@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -71,6 +72,7 @@ BOOL WINAPI WNASPI32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoa
 #endif /* defined(linux) */
 }
 
+
 #ifdef linux
 
 static int
@@ -131,7 +133,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
-    TRACE("{\n");
+    TRACE("INQUIRY {\n");
     TRACE("\tEVPD: %d\n", prb->CDBByte[1] & 1);
     TRACE("\tLUN: %d\n", (prb->CDBByte[1] & 0xc) >> 1);
     TRACE("\tPAGE CODE: %d\n", prb->CDBByte[2]);
@@ -171,8 +173,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
   TRACE("POST Proc: %lx\n", (DWORD) prb->SRB_PostProc);
   cdb = &prb->CDBByte[0];
   cmd = prb->CDBByte[0];
-  if (TRACE_ON(aspi))
-  {
+  if (TRACE_ON(aspi)) {
       DPRINTF("CDB buffer[");
       for (i = 0; i < prb->SRB_CDBLen; i++) {
           if (i != 0) DPRINTF(",");
@@ -186,15 +187,34 @@ static void
 ASPI_PrintSenseArea(SRB_ExecSCSICmd *prb)
 {
   int	i;
-  BYTE *cdb;
+  BYTE	*rqbuf = &prb->CDBByte[16];
 
   if (TRACE_ON(aspi))
   {
-      cdb = &prb->CDBByte[16];
+      DPRINTF("Request Sense reports:\n");
+      if ((rqbuf[0]&0x7f)!=0x70) {
+	      DPRINTF("\tInvalid sense header.\n");
+	      return;
+      }
+      DPRINTF("\tCurrent command read filemark: %s\n",(rqbuf[2]&0x80)?"yes":"no");
+      DPRINTF("\tEarly warning passed: %s\n",(rqbuf[2]&0x40)?"yes":"no");
+      DPRINTF("\tIncorrect blocklengt: %s\n",(rqbuf[2]&0x20)?"yes":"no");
+      DPRINTF("\tSense Key: %d\n",rqbuf[2]&0xf);
+      if (rqbuf[0]&0x80)
+	DPRINTF("\tResidual Length: %d\n",rqbuf[3]*0x1000000+rqbuf[4]*0x10000+rqbuf[5]*0x100+rqbuf[6]);
+      DPRINTF("\tAdditional Sense Length: %d\n",rqbuf[7]);
+      DPRINTF("\tAdditional Sense Code: %d\n",rqbuf[12]);
+      DPRINTF("\tAdditional Sense Code Qualifier: %d\n",rqbuf[13]);
+      if (rqbuf[15]&0x80) {
+	DPRINTF("\tIllegal Param is in %s\n",(rqbuf[15]&0x40)?"the CDB":"the Data Out Phase");
+	if (rqbuf[15]&0x8) {
+	  DPRINTF("Pointer at %d, bit %d\n",rqbuf[16]*256+rqbuf[17],rqbuf[15]&0x7);
+	}
+      }
       DPRINTF("SenseArea[");
       for (i = 0; i < prb->SRB_SenseLen; i++) {
-          if (i) DPRINTF(",");
-          DPRINTF("%02x", *cdb++);
+	if (i) DPRINTF(",");
+	DPRINTF("%02x", *rqbuf++);
       }
       DPRINTF("]\n");
   }
@@ -263,11 +283,40 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   int	fd;
   DWORD SRB_Status;
 
+  /* FIXME: hackmode */
+#define MAKE_TARGET_TO_HOST(lpPRB) \
+  	if (!TARGET_TO_HOST(lpPRB)) { \
+	    WARN("program was not sending target_to_host for cmd %x (flags=%x),correcting.\n",lpPRB->CDBByte[0],lpPRB->SRB_Flags); \
+	    lpPRB->SRB_Flags |= 8; \
+	}
+#define MAKE_HOST_TO_TARGET(lpPRB) \
+  	if (!HOST_TO_TARGET(lpPRB)) { \
+	    WARN("program was not sending host_to_target for cmd %x (flags=%x),correcting.\n",lpPRB->CDBByte[0],lpPRB->SRB_Flags); \
+	    lpPRB->SRB_Flags |= 0x10; \
+	}
+  switch (lpPRB->CDBByte[0]) {
+  case 0x12: /* INQUIRY */
+  case 0x5a: /* MODE_SENSE_10 */
+  case 0xa4: /* REPORT_KEY (DVD) MMC-2 */
+  case 0xad: /* READ DVD STRUCTURE MMC-2 */
+        MAKE_TARGET_TO_HOST(lpPRB)
+	break;
+  case 0xa3: /* SEND KEY (DVD) MMC-2 */
+        MAKE_HOST_TO_TARGET(lpPRB)
+	break;
+  default:
+	if ((((lpPRB->SRB_Flags & 0x18) == 0x00) ||
+	     ((lpPRB->SRB_Flags & 0x18) == 0x18)
+	    ) && lpPRB->SRB_BufLen
+	) {
+	    FIXME("command 0x%02x, no data transfer specified, but buflen is %ld!!!\n",lpPRB->CDBByte[0],lpPRB->SRB_BufLen); 
+	}
+	break;
+  }
   ASPI_DebugPrintCmd(lpPRB);
-
   fd = ASPI_OpenDevice(lpPRB);
   if (fd == -1) {
-      ERR("Failed: could not open device c%01dt%01dd%01d. Device permissions !?\n",
+      TRACE("Failed: could not open device c%01dt%01dd%01d. Device permissions !?\n",
 	  lpPRB->SRB_HaId,lpPRB->SRB_Target,lpPRB->SRB_Lun);
       return WNASPI32_DoPosting( lpPRB, SS_NO_DEVICE );
   }
@@ -278,7 +327,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   lpPRB->SRB_Status = SS_PENDING;
 
   if (!lpPRB->SRB_CDBLen) {
-      WARN("Failed: lpPRB->SRB_CDBLen = 0.\n");
+      ERR("Failed: lpPRB->SRB_CDBLen = 0.\n");
       return WNASPI32_DoPosting( lpPRB, SS_INVALID_SRB );
   }
 
@@ -353,8 +402,17 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   HeapFree(GetProcessHeap(), 0, sg_hd);
 
   /* FIXME: Should this be != 0 maybe? */
-  if( lpPRB->SRB_TargStat == 2 )
+  if( lpPRB->SRB_TargStat == 2 ) {
     SRB_Status = SS_ERR;
+    switch (lpPRB->CDBByte[0]) {
+    case 0xa4: /* REPORT_KEY (DVD) MMC-2 */
+    case 0xa3: /* SEND KEY (DVD) MMC-2 */
+          SRB_Status = SS_COMP;
+	  lpPRB->SRB_TargStat = 0;
+	  FIXME("Program wants to do DVD Region switching, but fails (non compliant DVD drive). Ignoring....\n");
+	  break;
+    }
+  }
 
   ASPI_DebugPrintResult(lpPRB);
   /* now do posting */
@@ -367,10 +425,8 @@ error_exit:
   if (error_code == EBUSY) {
       WNASPI32_DoPosting( lpPRB, SS_ASPI_IS_BUSY );
       TRACE("Device busy\n");
-  }
-  else {
-      WARN("Failed\n");
-  }
+  } else
+      FIXME("Failed\n");
 
   /* I'm not sure exactly error codes work here
    * We probably should set lpPRB->SRB_TargStat, SRB_HaStat ?
@@ -423,30 +479,33 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     /* FIXME: We should return SS_INVALID_HA if HostAdapter!=0 */
     SRB		tmpsrb;
     char	inqbuf[200];
+    DWORD	ret;
 
     memset(&tmpsrb,0,sizeof(tmpsrb));
 
-    tmpsrb.cmd.SRB_Cmd = SC_EXEC_SCSI_CMD;
-#define X(x) tmpsrb.cmd.SRB_##x = lpSRB->devtype.SRB_##x
-    X(Status);X(HaId);X(Flags);X(Target);X(Lun);
-#undef X
+    /* Copy header */
+    memcpy(&tmpsrb.common,&(lpSRB->common),sizeof(tmpsrb.common));
+    
+    tmpsrb.cmd.SRB_Flags	|= 8; /* target to host */
+    tmpsrb.cmd.SRB_Cmd 		= SC_EXEC_SCSI_CMD;
+    tmpsrb.cmd.SRB_Target	= lpSRB->devtype.SRB_Target;
+    tmpsrb.cmd.SRB_Lun		= lpSRB->devtype.SRB_Lun;
     tmpsrb.cmd.SRB_BufLen	= sizeof(inqbuf);
-    tmpsrb.cmd.SRB_Flags	= 8;/*target->host data. FIXME: anything more?*/
     tmpsrb.cmd.SRB_BufPointer	= inqbuf;
     tmpsrb.cmd.CDBByte[0]	= 0x12; /* INQUIRY  */
+    				  /* FIXME: handle lun */
     tmpsrb.cmd.CDBByte[4]	= sizeof(inqbuf);
     tmpsrb.cmd.SRB_CDBLen	= 6;
-    ASPI_ExecScsiCmd(&tmpsrb.cmd);
+    ret = ASPI_ExecScsiCmd(&tmpsrb.cmd);
 #define X(x) lpSRB->devtype.SRB_##x = tmpsrb.cmd.SRB_##x
     X(Status);
 #undef X
     lpSRB->devtype.SRB_DeviceType = inqbuf[0]&0x1f;
     TRACE("returning devicetype %d for target %d\n",inqbuf[0]&0x1f,tmpsrb.cmd.SRB_Target);
-    break;
+    return ret;
   }
   case SC_EXEC_SCSI_CMD:
     return ASPI_ExecScsiCmd(&lpSRB->cmd);
-    break;
   case SC_ABORT_SRB:
     FIXME("Not implemented SC_ABORT_SRB\n");
     break;
@@ -456,11 +515,11 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 #ifdef SC_GET_DISK_INFO
   case SC_GET_DISK_INFO:
     /* NT Doesn't implement this either.. so don't feel bad */
-    WARN("Not implemented SC_GET_DISK_INFO\n");
+    FIXME("Not implemented SC_GET_DISK_INFO\n");
     break;
 #endif
   default:
-    WARN("Unknown command %d\n", lpSRB->common.SRB_Cmd);
+    FIXME("Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
   return SS_INVALID_SRB;
 #else
