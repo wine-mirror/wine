@@ -38,7 +38,6 @@
 #include <commctrl.h>
 #include <shellapi.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <tchar.h>
 #include <ctype.h>
