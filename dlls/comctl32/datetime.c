@@ -356,10 +356,10 @@ DATETIME_SetFormatW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	int retval;
         int len = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1, NULL, 0, NULL, NULL );
 
- 	buf = (LPSTR) COMCTL32_Alloc (len);
+ 	buf = (LPSTR) Alloc (len);
         WideCharToMultiByte( CP_ACP, 0, (LPWSTR)lParam, -1, buf, len, NULL, NULL );
 	retval=DATETIME_SetFormat (hwnd, 0, (LPARAM) buf);
-	COMCTL32_Free (buf);
+	Free (buf);
 	return retval;
  }
  else
@@ -1196,7 +1196,7 @@ DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* allocate memory for info structure */
   TRACE("%04x %08lx\n",wParam,lParam);
-  infoPtr = (DATETIME_INFO *)COMCTL32_Alloc (sizeof(DATETIME_INFO));
+  infoPtr = (DATETIME_INFO *)Alloc (sizeof(DATETIME_INFO));
   if (infoPtr == NULL) {
     ERR("could not allocate info memory!\n");
     return 0;
@@ -1221,9 +1221,9 @@ DATETIME_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
         UD_MAXVAL, UD_MINVAL, 0);
   }
 
-  infoPtr->fieldspec = (int *) COMCTL32_Alloc (32*sizeof(int));
-  infoPtr->fieldRect = (RECT *) COMCTL32_Alloc (32*sizeof(RECT));
-  infoPtr->buflen = (int *) COMCTL32_Alloc (32*sizeof(int));
+  infoPtr->fieldspec = (int *) Alloc (32*sizeof(int));
+  infoPtr->fieldRect = (RECT *) Alloc (32*sizeof(RECT));
+  infoPtr->buflen = (int *) Alloc (32*sizeof(int));
   infoPtr->nrFieldsAllocated = 32;
 
   DATETIME_SetFormat (hwnd, 0, 0);
@@ -1249,7 +1249,7 @@ DATETIME_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DATETIME_INFO *infoPtr = DATETIME_GetInfoPtr (hwnd);
 
     TRACE("\n");
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongA( hwnd, 0, 0 );
     return 0;
 }

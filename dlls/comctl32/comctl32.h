@@ -162,11 +162,6 @@ LPVOID WINAPI ReAlloc (LPVOID, DWORD);
 BOOL   WINAPI Free (LPVOID);
 DWORD  WINAPI GetSize (LPVOID);
 
-/* for compatibility with old code */
-#define COMCTL32_Alloc(size) Alloc(size)
-#define COMCTL32_ReAlloc(ptr,size) ReAlloc(ptr,size)
-#define COMCTL32_Free(ptr) Free(ptr)
-
 INT  WINAPI Str_GetPtrA (LPCSTR, LPSTR, INT);
 INT  WINAPI Str_GetPtrW (LPCWSTR, LPWSTR, INT);
 

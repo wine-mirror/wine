@@ -54,7 +54,7 @@ NATIVEFONT_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     NATIVEFONT_INFO *infoPtr;
 
     /* allocate memory for info structure */
-    infoPtr = (NATIVEFONT_INFO *)COMCTL32_Alloc (sizeof(NATIVEFONT_INFO));
+    infoPtr = (NATIVEFONT_INFO *)Alloc (sizeof(NATIVEFONT_INFO));
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
 
@@ -74,7 +74,7 @@ NATIVEFONT_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
     /* free comboex info data */
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongA( hwnd, 0, 0 );
 
     return 0;

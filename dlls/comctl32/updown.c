@@ -715,7 +715,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
     {
         case WM_CREATE:
             SetWindowLongW (hwnd, GWL_STYLE, dwStyle & ~WS_BORDER);
-            infoPtr = (UPDOWN_INFO*)COMCTL32_Alloc (sizeof(UPDOWN_INFO));
+            infoPtr = (UPDOWN_INFO*)Alloc (sizeof(UPDOWN_INFO));
 	    SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
 	    /* initialize the info struct */
@@ -738,11 +738,11 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    break;
 
 	case WM_DESTROY:
-	    if(infoPtr->AccelVect) COMCTL32_Free (infoPtr->AccelVect);
+	    if(infoPtr->AccelVect) Free (infoPtr->AccelVect);
 
 	    if(infoPtr->Buddy) RemovePropA(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
 
-	    COMCTL32_Free (infoPtr);
+	    Free (infoPtr);
 	    SetWindowLongW (hwnd, 0, 0);
 	    TRACE("UpDown Ctrl destruction, hwnd=%p\n", hwnd);
 	    break;
@@ -834,12 +834,12 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	case UDM_SETACCEL:
 	    TRACE("UpDown Ctrl new accel info, hwnd=%p\n", hwnd);
 	    if(infoPtr->AccelVect) {
-		COMCTL32_Free (infoPtr->AccelVect);
+		Free (infoPtr->AccelVect);
 		infoPtr->AccelCount = 0;
 		infoPtr->AccelVect  = 0;
       	    }
 	    if(wParam==0) return TRUE;
-	    infoPtr->AccelVect = COMCTL32_Alloc (wParam*sizeof(UDACCEL));
+	    infoPtr->AccelVect = Alloc (wParam*sizeof(UDACCEL));
 	    if(infoPtr->AccelVect == 0) return FALSE;
 	    memcpy(infoPtr->AccelVect, (void*)lParam, wParam*sizeof(UDACCEL));
     	    return TRUE;

@@ -161,7 +161,7 @@ static LRESULT IPADDRESS_Create (HWND hwnd)
     SetWindowLongW (hwnd, GWL_STYLE,
 		    GetWindowLongW(hwnd, GWL_STYLE) & ~WS_BORDER);
 
-    infoPtr = (IPADDRESS_INFO *)COMCTL32_Alloc (sizeof(IPADDRESS_INFO));
+    infoPtr = (IPADDRESS_INFO *)Alloc (sizeof(IPADDRESS_INFO));
     if (!infoPtr) return -1;
     SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
@@ -208,7 +208,7 @@ static LRESULT IPADDRESS_Destroy (IPADDRESS_INFO *infoPtr)
     }
 
     SetWindowLongW (infoPtr->Self, 0, 0);
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     return 0;
 }
 

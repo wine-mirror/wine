@@ -531,7 +531,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
       pTitle = lppsp->pszTitle;
 
     len = strlenW(pTitle);
-    psInfo->proppage[index].pszText = COMCTL32_Alloc( (len+1)*sizeof (WCHAR) );
+    psInfo->proppage[index].pszText = Alloc( (len+1)*sizeof (WCHAR) );
     strcpyW( (LPWSTR)psInfo->proppage[index].pszText,pTitle);
   }
 
@@ -604,7 +604,7 @@ int PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
    */
   resSize = SizeofResource(COMCTL32_hModule, hRes);
 
-  temp = COMCTL32_Alloc(resSize);
+  temp = Alloc(resSize);
 
   if (!temp)
     return -1;
@@ -651,7 +651,7 @@ int PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
     }
   }
 
-  COMCTL32_Free(temp);
+  Free(temp);
 
   return ret;
 }
@@ -1433,7 +1433,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
      * Make a copy of the dialog template to make it writable
      */
   }
-  temp = COMCTL32_Alloc(resSize);
+  temp = Alloc(resSize);
   if (!temp)
     return FALSE;
   
@@ -1483,7 +1483,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 					(LPARAM)ppshpage);
   /* Free a no more needed copy */
   if(temp)
-      COMCTL32_Free(temp);
+      Free(temp);
 
   ppInfo[index].hwndPage = hwndPage;
 
@@ -2101,12 +2101,12 @@ static void PROPSHEET_SetTitleW(HWND hwndDlg, DWORD dwStyle, LPCWSTR lpszText)
     int lentitle = strlenW(lpszText);
     int lenprop  = strlenW(psInfo->strPropertiesFor);
 
-    dest = COMCTL32_Alloc( (lentitle + lenprop + 1)*sizeof (WCHAR));
+    dest = Alloc( (lentitle + lenprop + 1)*sizeof (WCHAR));
     strcpyW(dest, psInfo->strPropertiesFor);
     strcatW(dest, lpszText);
 
     SetWindowTextW(hwndDlg, dest);
-    COMCTL32_Free(dest);
+    Free(dest);
   }
   else
     SetWindowTextW(hwndDlg, lpszText);
@@ -2201,7 +2201,7 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
   /*
    * Allocate and fill in a new PropPageInfo entry.
    */
-  psInfo->proppage = (PropPageInfo*) COMCTL32_ReAlloc(psInfo->proppage,
+  psInfo->proppage = (PropPageInfo*) ReAlloc(psInfo->proppage,
                                                       sizeof(PropPageInfo) *
                                                       (psInfo->nPages + 1));
   if (!PROPSHEET_CollectPageInfo(ppsp, psInfo, psInfo->nPages))
@@ -2328,7 +2328,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   SendMessageW(hwndTabControl, TCM_DELETEITEM, index, 0);
 
   psInfo->nPages--;
-  psInfo->proppage = COMCTL32_Alloc(sizeof(PropPageInfo) * psInfo->nPages);
+  psInfo->proppage = Alloc(sizeof(PropPageInfo) * psInfo->nPages);
 
   if (index > 0)
     memcpy(&psInfo->proppage[0], &oldPages[0], index * sizeof(PropPageInfo));
@@ -2337,7 +2337,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
     memcpy(&psInfo->proppage[index], &oldPages[index + 1],
            (psInfo->nPages - index) * sizeof(PropPageInfo));
 
-  COMCTL32_Free(oldPages);
+  Free(oldPages);
 
   return FALSE;
 }
@@ -2450,8 +2450,8 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
      }
   }
 
-  COMCTL32_Free(psInfo->proppage);
-  COMCTL32_Free(psInfo->strPropertiesFor);
+  Free(psInfo->proppage);
+  Free(psInfo->strPropertiesFor);
   ImageList_Destroy(psInfo->hImageList);
 
   GlobalFree((HGLOBAL)psInfo);
@@ -2473,7 +2473,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 
   PROPSHEET_CollectSheetInfoA(lppsh, psInfo);
 
-  psInfo->proppage = (PropPageInfo*) COMCTL32_Alloc(sizeof(PropPageInfo) *
+  psInfo->proppage = (PropPageInfo*) Alloc(sizeof(PropPageInfo) *
                                                     lppsh->nPages);
   pByte = (BYTE*) psInfo->ppshheader.u3.ppsp;
 
@@ -2518,7 +2518,7 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 
   PROPSHEET_CollectSheetInfoW(lppsh, psInfo);
 
-  psInfo->proppage = (PropPageInfo*) COMCTL32_Alloc(sizeof(PropPageInfo) *
+  psInfo->proppage = (PropPageInfo*) Alloc(sizeof(PropPageInfo) *
                                                     lppsh->nPages);
   pByte = (BYTE*) psInfo->ppshheader.u3.ppsp;
 
@@ -2555,7 +2555,7 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)
 {
-  PROPSHEETPAGEW* ppsp = COMCTL32_Alloc(sizeof(PROPSHEETPAGEW));
+  PROPSHEETPAGEW* ppsp = Alloc(sizeof(PROPSHEETPAGEW));
 
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
@@ -2587,7 +2587,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
-  PROPSHEETPAGEW* ppsp = COMCTL32_Alloc(sizeof(PROPSHEETPAGEW));
+  PROPSHEETPAGEW* ppsp = Alloc(sizeof(PROPSHEETPAGEW));
 
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEW)));
 
@@ -2638,7 +2638,7 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
   if ((psp->dwFlags & PSP_USETITLE) && HIWORD( psp->pszTitle ))
       HeapFree(GetProcessHeap(), 0, (LPVOID)psp->pszTitle);
 
-  COMCTL32_Free(hPropPage);
+  Free(hPropPage);
 
   return TRUE;
 }
@@ -2774,7 +2774,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_INITDIALOG:
     {
       PropSheetInfo* psInfo = (PropSheetInfo*) lParam;
-      WCHAR* strCaption = (WCHAR*)COMCTL32_Alloc(MAX_CAPTION_LENGTH*sizeof(WCHAR));
+      WCHAR* strCaption = (WCHAR*)Alloc(MAX_CAPTION_LENGTH*sizeof(WCHAR));
       HWND hwndTabCtrl = GetDlgItem(hwnd, IDC_TABCONTROL);
       LPCPROPSHEETPAGEW ppshpage;
       int idx;

@@ -975,7 +975,7 @@ MONTHCAL_SetRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->monthRange = infoPtr->maxDate.wMonth - infoPtr->minDate.wMonth;
 
   if(infoPtr->monthRange!=prev) {
-	infoPtr->monthdayState = COMCTL32_ReAlloc(infoPtr->monthdayState,
+	infoPtr->monthdayState = ReAlloc(infoPtr->monthdayState,
                                                   infoPtr->monthRange * sizeof(MONTHDAYSTATE));
   }
 
@@ -1302,7 +1302,7 @@ static void MONTHCAL_GoToNextMonth(HWND hwnd, MONTHCAL_INFO *infoPtr)
     nmds.nmhdr.idFrom   = GetWindowLongA(hwnd, GWL_ID);
     nmds.nmhdr.code     = MCN_GETDAYSTATE;
     nmds.cDayState	= infoPtr->monthRange;
-    nmds.prgDayState	= COMCTL32_Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
+    nmds.prgDayState	= Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
 
     SendMessageA(GetParent(hwnd), WM_NOTIFY,
     (WPARAM)nmds.nmhdr.idFrom, (LPARAM)&nmds);
@@ -1332,7 +1332,7 @@ static void MONTHCAL_GoToPrevMonth(HWND hwnd,  MONTHCAL_INFO *infoPtr)
     nmds.nmhdr.idFrom   = GetWindowLongA(hwnd, GWL_ID);
     nmds.nmhdr.code     = MCN_GETDAYSTATE;
     nmds.cDayState	= infoPtr->monthRange;
-    nmds.prgDayState	= COMCTL32_Alloc
+    nmds.prgDayState	= Alloc
                         (infoPtr->monthRange * sizeof(MONTHDAYSTATE));
 
     SendMessageA(GetParent(hwnd), WM_NOTIFY,
@@ -1869,7 +1869,7 @@ MONTHCAL_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LOGFONTA	logFont;
 
   /* allocate memory for info structure */
-  infoPtr =(MONTHCAL_INFO*)COMCTL32_Alloc(sizeof(MONTHCAL_INFO));
+  infoPtr =(MONTHCAL_INFO*)Alloc(sizeof(MONTHCAL_INFO));
   SetWindowLongA(hwnd, 0, (DWORD)infoPtr);
 
   if(infoPtr == NULL) {
@@ -1897,7 +1897,7 @@ MONTHCAL_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   MONTHCAL_CopyTime(&infoPtr->todaysDate, &infoPtr->maxDate);
   infoPtr->maxSelCount  = 7;
   infoPtr->monthRange = 3;
-  infoPtr->monthdayState = COMCTL32_Alloc
+  infoPtr->monthdayState = Alloc
                          (infoPtr->monthRange * sizeof(MONTHDAYSTATE));
   infoPtr->titlebk     = GetSysColor(COLOR_ACTIVECAPTION);
   infoPtr->titletxt    = GetSysColor(COLOR_WINDOW);
@@ -1921,8 +1921,8 @@ MONTHCAL_Destroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* free month calendar info data */
   if(infoPtr->monthdayState)
-      COMCTL32_Free(infoPtr->monthdayState);
-  COMCTL32_Free(infoPtr);
+      Free(infoPtr->monthdayState);
+  Free(infoPtr);
   SetWindowLongA(hwnd, 0, 0);
   return 0;
 }

@@ -212,7 +212,7 @@ COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, INT code, NMCOMBOBOXEXW *hdr)
 	if ((hdr->ceItem.mask & CBEIF_TEXT) && is_textW(wstr)) {
 	    len = WideCharToMultiByte (CP_ACP, 0, wstr, -1, 0, 0, NULL, NULL);
 	    if (len > 0) {
-		astr = (LPSTR)COMCTL32_Alloc ((len + 1)*sizeof(CHAR));
+		astr = (LPSTR)Alloc ((len + 1)*sizeof(CHAR));
 		if (!astr) return 0;
 		WideCharToMultiByte (CP_ACP, 0, wstr, -1, astr, len, 0, 0);
 		hdr->ceItem.pszText = (LPWSTR)astr;
@@ -228,7 +228,7 @@ COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, INT code, NMCOMBOBOXEXW *hdr)
 	if (astr && hdr->ceItem.pszText == (LPWSTR)astr)
 	    hdr->ceItem.pszText = wstr;
 
-	if (astr) COMCTL32_Free(astr);
+	if (astr) Free(astr);
 
 	return ret;
     }
@@ -277,9 +277,9 @@ static void COMBOEX_NotifyDragBegin(COMBOEX_INFO *infoPtr, LPCWSTR wstr)
 
 static void COMBOEX_FreeText (CBE_ITEMDATA *item)
 {
-    if (is_textW(item->pszText)) COMCTL32_Free(item->pszText);
+    if (is_textW(item->pszText)) Free(item->pszText);
     item->pszText = 0;
-    if (item->pszTemp) COMCTL32_Free(item->pszTemp);
+    if (item->pszTemp) Free(item->pszTemp);
     item->pszTemp = 0;
 }
 
@@ -300,14 +300,14 @@ static LPCWSTR COMBOEX_GetText(COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 
     if (is_textW(nmce.ceItem.pszText)) {
 	len = MultiByteToWideChar (CP_ACP, 0, (LPSTR)nmce.ceItem.pszText, -1, NULL, 0);
-	buf = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	buf = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	if (buf)
 	    MultiByteToWideChar (CP_ACP, 0, (LPSTR)nmce.ceItem.pszText, -1, buf, len);
 	if (nmce.ceItem.mask & CBEIF_DI_SETITEM) {
 	    COMBOEX_FreeText(item);
 	    item->pszText = buf;
 	} else {
-	    if (item->pszTemp) COMCTL32_Free(item->pszTemp);
+	    if (item->pszTemp) Free(item->pszTemp);
 	    item->pszTemp = buf;
 	}
 	text = buf;
@@ -569,7 +569,7 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
     if (index > infoPtr->nb_items) index = infoPtr->nb_items;
 
     /* get zero-filled space and chain it in */
-    if(!(item = (CBE_ITEMDATA *)COMCTL32_Alloc (sizeof(*item)))) return -1;
+    if(!(item = (CBE_ITEMDATA *)Alloc (sizeof(*item)))) return -1;
 
     /* locate position to insert new item in */
     if (index == infoPtr->nb_items) {
@@ -587,7 +587,7 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 	}
 	if (!moving) {
 	    ERR("COMBOBOXEX item structures broken. Please report!\n");
-	    COMCTL32_Free(item);
+	    Free(item);
 	    return -1;
 	}
 	item->next = moving->next;
@@ -601,9 +601,9 @@ static INT COMBOEX_InsertItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 
         if (is_textW(cit->pszText)) len = strlenW (cit->pszText);
 	if (len > 0) {
-	    item->pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    item->pszText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	    if (!item->pszText) {
-		COMCTL32_Free(item);
+		Free(item);
 		return -1;
 	    }
 	    strcpyW (item->pszText, cit->pszText);
@@ -647,14 +647,14 @@ static INT COMBOEX_InsertItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
     memcpy(&citW,cit,sizeof(COMBOBOXEXITEMA));
     if (cit->mask & CBEIF_TEXT && is_textA(cit->pszText)) {
 	INT len = MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, NULL, 0);
-	wstr = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	wstr = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	if (!wstr) return -1;
 	MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, wstr, len);
 	citW.pszText = wstr;
     }
     ret = COMBOEX_InsertItemW(infoPtr, &citW);
 
-    if (wstr) COMCTL32_Free(wstr);
+    if (wstr) Free(wstr);
 
     return ret;
 }
@@ -736,7 +736,7 @@ static BOOL COMBOEX_SetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 	COMBOEX_FreeText(item);
         if (is_textW(cit->pszText)) len = strlenW(cit->pszText);
 	if (len > 0) {
-	    item->pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    item->pszText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	    if (!item->pszText) return FALSE;
 	    strcpyW(item->pszText, cit->pszText);
 	} else if (cit->pszText == LPSTR_TEXTCALLBACKW)
@@ -773,14 +773,14 @@ static BOOL COMBOEX_SetItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
     memcpy(&citW, cit, sizeof(COMBOBOXEXITEMA));
     if ((cit->mask & CBEIF_TEXT) && is_textA(cit->pszText)) {
 	INT len = MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, NULL, 0);
-	wstr = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	wstr = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	if (!wstr) return FALSE;
 	MultiByteToWideChar (CP_ACP, 0, cit->pszText, -1, wstr, len);
 	citW.pszText = wstr;
     }
     ret = COMBOEX_SetItemW(infoPtr, &citW);
 
-    if (wstr) COMCTL32_Free(wstr);
+    if (wstr) Free(wstr);
 
     return ret;
 }
@@ -925,7 +925,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
     INT i;
 
     /* allocate memory for info structure */
-    infoPtr = (COMBOEX_INFO *)COMCTL32_Alloc (sizeof(COMBOEX_INFO));
+    infoPtr = (COMBOEX_INFO *)Alloc (sizeof(COMBOEX_INFO));
     if (!infoPtr) return -1;
 
     /* initialize info structure */
@@ -1060,7 +1060,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, LPCREATESTRUCTA cs)
      * Create an item structure to represent the data in the
      * EDIT control. It is allocated zero-filled.
      */
-    infoPtr->edit = (CBE_ITEMDATA *)COMCTL32_Alloc (sizeof (CBE_ITEMDATA));
+    infoPtr->edit = (CBE_ITEMDATA *)Alloc (sizeof (CBE_ITEMDATA));
     if (!infoPtr->edit) {
 	COMBOEX_Destroy(infoPtr);
 	return -1;
@@ -1273,7 +1273,7 @@ static BOOL COMBOEX_WM_DeleteItem (COMBOEX_INFO *infoPtr, DELETEITEMSTRUCT *dis)
     COMBOEX_NotifyItem (infoPtr, CBEN_DELETEITEM, &nmcit);
 
     COMBOEX_FreeText(olditem);
-    COMCTL32_Free(olditem);
+    Free(olditem);
 
     return TRUE;
 }
@@ -1360,7 +1360,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT *dis)
 	    item->mask &= ~CBEIF_TEXT;
 	    if( (len = GetWindowTextLengthW(infoPtr->hwndEdit)) ) {
 		item->mask |= CBEIF_TEXT;
-		item->pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+		item->pszText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 		if (item->pszText)
 		    GetWindowTextW(infoPtr->hwndEdit, item->pszText, len+1);
 
@@ -1524,7 +1524,7 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
 	DestroyWindow (infoPtr->hwndCombo);
 
     if (infoPtr->edit) {
-	COMCTL32_Free (infoPtr->edit);
+	Free (infoPtr->edit);
 	infoPtr->edit = 0;
     }
 
@@ -1535,7 +1535,7 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
 	while (item) {
 	    next = (CBE_ITEMDATA *)item->next;
 	    COMBOEX_FreeText (item);
-	    COMCTL32_Free (item);
+	    Free (item);
 	    item = next;
 	}
 	infoPtr->items = 0;
@@ -1545,7 +1545,7 @@ static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr)
 	DeleteObject (infoPtr->defaultFont);
 
     /* free comboex info data */
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongW (infoPtr->hwndSelf, 0, 0);
     return 0;
 }

@@ -215,7 +215,7 @@ HOTKEY_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDC hdc;
 
     /* allocate memory for info structure */
-    infoPtr = (HOTKEY_INFO *)COMCTL32_Alloc (sizeof(HOTKEY_INFO));
+    infoPtr = (HOTKEY_INFO *)Alloc (sizeof(HOTKEY_INFO));
     SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
     /* initialize info structure */
@@ -239,7 +239,7 @@ HOTKEY_Destroy (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     HWND hwnd = infoPtr->hwndSelf;
     /* free hotkey info data */
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongW (hwnd, 0, 0);
     return 0;
 }

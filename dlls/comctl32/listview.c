@@ -465,7 +465,7 @@ static BOOL textsetptrT(LPWSTR *dest, LPWSTR src, BOOL isW)
     
     if (src == LPSTR_TEXTCALLBACKW)
     {
-	if (is_textW(*dest)) COMCTL32_Free(*dest);
+	if (is_textW(*dest)) Free(*dest);
 	*dest = LPSTR_TEXTCALLBACKW;
     }
     else
@@ -2519,11 +2519,11 @@ static void ranges_assert(RANGES ranges, LPCSTR desc, const char *func, int line
 
 static RANGES ranges_create(int count)
 {
-    RANGES ranges = (RANGES)COMCTL32_Alloc(sizeof(struct tagRANGES));
+    RANGES ranges = (RANGES)Alloc(sizeof(struct tagRANGES));
     if (!ranges) return NULL;
     ranges->hdpa = DPA_Create(count);
     if (ranges->hdpa) return ranges;
-    COMCTL32_Free(ranges);
+    Free(ranges);
     return NULL;
 }
 
@@ -2532,7 +2532,7 @@ static void ranges_clear(RANGES ranges)
     INT i;
 	
     for(i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
-	COMCTL32_Free(DPA_GetPtr(ranges->hdpa, i));
+	Free(DPA_GetPtr(ranges->hdpa, i));
     DPA_DeleteAllPtrs(ranges->hdpa);
 }
 
@@ -2542,7 +2542,7 @@ static void ranges_destroy(RANGES ranges)
     if (!ranges) return;
     ranges_clear(ranges);
     DPA_Destroy(ranges->hdpa);
-    COMCTL32_Free(ranges);
+    Free(ranges);
 }
 
 static RANGES ranges_clone(RANGES ranges)
@@ -2554,7 +2554,7 @@ static RANGES ranges_clone(RANGES ranges)
 
     for (i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
-        RANGE *newrng = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
+        RANGE *newrng = (RANGE *)Alloc(sizeof(RANGE));
 	if (!newrng) goto fail;
 	*newrng = *((RANGE*)DPA_GetPtr(ranges->hdpa, i));
 	DPA_SetPtr(clone->hdpa, i, newrng);
@@ -2646,7 +2646,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	TRACE("Adding new range\n");
 
 	/* create the brand new range to insert */	
-        newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
+        newrgn = (RANGE *)Alloc(sizeof(RANGE));
 	if(!newrgn) goto fail;
 	*newrgn = range;
 	
@@ -2658,7 +2658,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	/* and get it over with */
 	if (DPA_InsertPtr(ranges->hdpa, index, newrgn) == -1)
 	{
-	    COMCTL32_Free(newrgn);
+	    Free(newrgn);
 	    goto fail;
 	}
     }
@@ -2695,7 +2695,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	    mrgrgn = DPA_GetPtr(ranges->hdpa, mergeindex);
 	    chkrgn->lower = min(chkrgn->lower, mrgrgn->lower);
 	    chkrgn->upper = max(chkrgn->upper, mrgrgn->upper);
-	    COMCTL32_Free(mrgrgn);
+	    Free(mrgrgn);
 	    DPA_DeletePtr(ranges->hdpa, mergeindex);
 	    if (mergeindex < index) index --;
 	} while(1);
@@ -2757,13 +2757,13 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	{
 	    RANGE tmprgn = *chkrgn, *newrgn;
 
-	    if (!(newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE)))) goto fail;
+	    if (!(newrgn = (RANGE *)Alloc(sizeof(RANGE)))) goto fail;
 	    newrgn->lower = chkrgn->lower;
 	    newrgn->upper = range.lower;
 	    chkrgn->lower = range.upper;
 	    if (DPA_InsertPtr(ranges->hdpa, index, newrgn) == -1)
 	    {
-		COMCTL32_Free(newrgn);
+		Free(newrgn);
 		goto fail;
 	    }
 	    chkrgn = &tmprgn;
@@ -3374,7 +3374,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL i
 	SUBITEM_INFO *tmpSubItem;
 	INT i;
 
-	lpSubItem = (SUBITEM_INFO *)COMCTL32_Alloc(sizeof(SUBITEM_INFO));
+	lpSubItem = (SUBITEM_INFO *)Alloc(sizeof(SUBITEM_INFO));
 	if (!lpSubItem) return FALSE;
 	/* we could binary search here, if need be...*/
   	for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
@@ -3384,7 +3384,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL i
   	}
 	if (DPA_InsertPtr(hdpaSubItems, i, lpSubItem) == -1)
 	{
-	    COMCTL32_Free(lpSubItem);
+	    Free(lpSubItem);
 	    return FALSE;
 	}
         lpSubItem->iSubItem = lpLVItem->iSubItem;
@@ -4047,8 +4047,8 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 	    for (j = 0; j < DPA_GetPtrCount(hdpaSubItems); j++)
 	    {
 		hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, j);
-		if (is_textW(hdrItem->pszText)) COMCTL32_Free(hdrItem->pszText);
-		COMCTL32_Free(hdrItem);
+		if (is_textW(hdrItem->pszText)) Free(hdrItem->pszText);
+		Free(hdrItem);
 	    }
 	    DPA_Destroy(hdpaSubItems);
 	    DPA_DeletePtr(infoPtr->hdpaItems, i);
@@ -4152,7 +4152,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     if (!Header_DeleteItem(infoPtr->hwndHeader, nColumn))
 	return FALSE;
 
-    COMCTL32_Free(DPA_GetPtr(infoPtr->hdpaColumns, nColumn));
+    Free(DPA_GetPtr(infoPtr->hdpaColumns, nColumn));
     DPA_DeletePtr(infoPtr->hdpaColumns, nColumn);
   
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
@@ -4188,10 +4188,10 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 	    {
 		/* free string */
 		if (is_textW(lpDelItem->hdr.pszText))
-		    COMCTL32_Free(lpDelItem->hdr.pszText);
+		    Free(lpDelItem->hdr.pszText);
 
 		/* free item */
-		COMCTL32_Free(lpDelItem);
+		Free(lpDelItem);
 
 		/* free dpa memory */
 		DPA_DeletePtr(hdpaSubItems, nSubItem);
@@ -4324,8 +4324,8 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 	for (i = 0; i < DPA_GetPtrCount(hdpaSubItems); i++)
     	{
             hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, i);
-	    if (is_textW(hdrItem->pszText)) COMCTL32_Free(hdrItem->pszText);
-            COMCTL32_Free(hdrItem);
+	    if (is_textW(hdrItem->pszText)) Free(hdrItem->pszText);
+            Free(hdrItem);
         }
         DPA_Destroy(hdpaSubItems);
     }
@@ -5955,7 +5955,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 
     if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return -1;
 
-    if ( !(lpItem = (ITEM_INFO *)COMCTL32_Alloc(sizeof(ITEM_INFO))) )
+    if ( !(lpItem = (ITEM_INFO *)Alloc(sizeof(ITEM_INFO))) )
 	return -1;
     
     /* insert item in listview control data structure */
@@ -6044,7 +6044,7 @@ undo:
 fail:
     DPA_DeletePtr(hdpaSubItems, 0);
     DPA_Destroy (hdpaSubItems);
-    COMCTL32_Free (lpItem);
+    Free (lpItem);
     return -1;
 }
 
@@ -6270,7 +6270,7 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     if (nNewColumn != nColumn) ERR("nColumn=%d, nNewColumn=%d\n", nColumn, nNewColumn);
    
     /* create our own column info */ 
-    if (!(lpColumnInfo = COMCTL32_Alloc(sizeof(COLUMN_INFO)))) goto fail;
+    if (!(lpColumnInfo = Alloc(sizeof(COLUMN_INFO)))) goto fail;
     if (DPA_InsertPtr(infoPtr->hdpaColumns, nNewColumn, lpColumnInfo) == -1) goto fail;
 
     if (lpColumn->mask & LVCF_FMT) lpColumnInfo->fmt = lpColumn->fmt;
@@ -6305,7 +6305,7 @@ fail:
     if (lpColumnInfo)
     {
 	DPA_DeletePtr(infoPtr->hdpaColumns, nNewColumn);
-	COMCTL32_Free(lpColumnInfo);
+	Free(lpColumnInfo);
     }
     return -1;
 }
@@ -7171,7 +7171,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   TRACE("(lpcs=%p)\n", lpcs);
 
   /* initialize info pointer */
-  infoPtr = (LISTVIEW_INFO *)COMCTL32_Alloc(sizeof(LISTVIEW_INFO));
+  infoPtr = (LISTVIEW_INFO *)Alloc(sizeof(LISTVIEW_INFO));
   if (!infoPtr) return -1;
 
   SetWindowLongW(hwnd, 0, (LONG)infoPtr);
@@ -7256,7 +7256,7 @@ fail:
     DPA_Destroy(infoPtr->hdpaPosX);
     DPA_Destroy(infoPtr->hdpaPosY);
     DPA_Destroy(infoPtr->hdpaColumns);
-    COMCTL32_Free(infoPtr);
+    Free(infoPtr);
     return -1;
 }
 
@@ -7888,7 +7888,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   SetWindowLongW(infoPtr->hwndSelf, 0, 0);
 
   /* free listview info pointer*/
-  COMCTL32_Free(infoPtr);
+  Free(infoPtr);
 
   return 0;
 }
@@ -9134,7 +9134,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	    if (len)
 	    {
-		if ( (buffer = COMCTL32_Alloc((len+1) * (isW ? sizeof(WCHAR) : sizeof(CHAR)))) )
+		if ( (buffer = Alloc((len+1) * (isW ? sizeof(WCHAR) : sizeof(CHAR)))) )
 		{
 		    if (isW) GetWindowTextW(hwnd, buffer, len+1);
 		    else GetWindowTextA(hwnd, (CHAR*)buffer, len+1);
@@ -9143,7 +9143,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	}
 	LISTVIEW_EndEditLabelT(infoPtr, buffer, isW);
 
-	if (buffer) COMCTL32_Free(buffer);
+	if (buffer) Free(buffer);
 
     }
 

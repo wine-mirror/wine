@@ -115,14 +115,14 @@ static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
     	nrTics=(infoPtr->lRangeMax - infoPtr->lRangeMin)/infoPtr->uTicFreq;
     else {
         nrTics = 0;
-        COMCTL32_Free (infoPtr->tics);
+        Free (infoPtr->tics);
         infoPtr->tics = NULL;
         infoPtr->uNumTics = 0;
         return;
     }
 
     if (nrTics != infoPtr->uNumTics) {
-    	infoPtr->tics=COMCTL32_ReAlloc (infoPtr->tics,
+    	infoPtr->tics=ReAlloc (infoPtr->tics,
                                         (nrTics+1)*sizeof (DWORD));
 	if (!infoPtr->tics) {
 	    infoPtr->uNumTics = 0;
@@ -908,7 +908,7 @@ static LRESULT
 TRACKBAR_ClearTics (TRACKBAR_INFO *infoPtr, BOOL fRedraw)
 {
     if (infoPtr->tics) {
-        COMCTL32_Free (infoPtr->tics);
+        Free (infoPtr->tics);
         infoPtr->tics = NULL;
         infoPtr->uNumTics = 0;
     }
@@ -1192,7 +1192,7 @@ TRACKBAR_SetTic (TRACKBAR_INFO *infoPtr, LONG lPos)
     TRACE("lPos=%ld\n", lPos);
 
     infoPtr->uNumTics++;
-    infoPtr->tics=COMCTL32_ReAlloc( infoPtr->tics,
+    infoPtr->tics=ReAlloc( infoPtr->tics,
                                     (infoPtr->uNumTics)*sizeof (DWORD));
     if (!infoPtr->tics) {
 	infoPtr->uNumTics = 0;
@@ -1285,7 +1285,7 @@ TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
     TRACKBAR_INFO *infoPtr;
     DWORD oldStyle, newStyle;
 
-    infoPtr = (TRACKBAR_INFO *)COMCTL32_Alloc (sizeof(TRACKBAR_INFO));
+    infoPtr = (TRACKBAR_INFO *)Alloc (sizeof(TRACKBAR_INFO));
     if (!infoPtr) return -1;
     SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
@@ -1348,7 +1348,7 @@ TRACKBAR_Destroy (TRACKBAR_INFO *infoPtr)
     if (infoPtr->hwndToolTip)
     	DestroyWindow (infoPtr->hwndToolTip);
 
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongW (infoPtr->hwndSelf, 0, 0);
     return 0;
 }

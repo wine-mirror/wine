@@ -1716,8 +1716,8 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     /*                          indexes by row                         */
 
     if (infoPtr->uNumRows != origrows) {
-	if (infoPtr->rows) COMCTL32_Free (infoPtr->rows);
-	infoPtr->rows = COMCTL32_Alloc (sizeof (REBAR_ROW) * infoPtr->uNumRows);
+	if (infoPtr->rows) Free (infoPtr->rows);
+	infoPtr->rows = Alloc (sizeof (REBAR_ROW) * infoPtr->uNumRows);
     }
 
     row = 0;
@@ -2525,7 +2525,7 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	TRACE(" simple delete!\n");
 	if ((lpBand->fMask & RBBIM_CHILD) && lpBand->hwndChild)
 	    childhwnd = lpBand->hwndChild;
-	COMCTL32_Free (infoPtr->bands);
+	Free (infoPtr->bands);
 	infoPtr->bands = NULL;
 	infoPtr->uNumBands = 0;
     }
@@ -2537,7 +2537,7 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    childhwnd = lpBand->hwndChild;
 
 	infoPtr->uNumBands--;
-	infoPtr->bands = COMCTL32_Alloc (sizeof (REBAR_BAND) * infoPtr->uNumBands);
+	infoPtr->bands = Alloc (sizeof (REBAR_BAND) * infoPtr->uNumBands);
         if (uBand > 0) {
             memcpy (&infoPtr->bands[0], &oldBands[0],
                     uBand * sizeof(REBAR_BAND));
@@ -2548,7 +2548,7 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
                     (infoPtr->uNumBands - uBand) * sizeof(REBAR_BAND));
         }
 
-	COMCTL32_Free (oldBands);
+	Free (oldBands);
     }
 
     if (childhwnd)
@@ -2997,13 +2997,13 @@ REBAR_InsertBandA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_DumpBandInfo (lprbbi);
 
     if (infoPtr->uNumBands == 0) {
-	infoPtr->bands = (REBAR_BAND *)COMCTL32_Alloc (sizeof (REBAR_BAND));
+	infoPtr->bands = (REBAR_BAND *)Alloc (sizeof (REBAR_BAND));
 	uIndex = 0;
     }
     else {
 	REBAR_BAND *oldBands = infoPtr->bands;
 	infoPtr->bands =
-	    (REBAR_BAND *)COMCTL32_Alloc ((infoPtr->uNumBands+1)*sizeof(REBAR_BAND));
+	    (REBAR_BAND *)Alloc ((infoPtr->uNumBands+1)*sizeof(REBAR_BAND));
 	if (((INT)uIndex == -1) || (uIndex > infoPtr->uNumBands))
 	    uIndex = infoPtr->uNumBands;
 
@@ -3019,7 +3019,7 @@ REBAR_InsertBandA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 		    (infoPtr->uNumBands - uIndex - 1) * sizeof(REBAR_BAND));
 	}
 
-	COMCTL32_Free (oldBands);
+	Free (oldBands);
     }
 
     infoPtr->uNumBands++;
@@ -3040,7 +3040,7 @@ REBAR_InsertBandA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
         INT len = MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, NULL, 0 );
         if (len > 1) {
-            lpBand->lpText = (LPWSTR)COMCTL32_Alloc (len*sizeof(WCHAR));
+            lpBand->lpText = (LPWSTR)Alloc (len*sizeof(WCHAR));
             MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, lpBand->lpText, len );
 	}
     }
@@ -3078,13 +3078,13 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_DumpBandInfo ((LPREBARBANDINFOA)lprbbi);
 
     if (infoPtr->uNumBands == 0) {
-	infoPtr->bands = (REBAR_BAND *)COMCTL32_Alloc (sizeof (REBAR_BAND));
+	infoPtr->bands = (REBAR_BAND *)Alloc (sizeof (REBAR_BAND));
 	uIndex = 0;
     }
     else {
 	REBAR_BAND *oldBands = infoPtr->bands;
 	infoPtr->bands =
-	    (REBAR_BAND *)COMCTL32_Alloc ((infoPtr->uNumBands+1)*sizeof(REBAR_BAND));
+	    (REBAR_BAND *)Alloc ((infoPtr->uNumBands+1)*sizeof(REBAR_BAND));
 	if (((INT)uIndex == -1) || (uIndex > infoPtr->uNumBands))
 	    uIndex = infoPtr->uNumBands;
 
@@ -3100,7 +3100,7 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 		    (infoPtr->uNumBands - uIndex - 1) * sizeof(REBAR_BAND));
 	}
 
-	COMCTL32_Free (oldBands);
+	Free (oldBands);
     }
 
     infoPtr->uNumBands++;
@@ -3121,7 +3121,7 @@ REBAR_InsertBandW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
 	INT len = lstrlenW (lprbbi->lpText);
 	if (len > 0) {
-	    lpBand->lpText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    lpBand->lpText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	    strcpyW (lpBand->lpText, lprbbi->lpText);
 	}
     }
@@ -3339,7 +3339,7 @@ REBAR_MoveBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     /* allocate new space and copy rest of bands into it */
     infoPtr->bands =
-	(REBAR_BAND *)COMCTL32_Alloc ((infoPtr->uNumBands)*sizeof(REBAR_BAND));
+	(REBAR_BAND *)Alloc ((infoPtr->uNumBands)*sizeof(REBAR_BAND));
 
     /* pre insert copy */
     if (uTo > 0) {
@@ -3356,7 +3356,7 @@ REBAR_MoveBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 		(infoPtr->uNumBands - uTo - 1) * sizeof(REBAR_BAND));
     }
 
-    COMCTL32_Free (oldBands);
+    Free (oldBands);
 
     TRACE("moved band %d to index %d\n", uFrom, uTo);
     REBAR_DumpBand (infoPtr);
@@ -3397,12 +3397,12 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_CommonSetupBand (infoPtr->hwndSelf, lprbbi, lpBand);
     if (lprbbi->fMask & RBBIM_TEXT) {
 	if (lpBand->lpText) {
-	    COMCTL32_Free (lpBand->lpText);
+	    Free (lpBand->lpText);
 	    lpBand->lpText = NULL;
 	}
 	if (lprbbi->lpText) {
             INT len = MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, NULL, 0 );
-            lpBand->lpText = (LPWSTR)COMCTL32_Alloc (len*sizeof(WCHAR));
+            lpBand->lpText = (LPWSTR)Alloc (len*sizeof(WCHAR));
             MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, lpBand->lpText, len );
 	}
     }
@@ -3442,12 +3442,12 @@ REBAR_SetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_CommonSetupBand (infoPtr->hwndSelf, (LPREBARBANDINFOA)lprbbi, lpBand);
     if (lprbbi->fMask & RBBIM_TEXT) {
 	if (lpBand->lpText) {
-	    COMCTL32_Free (lpBand->lpText);
+	    Free (lpBand->lpText);
 	    lpBand->lpText = NULL;
 	}
 	if (lprbbi->lpText) {
 	    INT len = lstrlenW (lprbbi->lpText);
-	    lpBand->lpText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    lpBand->lpText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
 	    strcpyW (lpBand->lpText, lprbbi->lpText);
 	}
     }
@@ -3678,7 +3678,7 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 	    /* delete text strings */
 	    if (lpBand->lpText) {
-		COMCTL32_Free (lpBand->lpText);
+		Free (lpBand->lpText);
 		lpBand->lpText = NULL;
 	    }
 	    /* destroy child window */
@@ -3686,7 +3686,7 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 
 	/* free band array */
-	COMCTL32_Free (infoPtr->bands);
+	Free (infoPtr->bands);
 	infoPtr->bands = NULL;
     }
 
@@ -3698,7 +3698,7 @@ REBAR_Destroy (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     SetWindowLongA (infoPtr->hwndSelf, 0, 0);
 
     /* free rebar info data */
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     TRACE("destroyed!\n");
     return 0;
 }
@@ -3861,7 +3861,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     /* allocate memory for info structure */
-    infoPtr = (REBAR_INFO *)COMCTL32_Alloc (sizeof(REBAR_INFO));
+    infoPtr = (REBAR_INFO *)Alloc (sizeof(REBAR_INFO));
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     /* initialize info structure - initial values are 0 */

@@ -486,7 +486,7 @@ TREEVIEW_TVItemFromItem(TREEVIEW_INFO *infoPtr, UINT mask, TVITEMA *tvItem, TREE
     if (infoPtr->bNtfUnicode) {
         INT len = MultiByteToWideChar( CP_ACP, 0, item->pszText, -1, NULL, 0 );
         if (len > 1) {
-            tvItem->pszText = (LPSTR)COMCTL32_Alloc (len*sizeof(WCHAR));
+            tvItem->pszText = (LPSTR)Alloc (len*sizeof(WCHAR));
             MultiByteToWideChar( CP_ACP, 0, item->pszText, -1, (LPWSTR)tvItem->pszText, len*sizeof(WCHAR) );
 	}
     }
@@ -525,8 +525,8 @@ TREEVIEW_SendTreeviewNotify(TREEVIEW_INFO *infoPtr, UINT code, UINT action,
 			      (WPARAM)GetWindowLongA(hwnd, GWL_ID),
 			      (LPARAM)&nmhdr);
     if (infoPtr->bNtfUnicode) {
-	COMCTL32_Free(nmhdr.itemOld.pszText);
-	COMCTL32_Free(nmhdr.itemNew.pszText);
+	Free(nmhdr.itemOld.pszText);
+	Free(nmhdr.itemNew.pszText);
     }
     return ret;
 }
@@ -658,7 +658,7 @@ TREEVIEW_BeginLabelEditNotify(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *editItem)
     if (infoPtr->bNtfUnicode) {
         INT len = MultiByteToWideChar( CP_ACP, 0, editItem->pszText, -1, NULL, 0 );
         if (len > 1) {
-            tvdi.item.pszText = allocated = (LPSTR)COMCTL32_Alloc (len*sizeof(WCHAR));
+            tvdi.item.pszText = allocated = (LPSTR)Alloc (len*sizeof(WCHAR));
             MultiByteToWideChar( CP_ACP, 0, editItem->pszText, -1, (LPWSTR)tvdi.item.pszText, len*sizeof(WCHAR) );
 	    tvdi.item.cchTextMax = len*sizeof(WCHAR);
 	}
@@ -676,7 +676,7 @@ TREEVIEW_BeginLabelEditNotify(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *editItem)
 					 tvdi.hdr.idFrom,
 					(LPARAM)&tvdi);
     if (allocated)
-	COMCTL32_Free(allocated);
+	Free(allocated);
     return ret;
 }
 
@@ -725,7 +725,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 					   (LPWSTR)callback.item.pszText, -1,
                                            NULL, 0, NULL, NULL );
 	    buflen = max((len+1)*sizeof(WCHAR), TEXT_CALLBACK_SIZE);
-	    newText = (LPWSTR)COMCTL32_ReAlloc(wineItem->pszText, buflen);
+	    newText = (LPWSTR)ReAlloc(wineItem->pszText, buflen);
 
 	    TRACE("returned wstr %s, len=%d, buflen=%d\n",
 		  debugstr_w((LPWSTR)callback.item.pszText), len, buflen);
@@ -744,7 +744,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	else {
 	    int len = max(lstrlenA(callback.item.pszText) + 1,
 			  TEXT_CALLBACK_SIZE);
-	    LPSTR newText = COMCTL32_ReAlloc(wineItem->pszText, len);
+	    LPSTR newText = ReAlloc(wineItem->pszText, len);
 
 	    TRACE("returned str %s, len=%d\n",
 		  debugstr_a(callback.item.pszText), len);
@@ -768,7 +768,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 					   (LPWSTR)callback.item.pszText, -1,
                                            NULL, 0, NULL, NULL );
 	    buflen = max((len+1)*sizeof(WCHAR), TEXT_CALLBACK_SIZE);
-	    newText = (LPWSTR)COMCTL32_Alloc(buflen);
+	    newText = (LPWSTR)Alloc(buflen);
 
 	    TRACE("same buffer wstr %s, len=%d, buflen=%d\n",
 		  debugstr_w((LPWSTR)callback.item.pszText), len, buflen);
@@ -782,7 +782,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 				     wineItem->pszText, buflen, NULL, NULL );
 		wineItem->cchTextMax = buflen;
 		if (oldText)
-		    COMCTL32_Free(oldText);
+		    Free(oldText);
 	    }
 	}
     }
@@ -969,14 +969,14 @@ TREEVIEW_UpdateSubTree(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *root)
 static TREEVIEW_ITEM *
 TREEVIEW_AllocateItem(TREEVIEW_INFO *infoPtr)
 {
-    TREEVIEW_ITEM *newItem = COMCTL32_Alloc(sizeof(TREEVIEW_ITEM));
+    TREEVIEW_ITEM *newItem = Alloc(sizeof(TREEVIEW_ITEM));
 
     if (!newItem)
 	return NULL;
 
     if (DPA_InsertPtr(infoPtr->items, INT_MAX, newItem) == -1)
     {
-	COMCTL32_Free(newItem);
+	Free(newItem);
 	return NULL;
     }
 
@@ -989,7 +989,7 @@ static void
 TREEVIEW_FreeItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
     DPA_DeletePtr(infoPtr->items, DPA_GetPtrIndex(infoPtr->items, item));
-    COMCTL32_Free(item);
+    Free(item);
     if (infoPtr->selectedItem == item)
         infoPtr->selectedItem = NULL;
     if (infoPtr->hotItem == item)
@@ -1087,7 +1087,7 @@ TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	if (tvItem->pszText != LPSTR_TEXTCALLBACKA)
 	{
 	    int len = lstrlenA(tvItem->pszText) + 1;
-	    LPSTR newText = COMCTL32_ReAlloc(wineItem->pszText, len);
+	    LPSTR newText = ReAlloc(wineItem->pszText, len);
 
 	    if (newText == NULL) return FALSE;
 
@@ -1103,7 +1103,7 @@ TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	{
 	    callbackSet |= TVIF_TEXT;
 
-	    wineItem->pszText = COMCTL32_ReAlloc(wineItem->pszText,
+	    wineItem->pszText = ReAlloc(wineItem->pszText,
 						 TEXT_CALLBACK_SIZE);
 	    wineItem->cchTextMax = TEXT_CALLBACK_SIZE;
 	    TRACE("setting callback, item %p\n",
@@ -1394,7 +1394,7 @@ TREEVIEW_InsertItemW(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	{
             int len = WideCharToMultiByte( CP_ACP, 0, tvisW->DUMMYUNIONNAME.item.pszText, -1,
                                            NULL, 0, NULL, NULL );
-	    tvisA.DUMMYUNIONNAME.item.pszText = COMCTL32_Alloc(len);
+	    tvisA.DUMMYUNIONNAME.item.pszText = Alloc(len);
             WideCharToMultiByte( CP_ACP, 0, tvisW->DUMMYUNIONNAME.item.pszText, -1,
                                  tvisA.DUMMYUNIONNAME.item.pszText, len, NULL, NULL );
 	}
@@ -1415,7 +1415,7 @@ TREEVIEW_InsertItemW(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 
     if (tvisA.DUMMYUNIONNAME.item.pszText != LPSTR_TEXTCALLBACKA)
     {
-	COMCTL32_Free(tvisA.DUMMYUNIONNAME.item.pszText);
+	Free(tvisA.DUMMYUNIONNAME.item.pszText);
     }
 
     return lRes;
@@ -1487,7 +1487,7 @@ TREEVIEW_RemoveItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
     infoPtr->uNumItems--;
 
     if (wineItem->pszText != LPSTR_TEXTCALLBACKA)
-	COMCTL32_Free(wineItem->pszText);
+	Free(wineItem->pszText);
 
     TREEVIEW_FreeItem(infoPtr, wineItem);
 }
@@ -3714,7 +3714,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
     {
 	if (strcmp(tmpText, editedItem->pszText) != 0)
 	{
-	    if (NULL == COMCTL32_ReAlloc(editedItem->pszText, iLength + 1))
+	    if (NULL == ReAlloc(editedItem->pszText, iLength + 1))
 	    {
 		ERR("OutOfMemory, cannot allocate space for label\n");
 		DestroyWindow(infoPtr->hwndEdit);
@@ -4737,7 +4737,7 @@ TREEVIEW_Create(HWND hwnd)
 
     TRACE("wnd %p, style %lx\n", hwnd, GetWindowLongA(hwnd, GWL_STYLE));
 
-    infoPtr = (TREEVIEW_INFO *)COMCTL32_Alloc(sizeof(TREEVIEW_INFO));
+    infoPtr = (TREEVIEW_INFO *)Alloc(sizeof(TREEVIEW_INFO));
 
     if (infoPtr == NULL)
     {
@@ -4890,7 +4890,7 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
     SetWindowLongA(infoPtr->hwnd, 0, (LONG)NULL);
 
     DeleteObject(infoPtr->hBoldFont);
-    COMCTL32_Free(infoPtr);
+    Free(infoPtr);
 
     return 0;
 }

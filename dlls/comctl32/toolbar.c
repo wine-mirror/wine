@@ -1716,7 +1716,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		/* add items to 'toolbar buttons' list and check if removable */
 		for (i = 0; i < custInfo->tbInfo->nNumButtons; i++)
                 {
-		    btnInfo = (PCUSTOMBUTTON)COMCTL32_Alloc(sizeof(CUSTOMBUTTON));
+		    btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
                     memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
                     btnInfo->btn.fsStyle = TBSTYLE_SEP;
                     btnInfo->bVirtual = FALSE;
@@ -1730,7 +1730,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		/* insert separator button into 'available buttons' list */
-		btnInfo = (PCUSTOMBUTTON)COMCTL32_Alloc(sizeof(CUSTOMBUTTON));
+		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
 		btnInfo->btn.fsStyle = TBSTYLE_SEP;
 		btnInfo->bVirtual = FALSE;
@@ -1765,7 +1765,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    index = TOOLBAR_GetButtonIndex (custInfo->tbInfo, nmtb.tbButton.idCommand, FALSE);
 		    if (index == -1)
 		    {
-			btnInfo = (PCUSTOMBUTTON)COMCTL32_Alloc(sizeof(CUSTOMBUTTON));
+			btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
 			btnInfo->bVirtual = FALSE;
 			btnInfo->bRemovable = TRUE;
 
@@ -1797,7 +1797,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETCURSEL, 0, 0);
 
 		/* append 'virtual' separator button to the 'toolbar buttons' list */
-		btnInfo = (PCUSTOMBUTTON)COMCTL32_Alloc(sizeof(CUSTOMBUTTON));
+		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
 		memset (&btnInfo->btn, 0, sizeof(TBBUTTON));
 		btnInfo->btn.fsStyle = TBSTYLE_SEP;
 		btnInfo->bVirtual = TRUE;
@@ -1975,7 +1975,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
 			    }
 			    else
-				COMCTL32_Free (btnInfo);
+				Free (btnInfo);
 			}
 		    }
 		    break;
@@ -2010,7 +2010,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				PCUSTOMBUTTON btnNew;
 
 				/* duplicate 'separator' button */
-				btnNew = (PCUSTOMBUTTON)COMCTL32_Alloc (sizeof(CUSTOMBUTTON));
+				btnNew = (PCUSTOMBUTTON)Alloc (sizeof(CUSTOMBUTTON));
 				memcpy (btnNew, btnInfo, sizeof(CUSTOMBUTTON));
 				btnInfo = btnNew;
 			    }
@@ -2041,7 +2041,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		for (i = 0; i < count; i++)
 		{
 		    btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, i, 0);
-		    COMCTL32_Free(btnInfo);
+		    Free(btnInfo);
 		    SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, 0, 0);
 		}
 		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_RESETCONTENT, 0, 0);
@@ -2052,7 +2052,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		for (i = 0; i < count; i++)
 		{
 		    btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_GETITEMDATA, i, 0);
-		    COMCTL32_Free(btnInfo);
+		    Free(btnInfo);
 		    SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, i, 0);
 		}
 		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_RESETCONTENT, 0, 0);
@@ -2333,12 +2333,12 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->nNumBitmapInfos == 0)
     {
-        infoPtr->bitmaps = COMCTL32_Alloc(sizeof(TBITMAP_INFO));
+        infoPtr->bitmaps = Alloc(sizeof(TBITMAP_INFO));
     }
     else
     {
         TBITMAP_INFO *oldBitmaps = infoPtr->bitmaps;
-        infoPtr->bitmaps = COMCTL32_Alloc((infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
+        infoPtr->bitmaps = Alloc((infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
         memcpy(&infoPtr->bitmaps[0], &oldBitmaps[0], infoPtr->nNumBitmapInfos);
     }
 
@@ -2386,15 +2386,15 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->nNumButtons == 0) {
 	infoPtr->buttons =
-	    COMCTL32_Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
+	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
     }
     else {
 	TBUTTON_INFO *oldButtons = infoPtr->buttons;
 	infoPtr->buttons =
-	    COMCTL32_Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
+	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
 	memcpy (&infoPtr->buttons[0], &oldButtons[0],
 		nOldButtons * sizeof(TBUTTON_INFO));
-        COMCTL32_Free (oldButtons);
+        Free (oldButtons);
     }
 
     infoPtr->nNumButtons = nNewButtons;
@@ -2450,15 +2450,15 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->nNumButtons == 0) {
 	infoPtr->buttons =
-	    COMCTL32_Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
+	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
     }
     else {
 	TBUTTON_INFO *oldButtons = infoPtr->buttons;
 	infoPtr->buttons =
-	    COMCTL32_Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
+	    Alloc (sizeof(TBUTTON_INFO) * nNewButtons);
 	memcpy (&infoPtr->buttons[0], &oldButtons[0],
 		nOldButtons * sizeof(TBUTTON_INFO));
-        COMCTL32_Free (oldButtons);
+        Free (oldButtons);
     }
 
     infoPtr->nNumButtons = nNewButtons;
@@ -2518,18 +2518,18 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	nIndex = infoPtr->nNumStrings;
 	if (infoPtr->nNumStrings == 0) {
 	    infoPtr->strings =
-		COMCTL32_Alloc (sizeof(LPWSTR));
+		Alloc (sizeof(LPWSTR));
 	}
 	else {
 	    LPWSTR *oldStrings = infoPtr->strings;
 	    infoPtr->strings =
-		COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+		Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
 	    memcpy (&infoPtr->strings[0], &oldStrings[0],
 		    sizeof(LPWSTR) * infoPtr->nNumStrings);
-	    COMCTL32_Free (oldStrings);
+	    Free (oldStrings);
 	}
 
-        /*COMCTL32_Alloc zeros out the allocated memory*/
+        /*Alloc zeros out the allocated memory*/
         Str_SetPtrAtoW (&infoPtr->strings[infoPtr->nNumStrings], szString );
 	infoPtr->nNumStrings++;
     }
@@ -2548,15 +2548,15 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    if (infoPtr->nNumStrings == 0) {
 		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(LPWSTR));
+		    Alloc (sizeof(LPWSTR));
 	    }
 	    else {
 		LPWSTR *oldStrings = infoPtr->strings;
 		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+		    Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
 		memcpy (&infoPtr->strings[0], &oldStrings[0],
 			sizeof(LPWSTR) * infoPtr->nNumStrings);
-		COMCTL32_Free (oldStrings);
+		Free (oldStrings);
 	    }
 
             Str_SetPtrAtoW (&infoPtr->strings[infoPtr->nNumStrings], p );
@@ -2596,15 +2596,15 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 PWSTR np;
 
                 if (infoPtr->nNumStrings == 0) {
-                    infoPtr->strings = COMCTL32_Alloc (sizeof(LPWSTR));
+                    infoPtr->strings = Alloc (sizeof(LPWSTR));
                 }
                 else
                 {
                     LPWSTR *oldStrings = infoPtr->strings;
-                    infoPtr->strings = COMCTL32_Alloc(sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+                    infoPtr->strings = Alloc(sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
                     memcpy(&infoPtr->strings[0], &oldStrings[0],
                            sizeof(LPWSTR) * infoPtr->nNumStrings);
-                    COMCTL32_Free(oldStrings);
+                    Free(oldStrings);
                 }
 
                 np=strchrW (p, '|');
@@ -2617,7 +2617,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 }
                 TRACE("len=%d %s\n", len, debugstr_w(p));
                 infoPtr->strings[infoPtr->nNumStrings] =
-                    COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+                    Alloc (sizeof(WCHAR)*(len+1));
                 lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len+1);
                 infoPtr->nNumStrings++;
 
@@ -2629,15 +2629,15 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
             nIndex = infoPtr->nNumStrings;
             if (infoPtr->nNumStrings == 0) {
                 infoPtr->strings =
-                    COMCTL32_Alloc (sizeof(LPWSTR));
+                    Alloc (sizeof(LPWSTR));
             }
             else {
                 LPWSTR *oldStrings = infoPtr->strings;
                 infoPtr->strings =
-                    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+                    Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
                 memcpy (&infoPtr->strings[0], &oldStrings[0],
                         sizeof(LPWSTR) * infoPtr->nNumStrings);
-                COMCTL32_Free (oldStrings);
+                Free (oldStrings);
             }
 
             Str_SetPtrW (&infoPtr->strings[infoPtr->nNumStrings], szString);
@@ -2658,15 +2658,15 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    TRACE("len=%d %s\n", len, debugstr_w(p));
 	    if (infoPtr->nNumStrings == 0) {
 		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(LPWSTR));
+		    Alloc (sizeof(LPWSTR));
 	    }
 	    else {
 		LPWSTR *oldStrings = infoPtr->strings;
 		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+		    Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
 		memcpy (&infoPtr->strings[0], &oldStrings[0],
 			sizeof(LPWSTR) * infoPtr->nNumStrings);
-		COMCTL32_Free (oldStrings);
+		Free (oldStrings);
 	    }
 
 	    Str_SetPtrW (&infoPtr->strings[infoPtr->nNumStrings], p);
@@ -2916,7 +2916,7 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->nNumButtons == 1) {
 	TRACE(" simple delete!\n");
-	COMCTL32_Free (infoPtr->buttons);
+	Free (infoPtr->buttons);
 	infoPtr->buttons = NULL;
 	infoPtr->nNumButtons = 0;
     }
@@ -2925,7 +2925,7 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TRACE("complex delete! [nIndex=%d]\n", nIndex);
 
 	infoPtr->nNumButtons--;
-	infoPtr->buttons = COMCTL32_Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
+	infoPtr->buttons = Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
         if (nIndex > 0) {
             memcpy (&infoPtr->buttons[0], &oldButtons[0],
                     nIndex * sizeof(TBUTTON_INFO));
@@ -2936,7 +2936,7 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
                     (infoPtr->nNumButtons - nIndex) * sizeof(TBUTTON_INFO));
         }
 
-	COMCTL32_Free (oldButtons);
+	Free (oldButtons);
     }
 
     TOOLBAR_CalcToolbar (hwnd);
@@ -3500,11 +3500,11 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TRACE("string %s passed instead of index, adding string\n",
               debugstr_a((LPSTR)lpTbb->iString));
         len = strlen((LPSTR)lpTbb->iString) + 2;
-        ptr = COMCTL32_Alloc(len);
+        ptr = Alloc(len);
         strcpy(ptr, (LPSTR)lpTbb->iString);
         ptr[len - 1] = 0; /* ended by two '\0' */
         lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
-        COMCTL32_Free(ptr);
+        Free(ptr);
     }
 
     TRACE("inserting button index=%d\n", nIndex);
@@ -3515,7 +3515,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     oldButtons = infoPtr->buttons;
     infoPtr->nNumButtons++;
-    infoPtr->buttons = COMCTL32_Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
+    infoPtr->buttons = Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
     /* pre insert copy */
     if (nIndex > 0) {
 	memcpy (&infoPtr->buttons[0], &oldButtons[0],
@@ -3555,7 +3555,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		(infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
     }
 
-    COMCTL32_Free (oldButtons);
+    Free (oldButtons);
 
     TOOLBAR_CalcToolbar (hwnd);
 
@@ -3600,11 +3600,11 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("string %s passed instead of index, adding string\n",
 	      debugstr_w((LPWSTR)lpTbb->iString));
 	len = strlenW((LPWSTR)lpTbb->iString) + 2;
-	ptr = COMCTL32_Alloc(len*sizeof(WCHAR));
+	ptr = Alloc(len*sizeof(WCHAR));
 	strcpyW(ptr, (LPWSTR)lpTbb->iString);
 	ptr[len - 1] = 0; /* ended by two '\0' */
 	lpTbb->iString = TOOLBAR_AddStringW(hwnd, 0, (LPARAM)ptr);
-	COMCTL32_Free(ptr);
+	Free(ptr);
     }
 
     TRACE("inserting button index=%d\n", nIndex);
@@ -3615,7 +3615,7 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     oldButtons = infoPtr->buttons;
     infoPtr->nNumButtons++;
-    infoPtr->buttons = COMCTL32_Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
+    infoPtr->buttons = Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
     /* pre insert copy */
     if (nIndex > 0) {
 	memcpy (&infoPtr->buttons[0], &oldButtons[0],
@@ -3655,7 +3655,7 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		(infoPtr->nNumButtons - nIndex - 1) * sizeof(TBUTTON_INFO));
     }
 
-    COMCTL32_Free (oldButtons);
+    Free (oldButtons);
 
     TOOLBAR_CalcToolbar (hwnd);
 
@@ -4747,16 +4747,16 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* delete button data */
     if (infoPtr->buttons)
-	COMCTL32_Free (infoPtr->buttons);
+	Free (infoPtr->buttons);
 
     /* delete strings */
     if (infoPtr->strings) {
 	INT i;
 	for (i = 0; i < infoPtr->nNumStrings; i++)
 	    if (infoPtr->strings[i])
-		COMCTL32_Free (infoPtr->strings[i]);
+		Free (infoPtr->strings[i]);
 
-	COMCTL32_Free (infoPtr->strings);
+	Free (infoPtr->strings);
     }
 
     /* destroy internal image list */
@@ -4772,7 +4772,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	DeleteObject (infoPtr->hDefaultFont);
 
     /* free toolbar info data */
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongA (hwnd, 0, 0);
 
     return 0;
@@ -5257,7 +5257,7 @@ TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DWORD styleadd = 0;
 
     /* allocate memory for info structure */
-    infoPtr = (TOOLBAR_INFO *)COMCTL32_Alloc (sizeof(TOOLBAR_INFO));
+    infoPtr = (TOOLBAR_INFO *)Alloc (sizeof(TOOLBAR_INFO));
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     /* paranoid!! */
@@ -6039,15 +6039,15 @@ static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIS
     {
         PIMLENTRY *pnies;
 
-	c = (PIMLENTRY) COMCTL32_Alloc(sizeof(IMLENTRY));
+	c = (PIMLENTRY) Alloc(sizeof(IMLENTRY));
 	c->id = id;
 
-	pnies = COMCTL32_Alloc((*cies + 1) * sizeof(PIMLENTRY));
+	pnies = Alloc((*cies + 1) * sizeof(PIMLENTRY));
 	memcpy(pnies, *pies, ((*cies) * sizeof(PIMLENTRY)));
 	pnies[*cies] = c;
 	(*cies)++;
 
-	COMCTL32_Free(*pies);
+	Free(*pies);
 	*pies = pnies;
     }
 
@@ -6063,9 +6063,9 @@ static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies)
     int i;
 
     for (i = 0; i < *cies; i++)
-	COMCTL32_Free((*pies)[i]);
+	Free((*pies)[i]);
 
-    COMCTL32_Free(*pies);
+    Free(*pies);
 
     *cies = 0;
     *pies = NULL;

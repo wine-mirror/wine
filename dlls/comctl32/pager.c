@@ -838,7 +838,7 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
 
     /* allocate memory for info structure */
-    infoPtr = (PAGER_INFO *)COMCTL32_Alloc (sizeof(PAGER_INFO));
+    infoPtr = (PAGER_INFO *)Alloc (sizeof(PAGER_INFO));
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     /* set default settings */
@@ -878,7 +878,7 @@ PAGER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     /* free pager info data */
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongA (hwnd, 0, 0);
     return 0;
 }

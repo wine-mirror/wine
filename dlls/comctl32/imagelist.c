@@ -553,7 +553,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
-    himl = (HIMAGELIST)COMCTL32_Alloc (sizeof(struct _IMAGELIST));
+    himl = (HIMAGELIST)Alloc (sizeof(struct _IMAGELIST));
     if (!himl)
         return NULL;
 
@@ -665,7 +665,7 @@ ImageList_Destroy (HIMAGELIST himl)
         DeleteObject (himl->hbrBlend50);
 
     ZeroMemory(himl, sizeof(*himl));
-    COMCTL32_Free (himl);
+    Free (himl);
 
     return TRUE;
 }

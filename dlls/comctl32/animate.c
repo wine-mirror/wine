@@ -781,7 +781,7 @@ static LRESULT ANIMATE_Create(HWND hWnd, WPARAM wParam, LPARAM lParam)
     }
 
     /* allocate memory for info structure */
-    infoPtr = (ANIMATE_INFO *)COMCTL32_Alloc(sizeof(ANIMATE_INFO));
+    infoPtr = (ANIMATE_INFO *)Alloc(sizeof(ANIMATE_INFO));
     if (!infoPtr) {
 	ERR("could not allocate info memory!\n");
 	return 0;
@@ -810,7 +810,7 @@ static LRESULT ANIMATE_Destroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
     ANIMATE_Free(infoPtr);
 
     /* free animate info data */
-    COMCTL32_Free(infoPtr);
+    Free(infoPtr);
     SetWindowLongA(hWnd, 0, 0);
 
     return 0;

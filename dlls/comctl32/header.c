@@ -599,8 +599,8 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
     if (infoPtr->uNumItem == 1) {
         TRACE("Simple delete!\n");
         if (infoPtr->items[0].pszText)
-            COMCTL32_Free (infoPtr->items[0].pszText);
-        COMCTL32_Free (infoPtr->items);
+            Free (infoPtr->items[0].pszText);
+        Free (infoPtr->items);
         infoPtr->items = 0;
         infoPtr->uNumItem = 0;
     }
@@ -612,11 +612,11 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
         TRACE("Complex delete! [iItem=%d]\n", iItem);
 
         if (infoPtr->items[iItem].pszText)
-            COMCTL32_Free (infoPtr->items[iItem].pszText);
+            Free (infoPtr->items[iItem].pszText);
         iOrder = infoPtr->items[iItem].iOrder;
 
         infoPtr->uNumItem--;
-        infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
+        infoPtr->items = Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
         /* pre delete copy */
         if (iItem > 0) {
             memcpy (&infoPtr->items[0], &oldItems[0],
@@ -635,7 +635,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
             if (pItem->iOrder > iOrder)
             pItem->iOrder--;
         }
-        COMCTL32_Free (oldItems);
+        Free (oldItems);
     }
 
     HEADER_SetItemBounds (hwnd);
@@ -861,14 +861,14 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     iOrder = (phdi->mask & HDI_ORDER) ? phdi->iOrder : nItem;
 
     if (infoPtr->uNumItem == 0) {
-        infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM));
+        infoPtr->items = Alloc (sizeof (HEADER_ITEM));
         infoPtr->uNumItem++;
     }
     else {
         HEADER_ITEM *oldItems = infoPtr->items;
 
         infoPtr->uNumItem++;
-        infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
+        infoPtr->items = Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
         if (nItem == 0) {
             memcpy (&infoPtr->items[1], &oldItems[0],
                     (infoPtr->uNumItem-1) * sizeof(HEADER_ITEM));
@@ -888,7 +888,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
             }
         }
 
-        COMCTL32_Free (oldItems);
+        Free (oldItems);
     }
 
     for (i=0; i < infoPtr->uNumItem; i++)
@@ -908,7 +908,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    phdi->pszText = "";
 	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
 	    len = MultiByteToWideChar(CP_ACP, 0, phdi->pszText, -1, NULL, 0);
-	    lpItem->pszText = COMCTL32_Alloc( len*sizeof(WCHAR) );
+	    lpItem->pszText = Alloc( len*sizeof(WCHAR) );
 	    MultiByteToWideChar(CP_ACP, 0, phdi->pszText, -1, lpItem->pszText, len);
 	}
 	else
@@ -962,14 +962,14 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     iOrder = (phdi->mask & HDI_ORDER) ? phdi->iOrder : nItem;
 
     if (infoPtr->uNumItem == 0) {
-        infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM));
+        infoPtr->items = Alloc (sizeof (HEADER_ITEM));
         infoPtr->uNumItem++;
     }
     else {
         HEADER_ITEM *oldItems = infoPtr->items;
 
         infoPtr->uNumItem++;
-        infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
+        infoPtr->items = Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
         if (nItem == 0) {
             memcpy (&infoPtr->items[1], &oldItems[0],
                     (infoPtr->uNumItem-1) * sizeof(HEADER_ITEM));
@@ -989,7 +989,7 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
             }
         }
 
-        COMCTL32_Free (oldItems);
+        Free (oldItems);
     }
 
     for (i=0; i < infoPtr->uNumItem; i++)
@@ -1010,7 +1010,7 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    phdi->pszText = &wide_null_char;
 	if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
 	    len = strlenW (phdi->pszText);
-	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
+	    lpItem->pszText = Alloc ((len+1)*sizeof(WCHAR));
 	    strcpyW (lpItem->pszText, phdi->pszText);
 	}
 	else
@@ -1122,12 +1122,12 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_TEXT) {
 	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
 	    if (lpItem->pszText) {
-		COMCTL32_Free (lpItem->pszText);
+		Free (lpItem->pszText);
 		lpItem->pszText = NULL;
 	    }
 	    if (phdi->pszText) {
 		INT len = MultiByteToWideChar (CP_ACP,0,phdi->pszText,-1,NULL,0);
-		lpItem->pszText = COMCTL32_Alloc( len*sizeof(WCHAR) );
+		lpItem->pszText = Alloc( len*sizeof(WCHAR) );
 		MultiByteToWideChar (CP_ACP,0,phdi->pszText,-1,lpItem->pszText,len);
 	    }
 	}
@@ -1189,12 +1189,12 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_TEXT) {
 	if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
 	    if (lpItem->pszText) {
-		COMCTL32_Free (lpItem->pszText);
+		Free (lpItem->pszText);
 		lpItem->pszText = NULL;
 	    }
 	    if (phdi->pszText) {
 		INT len = strlenW (phdi->pszText);
-		lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
+		lpItem->pszText = Alloc ((len+1)*sizeof(WCHAR));
 		strcpyW (lpItem->pszText, phdi->pszText);
 	    }
 	}
@@ -1244,7 +1244,7 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HFONT hOldFont;
     HDC   hdc;
 
-    infoPtr = (HEADER_INFO *)COMCTL32_Alloc (sizeof(HEADER_INFO));
+    infoPtr = (HEADER_INFO *)Alloc (sizeof(HEADER_INFO));
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     infoPtr->hwndNotify = GetParent(hwnd);
@@ -1286,15 +1286,15 @@ HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
         lpItem = infoPtr->items;
         for (nItem = 0; nItem < infoPtr->uNumItem; nItem++, lpItem++) {
 	    if ((lpItem->pszText) && (lpItem->pszText != LPSTR_TEXTCALLBACKW))
-		COMCTL32_Free (lpItem->pszText);
+		Free (lpItem->pszText);
         }
-        COMCTL32_Free (infoPtr->items);
+        Free (infoPtr->items);
     }
 
     if (infoPtr->himl)
 	ImageList_Destroy (infoPtr->himl);
 
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongA (hwnd, 0, 0);
     return 0;
 }

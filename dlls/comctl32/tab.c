@@ -2425,7 +2425,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
   if (infoPtr->uNumItem == 0) {
-    infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM));
+    infoPtr->items = Alloc (sizeof (TAB_ITEM));
     infoPtr->uNumItem++;
     infoPtr->iSelected = 0;
   }
@@ -2433,7 +2433,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TAB_ITEM *oldItems = infoPtr->items;
 
     infoPtr->uNumItem++;
-    infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM) * infoPtr->uNumItem);
+    infoPtr->items = Alloc (sizeof (TAB_ITEM) * infoPtr->uNumItem);
 
     /* pre insert copy */
     if (iItem > 0) {
@@ -2451,7 +2451,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (iItem <= infoPtr->iSelected)
       infoPtr->iSelected++;
 
-    COMCTL32_Free (oldItems);
+    Free (oldItems);
   }
 
   infoPtr->items[iItem].mask = pti->mask;
@@ -2499,7 +2499,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TAB_DumpItemExternalW(pti, iItem);
 
   if (infoPtr->uNumItem == 0) {
-    infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM));
+    infoPtr->items = Alloc (sizeof (TAB_ITEM));
     infoPtr->uNumItem++;
     infoPtr->iSelected = 0;
   }
@@ -2507,7 +2507,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TAB_ITEM *oldItems = infoPtr->items;
 
     infoPtr->uNumItem++;
-    infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM) * infoPtr->uNumItem);
+    infoPtr->items = Alloc (sizeof (TAB_ITEM) * infoPtr->uNumItem);
 
     /* pre insert copy */
     if (iItem > 0) {
@@ -2525,7 +2525,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (iItem <= infoPtr->iSelected)
       infoPtr->iSelected++;
 
-    COMCTL32_Free (oldItems);
+    Free (oldItems);
   }
 
   infoPtr->items[iItem].mask = pti->mask;
@@ -2785,7 +2785,7 @@ TAB_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TAB_ITEM *oldItems = infoPtr->items;
 
     infoPtr->uNumItem--;
-    infoPtr->items = COMCTL32_Alloc(sizeof (TAB_ITEM) * infoPtr->uNumItem);
+    infoPtr->items = Alloc(sizeof (TAB_ITEM) * infoPtr->uNumItem);
 
     if (iItem > 0)
       memcpy(&infoPtr->items[0], &oldItems[0], iItem * sizeof(TAB_ITEM));
@@ -2794,7 +2794,7 @@ TAB_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
       memcpy(&infoPtr->items[iItem], &oldItems[iItem + 1],
               (infoPtr->uNumItem - iItem) * sizeof(TAB_ITEM));
 
-    COMCTL32_Free(oldItems);
+    Free(oldItems);
 
     /* Readjust the selected index */
     if ((iItem == infoPtr->iSelected) && (iItem > 0))
@@ -2821,7 +2821,7 @@ TAB_DeleteAllItems (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
    TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
-  COMCTL32_Free (infoPtr->items);
+  Free (infoPtr->items);
   infoPtr->uNumItem = 0;
   infoPtr->iSelected = -1;
   if (infoPtr->iHotTracked >= 0)
@@ -2947,7 +2947,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   HFONT hOldFont;
   DWORD dwStyle;
 
-  infoPtr = (TAB_INFO *)COMCTL32_Alloc (sizeof(TAB_INFO));
+  infoPtr = (TAB_INFO *)Alloc (sizeof(TAB_INFO));
 
   SetWindowLongA(hwnd, 0, (DWORD)infoPtr);
 
@@ -3042,9 +3042,9 @@ TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (infoPtr->items) {
     for (iItem = 0; iItem < infoPtr->uNumItem; iItem++) {
       if (infoPtr->items[iItem].pszText)
-	COMCTL32_Free (infoPtr->items[iItem].pszText);
+	Free (infoPtr->items[iItem].pszText);
     }
-    COMCTL32_Free (infoPtr->items);
+    Free (infoPtr->items);
   }
 
   if (infoPtr->hwndToolTip)
@@ -3056,7 +3056,7 @@ TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (infoPtr->iHotTracked >= 0)
     KillTimer(hwnd, TAB_HOTTRACK_TIMER);
 
-  COMCTL32_Free (infoPtr);
+  Free (infoPtr);
   SetWindowLongA(hwnd, 0, 0);
   return 0;
 }

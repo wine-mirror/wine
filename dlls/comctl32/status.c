@@ -589,16 +589,16 @@ STATUSBAR_SetParts (STATUSWINDOWINFO *infoPtr, INT count, LPINT parts)
     if (oldNumParts > infoPtr->numParts) {
 	for (i = infoPtr->numParts ; i < oldNumParts; i++) {
 	    if (infoPtr->parts[i].text && !(infoPtr->parts[i].style & SBT_OWNERDRAW))
-		COMCTL32_Free (infoPtr->parts[i].text);
+		Free (infoPtr->parts[i].text);
 	}
     } else if (oldNumParts < infoPtr->numParts) {
-	tmp = COMCTL32_Alloc (sizeof(STATUSWINDOWPART) * infoPtr->numParts);
+	tmp = Alloc (sizeof(STATUSWINDOWPART) * infoPtr->numParts);
 	if (!tmp) return FALSE;
 	for (i = 0; i < oldNumParts; i++) {
 	    tmp[i] = infoPtr->parts[i];
 	}
 	if (infoPtr->parts)
-	    COMCTL32_Free (infoPtr->parts);
+	    Free (infoPtr->parts);
 	infoPtr->parts = tmp;
     }
     if (oldNumParts == infoPtr->numParts) {
@@ -684,11 +684,11 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
 	if (text && !isW) {
 	    LPCSTR atxt = (LPCSTR)text;
             DWORD len = MultiByteToWideChar( CP_ACP, 0, atxt, -1, NULL, 0 );
-	    ntext = COMCTL32_Alloc( (len + 1)*sizeof(WCHAR) );
+	    ntext = Alloc( (len + 1)*sizeof(WCHAR) );
 	    if (!ntext) return FALSE;
             MultiByteToWideChar( CP_ACP, 0, atxt, -1, ntext, len );
 	} else if (text) {
-	    ntext = COMCTL32_Alloc( (strlenW(text) + 1)*sizeof(WCHAR) );
+	    ntext = Alloc( (strlenW(text) + 1)*sizeof(WCHAR) );
 	    if (!ntext) return FALSE;
 	    strcpyW (ntext, text);
 	} else ntext = 0;
@@ -696,7 +696,7 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
 	/* check if text is unchanged -> no need to redraw */
 	if (text) {
 	    if (!changed && part->text && !lstrcmpW(ntext, part->text)) {
-		if (!isW) COMCTL32_Free(ntext);
+		if (!isW) Free(ntext);
 		return TRUE;
 	    }
 	} else {
@@ -705,7 +705,7 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
 	}
 
 	if (part->text)
-	    COMCTL32_Free (part->text);
+	    Free (part->text);
 	part->text = ntext;
     }
     InvalidateRect(infoPtr->Self, &part->bound, FALSE);
@@ -793,11 +793,11 @@ STATUSBAR_WMDestroy (STATUSWINDOWINFO *infoPtr)
     TRACE("\n");
     for (i = 0; i < infoPtr->numParts; i++) {
 	if (infoPtr->parts[i].text && !(infoPtr->parts[i].style & SBT_OWNERDRAW))
-	    COMCTL32_Free (infoPtr->parts[i].text);
+	    Free (infoPtr->parts[i].text);
     }
     if (infoPtr->part0.text && !(infoPtr->part0.style & SBT_OWNERDRAW))
-	COMCTL32_Free (infoPtr->part0.text);
-    COMCTL32_Free (infoPtr->parts);
+	Free (infoPtr->part0.text);
+    Free (infoPtr->parts);
 
     /* delete default font */
     if (infoPtr->hDefaultFont)
@@ -807,7 +807,7 @@ STATUSBAR_WMDestroy (STATUSWINDOWINFO *infoPtr)
     if (infoPtr->hwndToolTip)
 	DestroyWindow (infoPtr->hwndToolTip);
 
-    COMCTL32_Free (infoPtr);
+    Free (infoPtr);
     SetWindowLongW(infoPtr->Self, 0, 0);
     return 0;
 }
@@ -824,7 +824,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     HDC	hdc;
 
     TRACE("\n");
-    infoPtr = (STATUSWINDOWINFO*)COMCTL32_Alloc (sizeof(STATUSWINDOWINFO));
+    infoPtr = (STATUSWINDOWINFO*)Alloc (sizeof(STATUSWINDOWINFO));
     if (!infoPtr) goto create_fail;
     SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
@@ -855,7 +855,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     infoPtr->part0.hIcon = 0;
 
     /* initialize first part */
-    infoPtr->parts = COMCTL32_Alloc (sizeof(STATUSWINDOWPART));
+    infoPtr->parts = Alloc (sizeof(STATUSWINDOWPART));
     if (!infoPtr->parts) goto create_fail;
     infoPtr->parts[0].bound = rect;
     infoPtr->parts[0].text = 0;
@@ -867,7 +867,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
 	infoPtr->bUnicode = TRUE;
 	if (lpCreate->lpszName &&
 	    (len = strlenW ((LPCWSTR)lpCreate->lpszName))) {
-	    infoPtr->parts[0].text = COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    infoPtr->parts[0].text = Alloc ((len + 1)*sizeof(WCHAR));
 	    if (!infoPtr->parts[0].text) goto create_fail;
 	    strcpyW (infoPtr->parts[0].text, (LPCWSTR)lpCreate->lpszName);
 	}
@@ -876,7 +876,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
 	if (lpCreate->lpszName &&
 	    (len = strlen((LPCSTR)lpCreate->lpszName))) {
             DWORD lenW = MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lpCreate->lpszName, -1, NULL, 0 );
-	    infoPtr->parts[0].text = COMCTL32_Alloc (lenW*sizeof(WCHAR));
+	    infoPtr->parts[0].text = Alloc (lenW*sizeof(WCHAR));
 	    if (!infoPtr->parts[0].text) goto create_fail;
             MultiByteToWideChar( CP_ACP, 0, (LPCSTR)lpCreate->lpszName, -1,
                                  infoPtr->parts[0].text, lenW );
@@ -1032,11 +1032,11 @@ STATUSBAR_WMSetText (STATUSWINDOWINFO *infoPtr, LPCSTR text)
     part = &infoPtr->parts[0];
     /* duplicate string */
     if (part->text)
-        COMCTL32_Free (part->text);
+        Free (part->text);
     part->text = 0;
     if (infoPtr->bUnicode) {
 	if (text && (len = strlenW((LPCWSTR)text))) {
-	    part->text = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
+	    part->text = Alloc ((len+1)*sizeof(WCHAR));
 	    if (!part->text) return FALSE;
 	    strcpyW (part->text, (LPCWSTR)text);
 	}
@@ -1044,7 +1044,7 @@ STATUSBAR_WMSetText (STATUSWINDOWINFO *infoPtr, LPCSTR text)
     else {
 	if (text && (len = lstrlenA(text))) {
             DWORD lenW = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
-            part->text = COMCTL32_Alloc (lenW*sizeof(WCHAR));
+            part->text = Alloc (lenW*sizeof(WCHAR));
 	    if (!part->text) return FALSE;
             MultiByteToWideChar( CP_ACP, 0, text, -1, part->text, lenW );
 	}

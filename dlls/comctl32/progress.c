@@ -294,7 +294,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	    SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
         /* allocate memory for info struct */
-        infoPtr = (PROGRESS_INFO *)COMCTL32_Alloc (sizeof(PROGRESS_INFO));
+        infoPtr = (PROGRESS_INFO *)Alloc (sizeof(PROGRESS_INFO));
         if (!infoPtr) return -1;
         SetWindowLongW (hwnd, 0, (DWORD)infoPtr);
 
@@ -313,7 +313,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case WM_DESTROY:
         TRACE("Progress Ctrl destruction, hwnd=%p\n", hwnd);
-        COMCTL32_Free (infoPtr);
+        Free (infoPtr);
         SetWindowLongW(hwnd, 0, 0);
         return 0;
 
