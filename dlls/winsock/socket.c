@@ -1711,7 +1711,7 @@ INT WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 #endif
 	    close(fd);
 	    _enable_event(s, FD_READ, 0, 0);
-	    return (INT16)length;
+	    return length;
 	}
 	SetLastError(wsaErrno());
 	close(fd);
@@ -1855,7 +1855,7 @@ INT WINAPI WSOCK32_send(SOCKET s, char *buf, INT len, INT flags)
 	else
 	{
 	    close(fd);
-	    return (INT16)length;
+	    return length;
 	}
 	close(fd);
     }
