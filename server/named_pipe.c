@@ -264,7 +264,7 @@ DECL_HANDLER(open_named_pipe)
             release_object( partner );
         }
         else {
-            set_error(STATUS_NO_SUCH_FILE);
+            set_error(STATUS_PIPE_NOT_AVAILABLE);
         }
     }
     else {
