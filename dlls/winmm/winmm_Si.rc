@@ -134,4 +134,4 @@ MCIERR_SEQ_PORT_NONEXISTENT, 	"Ta naprava ni namešèena. Èe želite namestiti nov 
 MCIERR_SEQ_PORTUNSPECIFIED, 	"The system doesnot have a current MIDI port specified."
 MCIERR_SEQ_TIMER, 		"All multimedia timers are being used by other applications. Quit one of these applications; then, try again."
 
-END 
+END
