@@ -3024,6 +3024,8 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCREATESTRUCT32A cs)
 	 *	functions can be called, and in what order.
 	 */
 	EDIT_WM_SetFont(wnd, es, 0, FALSE);
+    EDIT_EM_EmptyUndoBuffer(wnd, es);
+
 	if (cs->lpszName && *(cs->lpszName) != '\0') {
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, cs->lpszName);
                 /* if we insert text to the editline, the text scrolls out of the window, as the caret is placed after the insert pos normally; thus we reset es->selection... to 0 and update caret */
