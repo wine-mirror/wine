@@ -49,10 +49,10 @@ extern "C" {
 
 /* Mac's are special */
 #if defined(__RPC_MAC__)
-  #define __NDR_LOCAL_DATA_REPRESENTATION \
+# define __NDR_LOCAL_DATA_REPRESENTATION \
     (__NDR_IEEE_FLOAT | __NDR_ASCII_CHAR | __NDR_BIG_ENDIAN)
 #else
-  #define __NDR_LOCAL_DATA_REPRESENTATION \
+# define __NDR_LOCAL_DATA_REPRESENTATION \
     (__NDR_IEEE_FLOAT | __NDR_ASCII_CHAR | __NDR_LITTLE_ENDIAN)
 #endif
 
@@ -61,11 +61,11 @@ extern "C" {
 
 /* for convenience, define NDR_LOCAL_IS_BIG_ENDIAN iff it is */
 #if __NDR_LOCAL_ENDIAN == __NDR_BIG_ENDIAN
-  #define NDR_LOCAL_IS_BIG_ENDIAN
+# define NDR_LOCAL_IS_BIG_ENDIAN
 #elif __NDR_LOCAL_ENDIAN == __NDR_LITTLE_ENDIAN
-  #undef NDR_LOCAL_IS_BIG_ENDIAN
+# undef NDR_LOCAL_IS_BIG_ENDIAN
 #else
-  #error alien NDR_LOCAL_ENDIAN - Greg botched the defines again, please report
+# error alien NDR_LOCAL_ENDIAN - Greg botched the defines again, please report
 #endif
 
 /* finally, do the casts like Microsoft */
