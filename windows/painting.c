@@ -715,7 +715,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 
     /* prepare an update region in window coordinates */
 
-    if( flags & RDW_FRAME )
+    if (((flags & (RDW_INVALIDATE|RDW_FRAME)) == (RDW_INVALIDATE|RDW_FRAME)) ||
+        ((flags & (RDW_VALIDATE|RDW_NOFRAME)) == (RDW_VALIDATE|RDW_NOFRAME)))
 	r = wndPtr->rectWindow;
     else
 	r = wndPtr->rectClient;
@@ -779,9 +780,9 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 		OffsetRect( &r2, pt.x, pt.y );
 	    hRgn = CreateRectRgnIndirect( &r2 );
 	}
-	else /* entire window or client depending on RDW_FRAME */
+	else /* entire window or client depending on RDW_NOFRAME */
         {
-	    if( flags & RDW_FRAME )
+	    if( flags & RDW_NOFRAME )
 		hRgn = 1;
 	    else
 	    {
