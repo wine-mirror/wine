@@ -357,7 +357,7 @@ LONG ARTS_WaveInit(void)
 
     if ((errorcode = ARTS_Init()) < 0)
     {
-	ERR("arts_init() failed (%d)\n", errorcode);
+	WARN("arts_init() failed (%d)\n", errorcode);
 	return -1;
     }
 
