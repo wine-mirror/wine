@@ -72,6 +72,10 @@ extern int vs_mode;
 #define VS_HW   1
 #define VS_SW   2
 
+extern int ps_mode;
+#define PS_NONE 0
+#define PS_HW   1
+
 /* Device caps */
 #define MAX_PALETTES      256
 #define MAX_STREAMS       16
@@ -1262,6 +1266,10 @@ struct IDirect3DPixelShaderImpl {
   DWORD* function;
   UINT functionLength;
   DWORD version;
+
+  /** fields for hw pixel shader use */
+  GLuint  prgId;
+
   /* run time datas */
   PSHADERDATA8* data;
   PSHADERINPUTDATA8 input;
@@ -1270,6 +1278,7 @@ struct IDirect3DPixelShaderImpl {
 
 /* exported Interfaces */
 extern HRESULT WINAPI IDirect3DPixelShaderImpl_GetFunction(IDirect3DPixelShaderImpl* This, VOID* pData, UINT* pSizeOfData);
+extern HRESULT WINAPI IDirect3DPixelShaderImpl_SetConstantF(IDirect3DPixelShaderImpl* This, UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount);
 /* internal Interfaces */
 extern DWORD WINAPI IDirect3DPixelShaderImpl_GetVersion(IDirect3DPixelShaderImpl* This);
 /* temporary internal Interfaces */

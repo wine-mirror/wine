@@ -1397,6 +1397,14 @@ inline static const SHADER_OPCODE* pshader_program_get_opcode(const DWORD code) 
   return NULL;
 }
 
+inline static BOOL pshader_is_version_token(DWORD token) {
+  return 0xFFFF0000 == (token & 0xFFFF0000);
+}
+
+inline static BOOL pshader_is_comment_token(DWORD token) {
+  return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
+}
+
 inline static void pshader_program_dump_opcode(const SHADER_OPCODE* curOpcode, const DWORD code, const DWORD output) {
   if (0 != (code & ~D3DSI_OPCODE_MASK)) {
     DWORD mask = (code & ~D3DSI_OPCODE_MASK);
@@ -1417,14 +1425,12 @@ inline static void pshader_program_dump_opcode(const SHADER_OPCODE* curOpcode, c
    */
   if (0 != (output & D3DSP_DSTSHIFT_MASK)) {
     DWORD shift = (output & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
-    if (shift > 0) {
+    if (shift < 8) {
       TRACE("_x%u", 1 << shift);
+    } else {
+      TRACE("_d%u", 1 << (16-shift));
     }
-  } 
-  /**
-   * TODO: fix the divide shifts: d2, d4, d8
-   *  so i have to find a sample
-   */
+  }
   if (0 != (output & D3DSP_DSTMOD_MASK)) {
     DWORD mask = output & D3DSP_DSTMOD_MASK;
     switch (mask) {
@@ -1443,8 +1449,14 @@ inline static void pshader_program_dump_param(const DWORD param, int input) {
   DWORD reg = param & 0x00001FFF;
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
 
-  if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) {
-    TRACE("-");
+  if (input) {
+    if ( ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) ||
+         ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_BIASNEG) ||
+         ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_SIGNNEG) ||
+         ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_X2NEG) )
+      TRACE("-");
+    else if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_COMP)
+      TRACE("1-");
   }
   
   switch (regtype << D3DSP_REGTYPE_SHIFT) {
@@ -1531,11 +1543,11 @@ inline static void pshader_program_dump_param(const DWORD param, int input) {
       case D3DSPSM_NEG:     break;
       case D3DSPSM_BIAS:    TRACE("_bias"); break;
       case D3DSPSM_BIASNEG: TRACE("_bias"); break;
-      case D3DSPSM_SIGN:    TRACE("_sign"); break;
-      case D3DSPSM_SIGNNEG: TRACE("_sign"); break;
-      case D3DSPSM_COMP:    TRACE("_comp"); break;
+      case D3DSPSM_SIGN:    TRACE("_bx2"); break;
+      case D3DSPSM_SIGNNEG: TRACE("_bx2"); break;
+      case D3DSPSM_COMP:    break;
       case D3DSPSM_X2:      TRACE("_x2"); break;
-      case D3DSPSM_X2NEG:   TRACE("_bx2"); break;
+      case D3DSPSM_X2NEG:   TRACE("_x2"); break;
       case D3DSPSM_DZ:      TRACE("_dz"); break;
       case D3DSPSM_DW:      TRACE("_dw"); break;
       default:
@@ -1545,15 +1557,177 @@ inline static void pshader_program_dump_param(const DWORD param, int input) {
   }
 }
 
-inline static BOOL pshader_is_version_token(DWORD token) {
-  return 0xFFFF0000 == (token & 0xFFFF0000);
+static int constants[D3D8_PSHADER_MAX_CONSTANTS];
+
+inline static void get_register_name(const DWORD param, char* regstr)
+{
+  static const char* rastout_reg_names[] = { "oC0", "oC1", "oC2", "oC3", "oDepth" };
+
+  DWORD reg = param & 0x00001FFF;
+  DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
+
+  switch (regtype << D3DSP_REGTYPE_SHIFT) {
+  case D3DSPR_TEMP:
+    sprintf(regstr, "R%lu", reg);
+    break;
+  case D3DSPR_INPUT:
+    if (reg==0) {
+       strcpy(regstr, "fragment.color.primary");
+    } else {
+       strcpy(regstr, "fragment.color.secondary");
+    }
+    break;
+  case D3DSPR_CONST:
+    if (constants[reg])
+      sprintf(regstr, "C%lu", reg);
+    else
+      sprintf(regstr, "program.env[%lu]", reg);
+    break;
+  case D3DSPR_TEXTURE: /* case D3DSPR_ADDR: */
+    sprintf(regstr,"T%lu", reg);
+    break;
+  case D3DSPR_RASTOUT:
+    sprintf(regstr, "%s", rastout_reg_names[reg]);
+    break;
+  case D3DSPR_ATTROUT:
+    sprintf(regstr, "oD[%lu]", reg);
+    break;
+  case D3DSPR_TEXCRDOUT:
+    sprintf(regstr, "oT[%lu]", reg);
+    break;
+  default:
+    break;
+  }
+}	
+
+inline static void addline(int* lineNum, char* pgm, char* line)
+{
+  ++(*lineNum);
+  TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s\n", *lineNum, strlen(pgm), line);
+  strcat(pgm, line);
+  strcat(pgm, "\n");
 }
 
-inline static BOOL pshader_is_comment_token(DWORD token) {
-  return D3DSIO_COMMENT == (token & D3DSI_OPCODE_MASK);
+char* shift_tab[] = {
+  "dummy",     /*  0 (none) */ 
+  "coefmul.x", /*  1 (x2)   */ 
+  "coefmul.y", /*  2 (x4)   */ 
+  "coefmul.z", /*  3 (x8)   */ 
+  "coefmul.w", /*  4 (x16)  */ 
+  "dummy",     /*  5 (x32)  */ 
+  "dummy",     /*  6 (x64)  */ 
+  "dummy",     /*  7 (x128) */ 
+  "dummy",     /*  8 (d256) */ 
+  "dummy",     /*  9 (d128) */ 
+  "dummy",     /* 10 (d64)  */ 
+  "dummy",     /* 11 (d32)  */ 
+  "coefdiv.w", /* 12 (d16)  */ 
+  "coefdiv.z", /* 13 (d8)   */ 
+  "coefdiv.y", /* 14 (d4)   */ 
+  "coefdiv.x"  /* 15 (d2)   */ 
+};
+
+inline static void get_write_mask(const DWORD output_reg, char* write_mask) 
+{
+  *write_mask = 0;
+  if ((output_reg & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+    if (output_reg & D3DSP_WRITEMASK_0) strcat(write_mask, ".r");
+    if (output_reg & D3DSP_WRITEMASK_1) strcat(write_mask, ".g");
+    if (output_reg & D3DSP_WRITEMASK_2) strcat(write_mask, ".b");
+    if (output_reg & D3DSP_WRITEMASK_3) strcat(write_mask, ".a");
+  }
 }
 
+inline static void get_input_register_swizzle(const DWORD instr, char* swzstring) 
+{
+    static const char swizzle_reg_chars[] = "rgba";
+    DWORD swizzle = (instr & D3DSP_SWIZZLE_MASK) >> D3DSP_SWIZZLE_SHIFT;
+    DWORD swizzle_x = swizzle & 0x03;
+    DWORD swizzle_y = (swizzle >> 2) & 0x03;
+    DWORD swizzle_z = (swizzle >> 4) & 0x03;
+    DWORD swizzle_w = (swizzle >> 6) & 0x03;
+    /**
+     * swizzle bits fields:
+     *  WWZZYYXX
+     */
+    *swzstring = 0;
+    if ((D3DSP_NOSWIZZLE >> D3DSP_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
+      if (swizzle_x == swizzle_y && 
+	  swizzle_x == swizzle_z && 
+	  swizzle_x == swizzle_w) {
+	sprintf(swzstring, ".%c", swizzle_reg_chars[swizzle_x]);
+      } else {
+	sprintf(swzstring, ".%c%c%c%c", 
+	      swizzle_reg_chars[swizzle_x], 
+	      swizzle_reg_chars[swizzle_y], 
+	      swizzle_reg_chars[swizzle_z], 
+	      swizzle_reg_chars[swizzle_w]);
+      }
+    }
+}
 
+inline static void gen_output_modifier_line(int saturate, char* write_mask, int shift, char *regstr, char* line)
+{
+  /* Generate a line that does the output modifier computation */
+  sprintf(line, "MUL%s %s%s, %s, %s;", saturate ? "_SAT" : "", regstr, write_mask, regstr, shift_tab[shift]);
+}
+
+inline static int gen_input_modifier_line(const DWORD instr, int tmpreg, char* outregstr, char* line)
+{
+  /* Generate a line that does the input modifier computation and return the input register to use */
+  static char regstr[256];
+  int insert_line;
+ 
+  /* Assume a new line will be added */
+  insert_line = 1;
+  
+  /* Get register name */
+  get_register_name(instr, regstr);
+  
+  switch (instr & D3DSP_SRCMOD_MASK) {
+    case D3DSPSM_NONE:
+      strcpy(outregstr, regstr);
+      insert_line = 0;
+      break;
+    case D3DSPSM_NEG:
+      sprintf(outregstr, "-%s", regstr);
+      insert_line = 0;
+      break;
+    case D3DSPSM_BIAS:
+      sprintf(line, "ADD T%c, %s, -coefdiv.x;", 'A' + tmpreg, regstr);
+      break;
+    case D3DSPSM_BIASNEG:
+      sprintf(line, "ADD T%c, -%s, coefdiv.x;", 'A' + tmpreg, regstr);
+      break;
+    case D3DSPSM_SIGN:
+      sprintf(line, "MAD T%c, %s, coefmul.x, -one.x;", 'A' + tmpreg, regstr);
+      break;
+    case D3DSPSM_SIGNNEG:
+      sprintf(line, "MAD T%c, %s, -coefmul.x, one.x;", 'A' + tmpreg, regstr);
+      break;
+    case D3DSPSM_COMP:
+      sprintf(line, "SUB T%c, one.x, %s;", 'A' + tmpreg, regstr);
+      break;
+    case D3DSPSM_X2:
+      sprintf(line, "ADD T%c, %s, %s", 'A' + tmpreg, regstr, regstr);
+      break;
+    case D3DSPSM_X2NEG:
+      sprintf(line, "ADD T%c, %s, %s", 'A' + tmpreg, regstr, regstr);
+      break;
+    case D3DSPSM_DZ:
+    case D3DSPSM_DW:
+    default:
+      strcpy(outregstr, regstr);
+      insert_line = 0;
+  }
+
+  if (insert_line) {
+    /* Substitute the register name */
+    sprintf(outregstr, "T%c", 'A' + tmpreg);
+  }
+
+  return insert_line;
+}
 
 /**
  * Pixel Shaders
@@ -1563,6 +1737,305 @@ inline static BOOL pshader_is_comment_token(DWORD token) {
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/IDirect3DPixelShader9/_IDirect3DPixelShader9.asp
  *
  */
+inline static VOID IDirect3DPixelShaderImpl_GenerateProgramArbHW(IDirect3DPixelShaderImpl* pshader, CONST DWORD* pFunction) {
+  const DWORD* pToken = pFunction;
+  const SHADER_OPCODE* curOpcode = NULL;
+  const DWORD* pInstr;
+  DWORD code;
+  DWORD i;
+  int autoparam;
+  unsigned lineNum = 0;
+  char *pgmStr = NULL;
+  char  tmpLine[255];
+  BOOL saturate;
+  IDirect3DDevice8Impl* This = pshader->device;
+
+  for(i = 0; i < D3D8_PSHADER_MAX_CONSTANTS; i++)
+    constants[i] = 0;
+  
+  pgmStr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65535); /* 64kb should be enough */
+  
+  if (NULL != pToken) {
+    while (D3DPS_END() != *pToken) { 
+      if (pshader_is_version_token(*pToken)) { /** version */
+
+        /* Extract version *10 into integer value (ie. 1.0 == 10, 1.1==11 etc */
+        int version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
+        int numTemps;
+        int numConstants;
+
+	TRACE_(d3d_hw_shader)("ps.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
+
+        /* Each release of pixel shaders has had different numbers of temp registers */
+        switch (version) {
+        case 10: numTemps=12;
+                 numConstants=8;
+                 strcpy(tmpLine, "!!ARBfp1.0");
+                 break;
+        case 11: numTemps=12; 
+                 numConstants=8;
+                 strcpy(tmpLine, "!!ARBfp1.0");
+                 break;
+        case 20: numTemps=12;
+                 numConstants=8;
+                 strcpy(tmpLine, "!!ARBfp2.0");
+                 FIXME_(d3d_hw_shader)("No work done yet to support ps2.0 in hw\n");
+                 break;
+        case 30: numTemps=32; 
+                 numConstants=8;
+                 strcpy(tmpLine, "!!ARBfp3.0");
+                 FIXME_(d3d_hw_shader)("No work done yet to support ps3.0 in hw\n");
+                 break;
+        default:
+                 numTemps=12;
+                 numConstants=8;
+                 strcpy(tmpLine, "!!ARBfp1.0");
+                 FIXME_(d3d_hw_shader)("Unrecognized pixel shader version!\n");
+        }
+        addline(&lineNum, pgmStr, tmpLine);
+
+        for(i = 0; i < 4; i++) {
+          sprintf(tmpLine, "TEMP T%lu;", i);
+          addline(&lineNum, pgmStr, tmpLine);
+        }
+        for(i = 0; i < 2; i++) {
+          sprintf(tmpLine, "TEMP R%lu;", i);
+          addline(&lineNum, pgmStr, tmpLine);
+        }
+
+        sprintf(tmpLine, "TEMP TMP;");
+        addline(&lineNum, pgmStr, tmpLine);
+        sprintf(tmpLine, "TEMP TA;");
+        addline(&lineNum, pgmStr, tmpLine);
+        sprintf(tmpLine, "TEMP TB;");
+        addline(&lineNum, pgmStr, tmpLine);
+        sprintf(tmpLine, "TEMP TC;");
+        addline(&lineNum, pgmStr, tmpLine);
+
+        strcpy(tmpLine, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };");
+        addline(&lineNum, pgmStr, tmpLine);
+        strcpy(tmpLine, "PARAM coefmul = { 2, 4, 8, 16 };");
+        addline(&lineNum, pgmStr, tmpLine);
+        strcpy(tmpLine, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };");
+        addline(&lineNum, pgmStr, tmpLine);
+
+        for(i = 0; i < 4; i++) {
+          sprintf(tmpLine, "MOV T%lu, fragment.texcoord[%lu];", i, i);
+          addline(&lineNum, pgmStr, tmpLine);
+        }
+
+        ++pToken;
+        continue;
+      } 
+      if (pshader_is_comment_token(*pToken)) { /** comment */
+        DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+        ++pToken;
+        /*TRACE("comment[%ld] ;%s\n", comment_len, (char*)pToken);*/
+        pToken += comment_len;
+        continue;
+      }
+      code = *pToken;
+      pInstr = pToken;
+      curOpcode = pshader_program_get_opcode(code);
+      ++pToken;
+      if (NULL == curOpcode) {
+        /* unkown current opcode ... */
+        while (*pToken & 0x80000000) {
+          TRACE("unrecognized opcode: %08lx\n", *pToken);
+          ++pToken;
+        }
+      } else {
+        autoparam = 1;
+        saturate = FALSE;
+        /* Build opcode for GL vertex_program */
+        switch (curOpcode->opcode) {
+        case D3DSIO_DEF:
+            {
+              DWORD reg = *pToken & 0x00001FFF;
+              sprintf(tmpLine, "PARAM C%lu = { %f, %f, %f, %f };", reg,
+                              *((float*)(pToken+1)),
+                              *((float*)(pToken+2)),
+                              *((float*)(pToken+3)),
+                              *((float*)(pToken+4)) );
+              addline(&lineNum, pgmStr, tmpLine);
+              constants[reg] = 1;
+              autoparam = 0;
+              pToken+=5;
+            }
+            break;
+        case D3DSIO_TEXKILL:
+            strcpy(tmpLine, "KIL");
+            break;
+        case D3DSIO_TEX:
+            {
+              DWORD reg = *pToken & 0x00001FFF;
+              sprintf(tmpLine,"TEX T%lu, T%lu, texture[%lu], 2D;", reg, reg, reg);
+              addline(&lineNum, pgmStr, tmpLine);
+              autoparam = 0;
+              pToken++;
+            }
+            break;
+        case D3DSIO_TEXCOORD:
+            {
+              DWORD reg = *pToken & 0x00001FFF;
+              sprintf(tmpLine, "MOV T%lu, fragment.texcoord[%lu];", reg, reg);
+              addline(&lineNum, pgmStr, tmpLine);
+              autoparam = 0;
+              pToken++;
+            }
+            break;
+        case D3DSIO_TEXM3x2PAD:
+            {
+              DWORD reg = *pToken & 0x00001FFF;
+              char buf[50];
+              if (gen_input_modifier_line(*(pToken+1), 0, buf, tmpLine))
+                addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "DP3 TMP.x, T%lu, %s;", reg, buf);
+              addline(&lineNum, pgmStr, tmpLine);
+              autoparam = 0;
+              pToken += 2;
+            }
+            break;
+        case D3DSIO_TEXM3x2TEX:
+            {
+              DWORD reg = *pToken & 0x00001FFF;
+              char buf[50];
+              if (gen_input_modifier_line(*(pToken+1), 0, buf, tmpLine))
+                addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "DP3 TMP.y, T%lu, %s;", reg, buf);
+              addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "TEX T%lu, TMP, texture[%lu], 2D;", reg, reg);
+              addline(&lineNum, pgmStr, tmpLine);
+              autoparam = 0;
+              pToken += 2;
+            }
+            break;
+	case D3DSIO_TEXREG2AR:
+            {
+              DWORD reg1 = *pToken & 0x00001FFF;
+              DWORD reg2 = *(pToken+1) & 0x00001FFF;
+              sprintf(tmpLine, "MOV TMP.r, T%lu.a;", reg2);
+              addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "MOV TMP.g, T%lu.r;", reg2);
+              addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "TEX T%lu, TMP, texture[%lu], 2D;", reg1, reg1);
+              addline(&lineNum, pgmStr, tmpLine);
+              autoparam = 0;
+              pToken+=2;
+            }
+            break;
+        case D3DSIO_TEXREG2GB:
+            {
+              DWORD reg1 = *pToken & 0x00001FFF;
+              DWORD reg2 = *(pToken+1) & 0x00001FFF;
+              sprintf(tmpLine, "MOV TMP.r, T%lu.g;", reg2);
+              addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "MOV TMP.g, T%lu.b;", reg2);
+              addline(&lineNum, pgmStr, tmpLine);
+              sprintf(tmpLine, "TEX T%lu, TMP, texture[%lu], 2D;", reg1, reg1);
+              addline(&lineNum, pgmStr, tmpLine);
+              autoparam = 0;
+              pToken+=2;
+            }
+            break;
+        case D3DSIO_MOV:
+            strcpy(tmpLine, "MOV");
+            break;
+        case D3DSIO_MUL:
+            strcpy(tmpLine, "MUL");
+            break;
+        case D3DSIO_DP3:
+            strcpy(tmpLine, "DP3");
+            break;
+        case D3DSIO_MAD:
+            strcpy(tmpLine, "MAD");
+            break;
+        case D3DSIO_ADD:
+            strcpy(tmpLine, "ADD");
+            break;
+        case D3DSIO_SUB:
+            strcpy(tmpLine, "SUB");
+            break;
+        default:
+            FIXME_(d3d_hw_shader)("Can't handle opcode %s in hwShader\n", curOpcode->name);
+        }
+        if (0 != (*pToken & D3DSP_DSTMOD_MASK)) {
+          DWORD mask = *pToken & D3DSP_DSTMOD_MASK;
+          switch (mask) {
+          case D3DSPDM_SATURATE: saturate = TRUE; break;
+          default:
+            TRACE("_unhandled_modifier(0x%08lx)", mask);
+          }
+        }
+        if (autoparam && (curOpcode->num_params > 0)) {
+          char regs[3][50];
+          char tmp[256];
+          char swzstring[20];
+	  /* Generate lines that handle input modifier computation */
+          for (i = 1; i < curOpcode->num_params; i++) {
+            if (gen_input_modifier_line(*(pToken+i), i-1, regs[i-1], tmp))
+              addline(&lineNum, pgmStr, tmp);
+          }
+	  /* Handle saturation only when no shift is present in the output modifier */
+          if ((*pToken & D3DSPDM_SATURATE) && (0 == (*pToken & D3DSP_DSTSHIFT_MASK)))
+            strcat(tmpLine,"_SAT");
+          strcat(tmpLine, " ");
+	  /* Handle output register */
+          get_register_name(*pToken, tmp);
+          strcat(tmpLine, tmp);
+          get_write_mask(*pToken, tmp);
+          strcat(tmpLine, tmp);
+	  /* Handle input registers */
+          for (i = 1; i < curOpcode->num_params; i++) {
+            strcat(tmpLine, ", ");
+            strcat(tmpLine, regs[i-1]);
+            get_input_register_swizzle(*(pToken+i), swzstring);
+            strcat(tmpLine, swzstring);
+          }
+          strcat(tmpLine,";");
+          addline(&lineNum, pgmStr, tmpLine);
+          pToken += curOpcode->num_params;
+        }
+        if (curOpcode->num_params > 0) {
+          DWORD param = *(pInstr+1);
+          if (0 != (param & D3DSP_DSTSHIFT_MASK)) {
+            /* Generate a line that handle the output modifier computation */
+            char regstr[100];
+            char write_mask[20];
+            DWORD shift = (param & D3DSP_DSTSHIFT_MASK) >> D3DSP_DSTSHIFT_SHIFT;
+            get_register_name(param, regstr);
+            get_write_mask(param, write_mask);
+            gen_output_modifier_line(saturate, write_mask, shift, regstr, tmpLine);
+            addline(&lineNum, pgmStr, tmpLine);
+          }
+        }
+      }
+    }
+    strcpy(tmpLine, "MOV result.color, R0;");
+    addline(&lineNum, pgmStr, tmpLine);
+
+    strcpy(tmpLine, "END");
+    addline(&lineNum, pgmStr, tmpLine);
+  }
+
+  /*  Create the hw shader */
+  GL_EXTCALL(glGenProgramsARB(1, &pshader->prgId));
+  TRACE_(d3d_hw_shader)("Creating a hw pixel shader, prg=%d\n", pshader->prgId);
+
+  GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pshader->prgId));
+
+  /* Create the program and check for errors */
+  GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr), pgmStr));
+  if (glGetError() == GL_INVALID_OPERATION) {
+    GLint errPos;
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+    FIXME_(d3d_hw_shader)("HW PixelShader Error at position: %d\n%s\n", errPos, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+    pshader->prgId = -1;
+  }
+  
+  HeapFree(GetProcessHeap(), 0, pgmStr);
+}
+
 inline static VOID IDirect3DPixelShaderImpl_ParseProgram(IDirect3DPixelShaderImpl* pshader, CONST DWORD* pFunction) {
   const DWORD* pToken = pFunction;
   const SHADER_OPCODE* curOpcode = NULL;
@@ -1622,6 +2095,11 @@ inline static VOID IDirect3DPixelShaderImpl_ParseProgram(IDirect3DPixelShaderImp
   } else {
     pshader->functionLength = 1; /* no Function defined use fixed function vertex processing */
   }
+
+  if (NULL != pFunction) {
+    IDirect3DPixelShaderImpl_GenerateProgramArbHW(pshader, pFunction);
+  }
+
   if (NULL != pFunction) {
     pshader->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pshader->functionLength);
     memcpy(pshader->function, pFunction, pshader->functionLength);

@@ -35,7 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 int num_lock = 0;
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
-int vs_mode = VS_HW; /* Hardware by default */
+int vs_mode = VS_HW;   /* Hardware by default */
+int ps_mode = PS_NONE; /* Disabled by default */
 
 HRESULT WINAPI D3D8GetSWInfo(void)
 {
@@ -81,22 +82,34 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
        }
-       if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Direct3D", &hkey) &&
-            !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )
+       if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Direct3D", &hkey) )
        {
-           if (!strcmp(buffer,"none"))
+           if ( !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )
            {
-               TRACE("Disable vertex shader\n");
-               vs_mode = VS_NONE;
-	   }
-	   else if (!strcmp(buffer,"emulation"))
+               if (!strcmp(buffer,"none"))
+               {
+                   TRACE("Disable vertex shaders\n");
+                   vs_mode = VS_NONE;
+	       }
+	       else if (!strcmp(buffer,"emulation"))
+               {
+                   TRACE("Force SW vertex shaders\n");
+                   vs_mode = VS_SW;
+               }
+           }
+           if ( !RegQueryValueExA( hkey, "PixelShaderMode", 0, NULL, buffer, &size) )
            {
-               TRACE("Force SW vertex shader\n");
-               vs_mode = VS_SW;
+               if (!strcmp(buffer,"enabled"))
+               {
+                   TRACE("Allow pixel shaders\n");
+                   ps_mode = PS_HW;
+	       }
            }
        }
        if (vs_mode == VS_HW)
-           FIXME("Allow HW vertex shader\n");
+           TRACE("Allow HW vertex shaders\n");
+       if (ps_mode == PS_NONE)
+           TRACE("Disable pixel shaders\n");
     }
     return TRUE;
 }

@@ -1466,6 +1466,7 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
     BOOL                          rc = FALSE;
     DWORD                         fvf = 0;
     IDirect3DVertexShaderImpl    *vertex_shader = NULL;
+    IDirect3DPixelShaderImpl     *pixel_shader = NULL;
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
@@ -1496,6 +1497,28 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
+
+    /* If we will be using a pixel, do some initialization for it */
+    if ((pixel_shader = PIXEL_SHADER(This->UpdateStateBlock->PixelShader))) {
+        TRACE("drawing with pixel shader handle %p\n", pixel_shader);
+        memset(&pixel_shader->input, 0, sizeof(PSHADERINPUTDATA8));
+
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixel_shader->prgId));
+        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixel_shader->prgId);");
+        glEnable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");	
+
+        /* init Constants */
+        if (TRUE == This->UpdateStateBlock->Changed.pixelShaderConstant) {
+            TRACE_(d3d_shader)("pixel shader initializing constants %p\n",pixel_shader);
+            IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->UpdateStateBlock->pixelShaderConstant[0], 8);
+        }
+        /* Update the constants */
+        for (i=0; i<D3D8_PSHADER_MAX_CONSTANTS; i++) {
+            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, i, (GLfloat *)&This->StateBlock->pixelShaderConstant[i]));
+            checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB");
+        }
+    }
 
     /* Setup transform matrices and sort out */
     if (useHW) {
@@ -1595,6 +1618,17 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
         TRACE("Restored lighting to original state\n");
     }
 
+    if (pixel_shader)
+    {
+#if 0
+      GLint errPos;
+      glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
+      if (errPos != -1)
+        FIXME("HW PixelShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
+#endif
+      glDisable(GL_FRAGMENT_PROGRAM_ARB);      
+    }
+    
     /* Finshed updating the screen, restore lock */
     LEAVE_GL();
     TRACE("Done all gl drawing\n");

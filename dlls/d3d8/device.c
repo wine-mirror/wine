@@ -4146,6 +4146,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface,
     *pHandle = 0xFFFFFFFF;
     return res;
 }
+
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
@@ -4159,15 +4160,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DW
         return D3D_OK;
     }
 
-    /* FIXME: Quieten when not being used */
     if (Handle != 0) {
-      FIXME_(d3d_shader)("(%p) : stub %ld\n", This, Handle);
+      TRACE_(d3d_shader)("(%p) : Set pixel shader with handle %lx\n", This, Handle);
     } else {
-      TRACE_(d3d_shader)("(%p) : stub %ld\n", This, Handle);
+      TRACE_(d3d_shader)("(%p) : Remove pixel shader\n", This);
     }
 
     return D3D_OK;
 }
+
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE_(d3d_shader)("(%p) : GetPixelShader returning %ld\n", This, This->StateBlock->PixelShader);
@@ -4183,9 +4184,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface,
       return D3DERR_INVALIDCALL;
     }
     object = PixelShaders[Handle - VS_HIGHESTFIXEDFXF];
+    if (NULL == object) {
+      return D3DERR_INVALIDCALL;
+    }
     TRACE_(d3d_shader)("(%p) : freeing PixelShader %p\n", This, object);
     /* TODO: check validity of object before free */
     if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
+    if (object->prgId != 0) {
+        GL_EXTCALL(glDeleteProgramsARB( 1, &object->prgId ));
+    }
     HeapFree(GetProcessHeap(), 0, (void *)object->data);
     HeapFree(GetProcessHeap(), 0, (void *)object);
     PixelShaders[Handle - VS_HIGHESTFIXEDFXF] = NULL;

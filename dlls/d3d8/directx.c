@@ -599,7 +599,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
                           D3DPTEXTURECAPS_ALPHAPALETTE | 
                           D3DPTEXTURECAPS_POW2         | 
                           D3DPTEXTURECAPS_VOLUMEMAP    | 
-                          D3DPTEXTURECAPS_MIPMAP;
+                          D3DPTEXTURECAPS_MIPMAP       |
+                          D3DPTEXTURECAPS_PROJECTED;
 
     if (GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
       pCaps->TextureCaps |= D3DPTEXTURECAPS_CUBEMAP      | 
@@ -667,7 +668,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 	                    D3DSTENCILCAPS_INCR;
     }
 
-    pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
+    pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 
     pCaps->TextureOpCaps =  D3DTEXOPCAPS_ADD         | 
                             D3DTEXOPCAPS_ADDSIGNED   | 
@@ -763,13 +764,13 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
         pCaps->VertexShaderVersion = 0;
     pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
 
-#if 0
-    pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);
-    pCaps->MaxPixelShaderValue = 1.0;
-#else
-    pCaps->PixelShaderVersion = 0;
-    pCaps->MaxPixelShaderValue = 0.0;
-#endif
+    if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
+        pCaps->PixelShaderVersion = D3DPS_VERSION(1,1);
+        pCaps->MaxPixelShaderValue = 1.0;
+    } else {
+        pCaps->PixelShaderVersion = 0;
+        pCaps->MaxPixelShaderValue = 0.0;
+    }
 
     /* If we created a dummy context, throw it away */
     WineD3DReleaseFakeGLContext(fake_ctx);
