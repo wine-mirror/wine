@@ -1502,6 +1502,18 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     return S_OK;
 }
 
+static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref)
+{
+    if(ref->typelib_idx == -1)
+        add_interface_typeinfo(typeinfo->typelib, ref);
+    if(ref->typelib_idx == -1)
+        error("add_impl_type: unable to add inherited interface\n");
+
+    typeinfo->typeinfo->datatype1 = typeinfo->typelib->typelib_typeinfo_offsets[ref->typelib_idx];
+    typeinfo->typeinfo->cImplTypes++;
+    return S_OK;
+}
+
 static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_kind kind,
                                              char *name, attr_t *attr, int idx)
 {
@@ -1602,6 +1614,9 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs,
                                          typelib->typelib_header.nrtypeinfos);
     msft_typeinfo->typeinfo->size = 4;
+
+    if(interface->ref)
+        add_impl_type(msft_typeinfo, interface->ref);
 
     while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
     while(cur) {
