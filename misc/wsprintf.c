@@ -264,9 +264,9 @@ static WPRINTF_DATA WPRINTF_ExtractVAPtr( WPRINTF_FORMAT *format, va_list* args 
     switch(format->type)
     {
         case WPR_WCHAR:
-            result.wchar_view = va_arg( *args, WCHAR );     break;
+            result.wchar_view = (WCHAR)va_arg( *args, int );break;
         case WPR_CHAR:
-            result.char_view = va_arg( *args, CHAR );       break;
+            result.char_view = (CHAR)va_arg( *args, int );  break;
         case WPR_STRING:
             result.lpcstr_view = va_arg( *args, LPCSTR);    break;
         case WPR_WSTRING:
