@@ -1261,7 +1261,7 @@ ULONG WINAPI IStorage16_fnRelease(IStorage16* iface) {
  * IStorage16_Stat [STORAGE.517]
  */
 HRESULT WINAPI IStorage16_fnStat(
-        LPSTORAGE16 iface,STATSTG *pstatstg, DWORD grfStatFlag
+        LPSTORAGE16 iface,STATSTG16 *pstatstg, DWORD grfStatFlag
 ) {
 	ICOM_THIS(IStorage16Impl,iface);
 	TRACE(ole,"(%p)->(%p,0x%08lx)\n",
