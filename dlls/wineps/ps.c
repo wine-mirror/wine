@@ -234,6 +234,8 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     char *buf;
     INPUTSLOT *slot;
     PAGESIZE *page;
+    DUPLEX *duplex;
+    int win_duplex;
     int llx, lly, urx, ury;
 
     TRACE("'%s'\n", debugstr_a(title));
@@ -284,6 +286,18 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 	    if(page->InvocationString) {
 	        PSDRV_WriteFeature(physDev->job.hJob, "*PageSize", page->Name,
 			     page->InvocationString);
+		break;
+	    }
+	}
+    }
+
+    win_duplex = physDev->Devmode->dmPublic.dmFields & DM_DUPLEX ?
+        physDev->Devmode->dmPublic.dmDuplex : 0;
+    for(duplex = physDev->pi->ppd->Duplexes; duplex; duplex = duplex->next) {
+        if(duplex->WinDuplex == win_duplex) {
+	    if(duplex->InvocationString) {
+	        PSDRV_WriteFeature(physDev->job.hJob, "*Duplex", duplex->Name,
+			     duplex->InvocationString);
 		break;
 	    }
 	}

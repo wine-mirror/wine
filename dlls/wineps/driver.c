@@ -136,7 +136,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
        dm1->dmPublic.dmPrintQuality = dm2->dmPublic.dmPrintQuality;
    if (dm2->dmPublic.dmFields & DM_COLOR )
        dm1->dmPublic.dmColor = dm2->dmPublic.dmColor;
-   if (dm2->dmPublic.dmFields & DM_DUPLEX )
+   if (dm2->dmPublic.dmFields & DM_DUPLEX && pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
        dm1->dmPublic.dmDuplex = dm2->dmPublic.dmDuplex;
    if (dm2->dmPublic.dmFields & DM_YRESOLUTION )
        dm1->dmPublic.dmYResolution = dm2->dmPublic.dmYResolution;
@@ -201,7 +201,7 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
   PSDRV_DLGINFO *di;
   int i, Cursel = 0;
   PAGESIZE *ps;
-
+  DUPLEX *duplex;
 
   switch(msg) {
   case WM_INITDIALOG:
@@ -215,11 +215,25 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	Cursel = i;
     }
     SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_SETCURSEL, Cursel, 0);
-
+    
     CheckRadioButton(hwnd, IDD_ORIENT_PORTRAIT, IDD_ORIENT_LANDSCAPE,
 		     di->pi->Devmode->dmPublic.u1.s1.dmOrientation ==
 		     DMORIENT_PORTRAIT ? IDD_ORIENT_PORTRAIT :
 		     IDD_ORIENT_LANDSCAPE);
+
+    if(!di->pi->ppd->Duplexes) {
+        ShowWindow(GetDlgItem(hwnd, IDD_DUPLEX), SW_HIDE);
+        ShowWindow(GetDlgItem(hwnd, IDD_DUPLEX_NAME), SW_HIDE);        
+    } else {
+        Cursel = 0;
+        for(duplex = di->pi->ppd->Duplexes, i = 0; duplex; duplex = duplex->next, i++) {
+            SendDlgItemMessageA(hwnd, IDD_DUPLEX, CB_INSERTSTRING, i,
+                                (LPARAM)(duplex->FullName ? duplex->FullName : duplex->Name));
+            if(di->pi->Devmode->dmPublic.dmDuplex == duplex->WinDuplex)
+                Cursel = i;
+        }
+        SendDlgItemMessageA(hwnd, IDD_DUPLEX, CB_SETCURSEL, Cursel, 0);
+    }
     break;
 
   case WM_COMMAND:
@@ -241,6 +255,16 @@ INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	    "portrait" : "landscape");
       di->dlgdm->dmPublic.u1.s1.dmOrientation = wParam == IDD_ORIENT_PORTRAIT ?
 	DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
+      break;
+    case IDD_DUPLEX:
+      if(HIWORD(wParam) == CBN_SELCHANGE) {
+	Cursel = SendDlgItemMessageA(hwnd, LOWORD(wParam), CB_GETCURSEL, 0, 0);
+	for(i = 0, duplex = di->pi->ppd->Duplexes; i < Cursel; i++, duplex = duplex->next)
+	  ;
+	TRACE("Setting duplex to item %d Winduplex = %d\n", Cursel,
+	      duplex->WinDuplex);
+	di->dlgdm->dmPublic.dmDuplex = duplex->WinDuplex;
+      }
       break;
     }
     break;
@@ -417,6 +441,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 {
   PRINTERINFO *pi;
   DEVMODEA *lpdm;
+  DWORD ret;
   pi = PSDRV_FindPrinterInfo(lpszDevice);
 
   TRACE("Cap=%d. Got PrinterInfo = %p\n", fwCapability, pi);
@@ -482,12 +507,6 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       WORD *wp = (WORD *)lpszOutput;
       int i = 0;
 
-      /* We explicitly list DMBIN_AUTO first; actually while win9x does this
-	 win2000 lists DMBIN_FORMSOURCE instead. */
-      i++;
-      if(lpszOutput != NULL)
-	*wp++ = DMBIN_AUTO;
-
       for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
 	if(lpszOutput != NULL)
 	  *wp++ = slot->WinBin;
@@ -499,13 +518,6 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       INPUTSLOT *slot;
       char *cp = lpszOutput;
       int i = 0;
-
-      /* Add an entry corresponding to DMBIN_AUTO, see DC_BINS */
-      i++;
-      if(lpszOutput != NULL) {
-	strcpy(cp, "Automatically Select");
-	cp += 24;
-      }
 
       for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
 	if(lpszOutput != NULL) {
@@ -542,8 +554,11 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
     return -1; /* simulate that the driver supports 'RAW' */
 
   case DC_DUPLEX:
-    FIXME("DC_DUPLEX: returning %d.  Is this correct?\n", lpdm->dmDuplex);
-    return lpdm->dmDuplex;
+    ret = 0;
+    if(pi->ppd->DefaultDuplex && pi->ppd->DefaultDuplex->WinDuplex != 0)
+      ret = 1;
+    TRACE("DC_DUPLEX: returning %ld\n", ret);
+    return ret;
 
   case DC_EMF_COMPLIANT:
     FIXME("DC_EMF_COMPLIANT: stub.\n");

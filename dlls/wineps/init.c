@@ -59,7 +59,7 @@ static PSDRV_DEVMODEA DefaultDevmode =
 /* dmDriverExtra */	sizeof(PSDRV_DEVMODEA)-sizeof(DEVMODEA),
 /* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE |
 			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR |
-			DM_DUPLEX | DM_YRESOLUTION | DM_TTOPTION,
+		        DM_YRESOLUTION | DM_TTOPTION,
    { /* u1 */
      { /* s1 */
 /* dmOrientation */	DMORIENT_PORTRAIT,
@@ -73,7 +73,7 @@ static PSDRV_DEVMODEA DefaultDevmode =
 /* dmDefaultSource */	DMBIN_AUTO,
 /* dmPrintQuality */	0,
 /* dmColor */		DMCOLOR_COLOR,
-/* dmDuplex */		0,
+/* dmDuplex */		DMDUP_SIMPLEX,
 /* dmYResolution */	0,
 /* dmTTOption */	DMTT_SUBDEV,
 /* dmCollate */		0,
@@ -680,6 +680,20 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     else {
 	ERR ("GetPrinterDataA returned %li\n", res);
 	goto closeprinter;
+    }
+
+    /* Duplex is indicated by the setting of the DM_DUPLEX bit in dmFields.
+       WinDuplex == 0 is a special case which means that the ppd has a
+       *DefaultDuplex: NotCapable entry.  In this case we'll try not to confuse
+       apps and set dmDuplex to DMDUP_SIMPLEX but leave the DM_DUPLEX clear.
+       PSDRV_WriteHeader understands this and copes. */
+    pi->Devmode->dmPublic.dmFields &= ~DM_DUPLEX;
+    if(pi->ppd->DefaultDuplex) {
+        pi->Devmode->dmPublic.dmDuplex = pi->ppd->DefaultDuplex->WinDuplex;
+        if(pi->Devmode->dmPublic.dmDuplex != 0)
+            pi->Devmode->dmPublic.dmFields |= DM_DUPLEX;
+        else
+            pi->Devmode->dmPublic.dmDuplex = DMDUP_SIMPLEX;
     }
 
     res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable", NULL,

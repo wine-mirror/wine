@@ -556,7 +556,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     FILE *fp;
     PPD *ppd;
     PPDTuple tuple;
-    char *default_pagesize = NULL;
+    char *default_pagesize = NULL, *default_duplex = NULL;
 
     TRACE("file '%s'\n", fname);
 
@@ -814,6 +814,40 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    TRACE("*TTRasterizer = %d\n", ppd->TTRasterizer);
 	}
 
+        else if(!strcmp("*Duplex", tuple.key)) {
+            DUPLEX **duplex;
+            for(duplex = &ppd->Duplexes; *duplex; duplex = &(*duplex)->next)
+                ;
+            *duplex = HeapAlloc(GetProcessHeap(), 0, sizeof(**duplex));
+            (*duplex)->Name = tuple.option;
+            (*duplex)->FullName = tuple.opttrans;
+            (*duplex)->InvocationString = tuple.value;
+            (*duplex)->next = NULL;
+            if(!strcasecmp("None", tuple.option) || !strcasecmp("False", tuple.option)
+               || !strcasecmp("Simplex", tuple.option))
+                (*duplex)->WinDuplex = DMDUP_SIMPLEX;
+            else if(!strcasecmp("DuplexNoTumble", tuple.option))
+                (*duplex)->WinDuplex = DMDUP_VERTICAL;
+            else if(!strcasecmp("DuplexTumble", tuple.option))
+                (*duplex)->WinDuplex = DMDUP_HORIZONTAL;
+            else if(!strcasecmp("Notcapable", tuple.option))
+                (*duplex)->WinDuplex = 0;
+            else {
+                FIXME("Unknown option %s for *Duplex defaulting to simplex\n", tuple.option);
+                (*duplex)->WinDuplex = DMDUP_SIMPLEX;
+            }
+            tuple.option = tuple.opttrans = tuple.value = NULL;
+        }
+
+        else if(!strcmp("*DefaultDuplex", tuple.key)) {
+            if(default_duplex) {
+                WARN("Already set default duplex\n");
+            } else {
+                default_duplex = tuple.value;
+                tuple.value = NULL;
+           }
+        }
+
 	if(tuple.key) HeapFree(PSDRV_Heap, 0, tuple.key);
 	if(tuple.option) HeapFree(PSDRV_Heap, 0, tuple.option);
 	if(tuple.value) HeapFree(PSDRV_Heap, 0, tuple.value);
@@ -839,6 +873,24 @@ PPD *PSDRV_ParsePPD(char *fname)
         ppd->DefaultPageSize = ppd->PageSizes;
         TRACE("Setting DefaultPageSize to first in list\n");
     }
+
+    ppd->DefaultDuplex = NULL;
+    if(default_duplex) {
+	DUPLEX *duplex;
+	for(duplex = ppd->Duplexes; duplex; duplex = duplex->next) {
+            if(!strcmp(duplex->Name, default_duplex)) {
+                ppd->DefaultDuplex = duplex;
+                TRACE("DefaultDuplex: %s\n", duplex->Name);
+                break;
+            }
+        }
+        HeapFree(PSDRV_Heap, 0, default_duplex);
+    }
+    if(!ppd->DefaultDuplex) {
+        ppd->DefaultDuplex = ppd->Duplexes;
+        TRACE("Setting DefaultDuplex to first in list\n");
+    }
+
 
     {
         FONTNAME *fn;

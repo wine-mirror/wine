@@ -175,6 +175,14 @@ typedef struct _tagINPUTSLOT {
 typedef enum _RASTERIZEROPTION
   {RO_None, RO_Accept68K, RO_Type42, RO_TrueImage} RASTERIZEROPTION;
 
+typedef struct _tagDUPLEX {
+    char                        *Name;
+    char                        *FullName;
+    char                        *InvocationString;
+    WORD                        WinDuplex; /* eg DMDUP_SIMPLEX */
+    struct _tagDUPLEX           *next;
+} DUPLEX;
+
 typedef struct {
     char		*NickName;
     int			LanguageLevel;
@@ -192,6 +200,8 @@ typedef struct {
     CONSTRAINT		*Constraints;
     INPUTSLOT		*InputSlots;
     RASTERIZEROPTION    TTRasterizer;
+    DUPLEX              *Duplexes;
+    DUPLEX              *DefaultDuplex;
 } PPD;
 
 typedef struct {
