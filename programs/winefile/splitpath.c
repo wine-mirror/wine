@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Martin Fuchs
+ * Copyright 2000, 2004 Martin Fuchs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,8 +16,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "winefile.h"
+#define WIN32_LEAN_AND_MEAN
+#define WIN32_EXTRA_LEAN
 
+#include <windows.h>
+
+
+#ifdef __WINE__
 #ifdef UNICODE
 
 void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext)
@@ -48,7 +53,7 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 		}
 
 	if (ext)
-		for(s=end; *ext=*s++; )
+		for(s=end; (*ext=*s++); )
 			ext++;
 
 	/* search for end of directory name */
@@ -73,7 +78,7 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 	}
 }
 
-#else
+#else /* UNICODE */
 
 void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 {
@@ -128,7 +133,9 @@ void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 	}
 }
 
-#endif
+#endif /* UNICODE */
+#endif /* __WINE__ */
+
 
 /*
 void main()	// test splipath()
