@@ -440,7 +440,8 @@ static int wake_thread( struct thread *thread )
         if (debug_level) fprintf( stderr, "%08x: *wakeup* signaled=%d cookie=%p\n",
                                   (unsigned int)thread, signaled, cookie );
         end_wait( thread );
-        send_thread_wakeup( thread, cookie, signaled );
+        if (send_thread_wakeup( thread, cookie, signaled ) == -1) /* error */
+	    break;
     }
     return count;
 }
