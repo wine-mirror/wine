@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include "windef.h"
 #include "winbase.h"
+#include "ntddk.h"
 #include "wingdi.h"
 #include "winuser.h" /* SW_NORMAL */
 #include "wine/winbase16.h"
@@ -2049,12 +2050,15 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             break;
         case 0x21:
             TRACE("\tconvert string to uppercase with length\n");
-            CharUpperBuffA( (LPSTR)CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context)),
-                            CX_reg(context) );
+            {
+                char *ptr = (char *)CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context));
+                WORD len = CX_reg(context);
+                while (len--) { *ptr = toupper(*ptr); ptr++; }
+            }
             break;
         case 0x22:            
             TRACE("\tConvert ASCIIZ string to uppercase\n");
-            CharUpperA( (LPSTR)CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context)) );
+            _strupr( (LPSTR)CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context)) );
             break;    
 	default:
 	    TRACE("\tunimplemented function %d\n",AL_reg(context));

@@ -22,8 +22,7 @@
 #include <unistd.h>
 
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
@@ -1191,7 +1190,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	memmove(p+1,p+3,strlen(p+3)+1);
       }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
-      CharUpperA( full_name.short_name );
+      _strupr( full_name.short_name );
     namelen=strlen(full_name.short_name);
     if (!strcmp(full_name.short_name+namelen-3,"\\.."))
 	{
@@ -1373,7 +1372,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
                         !(flags & DRIVE_CASE_SENSITIVE) );
 
         lstrcpynA( entry->cFileName, long_name, sizeof(entry->cFileName) );
-        if (!(flags & DRIVE_CASE_PRESERVING)) CharLowerA( entry->cFileName );
+        if (!(flags & DRIVE_CASE_PRESERVING)) _strlwr( entry->cFileName );
         TRACE("returning %s (%s) %02lx %ld\n",
               entry->cFileName, entry->cAlternateFileName,
               entry->dwFileAttributes, entry->nFileSizeLow );

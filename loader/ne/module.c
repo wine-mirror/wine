@@ -244,7 +244,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
       /* Now copy and uppercase the string */
 
     strcpy( buffer, name );
-    CharUpperA( buffer );
+    _strupr( buffer );
     len = strlen( buffer );
 
       /* First search the resident names */

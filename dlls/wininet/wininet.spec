@@ -2,6 +2,7 @@ name    wininet
 type    win32
 init    WININET_LibMain
 
+import	user32.dll
 import	kernel32.dll
 
 @ stub InternetInitializeAutoProxyDll

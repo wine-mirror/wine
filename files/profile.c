@@ -18,8 +18,6 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "file.h"
@@ -511,7 +509,7 @@ static BOOL PROFILE_FlushFile(void)
         p = buffer + strlen(buffer);
         *p++ = '/';
         strcpy( p, strrchr( CurProfile->dos_name, '\\' ) + 1 );
-        CharLowerA( p );
+        _strlwr( p );
         file = fopen( buffer, "w" );
         unix_name = buffer;
     }
@@ -646,7 +644,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
     p = buffer + strlen(buffer);
     *p++ = '/';
     strcpy( p, strrchr( newdos_name, '\\' ) + 1 );
-    CharLowerA( p );
+    _strlwr( p );
     if ((file = fopen( buffer, "r" )))
     {
         TRACE("(%s): found it in %s\n",

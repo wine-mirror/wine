@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wininet
 SOVERSION = 1.0
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 
 C_SRCS = \
 	http.c \

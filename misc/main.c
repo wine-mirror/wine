@@ -16,7 +16,12 @@
 # include <malloc.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
+#include "ntddk.h"
+#include "winnls.h"
+#include "winerror.h"
+
 #include "winsock.h"
 #include "heap.h"
 #include "msdos.h"
@@ -24,12 +29,7 @@
 #include "debugtools.h"
 #include "debugdefs.h"
 #include "module.h"
-#include "winnls.h"
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
 #include "tweak.h"
-#include "winerror.h"
 
 
 /***********************************************************************
@@ -121,14 +121,14 @@ void MAIN_ParseDebugOptions( const char *arg )
 	while((s2 = strchr(s, ':'))) {
           c = *s2;
           *s2 = '\0';
-	  *((*output)+i) = CharUpperA(strdup(s));
+	  *((*output)+i) = _strupr(strdup(s));
           *s2 = c;
 	  s = s2 + 1;
 	  i++;
 	}
 	c = *(options + l);
 	*(options + l) = '\0';
-	*((*output)+i) = CharUpperA(strdup(s));
+	*((*output)+i) = _strupr(strdup(s));
 	*(options + l) = c;
 	*((*output)+i+1) = NULL;
       }

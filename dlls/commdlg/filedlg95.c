@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "ntddk.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
@@ -177,8 +178,6 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
-
-extern LPSTR _strlwr( LPSTR str );
 
 /***********************************************************************
  *      GetFileName95

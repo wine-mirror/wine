@@ -320,6 +320,119 @@ BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 
 
 /***********************************************************************
+ *           CharLowerA   (USER32.25)
+ * FIXME: handle current locale
+ */
+LPSTR WINAPI CharLowerA(LPSTR x)
+{
+    LPSTR	s;
+
+    if (HIWORD(x))
+    {
+        s=x;
+        while (*s)
+        {
+            *s=tolower(*s);
+            s++;
+        }
+        return x;
+    }
+    else return (LPSTR)tolower((char)(int)x);
+}
+
+
+/***********************************************************************
+ *           CharUpperA   (USER32.@)
+ * FIXME: handle current locale
+ */
+LPSTR WINAPI CharUpperA(LPSTR x)
+{
+    if (HIWORD(x))
+    {
+        LPSTR s = x;
+        while (*s)
+        {
+            *s=toupper(*s);
+            s++;
+        }
+        return x;
+    }
+    return (LPSTR)toupper((char)(int)x);
+}
+
+
+/***********************************************************************
+ *           CharLowerW   (USER32.@)
+ */
+LPWSTR WINAPI CharLowerW(LPWSTR x)
+{
+    if (HIWORD(x)) return strlwrW(x);
+    else return (LPWSTR)((UINT)tolowerW(LOWORD(x)));
+}
+
+
+/***********************************************************************
+ *           CharUpperW   (USER32.@)
+ * FIXME: handle current locale
+ */
+LPWSTR WINAPI CharUpperW(LPWSTR x)
+{
+    if (HIWORD(x)) return struprW(x);
+    else return (LPWSTR)((UINT)toupperW(LOWORD(x)));
+}
+
+
+/***********************************************************************
+ *           CharLowerBuffA   (USER32.@)
+ * FIXME: handle current locale
+ */
+DWORD WINAPI CharLowerBuffA( LPSTR str, DWORD len )
+{
+    DWORD ret = len;
+    if (!str) return 0; /* YES */
+    for (; len; len--, str++) *str = tolower(*str);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CharLowerBuffW   (USER32.@)
+ */
+DWORD WINAPI CharLowerBuffW( LPWSTR str, DWORD len )
+{
+    DWORD ret = len;
+    if (!str) return 0; /* YES */
+    for (; len; len--, str++) *str = tolowerW(*str);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CharUpperBuffA   (USER32.@)
+ * FIXME: handle current locale
+ */
+DWORD WINAPI CharUpperBuffA( LPSTR str, DWORD len )
+{
+    DWORD ret = len;
+    if (!str) return 0; /* YES */
+    for (; len; len--, str++) *str = toupper(*str);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CharUpperBuffW   (USER32.@)
+ */
+DWORD WINAPI CharUpperBuffW( LPWSTR str, DWORD len )
+{
+    DWORD ret = len;
+    if (!str) return 0; /* YES */
+    for (; len; len--, str++) *str = toupperW(*str);
+    return ret;
+}
+
+
+/***********************************************************************
  *           IsCharLowerA   (USER.436) (USER32.@)
  * FIXME: handle current locale
  */

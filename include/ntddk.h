@@ -974,6 +974,10 @@ NTSTATUS WINAPI NtReleaseSemaphore( IN HANDLE SemaphoreHandle,
                                     IN PULONG PreviousCount);
 
 
+/* string functions */
+extern LPSTR _strlwr( LPSTR str );
+extern LPSTR _strupr( LPSTR str );
+
 /*	misc */
 
 #if defined(__i386__) && defined(__GNUC__)
