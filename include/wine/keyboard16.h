@@ -1,6 +1,8 @@
 #ifndef _KEYBOARD16_H
 #define _KEYBOARD16_H
 
+#include "windef.h"
+
 INT16       WINAPI ToAscii16(UINT16,UINT16,LPBYTE,LPVOID,UINT16);
 WORD        WINAPI VkKeyScan16(CHAR);
 INT16       WINAPI AnsiToOem16(LPCSTR,LPSTR);

@@ -5,6 +5,8 @@
 #ifndef __WINE_DRIVER_H
 #define __WINE_DRIVER_H
 
+#include "windef.h"
+
 #define DRV_LOAD                0x0001
 #define DRV_ENABLE              0x0002
 #define DRV_OPEN                0x0003
