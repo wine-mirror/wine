@@ -478,14 +478,20 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 error:
 	if (pProv)
 	{
-		FreeLibrary(pProv->hModule);
-		CRYPT_Free(pProv->pVTable);
-		CRYPT_Free(pProv->pFuncs);
+		if (pProv->hModule)
+			FreeLibrary(pProv->hModule);
+		if (pProv->pVTable)
+			CRYPT_Free(pProv->pVTable);
+		if (pProv->pFuncs)
+			CRYPT_Free(pProv->pFuncs);
 		CRYPT_Free(pProv);
 	}
-	CRYPT_Free(provname);
-	CRYPT_Free(temp);
-	CRYPT_Free(imagepath);
+	if (provname)
+		CRYPT_Free(provname);
+	if (temp)
+		CRYPT_Free(temp);
+	if (imagepath)
+		CRYPT_Free(imagepath);
 	return FALSE;
 }
 
