@@ -45,6 +45,7 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -54,8 +55,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
-
-#define FAKE_CHARPTR(s)	((char *)(unsigned long)(s))
 
 #if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
 
@@ -124,7 +123,7 @@ typedef struct {
     WAVEOUTCAPSA		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char *			device;
+    char			device[32];
     snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
     snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
@@ -414,7 +413,7 @@ LONG ALSA_WaveInit(void)
     wwo = &WOutDev[0];
 
     /* FIXME: use better values */
-    wwo->device = FAKE_CHARPTR("hw");
+    strcpy(wwo->device, "hw");
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
     strcpy(wwo->caps.szPname, "SB16 Wave Out");
@@ -1595,6 +1594,32 @@ static	DWORD	wodGetNumDevs(void)
     return ALSA_WodNumDevs;
 }
 
+/**************************************************************************
+ * 				wodDevInterfaceSize		[internal]
+ */
+static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].device, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				wodDevInterface			[internal]
+ */
+static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].device, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].device, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+	return MMSYSERR_NOERROR;
+    }
+    return MMSYSERR_INVALPARAM;
+}
 
 /**************************************************************************
  * 				wodMessage (WINEALSA.@)
@@ -1630,6 +1655,8 @@ DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_SETVOLUME:	return wodSetVolume	(wDevID, dwParam1);
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
+    case DRV_QUERYDEVICEINTERFACESIZE: return wodDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return wodDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
     case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);

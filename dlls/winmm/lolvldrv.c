@@ -494,6 +494,21 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
     case DRV_QUERYMAPPABLE:
 	return (lpDrv->bIsMapper) ? 2 : 0;
 
+    case DRVM_MAPPER_PREFERRED_GET:
+	/* FIXME: get from registry someday */
+	if (bFrom32) {
+	    *((LPDWORD)dwParam1) = -1;      /* No preferred device */
+	    break;
+	}
+	return MMSYSERR_INVALPARAM;
+
+    case DRV_QUERYDEVICEINTERFACE:
+    case DRV_QUERYDEVICEINTERFACESIZE:
+	if (bFrom32)
+	    return MMDRV_Message(mld, uMsg, dwParam1, dwParam2, TRUE);
+	
+	return MMSYSERR_INVALPARAM;
+
     case DRV_QUERYDSOUNDIFACE: /* Wine-specific: Retrieve DirectSound interface */
     case DRV_QUERYDSOUNDDESC: /* Wine-specific: Retrieve DirectSound driver description*/
     case DRV_QUERYDSOUNDGUID: /* Wine-specific: Retrieve DirectSound driver GUID */

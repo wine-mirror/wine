@@ -26,7 +26,9 @@
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "mmsystem.h"
+#include "mmddk.h"
 
 /*
  * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
@@ -254,6 +256,9 @@ static void wave_out_tests()
     HWAVEOUT wout;
     MMRESULT rc;
     UINT ndev,d,f;
+    WCHAR * wname;
+    CHAR * name=NULL;
+    DWORD size;                                                                                 
 
     ndev=waveOutGetNumDevs();
     trace("found %d WaveOut devices\n",ndev);
@@ -280,8 +285,20 @@ static void wave_out_tests()
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
-        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx\n",
-              d,caps.szPname,caps.vDriverVersion >> 8,
+	rc=waveOutMessage((HWAVEOUT)d, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
+	ok(rc==MMSYSERR_NOERROR, "waveOutMessage: failed to get interface size for device: %d rc=%d\n",d,rc);
+	if (rc==MMSYSERR_NOERROR) {
+	    wname = (WCHAR *)malloc(size);
+            rc=waveOutMessage((HWAVEOUT)d, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
+	    ok(rc==MMSYSERR_NOERROR,"waveOutMessage: failed to get interface name for device:: %d rc=%d\n",d,rc);
+	    if (rc==MMSYSERR_NOERROR) {
+		name = malloc(size/sizeof(WCHAR));
+		WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
+	    }
+	}
+
+        trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx\n",
+              d,caps.szPname,name,caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
               caps.wChannels,caps.dwFormats,caps.dwSupport);
@@ -425,6 +442,9 @@ static void wave_in_tests()
     HWAVEIN win;
     MMRESULT rc;
     UINT ndev,d,f;
+    WCHAR * wname;
+    CHAR * name=NULL;
+    DWORD size;                                                                                 
 
     ndev=waveInGetNumDevs();
     trace("found %d WaveIn devices\n",ndev);
@@ -451,8 +471,20 @@ static void wave_in_tests()
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
-        trace("  %d: \"%s\" %d.%d (%d:%d): channels=%d formats=%05lx\n",
-              d,caps.szPname,caps.vDriverVersion >> 8,
+	rc=waveInMessage((HWAVEIN)d, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
+	ok(rc==MMSYSERR_NOERROR, "waveInMessage: failed to get interface size for device: %d rc=%d\n",d,rc);
+	if (rc==MMSYSERR_NOERROR) {
+	    wname = (WCHAR *)malloc(size);
+            rc=waveInMessage((HWAVEIN)d, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
+	    ok(rc==MMSYSERR_NOERROR,"waveInMessage: failed to get interface name for device:: %d rc=%d\n",d,rc);
+	    if (rc==MMSYSERR_NOERROR) {
+		name = malloc(size/sizeof(WCHAR));
+		WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
+	    }
+	}
+
+        trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx\n",
+              d,caps.szPname,name,caps.vDriverVersion >> 8,
               caps.vDriverVersion & 0xff,
               caps.wMid,caps.wPid,
               caps.wChannels,caps.dwFormats);

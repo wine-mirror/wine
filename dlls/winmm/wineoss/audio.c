@@ -257,6 +257,28 @@ static int getEnables(OSS_DEVICE *ossdev)
              (ossdev->bInputEnabled  ? PCM_ENABLE_INPUT  : 0) );
 }
 
+static DWORD wdDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].dev_name, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD wdDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].dev_name, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].dev_name, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+	return MMSYSERR_NOERROR;
+    }
+
+    return MMSYSERR_INVALPARAM;
+}
+
 /*======================================================================*
  *                  Low level WAVE implementation			*
  *======================================================================*/
@@ -1947,6 +1969,8 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
 
+    case DRV_QUERYDEVICEINTERFACESIZE: return wdDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
     case DRV_QUERYDSOUNDGUID:	return wodDsGuid	(wDevID, (LPGUID)dwParam1);
@@ -3143,6 +3167,8 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_RESET:		return widReset      (wDevID);
     case WIDM_START:		return widStart      (wDevID);
     case WIDM_STOP:		return widStop       (wDevID);
+    case DRV_QUERYDEVICEINTERFACESIZE: return wdDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
     case DRV_QUERYDSOUNDGUID:	return widDsGuid     (wDevID, (LPGUID)dwParam1);
