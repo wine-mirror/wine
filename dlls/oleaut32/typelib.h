@@ -417,7 +417,7 @@ typedef struct {
 /*0e*/  WORD res0e;
 /*10*/  WORD res10;
 /*12*/  WORD res12;
-/*14*/  WORD res14;
+/*14*/  WORD tdescalias_vt; /* for TKIND_ALIAS */
 /*16*/  WORD res16;
 /*18*/  WORD res18;
 /*1a*/  WORD res1a;
@@ -457,6 +457,13 @@ typedef struct {
 } SLTG_EnumItem;
 
 #define SLTG_ENUMITEM_MAGIC 0x120a
+
+typedef struct {
+/*00*/	WORD vt;	/* vartype, 0xffff marks end. */
+/*02*/	WORD res02;	/* ?, 0xffff marks end */
+} SLTG_AliasItem;
+
+#define SLTG_ALIASITEM_MAGIC 0x001d
 
 
 typedef struct {

@@ -573,9 +573,6 @@ HRESULT WINAPI UnRegisterTypeLib(
     return S_OK;	/* FIXME: pretend everything is OK */
 }
 
-/* for better debugging info leave the static out for the time being */
-#define static
-
 /*======================= ITypeLib implementation =======================*/
 
 typedef struct tagTLBCustData
@@ -1030,7 +1027,13 @@ void dump_Variant(VARIANT * pvar)
             TRACE("%d\n", *(short*)ref);
             break;
 
+        case VT_UI4:
+        case VT_UINT:
+            TRACE("%u\n", *(UINT*)ref);
+            break;
+
         case VT_I4:
+        case VT_INT:
             TRACE("%d\n", *(INT*)ref);
             break;
 
@@ -2727,6 +2730,58 @@ static SLTG_TypeInfoTail *SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
   return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
 }
 
+static SLTG_TypeInfoTail *SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
+					   char *pNameTable)
+{
+  SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
+  SLTG_MemberHeader *pMemHeader;
+  SLTG_AliasItem *pItem;
+  int i, mustbelast;
+
+  pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
+  pItem = (SLTG_AliasItem*)(pMemHeader + 1);
+
+  mustbelast = 0;
+  /* This is used for creating a TYPEDESC chain in case of VT_USERDEFINED */
+  for (i = 0 ; i<pMemHeader->cbExtra/4 ; i++) {
+    if (pItem->vt == 0xffff) {
+      if (i<(pMemHeader->cbExtra/4-1))
+	FIXME("Endmarker too early in process alias data!\n");
+      break;
+    }
+    if (mustbelast) {
+      FIXME("Chain extends over last entry?\n");
+      break;
+    }
+    if (pItem->vt == VT_USERDEFINED) {
+      pTI->TypeAttr.tdescAlias.vt = pItem->vt;
+      /* guessing here ... */
+      FIXME("Guessing TKIND_ALIAS of VT_USERDEFINED with hreftype 0x%x\n",pItem->res02);
+      pTI->TypeAttr.tdescAlias.u.hreftype = pItem->res02;
+      mustbelast = 1;
+    } else {
+      FIXME("alias %d: 0x%x\n",i,pItem->vt);
+      FIXME("alias %d: 0x%x\n",i,pItem->res02);
+    }
+    pItem++;
+  }
+  return (SLTG_TypeInfoTail*)((char*)(pMemHeader + 1)+pMemHeader->cbExtra);
+}
+
+static SLTG_TypeInfoTail *SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
+					   char *pNameTable)
+{
+  SLTG_TypeInfoHeader *pTIHeader = (SLTG_TypeInfoHeader*)pBlk;
+  SLTG_MemberHeader *pMemHeader;
+  SLTG_AliasItem *pItem;
+
+  pMemHeader = (SLTG_MemberHeader*)(pBlk + pTIHeader->elem_table);
+  pItem = (SLTG_AliasItem*)(pMemHeader + 1);
+  FIXME("memh.cbExtra is %ld\n",pMemHeader->cbExtra);
+  FIXME("offset 0 0x%x\n",*(WORD*)pItem);
+  return (SLTG_TypeInfoTail*)((char*)(pMemHeader + 1)+pMemHeader->cbExtra);
+}
+
 static SLTG_TypeInfoTail *SLTG_ProcessEnum(char *pBlk, ITypeInfoImpl *pTI,
 					   char *pNameTable)
 {
@@ -3016,6 +3071,16 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	pTITail = SLTG_ProcessCoClass(pBlk, *ppTypeInfoImpl, pNameTable);
 	break;
 
+      case TKIND_ALIAS:
+	pTITail = SLTG_ProcessAlias(pBlk, *ppTypeInfoImpl, pNameTable);
+	if (pTITail->tdescalias_vt)
+	  (*ppTypeInfoImpl)->TypeAttr.tdescAlias.vt = pTITail->tdescalias_vt;
+	break;
+
+      case TKIND_DISPATCH:
+	pTITail = SLTG_ProcessDispatch(pBlk, *ppTypeInfoImpl, pNameTable);
+	break;
+
       default:
 	FIXME("Not processing typekind %d\n", pTIHeader->typekind);
 	pTITail = NULL;
@@ -3028,6 +3093,28 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	  (*ppTypeInfoImpl)->TypeAttr.cbAlignment = pTITail->cbAlignment;
 	  (*ppTypeInfoImpl)->TypeAttr.cbSizeInstance = pTITail->cbSizeInstance;
 	  (*ppTypeInfoImpl)->TypeAttr.cbSizeVft = pTITail->cbSizeVft;
+
+#define X(x) TRACE("tt "#x": %x\n",pTITail->res##x);
+	  X(06);
+	  X(08);
+	  X(0a);
+	  X(0c);
+	  X(0e);
+	  X(10);
+	  X(12);
+	  X(16);
+	  X(18);
+	  X(1a);
+	  X(1c);
+	  X(1e);
+	  X(24);
+	  X(26);
+	  X(2a);
+	  X(2c);
+	  X(2e);
+	  X(30);
+	  X(32);
+	  X(34);
       }
       ppTypeInfoImpl = &((*ppTypeInfoImpl)->next);
       pBlk = (char*)pBlk + pBlkEntry[order].len;
@@ -3122,7 +3209,8 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           This->HelpStringDll = NULL;
       }
 
-      ITypeInfo_Release((ITypeInfo*) This->pTypeInfo);
+      if (This->pTypeInfo) /* can be NULL */
+      	  ITypeInfo_Release((ITypeInfo*) This->pTypeInfo);
       HeapFree(GetProcessHeap(),0,This);
       return 0;
     }
@@ -3885,7 +3973,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
     TLBImplType *pImpl = This->impltypelist;
 
     TRACE("(%p) index %d\n", This, index);
-    dump_TypeInfo(This);
+    if (TRACE_ON(ole)) dump_TypeInfo(This);
 
     if(index==(UINT)-1)
     {
@@ -4089,6 +4177,89 @@ _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
 
 extern int const _argsize(DWORD vt);
 
+/****************************************************************************
+ * Helper functions for Dispcall / Invoke, which copies one variant
+ * with target type onto the argument stack.
+ */
+static HRESULT
+_copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
+		DWORD *argpos, VARIANT *arg, VARTYPE vt
+) {
+    UINT arglen = _argsize(vt)*sizeof(DWORD);
+    VARTYPE	oldvt;
+
+    if (V_VT(arg) == vt) {
+	memcpy(argpos, &V_UNION(arg,lVal), arglen);
+	return S_OK;
+    }
+    
+    if (vt == VT_VARIANT) {
+	memcpy(argpos, arg, arglen);
+	return S_OK;
+    }
+    /* Deref BYREF vars if there is need */
+    if(V_ISBYREF(arg) && ((V_VT(arg) & ~VT_BYREF)==vt)) {
+        memcpy(argpos,(void*)V_UNION(arg,lVal), arglen);
+	return S_OK;
+    }
+    if (vt==VT_UNKNOWN && V_VT(arg)==VT_DISPATCH) {
+    	/* in this context, if the type lib specifies IUnknown*, giving an IDispatch* is correct; so, don't invoke VariantChangeType */
+    	memcpy(argpos,&V_UNION(arg,lVal), arglen);
+	return S_OK;
+    }
+    if ((vt == VT_PTR) && tdesc)
+	return _copy_arg(tinfo, tdesc->u.lptdesc, argpos, arg, tdesc->u.lptdesc->vt);
+    if ((vt == VT_USERDEFINED) && tdesc && tinfo) {
+	ITypeInfo	*tinfo2;
+	TYPEATTR	*tattr;
+	HRESULT		hres;
+
+	hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
+	if (hres) {
+	    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, while coercing from vt 0x%x. Copying 4 byte.\n",tdesc->u.hreftype,V_VT(arg));
+	    memcpy(argpos, &V_UNION(arg,lVal), 4);
+	    return S_OK;
+	}
+	ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+	switch (tattr->typekind) {
+	case TKIND_ENUM:
+	    if (V_VT(arg) == VT_I4) {
+		memcpy(argpos, &V_UNION(arg,iVal), 4);
+		return S_OK;
+	    }
+	    FIXME("vt 0x%x -> TKIND_ENUM unhandled.\n",V_VT(arg));
+	    break;
+	case TKIND_ALIAS:
+	    tdesc = &(tattr->tdescAlias);
+	    hres = _copy_arg((ITypeInfo2*)tinfo2, tdesc, argpos, arg, tdesc->vt);
+	    ITypeInfo_Release(tinfo2);
+	    return hres;
+
+	case TKIND_INTERFACE:
+	    FIXME("TKIND_INTERFACE unhandled.\n");
+	    break;
+	case TKIND_DISPATCH:
+	    FIXME("TKIND_DISPATCH unhandled.\n");
+	    break;
+	case TKIND_RECORD:
+	    FIXME("TKIND_RECORD unhandled.\n");
+	    break;
+	default:
+	    FIXME("TKIND %d unhandled.\n",tattr->typekind);
+	    break;
+	}
+	return E_FAIL;
+    }
+    oldvt = V_VT(arg);
+    if (VariantChangeType(arg,arg,0,vt)==S_OK) {
+    	FIXME("argument was coerced in-place (0x%x -> 0x%x); source data has been modified!!!\n", oldvt, vt);
+	memcpy(argpos,&V_UNION(arg,lVal), arglen);
+	return S_OK;
+    }
+    ERR("Set arg to disparg type 0x%x vs 0x%x\n",V_VT(arg),vt);
+    return E_FAIL;
+}
+
 /***********************************************************************
  *		DispCallFunc (OLEAUT32.@)
  */
@@ -4108,33 +4279,18 @@ DispCallFunc(
     So we need to add a first parameter to the list of arguments, to supply the interface pointer */
     argsize = 1;
     for (i=0;i<cActuals;i++) {
-        TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_argsize(prgvt[i]));
+	TRACE("arg %d: type %d, size %d\n",i,prgvt[i],_argsize(prgvt[i]));
 	dump_Variant(prgpvarg[i]);
-        argsize += _argsize(prgvt[i]);
+	argsize += _argsize(prgvt[i]);
     }
     args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
-    args[0]=0;      /* this is the fake IDispatch interface pointer */
+    args[0] = (DWORD)pvInstance;      /* this is the fake IDispatch interface pointer */
     argspos = 1;
     for (i=0;i<cActuals;i++) {
-	int arglen;
-        VARIANT *arg = prgpvarg[i];
-        TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
-	arglen = _argsize(prgvt[i]);
-	if (V_VT(arg) == prgvt[i]) {
-	    memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
-	} else if (prgvt[i] == VT_VARIANT) {
-	    memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
-    } else if (prgvt[i]==VT_UNKNOWN && V_VT(arg)==VT_DISPATCH) {
-        /* in this context, if the type lib specifies IUnknown*, giving an IDispatch* is correct;
-        so, don't invoke VariantChangeType */
-        memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
-	} else if (VariantChangeType(arg,arg,0,prgvt[i])==S_OK) {
-        FIXME("argument was coerced in-place; source data has been modified!!!\n");
-	    memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
-	} else {
-	    ERR("Set arg %d to disparg type %d vs %d\n",i,V_VT(arg),prgvt[i]);
-	}
-	argspos += arglen;
+	VARIANT *arg = prgpvarg[i];
+	TRACE("Storing arg %d (%d as %d)\n",i,V_VT(arg),prgvt[i]);
+	_copy_arg(NULL, NULL, &args[argspos], arg, prgvt[i]);
+	argspos += _argsize(prgvt[i]);
     }
 
     if(pvargResult!=NULL && V_VT(pvargResult)==VT_EMPTY)
@@ -4166,6 +4322,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     TLBFuncDesc * pFDesc;
     TLBVarDesc * pVDesc;
     int i;
+    HRESULT hres;
 
     TRACE("(%p)(%p,id=%ld,flags=0x%08x,%p,%p,%p,%p) partial stub!\n",
       This,pIUnk,memid,dwFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
@@ -4178,7 +4335,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		break;
 	}
     if (pFDesc) {
-	dump_TLBFuncDescOne(pFDesc);
+	if (TRACE_ON(typelib)) dump_TLBFuncDescOne(pFDesc);
 	/* dump_FUNCDESC(&pFDesc->funcdesc);*/
 	switch (pFDesc->funcdesc.funckind) {
 	case FUNC_PUREVIRTUAL:
@@ -4208,18 +4365,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		if (i<pDispParams->cArgs) {
 		    VARIANT *arg = &pDispParams->rgvarg[pDispParams->cArgs-i-1];
 		    TYPEDESC *tdesc = &pFDesc->funcdesc.lprgelemdescParam[i].tdesc;
-
-		    if (V_VT(arg) == tdesc->vt) {
-			memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
-                   } else if(V_ISBYREF(arg) && ((V_VT(arg) & ~VT_BYREF)==tdesc->vt)) {
-                       memcpy(&args[argspos],(void*)V_UNION(arg,lVal), arglen*sizeof(DWORD));
-                    } else if (tdesc->vt == VT_VARIANT) {
-                       memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
-                    } else {
-                       ERR("Set arg %d to disparg type %d vs %d\n",i,
-                           V_VT(arg),tdesc->vt
-                       );
-		    }
+		    hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
+		    if (FAILED(hres)) return hres;
 		    argspos += arglen;
 		} else {
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
@@ -4262,6 +4409,40 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
 		    if (tdesc->vt == VT_PTR)
 			tdesc = tdesc->u.lptdesc;
+		    if (tdesc->vt == VT_USERDEFINED) {
+			ITypeInfo	*tinfo2;
+			TYPEATTR	*tattr;
+
+			hres = ITypeInfo_GetRefTypeInfo(iface,tdesc->u.hreftype,&tinfo2);
+			if (hres) {
+			    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, while coercing. Copying 4 byte.\n",tdesc->u.hreftype);
+			    return E_FAIL;
+			}
+			ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+			switch (tattr->typekind) {
+			case TKIND_ENUM:
+			    FIXME("TKIND_ENUM unhandled.\n");
+			    break;
+			case TKIND_ALIAS:
+			    TRACE("TKIND_ALIAS to vt 0x%x\n",tattr->tdescAlias.vt);
+			    tdesc = &(tattr->tdescAlias);
+			    break;
+
+			case TKIND_INTERFACE:
+			    FIXME("TKIND_INTERFACE unhandled.\n");
+			    break;
+			case TKIND_DISPATCH:
+			    FIXME("TKIND_DISPATCH unhandled.\n");
+			    break;
+			case TKIND_RECORD:
+			    FIXME("TKIND_RECORD unhandled.\n");
+			    break;
+			default:
+			    FIXME("TKIND %d unhandled.\n",tattr->typekind);
+			    break;
+			}
+		        ITypeInfo_Release(tinfo2);
+		    }
 		    V_VT(pVarResult) = tdesc->vt;
 
 		    /* HACK: VB5 likes this.
