@@ -16,6 +16,7 @@
 #include "shellapi.h"
 #include "shlobj.h"
 #include "shell32_main.h"
+#include "wine/undocshell.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
@@ -199,10 +200,27 @@ int WINAPI SHShellFolderView_Message(HWND hwndCabinet,UINT uMsg,LPARAM lParam)
 /*************************************************************************
  * OleStrToStrN					[SHELL32.78]
  */
-BOOL WINAPI OleStrToStrN (LPSTR lpMulti, INT nMulti, LPCWSTR lpWide, INT nWide) 
+BOOL WINAPI OleStrToStrNA (LPSTR lpStr, INT nStr, LPCWSTR lpOle, INT nOle) 
 {
-	TRACE("%s %x %s %x\n", lpMulti, nMulti, debugstr_w(lpWide), nWide);
-	return WideCharToMultiByte (0, 0, lpWide, nWide, lpMulti, nMulti, NULL, NULL);
+	TRACE("%p %x %s %x\n", lpStr, nStr, debugstr_w(lpOle), nOle);
+	return WideCharToMultiByte (0, 0, lpOle, nOle, lpStr, nStr, NULL, NULL);
+}
+
+BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle) 
+{
+	TRACE("%p %x %s %x\n", lpwStr, nwStr, debugstr_w(lpOle), nOle);
+
+	if (lstrcpynW ( lpwStr, lpOle, nwStr))
+	{ return lstrlenW (lpwStr);
+	}
+	return 0;
+}
+
+BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn) 
+{
+	if (VERSION_OsIsUnicode())
+	  return OleStrToStrNW (lpOut, nOut, lpIn, nIn);
+	return OleStrToStrNA (lpOut, nOut, lpIn, nIn);
 }
 
 /*************************************************************************
@@ -371,12 +389,21 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path) {
  *     free_ptr() - frees memory using IMalloc
  *     exported by ordinal
  */
-DWORD WINAPI SHFree(LPVOID x) {
-  TRACE("%p\n",x);
-  if (!HIWORD(x))
-  { *(LPDWORD)0xdeaf0000 = 0;
-  }
-  return HeapFree(GetProcessHeap(),0,x);
+DWORD WINAPI SHFree(LPVOID x) 
+{
+	TRACE("%p\n",x);
+#if 0
+	WORD len;
+	x -= 4;
+
+	if ( (*(LPWORD)x) != 0x8271)
+	  ERR("MAGIC1!\n");
+
+	len = *(LPWORD)(x+2);
+	if ( *(LPWORD)( x + 4 + len) != 0x7384)
+	  ERR("MAGIC2!\n");
+#endif
+	return HeapFree(GetProcessHeap(), 0, x);
 }
 
 /*************************************************************************
@@ -386,11 +413,20 @@ DWORD WINAPI SHFree(LPVOID x) {
  *     void *task_alloc(DWORD len), uses SHMalloc allocator
  *     exported by ordinal
  */
-LPVOID WINAPI SHAlloc(DWORD len) {
- /* void * ret = (LPVOID)LocalAlloc32(len,LMEM_ZEROINIT);*/ /* chrashes */
- void * ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
-  TRACE("%lu bytes at %p\n",len, ret);
-  return ret;
+LPVOID WINAPI SHAlloc(DWORD len) 
+{
+	LPBYTE ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len);
+#if 0
+	LPBYTE ret = (LPVOID) HeapAlloc(GetProcessHeap(),0,len + 6);
+	*(LPWORD)(ret) = 0x8271;
+	*(LPWORD)(ret+2) = len;
+	*(LPWORD)(ret+len+4) = 0x7384;
+	
+	ret += 4;
+#endif
+
+	TRACE("%lu bytes at %p\n",len, ret);
+	return (LPVOID)ret;
 }
 
 /*************************************************************************
@@ -556,8 +592,23 @@ DWORD WINAPI SHChangeNotify (
 HRESULT WINAPI SHCreateShellFolderViewEx(
   LPSHELLVIEWDATA psvcbi, /*[in ] shelltemplate struct*/
   LPVOID* ppv)            /*[out] IShellView pointer*/
-{ FIXME("(%p,%p):stub.\n", psvcbi,ppv);
-  return 0;
+{
+	IShellView * psf;
+	HRESULT hRes;
+	
+	TRACE("sf=%p pidl=%p cb=%p mode=0x%08lx parm=0x%08lx\n", 
+	  psvcbi->pShellFolder, psvcbi->pidl, psvcbi->pCallBack, psvcbi->viewmode, psvcbi->dwUserParam);
+
+	psf = IShellView_Constructor(psvcbi->pShellFolder);
+	
+	if (!psf)
+	  return E_OUTOFMEMORY;
+
+	IShellView_AddRef(psf);
+	hRes = IShellView_QueryInterface(psf, &IID_IShellView, (LPVOID *)ppv);
+	IShellView_Release(psf);
+
+	return hRes;
 }
 /*************************************************************************
  *  SHWinHelp					[SHELL32.127]
@@ -871,7 +922,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 	    if (VERSION_OsIsUnicode())
 	      lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
 	    else
-	      strncpy((LPSTR)dest, src->u.cStr, len);
+	      lstrcpynA((LPSTR)dest, src->u.cStr, len);
 	    break;
 
 	  case STRRET_OFFSETA:
@@ -879,7 +930,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 	    { if(VERSION_OsIsUnicode())
 	        lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
 	      else
-	        strncpy((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+	        lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
 	      break;
 	    }
 
@@ -1072,7 +1123,7 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 	else
 	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
 	}
-	strncpy (pszBuf, buf, cchBuf);
+	lstrcpynA (pszBuf, buf, cchBuf);
 	return pszBuf;	
 }
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
@@ -1137,7 +1188,7 @@ HRESULT WINAPI shell32_654 (DWORD x, DWORD y)
  * NOTES
  *   builds a DPA
  */
-DWORD WINAPI RLBuildListOfPaths ()
+DWORD WINAPI RLBuildListOfPaths (void)
 {	FIXME("stub\n");
 	return 0;
 }
