@@ -48,7 +48,7 @@ typedef struct async_private
      struct async_private *prev;
 } async_private;
 
-extern void check_async_list(LPOVERLAPPED ov, DWORD status);
+extern void WINAPI check_async_list(LPOVERLAPPED ov, DWORD status);
 
 /* locale-independent case conversion */
 inline static char FILE_tolower( char c )

@@ -78,8 +78,8 @@ static void finish_async(async_private *ovp, DWORD status)
  *
  * Process a status event from the server.
  */
-void check_async_list(LPOVERLAPPED overlapped, DWORD status)
-            {
+void WINAPI check_async_list(LPOVERLAPPED overlapped, DWORD status)
+{
     async_private *ovp;
 
     /* fprintf(stderr,"overlapped %p status %x\n",overlapped,status); */
