@@ -323,14 +323,22 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  *  mycomputer:	0xb0000154	HASSUBFOLDER | FOLDER | FILESYSANCESTOR
  *  (seems to be default for shell extensions if no registry entry exists)
  *
+ * win2k:
+ *  folder:    0xF0400177      FILESYSTEM | HASSUBFOLDER | FOLDER | FILESYSANCESTOR | CANMONIKER
+ *  file:      0x40400177      FILESYSTEM | CANMONIKER
+ *  drive      0xF0400154      FILESYSTEM | HASSUBFOLDER | FOLDER | FILESYSANCESTOR | CANMONIKER | CANRENAME (LABEL)
+ *
  * This functions does not set flags!! It only resets flags when nessesary.
  */
 HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPITEMIDLIST pidl, LPDWORD pdwAttributes)
 {
     GUID const *clsid;
     DWORD dwAttributes;
-    DWORD dwSupportedAttr=SFGAO_CANLINK |           /*0x00000004 */
+    DWORD dwSupportedAttr=SFGAO_CANCOPY |           /*0x00000001 */
+                          SFGAO_CANMOVE |           /*0x00000002 */
+                          SFGAO_CANLINK |           /*0x00000004 */
                           SFGAO_CANRENAME |         /*0x00000010 */
+                          SFGAO_CANDELETE |         /*0x00000020 */
                           SFGAO_HASPROPSHEET |      /*0x00000040 */
                           SFGAO_DROPTARGET |        /*0x00000100 */
                           SFGAO_READONLY |          /*0x00040000 */
