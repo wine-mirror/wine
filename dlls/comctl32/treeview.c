@@ -853,7 +853,7 @@ TREEVIEW_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
         memcpy (&infoPtr->items[0], &oldItems[0],
                     infoPtr->uNumPtrsAlloced/2 * sizeof(TREEVIEW_ITEM));
         memcpy (&infoPtr->freeList[0], &oldfreeList[0],
-                    infoPtr->uNumPtrsAlloced>>6 * sizeof(INT32));
+                    (infoPtr->uNumPtrsAlloced>>6) * sizeof(INT32));
 
          HeapFree (GetProcessHeap (), 0, oldItems);  
          HeapFree (GetProcessHeap (), 0, oldfreeList);  
