@@ -58,6 +58,7 @@ static void test__hread( void )
     long bytes_read;
     long bytes_wanted;
     long i;
+    BOOL ret;
 
     SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL); /* be sure to remove stale files */
     DeleteFileA( filename );
@@ -92,7 +93,8 @@ static void test__hread( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 }
 
 
@@ -107,6 +109,7 @@ static void test__hwrite( void )
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -175,13 +178,15 @@ static void test__hwrite( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 }
 
 
 static void test__lclose( void )
 {
     HFILE filehandle;
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -194,7 +199,8 @@ static void test__lclose( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 }
 
 
@@ -206,6 +212,7 @@ static void test__lcreat( void )
     char slashname[] = "testfi/";
     int err;
     HANDLE find;
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -224,7 +231,8 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file\n" );
 
-    ok( DeleteFileA(filename) != 0, "DeleteFile failed (%ld)\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok( ret != 0, "DeleteFile failed (%ld)\n", GetLastError());
 
     filehandle = _lcreat( filename, 1 ); /* readonly */
     ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%ld)\n", filename, GetLastError(  ) );
@@ -254,7 +262,8 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 
     filehandle = _lcreat( filename, 4 ); /* SYSTEM file */
     ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%ld)\n", filename, GetLastError(  ) );
@@ -269,7 +278,8 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 
     filehandle=_lcreat (slashname, 0); /* illegal name */
     if (HFILE_ERROR==filehandle) {
@@ -281,7 +291,8 @@ static void test__lcreat( void )
       find=FindFirstFileA (slashname, &search_results);
       if (INVALID_HANDLE_VALUE!=find)
       {
-        ok (0!=FindClose (find), "FindClose complains (%ld)\n", GetLastError ());
+        ret = FindClose (find);
+        ok (0 != ret, "FindClose complains (%ld)\n", GetLastError ());
         slashname[strlen(slashname)-1]=0;
         ok (!strcmp (slashname, search_results.cFileName),
             "found unexpected name \"%s\"\n", search_results.cFileName);
@@ -289,8 +300,8 @@ static void test__lcreat( void )
             "attributes of file \"%s\" are 0x%04lx\n", search_results.cFileName,
             search_results.dwFileAttributes);
       }
-      ok (0!=DeleteFileA (slashname), "Can't delete \"%s\" (%ld)\n", slashname,
-          GetLastError ());
+    ret = DeleteFileA( slashname );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
     }
 
     filehandle=_lcreat (filename, 8); /* illegal attribute */
@@ -302,15 +313,16 @@ static void test__lcreat( void )
       if (INVALID_HANDLE_VALUE==find)
         ok (0, "file \"%s\" not found\n", filename);
       else {
-        ok (0!=FindClose (find), "FindClose complains (%ld)\n", GetLastError ());
+        ret = FindClose(find);
+        ok ( 0 != ret, "FindClose complains (%ld)\n", GetLastError ());
         ok (!strcmp (filename, search_results.cFileName),
             "found unexpected name \"%s\"\n", search_results.cFileName);
         ok (FILE_ATTRIBUTE_ARCHIVE==search_results.dwFileAttributes,
             "attributes of file \"%s\" are 0x%04lx\n", search_results.cFileName,
             search_results.dwFileAttributes);
       }
-      ok (0!=DeleteFileA (filename), "Can't delete \"%s\" (%ld)\n", slashname,
-          GetLastError ());
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
     }
 }
 
@@ -321,6 +333,7 @@ static void test__llseek( void )
     HFILE filehandle;
     char buffer[1];
     long bytes_read;
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -347,7 +360,8 @@ static void test__llseek( void )
     ok( HFILE_ERROR != _llseek( filehandle, 1000000, FILE_END ), "should be able to seek past file; poor, poor Windows programmers\n" );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 }
 
 
@@ -356,6 +370,7 @@ static void test__llopen( void )
     HFILE filehandle;
     UINT bytes_read;
     char buffer[10000];
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -384,7 +399,8 @@ static void test__llopen( void )
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine\n" );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
     /* TODO - add tests for the SHARE modes  -  use two processes to pull this one off */
 }
 
@@ -396,6 +412,7 @@ static void test__lread( void )
     long bytes_read;
     UINT bytes_wanted;
     UINT i;
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -428,7 +445,8 @@ static void test__lread( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 }
 
 
@@ -443,6 +461,7 @@ static void test__lwrite( void )
     char *contents;
     HLOCAL memory_object;
     char checksum[1];
+    BOOL ret;
 
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
@@ -511,7 +530,8 @@ static void test__lwrite( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains\n" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)\n", GetLastError(  ) );
+    ret = DeleteFileA( filename );
+    ok( ret, "DeleteFile failed (%ld)\n", GetLastError(  ) );
 }
 
 static void test_CopyFileA(void)
@@ -522,6 +542,7 @@ static void test_CopyFileA(void)
     HANDLE hfile;
     char buf[10];
     DWORD ret;
+    BOOL retok;
 
     ret = GetTempPathA(MAX_PATH, temp_path);
     ok(ret != 0, "GetTempPathA error %ld\n", GetLastError());
@@ -533,7 +554,8 @@ static void test_CopyFileA(void)
     /* make the source have not zero size */
     hfile = CreateFileA(source, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file\n");
-    ok(WriteFile(hfile, prefix, sizeof(prefix), &ret, NULL ) && ret == sizeof(prefix),
+    retok = WriteFile(hfile, prefix, sizeof(prefix), &ret, NULL );
+    ok( retok && ret == sizeof(prefix),
        "WriteFile error %ld\n", GetLastError());
     ok(GetFileSize(hfile, NULL) == sizeof(prefix), "source file has wrong size\n");
     CloseHandle(hfile);
@@ -563,7 +585,8 @@ static void test_CopyFileA(void)
     /* make sure that destination still has correct size */
     ret = GetFileSize(hfile, NULL);
     ok(ret == sizeof(prefix), "destination file has wrong size %ld\n", ret);
-    ok(ReadFile(hfile, buf, sizeof(buf), &ret, NULL) && ret == sizeof(prefix),
+    retok = ReadFile(hfile, buf, sizeof(buf), &ret, NULL);
+    ok( retok && ret == sizeof(prefix),
        "ReadFile: error %ld\n", GetLastError());
     ok(!memcmp(prefix, buf, sizeof(prefix)), "buffer contents mismatch\n");
     CloseHandle(hfile);
@@ -861,9 +884,12 @@ static void test_offset_in_overlapped_structure(void)
     BYTE buf[256], pattern[] = "TeSt";
     UINT i;
     char temp_path[MAX_PATH], temp_fname[MAX_PATH];
+    BOOL ret;
 
-    ok(GetTempPathA(MAX_PATH, temp_path) != 0, "GetTempPathA error %ld\n", GetLastError());
-    ok(GetTempFileNameA(temp_path, "pfx", 0, temp_fname) != 0, "GetTempFileNameA error %ld\n", GetLastError());
+    ret =GetTempPathA(MAX_PATH, temp_path);
+    ok( ret, "GetTempPathA error %ld\n", GetLastError());
+    ret =GetTempFileNameA(temp_path, "pfx", 0, temp_fname);
+    ok( ret, "GetTempFileNameA error %ld\n", GetLastError());
 
     /*** Write File *****************************************************/
 
@@ -871,7 +897,8 @@ static void test_offset_in_overlapped_structure(void)
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA error %ld\n", GetLastError());
 
     for(i = 0; i < sizeof(buf); i++) buf[i] = i;
-    ok(WriteFile(hFile, buf, sizeof(buf), &done, NULL), "WriteFile error %ld\n", GetLastError());
+    ret = WriteFile(hFile, buf, sizeof(buf), &done, NULL);
+    ok( ret, "WriteFile error %ld\n", GetLastError());
     ok(done == sizeof(buf), "expected number of bytes written %lu\n", done);
 
     memset(&ov, 0, sizeof(ov));
@@ -888,7 +915,8 @@ static void test_offset_in_overlapped_structure(void)
 
         ov.Offset = sizeof(buf) * 2;
         ov.OffsetHigh = 0;
-        ok(WriteFile(hFile, pattern, sizeof(pattern), &done, &ov), "WriteFile error %ld\n", GetLastError());
+        ret = WriteFile(hFile, pattern, sizeof(pattern), &done, &ov);
+        ok( ret, "WriteFile error %ld\n", GetLastError());
         ok(done == sizeof(pattern), "expected number of bytes written %lu\n", done);
         /*trace("Current offset = %04lx\n", SetFilePointer(hFile, 0, NULL, FILE_CURRENT));*/
         ok(SetFilePointer(hFile, 0, NULL, FILE_CURRENT) == (sizeof(buf) * 2 + sizeof(pattern)),
@@ -919,7 +947,8 @@ static void test_offset_in_overlapped_structure(void)
 
     CloseHandle(hFile);
 
-    ok(DeleteFileA(temp_fname), "DeleteFileA error %ld\n", GetLastError());
+    ret = DeleteFileA(temp_fname);
+    ok( ret, "DeleteFileA error %ld\n", GetLastError());
 }
 
 static void test_LockFile(void)
@@ -1316,8 +1345,10 @@ static void test_read_write(void)
 	"ret = %ld, error %ld\n", ret, GetLastError());
     ok(!bytes, "bytes = %ld\n", bytes);
 
-    ok(CloseHandle(hFile), "CloseHandle: error %ld\n", GetLastError());
-    ok(DeleteFileA(filename), "DeleteFileA: error %ld\n", GetLastError());
+    ret = CloseHandle(hFile);
+    ok( ret, "CloseHandle: error %ld\n", GetLastError());
+    ret = DeleteFileA(filename);
+    ok( ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
 START_TEST(file)

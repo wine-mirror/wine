@@ -189,10 +189,12 @@ void test_FileTimeToSystemTime()
     FILETIME ft;
     SYSTEMTIME st;
     ULONGLONG time = (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    BOOL ret;
 
     ft.dwHighDateTime = 0;
     ft.dwLowDateTime  = 0;
-    ok(FileTimeToSystemTime(&ft, &st),
+    ret = FileTimeToSystemTime(&ft, &st);
+    ok( ret,
        "FileTimeToSystemTime() failed with Error 0x%08lx\n",GetLastError());
     ok(((st.wYear == 1601) && (st.wMonth  == 1) && (st.wDay    == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 0) &&
@@ -201,7 +203,8 @@ void test_FileTimeToSystemTime()
 
     ft.dwHighDateTime = (UINT)(time >> 32);
     ft.dwLowDateTime  = (UINT)time;
-    ok(FileTimeToSystemTime(&ft, &st),
+    ret = FileTimeToSystemTime(&ft, &st);
+    ok( ret,
        "FileTimeToSystemTime() failed with Error 0x%08lx\n",GetLastError());
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&
@@ -222,10 +225,13 @@ void test_FileTimeToLocalFileTime()
             ( res == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
             ( res == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 ))) *
              SECSPERMIN *TICKSPERSEC;
+    BOOL ret;
+
     ok( res != TIME_ZONE_ID_INVALID , "GetTimeZoneInformation failed\n");
     ft.dwHighDateTime = (UINT)(time >> 32);
     ft.dwLowDateTime  = (UINT)time;
-    ok(FileTimeToLocalFileTime(&ft, &lft) !=0 ,
+    ret = FileTimeToLocalFileTime(&ft, &lft);
+    ok( ret,
        "FileTimeToLocalFileTime() failed with Error 0x%08lx\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
@@ -238,7 +244,8 @@ void test_FileTimeToLocalFileTime()
     ok(SetEnvironmentVariableA("TZ","GMT") != 0,
        "SetEnvironmentVariableA failed\n");
     ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
-    ok(FileTimeToLocalFileTime(&ft, &lft) !=0 ,
+    ret = FileTimeToLocalFileTime(&ft, &lft);
+    ok( ret,
        "FileTimeToLocalFileTime() failed with Error 0x%08lx\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&

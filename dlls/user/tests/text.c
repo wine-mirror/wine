@@ -38,6 +38,7 @@ static void test_DrawTextCalcRect(void)
       "MM_HIENGLISH mode";
     INT len;
     RECT rect = { 0, 0, 100, 0 };
+    BOOL ret;
 
     /* Initialization */
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
@@ -65,9 +66,10 @@ static void test_DrawTextCalcRect(void)
        GetLastError());
     hOldFont = SelectObject(hdc, hFont);
 
-    ok(DrawTextA(hdc, text, len, &rect, DT_CALCRECT |
+    len = DrawTextA(hdc, text, len, &rect, DT_CALCRECT |
        DT_EXTERNALLEADING | DT_WORDBREAK | DT_NOCLIP | DT_LEFT |
-       DT_NOPREFIX),"DrawTextA error %lu\n", GetLastError());
+       DT_NOPREFIX);
+    ok( len, "DrawTextA error %lu\n", GetLastError());
 
     trace("MM_HIENGLISH rect.bottom %ld\n", rect.bottom);
     todo_wine ok(rect.bottom < 0, "In MM_HIENGLISH, DrawText with "
@@ -75,8 +77,8 @@ static void test_DrawTextCalcRect(void)
        "(bot=%ld)\n", rect.bottom);
 
     SelectObject(hdc, hOldFont);
-    ok(DeleteObject(hFont), "DeleteObject error %lu\n",
-       GetLastError());
+    ret = DeleteObject(hFont);
+    ok( ret, "DeleteObject error %lu\n", GetLastError());
 
 
     /* DrawText in MM_TEXT with DT_CALCRECT */
@@ -88,9 +90,10 @@ static void test_DrawTextCalcRect(void)
        GetLastError());
     hOldFont = SelectObject(hdc, hFont);
 
-    ok(DrawTextA(hdc, text, len, &rect, DT_CALCRECT |
+    len = DrawTextA(hdc, text, len, &rect, DT_CALCRECT |
        DT_EXTERNALLEADING | DT_WORDBREAK | DT_NOCLIP | DT_LEFT |
-       DT_NOPREFIX),"DrawTextA error %lu\n", GetLastError());
+       DT_NOPREFIX);
+    ok( len, "DrawTextA error %lu\n", GetLastError());
 
     trace("MM_TEXT rect.bottom %ld\n", rect.bottom);
     ok(rect.bottom > 0, "In MM_TEXT, DrawText with DT_CALCRECT "
@@ -98,14 +101,14 @@ static void test_DrawTextCalcRect(void)
        rect.bottom);
 
     SelectObject(hdc, hOldFont);
-    ok(DeleteObject(hFont), "DeleteObject error %lu\n",
-       GetLastError());
+    ret = DeleteObject(hFont);
+    ok( ret, "DeleteObject error %lu\n", GetLastError());
 
     /* Clean up */
-    ok(ReleaseDC(hwnd, hdc), "ReleaseDC error %lu\n",
-       GetLastError());
-    ok(DestroyWindow(hwnd), "DestroyWindow error %lu\n",
-       GetLastError());
+    ret = ReleaseDC(hwnd, hdc);
+    ok( ret, "ReleaseDC error %lu\n", GetLastError());
+    ret = DestroyWindow(hwnd);
+    ok( ret, "DestroyWindow error %lu\n", GetLastError());
 }
 
 START_TEST(text)

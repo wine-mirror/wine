@@ -222,13 +222,15 @@ static void test_allocateLuid(void)
 
     ok(ret,
      "AllocateLocallyUniqueId failed: %ld\n", GetLastError());
-    ok(pAllocateLocallyUniqueId(&luid2),
+    ret = pAllocateLocallyUniqueId(&luid2);
+    ok( ret,
      "AllocateLocallyUniqueId failed: %ld\n", GetLastError());
     ok(luid1.LowPart > SE_MAX_WELL_KNOWN_PRIVILEGE || luid1.HighPart != 0,
      "AllocateLocallyUniqueId returned a well-known LUID\n");
     ok(luid1.LowPart != luid2.LowPart || luid1.HighPart != luid2.HighPart,
      "AllocateLocallyUniqueId returned non-unique LUIDs\n");
-    ok(!pAllocateLocallyUniqueId(NULL) && GetLastError() == ERROR_NOACCESS,
+    ret = pAllocateLocallyUniqueId(NULL);
+    ok( !ret && GetLastError() == ERROR_NOACCESS,
      "AllocateLocallyUniqueId(NULL) didn't return ERROR_NOACCESS: %ld\n",
      GetLastError());
 }
@@ -253,8 +255,8 @@ static void test_lookupPrivilegeName(void)
     /* check with a short buffer */
     cchName = 0;
     luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
-    ok(!pLookupPrivilegeNameA(NULL, &luid, NULL, &cchName) &&
-     GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+    ret = pLookupPrivilegeNameA(NULL, &luid, NULL, &cchName);
+    ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
      "LookupPrivilegeNameA didn't fail with ERROR_INSUFFICIENT_BUFFER: %ld\n",
      GetLastError());
     ok(cchName == strlen("SeCreateTokenPrivilege") + 1,
@@ -273,21 +275,22 @@ static void test_lookupPrivilegeName(void)
     {
         luid.LowPart = i;
         cchName = sizeof(buf);
-        ok(pLookupPrivilegeNameA(NULL, &luid, buf, &cchName),
+        ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
+        ok( ret,
          "LookupPrivilegeNameA(0.%ld) failed: %ld\n", i, GetLastError());
     }
     /* check a bogus LUID */
     luid.LowPart = 0xdeadbeef;
     cchName = sizeof(buf);
-    ok(!pLookupPrivilegeNameA(NULL, &luid, buf, &cchName) &&
-     GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
+    ret = pLookupPrivilegeNameA(NULL, &luid, buf, &cchName);
+    ok( !ret && GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
      "LookupPrivilegeNameA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
      GetLastError());
     /* check on a bogus system */
     luid.LowPart = SE_CREATE_TOKEN_PRIVILEGE;
     cchName = sizeof(buf);
-    ok(!pLookupPrivilegeNameA("b0gu5.Nam3", &luid, buf, &cchName) &&
-     GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+    ret = pLookupPrivilegeNameA("b0gu5.Nam3", &luid, buf, &cchName);
+    ok( !ret && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
      "LookupPrivilegeNameA didn't fail with RPC_S_SERVER_UNAVAILABLE: %ld\n",
      GetLastError());
 }
@@ -344,22 +347,23 @@ static void test_lookupPrivilegeValue(void)
         return;
 
     /* check a bogus system name */
-    ok(!pLookupPrivilegeValueA("b0gu5.Nam3", "SeCreateTokenPrivilege", &luid)
-     && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
+    ret = pLookupPrivilegeValueA("b0gu5.Nam3", "SeCreateTokenPrivilege", &luid);
+    ok( !ret && GetLastError() == RPC_S_SERVER_UNAVAILABLE,
      "LookupPrivilegeValueA didn't fail with RPC_S_SERVER_UNAVAILABLE: %ld\n",
      GetLastError());
     /* check a NULL string */
-    ok(!pLookupPrivilegeValueA(NULL, 0, &luid) &&
-     GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
+    ret = pLookupPrivilegeValueA(NULL, 0, &luid);
+    ok( !ret && GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
      "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
      GetLastError());
     /* check a bogus privilege name */
-    ok(!pLookupPrivilegeValueA(NULL, "SeBogusPrivilege", &luid) &&
-     GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
+    ret = pLookupPrivilegeValueA(NULL, "SeBogusPrivilege", &luid);
+    ok( !ret && GetLastError() == ERROR_NO_SUCH_PRIVILEGE,
      "LookupPrivilegeValueA didn't fail with ERROR_NO_SUCH_PRIVILEGE: %ld\n",
      GetLastError());
     /* check case insensitive */
-    ok(pLookupPrivilegeValueA(NULL, "sEcREATEtOKENpRIVILEGE", &luid),
+    ret = pLookupPrivilegeValueA(NULL, "sEcREATEtOKENpRIVILEGE", &luid);
+    ok( ret,
      "LookupPrivilegeValueA(NULL, sEcREATEtOKENpRIVILEGE, &luid) failed: %ld\n",
      GetLastError());
     for (i = 0; i < sizeof(privs) / sizeof(privs[0]); i++)

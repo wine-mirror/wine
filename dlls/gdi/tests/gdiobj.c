@@ -211,6 +211,7 @@ static void test_gdi_objects(void)
     HDC hdc = GetDC(NULL);
     HPEN hp;
     int i;
+    BOOL ret;
 
     /* SelectObject() with a NULL DC returns 0 and sets ERROR_INVALID_HANDLE.
      * Note: Under XP at least invalid ptrs can also be passed, not just NULL;
@@ -244,9 +245,10 @@ static void test_gdi_objects(void)
        hp, GetLastError());
 
     /* DeleteObject does not SetLastError() on a null object */
-    ok(!DeleteObject(NULL) && !GetLastError(),
+    ret = DeleteObject(NULL);
+    ok( !ret && !GetLastError(),
        "DeleteObject(NULL obj), expected 0, NO_ERROR, got %d, 0x%08lx\n",
-       DeleteObject(NULL), GetLastError());
+       ret, GetLastError());
 
     /* GetObject does not SetLastError() on a null object */
     SetLastError(0);

@@ -218,12 +218,13 @@ void InternetOpenUrlA_test(void)
   char protocol[32], hostName[1024], userName[1024];
   char password[1024], extra[1024], path[1024];
   DWORD size, readbytes, totalbytes=0;
+  BOOL ret;
   
   myhinternet = InternetOpen("Winetest",0,NULL,NULL,INTERNET_FLAG_NO_CACHE_WRITE);
   ok((myhinternet != 0), "InternetOpen failed, error %lx\n",GetLastError());
   size = 0x400;
-  ok (InternetCanonicalizeUrl(TEST_URL, buffer, &size,ICU_BROWSER_MODE),
-      "InternetCanonicalizeUrl failed, error %lx\n",GetLastError());
+  ret = InternetCanonicalizeUrl(TEST_URL, buffer, &size,ICU_BROWSER_MODE);
+  ok( ret, "InternetCanonicalizeUrl failed, error %lx\n",GetLastError());
   
   urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
   urlComponents.lpszScheme = protocol;
@@ -238,15 +239,16 @@ void InternetOpenUrlA_test(void)
   urlComponents.dwUrlPathLength = 2048;
   urlComponents.lpszExtraInfo = extra;
   urlComponents.dwExtraInfoLength = 1024;
-  ok((InternetCrackUrl(TEST_URL, 0,0,&urlComponents)),
-     "InternetCrackUrl failed, error %lx\n",GetLastError());
+  ret = InternetCrackUrl(TEST_URL, 0,0,&urlComponents);
+  ok( ret, "InternetCrackUrl failed, error %lx\n",GetLastError());
   SetLastError(0);
   myhttp = InternetOpenUrl(myhinternet, TEST_URL, 0, 0,
 			   INTERNET_FLAG_RELOAD|INTERNET_FLAG_NO_CACHE_WRITE|INTERNET_FLAG_TRANSFER_BINARY,0);
   if (GetLastError() == 12007)
     return; /* WinXP returns this when not connected to the net */
   ok((myhttp != 0),"InternetOpenUrl failed, error %lx\n",GetLastError());
-  ok(InternetReadFile(myhttp, buffer,0x400,&readbytes), "InternetReadFile failed, error %lx\n",GetLastError());
+  ret = InternetReadFile(myhttp, buffer,0x400,&readbytes);
+  ok( ret, "InternetReadFile failed, error %lx\n",GetLastError());
   totalbytes += readbytes;
   while (readbytes && InternetReadFile(myhttp, buffer,0x400,&readbytes))
     totalbytes += readbytes;
@@ -258,6 +260,7 @@ void InternetCrackUrl_test(void)
   URL_COMPONENTSA urlComponents;
   char protocol[32], hostName[1024], userName[1024];
   char password[1024], extra[1024], path[1024];
+  BOOL ret;
 
   urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
   urlComponents.lpszScheme = protocol;
@@ -272,8 +275,8 @@ void InternetCrackUrl_test(void)
   urlComponents.dwUrlPathLength = 2048;
   urlComponents.lpszExtraInfo = extra;
   urlComponents.dwExtraInfoLength = 1024;
-  ok((InternetCrackUrl(TEST_URL, 0,0,&urlComponents)),
-     "InternetCrackUrl failed, error %lx\n",GetLastError());
+  ret = InternetCrackUrl(TEST_URL, 0,0,&urlComponents);
+  ok( ret, "InternetCrackUrl failed, error %lx\n",GetLastError());
   ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong\n");
 }
 

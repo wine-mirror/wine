@@ -44,7 +44,8 @@ static DWORD CALLBACK NotificationThread(LPVOID arg)
         ret = FindNextChangeNotification(change);
     }
 
-    ok(FindCloseChangeNotification(change), "FindCloseChangeNotification error: %ld\n",
+    ret = FindCloseChangeNotification(change);
+    ok( ret, "FindCloseChangeNotification error: %ld\n",
        GetLastError());
 
     ExitThread((DWORD)ret);
@@ -123,7 +124,8 @@ static void test_FindFirstChangeNotification(void)
     file = CreateFileA(filename1, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
-    ok(CloseHandle(file), "CloseHandle error: %ld\n", GetLastError());
+    ret = CloseHandle(file);
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
 
     /* Try to register notification for a file. win98 and win2k behave differently here */
     change = FindFirstChangeNotificationA(filename1, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
@@ -189,7 +191,8 @@ static void test_FindFirstChangeNotification(void)
     file = CreateFileA(filename2, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, 
                        FILE_ATTRIBUTE_NORMAL, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
-    ok(CloseHandle(file), "CloseHandle error: %ld\n", GetLastError());
+    ret = CloseHandle(file);
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     attributes = GetFileAttributesA(filename2);
@@ -209,7 +212,8 @@ static void test_FindFirstChangeNotification(void)
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
     ret = WriteFile(file, buffer, sizeof(buffer), &count, NULL);
     ok(ret && count == sizeof(buffer), "WriteFile error: %ld\n", GetLastError());
-    ok(CloseHandle(file), "CloseHandle error: %ld\n", GetLastError());
+    ret = CloseHandle(file);
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* Change file size by truncating a file */
@@ -219,7 +223,8 @@ static void test_FindFirstChangeNotification(void)
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA error: %ld\n", GetLastError());
     ret = WriteFile(file, buffer, sizeof(buffer) / 2, &count, NULL);
     ok(ret && count == sizeof(buffer) / 2, "WriteFileA error: %ld\n", GetLastError());
-    ok(CloseHandle(file), "CloseHandle error: %ld\n", GetLastError());
+    ret = CloseHandle(file);
+    ok( ret, "CloseHandle error: %ld\n", GetLastError());
     ok(FinishNotificationThread(thread), "Missed notification\n");
 
     /* clean up */

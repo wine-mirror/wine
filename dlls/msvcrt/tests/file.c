@@ -187,10 +187,12 @@ static void test_file_write_read( void )
   static const char mytext[]=  "This is test_file_write_read\nsecond line\n";
   static const char dostext[]= "This is test_file_write_read\r\nsecond line\r\n";
   char btext[LLEN];
+  int ret;
 
   tempf=_tempnam(".","wne");
-  ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,
-                     _S_IREAD | _S_IWRITE)) != -1,
+  tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,
+                     _S_IREAD | _S_IWRITE);
+  ok( tempfd != -1,
      "Can't open '%s': %d\n", tempf, errno); /* open in TEXT mode */
   ok(_write(tempfd,mytext,strlen(mytext)) == lstrlenA(mytext),
      "_write _O_TEXT bad return value\n");
@@ -208,10 +210,12 @@ static void test_file_write_read( void )
   ok( memcmp(mytext,btext,strlen(mytext)) == 0,
       "problems with _O_TEXT _write / _read\n");
   _close(tempfd);
-  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
+  ret = unlink(tempf);
+  ok( ret !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 
   tempf=_tempnam(".","wne");
-  ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0)) != -1,
+  tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0);
+  ok( tempfd != -1,
      "Can't open '%s': %d\n", tempf, errno); /* open in BINARY mode */
   ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext),
      "_write _O_BINARY bad return value\n");
@@ -230,17 +234,21 @@ static void test_file_write_read( void )
       "problems with _O_BINARY _write / _O_TEXT _read\n");
   _close(tempfd);
 
-  ok(_chmod (tempf, _S_IREAD | _S_IWRITE) == 0,
+   ret =_chmod (tempf, _S_IREAD | _S_IWRITE);
+  ok( ret == 0,
      "Can't chmod '%s' to read-write: %d\n", tempf, errno);
-  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
+  ret = unlink(tempf);
+  ok( ret !=-1 ,"Can't unlink '%s': %d\n", tempf, errno);
 }
 
 static void test_file_inherit_child(const char* fd_s)
 {
     int fd = atoi(fd_s);
     char buffer[32];
+    int ret;
 
-    ok(write(fd, "Success", 8) == 8, "Couldn't write in child process on %d (%s)\n", fd, strerror(errno));
+    ret =write(fd, "Success", 8);
+    ok( ret == 8, "Couldn't write in child process on %d (%s)\n", fd, strerror(errno));
     lseek(fd, 0, SEEK_SET);
     ok(read(fd, buffer, sizeof (buffer)) == 8, "Couldn't read back the data\n");
     ok(memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
@@ -249,8 +257,10 @@ static void test_file_inherit_child(const char* fd_s)
 static void test_file_inherit_child_no(const char* fd_s)
 {
     int fd = atoi(fd_s);
+    int ret;
 
-    ok(write(fd, "Success", 8) == -1 && errno == EBADF, 
+    ret = write(fd, "Success", 8);
+    ok( ret == -1 && errno == EBADF, 
        "Wrong write result in child process on %d (%s)\n", fd, strerror(errno));
 }
  

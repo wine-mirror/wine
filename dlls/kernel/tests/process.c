@@ -202,6 +202,7 @@ static void     doChild(const char* file, const char* option)
     char                bufA[MAX_PATH];
     WCHAR               bufW[MAX_PATH];
     HANDLE              hFile = CreateFileA(file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    BOOL ret;
 
     if (hFile == INVALID_HANDLE_VALUE) return;
 
@@ -329,11 +330,14 @@ static void     doChild(const char* file, const char* option)
         /* now that we have written all relevant information, let's change it */
         ok(SetConsoleCP(1252), "Setting CP\n");
         ok(SetConsoleOutputCP(1252), "Setting SB CP\n");
-        ok(SetConsoleMode(hConIn, modeIn ^ 1), "Setting mode (%ld)\n", GetLastError());
-        ok(SetConsoleMode(hConOut, modeOut ^ 1), "Setting mode (%ld)\n", GetLastError());
+        ret = SetConsoleMode(hConIn, modeIn ^ 1);
+        ok( ret, "Setting mode (%ld)\n", GetLastError());
+        ret = SetConsoleMode(hConOut, modeOut ^ 1);
+        ok( ret, "Setting mode (%ld)\n", GetLastError());
         sbi.dwCursorPosition.X ^= 1;
         sbi.dwCursorPosition.Y ^= 1;
-        ok(SetConsoleCursorPosition(hConOut, sbi.dwCursorPosition), "Setting cursor position (%ld)\n", GetLastError());
+        ret = SetConsoleCursorPosition(hConOut, sbi.dwCursorPosition);
+        ok( ret, "Setting cursor position (%ld)\n", GetLastError());
     }
     if (option && strcmp(option, "stdhandle") == 0)
     {

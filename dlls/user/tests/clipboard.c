@@ -37,6 +37,7 @@ static BOOL is_win9x = FALSE;
 static void test_ClipboardOwner(void)
 {
     HWND hWnd1, hWnd2;
+    BOOL ret;
 
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef,
@@ -59,7 +60,8 @@ static void test_ClipboardOwner(void)
     ok(OpenClipboard(0), "OpenClipboard failed\n");
     ok(!GetClipboardOwner(), "clipboard should still be not owned\n");
     ok(!OpenClipboard(hWnd1), "OpenClipboard should fail since clipboard already opened\n");
-    ok(CloseClipboard(), "CloseClipboard error %ld\n", GetLastError());
+    ret = CloseClipboard();
+    ok( ret, "CloseClipboard error %ld\n", GetLastError());
 
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
 
@@ -69,18 +71,22 @@ static void test_ClipboardOwner(void)
 
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should still be not owned\n");
-    ok(EmptyClipboard(), "EmptyClipboard error %ld\n", GetLastError());
+    ret = EmptyClipboard();
+    ok( ret, "EmptyClipboard error %ld\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should be owned by %p, not by %p\n", hWnd1, GetClipboardOwner());
 
     SetLastError(0xdeadbeef);
     ok(!OpenClipboard(hWnd2) && GetLastError() == 0xdeadbeef,
        "OpenClipboard should fail without setting last error value\n");
 
-    ok(CloseClipboard(), "CloseClipboard error %ld\n", GetLastError());
+    ret = CloseClipboard();
+    ok( ret, "CloseClipboard error %ld\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should still be owned\n");
 
-    ok(DestroyWindow(hWnd1), "DestroyWindow error %ld\n", GetLastError());
-    ok(DestroyWindow(hWnd2), "DestroyWindow error %ld\n", GetLastError());
+    ret = DestroyWindow(hWnd1);
+    ok( ret, "DestroyWindow error %ld\n", GetLastError());
+    ret = DestroyWindow(hWnd2);
+    ok( ret, "DestroyWindow error %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
 }
@@ -91,6 +97,7 @@ static void test_RegisterClipboardFormatA(void)
     UINT format_id, format_id2;
     char buf[256];
     int len;
+    BOOL ret;
 
     format_id = RegisterClipboardFormatA("my_cool_clipboard_format");
     ok(format_id > 0xc000 && format_id < 0xffff, "invalid clipboard format id %04x\n", format_id);
@@ -149,7 +156,8 @@ todo_wine
     }
 #endif
 
-    ok(OpenClipboard(0), "OpenClipboard error %ld\n", GetLastError());
+    ret = OpenClipboard(0);
+    ok( ret, "OpenClipboard error %ld\n", GetLastError());
 
     trace("# of formats available: %d\n", CountClipboardFormats());
 
@@ -161,8 +169,10 @@ todo_wine
         trace("%04x: %s\n", format_id, len ? buf : "");
     }
 
-    ok(EmptyClipboard(), "EmptyClipboard error %ld\n", GetLastError());
-    ok(CloseClipboard(), "CloseClipboard error %ld\n", GetLastError());
+    ret = EmptyClipboard();
+    ok( ret, "EmptyClipboard error %ld\n", GetLastError());
+    ret =CloseClipboard();
+    ok( ret, "CloseClipboard error %ld\n", GetLastError());
 
     if (CountClipboardFormats())
     {

@@ -140,12 +140,13 @@ static void test_lzread(void)
   DWORD ret;
   int cfile;
   OFSTRUCT test;
+  BOOL retok;
 
   /* Create the compressed file. */
   file = CreateFile(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
   ok(file != INVALID_HANDLE_VALUE, "Could not create test file\n");
-  ok2(WriteFile(file, compressed_file, compressed_file_size, &ret, 0),
-     "WriteFile: error %ld\n", GetLastError());
+  retok = WriteFile(file, compressed_file, compressed_file_size, &ret, 0);
+  ok2( retok, "WriteFile: error %ld\n", GetLastError());
   ok(ret == compressed_file_size, "Wrote wrong number of bytes with WriteFile?\n");
   CloseHandle(file);
 
@@ -177,13 +178,14 @@ static void test_lzcopy(void)
   DWORD ret;
   int source, dest;
   OFSTRUCT stest, dtest;
+  BOOL retok;
 
   /* Create the compressed file. */
   file = CreateFile(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
   ok2(file != INVALID_HANDLE_VALUE, 
      "CreateFile: error %ld\n", GetLastError());
-  ok2(WriteFile(file, compressed_file, compressed_file_size, &ret, 0),
-     "WriteFile error %ld\n", GetLastError());
+  retok = WriteFile(file, compressed_file, compressed_file_size, &ret, 0);
+  ok2( retok, "WriteFile error %ld\n", GetLastError());
   ok(ret == compressed_file_size, "Wrote wrong number of bytes\n");
   CloseHandle(file);
 
@@ -203,8 +205,8 @@ static void test_lzcopy(void)
   ok2(file != INVALID_HANDLE_VALUE,
      "CreateFile: error %ld\n", GetLastError());
 
-  ok2(ReadFile(file, buf, uncompressed_data_size*2, &ret, 0) &&
-     ret == uncompressed_data_size, "ReadFile: error %ld\n", GetLastError());
+  retok = ReadFile(file, buf, uncompressed_data_size*2, &ret, 0);
+  ok2( retok && ret == uncompressed_data_size, "ReadFile: error %ld\n", GetLastError());
   /* Compare what we read with what we think we should read. */
   ok(!memcmp(buf, uncompressed_data, uncompressed_data_size),
      "buffer contents mismatch\n");

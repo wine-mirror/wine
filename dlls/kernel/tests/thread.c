@@ -438,14 +438,14 @@ VOID test_thread_priority(void)
          if (rc!=0 || GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
              ok(rc!=0,"error=%ld\n",GetLastError());
 
-             ok(pSetThreadPriorityBoost(curthread,1)!=0,
-                "error=%ld\n",GetLastError());
+             rc = pSetThreadPriorityBoost(curthread,1);
+             ok( rc != 0, "error=%ld\n",GetLastError());
              rc=pGetThreadPriorityBoost(curthread,&disabled);
              ok(rc!=0 && disabled==1,
                 "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
 
-             ok(pSetThreadPriorityBoost(curthread,0)!=0,
-                "error=%ld\n",GetLastError());
+             rc = pSetThreadPriorityBoost(curthread,0);
+             ok( rc != 0, "error=%ld\n",GetLastError());
              rc=pGetThreadPriorityBoost(curthread,&disabled);
              ok(rc!=0 && disabled==0,
                 "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);

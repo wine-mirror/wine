@@ -1672,6 +1672,7 @@ static void test_SetMenu(HWND parent)
     HWND child;
     HMENU hMenu, ret;
     BOOL is_win9x = GetWindowLongW(parent, GWL_WNDPROC) == 0;
+    BOOL retok;
 
     hMenu = CreateMenu();
     assert(hMenu);
@@ -1681,7 +1682,8 @@ static void test_SetMenu(HWND parent)
     ret = GetMenu(parent);
     ok(ret == hMenu, "unexpected menu id %p\n", ret);
     /* test whether we can destroy a menu assigned to a window */
-    ok(DestroyMenu(hMenu), "DestroyMenu error %ld\n", GetLastError());
+    retok = DestroyMenu(hMenu);
+    ok( retok, "DestroyMenu error %ld\n", GetLastError());
     ok(!IsMenu(hMenu), "menu handle should be not valid after DestroyMenu\n");
     ret = GetMenu(parent);
     /* This test fails on Win9x */
@@ -2050,6 +2052,7 @@ static void test_capture_3(HWND hwnd1, HWND hwnd2)
 static void test_keyboard_input(HWND hwnd)
 {
     MSG msg;
+    BOOL ret;
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
@@ -2064,21 +2067,24 @@ static void test_keyboard_input(HWND hwnd)
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
     PostThreadMessageA(GetCurrentThreadId(), WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(!msg.hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
     keybd_event(VK_SPACE, 0, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     SetFocus(0);
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
@@ -2088,21 +2094,24 @@ static void test_keyboard_input(HWND hwnd)
     PostMessageA(hwnd, WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     PostThreadMessageA(GetCurrentThreadId(), WM_KEYDOWN, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(!msg.hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     keybd_event(VK_SPACE, 0, 0, 0);
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
     ok(msg.hwnd == hwnd && msg.message == WM_SYSKEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 }
 
 static void test_mouse_input(HWND hwnd)
@@ -2112,6 +2121,7 @@ static void test_mouse_input(HWND hwnd)
     int x, y;
     HWND popup;
     MSG msg;
+    BOOL ret;
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
@@ -2150,7 +2160,8 @@ static void test_mouse_input(HWND hwnd)
     /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
     if (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
         ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, 0);
     ShowWindow(popup, SW_HIDE);
@@ -2160,7 +2171,8 @@ static void test_mouse_input(HWND hwnd)
 
     mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, 0);
     ShowWindow(hwnd, SW_HIDE);
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok( !ret, "message %04x available\n", msg.message);
 
     DestroyWindow(popup);
 }

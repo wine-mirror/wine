@@ -205,12 +205,13 @@ static void test_alloc_shared()
     HANDLE hmem;
     int val;
     int* p;
+    BOOL ret;
 
     procid=GetCurrentProcessId();
     hmem=pSHAllocShared(NULL,10,procid);
     ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %ld\n", GetLastError());
-    ok(pSHFreeShared(hmem, procid),
-       "SHFreeShared failed: %ld\n", GetLastError());
+    ret = pSHFreeShared(hmem, procid);
+    ok( ret, "SHFreeShared failed: %ld\n", GetLastError());
 
     val=0x12345678;
     hmem=pSHAllocShared(&val,4,procid);
@@ -220,10 +221,11 @@ static void test_alloc_shared()
     ok(p!=NULL,"SHLockShared failed: %ld\n", GetLastError());
     if (p!=NULL)
         ok(*p==val,"Wrong value in shared memory: %d instead of %d\n",*p,val);
-    ok(pSHUnlockShared(p),"SHUnlockShared failed: %ld\n", GetLastError());
+    ret = pSHUnlockShared(p);
+    ok( ret, "SHUnlockShared failed: %ld\n", GetLastError());
 
-    ok(pSHFreeShared(hmem, procid),
-       "SHFreeShared failed: %ld\n", GetLastError());
+    ret = pSHFreeShared(hmem, procid);
+    ok( ret, "SHFreeShared failed: %ld\n", GetLastError());
 }
 
 START_TEST(ordinal)

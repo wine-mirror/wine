@@ -821,6 +821,7 @@ static void testNonExistentPath(void)
                 STARTUPINFOA startup;
                 PROCESS_INFORMATION info;
                 HRESULT hr;
+                BOOL ret;
 
                 wnsprintfA(buffer, sizeof(buffer), "%s tests/shellpath.c 1",
                  selfname);
@@ -856,8 +857,8 @@ static void testNonExistentPath(void)
                 ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0,
                  "child process termination\n");
 
-                ok(RemoveDirectoryA(modifiedPath),
-                 "RemoveDirectoryA failed: %ld\n", GetLastError());
+                ret = RemoveDirectoryA(modifiedPath);
+                ok( ret, "RemoveDirectoryA failed: %ld\n", GetLastError());
             }
         }
         else if (winetest_interactive)

@@ -2168,6 +2168,7 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
 {
     DWORD style, exstyle;
     INT xmin, xmax;
+    BOOL ret;
 
     exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
     style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -2177,7 +2178,8 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     if (clear) ok(style & clear, "style %08lx should be set\n", clear);
     if (set) ok(!(style & set), "style %08lx should not be set\n", set);
 
-    ok(SetScrollRange(hwnd, ctl, min, max, FALSE), "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ret = SetScrollRange(hwnd, ctl, min, max, FALSE);
+    ok( ret, "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
     if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
         ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollRange(SB_HORZ/SB_VERT) NC", FALSE);
     else
@@ -2188,13 +2190,15 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     if (clear) ok(!(style & clear), "style %08lx should not be set\n", clear);
 
     /* a subsequent call should do nothing */
-    ok(SetScrollRange(hwnd, ctl, min, max, FALSE), "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ret = SetScrollRange(hwnd, ctl, min, max, FALSE);
+    ok( ret, "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
     ok_sequence(WmEmptySeq, "SetScrollRange(SB_HORZ/SB_VERT)", FALSE);
 
     xmin = 0xdeadbeef;
     xmax = 0xdeadbeef;
     trace("Ignore GetScrollRange error below if you are on Win9x\n");
-    ok(GetScrollRange(hwnd, ctl, &xmin, &xmax), "GetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ret = GetScrollRange(hwnd, ctl, &xmin, &xmax);
+    ok( ret, "GetScrollRange(%d) error %ld\n", ctl, GetLastError());
     ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)", FALSE);
     ok(xmin == min, "unexpected min scroll value %d\n", xmin);
     ok(xmax == max, "unexpected max scroll value %d\n", xmax);
@@ -2204,6 +2208,7 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
 {
     DWORD style, exstyle;
     SCROLLINFO si;
+    BOOL ret;
 
     exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
     style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -2244,7 +2249,8 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     si.fMask = SIF_RANGE;
     si.nMin = 0xdeadbeef;
     si.nMax = 0xdeadbeef;
-    ok(GetScrollInfo(hwnd, ctl, &si), "GetScrollInfo error %ld\n", GetLastError());
+    ret = GetScrollInfo(hwnd, ctl, &si);
+    ok( ret, "GetScrollInfo error %ld\n", GetLastError());
     ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)", FALSE);
     ok(si.nMin == min, "unexpected min scroll value %d\n", si.nMin);
     ok(si.nMax == max, "unexpected max scroll value %d\n", si.nMax);
@@ -2255,23 +2261,27 @@ static void test_scroll_messages(HWND hwnd)
 {
     SCROLLINFO si;
     INT min, max;
+    BOOL ret;
 
     min = 0xdeadbeef;
     max = 0xdeadbeef;
-    ok(GetScrollRange(hwnd, SB_CTL, &min, &max), "GetScrollRange error %ld\n", GetLastError());
+    ret = GetScrollRange(hwnd, SB_CTL, &min, &max);
+    ok( ret, "GetScrollRange error %ld\n", GetLastError());
     if (sequence->message != WmGetScrollRangeSeq[0].message)
         trace("GetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
     /* values of min and max are undefined */
     flush_sequence();
 
-    ok(SetScrollRange(hwnd, SB_CTL, 10, 150, FALSE), "SetScrollRange error %ld\n", GetLastError());
+    ret = SetScrollRange(hwnd, SB_CTL, 10, 150, FALSE);
+    ok( ret, "SetScrollRange error %ld\n", GetLastError());
     if (sequence->message != WmSetScrollRangeSeq[0].message)
         trace("SetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
     flush_sequence();
 
     min = 0xdeadbeef;
     max = 0xdeadbeef;
-    ok(GetScrollRange(hwnd, SB_CTL, &min, &max), "GetScrollRange error %ld\n", GetLastError());
+    ret = GetScrollRange(hwnd, SB_CTL, &min, &max);
+    ok( ret, "GetScrollRange error %ld\n", GetLastError());
     if (sequence->message != WmGetScrollRangeSeq[0].message)
         trace("GetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
     /* values of min and max are undefined */
@@ -2303,7 +2313,8 @@ static void test_scroll_messages(HWND hwnd)
     si.fMask = SIF_RANGE;
     si.nMin = 0xdeadbeef;
     si.nMax = 0xdeadbeef;
-    ok(GetScrollInfo(hwnd, SB_CTL, &si), "GetScrollInfo error %ld\n", GetLastError());
+    ret = GetScrollInfo(hwnd, SB_CTL, &si);
+    ok( ret, "GetScrollInfo error %ld\n", GetLastError());
     if (sequence->message != WmGetScrollInfoSeq[0].message)
         trace("GetScrollInfo(SB_CTL) generated unknown message %04x\n", sequence->message);
     /* values of min and max are undefined */
@@ -3366,6 +3377,7 @@ static void test_interthread_messages(void)
     char buf[256];
     int len, expected_len;
     struct wnd_event wnd_event;
+    BOOL ret;
 
     wnd_event.event = CreateEventW(NULL, 0, 0, NULL);
     if (!wnd_event.event)
@@ -3415,7 +3427,8 @@ static void test_interthread_messages(void)
     ok(!len && GetLastError() == 0xdeadbeef,
        "DispatchMessageA(WM_TIMER) failed on another thread window: ret %d, error %ld\n", len, GetLastError());
 
-    ok(PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0), "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
+    ret = PostMessageA(wnd_event.hwnd, WM_QUIT, 0, 0);
+    ok( ret, "PostMessageA(WM_QUIT) error %ld\n", GetLastError());
 
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
@@ -3549,8 +3562,9 @@ static void test_accelerators(void)
     HACCEL hAccel;
     HWND hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
                                 100, 100, 200, 200, 0, 0, 0, NULL);
-    assert(hwnd != 0);
+    BOOL ret;
 
+    assert(hwnd != 0);
     SetFocus(hwnd);
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
@@ -3607,7 +3621,8 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 1", FALSE);
 
-    ok(DestroyAcceleratorTable(hAccel), "DestroyAcceleratorTable error %ld\n", GetLastError());
+    ret = DestroyAcceleratorTable(hAccel);
+    ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
 
     hAccel = LoadAccelerators(GetModuleHandleA(0), MAKEINTRESOURCE(2));
     assert(hAccel != 0);
@@ -3657,7 +3672,8 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 2", FALSE);
 
-    ok(DestroyAcceleratorTable(hAccel), "DestroyAcceleratorTable error %ld\n", GetLastError());
+    ret = DestroyAcceleratorTable(hAccel);
+    ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
 
     DestroyWindow(hwnd);
 }

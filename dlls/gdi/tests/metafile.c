@@ -38,6 +38,7 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const INT *dx;
     INT *orig_dx = (INT *)param;
     LOGFONTA device_lf;
+    INT ret;
 
     trace("hdc %p, emr->iType %ld, emr->nSize %ld, param %p\n",
            hdc, emr->iType, emr->nSize, (void *)param);
@@ -55,8 +56,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         const EMREXTTEXTOUTA *emr_ExtTextOutA = (const EMREXTTEXTOUTA *)emr;
         dx = (const INT *)((const char *)emr + emr_ExtTextOutA->emrtext.offDx);
 
-        ok(GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf) == sizeof(device_lf),
-           "GetObjectA error %ld\n", GetLastError());
+        ret = GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf);
+        ok( ret == sizeof(device_lf), "GetObjectA error %ld\n", GetLastError());
 
         /* compare up to lfOutPrecision, other values are not interesting,
          * and in fact sometimes arbitrary adapted by Win9x.
@@ -79,8 +80,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         const EMREXTTEXTOUTW *emr_ExtTextOutW = (const EMREXTTEXTOUTW *)emr;
         dx = (const INT *)((const char *)emr + emr_ExtTextOutW->emrtext.offDx);
 
-        ok(GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf) == sizeof(device_lf),
-           "GetObjectA error %ld\n", GetLastError());
+        ret = GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(device_lf), &device_lf);
+        ok( ret == sizeof(device_lf), "GetObjectA error %ld\n", GetLastError());
 
         /* compare up to lfOutPrecision, other values are not interesting,
          * and in fact sometimes arbitrary adapted by Win9x.
@@ -114,6 +115,7 @@ static void test_ExtTextOut(void)
     static const char text[] = "Simple text to test ExtTextOut on metafiles";
     INT i, len, dx[256];
     static const RECT rc = { 0, 0, 100, 100 };
+    BOOL ret;
 
     assert(sizeof(dx)/sizeof(dx[0]) >= lstrlenA(text));
 
@@ -145,8 +147,8 @@ static void test_ExtTextOut(void)
     len = lstrlenA(text);
     for (i = 0; i < len; i++)
     {
-        ok(GetCharWidthA(hdcDisplay, text[i], text[i], &dx[i]),
-           "GetCharWidthA error %ld\n", GetLastError());
+        ret = GetCharWidthA(hdcDisplay, text[i], text[i], &dx[i]);
+        ok( ret, "GetCharWidthA error %ld\n", GetLastError());
     }
     hFont = SelectObject(hdcDisplay, hFont);
 
@@ -161,33 +163,37 @@ static void test_ExtTextOut(void)
     hFont = SelectObject(hdcMetafile, hFont);
 
     /* 1. pass NULL lpDx */
-    ok(ExtTextOutA(hdcMetafile, 0, 0, 0, &rc, text, lstrlenA(text), NULL),
-       "ExtTextOutA error %ld\n", GetLastError());
+    ret = ExtTextOutA(hdcMetafile, 0, 0, 0, &rc, text, lstrlenA(text), NULL);
+    ok( ret, "ExtTextOutA error %ld\n", GetLastError());
 
     /* 2. pass custom lpDx */
-    ok(ExtTextOutA(hdcMetafile, 0, 20, 0, &rc, text, lstrlenA(text), dx),
-       "ExtTextOutA error %ld\n", GetLastError());
+    ret = ExtTextOutA(hdcMetafile, 0, 20, 0, &rc, text, lstrlenA(text), dx);
+    ok( ret, "ExtTextOutA error %ld\n", GetLastError());
 
     hFont = SelectObject(hdcMetafile, hFont);
-    ok(DeleteObject(hFont), "DeleteObject error %ld\n", GetLastError());
+    ret = DeleteObject(hFont);
+    ok( ret, "DeleteObject error %ld\n", GetLastError());
 
     hMetafile = CloseEnhMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseEnhMetaFile error %ld\n", GetLastError());
 
     ok(!GetObjectType(hdcMetafile), "CloseEnhMetaFile has to destroy metafile hdc\n");
 
-    ok(PlayEnhMetaFile(hdcDisplay, hMetafile, &rc), "PlayEnhMetaFile error %ld\n", GetLastError());
+    ret = PlayEnhMetaFile(hdcDisplay, hMetafile, &rc);
+    ok( ret, "PlayEnhMetaFile error %ld\n", GetLastError());
 
-    ok(EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, &rc),
-       "EnumEnhMetaFile error %ld\n", GetLastError());
+    ret = EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, &rc);
+    ok( ret, "EnumEnhMetaFile error %ld\n", GetLastError());
 
     ok(emr_processed, "EnumEnhMetaFile couldn't find EMR_EXTTEXTOUTA or EMR_EXTTEXTOUTW record\n");
 
     ok(!EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, NULL),
        "A valid hdc has to require a valid rc\n");
 
-    ok(DeleteEnhMetaFile(hMetafile), "DeleteEnhMetaFile error %ld\n", GetLastError());
-    ok(ReleaseDC(hwnd, hdcDisplay), "ReleaseDC error %ld\n", GetLastError());
+    ret = DeleteEnhMetaFile(hMetafile);
+    ok( ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
+    ret = ReleaseDC(hwnd, hdcDisplay);
+    ok( ret, "ReleaseDC error %ld\n", GetLastError());
 }
 
 /* Win-format metafile (mfdrv) tests */
@@ -317,6 +323,7 @@ static void test_mf_Blank(void)
     HDC hdcMetafile;
     HMETAFILE hMetafile;
     INT caps;
+    BOOL ret;
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
@@ -335,7 +342,8 @@ static void test_mf_Blank(void)
         "mf_blank") != 0)
             dump_mf_bits (hMetafile, "mf_Blank");
 
-    ok(DeleteMetaFile(hMetafile), "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
+    ret = DeleteMetaFile(hMetafile);
+    ok( ret, "DeleteMetaFile(%p) error %ld\n", hMetafile, GetLastError());
 }
 
 /* Simple APIs from mfdrv/graphics.c
@@ -346,14 +354,18 @@ static void test_mf_Graphics()
     HDC hdcMetafile;
     HMETAFILE hMetafile;
     POINT oldpoint;
+    BOOL ret;
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %ld\n", GetLastError());
     trace("hdcMetafile %p\n", hdcMetafile);
 
-    ok(MoveToEx(hdcMetafile, 1, 1, NULL), "MoveToEx error %ld.\n", GetLastError());
-    ok(LineTo(hdcMetafile, 2, 2), "LineTo error %ld.\n", GetLastError());
-    ok(MoveToEx(hdcMetafile, 1, 1, &oldpoint), "MoveToEx error %ld.\n", GetLastError());
+    ret = MoveToEx(hdcMetafile, 1, 1, NULL);
+    ok( ret, "MoveToEx error %ld.\n", GetLastError());
+    ret = LineTo(hdcMetafile, 2, 2);
+    ok( ret, "LineTo error %ld.\n", GetLastError());
+    ret = MoveToEx(hdcMetafile, 1, 1, &oldpoint);
+    ok( ret, "MoveToEx error %ld.\n", GetLastError());
 
 /* oldpoint gets garbage under Win XP, so the following test would
  * work under Wine but fails under Windows:
@@ -363,7 +375,8 @@ static void test_mf_Graphics()
  *       oldpoint.x, oldpoint.y);
  */
 
-    ok(Ellipse(hdcMetafile, 0, 0, 2, 2), "Ellipse error %ld.\n", GetLastError());
+    ret = Ellipse(hdcMetafile, 0, 0, 2, 2);
+    ok( ret, "Ellipse error %ld.\n", GetLastError());
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %ld\n", GetLastError());
@@ -373,7 +386,8 @@ static void test_mf_Graphics()
         "mf_Graphics") != 0)
             dump_mf_bits (hMetafile, "mf_Graphics");
 
-    ok(DeleteMetaFile(hMetafile), "DeleteMetaFile(%p) error %ld\n",
+    ret = DeleteMetaFile(hMetafile);
+    ok( ret, "DeleteMetaFile(%p) error %ld\n",
         hMetafile, GetLastError());
 }
 
@@ -383,6 +397,7 @@ static void test_mf_PatternBrush(void)
     HMETAFILE hMetafile;
     LOGBRUSH *orig_lb;
     HBRUSH hBrush;
+    BOOL ret;
 
     orig_lb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LOGBRUSH));
 
@@ -409,9 +424,12 @@ static void test_mf_PatternBrush(void)
         "mf_Pattern_Brush") != 0)
             dump_mf_bits (hMetafile, "mf_Pattern_Brush");
 
-    ok(DeleteMetaFile(hMetafile), "DeleteMetaFile error %ld\n", GetLastError());
-    ok(DeleteObject(hBrush), "DeleteObject(HBRUSH) error %ld\n", GetLastError());
-    ok(DeleteObject((HBITMAP *)orig_lb->lbHatch), "DeleteObject(HBITMAP) error %ld\n",
+    ret = DeleteMetaFile(hMetafile);
+    ok( ret, "DeleteMetaFile error %ld\n", GetLastError());
+    ret = DeleteObject(hBrush);
+    ok( ret, "DeleteObject(HBRUSH) error %ld\n", GetLastError());
+    ret = DeleteObject((HBITMAP *)orig_lb->lbHatch);
+    ok( ret, "DeleteObject(HBITMAP) error %ld\n",
         GetLastError());
     HeapFree (GetProcessHeap(), 0, orig_lb);
 }

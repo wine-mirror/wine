@@ -630,6 +630,7 @@ static void test_OpenColorProfileA()
 {
     PROFILE profile;
     HPROFILE handle;
+    BOOL ret;
 
     profile.dwType = PROFILE_FILENAME;
     profile.pProfileData = NULL;
@@ -670,7 +671,8 @@ static void test_OpenColorProfileA()
         handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
 
-        ok( CloseColorProfile( handle ), "CloseColorProfile() failed (%ld)\n", GetLastError() );
+        ret = CloseColorProfile( handle );
+        ok( ret, "CloseColorProfile() failed (%ld)\n", GetLastError() );
     }
 }
 
@@ -678,6 +680,7 @@ static void test_OpenColorProfileW()
 {
     PROFILE profile;
     HPROFILE handle;
+    BOOL ret;
 
     profile.dwType = PROFILE_FILENAME;
     profile.pProfileData = NULL;
@@ -718,7 +721,8 @@ static void test_OpenColorProfileW()
         handle = OpenColorProfileW( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileW() failed (%ld)\n", GetLastError() );
 
-        ok( CloseColorProfile( handle ), "CloseColorProfile() failed (%ld)\n", GetLastError() );
+        ret = CloseColorProfile( handle );
+        ok( ret, "CloseColorProfile() failed (%ld)\n", GetLastError() );
     }
 }
 
