@@ -297,10 +297,21 @@ static void sock_destroy( struct object *obj )
 static struct object *create_socket( int family, int type, int protocol )
 {
     struct sock *sock;
+    int sockfd;
 
-    if (!(sock = alloc_object( &sock_ops )))
+    sockfd = socket( family, type, protocol );
+    if (debug_level)
+        fprintf(stderr,"socket(%d,%d,%d)=%d\n",family,type,protocol,sockfd);
+    if (sockfd == -1) {
+        sock_set_error();
         return NULL;
-    sock->select.fd      = socket(family,type,protocol);
+    }
+    fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
+    if (!(sock = alloc_object( &sock_ops ))) {
+        close( sockfd );
+        return NULL;
+    }
+    sock->select.fd      = sockfd;
     sock->select.func    = sock_select_event;
     sock->select.private = sock;
     sock->state          = (type!=SOCK_STREAM) ? WS_FD_READ|WS_FD_WRITE : 0;
@@ -308,9 +319,6 @@ static struct object *create_socket( int family, int type, int protocol )
     sock->hmask          = 0;
     sock->pmask          = 0;
     sock->event          = NULL;
-    if (debug_level)
-        fprintf(stderr,"socket(%d,%d,%d)=%d\n",family,type,protocol,sock->select.fd);
-    fcntl(sock->select.fd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
     register_select_user( &sock->select );
     sock_reselect( sock );
     clear_error();
@@ -343,6 +351,7 @@ static struct object *accept_socket( int handle )
     }
     if (!(acceptsock = alloc_object( &sock_ops )))
     {
+        close( acceptfd );
         release_object( sock );
         return NULL;
     }
