@@ -1,0 +1,13 @@
+#!/bin/sh
+name="$1"
+if [ "$name" == "" ] ; then
+    echo -n 'Function: '
+    read name;
+fi
+
+while [ "$name" != "" ]
+do
+    find $(dirname $0)/../ -name \*.spec | xargs -l1024 grep -i $name
+    echo -n 'Function: '
+    read name
+done
