@@ -55,48 +55,48 @@ static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
 /***********************************************************************
  *           PrintDlg16   (COMMDLG.20)
  */
-BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
+BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
 {
-    HANDLE16 hInst;
-    BOOL16 bRet = FALSE;
-    LPCVOID template;
-    HWND hwndDialog;
-    HANDLE hResInfo, hDlgTmpl;
-    LPSTR rscname;
-    LPPRINTDLG16 lpPrint = (LPPRINTDLG16)PTR_SEG_TO_LIN(printdlg);
+    PRINTDLGA Print32;
+    BOOL16 ret;
 
-    TRACE("(%p) -- Flags=%08lX\n", lpPrint, lpPrint->Flags );
-
-    if (lpPrint->Flags & PD_RETURNDEFAULT)
-        /* FIXME: should fill lpPrint->hDevMode and lpPrint->hDevNames here */
-        return TRUE;
-
-    if (lpPrint->Flags & PD_PRINTSETUP)
-        rscname = "PRINT_SETUP";
-    else
-        rscname = "PRINT";
-
-    if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, rscname, RT_DIALOGA)))
-    {
-	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-	return FALSE;
+    memset(&Print32, 0, sizeof(Print32));
+    Print32.lStructSize = sizeof(Print32);
+    Print32.hwndOwner   = lpPrint->hwndOwner;
+    Print32.hDevMode    = lpPrint->hDevMode;
+    Print32.hDevNames   = lpPrint->hDevNames;
+    Print32.Flags       = lpPrint->Flags;
+    Print32.nFromPage   = lpPrint->nFromPage;
+    Print32.nToPage     = lpPrint->nToPage;
+    Print32.nMinPage    = lpPrint->nMinPage;
+    Print32.nMaxPage    = lpPrint->nMaxPage;
+    Print32.nCopies     = lpPrint->nCopies;
+    Print32.hInstance   = lpPrint->hInstance;
+    Print32.lCustData   = lpPrint->lCustData;
+    if(lpPrint->lpfnPrintHook) {
+        FIXME("Need to allocate thunk\n");
+/*        Print32.lpfnPrintHook = lpPrint->lpfnPrintHook;*/
     }
-    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
-        !(template = LockResource( hDlgTmpl )))
-    {
-	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	return FALSE;
+    if(lpPrint->lpfnSetupHook) {
+        FIXME("Need to allocate thunk\n");
+/*	Print32.lpfnSetupHook = lpPrint->lpfnSetupHook;*/
     }
+    Print32.lpPrintTemplateName = PTR_SEG_TO_LIN(lpPrint->lpPrintTemplateName);
+    Print32.lpSetupTemplateName = PTR_SEG_TO_LIN(lpPrint->lpSetupTemplateName);
+    Print32.hPrintTemplate = lpPrint->hPrintTemplate;
+    Print32.hSetupTemplate = lpPrint->hSetupTemplate;
 
-    hInst = GetWindowLongA( lpPrint->hwndOwner, GWL_HINSTANCE );
-    hwndDialog = DIALOG_CreateIndirect( hInst, template, TRUE,
-                                        lpPrint->hwndOwner,
-                               (DLGPROC16)((lpPrint->Flags & PD_PRINTSETUP) ?
-                                /* FIXME: PrintSetupDlgProc */ PrintDlgProcA :
-                                PrintDlgProcA ),
-                                printdlg, WIN_PROC_32A );
-    if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpPrint->hwndOwner);
-    return bRet;
+    ret = PrintDlgA(&Print32);
+
+    lpPrint->hDevMode  = Print32.hDevMode;
+    lpPrint->hDevNames = Print32.hDevNames;
+    lpPrint->hDC       = Print32.hDC;
+    lpPrint->Flags     = Print32.Flags;
+    lpPrint->nFromPage = Print32.nFromPage;
+    lpPrint->nToPage   = Print32.nToPage;
+    lpPrint->nCopies   = Print32.nCopies;
+
+    return ret;
 }
 
 
