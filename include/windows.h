@@ -23,6 +23,11 @@
 #error Wine should not include windows.h internally
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER >= 800) && !defined(__cplusplus)
+/* TYPE_ALIGNMENT generates this - move it outside the warning push/pop scope. */
+# pragma warning(disable:4116)
+#endif
+
 #if defined(RC_INVOKED) && !defined(NOWINRES)
 #include "winresrc.h"
 #else /* RC_INVOKED && !NOWINRES */
