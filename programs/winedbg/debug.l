@@ -143,8 +143,8 @@ STRING     \"[^\n"]+\"
 <INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }
 <INITIAL,NOPROCESS>help|hel|he|"?"	{ BEGIN(HELP_CMD); return tHELP; }
 
-<INITIAL>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
-<INITIAL>where|wher|whe                 { BEGIN(NOCMD); return tBACKTRACE; }
+<INITIAL,NOPROCESS>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
+<INITIAL,NOPROCESS>where|wher|whe       { BEGIN(NOCMD); return tBACKTRACE; }
 
 <INITIAL>cont|con|co|c   		{ BEGIN(NOCMD); return tCONT; }
 <INITIAL>pass|pas|pa   			{ BEGIN(NOCMD); return tPASS; }
@@ -200,6 +200,7 @@ signed					{ return tSIGNED; }
 struct					{ return tSTRUCT; }
 union					{ return tUNION; }
 enum					{ return tENUM; }
+all                                     { return tALL; }
 
 {IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
 "$"{IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext+1); return tINTVAR; }

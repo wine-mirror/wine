@@ -1102,6 +1102,15 @@ int main(int argc, char** argv)
     /* parse options */
     while (argc > 1 && argv[1][0] == '-')
     {
+        if (!strcmp(argv[1], "--command"))
+        {
+            argc--; argv++;
+            arg_command = HeapAlloc(GetProcessHeap(), 0, strlen(argv[1])+2);
+            strcpy(arg_command, argv[1]);
+            strcat(arg_command, "\n");
+            argc--; argv++;
+            continue;
+        }
         if (!strcmp(argv[1], "--auto"))
         {
             if (dbg_action_mode != none_mode) return dbg_winedbg_usage();

@@ -109,6 +109,8 @@ enum dbg_exec_mode
 #endif
 };
 
+extern char *arg_command;
+
 struct dbg_breakpoint
 {
     ADDRESS             addr;

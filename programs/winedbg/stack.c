@@ -28,6 +28,7 @@
 #include "stackframe.h"
 #include "winbase.h"
 #include "wine/debug.h"
+#include "tlhelp32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
@@ -103,6 +104,48 @@ void stack_backtrace(DWORD tid, BOOL noisy)
     struct dbg_thread*          thread;
     unsigned                    nf;
 
+    if (tid == -1)  /* backtrace every thread in every process except the debugger itself, invoking via "bt all" */
+    {
+        THREADENTRY32 entry;
+        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+        
+        if (snapshot == INVALID_HANDLE_VALUE) {
+            dbg_printf("unable to create toolhelp snapshot\n");
+            return;
+        }
+        
+        entry.dwSize = sizeof(entry);
+        
+        if (!Thread32First(snapshot, &entry)) {
+            CloseHandle(snapshot);
+            return;
+        }
+        
+        do {
+            if (entry.th32OwnerProcessID == GetCurrentProcessId()) continue;
+            if (dbg_curr_process) dbg_detach_debuggee();
+
+            dbg_printf("\n");
+            if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE)) {
+                dbg_printf("\nwarning: could not attach to 0x%lx\n", entry.th32OwnerProcessID);
+                continue;
+            }
+
+            dbg_printf("Backtracing for thread 0x%lx in process 0x%lx (%s):\n", entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
+            
+            stack_backtrace(entry.th32ThreadID, TRUE);
+        } while (Thread32Next(snapshot, &entry));
+
+        if (dbg_curr_process) dbg_detach_debuggee();
+        CloseHandle(snapshot);
+        return;
+    }
+
+    if (!dbg_curr_process) {
+        dbg_printf("You must be attached to a process to run this command.\n");
+        return;
+    }
+    
     if (tid == dbg_curr_tid)
     {
         ctx = dbg_context; /* as StackWalk may modify it... */

@@ -47,7 +47,7 @@ int yyerror(const char*);
     struct type_expr_t  type;
 }
 
-%token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tUP tDOWN
+%token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tALL tINFO tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
 %token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
@@ -119,6 +119,7 @@ command:
     | tABORT                   	{ abort(); }
     | tBACKTRACE     	       	{ stack_backtrace(dbg_curr_tid, TRUE); }
     | tBACKTRACE tNUM          	{ stack_backtrace($2, TRUE); }
+    | tBACKTRACE tALL           { stack_backtrace(-1, TRUE); }
     | tUP     		       	{ stack_set_frame(dbg_curr_frame + 1);  }
     | tUP tNUM     	       	{ stack_set_frame(dbg_curr_frame + $2); }
     | tDOWN     	       	{ stack_set_frame(dbg_curr_frame - 1);  }
@@ -273,8 +274,9 @@ maintenance_command:
     ;
 
 noprocess_state:
-      tNOPROCESS     		{} /* <CR> shall not barf anything */
-    | tNOPROCESS tSTRING     	{ dbg_printf("No process loaded, cannot execute '%s'\n", $2); }
+      tNOPROCESS                 {} /* <CR> shall not barf anything */
+    | tNOPROCESS tBACKTRACE tALL { stack_backtrace(-1, TRUE); } /* can backtrace all threads with no attached process */
+    | tNOPROCESS tSTRING         { dbg_printf("No process loaded, cannot execute '%s'\n", $2); }
     ;
 
 type_expr:
@@ -449,11 +451,20 @@ static void stripwhite(char *string)
 static HANDLE dbg_parser_input;
 static HANDLE dbg_parser_output;
 
+/* command passed in the command line arguments */
+char *arg_command = NULL;
+
 int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
 {
     char 	buf_line[256];
     DWORD	nread;
     size_t      len;
+    
+    if (arg_command) {
+        *line = arg_command;
+        arg_command = "quit\n"; /* we only run one command before exiting */
+        return 1;
+    }
 
     /* as of today, console handles can be file handles... so better use file APIs rather than
      * console's
@@ -501,7 +512,7 @@ int input_read_line(const char* pfx, char* buf, int size)
     assert(line);
     line[0] = '\n';
     line[1] = '\0';		      
-	
+
     input_fetch_entire_line(pfx, &line, &len, FALSE);
     len = strlen(line);
     /* remove trailing \n */
