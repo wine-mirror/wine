@@ -13,6 +13,13 @@ extern "C" {
 
 #include "pshpack1.h"
 
+typedef LPVOID (*LPRGLPVOID)[];
+typedef LPRGLPVOID PRGPVOID, LPRGPVOID, PRGLPVOID, PAPVOID, LPAPVOID, PALPVOID, LPALPVOID;
+
+#define VOL volatile
+typedef VOID *VOL LPVOIDV;
+
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -283,6 +290,13 @@ typedef struct tagDPCHAT
     }msgstr;
 } DPCHAT, *LPDPCHAT;
 
+typedef struct
+{
+  UINT   len;
+  PUCHAR pData;
+} SGBUFFER, *PSGBUFFER, *LPSGBUFFER;
+
+
 typedef struct tagDPSECURITYDESC
 {
     DWORD dwSize;                   /* Size of structure */
@@ -342,14 +356,7 @@ typedef BOOL CALLBACK (*LPDPENUMDPCALLBACKA)(
     DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */ 
     LPVOID      lpContext);     /* User given */
 
-/* NOTE: This isn't in the dplay.h header file, but this shouldn't be 
- *       a problem. We require this because we include all these header files
- *       which declare GUIDs in guid.c
- */
-#ifndef __LPCGUID_DEFINED__
-#define __LPCGUID_DEFINED__
 typedef const GUID   *LPCGUID;
-#endif
 
 typedef const DPNAME *LPCDPNAME;
 

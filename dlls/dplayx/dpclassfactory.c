@@ -39,7 +39,6 @@ static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
         return --(This->ref);
 }
 
-/* Not the most efficient implementation, but it's simple */
 static HRESULT WINAPI DP_and_DPL_CreateInstance(
         LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
@@ -47,12 +46,11 @@ static HRESULT WINAPI DP_and_DPL_CreateInstance(
 
         TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
-        /* FIXME: reuse already created DP/DPL object if present? */
-        if ( directPlayLobby_QueryInterface( riid, ppobj ) == S_OK )
+        if ( DPL_CreateInterface( riid, ppobj ) == S_OK )
         {
            return S_OK;
         }
-        else if ( directPlay_QueryInterface( riid, ppobj ) == S_OK )
+        else if ( DP_CreateInterface( riid, ppobj ) == S_OK )
         {
            return S_OK;
         }
@@ -109,14 +107,4 @@ DWORD WINAPI DPLAYX_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 
     ERR("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *		DllCanUnloadNow (DPLAYX.@)
- */
-HRESULT WINAPI DPLAYX_DllCanUnloadNow(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_FALSE;
 }

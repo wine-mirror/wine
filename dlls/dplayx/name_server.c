@@ -10,101 +10,190 @@
 
 #include "winbase.h"
 #include "debugtools.h"
+#include "heap.h"
 
 #include "dplayx_global.h"
 #include "name_server.h"
+#include "dplaysp.h"
+#include "dplayx_messages.h"
+#include "dplayx_queue.h"
 
-/* FIXME: Need to aquire the interface semaphore before didlling data */
+/* Can't seem to solve unresolved reference even with import */
+#define HACK_TIMEGETTIME
+
+#if defined( HACK_TIMEGETTIME )
+static DWORD timeGetTime(void);
+#else
+#include "mmsystem.h"
+#endif
+
+/* FIXME: Need to create a crit section, store and use it */
 
 DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* NS specific structures */
-typedef struct tagNSCacheData
+struct NSCacheData
 {
-  struct tagNSCacheData* next;
+  DPQ_ENTRY(NSCacheData) next;
 
+  DWORD dwTime; /* Time at which data was last known valid */
   LPDPSESSIONDESC2 data;
 
-} NSCacheData, *lpNSCacheData;
+  LPVOID lpNSAddrHdr;
 
-typedef struct tagNSCache
+};
+typedef struct NSCacheData NSCacheData, *lpNSCacheData;
+
+struct NSCache
 {
-  lpNSCacheData present; /* keep track of what is to be looked at */
-  lpNSCacheData first; 
-} NSCache, *lpNSCache;
+  lpNSCacheData present; /* keep track of what is to be looked at when walking */
 
-/* Local Prototypes */
-static void NS_InvalidateSessionCache( lpNSCache lpCache );
-
+  DPQ_HEAD(NSCacheData) first;
+}; 
+typedef struct NSCache NSCache, *lpNSCache;
 
 /* Name Server functions 
  * --------------------- 
  */
 void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd )
 {
+#if 0
   DPLAYX_SetLocalSession( lpsd );
+#endif
+}
+
+/* Store the given NS remote address for future reference */
+void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
+                                       DWORD                     dwHdrSize,
+                                       LPDPMSG_ENUMSESSIONSREPLY lpMsg,
+                                       LPVOID                    lpNSInfo )
+{
+  lpNSCache     lpCache = (lpNSCache)lpNSInfo;
+  lpNSCacheData lpCacheNode;
+
+  TRACE( "%p, %p, %p\n", lpNSAddrHdr, lpMsg, lpNSInfo );
+
+  /* FIXME: Should check to see if the reply is for an existing session. If
+   *        so we just update the contents and update the timestamp.
+   */
+  lpCacheNode = (lpNSCacheData)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                          sizeof( *lpCacheNode ) );
+
+  if( lpCacheNode == NULL )
+  {
+    ERR( "no memory for NS node\n" );
+    return;
+  }
+
+  lpCacheNode->lpNSAddrHdr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        dwHdrSize );
+  CopyMemory( lpCacheNode->lpNSAddrHdr, lpNSAddrHdr, dwHdrSize );
+              
+
+  lpCacheNode->data = (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
+                                                   HEAP_ZERO_MEMORY, 
+                                                   sizeof( *lpCacheNode->data ) );
+
+  if( lpCacheNode->data == NULL )
+  {
+    ERR( "no memory for SESSIONDESC2\n" );
+    return;
+  }
+
+  CopyMemory( lpCacheNode->data, &lpMsg->sd, sizeof( *lpCacheNode->data ) );
+  lpCacheNode->data->sess.lpszSessionNameA = HEAP_strdupWtoA( GetProcessHeap(),
+                                                              HEAP_ZERO_MEMORY, 
+                                                              (LPWSTR)(lpMsg+1) );
+
+  lpCacheNode->dwTime = timeGetTime();
+
+  DPQ_INSERT(lpCache->first, lpCacheNode, next );
+
+  lpCache->present = lpCacheNode;
+
+  /* Use this message as an oportunity to weed out any old sessions so 
+   * that we don't enum them again 
+   */
+  NS_PruneSessionCache( lpNSInfo );
+}
+
+LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
+{
+  lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
+  FIXME( ":quick stub\n" );
+
+  /* Ok. Cheat and don't search for the correct stuff just take the first.
+   * FIXME: In the future how are we to know what is _THE_ enum we used?
+   */
+
+  return lpCache->first.lpQHFirst->lpNSAddrHdr;
 }
 
 /* This function is responsible for sending a request for all other known
    nameservers to send us what sessions they have registered locally
  */
-void NS_SendSessionRequestBroadcast( LPVOID lpNSInfo )
+HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
+                                        DWORD dwFlags,
+                                        LPSPINITDATA lpSpData )
+                                     
 {
-  UINT index = 0;
-  lpNSCache lpCache = (lpNSCache)lpNSInfo;
-  LPDPSESSIONDESC2 lpTmp = NULL; 
+  DPSP_ENUMSESSIONSDATA data;
+  LPDPMSG_ENUMSESSIONSREQUEST lpMsg;
 
-  /* Invalidate the session cache for the interface */
-  NS_InvalidateSessionCache( lpCache );
- 
-  /* Add the local known sessions to the cache */
-  if( ( lpTmp = DPLAYX_CopyAndAllocateLocalSession( &index ) ) != NULL )
-  {
-    lpCache->first = (lpNSCacheData)HeapAlloc( GetProcessHeap(), 
-                                               HEAP_ZERO_MEMORY,
-                                               sizeof( *(lpCache->first) ) );
-    lpCache->first->data = lpTmp;
-    lpCache->first->next = NULL;
-    lpCache->present = lpCache->first;
+  TRACE( "enumerating for guid %s\n", debugstr_guid( lpcGuid ) );
 
-    while( ( lpTmp = DPLAYX_CopyAndAllocateLocalSession( &index ) ) != NULL )
-    {
-      lpCache->present->next = (lpNSCacheData)HeapAlloc( GetProcessHeap(), 
-                                                         HEAP_ZERO_MEMORY,
-                                                         sizeof( *(lpCache->present) ) ); 
-      lpCache->present = lpCache->present->next;
-      lpCache->present->data = lpTmp;
-      lpCache->present->next = NULL;
-    }
+  /* Get the SP to deal with sending the EnumSessions request */
+  FIXME( ": not all data fields are correct\n" );
 
-    lpCache->present = lpCache->first;
-  }
+  data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ); /*FIXME!*/
+  data.lpMessage = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                              data.dwMessageSize );
+  data.lpISP = lpSpData->lpISP;
+  data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) ? TRUE : FALSE;
 
-  /* Send out requests for matching sessions to all other known computers */
-  FIXME( ": no remote requests sent\n" );
-  /* FIXME - how to handle responses to messages anyways? */
+
+  lpMsg = (LPDPMSG_ENUMSESSIONSREQUEST)(((BYTE*)data.lpMessage)+lpSpData->dwSPHeaderSize); 
+
+  /* Setup EnumSession reqest message */
+  lpMsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
+  lpMsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREQUEST;
+  lpMsg->envelope.wVersion   = DPMSGVER_DP6;
+
+  lpMsg->dwPasswordSize = 0; /* FIXME: If enumerating passwords..? */
+  lpMsg->dwFlags        = dwFlags;
+
+  CopyMemory( &lpMsg->guidApplication, lpcGuid, sizeof( *lpcGuid ) );
+
+  return (lpSpData->lpCB->EnumSessions)( &data ); 
 }
 
-/* Render all data in a session cache invalid */
-static void NS_InvalidateSessionCache( lpNSCache lpCache )
+DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
+DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData )
 {
+  /* FIXME: Memory leak on data (contained ptrs) */
+  HeapFree( GetProcessHeap(), 0, elem->data );
+  HeapFree( GetProcessHeap(), 0, elem->lpNSAddrHdr );
+  HeapFree( GetProcessHeap(), 0, elem );
+}
+
+
+
+/* Render all data in a session cache invalid */
+void NS_InvalidateSessionCache( LPVOID lpNSInfo )
+{
+  lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
   if( lpCache == NULL )
   {
     ERR( ": invalidate non existant cache\n" );
     return;
   }
 
-  /* Remove everything from the cache */
-  while( lpCache->first )
-  {
-    lpCache->present = lpCache->first;
-    lpCache->first = lpCache->first->next; 
-    HeapFree( GetProcessHeap(), 0, lpCache->present );
-  }
+  DPQ_DELETEQ( lpCache->first, next, lpNSCacheData, cbDeleteNSNodeFromHeap );
 
-  /* NULL out the cache pointers */
+  /* NULL out the walking pointer */
   lpCache->present = NULL;
-  lpCache->first   = NULL;
 }
 
 /* Create and initialize a session cache */
@@ -121,7 +210,8 @@ BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
     return FALSE;
   }
 
-  lpCache->first = lpCache->present = NULL;
+  DPQ_INIT(lpCache->first);
+  lpCache->present = NULL;
 
   return TRUE;
 }
@@ -136,13 +226,15 @@ void NS_DeleteSessionCache( LPVOID lpNSInfo )
 void NS_ResetSessionEnumeration( LPVOID lpNSInfo )
 {
  
-  ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->first;
+  ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->first.lpQHFirst;
 }
 
 LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
+  /* FIXME: The pointers could disappear when walking if a prune happens */
 
   /* Test for end of the list */ 
   if( lpCache->present == NULL )
@@ -153,7 +245,93 @@ LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
   lpSessionDesc = lpCache->present->data;
 
   /* Advance tracking pointer */
-  lpCache->present = lpCache->present->next;
+  lpCache->present = lpCache->present->next.lpQNext;
 
   return lpSessionDesc;
 }
+
+/* This method should check to see if there are any sessions which are
+ * older than the criteria. If so, just delete that information.
+ */
+void NS_PruneSessionCache( LPVOID lpNSInfo )
+{
+  lpNSCache     lpCache = lpNSInfo;
+  lpNSCacheData lpCacheEntry;
+
+  DWORD dwPresentTime = timeGetTime();
+#if defined( HACK_TIMEGETTIME )
+  DWORD dwPruneTime   = dwPresentTime - 2; /* One iteration with safety */
+#else
+  DWORD dwPruneTime   = dwPresentTime - 10000 /* 10 secs? */;
+#endif
+
+  FIXME( ": semi stub\n" );
+
+  /* FIXME: This doesn't handle time roll over correctly */
+  /* FIXME: Session memory leak on delete */
+  do
+  {
+    DPQ_FIND_ENTRY( lpCache->first, next, dwTime, <=, dwPruneTime, lpCacheEntry );
+  }
+  while( lpCacheEntry != NULL );
+
+}
+
+
+
+/* Message stuff */
+void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg, 
+                                    LPDPSP_REPLYDATA lpReplyData,
+                                    IDirectPlay2Impl* lpDP )
+{
+  LPDPMSG_ENUMSESSIONSREPLY rmsg;
+  DWORD dwVariableSize;
+  DWORD dwVariableLen;
+  LPWSTR string;
+  /* LPDPMSG_ENUMSESSIONSREQUEST msg = (LPDPMSG_ENUMSESSIONSREQUEST)lpMsg; */
+  BOOL bAnsi = TRUE; /* FIXME: This needs to be in the DPLAY interface */
+
+  FIXME( ": few fixed + need to check request for response\n" );
+
+  dwVariableLen = bAnsi ? lstrlenA( lpDP->dp2->lpSessionDesc->sess.lpszSessionNameA ) + 1 
+                         : lstrlenW( lpDP->dp2->lpSessionDesc->sess.lpszSessionName ) + 1;
+
+  dwVariableSize = dwVariableLen * sizeof( WCHAR );
+
+  lpReplyData->dwMessageSize = lpDP->dp2->spData.dwSPHeaderSize +
+                                 sizeof( *rmsg ) + dwVariableSize;
+  lpReplyData->lpMessage     = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                          lpReplyData->dwMessageSize );
+
+  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)lpReplyData->lpMessage;  
+
+  rmsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG; 
+  rmsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREPLY;
+  rmsg->envelope.wVersion   = DPMSGVER_DP6;
+
+  CopyMemory( &rmsg->sd, lpDP->dp2->lpSessionDesc, 
+              sizeof( lpDP->dp2->lpSessionDesc->dwSize ) ); 
+  rmsg->dwUnknown = 0x0000005c;
+  if( bAnsi )
+  {
+    string = HEAP_strdupAtoW( GetProcessHeap(), 0, 
+                              lpDP->dp2->lpSessionDesc->sess.lpszSessionNameA );
+    /* FIXME: Memory leak */
+  }
+  else
+  {
+    string = lpDP->dp2->lpSessionDesc->sess.lpszSessionName;
+  }
+
+  lstrcpyW( (LPWSTR)rmsg+1, string );
+ 
+}
+
+#if defined( HACK_TIMEGETTIME )
+DWORD timeGetTime(void)
+{
+  static DWORD time = 0;
+  
+  return time++;
+}
+#endif
