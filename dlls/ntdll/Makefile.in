@@ -46,7 +46,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/msdos/int21.c \
 	$(TOPOBJDIR)/msdos/ioports.c \
 	$(TOPOBJDIR)/msdos/ppdev.c \
-	$(TOPOBJDIR)/msdos/vxd.c \
 	$(TOPOBJDIR)/relay32/builtin32.c \
 	$(TOPOBJDIR)/relay32/relay386.c \
 	$(TOPOBJDIR)/relay32/snoop.c \

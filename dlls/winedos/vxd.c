@@ -395,14 +395,29 @@ void WINAPI VXD_Timer( CONTEXT86 *context )
     }
 }
 
+
+/***********************************************************************
+ *           timer_thread
+ */
+static DWORD CALLBACK timer_thread( void *arg )
+{
+    DWORD *system_time = arg;
+
+    for (;;)
+    {
+        *system_time = GetTickCount();
+        Sleep( 55 );
+    }
+}
+
+
 /***********************************************************************
  *           VXD_TimerAPI (WPROCS.1490)
  */
-static DWORD System_Time = 0;
-static WORD  System_Time_Selector = 0;
-static void  System_Time_Tick( WORD timer ) { System_Time += 55; }
 void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
 {
+    static WORD System_Time_Selector;
+
     unsigned service = AX_reg(context);
 
     TRACE("[%04x] TimerAPI\n", (UINT16)service);
@@ -417,10 +432,10 @@ void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
     case 0x0009: /* get system time selector */
         if ( !System_Time_Selector )
         {
-            System_Time_Selector = SELECTOR_AllocBlock( &System_Time, sizeof(DWORD), WINE_LDT_FLAGS_DATA );
-            CreateSystemTimer( 55, System_Time_Tick );
+            HANDLE16 handle = GlobalAlloc16( GMEM_FIXED, sizeof(DWORD) );
+            System_Time_Selector = handle | 7;
+            CloseHandle( CreateThread( NULL, 0, timer_thread, GlobalLock16(handle), 0, NULL ) );
         }
-
         SET_AX( context, System_Time_Selector );
         RESET_CFLAG(context);
         break;

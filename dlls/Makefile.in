@@ -429,7 +429,7 @@ joystick.drv$(DLLEXT): winmm/joystick/joystick.drv$(DLLEXT)
 
 kernel32.dll$(DLLEXT) comm.dll$(DLLEXT) krnl386.exe$(DLLEXT) \
   stress.dll$(DLLEXT) system.dll$(DLLEXT) toolhelp.dll$(DLLEXT) \
-  win87em.dll$(DLLEXT) windebug.dll$(DLLEXT) wprocs.dll$(DLLEXT): kernel/kernel32.dll$(DLLEXT)
+  win87em.dll$(DLLEXT) windebug.dll$(DLLEXT): kernel/kernel32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
 
 lz32.dll$(DLLEXT) lzexpand.dll$(DLLEXT): lzexpand/lz32.dll$(DLLEXT)
@@ -606,7 +606,7 @@ winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 wineaudioio.drv$(DLLEXT): winmm/wineaudioio/wineaudioio.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv$(DLLEXT) $@
 
-winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
+winedos.dll$(DLLEXT) wprocs.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
 winejack.drv$(DLLEXT): winmm/winejack/winejack.drv$(DLLEXT)
