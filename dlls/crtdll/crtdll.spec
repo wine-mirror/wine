@@ -73,7 +73,7 @@ debug_channels (crtdll)
 @ stub _cprintf
 @ stub _cpumode_dll
 @ stub _cputs
-@ cdecl _creat(str long) CTRDLL__creat
+@ cdecl _creat(str long) CRTDLL__creat
 @ stub _cscanf
 @ extern _ctype CRTDLL_ctype
 @ stub _cwait
@@ -465,7 +465,7 @@ debug_channels (crtdll)
 @ cdecl signal(long ptr) CRTDLL_signal
 @ cdecl sin(double) sin
 @ cdecl sinh(double) sinh
-@ varargs sprintf() sprintf
+@ varargs sprintf(ptr ptr) sprintf
 @ cdecl sqrt(double) sqrt
 @ cdecl srand(long) srand
 @ varargs sscanf() sscanf

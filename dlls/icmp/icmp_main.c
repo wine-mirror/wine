@@ -26,9 +26,11 @@
 # include <sys/socket.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+# include <netdb.h>
 #endif
-#include <netinet/in_systm.h>
+#ifdef HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif

@@ -302,7 +302,7 @@ INT __cdecl CRTDLL__commit(INT fd)
  *
  * Open a file, creating it if it is not present.
  */
-INT __cdecl CTRDLL__creat(LPCSTR path, INT flags)
+INT __cdecl CRTDLL__creat(LPCSTR path, INT flags)
 {
   INT usedFlags = (flags & _O_TEXT)| _O_CREAT| _O_WRONLY| _O_TRUNC;
   return CRTDLL__open(path, usedFlags);

@@ -30,7 +30,9 @@ asm(".org 0x110000");
 #endif
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/ptrace.h>
+#ifdef HAVE_SYS_PTRACE_H
+# include <sys/ptrace.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif

@@ -776,6 +776,8 @@ AC_CHECK_HEADERS(\
 	net/if.h \
 	netdb.h \
 	netinet/in.h \
+	netinet/in_systm.h \
+	netinet/ip.h \
 	netinet/tcp.h \
 	pty.h \
 	resolv.h \
@@ -809,7 +811,7 @@ AC_CHECK_HEADERS(\
 	sys/vfs.h \
 	sys/vm86.h \
 	syscall.h \
-	ucontext.h
+	ucontext.h \
 )
 AC_HEADER_STAT()
 

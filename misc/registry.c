@@ -1861,3 +1861,12 @@ DWORD WINAPI RegSetValueEx16( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type
     if (!count && (type==REG_SZ)) count = strlen(data);
     return RegSetValueExA( hkey, name, reserved, type, data, count );
 }
+
+/******************************************************************************
+ *           RegFlushKey16   [KERNEL.227]
+ */
+DWORD WINAPI RegFlushKey16( HKEY hkey )
+{
+    fix_win16_hkey( &hkey );
+    return RegFlushKey( hkey );
+}

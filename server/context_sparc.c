@@ -12,11 +12,15 @@
 #include <errno.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_REG_H
-#include <sys/reg.h>
+# include <sys/reg.h>
 #endif
 #include <unistd.h>
-#include <sys/ptrace.h>
-#include <sys/user.h>
+#ifdef HAVE_SYS_PTRACE_H
+# include <sys/ptrace.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
 
 #include "winbase.h"
 

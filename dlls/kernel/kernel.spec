@@ -238,7 +238,7 @@ owner	kernel32
 224 pascal RegQueryValue(long str ptr ptr) RegQueryValue16
 225 pascal RegQueryValueEx(long str ptr ptr ptr ptr) RegQueryValueEx16
 226 pascal RegSetValueEx(long str long long ptr long) RegSetValueEx16
-227 pascal RegFlushKey(long) RegFlushKey
+227 pascal RegFlushKey(long) RegFlushKey16
 228 pascal16 K228(word) GetExePtr
 229 pascal16 K229(long) Local32GetSegment16
 230 pascal GlobalSmartPageLock(word) GlobalPageLock16 #?

@@ -22,7 +22,10 @@ UB 000416:
  * since we need 2 byte wide characters. - Marcus Meissner, 981031
  */
 
+#include "config.h"
+
 #include "crtdll.h"
+
 #include <ctype.h>
 #define __USE_ISOC9X 1
 #define __USE_ISOC99 1
@@ -1506,7 +1509,7 @@ VOID __cdecl CRTDLL__purecall(VOID)
 
 
 /*********************************************************************
- *                  _div               (CRTDLL.358)
+ *                  div               (CRTDLL.358)
  *
  * Return the quotient and remainder of long integer division.
  */
@@ -1529,7 +1532,7 @@ div_t __cdecl CRTDLL_div(INT x, INT y)
 
 
 /*********************************************************************
- *                  _ldiv               (CRTDLL.249)
+ *                  ldiv               (CRTDLL.249)
  *
  * Return the quotient and remainder of long integer division.
  */

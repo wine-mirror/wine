@@ -22,12 +22,15 @@
 #endif
 #include <sys/stat.h>
 #include <unistd.h>
-#include <netinet/in_systm.h>
-#ifdef HAVE_NETINET_IH_H
+#ifdef HAVE_NETINET_IN_SYSTM_H
+# include <netinet/in_systm.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
-#include <netinet/in.h>
-#include <netinet/ip.h>
+#ifdef HAVE_NETINET_IP_H
+# include <netinet/ip.h>
+#endif
 
 #include "winbase.h"
 #include "wingdi.h"
