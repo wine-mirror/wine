@@ -125,7 +125,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetAllParameters(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPDS3DBUFFER lpDs3dBuffer)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning all parameters\n");
+	*lpDs3dBuffer = This->ds3db;
 	return DS_OK;
 }
 
@@ -134,7 +136,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeAngles(
 	LPDWORD lpdwInsideConeAngle,
 	LPDWORD lpdwOutsideConeAngle)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Inside Cone Angle = %ld degrees; Outside Cone Angle = %ld degrees\n", This->ds3db.dwInsideConeAngle, This->ds3db.dwOutsideConeAngle);
+	*lpdwInsideConeAngle = This->ds3db.dwInsideConeAngle;
+	*lpdwOutsideConeAngle = This->ds3db.dwOutsideConeAngle;
 	return DS_OK;
 }
 
@@ -142,7 +147,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOrientation(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPD3DVECTOR lpvConeOrientation)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Cone Orientation vector = (%f,%f,%f)\n", This->ds3db.vConeOrientation.u1.x, This->ds3db.vConeOrientation.u2.y, This->ds3db.vConeOrientation.u3.z);
+	*lpvConeOrientation = This->ds3db.vConeOrientation;
 	return DS_OK;
 }
 
@@ -150,7 +157,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOutsideVolume(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPLONG lplConeOutsideVolume)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Cone Outside Volume = %ld\n", This->ds3db.lConeOutsideVolume);
+	*lplConeOutsideVolume = This->ds3db.lConeOutsideVolume;
 	return DS_OK;
 }
 
@@ -158,7 +167,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetMaxDistance(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPD3DVALUE lpfMaxDistance)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Max Distance = %f\n", This->ds3db.flMaxDistance);
+	*lpfMaxDistance = This->ds3db.flMaxDistance;
 	return DS_OK;
 }
 
@@ -166,7 +177,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetMinDistance(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPD3DVALUE lpfMinDistance)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Min Distance = %f\n", This->ds3db.flMinDistance);
+	*lpfMinDistance = This->ds3db.flMinDistance;
 	return DS_OK;
 }
 
@@ -174,7 +187,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetMode(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPDWORD lpdwMode)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Mode = %ld\n", This->ds3db.dwMode);
+	*lpdwMode = This->ds3db.dwMode;
 	return DS_OK;
 }
 
@@ -182,7 +197,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetPosition(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPD3DVECTOR lpvPosition)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Position vector = (%f,%f,%f)\n", This->ds3db.vPosition.u1.x, This->ds3db.vPosition.u2.y, This->ds3db.vPosition.u1.x);
+	*lpvPosition = This->ds3db.vPosition;
 	return DS_OK;
 }
 
@@ -190,7 +207,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetVelocity(
 	LPDIRECTSOUND3DBUFFER iface,
 	LPD3DVECTOR lpvVelocity)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DBufferImpl,iface);
+	TRACE("returning: Velocity vector = (%f,%f,%f)\n", This->ds3db.vVelocity.u1.x, This->ds3db.vVelocity.u2.y, This->ds3db.vVelocity.u3.z);
+	*lpvVelocity = This->ds3db.vVelocity;
 	return DS_OK;
 }
 
