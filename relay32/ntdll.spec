@@ -265,7 +265,7 @@ type	win32
 262 stub RtlAddAttributeActionToRXact
 263 stub RtlAddAuditAccessAce
 264 stub RtlAdjustPrivilege
-265 stub RtlAllocateAndInitializeSid
+265 stdcall RtlAllocateAndInitializeSid(ptr long long long long long long long long long ptr) AllocateAndInitializeSid
 266 stdcall RtlAllocateHeap(long long long) HeapAlloc
 267 stub RtlAnsiCharToUnicodeChar
 268 stub RtlAnsiStringToUnicodeSize
