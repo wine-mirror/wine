@@ -932,10 +932,27 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName, 
 		LPSTR lpCookieData, LPDWORD lpdwSize)
 {
-    FIXME("Stub\n");
-	return FALSE;
+    FIXME("(%s,%s,%p), stub!\n",debugstr_a(lpszUrl),debugstr_a(lpszCookieName),
+	    lpCookieData
+    );
+    return FALSE;
 }
-
+/***********************************************************************
+ *           InternetSetCookieA (WININET.@)
+ *
+ * Sets cookie for the specified url
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetSetCookieA(
+	LPCSTR lpszUrl, LPCSTR lpszCookieName, LPCSTR lpCookieData
+) {
+    FIXME("(%s,%s,%s), stub!\n",debugstr_a(lpszUrl),debugstr_a(lpszCookieName),debugstr_a(lpCookieData));
+    return FALSE;
+}
 
 /***********************************************************************
  *           GetInternetScheme (internal)

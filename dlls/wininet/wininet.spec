@@ -114,7 +114,7 @@ debug_channels (wininet)
 @ stub InternetFindNextFileW
 @ stub InternetGetCertByURL
 @ stdcall InternetGetConnectedState(ptr long) InternetGetConnectedState
-@ stdcall InternetGetCookieA(str str str long) InternetGetCookieA
+@ stdcall InternetGetCookieA(str str ptr long) InternetGetCookieA
 @ stub InternetGetCookieW
 @ stdcall InternetGetLastResponseInfoA(ptr str ptr) InternetGetLastResponseInfoA
 @ stub InternetGetLastResponseInfoW
@@ -133,7 +133,7 @@ debug_channels (wininet)
 @ stub InternetReadFileExA
 @ stub InternetReadFileExW
 @ stub InternetServerPushParse
-@ stub InternetSetCookieA
+@ stdcall InternetSetCookieA(str str str) InternetSetCookieA
 @ stub InternetSetCookieW
 @ stub InternetSetDialState
 @ stub InternetSetFilePointer
