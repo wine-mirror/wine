@@ -1519,6 +1519,9 @@ BOOL        WINAPI LookupAccountSidW(LPCWSTR,PSID,LPWSTR,LPDWORD,LPWSTR,LPDWORD,
 BOOL        WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 BOOL        WINAPI LockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);
+BOOL        WINAPI LookupPrivilegeNameA(LPCSTR,PLUID,LPSTR,LPDWORD);
+BOOL        WINAPI LookupPrivilegeNameW(LPCWSTR,PLUID,LPWSTR,LPDWORD);
+#define     LookupPrivilegeName WINELIB_NAME_AW(LookupPrivilegeName)
 BOOL        WINAPI LookupPrivilegeValueA(LPCSTR,LPCSTR,PLUID);
 BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,PLUID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)

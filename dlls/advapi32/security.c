@@ -944,7 +944,7 @@ LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName, LPDWORD c
  * LookupPrivilegeNameW			[ADVAPI32.@]
  */
 BOOL WINAPI
-LookupPrivilegeNameW( LPCWSTR lpSystemName, PLUID lpLuid, LPSTR lpName, LPDWORD cchName)
+LookupPrivilegeNameW( LPCWSTR lpSystemName, PLUID lpLuid, LPWSTR lpName, LPDWORD cchName)
 {
     FIXME("%s %p %p %p\n", debugstr_w(lpSystemName), lpLuid, lpName, cchName);
     return FALSE;
