@@ -260,6 +260,8 @@ typedef struct
 #define CBR_19200	0xFF18
 #define CBR_38400	0xFF1B
 #define CBR_56000	0xFF1F
+#define CBR_57600       0xFF20
+#define CBR_115200      0xFF21
 #define CBR_128000	0xFF23
 #define CBR_256000	0xFF27
 
@@ -1035,7 +1037,110 @@ typedef struct tagDCB
     char EvtChar;
 } DCB, *LPDCB;
 
+typedef struct tagCOMMCONFIG {
+	DWORD dwSize;
+	WORD  wVersion;
+	WORD  wReserved;
+	DCB   dcb;
+	DWORD dwProviderSubType;
+	DWORD dwProviderOffset;
+	DWORD dwProviderSize;
+	DWORD wcProviderData[1];
+} COMMCONFIG, *LPCOMMCONFIG;
 
+typedef struct tagCOMMPROP {
+	WORD  wPacketLength;
+	WORD  wPacketVersion;
+	DWORD dwServiceMask;
+	DWORD dwReserved1;
+	DWORD dwMaxTxQueue;
+	DWORD dwMaxRxQueue;
+	DWORD dwMaxBaud;
+	DWORD dwProvSubType;
+	DWORD dwProvCapabilities;
+	DWORD dwSettableParams;
+	DWORD dwSettableBaud;
+	WORD  wSettableData;
+	WORD  wSettableStopParity;
+	DWORD dwCurrentTxQueue;
+	DWORD dwCurrentRxQueue;
+	DWORD dwProvSpec1;
+	DWORD dwProvSpec2;
+	WCHAR wcProvChar[1];
+} COMMPROP, *LPCOMMPROP;
+
+#define SP_SERIALCOMM ((DWORD)1)
+
+#define BAUD_075     ((DWORD)0x01)
+#define BAUD_110     ((DWORD)0x02)
+#define BAUD_134_5   ((DWORD)0x04)
+#define BAUD_150     ((DWORD)0x08)
+#define BAUD_300     ((DWORD)0x10)
+#define BAUD_600     ((DWORD)0x20)
+#define BAUD_1200    ((DWORD)0x40)
+#define BAUD_1800    ((DWORD)0x80)
+#define BAUD_2400    ((DWORD)0x100)
+#define BAUD_4800    ((DWORD)0x200)
+#define BAUD_7200    ((DWORD)0x400)
+#define BAUD_9600    ((DWORD)0x800)
+#define BAUD_14400   ((DWORD)0x1000)
+#define BAUD_19200   ((DWORD)0x2000)
+#define BAUD_38400   ((DWORD)0x4000)
+#define BAUD_56K     ((DWORD)0x8000)
+#define BAUD_57600   ((DWORD)0x40000)
+#define BAUD_115200  ((DWORD)0x20000)
+#define BAUD_128K    ((DWORD)0x10000)
+#define BAUD_USER    ((DWORD)0x10000000)
+
+#define PST_FAX            ((DWORD)0x21)
+#define PST_LAT            ((DWORD)0x101)
+#define PST_MODEM          ((DWORD)0x06)
+#define PST_NETWORK_BRIDGE ((DWORD)0x100)
+#define PST_PARALLEL_PORT  ((DWORD)0x02)
+#define PST_RS232          ((DWORD)0x01)
+#define PST_RS442          ((DWORD)0x03)
+#define PST_RS423          ((DWORD)0x04)
+#define PST_RS449          ((DWORD)0x06)
+#define PST_SCANNER        ((DWORD)0x22)
+#define PST_TCPIP_TELNET   ((DWORD)0x102)
+#define PST_UNSPECIFIED    ((DWORD)0x00)
+#define PST_X25            ((DWORD)0x103)
+
+#define PCF_16BITMODE     ((DWORD)0x200)
+#define PCF_DTRDSR        ((DWORD)0x01)
+#define PCF_INTTIMEOUTS   ((DWORD)0x80)
+#define PCF_PARITY_CHECK  ((DWORD)0x08)
+#define PCF_RLSD          ((DWORD)0x04)
+#define PCF_RTSCTS        ((DWORD)0x02)
+#define PCF_SETXCHAR      ((DWORD)0x20)
+#define PCF_SPECIALCHARS  ((DWORD)0x100)
+#define PCF_TOTALTIMEOUTS ((DWORD)0x40)
+#define PCF_XONXOFF       ((DWORD)0x10)
+
+#define SP_BAUD         ((DWORD)0x02)
+#define SP_DATABITS     ((DWORD)0x04)
+#define SP_HANDSHAKING  ((DWORD)0x10)
+#define SP_PARITY       ((DWORD)0x01)
+#define SP_PARITY_CHECK ((DWORD)0x20)
+#define SP_RLSD         ((DWORD)0x40)
+#define SP_STOPBITS     ((DWORD)0x08)
+
+#define DATABITS_5   ((DWORD)0x01)
+#define DATABITS_6   ((DWORD)0x02)
+#define DATABITS_7   ((DWORD)0x04)
+#define DATABITS_8   ((DWORD)0x08)
+#define DATABITS_16  ((DWORD)0x10)
+#define DATABITS_16X ((DWORD)0x20)
+
+#define STOPBITS_10 ((DWORD)1)
+#define STOPBITS_15 ((DWORD)2)
+#define STOPBITS_20 ((DWORD)4)
+
+#define PARITY_NONE  ((DWORD)0x100)
+#define PARITY_ODD   ((DWORD)0x200)
+#define PARITY_EVEN  ((DWORD)0x400)
+#define PARITY_MARK  ((DWORD)0x800)
+#define PARITY_SPACE ((DWORD)0x1000)
 
 typedef struct tagCOMMTIMEOUTS {
 	DWORD	ReadIntervalTimeout;
@@ -1044,26 +1149,49 @@ typedef struct tagCOMMTIMEOUTS {
 	DWORD	WriteTotalTimeoutMultiplier;
 	DWORD	WriteTotalTimeoutConstant;
 } COMMTIMEOUTS,*LPCOMMTIMEOUTS;
-  
+
+typedef struct tagMODEMSETTINGS {
+	DWORD dwActualSize;
+	DWORD dwRequiredSize;
+	DWORD dwDevSpecificOffset;
+	DWORD dwDevSpecificSize;
+	DWORD dwCallSetupFailTimer;
+	DWORD dwInactivityTimeout;
+	DWORD dwSpeakerVolume;
+	DWORD dwSpeakerMode;
+	DWORD dwPreferedModemOptions;
+	DWORD dwNegotiatedModemOptions;
+	DWORD dwNegotiatedDCERate;
+	BYTE  abVariablePortion[1];
+} MODEMSETTINGS, *LPMODEMSETTINGS;
+
+typedef struct tagMODEMDEVCAPS {
+	DWORD dwActualSize;
+	DWORD dwRequiredSize;
+	DWORD dwDevSpecificOffset;
+	DWORD dwDevSpecificSize;
+	DWORD dwModemProviderVersion;
+	DWORD dwModemManufacturerOffset;
+	DWORD dwModemManufacturerSize;
+	DWORD dwModemModelOffset;
+	DWORD dwModemModelSize;
+	DWORD dwModemVersionOffset;
+	DWORD dwModemVersionSize;
+	DWORD dwDialOptions;
+	DWORD dwCallSetupFailTimer;
+	DWORD dwInactivityTimeout;
+	DWORD dwSpeakerVolume;
+	DWORD dwSpeakerMode;
+	DWORD dwModemoptions;
+	DWORD dwMaxDTERate;
+	DWORD dwMaxDCERate;
+	BYTE  abVariablePortion[1];
+} MODEMDEVCAPS, *LPMODEMDEVCAPS;
+
 #include "poppack.h"
 
 typedef void CALLBACK (*PAPCFUNC)(ULONG_PTR);
 typedef void CALLBACK (*PTIMERAPCROUTINE)(LPVOID,DWORD,DWORD);
-
-BOOL      WINAPI ClearCommError(INT,LPDWORD,LPCOMSTAT);
-BOOL      WINAPI BuildCommDCBA(LPCSTR,LPDCB);
-BOOL      WINAPI BuildCommDCBW(LPCWSTR,LPDCB);
-#define     BuildCommDCB WINELIB_NAME_AW(BuildCommDCB)
-BOOL      WINAPI BuildCommDCBAndTimeoutsA(LPCSTR,LPDCB,LPCOMMTIMEOUTS);
-BOOL      WINAPI BuildCommDCBAndTimeoutsW(LPCWSTR,LPDCB,LPCOMMTIMEOUTS);
-#define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
-BOOL      WINAPI GetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
-BOOL      WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
-BOOL      WINAPI GetCommState(INT,LPDCB);
-BOOL      WINAPI SetCommState(INT,LPDCB);
-BOOL      WINAPI TransmitCommChar(INT,CHAR);
-BOOL      WINAPI SetupComm(HANDLE, DWORD, DWORD);
-BOOL      WINAPI GetCommProperties(HANDLE, LPDCB *);
   
 /*DWORD WINAPI GetVersion( void );*/
 BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16*);
@@ -1117,12 +1245,22 @@ BOOL        WINAPI BackupEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI BackupEventLogW(HANDLE,LPCWSTR);
 #define     BackupEventLog WINELIB_NAME_AW(BackupEventLog)
 BOOL        WINAPI Beep(DWORD,DWORD);
+BOOL        WINAPI BuildCommDCBA(LPCSTR,LPDCB);
+BOOL        WINAPI BuildCommDCBW(LPCWSTR,LPDCB);
+#define     BuildCommDCB WINELIB_NAME_AW(BuildCommDCB)
+BOOL        WINAPI BuildCommDCBAndTimeoutsA(LPCSTR,LPDCB,LPCOMMTIMEOUTS);
+BOOL        WINAPI BuildCommDCBAndTimeoutsW(LPCWSTR,LPDCB,LPCOMMTIMEOUTS);
+#define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
 BOOL        WINAPI CancelWaitableTimer(HANDLE);
+BOOL        WINAPI ClearCommError(HANDLE,LPDWORD,LPCOMSTAT);
 BOOL        WINAPI ClearEventLogA(HANDLE,LPCSTR);
 BOOL        WINAPI ClearEventLogW(HANDLE,LPCWSTR);
 #define     ClearEventLog WINELIB_NAME_AW(ClearEventLog)
 BOOL        WINAPI CloseEventLog(HANDLE);
-BOOL      WINAPI CloseHandle(HANDLE);
+BOOL        WINAPI CloseHandle(HANDLE);
+BOOL        WINAPI CommConfigDialogA(LPCSTR,HANDLE,LPCOMMCONFIG);
+BOOL        WINAPI CommConfigDialogW(LPCWSTR,HANDLE,LPCOMMCONFIG);
+#define     CommConfigDialog WINELIB_NAME_AW(CommConfigDialog)
 BOOL      WINAPI ContinueDebugEvent(DWORD,DWORD,DWORD);
 HANDLE    WINAPI ConvertToGlobalHandle(HANDLE hSrc);
 BOOL      WINAPI CopyFileA(LPCSTR,LPCSTR,BOOL);
@@ -1226,7 +1364,13 @@ BOOL      WINAPI FreeEnvironmentStringsA(LPSTR);
 BOOL      WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define     FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
 PVOID       WINAPI FreeSid(PSID);
-UINT      WINAPI GetACP(void);
+UINT        WINAPI GetACP(void);
+BOOL        WINAPI GetCommConfig(HANDLE,LPCOMMCONFIG);
+BOOL        WINAPI GetCommMask(HANDLE,LPDWORD);
+BOOL        WINAPI GetCommModemStatus(HANDLE,LPDWORD);
+BOOL        WINAPI GetCommProperties(HANDLE,LPCOMMPROP);
+BOOL        WINAPI GetCommState(HANDLE,LPDCB);
+BOOL        WINAPI GetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
 LPCSTR      WINAPI GetCommandLineA(void);
 LPCWSTR     WINAPI GetCommandLineW(void);
 #define     GetCommandLine WINELIB_NAME_AW(GetCommandLine)
@@ -1239,13 +1383,14 @@ UINT      WINAPI GetConsoleOutputCP(void);
 DWORD       WINAPI GetConsoleTitleA(LPSTR,DWORD);
 DWORD       WINAPI GetConsoleTitleW(LPWSTR,DWORD);
 #define     GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
-BOOL        WINAPI GetCommMask(HANDLE, LPDWORD);
-BOOL        WINAPI GetCommModemStatus(HANDLE, LPDWORD);
 HANDLE      WINAPI GetCurrentProcess(void);
 HANDLE      WINAPI GetCurrentThread(void);
 INT         WINAPI GetDateFormatA(LCID,DWORD,LPSYSTEMTIME,LPCSTR,LPSTR,INT);
 INT         WINAPI GetDateFormatW(LCID,DWORD,LPSYSTEMTIME,LPCWSTR,LPWSTR,INT);
 #define     GetDateFormat WINELIB_NAME_AW(GetDateFormat)
+BOOL        WINAPI GetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,LPDWORD);
+BOOL        WINAPI GetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,LPDWORD);
+#define     GetDefaultCommConfig WINELIB_NAME_AW(GetDefaultCommConfig)
 LPSTR       WINAPI GetEnvironmentStringsA(void);
 LPWSTR      WINAPI GetEnvironmentStringsW(void);
 #define     GetEnvironmentStrings WINELIB_NAME_AW(GetEnvironmentStrings)
@@ -1408,7 +1553,10 @@ BOOL        WINAPI RevertToSelf(void);
 DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI SearchPathW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     SearchPath WINELIB_NAME_AW(SearchPath)
-BOOL      WINAPI SetCommMask(INT,DWORD);
+BOOL        WINAPI SetCommConfig(HANDLE,LPCOMMCONFIG);
+BOOL        WINAPI SetCommMask(HANDLE,DWORD);
+BOOL        WINAPI SetCommState(HANDLE,LPDCB);
+BOOL        WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
 BOOL      WINAPI SetComputerNameA(LPCSTR);
 BOOL      WINAPI SetComputerNameW(LPCWSTR);
 #define     SetComputerName WINELIB_NAME_AW(SetComputerName)
@@ -1416,6 +1564,9 @@ BOOL      WINAPI SetConsoleMode(HANDLE,DWORD);
 BOOL      WINAPI SetConsoleTitleA(LPCSTR);
 BOOL      WINAPI SetConsoleTitleW(LPCWSTR);
 #define     SetConsoleTitle WINELIB_NAME_AW(SetConsoleTitle)
+BOOL        WINAPI SetDefaultCommConfigA(LPCSTR,LPCOMMCONFIG,DWORD);
+BOOL        WINAPI SetDefaultCommConfigW(LPCWSTR,LPCOMMCONFIG,DWORD);
+#define     SetDefaultCommConfig WINELIB_NAME_AW(SetDefaultCommConfig)
 BOOL      WINAPI SetEndOfFile(HANDLE);
 BOOL      WINAPI SetEnvironmentVariableA(LPCSTR,LPCSTR);
 BOOL      WINAPI SetEnvironmentVariableW(LPCWSTR,LPCWSTR);
@@ -1444,17 +1595,19 @@ BOOL        WINAPI SetThreadLocale(LCID);
 BOOL        WINAPI SetThreadPriority(HANDLE,INT);
 BOOL        WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
 BOOL        WINAPI SetWaitableTimer(HANDLE,const LARGE_INTEGER*,LONG,PTIMERAPCROUTINE,LPVOID,BOOL);
+BOOL        WINAPI SetupComm(HANDLE,DWORD,DWORD);
 VOID        WINAPI Sleep(DWORD);
 DWORD       WINAPI SleepEx(DWORD,BOOL);
 DWORD       WINAPI SuspendThread(HANDLE);
-BOOL      WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
+BOOL        WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 DWORD       WINAPI TlsAlloc(void);
-BOOL      WINAPI TlsFree(DWORD);
+BOOL        WINAPI TlsFree(DWORD);
 LPVOID      WINAPI TlsGetValue(DWORD);
-BOOL      WINAPI TlsSetValue(DWORD,LPVOID);
+BOOL        WINAPI TlsSetValue(DWORD,LPVOID);
+BOOL        WINAPI TransmitCommChar(HANDLE,CHAR);
 VOID        WINAPI UnMapLS(SEGPTR);
-BOOL      WINAPI UnlockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
-BOOL      WINAPI UnmapViewOfFile(LPVOID);
+BOOL        WINAPI UnlockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
+BOOL        WINAPI UnmapViewOfFile(LPVOID);
 LPVOID      WINAPI VirtualAlloc(LPVOID,DWORD,DWORD,DWORD);
 BOOL      WINAPI VirtualFree(LPVOID,DWORD,DWORD);
 BOOL      WINAPI VirtualLock(LPVOID,DWORD);

@@ -1846,7 +1846,7 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
 /*****************************************************************************
  *	ClearCommError	(KERNEL32.21)
  */
-BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
+BOOL WINAPI ClearCommError(HANDLE handle,LPDWORD errors,LPCOMSTAT lpStat)
 {
     int fd;
 
@@ -1939,7 +1939,7 @@ BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
 /*****************************************************************************
  *	SetCommMask	(KERNEL32.451)
  */
-BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
+BOOL WINAPI SetCommMask(HANDLE handle,DWORD evtmask)
 {
     int fd;
 
@@ -1967,7 +1967,7 @@ BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
 /*****************************************************************************
  *	SetCommState    (KERNEL32.452)
  */
-BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
+BOOL WINAPI SetCommState(HANDLE handle,LPDCB lpdcb)
 {
      struct termios port;
      int fd;
@@ -2275,7 +2275,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 /*****************************************************************************
  *	GetCommState	(KERNEL32.159)
  */
-BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
+BOOL WINAPI GetCommState(HANDLE handle, LPDCB lpdcb)
 {
      struct termios port;
      int fd,speed;
@@ -2470,26 +2470,10 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 /*****************************************************************************
  *	TransmitCommChar	(KERNEL32.535)
  */
-BOOL WINAPI TransmitCommChar(INT cid,CHAR chTransmit)
+BOOL WINAPI TransmitCommChar(HANDLE hComm,CHAR chTransmit)
 {
-	struct DosDeviceStruct *ptr;
-
-    	FIXME("(%d,'%c'), use win32 handle!\n",cid,chTransmit);
-	if ((ptr = GetDeviceStruct(cid)) == NULL)
-		FIXME("no handle for cid = %0x!.\n",cid);
-		return FALSE;
-
-	if (ptr->suspended) {
-		ptr->commerror = IE_HARDWARE;
-		return FALSE;
-	}
-	if (write(ptr->fd, (void *) &chTransmit, 1) == -1) {
-		ptr->commerror = WinError();
-		return FALSE;
-	}  else {
-		ptr->commerror = 0;
-		return TRUE;
-	}
+    	FIXME("(%x,'%c'), use win32 handle!\n",hComm,chTransmit);
+	return TRUE;
 }
 
 /*****************************************************************************
@@ -2594,18 +2578,9 @@ BOOL WINAPI WaitCommEvent(HANDLE hFile,LPDWORD eventmask ,LPOVERLAPPED overlappe
 /***********************************************************************
  *           GetCommProperties   (KERNEL32.???)
  */
-BOOL WINAPI GetCommProperties(HANDLE hFile, LPDCB *dcb)
+BOOL WINAPI GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 {
-    FIXME("(%d %p )\n",hFile,dcb);
-    return TRUE;
-}
-
-/***********************************************************************
- *           SetCommProperties   (KERNEL32.???)
- */
-BOOL WINAPI SetCommProperties(HANDLE hFile, LPDCB dcb)
-{
-    FIXME("(%d %p )\n",hFile,dcb);
+    FIXME("(%d %p )\n",hFile,lpCommProp);
     return TRUE;
 }
 
