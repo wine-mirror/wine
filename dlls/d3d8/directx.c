@@ -197,9 +197,8 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
 
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-	/*case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;*/
-	case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-        case 24: pMode->Format       = D3DFMT_R8G8B8;   break;
+        case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
+        case 24: pMode->Format       = D3DFMT_R5G6B5;   break; /* Make 24bit appear as 16 bit */
         case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
         default: pMode->Format       = D3DFMT_UNKNOWN;
         }
@@ -235,9 +234,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
 
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-	case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-	/*case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;*/
-        case 24: pMode->Format       = D3DFMT_R8G8B8;   break;
+        case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
+        case 24: pMode->Format       = D3DFMT_R5G6B5;   break; /* Make 24bit appear as 16 bit */
         case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
         default: pMode->Format       = D3DFMT_UNKNOWN;
         }
