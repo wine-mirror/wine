@@ -10,9 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "windef.h"
 #include "console.h"
-#include "config.h"
+#include "options.h"
 
 static int pop_driver(char **, char **, int *);
 
@@ -33,7 +34,9 @@ int CONSOLE_Init(char *drivers)
       
       char *single;
       int length;
-      
+      char initial_rows[5];
+      char initial_columns[5];
+
       /* Suitable defaults... */
       driver.console_out = stdout;
       driver.console_in = stdin;
@@ -50,10 +53,35 @@ int CONSOLE_Init(char *drivers)
             XTERM_Start();
       }
 
+   /* Read in generic configuration */
+   /* This is primarily to work around a limitation in nxterm where
+      this information is not correctly passed to the ncurses layer
+      through the terminal. At least, I'm not doing it correctly if there
+      is a way. But this serves as a generic way to do the same anyway. */
+
+   /* We are setting this to 80x25 here which is *not* the default for
+      most xterm variants... It is however the standard VGA resolution */
+
+   /* FIXME: We need to be able to be able to specify that the window's
+      dimensions should be used. This is required for correct emulation
+      of Win32's console and Win32's DOS emulation */
+
+   PROFILE_GetWineIniString("console", "InitialRows",
+      "24", initial_rows, 5);
+   PROFILE_GetWineIniString("console", "InitialColumns",
+      "80", initial_columns, 5);
+
+   sscanf(initial_rows, "%d", &driver.y_res);
+   sscanf(initial_columns, "%d", &driver.x_res);
+   
    GENERIC_Start();
 
    if (driver.init)
       driver.init();
+
+   /* Not all terminals let our programs know the proper resolution
+      if the resolution is set on the command-line... */
+   CONSOLE_NotifyResizeScreen(driver.x_res, driver.y_res);
 
    /* For now, always return TRUE */
    return TRUE;

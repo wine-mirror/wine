@@ -62,6 +62,8 @@ typedef struct CONSOLE_DRIVER
    char *driver_list;
    FILE *console_out;
    FILE *console_in;
+   int x_res;
+   int y_res;
 
 } CONSOLE_device;
 
