@@ -29,11 +29,13 @@ int UsePIC = 0;
 int nb_entry_points = 0;
 int nb_names = 0;
 int debugging = 1;
+int nb_debug_channels = 0;
 
 char DLLName[80];
 char DLLFileName[80];
 char DLLInitFunc[80];
 char owner_name[80];
+char **debug_channels;
 
 const char *input_file_name;
 const char *output_file_name;

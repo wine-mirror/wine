@@ -112,6 +112,26 @@ static char * GetToken(void)
 
 
 /*******************************************************************
+ *         ParseDebug
+ *
+ * Parse a debug channel definition.
+ */
+static void ParseDebug(void)
+{
+    char *token = GetToken();
+    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
+    while ((token = GetToken()))
+    {
+        if (*token == ')') break;
+        debug_channels = xrealloc( debug_channels,
+                                   (nb_debug_channels + 1) * sizeof(*debug_channels));
+        debug_channels[nb_debug_channels++] = xstrdup(token);
+    }
+    if (!token) fatal_error( "End of file in dbch declaration\n" );
+}
+
+
+/*******************************************************************
  *         ParseVariable
  *
  * Parse a variable definition.
@@ -489,6 +509,12 @@ SPEC_TYPE ParseTopLevel( FILE *file )
             if (SpecType != SPEC_WIN16)
                 fatal_error( "Owner only supported for Win16 spec files\n" );
             strcpy( owner_name, GetToken() );
+        }
+        else if (strcmp(token, "debug_channels") == 0)
+        {
+            if (SpecType != SPEC_WIN32)
+                fatal_error( "debug channels only supported for Win32 spec files\n" );
+            ParseDebug();
         }
         else if (strcmp(token, "@") == 0)
 	{

@@ -166,6 +166,7 @@ extern int Limit;
 extern int DLLHeapSize;
 extern int UsePIC;
 extern int debugging;
+extern int nb_debug_channels;
 
 extern char DLLName[80];
 extern char DLLFileName[80];
@@ -173,6 +174,7 @@ extern char DLLInitFunc[80];
 extern char owner_name[80];
 extern const char *input_file_name;
 extern const char *output_file_name;
+extern char **debug_channels;
 
 extern ORDDEF EntryPoints[MAX_ORDINALS];
 extern ORDDEF *Ordinals[MAX_ORDINALS];

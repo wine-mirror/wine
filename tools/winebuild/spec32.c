@@ -23,6 +23,13 @@ static int name_compare( const void *name1, const void *name2 )
     return strcmp( odp1->name, odp2->name );
 }
 
+static int string_compare( const void *ptr1, const void *ptr2 )
+{
+    const char * const *str1 = ptr1;
+    const char * const *str2 = ptr2;
+    return strcmp( *str1, *str2 );
+}
+
 /*******************************************************************
  *         AssignOrdinals
  *
@@ -63,6 +70,35 @@ static void AssignOrdinals(void)
         Ordinals[ordinal] = Names[i];
     }
     if (ordinal > Limit) Limit = ordinal;
+}
+
+
+/*******************************************************************
+ *         output_debug
+ *
+ * Output the debug channels.
+ */
+static int output_debug( FILE *outfile )
+{
+    int i;
+
+    if (!nb_debug_channels) return 0;
+    qsort( debug_channels, nb_debug_channels, sizeof(debug_channels[0]), string_compare );
+
+    for (i = 0; i < nb_debug_channels; i++)
+        fprintf( outfile, "char __wine_dbch_%s[] = \"\\003%s\";\n",
+                 debug_channels[i], debug_channels[i] );
+
+    fprintf( outfile, "\nstatic char * const debug_channels[%d] =\n{\n", nb_debug_channels );
+    for (i = 0; i < nb_debug_channels; i++)
+    {
+        fprintf( outfile, "    __wine_dbch_%s", debug_channels[i] );
+        if (i < nb_debug_channels - 1) fprintf( outfile, ",\n" );
+    }
+    fprintf( outfile, "\n};\n\n" );
+    fprintf( outfile, "static void *debug_registration;\n\n" );
+
+    return nb_debug_channels;
 }
 
 
@@ -263,7 +299,7 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
     }
 #endif  /* __i386__ */
 
-    fprintf( outfile, "  }\n};\n" );
+    fprintf( outfile, "  }\n};\n\n" );
 }
 
 
@@ -276,7 +312,7 @@ void BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
-    int nr_exports, nr_imports, nr_resources;
+    int nr_exports, nr_imports, nr_resources, nr_debug;
     int characteristics, subsystem;
     const char *init_func;
     DWORD page_size;
@@ -413,6 +449,10 @@ void BuildSpec32File( FILE *outfile )
     /* Output the resources */
 
     nr_resources = output_resources( outfile );
+
+    /* Output the debug channels */
+
+    nr_debug = output_debug( outfile );
 
     /* Output LibMain function */
 
@@ -566,14 +606,25 @@ void BuildSpec32File( FILE *outfile )
 
     fprintf( outfile, "#ifdef __GNUC__\n" );
     fprintf( outfile, "static void %s_init(void) __attribute__((constructor));\n", DLLName );
+    fprintf( outfile, "static void %s_fini(void) __attribute__((destructor));\n", DLLName );
     fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
     fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
     fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tcall %s_init\\n\"\n", DLLName );
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall %s_fini\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n\n" );
     fprintf( outfile, "static void %s_init(void)\n{\n", DLLName );
     fprintf( outfile, "    extern void BUILTIN32_RegisterDLL( const struct image_nt_headers *, const char * );\n" );
-    fprintf( outfile, "    BUILTIN32_RegisterDLL( &nt_header, \"%s\" );\n}\n", DLLFileName );
+    fprintf( outfile, "    extern void *wine_dbg_register( char * const *, int );\n");
+    fprintf( outfile, "    BUILTIN32_RegisterDLL( &nt_header, \"%s\" );\n", DLLFileName );
+    if (nr_debug) fprintf( outfile, "    debug_registration = wine_dbg_register( debug_channels, %d );\n", nr_debug );
+    fprintf( outfile, "}\n\n" );
+    fprintf( outfile, "static void %s_fini(void)\n{\n", DLLName );
+    fprintf( outfile, "    extern void wine_dbg_unregister( void * );\n");
+    if (nr_debug) fprintf( outfile, "    wine_dbg_unregister( debug_registration );\n" );
+    fprintf( outfile, "}\n" );
 }
