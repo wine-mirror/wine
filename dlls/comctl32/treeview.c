@@ -4825,14 +4825,18 @@ TREEVIEW_Create(HWND hwnd)
     {
 	RECT rc;
 	HBITMAP hbm, hbmOld;
-	HDC hdc;
+	HDC hdc,hdcScreen;
 	int nIndex;
 
 	infoPtr->himlState =
 	    ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
 
-	hdc = CreateCompatibleDC(0);
-	hbm = CreateCompatibleBitmap(hdc, 48, 16);
+	hdcScreen = CreateDCA("DISPLAY", NULL, NULL, NULL);
+
+	/* Create a coloured bitmap compatible with the screen depth
+	   because checkboxes are not black&white */
+	hdc = CreateCompatibleDC(hdcScreen);
+	hbm = CreateCompatibleBitmap(hdcScreen, 48, 16);
 	hbmOld = SelectObject(hdc, hbm);
 
 	rc.left  = 0;   rc.top    = 0;
@@ -4848,12 +4852,14 @@ TREEVIEW_Create(HWND hwnd)
 	DrawFrameControl(hdc, &rc, DFC_BUTTON,
 	                  DFCS_BUTTONCHECK|DFCS_FLAT|DFCS_CHECKED);
 
+	SelectObject(hdc, hbmOld);
 	nIndex = ImageList_AddMasked(infoPtr->himlState, hbm,
 	                              GetSysColor(COLOR_WINDOW));
-	TRACE("chckbox index %d\n", nIndex);
-	SelectObject(hdc, hbmOld);
+	TRACE("checkbox index %d\n", nIndex);
+
 	DeleteObject(hbm);
 	DeleteDC(hdc);
+	DeleteDC(hdcScreen);
 
 	infoPtr->stateImageWidth = 16;
 	infoPtr->stateImageHeight = 16;
