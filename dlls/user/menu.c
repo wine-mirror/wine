@@ -4527,7 +4527,7 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
 
     if (wParam != key) return FALSE;
 
-    if (message == WM_CHAR)
+    if (message == WM_CHAR || message == WM_SYSCHAR)
     {
         if ( !(fVirt & FALT) && !(fVirt & FVIRTKEY) )
         {
@@ -4697,11 +4697,12 @@ INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
         WARN_(accel)("invalid accel handle=%p\n", hAccel);
         return 0;
     }
-    if ((msg->message != WM_KEYDOWN &&
+    if ( msg->message != WM_KEYDOWN &&
          msg->message != WM_KEYUP &&
          msg->message != WM_SYSKEYDOWN &&
          msg->message != WM_SYSKEYUP &&
-         msg->message != WM_CHAR)) return 0;
+         msg->message != WM_SYSCHAR &&
+         msg->message != WM_CHAR ) return 0;
 
     TRACE_(accel)("TranslateAccelerators hAccel=%p, hWnd=%p,"
                   "msg->hwnd=%p, msg->message=%04x, wParam=%08x, lParam=%lx\n",
