@@ -2890,7 +2890,8 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
 
     /* check input parameter */
     if((Level < 1) || (Level > 3)) {
-        ERR("unsupported level %ld \n", Level);
+        ERR("unsupported level %ld\n", Level);
+        SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
     }
 
