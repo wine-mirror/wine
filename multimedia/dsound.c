@@ -1327,6 +1327,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		if (primarybuf) {
 			IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)primarybuf);
 			*ippdsb = primarybuf;
+			primarybuf->dsbd.dwFlags = dsbd->dwFlags;
 			return DS_OK;
 		} /* Else create primarybuf */
 	}
