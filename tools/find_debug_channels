@@ -2,13 +2,13 @@
 #
 # This script scans the whole source code for symbols of the form 
 # 'xxx(yyy' where:
-#        xxx is either TRACE, WARN, ERR or WARN
+#        xxx is either DECLARE_DEBUG_CHANNEL or DEFAULT_DEBUG_CHANNEL
 #        yyy is a C identifier 
 # It outputs on the standard output a sorted list of the 
 # yyy identifiers found in the .c files. 
 # Each identifier is reported once. Header files are not scanned.
 #
-# The script can be given an argument that specify the files to be
+# The script can be given an argument that specifies the files to be
 # searched according to the following scheme:
 #    - if the argument does not contain a slash (/), the script
 #      will search the tree rooted in the current directory for
@@ -19,7 +19,7 @@
 #      searched
 #    - if no argument is given, the argument defaults to "*.c"
 #      that is, all C files are searched.
-#    - if more than a argument is given, only the listed files are
+#    - if more than one argument is given, only the listed files are
 #      searched. Note that in this case, the script will not
 #      attempt to find them in some subdirectories, but rather
 #      it will try to open them in the current directory.
