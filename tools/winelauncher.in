@@ -364,13 +364,18 @@ clean_up_info_message ()
 #------------------------------------------------------------------------------
 #  Generate a temporary log file name
 #------------------------------------------------------------------------------
+if [ -n "$TMP" ] ; then
+  log_dir="$TMP"
+else
+  log_dir="/tmp"
+fi
 use_log_name=0
-log_name=`mktemp /tmp/wine.log.XXXXXX`
+log_name=`mktemp "$log_dir/wine.log.XXXXXX"`
 if [ $? -eq 0 ] ; then
     use_log_name=1
 fi
 use_status_name=0
-status_name=`mktemp /tmp/wine.status.XXXXXX`
+status_name=`mktemp "$log_dir/wine.status.XXXXXX"`
 if [ $? -eq 0 ] ; then
     use_status_name=1
 fi
@@ -379,7 +384,7 @@ fi
 #  Okay, really launch Wine...
 #------------------------------------------------------------------------------
 if [ $use_log_name -ne 0 -a $use_status_name -ne 0 ] ; then
-    ( $WINEBIN/$WINE_BIN_NAME "$@"; echo $? >$status_name ) 2>&1 | tee $log_name
+    ( $WINEBIN/$WINE_BIN_NAME "$@"; echo $? >$status_name ) 2>&1 | tee "$log_name"
     wine_return=`cat $status_name`
 else
     $WINEBIN/$WINE_BIN_NAME "$@"
@@ -395,7 +400,7 @@ fi
 if [ $always_see_output -eq 0 -a $wine_return -eq 0 ] ; then
     echo "Wine exited with a successful status"
     if [ $use_log_name -ne 0 ] ; then
-        rm -f $log_name
+        rm -f "$log_name"
     fi
 else
     if [ $always_see_output -eq 0 ] ; then
@@ -490,10 +495,10 @@ You may view this file by selecting View Log, below."
         #  Process a view instruction
         #------------------------------------------------------------------------------
         if [ $debug_return -eq 1 ] ; then
-            $XMESSAGE -title "View Wine Log" -file $log_name -buttons "  Okay  ":0,"Delete $log_name":1  
+            $XMESSAGE -title "View Wine Log" -file "$log_name" -buttons "  Okay  ":0,"Delete $log_name":1  
             if [ $? -eq 1 ] ; then
                 echo "Deleting $log_name"
-                rm -f $log_name
+                rm -f "$log_name"
                 use_log_name=0
             fi
         else
