@@ -799,40 +799,33 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 
 	TRACE_(shell)("(%04x,0x%x,%p)\n", hwndOwner,nFolder,ppidl);
 
-	*ppidl = NULL;
-
 	if (ppidl)
 	{
+	  *ppidl = NULL;
 	  switch (nFolder)
 	  {
 	    case CSIDL_DESKTOP:
 	      *ppidl = _ILCreateDesktop();
-	      hr = NOERROR;
 	      break;
 
 	    case CSIDL_DRIVES:
 	      *ppidl = _ILCreateMyComputer();
-	      hr = NOERROR;
 	      break;
 
 	    case CSIDL_NETWORK:
 	      *ppidl = _ILCreateNetwork ();
-	      hr = NOERROR;
 	      break;
 
 	    case CSIDL_CONTROLS:
 	      *ppidl = _ILCreateControl ();
-	      hr = NOERROR;
 	      break;
 
 	    case CSIDL_PRINTERS:
 	      *ppidl = _ILCreatePrinter ();
-	      hr = NOERROR;
 	      break;
 
 	    case CSIDL_BITBUCKET:
 	      *ppidl = _ILCreateBitBucket ();
-	      hr = NOERROR;
 	      break;
 
 	    default:
@@ -843,6 +836,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 		hr = SHILCreateFromPathA(szPath, ppidl, &attributes);
 	      }
 	  }
+	  if(*ppidl) hr = NOERROR;
 	}
 
 	TRACE_(shell)("-- (new pidl %p)\n",*ppidl);
@@ -1229,7 +1223,8 @@ LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
  */
 
 LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
-{	LPITEMIDLIST   pidlOut = NULL, pidlTemp = NULL;
+{
+	LPITEMIDLIST   pidlOut = NULL, pidlTemp = NULL;
 	LPPIDLDATA     pData;
 	UINT16         uSize = 0;
 	LPSTR	pszDest;
@@ -1237,18 +1232,38 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
 	TRACE("(0x%02x %p %i)\n",type,pIn,uInSize);
 
 	switch (type)
-	{ case PT_DESKTOP:
+	{
+	  case PT_DESKTOP:
 	    uSize = 0;
-	    pidlOut = SHAlloc(uSize + 2);
-	    pidlOut->mkid.cb = uSize;
+	    break;
+	  case PT_SPECIAL:
+	  case PT_MYCOMP:
+	    uSize = 2 + 2 + sizeof(GUID);
+	    break;
+	  case PT_DRIVE:
+	    uSize = 2 + 23;
+	    break;
+	  case PT_FOLDER:
+	  case PT_VALUE:   
+	    uSize = 2 + 12 + uInSize;
+	    break;
+	  default:
+	    FIXME("can't create type: 0x%08x\n",type); 
+	    return NULL;
+	}
+
+	if(!(pidlOut = SHAlloc(uSize + 2))) return NULL;
+	ZeroMemory(pidlOut, uSize + 2);
+	pidlOut->mkid.cb = uSize;
+
+	switch (type)
+	{
+	  case PT_DESKTOP:
 	    TRACE("- create Desktop\n");
 	    break;
 
+	  case PT_SPECIAL:
 	  case PT_MYCOMP:
-	    uSize = 2 + 2 + sizeof(GUID);
-	    pidlOut = SHAlloc(uSize + 2);
-	    ZeroMemory(pidlOut, uSize + 2);
-	    pidlOut->mkid.cb = uSize;
 	    pData =_ILGetDataPointer(pidlOut);
 	    pData->type = type;
 	    memcpy(&(pData->u.mycomp.guid), pIn, uInSize);
@@ -1256,10 +1271,6 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
 	    break;
 
 	  case PT_DRIVE:
-	    uSize = 2 + 23;
-	    pidlOut = SHAlloc(uSize + 2);
-	    ZeroMemory(pidlOut, uSize + 2);
-	    pidlOut->mkid.cb = uSize;
 	    pData =_ILGetDataPointer(pidlOut);
 	    pData->type = type;
 	    pszDest = _ILGetTextPointer(pidlOut);
@@ -1269,10 +1280,6 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
 
 	  case PT_FOLDER:
 	  case PT_VALUE:   
-	    uSize = 2 + 12 + uInSize;
-	    pidlOut = SHAlloc(uSize + 2);
-	    ZeroMemory(pidlOut, uSize + 2);
-	    pidlOut->mkid.cb = uSize;
 	    pData =_ILGetDataPointer(pidlOut);
 	    pData->type = type;
 	    pszDest =  _ILGetTextPointer(pidlOut);

@@ -818,7 +818,9 @@ static HINSTANCE	hComctl32;
 static INT		shell32_RefCount = 0;
 
 LONG		shell32_ObjCount = 0;
-HINSTANCE	shell32_hInstance; 
+HINSTANCE	shell32_hInstance = 0; 
+HINSTANCE	shlwapi_hInstance = 0; 
+HMODULE		huser32 = 0;
 HIMAGELIST	ShellSmallIconList = 0;
 HIMAGELIST	ShellBigIconList = 0;
 
@@ -829,10 +831,34 @@ HIMAGELIST	ShellBigIconList = 0;
  *  calling oleinitialize here breaks sone apps.
  */
 
+BOOL WINAPI ShlwapiLibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+	switch (fdwReason)
+	{
+	  case DLL_PROCESS_ATTACH:
+	    shlwapi_hInstance = hinstDLL;
+	    if(!huser32) huser32 = GetModuleHandleA("USER32.DLL");
+
+	    if (!huser32)
+	    {
+	      ERR("hModule of USER32 is 0\n");
+	      return FALSE;
+	    }
+	    break;
+	}
+	return TRUE;
+}
+
+/*************************************************************************
+ * SHELL32 LibMain
+ *
+ * NOTES
+ *  calling oleinitialize here breaks sone apps.
+ */
+
 BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-	HMODULE	hUser32;
-
 	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
 	switch (fdwReason)
@@ -843,10 +869,10 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	    shell32_hInstance = hinstDLL;
 	    hComctl32 = GetModuleHandleA("COMCTL32.DLL");	
-	    hUser32 = GetModuleHandleA("USER32");
+	    if(!huser32) huser32 = GetModuleHandleA("USER32.DLL");
 	    DisableThreadLibraryCalls(shell32_hInstance);
 
-	    if (!hComctl32 || !hUser32)
+	    if (!hComctl32 || !huser32)
 	    {
 	      ERR("P A N I C SHELL32 loading failed\n");
 	      return FALSE;
@@ -871,8 +897,8 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
 	    pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
 	    /* user32 */
-	    pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(hUser32,"LookupIconIdFromDirectoryEx");
-	    pCreateIconFromResourceEx=(void*)GetProcAddress(hUser32,"CreateIconFromResourceEx");
+	    pLookupIconIdFromDirectoryEx=(void*)GetProcAddress(huser32,"LookupIconIdFromDirectoryEx");
+	    pCreateIconFromResourceEx=(void*)GetProcAddress(huser32,"CreateIconFromResourceEx");
 
 	    /* initialize the common controls */
 	    if (pDLLInitComctl)

@@ -989,6 +989,19 @@ DWORD WINAPI SHLWAPI_1 (
 }
 
 /*************************************************************************
+ *      SHLWAPI_16	[SHLWAPI]
+ */
+HRESULT WINAPI SHLWAPI_16 (
+	LPVOID w,
+	LPVOID x,
+	LPVOID y,
+	LPWSTR z)
+{
+	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	return 0xabba1252;
+}
+
+/*************************************************************************
  *      SHLWAPI_23	[SHLWAPI.23]
  *
  * NOTES
@@ -1081,6 +1094,21 @@ HRESULT WINAPI SHLWAPI_219 (
 {
 	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
 	return 0xabba1252;
+}
+
+/*************************************************************************
+ *      SHLWAPI_215	[SHLWAPI]
+ *
+ * NOTES
+ *  check me!
+ */
+LPWSTR WINAPI SHLWAPI_215 (
+	LPSTR lpStrSrc,
+	LPVOID lpwStrDest,
+	int len)
+{
+	WARN("(%s %p %u)\n",lpStrSrc,lpwStrDest,len);
+	return CRTDLL_wcsncpy(lpwStrDest, lpStrSrc, len);
 }
 
 /*************************************************************************
@@ -1194,13 +1222,44 @@ DWORD WINAPI SHLWAPI_276 ()
 }
 
 /*************************************************************************
- *      SHLWAPI_309	[SHLWAPI]
+ *      SHLWAPI_278	[SHLWAPI]
  *
  */
-DWORD WINAPI SHLWAPI_309 (LPVOID x)
+DWORD WINAPI SHLWAPI_278 (
+	LONG wndProc,
+	HWND hWndParent,
+	DWORD dwExStyle,
+	DWORD dwStyle,
+	HMENU hMenu,
+	LONG z)
 {
-	FIXME("(%p)stub\n",x);
-	return 0xabba1245;
+	WNDCLASSA wndclass;
+	HWND hwnd;
+	HCURSOR hCursor;
+	char * clsname = "WorkerA";
+	
+	FIXME("(0x%08lx 0x%08x 0x%08lx 0x%08lx 0x%08x 0x%08lx)stub\n",
+	  wndProc,hWndParent,dwExStyle,dwStyle,hMenu,z);
+
+	hCursor = LoadCursorA(0x00000000,IDC_ARROWA);
+
+	if(!GetClassInfoA(shlwapi_hInstance, clsname, &wndclass))
+	{
+	  RtlZeroMemory(&wndclass, sizeof(WNDCLASSA));
+	  wndclass.lpfnWndProc = GetProcAddress(huser32, "DefWindowProcW");
+	  wndclass.cbWndExtra = 4;
+	  wndclass.hInstance = shlwapi_hInstance;
+	  wndclass.hCursor = hCursor;
+	  wndclass.hbrBackground = COLOR_BTNSHADOW;
+	  wndclass.lpszMenuName = NULL;
+	  wndclass.lpszClassName = clsname;
+	  RegisterClassA (&wndclass);
+	}
+	hwnd = CreateWindowExA(dwExStyle, clsname, 0,dwStyle,0,0,0,0,hWndParent,
+		hMenu,shlwapi_hInstance,0);
+	SetWindowLongA(hwnd, 0, z);
+	SetWindowLongA(hwnd, GWL_WNDPROC, wndProc);
+	return hwnd;
 }
 
 /*************************************************************************
@@ -1238,6 +1297,27 @@ DWORD WINAPI SHLWAPI_377 (LPVOID x, LPVOID y, LPVOID z)
 {
 	FIXME("(%p %p %p)stub\n", x,y,z);
 	return 0xabba1246;
+}
+
+/*************************************************************************
+ *      SHLWAPI_378	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_378 (
+	LPSTR x,
+	LPVOID y, /* 0x50000000 */
+	LPVOID z) /* 4 */
+{
+	FIXME("(%s %p %p)stub\n", x,y,z);
+	return LoadLibraryA(x);
+}
+
+/*************************************************************************
+ *      SHLWAPI_431	[SHLWAPI]
+ */
+DWORD WINAPI SHLWAPI_431 (DWORD x)
+{
+	FIXME("(0x%08lx)stub\n", x);
+	return 0xabba1247;
 }
 
 /*************************************************************************

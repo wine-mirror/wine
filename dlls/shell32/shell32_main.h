@@ -20,11 +20,17 @@
 /*******************************************
 *  global SHELL32.DLL variables
 */
+extern HMODULE	huser32;
 extern HINSTANCE shell32_hInstance;
 extern LONG	  shell32_ObjCount;
 extern HIMAGELIST	ShellSmallIconList;
 extern HIMAGELIST	ShellBigIconList;
 extern HDPA		sic_hdpa;
+
+/*******************************************
+*  global SHLWAPI.DLL variables
+*/
+extern HINSTANCE shlwapi_hInstance;
 
 /*******************************************
 * pointer to functions dynamically loaded

@@ -1,5 +1,6 @@
 name shlwapi
 type win32
+init ShlwapiLibMain
 
 1   stdcall SHLWAPI_1(ptr ptr)SHLWAPI_1
 2   stub @
@@ -16,7 +17,7 @@ type win32
 13  stub @
 14  stub @
 15  stub @
-16  stub @
+16  stdcall SHLWAPI_16(long long long long)SHLWAPI_16
 17  stub @
 18  stub @
 19  stub @
@@ -56,7 +57,7 @@ type win32
 53  stub @
 54  stub @
 55  stub @
-56  stub @
+56  forward SHLWAPI_56 user32.DefWindowProcW
 57  stub @
 58  stub @
 59  stub @
@@ -94,7 +95,7 @@ type win32
 91  stub @
 92  stub @
 93  stub @
-94  stub @
+94  forward SHLWAPI_94 user32.GetWindowLongW
 95  stub @
 96  stub @
 97  stub @
@@ -107,7 +108,7 @@ type win32
 104 stub @
 105 stub @
 106 stub @
-107 stub @
+107 forward SHLWAPI_107 user32.LoadStringW
 108 stub @
 109 stub @
 110 stub @
@@ -215,7 +216,7 @@ type win32
 212 stub @
 213 stub @
 214 stub @
-215 stub @
+215 stdcall SHLWAPI_215(long long long)SHLWAPI_215
 216 stub @
 217 stub @
 218 stub @
@@ -278,7 +279,7 @@ type win32
 275 stub @
 276 stdcall SHLWAPI_276()SHLWAPI_276
 277 stub @
-278 stub @
+278 stdcall SHLWAPI_278(long long long long long long)SHLWAPI_278
 279 stub @
 280 stub @
 281 stub @
@@ -309,7 +310,7 @@ type win32
 306 stub @
 307 stub @
 308 stub @
-309 stdcall SHLWAPI_309(ptr)SHLWAPI_309
+309 forward SHLWAPI_309 kernel32.LoadLibraryW
 310 stub @
 311 stub @
 312 stub @
@@ -378,7 +379,7 @@ type win32
 375 stub @
 376 stub @
 377 stdcall SHLWAPI_377(long long long)SHLWAPI_377
-378 stub @
+378 stdcall SHLWAPI_378(long long long)SHLWAPI_378
 379 stub @
 380 stub @
 381 stub AssocQueryStringA
@@ -431,7 +432,7 @@ type win32
 428 stub @
 429 stub @
 430 stub @
-431 stub @
+431 stdcall SHLWAPI_431(long)SHLWAPI_431
 432 stub @
 433 stub @
 434 stub @
