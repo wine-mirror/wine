@@ -240,7 +240,7 @@ static void CLASS_SetClassNameW( CLASS *classPtr, LPCWSTR name )
 static BOOL CLASS_FreeClass( CLASS *classPtr )
 {
     CLASS **ppClass;
-    TRACE("%p \n", classPtr);  
+    TRACE("%p\n", classPtr);  
 
     /* Check if we can remove this class */
 
@@ -260,7 +260,8 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
     /* Delete the class */
 
     if (classPtr->dce) DCE_FreeDCE( classPtr->dce );
-    if (classPtr->hbrBackground) DeleteObject( classPtr->hbrBackground );
+    if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
+        DeleteObject( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
     CLASS_SetClassNameA( classPtr, NULL );
@@ -277,7 +278,7 @@ void CLASS_FreeModuleClasses( HMODULE16 hModule )
 {
     CLASS *ptr, *next;
   
-    TRACE("0x%08x \n", hModule);  
+    TRACE("0x%08x\n", hModule); 
 
     for (ptr = firstClass; ptr; ptr = next)
     {
