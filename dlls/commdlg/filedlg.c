@@ -676,30 +676,11 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
 
 INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    FileOpenDlgInfos *fodInfos;
-
-#if 0
-    TRACE("0x%04x\n", uMsg);
-#endif
-
-    switch(uMsg)
-    {
-      case WM_INITDIALOG:
-      {
-        fodInfos = (FileOpenDlgInfos *)lParam;
-        lParam = (LPARAM) fodInfos->ofnInfos;
-
-        if(fodInfos && IsHooked(fodInfos))
-          return CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,hwnd,uMsg,wParam,lParam);
-        return 0;
-      }
+    switch(uMsg) {
+    case WM_INITDIALOG:
+        return TRUE;
     }
-
-    fodInfos = (FileOpenDlgInfos *) GetPropA(GetParent(hwnd),FileOpenDlgInfosStr);
-    if(fodInfos && IsHooked(fodInfos))
-      return CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,hwnd,uMsg,wParam,lParam);
-
-    return 0;
+    return FALSE;
 }
 
 HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
@@ -753,8 +734,9 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
           return NULL;
     	}
       }
-      hChildDlg= CreateDialogIndirectParamA(COMDLG32_hInstance, template,
-           hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
+      hChildDlg = CreateDialogIndirectParamA(COMDLG32_hInstance, template, hwnd,
+                                             IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
+                                             (LPARAM)fodInfos->ofnInfos);
       if(hChildDlg)
       {
         ShowWindow(hChildDlg,SW_SHOW);
@@ -779,7 +761,7 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
       temp.menu = temp.class = temp.title = 0;
 
       hChildDlg = CreateDialogIndirectParamA(COMDLG32_hInstance, &temp.tmplate,
-                  hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
+                  hwnd, (DLGPROC)fodInfos->ofnInfos->lpfnHook, (LPARAM)fodInfos->ofnInfos);
 
       return hChildDlg;
     }
@@ -1490,12 +1472,16 @@ static BOOL FILEDLG95_SendFileOK( HWND hwnd, FileOpenDlgInfos *fodInfos )
         TRACE("---\n");
         /* First send CDN_FILEOK as MSDN doc says */
         SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
+        if (GetWindowLongW(fodInfos->DlgInfos.hwndCustomDlg, DWL_MSGRESULT))
+        {
+            TRACE("canceled\n");
+            return FALSE;
+        }
 
         /* fodInfos->ofnInfos points to an ASCII or UNICODE structure as appropriate */
-        CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,
-                            fodInfos->DlgInfos.hwndCustomDlg,
-                            fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
-        if (GetWindowLongA(fodInfos->DlgInfos.hwndCustomDlg, DWL_MSGRESULT))
+        SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,
+                     fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
+        if (GetWindowLongW(fodInfos->DlgInfos.hwndCustomDlg, DWL_MSGRESULT))
         {
             TRACE("canceled\n");
             return FALSE;
