@@ -17,9 +17,7 @@ sub check_function {
     my $module = $winapi->function_module($internal_name);
        
     if($winapi->name eq "win16") {
-	my $name16 = $internal_name;
-	$name16 =~ s/16$//;
-	if($name16 ne $internal_name && $winapi->function_stub($name16)) {
+	if($winapi->function_stub($internal_name)) {
 	    if($options->implemented) {
 		$output->write("function implemented but declared as stub in .spec file\n");
 	    }

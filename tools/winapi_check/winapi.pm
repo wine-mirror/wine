@@ -229,6 +229,7 @@ sub parse_spec_file {
     my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
     my $function_arguments = \%{$self->{FUNCTION_ARGUMENTS}};
+    my $function_ordinal = \%{$self->{FUNCTION_ORDINAL}};
     my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
     my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
@@ -283,6 +284,7 @@ sub parse_spec_file {
 	    $$function_internal_name{$external_name} = $internal_name;
 	    $$function_external_name{$internal_name} = $external_name;
 	    $$function_arguments{$internal_name} = $arguments;
+	    $$function_ordinal{$internal_name} = $ordinal;
 	    $$function_calling_convention{$internal_name} = $calling_convention;
 	    if(!$$function_module{$internal_name}) {
 		$$function_module{$internal_name} = "$module";
@@ -333,7 +335,11 @@ sub parse_spec_file {
 
 	    my $internal_name;
 	    if($type eq "win16") {
-		$internal_name = $external_name . "16";
+		if($external_name =~ /\d$/) {
+		    $internal_name = $external_name . "_16";
+		} else {
+		    $internal_name = $external_name . "16";
+		}
 	    } else {
 		$internal_name = $external_name;
 	    }
@@ -614,6 +620,15 @@ sub all_functions_found {
     my $function_found = \%{$self->{FUNCTION_FOUND}};
 
     return sort(keys(%$function_found));
+}
+
+sub function_ordinal {
+    my $self = shift;
+    my $function_ordinal = \%{$self->{FUNCTION_ORDINAL}};
+
+    my $name = shift;
+
+    return $$function_ordinal{$name};
 }
 
 sub function_calling_convention {
