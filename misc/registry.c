@@ -674,10 +674,14 @@ static void _wine_loadreg( HKEY hkey, char *fn )
 
 #define NT_REG_HEADER_BLOCK_ID       0x66676572	/* regf */
 #define NT_REG_POOL_BLOCK_ID         0x6E696268	/* hbin */
-#define NT_REG_KEY_BLOCK_ID          0x6b6e
-#define NT_REG_VALUE_BLOCK_ID        0x6b76
-#define NT_REG_HASH_BLOCK_ID         0x666c
-#define NT_REG_NOHASH_BLOCK_ID       0x696c
+#define NT_REG_KEY_BLOCK_ID          0x6b6e /* nk */
+#define NT_REG_VALUE_BLOCK_ID        0x6b76 /* vk */
+
+/* subblocks of nk */
+#define NT_REG_HASH_BLOCK_ID         0x666c /* lf */
+#define NT_REG_NOHASH_BLOCK_ID       0x696c /* li */
+#define NT_REG_RI_BLOCK_ID	     0x6972 /* ri */
+
 #define NT_REG_KEY_BLOCK_TYPE        0x20
 #define NT_REG_ROOT_KEY_BLOCK_TYPE   0x2c
 
@@ -757,12 +761,37 @@ typedef struct
 	hash_rec	hash_rec[1];
 } nt_lf;
 
+/*
+ list of subkeys without hash
+
+ li --+-->nk
+      |
+      +-->nk
+ */
 typedef struct
 {
 	WORD	id;		/* 0x00 0x696c */
 	WORD	nr_keys;
 	DWORD	off_nk[1];
-} nt_il;
+} nt_li;
+
+/*
+ this is a intermediate node
+
+ ri --+-->li--+-->nk
+      |       +
+      |       +-->nk
+      |
+      +-->li--+-->nk
+              +
+	      +-->nk
+ */
+typedef struct
+{
+	WORD	id;		/* 0x00 0x6972 */
+	WORD	nr_li;		/* 0x02 number off offsets */
+	DWORD	off_li[1];	/* 0x04 points to li */
+} nt_ri;
 
 typedef struct
 {
@@ -789,7 +818,7 @@ LPSTR _strdupnA( LPCSTR str, int len )
 
 static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level);
 static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk);
-static int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level);
+static int _nt_parse_lf(HKEY hkey, char * base, int subkeys, nt_lf * lf, int level);
 
 
 /*
@@ -822,7 +851,7 @@ static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk)
 	if (ret) ERR("RegSetValueEx failed (0x%08lx)\n", ret);
 	return TRUE;
 error:
-	ERR_(reg)("vk block invalid\n");
+	ERR_(reg)("unknown block found (0x%04x), please report!\n", vk->id);
 	return FALSE;
 }
 
@@ -835,27 +864,64 @@ error:
  * exception: if the id is 'il' there are no hash values and every 
  * dword is a offset
  */
-static int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level)
+static int _nt_parse_lf(HKEY hkey, char * base, int subkeys, nt_lf * lf, int level)
 {
 	int i;
 
 	if (lf->id == NT_REG_HASH_BLOCK_ID)
 	{
+	  if (subkeys != lf->nr_keys) goto error1;
+
 	  for (i=0; i<lf->nr_keys; i++)
 	  {
 	    if (!_nt_parse_nk(hkey, base, (nt_nk*)(base+lf->hash_rec[i].off_nk+4), level)) goto error;
 	  }
-	  
 	}
 	else if (lf->id == NT_REG_NOHASH_BLOCK_ID)
 	{
-	  for (i=0; i<lf->nr_keys; i++)
+	  nt_li * li = (nt_li*)lf;
+	  if (subkeys != li->nr_keys) goto error1;
+
+	  for (i=0; i<li->nr_keys; i++)
 	  {
-	    if (!_nt_parse_nk(hkey, base, (nt_nk*)(base+((nt_il*)lf)->off_nk[i]+4), level)) goto error;
+	    if (!_nt_parse_nk(hkey, base, (nt_nk*)(base+li->off_nk[i]+4), level)) goto error;
 	  }
 	}
+	else if (lf->id == NT_REG_RI_BLOCK_ID) /* ri */
+	{
+	  nt_ri * ri = (nt_ri*)lf;
+	  int li_subkeys = 0;
+
+	  /* count all subkeys */
+	  for (i=0; i<ri->nr_li; i++)
+	  {
+	    nt_li * li = (nt_li*)(base+ri->off_li[i]+4);
+	    if(li->id != NT_REG_NOHASH_BLOCK_ID) goto error2;
+	    li_subkeys += li->nr_keys;
+	  }
+
+	  /* check number */
+	  if (subkeys != li_subkeys) goto error1;
+
+	  /* loop through the keys */
+	  for (i=0; i<ri->nr_li; i++)
+	  {
+	    nt_li * li = (nt_li*)(base+ri->off_li[i]+4);
+	    if (!_nt_parse_lf(hkey, base, li->nr_keys, (nt_lf*)li, level)) goto error;
+	  }
+	}
+	else 
+	{
+	  goto error2;
+	}
+	return TRUE;
+
+error2: ERR("unknown node id 0x%04x, please report!\n", lf->id);
 	return TRUE;
 	
+error1:	ERR_(reg)("registry file corrupt! (inconsistent number of subkeys)\n");
+	return FALSE;
+
 error:	ERR_(reg)("error reading lf block\n");
 	return FALSE;
 }
@@ -867,9 +933,18 @@ static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 	DWORD * vl;
 	HKEY subkey = hkey;
 
-	if(nk->SubBlockId != NT_REG_KEY_BLOCK_ID) goto error;
+	if(nk->SubBlockId != NT_REG_KEY_BLOCK_ID)
+	{
+	  ERR("unknown node id 0x%04x, please report!\n", nk->SubBlockId);
+	  goto error;
+	}
+
 	if((nk->Type!=NT_REG_ROOT_KEY_BLOCK_TYPE) &&
-	   (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != NT_REG_KEY_BLOCK_ID)) goto error;
+	   (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != NT_REG_KEY_BLOCK_ID))
+	{
+	  ERR_(reg)("registry file corrupt!\n");
+	  goto error;
+	}
 
 	/* create the new key */
 	if(level <= 0)
@@ -883,8 +958,7 @@ static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 	if (nk->nr_subkeys)
 	{
 	  nt_lf * lf = (nt_lf*)(base+nk->lf_off+4);
-	  if (nk->nr_subkeys != lf->nr_keys) goto error1;
-	  if (!_nt_parse_lf(subkey, base, lf, level-1)) goto error1;
+	  if (!_nt_parse_lf(subkey, base, nk->nr_subkeys, lf, level-1)) goto error1;
 	}
 
 	/* loop trough the value list */
@@ -899,8 +973,7 @@ static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 	return TRUE;
 	
 error1:	RegCloseKey(subkey);
-error:	ERR_(reg)("error reading nk block\n");
-	return FALSE;
+error:	return FALSE;
 }
 
 /* end nt loader */
