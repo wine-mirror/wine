@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  */
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran);
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package);
-static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq);
+static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI);
 static UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name, 
                             LPWSTR *FilePath);
 
@@ -864,6 +864,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     DWORD sz;
     WCHAR buffer[10];
     UINT rc;
+    BOOL ui = FALSE;
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
@@ -963,6 +964,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
         if (atoiW(buffer) >= INSTALLUILEVEL_REDUCED)
         {
             rc = ACTION_ProcessUISequence(package);
+            ui = TRUE;
             if (rc == ERROR_SUCCESS)
                 rc = ACTION_ProcessExecSequence(package,TRUE);
         }
@@ -980,13 +982,13 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
-        ACTION_PerformActionSequence(package,-1);
+        ACTION_PerformActionSequence(package,-1,ui);
     else if (rc == ERROR_INSTALL_USEREXIT) 
-        ACTION_PerformActionSequence(package,-2);
+        ACTION_PerformActionSequence(package,-2,ui);
     else if (rc == ERROR_FUNCTION_FAILED) 
-        ACTION_PerformActionSequence(package,-3);
+        ACTION_PerformActionSequence(package,-3,ui);
     else if (rc == ERROR_INSTALL_SUSPEND) 
-        ACTION_PerformActionSequence(package,-4);
+        ACTION_PerformActionSequence(package,-4,ui);
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
@@ -994,7 +996,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     return rc;
 }
 
-static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
+static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 {
     MSIQUERY * view;
     UINT rc;
@@ -1007,7 +1009,16 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
          'S','e','q','u','e','n','c','e',' ', 'W','H','E','R','E',' ',
          'S','e','q','u','e','n','c','e',' ', '=',' ','%','i',0};
 
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
+    static const WCHAR UISeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+	 'I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
+	 ' ', 'W','H','E','R','E',' ', 'S','e','q','u','e','n','c','e',
+	 ' ', '=',' ','%','i',0};
+
+    if (UI)
+        rc = MSI_OpenQuery(package->db, &view, UISeqQuery, seq);
+    else
+        rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
 
     if (rc == ERROR_SUCCESS)
     {
@@ -1058,7 +1069,10 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
             goto end;
         }
 
-        rc = ACTION_PerformAction(package,buffer);
+        if (UI)
+            rc = ACTION_PerformUIAction(package,buffer);
+        else
+            rc = ACTION_PerformAction(package,buffer);
         msiobj_release(&row->hdr);
 end:
         MSI_ViewClose(view);
@@ -3523,7 +3537,8 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             value_data = parse_value(package, value, &type, &size); 
         else
         {
-            value_data = NULL;
+            static const WCHAR szEmpty[] = {0};
+            value_data = (LPSTR)strdupW(szEmpty);
             size = 0;
             type = REG_SZ;
         }
