@@ -606,6 +606,101 @@ static void test_PathIsUrl(void)
     }
 }
 
+static const DWORD SHELL_charclass[] =
+{
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000080, 0x00000100, 0x00000200, 0x00000100,
+    0x00000100, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0x00000100, 0x00000002, 0x00000100,
+    0x00000040, 0x00000100, 0x00000004, 0x00000000,
+    0x00000100, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0x00000100, 0x00000010, 0x00000020,
+    0x00000000, 0x00000100, 0x00000000, 0x00000001,
+    0x00000100, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0x00000100,
+    0x00000008, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0x00000100,
+    0x00000000, 0x00000100, 0x00000100
+};
+
+BOOL WINAPI PathIsValidCharA( char c, DWORD class );
+BOOL WINAPI PathIsValidCharW( WCHAR c, DWORD class );
+
+static void test_PathIsValidCharA(void)
+{
+    BOOL ret;
+    unsigned int c;
+
+    ret = PathIsValidCharA( 0x7f, 0 );
+    ok ( !ret, "PathIsValidCharA succeeded: 0x%08lx\n", (DWORD)ret );
+
+    ret = PathIsValidCharA( 0x7f, 1 );
+    ok ( !ret, "PathIsValidCharA succeeded: 0x%08lx\n", (DWORD)ret );
+
+    for (c = 0; c < 0x7f; c++)
+    {
+        ret = PathIsValidCharA( c, ~0U );
+        ok ( ret == SHELL_charclass[c] || (ret == 1 && SHELL_charclass[c] == 0xffffffff),
+             "PathIsValidCharA failed: 0x%02x got 0x%08lx expected 0x%08lx\n",
+             c, (DWORD)ret, SHELL_charclass[c] );
+    }
+
+    for (c = 0x7f; c <= 0xff; c++)
+    {
+        ret = PathIsValidCharA( c, ~0U );
+        ok ( ret == 0x00000100,
+             "PathIsValidCharA failed: 0x%02x got 0x%08lx expected 0x00000100\n",
+             c, (DWORD)ret );
+    }
+}
+
+static void test_PathIsValidCharW(void)
+{
+    BOOL ret;
+    unsigned int c;
+
+    ret = PathIsValidCharW( 0x7f, 0 );
+    ok ( !ret, "PathIsValidCharW succeeded: 0x%08lx\n", (DWORD)ret );
+
+    ret = PathIsValidCharW( 0x7f, 1 );
+    ok ( !ret, "PathIsValidCharW succeeded: 0x%08lx\n", (DWORD)ret );
+
+    for (c = 0; c < 0x7f; c++)
+    {
+        ret = PathIsValidCharW( c, ~0U );
+        ok ( ret == SHELL_charclass[c] || (ret == 1 && SHELL_charclass[c] == 0xffffffff),
+             "PathIsValidCharW failed: 0x%02x got 0x%08lx expected 0x%08lx\n",
+             c, (DWORD)ret, SHELL_charclass[c] );
+    }
+
+    for (c = 0x007f; c <= 0xffff; c++)
+    {
+        ret = PathIsValidCharW( c, ~0U );
+        ok ( ret == 0x00000100,
+             "PathIsValidCharW failed: 0x%02x got 0x%08lx expected 0x00000100\n",
+             c, (DWORD)ret );
+    }
+}
+
 START_TEST(path)
 {
   test_UrlHash();
@@ -620,4 +715,6 @@ START_TEST(path)
   test_PathSearchAndQualify();
   test_PathCreateFromUrl();
   test_PathIsUrl();
+  test_PathIsValidCharA();
+  test_PathIsValidCharW();
 }
