@@ -709,7 +709,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
 
     /* Initialize the INSTANCEDATA structure */
     pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
-    pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack );
+    pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack ) + sizeof( STACK16FRAME );
     pinstance->stackbottom = pinstance->stackmin; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = ( pinstance->stackmin > BX_reg(context)? 
                                pinstance->stackmin - BX_reg(context) : 0 ) + 150; 
