@@ -79,12 +79,14 @@
 
 #ifndef __WINE__
 # ifdef UNICODE
-typedef LPWSTR LPTSTR;
-typedef LPCWSTR LPCTSTR;
+typedef WCHAR TCHAR, *PTCHAR;
+typedef LPWSTR PTSTR, LPTSTR;
+typedef LPCWSTR PCTSTR, LPCTSTR;
 #define __TEXT(string) L##string /*probably wrong */
 # else  /* UNICODE */
-typedef LPSTR LPTSTR;
-typedef LPCSTR LPCTSTR;
+typedef char TCHAR, *PTCHAR;
+typedef LPSTR PTSTR, LPTSTR;
+typedef LPCSTR PCTSTR, LPCTSTR;
 #define __TEXT(string) string
 # endif /* UNICODE */
 #endif   /* __WINE__ */
