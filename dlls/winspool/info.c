@@ -131,6 +131,11 @@ CUPS_LoadPrinters(void) {
 
 	if (!ppd) {
 	    WARN("No ppd file for %s.\n",printers[i]);
+	    /* If this was going to be the default printer,
+	     * forget it and use another one.
+	     */
+	    if (def && !strcmp(def,printers[i]))
+	        def = NULL;
 	    continue;
 	}
 	unlink(ppd);
@@ -139,6 +144,14 @@ CUPS_LoadPrinters(void) {
 
 	if (def && !strcmp(def,printers[i]))
 	        WINSPOOL_SetDefaultPrinter(printers[i],printers[i],FALSE);
+
+	/* The default printer has no PPD file, just use the first one
+	 * which has one.
+	 */
+	if (!def) {
+	        WINSPOOL_SetDefaultPrinter(printers[i],printers[i],FALSE);
+		def = printers[i];
+	}
 	memset(&pinfo2a,0,sizeof(pinfo2a));
 	pinfo2a.pPrinterName	= printers[i];
 	pinfo2a.pDatatype	= "RAW";
@@ -1865,6 +1878,12 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
     /* PRINTER_ENUM_DEFAULT is only supported under win9x, we behave like NT */
     if(dwType == PRINTER_ENUM_DEFAULT)
 	return TRUE;
+
+    if (dwType & PRINTER_ENUM_CONNECTIONS) {
+        FIXME("We dont handle PRINTER_ENUM_CONNECTIONS\n");
+	dwType &= ~PRINTER_ENUM_CONNECTIONS; /* we dont handle that */
+	dwType |= PRINTER_ENUM_LOCAL;
+    }
 
     if (!((dwType & PRINTER_ENUM_LOCAL) || (dwType & PRINTER_ENUM_NAME))) {
         FIXME("dwType = %08lx\n", dwType);
