@@ -56,6 +56,8 @@ DEFAULT_DEBUG_CHANNEL(win)
 
 static HWND hwndPrevActive  = 0;  /* Previously active window */
 static HWND hGlobalShellWindow=0; /*the shell*/
+static HWND hGlobalTaskmanWindow=0;
+static HWND hGlobalProgmanWindow=0;
 
 static LPCSTR atomInternalPos;
 
@@ -2977,38 +2979,59 @@ void WINAPI CascadeChildWindows16( HWND16 parent, WORD action )
 {
     FIXME(win, "(%04x, %d): stub\n", parent, action);
 }
+
+/***********************************************************************
+ *           SetProgmanWindow			[USER32.522]
+ */
+HRESULT WINAPI SetProgmanWindow ( HWND hwnd )
+{
+	hGlobalProgmanWindow = hwnd;
+	return hGlobalProgmanWindow;
+}
+
 /***********************************************************************
  *           GetProgmanWindow			[USER32.289]
  */
 HRESULT WINAPI GetProgmanWindow ( )
-{	FIXME(win,"stub\n");
-	return 0;
+{
+	return hGlobalProgmanWindow;
 }
+
+/***********************************************************************
+ *           SetShellWindowEx			[USER32.531]
+ * hwndProgman =  Progman[Program Manager]
+ *                |-> SHELLDLL_DefView
+ * hwndListView = |   |-> SysListView32
+ *                |   |   |-> tooltips_class32
+ *                |   |
+ *                |   |-> SysHeader32
+ *                |   
+ *                |-> ProxyTarget
+ */
+HRESULT WINAPI SetShellWindowEx ( HWND hwndProgman, HWND hwndListView )
+{
+	FIXME(win,"0x%08x 0x%08x stub\n",hwndProgman ,hwndListView );
+	hGlobalShellWindow = hwndProgman;
+	return hGlobalShellWindow;
+
+}
+
+/***********************************************************************
+ *           SetTaskmanWindow			[USER32.537]
+ * NOTES
+ *   hwnd = MSTaskSwWClass 
+ *          |-> SysTabControl32
+ */
+HRESULT WINAPI SetTaskmanWindow ( HWND hwnd )
+{
+	hGlobalTaskmanWindow = hwnd;
+	return hGlobalTaskmanWindow;
+}
+
 /***********************************************************************
  *           GetTaskmanWindow			[USER32.304]
  */
 HRESULT WINAPI GetTaskmanWindow ( )
-{	FIXME(win,"stub\n");
-	return 0;
-}
-/***********************************************************************
- *           SetProgmanWindow			[USER32.522]
- */
-HRESULT WINAPI SetProgmanWindow ( DWORD x )
-{	FIXME(win,"0x%08lx stub\n",x);
-	return 0;
-}
-/***********************************************************************
- *           SetShellWindowEx			[USER32.531]
- */
-HRESULT WINAPI SetShellWindowEx ( DWORD x, DWORD y )
-{	FIXME(win,"0x%08lx 0x%08lx stub\n",x,y);
-	return 0;
-}
-/***********************************************************************
- *           SetTaskmanWindow			[USER32.537]
- */
-HRESULT WINAPI SetTaskmanWindow ( DWORD x )
-{	FIXME(win,"0x%08lx stub\n",x);
-	return 0;
+{	
+	return hGlobalTaskmanWindow;
 }
