@@ -534,6 +534,26 @@ BOOL16 WINAPI GlobalUnlock16(
     return pArena->lockCount;
 }
 
+/***********************************************************************
+ *     GlobalChangeLockCount               (KERNEL.365)
+ *
+ * This is declared as a register function as it has to preserve
+ * *all* registers, even AX/DX !
+ *
+ */
+void WINAPI GlobalChangeLockCount( CONTEXT *context )
+{
+    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), SP_reg( context ) );
+    HGLOBAL16 handle = (HGLOBAL16)args[3];
+    INT16     delta  = (INT16)    args[2];
+
+    if ( delta == 1 )
+        GlobalLock16( handle );
+    else if ( delta == -1 )
+        GlobalUnlock16( handle );
+    else
+        ERR( global, "(%04X, %d): strange delta value\n", handle, delta );
+}
 
 /***********************************************************************
  *           GlobalSize16   (KERNEL.20)

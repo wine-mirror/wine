@@ -1444,16 +1444,3 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
     EAX_reg(context) = CALL32_CBClient( proc, args );
 }
 
-/***********************************************************************
- *     KERNEL_365                      (KERNEL.365)
- *
- * This is declared as a register function as it has to preserve
- * *all* registers, even AX/DX !
- *
- */
-void WINAPI KERNEL_365( CONTEXT *context )
-{
-    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), SP_reg( context ) );
-    TRACE( thunk, "(%04X, %d): stub!\n", args[3], (INT16)args[2] );
-}
-
