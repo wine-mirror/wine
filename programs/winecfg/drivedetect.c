@@ -151,9 +151,12 @@ static void ensure_root_is_mapped()
 
         for (letter = 'Z'; letter >= 'A'; letter--)
         {
-            if (drives[letter - 'A'].in_use) continue;
-            add_drive(letter, "/", "System", 0, DRIVE_FIXED);
-            WINE_TRACE("allocated drive %c as the root drive\n", letter);
+            if (!drives[letter - 'A'].in_use) 
+            {
+                add_drive(letter, "/", "System", "0", DRIVE_FIXED);
+                WINE_TRACE("allocated drive %c as the root drive\n", letter);
+                break;
+            }
         }
 
         if (letter == ('A' - 1)) report_error(NO_ROOT);

@@ -108,7 +108,7 @@ void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastE
 /* returns a string in the win32 heap  */
 static inline char *strdupA(char *s)
 {
-    char *r = HeapAlloc(GetProcessHeap(), 0, strlen(s));
+    char *r = HeapAlloc(GetProcessHeap(), 0, strlen(s)+1);
     return strcpy(r, s);
 }
 
