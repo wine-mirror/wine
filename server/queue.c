@@ -175,11 +175,14 @@ static struct thread_input *foreground_input;
 /* set the caret window in a given thread input */
 static void set_caret_window( struct thread_input *input, user_handle_t win )
 {
+    if (!win || win != input->caret)
+    {
+        input->caret_rect.left   = 0;
+        input->caret_rect.top    = 0;
+        input->caret_rect.right  = 0;
+        input->caret_rect.bottom = 0;
+    }
     input->caret             = win;
-    input->caret_rect.left   = 0;
-    input->caret_rect.top    = 0;
-    input->caret_rect.right  = 0;
-    input->caret_rect.bottom = 0;
     input->caret_hide        = 1;
     input->caret_state       = 0;
 }
@@ -1891,8 +1894,8 @@ DECL_HANDLER(set_caret_window)
         reply->old_state = input->caret_state;
 
         set_caret_window( input, get_user_full_handle(req->handle) );
-        input->caret_rect.right  = req->width;
-        input->caret_rect.bottom = req->height;
+        input->caret_rect.right  = input->caret_rect.left + req->width;
+        input->caret_rect.bottom = input->caret_rect.top + req->height;
     }
 }
 
