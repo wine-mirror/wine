@@ -293,7 +293,7 @@ static void thread_detach(void)
 
     if (hQueue)
     {
-        TIMER_RemoveQueueTimers( hQueue );
+        TIMER_RemoveThreadTimers();
         HOOK_FreeQueueHooks();
         WIN_DestroyThreadWindows( GetDesktopWindow() );
         QUEUE_DeleteMsgQueue();

@@ -36,7 +36,7 @@ extern BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int fl
 
 /* timer.c */
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
-extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
+extern void TIMER_RemoveThreadTimers(void);
 extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc );
 
 #endif  /* __WINE_MESSAGE_H */

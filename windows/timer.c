@@ -36,8 +36,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(timer);
 typedef struct tagTIMER
 {
     HWND           hwnd;
-    HQUEUE16       hq;
-    UINT16         msg;  /* WM_TIMER or WM_SYSTIMER */
+    DWORD          thread;
+    UINT           msg;  /* WM_TIMER or WM_SYSTIMER */
     UINT           id;
     UINT           timeout;
     HWINDOWPROC    proc;
@@ -89,11 +89,11 @@ void TIMER_RemoveWindowTimers( HWND hwnd )
 
 
 /***********************************************************************
- *           TIMER_RemoveQueueTimers
+ *           TIMER_RemoveThreadTimers
  *
- * Remove all timers for a given queue.
+ * Remove all timers for the current thread.
  */
-void TIMER_RemoveQueueTimers( HQUEUE16 hqueue )
+void TIMER_RemoveThreadTimers(void)
 {
     int i;
     TIMER *pTimer;
@@ -101,7 +101,7 @@ void TIMER_RemoveQueueTimers( HQUEUE16 hqueue )
     EnterCriticalSection( &csTimer );
 
     for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
-	if ((pTimer->hq == hqueue) && pTimer->timeout)
+        if ((pTimer->thread == GetCurrentThreadId()) && pTimer->timeout)
             TIMER_ClearTimer( pTimer );
 
     LeaveCriticalSection( &csTimer );
@@ -175,7 +175,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
       /* Add the timer */
 
     pTimer->hwnd    = hwnd;
-    pTimer->hq      = InitThreadInput16( 0, 0 );
+    pTimer->thread  = GetCurrentThreadId();
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
