@@ -162,8 +162,8 @@ static void cleanup_thread( void *ptr )
 static void SYSDEPS_StartThread( TEB *teb )
 {
     SYSDEPS_SetCurThread( teb );
-    CLIENT_InitThread();
     SIGNAL_Init();
+    CLIENT_InitThread();
     __TRY
     {
         teb->startup();
