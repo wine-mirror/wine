@@ -2865,7 +2865,7 @@ UINT WINAPI waveInGetNumDevs(void)
 UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
     WAVEINCAPSA		wicA;
-    UINT		ret = waveInGetDevCapsA(uDeviceID, &wicA, uSize);
+    UINT		ret = waveInGetDevCapsA(uDeviceID, &wicA, sizeof(wicA));
 
     if (ret == MMSYSERR_NOERROR) {
 	WAVEINCAPSW wicW;
