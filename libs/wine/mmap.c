@@ -287,8 +287,10 @@ void wine_mmap_add_reserved_area( void *addr, size_t size )
 
     if (!((char *)addr + size)) size--;  /* avoid wrap-around */
 
+#ifdef HAVE_MMAP
     /* blow away existing mappings */
     wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
+#endif
 
     LIST_FOR_EACH( ptr, &reserved_areas )
     {
