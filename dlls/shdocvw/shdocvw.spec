@@ -7,18 +7,18 @@
 106 stub HlinkFindFrame
 107 stub SetShellOfflineState
 108 stub AddUrlToFavorites
-110 stub @
+110 stdcall SHDOCVW_110() SHDOCVW_110
 111 stub @
 115 stub @
 116 stub @
 117 stub IEAboutBox
-118 stub @
+118 stdcall SHDOCVW_118(long) SHDOCVW_118
 119 stub @
 120 stub @
 121 stub @
 122 stub @
 123 stub @
-125 stub @
+125 stdcall SHDOCVW_125() SHDOCVW_125
 130 stub @
 131 stub @
 135 stub @
