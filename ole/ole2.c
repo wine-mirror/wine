@@ -1499,6 +1499,12 @@ static void OLEDD_TrackMouseMove(
   hwndNewTarget = WindowFromPoint(mousePos);
 
   /*
+   * Every time, we re-initialize the effects passed to the
+   * IDropTarget to the effects allowed by the source.
+   */
+  *trackerInfo->pdwEffect = trackerInfo->dwOKEffect;
+
+  /*
    * If we are hovering over the same target as before, send the
    * DragOver notification
    */
@@ -1521,7 +1527,7 @@ static void OLEDD_TrackMouseMove(
 			 trackerInfo->pdwEffect);
   }
   else
-{
+  {
     DropTargetNode* newDropTargetNode = 0;
     
     /*
