@@ -1014,12 +1014,27 @@ DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
     ICOM_THIS(IDirectDrawSurfaceImpl,iface);
     DIB_PRIV_VAR(priv, This);
     HRESULT hr = DD_OK;
+    DWORD flags = pDDSD->dwFlags;
 
-    TRACE("(%p)->(%p,%08lx)\n",iface,pDDSD,dwFlags);
-    if (pDDSD->dwFlags == DDSD_LPSURFACE) {
+    if (TRACE_ON(ddraw)) {
+        TRACE("(%p)->(%p,%08lx)\n",iface,pDDSD,dwFlags);
+        DDRAW_dump_surface_desc(pDDSD);
+    }
+
+    if (pDDSD->dwFlags & DDSD_PIXELFORMAT) {
+        flags &= ~DDSD_PIXELFORMAT;
+	if (flags & DDSD_LPSURFACE) {
+	    This->surface_desc.u4.ddpfPixelFormat = pDDSD->u4.ddpfPixelFormat;
+	} else {
+	    FIXME("Change of pixel format without surface re-allocation is not supported !\n");
+	}
+    }
+    if (pDDSD->dwFlags & DDSD_LPSURFACE) {
 	HBITMAP oldbmp = priv->dib.DIBsection;
 	LPVOID oldsurf = This->surface_desc.lpSurface;
 	BOOL oldc = priv->dib.client_memory;
+
+	flags &= ~DDSD_LPSURFACE;
 
 	TRACE("new lpSurface=%p\n",pDDSD->lpSurface);
 	This->surface_desc.lpSurface = pDDSD->lpSurface;
@@ -1038,13 +1053,9 @@ DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 
 	if (!oldc)
 	    VirtualFree(oldsurf, 0, MEM_RELEASE);
-
-	return hr;
     }
-    else {
-	FIXME("flags=%08lx\n",pDDSD->dwFlags);
-	abort();
-	hr = E_FAIL;
+    if (flags) {
+        WARN("Unhandled flags : %08lx\n", flags);
     }
     return hr;
 }
