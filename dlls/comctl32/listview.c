@@ -3515,7 +3515,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     }
 
     /* Don't bother painting item being edited */
-    if (infoPtr->hwndEdit && lprcFocus && nSubItem == 0) goto postpaint;
+    if (infoPtr->hwndEdit && nItem == infoPtr->nEditLabelItem && nSubItem == 0) goto postpaint;
 
     /* Set the text attributes */
     if (nmlvcd.clrTextBk != CLR_NONE)
@@ -4293,6 +4293,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 
     LISTVIEW_SetSelection(infoPtr, nItem);
     LISTVIEW_SetItemFocus(infoPtr, nItem);
+    LISTVIEW_InvalidateItem(infoPtr, nItem);
 
     rect.left = LVIR_LABEL;
     if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rect)) return 0;
