@@ -1045,7 +1045,7 @@ void FILEDLG_MapDrawItemStruct(LPDRAWITEMSTRUCT16 lpdis16, LPDRAWITEMSTRUCT lpdi
     lpdis->itemAction = lpdis16->itemAction;
     lpdis->itemState = lpdis16->itemState;
     lpdis->hwndItem = HWND_32(lpdis16->hwndItem);
-    lpdis->hDC = lpdis16->hDC;
+    lpdis->hDC = HDC_32(lpdis16->hDC);
     lpdis->rcItem.right = lpdis16->rcItem.right;
     lpdis->rcItem.left = lpdis16->rcItem.left;
     lpdis->rcItem.top = lpdis16->rcItem.top;

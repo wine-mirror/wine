@@ -721,7 +721,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
 
   /* This font will be deleted by WM_COMMAND */
   SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,
-     CreateFontA(0, 0, 1, 1, 400, 0, 0, 0, 0, 0, 0, 0, 0, NULL),FALSE);
+     (WPARAM)CreateFontA(0, 0, 1, 1, 400, 0, 0, 0, 0, 0, 0, 0, 0, NULL),FALSE);
 
   if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
     ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
@@ -962,7 +962,7 @@ static LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
    if (GetDlgCtrlID(HWND_32(LOWORD(lParam)))==stc6)
    {
      SetTextColor((HDC)wParam, lpcf->rgbColors);
-     return GetStockObject(WHITE_BRUSH);
+     return (LRESULT)GetStockObject(WHITE_BRUSH);
    }
   return 0;
 }
@@ -1065,9 +1065,9 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		    hFont=CreateFontIndirectA(lpxx);
 		    if (hFont)
 		    {
-		      HFONT oldFont=SendDlgItemMessageA(hDlg, stc6,
+		      HFONT oldFont=(HFONT)SendDlgItemMessageA(hDlg, stc6,
 		          WM_GETFONT, 0, 0);
-		      SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,hFont,TRUE);
+		      SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,(WPARAM)hFont,TRUE);
 		      DeleteObject(oldFont);
 		    }
                   }
@@ -1109,7 +1109,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 
 static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  DeleteObject(SendDlgItemMessageA(hwnd, stc6, WM_GETFONT, 0, 0));
+  DeleteObject((HFONT)SendDlgItemMessageA(hwnd, stc6, WM_GETFONT, 0, 0));
   return TRUE;
 }
 
@@ -1177,7 +1177,7 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
             dis.itemAction = dis16->itemAction;
             dis.itemState  = dis16->itemState;
             dis.hwndItem   = HWND_32(dis16->hwndItem);
-            dis.hDC        = dis16->hDC;
+            dis.hDC        = HDC_32(dis16->hDC);
             dis.itemData   = dis16->itemData;
             CONV_RECT16TO32( &dis16->rcItem, &dis.rcItem );
             res = CFn_WMDrawItem(hDlg, wParam, (LPARAM)&dis);
@@ -1185,7 +1185,7 @@ BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg16, UINT16 message,
         break;
     case WM_CTLCOLOR:
         if (HIWORD(lParam) == CTLCOLOR_STATIC)
-            res=CFn_WMCtlColorStatic(hDlg, (HDC)wParam, LOWORD(lParam), lpcf32a);
+            res=CFn_WMCtlColorStatic(hDlg, wParam, LOWORD(lParam), lpcf32a);
         break;
     case WM_COMMAND:
         res=CFn_WMCommand(hDlg, MAKEWPARAM( wParam, HIWORD(lParam) ), LOWORD(lParam), lpcf32a);

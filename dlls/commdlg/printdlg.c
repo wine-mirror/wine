@@ -2301,15 +2301,15 @@ static BOOL PRINTDLG_CreateDC16(LPPRINTDLG16 lppd)
     DEVMODEA *pdm = GlobalLock16(lppd->hDevMode);
 
     if(lppd->Flags & PD_RETURNDC) {
-        lppd->hDC = CreateDCA((char*)pdn + pdn->wDriverOffset,
+        lppd->hDC = HDC_16(CreateDCA((char*)pdn + pdn->wDriverOffset,
 			      (char*)pdn + pdn->wDeviceOffset,
 			      (char*)pdn + pdn->wOutputOffset,
-			      pdm );
+			      pdm ));
     } else if(lppd->Flags & PD_RETURNIC) {
-        lppd->hDC = CreateICA((char*)pdn + pdn->wDriverOffset,
+        lppd->hDC = HDC_16(CreateICA((char*)pdn + pdn->wDriverOffset,
 			      (char*)pdn + pdn->wDeviceOffset,
 			      (char*)pdn + pdn->wOutputOffset,
-			      pdm );
+			      pdm ));
     }
     GlobalUnlock16(lppd->hDevNames);
     GlobalUnlock16(lppd->hDevMode);
@@ -2343,7 +2343,7 @@ BOOL WINAPI PrintDlgA(
 {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
+    HINSTANCE hInst = (HINSTANCE)GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
@@ -2499,7 +2499,7 @@ BOOL WINAPI PrintDlgW(
 {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
+    HINSTANCE hInst = (HINSTANCE)GetWindowLongA( lppd->hwndOwner, GWL_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
@@ -2666,7 +2666,7 @@ BOOL16 WINAPI PrintDlg16(
 ) {
     BOOL      bRet = FALSE;
     LPVOID   ptr;
-    HINSTANCE hInst = GetWindowLongA( HWND_32(lppd->hwndOwner), GWL_HINSTANCE );
+    HINSTANCE hInst = (HINSTANCE)GetWindowLongA( HWND_32(lppd->hwndOwner), GWL_HINSTANCE );
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";

@@ -478,7 +478,7 @@ static void CC_PaintTriangle( HWND hDlg, int y)
    points[2].y = points[0].y - w;
    points[2].x = points[1].x = points[0].x + w;
 
-   FillRect(hDC, &lpp->old3angle, GetClassLongA( hwnd, GCL_HBRBACKGROUND));
+   FillRect(hDC, &lpp->old3angle, (HBRUSH)GetClassLongA( hwnd, GCL_HBRBACKGROUND));
    lpp->old3angle.left  = points[0].x;
    lpp->old3angle.right = points[1].x + 1;
    lpp->old3angle.top   = points[2].y - 1;
@@ -735,7 +735,7 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
 
  hdc = GetDC(hwnd);
  GetClientRect(hwnd, &rect);
- FillRect(hdc, &rect, GetClassLongA(hwnd, GCL_HBRBACKGROUND));
+ FillRect(hdc, &rect, (HBRUSH)GetClassLongA(hwnd, GCL_HBRBACKGROUND));
  for ( j = 0; j < rows; j++ )
  {
   for ( i = 0; i < cols; i++ )
@@ -779,7 +779,7 @@ static void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpc
  hdc = GetDC(hwnd);
  if (hdc)
  {
-  FillRect(hdc, &rect, GetClassLongA(hwnd, GCL_HBRBACKGROUND) );
+  FillRect(hdc, &rect, (HBRUSH)GetClassLongA(hwnd, GCL_HBRBACKGROUND) );
   for (j = 0; j < rows; j++)
   {
    for (i = 0; i < cols; i++)
