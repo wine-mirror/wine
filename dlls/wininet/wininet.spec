@@ -106,6 +106,7 @@
 @ stub InternetFindNextFileW
 @ stub InternetGetCertByURL
 @ stdcall InternetGetConnectedState(ptr long)
+@ stdcall InternetGetConnectedStateExW(ptr ptr long long)
 @ stdcall InternetGetCookieA(str str ptr long)
 @ stdcall InternetGetCookieW(wstr wstr ptr long)
 @ stdcall InternetGetLastResponseInfoA(ptr str ptr)

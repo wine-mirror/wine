@@ -380,6 +380,30 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *           InternetGetConnectedStateEx (WININET.@)
+ *
+ * Return connected state
+ *
+ * RETURNS
+ *    TRUE if connected
+ *    if lpdwStatus is not null, return the status (off line,
+ *    modem, lan...) in it.
+ *    FALSE if not connected
+ */
+BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnectionName,
+                                         DWORD dwNameLen, DWORD dwReserved)
+{
+    /* Must be zero */
+    if(dwReserved)
+	return FALSE;
+
+    if (lpdwStatus) {
+        FIXME("always returning LAN connection.\n");
+        *lpdwStatus = INTERNET_CONNECTION_LAN;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *           InternetConnectA (WININET.@)
