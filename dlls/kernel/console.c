@@ -1000,7 +1000,7 @@ COORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
     COORD c;
     c.X = 80;
     c.Y = 24;
-    TRACE("(%p), returning %dx%d\n", hConsoleOutput, c.X, x.Y);
+    TRACE("(%p), returning %dx%d\n", hConsoleOutput, c.X, c.Y);
     return c;
 }
 #endif /* defined(__i386__) */
