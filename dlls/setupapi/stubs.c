@@ -203,6 +203,7 @@ BOOL WINAPI SetupGetInfInformationA( LPCVOID InfSpec, DWORD SearchControl,
                                      PSP_INF_INFORMATION ReturnBuffer,
                                      DWORD ReturnBufferSize, PDWORD RequiredSize)
 {
-    FIXME("(%p, %d, %p, %d, %p) Stub!\n");
+    FIXME("(%p, %ld, %p, %ld, %p) Stub!\n",
+          InfSpec, SearchControl, ReturnBuffer, ReturnBufferSize, RequiredSize );
     return TRUE;
 }
