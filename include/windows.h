@@ -18,6 +18,7 @@ extern "C" {
 #include "ole2.h"
 #include "winnls.h"
 #include "objbase.h"
+#include "mmsystem.h"
 
 #if 0
   Where does this belong? Nobody uses this stuff anyway.
