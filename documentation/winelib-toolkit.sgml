@@ -156,10 +156,11 @@
           <filename>configure.in</filename>, 
           <filename>Make.rules.in</filename>). From the above description 
           you can guess at the items that winemaker may get wrong in 
-          this phase: macro definitions, include path, library path, 
-          list of libraries to import. You can deal with these issues by 
-          using winemaker's <option>-D</option>, <option>-I</option>, 
-          <option>-L</option> and <option>-i</option> options if they are 
+          this phase: macro definitions, include path, dll path, dlls to
+          import, library path, libraries to link with. You can deal with
+          these issues by using winemaker's <option>-D</>, <option>-P</>,
+          <option>-i</>, <option>-I</>, <option>-L</> and <option>-l</>
+          options if they are
           homogeneous enough between all your targets. Otherwise you may 
           want to use winemaker's <link linkend="interactive">interactive 
           mode</link> so that you can specify different settings for each 
@@ -181,10 +182,11 @@
         <itemizedlist>
           <listitem>
             <para>
-              The target is not being linked with the right set of libraries.  
-              You can avoid this by using winemaker's <option>-L</option> and 
-              <option>-i</option> options or adding these libraries to the 
-              <filename>Makefile.in</filename> file.
+              The target is not importing the right set of dlls, or is not
+              being linked with the right set of libraries. You can avoid
+              this by using winemaker's <option>-P</>, <option>-i</>,
+              <option>-L</option> and <option>-l</> options or adding these
+              dlls and libraries to the <filename>Makefile.in</> file.
             </para>
           </listitem>
           <listitem>
@@ -642,6 +644,13 @@ hello.spec.c: hello.res
 
       <sect2 id="spec-compiling">
         <title id="spec-compiling.title">Compiling it</title>
+          <note><para>
+            FIXME: This section is very outdated and does not correctly
+            describe the current use of winebuild and spec files. In
+            particular, with recent versions of winebuild most of the
+            information that used to be in the spec files is now specified on
+            the command line.
+          </para></note>
           <para>
             Compiling a spec file is a two step process. It is first 
             converted into a C file by winebuild, and then compiled into an 
@@ -671,7 +680,6 @@ WINEBUILD=$(WINE_DIR)/tools/winebuild
         <title id="spec-reference.title">More details</title>
         <para>
           (Extracted from tools/winebuild/README)
-          <!-- FIXME: this seems to be rather outdated and sometimes even incorrect, check with the source! -->
         </para>
 
         <para>
@@ -795,7 +803,7 @@ ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
           Each instance defines a function entry point. The prototype 
           defined by <literal>EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])</literal> 
           specifies the name available for dynamic linking and the format 
-          of the arguments. <literal>"ORDINAL</literal>" is replaced
+          of the arguments. <literal>ORDINAL</literal> is replaced
           by the ordinal number corresponding to the function, or 
           <literal>@</literal> for automatic ordinal allocation (Win32 only).
         </para>
