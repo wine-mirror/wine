@@ -240,7 +240,7 @@ static BOOL WINAPI CALLBACK_CallWOWCallback16Ex(
 /**********************************************************************
  *	     CALLBACK_CallUTProc
  */
-static DWORD WINAPI CALLBACK_CallUTProc( DWORD w1, DWORD w2 )
+static DWORD WINAPI CALLBACK_CallUTProc( FARPROC16 proc, DWORD w1, DWORD w2 )
 {
     ERR( relay, "Cannot call a UT thunk proc in Winelib\n" );
     assert( FALSE );

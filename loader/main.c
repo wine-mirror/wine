@@ -34,6 +34,7 @@
 #include "spy.h"
 #include "tweak.h"
 #include "user.h"
+#include "cursoricon.h"
 #include "global.h"
 #include "dce.h"
 #include "shell.h"
