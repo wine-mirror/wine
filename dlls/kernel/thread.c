@@ -157,6 +157,31 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
 }
 
 
+/***************************************************************************
+ *                  CreateRemoteThread   (KERNEL32.@)
+ *
+ * Creates a thread that runs in the address space of another process
+ *
+ * PARAMS
+ *
+ * RETURNS
+ *   Success: Handle to the new thread.
+ *   Failure: NULL. Use GetLastError() to find the error cause.
+ *
+ * BUGS
+ *   Unimplemented
+ */
+HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE_T stack,
+                                  LPTHREAD_START_ROUTINE start, LPVOID param,
+                                  DWORD flags, LPDWORD id )
+{
+    FIXME("(): stub, Write Me.\n");
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+
 /***********************************************************************
  * OpenThread  [KERNEL32.@]   Retrieves a handle to a thread from its thread id
  */

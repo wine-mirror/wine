@@ -221,7 +221,7 @@
 @ stdcall CreatePipe(ptr ptr ptr long)
 @ stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr)
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
-@ stub CreateRemoteThread
+@ stdcall CreateRemoteThread(long ptr long ptr long long ptr)
 @ stdcall CreateSemaphoreA(ptr long long str)
 @ stdcall CreateSemaphoreW(ptr long long wstr)
 @ stdcall CreateSocketHandle()
