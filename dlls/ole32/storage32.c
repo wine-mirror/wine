@@ -5294,6 +5294,11 @@ HRESULT WINAPI StgCreateDocfile(
     WCHAR tempPath[MAX_PATH];
     WCHAR prefix[] = { 'S', 'T', 'O', 0 };
 
+    if (!(grfMode & STGM_SHARE_EXCLUSIVE))
+      return STG_E_INVALIDFLAG;
+    if (!(grfMode & (STGM_WRITE|STGM_READWRITE)))
+      return STG_E_INVALIDFLAG;
+
     memset(tempPath, 0, sizeof(tempPath));
     memset(tempFileName, 0, sizeof(tempFileName));
 
@@ -5304,6 +5309,12 @@ HRESULT WINAPI StgCreateDocfile(
       pwcsName = tempFileName;
     else
       return STG_E_INSUFFICIENTMEMORY;
+
+    creationMode = TRUNCATE_EXISTING;
+  }
+  else
+  {
+    creationMode = GetCreationModeFromSTGM(grfMode);
   }
 
   /*
@@ -5311,7 +5322,6 @@ HRESULT WINAPI StgCreateDocfile(
    */
   shareMode    = GetShareModeFromSTGM(grfMode);
   accessMode   = GetAccessModeFromSTGM(grfMode);
-  creationMode = GetCreationModeFromSTGM(grfMode);
 
   if (grfMode & STGM_DELETEONRELEASE)
     fileAttributes = FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_DELETE_ON_CLOSE;
