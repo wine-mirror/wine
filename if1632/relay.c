@@ -434,6 +434,8 @@ static DWORD RELAY_CallProc32W(int Ex)
 	int aix;
 	dbg_decl_str(relay, 1024);
 
+	SYSLEVEL_ReleaseWin16Lock();
+
         VA_START16( valist );
         nrofargs    = VA_ARG16( valist, DWORD );
         argconvmask = VA_ARG16( valist, DWORD );
@@ -502,6 +504,9 @@ static DWORD RELAY_CallProc32W(int Ex)
 
 	TRACE(relay,"%s - returns %08lx\n",dbg_str(relay),ret);
 	HeapFree( GetProcessHeap(), 0, args );
+
+	SYSLEVEL_RestoreWin16Lock();
+
 	return ret;
 }
 

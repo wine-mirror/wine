@@ -805,7 +805,13 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
-    return WinExec( lpCmdLine, nCmdShow );
+    HINSTANCE16 hInst;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    hInst = WinExec( lpCmdLine, nCmdShow );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return hInst;
 }
 
 /***********************************************************************
