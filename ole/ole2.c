@@ -2110,37 +2110,37 @@ static void OLEUTL_ReadRegistryDWORDValue(
  * If no hIcon is given, we load the icon via lpszSourceFile and iIconIndex.
  * This code might be wrong at some places.
  */
-HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(HICON hIcon, LPOLESTR lpszLabel, LPOLESTR lpszSourceFile, UINT16 iIconIndex)
-{
+HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
+	HICON16 hIcon,
+	LPCOLESTR16 lpszLabel,
+	LPCOLESTR16 lpszSourceFile,
+	UINT16 iIconIndex
+) {
     METAFILEPICT16 *mf;
-	HGLOBAL16 hmf;
+    HGLOBAL16 hmf;
     HDC16 hdc;
 
-	FIXME(ole, "(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, (LPCSTR)lpszLabel, (LPCSTR)lpszSourceFile, iIconIndex);
+    FIXME(ole, "(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
 
     if (!hIcon) {
         if (lpszSourceFile) {
-			HINSTANCE16 hInstance = LoadLibrary16((LPCSTR)lpszSourceFile);
+	    HINSTANCE16 hInstance = LoadLibrary16(lpszSourceFile);
 
-	    	/* load the icon at index from lpszSourceFile */
-			hIcon = (HICON16)LoadIconA(hInstance, (LPCSTR)(DWORD)iIconIndex);
-
-			FreeLibrary16(hInstance);
-		} else
-			return (HGLOBAL)NULL;
+	    /* load the icon at index from lpszSourceFile */
+	    hIcon = (HICON16)LoadIconA(hInstance, (LPCSTR)(DWORD)iIconIndex);
+	    FreeLibrary16(hInstance);
+	} else
+	    return (HGLOBAL)NULL;
     }
 
-	hdc = CreateMetaFile16(NULL);
-	DrawIcon(hdc, 0, 0, hIcon); /* FIXME */
-	TextOut16(hdc, 0, 0, (LPCSTR)lpszLabel, 1); /* FIXME */
-
-	hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
-	mf = (METAFILEPICT16 *)GlobalLock16(hmf);
-
-	mf->mm = MM_ANISOTROPIC;
-	mf->xExt = 20; /* FIXME: bogus */
-	mf->yExt = 20; /* dito */
+    hdc = CreateMetaFile16(NULL);
+    DrawIcon(hdc, 0, 0, hIcon); /* FIXME */
+    TextOut16(hdc, 0, 0, lpszLabel, 1); /* FIXME */
+    hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
+    mf = (METAFILEPICT16 *)GlobalLock16(hmf);
+    mf->mm = MM_ANISOTROPIC;
+    mf->xExt = 20; /* FIXME: bogus */
+    mf->yExt = 20; /* dito */
     mf->hMF = CloseMetaFile16(hdc);
-
     return hmf;
 }
