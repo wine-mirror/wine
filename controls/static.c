@@ -7,7 +7,6 @@
 
 #include "wine/winuser16.h"
 #include "win.h"
-#include "bitmap.h"
 #include "cursoricon.h"
 #include "static.h"
 #include "heap.h"
@@ -83,26 +82,26 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
  *
  * Set the bitmap for an SS_BITMAP control.
  */
-static HICON16 STATIC_SetBitmap( WND *wndPtr, HICON16 hicon )
+static HBITMAP16 STATIC_SetBitmap( WND *wndPtr, HBITMAP16 hBitmap )
 {
-    HICON16 prevIcon;
+    HBITMAP16 hOldBitmap;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
-    BITMAPOBJ *info = (BITMAPOBJ *)GDI_HEAP_LOCK(hicon);
 
     if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_BITMAP) return 0;
-    if (hicon && !info) {
-	ERR("huh? hicon!=0, but info=0???\n");
+    if (hBitmap && GetObjectType(hBitmap) != OBJ_BITMAP) {
+	ERR("huh? hBitmap!=0, but not bitmap\n");
     	return 0;
     }
-    prevIcon = infoPtr->hIcon;
-    infoPtr->hIcon = hicon;
-    if (hicon)
+    hOldBitmap = infoPtr->hIcon;
+    infoPtr->hIcon = hBitmap;
+    if (hBitmap)
     {
-        SetWindowPos( wndPtr->hwndSelf, 0, 0, 0, info->bitmap.bmWidth, info->bitmap.bmHeight,
-                        SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+        BITMAP bm;
+        GetObjectA(hBitmap, sizeof(bm), &bm);
+        SetWindowPos( wndPtr->hwndSelf, 0, 0, 0, bm.bmWidth, bm.bmHeight,
+		      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
     }
-    GDI_HEAP_UNLOCK( hicon );
-    return prevIcon;
+    return hOldBitmap;
 }
 
 
@@ -449,16 +448,21 @@ static void STATIC_PaintBitmapfn(WND *wndPtr, HDC hdc )
     hbrush = SendMessageA( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
     FillRect( hdc, &rc, hbrush );
+
     if (infoPtr->hIcon) {
-        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_HEAP_LOCK( infoPtr->hIcon );
+        BITMAP bm;
+	SIZE sz;
 
-	if (!bmp) return;
+        if(GetObjectType(infoPtr->hIcon) != OBJ_BITMAP)
+	    return;
         if (!(hMemDC = CreateCompatibleDC( hdc ))) return;
-
-	oldbitmap = SelectObject(hMemDC,infoPtr->hIcon);
-	BitBlt(hdc,bmp->size.cx,bmp->size.cy,bmp->bitmap.bmWidth,bmp->bitmap.bmHeight,hMemDC,0,0,SRCCOPY);
+	GetObjectA(infoPtr->hIcon, sizeof(bm), &bm);
+	GetBitmapDimensionEx(infoPtr->hIcon, &sz);
+	oldbitmap = SelectObject(hMemDC, infoPtr->hIcon);
+	BitBlt(hdc, sz.cx, sz.cy, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
+	       SRCCOPY);
+	SelectObject(hMemDC, oldbitmap);
 	DeleteDC(hMemDC);
-        GDI_HEAP_UNLOCK(infoPtr->hIcon);
     }
 }
 
