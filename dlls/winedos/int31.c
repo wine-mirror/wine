@@ -510,8 +510,11 @@ void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
 }
 
 
-/* DPMI Raw Mode Switch handler */
-
+/**********************************************************************
+ *	    RawModeSwitch   (WINEDOS.@)
+ *
+ * DPMI Raw Mode Switch handler
+ */
 void WINAPI DOSVM_RawModeSwitch( CONTEXT86 *context )
 {
   CONTEXT86 rm_ctx;

@@ -28,7 +28,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/fcntl.h>
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_SYS_ERRNO_H
 # include <sys/errno.h>

@@ -32,7 +32,9 @@
 #ifdef HAVE_SYS_IPC_H
 # include <sys/ipc.h>
 #endif
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif

@@ -49,7 +49,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H

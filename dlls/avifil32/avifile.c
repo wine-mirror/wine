@@ -222,7 +222,7 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG 
 
 /***********************************************************************
  *		AVIFileOpenA (AVIFIL32.@)
- *		AVIFileOpenA (AVIFILE.102)
+ *		AVIFileOpen  (AVIFILE.102)
  */
 HRESULT WINAPI AVIFileOpenA(
 	PAVIFILE * ppfile,LPCSTR szFile,UINT uMode,LPCLSID lpHandler

@@ -833,7 +833,9 @@ void EVENT_ProcessEvent( XEvent *event )
           break;
         
       case PropertyNotify:
-          // EVENT_PropertyNotify( (XPropertyEvent *)event );
+#if 0
+          EVENT_PropertyNotify( (XPropertyEvent *)event );
+#endif
           break;
 
       default: /* ignore all other events */

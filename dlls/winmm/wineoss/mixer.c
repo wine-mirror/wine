@@ -30,7 +30,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
 #include "windef.h"
 #include "mmddk.h"
 #include "oss.h"
