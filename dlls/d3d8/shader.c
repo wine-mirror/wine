@@ -919,9 +919,10 @@ inline static VOID IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderI
   }
 
   /* Generate HW shader in needed */
-  if (useHW)
+  if (useHW && NULL != pFunction) {
     IDirect3DVertexShaderImpl_GenerateProgramArbHW(vshader, pFunction);
-  
+  }
+
   /* copy the function ... because it will certainly be released by application */
   if (NULL != pFunction) {
     vshader->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, vshader->functionLength);
