@@ -277,6 +277,11 @@ sym_not_found:
     return 0;
 }
 
+static int Tablet_ErrorHandler(Display *dpy, XErrorEvent *event, void* arg)
+{
+    return 1;
+}
+
 void X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
@@ -368,7 +373,15 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                 int i;
                 int shft = 0;
 
+                X11DRV_expect_error(data->display,Tablet_ErrorHandler,NULL);
                 pXGetDeviceButtonMapping(data->display, opendevice, map, 32);
+                if (X11DRV_check_error())
+                {
+                    TRACE("No buttons, Non Tablet Device\n");
+                    pXCloseDevice(data->display, opendevice);
+                    cursor_target --;
+                    continue;
+                }
 
                 for (i=0; i< cursor->BUTTONS; i++,shft++)
                 {
