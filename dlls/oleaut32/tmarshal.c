@@ -340,6 +340,7 @@ TMProxyImpl_Release(LPRPCPROXYBUFFER iface) {
     This->ref--;
     if (This->ref) return This->ref;
     if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
+    VirtualFree(This->asmstubs, 0, MEM_RELEASE);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
@@ -1362,11 +1363,17 @@ PSFacBuf_CreateProxy(
 	return hres;
     }
     nroffuncs = _nroffuncs(tinfo);
-    proxy = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TMProxyImpl));
+    proxy = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TMProxyImpl));
     if (!proxy) return E_OUTOFMEMORY;
-    proxy->asmstubs=HeapAlloc(GetProcessHeap(),0,sizeof(TMAsmProxy)*nroffuncs);
 
     assert(sizeof(TMAsmProxy) == 12);
+
+    proxy->asmstubs = VirtualAlloc(NULL, sizeof(TMAsmProxy) * nroffuncs, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    if (!proxy->asmstubs) {
+        ERR("Could not commit pages for proxy thunks\n");
+        HeapFree(GetProcessHeap(), 0, proxy);
+        return E_OUTOFMEMORY;
+    }
 
     proxy->lpvtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPBYTE)*nroffuncs);
     for (i=0;i<nroffuncs;i++) {
