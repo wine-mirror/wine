@@ -4116,7 +4116,6 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
 		goto exit;
 
             lpmenu->hWnd = hWnd;
-            lpmenu->wFlags &= ~MF_POPUP;  /* Can't be a popup */
             lpmenu->Height = 0;  /* Make sure we recalculate the size */
 	}
 	if (IsWindowVisible(hWnd))
