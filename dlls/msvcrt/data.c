@@ -42,6 +42,9 @@ WCHAR **MSVCRT___winitenv;
 int MSVCRT_timezone;
 int MSVCRT_app_type;
 
+static char* environ_strings;
+static WCHAR* wenviron_strings;
+
 typedef void (*_INITTERMFUN)(void);
 
 /***********************************************************************
@@ -136,14 +139,14 @@ static WCHAR *wstrdupa(const char *str)
 }
 
 /* INTERNAL: Since we can't rely on Winelib startup code calling w/getmainargs,
- * we initialise data values during DLL loading. The when called by a native
+ * we initialise data values during DLL loading. When called by a native
  * program we simply return the data we've already initialised. This also means
  * you can call multiple times without leaking
  */
 void msvcrt_init_args(void)
 {
-  char *cmdline, **xargv = NULL, *ptr, *env;
-  WCHAR *wcmdline, **wxargv = NULL, *wptr, *wenv;
+  char *cmdline, **xargv = NULL, *ptr;
+  WCHAR *wcmdline, **wxargv = NULL, *wptr;
   int xargc,end,last_arg,afterlastspace,count;
   DWORD version;
 
@@ -222,9 +225,9 @@ void msvcrt_init_args(void)
 
   TRACE("found %d arguments\n",MSVCRT___argc);
 
-  env = GetEnvironmentStringsA();
+  environ_strings = GetEnvironmentStringsA();
   count = 1; /* for NULL sentinel */
-  for (ptr = env; *ptr; ptr += strlen(ptr) + 1)
+  for (ptr = environ_strings; *ptr; ptr += strlen(ptr) + 1)
   {
     count++;
   }
@@ -232,7 +235,7 @@ void msvcrt_init_args(void)
   if (MSVCRT__environ)
   {
     count = 0;
-    for (ptr = env; *ptr; ptr += strlen(ptr) + 1)
+    for (ptr = environ_strings; *ptr; ptr += strlen(ptr) + 1)
     {
       MSVCRT__environ[count++] = ptr;
     }
@@ -241,9 +244,9 @@ void msvcrt_init_args(void)
 
   MSVCRT___initenv = MSVCRT__environ;
 
-  wenv = GetEnvironmentStringsW();
+  wenviron_strings = GetEnvironmentStringsW();
   count = 1; /* for NULL sentinel */
-  for (wptr = wenv; *wptr; wptr += lstrlenW(wptr) + 1)
+  for (wptr = wenviron_strings; *wptr; wptr += lstrlenW(wptr) + 1)
   {
     count++;
   }
@@ -251,7 +254,7 @@ void msvcrt_init_args(void)
   if (MSVCRT__wenviron)
   {
     count = 0;
-    for (wptr = wenv; *wptr; wptr += lstrlenW(wptr) + 1)
+    for (wptr = wenviron_strings; *wptr; wptr += lstrlenW(wptr) + 1)
     {
       MSVCRT__wenviron[count++] = wptr;
     }
@@ -264,7 +267,9 @@ void msvcrt_init_args(void)
 /* INTERNAL: free memory used by args */
 void msvcrt_free_args(void)
 {
-  /* FIXME */
+  /* FIXME: more things to free */
+  FreeEnvironmentStringsA(environ_strings);
+  FreeEnvironmentStringsW(wenviron_strings);
 }
 
 /*********************************************************************
