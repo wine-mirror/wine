@@ -52,6 +52,9 @@
 /* Define if you have the Xxf86dga library (-lXxf86dga).  */
 #undef HAVE_LIBXXF86DGA
 
+/* Define if you have the Xxf86dga library version 2.0 (-lXxf86dga).  */
+#undef HAVE_LIBXXF86DGA2
+
 /* Define if you have the X Shm extension */
 #undef HAVE_LIBXXSHM
 

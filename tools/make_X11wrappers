@@ -14,10 +14,10 @@
 #
 # This program expects to be run from Wine's main directory.
 
-$X11_include_dir = "/usr/X11R6/include";
+$X11_include_dir = "/usr/X11/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86vmode");
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86dga2", "xf86vmode");
 
 # First read list of wanted function names.
 
@@ -46,6 +46,7 @@ foreach $name (@dolist) {
     $extensions_dir = "";
     $pre_file = "";
     $post_file = "";
+    $inc_name = $name;
     if($name eq "Xutil" || $name eq "Xresource" || $name eq "XShm") {
 	$x11_incl = "#include <X11/Xlib.h>\n";
 	# For Xutil, we need X11/Xresource.h for XUniqueContext().
@@ -56,6 +57,13 @@ foreach $name (@dolist) {
 	$extensions_dir = "extensions/";
 	$pre_file = "#ifdef HAVE_LIBXXF86DGA\n";
 	$post_file = "#endif /* defined(HAVE_LIBXXF86DGA) */\n";
+    }
+    if($name eq "xf86dga2")  {
+    	$x11_incl = "#include <X11/Xlib.h>\n";
+	$extensions_dir = "extensions/";
+	$pre_file = "#ifdef HAVE_LIBXXF86DGA2\n";
+	$post_file = "#endif /* defined(HAVE_LIBXXF86DGA2) */\n";
+	$inc_name = "xf86dga";
     }
     if($name eq "XShm") {
 	$extensions_dir = "extensions/";
@@ -90,7 +98,7 @@ foreach $name (@dolist) {
 #ifndef X_DISPLAY_MISSING
 
 $pre_file
-$x11_incl#include <X11/$extensions_dir$name.h>
+$x11_incl#include <X11/$extensions_dir$inc_name.h>
 
 END
 
@@ -106,7 +114,7 @@ END
 #ifndef X_DISPLAY_MISSING
 
 $pre_file
-$x11_incl#include <X11/$extensions_dir$name.h>
+$x11_incl#include <X11/$extensions_dir$inc_name.h>
 
 #include "debugtools.h"
 #include "ts_$lcname.h"
@@ -196,6 +204,25 @@ END
 		"Display*a0,int a1,int a2",
 		"a0,a1,a2"
 	);
+    } elsif($name eq "xf86dga2") {
+    	output_fn_short("Bool", "XDGAQueryVersion", "Display*" ,"int*","int*");
+    	output_fn_short("Bool", "XDGAQueryExtension", "Display*" ,"int*","int*");
+    	output_fn_short("XDGAMode*", "XDGAQueryModes", "Display*" ,"int", "int*");
+    	output_fn_short("XDGADevice*", "XDGASetMode", "Display*" ,"int","int");
+    	output_fn_short("Bool", "XDGAOpenFramebuffer", "Display*" ,"int");
+    	output_fn_short("void", "XDGACloseFramebuffer", "Display*" ,"int");
+    	output_fn_short("void", "XDGASetViewport", "Display*" ,"int", "int", "int", "int");
+    	output_fn_short("void", "XDGAInstallColormap", "Display*" , "int", "Colormap");
+	output_fn_short("Colormap", "XDGACreateColormap", "Display*" ,"int", "XDGADevice*", "int");
+    	output_fn_short("void", "XDGASelectInput", "Display*" ,"int", "long");
+    	output_fn_short("void", "XDGAFillRectangle", "Display*" ,"int", "int", "int", "unsigned int", "unsigned int", "unsigned long");
+   	output_fn_short("void", "XDGACopyArea", "Display*" ,"int", "int", "int", "unsigned int", "unsigned int", "int", "int");
+   	output_fn_short("void", "XDGACopyTransparentArea", "Display*" ,"int", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned long");
+    	output_fn_short("int", "XDGAGetViewportStatus", "Display*" ,"int");
+    	output_fn_short("void", "XDGASync", "Display*" ,"int");
+    	output_fn_short("Bool", "XDGASetClientVersion", "Display*");
+    	output_fn_short("void", "XDGAChangePixmapMode", "Display*" ,"int", "int*", "int*", "int");
+	output_fn_short("void", "XDGAKeyEventToXKeyEvent", "XDGAKeyEvent*" ,"XKeyEvent*");
     } elsif($name eq "xf86vmode") {
     	output_fn("XF86VidModeQueryVersion",Bool,
 		"Display*,int*,int*",
@@ -381,6 +408,38 @@ sub output_fn {
 			 "$result_type TS$fn_name($protos)",
 			 "$result_type TS$fn_name($formals)",
 			 $actuals);
+}
+
+sub output_fn_short {
+    # Example call:
+    # output_fn_sort("Bool", "XDGAQueryExtension", "Display *", "int *", "int *");
+    #
+    my ($result_type, $fn_name, @args) = @_;
+    
+    my ($i, $proto, $formals, $actuals) = (0, 
+					   "$result_type TS$fn_name(",
+					   "$result_type TS$fn_name(",
+					   "");
+    while ($val = shift @args) {
+	$proto = $proto . $val;
+	$formals = $formals . $val . " a$i";
+	$actuals = $actuals . " a$i";
+	$i++;
+	if (@args) {
+	    $proto = $proto . ", ";
+	    $formals = $formals . ", ";
+	    $actuals = $actuals . ", ";
+	}
+    }
+    $proto = $proto . ")";
+    $formals = $formals . ")";
+
+
+    raw_output_fn($fn_name,
+		  $result_type =~ /^\s*void\s*$/ ? "" : "$result_type r",
+		  $proto,
+		  $formals,
+		  $actuals);
 }
 
 sub raw_output_fn {
