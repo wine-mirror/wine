@@ -6,37 +6,23 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
+WRCEXTRA  = -t -A -p progman
 
-LANGUAGES   = En Da De Fr Fi Ko Hu It Va Sw Es Wa Pt
 LICENSELANG = En
 
-MOSTSRCS = \
+C_SRCS = \
 	dialog.c \
 	group.c \
 	grpfile.c \
 	license.c \
 	main.c \
-	program.c
-
-# Some strings need addresses >= 0x10000
-STRINGSRCS = \
+	program.c \
 	string.c \
 	$(LICENSELANG:%=License_%.c)
 
-RC_SRCS = \
-	accel.rc \
-	$(LANGUAGES:%=%.rc)
-
-C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
-
-MOSTOBJS = $(MOSTSRCS:.c=.o)
-STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
+RC_SRCS = rsrc.rc
 
 all: check_wrc $(PROGRAMS)
-
-depend:: $(RC_SRCS:.rc=.h)
 
 @MAKE_RULES@
 
@@ -44,21 +30,13 @@ depend:: $(RC_SRCS:.rc=.h)
 .rc.s:
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
-.rc.h:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
+progman: $(OBJS) $(WINESTUB)
+	$(CC) -o progman $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-
-progman: $(MOSTOBJS) $(STRINGOBJS) $(WINESTUB)
-	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
-
-install: dummy
+install:: dummy
 	$(INSTALL_PROGRAM) progman $(bindir)/progman
 
-uninstall: dummy
+uninstall:: dummy
 	$(RM) $(bindir)/progman
-
-$(RC_SRCS:.rc=.s): $(WRC)
-
-dummy:
 
 ### Dependencies:

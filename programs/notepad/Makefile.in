@@ -6,29 +6,19 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
+WRCEXTRA  = -t -A -p notepad
 
-LANGUAGES   = En Da De Fr Sw Es Fi Wa Pt
 LICENSELANG = En
 
-MOSTSRCS = \
+C_SRCS = \
 	license.c \
 	main.c \
 	dialog.c \
 	language.c \
-	search.c
-
-# Some strings need addresses >= 0x10000
-STRINGSRCS = \
+	search.c \
 	$(LICENSELANG:%=License_%.c)
 
-RC_SRCS = $(LANGUAGES:%=%.rc)
-
-C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
-
-MOSTOBJS = $(MOSTSRCS:.c=.o)
-STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
+RC_SRCS = rsrc.rc
 
 all: check_wrc $(PROGRAMS)
 
@@ -40,21 +30,13 @@ depend::
 .rc.s:
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
-.rc.h:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
+notepad: $(OBJS) $(WINESTUB)
+	$(CC) -o notepad $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
-
-notepad: $(MOSTOBJS) $(STRINGOBJS) $(WINESTUB)
-	$(CC) -o notepad $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
-
-install: dummy
+install:: dummy
 	$(INSTALL_PROGRAM) notepad $(bindir)/notepad
 
-uninstall: dummy
+uninstall:: dummy
 	$(RM) $(bindir)/notepad
-
-$(RC_SRCS:.rc=.s): $(WRC)
-
-dummy:
 
 ### Dependencies:

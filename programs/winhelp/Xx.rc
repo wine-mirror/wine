@@ -4,12 +4,6 @@
  * Copyright 1996 Ulrich Schmid
  */
 
-#include "windows.h"
-#include "winhelp.h"
-
-#define CONCAT(a, b) CONCAT1(a, b)
-#define CONCAT1(a, b) a##b
-
 /* Menu */
 
 CONCAT(MENU_, LANGUAGE_ID) MENU
@@ -43,7 +37,7 @@ CONCAT(MENU_, LANGUAGE_ID) MENU
 
 /* Dialogs */
 
-DIALOG_TEST DIALOG 0, 0, 150, 22
+CONCAT(DIALOG_TEST_, LANGUAGE_ID) DIALOG 0, 0, 150, 22
 STYLE DS_MODALFRAME
 CAPTION "Macro Test"
 {
@@ -53,13 +47,6 @@ DEFPUSHBUTTON "OK", IDOK,     110, 5, 35,  12
 }
 
 /* Strings */
-
-#define ADDSTRING(str) ADDSTRING1(LANGUAGE_NUMBER, IDS_ ## str) STRING_ ## str
-#define ADDSTRING1(langnum, ids) ADDSTRING2(langnum, ids)
-#define ADDSTRING2(langnum, ids) 0x ## langnum ## ids
-
-#define STRINGIFY(str) STRINGIFY1(str)
-#define STRINGIFY1(str) #str
 
 #define STRING_LANGUAGE_ID        STRINGIFY(LANGUAGE_ID)
 
@@ -79,3 +66,40 @@ ADDSTRING(HISTORY)
 ADDSTRING(ALL_FILES)
 ADDSTRING(HELP_FILES_HLP)
 }
+
+
+/* Undefine all language-specific strings */
+
+#undef LANGUAGE_ID
+#undef LANGUAGE_NUMBER
+
+#undef MENU_FILE
+#undef MENU_FILE_OPEN
+#undef MENU_FILE_PRINT
+#undef MENU_FILE_PRINTER_SETUP
+#undef MENU_FILE_EXIT
+#undef MENU_EDIT
+#undef MENU_EDIT_COPY_DIALOG
+#undef MENU_EDIT_ANNOTATE
+#undef MENU_BOOKMARK
+#undef MENU_BOOKMARK_DEFINE
+#undef MENU_HELP
+#undef MENU_HELP_ON_HELP
+#undef MENU_HELP_ON_TOP
+#undef MENU_HELP_INFO
+#undef MENU_HELP_ABOUT_WINE
+
+#undef STRING_LANGUAGE_ID
+#undef STRING_WINE_HELP
+#undef STRING_ERROR
+#undef STRING_WARNING
+#undef STRING_INFO
+#undef STRING_NOT_IMPLEMENTED
+#undef STRING_HLPFILE_ERROR_s
+#undef STRING_CONTENTS
+#undef STRING_SEARCH
+#undef STRING_BACK
+#undef STRING_HISTORY
+#undef STRING_ALL_FILES
+#undef STRING_HELP_FILES_HLP
+

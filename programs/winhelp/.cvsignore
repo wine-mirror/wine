@@ -27,6 +27,7 @@ Wa.h
 Wa.s
 hlp2sgml
 lex.yy.c
+rsrc.s
 winhelp
 y.tab.c
 y.tab.h

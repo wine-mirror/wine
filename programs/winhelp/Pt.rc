@@ -8,7 +8,7 @@
 /* This file is not yet complete !! */
 
 #define LANGUAGE_ID                  Pt
-#define LANGUAGE_NUMBER              0
+#define LANGUAGE_NUMBER              16
 
 /* Menu */
 

@@ -17,22 +17,6 @@
 #include "dialog.h"
 #include "language.h"
 
-#if !defined(LCC) || defined(WINELIB)
-#include "shell.h"
-#endif
-
-#ifdef WINELIB
-#include "options.h"
-#include "resource.h"
-void LIBWINE_Register_Da();
-void LIBWINE_Register_De();
-void LIBWINE_Register_En();
-void LIBWINE_Register_Es();
-void LIBWINE_Register_Fi();
-void LIBWINE_Register_Fr();
-void LIBWINE_Register_Sw();
-#endif
-
 NOTEPAD_GLOBALS Globals;
 
 /***********************************************************************
@@ -157,17 +141,6 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     WNDCLASS class;
     char className[] = "NPClass";  /* To make sure className >= 0x10000 */
     char winName[]   = "Notepad";
-
-    #if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
-      /* Register resources */
-      LIBWINE_Register_Da();
-      LIBWINE_Register_De();
-      LIBWINE_Register_En();
-      LIBWINE_Register_Es();
-      LIBWINE_Register_Fi();
-      LIBWINE_Register_Fr();
-      LIBWINE_Register_Sw();
-    #endif
 
     /* Select Language */
     LANGUAGE_Init();

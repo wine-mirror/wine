@@ -1,0 +1,30 @@
+
+#include "windows.h"
+#include "progman.h"
+
+#define CONCAT(a, b) CONCAT1(a, b)
+#define CONCAT1(a, b) a##b
+
+#define ADDSTRING(str) ADDSTRING1(LANGUAGE_NUMBER, IDS_ ## str) STRING_ ## str
+#define ADDSTRING1(langnum, ids) ADDSTRING2(langnum, ids)
+#define ADDSTRING2(langnum, ids) 0x ## langnum ## ids
+
+#define STRINGIFY(str) STRINGIFY1(str)
+#define STRINGIFY1(str) #str
+
+#include "accel.rc"
+
+#include "Da.rc"
+#include "De.rc"
+#include "En.rc"
+#include "Es.rc"
+#include "Fi.rc"
+#include "Fr.rc"
+#include "Hu.rc"
+#include "It.rc"
+#include "Ko.rc"
+#include "Pt.rc"
+#include "Sw.rc"
+#include "Va.rc"
+#include "Wa.rc"
+

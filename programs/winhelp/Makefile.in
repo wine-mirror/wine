@@ -6,32 +6,22 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
+WRCEXTRA  = -t -A -p winhelp
 
-LANGUAGES   = En Da De Fr Fi Ko Hu It Va Sw Es Wa Pt
-
-MOSTSRCS = \
+C_SRCS = \
 	winhelp.c \
 	hlpfile.c \
-	macro.c
-
-# Some strings need addresses >= 0x10000
-STRINGSRCS = string.c
+	macro.c \
+	string.c
 
 EXTRA_SRCS = macro.yacc.y macro.lex.l
 EXTRA_OBJS = y.tab.o lex.yy.o
 
-RC_SRCS = $(LANGUAGES:%=%.rc)
-
-C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
-
-MOSTOBJS = $(MOSTSRCS:.c=.o) $(EXTRA_OBJS)
-STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
+RC_SRCS = rsrc.rc
 
 all: check_wrc $(PROGRAMS)
 
-depend:: $(RC_SRCS:.rc=.h) y.tab.h
+depend:: y.tab.h
 
 @MAKE_RULES@
 
@@ -39,21 +29,17 @@ depend:: $(RC_SRCS:.rc=.h) y.tab.h
 .rc.s:
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
-.rc.h:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
-
-# Some strings need addresses >= 0x10000
-winhelp: $(MOSTOBJS) $(STRINGOBJS) $(WINESTUB)
-	$(CC) -o winhelp $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
+winhelp: $(OBJS) $(WINESTUB)
+	$(CC) -o winhelp $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o
 	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o
 
-install: dummy
+install:: dummy
 	$(INSTALL_PROGRAM) winhelp $(bindir)/winhelp
 	$(INSTALL_PROGRAM) hlp2sgml $(bindir)/hlp2sgml
 
-uninstall: dummy
+uninstall:: dummy
 	$(RM) $(bindir)/winhelp $(bindir)/hlp2sgml
 
 y.tab.c y.tab.h: macro.yacc.y
@@ -61,9 +47,5 @@ y.tab.c y.tab.h: macro.yacc.y
 
 lex.yy.c: macro.lex.l
 	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
-
-$(RC_SRCS:.rc=.s): $(WRC)
-
-dummy:
 
 ### Dependencies:

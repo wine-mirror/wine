@@ -5,6 +5,7 @@
  *  To be distributed under the Wine License
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <windows.h>
 #include <commdlg.h>

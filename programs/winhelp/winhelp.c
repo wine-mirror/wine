@@ -6,22 +6,11 @@
 
 #include <stdio.h>
 #include "windows.h"
-#ifdef WINELIB
-#include "resource.h"
-#include "options.h"
-#include "shell.h"
-#endif
 #include "winhelp.h"
 
-VOID LIBWINE_Register_De(void);
-VOID LIBWINE_Register_En(void);
-VOID LIBWINE_Register_Fi(void);
-VOID LIBWINE_Register_Fr(void);
-VOID LIBWINE_Register_Hu(void);
-VOID LIBWINE_Register_It(void);
-VOID LIBWINE_Register_Ko(void);
-VOID LIBWINE_Register_Sw(void);
-VOID LIBWINE_Register_Va(void);
+#ifdef WINELIB
+#include "options.h"
+#endif
 
 static BOOL    WINHELP_RegisterWinClasses();
 static LRESULT WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -53,18 +42,6 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   MSG    msg;
   LONG   lHash = 0;
   INT    langnum;
-
-#if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
-  /* Register resources */
-  LIBWINE_Register_De();
-  LIBWINE_Register_En();
-  LIBWINE_Register_Fi();
-  LIBWINE_Register_Fr();
-  LIBWINE_Register_It();
-  LIBWINE_Register_Ko();
-  LIBWINE_Register_Hu();
-  LIBWINE_Register_Va();
-#endif
 
   Globals.hInstance = hInstance;
 

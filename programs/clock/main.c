@@ -18,19 +18,6 @@
 #include "winclock.h"
 #include "commdlg.h"
 
-#ifdef WINELIB
-   #include "options.h"
-   #include "resource.h"
-   #include "shell.h"
-   void LIBWINE_Register_Da();
-   void LIBWINE_Register_De();
-   void LIBWINE_Register_En();
-   void LIBWINE_Register_Es();
-   void LIBWINE_Register_Fr();
-   void LIBWINE_Register_Sw();
-   void LIBWINE_Register_Fi();
-#endif
-
 CLOCK_GLOBALS Globals;
 
 /***********************************************************************
@@ -209,17 +196,6 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     
     char szClassName[] = "CLClass";  /* To make sure className >= 0x10000 */
     char szWinName[]   = "Clock";
-
-    #if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
-      /* Register resources */
-      LIBWINE_Register_Da();
-      LIBWINE_Register_De();
-      LIBWINE_Register_En();
-      LIBWINE_Register_Es();
-      LIBWINE_Register_Fr();
-      LIBWINE_Register_Sw();
-      LIBWINE_Register_Fi();
-    #endif
 
     /* Setup Globals */
     Globals.bAnalog	    = TRUE;

@@ -4,11 +4,6 @@
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  */
 
-#include "windows.h"
-#include "main.h"
- 
-#define CONCAT(a, b) CONCAT1(a, b)
-#define CONCAT1(a, b) a##b
 
 /* Main Menu */
 
@@ -41,13 +36,6 @@ CONCAT(MENU_, LANGUAGE_ID) MENU
 
 /* Strings */
 
-#define ADDSTRING(str) ADDSTRING1(LANGUAGE_NUMBER, IDS_ ## str) STRING_ ## str
-#define ADDSTRING1(langnum, ids) ADDSTRING2(langnum, ids)
-#define ADDSTRING2(langnum, ids) 0x ## langnum ## ids
-
-#define STRINGIFY(str) STRINGIFY1(str)
-#define STRINGIFY1(str) #str
-
 #define STRING_LANGUAGE_ID        STRINGIFY(LANGUAGE_ID)
 #define STRING_LANGUAGE_MENU_ITEM LANGUAGE_MENU_ITEM
 #define STRING_MENU_ON_TOP        MENU_ON_TOP
@@ -60,3 +48,34 @@ ADDSTRING(LANGUAGE_MENU_ITEM)
 ADDSTRING(CLOCK)
 ADDSTRING(MENU_ON_TOP)
 }
+
+
+/* Undefine all language-specific strings */
+
+#undef LANGUAGE_ID
+#undef LANGUAGE_NUMBER
+
+#undef MENU_ON_TOP
+
+#undef MENU_PROPERTIES
+#undef MENU_ANALOG
+#undef MENU_DIGITAL
+#undef MENU_FONT
+#undef MENU_WITHOUT_TITLE
+
+#undef MENU_SECONDS
+#undef MENU_DATE
+
+#undef MENU_LANGUAGE
+#undef LANGUAGE_MENU_ITEM
+
+#undef MENU_INFO
+#undef MENU_INFO_LICENSE
+#undef MENU_INFO_NO_WARRANTY
+#undef MENU_INFO_ABOUT_WINE
+
+#undef STRING_LANGUAGE_ID
+#undef STRING_LANGUAGE_MENU_ITEM
+#undef STRING_MENU_ON_TOP
+#undef STRING_CLOCK
+

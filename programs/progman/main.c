@@ -8,18 +8,9 @@
 #include "windows.h"
 #include "license.h"
 #include "progman.h"
+
 #ifdef WINELIB
-#include "resource.h"
 #include "options.h"
-#include "shell.h"
-void LIBWINE_Register_accel();
-void LIBWINE_Register_De();
-void LIBWINE_Register_En();
-void LIBWINE_Register_Fi();
-void LIBWINE_Register_Fr();
-void LIBWINE_Register_It();
-void LIBWINE_Register_Ko();
-void LIBWINE_Register_Hu();
 #endif
 
 GLOBALS Globals;
@@ -41,18 +32,6 @@ static VOID MAIN_AutoStart(void);
 int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
-
-#if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
-  /* Register resources */
-  LIBWINE_Register_accel();
-  LIBWINE_Register_De();
-  LIBWINE_Register_En();
-  LIBWINE_Register_Fi();
-  LIBWINE_Register_Fr();
-  LIBWINE_Register_It();
-  LIBWINE_Register_Ko();
-  LIBWINE_Register_Hu();
-#endif
 
 #ifndef WINELIB
   Globals.lpszIniFile         = "progman.ini";
