@@ -178,8 +178,8 @@ static const SuffixCharset sufch_windows[] = {
 
 static const SuffixCharset sufch_koi8[] = {
     { "r", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
-    { "ru", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
-    { "u", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
+    { "ru", RUSSIAN_CHARSET, 21866, X11DRV_CPTABLE_SBCS },
+    { "u", RUSSIAN_CHARSET, 21866, X11DRV_CPTABLE_SBCS },
     { NULL, RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS }};
 
 static const SuffixCharset sufch_jisx0201[] = {

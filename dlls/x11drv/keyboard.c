@@ -488,6 +488,27 @@ static const char main_key_UA[MAIN_LEN][4] =
  "<>" /* the phantom key */
 };
 
+/*** Ukrainian keyboard layout KOI8-U by O. Nykyforchyn */
+/***  (as it appears on most of keyboards sold today)   */
+static const char main_key_UA_std[MAIN_LEN][4] =
+{
+ "­½","1!","2\"","3'","4;","5%","6:","7?","8*","9(","0)","-_","=+",
+ "Êê","Ãã","Õõ","Ëë","Åå","Îî","Çç","Ûû","İı","Úú","Èè","§·",
+ "Ææ","¦¶","×÷","Áá","Ğğ","Òò","Ïï","Ìì","Ää","Öö","¤´","\\/",
+ "Ññ","Şş","Óó","Íí","Éé","Ôô","Øø","Ââ","Àà",".,",
+ "<>" /* the phantom key */
+};
+
+/*** Russian keyboard layout KOI8-R (pair to the previous) */
+static const char main_key_RU_std[MAIN_LEN][4] =
+{
+ "£³","1!","2\"","3'","4;","5%","6:","7?","8*","9(","0)","-_","=+",
+ "Êê","Ãã","Õõ","Ëë","Åå","Îî","Çç","Ûû","İı","Úú","Èè","ßÿ",
+ "Ææ","Ùù","×÷","Áá","Ğğ","Òò","Ïï","Ìì","Ää","Öö","Üü","\\/",
+ "Ññ","Şş","Óó","Íí","Éé","Ôô","Øø","Ââ","Àà",".,",
+ "<>" /* the phantom key */
+};
+
 /*** Spanish keyboard layout (setxkbmap es) */
 static const char main_key_ES[MAIN_LEN][4] =
 {
@@ -812,6 +833,8 @@ static const struct {
  {0x0419, "Russian keyboard layout cp1251", &main_key_RU_cp1251, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0419, "Russian phonetic keyboard layout", &main_key_RU_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0422, "Ukrainian keyboard layout KOI8-U", &main_key_UA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0422, "Ukrainian keyboard layout (standard)", &main_key_UA_std, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0419, "Russian keyboard layout (standard)", &main_key_RU_std, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040a, "Spanish keyboard layout", &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0410, "Italian keyboard layout", &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x040f, "Icelandic keyboard layout", &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},

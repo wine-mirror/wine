@@ -121,7 +121,7 @@ static const struct charset_entry
     { "ISO88598", 28598 },
     { "ISO88599", 28599 },
     { "KOI8R", 20866 },
-    { "KOI8U", 20866 },
+    { "KOI8U", 21866 },
     { "UTF8", CP_UTF8 }
 };
 
