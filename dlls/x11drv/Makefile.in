@@ -29,11 +29,13 @@ C_SRCS = \
 	keyboard.c \
 	mouse.c \
 	scroll.c \
+	settings.c \
 	ts_xlib.c \
 	window.c \
 	winpos.c \
 	x11ddraw.c \
 	x11drv_main.c \
+	xrandr.c \
 	xrender.c \
 	xvidmode.c
 

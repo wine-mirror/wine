@@ -48,6 +48,7 @@
 #include "win.h"
 #include "x11drv.h"
 #include "xvidmode.h"
+#include "xrandr.h"
 #include "dga2.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -70,7 +71,7 @@ unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
 DWORD desktop_tid = 0;
-int dxgrab, usedga, usexvidmode;
+int dxgrab, usedga, usexvidmode, usexrandr;
 int use_xkb = 1;
 int use_take_focus = 1;
 int managed_mode = 1;
@@ -261,6 +262,9 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "UseXVidMode", buffer, sizeof(buffer) ))
         usexvidmode = IS_OPTION_TRUE( buffer[0] );
 
+    if (!get_config_key( hkey, appkey, "UseXRandR", buffer, sizeof(buffer) ))
+        usexrandr = IS_OPTION_TRUE( buffer[0] );
+
     if (!get_config_key( hkey, appkey, "UseTakeFocus", buffer, sizeof(buffer) ))
         use_take_focus = IS_OPTION_TRUE( buffer[0] );
 
@@ -361,6 +365,8 @@ static void process_attach(void)
     screen_width  = WidthOfScreen( screen );
     screen_height = HeightOfScreen( screen );
 
+    X11DRV_Settings_Init();
+
     if (desktop_geometry)
         root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
 
@@ -381,6 +387,10 @@ static void process_attach(void)
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */
     X11DRV_XF86VM_Init();
+#endif
+#ifdef HAVE_LIBXRANDR
+    /* initialize XRandR */
+    X11DRV_XRandR_Init();
 #endif
 #ifdef HAVE_LIBXXF86DGA2
     /* initialize DGA2 */

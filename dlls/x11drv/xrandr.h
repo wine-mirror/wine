@@ -1,7 +1,7 @@
 /*
- * DirectDraw HAL XVidMode interface
+ * Wine X11drv Xrandr interface
  *
- * Copyright 2001 TransGaming Technologies, Inc.
+ * Copyright 2003 Alexander James Pasadyn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,26 +17,17 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef __WINE_XVIDMODE_H
-#define __WINE_XVIDMODE_H
+#ifndef __WINE_XRANDR_H
+#define __WINE_XRANDR_H
 
 #ifndef __WINE_CONFIG_H
 # error You must include config.h to use this header
 #endif
 
-#ifdef HAVE_LIBXXF86VM
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "ddrawi.h"
+#ifdef HAVE_LIBXRANDR
 
-void X11DRV_XF86VM_Init(void);
-void X11DRV_XF86VM_Cleanup(void);
-void X11DRV_XF86VM_SetExclusiveMode(int lock);
+void X11DRV_XRandR_Init(void);
+void X11DRV_XRandR_Cleanup(void);
 
-BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp);
-BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp);
-
-#endif /* HAVE_LIBXXF86VM */
-#endif /* __WINE_XVIDMODE_H */
+#endif /* HAVE_LIBXRANDR */
+#endif /* __WINE_XRANDR_H */

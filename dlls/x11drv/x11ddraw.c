@@ -28,6 +28,7 @@
 #include "x11drv.h"
 #include "x11ddraw.h"
 #include "xvidmode.h"
+#include "xrandr.h"
 #include "dga2.h"
 
 #include "windef.h"
@@ -382,12 +383,7 @@ INT X11DRV_DCICommand(INT cbInput, const DCICMD *lpCmd, LPVOID lpOutData)
       if (!X11DRV_XF86DGA2_CreateDriver(&hal_info))
 #endif
       {
-#ifdef HAVE_LIBXXF86VM
-	if (!X11DRV_XF86VM_CreateDriver(&hal_info))
-#endif
-          {
-            X11DRV_desktop_CreateDriver(&hal_info);
-          }
+          X11DRV_Settings_CreateDriver(&hal_info);
       }
 #ifdef HAVE_OPENGL
       /*X11DRV_GLX_CreateDriver(&hal_info);*/
