@@ -1,11 +1,13 @@
 #!/usr/bin/perl
 ##Wine Quick Debug Report Maker Thingy (WQDRMK)
-##By Adam the Jazz Guy
-##(c) 1998
+##By Adam Sacarny
+##(c) 1998-1999
 ##Do not say this is yours without my express permisson, or I will
 ##hunt you down and kill you like the savage animal I am.
 ##Released under the WINE licence
 ##Changelog: 
+##August 29, 1999 - Work around for debugger exit (or lack thereof)
+##                - Should now put debugging output in correct place
 ##April 19, 1999 - Much nicer way to select wine's location
 ##               - Option to disable creation of a debugging output
 ##               - Now places debugging output where it was started
@@ -77,7 +79,7 @@ if ($debuglevel < 3) {
 	};
 	print do_var($var2);
 }
-print "Enter the formatted debug output (The first file):\n";
+print "Enter filename for the formatted debug output (The first file):\n";
 $outfile=<STDIN>;
 chomp $outfile;
 $var23 = qq{
@@ -88,13 +90,29 @@ while ($outfile =~ /^(\s)*$/) {
 	$outfile=<STDIN>;
 	chomp $outfile;
 }
-print "Enter the file for the full debug output (The second file):\n";
+print "Enter the filename for the full debug output (The second file):\n";
 $dbgoutfile=<STDIN>;
 chomp $dbgoutfile;
 while ($dbgoutfile =~ /^(\s)*$/) {
 	print do_var($var23);
 	$dbgoutfile=<STDIN>;
 	chomp $dbgoutfile;
+}
+$var31 = qq{
+Since you will only be creating the formatted report, I will need a
+temporary place to put the full output.
+You may not enter "no file" for this.
+Enter the filename for the temporary file:
+};
+if ($outfile ne "no file" and $dbgoutfile eq "no file") {
+	print do_var($var31);
+	$tmpoutfile=<STDIN>;
+	chomp $tmpoutfile;
+	while (($tmpoutfile =~ /^(\s)*$/) or ($tmpoutfile eq "no file")) {
+		print do_var($var23);
+		$tmpoutfile=<STDIN>;
+		chomp $tmpoutfile;
+	}
 }
 print "Looking for wine...\n";
 $whereis=`whereis wine`;
@@ -420,18 +438,70 @@ $dir=$1;
 use Cwd;
 $nowdir=getcwd;
 chdir($dir);
-if ($outfile eq "no file" and $dbgoutfile ne "no file") {
-	system("echo quit|$wineloc -debugmsg $debugopts $extraops \"$program\" $outflags $nowdir/$dbgoutfile");
-	system("gzip $nowdir/$dbgoutfile");
+if (!($outfile =~ /\//) and $outfile ne "no file") {
+	$outfile = "$nowdir/$outfile";
 }
-elsif ($outfile ne "no file" and $dbgoutfile ne "no file") {
-	system("echo quit|$wineloc -debugmsg $debugopts $extraops \"$program\" $outflags $nowdir/$dbgoutfile");
-	$lastlines=`tail -n $lastnlines $nowdir/$dbgoutfile`;
-	system("gzip $nowdir/$dbgoutfile");
-	&generate_outfile;
+if (!($dbgoutfile =~ /\//) and $dbgoutfile ne "no file") {
+	$dbgoutfile = "$nowdir/$dbgoutfile";
 }
-elsif ($outfile ne "no file" and $dbgoutfile eq "no file"){
-	$lastlines=`echo quit|$wineloc -debugmsg $debugopts $extraops "$program" 2>&1 | tail -n $lastnlines`;
+if (!($tmpoutfile =~ /\//)) {
+	$tmpoutfile = "$nowdir/$tmpoutfile";
+}
+$SIG{CHLD}=$SIG{CLD}=sub { wait };
+if ($dbgoutfile ne "no file") {
+	unlink("$dbgoutfile");
+	if ($pid=fork()) {
+	}
+	elsif (defined $pid) {
+		close(0);close(1);close(2);
+		exec "echo quit | $wineloc -debugmsg $debugopts $extraops \"$program\" > $dbgoutfile 2>&1";
+	}
+	else {
+		die "couldn't fork";
+	}
+	while (kill(0, $pid)) {
+		sleep(5);
+		$last = `tail -n 5 $dbgoutfile | grep Wine-dbg`;
+		if ($last =~ /Wine-dbg/) {
+			kill "TERM", $pid;
+			break;
+		}
+	}
+	if ($outfile ne "no file") {
+		$lastlines=`tail -n $lastnlines $dbgoutfile`;
+		system("gzip $dbgoutfile");
+		&generate_outfile;
+	}
+	else {
+		system("gzip $dbgoutfile");
+	}
+}
+elsif ($outfile ne "no file" and $dbgoutfile eq "no file") {
+	if ($pid=fork()) {
+	}
+	elsif (defined $pid) {
+		close(0);close(1);close(2);
+		exec "echo quit | $wineloc -debugmsg $debugopts $extraops \"$program\" 2>&1| tee $tmpoutfile | tail -n $lastnlines > $outfile";
+	}
+	else {
+		die "couldn't fork";
+	}
+	print "$outfile $tmpoutfile";
+	while (kill(0, $pid)) {
+		sleep(5);
+		$last = `tail -n 5 $tmpoutfile | grep Wine-dbg`;
+		if ($last =~ /Wine-dbg/) {
+			kill "TERM", $pid;
+			break;
+		}
+	}
+	unlink($tmpoutfile);
+	open(OUTFILE, "$outfile");
+	while (<OUTFILE>) {
+		$lastlines .= $_;
+	}
+	close(OUTFILE);
+	unlink($outfile);
 	&generate_outfile;
 }
 else {
@@ -446,7 +516,7 @@ else {
 	system("$wineloc -debugmsg $debugmsg $extraops \"$program\"");
 }
 sub generate_outfile {
-open(OUTFILE,">$nowdir"."\/"."$outfile");
+open(OUTFILE,">$outfile");
 print OUTFILE <<EOM;
 Auto-generated debug report by Wine Quick Debug Report Maker Thingy:
 WINE Version:                $winever
