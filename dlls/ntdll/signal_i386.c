@@ -776,8 +776,7 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
     case T_SEGNPFLT:  /* Segment not present exception */
     case T_PROTFLT:   /* General protection fault */
     case T_UNKNOWN:   /* Unknown fault code */
-        if (INSTR_EmulateInstruction( context )) return;
-        rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
+        if (!(rec.ExceptionCode = INSTR_EmulateInstruction( context ))) return;
         break;
     case T_PAGEFLT:  /* Page fault */
 #ifdef FAULT_ADDRESS

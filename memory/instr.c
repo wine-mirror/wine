@@ -396,17 +396,18 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 /***********************************************************************
  *           INSTR_EmulateInstruction
  *
- * Emulate a privileged instruction. Returns TRUE if emulation successful.
+ * Emulate a privileged instruction.
+ * Returns exception code, or 0 if emulation successful.
  */
-BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
+DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
-    SEGPTR gpHandler;
     BYTE *instr;
+    DWORD ret = EXCEPTION_PRIV_INSTRUCTION;
 
     long_op = long_addr = (!ISV86(context) && IS_SELECTOR_32BIT(context->SegCs));
     instr = make_ptr( context, context->SegCs, context->Eip, TRUE );
-    if (!instr) return FALSE;
+    if (!instr) return ret;
 
     /* First handle any possible prefix */
 
@@ -480,7 +481,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                     }
                     add_stack(context, long_op ? 4 : 2);
                     context->Eip += prefixlen + 1;
-                    return TRUE;
+                    return 0;
                 }
             }
             break;  /* Unable to emulate it */
@@ -494,7 +495,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 			ERR("mov eax,cr0 at 0x%08lx, EAX=0x%08lx\n",
                             context->Eip,context->Eax );
                         context->Eip += prefixlen+3;
-			return TRUE;
+			return 0;
 		default:
 			break; /*fallthrough to bad instruction handling */
 		}
@@ -516,12 +517,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                     ERR("mov cr4,eax at 0x%08lx\n",context->Eip);
                     context->Eax = 0;
                     context->Eip += prefixlen+3;
-		    return TRUE;
+		    return 0;
 		case 0xc0: /* mov cr0, eax */
                     ERR("mov cr0,eax at 0x%08lx\n",context->Eip);
                     context->Eax = 0x10; /* FIXME: set more bits ? */
                     context->Eip += prefixlen+3;
-		    return TRUE;
+		    return 0;
 		default: /* fallthrough to illegal instruction */
 		    break;
 		}
@@ -535,7 +536,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                         context->SegFs = seg;
                         add_stack(context, long_op ? 4 : 2);
                         context->Eip += prefixlen + 2;
-                        return TRUE;
+                        return 0;
                     }
                 }
                 break;
@@ -547,7 +548,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                         context->SegGs = seg;
                         add_stack(context, long_op ? 4 : 2);
                         context->Eip += prefixlen + 2;
-                        return TRUE;
+                        return 0;
                     }
                 }
                 break;
@@ -558,7 +559,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                                       long_addr, segprefix, &len ))
                 {
                     context->Eip += prefixlen + len;
-                    return TRUE;
+                    return 0;
                 }
                 break;
             }
@@ -631,7 +632,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 		}
               context->Eip += prefixlen + 1;
 	    }
-            return TRUE;
+            return 0;
 
         case 0x8e: /* mov XX,segment_reg */
             {
@@ -649,25 +650,25 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 case 0:
                     context->SegEs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return TRUE;
+                    return 0;
                 case 1:  /* cs */
                     break;
                 case 2:
                     context->SegSs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return TRUE;
+                    return 0;
                 case 3:
                     context->SegDs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return TRUE;
+                    return 0;
                 case 4:
                     context->SegFs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return TRUE;
+                    return 0;
                 case 5:
                     context->SegGs = seg;
                     context->Eip += prefixlen + len + 1;
-                    return TRUE;
+                    return 0;
                 case 6:  /* unused */
                 case 7:  /* unused */
                     break;
@@ -681,19 +682,28 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                                   long_addr, segprefix, &len ))
             {
                 context->Eip += prefixlen + len;
-                return TRUE;
+                return 0;
             }
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
-           if(!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
-               ERR("could not initialize interrupt handling\n");
-           else {
-               context->Eip += prefixlen + 2;
-               Dosvm.EmulateInterruptPM( context, instr[1] );
-               return TRUE;
-           }
-           break;  /* Unable to emulate it */
+            if (IS_SELECTOR_SYSTEM(context->SegCs))
+            {
+                /* Win32 applications cannot use interrupts */
+                ret = EXCEPTION_ACCESS_VIOLATION;
+                break;
+            }
+            else if (!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
+            {
+                ERR("could not initialize interrupt handling\n");
+            }
+            else
+            {
+                context->Eip += prefixlen + 2;
+                Dosvm.EmulateInterruptPM( context, instr[1] );
+                return 0;
+            }
+            break;  /* Unable to emulate it */
 
         case 0xcf: /* iret */
             if (long_op)
@@ -712,12 +722,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 SET_LOWORD(context->EFlags,*stack);
                 add_stack(context, 3*sizeof(WORD));  /* Pop the return address and flags */
             }
-            return TRUE;
+            return 0;
 
         case 0xe4: /* inb al,XX */
             SET_LOBYTE(context->Eax,INSTR_inport( instr[1], 1, context ));
             context->Eip += prefixlen + 2;
-            return TRUE;
+            return 0;
 
         case 0xe5: /* in (e)ax,XX */
             if (long_op)
@@ -725,12 +735,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 SET_LOWORD(context->Eax, INSTR_inport( instr[1], 2, context ));
             context->Eip += prefixlen + 2;
-            return TRUE;
+            return 0;
 
         case 0xe6: /* outb XX,al */
             INSTR_outport( instr[1], 1, LOBYTE(context->Eax), context );
             context->Eip += prefixlen + 2;
-            return TRUE;
+            return 0;
 
         case 0xe7: /* out XX,(e)ax */
             if (long_op)
@@ -738,12 +748,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 INSTR_outport( instr[1], 2, LOWORD(context->Eax), context );
             context->Eip += prefixlen + 2;
-            return TRUE;
+            return 0;
 
         case 0xec: /* inb al,dx */
             SET_LOBYTE(context->Eax, INSTR_inport( LOWORD(context->Edx), 1, context ) );
             context->Eip += prefixlen + 1;
-            return TRUE;
+            return 0;
 
         case 0xed: /* in (e)ax,dx */
             if (long_op)
@@ -751,12 +761,12 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 SET_LOWORD(context->Eax, INSTR_inport( LOWORD(context->Edx), 2, context ));
             context->Eip += prefixlen + 1;
-            return TRUE;
+            return 0;
 
         case 0xee: /* outb dx,al */
             INSTR_outport( LOWORD(context->Edx), 1, LOBYTE(context->Eax), context );
             context->Eip += prefixlen + 1;
-            return TRUE;
+            return 0;
 
         case 0xef: /* out dx,(e)ax */
             if (long_op)
@@ -764,32 +774,35 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             else
                 INSTR_outport( LOWORD(context->Edx), 2, LOWORD(context->Eax), context );
             context->Eip += prefixlen + 1;
-            return TRUE;
+            return 0;
 
         case 0xfa: /* cli, ignored */
             context->Eip += prefixlen + 1;
-            return TRUE;
+            return 0;
 
         case 0xfb: /* sti, ignored */
             context->Eip += prefixlen + 1;
-            return TRUE;
+            return 0;
     }
 
 
     /* Check for Win16 __GP handler */
-    gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
-    if (gpHandler)
+    if (!IS_SELECTOR_SYSTEM(context->SegCs))
     {
-        WORD *stack = get_stack( context );
-        *--stack = context->SegCs;
-        *--stack = context->Eip;
-        add_stack(context, -2*sizeof(WORD));
+        SEGPTR gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
+        if (gpHandler)
+        {
+            WORD *stack = get_stack( context );
+            *--stack = context->SegCs;
+            *--stack = context->Eip;
+            add_stack(context, -2*sizeof(WORD));
 
-        context->SegCs = SELECTOROF( gpHandler );
-        context->Eip   = OFFSETOF( gpHandler );
-        return TRUE;
+            context->SegCs = SELECTOROF( gpHandler );
+            context->Eip   = OFFSETOF( gpHandler );
+            return 0;
+        }
     }
-    return FALSE;  /* Unable to emulate it */
+    return ret;  /* Unable to emulate it */
 }
 
 #endif  /* __i386__ */
