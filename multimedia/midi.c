@@ -1445,7 +1445,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
     }
 }
 
-static VOID midTimeCallback(HWND32 hwnd, UINT32 msg, UINT32 id, DWORD dwTime)
+static VOID WINAPI midTimeCallback(HWND32 hwnd, UINT32 msg, UINT32 id, DWORD dwTime)
 {
     unsigned	char		buffer[256];
     int				len, idx;
