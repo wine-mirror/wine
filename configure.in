@@ -383,7 +383,7 @@ fi
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h sys/file.h libio.h curses.h ncurses.h elf.h)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h sys/file.h libio.h curses.h ncurses.h elf.h resolv.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()

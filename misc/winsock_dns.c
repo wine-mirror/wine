@@ -33,6 +33,13 @@
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
 #endif
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#ifdef HAVE_RESOLV_H
+# include <resolv.h>
+#endif
 
 #include "winsock.h"
 #include "heap.h"

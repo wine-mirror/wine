@@ -44,6 +44,9 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
+#ifdef HAVE_RESOLV_H
+# include <resolv.h>
+#endif
 
 #include "wine/winbase16.h"
 #include "winsock.h"

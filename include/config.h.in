@@ -183,6 +183,9 @@
 /* Define if you have the <netinet/in.h> header file.  */
 #undef HAVE_NETINET_IN_H
 
+/* Define if you have the <resolv.h> header file.  */
+#undef HAVE_RESOLV_H
+
 /* Define if you have the <soundcard.h> header file.  */
 #undef HAVE_SOUNDCARD_H
 

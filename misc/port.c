@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
