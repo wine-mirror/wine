@@ -103,7 +103,7 @@ HRESULT WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFORMAT
                 LPSTORAGE pStg, LPVOID* ppvObj)
 {
   FIXME("(not shown), stub!\n");
-  return S_OK;
+  return E_OUTOFMEMORY;
 }
 
 /******************************************************************************
@@ -201,7 +201,7 @@ BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
 {
     FIXME("(%p,%p), stub!\n", clsid, ppenum);
-    return S_OK;
+    return OLEOBJ_E_NOVERBS;
 }
 
 /***********************************************************************
@@ -215,17 +215,6 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
     FIXME("(%p, %ld, %p), stub!\n", clsid, dwDirection, ppenumFormatetc);
 
     return S_OK;
-}
-
-#include "oleauto.h"
-/***********************************************************************
- *           SetErrorInfo			    [OLE32.255]
- */
-HRESULT WINAPI SetErrorInfo(DWORD dwReserved, IErrorInfo* perrinfo)
-{
-	FIXME("(%ld, %p): stub:\n", dwReserved, perrinfo);
-
-	return S_OK;
 }
 
 /***********************************************************************
