@@ -552,6 +552,7 @@ DECL_WINELIB_TYPE_AW(LPMIDIOUTCAPS)
 #define MIDICAPS_VOLUME		0x0001  /* supports volume control */
 #define MIDICAPS_LRVOLUME	0x0002  /* separate left-right volume control */
 #define MIDICAPS_CACHE		0x0004
+#define MIDICAPS_STREAM		0x0008  /* capable of supporting stream buffer */
 
 typedef struct {
     WORD	wMid;		/* manufacturer ID */
@@ -590,9 +591,62 @@ typedef struct {
     DWORD	reserved;	/* reserved for driver */
 } MIDIHDR, *LPMIDIHDR;
 
+/* It seems that Win32 has a slightly different structure than Win 16.
+ * sigh....
+ */
+typedef struct {
+    LPSTR	lpData;		/* pointer to locked data block */
+    DWORD	dwBufferLength;	/* length of data in data block */
+    DWORD	dwBytesRecorded;/* used for input only */
+    DWORD	dwUser;		/* for client's use */
+    DWORD	dwFlags;	/* assorted flags (see defines) */
+    struct midihdr_tag *lpNext;	/* reserved for driver */
+    DWORD	reserved;	/* reserved for driver */
+    DWORD	dwOffset;	/* offset of playback in case of 
+				 * MIDISTRM buffer */
+    DWORD	dwReserved[4];	/* reserved for driver */
+} MIDIHDR_WIN32, *LPMIDIHDR_WIN32;
+
 #define MHDR_DONE       0x00000001       /* done bit */
 #define MHDR_PREPARED   0x00000002       /* set if header prepared */
 #define MHDR_INQUEUE    0x00000004       /* reserved for driver */
+#define MHDR_ISSTRM	0x00000008	 /* FIXME is this a correct
+					  * value ? Win32 only*/
+typedef struct {
+    DWORD		cbStruct;
+    DWORD		dwTempo;
+} MIDIPROPTEMPO, *LPMIDIPROPTEMPO;
+
+typedef struct {
+    DWORD		cbStruct;
+    DWORD		dwTimeDiv;
+} MIDIPROPTIMEDIV, *LPMIDIPROPTIMEDIV;
+
+#define MIDIPROP_GET		0x40000000
+#define MIDIPROP_SET		0x80000000
+#define MIDIPROP_TEMPO		0x00000002
+#define MIDIPROP_TIMEDIV	0x00000001
+
+typedef struct {  
+    DWORD dwDeltaTime;	/* Time, in MIDI ticks, between the previous 
+			 * event and the current event. */
+    DWORD dwStreamID;	/* Reserved; must be zero. */ 
+    DWORD dwEvent;  	/* event => see MEVT_XXX macros */
+    DWORD dwParms[0];	/* extra pmts to dwEvent if F_LONG is set */
+} MIDIEVENT, *LPMIDIEVENT;
+          
+#define MEVT_EVENTTYPE(x) ((BYTE) (((x)>>24)&0xFF))
+#define MEVT_EVENTPARM(x) ((DWORD) ((x)&0x00FFFFFFL))
+
+#define MEVT_F_CALLBACK 0x40000000
+#define	MEVT_F_LONG     0x80000000
+#define	MEVT_F_SHORT    0x00000000
+#define	MEVT_COMMENT	0x82
+#define	MEVT_LONGMSG	0x80
+#define	MEVT_NOP	0x02
+#define	MEVT_SHORTMSG	0x00
+#define	MEVT_TEMPO	0x01
+#define	MEVT_VERSION	0x84
 
 UINT16 WINAPI midiOutGetNumDevs16();
 UINT32 WINAPI midiOutGetNumDevs32();
@@ -688,6 +742,33 @@ UINT32 WINAPI midiInGetID32(HMIDIIN32,UINT32*);
 DWORD WINAPI midiInMessage16(HMIDIIN16,UINT16,DWORD,DWORD);
 DWORD WINAPI midiInMessage32(HMIDIIN32,UINT32,DWORD,DWORD);
 #define midiInMessage WINELIB_NAME(midiInMessage)
+
+MMRESULT16 WINAPI midiStreamClose16(HMIDISTRM16 hms);
+MMRESULT32 WINAPI midiStreamClose32(HMIDISTRM32 hms);
+#define midiStreamClose WINELIB_NAME(midiStreamClose)
+MMRESULT32 WINAPI midiStreamOpen32(HMIDISTRM32* phms, LPUINT32 uDeviceID, DWORD cMidi,
+				   DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
+MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phms, LPUINT16 devid, DWORD cMidi,
+				   DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
+#define midiStreamOpen WINELIB_NAME(midiStreamOpen)
+MMRESULT16 WINAPI midiStreamOut16(HMIDISTRM16 hms, LPMIDIHDR lpMidiHdr, UINT16 cbMidiHdr); 
+MMRESULT32 WINAPI midiStreamOut32(HMIDISTRM32 hms, LPMIDIHDR lpMidiHdr, UINT32 cbMidiHdr);
+#define midiStreamOut WINELIB_NAME(midiStreamOut)
+MMRESULT16 WINAPI midiStreamPause16(HMIDISTRM16 hms);
+MMRESULT32 WINAPI midiStreamPause32(HMIDISTRM32 hms);
+#define midiStreamPause WINELIB_NAME(midiStreamPause)
+MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hms, LPMMTIME16 lpmmt, UINT16 cbmmt);
+MMRESULT32 WINAPI midiStreamPosition32(HMIDISTRM32 hms, LPMMTIME32 lpmmt, UINT32 cbmmt);
+#define midiStreamPosition WINELIB_NAME(midiStreamPosition)
+MMRESULT16 WINAPI midiStreamProperty16(HMIDISTRM16 hms, LPBYTE lpPropData, DWORD dwProperty);
+MMRESULT32 WINAPI midiStreamProperty32(HMIDISTRM32 hms, LPBYTE lpPropData, DWORD dwProperty);
+#define midiStreamProperty WINELIB_NAME(midiStreamProperty)
+MMRESULT16 WINAPI midiStreamRestart16(HMIDISTRM16 hms);
+MMRESULT32 WINAPI midiStreamRestart32(HMIDISTRM32 hms);
+#define midiStreamRestart WINELIB_NAME(midiStreamRestart)
+MMRESULT16 WINAPI midiStreamStop16(HMIDISTRM16 hms);
+MMRESULT32 WINAPI midiStreamStop32(HMIDISTRM32 hms);
+#define midiStreamStop WINELIB_NAME(midiStreamStop)
 
 #define AUX_MAPPER     (-1)
 
@@ -1602,8 +1683,13 @@ HMMIO32	WINAPI	mmioOpen32A(LPSTR ,MMIOINFO32*,DWORD);
 HMMIO32	WINAPI	mmioOpen32W(LPWSTR,MMIOINFO32*,DWORD);
 #define		mmioOpen WINELIB_NAME_AW(mmioOpen)
 
-UINT16 WINAPI	mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
+UINT16 WINAPI	mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO16 * lpmmioinfo, DWORD dwRenameFlags);
+UINT32 WINAPI	mmioRename32A(LPCSTR szFileName, LPCSTR szNewFileName,
+     MMIOINFO32 * lpmmioinfo, DWORD dwRenameFlags);
+UINT32 WINAPI	mmioRename32W(LPCWSTR szFileName, LPCWSTR szNewFileName,
+     MMIOINFO32 * lpmmioinfo, DWORD dwRenameFlags);
+#define 	mmioRename WINELIB_NAME_AW(mmioRename)
 
 MMRESULT16 WINAPI mmioClose16(HMMIO16,UINT16);
 MMRESULT32 WINAPI mmioClose32(HMMIO32,UINT32);
@@ -1623,39 +1709,60 @@ MMRESULT32 WINAPI	mmioGetInfo32(HMMIO32,MMIOINFO32*,UINT32);
 MMRESULT16 WINAPI	mmioSetInfo16(HMMIO16,const MMIOINFO16*,UINT16);
 MMRESULT32 WINAPI	mmioSetInfo32(HMMIO32,const MMIOINFO32*,UINT32);
 #define			mmioSetInfo WINELIB_NAME(mmioSetInfo)
-
 UINT16 WINAPI	mmioSetBuffer16(HMMIO16,LPSTR,LONG,UINT16);
 UINT32 WINAPI	mmioSetBuffer32(HMMIO32,LPSTR,LONG,UINT32);
 #define			mmioSetBuffer WINELIB_NAME(mmioSetInfo)
-
 UINT16 WINAPI	mmioFlush16(HMMIO16,UINT16);
 UINT32 WINAPI	mmioFlush32(HMMIO32,UINT32);
 #define		mmioFlush WINELIB_NAME(mmioFlush)
-
 UINT16 WINAPI	mmioAdvance16(HMMIO16,MMIOINFO16*,UINT16);
 UINT32 WINAPI	mmioAdvance32(HMMIO32,MMIOINFO32*,UINT32);
 #define		mmioAdvance WINELIB_NAME(mmioAdvance)
 LONG WINAPI mmioSendMessage(HMMIO16,UINT16,LPARAM,LPARAM);
 UINT16 WINAPI mmioDescend(HMMIO16,MMCKINFO*,const MMCKINFO*,UINT16);
+
 UINT16 WINAPI	mmioAscend16(HMMIO16,MMCKINFO*,UINT16);
 UINT32 WINAPI	mmioAscend32(HMMIO32,MMCKINFO*,UINT32);
 #define		mmioAscend WINELIB_NAME(mmioAscend)
-UINT16 WINAPI mmioCreateChunk(HMMIO16,MMCKINFO*,UINT16);
+UINT16 WINAPI 	mmioCreateChunk16(HMMIO16,MMCKINFO*,UINT16);
+UINT32 WINAPI 	mmioCreateChunk32(HMMIO32,MMCKINFO*,UINT32);
+#define		mmioCreateChunk WINELIB_NAME(mmioAscend)
 
 typedef UINT16 (CALLBACK *YIELDPROC)(UINT16,DWORD);
 
-DWORD WINAPI mciSendCommand (UINT16,UINT16,DWORD,DWORD);
-DWORD WINAPI mciSendString (LPCSTR,LPSTR,UINT16,HWND16);
-UINT16 WINAPI mciGetDeviceID(LPCSTR);
-UINT16 WINAPI mciGetDeviceIDFromElementID(DWORD,LPCSTR);
+DWORD WINAPI mciSendCommand16(UINT16,UINT16,DWORD,DWORD);
+DWORD WINAPI mciSendCommand32A(UINT32,UINT32,DWORD,DWORD);
+DWORD WINAPI mciSendCommand32W(UINT32,UINT32,DWORD,DWORD);
+#define mciSendCommand WINELIB_NAME_AW(mciSendCommand)
+
+DWORD WINAPI mciSendString16(LPCSTR,LPSTR,UINT16,HWND16);
+DWORD WINAPI mciSendString32A(LPCSTR,LPSTR,UINT32,HWND32);
+DWORD WINAPI mciSendString32W(LPCWSTR,LPSTR,UINT32,HWND32);
+#define mciSendString WINELIB_NAME_AW(mciSendString)
+
+UINT16 WINAPI mciGetDeviceID16(LPCSTR);
+UINT32 WINAPI mciGetDeviceID32A(LPCSTR);
+UINT32 WINAPI mciGetDeviceID32W(LPCWSTR);
+#define mciGetDeviceID WINELIB_NAME_AW(mciGetDeviceID)
+
+UINT16 WINAPI mciGetDeviceIDFromElementID16(DWORD,LPCSTR);
+
 BOOL16 WINAPI mciGetErrorString16 (DWORD,LPSTR,UINT16);
 BOOL32 WINAPI mciGetErrorString32A(DWORD,LPSTR,UINT32);
 BOOL32 WINAPI mciGetErrorString32W(DWORD,LPWSTR,UINT32);
 #define mciGetErrorString WINELIB_NAME_AW(mciGetErrorString)
-BOOL16 WINAPI mciSetYieldProc (UINT16,YIELDPROC,DWORD);
 
-HTASK16 WINAPI mciGetCreatorTask(UINT16);
-YIELDPROC WINAPI mciGetYieldProc(UINT16,DWORD*);
+BOOL16 WINAPI mciSetYieldProc16(UINT16,YIELDPROC,DWORD);
+BOOL32 WINAPI mciSetYieldProc32(UINT32,YIELDPROC,DWORD);
+#define mciSetYieldProc WINELIB_NAME(mciSetYieldProc)
+
+HTASK16 WINAPI mciGetCreatorTask16(UINT16);
+HTASK32 WINAPI mciGetCreatorTask32(UINT32);
+#define mciGetCreatorTask WINELIB_NAME(mciGetCreatorTask)
+
+YIELDPROC WINAPI mciGetYieldProc16(UINT16,DWORD*);
+YIELDPROC WINAPI mciGetYieldProc32(UINT32,DWORD*);
+#define mciGetYieldProc WINELIB_NAME(mciGetYieldProc)
 
 #define MCIERR_INVALID_DEVICE_ID        (MCIERR_BASE + 1)
 #define MCIERR_UNRECOGNIZED_KEYWORD     (MCIERR_BASE + 3)
@@ -2076,6 +2183,12 @@ typedef struct {
 	DWORD   dwFrom;
 	DWORD   dwTo;
 } MCI_RECORD_PARMS, *LPMCI_RECORD_PARMS;
+
+/* FIXME: are those constants correct ? */
+#define MCI_CDA_STATUS_TYPE_TRACK 	0x00004001
+
+#define MCI_CDA_TRACK_AUDIO		0x00000001
+#define MCI_CDA_TRACK_OTHER		0x00000000
 
 #define MCI_VD_MODE_PARK                (MCI_VD_OFFSET + 1)
 
@@ -2794,14 +2907,33 @@ typedef struct {
 	UINT16	wType;			/* driver type (filled in by the driver) */
 } MCI_OPEN_DRIVER_PARMS, *LPMCI_OPEN_DRIVER_PARMS;
 
-DWORD  WINAPI mciGetDriverData(UINT16 uDeviceID);
-BOOL16 WINAPI mciSetDriverData(UINT16 uDeviceID, DWORD dwData);
-UINT16 WINAPI mciDriverYield(UINT16 uDeviceID);
-BOOL16 WINAPI mciDriverNotify(HWND16 hwndCallback, UINT16 uDeviceID,
+DWORD  WINAPI mciGetDriverData16(UINT16 uDeviceID);
+DWORD  WINAPI mciGetDriverData32(UINT32 uDeviceID);
+#define mciGetDriverData WINELIB_NAME(mciGetDriverData)
+
+BOOL16 WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD dwData);
+BOOL32 WINAPI mciSetDriverData32(UINT32 uDeviceID, DWORD dwData);
+#define mciSetDriverData WINELIB_NAME(mciSetDriverData)
+
+UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID);
+UINT32 WINAPI mciDriverYield32(UINT32 uDeviceID);
+#define mciDriverYield WINELIB_NAME(mciDriverYield)
+
+BOOL16 WINAPI mciDriverNotify16(HWND16 hwndCallback, UINT16 uDeviceID,
                               UINT16 uStatus);
-UINT16 WINAPI mciLoadCommandResource(HINSTANCE16 hInstance,
+BOOL32 WINAPI mciDriverNotify32(HWND32 hwndCallback, UINT32 uDeviceID,
+				UINT32 uStatus);
+#define mciDriverNotify WINELIB_NAME(mciDriverNotify)
+
+UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInstance,
                                      LPCSTR lpResName, UINT16 uType);
-BOOL16 WINAPI mciFreeCommandResource(UINT16 uTable);
+UINT32 WINAPI mciLoadCommandResource32(HINSTANCE32 hInstance,
+				       LPCSTR lpResName, UINT32 uType);
+#define mciLoadCommandResource WINELIB_NAME(mciLoadCommandResource)
+
+BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable);
+BOOL32 WINAPI mciFreeCommandResource32(UINT32 uTable);
+#define mciFreeCommandResource WINELIB_NAME(mciFreeCommandResource)
 
 #define DCB_NULL		0x0000
 #define DCB_WINDOW		0x0001			/* dwCallback is a HWND */
@@ -2828,22 +2960,5 @@ DWORD WINAPI widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 #pragma pack(4)
-
-LONG WAVE_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2);
-LONG WAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2);
-LONG MIDI_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2);
-LONG MIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2);
-LONG CDAUDIO_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-			  DWORD dwParam1, DWORD dwParam2);
-LONG CDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			  DWORD dwParam1, DWORD dwParam2);
-LONG ANIM_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2);
-LONG ANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2);
 
 #endif /* __WINE_MMSYSTEM_H */

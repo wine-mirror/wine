@@ -51,6 +51,32 @@ struct WINE_MCIDRIVER {
 
 /* function prototypes */
 extern BOOL32 MULTIMEDIA_Init(void);
-extern DWORD  mciSendCommandAsync32(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2);
+
+extern int    		MCI_DevIDToIndex(UINT16 wDevID);
+extern UINT16 		MCI_FirstDevID(void);
+extern UINT16 		MCI_NextDevID(UINT16 wDevID);
+extern BOOL32 		MCI_DevIDValid(UINT16 wDevID);
+
+extern int			MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
+extern int			MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
+
+typedef LONG		(*MCIPROC16)(DWORD, HDRVR16,  WORD, DWORD, DWORD);
+typedef LONG		(*MCIPROC32)(DWORD, HDRVR16, DWORD, DWORD, DWORD);
+
+extern MCIPROC32	MCI_GetProc32(UINT16 uDevType);
+extern WORD		   MCI_GetDevType(LPCSTR str);
+extern DWORD		MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
+extern const char* MCI_CommandToString(UINT16 wMsg);
+
+extern DWORD		MCI_SendCommandAsync32(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1, DWORD dwParam2);
+
+LONG MCIWAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+			  DWORD dwParam1, DWORD dwParam2);
+LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+			  DWORD dwParam1, DWORD dwParam2);
+LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+			     DWORD dwParam1, DWORD dwParam2);
+LONG MCIANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
+			  DWORD dwParam1, DWORD dwParam2);
 
 #endif /* __WINE_MULTIMEDIA_H */
