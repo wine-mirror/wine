@@ -592,6 +592,15 @@ typedef struct WS(sockaddr_in)
     char               sin_zero[8];
 } SOCKADDR_IN, *PSOCKADDR_IN, *LPSOCKADDR_IN;
 
+/*
+ * Multicast group information
+ */
+
+struct WS(ip_mreq)
+{
+    struct WS(in_addr) imr_multiaddr;
+    struct WS(in_addr) imr_interface;
+};
 
 /*
  * WSAStartup
