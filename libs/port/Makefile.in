@@ -9,6 +9,7 @@ C_SRCS = \
 	getopt.c \
 	getopt1.c \
 	getpagesize.c \
+	interlocked.c \
 	lstat.c \
 	memmove.c \
 	mkstemps.c \

@@ -164,14 +164,10 @@ struct statfs;
 
 
 /****************************************************************
- * Function definitions (only when using libwine)
+ * Function definitions (only when using libwine_port)
  */
 
 #ifndef NO_LIBWINE_PORT
-
-#if !defined(HAVE_CLONE) && defined(linux)
-int clone(int (*fn)(void *arg), void *stack, int flags, void *arg);
-#endif /* !defined(HAVE_CLONE) && defined(linux) */
 
 #ifndef HAVE_GETOPT_LONG
 extern char *optarg;
@@ -255,7 +251,7 @@ extern int mkstemps(char *template, int suffix_len);
 
 #if defined(__i386__) && defined(__GNUC__)
 
-inline static long interlocked_cmpxchg( long *dest, long xchg, long compare )
+extern inline long interlocked_cmpxchg( long *dest, long xchg, long compare )
 {
     long ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
@@ -263,7 +259,7 @@ inline static long interlocked_cmpxchg( long *dest, long xchg, long compare )
     return ret;
 }
 
-inline static void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
+extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
 {
     void *ret;
     __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
@@ -271,7 +267,7 @@ inline static void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *comp
     return ret;
 }
 
-inline static long interlocked_xchg( long *dest, long val )
+extern inline long interlocked_xchg( long *dest, long val )
 {
     long ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -279,7 +275,7 @@ inline static long interlocked_xchg( long *dest, long val )
     return ret;
 }
 
-inline static void *interlocked_xchg_ptr( void **dest, void *val )
+extern inline void *interlocked_xchg_ptr( void **dest, void *val )
 {
     void *ret;
     __asm__ __volatile__( "lock; xchgl %0,(%1)"
@@ -287,7 +283,7 @@ inline static void *interlocked_xchg_ptr( void **dest, void *val )
     return ret;
 }
 
-inline static long interlocked_xchg_add( long *dest, long incr )
+extern inline long interlocked_xchg_add( long *dest, long incr )
 {
     long ret;
     __asm__ __volatile__( "lock; xaddl %0,(%1)"
@@ -309,17 +305,23 @@ extern long interlocked_xchg_add( long *dest, long incr );
 
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
-#define clone             __WINE_NOT_PORTABLE(clone)
-#define getpagesize       __WINE_NOT_PORTABLE(getpagesize)
-#define lstat             __WINE_NOT_PORTABLE(lstat)
-#define memmove           __WINE_NOT_PORTABLE(memmove)
-#define pread             __WINE_NOT_PORTABLE(pread)
-#define pwrite            __WINE_NOT_PORTABLE(pwrite)
-#define statfs            __WINE_NOT_PORTABLE(statfs)
-#define strcasecmp        __WINE_NOT_PORTABLE(strcasecmp)
-#define strerror          __WINE_NOT_PORTABLE(strerror)
-#define strncasecmp       __WINE_NOT_PORTABLE(strncasecmp)
-#define usleep            __WINE_NOT_PORTABLE(usleep)
+#define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
+#define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)
+#define getpagesize             __WINE_NOT_PORTABLE(getpagesize)
+#define interlocked_cmpxchg     __WINE_NOT_PORTABLE(interlocked_cmpxchg)
+#define interlocked_cmpxchg_ptr __WINE_NOT_PORTABLE(interlocked_cmpxchg_ptr)
+#define interlocked_xchg        __WINE_NOT_PORTABLE(interlocked_xchg)
+#define interlocked_xchg_ptr    __WINE_NOT_PORTABLE(interlocked_xchg_ptr)
+#define interlocked_xchg_add    __WINE_NOT_PORTABLE(interlocked_xchg_add)
+#define lstat                   __WINE_NOT_PORTABLE(lstat)
+#define memmove                 __WINE_NOT_PORTABLE(memmove)
+#define pread                   __WINE_NOT_PORTABLE(pread)
+#define pwrite                  __WINE_NOT_PORTABLE(pwrite)
+#define statfs                  __WINE_NOT_PORTABLE(statfs)
+#define strcasecmp              __WINE_NOT_PORTABLE(strcasecmp)
+#define strerror                __WINE_NOT_PORTABLE(strerror)
+#define strncasecmp             __WINE_NOT_PORTABLE(strncasecmp)
+#define usleep                  __WINE_NOT_PORTABLE(usleep)
 
 #endif /* NO_LIBWINE_PORT */
 
