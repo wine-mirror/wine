@@ -178,16 +178,6 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
 }
 
 /***********************************************************************
- *            NdrConformantStringMarshall [RPCRT4.@]
- */
-unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
-  PFORMAT_STRING pFormat)
-{ 
-  FIXME("stub\n");
-  return NULL;
-}
-
-/***********************************************************************
  *           NdrGetBuffer [RPCRT4.@]
  */
 unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle)

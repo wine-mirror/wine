@@ -240,7 +240,7 @@ RPCRTAPI void RPC_ENTRY
   NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar );
 
 /* while MS declares each prototype separately, I prefer to use macros for this kind of thing instead */
-#define TYPE_MARSHAL(type) \
+#define SIMPLE_TYPE_MARSHAL(type) \
 RPCRTAPI unsigned char* RPC_ENTRY \
   Ndr##type##Marshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat ); \
 RPCRTAPI unsigned char* RPC_ENTRY \
@@ -248,7 +248,10 @@ RPCRTAPI unsigned char* RPC_ENTRY \
 RPCRTAPI void RPC_ENTRY \
   Ndr##type##BufferSize( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat ); \
 RPCRTAPI unsigned long RPC_ENTRY \
-  Ndr##type##MemorySize( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat ); \
+  Ndr##type##MemorySize( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
+
+#define TYPE_MARSHAL(type) \
+  SIMPLE_TYPE_MARSHAL(type) \
 RPCRTAPI void RPC_ENTRY \
   Ndr##type##Free( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat );
 
@@ -269,7 +272,11 @@ TYPE_MARSHAL(XmitOrRepAs)
 TYPE_MARSHAL(UserMarshal)
 TYPE_MARSHAL(InterfacePointer)
 
+SIMPLE_TYPE_MARSHAL(ConformantString)
+SIMPLE_TYPE_MARSHAL(NonConformantString)
+
 #undef TYPE_MARSHAL
+#undef SIMPLE_TYPE_MARSHAL
 
 RPCRTAPI void RPC_ENTRY
   NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, long NumberParams );
@@ -299,9 +306,6 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg, 
                           PMIDL_STUB_DESC pStubDesc, int unknown );
-RPCRTAPI unsigned char* RPC_ENTRY
-  NdrConformantStringMarshall( MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
-                               PFORMAT_STRING pFormat);
 RPCRTAPI unsigned char* RPC_ENTRY
   NdrGetBuffer( MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle );
 RPCRTAPI void RPC_ENTRY

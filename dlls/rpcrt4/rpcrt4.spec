@@ -297,10 +297,10 @@ init	RPCRT4_LibMain
 @ stub NdrConformantArrayMarshall
 @ stub NdrConformantArrayMemorySize
 @ stub NdrConformantArrayUnmarshall
-@ stub NdrConformantStringBufferSize
+@ stdcall NdrConformantStringBufferSize(ptr ptr ptr) NdrConformantStringBufferSize
 @ stdcall NdrConformantStringMarshall(ptr ptr ptr) NdrConformantStringMarshall
-@ stub NdrConformantStringMemorySize
-@ stub NdrConformantStringUnmarshall
+@ stdcall NdrConformantStringMemorySize(ptr ptr) NdrConformantStringMemorySize
+@ stdcall NdrConformantStringUnmarshall(ptr ptr ptr long) NdrConformantStringUnmarshall
 @ stub NdrConformantStructBufferSize
 @ stub NdrConformantStructFree
 @ stub NdrConformantStructMarshall
