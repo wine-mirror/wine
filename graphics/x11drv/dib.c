@@ -1482,21 +1482,35 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
                 LPWORD ptr = (LPWORD)srcbits + left;
                 DWORD val;
 
-		/* ==== 555 BGR dib to 24/32 BGR bitmap ==== */
 		if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff)
                 {
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line + left*4);
-                    for (x = 0; x < dstwidth; x++) {
-
+		  if ((rSrc == 0xF800) && (gSrc == 0x07E0) && (bSrc == 0x001F)) {
+		    /* ==== 555 RGB dib to 24/32 RGB bitmap ==== */
+		    for (h = lines - 1; h >= 0; h--) {
+		      dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line + left*4);
+		      for (x = 0; x < dstwidth; x++) {
+                        val = *ptr++;
+			*dstpixel++ = ((val << 8) & 0xF80000) | /* Red */
+			              ((val << 5) & 0x00FC00) | /* Green */
+			              ((val << 3) & 0x0000FF);  /* Blue */
+		      }
+		      ptr = (LPWORD)(srcbits += linebytes) + left;
+		    }
+		  } else {
+		    /* ==== 555 BGR dib to 24/32 BGR bitmap ==== */
+		    for (h = lines - 1; h >= 0; h--) {
+		      dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line + left*4);
+		      for (x = 0; x < dstwidth; x++) {
+			
                         val = *ptr++;
                         *dstpixel++ = ((val << 9) & 0xf80000) | ((val << 4) & 0x070000) | /* Red */
 			  ((val << 6) & 0x00f800) | ((val << 1) & 0x000700) | /* Green */
 			  ((val << 3) & 0x0000f8) | ((val >> 2) & 0x000007);      /* Blue */
-                    }
-                    ptr = (LPWORD)(srcbits += linebytes) + left;
-                }
-	    }
+		      }
+		      ptr = (LPWORD)(srcbits += linebytes) + left;
+		    }
+		  }
+		}
 		/* ==== 555 BGR dib to 24/32 RGB bitmap ==== */
 		else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
                 {
