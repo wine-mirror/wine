@@ -51,6 +51,7 @@ HANDLE dos_handles[DOS_TABLE_SIZE];
 /* info structure for FindFirstFile handle */
 typedef struct
 {
+    DWORD            magic;       /* magic number */
     HANDLE           handle;      /* handle to directory */
     CRITICAL_SECTION cs;          /* crit section protecting this structure */
     UNICODE_STRING   mask;        /* file mask */
@@ -59,6 +60,8 @@ typedef struct
     UINT             data_len;    /* length of dir data */
     BYTE             data[8192];  /* directory data */
 } FIND_FIRST_INFO;
+
+#define FIND_FIRST_MAGIC  0xc0ffee11
 
 static BOOL oem_file_apis;
 
@@ -1489,6 +1492,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     RtlFreeUnicodeString( &nt_name );
 
     RtlInitializeCriticalSection( &info->cs );
+    info->magic    = FIND_FIRST_MAGIC;
     info->data_pos = 0;
     info->data_len = 0;
 
@@ -1518,13 +1522,18 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     BOOL ret = FALSE;
 
     TRACE("%p %p\n", handle, data);
-    
-    if (handle == INVALID_HANDLE_VALUE)
+
+    if (!handle || handle == INVALID_HANDLE_VALUE)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return ret;
     }
     info = (FIND_FIRST_INFO *)handle;
+    if (info->magic != FIND_FIRST_MAGIC)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return ret;
+    }
 
     RtlEnterCriticalSection( &info->cs );
 
@@ -1591,17 +1600,31 @@ BOOL WINAPI FindClose( HANDLE handle )
 {
     FIND_FIRST_INFO *info = (FIND_FIRST_INFO *)handle;
 
-    if (!handle || handle == INVALID_HANDLE_VALUE) goto error;
+    if (!handle || handle == INVALID_HANDLE_VALUE)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
 
     __TRY
     {
-        RtlEnterCriticalSection( &info->cs );
-        if (info->handle) CloseHandle( info->handle );
-        info->handle = 0;
-        RtlFreeUnicodeString( &info->mask );
-        info->mask.Buffer = NULL;
-        info->data_pos = 0;
-        info->data_len = 0;
+        if (info->magic == FIND_FIRST_MAGIC)
+        {
+            RtlEnterCriticalSection( &info->cs );
+            if (info->magic == FIND_FIRST_MAGIC)  /* in case someone else freed it in the meantime */
+            {
+                info->magic = 0;
+                if (info->handle) CloseHandle( info->handle );
+                info->handle = 0;
+                RtlFreeUnicodeString( &info->mask );
+                info->mask.Buffer = NULL;
+                info->data_pos = 0;
+                info->data_len = 0;
+                RtlLeaveCriticalSection( &info->cs );
+                RtlDeleteCriticalSection( &info->cs );
+                HeapFree( GetProcessHeap(), 0, info );
+            }
+        }
     }
     __EXCEPT(page_fault)
     {
@@ -1611,14 +1634,7 @@ BOOL WINAPI FindClose( HANDLE handle )
     }
     __ENDTRY
 
-    RtlLeaveCriticalSection( &info->cs );
-    RtlDeleteCriticalSection( &info->cs );
-    HeapFree(GetProcessHeap(), 0, info);
     return TRUE;
-
- error:
-    SetLastError( ERROR_INVALID_HANDLE );
-    return FALSE;
 }
 
 
