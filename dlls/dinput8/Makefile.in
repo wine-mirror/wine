@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = dinput8.dll
+IMPORTS   = dinput
+EXTRALIBS = $(LIBUUID)
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	dinput8_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
+

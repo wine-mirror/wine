@@ -2,6 +2,7 @@
  *
  * Copyright 1998 Marcus Meissner
  * Copyright 1998,1999 Lionel Ulmer
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,12 +57,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_JOYSTICK_BUTTON_BASE 8
 
 typedef struct JoystickAImpl JoystickAImpl;
-static ICOM_VTABLE(IDirectInputDevice2A) JoystickAvt;
-static ICOM_VTABLE(IDirectInputDevice7A) Joystick7Avt;
+static ICOM_VTABLE(IDirectInputDevice8A) JoystickAvt;
 struct JoystickAImpl
 {
-        /* IDirectInputDevice2AImpl */
-        ICOM_VFIELD(IDirectInputDevice2A);
+        LPVOID                          lpVtbl;
         DWORD                           ref;
         GUID                            guid;
 
@@ -87,10 +86,15 @@ static GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf
 
 static BOOL joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
 {
+  int fd = -1;
+
+  if (dwFlags & DIEDFL_FORCEFEEDBACK)
+    return FALSE;
+
   if ((dwDevType==0) || (GET_DIDEVICE_TYPE(dwDevType)==DIDEVTYPE_JOYSTICK)) {
     /* check whether we have a joystick */
-    if ((access(JOYDEV,O_RDONLY) != -1) || (errno!=ENODEV && errno!=ENOENT)) {
-      TRACE("Enumerating the Joystick device\n");
+    if ((fd = open(JOYDEV,O_RDONLY) != -1) || (errno!=ENODEV && errno!=ENOENT)) {
+      TRACE("Enumerating the linux Joystick device\n");
 
       /* Return joystick */
       lpddi->guidInstance	= GUID_Joystick;
@@ -102,6 +106,9 @@ static BOOL joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANC
       /* ioctl JSIOCGNAME(len) */
       strcpy(lpddi->tszProductName,	"Wine Joystick");
 
+      lpddi->guidFFDriver = GUID_NULL;
+      if (fd != -1)
+	close(fd);
       return TRUE;
     }
   }
@@ -109,14 +116,14 @@ static BOOL joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANC
   return FALSE;
 }
 
-static JoystickAImpl *alloc_device(REFGUID rguid, ICOM_VTABLE(IDirectInputDevice2A) *jvt, IDirectInputAImpl *dinput)
+static JoystickAImpl *alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputAImpl *dinput)
 {
   JoystickAImpl* newDevice;
 
   newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickAImpl));
-  newDevice->ref		= 1;
-  ICOM_VTBL(newDevice)    = jvt;
-  newDevice->joyfd	= -1;
+  newDevice->lpVtbl = jvt;
+  newDevice->ref = 1;
+  newDevice->joyfd = -1;
   newDevice->lMin = -32768;
   newDevice->lMax = +32767;
   newDevice->dinput = dinput;
@@ -129,15 +136,14 @@ static HRESULT joydev_create_device(IDirectInputAImpl *dinput, REFGUID rguid, RE
 {
   if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
       (IsEqualGUID(&DInput_Wine_Joystick_GUID,rguid))) {
-    if ((riid == NULL) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid))) {
+    if ((riid == NULL) ||
+	IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
+	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
+	IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
+	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
       *pdev=(IDirectInputDeviceA*) alloc_device(rguid, &JoystickAvt, dinput);
 
       TRACE("Creating a Joystick device (%p)\n", *pdev);
-      return DI_OK;
-    } else if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
-      *pdev=(IDirectInputDeviceA*) alloc_device(rguid, (ICOM_VTABLE(IDirectInputDevice2A) *) &Joystick7Avt, dinput);
-
-      TRACE("Creating a Joystick DInput7A device (%p)\n", *pdev);
       return DI_OK;
     } else
       return DIERR_NOINTERFACE;
@@ -157,7 +163,7 @@ DECL_GLOBAL_CONSTRUCTOR(joydev_register) { dinput_register_device(&joydev); }
 /******************************************************************************
  *	Joystick
  */
-static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
+static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
 	ICOM_THIS(JoystickAImpl,iface);
 
@@ -181,7 +187,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
   *   the device driver sends back with GetDeviceState.
   */
 static HRESULT WINAPI JoystickAImpl_SetDataFormat(
-	LPDIRECTINPUTDEVICE2A iface,LPCDIDATAFORMAT df
+	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df
 )
 {
   ICOM_THIS(JoystickAImpl,iface);
@@ -214,7 +220,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 /******************************************************************************
   *     Acquire : gets exclusive control of the joystick
   */
-static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
+static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     ICOM_THIS(JoystickAImpl,iface);
 
@@ -230,7 +236,7 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 /******************************************************************************
   *     Unacquire : frees the joystick
   */
-static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
+static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
     ICOM_THIS(JoystickAImpl,iface);
 
@@ -292,7 +298,7 @@ static void joy_polldev(JoystickAImpl *This) {
   *
   */
 static HRESULT WINAPI JoystickAImpl_GetDeviceState(
-	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
+	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 ) {
     ICOM_THIS(JoystickAImpl,iface);
 
@@ -310,7 +316,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 /******************************************************************************
   *     GetDeviceData : gets buffered input data.
   */
-static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
+static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 					      DWORD dodsize,
 					      LPDIDEVICEOBJECTDATA dod,
 					      LPDWORD entries,
@@ -333,7 +339,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 /******************************************************************************
   *     SetProperty : change input device properties
   */
-static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
+static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 					    REFGUID rguid,
 					    LPCDIPROPHEADER ph)
 {
@@ -377,7 +383,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
   *     SetEventNotification : specifies event to be sent on state change
   */
 static HRESULT WINAPI JoystickAImpl_SetEventNotification(
-	LPDIRECTINPUTDEVICE2A iface, HANDLE hnd
+	LPDIRECTINPUTDEVICE8A iface, HANDLE hnd
 ) {
     ICOM_THIS(JoystickAImpl,iface);
 
@@ -387,7 +393,7 @@ static HRESULT WINAPI JoystickAImpl_SetEventNotification(
 }
 
 static HRESULT WINAPI JoystickAImpl_GetCapabilities(
-	LPDIRECTINPUTDEVICE2A iface,
+	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
     ICOM_THIS(JoystickAImpl,iface);
@@ -413,7 +419,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     	close(xfd);
     return DI_OK;
 }
-static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE2A iface) {
+static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface) {
     ICOM_THIS(JoystickAImpl,iface);
     TRACE("(),stub!\n");
 
@@ -425,7 +431,7 @@ static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE2A iface) {
   *     EnumObjects : enumerate the different buttons and axis...
   */
 static HRESULT WINAPI JoystickAImpl_EnumObjects(
-	LPDIRECTINPUTDEVICE2A iface,
+	LPDIRECTINPUTDEVICE8A iface,
 	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
 	LPVOID lpvRef,
 	DWORD dwFlags)
@@ -509,7 +515,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 /******************************************************************************
   *     GetProperty : get input device properties
   */
-static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE2A iface,
+static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 						REFGUID rguid,
 						LPDIPROPHEADER pdiph)
 {
@@ -554,7 +560,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE2A iface,
   return DI_OK;
 }
 
-static ICOM_VTABLE(IDirectInputDevice2A) JoystickAvt =
+static ICOM_VTABLE(IDirectInputDevice8A) JoystickAvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -584,48 +590,11 @@ static ICOM_VTABLE(IDirectInputDevice2A) JoystickAvt =
 	IDirectInputDevice2AImpl_Escape,
 	JoystickAImpl_Poll,
 	IDirectInputDevice2AImpl_SendDeviceData,
-};
-
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(Joystick7Avt.fun))
-#else
-# define XCAST(fun)	(void*)
-#endif
-
-static ICOM_VTABLE(IDirectInputDevice7A) Joystick7Avt =
-{
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	XCAST(QueryInterface)IDirectInputDevice2AImpl_QueryInterface,
-	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
-	XCAST(Release)JoystickAImpl_Release,
-	XCAST(GetCapabilities)JoystickAImpl_GetCapabilities,
-	XCAST(EnumObjects)JoystickAImpl_EnumObjects,
-	XCAST(GetProperty)JoystickAImpl_GetProperty,
-	XCAST(SetProperty)JoystickAImpl_SetProperty,
-	XCAST(Acquire)JoystickAImpl_Acquire,
-	XCAST(Unacquire)JoystickAImpl_Unacquire,
-	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
-	XCAST(GetDeviceData)JoystickAImpl_GetDeviceData,
-	XCAST(SetDataFormat)JoystickAImpl_SetDataFormat,
-	XCAST(SetEventNotification)JoystickAImpl_SetEventNotification,
-	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
-	XCAST(GetObjectInfo)IDirectInputDevice2AImpl_GetObjectInfo,
-	XCAST(GetDeviceInfo)IDirectInputDevice2AImpl_GetDeviceInfo,
-	XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
-	XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
-	XCAST(CreateEffect)IDirectInputDevice2AImpl_CreateEffect,
-	XCAST(EnumEffects)IDirectInputDevice2AImpl_EnumEffects,
-	XCAST(GetEffectInfo)IDirectInputDevice2AImpl_GetEffectInfo,
-	XCAST(GetForceFeedbackState)IDirectInputDevice2AImpl_GetForceFeedbackState,
-	XCAST(SendForceFeedbackCommand)IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-	XCAST(EnumCreatedEffectObjects)IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
-	XCAST(Escape)IDirectInputDevice2AImpl_Escape,
-	XCAST(Poll)JoystickAImpl_Poll,
-	XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
 	IDirectInputDevice7AImpl_EnumEffectsInFile,
-	IDirectInputDevice7AImpl_WriteEffectToFile
+	IDirectInputDevice7AImpl_WriteEffectToFile,
+	IDirectInputDevice8AImpl_BuildActionMap,
+	IDirectInputDevice8AImpl_SetActionMap,
+	IDirectInputDevice8AImpl_GetImageInfo
 };
-
-#undef XCAST
 
 #endif  /* HAVE_LINUX_22_JOYSTICK_API */

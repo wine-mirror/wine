@@ -26,6 +26,7 @@ BASEDIRS = \
 	dciman32 \
 	devenum \
 	dinput \
+	dinput8 \
 	dplay \
 	dplayx \
 	dsound \
@@ -134,6 +135,7 @@ all: \
 	ddeml.dll$(DLLEXT) \
 	devenum.dll$(DLLEXT) \
 	dinput.dll$(DLLEXT) \
+	dinput8.dll$(DLLEXT) \
 	dispdib.dll$(DLLEXT) \
 	display.dll$(DLLEXT) \
 	dplay.dll$(DLLEXT) \
@@ -288,6 +290,9 @@ devenum.dll$(DLLEXT): devenum/devenum.dll$(DLLEXT)
 
 dinput.dll$(DLLEXT): dinput/dinput.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dinput/dinput.dll$(DLLEXT) $@
+
+dinput8.dll$(DLLEXT): dinput8/dinput8.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dinput8/dinput8.dll$(DLLEXT) $@
 
 dplay.dll$(DLLEXT): dplay/dplay.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dplay/dplay.dll$(DLLEXT) $@
@@ -546,6 +551,7 @@ dciman32/dciman32.dll$(DLLEXT): dciman32
 ddraw/ddraw.dll$(DLLEXT): ddraw
 devenum/devenum.dll$(DLLEXT): devenum
 dinput/dinput.dll$(DLLEXT): dinput
+dinput8/dinput8.dll$(DLLEXT): dinput8
 dplay/dplay.dll$(DLLEXT): dplay
 dplayx/dplayx.dll$(DLLEXT): dplayx
 dsound/dsound.dll$(DLLEXT): dsound
@@ -642,6 +648,7 @@ dciman32: kernel32.dll$(DLLEXT)
 ddraw:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) libuser32.dll.$(LIBEXT) \
           libgdi32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT)
 devenum:  kernel32.dll$(DLLEXT)
+dinput8:  dinput.dll$(DLLEXT)
 dinput:   user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 dplay:    dplayx.dll$(DLLEXT)
 dplayx:   winmm.dll$(DLLEXT) ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \

@@ -26,11 +26,11 @@
 typedef struct IDirectInputAImpl IDirectInputAImpl;
 struct IDirectInputAImpl
 {
-        ICOM_VFIELD(IDirectInputA);
-        DWORD                   ref;
+   LPVOID lpVtbl;
+   DWORD  ref;
 
-	/* Used to have an unique sequence number for all the events */
-	DWORD evsequence;
+   /* Used to have an unique sequence number for all the events */
+   DWORD evsequence;
 };
 
 /* Function called by all devices that Wine supports */

@@ -1247,6 +1247,7 @@ dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/devenum/Makefile
 dlls/dinput/Makefile
+dlls/dinput8/Makefile
 dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile

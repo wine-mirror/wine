@@ -2,6 +2,7 @@
  *
  * Copyright 1998 Marcus Meissner
  * Copyright 1998,1999 Lionel Ulmer
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,14 +36,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt;
-static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt;
+static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt;
 
 typedef struct SysKeyboardAImpl SysKeyboardAImpl;
 struct SysKeyboardAImpl
 {
-        /* IDirectInputDevice2AImpl */
-        ICOM_VFIELD(IDirectInputDevice2A);
+        LPVOID                          lpVtbl;
         DWORD                           ref;
         GUID                            guid;
 
@@ -151,12 +150,12 @@ static BOOL keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEIN
   return FALSE;
 }
 
-static SysKeyboardAImpl *alloc_device(REFGUID rguid, ICOM_VTABLE(IDirectInputDevice2A) *kvt, IDirectInputAImpl *dinput)
+static SysKeyboardAImpl *alloc_device(REFGUID rguid, LPVOID kvt, IDirectInputAImpl *dinput)
 {
     SysKeyboardAImpl* newDevice;
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardAImpl));
+    newDevice->lpVtbl = kvt;
     newDevice->ref = 1;
-    ICOM_VTBL(newDevice) = kvt;
     memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
     newDevice->dinput = dinput;
 
@@ -168,15 +167,13 @@ static HRESULT keyboarddev_create_device(IDirectInputAImpl *dinput, REFGUID rgui
 {
   if ((IsEqualGUID(&GUID_SysKeyboard,rguid)) ||          /* Generic Keyboard */
       (IsEqualGUID(&DInput_Wine_Keyboard_GUID,rguid))) { /* Wine Keyboard */
-    if ((riid == NULL) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid))) {
+    if ((riid == NULL) ||
+	IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
+	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
+	IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
+	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
       *pdev=(IDirectInputDeviceA*) alloc_device(rguid, &SysKeyboardAvt, dinput);
-
       TRACE("Creating a Keyboard device (%p)\n", *pdev);
-      return DI_OK;
-    } else if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
-      *pdev=(IDirectInputDeviceA*) alloc_device(rguid, (ICOM_VTABLE(IDirectInputDevice2A) *) &SysKeyboard7Avt, dinput);
-
-      TRACE("Creating a Keyboard DInput7A device (%p)\n", *pdev);
       return DI_OK;
     } else
       return DIERR_NOINTERFACE;
@@ -194,7 +191,7 @@ static dinput_device keyboarddev = {
 DECL_GLOBAL_CONSTRUCTOR(keyboarddev_register) { dinput_register_device(&keyboarddev); }
 
 static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
-	LPDIRECTINPUTDEVICE2A iface,REFGUID rguid,LPCDIPROPHEADER ph
+	LPDIRECTINPUTDEVICE8A iface,REFGUID rguid,LPCDIPROPHEADER ph
 )
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
@@ -225,7 +222,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
-	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
+	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 )
 {
     /* Note: device does not need to be acquired */
@@ -237,7 +234,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
-	LPDIRECTINPUTDEVICE2A iface,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
+	LPDIRECTINPUTDEVICE8A iface,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
 	LPDWORD entries,DWORD flags
 )
 {
@@ -289,9 +286,9 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
         return ret;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface);
+static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface);
 
-static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
+static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
 
@@ -325,7 +322,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 	return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
+static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
 	TRACE("(this=%p)\n",This);
@@ -350,8 +347,8 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 	return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2A iface,
-							 HANDLE hnd) {
+static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE8A iface,
+							    HANDLE hnd) {
   ICOM_THIS(SysKeyboardAImpl,iface);
 
   TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
@@ -364,7 +361,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2
   *     GetCapabilities : get the device capablitites
   */
 static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
-	LPDIRECTINPUTDEVICE2A iface,
+	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
   ICOM_THIS(SysKeyboardAImpl,iface);
@@ -390,7 +387,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
   return DI_OK;
 }
 
-static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
+static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -419,47 +416,10 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
 	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
 	IDirectInputDevice2AImpl_Escape,
 	IDirectInputDevice2AImpl_Poll,
-	IDirectInputDevice2AImpl_SendDeviceData
+        IDirectInputDevice2AImpl_SendDeviceData,
+        IDirectInputDevice7AImpl_EnumEffectsInFile,
+        IDirectInputDevice7AImpl_WriteEffectToFile,
+        IDirectInputDevice8AImpl_BuildActionMap,
+        IDirectInputDevice8AImpl_SetActionMap,
+        IDirectInputDevice8AImpl_GetImageInfo
 };
-
-#if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(SysKeyboard7Avt.fun))
-#else
-# define XCAST(fun)	(void*)
-#endif
-
-static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt =
-{
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	XCAST(QueryInterface)IDirectInputDevice2AImpl_QueryInterface,
-	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
-	XCAST(Release)IDirectInputDevice2AImpl_Release,
-	XCAST(GetCapabilities)SysKeyboardAImpl_GetCapabilities,
-	XCAST(EnumObjects)IDirectInputDevice2AImpl_EnumObjects,
-	XCAST(GetProperty)IDirectInputDevice2AImpl_GetProperty,
-	XCAST(SetProperty)SysKeyboardAImpl_SetProperty,
-	XCAST(Acquire)SysKeyboardAImpl_Acquire,
-	XCAST(Unacquire)SysKeyboardAImpl_Unacquire,
-	XCAST(GetDeviceState)SysKeyboardAImpl_GetDeviceState,
-	XCAST(GetDeviceData)SysKeyboardAImpl_GetDeviceData,
-	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
-	XCAST(SetEventNotification)SysKeyboardAImpl_SetEventNotification,
-	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
-	XCAST(GetObjectInfo)IDirectInputDevice2AImpl_GetObjectInfo,
-	XCAST(GetDeviceInfo)IDirectInputDevice2AImpl_GetDeviceInfo,
-	XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
-	XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
-	XCAST(CreateEffect)IDirectInputDevice2AImpl_CreateEffect,
-	XCAST(EnumEffects)IDirectInputDevice2AImpl_EnumEffects,
-	XCAST(GetEffectInfo)IDirectInputDevice2AImpl_GetEffectInfo,
-	XCAST(GetForceFeedbackState)IDirectInputDevice2AImpl_GetForceFeedbackState,
-	XCAST(SendForceFeedbackCommand)IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-	XCAST(EnumCreatedEffectObjects)IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
-	XCAST(Escape)IDirectInputDevice2AImpl_Escape,
-	XCAST(Poll)IDirectInputDevice2AImpl_Poll,
-	XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
-	IDirectInputDevice7AImpl_EnumEffectsInFile,
-	IDirectInputDevice7AImpl_WriteEffectToFile
-};
-
-#undef XCAST
