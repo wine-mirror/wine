@@ -245,7 +245,7 @@ void test_storage_stream(void)
     r = IStorage_CreateStream(stg, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error\n");
     r = IStorage_CreateStream(stg, longname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
-    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error\n");
+    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error, got %ld GetLastError()=%ld\n", r, GetLastError());
     r = IStorage_CreateStream(stg, stmname, STGM_READWRITE, 0, 0, &stm );
     ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
     r = IStorage_CreateStream(stg, stmname, STGM_READ, 0, 0, &stm );
