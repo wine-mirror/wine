@@ -77,8 +77,6 @@ struct ne_segment_table_entry_s
 
 #define hFirstModule (pThhook->hExeHead)
 
-static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
-
 typedef struct
 {
     void       *module_start;      /* 32-bit address of the module data */
@@ -563,15 +561,24 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
 HANDLE NE_OpenFile( NE_MODULE *pModule )
 {
     HANDLE handle;
-    char *name;
+    char *name = NE_MODULE_NAME( pModule );
 
     TRACE("(%p)\n", pModule );
-    /* mjm - removed module caching because it keeps open file handles
-             thus preventing CDROMs from being ejected */
-    name = NE_MODULE_NAME( pModule );
-    if ((handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
-                                   NULL, OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
-        MESSAGE( "Can't open file '%s' for module %04x\n", name, pModule->self );
+
+    if (pModule->fd)
+    {
+        if (!DuplicateHandle( GetCurrentProcess(), pModule->fd,
+                              GetCurrentProcess(), &handle, 0, FALSE,
+                              DUPLICATE_SAME_ACCESS )) handle = INVALID_HANDLE_VALUE;
+    }
+    else
+    {
+        handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
+                              NULL, OPEN_EXISTING, 0, 0 );
+    }
+    if (handle == INVALID_HANDLE_VALUE)
+        ERR( "Can't open file '%s' for module %04x\n", name, pModule->self );
+
     TRACE("opened '%s' -> %p\n", name, handle);
     return handle;
 }
@@ -1027,17 +1034,29 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
     HINSTANCE16 hInstance;
     HFILE16 hFile;
     OFSTRUCT ofs;
+    UINT drive_type;
 
     /* Open file */
-    if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
+    if ((hFile = OpenFile16( name, &ofs, OF_READ|OF_SHARE_DENY_WRITE )) == HFILE_ERROR16)
         return (HMODULE16)2;  /* File not found */
 
     hModule = NE_LoadExeHeader( DosFileHandleToWin32Handle(hFile), ofs.szPathName );
-    _lclose16( hFile );
-    if (hModule < 32) return hModule;
-
+    if (hModule < 32)
+    {
+        _lclose16( hFile );
+        return hModule;
+    }
     pModule = NE_GetPtr( hModule );
-    if ( !pModule ) return hModule;
+
+    drive_type = GetDriveTypeA( ofs.szPathName );
+    if (drive_type != DRIVE_REMOVABLE && drive_type != DRIVE_CDROM)
+    {
+        /* keep the file handle open if not on a removable media */
+        DuplicateHandle( GetCurrentProcess(), DosFileHandleToWin32Handle(hFile),
+                         GetCurrentProcess(), &pModule->fd, 0, FALSE,
+                         DUPLICATE_SAME_ACCESS );
+    }
+    _lclose16( hFile );
 
     if ( !lib_only && !( pModule->flags & NE_FFLAGS_LIBMODULE ) )
         return hModule;
@@ -1521,6 +1540,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     /* Clear magic number just in case */
 
     pModule->magic = pModule->self = 0;
+    if (pModule->fd) CloseHandle( pModule->fd );
 
       /* Remove it from the linked list */
 
@@ -1542,10 +1562,6 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     /* Free the module storage */
 
     GlobalFreeAll16( hModule );
-
-    /* Remove module from cache */
-
-    if (pCachedModule == pModule) pCachedModule = NULL;
     return TRUE;
 }
 
@@ -2078,6 +2094,21 @@ HINSTANCE16 WINAPI PrivateLoadLibrary(LPCSTR libname)
 void WINAPI PrivateFreeLibrary(HINSTANCE16 handle)
 {
     FreeLibrary16(handle);
+}
+
+/***********************************************************************
+ *           LoadLibrary32        (KERNEL.452)
+ *           LoadSystemLibrary32  (KERNEL.482)
+ */
+HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
+{
+    HMODULE hModule;
+    DWORD count;
+
+    ReleaseThunkLock( &count );
+    hModule = LoadLibraryA( libname );
+    RestoreThunkLock( count );
+    return hModule;
 }
 
 /***************************************************************************

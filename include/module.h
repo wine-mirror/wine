@@ -69,6 +69,7 @@ typedef struct _NE_MODULE
     HMODULE16  self;          /* 44 Handle for this module */
     WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
     LPVOID  hRsrcMap;         /* HRSRC 16->32 map (for 32-bit modules) */
+    HANDLE  fd;               /* handle to the binary file */
 } NE_MODULE;
 
 

@@ -618,21 +618,6 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 }
 
 /***********************************************************************
- *           LoadLibrary32        (KERNEL.452)
- *           LoadSystemLibrary32  (KERNEL.482)
- */
-HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
-{
-    HMODULE hModule;
-    DWORD count;
-
-    ReleaseThunkLock( &count );
-    hModule = LoadLibraryA( libname );
-    RestoreThunkLock( count );
-    return hModule;
-}
-
-/***********************************************************************
  *           FreeLibrary   (KERNEL32.@)
  *           FreeLibrary32 (KERNEL.486)
  */

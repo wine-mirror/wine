@@ -1221,30 +1221,13 @@ found:
     WideCharToMultiByte(CP_ACP, 0, full_name.short_name, -1,
                         ofs->szPathName, sizeof(ofs->szPathName), NULL, NULL);
 
-    if (mode & OF_SHARE_EXCLUSIVE)
-      /* Some InstallShield version uses OF_SHARE_EXCLUSIVE
-	 on the file <tempdir>/_ins0432._mp to determine how
-	 far installation has proceeded.
-	 _ins0432._mp is an executable and while running the
-	 application expects the open with OF_SHARE_ to fail*/
-      /* Probable FIXME:
-	 As our loader closes the files after loading the executable,
-	 we can't find the running executable with FILE_InUse.
-	 The loader should keep the file open, as Windows does that, too.
-       */
-      {
-	char *last = strrchr(full_name.long_name,'/');
-	if (!last)
-	  last = full_name.long_name - 1;
-	if (GetModuleHandle16(last+1))
-	  {
-	    TRACE("Denying shared open for %s\n",full_name.long_name);
-	    return HFILE_ERROR;
-	  }
-      }
-
     if (mode & OF_DELETE)
     {
+        handle = FILE_CreateFile( full_name.long_name, GENERIC_READ|GENERIC_WRITE, 0,
+                                 NULL, OPEN_EXISTING, 0, 0, TRUE,
+                                 GetDriveTypeW( full_name.short_name ) );
+        if (!handle) goto error;
+        CloseHandle( handle );
         if (unlink( full_name.long_name ) == -1) goto not_found;
         TRACE("(%s): OF_DELETE return = OK\n", name);
         return 1;
