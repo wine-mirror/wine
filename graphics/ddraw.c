@@ -2020,7 +2020,7 @@ static HRESULT WINAPI IDirectDrawPaletteImpl_GetEntries(
 	      This,x,start,count,palent);
 
 	/* No palette created and not in depth-convertion mode -> BUG ! */
-	if ((This->cm == NULL) &&
+	if ((This->cm == None) &&
 	    (This->ddraw->d.palette_convert == NULL))
 	{
 		FIXME(ddraw,"app tried to read colormap for non-palettized mode\n");
