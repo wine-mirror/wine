@@ -27,6 +27,10 @@
 #include "stddebug.h"
 #include "debug.h"
 
+/* needed only  for GDI_HeapSel and USER_HeapSel */
+#include "gdi.h"
+#include "user.h"
+
 typedef struct
 {
 /* Arena header */
@@ -327,7 +331,7 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
         if (LOCAL_GetHeap(selector))
         {
             fprintf( stderr, "LocalInit: Heap %04x initialized twice.\n", selector);
-            if (debugging_local) LOCAL_PrintHeap(selector);
+            LOCAL_PrintHeap(selector);
         }
     }
 
@@ -781,7 +785,7 @@ static HLOCAL16 LOCAL_FindFreeBlock( HANDLE16 ds, WORD size )
         if (pArena->size >= size) return arena;
     }
     dprintf_local( stddeb, "Local_FindFreeBlock: not enough space\n" );
-    if (debugging_local) LOCAL_PrintHeap(ds);
+    LOCAL_PrintHeap(ds);
     return 0;
 }
 
@@ -822,8 +826,19 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
 	arena = LOCAL_FindFreeBlock( ds, size );
     }
     if (arena == 0) {
-	fprintf( stderr, "Local_GetBlock: not enough space in heap %04x for %d bytes\n",
-                 ds, size );
+        if (ds == GDI_HeapSel) { 
+	    fprintf( stderr, 
+	       "Local_GetBlock: not enough space in GDI local heap (%04x) for %d bytes\n",
+		     ds, size );
+	} else if (ds == USER_HeapSel) {
+	    fprintf( stderr, 
+	       "Local_GetBlock: not enough space in USER local heap (%04x) for %d bytes\n",
+		     ds, size );
+	} else {
+	    dprintf_local( stddeb, 
+	       "Local_GetBlock: not enough space in local heap %04x for %d bytes\n",
+		     ds, size );
+	}
 	return 0;
     }
 

@@ -28,7 +28,7 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 
 	/* FIXME: better values for the two entries below... */
 	cachedsi.lpMinimumApplicationAddress	= (void *)0x40000000;
-	cachedsi.lpMaximumApplicationAddress	= (void *)0x80000000;
+	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFFFFFF;
 	cachedsi.dwActiveProcessorMask		= 1;
 	cachedsi.dwNumberOfProcessors		= 1;
 	cachedsi.dwProcessorType		= PROCESSOR_INTEL_386;

@@ -2,7 +2,7 @@
  * USER DCE functions
  *
  * Copyright 1993 Alexandre Julliard
- *	     1996 Alex Korobka
+ *	     1996,1997 Alex Korobka
  *
  *
  * Note: Visible regions of CS_OWNDC/CS_CLASSDC window DCs 
@@ -10,15 +10,18 @@
  * 
  * Internal DCX flags:
  *
- * DCX_DCEBUSY     - dce structure is in use
- * DCX_KEEPCLIPRGN - do not delete clipping region in ReleaseDC
+ * DCX_DCEEMPTY    - dce is uninitialized
+ * DCX_DCEBUSY     - dce is in use
+ * DCX_KEEPCLIPRGN - ReleaseDC should preserve the clipping region
  * DCX_WINDOWPAINT - BeginPaint specific flag
  */
 
+#include "options.h"
 #include "dce.h"
 #include "class.h"
 #include "win.h"
 #include "gdi.h"
+#include "region.h"
 #include "heap.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
@@ -30,9 +33,30 @@
 static DCE *firstDCE = 0;
 static HDC32 defaultDCstate = 0;
 
+static void DCE_DeleteClipRgn( DCE* );
+static INT32 DCE_ReleaseDC( DCE* );
+
+
+/***********************************************************************
+ *           DCE_DumpCache
+ */
+static void DCE_DumpCache()
+{
+    DCE* dce = firstDCE;
+    
+    printf("DCE:\n");
+    while( dce )
+    {
+	printf("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
+	(unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags, (dce->DCXflags & DCX_CACHE) ?
+	"Cache" : "Owned", (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
+	dce = dce->next;
+    }
+}
+
 /***********************************************************************
  *           DCE_AllocDCE
-*
+ *
  * Allocate a new DCE.
  */
 DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type )
@@ -54,19 +78,19 @@ DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type )
     dce->next        = firstDCE;
     firstDCE = dce;
 
-    if( type != DCE_CACHE_DC )
-      {
+    if( type != DCE_CACHE_DC ) /* owned or class DC */
+    {
 	dce->DCXflags = DCX_DCEBUSY;
 	if( hWnd )
-	  {
+	{
 	    WND* wnd = WIN_FindWndPtr(hWnd);
 	
 	    if( wnd->dwStyle & WS_CLIPCHILDREN ) dce->DCXflags |= DCX_CLIPCHILDREN;
 	    if( wnd->dwStyle & WS_CLIPSIBLINGS ) dce->DCXflags |= DCX_CLIPSIBLINGS;
-	  }
+	}
 	SetHookFlags(dce->hDC,DCHF_INVALIDATEVISRGN);
-      }
-    else dce->DCXflags = DCX_CACHE;
+    }
+    else dce->DCXflags = DCX_CACHE | DCX_DCEEMPTY;
 
     return dce;
 }
@@ -75,11 +99,11 @@ DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type )
 /***********************************************************************
  *           DCE_FreeDCE
  */
-void DCE_FreeDCE( DCE *dce )
+DCE* DCE_FreeDCE( DCE *dce )
 {
     DCE **ppDCE = &firstDCE;
 
-    if (!dce) return;
+    if (!dce) return NULL;
     while (*ppDCE && (*ppDCE != dce)) ppDCE = &(*ppDCE)->next;
     if (*ppDCE == dce) *ppDCE = dce->next;
 
@@ -89,81 +113,176 @@ void DCE_FreeDCE( DCE *dce )
     if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
 	DeleteObject32(dce->hClipRgn);
     HeapFree( SystemHeap, 0, dce );
+    return *ppDCE;
+}
+
+/***********************************************************************
+ *           DCE_FreeWindowDCE
+ *
+ * Remove owned DCE and reset unreleased cache DCEs.
+ */
+void DCE_FreeWindowDCE( WND* pWnd )
+{
+    DCE *pDCE = firstDCE;
+
+    while( pDCE )
+    {
+	if( pDCE->hwndCurrent == pWnd->hwndSelf )
+	{
+	    if( pDCE == pWnd->dce ) /* owned DCE */
+	    {
+		pDCE = DCE_FreeDCE( pDCE );
+		pWnd->dce = NULL;
+		continue;
+	    }
+	    else
+	    {
+		if(!(pDCE->DCXflags & DCX_CACHE) ) /* class DCE */
+		{
+		    if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )
+			DCE_DeleteClipRgn( pDCE );
+		}
+		else if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
+		{
+		    fprintf(stderr,"[%04x] GetDC() without ReleaseDC()!\n", pWnd->hwndSelf);
+		    DCE_ReleaseDC( pDCE );
+		}
+
+		pDCE->DCXflags &= DCX_CACHE;
+		pDCE->DCXflags |= DCX_DCEEMPTY;
+		pDCE->hwndCurrent = 0;
+	    }
+	}
+	pDCE = pDCE->next;
+    }
 }
 
 
-/**********************************************************************
- *          WindowFromDC16   (USER32.580)
+/***********************************************************************
+ *   DCE_DeleteClipRgn
  */
-HWND16 WINAPI WindowFromDC16( HDC16 hDC )
+static void DCE_DeleteClipRgn( DCE* dce )
 {
-    return (HWND16)WindowFromDC32( hDC );
+    dce->DCXflags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN | DCX_WINDOWPAINT);
+
+    if( dce->DCXflags & DCX_KEEPCLIPRGN )
+	dce->DCXflags &= ~DCX_KEEPCLIPRGN;
+    else
+	if( dce->hClipRgn > 1 )
+	    DeleteObject32( dce->hClipRgn );
+
+    dce->hClipRgn = 0;
+    RestoreVisRgn(dce->hDC);
 }
 
 
-/**********************************************************************
- *          WindowFromDC32   (USER32.580)
+/***********************************************************************
+ *   DCE_ReleaseDC
  */
-HWND32 WINAPI WindowFromDC32( HDC32 hDC )
+static INT32 DCE_ReleaseDC( DCE* dce )
 {
-    DCE *dce = firstDCE;
-    while (dce && (dce->hDC != hDC)) dce = dce->next;
-    return dce ? dce->hwndCurrent : 0;
+    if ((dce->DCXflags & (DCX_DCEEMPTY | DCX_DCEBUSY)) != DCX_DCEBUSY) return 0;
+
+    /* restore previous visible region */
+
+    if ((dce->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
+        (dce->DCXflags & (DCX_CACHE | DCX_WINDOWPAINT)) )
+        DCE_DeleteClipRgn( dce );
+
+    if (dce->DCXflags & DCX_CACHE)
+    {
+        SetDCState( dce->hDC, defaultDCstate );
+        dce->DCXflags &= ~DCX_DCEBUSY;	/* but without DCX_DCEEMPTY */
+    }
+    return 1;
 }
 
 
 /***********************************************************************
  *   DCE_InvalidateDCE
  *
- * It is called from SetWindowPos - we have to invalidate all busy
- * DCE's for windows whose client rect intersects with update rectangle 
+ * It is called from SetWindowPos() - we have to mark as dirty all busy
+ * DCE's for windows whose client rect intersects with specified update 
+ * rectangle. wndScope is the immediate parent of the window(s) that 
+ * was(were) moved and(or) resized.
  */
 BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT32* pRectUpdate)
 {
     BOOL32 bRet = FALSE;
-    DCE *dce;
 
- if( !wndScope ) return 0;
+    if( wndScope )
+    {
+	DCE *dce;
 
- dprintf_dc(stddeb,"InvalidateDCE: scope hwnd = %04x, (%i,%i - %i,%i)\n",
-                    wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
+	dprintf_dc(stddeb,"InvalidateDCE: scope hwnd = %04x, (%i,%i - %i,%i)\n",
+                         wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
 				        pRectUpdate->right,pRectUpdate->bottom);
- /* walk all DCE's */
+	if( debugging_dc ) DCE_DumpCache();
 
- for (dce = firstDCE; (dce); dce = dce->next)
-  { 
-    if( dce->DCXflags & DCX_DCEBUSY )
-      {
-        WND * wndCurrent, * wnd; 
+	if( !Options.desktopGeometry && wndScope == WIN_GetDesktop() ) return TRUE;
 
-	wnd = wndCurrent = WIN_FindWndPtr(dce->hwndCurrent);
+ 	/* walk all DCEs and fixup non-empty entries */
 
-	/* desktop is not critical (DC is not owned anyway) */
+	for (dce = firstDCE; (dce); dce = dce->next)
+	{
+	    if( !(dce->DCXflags & DCX_DCEEMPTY) )
+	    {
+		WND* wndCurrent = WIN_FindWndPtr(dce->hwndCurrent);
 
-	if( wnd == WIN_GetDesktop() ) continue; 
+		if( wndCurrent && wndCurrent != WIN_GetDesktop() )
+		{
+		    WND* wnd = wndCurrent;
+		    INT32 xoffset = 0, yoffset = 0;
 
-	/* check if DCE window is within z-order scope */
+		    if( (wndCurrent == wndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN) )
+			continue;
 
-	for( ; wnd ; wnd = wnd->parent )
-	    if( wnd == wndScope )
-	      { 
-	        RECT32 wndRect = wndCurrent->rectWindow;
+		    /* check if DCE window is within the z-order scope */
 
-	        dprintf_dc(stddeb,"\tgot hwnd %04x\n", wndCurrent->hwndSelf);
-  
-	        MapWindowPoints32( wndCurrent->parent->hwndSelf,
-                                   wndScope->hwndSelf,
-                                   (LPPOINT32)&wndRect, 2 );
-	        if (IntersectRect32( &wndRect, &wndRect, pRectUpdate ))
-	        {    
-		   SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
-		   bRet = TRUE;
+		    for( wnd = wndCurrent; wnd; wnd = wnd->parent )
+		    {
+			if( wnd == wndScope )
+		 	{
+			    RECT32 wndRect;
+
+			    wndRect = wndCurrent->rectWindow;
+
+			    OffsetRect32( &wndRect, xoffset - wndCurrent->rectClient.left, 
+						    yoffset - wndCurrent->rectClient.top);
+			    if (IntersectRect32( &wndRect, &wndRect, pRectUpdate ))
+			    { 
+				if( !(dce->DCXflags & DCX_DCEBUSY) )
+				{
+				    /* Don't bother with visible regions of unused DCEs */
+
+				    dprintf_dc(stddeb,"\tpurged %08x dce [%04x]\n", 
+						(unsigned)dce, wndCurrent->hwndSelf);
+
+				    dce->hwndCurrent = 0;
+				    dce->DCXflags &= DCX_CACHE;
+				    dce->DCXflags |= DCX_DCEEMPTY;
+				}
+				else
+				{
+				    /* Set dirty bit in the hDC */
+
+				    dprintf_dc(stddeb,"\tfixed up %08x dce [%04x]\n", 
+						(unsigned)dce, wndCurrent->hwndSelf);
+
+				    SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
+				    bRet = TRUE;
+				}
+			    }
+			    break;
+			}
+			xoffset += wnd->rectClient.left;
+			yoffset += wnd->rectClient.top;
+		    }
 		}
-	        break;
-	      }
-      }
-  }
- return bRet;
+	    }
+	} /* dce list */
+    }
+    return bRet;
 }
 
 /***********************************************************************
@@ -185,87 +304,83 @@ void DCE_Init()
 /***********************************************************************
  *           DCE_GetVisRect
  *
- * Calc the visible rectangle of a window, i.e. the client or
- * window area clipped by the client area of all ancestors.
- * Return FALSE if the visible region is empty.
+ * Calculate the visible rectangle of a window (i.e. the client or
+ * window area clipped by the client area of all ancestors) in the
+ * corresponding coordinates. Return FALSE if the visible region is empty.
  */
 static BOOL32 DCE_GetVisRect( WND *wndPtr, BOOL32 clientArea, RECT32 *lprect )
 {
-    int xoffset, yoffset;
-
     *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
-    xoffset = lprect->left;
-    yoffset = lprect->top;
 
-    if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+    if ((wndPtr->dwStyle & WS_VISIBLE) && !(wndPtr->flags & WIN_NO_REDRAW))
     {
-        SetRectEmpty32( lprect );  /* Clip everything */
-        return FALSE;
+	INT32 xoffset = lprect->left;
+	INT32 yoffset = lprect->top;
+
+	while (wndPtr->parent)
+	{
+	    wndPtr = wndPtr->parent;
+
+	    if ((wndPtr->flags & WIN_NO_REDRAW) ||
+		(wndPtr->dwStyle & (WS_ICONIC | WS_VISIBLE)) != WS_VISIBLE )
+		goto fail;
+
+	    xoffset += wndPtr->rectClient.left;
+	    yoffset += wndPtr->rectClient.top;
+	    OffsetRect32( lprect, wndPtr->rectClient.left,
+				  wndPtr->rectClient.top );
+
+	    if( (wndPtr->rectClient.left >= wndPtr->rectClient.right) ||
+		(wndPtr->rectClient.top >= wndPtr->rectClient.bottom) ||
+		(lprect->left >= wndPtr->rectClient.right) ||
+		(lprect->right <= wndPtr->rectClient.left) ||
+		(lprect->top >= wndPtr->rectClient.bottom) ||
+		(lprect->bottom <= wndPtr->rectClient.top) )
+		goto fail;
+
+	    lprect->left = MAX( lprect->left, wndPtr->rectClient.left );
+	    lprect->right = MIN( lprect->right, wndPtr->rectClient.right );
+	    lprect->top = MAX( lprect->top, wndPtr->rectClient.top );
+	    lprect->bottom = MIN( lprect->bottom, wndPtr->rectClient.bottom );
+	}
+	OffsetRect32( lprect, -xoffset, -yoffset );
+	return TRUE;
     }
 
-    while (wndPtr->parent)
-    {
-        wndPtr = wndPtr->parent;
-        if (!(wndPtr->dwStyle & WS_VISIBLE) ||
-            (wndPtr->flags & WIN_NO_REDRAW) ||
-            (wndPtr->dwStyle & WS_ICONIC))
-        {
-            SetRectEmpty32( lprect );  /* Clip everything */
-            return FALSE;
-        }
-	xoffset += wndPtr->rectClient.left;
-	yoffset += wndPtr->rectClient.top;
-	OffsetRect32( lprect, wndPtr->rectClient.left,
-                      wndPtr->rectClient.top );
-
-	  /* Warning!! we assume that IntersectRect() handles the case */
-	  /* where the destination is the same as one of the sources.  */
-	if (!IntersectRect32( lprect, lprect, &wndPtr->rectClient ))
-            return FALSE;  /* Visible rectangle is empty */
-    }
-    OffsetRect32( lprect, -xoffset, -yoffset );
-    return TRUE;
+fail:
+    SetRectEmpty32( lprect );
+    return FALSE;
 }
 
 
 /***********************************************************************
- *           DCE_ClipWindows
+ *           DCE_AddClipRects
  *
- * Go through the linked list of windows from hwndStart to hwndEnd,
- * removing from the given region the rectangle of each window offset
- * by a given amount.  The new region is returned, and the original one
- * is destroyed.  Used to implement DCX_CLIPSIBLINGS and
- * DCX_CLIPCHILDREN styles. Now it skips managed windows 
- * because we have no idea about decoration size anyway.
+ * Go through the linked list of windows from pWndStart to pWndEnd,
+ * adding to the clip region the intersection of the target rectangle
+ * with an offset window rectangle.
  */
-static HRGN32 DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
-                               HRGN32 hrgn, int xoffset, int yoffset )
+static BOOL32 DCE_AddClipRects( WND *pWndStart, WND *pWndEnd, 
+			        HRGN32 hrgnClip, LPRECT32 lpRect, int x, int y )
 {
-    HRGN32 hrgnNew;
+    RECT32 rect;
 
-    if ( pWndStart == NULL ) return hrgn;
-    if ( (hrgnNew = CreateRectRgn32( 0, 0, 0, 0 )) )
+    if (pWndStart->window) return TRUE; /* X itself will do the clipping */
+
+    for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
     {
-	for (; pWndStart != pWndEnd; pWndStart = pWndStart->next)
-	{
-	    if ( !(pWndStart->dwStyle & WS_VISIBLE) ||
-		 (pWndStart->flags & WIN_MANAGED) ) continue;
+	if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
 	    
-            SetRectRgn32( hrgnNew, pWndStart->rectWindow.left + xoffset,
-				   pWndStart->rectWindow.top + yoffset,
-				   pWndStart->rectWindow.right + xoffset,
-				   pWndStart->rectWindow.bottom + yoffset );
-	    if (!CombineRgn32( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
-        }
-        DeleteObject32( hrgnNew );
-    } else pWndEnd = NULL;
+	rect.left = pWndStart->rectWindow.left + x;
+	rect.top = pWndStart->rectWindow.top + y;
+	rect.right = pWndStart->rectWindow.right + x;
+	rect.bottom = pWndStart->rectWindow.bottom + y;
 
-    if (pWndStart != pWndEnd)  /* something went wrong */
-    {
-        DeleteObject32( hrgn );
-        return 0;
+	if( IntersectRect32( &rect, &rect, lpRect ))
+	    if(!REGION_UnionRectWithRgn( hrgnClip, &rect ))
+		break;
     }
-    return hrgn;
+    return (pWndStart == pWndEnd);
 }
 
 
@@ -278,65 +393,87 @@ static HRGN32 DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
  */
 HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
 {
+    HRGN32 hrgnVis = 0;
     RECT32 rect;
-    HRGN32 hrgn;
-    int xoffset, yoffset;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-      /* Get visible rectangle and create a region with it. 
-       */
+    /* Get visible rectangle and create a region with it. */
 
-    if (!wndPtr || !DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &rect ))
+    if (wndPtr && DCE_GetVisRect(wndPtr, !(flags & DCX_WINDOW), &rect))
     {
-        return CreateRectRgn32( 0, 0, 0, 0 );  /* Visible region is empty */
-    }
-    if (!(hrgn = CreateRectRgnIndirect32( &rect ))) return 0;
-
-      /* Clip all children from the visible region */
-
-    if (flags & DCX_CLIPCHILDREN)
-    {
-        if (flags & DCX_WINDOW)
+	if((hrgnVis = CreateRectRgnIndirect32( &rect )))
         {
-            xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-            yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-        }
-        else xoffset = yoffset = 0;
-        hrgn = DCE_ClipWindows( wndPtr->child, NULL, hrgn, xoffset, yoffset );
-        if (!hrgn) return 0;
-    }
+	    HRGN32 hrgnClip = CreateRectRgn32( 0, 0, 0, 0 );
+	    INT32 xoffset, yoffset;
 
-      /* Clip siblings placed above this window */
+	    if( hrgnClip )
+	    {
+		/* Compute obscured region for the visible rectangle by 
+		 * clipping children, siblings, and ancestors. Note that
+		 * DCE_GetVisRect() returns a rectangle either in client
+		 * or in window coordinates (for DCX_WINDOW request). */
 
-    if (flags & DCX_WINDOW)
-    {
-        xoffset = -wndPtr->rectWindow.left;
-        yoffset = -wndPtr->rectWindow.top;
+		if( (flags & DCX_CLIPCHILDREN) && wndPtr->child )
+		{
+		    if( flags & DCX_WINDOW )
+		    {
+			/* adjust offsets since child window rectangles are 
+			 * in client coordinates */
+
+			xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
+			yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
+		    }
+		    else 
+			xoffset = yoffset = 0;
+
+		    DCE_AddClipRects( wndPtr->child, NULL, hrgnClip, 
+				      &rect, xoffset, yoffset );
+		}
+
+		/* sibling window rectangles are in client 
+		 * coordinates of the parent window */
+
+		if (flags & DCX_WINDOW)
+		{
+		    xoffset = -wndPtr->rectWindow.left;
+		    yoffset = -wndPtr->rectWindow.top;
+		}
+		else
+		{
+		    xoffset = -wndPtr->rectClient.left;
+		    yoffset = -wndPtr->rectClient.top;
+		}
+
+		if (flags & DCX_CLIPSIBLINGS && wndPtr->parent )
+		    DCE_AddClipRects( wndPtr->parent->child,
+				      wndPtr, hrgnClip, &rect, xoffset, yoffset );
+
+		while (wndPtr->dwStyle & WS_CHILD)
+		{
+		    wndPtr = wndPtr->parent;
+		    xoffset -= wndPtr->rectClient.left;
+		    yoffset -= wndPtr->rectClient.top;
+		    DCE_AddClipRects( wndPtr->parent->child, wndPtr,
+					hrgnClip, &rect, xoffset, yoffset );
+		}
+
+		/* Now once we've got a jumbo clip region we have
+		 * to substract it from the visible rectangle.
+	         */
+
+		CombineRgn32( hrgnVis, hrgnVis, hrgnClip, RGN_DIFF );
+		DeleteObject32( hrgnClip );
+	    }
+	    else
+	    {
+		DeleteObject32( hrgnVis );
+		hrgnVis = 0;
+	    }
+	}
     }
     else
-    {
-        xoffset = -wndPtr->rectClient.left;
-        yoffset = -wndPtr->rectClient.top;
-    }
-    if (flags & DCX_CLIPSIBLINGS)
-    {
-        hrgn = DCE_ClipWindows( wndPtr->parent ? wndPtr->parent->child : NULL,
-                                wndPtr, hrgn, xoffset, yoffset );
-        if (!hrgn) return 0;
-    }
-
-      /* Clip siblings of all ancestors that have the WS_CLIPSIBLINGS style */
-
-    while (wndPtr->dwStyle & WS_CHILD)
-    {
-        wndPtr = wndPtr->parent;
-        xoffset -= wndPtr->rectClient.left;
-        yoffset -= wndPtr->rectClient.top;
-        hrgn = DCE_ClipWindows( wndPtr->parent ? wndPtr->parent->child : NULL,
-                                wndPtr, hrgn, xoffset, yoffset );
-        if (!hrgn) return 0;
-    }
-    return hrgn;
+	hrgnVis = CreateRectRgn32(0, 0, 0, 0); /* empty */
+    return hrgnVis;
 }
 
 
@@ -346,7 +483,7 @@ HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
  */
-static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
+static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOrigin )
 {
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
@@ -376,6 +513,14 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
         dc->w.DCOrgX -= wndPtr->rectWindow.left;
         dc->w.DCOrgY -= wndPtr->rectWindow.top;
         dc->u.x.drawable = wndPtr->window;
+
+	/* This is needed when we reuse a cached DC because
+	 * SetDCState() called by ReleaseDC() screws up DC
+	 * origins for child windows.
+	 */
+
+	if( bSetClipOrigin )
+	    XSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 }
 /***********************************************************************
@@ -427,20 +572,26 @@ HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
  *           GetDCEx32    (USER32.230)
  *
  * Unimplemented flags: DCX_LOCKWINDOWUPDATE
+ *
+ * FIXME: Full support for hrgnClip == 1 (alias for entire window).
  */
 HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 {
-    HRGN32 	hrgnVisible;
+    HRGN32 	hrgnVisible = 0;
     HDC32 	hdc = 0;
     DCE * 	dce;
     DC * 	dc;
     WND * 	wndPtr;
-    DWORD 	dcx_flags = 0;
-    BOOL32	need_update = TRUE;
+    DWORD 	dcxFlags = 0;
+    BOOL32	bUpdateVisRgn = TRUE;
+    BOOL32	bUpdateClipOrigin = FALSE;
 
-    dprintf_dc(stddeb,"GetDCEx: hwnd %04x, hrgnClip %04x, flags %08x\n", hwnd, hrgnClip, (unsigned)flags);
+    dprintf_dc(stddeb,"GetDCEx: hwnd %04x, hrgnClip %04x, flags %08x\n", 
+				hwnd, hrgnClip, (unsigned)flags);
     
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+
+    /* fixup flags */
 
     if (!(wndPtr->class->style & (CS_OWNDC | CS_CLASSDC))) flags |= DCX_CACHE;
 
@@ -467,101 +618,167 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
         flags &= ~(DCX_PARENTCLIP | DCX_CLIPCHILDREN);
     }
 
-    if (flags & DCX_WINDOW) flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
+    if (flags & DCX_WINDOW) 
+	flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
 
-    if (!(wndPtr->dwStyle & WS_CHILD) || !wndPtr->parent ) flags &= ~DCX_PARENTCLIP;
+    if (!(wndPtr->dwStyle & WS_CHILD) || !wndPtr->parent ) 
+	flags &= ~DCX_PARENTCLIP;
     else if( flags & DCX_PARENTCLIP )
     {
-        flags |= DCX_CACHE;
-        if( !(flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN)) )
-          if( (wndPtr->dwStyle & WS_VISIBLE) && (wndPtr->parent->dwStyle & WS_VISIBLE) )
-          {
-              flags &= ~DCX_CLIPCHILDREN;
-              if( wndPtr->parent->dwStyle & WS_CLIPSIBLINGS )
-                  flags |= DCX_CLIPSIBLINGS;
-          }
+	flags |= DCX_CACHE;
+	if( !(flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN)) )
+	    if( (wndPtr->dwStyle & WS_VISIBLE) && (wndPtr->parent->dwStyle & WS_VISIBLE) )
+	    {
+		flags &= ~DCX_CLIPCHILDREN;
+		if( wndPtr->parent->dwStyle & WS_CLIPSIBLINGS )
+		    flags |= DCX_CLIPSIBLINGS;
+	    }
     }
+
+    /* find a suitable DCE */
+
+    dcxFlags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | 
+		        DCX_CACHE | DCX_WINDOW);
 
     if (flags & DCX_CACHE)
     {
+	DCE*	dceEmpty;
+	DCE*	dceUnused;
+
+	dceEmpty = dceUnused = NULL;
+
+	/* Strategy: First, we attempt to find a non-empty but unused DCE with
+	 * compatible flags. Next, we look for an empty entry. If the cache is
+	 * full we have to purge one of the unused entries.
+	 */
+
 	for (dce = firstDCE; (dce); dce = dce->next)
 	{
-	    if ((dce->DCXflags & DCX_CACHE) && !(dce->DCXflags & DCX_DCEBUSY)) break;
+	    if ((dce->DCXflags & (DCX_CACHE | DCX_DCEBUSY)) == DCX_CACHE )
+	    {
+		dceUnused = dce;
+
+		if (dce->DCXflags & DCX_DCEEMPTY)
+		    dceEmpty = dce;
+		else
+		if ((dce->hwndCurrent == hwnd) &&
+		   ((dce->DCXflags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
+				      DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
+		{
+		    dprintf_dc(stddeb,"\tfound valid %08x dce [%04x]\n", (unsigned)dce, hwnd );
+
+/* Eventually, this won't be commented out but at this time
+ * there are still some problems with DC reuse.
+ * 
+		    bUpdateVisRgn = TRUE; 
+ */
+		    bUpdateClipOrigin = TRUE;
+		    break;
+		}
+	    }
 	}
+	if (!dce) dce = (dceEmpty) ? dceEmpty : dceUnused;
     }
     else 
     {
-        dce = (wndPtr->class->style & CS_OWNDC)?wndPtr->dce:wndPtr->class->dce;
+        dce = (wndPtr->class->style & CS_OWNDC) ? wndPtr->dce : wndPtr->class->dce;
 	if( dce->hwndCurrent == hwnd )
 	{
 	    dprintf_dc(stddeb,"\tskipping hVisRgn update\n");
-	    need_update = FALSE;
-	}
+	    bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
 
-	if( hrgnClip && dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN))
-	{
-	    fprintf(stdnimp,"GetDCEx: hClipRgn collision!\n");
-            DeleteObject32( dce->hClipRgn ); 
-	    need_update = TRUE;
+	    if( (dce->DCXflags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN)) &&
+		(flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN)) )
+	    {
+		/* This is likely to be a nested BeginPaint(). */
+
+		if( dce->hClipRgn != hrgnClip )
+		{
+		    fprintf(stdnimp,"GetDCEx: new hrgnClip [%04x] smashes the previous [%04x]!\n",
+				     hrgnClip, dce->hClipRgn );
+		    DCE_DeleteClipRgn( dce );
+		}
+		else 
+		    RestoreVisRgn(dce->hDC);
+	    }
 	}
     }
-
-    dcx_flags = flags & ( DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT);
-
     if (!dce) return 0;
+
     dce->hwndCurrent = hwnd;
     dce->hClipRgn = 0;
-    dce->DCXflags = dcx_flags | DCX_DCEBUSY;
+    dce->DCXflags = dcxFlags | (flags & DCX_WINDOWPAINT) | DCX_DCEBUSY;
     hdc = dce->hDC;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    bUpdateVisRgn = bUpdateVisRgn || (dc->w.flags & DC_DIRTY);
 
-    DCE_SetDrawable( wndPtr, dc, flags );
-    if( need_update || dc->w.flags & DC_DIRTY )
+    /* recompute visible region */
+
+    DCE_SetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
+    if( bUpdateVisRgn )
     {
-      dprintf_dc(stddeb,"updating hDC anyway\n");
+	dprintf_dc(stddeb,"updating %08x dce, visrgn [%04x]\n", (unsigned)dce, hwnd);
 
-      if (flags & DCX_PARENTCLIP)
+	if (flags & DCX_PARENTCLIP)
         {
             WND *parentPtr = wndPtr->parent;
-            dcx_flags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
-                                       DCX_WINDOW);
-            if (parentPtr->dwStyle & WS_CLIPSIBLINGS)
-                dcx_flags |= DCX_CLIPSIBLINGS;
-            hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcx_flags );
-            if (flags & DCX_WINDOW)
-                OffsetRgn32( hrgnVisible, -wndPtr->rectWindow.left,
-                                          -wndPtr->rectWindow.top );
-            else OffsetRgn32( hrgnVisible, -wndPtr->rectClient.left,
-                                           -wndPtr->rectClient.top );
+
+	    if( wndPtr->dwStyle & WS_VISIBLE && !(parentPtr->dwStyle & WS_MINIMIZE) )
+	    {
+		if( parentPtr->dwStyle & WS_CLIPSIBLINGS ) 
+		    dcxFlags = DCX_CLIPSIBLINGS | (flags & ~(DCX_CLIPCHILDREN | DCX_WINDOW));
+		else
+		    dcxFlags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
+
+                hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcxFlags );
+		if( flags & DCX_WINDOW )
+		    OffsetRgn32( hrgnVisible, -wndPtr->rectWindow.left,
+					      -wndPtr->rectWindow.top );
+		else
+		    OffsetRgn32( hrgnVisible, -wndPtr->rectClient.left,
+					      -wndPtr->rectClient.top );
+	    }
+	    else
+		hrgnVisible = CreateRectRgn32( 0, 0, 0, 0 );
         }
-           /* optimize away GetVisRgn for desktop if it isn't there */
+        else 
+	    if ((hwnd == GetDesktopWindow32()) &&
+                (rootWindow == DefaultRootWindow(display)))
+                 hrgnVisible = CreateRectRgn32( 0, 0, SYSMETRICS_CXSCREEN,
+						      SYSMETRICS_CYSCREEN );
+	    else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
 
-      else if ((hwnd == GetDesktopWindow32()) &&
-               (rootWindow == DefaultRootWindow(display)))
-	       hrgnVisible = CreateRectRgn32( 0, 0, SYSMETRICS_CXSCREEN,
-                                                    SYSMETRICS_CYSCREEN );
-      else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
 
-      if( wndPtr->parent && wndPtr->window )
-      {
-        WND* 	wnd = wndPtr->parent->child;
-	RECT32  rect;
+	if( wndPtr->parent && wndPtr->window )
+	{
+	    /* Problem - X doesn't discard save under buffers when
+	     * the old data is invalidated by the new graphics output.
+	     *
+	     * FIXME: Instead of overriding we should try to discard
+	     *        save_unders by calling XSetWindowAttributes().
+	     *        And we should do it for the child window GetDCEx() 
+	     *	      calls as well. */
+
+            WND*    wnd = wndPtr->parent->child;
+	    RECT32  rect;
 	
-        for( ; wnd != wndPtr; wnd = wnd->next )
-           if( wnd->class->style & CS_SAVEBITS &&
-               wnd->dwStyle & WS_VISIBLE &&
-	       IntersectRect32(&rect, &wndPtr->rectClient, &wnd->rectClient) )
-               wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
-      }
-
-      dc->w.flags &= ~DC_DIRTY;
-      SelectVisRgn( hdc, hrgnVisible );
+	    for( ; wnd != wndPtr; wnd = wnd->next )
+		if( wnd->class->style & CS_SAVEBITS && 
+		    wnd->dwStyle & WS_VISIBLE &&
+		    IntersectRect32(&rect, &wndPtr->rectClient, &wnd->rectClient) )
+                    wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
+	}
+	dc->w.flags &= ~DC_DIRTY;
+	SelectVisRgn( hdc, hrgnVisible );
     }
-    else hrgnVisible = CreateRectRgn32( 0, 0, 0, 0 );
+
+    /* apply additional region operation (if any) */
 
     if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
     {
+	if( !hrgnVisible ) hrgnVisible = CreateRectRgn32( 0, 0, 0, 0 );
+
 	dce->DCXflags |= flags & (DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
 	dce->hClipRgn = hrgnClip;
 
@@ -572,7 +789,8 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
                       (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 	SelectVisRgn( hdc, hrgnVisible );
     }
-    DeleteObject32( hrgnVisible );
+
+    if( hrgnVisible ) DeleteObject32( hrgnVisible );
 
     dprintf_dc(stddeb, "GetDCEx(%04x,%04x,0x%lx): returning %04x\n", 
 	       hwnd, hrgnClip, flags, hdc);
@@ -639,34 +857,11 @@ INT32 WINAPI ReleaseDC32( HWND32 hwnd, HDC32 hdc )
     dprintf_dc(stddeb, "ReleaseDC: %04x %04x\n", hwnd, hdc );
         
     while (dce && (dce->hDC != hdc)) dce = dce->next;
-    if (!dce) return 0;
-    if (!(dce->DCXflags & DCX_DCEBUSY) ) return 0;
 
-    /* restore previous visible region */
-
-    if ( dce->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) &&
-	(dce->DCXflags & DCX_CACHE || dce->DCXflags & DCX_WINDOWPAINT) )
-    {
-	dprintf_dc(stddeb,"\tcleaning up visrgn...\n");
-	dce->DCXflags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN | DCX_WINDOWPAINT);
-
-	if( dce->DCXflags & DCX_KEEPCLIPRGN )
-	    dce->DCXflags &= ~DCX_KEEPCLIPRGN;
-	else
-	    if( dce->hClipRgn > 1 )
-	        DeleteObject32( dce->hClipRgn );
-
-        dce->hClipRgn = 0;
-	RestoreVisRgn(dce->hDC);
-    }
-
-    if (dce->DCXflags & DCX_CACHE)
-    {
-	SetDCState( dce->hDC, defaultDCstate );
-	dce->DCXflags = DCX_CACHE;
-	dce->hwndCurrent = 0;
-    }
-    return 1;
+    if ( dce ) 
+	if ( dce->DCXflags & DCX_DCEBUSY )
+	     return DCE_ReleaseDC( dce );
+    return 0;
 }
 
 /***********************************************************************
@@ -684,12 +879,17 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     while (dce && (dce->hDC != hDC)) dce = dce->next;
     if (!dce) return 0;
 
-  switch( code )
+    switch( code )
     {
       case DCHC_INVALIDVISRGN:
-         {
+
+	   /* GDI code calls this when it detects that the
+	    * DC is dirty (usually after SetHookFlags()). This
+	    * means that we have to recompute the visible region.
+	    */
+
            if( dce->DCXflags & DCX_DCEBUSY )
- 	     {
+ 	   {
 	       SetHookFlags(hDC, DCHF_VALIDATEVISRGN);
 	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags);
 
@@ -699,7 +899,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
                if ( (dce->DCXflags & DCX_INTERSECTRGN && dce->hClipRgn != 1) ||
                   (  dce->DCXflags & DCX_EXCLUDERGN && dce->hClipRgn) )
-                  {
+               {
 
                     if( (!dce->hClipRgn && dce->DCXflags & DCX_INTERSECTRGN) ||
                          (dce->hClipRgn == 1 && dce->DCXflags & DCX_EXCLUDERGN) )            
@@ -707,22 +907,41 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
                     else
                          CombineRgn32(hVisRgn, hVisRgn, dce->hClipRgn, 
                                       (dce->DCXflags & DCX_EXCLUDERGN)? RGN_DIFF:RGN_AND);
-	          }  
+	       }  
 	       SelectVisRgn(hDC, hVisRgn);
 	       DeleteObject32( hVisRgn );
-	     }
-           else
+	   }
+           else /* non-fatal but shouldn't happen */
 	     dprintf_dc(stddeb,"DCHook: DC is not in use!\n");
-         }
-	 break;
+	   break;
 
       case DCHC_DELETEDC: /* FIXME: ?? */
-	 break;
+	   break;
 
       default:
-	 fprintf(stdnimp,"DCHook: unknown code\n");
+	   fprintf(stdnimp,"DCHook: unknown code\n");
     }
   return 0;
+}
+
+
+/**********************************************************************
+ *          WindowFromDC16   (USER32.580)
+ */
+HWND16 WINAPI WindowFromDC16( HDC16 hDC )
+{
+    return (HWND16)WindowFromDC32( hDC );
+}
+
+
+/**********************************************************************
+ *          WindowFromDC32   (USER32.580)
+ */
+HWND32 WINAPI WindowFromDC32( HDC32 hDC )
+{
+    DCE *dce = firstDCE;
+    while (dce && (dce->hDC != hDC)) dce = dce->next;
+    return dce ? dce->hwndCurrent : 0;
 }
 
 

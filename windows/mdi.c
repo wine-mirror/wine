@@ -16,7 +16,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include "xmalloc.h"
 #include "windows.h"
 #include "win.h"
 #include "heap.h"
@@ -341,11 +340,26 @@ static HWND16 MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND16 parent,
         style |= (WS_VISIBLE | WS_OVERLAPPEDWINDOW);
     }
 
-    hwnd = CreateWindow16( (LPCSTR)PTR_SEG_TO_LIN(cs->szClass),
-                           (LPCSTR)PTR_SEG_TO_LIN(cs->szTitle), style, 
-                           cs->x, cs->y, cs->cx, cs->cy, parent, 
-                           (HMENU16)wIDmenu, w->hInstance, 
-                           (LPVOID)lParam);
+    if( w->flags & WIN_ISWIN32 )
+    {
+    	MDICREATESTRUCT32A cs32a;
+
+	STRUCT32_MDICREATESTRUCT16to32A(cs,&cs32a);
+	cs32a.szTitle = (LPCSTR)PTR_SEG_TO_LIN(cs->szTitle);
+	cs32a.szClass = (LPCSTR)PTR_SEG_TO_LIN(cs->szClass);
+
+	hwnd = CreateWindow32A(cs32a.szClass,cs32a.szTitle, style, 
+			       cs->x, cs->y, cs->cx, cs->cy, parent, 
+			       (HMENU16)wIDmenu, cs->hOwner,
+			       (LPVOID)&cs32a);
+	STRUCT32_MDICREATESTRUCT32Ato16(&cs32a,cs);
+    }
+    else
+	hwnd = CreateWindow16( (LPCSTR)PTR_SEG_TO_LIN(cs->szClass),
+			       (LPCSTR)PTR_SEG_TO_LIN(cs->szTitle), style, 
+			       cs->x, cs->y, cs->cx, cs->cy, parent, 
+			       (HMENU32)wIDmenu, cs->hOwner,
+			       (LPVOID)lParam);
 
     /* MDI windows are WS_CHILD so they won't be activated by CreateWindow */
 
@@ -527,16 +541,9 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND16 hWndChild )
     if( wndPrev )
     {
 	wndPrev->dwStyle |= WS_SYSMENU;
-	SendMessage16( prevActiveWnd, WM_NCACTIVATE, FALSE, 0L );
-
-#ifdef WINELIB32
+	SendMessage32A( prevActiveWnd, WM_NCACTIVATE, FALSE, 0L );
         SendMessage32A( prevActiveWnd, WM_MDIACTIVATE, (WPARAM32)prevActiveWnd, 
                         (LPARAM)hWndChild);
-#else 
-
-        SendMessage16( prevActiveWnd, WM_MDIACTIVATE, FALSE,
-                       MAKELONG(hWndChild,prevActiveWnd));
-#endif 
         /* uncheck menu item */
        	if( clientInfo->hWindowMenu )
        	        CheckMenuItem32( clientInfo->hWindowMenu,
@@ -582,15 +589,8 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND16 hWndChild )
 	    else
 		SetFocus32( clientInfo->self );
     }
-
-#ifdef WINELIB32
-    SendMessage32A( hWndChild, WM_MDIACTIVATE, (WPARAM32)hWndChild,
-                    (LPARAM)prevActiveWnd );
-#else
-    SendMessage16( hWndChild, WM_MDIACTIVATE, TRUE,
-                   MAKELONG(hWndChild,prevActiveWnd));
-#endif
-
+    SendMessage32A( hWndChild, WM_MDIACTIVATE, (WPARAM32)prevActiveWnd,
+                    (LPARAM)hWndChild );
     return 1;
 }
 
@@ -1008,11 +1008,10 @@ LRESULT WINAPI MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 	return 0;
 
       case WM_MDISETMENU:
-#ifdef WINELIB32
-	return (LRESULT)MDISetMenu(hwnd, FALSE, (HMENU16)wParam, (HMENU16)lParam);
-#else
-	return (LRESULT)MDISetMenu(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
-#endif
+          /* if Winelib32:
+           * return (LRESULT)MDISetMenu(hwnd, FALSE, (HMENU16)wParam, (HMENU16)lParam);
+           */
+          return (LRESULT)MDISetMenu(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
 	
       case WM_MDITILE:
 	ci->mdiFlags |= MDIF_NEEDUPDATE;

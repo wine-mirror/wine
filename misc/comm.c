@@ -928,7 +928,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	struct DosDeviceStruct *ptr;
 
     	dprintf_comm(stddeb,
-		"SetCommState: fd %d, ptr %p\n", lpdcb->Id, lpdcb);
+		"SetCommState16: fd %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if (tcgetattr(lpdcb->Id, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -997,6 +997,12 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 		case 38400:
 		case CBR_38400:
 			port.c_cflag |= B38400;
+			break;		
+		case 57600:
+			port.c_cflag |= B57600;
+			break;		
+		case 57601:
+			port.c_cflag |= B115200;
 			break;		
 		default:
 			commerror = IE_BAUDRATE;
@@ -1088,6 +1094,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	
 
     	dprintf_comm(stddeb,"SetCommState: stopbits %d\n",lpdcb->StopBits);
+
 	switch (lpdcb->StopBits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
@@ -1118,7 +1125,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 
 	if (tcsetattr(lpdcb->Id, TCSADRAIN, &port) == -1) {
 		commerror = WinError();	
-		return -1;
+		return FALSE;
 	} else {
 		commerror = 0;
 		return 0;
@@ -1133,7 +1140,7 @@ BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
 	struct termios port;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_comm(stddeb,"SetCommState: fd %d, ptr %p\n",fd,lpdcb);
+    	dprintf_comm(stddeb,"SetCommState32: fd %d, ptr %p\n",fd,lpdcb);
 	if (tcgetattr(fd,&port) == -1) {
 		commerror = WinError();	
 		return FALSE;
@@ -1340,7 +1347,7 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 {
 	struct termios port;
 
-    	dprintf_comm(stddeb,"GetCommState: fd %d, ptr %p\n", fd, lpdcb);
+    	dprintf_comm(stddeb,"GetCommState16: fd %d, ptr %p\n", fd, lpdcb);
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -1378,6 +1385,12 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 			break;
 		case B38400:
 			lpdcb->BaudRate = 38400;
+			break;
+		case B57600:
+			lpdcb->BaudRate = 57600;
+			break;
+		case B115200:
+			lpdcb->BaudRate = 57601;
 			break;
 	}
 #endif
@@ -1459,8 +1472,8 @@ BOOL32 WINAPI GetCommState32(INT32 fd, LPDCB32 lpdcb)
 {
 	struct termios	port;
 
-
     	dprintf_comm(stddeb,"GetCommState32: fd %d, ptr %p\n", fd, lpdcb);
+        if (GetDeviceStruct(fd) == NULL) return FALSE;
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
 		return FALSE;

@@ -636,9 +636,7 @@ static HMODULE32 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
                   ne_header.rname_tab_offset - ne_header.resource_tab_offset,
                   pData )) return (HMODULE32)11;  /* invalid exe */
         pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
-#ifndef WINELIB
 	NE_InitResourceHandler( hModule );
-#endif
     }
     else pModule->res_table = 0;  /* No resource table */
 
@@ -1017,7 +1015,7 @@ static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
 	dprintf_module( stddeb, "module %04x doesn't have a WEP\n", hModule );
 	return FALSE;
     }
-    return CallWindowsExitProc( WEP, WEP_FREE_DLL );
+    return Callbacks->CallWindowsExitProc( WEP, WEP_FREE_DLL );
 }
 
 
@@ -1258,7 +1256,8 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
                 stack16Top->cs = 0;
 
                 hf = FILE_DupUnixHandle( MODULE_OpenFile( hModule ) );
-		CallTo16_word_ww( selfloadheader->BootApp, hModule, hf );
+                Callbacks->CallBootAppProc( selfloadheader->BootApp,
+                                            hModule, hf );
                 _lclose32(hf);
 		/* some BootApp procs overwrite the selector of dgroup */
 		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
@@ -1337,6 +1336,15 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
  *	    LoadModule16    (KERNEL.45)
  */
 HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
+{
+    return MODULE_Load( name, paramBlock, 0 );
+}
+
+/**********************************************************************
+ *	    LoadModule32    (KERNEL32)
+ * FIXME: check this function
+ */
+DWORD LoadModule32( LPCSTR name, LPVOID paramBlock ) 
 {
     return MODULE_Load( name, paramBlock, 0 );
 }
@@ -1865,7 +1873,6 @@ LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
      * but we could get HMODULE16 or the like (think builtin modules)
      */
 
-#ifndef WINELIB
     NE_MODULE *pModule;
 
     if (!(pModule = MODULE_GetPtr( hModule )))
@@ -1875,9 +1882,6 @@ LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
     if (pModule->flags & NE_FFLAGS_BUILTIN)
         return (LPIMAGE_NT_HEADERS)0;
     return pModule->pe_module->pe_header;
-#else
-    return NULL;
-#endif
 }
 
 
@@ -1919,12 +1923,13 @@ BOOL16 WINAPI ModuleFirst( MODULEENTRY *lpme )
 BOOL16 WINAPI ModuleNext( MODULEENTRY *lpme )
 {
     NE_MODULE *pModule;
+    char *name;
 
     if (!lpme->wNext) return FALSE;
     if (!(pModule = MODULE_GetPtr( lpme->wNext ))) return FALSE;
-    strncpy( lpme->szModule, (char *)pModule + pModule->name_table,
-             MAX_MODULE_NAME );
-    lpme->szModule[MAX_MODULE_NAME] = '\0';
+    name = (char *)pModule + pModule->name_table;
+    memcpy( lpme->szModule, name + 1, *name );
+    lpme->szModule[(BYTE)*name] = '\0';
     lpme->hModule = lpme->wNext;
     lpme->wcUsage = pModule->count;
     strncpy( lpme->szExePath, NE_MODULE_NAME(pModule), MAX_PATH );

@@ -114,8 +114,8 @@ type	win32
 110 stub _fsopen
 111 stub _fstat
 112 stub _ftime
-113 stub _ftol
-114 stub _fullpath
+113 cdecl _ftol(double) CRTDLL__ftol
+114 cdecl _fullpath(ptr ptr long) CRTDLL__fullpath
 115 stub _futime
 116 stub _gcvt
 117 stub _get_osfhandle
@@ -281,7 +281,7 @@ type	win32
 277 stub _spawnvp
 278 stub _spawnvpe
 279 stub _splitpath
-280 stub _stat
+280 cdecl _stat (ptr ptr) CRTDLL__stat
 281 stub _statusfp
 282 cdecl _strcmpi(ptr ptr) CRTDLL__strcmpi
 283 stub _strdate
@@ -336,9 +336,9 @@ type	win32
 332 cdecl _write(long ptr long) CRTDLL__write
 333 stub _wtoi
 334 stub _wtol
-335 stub _y0
-336 stub _y1
-337 stub _yn
+335 cdecl _y0(double) y0
+336 cdecl _y1(double) y1
+337 cdecl _yn(long double) yn
 338 stub abort
 339 cdecl abs(long) abs
 340 cdecl acos(double) acos
@@ -371,7 +371,7 @@ type	win32
 367 stub fgetpos
 368 cdecl fgets(ptr long ptr) CRTDLL_fgets
 369 stub fgetwc
-370 stub floor
+370 cdecl floor(double) floor
 371 cdecl fmod(double double) fmod
 372 cdecl fopen(ptr ptr) CRTDLL_fopen
 373 varargs fprintf() CRTDLL_fprintf
@@ -381,7 +381,7 @@ type	win32
 377 cdecl fread(ptr long long ptr) CRTDLL_fread
 378 cdecl free(ptr) CRTDLL_free
 379 stub freopen
-380 stub frexp
+380 cdecl frexp(double ptr) frexp
 381 stub fscanf
 382 cdecl fseek(ptr long long) CRTDLL_fseek
 383 stub fsetpos
@@ -421,7 +421,7 @@ type	win32
 417 stub iswxdigit
 418 cdecl isxdigit(long) isxdigit
 419 cdecl labs(long) labs
-420 stub ldexp
+420 cdecl ldexp(double long) ldexp
 421 cdecl ldiv(long long) ldiv
 422 stub localeconv
 423 cdecl localtime(ptr) localtime
@@ -438,7 +438,7 @@ type	win32
 434 cdecl memmove(ptr ptr long) memmove
 435 cdecl memset(ptr long long) memset 
 436 cdecl mktime(ptr) mktime
-437 stub modf
+437 cdecl modf(double ptr) modf
 438 stub perror
 439 cdecl pow(double double) pow
 440 varargs printf() printf
@@ -450,7 +450,7 @@ type	win32
 446 cdecl rand() CRTDLL_rand
 447 cdecl realloc(ptr long) CRTDLL_realloc
 448 stub remove
-449 stub rename
+449 cdecl rename(str str) CRTDLL_rename
 450 stub rewind
 451 stub scanf
 452 cdecl setbuf(ptr ptr) CRTDLL_setbuf

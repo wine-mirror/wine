@@ -34,7 +34,6 @@
 #include "winpos.h"
 #include "drive.h"
 #include "shell.h"
-#include "xmalloc.h"
 #include "keyboard.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -859,7 +858,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 
 	    /* remove carriage returns */
 
-	    lpstr = (char*)xmalloc(size--);
+	    lpstr = (char*)HEAP_xalloc( GetProcessHeap(), 0, size-- );
 	    for(i=0,j=0; i < size && text[i]; i++ )
 	    {
 	       if( text[i] == '\r' && 
@@ -871,7 +870,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	    XChangeProperty(display, request, rprop, 
 			    XA_STRING, 8, PropModeReplace, 
 			    lpstr, j);
-	    free(lpstr);
+	    HeapFree( GetProcessHeap(), 0, lpstr );
 
 	    /* close only if we opened before */
 

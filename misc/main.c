@@ -178,16 +178,6 @@ WORD WINE_LanguageId = 0;
 
 #define WINE_APP_DEFAULTS "/usr/lib/X11/app-defaults/Wine"
 
-typedef struct tagENVENTRY {
-  LPSTR	       	        Name;
-  LPSTR	       	        Value;
-  WORD	       	        wSize;
-  struct tagENVENTRY    *Prev;
-  struct tagENVENTRY    *Next;
-} ENVENTRY, *LPENVENTRY;
-
-LPENVENTRY	lpEnvList = NULL;
-
 Display *display;
 Screen *screen;
 Window rootWindow;
@@ -1221,6 +1211,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		case SPI_SETFASTTASKSWITCH:
 		case SPI_SETKEYBOARDDELAY:
 		case SPI_SETKEYBOARDSPEED:
+	        case SPI_GETHIGHCONTRAST:
 			fprintf(stderr, "SystemParametersInfo: option %d ignored.\n", uAction);
 			break;
 

@@ -486,14 +486,15 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 
       /* Load menu */
 
-    if (template.menuName) {
-	if (!HIWORD(hInst)) /* win32 modules always have hiword set */
+    if (template.menuName)
+    {
+        if (!win32Template)
         {
             LPSTR str = SEGPTR_STRDUP( template.menuName );
 	    hMenu = LoadMenu16( hInst, SEGPTR_GET(str) );
             SEGPTR_FREE( str );
-	} else /* win32 modules always have hiword set */
-	    hMenu = LoadMenu32A( hInst, template.menuName );
+	}
+        else hMenu = LoadMenu32W( hInst, (LPCWSTR)template.menuName );
     }
 
       /* Create custom font if needed */
@@ -503,12 +504,12 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
           /* The font height must be negative as it is a point size */
           /* (see CreateFont() documentation in the Windows SDK).   */
 	if (win32Template)
-	    hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
+	    hFont = CreateFont32W( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			    PROOF_QUALITY, FF_DONTCARE,
-                            template.faceName );
+                            (LPCWSTR)template.faceName );
 	else
-	    hFont = CreateFont32W( -template.pointSize, 0, 0, 0, FW_DONTCARE,
+	    hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			    PROOF_QUALITY, FF_DONTCARE,
                             template.faceName );

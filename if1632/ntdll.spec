@@ -864,7 +864,7 @@ type	win32
 861 stub _alloca_probe
 862 cdecl _chkstk() NTDLL_chkstk
 863 stub _fltused
-864 stub _ftol
+864 cdecl _ftol(double) CRTDLL__ftol
 865 stub _itoa
 866 stub _ltoa
 867 stub _memccpy

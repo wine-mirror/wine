@@ -20,5 +20,6 @@ typedef struct
 extern BOOL32 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj );
 extern BOOL32 REGION_UnionRectWithRgn( HRGN32 hrgn, const RECT32 *lpRect );
 extern BOOL32 REGION_FrameRgn( HRGN32 dest, HRGN32 src, INT32 x, INT32 y );
+extern BOOL32 REGION_IsEmpty( HRGN32 rgn );
 
 #endif  /* __WINE_REGION_H */

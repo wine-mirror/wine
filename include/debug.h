@@ -7,6 +7,7 @@
 
 #ifdef DEBUG_NONE_EXT
 #undef DEBUG_ACCEL
+#undef DEBUG_ASPI
 #undef DEBUG_ATOM
 #undef DEBUG_BITBLT
 #undef DEBUG_BITMAP
@@ -27,7 +28,6 @@
 #undef DEBUG_DOSFS
 #undef DEBUG_DRIVER
 #undef DEBUG_EDIT
-#undef DEBUG_ENV
 #undef DEBUG_EVENT
 #undef DEBUG_EXEC
 #undef DEBUG_FILE
@@ -93,6 +93,7 @@
 
 #ifdef DEBUG_ALL_EXT
 #define DEBUG_ACCEL
+#define DEBUG_ASPI
 #define DEBUG_ATOM
 #define DEBUG_BITBLT
 #define DEBUG_BITMAP
@@ -113,7 +114,6 @@
 #define DEBUG_DOSFS
 #define DEBUG_DRIVER
 #define DEBUG_EDIT
-#define DEBUG_ENV
 #define DEBUG_EVENT
 #define DEBUG_EXEC
 #define DEBUG_FILE
@@ -181,6 +181,11 @@
 #ifdef DEBUG_DEFINE_VARIABLES
 short debug_msg_enabled[]={
 #ifdef DEBUG_ACCEL
+    1,
+#else
+    0,
+#endif
+#ifdef DEBUG_ASPI
     1,
 #else
     0,
@@ -281,11 +286,6 @@ short debug_msg_enabled[]={
     0,
 #endif
 #ifdef DEBUG_EDIT
-    1,
-#else
-    0,
-#endif
-#ifdef DEBUG_ENV
     1,
 #else
     0,
@@ -616,8 +616,21 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_atom if(!debug_msg_enabled[1]) ; else fprintf
-#define debugging_atom debug_msg_enabled[1]
+#define dprintf_aspi if(!debug_msg_enabled[1]) ; else fprintf
+#define debugging_aspi debug_msg_enabled[1]
+#else
+#ifdef DEBUG_ASPI
+#define dprintf_aspi fprintf
+#define debugging_aspi 1
+#else
+#define dprintf_aspi while(0) fprintf
+#define debugging_aspi 0
+#endif
+#endif
+
+#ifdef DEBUG_RUNTIME
+#define dprintf_atom if(!debug_msg_enabled[2]) ; else fprintf
+#define debugging_atom debug_msg_enabled[2]
 #else
 #ifdef DEBUG_ATOM
 #define dprintf_atom fprintf
@@ -629,8 +642,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_bitblt if(!debug_msg_enabled[2]) ; else fprintf
-#define debugging_bitblt debug_msg_enabled[2]
+#define dprintf_bitblt if(!debug_msg_enabled[3]) ; else fprintf
+#define debugging_bitblt debug_msg_enabled[3]
 #else
 #ifdef DEBUG_BITBLT
 #define dprintf_bitblt fprintf
@@ -642,8 +655,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_bitmap if(!debug_msg_enabled[3]) ; else fprintf
-#define debugging_bitmap debug_msg_enabled[3]
+#define dprintf_bitmap if(!debug_msg_enabled[4]) ; else fprintf
+#define debugging_bitmap debug_msg_enabled[4]
 #else
 #ifdef DEBUG_BITMAP
 #define dprintf_bitmap fprintf
@@ -655,8 +668,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_caret if(!debug_msg_enabled[4]) ; else fprintf
-#define debugging_caret debug_msg_enabled[4]
+#define dprintf_caret if(!debug_msg_enabled[5]) ; else fprintf
+#define debugging_caret debug_msg_enabled[5]
 #else
 #ifdef DEBUG_CARET
 #define dprintf_caret fprintf
@@ -668,8 +681,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_cdaudio if(!debug_msg_enabled[5]) ; else fprintf
-#define debugging_cdaudio debug_msg_enabled[5]
+#define dprintf_cdaudio if(!debug_msg_enabled[6]) ; else fprintf
+#define debugging_cdaudio debug_msg_enabled[6]
 #else
 #ifdef DEBUG_CDAUDIO
 #define dprintf_cdaudio fprintf
@@ -681,8 +694,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_class if(!debug_msg_enabled[6]) ; else fprintf
-#define debugging_class debug_msg_enabled[6]
+#define dprintf_class if(!debug_msg_enabled[7]) ; else fprintf
+#define debugging_class debug_msg_enabled[7]
 #else
 #ifdef DEBUG_CLASS
 #define dprintf_class fprintf
@@ -694,8 +707,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_clipboard if(!debug_msg_enabled[7]) ; else fprintf
-#define debugging_clipboard debug_msg_enabled[7]
+#define dprintf_clipboard if(!debug_msg_enabled[8]) ; else fprintf
+#define debugging_clipboard debug_msg_enabled[8]
 #else
 #ifdef DEBUG_CLIPBOARD
 #define dprintf_clipboard fprintf
@@ -707,8 +720,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_clipping if(!debug_msg_enabled[8]) ; else fprintf
-#define debugging_clipping debug_msg_enabled[8]
+#define dprintf_clipping if(!debug_msg_enabled[9]) ; else fprintf
+#define debugging_clipping debug_msg_enabled[9]
 #else
 #ifdef DEBUG_CLIPPING
 #define dprintf_clipping fprintf
@@ -720,8 +733,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_combo if(!debug_msg_enabled[9]) ; else fprintf
-#define debugging_combo debug_msg_enabled[9]
+#define dprintf_combo if(!debug_msg_enabled[10]) ; else fprintf
+#define debugging_combo debug_msg_enabled[10]
 #else
 #ifdef DEBUG_COMBO
 #define dprintf_combo fprintf
@@ -733,8 +746,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_comm if(!debug_msg_enabled[10]) ; else fprintf
-#define debugging_comm debug_msg_enabled[10]
+#define dprintf_comm if(!debug_msg_enabled[11]) ; else fprintf
+#define debugging_comm debug_msg_enabled[11]
 #else
 #ifdef DEBUG_COMM
 #define dprintf_comm fprintf
@@ -746,8 +759,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_commdlg if(!debug_msg_enabled[11]) ; else fprintf
-#define debugging_commdlg debug_msg_enabled[11]
+#define dprintf_commdlg if(!debug_msg_enabled[12]) ; else fprintf
+#define debugging_commdlg debug_msg_enabled[12]
 #else
 #ifdef DEBUG_COMMDLG
 #define dprintf_commdlg fprintf
@@ -759,8 +772,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_crtdll if(!debug_msg_enabled[12]) ; else fprintf
-#define debugging_crtdll debug_msg_enabled[12]
+#define dprintf_crtdll if(!debug_msg_enabled[13]) ; else fprintf
+#define debugging_crtdll debug_msg_enabled[13]
 #else
 #ifdef DEBUG_CRTDLL
 #define dprintf_crtdll fprintf
@@ -772,8 +785,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_cursor if(!debug_msg_enabled[13]) ; else fprintf
-#define debugging_cursor debug_msg_enabled[13]
+#define dprintf_cursor if(!debug_msg_enabled[14]) ; else fprintf
+#define debugging_cursor debug_msg_enabled[14]
 #else
 #ifdef DEBUG_CURSOR
 #define dprintf_cursor fprintf
@@ -785,8 +798,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_dc if(!debug_msg_enabled[14]) ; else fprintf
-#define debugging_dc debug_msg_enabled[14]
+#define dprintf_dc if(!debug_msg_enabled[15]) ; else fprintf
+#define debugging_dc debug_msg_enabled[15]
 #else
 #ifdef DEBUG_DC
 #define dprintf_dc fprintf
@@ -798,8 +811,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_dde if(!debug_msg_enabled[15]) ; else fprintf
-#define debugging_dde debug_msg_enabled[15]
+#define dprintf_dde if(!debug_msg_enabled[16]) ; else fprintf
+#define debugging_dde debug_msg_enabled[16]
 #else
 #ifdef DEBUG_DDE
 #define dprintf_dde fprintf
@@ -811,8 +824,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_dialog if(!debug_msg_enabled[16]) ; else fprintf
-#define debugging_dialog debug_msg_enabled[16]
+#define dprintf_dialog if(!debug_msg_enabled[17]) ; else fprintf
+#define debugging_dialog debug_msg_enabled[17]
 #else
 #ifdef DEBUG_DIALOG
 #define dprintf_dialog fprintf
@@ -824,8 +837,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_dll if(!debug_msg_enabled[17]) ; else fprintf
-#define debugging_dll debug_msg_enabled[17]
+#define dprintf_dll if(!debug_msg_enabled[18]) ; else fprintf
+#define debugging_dll debug_msg_enabled[18]
 #else
 #ifdef DEBUG_DLL
 #define dprintf_dll fprintf
@@ -837,8 +850,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_dosfs if(!debug_msg_enabled[18]) ; else fprintf
-#define debugging_dosfs debug_msg_enabled[18]
+#define dprintf_dosfs if(!debug_msg_enabled[19]) ; else fprintf
+#define debugging_dosfs debug_msg_enabled[19]
 #else
 #ifdef DEBUG_DOSFS
 #define dprintf_dosfs fprintf
@@ -850,8 +863,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_driver if(!debug_msg_enabled[19]) ; else fprintf
-#define debugging_driver debug_msg_enabled[19]
+#define dprintf_driver if(!debug_msg_enabled[20]) ; else fprintf
+#define debugging_driver debug_msg_enabled[20]
 #else
 #ifdef DEBUG_DRIVER
 #define dprintf_driver fprintf
@@ -863,8 +876,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_edit if(!debug_msg_enabled[20]) ; else fprintf
-#define debugging_edit debug_msg_enabled[20]
+#define dprintf_edit if(!debug_msg_enabled[21]) ; else fprintf
+#define debugging_edit debug_msg_enabled[21]
 #else
 #ifdef DEBUG_EDIT
 #define dprintf_edit fprintf
@@ -872,19 +885,6 @@ extern short debug_msg_enabled[];
 #else
 #define dprintf_edit while(0) fprintf
 #define debugging_edit 0
-#endif
-#endif
-
-#ifdef DEBUG_RUNTIME
-#define dprintf_env if(!debug_msg_enabled[21]) ; else fprintf
-#define debugging_env debug_msg_enabled[21]
-#else
-#ifdef DEBUG_ENV
-#define dprintf_env fprintf
-#define debugging_env 1
-#else
-#define dprintf_env while(0) fprintf
-#define debugging_env 0
 #endif
 #endif
 
@@ -1686,6 +1686,7 @@ extern short debug_msg_enabled[];
 #ifdef DEBUG_DEFINE_VARIABLES
 static char *debug_msg_name[] = {
     "accel",
+    "aspi",
     "atom",
     "bitblt",
     "bitmap",
@@ -1706,7 +1707,6 @@ static char *debug_msg_name[] = {
     "dosfs",
     "driver",
     "edit",
-    "env",
     "event",
     "exec",
     "file",

@@ -16,6 +16,7 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "callback.h"
+#include "heap.h"
 #include "metafile.h"
 #include "syscolor.h"
 #include "palette.h"
@@ -23,7 +24,6 @@
 #include "region.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 BOOL32 DrawDiagEdge32(HDC32 hdc, RECT32 *rect, UINT32 edge, UINT32 flags);
 BOOL32 DrawRectEdge32(HDC32 hdc, RECT32 *rect, UINT32 edge, UINT32 flags);
@@ -360,6 +360,17 @@ COLORREF WINAPI SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
     return dc->funcs->pSetPixel(dc,x,y,color);
 }
 
+/***********************************************************************
+ *           SetPixel32    (GDI32.329)
+ */
+BOOL32 WINAPI SetPixelV32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
+{
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    if (!dc || !dc->funcs->pSetPixel) return FALSE;
+    dc->funcs->pSetPixel(dc,x,y,color);
+    return TRUE;
+}
 
 /***********************************************************************
  *           GetPixel16    (GDI.83)
@@ -534,12 +545,14 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 BOOL16 WINAPI Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
-    LPPOINT32 pt32 = (LPPOINT32)xmalloc(count*sizeof(POINT32));
     BOOL16 ret;
+    LPPOINT32 pt32 = (LPPOINT32)HeapAlloc( GetProcessHeap(), 0,
+                                           count*sizeof(POINT32) );
 
+    if (!pt32) return FALSE;
     for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
     ret = Polyline32(hdc,pt32,count);
-    free(pt32);
+    HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
 }
 
@@ -562,13 +575,14 @@ BOOL32 WINAPI Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
 BOOL16 WINAPI Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
-    LPPOINT32 pt32 = (LPPOINT32)xmalloc(count*sizeof(POINT32));
     BOOL32 ret;
+    LPPOINT32 pt32 = (LPPOINT32)HeapAlloc( GetProcessHeap(), 0,
+                                           count*sizeof(POINT32) );
 
-
+    if (!pt32) return FALSE;
     for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
     ret = Polygon32(hdc,pt32,count);
-    free(pt32);
+    HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
 }
 
@@ -599,15 +613,16 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts,
     nrpts=0;
     for (i=polygons;i--;)
     	nrpts+=counts[i];
-    pt32 = (LPPOINT32)xmalloc(sizeof(POINT32)*nrpts);
+    pt32 = (LPPOINT32)HEAP_xalloc( GetProcessHeap(), 0, sizeof(POINT32)*nrpts);
     for (i=nrpts;i--;)
     	CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
-    counts32 = (LPINT32)xmalloc(polygons*sizeof(INT32));
+    counts32 = (LPINT32)HEAP_xalloc( GetProcessHeap(), 0,
+                                     polygons*sizeof(INT32) );
     for (i=polygons;i--;) counts32[i]=counts[i];
    
     ret = PolyPolygon32(hdc,pt32,counts32,polygons);
-    free(counts32);
-    free(pt32);
+    HeapFree( GetProcessHeap(), 0, counts32 );
+    HeapFree( GetProcessHeap(), 0, pt32 );
     return ret;
 }
 

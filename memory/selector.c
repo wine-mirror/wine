@@ -568,7 +568,6 @@ x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
     	ptr = MapLS((LPVOID)val);
 	*(DWORD*)(EBP_reg(context)+argoff) = ptr;
     }
-    fprintf(stderr,"[EBP+%d] %08lx => %08lx\n",argoff,val,ptr);
     EAX_reg(context) = ptr;
 }
 
@@ -655,4 +654,3 @@ void WINAPI WOWGetVDMPointerUnfix(DWORD vp)
     fprintf(stdnimp,"WOWGetVDMPointerUnfix(%08lx), STUB\n",vp);
     /* FIXME: unfix heapsegment */
 }
-

@@ -1128,7 +1128,7 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT32 index, INT32 height 
  */
 static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT32 start, LPCSTR pText )
 {
-   INT32 index = SendMessage32A( lphc->hWndLBox, CB_SELECTSTRING32, 
+   INT32 index = SendMessage32A( lphc->hWndLBox, LB_SELECTSTRING32, 
 				 (WPARAM32)start, (LPARAM)pText );
    if( index >= 0 )
         if( lphc->wState & CBF_EDIT )

@@ -754,10 +754,10 @@ static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT32 lprect,
 	    if ((i != start) &&
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
-
-	    dprintf_menu( stddeb, "MENU_MenuBarCalcSize: calling "
-			  "MENU_CalcItemSize on item '%s', org=(%d, %d)\n",
-			  lpitem->text, orgX, orgY );
+	    dprintf_menu( stddeb,
+			  "MENU_MenuBarCalcSize: calling MENU_CalcItemSize"
+			  " org=(%d, %d)\n", orgX, orgY );
+	    debug_print_menuitem ("  item: ", lpitem, "\n");
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE );
 	    if (lpitem->rect.right > lprect->right)
 	    {
@@ -1396,7 +1396,7 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
 
     if (IS_STRING_ITEM(flags))
     {
-        if (!str)
+        if (!str || !*str)
         {
             flags |= MF_SEPARATOR;
             item->text = NULL;
@@ -1904,7 +1904,7 @@ static BOOL32 MENU_ButtonUp( MTRACKER* pmt, HMENU32 hPtMenu )
         else
             item = MENU_FindItemByCoords( ptmenu, pmt->pt, &id );
 
-	if( ptmenu->FocusedItem == id )
+	if( item && (ptmenu->FocusedItem == id ))
 	{
 	    if( !(item->fType & MF_POPUP) )
 		return MENU_ExecFocusedItem( pmt, hPtMenu );
@@ -2861,6 +2861,7 @@ UINT32 WINAPI GetMenuState32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
     dprintf_menu(stddeb,"GetMenuState(%04x, %04x, %04x);\n", 
 		 hMenu, wItemID, wFlags);
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return -1;
+    debug_print_menuitem ("  item: ", item, "\n");
     if (item->fType & MF_POPUP)
     {
 	POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( item->hSubMenu );
@@ -2868,9 +2869,12 @@ UINT32 WINAPI GetMenuState32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
 	else return (menu->nItems << 8) | (menu->wFlags & 0xff);
     }
     else
-        /* Non POPUP Menus only return flags in the lower byte */
-        /* XXX ??? */
-	return ((item->fType | item->fState) & 0x00ff);
+    {
+	 /* We used to (from way back then) mask the result to 0xff.  */
+	 /* I don't know why and it seems wrong as the documented */
+	 /* return flag MF_SEPARATOR is outside that mask.  */
+	 return (item->fType | item->fState);
+    }
 }
 
 

@@ -10,7 +10,6 @@
 #include "winerror.h"
 #include "wincon.h"
 #include "heap.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -124,14 +123,10 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
                                LPDWORD lpNumberOfCharsWritten,
                                LPVOID lpReserved )
 {
-	LPSTR	buf = (LPSTR)xmalloc(nNumberOfCharsToWrite+1);
-
-	lstrcpyn32A(buf,lpBuffer,nNumberOfCharsToWrite);
-	buf[nNumberOfCharsToWrite]=0;
-	fprintf(stderr,"%s",buf);
-	free(buf);
-	*lpNumberOfCharsWritten=nNumberOfCharsToWrite;
-	return TRUE;
+    *lpNumberOfCharsWritten = fprintf( stderr, "%.*s",
+                                       (int)nNumberOfCharsToWrite,
+                                       (LPSTR)lpBuffer );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -143,14 +138,11 @@ BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
                                LPDWORD lpNumberOfCharsWritten,
                                LPVOID lpReserved )
 {
-	LPSTR	buf = (LPSTR)xmalloc(2*nNumberOfCharsToWrite+1);
-
-	lstrcpynWtoA(buf,lpBuffer,nNumberOfCharsToWrite);
-	buf[nNumberOfCharsToWrite]=0;
-	fprintf(stderr,"%s",buf);
-	free(buf);
-	*lpNumberOfCharsWritten=nNumberOfCharsToWrite;
-	return TRUE;
+    LPSTR buf =  HEAP_strdupWtoA( GetProcessHeap(), 0, lpBuffer );
+    *lpNumberOfCharsWritten = fprintf( stderr, "%.*s",
+                                       (int)nNumberOfCharsToWrite, buf );
+    HeapFree( GetProcessHeap(), 0, buf );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -176,12 +168,12 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-	LPSTR	buf = (LPSTR)xmalloc(nNumberOfCharsToRead);
-
-	fgets(buf,nNumberOfCharsToRead,stdin);
-	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
-	*lpNumberOfCharsRead = strlen(buf);
-	return TRUE;
+    LPSTR buf = (LPSTR)HEAP_xalloc( GetProcessHeap(), 0, nNumberOfCharsToRead);
+    fgets(buf,nNumberOfCharsToRead,stdin);
+    lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
+    *lpNumberOfCharsRead = strlen(buf);
+    HeapFree( GetProcessHeap(), 0, buf );
+    return TRUE;
 }
 
 /***********************************************************************

@@ -170,12 +170,14 @@ LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
 
     case WM_SETTEXT:
         DEFWND_SetText( wndPtr, (LPSTR)lParam );
-        PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
+	if( wndPtr->dwStyle & WS_VISIBLE )
+            PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         return 0;
 
     case WM_SETFONT:
         infoPtr->hFont = (HFONT16)wParam;
-        if (lParam) PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
+        if (lParam && (wndPtr->dwStyle & WS_VISIBLE)) 
+	    PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         break;
 
     case WM_GETFONT:

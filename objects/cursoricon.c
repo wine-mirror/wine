@@ -1447,4 +1447,53 @@ HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
 /**********************************************************************
  *          GetIconInfo		(USER32.241)
  */
+BOOL32 WINAPI GetIconInfo(HICON32 hIcon,LPICONINFO iconinfo) {
+    CURSORICONINFO	*ciconinfo;
 
+    ciconinfo = GlobalLock16(hIcon);
+    if (!ciconinfo)
+	return FALSE;
+    iconinfo->xHotspot = ciconinfo->ptHotSpot.x;
+    iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
+    iconinfo->fIcon    = TRUE; /* hmm */
+    /* FIXME ... add both bitmaps */
+    return TRUE;
+}
+
+/**********************************************************************
+ *          CreateIconIndirect		(USER32.78)
+ */
+HICON32 WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
+    BITMAPOBJ *bmpXor,*bmpAnd;
+    HICON32 hObj;
+    int	sizeXor,sizeAnd;
+
+    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( iconinfo->hbmColor, BITMAP_MAGIC );
+    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( iconinfo->hbmMask, BITMAP_MAGIC );
+
+    sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
+    sizeAnd = bmpAnd->bitmap.bmHeight * bmpAnd->bitmap.bmWidthBytes;
+
+    hObj = GlobalAlloc16( GMEM_MOVEABLE, 
+		     sizeof(CURSORICONINFO) + sizeXor + sizeAnd );
+    if (hObj)
+    {
+	CURSORICONINFO *info;
+
+	info = (CURSORICONINFO *)GlobalLock16( hObj );
+	info->ptHotSpot.x   = iconinfo->xHotspot;
+	info->ptHotSpot.y   = iconinfo->yHotspot;
+	info->nWidth        = bmpXor->bitmap.bmWidth;
+	info->nHeight       = bmpXor->bitmap.bmHeight;
+	info->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
+	info->bPlanes       = bmpXor->bitmap.bmPlanes;
+	info->bBitsPerPixel = bmpXor->bitmap.bmBitsPixel;
+
+	/* Transfer the bitmap bits to the CURSORICONINFO structure */
+
+	GetBitmapBits32( iconinfo->hbmMask ,sizeAnd,(char*)(info + 1) );
+	GetBitmapBits32( iconinfo->hbmColor,sizeXor,(char*)(info + 1) +sizeAnd);
+	GlobalUnlock16( hObj );
+    }
+    return hObj;
+}

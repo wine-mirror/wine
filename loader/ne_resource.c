@@ -1,4 +1,3 @@
-#ifndef WINELIB
 /*
  *
  * Copyright 1993 Robert J. Amstadt
@@ -305,9 +304,7 @@ HGLOBAL16 NE_AllocResource( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size )
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
-#ifndef WINELIB
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-#endif
     if (size < (DWORD)pNameInfo->length << sizeShift)
         size = (DWORD)pNameInfo->length << sizeShift;
     return GLOBAL_Alloc( GMEM_FIXED, size, hModule, FALSE, FALSE, FALSE );
@@ -324,9 +321,7 @@ int NE_AccessResource( HMODULE16 hModule, HRSRC16 hRsrc )
 
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return -1;
-#ifndef WINELIB
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-#endif
 
     if ((fd = _lopen32( NE_MODULE_NAME(pModule), OF_READ )) != -1)
     {
@@ -348,9 +343,7 @@ DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC16 hRsrc )
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
-#ifndef WINELIB
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-#endif
     return (DWORD)pNameInfo->length << sizeShift;
 }
 
@@ -371,7 +364,6 @@ HGLOBAL16 NE_LoadResource( HMODULE16 hModule,  HRSRC16 hRsrc )
 
     d = pModule->res_table + 2;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + d);
-#ifndef WINELIB
     while( hRsrc > d )
     {
 	if (pTypeInfo->type_id == 0)
@@ -389,7 +381,7 @@ HGLOBAL16 NE_LoadResource( HMODULE16 hModule,  HRSRC16 hRsrc )
 	}
 	pTypeInfo = (NE_TYPEINFO *)(((char *)pModule) + d);
     }
-#endif
+
     if (pNameInfo)
     {
 	RESOURCEHANDLER16 __r16loader;
@@ -459,6 +451,7 @@ BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
                 {
                     GlobalFree16( pNameInfo->handle );
                     pNameInfo->handle = 0;
+		    pNameInfo->flags &= ~NE_SEGFLAGS_LOADED;
                 }
                 return 0;
             }
@@ -472,4 +465,3 @@ BOOL32 NE_FreeResource( HMODULE16 hModule, HGLOBAL16 handle )
     GlobalFree16( handle ); /* it could have been DirectResAlloc()'ed */
     return handle;
 }
-#endif /* WINELIB */

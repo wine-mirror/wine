@@ -41,24 +41,24 @@ static int	NumDev = 6;
 
 
 /**************************************************************************
-* 				AUX_GetDevCaps			[internal]
-*/
-static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
+ * 				AUX_GetDevCaps			[internal]
+ */
+static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS16 lpCaps, DWORD dwSize)
 {
 #ifdef linux
-	int 	mixer;
-	int		volume;
+	int 	mixer,volume;
+
 	dprintf_mmaux(stddeb,"AUX_GetDevCaps(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		dprintf_mmaux(stddeb,"AUX_GetDevCaps // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
-		}
-    if (ioctl(mixer, SOUND_MIXER_READ_LINE, &volume) == -1) {
+	}
+	if (ioctl(mixer, SOUND_MIXER_READ_LINE, &volume) == -1) {
 		close(mixer);
 		dprintf_mmaux(stddeb,"AUX_GetDevCaps // unable read mixer !\n");
 		return MMSYSERR_NOTENABLED;
-		}
+	}
 	close(mixer);
 #ifdef EMULATE_SB16
 	lpCaps->wMid = 0x0002;
@@ -112,21 +112,19 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 
 
 /**************************************************************************
-* 				AUX_GetVolume			[internal]
-*/
+ * 				AUX_GetVolume			[internal]
+ */
 static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
 #ifdef linux
-	int 	mixer;
-	int		volume, left, right;
-	int		cmd;
+	int 	mixer,volume,left,right,cmd;
 
 	dprintf_mmaux(stddeb,"AUX_GetVolume(%04X, %p);\n", wDevID, lpdwVol);
 	if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 		dprintf_mmaux(stddeb,"Linux 'AUX_GetVolume' // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
-		}
+	}
 	switch(wDevID) {
 		case 0:
 			dprintf_mmaux(stddeb,"Linux 'AUX_GetVolume' // SOUND_MIXER_READ_PCM !\n");
@@ -159,7 +157,7 @@ static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 	if (ioctl(mixer, cmd, &volume) == -1) {
 		dprintf_mmaux(stddeb,"Linux 'AUX_GetVolume' // unable read mixer !\n");
 		return MMSYSERR_NOTENABLED;
-		}
+	}
 	close(mixer);
 	left = volume & 0x7F;
 	right = (volume >> 8) & 0x7F;
@@ -172,8 +170,8 @@ static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 }
 
 /**************************************************************************
-* 				AUX_SetVolume			[internal]
-*/
+ * 				AUX_SetVolume			[internal]
+ */
 static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 {
 #ifdef linux
@@ -229,26 +227,25 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 
 
 /**************************************************************************
-* 				auxMessage			[sample driver]
-*/
+ * 				auxMessage			[sample driver]
+ */
 DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
 	dprintf_mmaux(stddeb,"auxMessage(%04X, %04X, %08lX, %08lX, %08lX);\n", 
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
-		case AUXDM_GETDEVCAPS:
-			return AUX_GetDevCaps(wDevID, 
-				(LPAUXCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
-		case AUXDM_GETNUMDEVS:
-			dprintf_mmaux(stddeb,"AUX_GetNumDevs() return %d;\n", NumDev);
-			return NumDev;
-		case AUXDM_GETVOLUME:
-			return AUX_GetVolume(wDevID, (LPDWORD)PTR_SEG_TO_LIN(dwParam1));
-		case AUXDM_SETVOLUME:
-			return AUX_SetVolume(wDevID, dwParam1);
-		default:
-			dprintf_mmaux(stddeb,"auxMessage // unknown message !\n");
-		}
+	case AUXDM_GETDEVCAPS:
+		return AUX_GetDevCaps(wDevID,(LPAUXCAPS16)dwParam1,dwParam2);
+	case AUXDM_GETNUMDEVS:
+		dprintf_mmaux(stddeb,"AUX_GetNumDevs() return %d;\n", NumDev);
+		return NumDev;
+	case AUXDM_GETVOLUME:
+		return AUX_GetVolume(wDevID,(LPDWORD)dwParam1);
+	case AUXDM_SETVOLUME:
+		return AUX_SetVolume(wDevID,dwParam1);
+	default:
+		dprintf_mmaux(stddeb,"auxMessage // unknown message !\n");
+	}
 	return MMSYSERR_NOTSUPPORTED;
 }

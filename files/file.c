@@ -1207,12 +1207,32 @@ BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
 /***********************************************************************
  *           FILE_mmap
  */
-LPVOID FILE_mmap( FILE_OBJECT *file, LPVOID start,
+LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
                   DWORD size_high, DWORD size_low,
                   DWORD offset_high, DWORD offset_low,
                   int prot, int flags )
 {
+    LPVOID ret;
+    FILE_OBJECT *file = FILE_GetFile( hFile );
+    if (!file) return (LPVOID)-1;
+    ret = FILE_dommap( file, start, size_high, size_low,
+                       offset_high, offset_low, prot, flags );
+    FILE_ReleaseFile( file );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           FILE_dommap
+ */
+LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
+                    DWORD size_high, DWORD size_low,
+                    DWORD offset_high, DWORD offset_low,
+                    int prot, int flags )
+{
     int fd = -1;
+    int pos;
+    LPVOID ret;
 
     if (size_high || offset_high)
         fprintf( stderr, "FILE_mmap: offsets larger than 4Gb not supported\n");
@@ -1244,7 +1264,52 @@ LPVOID FILE_mmap( FILE_OBJECT *file, LPVOID start,
     }
     else fd = file->unix_handle;
 
-    return mmap( start, size_low, prot, flags, fd, offset_low );
+    if ((ret = mmap( start, size_low, prot,
+                     flags, fd, offset_low )) != (LPVOID)-1)
+        return ret;
+
+    /* mmap() failed; if this is because the file offset is not    */
+    /* page-aligned (EINVAL), or because the underlying filesystem */
+    /* does not support mmap() (ENOEXEC), we do it by hand.        */
+
+    if (!file) return ret;
+    if ((errno != ENOEXEC) && (errno != EINVAL)) return ret;
+    if (prot & PROT_WRITE)
+    {
+        /* We cannot fake shared write mappings */
+#ifdef MAP_SHARED
+	if (flags & MAP_SHARED) return ret;
+#endif
+#ifdef MAP_PRIVATE
+	if (!(flags & MAP_PRIVATE)) return ret;
+#endif
+    }
+/*    printf( "FILE_mmap: mmap failed (%d), faking it\n", errno );*/
+    /* Reserve the memory with an anonymous mmap */
+    ret = FILE_mmap( NULL, start, size_high, size_low, 0, 0,
+                     PROT_READ | PROT_WRITE, flags );
+    if (ret == (LPVOID)-1) return ret;
+    /* Now read in the file */
+    if ((pos = lseek( fd, offset_low, SEEK_SET )) == -1)
+    {
+        FILE_munmap( ret, size_high, size_low );
+        return (LPVOID)-1;
+    }
+    read( fd, ret, size_low );
+    lseek( fd, pos, SEEK_SET );  /* Restore the file pointer */
+    mprotect( ret, size_low, prot );  /* Set the right protection */
+    return ret;
+}
+
+
+/***********************************************************************
+ *           FILE_munmap
+ */
+int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
+{
+    if (size_high)
+      fprintf( stderr, "FILE_munmap: offsets larger than 4Gb not supported\n");
+    return munmap( start, size_low );
 }
 
 
@@ -1262,8 +1327,6 @@ DWORD WINAPI GetFileType( HFILE32 hFile )
 
 /**************************************************************************
  *           MoveFileEx32A   (KERNEL32.???)
- *
- * 
  */
 BOOL32 WINAPI MoveFileEx32A( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 {

@@ -24,4 +24,7 @@ extern BOOL32 DC_SetupGCForText( DC * dc );
 
 extern const int DC_XROPfunction[];
 
+INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
+                                  INT32 right, INT32 bottom, UINT32 flags );
+
 #endif /* __WINE_DC_H */

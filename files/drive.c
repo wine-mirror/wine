@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
@@ -502,6 +503,54 @@ int DRIVE_Enable( int drive  )
 
 
 /***********************************************************************
+ *           DRIVE_SetLogicalMapping
+ */
+int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
+{
+ /* If new_drive is already valid, do nothing and return 0
+    otherwise, copy DOSDrives[existing_drive] to DOSDrives[new_drive] */
+  
+    DOSDRIVE *old, *new;
+    
+    old = DOSDrives + existing_drive;
+    new = DOSDrives + new_drive;
+
+    if ((existing_drive < 0) || (existing_drive >= MAX_DOS_DRIVES) ||
+        !old->root ||
+	(new_drive < 0) || (new_drive >= MAX_DOS_DRIVES))
+    {
+        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        return 0;
+    }
+
+    if ( new->root )
+    {
+        dprintf_dosfs ( stddeb, "Can\'t map drive %c to drive %c - "
+	                        "drive %c already exists\n",
+			'A' + existing_drive, 'A' + new_drive,
+			'A' + new_drive );
+	return 0;
+    }
+
+    new->root = HEAP_strdupA( SystemHeap, 0, old->root );
+    new->dos_cwd = HEAP_strdupA( SystemHeap, 0, old->dos_cwd );
+    new->unix_cwd = HEAP_strdupA( SystemHeap, 0, old->unix_cwd );
+    memcpy ( new->label, old->label, 12 );
+    new->serial = old->serial;
+    new->type = old->type;
+    new->flags = old->flags;
+    new->dev = old->dev;
+    new->ino = old->ino;
+
+    dprintf_dosfs ( stddeb, "Drive %c is now equal to drive %c\n",
+                    'A' + new_drive, 'A' + existing_drive );
+
+    return 1;
+}
+
+
+
+/***********************************************************************
  *           DRIVE_GetFreeSpace
  */
 static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
@@ -560,7 +609,7 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
     {
-        if ((root[1] != ':') || (root[2] != '\\'))
+        if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
         {
             fprintf( stderr, "GetDiskFreeSpaceA: invalid root '%s'\n", root );
             return FALSE;
@@ -622,7 +671,7 @@ UINT16 WINAPI GetDriveType16( UINT16 drive )
 UINT32 WINAPI GetDriveType32A( LPCSTR root )
 {
     dprintf_dosfs( stddeb, "GetDriveType32A(%s)\n", root );
-    if (root[1] != ':')
+    if ((root[1]) && (root[1] != ':'))
     {
         fprintf( stderr, "GetDriveType32A: invalid root '%s'\n", root );
         return DRIVE_DOESNOTEXIST;
@@ -669,11 +718,7 @@ UINT32 WINAPI GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
 {
     char *pref = "A:\\";
     const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
-    if (!s)
-    {
-        *buf = '\0';
-        return 0;
-    }
+    assert(s);
     lstrcpyn32A( buf, pref, MIN( 4, buflen ) );
     if (buflen) buf[0] += DRIVE_GetCurrentDrive();
     if (buflen > 3) lstrcpyn32A( buf + 3, s, buflen - 3 );
@@ -820,7 +865,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
     {
-        if ((root[1] != ':') || (root[2] != '\\'))
+        if ((root[1]) &&((root[1] != ':') || (root[2] != '\\')))
         {
             fprintf( stderr, "GetVolumeInformation: invalid root '%s'\n",root);
             return FALSE;
@@ -836,7 +881,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
 
     if (filename_len) *filename_len = 12;
     if (flags) *flags = 0;
-    if (fsname) lstrcpyn32A( fsname, "FAT", fsname_len );
+    if (fsname) lstrcpyn32A( fsname, "FAT16", fsname_len );
     return TRUE;
 }
 

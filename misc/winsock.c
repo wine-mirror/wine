@@ -1332,115 +1332,233 @@ SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
 /* ----------------------------------- DNS services
  *
  * IMPORTANT: 16-bit API structures have SEGPTR pointers inside them.
- * Also, we have to use wsock32 stubs to convert error codes from Unix
- * to WSA, hence no direct mapping in if1632/wsock32.spec.
- *
- * FIXME: Win32 may need "short" h_addrtype and h_length in
- * ...ent structures. If so, use WS_dup_...(pwsi, ..., 0) to
- * convert.
+ * Also, we have to use wsock32 stubs to convert structures and
+ * error codes from Unix to WSA, hence no direct mapping in if1632/wsock32.spec.
  */
 
 static char*	NULL_STRING = "NULL";
 
-
 /***********************************************************************
- *		gethostbyaddr()		(WINSOCK.51)
- *
- *
-struct WIN_hostent *
+ *		gethostbyaddr()		(WINSOCK.51)(WSOCK32.51)
  */
-SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
+static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
 {
     LPWSINFO      	pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GetHostByAddr16(%08x): ptr %8x, len %d, type %d\n", 
-			  (unsigned)pwsi, (unsigned) addr, len, type);
     if( pwsi )
     {
-	struct hostent*	host = gethostbyaddr(addr, len, type);
-	if( host )
-	    if( WS_dup_he(pwsi, host, WS_DUP_SEGPTR) )
-		return SEGPTR_GET(pwsi->buffer);
+	struct hostent*	host;
+	if( (host = gethostbyaddr(addr, len, type)) != NULL )
+	    if( WS_dup_he(pwsi, host, dup_flag) )
+		return (struct WIN_hostent*)(pwsi->buffer);
 	    else 
 		pwsi->err = WSAENOBUFS;
 	else 
 	    pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
     }
-    return (SEGPTR)NULL;
-}
-
-/***********************************************************************
- *              gethostbyaddr()		(WSOCK32.51)
- */
-struct hostent*  WINAPI WINSOCK_gethostbyaddr32(const char *addr, INT32 len,
-                                                INT32 type)
-{
-    LPWSINFO		pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetHostByAddr32(%08x): ptr %8x, len %d, type %d\n",
-                            (unsigned)pwsi, (unsigned) addr, len, type);
-    if( pwsi )
-    {
-	struct hostent* host = gethostbyaddr( addr, len, type );
-	if( host ) 
-	    return host;
-	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
     return NULL;
 }
 
+SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
+{
+    struct WIN_hostent* retval;
+    dprintf_winsock(stddeb, "WS_GetHostByAddr16: ptr %08x, len %d, type %d\n",
+                            (unsigned) addr, len, type);
+    retval = __ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR );
+    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+}
+
+struct WIN_hostent* WINAPI WINSOCK_gethostbyaddr32(const char *addr, INT32 len,
+                                                INT32 type)
+{
+    dprintf_winsock(stddeb, "WS_GetHostByAddr32: ptr %08x, len %d, type %d\n",
+                             (unsigned) addr, len, type);
+    return __ws_gethostbyaddr(addr, len, type, WS_DUP_LINEAR);
+}
+
 /***********************************************************************
- *		gethostbyname()		(WINSOCK.52) 
- *
- *
-struct WIN_hostent *
+ *		gethostbyname()		(WINSOCK.52)(WSOCK32.52)
  */
-SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
+static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 {
     LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GetHostByName16(%08x): %s\n",
-                          (unsigned)pwsi, (name)?name:"NULL");
     if( pwsi )
     {
 	struct hostent*     host;
 	if( (host = gethostbyname(name)) != NULL )
-	    if( WS_dup_he(pwsi, host, WS_DUP_SEGPTR) )
-		return SEGPTR_GET(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
+	     if( WS_dup_he(pwsi, host, dup_flag) )
+		 return (struct WIN_hostent*)(pwsi->buffer);
+	     else pwsi->err = WSAENOBUFS;
 	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-  }
-  return (SEGPTR)NULL;
-}
-
-/***********************************************************************
- *              gethostbyname()		(WSOCK32,52)
- */
-struct hostent*  WINAPI WINSOCK_gethostbyname32(const char* name)
-{
-    LPWSINFO            pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetHostByName32(%08x): %s\n",
-                            (unsigned)pwsi, (name)?name:"NULL");
-    if( pwsi )
-    {
-	struct hostent* host = gethostbyname( name );
-	if( host )
-	    return host;
-	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
     }
     return NULL;
 }
 
+SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
+{
+    struct WIN_hostent* retval;
+    dprintf_winsock(stddeb, "WS_GetHostByName16: %s\n", (name)?name:NULL_STRING);
+    retval = __ws_gethostbyname( name, WS_DUP_SEGPTR );
+    return (retval)? SEGPTR_GET(retval) : ((SEGPTR)NULL) ;
+}
+
+struct WIN_hostent* WINAPI WINSOCK_gethostbyname32(const char* name)
+{
+    dprintf_winsock(stddeb, "WS_GetHostByName32: %s\n", (name)?name:NULL_STRING);
+    return __ws_gethostbyname( name, WS_DUP_LINEAR );
+}
+
+
 /***********************************************************************
- *		gethostname()		(WSOCK32.57)
+ *		getprotobyname()	(WINSOCK.53)(WSOCK32.53)
+ */
+static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
+{
+    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+
+    if( pwsi )
+    {
+	struct protoent*     proto;
+	if( (proto = getprotobyname(name)) != NULL )
+	    if( WS_dup_pe(pwsi, proto, dup_flag) )
+		return (struct WIN_protoent*)(pwsi->buffer);
+	    else pwsi->err = WSAENOBUFS;
+	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+    }
+    return NULL;
+}
+
+SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
+{
+    struct WIN_protoent* retval;
+    dprintf_winsock(stddeb, "WS_GetProtoByName16: %s\n", (name)?name:NULL_STRING);
+    retval = __ws_getprotobyname(name, WS_DUP_SEGPTR);
+    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+}
+
+struct WIN_protoent* WINAPI WINSOCK_getprotobyname32(const char* name)
+{
+    dprintf_winsock(stddeb, "WS_GetProtoByName32: %s\n", (name)?name:NULL_STRING);
+    return __ws_getprotobyname(name, WS_DUP_LINEAR);
+}
+
+
+/***********************************************************************
+ *		getprotobynumber()	(WINSOCK.54)(WSOCK32.54)
+ */
+static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
+{
+    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+
+    if( pwsi )
+    {
+	struct protoent*     proto;
+	if( (proto = getprotobynumber(number)) != NULL )
+	    if( WS_dup_pe(pwsi, proto, dup_flag) )
+		return (struct WIN_protoent*)(pwsi->buffer);
+	    else pwsi->err = WSAENOBUFS;
+	else pwsi->err = WSANO_DATA;
+    }
+    return NULL;
+}
+
+SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
+{
+    struct WIN_protoent* retval;
+    dprintf_winsock(stddeb, "WS_GetProtoByNumber16: %i\n", number);
+    retval = __ws_getprotobynumber(number, WS_DUP_SEGPTR);
+    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+}
+
+struct WIN_protoent* WINAPI WINSOCK_getprotobynumber32(INT32 number)
+{
+    dprintf_winsock(stddeb, "WS_GetProtoByNumber32: %i\n", number);
+    return __ws_getprotobynumber(number, WS_DUP_LINEAR);
+}
+
+
+/***********************************************************************
+ *		getservbyname()		(WINSOCK.55)(WSOCK32.55)
+ */
+struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
+{
+    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+
+    if( pwsi )
+    {
+	struct servent*     serv;
+	if( (serv = getservbyname(name, proto)) != NULL )
+	    if( WS_dup_se(pwsi, serv, dup_flag) )
+		return (struct WIN_servent*)(pwsi->buffer);
+	    else pwsi->err = WSAENOBUFS;
+	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+    }
+    return NULL;
+}
+
+SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
+{
+    struct WIN_servent* retval;
+    dprintf_winsock(stddeb, "WS_GetServByName16: '%s', '%s'\n",
+                            (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
+    retval = __ws_getservbyname(name, proto, WS_DUP_SEGPTR);
+    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+}
+
+struct WIN_servent* WINAPI WINSOCK_getservbyname32(const char *name, const char *proto)
+{
+    dprintf_winsock(stddeb, "WS_GetServByName32: '%s', '%s'\n",
+                            (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
+    return __ws_getservbyname(name, proto, WS_DUP_LINEAR);
+}
+
+
+/***********************************************************************
+ *		getservbyport()		(WINSOCK.56)(WSOCK32.56)
+ */
+static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
+{
+    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+
+    if( pwsi )
+    {
+	struct servent*     serv;
+	if( (serv = getservbyport(port, proto)) != NULL )
+	    if( WS_dup_se(pwsi, serv, dup_flag) )
+		return (struct WIN_servent*)(pwsi->buffer);
+	    else pwsi->err = WSAENOBUFS;
+	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+    }
+    return NULL;
+}
+
+SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
+{
+    struct WIN_servent* retval;
+    dprintf_winsock(stddeb, "WS_GetServByPort16: %i, '%s'\n",
+                            (int)port, (proto)?proto:NULL_STRING);
+    retval = __ws_getservbyport(port, proto, WS_DUP_SEGPTR);
+    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+}
+
+struct WIN_servent* WINAPI WINSOCK_getservbyport32(INT32 port, const char *proto)
+{
+    dprintf_winsock(stddeb, "WS_GetServByPort32: %i, '%s'\n",
+                            (int)port, (proto)?proto:NULL_STRING);
+    return __ws_getservbyport(port, proto, WS_DUP_LINEAR);
+}
+
+
+/***********************************************************************
+ *              gethostname()           (WSOCK32.57)
  */
 INT32 WINAPI WINSOCK_gethostname32(char *name, INT32 namelen)
 {
     LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-    dprintf_winsock(stddeb, "WS_GetHostName(%08x): name %s, len %d\n", 
-			  (unsigned)pwsi, (name)?name:NULL_STRING, namelen);
+    dprintf_winsock(stddeb, "WS_GetHostName(%08x): name %s, len %d\n",
+                          (unsigned)pwsi, (name)?name:NULL_STRING, namelen);
     if( pwsi )
     {
 	if (gethostname(name, namelen) == 0) return 0;
@@ -1450,184 +1568,11 @@ INT32 WINAPI WINSOCK_gethostname32(char *name, INT32 namelen)
 }
 
 /***********************************************************************
- *              gethostname()		(WINSOCK.57)
+ *              gethostname()           (WINSOCK.57)
  */
 INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
 {
     return (INT16)WINSOCK_gethostname32(name, namelen);
-}
-
-/***********************************************************************
- *		getprotobyname()	(WINSOCK.53)
- *
- *
-struct WIN_protoent *
- */
-SEGPTR WINAPI WINSOCK_getprotobyname16(char *name)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetProtoByName16(%08x): %s\n",
-                          (unsigned)pwsi, (name)?name:NULL_STRING);
-    if( pwsi )
-    {
-	struct protoent*     proto;
-	if( (proto = getprotobyname(name)) != NULL )
-	    if( WS_dup_pe(pwsi, proto, WS_DUP_SEGPTR) )
-		return SEGPTR_GET(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
-    return (SEGPTR)NULL;
-}
-
-/***********************************************************************
- *              getprotobyname()	(WSOCK32.53)
- */
-struct protoent* WINAPI WINSOCK_getprotobyname32(char* name)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetProtoByName32(%08x): %s\n",
-                          (unsigned)pwsi, (name)?name:NULL_STRING);
-    if( pwsi )
-    {
-	struct protoent* proto;
-	if( (proto = getprotobyname(name)) != NULL )
-                return proto;
-        pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
-    return NULL;
-}
-
-
-/***********************************************************************
- *		getprotobynumber()	(WINSOCK.54)
- *
- *
-struct WIN_protoent *
- */
-SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetProtoByNumber16(%08x): %i\n", (unsigned)pwsi, number);
-
-    if( pwsi )
-    {
-	struct protoent*     proto;
-	if( (proto = getprotobynumber(number)) != NULL )
-	    if( WS_dup_pe(pwsi, proto, WS_DUP_SEGPTR) )
-		return SEGPTR_GET(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = WSANO_DATA;
-    }
-    return (SEGPTR)NULL;
-}
-
-/***********************************************************************
- *              getprotobynumber()	(WSOCK32.54)
- */
-struct protoent* WINAPI WINSOCK_getprotobynumber32(INT32 number)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetProtoByNumber32(%08x): %i\n", (unsigned)pwsi, number);
-
-    if( pwsi )
-    {
-	struct protoent* proto;
-	if( (proto = getprotobynumber(number)) != NULL )
-	    return proto;
-	pwsi->err = WSANO_DATA;
-    }
-    return NULL;
-}
-
-/***********************************************************************
- *		getservbyname()		(WINSOCK.55)
- *
- *
-struct WIN_servent *
- */
-SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetServByName16(%08x): '%s', '%s'\n", 
-			  (unsigned)pwsi, (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
-    if( pwsi )
-    {
-	struct servent*     serv;
-	if( (serv = getservbyname(name, proto)) != NULL )
-	    if( WS_dup_se(pwsi, serv, WS_DUP_SEGPTR) )
-		return SEGPTR_GET(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
-    return (SEGPTR)NULL;
-}
-
-/***********************************************************************
- *              getservbyname()		(WSOCK32.55)
- */
-struct servent* WINAPI WINSOCK_getservbyname32(const char *name, const char *proto)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetServByName32(%08x): '%s', '%s'\n",
-                          (unsigned)pwsi, (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
-    if( pwsi )
-    {
-	struct servent* serv;
-	if( (serv = getservbyname(name, proto)) != NULL )
-	    return serv;
-	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
-    return NULL;
-}
-
-/***********************************************************************
- *		getservbyport()		(WINSOCK.56)
- *
- *
-struct WIN_servent *
- */
-SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetServByPort16(%08x): %i, '%s'\n",
-                          (unsigned)pwsi, (int)port, (proto)?proto:NULL_STRING);
-    if( pwsi )
-    {
-	struct servent*     serv;
-	if( (serv = getservbyport(port, proto)) != NULL )
-	    if( WS_dup_se(pwsi, serv, WS_DUP_SEGPTR) )
-		return SEGPTR_GET(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
-    return (SEGPTR)NULL;
-}
-
-/***********************************************************************
- *              getservbyport()		(WSOCK32.56)
- */
-struct servent* WINAPI WINSOCK_getservbyport32(INT32 port, const char *proto)
-{
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-    dprintf_winsock(stddeb, "WS_GetServByPort32(%08x): %i, '%s'\n",
-                          (unsigned)pwsi, (int)port, (proto)?proto:NULL_STRING);
-    if( pwsi )
-    {
-	struct servent* serv;
-	if( (serv = getservbyport(port, proto)) != NULL )
-	    return serv;
-	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-    }
-    return NULL;
 }
 
 
@@ -1676,6 +1621,19 @@ HANDLE16 WINAPI WSAAsyncGetHostByName(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
   if( pwsi )
     return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
                             NULL, sbuf, buflen, WSMSG_ASYNC_HOSTBYNAME );
+  return 0;
+}                     
+
+/***********************************************************************
+ *       WSAAsyncGetHostByName32()	(WSOCK32.103)
+ */
+HANDLE32 WINAPI WSAAsyncGetHostByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name, 
+                                      LPSTR sbuf, INT32 buflen)
+{
+  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+  dprintf_winsock(stddeb, "WS_AsyncGetHostByName(%08x): hwnd %04x, msg %04x, host %s, buffer %i\n",
+                          (unsigned)pwsi, hWnd, uMsg, (name)?name:NULL_STRING, (int)buflen );
+
   return 0;
 }                     
 

@@ -413,6 +413,10 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
     {
 	switch(nEscape)
           {
+	  case ENABLEPAIRKERNING:
+	    fprintf(stderr,"Escape: ENABLEPAIRKERNING ignored.\n");
+            nRet = 1;
+	    break;
           case SETABORTPROC:
 	    printf("Escape: SetAbortProc ignored should be stored in dc somewhere\n");
             /* Make calling application believe this worked */

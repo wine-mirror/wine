@@ -20,6 +20,7 @@
 #define DCX_NORECOMPUTE      	0x00100000
 #define DCX_VALIDATE         	0x00200000
 
+#define DCX_DCEEMPTY		0x00000800
 #define DCX_DCEBUSY		0x00001000
 #define DCX_WINDOWPAINT		0x00020000
 #define DCX_KEEPCLIPRGN		0x00040000
@@ -47,7 +48,8 @@ typedef struct tagDCE
 
 extern void  DCE_Init(void);
 extern DCE*  DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
-extern void  DCE_FreeDCE( DCE *dce );
+extern DCE*  DCE_FreeDCE( DCE *dce );
+extern void  DCE_FreeWindowDCE( WND* );
 extern INT16 DCE_ExcludeRgn( HDC32, WND*, HRGN32 );
 extern HRGN32 DCE_GetVisRgn( HWND32, WORD );
 extern BOOL32 DCE_InvalidateDCE( WND*, RECT32* );

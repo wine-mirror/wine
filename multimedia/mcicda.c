@@ -51,7 +51,7 @@ typedef struct {
     BOOL16  fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
     HANDLE16 hCallback;          /* Callback handle for pending notification */
-	MCI_OPEN_PARMS openParms;
+	MCI_OPEN_PARMS16 openParms;
 	DWORD	dwTimeFormat;
 	int		unixdev;
 #ifdef linux
@@ -227,7 +227,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(UINT16 wDevID)
 /**************************************************************************
 * 				CDAUDIO_mciOpen			[internal]
 */
-static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
+static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
     	dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen(%04X, %08lX, %p);\n", 
@@ -251,7 +251,7 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpPa
 		dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen // MCI_OPEN_ELEMENT !\n");
 /*		return MCIERR_NO_ELEMENT_ALLOWED; */
 		}
-	memcpy(&CDADev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS));
+	memcpy(&CDADev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS16));
 	CDADev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
 	CDADev[wDevID].unixdev = open (CDAUDIO_DEV, O_RDONLY, 0);
 	if (CDADev[wDevID].unixdev == -1) {
@@ -361,7 +361,7 @@ static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
 /**************************************************************************
 * 				CDAUDIO_mciInfo			[internal]
 */
-static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
+static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
     	dprintf_cdaudio(stddeb,"CDAUDIO_mciInfo(%04X, %08lX, %p);\n", 
@@ -1037,7 +1037,7 @@ LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case DRV_OPEN:
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
-			return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2)); 
+			return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS16)PTR_SEG_TO_LIN(dwParam2)); 
 		case DRV_CLOSE:
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
@@ -1061,7 +1061,7 @@ LONG CDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 				(LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_INFO:
 			return CDAUDIO_mciInfo(dwDevID, dwParam1, 
-				(LPMCI_INFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
+				(LPMCI_INFO_PARMS16)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STATUS:
 			return CDAUDIO_mciStatus(dwDevID, dwParam1, 
 				(LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));

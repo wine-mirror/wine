@@ -9,10 +9,10 @@
 #include "windows.h"
 #include "winnt.h"
 #include "global.h"
+#include "heap.h"
 #include "module.h"
 #include "stackframe.h"
 #include "task.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
 #include "debug.h"
@@ -53,8 +53,10 @@ BOOL32 RELAY_Init(void)
     CALLTO16_RetAddr_regs=MAKELONG( (int)CALLTO16_Ret_regs-(int)CALLTO16_Start,
                                     codesel );
 
-    /* Initialize thunking */
+    /* Create built-in modules */
+    if (!BUILTIN_Init()) return FALSE;
 
+    /* Initialize thunking */
     return THUNK_Init();
 }
 
@@ -245,6 +247,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     int i, ret;
     char buffer[80];
     FARPROC32 func;
+    DWORD mask, typemask;
 
     int *args = &ret_addr;
     /* Relay addr is the return address for this function */
@@ -252,13 +255,23 @@ int RELAY_CallFrom32( int ret_addr, ... )
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
     assert(debugging_relay);
-    func = BUILTIN_GetEntryPoint32( buffer, relay_addr - 5 );
+    func = BUILTIN_GetEntryPoint32( buffer, relay_addr - 5, &typemask );
     printf( "Call %s(", buffer );
     args++;
-    for (i = 0; i < nb_args; i++)
+    for (i = 0, mask = 3; i < nb_args; i++, mask <<= 2)
     {
         if (i) printf( "," );
-        printf( "%08x", args[i] );
+	if ((typemask & mask) && HIWORD(args[i]))
+        {
+	    if (typemask & (2<<(2*i)))
+            {
+                char buff[80];
+                lstrcpynWtoA( buff, (LPWSTR)args[i], sizeof(buff) );
+	    	printf( "%08x L\"%s\"", args[i], buff );
+	    }
+            else printf( "%08x \"%s\"", args[i], (char *)args[i] );
+	}
+        else printf( "%08x", args[i] );
     }
     printf( ") ret=%08x\n", ret_addr );
     if (*relay_addr == 0xc3) /* cdecl */
@@ -371,14 +384,16 @@ void RELAY_CallFrom32Regs( CONTEXT context,
     else
     {
         char buffer[80];
+        DWORD typemask;
 
+    	__RESTORE_ES;
         /* Fixup the context structure because of the extra parameter */
         /* pushed by the relay debugging code */
 
         EIP_reg(&context) = ret_addr;
         ESP_reg(&context) += sizeof(int);
 
-        BUILTIN_GetEntryPoint32( buffer, relay_addr - 5 );
+        BUILTIN_GetEntryPoint32( buffer, relay_addr - 5, &typemask );
         printf("Call %s(regs) ret=%08x\n", buffer, ret_addr );
         printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
@@ -524,8 +539,9 @@ DWORD WINAPI WIN16_CallProc32W()
         argconvmask = VA_ARG16( valist, DWORD );
         proc32      = VA_ARG16( valist, FARPROC32 );
 	fprintf(stderr,"CallProc32W(%ld,%ld,%p,args[",nrofargs,argconvmask,proc32);
-	args = (DWORD*)xmalloc(sizeof(DWORD)*nrofargs);
-	for (i=nrofargs;i--;) {
+	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
+                                    sizeof(DWORD)*nrofargs );
+	for (i=0;i<nrofargs;i++) {
 		if (argconvmask & (1<<i))
                 {
                     SEGPTR ptr = VA_ARG16( valist, SEGPTR );
@@ -568,6 +584,6 @@ DWORD WINAPI WIN16_CallProc32W()
         STACK16_POP( (3 + nrofargs) * sizeof(DWORD) );
 
 	fprintf(stderr,"returns %08lx\n",ret);
-	free(args);
+	HeapFree( GetProcessHeap(), 0, args );
 	return ret;
 }

@@ -122,7 +122,6 @@ typedef DWORD           ACCESS_MASK;
 typedef ACCESS_MASK     REGSAM;
 typedef HANDLE32        HHOOK;
 typedef HANDLE32        HKEY;
-typedef HANDLE32        HMIXEROBJ;
 typedef DWORD           LCID;
 typedef WORD            LANGID;
 typedef DWORD           LCTYPE;
@@ -145,7 +144,6 @@ typedef UINT16         *LPUINT16;
 typedef INT32          *LPINT32;
 typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
-typedef HMIXEROBJ      *LPHMIXEROBJ;
 typedef FLOAT          *LPFLOAT;
 
 /* Special case: a segmented pointer is just a pointer in the user's code. */
@@ -179,6 +177,8 @@ DECLARE_HANDLE(HMETAFILE);
 DECLARE_HANDLE(HMIDI);
 DECLARE_HANDLE(HMIDIIN);
 DECLARE_HANDLE(HMIDIOUT);
+DECLARE_HANDLE(HMIXER);
+DECLARE_HANDLE(HMIXEROBJ);
 DECLARE_HANDLE(HMMIO);
 DECLARE_HANDLE(HMODULE);
 DECLARE_HANDLE(HPALETTE);

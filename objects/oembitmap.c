@@ -15,10 +15,10 @@
 #include "callback.h"
 #include "color.h"
 #include "cursoricon.h"
+#include "heap.h"
 #include "stddebug.h"
 #include "tweak.h"
 #include "debug.h"
-#include "xmalloc.h"
 
   /* Include OEM pixmaps */
 #include "bitmaps/obm_cdrom"
@@ -208,34 +208,36 @@ static HGLOBAL16 OBM_Cursors[NB_CURSORS];
   /* palette indexes, but system colors that will be converted to    */
   /* indexes later on.                                               */
 
+#if 0
 static const struct
 {
     char *   name;
     COLORREF color;
 } OBM_SymbolicColors[] =
+#endif
+static XpmColorSymbol OBM_Colors[] =
 {
-    { "black",            RGB(0,0,0) },
-    { "white",            RGB(255,255,255) },
-    { "red",              RGB(255,0,0) },
-    { "green",            RGB(0,255,0) },
-    { "blue",             RGB(0,0,255) },
-    { "yellow",           RGB(255,255,0) },
-    { "cyan",             RGB(0,255,255) },    
-    { "dkyellow",         RGB(128,128,0) },
-    { "purple",           RGB(128,0,128) },
-    { "ltgray",           RGB(192,192,192) },
-    { "dkgray",           RGB(128,128,128) },
-    { "foldercol",        RGB(0,191,191) },
-    { "button_face",      PALETTEINDEX(COLOR_BTNFACE) },
-    { "button_shadow",    PALETTEINDEX(COLOR_BTNSHADOW) },
-    { "button_highlight", PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
-    { "button_edge",      PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
-    { "button_text",      PALETTEINDEX(COLOR_BTNTEXT) },
-    { "window_frame",     PALETTEINDEX(COLOR_WINDOWFRAME) }
+    { "black",            NULL, (Pixel)RGB(0,0,0) },
+    { "white",            NULL, (Pixel)RGB(255,255,255) },
+    { "red",              NULL, (Pixel)RGB(255,0,0) },
+    { "green",            NULL, (Pixel)RGB(0,255,0) },
+    { "blue",             NULL, (Pixel)RGB(0,0,255) },
+    { "yellow",           NULL, (Pixel)RGB(255,255,0) },
+    { "cyan",             NULL, (Pixel)RGB(0,255,255) },    
+    { "dkyellow",         NULL, (Pixel)RGB(128,128,0) },
+    { "purple",           NULL, (Pixel)RGB(128,0,128) },
+    { "ltgray",           NULL, (Pixel)RGB(192,192,192) },
+    { "dkgray",           NULL, (Pixel)RGB(128,128,128) },
+    { "foldercol",        NULL, (Pixel)RGB(0,191,191) },
+    { "button_face",      NULL, (Pixel)PALETTEINDEX(COLOR_BTNFACE) },
+    { "button_shadow",    NULL, (Pixel)PALETTEINDEX(COLOR_BTNSHADOW) },
+    { "button_highlight", NULL, (Pixel)PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
+    { "button_edge",      NULL, (Pixel)PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
+    { "button_text",      NULL, (Pixel)PALETTEINDEX(COLOR_BTNTEXT) },
+    { "window_frame",     NULL, (Pixel)PALETTEINDEX(COLOR_WINDOWFRAME) }
 };
 
-#define NB_COLOR_SYMBOLS \
-            (sizeof(OBM_SymbolicColors)/sizeof(OBM_SymbolicColors[0]))
+#define NB_COLOR_SYMBOLS (sizeof(OBM_Colors)/sizeof(OBM_Colors[0]))
 
   /* These are the symbolic colors for monochrome bitmaps   */
   /* This is needed to make sure that black is always 0 and */
@@ -246,8 +248,6 @@ static XpmColorSymbol OBM_BlackAndWhite[2] =
     { "black", NULL, 0 },
     { "white", NULL, 0xffffffff }
 };
-
-static XpmColorSymbol *OBM_Colors = NULL;
 
 /* This structure holds the arguments for OBM_CreateBitmaps() */
 typedef struct
@@ -266,23 +266,19 @@ typedef struct
  */
 static BOOL32 OBM_InitColorSymbols()
 {
+    static BOOL32 initialized = FALSE;
     int i;
 
-    if (OBM_Colors) return TRUE;  /* Already initialised */
+    if (initialized) return TRUE;  /* Already initialised */
+    initialized = TRUE;
 
-    OBM_Colors = (XpmColorSymbol *) malloc( sizeof(XpmColorSymbol) *
-                                            NB_COLOR_SYMBOLS );
-    if (!OBM_Colors) return FALSE;
     for (i = 0; i < NB_COLOR_SYMBOLS; i++)
     {
-        OBM_Colors[i].name  = OBM_SymbolicColors[i].name;
-        OBM_Colors[i].value = NULL;
-        if (OBM_SymbolicColors[i].color & 0xff000000)  /* PALETTEINDEX */
+        if (OBM_Colors[i].pixel & 0xff000000)  /* PALETTEINDEX */
             OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
-                            GetSysColor32(OBM_SymbolicColors[i].color & 0xff));
+                                    GetSysColor32(OBM_Colors[i].pixel & 0xff));
         else  /* RGB*/
-            OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
-                                                 OBM_SymbolicColors[i].color );
+            OBM_Colors[i].pixel = COLOR_ToPhysical( NULL, OBM_Colors[i].pixel);
     }
     return TRUE;
 }
@@ -331,7 +327,8 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     XpmAttributes *attrs;
     int err;
 
-    attrs = (XpmAttributes *)xmalloc( XpmAttributesSize() );
+    attrs = (XpmAttributes *)HEAP_xalloc( GetProcessHeap(), 0,
+                                          XpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
     attrs->colormap     = COLOR_GetColormap();
     attrs->depth        = descr->color ? screenDepth : 1;
@@ -343,7 +340,7 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
 
     if (err != XpmSuccess)
     {
-        free( attrs );
+        HeapFree( GetProcessHeap(), 0, attrs );
         return FALSE;
     }
     descr->hotspot.x = attrs->x_hotspot;
@@ -353,7 +350,7 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     if (descr->need_mask)
         descr->mask = OBM_MakeBitmap( attrs->width, attrs->height,
                                       1, pixmask );
-    free( attrs );
+    HeapFree( GetProcessHeap(), 0, attrs );
     if (!descr->bitmap)
     {
         if (pixmap) XFreePixmap( display, pixmap );

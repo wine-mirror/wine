@@ -1126,7 +1126,6 @@ DWORD WINAPI VerInstallFile32W(
 }
 
 
-/* FIXME: UNICODE? */
 struct dbA {
 	WORD	nextoff;
 	WORD	datalen;
@@ -1138,7 +1137,8 @@ struct dbA {
  */
 };
 
-/* FIXME: UNICODE? */
+#define DATA_OFFSET_A(db) ((4+(strlen((db)->name)+4))&~3)
+
 struct dbW {
 	WORD	nextoff;
 	WORD	datalen;
@@ -1151,9 +1151,17 @@ struct dbW {
  */
 };
 
+/* WORD nextoffset;
+ * WORD datalength;
+ * WORD btype;
+ * WCHAR szKey[]; (zero terminated)
+ * PADDING (round up to nearest 32bit boundary)
+ */
+#define DATA_OFFSET_W(db) ((2+2+2+((lstrlen32W((db)->name)+1)*2+3))&~3)
+
 /* this one used for Win16 resources, which are always in ASCII format */
 static BYTE*
-_find_dataA(BYTE *block,LPCSTR str, WORD buff_remain) {
+_find_dataA(BYTE *block,LPCSTR str, int buff_remain) {
 	char	*nextslash;
 	int	substrlen, inc_size;
 	struct	dbA	*db;
@@ -1174,36 +1182,35 @@ _find_dataA(BYTE *block,LPCSTR str, WORD buff_remain) {
 
 	while (1) {
 		db=(struct dbA*)block;
-		dprintf_ver(stddeb,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s,db->data=%s\n",
-			db,db->nextoff,db->datalen,db->name,(char*)((char*)db+4+((strlen(db->name)+4)&~3))
+		dprintf_ver(stddeb,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s\n",
+			db,db->nextoff,db->datalen,db->name
 		);
-		if ((!db->nextoff) || (!buff_remain)) /* no more entries ? */
+		if ((!db->nextoff) || (buff_remain<=0)) /* no more entries ? */
 			return NULL;
 
 		dprintf_ver(stddeb,"comparing with %s\n",db->name);
-		if (!strncmp(db->name,str,substrlen)) {
+		if (!lstrncmpi32A(db->name,str,substrlen)) {
 			if (nextslash) {
-				inc_size = 4+((strlen(db->name)+4)&~3)+((db->datalen+3)&~3);
-
-				return _find_dataA( block+inc_size ,nextslash,
-							buff_remain - inc_size);
-			}
-			else
+				inc_size=DATA_OFFSET_A(db)+((db->datalen+3)&~3);
+				return _find_dataA(block+inc_size,nextslash,
+							db->nextoff-inc_size);
+			} else
 				return block;
 		}
-		inc_size=((db->nextoff+3)&~3);
-		block=block+inc_size;
-		buff_remain=buff_remain-inc_size;
+		inc_size	 = ((db->nextoff+3)&~3);
+		block		+= inc_size;
+		buff_remain	-= inc_size;
 	}
 }
 
 /* this one used for Win32 resources, which are always in UNICODE format */
 extern LPWSTR CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
 static BYTE*
-_find_dataW(BYTE *block,LPCWSTR str, WORD buff_remain) {
+_find_dataW(BYTE *block,LPCWSTR str, int buff_remain) {
 	LPWSTR	nextslash;
 	int	substrlen, inc_size;
 	struct	dbW	*db;
+
 
 	while (*str && *str=='\\')
 		str++;
@@ -1220,22 +1227,42 @@ _find_dataW(BYTE *block,LPCWSTR str, WORD buff_remain) {
 
 
 	while (1) {
+		char	*xs,*vs;
 		db=(struct dbW*)block;
-		if ((!db->nextoff) || (!buff_remain)) /* no more entries ? */
+		xs= HEAP_strdupWtoA(GetProcessHeap(),0,db->name);
+		if (db->datalen) {
+			if (db->btext)
+				vs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)((block+DATA_OFFSET_W(db))));
+			else
+				vs = HEAP_strdupA(GetProcessHeap(),0,"not a string");
+		} else
+			vs = HEAP_strdupA(GetProcessHeap(),0,"no data");
+
+		dprintf_ver(stddeb,"db->nextoff=%d,db->name=%s,db->data=\"%s\"\n",
+			db->nextoff,xs,vs
+		);
+		HeapFree(GetProcessHeap(),0,vs);
+		HeapFree(GetProcessHeap(),0,xs);
+		if ((!db->nextoff) || (buff_remain<=0)) /* no more entries ? */
 			return NULL;
 
-		if (!lstrncmp32W(db->name,str,substrlen)) {
+		if (!lstrncmpi32W(db->name,str,substrlen)) {
 			if (nextslash) {
-				inc_size = 8+((lstrlen32W(db->name)*sizeof(WCHAR)+4)&~3)+((db->datalen+3)&~3);
-
+				/* DATA_OFFSET_W(db) (padded to 32bit already)
+				 * DATA[datalength]
+				 * PADDING (round up to nearest 32bit boundary)
+				 * -->	next level structs
+				 */
+				inc_size=DATA_OFFSET_W(db)+((db->datalen+3)&~3);
 				return _find_dataW( block+inc_size ,nextslash,
-							buff_remain - inc_size);
+							db->nextoff-inc_size);
 			} else
 				return block;
 		}
-		inc_size=((db->nextoff+3)&~3);
-		block=block+inc_size;
-		buff_remain=buff_remain-inc_size;
+		/* skip over this block, round up to nearest 32bit boundary */
+		inc_size	=  ((db->nextoff+3)&~3);
+		block		+= inc_size;
+		buff_remain	-= inc_size;
 	}
 }
 
@@ -1244,46 +1271,59 @@ _find_dataW(BYTE *block,LPCWSTR str, WORD buff_remain) {
 DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
                              UINT16 *buflen)
 {
+	LPSTR	s;
 	BYTE	*block=PTR_SEG_TO_LIN(segblock),*b;
-	char	*s;
 
 	dprintf_ver(stddeb,"VerQueryValue16(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
+
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
-
 	/* check for UNICODE version */
 	if (	(*(DWORD*)(block+0x14) != VS_FFI_SIGNATURE) && 
 		(*(DWORD*)(block+0x28) == VS_FFI_SIGNATURE)
 	) {
 		struct	dbW	*db;
 		LPWSTR	wstr;
+		LPSTR	xs;
+
 		wstr = HEAP_strdupAtoW(GetProcessHeap(),0,s);
-		b=_find_dataW(block, wstr, *(WORD *)block);
+		b=_find_dataW(block,wstr,*(WORD*)block);
 		HeapFree(GetProcessHeap(),0,wstr);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			fprintf(stderr,"key %s not found in versionresource.\n",s);
 			*buflen=0;
 			return 0;
 		}
 		db=(struct dbW*)b;
-		b	= b+8+((lstrlen32W(db->name)*sizeof(WCHAR)+4)&~3);
+		b	= b+DATA_OFFSET_W(db);
 		*buflen	= db->datalen;
+		if (db->btext) {
+		    xs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
+		    dprintf_ver(stderr,"->%s\n",xs);
+		    HeapFree(GetProcessHeap(),0,xs);
+		} else
+		    dprintf_ver(stderr,"->%p\n",b);
 	} else {
 		struct	dbA	*db;
-		b=_find_dataA(block, s, *(WORD *)block);
+		b=_find_dataA(block,s,*(WORD*)block);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			fprintf(stderr,"key %s not found in versionresource.\n",s);
 			*buflen=0;
 			return 0;
 		}
 		db=(struct dbA*)b;
-		b	= b+4+((lstrlen32A(db->name)+4)&~3);
+		b	= b+DATA_OFFSET_A(db);
 		*buflen	= db->datalen;
+		/* the string is only printable, if it is below \\StringFileInfo*/
+		if (!lstrncmpi32A("VS_VERSION_INFO\\StringFileInfo\\",s,strlen("VS_VERSION_INFO\\StringFileInfo\\")))
+		    dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
+		else
+		    dprintf_ver(stddeb,"	-> %s=%p\n",subblock,b);
 	}
 	*buffer	= (b-block)+segblock;
-	dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
+	free(s);
 	return 1;
 }
 
@@ -1296,28 +1336,38 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 	dprintf_ver(stddeb,"VerQueryValue32A(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
+
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO\\")+strlen(subblock)+1);
 	strcpy(s,"VS_VERSION_INFO\\");strcat(s,subblock);
+
 	/* check for UNICODE version */
 	if (	(*(DWORD*)(block+0x14) != VS_FFI_SIGNATURE) && 
 		(*(DWORD*)(block+0x28) == VS_FFI_SIGNATURE)
 	) {
 		LPWSTR	wstr;
+		LPSTR	xs;
 		struct	dbW	*db;
+
 		wstr = HEAP_strdupAtoW(GetProcessHeap(),0,s);
-		b=_find_dataW(block, wstr, *(WORD *)block);
+		b=_find_dataW(block,wstr,*(WORD*)block);
 		HeapFree(GetProcessHeap(),0,wstr);
 		if (!b) {
-			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
+			fprintf(stderr,"key %s not found in versionresource.\n",s);
 			*buflen=0;
 			return 0;
 		}
-		db=(struct dbW*)b;
+		db	= (struct dbW*)b;
 		*buflen	= db->datalen;
-		b	= b+8+((lstrlen32W(db->name)*sizeof(WCHAR)+4)&~3);
+		b	= b+DATA_OFFSET_W(db);
+		if (db->btext) {
+		    xs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
+		    dprintf_ver(stderr,"->%s\n",xs);
+		    HeapFree(GetProcessHeap(),0,xs);
+		} else
+		    dprintf_ver(stderr,"->%p\n",b);
 	} else {
 		struct	dbA	*db;
-		b=_find_dataA(block, s, *(WORD *)block);
+		b=_find_dataA(block,s,*(WORD*)block);
 		if (!b) {
 			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
 			*buflen=0;
@@ -1325,10 +1375,16 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		}
 		db=(struct dbA*)b;
 		*buflen	= db->datalen;
-		b	= b+4+((lstrlen32A(db->name)+4)&~3);
+		b	= b+DATA_OFFSET_A(db);
+
+		/* the string is only printable, if it is below \\StringFileInfo*/
+		if (!lstrncmpi32A("VS_VERSION_INFO\\StringFileInfo\\",s,strlen("VS_VERSION_INFO\\StringFileInfo\\")))
+		    dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
+		else
+		    dprintf_ver(stddeb,"	-> %s=%p\n",subblock,b);
 	}
 	*buffer	= b;
-	dprintf_ver(stddeb,"	-> %s=%s\n",subblock,b);
+	free(s);
 	return 1;
 }
 

@@ -46,7 +46,8 @@ HPALETTE16 PALETTE_Init(void)
 
     /* create default palette (20 system colors) */
 
-    palPtr = xmalloc( sizeof(LOGPALETTE) + (NB_RESERVED_COLORS-1)*sizeof(PALETTEENTRY) );
+    palPtr = HeapAlloc( GetProcessHeap(), 0,
+             sizeof(LOGPALETTE) + (NB_RESERVED_COLORS-1)*sizeof(PALETTEENTRY));
     if (!palPtr) return FALSE;
 
     palPtr->palVersion = 0x300;
@@ -66,7 +67,7 @@ HPALETTE16 PALETTE_Init(void)
 
     GDI_HEAP_UNLOCK( hpalette );
 
-    free( palPtr );
+    HeapFree( GetProcessHeap(), 0, palPtr );
     return hpalette;
 }
 

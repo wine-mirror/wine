@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "callback.h"
 #include "windows.h"
 #include "miscemu.h"
 
@@ -43,7 +44,7 @@ static void SYSTEM_TimerTick(void)
         if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
         {
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
-            SYS_Timers[i].callback();
+            Callbacks->CallSystemTimerProc( SYS_Timers[i].callback );
         }
     }
 }
@@ -176,16 +177,4 @@ void WINAPI DisableSystemTimers(void)
 {
     SYS_TimersDisabled = TRUE;
     if (SYS_NbTimers) SYSTEM_StopTicks();
-}
-
-
-/***********************************************************************
- *           SYSTEM_GetTimerProc
- *
- * Return the timer proc of a system timer. Used by thunking code.
- */
-FARPROC16 SYSTEM_GetTimerProc( WORD timer )
-{
-    if (!timer || (timer > NB_SYS_TIMERS)) return NULL;
-    return SYS_Timers[timer-1].callback;
 }

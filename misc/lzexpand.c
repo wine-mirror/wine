@@ -21,7 +21,6 @@
 #include "lzexpand.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 
 /* The readahead length of the decompressor. Reading single bytes
@@ -169,7 +168,8 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 		_llseek32(hfSrc,0,SEEK_SET);
 		return ret?ret:hfSrc;
 	}
-	lzstates=xrealloc(lzstates,(++nroflzstates)*sizeof(struct lzstate));
+	lzstates = HeapReAlloc( GetProcessHeap(), 0, lzstates,
+                                (++nroflzstates)*sizeof(struct lzstate) );
 	lzs		= lzstates+(nroflzstates-1);
 
 	memset(lzs,'\0',sizeof(*lzs));
@@ -178,7 +178,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 	lzs->lastchar	= head.lastchar;
 	lzs->reallength = head.reallength;
 
-	lzs->get	= xmalloc(GETLEN);
+	lzs->get	= HEAP_xalloc( GetProcessHeap(), 0, GETLEN );
 	lzs->getlen	= 0;
 	lzs->getcur	= 0;
 
@@ -513,7 +513,8 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 {
     char *p;
-    char *mfn = (char *)xmalloc( strlen(fn) + 3 ); /* "._" and \0 */
+    char *mfn = (char *)HEAP_xalloc( GetProcessHeap(), 0,
+                                     strlen(fn) + 3 ); /* "._" and \0 */
     strcpy( mfn, fn );
     if (!(p = strrchr( mfn, '\\' ))) p = mfn;
     if ((p = strchr( p, '.' )))
@@ -552,7 +553,7 @@ HFILE32 WINAPI LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
         {
             LPSTR mfn = LZEXPAND_MangleName(fn);
             fd = OpenFile32(mfn,ofs,mode);
-            free( mfn );
+            HeapFree( GetProcessHeap(), 0, mfn );
 	}
 	if ((mode&~0x70)!=OF_READ)
 		return fd;
@@ -612,11 +613,13 @@ void WINAPI LZClose32( HFILE32 fd )
 		return;
 	}
 	if (lzstates[i].get)
-		free(lzstates[i].get);
+		HeapFree( GetProcessHeap(), 0, lzstates[i].get );
 	_lclose32(lzstates[i].realfd);
-	memcpy(lzstates+i,lzstates+i+1,sizeof(struct lzstate)*(nroflzstates-i-1));
+	memmove(lzstates+i,lzstates+i+1,
+                sizeof(struct lzstate)*(nroflzstates-i-1));
 	nroflzstates--;
-	lzstates=xrealloc(lzstates,sizeof(struct lzstate)*nroflzstates);
+	lzstates = HeapReAlloc( GetProcessHeap(), 0, lzstates,
+                                sizeof(struct lzstate)*nroflzstates );
 }
 
 /***********************************************************************

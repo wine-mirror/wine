@@ -77,6 +77,7 @@
 
 #ifdef DEBUG_NONE
 #undef DEBUG_ACCEL
+#undef DEBUG_ASPI
 #undef DEBUG_ATOM
 #undef DEBUG_BITBLT
 #undef DEBUG_BITMAP
@@ -97,7 +98,6 @@
 #undef DEBUG_DOSFS
 #undef DEBUG_DRIVER
 #undef DEBUG_EDIT
-#undef DEBUG_ENV
 #undef DEBUG_EVENT
 #undef DEBUG_EXEC
 #undef DEBUG_FILE
@@ -163,6 +163,7 @@
 
 #ifdef DEBUG_ALL
 #define DEBUG_ACCEL
+#define DEBUG_ASPI
 #define DEBUG_ATOM
 #define DEBUG_BITBLT
 #define DEBUG_BITMAP
@@ -183,7 +184,6 @@
 #define DEBUG_DOSFS
 #define DEBUG_DRIVER
 #define DEBUG_EDIT
-#define DEBUG_ENV
 #define DEBUG_EVENT
 #define DEBUG_EXEC
 #define DEBUG_FILE

@@ -4,6 +4,7 @@
  * Copyright 1997 John Harvey
  */
 
+#include "heap.h"
 #include "win16drv.h"
 
 /**********************************************************************
@@ -64,7 +65,7 @@ WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     points[0].y = YLPTODP(dc, top);
 
     points[1].x = XLPTODP(dc, right);
-    points[1].y = XLPTODP(dc, bottom);
+    points[1].y = YLPTODP(dc, bottom);
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
                          OS_RECTANGLE, 2, points, 
                          physDev->segptrPenInfo,
@@ -86,7 +87,7 @@ WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count )
     BOOL32 bRet = 0;
     LPPOINT16 points;
     int i;
-    points = malloc(count * sizeof(POINT16));
+    points = HEAP_xalloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
     for (i = 0; i<count ; i++)
     {
       points[i].x = ((pt[i].x - dc->wndOrgX) * dc->vportExtX/ dc->wndExtX) + dc->vportOrgX;
@@ -97,9 +98,6 @@ WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count )
                          physDev->segptrPenInfo,
                          physDev->segptrBrushInfo,
                          win16drv_SegPtr_DrawMode, NULL);
+    HeapFree( GetProcessHeap(), 0, points );
     return bRet;
 }
-
-
-
-

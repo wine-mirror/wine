@@ -17,69 +17,48 @@ extern int (*IF1632_CallLargeStack)( int (*func)(), void *arg );
      IF1632_CallLargeStack( (int(*)())(func), (void *)(arg) ) : \
      ((int(*)())(func))((void *)arg))
 
-/* List of the 16-bit callback functions. This list is used  */
-/* by the build program to generate the file if1632/callto16.S */
+typedef struct
+{
+    VOID (CALLBACK *CallRegisterProc)( CONTEXT *, INT32 );
+    VOID (CALLBACK *CallTaskRescheduleProc)(void);
+    LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
+                                     WPARAM16, LPARAM );
+    LRESULT (CALLBACK *CallDriverProc)( DRIVERPROC16, DWORD, HDRVR16,
+                                        UINT16, LPARAM, LPARAM );
+    LRESULT (CALLBACK *CallDriverCallback)( FARPROC16, HANDLE16, UINT16,
+                                            DWORD, LPARAM, LPARAM );
+    LRESULT (CALLBACK *CallTimeFuncProc)( FARPROC16, WORD, UINT16,
+                                          DWORD, LPARAM, LPARAM );
+    INT16 (CALLBACK *CallWindowsExitProc)( FARPROC16, INT16 );
+    INT16 (CALLBACK *CallWordBreakProc)( EDITWORDBREAKPROC16, SEGPTR, INT16,
+                                         INT16, INT16 );
+    VOID (CALLBACK *CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
+    WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
+    VOID (CALLBACK *CallSystemTimerProc)( FARPROC16 );
+    LRESULT (CALLBACK *CallASPIPostProc)( FARPROC16, SEGPTR );
+    /* Following are the graphics driver callbacks */
+    WORD (CALLBACK *CallDrvControlProc)( FARPROC16, SEGPTR, WORD,
+                                         SEGPTR, SEGPTR );
+    WORD (CALLBACK *CallDrvEnableProc)( FARPROC16, SEGPTR, WORD, SEGPTR,
+                                        SEGPTR, SEGPTR );
+    WORD (CALLBACK *CallDrvEnumDFontsProc)( FARPROC16, SEGPTR, SEGPTR,
+                                            FARPROC16, SEGPTR );
+    WORD (CALLBACK *CallDrvEnumObjProc)( FARPROC16, SEGPTR, WORD, FARPROC16,
+                                         SEGPTR );
+    WORD (CALLBACK *CallDrvOutputProc)( FARPROC16, SEGPTR, WORD, WORD, SEGPTR,
+                                        SEGPTR, SEGPTR, SEGPTR, SEGPTR );
+    DWORD (CALLBACK *CallDrvRealizeProc)( FARPROC16, SEGPTR, WORD, SEGPTR,
+                                          SEGPTR, SEGPTR );
+    WORD (CALLBACK *CallDrvStretchBltProc)( FARPROC16, SEGPTR, WORD, WORD,
+                                            WORD, WORD, SEGPTR, WORD, WORD,
+                                            WORD, WORD, DWORD, SEGPTR, SEGPTR,
+                                            SEGPTR );
+    DWORD (CALLBACK *CallDrvExtTextOutProc)( FARPROC16, SEGPTR, WORD, WORD,
+                                             SEGPTR, SEGPTR, INT16, SEGPTR,
+                                             SEGPTR, SEGPTR, SEGPTR, SEGPTR,
+                                             WORD );
+} CALLBACKS_TABLE;
 
-#ifndef WINELIB
-
-extern LONG CALLBACK CallTo16_regs_     (const CONTEXT *context, INT32 offset);
-extern WORD CALLBACK CallTo16_word_     (FARPROC16);
-extern WORD CALLBACK CallTo16_word_w    (FARPROC16,WORD);
-extern LONG CALLBACK CallTo16_long_l    (FARPROC16,LONG);
-extern WORD CALLBACK CallTo16_word_ww   (FARPROC16,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wl   (FARPROC16,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_ll   (FARPROC16,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
-extern LONG CALLBACK CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern WORD CALLBACK CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
-extern LONG CALLBACK CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
-extern WORD CALLBACK CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern WORD CALLBACK CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern LONG CALLBACK CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
-                                            LONG,LONG,WORD);
-extern LONG CALLBACK CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
-                                                LONG,WORD,LONG,LONG,LONG,LONG,
-                                                LONG,WORD);
-extern LONG CALLBACK CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
-                                                  WORD,WORD,LONG,WORD,WORD,
-                                                  WORD,WORD,LONG,LONG,LONG,
-                                                  LONG);
-
-#define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
-    CallTo16_long_lwwll( func, dwId, msg, hdrvr, lparam1, lparam2 )
-#define CallDriverCallback( func, hdev, msg, user, lparam1, lparam2 ) \
-    CallTo16_word_wwlll( func, hdev, msg, user, lparam1, lparam2 )
-#define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
-    CallTo16_word_wwlll( func, id, msg, dwUser, dw1, dw2 )
-#define CallWindowsExitProc( func, nExitType ) \
-    CallTo16_word_w( func, nExitType )
-#define CallWordBreakProc16( func, lpch, ichCurrent, cch, code ) \
-    CallTo16_word_lwww( func, lpch, ichCurrent, cch, code )
-
-#else  /* WINELIB */
-
-#define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
-    (*func)( dwId, msg, hdrvr, lparam1, lparam2 )
-#define CallDriverCallback( func, hdev, msg, user, lparam1, lparam2 ) \
-    (*func)( hdev, msg, user, lparam1, lparam2 )
-#define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
-    (*func)( id, msg, dwUser, dw1, dw2 )
-#define CallWindowsExitProc( func, nExitType ) \
-    (*func)( nExitType )
-#define CallWordBreakProc16( func, lpch, ichCurrent, cch, code ) \
-    (*func)( lpch, ichCurrent, cch, code )
-
-#endif  /* WINELIB */
-
+extern const CALLBACKS_TABLE *Callbacks;
 
 #endif /* __WINE_CALLBACK_H */

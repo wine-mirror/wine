@@ -18,12 +18,9 @@
 #include "region.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "gdi.h"
 
 WORD GDI_HeapSel = 0;
-
-/* Object types for EnumObjects() */
-#define OBJ_PEN             1
-#define OBJ_BRUSH           2
 
 /***********************************************************************
  *          GDI stock objects 
@@ -453,6 +450,62 @@ INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
     return result;
 }
 
+/***********************************************************************
+ *           GetObjectType    (GDI32.205)
+ */
+DWORD WINAPI GetObjectType( HANDLE32 handle )
+{
+    GDIOBJHDR * ptr = NULL;
+    INT32 result = 0;
+    dprintf_gdi(stddeb, "GetObjectType: %08x\n", handle );
+
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
+    else
+      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
+    if (!ptr) return 0;
+    
+    switch(ptr->wMagic)
+    {
+      case PEN_MAGIC:
+	  result = OBJ_PEN;
+	  break;
+      case BRUSH_MAGIC: 
+	  result = OBJ_BRUSH;
+	  break;
+      case BITMAP_MAGIC: 
+	  result = OBJ_BITMAP;
+	  break;
+      case FONT_MAGIC:
+	  result = OBJ_FONT;
+	  break;
+      case PALETTE_MAGIC:
+	  result = OBJ_PAL;
+	  break;
+      case REGION_MAGIC:
+	  result = OBJ_REGION;
+	  break;
+      case DC_MAGIC:
+	  result = OBJ_DC;
+	  break;
+      case META_DC_MAGIC:
+	  result = OBJ_METADC;
+	  break;
+      case METAFILE_MAGIC:
+	  result = OBJ_METAFILE;
+	  break;
+      case METAFILE_DC_MAGIC:
+	  result = OBJ_METADC;
+	  break;
+
+	  default:
+	  fprintf( stderr, "GetObjectType: magic %04x not implemented\n",
+			   ptr->wMagic );
+	  break;
+    }
+    GDI_HEAP_UNLOCK( handle );
+    return result;
+}
 
 /***********************************************************************
  *           GetObject32W    (GDI32.206)
@@ -712,6 +765,14 @@ void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
 void WINAPI SetObjectOwner32( HGDIOBJ32 handle, HANDLE32 owner )
 {
     /* Nothing to do */
+}
+
+/***********************************************************************
+ *           GdiFlush    (GDI32.128)
+ */
+BOOL32 WINAPI GdiFlush(void)
+{
+    return TRUE;  /* FIXME */
 }
 
 

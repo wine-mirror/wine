@@ -440,10 +440,10 @@ matters about Wine. The address is: @url{news:comp.emulators.ms-windows.wine}.
 @node Reference Manual, Installation, Introduction, Top
 
 @menu
-* @WIN32{} Reference Manual::      The @WIN32{} function calls and data types.
+* WIN32 Reference Manual::      The @WIN32{} function calls and data types.
 * Resources and INI files::     How to determine the appearance and
                                 behaviour of Wine programs.
-* Metafiles--Icons--Bitmaps::     FIXME missing.
+* Metafiles-Icons-Bitmaps::     FIXME missing.
 * Debugging::                   Debugging Wine.
 * Programs::                    Programs written to run in/with Wine.
 * Tools::                       Programs to support Wine.

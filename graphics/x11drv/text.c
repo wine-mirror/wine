@@ -16,13 +16,9 @@
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
-#include "xmalloc.h"
 
 #define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
 
-
-extern int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
-                                       short right, short bottom, UINT16 flags);
 
 /***********************************************************************
  *           X11DRV_ExtTextOut
@@ -195,7 +191,8 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
 	/* allocate max items */
 
-        pitem = items = xmalloc( count * sizeof(XTextItem) );
+        pitem = items = HEAP_xalloc( GetProcessHeap(), 0,
+                                     count * sizeof(XTextItem) );
         delta = i = 0;
 	if( lpDx ) /* explicit character widths */
 	{
@@ -245,7 +242,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
         XDrawText( display, dc->u.x.drawable, dc->u.x.gc,
                    dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
-        free( items );
+        HeapFree( GetProcessHeap(), 0, items );
     }
 
       /* Draw underline and strike-out if needed */

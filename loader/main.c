@@ -92,9 +92,6 @@ int MAIN_Init(void)
     /* Initialize relay code */
     if (!RELAY_Init()) return 0;
 
-    /* Create built-in modules */
-    if (!BUILTIN_Init()) return 0;
-
       /* Initialize signal handling */
     if (!SIGNAL_InitEmulator()) return 0;
 
@@ -232,7 +229,7 @@ int main(int argc, char *argv[] )
         return 0;
     }
 
-    if (Options.debug) DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */
+    if (Options.debug) DEBUG_AddModuleBreakpoints();
 
     Yield();  /* Start the first task */
     fprintf( stderr, "WinMain: Should never happen: returned from Yield()\n" );

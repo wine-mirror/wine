@@ -1,4 +1,3 @@
-#ifndef WINELIB
 /*
  * NE modules
  *
@@ -88,8 +87,8 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
         stack16Top->bp = 0;
         stack16Top->ip = 0;
         stack16Top->cs = 0;
- 	newselector =  CallTo16_word_www( selfloadheader->LoadAppSeg,
-                                          hModule, hf, segnum );
+ 	newselector = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
+                                                    hModule, hf, segnum );
         _lclose32( hf );
  	if (newselector != oldselector) {
  	  /* Self loaders like creating their own selectors; 
@@ -519,7 +518,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
     dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
-    CallTo16_regs_( &context, 0 );
+    Callbacks->CallRegisterProc( &context, 0 );
     return TRUE;
 }
 
@@ -537,11 +536,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
     HMODULE16 *pDLL;
 
     if (!(pModule = MODULE_GetPtr( hModule ))) return;
-    if (pModule->flags & NE_FFLAGS_WIN32)
-    {
-/*        PE_InitializeDLLs(hModule); */
-        return;
-    }
+    if (pModule->flags & NE_FFLAGS_WIN32) return;
 
     if (pModule->dlls_to_init)
     {
@@ -558,7 +553,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 
 
 /***********************************************************************
- *           NE_PatchCodeHandle
+ *           PatchCodeHandle
  *
  * Needed for self-loading modules.
  */
@@ -567,4 +562,3 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 void WINAPI PatchCodeHandle(HANDLE16 hSel)
 {
 }
-#endif /* WINELIB */

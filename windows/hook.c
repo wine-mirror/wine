@@ -267,9 +267,9 @@ static void HOOK_UnMap16To32Common(INT32 id, INT32 code, WPARAM32 wParamOrig,
 	{
             LPCWPSTRUCT32   lpcwp32 = (LPCWPSTRUCT32)lParam;
             if (bA) WINPROC_UnmapMsg16To32A( lpcwp32->message, lpcwp32->wParam,
-                                             lpcwp32->lParam );
+                                             lpcwp32->lParam, 0 );
             else WINPROC_UnmapMsg16To32W( lpcwp32->message, lpcwp32->wParam,
-                                          lpcwp32->lParam );
+                                          lpcwp32->lParam, 0 );
 	    HeapFree( SystemHeap, 0, lpcwp32 );
             break;
 	}
@@ -399,12 +399,12 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
           lpcwp16->hwnd = lpcwp32->hwnd;
           lpcwp16->lParam = lpcwp32->lParam;
 
-          if (bA) WINPROC_MapMsg32ATo16( lpcwp32->message, lpcwp32->wParam,
-                                         &lpcwp16->message, &lpcwp16->wParam,
-                                         &lpcwp16->lParam );
-          else WINPROC_MapMsg32WTo16( lpcwp32->message, lpcwp32->wParam,
-                                      &lpcwp16->message, &lpcwp16->wParam,
-                                      &lpcwp16->lParam );
+          if (bA) WINPROC_MapMsg32ATo16( lpcwp32->hwnd, lpcwp32->message,
+                                         lpcwp32->wParam, &lpcwp16->message,
+                                         &lpcwp16->wParam, &lpcwp16->lParam );
+          else WINPROC_MapMsg32WTo16( lpcwp32->hwnd, lpcwp32->message,
+                                      lpcwp32->wParam, &lpcwp16->message,
+                                      &lpcwp16->wParam, &lpcwp16->lParam );
 	  *plParam = (LPARAM)SEGPTR_GET( lpcwp16 );
           break;
       }

@@ -16,7 +16,6 @@
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
   
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
@@ -68,16 +67,12 @@ BOOL32 WINAPI GetComputerName32A(LPSTR name,LPDWORD size)
  */
 BOOL32 WINAPI GetComputerName32W(LPWSTR name,LPDWORD size)
 {
-	LPSTR	nameA = (LPSTR)xmalloc(*size);
-
-	if (!GetComputerName32A(nameA,size)) {
-		free(nameA);
-		return FALSE;
-	}
-	lstrcpynAtoW(name,nameA,*size);
-	free(nameA);
-	/* FIXME : size correct? */
-	return TRUE;
+    LPSTR nameA = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *size);
+    BOOL32 ret = GetComputerName32A(nameA,size);
+    if (ret) lstrcpynAtoW(name,nameA,*size);
+    HeapFree( GetProcessHeap(), 0, nameA );
+    /* FIXME : size correct? */
+    return ret;
 }
 
 /***********************************************************************
@@ -104,10 +99,11 @@ BOOL32 WINAPI GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
  */
 BOOL32 WINAPI GetUserName32W(LPWSTR lpszName, LPDWORD lpSize)
 {
-	LPSTR name = (LPSTR)xmalloc(*lpSize);
+	LPSTR name = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *lpSize );
 	DWORD	size = *lpSize;
 	BOOL32 res = GetUserName32A(name,lpSize);
 
 	lstrcpynAtoW(lpszName,name,size);
+        HeapFree( GetProcessHeap(), 0, name );
 	return res;
 }

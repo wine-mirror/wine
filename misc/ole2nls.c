@@ -2039,11 +2039,10 @@ INT32 WINAPI LCMapString32A(
 ) {
 	int	i,len;
 
-	fprintf(stderr,"LCMapStringA(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
-		lcid,mapflags,srcstr,srclen,dststr,dstlen
-	);
+	dprintf_string(stderr,"LCMapStringA(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
+		lcid,mapflags,srcstr,srclen,dststr,dstlen);
 	if (!dstlen || !dststr) {
-		dststr = srcstr;
+		dststr = (LPSTR)srcstr;
 	}
 	if (!srclen) srclen = strlen(srcstr);
 	if (!dstlen) dstlen = strlen(dststr);
@@ -2055,8 +2054,18 @@ INT32 WINAPI LCMapString32A(
 			dststr[i]=tolower(srcstr[i]);
 		mapflags &= ~LCMAP_LOWERCASE;
 	}
+	if (mapflags & LCMAP_UPPERCASE) {
+		for (i=0;i<len;i++)
+			dststr[i]=toupper(srcstr[i]);
+		mapflags &= ~LCMAP_UPPERCASE;
+	}
 	if (mapflags)
+	  {
+	    fprintf(stderr,
+		    "LCMapStringA(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+		    lcid,mapflags,srcstr,srclen,dststr,dstlen);
 		fprintf(stderr,"	unimplemented flags: 0x%08lx\n",mapflags);
+	  }
 	return len;
 }
 
@@ -2068,11 +2077,11 @@ INT32 WINAPI LCMapString32W(
 ) {
 	int	i,len;
 
-	fprintf(stderr,"LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+	dprintf_string(stderr,"LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
 		lcid,mapflags,srcstr,srclen,dststr,dstlen
 	);
 	if (!dstlen || !dststr) {
-		dststr = srcstr;
+		dststr = (LPWSTR)srcstr;
 	}
 	if (!srclen) srclen = lstrlen32W(srcstr);
 	if (!dstlen) dstlen = lstrlen32W(dststr);
@@ -2084,7 +2093,38 @@ INT32 WINAPI LCMapString32W(
 			dststr[i]=tolower(srcstr[i]);
 		mapflags &= ~LCMAP_LOWERCASE;
 	}
+	if (mapflags & LCMAP_UPPERCASE) {
+		for (i=0;i<len;i++)
+			dststr[i]=toupper(srcstr[i]);
+		mapflags &= ~LCMAP_UPPERCASE;
+	}
 	if (mapflags)
+	  {
+	    fprintf(stderr,
+		    "LCMapStringW(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
+		    lcid,mapflags,srcstr,srclen,dststr,dstlen);
 		fprintf(stderr,"	unimplemented flags: 0x%08lx\n",mapflags);
+	  }
 	return len;
+}
+
+
+INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
+			      LPCSTR format, LPSTR date,INT32 datelen
+) {
+	fprintf(stderr,"GetDateFormat(0x%04x,0x%08lx,%p,%s,%p,%d), stub\n",
+		locale,flags,xtime,format,date,datelen
+	);
+	lstrcpyn32A(date,"1.4.1997",datelen);
+	return strlen("1.4.1997");
+}
+
+INT32 WINAPI GetTimeFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
+			      LPCSTR format, LPSTR timestr,INT32 timelen
+) {
+	fprintf(stderr,"GetDateFormat(0x%04x,0x%08lx,%p,%s,%p,%d), stub\n",
+		locale,flags,xtime,format,timestr,timelen
+	);
+	lstrcpyn32A(timestr,"00:00:42",timelen);
+	return strlen("00:00:42");
 }

@@ -698,7 +698,7 @@ INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
     return retval;
 }
 
-#ifndef WINELIB
+
 /**********************************************************************
  *	SetResourceHandler	(KERNEL.43)
  */
@@ -722,6 +722,7 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR s,
     }
     return NULL;
 }
+
 
 /**********************************************************************
  *	EnumResourceTypesA	(KERNEL32.90)
@@ -776,4 +777,3 @@ BOOL32 WINAPI EnumResourceLanguages32W( HMODULE32 hmodule, LPCWSTR type,
 {
     return PE_EnumResourceLanguages32W(hmodule,type,name,lpfun,lParam);
 }
-#endif  /* WINELIB */

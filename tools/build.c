@@ -1,7 +1,7 @@
 /*
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995 Martin von Loewis
- * Copyright 1995, 1996 Alexandre Julliard
+ * Copyright 1995, 1996, 1997 Alexandre Julliard
  * Copyright 1997 Eric Youngdale
  */
 
@@ -393,6 +393,8 @@ static int ParseExportFunction( ORDDEF *odp )
             odp->u.func.arg_types[i] = 'p';
 	else if (!strcmp(token, "str"))
 	    odp->u.func.arg_types[i] = 't';
+	else if (!strcmp(token, "wstr"))
+	    odp->u.func.arg_types[i] = 'W';
 	else if (!strcmp(token, "segstr"))
 	    odp->u.func.arg_types[i] = 'T';
         else if (!strcmp(token, "double"))
@@ -410,6 +412,8 @@ static int ParseExportFunction( ORDDEF *odp )
         {
             if (strcmp(token, "long") &&
                 strcmp(token, "ptr") &&
+                strcmp(token, "str") &&
+                strcmp(token, "wstr") &&
                 strcmp(token, "double"))
             {
                 fprintf( stderr, "%s:%d: Type '%s' not supported for Win32\n",
@@ -1068,6 +1072,21 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             fprintf( outfile, "\t.long Name_%d\n", i );
     }
 
+    /* Output the DLL argument types */
+
+    fprintf( outfile, "ArgTypes:\n" );
+    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    {
+    	unsigned int j, mask = 0;
+	if ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL))
+	    for (j = 0; odp->u.func.arg_types[j]; j++)
+            {
+                if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
+                if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
+	    }
+	fprintf( outfile, "\t.long %ld\n",mask);
+    }
+
     /* Output the DLL ordinals table */
 
     fprintf( outfile, "FuncOrdinals:\n" );
@@ -1125,6 +1144,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "\t.long FuncNames\n" );        /* Function names */
     fprintf( outfile, "\t.long FuncOrdinals\n" );     /* Function ordinals */
     fprintf( outfile, "\t.long FuncArgs\n" );         /* Function arguments */
+    fprintf( outfile, "\t.long ArgTypes\n" );         /* Function argtypes */
 #ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
@@ -1620,7 +1640,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
             /* Push again the address of the context struct in case */
             /* it has been removed by an stdcall function */
             fprintf( outfile, "\tleal -%d(%%ebp),%%esp\n",
-                     sizeof(CONTEXT) + 32 );
+                     sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME,ebp) );
             fprintf( outfile, "\tpushl %%esp\n" );
         }
         fprintf( outfile, "\tpushl %%eax\n" );
@@ -1728,7 +1748,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
  * Prototypes for the CallTo16 functions:
  *   extern WINAPI WORD CallTo16_word_xxx( FARPROC16 func, args... );
  *   extern WINAPI LONG CallTo16_long_xxx( FARPROC16 func, args... );
- *   extern WINAPI void CallTo16_regs_( const CONTEXT *context );
+ *   extern WINAPI void CallTo16_regs_{short,long}( const CONTEXT *context );
  */
 static void BuildCallTo16Func( FILE *outfile, char *profile )
 {
@@ -1740,8 +1760,8 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     else if (!strncmp( "regs_", profile, 5 )) reg_func = 1;
     else if (strncmp( "long_", profile, 5 ))
     {
-        fprintf( stderr, "Invalid function name '%s', ignored\n", profile );
-        return;
+        fprintf( stderr, "Invalid function name '%s'.\n", profile );
+        exit(1);
     }
 
     /* Function header */
@@ -1833,9 +1853,19 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tmovl %d(%%ebx),%%esi\n", CONTEXTOFFSET(Esi) );
         fprintf( outfile, "\tmovl %d(%%ebx),%%edi\n", CONTEXTOFFSET(Edi) );
 
-        /* Push the return address */
-
-        fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_regs\n" );
+        /* Push the return address 
+	 * With _short suffix, we push 16:16 address (normal lret)
+	 * With _long suffix, we push 16:32 address (0x66 lret, for KERNEL32_45)
+	 */
+	if (!strncmp(profile,"regs_short",10))
+	    fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_regs\n" );
+	else 
+	{
+	    fprintf( outfile, "\tpushw $0\n" );
+	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_regs+2\n" );
+	    fprintf( outfile, "\tpushw $0\n" );
+	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_regs\n" );
+	}
 
         /* Push the called routine address */
 
@@ -2233,7 +2263,18 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
 static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] )
 {
     char buffer[1024];
-    int i;
+    FILE *infile;
+
+    if (argc > 2)
+    {
+        infile = fopen( argv[2], "r" );
+        if (!infile)
+        {
+            perror( argv[2] );
+            exit( 1 );
+        }
+    }
+    else infile = stdin;
 
     /* File header */
 
@@ -2260,7 +2301,23 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
 
     /* Build the callback functions */
 
-    for (i = 2; i < argc; i++) BuildCallTo16Func( outfile, argv[i] );
+    while (fgets( buffer, sizeof(buffer), infile ))
+    {
+        if (strstr( buffer, "### start build ###" )) break;
+    }
+    while (fgets( buffer, sizeof(buffer), infile ))
+    {
+        char *p = strstr( buffer, "CallTo16_" );
+        if (p)
+        {
+            char *profile = p + strlen( "CallTo16_" );
+            p = profile;
+            while ((*p == '_') || isalpha(*p)) p++;
+            *p = '\0';
+            BuildCallTo16Func( outfile, profile );
+        }
+        if (strstr( buffer, "### stop build ###" )) break;
+    }
 
     /* Output the 16-bit return code */
 
@@ -2275,6 +2332,7 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
     fprintf( outfile, ".Letext:\n");
 #endif
 
+    fclose( infile );
     return 0;
 }
 

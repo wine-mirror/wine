@@ -1,4 +1,224 @@
 ----------------------------------------------------------------------
+Thu Oct 30 21:52:23 1997  Martin Boehme <boehme@informatik.mu-luebeck.de>
+
+	* [windows/nonclient.c]
+	Changed NC_TrackSysMenu to give the same behaviour as MS-Windows,
+	i.e. system menu already appears when mouse button is depressed.
+	Changed NC_HandleNCLButtonDblClk so that double clicks on scroll
+	bar arrows are handled the same way as single clicks.
+
+	* [windows/winpos.c]
+	Fixed SetWindowPos32 to clear WIN_NO_REDRAW when SWP_SHOWWINDOW is
+	set; this is the way MS-Windows behaves.
+
+Thu Oct 30 21:08:57 1997  Morten Welinder  <terra@diku.dk>
+
+	* [controls/status.c]
+	In SW_SetText, fix condition, I hope.
+
+	* [controls/menu.c]
+ 	(GetMenuState32): Don't mask return value. Print more debug info.
+	(MENU_MenuBarCalcSize): Be more careful when printing debug
+	information.
+	(MENU_SetItemData): Empty strings are separators.
+
+	* [graphics/x11drv/text.c]
+	Don't prototype CLIPPING_IntersectClipRect.
+
+	* [include/dc.h]
+	Prototype CLIPPING_IntersectClipRect.
+
+	* [objects/font.c]
+	Remove non-portable (and faulty) smartness in FONT_TextMetric*to*.
+	In CreateFont32W and CreateFont16, handle null font name.
+
+	* [objects/text.c]
+ 	(TEXT_NextLine): Fix end-of-line bug.
+
+	* [if1632/shell32.spec]
+	Activate existing implementation of ExtractIconA.
+
+	* [misc/shell.c]
+	For Control_RunDLL, add types for parameters.
+
+Thu Oct 30 14:54:11 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [controls/static.c] [include/windows.h] [misc/spy.c]
+	Added some win32 defines to static controls, basic SS_BITMAP style
+	handling implemented. [please add more, I am lacking knowledge and
+	time]
+
+	* [controls/status.c]
+	part_num 255 seems to indicate whole statusline (win95 cdplayer.exe)
+
+	* [if1632/thunk.c] [tools/build.c]
+	Support lret and 0x66 lret calls for CallTo16_regs
+	(needed for KERNEL32_45)
+	Fixed KERNEL32_45, QT_Thunk (should work now).
+
+	* [if1632/relay.c][if1632/builtin.c][tools/build.c][if1632/*32.spec]
+	Added string dumping to relay debugging for win32 apifuncs.
+
+	* [misc/ver.c]
+	Fixed and cleaned up VerQueryValue*.
+
+	* [multimedia/*.c][include/mmsystem.h][if1632/mmsystem.spec]
+	  [if1632/winmm.spec]
+	Win32 support for lowlevel multimedia functions.
+	Added some mixer* lowlevel functions.
+	Some small fixes in the audio lowlevel queue handling, code
+	reformatting/cleanups.
+
+	* [debugger/hash.c]
+	Don't show difference between 16bit symbols if they are in
+	different segments.
+
+	* [objects/cursoricon.c]
+	Added GetIconInfo (partial) and CreateIconIndirect.
+
+	* [windows/mdi.c]
+	Fixed some "bad class" problems and crashes in MDICreateChild,
+	which happen in Win32 (jwp32.exe).
+
+Wed Oct 29 00:57:27 1997  Bruce Milner  <Bruce.Milner@genetics.utah.edu>
+
+	* [if1632/winaspi.spec] [misc/aspi.c] [include/aspi.c]
+	  [documentation/aspi] [include/callback.h]
+	Added support for 16 bit ASPI calls to linux generic SCSI.
+	The support is not complete, but appears to run my Mustek
+	scanner from within ipplus.exe.
+
+Mon Oct 27 00:59:41 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [windows/dce.c]
+	DC reuse framework.
+
+Sun Oct 26 18:41:21 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [graphics/x11drv/xfont.c]
+	Substituted fonts are removed from the alias table. References to
+	the old name are also updated.
+
+	* [controls/combo.c]
+	LB_SELECTSTRING32 not CB_SELECTSTRING32 should be sent to
+	ComboLBox.
+
+Sun Oct 26 14:25:00 1997  Nikita V. Youshchenko <yoush@cs.msu.su>
+
+	* [include/drive.h] [files/drive.c] [msdos/int21.c]
+	Partially implemented DOS drive mapping (int21 AX=440F).
+
+Sat Oct 25 13:03:29 1997  Alexandre Julliard  <Alexandre.Julliard@urbanet.ch>
+
+	* [debugger/debug.l]
+	Support '.' in identifiers. Use "x . y" to access structure
+	fields.
+
+	* [debugger/hash.c] [loader/pe_image.c]
+	Load entry points of Win32 modules only when entering the
+	debugger.
+
+	* [debugger/break.c]
+	New function DEBUG_AddModuleBreakpoint() to set a breakpoint at
+	the start of every module.
+
+	* [files/file.c]
+	FILE_mmap() can now fake mmap() for unaligned offsets or broken
+	filesystems.
+
+	* [include/callback.h] [misc/callback.c] [if1632/thunk.c]
+	Use a table of callbacks instead of macros to differentiate
+	between emulator and Winelib.
+
+	* [loader/task.c]
+	Initialize current directory from cwd, not from module path.
+
+	* [tools/build.c]
+	Read CallTo16 prototypes directly from thunk.c source file.
+
+	* [windows/winproc.c] [windows/mdi.c]
+	Added translation for WM_MDIACTIVATE and WM_MDIGETACTIVE.
+
+Fri Oct 24 21:41:25 1997  Uwe Bonnes  <bon@elektron.ikp.tu-darmstadt.de>
+
+	* [files/drive.c]
+	Allow arguments like "a" for the drive related apis.
+
+	* [memory/global.c]
+	Keep the calculation for dwMemoryLoad in range.
+
+	* [misc/crtdll.c]
+	Make CRTDLL_getcwd use GetCurrentDirectory32A and alloc
+	its memory if requested.
+	Implemented CRTDLL_rename and CRTDLL_stat needed for
+	lcc-win32:wedit.exe.
+	Implemented CRTDLL__fullpath.
+
+	* [misc/comm.c]
+	High speed modes for the 16-bit mode Comm functions.
+
+	* [misc/cpu.c]
+	As applications may treat lpMaximumApplicationAddress as long,
+	use a valid long number.
+
+	* [misc/main.c]
+	In SystemParametersInfo16 ignore SPI_GETHIGHCONTRAST too.
+
+	* [misc/ole2nls.c]
+	Implement LCMAP_UPPERCASE for LCMapString32.
+
+	* [misc/wsprintf]
+	Made WPRINTF_ParseFormatA understand %ws.
+
+	* [win32/file.c]
+	Ignore FILE_ATTRIBUTE_NORMAL.
+	Stub for ReadFileEx.
+
+Fri Oct 24 15:36:02 1997  Doug Ridgway <ridgway@routh.ucsd.edu>
+
+	* [memory/local.c]
+	Local heap exhaustion message now prints which builtin heap filled.
+
+Fri Oct 24 00:46:34 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [windows/dialog.c]
+	Reversed CreateFont16/32W typo.
+
+Thu Oct 23 23:44:20 1997  Kristian Nielsen  <kristian.nielsen@risoe.dk>
+
+	* [if1632/user.spec]
+	Fixed argument list for ChangeClipboardChain.
+
+	* [windows/mdi.c]
+	Pass correct hInstance to CreateWindow16() in MDICreateChild().
+
+Mon Oct 20 11:51:24 1997  Carsten Fallesen <cf@it.dtu.dk>
+
+	* [objects/metafile.c]
+	Added support for META_SETTEXTCHAREXTRA.
+
+	* [objects/region.c]
+	Fixed crash in XPolygonRegion if there is only one point in 
+	in the region.
+
+	* [if1632/gdi32.spec][include/gdi.h][include/windows.h]
+	  [objects/gdiobj.c]
+	Completed OBJ_XXX defines in gdi.h, removed OBJ_XXX in gdiobj.c 
+	and included gdi.h instead. Implemented GetObjectType32().
+
+Thu Oct 16 17:21:32 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [documentation/wine.texinfo]
+	Fixed WIN32 and Makefiles entries of Reference manual node, that
+	made makeinfo dump core.
+
+Mon Oct 13 17:15:57 1997  Robert Wilhelm  <robert@physiol.med.tu-muenchen.de>
+
+	* [if1632/crtdll.spec]
+	Added missing math functions y0(), y1(), y2(), floor(), frexp(),
+	ldexp(), modf().
+
+----------------------------------------------------------------------
 Sun Oct 12 15:03:01 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [if1632/builtin.c] [if1632/relay.c]

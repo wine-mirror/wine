@@ -978,7 +978,7 @@ static INT32 EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT32 start, INT32 
 	if (es->word_break_proc16) {
 		HLOCAL16 hloc16 = EDIT_EM_GetHandle16(wnd, es);
 		SEGPTR segptr = LocalLock16(hloc16);
-		INT32 ret = (INT32)CallWordBreakProc16((FARPROC16)es->word_break_proc16,
+		INT32 ret = (INT32)Callbacks->CallWordBreakProc(es->word_break_proc16,
 						segptr + start, index, count, action);
 		LocalUnlock16(hloc16);
 		return ret;

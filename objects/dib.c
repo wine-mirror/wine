@@ -193,7 +193,8 @@ static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
         colors = 1 << ((BITMAPCOREHEADER *)&info->bmiHeader)->bcBitCount;
         colorPtr = (WORD *)((BITMAPCOREINFO *)info)->bmciColors;
     }
-    if (!(colorMapping = (int *)malloc( colors * sizeof(int) ))) return NULL;
+    if (!(colorMapping = (int *)HeapAlloc(GetProcessHeap(), 0,
+                                          colors * sizeof(int) ))) return NULL;
 
     if (coloruse == DIB_RGB_COLORS)
     {
@@ -664,7 +665,7 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
         fprintf( stderr, "Invalid depth %d for SetDIBits!\n", descr->infoBpp );
         break;
     }
-    if (colorMapping) free(colorMapping);
+    if (colorMapping) HeapFree( GetProcessHeap(), 0, colorMapping );
     XPutImage( display, descr->drawable, descr->gc, bmpImage,
                descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
                descr->width, descr->height );

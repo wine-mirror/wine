@@ -3,7 +3,7 @@
  *      libwine.a.
  */
 
-#include <stdarg.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +21,6 @@ extern LRESULT MDIClientWndProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT PrintDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT PrintSetupDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT ReplaceTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-extern LRESULT TASK_Reschedule(void);
 
 /***********************************************************************
  *           MODULE_GetWndProcEntry16 (not a Windows API function)
@@ -39,8 +38,7 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("PrintDlgProc",PrintDlgProc);
   MAP_STR_TO_PROC("PrintSetupDlgProc",PrintSetupDlgProc);
   MAP_STR_TO_PROC("ReplaceTextDlgProc",ReplaceTextDlgProc);
-  MAP_STR_TO_PROC("TASK_Reschedule",TASK_Reschedule);
   fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
+  assert( FALSE );
   return NULL;
 }
-

@@ -1,185 +1,185 @@
 name winmm
 type win32
 
-0001 stdcall PlaySoundA(ptr long long) PlaySound32A
-0004 stub CloseDriver
-0005 stub DefDriverProc
-0006 stub DriverCallback
-0007 stub DrvClose
-0008 stub DrvDefDriverProc
-0009 stub DrvGetModuleHandle
-0010 stub DrvOpen
-0011 stub DrvOpenA
-0012 stub DrvSendMessage
-0013 stub GetDriverFlags
-0014 stub GetDriverModuleHandle
-0015 stub OpenDriver
-0016 stub OpenDriverA
-0017 stub PlaySound
-0018 stdcall PlaySoundW(ptr long long) PlaySound32W
-0019 stub SendDriverMessage
-0020 stub auxGetDevCapsA
-0021 stub auxGetDevCapsW
-0022 stub auxGetNumDevs
-0023 stub auxGetVolume
-0024 stub auxOutMessage
-0025 stub auxSetVolume
-0026 stub joyConfigChanged
-0027 stub joyGetDevCapsA
-0028 stub joyGetDevCapsW
-0029 stub joyGetNumDevs
-0030 stub joyGetPos
-0031 stub joyGetPosEx
-0032 stub joyGetThreshold
-0033 stub joyReleaseCapture
-0034 stub joySetCapture
-0035 stub joySetThreshold
-0036 stub mciDriverNotify
-0037 stub mciDriverYield
-0038 stub mciExecute
-0039 stub mciFreeCommandResource
-0040 stub mciGetCreatorTask
-0041 stub mciGetDeviceIDA
-0042 stub mciGetDeviceIDFromElementIDW
-0043 stub mciGetDeviceIDW
-0044 stub mciGetDriverData
-0045 stub mciGetErrorStringA
-0046 stub mciGetErrorStringW
-0047 stub mciGetYieldProc
-0048 stub mciLoadCommandResource
-0049 stub mciSendCommandA
-0050 stub mciSendCommandW
-0051 stdcall mciSendStringA(ptr ptr long long) mciSendString
-0052 stub mciSendStringW
-0053 stub mciSetDriverData
-0054 stub mciSetYieldProc
-0055 stub midiConnect
-0056 stub midiDisconnect
-0057 stub midiInAddBuffer
-0058 stub midiInClose
-0059 stub midiInGetDevCapsA
-0060 stub midiInGetDevCapsW
-0061 stub midiInGetErrorTextA
-0062 stub midiInGetErrorTextW
-0063 stub midiInGetID
-0064 stub midiInGetNumDevs
-0065 stub midiInMessage
-0066 stub midiInOpen
-0067 stub midiInPrepareHeader
-0068 stub midiInReset
-0069 stub midiInStart
-0070 stub midiInStop
-0071 stub midiInUnprepareHeader
-0072 stub midiOutCacheDrumPatches
-0073 stub midiOutCachePatches
-0074 stub midiOutClose
-0075 stub midiOutGetDevCapsA
-0076 stub midiOutGetDevCapsW
-0077 stub midiOutGetErrorTextA
-0078 stub midiOutGetErrorTextW
-0079 stub midiOutGetID
-0080 stub midiOutGetNumDevs
-0081 stub midiOutGetVolume
-0082 stub midiOutLongMsg
-0083 stub midiOutMessage
-0084 stub midiOutOpen
-0085 stub midiOutPrepareHeader
-0086 stub midiOutReset
-0087 stub midiOutSetVolume
-0088 stub midiOutShortMsg
-0089 stub midiOutUnprepareHeader
-0090 stub midiStreamClose
-0091 stub midiStreamOpen
-0092 stub midiStreamOut
-0093 stub midiStreamPause
-0094 stub midiStreamPosition
-0095 stub midiStreamProperty
-0096 stub midiStreamRestart
-0097 stub midiStreamStop
-0098 stub mixerClose
-0099 stub mixerGetControlDetailsA
-0100 stub mixerGetControlDetailsW
-0101 stub mixerGetDevCapsA
-0102 stub mixerGetDevCapsW
-0103 stub mixerGetID
-0104 stub mixerGetLineControlsA
-0105 stub mixerGetLineControlsW
-0106 stub mixerGetLineInfoA
-0107 stub mixerGetLineInfoW
-0108 stub mixerGetNumDevs
-0109 stub mixerMessage
-0110 stub mixerOpen
-0111 stub mixerSetControlDetails
-0112 stub mmioAdvance
-0113 stub mmioAscend
-0114 stub mmioClose
-0115 stub mmioCreateChunk
-0116 stub mmioDescend
-0117 stub mmioFlush
-0118 stub mmioGetInfo
-0119 stub mmioInstallIOProc16
-0120 stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProc32A
-0121 stub mmioInstallIOProcW
-0122 stub mmioOpenA
-0123 stub mmioOpenW
-0124 stub mmioRead
-0125 stub mmioRenameA
-0126 stub mmioRenameW
-0127 stub mmioSeek
-0128 stub mmioSendMessage
-0129 stub mmioSetBuffer
-0130 stub mmioSetInfo
-0131 stub mmioStringToFOURCCA
-0132 stub mmioStringToFOURCCW
-0133 stub mmioWrite
-0134 stub mmsystemGetVersion
-0135 stdcall sndPlaySoundA(ptr long) sndPlaySound
-0136 stub sndPlaySoundW
-0137 stub timeBeginPeriod
-0138 stub timeEndPeriod
-0139 stub timeGetDevCaps
-0140 stub timeGetSystemTime
-0141 stdcall timeGetTime() timeGetTime
-0142 stub timeKillEvent
-0143 stub timeSetEvent
-0144 stub waveInAddBuffer
-0145 stub waveInClose
-0146 stub waveInGetDevCapsA
-0147 stub waveInGetDevCapsW
-0148 stub waveInGetErrorTextA
-0149 stub waveInGetErrorTextW
-0150 stub waveInGetID
-0151 stub waveInGetNumDevs
-0152 stub waveInGetPosition
-0153 stub waveInMessage
-0154 stub waveInOpen
-0155 stub waveInPrepareHeader
-0156 stub waveInReset
-0157 stub waveInStart
-0158 stub waveInStop
-0159 stub waveInUnprepareHeader
-0160 stub waveOutBreakLoop
-0161 stub waveOutClose
-0162 stub waveOutGetDevCapsA
-0163 stub waveOutGetDevCapsW
-0164 stub waveOutGetErrorTextA
-0165 stub waveOutGetErrorTextW
-0166 stub waveOutGetID
-0167 	stdcall waveOutGetNumDevs() waveOutGetNumDevs
-0168 stub waveOutGetPitch
-0169 stub waveOutGetPlaybackRate
-0170 stub waveOutGetPosition
-0171 stub waveOutGetVolume
-0172 stub waveOutMessage
-0173 stub waveOutOpen
-0174 stub waveOutPause
-0175 stub waveOutPrepareHeader
-0176 stub waveOutReset
-0177 stub waveOutRestart
-0178 stub waveOutSetPitch
-0179 stub waveOutSetPlaybackRate
-0180 stub waveOutSetVolume
-0181 stub waveOutUnprepareHeader
-0182 stub waveOutWrite
-0183 stub winmmf_ThunkData32
-0184 stub winmmsl_ThunkData32
+  1 stdcall PlaySoundA(ptr long long) PlaySound32A
+  4 stub CloseDriver
+  5 stub DefDriverProc
+  6 stub DriverCallback
+  7 stub DrvClose
+  8 stub DrvDefDriverProc
+  9 stub DrvGetModuleHandle
+ 10 stub DrvOpen
+ 11 stub DrvOpenA
+ 12 stub DrvSendMessage
+ 13 stub GetDriverFlags
+ 14 stub GetDriverModuleHandle
+ 15 stdcall OpenDriver(ptr ptr long) OpenDriver
+ 16 stub OpenDriverA
+ 17 stub PlaySound
+ 18 stdcall PlaySoundW(ptr long long) PlaySound32W
+ 19 stub SendDriverMessage
+ 20 stdcall auxGetDevCapsA(long ptr long) auxGetDevCaps32A
+ 21 stdcall auxGetDevCapsW(long ptr long) auxGetDevCaps32W
+ 22 stdcall auxGetNumDevs() auxGetNumDevs32
+ 23 stdcall auxGetVolume(long ptr) auxGetVolume32
+ 24 stdcall auxOutMessage(long long long long) auxOutMessage32
+ 25 stdcall auxSetVolume(long long) auxSetVolume32
+ 26 stub joyConfigChanged
+ 27 stub joyGetDevCapsA
+ 28 stub joyGetDevCapsW
+ 29 stub joyGetNumDevs
+ 30 stub joyGetPos
+ 31 stub joyGetPosEx
+ 32 stub joyGetThreshold
+ 33 stub joyReleaseCapture
+ 34 stub joySetCapture
+ 35 stub joySetThreshold
+ 36 stub mciDriverNotify
+ 37 stub mciDriverYield
+ 38 stub mciExecute
+ 39 stub mciFreeCommandResource
+ 40 stub mciGetCreatorTask
+ 41 stub mciGetDeviceIDA
+ 42 stub mciGetDeviceIDFromElementIDW
+ 43 stub mciGetDeviceIDW
+ 44 stub mciGetDriverData
+ 45 stdcall mciGetErrorStringA(long ptr long) mciGetErrorString32A
+ 46 stdcall mciGetErrorStringW(long ptr long) mciGetErrorString32W
+ 47 stub mciGetYieldProc
+ 48 stub mciLoadCommandResource
+ 49 stub mciSendCommandA
+ 50 stub mciSendCommandW
+ 51 stdcall mciSendStringA(ptr ptr long long) mciSendString
+ 52 stub mciSendStringW
+ 53 stub mciSetDriverData
+ 54 stub mciSetYieldProc
+ 55 stub midiConnect
+ 56 stub midiDisconnect
+ 57 stdcall midiInAddBuffer(long ptr long) midiInAddBuffer32
+ 58 stdcall midiInClose(long) midiInClose32
+ 59 stdcall midiInGetDevCapsA(long ptr long) midiInGetDevCaps32A
+ 60 stdcall midiInGetDevCapsW(long ptr long) midiInGetDevCaps32W
+ 61 stdcall midiInGetErrorTextA(long ptr long) midiInGetErrorText32A
+ 62 stdcall midiInGetErrorTextW(long ptr long) midiInGetErrorText32W
+ 63 stdcall midiInGetID(long) midiInGetID32
+ 64 stdcall midiInGetNumDevs() midiInGetNumDevs32
+ 65 stdcall midiInMessage(long long long long) midiInMessage32
+ 66 stdcall midiInOpen(ptr long long long long) midiInOpen32
+ 67 stdcall midiInPrepareHeader(long ptr long) midiInPrepareHeader32
+ 68 stdcall midiInReset(long) midiInReset32
+ 69 stdcall midiInStart(long) midiInStart32
+ 70 stdcall midiInStop(long) midiInStop32
+ 71 stdcall midiInUnprepareHeader(long ptr long) midiInUnprepareHeader32
+ 72 stdcall midiOutCacheDrumPatches(long long ptr long) midiOutCacheDrumPatches32
+ 73 stdcall midiOutCachePatches(long long ptr long) midiOutCachePatches32
+ 74 stdcall midiOutClose(long) midiOutClose32
+ 75 stdcall midiOutGetDevCapsA(long ptr long) midiOutGetDevCaps32A
+ 76 stdcall midiOutGetDevCapsW(long ptr long) midiOutGetDevCaps32W
+ 77 stdcall midiOutGetErrorTextA(long ptr long) midiOutGetErrorText32A
+ 78 stdcall midiOutGetErrorTextW(long ptr long) midiOutGetErrorText32W
+ 79 stdcall midiOutGetID(long) midiOutGetID32
+ 80 stdcall midiOutGetNumDevs() midiOutGetNumDevs32
+ 81 stdcall midiOutGetVolume(long ptr) midiOutGetVolume32
+ 82 stdcall midiOutLongMsg(long ptr long) midiOutLongMsg32
+ 83 stdcall midiOutMessage(long long long long) midiOutMessage32
+ 84 stdcall midiOutOpen(ptr long long long long) midiOutOpen32
+ 85 stdcall midiOutPrepareHeader(long ptr long) midiOutPrepareHeader32
+ 86 stdcall midiOutReset(long) midiOutReset32
+ 87 stdcall midiOutSetVolume(long ptr) midiOutSetVolume32
+ 88 stdcall midiOutShortMsg(long long) midiOutShortMsg32
+ 89 stdcall midiOutUnprepareHeader(long ptr long) midiOutUnprepareHeader32
+ 90 stub midiStreamClose
+ 91 stub midiStreamOpen
+ 92 stub midiStreamOut
+ 93 stub midiStreamPause
+ 94 stub midiStreamPosition
+ 95 stub midiStreamProperty
+ 96 stub midiStreamRestart
+ 97 stub midiStreamStop
+ 98 stdcall mixerClose(long) mixerClose32
+ 99 stdcall mixerGetControlDetailsA(long ptr long) mixerGetControlDetails32A
+100 stdcall mixerGetControlDetailsW(long ptr long) mixerGetControlDetails32W
+101 stdcall mixerGetDevCapsA(long ptr long) mixerGetDevCaps32A
+102 stdcall mixerGetDevCapsW(long ptr long) mixerGetDevCaps32W
+103 stdcall mixerGetID(long ptr long) mixerGetID32
+104 stdcall mixerGetLineControlsA(long ptr long) mixerGetLineControls32A
+105 stdcall mixerGetLineControlsW(long ptr long) mixerGetLineControls32W
+106 stdcall mixerGetLineInfoA(long ptr long) mixerGetLineInfo32A
+107 stdcall mixerGetLineInfoW(long ptr long) mixerGetLineInfo32W
+108 stdcall mixerGetNumDevs() mixerGetNumDevs32
+109 stdcall mixerMessage(long long long long) mixerMessage32
+110 stdcall mixerOpen(ptr long long long long) mixerOpen32
+111 stdcall mixerSetControlDetails(long ptr long) mixerSetControlDetails32
+112 stub mmioAdvance
+113 stub mmioAscend
+114 stub mmioClose
+115 stub mmioCreateChunk
+116 stub mmioDescend
+117 stub mmioFlush
+118 stub mmioGetInfo
+119 stub mmioInstallIOProc16
+120 stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProc32A
+121 stub mmioInstallIOProcW
+122 stdcall mmioOpenA(str ptr long) mmioOpen32A
+123 stdcall mmioOpenW(wstr ptr long) mmioOpen32W
+124 stub mmioRead
+125 stub mmioRenameA
+126 stub mmioRenameW
+127 stub mmioSeek
+128 stub mmioSendMessage
+129 stub mmioSetBuffer
+130 stub mmioSetInfo
+131 stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCC32A
+132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCC32W
+133 stub mmioWrite
+134 stdcall mmsystemGetVersion() mmsystemGetVersion32
+135 stdcall sndPlaySoundA(ptr long) sndPlaySound
+136 stub sndPlaySoundW
+137 stub timeBeginPeriod
+138 stub timeEndPeriod
+139 stub timeGetDevCaps
+140 stub timeGetSystemTime
+141 stdcall timeGetTime() timeGetTime
+142 stub timeKillEvent
+143 stub timeSetEvent
+144 stdcall waveInAddBuffer(long ptr long) waveInAddBuffer32
+145 stdcall waveInClose(long) waveInClose32
+146 stdcall waveInGetDevCapsA(long ptr long) waveInGetDevCaps32A
+147 stdcall waveInGetDevCapsW(long ptr long) waveInGetDevCaps32W
+148 stdcall waveInGetErrorTextA(long ptr long) waveInGetErrorText32A
+149 stdcall waveInGetErrorTextW(long ptr long) waveInGetErrorText32W
+150 stdcall waveInGetID(long ptr) waveInGetID32
+151 stdcall waveInGetNumDevs() waveInGetNumDevs32
+152 stdcall waveInGetPosition(long ptr long) waveInGetPosition32
+153 stdcall waveInMessage(long long long long) waveInMessage32
+154 stdcall waveInOpen(ptr long ptr long long long) waveInOpen32
+155 stdcall waveInPrepareHeader(long ptr long) waveInPrepareHeader32
+156 stdcall waveInReset(long) waveInReset32
+157 stdcall waveInStart(long) waveInStart32
+158 stdcall waveInStop(long) waveInStop32
+159 stdcall waveInUnprepareHeader(long ptr long) waveInUnprepareHeader32
+160 stdcall waveOutBreakLoop(long) waveOutBreakLoop32
+161 stdcall waveOutClose(long) waveOutClose32
+162 stdcall waveOutGetDevCapsA(long ptr long) waveOutGetDevCaps32A
+163 stdcall waveOutGetDevCapsW(long ptr long) waveOutGetDevCaps32W
+164 stdcall waveOutGetErrorTextA(long ptr long) waveOutGetErrorText32A
+165 stdcall waveOutGetErrorTextW(long ptr long) waveOutGetErrorText32W
+166 stdcall waveOutGetID(long ptr) waveOutGetID32
+167 stdcall waveOutGetNumDevs() waveOutGetNumDevs32
+168 stdcall waveOutGetPitch(long ptr) waveOutGetPitch32
+169 stdcall waveOutGetPlaybackRate(long ptr) waveOutGetPlaybackRate32
+170 stdcall waveOutGetPosition(long ptr long) waveOutGetPosition32
+171 stdcall waveOutGetVolume(long ptr) waveOutGetVolume32
+172 stdcall waveOutMessage(long long long long) waveOutMessage32
+173 stdcall waveOutOpen(ptr long ptr long long long) waveOutOpen32
+174 stdcall waveOutPause(long) waveOutPause32
+175 stdcall waveOutPrepareHeader(long ptr long) waveOutPrepareHeader32
+176 stdcall waveOutReset(long) waveOutReset32
+177 stdcall waveOutRestart(long) waveOutRestart32
+178 stdcall waveOutSetPitch(long long) waveOutSetPitch32
+179 stdcall waveOutSetPlaybackRate(long long) waveOutSetPlaybackRate32
+180 stdcall waveOutSetVolume(long long) waveOutSetVolume32
+181 stdcall waveOutUnprepareHeader(long ptr long) waveOutPrepareHeader32
+182 stdcall waveOutWrite(long ptr long) waveOutWrite32
+183 stub winmmf_ThunkData32
+184 stub winmmsl_ThunkData32

@@ -2,8 +2,8 @@ name	system
 type	win16
 
 1 pascal   InquireSystem(word word) InquireSystem
-2 pascal16 CreateSystemTimer(word segptr) THUNK_CreateSystemTimer
-3 pascal16 KillSystemTimer(word) THUNK_KillSystemTimer
+2 pascal16 CreateSystemTimer(word segptr) CreateSystemTimer
+3 pascal16 KillSystemTimer(word) SYSTEM_KillSystemTimer
 4 pascal16 EnableSystemTimers() EnableSystemTimers
 5 pascal16 DisableSystemTimers() DisableSystemTimers
 6 pascal   GetSystemMSecCount() GetTickCount

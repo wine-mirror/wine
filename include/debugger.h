@@ -145,6 +145,7 @@ extern void DEBUG_AddBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL32 enable );
 extern void DEBUG_InfoBreakpoints(void);
+extern void DEBUG_AddModuleBreakpoints(void);
 extern BOOL32 DEBUG_HandleTrap(void);
 extern BOOL32 DEBUG_ShouldContinue( enum exec_mode mode, int * count );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );

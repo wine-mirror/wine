@@ -13,7 +13,6 @@
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
-#include "xmalloc.h"
 
 #define TAB     9
 #define LF     10
@@ -60,8 +59,11 @@ static const char *TEXT_NextLine( HDC16 hdc, const char *str, int *count,
 	case LF:
 	    if (!(format & DT_SINGLELINE))
 	    {
-		if (str[i] == CR && str[i+1] == LF)
-		    i++;
+		if ((*count > 1) && (str[i] == CR) && (str[i+1] == LF))
+                {
+		    (*count)--;
+                    i++;
+                }
 		i++;
 		*len = j;
 		(*count)--;
@@ -348,12 +350,14 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
     BOOL32	ret;
     int		i;
     RECT32	rect32;
-    LPINT32	lpdx32 = lpDx?(LPINT32)xmalloc(sizeof(INT32)*count):NULL;
+    LPINT32	lpdx32 = NULL;
 
+    if (lpDx) lpdx32 = (LPINT32)HEAP_xalloc( GetProcessHeap(), 0,
+                                             sizeof(INT32)*count );
     if (lprect)	CONV_RECT16TO32(lprect,&rect32);
     if (lpdx32)	for (i=count;i--;) lpdx32[i]=lpDx[i];
     ret = ExtTextOut32A(hdc,x,y,flags,lprect?&rect32:NULL,str,count,lpdx32);
-    if (lpdx32) free(lpdx32);
+    if (lpdx32) HeapFree( GetProcessHeap(), 0, lpdx32 );
     return ret;
 
 

@@ -161,7 +161,6 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 #ifdef __i386__
 
 #ifdef linux
-    if (!__winelib)
     {
         struct modify_ldt_s ldt_info;
 
@@ -205,7 +204,6 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 #endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-    if (!__winelib)
     {
         long d[2];
 
@@ -222,7 +220,6 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
 #if defined(__svr4__) || defined(_SCO_DS)
-    if (!__winelib)
     {
         struct ssd ldt_mod;
         int i;

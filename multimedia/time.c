@@ -20,8 +20,8 @@
 #include "xmalloc.h"
 
 static BOOL32 mmTimeStarted = FALSE;
-static MMTIME mmSysTimeMS;
-static MMTIME mmSysTimeSMPTE;
+static MMTIME16 mmSysTimeMS;
+static MMTIME16 mmSysTimeSMPTE;
 
 typedef struct tagTIMERENTRY {
     WORD wDelay;
@@ -78,8 +78,8 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
  *          guess current implementation via SetTimer has to be improved upon.		
  */
 
-		CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID, 
-                                    0, lpTimer->dwUser, 0, 0);
+		Callbacks->CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID,
+                                            0, lpTimer->dwUser, 0, 0 );
 
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
 		fflush(stdout);
@@ -114,7 +114,7 @@ static void StartMMTime()
 /**************************************************************************
  * 				timeGetSystemTime	[MMSYSTEM.601]
  */
-WORD WINAPI timeGetSystemTime(LPMMTIME lpTime, WORD wSize)
+WORD WINAPI timeGetSystemTime(LPMMTIME16 lpTime, WORD wSize)
 {
     dprintf_mmsys(stddeb, "timeGetSystemTime(%p, %u);\n", lpTime, wSize);
     if (!mmTimeStarted)

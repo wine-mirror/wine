@@ -2053,13 +2053,20 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if (hwnd == GetDesktopWindow32()) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
-    if (wndPtr->dwStyle & WS_VISIBLE) flags &= ~SWP_SHOWWINDOW;
+    if(wndPtr->dwStyle & WS_VISIBLE)
+    {
+        if(!(wndPtr->flags & WIN_NO_REDRAW))
+            flags &= ~SWP_SHOWWINDOW;
+    }
     else
     {
 	uFlags |= SMC_NOPARENTERASE; 
 	flags &= ~SWP_HIDEWINDOW;
 	if (!(flags & SWP_SHOWWINDOW)) flags |= SWP_NOREDRAW;
     }
+
+    if(flags & SWP_SHOWWINDOW)
+       wndPtr->flags&=~WIN_NO_REDRAW;
 
 /*     Check for windows that may not be resized 
        FIXME: this should be done only for Windows 3.0 programs 
@@ -2120,7 +2127,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     
       /* Send WM_WINDOWPOSCHANGING message */
 
-    if (!(flags & SWP_NOSENDCHANGING))
+    if (!(winpos.flags & SWP_NOSENDCHANGING))
 	SendMessage32A( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
 
       /* Calculate new position and size */
@@ -2155,7 +2162,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
          */
 	if( wndPtr->parent == WIN_GetDesktop() )
 	    hwndInsertAfter = WINPOS_ReorderOwnedPopups( hwndInsertAfter,
-							 wndPtr, flags );
+							 wndPtr, winpos.flags );
 
         if (wndPtr->window)
         {
@@ -2165,14 +2172,15 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         else WINPOS_MoveWindowZOrder( winpos.hwnd, hwndInsertAfter );
     }
 
-    if ( !wndPtr->window && !(flags & SWP_NOREDRAW) && 
-        (!(flags & SWP_NOMOVE) || !(flags & SWP_NOSIZE) || (flags & SWP_FRAMECHANGED)) )
+    if ( !wndPtr->window && !(winpos.flags & SWP_NOREDRAW) && 
+	((winpos.flags & (SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED)) 
+		      != (SWP_NOMOVE | SWP_NOSIZE)) )
           visRgn = DCE_GetVisRgn(hwnd, DCX_WINDOW | DCX_CLIPSIBLINGS);
 
 
       /* Send WM_NCCALCSIZE message to get new client area */
-    if( (flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
-      {
+    if( (winpos.flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
+    {
          result = WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
 				    &wndPtr->rectWindow, &wndPtr->rectClient,
 				    &winpos, &newClientRect );
@@ -2184,11 +2192,11 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
              winpos.flags &= ~SWP_NOCLIENTMOVE;
 
          if( (newClientRect.right - newClientRect.left !=
-             wndPtr->rectClient.right - wndPtr->rectClient.left) ||
-  	    (newClientRect.bottom - newClientRect.top !=
-	     wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
+              wndPtr->rectClient.right - wndPtr->rectClient.left) ||
+	     (newClientRect.bottom - newClientRect.top !=
+	      wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
 	     winpos.flags &= ~SWP_NOCLIENTSIZE;
-      }
+    }
     else
       if( !(flags & SWP_NOMOVE) && (newClientRect.left != wndPtr->rectClient.left ||
 				    newClientRect.top != wndPtr->rectClient.top) )
@@ -2196,15 +2204,15 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
     /* Update active DCEs */
 
-    if( !(flags & SWP_NOZORDER) || (flags & SWP_HIDEWINDOW) || (flags & SWP_SHOWWINDOW)
-                                || (memcmp(&newWindowRect,&wndPtr->rectWindow,sizeof(newWindowRect))
-                                    && wndPtr->dwStyle & WS_VISIBLE ) )
-      {
+    if( (((winpos.flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) && 
+					 wndPtr->dwStyle & WS_VISIBLE) || 
+	(flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW)) ) 
+    {
         RECT32 rect;
 
-        UnionRect32(&rect,&newWindowRect,&wndPtr->rectWindow);
+        UnionRect32(&rect, &newWindowRect, &wndPtr->rectWindow);
         DCE_InvalidateDCE(wndPtr->parent, &rect);
-      }
+    }
 
     /* change geometry */
 

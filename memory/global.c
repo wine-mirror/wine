@@ -1259,7 +1259,7 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpmem )
             lpmem->dwTotalVirtual = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
             lpmem->dwAvailVirtual = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
             lpmem->dwMemoryLoad = (lpmem->dwTotalVirtual-lpmem->dwAvailVirtual)
-                                      * 100 / lpmem->dwTotalVirtual;
+                                      / (lpmem->dwTotalVirtual / 100);
             return;
         }
     }

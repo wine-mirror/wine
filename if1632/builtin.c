@@ -41,6 +41,7 @@ typedef struct
     const char * const *names;      /* Pointer to names table */
     const WORD         *ordinals;   /* Pointer to ordinals table */
     const BYTE         *args;       /* Pointer to argument lengths */
+    const DWORD        *argtypes;   /* Pointer to argument types bitmask */
 } WIN32_DESCRIPTOR;
 
 typedef union
@@ -101,6 +102,7 @@ extern const DLL_DESCRIPTOR LZEXPAND_Descriptor;
 extern const DLL_DESCRIPTOR VER_Descriptor;
 extern const DLL_DESCRIPTOR W32SYS_Descriptor;
 extern const DLL_DESCRIPTOR WING_Descriptor;
+extern const DLL_DESCRIPTOR WINASPI_Descriptor;
 
 /* 32-bit DLLs */
 
@@ -155,6 +157,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &VER_Descriptor,      NULL, 0 },
     { &W32SYS_Descriptor,   NULL, 0 },
     { &WING_Descriptor,     NULL, 0 },
+    { &WINASPI_Descriptor,  NULL, 0 },
     /* Win32 DLLs */
     { &ADVAPI32_Descriptor, NULL, DLL_FLAG_WIN32 },
     { &COMCTL32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
@@ -462,7 +465,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
  * This function _must_ return the real entry point to call
  * after the debug info is printed.
  */
-FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay )
+FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay, DWORD *typemask )
 {
     BUILTIN_DLL *dll;
     int ordinal, i;
@@ -487,6 +490,7 @@ FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay )
     assert( i < descr->nb_names );
 
     sprintf( buffer, "%s.%d: %s", descr->name, ordinal, descr->names[i] );
+    *typemask = descr->argtypes[ordinal - descr->base];
     return (FARPROC32)descr->functions[ordinal - descr->base];
 }
 

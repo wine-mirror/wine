@@ -25,15 +25,15 @@ type	win32
 022 stdcall shutdown(long long) WINSOCK_shutdown32
 023 stdcall socket(long long long) WINSOCK_socket32
 051 stdcall gethostbyaddr(ptr long long) WINSOCK_gethostbyaddr32
-052 stdcall gethostbyname(ptr) WINSOCK_gethostbyname32
-053 stdcall getprotobyname(ptr) WINSOCK_getprotobyname32
+052 stdcall gethostbyname(str) WINSOCK_gethostbyname32
+053 stdcall getprotobyname(str) WINSOCK_getprotobyname32
 054 stdcall getprotobynumber(long) WINSOCK_getprotobynumber32
-055 stdcall getservbyname(ptr ptr) WINSOCK_getservbyname32
-056 stdcall getservbyport(long ptr) WINSOCK_getservbyport32
+055 stdcall getservbyname(str str) WINSOCK_getservbyname32
+056 stdcall getservbyport(long str) WINSOCK_getservbyport32
 057 stdcall gethostname(ptr long) WINSOCK_gethostname32
-101 stub WSAAsyncSelect
+101 stdcall WSAAsyncSelect(long long long long) WSAAsyncSelect
 102 stub WSAAsyncGetHostByAddr
-103 stub WSAAsyncGetHostByName
+103 stdcall WSAAsyncGetHostByName(long long ptr ptr long) WSAAsyncGetHostByName32
 104 stub WSAAsyncGetProtoByNumber
 105 stub WSAAsyncGetProtoByName
 106 stub WSAAsyncGetServByPort

@@ -24,7 +24,6 @@
 #include "task.h"
 #include "options.h"
 #include "miscemu.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 #if defined(__svr4__) || defined(_SCO_DS)
@@ -535,7 +534,7 @@ static int INT21_FindFirst( CONTEXT *context )
         SET_CFLAG(context);
         return 0;
     }
-    dta->unixPath = xstrdup( full_name.long_name );
+    dta->unixPath = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
     p = strrchr( dta->unixPath, '/' );
     *p = '\0';
 
@@ -544,7 +543,7 @@ static int INT21_FindFirst( CONTEXT *context )
      */
     if (!DOSFS_ToDosFCBFormat( p + 1, dta->mask ))
     {
-        free( dta->unixPath );
+        HeapFree( GetProcessHeap(), 0, dta->unixPath );
         dta->unixPath = NULL;
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         AX_reg(context) = ER_FileNotFound;
@@ -569,14 +568,14 @@ static int INT21_FindNext( CONTEXT *context )
     if (!(count = DOSFS_FindNext( dta->unixPath, dta->mask, NULL, dta->drive,
                                   dta->search_attr, dta->count, &entry )))
     {
-        free( dta->unixPath );
+        HeapFree( GetProcessHeap(), 0, dta->unixPath );
         dta->unixPath = NULL;
         return 0;
     }
     if ((int)dta->count + count > 0xffff)
     {
         fprintf( stderr, "Too many directory entries in %s\n", dta->unixPath );
-        free( dta->unixPath );
+        HeapFree( GetProcessHeap(), 0, dta->unixPath );
         dta->unixPath = NULL;
         return 0;
     }
@@ -850,13 +849,15 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
     case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
     case 0x29: /* PARSE FILENAME INTO FCB */
-    case 0x2e: /* SET VERIFY FLAG */
     case 0x37: /* "SWITCHAR" - GET SWITCH CHARACTER
                   "SWITCHAR" - SET SWITCH CHARACTER
                   "AVAILDEV" - SPECIFY \DEV\ PREFIX USE */
     case 0x54: /* GET VERIFY FLAG */
         INT_BARF( context, 0x21 );
         break;
+    case 0x2e: /* SET VERIFY FLAG */
+    	/* we cannot change the behaviour anyway, so just ignore it */
+    	break;
 
     case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
     case 0x1d:
@@ -1197,16 +1198,20 @@ void WINAPI DOS3Call( CONTEXT *context )
             break;
 
 	case 0x0e: /* get logical drive mapping */
-	    AL_reg(context) = 0; /* drive has no mapping */
+	    AL_reg(context) = 0; /* drive has no mapping - FIXME: may be wrong*/
 	    break;
 
         case 0x0F:   /* Set logical drive mapping */
-            /* FIXME: Not implemented at the moment, always returns error
-             */
-            INT_BARF( context, 0x21 );
-            AX_reg(context) = 0x0001; /* invalid function */
-            SET_CFLAG(context);
+	    {
+	    int drive;
+	    drive = DOS_GET_DRIVE ( BL_reg(context) );
+	    if ( ! DRIVE_SetLogicalMapping ( drive, drive+1 ) )
+	    {
+		SET_CFLAG(context);
+		AX_reg(context) = 0x000F;  /* invalid drive */
+	    }
             break;
+	    }
                 
         default:
             INT_BARF( context, 0x21 );

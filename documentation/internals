@@ -18,6 +18,9 @@ located in windows/, controls/, and misc/ directories.
 
 1. Windowing subsystem
 
+   windows/win.c
+   windows/winpos.c
+
    Windows are arranged into parent/child hierarchy with one
    common ancestor for all windows (desktop window). Each window
    structure contains a pointer to the immediate ancestor (parent 
@@ -63,7 +66,89 @@ located in windows/, controls/, and misc/ directories.
    fake stub. In desktop mode, however, only desktop window has an X
    window associated with it.
 
-2. Messaging subsystem
+2. Visible region, clipping region and update region
+
+   windows/dce.c
+   windows/winpos.c
+   windows/painting.c
+
+    ________________________
+   |_________               |  A and B are child windows of C
+   |    A    |______        | 
+   |         |      |       |
+   |---------'      |       |
+   |   |      B     |       |
+   |   |            |       |
+   |   `------------'       |
+   |                   C    |
+   `------------------------'
+
+   Visible region determines which part of the window is not obscured
+   by other windows. If a window has the WS_CLIPCHILDREN style then all
+   areas below its children are considered invisible. Similarily, if
+   the WS_CLIPSIBLINGS bit is in effect then all areas obscured by its
+   siblings are invisible. Child windows are always clipped by the 
+   boundaries of their parent windows.
+
+   B has a WS_CLIPSIBLINGS style:
+   .          ______ 
+   :         |      |
+   |   ,-----'      |
+   |   |      B     | - visible region of B
+   |   |            |
+   :   `------------'
+    
+   When the program requests a display context (DC) for a window it 
+   can specify an optional clipping region that further restricts the 
+   area where the graphics output can appear. This area is calculated 
+   as an intersection of the visible region and a clipping region. 
+
+   Program asked for a DC with a clipping region:
+          ______
+      ,--|--.   |     .    ,--. 
+   ,--+--'  |   |     :   _:  |
+   |  |   B |   |  => |  |    | - DC region where the painting will
+   |  |     |   |     |  |    |   be visible
+   `--|-----|---'     :  `----'
+      `-----'
+
+   When the window manager detects that some part of the window 
+   became visible it adds this area to the update region of this
+   window and then generates WM_ERASEBKGND and WM_PAINT messages. 
+   In addition, WM_NCPAINT message is sent when the uncovered area 
+   intersects a nonclient part of the window. Application must reply 
+   to the WM_PAINT message by calling BeginPaint()/EndPaint() pair of
+   functions. BeginPaint() returns a DC that uses accumulated update 
+   region as a clipping region. This operation cleans up invalidated
+   area and the window will not receive another WM_PAINT until the
+   window manager creates a new update region.
+
+   A was moved to the left:
+    ________________________       ...          / C update region
+   |______                  |     :      .___ /
+   | A    |_________        |  => |   ...|___|..
+   |      |         |       |     |   :  |   |
+   |------'         |       |     |   :  '---' 
+   |   |      B     |       |     |   :      \
+   |   |            |       |     :            \
+   |   `------------'       |                    B update region
+   |                   C    |
+   `------------------------'
+
+
+   Windows maintains a display context cache consisting of entries that 
+   include DC itself, window to which it belongs, and an optional clipping 
+   region (visible region is stored in the DC itself). When an API call 
+   changes the state of the window tree, window manager has to go through 
+   the DC cache to recalculate visible regions for entries whose windows 
+   were involved in the operation. DC entries (DCE) can be either private
+   to the window, or private to the window class, or shared between all 
+   windows. Windows 3.1 limits the number of shared DCEs to 5. 
+
+3. Messaging subsystem
+
+   windows/queue.c
+   windows/message.c
 
    Each Windows task/thread has its own message queue - this is where
    it gets messages from. Messages can be generated on the fly

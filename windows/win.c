@@ -308,7 +308,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
     {
-        if (wndPtr->hrgnUpdate) DeleteObject32( wndPtr->hrgnUpdate );
+        if (wndPtr->hrgnUpdate > 1) DeleteObject32( wndPtr->hrgnUpdate );
         QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
     }
 
@@ -316,19 +316,29 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     if( wndPtr->hmemTaskQ )
     {
-      int           pos;
-      MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) GlobalLock16(wndPtr->hmemTaskQ);
+        int           pos;
+	BOOL32	      bPostQuit = FALSE;
+	WPARAM32      wQuitParam = 0;
+        MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) GlobalLock16(wndPtr->hmemTaskQ);
 
-      while( (pos = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != -1 ) 
-	      QUEUE_RemoveMsg(msgQ, pos);
-      wndPtr->hmemTaskQ = 0;
+	while( (pos = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != -1 )
+	{
+	    if( msgQ->messages[pos].msg.message == WM_QUIT ) 
+	    {
+		bPostQuit = TRUE;
+		wQuitParam = msgQ->messages[pos].msg.wParam;
+	    }
+	    QUEUE_RemoveMsg(msgQ, pos);
+	}
+	if( bPostQuit ) PostQuitMessage32(wQuitParam);
+	wndPtr->hmemTaskQ = 0;
     }
 
     if (!(wndPtr->dwStyle & WS_CHILD))
        if (wndPtr->wIDmenu) DestroyMenu32( (HMENU32)wndPtr->wIDmenu );
     if (wndPtr->hSysMenu) DestroyMenu32( wndPtr->hSysMenu );
     if (wndPtr->window) EVENT_DestroyWindow( wndPtr );
-    if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->dce );
+    if (wndPtr->class->style & CS_OWNDC) DCE_FreeWindowDCE( wndPtr );
 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
 

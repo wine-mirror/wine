@@ -131,6 +131,14 @@ void THREAD_Destroy( K32OBJ *ptr )
 
     /* Free the associated memory */
 
+#ifdef __i386__
+    {
+        /* Check if we are deleting the current thread */
+        WORD fs;
+        __asm__("movw %%fs,%w0":"=r" (fs));
+        if (fs == thdb->teb_sel) __asm__ __volatile__("pushw %ds\n\tpopw %fs");
+    }
+#endif
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
 
@@ -330,7 +338,7 @@ BOOL32 WINAPI TlsSetValue( DWORD index, LPVOID value )
  */
 BOOL32 WINAPI GetThreadContext( HANDLE32 handle, CONTEXT *context )
 {
-    THDB *thread = (THDB*)PROCESS_GetObjPtr( handle, K32OBJ_THREAD );
+    THDB *thread = THREAD_GetPtr( handle );
     if (!thread) return FALSE;
     *context = thread->context;
     K32OBJ_DecCount( &thread->header );

@@ -768,12 +768,21 @@ DECL_WINELIB_TYPE(LPDEBUGHOOKINFO);
 #define DLGWINDOWEXTRA      30
 
   /* Dialog styles */
-#define DS_ABSALIGN         0x001
-#define DS_SYSMODAL         0x002
-#define DS_LOCALEDIT        0x020
-#define DS_SETFONT          0x040
-#define DS_MODALFRAME       0x080
-#define DS_NOIDLEMSG        0x100
+#define DS_ABSALIGN		0x0001
+#define DS_SYSMODAL		0x0002
+#define DS_3DLOOK		0x0004	/* win95 */
+#define DS_FIXEDSYS		0x0008	/* win95 */
+#define DS_NOFAILCREATE		0x0010	/* win95 */
+#define DS_LOCALEDIT		0x0020
+#define DS_SETFONT		0x0040
+#define DS_MODALFRAME		0x0080
+#define DS_NOIDLEMSG		0x0100
+#define DS_SETFOREGROUND	0x0200	/* win95 */
+#define DS_CONTROL		0x0400	/* win95 */
+#define DS_CENTER		0x0800	/* win95 */
+#define DS_CENTERMOUSE		0x1000	/* win95 */
+#define DS_CONTEXTHELP		0x2000	/* win95 */
+
 
   /* Dialog messages */
 #define DM_GETDEFID         (WM_USER+0)
@@ -1917,7 +1926,7 @@ typedef struct
 } DIBSECTION,*LPDIBSECTION;
 
 
-  /* Cursors / Icons */
+/* Cursors / Icons */
 
 typedef struct
 {
@@ -1929,7 +1938,14 @@ typedef struct
     BYTE    bBitsPerPixel;
 } CURSORICONINFO;
 
-
+/* only used by Win32 functions */
+typedef struct {
+	BOOL32		fIcon;
+	DWORD		xHotspot;
+	DWORD		yHotspot;
+	HBITMAP32	hbmMask;
+	HBITMAP32	hbmColor;
+} ICONINFO,*LPICONINFO;
 
 typedef struct {
 	BYTE i;  /* much more .... */
@@ -3227,13 +3243,34 @@ typedef BOOL32 (CALLBACK *DRAWSTATEPROC)(HDC32,LPARAM,WPARAM32,INT32,INT32);
 #define SS_BLACKFRAME       0x00000007L
 #define SS_GRAYFRAME        0x00000008L
 #define SS_WHITEFRAME       0x00000009L
+
 #define SS_SIMPLE           0x0000000BL
 #define SS_LEFTNOWORDWRAP   0x0000000CL
+
+#define SS_OWNERDRAW        0x0000000DL
+#define SS_BITMAP           0x0000000EL
+#define SS_ENHMETAFILE      0x0000000FL
+
+#define SS_ETCHEDHORZ       0x00000010L
+#define SS_ETCHEDVERT       0x00000011L
+#define SS_ETCHEDFRAME      0x00000012L
+#define SS_TYPEMASK         0x0000001FL
+
 #define SS_NOPREFIX         0x00000080L
+#define SS_CENTERIMAGE      0x00000200L
+#define SS_RIGHTJUST        0x00000400L
+#define SS_REALSIZEIMAGE    0x00000800L
+#define SS_SUNKEN           0x00001000L
 
 /* Static Control Messages */
-#define STM_SETICON         (WM_USER+0)
-#define STM_GETICON         (WM_USER+1)
+#define STM_SETICON16       (WM_USER+0)
+#define STM_SETICON32       0x0170
+#define STM_SETICON	    WINELIB_NAME(STM_SETICON)
+#define STM_GETICON16       (WM_USER+1)
+#define STM_GETICON32       0x0171
+#define STM_GETICON	    WINELIB_NAME(STM_GETICON)
+#define STM_SETIMAGE        0x0172
+#define STM_GETIMAGE        0x0173
 
 /* WM_H/VSCROLL commands */
 #define SB_LINEUP           0
@@ -5430,6 +5467,7 @@ HANDLE32    WINAPI CreateFileMapping32A(HANDLE32,LPSECURITY_ATTRIBUTES,DWORD,
 HANDLE32    WINAPI CreateFileMapping32W(HANDLE32,LPSECURITY_ATTRIBUTES,DWORD,
                                         DWORD,DWORD,LPCWSTR);
 #define     CreateFileMapping WINELIB_NAME_AW(CreateFileMapping)
+HICON32     WINAPI CreateIconIndirect(LPICONINFO);
 HANDLE32    WINAPI CreateMutex32A(LPSECURITY_ATTRIBUTES,BOOL32,LPCSTR);
 HANDLE32    WINAPI CreateMutex32W(LPSECURITY_ATTRIBUTES,BOOL32,LPCWSTR);
 #define     CreateMutex WINELIB_NAME_AW(CreateMutex)
@@ -5508,6 +5546,7 @@ DWORD       WINAPI GetLogicalDrives(void);
 BOOL32      WINAPI GetMenuItemInfo32A(HMENU32,UINT32,BOOL32,MENUITEMINFO32A*);
 BOOL32      WINAPI GetMenuItemInfo32W(HMENU32,UINT32,BOOL32,MENUITEMINFO32W*);
 #define     GetMenuItemInfo WINELIB_NAME_AW(GetMenuItemInfo)
+DWORD       WINAPI GetObjectType(HANDLE32);
 UINT32      WINAPI GetOEMCP(void);
 DWORD       WINAPI GetPriorityClass(HANDLE32);
 INT32       WINAPI GetPrivateProfileSection32A(LPCSTR,LPSTR,INT32,LPCSTR);
@@ -5562,6 +5601,9 @@ INT32       WINAPI MessageBoxEx32W(HWND32,LPCWSTR,LPCWSTR,UINT32,WORD);
 BOOL32      WINAPI MoveFile32A(LPCSTR,LPCSTR);
 BOOL32      WINAPI MoveFile32W(LPCWSTR,LPCWSTR);
 #define     MoveFile WINELIB_NAME_AW(MoveFile)
+BOOL32      WINAPI MoveFileEx32A(LPCSTR,LPCSTR,DWORD);
+BOOL32      WINAPI MoveFileEx32W(LPCWSTR,LPCWSTR,DWORD);
+#define     MoveFileEx WINELIB_NAME_AW(MoveFileEx)
 HANDLE32    WINAPI OpenEvent32A(DWORD,BOOL32,LPCSTR);
 HANDLE32    WINAPI OpenEvent32W(DWORD,BOOL32,LPCWSTR);
 #define     OpenEvent WINELIB_NAME_AW(OpenEvent)

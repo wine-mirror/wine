@@ -3,9 +3,9 @@ type	win32
 
   0 stub AbortDoc
   1 stub AbortPath
-  2 stdcall AddFontResourceA(ptr) AddFontResource32A
+  2 stdcall AddFontResourceA(str) AddFontResource32A
   3 stub AddFontResourceTracking
-  4 stdcall AddFontResourceW(ptr) AddFontResource32W
+  4 stdcall AddFontResourceW(wstr) AddFontResource32W
   5 stub AngleArc
   6 stdcall AnimatePalette(long long long ptr) AnimatePalette32
   7 stdcall Arc(long long long long long long long long long) Arc32
@@ -24,8 +24,8 @@ type	win32
  20 stub CombineTransform
  21 stub CopyEnhMetaFileA
  22 stub CopyEnhMetaFileW
- 23 stdcall CopyMetaFileA(long ptr) CopyMetaFile32A
- 24 stdcall CopyMetaFileW(long ptr) CopyMetaFile32W
+ 23 stdcall CopyMetaFileA(long str) CopyMetaFile32A
+ 24 stdcall CopyMetaFileW(long wstr) CopyMetaFile32W
  25 stdcall CreateBitmap(long long long long ptr) CreateBitmap32
  26 stdcall CreateBitmapIndirect(ptr) CreateBitmapIndirect32
  27 stdcall CreateBrushIndirect(ptr) CreateBrushIndirect32
@@ -33,8 +33,8 @@ type	win32
  29 stub CreateColorSpaceW
  30 stdcall CreateCompatibleBitmap(long long long) CreateCompatibleBitmap32
  31 stdcall CreateCompatibleDC(long) CreateCompatibleDC32
- 32 stdcall CreateDCA(ptr ptr ptr ptr) CreateDC32A
- 33 stdcall CreateDCW(ptr ptr ptr ptr) CreateDC32W
+ 32 stdcall CreateDCA(str str str ptr) CreateDC32A
+ 33 stdcall CreateDCW(wstr wstr wstr ptr) CreateDC32W
  34 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
  35 stub CreateDIBPatternBrushPt
  36 stdcall CreateDIBSection(long ptr long ptr long long) CreateDIBSection
@@ -45,15 +45,15 @@ type	win32
  41 stub CreateEnhMetaFileA
  42 stub CreateEnhMetaFileW
  43 stdcall CreateFontA(long long long long long long long long
-                        long long long long long ptr) CreateFont32A
+                        long long long long long str) CreateFont32A
  44 stdcall CreateFontIndirectA(ptr) CreateFontIndirect32A
  45 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
  46 stdcall CreateFontW(long long long long long long long long
-                        long long long long long ptr) CreateFont32W
+                        long long long long long wstr) CreateFont32W
  47 stub CreateHalftonePalette
  48 stdcall CreateHatchBrush(long long) CreateHatchBrush32
- 49 stdcall CreateICA(ptr ptr ptr ptr) CreateIC32A
- 50 stdcall CreateICW(ptr ptr ptr ptr) CreateIC32W
+ 49 stdcall CreateICA(str str str ptr) CreateIC32A
+ 50 stdcall CreateICW(wstr wstr wstr ptr) CreateIC32W
  51 stub CreateMetaFileA
  52 stub CreateMetaFileW
  53 stdcall CreatePalette(ptr) CreatePalette32
@@ -66,8 +66,8 @@ type	win32
  60 stdcall CreateRectRgnIndirect(ptr) CreateRectRgnIndirect32
  61 stdcall CreateRoundRectRgn(long long long long long long)
              CreateRoundRectRgn32
- 62 stdcall CreateScalableFontResourceA(long ptr ptr ptr) CreateScalableFontResource32A
- 63 stdcall CreateScalableFontResourceW(long ptr ptr ptr) CreateScalableFontResource32W
+ 62 stdcall CreateScalableFontResourceA(long str str str) CreateScalableFontResource32A
+ 63 stdcall CreateScalableFontResourceW(long wstr wstr wstr) CreateScalableFontResource32W
  64 stdcall CreateSolidBrush(long) CreateSolidBrush32
  65 stdcall DPtoLP(long ptr long) DPtoLP32
  66 stub DeleteColorSpace
@@ -84,12 +84,12 @@ type	win32
  77 stub EndPage
  78 stub EndPath
  79 stub EnumEnhMetaFile
- 80 stdcall EnumFontFamiliesA(long ptr ptr long) EnumFontFamilies32A
- 81 stdcall EnumFontFamiliesExA(long ptr ptr long long) EnumFontFamiliesEx32A
- 82 stdcall EnumFontFamiliesExW(long ptr ptr long long) EnumFontFamiliesEx32W
- 83 stdcall EnumFontFamiliesW(long ptr ptr long) EnumFontFamilies32W
- 84 stdcall EnumFontsA(long ptr ptr long) EnumFonts32A
- 85 stdcall EnumFontsW(long ptr ptr long) EnumFonts32W
+ 80 stdcall EnumFontFamiliesA(long str ptr long) EnumFontFamilies32A
+ 81 stdcall EnumFontFamiliesExA(long str ptr long long) EnumFontFamiliesEx32A
+ 82 stdcall EnumFontFamiliesExW(long wstr ptr long long) EnumFontFamiliesEx32W
+ 83 stdcall EnumFontFamiliesW(long wstr ptr long) EnumFontFamilies32W
+ 84 stdcall EnumFontsA(long str ptr long) EnumFonts32A
+ 85 stdcall EnumFontsW(long wstr ptr long) EnumFonts32W
  86 stub EnumICMProfilesA
  87 stub EnumICMProfilesW
  88 stub EnumMetaFile
@@ -102,8 +102,8 @@ type	win32
  95 stdcall ExtEscape(long long long ptr long ptr) ExtEscape32
  96 stdcall ExtFloodFill(long long long long long) ExtFloodFill32
  97 stub ExtSelectClipRgn
- 98 stdcall ExtTextOutA(long long long long ptr ptr long ptr) ExtTextOut32A
- 99 stdcall ExtTextOutW(long long long long ptr ptr long ptr) ExtTextOut32W
+ 98 stdcall ExtTextOutA(long long long long ptr str long ptr) ExtTextOut32A
+ 99 stdcall ExtTextOutW(long long long long ptr wstr long ptr) ExtTextOut32W
 100 stub FillPath
 101 stdcall FillRgn(long long long) FillRgn32
 102 stub FixBrushOrgEx
@@ -132,7 +132,7 @@ type	win32
 125 stub GdiCreateLocalRegion
 126 stub GdiDeleteLocalDC
 127 stub GdiDeleteLocalObject
-128 stub GdiFlush
+128 stdcall GdiFlush() GdiFlush
 129 stdcall GdiGetBatchLimit() GdiGetBatchLimit
 130 stub GdiGetLocalBrush
 131 stub GdiGetLocalDC
@@ -201,15 +201,15 @@ type	win32
 194 stub GetLogColorSpaceA
 195 stub GetLogColorSpaceW
 196 stdcall GetMapMode(long) GetMapMode32
-197 stdcall GetMetaFileA(ptr) GetMetaFile32A
+197 stdcall GetMetaFileA(str) GetMetaFile32A
 198 stub GetMetaFileBitsEx
-199 stdcall GetMetaFileW(ptr) GetMetaFile32W
+199 stdcall GetMetaFileW(wstr) GetMetaFile32W
 200 stub GetMetaRgn
 201 stub GetMiterLimit
 202 stdcall GetNearestColor(long long) GetNearestColor32
 203 stdcall GetNearestPaletteIndex(long long) GetNearestPaletteIndex32
 204 stdcall GetObjectA(long long ptr) GetObject32A
-205 stub GetObjectType
+205 stdcall GetObjectType(long) GetObjectType
 206 stdcall GetObjectW(long long ptr) GetObject32W
 207 stub GetOutlineTextMetricsA
 208 stub GetOutlineTextMetricsW
@@ -227,17 +227,17 @@ type	win32
 220 stdcall GetStockObject(long) GetStockObject32
 221 stdcall GetStretchBltMode(long) GetStretchBltMode32
 222 stdcall GetSystemPaletteEntries(long long long ptr) GetSystemPaletteEntries32
-223 stdcall GetSystemPaletteUse() GetSystemPaletteUse32
+223 stdcall GetSystemPaletteUse(long) GetSystemPaletteUse32
 224 stdcall GetTextAlign(long) GetTextAlign32
 225 stdcall GetTextCharacterExtra(long) GetTextCharacterExtra32
 226 stdcall GetTextCharset(long) GetTextCharset32
 227 stdcall GetTextColor(long) GetTextColor32
-228 stdcall GetTextExtentExPointA(long ptr long long ptr ptr ptr) GetTextExtentExPoint32A
-229 stdcall GetTextExtentExPointW(long ptr long long ptr ptr ptr) GetTextExtentExPoint32W
-230 stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
-231 stdcall GetTextExtentPoint32W(long ptr long ptr) GetTextExtentPoint32W
-232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32ABuggy
-233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32WBuggy
+228 stdcall GetTextExtentExPointA(long str long long ptr ptr ptr) GetTextExtentExPoint32A
+229 stdcall GetTextExtentExPointW(long wstr long long ptr ptr ptr) GetTextExtentExPoint32W
+230 stdcall GetTextExtentPoint32A(long str long ptr) GetTextExtentPoint32A
+231 stdcall GetTextExtentPoint32W(long wstr long ptr) GetTextExtentPoint32W
+232 stdcall GetTextExtentPointA(long str long ptr) GetTextExtentPoint32ABuggy
+233 stdcall GetTextExtentPointW(long wstr long ptr) GetTextExtentPoint32WBuggy
 234 stdcall GetTextFaceA(long long ptr) GetTextFace32A
 235 stdcall GetTextFaceW(long long ptr) GetTextFace32W
 236 stdcall GetTextMetricsA(long ptr) GetTextMetrics32A
@@ -288,9 +288,9 @@ type	win32
 281 stdcall RectInRegion(long ptr) RectInRegion32
 282 stdcall RectVisible(long ptr) RectVisible32
 283 stdcall Rectangle(long long long long long) Rectangle32
-284 stdcall RemoveFontResourceA(ptr) RemoveFontResource32A
+284 stdcall RemoveFontResourceA(str) RemoveFontResource32A
 285 stub RemoveFontResourceTracking
-286 stdcall RemoveFontResourceW(ptr) RemoveFontResource32W
+286 stdcall RemoveFontResourceW(wstr) RemoveFontResource32W
 287 stdcall ResetDCA(long ptr) ResetDC32A
 288 stdcall ResetDCW(long ptr) ResetDC32W
 289 stdcall ResizePalette(long long) ResizePalette32
@@ -334,7 +334,7 @@ type	win32
 326 stdcall SetPaletteEntries(long long long ptr) SetPaletteEntries32
 327 stdcall SetPixel(long long long long) SetPixel32
 328 stub SetPixelFormat
-329 stub SetPixelV
+329 stdcall SetPixelV(long long long long) SetPixelV32
 330 stdcall SetPolyFillMode(long long) SetPolyFillMode32
 331 stdcall SetROP2(long long) SetROP232
 332 stdcall SetRectRgn(long long long long long) SetRectRgn32
@@ -362,8 +362,8 @@ type	win32
 352 stub StrokeAndFillPath
 353 stub StrokePath
 354 stub SwapBuffers
-355 stdcall TextOutA(long long long ptr long) TextOut32A
-356 stdcall TextOutW(long long long ptr long) TextOut32W
+355 stdcall TextOutA(long long long str long) TextOut32A
+356 stdcall TextOutW(long long long wstr long) TextOut32W
 357 stub UnloadNetworkFonts
 358 stdcall UnrealizeObject(long) UnrealizeObject32
 359 stdcall UpdateColors(long) UpdateColors32

@@ -11,6 +11,7 @@
 #include "windows.h"
 #include "user.h"
 #include "callback.h"
+#include "drive.h"
 #include "file.h"
 #include "global.h"
 #include "instance.h"
@@ -18,7 +19,6 @@
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
-#include "options.h"
 #include "peexe.h"
 #include "pe_image.h"
 #include "process.h"
@@ -32,10 +32,6 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
-
-#ifndef WINELIB
-#include "debugger.h"
-#endif
 
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
@@ -57,15 +53,6 @@ static HTASK16 hLockedTask = 0;
 static UINT16 nTaskCount = 0;
 static HGLOBAL16 hDOSEnvironment = 0;
 
-  /* TASK_Reschedule() 16-bit entry point */
-static FARPROC16 TASK_RescheduleProc;
-
-#ifdef WINELIB
-#define TASK_SCHEDULE()  TASK_Reschedule()
-#else
-#define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc)
-#endif
-
 static HGLOBAL16 TASK_CreateDOSEnvironment(void);
 static void	 TASK_YieldToSystem(TDB*);
 
@@ -75,12 +62,10 @@ static THDB TASK_SystemTHDB;
  */
 BOOL32 TASK_Init(void)
 {
-
-    TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
         fprintf( stderr, "Not enough memory for DOS Environment\n" );
     TASK_SystemTHDB.teb_sel = SELECTOR_AllocBlock( &TASK_SystemTHDB, 0x1000, SEGMENT_DATA, TRUE, FALSE );
-#ifndef WINELIB
+#ifdef __i386__
     __asm__ __volatile__("movw %w0,%%fs"::"r"(TASK_SystemTHDB.teb_sel));
 #endif
     return (hDOSEnvironment != 0);
@@ -369,8 +354,9 @@ static void TASK_CallToStart(void)
 
         InitTask( NULL );
         InitApp( pTask->hModule );
+#ifdef __i386__
         __asm__ __volatile__("movw %w0,%%fs"::"r" (pCurrentThread->teb_sel));
-
+#endif
         PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         dprintf_relay( stddeb, "CallTo32(entryproc=%p)\n", entry );
         exit_code = entry();
@@ -406,7 +392,7 @@ static void TASK_CallToStart(void)
                       SELECTOROF(IF1632_Saved16_ss_sp),
                       OFFSETOF(IF1632_Saved16_ss_sp) );
 
-        CallTo16_regs_( &context, 0 );
+        Callbacks->CallRegisterProc( &context, 0 );
         /* This should never return */
         fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
         TASK_KillCurrentTask( 1 );
@@ -429,11 +415,10 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
-    char filename[256];
     char *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
-#ifndef WINELIB32
+#ifndef WINELIB
     extern DWORD CALLTO16_RetAddr_regs;
     extern void CALLTO16_Restore();
 #endif
@@ -465,13 +450,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     memcpy( GlobalLock16( hEnvironment ), GlobalLock16( hParentEnv ),
             GlobalSize16( hParentEnv ) );
 
-      /* Get current directory */
-    
-    GetModuleFileName16( hModule, filename, sizeof(filename) );
-    name = strrchr(filename, '\\');
-    if (name) *(name+1) = 0;
-
-      /* Fill the task structure */
+    /* Fill the task structure */
 
     pTask->nEvents       = 1;  /* So the task can be started */
     pTask->hSelf         = hTask;
@@ -485,10 +464,12 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->hPrevInstance = hPrevInstance;
     pTask->hModule       = hModule;
     pTask->hParent       = hCurrentTask;
-    pTask->curdrive      = filename[0] - 'A' + 0x80;
-    strcpy( pTask->curdir, filename+2 );
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
+    pTask->curdrive      = DRIVE_GetCurrentDrive() | 0x80;
+    strcpy( pTask->curdir, "\\" );
+    lstrcpyn32A( pTask->curdir + 1, DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() ),
+                 sizeof(pTask->curdir) - 1 );
 
       /* Create the thunks block */
 
@@ -546,6 +527,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     /* Create the Win32 part of the task */
 
     pCurrentProcess = pdb32 = PROCESS_Create( pTask, cmdLine );
+    /* FIXME: check for pdb32 == NULL.  */
     pdb32->task = hTask;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -564,6 +546,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     }
     else
         pTask->thdb = THREAD_Create( pdb32, 0, NULL );
+
+    /* FIXME: check for pTask->thdb == NULL.  */
 
     /* Create the 32-bit stack frame */
 
@@ -592,10 +576,10 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame16->ebp = 0;
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
-    frame16->entry_ip = OFFSETOF(TASK_RescheduleProc) + 14;
-    frame16->entry_cs = SELECTOROF(TASK_RescheduleProc);
+    frame16->entry_ip = 0;
+    frame16->entry_cs = 0;
     frame16->bp = 0;
-    *(DWORD *)(frame16 + 1) = frame32; /* Store the 32-bit stack pointer */
+    *(STACK32FRAME **)(frame16 + 1) = frame32; /* Store the 32-bit %esp */
 #ifndef WINELIB
     frame16->ip = LOWORD( CALLTO16_RetAddr_regs );
     frame16->cs = HIWORD( CALLTO16_RetAddr_regs );
@@ -606,30 +590,6 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
       /* call to DirectedYield(). */
 
     if (!IF1632_Saved16_ss_sp) IF1632_Saved16_ss_sp = pTask->ss_sp;
-
-      /* Add a breakpoint at the start of the task */
-
-#ifndef WINELIB
-    if (Options.debug)
-    {
-        if (pModule->flags & NE_FFLAGS_WIN32)
-        {
-	/*
-            DBG_ADDR addr = { NULL, 0, pCurrentProcess->exe_modref->load_addr + 
-                              pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint };
-            fprintf( stderr, "Win32 task '%s': ", name );
-            DEBUG_AddBreakpoint( &addr );
-	 */
-        }
-        else
-        {
-            DBG_ADDR addr = { NULL, pSegTable[pModule->cs-1].selector,
-                              pModule->ip };
-            fprintf( stderr, "Win16 task '%s': ", name );
-            DEBUG_AddBreakpoint( &addr );
-        }
-    }
-#endif  /* WINELIB */
 
       /* Add the task to the linked list */
 
@@ -847,7 +807,7 @@ void TASK_YieldToSystem(TDB* pTask)
 {
   MESSAGEQUEUE*		pQ;
 
-  TASK_SCHEDULE();
+  Callbacks->CallTaskRescheduleProc();
 
   if( pTask )
   {
@@ -884,10 +844,8 @@ void WINAPI InitTask( CONTEXT *context )
 
     pTask->userhandler = (USERSIGNALPROC)&USER_SignalProc;
 
-#ifndef WINELIB
     /* Initialize implicitly loaded DLLs */
     NE_InitializeDLLs( pTask->hModule );
-#endif
 
     if (context)
     {
@@ -922,9 +880,7 @@ void WINAPI InitTask( CONTEXT *context )
     pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
     pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = stacklow; 
-#ifndef WINELIB
     pinstance->stackmin    = OFFSETOF(IF1632_Saved16_ss_sp);
-#endif
 }
 
 

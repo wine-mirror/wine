@@ -118,10 +118,10 @@ SW_SetText(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     part_num = ((INT32) wParam) & 0x00ff;
     style = ((INT32) wParam) & 0xff00;
 
-    if (part_num > 255)
+    if (part_num >= 255)
 	return FALSE;
 
-    if (self->simple)
+    if ((self->simple) || (part_num==255))
 	part = &self->part0;
     else
 	part = &self->parts[part_num];

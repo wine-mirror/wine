@@ -39,7 +39,7 @@ type	win32
  101 stub ExtractAssociatedIconExA
  124 stub ExtractAssociatedIconExW
  125 stub ExtractAssociatedIconW
- 133 stub ExtractIconA
+ 133 stdcall ExtractIconA(long ptr long) ExtractIcon32A
  135 stub ExtractIconEx
  138 stub ExtractIconExA
  148 stub ExtractIconResInfoA

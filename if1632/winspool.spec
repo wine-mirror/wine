@@ -51,7 +51,7 @@ type	win32
 148 stub DeletePrinterIC
 149 stub DevQueryPrint
 150 stub DeviceCapabilities
-151 stdcall DeviceCapabilitiesA(ptr ptr long ptr ptr) DeviceCapabilities32A
+151 stdcall DeviceCapabilitiesA(str str long ptr ptr) DeviceCapabilities32A
 152 stub DeviceCapabilitiesW
 153 stub DeviceMode
 154 stub DocumentEvent

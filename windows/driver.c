@@ -61,8 +61,8 @@ LRESULT WINAPI SendDriverMessage(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
 	return 0;
     }
 
-    retval = CallDriverProc( (FARPROC16)lpdrv->lpDrvProc, 0L /* FIXME */, 
-                             hDriver, msg, lParam1, lParam2 );
+    retval = Callbacks->CallDriverProc( lpdrv->lpDrvProc, 0L /* FIXME */,
+                                        hDriver, msg, lParam1, lParam2 );
 
     dprintf_driver( stddeb, "SendDriverMessage // retval = %ld\n", retval );
 

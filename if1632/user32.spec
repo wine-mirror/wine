@@ -25,26 +25,26 @@ type	win32
  22 stdcall ChangeClipboardChain(long long) ChangeClipboardChain32
  23 stdcall ChangeMenuA(long long ptr long long) ChangeMenu32A
  24 stdcall ChangeMenuW(long long ptr long long) ChangeMenu32W
- 25 stdcall CharLowerA(ptr) CharLower32A
- 26 stdcall CharLowerBuffA(ptr long) CharLowerBuff32A
- 27 stdcall CharLowerBuffW(ptr long) CharLowerBuff32W
- 28 stdcall CharLowerW(ptr) CharLower32W
- 29 stdcall CharNextA(ptr) CharNext32A
- 30 stdcall CharNextExA(long ptr long) CharNextEx32A
- 31 stdcall CharNextExW(long ptr long) CharNextEx32W
- 32 stdcall CharNextW(ptr) CharNext32W
- 33 stdcall CharPrevA(ptr ptr) CharPrev32A
- 34 stdcall CharPrevExA(long ptr ptr long) CharPrevEx32A
- 35 stdcall CharPrevExW(long ptr ptr long) CharPrevEx32W
- 36 stdcall CharPrevW(ptr ptr) CharPrev32W
- 37 stdcall CharToOemA(ptr ptr) CharToOem32A
- 38 stdcall CharToOemBuffA(ptr ptr long) CharToOemBuff32A
- 39 stdcall CharToOemBuffW(ptr ptr long) CharToOemBuff32W
- 40 stdcall CharToOemW(ptr ptr) CharToOem32W
- 41 stdcall CharUpperA(ptr) CharUpper32A
- 42 stdcall CharUpperBuffA(ptr long) CharUpperBuff32A
- 43 stdcall CharUpperBuffW(ptr long) CharUpperBuff32W
- 44 stdcall CharUpperW(ptr) CharUpper32W
+ 25 stdcall CharLowerA(str) CharLower32A
+ 26 stdcall CharLowerBuffA(str long) CharLowerBuff32A
+ 27 stdcall CharLowerBuffW(wstr long) CharLowerBuff32W
+ 28 stdcall CharLowerW(wstr) CharLower32W
+ 29 stdcall CharNextA(str) CharNext32A
+ 30 stdcall CharNextExA(long str long) CharNextEx32A
+ 31 stdcall CharNextExW(long wstr long) CharNextEx32W
+ 32 stdcall CharNextW(wstr) CharNext32W
+ 33 stdcall CharPrevA(str str) CharPrev32A
+ 34 stdcall CharPrevExA(long str str long) CharPrevEx32A
+ 35 stdcall CharPrevExW(long wstr wstr long) CharPrevEx32W
+ 36 stdcall CharPrevW(wstr wstr) CharPrev32W
+ 37 stdcall CharToOemA(str str) CharToOem32A
+ 38 stdcall CharToOemBuffA(str str long) CharToOemBuff32A
+ 39 stdcall CharToOemBuffW(wstr wstr long) CharToOemBuff32W
+ 40 stdcall CharToOemW(wstr wstr) CharToOem32W
+ 41 stdcall CharUpperA(str) CharUpper32A
+ 42 stdcall CharUpperBuffA(str long) CharUpperBuff32A
+ 43 stdcall CharUpperBuffW(wstr long) CharUpperBuff32W
+ 44 stdcall CharUpperW(wstr) CharUpper32W
  45 stdcall CheckDlgButton(long long long) CheckDlgButton32
  46 stdcall CheckMenuItem(long long long) CheckMenuItem32
  47 stub CheckMenuRadioItem
@@ -78,14 +78,14 @@ type	win32
  75 stdcall CreateIcon(long long long long long ptr ptr) CreateIcon32
  76 stub CreateIconFromResource
  77 stdcall CreateIconFromResourceEx(ptr long long long long long long) CreateIconFromResourceEx32
- 78 stub CreateIconIndirect
+ 78 stdcall CreateIconIndirect(ptr) CreateIconIndirect
  79 stub CreateMDIWindowA
  80 stub CreateMDIWindowW
  81 stdcall CreateMenu() CreateMenu32
  82 stdcall CreatePopupMenu() CreatePopupMenu32
- 83 stdcall CreateWindowExA(long ptr ptr long long long long long 
+ 83 stdcall CreateWindowExA(long str str long long long long long 
                             long long long ptr) CreateWindowEx32A
- 84 stdcall CreateWindowExW(long ptr ptr long long long long long 
+ 84 stdcall CreateWindowExW(long wstr wstr long long long long long 
                             long long long ptr) CreateWindowEx32W
  85 stub CreateWindowStationA
  86 stub CreateWindowStationW
@@ -141,8 +141,8 @@ type	win32
 136 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParam32A
 137 stdcall DialogBoxIndirectParamAorW(long ptr long ptr long) DialogBoxIndirectParam32A
 138 stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParam32W
-139 stdcall DialogBoxParamA(long ptr long ptr long) DialogBoxParam32A
-140 stdcall DialogBoxParamW(long ptr long ptr long) DialogBoxParam32W
+139 stdcall DialogBoxParamA(long str long ptr long) DialogBoxParam32A
+140 stdcall DialogBoxParamW(long wstr long ptr long) DialogBoxParam32W
 141 stdcall DispatchMessageA(ptr) DispatchMessage32A
 142 stdcall DispatchMessageW(ptr) DispatchMessage32W
 143 stdcall DlgDirListA(long ptr long long long) DlgDirList32A
@@ -166,10 +166,10 @@ type	win32
 161 stdcall DrawMenuBar(long) DrawMenuBar32
 162 stdcall DrawStateA(long long ptr long long long long long long long) DrawState32A
 163 stub DrawStateW
-164 stdcall DrawTextA(long ptr long ptr long) DrawText32A
-165 stdcall DrawTextExA(long ptr long ptr long ptr) DrawTextEx32A
-166 stdcall DrawTextExW(long ptr long ptr long ptr) DrawTextEx32W
-167 stdcall DrawTextW(long ptr long ptr long) DrawText32W
+164 stdcall DrawTextA(long str long ptr long) DrawText32A
+165 stdcall DrawTextExA(long str long ptr long ptr) DrawTextEx32A
+166 stdcall DrawTextExW(long wstr long ptr long ptr) DrawTextEx32W
+167 stdcall DrawTextW(long wstr long ptr long) DrawText32W
 168 stub EditWndProc
 169 stdcall EmptyClipboard() EmptyClipboard32
 170 stdcall EnableMenuItem(long long long) EnableMenuItem32
@@ -200,10 +200,10 @@ type	win32
 195 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn32
 196 stdcall ExitWindowsEx(long long) ExitWindowsEx
 197 stdcall FillRect(long ptr long) FillRect32
-198 stdcall FindWindowA(ptr ptr) FindWindow32A
-199 stdcall FindWindowExA(long long ptr ptr) FindWindowEx32A
-200 stdcall FindWindowExW(long long ptr ptr) FindWindowEx32W
-201 stdcall FindWindowW(ptr ptr) FindWindow32W
+198 stdcall FindWindowA(str str) FindWindow32A
+199 stdcall FindWindowExA(long long str str) FindWindowEx32A
+200 stdcall FindWindowExW(long long wstr wstr) FindWindowEx32W
+201 stdcall FindWindowW(wstr wstr) FindWindow32W
 202 stdcall FlashWindow(long long) FlashWindow32
 203 stdcall FrameRect(long ptr long) FrameRect32
 204 stub FreeDDElParam
@@ -213,10 +213,10 @@ type	win32
 208 stdcall GetCapture() GetCapture32
 209 stdcall GetCaretBlinkTime() GetCaretBlinkTime32
 210 stdcall GetCaretPos(ptr) GetCaretPos32
-211 stdcall GetClassInfoA(long ptr ptr) GetClassInfo32A
-212 stdcall GetClassInfoExA(long ptr ptr) GetClassInfoEx32A
-213 stdcall GetClassInfoExW(long ptr ptr) GetClassInfoEx32W
-214 stdcall GetClassInfoW(long ptr ptr) GetClassInfo32W
+211 stdcall GetClassInfoA(long str ptr) GetClassInfo32A
+212 stdcall GetClassInfoExA(long str ptr) GetClassInfoEx32A
+213 stdcall GetClassInfoExW(long wstr ptr) GetClassInfoEx32W
+214 stdcall GetClassInfoW(long wstr ptr) GetClassInfo32W
 215 stdcall GetClassLongA(long long) GetClassLong32A
 216 stdcall GetClassLongW(long long) GetClassLong32W
 217 stdcall GetClassNameA(long ptr long) GetClassName32A
@@ -244,7 +244,7 @@ type	win32
 239 stdcall GetDoubleClickTime() GetDoubleClickTime32
 240 stdcall GetFocus() GetFocus32
 241 stdcall GetForegroundWindow() GetForegroundWindow32
-242 stub GetIconInfo
+242 stdcall GetIconInfo(long ptr) GetIconInfo
 243 stub GetInputDesktop
 244 stdcall GetInputState() GetInputState32
 245 stdcall GetInternalWindowPos(long ptr ptr) GetInternalWindowPos32
@@ -295,8 +295,8 @@ type	win32
 290 stdcall GetSysColorBrush(long) GetSysColorBrush32
 291 stdcall GetSystemMenu(long long) GetSystemMenu32
 292 stdcall GetSystemMetrics(long) GetSystemMetrics32
-293 stdcall GetTabbedTextExtentA(long ptr long long ptr) GetTabbedTextExtent32A
-294 stdcall GetTabbedTextExtentW(long ptr long long ptr) GetTabbedTextExtent32W
+293 stdcall GetTabbedTextExtentA(long str long long ptr) GetTabbedTextExtent32A
+294 stdcall GetTabbedTextExtentW(long wstr long long ptr) GetTabbedTextExtent32W
 295 stub GetThreadDesktop
 296 stdcall GetTopWindow(long) GetTopWindow32
 297 stdcall GetUpdateRect(long ptr long) GetUpdateRect32
@@ -357,32 +357,32 @@ type	win32
 352 stdcall IsZoomed(long) IsZoomed32
 353 stdcall KillSystemTimer(long long) KillSystemTimer32
 354 stdcall KillTimer(long long) KillTimer32
-355 stdcall LoadAcceleratorsA(long ptr) LoadAccelerators32A
-356 stdcall LoadAcceleratorsW(long ptr) LoadAccelerators32W
-357 stdcall LoadBitmapA(long ptr) LoadBitmap32A
-358 stdcall LoadBitmapW(long ptr) LoadBitmap32W
-359 stdcall LoadCursorA(long ptr) LoadCursor32A
+355 stdcall LoadAcceleratorsA(long str) LoadAccelerators32A
+356 stdcall LoadAcceleratorsW(long wstr) LoadAccelerators32W
+357 stdcall LoadBitmapA(long str) LoadBitmap32A
+358 stdcall LoadBitmapW(long wstr) LoadBitmap32W
+359 stdcall LoadCursorA(long str) LoadCursor32A
 360 stub LoadCursorFromFileA
 361 stub LoadCursorFromFileW
-362 stdcall LoadCursorW(long ptr) LoadCursor32W
-363 stdcall LoadIconA(long ptr) LoadIcon32A
-364 stdcall LoadIconW(long ptr) LoadIcon32W
-365 stdcall LoadImageA(long ptr long long long long) LoadImage32A
-366 stdcall LoadImageW(long ptr long long long long) LoadImage32W
+362 stdcall LoadCursorW(long wstr) LoadCursor32W
+363 stdcall LoadIconA(long str) LoadIcon32A
+364 stdcall LoadIconW(long wstr) LoadIcon32W
+365 stdcall LoadImageA(long str long long long long) LoadImage32A
+366 stdcall LoadImageW(long wstr long long long long) LoadImage32W
 367 stub LoadKeyboardLayoutA
 368 stub LoadKeyboardLayoutW
 369 stub LoadLocalFonts
-370 stdcall LoadMenuA(long ptr) LoadMenu32A
+370 stdcall LoadMenuA(long str) LoadMenu32A
 371 stdcall LoadMenuIndirectA(ptr) LoadMenuIndirect32A
 372 stdcall LoadMenuIndirectW(ptr) LoadMenuIndirect32W
-373 stdcall LoadMenuW(long ptr) LoadMenu32W
+373 stdcall LoadMenuW(long wstr) LoadMenu32W
 374 stub LoadRemoteFonts
 375 stdcall LoadStringA(long long ptr long) LoadString32A
 376 stdcall LoadStringW(long long ptr long) LoadString32W
 377 stub LockWindowStation
 378 stdcall LockWindowUpdate(long) LockWindowUpdate32
-378 stdcall LookupIconIdFromDirectory(ptr long) LookupIconIdFromDirectory
-379 stdcall LookupIconIdFromDirectoryEx(ptr long long long long) LookupIconIdFromDirectoryEx32
+379 stdcall LookupIconIdFromDirectory(ptr long) LookupIconIdFromDirectory
+380 stdcall LookupIconIdFromDirectoryEx(ptr long long long long) LookupIconIdFromDirectoryEx32
 381 stub MBToWCSEx
 382 stdcall MapDialogRect(long ptr) MapDialogRect32
 383 stdcall MapVirtualKeyA(long long) MapVirtualKey32A
@@ -393,12 +393,12 @@ type	win32
 388 stub MenuWindowProcA
 389 stub MenuWindowProcW
 390 stdcall MessageBeep(long) MessageBeep32
-391 stdcall MessageBoxA(long ptr ptr long) MessageBox32A
-392 stdcall MessageBoxExA(long ptr ptr long long) MessageBoxEx32A
-393 stdcall MessageBoxExW(long ptr ptr long long) MessageBoxEx32W
+391 stdcall MessageBoxA(long str str long) MessageBox32A
+392 stdcall MessageBoxExA(long str str long long) MessageBoxEx32A
+393 stdcall MessageBoxExW(long wstr wstr long long) MessageBoxEx32W
 394 stub MessageBoxIndirectA
 395 stub MessageBoxIndirectW
-396 stdcall MessageBoxW(long ptr ptr long) MessageBox32W
+396 stdcall MessageBoxW(long wstr wstr long) MessageBox32W
 397 stdcall ModifyMenuA(long long long long ptr) ModifyMenu32A
 398 stdcall ModifyMenuW(long long long long ptr) ModifyMenu32W
 399 stdcall MoveWindow(long long long long long long) MoveWindow32
@@ -433,8 +433,8 @@ type	win32
 428 stdcall RegisterClassExA(ptr) RegisterClassEx32A
 429 stdcall RegisterClassExW(ptr) RegisterClassEx32W
 430 stdcall RegisterClassW(ptr) RegisterClass32W
-431 stdcall RegisterClipboardFormatA(ptr) RegisterClipboardFormat32A
-432 stdcall RegisterClipboardFormatW(ptr) RegisterClipboardFormat32W
+431 stdcall RegisterClipboardFormatA(str) RegisterClipboardFormat32A
+432 stdcall RegisterClipboardFormatW(wstr) RegisterClipboardFormat32W
 433 stub RegisterHotKey
 434 stub RegisterLogonProcess
 435 stub RegisterSystemThread
@@ -444,8 +444,8 @@ type	win32
 439 stdcall ReleaseCapture() ReleaseCapture
 440 stdcall ReleaseDC(long long) ReleaseDC32
 441 stdcall RemoveMenu(long long long) RemoveMenu32
-442 stdcall RemovePropA(long ptr) RemoveProp32A
-443 stdcall RemovePropW(long ptr) RemoveProp32W
+442 stdcall RemovePropA(long str) RemoveProp32A
+443 stdcall RemovePropW(long wstr) RemoveProp32W
 444 stub ReplyMessage
 445 stub ResetDisplay
 446 stub ReuseDDElParam
@@ -478,10 +478,10 @@ type	win32
 473 stub SetCursorContents
 474 stdcall SetCursorPos(long long) SetCursorPos32
 475 stub SetDebugErrorLevel
-476 stdcall SetDeskWallPaper(ptr) SetDeskWallPaper32
+476 stdcall SetDeskWallPaper(str) SetDeskWallPaper32
 477 stdcall SetDlgItemInt(long long long long) SetDlgItemInt32
-478 stdcall SetDlgItemTextA(long long ptr) SetDlgItemText32A
-479 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
+478 stdcall SetDlgItemTextA(long long str) SetDlgItemText32A
+479 stdcall SetDlgItemTextW(long long wstr) SetDlgItemText32W
 480 stdcall SetDoubleClickTime(long) SetDoubleClickTime32
 481 stdcall SetFocus(long) SetFocus32
 482 stdcall SetForegroundWindow(long) SetForegroundWindow32
@@ -499,8 +499,8 @@ type	win32
 494 stdcall SetMessageQueue(long) SetMessageQueue32
 495 stdcall SetParent(long long) SetParent32
 496 stub SetProcessWindowStation
-497 stdcall SetPropA(long ptr long) SetProp32A
-498 stdcall SetPropW(long ptr long) SetProp32W
+497 stdcall SetPropA(long str long) SetProp32A
+498 stdcall SetPropW(long wstr long) SetProp32W
 499 stdcall SetRect(ptr long long long long) SetRect32
 500 stdcall SetRectEmpty(ptr) SetRectEmpty32
 501 stdcall SetScrollInfo(long long ptr long) SetScrollInfo32
@@ -524,8 +524,8 @@ type	win32
 519 stdcall SetWindowPlacement(long ptr) SetWindowPlacement32
 520 stdcall SetWindowPos(long long long long long long long) SetWindowPos32
 521 stub SetWindowStationUser
-522 stdcall SetWindowTextA(long ptr) SetWindowText32A
-523 stdcall SetWindowTextW(long ptr) SetWindowText32W
+522 stdcall SetWindowTextA(long str) SetWindowText32A
+523 stdcall SetWindowTextW(long wstr) SetWindowText32W
 524 stdcall SetWindowWord(long long long) SetWindowWord32
 525 stdcall SetWindowsHookA(long ptr) SetWindowsHook32A
 526 stdcall SetWindowsHookExA(long long long long) SetWindowsHookEx32A
@@ -544,8 +544,8 @@ type	win32
 539 stdcall SwitchToThisWindow(long long) SwitchToThisWindow32
 540 stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfo32A
 541 stdcall SystemParametersInfoW(long long ptr long) SystemParametersInfo32W
-542 stdcall TabbedTextOutA(long long long ptr long long ptr long) TabbedTextOut32A
-543 stdcall TabbedTextOutW(long long long ptr long long ptr long) TabbedTextOut32W
+542 stdcall TabbedTextOutA(long long long str long long ptr long) TabbedTextOut32A
+543 stdcall TabbedTextOutW(long long long wstr long long ptr long) TabbedTextOut32W
 544 stub TileChildWindows
 545 stub TileWindows
 546 stdcall ToAscii(long long ptr ptr long) ToAscii32
@@ -565,8 +565,8 @@ type	win32
 560 stub UnloadKeyboardLayout
 561 stub UnlockWindowStation
 562 stub UnpackDDElParam
-563 stdcall UnregisterClassA(ptr long) UnregisterClass32A
-564 stdcall UnregisterClassW(ptr long) UnregisterClass32W
+563 stdcall UnregisterClassA(str long) UnregisterClass32A
+564 stdcall UnregisterClassW(wstr long) UnregisterClass32W
 565 stub UnregisterHotKey
 566 stub UpdatePerUserSystemParameters
 567 stdcall UpdateWindow(long) UpdateWindow32
@@ -581,16 +581,16 @@ type	win32
 576 stdcall VkKeyScanW(long) VkKeyScan32W
 577 stub WaitForInputIdle
 578 stdcall WaitMessage() WaitMessage
-579 stdcall WinHelpA(long ptr long long) WinHelp32A
-580 stdcall WinHelpW(long ptr long long) WinHelp32W
+579 stdcall WinHelpA(long str long long) WinHelp32A
+580 stdcall WinHelpW(long wstr long long) WinHelp32W
 581 stdcall WindowFromDC(long) WindowFromDC32
 582 stdcall WindowFromPoint(long long) WindowFromPoint32
 583 stub keybd_event
 584 stub mouse_event
 585 varargs wsprintfA() wsprintf32A
 586 varargs wsprintfW() wsprintf32W
-587 stdcall wvsprintfA(ptr ptr ptr) wvsprintf32A
-588 stdcall wvsprintfW(ptr ptr ptr) wvsprintf32W
+587 stdcall wvsprintfA(str str ptr) wvsprintf32A
+588 stdcall wvsprintfW(wstr wstr ptr) wvsprintf32W
 #late additions
 589 stub ChangeDisplaySettingsA
 590 stub ChangeDisplaySettingsW

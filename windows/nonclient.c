@@ -102,8 +102,8 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL32 menu,
     }
     if (menu) rect->top -= SYSMETRICS_CYMENU + SYSMETRICS_CYBORDER;
 
-    if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL;
-    if (style & WS_HSCROLL) rect->bottom += SYSMETRICS_CYHSCROLL;
+    if (style & WS_VSCROLL) rect->right  += SYSMETRICS_CXVSCROLL - 1;
+    if (style & WS_HSCROLL) rect->bottom += SYSMETRICS_CYHSCROLL - 1;
 }
 
 
@@ -1342,56 +1342,8 @@ static void NC_TrackSysMenu( HWND32 hwnd, POINT16 pt )
     WND*	wndPtr = WIN_FindWndPtr( hwnd );
     
     if (wndPtr->dwStyle & WS_SYSMENU)
-    {
-	int	iconic, on = 1;
-
-	iconic = wndPtr->dwStyle & WS_MINIMIZE;
-
-	if( !iconic ) 
-	{
-	     HDC16	hdc = GetWindowDC32(hwnd);
-	     RECT32	rect;
-             RECT16     rTrack;
-	     BOOL32 	bNew, bTrack = TRUE;
-	     MSG16	msg;
-	    
-	     NC_GetSysPopupPos( wndPtr, &rect );
-             CONV_RECT32TO16( &rect, &rTrack );
-	     MapWindowPoints16( 0, hwnd, (LPPOINT16)&rTrack, 2 );
-
-	     /* track mouse while waiting for WM_LBUTTONUP */
-	     if(TWEAK_Win95Look)
-		 NC_DrawSysButton95( hwnd, hdc, bTrack );
-	     else
-		 NC_DrawSysButton( hwnd, hdc, bTrack );
-	     SetCapture32(hwnd);
-	     do
-	     {
-		msg.message = WM_NULL;
-		PeekMessage16( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE);
-		if( msg.message == WM_MOUSEMOVE )
-		{
-		    if( (bNew = PtInRect16(&rTrack, MAKEPOINT16(msg.lParam))) )
-		    {   if( bTrack ) continue; }
-		    else 
-		    {   if(!bTrack ) continue; }
-
-		    if(TWEAK_Win95Look)
-			NC_DrawSysButton95( hwnd, hdc, bTrack = bNew);
-		    else
-			NC_DrawSysButton( hwnd, hdc, bTrack = bNew);
-		}
-	     } while( msg.message != WM_LBUTTONUP );
-
-	     ReleaseCapture();
-	     ReleaseDC32(hwnd, hdc);
-	     on = PtInRect16(&rTrack, MAKEPOINT16(msg.lParam));
-	} 
-
-	if( on ) 
-	    SendMessage16( hwnd, WM_SYSCOMMAND, 
-			   SC_MOUSEMENU + HTSYSMENU, *((LPARAM*)&pt));
-    }
+	SendMessage16( hwnd, WM_SYSCOMMAND, 
+		SC_MOUSEMENU + HTSYSMENU, *((LPARAM*)&pt));
 }
 
 
@@ -1694,7 +1646,9 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
     if( wndPtr->dwStyle & WS_MINIMIZE )
     {
 	WINPOS_ShowIconTitle( wndPtr, TRUE );
-	if( !moved ) NC_TrackSysMenu( hwnd, pt );
+	if (!moved && (wndPtr->dwStyle & WS_SYSMENU))
+            SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU,
+                           MAKELPARAM( pt.x, pt.y ) );
     }
 }
 
@@ -1839,7 +1793,7 @@ LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
-        NC_TrackSysMenu( hwnd, MAKEPOINT16(lParam) );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
 	break;
 
     case HTMENU:
@@ -1908,6 +1862,16 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
     case HTSYSMENU:
         if (!(pWnd->class->style & CS_NOCLOSE))
             SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
+	break;
+
+    case HTHSCROLL:
+	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL,
+            lParam );
+	break;
+
+    case HTVSCROLL:
+	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL,
+            lParam );
 	break;
     }
     return 0;

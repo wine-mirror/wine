@@ -1,0 +1,78 @@
+This file describes setting up the Windows ASPI interface.
+
+Warning/Warning/Warning!!!!!!
+=============================
+THIS MAY TRASH YOUR SYSTEM IF USED INCORRECTLY
+THIS MAY TRASH YOUR SYSTEM IF USED CORRECTLY
+
+Now that I have said that. ASPI is a direct link to SCSI devices from
+windows programs. ASPI just forwards the SCSI commands that programs send
+to it to the SCSI bus.
+
+If you use the wrong scsi device in your setup file, you can send
+completely bogus commands to the wrong device - An example would be
+formatting your hard drives (assuming the device gave you permission -
+if you're running as root, all bets are off).
+
+Cookbook for setting up scanner: (At least how mine is to work)
+================================
+
+Windows requirements:
+=====================
+0) The scanner software needs to use the "Adaptec" compatible drivers
+(ASPI). At least with Mustek, they allow you the choice of using
+the builtin card or the "Adaptec (AHA)" compatible drivers. This will not
+work any other way.
+
+1) You probably need a real windows install of the software to set the
+LUN's/SCSI id's up correctly. I'm not exactly sure.
+
+LINUX requirements:
+============================================================
+0) Your scsi card must be supported under linux. This will not work with
+an unknown scsi card.
+
+1) Compile generic scsi drivers into your kernel.
+
+2) Linux by default uses smaller scsi buffers than Windows. There is a
+kernel build define SG_BIG_BUFF (in sg.h) that is by default set too low.
+The SANE project recommends 130560 and this seems to work just fine. This
+does require a kernel rebuild.
+
+3) Make the devices for the scanner (generic scsi devices) - look at the scsi
+programming how-to for device numbering.
+
+4) I would recommend making the scanner device writable by a group.
+I made a group called "scanner" and added myself to it. Running as root
+increases your risk of sending bad scsi commands to the wrong device. With
+a regular user, you are better protected.
+
+5) Add a scsi device entry for your particular scanner to wine.conf.
+The format is [scsi cCtTdD] where C=controller, T=target, D=LUN
+
+ex. I set mine up as  controller 0, Target 6, LUN 0.
+[scsi c0t6d0]
+Device=/dev/sgi
+
+Yours will vary with your particular SCSI setup.
+
+
+General Information:
+====================
+The mustek scanner I have was shipped with a package "ipplus". This
+program uses the TWAIN driver specification to access scanners.
+
+                            (TWAIN MANAGER)
+ipplus.exe <---> (TWAIN INTERFACE) <---> (TWAIN DATA SOURCE . ASPI) -> WINASPI
+
+NOTES/BUGS:
+===========
+The biggest is that it only works under linux at the moment.
+The ASPI code was only tested using a Mustek 800SP with a Buslogic
+controller under Linux.
+
+I make no warranty to the aspi code. It makes my scanner work. Your scanner
+may explode. I have no way of determining this. I take zero responsibility!
+
+
+Bruce Milner

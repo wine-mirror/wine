@@ -453,9 +453,9 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->hSelf = (HDC32)handle;
     newdc->saveLevel = 0;
 
-    newdc->w.hGCClipRgn = 0;
-    newdc->w.hVisRgn = CreateRectRgn32( 0, 0, 0, 0 );
-    CombineRgn32( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
+    /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
+
+    newdc->w.hGCClipRgn = newdc->w.hVisRgn = 0;
     if (dc->w.hClipRgn)
     {
 	newdc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
@@ -527,8 +527,8 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->vportExtY         = dcs->vportExtY;
 
     if (!(dc->w.flags & DC_MEMORY)) dc->w.bitsPerPixel = dcs->w.bitsPerPixel;
-    CombineRgn32( dc->w.hVisRgn, dcs->w.hVisRgn, 0, RGN_COPY );
     SelectClipRgn32( hdc, dcs->w.hClipRgn );
+
     SelectObject32( hdc, dcs->w.hBitmap );
     SelectObject32( hdc, dcs->w.hBrush );
     SelectObject32( hdc, dcs->w.hFont );
@@ -1110,14 +1110,13 @@ DWORD WINAPI GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
  */
 WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
 {
-  DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
+    DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
 
-  if( dc )
+    if( dc )
     {
         WORD wRet = dc->w.flags & DC_DIRTY;
 
-        /* "Undocumented Windows" info is slightly
-         *  confusing
+        /* "Undocumented Windows" info is slightly confusing.
          */
 
         dprintf_dc(stddeb,"SetHookFlags: hDC %04x, flags %04x\n",hDC,flags);
@@ -1129,6 +1128,6 @@ WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
 	GDI_HEAP_UNLOCK( hDC );
         return wRet;
     }
-  return 0;
+    return 0;
 }
 

@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include "module.h"
+#include "process.h"
+#include "toolhelp.h"
 #include "windows.h"
 #include "debugger.h"
 
@@ -225,6 +228,7 @@ void DEBUG_AddBreakpoint( const DBG_ADDR *address )
 	addr.off = DEBUG_GetExprValue(&addr, NULL);
 	addr.seg = seg2;
       }
+    if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
 
     if (next_bp < MAX_BREAKPOINTS)
         num = next_bp++;
@@ -238,7 +242,6 @@ void DEBUG_AddBreakpoint( const DBG_ADDR *address )
             return;
         }
     }
-    if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
     p = DBG_ADDR_TO_LIN( &addr );
     breakpoints[num].addr    = addr;
     breakpoints[num].addrlen = !addr.seg ? 32 :
@@ -322,6 +325,54 @@ void DEBUG_InfoBreakpoints(void)
 	      }
         }
     }
+}
+
+
+/***********************************************************************
+ *           DEBUG_AddModuleBreakpoints
+ *
+ * Add a breakpoint at the start of every loaded module.
+ */
+void DEBUG_AddModuleBreakpoints(void)
+{
+    MODULEENTRY entry;
+    NE_MODULE *pModule;
+    BOOL32 ok;
+    DBG_ADDR addr = { NULL, 0, 0 };
+
+    for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
+    {
+        if (!(pModule = MODULE_GetPtr( entry.hModule ))) continue;
+        if (pModule->flags & NE_FFLAGS_LIBMODULE) continue;  /* Library */
+
+        if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
+        {
+            PE_MODULE *pe = pModule->pe_module;
+            PE_MODREF *pem;
+            if (!pCurrentProcess) continue;
+            pem = pCurrentProcess->modref_list;
+            while (pem)
+            {
+		if (pem->pe_module == pe) break;
+		pem = pem->next;
+            }
+            if (!pem) continue;
+            addr.seg = 0;
+            addr.off = pem->load_addr +
+                      (DWORD)pe->pe_header->OptionalHeader.AddressOfEntryPoint;
+            fprintf( stderr, "Win32 task '%s': ", entry.szModule );
+            DEBUG_AddBreakpoint( &addr );
+        }
+        else  /* NE module */
+        {
+            addr.seg = NE_SEG_TABLE(pModule)[pModule->cs-1].selector;
+            addr.off = pModule->ip;
+            fprintf( stderr, "Win16 task '%s': ", entry.szModule );
+            DEBUG_AddBreakpoint( &addr );
+        }
+    }
+
+    DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */
 }
 
 

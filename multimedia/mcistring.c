@@ -33,7 +33,7 @@ extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 /* FIXME: I need to remember the aliasname of a spec. driver. 
  *        and this is the easiest way. *sigh*
  */
-extern MCI_OPEN_PARMS		mciOpenDrv[MAXMCIDRIVERS];
+extern MCI_OPEN_PARMS16		mciOpenDrv[MAXMCIDRIVERS];
 
 #define GetDrv(wDevID) (&mciDrv[MMSYSTEM_DevIDToIndex(wDevID)])
 #define GetOpenDrv(wDevID) (&mciOpenDrv[MMSYSTEM_DevIDToIndex(wDevID)])
@@ -305,10 +305,10 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	int		res,i;
 	char		*s;
 	union U {
-		MCI_OPEN_PARMS	openParams;
-		MCI_WAVE_OPEN_PARMS	waveopenParams;
-		MCI_ANIM_OPEN_PARMS	animopenParams;
-		MCI_OVLY_OPEN_PARMS	ovlyopenParams;
+		MCI_OPEN_PARMS16	openParams;
+		MCI_WAVE_OPEN_PARMS16	waveopenParams;
+		MCI_ANIM_OPEN_PARMS16	animopenParams;
+		MCI_OVLY_OPEN_PARMS16	ovlyopenParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
 
@@ -316,7 +316,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	s=strchr(dev,'!');
 	if (s!=NULL) {
 		*s++='\0';
-		pU->openParams.lpstrElementName=SEGPTR_GET(SEGPTR_STRDUP(s));
+		pU->openParams.lpstrElementName=(LPSTR)SEGPTR_GET(SEGPTR_STRDUP(s));
 		dwFlags |= MCI_OPEN_ELEMENT;
 	}
 	if (!STRCMP(dev,"cdaudio")) {
@@ -350,7 +350,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	pU->openParams.wDeviceID	= wDevID;
 	pU->ovlyopenParams.dwStyle	= 0; 
 	pU->animopenParams.dwStyle	= 0; 
-	pU->openParams.lpstrDeviceType	= SEGPTR_GET(SEGPTR_STRDUP(dev));
+	pU->openParams.lpstrDeviceType	= (LPSTR)SEGPTR_GET(SEGPTR_STRDUP(dev));
 	pU->openParams.lpstrAlias	= NULL;
 	dwFlags |= MCI_OPEN_TYPE;
 	i=0;
@@ -358,13 +358,13 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		FLAG1("shareable",MCI_OPEN_SHAREABLE);
 		if (!STRCMP(keywords[i],"alias") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ALIAS;
-			pU->openParams.lpstrAlias=SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
+			pU->openParams.lpstrAlias=(LPSTR)SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
 			i+=2;
 			continue;
 		}
 		if (!STRCMP(keywords[i],"element") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ELEMENT;
-			pU->openParams.lpstrElementName=SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
+			pU->openParams.lpstrElementName=(LPSTR)SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
 			i+=2;
 			continue;
 		}
@@ -434,7 +434,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	}
 	_MCI_CALL_DRIVER( MCI_OPEN, SEGPTR_GET(pU) );
 	if (res==0)
-		memcpy(GetOpenDrv(wDevID),&pU->openParams,sizeof(MCI_OPEN_PARMS));
+		memcpy(GetOpenDrv(wDevID),&pU->openParams,sizeof(MCI_OPEN_PARMS16));
 	else {
 		SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrElementName));
 		SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrDeviceType));
@@ -672,7 +672,7 @@ static DWORD
 MCISTR_Set(_MCISTR_PROTO_) {
 	union U {
 		MCI_SET_PARMS		setParams;
-		MCI_WAVE_SET_PARMS	wavesetParams;
+		MCI_WAVE_SET_PARMS16	wavesetParams;
 		MCI_SEQ_SET_PARMS	seqsetParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
@@ -848,7 +848,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Break(_MCISTR_PROTO_)
 {
-    MCI_BREAK_PARMS *breakParams = SEGPTR_NEW(MCI_BREAK_PARMS);
+    MCI_BREAK_PARMS16 *breakParams = SEGPTR_NEW(MCI_BREAK_PARMS16);
     int res,i;
 
     if (!breakParams) return 0;
@@ -859,7 +859,7 @@ MCISTR_Break(_MCISTR_PROTO_)
 		if (!strcmp(keywords[i],"on") && (nrofkeywords>i+1)) {
 			dwFlags&=~MCI_BREAK_OFF;
 			dwFlags|=MCI_BREAK_KEY;
-			sscanf(keywords[i+1],"%d",&(breakParams->nVirtKey));
+			sscanf(keywords[i+1],"%hd",&(breakParams->nVirtKey));
 			i+=2;
 			continue;
 		}
@@ -1312,7 +1312,7 @@ MCISTR_Close(_MCISTR_PROTO_)
 static DWORD
 MCISTR_Info(_MCISTR_PROTO_)
 {
-	MCI_INFO_PARMS	*infoParams = SEGPTR_NEW(MCI_INFO_PARMS);
+	MCI_INFO_PARMS16 *infoParams = SEGPTR_NEW(MCI_INFO_PARMS16);
 	DWORD		sflags;
 	int		i,res;
 
@@ -1342,7 +1342,7 @@ MCISTR_Info(_MCISTR_PROTO_)
 	return res;
 }
 
-DWORD mciSysInfo(DWORD dwFlags,LPMCI_SYSINFO_PARMS lpParms);
+DWORD mciSysInfo(DWORD dwFlags,LPMCI_SYSINFO_PARMS16 lpParms);
 
 /* query MCI driver itself for information
  * Arguments:
@@ -1356,7 +1356,7 @@ DWORD mciSysInfo(DWORD dwFlags,LPMCI_SYSINFO_PARMS lpParms);
  */
 static DWORD
 MCISTR_Sysinfo(_MCISTR_PROTO_) {
-	MCI_SYSINFO_PARMS	sysinfoParams;
+	MCI_SYSINFO_PARMS16	sysinfoParams;
 	int			i,res;
 
 	sysinfoParams.lpstrReturn	= lpstrReturnString;
@@ -1393,8 +1393,8 @@ MCISTR_Sysinfo(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Load(_MCISTR_PROTO_) {
 	union U {
-		MCI_LOAD_PARMS	loadParams;
-		MCI_OVLY_LOAD_PARMS	ovlyloadParams;
+		MCI_LOAD_PARMS16	loadParams;
+		MCI_OVLY_LOAD_PARMS16	ovlyloadParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
 	int		i,len,res;
@@ -1441,7 +1441,7 @@ static DWORD
 MCISTR_Save(_MCISTR_PROTO_) {
 	union U {
 		MCI_SAVE_PARMS	saveParams;
-		MCI_OVLY_SAVE_PARMS	ovlysaveParams;
+		MCI_OVLY_SAVE_PARMS16	ovlysaveParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
 	int		i,len,res;
@@ -1575,7 +1575,7 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Escape(_MCISTR_PROTO_)
 {
-	MCI_VD_ESCAPE_PARMS *escapeParams = SEGPTR_NEW(MCI_VD_ESCAPE_PARMS);
+	MCI_VD_ESCAPE_PARMS16 *escapeParams = SEGPTR_NEW(MCI_VD_ESCAPE_PARMS16);
 	int			i,len,res;
 	char		*s;
 
@@ -1607,7 +1607,7 @@ MCISTR_Escape(_MCISTR_PROTO_)
 static DWORD
 MCISTR_Unfreeze(_MCISTR_PROTO_)
 {
-	MCI_OVLY_RECT_PARMS *unfreezeParams = SEGPTR_NEW(MCI_OVLY_RECT_PARMS);
+	MCI_OVLY_RECT_PARMS16 *unfreezeParams = SEGPTR_NEW(MCI_OVLY_RECT_PARMS16);
 	int			i,res;
 
 	if (uDevTyp != MCI_DEVTYPE_OVERLAY)
@@ -1634,7 +1634,7 @@ MCISTR_Unfreeze(_MCISTR_PROTO_)
 static DWORD
 MCISTR_Freeze(_MCISTR_PROTO_)
 {
-	MCI_OVLY_RECT_PARMS *freezeParams = SEGPTR_NEW(MCI_OVLY_RECT_PARMS);
+	MCI_OVLY_RECT_PARMS16 *freezeParams = SEGPTR_NEW(MCI_OVLY_RECT_PARMS16);
 	int			i,res;
 
 	if (uDevTyp != MCI_DEVTYPE_OVERLAY)
@@ -1673,8 +1673,8 @@ MCISTR_Freeze(_MCISTR_PROTO_)
 static DWORD
 MCISTR_Put(_MCISTR_PROTO_) {
 	union U {
-		MCI_OVLY_RECT_PARMS	ovlyputParams;
-		MCI_ANIM_RECT_PARMS	animputParams;
+		MCI_OVLY_RECT_PARMS16	ovlyputParams;
+		MCI_ANIM_RECT_PARMS16	animputParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
@@ -1813,7 +1813,7 @@ MCISTR_Step(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Update(_MCISTR_PROTO_) {
 	int		i,res;
-	MCI_ANIM_UPDATE_PARMS *updateParams = SEGPTR_NEW(MCI_ANIM_UPDATE_PARMS);
+	MCI_ANIM_UPDATE_PARMS16 *updateParams = SEGPTR_NEW(MCI_ANIM_UPDATE_PARMS16);
 
 	i=0;
 	while (i<nrofkeywords) {
@@ -1851,8 +1851,8 @@ MCISTR_Update(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Where(_MCISTR_PROTO_) {
 	union U {
-		MCI_ANIM_RECT_PARMS	animwhereParams;
-		MCI_OVLY_RECT_PARMS	ovlywhereParams;
+		MCI_ANIM_RECT_PARMS16	animwhereParams;
+		MCI_OVLY_RECT_PARMS16	ovlywhereParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
@@ -1906,8 +1906,8 @@ MCISTR_Window(_MCISTR_PROTO_) {
 	int	i,res;
 	char	*s;
 	union U {
-		MCI_ANIM_WINDOW_PARMS	animwindowParams;
-		MCI_OVLY_WINDOW_PARMS	ovlywindowParams;
+		MCI_ANIM_WINDOW_PARMS16	animwindowParams;
+		MCI_OVLY_WINDOW_PARMS16	ovlywindowParams;
 	};
         union U *pU = SEGPTR_NEW(union U);
 

@@ -22,6 +22,7 @@
 #include "windows.h"
 #include "winbase.h"
 #include "callback.h"
+#include "file.h"
 #include "neexe.h"
 #include "peexe.h"
 #include "process.h"
@@ -30,7 +31,6 @@
 #include "global.h"
 #include "task.h"
 #include "ldt.h"
-#include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -45,17 +45,12 @@ static void PE_InitDLL(PE_MODREF* modref, DWORD type, LPVOID lpReserved);
 
 void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 { 
-#ifndef WINELIB
   char		*Module;
-  int		i;
+  int		i, j;
   u_short	*ordinal;
   u_long	*function,*functions;
   u_char	**name,*ename;
-  char		buffer[1000];
-  DBG_ADDR	daddr;
 
-  daddr.seg = 0;
-  daddr.type = NULL;
   Module = (char*)RVA(pe_exports->Name);
   dprintf_win32(stddeb,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
 	 Module,
@@ -66,25 +61,17 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
   functions=function=(u_long*) RVA(pe_exports->AddressOfFunctions);
   name=(u_char**) RVA(pe_exports->AddressOfNames);
 
-  dprintf_win32(stddeb,"%-32s Ordinal Virt Addr\n", "Function Name");
-  for (i=0;i<pe_exports->NumberOfFunctions;i++) {
-      if (i<pe_exports->NumberOfNames) {
-	  ename=(char*)RVA(*name++);
-	  dprintf_win32(stddeb,"%-32s %4d    %8.8lx (%8.8lx)\n",ename,*ordinal,functions[*ordinal],*function);
-	  sprintf(buffer,"%s_%s",Module,ename);
-	  daddr.off=RVA(functions[*ordinal]);
-	  ordinal++;
-	  function++;
-      } else {
-      	  /* ordinals/names no longer valid, but we still got functions */
-	  dprintf_win32(stddeb,"%-32s %4s    %8s %8.8lx\n","","","",*function);
-	  sprintf(buffer,"%s_%d",Module,i);
-	  daddr.off=RVA(*functions);
-	  function++;
-      }
-      DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
+  dprintf_win32(stddeb," Ord  Virt Addr  Name\n" );
+  for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
+  {
+      if (!*function) continue;  /* No such function */
+      dprintf_win32( stddeb,"%4d  %08lx", i + pe_exports->Base, *function );
+      /* Check if we have a name for it */
+      for (j = 0; j < pe_exports->NumberOfNames; j++)
+          if (ordinal[j] == i)
+              dprintf_win32( stddeb, "  %s", (char*)RVA(name[j]) );
+      dprintf_win32( stddeb,"\n" );
   }
-#endif
 }
 
 /* Look up the specified function or ordinal in the exportlist:
@@ -241,9 +228,7 @@ fixup_imports (PDB32 *process,PE_MODREF *pem)
 	char			*Module;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	LPIMAGE_THUNK_DATA	import_list,thunk_list;
-	int			ordimportwarned;
 
-        ordimportwarned = 0;
 	Module = (char *) RVA(pe_imp->Name);
 	dprintf_win32 (stddeb, "%s\n", Module);
 
@@ -258,10 +243,6 @@ fixup_imports (PDB32 *process,PE_MODREF *pem)
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
-		    if(!lstrncmpi32A(Module,"kernel32",8) && !ordimportwarned){
-		       fprintf(stderr,"%s imports kernel32.dll by ordinal. May crash.\n",modname);
-		       ordimportwarned = 1;
-		    }
 		    dprintf_win32 (stddeb, "--- Ordinal %s,%d\n", Module, ordinal);
 		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),(LPCSTR)ordinal);
 		    if (!thunk_list->u1.Function) {
@@ -292,13 +273,6 @@ fixup_imports (PDB32 *process,PE_MODREF *pem)
 		    /* not sure about this branch, but it seems to work */
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
-
-		    if (!lstrncmpi32A(Module,"kernel32",8) && 
-		    	!ordimportwarned
-		    ) {
-		       fprintf(stderr,"%s imports kernel32.dll by ordinal. May crash.\n",modname);
-		       ordimportwarned = 1;
-		    }
 		    dprintf_win32(stddeb,"--- Ordinal %s.%d\n",Module,ordinal);
 		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),
 						     (LPCSTR) ordinal);
@@ -422,65 +396,46 @@ static void do_relocations(PE_MODREF *pem)
  * Load one PE format DLL/EXE into memory
  * 
  * Unluckily we can't just mmap the sections where we want them, for 
- * (at least) Linux does only support offset with are multiples of the
- * underlying filesystemblocksize, but PE DLLs usually have alignments of 512
- * byte. This fails for instance when you try to map from CDROM (bsize 2048).
+ * (at least) Linux does only support offsets which are page-aligned.
  *
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-static PE_MODULE *PE_LoadImage( int fd )
+static PE_MODULE *PE_LoadImage( HFILE32 hFile )
 {
-	struct pe_data		*pe;
-	struct stat		stbuf;
+    struct pe_data *pe;
+    HMODULE32 hModule;
+    HANDLE32 mapping;
 
-	if (-1==fstat(fd,&stbuf)) {
-		perror("PE_LoadImage:fstat");
-		return NULL;
-	}
-	pe = xmalloc(sizeof(struct pe_data));
-	memset(pe,0,sizeof(struct pe_data));
+    /* map the PE file somewhere */
+    mapping = CreateFileMapping32A( hFile, NULL, PAGE_READONLY | SEC_COMMIT,
+                                    0, 0, NULL );
+    if (!mapping)
+    {
+        fprintf( stderr, "PE_LoadImage: CreateFileMapping error %ld\n",
+                 GetLastError() );
+        return NULL;
+    }
+    hModule = (HMODULE32)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( mapping );
+    if (!hModule)
+    {
+        fprintf( stderr, "PE_LoadImage: MapViewOfFile error %ld\n",
+                 GetLastError() );
+        return NULL;
+    }
 
-	/* map the PE image somewhere */
-	pe->mappeddll = (HMODULE32)mmap(NULL,stbuf.st_size,PROT_READ,MAP_SHARED,fd,0);
-	if (!pe->mappeddll || pe->mappeddll==-1) {
-		if (errno==ENOEXEC) {
-			int	res=0,curread = 0;
-
-			lseek(fd,0,SEEK_SET);
-			/* linux: some filesystems don't support mmap (samba,
-			 * ntfs apparently) so we have to read the image the
-			 * hard way
-			 */
-			pe->mappeddll = xmalloc(stbuf.st_size);
-			while (curread < stbuf.st_size) {
-				res = read(fd,pe->mappeddll+curread,stbuf.st_size-curread);
-				if (res<=0) 
-					break;
-				curread+=res;
-			}
-			if (res == -1) {
-				perror("PE_LoadImage:mmap compat read");
-				free(pe->mappeddll);
-				free(pe);
-				return NULL;
-			}
-
-		} else {
-			perror("PE_LoadImage:mmap");
-			free(pe);
-			return NULL;
-		}
-	}
-	/* link PE header */
-	pe->pe_header = (IMAGE_NT_HEADERS*)(pe->mappeddll+(((IMAGE_DOS_HEADER*)pe->mappeddll)->e_lfanew));
-	if (pe->pe_header->Signature!=IMAGE_NT_SIGNATURE) {
-		fprintf(stderr,"image doesn't have PE signature, but 0x%08lx\n",
-			pe->pe_header->Signature
-		);
-		free(pe);
-		return NULL;
-	}
+    /* build PE header */
+    pe = xmalloc(sizeof(struct pe_data));
+    pe->mappeddll = hModule;
+    pe->pe_header = (IMAGE_NT_HEADERS*)(pe->mappeddll+(((IMAGE_DOS_HEADER*)pe->mappeddll)->e_lfanew));
+    if (pe->pe_header->Signature!=IMAGE_NT_SIGNATURE)
+    {
+        fprintf(stderr,"image doesn't have PE signature, but 0x%08lx\n",
+                pe->pe_header->Signature );
+        free(pe);
+        return NULL;
+    }
 
 	if (pe->pe_header->FileHeader.Machine != IMAGE_FILE_MACHINE_I386) {
 		fprintf(stderr,"trying to load PE image for unsupported architecture (");
@@ -523,7 +478,6 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 	int			i, result;
 	int			load_addr;
 	IMAGE_DATA_DIRECTORY	dir;
-	char			buffer[200];
 	char			*modname;
 	int			vma_size;
 	
@@ -553,8 +507,8 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 	{
 		/* memcpy only non-BSS segments */
 		/* FIXME: this should be done by mmap(..MAP_PRIVATE|MAP_FIXED..)
-		 * but it is not possible for (at least) Linux needs an offset
-		 * aligned to a block on the filesystem.
+		 * but it is not possible for (at least) Linux needs
+		 * a page-aligned offset.
 		 */
 		if(!(pe->pe_seg[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA))
 		    memcpy((char*)RVA(pe->pe_seg[i].VirtualAddress),
@@ -599,8 +553,10 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
 	if(dir.Size)
 	{
+		/* 
 		if(pem->pe_import && (int)pem->pe_import!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong import directory??\n");
+		 */
 		pem->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) RVA(dir.VirtualAddress);
 	}
 
@@ -682,25 +638,6 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 		if ((s=strchr(modname,'.')))
 			*s='\0';
 	}
-
-#ifndef WINELIB
-        {
-            DBG_ADDR daddr = { NULL, 0, 0 };
-            /* add start of sections as debugsymbols */
-            for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
-		sprintf(buffer,"%s_%s",modname,pe->pe_seg[i].Name);
-		daddr.off= RVA(pe->pe_seg[i].VirtualAddress);
-		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-            }
-            /* add entry point */
-            sprintf(buffer,"%s_EntryPoint",modname);
-            daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
-            DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-            /* add start of DLL */
-            daddr.off=load_addr;
-            DEBUG_AddSymbol(modname,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-        }
-#endif
 }
 
 HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
@@ -730,17 +667,20 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		pModule = MODULE_GetPtr(hModule);
 	} else {
 
+#ifndef WINELIB
 		/* try to load builtin, enabled modules first */
 		if ((hModule = BUILTIN_LoadModule( name, FALSE )))
 			return hModule;
-
+#endif
 		/* try to open the specified file */
 		if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
+#ifndef WINELIB
 			/* Now try the built-in even if disabled */
 			if ((hModule = BUILTIN_LoadModule( name, TRUE ))) {
 				fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
 				return hModule;
 			}
+#endif
 			return 1;
 		}
 		if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {
@@ -749,8 +689,8 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		}
 		pModule		= (NE_MODULE *)GlobalLock16( hModule );
 		pModule->flags	= NE_FFLAGS_WIN32;
-		pModule->pe_module = PE_LoadImage( FILE_GetUnixHandle(hFile) );
-		_lclose32(hFile);
+		pModule->pe_module = PE_LoadImage( hFile );
+		CloseHandle( hFile );
 		if (!pModule->pe_module)
 			return 21;
 	}
@@ -774,8 +714,8 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->flags = NE_FFLAGS_WIN32;
 
-    pModule->pe_module = PE_LoadImage( FILE_GetUnixHandle(hFile) );
-    _lclose32(hFile);
+    pModule->pe_module = PE_LoadImage( hFile );
+    CloseHandle( hFile );
     if (!pModule->pe_module)
     	return 21;
 
@@ -810,13 +750,6 @@ static void PE_InitDLL(PE_MODREF *pem, DWORD type,LPVOID lpReserved)
 
     if (type==DLL_PROCESS_ATTACH)
 	pem->flags |= PE_MODREF_PROCESS_ATTACHED;
-#ifndef WINELIB
-    if (Options.debug) {
-            DBG_ADDR addr = { NULL, 0, RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint) };
-            DEBUG_AddBreakpoint( &addr );
-	    DEBUG_SetBreakpoints(TRUE);
-    }
-#endif
 
     /*  DLL_ATTACH_PROCESS:
      *		lpreserved is NULL for dynamic loads, not-NULL for static loads

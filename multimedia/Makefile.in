@@ -12,6 +12,7 @@ C_SRCS = \
 	mcicda.c \
 	mcistring.c \
 	midi.c \
+	mixer.c \
 	mmaux.c \
 	mmsystem.c \
 	time.c

@@ -751,10 +751,13 @@ DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
     }
   
   if( addr->type == NULL )
-    {
-      fprintf(stderr, "Unable to evaluate expression\n");
+  {
+      /* No type, just print the addr value */
+      if (addr->seg && (addr->seg != 0xffffffff))
+          DEBUG_nchar += fprintf( stderr, "0x%04lx: ", addr->seg );
+      DEBUG_nchar += fprintf( stderr, "0x%08lx", addr->off );
       goto leave;
-    }
+  }
   
   if( level == 0 )
     {

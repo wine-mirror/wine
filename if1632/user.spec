@@ -149,7 +149,7 @@ file	user.exe
 146 pascal16 GetClipboardFormatName(word ptr s_word) GetClipboardFormatName16
 147 pascal16 SetClipboardViewer(word) SetClipboardViewer16
 148 pascal16 GetClipboardViewer() GetClipboardViewer16
-149 pascal16 ChangeClipboardChain(word ptr) ChangeClipboardChain16
+149 pascal16 ChangeClipboardChain(word word) ChangeClipboardChain16
 150 pascal16 LoadMenu(word segstr) LoadMenu16
 151 pascal16 CreateMenu() CreateMenu16
 152 pascal16 DestroyMenu(word) DestroyMenu16

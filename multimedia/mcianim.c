@@ -29,7 +29,7 @@ typedef struct {
     BOOL16  fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
     HANDLE16 hCallback;          /* Callback handle for pending notification */
-	MCI_OPEN_PARMS openParms;
+	MCI_OPEN_PARMS16 openParms;
 	DWORD	dwTimeFormat;
 	int		mode;
 	UINT16	nCurTrack;
@@ -38,7 +38,7 @@ typedef struct {
 	DWORD	dwTotalLen;
 	LPDWORD	lpdwTrackLen;
 	LPDWORD	lpdwTrackPos;
-	} LINUX_ANIM;
+} LINUX_ANIM;
 
 static LINUX_ANIM	AnimDev[MAX_ANIMDRV];
 #endif
@@ -49,7 +49,7 @@ static LINUX_ANIM	AnimDev[MAX_ANIMDRV];
 /**************************************************************************
 * 				ANIM_mciOpen			[internal]
 */
-static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
+static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
 	LPSTR		lpstrElementName;
@@ -83,7 +83,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms
 			CharUpper32A(str);
 			}
 		}
-	memcpy(&AnimDev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS));
+	memcpy(&AnimDev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS16));
 	AnimDev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
 	AnimDev[wDevID].mode = 0;
 	AnimDev[wDevID].dwTimeFormat = MCI_FORMAT_TMSF;
@@ -285,7 +285,7 @@ static DWORD ANIM_CalcFrame(UINT16 wDevID, DWORD dwFormatType, DWORD dwTime)
 /**************************************************************************
 * 				ANIM_mciInfo			[internal]
 */
-static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
+static DWORD ANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
 #if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciInfo(%u, %08lX, %p);\n", 
@@ -617,7 +617,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
 			return ANIM_mciOpen(dwDevID, dwParam1, 
-					(LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2)); 
+					(LPMCI_OPEN_PARMS16)PTR_SEG_TO_LIN(dwParam2)); 
 		case DRV_CLOSE:
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
@@ -642,7 +642,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 					(LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_INFO:
 			return ANIM_mciInfo(dwDevID, dwParam1, 
-						(LPMCI_INFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
+						(LPMCI_INFO_PARMS16)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STATUS:
 			return ANIM_mciStatus(dwDevID, dwParam1, 
 						(LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));

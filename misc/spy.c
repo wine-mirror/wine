@@ -299,7 +299,11 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0170 - Win32 Static controls */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "STM_SETICON32",		/* 0x0170 */
+    "STM_GETICON32",		/* 0x0171 */
+    "STM_SETIMAGE32",		/* 0x0172 */
+    "STM_GETIMAGE32",		/* 0x0173 */
+    NULL, NULL, NULL, NULL, 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0180 - Win32 Listboxes */

@@ -24,6 +24,7 @@ Unresolved issues Uwe Bonnes 970904:
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 #include <ctype.h>
@@ -34,7 +35,6 @@ Unresolved issues Uwe Bonnes 970904:
 #include "stddebug.h"
 #include "debug.h"
 #include "module.h"
-#include "xmalloc.h"
 #include "heap.h"
 #include "crtdll.h"
 #include "drive.h"
@@ -84,7 +84,8 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	dprintf_crtdll(stddeb,"CRTDLL__GetMainArgs(%p,%p,%p,%ld).\n",
 		argc,argv,environ,flag
 	);
-	CRTDLL_acmdln_dll = cmdline = xstrdup( GetCommandLine32A() );
+	CRTDLL_acmdln_dll = cmdline = HEAP_strdupA( GetProcessHeap(), 0,
+                                                    GetCommandLine32A() );
  	dprintf_crtdll(stddeb,"CRTDLL__GetMainArgs got \"%s\"\n",
 		cmdline);
 
@@ -105,9 +106,11 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	i=0;xargv=NULL;xargc=0;afterlastspace=0;
 	while (cmdline[i]) {
 		if (cmdline[i]==' ') {
-			xargv=(char**)xrealloc(xargv,sizeof(char*)*(++xargc));
+			xargv=(char**)HeapReAlloc( GetProcessHeap(), 0, xargv,
+                                                   sizeof(char*)*(++xargc));
 			cmdline[i]='\0';
-			xargv[xargc-1] = xstrdup(cmdline+afterlastspace);
+			xargv[xargc-1] = HEAP_strdupA( GetProcessHeap(), 0,
+                                                       cmdline+afterlastspace);
 			i++;
 			while (cmdline[i]==' ')
 				i++;
@@ -116,9 +119,11 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 		} else
 			i++;
 	}
-	xargv=(char**)xrealloc(xargv,sizeof(char*)*(++xargc));
+	xargv=(char**)HeapReAlloc( GetProcessHeap(), 0, xargv,
+                                   sizeof(char*)*(++xargc));
 	cmdline[i]='\0';
-	xargv[xargc-1] = xstrdup(cmdline+afterlastspace);
+	xargv[xargc-1] = HEAP_strdupA( GetProcessHeap(), 0,
+                                       cmdline+afterlastspace);
 	CRTDLL_argc_dll	= xargc;
 	*argc		= xargc;
 	CRTDLL_argv_dll	= xargv;
@@ -126,10 +131,7 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 
 	dprintf_crtdll(stddeb,"CRTDLL__GetMainArgs found %d arguments\n",
 		CRTDLL_argc_dll);
-	/* FIXME ... use real environment */
-	*environ	= xmalloc(sizeof(LPSTR));
-	CRTDLL_environ_dll = *environ;
-	(*environ)[0] = NULL;
+	CRTDLL_environ_dll = *environ = GetEnvironmentStrings32A();
 	return 0;
 }
 
@@ -920,6 +922,66 @@ INT32 __cdecl CRTDLL__unlink(LPCSTR pathname)
 }
 
 /*********************************************************************
+ *                  rename           (CRTDLL.449)
+ */
+INT32 __cdecl CRTDLL_rename(LPCSTR oldpath,LPCSTR newpath)
+{
+    BOOL32 ok = MoveFileEx32A( oldpath, newpath, MOVEFILE_REPLACE_EXISTING );
+    return ok ? 0 : -1;
+}
+
+
+/*********************************************************************
+ *                  _stat          (CRTDLL.280)
+ */
+
+struct win_stat
+{
+    UINT16 win_st_dev;
+    UINT16 win_st_ino;
+    UINT16 win_st_mode;
+    INT16  win_st_nlink;
+    INT16  win_st_uid;
+    INT16  win_st_gid;
+    UINT32 win_st_rdev;
+    INT32  win_st_size;
+    INT32  win_st_atime;
+    INT32  win_st_mtime;
+    INT32  win_st_ctime;
+};
+
+int __cdecl CRTDLL__stat(const char * filename, struct win_stat * buf)
+{
+    int ret=0;
+    DOS_FULL_NAME full_name;
+    struct stat mystat;
+
+    if (!DOSFS_GetFullName( filename, TRUE, &full_name ))
+    {
+      dprintf_crtdll(stddeb,"CRTDLL__stat filename %s bad name\n",filename);
+      return -1;
+    }
+    ret=stat(full_name.long_name,&mystat);
+    dprintf_crtdll(stddeb,"CRTDLL__stat %s%s\n",
+		   filename, (ret)?" failed":"");
+
+    /* FIXME: should check what Windows returns */
+
+    buf->win_st_dev   = mystat.st_dev;
+    buf->win_st_ino   = mystat.st_ino;
+    buf->win_st_mode  = mystat.st_mode;
+    buf->win_st_nlink = mystat.st_nlink;
+    buf->win_st_uid   = mystat.st_uid;
+    buf->win_st_gid   = mystat.st_gid;
+    buf->win_st_rdev  = mystat.st_rdev;
+    buf->win_st_size  = mystat.st_size;
+    buf->win_st_atime = mystat.st_atime;
+    buf->win_st_mtime = mystat.st_mtime;
+    buf->win_st_ctime = mystat.st_ctime;
+    return ret;
+}
+
+/*********************************************************************
  *                  _open           (CRTDLL.239)
  */
 HFILE32 __cdecl CRTDLL__open(LPCSTR path,INT32 flags)
@@ -1350,36 +1412,55 @@ INT32 __cdecl CRTDLL__chdir(LPCSTR newdir)
 }
 
 /*********************************************************************
+ *                  _fullpath           (CRTDLL.114)
+ */
+LPSTR __cdecl CRTDLL__fullpath(LPSTR buf, LPCSTR name, INT32 size)
+{
+  DOS_FULL_NAME full_name;
+
+  if (!buf)
+  {
+      size = 256;
+      if(!(buf = CRTDLL_malloc(size))) return NULL;
+  }
+  if (!DOSFS_GetFullName( name, FALSE, &full_name )) return NULL;
+  lstrcpyn32A(buf,full_name.short_name,size);
+  dprintf_crtdll(stderr,"CRTDLL_fullpath got %s\n",buf);
+  return buf;
+}
+
+/*********************************************************************
  *                  _getcwd           (CRTDLL.120)
  */
 CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT32 size)
 {
-  DOS_FULL_NAME full_name;
-  char *ret;
+  char test[1];
+  int len;
 
-  dprintf_crtdll(stddeb,"CRTDLL_getcwd for buf %p size %d\n",
-		 buf,size);
-  if (buf == NULL)
+  len = size;
+  if (!buf) {
+    len = size;
+    if (size < 0) /* allocate as big as nescessary */
+      len =GetCurrentDirectory32A(1,test);
+    if(!(buf = CRTDLL_malloc(len)))
     {
-      dprintf_crtdll(stderr,"CRTDLL_getcwd malloc unsupported\n");
-      printf("CRTDLL_getcwd malloc unsupported\n");
-      return 0;
+	/* set error to OutOfRange */
+	return( NULL );
     }
-  ret = getcwd(buf,size);
-  if (!DOSFS_GetFullName( buf, FALSE, &full_name )) 
+  }
+  size = len;
+  if(!(len =GetCurrentDirectory32A(len,buf)))
     {
-      dprintf_crtdll(stddeb,"CRTDLL_getcwd failed\n");
-      return 0;
+      return NULL;
     }
-  if (strlen(full_name.short_name)>size) 
+  if (len > size)
     {
-      dprintf_crtdll(stddeb,"CRTDLL_getcwd string too long\n");
-      return 0;
+      /* set error to ERANGE */
+      dprintf_crtdll(stddeb,"CRTDLL_getcwd buffer to small\n");
+      return NULL;
     }
-  ret=strcpy(buf,full_name.short_name);
-  if (ret) 
-    dprintf_crtdll(stddeb,"CRTDLL_getcwd returned:%s\n",ret);
-  return ret;
+  return buf;
+
 }
 
 /*********************************************************************
@@ -1494,4 +1575,11 @@ typedef VOID (*sig_handler_type)(VOID);
 VOID __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
 {
     dprintf_crtdll(stddeb,"CRTDLL_signal %d %p: STUB!\n",sig,ptr);
+}
+
+/*********************************************************************
+ *                  _ftol           (CRTDLL.113)
+ */
+LONG __cdecl CRTDLL__ftol(double fl) {
+	return (LONG)fl;
 }

@@ -56,10 +56,12 @@ typedef struct
 
 /* Font alias table - these 2 aliases are always present */
 
-static fontAlias aliasTable[2] = { 
-			{ "Helvetica", "Helv", &aliasTable[1] },
+static fontAlias __aliasTable[2] = { 
+			{ "Helvetica", "Helv", &__aliasTable[1] },
 			{ "Times", "Tms Rmn", NULL } 
 			};
+
+static fontAlias *aliasTable = __aliasTable;
 
 /* Optional built-in aliases, they are installed only when X
  * cannot supply us with original MS fonts */
@@ -961,6 +963,27 @@ static void XFONT_LoadAliases( char** buffer, int buf_size )
 		{
 		    if( bSubst )
 		    {
+			fontAlias *pfa, *prev = NULL;
+
+			for(pfa = aliasTable; pfa; pfa = pfa->next)
+			{
+	/* Remove lpAlias from aliasTable - we should free the old entry */
+			    if(!lstrcmp32A(lpAlias, pfa->faAlias))
+			    {
+				if(prev)
+				    prev->next = pfa->next;
+				else
+				    aliasTable = pfa->next;
+			     }
+
+	/* Update any references to the substituted font in aliasTable */
+			    if(!lstrcmp32A(frMatch->lfFaceName,
+							pfa->faTypeFace))
+				pfa->faTypeFace = HEAP_strdupA( SystemHeap, 0,
+							 lpAlias );
+			    prev = pfa;
+			}
+						
 #ifdef DEBUG_FONT_INIT
                         dprintf_font(stddeb, "\tsubstituted '%s' with %s\n",
 						frMatch->lfFaceName, lpAlias );

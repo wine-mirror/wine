@@ -435,6 +435,7 @@ typedef struct timeval TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
 
 /* ws_... struct conversion flags */
 
+#define WS_DUP_LINEAR		0x0000
 #define WS_DUP_NATIVE           0x0001		/* native structure format (not ws_..) */
 #define WS_DUP_OFFSET           0x0002		/* internal pointers are offsets */
 #define WS_DUP_SEGPTR           0x0004		/* internal pointers are SEGPTRs */

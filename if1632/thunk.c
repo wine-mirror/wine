@@ -1,7 +1,7 @@
 /*
  * Emulator and Win95 thunks
  *
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1996, 1997 Alexandre Julliard
  * Copyright 1997 Marcus Meissner
  */
 
@@ -13,7 +13,6 @@
 #include "heap.h"
 #include "hook.h"
 #include "module.h"
-#include "winproc.h"
 #include "stackframe.h"
 #include "selectors.h"
 #include "task.h"
@@ -21,6 +20,46 @@
 #include "win.h"
 #include "stddebug.h"
 #include "debug.h"
+
+
+/* List of the 16-bit callback functions. This list is used  */
+/* by the build program to generate the file if1632/callto16.S */
+
+/* ### start build ### */
+extern LONG CALLBACK CallTo16_regs_short(const CONTEXT *context, INT32 offset);
+extern LONG CALLBACK CallTo16_regs_long (const CONTEXT *context, INT32 offset);
+extern WORD CALLBACK CallTo16_word_     (FARPROC16);
+extern WORD CALLBACK CallTo16_word_w    (FARPROC16,WORD);
+extern LONG CALLBACK CallTo16_long_l    (FARPROC16,LONG);
+extern WORD CALLBACK CallTo16_word_ww   (FARPROC16,WORD,WORD);
+extern WORD CALLBACK CallTo16_word_wl   (FARPROC16,WORD,LONG);
+extern WORD CALLBACK CallTo16_word_ll   (FARPROC16,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
+extern WORD CALLBACK CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
+extern WORD CALLBACK CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
+extern LONG CALLBACK CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
+extern WORD CALLBACK CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
+extern WORD CALLBACK CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
+extern WORD CALLBACK CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
+extern LONG CALLBACK CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
+extern WORD CALLBACK CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern WORD CALLBACK CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern LONG CALLBACK CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
+                                            LONG,LONG,WORD);
+extern LONG CALLBACK CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
+                                                LONG,WORD,LONG,LONG,LONG,LONG,
+                                                LONG,WORD);
+extern LONG CALLBACK CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
+                                                  WORD,WORD,LONG,WORD,WORD,
+                                                  WORD,WORD,LONG,LONG,LONG,
+                                                  LONG);
+/* ### stop build ### */
+
 
 typedef void (*RELAY)();
 
@@ -46,8 +85,39 @@ typedef struct tagTHUNK
 
 static THUNK *firstThunk = NULL;
 
-static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
-                                    WPARAM16 wParam, LPARAM lParam );
+static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
+                                           UINT16 msg, WPARAM16 wParam,
+                                           LPARAM lParam );
+static void WINAPI THUNK_CallTaskReschedule(void);
+
+/* TASK_Reschedule() 16-bit entry point */
+static FARPROC16 TASK_RescheduleProc;
+
+/* Callbacks function table for the emulator */
+static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
+{
+    (void *)CallTo16_regs_short,           /* CallRegisterProc */
+    THUNK_CallTaskReschedule,              /* CallTaskRescheduleProc */
+    THUNK_CallWndProc16,                   /* CallWndProc */
+    (void *)CallTo16_long_lwwll,           /* CallDriverProc */
+    (void *)CallTo16_word_wwlll,           /* CallDriverCallback */
+    (void *)CallTo16_word_wwlll,           /* CallTimeFuncProc */
+    (void *)CallTo16_word_w,               /* CallWindowsExitProc */
+    (void *)CallTo16_word_lwww,            /* CallWordBreakProc */
+    (void *)CallTo16_word_ww,              /* CallBootAppProc */
+    (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
+    (void *)CallTo16_word_,                /* CallSystemTimerProc */
+    (void *)CallTo16_long_l,               /* CallASPIPostProc */
+    (void *)CallTo16_word_lwll,            /* CallDrvControlProc */
+    (void *)CallTo16_word_lwlll,           /* CallDrvEnableProc */
+    (void *)CallTo16_word_llll,            /* CallDrvEnumDFontsProc */
+    (void *)CallTo16_word_lwll,            /* CallDrvEnumObjProc */
+    (void *)CallTo16_word_lwwlllll,        /* CallDrvOutputProc */
+    (void *)CallTo16_long_lwlll,           /* CallDrvRealizeProc */
+    (void *)CallTo16_word_lwwwwlwwwwllll,  /* CallDrvStretchBltProc */
+    (void *)CallTo16_long_lwwllwlllllw     /* CallDrvExtTextOutProc */
+};
+
 
 /***********************************************************************
  *           THUNK_Init
@@ -55,7 +125,9 @@ static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
 BOOL32 THUNK_Init(void)
 {
     /* Set the window proc calling functions */
-    WINPROC_SetCallWndProc16( THUNK_CallWndProc16 );
+    Callbacks = &CALLBACK_EmulatorTable;
+    /* Get the 16-bit reschedule function pointer */
+    TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
     return TRUE;
 }
 
@@ -117,8 +189,9 @@ static void THUNK_Free( THUNK *thunk )
  *
  * Call a 16-bit window procedure
  */
-static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
-                                    WPARAM16 wParam, LPARAM lParam )
+static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
+                                           UINT16 msg, WPARAM16 wParam,
+                                           LPARAM lParam )
 {
     CONTEXT context;
     LRESULT ret;
@@ -154,9 +227,18 @@ static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
     args[4] = hwnd;
     /* args[5] and args[6] are used by relay code to store the stack pointer */
 
-    ret = CallTo16_regs_( &context, -(5 * sizeof(WORD)) );
+    ret = CallTo16_regs_short( &context, -(5 * sizeof(WORD)) );
     if (offset) STACK16_POP(offset);
     return ret;
+}
+
+
+/***********************************************************************
+ *           THUNK_CallTaskReschedule
+ */
+static void WINAPI THUNK_CallTaskReschedule(void)
+{
+    CallTo16_word_(TASK_RescheduleProc);
 }
 
 
@@ -337,31 +419,6 @@ BOOL16 WINAPI THUNK_UnhookWindowsHookEx16( HHOOK hhook )
 }
 
 
-/***********************************************************************
- *           THUNK_CreateSystemTimer   (SYSTEM.2)
- */
-WORD WINAPI THUNK_CreateSystemTimer( WORD rate, FARPROC16 callback )
-{
-    THUNK *thunk = THUNK_Alloc( callback, (RELAY)CallTo16_word_ );
-    if (!thunk) return 0;
-    return CreateSystemTimer( rate, (FARPROC16)thunk );
-}
-
-
-/***********************************************************************
- *           THUNK_KillSystemTimer   (SYSTEM.3)
- */
-WORD WINAPI THUNK_KillSystemTimer( WORD timer )
-{
-    extern WORD SYSTEM_KillSystemTimer( WORD timer );  /* misc/system.c */
-    extern FARPROC16 SYSTEM_GetTimerProc( WORD timer );  /* misc/system.c */
-
-    THUNK *thunk = (THUNK *)SYSTEM_GetTimerProc( timer );
-    WORD ret = SYSTEM_KillSystemTimer( timer );
-    if (thunk) THUNK_Free( thunk );
-    return ret;
-}
-
 
 static FARPROC16 defDCHookProc = NULL;
 
@@ -512,10 +569,10 @@ FARPROC16 WINAPI THUNK_SetResourceHandler( HMODULE16 hModule, SEGPTR typeId, FAR
  *  68xxxxxxxx		    push FT_Prolog
  *  C3			    lret
  */
-static void _write_ftprolog(LPBYTE start,DWORD thunkstart) {
+static void _write_ftprolog(LPBYTE thunk,DWORD thunkstart) {
 	LPBYTE	x;
 
-	x	= start;
+	x	= thunk;
 	*x++	= 0x0f;*x++=0xb6;*x++=0xd1; /* movzbl edx,cl */
 	*x++	= 0x8B;*x++=0x14;*x++=0x95;*(DWORD*)x= thunkstart;
 	x+=4;	/* mov edx, [4*edx + thunkstart] */
@@ -523,6 +580,13 @@ static void _write_ftprolog(LPBYTE start,DWORD thunkstart) {
 	x+=4; 	/* push FT_Prolog */
 	*x++	= 0xC3;		/* lret */
 	/* fill rest with 0xCC / int 3 */
+}
+
+/***********************************************************************
+ *			FT_PrologPrime			(KERNEL32.89)
+ */
+void WINAPI FT_PrologPrime(DWORD startind,LPBYTE thunk) {
+	_write_ftprolog(thunk,*(DWORD*)(startind+thunk));
 }
 
 /***********************************************************************
@@ -623,39 +687,31 @@ UINT32 WINAPI ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
 
 
 /**********************************************************************
- * The infamous and undocumented QT_Thunk procedure.
+ * 		QT_Thunk			(KERNEL32)
  *
- * We get arguments in [EBP+8] up to [EBP+38].
- * We have to set up a frame in the 16 bit stackframe.
- *	saved_ss_sp:	bp+0x40
- *			bp+0x3c
- *			...
- *		bp:	bp+0x00
- *		sp:	
- *		
+ * The target address is in EDX.
+ * The 16 bit arguments start at ESP+4.
+ * The number of 16bit argumentbytes is EBP-ESP-0x44 (68 Byte thunksetup).
+ * [ok]
  */
 VOID WINAPI QT_Thunk(CONTEXT *context)
 {
 	CONTEXT	context16;
-	LPBYTE	curstack;
-	DWORD	ret;
+	DWORD	argsize;
 
-	fprintf(stderr,"QT_Thunk(%08lx) ..",EDX_reg(context));
-	fprintf(stderr,"	argsize probably ebp-esp=%ld\n",
-		EBP_reg(context)-ESP_reg(context)
-	);
 	memcpy(&context16,context,sizeof(context16));
 
-	curstack = (LPBYTE)CURRENT_STACK16;
-	memcpy(curstack-0x44,(LPBYTE)EBP_reg(context),0x40);
-	EBP_reg(&context16)	 = LOWORD(IF1632_Saved16_ss_sp)-0x40;
 	CS_reg(&context16)	 = HIWORD(EDX_reg(context));
 	IP_reg(&context16)	 = LOWORD(EDX_reg(context));
-#ifndef WINELIB
-	ret = CallTo16_regs_(&context16,-0x40);
-#endif
-	fprintf(stderr,". returned %08lx\n",ret);
-	EAX_reg(context) 	 = ret;
+
+	argsize = EBP_reg(context)-ESP_reg(context)-0x44;
+
+	/* additional 4 bytes used by the relaycode for storing the stackptr */
+	memcpy(	((LPBYTE)CURRENT_STACK16)-argsize-4,
+		(LPBYTE)ESP_reg(context)+4,
+		argsize
+	);
+	EAX_reg(context) = CallTo16_regs_short(&context16,-argsize);
 }
 
 
@@ -674,22 +730,15 @@ DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
 /***********************************************************************
  *           _KERNEL32_52    (KERNEL32.52)
  * Returns a pointer to ThkBuf in the 16bit library SYSTHUNK.DLL.
+ * [ok probably]
  */
 LPVOID WINAPI _KERNEL32_52()
 {
 	HMODULE32	hmod = LoadLibrary16("systhunk.dll");
-	DWORD		ret;
 
-	fprintf(stderr,"_KERNE32_52()\n");
 	if (hmod<=32)
 		return 0;
-
-	ret = (DWORD)WIN32_GetProcAddress16(hmod,"ThkBuf");
-
-	fprintf(stderr,"	GetProcAddress16(0x%04x,\"ThkBuf\") returns %08lx\n",
-			hmod,ret
-	);
-	return PTR_SEG_TO_LIN(ret);
+	return PTR_SEG_TO_LIN(WIN32_GetProcAddress16(hmod,"ThkBuf"));
 }
 
 /***********************************************************************
@@ -701,6 +750,7 @@ LPVOID WINAPI _KERNEL32_52()
  *	04: SEGPTR	ptr		? where does it point to?
  * The pointer ptr is written into the first DWORD of 'thunk'.
  * (probably correct implemented)
+ * [ok probably]
  */
 DWORD WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
                            LPCSTR dll16,LPCSTR dll32)
@@ -709,36 +759,34 @@ DWORD WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
 	LPDWORD		addr;
 	SEGPTR		segaddr;
 
-	fprintf(stderr,"_KERNEL32_43(%p,%s,0x%08lx,%s,%s)\n",thunk,thkbuf,len,dll16,dll32);
-
 	hmod = LoadLibrary16(dll16);
 	if (hmod<32) {
-		fprintf(stderr,"->failed to load 16bit DLL %s, error %d\n",dll16,hmod);
+		fprintf(stderr,"KERNEL32_43->failed to load 16bit DLL %s, error %d\n",dll16,hmod);
 		return 0;
 	}
 	segaddr = (DWORD)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
 	if (!segaddr) {
-		fprintf(stderr,"->no %s exported from %s!\n",thkbuf,dll16);
+		fprintf(stderr,"KERNEL32_43->no %s exported from %s!\n",thkbuf,dll16);
 		return 0;
 	}
 	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
 	if (addr[0] != len) {
-		fprintf(stderr,"->thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
+		fprintf(stderr,"KERNEL32_43->thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
 		return 0;
 	}
 	if (!addr[1])
 		return 0;
-	fprintf(stderr,"	addr[1] is %08lx\n",addr[1]);
 	*(DWORD*)thunk = addr[1];
 	return addr[1];
 }
 
 /***********************************************************************
  * 		_KERNEL32_45 	(KERNEL32.44)
- * Looks like another 32->16 thunk. Dunno why they need two of them.
- * calls the win16 address in EAX with the current stack.
+ * Another 32->16 thunk, the difference to QT_Thunk is, that the called routine
+ * uses 0x66 lret, and that we have to pass CX in DI.
+ * (there seems to be some kind of BL/BX return magic too...)
  *
- * FIXME: doesn't seem to work correctly yet...
+ * [doesn't crash anymore]
  */
 VOID WINAPI _KERNEL32_45(CONTEXT *context)
 {
@@ -754,25 +802,55 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 
 	memcpy(&context16,context,sizeof(context16));
 
-	curstack = (LPBYTE)CURRENT_STACK16;
-	memcpy(curstack-stacksize-4,(LPBYTE)EBP_reg(context),stacksize);
-	fprintf(stderr,"IF1632_Saved16_ss_sp is 0x%08lx\n",IF1632_Saved16_ss_sp);
-	EBP_reg(&context16)	 = LOWORD(IF1632_Saved16_ss_sp)-stacksize;
 	DI_reg(&context16)	 = CX_reg(context);
 	CS_reg(&context16)	 = HIWORD(EAX_reg(context));
 	IP_reg(&context16)	 = LOWORD(EAX_reg(context));
-	/* some more registers spronged locally, but I don't think they are
-	 * needed
-	 */
-#ifndef WINELIB
-	ret = CallTo16_regs_(&context16,-stacksize);
-#endif
+
+	curstack = PTR_SEG_TO_LIN(STACK16_PUSH(stacksize));
+	memcpy(curstack-stacksize,(LPBYTE)ESP_reg(context),stacksize);
+	ret = CallTo16_regs_long(&context16,0);
+	STACK16_POP(stacksize);
+
 	fprintf(stderr,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
 }
 
 /***********************************************************************
- *		(KERNEL32.40)
+ * 		_KERNEL32_40 	(KERNEL32.40)
+ * YET Another 32->16 thunk, the difference to the others is still mysterious
+ * target address is EDX
+ *
+ * [crashes]
+ */
+VOID WINAPI _KERNEL32_40(CONTEXT *context)
+{
+	CONTEXT	context16;
+	LPBYTE	curstack;
+	DWORD	ret,stacksize;
+
+	fprintf(stderr,"_KERNEL32_40(EDX=0x%08lx)\n",
+		EDX_reg(context)
+	);
+	stacksize = EBP_reg(context)-ESP_reg(context);
+	fprintf(stderr,"	stacksize = %ld\n",stacksize);
+	fprintf(stderr,"on top of stack: 0x%04x\n",*(WORD*)ESP_reg(context));
+
+	memcpy(&context16,context,sizeof(context16));
+
+	CS_reg(&context16)	 = HIWORD(EDX_reg(context));
+	IP_reg(&context16)	 = LOWORD(EDX_reg(context));
+
+	curstack = PTR_SEG_TO_LIN(STACK16_PUSH(stacksize));
+	memcpy(curstack-stacksize,(LPBYTE)ESP_reg(context),stacksize);
+	ret = CallTo16_regs_short(&context16,0);
+	STACK16_POP(stacksize);
+
+	fprintf(stderr,". returned %08lx\n",ret);
+	EAX_reg(context) 	 = ret;
+}
+
+/***********************************************************************
+ *		(KERNEL32.41)
  * A thunk setup routine.
  * Expects a pointer to a preinitialized thunkbuffer in the first argument
  * looking like:
@@ -805,7 +883,7 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
  *	00: DWORD	length		? don't know exactly
  *	04: SEGPTR	ptr		? where does it point to?
  * The segpointer ptr is written into the first DWORD of 'thunk'.
- * (probably correct implemented)
+ * [ok probably]
  */
 
 LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
@@ -816,10 +894,6 @@ LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
 	LPDWORD		addr,addr2;
 	DWORD		segaddr;
 
-	fprintf(stderr,"KERNEL32_41(%p,%s,%ld,%s,%s)\n",
-		thunk,thkbuf,len,dll16,dll32
-	);
-
 	/* FIXME: add checks for valid code ... */
 	/* write pointers to kernel32.89 and kernel32.90 (+ordinal base of 1) */
 	*(DWORD*)(thunk+0x35) = (DWORD)GetProcAddress32(hkrnl32,(LPSTR)90);
@@ -828,39 +902,34 @@ LPVOID WINAPI _KERNEL32_41(LPBYTE thunk,LPCSTR thkbuf,DWORD len,LPCSTR dll16,
 	
 	hmod = LoadLibrary16(dll16);
 	if (hmod<32) {
-		fprintf(stderr,"->failed to load 16bit DLL %s, error %d\n",dll16,hmod);
+		fprintf(stderr,"KERNEL32_41->failed to load 16bit DLL %s, error %d\n",dll16,hmod);
 		return NULL;
 	}
 	segaddr = (DWORD)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
 	if (!segaddr) {
-		fprintf(stderr,"->no %s exported from %s!\n",thkbuf,dll16);
+		fprintf(stderr,"KERNEL32_41->no %s exported from %s!\n",thkbuf,dll16);
 		return NULL;
 	}
 	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
 	if (addr[0] != len) {
-		fprintf(stderr,"->thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
+		fprintf(stderr,"KERNEL32_41->thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
 		return NULL;
 	}
 	addr2 = PTR_SEG_TO_LIN(addr[1]);
-	fprintf(stderr,"	addr2 is %08lx:%p\n",addr[1],addr2);
 	if (HIWORD(addr2))
 		*(DWORD*)thunk = (DWORD)addr2;
 	return addr2;
 }
 
 /***********************************************************************
- *							(KERNEL32.91)
- * Thunk priming? function
+ *							(KERNEL32.90)
+ * QT Thunk priming function
  * Rewrites the first part of the thunk to use the QT_Thunk interface
  * and jumps to the start of that code.
+ * [ok]
  */
 VOID WINAPI _KERNEL32_90(CONTEXT *context)
 {
-	fprintf(stderr,"_KERNEL32_90(eax=0x%08lx,edx=0x%08lx,ebp[-4]=0x%02x,target = %08lx, *target =%08lx)\n",
-		EAX_reg(context),EDX_reg(context),((BYTE*)EBP_reg(context))[-4],
-		(*(DWORD*)(EAX_reg(context)+EDX_reg(context)))+4*(((BYTE*)EBP_reg(context))[-4]),
-		*(DWORD*)((*(DWORD*)(EAX_reg(context)+EDX_reg(context)))+4*(((BYTE*)EBP_reg(context))[-4]))
-	);
 	_write_qtthunk((LPBYTE)EAX_reg(context),*(DWORD*)(EAX_reg(context)+EDX_reg(context)));
 	/* we just call the real QT_Thunk right now 
 	 * we can bypass the relaycode, for we already have the registercontext
@@ -875,6 +944,7 @@ VOID WINAPI _KERNEL32_90(CONTEXT *context)
  * The start of the thunkbuf looks like this:
  * 	00: DWORD	length
  *	04: SEGPTR	address for thunkbuffer pointer
+ * [ok probably]
  */
 VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
                          LPSTR dll32)
@@ -883,22 +953,19 @@ VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
 	HMODULE16	hmod;
 	SEGPTR		segaddr;
 
-	fprintf(stderr,"KERNEL32_46(%p,%s,%lx,%s,%s)\n",
-		thunk,thkbuf,len,dll16,dll32
-	);
 	hmod = LoadLibrary16(dll16);
 	if (hmod < 32) {
-		fprintf(stderr,"->couldn't load %s, error %d\n",dll16,hmod);
+		fprintf(stderr,"KERNEL32_46->couldn't load %s, error %d\n",dll16,hmod);
 		return;
 	}
 	segaddr = (SEGPTR)WIN32_GetProcAddress16(hmod,thkbuf);
 	if (!segaddr) {
-		fprintf(stderr,"-> haven't found %s in %s!\n",thkbuf,dll16);
+		fprintf(stderr,"KERNEL32_46-> haven't found %s in %s!\n",thkbuf,dll16);
 		return;
 	}
 	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
 	if (addr[0] != len) {
-		fprintf(stderr,"-> length of thkbuf differs from expected length! (%ld vs %ld)\n",addr[0],len);
+		fprintf(stderr,"KERNEL32_46-> length of thkbuf differs from expected length! (%ld vs %ld)\n",addr[0],len);
 		return;
 	}
 	*(DWORD*)PTR_SEG_TO_LIN(addr[1]) = (DWORD)thunk;
@@ -907,10 +974,11 @@ VOID WINAPI _KERNEL32_46(LPBYTE thunk,LPSTR thkbuf,DWORD len,LPSTR dll16,
 /**********************************************************************
  *           _KERNEL32_87
  * Check if thunking is initialized (ss selector set up etc.)
+ * We do that differently, so just return TRUE.
+ * [ok]
  */
 BOOL32 WINAPI _KERNEL32_87()
 {
-    fprintf(stderr,"KERNEL32_87 stub, returning TRUE\n");
     return TRUE;
 }
 
@@ -920,6 +988,7 @@ BOOL32 WINAPI _KERNEL32_87()
  * thunks. It should probably be capable of crossing processboundaries.
  *
  * And YES, I've seen nr=48 (somewhere in the Win95 32<->16 OLE coupling)
+ * [ok]
  */
 DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
 {

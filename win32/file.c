@@ -20,7 +20,6 @@
 #include "file.h"
 #include "heap.h"
 #include "handle32.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #define DEBUG_WIN32
 #include "debug.h"
@@ -65,6 +64,29 @@ BOOL32 WINAPI ReadFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
         *numread = actual_read;
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *              ReadFileEx                (KERNEL32.)
+ */
+typedef /* from winbase.h */
+VOID
+(WINAPI *LPOVERLAPPED_COMPLETION_ROUTINE)(
+    DWORD dwErrorCode,
+    DWORD dwNumberOfBytesTransfered,
+    LPOVERLAPPED lpOverlapped
+    );
+
+BOOL32 WINAPI ReadFileEx(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
+			 LPOVERLAPPED lpOverlapped, 
+			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+
+    fprintf(stdnimp,"ReadFileEx file %d to buf %p num %ld %p func %p stub\n",
+	    hFile, lpBuffer, numtoread, lpOverlapped, lpCompletionRoutine);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
 }
 
 
@@ -200,6 +222,12 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
         return FALSE;
 
     dprintf_file(stddeb,"SetFileAttributes(%s,%lx)\n",lpFileName,attributes);
+    if (attributes & FILE_ATTRIBUTE_NORMAL) {
+      attributes &= ~FILE_ATTRIBUTE_NORMAL;
+      if (attributes)
+        fprintf(stdnimp,"SetFileAttributesA(%s):%lx illegal combination with FILE_ATTRIBUTE_NORMAL.\n",
+		lpFileName,attributes);
+    }
     if(stat(full_name.long_name,&buf)==-1)
     {
         SetLastError(ErrnoToLastError(errno));

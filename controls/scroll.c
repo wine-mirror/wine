@@ -410,18 +410,20 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
     r = *rect;
     if (vertical)
     {
-        r.top    += arrowSize;
+        r.top    += arrowSize - 1;
         r.bottom -= arrowSize;
+	r.right--;
     }
     else
     {
-        r.left  += arrowSize;
+        r.left  += arrowSize - 1;
         r.right -= arrowSize;
+	r.bottom--;
     }
 
       /* Draw the scroll bar frame */
 
-    GRAPH_DrawRectangle( hdc, r.left, r.top, r.right - 1, r.bottom - 1, 0);
+    GRAPH_DrawRectangle( hdc, r.left, r.top, r.right - r.left, r.bottom - r.top, 0);
 
       /* Draw the scroll rectangles and thumb */
 
@@ -443,7 +445,7 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
                   r.right - r.left - 2,
                   r.bottom - r.top - thumbSize - 2,
                   bottom_selected ? 0x0f0000 : PATCOPY );
-        r.bottom = r.top + thumbSize + 1;
+        r.bottom = r.top + thumbSize + 2;
     }
     else  /* horizontal */
     {
@@ -456,7 +458,7 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
                   r.right - r.left - thumbSize - 2,
                   r.bottom - r.top - 2,
                   bottom_selected ? 0x0f0000 : PATCOPY );
-        r.right = r.left + thumbSize + 1;
+        r.right = r.left + thumbSize + 2;
     }
 
       /* Draw the thumb */

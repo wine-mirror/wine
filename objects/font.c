@@ -43,7 +43,7 @@ typedef struct
 /***********************************************************************
  *              LOGFONT conversion functions.
  */
-static void __logfont32to16( INT16* plf16, INT32* plf32 )
+static void __logfont32to16( INT16* plf16, const INT32* plf32 )
 {
     int  i;
     for( i = 0; i < 5; i++ ) *plf16++ = *plf32++;
@@ -51,7 +51,7 @@ static void __logfont32to16( INT16* plf16, INT32* plf32 )
    *((INT32*)plf16)   = *plf32;
 }
 
-static void __logfont16to32( INT32* plf32, INT16* plf16 )
+static void __logfont16to32( INT32* plf32, const INT16* plf16 )
 {
     int i;
     for( i = 0; i < 5; i++ ) *plf32++ = *plf16++;
@@ -61,117 +61,149 @@ static void __logfont16to32( INT32* plf32, INT16* plf16 )
 
 void FONT_LogFont32ATo16( const LOGFONT32A* font32, LPLOGFONT16 font16 )
 {
-  __logfont32to16( (INT16*)font16, (INT32*)font32 );
+  __logfont32to16( (INT16*)font16, (const INT32*)font32 );
     lstrcpyn32A( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
 void FONT_LogFont32WTo16( const LOGFONT32W* font32, LPLOGFONT16 font16 )
 {
-  __logfont32to16( (INT16*)font16, (INT32*)font32 );
+  __logfont32to16( (INT16*)font16, (const INT32*)font32 );
     lstrcpynWtoA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
-void FONT_LogFont16To32A( LPLOGFONT16 font16, LPLOGFONT32A font32 )
+void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONT32A font32 )
 {
-  __logfont16to32( (INT32*)font32, (INT16*)font16 );
+  __logfont16to32( (INT32*)font32, (const INT16*)font16 );
     lstrcpyn32A( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 }
 
-void FONT_LogFont16To32W( LPLOGFONT16 font16, LPLOGFONT32W font32 )
+void FONT_LogFont16To32W( const LPLOGFONT16 font16, LPLOGFONT32W font32 )
 {
-  __logfont16to32( (INT32*)font32, (INT16*)font16 );
+  __logfont16to32( (INT32*)font32, (const INT16*)font16 );
     lstrcpynAtoW( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 }
 
 /***********************************************************************
  *              TEXTMETRIC conversion functions.
  */
-void FONT_TextMetric32Ato16( LPTEXTMETRIC32A ptm32, LPTEXTMETRIC16 ptm16 )
+void FONT_TextMetric32Ato16(const LPTEXTMETRIC32A ptm32, LPTEXTMETRIC16 ptm16 )
 {
-    int         i;
-    INT16*      pi16 = (INT16*)ptm16;
-
-   *(INT32*)&ptm16->tmFirstChar = *(INT32*)&ptm32->tmFirstChar;
-   *(INT32*)&ptm16->tmItalic = *(INT32*)&ptm32->tmItalic;
-   *(INT16*)&ptm16->tmPitchAndFamily = *(INT16*)&ptm32->tmPitchAndFamily;
-#define pi32 ((INT32*)ptm32)
-    for( i = 0; i < 8; i++ ) *pi16++ = *pi32++;
-    ptm16->tmOverhang = pi32[0];
-    ptm16->tmDigitizedAspectX = pi32[1];
-    ptm16->tmDigitizedAspectY = pi32[2];
-#undef  pi32
-}
-
-void FONT_TextMetric32Wto16( LPTEXTMETRIC32W ptm32, LPTEXTMETRIC16 ptm16 )
-{
-    int         i;
-    INT16*      pi16 = (INT16*)ptm16;
-
+    ptm16->tmHeight = ptm32->tmHeight;
+    ptm16->tmAscent = ptm32->tmAscent;
+    ptm16->tmDescent = ptm32->tmDescent;
+    ptm16->tmInternalLeading = ptm32->tmInternalLeading;
+    ptm16->tmExternalLeading = ptm32->tmExternalLeading;
+    ptm16->tmAveCharWidth = ptm32->tmAveCharWidth;
+    ptm16->tmMaxCharWidth = ptm32->tmMaxCharWidth;
+    ptm16->tmWeight = ptm32->tmWeight;
+    ptm16->tmOverhang = ptm32->tmOverhang;
+    ptm16->tmDigitizedAspectX = ptm32->tmDigitizedAspectX;
+    ptm16->tmDigitizedAspectY = ptm32->tmDigitizedAspectY;
     ptm16->tmFirstChar = ptm32->tmFirstChar;
     ptm16->tmLastChar = ptm32->tmLastChar;
     ptm16->tmDefaultChar = ptm32->tmDefaultChar;
     ptm16->tmBreakChar = ptm32->tmBreakChar;
-   *(INT32*)&ptm16->tmItalic = *(INT32*)&ptm32->tmItalic;
-   *(INT16*)&ptm16->tmPitchAndFamily = *(INT16*)&ptm32->tmPitchAndFamily;
-#define pi32 ((INT32*)ptm32)
-    for( i = 0; i < 8; i++ ) *pi16++ = *pi32++;
-    ptm16->tmOverhang = pi32[0];
-    ptm16->tmDigitizedAspectX = pi32[1];
-    ptm16->tmDigitizedAspectY = pi32[2];
-#undef  pi32
+    ptm16->tmItalic = ptm32->tmItalic;
+    ptm16->tmUnderlined = ptm32->tmUnderlined;
+    ptm16->tmStruckOut = ptm32->tmStruckOut;
+    ptm16->tmPitchAndFamily = ptm32->tmPitchAndFamily;
+    ptm16->tmCharSet = ptm32->tmCharSet;
 }
 
-void FONT_TextMetric16to32A( LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32A ptm32 )
+void FONT_TextMetric32Wto16(const LPTEXTMETRIC32W ptm32, LPTEXTMETRIC16 ptm16 )
 {
-    int         i;
-    INT16*      pi16 = (INT16*)ptm16;
-
-   *(INT32*)&ptm32->tmFirstChar = *(INT32*)&ptm16->tmFirstChar;
-   *(INT32*)&ptm32->tmItalic = *(INT32*)&ptm16->tmItalic;
-   *(INT16*)&ptm32->tmPitchAndFamily = *(INT16*)&ptm16->tmPitchAndFamily;
-#define pi32 ((INT32*)ptm32)
-    for( i = 0; i < 8; i++ ) *pi32++ = *pi16++;
-    pi32[0] = ptm16->tmOverhang;
-    pi32[1] = ptm16->tmDigitizedAspectX;
-    pi32[2] = ptm16->tmDigitizedAspectY;
-#undef  pi32
+    ptm16->tmHeight = ptm32->tmHeight;
+    ptm16->tmAscent = ptm32->tmAscent;
+    ptm16->tmDescent = ptm32->tmDescent;
+    ptm16->tmInternalLeading = ptm32->tmInternalLeading;
+    ptm16->tmExternalLeading = ptm32->tmExternalLeading;
+    ptm16->tmAveCharWidth = ptm32->tmAveCharWidth;
+    ptm16->tmMaxCharWidth = ptm32->tmMaxCharWidth;
+    ptm16->tmWeight = ptm32->tmWeight;
+    ptm16->tmOverhang = ptm32->tmOverhang;
+    ptm16->tmDigitizedAspectX = ptm32->tmDigitizedAspectX;
+    ptm16->tmDigitizedAspectY = ptm32->tmDigitizedAspectY;
+    ptm16->tmFirstChar = ptm32->tmFirstChar;
+    ptm16->tmLastChar = ptm32->tmLastChar;
+    ptm16->tmDefaultChar = ptm32->tmDefaultChar;
+    ptm16->tmBreakChar = ptm32->tmBreakChar;
+    ptm16->tmItalic = ptm32->tmItalic;
+    ptm16->tmUnderlined = ptm32->tmUnderlined;
+    ptm16->tmStruckOut = ptm32->tmStruckOut;
+    ptm16->tmPitchAndFamily = ptm32->tmPitchAndFamily;
+    ptm16->tmCharSet = ptm32->tmCharSet;
 }
 
-void FONT_TextMetric16to32W( LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32W ptm32 )
+void FONT_TextMetric16to32A(const LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32A ptm32 )
 {
-    int         i;
-    INT16*      pi16 = (INT16*)ptm16;
-
+    ptm32->tmHeight = ptm16->tmHeight;
+    ptm32->tmAscent = ptm16->tmAscent;
+    ptm32->tmDescent = ptm16->tmDescent;
+    ptm32->tmInternalLeading = ptm16->tmInternalLeading;
+    ptm32->tmExternalLeading = ptm16->tmExternalLeading;
+    ptm32->tmAveCharWidth = ptm16->tmAveCharWidth;
+    ptm32->tmMaxCharWidth = ptm16->tmMaxCharWidth;
+    ptm32->tmWeight = ptm16->tmWeight;
+    ptm32->tmOverhang = ptm16->tmOverhang;
+    ptm32->tmDigitizedAspectX = ptm16->tmDigitizedAspectX;
+    ptm32->tmDigitizedAspectY = ptm16->tmDigitizedAspectY;
     ptm32->tmFirstChar = ptm16->tmFirstChar;
     ptm32->tmLastChar = ptm16->tmLastChar;
     ptm32->tmDefaultChar = ptm16->tmDefaultChar;
     ptm32->tmBreakChar = ptm16->tmBreakChar;
-   *(INT32*)&ptm32->tmItalic = *(INT32*)&ptm16->tmItalic;
-   *(INT16*)&ptm32->tmPitchAndFamily = *(INT16*)&ptm16->tmPitchAndFamily;
-#define pi32 ((INT32*)ptm32)
-    for( i = 0; i < 8; i++ ) *pi32++ = *pi16++;
-    pi32[0] = ptm16->tmOverhang;
-    pi32[1] = ptm16->tmDigitizedAspectX;
-    pi32[2] = ptm16->tmDigitizedAspectY;
-#undef  pi32
+    ptm32->tmItalic = ptm16->tmItalic;
+    ptm32->tmUnderlined = ptm16->tmUnderlined;
+    ptm32->tmStruckOut = ptm16->tmStruckOut;
+    ptm32->tmPitchAndFamily = ptm16->tmPitchAndFamily;
+    ptm32->tmCharSet = ptm16->tmCharSet;
 }
 
-void FONT_TextMetric32Ato32W( LPTEXTMETRIC32A ptm32A, LPTEXTMETRIC32W ptm32W )
+void FONT_TextMetric16to32W(const LPTEXTMETRIC16 ptm16, LPTEXTMETRIC32W ptm32 )
 {
-    int         i;
-#define pi32A ((INT32*)ptm32A)
-#define pi32W ((INT32*)ptm32W)
-    for( i = 0; i < 8; i++ ) *pi32W++ = *pi32A++;
-#undef pi32W
-#undef pi32A
-#define pch32A ((BYTE*)ptm32A)
-#define pch32W ((WCHAR*)ptm32W)
-   for( i = 0; i < 4; i++ ) *pch32W++ = *pch32A++;
-#undef pch32W
-#define pch32W ((BYTE*)ptm32W)
-   for( i = 0; i < 5; i++ ) *pch32W++ = *pch32A++;
-#undef pch32W
-#undef pch32A
+    ptm32->tmHeight = ptm16->tmHeight;
+    ptm32->tmAscent = ptm16->tmAscent;
+    ptm32->tmDescent = ptm16->tmDescent;
+    ptm32->tmInternalLeading = ptm16->tmInternalLeading;
+    ptm32->tmExternalLeading = ptm16->tmExternalLeading;
+    ptm32->tmAveCharWidth = ptm16->tmAveCharWidth;
+    ptm32->tmMaxCharWidth = ptm16->tmMaxCharWidth;
+    ptm32->tmWeight = ptm16->tmWeight;
+    ptm32->tmOverhang = ptm16->tmOverhang;
+    ptm32->tmDigitizedAspectX = ptm16->tmDigitizedAspectX;
+    ptm32->tmDigitizedAspectY = ptm16->tmDigitizedAspectY;
+    ptm32->tmFirstChar = ptm16->tmFirstChar;
+    ptm32->tmLastChar = ptm16->tmLastChar;
+    ptm32->tmDefaultChar = ptm16->tmDefaultChar;
+    ptm32->tmBreakChar = ptm16->tmBreakChar;
+    ptm32->tmItalic = ptm16->tmItalic;
+    ptm32->tmUnderlined = ptm16->tmUnderlined;
+    ptm32->tmStruckOut = ptm16->tmStruckOut;
+    ptm32->tmPitchAndFamily = ptm16->tmPitchAndFamily;
+    ptm32->tmCharSet = ptm16->tmCharSet;
+}
+
+void FONT_TextMetric32Ato32W(const LPTEXTMETRIC32A ptm32A, LPTEXTMETRIC32W ptm32W )
+{
+    ptm32W->tmHeight = ptm32A->tmHeight;
+    ptm32W->tmAscent = ptm32A->tmAscent;
+    ptm32W->tmDescent = ptm32A->tmDescent;
+    ptm32W->tmInternalLeading = ptm32A->tmInternalLeading;
+    ptm32W->tmExternalLeading = ptm32A->tmExternalLeading;
+    ptm32W->tmAveCharWidth = ptm32A->tmAveCharWidth;
+    ptm32W->tmMaxCharWidth = ptm32A->tmMaxCharWidth;
+    ptm32W->tmWeight = ptm32A->tmWeight;
+    ptm32W->tmOverhang = ptm32A->tmOverhang;
+    ptm32W->tmDigitizedAspectX = ptm32A->tmDigitizedAspectX;
+    ptm32W->tmDigitizedAspectY = ptm32A->tmDigitizedAspectY;
+    ptm32W->tmFirstChar = ptm32A->tmFirstChar;
+    ptm32W->tmLastChar = ptm32A->tmLastChar;
+    ptm32W->tmDefaultChar = ptm32A->tmDefaultChar;
+    ptm32W->tmBreakChar = ptm32A->tmBreakChar;
+    ptm32W->tmItalic = ptm32A->tmItalic;
+    ptm32W->tmUnderlined = ptm32A->tmUnderlined;
+    ptm32W->tmStruckOut = ptm32A->tmStruckOut;
+    ptm32W->tmPitchAndFamily = ptm32A->tmPitchAndFamily;
+    ptm32W->tmCharSet = ptm32A->tmCharSet;
 }
 
 /***********************************************************************
@@ -238,7 +270,8 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
     LOGFONT16 logfont = { height, width, esc, orient, weight, italic, underline,
                           strikeout, charset, outpres, clippres, quality, pitch, };
 
-    dprintf_font(stddeb,"CreateFont16('%s',%d,%d)\n", name, height, width);
+    dprintf_font(stddeb,"CreateFont16('%s',%d,%d)\n",
+		 (name ? name : "(null)") , height, width);
     if (name) 
 	lstrcpyn32A(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
     else 
@@ -274,7 +307,7 @@ HFONT32 WINAPI CreateFont32W( INT32 height, INT32 width, INT32 esc,
                                          italic, underline, strikeout, charset,
                                          outpres, clippres, quality, pitch,
                                          namea );
-    HeapFree( GetProcessHeap(), 0, namea );
+    if (namea) HeapFree( GetProcessHeap(), 0, namea );
     return ret;
 }
 
@@ -953,7 +986,7 @@ DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
  */
 DWORD WINAPI SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
 {
-    dprintf_font(stdnimp,"SetmapperFlags(%04x, %08lX) // Empty Stub !\n",
+    dprintf_font(stdnimp,"SetMapperFlags(%04x, %08lX) // Empty Stub !\n",
                  hDC, dwFlag);
     return 0L;
 }

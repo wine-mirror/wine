@@ -20,12 +20,12 @@
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
+#include "heap.h"
 #include "keyboard.h"
 #include "message.h"
 #include "stddebug.h"
 /* #define DEBUG_KEYBOARD */
 #include "debug.h"
-#include "xmalloc.h"
 #include "accel.h"
 #include "struct32.h"
 
@@ -974,11 +974,11 @@ UINT32 WINAPI GetKBCodePage32(void)
  */
 INT32 WINAPI GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
 {
-	LPSTR buf = xmalloc(nSize);
-	int	res = GetKeyNameText32A(lParam,buf,nSize);
+	LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, nSize );
+	int res = GetKeyNameText32A(lParam,buf,nSize);
 
 	lstrcpynAtoW(lpBuffer,buf,nSize);
-	free(buf);
+	HeapFree( GetProcessHeap(), 0, buf );
 	return res;
 }
 

@@ -19,6 +19,7 @@
 #define WPRINTF_LONG        0x0008  /* Long arg ('l' prefix) */
 #define WPRINTF_SHORT       0x0010  /* Short arg ('h' prefix) */
 #define WPRINTF_UPPER_HEX   0x0020  /* Upper-case hex ('X' specifier) */
+#define WPRINTF_WIDE        0x0040  /* Wide arg ('w' prefix) */
 
 typedef enum
 {
@@ -75,6 +76,7 @@ static INT32 WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
     }
     if (*p == 'l') { res->flags |= WPRINTF_LONG; p++; }
     else if (*p == 'h') { res->flags |= WPRINTF_SHORT; p++; }
+    else if (*p == 'w') { res->flags |= WPRINTF_WIDE; p++; }
     switch(*p)
     {
     case 'c':
@@ -88,10 +90,12 @@ static INT32 WPRINTF_ParseFormatA( LPCSTR format, WPRINTF_FORMAT *res )
         res->type = WPR_SIGNED;
         break;
     case 's':
-        res->type = (res->flags & WPRINTF_LONG) ? WPR_WSTRING : WPR_STRING;
+        res->type = (res->flags & (WPRINTF_LONG |WPRINTF_WIDE)) 
+	            ? WPR_WSTRING : WPR_STRING;
         break;
     case 'S':
-        res->type = (res->flags & WPRINTF_SHORT) ? WPR_STRING : WPR_WSTRING;
+        res->type = (res->flags & (WPRINTF_SHORT|WPRINTF_WIDE))
+	            ? WPR_STRING : WPR_WSTRING;
         break;
     case 'u':
         res->type = WPR_UNSIGNED;

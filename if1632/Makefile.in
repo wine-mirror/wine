@@ -45,6 +45,7 @@ DLLS = \
 	version.spec \
 	w32sys.spec \
 	win87em.spec \
+	winaspi.spec \
 	wing.spec \
 	winmm.spec \
 	winsock.spec \
@@ -84,7 +85,7 @@ callfrom16.s: $(SPEC_FILES)
 call32.s: $(BUILD)
 	$(BUILD) -o $@ -call32
 
-callto16.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
-	$(BUILD) -o $@ -callto16 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq`
+callto16.s: $(SRCDIR)/thunk.c $(BUILD)
+	$(BUILD) -o $@ -callto16 $(SRCDIR)/thunk.c
 
 ### Dependencies:

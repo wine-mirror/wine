@@ -230,7 +230,7 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
  */
 static void VIRTUAL_DeleteView( FILE_VIEW *view )
 {
-    munmap( (void *)view->base, view->size );
+    FILE_munmap( (void *)view->base, 0, view->size );
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
@@ -468,8 +468,8 @@ LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
     if ((type & MEM_RESERVE) || !base)
     {
         view_size = size + (base ? 0 : granularity_mask + 1);
-        ptr = (UINT32)FILE_mmap( NULL, (LPVOID)base, 0, view_size, 0, 0,
-                                 VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
+        ptr = (UINT32)FILE_dommap( NULL, (LPVOID)base, 0, view_size, 0, 0,
+                                   VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
         if (ptr == (UINT32)-1)
         {
             SetLastError( ERROR_OUTOFMEMORY );
@@ -483,16 +483,16 @@ LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
             if (ptr & granularity_mask)
             {
                 UINT32 extra = granularity_mask + 1 - (ptr & granularity_mask);
-                munmap( (void *)ptr, extra );
+                FILE_munmap( (void *)ptr, 0, extra );
                 ptr += extra;
                 view_size -= extra;
             }
             if (view_size > size)
-                munmap( (void *)(ptr + size), view_size - size );
+                FILE_munmap( (void *)(ptr + size), 0, view_size - size );
         }
         if (!(view = VIRTUAL_CreateView( ptr, size, 0, 0, vprot, NULL )))
         {
-            munmap( (void *)ptr, size );
+            FILE_munmap( (void *)ptr, 0, size );
             SetLastError( ERROR_OUTOFMEMORY );
             return NULL;
         }
@@ -1056,9 +1056,9 @@ LPVOID WINAPI MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offset_high,
     dprintf_virtual( stddeb, "MapViewOfFile: handle=%x size=%x offset=%lx\n",
                      handle, size, offset_low );
 
-    ptr = (UINT32)FILE_mmap( mapping->file, addr, 0, size, 0, offset_low,
-                             VIRTUAL_GetUnixProt( mapping->protect ),
-                             flags );
+    ptr = (UINT32)FILE_dommap( mapping->file, addr, 0, size, 0, offset_low,
+                               VIRTUAL_GetUnixProt( mapping->protect ),
+                               flags );
     if (ptr == (UINT32)-1)
     {
         SetLastError( ERROR_OUTOFMEMORY );
@@ -1074,7 +1074,7 @@ LPVOID WINAPI MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offset_high,
     return (LPVOID)ptr;
 
 error:
-    if (ptr != (UINT32)-1) munmap( (void *)ptr, size );
+    if (ptr != (UINT32)-1) FILE_munmap( (void *)ptr, 0, size );
     K32OBJ_DecCount( &mapping->header );
     return NULL;
 }

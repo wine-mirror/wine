@@ -4,7 +4,6 @@
 
 #include "windows.h"
 #include "ntdll.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -82,7 +81,9 @@ BOOL32 WINAPI AllocateAndInitializeSid(LPSID_IDENTIFIER_AUTHORITY pIdentifierAut
     DWORD nSubAuthority6, DWORD nSubAuthority7,
     LPSID *pSid) {
 
-    *pSid = xmalloc(GetSidLengthRequired(nSubAuthorityCount));
+    if (!(*pSid = HeapAlloc( GetProcessHeap(), 0,
+                             GetSidLengthRequired(nSubAuthorityCount))))
+        return FALSE;
     (*pSid)->Revision = SID_REVISION;
     if (pIdentifierAuthority)
         memcpy(&(*pSid)->IdentifierAuthority, pIdentifierAuthority,
@@ -112,8 +113,9 @@ BOOL32 WINAPI AllocateAndInitializeSid(LPSID_IDENTIFIER_AUTHORITY pIdentifierAut
 /***********************************************************************
  *           FreeSid  (ADVAPI.42)
  */
-VOID* WINAPI FreeSid(LPSID pSid) {
-    free(pSid);
+VOID* WINAPI FreeSid(LPSID pSid)
+{
+    HeapFree( GetProcessHeap(), 0, pSid );
     return NULL;
 }
 

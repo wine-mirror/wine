@@ -2640,7 +2640,8 @@ DWORD WINAPI RegEnumValue32W(
 		*lpszValue	= 0;
 		*lpcchValue	= 2;
 	}
-	*lpdwType=val->type;
+	if (lpdwType)
+		*lpdwType=val->type;
 	if (lpbData) {
 		if (val->len>*lpcbData)
 			return ERROR_MORE_DATA;

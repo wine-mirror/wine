@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <neexe.h>
 #include "module.h"
+#include "process.h"
 #include "selectors.h"
 #include "debugger.h"
 #include "toolhelp.h"
@@ -264,8 +265,7 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
 		c++;
 		if(    (strcmp(c, "callfrom16.s") == 0)
 		    || (strcmp(c, "callto16.s") == 0)
-		    || (strcmp(c, "callfrom32.s") == 0)
-		    || (strcmp(c, "callto32.s") == 0) )
+		    || (strcmp(c, "call32.s") == 0) )
 		  {
 		    new->flags |= SYM_TRAMPOLINE;
 		  }
@@ -676,9 +676,13 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
       {
 	if (addr->off == nearest->addr.off)
 	  sprintf( name_buffer, "%s%s", nearest->name, arglist);
-	else
-	  sprintf( name_buffer, "%s+0x%lx%s", nearest->name,
-		   addr->off - nearest->addr.off, arglist);
+	else {
+	  if (addr->seg && (nearest->addr.seg!=addr->seg))
+	      return NULL;
+	  else
+	      sprintf( name_buffer, "%s+0x%lx%s", nearest->name,
+		       addr->off - nearest->addr.off, arglist);
+ 	}
       }
     return name_buffer;
 }
@@ -734,6 +738,132 @@ void DEBUG_ReadSymbolTable( const char * filename )
 
 
 /***********************************************************************
+ *           DEBUG_LoadEntryPoints16
+ *
+ * Load the entry points of a Win16 module into the hash table.
+ */
+static void DEBUG_LoadEntryPoints16( HMODULE16 hModule, NE_MODULE *pModule,
+                                     const char *name )
+{
+    DBG_ADDR addr;
+    char buffer[256];
+    FARPROC16 address;
+
+    /* First search the resident names */
+
+    unsigned char *cpnt = (unsigned char *)pModule + pModule->name_table;
+    while (*cpnt)
+    {
+        cpnt += *cpnt + 1 + sizeof(WORD);
+        sprintf( buffer, "%s.%.*s", name, *cpnt, cpnt + 1 );
+        if ((address = MODULE_GetEntryPoint( hModule,
+                                             *(WORD *)(cpnt + *cpnt + 1) )))
+        {
+            addr.seg = HIWORD(address);
+            addr.off = LOWORD(address);
+            addr.type = NULL;
+            DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+        }
+    }
+
+    /* Now search the non-resident names table */
+
+    if (!pModule->nrname_handle) return;  /* No non-resident table */
+    cpnt = (char *)GlobalLock16( pModule->nrname_handle );
+    while (*cpnt)
+    {
+        cpnt += *cpnt + 1 + sizeof(WORD);
+        sprintf( buffer, "%s.%.*s", name, *cpnt, cpnt + 1 );
+        if ((address = MODULE_GetEntryPoint( hModule,
+                                             *(WORD *)(cpnt + *cpnt + 1) )))
+        {
+            addr.seg = HIWORD(address);
+            addr.off = LOWORD(address);
+            addr.type = NULL;
+            DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+        }
+    }
+}
+
+
+/***********************************************************************
+ *           DEBUG_LoadEntryPoints32
+ *
+ * Load the entry points of a Win32 module into the hash table.
+ */
+static void DEBUG_LoadEntryPoints32( PE_MODULE *pe, const char *name )
+{
+#define RVA(x) (load_addr+(DWORD)(x))
+
+    DBG_ADDR addr;
+    char buffer[256];
+    int i, j;
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD load_addr;
+    WORD *ordinals;
+    void **functions;
+    const char **names;
+
+    PE_MODREF *pem = pCurrentProcess->modref_list;
+    while (pem && (pem->pe_module != pe)) pem = pem->next;
+    if (!pem) return;
+    load_addr = pem->load_addr;
+    exports = pem->pe_export;
+
+    addr.seg = 0;
+    addr.type = NULL;
+
+    /* Add start of DLL */
+
+    addr.off = load_addr;
+    DEBUG_AddSymbol( name, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+
+    /* Add entry point */
+
+    sprintf( buffer, "%s.EntryPoint", name );
+    addr.off = RVA( pe->pe_header->OptionalHeader.AddressOfEntryPoint );
+    DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+
+    /* Add start of sections */
+
+    for (i = 0; i < pe->pe_header->FileHeader.NumberOfSections; i++)
+    {
+        sprintf( buffer, "%s.%s", name, pe->pe_seg[i].Name );
+        addr.off = RVA( pe->pe_seg[i].VirtualAddress );
+        DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+    }
+
+    /* Add exported functions */
+
+    if (!exports) return;
+    ordinals  = (WORD *)RVA( exports->AddressOfNameOrdinals );
+    names     = (const char **)RVA( exports->AddressOfNames );
+    functions = (void **)RVA( exports->AddressOfFunctions );
+
+    for (i = 0; i < exports->NumberOfNames; i++)
+    {
+        if (!names[i]) continue;
+        sprintf( buffer, "%s.%s", name, (char *)RVA(names[i]) );
+        addr.off = RVA( functions[ordinals[i]] );
+        DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+    }
+
+    for (i = 0; i < exports->NumberOfFunctions; i++)
+    {
+        if (!functions[i]) continue;
+        /* Check if we already added it with a name */
+        for (j = 0; j < exports->NumberOfNames; j++)
+            if ((ordinals[j] == i) && names[j]) break;
+        if (j < exports->NumberOfNames) continue;
+        sprintf( buffer, "%s.%ld", name, i + exports->Base );
+        addr.off = (DWORD)RVA( functions[i] );
+        DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
+    }
+#undef RVA
+}
+
+
+/***********************************************************************
  *           DEBUG_LoadEntryPoints
  *
  * Load the entry points of all the modules into the hash table.
@@ -742,57 +872,23 @@ void DEBUG_LoadEntryPoints(void)
 {
     MODULEENTRY entry;
     NE_MODULE *pModule;
-    DBG_ADDR addr;
-    char buffer[256];
-    unsigned char *cpnt, *name;
-    FARPROC16 address;
     BOOL32 ok;
 
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
         if (!(pModule = MODULE_GetPtr( entry.hModule ))) continue;
-        if (pModule->flags & NE_FFLAGS_WIN32) continue;
+        fprintf( stderr, " %s", entry.szModule );
 
-        name = (unsigned char *)pModule + pModule->name_table;
-
-        fprintf( stderr, " %.*s",*name, name + 1 );
-
-        /* First search the resident names */
-
-        cpnt = (unsigned char *)pModule + pModule->name_table;
-        while (*cpnt)
+        if (pModule->flags & NE_FFLAGS_WIN32)  /* PE module */
         {
-            cpnt += *cpnt + 1 + sizeof(WORD);
-            sprintf( buffer, "%.*s_%.*s", *name, name + 1, *cpnt, cpnt + 1 );
-            if ((address = MODULE_GetEntryPoint( entry.hModule,
-                                            *(WORD *)(cpnt + *cpnt + 1) )))
-            {
-                addr.seg = HIWORD(address);
-                addr.off = LOWORD(address);
-		addr.type = NULL;
-                DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
-            }
+            if (pModule->flags & NE_FFLAGS_BUILTIN) continue;
+            DEBUG_LoadEntryPoints32( pModule->pe_module, entry.szModule );
         }
-
-        /* Now search the non-resident names table */
-
-        if (!pModule->nrname_handle) continue;  /* No non-resident table */
-        cpnt = (char *)GlobalLock16( pModule->nrname_handle );
-        while (*cpnt)
-        {
-            cpnt += *cpnt + 1 + sizeof(WORD);
-            sprintf( buffer, "%.*s_%.*s", *name, name + 1, *cpnt, cpnt + 1 );
-            if ((address = MODULE_GetEntryPoint( entry.hModule,
-                                                *(WORD *)(cpnt + *cpnt + 1) )))
-            {
-                addr.seg = HIWORD(address);
-                addr.off = LOWORD(address);
-		addr.type = NULL;
-                DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32);
-            }
-        }
+        else  /* NE module */
+            DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
     }
 }
+
 
 void
 DEBUG_AddLineNumber( struct name_hash * func, int line_num, 

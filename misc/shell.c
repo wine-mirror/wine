@@ -333,7 +333,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
 
 
 /*************************************************************************
- *             ShellExecute32A   (SHELL32.84)
+ *             ShellExecute32A   (SHELL32.245)
  */
 HINSTANCE32 WINAPI ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation,
                                     LPCSTR lpFile, LPCSTR lpParameters,
@@ -411,7 +411,7 @@ LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
             ABOUT_INFO *info = (ABOUT_INFO *)lParam;
             if (info)
             {
-                SendDlgItemMessage32A(hWnd, stc1, STM_SETICON, info->hIcon, 0);
+                SendDlgItemMessage32A(hWnd, stc1, STM_SETICON32,info->hIcon, 0);
                 GetWindowText32A( hWnd, Template, sizeof(Template) );
                 sprintf( AppTitle, Template, info->szApp );
                 SetWindowText32A( hWnd, AppTitle );
@@ -452,7 +452,7 @@ BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 }
 
 /*************************************************************************
- *             ShellAbout32A   (SHELL32.82)
+ *             ShellAbout32A   (SHELL32.243)
  */
 BOOL32 WINAPI ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                              HICON32 hIcon )
@@ -469,7 +469,7 @@ BOOL32 WINAPI ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 
 
 /*************************************************************************
- *             ShellAbout32W   (SHELL32.83)
+ *             ShellAbout32W   (SHELL32.244)
  */
 BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
                              HICON32 hIcon )
@@ -754,7 +754,7 @@ HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 
 
 /*************************************************************************
- *             ExtractIcon32A   (SHELL32.20)
+ *             ExtractIcon32A   (SHELL32.133)
  */
 HICON32 WINAPI ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
                                UINT32 nIconIndex )
@@ -983,7 +983,7 @@ BOOL32 WINAPI RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 
 
 /*************************************************************************
- *				SHGetFileInfoA		[SHELL32.54]
+ *				SHGetFileInfoA		[SHELL32.218]
  */
 DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
@@ -996,7 +996,7 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- *				CommandLineToArgvW	[SHELL32.2]
+ *				CommandLineToArgvW	[SHELL32.7]
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 {
@@ -1043,11 +1043,25 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 	return argv;
 }
 
-void WINAPI Control_RunDLL(DWORD a1,DWORD a2,LPSTR a3,DWORD a4) {
-	fprintf(stderr,"Control_RunDLL(0x%08lx,0x%08lx,%s,0x%08lx)\n",
-		a1,a2,a3,a4
-	);
+/*************************************************************************
+ *				Control_RunDLL		[SHELL32.12]
+ *
+ * Wild speculation in the following!
+ *
+ * http://premium.microsoft.com/msdn/library/techart/msdn193.htm
+ */
+
+void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
+{
+  dprintf_exec (stddeb, "Control_RunDLL (%08x, %p, \"%s\", %08lx)\n",
+		hwnd,
+		code ? code : "(null)",
+		cmd ? cmd : "(null)",
+		arg4);
 }
+
+/*************************************************************************
+ */
 
 void WINAPI FreeIconList( DWORD dw )
 {

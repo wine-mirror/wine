@@ -26,19 +26,19 @@ type	win32
  31 stub _KERNEL32_31
  
  34 stdcall _KERNEL32_34() _KERNEL32_34
- 35 stdcall LoadLibrary16(ptr) LoadLibrary16
+ 35 stdcall LoadLibrary16(str) LoadLibrary16
  36 stdcall FreeLibrary16(long) FreeLibrary16
- 37 stdcall GetProcAddress16(long ptr) WIN32_GetProcAddress16
+ 37 stdcall GetProcAddress16(long str) WIN32_GetProcAddress16
  
- 40 stub _KERNEL32_40
- 41 stdcall _KERNEL32_41(long long long long long) _KERNEL32_41
+ 40 register _KERNEL32_40() _KERNEL32_40
+ 41 stdcall _KERNEL32_41(long str long str str) _KERNEL32_41
  42 stub _KERNEL32_42
- 43 stdcall _KERNEL32_43(long ptr long ptr ptr) _KERNEL32_43
+ 43 stdcall _KERNEL32_43(long str long str str) _KERNEL32_43
  45 register _KERNEL32_45() _KERNEL32_45 
- 46 stdcall _KERNEL32_46(long long long long long) _KERNEL32_46
+ 46 stdcall _KERNEL32_46(long str long str str) _KERNEL32_46
  47 stub _KERNEL32_47
  
- 50 stdcall AddAtomA(ptr) AddAtom32A
+ 50 stdcall AddAtomA(str) AddAtom32A
 
  52 stdcall _KERNEL32_52() _KERNEL32_52
 
@@ -48,10 +48,10 @@ type	win32
  56 stdcall WOWGetVDMPointer(long long long) WOWGetVDMPointer
  57 stub WOWHandle32
  58 stub WOWHandle16
- 59 stub WOWGlobalAlloc16
- 60 stub WOWGlobalLock16
- 61 stub WOWGlobalUnlock16
- 62 stub WOWGlobalFree16
+ 59 stdcall WOWGlobalAlloc16(long long) GlobalAlloc16
+ 60 stdcall WOWGlobalLock16(long) WIN16_GlobalLock16
+ 61 stdcall WOWGlobalUnlock16(long) GlobalUnlock16
+ 62 stdcall WOWGlobalFree16(long) GlobalFree16
  63 stdcall WOWGlobalAllocLock16(long long ptr) WOWGlobalAllocLock16
  64 stub WOWGlobalUnlockFree16
  65 stub WOWGlobalLockSize16
@@ -78,7 +78,7 @@ type	win32
 
  87 stdcall _KERNEL32_87() _KERNEL32_87
  88 varargs _KERNEL32_88() _KERNEL32_88
- 89 stub _KERNEL32_89
+ 89 stdcall FT_PrologPrime(ptr ptr) FT_PrologPrime
  90 register _KERNEL32_90() _KERNEL32_90
  91 stub _KERNEL32_91
  92 stub _KERNEL32_92
@@ -90,7 +90,7 @@ type	win32
 101 stub _KERNEL32_100
 
 
-102 stdcall AddAtomW(ptr) AddAtom32W
+102 stdcall AddAtomW(wstr) AddAtom32W
 103 stub AllocConsole
 104 stub AllocLSCallback
 105 stdcall AllocSLCallback(ptr ptr) AllocSLCallback
@@ -101,10 +101,10 @@ type	win32
 110 stdcall Beep(long long) Beep
 111 stub BeginUpdateResourceA
 112 stub BeginUpdateResourceW
-113 stdcall BuildCommDCBA(ptr ptr) BuildCommDCB32A
-114 stdcall BuildCommDCBAndTimeoutsA(ptr ptr ptr) BuildCommDCBAndTimeouts32A
-115 stdcall BuildCommDCBAndTimeoutsW(ptr ptr ptr) BuildCommDCBAndTimeouts32W
-116 stdcall BuildCommDCBW(ptr ptr) BuildCommDCB32W
+113 stdcall BuildCommDCBA(str ptr) BuildCommDCB32A
+114 stdcall BuildCommDCBAndTimeoutsA(str ptr ptr) BuildCommDCBAndTimeouts32A
+115 stdcall BuildCommDCBAndTimeoutsW(wstr ptr ptr) BuildCommDCBAndTimeouts32W
+116 stdcall BuildCommDCBW(wstr ptr) BuildCommDCB32W
 117 stub CallNamedPipeA
 118 stub CallNamedPipeW
 119 stub Callback12
@@ -131,39 +131,39 @@ type	win32
 140 stub CommConfigDialogA
 141 stub CommConfigDialogW
 142 stdcall CompareFileTime(ptr ptr) CompareFileTime
-143 stdcall CompareStringA(long long ptr long ptr long) CompareString32A
-144 stdcall CompareStringW(long long ptr long ptr long) CompareString32W
+143 stdcall CompareStringA(long long str long str long) CompareString32A
+144 stdcall CompareStringW(long long wstr long wstr long) CompareString32W
 145 stub ConnectNamedPipe
 146 stdcall ContinueDebugEvent(long long long) ContinueDebugEvent
 147 stub ConvertDefaultLocale
 148 stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
-149 stdcall CopyFileA(ptr ptr long) CopyFile32A
-150 stdcall CopyFileW(ptr ptr long) CopyFile32W
+149 stdcall CopyFileA(str str long) CopyFile32A
+150 stdcall CopyFileW(wstr wstr long) CopyFile32W
 151 stub CreateConsoleScreenBuffer
-152 stdcall CreateDirectoryA(ptr ptr) CreateDirectory32A
-153 stdcall CreateDirectoryExA(ptr ptr ptr) CreateDirectoryEx32A
-154 stdcall CreateDirectoryExW(ptr ptr ptr) CreateDirectoryEx32W
-155 stdcall CreateDirectoryW(ptr ptr) CreateDirectory32W
-156 stdcall CreateEventA(ptr long long ptr) CreateEvent32A
-157 stdcall CreateEventW(ptr long long ptr) CreateEvent32W
-158 stdcall CreateFileA(ptr long long ptr long long long) CreateFile32A
-159 stdcall CreateFileMappingA(long ptr long long long ptr) CreateFileMapping32A
-160 stdcall CreateFileMappingW(long ptr long long long ptr) CreateFileMapping32W
-161 stdcall CreateFileW(ptr long long ptr long long long) CreateFile32W
+152 stdcall CreateDirectoryA(str ptr) CreateDirectory32A
+153 stdcall CreateDirectoryExA(str str ptr) CreateDirectoryEx32A
+154 stdcall CreateDirectoryExW(wstr wstr ptr) CreateDirectoryEx32W
+155 stdcall CreateDirectoryW(wstr ptr) CreateDirectory32W
+156 stdcall CreateEventA(ptr long long str) CreateEvent32A
+157 stdcall CreateEventW(ptr long long wstr) CreateEvent32W
+158 stdcall CreateFileA(str long long ptr long long long) CreateFile32A
+159 stdcall CreateFileMappingA(long ptr long long long str) CreateFileMapping32A
+160 stdcall CreateFileMappingW(long ptr long long long wstr) CreateFileMapping32W
+161 stdcall CreateFileW(wstr long long ptr long long long) CreateFile32W
 162 stub CreateIoCompletionPort
 163 stub CreateKernelThread
 164 stub CreateMailslotA
 165 stub CreateMailslotW
-166 stdcall CreateMutexA(ptr long ptr) CreateMutex32A
-167 stdcall CreateMutexW(ptr long ptr) CreateMutex32W
+166 stdcall CreateMutexA(ptr long str) CreateMutex32A
+167 stdcall CreateMutexW(ptr long wstr) CreateMutex32W
 168 stub CreateNamedPipeA
 169 stub CreateNamedPipeW
 170 stub CreatePipe
-171 stdcall CreateProcessA(ptr ptr ptr ptr long long ptr ptr ptr ptr) CreateProcess32A
+171 stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) CreateProcess32A
 172 stub CreateProcessW
 173 stub CreateRemoteThread
-174 stdcall CreateSemaphoreA(ptr long long ptr) CreateSemaphore32A
-175 stdcall CreateSemaphoreW(ptr long long ptr) CreateSemaphore32W
+174 stdcall CreateSemaphoreA(ptr long long str) CreateSemaphore32A
+175 stdcall CreateSemaphoreW(ptr long long wstr) CreateSemaphore32W
 176 stub CreateSocketHandle
 177 stub CreateTapePartition
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
@@ -174,8 +174,8 @@ type	win32
 183 stub DefineDosDeviceW
 184 stdcall DeleteAtom(long) DeleteAtom32
 185 stdcall DeleteCriticalSection(ptr)	DeleteCriticalSection
-186 stdcall DeleteFileA(ptr) DeleteFile32A
-187 stdcall DeleteFileW(ptr) DeleteFile32W
+186 stdcall DeleteFileA(str) DeleteFile32A
+187 stdcall DeleteFileW(wstr) DeleteFile32W
 188 stub DeviceIoControl
 189 stdcall DisableThreadLibraryCalls(long) DisableThreadLibraryCalls
 190 stub DisconnectNamedPipe
@@ -188,10 +188,10 @@ type	win32
 197 stub EnumCalendarInfoW
 198 stub EnumDateFormatsA
 199 stub EnumDateFormatsW
-200 stdcall EnumResourceLanguagesA(long ptr ptr ptr long) EnumResourceLanguages32A
-201 stdcall EnumResourceLanguagesW(long ptr ptr ptr long) EnumResourceLanguages32W
-202 stdcall EnumResourceNamesA(long ptr ptr long) EnumResourceNames32A
-203 stdcall EnumResourceNamesW(long ptr ptr long) EnumResourceNames32W
+200 stdcall EnumResourceLanguagesA(long str str ptr long) EnumResourceLanguages32A
+201 stdcall EnumResourceLanguagesW(long wstr wstr ptr long) EnumResourceLanguages32W
+202 stdcall EnumResourceNamesA(long str ptr long) EnumResourceNames32A
+203 stdcall EnumResourceNamesW(long wstr ptr long) EnumResourceNames32W
 204 stdcall EnumResourceTypesA(long ptr long) EnumResourceTypes32A
 205 stdcall EnumResourceTypesW(long ptr long) EnumResourceTypes32W
 206 stdcall EnumSystemCodePagesA(ptr long) EnumSystemCodePages32A
@@ -204,8 +204,8 @@ type	win32
 213 stdcall EscapeCommFunction(long long) EscapeCommFunction32
 214 stdcall ExitProcess(long) ExitProcess
 215 stub ExitThread
-216 stdcall ExpandEnvironmentStringsA(ptr ptr long) ExpandEnvironmentStrings32A
-217 stdcall ExpandEnvironmentStringsW(ptr ptr long) ExpandEnvironmentStrings32W
+216 stdcall ExpandEnvironmentStringsA(str ptr long) ExpandEnvironmentStrings32A
+217 stdcall ExpandEnvironmentStringsW(wstr ptr long) ExpandEnvironmentStrings32W
 218 stub FT_Exit0
 219 stub FT_Exit12
 220 stub FT_Exit16
@@ -223,8 +223,8 @@ type	win32
 232 stub FT_Exit8
 233 stub FT_Prolog
 234 stub FT_Thunk
-235 stdcall FatalAppExitA(long ptr) FatalAppExit32A
-236 stdcall FatalAppExitW(long ptr) FatalAppExit32W
+235 stdcall FatalAppExitA(long str) FatalAppExit32A
+236 stdcall FatalAppExitW(long wstr) FatalAppExit32W
 237 stub FatalExit
 238 stdcall FileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
 239 stdcall FileTimeToLocalFileTime(ptr ptr) FileTimeToLocalFileTime
@@ -232,21 +232,21 @@ type	win32
 241 stub FillConsoleOutputAttribute
 242 stub FillConsoleOutputCharacterA
 243 stub FillConsoleOutputCharacterW
-244 stdcall FindAtomA(ptr) FindAtom32A
-245 stdcall FindAtomW(ptr) FindAtom32W
+244 stdcall FindAtomA(str) FindAtom32A
+245 stdcall FindAtomW(wstr) FindAtom32W
 247 stub FindCloseChangeNotification
 246 stdcall FindClose(long) FindClose32
 248 stub FindFirstChangeNotificationA
 249 stub FindFirstChangeNotificationW
-250 stdcall FindFirstFileA(ptr ptr) FindFirstFile32A
-251 stdcall FindFirstFileW(ptr ptr) FindFirstFile32W
+250 stdcall FindFirstFileA(str ptr) FindFirstFile32A
+251 stdcall FindFirstFileW(wstr ptr) FindFirstFile32W
 252 stub FindNextChangeNotification
 253 stdcall FindNextFileA(long ptr) FindNextFile32A
 254 stdcall FindNextFileW(long ptr) FindNextFile32W
-255 stdcall FindResourceA(long ptr ptr) FindResource32A
-256 stdcall FindResourceExA(long ptr ptr long) FindResourceEx32A
-257 stdcall FindResourceExW(long ptr ptr long) FindResourceEx32W
-258 stdcall FindResourceW(long ptr ptr) FindResource32W
+255 stdcall FindResourceA(long str str) FindResource32A
+256 stdcall FindResourceExA(long str str long) FindResourceEx32A
+257 stdcall FindResourceExW(long wstr wstr long) FindResourceEx32W
+258 stdcall FindResourceW(long wstr wstr) FindResource32W
 259 stdcall FlushConsoleInputBuffer(long) FlushConsoleInputBuffer
 260 stdcall FlushFileBuffers(long) FlushFileBuffers
 261 stub FlushInstructionCache
@@ -298,31 +298,31 @@ type	win32
 307 stdcall GetCurrentProcessId() GetCurrentProcessId
 308 stdcall GetCurrentThread() GetCurrentThread
 309 stdcall GetCurrentThreadId() GetCurrentThreadId
-310 stub GetDateFormatA
+310 stdcall GetDateFormatA(long long ptr ptr ptr long) GetDateFormat32A
 311 stub GetDateFormatW
 312 stub GetDaylightFlag
 313 stub GetDefaultCommConfigA
 314 stub GetDefaultCommConfigW
-315 stdcall GetDiskFreeSpaceA(ptr ptr ptr ptr ptr) GetDiskFreeSpace32A
-316 stdcall GetDiskFreeSpaceW(ptr ptr ptr ptr ptr) GetDiskFreeSpace32W
-317 stdcall GetDriveTypeA(ptr) GetDriveType32A
-318 stdcall GetDriveTypeW(ptr) GetDriveType32W
+315 stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) GetDiskFreeSpace32A
+316 stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) GetDiskFreeSpace32W
+317 stdcall GetDriveTypeA(str) GetDriveType32A
+318 stdcall GetDriveTypeW(wstr) GetDriveType32W
 320 stdcall GetEnvironmentStringsA() GetEnvironmentStrings32A
 321 stdcall GetEnvironmentStringsW() GetEnvironmentStrings32W
 319 stdcall GetEnvironmentStrings() GetEnvironmentStrings32A
-322 stdcall GetEnvironmentVariableA(ptr ptr long) GetEnvironmentVariable32A
-323 stdcall GetEnvironmentVariableW(ptr ptr long) GetEnvironmentVariable32W
+322 stdcall GetEnvironmentVariableA(str ptr long) GetEnvironmentVariable32A
+323 stdcall GetEnvironmentVariableW(wstr ptr long) GetEnvironmentVariable32W
 324 stub GetErrorMode
 325 stub GetExitCodeProcess
 326 stdcall GetExitCodeThread(long ptr) GetExitCodeThread
-327 stdcall GetFileAttributesA(ptr) GetFileAttributes32A
-328 stdcall GetFileAttributesW(ptr) GetFileAttributes32W
+327 stdcall GetFileAttributesA(str) GetFileAttributes32A
+328 stdcall GetFileAttributesW(wstr) GetFileAttributes32W
 329 stdcall GetFileInformationByHandle(long ptr) GetFileInformationByHandle
 330 stdcall GetFileSize(long ptr) GetFileSize
 331 stdcall GetFileTime(long ptr ptr ptr) GetFileTime
 332 stdcall GetFileType(long) GetFileType
-333 stdcall GetFullPathNameA(ptr long ptr ptr) GetFullPathName32A
-334 stdcall GetFullPathNameW(ptr long ptr ptr) GetFullPathName32W
+333 stdcall GetFullPathNameA(str long ptr ptr) GetFullPathName32A
+334 stdcall GetFullPathNameW(wstr long ptr ptr) GetFullPathName32W
 335 stub GetHandleContext
 336 stub GetHandleInformation
 337 stub GetLSCallbackTarget
@@ -338,8 +338,8 @@ type	win32
 347 stub GetMailslotInfo
 348 stdcall GetModuleFileNameA(long ptr long) GetModuleFileName32A
 349 stdcall GetModuleFileNameW(long ptr long) GetModuleFileName32W
-350 stdcall GetModuleHandleA(ptr) GetModuleHandle32A
-351 stdcall GetModuleHandleW(ptr) GetModuleHandle32W
+350 stdcall GetModuleHandleA(str) GetModuleHandle32A
+351 stdcall GetModuleHandleW(wstr) GetModuleHandle32W
 352 stub GetNamedPipeHandleStateA
 353 stub GetNamedPipeHandleStateW
 354 stub GetNamedPipeInfo
@@ -350,18 +350,18 @@ type	win32
 359 stdcall GetOEMCP() GetOEMCP
 360 stub GetOverlappedResult
 361 stdcall GetPriorityClass(long) GetPriorityClass
-362 stdcall GetPrivateProfileIntA(ptr ptr long ptr) GetPrivateProfileInt32A
-363 stdcall GetPrivateProfileIntW(ptr ptr long ptr) GetPrivateProfileInt32W
-364 stdcall GetPrivateProfileSectionA(ptr ptr long ptr) GetPrivateProfileSection32A
+362 stdcall GetPrivateProfileIntA(str str long str) GetPrivateProfileInt32A
+363 stdcall GetPrivateProfileIntW(wstr wstr long wstr) GetPrivateProfileInt32W
+364 stdcall GetPrivateProfileSectionA(str str long str) GetPrivateProfileSection32A
 365 stub GetPrivateProfileSectionNamesA
 366 stub GetPrivateProfileSectionNamesW
 367 stub GetPrivateProfileSectionW
-368 stdcall GetPrivateProfileStringA(ptr ptr ptr ptr long ptr) GetPrivateProfileString32A
-369 stdcall GetPrivateProfileStringW(ptr ptr ptr ptr long ptr) GetPrivateProfileString32W
+368 stdcall GetPrivateProfileStringA(str str str ptr long str) GetPrivateProfileString32A
+369 stdcall GetPrivateProfileStringW(wstr wstr wstr ptr long wstr) GetPrivateProfileString32W
 370 stub GetPrivateProfileStructA
 371 stub GetPrivateProfileStructW
-372 stdcall GetProcAddress(long ptr) GetProcAddress32
-373 stdcall GetProcessAffinityMask(long ptr ptr)	GetProcessAffinityMask
+372 stdcall GetProcAddress(long str) GetProcAddress32
+373 stdcall GetProcessAffinityMask(long ptr ptr) GetProcessAffinityMask
 374 stub GetProcessFlags
 375 stdcall GetProcessHeap() GetProcessHeap
 376 stub GetProcessHeaps
@@ -370,24 +370,24 @@ type	win32
 379 stdcall GetProcessVersion(long) GetProcessVersion
 380 stdcall GetProcessWorkingSetSize(long ptr ptr) GetProcessWorkingSetSize
 381 stub GetProductName
-382 stdcall GetProfileIntA(ptr ptr long) GetProfileInt32A
-383 stdcall GetProfileIntW(ptr ptr long) GetProfileInt32W
-384 stdcall GetProfileSectionA(ptr ptr long) GetProfileSection32A
+382 stdcall GetProfileIntA(str str long) GetProfileInt32A
+383 stdcall GetProfileIntW(wstr wstr long) GetProfileInt32W
+384 stdcall GetProfileSectionA(str str long) GetProfileSection32A
 385 stub GetProfileSectionW
-386 stdcall GetProfileStringA(ptr ptr ptr ptr long) GetProfileString32A
-387 stdcall GetProfileStringW(ptr ptr ptr ptr long) GetProfileString32W
+386 stdcall GetProfileStringA(str str str ptr long) GetProfileString32A
+387 stdcall GetProfileStringW(wstr wstr wstr ptr long) GetProfileString32W
 388 stub GetQueuedCompletionStatus
 389 stub GetSLCallbackTarget
 390 stub GetSLCallbackTemplate
-391 stdcall GetShortPathNameA(ptr ptr long) GetShortPathName32A
-392 stdcall GetShortPathNameW(ptr ptr long) GetShortPathName32W
+391 stdcall GetShortPathNameA(str ptr long) GetShortPathName32A
+392 stdcall GetShortPathNameW(wstr ptr long) GetShortPathName32W
 393 stdcall GetStartupInfoA(ptr) GetStartupInfo32A
 394 stdcall GetStartupInfoW(ptr) GetStartupInfo32W
 395 stdcall GetStdHandle(long)	GetStdHandle
-396 stdcall GetStringTypeA(long long ptr long ptr) GetStringType32A
-397 stdcall GetStringTypeExA(long long ptr long ptr) GetStringTypeEx32A
-398 stdcall GetStringTypeExW(long long ptr long ptr) GetStringTypeEx32W
-399 stdcall GetStringTypeW(long ptr long ptr) GetStringType32W
+396 stdcall GetStringTypeA(long long str long ptr) GetStringType32A
+397 stdcall GetStringTypeExA(long long str long ptr) GetStringTypeEx32A
+398 stdcall GetStringTypeExW(long long wstr long ptr) GetStringTypeEx32W
+399 stdcall GetStringTypeW(long wstr long ptr) GetStringType32W
 400 stdcall GetSystemDefaultLCID() GetSystemDefaultLCID
 401 stdcall GetSystemDefaultLangID() GetSystemDefaultLangID
 402 stdcall GetSystemDirectoryA(ptr long) GetSystemDirectory32A
@@ -400,8 +400,8 @@ type	win32
 409 stub GetTapeParameters
 410 stub GetTapePosition
 411 stub GetTapeStatus
-412 stdcall GetTempFileNameA(ptr ptr long ptr) GetTempFileName32A
-413 stdcall GetTempFileNameW(ptr ptr long ptr) GetTempFileName32W
+412 stdcall GetTempFileNameA(str str long ptr) GetTempFileName32A
+413 stdcall GetTempFileNameW(wstr wstr long ptr) GetTempFileName32W
 414 stdcall GetTempPathA(long ptr) GetTempPath32A
 415 stdcall GetTempPathW(long ptr) GetTempPath32W
 416 stdcall GetThreadContext(long ptr) GetThreadContext
@@ -410,7 +410,7 @@ type	win32
 419 stdcall GetThreadSelectorEntry(long long ptr) GetThreadSelectorEntry
 420 stub GetThreadTimes
 421 stdcall GetTickCount() GetTickCount
-422 stub GetTimeFormatA
+422 stdcall GetTimeFormatA(long long ptr str ptr long) GetTimeFormat32A
 423 stub GetTimeFormatW
 424 stdcall GetTimeZoneInformation(ptr) GetTimeZoneInformation
 425 stdcall GetUserDefaultLCID() GetUserDefaultLCID
@@ -418,17 +418,17 @@ type	win32
 427 stdcall GetVersion() GetVersion32
 428 stdcall GetVersionExA(ptr) GetVersionEx32A
 429 stdcall GetVersionExW(ptr) GetVersionEx32W
-430 stdcall GetVolumeInformationA(ptr ptr long ptr ptr ptr ptr long) GetVolumeInformation32A
-431 stdcall GetVolumeInformationW(ptr ptr long ptr ptr ptr ptr long) GetVolumeInformation32W
+430 stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) GetVolumeInformation32A
+431 stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) GetVolumeInformation32W
 432 stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectory32A
 433 stdcall GetWindowsDirectoryW(ptr long) GetWindowsDirectory32W
-434 stdcall GlobalAddAtomA(ptr) GlobalAddAtom32A
-435 stdcall GlobalAddAtomW(ptr) GlobalAddAtom32W
+434 stdcall GlobalAddAtomA(str) GlobalAddAtom32A
+435 stdcall GlobalAddAtomW(wstr) GlobalAddAtom32W
 436 stdcall GlobalAlloc(long long) GlobalAlloc32
 437 stdcall GlobalCompact(long) GlobalCompact32
 438 stdcall GlobalDeleteAtom(long) GlobalDeleteAtom
-439 stdcall GlobalFindAtomA(ptr) GlobalFindAtom32A
-440 stdcall GlobalFindAtomW(ptr) GlobalFindAtom32W
+439 stdcall GlobalFindAtomA(str) GlobalFindAtom32A
+440 stdcall GlobalFindAtomW(wstr) GlobalFindAtom32W
 441 stdcall GlobalFix(long) GlobalFix32
 442 stdcall GlobalFlags(long) GlobalFlags32
 443 stdcall GlobalFree(long) GlobalFree32
@@ -480,14 +480,14 @@ type	win32
 489 stdcall IsValidLocale(long long) IsValidLocale
 490 stub K32Thk1632Epilog
 491 stub K32Thk1632Prolog
-492 stdcall LCMapStringA(long long ptr long ptr long) LCMapString32A
-493 stdcall LCMapStringW(long long ptr long ptr long) LCMapString32W
+492 stdcall LCMapStringA(long long str long ptr long) LCMapString32A
+493 stdcall LCMapStringW(long long wstr long ptr long) LCMapString32W
 494 stdcall LeaveCriticalSection(ptr)	LeaveCriticalSection
-495 stdcall LoadLibraryA(ptr) LoadLibrary32A
-496 stdcall LoadLibraryExA(ptr long long) LoadLibraryEx32A
+495 stdcall LoadLibraryA(str) LoadLibrary32A
+496 stdcall LoadLibraryExA(str long long) LoadLibraryEx32A
 497 stub LoadLibraryExW
-498 stdcall LoadLibraryW(ptr) LoadLibrary32W
-499 stub LoadModule
+498 stdcall LoadLibraryW(wstr) LoadLibrary32W
+499 stdcall LoadModule(str ptr) LoadModule32
 500 stdcall LoadResource(long long) LoadResource32
 501 stdcall LocalAlloc(long long) LocalAlloc32
 502 stdcall LocalCompact(long) LocalCompact32
@@ -517,27 +517,27 @@ type	win32
 526 stdcall MapViewOfFileEx(long long long long long ptr) MapViewOfFileEx
 527 stub Module32First
 528 stub Module32Next
-529 stdcall MoveFileA(ptr ptr) MoveFile32A
-530 stdcall MoveFileExA(ptr ptr long) MoveFileEx32A
-531 stdcall MoveFileExW(ptr ptr long) MoveFileEx32W
-532 stdcall MoveFileW(ptr ptr) MoveFile32W
+529 stdcall MoveFileA(str str) MoveFile32A
+530 stdcall MoveFileExA(str str long) MoveFileEx32A
+531 stdcall MoveFileExW(wstr wstr long) MoveFileEx32W
+532 stdcall MoveFileW(wstr wstr) MoveFile32W
 533 stdcall MulDiv(long long long) MulDiv32
-534 stdcall MultiByteToWideChar(long long ptr long ptr long) MultiByteToWideChar
+534 stdcall MultiByteToWideChar(long long str long ptr long) MultiByteToWideChar
 535 stub NotifyNLSUserCache
-536 stdcall OpenEventA(long long ptr) OpenEvent32A
-537 stdcall OpenEventW(long long ptr) OpenEvent32W
-538 stdcall OpenFile(ptr ptr long) OpenFile32
-539 stdcall OpenFileMappingA(long long ptr) OpenFileMapping32A
-540 stdcall OpenFileMappingW(long long ptr) OpenFileMapping32W
-541 stdcall OpenMutexA(long long ptr) OpenMutex32A
-542 stdcall OpenMutexW(long long ptr) OpenMutex32W
+536 stdcall OpenEventA(long long str) OpenEvent32A
+537 stdcall OpenEventW(long long wstr) OpenEvent32W
+538 stdcall OpenFile(str ptr long) OpenFile32
+539 stdcall OpenFileMappingA(long long str) OpenFileMapping32A
+540 stdcall OpenFileMappingW(long long wstr) OpenFileMapping32W
+541 stdcall OpenMutexA(long long str) OpenMutex32A
+542 stdcall OpenMutexW(long long wstr) OpenMutex32W
 543 stub OpenProcess
 544 stub OpenProfileUserMapping
-545 stdcall OpenSemaphoreA(long long ptr) OpenSemaphore32A
-546 stdcall OpenSemaphoreW(long long ptr) OpenSemaphore32W
+545 stdcall OpenSemaphoreA(long long str) OpenSemaphore32A
+546 stdcall OpenSemaphoreW(long long wstr) OpenSemaphore32W
 547 stub OpenVxDHandle
-548 stdcall OutputDebugStringA(ptr) OutputDebugString32A
-549 stdcall OutputDebugStringW(ptr) OutputDebugString32W
+548 stdcall OutputDebugStringA(str) OutputDebugString32A
+549 stdcall OutputDebugStringW(wstr) OutputDebugString32W
 550 stub PeekConsoleInputA
 551 stub PeekConsoleInputW
 552 stub PeekNamedPipe
@@ -548,8 +548,8 @@ type	win32
 557 stub PulseEvent
 558 stdcall PurgeComm(long long) PurgeComm
 559 register QT_Thunk() QT_Thunk
-560 stdcall QueryDosDeviceA(ptr ptr long) QueryDosDevice32A
-561 stdcall QueryDosDeviceW(ptr ptr long) QueryDosDevice32W
+560 stdcall QueryDosDeviceA(str ptr long) QueryDosDevice32A
+561 stdcall QueryDosDeviceW(wstr ptr long) QueryDosDevice32W
 562 stub QueryNumberOfEventLogRecords
 563 stub QueryOldestEventLogRecord
 564 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
@@ -566,14 +566,14 @@ type	win32
 575 stub ReadConsoleOutputW
 576 stdcall ReadConsoleW(long ptr long ptr ptr) ReadConsole32W
 577 stdcall ReadFile(long ptr long ptr ptr) ReadFile
-578 stub ReadFileEx
+578 stdcall ReadFileEx(long ptr long ptr ptr) ReadFileEx
 579 stdcall ReadProcessMemory(long ptr ptr long ptr) ReadProcessMemory
 580 stub RegisterServiceProcess
 581 stdcall ReinitializeCriticalSection(ptr) ReinitializeCriticalSection
 582 stdcall ReleaseMutex(long) ReleaseMutex
 583 stdcall ReleaseSemaphore(long long ptr) ReleaseSemaphore
-584 stdcall RemoveDirectoryA(ptr) RemoveDirectory32A
-585 stdcall RemoveDirectoryW(ptr) RemoveDirectory32W
+584 stdcall RemoveDirectoryA(str) RemoveDirectory32A
+585 stdcall RemoveDirectoryW(wstr) RemoveDirectory32W
 586 stdcall ResetEvent(long) ResetEvent
 587 stdcall ResumeThread(long) ResumeThread
 588 stdcall RtlFillMemory(ptr long long) RtlFillMemory
@@ -602,8 +602,8 @@ type	win32
 611 register SUnMapLS_IP_EBP_8() SUnMapLS_IP_EBP_8
 612 stub ScrollConsoleScreenBufferA
 613 stub ScrollConsoleScreenBufferW
-614 stdcall SearchPathA(ptr ptr ptr long ptr ptr) SearchPath32A
-615 stdcall SearchPathW(ptr ptr ptr long ptr ptr) SearchPath32W
+614 stdcall SearchPathA(str str str long ptr ptr) SearchPath32A
+615 stdcall SearchPathW(wstr wstr wstr long ptr ptr) SearchPath32W
 616 stdcall SetCommBreak(long) SetCommBreak32
 617 stub SetCommConfig
 618 stdcall SetCommMask(long ptr) SetCommMask
@@ -620,23 +620,23 @@ type	win32
 629 stub SetConsoleOutputCP
 630 stub SetConsoleScreenBufferSize
 631 stub SetConsoleTextAttribute
-632 stdcall SetConsoleTitleA(ptr) SetConsoleTitle32A
-633 stdcall SetConsoleTitleW(ptr) SetConsoleTitle32W
+632 stdcall SetConsoleTitleA(str) SetConsoleTitle32A
+633 stdcall SetConsoleTitleW(wstr) SetConsoleTitle32W
 634 stub SetConsoleWindowInfo
-635 stdcall SetCurrentDirectoryA(ptr) SetCurrentDirectory32A
-636 stdcall SetCurrentDirectoryW(ptr) SetCurrentDirectory32W
+635 stdcall SetCurrentDirectoryA(str) SetCurrentDirectory32A
+636 stdcall SetCurrentDirectoryW(wstr) SetCurrentDirectory32W
 637 stub SetDaylightFlag
 638 stub SetDefaultCommConfigA
 639 stub SetDefaultCommConfigW
 640 stdcall SetEndOfFile(long) SetEndOfFile
-641 stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariable32A
-642 stdcall SetEnvironmentVariableW(ptr ptr) SetEnvironmentVariable32W
+641 stdcall SetEnvironmentVariableA(str str) SetEnvironmentVariable32A
+642 stdcall SetEnvironmentVariableW(wstr wstr) SetEnvironmentVariable32W
 643 stdcall SetErrorMode(long) SetErrorMode32
-644 stdcall	SetEvent(long) SetEvent
+644 stdcall SetEvent(long) SetEvent
 645 stdcall SetFileApisToANSI() SetFileApisToANSI
 646 stdcall SetFileApisToOEM() SetFileApisToOEM
-647 stdcall SetFileAttributesA(ptr long) SetFileAttributes32A
-648 stdcall SetFileAttributesW(ptr long) SetFileAttributes32W
+647 stdcall SetFileAttributesA(str long) SetFileAttributes32A
+648 stdcall SetFileAttributesW(wstr long) SetFileAttributes32W
 649 stdcall SetFilePointer(long long ptr long) SetFilePointer
 650 stdcall SetFileTime(long ptr ptr ptr) SetFileTime
 651 stub SetHandleContext
@@ -644,7 +644,7 @@ type	win32
 653 stub SetHandleInformation
 654 stdcall SetLastError(long) SetLastError
 655 stub SetLocalTime
-656 stdcall SetLocaleInfoA(long long ptr) SetLocaleInfoA
+656 stdcall SetLocaleInfoA(long long str) SetLocaleInfoA
 657 stub SetLocaleInfoW
 658 stub SetMailslotInfo
 659 stub SetNamedPipeHandleState
@@ -676,7 +676,7 @@ type	win32
 685 stdcall TerminateThread(long long) TerminateThread
 686 stub Thread32First
 687 stub Thread32Next
-688 stdcall ThunkConnect32(ptr ptr ptr ptr ptr ptr) ThunkConnect32
+688 stdcall ThunkConnect32(ptr str str str ptr ptr) ThunkConnect32
 689 stdcall TlsAlloc()	TlsAlloc
 690 stub TlsAllocInternal
 691 stdcall TlsFree(long) TlsFree
@@ -686,7 +686,7 @@ type	win32
 695 stub Toolhelp32ReadProcessMemory
 696 stub TransactNamedPipe
 697 stdcall TransmitCommChar(long long) TransmitCommChar32
-698 stdcall UTRegister(long ptr ptr ptr ptr ptr ptr) UTRegister
+698 stdcall UTRegister(long str str str ptr ptr ptr) UTRegister
 699 stdcall UTUnRegister(long) UTUnRegister
 700 stdcall UnMapLS(long) UnMapLS
 701 stub UnMapSLFixArray
@@ -715,8 +715,8 @@ type	win32
 724 stdcall WaitForSingleObjectEx(long long long) WaitForSingleObjectEx
 725 stub WaitNamedPipeA
 726 stub WaitNamedPipeW
-727 stdcall WideCharToMultiByte(long long ptr long ptr long ptr ptr)	WideCharToMultiByte
-728 stdcall WinExec(ptr long) WinExec32
+727 stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)	WideCharToMultiByte
+728 stdcall WinExec(str long) WinExec32
 729 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsole32A
 730 stub WriteConsoleInputA
 731 stub WriteConsoleInputW
@@ -730,15 +730,15 @@ type	win32
 739 stub WriteFileEx
 740 stub WritePrivateProfileSectionA
 741 stub WritePrivateProfileSectionW
-742 stdcall WritePrivateProfileStringA(ptr ptr ptr ptr) WritePrivateProfileString32A
-743 stdcall WritePrivateProfileStringW(ptr ptr ptr ptr) WritePrivateProfileString32W
+742 stdcall WritePrivateProfileStringA(str str str str) WritePrivateProfileString32A
+743 stdcall WritePrivateProfileStringW(wstr wstr wstr wstr) WritePrivateProfileString32W
 744 stub WritePrivateProfileStructA
 745 stub WritePrivateProfileStructW
 746 stub WriteProcessMemory
 747 stub WriteProfileSectionA
 748 stub WriteProfileSectionW
-749 stdcall WriteProfileStringA(ptr ptr ptr) WriteProfileString32A
-750 stdcall WriteProfileStringW(ptr ptr ptr) WriteProfileString32W
+749 stdcall WriteProfileStringA(str str str) WriteProfileString32A
+750 stdcall WriteProfileStringW(wstr wstr wstr) WriteProfileString32W
 751 stub WriteTapemark
 752 stub _DebugOut
 753 stub _DebugPrintf
@@ -751,24 +751,24 @@ type	win32
 760 stdcall _lread(long ptr long) _lread32
 761 stdcall _lwrite(long ptr long) _lwrite32
 762 stub dprintf
-763 stdcall lstrcat(ptr ptr) lstrcat32A
-764 stdcall lstrcatA(ptr ptr) lstrcat32A
-765 stdcall lstrcatW(ptr ptr) lstrcat32W
-766 stdcall lstrcmp(ptr ptr) lstrcmp32A
-767 stdcall lstrcmpA(ptr ptr) lstrcmp32A
-768 stdcall lstrcmpW(ptr ptr) lstrcmp32W
-769 stdcall lstrcmpi(ptr ptr) lstrcmpi32A
-770 stdcall lstrcmpiA(ptr ptr) lstrcmpi32A
-771 stdcall lstrcmpiW(ptr ptr) lstrcmpi32W
-772 stdcall lstrcpy(ptr ptr) lstrcpy32A
-773 stdcall lstrcpyA(ptr ptr) lstrcpy32A
-774 stdcall lstrcpyW(ptr ptr) lstrcpy32W
-775 stdcall lstrcpyn(ptr ptr long) lstrcpyn32A
-776 stdcall lstrcpynA(ptr ptr long) lstrcpyn32A
-777 stdcall lstrcpynW(ptr ptr long) lstrcpyn32W
-778 stdcall lstrlen(ptr) lstrlen32A
-779 stdcall lstrlenA(ptr) lstrlen32A
-780 stdcall lstrlenW(ptr) lstrlen32W
+763 stdcall lstrcat(str str) lstrcat32A
+764 stdcall lstrcatA(str str) lstrcat32A
+765 stdcall lstrcatW(wstr wstr) lstrcat32W
+766 stdcall lstrcmp(str str) lstrcmp32A
+767 stdcall lstrcmpA(str str) lstrcmp32A
+768 stdcall lstrcmpW(wstr wstr) lstrcmp32W
+769 stdcall lstrcmpi(str str) lstrcmpi32A
+770 stdcall lstrcmpiA(str str) lstrcmpi32A
+771 stdcall lstrcmpiW(wstr wstr) lstrcmpi32W
+772 stdcall lstrcpy(ptr str) lstrcpy32A
+773 stdcall lstrcpyA(ptr str) lstrcpy32A
+774 stdcall lstrcpyW(ptr wstr) lstrcpy32W
+775 stdcall lstrcpyn(ptr str long) lstrcpyn32A
+776 stdcall lstrcpynA(ptr str long) lstrcpyn32A
+777 stdcall lstrcpynW(ptr wstr long) lstrcpyn32W
+778 stdcall lstrlen(str) lstrlen32A
+779 stdcall lstrlenA(str) lstrlen32A
+780 stdcall lstrlenW(wstr) lstrlen32W
 # 
 # Functions exported by kernel32.dll in NT 3.51
 # 

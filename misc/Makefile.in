@@ -6,6 +6,8 @@ VPATH     = @srcdir@
 MODULE    = misc
 
 C_SRCS = \
+	aspi.c \
+	callback.c \
 	comm.c \
 	commdlg.c \
 	compobj.c \

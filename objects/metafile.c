@@ -259,6 +259,7 @@ BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 
     dprintf_metafile(stddeb,"PlayMetaFile(%04x %04x)\n",hdc,hmf);
 
+    if (!mh) return FALSE;
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     hPen = dc->w.hPen;
     hBrush = dc->w.hBrush;
@@ -783,12 +784,15 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
         }
         break;	
        
+     case META_SETTEXTCHAREXTRA:
+	    SetTextCharacterExtra16(hdc, (INT16)*(mr->rdParam));
+	    break;
+
      case META_SETTEXTJUSTIFICATION:
        	SetTextJustification32(hdc, *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
 #define META_UNIMP(x) case x: fprintf(stderr,"PlayMetaFileRecord:record type "#x" not implemented.\n");break;
-    META_UNIMP(META_SETTEXTCHAREXTRA)
     META_UNIMP(META_FRAMEREGION)
     META_UNIMP(META_DRAWTEXT)
     META_UNIMP(META_SETDIBTODEV)

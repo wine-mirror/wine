@@ -422,6 +422,7 @@ HRGN32 WINAPI CreatePolyPolygonRgn32( const POINT32 * points,
 
     for (i = 0; i < nbpolygons; i++, count++)
     {
+        if (*count <= 1) continue;
 	for (j = *count, pt = xpoints; j > 0; j--, points++, pt++)
 	{
 	    pt->x = points->x;
@@ -436,7 +437,7 @@ HRGN32 WINAPI CreatePolyPolygonRgn32( const POINT32 * points,
             GDI_FreeObject( hrgn );
             return 0;
         }
-	if (i > 0)
+	if (obj->xrgn)
 	{
 	    Region tmprgn = XCreateRegion();
 	    if (mode == WINDING) XUnionRegion( xrgn, obj->xrgn, tmprgn );
@@ -570,34 +571,51 @@ static INT32 REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
     }
 }
 
+
+/***********************************************************************
+ *           REGION_IsEmpty
+ */
+BOOL32 REGION_IsEmpty( HRGN32 hRgn )
+{
+    RGNOBJ*     rgnObj = (RGNOBJ*) GDI_GetObjPtr( hRgn, REGION_MAGIC );
+    BOOL32	ret = TRUE;
+
+    if( rgnObj )
+    {
+	if( rgnObj->xrgn && !XEmptyRegion(rgnObj->xrgn) ) ret = FALSE;
+	GDI_HEAP_UNLOCK( hRgn );
+    }
+    return ret;
+}
+
+
 /***********************************************************************
  *           REGION_UnionRectWithRgn
  *
- * Add rectangle to region
+ * Add rc rectangle to the region.
  */
 BOOL32 REGION_UnionRectWithRgn( HRGN32 hRgn, const RECT32 *rc )
 {
-  RGNOBJ 	*rgnObj = (RGNOBJ*) GDI_GetObjPtr( hRgn, REGION_MAGIC );
-  XRectangle     rect = { rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top };
-  BOOL32 ret = FALSE;
+    RGNOBJ*	rgnObj = (RGNOBJ*) GDI_GetObjPtr( hRgn, REGION_MAGIC );
+    XRectangle  rect = { rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top };
+    BOOL32 	ret = ERROR;
 
-  if( rgnObj )
-  {
-    if( !rgnObj->xrgn )
+    if( rgnObj )
     {
-      if (!(rgnObj->xrgn = XCreateRegion()))
-      {
-         GDI_FreeObject( hRgn );
-         return 0;
-      }
-      ret = SIMPLEREGION; 
+	if( !rgnObj->xrgn )
+	{
+	    if ((rgnObj->xrgn = XCreateRegion()))
+		ret = SIMPLEREGION;
+	    else
+		goto done;
+	}
+	else
+	    ret = COMPLEXREGION;
+	XUnionRectWithRegion( &rect, rgnObj->xrgn, rgnObj->xrgn );
+done:
+	GDI_HEAP_UNLOCK( hRgn );
     }
-    else
-      ret = COMPLEXREGION;
-    XUnionRectWithRegion( &rect, rgnObj->xrgn, rgnObj->xrgn );
-    GDI_HEAP_UNLOCK( hRgn );
-  }
-  return ret;
+    return ret;
 }
 
 
@@ -608,26 +626,27 @@ BOOL32 REGION_UnionRectWithRgn( HRGN32 hRgn, const RECT32 *rc )
  */
 BOOL32 REGION_FrameRgn( HRGN32 hDest, HRGN32 hSrc, INT32 x, INT32 y )
 {
-    RGNOBJ *destObj,*srcObj;
-    Region result;
+    BOOL32 bRet;
+    RGNOBJ *srcObj = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
 
-    destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
-    srcObj  = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
-    if (!srcObj->xrgn) 
+    if (srcObj->xrgn) 
     {
-      GDI_HEAP_UNLOCK( hDest );
-      GDI_HEAP_UNLOCK( hSrc );
-      return FALSE;
+	RGNOBJ* destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
+	Region  resRgn;
+
+	REGION_CopyRegion( srcObj, destObj );
+	XShrinkRegion( destObj->xrgn, -x, -y );
+	resRgn = XCreateRegion();
+	XSubtractRegion( destObj->xrgn, srcObj->xrgn, resRgn );
+	XDestroyRegion( destObj->xrgn );
+	destObj->xrgn = resRgn;
+	GDI_HEAP_UNLOCK( hDest );
+	bRet = TRUE;
     }
-    REGION_CopyRegion( srcObj, destObj );
-    XShrinkRegion( destObj->xrgn, -x, -y );
-    result = XCreateRegion();
-    XSubtractRegion( destObj->xrgn, srcObj->xrgn, result );
-    XDestroyRegion( destObj->xrgn );
-    destObj->xrgn = result;
-    GDI_HEAP_UNLOCK( hDest );
+    else
+	bRet = FALSE;
     GDI_HEAP_UNLOCK( hSrc );
-    return TRUE;
+    return bRet;
 }
 
 
@@ -647,118 +666,108 @@ INT16 WINAPI CombineRgn16(HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode)
  */
 INT32 WINAPI CombineRgn32(HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode)
 {
-    RGNOBJ *destObj, *src1Obj, *src2Obj;
-    Region destrgn;
-    INT32 result;
+    RGNOBJ *destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC);
+    INT32 result = ERROR;
 
     dprintf_region(stddeb, "CombineRgn: %04x,%04x -> %04x mode=%x\n", 
 		   hSrc1, hSrc2, hDest, mode );
-    
-    if (!(destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC )))
-	return ERROR;
-    if (!(src1Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc1, REGION_MAGIC )))
+    if (destObj)
     {
-        GDI_HEAP_UNLOCK( hDest );
-	return ERROR;
-    }
-    if (mode == RGN_COPY) 
-    {
-       result = REGION_CopyRegion( src1Obj, destObj );
-       GDI_HEAP_UNLOCK( hDest );
-       GDI_HEAP_UNLOCK( hSrc1 );
-       return result;
-    }
+	RGNOBJ *src1Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc1, REGION_MAGIC);
 
-    if (!(src2Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc2, REGION_MAGIC )))
-    {
-       GDI_HEAP_UNLOCK( hDest );
-       GDI_HEAP_UNLOCK( hSrc1 );
-       return ERROR;
-    }
-      /* Some optimizations for null regions */
-
-    if (!src1Obj->xrgn || !src2Obj->xrgn)
-    {
-        switch(mode)
-        {
-        case RGN_DIFF:
-            if (src1Obj->xrgn)
+	if (src1Obj)
+	{
+	    if (mode == RGN_COPY)
+		result = REGION_CopyRegion( src1Obj, destObj );
+	    else
 	    {
-                result = REGION_CopyRegion( src1Obj, destObj );
-		GDI_HEAP_UNLOCK( hDest );
-		GDI_HEAP_UNLOCK( hSrc1 );
-		GDI_HEAP_UNLOCK( hSrc2 );
-		return result;
+		RGNOBJ *src2Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc2, REGION_MAGIC);
+
+		if (src2Obj)
+		{
+		    if (!src1Obj->xrgn || !src2Obj->xrgn)
+		    {
+			/* Some optimizations for null regions */
+			switch( mode )
+			{
+			    case RGN_DIFF:
+				 if (src1Obj->xrgn)
+				 {
+				     result = REGION_CopyRegion( src1Obj, destObj );
+				     break;
+				 }
+				 /* else fall through */
+			    case RGN_AND:
+				 if (destObj->xrgn) 
+				 {
+				     XDestroyRegion( destObj->xrgn );
+				     destObj->xrgn = 0;
+				 }
+				 result = NULLREGION;
+				 break;
+
+			    case RGN_OR:
+			    case RGN_XOR:
+#define __SRC_RGN ((src1Obj->xrgn) ? src1Obj : src2Obj)
+				 result = REGION_CopyRegion( __SRC_RGN, destObj );
+#undef  __SRC_RGN
+				 break;
+
+			    case 0:
+			    default:
+				 /* makes gcc generate more efficient code */
+			}
+		    }
+		    else /* both regions are present */
+		    {
+			Region  destRgn = XCreateRegion();
+
+			if (destRgn)
+			{
+			    switch (mode)
+			    {
+				case RGN_AND:
+				     XIntersectRegion( src1Obj->xrgn, src2Obj->xrgn, destRgn );
+				     break;
+				case RGN_OR:
+				     XUnionRegion( src1Obj->xrgn, src2Obj->xrgn, destRgn );
+				     break;
+				case RGN_XOR:
+				     XXorRegion( src1Obj->xrgn, src2Obj->xrgn, destRgn );
+				     break;
+				case RGN_DIFF:
+			             XSubtractRegion( src1Obj->xrgn, src2Obj->xrgn, destRgn );
+				     break;
+
+				case 0: /* makes gcc generate more efficient code */
+				default:
+				     XDestroyRegion( destRgn );
+				     goto done;
+			    }
+
+			    if ( destObj->xrgn ) 
+				 XDestroyRegion( destObj->xrgn );
+			    if ( XEmptyRegion( destRgn ) )
+			    {
+				 XDestroyRegion( destRgn );
+				 destObj->xrgn = 0;
+				 result = NULLREGION;
+			    }
+			    else 
+			    {
+				 destObj->xrgn = destRgn;
+				 result = COMPLEXREGION;
+			    }
+			}
+		    }
+done:
+		    GDI_HEAP_UNLOCK( hSrc2 );
+		}
 	    }
-            /* else fall through */
-        case RGN_AND:
-            if (destObj->xrgn) XDestroyRegion( destObj->xrgn );
-	    destObj->xrgn = 0;
-	    GDI_HEAP_UNLOCK( hDest );
 	    GDI_HEAP_UNLOCK( hSrc1 );
-	    GDI_HEAP_UNLOCK( hSrc2 );
-	    return NULLREGION;
-        case RGN_OR:
-        case RGN_XOR:
-            if (src1Obj->xrgn)
-                result = REGION_CopyRegion( src1Obj, destObj );
-            else
-                result = REGION_CopyRegion( src2Obj, destObj );
-	    GDI_HEAP_UNLOCK( hDest );
-	    GDI_HEAP_UNLOCK( hSrc1 );
-	    GDI_HEAP_UNLOCK( hSrc2 );
-	    return result;
-	default:
-	    GDI_HEAP_UNLOCK( hDest );
-	    GDI_HEAP_UNLOCK( hSrc1 );
-	    GDI_HEAP_UNLOCK( hSrc2 );
-	    return ERROR;
-        }
-    }
-
-      /* Perform the operation with the two X regions */
-
-    if (!(destrgn = XCreateRegion()))
-    {
-      GDI_HEAP_UNLOCK( hDest );
-      GDI_HEAP_UNLOCK( hSrc1 );
-      GDI_HEAP_UNLOCK( hSrc2 );
-      return ERROR;
-    }
-    switch(mode)
-    {
-    case RGN_AND:
-        XIntersectRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
-        break;
-    case RGN_OR:
-        XUnionRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
-        break;
-    case RGN_XOR:
-        XXorRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
-        break;
-    case RGN_DIFF:
-        XSubtractRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
-        break;
-    default:
-        XDestroyRegion( destrgn );
+	}
 	GDI_HEAP_UNLOCK( hDest );
-	GDI_HEAP_UNLOCK( hSrc1 );
-	GDI_HEAP_UNLOCK( hSrc2 );
-        return ERROR;
     }
-    if (destObj->xrgn) XDestroyRegion( destObj->xrgn );
-    destObj->xrgn = destrgn;
-    if (XEmptyRegion(destObj->xrgn))
-    {
-        XDestroyRegion( destObj->xrgn );
-        destObj->xrgn = 0;
-	GDI_HEAP_UNLOCK( hDest );
-	GDI_HEAP_UNLOCK( hSrc1 );
-	GDI_HEAP_UNLOCK( hSrc2 );
-        return NULLREGION;
-    }
-    GDI_HEAP_UNLOCK( hDest );
-    GDI_HEAP_UNLOCK( hSrc1 );
-    GDI_HEAP_UNLOCK( hSrc2 );
-    return COMPLEXREGION;
+    return result;
 }
+
