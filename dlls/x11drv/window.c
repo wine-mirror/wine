@@ -796,6 +796,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     char *utf8_buffer;
     static UINT text_cp = (UINT)-1;
     Window win;
+    XTextProperty prop;
 
     if ((win = X11DRV_get_whole_window( hwnd )))
     {
@@ -833,8 +834,12 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);
 
         wine_tsx11_lock();
-        XStoreName( display, win, buffer );
-        XSetIconName( display, win, buffer );
+	if (XmbTextListToTextProperty( display, &buffer, 1, XStdICCTextStyle, &prop ) == Success)
+	{
+	    XSetWMName( display, win, &prop );
+	    XSetWMIconName( display, win, &prop );
+	    XFree( prop.value );
+	}
         /*
         Implements a NET_WM UTF-8 title. It should be without a trailing \0,
         according to the standard
