@@ -2352,14 +2352,14 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
 		CHAR *textA;
 		INT countA;
 		TRACE("Allocating 32-bit ANSI alias buffer\n");
-		countA = WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, NULL, 0, NULL, NULL);
+		countA = WideCharToMultiByte(CP_ACP, 0, es->text, -1, NULL, 0, NULL, NULL);
 		if(!(es->hloc32A = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, countA)))
 		{
 		    ERR("Could not allocate %d bytes for 32-bit ANSI alias buffer\n", countA);
 		    return 0;
 		}
 		textA = LocalLock(es->hloc32A);
-		WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, textA, countA, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, countA, NULL, NULL);
 		LocalUnlock(es->hloc32A);
 	    }
 	    hLocal = es->hloc32A;
@@ -2405,7 +2405,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 		TRACE("local heap initialized\n");
 	}
 
-	countA = WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, NULL, 0, NULL, NULL);
+	countA = WideCharToMultiByte(CP_ACP, 0, es->text, -1, NULL, 0, NULL, NULL);
 
 	TRACE("Allocating 16-bit ANSI alias buffer\n");
 	if (!(es->hloc16 = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE | LMEM_ZEROINIT, countA))) {
@@ -2420,7 +2420,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 		return 0;
 	}
 
-	WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, textA, countA, NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, countA, NULL, NULL);
 	LOCAL_Unlock(wnd->hInstance, es->hloc16);
 
 	TRACE("Returning %04X, LocalSize() = %d\n", es->hloc16, LOCAL_Size(wnd->hInstance, es->hloc16));
@@ -3653,7 +3653,7 @@ static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode
     else
     {
 	LPSTR textA = (LPSTR)lParam;
-	INT ret = WideCharToMultiByte(CP_ACP, 0, es->text, es->buffer_size, textA, count, NULL, NULL);
+	INT ret = WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, count, NULL, NULL);
 	textA[count - 1] = 0; /* ensure 0 termination */
 	return ret;
     }
