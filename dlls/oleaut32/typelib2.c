@@ -1442,8 +1442,39 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetAlignment(
         ICreateTypeInfo2* iface,
         WORD cbAlignment)
 {
-    FIXME("(%p,%d), stub!\n", iface, cbAlignment);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    TRACE("(%p,%d)\n", iface, cbAlignment);
+
+    if (!cbAlignment) return E_INVALIDARG;
+    if (cbAlignment > 16) return E_INVALIDARG;
+
+    This->typeinfo->typekind &= ~0xffc0;
+    This->typeinfo->typekind |= cbAlignment << 6;
+
+    /* FIXME: There's probably some way to simplify this. */
+    switch (This->typeinfo->typekind & 15) {
+    case TKIND_ALIAS:
+    default:
+	break;
+
+    case TKIND_ENUM:
+    case TKIND_INTERFACE:
+    case TKIND_DISPATCH:
+    case TKIND_COCLASS:
+	if (cbAlignment > 4) cbAlignment = 4;
+	break;
+
+    case TKIND_RECORD:
+    case TKIND_MODULE:
+    case TKIND_UNION:
+	cbAlignment = 1;
+	break;
+    }
+
+    This->typeinfo->typekind |= cbAlignment << 11;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -2770,34 +2801,34 @@ static ICreateTypeInfo2 *ICreateTypeInfo2_Constructor(ICreateTypeLib2Impl *typel
 
     pCreateTypeInfo2Impl->typeinfo = typeinfo;
 
-    if (tkind == TKIND_ENUM) {
-	typeinfo->typekind |= TKIND_ENUM | 0x2120;
+    typeinfo->typekind |= tkind | 0x20;
+    ICreateTypeInfo2_SetAlignment((ICreateTypeInfo2 *)pCreateTypeInfo2Impl, 4);
+
+    switch (tkind) {
+    case TKIND_ENUM:
+    case TKIND_INTERFACE:
+    case TKIND_DISPATCH:
+    case TKIND_COCLASS:
 	typeinfo->size = 4;
-    } else if (tkind == TKIND_RECORD) {
-	typeinfo->typekind |= TKIND_RECORD | 0x0920;
+	break;
+
+    case TKIND_RECORD:
+    case TKIND_UNION:
 	typeinfo->size = 0;
-    } else if (tkind == TKIND_MODULE) {
-	typeinfo->typekind |= TKIND_MODULE | 0x0920;
+	break;
+
+    case TKIND_MODULE:
 	typeinfo->size = 2;
-    } else if (tkind == TKIND_INTERFACE) {
-	typeinfo->typekind |= TKIND_INTERFACE | 0x2120;
-	typeinfo->size = 4;
-    } else if (tkind == TKIND_DISPATCH) {
-	typeinfo->typekind |= TKIND_DISPATCH | 0x2120;
-	typeinfo->size = 4;
-    } else if (tkind == TKIND_COCLASS) {
-	typeinfo->typekind |= TKIND_COCLASS | 0x2120;
-	typeinfo->size = 4;
-    } else if (tkind == TKIND_ALIAS) {
-	typeinfo->typekind |= TKIND_ALIAS | 0x2120;
-	typeinfo->size = -0x75; /* ??? */
-    } else if (tkind == TKIND_UNION) {
-	typeinfo->typekind |= TKIND_UNION | 0x0920;
-	typeinfo->size = 0;
-    } else {
+	break;
+
+    case TKIND_ALIAS:
+	typeinfo->size = -0x75;
+	break;
+
+    default:
 	FIXME("(%s,%d), unrecognized typekind %d\n", debugstr_w(szName), tkind, tkind);
-	typeinfo->typekind |= tkind;
 	typeinfo->size = 0xdeadbeef;
+	break;
     }
 
     if (typelib->last_typeinfo) typelib->last_typeinfo->next_typeinfo = pCreateTypeInfo2Impl;
