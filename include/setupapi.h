@@ -160,6 +160,23 @@ typedef struct _SP_DEVICE_INTERFACE_DETAIL_DATA_W
 DECL_WINELIB_SETUPAPI_TYPE_AW(SP_DEVICE_INTERFACE_DETAIL_DATA)
 DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_DEVICE_INTERFACE_DETAIL_DATA)
 
+typedef struct _SP_DEVINFO_LIST_DETAIL_DATA_A {
+    DWORD  cbSize;
+    GUID   ClassGuid;
+    HANDLE RemoteMachineHandle;
+    CHAR   RemoteMachineName[SP_MAX_MACHINENAME_LENGTH];
+} SP_DEVINFO_LIST_DETAIL_DATA_A, *PSP_DEVINFO_LIST_DETAIL_DATA_A;
+
+typedef struct _SP_DEVINFO_LIST_DETAIL_DATA_W {
+    DWORD  cbSize;
+    GUID   ClassGuid;
+    HANDLE RemoteMachineHandle;
+    WCHAR  RemoteMachineName[SP_MAX_MACHINENAME_LENGTH];
+} SP_DEVINFO_LIST_DETAIL_DATA_W, *PSP_DEVINFO_LIST_DETAIL_DATA_W;
+
+DECL_WINELIB_SETUPAPI_TYPE_AW(SP_DEVINFO_LIST_DETAIL_DATA)
+DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_DEVINFO_LIST_DETAIL_DATA)
+
 typedef struct _FILE_IN_CABINET_INFO_A {
   LPCSTR NameInCabinet;
   DWORD FileSize;
@@ -517,21 +534,21 @@ LONG     WINAPI SetupGetLineCountW( HINF hinf, PCWSTR section );
 BOOL     WINAPI SetupFindFirstLineA( HINF hinf, PCSTR section, PCSTR key, INFCONTEXT *context );
 BOOL     WINAPI SetupFindFirstLineW( HINF hinf, PCWSTR section, PCWSTR key, INFCONTEXT *context );
 #define         SetupFindFirstLine WINELIB_NAME_AW(SetupFindFirstLine)
-BOOL     WINAPI SetupFindNextLine( const INFCONTEXT *, INFCONTEXT * );
-BOOL     WINAPI SetupFindNextMatchLineA( const INFCONTEXT *, PCSTR, INFCONTEXT * );
-BOOL     WINAPI SetupFindNextMatchLineW( const INFCONTEXT *, PCWSTR, INFCONTEXT * );
+BOOL     WINAPI SetupFindNextLine( PINFCONTEXT context_in, PINFCONTEXT context_out );
+BOOL     WINAPI SetupFindNextMatchLineA( PINFCONTEXT context_in, PCSTR key, PINFCONTEXT context_out );
+BOOL     WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key, PINFCONTEXT context_out );
 #define         SetupFindNextMatchLine WINELIB_NAME_AW(SetupFindNextMatchLine)
-BOOL     WINAPI SetupGetLineTextA( const INFCONTEXT *, HINF, PCSTR, PCSTR, PSTR, DWORD, DWORD * );
-BOOL     WINAPI SetupGetLineTextW( const INFCONTEXT *, HINF, PCWSTR, PCWSTR, PWSTR, DWORD, DWORD * );
+BOOL     WINAPI SetupGetLineTextA( PINFCONTEXT context, HINF hinf, PCSTR section_name,PCSTR key_name, PSTR buffer, DWORD size, PDWORD required );
+BOOL     WINAPI SetupGetLineTextW( PINFCONTEXT context, HINF hinf, PCWSTR section_name, PCWSTR key_name, PWSTR buffer, DWORD size, PDWORD required );
 #define         SetupGetLineText WINELIB_NAME_AW(SetupGetLineText)
-DWORD    WINAPI SetupGetFieldCount( const INFCONTEXT * );
-BOOL     WINAPI SetupGetIntField( const INFCONTEXT *, DWORD, INT * );
-BOOL     WINAPI SetupGetStringFieldA( const INFCONTEXT *, DWORD, PSTR, DWORD, DWORD * );
-BOOL     WINAPI SetupGetStringFieldW( const INFCONTEXT *, DWORD, PWSTR, DWORD, DWORD * );
+DWORD    WINAPI SetupGetFieldCount( PINFCONTEXT context );
+BOOL     WINAPI SetupGetIntField( PINFCONTEXT context, DWORD index, PINT result );
+BOOL     WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, PDWORD required );
+BOOL     WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, PDWORD required );
 #define         SetupGetStringField WINELIB_NAME_AW(SetupGetStringField)
-BOOL     WINAPI SetupGetBinaryField( const INFCONTEXT *, DWORD, BYTE *, DWORD, DWORD * );
-BOOL     WINAPI SetupGetMultiSzFieldA( const INFCONTEXT *, DWORD, PSTR, DWORD, DWORD * );
-BOOL     WINAPI SetupGetMultiSzFieldW( const INFCONTEXT *, DWORD, PWSTR, DWORD, DWORD * );
+BOOL     WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer, DWORD size, LPDWORD required );
+BOOL     WINAPI SetupGetMultiSzFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, LPDWORD required );
+BOOL     WINAPI SetupGetMultiSzFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, LPDWORD required );
 #define         SetupGetMultiSzField WINELIB_NAME_AW(SetupGetMultiSzField)
 BOOL     WINAPI SetupSetDirectoryIdA( HINF, DWORD, PCSTR );
 BOOL     WINAPI SetupSetDirectoryIdW( HINF, DWORD, PCWSTR );

@@ -1312,7 +1312,7 @@ BOOL WINAPI SetupFindFirstLineW( HINF hinf, PCWSTR section, PCWSTR key, INFCONTE
 /***********************************************************************
  *            SetupFindNextLine   (SETUPAPI.@)
  */
-BOOL WINAPI SetupFindNextLine( const INFCONTEXT *context_in, INFCONTEXT *context_out )
+BOOL WINAPI SetupFindNextLine( PINFCONTEXT context_in, PINFCONTEXT context_out )
 {
     struct inf_file *file = context_in->CurrentInf;
     struct section *section;
@@ -1353,8 +1353,8 @@ BOOL WINAPI SetupFindNextLine( const INFCONTEXT *context_in, INFCONTEXT *context
 /***********************************************************************
  *            SetupFindNextMatchLineA   (SETUPAPI.@)
  */
-BOOL WINAPI SetupFindNextMatchLineA( const INFCONTEXT *context_in, PCSTR key,
-                                     INFCONTEXT *context_out )
+BOOL WINAPI SetupFindNextMatchLineA( PINFCONTEXT context_in, PCSTR key,
+                                     PINFCONTEXT context_out )
 {
     UNICODE_STRING keyW;
     BOOL ret = FALSE;
@@ -1375,8 +1375,8 @@ BOOL WINAPI SetupFindNextMatchLineA( const INFCONTEXT *context_in, PCSTR key,
 /***********************************************************************
  *            SetupFindNextMatchLineW   (SETUPAPI.@)
  */
-BOOL WINAPI SetupFindNextMatchLineW( const INFCONTEXT *context_in, PCWSTR key,
-                                     INFCONTEXT *context_out )
+BOOL WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key,
+                                     PINFCONTEXT context_out )
 {
     struct inf_file *file = context_in->CurrentInf;
     struct section *section;
@@ -1437,8 +1437,8 @@ BOOL WINAPI SetupFindNextMatchLineW( const INFCONTEXT *context_in, PCWSTR key,
 /***********************************************************************
  *		SetupGetLineTextW    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetLineTextW( const INFCONTEXT *context, HINF hinf, PCWSTR section_name,
-                               PCWSTR key_name, PWSTR buffer, DWORD size, DWORD *required )
+BOOL WINAPI SetupGetLineTextW( PINFCONTEXT context, HINF hinf, PCWSTR section_name,
+                               PCWSTR key_name, PWSTR buffer, DWORD size, PDWORD required )
 {
     struct inf_file *file;
     struct line *line;
@@ -1488,8 +1488,8 @@ BOOL WINAPI SetupGetLineTextW( const INFCONTEXT *context, HINF hinf, PCWSTR sect
 /***********************************************************************
  *		SetupGetLineTextA    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetLineTextA( const INFCONTEXT *context, HINF hinf, PCSTR section_name,
-                               PCSTR key_name, PSTR buffer, DWORD size, DWORD *required )
+BOOL WINAPI SetupGetLineTextA( PINFCONTEXT context, HINF hinf, PCSTR section_name,
+                               PCSTR key_name, PSTR buffer, DWORD size, PDWORD required )
 {
     struct inf_file *file;
     struct line *line;
@@ -1539,7 +1539,7 @@ BOOL WINAPI SetupGetLineTextA( const INFCONTEXT *context, HINF hinf, PCSTR secti
 /***********************************************************************
  *		SetupGetFieldCount    (SETUPAPI.@)
  */
-DWORD WINAPI SetupGetFieldCount( const INFCONTEXT *context )
+DWORD WINAPI SetupGetFieldCount( PINFCONTEXT context )
 {
     struct inf_file *file = context->CurrentInf;
     struct line *line = get_line( file, context->Section, context->Line );
@@ -1552,8 +1552,8 @@ DWORD WINAPI SetupGetFieldCount( const INFCONTEXT *context )
 /***********************************************************************
  *		SetupGetStringFieldA    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetStringFieldA( const INFCONTEXT *context, DWORD index, PSTR buffer,
-                                  DWORD size, DWORD *required )
+BOOL WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer,
+                                  DWORD size, PDWORD required )
 {
     struct inf_file *file = context->CurrentInf;
     struct field *field = get_field( file, context->Section, context->Line, index );
@@ -1583,8 +1583,8 @@ BOOL WINAPI SetupGetStringFieldA( const INFCONTEXT *context, DWORD index, PSTR b
 /***********************************************************************
  *		SetupGetStringFieldW    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetStringFieldW( const INFCONTEXT *context, DWORD index, PWSTR buffer,
-                                  DWORD size, DWORD *required )
+BOOL WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer,
+                                  DWORD size, PDWORD required )
 {
     struct inf_file *file = context->CurrentInf;
     struct field *field = get_field( file, context->Section, context->Line, index );
@@ -1614,7 +1614,7 @@ BOOL WINAPI SetupGetStringFieldW( const INFCONTEXT *context, DWORD index, PWSTR 
 /***********************************************************************
  *		SetupGetIntField    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetIntField( const INFCONTEXT *context, DWORD index, INT *result )
+BOOL WINAPI SetupGetIntField( PINFCONTEXT context, DWORD index, PINT result )
 {
     char localbuff[20];
     char *end, *buffer = localbuff;
@@ -1645,8 +1645,8 @@ BOOL WINAPI SetupGetIntField( const INFCONTEXT *context, DWORD index, INT *resul
 /***********************************************************************
  *		SetupGetBinaryField    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetBinaryField( const INFCONTEXT *context, DWORD index, BYTE *buffer,
-                                 DWORD size, DWORD *required )
+BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
+                                 DWORD size, LPDWORD required )
 {
     struct inf_file *file = context->CurrentInf;
     struct line *line = get_line( file, context->Section, context->Line );
@@ -1702,8 +1702,8 @@ BOOL WINAPI SetupGetBinaryField( const INFCONTEXT *context, DWORD index, BYTE *b
 /***********************************************************************
  *		SetupGetMultiSzFieldA    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetMultiSzFieldA( const INFCONTEXT *context, DWORD index, PSTR buffer,
-                                   DWORD size, DWORD *required )
+BOOL WINAPI SetupGetMultiSzFieldA( PINFCONTEXT context, DWORD index, PSTR buffer,
+                                   DWORD size, LPDWORD required )
 {
     struct inf_file *file = context->CurrentInf;
     struct line *line = get_line( file, context->Section, context->Line );
@@ -1751,8 +1751,8 @@ BOOL WINAPI SetupGetMultiSzFieldA( const INFCONTEXT *context, DWORD index, PSTR 
 /***********************************************************************
  *		SetupGetMultiSzFieldW    (SETUPAPI.@)
  */
-BOOL WINAPI SetupGetMultiSzFieldW( const INFCONTEXT *context, DWORD index, PWSTR buffer,
-                                   DWORD size, DWORD *required )
+BOOL WINAPI SetupGetMultiSzFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer,
+                                   DWORD size, LPDWORD required )
 {
     struct inf_file *file = context->CurrentInf;
     struct line *line = get_line( file, context->Section, context->Line );
