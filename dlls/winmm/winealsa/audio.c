@@ -1557,8 +1557,6 @@ static DWORD wodClose(WORD wDevID)
 	wwo->p_handle = NULL;
 
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
-
-       HeapFree(GetProcessHeap(), 0, wwo->device);
     }
 
     HeapFree(GetProcessHeap(), 0, wwo->ufds);
@@ -3044,8 +3042,6 @@ static DWORD widClose(WORD wDevID)
 	wwi->p_handle = NULL;
 
 	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
-
-       HeapFree(GetProcessHeap(), 0, wwi->device);
     }
 
     HeapFree(GetProcessHeap(), 0, wwi->ufds);
