@@ -1239,7 +1239,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	DDSURFACEDESC	ddesc,sdesc;
 	HRESULT			ret = DD_OK;
 	LPBYTE			sbuf, dbuf;
-
+	RECT				rsrc2;
 
 	if (TRACE_ON(ddraw)) {
 	    FIXME("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
@@ -1248,11 +1248,23 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	    FIXME("	trans:");
 	    if (FIXME_ON(ddraw))
 	      _dump_DDBLTFAST(trans);
-	    FIXME("	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+		 if (rsrc)
+			 FIXME("	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+		 else
+			 FIXME(" srcrect: NULL\n");
 	}
+	
 	/* We need to lock the surfaces, or we won't get refreshes when done. */
 	IDirectDrawSurface4_Lock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
+
+	if (!rsrc) {
+		WARN("rsrc is NULL!\n");
+		rsrc = &rsrc2;
+		rsrc->left = rsrc->top = 0;
+		rsrc->right = sdesc.dwWidth;
+		rsrc->bottom = sdesc.dwHeight;
+	}
 
 	bpp = GET_BPP(This->s.surface_desc);
 	sbuf = (BYTE *) sdesc.u1.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
