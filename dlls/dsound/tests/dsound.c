@@ -671,7 +671,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_GetCaps(dsco,&dsccaps);
     ok(rc==DS_OK,"GetCaps failed: 0x%lx\n",rc);
     if (rc==DS_OK) {
-        trace("  DirectSoundCapture Caps: size=%ld flags=0x%08lx formats=%ld channels=%ld\n",
+        trace("  DirectSoundCapture Caps: size=%ld flags=0x%08lx formats=%05lx channels=%ld\n",
               dsccaps.dwSize,dsccaps.dwFlags,dsccaps.dwFormats,dsccaps.dwChannels);
     }
 
