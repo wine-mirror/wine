@@ -725,17 +725,12 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
       "GetFullPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
       "GetFullPathNameA returned part '%s' instead of '%s'\n",strptr,SHORTFILE);
-/* Windows will insert a drive letter in front of an absolute UNIX path, but
-    Wine probably shouldn't. */
+/* Windows will insert a drive letter in front of an absolute UNIX path */
   sprintf(tmpstr,"/%s/%s",SHORTDIR,SHORTFILE);
   ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed\n");
-  todo_wine {
-    if( curDrive != NOT_A_VALID_DRIVE) {
-      sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
-      ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-         "GetFullPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
-    }
-  }
+  sprintf(tmpstr,"%c:\\%s\\%s",*tmpstr1,SHORTDIR,SHORTFILE);
+  ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+     "GetFullPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
 /* This passes in Wine because it still contains the pointer from the previous test */
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
       "GetFullPathNameA returned part '%s' instead of '%s'\n",strptr,SHORTFILE);
