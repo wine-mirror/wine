@@ -882,7 +882,8 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	        
             /* the animation isn't playing, don't paint */
 	    if(!infoPtr->uTimer && !infoPtr->hThread)
-	    	break;
+		/* default paint handling */
+	    	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 	    
             if (GetWindowLongA(hWnd, GWL_STYLE) & ACS_TRANSPARENT)
                 infoPtr->hbrushBG = SendMessageA(GetParent(hWnd), WM_CTLCOLORSTATIC,
@@ -896,15 +897,15 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
             }
             else
             {
-	    PAINTSTRUCT ps;
- 	    HDC hDC = BeginPaint(hWnd, &ps);
+	        PAINTSTRUCT ps;
+ 	        HDC hDC = BeginPaint(hWnd, &ps);
 
                 EnterCriticalSection(&infoPtr->cs);
                 ANIMATE_PaintFrame(infoPtr, hDC);
                 LeaveCriticalSection(&infoPtr->cs);
     
-	    EndPaint(hWnd, &ps);
-	}
+	        EndPaint(hWnd, &ps);
+	    }
         }
 	break;
 
