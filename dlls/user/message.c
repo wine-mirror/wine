@@ -584,12 +584,14 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_WINE_MOUSE_LL_HOOK:
         push_data( data, (MSLLHOOKSTRUCT *)lparam, sizeof(MSLLHOOKSTRUCT) );
         return 0;
+    case WM_PAINT:
+        if (!wparam) return 0;
+        /* fall through */
 
     /* these contain an HFONT */
     case WM_SETFONT:
     case WM_GETFONT:
     /* these contain an HDC */
-    case WM_PAINT:
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
     case WM_NCPAINT:
@@ -840,12 +842,14 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_WINE_MOUSE_LL_HOOK:
         minsize = sizeof(MSLLHOOKSTRUCT);
         break;
+    case WM_PAINT:
+        if (!*wparam) return TRUE;
+        /* fall through */
 
     /* these contain an HFONT */
     case WM_SETFONT:
     case WM_GETFONT:
     /* these contain an HDC */
-    case WM_PAINT:
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
     case WM_NCPAINT:
