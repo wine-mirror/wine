@@ -1661,42 +1661,47 @@ static LRESULT LISTBOX_Directory( WND *wnd, LB_DESCR *descr, UINT attrib,
     WIN32_FIND_DATAA entry;
     int pos;
 
-    if ((handle = FindFirstFileA(filespec,&entry)) == INVALID_HANDLE_VALUE)
-    {
-        if (GetLastError() != ERROR_NO_MORE_FILES) return LB_ERR;
-    }
-    else
-    {
-        do
+    /* don't scan directory if we just want drives exclusively */
+    if (attrib != (DDL_DRIVES | DDL_EXCLUSIVE)) {
+        /* scan directory */
+        if ((handle = FindFirstFileA(filespec,&entry)) == INVALID_HANDLE_VALUE)
         {
-            char buffer[270];
-            if (entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            if (GetLastError() != ERROR_NO_MORE_FILES) return LB_ERR;
+        }
+        else
+        {
+            do
             {
-                if (!(attrib & DDL_DIRECTORY) ||
-                    !strcmp( entry.cAlternateFileName, "." )) continue;
-                if (long_names) sprintf( buffer, "[%s]", entry.cFileName );
-                else sprintf( buffer, "[%s]", entry.cAlternateFileName );
-            }
-            else  /* not a directory */
-            {
+                char buffer[270];
+                if (entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    if (!(attrib & DDL_DIRECTORY) ||
+                        !strcmp( entry.cAlternateFileName, "." )) continue;
+                    if (long_names) sprintf( buffer, "[%s]", entry.cFileName );
+                    else sprintf( buffer, "[%s]", entry.cAlternateFileName );
+                }
+                else  /* not a directory */
+                {
 #define ATTRIBS (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | \
                  FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE)
 
-                if ((attrib & DDL_EXCLUSIVE) &&
-                    ((attrib & ATTRIBS) != (entry.dwFileAttributes & ATTRIBS)))
-                    continue;
+                    if ((attrib & DDL_EXCLUSIVE) &&
+                        ((attrib & ATTRIBS) != (entry.dwFileAttributes & ATTRIBS)))
+                        continue;
 #undef ATTRIBS
-                if (long_names) strcpy( buffer, entry.cFileName );
-                else strcpy( buffer, entry.cAlternateFileName );
-            }
-            if (!long_names) CharLowerA( buffer );
-            pos = LISTBOX_FindFileStrPos( wnd, descr, buffer );
-            if ((ret = LISTBOX_InsertString( wnd, descr, pos, buffer )) < 0)
-                break;
-        } while (FindNextFileA( handle, &entry ));
-        FindClose( handle );
+                    if (long_names) strcpy( buffer, entry.cFileName );
+                    else strcpy( buffer, entry.cAlternateFileName );
+                }
+                if (!long_names) CharLowerA( buffer );
+                pos = LISTBOX_FindFileStrPos( wnd, descr, buffer );
+                if ((ret = LISTBOX_InsertString( wnd, descr, pos, buffer )) < 0)
+                    break;
+            } while (FindNextFileA( handle, &entry ));
+            FindClose( handle );
+        }
     }
 
+    /* scan drives */
     if ((ret >= 0) && (attrib & DDL_DRIVES))
     {
         char buffer[] = "[-a-]";
@@ -2689,6 +2694,9 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return LB_OKAY;
 
     case LB_DIR16:
+        /* according to Win16 docs, DDL_DRIVES should make DDL_EXCLUSIVE
+         * be set automatically (this is different in Win32) */
+        if (wParam & DDL_DRIVES) wParam |= DDL_EXCLUSIVE;
         return LISTBOX_Directory( wnd, descr, wParam,
                                   (LPCSTR)PTR_SEG_TO_LIN(lParam), FALSE );
 

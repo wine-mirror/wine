@@ -102,7 +102,7 @@ owner	user32
 97  pascal16 CheckDlgButton(word word word) CheckDlgButton16
 98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked16
 99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect16
-100 pascal16 DlgDirList(word ptr word word word) DlgDirList16
+100 pascal16 DlgDirList(word str word word word) DlgDirList16
 101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage16
 102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect16
 103 pascal16 MapDialogRect(word ptr) MapDialogRect16

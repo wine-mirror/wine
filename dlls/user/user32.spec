@@ -155,10 +155,10 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall DialogBoxParamW(long wstr long ptr long) DialogBoxParamW
 @ stdcall DispatchMessageA(ptr) DispatchMessageA
 @ stdcall DispatchMessageW(ptr) DispatchMessageW
-@ stdcall DlgDirListA(long ptr long long long) DlgDirListA
+@ stdcall DlgDirListA(long str long long long) DlgDirListA
 @ stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBoxA
 @ stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBoxW
-@ stdcall DlgDirListW(long ptr long long long) DlgDirListW
+@ stdcall DlgDirListW(long wstr long long long) DlgDirListW
 @ stdcall DlgDirSelectComboBoxExA(long ptr long long) DlgDirSelectComboBoxExA
 @ stdcall DlgDirSelectComboBoxExW(long ptr long long) DlgDirSelectComboBoxExW
 @ stdcall DlgDirSelectExA(long ptr long long) DlgDirSelectExA
