@@ -99,9 +99,12 @@ HPALETTE32 WINAPI CreatePalette32(
 {
     PALETTEOBJ * palettePtr;
     HPALETTE32 hpalette;
-    int size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
-
+    int size;
+    
+    if (!palette) return 0;
     TRACE(palette,"entries=%i\n", palette->palNumEntries);
+
+    size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
     hpalette = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR) , PALETTE_MAGIC );
     if (!hpalette) return 0;
