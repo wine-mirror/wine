@@ -1235,7 +1235,7 @@ DSPCF_CreateInstance(
 	*ppobj = NULL;
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-		return IKsPropertySetImpl_Create(0,(IKsPropertySetImpl**)ppobj);
+		return IKsPrivatePropertySetImpl_Create((IKsPrivatePropertySetImpl**)ppobj);
 	}
 
 	WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	

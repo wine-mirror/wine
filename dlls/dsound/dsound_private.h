@@ -52,7 +52,8 @@ typedef struct IDirectSoundFullDuplexImpl IDirectSoundFullDuplexImpl;
 typedef struct IDirectSoundNotifyImpl IDirectSoundNotifyImpl;
 typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
-typedef struct IKsPropertySetImpl IKsPropertySetImpl;
+typedef struct IKsBufferPropertySetImpl IKsBufferPropertySetImpl;
+typedef struct IKsPrivatePropertySetImpl IKsPrivatePropertySetImpl;
 typedef struct PrimaryBufferImpl PrimaryBufferImpl;
 typedef struct IClassFactoryImpl IClassFactoryImpl;
 
@@ -113,7 +114,7 @@ struct IDirectSoundBufferImpl
     /* IDirectSoundBufferImpl fields */
     IDirectSoundImpl*           dsound;
     IDirectSound3DBufferImpl*   ds3db;
-    IKsPropertySetImpl*         iks;
+    IKsBufferPropertySetImpl*   iks;
     CRITICAL_SECTION            lock;
     PIDSDRIVERBUFFER            hwbuf;
     WAVEFORMATEX                wfx;
@@ -256,9 +257,9 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	IDirectSound3DListenerImpl **pdsl);
 
 /*****************************************************************************
- *  IKsPropertySet implementation structure
+ *  IKsBufferPropertySet implementation structure
  */
-struct IKsPropertySetImpl
+struct IKsBufferPropertySetImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IKsPropertySet);
@@ -267,9 +268,22 @@ struct IKsPropertySetImpl
     IDirectSoundBufferImpl*	dsb;
 };
 
-HRESULT WINAPI IKsPropertySetImpl_Create(
+HRESULT WINAPI IKsBufferPropertySetImpl_Create(
 	IDirectSoundBufferImpl *This,
-	IKsPropertySetImpl **piks);
+	IKsBufferPropertySetImpl **piks);
+
+/*****************************************************************************
+ *  IKsPrivatePropertySet implementation structure
+ */
+struct IKsPrivatePropertySetImpl
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IKsPropertySet);
+    DWORD			ref;
+};
+
+HRESULT WINAPI IKsPrivatePropertySetImpl_Create(
+	IKsPrivatePropertySetImpl **piks);
 
 /*****************************************************************************
  * IDirectSound3DBuffer implementation structure
