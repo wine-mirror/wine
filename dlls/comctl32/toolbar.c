@@ -109,6 +109,7 @@ typedef struct
     BOOL     bAutoSize;       /* auto size deadlock indicator */
     BOOL     bAnchor;         /* anchor highlight enabled */
     BOOL     bNtfUnicode;     /* TRUE if NOTIFYs use {W} */
+    BOOL     bDoRedraw;       /* Redraw status */
     DWORD      dwExStyle;       /* extended toolbar style */
     DWORD      dwDTFlags;       /* DrawText flags */
 
@@ -176,9 +177,10 @@ TOOLBAR_DumpToolbar(TOOLBAR_INFO *iP, INT line)
 	      iP->hwndSelf, line,
 	      iP->dwExStyle, iP->nNumButtons, iP->nNumBitmaps,
 	      iP->nNumStrings, dwStyle);
-	TRACE("toolbar %08x at line %d, himlInt=%p, himlDef=%p, himlHot=%p, himlDis=%p\n",
+	TRACE("toolbar %08x at line %d, himlInt=%p, himlDef=%p, himlHot=%p, himlDis=%p, redrawable=%s\n",
 	      iP->hwndSelf, line,
-	      iP->himlInt, iP->himlDef, iP->himlHot, iP->himlDis);
+	      iP->himlInt, iP->himlDef, iP->himlHot, iP->himlDis,
+	      (iP->bDoRedraw) ? "TRUE" : "FALSE");
  	for(i=0; i<iP->nNumButtons; i++) {
 	    TOOLBAR_DumpButton(iP, &iP->buttons[i], i, TRUE);
 	}
@@ -2353,6 +2355,7 @@ TOOLBAR_AutoSize (HWND hwnd)
 	uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
 	cx = 0;
 	cy = 0;
+	TOOLBAR_CalcToolbar (hwnd);
     }
     else {
 	infoPtr->nWidth = parent_rect.right - parent_rect.left;
@@ -3140,23 +3143,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	* I only see this happen with nIndex == -1, but it could have a special
 	* meaning (like -nIndex (or ~nIndex) to get the real position of insertion).
 	*/
-       int	len;
-       LPSTR	ptr;
-
-       /* FIXME: iString == -1 is undocumented */
-       if(lpTbb->iString && lpTbb->iString!=-1) {
-           len = strlen((char*)lpTbb->iString) + 2;
-           ptr = COMCTL32_Alloc(len);
-           nIndex = infoPtr->nNumButtons;
-           strcpy(ptr, (char*)lpTbb->iString);
-           ptr[len - 1] = 0; /* ended by two '\0' */
-           lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
-           COMCTL32_Free(ptr);
-       }
-       else {
-           ERR("lpTbb->iString is NULL\n");
-           return FALSE;
-       }
+	nIndex = infoPtr->nNumButtons;
 
     } else if (nIndex < 0)
        return FALSE;
@@ -3174,6 +3161,19 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nIndex > 0) {
 	memcpy (&infoPtr->buttons[0], &oldButtons[0],
 		nIndex * sizeof(TBUTTON_INFO));
+    }
+
+    /* if passed string and not index, then add string */
+    if(HIWORD(lpTbb->iString) && lpTbb->iString!=-1) {
+	int	len;
+	LPSTR	ptr;
+
+	len = strlen((char*)lpTbb->iString) + 2;
+	ptr = COMCTL32_Alloc(len*sizeof(char));
+	strcpy(ptr, (char*)lpTbb->iString);
+	ptr[len - 1] = 0; /* ended by two '\0' */
+	lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
+	COMCTL32_Free(ptr);
     }
 
     /* insert new button */
@@ -3208,7 +3208,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_CalcToolbar (hwnd);
 
-    InvalidateRect (hwnd, NULL, FALSE);
+    InvalidateRect (hwnd, NULL, TRUE);
 
     return TRUE;
 }
@@ -3242,6 +3242,19 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		nIndex * sizeof(TBUTTON_INFO));
     }
 
+    /* if passed string and not index, then add string */
+    if(HIWORD(lpTbb->iString) && lpTbb->iString!=-1) {
+	int	len;
+	LPWSTR	ptr;
+
+	len = strlenW((WCHAR*)lpTbb->iString) + 2;
+	ptr = COMCTL32_Alloc(len*sizeof(WCHAR));
+	strcpyW(ptr, (WCHAR*)lpTbb->iString);
+	ptr[len - 1] = 0; /* ended by two '\0' */
+	lpTbb->iString = TOOLBAR_AddStringW(hwnd, 0, (LPARAM)ptr);
+	COMCTL32_Free(ptr);
+    }
+
     /* insert new button */
     infoPtr->buttons[nIndex].iBitmap   = lpTbb->iBitmap;
     infoPtr->buttons[nIndex].idCommand = lpTbb->idCommand;
@@ -3272,7 +3285,7 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     COMCTL32_Free (oldButtons);
 
-    InvalidateRect (hwnd, NULL, FALSE);
+    InvalidateRect (hwnd, NULL, TRUE);
 
     return TRUE;
 }
@@ -3800,6 +3813,7 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
 
     /* FIXME: redraw ? */
+    InvalidateRect(hwnd, NULL, TRUE);
 
     return (LRESULT)himlTemp; 
 }
@@ -4047,6 +4061,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->iVersion = 0;
     infoPtr->bNtfUnicode = FALSE;
     infoPtr->hwndSelf = hwnd;
+    infoPtr->bDoRedraw = TRUE;
 
     SystemParametersInfoA (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
     infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectA (&logFont);
@@ -4753,6 +4768,35 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
 
 
 static LRESULT
+TOOLBAR_SetRedraw (HWND hwnd, WPARAM wParam, LPARAM lParam)
+     /*****************************************************
+      *
+      * Function;
+      *  Handles the WM_SETREDRAW message.
+      *
+      * Documentation:
+      *  According to testing V4.71 of COMCTL32 returns the 
+      *  *previous* status of the redraw flag (either 0 or 1)
+      *  instead of the MSDN documented value of 0 if handled.
+      *  (For laughs see the "consistancy" with same function
+      *   in rebar.)
+      *
+      *****************************************************/
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    BOOL oldredraw = infoPtr->bDoRedraw;
+
+    TRACE("set to %s\n", 
+	  (wParam) ? "TRUE" : "FALSE");
+    infoPtr->bDoRedraw = (BOOL) wParam;
+    if (wParam) {
+	InvalidateRect (infoPtr->hwndSelf, 0, TRUE);
+    }
+    return (oldredraw) ? 1 : 0;
+}
+
+
+static LRESULT
 TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -5184,6 +5228,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT:
 	    return TOOLBAR_Paint (hwnd, wParam);
+
+	case WM_SETREDRAW:
+	    return TOOLBAR_SetRedraw (hwnd, wParam, lParam);
 
 	case WM_SIZE:
 	    return TOOLBAR_Size (hwnd, wParam, lParam);
