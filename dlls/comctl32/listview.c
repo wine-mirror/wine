@@ -138,6 +138,7 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem);
 static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem);
 static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam);
+static LRESULT LISTVIEW_GetStringWidthA(HWND hwnd, LPCSTR lpszText);
 
 /*************************************************************************
  * LISTVIEW_UpdateHeaderSize [Internal] 
@@ -1652,8 +1653,11 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
   HDPA hdpaSubItems;
   LISTVIEW_ITEM *lpItem;
   NMLISTVIEW nmlv;
-  UINT uChanged;
   LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  UINT uChanged;
+  UINT uView = lStyle & LVS_TYPEMASK;
+  INT item_width;
 
   if (lpLVItem != NULL)
   {
@@ -1687,6 +1691,16 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
 
             /* copy information */
             bResult = LISTVIEW_InitItem(hwnd, lpItem, lpLVItem);
+
+            /* if LVS_LIST or LVS_SMALLICON, update the width of the items based on */
+            /* the width of the items text */
+            if((uView == LVS_LIST) || (uView == LVS_SMALLICON))
+            {
+              item_width = LISTVIEW_GetStringWidthA(hwnd, lpItem->pszText);
+
+              if(item_width > infoPtr->nItemWidth)
+                  infoPtr->nItemWidth = item_width;
+            }
 
             /* send LVN_ITEMCHANGED notification */
             nmlv.hdr.code = LVN_ITEMCHANGED;
