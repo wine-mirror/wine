@@ -19,7 +19,7 @@
 #include "server.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(toolhelp)
+DEFAULT_DEBUG_CHANNEL(toolhelp);
 
 
 /* FIXME: to make this working, we have to callback all these registered 
@@ -150,10 +150,9 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     struct create_snapshot_request *req = get_req_buffer();
 
     TRACE("%lx,%lx\n", flags, process );
-    if (flags & (TH32CS_SNAPHEAPLIST|TH32CS_SNAPMODULE|TH32CS_SNAPTHREAD))
-        FIXME("flags %lx not implemented\n", flags );
-    if (!(flags & TH32CS_SNAPPROCESS))
+    if (!(flags & (TH32CS_SNAPPROCESS|TH32CS_SNAPTHREAD|TH32CS_SNAPMODULE)))
     {
+        FIXME("flags %lx not implemented\n", flags );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return INVALID_HANDLE_VALUE;
     }
@@ -161,23 +160,47 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     /* Now do the snapshot */
     req->flags   = flags & ~TH32CS_INHERIT;
     req->inherit = (flags & TH32CS_INHERIT) != 0;
+    req->pid     = (void *)process;
     server_call( REQ_CREATE_SNAPSHOT );
     return req->handle;
 }
 
 
 /***********************************************************************
+ *		TOOLHELP_Thread32Next
+ *
+ * Implementation of Thread32First/Next
+ */
+static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL first )
+{
+    struct next_thread_request *req = get_req_buffer();
+
+    if (lpte->dwSize < sizeof(THREADENTRY32))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(THREADENTRY32), lpte->dwSize);
+        return FALSE;
+    }
+    req->handle = handle;
+    req->reset = first;
+    if (server_call( REQ_NEXT_THREAD )) return FALSE;
+    lpte->cntUsage           = req->count;
+    lpte->th32ThreadID       = (DWORD)req->tid;
+    lpte->th32OwnerProcessID = (DWORD)req->pid;
+    lpte->tbBasePri          = req->base_pri; 
+    lpte->tbDeltaPri         = req->delta_pri;
+    lpte->dwFlags            = 0;  /* SDK: "reserved; do not use" */
+    return TRUE;
+}
+
+/***********************************************************************
  *		Thread32First    (KERNEL32.686)
  *
  * Return info about the first thread in a toolhelp32 snapshot
  */
-BOOL WINAPI Thread32First(HANDLE hSnapshot, LPTHREADENTRY lpte)
+BOOL WINAPI Thread32First(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
 {
-    if (!lpte)
-	return FALSE;
-
-    FIXME("(%d,%p),stub!\n",hSnapshot,lpte);
-    return FALSE;
+    return TOOLHELP_Thread32Next(hSnapshot, lpte, TRUE);
 }
 
 /***********************************************************************
@@ -185,13 +208,9 @@ BOOL WINAPI Thread32First(HANDLE hSnapshot, LPTHREADENTRY lpte)
  *
  * Return info about the "next" thread in a toolhelp32 snapshot
  */
-BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY lpte)
+BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
 {
-    if (!lpte)
-	return FALSE;
-
-    FIXME("(%d,%p),stub!\n",hSnapshot,lpte);
-    return FALSE;
+    return TOOLHELP_Thread32Next(hSnapshot, lpte, FALSE);
 }
 
 /***********************************************************************
@@ -199,20 +218,20 @@ BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY lpte)
  *
  * Implementation of Process32First/Next
  */
-static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL first )
+static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL first )
 {
     struct next_process_request *req = get_req_buffer();
 
-    if (lppe->dwSize < sizeof (PROCESSENTRY))
+    if (lppe->dwSize < sizeof(PROCESSENTRY32))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        ERR("Result buffer too small\n");
+        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32), lppe->dwSize);
         return FALSE;
     }
     req->handle = handle;
     req->reset = first;
     if (server_call( REQ_NEXT_PROCESS )) return FALSE;
-    lppe->cntUsage            = 1;
+    lppe->cntUsage            = req->count;
     lppe->th32ProcessID       = (DWORD)req->pid;
     lppe->th32DefaultHeapID   = 0;  /* FIXME */ 
     lppe->th32ModuleID        = 0;  /* FIXME */
@@ -230,7 +249,7 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL fir
  *
  * Return info about the first process in a toolhelp32 snapshot
  */
-BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY lppe)
+BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 {
     return TOOLHELP_Process32Next( hSnapshot, lppe, TRUE );
 }
@@ -240,9 +259,40 @@ BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY lppe)
  *
  * Return info about the "next" process in a toolhelp32 snapshot
  */
-BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY lppe)
+BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 {
     return TOOLHELP_Process32Next( hSnapshot, lppe, FALSE );
+}
+
+
+/***********************************************************************
+ *		TOOLHELP_Module32Next
+ *
+ * Implementation of Module32First/Next
+ */
+static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
+{
+    struct next_module_request *req = get_req_buffer();
+    
+    if (lpme->dwSize < sizeof (MODULEENTRY32))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32), lpme->dwSize);
+        return FALSE;
+    }
+    req->handle = handle;
+    req->reset = first;
+    if (server_call( REQ_NEXT_MODULE )) return FALSE;
+    lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
+    lpme->th32ProcessID  = (DWORD)req->pid;
+    lpme->GlblcntUsage   = 0; /* FIXME */
+    lpme->ProccntUsage   = 0; /* FIXME */ 
+    lpme->modBaseAddr    = req->base;
+    lpme->modBaseSize    = 0; /* FIXME */
+    lpme->hModule        = (DWORD)req->base;
+    lpme->szModule[0]    = 0;  /* FIXME */
+    lpme->szExePath[0]   = 0;  /* FIXME */
+    return TRUE;
 }
 
 /***********************************************************************
@@ -250,10 +300,9 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY lppe)
  *
  * Return info about the "first" module in a toolhelp32 snapshot
  */
-BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY lpme)
+BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 {
-    FIXME("(%d,%p),stub!\n",hSnapshot,lpme);
-    return FALSE;
+    return TOOLHELP_Module32Next( hSnapshot, lpme, TRUE );
 }
 
 /***********************************************************************
@@ -261,10 +310,9 @@ BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY lpme)
  *
  * Return info about the "next" module in a toolhelp32 snapshot
  */
-BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY lpme)
+BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 {
-    FIXME("(%d,%p),stub!\n",hSnapshot,lpme);
-    return FALSE;
+    return TOOLHELP_Module32Next( hSnapshot, lpme, FALSE );
 }
 
 /************************************************************************

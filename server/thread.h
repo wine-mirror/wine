@@ -58,6 +58,13 @@ struct thread
     enum request        last_req;  /* last request received (for debugging) */
 };
 
+struct thread_snapshot
+{
+    struct thread  *thread;    /* thread ptr */
+    int             count;     /* thread refcount */
+    int             priority;  /* priority class */
+};
+
 /* callback function for building the thread reply when sleep_on is finished */
 typedef void (*sleep_reply)( struct thread *thread, struct object *obj, int signaled );
 
@@ -79,6 +86,7 @@ extern void kill_thread( struct thread *thread, int violent_death );
 extern void wake_up( struct object *obj, int max );
 extern int sleep_on( int count, struct object *objects[], int flags,
                      int timeout, sleep_reply func );
+extern struct thread_snapshot *thread_snap( int *count );
 
 /* ptrace functions */
 

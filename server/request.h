@@ -138,6 +138,8 @@ DECL_HANDLER(get_mapping_info);
 DECL_HANDLER(create_device);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
+DECL_HANDLER(next_thread);
+DECL_HANDLER(next_module);
 DECL_HANDLER(wait_debug_event);
 DECL_HANDLER(exception_event);
 DECL_HANDLER(output_debug_string);
@@ -244,6 +246,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_device,
     (req_handler)req_create_snapshot,
     (req_handler)req_next_process,
+    (req_handler)req_next_thread,
+    (req_handler)req_next_module,
     (req_handler)req_wait_debug_event,
     (req_handler)req_exception_event,
     (req_handler)req_output_debug_string,

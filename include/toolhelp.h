@@ -2,7 +2,6 @@
 #define __WINE_TOOLHELP_H
 
 #include "windef.h"
-#include "tlhelp32.h"
 
 #define MAX_DATA	11
 #define MAX_MODULE_NAME	9
@@ -396,45 +395,5 @@ typedef struct {
 } STACKTRACEENTRY;
 
 #include "poppack.h"
-
-/*
- * Thread entry list as created by CreateToolHelp32Snapshot 
- */
-
-typedef struct tagTHREADENTRY { 
-    DWORD dwSize; 
-    DWORD cntUsage; 
-    DWORD th32ThreadID; 
-    DWORD th32OwnerProcessID; 
-    DWORD tbBasePri; 
-    DWORD tbDeltaPri; 
-    DWORD dwFlags; 
-    DWORD th32AccessKey;
-    DWORD th32CurrentProcessID;
-} THREADENTRY, *PTHREADENTRY, *LPTHREADENTRY; 
-
-BOOL      WINAPI Thread32First(HANDLE,LPTHREADENTRY);
-BOOL      WINAPI Thread32Next(HANDLE,LPTHREADENTRY);
-
-/*
- * Process entry list as created by CreateToolHelp32Snapshot 
- */
-
-typedef struct tagPROCESSENTRY { 
-    DWORD dwSize; 
-    DWORD cntUsage; 
-    DWORD th32ProcessID; 
-    DWORD th32DefaultHeapID; 
-    DWORD th32ModuleID; 
-    DWORD cntThreads; 
-    DWORD th32ParentProcessID; 
-    LONG  pcPriClassBase; 
-    DWORD dwFlags; 
-    char szExeFile[MAX_PATH]; 
-} PROCESSENTRY, *PPROCESSENTRY, *LPPROCESSENTRY; 
-
-BOOL      WINAPI Process32First(HANDLE,LPPROCESSENTRY);
-BOOL      WINAPI Process32Next(HANDLE,LPPROCESSENTRY);
-
 
 #endif /* __WINE_TOOLHELP_H */

@@ -580,6 +580,30 @@ void kill_thread( struct thread *thread, int violent_death )
     release_object( thread );
 }
 
+/* take a snapshot of currently running threads */
+struct thread_snapshot *thread_snap( int *count )
+{
+    struct thread_snapshot *snapshot, *ptr;
+    struct thread *thread;
+    int total = 0;
+
+    for (thread = first_thread; thread; thread = thread->next)
+        if (thread->state != TERMINATED) total++;
+    if (!total || !(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
+    ptr = snapshot;
+    for (thread = first_thread; thread; thread = thread->next)
+    {
+        if (thread->state == TERMINATED) continue;
+        ptr->thread   = thread;
+        ptr->count    = thread->obj.refcount;
+        ptr->priority = thread->priority;
+        grab_object( thread );
+        ptr++;
+    }
+    *count = total;
+    return snapshot;
+}
+
 /* signal that we are finished booting on the client side */
 DECL_HANDLER(boot_done)
 {

@@ -789,6 +789,7 @@ struct create_snapshot_request
 {
     IN  int          inherit;       /* inherit flag */
     IN  int          flags;         /* snapshot flags (TH32CS_*) */
+    IN  void*        pid;           /* process id */
     OUT int          handle;        /* handle to the snapshot */
 };
 
@@ -798,9 +799,33 @@ struct next_process_request
 {
     IN  int          handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
-    OUT void*        pid;          /* process id */
-    OUT int          threads;      /* number of threads */
-    OUT int          priority;     /* process priority */
+    OUT int          count;         /* process usage count */
+    OUT void*        pid;           /* process id */
+    OUT int          threads;       /* number of threads */
+    OUT int          priority;      /* process priority */
+};
+
+
+/* Get the next thread from a snapshot */
+struct next_thread_request
+{
+    IN  int          handle;        /* handle to the snapshot */
+    IN  int          reset;         /* reset snapshot position? */
+    OUT int          count;         /* thread usage count */
+    OUT void*        pid;           /* process id */
+    OUT void*        tid;           /* thread id */
+    OUT int          base_pri;      /* base priority */
+    OUT int          delta_pri;     /* delta priority */
+};
+
+
+/* Get the next module from a snapshot */
+struct next_module_request
+{
+    IN  int          handle;        /* handle to the snapshot */
+    IN  int          reset;         /* reset snapshot position? */
+    OUT void*        pid;           /* process id */
+    OUT void*        base;          /* module base address */
 };
 
 
@@ -1184,6 +1209,8 @@ enum request
     REQ_CREATE_DEVICE,
     REQ_CREATE_SNAPSHOT,
     REQ_NEXT_PROCESS,
+    REQ_NEXT_THREAD,
+    REQ_NEXT_MODULE,
     REQ_WAIT_DEBUG_EVENT,
     REQ_EXCEPTION_EVENT,
     REQ_OUTPUT_DEBUG_STRING,
@@ -1219,7 +1246,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 8
+#define SERVER_PROTOCOL_VERSION 9
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

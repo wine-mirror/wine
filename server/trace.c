@@ -929,7 +929,8 @@ static void dump_create_device_reply( const struct create_device_request *req )
 static void dump_create_snapshot_request( const struct create_snapshot_request *req )
 {
     fprintf( stderr, " inherit=%d,", req->inherit );
-    fprintf( stderr, " flags=%d", req->flags );
+    fprintf( stderr, " flags=%d,", req->flags );
+    fprintf( stderr, " pid=%p", req->pid );
 }
 
 static void dump_create_snapshot_reply( const struct create_snapshot_request *req )
@@ -945,9 +946,37 @@ static void dump_next_process_request( const struct next_process_request *req )
 
 static void dump_next_process_reply( const struct next_process_request *req )
 {
+    fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " threads=%d,", req->threads );
     fprintf( stderr, " priority=%d", req->priority );
+}
+
+static void dump_next_thread_request( const struct next_thread_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " reset=%d", req->reset );
+}
+
+static void dump_next_thread_reply( const struct next_thread_request *req )
+{
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " base_pri=%d,", req->base_pri );
+    fprintf( stderr, " delta_pri=%d", req->delta_pri );
+}
+
+static void dump_next_module_request( const struct next_module_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " reset=%d", req->reset );
+}
+
+static void dump_next_module_reply( const struct next_module_request *req )
+{
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " base=%p", req->base );
 }
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )
@@ -1364,6 +1393,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_request,
     (dump_func)dump_create_snapshot_request,
     (dump_func)dump_next_process_request,
+    (dump_func)dump_next_thread_request,
+    (dump_func)dump_next_module_request,
     (dump_func)dump_wait_debug_event_request,
     (dump_func)dump_exception_event_request,
     (dump_func)dump_output_debug_string_request,
@@ -1467,6 +1498,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_device_reply,
     (dump_func)dump_create_snapshot_reply,
     (dump_func)dump_next_process_reply,
+    (dump_func)dump_next_thread_reply,
+    (dump_func)dump_next_module_reply,
     (dump_func)dump_wait_debug_event_reply,
     (dump_func)dump_exception_event_reply,
     (dump_func)0,
@@ -1570,6 +1603,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_device",
     "create_snapshot",
     "next_process",
+    "next_thread",
+    "next_module",
     "wait_debug_event",
     "exception_event",
     "output_debug_string",

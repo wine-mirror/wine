@@ -563,6 +563,7 @@ struct process_snapshot *process_snap( int *count )
         if (!process->running_threads) continue;
         ptr->process  = process;
         ptr->threads  = process->running_threads;
+        ptr->count    = process->obj.refcount;
         ptr->priority = process->priority;
         grab_object( process );
         ptr++;
@@ -570,6 +571,25 @@ struct process_snapshot *process_snap( int *count )
     *count = running_processes;
     return snapshot;
 }
+
+/* take a snapshot of the modules of a process */
+struct module_snapshot *module_snap( struct process *process, int *count )
+{
+    struct module_snapshot *snapshot, *ptr;
+    struct process_dll *dll;
+    int total = 0;
+
+    for (dll = &process->exe; dll; dll = dll->next) total++;
+    if (!(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
+
+    for (ptr = snapshot, dll = &process->exe; dll; dll = dll->next, ptr++)
+    {
+        ptr->base = dll->base;
+    }
+    *count = total;
+    return snapshot;
+}
+
 
 /* create a new process */
 DECL_HANDLER(new_process)

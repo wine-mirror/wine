@@ -55,8 +55,14 @@ struct process_snapshot
 {
     struct process *process;  /* process ptr */
     struct process *parent;   /* process parent */
+    int             count;    /* process refcount */
     int             threads;  /* number of threads */
     int             priority; /* priority class */
+};
+
+struct module_snapshot
+{
+    void           *base;     /* module base addr */
 };
 
 /* process functions */
@@ -75,6 +81,7 @@ extern void suspend_process( struct process *process );
 extern void resume_process( struct process *process );
 extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern struct process_snapshot *process_snap( int *count );
+extern struct module_snapshot *module_snap( struct process *process, int *count );
 
 static inline void *get_process_id( struct process *process ) { return process; }
 
