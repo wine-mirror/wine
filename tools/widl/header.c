@@ -556,12 +556,12 @@ static void write_cpp_method_def(type_t *iface)
   }
 }
 
-static void write_c_method_def(type_t *iface)
+static void write_c_method_def(type_t *iface,char *name)
 {
   func_t *cur = iface->funcs;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
-  if (iface->ref) write_c_method_def(iface->ref);
+  if (iface->ref) write_c_method_def(iface->ref,name);
   indent(0);
   fprintf(header, "/*** %s methods ***/\n", iface->name);
   while (cur) {
@@ -572,7 +572,7 @@ static void write_c_method_def(type_t *iface)
       fprintf(header, " (CALLBACK *");
       write_name(header, def);
       fprintf(header, ")(\n");
-      write_args(header, cur->args, iface->name, 1);
+      write_args(header, cur->args, name, 1);
       fprintf(header, ");\n");
       fprintf(header, "\n");
     }
@@ -724,7 +724,7 @@ void write_com_interface(type_t *iface)
     indentation++;
     fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS\n");
     fprintf(header, "\n");
-    write_c_method_def(iface);
+    write_c_method_def(iface,iface->name);
     indentation--;
     fprintf(header, "};\n");
     fprintf(header, "\n");

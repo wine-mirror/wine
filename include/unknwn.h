@@ -136,15 +136,15 @@ struct IClassFactoryVtbl {
 
     /*** IUnknown methods ***/
     HRESULT (CALLBACK *QueryInterface)(
-        IUnknown* This,
+        IClassFactory* This,
         REFIID riid,
         void** ppvObject);
 
     ULONG (CALLBACK *AddRef)(
-        IUnknown* This);
+        IClassFactory* This);
 
     ULONG (CALLBACK *Release)(
-        IUnknown* This);
+        IClassFactory* This);
 
     /*** IClassFactory methods ***/
     HRESULT (CALLBACK *CreateInstance)(
