@@ -17,26 +17,23 @@ typedef struct
     BYTE   bHeight;
     BYTE   bColorCount;
     BYTE   bReserved;
-    WORD   wPlanes;
-    WORD   wBitCount;
-    DWORD  dwBytesInRes;
-    WORD   wResId;
-} ICONDIRENTRY;
+} ICONRESDIR;
 
 typedef struct
 {
     WORD   wWidth;
     WORD   wHeight;
+} CURSORDIR;
+
+typedef struct
+{   union
+    { ICONRESDIR icon;
+      CURSORDIR  cursor;
+    } ResInfo;
     WORD   wPlanes;
     WORD   wBitCount;
     DWORD  dwBytesInRes;
     WORD   wResId;
-} CURSORDIRENTRY;
-
-typedef union
-{
-    ICONDIRENTRY    icon;
-    CURSORDIRENTRY  cursor;
 } CURSORICONDIRENTRY;
 
 typedef struct

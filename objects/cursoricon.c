@@ -188,55 +188,55 @@ void CURSORICON_FreeModuleIcons( HMODULE hModule )
  *
  * Find the icon closest to the requested size and number of colors.
  */
-static ICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
+static CURSORICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
                                               int height, int colors )
 {
     int i, maxcolors, maxwidth, maxheight;
-    ICONDIRENTRY *entry, *bestEntry = NULL;
+    CURSORICONDIRENTRY *entry, *bestEntry = NULL;
 
     if (dir->idCount < 1)
     {
         WARN(icon, "Empty directory!\n" );
         return NULL;
     }
-    if (dir->idCount == 1) return &dir->idEntries[0].icon;  /* No choice... */
+    if (dir->idCount == 1) return &dir->idEntries[0];  /* No choice... */
 
     /* First find the exact size with less colors */
 
     maxcolors = 0;
-    for (i = 0, entry = &dir->idEntries[0].icon; i < dir->idCount; i++,entry++)
-        if ((entry->bWidth == width) && (entry->bHeight == height) &&
-            (entry->bColorCount <= colors) && (entry->bColorCount > maxcolors))
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.icon.bWidth == width) && (entry->ResInfo.icon.bHeight == height) &&
+            (entry->ResInfo.icon.bColorCount <= colors) && (entry->ResInfo.icon.bColorCount > maxcolors))
         {
             bestEntry = entry;
-            maxcolors = entry->bColorCount;
+            maxcolors = entry->ResInfo.icon.bColorCount;
         }
     if (bestEntry) return bestEntry;
 
     /* First find the exact size with more colors */
 
     maxcolors = 255;
-    for (i = 0, entry = &dir->idEntries[0].icon; i < dir->idCount; i++,entry++)
-        if ((entry->bWidth == width) && (entry->bHeight == height) &&
-            (entry->bColorCount > colors) && (entry->bColorCount <= maxcolors))
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.icon.bWidth == width) && (entry->ResInfo.icon.bHeight == height) &&
+            (entry->ResInfo.icon.bColorCount > colors) && (entry->ResInfo.icon.bColorCount <= maxcolors))
         {
             bestEntry = entry;
-            maxcolors = entry->bColorCount;
+            maxcolors = entry->ResInfo.icon.bColorCount;
         }
     if (bestEntry) return bestEntry;
 
     /* Now find a smaller one with less colors */
 
     maxcolors = maxwidth = maxheight = 0;
-    for (i = 0, entry = &dir->idEntries[0].icon; i < dir->idCount; i++,entry++)
-        if ((entry->bWidth <= width) && (entry->bHeight <= height) &&
-            (entry->bWidth >= maxwidth) && (entry->bHeight >= maxheight) &&
-            (entry->bColorCount <= colors) && (entry->bColorCount > maxcolors))
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.icon.bWidth <= width) && (entry->ResInfo.icon.bHeight <= height) &&
+            (entry->ResInfo.icon.bWidth >= maxwidth) && (entry->ResInfo.icon.bHeight >= maxheight) &&
+            (entry->ResInfo.icon.bColorCount <= colors) && (entry->ResInfo.icon.bColorCount > maxcolors))
         {
             bestEntry = entry;
-            maxwidth  = entry->bWidth;
-            maxheight = entry->bHeight;
-            maxcolors = entry->bColorCount;
+            maxwidth  = entry->ResInfo.icon.bWidth;
+            maxheight = entry->ResInfo.icon.bHeight;
+            maxcolors = entry->ResInfo.icon.bColorCount;
         }
     if (bestEntry) return bestEntry;
 
@@ -244,15 +244,15 @@ static ICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
 
     maxcolors = 255;
     maxwidth = maxheight = 0;
-    for (i = 0, entry = &dir->idEntries[0].icon; i < dir->idCount; i++,entry++)
-        if ((entry->bWidth <= width) && (entry->bHeight <= height) &&
-            (entry->bWidth >= maxwidth) && (entry->bHeight >= maxheight) &&
-            (entry->bColorCount > colors) && (entry->bColorCount <= maxcolors))
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.icon.bWidth <= width) && (entry->ResInfo.icon.bHeight <= height) &&
+            (entry->ResInfo.icon.bWidth >= maxwidth) && (entry->ResInfo.icon.bHeight >= maxheight) &&
+            (entry->ResInfo.icon.bColorCount > colors) && (entry->ResInfo.icon.bColorCount <= maxcolors))
         {
             bestEntry = entry;
-            maxwidth  = entry->bWidth;
-            maxheight = entry->bHeight;
-            maxcolors = entry->bColorCount;
+            maxwidth  = entry->ResInfo.icon.bWidth;
+            maxheight = entry->ResInfo.icon.bHeight;
+            maxcolors = entry->ResInfo.icon.bColorCount;
         }
     if (bestEntry) return bestEntry;
 
@@ -260,28 +260,28 @@ static ICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
 
     maxcolors = 0;
     maxwidth = maxheight = 255;
-    for (i = 0, entry = &dir->idEntries[0].icon; i < dir->idCount; i++,entry++)
-        if ((entry->bWidth <= maxwidth) && (entry->bHeight <= maxheight) &&
-            (entry->bColorCount <= colors) && (entry->bColorCount > maxcolors))
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.icon.bWidth <= maxwidth) && (entry->ResInfo.icon.bHeight <= maxheight) &&
+            (entry->ResInfo.icon.bColorCount <= colors) && (entry->ResInfo.icon.bColorCount > maxcolors))
         {
             bestEntry = entry;
-            maxwidth  = entry->bWidth;
-            maxheight = entry->bHeight;
-            maxcolors = entry->bColorCount;
+            maxwidth  = entry->ResInfo.icon.bWidth;
+            maxheight = entry->ResInfo.icon.bHeight;
+            maxcolors = entry->ResInfo.icon.bColorCount;
         }
     if (bestEntry) return bestEntry;
 
     /* Now find a larger one with more colors */
 
     maxcolors = maxwidth = maxheight = 255;
-    for (i = 0, entry = &dir->idEntries[0].icon; i < dir->idCount; i++,entry++)
-        if ((entry->bWidth <= maxwidth) && (entry->bHeight <= maxheight) &&
-            (entry->bColorCount > colors) && (entry->bColorCount <= maxcolors))
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.icon.bWidth <= maxwidth) && (entry->ResInfo.icon.bHeight <= maxheight) &&
+            (entry->ResInfo.icon.bColorCount > colors) && (entry->ResInfo.icon.bColorCount <= maxcolors))
         {
             bestEntry = entry;
-            maxwidth  = entry->bWidth;
-            maxheight = entry->bHeight;
-            maxcolors = entry->bColorCount;
+            maxwidth  = entry->ResInfo.icon.bWidth;
+            maxheight = entry->ResInfo.icon.bHeight;
+            maxcolors = entry->ResInfo.icon.bColorCount;
         }
 
     return bestEntry;
@@ -295,43 +295,43 @@ static ICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
  * FIXME: parameter 'color' ignored and entries with more than 1 bpp
  *        ignored too
  */
-static CURSORDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
+static CURSORICONDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
                                                   int width, int height, int color)
 {
     int i, maxwidth, maxheight;
-    CURSORDIRENTRY *entry, *bestEntry = NULL;
+    CURSORICONDIRENTRY *entry, *bestEntry = NULL;
 
     if (dir->idCount < 1)
     {
         WARN(cursor, "Empty directory!\n" );
         return NULL;
     }
-    if (dir->idCount == 1) return &dir->idEntries[0].cursor; /* No choice... */
+    if (dir->idCount == 1) return &dir->idEntries[0]; /* No choice... */
 
     /* First find the largest one smaller than or equal to the requested size*/
 
     maxwidth = maxheight = 0;
-    for(i = 0,entry = &dir->idEntries[0].cursor; i < dir->idCount; i++,entry++)
-        if ((entry->wWidth <= width) && (entry->wHeight <= height) &&
-            (entry->wWidth > maxwidth) && (entry->wHeight > maxheight) &&
+    for(i = 0,entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.cursor.wWidth <= width) && (entry->ResInfo.cursor.wHeight <= height) &&
+            (entry->ResInfo.cursor.wWidth > maxwidth) && (entry->ResInfo.cursor.wHeight > maxheight) &&
 	    (entry->wBitCount == 1))
         {
             bestEntry = entry;
-            maxwidth  = entry->wWidth;
-            maxheight = entry->wHeight;
+            maxwidth  = entry->ResInfo.cursor.wWidth;
+            maxheight = entry->ResInfo.cursor.wHeight;
         }
     if (bestEntry) return bestEntry;
 
     /* Now find the smallest one larger than the requested size */
 
     maxwidth = maxheight = 255;
-    for(i = 0,entry = &dir->idEntries[0].cursor; i < dir->idCount; i++,entry++)
-        if ((entry->wWidth < maxwidth) && (entry->wHeight < maxheight) &&
+    for(i = 0,entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        if ((entry->ResInfo.cursor.wWidth < maxwidth) && (entry->ResInfo.cursor.wHeight < maxheight) &&
 	    (entry->wBitCount == 1))
         {
             bestEntry = entry;
-            maxwidth  = entry->wWidth;
-            maxheight = entry->wHeight;
+            maxwidth  = entry->ResInfo.cursor.wWidth;
+            maxheight = entry->ResInfo.cursor.wHeight;
         }
 
     return bestEntry;
@@ -396,29 +396,25 @@ BOOL CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL fCursor,
     {
       ((LPBYTE*)(*ptr))[i] = _free;
       if (fCursor) {
-        (*res)->idEntries[i].cursor.wWidth=bits->idEntries[i].bWidth;
-        (*res)->idEntries[i].cursor.wHeight=bits->idEntries[i].bHeight;
-        (*res)->idEntries[i].cursor.wPlanes=1;
-        (*res)->idEntries[i].cursor.wBitCount = ((LPBITMAPINFOHEADER)((LPBYTE)bits +
-                                                   bits->idEntries[i].dwDIBOffset))->biBitCount;
-        (*res)->idEntries[i].cursor.dwBytesInRes = bits->idEntries[i].dwDIBSize;
-        (*res)->idEntries[i].cursor.wResId=i+1;
+        (*res)->idEntries[i].ResInfo.cursor.wWidth=bits->idEntries[i].bWidth;
+        (*res)->idEntries[i].ResInfo.cursor.wHeight=bits->idEntries[i].bHeight;
 	((LPPOINT16)_free)->x=bits->idEntries[i].xHotspot;
 	((LPPOINT16)_free)->y=bits->idEntries[i].yHotspot;
 	_free+=sizeof(POINT16);
       } else {
-        (*res)->idEntries[i].icon.bWidth=bits->idEntries[i].bWidth;
-        (*res)->idEntries[i].icon.bHeight=bits->idEntries[i].bHeight;
-        (*res)->idEntries[i].icon.bColorCount = bits->idEntries[i].bColorCount;
-        (*res)->idEntries[i].icon.wPlanes=1;
-	(*res)->idEntries[i].icon.wBitCount= ((LPBITMAPINFOHEADER)((LPBYTE)bits +
-                                             bits->idEntries[i].dwDIBOffset))->biBitCount;
-        (*res)->idEntries[i].icon.dwBytesInRes = bits->idEntries[i].dwDIBSize;
-        (*res)->idEntries[i].icon.wResId=i+1;
+        (*res)->idEntries[i].ResInfo.icon.bWidth=bits->idEntries[i].bWidth;
+        (*res)->idEntries[i].ResInfo.icon.bHeight=bits->idEntries[i].bHeight;
+        (*res)->idEntries[i].ResInfo.icon.bColorCount = bits->idEntries[i].bColorCount;
       }
+      (*res)->idEntries[i].wPlanes=1;
+      (*res)->idEntries[i].wBitCount = ((LPBITMAPINFOHEADER)((LPBYTE)bits +
+                                                   bits->idEntries[i].dwDIBOffset))->biBitCount;
+      (*res)->idEntries[i].dwBytesInRes = bits->idEntries[i].dwDIBSize;
+      (*res)->idEntries[i].wResId=i+1;
+
       memcpy(_free,(LPBYTE)bits +bits->idEntries[i].dwDIBOffset,
-             (*res)->idEntries[i].icon.dwBytesInRes);
-      _free += (*res)->idEntries[i].icon.dwBytesInRes;
+             (*res)->idEntries[i].dwBytesInRes);
+      _free += (*res)->idEntries[i].dwBytesInRes;
     }
     UnmapViewOfFile( bits );
     return TRUE;    
@@ -685,8 +681,8 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
             dirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestCursor(dir, width, height, 1);
         else
             dirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestIcon(dir, width, height, colors);
-        bits = ptr[dirEntry->icon.wResId-1];
-        h = CURSORICON_CreateFromResource( 0, 0, bits, dirEntry->icon.dwBytesInRes, 
+        bits = ptr[dirEntry->wResId-1];
+        h = CURSORICON_CreateFromResource( 0, 0, bits, dirEntry->dwBytesInRes, 
                                            !fCursor, 0x00030000, width, height, loadflags);
         HeapFree( GetProcessHeap(), 0, dir );
         HeapFree( GetProcessHeap(), 0, ptr );
@@ -757,8 +753,8 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
             dirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestIcon( dir,
                                                        width, height, colors );
         if (!dirEntry) return 0;
-        wResId = dirEntry->icon.wResId;
-        dwBytesInRes = dirEntry->icon.dwBytesInRes;
+        wResId = dirEntry->wResId;
+        dwBytesInRes = dirEntry->dwBytesInRes;
         FreeResource( handle );
 
         /* Load the resource */
@@ -1382,20 +1378,16 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
         HDC hdc = GetDC(0);
 	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
 	int colors = (cFlag & LR_MONOCHROME) ? 2 : palEnts;
+	CURSORICONDIRENTRY* entry;
+
 	ReleaseDC(0, hdc);
 
 	if( bIcon )
-	{
-	    ICONDIRENTRY* entry;
 	    entry = CURSORICON_FindBestIcon( dir, width, height, colors );
-	    if( entry ) retVal = entry->wResId;
-	}
 	else
-	{
-	    CURSORDIRENTRY* entry;
 	    entry = CURSORICON_FindBestCursor( dir, width, height, 1);
-	    if( entry ) retVal = entry->wResId;
-	}
+
+	if( entry ) retVal = entry->wResId;
     }
     else WARN(cursor, "invalid resource directory\n");
     return retVal;
