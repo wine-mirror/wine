@@ -97,8 +97,6 @@ typedef struct _RSA_CryptProv
 BOOL WINAPI RSA_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
                    DWORD dwFlags, PVTableProvStruc pVTable)
 {
-    BOOL ret = FALSE;
-
     TRACE("%p %s %08lx %p\n", phProv, debugstr_a(pszContainer),
            dwFlags, pVTable);
 
@@ -118,11 +116,15 @@ BOOL WINAPI RSA_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
         cp->dwMagic = RSABASE_MAGIC;
 
         *phProv = (HCRYPTPROV) cp;
-        ret = TRUE;
-    }
-#endif
 
-    return ret;
+        SetLastError(ERROR_SUCCESS);
+        return TRUE;
+    }
+#else
+    FIXME("You have to install libcrypto.so and development headers in order to use crypto API\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+#endif
 }
 
 BOOL WINAPI RSA_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, DWORD dwFlags, HCRYPTHASH *phHash)

@@ -18,14 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
+#include <stdarg.h>
 
-#include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
 #include "winerror.h"
 #include "winreg.h"
+
+#include "wine/test.h"
 
 static const char szRsaBaseProv[] = MS_DEF_PROV_A;
 static const char szNonExistentProv[] = "Wine Non Existent Cryptographic Provider v11.2";
@@ -102,21 +103,29 @@ static void test_acquire_context(void)
 	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, NON_DEF_PROV_TYPE, 0);
 	ok(!result && GetLastError()==NTE_PROV_TYPE_NO_MATCH, "%ld\n", GetLastError());
 	
+	/* This test fails under Win2k SP4:
+	   result = TRUE, GetLastError() == ERROR_INVALID_PARAMETER
+	SetLastError(0xdeadbeef);
 	result = CryptAcquireContext(NULL, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
-	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%d/%ld\n", result, GetLastError());
+	*/
 	
 	/* Last not least, try to really acquire a context. */
+	hProv = 0;
+	SetLastError(0xdeadbeef);
 	result = CryptAcquireContext(&hProv, szKeySet, szRsaBaseProv, PROV_RSA_FULL, 0);
-	ok(result, "%ld\n", GetLastError());
+	ok(result && GetLastError() == ERROR_SUCCESS, "%d/%ld\n", result, GetLastError());
 
-	if (GetLastError() == ERROR_SUCCESS) 
+	if (hProv) 
 		CryptReleaseContext(hProv, 0);
 
 	/* Try again, witch an empty ("\0") szProvider parameter */
+	hProv = 0;
+	SetLastError(0xdeadbeef);
 	result = CryptAcquireContext(&hProv, szKeySet, "", PROV_RSA_FULL, 0);
-	ok(result, "%ld\n", GetLastError());
+	ok(result && GetLastError() == ERROR_SUCCESS, "%d/%ld\n", result, GetLastError());
 
-	if (GetLastError() == ERROR_SUCCESS)
+	if (hProv) 
 		CryptReleaseContext(hProv, 0);
 }
 
@@ -230,14 +239,16 @@ static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTy
 	if (RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types", &hKey))
 		return FALSE;
 	
-	RegQueryInfoKey(hKey, NULL, NULL, NULL, pdwTypeCount, pcbTypeName, NULL,
-			NULL, NULL, NULL, NULL, NULL);
+	if (RegQueryInfoKey(hKey, NULL, NULL, NULL, pdwTypeCount, pcbTypeName, NULL,
+			NULL, NULL, NULL, NULL, NULL))
+	    return FALSE;
 	(*pcbTypeName)++;
 	
 	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
 		return FALSE;
 	
-	RegEnumKeyEx(hKey, dwIndex, *pszTypeName, pcbTypeName, NULL, NULL, NULL, NULL);
+	if (RegEnumKeyEx(hKey, dwIndex, *pszTypeName, pcbTypeName, NULL, NULL, NULL, NULL))
+	    return FALSE;
 	(*pcbTypeName)++;
 	ch = *pszTypeName + strlen(*pszTypeName);
 	/* Convert "Type 000" to 0, etc/ */
@@ -245,14 +256,17 @@ static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTy
 	*pdwProvType += (*(--ch) - '0') * 10;
 	*pdwProvType += (*(--ch) - '0') * 100;
 	
-	RegOpenKey(hKey, *pszTypeName, &hSubKey);
-	LocalFree(*pszTypeName);
+	if (RegOpenKey(hKey, *pszTypeName, &hSubKey))
+	    return FALSE;
 	
-	RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName);
+	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, NULL, pcbTypeName))
+            return FALSE;
+
 	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
 		return FALSE;
 	
-	RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, *pszTypeName, pcbTypeName);
+	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, *pszTypeName, pcbTypeName))
+	    return FALSE;
 	
 	RegCloseKey(hSubKey);
 	RegCloseKey(hKey);
@@ -279,7 +293,10 @@ static void test_enum_provider_types()
 	DWORD notZeroFlags = 5;
 	
 	if (!FindProvTypesRegVals(index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
-		return;
+	{
+	    trace("could not find provider types in registry, skipping the test\n");
+	    return;
+	}
 	
 	/* check pdwReserved for NULL */
 	result = CryptEnumProviderTypes(index, &notNull, 0, &provType, typeName, &typeNameSize);
@@ -297,9 +314,13 @@ static void test_enum_provider_types()
 	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
 		return;
 
+	/* This test fails under Win2k SP4:
+	   result = TRUE, GetLastError() == 0xdeadbeef
+	SetLastError(0xdeadbeef);
 	result = CryptEnumProviderTypes(index, NULL, 0, &provType, typeName, &typeNameSize);
-	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %i, got %ld\n",
-		ERROR_MORE_DATA, GetLastError());
+	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected 0/ERROR_MORE_DATA, got %d/%08lx\n",
+		result, GetLastError());
+	*/
 	
 	LocalFree(typeName);
 	
@@ -326,10 +347,13 @@ static void test_enum_provider_types()
 	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
 		return;
 		
+	typeNameSize = 0xdeadbeef;
 	result = CryptEnumProviderTypes(index, NULL, 0, &provType, typeName, &typeNameSize);
-	ok(result && provType==dwProvType, "expected %ld, got %ld\n", dwProvType, provType);
-	ok(result && !strcmp(pszTypeName, typeName), "expected %s, got %s\n", pszTypeName, typeName);
-	ok(result && typeNameSize==cbTypeName, "expected %ld, got %ld\n", cbTypeName, typeNameSize);
+	ok(result, "expected TRUE, got %ld\n", result);
+	ok(provType==dwProvType, "expected %ld, got %ld\n", dwProvType, provType);
+	if (pszTypeName)
+	    ok(!strcmp(pszTypeName, typeName), "expected %s, got %s\n", pszTypeName, typeName);
+	ok(typeNameSize==cbTypeName, "expected %ld, got %ld\n", cbTypeName, typeNameSize);
 }
 
 static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvName, DWORD *pcbProvName)
@@ -415,8 +439,10 @@ static void test_get_default_provider()
 	/* check for invalid prov type */
 	provType = 0xdeadbeef;
 	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
-	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "expected %ld, got %ld\n",
-		NTE_BAD_PROV_TYPE, GetLastError());
+	ok(!result && (GetLastError() == NTE_BAD_PROV_TYPE ||
+	               GetLastError() == ERROR_INVALID_PARAMETER),
+		"expected NTE_BAD_PROV_TYPE or ERROR_INVALID_PARAMETER, got %ld/%ld\n",
+		result, GetLastError());
 	provType = PROV_RSA_FULL;
 	
 	SetLastError(0);

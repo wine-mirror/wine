@@ -1,5 +1,6 @@
 Makefile
 crypt.ok
+crypt_lmhash.ok
 crypt_sha.ok
 registry.ok
 security.ok
