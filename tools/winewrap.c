@@ -75,6 +75,8 @@ static const char *app_loader_script =
     "# figure out the full app path\n"
     "if [ -n \"$appdir\" ]; then\n"
     "    apppath=\"$appdir/$appname.exe.so\"\n"
+    "    WINEDLLPATH=\"$appdir:$WINEDLLPATH\"\n"
+    "    export WINEDLLPATH\n"
     "else\n"
     "    apppath=\"$appname.exe.so\"\n"
     "fi\n"
@@ -118,9 +120,9 @@ static const char *wrapper_code =
     "\n"
     "/**\n"
     " * This is the name of the library containing the application,\n"
-    " * e.g. 'hello.dll' if the application is called 'hello.exe'.\n"
+    " * e.g. 'hello-wrap.dll' if the application is called 'hello.exe'.\n"
     " */\n"
-    "static char* appName     = APPNAME \".dll\";\n"
+    "static char* appName     = APPNAME \"-wrap.dll\";\n"
     "\n"
     "/**\n"
     " * This is the name of the application's Windows module. If left NULL\n"
@@ -511,7 +513,7 @@ int main(int argc, char **argv)
     if (create_wrapper)
     {
 	spec_args[j++] = "-F";
-	spec_args[j++] = strmake("%s.dll", base_name);
+	spec_args[j++] = strmake("%s-wrap.dll", base_name);
 	spec_args[j++] = "--spec";
 	spec_args[j++] = spec_name;
     }
@@ -551,7 +553,8 @@ int main(int argc, char **argv)
     for (i = 0; i < nb_lib_files; i++)
 	link_args[j++] = lib_files[i];
     link_args[j++] = "-o";
-    link_args[j++] = strmake("%s.%s.so", base_file, create_wrapper ? "dll" : "exe");
+    if (create_wrapper) link_args[j++] = strmake("%s-wrap.dll.so", base_file);
+    else link_args[j++] = strmake("%s.exe.so", base_file);
     link_args[j++] = spec_o_name;
     for (i = 0; i < nb_obj_files; i++)
 	if (!is_resource(obj_files[i])) link_args[j++] = obj_files[i];
