@@ -33,6 +33,7 @@
 #include "d3d.h"
 #include "ddraw.h"
 #include "dsound.h"
+#include "dsdriver.h"
 #include "dmusicc.h"
 #include "dmusici.h"
 #include "dmusics.h"
