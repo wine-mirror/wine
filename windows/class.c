@@ -766,7 +766,7 @@ BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
  */
 BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 {
-    TRACE("%s %x\n",debugres_a(className), hInstance);
+    TRACE("%s %x\n",debugstr_a(className), hInstance);
     return CLASS_UnregisterClass( GlobalFindAtomA( className ), hInstance );
 }
 
@@ -775,7 +775,7 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
  */
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
-    TRACE("%s %x\n",debugres_w(className), hInstance);
+    TRACE("%s %x\n",debugstr_w(className), hInstance);
     return CLASS_UnregisterClass( GlobalFindAtomW( className ), hInstance );
 }
 
@@ -1111,7 +1111,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
     ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%x %s %p\n",hInstance, debugres_a(MapSL(name)), wc);
+    TRACE("%x %s %p\n",hInstance, debugstr_a(MapSL(name)), wc);
 
     hInstance = GetExePtr( hInstance );
     if (!(atom = GlobalFindAtomA( MapSL(name) )) ||
@@ -1223,7 +1223,7 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16
     ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%x %s %p\n",hInstance,debugres_a( MapSL(name) ), wc);
+    TRACE("%x %s %p\n",hInstance,debugstr_a( MapSL(name) ), wc);
 
     hInstance = GetExePtr( hInstance );
     if (!(atom = GlobalFindAtomA( MapSL(name) )) ||

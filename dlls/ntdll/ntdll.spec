@@ -1021,14 +1021,6 @@ name	ntdll
 # Relays
 @ cdecl -norelay -i386 __wine_call_from_32_regs() __wine_call_from_32_regs
 
-# Debugging interface
-@ cdecl -norelay wine_dbgstr_an(str long) wine_dbgstr_an
-@ cdecl -norelay wine_dbgstr_wn(str long) wine_dbgstr_wn
-@ cdecl -norelay wine_dbgstr_guid(ptr) wine_dbgstr_guid
-@ cdecl -norelay wine_dbg_vprintf(str ptr) wine_dbg_vprintf
-@ varargs wine_dbg_printf(str) wine_dbg_printf
-@ varargs wine_dbg_log(long str str str) wine_dbg_log
-
 # Server interface
 @ cdecl -norelay wine_server_call(ptr) wine_server_call
 @ cdecl wine_server_handle_to_fd(long long ptr ptr ptr) wine_server_handle_to_fd

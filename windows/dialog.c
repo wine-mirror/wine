@@ -379,7 +379,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
 
     TRACE("    %s %s %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
           debugstr_w( (LPCWSTR)info->className ),
-          debugres_w( (LPCWSTR)info->windowName ),
+          debugstr_w( (LPCWSTR)info->windowName ),
           info->id, info->x, info->y, info->cx, info->cy,
           info->style, info->exStyle, info->helpId );
 
@@ -913,7 +913,7 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
     LPCVOID data;
 
     TRACE("%04x,%s,%04x,%08lx,%ld\n",
-          hInst, debugres_a(dlgTemplate), owner, (DWORD)dlgProc, param );
+          hInst, debugstr_a(dlgTemplate), owner, (DWORD)dlgProc, param );
 
     if (!(hRsrc = FindResource16( hInst, dlgTemplate, RT_DIALOGA ))) return 0;
     if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;

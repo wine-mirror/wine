@@ -229,58 +229,41 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	return (FARPROC)&(fun->lcall);
 }
 
-static char*
-SNOOP_PrintArg(DWORD x) {
-	static char	buf[200];
-	int		i,nostring;
-	char * volatile ret=0;
+static void SNOOP_PrintArg(DWORD x)
+{
+    int i,nostring;
 
-	if ( !HIWORD(x) ) { /* trivial reject to avoid faults */
-	    sprintf(buf,"%08lx",x);
-	    return buf;
-	}
-	__TRY{
-		LPBYTE	s=(LPBYTE)x;
-		i=0;nostring=0;
-		while (i<80) {
-			if (s[i]==0) break;
-			if (s[i]<0x20) {nostring=1;break;}
-			if (s[i]>=0x80) {nostring=1;break;}
-			i++;
-		}
-		if (!nostring) {
-			if (i>5) {
-				snprintf(buf,sizeof(buf),"%08lx %s",x,debugstr_an((LPSTR)x,sizeof(buf)-10));
-				ret=buf;
-			}
-		}
-	}
-	__EXCEPT(page_fault){}
-	__ENDTRY
-	if (ret)
-	  return ret;
-	__TRY{
-		LPWSTR	s=(LPWSTR)x;
-		i=0;nostring=0;
-		while (i<80) {
-			if (s[i]==0) break;
-			if (s[i]<0x20) {nostring=1;break;}
-			if (s[i]>0x100) {nostring=1;break;}
-			i++;
-		}
-		if (!nostring) {
-			if (i>5) {
-				snprintf(buf,sizeof(buf),"%08lx %s",x,debugstr_wn((LPWSTR)x,sizeof(buf)-10));
-				ret=buf;
-			}
-		}
-	}
-	__EXCEPT(page_fault){}
-	__ENDTRY
-	if (ret)
-	  return ret;
-	sprintf(buf,"%08lx",x);
-	return buf;
+    DPRINTF("%08lx",x);
+    if ( !HIWORD(x) ) return; /* trivial reject to avoid faults */
+    __TRY
+    {
+        LPBYTE s=(LPBYTE)x;
+        i=0;nostring=0;
+        while (i<80) {
+            if (s[i]==0) break;
+            if (s[i]<0x20) {nostring=1;break;}
+            if (s[i]>=0x80) {nostring=1;break;}
+            i++;
+        }
+        if (!nostring && i > 5)
+            DPRINTF(" %s",debugstr_an((LPSTR)x,i));
+        else  /* try unicode */
+        {
+            LPWSTR s=(LPWSTR)x;
+            i=0;nostring=0;
+            while (i<80) {
+                if (s[i]==0) break;
+                if (s[i]<0x20) {nostring=1;break;}
+                if (s[i]>0x100) {nostring=1;break;}
+                i++;
+            }
+            if (!nostring && i > 5) DPRINTF(" %s",debugstr_wn((LPWSTR)x,i));
+        }
+    }
+    __EXCEPT(page_fault)
+    {
+    }
+    __ENDTRY
 }
 
 #define CALLER1REF (*(DWORD*)context->Esp)
@@ -354,7 +337,10 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
-			DPRINTF("%s%s",SNOOP_PrintArg(*(DWORD*)(context->Esp + 4 + sizeof(DWORD)*i)),(i<fun->nrofargs-1)?",":"");
+                {
+                    SNOOP_PrintArg(*(DWORD*)(context->Esp + 4 + sizeof(DWORD)*i));
+                    if (i<fun->nrofargs-1) DPRINTF(",");
+                }
 		if (max!=fun->nrofargs)
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
@@ -388,7 +374,10 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 		if (max>16) max=16;
 
 		for (i=0;i<max;i++)
-			DPRINTF("%s%s",SNOOP_PrintArg(ret->args[i]),(i<max-1)?",":"");
+                {
+                    SNOOP_PrintArg(ret->args[i]);
+                    if (i<max-1) DPRINTF(",");
+                }
 		DPRINTF(") retval = %08lx ret=%08lx\n",
 			context->Eax,(DWORD)ret->origreturn );
 		HeapFree(GetProcessHeap(),0,ret->args);

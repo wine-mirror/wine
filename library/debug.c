@@ -18,10 +18,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+
+#include "wine/debug.h"
+#include "wine/library.h"
+#include "wine/unicode.h"
 
 struct dll
 {
@@ -130,3 +139,187 @@ void wine_dbg_add_option( const char *name, unsigned char set, unsigned char cle
         dll = dll->next;
     }
 }
+
+
+/* varargs wrapper for __wine_dbg_vprintf */
+int wine_dbg_printf( const char *format, ... )
+{
+    int ret;
+    va_list valist;
+
+    va_start(valist, format);
+    ret = __wine_dbg_vprintf( format, valist );
+    va_end(valist);
+    return ret;
+}
+
+
+/* varargs wrapper for __wine_dbg_vlog */
+int wine_dbg_log( int cls, const char *channel, const char *func, const char *format, ... )
+{
+    int ret;
+    va_list valist;
+
+    va_start(valist, format);
+    ret = __wine_dbg_vlog( cls, channel, func, format, valist );
+    va_end(valist);
+    return ret;
+}
+
+
+/* allocate some tmp string space */
+/* FIXME: this is not 100% thread-safe */
+static char *get_tmp_space( int size )
+{
+    static char *list[32];
+    static long pos;
+    char *ret;
+    int idx;
+
+    idx = interlocked_xchg_add( &pos, 1 ) % (sizeof(list)/sizeof(list[0]));
+    if ((ret = realloc( list[idx], size ))) list[idx] = ret;
+    return ret;
+}
+
+
+/* default implementation of wine_dbgstr_an */
+static const char *default_dbgstr_an( const char *str, int n )
+{
+    char *dst, *res;
+
+    if (n == -1) n = strlen(str);
+    if (n < 0) n = 0;
+    else if (n > 200) n = 200;
+    dst = res = get_tmp_space( n * 4 + 6 );
+    *dst++ = '"';
+    while (n-- > 0)
+    {
+        unsigned char c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c >= ' ' && c <= 126)
+                *dst++ = c;
+            else
+            {
+                *dst++ = '\\';
+                *dst++ = '0' + ((c >> 6) & 7);
+                *dst++ = '0' + ((c >> 3) & 7);
+                *dst++ = '0' + ((c >> 0) & 7);
+            }
+        }
+    }
+    *dst++ = '"';
+    if (*str)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return res;
+}
+
+
+/* default implementation of wine_dbgstr_wn */
+static const char *default_dbgstr_wn( const WCHAR *str, int n )
+{
+    char *dst, *res;
+
+    if (n == -1) n = strlenW(str);
+    if (n < 0) n = 0;
+    else if (n > 200) n = 200;
+    dst = res = get_tmp_space( n * 5 + 7 );
+    *dst++ = 'L';
+    *dst++ = '"';
+    while (n-- > 0)
+    {
+        WCHAR c = *str++;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        case '"':  *dst++ = '\\'; *dst++ = '"'; break;
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        default:
+            if (c >= ' ' && c <= 126)
+                *dst++ = c;
+            else
+            {
+                *dst++ = '\\';
+                sprintf(dst,"%04x",c);
+                dst+=4;
+            }
+        }
+    }
+    *dst++ = '"';
+    if (*str)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return res;
+}
+
+
+/* default implementation of wine_dbgstr_guid */
+static const char *default_dbgstr_guid( const struct _GUID *id )
+{
+    char *str;
+
+    if (!id) return "(null)";
+    if (!((int)id >> 16))
+    {
+        str = get_tmp_space( 12 );
+        sprintf( str, "<guid-0x%04x>", (int)id & 0xffff );
+    }
+    else
+    {
+        str = get_tmp_space( 40 );
+        sprintf( str, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 id->Data1, id->Data2, id->Data3,
+                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    }
+    return str;
+}
+
+
+/* default implementation of wine_dbg_vprintf */
+static int default_dbg_vprintf( const char *format, va_list args )
+{
+    return vfprintf( stderr, format, args );
+}
+
+
+/* default implementation of wine_dbg_vlog */
+static int default_dbg_vlog( int cls, const char *channel, const char *func,
+                             const char *format, va_list args )
+{
+    static const char * const classes[] = { "fixme", "err", "warn", "trace" };
+    int ret = 0;
+
+    if (cls < sizeof(classes)/sizeof(classes[0]))
+        ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, func );
+    if (format)
+        ret += __wine_dbg_vprintf( format, args );
+    return ret;
+}
+
+
+/* exported function pointers so that debugging functions can be redirected at run-time */
+
+const char * (*__wine_dbgstr_an)( const char * s, int n ) = default_dbgstr_an;
+const char * (*__wine_dbgstr_wn)( const WCHAR *s, int n ) = default_dbgstr_wn;
+const char * (*__wine_dbgstr_guid)( const struct _GUID *id ) = default_dbgstr_guid;
+int (*__wine_dbg_vprintf)( const char *format, va_list args ) = default_dbg_vprintf;
+int (*__wine_dbg_vlog)( int cls, const char *channel, const char *function,
+                        const char *format, va_list args ) = default_dbg_vlog;

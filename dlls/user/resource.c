@@ -47,7 +47,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
 {
     HRSRC16	hRsrc;
 
-    TRACE_(accel)("%04x %s\n", instance, debugres_a(lpTableName) );
+    TRACE_(accel)("%04x %s\n", instance, debugstr_a(lpTableName) );
 
     if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATORA ))) {
       WARN_(accel)("couldn't find accelerator table resource\n");

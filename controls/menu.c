@@ -4086,7 +4086,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
     HGLOBAL16 handle;
     HMENU16 hMenu;
 
-    TRACE("(%04x,%s)\n", instance, debugres_a(name) );
+    TRACE("(%04x,%s)\n", instance, debugstr_a(name) );
 
     if (HIWORD(name))
     {

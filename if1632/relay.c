@@ -248,12 +248,12 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
                 break;
             case ARG_STR:
                 DPRINTF( "%08x %s", *(int *)args16,
-                         debugres_a( MapSL(*(SEGPTR *)args16 )));
+                         debugstr_a( MapSL(*(SEGPTR *)args16 )));
                 args16 += sizeof(int);
                 break;
             case ARG_SEGSTR:
                 DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
-                         debugres_a( MapSL(*(SEGPTR *)args16 )) );
+                         debugstr_a( MapSL(*(SEGPTR *)args16 )) );
                 args16 += sizeof(SEGPTR);
                 break;
             default:
@@ -289,12 +289,12 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
             case ARG_STR:
                 args16 -= sizeof(int);
                 DPRINTF( "%08x %s", *(int *)args16,
-                         debugres_a( MapSL(*(SEGPTR *)args16 )));
+                         debugstr_a( MapSL(*(SEGPTR *)args16 )));
                 break;
             case ARG_SEGSTR:
                 args16 -= sizeof(SEGPTR);
                 DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
-                         debugres_a( MapSL(*(SEGPTR *)args16 )) );
+                         debugstr_a( MapSL(*(SEGPTR *)args16 )) );
                 break;
             default:
                 break;

@@ -999,8 +999,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     BOOL unicode = (type == WIN_PROC_32W);
 
     TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%04x menu=%04x inst=%08x params=%p\n",
-          (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName),
-          (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
+          (type == WIN_PROC_32W) ? debugstr_w((LPWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
+          (type == WIN_PROC_32W) ? debugstr_w((LPWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
 
@@ -1209,7 +1209,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
     {
         if (!(classAtom = GlobalFindAtomA( className )))
         {
-            ERR( "bad class name %s\n", debugres_a(className) );
+            ERR( "bad class name %s\n", debugstr_a(className) );
             return 0;
         }
     }
@@ -1271,7 +1271,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     {
         if (!(classAtom = GlobalFindAtomA( className )))
         {
-            ERR( "bad class name %s\n", debugres_a(className) );
+            ERR( "bad class name %s\n", debugstr_a(className) );
             return 0;
         }
     }
@@ -1330,7 +1330,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     {
         if (!(classAtom = GlobalFindAtomW( className )))
         {
-            ERR( "bad class name %s\n", debugres_w(className) );
+            ERR( "bad class name %s\n", debugstr_w(className) );
             return 0;
         }
     }

@@ -2290,7 +2290,7 @@ INT16 WINAPI AddFontResource16( LPCSTR filename )
 INT WINAPI AddFontResourceA( LPCSTR str )
 {
     FIXME("(%s): stub! Read the Wine User Guide on how to install "
-            "this font manually.\n", debugres_a(str));
+            "this font manually.\n", debugstr_a(str));
     return 1;
 }
 
@@ -2301,7 +2301,7 @@ INT WINAPI AddFontResourceA( LPCSTR str )
 INT WINAPI AddFontResourceW( LPCWSTR str )
 {
     FIXME("(%s): stub! Read the Wine User Guide on how to install "
-            "this font manually.\n", debugres_w(str));
+            "this font manually.\n", debugstr_w(str));
     return 1;
 }
 
@@ -2310,7 +2310,7 @@ INT WINAPI AddFontResourceW( LPCWSTR str )
  */
 BOOL16 WINAPI RemoveFontResource16( LPCSTR str )
 {
-    FIXME("(%s): stub\n", debugres_a(str));
+    FIXME("(%s): stub\n", debugstr_a(str));
     return TRUE;
 }
 
@@ -2342,7 +2342,7 @@ BOOL WINAPI RemoveFontResourceA( LPCSTR str )
     LeaveCriticalSection( &crtsc_fonts_X11 );
     return retVal;
  */
-    FIXME("(%s): stub\n", debugres_a(str));
+    FIXME("(%s): stub\n", debugstr_a(str));
     return TRUE;
 }
 
@@ -2352,6 +2352,6 @@ BOOL WINAPI RemoveFontResourceA( LPCSTR str )
  */
 BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
 {
-    FIXME("(%s): stub\n", debugres_w(str) );
+    FIXME("(%s): stub\n", debugstr_w(str) );
     return TRUE;
 }

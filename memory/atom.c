@@ -354,7 +354,7 @@ ATOM WINAPI FindAtom16( LPCSTR str )
 
     if (CURRENT_DS == ATOM_UserDS) return GlobalFindAtomA( str );
 
-    TRACE("%s\n",debugres_a(str));
+    TRACE("%s\n",debugstr_a(str));
 
     if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
     if ((len = strlen( str )) > 255) len = 255;
@@ -451,7 +451,7 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_a(str), atom );
     return atom;
 }
 
@@ -506,7 +506,7 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_w(str), atom );
     return atom;
 }
 
@@ -598,7 +598,7 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_a(str), atom );
     return atom;
 }
 
@@ -652,7 +652,7 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
+    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_w(str), atom );
     return atom;
 }
 

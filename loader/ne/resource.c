@@ -294,7 +294,7 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
 
     if (!pModule || !pModule->res_table) return NULL;
 
-    TRACE("module=%04x type=%s\n", hModule, debugres_a(typeId) );
+    TRACE("module=%04x type=%s\n", hModule, debugstr_a(typeId) );
 
     for (;;)
     {
@@ -319,7 +319,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 
     if (!pModule || !pModule->res_table) return 0;
 
-    TRACE("module=%04x name=%s type=%s\n", pModule->self, debugres_a(name), debugres_a(type) );
+    TRACE("module=%04x name=%s type=%s\n", pModule->self, debugstr_a(name), debugstr_a(type) );
 
     if (HIWORD(name))  /* Check for '#xxx' name */
     {

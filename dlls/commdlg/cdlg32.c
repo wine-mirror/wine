@@ -63,7 +63,7 @@ static char * GPA_string = "Failed to get entry point %s for hinst = 0x%08x\n";
 #define GPA(dest, hinst, name) \
 	if(!(dest = (void*)GetProcAddress(hinst,name)))\
 	{ \
-	  ERR(GPA_string, debugres_a(name), hinst); \
+	  ERR(GPA_string, debugstr_a(name), hinst); \
 	  return FALSE; \
 	}
 

@@ -27,6 +27,7 @@
 
 #include "wine/debug.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
 #include "thread.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -92,11 +93,12 @@ inline static char *put_string_a( const char *src, int n )
 {
     char *dst, *res;
 
+    if (n == -1) n = strlen(src);
     if (n < 0) n = 0;
     else if (n > 200) n = 200;
     dst = res = gimme1 (n * 4 + 6);
     *dst++ = '"';
-    while (n-- > 0 && *src)
+    while (n-- > 0)
     {
         unsigned char c = *src++;
         switch (c)
@@ -135,12 +137,13 @@ inline static char *put_string_w( const WCHAR *src, int n )
 {
     char *dst, *res;
 
+    if (n == -1) n = strlenW(src);
     if (n < 0) n = 0;
     else if (n > 200) n = 200;
     dst = res = gimme1 (n * 5 + 7);
     *dst++ = 'L';
     *dst++ = '"';
-    while (n-- > 0 && *src)
+    while (n-- > 0)
     {
         WCHAR c = *src++;
         switch (c)
@@ -174,9 +177,9 @@ inline static char *put_string_w( const WCHAR *src, int n )
 }
 
 /***********************************************************************
- *		wine_dbgstr_an (NTDLL.@)
+ *		NTDLL_dbgstr_an
  */
-const char *wine_dbgstr_an( const char *src, int n )
+static const char *NTDLL_dbgstr_an( const char *src, int n )
 {
     char *res, *old_pos;
     struct debug_info *info = get_info();
@@ -204,9 +207,9 @@ const char *wine_dbgstr_an( const char *src, int n )
 }
 
 /***********************************************************************
- *		wine_dbgstr_wn (NTDLL.@)
+ *		NTDLL_dbgstr_wn
  */
-const char *wine_dbgstr_wn( const WCHAR *src, int n )
+static const char *NTDLL_dbgstr_wn( const WCHAR *src, int n )
 {
     char *res, *old_pos;
     struct debug_info *info = get_info();
@@ -235,9 +238,9 @@ const char *wine_dbgstr_wn( const WCHAR *src, int n )
 }
 
 /***********************************************************************
- *		wine_dbgstr_guid (NTDLL.@)
+ *		NTDLL_dbgstr_guid
  */
-const char *wine_dbgstr_guid( const GUID *id )
+static const char *NTDLL_dbgstr_guid( const GUID *id )
 {
     char *str;
 
@@ -259,9 +262,9 @@ const char *wine_dbgstr_guid( const GUID *id )
 }
 
 /***********************************************************************
- *		wine_dbg_vprintf (NTDLL.@)
+ *		NTDLL_dbg_vprintf
  */
-int wine_dbg_vprintf( const char *format, va_list args )
+static int NTDLL_dbg_vprintf( const char *format, va_list args )
 {
     struct debug_info *info = get_info();
     char *p;
@@ -296,36 +299,31 @@ int wine_dbg_vprintf( const char *format, va_list args )
 }
 
 /***********************************************************************
- *		wine_dbg_printf (NTDLL.@)
+ *		NTDLL_dbg_vlog
  */
-int wine_dbg_printf(const char *format, ...)
+static int NTDLL_dbg_vlog( int cls, const char *channel,
+                           const char *function, const char *format, va_list args )
 {
-    int ret;
-    va_list valist;
+    static const char *classes[] = { "fixme", "err", "warn", "trace" };
+    int ret = 0;
 
-    va_start(valist, format);
-    ret = wine_dbg_vprintf( format, valist );
-    va_end(valist);
+    if (TRACE_ON(tid))
+        ret = wine_dbg_printf( "%08lx:", (DWORD)NtCurrentTeb()->tid );
+    if (cls < sizeof(classes)/sizeof(classes[0]))
+        ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
+    if (format)
+        ret += NTDLL_dbg_vprintf( format, args );
     return ret;
 }
 
 /***********************************************************************
- *		wine_dbg_log (NTDLL.@)
+ *		debug_init
  */
-int wine_dbg_log(enum __WINE_DEBUG_CLASS cls, const char *channel,
-                 const char *function, const char *format, ... )
+DECL_GLOBAL_CONSTRUCTOR(debug_init)
 {
-    static const char *classes[__WINE_DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
-    va_list valist;
-    int ret = 0;
-
-    va_start(valist, format);
-    if (TRACE_ON(tid))
-        ret = wine_dbg_printf( "%08lx:", (DWORD)NtCurrentTeb()->tid );
-    if (cls < __WINE_DBCL_COUNT)
-        ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
-    if (format)
-        ret += wine_dbg_vprintf( format, valist );
-    va_end(valist);
-    return ret;
+    __wine_dbgstr_an   = NTDLL_dbgstr_an;
+    __wine_dbgstr_wn   = NTDLL_dbgstr_wn;
+    __wine_dbgstr_guid = NTDLL_dbgstr_guid;
+    __wine_dbg_vprintf = NTDLL_dbg_vprintf;
+    __wine_dbg_vlog    = NTDLL_dbg_vlog;
 }
