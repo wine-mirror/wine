@@ -900,7 +900,6 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
     {
         extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
         if (!extra) breaks = 0;
-        dc->breakTotalExtra = extra;
         dc->breakCount = breaks;
         if (breaks)
         {

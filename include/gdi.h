@@ -139,14 +139,10 @@ typedef struct tagDC
     short         brushOrgY;
 
     WORD          textAlign;         /* Text alignment from SetTextAlign() */
-    short         charExtra;         /* Spacing from SetTextCharacterExtra() */
-    short         breakTotalExtra;   /* Total extra space for justification */
-    short         breakCount;        /* Break char. count */
-    short         breakExtra;        /* breakTotalExtra / breakCount */
-    short         breakRem;          /* breakTotalExtra % breakCount */
-
-    RECT          totalExtent;
-
+    INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
+    INT           breakCount;        /* Break char. count */
+    INT           breakExtra;        /* breakTotalExtra / breakCount */
+    INT           breakRem;          /* breakTotalExtra % breakCount */
     INT           MapMode;
     INT           GraphicsMode;      /* Graphics mode */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */

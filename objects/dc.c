@@ -99,14 +99,9 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->brushOrgY           = 0;
     dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
     dc->charExtra           = 0;
-    dc->breakTotalExtra     = 0;
     dc->breakCount          = 0;
     dc->breakExtra          = 0;
     dc->breakRem            = 0;
-    dc->totalExtent.left    = 0;
-    dc->totalExtent.top     = 0;
-    dc->totalExtent.right   = 0;
-    dc->totalExtent.bottom  = 0;
     dc->MapMode             = MM_TEXT;
     dc->GraphicsMode        = GM_COMPATIBLE;
     dc->pAbortProc          = NULL;
@@ -295,7 +290,6 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->hBitmap          = dc->hBitmap;
     newdc->hDevice          = dc->hDevice;
     newdc->hPalette         = dc->hPalette;
-    newdc->totalExtent      = dc->totalExtent;
     newdc->ROPmode          = dc->ROPmode;
     newdc->polyFillMode     = dc->polyFillMode;
     newdc->stretchBltMode   = dc->stretchBltMode;
@@ -309,7 +303,6 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->brushOrgY        = dc->brushOrgY;
     newdc->textAlign        = dc->textAlign;
     newdc->charExtra        = dc->charExtra;
-    newdc->breakTotalExtra  = dc->breakTotalExtra;
     newdc->breakCount       = dc->breakCount;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
@@ -385,7 +378,6 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
 
     dc->flags            = dcs->flags & ~(DC_SAVED | DC_DIRTY);
     dc->hDevice          = dcs->hDevice;
-    dc->totalExtent      = dcs->totalExtent;
     dc->ROPmode          = dcs->ROPmode;
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;
@@ -399,7 +391,6 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     dc->brushOrgY        = dcs->brushOrgY;
     dc->textAlign        = dcs->textAlign;
     dc->charExtra        = dcs->charExtra;
-    dc->breakTotalExtra  = dcs->breakTotalExtra;
     dc->breakCount       = dcs->breakCount;
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
@@ -602,6 +593,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         DRIVER_release_driver( funcs );
         return 0;
     }
+    hdc = dc->hSelf;
 
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
 
@@ -617,14 +609,10 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         return 0;
     }
 
-    dc->totalExtent.left   = 0;
-    dc->totalExtent.top    = 0;
-    dc->totalExtent.right  = GetDeviceCaps( dc->hSelf, HORZRES );
-    dc->totalExtent.bottom = GetDeviceCaps( dc->hSelf, VERTRES );
-    dc->hVisRgn = CreateRectRgnIndirect( &dc->totalExtent );
+    dc->hVisRgn = CreateRectRgn( 0, 0, GetDeviceCaps( hdc, HORZRES ),
+                                 GetDeviceCaps( hdc, VERTRES ) );
 
     DC_InitDC( dc );
-    hdc = dc->hSelf;
     GDI_ReleaseObj( hdc );
     return hdc;
 }
@@ -735,11 +723,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         return 0;
     }
 
-    dc->totalExtent.left   = 0;
-    dc->totalExtent.top    = 0;
-    dc->totalExtent.right  = 1;  /* default bitmap is 1x1 */
-    dc->totalExtent.bottom = 1;
-    dc->hVisRgn = CreateRectRgnIndirect( &dc->totalExtent );
+    dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 );  /* default bitmap is 1x1 */
 
     DC_InitDC( dc );
     GDI_ReleaseObj( dc->hSelf );
