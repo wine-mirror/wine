@@ -2838,42 +2838,29 @@ Pos:  /* -----------------------------------------------------------------------
     {
 	if( !(winpos.flags & SWP_NOREDRAW) )
 	{
-	    if (wndPtr->parent == wndTemp)
-	    {   
-		/*  Desktop does not receive wm_paint message so we use RDW_ERASENOW to erase the 
-		    the desktop window  */
  
+	    /*  Use PAINT_RedrawWindow to explicitly force an invalidation of the window,
+		its parent and sibling and so on, and then erase the parent window 
+		back ground if the parent is either a top-level window or its parent's parent  
+		is top-level window. Rely on the system to repaint other affected 
+		windows later on.  */ 
 	    if( uFlags & SWP_EX_PAINTSELF )
 	    {
-		PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn, RDW_ERASE | RDW_FRAME |
-				  ((winpos.flags & SWP_DEFERERASE) ? 0 : RDW_ERASENOW) | RDW_INVALIDATE |
-				    RDW_ALLCHILDREN, RDW_EX_XYWINDOW | RDW_EX_USEHRGN );
+		PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn, 
+				RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN,
+				RDW_EX_XYWINDOW | RDW_EX_USEHRGN );
 	    }
 	    else
 	    {
 		    PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn, 
-			  RDW_ERASE | RDW_ERASENOW | RDW_INVALIDATE | RDW_ALLCHILDREN, RDW_EX_USEHRGN );
-		}
+				RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN, 
+				RDW_EX_USEHRGN );
 	    }
-	    else
-	    {
-		if( uFlags & SWP_EX_PAINTSELF )
-		{
-		    /*  Use PAINT_RedrawWindow to explicitly force an invalidation of the window,
-			its parent and sibling and so on, and then update the parent window, 
-			the non-top-level window. Rely on the system to repaint other affected 
-			windows later on.  */ 
 
-		    PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn, RDW_ERASE | 
-		       	 RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN, RDW_EX_XYWINDOW | RDW_EX_USEHRGN );
-		}
-		else
+	    if(wndPtr -> parent == wndTemp || wndPtr->parent->parent == wndTemp )
 		{
-		    PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, (visRgn == 1) ? 0 : visRgn, 
-			 RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN, RDW_EX_USEHRGN );
-
-		    UpdateWindow( wndPtr->parent->hwndSelf);
-		}
+		PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, 
+    				RDW_ERASENOW | RDW_NOCHILDREN, 0 );
 	    }
         }
 	if( visRgn != 1 )
