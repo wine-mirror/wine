@@ -107,6 +107,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
   int				i;
   struct open_filelist	      * ol;
   int				nlines;
+  char			      * basename;
   char			      * pnt;
   int				rtn;
   struct searchlist	      * sl;
@@ -131,10 +132,17 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
       /*
        * Try again, stripping the path from the opened file.
        */
+      basename = strrchr(sourcefile, '\\' );
+      if ( !basename )
+          basename = strrchr(sourcefile, '/' );
+      if ( !basename )
+          basename = sourcefile;
+      else
+          basename++;
+
       for(ol = ofiles; ol; ol = ol->next)
 	{
-	  pnt = strrchr(ol->path, '/');
-	  if( pnt != NULL && strcmp(pnt + 1, sourcefile) == 0 )
+          if( strcmp(ol->path, basename) == 0 )
 	    {
 	      break;
 	    }
@@ -145,25 +153,16 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
   if( ol == NULL )
     {
       /*
-       * See if this is a DOS style name or not.
-       */
-      pnt = strchr(sourcefile, '\\' );
-      if( pnt == NULL )
-	{
-	  pnt = strchr(sourcefile, '/' );
-	  if( pnt == NULL )
-	    {
-	      pnt = sourcefile;
-	    }
-	}
-
-      /*
        * Crapola.  We need to try and open the file.
        */
       status = stat(sourcefile, &statbuf);
       if( status != -1 )
 	{
 	  strcpy(tmppath, sourcefile);
+	}
+      else if( (status = stat(basename, &statbuf)) != -1 )
+	{
+	  strcpy(tmppath, basename);
 	}
       else
 	{
@@ -177,7 +176,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	      /*
 	       * Now append the base file name.
 	       */
-	      strcat(tmppath, pnt);
+	      strcat(tmppath, basename);
 	      
 	      status = stat(tmppath, &statbuf);
 	      if( status != -1 )
@@ -206,7 +205,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	      /*
 	       * Now append the base file name.
 	       */
-	      strcat(tmppath, pnt);
+	      strcat(tmppath, basename);
 	      
 	      status = stat(tmppath, &statbuf);
 	      if( status == -1 )

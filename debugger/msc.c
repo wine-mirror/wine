@@ -3,6 +3,7 @@
  * from PDB files.
  *
  * Copyright (C) 1996, Eric Youngdale.
+ * Copyright (C) 1999, Ulrich Weigand.
  *
  * Note - this handles reading debug information for 32 bit applications
  * that run under Windows-NT for example.  I doubt that this would work well
@@ -126,6 +127,17 @@ union codeview_symbol
   {
 	short int	len;
 	short int	id;
+	unsigned int	symtype;
+	unsigned int	offset;
+	unsigned short	seg;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } data32;
+
+  struct
+  {
+	short int	len;
+	short int	id;
 	unsigned int	pparent;
 	unsigned int	pend;
 	unsigned int	next;
@@ -136,6 +148,7 @@ union codeview_symbol
 	unsigned char	namelen;
 	unsigned char	name[1];
   } thunk;
+
   struct
   {
 	short int	len;
@@ -153,6 +166,25 @@ union codeview_symbol
 	unsigned char	namelen;
 	unsigned char	name[1];
   } proc;
+
+  struct
+  {
+	short int	len;
+	short int	id;
+	unsigned int	pparent;
+	unsigned int	pend;
+	unsigned int	next;
+	unsigned int	proc_len;
+	unsigned int	debug_start;
+	unsigned int	debug_end;
+	unsigned int	proctype;
+	unsigned int	offset;
+	unsigned short	segment;
+	unsigned char	flags;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } proc32;
+
   struct
   {
 	short int	len;	/* Total length of this entry */
@@ -162,6 +194,17 @@ union codeview_symbol
 	unsigned char	namelen;
 	unsigned char	name[1];
   } stack;
+
+  struct
+  {
+	short int	len;	/* Total length of this entry */
+	short int	id;		/* Always S_BPREL32 */
+	unsigned int	offset;	/* Stack offset relative to BP */
+	unsigned int	symtype;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } stack32;
+
 };
 
 union codeview_type
@@ -185,10 +228,28 @@ union codeview_type
   {
     short int		len;
     short int		id;
+    unsigned int	datatype;
+    unsigned int	attribute;
+    unsigned char	variant[1];
+  } pointer32;
+
+  struct
+  {
+    short int		len;
+    short int		id;
     unsigned char	nbits;
     unsigned char	bitoff;
     unsigned short	type;
   } bitfield;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    unsigned int	type;
+    unsigned char	nbits;
+    unsigned char	bitoff;
+  } bitfield32;
 
   struct
   {
@@ -200,6 +261,17 @@ union codeview_type
     unsigned char	namelen;
     unsigned char	name[1];
   } array;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    unsigned int	elemtype;
+    unsigned int	idxtype;
+    unsigned char	arrlen;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } array32;
 
   struct
   {
@@ -219,6 +291,20 @@ union codeview_type
   {
     short int		len;
     short int		id;
+    short int		n_element;
+    short int		property;
+    unsigned int	fieldlist;
+    unsigned int	derived;
+    unsigned int	vshape;
+    unsigned short	structlen;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } structure32;
+
+  struct
+  {
+    short int		len;
+    short int		id;
     short int		count;
     short int		field;
     short int		property;
@@ -232,12 +318,36 @@ union codeview_type
     short int		len;
     short int		id;
     short int		count;
+    short int		property;
+    unsigned int	field;
+    unsigned short	un_len;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } t_union32;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		count;
     short int		type;
     short int		field;
     short int		property;
     unsigned char	namelen;
     unsigned char	name[1];
   } enumeration;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		count;
+    short int		property;
+    unsigned int	type;
+    unsigned int	field;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } enumeration32;
 
   struct
   {
@@ -260,33 +370,68 @@ union codeview_type
 
   struct
   {
-    short int		len;
     short int		id;
-    short int		count;
-    short int		type;
-    short int		field;
-    short int		property;
+    short int		attribute;
+    unsigned int	type;
+    unsigned short int	offset;
     unsigned char	namelen;
     unsigned char	name[1];
-  } fieldlist;
-
+  } member32;
 };
 
-#define S_BPREL	0x200
-#define S_LDATA	0x201
-#define S_GDATA	0x202
-#define S_PUB		0x203
-#define S_LPROC	0x204
-#define S_GPROC	0x205
-#define S_THUNK	0x206
-#define S_BLOCK	0x207
-#define S_WITH	0x208
-#define S_LABEL	0x209
+#define S_COMPILE       0x0001
+#define S_REGISTER      0x0002
+#define S_CONSTANT      0x0003
+#define S_UDT           0x0004
+#define S_SSEARCH       0x0005
+#define S_END           0x0006
+#define S_SKIP          0x0007
+#define S_CVRESERVE     0x0008
+#define S_OBJNAME       0x0009
+#define S_ENDARG        0x000a
+#define S_COBOLUDT      0x000b
+#define S_MANYREG       0x000c
+#define S_RETURN        0x000d
+#define S_ENTRYTHIS     0x000e
 
-#define S_PROCREF	0x400
-#define S_DATAREF	0x401
-#define S_ALIGN		0x402
-#define S_UNKNOWN	0x403
+#define S_BPREL         0x0200
+#define S_LDATA         0x0201
+#define S_GDATA         0x0202
+#define S_PUB           0x0203
+#define S_LPROC         0x0204
+#define S_GPROC         0x0205
+#define S_THUNK         0x0206
+#define S_BLOCK         0x0207
+#define S_WITH          0x0208
+#define S_LABEL         0x0209
+#define S_CEXMODEL      0x020a
+#define S_VFTPATH       0x020b
+#define S_REGREL        0x020c
+#define S_LTHREAD       0x020d
+#define S_GTHREAD       0x020e
+
+#define S_PROCREF       0x0400
+#define S_DATAREF       0x0401
+#define S_ALIGN         0x0402
+#define S_LPROCREF      0x0403
+
+#define S_REGISTER_32   0x1001 /* Variants with new 32-bit type indices */
+#define S_CONSTANT_32   0x1002
+#define S_UDT_32        0x1003
+#define S_COBOLUDT_32   0x1004
+#define S_MANYREG_32    0x1005
+
+#define S_BPREL_32      0x1006
+#define S_LDATA_32      0x1007
+#define S_GDATA_32      0x1008
+#define S_PUB_32        0x1009
+#define S_LPROC_32      0x100a
+#define S_GPROC_32      0x100b
+#define S_VFTTABLE_32   0x100c
+#define S_REGREL_32     0x100d
+#define S_LTHREAD_32    0x100e
+#define S_GTHREAD_32    0x100f
+
 
 /*
  * This covers the basic datatypes that VC++ seems to be using these days.
@@ -329,40 +474,105 @@ union codeview_type
 #define T_32PINT4	0x0474	/* 16:32 near pointer to int */
 #define T_32PUINT4	0x0475  /* 16:32 near pointer to unsigned int */
 
-#define LF_MODIFIER	0x1
-#define LF_POINTER	0x2
-#define LF_ARRAY	0x3
-#define LF_CLASS	0x4
-#define LF_STRUCTURE	0x5
-#define LF_UNION	0x6
-#define LF_ENUMERATION	0x7
-#define LF_PROCEDURE	0x8
-#define LF_MFUNCTION	0x9
-#define LF_VTSHAPE	0xa
-#define LF_BARRAY	0xd
-#define LF_DIMARRAY	0x11
-#define LF_VFTPATH	0x12
+#define LF_MODIFIER     0x0001
+#define LF_POINTER      0x0002
+#define LF_ARRAY        0x0003
+#define LF_CLASS        0x0004
+#define LF_STRUCTURE    0x0005
+#define LF_UNION        0x0006
+#define LF_ENUM         0x0007
+#define LF_PROCEDURE    0x0008
+#define LF_MFUNCTION    0x0009
+#define LF_VTSHAPE      0x000a
+#define LF_COBOL0       0x000b
+#define LF_COBOL1       0x000c
+#define LF_BARRAY       0x000d
+#define LF_LABEL        0x000e
+#define LF_NULL         0x000f
+#define LF_NOTTRAN      0x0010
+#define LF_DIMARRAY     0x0011
+#define LF_VFTPATH      0x0012
+#define LF_PRECOMP      0x0013
+#define LF_ENDPRECOMP   0x0014
+#define LF_OEM          0x0015
+#define LF_TYPESERVER   0x0016
 
-#define LF_SKIP		0x200
-#define LF_ARGLIST	0x201
-#define LF_FIELDLIST	0x204
-#define LF_DERIVED	0x205
-#define LF_BITFIELD	0x206
+#define LF_MODIFIER_32  0x1001     /* variants with new 32-bit type indices */
+#define LF_POINTER_32   0x1002
+#define LF_ARRAY_32     0x1003
+#define LF_CLASS_32     0x1004
+#define LF_STRUCTURE_32 0x1005
+#define LF_UNION_32     0x1006
+#define LF_ENUM_32      0x1007
+#define LF_PROCEDURE_32 0x1008
+#define LF_MFUNCTION_32 0x1009
+#define LF_COBOL0_32    0x100a
+#define LF_BARRAY_32    0x100b
+#define LF_DIMARRAY_32  0x100c
+#define LF_VFTPATH_32   0x100d
+#define LF_PRECOMP_32   0x100e
+#define LF_OEM_32       0x100f
 
-#define LF_BCLASS	0x400
-#define LF_VBCLASS	0x401
-#define LF_IVBCLASS	0x402
-#define LF_ENUMERATE	0x403
-#define LF_FRIENDFCN	0x404
-#define LF_INDEX	0x405
-#define LF_MEMBER	0x406
-#define LF_STMEMBER	0x407
-#define LF_METHOD	0x408
-#define LF_NESTEDTYPE	0x409
-#define LF_VFUNCTAB	0x40a
-#define LF_FRIENDCLS	0x40b
-#define LF_ONEMETHOD	0x40c
-#define LF_FUNCOFF	0x40d
+#define LF_SKIP         0x0200
+#define LF_ARGLIST      0x0201
+#define LF_DEFARG       0x0202
+#define LF_LIST         0x0203
+#define LF_FIELDLIST    0x0204
+#define LF_DERIVED      0x0205
+#define LF_BITFIELD     0x0206
+#define LF_METHODLIST   0x0207
+#define LF_DIMCONU      0x0208
+#define LF_DIMCONLU     0x0209
+#define LF_DIMVARU      0x020a
+#define LF_DIMVARLU     0x020b
+#define LF_REFSYM       0x020c
+
+#define LF_SKIP_32      0x1200    /* variants with new 32-bit type indices */
+#define LF_ARGLIST_32   0x1201
+#define LF_DEFARG_32    0x1202
+#define LF_FIELDLIST_32 0x1203
+#define LF_DERIVED_32   0x1204
+#define LF_BITFIELD_32  0x1205
+#define LF_METHODLIST_32 0x1206
+#define LF_DIMCONU_32   0x1207
+#define LF_DIMCONLU_32  0x1208
+#define LF_DIMVARU_32   0x1209
+#define LF_DIMVARLU_32  0x120a
+
+#define LF_BCLASS       0x0400
+#define LF_VBCLASS      0x0401
+#define LF_IVBCLASS     0x0402
+#define LF_ENUMERATE    0x0403
+#define LF_FRIENDFCN    0x0404
+#define LF_INDEX        0x0405
+#define LF_MEMBER       0x0406
+#define LF_STMEMBER     0x0407
+#define LF_METHOD       0x0408
+#define LF_NESTTYPE     0x0409
+#define LF_VFUNCTAB     0x040a
+#define LF_FRIENDCLS    0x040b
+#define LF_ONEMETHOD    0x040c
+#define LF_VFUNCOFF     0x040d
+#define LF_NESTTYPEEX   0x040e
+#define LF_MEMBERMODIFY 0x040f
+
+#define LF_BCLASS_32    0x1400    /* variants with new 32-bit type indices */
+#define LF_VBCLASS_32   0x1401
+#define LF_IVBCLASS_32  0x1402
+#define LF_FRIENDFCN_32 0x1403
+#define LF_INDEX_32     0x1404
+#define LF_MEMBER_32    0x1405
+#define LF_STMEMBER_32  0x1406
+#define LF_METHOD_32    0x1407
+#define LF_NESTTYPE_32  0x1408
+#define LF_VFUNCTAB_32  0x1409
+#define LF_FRIENDCLS_32 0x140a
+#define LF_ONEMETHOD_32 0x140b
+#define LF_VFUNCOFF_32  0x140c
+#define LF_NESTTYPEEX_32 0x140d
+
+
+
 
 #define MAX_BUILTIN_TYPES	0x480
 static struct datatype * cv_basic_types[MAX_BUILTIN_TYPES];
@@ -478,65 +688,6 @@ struct codeview_linetab_hdr
   unsigned int		 * offtab;
 };
 
-struct codeview_pdb_hdr
-{
-  char		ident[44];
-  unsigned int	blocksize;	   /* Extent size */
-  unsigned short loc_freelist;   /* freelist. */
-  unsigned short alloc_filesize; /* # extents allocated. */
-  unsigned int	toc_len;
-  unsigned int	unknown;
-  unsigned short toc_ext[1];	   /* array of extent #'s for toc. */
-};
-
-/*
- * This is our own structure that we use to keep track of the contents
- * of a PDB file.
- */
-struct file_list
-{
-	int		record_len;
-	int		nextents;
-	short int     * extent_list;
-	unsigned int	linetab_offset;
-	unsigned int	linetab_len;
-};
-
-/*
- * These are the structures that represent how the file table is set up
- * within the PDB file.
- */
-struct filetab_hdr
-{
-  unsigned short	tab1_file;
-  unsigned short	tab2_file;
-  unsigned short	gsym_file;
-  unsigned short	padding;
-  unsigned int		ftab_len;
-  unsigned int		fofftab_len;
-  unsigned int		hash_len;
-  unsigned int		strtab_len;
-};
-
-struct file_ent
-{
-  unsigned int		reserved1;
-  unsigned short	datasect_segment;
-  unsigned short	reserved2;
-  unsigned int		datasect_offset;
-  unsigned int		datasect_size;
-  unsigned int		datasect_flags;
-  unsigned short	reserved3;
-  unsigned short	index;
-  unsigned short	num6a;
-  unsigned short	file_number;
-  unsigned int		linetab_offset;
-  unsigned int		linetab_len;
-  unsigned int		num9;
-  unsigned int		num10;
-  unsigned int		num11;
-  unsigned char		filename[1];
-};
 
 /*
  ********************************************************************
@@ -580,7 +731,7 @@ struct deferred_debug_info * dbglist = NULL;
 #define IMAGE_SYM_CLASS_FILE                0x67
 
 static 
-struct datatype * DEBUG_GetCVType(int typeno)
+struct datatype * DEBUG_GetCVType(unsigned int typeno)
 {
   struct datatype * dt = NULL;
 
@@ -624,7 +775,6 @@ DEBUG_ParseTypeTable(char * table, int len)
 
   curr_type = 0x1000;
 
-  ptr.c = (table + 16);
   while( ptr.c - table < len )
     {
       type = (union codeview_type *) ptr.c;
@@ -648,6 +798,10 @@ DEBUG_ParseTypeTable(char * table, int len)
 	case LF_POINTER:
 	  cv_defined_types[curr_type - 0x1000] = 
 	    DEBUG_FindOrMakePointerType(DEBUG_GetCVType(type->pointer.datatype));
+	  break;
+	case LF_POINTER_32:
+	  cv_defined_types[curr_type - 0x1000] = 
+	    DEBUG_FindOrMakePointerType(DEBUG_GetCVType(type->pointer32.datatype));
 	  break;
 	case LF_ARRAY:
 	  if( type->array.arrlen >= 0x8000 )
@@ -680,6 +834,41 @@ DEBUG_ParseTypeTable(char * table, int len)
 	  else
 	    {
 	      arr_max = type->array.arrlen / DEBUG_GetObjectSize(subtype);
+	    }
+
+	  DEBUG_SetArrayParams(typeptr, 0, arr_max, subtype);
+	  break;
+	case LF_ARRAY_32:
+	  if( type->array32.arrlen >= 0x8000 )
+	    {
+	      /*
+	       * This is a numeric leaf, I am too lazy to handle this right
+	       * now.
+	       */
+	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      break;
+	    }
+	  if( type->array32.namelen != 0 )
+	    {
+	      memset(symname, 0, sizeof(symname));
+	      memcpy(symname, type->array32.name, type->array32.namelen);
+	      typeptr = DEBUG_NewDataType(DT_ARRAY, symname);
+	    }
+	  else
+	    {
+	      typeptr = DEBUG_NewDataType(DT_ARRAY, NULL);
+	    }
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  subtype = DEBUG_GetCVType(type->array32.elemtype);
+	  if(    (subtype == NULL)
+	      || (elem_size = DEBUG_GetObjectSize(subtype)) == 0 )
+	    {
+	      arr_max = 0;
+	    }
+	  else
+	    {
+	      arr_max = type->array32.arrlen / DEBUG_GetObjectSize(subtype);
 	    }
 
 	  DEBUG_SetArrayParams(typeptr, 0, arr_max, subtype);
@@ -774,6 +963,96 @@ DEBUG_ParseTypeTable(char * table, int len)
 	      ptr2.c += ((type2->member.namelen + 9 + 3) & ~3);
 	    }
 	  break;
+	case LF_FIELDLIST_32:
+	  /*
+	   * This is where the basic list of fields is defined for
+	   * structures and classes.
+	   *
+	   * First, we need to look ahead and see whether we are building
+	   * a fieldlist for an enum or a struct.
+	   */
+	  ptr2.i = ptr.i + 1;
+	  type2 = (union codeview_type *) ptr2.c;
+	  if( type2->member32.id == LF_MEMBER_32 )
+	    {
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
+	      fieldtype = DT_STRUCT;
+	    }
+	  else if( type2->member32.id == LF_ENUMERATE )
+	    {
+	      typeptr = DEBUG_NewDataType(DT_ENUM, NULL);
+	      fieldtype = DT_ENUM;
+	    }
+	  else
+	    {
+	      break;
+	    }
+
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+	  while( ptr2.c < (ptr.c + ((type->generic.len + 3) & ~3)) )
+	    {
+	      type2 = (union codeview_type *) ptr2.c;
+	      if( type2->member.id == LF_MEMBER_32 && fieldtype == DT_STRUCT )
+		{
+		  memset(symname, 0, sizeof(symname));
+		  memcpy(symname, type2->member32.name, type2->member32.namelen);
+		  
+		  subtype = DEBUG_GetCVType(type2->member32.type);
+		  elem_size = 0;
+		  if( subtype != NULL )
+		    {
+		      elem_size = DEBUG_GetObjectSize(subtype);
+		    }
+		  
+		  if( type2->member32.offset >= 0x8000 )
+		    {
+		      /*
+		       * This is a numeric leaf, I am too lazy to handle this right
+		       * now.
+		       */
+		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		    }
+		  else
+		    {
+		      DEBUG_AddStructElement(typeptr, symname, subtype, 
+					     type2->member32.offset << 3,
+					     elem_size << 3);
+		    }
+		}
+	      else if( type2->member32.id == LF_ENUMERATE && fieldtype == DT_ENUM )
+		{
+		  memset(symname, 0, sizeof(symname));
+		  memcpy(symname, type2->enumerate.name, type2->enumerate.namelen);
+		  
+		  if( type2->enumerate.value >= 0x8000 )
+		    {
+		      /*
+		       * This is a numeric leaf, I am too lazy to handle this right
+		       * now.
+		       */
+		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		    }
+		  else
+		    {
+		      DEBUG_AddStructElement(typeptr, symname, NULL, 
+					     type2->enumerate.value, 0);
+		    }
+		}
+	      else
+		{
+		  /*
+		   * Something else I have never seen before.  Either wrong type of
+		   * object in the fieldlist, or some other problem which I wouldn't
+		   * really know how to handle until it came up.
+		   */
+		  fprintf(stderr, "Unexpected entry in fieldlist\n");
+		  break;
+		}
+
+
+	      ptr2.c += ((type2->member32.namelen + 9 + 3) & ~3);
+	    }
+	  break;
 	case LF_STRUCTURE:
 	case LF_CLASS:
 	  if( type->structure.structlen >= 0x8000 )
@@ -805,6 +1084,40 @@ DEBUG_ParseTypeTable(char * table, int len)
 	  if( subtype != NULL )
 	    {
 	      DEBUG_SetStructSize(typeptr, type->structure.structlen);
+	      DEBUG_CopyFieldlist(typeptr, subtype);
+	    }
+	  break;
+	case LF_STRUCTURE_32:
+	case LF_CLASS_32:
+	  if( type->structure32.structlen >= 0x8000 )
+	    {
+	      /*
+	       * This is a numeric leaf, I am too lazy to handle this right
+	       * now.
+	       */
+	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      break;
+	    }
+	  memset(symname, 0, sizeof(symname));
+	  memcpy(symname, type->structure32.name, type->structure32.namelen);
+	  if( strcmp(symname, "__unnamed") == 0 )
+	    {
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
+	    }
+	  else
+	    {
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
+	    }
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  /*
+	   * Now copy the relevant bits from the fieldlist that we specified.
+	   */
+	  subtype = DEBUG_GetCVType(type->structure32.fieldlist);
+
+	  if( subtype != NULL )
+	    {
+	      DEBUG_SetStructSize(typeptr, type->structure32.structlen);
 	      DEBUG_CopyFieldlist(typeptr, subtype);
 	    }
 	  break;
@@ -843,6 +1156,41 @@ DEBUG_ParseTypeTable(char * table, int len)
 	      DEBUG_CopyFieldlist(typeptr, subtype);
 	    }
 	  break;
+	case LF_UNION_32:
+	  if( type->t_union32.un_len >= 0x8000 )
+	    {
+	      /*
+	       * This is a numeric leaf, I am too lazy to handle this right
+	       * now.
+	       */
+	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      break;
+	    }
+	  memset(symname, 0, sizeof(symname));
+	  memcpy(symname, type->t_union32.name, type->t_union32.namelen);
+
+	  if( strcmp(symname, "__unnamed") == 0 )
+	    {
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
+	    }
+	  else
+	    {
+	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
+	    }
+
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  /*
+	   * Now copy the relevant bits from the fieldlist that we specified.
+	   */
+	  subtype = DEBUG_GetCVType(type->t_union32.field);
+
+	  if( subtype != NULL )
+	    {
+	      DEBUG_SetStructSize(typeptr, type->t_union32.un_len);
+	      DEBUG_CopyFieldlist(typeptr, subtype);
+	    }
+	  break;
 	case LF_BITFIELD:
 	  typeptr = DEBUG_NewDataType(DT_BITFIELD, NULL);
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
@@ -850,7 +1198,14 @@ DEBUG_ParseTypeTable(char * table, int len)
 				  type->bitfield.nbits, 
 				  DEBUG_GetCVType(type->bitfield.type));
 	  break;
-	case LF_ENUMERATION:
+	case LF_BITFIELD_32:
+	  typeptr = DEBUG_NewDataType(DT_BITFIELD, NULL);
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+	  DEBUG_SetBitfieldParams(typeptr, type->bitfield32.bitoff,
+				  type->bitfield32.nbits, 
+				  DEBUG_GetCVType(type->bitfield32.type));
+	  break;
+	case LF_ENUM:
 	  memset(symname, 0, sizeof(symname));
 	  memcpy(symname, type->enumeration.name, type->enumeration.namelen);
 	  typeptr = DEBUG_NewDataType(DT_ENUM, symname);
@@ -866,7 +1221,22 @@ DEBUG_ParseTypeTable(char * table, int len)
 	      DEBUG_CopyFieldlist(typeptr, subtype);
 	    }
 	  break;
-	case LF_DIMARRAY:
+	case LF_ENUM_32:
+	  memset(symname, 0, sizeof(symname));
+	  memcpy(symname, type->enumeration32.name, type->enumeration32.namelen);
+	  typeptr = DEBUG_NewDataType(DT_ENUM, symname);
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  /*
+	   * Now copy the relevant bits from the fieldlist that we specified.
+	   */
+	  subtype = DEBUG_GetCVType(type->enumeration32.field);
+
+	  if( subtype != NULL )
+	    {
+	      DEBUG_CopyFieldlist(typeptr, subtype);
+	    }
+	  break;
 	default:
 	  break;
 	}
@@ -1655,12 +2025,6 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
   sectp = deefer->sectp;
 
   /*
-   * Skip over the first word.  Don't really know what it means, but
-   * it is useless.
-   */
-  ptr.ui++;
-
-  /*
    * Loop over the different types of records and whenever we
    * find something we are interested in, record it and move on.
    */
@@ -1710,6 +2074,35 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  new_addr.off = (unsigned int) deefer->load_addr + 
 	    sectp[sym->data.seg - 1].VirtualAddress + 
 	    sym->data.offset;
+	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
+	  break;
+	case S_GDATA_32:
+	case S_LDATA_32:
+	case S_PUB_32:
+	  /*
+	   * First, a couple of sanity checks.
+	   */
+	  if( sym->data32.namelen == 0 )
+	    {
+	      break;
+	    }
+
+	  if( sym->data32.seg == 0 || sym->data32.seg > nsect )
+	    {
+	      break;
+	    }
+
+	  /*
+	   * Global and local data symbols.  We don't associate these
+	   * with any given source file.
+	   */
+
+	  memcpy(symname, sym->data32.name, sym->data32.namelen);
+	  new_addr.seg = 0;
+	  new_addr.type = DEBUG_GetCVType(sym->data32.symtype);
+	  new_addr.off = (unsigned int) deefer->load_addr + 
+	    sectp[sym->data32.seg - 1].VirtualAddress + 
+	    sym->data32.offset;
 	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
 	  break;
 	case S_THUNK:
@@ -1793,6 +2186,71 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  DEBUG_SetSymbolBPOff(curr_func, sym->proc.debug_start);
 	  DEBUG_SetSymbolSize(curr_func, sym->proc.proc_len);
 	  break;
+	case S_GPROC_32:
+	case S_LPROC_32:
+	  /*
+	   * Global and static functions.
+	   */
+	  memcpy(symname, sym->proc32.name, sym->proc32.namelen);
+	  new_addr.seg = 0;
+	  new_addr.type = DEBUG_GetCVType(sym->proc32.proctype);
+	  new_addr.off = (unsigned int) deefer->load_addr + 
+	    sectp[sym->proc32.segment - 1].VirtualAddress + 
+	    sym->proc32.offset;
+	  /*
+	   * See if we can find a segment that this goes with.  If so,
+	   * it means that we also may have line number information
+	   * for this function.
+	   */
+	  for(i=0; linetab[i].linetab != NULL; i++)
+	    {
+	      if(     ((unsigned int) deefer->load_addr 
+		       + sectp[linetab[i].segno - 1].VirtualAddress 
+		       + linetab[i].start <= new_addr.off)
+		  &&  ((unsigned int) deefer->load_addr 
+		       + sectp[linetab[i].segno - 1].VirtualAddress 
+		       + linetab[i].end > new_addr.off) )
+		{
+		  break;
+		}
+	    }
+
+ 	  DEBUG_Normalize(curr_func);
+	  if( linetab[i].linetab == NULL )
+	    {
+	      curr_func = DEBUG_AddSymbol( symname, &new_addr, NULL,
+					   SYM_WIN32 | SYM_FUNC);
+	    }
+	  else
+	    {
+	      /*
+	       * First, create the entry.  Then dig through the linetab
+	       * and add whatever line numbers are appropriate for this
+	       * function.
+	       */
+	      curr_func = DEBUG_AddSymbol( symname, &new_addr, 
+					   linetab[i].sourcefile,
+					   SYM_WIN32 | SYM_FUNC);
+	      for(j=0; j < linetab[i].nline; j++)
+		{
+		  if( linetab[i].offtab[j] >= sym->proc32.offset 
+		      && linetab[i].offtab[j] < sym->proc32.offset 
+		      + sym->proc32.proc_len )
+		    {
+		      DEBUG_AddLineNumber(curr_func, linetab[i].linetab[j],
+					  linetab[i].offtab[j] - sym->proc32.offset);
+		    }
+		}
+
+	    }
+
+	  /*
+	   * Add information about where we should set breakpoints
+	   * in this function.
+	   */
+	  DEBUG_SetSymbolBPOff(curr_func, sym->proc32.debug_start);
+	  DEBUG_SetSymbolSize(curr_func, sym->proc32.proc_len);
+	  break;
 	case S_BPREL:
 	  /*
 	   * Function parameters and stack variables.
@@ -1807,6 +2265,20 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  DEBUG_SetLocalSymbolType(curr_sym, DEBUG_GetCVType(sym->stack.symtype));
 	  
 	  break;
+	case S_BPREL_32:
+	  /*
+	   * Function parameters and stack variables.
+	   */
+	  memcpy(symname, sym->stack32.name, sym->stack32.namelen);
+	  curr_sym = DEBUG_AddLocal(curr_func, 
+			 0, 
+			 sym->stack32.offset, 
+			 0, 
+			 0, 
+			 symname);
+	  DEBUG_SetLocalSymbolType(curr_sym, DEBUG_GetCVType(sym->stack32.symtype));
+	  
+	  break;
 	default:
 	  break;
 	}
@@ -1818,7 +2290,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
        */
       if( sym->generic.id == S_PROCREF
 	  || sym->generic.id == S_DATAREF
-	  || sym->generic.id == S_UNKNOWN )
+	  || sym->generic.id == S_LPROCREF )
 	{
 	  len = (sym->generic.len + 3) & ~3;
 	  len += ptr.c[16] + 1;
@@ -1841,360 +2313,474 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 
 /*
  * Process PDB file which contains debug information.
- *
- * These are really weird beasts.  They are intended to be incrementally
- * updated by the incremental linker, and this means that you need to 
- * be able to remove and add information.  Thus the PDB file is sort of
- * like a block structured device, with a freelist and lists of extent numbers
- * that are used to get the relevant pieces.  In all cases seen so far, the
- * blocksize is always 0x400 bytes.  The header has a field which apparently
- * holds the blocksize, so if it ever changes we are safe.
- *
- * In general, every time we need to extract something from the pdb file,
- * it is easier to copy it into another buffer so we have the information
- * in one contiguous block rather than attempt to try and keep track of when
- * we need to grab another extent from the pdb file.
- *
- * The thing that is a real pain about some MS stuff is that they choose
- * data structures which are not representable in C.  Thus we have to
- * hack around and diddle pointers.
  */
-/* static */
-int
-DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
+
+#pragma pack(1)
+typedef struct _PDB_FILE
 {
-  char			      * addr = (char *) 0xffffffff;
-  unsigned int			blocksize;
-  unsigned int			bufflen = 0;
-  char			      * buffer = NULL;
-  unsigned short	      * extent_table;
-  int				fd = -1;
-  struct file_ent	      * fent;
-  char			        filename[MAX_PATHNAME_LEN];
-  struct file_list	      * filelist = NULL;
-  unsigned int			gsym_record = 0;
-  char			      * gsymtab = NULL;
-  struct filetab_hdr	      * hd;
-  int				i;
-  int				j;
-  unsigned int			last_extent;
-  struct codeview_linetab_hdr * linetab;
-  unsigned int			nblocks;
-  unsigned int			npair;
-  unsigned int			offset;
-  struct codeview_pdb_hdr     * pdbhdr;
-  unsigned int		      * pnt;
-  struct stat			statbuf;
-  int				status;
-  unsigned short	      * table;
-  char			      * toc;
-  unsigned int			toc_blocks;
+    DWORD size;
+    DWORD unknown;
 
-  LocateDebugInfoFile(full_filename, filename);
-  status = stat(filename, &statbuf);
-  if( status == -1 )
-    {
-      fprintf(stderr, "-Unable to open .PDB file %s\n", filename);
-      goto leave;
-    }
+} PDB_FILE, *PPDB_FILE;
 
-  /*
-   * Now open the file, so that we can mmap() it.
-   */
-  fd = open(filename, O_RDONLY);
-  if( fd == -1 )
-    {
-      fprintf(stderr, "-Unable to open .DBG file %s\n", filename);
-      goto leave;
-    }
+typedef struct _PDB_HEADER
+{
+    CHAR     ident[40];
+    DWORD    signature;
+    DWORD    blocksize;
+    WORD     freelist;
+    WORD     total_alloc;
+    PDB_FILE toc;
+    WORD     toc_block[ 1 ];
+
+} PDB_HEADER, *PPDB_HEADER;
+
+typedef struct _PDB_TOC
+{
+    DWORD    nFiles;
+    PDB_FILE file[ 1 ];
+
+} PDB_TOC, *PPDB_TOC;
+
+typedef struct _PDB_ROOT
+{
+    DWORD  version;
+    DWORD  TimeDateStamp;
+    DWORD  unknown;
+    DWORD  cbNames;
+    CHAR   names[ 1 ];
+
+} PDB_ROOT, *PPDB_ROOT;
+
+typedef struct _PDB_TYPES_OLD
+{
+    DWORD  version;
+    WORD   first_index;
+    WORD   last_index;
+    DWORD  type_size;
+    WORD   file;
+    WORD   pad;
+
+} PDB_TYPES_OLD, *PPDB_TYPES_OLD;
+
+typedef struct _PDB_TYPES
+{
+    DWORD  version;
+    DWORD  type_offset;
+    DWORD  first_index;
+    DWORD  last_index;
+    DWORD  type_size;
+    WORD   file;
+    WORD   pad;
+    DWORD  hash_size;
+    DWORD  hash_base;
+    DWORD  hash_offset;
+    DWORD  hash_len;
+    DWORD  search_offset;
+    DWORD  search_len;
+    DWORD  unknown_offset;
+    DWORD  unknown_len;
+
+} PDB_TYPES, *PPDB_TYPES;
+
+typedef struct _PDB_SYMBOL_RANGE
+{
+    WORD   segment;
+    WORD   pad1;
+    DWORD  offset;
+    DWORD  size;
+    DWORD  characteristics;
+    WORD   index;
+    WORD   pad2;
+
+} PDB_SYMBOL_RANGE, *PPDB_SYMBOL_RANGE;
+
+typedef struct _PDB_SYMBOL_RANGE_EX
+{
+    WORD   segment;
+    WORD   pad1;
+    DWORD  offset;
+    DWORD  size;
+    DWORD  characteristics;
+    WORD   index;
+    WORD   pad2;
+    DWORD  timestamp;
+    DWORD  unknown;
+
+} PDB_SYMBOL_RANGE_EX, *PPDB_SYMBOL_RANGE_EX;
+
+typedef struct _PDB_SYMBOL_FILE
+{
+    DWORD  unknown1;
+    PDB_SYMBOL_RANGE range;
+    WORD   flag;
+    WORD   file;
+    DWORD  symbol_size;
+    DWORD  lineno_size;
+    DWORD  unknown2;
+    DWORD  nSrcFiles;
+    DWORD  attribute;
+    CHAR   filename[ 1 ];
+
+} PDB_SYMBOL_FILE, *PPDB_SYMBOL_FILE;
+
+typedef struct _PDB_SYMBOL_FILE_EX
+{
+    DWORD  unknown1;
+    PDB_SYMBOL_RANGE_EX range;
+    WORD   flag;
+    WORD   file;
+    DWORD  symbol_size;
+    DWORD  lineno_size;
+    DWORD  unknown2;
+    DWORD  nSrcFiles;
+    DWORD  attribute;
+    DWORD  reserved[ 2 ];
+    CHAR   filename[ 1 ];
+
+} PDB_SYMBOL_FILE_EX, *PPDB_SYMBOL_FILE_EX;
+
+typedef struct _PDB_SYMBOL_SOURCE
+{
+    WORD   nModules;
+    WORD   nSrcFiles;
+    WORD   table[ 1 ];
+
+} PDB_SYMBOL_SOURCE, *PPDB_SYMBOL_SOURCE;
+
+typedef struct _PDB_SYMBOL_IMPORT
+{
+    DWORD  unknown1;
+    DWORD  unknown2;
+    DWORD  TimeDateStamp;
+    DWORD  nRequests;
+    CHAR   filename[ 1 ];
+
+} PDB_SYMBOL_IMPORT, *PPDB_SYMBOL_IMPORT;
+
+typedef struct _PDB_SYMBOLS_OLD
+{
+    WORD   hash1_file;
+    WORD   hash2_file;
+    WORD   gsym_file;
+    WORD   pad;
+    DWORD  module_size;
+    DWORD  offset_size;
+    DWORD  hash_size;
+    DWORD  srcmodule_size;
+
+} PDB_SYMBOLS_OLD, *PPDB_SYMBOLS_OLD;
+
+typedef struct _PDB_SYMBOLS
+{
+    DWORD  signature;
+    DWORD  version;
+    DWORD  extended_format;
+    DWORD  hash1_file;
+    DWORD  hash2_file;
+    DWORD  gsym_file;
+    DWORD  module_size;
+    DWORD  offset_size;
+    DWORD  hash_size;
+    DWORD  srcmodule_size;
+    DWORD  pdbimport_size;
+    DWORD  resvd[ 5 ];
+
+} PDB_SYMBOLS, *PPDB_SYMBOLS;
+#pragma pack()
 
 
-  /*
-   * Now mmap() the file.
-   */
-  addr = mmap(0, statbuf.st_size, PROT_READ, 
-	      MAP_PRIVATE, fd, 0);
-  if( addr == (char *) 0xffffffff )
-    {
-      fprintf(stderr, "-Unable to mmap .DBG file %s\n", filename);
-      goto leave;
-    }
+static void *pdb_read( LPBYTE image, WORD *block_list, int size )
+{
+    PPDB_HEADER pdb = (PPDB_HEADER)image;
+    int i, nBlocks;
+    LPBYTE buffer;
 
-  /*
-   * Now that we have the formalities over and done with, we need
-   * to find the table of contents for the PDB file.
-   */
-  pdbhdr = (struct codeview_pdb_hdr *) addr;
-  blocksize = pdbhdr->blocksize;
-  last_extent = (statbuf.st_size + blocksize - 1) / blocksize;
+    if ( !size ) return NULL;
 
-  /*
-   * The TOC itself isn't always contiguous, so we need to extract a few
-   * extents from the file to form the TOC.
-   */
-  toc_blocks = (pdbhdr->toc_len + blocksize - 1) / blocksize;
-  toc = (char *) DBG_alloc(toc_blocks * blocksize);
-  table = pdbhdr->toc_ext;
-  for(i=0; i < toc_blocks; i++)
-    {
-      memcpy(toc + blocksize*i, addr + table[i]*blocksize, blocksize);
-    }
+    nBlocks = (size + pdb->blocksize-1) / pdb->blocksize;
+    buffer = DBG_alloc( nBlocks * pdb->blocksize );
 
-  /*
-   * Next build our own table which will have the size and extent block
-   * list for each record in the PDB file.
-   *
-   * The TOC starts out with the number of files.  Then it is followed by
-   * (npair * 2*sizeof(int)) bytes of information, which are pairs of ints.
-   * The first one is the size of the record (in bytes), and the second one
-   * is something else which I haven't figured out yet.
-   */
-  pnt = (unsigned int *) toc;
-  npair = *pnt++;
-  extent_table = (unsigned short *) ((unsigned int) toc +
-				     npair * 2 * sizeof(int) + sizeof(int));
+    for ( i = 0; i < nBlocks; i++ )
+        memcpy( buffer + i*pdb->blocksize,
+                image + block_list[i]*pdb->blocksize, pdb->blocksize );
 
-  /*
-   * Sanity check.
-   */
-  if( sizeof(int) + 2*sizeof(int)*npair > pdbhdr->toc_len )
-    {
-      goto leave;
-    }
-  
-  filelist = (struct file_list *) DBG_alloc(npair * sizeof(*filelist));
-  if( filelist == NULL )
-    {
-      goto leave;
-    }
-  memset(filelist, 0, npair * sizeof(*filelist));
-
-  nblocks = 0;
-  for(i=0; i < npair; i++)
-    {
-      filelist[i].record_len = pnt[i*2];
-      filelist[i].nextents   = (filelist[i].record_len + blocksize - 1) 
-	/ blocksize;
-      filelist[i].extent_list = extent_table + nblocks;
-      nblocks += filelist[i].nextents;
-
-      /*
-       * These get filled in later when we parse one of the records.
-       */
-      filelist[i].linetab_offset = 0;
-      filelist[i].linetab_len = 0;
-    }
-
-  /*
-   * OK, now walk through the various records and pick out the bits we
-   * really want to see.  Some of the records are extra special, and
-   * we need to handle these a little bit differently.
-   */
-  for(i=0; i < npair; i++)
-    {
-      if( filelist[i].record_len == 0xffffffff )
-	{
-	  continue;
-	}
-
-      /*
-       * Make sure our buffer is large enough to hold the record.
-       */
-      if( bufflen < filelist[i].nextents * blocksize )
-	{
-	  bufflen = filelist[i].nextents * blocksize;
-	  buffer = (char *) DBG_realloc(buffer, bufflen);
-	}
-
-      /*
-       * Do this just for completeness.  It makes debugging easier
-       * if we have a clean indication of where the record ends.
-       */
-      memset(buffer, 0, filelist[i].nextents * blocksize);
-
-      /*
-       * Next, build the record using the extent list.
-       */
-      for(j=0; j < filelist[i].nextents; j++)
-	{
-	  memcpy(buffer + j * blocksize,
-		 addr + filelist[i].extent_list[j] * blocksize,
-		 blocksize);
-	}
-
-      pnt = (unsigned int *) buffer;
-
-      /*
-       * OK, now figure out what to do with it.
-       */
-
-      /*
-       * Always ignore the first entry.  It seems to contain a backup copy
-       * of the TOC (the last time the file was modified??)
-       */
-      if( i == 0 )
-	{
-	  continue;
-	}
-
-      /* 
-       * The second entry as a id block.  It contains a magic number
-       * to identify the compiler, plus it also contains the timestamp
-       * which must match the timestamp in the executable.  
-       */
-      if( i == 1 )
-	{
-
-	  if( ((*pnt != 19950623) && (*pnt != 19950814))
-	      || (filelist[i].record_len != 0x24)
-	      || (pnt[1] != ((struct CodeViewDebug *)(deefer->dbg_info))->cv_timestamp) )
-	    {
-	      goto leave;
-	    }
-	}
-
-      /*
-       * The third entry contains pointers to the global symbol table,
-       * plus it also contains additional information about each record
-       * in the PDB file.
-       */
-      if( i == 3 )
-	{
-	  hd = (struct filetab_hdr *) buffer;
-
-	  gsym_record = hd->gsym_file;
-	  gsymtab = (char *) DBG_alloc(filelist[gsym_record].nextents 
-				      * blocksize);
-	  memset(gsymtab, 0, filelist[gsym_record].nextents * blocksize);
-	  
-	  for(j=0; j < filelist[gsym_record].nextents; j++)
-	    {
-	      memcpy(gsymtab + j * blocksize,
-		     addr + filelist[gsym_record].extent_list[j] * blocksize,
-		     blocksize);
-	    }
-
-	  /*
-	   * This record also contains information about where in the
-	   * remaining records we will be able to find the start of the
-	   * line number table.  We could locate that bit using heuristics,
-	   * but since we have the info handy, we might as well use it.
-	   */
-	  offset = sizeof(*hd);
-	  while(1==1)
-	    {
-	      fent = (struct file_ent *) (buffer + offset);
-	      if( offset > hd->ftab_len )
-		{
-		  break;
-		}
-
-	      if( fent->file_number == 0 || fent->file_number >= npair )
-		{
- 		  break;
-		}
-
-	      filelist[fent->file_number].linetab_offset = 
-		fent->linetab_offset;
-	      filelist[fent->file_number].linetab_len = 
-		fent->linetab_len;
-	      /*
-	       * Figure out the offset of the next entry.
-	       * There is a fixed part of the record and a variable
-	       * length filename which we must also skip past.
-	       */
-	      offset += ((unsigned int) &fent->filename - (unsigned int) fent)
-		+ strlen(fent->filename) + 1;
-	      offset += strlen(buffer+offset) + 1;
-	      offset = (offset + 3) & ~3;
-	    }
-	}
-      
-
-      /*
-       * Two different magic numbers used as dates.
-       * These indicate the 'type' table.
-       */
-      if(       *pnt == 19950410
-	     || *pnt == 19951122 )
-	{
-	  DEBUG_ParseTypeTable(buffer, filelist[i].record_len);
-	  continue;
-	}
-
-      /*
-       * This is something we really want to look at, since it contains
-       * real debug info.  Anything that doesn't match this can be
-       * ignored for now.
-       */
-      if( *pnt == 1 )
-	{
-	  /*
-	   * First, snag the line table, if we have one.  This always
-	   * occurs at the end of the record, so we take the linetab
-	   * offset as the end of the normal part of the record.
-	   */
-	  linetab = NULL;
-	  if( filelist[i].linetab_len != 0 )
-	    {
-	      linetab = DEBUG_SnarfLinetab(buffer + filelist[i].linetab_offset,
-					   filelist[i].linetab_len);
-	      DEBUG_SnarfCodeView(deefer, buffer,
-				  filelist[i].linetab_offset,
-				  linetab);
-	    }
-	  else
-	    {
-	      DEBUG_SnarfCodeView(deefer, buffer,
-				  filelist[i].record_len,
-				  linetab);
-	    }
-	  continue;
-	}
-    }
-
-  /*
-   * Finally, process the global symbol table itself.  There isn't
-   * a line number component to this, so we just toss everything
-   * into the mix and it all should work out.
-   */
-  if( gsym_record != 0 )
-    {
-      DEBUG_SnarfCodeView(deefer, gsymtab - sizeof(int), 
-			  filelist[gsym_record].record_len,
-			  NULL);
-    }
-  
-leave:
-
-  if( gsymtab != NULL )
-    {
-      DBG_free(gsymtab);
-      gsymtab = NULL;
-    }
-
-  if( buffer != NULL )
-    {
-      DBG_free(buffer);
-    }
-
-  if( filelist != NULL )
-    {
-      DBG_free(filelist);
-    }
-
-  if( addr != (char *) 0xffffffff )
-    {
-      munmap(addr, statbuf.st_size);
-    }
-
-  if( fd != -1 )
-    {
-      close(fd);
-    }
-
-  return TRUE;
+    return buffer;
 }
+
+static void *pdb_read_file( LPBYTE image, PPDB_TOC toc, int fileNr )
+{
+    PPDB_HEADER pdb = (PPDB_HEADER)image;
+    WORD *block_list;
+    int i;
+
+    if ( !toc || fileNr >= toc->nFiles )
+        return NULL;
+
+    block_list = (WORD *) &toc->file[ toc->nFiles ];
+    for ( i = 0; i < fileNr; i++ )
+        block_list += (toc->file[i].size + pdb->blocksize-1) / pdb->blocksize;
+
+    return pdb_read( image, block_list, toc->file[fileNr].size );
+}
+
+static void pdb_free( void *buffer )
+{
+    DBG_free( buffer );
+}
+
+static void pdb_convert_types_header( PDB_TYPES *types, char *image )
+{
+    memset( types, 0, sizeof(PDB_TYPES) );
+    if ( !image ) return;
+
+    if ( *(DWORD *)image < 19960000 )   /* FIXME: correct version? */
+    {
+        /* Old version of the types record header */
+        PDB_TYPES_OLD *old = (PDB_TYPES_OLD *)image;
+        types->version     = old->version;
+        types->type_offset = sizeof(PDB_TYPES_OLD);
+        types->type_size   = old->type_size;
+        types->first_index = old->first_index;
+        types->last_index  = old->last_index;
+        types->file        = old->file;
+    }
+    else
+    {
+        /* New version of the types record header */
+        *types = *(PDB_TYPES *)image;
+    }
+}
+
+static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols, 
+                                        int *header_size, char *image )
+{
+    memset( symbols, 0, sizeof(PDB_SYMBOLS) );
+    if ( !image ) return;
+
+    if ( *(DWORD *)image != 0xffffffff )
+    {
+        /* Old version of the symbols record header */
+        PDB_SYMBOLS_OLD *old     = (PDB_SYMBOLS_OLD *)image;
+        symbols->version         = 0;
+        symbols->extended_format = 0;
+        symbols->module_size     = old->module_size;
+        symbols->offset_size     = old->offset_size;
+        symbols->hash_size       = old->hash_size;
+        symbols->srcmodule_size  = old->srcmodule_size;
+        symbols->pdbimport_size  = 0;
+        symbols->hash1_file      = old->hash1_file;
+        symbols->hash2_file      = old->hash2_file;
+        symbols->gsym_file       = old->gsym_file;
+
+        *header_size = sizeof(PDB_SYMBOLS_OLD);
+    }
+    else
+    {
+        /* New version of the symbols record header */
+        *symbols = *(PDB_SYMBOLS *)image;
+
+        *header_size = sizeof(PDB_SYMBOLS);
+    }
+}
+
+int DEBUG_ProcessPDBFile( struct deferred_debug_info *deefer, char *full_filename )
+{
+    char filename[MAX_PATHNAME_LEN];
+    struct stat	statbuf;
+    int	fd = -1;
+    char *image = (char *) 0xffffffff;
+    PDB_HEADER *pdb = NULL;
+    PDB_TOC *toc = NULL;
+    PDB_ROOT *root = NULL;
+    char *types_image = NULL;
+    char *symbols_image = NULL;
+    PDB_TYPES types;
+    PDB_SYMBOLS symbols;
+    int header_size = 0;
+    char *modimage, *file;
+
+
+    /*
+     * Open and mmap() .PDB file
+     */
+
+    LocateDebugInfoFile( full_filename, filename );
+
+    if ( stat( filename, &statbuf ) == -1 )
+    {
+        fprintf( stderr, "-Unable to open .PDB file %s\n", filename );
+        goto leave;
+    }
+
+    fd = open(filename, O_RDONLY);
+    if ( fd == -1 )
+    {
+        fprintf( stderr, "-Unable to open .PDB file %s\n", filename );
+        goto leave;
+    }
+
+    image = mmap( 0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0 );
+    if ( image == (char *) 0xffffffff )
+    {
+        fprintf(stderr, "-Unable to mmap .PDB file %s\n", filename);
+        goto leave;
+    }
+
+    /*
+     * Read in TOC and well-known files
+     */
+
+    pdb = (PPDB_HEADER)image;
+    toc = pdb_read( image, pdb->toc_block, pdb->toc.size );
+    root = pdb_read_file( image, toc, 1 );
+    types_image = pdb_read_file( image, toc, 2 );
+    symbols_image = pdb_read_file( image, toc, 3 );
+
+    pdb_convert_types_header( &types, types_image );
+    pdb_convert_symbols_header( &symbols, &header_size, symbols_image );
+
+    /*
+     * Check for unknown versions
+     */
+
+    switch ( root->version )
+    {
+        case 19950623:      /* VC 4.0 */
+        case 19950814:
+        case 19960307:      /* VC 5.0 */
+        case 19970604:      /* VC 6.0 */
+            break;
+        default:
+            fprintf( stderr, "-Unknown root block version %ld\n", root->version );
+    }
+
+    switch ( types.version )
+    {
+        case 19950410:      /* VC 4.0 */
+        case 19951122:
+        case 19961031:      /* VC 5.0 / 6.0 */
+            break;
+        default:
+            fprintf( stderr, "-Unknown type info version %ld\n", types.version );
+    }
+
+    switch ( symbols.version )
+    {
+        case 0:            /* VC 4.0 */
+        case 19960307:     /* VC 5.0 */
+        case 19970606:     /* VC 6.0 */
+            break;
+        default:
+            fprintf( stderr, "-Unknown symbol info version %ld\n", symbols.version );
+    }
+
+
+    /* 
+     * Check .PDB time stamp
+     */
+
+    if (      root->TimeDateStamp 
+         != ((struct CodeViewDebug *)deefer->dbg_info)->cv_timestamp ) 
+    {
+        fprintf(stderr, "-Wrong time stamp of .PDB file %s\n", filename);
+        goto leave;
+    }
+
+    /* 
+     * Read type table
+     */
+
+    DEBUG_ParseTypeTable( types_image + types.type_offset, types.type_size );
+    
+    /*
+     * Read type-server .PDB imports
+     */
+
+    if ( symbols.pdbimport_size )
+    {   
+        /* FIXME */
+        fprintf(stderr, "-Type server .PDB imports ignored!\n" );
+    }
+
+    /* 
+     * Read global symbol table
+     */
+
+    modimage = pdb_read_file( image, toc, symbols.gsym_file );
+    if ( modimage )
+    {
+        DEBUG_SnarfCodeView( deefer, modimage, 
+                             toc->file[symbols.gsym_file].size, NULL );
+        pdb_free( modimage );
+    }
+
+    /*
+     * Read per-module symbol / linenumber tables
+     */
+
+    file = symbols_image + header_size;
+    while ( file - symbols_image < header_size + symbols.module_size )
+    {
+        int file_nr, file_index, symbol_size, lineno_size;
+        char *file_name;
+
+        if ( !symbols.extended_format )
+        {
+            PDB_SYMBOL_FILE *sym_file = (PDB_SYMBOL_FILE *) file;
+            file_nr     = sym_file->file;
+            file_name   = sym_file->filename;
+            file_index  = sym_file->range.index;
+            symbol_size = sym_file->symbol_size;
+            lineno_size = sym_file->lineno_size;
+        }
+        else
+        {
+            PDB_SYMBOL_FILE_EX *sym_file = (PDB_SYMBOL_FILE_EX *) file;
+            file_nr     = sym_file->file;
+            file_name   = sym_file->filename;
+            file_index  = sym_file->range.index;
+            symbol_size = sym_file->symbol_size;
+            lineno_size = sym_file->lineno_size;
+        }
+
+        modimage = pdb_read_file( image, toc, file_nr );
+        if ( modimage )
+        {
+            struct codeview_linetab_hdr *linetab = NULL;
+
+            if ( lineno_size )
+                linetab = DEBUG_SnarfLinetab( modimage + symbol_size, lineno_size );
+
+            if ( symbol_size )
+                DEBUG_SnarfCodeView( deefer, modimage + sizeof(DWORD),
+                                     symbol_size - sizeof(DWORD), linetab );
+
+            pdb_free( modimage );
+        }
+
+        file_name += strlen(file_name) + 1;
+        file = (char *)( (DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3 );
+    }
+    
+
+ leave:    
+
+    /*
+     * Cleanup
+     */
+
+    if ( symbols_image ) pdb_free( symbols_image );
+    if ( types_image ) pdb_free( types_image );
+    if ( root ) pdb_free( root );
+    if ( toc ) pdb_free( toc );
+
+    if ( image != (char *) 0xffffffff ) munmap( image, statbuf.st_size );
+    if ( fd != -1 ) close( fd );
+
+    return TRUE;
+}
+
 
 /*
  * Process DBG file which contains debug information.
@@ -2356,8 +2942,8 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 			   * Now process the CV stuff.
 			   */
 			  DEBUG_SnarfCodeView(deefer, 
-					      codeview + codeview_dent->offset,
-					      codeview_dent->size,
+					      codeview + codeview_dent->offset + sizeof(DWORD),
+					      codeview_dent->size - sizeof(DWORD),
 					      linetab);
 			}
 		    }
