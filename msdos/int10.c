@@ -18,8 +18,6 @@ static void scroll_window(int direction, char lines, char row1,
 
 static int color_pallet[16];
 
-static char dummy; /* dummy var used for unneeded CONSOLE function parameter */
-
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
 
@@ -67,6 +65,10 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
              0110b   brown          1110b   yellow
              0111b   light gray     1111b   white
         */
+        
+        /* These AllocColor calls have the side-effect of triggering 
+           ternimal initialization as xx_Init() is no longer called on
+           startup. Which is what we want anyway. */
 
         color_pallet[0]  = CONSOLE_AllocColor(WINE_BLACK);
         color_pallet[1]  = CONSOLE_AllocColor(WINE_BLUE);
@@ -134,7 +136,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
     case 0x01: /* SET CURSOR SHAPE */
         FIXME(int10, "Set Cursor Shape - Not Supported\n");
         break;
-
+    
     case 0x02: /* SET CURSOR POSITION */
         /* BH = Page Number */ /* Not supported */
         /* DH = Row */ /* 0 is left */
@@ -191,11 +193,24 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
 
     case 0x08: /* READ CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
         {
-        CHAR ch, attr;
-        TRACE(int10, "Read Character and Attribute at Cursor Position\n");
-        CONSOLE_GetCharacterAtCursor(&ch, &dummy, &dummy, &attr);
-        AL_reg(context) = ch;
-        AH_reg(context) = attr; 
+            /* Note here that color data returned is bogus, will fix later. */
+            char ch;
+            int bg, fg, attr;
+            if (BH_reg(context)) /* Write to different page */
+            {
+                FIXME(int10, "Read Character and Attribute at Cursor Position -"
+                      " Can't read from non-0 page\n");
+                AL_reg(context) = ' '; /* That page is blank */
+                AH_reg(context) = 7;
+            }
+            else
+            {
+                TRACE(int10, 
+                      "Read Character and Attribute at Cursor Position\n");
+                CONSOLE_GetCharacterAtCursor(&ch, &fg, &bg, &attr);
+                AL_reg(context) = ch;
+                AH_reg(context) = 7;	/* FIXME: We're assuming wh on bl */ 
+            }
         }
         break;
 
@@ -204,7 +219,7 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
        /* BH = Page Number */ /* We can't write to non-0 pages, yet. */
        /* BL = Attribute / Color */
        /* CX = Times to Write Char */
-       /* !NOTE!: It appears as if the cursor is not advanced if CX > 1 */
+       /* Note here that the cursor is not advanced. */
        write_char_attribute_at_cursor(AL_reg(context), BH_reg(context), 
           BL_reg(context), CX_reg(context));
        if (CX_reg(context) > 1)
