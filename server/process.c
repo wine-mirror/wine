@@ -160,7 +160,7 @@ static void process_dump( struct object *obj, int verbose )
 static int process_signaled( struct object *obj, struct thread *thread )
 {
     struct process *process = (struct process *)obj;
-    return (process->running_threads > 0);
+    return !process->running_threads;
 }
 
 /* get a process from an id (and increment the refcount) */
