@@ -114,6 +114,8 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
     RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];
 } RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
+/* value for Flags field (FIXME: not the correct name) */
+#define PROCESS_PARAMS_FLAG_NORMALIZED 1
 
 typedef struct _PEB_LDR_DATA
 {
@@ -1080,6 +1082,11 @@ void      WINAPI RtlCopyUnicodeString(UNICODE_STRING*,const UNICODE_STRING*);
 NTSTATUS  WINAPI RtlCreateAcl(PACL,DWORD,DWORD);
 NTSTATUS  WINAPI RtlCreateEnvironment(BOOLEAN, PWSTR*);
 HANDLE    WINAPI RtlCreateHeap(ULONG,PVOID,ULONG,ULONG,PVOID,PRTL_HEAP_DEFINITION);
+NTSTATUS  WINAPI RtlCreateProcessParameters(RTL_USER_PROCESS_PARAMETERS**,const UNICODE_STRING*,
+                                            const UNICODE_STRING*,const UNICODE_STRING*,
+                                            const UNICODE_STRING*,PWSTR,const UNICODE_STRING*,
+                                            const UNICODE_STRING*,const UNICODE_STRING*,
+                                            const UNICODE_STRING*);
 NTSTATUS  WINAPI RtlCreateSecurityDescriptor(PSECURITY_DESCRIPTOR,DWORD);
 BOOLEAN   WINAPI RtlCreateUnicodeString(PUNICODE_STRING,LPCWSTR);
 BOOLEAN   WINAPI RtlCreateUnicodeStringFromAsciiz(PUNICODE_STRING,LPCSTR);
@@ -1087,8 +1094,10 @@ BOOLEAN   WINAPI RtlCreateUnicodeStringFromAsciiz(PUNICODE_STRING,LPCSTR);
 NTSTATUS  WINAPI RtlDeleteCriticalSection(RTL_CRITICAL_SECTION *);
 void      WINAPI RtlDeleteResource(LPRTL_RWLOCK);
 DWORD     WINAPI RtlDeleteSecurityObject(DWORD);
+PRTL_USER_PROCESS_PARAMETERS WINAPI RtlDeNormalizeProcessParams(RTL_USER_PROCESS_PARAMETERS*);
 NTSTATUS  WINAPI RtlDestroyEnvironment(PWSTR);
 HANDLE    WINAPI RtlDestroyHeap(HANDLE);
+void      WINAPI RtlDestroyProcessParameters(RTL_USER_PROCESS_PARAMETERS*);
 DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U(PCWSTR);
 BOOLEAN   WINAPI RtlDoesFileExists_U(LPCWSTR);
 BOOLEAN   WINAPI RtlDosPathNameToNtPathName_U(LPWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
@@ -1196,7 +1205,7 @@ NTSTATUS  WINAPI RtlMultiByteToUnicodeN(LPWSTR,DWORD,LPDWORD,LPCSTR,DWORD);
 NTSTATUS  WINAPI RtlMultiByteToUnicodeSize(DWORD*,LPCSTR,UINT);
 
 DWORD     WINAPI RtlNewSecurityObject(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD);
-LPVOID    WINAPI RtlNormalizeProcessParams(LPVOID);
+PRTL_USER_PROCESS_PARAMETERS WINAPI RtlNormalizeProcessParams(RTL_USER_PROCESS_PARAMETERS*);
 ULONG     WINAPI RtlNtStatusToDosError(NTSTATUS);
 ULONG     WINAPI RtlNumberOfSetBits(PCRTL_BITMAP);
 ULONG     WINAPI RtlNumberOfClearBits(PCRTL_BITMAP);

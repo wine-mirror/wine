@@ -340,15 +340,6 @@ DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
 }
 
 /**************************************************************************
- *                 RtlNormalizeProcessParams		[NTDLL.@]
- */
-LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
-{
-    FIXME("(%p), stub\n",x);
-    return x;
-}
-
-/**************************************************************************
  *                 RtlGetNtProductType			[NTDLL.@]
  */
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)

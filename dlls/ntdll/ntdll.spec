@@ -323,7 +323,7 @@
 @ stub RtlCreateAndSetSD
 @ stdcall RtlCreateEnvironment(long ptr)
 @ stdcall RtlCreateHeap(long ptr long long ptr ptr)
-@ stub RtlCreateProcessParameters
+@ stdcall RtlCreateProcessParameters(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub RtlCreateQueryDebugBuffer
 @ stub RtlCreateRegistryKey
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
@@ -335,7 +335,7 @@
 @ stub RtlCreateUserThread
 @ stub RtlCustomCPToUnicodeN
 @ stub RtlCutoverTimeToSystemTime
-@ stub RtlDeNormalizeProcessParams
+@ stdcall RtlDeNormalizeProcessParams(ptr)
 @ stub RtlDecompressBuffer
 @ stub RtlDecompressFragment
 @ stub RtlDelete
@@ -347,7 +347,7 @@
 @ stdcall RtlDeleteSecurityObject(long)
 @ stdcall RtlDestroyEnvironment(ptr)
 @ stdcall RtlDestroyHeap(long)
-@ stub RtlDestroyProcessParameters
+@ stdcall RtlDestroyProcessParameters(ptr)
 @ stub RtlDestroyQueryDebugBuffer
 @ stdcall RtlDetermineDosPathNameType_U(wstr)
 @ stdcall RtlDoesFileExists_U(wstr)
