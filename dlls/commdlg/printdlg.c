@@ -1025,12 +1025,20 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
 
     case rad1: /* Paperorientation */
         if (lppd->Flags & PD_PRINTSETUP)
+        {
               lpdm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+              SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE, (WPARAM) IMAGE_ICON,
+                          (LPARAM)(PrintStructures->hPortraitIcon));
+        }
         break;
             
     case rad2: /* Paperorientation */
         if (lppd->Flags & PD_PRINTSETUP)
+        {
               lpdm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+              SendDlgItemMessageA(hDlg, ico1, STM_SETIMAGE, (WPARAM) IMAGE_ICON,
+                          (LPARAM)(PrintStructures->hLandscapeIcon));
+        }
         break;
             
     case cmb1:
