@@ -39,7 +39,7 @@
 #include <stdio.h>
 
 #include "winnt.h"
-#include "options.h"
+#include "winreg.h"
 #include "psdrv.h"
 #include "debugtools.h"
 #include "heap.h"
@@ -558,11 +558,13 @@ static BOOL ReadTrueTypeFile(LPCSTR filename)
  *  that event.
  *
  */
-BOOL PSDRV_GetTrueTypeMetrics()
+BOOL PSDRV_GetTrueTypeMetrics(void)
 {
     CHAR    	keybuf[256], namebuf[256];
     INT     	i = 0;
     FT_Error	error;
+    HKEY hkey;
+    DWORD type, key_len, name_len;
 
     error = FT_Init_FreeType(&library);
     if (error != FT_Err_Ok)
@@ -571,8 +573,13 @@ BOOL PSDRV_GetTrueTypeMetrics()
 	return FALSE;
     }
 
-    while (PROFILE_EnumWineIniString("TrueType Font Directories", i++, keybuf,
-    	    sizeof(keybuf), namebuf, sizeof(namebuf)))
+    if(RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\TrueType Font Directories",
+		     0, KEY_READ, &hkey))
+	goto no_metrics;
+
+    key_len = sizeof(keybuf);
+    name_len = sizeof(namebuf);
+    while(!RegEnumValueA(hkey, i++, keybuf, &key_len, NULL, &type, namebuf, &name_len))
     {
     	struct dirent	*dent;
     	DIR 	    	*dir;
@@ -614,14 +621,21 @@ BOOL PSDRV_GetTrueTypeMetrics()
 	    {
 	    	ERR("Error reading '%s'\n", namebuf);
 	    	closedir(dir);
+		RegCloseKey(hkey);
 		FT_Done_FreeType(library);
 		return FALSE;
 	    }
 	}
 	
 	closedir(dir);
+
+	/* initialize lengths for new iteration */
+	key_len = sizeof(keybuf);
+	name_len = sizeof(namebuf);
     }
-   
+    RegCloseKey(hkey);
+
+no_metrics:
     FT_Done_FreeType(library);
     return TRUE;
 }

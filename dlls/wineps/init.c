@@ -18,7 +18,6 @@
 #include "winreg.h"
 #include "winspool.h"
 #include "winerror.h"
-#include "options.h"
 
 #ifdef HAVE_CUPS
 # include <cups/cups.h>
@@ -468,6 +467,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     HANDLE hPrinter;
     const char *ppd = NULL;
     char ppdFileName[256];
+    HKEY hkey;
 
     TRACE("'%s'\n", name);
     
@@ -538,10 +538,16 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     /* Look for a ppd file for this printer in the config file.
      * First look for the names of the printer, then for 'generic'
      */
-    if ((res!=ERROR_SUCCESS) &&
-	!PROFILE_GetWineIniString("ppd",name,"",ppdFileName,sizeof(ppdFileName))	&&
-    	!PROFILE_GetWineIniString("ppd","generic","",ppdFileName,sizeof(ppdFileName))
-    )
+    if((res != ERROR_SUCCESS) && !RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd", &hkey))
+    {
+	DWORD count = sizeof(ppdFileName);
+	ppdFileName[0] = 0;
+	if(RegQueryValueExA(hkey, name, 0, &type, ppdFileName, &count) != ERROR_SUCCESS)
+	    RegQueryValueExA(hkey, "generic", 0, &type, ppdFileName, &count);
+	RegCloseKey(hkey);
+    }
+
+    if(!ppdFileName[0])
 	res = ERROR_FILE_NOT_FOUND;
     else 
 	res = ERROR_SUCCESS;

@@ -17,8 +17,8 @@
 # include <float.h>  	/* FLT_MAX */
 #endif
 #include "winnt.h"  	/* HEAP_ZERO_MEMORY */
+#include "winreg.h"
 #include "psdrv.h"
-#include "options.h"
 #include "debugtools.h"
 #include "heap.h"
 
@@ -977,15 +977,23 @@ static BOOL PSDRV_ReadAFMDir(const char* afmdir) {
 
 BOOL PSDRV_GetFontMetrics(void)
 {
-    int idx = 0;
+    int idx;
     char key[256];
     char value[256];
+    HKEY hkey;
+    DWORD type, key_len, value_len;
 
     if (PSDRV_GlyphListInit() != 0)
 	return FALSE;
 
-    while (PROFILE_EnumWineIniString( "afmfiles", idx++, key, sizeof(key),
-    	    value, sizeof(value)))
+    if(RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\afmfiles",
+		     0, KEY_READ, &hkey))
+	goto no_afmfiles;
+
+    idx = 0;
+    key_len = sizeof(key);
+    value_len = sizeof(value);
+    while(!RegEnumValueA(hkey, idx++, key, &key_len, NULL, &type, value, &value_len))
     {
         AFM* afm = PSDRV_AFMParse(value);
 	
@@ -995,18 +1003,44 @@ BOOL PSDRV_GetFontMetrics(void)
                 PSDRV_ReencodeCharWidths(afm);
             }
             if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
+		RegCloseKey(hkey);
 	    	return FALSE;
 	    }
         }
 	else {
 	    WARN("Error parsing %s\n", value);
 	}
-    }
 
-    for (idx = 0; PROFILE_EnumWineIniString ("afmdirs", idx, key, sizeof (key),
-	    value, sizeof (value)); ++idx)
+	/* initialize lengths for new iteration */
+	key_len = sizeof(key);
+	value_len = sizeof(value);
+    }
+    RegCloseKey(hkey);
+
+no_afmfiles:
+
+    if(RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\afmdirs",
+		     0, KEY_READ, &hkey))
+	goto no_afmdirs;
+
+    idx = 0;
+    key_len = sizeof(key);
+    value_len = sizeof(value);
+    while(!RegEnumValueA(hkey, idx++, key, &key_len, NULL, &type, value, &value_len))
+    {
 	if (PSDRV_ReadAFMDir (value) == FALSE)
+	{
+	    RegCloseKey(hkey);
 	    return FALSE;
+	}
+
+	/* initialize lengths for new iteration */
+	key_len = sizeof(key);
+	value_len = sizeof(value);
+    }
+    RegCloseKey(hkey);
+
+no_afmdirs:
 
     PSDRV_IndexGlyphList(); 	    	/* So SortFontMetrics will work */
     if (SortFontMetrics() == FALSE)
