@@ -968,9 +968,9 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
-unsigned long elf_read_wine_loader_dbg_info(struct process* pcs)
+BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
 {
-    return -1;
+    return FALSE;
 }
 
 struct module*  elf_load_module(struct process* pcs, const char* name)
