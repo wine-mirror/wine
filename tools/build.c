@@ -45,8 +45,8 @@
 #ifdef __i386__
 extern WORD __get_cs(void);
 extern WORD __get_ds(void);
-__ASM_GLOBAL_FUNC( __get_cs, "movl %cs,%eax\n\tret" );
-__ASM_GLOBAL_FUNC( __get_ds, "movl %ds,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_ds, "movw %ds,%ax\n\tret" );
 #else
 static inline WORD __get_cs(void) { return 0; }
 static inline WORD __get_ds(void) { return 0; }
@@ -1084,18 +1084,18 @@ static int BuildSpec32File( FILE *outfile )
     if ( have_regs )
     { 
         fprintf( outfile, "#ifndef __GNUC__\n" );
-        fprintf( outfile, "static void __asm__dummy() {\n" );
+        fprintf( outfile, "static void __asm__dummy(void) {\n" );
         fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
         for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
         {
             if (odp->type != TYPE_REGISTER) continue;
             fprintf( outfile,
-                     "__asm__(\".align 4\\n\\t\"\n"
-                     "        \".type " PREFIX "__regs_%d,@function\\n\\t\"\n"
-                     "        \"" PREFIX "__regs_%d:\\n\\t\"\n"
-                     "        \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
-                     "        \".long " PREFIX "%s\\n\\t\"\n"
-                     "        \".byte %d,%d\");\n",
+                     "asm(\".align 4\\n\\t\"\n"
+                     "    \".type " PREFIX "__regs_%d,@function\\n\\t\"\n"
+                     "    \"" PREFIX "__regs_%d:\\n\\t\"\n"
+                     "    \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
+                     "    \".long " PREFIX "%s\\n\\t\"\n"
+                     "    \".byte %d,%d\");\n",
                      odp->ordinal, odp->ordinal, odp->u.func.link_name,
                      4 * strlen(odp->u.func.arg_types),
                      4 * strlen(odp->u.func.arg_types) );
@@ -1105,111 +1105,117 @@ static int BuildSpec32File( FILE *outfile )
         fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
     }
 
-    /* Output the DLL functions table */
-
-    fprintf( outfile, "\nstatic const ENTRYPOINT32 Functions[%d] =\n{\n",
-             nr_exports );
-    for (i = Base; i <= Limit; i++)
+    if (nb_names)
     {
-        ORDDEF *odp = Ordinals[i];
-        if (!odp) fprintf( outfile, "    0" );
-        else switch(odp->type)
+        /* Output the DLL names table */
+
+        fprintf( outfile, "static const char * const FuncNames[%d] =\n{\n", nb_names );
+        for (i = 0; i < nb_names; i++)
         {
-        case TYPE_EXTERN:
-            fprintf( outfile, "    %s", odp->u.ext.link_name );
-            break;
-        case TYPE_STDCALL:
-        case TYPE_VARARGS:
-        case TYPE_CDECL:
-            fprintf( outfile, "    %s", odp->u.func.link_name);
-            break;
-        case TYPE_STUB:
-            fprintf( outfile, "    __stub_%d", i );
-            break;
-        case TYPE_REGISTER:
-            fprintf( outfile, "    __regs_%d", i );
-            break;
-        case TYPE_FORWARD:
-            fprintf( outfile, "    (ENTRYPOINT32)\"%s\"", odp->u.fwd.link_name );
-            break;
-        default:
-            return -1;
+            if (i) fprintf( outfile, ",\n" );
+            fprintf( outfile, "    \"%s\"", Names[i]->name );
         }
-        if (i < Limit) fprintf( outfile, ",\n" );
+        fprintf( outfile, "\n};\n\n" );
+
+        /* Output the DLL ordinals table */
+
+        fprintf( outfile, "static const unsigned short FuncOrdinals[%d] =\n{\n", nb_names );
+        for (i = 0; i < nb_names; i++)
+        {
+            if (i) fprintf( outfile, ",\n" );
+            fprintf( outfile, "    %d", Names[i]->ordinal - Base );
+        }
+        fprintf( outfile, "\n};\n\n" );
     }
-    fprintf( outfile, "\n};\n\n" );
 
-    /* Output the DLL names table */
-
-    fprintf( outfile, "static const char * const FuncNames[%d] =\n{\n", nb_names );
-    for (i = 0; i < nb_names; i++)
+    if (nr_exports) 
     {
-        if (i) fprintf( outfile, ",\n" );
-        fprintf( outfile, "    \"%s\"", Names[i]->name );
-    }
-    fprintf( outfile, "\n};\n\n" );
+        /* Output the DLL functions table */
 
-    /* Output the DLL ordinals table */
-
-    fprintf( outfile, "static const unsigned short FuncOrdinals[%d] =\n{\n", nb_names );
-    for (i = 0; i < nb_names; i++)
-    {
-        if (i) fprintf( outfile, ",\n" );
-        fprintf( outfile, "    %d", Names[i]->ordinal - Base );
-    }
-    fprintf( outfile, "\n};\n\n" );
-
-    /* Output the DLL argument types */
-
-    fprintf( outfile, "static const unsigned int ArgTypes[%d] =\n{\n",
-             nr_exports );
-    for (i = Base; i <= Limit; i++)
-    {
-        ORDDEF *odp = Ordinals[i];
-    	unsigned int j, mask = 0;
-	if (odp &&
-            ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL) ||
-            (odp->type == TYPE_REGISTER)))
-	    for (j = 0; odp->u.func.arg_types[j]; j++)
+        fprintf( outfile, "\nstatic const ENTRYPOINT32 Functions[%d] =\n{\n",
+                 nr_exports );
+        for (i = Base; i <= Limit; i++)
+        {
+            ORDDEF *odp = Ordinals[i];
+            if (!odp) fprintf( outfile, "    0" );
+            else switch(odp->type)
             {
-                if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
-                if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
-	    }
-	fprintf( outfile, "    %d", mask );
-        if (i < Limit) fprintf( outfile, ",\n" );
-    }
-    fprintf( outfile, "\n};\n\n" );
-
-    /* Output the DLL functions arguments */
-
-    fprintf( outfile, "static const unsigned char FuncArgs[%d] =\n{\n",
-             nr_exports );
-    for (i = Base; i <= Limit; i++)
-    {
-        unsigned char args = 0xff;
-        ORDDEF *odp = Ordinals[i];
-        if (odp) switch(odp->type)
-        {
-        case TYPE_STDCALL:
-            args = (unsigned char)strlen(odp->u.func.arg_types);
-            break;
-        case TYPE_CDECL:
-            args = 0x80 | (unsigned char)strlen(odp->u.func.arg_types);
-            break;
-        case TYPE_REGISTER:
-            args = 0x40 | (unsigned char)strlen(odp->u.func.arg_types);
-            break;
-        case TYPE_FORWARD:
-            args = 0xfd;
-            break;
-        default:
-            args = 0xff;
-            break;
+            case TYPE_EXTERN:
+                fprintf( outfile, "    %s", odp->u.ext.link_name );
+                break;
+            case TYPE_STDCALL:
+            case TYPE_VARARGS:
+            case TYPE_CDECL:
+                fprintf( outfile, "    %s", odp->u.func.link_name);
+                break;
+            case TYPE_STUB:
+                fprintf( outfile, "    __stub_%d", i );
+                break;
+            case TYPE_REGISTER:
+                fprintf( outfile, "    __regs_%d", i );
+                break;
+            case TYPE_FORWARD:
+                fprintf( outfile, "    (ENTRYPOINT32)\"%s\"", odp->u.fwd.link_name );
+                break;
+            default:
+                return -1;
+            }
+            if (i < Limit) fprintf( outfile, ",\n" );
         }
-        fprintf( outfile, "    0x%02x", args );
-        if (i < Limit) fprintf( outfile, ",\n" );
+        fprintf( outfile, "\n};\n\n" );
+
+        /* Output the DLL argument types */
+
+        fprintf( outfile, "static const unsigned int ArgTypes[%d] =\n{\n",
+                 nr_exports );
+        for (i = Base; i <= Limit; i++)
+        {
+            ORDDEF *odp = Ordinals[i];
+            unsigned int j, mask = 0;
+	    if (odp &&
+                ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL) ||
+                (odp->type == TYPE_REGISTER)))
+                for (j = 0; odp->u.func.arg_types[j]; j++)
+                {
+                    if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
+                    if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
+	        }
+                fprintf( outfile, "    %d", mask );
+                if (i < Limit) fprintf( outfile, ",\n" );
+        }
+        fprintf( outfile, "\n};\n\n" );
+
+        /* Output the DLL functions arguments */
+
+        fprintf( outfile, "static const unsigned char FuncArgs[%d] =\n{\n",
+                 nr_exports );
+        for (i = Base; i <= Limit; i++)
+        {
+            unsigned char args = 0xff;
+            ORDDEF *odp = Ordinals[i];
+            if (odp) switch(odp->type)
+            {
+            case TYPE_STDCALL:
+                args = (unsigned char)strlen(odp->u.func.arg_types);
+                break;
+            case TYPE_CDECL:
+                args = 0x80 | (unsigned char)strlen(odp->u.func.arg_types);
+                break;
+            case TYPE_REGISTER:
+                args = 0x40 | (unsigned char)strlen(odp->u.func.arg_types);
+                break;
+            case TYPE_FORWARD:
+                args = 0xfd;
+                break;
+            default:
+                args = 0xff;
+                break;
+            }
+            fprintf( outfile, "    0x%02x", args );
+            if (i < Limit) fprintf( outfile, ",\n" );
+        }
+        fprintf( outfile, "\n};\n\n" );
     }
-    fprintf( outfile, "\n};\n\n" );
 
     /* Output the DLL imports */
 
@@ -1237,12 +1243,11 @@ static int BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    %d,\n", nb_names );
     fprintf( outfile, "    %d,\n", nb_imports );
     fprintf( outfile, "    %d,\n", (fwd_size + 3) & ~3 );
-    fprintf( outfile,
-             "    Functions,\n"
-             "    FuncNames,\n"
-             "    FuncOrdinals,\n"
-             "    FuncArgs,\n"
-             "    ArgTypes,\n");
+    fprintf( outfile, "    %s,\n", nr_exports ? "Functions" : "0" );
+    fprintf( outfile, "    %s,\n", nb_names ? "FuncNames" : "0" );
+    fprintf( outfile, "    %s,\n", nb_names ? "FuncOrdinals" : "0" );
+    fprintf( outfile, "    %s,\n", nr_exports ? "FuncArgs" : "0" );
+    fprintf( outfile, "    %s,\n", nr_exports ? "ArgTypes" : "0" );
     fprintf( outfile, "    %s,\n", nb_imports ? "Imports" : "0" );
     fprintf( outfile, "    %s,\n", DLLInitFunc[0] ? DLLInitFunc : "0" );
     fprintf( outfile, "    %d,\n", SpecMode == SPEC_MODE_DLL ? IMAGE_FILE_DLL : 0 );
@@ -1251,9 +1256,18 @@ static int BuildSpec32File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    fprintf( outfile, "static void dll_init(void) __attribute__((constructor));\n" );
-    fprintf( outfile, "static void dll_init(void) { BUILTIN32_RegisterDLL( &%s_Descriptor ); }\n",
-             DLLName );
+    fprintf( outfile, "#ifdef __GNUC__\n" );
+    fprintf( outfile, "static void %s_init(void) __attribute__((constructor));\n", DLLName );
+    fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
+    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall %s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
+    fprintf( outfile, "static void %s_init(void) { BUILTIN32_RegisterDLL( &%s_Descriptor ); }\n",
+             DLLName, DLLName );
+
     return 0;
 }
 
@@ -1505,9 +1519,18 @@ static int BuildSpec16File( FILE *outfile )
     
     /* Output the DLL constructor */
 
-    fprintf( outfile, "static void dll_init(void) __attribute__((constructor));\n" );
-    fprintf( outfile, "static void dll_init(void) { BUILTIN_RegisterDLL( &%s_Descriptor ); }\n",
-             DLLName );
+    fprintf( outfile, "#ifdef __GNUC__\n" );
+    fprintf( outfile, "static void %s_init(void) __attribute__((constructor));\n", DLLName );
+    fprintf( outfile, "#else /* defined(__GNUC__) */\n" );
+    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "asm(\"\\t.section\t.init ,\\\"ax\\\"\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall %s_init\\n\"\n", DLLName );
+    fprintf( outfile, "    \"\\t.previous\\n\");\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
+    fprintf( outfile, "static void %s_init(void) { BUILTIN_RegisterDLL( &%s_Descriptor ); }\n",
+             DLLName, DLLName );
+
     return 0;
 }
 
@@ -2178,6 +2201,7 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     fprintf( outfile, ".stabs \"CallTo16%s:F1\",36,0,0," PREFIX "CallTo16%s\n", 
 	     name, name);
 #endif
+    fprintf( outfile, "\t.type " PREFIX "CallTo16%s,@function\n", name );
     fprintf( outfile, "\t.globl " PREFIX "CallTo16%s\n", name );
     fprintf( outfile, PREFIX "CallTo16%s:\n", name );
 
@@ -2225,7 +2249,10 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Get return address */
     if ( UsePIC )
-        fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr@GOTOFF(%%ebx), %%ecx\n" );
+    {
+        fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr@GOT(%%ebx), %%ecx\n" );
+        fprintf( outfile, "\tmovl " PREFIX "(%%ecx), %%ecx\n" );
+    }
     else
         fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr, %%ecx\n" );
 
@@ -2381,7 +2408,8 @@ static void BuildRet16Func( FILE *outfile )
      *        run-time relocation of the SYSLEVEL_Win16CurrentTeb symbol
      */
 
-    fprintf( outfile, "\n\t.globl " PREFIX "CallTo16_Ret\n" );
+    fprintf( outfile, "\n\t.type " PREFIX "CallTo16_Ret,@function\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CallTo16_Ret\n" );
     fprintf( outfile, PREFIX "CallTo16_Ret:\n" );
 
     /* Restore 32-bit segment registers */
