@@ -343,20 +343,27 @@ static inline BOOL copy_param(
  * Query CSP capabilities for a given crypto algorithm.
  * 
  * PARAMS
- *  pKeyContainer [I] Pointer to a key container of the CSP whose capabilities are to be queried.
- *  algid         [I] Identifier of the crypto algorithm about which information is requested.
+ *  hProv [I] Handle to a key container of the CSP whose capabilities are to be queried.
+ *  algid [I] Identifier of the crypto algorithm about which information is requested.
  *
  * RETURNS
  *  Success: Pointer to a PROV_ENUMALGS_EX struct containing information about the crypto algorithm.
  *  Failure: NULL (algid not supported)
  */
-static inline const PROV_ENUMALGS_EX* get_algid_info(KEYCONTAINER *pKeyContainer, ALG_ID algid) {
+static inline const PROV_ENUMALGS_EX* get_algid_info(HCRYPTPROV hProv, ALG_ID algid) {
     PROV_ENUMALGS_EX *iterator;
+    KEYCONTAINER *pKeyContainer;
+
+    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR**)&pKeyContainer)) {
+        SetLastError(NTE_BAD_UID);
+        return NULL;
+    }
 
     for (iterator = aProvEnumAlgsEx[pKeyContainer->dwPersonality]; iterator->aiAlgid; iterator++) {
         if (iterator->aiAlgid == algid) return iterator;
     }
 
+    SetLastError(NTE_BAD_ALGID);
     return NULL;
 }
 
@@ -445,7 +452,6 @@ static void destroy_hash(OBJECTHDR *pCryptHash)
  * Initialize (or reset) a hash object
  *
  * PARAMS
- *  pKeyContainer [I] Pointer to the key container the hash object belongs to.
  *  pCryptHash    [I] The hash object to be initialized.
  */
 static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
@@ -456,19 +462,9 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
         case CALG_HMAC:
             if (pCryptHash->pHMACInfo) { 
                 const PROV_ENUMALGS_EX *pAlgInfo;
-                KEYCONTAINER *pKeyContainer;
-
-                if (!lookup_handle(&handle_table, pCryptHash->hProv, RSAENH_MAGIC_CONTAINER, 
-                                   (OBJECTHDR**)&pKeyContainer))
-                {
-                    SetLastError(NTE_FAIL);
-                    return FALSE;
-                }
-                pAlgInfo = get_algid_info(pKeyContainer, pCryptHash->pHMACInfo->HashAlgid);
-                if (!pAlgInfo) {
-                    SetLastError(NTE_BAD_ALGID);
-                    return FALSE;
-                }
+                
+                pAlgInfo = get_algid_info(pCryptHash->hProv, pCryptHash->pHMACInfo->HashAlgid);
+                if (!pAlgInfo) return FALSE;
                 pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
                 init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context);
                 update_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context,
@@ -616,26 +612,16 @@ static inline void setup_key(CRYPTKEY *pCryptKey) {
  */
 static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTKEY **ppCryptKey)
 {
-    KEYCONTAINER *pKeyContainer;
     HCRYPTKEY hCryptKey;
     CRYPTKEY *pCryptKey;
     DWORD dwKeyLen = HIWORD(dwFlags);
     const PROV_ENUMALGS_EX *peaAlgidInfo;
 
-    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR**)&pKeyContainer))
-    {
-        SetLastError(NTE_BAD_UID);
-        return (HCRYPTKEY)INVALID_HANDLE_VALUE;
-    }
-    
     /* 
      * Retrieve the CSP's capabilities for the given ALG_ID value
      */
-    peaAlgidInfo = get_algid_info(pKeyContainer, aiAlgid);
-    if (!peaAlgidInfo) {
-        SetLastError(NTE_BAD_ALGID);
-        return (HCRYPTKEY)INVALID_HANDLE_VALUE;
-    }
+    peaAlgidInfo = get_algid_info(hProv, aiAlgid);
+    if (!peaAlgidInfo) return (HCRYPTKEY)INVALID_HANDLE_VALUE;
 
     /*
      * Assume the default key length, if none is specified explicitly
@@ -1149,25 +1135,14 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
 BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, DWORD dwFlags, 
                                 HCRYPTHASH *phHash)
 {
-    KEYCONTAINER *pKeyContainer;
     CRYPTHASH *pCryptHash;
     const PROV_ENUMALGS_EX *peaAlgidInfo;
         
     TRACE("(hProv=%08lx, Algid=%08x, hKey=%08lx, dwFlags=%08lx, phHash=%p)\n", hProv, Algid, hKey, 
           dwFlags, phHash);
 
-    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR**)&pKeyContainer)) 
-    {
-        SetLastError(NTE_BAD_UID);
-        return FALSE;
-    }
-
-    peaAlgidInfo = get_algid_info(pKeyContainer, Algid);
-    if (!peaAlgidInfo)
-    {
-        SetLastError(NTE_BAD_ALGID);
-        return FALSE;
-    }
+    peaAlgidInfo = get_algid_info(hProv, Algid);
+    if (!peaAlgidInfo) return FALSE;
 
     if (dwFlags)
     {
@@ -1806,7 +1781,6 @@ BOOL WINAPI RSAENH_CPExportKey(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTKEY hPubK
 BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen, 
                                HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey)
 {
-    KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey, *pPubKey;
     CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
     CONST RSAPUBKEY *pRSAPubKey = (CONST RSAPUBKEY*)(pBlobHeader+1);
@@ -1818,7 +1792,7 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     TRACE("(hProv=%08lx, pbData=%p, dwDataLen=%ld, hPubKey=%08lx, dwFlags=%08lx, phKey=%p)\n", 
         hProv, pbData, dwDataLen, hPubKey, dwFlags, phKey);
     
-    if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR**)&pKeyContainer))
+    if (!is_valid_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER))
     {
         SetLastError(NTE_BAD_UID);
         return FALSE;
@@ -2031,12 +2005,9 @@ BOOL WINAPI RSAENH_CPGenKey(HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYP
  */
 BOOL WINAPI RSAENH_CPGenRandom(HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
 {
-    KEYCONTAINER *pKeyContainer;
-
     TRACE("(hProv=%08lx, dwLen=%ld, pbBuffer=%p)\n", hProv, dwLen, pbBuffer);
     
-    if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
-                       (OBJECTHDR**)&pKeyContainer)) 
+    if (!is_valid_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER)) 
     {
         /* MSDN: hProv not containing valid context handle */
         SetLastError(NTE_BAD_UID);
@@ -2071,13 +2042,11 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                                   DWORD *pdwDataLen, DWORD dwFlags) 
 {
     CRYPTHASH *pCryptHash;
-    KEYCONTAINER *pKeyContainer;
         
     TRACE("(hProv=%08lx, hHash=%08lx, dwParam=%08lx, pbData=%p, pdwDataLen=%p, dwFlags=%08lx)\n", 
         hProv, hHash, dwParam, pbData, pdwDataLen, dwFlags);
     
-    if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
-                       (OBJECTHDR**)&pKeyContainer)) 
+    if (!is_valid_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER)) 
     {
         SetLastError(NTE_BAD_UID);
         return FALSE;
@@ -2445,7 +2414,6 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
 BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData, 
                                DWORD dwFlags, HCRYPTKEY *phKey)
 {
-    KEYCONTAINER *pKeyContainer;
     CRYPTKEY *pCryptKey;
     CRYPTHASH *pCryptHash;
     BYTE abHashValue[RSAENH_MAX_HASH_SIZE*2];
@@ -2454,8 +2422,7 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
     TRACE("(hProv=%08lx, Algid=%d, hBaseData=%08lx, dwFlags=%08lx phKey=%p)\n", hProv, Algid, 
            hBaseData, dwFlags, phKey);
     
-    if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
-                       (OBJECTHDR**)&pKeyContainer))
+    if (!is_valid_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER))
     {
         SetLastError(NTE_BAD_UID);
         return FALSE;
@@ -2604,17 +2571,9 @@ BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pb
                               DWORD dwDataLen, DWORD dwFlags)
 {
     CRYPTHASH *pCryptHash;
-    KEYCONTAINER *pKeyContainer;
         
     TRACE("(hProv=%08lx, hHash=%08lx, pbData=%p, dwDataLen=%ld, dwFlags=%08lx)\n", 
           hProv, hHash, pbData, dwDataLen, dwFlags);
-
-    if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
-                       (OBJECTHDR**)&pKeyContainer))
-    {
-        SetLastError(NTE_BAD_UID);
-        return FALSE;
-    }
 
     if (dwFlags)
     {
@@ -2629,8 +2588,7 @@ BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pb
         return FALSE;
     }
 
-    if (!get_algid_info(pKeyContainer, pCryptHash->aiAlgid) || 
-        pCryptHash->aiAlgid == CALG_SSL3_SHAMD5) 
+    if (!get_algid_info(hProv, pCryptHash->aiAlgid) || pCryptHash->aiAlgid == CALG_SSL3_SHAMD5)
     {
         SetLastError(NTE_BAD_ALGID);
         return FALSE;
@@ -2755,14 +2713,12 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
 {
     CRYPTHASH *pCryptHash;
     CRYPTKEY *pCryptKey;
-    KEYCONTAINER *pKeyContainer;
     int i;
 
     TRACE("(hProv=%08lx, hHash=%08lx, dwParam=%08lx, pbData=%p, dwFlags=%08lx)\n", 
            hProv, hHash, dwParam, pbData, dwFlags);
 
-    if (!lookup_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER, 
-                       (OBJECTHDR**)&pKeyContainer))
+    if (!is_valid_handle(&handle_table, (unsigned int)hProv, RSAENH_MAGIC_CONTAINER))
     {
         SetLastError(NTE_BAD_UID);
         return FALSE;
