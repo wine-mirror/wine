@@ -30,8 +30,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <fcntl.h>
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
+
+#ifndef O_BINARY
+# define O_BINARY 0
+#endif
 
 #include "fnt2bdf.h"
 #include "module.h"
@@ -146,6 +155,13 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
   t = return_data_value(dfShort, &cpe_font_struct.hdr.dfVersion);
   if( t != 0x300 && t != 0x200) return ERROR_VERSION;
 
+  t = return_data_value(dfShort, &cpe_font_struct.hdr.fi.dfType);
+  if (t & 1)
+  {
+    fprintf(stderr, "Vector fonts not supported\n");
+    return ERROR_DATA;
+  }
+
   t = return_data_value(dfLong, &cpe_font_struct.hdr.dfSize);
   if( t > length ) return ERROR_SIZE;
   else
@@ -176,7 +192,7 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
 	if( return_data_value(dfShort, &cpe_font_struct.hdr.dfVersion) == 0x200) {
 	    cpe_font_struct.dfCharTable[ic].charOffset =
 			return_data_value(dfShort, &file_buffer[l_ptr]);
-	    l_ptr += 2;	/* bump by sizeof(long) */
+	    l_ptr += 2;	/* bump by sizeof(short) */
 	    }
 	else { 	/*  Windows Version 3.0 type font */
 	    cpe_font_struct.dfCharTable[ic].charOffset =
@@ -540,7 +556,7 @@ int main(int argc, char **argv)
 
   parse_options( argc, argv);
 
-  if( (fd = open( g_lpstrInputFile, O_RDONLY)) )
+  if( (fd = open( g_lpstrInputFile, O_RDONLY | O_BINARY)) )
   {
     int    i;
     struct stat file_stat;
@@ -574,7 +590,7 @@ int main(int argc, char **argv)
 		 unsigned short		size_shift = return_data_value(dfShort, lpdata);
 		 unsigned char*		lpfont = NULL;
 		 unsigned		offset;
-		 unsigned		length;
+		 int			length;
 
 		 for( j = 0; j < count; j++, pFontStorage++ )
 		 {
