@@ -299,16 +299,20 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 
 static void
-TOOLBAR_Refresh (HWND hwnd, HDC hdc)
+TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
     INT i;
+    RECT rcTemp;
 
-    /* draw buttons */
+    /* redraw necessary buttons */
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
-	TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
+    {
+        if(IntersectRect(&rcTemp, &(ps->rcPaint), &(btnPtr->rect)))
+            TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
+    }
 }
 
 
@@ -3456,14 +3460,18 @@ TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
 {
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     HDC hdc;
     PAINTSTRUCT ps;
 
+    /* fill ps.rcPaint with a default rect */
+    memcpy(&(ps.rcPaint), &(infoPtr->rcBound), sizeof(infoPtr->rcBound)); 
+
     TOOLBAR_CalcToolbar( hwnd );
-    hdc = wParam==0 ? BeginPaint (hwnd, &ps) : (HDC)wParam;
-    TOOLBAR_Refresh (hwnd, hdc);
-    if (!wParam)
-	EndPaint (hwnd, &ps);
+    hdc = wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam;
+    TOOLBAR_Refresh (hwnd, hdc, &ps);
+    if (!wParam) EndPaint (hwnd, &ps);
+
     return 0;
 }
 
