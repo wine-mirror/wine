@@ -53,7 +53,8 @@ static char psprolog[] =
 "  r cvi gap idiv gap mul\n"
 "  {t moveto 0 b t sub rlineto}\n"
 "  for\n"
-"} bind def\n";
+"} bind def\n"
+"/B {pop pop pop pop} def\n";
 
 static char psbeginsetup[] =
 "%%BeginSetup\n";
@@ -191,9 +192,14 @@ static char psarraydef[] =
 
 int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPSTR lpData, WORD cch)
 {
+    if(physDev->job.quiet) {
+        TRACE("ignoring output\n");
+	return 0;
+    }
+
     if(physDev->job.OutOfPage) { /* Will get here after NEWFRAME Escape */
         if( !PSDRV_StartPage(physDev) )
-	    return FALSE;
+	    return 0;
     }
     return WriteSpool16( physDev->job.hJob, lpData, cch );
 }

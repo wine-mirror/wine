@@ -19,6 +19,7 @@
  */
 #include "windef.h"
 #include "wingdi.h"
+#include "wine/wingdi16.h"
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "psdrv.h"
@@ -26,7 +27,6 @@
 #include "winspool.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
-
 
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
@@ -56,8 +56,13 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    case EXT_DEVICE_CAPS:
 	    case SET_BOUNDS:
             case EPSPRINTING:
+	    case POSTSCRIPT_DATA:
             case PASSTHROUGH:
             case POSTSCRIPT_PASSTHROUGH:
+	    case POSTSCRIPT_IGNORE:
+	    case BEGIN_PATH:
+	    case CLIP_TO_PATH:
+	    case END_PATH:
 	        return TRUE;
 
 	    default:
@@ -192,6 +197,8 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    TRACE("EPS Printing support %sable.\n",epsprint?"en":"dis");
 	    return 1;
         }
+
+    case POSTSCRIPT_DATA:
     case PASSTHROUGH:
     case POSTSCRIPT_PASSTHROUGH:
         {
@@ -204,6 +211,14 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
             return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,cbInput-2);
         }
 
+    case POSTSCRIPT_IGNORE:
+      {
+	BOOL ret = physDev->job.quiet;
+        TRACE("POSTSCRIPT_IGNORE %d\n", *(short*)in_data);
+	physDev->job.quiet = *(short*)in_data;
+	return ret;
+      }
+
     case GETSETPRINTORIENT:
 	{
 	    /* If lpInData is present, it is a 20 byte structure, first 32
@@ -213,6 +228,63 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    FIXME("GETSETPRINTORIENT not implemented (data %p)!\n",in_data);
 	    return 1;
 	}
+    case BEGIN_PATH:
+        TRACE("BEGIN_PATH\n");
+	if(physDev->pathdepth)
+	    FIXME("Nested paths not yet handled\n");
+	return ++physDev->pathdepth;
+
+    case END_PATH:
+      {
+	struct PATH_INFO *info = (struct PATH_INFO*)in_data;
+
+	TRACE("END_PATH\n");
+        if(!physDev->pathdepth) {
+	    ERR("END_PATH called without a BEIGN_PATH\n");
+	    return -1;
+	}
+	TRACE("RenderMode = %d, FillMode = %d, BkMode = %d\n",
+	      info->RenderMode, info->FillMode, info->BkMode);
+	switch(info->RenderMode) {
+	case RENDERMODE_NO_DISPLAY:
+	    PSDRV_WriteClosePath(physDev); /* not sure if this is necessary, but it can't hurt */
+	    break;
+	case RENDERMODE_OPEN:
+	case RENDERMODE_CLOSED:
+	default:
+	    FIXME("END_PATH: RenderMode %d, not yet supported\n", info->RenderMode);
+	    break;
+	}
+	return --physDev->pathdepth;
+      }
+
+    case CLIP_TO_PATH:
+      {
+	WORD mode = *(WORD*)in_data;
+
+	switch(mode) {
+	case CLIP_SAVE:
+	    TRACE("CLIP_TO_PATH: CLIP_SAVE\n");
+	    PSDRV_WriteGSave(physDev);
+	    return 1;
+	case CLIP_RESTORE:
+	    TRACE("CLIP_TO_PATH: CLIP_RESTORE\n");
+	    PSDRV_WriteGRestore(physDev);
+	    return 1;
+	case CLIP_INCLUSIVE:
+	    TRACE("CLIP_TO_PATH: CLIP_INCLUSIVE\n");
+	    /* FIXME to clip or eoclip ? (see PATH_INFO.FillMode) */
+	    PSDRV_WriteClip(physDev);
+	    return 1;
+	case CLIP_EXCLUSIVE:
+	    FIXME("CLIP_EXCLUSIVE: not implemented\n");
+	    return 0;
+	default:
+	    FIXME("Unknown CLIP_TO_PATH mode %d\n", mode);
+	    return 0;
+	}
+        return 0;
+      }
     default:
         FIXME("Unimplemented code 0x%x\n", nEscape);
 	return 0;
@@ -288,6 +360,7 @@ INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
  */
 INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
 {
+    INT ret = 1;
     if(!physDev->job.hJob) {
         FIXME("hJob == 0. Now what?\n");
 	return 0;
@@ -297,13 +370,12 @@ INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
         WARN("Somebody forgot a EndPage\n");
 	PSDRV_EndPage( physDev );
     }
-    if(!PSDRV_WriteFooter( physDev ))
-        return 0;
+    PSDRV_WriteFooter( physDev );
 
     if( CloseJob16( physDev->job.hJob ) == SP_ERROR ) {
         WARN("CloseJob error\n");
-	return 0;
+	ret = 0;
     }
     physDev->job.hJob = 0;
-    return 1;
+    return ret;
 }

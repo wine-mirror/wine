@@ -361,6 +361,9 @@ COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
  */
 VOID PSDRV_DrawLine( PSDRV_PDEVICE *physDev )
 {
+    if(physDev->pathdepth)
+        return;
+
     if (physDev->pen.style == PS_NULL)
 	PSDRV_WriteNewPath(physDev);
     else

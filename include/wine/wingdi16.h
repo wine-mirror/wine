@@ -354,6 +354,27 @@ typedef BOOL16 (CALLBACK *ABORTPROC16)(HDC16, INT16);
 #define INT_PD_DEFAULT_DEVMODE  1
 #define INT_PD_DEFAULT_MODEL    2
 
+/* Escape: CLIP_TO_PATH modes */
+#define CLIP_SAVE 0
+#define CLIP_RESTORE 1
+#define CLIP_INCLUSIVE 2
+#define CLIP_EXCLUSIVE 3
+
+/* Escape: END_PATH info */
+struct PATH_INFO {
+    short RenderMode;
+    BYTE FillMode;
+    BYTE BkMode;
+    LOGPEN16 Pen;
+    LOGBRUSH16 Brush;
+    DWORD BkColor;
+};
+
+/* RenderMode */
+#define RENDERMODE_NO_DISPLAY 0
+#define RENDERMODE_OPEN 1
+#define RENDERMODE_CLOSED 2
+
 #include "poppack.h"
 
 

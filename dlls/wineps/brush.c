@@ -134,6 +134,9 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
     LOGBRUSH logbrush;
     BOOL ret = TRUE;
 
+    if(physDev->pathdepth)
+        return FALSE;
+
     if (!GetObjectA( GetCurrentObject(physDev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");

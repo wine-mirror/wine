@@ -305,6 +305,7 @@ typedef struct {
     BOOL		banding;        /* Have we received a NEXTBAND */
     BOOL		OutOfPage;      /* Page header not sent yet */
     INT			PageNo;
+    BOOL                quiet;          /* Don't actually output anything */
 } JOB;
 
 typedef struct {
@@ -331,6 +332,8 @@ typedef struct {
     int                 vertSize;
     int                 logPixelsX;
     int                 logPixelsY;
+
+    int                 pathdepth;
 } PSDRV_PDEVICE;
 
 typedef struct {
