@@ -23,9 +23,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
-LIBSUBDIRS = \
+TOOLSUBDIRS = \
 	tools \
-	tools/wrc \
+	tools/wrc
+
+LIBSUBDIRS = \
 	controls \
 	console \
 	dlls/advapi32 \
@@ -89,6 +91,7 @@ INCSUBDIRS = include
 
 # Sub-directories to run make into
 BUILDSUBDIRS = \
+	$(TOOLSUBDIRS) \
 	$(LIBSUBDIRS) \
 	$(X11SUBDIRS) \
 	$(EMUSUBDIRS) \
@@ -181,12 +184,12 @@ wine wine.sym: $(LIB_TARGET) $(EMUOBJS) dummy
 	nm -n wine | grep -v _compiled >wine.sym
 	@echo "Wine build complete."
 
-libwine.a: $(LIBOBJS) $(X11OBJS)
+libwine.a: $(TOOLSUBDIRS) $(LIBOBJS) $(X11OBJS)
 	$(RM) $@
 	$(AR) $@ $(LIBOBJS) $(X11OBJS)
 	$(RANLIB) $@
 
-libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
+libwine.so.1.0: $(TOOLSUBDIRS) $(LIBOBJS) $(X11OBJS)
 	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
 	ln -sf $@ libwine.so
 
