@@ -33,6 +33,7 @@
 #include "mmreg.h"
 
 extern GUID KSDATAFORMAT_SUBTYPE_PCM;
+extern GUID KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
 #include "winmm_test.h"
 
@@ -505,7 +506,7 @@ static void wave_in_test_device(int device)
         waveInClose(win);
         wave_in_test_deviceIn(device,&wfex.Format,0,0,&capsA);
     } else
-        trace("waveInOpen(%s): 24 bit not supported\n",
+        trace("waveInOpen(%s): 24 bit samples not supported\n",
               dev_name(device));
 #endif
 
@@ -530,7 +531,31 @@ static void wave_in_test_device(int device)
         waveInClose(win);
         wave_in_test_deviceIn(device,&wfex.Format,0,0,&capsA);
     } else
-        trace("waveInOpen(%s): 32 bit not supported\n",
+        trace("waveInOpen(%s): 32 bit samples not supported\n",
+              dev_name(device));
+
+    /* test if 32 bit float samples supported */
+    wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
+    wfex.Format.nChannels=2;
+    wfex.Format.wBitsPerSample=32;
+    wfex.Format.nSamplesPerSec=22050;
+    wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
+    wfex.Format.cbSize=22;
+    wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
+    wfex.dwChannelMask=SPEAKER_ALL;
+    wfex.SubFormat=KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+    rc=waveInOpen(&win,device,&wfex.Format,0,0,
+                  CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveInClose(win);
+        wave_in_test_deviceIn(device,&wfex.Format,0,0,&capsA);
+    } else
+        trace("waveInOpen(%s): 32 bit float samples not supported\n",
               dev_name(device));
 }
 

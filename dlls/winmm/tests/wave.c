@@ -54,6 +54,7 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
     int nb_samples;
     char* buf;
     char* b;
+    WAVEFORMATEXTENSIBLE *wfex = (WAVEFORMATEXTENSIBLE*)wfx;
 
     nb_samples=(int)(duration*wfx->nSamplesPerSec);
     *size=nb_samples*wfx->nBlockAlign;
@@ -79,13 +80,26 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
                 b[2]=(sample >> 16) & 0xff;
                 b+=3;
             }
-        } else if (wfx->wBitsPerSample==32) {
+        } else if ((wfx->wBitsPerSample==32) && ((wfx->wFormatTag == WAVE_FORMAT_PCM) ||
+            ((wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE) && 
+            IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)))) {
             signed int sample=(signed int)(((double)0x7fffffff+0.5)*y-0.5);
             for (j = 0; j < wfx->nChannels; j++) {
                 b[0]=sample & 0xff;
                 b[1]=(sample >> 8) & 0xff;
                 b[2]=(sample >> 16) & 0xff;
                 b[3]=(sample >> 24) & 0xff;
+                b+=4;
+            }
+        } else if ((wfx->wBitsPerSample==32) && (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE) && 
+            IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
+            union { float f; char c[4]; } sample;
+            sample.f=y;
+            for (j = 0; j < wfx->nChannels; j++) {
+                b[0]=sample.c[0];
+                b[1]=sample.c[1];
+                b[2]=sample.c[2];
+                b[3]=sample.c[3];
                 b+=4;
             }
         }
@@ -867,6 +881,31 @@ static void wave_out_test_device(int device)
                                 &capsA);
     } else
         trace("waveOutOpen(%s): 32 bit samples not supported\n",
+              dev_name(device));
+
+    /* test if 32 bit float samples supported */
+    wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
+    wfex.Format.nChannels=2;
+    wfex.Format.wBitsPerSample=32;
+    wfex.Format.nSamplesPerSec=22050;
+    wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
+    wfex.Format.cbSize=22;
+    wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
+    wfex.dwChannelMask=SPEAKER_ALL;
+    wfex.SubFormat=KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,
+                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,0,
+                                &capsA);
+    } else
+        trace("waveOutOpen(%s): 32 bit float samples not supported\n",
               dev_name(device));
 }
 
