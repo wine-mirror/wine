@@ -236,12 +236,13 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         return infoPtr->hFont;
 
     case WM_SETFOCUS:
-        if ((style == BS_AUTORADIOBUTTON) && (GetCapture() != hWnd) &&
+        if ((style == BS_RADIOBUTTON || style == BS_AUTORADIOBUTTON) && (GetCapture() != hWnd) &&
             !(SendMessageA(hWnd, BM_GETCHECK, 0, 0) & BST_CHECKED))
 	{
             /* The notification is sent when the button (BS_AUTORADIOBUTTON) 
                is unckecked and the focus was not given by a mouse click. */
-            SendMessageA( hWnd, BM_SETCHECK, TRUE, 0 );
+	    if (style == BS_AUTORADIOBUTTON)
+		    SendMessageA( hWnd, BM_SETCHECK, BUTTON_CHECKED, 0 );
             SendMessageA( GetParent(hWnd), WM_COMMAND,
                           MAKEWPARAM( wndPtr->wIDmenu, BN_CLICKED ), hWnd);
         }
