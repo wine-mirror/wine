@@ -323,7 +323,7 @@ callrmproc_again:
 
 
 /**********************************************************************
- *	    DOSVM_CallRMInt   (WINEDOS.@)
+ *	    CallRMInt   (WINEDOS.@)
  */
 void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
 {
@@ -350,7 +350,7 @@ void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    DOSVM_CallRMProc   (WINEDOS.@)
+ *	    CallRMProc   (WINEDOS.@)
  */
 void WINAPI DOSVM_CallRMProc( CONTEXT86 *context, int iret )
 {
@@ -553,7 +553,7 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 
 
 /**********************************************************************
- *	    DOSVM_AllocRMCB   (WINEDOS.@)
+ *	    AllocRMCB   (WINEDOS.@)
  */
 void WINAPI DOSVM_AllocRMCB( CONTEXT86 *context )
 {
@@ -580,7 +580,7 @@ void WINAPI DOSVM_AllocRMCB( CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    DOSVM_FreeRMCB   (WINEDOS.@)
+ *	    FreeRMCB   (WINEDOS.@)
  */
 void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
 {

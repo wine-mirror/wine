@@ -167,7 +167,7 @@ void WINAPI ASPI_DOS_func(CONTEXT86 *context)
 
 
 /**********************************************************************
- *	    DOSVM_ASPIHandler  (WINEDOS.@)
+ *	    ASPIHandler  (WINEDOS.@)
  *
  * returns the address of a real mode callback to ASPI_DOS_func()
  */

@@ -678,7 +678,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
 }
 
 /***********************************************************************
- *              EnumFontFamiliesEx16	(GDI.613)
+ *              EnumFontFamiliesEx	(GDI.613)
  */
 INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
                                    FONTENUMPROCEX16 efproc, LPARAM lParam,
@@ -773,7 +773,7 @@ INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
 }
 
 /***********************************************************************
- *              EnumFontFamilies16	(GDI.330)
+ *              EnumFontFamilies	(GDI.330)
  */
 INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
                                  FONTENUMPROC16 efproc, LPARAM lpData )
@@ -818,7 +818,7 @@ INT WINAPI EnumFontFamiliesW( HDC hDC, LPCWSTR lpFamily,
 }
 
 /***********************************************************************
- *              EnumFonts16		(GDI.70)
+ *              EnumFonts		(GDI.70)
  */
 INT16 WINAPI EnumFonts16( HDC16 hDC, LPCSTR lpName, FONTENUMPROC16 efproc,
                           LPARAM lpData )

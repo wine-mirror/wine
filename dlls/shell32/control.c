@@ -385,7 +385,9 @@ HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
     return 0;
 }
 
-/*
+/*************************************************************************
+ * CallCPLEntry16				[SHELL32.166]
+ *
  * called by desk.cpl on "Advanced" with:
  * hMod("DeskCp16.Dll"), pFunc("CplApplet"), 0, 1, 0xc, 0
  *

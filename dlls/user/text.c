@@ -598,7 +598,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
 
 
 /***********************************************************************
- *           GrayString16   (USER.185)
+ *           GrayString   (USER.185)
  */
 BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
                             LPARAM lParam, INT16 cch, INT16 x, INT16 y,

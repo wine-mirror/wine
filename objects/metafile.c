@@ -576,7 +576,7 @@ BOOL WINAPI PlayMetaFile(
 
 
 /******************************************************************
- *            EnumMetaFile16   (GDI.175)
+ *            EnumMetaFile   (GDI.175)
  *
  */
 BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,

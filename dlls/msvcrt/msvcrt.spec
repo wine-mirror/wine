@@ -270,7 +270,7 @@ debug_channels (msvcrt)
 @ cdecl _getw(ptr) _getw
 @ stub _getws #(wstr)
 @ cdecl _global_unwind2(ptr) _global_unwind2
-@ stub _heapadd #()
+@ cdecl _heapadd (ptr long) _heapadd
 @ cdecl _heapchk() _heapchk
 @ cdecl _heapmin() _heapmin
 @ cdecl _heapset(long) _heapset

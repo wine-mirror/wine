@@ -854,7 +854,7 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
 
 
 /***********************************************************************
- *           EnumObjects16    (GDI.71)
+ *           EnumObjects    (GDI.71)
  */
 INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
                             GOBJENUMPROC16 lpEnumFunc, LPARAM lParam )
@@ -1125,13 +1125,13 @@ WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
 }
 
 /***********************************************************************
- *           GdiInit2     (GDI.405)
+ *           GdiInit2     (GDI.403)
  *
  * See "Undocumented Windows"
  */
 HANDLE16 WINAPI GdiInit216(
-    HANDLE16 h1, /* GDI object */
-    HANDLE16 h2 /* global data */
+    HANDLE16 h1, /* [in] GDI object */
+    HANDLE16 h2  /* [in] global data */
 )
 {
     FIXME("(%04x, %04x), stub.\n", h1, h2);
@@ -1143,7 +1143,7 @@ HANDLE16 WINAPI GdiInit216(
 /***********************************************************************
  *           FinalGdiInit     (GDI.405)
  */
-void WINAPI FinalGdiInit16( HBRUSH16 hPattern /* fill pattern of desktop */ )
+void WINAPI FinalGdiInit16( HBRUSH16 hPattern /* [in] fill pattern of desktop */ )
 {
 }
 

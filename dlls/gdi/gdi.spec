@@ -188,7 +188,7 @@ rsrc	version16.res
 185 stub STUFFINREGION # W2.0 (only ?)
 186 stub DELETEABOVELINEFONTS # W2.0 (only ?)
 188 stub GetTextExtentEx
-190 pascal16 SetDCHook(word segptr long) SetDCHook
+190 pascal16 SetDCHook(word segptr long) SetDCHook16
 191 pascal   GetDCHook(word ptr) GetDCHook
 192 pascal16 SetHookFlags(word word) SetHookFlags16
 193 pascal16 SetBoundsRect(word ptr word) SetBoundsRect16
