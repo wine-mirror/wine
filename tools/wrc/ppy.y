@@ -150,7 +150,7 @@ static int	nmacro_args;
 %type <cval>	pp_expr
 %type <marg>	emargs margs
 %type <mtext>	opt_mtexts mtexts mtext
-%type <sint>	nums allmargs
+%type <sint>	allmargs
 %type <cptr>	opt_text text
 
 /*
@@ -253,7 +253,15 @@ preprocessor
 		add_macro($1, macro_args, nmacro_args, $5);
 		}
 	| tLINE tSINT tDQSTRING	tNL	{ fprintf(ppout, "# %d %s\n", $2 - 1, $3); free($3); }
-	| tGCCLINE tDQSTRING nums tNL	{ fprintf(ppout, "# %d %s\n", $3 - 1, $2); free($2); }
+	| tGCCLINE tSINT tDQSTRING tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
+	| tGCCLINE tSINT tDQSTRING tSINT tNL	
+		{ fprintf(ppout, "# %d %s %d\n", $2, $3, $4); free($3); }
+	| tGCCLINE tSINT tDQSTRING tSINT tSINT tNL	
+		{ fprintf(ppout, "# %d %s %d %d\n", $2 ,$3, $4, $5); free($3); }
+	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT  tNL	
+		{ fprintf(ppout, "# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
+	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT tSINT tNL	
+		{ fprintf(ppout, "# %d %s %d %d %d %d \n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ pperror("#error directive: '%s'", $2); if($2) free($2); }
 	| tWARNING opt_text tNL	{ ppwarning("#warning directive: '%s'", $2); if($2) free($2); }
@@ -275,10 +283,6 @@ text	: tLITERAL		{ $$ = $1; }
 	;
 
 res_arg	: /* Empty */	{ macro_args = NULL; nmacro_args = 0; }
-	;
-
-nums	: tSINT		{ $$ = $1; }
-	| nums tSINT	/* Ignore */
 	;
 
 allmargs: /* Empty */		{ $$ = 0; macro_args = NULL; nmacro_args = 0; }
