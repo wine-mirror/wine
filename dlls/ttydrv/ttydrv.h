@@ -51,6 +51,8 @@ extern HBITMAP16 TTYDRV_BITMAP_CreateDIBSection16(struct tagDC *dc, BITMAPINFO *
 extern INT TTYDRV_BITMAP_SetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
 extern INT TTYDRV_BITMAP_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPVOID bits, BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
 extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
+extern UINT TTYDRV_BITMAP_SetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,const RGBQUAD *);
+extern UINT TTYDRV_BITMAP_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,RGBQUAD *);
 
 #ifndef WINE_CURSES
 typedef struct { int dummy; } WINDOW;

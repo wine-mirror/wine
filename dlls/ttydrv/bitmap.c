@@ -205,6 +205,24 @@ void TTYDRV_BITMAP_DeleteDIBSection(BITMAPOBJ *bmp)
 }
 
 /***********************************************************************
+ *		TTYDRV_BITMAP_SetDIBColorTable
+ */
+UINT TTYDRV_BITMAP_SetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count, const RGBQUAD *colors)
+{
+  FIXME("(%p): stub\n", bmp);
+  return 0;
+}
+
+/***********************************************************************
+ *		TTYDRV_BITMAP_GetDIBColorTable
+ */
+UINT TTYDRV_BITMAP_GetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count, RGBQUAD *colors)
+{
+  FIXME("(%p): stub\n", bmp);
+  return 0;
+}
+
+/***********************************************************************
  *		TTYDRV_BITMAP_GetDIBits
  */
 INT TTYDRV_BITMAP_GetDIBits(

@@ -306,40 +306,22 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 				  RGBQUAD *colors )
 {
     DC * dc;
-    PALETTEENTRY * palEntry;
-    PALETTEOBJ * palette;
-    RGBQUAD *end;
+    BITMAPOBJ * bmp;
+    UINT result;
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
+    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
         return 0;
     }
 
-    /* Transfer color info */
-    
-    if (dc->bitsPerPixel <= 8) {
-	palEntry = palette->logpalette.palPalEntry + startpos;
-	if (startpos + entries > (1 << dc->bitsPerPixel))
-	    entries = (1 << dc->bitsPerPixel) - startpos;
+    result = BITMAP_Driver->pSetDIBColorTable(bmp, dc, startpos, entries, colors);
 
-        if (startpos + entries > palette->logpalette.palNumEntries)
-            entries = palette->logpalette.palNumEntries - startpos;
-
-        for (end = colors + entries; colors < end; palEntry++, colors++)
-        {
-            palEntry->peRed   = colors->rgbRed;
-            palEntry->peGreen = colors->rgbGreen;
-            palEntry->peBlue  = colors->rgbBlue;
-        }
-    } else {
-	entries = 0;
-    }
-    GDI_ReleaseObj( dc->hPalette );
+    GDI_ReleaseObj( dc->hBitmap );
     GDI_ReleaseObj( hdc );
-    return entries;
+    return result;
 }
 
 /***********************************************************************
@@ -358,38 +340,22 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 				  RGBQUAD *colors )
 {
     DC * dc;
-    PALETTEENTRY * palEntry;
-    PALETTEOBJ * palette;
-    RGBQUAD *end;
+    BITMAPOBJ * bmp;
+    UINT result;
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
+    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
         return 0;
     }
 
-    /* Transfer color info */
-    
-    if (dc->bitsPerPixel <= 8) {
-	palEntry = palette->logpalette.palPalEntry + startpos;
-	if (startpos + entries > (1 << dc->bitsPerPixel)) {
-	    entries = (1 << dc->bitsPerPixel) - startpos;
-	}
-	for (end = colors + entries; colors < end; palEntry++, colors++)
-	{
-	    colors->rgbRed      = palEntry->peRed;
-	    colors->rgbGreen    = palEntry->peGreen;
-	    colors->rgbBlue     = palEntry->peBlue;
-	    colors->rgbReserved = 0;
-	}
-    } else {
-	entries = 0;
-    }
-    GDI_ReleaseObj( dc->hPalette );
+    result = BITMAP_Driver->pGetDIBColorTable(bmp, dc, startpos, entries, colors);
+
+    GDI_ReleaseObj( dc->hBitmap );
     GDI_ReleaseObj( hdc );
-    return entries;
+    return result;
 }
 
 /* FIXME the following two structs should be combined with __sysPalTemplate in

@@ -280,6 +280,8 @@ extern INT X11DRV_DIB_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT
 				UINT lines, LPVOID bits, BITMAPINFO *info,
 				UINT coloruse, HBITMAP hbitmap);
 extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
+extern UINT X11DRV_DIB_SetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT,UINT,const RGBQUAD *);
+extern UINT X11DRV_DIB_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT,UINT,RGBQUAD *);
 
 /**************************************************************************
  * X11 GDI driver

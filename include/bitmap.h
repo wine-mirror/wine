@@ -35,6 +35,8 @@ typedef struct tagBITMAP_DRIVER
   INT  (*pSetDIBits)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,LPCVOID,const BITMAPINFO *,UINT,HBITMAP);
   INT  (*pGetDIBits)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,LPVOID,BITMAPINFO *,UINT,HBITMAP);
   VOID (*pDeleteDIBSection)(struct tagBITMAPOBJ *);
+  UINT (*pSetDIBColorTable)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,const RGBQUAD *);
+  UINT (*pGetDIBColorTable)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,RGBQUAD *);
 } BITMAP_DRIVER;
 
 extern BITMAP_DRIVER *BITMAP_Driver;

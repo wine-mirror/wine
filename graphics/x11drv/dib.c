@@ -78,6 +78,60 @@ int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 }
 
 /***********************************************************************
+ *           X11DRV_DIB_GenColorMap
+ *
+ * Fills the color map of a bitmap palette. Should not be called
+ * for a >8-bit deep bitmap.
+ */
+int *X11DRV_DIB_GenColorMap( DC *dc, int *colorMapping,
+                             WORD coloruse, WORD depth, BOOL quads,
+                             const void *colorPtr, int start, int end )
+{
+    int i;
+
+    if (coloruse == DIB_RGB_COLORS)
+    {
+        if (quads)
+        {
+            RGBQUAD * rgb = (RGBQUAD *)colorPtr;
+
+            if (depth == 1)  /* Monochrome */
+                for (i = start; i < end; i++, rgb++)
+                    colorMapping[i] = (rgb->rgbRed + rgb->rgbGreen +
+                                       rgb->rgbBlue > 255*3/2);
+            else
+                for (i = start; i < end; i++, rgb++)
+                    colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, RGB(rgb->rgbRed,
+                                                                rgb->rgbGreen,
+                                                                rgb->rgbBlue));
+        }
+        else
+        {
+            RGBTRIPLE * rgb = (RGBTRIPLE *)colorPtr;
+
+            if (depth == 1)  /* Monochrome */
+                for (i = start; i < end; i++, rgb++)
+                    colorMapping[i] = (rgb->rgbtRed + rgb->rgbtGreen +
+                                       rgb->rgbtBlue > 255*3/2);
+            else
+                for (i = start; i < end; i++, rgb++)
+                    colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, RGB(rgb->rgbtRed,
+                                                               rgb->rgbtGreen,
+                                                               rgb->rgbtBlue));
+        }
+    }
+    else  /* DIB_PAL_COLORS */
+    {
+        WORD * index = (WORD *)colorPtr;
+
+        for (i = start; i < end; i++, index++)
+            colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, PALETTEINDEX(*index) );
+    }
+
+    return colorMapping;
+}
+
+/***********************************************************************
  *           X11DRV_DIB_BuildColorMap
  *
  * Build the color map from the bitmap palette. Should not be called
@@ -86,7 +140,7 @@ int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth, 
                                const BITMAPINFO *info, int *nColors )
 {
-    int i, colors;
+    int colors;
     BOOL isInfo;
     WORD *colorPtr;
     int *colorMapping;
@@ -113,45 +167,9 @@ int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
                                           colors * sizeof(int) ))) 
 	return NULL;
 
-    if (coloruse == DIB_RGB_COLORS)
-    {
-        if (isInfo)
-        {
-            RGBQUAD * rgb = (RGBQUAD *)colorPtr;
-
-            if (depth == 1)  /* Monochrome */
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = (rgb->rgbRed + rgb->rgbGreen +
-                                       rgb->rgbBlue > 255*3/2);
-            else
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, RGB(rgb->rgbRed,
-                                                                rgb->rgbGreen,
-                                                                rgb->rgbBlue));
-        }
-        else
-        {
-            RGBTRIPLE * rgb = (RGBTRIPLE *)colorPtr;
-
-            if (depth == 1)  /* Monochrome */
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = (rgb->rgbtRed + rgb->rgbtGreen +
-                                       rgb->rgbtBlue > 255*3/2);
-            else
-                for (i = 0; i < colors; i++, rgb++)
-                    colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, RGB(rgb->rgbtRed,
-                                                               rgb->rgbtGreen,
-                                                               rgb->rgbtBlue));
-        }
-    }
-    else  /* DIB_PAL_COLORS */
-    {
-        for (i = 0; i < colors; i++, colorPtr++)
-            colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, PALETTEINDEX(*colorPtr) );
-    }
-
     *nColors = colors;
-    return colorMapping;
+    return X11DRV_DIB_GenColorMap( dc, colorMapping, coloruse, depth,
+                                   isInfo, colorPtr, 0, colors);
 }
 
 
@@ -3601,6 +3619,42 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
     HeapFree(GetProcessHeap(), 0, dib->colorMap);
 
   if (dib->selector) SELECTOR_FreeBlock( dib->selector );
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_SetDIBColorTable
+ */
+UINT X11DRV_DIB_SetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count, const RGBQUAD *colors)
+{
+  X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+
+  if (dib && dib->colorMap) {
+    X11DRV_DIB_GenColorMap( dc, dib->colorMap, DIB_RGB_COLORS, dib->dibSection.dsBm.bmBitsPixel,
+                            TRUE, colors, start, count - start );
+    return count;
+  }
+  return 0;
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_GetDIBColorTable
+ */
+UINT X11DRV_DIB_GetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count, RGBQUAD *colors)
+{
+  X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+
+  if (dib && dib->colorMap) {
+    int i, end = count - start;
+    for (i = start; i < end; i++,colors++) {
+      COLORREF col = X11DRV_PALETTE_ToLogical( dib->colorMap[i] );
+      colors->rgbBlue  = GetBValue(col);
+      colors->rgbGreen = GetGValue(col);
+      colors->rgbRed   = GetRValue(col);
+      colors->rgbReserved = 0;
+    }
+    return count;
+  }
+  return 0;
 }
 
 
