@@ -32,6 +32,9 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -1117,13 +1120,26 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
             return FALSE;
         }
     }
-    wine_server_release_fd( hPipe, fd );
     TRACE(" 0x%08x bytes available\n", avail );
-    if (!lpvBuffer && lpcbAvail)
-      {
-	*lpcbAvail= avail;
-	return TRUE;
-      }
+    ret = TRUE;
+    if (lpcbAvail)
+	*lpcbAvail = avail;
+    if (lpcbRead)
+        *lpcbRead = 0;
+    if (avail && lpvBuffer)
+    {
+        int readbytes = (avail < cbBuffer) ? avail : cbBuffer;
+        readbytes = recv(fd, lpvBuffer, readbytes, MSG_PEEK);
+        if (readbytes < 0)
+        {
+            WARN("failed to peek socket (%d)\n", errno);
+            ret = FALSE;
+        }
+        else if (lpcbRead)
+            *lpcbRead = readbytes;
+    }
+    wine_server_release_fd( hPipe, fd );
+    return ret;
 #endif /* defined(FIONREAD) */
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
