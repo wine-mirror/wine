@@ -49,12 +49,7 @@ CRITICAL_SECTION X11DRV_CritSection = { 0, };
 #  define CLONE_SIGHAND 0x00000800
 #  define CLONE_PID     0x00001000
 # endif  /* CLONE_VM */
-# define PER_THREAD_FILE_HANDLES
 #endif  /* linux */
-
-#ifdef HAVE_RFORK
-# define PER_THREAD_FILE_HANDLES
-#endif
 
 static int init_done;
 
@@ -130,12 +125,7 @@ void SYSDEPS_SetCurThread( TEB *teb )
  */
 static void SYSDEPS_StartThread( TEB *teb )
 {
-    int parent_socket = -1;
-#ifdef PER_THREAD_FILE_HANDLES
-    parent_socket = NtCurrentTeb()->socket;
-#endif
     SYSDEPS_SetCurThread( teb );
-    if (parent_socket != -1) close( parent_socket );
     CLIENT_InitThread();
     SIGNAL_Init();
     __TRY
@@ -162,20 +152,21 @@ int SYSDEPS_SpawnThread( TEB *teb )
 #ifndef NO_REENTRANT_LIBC
 
 #ifdef linux
-    if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
-               CLONE_VM | CLONE_FS | SIGCHLD, teb ) < 0)
+    const int flags = CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD;
+    if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top, flags, teb ) < 0)
         return -1;
-    close( teb->socket );  /* close the child socket in the parent */
+    if (!(flags & CLONE_FILES)) close( teb->socket );  /* close the child socket in the parent */
     return 0;
 #endif
 
 #ifdef HAVE_RFORK
+    const int flags = RFPROC | RFMEM; /*|RFFDG*/
     void **sp = (void **)teb->stack_top;
     *--sp = teb;
     *--sp = 0;
     *--sp = SYSDEPS_StartThread;
     __asm__ __volatile__(
-    "pushl %2;\n\t"		/* RFPROC|RFMEM|RFFDG */
+    "pushl %2;\n\t"		/* flags */
     "pushl $0;\n\t"		/* 0 ? */
     "movl %1,%%eax;\n\t"	/* SYS_rfork */
     ".byte 0x9a; .long 0; .word 7;\n\t"	/* lcall 7:0... FreeBSD syscall */
@@ -185,9 +176,9 @@ int SYSDEPS_SpawnThread( TEB *teb )
     "ret;\n"
     "1:\n\t"		/* parent -> caller thread */
     "addl $8,%%esp" :
-    : "r" (sp), "g" (SYS_rfork), "g" (RFPROC|RFMEM|RFFDG)
+    : "r" (sp), "g" (SYS_rfork), "g" (flags)
     : "eax", "edx");
-    close( teb->socket );  /* close the child socket in the parent */
+    if (flags & RFFDG) close( teb->socket );  /* close the child socket in the parent */
     return 0;
 #endif
 
@@ -215,10 +206,9 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void SYSDEPS_ExitThread( int status )
 {
-#ifndef PER_THREAD_FILE_HANDLES
-    /* otherwise it will be closed automagically by _exit */
-    close( NtCurrentTeb()->socket );
-#endif
+    int socket = NtCurrentTeb()->socket;
+    NtCurrentTeb()->socket = -1;
+    close( socket );
 #ifdef HAVE__LWP_CREATE
     _lwp_exit();
 #endif

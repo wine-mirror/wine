@@ -143,6 +143,7 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
 
     /* Free the associated memory */
 
+    if (teb->socket != -1) close( teb->socket );
     if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
     SELECTOR_FreeBlock( teb->teb_sel, 1 );
     if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
