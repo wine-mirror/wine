@@ -2069,6 +2069,15 @@ d3ddevice_set_ortho(IDirect3DDeviceImpl *This)
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    /* See the OpenGL Red Book for an explanation of the following translation (in the OpenGL
+       Correctness Tips section).
+       
+       Basically, from what I understood, if the game does not filter the font texture,
+       as the 'real' pixel will lie at the middle of the two texels, OpenGL may choose the wrong
+       one and we will have strange artifacts (as the rounding and stuff may give different results
+       for different pixels, ie sometimes take the left pixel, sometimes the right).
+    */
+    glTranslatef(0.375, 0.375, 0);
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(trans_mat);
 }
