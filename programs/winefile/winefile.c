@@ -25,7 +25,7 @@
 #include "resource.h"
 
 
- // for read_directory_unix()
+/* for read_directory_unix() */
 #if !defined(_NO_EXTENSIONS)
 #include <dirent.h>
 #include <sys/stat.h>
@@ -123,7 +123,7 @@ typedef struct {
 	HWND	hwnd;
 	Pane	left;
 	Pane	right;
-	int		focus_pane;		// 0: left  1: right
+        int		focus_pane;		/* 0: left  1: right */
 	WINDOWPLACEMENT pos;
 	int		split_pos;
 	BOOL	header_wdths_ok;
@@ -186,7 +186,7 @@ static void read_directory_win(Entry* parent, LPCTSTR path)
 			entry->level = level;
 
 #ifdef _NO_EXTENSIONS
-			 // hide directory entry "."
+			/* hide directory entry "." */
 			if (entry->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				LPCTSTR name = entry->data.cFileName;
 
@@ -304,7 +304,7 @@ BOOL to_filetime(const time_t* t, FILETIME* ftime)
 
 	stime.wYear = tm->tm_year+1900;
 	stime.wMonth = tm->tm_mon+1;
-//	stime.wDayOfWeek
+	/*	stime.wDayOfWeek */
 	stime.wDay = tm->tm_mday;
 	stime.wHour = tm->tm_hour;
 	stime.wMinute = tm->tm_min;
@@ -442,7 +442,7 @@ static Entry* read_tree_unix(Root* root, LPCTSTR path, int sortOrder)
 #endif
 
 
- // directories first...
+/* directories first... */
 static int compareType(const WIN32_FIND_DATA* fd1, const WIN32_FIND_DATA* fd2)
 {
 	int dir1 = fd1->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
@@ -532,10 +532,10 @@ static int compareDate(const void* arg1, const void* arg2)
 
 
 static int (*sortFunctions[])(const void* arg1, const void* arg2) = {
-	compareName,	// SORT_NAME
-	compareExt,		// SORT_EXT
-	compareSize,	// SORT_SIZE
-	compareDate		// SORT_DATE
+        compareName,	/* SORT_NAME */
+	compareExt,		/* SORT_EXT */
+	compareSize,	/* SORT_SIZE */
+	compareDate		/* SORT_DATE */
 };
 
 
@@ -556,7 +556,7 @@ static void SortDirectory(Entry* parent, SORT_ORDER sortOrder)
 		for(entry=parent->down; entry; entry=entry->next)
 			*p++ = entry;
 
-		 // call qsort with the appropriate compare function
+		/* call qsort with the appropriate compare function */
 		qsort(array, len, sizeof(array[0]), sortFunctions[sortOrder]);
 
 		parent->down = array[0];
@@ -686,7 +686,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path)
 		entry = read_tree_win(root, path, child->sortOrder);
 	}
 
-//@@lstrcpy(root->entry.data.cFileName, drv);
+	/*@@lstrcpy(root->entry.data.cFileName, drv); */
 	wsprintf(root->entry.data.cFileName, _T("%s - %s"), drv, root->fs);
 
 	root->entry.data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
@@ -699,7 +699,7 @@ static ChildWnd* alloc_child_window(LPCTSTR path)
 }
 
 
- // recursively free all child entries
+/* recursively free all child entries */
 static void free_entries(Entry* parent)
 {
 	Entry *entry, *next=parent->down;
@@ -717,7 +717,7 @@ static void free_entries(Entry* parent)
 	}
 }
 
- // free all memory associated with a child window
+/* free all memory associated with a child window */
 static void free_child_window(ChildWnd* child)
 {
 	free_entries(&child->root.entry);
@@ -725,7 +725,7 @@ static void free_child_window(ChildWnd* child)
 }
 
 
- // get full path of specified directory entry
+/* get full path of specified directory entry */
 static void get_path(Entry* dir, PTSTR path)
 {
 	Entry* entry;
@@ -907,7 +907,7 @@ static struct FullScreenParameters {
 	RECT	orgPos;
 	BOOL	wasZoomed;
 } g_fullscreen = {
-	FALSE	// mode
+        FALSE	/* mode */
 };
 
 void frame_get_clientspace(HWND hwnd, PRECT prect)
@@ -1018,7 +1018,7 @@ BOOL activate_drive_window(LPCTSTR path)
 
 	_tsplitpath(path, drv1, 0, 0, 0);
 
-	 // search for a already open window for the same drive
+	/* search for a already open window for the same drive */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
 		ChildWnd* child = (ChildWnd*) GetWindowLong(child_wnd, GWL_USERDATA);
 
@@ -1077,7 +1077,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					return 0;
 				}
 
-				GetCurrentDirectory(MAX_PATH, path); //@@ letztes Verzeichnis pro Laufwerk speichern
+				GetCurrentDirectory(MAX_PATH, path); /*@@ letztes Verzeichnis pro Laufwerk speichern */
 				child = alloc_child_window(path);
 
 				if (!create_child_window(child))
@@ -1158,7 +1158,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 #endif
 #endif
 
-					//TODO: There are even more menu items!
+				/*TODO: There are even more menu items! */
 
 #ifndef _NO_EXTENSIONS
 				case ID_LICENSE:
@@ -1187,14 +1187,14 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 		case WM_SIZE:
 			resize_frame(hwnd, LOWORD(lparam), HIWORD(lparam));
-			break;	// do not pass message to DefFrameProc
+			break;	/* do not pass message to DefFrameProc */
 
 #ifndef _NO_EXTENSIONS
 		case WM_GETMINMAXINFO: {
 			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lparam;
 
-			lpmmi->ptMaxTrackSize.x <<= 1;//2*GetSystemMetrics(SM_CXSCREEN) / SM_CXVIRTUALSCREEN
-			lpmmi->ptMaxTrackSize.y <<= 1;//2*GetSystemMetrics(SM_CYSCREEN) / SM_CYVIRTUALSCREEN
+			lpmmi->ptMaxTrackSize.x <<= 1;/*2*GetSystemMetrics(SM_CXSCREEN) / SM_CXVIRTUALSCREEN */
+			lpmmi->ptMaxTrackSize.y <<= 1;/*2*GetSystemMetrics(SM_CYSCREEN) / SM_CYVIRTUALSCREEN */
 			break;}
 
 		case FRM_CALC_CLIENT:
@@ -1211,7 +1211,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 
 const static LPTSTR g_pos_names[COLUMNS] = {
-	_T(""),			// symbol
+        _T(""),			/* symbol */
 	_T("Name"),
 	_T("Size"),
 	_T("CDate"),
@@ -1229,18 +1229,18 @@ const static LPTSTR g_pos_names[COLUMNS] = {
 
 const static int g_pos_align[] = {
 	0,
-	HDF_LEFT,	// Name
-	HDF_RIGHT,	// Size
-	HDF_LEFT,	// CDate
+	HDF_LEFT,	/* Name */
+	HDF_RIGHT,	/* Size */
+	HDF_LEFT,	/* CDate */
 #ifndef _NO_EXTENSIONS
-	HDF_LEFT,	// ADate
-	HDF_LEFT,	// MDate
-	HDF_LEFT,	// Index
-	HDF_CENTER,	// Links
+	HDF_LEFT,	/* ADate */
+	HDF_LEFT,	/* MDate */
+	HDF_LEFT,	/* Index */
+	HDF_CENTER,	/* Links */
 #endif
-	HDF_CENTER,	// Attributes
+	HDF_CENTER,	/* Attributes */
 #ifndef _NO_EXTENSIONS
-	HDF_LEFT	// Security
+	HDF_LEFT	/* Security */
 #endif
 };
 
@@ -1319,7 +1319,7 @@ static void init_output(HWND hwnd)
 static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWidthCol);
 
 
- // calculate prefered width for all visible columns
+/* calculate prefered width for all visible columns */
 
 static BOOL calc_widths(Pane* pane, BOOL anyway)
 {
@@ -1376,11 +1376,11 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 
 	ListBox_SetHorizontalExtent(pane->hwnd, x);
 
-	 // no change?
+	/* no change? */
 	if (!memcmp(orgWidths, pane->widths, sizeof(orgWidths)))
 		return FALSE;
 
-	 // don't move, if only collapsing an entry
+	/* don't move, if only collapsing an entry */
 	if (!anyway && pane->widths[0]<orgWidths[0] &&
 		!memcmp(orgWidths+1, pane->widths+1, sizeof(orgWidths)-sizeof(int))) {
 		pane->widths[0] = orgWidths[0];
@@ -1395,7 +1395,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 }
 
 
- // calculate one prefered column width
+/* calculate one prefered column width */
 
 static void calc_single_width(Pane* pane, int col)
 {
@@ -1442,7 +1442,7 @@ static void calc_single_width(Pane* pane, int col)
 }
 
 
- // insert listbox entries after index idx
+/* insert listbox entries after index idx */
 
 static void insert_entries(Pane* pane, Entry* parent, int idx)
 {
@@ -1459,7 +1459,7 @@ static void insert_entries(Pane* pane, Entry* parent, int idx)
 			continue;
 #endif
 
-		 // don't display entries "." and ".." in the left pane
+		/* don't display entries "." and ".." in the left pane */
 		if (pane->treePane && (entry->data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				&& entry->data.cFileName[0]==_T('.'))
 			if (
@@ -1498,11 +1498,11 @@ static void create_tree_window(HWND parent, Pane* pane, int id, int id_header)
 
 	SendMessage(pane->hwnd, WM_SETFONT, (WPARAM)Globals.hfont, FALSE);
 
-	 // insert entries into listbox
+	/* insert entries into listbox */
 	if (entry)
 		insert_entries(pane, entry, -1);
 
-	 // calculate column widths
+	/* calculate column widths */
 	if (!s_init) {
 		s_init = 1;
 		init_output(pane->hwnd);
@@ -1576,7 +1576,7 @@ static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR
 	DrawTextEx(dis->hDC, (LPTSTR)str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_NOPREFIX|DT_EXPANDTABS|DT_TABSTOP, &dtp);*/
 
 	DrawText(dis->hDC, (LPTSTR)str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
-//@@ rt (0,0) ???
+	/*@@ rt (0,0) ??? */
 
 	if (rt.right > pane->widths[col])
 		pane->widths[col] = rt.right;
@@ -1614,7 +1614,7 @@ static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str
 	if (*s)
 		*d++ = *s++;
 
-	 // insert number separator characters
+	/* insert number separator characters */
 	pos = lstrlen(s) % 3;
 
 	while(*s)
@@ -1661,7 +1661,7 @@ static int is_exe_file(LPCTSTR ext)
 
 static int is_registered_type(LPCTSTR ext)
 {
-	//TODO
+        /* TODO */
 
 	return 1;
 }
@@ -1735,7 +1735,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 					hrgn_org = 0;
 				}
 
-//				HGDIOBJ holdPen = SelectObject(dis->hDC, GetStockObject(BLACK_PEN));
+				/*				HGDIOBJ holdPen = SelectObject(dis->hDC, GetStockObject(BLACK_PEN)); */
 				ExtSelectClipRgn(dis->hDC, hrgn, RGN_AND);
 				DeleteObject(hrgn);
 
@@ -1779,7 +1779,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 				SelectClipRgn(dis->hDC, hrgn_org);
 				if (hrgn_org) DeleteObject(hrgn_org);
-//				SelectObject(dis->hDC, holdPen);
+				/*				SelectObject(dis->hDC, holdPen); */
 			} else if (calcWidthCol==col || calcWidthCol==COLUMNS) {
 				int right = img_pos + IMAGE_WIDTH - Globals.spaceSize.cx;
 
@@ -1851,7 +1851,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 	col++;
 
-	 // ouput file name
+	/* ouput file name */
 	if (calcWidthCol == -1)
 		output_text(pane, dis, col, entry->data.cFileName, 0);
 	else if (calcWidthCol==col || calcWidthCol==COLUMNS)
@@ -1863,7 +1863,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
   if (!pane->treePane) {
 #endif
 
-	 // display file size
+        /* display file size */
 	if (visible_cols & COL_SIZE) {
 #ifdef _NO_EXTENSIONS
 		if (!(attrs&FILE_ATTRIBUTE_DIRECTORY))
@@ -1871,7 +1871,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		{
 			QWORD size;
 
-			*(DWORD*)(&size) = entry->data.nFileSizeLow;	//TODO: platform spefific
+			*(DWORD*)(&size) = entry->data.nFileSizeLow;	/*TODO: platform spefific */
 			*(((DWORD*)&size)+1) = entry->data.nFileSizeHigh;
 
 			_stprintf(buffer, _T("%") LONGLONGARG _T("d"), size);
@@ -1879,13 +1879,13 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 			if (calcWidthCol == -1)
 				output_number(pane, dis, col, buffer);
 			else if (calcWidthCol==col || calcWidthCol==COLUMNS)
-				calc_width(pane, dis, col, buffer);//TODO: not ever time enough
+				calc_width(pane, dis, col, buffer);/*TODO: not ever time enough */
 		}
 
 		col++;
 	}
 
-	 // display file date
+	/* display file date */
 	if (visible_cols & (COL_DATE|COL_TIME)) {
 #ifndef _NO_EXTENSIONS
 		format_date(&entry->data.ftCreationTime, buffer, visible_cols);
@@ -1913,7 +1913,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 #ifndef _NO_EXTENSIONS
 	if (entry->bhfi_valid) {
-		((DWORD*)&index)[0] = entry->bhfi.nFileIndexLow;	//TODO: platform spefific
+	  ((DWORD*)&index)[0] = entry->bhfi.nFileIndexLow;	/*TODO: platform spefific */
 		((DWORD*)&index)[1] = entry->bhfi.nFileIndexHigh;
 
 		if (visible_cols & COL_INDEX) {
@@ -1937,7 +1937,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		col += 2;
 #endif
 
-	 // show file attributes
+	/* show file attributes */
 	if (visible_cols & COL_ATTRIBUTES) {
 #ifdef _NO_EXTENSIONS
 		_tcscpy(buffer, _T(" \t \t \t \t "));
@@ -2002,15 +2002,15 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 #ifdef _NO_EXTENSIONS
   }
 
-	 // draw focus frame
+        /* draw focus frame */
 	if ((dis->itemState&ODS_FOCUS) && calcWidthCol==-1) {
-		 // Currently [04/2000] Wine neither behaves exactly the same
-		 // way as WIN 95 nor like Windows NT...
+	        /* Currently [04/2000] Wine neither behaves exactly the same */
+	        /* way as WIN 95 nor like Windows NT... */
 		HGDIOBJ lastBrush;
 		HPEN lastPen;
 		HPEN hpen;
 
-		if (!(GetVersion() & 0x80000000)) {	// Windows NT?
+		if (!(GetVersion() & 0x80000000)) {	/* Windows NT? */
 			LOGBRUSH lb = {PS_SOLID, RGB(255,255,255)};
 			hpen = ExtCreatePen(PS_COSMETIC|PS_ALTERNATE, 1, &lb, 0, 0);
 		} else
@@ -2090,7 +2090,7 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 			RECT clnt;
 			GetClientRect(pane->hwnd, &clnt);
 
-			 // move immediate to simulate HDS_FULLDRAG (for now [04/2000] not realy needed with WINELIB)
+			/* move immediate to simulate HDS_FULLDRAG (for now [04/2000] not realy needed with WINELIB) */
 			Header_SetItem(pane->hwndHeader, idx, phdn->pitem);
 
 			pane->widths[idx] += dx;
@@ -2147,7 +2147,7 @@ static void scan_entry(ChildWnd* child, Entry* entry)
 	int idx = ListBox_GetCurSel(child->left.hwnd);
 	HCURSOR crsrOld = SetCursor(LoadCursor(0, IDC_WAIT));
 
-	 // delete sub entries in left pane
+	/* delete sub entries in left pane */
 	for(;;) {
 		LRESULT res = ListBox_GetItemData(child->left.hwnd, idx+1);
 		Entry* sub = (Entry*) res;
@@ -2158,17 +2158,17 @@ static void scan_entry(ChildWnd* child, Entry* entry)
 		ListBox_DeleteString(child->left.hwnd, idx+1);
 	}
 
-	 // empty right pane
+	/* empty right pane */
 	ListBox_ResetContent(child->right.hwnd);
 
-	 // release memory
+	/* release memory */
 	free_entries(entry);
 
-	 // read contents from disk
+	/* read contents from disk */
 	get_path(entry, path);
 	read_directory(entry, path, child->sortOrder);
 
-	 // insert found entries in right pane
+	/* insert found entries in right pane */
 	insert_entries(&child->right, entry->down, -1);
 	calc_widths(&child->right, FALSE);
 #ifndef _NO_EXTENSIONS
@@ -2181,7 +2181,7 @@ static void scan_entry(ChildWnd* child, Entry* entry)
 }
 
 
- // expand a directory entry
+/* expand a directory entry */
 
 static BOOL expand_entry(ChildWnd* child, Entry* dir)
 {
@@ -2201,7 +2201,7 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 			p = p->next;
 	}
 
-	 // no subdirectories ?
+	/* no subdirectories ? */
 	if (!(p->data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		return FALSE;
 
@@ -2209,7 +2209,7 @@ static BOOL expand_entry(ChildWnd* child, Entry* dir)
 
 	dir->expanded = TRUE;
 
-	 // insert entries in left pane
+	/* insert entries in left pane */
 	insert_entries(&child->left, p, idx);
 
 	if (!child->header_wdths_ok) {
@@ -2232,7 +2232,7 @@ static void collapse_entry(Pane* pane, Entry* dir)
 
 	ShowWindow(pane->hwnd, SW_HIDE);
 
-	 // hide sub entries
+	/* hide sub entries */
 	for(;;) {
 		LRESULT res = ListBox_GetItemData(pane->hwnd, idx+1);
 		Entry* sub = (Entry*) res;
@@ -2318,7 +2318,7 @@ static void activate_entry(ChildWnd* child, Pane* pane)
 		}
 	} else {
 
-		//TODO: start program, open document...
+	        /*TODO: start program, open document... */
 
 	}
 }
@@ -2363,7 +2363,7 @@ static BOOL pane_command(Pane* pane, UINT cmd)
 			break;}
 #endif
 
-			// TODO: more command ids...
+		        /* TODO: more command ids... */
 
 		default:
 			return FALSE;
@@ -2529,8 +2529,8 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 			{LPMINMAXINFO lpmmi = (LPMINMAXINFO)lparam;
 
-			lpmmi->ptMaxTrackSize.x <<= 1;//2*GetSystemMetrics(SM_CXSCREEN) / SM_CXVIRTUALSCREEN
-			lpmmi->ptMaxTrackSize.y <<= 1;//2*GetSystemMetrics(SM_CYSCREEN) / SM_CYVIRTUALSCREEN
+			lpmmi->ptMaxTrackSize.x <<= 1;/*2*GetSystemMetrics(SM_CXSCREEN) / SM_CXVIRTUALSCREEN */
+			lpmmi->ptMaxTrackSize.y <<= 1;/*2*GetSystemMetrics(SM_CYSCREEN) / SM_CYVIRTUALSCREEN */
 			break;}
 #endif
 
@@ -2594,7 +2594,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 		case WM_SIZE:
 			if (wparam != SIZE_MINIMIZED)
 				resize_tree(child, LOWORD(lparam), HIWORD(lparam));
-			 // fall through
+			/* fall through */
 
 		default: def:
 			return DefMDIChildProc(hwnd, nmsg, wparam, lparam);
@@ -2620,12 +2620,12 @@ LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 		case WM_SETFOCUS:
 			child->focus_pane = pane==&child->right? 1: 0;
 			ListBox_SetSel(hwnd, TRUE, 1);
-			//TODO: check menu items
+			/*TODO: check menu items */
 			break;
 
 		case WM_KEYDOWN:
 			if (wparam == VK_TAB) {
-				//TODO: SetFocus(Globals.hdrivebar)
+				/*TODO: SetFocus(Globals.hdrivebar) */
 				SetFocus(child->focus_pane? child->left.hwnd: child->right.hwnd);
 			}
 	}
@@ -2702,7 +2702,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 	Globals.hInstance = hinstance;
 
-	 // create main window
+	/* create main window */
 	Globals.hMainWnd = CreateWindowEx(0, (LPCTSTR)(int)hframeClass, _T("Wine File"), WS_OVERLAPPEDWINDOW,
 					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 					0/*hWndParent*/, Globals.hMenuFrame, hinstance, 0/*lpParam*/);
@@ -2732,7 +2732,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 #ifndef _NO_EXTENSIONS
 #ifdef __linux__
-		 // insert unix file system button
+		/* insert unix file system button */
 		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)_T("/\0"));
 
 		drivebarBtn.idCommand = ID_DRIVE_UNIX_FS;
@@ -2740,7 +2740,7 @@ static void InitInstance(HINSTANCE hinstance)
 		drivebarBtn.iString++;
 #endif
 
-		 // register windows drive root strings
+		/* register windows drive root strings */
 		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)Globals.drives);
 #endif
 
@@ -2748,7 +2748,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 		for(p=Globals.drives; *p; ) {
 #ifdef _NO_EXTENSIONS
-			 // insert drive letter
+		  /* insert drive letter */
 			TCHAR b[3] = {tolower(*p)};
 			SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b);
 #endif
@@ -2793,7 +2793,7 @@ static void InitInstance(HINSTANCE hinstance)
 					WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|CCS_NODIVIDER, 0,0,0,0,
 					Globals.hMainWnd, (HMENU)IDW_STATUSBAR, hinstance, 0);*/
 
-	 //TODO: read paths and window placements from registry
+	/*TODO: read paths and window placements from registry */
 	GetCurrentDirectory(MAX_PATH, path);
 	child = alloc_child_window(path);
 
@@ -2821,7 +2821,7 @@ void ExitInstance()
 
 #ifdef _NO_EXTENSIONS
 
- // search for already running win[e]files
+/* search for already running win[e]files */
 
 static int g_foundPrevInstance = 0;
 
@@ -2850,7 +2850,7 @@ int APIENTRY WinMain(HINSTANCE hinstance,
 	MSG msg;
 
 #ifdef _NO_EXTENSIONS
-	// allow only one running instance
+	/* allow only one running instance */
 	EnumWindows(EnumWndProc, (LPARAM)WINEFILEFRAME);
 
 	if (g_foundPrevInstance)
@@ -2860,7 +2860,7 @@ int APIENTRY WinMain(HINSTANCE hinstance,
 	InitInstance(hinstance);
 
 	if (cmdshow == SW_SHOWNORMAL) {
-	 	//TODO: read window placement from registry
+	        /*TODO: read window placement from registry */
 		cmdshow = SW_MAXIMIZE;
 	}
 

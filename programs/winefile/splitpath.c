@@ -22,11 +22,11 @@
 
 void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext)
 {
-	const WCHAR* end; // end of processed string
-	const WCHAR* p;	  // search pointer
-	const WCHAR* s;	  // copy pointer
+        const WCHAR* end; /* end of processed string */
+	const WCHAR* p;	  /* search pointer */
+	const WCHAR* s;	  /* copy pointer */
 
-	 // extract drive name
+	/* extract drive name */
 	if (path[0] && path[1]==':') {
 		if (drv) {
 			*drv++ = *path++;
@@ -36,11 +36,11 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 	} else if (drv)
 		*drv = L'\0';
 
-	 // search for end of string or stream separator
+	/* search for end of string or stream separator */
 	for(end=path; *end && *end!=L':'; )
 		end++;
 
-	 // search for begin of file extension
+	/* search for begin of file extension */
 	for(p=end; p>path && *--p!=L'\\' && *p!=L'/'; )
 		if (*p == L'.') {
 			end = p;
@@ -51,7 +51,7 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 		for(s=end; *ext=*s++; )
 			ext++;
 
-	 // search for end of directory name
+	/* search for end of directory name */
 	for(p=end; p>path; )
 		if (*--p=='\\' || *p=='/') {
 			p++;
@@ -77,11 +77,11 @@ void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* 
 
 void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 {
-	const CHAR* end; // end of processed string
-	const CHAR* p;	 // search pointer
-	const CHAR* s;	 // copy pointer
+        const CHAR* end; /* end of processed string */
+	const CHAR* p;	 /* search pointer */
+	const CHAR* s;	 /* copy pointer */
 
-	 // extract drive name
+	/* extract drive name */
 	if (path[0] && path[1]==':') {
 		if (drv) {
 			*drv++ = *path++;
@@ -91,11 +91,11 @@ void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 	} else if (drv)
 		*drv = '\0';
 
-	 // search for end of string or stream separator
+	/* search for end of string or stream separator */
 	for(end=path; *end && *end!=':'; )
 		end++;
 
-	 // search for begin of file extension
+	/* search for begin of file extension */
 	for(p=end; p>path && *--p!='\\' && *p!='/'; )
 		if (*p == '.') {
 			end = p;
@@ -106,7 +106,7 @@ void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 		for(s=end; (*ext=*s++); )
 			ext++;
 
-	 // search for end of directory name
+	/* search for end of directory name */
 	for(p=end; p>path; )
 		if (*--p=='\\' || *p=='/') {
 			p++;

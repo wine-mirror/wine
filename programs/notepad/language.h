@@ -22,4 +22,4 @@
 
 VOID LANGUAGE_UpdateWindowCaption(VOID);
 VOID LANGUAGE_LoadMenus(VOID);
-//VOID LANGUAGE_DefaultHandle(WPARAM wParam);
+/*VOID LANGUAGE_DefaultHandle(WPARAM wParam);*/

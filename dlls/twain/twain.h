@@ -383,7 +383,7 @@ typedef struct
     TW_INT16    dataArgType;    /* DSM_Entry dataArgType parameter          */
     TW_INT16    message;        /* DSM_Entry message parameter              */
     TW_INT32    pDataSize;      /* Size of pData (0 if NULL)                */
-    //  TW_MEMREF   pData;      /* Based on implementation specifics, a     */
+    /*  TW_MEMREF   pData; */   /* Based on implementation specifics, a     */
                                 /* pData parameter makes no sense in this   */
                                 /* structure, but data (if provided) will be*/
                                 /* appended in the data block.              */
@@ -396,7 +396,7 @@ typedef struct
     TW_UINT16   returnCode;     /* Thunker DsEntry return code.             */
     TW_UINT16   conditionCode;  /* Thunker DsEntry condition code.          */
     TW_INT32    pDataSize;      /* Size of pData (0 if NULL)                */
-    //  TW_MEMREF   pData;      /* Based on implementation specifics, a     */
+    /*  TW_MEMREF   pData; */   /* Based on implementation specifics, a     */
                                 /* pData parameter makes no sense in this   */
                                 /* structure, but data (if provided) will be*/
                                 /* appended in the data block.              */
@@ -660,7 +660,7 @@ typedef struct {
 #define TWSS_A5          5
 #define TWSS_B4          6
 #define TWSS_B6          7
-//#define TWSS_B          8
+/*#define TWSS_B          8 */
 /* Added 1.7 */
 #define TWSS_USLEDGER    9
 #define TWSS_USEXECUTIVE 10

@@ -159,7 +159,7 @@ typedef struct IFEntry
  * an IP route table entry is unknown */
 typedef struct IPRouteEntry {
    unsigned long ire_addr;
-   unsigned long ire_index;  //matches if_index in IFEntry and iae_index in IPAddrEntry
+   unsigned long ire_index;  /*matches if_index in IFEntry and iae_index in IPAddrEntry */
    unsigned long ire_metric;
    unsigned long ire_option4;
    unsigned long ire_option5;

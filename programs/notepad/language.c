@@ -77,8 +77,8 @@ VOID LANGUAGE_LoadMenus(VOID)
   LANGUAGE_UpdateWindowCaption();
 
   /* Change Resource names */
-//  lstrcpyn(STRING_MENU_Xx      + sizeof(STRING_MENU_Xx)      - 3, lang, 3);
-//  lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);
+  /*lstrcpyn(STRING_MENU_Xx      + sizeof(STRING_MENU_Xx)      - 3, lang, 3);*/
+  /*lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);*/
 
   /* Create menu */
   hMainMenu = LoadMenu(Globals.hInstance, MAIN_MENU);
@@ -95,9 +95,10 @@ VOID LANGUAGE_LoadMenus(VOID)
   Globals.hMainMenu = hMainMenu;
 }
 
-//VOID LANGUAGE_DefaultHandle(WPARAM wParam)
-//{
-//  if ((wParam >=NP_FIRST_LANGUAGE) && (wParam<=NP_LAST_LANGUAGE))
-//          LANGUAGE_SelectByNumber(wParam - NP_FIRST_LANGUAGE);
-//     else printf("Unimplemented menu command %i\n", wParam);
-//}
+/*VOID LANGUAGE_DefaultHandle(WPARAM wParam)
+{
+  if ((wParam >=NP_FIRST_LANGUAGE) && (wParam<=NP_LAST_LANGUAGE))
+          LANGUAGE_SelectByNumber(wParam - NP_FIRST_LANGUAGE);
+     else printf("Unimplemented menu command %i\n", wParam);
+}
+*/

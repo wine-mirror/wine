@@ -745,8 +745,8 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
      case 0x136:  DIALOG_HelpNoWarranty(); break;
      case 0x137:   DIALOG_HelpAboutWine(); break;
 
-//     default:
-//      LANGUAGE_DefaultHandle(wParam);
+       /*     default: */
+       /*      LANGUAGE_DefaultHandle(wParam); */
    }
    return 0;
 }

@@ -29,7 +29,7 @@ typedef struct _tagCHARLISTENTRY
 
 typedef struct _tagCHARLIST
 {
-    unsigned int nCount; // Entries Count;
+    unsigned int nCount; /* Entries Count; */
     CHARLISTENTRY *pHead;
     CHARLISTENTRY *pTail;
 } CHARLIST;

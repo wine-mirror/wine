@@ -80,7 +80,7 @@ enum IMAGE {
 #define IDW_STATUSBAR		0x100
 #define IDW_TOOLBAR			0x101
 #define IDW_DRIVEBAR		0x102
-#define	IDW_FIRST_CHILD		0xC000	//0x200
+#define	IDW_FIRST_CHILD		0xC000	/*0x200*/
 
 #define IDW_TREE_LEFT		3
 #define IDW_TREE_RIGHT		6
@@ -128,7 +128,7 @@ typedef struct
   HIMAGELIST himl;
 
   TCHAR		drives[BUFFER_LEN];
-  BOOL		prescan_node;	//TODO
+  BOOL		prescan_node;	/*TODO*/
 
   UINT		wStringTableOffset;
 } WINEFILE_GLOBALS;

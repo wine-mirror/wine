@@ -56,13 +56,13 @@ extern "C" {
 
 #define SS_INVALID_SRB			0xE0
 #define SS_OLD_MANAGER			0xE1
-#define SS_BUFFER_ALIGN			0xE1 // Win32
+#define SS_BUFFER_ALIGN			0xE1 /* Win32 */
 #define SS_ILLEGAL_MODE			0xE2
 #define SS_NO_ASPI			0xE3
 #define SS_FAILED_INIT			0xE4
 #define SS_ASPI_IS_BUSY			0xE5
 #define SS_BUFFER_TO_BIG		0xE6
-#define SS_MISMATCHED_COMPONENTS	0xE7 // DLLs/EXE version mismatch
+#define SS_MISMATCHED_COMPONENTS	0xE7 /* DLLs/EXE version mismatch */
 #define SS_NO_ADAPTERS			0xE8
 #define SS_INSUFFICIENT_RESOURCES	0xE9
 #define SS_ASPI_IS_SHUTDOWN		0xEA
@@ -101,7 +101,7 @@ extern "C" {
 #define SC_GETSET_TIMEOUTS		0x08
 
 /* SRB Status.. MS defined */
-#define SS_SECURITY_VIOLATION		0xE2 // Replaces SS_INVALID_MODE
+#define SS_SECURITY_VIOLATION		0xE2 /* Replaces SS_INVALID_MODE */
 /*** END DEFS */
 
 #include "pshpack1.h"
