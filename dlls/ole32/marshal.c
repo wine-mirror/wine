@@ -453,6 +453,10 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
   TRACE("(%p, %s, %p, %lx, %p, %lx)\n",
     pStm,debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags
   );
+
+  if (pUnk == NULL)
+    return E_INVALIDARG;
+
   STUBMGR_Start(); /* Just to be sure we have one running. */
   mid.processid = GetCurrentProcessId();
   IUnknown_QueryInterface(pUnk,&IID_IUnknown,(LPVOID*)&pUnknown);
