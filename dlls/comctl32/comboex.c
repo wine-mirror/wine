@@ -1556,14 +1556,9 @@ static LRESULT COMBOEX_NotifyFormat (COMBOEX_INFO *infoPtr, LPARAM lParam)
     if (lParam == NF_REQUERY) {
 	INT i = SendMessageW(GetParent (infoPtr->hwndSelf),
 			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
-	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
-	    ERR("wrong response to WM_NOTIFYFORMAT (%d), set to ANSI\n", i);
-	    i = NFR_ANSI;
-	}
 	infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
-	return (LRESULT)i;
     }
-    return (LRESULT)(infoPtr->unicode ? NFR_UNICODE : NFR_ANSI);
+    return infoPtr->NtfUnicode ? NFR_UNICODE : NFR_ANSI;
 }
 
 
