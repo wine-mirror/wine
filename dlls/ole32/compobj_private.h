@@ -198,14 +198,13 @@ APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
 DWORD COM_ApartmentAddRef(struct apartment *apt);
 DWORD COM_ApartmentRelease(struct apartment *apt);
 
-extern CRITICAL_SECTION csApartment;
-
 /* this is what is stored in TEB->ReservedForOle */
 struct oletls
 {
     struct apartment *apt;
     IErrorInfo       *errorinfo;   /* see errorinfo.c */
     IUnknown         *state;       /* see CoSetState */
+    DWORD            inits;        /* number of times CoInitializeEx called */
 };
 
 /*

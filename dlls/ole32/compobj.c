@@ -31,6 +31,7 @@
  *     thing currently (should be controlling the stub manager)
  *
  *   - Make the MTA dynamically allocated and refcounted
+ *   - Free the ReservedForOle data in DllMain(THREAD_DETACH)
  *
  *   - Implement the service control manager (in rpcss) to keep track
  *     of registered class objects: ISCM::ServerRegisterClsid et al
@@ -102,7 +103,7 @@ static void COM_ExternalLockFreeList(void);
 const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
 APARTMENT MTA;
-struct list apts = LIST_INIT( apts );
+static struct list apts = LIST_INIT( apts );
 
 static CRITICAL_SECTION csApartment;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -304,21 +305,22 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
 {
     DWORD ret;
 
-    EnterCriticalSection(&csApartment);
-
     ret = InterlockedDecrement(&apt->refs);
     if (ret == 0)
     {
         TRACE("destroying apartment %p, oxid %s\n", apt, wine_dbgstr_longlong(apt->oxid));
 
+        EnterCriticalSection(&csApartment);
+        list_remove(&apt->entry);
+        LeaveCriticalSection(&csApartment);
+
         MARSHAL_Disconnect_Proxies(apt);
 
-        list_remove(&apt->entry);
         if ((apt->model & COINIT_APARTMENTTHREADED) && apt->win) DestroyWindow(apt->win);
 
         if (!list_empty(&apt->stubmgrs))
         {
-            FIXME("PANIC: Apartment being destroyed with outstanding stubs, what do we do now?\n");
+            FIXME("Destroy outstanding stubs\n");
         }
 
         if (apt->filter) IUnknown_Release(apt->filter);
@@ -330,8 +332,6 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
 
         apt = NULL;
     }
-
-    LeaveCriticalSection(&csApartment);
 
     return ret;
 }
@@ -545,20 +545,18 @@ HRESULT WINAPI CoInitializeEx(
   if (!(apt = COM_CurrentInfo()->apt))
   {
     apt = COM_CreateApartment(dwCoInit);
+    if (!apt) return E_OUTOFMEMORY;
   }
-  else
-  {
-    InterlockedIncrement(&apt->refs);
-  }
-
-  if (dwCoInit != apt->model)
+  else if (dwCoInit != apt->model)
   {
     /* Changing the threading model after it's been set is illegal. If this warning is triggered by Wine
        code then we are probably using the wrong threading model to implement that API. */
     ERR("Attempt to change threading model of this apartment from 0x%lx to 0x%lx\n", apt->model, dwCoInit);
+    COM_ApartmentRelease(apt);
     return RPC_E_CHANGED_MODE;
   }
-  
+
+  COM_CurrentInfo()->inits++;
 
   return hr;
 }
@@ -606,12 +604,26 @@ void COM_FlushMessageQueue(void)
  */
 void WINAPI CoUninitialize(void)
 {
+  struct oletls * info = COM_CurrentInfo();
   LONG lCOMRefCnt;
 
   TRACE("()\n");
 
-  if (!COM_ApartmentRelease(COM_CurrentInfo()->apt))
-      COM_CurrentInfo()->apt = NULL;
+  /* will only happen on OOM */
+  if (!info) return;
+
+  /* sanity check */
+  if (!info->inits)
+  {
+    ERR("Mismatched CoUninitialize\n");
+    return;
+  }
+
+  if (!--info->inits)
+  {
+    COM_ApartmentRelease(info->apt);
+    info->apt = NULL;
+  }
 
   /*
    * Decrease the reference count.
