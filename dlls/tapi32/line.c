@@ -286,7 +286,15 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
     DWORD dwAvailSize, dwOffset, i;
     LPLINECOUNTRYENTRY lpLCE;
 
-    TRACE("(%08lx, %08lx, %p): stub.\n", dwCountryID, dwAPIVersion, lpLineCountryList);
+    if(!lpLineCountryList) {
+	TRACE("(%08lx, %08lx, %p): stub. Returning LINEERR_INVALPOINTER\n",
+	      dwCountryID, dwAPIVersion, lpLineCountryList);
+        return LINEERR_INVALPOINTER;
+    }
+
+    TRACE("(%08lx, %08lx, %p(%ld)): stub.\n", 
+	  dwCountryID, dwAPIVersion, lpLineCountryList,
+	  lpLineCountryList->dwTotalSize);
 
     dwAvailSize = lpLineCountryList->dwTotalSize;
     dwOffset = sizeof (LINECOUNTRYLIST);
@@ -294,11 +302,9 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
     if(dwAvailSize<dwOffset)
         return LINEERR_STRUCTURETOOSMALL;
 
-    if(!lpLineCountryList)
-        return LINEERR_INVALPOINTER;
-
     memset(lpLineCountryList, 0, dwAvailSize);
 
+    lpLineCountryList->dwTotalSize         = dwAvailSize;
     lpLineCountryList->dwUsedSize          = dwOffset;
     lpLineCountryList->dwNumCountries      = 0;
     lpLineCountryList->dwCountryListSize   = 0;
@@ -330,7 +336,7 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
         lpLineCountryList->dwCountryListSize += len;
         lpLineCountryList->dwUsedSize += sizeof (LINECOUNTRYENTRY); /* maybe wrong */
 
-        TRACE("Adding country %s at %p\n", TAPI_LCList[i].lpCountryName, lpLCE);
+        TRACE("Adding country %s at %p\n", TAPI_LCList[i].lpCountryName, &lpLCE[i]);
 
         lpLCE[i].dwCountryID   = TAPI_LCList[i].dwCountryID;
         lpLCE[i].dwCountryCode = TAPI_LCList[i].dwCountryCode;
