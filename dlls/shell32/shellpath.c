@@ -183,8 +183,9 @@ BOOL WINAPI PathRemoveFileSpecAW(LPVOID lpszPath)
 void WINAPI PathStripPathAW(LPVOID lpszPath)
 {
 	if (SHELL_OsIsUnicode())
-	  return PathStripPathW(lpszPath);
-	return PathStripPathA(lpszPath);
+            PathStripPathW(lpszPath);
+        else
+            PathStripPathA(lpszPath);
 }
 
 /*************************************************************************
@@ -203,8 +204,9 @@ BOOL WINAPI PathStripToRootAW(LPVOID lpszPath)
 void WINAPI PathRemoveArgsAW(LPVOID lpszPath)
 {
 	if (SHELL_OsIsUnicode())
-	  PathRemoveArgsW(lpszPath);
-	PathRemoveArgsA(lpszPath);
+            PathRemoveArgsW(lpszPath);
+        else
+            PathRemoveArgsA(lpszPath);
 }
 
 /*************************************************************************
@@ -213,8 +215,9 @@ void WINAPI PathRemoveArgsAW(LPVOID lpszPath)
 void WINAPI PathRemoveExtensionAW(LPVOID lpszPath)
 {
 	if (SHELL_OsIsUnicode())
-	  return PathRemoveExtensionW(lpszPath);
-	return PathRemoveExtensionA(lpszPath);
+            PathRemoveExtensionW(lpszPath);
+        else
+            PathRemoveExtensionA(lpszPath);
 }
 
 
@@ -256,8 +259,9 @@ LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath)
 void WINAPI PathRemoveBlanksAW(LPVOID str)
 {
 	if(SHELL_OsIsUnicode())
-	  PathRemoveBlanksW(str);
-	PathRemoveBlanksA(str);
+            PathRemoveBlanksW(str);
+        else
+            PathRemoveBlanksA(str);
 }
 
 /*************************************************************************
@@ -266,8 +270,9 @@ void WINAPI PathRemoveBlanksAW(LPVOID str)
 VOID WINAPI PathQuoteSpacesAW (LPVOID lpszPath)
 {
 	if(SHELL_OsIsUnicode())
-	  return PathQuoteSpacesW(lpszPath);
-	return PathQuoteSpacesA(lpszPath);
+            PathQuoteSpacesW(lpszPath);
+        else
+            PathQuoteSpacesA(lpszPath);
 }
 
 /*************************************************************************
@@ -635,9 +640,11 @@ HRESULT WINAPI PathProcessCommandAW (
  * PathSetDlgItemPath (SHELL32.48)
  */
 VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
-{	if (SHELL_OsIsUnicode())
-	  return PathSetDlgItemPathW(hDlg, id, pszPath);
-	return PathSetDlgItemPathA(hDlg, id, pszPath);
+{
+	if (SHELL_OsIsUnicode())
+            PathSetDlgItemPathW(hDlg, id, pszPath);
+        else
+            PathSetDlgItemPathA(hDlg, id, pszPath);
 }
 
 

@@ -90,7 +90,7 @@ HRESULT FakeZBuffer_DirectDrawSurface_Create(IDirectDrawImpl* pDD,
 void
 FakeZBuffer_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
 {
-    return Main_DirectDrawSurface_final_release(This);
+    Main_DirectDrawSurface_final_release(This);
 }
 
 HRESULT

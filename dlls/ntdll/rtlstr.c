@@ -84,7 +84,7 @@ void WINAPI RtlInitAnsiString( PSTRING target, LPCSTR source)
  */
 void WINAPI RtlInitString( PSTRING target, LPCSTR source )
 {
-    return RtlInitAnsiString( target, source );
+    RtlInitAnsiString( target, source );
 }
 
 

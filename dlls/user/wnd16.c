@@ -1461,7 +1461,7 @@ void WINAPI SetInternalWindowPos16( HWND16 hwnd, UINT16 showCmd, LPRECT16 rect, 
  */
 void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
 {
-    return CalcChildScroll( WIN_Handle32(hwnd), scroll );
+    CalcChildScroll( WIN_Handle32(hwnd), scroll );
 }
 
 
