@@ -17,7 +17,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "pe_image.h"
 #include "debugger.h"
 
 #define NR_TYPE_HASH 521

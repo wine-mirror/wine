@@ -920,11 +920,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 			hinst = NE_LoadModule(libname, lib_only);
 			break;
 
-		case MODULE_LOADORDER_ELFDLL:
-			TRACE("Trying elfdll '%s'\n", libname);
-			hinst = ELFDLL_LoadModule16(libname);
-			break;
-
 		case MODULE_LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", libname);
 			hinst = BUILTIN_LoadModule(libname);
@@ -935,6 +930,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 		/* Fall through */
 
 		case MODULE_LOADORDER_SO:	/* This is not supported for NE modules */
+		case MODULE_LOADORDER_ELFDLL:	/* This is not supported for NE modules */
 		case MODULE_LOADORDER_INVALID:	/* We ignore this as it is an empty entry */
 			hinst = 2;
 			break;

@@ -8,7 +8,7 @@
 #define __WINE_MODULE_H
 
 #include "windef.h"
-#include "pe_image.h"
+#include "winbase.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
@@ -118,23 +118,15 @@ typedef struct
 #include "poppack.h"
 
 /* internal representation of 32bit modules. per process. */
-typedef enum {
-	MODULE32_PE = 1,
-	MODULE32_ELF,
-	MODULE32_ELFDLL
-} MODULE32_TYPE;
-
 typedef struct _wine_modref
 {
-	struct _wine_modref	*next;
-	struct _wine_modref	*prev;
-	MODULE32_TYPE		type;
-	union {
-		PE_MODREF	pe;
-		ELF_MODREF	elf;
-	} binfmt;
+	struct _wine_modref *next;
+	struct _wine_modref *prev;
+	HMODULE              module;
+	void                *dlhandle;  /* handle returned by dlopen() */
+	int                  tlsindex;  /* TLS index or -1 if none */
 
-	HMODULE			module;
+	FARPROC            (*find_export)( struct _wine_modref *wm, LPCSTR func, BOOL snoop );
 
 	int			nDeps;
 	struct _wine_modref	**deps;
@@ -151,10 +143,8 @@ typedef struct _wine_modref
 #define WINE_MODREF_INTERNAL              0x00000001
 #define WINE_MODREF_NO_DLL_CALLS          0x00000002
 #define WINE_MODREF_PROCESS_ATTACHED      0x00000004
-#define WINE_MODREF_LOAD_AS_DATAFILE      0x00000010
 #define WINE_MODREF_DONT_RESOLVE_REFS     0x00000020
 #define WINE_MODREF_MARKER                0x80000000
-
 
 
 /* Resource types */
@@ -170,9 +160,17 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
+#define PE_HEADER(module) \
+    ((IMAGE_NT_HEADERS*)((LPBYTE)(module) + \
+                         (((IMAGE_DOS_HEADER*)(module))->e_lfanew)))
+
+#define PE_SECTIONS(module) \
+    ((IMAGE_SECTION_HEADER*)((LPBYTE)&PE_HEADER(module)->OptionalHeader + \
+                           PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
+
 /* module.c */
+extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, BOOL snoop );
-extern WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hModule );
 extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved );
 extern void MODULE_DllThreadAttach( LPVOID lpReserved );
@@ -223,10 +221,27 @@ extern void NE_DllProcessAttach( HMODULE16 hModule );
 /* loader/ne/convert.c */
 HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
 
+/* loader/pe_resource.c */
+extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
+extern DWORD PE_SizeofResource(HMODULE,HRSRC);
+extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
+extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL);
+extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL);
+
+/* loader/pe_image.c */
+extern WINE_MODREF *PE_LoadLibraryExA(LPCSTR, DWORD);
+extern HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags );
+extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
+                                     DWORD flags, HFILE hFile, BOOL builtin );
+extern void PE_InitTls(void);
+extern BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved );
+
+/* loader/elf.c */
+extern WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags);
+
 /* relay32/builtin.c */
 extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags);
 extern HMODULE BUILTIN32_LoadExeModule(void);
-extern void BUILTIN32_UnloadLibrary(WINE_MODREF *wm);
 extern void *BUILTIN32_dlopen( const char *name );
 extern int BUILTIN32_dlclose( void *handle );
 

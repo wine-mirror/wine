@@ -5,8 +5,6 @@
 #include "windef.h"
 
 WINE_MODREF *ELFDLL_LoadLibraryExA(LPCSTR libname, DWORD flags);
-HINSTANCE16 ELFDLL_LoadModule16(LPCSTR libname);
-void ELFDLL_UnloadLibrary(WINE_MODREF *wm);
 
 #if defined(HAVE_DL_API)
 

@@ -12,7 +12,6 @@
 #include "module.h"
 #include "debugger.h"
 #include "win.h"
-#include "pe_image.h"
 
 ldt_copy_entry ldt_copy[LDT_SIZE];
 unsigned char ldt_flags_copy[LDT_SIZE];

@@ -56,7 +56,6 @@
 #include "neexe.h"
 #include "process.h"
 #include "thread.h"
-#include "pe_image.h"
 #include "module.h"
 #include "global.h"
 #include "task.h"
@@ -70,6 +69,27 @@ DECLARE_DEBUG_CHANNEL(fixup);
 DECLARE_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(relay);
 DECLARE_DEBUG_CHANNEL(segment);
+
+
+static IMAGE_EXPORT_DIRECTORY *get_exports( HMODULE hmod )
+{
+    IMAGE_EXPORT_DIRECTORY *ret = NULL;
+    IMAGE_DATA_DIRECTORY *dir = PE_HEADER(hmod)->OptionalHeader.DataDirectory
+                                + IMAGE_DIRECTORY_ENTRY_EXPORT;
+    if (dir->Size && dir->VirtualAddress)
+        ret = (IMAGE_EXPORT_DIRECTORY *)((char *)hmod + dir->VirtualAddress);
+    return ret;
+}
+
+static IMAGE_IMPORT_DESCRIPTOR *get_imports( HMODULE hmod )
+{
+    IMAGE_IMPORT_DESCRIPTOR *ret = NULL;
+    IMAGE_DATA_DIRECTORY *dir = PE_HEADER(hmod)->OptionalHeader.DataDirectory
+                                + IMAGE_DIRECTORY_ENTRY_IMPORT;
+    if (dir->Size && dir->VirtualAddress)
+        ret = (IMAGE_IMPORT_DESCRIPTOR *)((char *)hmod + dir->VirtualAddress);
+    return ret;
+}
 
 
 /* convert PE image VirtualAddress to Real Address */
@@ -130,7 +150,7 @@ void dump_exports( HMODULE hModule )
  * If it is a ordinal:
  *	- use ordinal-pe_export->Base as offset into the functionlist
  */
-FARPROC PE_FindExportedFunction( 
+static FARPROC PE_FindExportedFunction( 
 	WINE_MODREF *wm,	/* [in] WINE modreference */
 	LPCSTR funcName,	/* [in] function name */
         BOOL snoop )
@@ -139,11 +159,10 @@ FARPROC PE_FindExportedFunction(
 	u_long				* function;
 	u_char				** name, *ename = NULL;
 	int				i, ordinal;
-	PE_MODREF			*pem = &(wm->binfmt.pe);
-	IMAGE_EXPORT_DIRECTORY 		*exports = pem->pe_export;
 	unsigned int			load_addr = wm->module;
 	u_long				rva_start, rva_end, addr;
 	char				* forward;
+	IMAGE_EXPORT_DIRECTORY *exports = get_exports(wm->module);
 
 	if (HIWORD(funcName))
 		TRACE("(%s)\n",funcName);
@@ -154,7 +173,7 @@ FARPROC PE_FindExportedFunction(
 		 * GetProcAddress(0,"RegisterPenApp") which triggers this
 		 * case.
 		 */
-		WARN("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,pem);
+		WARN("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,wm);
 		return NULL;
 	}
 	ordinals= (u_short*)  RVA(exports->AddressOfNameOrdinals);
@@ -253,24 +272,23 @@ FARPROC PE_FindExportedFunction(
 DWORD fixup_imports( WINE_MODREF *wm )
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
-    PE_MODREF			*pem;
     unsigned int load_addr	= wm->module;
     int				i,characteristics_detection=1;
     char			*modname;
+    IMAGE_EXPORT_DIRECTORY *exports = get_exports(wm->module);
+    IMAGE_IMPORT_DESCRIPTOR *imports = get_imports(wm->module);
     
-    assert(wm->type==MODULE32_PE);
-    pem = &(wm->binfmt.pe);
-    if (pem->pe_export)
-    	modname = (char*) RVA(pem->pe_export->Name);
+    if (exports)
+    	modname = (char*) RVA(exports->Name);
     else
         modname = "<unknown>";
 
+    /* first, count the number of imported non-internal modules */
+    pe_imp = imports;
+    if (!pe_imp) return 0;
+
     /* OK, now dump the import list */
     TRACE("Dumping imports list\n");
-
-    /* first, count the number of imported non-internal modules */
-    pe_imp = pem->pe_import;
-    if (!pe_imp) return 0;
 
     /* We assume that we have at least one import with !0 characteristics and
      * detect broken imports with all characteristics 0 (notably Borland) and
@@ -293,7 +311,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
      * added to the modref list of the process.
      */
  
-    for (i = 0, pe_imp = pem->pe_import; pe_imp->Name ; pe_imp++) {
+    for (i = 0, pe_imp = imports; pe_imp->Name ; pe_imp++) {
     	WINE_MODREF		*wmImp;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
@@ -472,7 +490,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
+HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
 {
     HMODULE	hModule;
     HANDLE	mapping;
@@ -612,7 +630,20 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
     load_addr = (DWORD)VirtualAlloc( (void*)load_addr, vma_size,
                                      MEM_RESERVE | MEM_COMMIT,
                                      PAGE_EXECUTE_READWRITE );
-    if (load_addr == 0) 
+    if (!load_addr)
+    {
+        load_addr = (DWORD)VirtualAlloc( NULL, vma_size,
+					 MEM_RESERVE | MEM_COMMIT,
+					 PAGE_EXECUTE_READWRITE );
+	if (!load_addr)
+        {
+            FIXME_(win32)(
+                   "FATAL: Couldn't load module %s (out of memory, %d needed)!\n", filename, vma_size);
+            goto error;
+	}
+    }
+
+    if (load_addr != nt->OptionalHeader.ImageBase && !(flags & LOAD_LIBRARY_AS_DATAFILE))
     {
         /* We need to perform base relocations */
         WARN("Info: base relocations needed for %s\n", filename);
@@ -635,34 +666,14 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
          *        really make sure that the *new* base address is also > 2GB.
          *        Some DLLs really check the MSB of the module handle :-/
          */
-        if ( nt->OptionalHeader.ImageBase & 0x80000000 )
+        if ((nt->OptionalHeader.ImageBase & 0x80000000) && !(load_addr & 0x80000000))
             ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
-
-        load_addr = (DWORD)VirtualAlloc( NULL, vma_size,
-					 MEM_RESERVE | MEM_COMMIT,
-					 PAGE_EXECUTE_READWRITE );
-	if (!load_addr) {
-            FIXME_(win32)(
-                   "FATAL: Couldn't load module %s (out of memory, %d needed)!\n", filename, vma_size);
-            goto error;
-	}
     }
 
     TRACE("Load addr is %lx (base %lx), range %x\n",
           load_addr, nt->OptionalHeader.ImageBase, vma_size );
     TRACE_(segment)("Loading %s at %lx, range %x\n",
                     filename, load_addr, vma_size );
-
-#if 0
-    /* Store the NT header at the load addr */
-    *(PIMAGE_DOS_HEADER)load_addr = *(PIMAGE_DOS_HEADER)hModule;
-    *PE_HEADER( load_addr ) = *nt;
-    memcpy( PE_SECTIONS(load_addr), PE_SECTIONS(hModule),
-            sizeof(IMAGE_SECTION_HEADER) * nt->FileHeader.NumberOfSections );
-
-    /* Copies all stuff up to the first section. Including win32 viruses. */
-    memcpy( load_addr, hModule, lowest_fa );
-#endif
 
     req->handle = hFile;
     server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
@@ -735,33 +746,24 @@ error:
  *
  * Note: This routine must always be called in the context of the
  *       process that is to own the module to be created.
+ *
+ * Note: Assumes that the process critical section is held
  */
-WINE_MODREF *PE_CreateModule( HMODULE hModule, 
-                              LPCSTR filename, DWORD flags, BOOL builtin )
+WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
+                              HFILE hFile, BOOL builtin )
 {
     DWORD load_addr = (DWORD)hModule;  /* for RVA */
     IMAGE_NT_HEADERS *nt = PE_HEADER(hModule);
     IMAGE_DATA_DIRECTORY *dir;
-    IMAGE_IMPORT_DESCRIPTOR *pe_import = NULL;
     IMAGE_EXPORT_DIRECTORY *pe_export = NULL;
-    IMAGE_RESOURCE_DIRECTORY *pe_resource = NULL;
     WINE_MODREF *wm;
-    int	result;
-
+    HMODULE16 hModule16;
 
     /* Retrieve DataDirectory entries */
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXPORT;
     if (dir->Size)
         pe_export = (PIMAGE_EXPORT_DIRECTORY)RVA(dir->VirtualAddress);
-
-    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_IMPORT;
-    if (dir->Size)
-        pe_import = (PIMAGE_IMPORT_DESCRIPTOR)RVA(dir->VirtualAddress);
-
-    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_RESOURCE;
-    if (dir->Size)
-        pe_resource = (PIMAGE_RESOURCE_DIRECTORY)RVA(dir->VirtualAddress);
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXCEPTION;
     if (dir->Size) FIXME("Exception directory ignored\n" );
@@ -771,12 +773,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
     /* IMAGE_DIRECTORY_ENTRY_BASERELOC handled in PE_LoadImage */
     /* IMAGE_DIRECTORY_ENTRY_DEBUG handled by debugger */
-
-    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_DEBUG;
-    if (dir->Size) TRACE("Debug directory ignored\n" );
-
-    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_COPYRIGHT;
-    if (dir->Size) FIXME("Copyright string ignored\n" );
 
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_GLOBALPTR;
     if (dir->Size) FIXME("Global Pointer (MIPS) ignored\n" );
@@ -825,58 +821,33 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
     dir = nt->OptionalHeader.DataDirectory+15;
     if (dir->Size) FIXME("Unknown directory 15 ignored\n" );
 
+    /* Create 16-bit dummy module */
+
+    if ((hModule16 = MODULE_CreateDummyModule( filename, hModule )) < 32)
+    {
+        SetLastError( (DWORD)hModule16 );	/* This should give the correct error */
+        return NULL;
+    }
 
     /* Allocate and fill WINE_MODREF */
 
-    wm = (WINE_MODREF *)HeapAlloc( GetProcessHeap(), 
-                                   HEAP_ZERO_MEMORY, sizeof(*wm) );
-    wm->module = hModule;
-
-    if ( builtin ) 
-        wm->flags |= WINE_MODREF_INTERNAL;
-    if ( flags & DONT_RESOLVE_DLL_REFERENCES )
-        wm->flags |= WINE_MODREF_DONT_RESOLVE_REFS;
-    if ( flags & LOAD_LIBRARY_AS_DATAFILE )
-        wm->flags |= WINE_MODREF_LOAD_AS_DATAFILE;
-
-    wm->type = MODULE32_PE;
-    wm->binfmt.pe.pe_export = pe_export;
-    wm->binfmt.pe.pe_import = pe_import;
-    wm->binfmt.pe.pe_resource = pe_resource;
-    wm->binfmt.pe.tlsindex = -1;
-
-    wm->filename = HEAP_strdupA( GetProcessHeap(), 0, filename );
-    wm->modname = strrchr( wm->filename, '\\' );
-    if (!wm->modname) wm->modname = wm->filename;
-    else wm->modname++;
-
-    result = GetShortPathNameA( wm->filename, NULL, 0 );
-    wm->short_filename = (char *)HeapAlloc( GetProcessHeap(), 0, result+1 );
-    GetShortPathNameA( wm->filename, wm->short_filename, result+1 );
-    wm->short_modname = strrchr( wm->short_filename, '\\' );
-    if (!wm->short_modname) wm->short_modname = wm->short_filename;
-    else wm->short_modname++;
-
-    /* Link MODREF into process list */
-
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
-
-    wm->next = PROCESS_Current()->modref_list;
-    PROCESS_Current()->modref_list = wm;
-    if ( wm->next ) wm->next->prev = wm;
-
-    if (    !( nt->FileHeader.Characteristics & IMAGE_FILE_DLL )
-         && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
-
+    if (!(wm = MODULE_AllocModRef( hModule, filename )))
     {
-        if ( PROCESS_Current()->exe_modref )
-            FIXME( "Trying to load second .EXE file: %s\n", filename );
-        else
-            PROCESS_Current()->exe_modref = wm;
+        FreeLibrary16( hModule16 );
+        return NULL;
     }
 
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    if ( builtin ) 
+    {
+        NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule16 );
+        pModule->flags |= NE_FFLAGS_BUILTIN;
+        wm->flags |= WINE_MODREF_INTERNAL;
+    }
 
+    if ( flags & DONT_RESOLVE_DLL_REFERENCES )
+        wm->flags |= WINE_MODREF_DONT_RESOLVE_REFS;
+
+    wm->find_export = PE_FindExportedFunction;
 
     /* Dump Exports */
 
@@ -885,13 +856,9 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
     /* Fixup Imports */
 
-    if (    pe_import
-         && !( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE )
-         && !( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS ) 
-         && fixup_imports( wm ) ) 
+    if (!(wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) && fixup_imports( wm ))
     {
         /* remove entry from modref chain */
-        EnterCriticalSection( &PROCESS_Current()->crit_section );
 
         if ( !wm->prev )
             PROCESS_Current()->modref_list = wm->next;
@@ -900,8 +867,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
 
         if ( wm->next ) wm->next->prev = wm->prev;
         wm->next = wm->prev = NULL;
-
-        LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
         /* FIXME: there are several more dangling references
          * left. Including dlls loaded by this dll before the
@@ -913,6 +878,29 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
          return NULL;
     }
 
+    if (pe_export)
+        SNOOP_RegisterDLL( hModule, wm->modname, pe_export->NumberOfFunctions );
+
+    /* Send DLL load event */
+
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
+    {
+        struct load_dll_request *req = get_req_buffer();
+        req->handle     = hFile;
+        req->base       = (void *)hModule;
+        req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
+        req->dbg_size   = nt->FileHeader.NumberOfSymbols;
+        req->name       = &wm->filename;
+        server_call_noerr( REQ_LOAD_DLL );
+    }
+    else  /* we don't need to send a dll event for the main exe */
+    {
+        if ( PROCESS_Current()->exe_modref )
+            FIXME( "Trying to load second .EXE file: %s\n", filename );
+        else
+            PROCESS_Current()->exe_modref = wm;
+    }
+
     return wm;
 }
 
@@ -922,9 +910,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
  */
 WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 {
-        struct load_dll_request *req = get_req_buffer();
 	HMODULE		hModule32;
-	HMODULE16	hModule16;
 	WINE_MODREF	*wm;
 	char        	filename[256];
 	HANDLE		hFile;
@@ -938,56 +924,24 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
 	
 	/* Load PE module */
-	hModule32 = PE_LoadImage( hFile, filename );
+	hModule32 = PE_LoadImage( hFile, filename, flags );
 	if (!hModule32)
 	{
                 CloseHandle( hFile );
 		return NULL;
 	}
 
-	/* Create 16-bit dummy module */
-	if ((hModule16 = MODULE_CreateDummyModule( filename, hModule32 )) < 32)
-	{
-                CloseHandle( hFile );
-		SetLastError( (DWORD)hModule16 );	/* This should give the correct error */
-		return NULL;
-	}
-
 	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, filename, flags, FALSE )) )
+	if ( !(wm = PE_CreateModule( hModule32, filename, flags, -1, FALSE )) )
 	{
 		ERR( "can't load %s\n", filename );
-		FreeLibrary16( hModule16 );
                 CloseHandle( hFile );
 		SetLastError( ERROR_OUTOFMEMORY );
 		return NULL;
 	}
 
-	if (wm->binfmt.pe.pe_export)
-		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
-        req->handle     = hFile;
-        req->base       = (void *)hModule32;
-        req->dbg_offset = PE_HEADER(hModule32)->FileHeader.PointerToSymbolTable;
-        req->dbg_size   = PE_HEADER(hModule32)->FileHeader.NumberOfSymbols;
-        req->name       = &wm->filename;
-        server_call_noerr( REQ_LOAD_DLL );
         CloseHandle( hFile );
 	return wm;
-}
-
-
-/*****************************************************************************
- *	PE_UnloadLibrary
- *
- * Unload the library unmapping the image and freeing the modref structure.
- */
-void PE_UnloadLibrary(WINE_MODREF *wm)
-{
-    TRACE(" unloading %s\n", wm->filename);
-/*    VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE ); */  /* FIXME */
-    HeapFree( GetProcessHeap(), 0, wm->filename );
-    HeapFree( GetProcessHeap(), 0, wm->short_filename );
-    HeapFree( GetProcessHeap(), 0, wm );
 }
 
 
@@ -996,20 +950,22 @@ void PE_UnloadLibrary(WINE_MODREF *wm)
  * DLL_PROCESS_ATTACH. Only new created threads do DLL_THREAD_ATTACH
  * (SDK)
  */
-BOOL PE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
+typedef DWORD CALLBACK(*DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
+
+BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved )
 {
     BOOL retv = TRUE;
-    assert( wm->type == MODULE32_PE );
+    IMAGE_NT_HEADERS *nt = PE_HEADER(module);
 
     /* Is this a library? And has it got an entrypoint? */
-    if ((PE_HEADER(wm->module)->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
-        (PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint)
-    ) {
-        DLLENTRYPROC entry = (void*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
+    if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
+        (nt->OptionalHeader.AddressOfEntryPoint))
+    {
+        DLLENTRYPROC entry = (void*)((char*)module + nt->OptionalHeader.AddressOfEntryPoint);
         TRACE_(relay)("CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
-                       entry, wm->module, type, lpReserved );
+                       entry, module, type, lpReserved );
 
-        retv = entry( wm->module, type, lpReserved );
+        retv = entry( module, type, lpReserved );
     }
 
     return retv;
@@ -1036,7 +992,6 @@ _fixup_address(PIMAGE_OPTIONAL_HEADER opt,int delta,LPVOID addr) {
 void PE_InitTls( void )
 {
 	WINE_MODREF		*wm;
-	PE_MODREF		*pem;
 	IMAGE_NT_HEADERS	*peh;
 	DWORD			size,datasize;
 	LPVOID			mem;
@@ -1044,9 +999,6 @@ void PE_InitTls( void )
         int delta;
 	
 	for (wm = PROCESS_Current()->modref_list;wm;wm=wm->next) {
-		if (wm->type!=MODULE32_PE)
-			continue;
-		pem = &(wm->binfmt.pe);
 		peh = PE_HEADER(wm->module);
 		delta = wm->module - peh->OptionalHeader.ImageBase;
 		if (!peh->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
@@ -1055,13 +1007,13 @@ void PE_InitTls( void )
 			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
 		
 		
-		if ( pem->tlsindex == -1 ) {
+		if ( wm->tlsindex == -1 ) {
 			LPDWORD xaddr;
-			pem->tlsindex = TlsAlloc();
+			wm->tlsindex = TlsAlloc();
 			xaddr = _fixup_address(&(peh->OptionalHeader),delta,
 					pdir->AddressOfIndex
 			);
-			*xaddr=pem->tlsindex;
+			*xaddr=wm->tlsindex;
 		}
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
@@ -1075,7 +1027,7 @@ void PE_InitTls( void )
 		       FIXME("TLS Callbacks aren't going to be called\n");
 		}
 
-		TlsSetValue( pem->tlsindex, mem );
+		TlsSetValue( wm->tlsindex, mem );
 	}
 }
 

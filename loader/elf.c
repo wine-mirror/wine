@@ -21,46 +21,51 @@
 #include "neexe.h"
 #include "heap.h"
 #include "module.h"
-#include "pe_image.h"
 #include "debugtools.h"
 #include "winerror.h"
 #include "elfdll.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(win32);
 
-#if defined(HAVE_DL_API)
+#ifdef HAVE_DL_API
+
+typedef struct {
+	WORD	popl	WINE_PACKED;	/* 0x8f 0x05 */
+	DWORD	addr_popped WINE_PACKED;/* ...  */
+	BYTE	pushl1	WINE_PACKED;	/* 0x68 */
+	DWORD	newret WINE_PACKED;	/* ...  */
+	BYTE	pushl2 	WINE_PACKED;	/* 0x68 */
+	DWORD	origfun WINE_PACKED;	/* original function */
+	BYTE	ret1	WINE_PACKED;	/* 0xc3 */
+	WORD	addesp 	WINE_PACKED;	/* 0x83 0xc4 */
+	BYTE	nrofargs WINE_PACKED;	/* nr of arguments to add esp, */
+	BYTE	pushl3	WINE_PACKED;	/* 0x68 */
+	DWORD	oldret	WINE_PACKED;	/* Filled out from popl above  */
+	BYTE	ret2	WINE_PACKED;	/* 0xc3 */
+} ELF_STDCALL_STUB;
 
 #define UNIX_DLL_ENDING		"so"
 
 #define	STUBSIZE		4095
+#define STUBOFFSET  (sizeof(IMAGE_DOS_HEADER) + \
+                     sizeof(IMAGE_NT_HEADERS) + \
+                     sizeof(IMAGE_SECTION_HEADER))
 
 #include <dlfcn.h>
 
+static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL snoop );
 
-static WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
+static HMODULE ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 {
 	PIMAGE_DOS_HEADER	dh;
 	PIMAGE_NT_HEADERS	nth;
 	PIMAGE_SECTION_HEADER	sh;
-	WINE_MODREF *wm;
 	HMODULE hmod;
-
-	wm=(WINE_MODREF*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wm) );
-	wm->type = MODULE32_ELF;
-
-	/* FIXME: hmm, order? */
-	wm->next = PROCESS_Current()->modref_list;
-	PROCESS_Current()->modref_list = wm;
-
-	wm->modname = HEAP_strdupA( GetProcessHeap(), 0, modname );
-	wm->filename = HEAP_strdupA( GetProcessHeap(), 0, libname );
-	wm->short_modname = wm->modname;
-	wm->short_filename = wm->filename;
 
 	hmod = (HMODULE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                      sizeof(IMAGE_DOS_HEADER) + 
                                      sizeof(IMAGE_NT_HEADERS) +
-                                     sizeof(IMAGE_SECTION_HEADER) + 100 );
+                                     sizeof(IMAGE_SECTION_HEADER) + STUBSIZE );
 	dh = (PIMAGE_DOS_HEADER)hmod;
 	dh->e_magic = IMAGE_DOS_SIGNATURE;
 	dh->e_lfanew = sizeof(IMAGE_DOS_HEADER);
@@ -92,18 +97,18 @@ static WINE_MODREF *ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	 */
 	sh=(PIMAGE_SECTION_HEADER)(nth+1);
 	strcpy(sh->Name,".text");
-	sh->Misc.VirtualSize	= 0x7fffffff;
-	sh->VirtualAddress	= 0x42; /* so snoop can use it ... */
-	sh->SizeOfRawData	= 0x7fffffff;
+	sh->Misc.VirtualSize	= STUBSIZE;
+	sh->VirtualAddress	= STUBOFFSET; /* so snoop can use it ... */
+	sh->SizeOfRawData	= STUBSIZE;
 	sh->PointerToRawData	= 0;
 	sh->Characteristics	= IMAGE_SCN_CNT_CODE|IMAGE_SCN_CNT_INITIALIZED_DATA|IMAGE_SCN_MEM_EXECUTE|IMAGE_SCN_MEM_READ;
-	wm->module = hmod;
-	return wm;
+        return hmod;
 }
 
 WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 {
 	WINE_MODREF	*wm;
+        HMODULE		hmod;
 	char		*modname,*s,*t,*x;
 	LPVOID		*dlhandle;
 
@@ -149,29 +154,31 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 		return NULL;
 	}
 
-	wm = ELF_CreateDummyModule( t, modname );
-	wm->binfmt.elf.dlhandle = dlhandle;
+	hmod = ELF_CreateDummyModule( t, modname );
 
-	SNOOP_RegisterDLL(wm->module,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
+	SNOOP_RegisterDLL(hmod,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
+
+        wm = PE_CreateModule( hmod, modname, 0, -1, FALSE );
+        wm->find_export = ELF_FindExportedFunction;
+	wm->dlhandle = dlhandle;
 	return wm;
 }
 
-FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
+static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL snoop )
 {
 	LPVOID			fun;
 	int			i,nrofargs = 0;
-	ELF_STDCALL_STUB	*stub;
+	ELF_STDCALL_STUB	*stub, *first_stub;
 
-	assert(wm->type == MODULE32_ELF);
 	if (!HIWORD(funcName)) {
 		ERR("Can't import from UNIX dynamic libs by ordinal, sorry.\n");
 		return (FARPROC)0;
 	}
-	fun = dlsym(wm->binfmt.elf.dlhandle,funcName);
+	fun = dlsym(wm->dlhandle,funcName);
 	/* we sometimes have an excess '_' at the beginning of the name */
 	if (!fun && (funcName[0]=='_')) {
 		funcName++ ;
-		fun = dlsym(wm->binfmt.elf.dlhandle,funcName);
+		fun = dlsym(wm->dlhandle,funcName);
 	}
 	if (!fun) {
 		/* Function@nrofargs usually marks a stdcall function 
@@ -184,7 +191,7 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 			*t = '\0';
 			nrofargs = 0;
 			sscanf(t+1,"%d",&nrofargs);
-			fun = dlsym(wm->binfmt.elf.dlhandle,fn);
+			fun = dlsym(wm->dlhandle,fn);
 			HeapFree( GetProcessHeap(), 0, fn );
 		}
 	}
@@ -192,12 +199,7 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 	 * dlls using cdecl. If we find out the number of args the function
 	 * uses, we remove them from the stack using two small stubs.
 	 */
-	if (!wm->binfmt.elf.stubs) {
-		/* one page should suffice */
-		wm->binfmt.elf.stubs = VirtualAlloc(NULL,STUBSIZE,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		memset(wm->binfmt.elf.stubs,0,STUBSIZE);
-	}
-	stub = wm->binfmt.elf.stubs;
+        stub = first_stub = (ELF_STDCALL_STUB *)((char *)wm->module + STUBOFFSET);
 	for (i=0;i<STUBSIZE/sizeof(ELF_STDCALL_STUB);i++) {
 		if (!stub->origfun)
 			break;
@@ -252,35 +254,15 @@ FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName)
 		FIXME("function %s not found: %s\n",funcName,dlerror());
 		return fun;
 	}
-	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-wm->binfmt.elf.stubs,fun);
+	fun = SNOOP_GetProcAddress(wm->module,funcName,stub-first_stub,fun);
 	return (FARPROC)fun;
 }
 
-
-/***************************************************************************
- *	ELF_UnloadLibrary
- *
- * Unload the elf library and free the modref
- */
-void ELF_UnloadLibrary(WINE_MODREF *wm)
-{
-	/* FIXME: do something here */
-}
-
-#else
+#else  /* HAVE_DL_API */
 
 WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 {
 	return NULL;
 }
 
-void ELF_UnloadLibrary(WINE_MODREF *wm)
-{
-}
-
-FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName) 
-{
-	return (FARPROC)0;
-}
-
-#endif
+#endif  /* HAVE_DL_API */

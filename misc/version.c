@@ -98,7 +98,6 @@ static char * special_dlls[] =
 	"COMDLG32",
 	"COMCTL32",
 	"SHELL32",
-	"USER32",
 	"OLE32",
 	"RPCRT4",
 	NULL
@@ -161,29 +160,28 @@ void VERSION_ParseDosVersion( const char *arg )
  * shell32.
  * If you have a better idea to figure this out...
  */
-DWORD VERSION_GetSystemDLLVersion (WINE_MODREF * wm)
+static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
 {
-	PE_MODREF * pem = &(wm->binfmt.pe);
-	
-	if (pem->pe_import)
-	{
-	  IMAGE_IMPORT_DESCRIPTOR * pe_imp;
-
-	  for ( pe_imp = pem->pe_import; pe_imp->Name; pe_imp++)
-	  {
-	    char * name = (char*)((unsigned int)wm->module+(unsigned int)(pe_imp->Name));
+    IMAGE_DATA_DIRECTORY *dir = PE_HEADER(hmod)->OptionalHeader.DataDirectory
+                                + IMAGE_DIRECTORY_ENTRY_IMPORT;
+    if (dir->Size && dir->VirtualAddress)
+    {
+        IMAGE_IMPORT_DESCRIPTOR *pe_imp = (IMAGE_IMPORT_DESCRIPTOR *)((char *)hmod + dir->VirtualAddress);
+        for ( ; pe_imp->Name; pe_imp++)
+        {
+	    char * name = (char *)hmod + (unsigned int)pe_imp->Name;
 	    TRACE("%s\n", name);
 	    
-	    if (!lstrncmpiA(name, "ntdll", 5))
+	    if (!strncasecmp(name, "ntdll", 5))
 	    {
-	      if (3 == PE_HEADER(wm->module)->OptionalHeader.MajorOperatingSystemVersion)
+	      if (3 == PE_HEADER(hmod)->OptionalHeader.MajorOperatingSystemVersion)
 	        return NT351;
 	      else
 	        return NT40;
 	    }
-	  }
-	}
-	return WIN95;
+        }
+    }
+    return WIN95;
 }
 /**********************************************************************
  *	VERSION_GetLinkedDllVersion
@@ -236,15 +234,15 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
 
 	  /* test if it is a external (native) dll */
-	  if ( !(wm->flags & WINE_MODREF_INTERNAL) && wm->type==MODULE32_PE)
+	  if (!(wm->flags & WINE_MODREF_INTERNAL))
 	  {
 	    int i;
 	    for (i = 0; special_dlls[i]; i++)
 	    {
 	      /* test if it a special dll */
-	      if (!lstrncmpiA(wm->modname, special_dlls[i], strlen(special_dlls[i]) ))
+	      if (!strncasecmp(wm->modname, special_dlls[i], strlen(special_dlls[i]) ))
 	      {
-	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm);
+	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->module);
 	        if (WinVersion == NB_WINDOWS_VERSIONS) 
 	          WinVersion = DllVersion;
 	        else {

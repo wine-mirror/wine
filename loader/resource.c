@@ -134,8 +134,6 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
     HRSRC hRsrc = 0;
     HMODULE16 hMod16   = MapHModuleLS( hModule );
     NE_MODULE *pModule = NE_GetPtr( hMod16 );
-    WINE_MODREF *wm    = pModule && pModule->module32? 
-	MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
     
     TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
 	  hModule,
@@ -148,7 +146,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
     
     if (pModule)
     {
-	if ( wm )
+	if (pModule->module32)
 	{
 	    /* 32-bit PE module */
 	    LPWSTR typeStr, nameStr;
@@ -162,7 +160,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 	    else
 		nameStr = (LPWSTR)name;
 	    
-	    hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang );
+	    hRsrc = PE_FindResourceExW( pModule->module32, nameStr, typeStr, lang );
 	    
 	    if ( HIWORD( type ) && !bUnicode ) 
 		HeapFree( GetProcessHeap(), 0, typeStr );
@@ -236,15 +234,13 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
     HMODULE16 hMod16   = MapHModuleLS( hModule );
     NE_MODULE *pModule = NE_GetPtr( hMod16 );
-    WINE_MODREF *wm    = pModule && pModule->module32? 
-                         MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
     TRACE("(%08x %s, %08x, %s)\n",
           hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return 0;
 
-    if ( wm )
+    if (pModule->module32)
     {
         /* 32-bit PE module */
 
@@ -274,15 +270,13 @@ static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
     HMODULE16 hMod16   = MapHModuleLS( hModule );
     NE_MODULE *pModule = NE_GetPtr( hMod16 );
-    WINE_MODREF *wm    = pModule && pModule->module32? 
-                         MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
     TRACE("(%08x %s, %08x, %s)\n",
           hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return HFILE_ERROR;
 
-    if ( wm )
+    if (pModule->module32)
     {
         /* 32-bit PE module */
 #if 0
@@ -322,22 +316,20 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 
     HMODULE16 hMod16   = MapHModuleLS( hModule );
     NE_MODULE *pModule = NE_GetPtr( hMod16 );
-    WINE_MODREF *wm    = pModule && pModule->module32? 
-                         MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
     TRACE("(%08x %s, %08x, %s)\n",
           hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return 0;
 
-    if ( wm )
+    if (pModule->module32)
     {
         /* 32-bit PE module */
 
         /* If we got a 16-bit hRsrc, convert it */
         HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
 
-        hMem = PE_LoadResource( wm, hRsrc32 );
+        hMem = PE_LoadResource( pModule->module32, hRsrc32 );
 
         /* If we need to return a 16-bit resource, convert it */
         if ( bRet16 )
@@ -566,66 +558,4 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
 {
     return RES_SizeofResource( hModule, hRsrc, FALSE );
-}
-
-
-
-/**********************************************************************
- *	EnumResourceTypesA	(KERNEL32.90)
- */
-BOOL WINAPI EnumResourceTypesA( HMODULE hmodule,ENUMRESTYPEPROCA lpfun,
-                                    LONG lParam)
-{
-	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceTypesA(hmodule,lpfun,lParam);
-}
-
-/**********************************************************************
- *	EnumResourceTypesW	(KERNEL32.91)
- */
-BOOL WINAPI EnumResourceTypesW( HMODULE hmodule,ENUMRESTYPEPROCW lpfun,
-                                    LONG lParam)
-{
-	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceTypesW(hmodule,lpfun,lParam);
-}
-
-/**********************************************************************
- *	EnumResourceNamesA	(KERNEL32.88)
- */
-BOOL WINAPI EnumResourceNamesA( HMODULE hmodule, LPCSTR type,
-                                    ENUMRESNAMEPROCA lpfun, LONG lParam )
-{
-	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceNamesA(hmodule,type,lpfun,lParam);
-}
-/**********************************************************************
- *	EnumResourceNamesW	(KERNEL32.89)
- */
-BOOL WINAPI EnumResourceNamesW( HMODULE hmodule, LPCWSTR type,
-                                    ENUMRESNAMEPROCW lpfun, LONG lParam )
-{
-	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceNamesW(hmodule,type,lpfun,lParam);
-}
-
-/**********************************************************************
- *	EnumResourceLanguagesA	(KERNEL32.86)
- */
-BOOL WINAPI EnumResourceLanguagesA( HMODULE hmodule, LPCSTR type,
-                                        LPCSTR name, ENUMRESLANGPROCA lpfun,
-                                        LONG lParam)
-{
-	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceLanguagesA(hmodule,type,name,lpfun,lParam);
-}
-/**********************************************************************
- *	EnumResourceLanguagesW	(KERNEL32.87)
- */
-BOOL WINAPI EnumResourceLanguagesW( HMODULE hmodule, LPCWSTR type,
-                                        LPCWSTR name, ENUMRESLANGPROCW lpfun,
-                                        LONG lParam)
-{
-	/* FIXME: move WINE_MODREF stuff here */
-    return PE_EnumResourceLanguagesW(hmodule,type,name,lpfun,lParam);
 }

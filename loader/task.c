@@ -19,7 +19,6 @@
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
-#include "pe_image.h"
 #include "process.h"
 #include "queue.h"
 #include "selectors.h"

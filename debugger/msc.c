@@ -25,7 +25,6 @@
 #endif
 #include "debugger.h"
 #include "neexe.h"
-#include "pe_image.h"
 #include "file.h"
 
 typedef struct {

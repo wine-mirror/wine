@@ -20,7 +20,6 @@
 #include "module.h"
 #include "snoop.h"
 #include "neexe.h"
-#include "pe_image.h"
 #include "dosexe.h"
 #include "process.h"
 #include "syslevel.h"
@@ -41,8 +40,9 @@ DECLARE_DEBUG_CHANNEL(win32);
 /*************************************************************************
  *		MODULE32_LookupHMODULE
  * looks for the referenced HMODULE in the current process
+ * NOTE: Assumes that the process critical section is held!
  */
-WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
+static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 {
     WINE_MODREF	*wm;
 
@@ -51,12 +51,47 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 
     if (!HIWORD(hmod)) {
     	ERR("tried to lookup 0x%04x in win32 module handler!\n",hmod);
+        SetLastError( ERROR_INVALID_HANDLE );
 	return NULL;
     }
     for ( wm = PROCESS_Current()->modref_list; wm; wm=wm->next )
 	if (wm->module == hmod)
 	    return wm;
+    SetLastError( ERROR_INVALID_HANDLE );
     return NULL;
+}
+
+/*************************************************************************
+ *		MODULE_AllocModRef
+ *
+ * Allocate a WINE_MODREF structure and add it to the process list
+ * NOTE: Assumes that the process critical section is held!
+ */
+WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
+{
+    WINE_MODREF *wm;
+    DWORD len;
+
+    if ((wm = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wm) )))
+    {
+        wm->module = hModule;
+        wm->tlsindex = -1;
+
+        wm->filename = HEAP_strdupA( GetProcessHeap(), 0, filename );
+        if ((wm->modname = strrchr( wm->filename, '\\' ))) wm->modname++;
+        else wm->modname = wm->filename;
+
+        len = GetShortPathNameA( wm->filename, NULL, 0 );
+        wm->short_filename = (char *)HeapAlloc( GetProcessHeap(), 0, len+1 );
+        GetShortPathNameA( wm->filename, wm->short_filename, len+1 );
+        if ((wm->short_modname = strrchr( wm->short_filename, '\\' ))) wm->short_modname++;
+        else wm->short_modname = wm->short_filename;
+
+        wm->next = PROCESS_Current()->modref_list;
+        if (wm->next) wm->next->prev = wm;
+        PROCESS_Current()->modref_list = wm;
+    }
+    return wm;
 }
 
 /*************************************************************************
@@ -70,32 +105,14 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
                                  "THREAD_ATTACH", "THREAD_DETACH" };
     assert( wm );
 
-
     /* Skip calls for modules loaded with special load flags */
 
-    if (    ( wm->flags & WINE_MODREF_DONT_RESOLVE_REFS )
-         || ( wm->flags & WINE_MODREF_LOAD_AS_DATAFILE ) )
-        return TRUE;
-
+    if (wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) return TRUE;
 
     TRACE("(%s,%s,%p) - CALL\n", wm->modname, typeName[type], lpReserved );
 
     /* Call the initialization routine */
-    switch ( wm->type )
-    {
-    case MODULE32_PE:
-        retv = PE_InitDLL( wm, type, lpReserved );
-        break;
-
-    case MODULE32_ELF:
-        /* no need to do that, dlopen() already does */
-        break;
-
-    default:
-        ERR("wine_modref type %d not handled.\n", wm->type );
-        retv = FALSE;
-        break;
-    }
+    retv = PE_InitDLL( wm->module, type, lpReserved );
 
     /* The state of the module list may have changed due to the call
        to PE_InitDLL. We cannot assume that this module has not been
@@ -626,13 +643,13 @@ BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType )
     ptr = strrchr( filename, '.' );
     if ( ptr && !strchr( ptr, '\\' ) && !strchr( ptr, '/' ) )
     {
-        if ( !lstrcmpiA( ptr, ".COM" ) )
+        if ( !strcasecmp( ptr, ".COM" ) )
         {
             *lpBinaryType = SCS_DOS_BINARY;
             return TRUE;
         }
 
-        if ( !lstrcmpiA( ptr, ".PIF" ) )
+        if ( !strcasecmp( ptr, ".PIF" ) )
         {
             *lpBinaryType = SCS_PIF_BINARY;
             return TRUE;
@@ -1152,15 +1169,17 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 DWORD WINAPI GetModuleFileNameA( 
 	HMODULE hModule,	/* [in] module handle (32bit) */
 	LPSTR lpFileName,	/* [out] filenamebuffer */
-        DWORD size		/* [in] size of filenamebuffer */
-) {                   
-    WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
+        DWORD size )		/* [in] size of filenamebuffer */
+{
+    WINE_MODREF *wm;
 
-    if (!wm) /* can happen on start up or the like */
-    	return 0;
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
 
-    lstrcpynA( lpFileName, wm->filename, size );
-       
+    lpFileName[0] = 0;
+    if ((wm = MODULE32_LookupHMODULE( hModule )))
+        lstrcpynA( lpFileName, wm->filename, size );
+
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
     TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
 }                   
@@ -1192,6 +1211,25 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
+
+        if (flags & LOAD_LIBRARY_AS_DATAFILE)
+        {
+            char filename[256];
+            HFILE hFile;
+            HMODULE hmod = 0;
+
+            if (!SearchPathA( NULL, libname, ".dll", sizeof(filename), filename, NULL ))
+                return 0;
+            /* FIXME: maybe we should use the hfile parameter instead */
+            hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
+                                 NULL, OPEN_EXISTING, 0, -1 );
+            if (hFile != INVALID_HANDLE_VALUE)
+            {
+                hmod = PE_LoadImage( hFile, filename, flags );
+                CloseHandle( hFile );
+            }
+            return hmod;
+        }
 
 	EnterCriticalSection(&PROCESS_Current()->crit_section);
 
@@ -1237,6 +1275,14 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	{
 		if(!(pwm->flags & WINE_MODREF_MARKER))
 			pwm->refCount++;
+
+                if ((pwm->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
+		    !(flags & DONT_RESOLVE_DLL_REFERENCES))
+                {
+                    extern DWORD fixup_imports(WINE_MODREF *wm); /*FIXME*/
+                    pwm->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
+                    fixup_imports( pwm );
+		}
 		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", libname, pwm->module, pwm->refCount);
 		LeaveCriticalSection(&PROCESS_Current()->crit_section);
 		return pwm;
@@ -1371,23 +1417,12 @@ static void MODULE_FlushModrefs(void)
 		if(wm == PROCESS_Current()->modref_list)
 			PROCESS_Current()->modref_list = wm->next;
 
-		/* 
-		 * The unloaders are also responsible for freeing the modref itself
-		 * because the loaders were responsible for allocating it.
-		 */
-		switch(wm->type)
-		{
-                case MODULE32_PE:       if ( !(wm->flags & WINE_MODREF_INTERNAL) )
-                                               PE_UnloadLibrary(wm);
-                                        else
-                                               BUILTIN32_UnloadLibrary(wm);
-					break;
-		case MODULE32_ELF:	ELF_UnloadLibrary(wm);		break;
-		case MODULE32_ELFDLL:	ELFDLL_UnloadLibrary(wm);	break;
-
-		default:
-			ERR("Invalid or unhandled MODREF type %d encountered (wm=%p)\n", wm->type, wm);
-		}
+                TRACE(" unloading %s\n", wm->filename);
+                /* VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE ); */  /* FIXME */
+                /* if (wm->dlhandle) dlclose( wm->dlhandle ); */  /* FIXME */
+                HeapFree( GetProcessHeap(), 0, wm->filename );
+                HeapFree( GetProcessHeap(), 0, wm->short_filename );
+                HeapFree( GetProcessHeap(), 0, wm );
 	}
 }
 
@@ -1592,32 +1627,22 @@ FARPROC MODULE_GetProcAddress(
 	LPCSTR function,	/* [in] function to be looked up */
 	BOOL snoop )
 {
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
-    FARPROC	retproc;
+    WINE_MODREF	*wm;
+    FARPROC	retproc = 0;
 
     if (HIWORD(function))
 	TRACE_(win32)("(%08lx,%s)\n",(DWORD)hModule,function);
     else
 	TRACE_(win32)("(%08lx,%p)\n",(DWORD)hModule,function);
-    if (!wm) {
-    	SetLastError(ERROR_INVALID_HANDLE);
-        return (FARPROC)0;
-    }
-    switch (wm->type)
+
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
+    if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
-    case MODULE32_PE:
-     	retproc = PE_FindExportedFunction( wm, function, snoop );
-	if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
-	return retproc;
-    case MODULE32_ELF:
-    	retproc = ELF_FindExportedFunction( wm, function);
-	if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
-	return retproc;
-    default:
-    	ERR("wine_modref type %d not handled.\n",wm->type);
-    	SetLastError(ERROR_INVALID_HANDLE);
-    	return (FARPROC)0;
+        retproc = wm->find_export( wm, function, snoop );
+        if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
     }
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    return retproc;
 }
 
 

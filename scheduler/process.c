@@ -27,7 +27,6 @@
 #include "syslevel.h"
 #include "thread.h"
 #include "winerror.h"
-#include "pe_image.h"
 #include "server.h"
 #include "options.h"
 #include "callback.h"
@@ -315,7 +314,6 @@ static void start_process(void)
 {
     struct init_process_done_request *req = get_req_buffer();
     int debugged, console_app;
-    HMODULE16 hModule16;
     UINT cmdShow = SW_SHOWNORMAL;
     LPTHREAD_START_ROUTINE entry;
     PDB *pdb = PROCESS_Current();
@@ -328,7 +326,7 @@ static void start_process(void)
     if (!(pdb->env_db->cmd_line = build_command_line( main_exe_argv ))) goto error;
 
     /* Retrieve entry point address */
-    entry = (LPTHREAD_START_ROUTINE)RVA_PTR( module, OptionalHeader.AddressOfEntryPoint );
+    entry = (LPTHREAD_START_ROUTINE)((char*)module + PE_HEADER(module)->OptionalHeader.AddressOfEntryPoint);
     console_app = (PE_HEADER(module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
     if (console_app) pdb->flags |= PDB32_CONSOLE_PROC;
@@ -349,13 +347,10 @@ static void start_process(void)
     /* Load KERNEL (necessary for TASK_Create) */
     if (!LoadLibraryA( "KERNEL32" )) goto error;
 
-    /* Create 16-bit dummy module */
-    if ((hModule16 = MODULE_CreateDummyModule( pdb->exe_modref->filename, module )) < 32)
-        ExitProcess( hModule16 );
-
+    /* Create 16-bit task */
     if (pdb->env_db->startup_info->dwFlags & STARTF_USESHOWWINDOW)
         cmdShow = pdb->env_db->startup_info->wShowWindow;
-    if (!TASK_Create( (NE_MODULE *)GlobalLock16( hModule16 ), cmdShow,
+    if (!TASK_Create( (NE_MODULE *)GlobalLock16( MapHModuleLS(module) ), cmdShow,
                       NtCurrentTeb(), NULL, 0 ))
         goto error;
 
@@ -387,8 +382,8 @@ static void start_process(void)
  * Startup routine of a new Win32 process once the main module has been loaded.
  * The filename is free'd by this routine.
  */
-static void PROCESS_Start( HMODULE main_module, LPSTR filename ) WINE_NORETURN;
-static void PROCESS_Start( HMODULE main_module, LPSTR filename )
+static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPSTR filename ) WINE_NORETURN;
+static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPSTR filename )
 {
     if (!filename)
     {
@@ -403,7 +398,7 @@ static void PROCESS_Start( HMODULE main_module, LPSTR filename )
         ExitProcess( ERROR_BAD_EXE_FORMAT );
 
     /* Create 32-bit MODREF */
-    if (!PE_CreateModule( main_module, filename, 0, FALSE ))
+    if (!PE_CreateModule( main_module, filename, 0, hFile, FALSE ))
         goto error;
     free( filename );
 
@@ -473,8 +468,8 @@ void PROCESS_InitWine( int argc, char *argv[] )
     {
     case SCS_32BIT_BINARY:
         {
-            HMODULE main_module = PE_LoadImage( main_exe_file, main_exe_name );
-            if (main_module) PROCESS_Start( main_module, main_exe_name );
+            HMODULE main_module = PE_LoadImage( main_exe_file, main_exe_name, 0 );
+            if (main_module) PROCESS_Start( main_module, main_exe_file, main_exe_name );
         }
         break;
 
@@ -486,7 +481,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
             NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
             PROCESS_Current()->flags |= PDB32_WIN16_PROC;
             SYSLEVEL_EnterWin16Lock();
-            PROCESS_Start( main_module, NULL );
+            PROCESS_Start( main_module, -1, NULL );
         }
         break;
 
@@ -497,7 +492,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
             if (!(main_module = BUILTIN32_LoadExeModule())) goto error;
             NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
             if (!MZ_LoadImage( main_module, main_exe_file, main_exe_name )) goto error;
-            PROCESS_Start( main_module, NULL );
+            PROCESS_Start( main_module, main_exe_file, NULL );
         }
         break;
 
@@ -529,7 +524,7 @@ void PROCESS_InitWinelib( int argc, char *argv[] )
     if (!(main_module = BUILTIN32_LoadExeModule())) ExitProcess( GetLastError() );
 
     main_exe_argv = argv;
-    PROCESS_Start( main_module, NULL );
+    PROCESS_Start( main_module, -1, NULL );
 }
 
 

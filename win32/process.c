@@ -12,13 +12,12 @@
 #include "heap.h"
 #include "thread.h"
 #include "process.h"
-#include "pe_image.h"
 #include "file.h"
 #include "task.h"
 #include "toolhelp.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(win32);
 
 
 /*********************************************************************
