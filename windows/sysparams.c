@@ -60,6 +60,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETKEYBOARDPREF_IDX                 18
 #define SPI_SETSCREENREADER_IDX                 19
 #define SPI_SETSCREENSAVERRUNNING_IDX           20
+#define SPI_SETFONTSMOOTHING_IDX                21
+#define SPI_SETKEYBOARDCUES_IDX                 22
+#define SPI_SETGRADIENTCAPTIONS_IDX             23
+#define SPI_SETHOTTRACKING_IDX                  24
+#define SPI_SETLISTBOXSMOOTHSCROLLING_IDX       25
+
 #define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
 
 /**
@@ -115,6 +121,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
 #define SPI_SETDESKWALLPAPER_REGKEY	"Control Panel\\Desktop"
 #define SPI_SETDESKWALLPAPER_VALNAME	"Wallpaper"
+#define SPI_SETFONTSMOOTHING_REGKEY             "Control Panel\\Desktop"
+#define SPI_SETFONTSMOOTHING_VALNAME            "FontSmoothing"
+#define SPI_USERPREFERENCEMASK_REGKEY           "Control Panel\\Desktop"
+#define SPI_USERPREFERENCEMASK_VALNAME          "UserPreferencemask"
+#define SPI_SETLISTBOXSMOOTHSCROLLING_REGKEY    "Control Panel\\Desktop"
+#define SPI_SETLISTBOXSMOOTHSCROLLING_VALNAME   "SmoothScroll"
+
 /* FIXME - real values */
 #define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Desktop"
 #define SPI_SETKEYBOARDPREF_VALNAME     "WINE_KeyboardPref"
@@ -148,6 +161,11 @@ static RECT work_area;
 static BOOL keyboard_pref = TRUE;
 static BOOL screen_reader = FALSE;
 static BOOL screensaver_running = FALSE;
+static BOOL font_smoothing = FALSE;
+static BOOL keyboard_cues = FALSE;
+static BOOL gradient_captions = FALSE;
+static BOOL listbox_smoothscrolling = FALSE;
+static BOOL hot_tracking = FALSE;
 
 /***********************************************************************
  *		GetTimerResolution (USER.14)
@@ -1642,7 +1660,29 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
     WINE_SPI_WARN(SPI_SETANIMATION);		/*     73  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETFONTSMOOTHING);	/*     74  WINVER >= 0x400 */
+    case SPI_GETFONTSMOOTHING:    /*     74  WINVER >= 0x400 */
+        if (!pvParam) return FALSE;
+
+        spi_idx = SPI_SETFONTSMOOTHING_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_SETFONTSMOOTHING_REGKEY,
+                                SPI_SETFONTSMOOTHING_VALNAME, buf, sizeof(buf) ))
+            {
+                spi_loaded[spi_idx] = TRUE;
+                if (buf[0] == 0x01 || buf[0] == 0x02) /* 0x01 for 95/98/NT, 0x02 for 98/ME/2k/XP */
+                {
+                    font_smoothing = TRUE;
+                }
+            }
+        }
+
+	*(BOOL *)pvParam = font_smoothing;
+
+        break;
+
     WINE_SPI_FIXME(SPI_SETFONTSMOOTHING);	/*     75  WINVER >= 0x400 */
 
     WINE_SPI_FIXME(SPI_SETDRAGWIDTH);		/*     76  WINVER >= 0x400 */
@@ -1779,21 +1819,106 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETMENUANIMATION);       /* 0x1003  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETCOMBOBOXANIMATION);   /* 0x1004  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETCOMBOBOXANIMATION);   /* 0x1005  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETLISTBOXSMOOTHSCROLLING);/* 0x1006  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+
+    case SPI_GETLISTBOXSMOOTHSCROLLING:    /* 0x1006  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
+
+        spi_idx = SPI_SETLISTBOXSMOOTHSCROLLING_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_SETLISTBOXSMOOTHSCROLLING_REGKEY,
+                                SPI_SETLISTBOXSMOOTHSCROLLING_VALNAME, buf, sizeof(buf) ))
+            {
+                if ((buf[0]&0x01) == 0x01)
+                {
+                    listbox_smoothscrolling = TRUE;
+                }
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+
+        *(BOOL *)pvParam = listbox_smoothscrolling;
+
+        break;
+
     WINE_SPI_FIXME(SPI_SETLISTBOXSMOOTHSCROLLING);/* 0x1007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETGRADIENTCAPTIONS:    /* 0x1008  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
-        FIXME("case SPI_GETGRADIENTCAPTIONS always return false\n");
-        *(BOOL *)pvParam = FALSE;
+
+        spi_idx = SPI_SETGRADIENTCAPTIONS_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_USERPREFERENCEMASK_REGKEY,
+                                SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            {
+                if ((buf[0]&0x10) == 0x10)
+                {
+                    gradient_captions = TRUE;
+                }
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+
+        *(BOOL *)pvParam = gradient_captions;
+
         break;
 
     WINE_SPI_FIXME(SPI_SETGRADIENTCAPTIONS);    /* 0x1009  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETKEYBOARDCUES);        /* 0x100A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+
+    case SPI_GETKEYBOARDCUES:     /* 0x100A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
+
+        spi_idx = SPI_SETKEYBOARDCUES_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_USERPREFERENCEMASK_REGKEY,
+                                SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            {
+                if ((buf[0]&0x20) == 0x20)
+                {
+                    keyboard_cues = TRUE;
+                }
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+
+        *(BOOL *)pvParam = keyboard_cues;
+
+        break;
+
     WINE_SPI_FIXME(SPI_SETKEYBOARDCUES);        /* 0x100B  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETACTIVEWNDTRKZORDER);  /* 0x100C  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETACTIVEWNDTRKZORDER);  /* 0x100D  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
-    WINE_SPI_FIXME(SPI_GETHOTTRACKING);         /* 0x100E  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_GETHOTTRACKING:    /* 0x100E  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
+
+        spi_idx = SPI_SETHOTTRACKING_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+
+            if (SYSPARAMS_Load( SPI_USERPREFERENCEMASK_REGKEY,
+                                SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            {
+                if ((buf[0]&0x80) == 0x80)
+                {
+                    hot_tracking = TRUE;
+                }
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+
+        *(BOOL *)pvParam = hot_tracking;
+
+        break;
+
     WINE_SPI_FIXME(SPI_SETHOTTRACKING);         /* 0x100F  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_GETSELECTIONFADE);       /* 0x1014  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETSELECTIONFADE);       /* 0x1015  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */

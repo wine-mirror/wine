@@ -43,7 +43,10 @@
 "Favorites"="C:\\WINDOWS\\Favorites"
 
 [HKEY_CURRENT_USER\Control Panel\desktop]
+"FontSmoothing"="0"
 "DragFullWindows"="0"
+"SmoothScroll"=hex:00,00,00,00
+"UserPreferencemask"=hex:00,00,00,00
 
 #
 # WinMM config
