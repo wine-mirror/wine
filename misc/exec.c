@@ -7,9 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "windows.h"
+#include "heap.h"
 #include "neexe.h"
 #include "shell.h"
-#include "windows.h"
 #include "callback.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -54,50 +55,36 @@ void EXEC_ExitWindows( int retCode )
  */
 BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
 {
-    HWND hwndDesktop;
-    WND *wndPtr;
-    HWND *list, *pWnd;
-    int count, i;
-    BOOL result;
+    int i;
+    BOOL16 result;
+    WND **list, **ppWnd;
         
     api_assert("ExitWindows", wReserved == 0);
     api_assert("ExitWindows", HIWORD(dwReturnCode) == 0);
 
     /* We have to build a list of all windows first, as in EnumWindows */
 
-    /* First count the windows */
+    if (!(list = WIN_BuildWinArray( WIN_GetDesktop() ))) return FALSE;
 
-    hwndDesktop = GetDesktopWindow();
-    count = 0;
-    for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
-        count++;
-    if (!count) /* No windows, we can exit at once */
-        EXEC_ExitWindows( LOWORD(dwReturnCode) );
+    /* Send a WM_QUERYENDSESSION message to every window */
 
-      /* Now build the list of all windows */
-
-    if (!(pWnd = list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
-    for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
-        *pWnd++ = wndPtr->hwndSelf;
-
-      /* Now send a WM_QUERYENDSESSION message to every window */
-
-    for (pWnd = list, i = 0; i < count; i++, pWnd++)
+    for (ppWnd = list, i = 0; *ppWnd; ppWnd++, i++)
     {
-          /* Make sure that window still exists */
-        if (!IsWindow(*pWnd)) continue;
-	if (!SendMessage16( *pWnd, WM_QUERYENDSESSION, 0, 0 )) break;
+        /* Make sure that the window still exists */
+        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+	if (!SendMessage16( (*ppWnd)->hwndSelf, WM_QUERYENDSESSION, 0, 0 ))
+            break;
     }
-    result = (i == count);
+    result = !(*ppWnd);
 
     /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
 
-    for (pWnd = list; i > 0; i--, pWnd++)
+    for (ppWnd = list; i > 0; i--, ppWnd++)
     {
-	if (!IsWindow(*pWnd)) continue;
-	SendMessage16( *pWnd, WM_ENDSESSION, result, 0 );
+        if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+	SendMessage16( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
     }
-    free( list );
+    HeapFree( SystemHeap, 0, list );
 
     if (result) EXEC_ExitWindows( LOWORD(dwReturnCode) );
     return FALSE;

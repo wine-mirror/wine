@@ -23,8 +23,8 @@ type	win16
 20  pascal GlobalSize(word) GlobalSize16
 21  pascal GlobalHandle(word) GlobalHandle16
 22  pascal16 GlobalFlags(word) GlobalFlags16
-23  pascal16 LockSegment(word) LockSegment
-24  pascal16 UnlockSegment(word) UnlockSegment
+23  pascal16 LockSegment(word) LockSegment16
+24  pascal16 UnlockSegment(word) UnlockSegment16
 25  pascal GlobalCompact(long) GlobalCompact16
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll
 27  stub GetModuleName
@@ -42,13 +42,13 @@ type	win16
 41  return EnableDos 0 0
 42  return DisableDos 0 0
 45  pascal16 LoadModule(ptr ptr) LoadModule
-46  pascal16 FreeModule(word) FreeModule
+46  pascal16 FreeModule(word) FreeModule16
 47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName
 50  pascal GetProcAddress(word segptr) GetProcAddress
-51  pascal MakeProcInstance(segptr word) MakeProcInstance
-52  pascal16 FreeProcInstance(segptr) FreeProcInstance
+51  pascal MakeProcInstance(segptr word) MakeProcInstance16
+52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
 54  pascal16 GetInstanceData(word word word) GetInstanceData
 55  pascal16 Catch(ptr) Catch 
@@ -133,8 +133,8 @@ type	win16
 132 pascal GetWinFlags() GetWinFlags
 133 pascal16 GetExePtr(word) GetExePtr
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory
-135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory
-136 pascal16 GetDriveType(byte) GetDriveType
+135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
+136 pascal16 GetDriveType(byte) GetDriveType16
 137 pascal FatalAppExit(word ptr) FatalAppExit
 138 pascal GetHeapSpaces(word) GetHeapSpaces
 139 stub DoSignal
@@ -143,8 +143,8 @@ type	win16
 142 stub GetProfileSectionNames
 143 stub GetPrivateProfileSectionNames
 144 pascal16 CreateDirectory(ptr ptr) CreateDirectory16
-145 stub RemoveDirectory
-146 stub DeleteFile
+145 pascal16 RemoveDirectory(ptr) RemoveDirectory16
+146 pascal16 DeleteFile(ptr) DeleteFile16
 147 stub SetLastError
 148 stub GetLastError
 149 stub GetVersionEx
@@ -270,7 +270,7 @@ type	win16
 404 pascal16 FarGetOwner(word) FarGetOwner
 406 stub WritePrivateProfileStruct
 407 stub GetPrivateProfileStruct
-411 pascal   GetCurrentDirectory(long ptr) GetCurrentDirectory
+411 pascal   GetCurrentDirectory(long ptr) GetCurrentDirectory16
 412 pascal16 SetCurrentDirectory(ptr) SetCurrentDirectory
 413 stub FindFirstFile
 414 stub FindNextFile

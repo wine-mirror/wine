@@ -161,7 +161,7 @@ int WNetGetConnection(LPSTR lpLocalName,
     if (lpLocalName[1] == ':')
     {
         int drive = toupper(lpLocalName[0]) - 'A';
-        switch(GetDriveType(drive))
+        switch(GetDriveType16(drive))
         {
         case DRIVE_CANNOTDETERMINE:
         case DRIVE_DOESNOTEXIST:

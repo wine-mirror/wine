@@ -29,8 +29,7 @@ static struct notify
 
 static int nrofnotifys = 0;
 
-BOOL
-NotifyRegister(HTASK htask,FARPROC lpfnCallback,WORD wFlags)
+BOOL16 NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback, WORD wFlags )
 {
     int	i;
 

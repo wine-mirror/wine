@@ -161,7 +161,7 @@ static FARPROC16 defDCHookCallback;
  *
  * GDI initialization.
  */
-BOOL GDI_Init(void)
+BOOL32 GDI_Init(void)
 {
     HPALETTE16 hpalette;
 
@@ -203,7 +203,7 @@ FARPROC16 GDI_GetDefDCHook(void)
 /***********************************************************************
  *           GDI_AllocObject
  */
-HANDLE GDI_AllocObject( WORD size, WORD magic )
+HANDLE16 GDI_AllocObject( WORD size, WORD magic )
 {
     static DWORD count = 0;
     GDIOBJHDR * obj;
@@ -220,7 +220,7 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
 /***********************************************************************
  *           GDI_FreeObject
  */
-BOOL GDI_FreeObject( HANDLE handle )
+BOOL32 GDI_FreeObject( HANDLE16 handle )
 {
     GDIOBJHDR * object;
 
@@ -244,7 +244,7 @@ BOOL GDI_FreeObject( HANDLE handle )
  * Return a pointer to the GDI object associated to the handle.
  * Return NULL if the object has the wrong magic number.
  */
-GDIOBJHDR * GDI_GetObjPtr( HANDLE handle, WORD magic )
+GDIOBJHDR * GDI_GetObjPtr( HANDLE16 handle, WORD magic )
 {
     GDIOBJHDR * ptr = NULL;
 

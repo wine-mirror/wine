@@ -62,9 +62,6 @@
 #define IP_reg(context)      (*(WORD*)(&(context)->sc_eip))
 #define SP_reg(context)      (*(WORD*)(&(context)->sc_esp))
                             
-#define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
-#define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
-
 #else  /* __svr4__ || _SCO_DS */
 
 #ifdef _SCO_DS
@@ -123,9 +120,9 @@
 #define SP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[ESP]))
 #endif
                             
+#endif  /* __svr4__ || _SCO_DS */
+
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
-
-#endif  /* __svr4__ || _SCO_DS */
 
 #endif /* __WINE_REGISTERS_H */

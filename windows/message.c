@@ -19,6 +19,7 @@
 #include "atom.h"
 #include "dde.h"
 #include "queue.h"
+#include "winproc.h"
 #include "stddebug.h"
 /* #define DEBUG_MSG */
 #include "debug.h"
@@ -290,7 +291,7 @@ WORD GetDoubleClickTime()
  *
  * Implementation of an inter-task SendMessage.
  */
-LRESULT MSG_SendMessage( HQUEUE hDestQueue, HWND hwnd, UINT msg,
+static LRESULT MSG_SendMessage( HQUEUE hDestQueue, HWND hwnd, UINT msg,
                          WPARAM wParam, LPARAM lParam )
 {
     MESSAGEQUEUE *queue, *destQ;
@@ -323,10 +324,10 @@ LRESULT MSG_SendMessage( HQUEUE hDestQueue, HWND hwnd, UINT msg,
 
     if (!(queue->wakeBits & QS_SMRESULT))
     {
-        DirectedYield( hDestQueue );
+        DirectedYield( destQ->hTask );
         QUEUE_WaitBits( QS_SMRESULT );
     }
-    printf( "SendMessage %04x to %04x: got %08x\n",
+    printf( "SendMessage %04x to %04x: got %08lx\n",
             msg, hDestQueue, queue->SendMessageReturn );
     queue->wakeBits &= ~QS_SMRESULT;
     return queue->SendMessageReturn;
@@ -351,7 +352,7 @@ void ReplyMessage( LRESULT result )
         else if (senderQ->wakeBits & QS_SMRESULT) Yield();
         else break;
     }
-    printf( "ReplyMessage: res = %08x\n", result );
+    printf( "ReplyMessage: res = %08lx\n", result );
     senderQ->SendMessageReturn = result;
     queue->InSendMessageHandle = 0;
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
@@ -845,7 +846,8 @@ LONG DispatchMessage( const MSG16* msg )
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );
-    retval = CallWindowProc16( wndPtr->winproc, msg->hwnd, msg->message,
+    retval = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+                               msg->hwnd, msg->message,
                                msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval );
 

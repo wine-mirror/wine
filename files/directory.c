@@ -15,8 +15,10 @@
 #include "msdos.h"
 #include "options.h"
 #include "xmalloc.h"
+#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "string32.h"
 
 #define MAX_PATH_ELEMENTS 20
 
@@ -178,12 +180,25 @@ int DIR_Init(void)
 
 
 /***********************************************************************
- *           DIR_GetTempDosDir
+ *           GetTempPath32A   (KERNEL32.292)
  */
-UINT DIR_GetTempDosDir( LPSTR path, UINT count )
+UINT32 GetTempPath32A( UINT32 count, LPSTR path )
 {
     if (path) lstrcpyn32A( path, DIR_TempDosDir, count );
     return strlen( DIR_TempDosDir );
+}
+
+
+/***********************************************************************
+ *           GetTempPath32W   (KERNEL32.293)
+ */
+UINT32 GetTempPath32W( UINT32 count, LPWSTR path )
+{
+    LPSTR tmp = (char*)xmalloc(count);
+    UINT32 len = GetTempPath32A( count, tmp );
+    if (path) STRING32_AnsiToUni( path, tmp );
+    free(tmp);
+    return len;
 }
 
 
@@ -248,10 +263,34 @@ UINT GetWindowsDirectory( LPSTR path, UINT count )
 
 
 /***********************************************************************
- *           GetSystemDirectory   (KERNEL.135)
+ *           GetSystemDirectory16   (KERNEL.135)
  */
-UINT GetSystemDirectory( LPSTR path, UINT count )
+UINT16 GetSystemDirectory16( LPSTR path, UINT16 count )
+{
+    return (UINT16)GetSystemDirectory32A( path, count );
+}
+
+
+/***********************************************************************
+ *           GetSystemDirectory32A   (KERNEL32.282)
+ */
+UINT32 GetSystemDirectory32A( LPSTR path, UINT32 count )
 {
     if (path) lstrcpyn32A( path, DIR_SystemDosDir, count );
+    return strlen( DIR_SystemDosDir );
+}
+
+
+/***********************************************************************
+ *           GetSystemDirectory32W   (KERNEL32.283)
+ */
+UINT32 GetSystemDirectory32W( LPWSTR path, UINT32 count )
+{
+    if (path)
+    {
+        LPWSTR tmp = STRING32_DupAnsiToUni( DIR_SystemDosDir );
+        lstrcpyn32W( path, tmp, count );
+	free (tmp);
+    }
     return strlen( DIR_SystemDosDir );
 }

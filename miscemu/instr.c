@@ -24,7 +24,7 @@
  * Try to replace an invalid selector by a valid one.
  * For now, only selector 0x40 is handled here.
  */
-static WORD INSTR_ReplaceSelector( struct sigcontext_struct *context, WORD sel)
+static WORD INSTR_ReplaceSelector( SIGCONTEXT *context, WORD sel)
 {
     if (sel == 0x40)
     {
@@ -43,9 +43,8 @@ static WORD INSTR_ReplaceSelector( struct sigcontext_struct *context, WORD sel)
  *
  * Return the address of an instruction operand (from the mod/rm byte).
  */
-static BYTE *INSTR_GetOperandAddr( struct sigcontext_struct *context,
-                                   BYTE *instr, int long_addr,
-                                   int segprefix, int *len )
+static BYTE *INSTR_GetOperandAddr( SIGCONTEXT *context, BYTE *instr,
+                                   int long_addr, int segprefix, int *len )
 {
     int mod, rm, base, index = 0, ss = 0, seg = 0, off;
 
@@ -197,14 +196,16 @@ static BYTE *INSTR_GetOperandAddr( struct sigcontext_struct *context,
  *
  * Emulate the LDS (and LES,LFS,etc.) instruction.
  */
-static BOOL INSTR_EmulateLDS( struct sigcontext_struct *context,
-                              BYTE *instr, int long_op, int long_addr,
-                              int segprefix, int *len )
+static BOOL INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
+                              int long_addr, int segprefix, int *len )
 {
+    WORD seg;
     BYTE *regmodrm = instr + 1 + (*instr == 0x0f);
     BYTE *addr = INSTR_GetOperandAddr( context, regmodrm,
                                        long_addr, segprefix, len );
-    WORD seg = *(WORD *)(addr + (long_op ? 4 : 2));
+    if (!addr)
+        return FALSE;  /* Unable to emulate it */
+    seg = *(WORD *)(addr + (long_op ? 4 : 2));
 
     if (!(seg = INSTR_ReplaceSelector( context, seg )))
         return FALSE;  /* Unable to emulate it */
@@ -278,7 +279,7 @@ static BOOL INSTR_EmulateLDS( struct sigcontext_struct *context,
  *
  * Emulate a priviledged instruction. Returns TRUE if emulation successful.
  */
-BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
+BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
     BYTE *instr;
@@ -489,8 +490,12 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
 
         case 0x8e: /* mov XX,segment_reg */
             {
-                WORD seg = *(WORD *)INSTR_GetOperandAddr( context, instr + 1,
+                WORD seg;
+                BYTE *addr = INSTR_GetOperandAddr(context, instr + 1,
                                                   long_addr, segprefix, &len );
+                if (!addr)
+                    break;  /* Unable to emulate it */
+                seg = *(WORD *)addr;
                 if (!(seg = INSTR_ReplaceSelector( context, seg )))
                     break;  /* Unable to emulate it */
 

@@ -18,12 +18,12 @@
   /* Hook data (pointed to by a HHOOK) */
 typedef struct
 {
-    HANDLE   next;               /* 00 Next hook in chain */
-    HOOKPROC proc WINE_PACKED;   /* 02 Hook procedure */
-    short    id;                 /* 06 Hook id (WH_xxx) */
-    HQUEUE   ownerQueue;         /* 08 Owner queue (0 for system hook) */
-    HMODULE  ownerModule;        /* 0a Owner module */
-    WORD     inHookProc;         /* 0c TRUE if in this->proc */
+    HANDLE16   next;               /* 00 Next hook in chain */
+    HOOKPROC   proc WINE_PACKED;   /* 02 Hook procedure */
+    short      id;                 /* 06 Hook id (WH_xxx) */
+    HQUEUE16   ownerQueue;         /* 08 Owner queue (0 for system hook) */
+    HMODULE16  ownerModule;        /* 0a Owner module */
+    WORD       inHookProc;         /* 0c TRUE if in this->proc */
 } HOOKDATA;
 
 #ifndef WINELIB
@@ -35,7 +35,7 @@ typedef struct
 extern HANDLE HOOK_GetHook( short id , HQUEUE hQueue );
 extern DWORD HOOK_CallHooks( short id, short code,
                              WPARAM wParam, LPARAM lParam );
-extern void HOOK_FreeModuleHooks( HMODULE hModule );
-extern void HOOK_FreeQueueHooks( HQUEUE hQueue );
+extern void HOOK_FreeModuleHooks( HMODULE16 hModule );
+extern void HOOK_FreeQueueHooks( HQUEUE16 hQueue );
 
 #endif  /* __WINE_HOOK_H */

@@ -394,8 +394,9 @@ static BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 		}
 	switch (CDADev[wDevID].sc.cdsc_audiostatus) {
 		case CDROM_AUDIO_INVALID:
-            		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // device doesn't support status !\n");
-			return FALSE;
+            		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // device doesn't support status, returning NOT_READY.\n");
+			CDADev[wDevID].mode = MCI_MODE_NOT_READY;
+			break;
 		case CDROM_AUDIO_NO_STATUS: 
 			CDADev[wDevID].mode = MCI_MODE_STOP;
             		dprintf_cdaudio(stddeb,"CDAUDIO_GetCDStatus // MCI_MODE_STOP !\n");
@@ -737,7 +738,10 @@ static DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParm
     	dprintf_cdaudio(stddeb,"CDAUDIO_mciSeek(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	if (ioctl(CDADev[wDevID].unixdev, CDROMRESUME)) return MCIERR_HARDWARE;
+	if (ioctl(CDADev[wDevID].unixdev, CDROMRESUME)) {
+		perror("ioctl CDROMRESUME");
+		return MCIERR_HARDWARE;
+	}
 	CDADev[wDevID].mode = MCI_MODE_SEEK;
 	switch(dwFlags) {
 		case MCI_SEEK_TO_START:

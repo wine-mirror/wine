@@ -34,7 +34,7 @@
 
 typedef struct tagGDIOBJHDR
 {
-    HANDLE      hNext;
+    HANDLE16    hNext;
     WORD        wMagic;
     DWORD       dwCount;
     WORD        wMetaList;
@@ -86,16 +86,16 @@ typedef struct
     int           flags;
     DeviceCaps   *devCaps;
 
-    HANDLE        hMetaFile;
-    HRGN          hClipRgn;     /* Clip region (may be 0) */
-    HRGN          hVisRgn;      /* Visible region (must never be 0) */
-    HRGN          hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
+    HANDLE16      hMetaFile;
+    HRGN16        hClipRgn;     /* Clip region (may be 0) */
+    HRGN16        hVisRgn;      /* Visible region (must never be 0) */
+    HRGN16        hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
     HPEN16        hPen;
-    HBRUSH        hBrush;
-    HFONT         hFont;
-    HBITMAP       hBitmap;
-    HBITMAP       hFirstBitmap; /* Bitmap selected at creation of the DC */
-    HANDLE        hDevice;
+    HBRUSH16      hBrush;
+    HFONT16       hFont;
+    HBITMAP16     hBitmap;
+    HBITMAP16     hFirstBitmap; /* Bitmap selected at creation of the DC */
+    HANDLE16      hDevice;
     HPALETTE16    hPalette;
 
     WORD          ROPmode;
@@ -164,8 +164,8 @@ typedef struct
   /* X physical palette information */
 typedef struct
 {
-    HANDLE    hMapping;     /* Color mapping table (or 0 for identity) */
-    HANDLE    hRevMapping;  /* Reverse color mapping table */
+    HANDLE16  hMapping;     /* Color mapping table (or 0 for identity) */
+    HANDLE16  hRevMapping;  /* Reverse color mapping table */
     WORD      mappingSize;
 } X_PHYSPALETTE;
 
@@ -187,7 +187,7 @@ typedef struct tagDC
     WORD          saveLevel;
     DWORD         dwHookData;
     FARPROC16     hookProc;
-    HDC           hSelf;
+    HDC16         hSelf;
     WIN_DC_INFO   w;
     union
     {
@@ -275,10 +275,10 @@ extern WORD GDI_HeapSel;
 
 #endif  /* WINELIB */
 
-extern BOOL GDI_Init(void);
-extern HANDLE GDI_AllocObject( WORD, WORD );
-extern BOOL GDI_FreeObject( HANDLE );
-extern GDIOBJHDR * GDI_GetObjPtr( HANDLE, WORD );
+extern BOOL32 GDI_Init(void);
+extern HANDLE16 GDI_AllocObject( WORD, WORD );
+extern BOOL32 GDI_FreeObject( HANDLE16 );
+extern GDIOBJHDR * GDI_GetObjPtr( HANDLE16, WORD );
 extern FARPROC16 GDI_GetDefDCHook(void);
 
 extern Display * display;

@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <ctype.h>
 #include <string.h>
 #include "windows.h"
@@ -332,4 +333,40 @@ INT32 lstrncmpi32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
         str2++;
     }
     return toupper(*str1) - toupper(*str2);
+}
+
+
+/***********************************************************************
+ *           RtlFillMemory   (KERNEL32.441)
+ */
+VOID RtlFillMemory( LPVOID ptr, UINT32 len, UINT32 fill )
+{
+    memset( ptr, fill, len );
+}
+
+
+/***********************************************************************
+ *           RtlMoveMemory   (KERNEL32.442)
+ */
+VOID RtlMoveMemory( LPVOID dst, LPCVOID src, UINT32 len )
+{
+    /* memcpy does not support overlapped copies, */
+    /* and memmove is not portable. */
+    if (((BYTE *)dst + len <= (BYTE *)src) ||
+        ((BYTE *)src + len <= (BYTE *)dst))
+    {
+        memcpy( dst, src, len );
+        return;
+    }
+    /* do it the hard way (FIXME: could do better than this) */
+    while (len--) *((BYTE *)dst)++ = *((BYTE *)src)++;
+}
+
+
+/***********************************************************************
+ *           RtlZeroMemory   (KERNEL32.444)
+ */
+VOID RtlZeroMemory( LPVOID ptr, UINT32 len )
+{
+    memset( ptr, 0, len );
 }

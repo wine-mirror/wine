@@ -11,6 +11,7 @@
 
 #include "ldt.h"
 #include "class.h"
+#include "winproc.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
@@ -34,7 +35,7 @@ typedef struct tagWND
     struct tagWND *parent;        /* Window parent (from CreateWindow) */
     struct tagWND *owner;         /* Window owner */
     CLASS         *class;         /* Window class */
-    HANDLE32       winproc;       /* Window procedure */
+    HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     HWND16         hwndSelf;      /* Handle of this window */
     HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
@@ -71,6 +72,7 @@ typedef struct tagWND
 #define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */
+#define WIN_ISDIALOG           0x0200 /* Window is a dialog */
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND hwnd );
@@ -86,6 +88,7 @@ extern void WIN_SendParentNotify( HWND hwnd, WORD event,
 extern BOOL WIN_CreateDesktopWindow(void);
 extern HWND WIN_GetTopParent( HWND hwnd );
 extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
+extern WND **WIN_BuildWinArray( WND *wndPtr );
 
 extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );  /* windows/defwnd.c */
 

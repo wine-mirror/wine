@@ -42,7 +42,7 @@ DWORD INT1A_GetTicksSinceMidnight(void)
  *
  * Handler for int 1ah (date and time).
  */
-void INT_Int1aHandler( struct sigcontext_struct context )
+void INT_Int1aHandler( SIGCONTEXT context )
 {
     time_t ltime;
     DWORD ticks;

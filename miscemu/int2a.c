@@ -13,7 +13,7 @@
  *
  * Handler for int 2ah (network).
  */
-void INT_Int2aHandler( struct sigcontext_struct context )
+void INT_Int2aHandler( SIGCONTEXT context )
 {
     switch(AH_reg(&context))
     {

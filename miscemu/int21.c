@@ -134,7 +134,7 @@ static void CreateBPB(int drive, BYTE *data)
 	}	
 }
 
-static int INT21_GetFreeDiskSpace(struct sigcontext_struct *context)
+static int INT21_GetFreeDiskSpace( SIGCONTEXT *context )
 {
     DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
     char root[] = "A:\\";
@@ -149,7 +149,7 @@ static int INT21_GetFreeDiskSpace(struct sigcontext_struct *context)
     return 1;
 }
 
-static int INT21_GetDriveAllocInfo(struct sigcontext_struct *context)
+static int INT21_GetDriveAllocInfo( SIGCONTEXT *context )
 {
     if (!INT21_GetFreeDiskSpace( context )) return 0;
     heap->mediaID = 0xf0;
@@ -158,7 +158,7 @@ static int INT21_GetDriveAllocInfo(struct sigcontext_struct *context)
     return 1;
 }
 
-static void GetDrivePB(struct sigcontext_struct *context, int drive)
+static void GetDrivePB( SIGCONTEXT *context, int drive )
 {
         if(!DRIVE_IsValid(drive))
         {
@@ -201,7 +201,7 @@ static void GetDrivePB(struct sigcontext_struct *context, int drive)
 }
 
 
-static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
+static void ioctlGetDeviceInfo( SIGCONTEXT *context )
 {
     dprintf_int (stddeb, "int21: ioctl (%d, GetDeviceInfo)\n", BX_reg(context));
     
@@ -214,7 +214,7 @@ static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
     RESET_CFLAG(context);
 }
 
-static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
+static void ioctlGenericBlkDevReq( SIGCONTEXT *context )
 {
 	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
 	int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -258,7 +258,7 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 	}
 }
 
-static void GetSystemDate(struct sigcontext_struct *context)
+static void GetSystemDate( SIGCONTEXT *context )
 {
 	struct tm *now;
 	time_t ltime;
@@ -271,7 +271,7 @@ static void GetSystemDate(struct sigcontext_struct *context)
 	AX_reg(context) = now->tm_wday;
 }
 
-static void INT21_GetSystemTime(struct sigcontext_struct *context)
+static void INT21_GetSystemTime( SIGCONTEXT *context )
 {
 	struct tm *now;
 	struct timeval tv;
@@ -286,7 +286,7 @@ static void INT21_GetSystemTime(struct sigcontext_struct *context)
 					/* Note hundredths of seconds */
 }
 
-static void CreateFile(struct sigcontext_struct *context)
+static void CreateFile( SIGCONTEXT *context )
 {
     AX_reg(context) = _lcreat( PTR_SEG_OFF_TO_LIN( DS_reg(context),
                                           DX_reg(context) ), CX_reg(context) );
@@ -298,7 +298,7 @@ static void CreateFile(struct sigcontext_struct *context)
 }
 
 
-void OpenExistingFile(struct sigcontext_struct *context)
+void OpenExistingFile( SIGCONTEXT *context )
 {
     AX_reg(context) = _lopen( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
                               AL_reg(context) );
@@ -379,7 +379,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 #endif
 }
 
-static void CloseFile(struct sigcontext_struct *context)
+static void CloseFile( SIGCONTEXT *context )
 {
     if ((AX_reg(context) = _lclose( BX_reg(context) )) != 0)
     {
@@ -388,7 +388,7 @@ static void CloseFile(struct sigcontext_struct *context)
     }
 }
 
-void ExtendedOpenCreateFile(struct sigcontext_struct *context)
+void ExtendedOpenCreateFile(SIGCONTEXT *context )
 {
   BYTE action=DL_reg(context);
   dprintf_int(stddeb, "int21: extended open/create: file= %s \n",
@@ -478,7 +478,7 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
 }
 
 
-static int INT21_RenameFile(struct sigcontext_struct *context)
+static int INT21_RenameFile( SIGCONTEXT *context )
 {
     const char *newname, *oldname;
     char *buffer;
@@ -511,7 +511,7 @@ static int INT21_RenameFile(struct sigcontext_struct *context)
 }
 
 
-static void INT21_ChangeDir(struct sigcontext_struct *context)
+static void INT21_ChangeDir( SIGCONTEXT *context )
 {
     int drive;
     char *dirname = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
@@ -531,7 +531,7 @@ static void INT21_ChangeDir(struct sigcontext_struct *context)
 }
 
 
-static int INT21_FindFirst(struct sigcontext_struct *context)
+static int INT21_FindFirst( SIGCONTEXT *context )
 {
     const char *path, *unixPath, *mask;
     char *p;
@@ -566,7 +566,7 @@ static int INT21_FindFirst(struct sigcontext_struct *context)
 }
 
 
-static int INT21_FindNext(struct sigcontext_struct *context)
+static int INT21_FindNext( SIGCONTEXT *context )
 {
     FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA();
     DOS_DIRENT entry;
@@ -597,7 +597,7 @@ static int INT21_FindNext(struct sigcontext_struct *context)
 }
 
 
-static int INT21_CreateTempFile(struct sigcontext_struct *context)
+static int INT21_CreateTempFile( SIGCONTEXT *context )
 {
     static int counter = 0;
     char *name = PTR_SEG_OFF_TO_LIN( DS_reg(context), DX_reg(context) );
@@ -618,7 +618,7 @@ static int INT21_CreateTempFile(struct sigcontext_struct *context)
 }
 
 
-static int INT21_GetCurrentDirectory(struct sigcontext_struct *context)
+static int INT21_GetCurrentDirectory( SIGCONTEXT *context ) 
 {
     int drive = DOS_GET_DRIVE( DL_reg(context) );
     char *ptr = (char *)PTR_SEG_OFF_TO_LIN( DS_reg(context), SI_reg(context) );
@@ -635,7 +635,7 @@ static int INT21_GetCurrentDirectory(struct sigcontext_struct *context)
 }
 
 
-static int INT21_GetDiskSerialNumber(struct sigcontext_struct *context)
+static int INT21_GetDiskSerialNumber( SIGCONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -654,7 +654,7 @@ static int INT21_GetDiskSerialNumber(struct sigcontext_struct *context)
 }
 
 
-static int INT21_SetDiskSerialNumber(struct sigcontext_struct *context)
+static int INT21_SetDiskSerialNumber( SIGCONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     int drive = DOS_GET_DRIVE( BL_reg(context) );
@@ -673,7 +673,7 @@ static int INT21_SetDiskSerialNumber(struct sigcontext_struct *context)
 /* microsoft's programmers should be shot for using CP/M style int21
    calls in Windows for Workgroup's winfile.exe */
 
-static int INT21_FindFirstFCB( struct sigcontext_struct *context )
+static int INT21_FindFirstFCB( SIGCONTEXT *context )
 {
     BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     FINDFILE_FCB *pFCB;
@@ -701,7 +701,7 @@ static int INT21_FindFirstFCB( struct sigcontext_struct *context )
 }
 
 
-static int INT21_FindNextFCB( struct sigcontext_struct *context )
+static int INT21_FindNextFCB( SIGCONTEXT *context )
 {
     BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     FINDFILE_FCB *pFCB;
@@ -743,7 +743,7 @@ static int INT21_FindNextFCB( struct sigcontext_struct *context )
 }
 
 
-static void DeleteFileFCB(struct sigcontext_struct *context)
+static void DeleteFileFCB( SIGCONTEXT *context )
 {
     fprintf( stderr, "DeleteFileFCB: not implemented yet\n" );
 #if 0
@@ -785,7 +785,7 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 #endif
 }
 
-static void RenameFileFCB(struct sigcontext_struct *context)
+static void RenameFileFCB( SIGCONTEXT *context )
 {
     fprintf( stderr, "RenameFileFCB: not implemented yet\n" );
 #if 0
@@ -831,7 +831,7 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 
 
 
-static void fLock (struct sigcontext_struct * context)
+static void fLock( SIGCONTEXT * context )
 {
 #if 0
     struct flock f;
@@ -882,7 +882,7 @@ static void fLock (struct sigcontext_struct * context)
 } 
 
 
-static int INT21_GetFileAttribute (struct sigcontext_struct * context)
+static int INT21_GetFileAttribute( SIGCONTEXT * context )
 {
     const char *unixName;
 
@@ -901,7 +901,7 @@ extern void LOCAL_PrintHeap (WORD ds);
 /***********************************************************************
  *           DOS3Call  (KERNEL.102)
  */
-void DOS3Call( struct sigcontext_struct context )
+void DOS3Call( SIGCONTEXT context )
 {
     dprintf_int( stddeb, "int21: AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
@@ -1136,8 +1136,8 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 	
     case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
-        if (!FILE_RemoveDir( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
-                                                 DX_reg(&context) )))
+        if (!RemoveDirectory32A( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                     DX_reg(&context) )))
         {
             AX_reg(&context) = DOS_ExtendedError;
             SET_CFLAG(&context);
@@ -1201,8 +1201,8 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 
     case 0x41: /* "UNLINK" - DELETE FILE */
-        if (!FILE_Unlink( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
-                                              DX_reg(&context) )))
+        if (!DeleteFile32A( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                DX_reg(&context) )))
         {
             AX_reg(&context) = DOS_ExtendedError;
             SET_CFLAG(&context);
@@ -1252,7 +1252,7 @@ void DOS3Call( struct sigcontext_struct context )
             break;
 
         case 0x08:   /* Check if drive is removable. */
-            switch(GetDriveType( DOS_GET_DRIVE( BL_reg(&context) )))
+            switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(&context) )))
             {
             case DRIVE_CANNOTDETERMINE:
                 DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );
@@ -1269,7 +1269,7 @@ void DOS3Call( struct sigcontext_struct context )
             break;
 
         case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
-            switch(GetDriveType( DOS_GET_DRIVE( BL_reg(&context) )))
+            switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(&context) )))
             {
             case DRIVE_CANNOTDETERMINE:
                 DOS_ERROR( ER_InvalidDrive, EC_NotFound, SA_Abort, EL_Disk );

@@ -732,7 +732,7 @@ UINT MENU_DrawMenuBar(HDC hDC, LPRECT16 lprect, HWND hwnd, BOOL suppress_draw)
 /***********************************************************************
  *	     MENU_SwitchTPWndTo
  */
-BOOL MENU_SwitchTPWndTo( HTASK hTask)
+static BOOL MENU_SwitchTPWndTo( HTASK hTask)
 {
   /* This is supposed to be called when popup is hidden */
 

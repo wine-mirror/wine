@@ -103,7 +103,8 @@ window|windo|wind|win|wnd	{ return tWND; }
 
 help|hel|he|"?"			{ return tHELP; }
 
-backtrace|bt			{ return tBACKTRACE; }
+backtrace|backtrac|backtra|backt|back|bac|ba|bt { return tBACKTRACE; }
+where|wher|whe                  { return tBACKTRACE; }
 
 cont|con|co|c   		{ return tCONT; }
 step|ste|st|s   		{ return tSTEP; }

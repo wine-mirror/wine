@@ -79,6 +79,9 @@ typedef struct
 #define IsHScrollBar(wndPtr) ((wndPtr)->dwStyle & WS_HSCROLL)
 #define IsReadOnly(wndPtr) ((wndPtr)->dwStyle & ES_READONLY)
 #define IsWordWrap(wndPtr) (((wndPtr)->dwStyle & ES_AUTOHSCROLL) == 0)
+#define IsPassword(wndPtr) ((wndPtr)->dwStyle & ES_PASSWORD)
+#define IsLower(wndPtr) ((wndPtr)->dwStyle & ES_LOWERCASE)
+#define IsUpper(wndPtr) ((wndPtr)->dwStyle & ES_UPPERCASE)
 
 #define EDITSTATEPTR(wndPtr) (*(EDITSTATE **)((wndPtr)->wExtra))
 
@@ -127,6 +130,7 @@ static UINT    EDIT_GetAveCharWidth(WND *wndPtr);
 static UINT    EDIT_GetLineHeight(WND *wndPtr);
 static void    EDIT_GetLineRect(WND *wndPtr, UINT line, UINT scol, UINT ecol, LPRECT16 rc);
 static char *  EDIT_GetPointer(WND *wndPtr);
+static char *  EDIT_GetPasswordPointer(WND *wndPtr);
 static LRESULT EDIT_GetRect(WND *wndPtr, WPARAM wParam, LPARAM lParam);
 static BOOL    EDIT_GetRedraw(WND *wndPtr);
 static UINT    EDIT_GetTextWidth(WND *wndPtr);
@@ -504,14 +508,14 @@ LRESULT EditWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
  *	EDIT_BuildLineDefs
  *
  *	Build array of pointers to text lines.
- *	Lines can end with '\0' (last line), nothing (if it is to long),
+ *	Lines can end with '\0' (last line), nothing (if it is too long),
  *	a delimiter (usually ' '), a soft return '\r\r\n' or a hard return '\r\n'
  *
  */
 static void EDIT_BuildLineDefs(WND *wndPtr)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-	char *text = EDIT_GetPointer(wndPtr);
+	char *text = EDIT_GetPasswordPointer(wndPtr);
 	int ww = EDIT_GetWndWidth(wndPtr);
 	HDC hdc;
 	HFONT hFont;
@@ -562,16 +566,23 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 					width = LOWORD(GetTabbedTextExtent(hdc, start, next,
 							es->NumTabStops, es->TabStops));
 				} while (width <= ww);
-				if (prev) {
-					length = prev;
-					if (EDIT_CallWordBreakProc(wndPtr, start, length - 1,
-									length, WB_ISDELIMITER)) {
-						length--;
-						ending = END_DELIMIT;
-					} else
-						ending = END_NONE;
-				} else {
+				if (!prev) {
+					next = 0;
+					do {
+						prev = next;
+						next++;
+						width = LOWORD(GetTabbedTextExtent(hdc, start, next,
+								es->NumTabStops, es->TabStops));
+					} while (width <= ww);
+					if(!prev) prev = 1;
 				}
+				length = prev;
+				if (EDIT_CallWordBreakProc(wndPtr, start, length - 1,
+								length, WB_ISDELIMITER)) {
+					length--;
+					ending = END_DELIMIT;
+				} else
+					ending = END_NONE;
 				width = LOWORD(GetTabbedTextExtent(hdc, start, length,
 							es->NumTabStops, es->TabStops));
 			}
@@ -602,6 +613,8 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	if (hFont)
 		SelectObject(hdc, oldFont);
 	ReleaseDC(wndPtr->hwndSelf, hdc);
+
+	free(text);
 }
 
 
@@ -750,6 +763,30 @@ static char *EDIT_GetPointer(WND *wndPtr)
 	if (!es->text && es->hBuf)
 		es->text = LOCAL_Lock(wndPtr->hInstance, es->hBuf);
 	return es->text;
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_GetPasswordPointer
+ *
+ *
+ */
+static char *EDIT_GetPasswordPointer(WND *wndPtr)
+{
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+	char *text = xstrdup(EDIT_GetPointer(wndPtr));
+	char *p;
+
+	if(es->PasswordChar) {
+		p = text;
+		while(*p != '\0') {
+			if(*p != '\r' && *p != '\n')
+				*p = es->PasswordChar;
+			p++;
+		}
+	}
+	return text;
 }
 
 
@@ -1272,11 +1309,12 @@ static UINT EDIT_PaintText(WND *wndPtr, HDC hdc, INT x, INT y, UINT line, UINT c
 		SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
 		SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
 	}
-	text = EDIT_GetPointer(wndPtr);
+	text = EDIT_GetPasswordPointer(wndPtr);
 	li = (UINT)EDIT_EM_LineIndex(wndPtr, line, 0L);
 	xoff = EDIT_GetXOffset(wndPtr);
 	ret = LOWORD(TabbedTextOut(hdc, x, y, text + li + col, count,
-					es->NumTabStops, es->TabStops, -xoff));	
+					es->NumTabStops, es->TabStops, -xoff));
+	free(text);
 	if (rev) {
 		SetBkColor(hdc, BkColor);
 		SetTextColor(hdc, TextColor);
@@ -1341,6 +1379,10 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 		p[strl] = p[0];
 	for (i = 0 , p = text + e ; i < strl ; i++)
 		p[i] = str[i];
+	if(IsUpper(wndPtr))
+		AnsiUpperBuff(p, strl);
+	else if(IsLower(wndPtr))
+		AnsiLowerBuff(p, strl);
 	EDIT_BuildLineDefs(wndPtr);
 	e += strl;
 	EDIT_EM_SetSel(wndPtr, 0, MAKELPARAM(e, e));
@@ -1403,7 +1445,7 @@ static void EDIT_ScrollIntoView(WND *wndPtr)
 static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 {	
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-	char *text = EDIT_GetPointer(wndPtr);
+	char *text = EDIT_GetPasswordPointer(wndPtr);
 	INT ret;
 	HDC hdc;
 	HFONT hFont;
@@ -1425,6 +1467,7 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 	if (hFont)
 		SelectObject(hdc, oldFont);
 	ReleaseDC(wndPtr->hwndSelf, hdc);
+	free(text);
 	return ret;
 }
 
@@ -2753,7 +2796,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	hdc = GetDC(wndPtr->hwndSelf);
 	if (es->hFont)
 		oldFont = SelectObject(hdc, es->hFont);
-	GetTextMetrics(hdc, &tm);
+	GetTextMetrics16(hdc, &tm);
 	es->LineHeight = HIWORD(GetTextExtent(hdc, "X", 1));
 	es->AveCharWidth = tm.tmAveCharWidth;
 	if (es->hFont)

@@ -21,7 +21,9 @@
 #include "winreg.h"
 #include "string32.h"
 
-#define LZREAD(what)	if (sizeof(*what)!=LZRead32(lzfd,what,sizeof(*what))) return 0;
+#define LZREAD(what) \
+  if (sizeof(*what)!=LZRead32(lzfd,what,sizeof(*what))) return 0;
+#define LZTELL(lzfd) LZSeek(lzfd, 0, SEEK_CUR);
 
 #define strdupW2A(x)	STRING32_DupUniToAnsi(x)
 #define strdupA2W(x)	STRING32_DupAnsiToUni(x)
@@ -57,7 +59,8 @@ find_ne_resource(
 	WORD		shiftcount;
 	DWORD		nehdoffset;
 
-	nehdoffset=LZSeek(lzfd,nehd->resource_tab_offset,SEEK_CUR);
+	nehdoffset = LZTELL(lzfd);
+	LZSeek(lzfd,nehd->resource_tab_offset,SEEK_CUR);
 	LZREAD(&shiftcount);
 	dprintf_resource(stderr,"shiftcount is %d\n",shiftcount);
 	dprintf_resource(stderr,"reading resource typeinfo dir.\n");
@@ -83,7 +86,8 @@ find_ne_resource(
 				char	*str;
 				DWORD	whereleft;
 
-				whereleft=LZSeek(
+				whereleft = LZTELL(lzfd);
+				LZSeek(
 					lzfd,
 					nehdoffset+nehd->resource_tab_offset+ti.type_id,
 					SEEK_SET
@@ -123,7 +127,8 @@ find_ne_resource(
 					char	*str;
 					DWORD	whereleft;
 
-					whereleft=LZSeek(
+					whereleft = LZTELL(lzfd);
+					  LZSeek(
 						lzfd,
 						nehdoffset+nehd->resource_tab_offset+ni.id,
 						SEEK_SET
@@ -187,7 +192,7 @@ GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 	return reslen;
 }
 
-/* GetFileResourceSize				[VER.3] */
+/* GetFileResource				[VER.3] */
 DWORD
 GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD datalen,LPVOID data
@@ -195,7 +200,7 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	HFILE	lzfd;
 	OFSTRUCT	ofs;
 	BYTE	*resdata;
-	int	reslen;
+	int	reslen=datalen;
 	struct	ne_header_s	nehd;
 	fprintf(stderr,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data

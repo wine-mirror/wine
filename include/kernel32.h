@@ -27,7 +27,7 @@ typedef struct {
         DWORD InternalHigh;
         DWORD Offset;
         DWORD OffsetHigh;
-        HANDLE hEvent;
+        HANDLE32 hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
 /* Process startup information.
@@ -48,9 +48,9 @@ typedef struct {
         WORD wShowWindow;
         WORD cbReserved2;
         BYTE *lpReserved2;
-        HANDLE hStdInput;
-        HANDLE hStdOutput;
-        HANDLE hStdError;
+        HANDLE32 hStdInput;
+        HANDLE32 hStdOutput;
+        HANDLE32 hStdError;
 } STARTUPINFO, *LPSTARTUPINFO;
 
 typedef struct {
@@ -119,6 +119,6 @@ typedef struct
 #define FILE_ATTRIBUTE_ATOMIC_WRITE     0x0200
 #define FILE_ATTRIBUTE_XACTION_WRITE    0x0400
 
-BOOL       SetTimeZoneInformation(const TIME_ZONE_INFORMATION*);
+BOOL32     SetTimeZoneInformation(const TIME_ZONE_INFORMATION*);
 
 #endif  /* __WINE_KERNEL32_H */

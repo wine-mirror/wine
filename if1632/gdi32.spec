@@ -238,8 +238,8 @@ base	1
 0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32W
 0234 stub GetTextFaceA
 0235 stub GetTextFaceW
-0236 stub GetTextMetricsA
-0237 stub GetTextMetricsW
+0236 stdcall GetTextMetricsA(long ptr) GetTextMetrics32A
+0237 stdcall GetTextMetricsW(long ptr) GetTextMetrics32W
 0238 stub GetTransform
 0239 stub GetViewportExtEx
 0240 stub GetViewportOrgEx
@@ -314,8 +314,9 @@ base	1
 0309 stub SetColorAdjustment
 0310 stub SetColorSpace
 0311 stub SetDIBColorTable
-0312 stub SetDIBits
-0313 stub SetDIBitsToDevice
+0312 stdcall SetDIBits(long long long long ptr ptr long) SetDIBits
+0313 stdcall SetDIBitsToDevice(long long long long long long long long long
+                               ptr ptr long) SetDIBitsToDevice
 0314 stub SetDeviceGammaRamp
 0315 stub SetEnhMetaFileBits
 0316 stub SetFontEnumeration

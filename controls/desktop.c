@@ -4,16 +4,15 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "win.h"
 #include "desktop.h"
 #include "directory.h"
-#include "dos_fs.h"
+#include "file.h"
 #include "graphics.h"
+#include "heap.h"
 
 
 /***********************************************************************
@@ -26,47 +25,46 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
     BITMAPFILEHEADER *fileHeader;
     BITMAPINFO *bitmapInfo;
     HBITMAP hbitmap;
-    char *buffer;
-    const char *unixFileName;
-    int file;
-    long size;
+    HFILE file;
+    LPSTR buffer;
+    LONG size;
 
-      /* Read all the file into memory */
+    /* Read all the file into memory */
 
-    if (!(unixFileName = DOSFS_GetUnixFileName( filename, TRUE )))
+    if ((file = _lopen( filename, OF_READ )) == HFILE_ERROR)
     {
-        int len = DIR_GetWindowsUnixDir( NULL, 0 );
-        if (!(buffer = malloc( len + strlen(filename) + 2 ))) return 0;
-        DIR_GetWindowsUnixDir( buffer, len + 1 );
-        strcat( buffer, "/" );
+        UINT32 len = GetWindowsDirectory( NULL, 0 );
+        if (!(buffer = HeapAlloc( SystemHeap, 0, len + strlen(filename) + 2 )))
+            return 0;
+        GetWindowsDirectory( buffer, len + 1 );
+        strcat( buffer, "\\" );
         strcat( buffer, filename );
-        unixFileName = DOSFS_GetUnixFileName( buffer, TRUE );
-        free( buffer );
-        if (!unixFileName) return 0;
+        file = _lopen( buffer, OF_READ );
+        HeapFree( SystemHeap, 0, buffer );
     }
-    if ((file = open( unixFileName, O_RDONLY )) == -1) return 0;
-    size = lseek( file, 0, SEEK_END );
-    if (!(buffer = (char *)malloc( size )))
+    if (file == HFILE_ERROR) return 0;
+    size = _llseek( file, 0, 2 );
+    if (!(buffer = HeapAlloc( SystemHeap, 0, size )))
     {
-	close( file );
+	_lclose( file );
 	return 0;
     }
-    lseek( file, 0, SEEK_SET );
-    size = read( file, buffer, size );
-    close( file );
+    _llseek( file, 0, 0 );
+    size = FILE_Read( file, buffer, size );
+    _lclose( file );
     fileHeader = (BITMAPFILEHEADER *)buffer;
     bitmapInfo = (BITMAPINFO *)(buffer + sizeof(BITMAPFILEHEADER));
     
       /* Check header content */
     if ((fileHeader->bfType != 0x4d42) || (size < fileHeader->bfSize))
     {
-	free( buffer );
+	HeapFree( SystemHeap, 0, buffer );
 	return 0;
     }
     hbitmap = CreateDIBitmap( hdc, &bitmapInfo->bmiHeader, CBM_INIT,
 			      buffer + fileHeader->bfOffBits,
 			      bitmapInfo, DIB_RGB_COLORS );
-    free( buffer );
+    HeapFree( SystemHeap, 0, buffer );
     return hbitmap;
 }
 

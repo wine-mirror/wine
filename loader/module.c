@@ -30,8 +30,8 @@
 
 extern HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
 
-static HMODULE hFirstModule = 0;
-static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
+static HMODULE16 hFirstModule = 0;
+static HMODULE16 hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 
 #ifndef WINELIB
 static HANDLE hInitialStack32 = 0;
@@ -41,7 +41,7 @@ static HANDLE hInitialStack32 = 0;
 /***********************************************************************
  *           MODULE_GetPtr
  */
-NE_MODULE *MODULE_GetPtr( HMODULE hModule )
+NE_MODULE *MODULE_GetPtr( HMODULE16 hModule )
 {
     NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule );
     if (!pModule || (pModule->magic != NE_SIGNATURE) ||
@@ -53,7 +53,7 @@ NE_MODULE *MODULE_GetPtr( HMODULE hModule )
 /***********************************************************************
  *           MODULE_DumpModule
  */
-void MODULE_DumpModule( HMODULE hmodule )
+void MODULE_DumpModule( HMODULE16 hmodule )
 {
     int i, ordinal;
     SEGTABLEENTRY *pSeg;
@@ -134,9 +134,8 @@ void MODULE_DumpModule( HMODULE hmodule )
         pword = (WORD *)((BYTE *)pModule + pModule->modref_table);
         for (i = 0; i < pModule->modref_count; i++, pword++)
         {
-            char *name = (char *)pModule + pModule->import_table + *pword;
-            printf( "%d: %04x -> '%*.*s'\n",
-                    i, *pword, *name, *name, name + 1 );
+	    printf( "%d: %04x -> '%s'\n", i, *pword,
+		    MODULE_GetModuleName(*pword));
         }
     }
     else printf( "None\n" );
@@ -217,7 +216,7 @@ void MODULE_WalkModules(void)
 /***********************************************************************
  *           MODULE_OpenFile
  */
-int MODULE_OpenFile( HMODULE hModule )
+int MODULE_OpenFile( HMODULE16 hModule )
 {
     NE_MODULE *pModule;
     char *name;
@@ -288,7 +287,7 @@ DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
  *           MODULE_CreateSegments
  */
 #ifndef WINELIB32
-static BOOL MODULE_CreateSegments( HMODULE hModule )
+static BOOL MODULE_CreateSegments( HMODULE16 hModule )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -321,7 +320,7 @@ static BOOL MODULE_CreateSegments( HMODULE hModule )
  *           MODULE_GetInstance
  */
 #ifndef WINELIB32
-HINSTANCE MODULE_GetInstance( HMODULE hModule )
+HINSTANCE16 MODULE_GetInstance( HMODULE16 hModule )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -339,7 +338,7 @@ HINSTANCE MODULE_GetInstance( HMODULE hModule )
 /***********************************************************************
  *           MODULE_CreateInstance
  */
-HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
+HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS *params )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -373,12 +372,12 @@ HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
 /***********************************************************************
  *           MODULE_LoadExeHeader
  */
-static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
+static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 {
     struct mz_header_s mz_header;
     struct ne_header_s ne_header;
     int size;
-    HMODULE hModule;
+    HMODULE16 hModule;
     NE_MODULE *pModule;
     BYTE *pData;
     char *buffer, *fastload = NULL;
@@ -394,14 +393,15 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 
     _llseek( hFile, 0, SEEK_SET );
     if ((FILE_Read(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
-        (mz_header.mz_magic != MZ_SIGNATURE)) return (HMODULE)11;  /* invalid exe */
+        (mz_header.mz_magic != MZ_SIGNATURE))
+        return (HMODULE16)11;  /* invalid exe */
 
     _llseek( hFile, mz_header.ne_offset, SEEK_SET );
     if (FILE_Read( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
-        return (HMODULE)11;  /* invalid exe */
+        return (HMODULE16)11;  /* invalid exe */
 
-    if (ne_header.ne_magic == PE_SIGNATURE) return (HMODULE)21;  /* win32 exe */
-    if (ne_header.ne_magic != NE_SIGNATURE) return (HMODULE)11;  /* invalid exe */
+    if (ne_header.ne_magic == PE_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
+    if (ne_header.ne_magic != NE_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
     /* We now have a valid NE header */
 
@@ -422,7 +422,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
            ne_header.entry_tab_length;
 
     hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-    if (!hModule) return (HMODULE)11;  /* invalid exe */
+    if (!hModule) return (HMODULE16)11;  /* invalid exe */
     FarSetOwner( hModule, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     memcpy( pModule, &ne_header, sizeof(ne_header) );
@@ -474,7 +474,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 
         if (!READ( ne_header.segment_tab_offset,
              ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s),
-             buffer )) return (HMODULE)11;  /* invalid exe */
+             buffer )) return (HMODULE16)11;  /* invalid exe */
         pSeg = (struct ne_segment_table_entry_s *)buffer;
         for (i = ne_header.n_segment_tab; i > 0; i--, pSeg++)
         {
@@ -486,7 +486,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     else
     {
         GlobalFree16( hModule );
-        return (HMODULE)11;  /* invalid exe */
+        return (HMODULE16)11;  /* invalid exe */
     }
 
     /* Get the resource table */
@@ -496,7 +496,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         pModule->res_table = (int)pData - (int)pModule;
         if (!READ(ne_header.resource_tab_offset,
                   ne_header.rname_tab_offset - ne_header.resource_tab_offset,
-                  pData )) return (HMODULE)11;  /* invalid exe */
+                  pData )) return (HMODULE16)11;  /* invalid exe */
         pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
     }
     else pModule->res_table = 0;  /* No resource table */
@@ -509,7 +509,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                pData ))
     {
         GlobalFree16( hModule );
-        return (HMODULE)11;  /* invalid exe */
+        return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.moduleref_tab_offset - ne_header.rname_tab_offset;
 
@@ -520,7 +520,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         pModule->modref_table = (int)pData - (int)pModule;
         if (!READ( ne_header.moduleref_tab_offset,
                   ne_header.n_mod_ref_tab * sizeof(WORD),
-                  pData )) return (HMODULE)11;  /* invalid exe */
+                  pData )) return (HMODULE16)11;  /* invalid exe */
         pData += ne_header.n_mod_ref_tab * sizeof(WORD);
     }
     else pModule->modref_table = 0;  /* No module references */
@@ -533,7 +533,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                pData ))
     {
         GlobalFree16( hModule );
-        return (HMODULE)11;  /* invalid exe */
+        return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_offset - ne_header.iname_tab_offset;
 
@@ -545,7 +545,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
                pData ))
     {
         GlobalFree16( hModule );
-        return (HMODULE)11;  /* invalid exe */
+        return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_length;
 
@@ -558,7 +558,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         if (!pModule->nrname_handle)
         {
             GlobalFree16( hModule );
-            return (HMODULE)11;  /* invalid exe */
+            return (HMODULE16)11;  /* invalid exe */
         }
         buffer = GlobalLock16( pModule->nrname_handle );
         _llseek( hFile, ne_header.nrname_tab_offset, SEEK_SET );
@@ -567,7 +567,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         {
             GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
-            return (HMODULE)11;  /* invalid exe */
+            return (HMODULE16)11;  /* invalid exe */
         }
     }
     else pModule->nrname_handle = 0;
@@ -577,13 +577,13 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     if (pModule->modref_count)
     {
         pModule->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,
-                                    (pModule->modref_count+1)*sizeof(HMODULE),
+                                    (pModule->modref_count+1)*sizeof(HMODULE16),
                                     hModule, FALSE, FALSE, FALSE );
         if (!pModule->dlls_to_init)
         {
             if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );
-            return (HMODULE)11;  /* invalid exe */
+            return (HMODULE16)11;  /* invalid exe */
         }
     }
     else pModule->dlls_to_init = 0;
@@ -599,7 +599,7 @@ static HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
  *
  * Lookup the ordinal for a given name.
  */
-WORD MODULE_GetOrdinal( HMODULE hModule, const char *name )
+WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name )
 {
     char buffer[256], *cpnt;
     BYTE len;
@@ -663,7 +663,7 @@ WORD MODULE_GetOrdinal( HMODULE hModule, const char *name )
  *
  * Return the entry point for a given ordinal.
  */
-SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
+SEGPTR MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 {
     NE_MODULE *pModule;
     WORD curOrdinal = 1;
@@ -714,7 +714,7 @@ SEGPTR MODULE_GetEntryPoint( HMODULE hModule, WORD ordinal )
  * Change the value of an entry point. Use with caution!
  * It can only change the offset value, not the selector.
  */
-BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset )
+BOOL16 MODULE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
 {
     NE_MODULE *pModule;
     WORD curOrdinal = 1;
@@ -763,7 +763,7 @@ FARPROC16 MODULE_GetWndProcEntry16( const char *name )
 {
     WORD ordinal;
     FARPROC16 ret;
-    static HMODULE hModule = 0;
+    static HMODULE16 hModule = 0;
 
     if (!hModule) hModule = GetModuleHandle( "WPROCS" );
     ordinal = MODULE_GetOrdinal( hModule, name );
@@ -777,7 +777,7 @@ FARPROC16 MODULE_GetWndProcEntry16( const char *name )
 /***********************************************************************
  *           MODULE_GetModuleName
  */
-LPSTR MODULE_GetModuleName( HMODULE hModule )
+LPSTR MODULE_GetModuleName( HMODULE16 hModule )
 {
     NE_MODULE *pModule;
     BYTE *p, len;
@@ -807,9 +807,9 @@ void MODULE_RegisterModule( NE_MODULE *pModule )
  *
  * Find a module from a path name.
  */
-HMODULE MODULE_FindModule( LPCSTR path )
+HMODULE16 MODULE_FindModule( LPCSTR path )
 {
-    HMODULE hModule = hFirstModule;
+    HMODULE16 hModule = hFirstModule;
     LPCSTR filename, dotptr, modulepath, modulename;
     BYTE len, *name_table;
 
@@ -839,23 +839,44 @@ HMODULE MODULE_FindModule( LPCSTR path )
 
 
 /**********************************************************************
+ *	    MODULE_CallWEP
+ *
+ * Call a DLL's WEP, allowing it to shut down.
+ * FIXME: we always pass the WEP WEP_FREE_DLL, never WEP_SYSTEM_EXIT
+ */
+static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
+{
+    FARPROC16 WEP = (FARPROC16)0;
+    WORD ordinal = MODULE_GetOrdinal( hModule, "WEP" );
+
+    if (ordinal) WEP = MODULE_GetEntryPoint( hModule, ordinal );
+    if (!WEP)
+    {
+	dprintf_module( stddeb, "module %04x doesn't have a WEP\n", hModule );
+	return FALSE;
+    }
+    return CallWindowsExitProc( WEP, WEP_FREE_DLL );
+}
+
+
+/**********************************************************************
  *	    MODULE_FreeModule
  *
  * Remove a module from memory.
  */
-static void MODULE_FreeModule( HMODULE hModule )
+static void MODULE_FreeModule( HMODULE16 hModule )
 {
-    HMODULE *hPrevModule;
+    HMODULE16 *hPrevModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
-    HMODULE *pModRef;
+    HMODULE16 *pModRef;
     int i;
 
     if (!(pModule = MODULE_GetPtr( hModule ))) return;
     if (pModule->flags & NE_FFLAGS_BUILTIN)
         return;  /* Can't free built-in module */
 
-    /* FIXME: should call the exit code for the library here */
+    if (pModule->flags & NE_FFLAGS_LIBMODULE) MODULE_CallWEP( hModule );
 
     /* Free the objects owned by the module */
 
@@ -885,10 +906,10 @@ static void MODULE_FreeModule( HMODULE hModule )
 
       /* Free the referenced modules */
 
-    pModRef = (HMODULE*)NE_MODULE_TABLE( pModule );
+    pModRef = (HMODULE16*)NE_MODULE_TABLE( pModule );
     for (i = 0; i < pModule->modref_count; i++, pModRef++)
     {
-        FreeModule( *pModRef );
+        FreeModule16( *pModRef );
     }
 
       /* Free the module storage */
@@ -908,7 +929,7 @@ static void MODULE_FreeModule( HMODULE hModule )
  */
 HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 {
-    HMODULE hModule;
+    HMODULE16 hModule;
     HANDLE hInstance, hPrevInstance;
     NE_MODULE *pModule;
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
@@ -977,7 +998,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
             {
                 /* If the DLL is not loaded yet, load it and store */
                 /* its handle in the list of DLLs to initialize.   */
-                HMODULE hDLL;
+                HMODULE16 hDLL;
 
                 if ((hDLL = LoadModule( buffer, (LPVOID)-1 )) == 2)  /* file not found */
                 {
@@ -1015,7 +1036,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
                 STACK16FRAME *stack16Top;
-		HMODULE hselfload = GetModuleHandle("WPROCS");
+		HMODULE16 hselfload = GetModuleHandle("WPROCS");
 		WORD oldss, oldsp, saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
 		fprintf (stderr, "Warning:  %*.*s is a self-loading module\n"
                                 "Support for self-loading modules is very experimental\n",
@@ -1138,16 +1159,16 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
 
 /**********************************************************************
- *	    FreeModule    (KERNEL.46)
+ *	    FreeModule16    (KERNEL.46)
  */
-BOOL FreeModule( HANDLE hModule )
+BOOL16 FreeModule16( HMODULE16 hModule )
 {
     NE_MODULE *pModule;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = MODULE_GetPtr( hModule ))) return FALSE;
 
-    dprintf_module( stddeb, "FreeModule: %s count %d\n", 
+    dprintf_module( stddeb, "FreeModule16: %s count %d\n", 
 		    MODULE_GetModuleName(hModule), pModule->count );
     if (--pModule->count == 0) MODULE_FreeModule( hModule );
     return TRUE;
@@ -1157,13 +1178,13 @@ BOOL FreeModule( HANDLE hModule )
 /**********************************************************************
  *	    GetModuleHandle    (KERNEL.47)
  */
-HMODULE WIN16_GetModuleHandle( SEGPTR name )
+HMODULE16 WIN16_GetModuleHandle( SEGPTR name )
 {
     if (HIWORD(name) == 0) return GetExePtr( (HANDLE)name );
     return MODULE_FindModule( PTR_SEG_TO_LIN(name) );
 }
 
-HMODULE GetModuleHandle( LPCSTR name )
+HMODULE16 GetModuleHandle( LPCSTR name )
 {
     return MODULE_FindModule( name );
 }
@@ -1237,7 +1258,7 @@ HANDLE LoadLibrary( LPCSTR libname )
 void FreeLibrary( HANDLE handle )
 {
     dprintf_module( stddeb,"FreeLibrary: %04x\n", handle );
-    FreeModule( handle );
+    FreeModule16( handle );
 }
 
 
@@ -1416,7 +1437,7 @@ FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
 /**********************************************************************
  *	    GetExpWinVer    (KERNEL.167)
  */
-WORD GetExpWinVer( HMODULE hModule )
+WORD GetExpWinVer( HMODULE16 hModule )
 {
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     return pModule ? pModule->expected_version : 0;
@@ -1426,7 +1447,7 @@ WORD GetExpWinVer( HMODULE hModule )
 /**********************************************************************
  *	    ModuleFirst    (TOOLHELP.59)
  */
-BOOL ModuleFirst( MODULEENTRY *lpme )
+BOOL16 ModuleFirst( MODULEENTRY *lpme )
 {
     lpme->wNext = hFirstModule;
     return ModuleNext( lpme );
@@ -1436,7 +1457,7 @@ BOOL ModuleFirst( MODULEENTRY *lpme )
 /**********************************************************************
  *	    ModuleNext    (TOOLHELP.60)
  */
-BOOL ModuleNext( MODULEENTRY *lpme )
+BOOL16 ModuleNext( MODULEENTRY *lpme )
 {
     NE_MODULE *pModule;
 
@@ -1457,7 +1478,7 @@ BOOL ModuleNext( MODULEENTRY *lpme )
 /**********************************************************************
  *	    ModuleFindName    (TOOLHELP.61)
  */
-BOOL ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
+BOOL16 ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
 {
     lpme->wNext = GetModuleHandle( name );
     return ModuleNext( lpme );
@@ -1467,7 +1488,7 @@ BOOL ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
 /**********************************************************************
  *	    ModuleFindHandle    (TOOLHELP.62)
  */
-BOOL ModuleFindHandle( MODULEENTRY *lpme, HMODULE hModule )
+BOOL16 ModuleFindHandle( MODULEENTRY *lpme, HMODULE16 hModule )
 {
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     lpme->wNext = hModule;

@@ -17,15 +17,15 @@
   /* base WPROCS.DLL ordinal number for VxDs */
 #define VXD_BASE 400
 
-static void do_int2f_16(struct sigcontext_struct *context);
-void do_mscdex(struct sigcontext_struct *context);
+static void do_int2f_16( SIGCONTEXT *context );
+void do_mscdex( SIGCONTEXT *context );
 
 /**********************************************************************
  *	    INT_Int2fHandler
  *
  * Handler for int 2fh (multiplex).
  */
-void INT_Int2fHandler( struct sigcontext_struct context )
+void INT_Int2fHandler( SIGCONTEXT context )
 {
     switch(AH_reg(&context))
     {
@@ -67,7 +67,7 @@ void INT_Int2fHandler( struct sigcontext_struct context )
 /**********************************************************************
  *	    do_int2f_16
  */
-static void do_int2f_16(struct sigcontext_struct *context)
+static void do_int2f_16( SIGCONTEXT *context )
 {
     DWORD addr;
 
@@ -138,7 +138,7 @@ static void do_int2f_16(struct sigcontext_struct *context)
     }
 }
 
-void do_mscdex(struct sigcontext_struct *context)
+void do_mscdex( SIGCONTEXT *context )
 {
     int drive, count;
     char *p;

@@ -66,7 +66,7 @@ void DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr )
  *
  * Get the address of a named symbol.
  */
-BOOL DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr )
+BOOL32 DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr )
 {
     char buffer[256];
     struct name_hash *nh;
@@ -93,7 +93,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr )
  *
  * Set the address of a named symbol.
  */
-BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
+BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr )
 {
     char buffer[256];
     struct name_hash *nh;

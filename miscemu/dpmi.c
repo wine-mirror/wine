@@ -41,14 +41,14 @@ typedef struct
     WORD  ss;
 } REALMODECALL;
 
-extern void do_mscdex(struct sigcontext_struct *context);
+extern void do_mscdex( SIGCONTEXT *context );
 
 /**********************************************************************
  *	    INT_Int31Handler
  *
  * Handler for int 31h (DPMI).
  */
-void INT_Int31Handler( struct sigcontext_struct context )
+void INT_Int31Handler( SIGCONTEXT context )
 {
     DWORD dw;
     BYTE *ptr;
@@ -199,7 +199,7 @@ void INT_Int31Handler( struct sigcontext_struct context )
              */
             if ((BL_reg(&context) == 0x2f) && ((p->eax & 0xFF00) == 0x1500))
             {
-                struct sigcontext_struct context2;
+                SIGCONTEXT context2;
                 EAX_reg(&context2) = p->eax;
                 EBX_reg(&context2) = p->ebx;
                 ECX_reg(&context2) = p->ecx;

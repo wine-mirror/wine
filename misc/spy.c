@@ -429,7 +429,7 @@ static const char *SPY_GetMsgName( UINT msg )
         if (!MessageTypeNames[msg]) return "???";
         return MessageTypeNames[msg];
     }
-    sprintf( buffer, "WM_USER+%04x\n", msg - WM_USER );
+    sprintf( buffer, "WM_USER+%04x", msg - WM_USER );
     return buffer;
 }
 

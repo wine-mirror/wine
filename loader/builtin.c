@@ -105,6 +105,7 @@ extern const DLL_DESCRIPTOR NTDLL_Descriptor;
 extern const DLL_DESCRIPTOR SHELL32_Descriptor;
 extern const DLL_DESCRIPTOR USER32_Descriptor;
 extern const DLL_DESCRIPTOR VERSION_Descriptor;
+extern const DLL_DESCRIPTOR WINMM_Descriptor;
 extern const DLL_DESCRIPTOR WINSPOOL_Descriptor;
 extern const DLL_DESCRIPTOR WSOCK32_Descriptor;
 
@@ -154,6 +155,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },
     { &VERSION_Descriptor,  0 },
+    { &WINMM_Descriptor,    0 },
     { &WINSPOOL_Descriptor, 0 },
     { &WSOCK32_Descriptor,  0 },
     /* Last entry */
@@ -166,7 +168,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
  *
  * Load all built-in modules marked as 'always used'.
  */
-BOOL BUILTIN_Init(void)
+BOOL16 BUILTIN_Init(void)
 {
     BUILTIN_DLL *dll;
     NE_MODULE *pModule;
@@ -196,7 +198,7 @@ BOOL BUILTIN_Init(void)
  * Load a built-in module. If the 'force' parameter is FALSE, we only
  * load the module if it has not been disabled via the -dll option.
  */
-HMODULE BUILTIN_LoadModule( LPCSTR name, BOOL force )
+HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL16 force )
 {
     HMODULE hModule;
     NE_MODULE *pModule;
@@ -377,7 +379,7 @@ DWORD BUILTIN_GetProcAddress32( NE_MODULE *pModule, char *function )
  *
  * Set runtime DLL usage flags
  */
-BOOL BUILTIN_ParseDLLOptions( const char *str )
+BOOL16 BUILTIN_ParseDLLOptions( const char *str )
 {
     BUILTIN_DLL *dll;
     const char *p;

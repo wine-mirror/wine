@@ -54,8 +54,8 @@ typedef struct tagMESSAGEQUEUE
   WORD      wakeBits;               /* 44 Queue wake-up bits */
   WORD      wakeMask;               /* 46 Queue wake-up mask */
   WORD      SendMsgReturnPtrs[3];   /* 48 Near ptr to return values (?) */
-  HANDLE    hCurHook;               /* 4e Current hook */
-  HANDLE    hooks[WH_NB_HOOKS];     /* 50 Task hooks list */
+  HANDLE16  hCurHook;               /* 4e Current hook */
+  HANDLE16  hooks[WH_NB_HOOKS];     /* 50 Task hooks list */
   WORD      reserved4[3];           /* 68 Unknown */
   QMSG      messages[1];            /* 6e Queue messages */
 } MESSAGEQUEUE;

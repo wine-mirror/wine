@@ -313,7 +313,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
         {
             short xdelta, ydelta;
             dwTextSize = GetTextExtent(hDC,wndPtr->text,strlen(wndPtr->text));
-            GetTextMetrics( hDC, &tm );
+            GetTextMetrics16( hDC, &tm );
             xdelta = ((rc.right - rc.left) - LOWORD(dwTextSize) - 1) / 2;
             ydelta = ((rc.bottom - rc.top) - tm.tmHeight - 1) / 2;
             if (xdelta < 0) xdelta = 0;
@@ -382,7 +382,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     if (action == ODA_DRAWENTIRE) FillRect16( hDC, &rc, hBrush );
 
-    GetTextMetrics(hDC, &tm);
+    GetTextMetrics16(hDC, &tm);
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
 
       /* Draw the check-box bitmap */
@@ -512,9 +512,9 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     dis.CtlID      = wndPtr->wIDmenu;
     dis.itemID     = 0;
     dis.itemAction = action;
-    dis.itemState  = (infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0 |
-                     (infoPtr->state & BUTTON_HIGHLIGHTED) ? ODS_SELECTED : 0 |
-                     (wndPtr->dwStyle & WS_DISABLED) ? ODS_DISABLED : 0;
+    dis.itemState  = ((infoPtr->state & BUTTON_HASFOCUS) ? ODS_FOCUS : 0) |
+                     ((infoPtr->state & BUTTON_HIGHLIGHTED) ? ODS_SELECTED : 0) |
+                     ((wndPtr->dwStyle & WS_DISABLED) ? ODS_DISABLED : 0);
     dis.hwndItem   = wndPtr->hwndSelf;
     dis.hDC        = hDC;
     dis.itemData   = 0;

@@ -9,8 +9,8 @@ static inline int runtime_cpu(void) { return 3; }
 
 #ifndef WINELIB
 
-#if defined ( linux) 
-struct sigcontext_struct
+#ifdef linux
+typedef struct
 {
 	unsigned short sc_gs, __gsh;
 	unsigned short sc_fs, __fsh;
@@ -34,17 +34,17 @@ struct sigcontext_struct
 	unsigned long i387;
 	unsigned long oldmask;
 	unsigned long cr2;
-};
+} SIGCONTEXT;
 #define WINE_DATA_SELECTOR 0x2b
 #define WINE_CODE_SELECTOR 0x23
 #endif  /* linux */
 
 #ifdef __NetBSD__
 #include <signal.h>
-#define sigcontext_struct sigcontext
+typedef struct sigcontext SIGCONTEXT;
 #define WINE_DATA_SELECTOR 0x1f
 #define WINE_CODE_SELECTOR 0x17
-#endif
+#endif  /* NetBSD */
 
 #if defined(__svr4__) || defined(_SCO_DS)
 #include <signal.h>
@@ -52,17 +52,23 @@ struct sigcontext_struct
 #include <sys/regset.h>
 #endif
 #include <sys/ucontext.h>
-#define sigcontext_struct ucontext
+typedef struct ucontext SIGCONTEXT;
 #define WINE_DATA_SELECTOR 0x1f
 #define WINE_CODE_SELECTOR 0x17
-#endif
+#endif  /* svr4 || SCO_DS */
 
 #ifdef __FreeBSD__
 #include <signal.h>
-#define sigcontext_struct sigcontext
+typedef struct sigcontext SIGCONTEXT;
 #define WINE_DATA_SELECTOR 0x27
 #define WINE_CODE_SELECTOR 0x1f
-#endif
+#endif  /* FreeBSD */
+
+#else  /* WINELIB */
+
+typedef void SIGCONTEXT;
+#define WINE_DATA_SELECTOR 0x00
+#define WINE_CODE_SELECTOR 0x00
 
 #endif  /* WINELIB */
 

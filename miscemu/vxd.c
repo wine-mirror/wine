@@ -17,7 +17,7 @@
 /***********************************************************************
  *           VXD_PageFile
  */
-void VXD_PageFile( struct sigcontext_struct context )
+void VXD_PageFile( SIGCONTEXT context )
 {
     /* taken from Ralf Brown's Interrupt List */
 
@@ -62,7 +62,7 @@ void VXD_PageFile( struct sigcontext_struct context )
 /***********************************************************************
  *           VXD_Shell
  */
-void VXD_Shell( struct sigcontext_struct context )
+void VXD_Shell( SIGCONTEXT context )
 {
     dprintf_vxd(stddeb,"VxD Shell called ...\n");
 
@@ -120,7 +120,7 @@ void VXD_Shell( struct sigcontext_struct context )
 /***********************************************************************
  *           VXD_Comm
  */
-void VXD_Comm( struct sigcontext_struct context )
+void VXD_Comm( SIGCONTEXT context )
 {
     dprintf_vxd(stddeb,"VxD Comm called ...\n");
 

@@ -17,11 +17,13 @@ typedef enum
     WIN_PROC_32W
 } WINDOWPROCTYPE;
 
-extern HANDLE32 WINPROC_AllocWinProc( UINT32 func, WINDOWPROCTYPE type );
-extern HANDLE32 WINPROC_CopyWinProc( HANDLE32 handle );
-extern void WINPROC_FreeWinProc( HANDLE32 handle );
-extern WINDOWPROCTYPE WINPROC_GetWinProcType( HANDLE32 handle );
-extern WNDPROC16 WINPROC_GetFunc16( HANDLE32 handle );
-extern WNDPROC32 WINPROC_GetFunc32( HANDLE32 handle );
+typedef void *HWINDOWPROC;  /* Really a pointer to a WINDOWPROC */
+
+extern BOOL32 WINPROC_Init(void);
+extern WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type );
+extern BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
+                               WINDOWPROCTYPE type );
+extern void WINPROC_FreeProc( HWINDOWPROC proc );
+extern WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc );
 
 #endif  /* __WINE_WINPROC_H */

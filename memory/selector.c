@@ -101,8 +101,8 @@ WORD FreeSelector( WORD sel )
  * Set the LDT entries for an array of selectors.
  */
 static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size,
-                                 enum seg_type type, BOOL is32bit,
-                                 BOOL readonly )
+                                 enum seg_type type, BOOL32 is32bit,
+                                 BOOL32 readonly )
 {
     ldt_entry entry;
     WORD i, count;
@@ -136,7 +136,7 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size,
  * Allocate selectors for a block of linear memory.
  */
 WORD SELECTOR_AllocBlock( const void *base, DWORD size, enum seg_type type,
-                          BOOL is32bit, BOOL readonly )
+                          BOOL32 is32bit, BOOL32 readonly )
 {
     WORD sel, count;
 
@@ -154,7 +154,7 @@ WORD SELECTOR_AllocBlock( const void *base, DWORD size, enum seg_type type,
  * Change the size of a block of selectors.
  */
 WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
-                            enum seg_type type, BOOL is32bit, BOOL readonly )
+                           enum seg_type type, BOOL32 is32bit, BOOL32 readonly)
 {
     WORD i, oldcount, newcount;
     ldt_entry entry;

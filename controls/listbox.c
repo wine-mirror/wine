@@ -107,7 +107,7 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   if ((hdc = GetDC(0)))
   {
       TEXTMETRIC16 tm;
-      GetTextMetrics( hdc, &tm );
+      GetTextMetrics16( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
       dprintf_listbox(stddeb,"CreateListBoxStruct:  font height %d\n",
                       lphl->StdItemHeight);
@@ -1273,7 +1273,7 @@ static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
   if ((hdc = GetDC(0)))
   {
       TEXTMETRIC16 tm;
-      GetTextMetrics( hdc, &tm );
+      GetTextMetrics16( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
       dprintf_listbox(stddeb,"LBSetFont:  new font %d with height %d\n",
                       lphl->hFont, lphl->StdItemHeight);
@@ -2094,7 +2094,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
     {
         char mask[20];
         
-        if (!filespec[0]) strcpy( mask, "*.*" );
+        if (!filespec || !filespec[0]) strcpy( mask, "*.*" );
         else
         {
             /* If the path exists and is a directory, chdir to it */

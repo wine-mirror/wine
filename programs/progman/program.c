@@ -257,7 +257,7 @@ VOID PROGRAM_ExecuteProgram(HLOCAL hProgram)
   LPSTR lpszCmdLine = LocalLock(program->hCmdLine);
   LPSTR lpszWorkDir = LocalLock(program->hWorkDir);
 
-  /* FIXME set working direktory */
+  /* FIXME set working directory */
   lpszWorkDir = lpszWorkDir;
 
   WinExec(lpszCmdLine, program->nCmdShow);

@@ -825,21 +825,6 @@ BOOL32 SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *wndpl )
 
 
 /*******************************************************************
- *	   ACTIVATEAPP_callback
- */
-BOOL ACTIVATEAPP_callback(HWND hWnd, LPARAM lParam)
-{
-    ACTIVATESTRUCT  *lpActStruct = (ACTIVATESTRUCT*)lParam;
- 
-    if (GetWindowTask(hWnd) != lpActStruct->hTaskSendTo) return 1;
-
-    SendMessage16( hWnd, WM_ACTIVATEAPP, lpActStruct->wFlag,
-		(LPARAM)((lpActStruct->hWindowTask)?lpActStruct->hWindowTask:0));
-    return 1;
-}
-
-
-/*******************************************************************
  *	   WINPOS_SetActiveWindow
  *
  * back-end to SetActiveWindow
@@ -849,8 +834,6 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     WND                   *wndPtr          = WIN_FindWndPtr(hWnd);
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
     CBTACTIVATESTRUCT16   *cbtStruct;
-    FARPROC                enumCallback    = MODULE_GetWndProcEntry16("ActivateAppProc");
-    ACTIVATESTRUCT         actStruct;
     WORD                   wIconized=0;
 
     /* FIXME: When proper support for cooperative multitasking is in place 
@@ -940,24 +923,34 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     /* send WM_ACTIVATEAPP if necessary */
     if (hActiveQ != wndPtr->hmemTaskQ)
     {
-	HTASK hT = QUEUE_GetQueueTask( hActiveQ );
+        WND **list, **ppWnd;
 
-	actStruct.wFlag = 0;                  /* deactivate */
-	actStruct.hWindowTask = QUEUE_GetQueueTask(wndPtr->hmemTaskQ);
-	actStruct.hTaskSendTo = hT;
+        if ((list = WIN_BuildWinArray( WIN_GetDesktop() )))
+        {
+            for (ppWnd = list; *ppWnd; ppWnd++)
+            {
+                /* Make sure that the window still exists */
+                if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+                if ((*ppWnd)->hmemTaskQ != hActiveQ) continue;
+                SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
+                               0, QUEUE_GetQueueTask(wndPtr->hmemTaskQ) );
+            }
+            HeapFree( SystemHeap, 0, list );
+        }
 
-	/* send WM_ACTIVATEAPP to top-level windows
-	 * that belong to the actStruct.hTaskSendTo task
-	 */
-	EnumWindows( enumCallback , (LPARAM)&actStruct );
-
-	actStruct.wFlag = 1;                  /* activate */
-	actStruct.hWindowTask = hT;
-	actStruct.hTaskSendTo = QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
-
-	EnumWindows( enumCallback , (LPARAM)&actStruct );
-
-	if( !IsWindow(hWnd) ) return 0;
+        if ((list = WIN_BuildWinArray( WIN_GetDesktop() )))
+        {
+            for (ppWnd = list; *ppWnd; ppWnd++)
+            {
+                /* Make sure that the window still exists */
+                if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
+                if ((*ppWnd)->hmemTaskQ != wndPtr->hmemTaskQ) continue;
+                SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
+                               1, QUEUE_GetQueueTask( hActiveQ ) );
+            }
+            HeapFree( SystemHeap, 0, list );
+        }
+	if (!IsWindow(hWnd)) return 0;
     }
 
     /* walk up to the first unowned window */

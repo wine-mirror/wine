@@ -640,7 +640,7 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
 	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
 	SetBkMode( hdc, TRANSPARENT );
 	DrawText16( hdc, buffer, -1, &r,
-                    DT_SINGLELINE | DT_CENTER | DT_VCENTER );
+                    DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
     }
 }
 

@@ -247,7 +247,7 @@ LPVOID VirtualAlloc(LPVOID lpvAddress, DWORD cbSize,
 /***********************************************************************
  *           VirtualFree               (KERNEL32.550)
  */
-BOOL VirtualFree(LPVOID lpvAddress, DWORD cbSize, DWORD fdwFreeType)
+BOOL32 VirtualFree(LPVOID lpvAddress, DWORD cbSize, DWORD fdwFreeType)
 {
     int i;
 

@@ -362,7 +362,7 @@ base	0
 358 stub RtlExtendedIntegerMultiply
 359 stub RtlExtendedLargeIntegerDivide
 360 stub RtlExtendedMagicDivide
-361 stub RtlFillMemory
+361 stdcall RtlFillMemory(ptr long long) RtlFillMemory
 362 stub RtlFillMemoryUlong
 363 stub RtlFindClearBits
 364 stub RtlFindClearBitsAndSet
@@ -436,7 +436,7 @@ base	0
 432 stub RtlLookupElementGenericTable
 433 stub RtlMakeSelfRelativeSD
 434 stub RtlMapGenericMask
-435 stub RtlMoveMemory
+435 stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
 436 stub RtlMultiByteToUnicodeN
 437 stub RtlMultiByteToUnicodeSize
 438 stub RtlNewInstanceSecurityObject
@@ -539,7 +539,7 @@ base	0
 535 stub RtlWalkHeap
 536 stub RtlWriteRegistryValue
 537 stub RtlZeroHeap
-538 stub RtlZeroMemory
+538 stdcall RtlZeroMemory(ptr long) RtlZeroMemory
 539 stub RtlpInitializeRtl
 540 stub RtlpNtCreateKey
 541 stub RtlpNtEnumerateSubKey

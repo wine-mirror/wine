@@ -17,7 +17,7 @@ typedef struct
 } RGNOBJ;
 
 
-extern BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj );
-extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT32 x, INT32 y );
+extern BOOL16 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj );
+extern BOOL16 REGION_FrameRgn( HRGN32 dest, HRGN32 src, INT32 x, INT32 y );
 
 #endif  /* __WINE_REGION_H */

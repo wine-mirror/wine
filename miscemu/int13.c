@@ -13,7 +13,7 @@
  *
  * Handler for int 13h (disk I/O).
  */
-void INT_Int13Handler( struct sigcontext_struct context )
+void INT_Int13Handler( SIGCONTEXT context )
 {
     switch(AH_reg(&context))
     {

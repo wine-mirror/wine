@@ -98,7 +98,7 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->next, ptr->child, ptr->parent, ptr->owner,
              ptr->class, className, ptr->hInstance, ptr->hmemTaskQ,
              ptr->hrgnUpdate, ptr->hwndLastActive, ptr->hdce, ptr->wIDmenu,
-             ptr->dwStyle, ptr->dwExStyle, ptr->winproc,
+             ptr->dwStyle, ptr->dwExStyle, (UINT32)ptr->winproc,
              ptr->text ? ptr->text : "",
              ptr->rectClient.left, ptr->rectClient.top, ptr->rectClient.right,
              ptr->rectClient.bottom, ptr->rectWindow.left, ptr->rectWindow.top,
@@ -130,7 +130,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     ptr = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop;
     if (!ptr)
     {
-        fprintf( stderr, "*** Invalid window handle\n" );
+        fprintf( stderr, "*** Invalid window handle %04x\n", hwnd );
         return;
     }
 
@@ -146,7 +146,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
         
         fprintf( stderr, "%08lx %-6.4x %-17.17s %08x %08x\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
-                 (unsigned) ptr->dwStyle, ptr->winproc );
+                 (UINT32)ptr->dwStyle, (UINT32)ptr->winproc );
         
         if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
         ptr = ptr->next;
@@ -303,20 +303,6 @@ void WIN_SendParentNotify( HWND hwnd, WORD event, WORD idChild, LONG lValue )
 
 
 /***********************************************************************
- *           WIN_SetWndProc
- *
- * Set the window procedure and return the old one.
- */
-static HANDLE32 WIN_SetWndProc( WND *pWnd, HANDLE32 proc, WINDOWPROCTYPE type)
-{
-    HANDLE32 oldProc = pWnd->winproc;
-    pWnd->winproc = WINPROC_AllocWinProc( proc, type );
-    if (oldProc) WINPROC_FreeWinProc( oldProc );
-    return oldProc;
-}
-
-
-/***********************************************************************
  *           WIN_DestroyWindow
  *
  * Destroy storage associated to a window
@@ -347,7 +333,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
     if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
-    WIN_SetWndProc( wndPtr, (HANDLE32)0, WIN_PROC_16 );
+    WINPROC_FreeProc( wndPtr->winproc );
     wndPtr->class->cWindows--;
     USER_HEAP_FREE( hwnd );
 }
@@ -395,7 +381,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->parent            = NULL;
     pWndDesktop->owner             = NULL;
     pWndDesktop->class             = class;
-    pWndDesktop->winproc           = WINPROC_CopyWinProc( class->winproc );
+    pWndDesktop->winproc           = NULL;
     pWndDesktop->dwMagic           = WND_MAGIC;
     pWndDesktop->hwndSelf          = hwndDesktop;
     pWndDesktop->hInstance         = 0;
@@ -426,6 +412,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hProp             = 0;
     pWndDesktop->userdata          = 0;
 
+    WINPROC_SetProc( &pWndDesktop->winproc, (WNDPROC16)class->winproc, 0 );
     EVENT_RegisterWindow( pWndDesktop );
     SendMessage32A( hwndDesktop, WM_NCCREATE, 0, 0 );
     if ((hdc = GetDC( hwndDesktop )) != 0)
@@ -522,7 +509,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                               WIN_FindWndPtr(WIN_GetTopParent(cs->hwndParent));
     wndPtr->window         = 0;
     wndPtr->class          = classPtr;
-    wndPtr->winproc        = WINPROC_CopyWinProc( classPtr->winproc );
+    wndPtr->winproc        = NULL;
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hInstance      = cs->hInstance;
@@ -546,6 +533,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     if (classPtr->cbWndExtra) memset( wndPtr->wExtra, 0, classPtr->cbWndExtra);
     classPtr->cWindows++;
+
+    /* Set the window procedure */
+
+    WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)classPtr->winproc, 0 );
 
     /* Correct the window style */
 
@@ -706,14 +697,14 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         WINPOS_FindIconPos( hwnd );
         SetWindowPos( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
                       SYSMETRICS_CXICON, SYSMETRICS_CYICON, SWP_FRAMECHANGED |
-                      (cs->style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 );
+                      ((cs->style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 ));
     }
     else if (wndPtr->dwStyle & WS_MAXIMIZE)
     {
         POINT16 maxSize, maxPos, minTrack, maxTrack;
         NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
         SetWindowPos( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
-            SWP_FRAMECHANGED | (cs->style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 );
+            SWP_FRAMECHANGED | ((cs->style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0) );
     }
     else if (cs->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
@@ -928,7 +919,7 @@ BOOL DestroyWindow( HWND hwnd )
 BOOL CloseWindow(HWND hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr->dwStyle & WS_CHILD) return TRUE;
+    if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return TRUE;
     ShowWindow(hWnd, SW_MINIMIZE);
     return TRUE;
 }
@@ -1057,9 +1048,9 @@ HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
     HWND hwnd;
 
     atom = className ? GlobalFindAtom32W( className ) : 0;
-    buffer = STRING32_DupUniToAnsi( title );
+    buffer = title ? STRING32_DupUniToAnsi( title ) : NULL;
     hwnd = WIN_FindWindow( 0, 0, atom, buffer );
-    free( buffer );
+    if (buffer) free( buffer );
     return hwnd;
 }
 
@@ -1153,7 +1144,7 @@ BOOL IsWindowUnicode( HWND hwnd )
     WND * wndPtr; 
 
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
-    return (WINPROC_GetWinProcType( wndPtr->winproc ) == WIN_PROC_32W);
+    return (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
 }
 
 
@@ -1164,7 +1155,15 @@ WORD GetWindowWord( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    if (offset >= 0) return *(WORD *)(((char *)wndPtr->wExtra) + offset);
+    if (offset >= 0)
+    {
+        if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
+        {
+            fprintf( stderr, "SetWindowWord: invalid offset %d\n", offset );
+            return 0;
+        }
+        return *(WORD *)(((char *)wndPtr->wExtra) + offset);
+    }
     switch(offset)
     {
     case GWW_ID:         return wndPtr->wIDmenu;
@@ -1196,7 +1195,15 @@ WORD SetWindowWord( HWND32 hwnd, INT32 offset, WORD newval )
     WORD *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    if (offset >= 0) ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
+    if (offset >= 0)
+    {
+        if (offset + sizeof(WORD) > wndPtr->class->cbWndExtra)
+        {
+            fprintf( stderr, "SetWindowWord: invalid offset %d\n", offset );
+            return 0;
+        }
+        ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
+    }
     else switch(offset)
     {
 	case GWW_ID:        ptr = (WORD *)&wndPtr->wIDmenu; break;
@@ -1212,85 +1219,82 @@ WORD SetWindowWord( HWND32 hwnd, INT32 offset, WORD newval )
 
 
 /**********************************************************************
- *	     GetWindowLong16    (USER.135)
+ *	     WIN_GetWindowLong
+ *
+ * Helper function for GetWindowLong().
  */
-LONG GetWindowLong16( HWND16 hwnd, INT16 offset )
+static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
 {
-    LONG ret = GetWindowLong32A( (HWND32)hwnd, offset );
-    if (offset == GWL_WNDPROC) return (LONG)WINPROC_GetFunc16( (HANDLE32)ret );
-    return ret;
-}
-
-
-/**********************************************************************
- *	     GetWindowLong32A    (USER32.304)
- */
-LONG GetWindowLong32A( HWND32 hwnd, INT32 offset )
-{
+    LONG retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    if (offset >= 0) return *(LONG *)(((char *)wndPtr->wExtra) + offset);
+    if (offset >= 0)
+    {
+        if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
+        {
+            fprintf( stderr, "GetWindowLong: invalid offset %d\n", offset );
+            return 0;
+        }
+        retval = *(LONG *)(((char *)wndPtr->wExtra) + offset);
+        /* Special case for dialog window procedure */
+        if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+            return (LONG)WINPROC_GetProc( (HWINDOWPROC)retval, type );
+        return retval;
+    }
     switch(offset)
     {
         case GWL_USERDATA:   return wndPtr->userdata;
         case GWL_STYLE:      return wndPtr->dwStyle;
         case GWL_EXSTYLE:    return wndPtr->dwExStyle;
         case GWL_ID:         return wndPtr->wIDmenu;
-        case GWL_WNDPROC:    return (LONG)WINPROC_GetFunc32( wndPtr->winproc );
+        case GWL_WNDPROC:    return (LONG)WINPROC_GetProc( wndPtr->winproc,
+                                                           type );
         case GWL_HWNDPARENT: return wndPtr->parent ?
                                         (HWND32)wndPtr->parent->hwndSelf : 0;
         case GWL_HINSTANCE:  return (HINSTANCE32)wndPtr->hInstance;
         default:
-            fprintf( stderr, "GetWindowLong32A: unknown offset %d\n", offset );
+            fprintf( stderr, "GetWindowLong: unknown offset %d\n", offset );
     }
     return 0;
 }
 
 
 /**********************************************************************
- *	     GetWindowLong32W    (USER32.305)
+ *	     WIN_SetWindowLong
+ *
+ * Helper function for SetWindowLong().
  */
-LONG GetWindowLong32W( HWND32 hwnd, INT32 offset )
-{
-    return GetWindowLong32A( hwnd, offset );
-}
-
-
-/**********************************************************************
- *	     SetWindowLong16    (USER.136)
- */
-LONG SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
-{
-    if (offset == GWL_WNDPROC)
-    {
-        HANDLE32 ret;
-        WND *wndPtr = WIN_FindWndPtr( hwnd );
-        if (!wndPtr) return 0;
-        ret = WIN_SetWndProc( wndPtr, (HANDLE32)newval, WIN_PROC_16 );
-        return (LONG)WINPROC_GetFunc16( ret );
-    }
-    return SetWindowLong32A( hwnd, offset, newval );
-}
-
-
-/**********************************************************************
- *	     SetWindowLong32A    (USER32.516)
- */
-LONG SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
+static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
+                               WINDOWPROCTYPE type )
 {
     LONG *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    if (offset >= 0) ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
+    if (offset >= 0)
+    {
+        if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
+        {
+            fprintf( stderr, "SetWindowLong: invalid offset %d\n", offset );
+            return 0;
+        }
+        ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
+        /* Special case for dialog window procedure */
+        if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
+        {
+            retval = (LONG)WINPROC_GetProc( (HWINDOWPROC)*ptr, type );
+            WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval, type );
+            return retval;
+        }
+    }
     else switch(offset)
     {
         case GWL_ID:
         case GWL_HINSTANCE:
             return SetWindowWord( hwnd, offset, (WORD)newval );
 	case GWL_WNDPROC:
-            return (LONG)WINPROC_GetFunc32( WIN_SetWndProc( wndPtr,
-                                                            (HANDLE32)newval,
-                                                            WIN_PROC_32A ));
+            retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
+            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, type );
+            return retval;
         case GWL_USERDATA: ptr = &wndPtr->userdata; break;
 	case GWL_STYLE:    ptr = &wndPtr->dwStyle; break;
         case GWL_EXSTYLE:  ptr = &wndPtr->dwExStyle; break;
@@ -1305,19 +1309,56 @@ LONG SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 
 
 /**********************************************************************
+ *	     GetWindowLong16    (USER.135)
+ */
+LONG GetWindowLong16( HWND16 hwnd, INT16 offset )
+{
+    return WIN_GetWindowLong( (HWND32)hwnd, offset, WIN_PROC_16 );
+}
+
+
+/**********************************************************************
+ *	     GetWindowLong32A    (USER32.304)
+ */
+LONG GetWindowLong32A( HWND32 hwnd, INT32 offset )
+{
+    return WIN_GetWindowLong( hwnd, offset, WIN_PROC_32A );
+}
+
+
+/**********************************************************************
+ *	     GetWindowLong32W    (USER32.305)
+ */
+LONG GetWindowLong32W( HWND32 hwnd, INT32 offset )
+{
+    return WIN_GetWindowLong( hwnd, offset, WIN_PROC_32W );
+}
+
+
+/**********************************************************************
+ *	     SetWindowLong16    (USER.136)
+ */
+LONG SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
+{
+    return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_16 );
+}
+
+
+/**********************************************************************
+ *	     SetWindowLong32A    (USER32.516)
+ */
+LONG SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
+{
+    return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32A );
+}
+
+
+/**********************************************************************
  *	     SetWindowLong32W    (USER32.517)
  */
 LONG SetWindowLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 {
-    if (offset == GCL_WNDPROC)
-    {
-        WND *wndPtr = WIN_FindWndPtr( hwnd );
-        if (!wndPtr) return 0;
-        return (LONG)WINPROC_GetFunc32( WIN_SetWndProc( wndPtr,
-                                                        (HANDLE32)newval,
-                                                        WIN_PROC_32W ));
-    }
-    return SetWindowLong32A( hwnd, offset, newval );
+    return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32W );
 }
 
 
@@ -1568,126 +1609,224 @@ HWND GetLastActivePopup(HWND hwnd)
 
 
 /*******************************************************************
- *           EnumWindows   (USER.54)
+ *           WIN_BuildWinArray
+ *
+ * Build an array of pointers to all children of a given window.
+ * The array must be freed with HeapFree(SystemHeap).
  */
-BOOL EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
+WND **WIN_BuildWinArray( WND *wndPtr )
 {
-    WND *wndPtr;
-    HWND *list, *pWnd;
-    int count;
+    WND **list, **ppWnd;
+    WND *pWnd;
+    INT32 count;
+
+    /* First count the windows */
+
+    if (!wndPtr) wndPtr = pWndDesktop;
+    for (pWnd = wndPtr->child, count = 0; pWnd; pWnd = pWnd->next) count++;
+    count++;  /* For the terminating NULL */
+
+    /* Now build the list of all windows */
+
+    if (!(list = (WND **)HeapAlloc( SystemHeap, 0, sizeof(WND *) * count )))
+        return NULL;
+    for (pWnd = wndPtr->child, ppWnd = list; pWnd; pWnd = pWnd->next)
+        *ppWnd++ = pWnd;
+    *ppWnd = NULL;
+    return list;
+}
+
+
+/*******************************************************************
+ *           EnumWindows16   (USER.54)
+ */
+BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
+{
+    WND **list, **ppWnd;
 
     /* We have to build a list of all windows first, to avoid */
     /* unpleasant side-effects, for instance if the callback  */
     /* function changes the Z-order of the windows.           */
 
-      /* First count the windows */
+    if (!(list = WIN_BuildWinArray( pWndDesktop ))) return FALSE;
 
-    count = 0;
-    for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next) count++;
-    if (!count) return TRUE;
+    /* Now call the callback function for every window */
 
-      /* Now build the list of all windows */
-
-    if (!(pWnd = list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
-    for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
-        *pWnd++ = wndPtr->hwndSelf;
-
-      /* Now call the callback function for every window */
-
-    for (pWnd = list; count > 0; count--, pWnd++)
+    for (ppWnd = list; *ppWnd; ppWnd++)
     {
-          /* Make sure that window still exists */
-        if (!IsWindow(*pWnd)) continue;
-        if (!CallEnumWindowsProc( lpEnumFunc, *pWnd, lParam )) break;
+        /* Make sure that the window still exists */
+        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if (!CallEnumWindowsProc16( lpEnumFunc, (*ppWnd)->hwndSelf, lParam ))
+            break;
     }
-    free( list );
+    HeapFree( SystemHeap, 0, list );
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *           EnumWindows32   (USER32.192)
+ */
+BOOL32 EnumWindows32( WNDENUMPROC32 lpEnumFunc, LPARAM lParam )
+{
+    WND **list, **ppWnd;
+
+    /* We have to build a list of all windows first, to avoid */
+    /* unpleasant side-effects, for instance if the callback  */
+    /* function changes the Z-order of the windows.           */
+
+    if (!(list = WIN_BuildWinArray( pWndDesktop ))) return FALSE;
+
+    /* Now call the callback function for every window */
+
+    for (ppWnd = list; *ppWnd; ppWnd++)
+    {
+        /* Make sure that the window still exists */
+        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if (!CallEnumWindowsProc32( lpEnumFunc, (*ppWnd)->hwndSelf, lParam ))
+            break;
+    }
+    HeapFree( SystemHeap, 0, list );
     return TRUE;
 }
 
 
 /**********************************************************************
- *           EnumTaskWindows   (USER.225)
+ *           EnumTaskWindows16   (USER.225)
  */
-BOOL EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
+BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
 {
-    WND *wndPtr;
-    HWND *list, *pWnd;
+    WND **list, **ppWnd;
     HANDLE hQueue = GetTaskQueue( hTask );
-    int count;
 
     /* This function is the same as EnumWindows(),    */
     /* except for an added check on the window queue. */
 
-      /* First count the windows */
+    if (!(list = WIN_BuildWinArray( pWndDesktop ))) return FALSE;
 
-    count = 0;
-    for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
-        if (wndPtr->hmemTaskQ == hQueue) count++;
-    if (!count) return TRUE;
+    /* Now call the callback function for every window */
 
-      /* Now build the list of all windows */
-
-    if (!(pWnd = list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
-    for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
-        if (wndPtr->hmemTaskQ == hQueue) *pWnd++ = wndPtr->hwndSelf;
-
-      /* Now call the callback function for every window */
-
-    for (pWnd = list; count > 0; count--, pWnd++)
+    for (ppWnd = list; *ppWnd; ppWnd++)
     {
-          /* Make sure that window still exists */
-        if (!IsWindow(*pWnd)) continue;
-        if (!CallEnumTaskWndProc( lpEnumFunc, *pWnd, lParam )) break;
+        /* Make sure that the window still exists */
+        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
+        if (!CallEnumWindowsProc16( func, (*ppWnd)->hwndSelf, lParam ))
+            break;
     }
-    free( list );
+    HeapFree( SystemHeap, 0, list );
     return TRUE;
 }
 
 
-/*******************************************************************
- *    WIN_EnumChildWin
- *
- *   o hwnd is the first child to use, loop until all next windows
- *     are processed
- * 
- *   o call wdnenumprc
- *
- *   o call ourselves with the next child window
- * 
+/**********************************************************************
+ *           EnumThreadWindows   (USER32.189)
  */
-static BOOL WIN_EnumChildWin( WND *wndPtr, FARPROC wndenumprc, LPARAM lParam )
+BOOL32 EnumThreadWindows( DWORD id, WNDENUMPROC32 func, LPARAM lParam )
 {
-    WND *pWndNext, *pWndChild;
-    while (wndPtr)
+    WND **list, **ppWnd;
+    HANDLE hQueue = GetTaskQueue( (DWORD)id );
+
+    if (!(list = WIN_BuildWinArray( pWndDesktop ))) return FALSE;
+
+    /* Now call the callback function for every window */
+
+    for (ppWnd = list; *ppWnd; ppWnd++)
     {
-        pWndNext = wndPtr->next;    /* storing hwnd is a way to avoid.. */
-        pWndChild = wndPtr->child;  /* ..side effects after wndenumprc  */
-        if (!CallEnumWindowsProc( wndenumprc, wndPtr->hwndSelf, lParam ))
-            return 0;
-        if (pWndChild && IsWindow(pWndChild->hwndSelf))
-            if (!WIN_EnumChildWin(pWndChild, wndenumprc, lParam)) return 0;
-        wndPtr = pWndNext;
-    } 
-    return 1;
+        /* Make sure that the window still exists */
+        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
+        if (!CallEnumWindowsProc32( func, (*ppWnd)->hwndSelf, lParam ))
+            break;
+    }
+    HeapFree( SystemHeap, 0, list );
+    return TRUE;
 }
 
 
-/*******************************************************************
- *    EnumChildWindows        (USER.55)
+/**********************************************************************
+ *           WIN_EnumChildWindows16
  *
- *   o gets the first child of hwnd
- *
- *   o calls WIN_EnumChildWin to do a recursive decent of child windows
+ * Helper function for EnumChildWindows16().
  */
-BOOL EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
+static BOOL16 WIN_EnumChildWindows16( WND **ppWnd, WNDENUMPROC16 func,
+                                      LPARAM lParam )
 {
-    WND *wndPtr;
+    WND **childList;
+    BOOL16 ret = FALSE;
 
-    dprintf_enum(stddeb,"EnumChildWindows\n");
+    while (*ppWnd)
+    {
+        /* Make sure that the window still exists */
+        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        /* Build children list first */
+        if (!(childList = WIN_BuildWinArray( *ppWnd ))) return FALSE;
+        if (!CallEnumWindowsProc16( func, (*ppWnd)->hwndSelf, lParam ))
+            return FALSE;
+        ret = WIN_EnumChildWindows16( childList, func, lParam );
+        HeapFree( SystemHeap, 0, childList );
+        if (!ret) return FALSE;
+        ppWnd++;
+    }
+    return TRUE;
+}
 
-    if (hwnd == 0) return 0;
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    return WIN_EnumChildWin(wndPtr->child, wndenumprc, lParam);
+
+/**********************************************************************
+ *           WIN_EnumChildWindows32
+ *
+ * Helper function for EnumChildWindows32().
+ */
+static BOOL32 WIN_EnumChildWindows32( WND **ppWnd, WNDENUMPROC32 func,
+                                      LPARAM lParam )
+{
+    WND **childList;
+    BOOL32 ret = FALSE;
+
+    while (*ppWnd)
+    {
+        /* Make sure that the window still exists */
+        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
+        /* Build children list first */
+        if (!(childList = WIN_BuildWinArray( *ppWnd ))) return FALSE;
+        if (!CallEnumWindowsProc32( func, (*ppWnd)->hwndSelf, lParam ))
+            return FALSE;
+        ret = WIN_EnumChildWindows32( childList, func, lParam );
+        HeapFree( SystemHeap, 0, childList );
+        if (!ret) return FALSE;
+        ppWnd++;
+    }
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *           EnumChildWindows16   (USER.55)
+ */
+BOOL16 EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
+{
+    WND **list, *pParent;
+
+    if (!(pParent = WIN_FindWndPtr( parent ))) return FALSE;
+    if (!(list = WIN_BuildWinArray( pParent ))) return FALSE;
+    WIN_EnumChildWindows16( list, func, lParam );
+    HeapFree( SystemHeap, 0, list );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *           EnumChildWindows32   (USER32.177)
+ */
+BOOL32 EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func, LPARAM lParam )
+{
+    WND **list, *pParent;
+
+    if (!(pParent = WIN_FindWndPtr( parent ))) return FALSE;
+    if (!(list = WIN_BuildWinArray( pParent ))) return FALSE;
+    WIN_EnumChildWindows32( list, func, lParam );
+    HeapFree( SystemHeap, 0, list );
+    return TRUE;
 }
 
 

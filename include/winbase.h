@@ -3,14 +3,6 @@
 
 #include "wintypes.h"
 
-#ifdef UNICODE
-#define LoadAccelerators LoadAcceleratorsW
-#define TranslateAccelat
-#else
-#define LoadAccelerators LoadAcceleratorsA
-#endif
-
-
 #define INVALID_HANDLE_VALUE    ((HANDLE32) -1)
 
 #define WAIT_FAILED		0xffffffff
@@ -116,8 +108,8 @@ typedef struct {
 	LPVOID	DebugInfo;
 	LONG LockCount;
 	LONG RecursionCount;
-	HANDLE OwningThread;
-	HANDLE LockSemaphore;
+	HANDLE32 OwningThread;
+	HANDLE32 LockSemaphore;
 	DWORD Reserved;
 }CRITICAL_SECTION;
 
@@ -150,36 +142,16 @@ BOOL32 GetVersionEx32A(OSVERSIONINFO32A*);
 BOOL32 GetVersionEx32W(OSVERSIONINFO32W*);
 #define GetVersionEx WINELIB_NAME_AW(GetVersionEx)
 
-int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);
+/*int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);*/
 
-#define GMEM_FIXED          0x0000
-#define GMEM_MOVEABLE 	    0x0002
-
-HACCEL32 LoadAcceleratorsA(   HINSTANCE, const char *);
-#define FreeModule(hLibModule) FreeLibrary((hLibModule))
-#define MakeProcInstance(lpProc,hInstance) (lpProc)
-#define FreeProcInstance(lpProc) (lpProc)
-
+HACCEL32 LoadAcceleratorsA(   HINSTANCE32, const char *);
 
 void     DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void     EnterCriticalSection(CRITICAL_SECTION *lpCrit);
 int      GetCurrentProcessId(void);
-HANDLE32 GetProcessHeap(void);
-LPVOID   HeapAlloc(HANDLE32,DWORD,DWORD);
-DWORD    HeapCompact(HANDLE32,DWORD);
-HANDLE32 HeapCreate(DWORD,DWORD,DWORD);
-BOOL     HeapDestroy(HANDLE32);
-BOOL     HeapFree(HANDLE32,DWORD,LPVOID);
-BOOL     HeapLock(HANDLE32);
-LPVOID   HeapReAlloc(HANDLE32,DWORD,LPVOID,DWORD);
-DWORD    HeapSize(HANDLE32,DWORD,LPVOID);
-BOOL     HeapUnlock(HANDLE32);
-BOOL     HeapValidate(HANDLE32,DWORD,LPVOID);
 void     InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void     LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
-HANDLE   OpenProcess(DWORD access, BOOL inherit, DWORD id);
-int      TerminateProcess(HANDLE h, int ret);
-LPVOID   VirtualAlloc(LPVOID addr,DWORD size,DWORD type,DWORD protect);
-BOOL     VirtualFree( LPVOID addr, DWORD size, DWORD type );
+HANDLE32 OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
+int      TerminateProcess(HANDLE32 h, int ret);
 
 #endif  /* __WINE_WINBASE_H */

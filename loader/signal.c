@@ -54,13 +54,13 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
  * SIGALRM handler.
  */
 #ifdef linux
-static void wine_timer(int signal, struct sigcontext_struct context_struct)
+static void wine_timer(int signal, SIGCONTEXT context_struct)
 {
 #elif defined(__svr4__)
-static void wine_timer(int signal, void *siginfo, ucontext_t *context)
+static void wine_timer(int signal, void *siginfo, SIGCONTEXT *context)
 {
 #else
-static void wine_timer(int signal, int code, struct sigcontext *context)
+static void wine_timer(int signal, int code, SIGCONTEXT *context)
 {
 #endif
     /* Should do real-time timers here */
@@ -75,14 +75,14 @@ static void wine_timer(int signal, int code, struct sigcontext *context)
  * SIGTRAP handler.
  */
 #ifdef linux
-static void SIGNAL_trap(int signal, struct sigcontext_struct context_struct)
+static void SIGNAL_trap(int signal, SIGCONTEXT context_struct)
 {
-    struct sigcontext_struct *context = &context_struct;
+    SIGCONTEXT *context = &context_struct;
 #elif defined(__svr4__) || defined(_SCO_DS)
-static void SIGNAL_trap(int signal, void *siginfo, ucontext_t *context)
+static void SIGNAL_trap(int signal, void *siginfo, SIGCONTEXT *context)
 {
 #else
-static void SIGNAL_trap(int signal, int code, struct sigcontext *context)
+static void SIGNAL_trap(int signal, int code, SIGCONTEXT *context)
 {
 #endif
     wine_debug( signal, context );  /* Enter our debugger */
@@ -95,14 +95,14 @@ static void SIGNAL_trap(int signal, int code, struct sigcontext *context)
  * Segfault handler.
  */
 #ifdef linux
-static void SIGNAL_fault(int signal, struct sigcontext_struct context_struct)
+static void SIGNAL_fault(int signal, SIGCONTEXT context_struct)
 {
-    struct sigcontext_struct *context = &context_struct;
+    SIGCONTEXT *context = &context_struct;
 #elif defined(__svr4__) || defined(_SCO_DS)
-static void SIGNAL_fault(int signal, void *siginfo, ucontext_t *context)
+static void SIGNAL_fault(int signal, void *siginfo, SIGCONTEXT *context)
 {
 #else
-static void SIGNAL_fault(int signal, int code, struct sigcontext *context)
+static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
 {
 #endif
     if (CS_reg(context) == WINE_CODE_SELECTOR)

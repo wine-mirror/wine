@@ -22,6 +22,8 @@
 #include "module.h"
 #include "neexe.h"
 #include "options.h"
+#include "peexe.h"
+#include "pe_image.h"
 #include "queue.h"
 #include "toolhelp.h"
 #include "stddebug.h"
@@ -116,7 +118,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
         winpathlen += len + 1;
     }
     if (!winpathlen) winpathlen = 1;
-    sysdirlen  = GetSystemDirectory( NULL, 0 ) + 1;
+    sysdirlen  = GetSystemDirectory32A( NULL, 0 ) + 1;
     initial_size = 5 + winpathlen +           /* PATH=xxxx */
                    1 +                        /* BYTE 0 at end */
                    sizeof(WORD) +             /* WORD 1 */
@@ -176,7 +178,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
     *p++ = '\0';
     PUT_WORD( p, 1 );
     p += sizeof(WORD);
-    GetSystemDirectory( p, sysdirlen );
+    GetSystemDirectory32A( p, sysdirlen );
     strcat( p, "\\" );
     strcat( p, program_name );
 
@@ -554,9 +556,19 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
     if (Options.debug)
     {
-        DBG_ADDR addr = { pSegTable[pModule->cs-1].selector, pModule->ip };
-        fprintf( stderr, "Task '%s': ", name );
-        DEBUG_AddBreakpoint( &addr );
+        if (pModule->flags & NE_FFLAGS_WIN32)
+        {
+            DBG_ADDR addr = { 0, pModule->pe_module->load_addr + 
+                              pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint };
+            fprintf( stderr, "Win32 task '%s': ", name );
+            DEBUG_AddBreakpoint( &addr );
+        }
+        else
+        {
+            DBG_ADDR addr = { pSegTable[pModule->cs-1].selector, pModule->ip };
+            fprintf( stderr, "Win16 task '%s': ", name );
+            DEBUG_AddBreakpoint( &addr );
+        }
     }
 #endif
 
@@ -584,7 +596,7 @@ static void TASK_DeleteTask( HTASK hTask )
 
     /* Free the task module */
 
-    FreeModule( pTask->hModule );
+    FreeModule16( pTask->hModule );
 
     /* Close all open files of this task */
 
@@ -619,6 +631,7 @@ void TASK_KillCurrentTask( int exitCode )
     extern void EXEC_ExitWindows( int retCode );
 
     TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
+    if (!pTask) EXEC_ExitWindows(0);  /* No current task yet */
 
     /* Perform USER cleanup */
 
@@ -753,7 +766,7 @@ void TASK_Reschedule(void)
 #ifdef WINELIB
 void InitTask(void)
 #else
-void InitTask( struct sigcontext_struct context )
+void InitTask( SIGCONTEXT context )
 #endif
 {
     static int firstTask = 1;
@@ -959,12 +972,12 @@ void Yield(void)
 
 
 /***********************************************************************
- *           MakeProcInstance  (KERNEL.51)
+ *           MakeProcInstance16  (KERNEL.51)
  */
-FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
+FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
-#ifdef WINELIB32
-    return func; /* func can be called directly in Win32 */
+#ifdef WINELIB
+    return func; /* func can be called directly in Winelib */
 #else
     BYTE *thunk;
     SEGPTR thunkaddr;
@@ -987,11 +1000,11 @@ FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
 
 
 /***********************************************************************
- *           FreeProcInstance  (KERNEL.52)
+ *           FreeProcInstance16  (KERNEL.52)
  */
-void FreeProcInstance( FARPROC func )
+void FreeProcInstance16( FARPROC16 func )
 {
-#ifndef WINELIB32
+#ifndef WINELIB
     dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (DWORD)func );
     TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 #endif
@@ -1060,7 +1073,7 @@ HQUEUE GetTaskQueue( HANDLE hTask )
  *           GetTaskQueueDS  (KERNEL.118)
  */
 #ifndef WINELIB
-void GetTaskQueueDS( struct sigcontext_struct context )
+void GetTaskQueueDS( SIGCONTEXT context )
 {
     DS_reg(&context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
@@ -1071,7 +1084,7 @@ void GetTaskQueueDS( struct sigcontext_struct context )
  *           GetTaskQueueES  (KERNEL.119)
  */
 #ifndef WINELIB
-void GetTaskQueueES( struct sigcontext_struct context )
+void GetTaskQueueES( SIGCONTEXT context )
 {
     ES_reg(&context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
@@ -1081,7 +1094,7 @@ void GetTaskQueueES( struct sigcontext_struct context )
 /***********************************************************************
  *           GetCurrentTask   (KERNEL.36)
  */
-HTASK GetCurrentTask(void)
+HTASK16 GetCurrentTask(void)
 {
     return hCurrentTask;
 }
@@ -1223,7 +1236,7 @@ HMODULE GetExePtr( HANDLE handle )
 /***********************************************************************
  *           TaskFirst   (TOOLHELP.63)
  */
-BOOL TaskFirst( TASKENTRY *lpte )
+BOOL16 TaskFirst( TASKENTRY *lpte )
 {
     lpte->hNext = hFirstTask;
     return TaskNext( lpte );
@@ -1233,7 +1246,7 @@ BOOL TaskFirst( TASKENTRY *lpte )
 /***********************************************************************
  *           TaskNext   (TOOLHELP.64)
  */
-BOOL TaskNext( TASKENTRY *lpte )
+BOOL16 TaskNext( TASKENTRY *lpte )
 {
     TDB *pTask;
     INSTANCEDATA *pInstData;
@@ -1265,7 +1278,7 @@ BOOL TaskNext( TASKENTRY *lpte )
 /***********************************************************************
  *           TaskFindHandle   (TOOLHELP.65)
  */
-BOOL TaskFindHandle( TASKENTRY *lpte, HTASK hTask )
+BOOL16 TaskFindHandle( TASKENTRY *lpte, HTASK16 hTask )
 {
     lpte->hNext = hTask;
     return TaskNext( lpte );

@@ -21,7 +21,7 @@ DWORD InquireSystem( WORD code, WORD drive, BOOL enable )
         return 54925;
 
     case 1:  /* Get drive type */
-        drivetype = GetDriveType( drive );
+        drivetype = GetDriveType16( drive );
         return MAKELONG( drivetype, drivetype );
 
     case 2:  /* Enable one-drive logic */

@@ -1,4 +1,150 @@
 ----------------------------------------------------------------------
+Fri Jul  5 16:27:43 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/desktop.c]
+	Use Windows file I/O routines to load the desktop bitmap.
+
+	* [files/file.c]
+	Implemented RemoveDirectory* and DeleteFile*.
+
+	* [include/wine.h]
+	Added SIGCONTEXT typedef to replace #define sigcontext_struct.
+
+	* [loader/task.c]
+	Fixed initial breakpoint setting for Win32 tasks.
+
+	* [misc/wsprintf.c]
+	Ignore Unicode formats for wsprintf16().
+
+	* [objects/font.c]
+	Implemented Win32 version of GetTextMetrics.
+
+	* [windows/winproc.c] [windows/win.c] [windows/class.c]
+	  [windows/dialog.c]
+	Modified windows procedures to use thunks, to ensure that the
+	procedure can be called directly from the Windows program.
+
+	* [windows/win.c]
+	Added function WIN_BuildWinArray() to make it easier to enumerate
+	windows. Implemented Win32 version of EnumWindows() and friends.
+
+Fri Jul  5 11:56:22 1996  Andreas Kirschbaum <ank@rbg.informatik.th-darmstadt.de>
+
+	* [controls/button.c] [windows/win.c]
+	Operator precedence fixes.
+
+	* [controls/edit.c]
+	Implemented ES_PASSWORD, ES_LOWERCASE and ES_UPPERCASE styles.
+	Fixed word wrap with long words.
+
+	* [debugger/debug.l]
+	New alias "where" for command "backtrace".
+
+	* [if1632/gdi.spec]
+	Corrected parameter of ExtTextOut.
+
+	* [loader/module.c]
+	Corrected printing of table of modules.
+
+	* [misc/spy.c]
+	Removed superfluous \n in message name.
+
+	* [windows/message.c]
+	Declared MSG_SendMessage as static.
+	Changed parameter of DirectedYield() from queue handle to task handle.
+	Removed warning mesages for argument of printf.
+
+	* [windows/nonclient.c]
+	Added the flag DT_NOPREFIX when drawing window titles.
+
+	* [windows/win.c]
+	WIN_WalkWindows now prints the invalid window handle.
+	Added a warning if Get-/SetWindowWord/-Long gets an invalid offset.
+
+	* [windows/winproc.c]
+	Allows creating dialog windows with NULL as dialog function.
+
+Wed Jul  3 09:26:41 1996  Peter Lewycky <plewycky@oise.utoronto.ca>
+
+	* [windows/event.c]
+	EVENT_key: Fixes to VK_ code generation for space bar and
+	punctuation.
+
+	* [files/file.c]
+	GetTempFileName: first character in temporary name is "~".
+
+	* [memory/heap.c]
+	HEAP_MakeInUseBlockFree now frees the whole subheap if possible.
+
+	* [objects/text.c]
+	ExtTextOut16(): handle NULL lpRect and ETO_OPAQUE.
+
+	* [misc/driver.c]
+	Removed some bugs and reformatted. Actually loads drivers now.
+
+	* [include/callback.h]
+	Added CallDriverProc() and CallWindowsExitProc().
+
+	* [loader/module.c]
+	MODULE_CallWEP(): new function.
+
+	* [misc/lzexpand.c]
+	LZSeek(): return new pointer, not old one.
+
+	* [misc/ver.c]
+	find_ne_resource(): fixed dependence on LZSeek() bug.
+	GetFileResource(): initialize reslen before using it.
+
+	* [windows/class.c]
+	SetClassWord(): add missing else.
+
+	* [objects/font.c]
+	lpFontList is now MAX_FONTS+1. It used to overwrite the array.
+	InitFontList: allocate one huge array of structures.
+	FONT_MatchFont: uppercase the face name.
+
+Thu Jun 27 12:41:40 1996  Bruce Milner <bruce@genetics.utah.edu>
+
+	* [memory/heap.c]
+	Fixed a typo in HeapReAlloc().
+
+Tue Jun 25 22:22:03 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/directory.c] [files/drive.c] [if1632/kernel.spec]
+	  [if1632/kernel32.spec] [if1632/shell.spec] [include/windows.h]
+	GetTempPath* added
+	GetDriveType* fixed, updated to NewNameStandard.
+	GetCurrentDirectory* fixed (needs to prepend X:\).
+
+	* [controls/listbox.c]
+	Missing NULL check added.
+
+	* [if1632/winmm.spec] [loader/builtin.c]
+	winmm.dll (32bit mmsystem equivalent) specs added.
+
+	* [memory/string.c] [if1632/kernel32.spec] [include/windows.h]
+	Rtl{Move,Zero,Fill}Memory added.
+
+	* [misc/registry.c]
+	Some NULL ptr dereference bugs fixed.
+
+	* [multimedia/mcicda.c][multimedia/mcistring.c][multimedia/mmsystem.c]
+	Check for NULL ptr.
+	Fill mciOpenDrv when mixing mciOpen and mciSendString("open ..").
+	Aliasing should work for all MCI devices.
+
+	* [windows/win.c]
+	Allow passing invalid window handles to CloseWindow().
+
+Tue Jun 25 20:02:15 1996  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [files/directory.c] [if1632/kernel32.spec]
+	GetSystemDirectory32A and GetSystemDirectory32W added.
+
+	* [misc/main.c] [if1632/kernel32.spec]
+	Beep and SetEnvironmentVariable32W added.
+
+----------------------------------------------------------------------
 Wed Jun 19 14:49:27 1996  Marcus Meissner <msmeissn@faui45.informatik.uni-erlangen.de>
 
 	* [files/drive.c] 

@@ -13,10 +13,6 @@
 #pragma pack(1)
 #endif
 
-
-extern BOOL TASK_Init(void);
-extern void TASK_KillCurrentTask( int exitCode );
-
   /* Process database (i.e. a normal DOS PSP) */
 
 typedef struct
@@ -115,8 +111,10 @@ typedef struct
 #pragma pack(4)
 #endif
 
+extern BOOL TASK_Init(void);
 extern HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance,
                               HANDLE hPrevInstance, HANDLE hEnvironment,
                               char *cmdLine, WORD cmdShow );
+extern void TASK_KillCurrentTask( int exitCode );
 
 #endif /* _WINE_TASK_H */

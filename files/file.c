@@ -385,32 +385,6 @@ static DOS_FILE *FILE_Create( LPCSTR path, int mode, int unique )
 
 
 /***********************************************************************
- *           FILE_Unlink
- */
-int FILE_Unlink( LPCSTR path )
-{
-    const char *unixName;
-
-    dprintf_file(stddeb, "FILE_Unlink: '%s'\n", path );
-
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
-    {
-        dprintf_file(stddeb, "FILE_Unlink: removing device '%s'!\n", unixName);
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-        return 0;
-    }
-
-    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return 0;
-    if (unlink( unixName ) == -1)
-    {
-        FILE_SetDosError();
-        return 0;
-    }
-    return 1;
-}
-
-
-/***********************************************************************
  *           FILE_Stat
  *
  * Stat a Unix path name. Return 1 if OK.
@@ -481,31 +455,6 @@ int FILE_SetDateTime( HFILE hFile, WORD date, WORD time )
     if (utime( file->unix_name, &filetime ) != -1) return 1;
     FILE_SetDosError();
     return 0;
-}
-
-
-/***********************************************************************
- *           FILE_RemoveDir
- */
-int FILE_RemoveDir( LPCSTR path )
-{
-    const char *unixName;
-
-    dprintf_file(stddeb, "FILE_RemoveDir: '%s'\n", path );
-
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
-    {
-        dprintf_file(stddeb, "FILE_RemoveDir: device '%s'!\n", unixName);
-        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-        return 0;
-    }
-    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return 0;
-    if (rmdir( unixName ) == -1)
-    {
-        FILE_SetDosError();
-        return 0;
-    }
-    return 1;
 }
 
 
@@ -599,11 +548,12 @@ INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
     }
     else
     {
-        DIR_GetTempDosDir( buffer, 132 );  /* buffer must be at least 144 */
+        GetTempPath32A( 132, buffer );  /* buffer must be at least 144 */
         strcat( buffer, "\\" );
     }
 
     p = buffer + strlen(buffer);
+    *p++ = '~';
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
     sprintf( p, "%04x.tmp", num );
 
@@ -668,7 +618,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     {
         if (!(dosName = DOSFS_GetDosTrueName( name, FALSE ))) goto error;
         lstrcpyn32A( ofs->szPathName, dosName, sizeof(ofs->szPathName) );
-        ofs->fFixedDisk = (GetDriveType( dosName[0]-'A' ) != DRIVE_REMOVABLE);
+        ofs->fFixedDisk = (GetDriveType16( dosName[0]-'A' ) != DRIVE_REMOVABLE);
         dprintf_file( stddeb, "OpenFile(%s): OF_PARSE, res = '%s', %d\n",
                       name, ofs->szPathName, hFileRet );
         /* Return the handle, but close it first */
@@ -723,7 +673,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
     /* Try the Windows system directory */
 
-    GetSystemDirectory( ofs->szPathName, len );
+    GetSystemDirectory32A( ofs->szPathName, len );
     strcat( ofs->szPathName, "\\" );
     strcat( ofs->szPathName, name );
     if ((unixName = DOSFS_GetUnixFileName( ofs->szPathName, TRUE )) != NULL)
@@ -1080,6 +1030,53 @@ BOOL32 FlushFileBuffers( HFILE hFile )
 
 
 /***********************************************************************
+ *           DeleteFile16   (KERNEL.146)
+ */
+BOOL16 DeleteFile16( LPCSTR path )
+{
+    return DeleteFile32A( path );
+}
+
+
+/***********************************************************************
+ *           DeleteFile32A   (KERNEL32.71)
+ */
+BOOL32 DeleteFile32A( LPCSTR path )
+{
+    const char *unixName;
+
+    dprintf_file(stddeb, "DeleteFile: '%s'\n", path );
+
+    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    {
+        dprintf_file(stddeb, "DeleteFile: removing device '%s'!\n", unixName);
+        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        return FALSE;
+    }
+
+    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return FALSE;
+    if (unlink( unixName ) == -1)
+    {
+        FILE_SetDosError();
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DeleteFile32W   (KERNEL32.72)
+ */
+BOOL32 DeleteFile32W( LPCWSTR path )
+{
+    LPSTR xpath = STRING32_DupUniToAnsi(path);
+    BOOL32 ret = RemoveDirectory32A( xpath );
+    free(xpath);
+    return ret;
+}
+
+
+/***********************************************************************
  *           CreateDirectory16   (KERNEL.144)
  */
 BOOL16 CreateDirectory16( LPCSTR path, LPVOID dummy )
@@ -1120,6 +1117,52 @@ BOOL32 CreateDirectory32W( LPCWSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
 {
     LPSTR xpath = STRING32_DupUniToAnsi(path);
     BOOL32 ret = CreateDirectory32A(xpath,lpsecattribs);
+    free(xpath);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           RemoveDirectory16   (KERNEL)
+ */
+BOOL16 RemoveDirectory16( LPCSTR path )
+{
+    return (BOOL16)RemoveDirectory32A( path );
+}
+
+
+/***********************************************************************
+ *           RemoveDirectory32A   (KERNEL32.437)
+ */
+BOOL32 RemoveDirectory32A( LPCSTR path )
+{
+    const char *unixName;
+
+    dprintf_file(stddeb, "RemoveDirectory: '%s'\n", path );
+
+    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    {
+        dprintf_file(stddeb, "RemoveDirectory: device '%s'!\n", unixName);
+        DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        return FALSE;
+    }
+    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return FALSE;
+    if (rmdir( unixName ) == -1)
+    {
+        FILE_SetDosError();
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           RemoveDirectory32W   (KERNEL32.438)
+ */
+BOOL32 RemoveDirectory32W( LPCWSTR path )
+{
+    LPSTR xpath = STRING32_DupUniToAnsi(path);
+    BOOL32 ret = RemoveDirectory32A( xpath );
     free(xpath);
     return ret;
 }

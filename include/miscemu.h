@@ -17,7 +17,7 @@ extern void DOSMEM_FillBiosSegment(void);
 extern HANDLE DOSMEM_BiosSeg;
 
   /* miscemu/instr.c */
-extern BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context );
+extern BOOL INSTR_EmulateInstruction( SIGCONTEXT *context );
 
   /* miscemu/interrupts.c */
 extern BOOL INT_Init(void);

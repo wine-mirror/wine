@@ -205,7 +205,7 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
     if (count == -1) count = strlen(str);
     strPtr = str;
 
-    GetTextMetrics(hdc, &tm);
+    GetTextMetrics16(hdc, &tm);
     if (flags & DT_EXTERNALLEADING)
 	lh = tm.tmHeight + tm.tmExternalLeading;
     else
@@ -351,17 +351,34 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 	x = dc->w.CursPosX;
 	y = dc->w.CursPosY;
     }
+
+    if (flags & (ETO_OPAQUE | ETO_CLIPPED))  /* there's a rectangle */
+    {
+        if (!lprect)  /* not always */
+        {
+            SIZE16 sz;
+            if (flags & ETO_CLIPPED)  /* Can't clip with no rectangle */
+	      return FALSE;
+	    if (!GetTextExtentPoint16( hdc, str, count, &sz ))
+	      return FALSE;
+	    rect.left   = XLPTODP( dc, x );
+	    rect.right  = XLPTODP( dc, x+sz.cx );
+	    rect.top    = YLPTODP( dc, y );
+	    rect.bottom = YLPTODP( dc, y+sz.cy );
+	}
+	else
+	{
+	    rect.left   = XLPTODP( dc, lprect->left );
+	    rect.right  = XLPTODP( dc, lprect->right );
+	    rect.top    = YLPTODP( dc, lprect->top );
+	    rect.bottom = YLPTODP( dc, lprect->bottom );
+	}
+	if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
+	if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
+    }
+
     x = XLPTODP( dc, x );
     y = YLPTODP( dc, y );
-    if (flags & (ETO_OPAQUE | ETO_CLIPPED))  /* There's a rectangle */
-    {
-        rect.left   = XLPTODP( dc, lprect->left );
-        rect.right  = XLPTODP( dc, lprect->right );
-        rect.top    = YLPTODP( dc, lprect->top );
-        rect.bottom = YLPTODP( dc, lprect->bottom );
-        if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
-        if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
-    }
 
     dprintf_text(stddeb,"\treal coord: x=%i, y=%i, rect=(%d,%d-%d,%d)\n",
 			  x, y, rect.left, rect.top, rect.right, rect.bottom);
@@ -641,7 +658,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
     else
     {
         TEXTMETRIC16 tm;
-        GetTextMetrics( hdc, &tm );
+        GetTextMetrics16( hdc, &tm );
         defWidth = 8 * tm.tmAveCharWidth;
     }
     

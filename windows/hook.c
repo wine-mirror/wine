@@ -21,7 +21,7 @@
 #include "debug.h"
 
   /* This should probably reside in USER heap */
-static HANDLE HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
+static HANDLE16 HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
 
 
 /***********************************************************************
@@ -124,7 +124,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
 static BOOL HOOK_RemoveHook( HANDLE hook )
 {
     HOOKDATA *data;
-    HANDLE *prevHook;
+    HANDLE16 *prevHook;
 
     dprintf_hook( stddeb, "Removing hook %04x\n", hook );
 
@@ -215,7 +215,7 @@ DWORD HOOK_CallHooks( short id, short code, WPARAM wParam, LPARAM lParam )
 /***********************************************************************
  *	     HOOK_FreeModuleHooks
  */
-void HOOK_FreeModuleHooks( HMODULE hModule )
+void HOOK_FreeModuleHooks( HMODULE16 hModule )
 {
  /* remove all system hooks registered by this module */
 
@@ -244,7 +244,7 @@ void HOOK_FreeModuleHooks( HMODULE hModule )
 /***********************************************************************
  *	     HOOK_FreeQueueHooks
  */
-void HOOK_FreeQueueHooks( HQUEUE hQueue )
+void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 {
   /* remove all hooks registered by this queue */
 

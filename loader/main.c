@@ -36,6 +36,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "dce.h"
 #include "pe_image.h"
 #include "shell.h"
+#include "winproc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -117,7 +118,10 @@ int MAIN_Init(void)
 
       /* Create the DCEs */
     DCE_Init();
-    
+
+    /* Initialize window procedures */
+    if (!WINPROC_Init()) return 0;
+
       /* Initialize dialog manager */
     if (!DIALOG_Init()) return 0;
 

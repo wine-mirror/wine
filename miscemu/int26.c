@@ -15,7 +15,7 @@
  *
  * Handler for int 26h (absolute disk read).
  */
-void INT_Int26Handler( struct sigcontext_struct context )
+void INT_Int26Handler( SIGCONTEXT context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN( DS_reg(&context), BX_reg(&context) );
     DWORD begin, length;

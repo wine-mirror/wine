@@ -15,7 +15,7 @@
  *
  * Check if we are allowed to read memory at 'address'.
  */
-BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
+BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 {
     if (address->seg)  /* segmented addr */
         return IsBadReadPtr( (SEGPTR)MAKELONG( (WORD)address->off,
@@ -31,7 +31,7 @@ BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
  *
  * Check if we are allowed to write memory at 'address'.
  */
-BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
+BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
 {
     if (address->seg)  /* segmented addr */
         /* Note: we use IsBadReadPtr here because we are */

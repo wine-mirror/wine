@@ -71,7 +71,7 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
  * Determine if the instruction at CS:EIP is an instruction that
  * we need to step over (like a call or a repetitive string move).
  */
-static BOOL DEBUG_IsStepOverInstr( struct sigcontext_struct *context )
+static BOOL DEBUG_IsStepOverInstr( SIGCONTEXT *context )
 {
     BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN(CS_reg(context),EIP_reg(context));
 
@@ -135,7 +135,7 @@ static BOOL DEBUG_IsStepOverInstr( struct sigcontext_struct *context )
  *
  * Set or remove all the breakpoints.
  */
-void DEBUG_SetBreakpoints( BOOL set )
+void DEBUG_SetBreakpoints( BOOL32 set )
 {
     int i;
 
@@ -236,7 +236,7 @@ void DEBUG_DelBreakpoint( int num )
  *
  * Enable or disable a break point.
  */
-void DEBUG_EnableBreakpoint( int num, BOOL enable )
+void DEBUG_EnableBreakpoint( int num, BOOL32 enable )
 {
     if ((num <= 0) || (num >= next_bp) || !breakpoints[num].in_use)
     {
@@ -275,8 +275,7 @@ void DEBUG_InfoBreakpoints(void)
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
-                           enum exec_mode mode )
+BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode )
 {
     DBG_ADDR addr;
     int bpnum;
@@ -316,8 +315,8 @@ BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
  * Set the breakpoints to the correct state to restart execution
  * in the given mode.
  */
-void DEBUG_RestartExecution( struct sigcontext_struct *context,
-                             enum exec_mode mode, int instr_len )
+void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
+                             int instr_len )
 {
     DBG_ADDR addr;
 

@@ -151,11 +151,8 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    }
 
             /* Delete window procedure */
-            if (dlgInfo->dlgProc)
-            {
-                WINPROC_FreeWinProc( dlgInfo->dlgProc );
-                dlgInfo->dlgProc = 0;
-            }
+            WINPROC_FreeProc( dlgInfo->dlgProc );
+            dlgInfo->dlgProc = (HWINDOWPROC)0;
 
 	      /* Window clean-up */
 	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
@@ -224,8 +221,8 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
     if (dlgInfo->dlgProc)
     {
 	  /* Call dialog procedure */
-	result = (BOOL16)CallWindowProc16( (WNDPROC16)dlgInfo->dlgProc, hwnd, 
-                                           msg, wParam, lParam );
+	result = (BOOL16)CallWindowProc16( (WNDPROC16)dlgInfo->dlgProc,
+                                           hwnd, msg, wParam, lParam );
 
         /* Check if window was destroyed by dialog procedure */
         if (result || !IsWindow( hwnd )) return result;
@@ -268,8 +265,8 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     if (dlgInfo->dlgProc)
     {
 	  /* Call dialog procedure */
-	result = (BOOL16)CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc, hwnd, 
-                                            msg, wParam, lParam );
+	result = (BOOL16)CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc,
+                                            hwnd, msg, wParam, lParam );
 
         /* Check if window was destroyed by dialog procedure */
         if (result || !IsWindow( hwnd )) return result;
@@ -311,8 +308,8 @@ LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
     if (dlgInfo->dlgProc)
     {
 	  /* Call dialog procedure */
-	result = (BOOL16)CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc, hwnd, 
-                                            msg, wParam, lParam );
+	result = (BOOL16)CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc,
+                                            hwnd, msg, wParam, lParam );
 
         /* Check if window was destroyed by dialog procedure */
         if (result || !IsWindow( hwnd )) return result;

@@ -24,7 +24,7 @@
 
 #define FONTCACHE 	32	/* dynamic font cache size */
 #define MAX_FONTS	256
-static LPLOGFONT16 lpLogFontList[MAX_FONTS];
+static LPLOGFONT16 lpLogFontList[MAX_FONTS+1];
 
 static int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz);
 
@@ -266,7 +266,8 @@ static XFontStruct * FONT_MatchFont( LOGFONT16 * font, DC * dc )
     if (!*font->lfFaceName)
       ParseFontParms(*names, 2, font->lfFaceName , LF_FACESIZE-1);
       /* we need a font name for function GetTextFace() even if there isn't one ;-) */  
-    
+    AnsiUpper(font->lfFaceName);
+
     fontStruct = XLoadQueryFont( display, *names );
     XFreeFontNames( names );
     return fontStruct;
@@ -701,9 +702,9 @@ BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
 
 
 /***********************************************************************
- *           GetTextMetrics    (GDI.93)
+ *           GetTextMetrics16    (GDI.93)
  */
-BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC16 metrics )
+BOOL16 GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -765,6 +766,68 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC16 metrics )
     metrics->tmDescent,
     metrics->tmHeight);
 
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetTextMetrics32A    (GDI32.236)
+ */
+BOOL32 GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
+{
+    TEXTMETRIC16 tm;
+    if (!GetTextMetrics16( (HDC16)hdc, &tm )) return FALSE;
+    metrics->tmHeight           = tm.tmHeight;
+    metrics->tmAscent           = tm.tmAscent;
+    metrics->tmDescent          = tm.tmDescent;
+    metrics->tmInternalLeading  = tm.tmInternalLeading;
+    metrics->tmExternalLeading  = tm.tmExternalLeading;
+    metrics->tmAveCharWidth     = tm.tmAveCharWidth;
+    metrics->tmMaxCharWidth     = tm.tmMaxCharWidth;
+    metrics->tmWeight           = tm.tmWeight;
+    metrics->tmOverhang         = tm.tmOverhang;
+    metrics->tmDigitizedAspectX = tm.tmDigitizedAspectX;
+    metrics->tmDigitizedAspectY = tm.tmDigitizedAspectY;
+    metrics->tmFirstChar        = tm.tmFirstChar;
+    metrics->tmLastChar         = tm.tmLastChar;
+    metrics->tmDefaultChar      = tm.tmDefaultChar;
+    metrics->tmBreakChar        = tm.tmBreakChar;
+    metrics->tmItalic           = tm.tmItalic;
+    metrics->tmUnderlined       = tm.tmUnderlined;
+    metrics->tmStruckOut        = tm.tmStruckOut;
+    metrics->tmPitchAndFamily   = tm.tmPitchAndFamily;
+    metrics->tmCharSet          = tm.tmCharSet;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetTextMetrics32W    (GDI32.237)
+ */
+BOOL32 GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
+{
+    TEXTMETRIC16 tm;
+    if (!GetTextMetrics16( (HDC16)hdc, &tm )) return FALSE;
+    metrics->tmHeight           = tm.tmHeight;
+    metrics->tmAscent           = tm.tmAscent;
+    metrics->tmDescent          = tm.tmDescent;
+    metrics->tmInternalLeading  = tm.tmInternalLeading;
+    metrics->tmExternalLeading  = tm.tmExternalLeading;
+    metrics->tmAveCharWidth     = tm.tmAveCharWidth;
+    metrics->tmMaxCharWidth     = tm.tmMaxCharWidth;
+    metrics->tmWeight           = tm.tmWeight;
+    metrics->tmOverhang         = tm.tmOverhang;
+    metrics->tmDigitizedAspectX = tm.tmDigitizedAspectX;
+    metrics->tmDigitizedAspectY = tm.tmDigitizedAspectY;
+    metrics->tmFirstChar        = tm.tmFirstChar;
+    metrics->tmLastChar         = tm.tmLastChar;
+    metrics->tmDefaultChar      = tm.tmDefaultChar;
+    metrics->tmBreakChar        = tm.tmBreakChar;
+    metrics->tmItalic           = tm.tmItalic;
+    metrics->tmUnderlined       = tm.tmUnderlined;
+    metrics->tmStruckOut        = tm.tmStruckOut;
+    metrics->tmPitchAndFamily   = tm.tmPitchAndFamily;
+    metrics->tmCharSet          = tm.tmCharSet;
     return TRUE;
 }
 
@@ -894,23 +957,31 @@ void InitFontsList(void)
   char 	slant, spacing;
   int 	i, count;
   LPLOGFONT16 lpNewFont;
+
+  dprintf_font(stddeb,"InitFontsList !\n");
+
   weight = "medium";
   slant = 'r';
   spacing = '*';
   charset = "*";
   family = "*-*";
-  dprintf_font(stddeb,"InitFontsList !\n");
+
   sprintf( pattern, "-%s-%s-%c-normal-*-*-*-*-*-%c-*-%s",
 	  family, weight, slant, spacing, charset);
   names = XListFonts( display, pattern, MAX_FONTS, &count );
   dprintf_font(stddeb,"InitFontsList // count=%d \n", count);
+
+  lpNewFont = malloc((sizeof(LOGFONT16)+LF_FACESIZE)*count);
+  if (lpNewFont == NULL) {
+      dprintf_font(stddeb,
+		   "InitFontsList // Error alloc new font structure !\n");
+      XFreeFontNames(names);
+      return;
+  }
+
   for (i = 0; i < count; i++) {
-    lpNewFont = malloc(sizeof(LOGFONT16) + LF_FACESIZE);
-    if (lpNewFont == NULL) {
-      dprintf_font(stddeb, "InitFontsList // Error alloc new font structure !\n");
-      break;
-    }
     dprintf_font(stddeb,"InitFontsList // names[%d]='%s' \n", i, names[i]);
+
     ParseFontParms(names[i], 2, str, sizeof(str));
 #if 0
     /* not necessary because new function FONT_ChkX11Family() */
@@ -950,12 +1021,21 @@ void InitFontsList(void)
       lpNewFont->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
       break;
     }
-    dprintf_font(stddeb,"InitFontsList // lpNewFont->lfHeight=%d \n", lpNewFont->lfHeight);
-    dprintf_font(stddeb,"InitFontsList // lpNewFont->lfWidth=%d \n", lpNewFont->lfWidth);
-    dprintf_font(stddeb,"InitFontsList // lfFaceName='%s' \n", lpNewFont->lfFaceName);
+    dprintf_font( stddeb,
+		  "InitFontsList // lpNewFont->lfHeight=%d\n",
+		  lpNewFont->lfHeight );
+    dprintf_font( stddeb,
+		  "InitFontsList // lpNewFont->lfWidth=%d\n",
+		  lpNewFont->lfWidth );
+    dprintf_font( stddeb,
+		  "InitFontsList // lfFaceName='%s'\n",
+		  lpNewFont->lfFaceName );
     lpLogFontList[i] = lpNewFont;
-    lpLogFontList[i+1] = NULL;
+    lpNewFont = (LPLOGFONT16)
+      ((char *)lpNewFont + sizeof(LOGFONT16)+LF_FACESIZE);
   }
+  lpLogFontList[i] = NULL;
+
   qsort(lpLogFontList,count,sizeof(*lpLogFontList),logfcmp);
   XFreeFontNames(names);
 }
@@ -976,7 +1056,7 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
   char	       FaceName[LF_FACESIZE];
   int          nRet = 0;
   int          i;
-  
+
   dprintf_font(stddeb,"EnumFonts(%04x, %p='%s', %08lx, %08lx)\n", 
 	       hDC, lpFaceName, lpFaceName, (LONG)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
@@ -1014,7 +1094,7 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
     memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT16) + LF_FACESIZE);
     hFont = CreateFontIndirect(lpLogFont);
     hOldFont = SelectObject(hDC, hFont);
-    GetTextMetrics(hDC, lptm);
+    GetTextMetrics16(hDC, lptm);
     SelectObject(hDC, hOldFont);
     DeleteObject(hFont);
     dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
@@ -1083,7 +1163,7 @@ INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM
     strcpy(lpEnumLogFont->elfStyle,"");
     hFont = CreateFontIndirect((LPLOGFONT16)lpEnumLogFont);
     hOldFont = SelectObject(hDC, hFont);
-    GetTextMetrics(hDC, lptm);
+    GetTextMetrics16(hDC, lptm);
     SelectObject(hDC, hOldFont);
     DeleteObject(hFont);
     dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpEnumLogFont, lptm);

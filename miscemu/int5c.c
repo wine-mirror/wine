@@ -18,7 +18,7 @@
  *
  * Also handler for interrupt 5c. 
  */
-void NetBIOSCall( struct sigcontext_struct context )
+void NetBIOSCall( SIGCONTEXT context )
 {
   BYTE* ptr;
 

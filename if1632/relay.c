@@ -9,6 +9,7 @@
 #include "module.h"
 #include "registers.h"
 #include "stackframe.h"
+#include "task.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
 #include "debug.h"
@@ -122,7 +123,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
 
     if (func_type == 2)  /* register function */
     {
-        struct sigcontext_struct *context = (struct sigcontext_struct *)&args32;
+        SIGCONTEXT *context = (SIGCONTEXT *)&args32;
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -170,7 +171,7 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
         printf( "retval=none ret=%04x:%04x ds=%04x\n",
                 frame->cs, frame->ip, frame->ds );
         {
-            struct sigcontext_struct *context = (struct sigcontext_struct *)&args32;
+            SIGCONTEXT *context = (SIGCONTEXT *)&args32;
             printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                     AX_reg(context), BX_reg(context), CX_reg(context),
                     DX_reg(context), SI_reg(context), DI_reg(context),
@@ -195,11 +196,11 @@ void RELAY_Unimplemented16(void)
     NE_MODULE *pModule  = BUILTIN_GetEntryPoint( frame->entry_cs,
                                                  frame->entry_ip,
                                                  &ordinal, &name );
-    fprintf( stderr, "No handler for routine %.*s.%d (%.*s)\n",
+    fprintf( stderr, "No handler for Win16 routine %.*s.%d (%.*s) called from %04x:%04x\n",
              *((BYTE *)pModule + pModule->name_table),
              (char *)pModule + pModule->name_table + 1,
-             ordinal, *name, name + 1 );
-    exit(1);
+             ordinal, *name, name + 1, frame->cs, frame->ip );
+    TASK_KillCurrentTask(1);
 }
 
 
@@ -211,10 +212,11 @@ void RELAY_Unimplemented16(void)
  * (The args are the same than for RELAY_DebugCallFrom32).
  */
 void RELAY_Unimplemented32( int nb_args, void *entry_point,
-                            const char *func_name )
+                            const char *func_name, int ebp, int ret_addr )
 {
-    fprintf( stderr, "No handler for Win32 routine %s\n", func_name );
-    exit(1);
+    fprintf( stderr, "No handler for Win32 routine %s called from %08x\n",
+             func_name, ret_addr );
+    TASK_KillCurrentTask(1);
 }
 
 

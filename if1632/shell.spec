@@ -35,7 +35,7 @@ type	win16
 #  157 RESTARTDIALOG
 #  166 PICKICONDLG
 
-262 pascal16 DriveType(long) GetDriveType
+262 pascal16 DriveType(long) GetDriveType16
 
 #  263 SH16TO32DRIVEIOCTL
 #  264 SH16TO32INT2526

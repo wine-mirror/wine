@@ -101,7 +101,7 @@ static XImage *DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
  * Get the info from a bitmap header.
  * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
  */
-static int DIB_GetBitmapInfo( BITMAPINFOHEADER *header, DWORD *width,
+static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               DWORD *height, WORD *bpp )
 {
     if (header->biSize == sizeof(BITMAPINFOHEADER))
@@ -639,10 +639,10 @@ int StretchDIBits( HDC hdc,
 
 
 /***********************************************************************
- *           SetDIBits    (GDI.440)
+ *           SetDIBits    (GDI.440) (GDI32.312)
  */
-int SetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
-	       LPSTR bits, BITMAPINFO * info, WORD coloruse )
+INT16 SetDIBits( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan, UINT32 lines,
+                 LPCVOID bits, const BITMAPINFO *info, UINT32 coloruse )
 {
     DC * dc;
     BITMAPOBJ * bmp;
@@ -670,11 +670,12 @@ int SetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
 
 
 /***********************************************************************
- *           SetDIBitsToDevice    (GDI.443)
+ *           SetDIBitsToDevice    (GDI.443) (GDI32.313)
  */
-int SetDIBitsToDevice( HDC hdc, short xDest, short yDest, WORD cx, WORD cy,
-		       WORD xSrc, WORD ySrc, WORD startscan, WORD lines,
-		       LPSTR bits, BITMAPINFO * info, WORD coloruse )
+INT16 SetDIBitsToDevice( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
+                         DWORD cy, INT32 xSrc, INT32 ySrc, UINT32 startscan,
+                         UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
+                         UINT32 coloruse )
 {
     DC * dc;
     DWORD width, height, compression = 0;

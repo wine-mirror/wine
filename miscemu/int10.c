@@ -13,7 +13,7 @@
  *
  * Handler for int 10h (video).
  */
-void INT_Int10Handler( struct sigcontext_struct context )
+void INT_Int10Handler( SIGCONTEXT context )
 {
     switch(AH_reg(&context))
     {

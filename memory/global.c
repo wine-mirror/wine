@@ -485,24 +485,24 @@ UINT16 GlobalFlags16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           LockSegment   (KERNEL.23)
+ *           LockSegment16   (KERNEL.23)
  */
-HGLOBAL LockSegment( HGLOBAL handle )
+HGLOBAL16 LockSegment16( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "LockSegment: %04x\n", handle );
-    if (handle == (HGLOBAL)-1) handle = CURRENT_DS;
+    if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     GET_ARENA_PTR(handle)->lockCount++;
     return handle;
 }
 
 
 /***********************************************************************
- *           UnlockSegment   (KERNEL.24)
+ *           UnlockSegment16   (KERNEL.24)
  */
-void UnlockSegment( HGLOBAL handle )
+void UnlockSegment16( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "UnlockSegment: %04x\n", handle );
-    if (handle == (HGLOBAL)-1) handle = CURRENT_DS;
+    if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     GET_ARENA_PTR(handle)->lockCount--;
     /* FIXME: this ought to return the lock count in CX (go figure...) */
 }
@@ -546,7 +546,7 @@ SEGPTR GlobalWire( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalUnWire   (KERNEL.112)
  */
-BOOL GlobalUnWire( HGLOBAL16 handle )
+BOOL16 GlobalUnWire( HGLOBAL16 handle )
 {
     return GlobalUnlock16( handle );
 }
@@ -588,7 +588,7 @@ LONG SetSwapAreaSize( WORD size )
 HGLOBAL16 GlobalLRUOldest( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalLRUOldest: %04x\n", handle );
-    if (handle == (HGLOBAL)-1) handle = CURRENT_DS;
+    if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     return handle;
 }
 
@@ -599,7 +599,7 @@ HGLOBAL16 GlobalLRUOldest( HGLOBAL16 handle )
 HGLOBAL16 GlobalLRUNewest( HGLOBAL16 handle )
 {
     dprintf_global( stddeb, "GlobalLRUNewest: %04x\n", handle );
-    if (handle == (HGLOBAL)-1) handle = CURRENT_DS;
+    if (handle == (HGLOBAL16)-1) handle = CURRENT_DS;
     return handle;
 }
 
@@ -656,7 +656,7 @@ void GlobalUnfix( HGLOBAL16 handle )
 /***********************************************************************
  *           FarSetOwner   (KERNEL.403)
  */
-void FarSetOwner( HANDLE handle, HANDLE hOwner )
+void FarSetOwner( HANDLE16 handle, HANDLE16 hOwner )
 {
     GET_ARENA_PTR(handle)->hOwner = hOwner;
 }
@@ -665,7 +665,7 @@ void FarSetOwner( HANDLE handle, HANDLE hOwner )
 /***********************************************************************
  *           FarGetOwner   (KERNEL.404)
  */
-WORD FarGetOwner( HANDLE handle )
+HANDLE16 FarGetOwner( HANDLE16 handle )
 {
     return GET_ARENA_PTR(handle)->hOwner;
 }
@@ -693,7 +693,7 @@ WORD GlobalHandleToSel( HGLOBAL16 handle )
 /***********************************************************************
  *           GlobalFirst   (TOOLHELP.51)
  */
-BOOL GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags )
+BOOL16 GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags )
 {
     if (wFlags == GLOBAL_LRU) return FALSE;
     pGlobal->dwNext = 0;
@@ -704,7 +704,7 @@ BOOL GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags )
 /***********************************************************************
  *           GlobalNext   (TOOLHELP.52)
  */
-BOOL GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
+BOOL16 GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
 {
     GLOBALARENA *pArena;
 
@@ -737,7 +737,7 @@ BOOL GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
 /***********************************************************************
  *           GlobalInfo   (TOOLHELP.53)
  */
-BOOL GlobalInfo( GLOBALINFO *pInfo )
+BOOL16 GlobalInfo( GLOBALINFO *pInfo )
 {
     int i;
     GLOBALARENA *pArena;
@@ -754,7 +754,7 @@ BOOL GlobalInfo( GLOBALINFO *pInfo )
 /***********************************************************************
  *           GlobalEntryHandle   (TOOLHELP.54)
  */
-BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
+BOOL16 GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 {
     return FALSE;
 }
@@ -763,7 +763,7 @@ BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 /***********************************************************************
  *           GlobalEntryModule   (TOOLHELP.55)
  */
-BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg )
+BOOL16 GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg )
 {
     return FALSE;
 }
@@ -772,7 +772,7 @@ BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg )
 /***********************************************************************
  *           MemManInfo   (TOOLHELP.72)
  */
-BOOL MemManInfo( MEMMANINFO *pInfo )
+BOOL16 MemManInfo( MEMMANINFO *pInfo )
 {
 #ifdef linux
     /* FIXME: does not take into account the dwSize member

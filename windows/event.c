@@ -462,9 +462,38 @@ static void EVENT_key( XKeyEvent *event )
     else if (key_type == 0)                        /* character key */
     {
 	if ( isalnum(key) )
-	     vkey = toupper(key);                  /* convert lower to uppercase */
+	     vkey = toupper(key);                  /* convert lc to uc */
+	else if ( isspace(key) )
+	  vkey = key;				   /* XXX approximately */
         else  
-	     vkey = 0xbe;
+	  switch (key)				   /* the rest... */
+	  {
+#define vkcase(k,val) case k: vkey = val; break;
+#define vkcase2(k1,k2,val) case k1: case k2: vkey = val; break;
+
+	      /* I wish I had a bit-paired keyboard! */
+	      vkcase('!','1'); vkcase('@','2'); vkcase('#','3');
+	      vkcase('$','4'); vkcase('%','5'); vkcase('^','6');
+	      vkcase('&','7'); vkcase('*','8'); vkcase('(','9');
+	      vkcase(')','0');
+
+	      vkcase2('`','~',0xc0);
+	      vkcase2('-','_',0xbd);
+	      vkcase2('=','+',0xbb);
+	      vkcase2('[','{',0xdb);
+	      vkcase2(']','}',0xdd);
+	      vkcase2(';',':',0xba);
+	      vkcase2('\'','\"',0xde);
+	      vkcase2(',','<',0xbc);
+	      vkcase2('.','>',0xbe);
+	      vkcase2('/','?',0xbf);
+	      vkcase2('\\','|',0xdc);
+#undef vkcase
+#undef vkcase2
+	    default:
+	      fprintf( stderr, "Unknown key! Please report!\n" );
+	      vkey = 0;				   /* whatever */
+	  }
     }
 
     if (event->type == KeyPress)
@@ -845,7 +874,7 @@ HWND GetCapture()
  */
 FARPROC GetMouseEventProc(void)
 {
-    HMODULE hmodule = GetModuleHandle("USER");
+    HMODULE16 hmodule = GetModuleHandle("USER");
     return MODULE_GetEntryPoint( hmodule,
                                  MODULE_GetOrdinal( hmodule, "Mouse_Event" ) );
 }
@@ -855,7 +884,7 @@ FARPROC GetMouseEventProc(void)
  *           Mouse_Event   (USER.299)
  */
 #ifndef WINELIB
-void Mouse_Event( struct sigcontext_struct context )
+void Mouse_Event( SIGCONTEXT context )
 {
     /* Register values:
      * AX = mouse event

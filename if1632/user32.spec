@@ -181,7 +181,7 @@ base	1
 0174 stub EndMenu
 0175 stdcall EndPaint(long ptr) EndPaint32
 0176 stub EndTask
-0177 stub EnumChildWindows
+0177 stdcall EnumChildWindows(long ptr long) EnumChildWindows32
 0178 stub EnumClipboardFormats
 0179 stub EnumDesktopsA
 0180 stub EnumDesktopsW
@@ -193,10 +193,10 @@ base	1
 0186 stub EnumPropsExA
 0187 stub EnumPropsExW
 0188 stub EnumPropsW
-0189 stub EnumThreadWindows
+0189 stdcall EnumThreadWindows(long ptr long) EnumThreadWindows
 0190 stub EnumWindowStationsA
 0191 stub EnumWindowStationsW
-0192 stub EnumWindows
+0192 stdcall EnumWindows(ptr long) EnumWindows32
 0193 stdcall EqualRect(ptr ptr) EqualRect32
 0194 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn
 0195 stub ExitWindowsEx

@@ -24,6 +24,7 @@ extern WORD CallTo16_word_     ( FARPROC16, WORD );
 
 #ifndef WINELIB
 
+extern WORD CallTo16_word_w    (FARPROC16, WORD, WORD);
 extern WORD CallTo16_word_ww   (FARPROC16, WORD, WORD, WORD);
 extern WORD CallTo16_word_wl   (FARPROC16, WORD, WORD, LONG);
 extern WORD CallTo16_word_ll   (FARPROC16, WORD, LONG, LONG);
@@ -36,6 +37,7 @@ extern LONG CallTo16_long_wwwl (FARPROC16, WORD, WORD, WORD, WORD, LONG);
 extern WORD CallTo16_word_lwww (FARPROC16, WORD, LONG, WORD, WORD, WORD);
 extern WORD CallTo16_word_wwll (FARPROC16, WORD, WORD, WORD, LONG, LONG);
 extern WORD CallTo16_word_wllwl(FARPROC16, WORD, WORD, LONG, LONG, WORD, LONG);
+extern LONG CallTo16_long_lwwll(FARPROC16, WORD, LONG, WORD, WORD, LONG, LONG);
 extern WORD CallTo16_word_wwlll(FARPROC16, WORD, WORD, WORD, LONG, LONG, LONG);
 extern LONG CallTo16_long_lllllllwlwwwl( FARPROC16, WORD, LONG, LONG, LONG,
                                          LONG, LONG, LONG, LONG, WORD, LONG,
@@ -44,6 +46,10 @@ extern LONG CallTo16_long_lllllllwlwwwl( FARPROC16, WORD, LONG, LONG, LONG,
 extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
                             WORD bx, WORD cx, WORD dx, WORD si, WORD di );
 
+#define CallDCHookProc( func, hdc, code, data, lparam) \
+    CallTo16_word_wwll( func, CURRENT_DS, hdc, code, data, lparam )
+#define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
+    CallTo16_long_lwwll( func, CURRENT_DS, dwId, msg, hdrvr, lparam1, lparam2 )
 #define CallEnumChildProc( func, hwnd, lParam ) \
     CallTo16_word_wl( func, CURRENT_DS, hwnd, lParam )
 #define CallEnumFontFamProc( func, lpfont, lpmetric, type, lParam ) \
@@ -58,7 +64,7 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_word_wlw( func, CURRENT_DS, hwnd, lpstr, data )
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     CallTo16_word_wl( func, CURRENT_DS, hwnd, lParam )
-#define CallEnumWindowsProc( func, hwnd, lParam ) \
+#define CallEnumWindowsProc16( func, hwnd, lParam ) \
     CallTo16_word_wl( func, CURRENT_DS, hwnd, lParam )
 #define CallLineDDAProc( func, xPos, yPos, lParam ) \
     CallTo16_word_wwl( func, CURRENT_DS, xPos, yPos, lParam )
@@ -68,12 +74,12 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_long_wwl( func, CURRENT_DS, code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     CallTo16_word_wwlll( func, CURRENT_DS, id, msg, dwUser, dw1, dw2 )
+#define CallWindowsExitProc( func, nExitType ) \
+    CallTo16_word_w( func, CURRENT_DS, nExitType )
 #define CallWndProc16( func, ds, hwnd, msg, wParam, lParam ) \
     CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     CallTo16_word_lwww( func, CURRENT_DS, lpch, ichCurrent, cch, code )
-#define CallDCHookProc( func, hdc, code, data, lparam) \
-    CallTo16_word_wwll( func, CURRENT_DS, hdc, code, data, lparam )
 #define CallWndProcNCCREATE16( func, ds, exStyle, clsName, winName, style, \
                                x, y, cx, cy, hparent, hmenu, instance, \
                                params, hwnd, msg, wParam, lParam ) \
@@ -86,6 +92,7 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
 /* by the build program to generate the file if1632/callto32.S */
 
 extern LONG CallTo32_0( FARPROC32 );
+extern LONG CallTo32_2( FARPROC32, DWORD, DWORD );
 extern LONG CallTo32_3( FARPROC32, DWORD, DWORD, DWORD );
 extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
 
@@ -93,12 +100,18 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     CallTo32_0( func )
 #define CallDLLEntryProc32( func, hmodule, a, b ) \
     CallTo32_3( func, hmodule, a, b )
+#define CallEnumWindowsProc32( func, hwnd, lParam ) \
+    CallTo32_2( func, hwnd, lParam )
 #define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
     CallTo32_4( func, hwnd, msg, wParam, lParam )
 
 
 #else  /* WINELIB */
 
+#define CallDCHookProc( func, hdc, code, data, lparam ) \
+    (*func)( hdc, code, data, lparam )
+#define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
+    (*func)( dwId, msg, hdrvr, lparam1, lparam2 )
 #define CallEnumChildProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 #define CallEnumFontFamProc( func, lpfont, lpmetric, type, lParam ) \
@@ -113,7 +126,9 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     (*func)( hwnd, (LPCTSTR)(lpstr), data )
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
-#define CallEnumWindowsProc( func, hwnd, lParam ) \
+#define CallEnumWindowsProc16( func, hwnd, lParam ) \
+    (*func)( hwnd, lParam )
+#define CallEnumWindowsProc32( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 #define CallLineDDAProc( func, xPos, yPos, lParam ) \
     (*func)( xPos, yPos, lParam )
@@ -123,15 +138,14 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     (*func)( code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     (*func)( id, msg, dwUser, dw1, dw2 )
+#define CallWindowsExitProc( func, nExitType ) \
+    (*func)( nExitType )
 #define CallWndProc16( func, ds, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
 #define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
-#define CallDCHookProc( func, hdc, code, data, lparam ) \
-    (*func)( hdc, code, data, lparam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
-
 
 #endif  /* WINELIB */
 

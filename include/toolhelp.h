@@ -20,19 +20,19 @@ typedef struct
 
 typedef struct
 {
-    DWORD   dwSize;
-    DWORD   dwAddress;
-    DWORD   dwBlockSize;
-    HGLOBAL hBlock;
-    WORD    wcLock;
-    WORD    wcPageLock;
-    WORD    wFlags;
-    BOOL    wHeapPresent;
-    HGLOBAL hOwner;
-    WORD    wType;
-    WORD    wData;
-    DWORD   dwNext;
-    DWORD   dwNextAlt;
+    DWORD     dwSize;
+    DWORD     dwAddress;
+    DWORD     dwBlockSize;
+    HGLOBAL16 hBlock;
+    WORD      wcLock;
+    WORD      wcPageLock;
+    WORD      wFlags;
+    BOOL16    wHeapPresent;
+    HGLOBAL16 hOwner;
+    WORD      wType;
+    WORD      wData;
+    DWORD     dwNext;
+    DWORD     dwNextAlt;
 } GLOBALENTRY;
 
   /* GlobalFirst()/GlobalNext() flags */
@@ -74,11 +74,11 @@ typedef struct
 /* wFlags values */
 #define GF_PDB_OWNER        0x0100      /* Low byte is KERNEL flags */
 
-BOOL GlobalInfo( GLOBALINFO *pInfo );
-BOOL GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
-BOOL GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
-BOOL GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
-BOOL GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg );
+BOOL16 GlobalInfo( GLOBALINFO *pInfo );
+BOOL16 GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
+BOOL16 GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
+BOOL16 GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
+BOOL16 GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg );
 
 /* Local heap */
 
@@ -152,55 +152,55 @@ typedef struct
 #define LT_USER_HANDLETABLE         32
 #define LT_USER_MAX                 LT_USER_HANDLETABLE
 
-BOOL LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle );
-BOOL LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle );
-BOOL LocalNext( LOCALENTRY *pLocalEntry );
+BOOL16 LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle );
+BOOL16 LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle );
+BOOL16 LocalNext( LOCALENTRY *pLocalEntry );
 
 
 /* modules */
 
-typedef struct {
-    DWORD dwSize;
-    char szModule[MAX_MODULE_NAME + 1];
-    HMODULE hModule;
-    WORD wcUsage;
-    char szExePath[MAX_PATH + 1];
-    HANDLE wNext;
-} MODULEENTRY;
-typedef MODULEENTRY *LPMODULEENTRY;
+typedef struct
+{
+    DWORD      dwSize;
+    char       szModule[MAX_MODULE_NAME + 1];
+    HMODULE16  hModule;
+    WORD       wcUsage;
+    char       szExePath[MAX_PATH + 1];
+    HANDLE16   wNext;
+} MODULEENTRY, *LPMODULEENTRY;
 
-BOOL	ModuleFirst(MODULEENTRY *lpModule);
-BOOL	ModuleNext(MODULEENTRY *lpModule);
-BOOL    ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
-BOOL    ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule);
+BOOL16 ModuleFirst(MODULEENTRY *lpModule);
+BOOL16 ModuleNext(MODULEENTRY *lpModule);
+BOOL16 ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
+BOOL16 ModuleFindHandle(MODULEENTRY *lpModule, HMODULE16 hModule);
 
 /* tasks */
 
-typedef struct tagTASKENTRY {
-	DWORD dwSize;
-	HTASK hTask;
-	HTASK hTaskParent;
-	HINSTANCE hInst;
-	HMODULE hModule;
-	WORD wSS;
-	WORD wSP;
-	WORD wStackTop;
-	WORD wStackMinimum;
-	WORD wStackBottom;
-	WORD wcEvents;
-	HGLOBAL hQueue;
-	char szModule[MAX_MODULE_NAME + 1];
-	WORD wPSPOffset;
-	HANDLE hNext;
-} TASKENTRY;
-typedef TASKENTRY *LPTASKENTRY;
+typedef struct
+{
+    DWORD        dwSize;
+    HTASK16      hTask;
+    HTASK16      hTaskParent;
+    HINSTANCE16  hInst;
+    HMODULE16    hModule;
+    WORD         wSS;
+    WORD         wSP;
+    WORD         wStackTop;
+    WORD         wStackMinimum;
+    WORD         wStackBottom;
+    WORD         wcEvents;
+    HGLOBAL16    hQueue;
+    char         szModule[MAX_MODULE_NAME + 1];
+    WORD         wPSPOffset;
+    HANDLE16     hNext;
+} TASKENTRY, *LPTASKENTRY;
 
-BOOL	TaskFirst(LPTASKENTRY lpTask);
-BOOL	TaskNext(LPTASKENTRY lpTask);
-BOOL	TaskFindHandle(LPTASKENTRY lpTask, HTASK hTask);
-DWORD	TaskSetCSIP(HTASK hTask, WORD wCS, WORD wIP);
-DWORD	TaskGetCSIP(HTASK hTask);
-BOOL	TaskSwitch(HTASK hTask, DWORD dwNewCSIP);
+BOOL16 TaskFirst(LPTASKENTRY lpTask);
+BOOL16 TaskNext(LPTASKENTRY lpTask);
+BOOL16 TaskFindHandle(LPTASKENTRY lpTask, HTASK16 hTask);
+DWORD TaskSetCSIP(HTASK16 hTask, WORD wCS, WORD wIP);
+DWORD TaskGetCSIP(HTASK16 hTask);
+BOOL16 TaskSwitch(HTASK16 hTask, DWORD dwNewCSIP);
 
 /* mem info */
 
@@ -221,15 +221,15 @@ typedef MEMMANINFO *LPMEMMANINFO;
 
 typedef struct
 {
-    DWORD   dwSize;
-    WORD    wUserFreePercent;
-    WORD    wGDIFreePercent;
-    HGLOBAL hUserSegment;
-    HGLOBAL hGDISegment;
+    DWORD     dwSize;
+    WORD      wUserFreePercent;
+    WORD      wGDIFreePercent;
+    HGLOBAL16 hUserSegment;
+    HGLOBAL16 hGDISegment;
 } SYSHEAPINFO;
 
-BOOL MemManInfo(LPMEMMANINFO lpEnhMode);
-BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
+BOOL16 MemManInfo(LPMEMMANINFO lpEnhMode);
+BOOL16 SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
 
 /* timer info */
 
@@ -239,20 +239,20 @@ typedef struct tagTIMERINFO {
 	DWORD dwmsThisVM;
 } TIMERINFO;
 
-BOOL TimerCount( TIMERINFO *pTimerInfo );
+BOOL16 TimerCount( TIMERINFO *pTimerInfo );
 
 /* Window classes */
 
 typedef struct
 {
     DWORD     dwSize;
-    HMODULE   hInst;              /* This is really an hModule */
+    HMODULE16 hInst;              /* This is really an hModule */
     char      szClassName[MAX_CLASSNAME + 1];
-    HANDLE    wNext;
+    HANDLE16  wNext;
 } CLASSENTRY;
 
-BOOL ClassFirst( CLASSENTRY *pClassEntry );
-BOOL ClassNext( CLASSENTRY *pClassEntry );
+BOOL16 ClassFirst( CLASSENTRY *pClassEntry );
+BOOL16 ClassNext( CLASSENTRY *pClassEntry );
 
 
 /* Memory read/write */
@@ -267,7 +267,7 @@ DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
 #define NF_TASKSWITCH	1	/* get taskswitch information */
 #define NF_RIP		2	/* get debugerrors of system */
 
-BOOL NotifyRegister(HTASK htask,FARPROC lpfnCallback,WORD wFlags);
+BOOL16 NotifyRegister(HTASK16 htask,FARPROC16 lpfnCallback,WORD wFlags);
 
 #define NFY_UNKNOWN	0
 #define NFY_LOADSEG	1
@@ -285,10 +285,10 @@ struct {
 /* called when loading/starting a DLL */
 #define NFY_STARTDLL	3
 struct {
-	DWORD	dwSize;
-	HMODULE	hModule;
-	WORD	wCS;
-	WORD	wIP;
+    DWORD      dwSize;
+    HMODULE16  hModule;
+    WORD       wCS;
+    WORD       wIP;
 } NFYSTARTDLL;
 
 /* called when starting a task. dwData is CS:IP */
@@ -331,16 +331,16 @@ struct {
 #define NFY_LOGERROR	12
 struct {
 	DWORD	dwSize;
-	UINT	wErrCode;
+	UINT16	wErrCode;
 	VOID   *lpInfo; /* depends on wErrCode */
 } NFYLOGERROR;
 
 /* called for parameter errors? */
 #define NFY_LOGPARAMERROR	13
 struct {
-	DWORD	dwSize;
-	UINT	wErrCode;
-	FARPROC	lpfnErrorAddr;
-	void  **lpBadParam;
+    DWORD       dwSize;
+    UINT16      wErrCode;
+    FARPROC16   lpfnErrorAddr;
+    void      **lpBadParam;
 } NFYLOGPARAMERROR;
 #endif /* __TOOLHELP_H */

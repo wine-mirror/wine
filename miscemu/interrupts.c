@@ -28,7 +28,7 @@ static SEGPTR INT_Vectors[256];
 BOOL INT_Init(void)
 {
     WORD vector;
-    HMODULE hModule = GetModuleHandle( "WPROCS" );
+    HMODULE16 hModule = GetModuleHandle( "WPROCS" );
 
     for (vector = 0; vector < 256; vector++)
     {
@@ -70,7 +70,7 @@ void INT_SetHandler( BYTE intnum, SEGPTR handler )
 /**********************************************************************
  *	    INT_DummyHandler
  */
-void INT_DummyHandler( struct sigcontext_struct context )
+void INT_DummyHandler( SIGCONTEXT context )
 {
     WORD ordinal;
     char *name;
@@ -85,7 +85,7 @@ void INT_DummyHandler( struct sigcontext_struct context )
  *
  * Handler for int 11h (get equipment list).
  */
-void INT_Int11Handler( struct sigcontext_struct context )
+void INT_Int11Handler( SIGCONTEXT context )
 {
     int diskdrives = 0;
     int parallelports = 0;
@@ -144,7 +144,7 @@ void INT_Int11Handler( struct sigcontext_struct context )
  *
  * Handler for int 12h (get memory size).
  */
-void INT_Int12Handler( struct sigcontext_struct context )
+void INT_Int12Handler( SIGCONTEXT context )
 {
     AX_reg(&context) = 640;
 }
@@ -155,7 +155,7 @@ void INT_Int12Handler( struct sigcontext_struct context )
  *
  * Handler for int 15h.
  */
-void INT_Int15Handler( struct sigcontext_struct context )
+void INT_Int15Handler( SIGCONTEXT context )
 {
     INT_BARF( &context, 0x15 );
 }
@@ -166,7 +166,7 @@ void INT_Int15Handler( struct sigcontext_struct context )
  *
  * Handler for int 16h (keyboard).
  */
-void INT_Int16Handler( struct sigcontext_struct context )
+void INT_Int16Handler( SIGCONTEXT context )
 {
     INT_BARF( &context, 0x16 );
 }

@@ -533,7 +533,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE hModule, WORD offset )
 }
 
 HINSTANCE MODULE_CreateInstance(HMODULE hModule,LOADPARAMS *params);
-void InitTask(struct sigcontext_struct context);
+void InitTask(SIGCONTEXT context);
 
 HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
@@ -604,7 +604,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	pSegment->selector=(void*)cts;
 	pModule->ip=0;
 #else
-	pSegment->selector=cts>>16;
+	pSegment->selector=cts>>16;  /* FIXME!! */
 	pModule->ip=cts & 0xFFFF;
 #endif
 	pSegment++;
@@ -644,7 +644,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 int USER_InitApp(HINSTANCE hInstance);
 void PE_InitTEB(int hTEB);
 
-void PE_Win32CallToStart(struct sigcontext_struct context)
+void PE_Win32CallToStart(SIGCONTEXT context)
 {
     int fs;
     HMODULE hModule;

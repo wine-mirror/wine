@@ -78,7 +78,7 @@ typedef struct
     WORD hdelta;                /* 18 Delta to expand the handle table */
     WORD expand;                /* 1a Pointer to expand function (unused) */
     WORD pstat;                 /* 1c Pointer to status structure (unused) */
-    FARPROC notify WINE_PACKED; /* 1e Pointer to LocalNotify() function */
+    FARPROC16 notify WINE_PACKED; /* 1e Pointer to LocalNotify() function */
     WORD lock;                  /* 22 Lock count for the heap */
     WORD extra;                 /* 24 Extra bytes to allocate when expanding */
     WORD minsize;               /* 26 Minimum size of the heap */
@@ -294,7 +294,7 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
 /***********************************************************************
  *           LocalInit   (KERNEL.4)
  */
-BOOL LocalInit( HANDLE selector, WORD start, WORD end )
+BOOL16 LocalInit( HANDLE16 selector, WORD start, WORD end )
 {
     char *ptr;
     WORD heapInfoArena, freeArena, lastArena;
@@ -410,7 +410,7 @@ BOOL LocalInit( HANDLE selector, WORD start, WORD end )
  */
 static void LOCAL_GrowHeap( HANDLE16 ds )
 {
-    HANDLE hseg = GlobalHandle16( ds );
+    HANDLE16 hseg = GlobalHandle16( ds );
     LONG oldsize = GlobalSize16( hseg );
     LONG end;
     LOCALHEAPINFO *pHeapInfo;
@@ -814,7 +814,7 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
 /***********************************************************************
  *           LOCAL_NewHTable
  */
-static BOOL LOCAL_NewHTable( HANDLE16 ds )
+static BOOL16 LOCAL_NewHTable( HANDLE16 ds )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
@@ -1230,7 +1230,7 @@ LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle )
 /***********************************************************************
  *           LOCAL_Unlock
  */
-BOOL LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
+BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
 
@@ -1460,10 +1460,10 @@ UINT16 LocalCompact16( UINT16 minfree )
 /***********************************************************************
  *           LocalNotify   (KERNEL.14)
  */
-FARPROC LocalNotify( FARPROC func )
+FARPROC16 LocalNotify( FARPROC16 func )
 {
     LOCALHEAPINFO *pInfo;
-    FARPROC oldNotify;
+    FARPROC16 oldNotify;
     HANDLE16 ds = CURRENT_DS;
 
     if (!(pInfo = LOCAL_GetHeap( ds )))
@@ -1492,7 +1492,7 @@ UINT16 LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
 /***********************************************************************
  *           GetHeapSpaces   (KERNEL.138)
  */
-DWORD GetHeapSpaces( HMODULE module )
+DWORD GetHeapSpaces( HMODULE16 module )
 {
     NE_MODULE *pModule;
     WORD ds;
@@ -1545,7 +1545,7 @@ WORD LocalHandleDelta( WORD delta )
 /***********************************************************************
  *           LocalInfo   (TOOLHELP.56)
  */
-BOOL LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle )
+BOOL16 LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
 {
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap(SELECTOROF(WIN16_GlobalLock16(handle)));
     if (!pInfo) return FALSE;
@@ -1557,7 +1557,7 @@ BOOL LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle )
 /***********************************************************************
  *           LocalFirst   (TOOLHELP.57)
  */
-BOOL LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle )
+BOOL16 LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
 {
     WORD ds = GlobalHandleToSel( handle );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
@@ -1580,7 +1580,7 @@ BOOL LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle )
 /***********************************************************************
  *           LocalNext   (TOOLHELP.58)
  */
-BOOL LocalNext( LOCALENTRY *pLocalEntry )
+BOOL16 LocalNext( LOCALENTRY *pLocalEntry )
 {
     WORD ds = GlobalHandleToSel( pLocalEntry->hHeap );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );

@@ -15,7 +15,7 @@
  *           INT_Int4bHandler
  *
  */
-void INT_Int4bHandler( struct sigcontext_struct context )
+void INT_Int4bHandler( SIGCONTEXT context )
 {
 
   switch(AH_reg(&context))

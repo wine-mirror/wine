@@ -54,8 +54,8 @@ heap	65520
 #51 BEAR51
 52  pascal16 AnyPopup() AnyPopup
 53  pascal16 DestroyWindow(word) DestroyWindow
-54  pascal16 EnumWindows(segptr long) EnumWindows
-55  pascal16 EnumChildWindows(word segptr long) EnumChildWindows
+54  pascal16 EnumWindows(segptr long) EnumWindows16
+55  pascal16 EnumChildWindows(word segptr long) EnumChildWindows16
 56  pascal16 MoveWindow(word word word word word word) MoveWindow
 57  pascal16 RegisterClass(ptr) RegisterClass16
 58  pascal16 GetClassName(word ptr word) GetClassName16
@@ -225,7 +225,7 @@ heap	65520
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask
-225 pascal16 EnumTaskWindows(word segptr long) EnumTaskWindows
+225 pascal16 EnumTaskWindows(word segptr long) EnumTaskWindows16
 226 stub LockInput
 227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem

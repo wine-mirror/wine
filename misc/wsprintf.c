@@ -4,6 +4,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -246,10 +247,12 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
         spec += WPRINTF_ParseFormatA( spec, &format );
         switch(format.type)
         {
+        case WPR_WCHAR:  /* No Unicode in Win16 */
         case WPR_CHAR:
             cur_arg = (DWORD)*(CHAR *)args;
             args = (WORD *)args + 1;
             break;
+        case WPR_WSTRING:  /* No Unicode in Win16 */
         case WPR_STRING:
             cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );
             args = (SEGPTR *)args + 1;
@@ -268,10 +271,6 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
                 args = (UINT16 *)args + 1;
             }
             break;
-        case WPR_WCHAR:
-        case WPR_WSTRING:
-            fprintf( stderr, "Unicode not supported in wsprintf16\n" );
-            continue;
         }
         len = WPRINTF_GetLen( &format, &cur_arg, number, maxlen - 1 );
         if (!(format.flags & WPRINTF_LEFTALIGN))

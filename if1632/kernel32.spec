@@ -13,7 +13,7 @@ base	1
 0008 stub BackupWrite
 0009 stub BaseAttachCompleteThunk
 0010 stub BasepDebugDump
-0011 stub Beep
+0011 stdcall Beep(long long) Beep
 0012 stub BeginUpdateResourceA
 0013 stub BeginUpdateResourceW
 0014 stub BuildCommDCBA
@@ -73,8 +73,8 @@ base	1
 0068 stub DefineDosDeviceW
 0069 stub DeleteAtom
 0070 stdcall DeleteCriticalSection(ptr)	DeleteCriticalSection
-0071 stub DeleteFileA
-0072 stub DeleteFileW
+0071 stdcall DeleteFileA(ptr) DeleteFile32A
+0072 stdcall DeleteFileW(ptr) DeleteFile32W
 0073 stub DeviceIoControl
 0074 stub DisableThreadLibraryCalls
 0075 stub DisconnectNamedPipe
@@ -198,9 +198,9 @@ base	1
 0193 stub GetCurrencyFormatA
 0194 stub GetCurrencyFormatW
 0195 stub GetCurrentConsoleFont
-0196 	stdcall GetCurrentDirectoryA(ptr ptr) GetCurrentDirectory
-0197 stub GetCurrentDirectoryW
-0198 	stdcall GetCurrentProcess() GetCurrentProcess
+0196 stdcall GetCurrentDirectoryA(long ptr) GetCurrentDirectory32A
+0197 stdcall GetCurrentDirectoryW(long ptr) GetCurrentDirectory32W
+0198 stdcall GetCurrentProcess() GetCurrentProcess
 0199 stdcall GetCurrentProcessId() GetCurrentThreadId
 0200 	stdcall GetCurrentThread() GetCurrentThread
 0201	stdcall GetCurrentThreadId()	GetCurrentThreadId
@@ -211,7 +211,7 @@ base	1
 0206 	stdcall GetDiskFreeSpaceA(ptr ptr ptr ptr ptr) GetDiskFreeSpace32A
 0207 	stdcall GetDiskFreeSpaceW(ptr ptr ptr ptr ptr) GetDiskFreeSpace32W
 0208 stdcall GetDriveTypeA(ptr) GetDriveType32A
-0209 stub GetDriveTypeW
+0209 stdcall GetDriveTypeW(ptr) GetDriveType32W
 0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
 0211 stub GetEnvironmentStringsA
 0212 	stdcall GetEnvironmentStringsW()		GetEnvironmentStringsW
@@ -284,8 +284,8 @@ base	1
 0279 stub GetStringTypeW
 0280 stdcall GetSystemDefaultLCID() GetSystemDefaultLCID
 0281 stub GetSystemDefaultLangID
-0282 stub GetSystemDirectoryA
-0283 stub GetSystemDirectoryW
+0282 stdcall GetSystemDirectoryA(ptr long) GetSystemDirectory32A
+0283 stdcall GetSystemDirectoryW(ptr long) GetSystemDirectory32W
 0284 stub GetSystemInfo
 0285 	stdcall GetSystemTime(ptr) GetSystemTime
 0286 stub GetSystemTimeAdjustment
@@ -294,8 +294,8 @@ base	1
 0289 stub GetTapeStatus
 0290 stub GetTempFileNameA
 0291 stub GetTempFileNameW
-0292 stub GetTempPathA
-0293 stub GetTempPathW
+0292 stdcall GetTempPathA(long ptr) GetTempPath32A
+0293 stdcall GetTempPathW(long ptr) GetTempPath32W
 0294	stdcall GetThreadContext(long ptr)	GetThreadContext
 0295 stub GetThreadLocale
 0296 stub GetThreadPriority
@@ -439,14 +439,14 @@ base	1
 0434 stub RegisterWowExec
 0435 	stdcall ReleaseMutex(long) ReleaseMutex
 0436 stub ReleaseSemaphore
-0437 stub RemoveDirectoryA
-0438 stub RemoveDirectoryW
+0437 stdcall RemoveDirectoryA(ptr) RemoveDirectory32A
+0438 stdcall RemoveDirectoryW(ptr) RemoveDirectory32W
 0439 	stdcall ResetEvent(long) ResetEvent
 0440 stub ResumeThread
-0441 stub RtlFillMemory
-0442 stub RtlMoveMemory
-0443    stdcall RtlUnwind(ptr long ptr long) RtlUnwind
-0444 stub RtlZeroMemory
+0441 stdcall RtlFillMemory(ptr long long) RtlFillMemory
+0442 stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
+0443 stdcall RtlUnwind(ptr long ptr long) RtlUnwind
+0444 stdcall RtlZeroMemory(ptr long) RtlZeroMemory
 0445 stub ScrollConsoleScreenBufferA
 0446 stub ScrollConsoleScreenBufferW
 0447 stub SearchPathA
@@ -486,8 +486,8 @@ base	1
 0481 stub SetDefaultCommConfigA
 0482 stub SetDefaultCommConfigW
 0483 stub SetEndOfFile
-0484    stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariableA
-0485 stub SetEnvironmentVariableW
+0484 stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariable32A
+0485 stdcall SetEnvironmentVariableW(ptr ptr) SetEnvironmentVariable32W
 0486 stdcall SetErrorMode(long) SetErrorMode
 0487 	stdcall	SetEvent(long) SetEvent
 0488 stub SetFileApisToANSI

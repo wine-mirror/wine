@@ -71,7 +71,7 @@ BOOL DIALOG_Init()
       /* Calculate the dialog base units */
 
     if (!(hdc = CreateDC( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
-    GetTextMetrics( hdc, &tm );
+    GetTextMetrics16( hdc, &tm );
     DeleteDC( hdc );
     xBaseUnit = tm.tmAveCharWidth;
     yBaseUnit = tm.tmHeight;
@@ -477,8 +477,8 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
  *           DIALOG_CreateIndirect
  */
 static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
-                                   HWND owner, HANDLE32 dlgProc,
-                                   LPARAM param, BOOL win32 )
+                                   HWND owner, DLGPROC16 dlgProc,
+                                   LPARAM param, WINDOWPROCTYPE procType )
 {
     HMENU hMenu = 0;
     HFONT hFont = 0;
@@ -493,8 +493,10 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
       /* Parse dialog template */
 
     if (!dlgTemplate) return 0;
-    if (win32) dlgTemplate = DIALOG_ParseTemplate32( dlgTemplate, &template );
-    else dlgTemplate = DIALOG_ParseTemplate16( dlgTemplate, &template );
+    if (procType != WIN_PROC_16)
+        dlgTemplate = DIALOG_ParseTemplate32( dlgTemplate, &template );
+    else
+        dlgTemplate = DIALOG_ParseTemplate16( dlgTemplate, &template );
 
       /* Load menu */
 
@@ -523,7 +525,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
 	    hdc = GetDC(0);
 	    oldFont = SelectObject( hdc, hFont );
-	    GetTextMetrics( hdc, &tm );
+	    GetTextMetrics16( hdc, &tm );
 	    SelectObject( hdc, oldFont );
 	    ReleaseDC( 0, hdc );
 	    xUnit = tm.tmAveCharWidth;
@@ -555,7 +557,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
             ClientToScreen16( owner, (POINT16 *)&rect );
     }
 
-    if (win32)
+    if (procType != WIN_PROC_16)
         hwnd = CreateWindowEx32W(template.exStyle, (LPCWSTR)template.className,
                                  (LPCWSTR)template.caption,
                                  template.style & ~WS_VISIBLE,
@@ -573,6 +575,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	return 0;
     }
     wndPtr = WIN_FindWndPtr( hwnd );
+    wndPtr->flags |= WIN_ISDIALOG;
 
       /* Initialise dialog extra data */
 
@@ -587,7 +590,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     /* Create controls */
 
     if (!DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
-                                hInst, win32 ))
+                                hInst, (procType != WIN_PROC_16) ))
     {
         DestroyWindow( hwnd );
         return 0;
@@ -595,7 +598,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     /* Send initialisation messages and set focus */
 
-    dlgInfo->dlgProc   = dlgProc;
+    WINPROC_SetProc( &dlgInfo->dlgProc, dlgProc, procType );
     dlgInfo->hwndFocus = DIALOG_GetFirstTabItem( hwnd );
     if (dlgInfo->hUserFont)
 	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
@@ -687,9 +690,8 @@ HWND16 CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
                                     HWND16 owner, DLGPROC16 dlgProc,
                                     LPARAM param )
 {
-    HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_16 );
-    return DIALOG_CreateIndirect( hInst, dlgTemplate,
-                                  owner, proc, param, FALSE );
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, owner,
+                                  dlgProc, param, WIN_PROC_16 );
 }
 
 
@@ -700,9 +702,8 @@ HWND32 CreateDialogIndirectParam32A( HINSTANCE32 hInst, LPCVOID dlgTemplate,
                                      HWND32 owner, DLGPROC32 dlgProc,
                                      LPARAM param )
 {
-    HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_32A );
-    return DIALOG_CreateIndirect( hInst, dlgTemplate,
-                                  owner, proc, param, TRUE );
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, owner,
+                                  (DLGPROC16)dlgProc, param, WIN_PROC_32A );
 }
 
 
@@ -713,9 +714,8 @@ HWND32 CreateDialogIndirectParam32W( HINSTANCE32 hInst, LPCVOID dlgTemplate,
                                      HWND32 owner, DLGPROC32 dlgProc,
                                      LPARAM param )
 {
-    HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_32W );
-    return DIALOG_CreateIndirect( hInst, dlgTemplate,
-                                  owner, proc, param, TRUE );
+    return DIALOG_CreateIndirect( hInst, dlgTemplate, owner,
+                                  (DLGPROC16)dlgProc, param, WIN_PROC_32W );
 }
 
 

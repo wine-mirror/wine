@@ -229,7 +229,7 @@ void DEBUG_EnterDebugger(void)
 }
 
 
-void wine_debug( int signal, struct sigcontext_struct *regs )
+void wine_debug( int signal, SIGCONTEXT *regs )
 {
     static int loaded_symbols = 0;
     char SymbolTableFile[256];
@@ -239,7 +239,7 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
 #endif
 
     yyin = stdin;
-    DEBUG_context = (struct sigcontext_struct *)regs;
+    DEBUG_context = regs;
 
     DEBUG_SetBreakpoints( FALSE );
 

@@ -81,7 +81,7 @@ static enum SPEC_TYPE SpecType = SPEC_INVALID;
 char DLLName[80];
 int Limit = 0;
 int Base = 0;
-int HeapSize = 0;
+int DLLHeapSize = 0;
 FILE *SpecFp;
 
 char *ParseBuffer = NULL;
@@ -93,8 +93,7 @@ static int debugging = 1;
 
   /* Offset of register relative to the end of the context struct */
 #define CONTEXTOFFSET(reg) \
-  ((int)&reg##_reg((struct sigcontext_struct *)0) \
-   - sizeof(struct sigcontext_struct))
+    ((int)&reg##_reg((SIGCONTEXT *)0) - sizeof(SIGCONTEXT))
 
 static void *xmalloc (size_t size)
 {
@@ -521,7 +520,7 @@ static int ParseTopLevel(void)
 		fprintf(stderr, "%d: Expected number after heap\n", Line);
 		exit(1);
             }
-            HeapSize = atoi(token);
+            DLLHeapSize = atoi(token);
 	}
 	else if (IsNumberString(token))
 	{
@@ -631,7 +630,7 @@ static int BuildModule16( int max_code_offset, int max_data_offset )
     pModule->next = 0;
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
     pModule->dgroup = 2;
-    pModule->heap_size = HeapSize;
+    pModule->heap_size = DLLHeapSize;
     pModule->stack_size = 0;
     pModule->ip = 0;
     pModule->cs = 0;
@@ -815,7 +814,7 @@ static int BuildModule32(void)
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
                      NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
     pModule->dgroup = 0;
-    pModule->heap_size = HeapSize;
+    pModule->heap_size = DLLHeapSize;
     pModule->stack_size = 0;
     pModule->ip = 0;
     pModule->cs = 0;
@@ -1482,7 +1481,7 @@ static void BuildCallFrom16Func( char *profile )
     printf( "\tpushw %%ds\n" );
     printf( "\tpopw %%ss\n" );
     printf( "\tleal -%d(%%ebp),%%esp\n",
-            reg_func ? sizeof(struct sigcontext_struct) : 4 * strlen(args) );
+            reg_func ? sizeof(SIGCONTEXT) : 4 * strlen(args) );
 
     /* Setup %ebp to point to the previous stack frame (built by CallTo16) */
 

@@ -2292,7 +2292,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT16 lplf ,LPTEXTMET
      lplf->lfWeight=fontstyles[i].weight;
      hf=CreateFontIndirect(lplf);
      hf=SelectObject(hdc,hf);
-     GetTextMetrics(hdc,lptm);
+     GetTextMetrics16(hdc,lptm);
      hf=SelectObject(hdc,hf);
      DeleteObject(hf);
 

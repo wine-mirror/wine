@@ -19,7 +19,6 @@
 #include "resource32.h"
 #include "string32.h"
 #include "win.h"
-#include "winproc.h"
 #include "debug.h"
 #include "stddebug.h"
 

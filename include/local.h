@@ -23,6 +23,6 @@ extern UINT16 LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle );
 extern UINT16 LOCAL_HeapSize( HANDLE16 ds );
 extern UINT16 LOCAL_CountFree( HANDLE16 ds );
 extern LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle );
-extern BOOL LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle );
+extern BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle );
 
 #endif  /* __WINE_LOCAL_H */

@@ -8,7 +8,7 @@
 #include "debugger.h"
 
 
-struct sigcontext_struct *DEBUG_context;
+SIGCONTEXT *DEBUG_context;
 
 
 

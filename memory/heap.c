@@ -4,6 +4,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -236,7 +237,7 @@ static SUBHEAP *HEAP_FindSubHeap( HEAP *heap, LPCVOID ptr )
  *
  * Make sure the heap storage is committed up to (not including) ptr.
  */
-static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
+static BOOL32 HEAP_Commit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
     size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
@@ -262,7 +263,7 @@ static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
  *
  * If possible, decommit the heap storage from (including) 'ptr'.
  */
-static BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
+static BOOL32 HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
     size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
@@ -373,7 +374,18 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
     if (((char *)pFree == (char *)subheap + subheap->headerSize) &&
         (subheap != &subheap->heap->subheap))
     {
-        /* FIXME: free the sub-heap here */
+        SUBHEAP *pPrev = &subheap->heap->subheap;
+        /* Remove the free block from the list */
+        pFree->next->prev = pFree->prev;
+        pFree->prev->next = pFree->next;
+        /* Remove the subheap from the list */
+        while (pPrev && (pPrev->next != subheap)) pPrev = pPrev->next;
+        if (pPrev) pPrev->next = subheap->next;
+        /* Free the memory */
+        subheap->magic = 0;
+        if (subheap->selector) FreeSelector( subheap->selector );
+        VirtualFree( subheap, subheap->size, MEM_DECOMMIT );
+        VirtualFree( subheap, 0, MEM_RELEASE );
         return;
     }
     
@@ -541,7 +553,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
  *
  * Check that the pointer is inside the range possible for arenas.
  */
-static BOOL HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
+static BOOL32 HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
 {
     int i;
     SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
@@ -557,7 +569,7 @@ static BOOL HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
 /***********************************************************************
  *           HEAP_ValidateFreeArena
  */
-static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
+static BOOL32 HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
@@ -639,7 +651,7 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 /***********************************************************************
  *           HEAP_ValidateInUseArena
  */
-static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
+static BOOL32 HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena )
 {
     char *heapEnd = (char *)subheap + subheap->size;
 
@@ -829,7 +841,7 @@ HANDLE32 HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
 /***********************************************************************
  *           HeapDestroy   (KERNEL32.337)
  */
-BOOL HeapDestroy( HANDLE32 heap )
+BOOL32 HeapDestroy( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
@@ -842,6 +854,7 @@ BOOL HeapDestroy( HANDLE32 heap )
     while (subheap)
     {
         SUBHEAP *next = subheap->next;
+        if (subheap->selector) FreeSelector( subheap->selector );
         VirtualFree( subheap, subheap->commitSize, MEM_DECOMMIT );
         VirtualFree( subheap, 0, MEM_RELEASE );
         subheap = next;
@@ -913,7 +926,7 @@ LPVOID HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
 /***********************************************************************
  *           HeapFree   (KERNEL32.338)
  */
-BOOL HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
+BOOL32 HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
 {
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
@@ -1030,7 +1043,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
                                + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
             pInUse->threadId = GetCurrentTask();
             pInUse->magic    = ARENA_INUSE_MAGIC;
-            HEAP_ShrinkBlock( subheap, pInUse, size );
+            HEAP_ShrinkBlock( newsubheap, pInUse, size );
             memcpy( pInUse + 1, pArena + 1, oldSize );
 
             /* Free the previous block */
@@ -1077,7 +1090,7 @@ DWORD HeapCompact( HANDLE32 heap, DWORD flags )
 /***********************************************************************
  *           HeapLock   (KERNEL32.339)
  */
-BOOL HeapLock( HANDLE32 heap )
+BOOL32 HeapLock( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
@@ -1090,7 +1103,7 @@ BOOL HeapLock( HANDLE32 heap )
 /***********************************************************************
  *           HeapUnlock   (KERNEL32.342)
  */
-BOOL HeapUnlock( HANDLE32 heap )
+BOOL32 HeapUnlock( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
@@ -1133,7 +1146,7 @@ DWORD HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
 /***********************************************************************
  *           HeapValidate   (KERNEL32.343)
  */
-BOOL HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
+BOOL32 HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
 {
     SUBHEAP *subheap;
     HEAP *heapPtr = (HEAP *)heap;
@@ -1185,7 +1198,7 @@ BOOL HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
 /***********************************************************************
  *           HeapWalk   (KERNEL32.344)
  */
-BOOL HeapWalk( HANDLE32 heap, void *entry )
+BOOL32 HeapWalk( HANDLE32 heap, void *entry )
 {
     fprintf( stderr, "HeapWalk(%08x): not implemented\n", heap );
     return FALSE;

@@ -61,29 +61,28 @@ enum exec_mode
     EXEC_STEP_INSTR  /* Single-stepping an instruction */
 };
 
-extern struct sigcontext_struct *DEBUG_context;  /* debugger/registers.c */
+extern SIGCONTEXT *DEBUG_context;  /* debugger/registers.c */
 extern unsigned int dbg_mode;
 
   /* debugger/break.c */
-extern void DEBUG_SetBreakpoints( BOOL set );
+extern void DEBUG_SetBreakpoints( BOOL32 set );
 extern int DEBUG_FindBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_AddBreakpoint( const DBG_ADDR *addr );
 extern void DEBUG_DelBreakpoint( int num );
-extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
+extern void DEBUG_EnableBreakpoint( int num, BOOL32 enable );
 extern void DEBUG_InfoBreakpoints(void);
-extern BOOL DEBUG_HandleTrap( struct sigcontext_struct *context );
-extern BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
-                                  enum exec_mode mode );
-extern void DEBUG_RestartExecution( struct sigcontext_struct *context,
-                                    enum exec_mode mode, int instr_len );
+extern BOOL32 DEBUG_HandleTrap( SIGCONTEXT *context );
+extern BOOL32 DEBUG_ShouldContinue( SIGCONTEXT *context, enum exec_mode mode );
+extern void DEBUG_RestartExecution( SIGCONTEXT *context, enum exec_mode mode,
+                                    int instr_len );
 
   /* debugger/db_disasm.c */
 extern void DEBUG_Disasm( DBG_ADDR *addr );
 
   /* debugger/hash.c */
 extern void DEBUG_AddSymbol( const char *name, const DBG_ADDR *addr );
-extern BOOL DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr );
-extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
+extern BOOL32 DEBUG_GetSymbolValue( const char * name, DBG_ADDR *addr );
+extern BOOL32 DEBUG_SetSymbolValue( const char * name, const DBG_ADDR *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr );
 extern void DEBUG_ReadSymbolTable( const char * filename );
 extern void DEBUG_LoadEntryPoints(void);
@@ -95,8 +94,8 @@ extern void DEBUG_Help(void);
 extern void DEBUG_List( DBG_ADDR *addr, int count );
 
   /* debugger/memory.c */
-extern BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
-extern BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size );
+extern BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );
+extern BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size );
 extern int DEBUG_ReadMemory( const DBG_ADDR *address );
 extern void DEBUG_WriteMemory( const DBG_ADDR *address, int value );
 extern void DEBUG_ExamineMemory( const DBG_ADDR *addr, int count, char format);
@@ -112,6 +111,6 @@ extern void DEBUG_BackTrace(void);
 
   /* debugger/dbg.y */
 extern void DEBUG_EnterDebugger(void);
-extern void wine_debug( int signal, struct sigcontext_struct * regs );
+extern void wine_debug( int signal, SIGCONTEXT *regs );
 
 #endif  /* DEBUGGER_H */

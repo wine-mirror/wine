@@ -8,6 +8,7 @@
 #define CLASS_H
 
 #include "windows.h"
+#include "winproc.h"
 
 #define CLASS_MAGIC   ('C' | ('L' << 8) | ('A' << 16) | ('S' << 24))
 
@@ -17,7 +18,7 @@ typedef struct tagCLASS
     UINT32           magic;         /* Magic number */
     UINT32           cWindows;      /* Count of existing windows */
     UINT32           style;         /* Class style */
-    HANDLE32         winproc;       /* Window procedure */ 
+    HWINDOWPROC      winproc;       /* Window procedure */ 
     INT32            cbClsExtra;    /* Class extra bytes */
     INT32            cbWndExtra;    /* Window extra bytes */
     LPSTR            menuNameA;     /* Default menu name (ASCII string) */
@@ -34,7 +35,7 @@ typedef struct tagCLASS
 
 extern void CLASS_DumpClass( CLASS *class );
 extern void CLASS_WalkClasses(void);
-extern void CLASS_FreeModuleClasses( HMODULE hModule );
+extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance );
 extern CLASS * CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance );
 

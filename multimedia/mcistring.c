@@ -35,7 +35,7 @@ extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
 /* FIXME: I need to remember the aliasname of a spec. driver. 
  *        and this is the easiest way. *sigh*
  */
-static MCI_OPEN_PARMS		mciOpenDrv[MAXMCIDRIVERS];
+extern MCI_OPEN_PARMS		mciOpenDrv[MAXMCIDRIVERS];
 
 LONG DrvDefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 		      DWORD dwParam1, DWORD dwParam2);
@@ -2087,7 +2087,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	DWORD	dwFlags;
 	int	res=0,i,nrofkeywords;
 
-	dprintf_mci(stdnimp,"mciSendString('%s', %p, %d, %X)\n", lpstrCommand, 
+	dprintf_mci(stddeb,"mciSendString('%s', %p, %d, %X)\n", lpstrCommand, 
 		lpstrReturnString, uReturnLength, hwndCallback
 	);
 	/* format is <command> <device> <optargs> */
@@ -2146,7 +2146,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 			dname=(SEGPTR)mciOpenDrv[wDevID].lpstrAlias;
 			if (dname==NULL) 
 				dname=(SEGPTR)mciOpenDrv[wDevID].lpstrDeviceType;
-			if (!STRCMP(PTR_SEG_TO_LIN(dname),dev))
+			if ((dname!=NULL)&&(!STRCMP(PTR_SEG_TO_LIN(dname),dev)))
 				break;
 			if (++wDevID >= MAXMCIDRIVERS) {
 				dprintf_mci(stddeb, __FILE__":mciSendString:MAXMCIDRIVERS reached!\n");

@@ -11,10 +11,10 @@
 #include "ldt.h"
 
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size,
-				 enum seg_type type, BOOL is32bit,
-				 BOOL readonly );
+				 enum seg_type type, BOOL32 is32bit,
+				 BOOL32 readonly );
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
-                                   enum seg_type type, BOOL is32bit,
-                                   BOOL readonly );
+                                   enum seg_type type, BOOL32 is32bit,
+                                   BOOL32 readonly );
 
 #endif /* __WINE_SELECTORS_H */

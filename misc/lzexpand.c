@@ -396,7 +396,7 @@ LONG
 LZSeek(HFILE fd,LONG off,INT32 type) {
 	int	i;
 	struct	lzstate	*lzs;
-	LONG	lastwanted,newwanted;
+	LONG	newwanted;
 
 	dprintf_file(stddeb,"LZSeek(%d,%ld,%d)\n",fd,off,type);
 	for (i=0;i<nroflzstates;i++)
@@ -406,7 +406,6 @@ LZSeek(HFILE fd,LONG off,INT32 type) {
 	if (i==nroflzstates)
 		return _llseek(fd,off,type);
 	lzs		= lzstates+i;
-	lastwanted	= lzs->realwanted;
 	newwanted	= lzs->realwanted;
 	switch (type) {
 	case 1:	/* SEEK_CUR */
@@ -424,7 +423,7 @@ LZSeek(HFILE fd,LONG off,INT32 type) {
 	if (newwanted<0)
 		return LZERROR_BADVALUE;
 	lzs->realwanted	= newwanted;
-	return lastwanted;
+	return newwanted;
 }
 
 /* 

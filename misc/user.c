@@ -76,7 +76,7 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 /***********************************************************************
  *           TimerCount   (TOOLHELP.80)
  */
-BOOL TimerCount( TIMERINFO *pTimerInfo )
+BOOL16 TimerCount( TIMERINFO *pTimerInfo )
 {
     /* FIXME
      * In standard mode, dwmsSinceStart = dwmsThisVM 

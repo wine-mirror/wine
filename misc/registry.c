@@ -1714,9 +1714,12 @@ DWORD RegQueryValueEx32W(
 	}
 	if (i==lpkey->nrofvalues) {
 		if (lpszValueName==NULL) {
-			*(WCHAR*)lpbData = 0;
-			*lpcbData	= 2;
-			*lpdwType	= REG_SZ;
+			if (lpbData) {
+				*(WCHAR*)lpbData = 0;
+				*lpcbData	= 2;
+			}
+			if (lpdwType)
+				*lpdwType	= REG_SZ;
 			return SHELL_ERROR_SUCCESS;
 		}
 		return SHELL_ERROR_BADKEY;/*FIXME: correct return? */
@@ -1790,6 +1793,7 @@ DWORD RegQueryValueEx32A(
 	LPBYTE	buf;
 	DWORD	ret,myxlen;
 	DWORD	*mylen;
+	DWORD	type;
 
 	dprintf_reg(stddeb,"RegQueryValueEx32A(%x,%s,%p,%p,%p,%ld)\n->",
 		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,
@@ -1813,18 +1817,21 @@ DWORD RegQueryValueEx32A(
 	else 
 		lpszValueNameW=NULL;
 
+	if (lpdwType)
+		type=*lpdwType;
 	ret=RegQueryValueEx32W(
 		hkey,
 		lpszValueNameW,
 		lpdwReserved,
-		lpdwType,
+		&type,
 		buf,
 		mylen
 	);
-
+	if (lpdwType) 
+		*lpdwType=type;
 	if (ret==ERROR_SUCCESS) {
 		if (buf) {
-			if (UNICONVMASK & (1<<(*lpdwType))) {
+			if (UNICONVMASK & (1<<(type))) {
 				/* convert UNICODE to ASCII */
 				strcpyWA(lpbData,(LPWSTR)buf);
 				*lpcbData	= myxlen/2;
@@ -1837,11 +1844,11 @@ DWORD RegQueryValueEx32A(
 				*lpcbData	= myxlen;
 			}
 		} else {
-			if ((UNICONVMASK & (1<<(*lpdwType))) && lpcbData)
+			if ((UNICONVMASK & (1<<(type))) && lpcbData)
 				*lpcbData	= myxlen/2;
 		}
 	} else {
-		if ((UNICONVMASK & (1<<(*lpdwType))) && lpcbData)
+		if ((UNICONVMASK & (1<<(type))) && lpcbData)
 			*lpcbData	= myxlen/2;
 	}
 	if (buf)

@@ -86,7 +86,7 @@ static BIOSDATA *pBiosData = NULL;
  */
 BOOL DOSMEM_Init(void)
 {
-    HMODULE hModule = GetModuleHandle( "KERNEL" );
+    HMODULE16 hModule = GetModuleHandle( "KERNEL" );
     char *dosmem;
 
     /* Allocate 7 64k segments for 0000, A000, B000, C000, D000, E000, F000. */

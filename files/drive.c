@@ -525,9 +525,9 @@ BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDriveType   (KERNEL.136)
+ *           GetDriveType16   (KERNEL.136)
  */
-WORD GetDriveType( INT drive )
+UINT16 GetDriveType16( UINT16 drive )
 {
     dprintf_dosfs( stddeb, "GetDriveType(%c:)\n", 'A' + drive );
     switch(DRIVE_GetType(drive))
@@ -543,9 +543,9 @@ WORD GetDriveType( INT drive )
 
 
 /***********************************************************************
- *           GetDriveType32A   (KERNEL32.)
+ *           GetDriveType32A   (KERNEL32.208)
  */
-WORD GetDriveType32A( LPCSTR root )
+UINT32 GetDriveType32A( LPCSTR root )
 {
     dprintf_dosfs( stddeb, "GetDriveType32A(%s)\n", root );
     if ((root[1] != ':') || (root[2] != '\\'))
@@ -566,18 +566,61 @@ WORD GetDriveType32A( LPCSTR root )
 
 
 /***********************************************************************
- *           GetCurrentDirectory   (KERNEL.411) (KERNEL32.196)
+ *           GetDriveType32W   (KERNEL32.209)
  */
-UINT32 GetCurrentDirectory( UINT32 buflen, LPSTR buf )
+UINT32 GetDriveType32W( LPCWSTR root )
 {
+    LPSTR xpath=STRING32_DupUniToAnsi(root);
+    UINT32 ret;
+
+    ret = GetDriveType32A(xpath);
+    free(xpath);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetCurrentDirectory16   (KERNEL.411)
+ */
+UINT16 GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
+{
+    return (UINT16)GetCurrentDirectory32A( buflen, buf );
+}
+
+
+/***********************************************************************
+ *           GetCurrentDirectory32A   (KERNEL32.196)
+ *
+ * Returns "X:\\path\\etc\\".
+ */
+UINT32 GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
+{
+    char *pref = "A:\\";
     const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
     if (!s)
     {
         *buf = '\0';
         return 0;
     }
-    lstrcpyn32A( buf, s, buflen );
-    return strlen(s); /* yes */
+    lstrcpyn32A( buf, pref, 3 );
+    if (buflen) buf[0] += DRIVE_GetCurrentDrive();
+    if (buflen >= 3) lstrcpyn32A( buf + 3, s, buflen - 3 );
+    return strlen(s) + 3; /* length of WHOLE current directory */
+}
+
+
+/***********************************************************************
+ *           GetCurrentDirectory32W   (KERNEL32.197)
+ */
+UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
+{
+    LPSTR xpath=(char*)xmalloc(buflen+1);
+    UINT32 ret;
+
+    ret = GetCurrentDirectory32A(buflen,xpath);
+    STRING32_AnsiToUni(buf,xpath);
+    free(xpath);
+    return ret;
 }
 
 

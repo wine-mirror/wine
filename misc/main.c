@@ -227,7 +227,7 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
  *                    ParseDebugOptions
  *
  *  Turns specific debug messages on or off, according to "options".
- *  Returns TRUE if parsing was successfull 
+ *  Returns TRUE if parsing was successful
  */
 #ifdef DEBUG_RUNTIME
 
@@ -655,6 +655,17 @@ void MessageBeep(WORD i)
 
 
 /***********************************************************************
+ *           Beep   (KERNEL32.11)
+ */
+BOOL32 Beep( DWORD dwFreq, DWORD dwDur )
+{
+    /* dwFreq and dwDur are ignored by Win95 */
+    XBell(display, 100);
+    return TRUE;
+}
+
+
+/***********************************************************************
  *      GetVersion (KERNEL.3)
  */
 LONG GetVersion(void)
@@ -761,7 +772,7 @@ LONG GetWinFlags(void)
 /***********************************************************************
  *	SetEnvironment (GDI.132)
  */
-int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
+int SetEnvironment(LPCSTR lpPortName, LPCSTR lpEnviron, WORD nCount)
 {
     LPENVENTRY	lpNewEnv;
     LPENVENTRY	lpEnv = lpEnvList;
@@ -826,16 +837,35 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
     return nCount;
 }
 
+
 /***********************************************************************
- *      SetEnvironmentVariableA (KERNEL32.484)
+ *      SetEnvironmentVariable32A   (KERNEL32.484)
  */
-BOOL SetEnvironmentVariableA(LPSTR lpName, LPSTR lpValue)
+BOOL32 SetEnvironmentVariable32A( LPCSTR lpName, LPCSTR lpValue )
 {
     int rc;
 
     rc = SetEnvironment(lpName, lpValue, strlen(lpValue) + 1);
     return (rc > 0) ? 1 : 0;
 }
+
+
+/***********************************************************************
+ *      SetEnvironmentVariable32W   (KERNEL32.485)
+ */
+BOOL32 SetEnvironmentVariable32W( LPCWSTR lpName, LPCWSTR lpValue )
+{
+    LPSTR lpAName, lpAValue;
+    BOOL ret;
+
+    lpAName = STRING32_DupUniToAnsi( lpName );
+    lpAValue = STRING32_DupUniToAnsi ( lpValue );
+    ret = SetEnvironment(lpAName, lpAValue, strlen(lpAValue) + 1);
+    free (lpAName);
+    free (lpAValue);
+    return (ret > 0) ? 1 : 0;    
+}
+
 
 /***********************************************************************
  *	GetEnvironment (GDI.134)

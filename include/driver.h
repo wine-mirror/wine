@@ -37,29 +37,32 @@ typedef struct {
 	LPCSTR  lpszDCIAliasName;
 } DRVCONFIGINFO, *LPDRVCONFIGINFO;
 
-typedef struct {
-	UINT    length;
-	HDRVR   hDriver;
-	HINSTANCE hModule;
-	char    szAliasName[128];
-} DRIVERINFOSTRUCT, *LPDRIVERINFOSTRUCT;
+typedef struct
+{
+    UINT16       length;
+    HDRVR16      hDriver;
+    HINSTANCE16  hModule;
+    CHAR         szAliasName[128];
+} DRIVERINFOSTRUCT16, *LPDRIVERINFOSTRUCT16;
 
-typedef struct {
-	DRIVERINFOSTRUCT dis;
-	WORD		count;
-	void		*lpPrevItem;
-	void		*lpNextItem;
-	DRIVERPROC	lpDrvProc;
+typedef struct tagDRIVERITEM
+{
+    DRIVERINFOSTRUCT16    dis;
+    WORD                  count;
+    struct tagDRIVERITEM *lpPrevItem;
+    struct tagDRIVERITEM *lpNextItem;
+    DRIVERPROC            lpDrvProc;
 } DRIVERITEM, *LPDRIVERITEM;
 
-LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
-						DWORD dwParam1, DWORD dwParam2);
-HDRVR   OpenDriver(LPSTR szDriverName, LPSTR szSectionName, LPARAM lParam2);
-LRESULT CloseDriver(HDRVR hDriver, LPARAM lParam1, LPARAM lParam2);
-LRESULT SendDriverMessage(HDRVR hDriver, WORD message, LPARAM lParam1, LPARAM lParam2);
-HINSTANCE GetDriverModuleHandle(HDRVR hDriver);
-HDRVR   GetNextDriver(HDRVR, DWORD);
-BOOL    GetDriverInfo(HDRVR, DRIVERINFOSTRUCT *);
+LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, UINT16 wMsg, 
+                      LPARAM dwParam1, LPARAM dwParam2);
+HDRVR16 OpenDriver(LPSTR szDriverName, LPSTR szSectionName, LPARAM lParam2);
+LRESULT CloseDriver(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
+LRESULT SendDriverMessage( HDRVR16 hDriver, UINT16 message, LPARAM lParam1,
+                           LPARAM lParam2 );
+HMODULE16 GetDriverModuleHandle(HDRVR16 hDriver);
+HDRVR16 GetNextDriver(HDRVR16, DWORD);
+BOOL16 GetDriverInfo(HDRVR16, DRIVERINFOSTRUCT16 *);
 
 
 

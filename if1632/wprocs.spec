@@ -1,6 +1,7 @@
 name	wprocs
 type	win16
 
+1  pascal WINPROC_CallProc16To32A(word word word long long) WINPROC_CallProc16To32A
 2  pascal StaticWndProc(word word word long) StaticWndProc
 3  pascal ScrollBarWndProc(word word word long) ScrollBarWndProc
 4  pascal ListBoxWndProc(word word word long) ListBoxWndProc
@@ -25,7 +26,6 @@ type	win16
 26 register Win32CallToStart() PE_Win32CallToStart
 27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment
-29 pascal16 ActivateAppProc(word long) ACTIVATEAPP_callback
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc
 31 pascal16 FontStyleEnumProc(ptr ptr word long)   FontStyleEnumProc
 32 pascal16 FontFamilyEnumProc(ptr ptr word long)  FontFamilyEnumProc

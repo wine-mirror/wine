@@ -31,6 +31,10 @@ static int	InstalledListLen;
 static LPSTR	lpInstallNames = NULL;
 
 MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
+/* struct below is to remember alias/devicenames for mcistring.c 
+ * FIXME: should use some internal struct ... 
+ */
+MCI_OPEN_PARMS		mciOpenDrv[MAXMCIDRIVERS];
 
 UINT midiGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
 UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize);
@@ -547,12 +551,21 @@ BOOL mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 /**************************************************************************
 * 				mciOpen					[internal]
 */
+
+#define	_MCI_STRDUP_TO_SEG(dest,source) {\
+	HANDLE	x;\
+	x=USER_HEAP_ALLOC(strlen(source));\
+	dest=(LPSTR)MAKELONG(x,USER_HeapSel);\
+	strcpy(PTR_SEG_TO_LIN(dest),source);\
+}
+
 DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 {
 	char	str[128];
 	LPMCI_OPEN_PARMS lpParms;
 	UINT	uDevTyp = 0;
 	UINT	wDevID = 0;
+
 	lpParms = PTR_SEG_TO_LIN(lp16Parms);
 	dprintf_mmsys(stddeb, "mciOpen(%08lX, %p (%p))\n", dwParam, lp16Parms, lpParms);
 	if (lp16Parms == NULL) return MCIERR_INTERNAL;
@@ -560,46 +573,52 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 		if (++wDevID >= MAXMCIDRIVERS) {
 			dprintf_mmsys(stddeb, "MCI_OPEN // MAXMCIDRIVERS reached !\n");
 			return MCIERR_INTERNAL;
-			}
 		}
+	}
 	dprintf_mmsys(stddeb, "mciOpen // wDevID=%d \n", wDevID);
+
+	memcpy(&mciOpenDrv[wDevID],lpParms,sizeof(*lpParms));
 	if (dwParam & MCI_OPEN_ALIAS) {
 		dprintf_mmsys(stddeb, "MCI_OPEN // Alias='%s' !\n",
 			(char*)PTR_SEG_TO_LIN(lpParms->lpstrAlias));
-		uDevTyp = MCI_DEVTYPE_WAVEFORM_AUDIO;
- 		}
+		_MCI_STRDUP_TO_SEG(
+			mciOpenDrv[wDevID].lpstrAlias,
+			(char*)PTR_SEG_TO_LIN(lpParms->lpstrAlias)
+		);
+		/* mplayer does allocate alias to CDAUDIO */
+	}
 	if (dwParam & MCI_OPEN_TYPE) {
 		if (dwParam & MCI_OPEN_TYPE_ID) {
 			dprintf_mmsys(stddeb, "MCI_OPEN // Dev=%p !\n", lpParms->lpstrDeviceType);
 			uDevTyp = LOWORD((DWORD)lpParms->lpstrDeviceType);
-			}
-		else {
+			mciOpenDrv[wDevID].lpstrDeviceType=lpParms->lpstrDeviceType;
+		} else {
 			if (lpParms->lpstrDeviceType == NULL) return MCIERR_INTERNAL;
 			dprintf_mmsys(stddeb, "MCI_OPEN // Dev='%s' !\n",
                               (char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
+			_MCI_STRDUP_TO_SEG(
+				mciOpenDrv[wDevID].lpstrDeviceType,
+				(char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType)
+			);
 			strcpy(str, PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
 			AnsiUpper(str);
 			if (strcmp(str, "CDAUDIO") == 0) {
 				uDevTyp = MCI_DEVTYPE_CD_AUDIO;
-				}
-			else
+			} else
 			if (strcmp(str, "WAVEAUDIO") == 0) {
 				uDevTyp = MCI_DEVTYPE_WAVEFORM_AUDIO;
-				}
-			else
+			} else
 			if (strcmp(str, "SEQUENCER") == 0)	{
 				uDevTyp = MCI_DEVTYPE_SEQUENCER;
-				}
-			else
+			} else
 			if (strcmp(str, "ANIMATION1") == 0) {
 				uDevTyp = MCI_DEVTYPE_ANIMATION;
-				}
-			else
+			} else
 			if (strcmp(str, "AVIVIDEO") == 0) {
 				uDevTyp = MCI_DEVTYPE_DIGITAL_VIDEO;
-				}
 			}
 		}
+	}
 	mciDrv[wDevID].wType = uDevTyp;
 	mciDrv[wDevID].wDeviceID = wDevID;
 	lpParms->wDeviceID = wDevID;

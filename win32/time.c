@@ -119,20 +119,13 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *              SetTimeZoneInformation  (KERNEL32.515)
  */
-BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION *tzinfo)
+BOOL32 SetTimeZoneInformation(const TIME_ZONE_INFORMATION *tzinfo)
 {
     struct timezone tz;
 
     tz.tz_minuteswest = tzinfo->Bias;
     tz.tz_dsttime = DST_NONE;
-    if (settimeofday(NULL, &tz))
-    {
-        return FALSE;
-    }
-    else
-    {
-        return TRUE;
-    }
+    return !settimeofday(NULL, &tz);
 }
 
 
