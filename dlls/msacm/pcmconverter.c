@@ -38,6 +38,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "mmsystem.h"
+#define NOBITMAP
 #include "mmreg.h"
 #include "msacm.h"
 #include "wingdi.h"

@@ -457,4 +457,38 @@ typedef WAVEFORMATIEEEFLOATEX*  LPWAVEFORMATIEEEFLOATEX;
 
 #endif /* _SPEAKER_POSITIONS_ */
 
+
+/* DIB stuff */
+
+#ifndef BI_BITFIELDS
+#define BI_BITFIELDS     3
+#endif
+
+#ifndef QUERYDIBSUPPORT
+#define	QUERYDIBSUPPORT		3073
+#define	QDI_SETDIBITS		1
+#define	QDI_GETDIBITS		2
+#define	QDI_DIBTOSCREEN		4
+#define	QDI_STRETCHDIB		8
+#endif
+
+#ifndef NOBITMAP
+typedef struct tagEXBMINFOHEADER {
+    BITMAPINFOHEADER bmi;
+    DWORD biExtDataOffset;
+} EXBMINFOHEADER;
+#endif
+
+
+/* Video stuff */
+
+#ifndef NONEWIC
+
+#ifndef ICTYPE_VIDEO
+#define ICTYPE_VIDEO		mmioFOURCC('v', 'i', 'd', 'c')
+#define ICTYPE_AUDIO		mmioFOURCC('a', 'u', 'd', 'c')
+#endif
+
+#endif
+
 #endif /* __WINE_MMREG_H */

@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "mmsystem.h"
+#define NOBITMAP
 #include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
@@ -459,5 +460,3 @@ MMRESULT16 WINAPI acmStreamUnprepareHeader16(
  * FIXME
  *   No documentation found.
  */
-
-

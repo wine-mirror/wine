@@ -35,6 +35,7 @@
 #include "winerror.h"
 #include "wine/debug.h"
 #include "mmsystem.h"
+#define NOBITMAP
 #include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
