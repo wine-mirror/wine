@@ -3567,8 +3567,25 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, LPCREATESTRUCTA cs)
  		return FALSE;
  	es->style = cs->style;
  
-	if ((es->style & WS_BORDER) && !(es->style & WS_DLGFRAME))
-		wnd->dwStyle &= ~WS_BORDER;
+	/*
+	 * In Win95 look and feel, the WS_BORDER style is replaced by the 
+	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit 
+	 * control a non client area.
+	 */
+	if (TWEAK_WineLook != WIN31_LOOK)
+	{
+	  if (es->style & WS_BORDER)
+	  {
+	    es->style      &= ~WS_BORDER;
+	    wnd->dwStyle   &= ~WS_BORDER;
+	    wnd->dwExStyle |= WS_EX_CLIENTEDGE;
+	  }
+	}
+	else
+	{
+	  if ((es->style & WS_BORDER) && !(es->style & WS_DLGFRAME))
+	    wnd->dwStyle &= ~WS_BORDER;
+	}
 
 	if (es->style & ES_MULTILINE) {
 		es->buffer_size = BUFSTART_MULTI;
@@ -3650,10 +3667,7 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
 			if(es->style & WS_HSCROLL) rc.bottom++;
 			if(es->style & WS_VSCROLL) rc.right++;
 		}
-		if (TWEAK_WineLook != WIN31_LOOK)
-			DrawEdge(dc, &rc, EDGE_SUNKEN, BF_RECT);
-		else
-			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+		Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
 	}
 	IntersectClipRect(dc, es->format_rect.left,
 				es->format_rect.top,
