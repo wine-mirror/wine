@@ -818,7 +818,7 @@
 @ stub TlsFreeInternal
 @ stdcall TlsGetValue(long)
 @ stdcall TlsSetValue(long ptr)
-@ stub Toolhelp32ReadProcessMemory
+@ stdcall Toolhelp32ReadProcessMemory(long ptr ptr long ptr)
 @ stdcall TransactNamedPipe(long ptr long ptr long ptr ptr)
 @ stdcall TransmitCommChar(long long)
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr)

@@ -154,6 +154,7 @@ typedef struct tagHEAPLIST32 {
 } HEAPLIST32, *PHEAPLIST32, *LPHEAPLIST32;
 
 BOOL WINAPI Heap32ListFirst(HANDLE,LPHEAPLIST32);
+BOOL WINAPI Toolhelp32ReadProcessMemory(DWORD,LPCVOID,LPVOID,SIZE_T,SIZE_T*);
 
 #ifdef __cplusplus
 } /* extern "C" */

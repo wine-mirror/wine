@@ -441,3 +441,23 @@ BOOL WINAPI Heap32ListFirst(HANDLE hSnapshot, LPHEAPLIST32 lphl)
     FIXME(": stub\n");
     return FALSE;
 }
+
+/******************************************************************
+ *		Toolhelp32ReadProcessMemory (KERNEL.@)
+ *
+ *
+ */
+BOOL WINAPI Toolhelp32ReadProcessMemory(DWORD pid, const void* base,
+                                        void* buf, SIZE_T len, SIZE_T* r)
+{
+    HANDLE h;
+    BOOL   ret = FALSE;
+
+    h = (pid) ? OpenProcess(PROCESS_VM_READ, FALSE, pid) : GetCurrentProcess();
+    if (h != NULL)
+    {
+        ret = ReadProcessMemory(h, base, buf, len, r);
+        if (pid) CloseHandle(h);
+    }
+    return ret;
+}
