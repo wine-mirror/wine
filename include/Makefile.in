@@ -12,6 +12,7 @@ INSTALLED_INCLUDES = \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
+	cpl.h \
 	d3d.h \
 	d3dcaps.h \
 	d3dtypes.h \

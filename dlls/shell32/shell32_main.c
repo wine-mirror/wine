@@ -77,20 +77,6 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 }
 
 /*************************************************************************
- * Control_RunDLL			[SHELL32.12]
- *
- * Wild speculation in the following!
- *
- * http://premium.microsoft.com/msdn/library/techart/msdn193.htm
- */
-
-void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
-{
-    FIXME("(0x%08x, %p, %s, 0x%08lx): stub\n", hwnd, code,
-          debugstr_a(cmd), arg4);
-}
-
-/*************************************************************************
  * SHGetFileInfoA			[SHELL32.@]
  *
  */

@@ -881,22 +881,6 @@ BOOL WINAPI SHWaitForFileToOpen(
 	FIXME("%p 0x%08lx 0x%08lx stub\n", pidl, dwFlags, dwTimeout);
 	return 0;
 }
-/*************************************************************************
- * Control_FillCache_RunDLL			[SHELL32.8]
- *
- */
-HRESULT WINAPI Control_FillCache_RunDLL(HWND hWnd, HANDLE hModule, DWORD w, DWORD x)
-{	FIXME("0x%04x 0x%04x 0x%04lx 0x%04lx stub\n",hWnd, hModule,w,x);
-	return 0;
-}
-/*************************************************************************
- * RunDLL_CallEntry16				[SHELL32.122]
- * the name is propably wrong
- */
-HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
-{	FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
-	return 0;
-}
 
 /************************************************************************
  *	shell32_654				[SHELL32.654]
@@ -981,5 +965,41 @@ BOOL WINAPI shell32_243(DWORD a, DWORD b)
 DWORD WINAPI SHELL32_714(LPVOID x)
 {
  	FIXME("(%s)stub\n", debugstr_w(x));
+	return 0;
+}
+
+/*************************************************************************
+ *      SHAddFromPropSheetExtArray	[SHELL32]
+ */
+DWORD WINAPI SHAddFromPropSheetExtArray(DWORD a, DWORD b, DWORD c)
+{
+ 	FIXME("(%08lx,%08lx,%08lx)stub\n", a, b, c);
+	return 0;
+}
+
+/*************************************************************************
+ *      SHCreatePropSheetExtArray	[SHELL32]
+ */
+DWORD WINAPI SHCreatePropSheetExtArray(DWORD a, LPCSTR b, DWORD c)
+{
+ 	FIXME("(%08lx,%s,%08lx)stub\n", a, debugstr_a(b), c);
+	return 0;
+}
+
+/*************************************************************************
+ *      SHReplaceFromPropSheetExtArray	[SHELL]
+ */
+DWORD WINAPI SHReplaceFromPropSheetExtArray(DWORD a, DWORD b, DWORD c, DWORD d)
+{
+ 	FIXME("(%08lx,%08lx,%08lx,%08lx)stub\n", a, b, c, d);
+	return 0;
+}
+
+/*************************************************************************
+ *      SHDestroyPropSheetExtArray	[SHELL32]
+ */
+DWORD WINAPI SHDestroyPropSheetExtArray(DWORD a)
+{
+ 	FIXME("(%08lx)stub\n", a);
 	return 0;
 }

@@ -14,7 +14,7 @@ import advapi32.dll
 import kernel32.dll
 import ntdll.dll
 
-debug_channels (exec pidl shell)
+debug_channels (exec pidl shell shlctrl)
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 
@@ -172,10 +172,10 @@ debug_channels (exec pidl shell)
  164 stdcall Win32DeleteFile(str) Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory
  166 stub CallCPLEntry16
- 167 stub SHAddFromPropSheetExtArray
- 168 stub SHCreatePropSheetExtArray
- 169 stub SHDestroyPropSheetExtArray
- 170 stub SHReplaceFromPropSheetExtArray
+ 167 stdcall SHAddFromPropSheetExtArray(long long long) SHAddFromPropSheetExtArray
+ 168 stdcall SHCreatePropSheetExtArray(long str long) SHCreatePropSheetExtArray
+ 169 stdcall SHDestroyPropSheetExtArray(long) SHDestroyPropSheetExtArray
+ 170 stdcall SHReplaceFromPropSheetExtArray(long long long long) SHReplaceFromPropSheetExtArray
  171 stdcall PathCleanupSpec(ptr ptr) PathCleanupSpecAW
  172 stub SHCreateLinks
  173 stdcall SHValidateUNC(long long long)SHValidateUNC
