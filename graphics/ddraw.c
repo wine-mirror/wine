@@ -16,6 +16,8 @@
 
 #include "config.h"
 
+#ifndef X_DISPLAY_MISSING 
+
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
@@ -127,63 +129,151 @@ DDRAW_DGA_Available(void)
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
-HRESULT WINAPI
-DirectDrawEnumerateA(LPDDENUMCALLBACKA ddenumproc,LPVOID data) {
-	TRACE(ddraw, "(%p,%p)\n", ddenumproc, data);
+/**********************************************************************/
+
+typedef struct {
+  LPVOID lpCallback;
+  LPVOID lpContext; 
+} DirectDrawEnumerateProcData;
+
+/***********************************************************************
+ *		DirectDrawEnumerateExA (DDRAW.*)
+ */
+HRESULT WINAPI DirectDrawEnumerateExA(
+  LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
+{
+  TRACE(ddraw, "(%p,%p, %08lx)\n", lpCallback, lpContext, dwFlags);
   
-	if (DDRAW_DGA_Available()) {
-	  TRACE(ddraw, "Enumerating DGA interface\n");
-	  if (!ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data))
-	    return DD_OK;
-	}
-	
-	TRACE(ddraw, "Enumerating Xlib interface\n");
-	if (!ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data))
-	  return DD_OK;
-	
-	TRACE(ddraw, "Enumerating Default interface\n");
-	if (!ddenumproc(NULL,"WINE (default)","display",data))
-	  return DD_OK;
-	
-	return DD_OK;
+  if (TRACE_ON(ddraw)) {
+    DUMP("  Flags : ");
+    if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES)
+      DUMP("DDENUM_ATTACHEDSECONDARYDEVICES ");
+    if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES)
+      DUMP("DDENUM_DETACHEDSECONDARYDEVICES ");
+    if (dwFlags & DDENUM_NONDISPLAYDEVICES)
+      DUMP("DDENUM_NONDISPLAYDEVICES ");
+    DUMP("\n");
+  }
+
+  if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
+    /* For the moment, Wine does not support any 3D only accelerators */
+    return DD_OK;
+  }
+  
+  if (DDRAW_DGA_Available()) {
+    TRACE(ddraw, "Enumerating DGA interface\n");
+    if (!lpCallback(&DGA_DirectDraw_GUID, "WINE with XFree86 DGA", "display", lpContext, NULL))
+      return DD_OK;
+  }
+
+  TRACE(ddraw, "Enumerating Xlib interface\n");
+  if (!lpCallback(&XLIB_DirectDraw_GUID, "WINE with Xlib", "display", lpContext, NULL))
+    return DD_OK;
+  
+  TRACE(ddraw, "Enumerating Default interface\n");
+  if (!lpCallback(NULL,"WINE (default)", "display", lpContext, NULL))
+    return DD_OK;
+  
+  return DD_OK;
 }
 
-HRESULT WINAPI
-DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA ddenumproc,LPVOID data, DWORD dwFlags) {
-	TRACE(ddraw, "(%p,%p, %08lx)\n", ddenumproc, data, dwFlags);
+/***********************************************************************
+ *		DirectDrawEnumerateExW (DDRAW.*)
+ */
 
-	if (TRACE_ON(ddraw)) {
-	  DUMP("  Flags : ");
-	  if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES)
-	    DUMP("DDENUM_ATTACHEDSECONDARYDEVICES ");
-	  if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES)
-	    DUMP("DDENUM_DETACHEDSECONDARYDEVICES ");
-	  if (dwFlags & DDENUM_NONDISPLAYDEVICES)
-	    DUMP("DDENUM_NONDISPLAYDEVICES ");
-	  DUMP("\n");
-	}
+static BOOL DirectDrawEnumerateExProcW(
+	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
+	LPVOID lpContext, HMONITOR hm)
+{
+  DirectDrawEnumerateProcData *pEPD =
+    (DirectDrawEnumerateProcData *) lpContext;
+  LPWSTR lpDriverDescriptionW =
+    HEAP_strdupAtoW(GetProcessHeap(), 0, lpDriverDescription);
+  LPWSTR lpDriverNameW =
+    HEAP_strdupAtoW(GetProcessHeap(), 0, lpDriverName);
 
-	if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
-	  /* For the moment, Wine does not support any 3D only accelerators */
-	  return DD_OK;
-	}
-	
-	if (DDRAW_DGA_Available()) {
-	  TRACE(ddraw, "Enumerating DGA interface\n");
-	  if (!ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data, NULL))
-	    return DD_OK;
-	}
+  BOOL bResult = (*(LPDDENUMCALLBACKEXW *) pEPD->lpCallback)(
+    lpGUID, lpDriverDescriptionW, lpDriverNameW, pEPD->lpContext, hm);
 
-	TRACE(ddraw, "Enumerating Xlib interface\n");
-	if (!ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data, NULL))
-	  return DD_OK;
+  HeapFree(GetProcessHeap(), 0, lpDriverDescriptionW);
+  HeapFree(GetProcessHeap(), 0, lpDriverNameW);
 
-	TRACE(ddraw, "Enumerating Default interface\n");
-	if (!ddenumproc(NULL,"WINE (default)","display",data, NULL))
-	  return DD_OK;
-	
-	return DD_OK;
+  return bResult;
 }
+
+/**********************************************************************/
+
+HRESULT WINAPI DirectDrawEnumerateExW(
+  LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
+{
+  DirectDrawEnumerateProcData epd;
+  epd.lpCallback = lpCallback;
+  epd.lpContext = lpContext;
+
+  return DirectDrawEnumerateExA(&DirectDrawEnumerateExProcW, 
+				  (LPVOID) &epd, 0);
+}
+
+/***********************************************************************
+ *		DirectDrawEnumerateA (DDRAW.*)
+ */
+
+static BOOL DirectDrawEnumerateProcA(
+	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
+	LPVOID lpContext, HMONITOR hm)
+{
+  DirectDrawEnumerateProcData *pEPD = 
+    (DirectDrawEnumerateProcData *) lpContext;
+  
+  return (*(LPDDENUMCALLBACKA *) pEPD->lpCallback)(
+    lpGUID, lpDriverDescription, lpDriverName, pEPD->lpContext);
+}
+
+/**********************************************************************/
+
+HRESULT WINAPI DirectDrawEnumerateA(
+  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
+{
+  DirectDrawEnumerateProcData epd;  
+  epd.lpCallback = lpCallback;
+  epd.lpContext = lpContext;
+
+  return DirectDrawEnumerateExA(&DirectDrawEnumerateProcA, 
+				(LPVOID) &epd, 0);
+}
+
+/***********************************************************************
+ *		DirectDrawEnumerateW (DDRAW.*)
+ */
+
+static BOOL DirectDrawEnumerateProcW(
+  GUID *lpGUID, LPWSTR lpDriverDescription, LPWSTR lpDriverName, 
+  LPVOID lpContext, HMONITOR hm)
+{
+  DirectDrawEnumerateProcData *pEPD = 
+    (DirectDrawEnumerateProcData *) lpContext;
+  
+  return (*(LPDDENUMCALLBACKW *) pEPD->lpCallback)(
+    lpGUID, lpDriverDescription, lpDriverName, 
+    pEPD->lpContext);
+}
+
+/**********************************************************************/
+
+HRESULT WINAPI DirectDrawEnumerateW(
+  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
+{
+  DirectDrawEnumerateProcData epd;  
+  epd.lpCallback = lpCallback;
+  epd.lpContext = lpContext;
+
+  return DirectDrawEnumerateExW(&DirectDrawEnumerateProcW, 
+				(LPVOID) &epd, 0);
+}
+
+/***********************************************************************
+ *		DSoundHelp (DDRAW.?)
+ */
 
 /* What is this doing here? */
 HRESULT WINAPI 
@@ -191,7 +281,6 @@ DSoundHelp(DWORD x,DWORD y,DWORD z) {
 	FIXME(ddraw,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x,y,z);
 	return 0;
 }
-
 
 /******************************************************************************
  *		internal helper functions
@@ -4160,3 +4249,62 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	ERR(ddraw, "DirectDrawCreate(%s,%p,%p): did not recognize requested GUID\n",xclsid,lplpDD,pUnkOuter);
 	return DDERR_INVALIDDIRECTDRAWGUID;
 }
+
+
+#else /* !defined(X_DISPLAY_MISSING) */
+
+#include "wintypes.h"
+
+#define DD_OK 0
+
+typedef void *LPGUID;
+typedef void *LPUNKNOWN;
+typedef void *LPDIRECTDRAW;
+typedef void *LPDIRECTDRAWCLIPPER;
+typedef void *LPDDENUMCALLBACKA;
+typedef void *LPDDENUMCALLBACKEXA;
+typedef void *LPDDENUMCALLBACKEXW;
+typedef void *LPDDENUMCALLBACKW;
+
+HRESULT WINAPI DSoundHelp(DWORD x, DWORD y, DWORD z) 
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawCreate(
+  LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawCreateClipper(
+  DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter)
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateA(
+  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateExA(
+  LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateExW(
+  LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
+{
+  return DD_OK;
+}
+
+HRESULT WINAPI DirectDrawEnumerateW(
+  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
+{
+  return DD_OK;
+}
+
+#endif /* !defined(X_DISPLAY_MISSING) */

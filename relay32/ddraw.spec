@@ -9,9 +9,9 @@ type win32
    6  stdcall DirectDrawCreate(ptr ptr ptr) DirectDrawCreate
    7  stdcall DirectDrawCreateClipper(long ptr ptr) DirectDrawCreateClipper
    8  stdcall DirectDrawEnumerateA(ptr ptr) DirectDrawEnumerateA
-   9  stub DirectDrawEnumerateW
-  10  stdcall DirectDrawEnumerateExA(ptr ptr long) DirectDrawEnumerateExA
-  11  stub DirectDrawEnumerateExW
+   9  stdcall DirectDrawEnumerateExA(ptr ptr long) DirectDrawEnumerateExA
+  10  stdcall DirectDrawEnumerateExW(ptr ptr long) DirectDrawEnumerateExW
+  11  stdcall DirectDrawEnumerateW(ptr ptr) DirectDrawEnumerateW
   12  stub DllCanUnloadNow
   13  stub DllGetClassObject
   14  stub GetNextMipMap
