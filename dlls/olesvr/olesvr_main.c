@@ -15,7 +15,7 @@
 
 DEFAULT_DEBUG_CHANNEL(ole);
 
-LONG	OLE_current_handle;
+static LONG OLE_current_handle;
 
 /******************************************************************************
  *		OleRegisterServer16	[OLESVR.2]

@@ -16,7 +16,7 @@
 DEFAULT_DEBUG_CHANNEL(ole);
 
 
-extern LONG	OLE_current_handle;
+static LONG OLE_current_handle;
 
 /******************************************************************************
  *		OleRegisterClientDoc16	[OLECLI.41]

@@ -156,9 +156,9 @@ import ole32.dll
 197 stub VarDecFromStr
 198 stub VarDecFromDisp
 199 stub VarDecFromBool
-200 stdcall GetErrorInfo(long ptr) GetErrorInfo
-201 stdcall SetErrorInfo(long ptr ) SetErrorInfo
-202 stdcall CreateErrorInfo(ptr) CreateErrorInfo
+200 forward GetErrorInfo ole32.GetErrorInfo
+201 forward SetErrorInfo ole32.SetErrorInfo
+202 forward CreateErrorInfo ole32.CreateErrorInfo
 205 stdcall VarI2FromI1(long ptr) VarI2FromI1
 206 stdcall VarI2FromUI2(long ptr) VarI2FromUI2
 207 stdcall VarI2FromUI4(long ptr) VarI2FromUI4
