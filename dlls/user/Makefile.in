@@ -25,7 +25,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/driver.c \
 	$(TOPOBJDIR)/windows/input.c \
 	$(TOPOBJDIR)/windows/mdi.c \
-	$(TOPOBJDIR)/windows/message.c \
 	$(TOPOBJDIR)/windows/msgbox.c \
 	$(TOPOBJDIR)/windows/multimon.c \
 	$(TOPOBJDIR)/windows/nonclient.c \

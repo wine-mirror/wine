@@ -56,14 +56,9 @@ extern MESSAGEQUEUE *QUEUE_Current(void);
 extern void QUEUE_DeleteMsgQueue(void);
 
 /* message.c */
-extern BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
-                                              UINT first, UINT last, BOOL remove );
-extern BOOL MSG_process_cooked_hardware_message( MSG *msg, ULONG_PTR extra_info, BOOL remove );
-extern void MSG_JournalPlayBackMsg(void);
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
                                                UINT msg, WPARAM wparam, LPARAM lparam,
                                                UINT flags, UINT timeout, PDWORD_PTR res_ptr );
-extern BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags );
 
 /* spy.c */
 #define SPY_DISPATCHMESSAGE16     0x0100
