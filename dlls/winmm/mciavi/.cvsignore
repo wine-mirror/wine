@@ -1,2 +1,3 @@
 *.spec.c
 Makefile
+mciavi_res.res

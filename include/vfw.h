@@ -4,7 +4,6 @@
 #include "windef.h"
 #include "mmsystem.h"
 #include "wingdi.h"
-#include "unknwn.h"
 
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV
@@ -15,25 +14,9 @@ extern "C" {
 
 typedef HANDLE HDRAWDIB;
 
-HWND        VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCSTR szFile);
-HWND        VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCWSTR szFile);
-#define     MCIWndCreate WINELIB_NAME_AW(MCIWndCreate)
 DWORD       VFWAPI  VideoForWindowsVersion(void);
 LONG 	    VFWAPI  InitVFW(void);
 LONG	    VFWAPI  TermVFW(void);
-
-#ifndef mmioFOURCC
-#define mmioFOURCC( ch0, ch1, ch2, ch3 )				\
-	( (DWORD)(BYTE)(ch0) | ( (DWORD)(BYTE)(ch1) << 8 ) |		\
-	( (DWORD)(BYTE)(ch2) << 16 ) | ( (DWORD)(BYTE)(ch3) << 24 ) )
-#endif
-
-#ifndef aviTWOCC
-#define aviTWOCC(ch0, ch1) ((WORD)(BYTE)(ch0) | ((WORD)(BYTE)(ch1) << 8))
-#endif
-
-#define ICTYPE_VIDEO	mmioFOURCC('v', 'i', 'd', 'c')
-#define ICTYPE_AUDIO	mmioFOURCC('a', 'u', 'd', 'c')
 
 /*****************************************************************************
  * Predeclare the interfaces
@@ -44,7 +27,7 @@ typedef struct IGetFrame IGetFrame,*PGETFRAME;
 
 /* Installable Compressor Manager */
 
-DECLARE_OLD_HANDLE(HIC);
+DECLARE_HANDLE(HIC);
 
 #ifdef __WINE__
 /* HIC struct (same layout as Win95 one) */
@@ -729,6 +712,22 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits,
 void VFWAPI ICCompressorFree(PCOMPVARS pc);
 
 /********************* AVIFILE function declarations *************************/
+
+#ifndef mmioFOURCC
+#define mmioFOURCC( ch0, ch1, ch2, ch3 )				\
+	( (DWORD)(BYTE)(ch0) | ( (DWORD)(BYTE)(ch1) << 8 ) |		\
+	( (DWORD)(BYTE)(ch2) << 16 ) | ( (DWORD)(BYTE)(ch3) << 24 ) )
+#endif
+
+#ifndef aviTWOCC
+#define aviTWOCC(ch0, ch1) ((WORD)(BYTE)(ch0) | ((WORD)(BYTE)(ch1) << 8))
+#endif
+
+typedef WORD TWOCC;
+
+#define ICTYPE_VIDEO		mmioFOURCC('v', 'i', 'd', 'c')
+#define ICTYPE_AUDIO		mmioFOURCC('a', 'u', 'd', 'c')
+
 #define formtypeAVI             mmioFOURCC('A', 'V', 'I', ' ')
 #define listtypeAVIHEADER       mmioFOURCC('h', 'd', 'r', 'l')
 #define ckidAVIMAINHDR          mmioFOURCC('a', 'v', 'i', 'h')
@@ -756,6 +755,15 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc);
 
 /* Chunk id to use for extra chunks for padding. */
 #define ckidAVIPADDING          mmioFOURCC('J', 'U', 'N', 'K')
+
+#define FromHex(n)		(((n) >= 'A') ? ((n) + 10 - 'A') : ((n) - '0'))
+#define StreamFromFOURCC(fcc)	((WORD)((FromHex(LOBYTE(LOWORD(fcc))) << 4) + \
+					(FromHex(HIBYTE(LOWORD(fcc))))))
+#define TWOCCFromFOURCC(fcc)    HIWORD(fcc)
+#define ToHex(n)		((BYTE)(((n) > 9) ? ((n) - 10 + 'A') : ((n) + '0')))
+#define MAKEAVICKID(tcc, stream) \
+                                MAKELONG((ToHex((stream) & 0x0f) << 8) | \
+			                 (ToHex(((stream) & 0xf0) >> 4)), tcc)
 
 /* AVIFileHdr.dwFlags */
 #define AVIF_HASINDEX		0x00000010	/* Index at end of file? */
@@ -942,7 +950,7 @@ typedef struct {
     DWORD	dwInterleaveEvery;	/* for non-video streams only */
 } AVICOMPRESSOPTIONS, *LPAVICOMPRESSOPTIONS,*PAVICOMPRESSOPTIONS;
 
-
+#include "ole2.h"
 
 #define DEFINE_AVIGUID(name, l, w1, w2) \
     DEFINE_GUID(name, l, w1, w2, 0xC0,0,0,0,0,0,0,0x46)
@@ -1116,6 +1124,229 @@ ICOM_DEFINE(IGetFrame,IUnknown)
 #define AVIERR_CANTCOMPRESS	MAKE_AVIERR(117)
 #define AVIERR_USERABORT	MAKE_AVIERR(198)
 #define AVIERR_ERROR		MAKE_AVIERR(199)
+
+HWND        VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCSTR szFile);
+HWND        VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCWSTR szFile);
+#define     MCIWndCreate WINELIB_NAME_AW(MCIWndCreate)
+
+#define MCIWNDOPENF_NEW			0x0001
+
+#define MCIWNDF_NOAUTOSIZEWINDOW	0x0001
+#define MCIWNDF_NOPLAYBAR		0x0002
+#define MCIWNDF_NOAUTOSIZEMOVIE		0x0004
+#define MCIWNDF_NOMENU			0x0008
+#define MCIWNDF_SHOWNAME		0x0010
+#define MCIWNDF_SHOWPOS			0x0020
+#define MCIWNDF_SHOWMODE		0x0040
+#define MCIWNDF_SHOWALL			0x0070
+
+#define MCIWNDF_NOTIFYMODE		0x0100
+#define MCIWNDF_NOTIFYPOS		0x0200
+#define MCIWNDF_NOTIFYSIZE		0x0400
+#define MCIWNDF_NOTIFYERROR		0x1000
+#define MCIWNDF_NOTIFYALL		0x1F00
+
+#define MCIWNDF_NOTIFYANSI		0x0080
+
+#define MCIWNDF_NOTIFYMEDIAA		0x0880
+#define MCIWNDF_NOTIFYMEDIAW		0x0800
+#define MCIWNDF_NOTIFYMEDIA WINELIB_NAME_AW(MCIWNDF_NOTIFYMEDIA)
+
+#define MCIWNDF_RECORD			0x2000
+#define MCIWNDF_NOERRORDLG		0x4000
+#define MCIWNDF_NOOPEN			0x8000
+
+#ifdef __cplusplus
+#define MCIWndSM ::SendMessage
+#else
+#define MCIWndSM SendMessage
+#endif
+
+#define MCIWndCanPlay(hWnd)         (BOOL)MCIWndSM(hWnd,MCIWNDM_CAN_PLAY,0,0)
+#define MCIWndCanRecord(hWnd)       (BOOL)MCIWndSM(hWnd,MCIWNDM_CAN_RECORD,0,0)
+#define MCIWndCanSave(hWnd)         (BOOL)MCIWndSM(hWnd,MCIWNDM_CAN_SAVE,0,0)
+#define MCIWndCanWindow(hWnd)       (BOOL)MCIWndSM(hWnd,MCIWNDM_CAN_WINDOW,0,0)
+#define MCIWndCanEject(hWnd)        (BOOL)MCIWndSM(hWnd,MCIWNDM_CAN_EJECT,0,0)
+#define MCIWndCanConfig(hWnd)       (BOOL)MCIWndSM(hWnd,MCIWNDM_CAN_CONFIG,0,0)
+#define MCIWndPaletteKick(hWnd)     (BOOL)MCIWndSM(hWnd,MCIWNDM_PALETTEKICK,0,0)
+
+#define MCIWndSave(hWnd,szFile)	    (LONG)MCIWndSM(hWnd,MCI_SAVE,0,(LPARAM)(LPVOID)(szFile))
+#define MCIWndSaveDialog(hWnd)      MCIWndSave(hWnd,-1)
+
+#define MCIWndNew(hWnd,lp)          (LONG)MCIWndSM(hWnd,MCIWNDM_NEW,0,(LPARAM)(LPVOID)(lp))
+
+#define MCIWndRecord(hWnd)          (LONG)MCIWndSM(hWnd,MCI_RECORD,0,0)
+#define MCIWndOpen(hWnd,sz,f)       (LONG)MCIWndSM(hWnd,MCIWNDM_OPEN,(WPARAM)(UINT)(f),(LPARAM)(LPVOID)(sz))
+#define MCIWndOpenDialog(hWnd)      MCIWndOpen(hWnd,-1,0)
+#define MCIWndClose(hWnd)           (LONG)MCIWndSM(hWnd,MCI_CLOSE,0,0)
+#define MCIWndPlay(hWnd)            (LONG)MCIWndSM(hWnd,MCI_PLAY,0,0)
+#define MCIWndStop(hWnd)            (LONG)MCIWndSM(hWnd,MCI_STOP,0,0)
+#define MCIWndPause(hWnd)           (LONG)MCIWndSM(hWnd,MCI_PAUSE,0,0)
+#define MCIWndResume(hWnd)          (LONG)MCIWndSM(hWnd,MCI_RESUME,0,0)
+#define MCIWndSeek(hWnd,lPos)       (LONG)MCIWndSM(hWnd,MCI_SEEK,0,(LPARAM)(LONG)(lPos))
+#define MCIWndEject(hWnd)           (LONG)MCIWndSM(hWnd,MCIWNDM_EJECT,0,0)
+
+#define MCIWndHome(hWnd)            MCIWndSeek(hWnd,MCIWND_START)
+#define MCIWndEnd(hWnd)             MCIWndSeek(hWnd,MCIWND_END)
+
+#define MCIWndGetSource(hWnd,prc)   (LONG)MCIWndSM(hWnd,MCIWNDM_GET_SOURCE,0,(LPARAM)(LPRECT)(prc))
+#define MCIWndPutSource(hWnd,prc)   (LONG)MCIWndSM(hWnd,MCIWNDM_PUT_SOURCE,0,(LPARAM)(LPRECT)(prc))
+
+#define MCIWndGetDest(hWnd,prc)     (LONG)MCIWndSM(hWnd,MCIWNDM_GET_DEST,0,(LPARAM)(LPRECT)(prc))
+#define MCIWndPutDest(hWnd,prc)     (LONG)MCIWndSM(hWnd,MCIWNDM_PUT_DEST,0,(LPARAM)(LPRECT)(prc))
+
+#define MCIWndPlayReverse(hWnd)     (LONG)MCIWndSM(hWnd,MCIWNDM_PLAYREVERSE,0,0)
+#define MCIWndPlayFrom(hWnd,lPos)   (LONG)MCIWndSM(hWnd,MCIWNDM_PLAYFROM,0,(LPARAM)(LONG)(lPos))
+#define MCIWndPlayTo(hWnd,lPos)     (LONG)MCIWndSM(hWnd,MCIWNDM_PLAYTO,  0,(LPARAM)(LONG)(lPos))
+#define MCIWndPlayFromTo(hWnd,lStart,lEnd) (MCIWndSeek(hWnd,lStart),MCIWndPlayTo(hWnd,lEnd))
+
+#define MCIWndGetDeviceID(hWnd)     (UINT)MCIWndSM(hWnd,MCIWNDM_GETDEVICEID,0,0)
+#define MCIWndGetAlias(hWnd)        (UINT)MCIWndSM(hWnd,MCIWNDM_GETALIAS,0,0)
+#define MCIWndGetMode(hWnd,lp,len)  (LONG)MCIWndSM(hWnd,MCIWNDM_GETMODE,(WPARAM)(UINT)(len),(LPARAM)(LPTSTR)(lp))
+#define MCIWndGetPosition(hWnd)     (LONG)MCIWndSM(hWnd,MCIWNDM_GETPOSITION,0,0)
+#define MCIWndGetPositionString(hWnd,lp,len) (LONG)MCIWndSM(hWnd,MCIWNDM_GETPOSITION,(WPARAM)(UINT)(len),(LPARAM)(LPTSTR)(lp))
+#define MCIWndGetStart(hWnd)        (LONG)MCIWndSM(hWnd,MCIWNDM_GETSTART,0,0)
+#define MCIWndGetLength(hWnd)       (LONG)MCIWndSM(hWnd,MCIWNDM_GETLENGTH,0,0)
+#define MCIWndGetEnd(hWnd)          (LONG)MCIWndSM(hWnd,MCIWNDM_GETEND,0,0)
+
+#define MCIWndStep(hWnd,n)          (LONG)MCIWndSM(hWnd,MCI_STEP,0,(LPARAM)(long)(n))
+
+#define MCIWndDestroy(hWnd)         (VOID)MCIWndSM(hWnd,WM_CLOSE,0,0)
+#define MCIWndSetZoom(hWnd,iZoom)   (VOID)MCIWndSM(hWnd,MCIWNDM_SETZOOM,0,(LPARAM)(UINT)(iZoom))
+#define MCIWndGetZoom(hWnd)         (UINT)MCIWndSM(hWnd,MCIWNDM_GETZOOM,0,0)
+#define MCIWndSetVolume(hWnd,iVol)  (LONG)MCIWndSM(hWnd,MCIWNDM_SETVOLUME,0,(LPARAM)(UINT)(iVol))
+#define MCIWndGetVolume(hWnd)       (LONG)MCIWndSM(hWnd,MCIWNDM_GETVOLUME,0,0)
+#define MCIWndSetSpeed(hWnd,iSpeed) (LONG)MCIWndSM(hWnd,MCIWNDM_SETSPEED,0,(LPARAM)(UINT)(iSpeed))
+#define MCIWndGetSpeed(hWnd)        (LONG)MCIWndSM(hWnd,MCIWNDM_GETSPEED,0,0)
+#define MCIWndSetTimeFormat(hWnd,lp) (LONG)MCIWndSM(hWnd,MCIWNDM_SETTIMEFORMAT,0,(LPARAM)(LPTSTR)(lp))
+#define MCIWndGetTimeFormat(hWnd,lp,len) (LONG)MCIWndSM(hWnd,MCIWNDM_GETTIMEFORMAT,(WPARAM)(UINT)(len),(LPARAM)(LPTSTR)(lp))
+#define MCIWndValidateMedia(hWnd)   (VOID)MCIWndSM(hWnd,MCIWNDM_VALIDATEMEDIA,0,0)
+
+#define MCIWndSetRepeat(hWnd,f)     (void)MCIWndSM(hWnd,MCIWNDM_SETREPEAT,0,(LPARAM)(BOOL)(f))
+#define MCIWndGetRepeat(hWnd)       (BOOL)MCIWndSM(hWnd,MCIWNDM_GETREPEAT,0,0)
+
+#define MCIWndUseFrames(hWnd)       MCIWndSetTimeFormat(hWnd,TEXT("frames"))
+#define MCIWndUseTime(hWnd)         MCIWndSetTimeFormat(hWnd,TEXT("ms"))
+
+#define MCIWndSetActiveTimer(hWnd,active)				\
+	(VOID)MCIWndSM(hWnd,MCIWNDM_SETACTIVETIMER,			\
+	(WPARAM)(UINT)(active),0L)
+#define MCIWndSetInactiveTimer(hWnd,inactive)				\
+	(VOID)MCIWndSM(hWnd,MCIWNDM_SETINACTIVETIMER,			\
+	(WPARAM)(UINT)(inactive),0L)
+#define MCIWndSetTimers(hWnd,active,inactive)				\
+	    (VOID)MCIWndSM(hWnd,MCIWNDM_SETTIMERS,(WPARAM)(UINT)(active),\
+	    (LPARAM)(UINT)(inactive))
+#define MCIWndGetActiveTimer(hWnd)					\
+	(UINT)MCIWndSM(hWnd,MCIWNDM_GETACTIVETIMER,0,0L);
+#define MCIWndGetInactiveTimer(hWnd)					\
+	(UINT)MCIWndSM(hWnd,MCIWNDM_GETINACTIVETIMER,0,0L);
+
+#define MCIWndRealize(hWnd,fBkgnd) (LONG)MCIWndSM(hWnd,MCIWNDM_REALIZE,(WPARAM)(BOOL)(fBkgnd),0)
+
+#define MCIWndSendString(hWnd,sz)  (LONG)MCIWndSM(hWnd,MCIWNDM_SENDSTRING,0,(LPARAM)(LPTSTR)(sz))
+#define MCIWndReturnString(hWnd,lp,len)  (LONG)MCIWndSM(hWnd,MCIWNDM_RETURNSTRING,(WPARAM)(UINT)(len),(LPARAM)(LPVOID)(lp))
+#define MCIWndGetError(hWnd,lp,len) (LONG)MCIWndSM(hWnd,MCIWNDM_GETERROR,(WPARAM)(UINT)(len),(LPARAM)(LPVOID)(lp))
+
+#define MCIWndGetPalette(hWnd)      (HPALETTE)MCIWndSM(hWnd,MCIWNDM_GETPALETTE,0,0)
+#define MCIWndSetPalette(hWnd,hpal) (LONG)MCIWndSM(hWnd,MCIWNDM_SETPALETTE,(WPARAM)(HPALETTE)(hpal),0)
+
+#define MCIWndGetFileName(hWnd,lp,len) (LONG)MCIWndSM(hWnd,MCIWNDM_GETFILENAME,(WPARAM)(UINT)(len),(LPARAM)(LPVOID)(lp))
+#define MCIWndGetDevice(hWnd,lp,len)   (LONG)MCIWndSM(hWnd,MCIWNDM_GETDEVICE,(WPARAM)(UINT)(len),(LPARAM)(LPVOID)(lp))
+
+#define MCIWndGetStyles(hWnd) (UINT)MCIWndSM(hWnd,MCIWNDM_GETSTYLES,0,0L)
+#define MCIWndChangeStyles(hWnd,mask,value) (LONG)MCIWndSM(hWnd,MCIWNDM_CHANGESTYLES,(WPARAM)(UINT)(mask),(LPARAM)(LONG)(value))
+
+#define MCIWndOpenInterface(hWnd,pUnk)  (LONG)MCIWndSM(hWnd,MCIWNDM_OPENINTERFACE,0,(LPARAM)(LPUNKNOWN)(pUnk))
+
+#define MCIWndSetOwner(hWnd,hWndP)  (LONG)MCIWndSM(hWnd,MCIWNDM_SETOWNER,(WPARAM)(hWndP),0)
+
+#define MCIWNDM_GETDEVICEID	(WM_USER + 100)
+#define MCIWNDM_GETSTART	(WM_USER + 103)
+#define MCIWNDM_GETLENGTH	(WM_USER + 104)
+#define MCIWNDM_GETEND		(WM_USER + 105)
+#define MCIWNDM_EJECT		(WM_USER + 107)
+#define MCIWNDM_SETZOOM		(WM_USER + 108)
+#define MCIWNDM_GETZOOM         (WM_USER + 109)
+#define MCIWNDM_SETVOLUME	(WM_USER + 110)
+#define MCIWNDM_GETVOLUME	(WM_USER + 111)
+#define MCIWNDM_SETSPEED	(WM_USER + 112)
+#define MCIWNDM_GETSPEED	(WM_USER + 113)
+#define MCIWNDM_SETREPEAT	(WM_USER + 114)
+#define MCIWNDM_GETREPEAT	(WM_USER + 115)
+#define MCIWNDM_REALIZE         (WM_USER + 118)
+#define MCIWNDM_VALIDATEMEDIA   (WM_USER + 121)
+#define MCIWNDM_PLAYFROM	(WM_USER + 122)
+#define MCIWNDM_PLAYTO          (WM_USER + 123)
+#define MCIWNDM_GETPALETTE      (WM_USER + 126)
+#define MCIWNDM_SETPALETTE      (WM_USER + 127)
+#define MCIWNDM_SETTIMERS	(WM_USER + 129)
+#define MCIWNDM_SETACTIVETIMER	(WM_USER + 130)
+#define MCIWNDM_SETINACTIVETIMER (WM_USER + 131)
+#define MCIWNDM_GETACTIVETIMER	(WM_USER + 132)
+#define MCIWNDM_GETINACTIVETIMER (WM_USER + 133)
+#define MCIWNDM_CHANGESTYLES	(WM_USER + 135)
+#define MCIWNDM_GETSTYLES	(WM_USER + 136)
+#define MCIWNDM_GETALIAS	(WM_USER + 137)
+#define MCIWNDM_PLAYREVERSE	(WM_USER + 139)
+#define MCIWNDM_GET_SOURCE      (WM_USER + 140)
+#define MCIWNDM_PUT_SOURCE      (WM_USER + 141)
+#define MCIWNDM_GET_DEST        (WM_USER + 142)
+#define MCIWNDM_PUT_DEST        (WM_USER + 143)
+#define MCIWNDM_CAN_PLAY        (WM_USER + 144)
+#define MCIWNDM_CAN_WINDOW      (WM_USER + 145)
+#define MCIWNDM_CAN_RECORD      (WM_USER + 146)
+#define MCIWNDM_CAN_SAVE        (WM_USER + 147)
+#define MCIWNDM_CAN_EJECT       (WM_USER + 148)
+#define MCIWNDM_CAN_CONFIG      (WM_USER + 149)
+#define MCIWNDM_PALETTEKICK     (WM_USER + 150)
+#define MCIWNDM_OPENINTERFACE	(WM_USER + 151)
+#define MCIWNDM_SETOWNER	(WM_USER + 152)
+
+#define MCIWNDM_SENDSTRINGA	(WM_USER + 101)
+#define MCIWNDM_GETPOSITIONA	(WM_USER + 102)
+#define MCIWNDM_GETMODEA	(WM_USER + 106)
+#define MCIWNDM_SETTIMEFORMATA  (WM_USER + 119)
+#define MCIWNDM_GETTIMEFORMATA  (WM_USER + 120)
+#define MCIWNDM_GETFILENAMEA    (WM_USER + 124)
+#define MCIWNDM_GETDEVICEA      (WM_USER + 125)
+#define MCIWNDM_GETERRORA       (WM_USER + 128)
+#define MCIWNDM_NEWA		(WM_USER + 134)
+#define MCIWNDM_RETURNSTRINGA	(WM_USER + 138)
+#define MCIWNDM_OPENA		(WM_USER + 153)
+
+#define MCIWNDM_SENDSTRINGW	(WM_USER + 201)
+#define MCIWNDM_GETPOSITIONW	(WM_USER + 202)
+#define MCIWNDM_GETMODEW	(WM_USER + 206)
+#define MCIWNDM_SETTIMEFORMATW  (WM_USER + 219)
+#define MCIWNDM_GETTIMEFORMATW  (WM_USER + 220)
+#define MCIWNDM_GETFILENAMEW    (WM_USER + 224)
+#define MCIWNDM_GETDEVICEW      (WM_USER + 225)
+#define MCIWNDM_GETERRORW       (WM_USER + 228)
+#define MCIWNDM_NEWW		(WM_USER + 234)
+#define MCIWNDM_RETURNSTRINGW	(WM_USER + 238)
+#define MCIWNDM_OPENW		(WM_USER + 252)
+
+#define MCIWNDM_SENDSTRING	WINELIB_NAME_AW(MCIWNDM_SENDSTRING)
+#define MCIWNDM_GETPOSITION	WINELIB_NAME_AW(MCIWNDM_GETPOSITION)
+#define MCIWNDM_GETMODE		WINELIB_NAME_AW(MCIWNDM_GETMODE)
+#define MCIWNDM_SETTIMEFORMAT	WINELIB_NAME_AW(MCIWNDM_SETTIMEFORMAT)
+#define MCIWNDM_GETTIMEFORMAT	WINELIB_NAME_AW(MCIWNDM_GETTIMEFORMAT)
+#define MCIWNDM_GETFILENAME	WINELIB_NAME_AW(MCIWNDM_GETFILENAME)
+#define MCIWNDM_GETDEVICE	WINELIB_NAME_AW(MCIWNDM_GETDEVICE)
+#define MCIWNDM_GETERROR	WINELIB_NAME_AW(MCIWNDM_GETERROR)
+#define MCIWNDM_NEW		WINELIB_NAME_AW(MCIWNDM_NEW)
+#define MCIWNDM_RETURNSTRING	WINELIB_NAME_AW(MCIWNDM_RETURNSTRING)
+#define MCIWNDM_OPEN		WINELIB_NAME_AW(MCIWNDM_OPEN)
+
+#define MCIWNDM_NOTIFYMODE      (WM_USER + 200)
+#define MCIWNDM_NOTIFYPOS	(WM_USER + 201)
+#define MCIWNDM_NOTIFYSIZE	(WM_USER + 202)
+#define MCIWNDM_NOTIFYMEDIA     (WM_USER + 203)
+#define MCIWNDM_NOTIFYERROR     (WM_USER + 205)
+
+#define MCIWND_START                -1
+#define MCIWND_END                  -2
 
 /********************************************
  * DrawDib declarations

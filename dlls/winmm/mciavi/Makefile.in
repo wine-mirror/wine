@@ -8,7 +8,13 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	mciavi.c
+	info.c \
+	mciavi.c \
+	mmoutput.c \
+	wnd.c
+
+RC_SRCS = \
+	mciavi_res.rc
 
 @MAKE_DLL_RULES@
 

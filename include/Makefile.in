@@ -36,6 +36,7 @@ INSTALLED_INCLUDES = \
 	lzexpand.h \
 	mapi.h \
 	mapidefs.h \
+	mciavi.h \
 	mcx.h \
 	mmreg.h \
 	mmsystem.h \

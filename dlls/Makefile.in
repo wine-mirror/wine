@@ -461,7 +461,7 @@ wininet/libwininet.@LIBEXT@: libshlwapi.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.
 winmm/joystick/libjoystick.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/libwinmm.@LIBEXT@: libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mcianim/libmcianim.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-winmm/mciavi/libmciavi.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/mciavi/libmciavi.drv.@LIBEXT@: libmsvfw32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mcicda/libmcicda.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mciseq/libmciseq.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mciwave/libmciwave.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
