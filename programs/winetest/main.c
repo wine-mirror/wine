@@ -45,7 +45,6 @@ struct wine_test
     int resource;
     int subtest_count;
     char **subtests;
-    int is_elf;
     char *exename;
 };
 
@@ -56,7 +55,7 @@ struct rev_info
 };
 
 static struct wine_test *wine_tests;
-static struct rev_info *rev_infos;
+static struct rev_info *rev_infos = NULL;
 
 static const char *wineloader;
 
@@ -194,7 +193,7 @@ void* extract_rcdata (int id, DWORD* size)
     return addr;
 }
 
-/* Fills in the name, is_elf and exename fields */
+/* Fills in the name and exename fields */
 void
 extract_test (struct wine_test *test, const char *dir, int id)
 {
@@ -218,7 +217,6 @@ extract_test (struct wine_test *test, const char *dir, int id)
     *exepos = 0;
     test->name = xrealloc (test->name, exepos - test->name + 1);
     report (R_STEP, "Extracting: %s", test->name);
-    test->is_elf = !memcmp (code+1, "ELF", 3);
 
     if (!(fout = fopen (test->exename, "wb")) ||
         (fwrite (code, size, 1, fout) != 1) ||
@@ -226,54 +224,132 @@ extract_test (struct wine_test *test, const char *dir, int id)
                                test->exename);
 }
 
+/* Run a command for MS milliseconds.  If OUT != NULL, also redirect
+   stdout to there.
+
+   Return the exit status, -2 if can't create process or the return
+   value of WaitForSingleObject.
+ */
+int
+run_ex (char *cmd, const char *out, DWORD ms)
+{
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    int fd, oldstdout = -1;
+    DWORD wait, status;
+
+    GetStartupInfo (&si);
+    si.wShowWindow = SW_HIDE;
+    si.dwFlags = STARTF_USESHOWWINDOW;
+
+    if (out) {
+        fd = open (out, O_WRONLY | O_CREAT, 0666);
+        if (-1 == fd)
+            report (R_FATAL, "Can't open '%s': %d", out, errno);
+        oldstdout = dup (1);
+        if (-1 == oldstdout)
+            report (R_FATAL, "Can't save stdout: %d", errno);
+        if (-1 == dup2 (fd, 1))
+            report (R_FATAL, "Can't redirect stdout: %d", errno);
+        close (fd);
+    }
+
+    if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, 0,
+                         NULL, NULL, &si, &pi)) {
+        status = -2;
+    } else {
+        CloseHandle (pi.hThread);
+        wait = WaitForSingleObject (pi.hProcess, ms);
+        if (wait == WAIT_OBJECT_0) {
+            GetExitCodeProcess (pi.hProcess, &status);
+        } else {
+            switch (wait) {
+            case WAIT_FAILED:
+                report (R_ERROR, "Wait for '%s' failed: %d", cmd,
+                        GetLastError ());
+                break;
+            case WAIT_TIMEOUT:
+                report (R_ERROR, "Process '%s' timed out.", cmd);
+                break;
+            default:
+                report (R_ERROR, "Wait returned %d", wait);
+            }
+            status = wait;
+            if (!TerminateProcess (pi.hProcess, 257))
+                report (R_ERROR, "TerminateProcess failed: %d",
+                        GetLastError ());
+            wait = WaitForSingleObject (pi.hProcess, 5000);
+            switch (wait) {
+            case WAIT_FAILED:
+                report (R_ERROR,
+                        "Wait for termination of '%s' failed: %d",
+                        cmd, GetLastError ());
+                break;
+            case WAIT_OBJECT_0:
+                break;
+            case WAIT_TIMEOUT:
+                report (R_ERROR, "Can't kill process '%s'", cmd);
+                break;
+            default:
+                report (R_ERROR, "Waiting for termination: %d",
+                        wait);
+            }
+        }
+        CloseHandle (pi.hProcess);
+    }
+
+    if (out) {
+        close (1);
+        if (-1 == dup2 (oldstdout, 1))
+            report (R_FATAL, "Can't recover stdout: %d", errno);
+        close (oldstdout);
+    }
+    return status;
+}
+
 void
 get_subtests (const char *tempdir, struct wine_test *test, int id)
 {
     char *subname;
     FILE *subfile;
-    size_t subsize, bytes_read, total;
-    char *buffer, *index;
+    size_t total;
+    char buffer[8192], *index;
     const char header[] = "Valid test names:", seps[] = " \r\n";
-    int oldstdout;
-    const char *argv[] = {"wine", NULL, NULL};
     int allocated;
+
+    test->subtest_count = 0;
 
     subname = tempnam (0, "sub");
     if (!subname) report (R_FATAL, "Can't name subtests file.");
-    oldstdout = dup (1);
-    if (-1 == oldstdout) report (R_FATAL, "Can't preserve stdout.");
-    subfile = fopen (subname, "w+b");
-    if (!subfile) report (R_FATAL, "Can't open subtests file.");
-    if (-1 == dup2 (fileno (subfile), 1))
-        report (R_FATAL, "Can't redirect output to subtests.");
-    fclose (subfile);
 
     extract_test (test, tempdir, id);
-    argv[1] = test->exename;
-    if (test->is_elf)
-        spawnvp (_P_WAIT, wineloader, argv);
-    else
-        spawnvp (_P_WAIT, test->exename, argv+1);
-    subsize = lseek (1, 0, SEEK_CUR);
-    buffer = xmalloc (subsize+1);
+    run_ex (test->exename, subname, 5000);
 
-    lseek (1, 0, SEEK_SET);
-    total = 0;
-    while ((bytes_read = read (1, buffer + total, subsize - total))
-               && (signed)bytes_read != -1)
-            total += bytes_read;
-    if (bytes_read)
-        report (R_FATAL, "Can't get subtests of %s", test->name);
+    subfile = fopen (subname, "r");
+    if (!subfile) {
+        report (R_ERROR, "Can't open subtests output of %s: %d",
+                test->name, errno);
+        goto quit;
+    }
+    total = fread (buffer, 1, sizeof buffer, subfile);
+    fclose (subfile);
+    if (sizeof buffer == total) {
+        report (R_ERROR, "Subtest list of %s too big.",
+                test->name, sizeof buffer);
+        goto quit;
+    }
     buffer[total] = 0;
+
     index = strstr (buffer, header);
-    if (!index)
-        report (R_FATAL, "Can't parse subtests output of %s",
+    if (!index) {
+        report (R_ERROR, "Can't parse subtests output of %s",
                 test->name);
+        goto quit;
+    }
     index += sizeof header;
 
     allocated = 10;
     test->subtests = xmalloc (allocated * sizeof(char*));
-    test->subtest_count = 0;
     index = strtok (index, seps);
     while (index) {
         if (test->subtest_count == allocated) {
@@ -286,34 +362,26 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
     }
     test->subtests = xrealloc (test->subtests,
                                test->subtest_count * sizeof(char*));
-    free (buffer);
-    close (1);
-    if (-1 == dup2 (oldstdout, 1))
-        report (R_FATAL, "Can't recover old stdout.");
-    close (oldstdout);
+
+ quit:
     if (remove (subname))
-        report (R_FATAL, "Can't remove subtests file.");
+        report (R_WARNING, "Can't delete file '%s': %d",
+                subname, errno);
     free (subname);
 }
 
-/* Return number of failures, -1 if couldn't spawn process. */
-int run_test (struct wine_test* test, const char* subtest)
+void
+run_test (struct wine_test* test, const char* subtest)
 {
     int status;
-    const char* argv[] = {"wine", test->exename, subtest, NULL};
     const char* file = get_test_source_file(test->name, subtest);
     const char* rev = get_file_rev(file);
+    char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
 
     xprintf ("%s:%s start %s %s\n", test->name, subtest, file, rev);
-    if (test->is_elf)
-        status = spawnvp (_P_WAIT, wineloader, argv);
-    else
-        status = spawnvp (_P_WAIT, test->exename, argv+1);
-    if (status == -1)
-        xprintf ("Can't run: %d, errno=%d: %s\n",
-                 status, errno, strerror (errno));
+    status = run_ex (cmd, NULL, 120000);
+    free (cmd);
     xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
-    return status;
 }
 
 BOOL CALLBACK
