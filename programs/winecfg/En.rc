@@ -26,7 +26,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Wine Version:",IDC_STATIC,119,17,55,8
     LTEXT           "CVS",IDC_WINEVER,179,17,56,8
@@ -38,7 +38,7 @@ END
 
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Application Settings ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine can mimic different Windows versions for each application.",
@@ -55,7 +55,7 @@ END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT	    "Screen color depth: ",IDC_STATIC,8,10,70,30
     COMBOBOX	    IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -79,7 +79,7 @@ END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " DLL Overrides ",IDC_STATIC,8,4,244,240
     LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
@@ -98,7 +98,7 @@ END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Drive mappings ",IDC_STATIC,8,4,244,240
     LISTBOX         IDC_LIST_DRIVES,15,18,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
@@ -133,7 +133,7 @@ END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT	"Audio driver: ",IDC_STATIC,10,20,60,8
     COMBOBOX	IDC_AUDIO_DRIVER,70,18,85,85,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
