@@ -162,12 +162,11 @@ HPALETTE WINAPI CreateHalftonePalette(
 	WORD Version;
 	WORD NumberOfEntries;
 	PALETTEENTRY aEntries[256];
-    } Palette = {
-	0x300, 256
-    };
+    } Palette;
 
+    Palette.Version = 0x300;
+    Palette.NumberOfEntries = 256;
     GetSystemPaletteEntries(hdc, 0, 256, Palette.aEntries);
-    return CreatePalette((LOGPALETTE *)&Palette);
 
     for (r = 0; r < 6; r++) {
 	for (g = 0; g < 6; g++) {
