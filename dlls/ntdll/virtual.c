@@ -724,9 +724,10 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         if (!relocs->VirtualAddress || !relocs->Size)
         {
-            if (nt->OptionalHeader.ImageBase == 0x400000)
-                ERR("Standard load address for a Win32 program (0x00400000) not available - security-patched kernel ?\n");
-            else
+            if (nt->OptionalHeader.ImageBase == 0x400000) {
+                ERR("Image was mapped at %p: standard load address for a Win32 program (0x00400000) not available\n", ptr);
+                ERR("Do you have exec-shield or prelink active?\n");
+            } else
                 ERR( "FATAL: Need to relocate module from addr %lx, but there are no relocation records\n",
                      nt->OptionalHeader.ImageBase );
             goto error;
