@@ -1195,6 +1195,9 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 	    return DSERR_GENERIC;
 	}
 	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);
+
+	/* for some reason, es1371 and sblive! sometimes have junk in here. */
+	memset(wwo->mapping,0,wwo->maplen); /* clear it, or we get junk noise */
     }
     return DS_OK;
 }
