@@ -96,7 +96,7 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
-#if (defined(_MSC_VER) || defined(__MINGW_H)) && !defined(MSVCRT_BSD_TYPES_DEFINED)
+#if (defined(_MSC_VER) || defined(__MINGW_H)) && !defined(_BSD_TYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
 typedef unsigned char u_char;
 typedef unsigned short u_short;

@@ -11,18 +11,10 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
@@ -41,59 +33,59 @@ typedef unsigned short MSVCRT(wchar_t);
 #define _A_SUBDIR 0x00000010
 #define _A_ARCH   0x00000020
 
-#ifndef MSVCRT_TIME_T_DEFINED
-typedef long MSVCRT(time_t);
-#define MSVCRT_TIME_T_DEFINED
+#ifndef _TIME_T_DEFINED
+typedef long time_t;
+#define _TIME_T_DEFINED
 #endif
 
-#ifndef MSVCRT_FSIZE_T_DEFINED
-typedef unsigned long MSVCRT(_fsize_t);
-#define MSVCRT_FSIZE_T_DEFINED
+#ifndef _FSIZE_T_DEFINED
+typedef unsigned long _fsize_t;
+#define _FSIZE_T_DEFINED
 #endif
 
-#ifndef MSVCRT_FINDDATA_T_DEFINED
-#define MSVCRT_FINDDATA_T_DEFINED
-struct MSVCRT(_finddata_t)
+#ifndef _FINDDATA_T_DEFINED
+#define _FINDDATA_T_DEFINED
+struct _finddata_t
 {
   unsigned attrib;
-  MSVCRT(time_t)   time_create;
-  MSVCRT(time_t)   time_access;
-  MSVCRT(time_t)   time_write;
-  MSVCRT(_fsize_t) size;
+  time_t   time_create;
+  time_t   time_access;
+  time_t   time_write;
+  _fsize_t size;
   char             name[260];
 };
 
-struct MSVCRT(_finddatai64_t)
+struct _finddatai64_t
 {
   unsigned attrib;
-  MSVCRT(time_t) time_create;
-  MSVCRT(time_t) time_access;
-  MSVCRT(time_t) time_write;
+  time_t time_create;
+  time_t time_access;
+  time_t time_write;
   __int64        size;
   char           name[260];
 };
-#endif /* MSVCRT_FINDDATA_T_DEFINED */
+#endif /* _FINDDATA_T_DEFINED */
 
-#ifndef MSVCRT_WFINDDATA_T_DEFINED
-#define MSVCRT_WFINDDATA_T_DEFINED
-struct MSVCRT(_wfinddata_t) {
+#ifndef _WFINDDATA_T_DEFINED
+#define _WFINDDATA_T_DEFINED
+struct _wfinddata_t {
   unsigned attrib;
-  MSVCRT(time_t)   time_create;
-  MSVCRT(time_t)   time_access;
-  MSVCRT(time_t)   time_write;
-  MSVCRT(_fsize_t) size;
-  MSVCRT(wchar_t)  name[260];
+  time_t   time_create;
+  time_t   time_access;
+  time_t   time_write;
+  _fsize_t size;
+  wchar_t  name[260];
 };
 
-struct MSVCRT(_wfinddatai64_t) {
+struct _wfinddatai64_t {
   unsigned attrib;
-  MSVCRT(time_t)  time_create;
-  MSVCRT(time_t)  time_access;
-  MSVCRT(time_t)  time_write;
+  time_t  time_create;
+  time_t  time_access;
+  time_t  time_write;
   __int64         size;
-  MSVCRT(wchar_t) name[260];
+  wchar_t name[260];
 };
-#endif /* MSVCRT_WFINDDATA_T_DEFINED */
+#endif /* _WFINDDATA_T_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,10 +103,10 @@ int         _eof(int);
 __int64     _filelengthi64(int);
 long        _filelength(int);
 int         _findclose(long);
-long        MSVCRT(_findfirst)(const char*,struct MSVCRT(_finddata_t)*);
-long        MSVCRT(_findfirsti64)(const char*, struct MSVCRT(_finddatai64_t)*);
-int         MSVCRT(_findnext)(long,struct MSVCRT(_finddata_t)*);
-int         MSVCRT(_findnexti64)(long, struct MSVCRT(_finddatai64_t)*);
+long        _findfirst(const char*,struct _finddata_t*);
+long        _findfirsti64(const char*, struct _finddatai64_t*);
+int         _findnext(long,struct _finddata_t*);
+int         _findnexti64(long, struct _finddatai64_t*);
 long        _get_osfhandle(int);
 int         _isatty(int);
 int         _locking(int,int,long);
@@ -133,31 +125,30 @@ int         _umask(int);
 int         _unlink(const char*);
 int         _write(int,const void*,unsigned int);
 
-int         MSVCRT(remove)(const char*);
-int         MSVCRT(rename)(const char*,const char*);
+int         remove(const char*);
+int         rename(const char*,const char*);
 
-#ifndef MSVCRT_WIO_DEFINED
-#define MSVCRT_WIO_DEFINED
-int         _waccess(const MSVCRT(wchar_t)*,int);
-int         _wchmod(const MSVCRT(wchar_t)*,int);
-int         _wcreat(const MSVCRT(wchar_t)*,int);
-long        MSVCRT(_wfindfirst)(const MSVCRT(wchar_t)*,struct MSVCRT(_wfinddata_t)*);
-long        MSVCRT(_wfindfirsti64)(const MSVCRT(wchar_t)*, struct MSVCRT(_wfinddatai64_t)*);
-int         MSVCRT(_wfindnext)(long,struct MSVCRT(_wfinddata_t)*);
-int         MSVCRT(_wfindnexti64)(long, struct MSVCRT(_wfinddatai64_t)*);
-MSVCRT(wchar_t)*_wmktemp(MSVCRT(wchar_t)*);
-int         _wopen(const MSVCRT(wchar_t)*,int,...);
-int         _wrename(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
-int         _wsopen(const MSVCRT(wchar_t)*,int,int,...);
-int         _wunlink(const MSVCRT(wchar_t)*);
-#endif /* MSVCRT_WIO_DEFINED */
+#ifndef _WIO_DEFINED
+#define _WIO_DEFINED
+int         _waccess(const wchar_t*,int);
+int         _wchmod(const wchar_t*,int);
+int         _wcreat(const wchar_t*,int);
+long        _wfindfirst(const wchar_t*,struct _wfinddata_t*);
+long        _wfindfirsti64(const wchar_t*, struct _wfinddatai64_t*);
+int         _wfindnext(long,struct _wfinddata_t*);
+int         _wfindnexti64(long, struct _wfinddatai64_t*);
+wchar_t*_wmktemp(wchar_t*);
+int         _wopen(const wchar_t*,int,...);
+int         _wrename(const wchar_t*,const wchar_t*);
+int         _wsopen(const wchar_t*,int,int,...);
+int         _wunlink(const wchar_t*);
+#endif /* _WIO_DEFINED */
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 static inline int access(const char* path, int mode) { return _access(path, mode); }
 static inline int chmod(const char* path, int mode) { return _chmod(path, mode); }
 static inline int chsize(int fd, long size) { return _chsize(fd, size); }
@@ -174,13 +165,13 @@ static inline char* mktemp(char* pat) { return _mktemp(pat); }
 static inline int read(int fd, void* buf, unsigned int size) { return _read(fd, buf, size); }
 static inline int setmode(int fd, int mode) { return _setmode(fd, mode); }
 static inline long tell(int fd) { return _tell(fd); }
-#ifndef MSVCRT_UMASK_DEFINED
+#ifndef _UMASK_DEFINED
 static inline int umask(int fd) { return _umask(fd); }
-#define MSVCRT_UMASK_DEFINED
+#define _UMASK_DEFINED
 #endif
-#ifndef MSVCRT_UNLINK_DEFINED
+#ifndef _UNLINK_DEFINED
 static inline int unlink(const char* path) { return _unlink(path); }
-#define MSVCRT_UNLINK_DEFINED
+#define _UNLINK_DEFINED
 #endif
 static inline int write(int fd, const void* buf, unsigned int size) { return _write(fd, buf, size); }
 
@@ -191,7 +182,5 @@ extern int sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
 #define open _open
 #define sopen _sopen
 #endif /* __GNUC__ */
-
-#endif /* USE _MSVCRT_PREFIX */
 
 #endif /* __WINE_IO_H */

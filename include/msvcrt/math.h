@@ -12,14 +12,6 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,9 +23,9 @@ extern "C" {
 #define _TLOSS          5       /* total loss of precision */
 #define _PLOSS          6       /* partial loss of precision */
 
-#ifndef MSVCRT_EXCEPTION_DEFINED
-#define MSVCRT_EXCEPTION_DEFINED
-struct MSVCRT(_exception)
+#ifndef _EXCEPTION_DEFINED
+#define _EXCEPTION_DEFINED
+struct _exception
 {
   int     type;
   char    *name;
@@ -41,16 +33,16 @@ struct MSVCRT(_exception)
   double  arg2;
   double  retval;
 };
-#endif /* MSVCRT_EXCEPTION_DEFINED */
+#endif /* _EXCEPTION_DEFINED */
 
-#ifndef MSVCRT_COMPLEX_DEFINED
-#define MSVCRT_COMPLEX_DEFINED
-struct MSVCRT(_complex)
+#ifndef _COMPLEX_DEFINED
+#define _COMPLEX_DEFINED
+struct _complex
 {
   double x;      /* Real part */
   double y;      /* Imaginary part */
 };
-#endif /* MSVCRT_COMPLEX_DEFINED */
+#endif /* _COMPLEX_DEFINED */
 
 double sin(double);
 double cos(double);
@@ -83,8 +75,8 @@ double y0(double);
 double y1(double);
 double yn(int, double);
 
-int MSVCRT(_matherr)(struct MSVCRT(_exception)*);
-double MSVCRT(_cabs)(struct MSVCRT(_complex));
+int _matherr(struct _exception*);
+double _cabs(struct _complex);
 
 #ifndef HUGE_VAL
 #  if defined(__GNUC__) && (__GNUC__ >= 3)

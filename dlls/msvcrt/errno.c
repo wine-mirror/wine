@@ -18,24 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "msvcrt.h"
-#include "msvcrt/errno.h"
-
 #include <stdio.h>
 #include <string.h>
 
-#include "msvcrt/conio.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-
-
+#include "msvcrt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */
-void MSVCRT__set_errno(int err)
+void msvcrt_set_errno(int err)
 {
   int *errno = MSVCRT__errno();
   unsigned long *doserrno = MSVCRT___doserrno();
@@ -154,10 +147,10 @@ void MSVCRT_perror(const char* str)
  */
 int _set_error_mode(int mode)
 {
-  static int current_mode = _OUT_TO_DEFAULT;
+  static int current_mode = MSVCRT__OUT_TO_DEFAULT;
 
   const int old = current_mode;
-  if ( _REPORT_ERRMODE != mode ) {
+  if ( MSVCRT__REPORT_ERRMODE != mode ) {
     current_mode = mode;
     FIXME("dummy implementation (old mode: %d, new mode: %d)\n",
           old, mode);

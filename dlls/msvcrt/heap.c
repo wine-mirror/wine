@@ -22,12 +22,7 @@
  */
 
 #include "msvcrt.h"
-#include "msvcrt/errno.h"
-
-#include "msvcrt/malloc.h"
-#include "msvcrt/stdlib.h"
 #include "mtdll.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -145,10 +140,10 @@ int _heapchk(void)
 {
   if (!HeapValidate( GetProcessHeap(), 0, NULL))
   {
-    MSVCRT__set_errno(GetLastError());
-    return _HEAPBADNODE;
+    msvcrt_set_errno(GetLastError());
+    return MSVCRT__HEAPBADNODE;
   }
-  return _HEAPOK;
+  return MSVCRT__HEAPOK;
 }
 
 /*********************************************************************
@@ -159,7 +154,7 @@ int _heapmin(void)
   if (!HeapCompact( GetProcessHeap(), 0 ))
   {
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
-      MSVCRT__set_errno(GetLastError());
+      msvcrt_set_errno(GetLastError());
     return -1;
   }
   return 0;
@@ -168,21 +163,21 @@ int _heapmin(void)
 /*********************************************************************
  *		_heapwalk (MSVCRT.@)
  */
-int _heapwalk(_HEAPINFO* next)
+int _heapwalk(struct MSVCRT__heapinfo* next)
 {
   PROCESS_HEAP_ENTRY phe;
 
   LOCK_HEAP;
   phe.lpData = next->_pentry;
   phe.cbData = next->_size;
-  phe.wFlags = next->_useflag == _USEDENTRY ? PROCESS_HEAP_ENTRY_BUSY : 0;
+  phe.wFlags = next->_useflag == MSVCRT__USEDENTRY ? PROCESS_HEAP_ENTRY_BUSY : 0;
 
   if (phe.lpData && phe.wFlags & PROCESS_HEAP_ENTRY_BUSY &&
       !HeapValidate( GetProcessHeap(), 0, phe.lpData ))
   {
     UNLOCK_HEAP;
-    MSVCRT__set_errno(GetLastError());
-    return _HEAPBADNODE;
+    msvcrt_set_errno(GetLastError());
+    return MSVCRT__HEAPBADNODE;
   }
 
   do
@@ -191,19 +186,19 @@ int _heapwalk(_HEAPINFO* next)
     {
       UNLOCK_HEAP;
       if (GetLastError() == ERROR_NO_MORE_ITEMS)
-         return _HEAPEND;
-      MSVCRT__set_errno(GetLastError());
+         return MSVCRT__HEAPEND;
+      msvcrt_set_errno(GetLastError());
       if (!phe.lpData)
-        return _HEAPBADBEGIN;
-      return _HEAPBADNODE;
+        return MSVCRT__HEAPBADBEGIN;
+      return MSVCRT__HEAPBADNODE;
     }
   } while (phe.wFlags & (PROCESS_HEAP_REGION|PROCESS_HEAP_UNCOMMITTED_RANGE));
 
   UNLOCK_HEAP;
   next->_pentry = phe.lpData;
   next->_size = phe.cbData;
-  next->_useflag = phe.wFlags & PROCESS_HEAP_ENTRY_BUSY ? _USEDENTRY : _FREEENTRY;
-  return _HEAPOK;
+  next->_useflag = phe.wFlags & PROCESS_HEAP_ENTRY_BUSY ? MSVCRT__USEDENTRY : MSVCRT__FREEENTRY;
+  return MSVCRT__HEAPOK;
 }
 
 /*********************************************************************
@@ -212,17 +207,17 @@ int _heapwalk(_HEAPINFO* next)
 int _heapset(unsigned int value)
 {
   int retval;
-  _HEAPINFO heap;
+  struct MSVCRT__heapinfo heap;
 
-  memset( &heap, 0, sizeof(_HEAPINFO) );
+  memset( &heap, 0, sizeof(heap) );
   LOCK_HEAP;
-  while ((retval = _heapwalk(&heap)) == _HEAPOK)
+  while ((retval = _heapwalk(&heap)) == MSVCRT__HEAPOK)
   {
-    if (heap._useflag == _FREEENTRY)
+    if (heap._useflag == MSVCRT__FREEENTRY)
       memset(heap._pentry, value, heap._size);
   }
   UNLOCK_HEAP;
-  return retval == _HEAPEND? _HEAPOK : retval;
+  return retval == MSVCRT__HEAPEND? MSVCRT__HEAPOK : retval;
 }
 
 /*********************************************************************
@@ -272,7 +267,7 @@ void* MSVCRT_malloc(MSVCRT_size_t size)
 {
   void *ret = HeapAlloc(GetProcessHeap(),0,size);
   if (!ret)
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
   return ret;
 }
 

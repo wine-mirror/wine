@@ -24,8 +24,6 @@
 #include <stdlib.h>
 
 #include "msvcrt.h"
-#include "msvcrt/stdlib.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);

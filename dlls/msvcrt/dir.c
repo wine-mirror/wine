@@ -33,14 +33,6 @@
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "msvcrt.h"
-#include "msvcrt/errno.h"
-
-#include "wine/unicode.h"
-#include "msvcrt/io.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-#include "msvcrt/dos.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -144,7 +136,7 @@ int _chdir(const char * newdir)
 {
   if (!SetCurrentDirectoryA(newdir))
   {
-    MSVCRT__set_errno(newdir?GetLastError():0);
+    msvcrt_set_errno(newdir?GetLastError():0);
     return -1;
   }
   return 0;
@@ -159,7 +151,7 @@ int _wchdir(const MSVCRT_wchar_t * newdir)
 {
   if (!SetCurrentDirectoryW(newdir))
   {
-    MSVCRT__set_errno(newdir?GetLastError():0);
+    msvcrt_set_errno(newdir?GetLastError():0);
     return -1;
   }
   return 0;
@@ -187,7 +179,7 @@ int _chdrive(int newdrive)
   buffer[0] += newdrive - 1;
   if (!SetCurrentDirectoryW( buffer ))
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     if (newdrive <= 0)
       *MSVCRT__errno() = MSVCRT_EACCES;
     return -1;
@@ -215,7 +207,7 @@ int _findclose(long hand)
   TRACE(":handle %ld\n",hand);
   if (!FindClose((HANDLE)hand))
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   return 0;
@@ -246,7 +238,7 @@ long MSVCRT__findfirst(const char * fspec, struct MSVCRT__finddata_t* ft)
   hfind  = FindFirstFileA(fspec, &find_data);
   if (hfind == INVALID_HANDLE_VALUE)
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   msvcrt_fttofd(&find_data,ft);
@@ -267,7 +259,7 @@ long MSVCRT__wfindfirst(const MSVCRT_wchar_t * fspec, struct MSVCRT__wfinddata_t
   hfind  = FindFirstFileW(fspec, &find_data);
   if (hfind == INVALID_HANDLE_VALUE)
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   msvcrt_wfttofd(&find_data,ft);
@@ -288,7 +280,7 @@ long MSVCRT__findfirsti64(const char * fspec, struct MSVCRT__finddatai64_t* ft)
   hfind  = FindFirstFileA(fspec, &find_data);
   if (hfind == INVALID_HANDLE_VALUE)
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   msvcrt_fttofdi64(&find_data,ft);
@@ -309,7 +301,7 @@ long MSVCRT__wfindfirsti64(const MSVCRT_wchar_t * fspec, struct MSVCRT__wfinddat
   hfind  = FindFirstFileW(fspec, &find_data);
   if (hfind == INVALID_HANDLE_VALUE)
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   msvcrt_wfttofdi64(&find_data,ft);
@@ -619,7 +611,7 @@ unsigned int MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT__diskfree_t * 
     return 0;
   }
   err = GetLastError();
-  MSVCRT__set_errno(err);
+  msvcrt_set_errno(err);
   return err;
 }
 
@@ -642,7 +634,7 @@ int _mkdir(const char * newdir)
 {
   if (CreateDirectoryA(newdir,NULL))
     return 0;
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -655,7 +647,7 @@ int _wmkdir(const MSVCRT_wchar_t* newdir)
 {
   if (CreateDirectoryW(newdir,NULL))
     return 0;
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -678,7 +670,7 @@ int _rmdir(const char * dir)
 {
   if (RemoveDirectoryA(dir))
     return 0;
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -691,7 +683,7 @@ int _wrmdir(const MSVCRT_wchar_t * dir)
 {
   if (RemoveDirectoryW(dir))
     return 0;
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -1216,7 +1208,7 @@ void _searchenv(const char* file, const char* env, char *buf)
   {
     GetFullPathNameA( file, MAX_PATH, buf, NULL );
     /* Sigh. This error is *always* set, regardless of success */
-    MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+    msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
     return;
   }
 
@@ -1224,7 +1216,7 @@ void _searchenv(const char* file, const char* env, char *buf)
   envVal = MSVCRT_getenv(env);
   if (!envVal)
   {
-    MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+    msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
     return;
   }
 
@@ -1238,7 +1230,7 @@ void _searchenv(const char* file, const char* env, char *buf)
     while(*end && *end != ';') end++; /* Find end of next path */
     if (penv == end || !*penv)
     {
-      MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+      msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return;
     }
     strncpy(curPath, penv, end - penv);
@@ -1255,7 +1247,7 @@ void _searchenv(const char* file, const char* env, char *buf)
     if (GetFileAttributesA( curPath ) != INVALID_FILE_ATTRIBUTES)
     {
       strcpy(buf, curPath);
-      MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+      msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return; /* Found */
     }
     penv = *end ? end + 1 : end;

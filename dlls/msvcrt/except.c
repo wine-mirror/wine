@@ -36,11 +36,7 @@
 #include "winternl.h"
 #include "wine/exception.h"
 #include "msvcrt.h"
-
-#include "msvcrt/setjmp.h"
 #include "excpt.h"
-
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -281,7 +277,7 @@ typedef void (*MSVCRT_unwind_function)(const void*);
  *		_setjmp (MSVCRT.@)
  */
 DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp, _MSVCRT__setjmp, 4, 0 );
-void _MSVCRT__setjmp(_JUMP_BUFFER *jmp, CONTEXT86* context)
+void _MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp, CONTEXT86* context)
 {
     TRACE("(%p)\n",jmp);
     jmp->Ebp = context->Ebp;
@@ -303,7 +299,7 @@ void _MSVCRT__setjmp(_JUMP_BUFFER *jmp, CONTEXT86* context)
  *		_setjmp3 (MSVCRT.@)
  */
 DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp3, _MSVCRT__setjmp3, 8, 0 );
-void _MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
+void _MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
 {
     TRACE("(%p,%d)\n",jmp,nb_args);
     jmp->Ebp = context->Ebp;
@@ -340,7 +336,7 @@ void _MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
  *		longjmp (MSVCRT.@)
  */
 DEFINE_REGS_ENTRYPOINT( MSVCRT_longjmp, _MSVCRT_longjmp, 8, 0 );
-void _MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
+void _MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
 {
     unsigned long cur_frame = 0;
 
@@ -383,7 +379,7 @@ void _MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
 /*********************************************************************
  *		_seh_longjmp_unwind (MSVCRT.@)
  */
-void __stdcall _seh_longjmp_unwind(_JUMP_BUFFER *jmp)
+void __stdcall _seh_longjmp_unwind(struct MSVCRT___JUMP_BUFFER *jmp)
 {
     _local_unwind2( (MSVCRT_EXCEPTION_FRAME *)jmp->Registration, jmp->TryLevel );
 }

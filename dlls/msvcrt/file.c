@@ -31,36 +31,24 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <sys/types.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "msvcrt.h"
-#include "msvcrt/errno.h"
 
 #include "wine/unicode.h"
-#include "msvcrt/fcntl.h"
-#include "msvcrt/io.h"
-#include "msvcrt/sys/locking.h"
-#include "msvcrt/stdio.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-#include "msvcrt/sys/stat.h"
-#include "msvcrt/sys/utime.h"
-#include "msvcrt/time.h"
-#include "msvcrt/share.h"
-#include "msvcrt/wctype.h"
-#include "msvcrt/direct.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* for stat mode, permissions apply to all,owner and group */
-#define MSVCRT_S_IREAD  (_S_IREAD  | (_S_IREAD  >> 3) | (_S_IREAD  >> 6))
-#define MSVCRT_S_IWRITE (_S_IWRITE | (_S_IWRITE >> 3) | (_S_IWRITE >> 6))
-#define MSVCRT_S_IEXEC  (_S_IEXEC  | (_S_IEXEC  >> 3) | (_S_IEXEC  >> 6))
+#define ALL_S_IREAD  (MSVCRT__S_IREAD  | (MSVCRT__S_IREAD  >> 3) | (MSVCRT__S_IREAD  >> 6))
+#define ALL_S_IWRITE (MSVCRT__S_IWRITE | (MSVCRT__S_IWRITE >> 3) | (MSVCRT__S_IWRITE >> 6))
+#define ALL_S_IEXEC  (MSVCRT__S_IEXEC  | (MSVCRT__S_IEXEC  >> 3) | (MSVCRT__S_IEXEC  >> 6))
 
 /* _access() bit flags FIXME: incomplete */
 #define MSVCRT_W_OK      0x02
@@ -181,9 +169,9 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
   }
   MSVCRT_fdesc[fd].handle = hand;
   MSVCRT_fdesc[fd].xflag = WX_OPEN;
-  if (flag & _O_NOINHERIT)      MSVCRT_fdesc[fd].xflag |= WX_DONTINHERIT;
-  if (flag & _O_APPEND)         MSVCRT_fdesc[fd].xflag |= WX_APPEND;
-  if (flag & _O_TEXT)           MSVCRT_fdesc[fd].xflag |= WX_TEXT;
+  if (flag & MSVCRT__O_NOINHERIT)      MSVCRT_fdesc[fd].xflag |= WX_DONTINHERIT;
+  if (flag & MSVCRT__O_APPEND)         MSVCRT_fdesc[fd].xflag |= WX_APPEND;
+  if (flag & MSVCRT__O_TEXT)           MSVCRT_fdesc[fd].xflag |= WX_TEXT;
 
   /* locate next free slot */
   if (fd == MSVCRT_fdend)
@@ -352,12 +340,12 @@ int _access(const char *filename, int mode)
 
   if (!filename || attr == INVALID_FILE_ATTRIBUTES)
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & MSVCRT_W_OK))
   {
-    MSVCRT__set_errno(ERROR_ACCESS_DENIED);
+    msvcrt_set_errno(ERROR_ACCESS_DENIED);
     return -1;
   }
   return 0;
@@ -374,12 +362,12 @@ int _waccess(const MSVCRT_wchar_t *filename, int mode)
 
   if (!filename || attr == INVALID_FILE_ATTRIBUTES)
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & MSVCRT_W_OK))
   {
-    MSVCRT__set_errno(ERROR_ACCESS_DENIED);
+    msvcrt_set_errno(ERROR_ACCESS_DENIED);
     return -1;
   }
   return 0;
@@ -394,13 +382,13 @@ int _chmod(const char *path, int flags)
 
   if (oldFlags != INVALID_FILE_ATTRIBUTES)
   {
-    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
+    DWORD newFlags = (flags & MSVCRT__S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
       oldFlags | FILE_ATTRIBUTE_READONLY;
 
     if (newFlags == oldFlags || SetFileAttributesA(path, newFlags))
       return 0;
   }
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -413,13 +401,13 @@ int _wchmod(const MSVCRT_wchar_t *path, int flags)
 
   if (oldFlags != INVALID_FILE_ATTRIBUTES)
   {
-    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
+    DWORD newFlags = (flags & MSVCRT__S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
       oldFlags | FILE_ATTRIBUTE_READONLY;
 
     if (newFlags == oldFlags || SetFileAttributesW(path, newFlags))
       return 0;
   }
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -459,7 +447,7 @@ int _unlink(const char *path)
   if(DeleteFileA(path))
     return 0;
   TRACE("failed (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -472,7 +460,7 @@ int _wunlink(const MSVCRT_wchar_t *path)
   if(DeleteFileW(path))
     return 0;
   TRACE("failed (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -533,7 +521,7 @@ int _close(int fd)
   if (!CloseHandle(hand))
   {
     WARN(":failed-last error (%ld)\n",GetLastError());
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   msvcrt_free_fd(fd);
@@ -562,7 +550,7 @@ int _commit(int fd)
       return 0;
     }
     TRACE(":failed-last error (%ld)\n",GetLastError());
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
   TRACE(":ok\n");
@@ -654,7 +642,7 @@ __int64 _lseeki64(int fd, __int64 offset, int whence)
     return ((__int64)hoffset << 32) | ret;
   }
   TRACE(":error-last error (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -688,11 +676,11 @@ int _locking(int fd, int mode, LONG nbytes)
   }
 
   TRACE(":fd (%d) by 0x%08lx mode %s\n",
-        fd,nbytes,(mode==_LK_UNLCK)?"_LK_UNLCK":
-        (mode==_LK_LOCK)?"_LK_LOCK":
-        (mode==_LK_NBLCK)?"_LK_NBLCK":
-        (mode==_LK_RLCK)?"_LK_RLCK":
-        (mode==_LK_NBRLCK)?"_LK_NBRLCK":
+        fd,nbytes,(mode==MSVCRT__LK_UNLCK)?"_LK_UNLCK":
+        (mode==MSVCRT__LK_LOCK)?"_LK_LOCK":
+        (mode==MSVCRT__LK_NBLCK)?"_LK_NBLCK":
+        (mode==MSVCRT__LK_RLCK)?"_LK_RLCK":
+        (mode==MSVCRT__LK_NBRLCK)?"_LK_NBRLCK":
                           "UNKNOWN");
 
   if ((cur_locn = SetFilePointer(hand, 0L, NULL, SEEK_CUR)) == INVALID_SET_FILE_POINTER)
@@ -701,7 +689,7 @@ int _locking(int fd, int mode, LONG nbytes)
     *MSVCRT__errno() = MSVCRT_EINVAL; /* FIXME */
     return -1;
   }
-  if (mode == _LK_LOCK || mode == _LK_RLCK)
+  if (mode == MSVCRT__LK_LOCK || mode == MSVCRT__LK_RLCK)
   {
     int nretry = 10;
     ret = 1; /* just to satisfy gcc */
@@ -709,10 +697,10 @@ int _locking(int fd, int mode, LONG nbytes)
     {
       ret = LockFile(hand, cur_locn, 0L, nbytes, 0L);
       if (ret) break;
-      _sleep (1);
+      Sleep(1);
     }
   }
-  else if (mode == _LK_UNLCK)
+  else if (mode == MSVCRT__LK_UNLCK)
     ret = UnlockFile(hand, cur_locn, 0L, nbytes, 0L);
   else
     ret = LockFile(hand, cur_locn, 0L, nbytes, 0L);
@@ -768,15 +756,15 @@ static int msvcrt_get_flags(const char* mode, int *open_flags, int* stream_flags
   switch(*mode++)
   {
   case 'R': case 'r':
-    *open_flags = plus ? _O_RDWR : _O_RDONLY;
+    *open_flags = plus ? MSVCRT__O_RDWR : MSVCRT__O_RDONLY;
     *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOREAD;
     break;
   case 'W': case 'w':
-    *open_flags = _O_CREAT | _O_TRUNC | (plus  ? _O_RDWR : _O_WRONLY);
+    *open_flags = MSVCRT__O_CREAT | MSVCRT__O_TRUNC | (plus  ? MSVCRT__O_RDWR : MSVCRT__O_WRONLY);
     *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOWRT;
     break;
   case 'A': case 'a':
-    *open_flags = _O_CREAT | _O_APPEND | (plus  ? _O_RDWR : _O_WRONLY);
+    *open_flags = MSVCRT__O_CREAT | MSVCRT__O_APPEND | (plus  ? MSVCRT__O_RDWR : MSVCRT__O_WRONLY);
     *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOWRT;
     break;
   default:
@@ -787,12 +775,12 @@ static int msvcrt_get_flags(const char* mode, int *open_flags, int* stream_flags
     switch (*mode++)
     {
     case 'B': case 'b':
-      *open_flags |=  _O_BINARY;
-      *open_flags &= ~_O_TEXT;
+      *open_flags |=  MSVCRT__O_BINARY;
+      *open_flags &= ~MSVCRT__O_TEXT;
       break;
     case 'T': case 't':
-      *open_flags |=  _O_TEXT;
-      *open_flags &= ~_O_BINARY;
+      *open_flags |=  MSVCRT__O_TEXT;
+      *open_flags &= ~MSVCRT__O_BINARY;
       break;
     case '+':
       break;
@@ -916,7 +904,7 @@ int MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
   if (!buf)
   {
     WARN(":failed-NULL buf\n");
-    MSVCRT__set_errno(ERROR_INVALID_PARAMETER);
+    msvcrt_set_errno(ERROR_INVALID_PARAMETER);
     return -1;
   }
 
@@ -925,7 +913,7 @@ int MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
   if (!GetFileInformationByHandle(hand, &hfi))
   {
     WARN(":failed-last error (%ld)\n",GetLastError());
-    MSVCRT__set_errno(ERROR_INVALID_PARAMETER);
+    msvcrt_set_errno(ERROR_INVALID_PARAMETER);
     return -1;
   }
   FIXME(":dwFileAttributes = %ld, mode set to 0\n",hfi.dwFileAttributes);
@@ -954,7 +942,7 @@ int MSVCRT__fstat(int fd, struct MSVCRT__stat* buf)
 /*********************************************************************
  *		_futime (MSVCRT.@)
  */
-int _futime(int fd, struct _utimbuf *t)
+int _futime(int fd, struct MSVCRT__utimbuf *t)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
   FILETIME at, wt;
@@ -977,7 +965,7 @@ int _futime(int fd, struct _utimbuf *t)
 
   if (!SetFileTime(hand, NULL, &at, &wt))
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1 ;
   }
   return 0;
@@ -1108,71 +1096,71 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   TRACE(":file (%s) oflags: 0x%04x shflags: 0x%04x\n",
         path, oflags, shflags);
 
-  switch(oflags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
+  switch(oflags & (MSVCRT__O_RDONLY | MSVCRT__O_WRONLY | MSVCRT__O_RDWR))
   {
-  case _O_RDONLY:
+  case MSVCRT__O_RDONLY:
     access |= GENERIC_READ;
     ioflag |= MSVCRT__IOREAD;
     break;
-  case _O_WRONLY:
+  case MSVCRT__O_WRONLY:
     access |= GENERIC_WRITE;
     ioflag |= MSVCRT__IOWRT;
     break;
-  case _O_RDWR:
+  case MSVCRT__O_RDWR:
     access |= GENERIC_WRITE | GENERIC_READ;
     ioflag |= MSVCRT__IORW;
     break;
   }
 
-  if (oflags & _O_CREAT)
+  if (oflags & MSVCRT__O_CREAT)
   {
     va_start(ap, shflags);
       pmode = va_arg(ap, int);
     va_end(ap);
 
-    if(pmode & ~(_S_IREAD | _S_IWRITE))
+    if(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))
       FIXME(": pmode 0x%04x ignored\n", pmode);
     else
       WARN(": pmode 0x%04x ignored\n", pmode);
 
-    if (oflags & _O_EXCL)
+    if (oflags & MSVCRT__O_EXCL)
       creation = CREATE_NEW;
-    else if (oflags & _O_TRUNC)
+    else if (oflags & MSVCRT__O_TRUNC)
       creation = CREATE_ALWAYS;
     else
       creation = OPEN_ALWAYS;
   }
-  else  /* no _O_CREAT */
+  else  /* no MSVCRT__O_CREAT */
   {
-    if (oflags & _O_TRUNC)
+    if (oflags & MSVCRT__O_TRUNC)
       creation = TRUNCATE_EXISTING;
     else
       creation = OPEN_EXISTING;
   }
-  if (oflags & _O_APPEND)
-    ioflag |= _O_APPEND;
+  if (oflags & MSVCRT__O_APPEND)
+    ioflag |= MSVCRT__O_APPEND;
 
-  if (oflags & _O_BINARY)
-    ioflag |= _O_BINARY;
-  else if (oflags & _O_TEXT)
-    ioflag |= _O_TEXT;
-  else if (*__p__fmode() & _O_BINARY)
-    ioflag |= _O_BINARY;
+  if (oflags & MSVCRT__O_BINARY)
+    ioflag |= MSVCRT__O_BINARY;
+  else if (oflags & MSVCRT__O_TEXT)
+    ioflag |= MSVCRT__O_TEXT;
+  else if (*__p__fmode() & MSVCRT__O_BINARY)
+    ioflag |= MSVCRT__O_BINARY;
   else
-    ioflag |= _O_TEXT; /* default to TEXT*/
+    ioflag |= MSVCRT__O_TEXT; /* default to TEXT*/
   
   switch( shflags )
   {
-    case _SH_DENYRW:
+    case MSVCRT__SH_DENYRW:
       sharing = 0L;
       break;
-    case _SH_DENYWR:
+    case MSVCRT__SH_DENYWR:
       sharing = FILE_SHARE_READ;
       break;
-    case _SH_DENYRD:
+    case MSVCRT__SH_DENYRD:
       sharing = FILE_SHARE_WRITE;
       break;
-    case _SH_DENYNO:
+    case MSVCRT__SH_DENYNO:
       sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
       break;
     default:
@@ -1181,26 +1169,26 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   }
   attrib = FILE_ATTRIBUTE_NORMAL;
 
-  if (oflags & _O_TEMPORARY)
+  if (oflags & MSVCRT__O_TEMPORARY)
   {
       attrib |= FILE_FLAG_DELETE_ON_CLOSE;
       access |= DELETE;
       sharing |= FILE_SHARE_DELETE;
   }
 
-  if (oflags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL
-                |_O_CREAT|_O_RDWR|_O_WRONLY|_O_TEMPORARY|_O_NOINHERIT))
+  if (oflags & ~(MSVCRT__O_BINARY|MSVCRT__O_TEXT|MSVCRT__O_APPEND|MSVCRT__O_TRUNC|MSVCRT__O_EXCL
+                |MSVCRT__O_CREAT|MSVCRT__O_RDWR|MSVCRT__O_WRONLY|MSVCRT__O_TEMPORARY|MSVCRT__O_NOINHERIT))
     ERR(":unsupported oflags 0x%04x\n",oflags);
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = (oflags & _O_NOINHERIT) ? FALSE : TRUE;
+  sa.bInheritHandle       = (oflags & MSVCRT__O_NOINHERIT) ? FALSE : TRUE;
 
   hand = CreateFileA(path, access, sharing, &sa, creation, attrib, 0);
 
   if (hand == INVALID_HANDLE_VALUE)  {
     WARN(":failed-last error (%ld)\n",GetLastError());
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
 
@@ -1210,7 +1198,7 @@ int MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
 
   if (fd > 0)
   {
-    if (oflags & _O_APPEND)
+    if (oflags & MSVCRT__O_APPEND)
       _lseek(fd, 0, FILE_END);
   }
 
@@ -1238,7 +1226,7 @@ int MSVCRT__wsopen( const MSVCRT_wchar_t* path, int oflags, int shflags, ... )
     return retval;
   }
 
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -1249,16 +1237,16 @@ int _open( const char *path, int flags, ... )
 {
   va_list ap;
 
-  if (flags & _O_CREAT)
+  if (flags & MSVCRT__O_CREAT)
   {
     int pmode;
     va_start(ap, flags);
     pmode = va_arg(ap, int);
     va_end(ap);
-    return MSVCRT__sopen( path, flags, _SH_DENYNO, pmode );
+    return MSVCRT__sopen( path, flags, MSVCRT__SH_DENYNO, pmode );
   }
   else
-    return MSVCRT__sopen( path, flags, _SH_DENYNO);
+    return MSVCRT__sopen( path, flags, MSVCRT__SH_DENYNO);
 }
 
 /*********************************************************************
@@ -1282,7 +1270,7 @@ int _wopen(const MSVCRT_wchar_t *path,int flags,...)
     return retval;
   }
 
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -1291,7 +1279,7 @@ int _wopen(const MSVCRT_wchar_t *path,int flags,...)
  */
 int _creat(const char *path, int flags)
 {
-  int usedFlags = (flags & _O_TEXT)| _O_CREAT| _O_WRONLY| _O_TRUNC;
+  int usedFlags = (flags & MSVCRT__O_TEXT)| MSVCRT__O_CREAT| MSVCRT__O_WRONLY| MSVCRT__O_TRUNC;
   return _open(path, usedFlags);
 }
 
@@ -1300,7 +1288,7 @@ int _creat(const char *path, int flags)
  */
 int _wcreat(const MSVCRT_wchar_t *path, int flags)
 {
-  int usedFlags = (flags & _O_TEXT)| _O_CREAT| _O_WRONLY| _O_TRUNC;
+  int usedFlags = (flags & MSVCRT__O_TEXT)| MSVCRT__O_CREAT| MSVCRT__O_WRONLY| MSVCRT__O_TRUNC;
   return _wopen(path, usedFlags);
 }
 
@@ -1311,16 +1299,16 @@ int _open_osfhandle(long hand, int flags)
 {
   int fd;
 
-  /* _O_RDONLY (0) always matches, so set the read flag
+  /* MSVCRT__O_RDONLY (0) always matches, so set the read flag
    * MFC's CStdioFile clears O_RDONLY (0)! if it wants to write to the
-   * file, so set the write flag. It also only sets _O_TEXT if it wants
-   * text - it never sets _O_BINARY.
+   * file, so set the write flag. It also only sets MSVCRT__O_TEXT if it wants
+   * text - it never sets MSVCRT__O_BINARY.
    */
   /* FIXME: handle more flags */
-  if (!(flags & (_O_BINARY | _O_TEXT)) && (*__p__fmode() & _O_BINARY))
-      flags |= _O_BINARY;
+  if (!(flags & (MSVCRT__O_BINARY | MSVCRT__O_TEXT)) && (*__p__fmode() & MSVCRT__O_BINARY))
+      flags |= MSVCRT__O_BINARY;
   else
-      flags |= _O_TEXT;
+      flags |= MSVCRT__O_TEXT;
 
   fd = msvcrt_alloc_fd((HANDLE)hand,flags);
   TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd,flags);
@@ -1433,10 +1421,10 @@ int MSVCRT__getw(MSVCRT_FILE* file)
  */
 int _setmode(int fd,int mode)
 {
-  int ret = MSVCRT_fdesc[fd].xflag & WX_TEXT ? _O_TEXT : _O_BINARY;
-  if (mode & (~(_O_TEXT|_O_BINARY)))
+  int ret = MSVCRT_fdesc[fd].xflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
+  if (mode & (~(MSVCRT__O_TEXT|MSVCRT__O_BINARY)))
     FIXME("fd (%d) mode (0x%08x) unknown\n",fd,mode);
-  if ((mode & _O_TEXT) == _O_TEXT)
+  if ((mode & MSVCRT__O_TEXT) == MSVCRT__O_TEXT)
       MSVCRT_fdesc[fd].xflag |= WX_TEXT;
   else
       MSVCRT_fdesc[fd].xflag &= ~WX_TEXT;
@@ -1450,7 +1438,7 @@ int MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
-  unsigned short mode = MSVCRT_S_IREAD;
+  unsigned short mode = ALL_S_IREAD;
   int plen;
 
   TRACE(":file (%s) buf(%p)\n",path,buf);
@@ -1458,7 +1446,7 @@ int MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
   if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
   {
       TRACE("failed (%ld)\n",GetLastError());
-      MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+      msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return -1;
   }
 
@@ -1479,22 +1467,22 @@ int MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
   /* Dir, or regular file? */
   if ((hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
       (path[plen-1] == '\\'))
-    mode |= (_S_IFDIR | MSVCRT_S_IEXEC);
+    mode |= (MSVCRT__S_IFDIR | ALL_S_IEXEC);
   else
   {
-    mode |= _S_IFREG;
+    mode |= MSVCRT__S_IFREG;
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
       unsigned int ext = tolower(path[plen-1]) | (tolower(path[plen-2]) << 8) |
                                  (tolower(path[plen-3]) << 16);
       if (ext == EXE || ext == BAT || ext == CMD || ext == COM)
-          mode |= MSVCRT_S_IEXEC;
+          mode |= ALL_S_IEXEC;
     }
   }
 
   if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-    mode |= MSVCRT_S_IWRITE;
+    mode |= ALL_S_IWRITE;
 
   buf->st_mode  = mode;
   buf->st_nlink = 1;
@@ -1529,7 +1517,7 @@ int MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
-  unsigned short mode = MSVCRT_S_IREAD;
+  unsigned short mode = ALL_S_IREAD;
   int plen;
 
   TRACE(":file (%s) buf(%p)\n",debugstr_w(path),buf);
@@ -1537,7 +1525,7 @@ int MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * buf)
   if (!GetFileAttributesExW(path, GetFileExInfoStandard, &hfi))
   {
       TRACE("failed (%ld)\n",GetLastError());
-      MSVCRT__set_errno(ERROR_FILE_NOT_FOUND);
+      msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
       return -1;
   }
 
@@ -1554,22 +1542,22 @@ int MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * buf)
   /* Dir, or regular file? */
   if ((hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
       (path[plen-1] == '\\'))
-    mode |= (_S_IFDIR | MSVCRT_S_IEXEC);
+    mode |= (MSVCRT__S_IFDIR | ALL_S_IEXEC);
   else
   {
-    mode |= _S_IFREG;
+    mode |= MSVCRT__S_IFREG;
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
       ULONGLONG ext = tolowerW(path[plen-1]) | (tolowerW(path[plen-2]) << 16) |
                                ((ULONGLONG)tolowerW(path[plen-3]) << 32);
       if (ext == WCEXE || ext == WCBAT || ext == WCCMD || ext == WCCOM)
-        mode |= MSVCRT_S_IEXEC;
+        mode |= ALL_S_IEXEC;
     }
   }
 
   if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-    mode |= MSVCRT_S_IWRITE;
+    mode |= ALL_S_IWRITE;
 
   buf->st_mode  = mode;
   buf->st_nlink = 1;
@@ -1663,9 +1651,9 @@ int _umask(int umask)
 /*********************************************************************
  *		_utime (MSVCRT.@)
  */
-int _utime(const char* path, struct _utimbuf *t)
+int _utime(const char* path, struct MSVCRT__utimbuf *t)
 {
-  int fd = _open(path, _O_WRONLY | _O_BINARY);
+  int fd = _open(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
 
   if (fd > 0)
   {
@@ -1679,9 +1667,9 @@ int _utime(const char* path, struct _utimbuf *t)
 /*********************************************************************
  *		_wutime (MSVCRT.@)
  */
-int _wutime(const MSVCRT_wchar_t* path, struct _utimbuf *t)
+int _wutime(const MSVCRT_wchar_t* path, struct MSVCRT__utimbuf *t)
 {
-  int fd = _wopen(path, _O_WRONLY | _O_BINARY);
+  int fd = _wopen(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
 
   if (fd > 0)
   {
@@ -1921,7 +1909,7 @@ char *MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
 /*********************************************************************
  *		fgetwc (MSVCRT.@)
  *
- * In _O_TEXT mode, multibyte characters are read from the file, dropping
+ * In MSVCRT__O_TEXT mode, multibyte characters are read from the file, dropping
  * the CR from CR/LF combinations
  */
 MSVCRT_wint_t MSVCRT_fgetwc(MSVCRT_FILE* file)
@@ -2074,7 +2062,7 @@ MSVCRT_FILE* MSVCRT_fopen(const char *path, const char *mode)
   if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
       return NULL;
 
-  fd = _open(path, open_flags, _S_IREAD | _S_IWRITE);
+  fd = _open(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
 
   if (fd < 0)
     return NULL;
@@ -2114,7 +2102,7 @@ MSVCRT_FILE *MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mo
     return retval;
   }
 
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return NULL;
 }
 
@@ -2250,7 +2238,7 @@ MSVCRT_FILE* MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE* file
   if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
       return NULL;
 
-  fd = _open(path, open_flags, _S_IREAD | _S_IWRITE);
+  fd = _open(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
 
   if (fd < 0)
     return NULL;
@@ -2258,7 +2246,7 @@ MSVCRT_FILE* MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE* file
   {
       file->_flag = 0;
       WARN(":failed-last error (%ld)\n",GetLastError());
-      MSVCRT__set_errno(GetLastError());
+      msvcrt_set_errno(GetLastError());
       return NULL;
   }
   return file;
@@ -2432,7 +2420,7 @@ int MSVCRT_remove(const char *path)
   if (DeleteFileA(path))
     return 0;
   TRACE(":failed (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -2445,7 +2433,7 @@ int _wremove(const MSVCRT_wchar_t *path)
   if (DeleteFileW(path))
     return 0;
   TRACE(":failed (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -2458,7 +2446,7 @@ int MSVCRT_rename(const char *oldpath,const char *newpath)
   if (MoveFileExA(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
     return 0;
   TRACE(":failed (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -2471,7 +2459,7 @@ int _wrename(const MSVCRT_wchar_t *oldpath,const MSVCRT_wchar_t *newpath)
   if (MoveFileExW(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
     return 0;
   TRACE(":failed (%ld)\n",GetLastError());
-  MSVCRT__set_errno(GetLastError());
+  msvcrt_set_errno(GetLastError());
   return -1;
 }
 
@@ -2539,10 +2527,10 @@ MSVCRT_FILE* MSVCRT_tmpfile(void)
   int fd;
   MSVCRT_FILE* file = NULL;
 
-  fd = _open(filename, _O_CREAT | _O_BINARY | _O_RDWR | _O_TEMPORARY);
+  fd = _open(filename, MSVCRT__O_CREAT | MSVCRT__O_BINARY | MSVCRT__O_RDWR | MSVCRT__O_TEMPORARY);
   if (fd != -1 && (file = msvcrt_alloc_fp()))
   {
-    if (msvcrt_init_fp(file, fd, _O_RDWR) == -1)
+    if (msvcrt_init_fp(file, fd, MSVCRT__O_RDWR) == -1)
     {
         file->_flag = 0;
         file = NULL;

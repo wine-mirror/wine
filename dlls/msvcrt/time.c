@@ -30,11 +30,7 @@
 #endif
 
 #include "msvcrt.h"
-#include "msvcrt/sys/timeb.h"
-#include "msvcrt/time.h"
-
 #include "winbase.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -221,23 +217,9 @@ double MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2)
 }
 
 /*********************************************************************
- *		time (MSVCRT.@)
- */
-MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
-{
-  MSVCRT_time_t curtime;
-  struct _timeb tb;
-
-  _ftime(&tb);
-
-  curtime = tb.time;
-  return buf ? *buf = curtime : curtime;
-}
-
-/*********************************************************************
  *		_ftime (MSVCRT.@)
  */
-void _ftime(struct _timeb *buf)
+void _ftime(struct MSVCRT__timeb *buf)
 {
   TIME_ZONE_INFORMATION tzinfo;
   FILETIME ft;
@@ -252,6 +234,20 @@ void _ftime(struct _timeb *buf)
   buf->millitm = (time % TICKSPERSEC) / TICKSPERMSEC;
   buf->timezone = tzinfo.Bias;
   buf->dstflag = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
+}
+
+/*********************************************************************
+ *		time (MSVCRT.@)
+ */
+MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
+{
+  MSVCRT_time_t curtime;
+  struct MSVCRT__timeb tb;
+
+  _ftime(&tb);
+
+  curtime = tb.time;
+  return buf ? *buf = curtime : curtime;
 }
 
 /*********************************************************************

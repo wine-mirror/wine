@@ -4,11 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msvcrt.dll
 IMPORTS   = msvcrt
-EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt -I$(SRCDIR)/..
 
 CTESTS = \
 	cpp.c \
 	file.c \
+	headers.c \
 	heap.c \
 	scanf.c \
 	string.c \

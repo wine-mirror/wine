@@ -20,30 +20,28 @@
 #define _A_SUBDIR 0x00000010
 #define _A_ARCH   0x00000020
 
-#ifndef MSVCRT_DISKFREE_T_DEFINED
-#define MSVCRT_DISKFREE_T_DEFINED
-struct MSVCRT(_diskfree_t) {
+#ifndef _DISKFREE_T_DEFINED
+#define _DISKFREE_T_DEFINED
+struct _diskfree_t {
   unsigned int total_clusters;
   unsigned int avail_clusters;
   unsigned int sectors_per_cluster;
   unsigned int bytes_per_sector;
 };
-#endif /* MSVCRT_DISKFREE_T_DEFINED */
+#endif /* _DISKFREE_T_DEFINED */
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-unsigned int MSVCRT(_getdiskfree)(unsigned int, struct MSVCRT(_diskfree_t) *);
+unsigned int _getdiskfree(unsigned int, struct _diskfree_t *);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
-#define MSVCRT(diskfree_t) MSVCRT(_diskfree_t)
-#endif /* USE_MSVCRT_PREFIX */
+#define diskfree_t _diskfree_t
 
 #endif /* __WINE_DOS_H */

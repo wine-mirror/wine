@@ -31,9 +31,6 @@
 #include "wine/exception.h"
 #include "excpt.h"
 #include "wine/debug.h"
-#include "msvcrt/malloc.h"
-#include "msvcrt/stdlib.h"
-
 #include "msvcrt.h"
 #include "cppexcept.h"
 #include "mtdll.h"
@@ -539,9 +536,9 @@ const char * __stdcall MSVCRT_type_info_name(type_info * _this)
   if (!_this->name)
   {
     /* Create and set the demangled name */
-    char* name = MSVCRT___unDName(0, _this->mangled, 0,
-                                  (MSVCRT_malloc_func)MSVCRT_malloc,
-                                  (MSVCRT_free_func)MSVCRT_free, 0x2800);
+    char* name = __unDName(0, _this->mangled, 0,
+                           (malloc_func_t)MSVCRT_malloc,
+                           (free_func_t)MSVCRT_free, 0x2800);
 
     if (name)
     {
@@ -953,10 +950,10 @@ static const cxx_exception_type __non_rtti_object_exception_type =
  * RETURNS
  *  The previously installed handler function, if any.
  */
-terminate_function MSVCRT_set_terminate(terminate_function func)
+MSVCRT_terminate_function MSVCRT_set_terminate(MSVCRT_terminate_function func)
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
-    terminate_function previous = data->terminate_handler;
+    thread_data_t *data = msvcrt_get_thread_data();
+    MSVCRT_terminate_function previous = data->terminate_handler;
     TRACE("(%p) returning %p\n",func,previous);
     data->terminate_handler = func;
     return previous;
@@ -973,10 +970,10 @@ terminate_function MSVCRT_set_terminate(terminate_function func)
  * RETURNS
  *  The previously installed handler function, if any.
  */
-unexpected_function MSVCRT_set_unexpected(unexpected_function func)
+MSVCRT_unexpected_function MSVCRT_set_unexpected(MSVCRT_unexpected_function func)
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
-    unexpected_function previous = data->unexpected_handler;
+    thread_data_t *data = msvcrt_get_thread_data();
+    MSVCRT_unexpected_function previous = data->unexpected_handler;
     TRACE("(%p) returning %p\n",func,previous);
     data->unexpected_handler = func;
     return previous;
@@ -985,10 +982,10 @@ unexpected_function MSVCRT_set_unexpected(unexpected_function func)
 /******************************************************************
  *              ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z  (MSVCRT.@)
  */
-_se_translator_function MSVCRT__set_se_translator(_se_translator_function func)
+MSVCRT__se_translator_function MSVCRT__set_se_translator(MSVCRT__se_translator_function func)
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
-    _se_translator_function previous = data->se_translator;
+    thread_data_t *data = msvcrt_get_thread_data();
+    MSVCRT__se_translator_function previous = data->se_translator;
     TRACE("(%p) returning %p\n",func,previous);
     data->se_translator = func;
     return previous;
@@ -1009,7 +1006,7 @@ _se_translator_function MSVCRT__set_se_translator(_se_translator_function func)
  */
 void MSVCRT_terminate(void)
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    thread_data_t *data = msvcrt_get_thread_data();
     if (data->terminate_handler) data->terminate_handler();
     MSVCRT_abort();
 }
@@ -1019,7 +1016,7 @@ void MSVCRT_terminate(void)
  */
 void MSVCRT_unexpected(void)
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    thread_data_t *data = msvcrt_get_thread_data();
     if (data->unexpected_handler) data->unexpected_handler();
     MSVCRT_terminate();
 }

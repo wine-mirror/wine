@@ -30,13 +30,6 @@
 #include <stdarg.h>
 
 #include "msvcrt.h"
-#include "msvcrt/errno.h"
-
-#include "msvcrt/stdio.h"
-#include "msvcrt/process.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -50,7 +43,7 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
   if (sizeof(HANDLE) != sizeof(int))
     WARN("This call is unsuitable for your architecture\n");
 
-  if ((unsigned)flags > _P_DETACH)
+  if ((unsigned)flags > MSVCRT__P_DETACH)
   {
     *MSVCRT__errno() = MSVCRT_EINVAL;
     return -1;
@@ -62,30 +55,30 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
   si.cb = sizeof(si);
 
   if (!CreateProcessA(exe, cmdline, NULL, NULL, TRUE,
-                     flags == _P_DETACH ? DETACHED_PROCESS : 0,
+                     flags == MSVCRT__P_DETACH ? DETACHED_PROCESS : 0,
                      env, NULL, &si, &pi))
   {
-    MSVCRT__set_errno(GetLastError());
+    msvcrt_set_errno(GetLastError());
     return -1;
   }
 
   switch(flags)
   {
-  case _P_WAIT:
+  case MSVCRT__P_WAIT:
     WaitForSingleObject(pi.hProcess, INFINITE);
     GetExitCodeProcess(pi.hProcess,&pi.dwProcessId);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     return (int)pi.dwProcessId;
-  case _P_DETACH:
+  case MSVCRT__P_DETACH:
     CloseHandle(pi.hProcess);
     pi.hProcess = 0;
     /* fall through */
-  case _P_NOWAIT:
-  case _P_NOWAITO:
+  case MSVCRT__P_NOWAIT:
+  case MSVCRT__P_NOWAITO:
     CloseHandle(pi.hThread);
     return (int)pi.hProcess;
-  case  _P_OVERLAY:
+  case  MSVCRT__P_OVERLAY:
     MSVCRT__exit(0);
   }
   return -1; /* can't reach here */
@@ -218,7 +211,7 @@ int _cwait(int *status, int pid, int action)
     *MSVCRT___doserrno() = doserrno;
   }
   else
-    MSVCRT__set_errno(doserrno);
+    msvcrt_set_errno(doserrno);
 
   return status ? *status = -1 : -1;
 }
@@ -239,7 +232,7 @@ int _execl(const char* name, const char* arg0, ...)
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(_P_OVERLAY, name, args, NULL);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL);
   MSVCRT_free(args);
 
   return ret;
@@ -273,7 +266,7 @@ int _execlp(const char* name, const char* arg0, ...)
   args = msvcrt_valisttos(arg0, ap, ' ');
   va_end(ap);
 
-  ret = msvcrt_spawn(_P_OVERLAY, fullname[0] ? fullname : name, args, NULL);
+  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name, args, NULL);
   MSVCRT_free(args);
 
   return ret;
@@ -296,7 +289,7 @@ int _execlpe(const char* name, const char* arg0, ...)
  */
 int _execv(const char* name, char* const* argv)
 {
-  return _spawnve(_P_OVERLAY, name, (const char* const*) argv, NULL);
+  return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, NULL);
 }
 
 /*********************************************************************
@@ -307,7 +300,7 @@ int _execv(const char* name, char* const* argv)
  */
 int _execve(const char* name, char* const* argv, const char* const* envv)
 {
-  return _spawnve(_P_OVERLAY, name, (const char* const*) argv, envv);
+  return _spawnve(MSVCRT__P_OVERLAY, name, (const char* const*) argv, envv);
 }
 
 /*********************************************************************
@@ -321,7 +314,7 @@ int _execvpe(const char* name, char* const* argv, const char* const* envv)
   char fullname[MAX_PATH];
 
   _searchenv(name, "PATH", fullname);
-  return _spawnve(_P_OVERLAY, fullname[0] ? fullname : name,
+  return _spawnve(MSVCRT__P_OVERLAY, fullname[0] ? fullname : name,
                   (const char* const*) argv, envv);
 }
 
@@ -504,7 +497,7 @@ int MSVCRT_system(const char* cmd)
     /* Make a writable copy for CreateProcess */
     cmdcopy=_strdup(cmd);
     /* FIXME: should probably launch cmd interpreter in COMSPEC */
-    res=msvcrt_spawn(_P_WAIT, NULL, cmdcopy, NULL);
+    res=msvcrt_spawn(MSVCRT__P_WAIT, NULL, cmdcopy, NULL);
     MSVCRT_free(cmdcopy);
     return res;
 }
@@ -527,7 +520,7 @@ int _unloaddll(int dll)
   else
   {
     int err = GetLastError();
-    MSVCRT__set_errno(err);
+    msvcrt_set_errno(err);
     return err;
   }
 }

@@ -18,26 +18,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "msvcrt.h"
-
-#include "msvcrt/ctype.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* Some abbreviations to make the following table readable */
-#define _C_ _CONTROL
-#define _S_ _SPACE
-#define _P_ _PUNCT
-#define _D_ _DIGIT
-#define _H_ _HEX
-#define _U_ _UPPER
-#define _L_ _LOWER
+#define _C_ MSVCRT__CONTROL
+#define _S_ MSVCRT__SPACE
+#define _P_ MSVCRT__PUNCT
+#define _D_ MSVCRT__DIGIT
+#define _H_ MSVCRT__HEX
+#define _U_ MSVCRT__UPPER
+#define _L_ MSVCRT__LOWER
 
 WORD MSVCRT__ctype [257] = {
   0, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|_C_, _S_|_C_,
   _S_|_C_, _S_|_C_, _S_|_C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_,
-  _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|_BLANK,
+  _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|MSVCRT__BLANK,
   _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_,
   _P_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_,
   _D_|_H_, _D_|_H_, _D_|_H_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _U_|_H_,
@@ -90,7 +87,7 @@ int _isctype(int c, int type)
     WORD typeInfo;
     char convert[3], *pconv = convert;
 
-    if (MSVCRT__pctype[(UINT)c >> 8] & _LEADBYTE)
+    if (MSVCRT__pctype[(UINT)c >> 8] & MSVCRT__LEADBYTE)
       *pconv++ = (UINT)c >> 8;
     *pconv++ = c & 0xff;
     *pconv = 0;
@@ -107,7 +104,7 @@ int _isctype(int c, int type)
  */
 int MSVCRT_isalnum(int c)
 {
-  return _isctype( c, _ALPHA | _DIGIT );
+  return _isctype( c, MSVCRT__ALPHA | MSVCRT__DIGIT );
 }
 
 /*********************************************************************
@@ -115,7 +112,7 @@ int MSVCRT_isalnum(int c)
  */
 int MSVCRT_isalpha(int c)
 {
-  return _isctype( c, _ALPHA );
+  return _isctype( c, MSVCRT__ALPHA );
 }
 
 /*********************************************************************
@@ -123,7 +120,7 @@ int MSVCRT_isalpha(int c)
  */
 int MSVCRT_iscntrl(int c)
 {
-  return _isctype( c, _CONTROL );
+  return _isctype( c, MSVCRT__CONTROL );
 }
 
 /*********************************************************************
@@ -131,7 +128,7 @@ int MSVCRT_iscntrl(int c)
  */
 int MSVCRT_isdigit(int c)
 {
-  return _isctype( c, _DIGIT );
+  return _isctype( c, MSVCRT__DIGIT );
 }
 
 /*********************************************************************
@@ -139,7 +136,7 @@ int MSVCRT_isdigit(int c)
  */
 int MSVCRT_isgraph(int c)
 {
-  return _isctype( c, _ALPHA | _DIGIT | _PUNCT );
+  return _isctype( c, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__PUNCT );
 }
 
 /*********************************************************************
@@ -147,7 +144,7 @@ int MSVCRT_isgraph(int c)
  */
 int MSVCRT_isleadbyte(int c)
 {
-  return _isctype( c, _LEADBYTE );
+  return _isctype( c, MSVCRT__LEADBYTE );
 }
 
 /*********************************************************************
@@ -155,7 +152,7 @@ int MSVCRT_isleadbyte(int c)
  */
 int MSVCRT_islower(int c)
 {
-  return _isctype( c, _LOWER );
+  return _isctype( c, MSVCRT__LOWER );
 }
 
 /*********************************************************************
@@ -163,7 +160,7 @@ int MSVCRT_islower(int c)
  */
 int MSVCRT_isprint(int c)
 {
-  return _isctype( c, _ALPHA | _DIGIT | _BLANK | _PUNCT );
+  return _isctype( c, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__BLANK | MSVCRT__PUNCT );
 }
 
 /*********************************************************************
@@ -171,7 +168,7 @@ int MSVCRT_isprint(int c)
  */
 int MSVCRT_ispunct(int c)
 {
-  return _isctype( c, _PUNCT );
+  return _isctype( c, MSVCRT__PUNCT );
 }
 
 /*********************************************************************
@@ -179,7 +176,7 @@ int MSVCRT_ispunct(int c)
  */
 int MSVCRT_isspace(int c)
 {
-  return _isctype( c, _SPACE );
+  return _isctype( c, MSVCRT__SPACE );
 }
 
 /*********************************************************************
@@ -187,7 +184,7 @@ int MSVCRT_isspace(int c)
  */
 int MSVCRT_isupper(int c)
 {
-  return _isctype( c, _UPPER );
+  return _isctype( c, MSVCRT__UPPER );
 }
 
 /*********************************************************************
@@ -195,7 +192,7 @@ int MSVCRT_isupper(int c)
  */
 int MSVCRT_isxdigit(int c)
 {
-  return _isctype( c, _HEX );
+  return _isctype( c, MSVCRT__HEX );
 }
 
 /*********************************************************************

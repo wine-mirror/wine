@@ -24,12 +24,6 @@
 #include "msvcrt.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-
-#include "msvcrt/stdio.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-#include "msvcrt/wctype.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);

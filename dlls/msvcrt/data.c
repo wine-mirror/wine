@@ -23,11 +23,6 @@
 
 #include <math.h>
 #include "msvcrt.h"
-
-#include "msvcrt/fcntl.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -57,8 +52,8 @@ char **MSVCRT___argv;
 MSVCRT_wchar_t **MSVCRT___wargv;
 char *MSVCRT__acmdln;
 MSVCRT_wchar_t *MSVCRT__wcmdln;
-char **MSVCRT__environ = 0;
-MSVCRT_wchar_t **MSVCRT__wenviron = 0;
+char **_environ = 0;
+MSVCRT_wchar_t **_wenviron = 0;
 char **MSVCRT___initenv = 0;
 MSVCRT_wchar_t **MSVCRT___winitenv = 0;
 int MSVCRT_timezone;
@@ -211,9 +206,9 @@ MSVCRT_wchar_t*** __p___wargv(void) { return &MSVCRT___wargv; }
  */
 char*** __p__environ(void)
 {
-  if (!MSVCRT__environ)
-    MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(NULL);
-  return &MSVCRT__environ;
+  if (!_environ)
+    _environ = msvcrt_SnapshotOfEnvironmentA(NULL);
+  return &_environ;
 }
 
 /*********************************************************************
@@ -221,9 +216,9 @@ char*** __p__environ(void)
  */
 MSVCRT_wchar_t*** __p__wenviron(void)
 {
-  if (!MSVCRT__wenviron)
-    MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
-  return &MSVCRT__wenviron;
+  if (!_wenviron)
+    _wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
+  return &_wenviron;
 }
 
 /*********************************************************************
@@ -286,7 +281,7 @@ void msvcrt_init_args(void)
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;
   MSVCRT_timezone = 0;
-  MSVCRT__fmode = _O_TEXT;
+  MSVCRT__fmode = MSVCRT__O_TEXT;
   
   MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);
   MSVCRT___winitenv= msvcrt_SnapshotOfEnvironmentW(NULL);
@@ -317,8 +312,8 @@ void msvcrt_free_args(void)
   /* FIXME: more things to free */
   if (MSVCRT___initenv) HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
   if (MSVCRT___winitenv) HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
-  if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0, MSVCRT__environ);
-  if (MSVCRT__wenviron) HeapFree(GetProcessHeap(), 0, MSVCRT__wenviron);
+  if (_environ) HeapFree(GetProcessHeap(), 0, _environ);
+  if (_wenviron) HeapFree(GetProcessHeap(), 0, _wenviron);
   if (MSVCRT__pgmptr) HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
   if (MSVCRT__wpgmptr) HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
 }

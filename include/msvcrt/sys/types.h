@@ -23,52 +23,42 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_DEV_T_DEFINED
+#ifndef _DEV_T_DEFINED
 typedef unsigned int   _dev_t;
-#define MSVCRT_DEV_T_DEFINED
+#define _DEV_T_DEFINED
 #endif
 
-#ifndef MSVCRT_INO_T_DEFINED
+#ifndef _INO_T_DEFINED
 typedef unsigned short _ino_t;
-#define MSVCRT_INO_T_DEFINED
+#define _INO_T_DEFINED
 #endif
 
-#ifndef MSVCRT_MODE_T_DEFINED
+#ifndef _MODE_T_DEFINED
 typedef unsigned short _mode_t;
-#define MSVCRT_MODE_T_DEFINED
+#define _MODE_T_DEFINED
 #endif
 
-#ifndef MSVCRT_OFF_T_DEFINED
-typedef int MSVCRT(_off_t);
-#define MSVCRT_OFF_T_DEFINED
+#ifndef _OFF_T_DEFINED
+typedef int _off_t;
+#define _OFF_T_DEFINED
 #endif
 
-#ifndef MSVCRT_TIME_T_DEFINED
-typedef long MSVCRT(time_t);
-#define MSVCRT_TIME_T_DEFINED
+#ifndef _TIME_T_DEFINED
+typedef long time_t;
+#define _TIME_T_DEFINED
 #endif
 
-#ifndef USE_MSVCRT_PREFIX
-#ifndef MSVCRT_BSD_TYPES_DEFINED
+#ifndef _BSD_TYPES_DEFINED
 typedef unsigned char u_char;
 typedef unsigned short u_short;
 typedef unsigned int  u_int;
 typedef unsigned long u_long;
-#define MSVCRT_BSD_TYPES_DEFINED
+#define _BSD_TYPES_DEFINED
 #endif
 
 #define dev_t _dev_t
 #define ino_t _ino_t
 #define mode_t _mode_t
 #define off_t _off_t
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SYS_TYPES_H */

@@ -23,29 +23,21 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
-#ifndef MSVCRT_PTRDIFF_T_DEFINED
+#ifndef _PTRDIFF_T_DEFINED
 typedef int ptrdiff_t;
-#define MSVCRT_PTRDIFF_T_DEFINED
+#define _PTRDIFF_T_DEFINED
 #endif
 
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int size_t;
+#define _SIZE_T_DEFINED
 #endif
 
 #ifndef NULL

@@ -18,10 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "msvcrt.h"
-
-#include "msvcrt/malloc.h"
-#include "msvcrt/process.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -29,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /********************************************************************/
 
 typedef struct {
-  _beginthread_start_routine_t start_address;
+  MSVCRT__beginthread_start_routine_t start_address;
   void *arglist;
 } _beginthread_trampoline_t;
 
@@ -38,16 +34,16 @@ typedef struct {
  *
  * Return the thread local storage structure.
  */
-MSVCRT_thread_data *msvcrt_get_thread_data(void)
+thread_data_t *msvcrt_get_thread_data(void)
 {
-    MSVCRT_thread_data *ptr;
+    thread_data_t *ptr;
     DWORD err = GetLastError();  /* need to preserve last error */
 
-    if (!(ptr = TlsGetValue( MSVCRT_tls_index )))
+    if (!(ptr = TlsGetValue( msvcrt_tls_index )))
     {
         if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptr) )))
-            MSVCRT__amsg_exit( _RT_THREAD );
-        if (!TlsSetValue( MSVCRT_tls_index, ptr )) MSVCRT__amsg_exit( _RT_THREAD );
+            _amsg_exit( _RT_THREAD );
+        if (!TlsSetValue( msvcrt_tls_index, ptr )) _amsg_exit( _RT_THREAD );
     }
     SetLastError( err );
     return ptr;
@@ -75,7 +71,7 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
  *		_beginthread (MSVCRT.@)
  */
 unsigned long _beginthread(
-  _beginthread_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
+  MSVCRT__beginthread_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
   void *arglist)           /* [in] Argument list to be passed to new thread or NULL */
 {
@@ -102,7 +98,7 @@ unsigned long _beginthread(
 unsigned long _beginthreadex(
   void *security,          /* [in] Security descriptor for new thread; must be NULL for Windows 9x applications */
   unsigned int stack_size, /* [in] Stack size for new thread or 0 */
-  _beginthreadex_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
+  MSVCRT__beginthreadex_start_routine_t start_address, /* [in] Start address of routine that begins execution of new thread */
   void *arglist,           /* [in] Argument list to be passed to new thread or NULL */
   unsigned int initflag,   /* [in] Initial state of new thread (0 for running or CREATE_SUSPEND for suspended) */
   unsigned int *thrdaddr)  /* [out] Points to a 32-bit variable that receives the thread identifier */

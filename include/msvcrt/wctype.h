@@ -23,18 +23,10 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
@@ -50,19 +42,13 @@ typedef unsigned short MSVCRT(wchar_t);
 #define _LEADBYTE     0x8000
 #define _ALPHA       (0x0100|_UPPER|_LOWER)  /* (C1_ALPHA|_UPPER|_LOWER) */
 
-#ifndef USE_MSVCRT_PREFIX
-# ifndef WEOF
-#  define WEOF        (wint_t)(0xFFFF)
-# endif
-#else
-# ifndef MSVCRT_WEOF
-#  define MSVCRT_WEOF (MSVCRT_wint_t)(0xFFFF)
-# endif
-#endif /* USE_MSVCRT_PREFIX */
+#ifndef WEOF
+#define WEOF        (wint_t)(0xFFFF)
+#endif
 
 #ifndef _WCTYPE_T_DEFINED
-typedef unsigned short  MSVCRT(wint_t);
-typedef unsigned short  MSVCRT(wctype_t);
+typedef unsigned short  wint_t;
+typedef unsigned short  wctype_t;
 #define _WCTYPE_T_DEFINED
 #endif
 
@@ -73,26 +59,26 @@ typedef unsigned short  MSVCRT(wctype_t);
 extern "C" {
 #endif
 
-#ifndef MSVCRT_WCTYPE_DEFINED
-#define MSVCRT_WCTYPE_DEFINED
-int MSVCRT(is_wctype)(MSVCRT(wint_t),MSVCRT(wctype_t));
-int MSVCRT(isleadbyte)(int);
-int MSVCRT(iswalnum)(MSVCRT(wint_t));
-int MSVCRT(iswalpha)(MSVCRT(wint_t));
-int MSVCRT(iswascii)(MSVCRT(wint_t));
-int MSVCRT(iswcntrl)(MSVCRT(wint_t));
-int MSVCRT(iswctype)(MSVCRT(wint_t),MSVCRT(wctype_t));
-int MSVCRT(iswdigit)(MSVCRT(wint_t));
-int MSVCRT(iswgraph)(MSVCRT(wint_t));
-int MSVCRT(iswlower)(MSVCRT(wint_t));
-int MSVCRT(iswprint)(MSVCRT(wint_t));
-int MSVCRT(iswpunct)(MSVCRT(wint_t));
-int MSVCRT(iswspace)(MSVCRT(wint_t));
-int MSVCRT(iswupper)(MSVCRT(wint_t));
-int MSVCRT(iswxdigit)(MSVCRT(wint_t));
-MSVCRT(wchar_t) MSVCRT(towlower)(MSVCRT(wchar_t));
-MSVCRT(wchar_t) MSVCRT(towupper)(MSVCRT(wchar_t));
-#endif /* MSVCRT_WCTYPE_DEFINED */
+#ifndef _WCTYPE_DEFINED
+#define _WCTYPE_DEFINED
+int is_wctype(wint_t,wctype_t);
+int isleadbyte(int);
+int iswalnum(wint_t);
+int iswalpha(wint_t);
+int iswascii(wint_t);
+int iswcntrl(wint_t);
+int iswctype(wint_t,wctype_t);
+int iswdigit(wint_t);
+int iswgraph(wint_t);
+int iswlower(wint_t);
+int iswprint(wint_t);
+int iswpunct(wint_t);
+int iswspace(wint_t);
+int iswupper(wint_t);
+int iswxdigit(wint_t);
+wchar_t towlower(wchar_t);
+wchar_t towupper(wchar_t);
+#endif /* _WCTYPE_DEFINED */
 
 #ifdef __cplusplus
 }

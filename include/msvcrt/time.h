@@ -23,34 +23,26 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int size_t;
+#define _SIZE_T_DEFINED
 #endif
 
-#ifndef MSVCRT_TIME_T_DEFINED
-typedef long MSVCRT(time_t);
-#define MSVCRT_TIME_T_DEFINED
+#ifndef _TIME_T_DEFINED
+typedef long time_t;
+#define _TIME_T_DEFINED
 #endif
 
-#ifndef MSVCRT_CLOCK_T_DEFINED
-typedef long MSVCRT(clock_t);
-#define MSVCRT_CLOCK_T_DEFINED
+#ifndef _CLOCK_T_DEFINED
+typedef long clock_t;
+#define _CLOCK_T_DEFINED
 #endif
 
 #ifndef NULL
@@ -65,9 +57,9 @@ typedef long MSVCRT(clock_t);
 #define CLOCKS_PER_SEC 1000
 #endif
 
-#ifndef MSVCRT_TM_DEFINED
-#define MSVCRT_TM_DEFINED
-struct MSVCRT(tm) {
+#ifndef _TM_DEFINED
+#define _TM_DEFINED
+struct tm {
     int tm_sec;
     int tm_min;
     int tm_hour;
@@ -78,7 +70,7 @@ struct MSVCRT(tm) {
     int tm_yday;
     int tm_isdst;
 };
-#endif /* MSVCRT_TM_DEFINED */
+#endif /* _TM_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,30 +79,30 @@ extern "C" {
 /* FIXME: Must do something for _daylight, _dstbias, _timezone, _tzname */
 
 
-unsigned    _getsystime(struct MSVCRT(tm)*);
-unsigned    _setsystime(struct MSVCRT(tm)*,unsigned);
+unsigned    _getsystime(struct tm*);
+unsigned    _setsystime(struct tm*,unsigned);
 char*       _strdate(char*);
 char*       _strtime(char*);
 void        _tzset(void);
 
-char*       MSVCRT(asctime)(const struct MSVCRT(tm)*);
-MSVCRT(clock_t) MSVCRT(clock)(void);
-char*       MSVCRT(ctime)(const MSVCRT(time_t)*);
-double      MSVCRT(difftime)(MSVCRT(time_t),MSVCRT(time_t));
-struct MSVCRT(tm)* MSVCRT(gmtime)(const MSVCRT(time_t)*);
-struct MSVCRT(tm)* MSVCRT(localtime)(const MSVCRT(time_t)*);
-MSVCRT(time_t) MSVCRT(mktime)(struct MSVCRT(tm)*);
-size_t      MSVCRT(strftime)(char*,size_t,const char*,const struct MSVCRT(tm)*);
-MSVCRT(time_t) MSVCRT(time)(MSVCRT(time_t)*);
+char*       asctime(const struct tm*);
+clock_t clock(void);
+char*       ctime(const time_t*);
+double      difftime(time_t,time_t);
+struct tm* gmtime(const time_t*);
+struct tm* localtime(const time_t*);
+time_t mktime(struct tm*);
+size_t      strftime(char*,size_t,const char*,const struct tm*);
+time_t time(time_t*);
 
-#ifndef MSVCRT_WTIME_DEFINED
-#define MSVCRT_WTIME_DEFINED
-MSVCRT(wchar_t)* MSVCRT(_wasctime)(const struct MSVCRT(tm)*);
-MSVCRT(size_t)  MSVCRT(wcsftime)(MSVCRT(wchar_t)*,MSVCRT(size_t),const MSVCRT(wchar_t)*,const struct MSVCRT(tm)*);
-MSVCRT(wchar_t)*_wctime(const MSVCRT(time_t)*);
-MSVCRT(wchar_t)*_wstrdate(MSVCRT(wchar_t)*);
-MSVCRT(wchar_t)*_wstrtime(MSVCRT(wchar_t)*);
-#endif /* MSVCRT_WTIME_DEFINED */
+#ifndef _WTIME_DEFINED
+#define _WTIME_DEFINED
+wchar_t* _wasctime(const struct tm*);
+size_t  wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
+wchar_t*_wctime(const time_t*);
+wchar_t*_wstrdate(wchar_t*);
+wchar_t*_wstrtime(wchar_t*);
+#endif /* _WTIME_DEFINED */
 
 #ifdef __cplusplus
 }

@@ -42,13 +42,13 @@ int         _ismbbprint(unsigned int);
 int         _ismbbpunct(unsigned int);
 int         _setmbcp(int);
 
-#ifndef MSVCRT_MBLEADTRAIL_DEFINED
-#define MSVCRT_MBLEADTRAIL_DEFINED
+#ifndef _MBLEADTRAIL_DEFINED
+#define _MBLEADTRAIL_DEFINED
 int         _ismbblead(unsigned int);
 int         _ismbbtrail(unsigned int);
 int         _ismbslead(const unsigned char*,const unsigned char*);
 int         _ismbstrail(const unsigned char*,const unsigned char*);
-#endif /* MSVCRT_MBLEADTRAIL_DEFINED */
+#endif /* _MBLEADTRAIL_DEFINED */
 
 #ifdef __cplusplus
 }

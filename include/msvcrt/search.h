@@ -23,17 +23,9 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int size_t;
+#define _SIZE_T_DEFINED
 #endif
 
 
@@ -45,9 +37,9 @@ void*       _lfind(const void*,const void*,unsigned int*,unsigned int,
                    int (*)(const void*,const void*));
 void*       _lsearch(const void*,void*,unsigned int*,unsigned int,
                      int (*)(const void*,const void*));
-void*       MSVCRT(bsearch)(const void*,const void*,MSVCRT(size_t),MSVCRT(size_t),
+void*       bsearch(const void*,const void*,size_t,size_t,
                             int (*)(const void*,const void*));
-void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),
+void        qsort(void*,size_t,size_t,
                           int (*)(const void*,const void*));
 
 #ifdef __cplusplus
@@ -55,9 +47,7 @@ void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 static inline void* lfind(const void* match, const void* start, unsigned int* array_size, unsigned int elem_size, int (*cf)(const void*,const void*)) { return _lfind(match, start, array_size, elem_size, cf); }
 static inline void* lsearch(const void* match, void* start, unsigned int* array_size, unsigned int elem_size, int (*cf)(const void*,const void*) ) { return _lsearch(match, start, array_size, elem_size, cf); }
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SEARCH_H */

@@ -39,7 +39,6 @@ unsigned short _outpw(unsigned short, unsigned short);
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 static inline char* cgets(char* str) { return _cgets(str); }
 static inline int cputs(const char* str) { return _cputs(str); }
 static inline int getch(void) { return _getch(); }
@@ -61,7 +60,5 @@ extern int cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,
 #define cprintf _cprintf
 #define cscanf _cscanf
 #endif /* __GNUC__ */
-
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_CONIO_H */

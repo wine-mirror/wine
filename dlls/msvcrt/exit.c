@@ -19,12 +19,8 @@
  */
 #include <stdio.h>
 #include "msvcrt.h"
-
-#include "msvcrt/conio.h"
-#include "msvcrt/stdlib.h"
 #include "mtdll.h"
 #include "winuser.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -132,7 +128,7 @@ static void DoMessageBox(LPCSTR lead, LPCSTR message)
 /*********************************************************************
  *		_amsg_exit (MSVCRT.@)
  */
-void MSVCRT__amsg_exit(int errnum)
+void _amsg_exit(int errnum)
 {
   TRACE("(%d)\n", errnum);
   /* FIXME: text for the error number. */
@@ -259,5 +255,5 @@ int MSVCRT_atexit(void (*func)(void))
 void _purecall(void)
 {
   TRACE("(void)\n");
-  MSVCRT__amsg_exit( 25 );
+  _amsg_exit( 25 );
 }

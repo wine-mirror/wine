@@ -23,29 +23,21 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
+#ifndef _TIME_T_DEFINED
+typedef long time_t;
+#define _TIME_T_DEFINED
 #endif
 
-#ifndef MSVCRT_TIME_T_DEFINED
-typedef long MSVCRT(time_t);
-#define MSVCRT_TIME_T_DEFINED
-#endif
-
-#ifndef MSVCRT_TIMEB_DEFINED
-#define MSVCRT_TIMEB_DEFINED
+#ifndef _TIMEB_DEFINED
+#define _TIMEB_DEFINED
 struct _timeb
 {
-    MSVCRT(time_t) time;
+    time_t time;
     unsigned short millitm;
     short          timezone;
     short          dstflag;
 };
-#endif /* MSVCRT_TIMEB_DEFINED */
+#endif /* _TIMEB_DEFINED */
 
 
 #ifdef __cplusplus
@@ -59,10 +51,8 @@ void        _ftime(struct _timeb*);
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 #define timeb _timeb
 
 static inline void ftime(struct _timeb* ptr) { return _ftime(ptr); }
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SYS_TIMEB_H */

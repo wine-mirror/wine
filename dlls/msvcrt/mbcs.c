@@ -24,13 +24,6 @@
  */
 
 #include "msvcrt.h"
-
-#include "msvcrt/mbctype.h"
-#include "msvcrt/mbstring.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/string.h"
-#include "msvcrt/wctype.h"
-
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -53,7 +46,7 @@ static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
     mbch[1] = ch & 0xff;
     n_chars = 2;
   }
-  if (!MultiByteToWideChar(MSVCRT_current_lc_all_cp, 0, mbch, n_chars, &chW, 1))
+  if (!MultiByteToWideChar(msvcrt_current_lc_all_cp, 0, mbch, n_chars, &chW, 1))
   {
     WARN("MultiByteToWideChar failed on %x\n", ch);
     return 0;
@@ -555,7 +548,7 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
  */
 unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    thread_data_t *data = msvcrt_get_thread_data();
     char *ret;
 
     if(MSVCRT___mb_cur_max > 1)
@@ -626,7 +619,7 @@ unsigned int _mbbtombc(unsigned int c)
 int _ismbbkana(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
-  if(MSVCRT_current_lc_all_cp == 932)
+  if(msvcrt_current_lc_all_cp == 932)
   {
     /* Japanese/Katakana, CP 932 */
     return (c >= 0xa1 && c <= 0xdf);
@@ -736,7 +729,7 @@ int _ismbcpunct(unsigned int ch)
 int _ismbchira(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
-  if(MSVCRT_current_lc_all_cp == 932)
+  if(msvcrt_current_lc_all_cp == 932)
   {
     /* Japanese/Hiragana, CP 932 */
     return (c >= 0x829f && c <= 0x82f1);
@@ -750,7 +743,7 @@ int _ismbchira(unsigned int c)
 int _ismbckata(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
-  if(MSVCRT_current_lc_all_cp == 932)
+  if(msvcrt_current_lc_all_cp == 932)
   {
     if(c < 256)
       return _ismbbkana(c);

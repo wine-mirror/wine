@@ -11,14 +11,6 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
 #ifndef NULL
 #ifdef __cplusplus
 #define NULL  0
@@ -27,10 +19,10 @@
 #endif
 #endif
 
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
@@ -40,13 +32,9 @@ typedef unsigned short MSVCRT(wchar_t);
 # endif
 #endif
 
-#ifndef USE_MSVCRT_PREFIX
 #define EXIT_SUCCESS        0
 #define EXIT_FAILURE        -1
 #define RAND_MAX            0x7FFF
-#else
-#define MSVCRT_RAND_MAX     0x7FFF
-#endif /* USE_MSVCRT_PREFIX */
 
 #ifndef _MAX_PATH
 #define _MAX_DRIVE          3
@@ -57,19 +45,19 @@ typedef unsigned short MSVCRT(wchar_t);
 #endif
 
 
-typedef struct MSVCRT(_div_t) {
+typedef struct _div_t {
     int quot;
     int rem;
-} MSVCRT(div_t);
+} div_t;
 
-typedef struct MSVCRT(_ldiv_t) {
+typedef struct _ldiv_t {
     long quot;
     long rem;
-} MSVCRT(ldiv_t);
+} ldiv_t;
 
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int size_t;
+#define _SIZE_T_DEFINED
 #endif
 
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
@@ -101,17 +89,16 @@ extern unsigned int*         __p__winminor();
 
 extern int*                  __p___argc(void);
 extern char***               __p___argv(void);
-extern MSVCRT(wchar_t)***    __p___wargv(void);
+extern wchar_t***    __p___wargv(void);
 extern char***               __p__environ(void);
-extern MSVCRT(wchar_t)***    __p__wenviron(void);
+extern wchar_t***    __p__wenviron(void);
 extern int*                  __p___mb_cur_max(void);
-extern unsigned long*        MSVCRT(__doserrno)(void);
+extern unsigned long*        __doserrno(void);
 extern unsigned int*         __p__fmode(void);
 /* FIXME: We need functions to access these:
  * int _sys_nerr;
  * char** _sys_errlist;
  */
-#ifndef USE_MSVCRT_PREFIX
 #define __argc             (*__p___argc())
 #define __argv             (*__p___argv())
 #define __wargv            (*__p___wargv())
@@ -120,18 +107,13 @@ extern unsigned int*         __p__fmode(void);
 #define __mb_cur_max       (*__p___mb_cur_max())
 #define _doserrno          (*__doserrno())
 #define _fmode             (*_fmode)
-#endif /* USE_MSVCRT_PREFIX */
 
 
-extern int*           MSVCRT(_errno)(void);
-#ifndef USE_MSVCRT_PREFIX
-# define errno        (*_errno())
-#else
-# define MSVCRT_errno (*MSVCRT__errno())
-#endif
+extern int*           _errno(void);
+#define errno        (*_errno())
 
 
-typedef int (*MSVCRT(_onexit_t))(void);
+typedef int (*_onexit_t)(void);
 
 
 __int64     _atoi64(const char*);
@@ -139,7 +121,7 @@ long double _atold(const char*);
 void        _beep(unsigned int,unsigned int);
 char*       _ecvt(double,int,int*,int*);
 char*       _fcvt(double,int,int*,int*);
-char*       _fullpath(char*,const char*,MSVCRT(size_t));
+char*       _fullpath(char*,const char*,size_t);
 char*       _gcvt(double,int,char*);
 char*       _i64toa(__int64,char*,int);
 char*       _itoa(int,char*,int);
@@ -147,8 +129,8 @@ char*       _ltoa(long,char*,int);
 unsigned long _lrotl(unsigned long,int);
 unsigned long _lrotr(unsigned long,int);
 void        _makepath(char*,const char*,const char*,const char*,const char*);
-MSVCRT(size_t) _mbstrlen(const char*);
-MSVCRT(_onexit_t) MSVCRT(_onexit)(MSVCRT(_onexit_t));
+size_t _mbstrlen(const char*);
+_onexit_t _onexit(_onexit_t);
 int         _putenv(const char*);
 unsigned int _rotl(unsigned int,int);
 unsigned int _rotr(unsigned int,int);
@@ -158,75 +140,74 @@ void        _seterrormode(int);
 void        _sleep(unsigned long);
 void        _splitpath(const char*,char*,char*,char*,char*);
 long double _strtold(const char*,char**);
-void        MSVCRT(_swab)(char*,char*,int);
+void        _swab(char*,char*,int);
 char*       _ui64toa(unsigned __int64,char*,int);
 char*       _ultoa(unsigned long,char*,int);
 
-void        MSVCRT(_exit)(int);
-void        MSVCRT(abort)();
-int         MSVCRT(abs)(int);
-int         MSVCRT(atexit)(void (*)(void));
-double      MSVCRT(atof)(const char*);
-int         MSVCRT(atoi)(const char*);
-long        MSVCRT(atol)(const char*);
-void*       MSVCRT(calloc)(MSVCRT(size_t),MSVCRT(size_t));
+void        _exit(int);
+void        abort();
+int         abs(int);
+int         atexit(void (*)(void));
+double      atof(const char*);
+int         atoi(const char*);
+long        atol(const char*);
+void*       calloc(size_t,size_t);
 #ifndef __i386__
-MSVCRT(div_t) MSVCRT(div)(int,int);
-MSVCRT(ldiv_t) MSVCRT(ldiv)(long,long);
+div_t div(int,int);
+ldiv_t ldiv(long,long);
 #endif
-void        MSVCRT(exit)(int);
-void        MSVCRT(free)(void*);
-char*       MSVCRT(getenv)(const char*);
-long        MSVCRT(labs)(long);
-void*       MSVCRT(malloc)(MSVCRT(size_t));
-int         MSVCRT(mblen)(const char*,MSVCRT(size_t));
-void        MSVCRT(perror)(const char*);
-int         MSVCRT(rand)(void);
-void*       MSVCRT(realloc)(void*,MSVCRT(size_t));
-void        MSVCRT(srand)(unsigned int);
-double      MSVCRT(strtod)(const char*,char**);
-long        MSVCRT(strtol)(const char*,char**,int);
-unsigned long MSVCRT(strtoul)(const char*,char**,int);
-int         MSVCRT(system)(const char*);
-void*       MSVCRT(bsearch)(const void*,const void*,MSVCRT(size_t),MSVCRT(size_t),
+void        exit(int);
+void        free(void*);
+char*       getenv(const char*);
+long        labs(long);
+void*       malloc(size_t);
+int         mblen(const char*,size_t);
+void        perror(const char*);
+int         rand(void);
+void*       realloc(void*,size_t);
+void        srand(unsigned int);
+double      strtod(const char*,char**);
+long        strtol(const char*,char**,int);
+unsigned long strtoul(const char*,char**,int);
+int         system(const char*);
+void*       bsearch(const void*,const void*,size_t,size_t,
                             int (*)(const void*,const void*));
-void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),
+void        qsort(void*,size_t,size_t,
                           int (*)(const void*,const void*));
 
-#ifndef MSVCRT_WSTDLIB_DEFINED
-#define MSVCRT_WSTDLIB_DEFINED
-MSVCRT(wchar_t)*_itow(int,MSVCRT(wchar_t)*,int);
-MSVCRT(wchar_t)*_i64tow(__int64,MSVCRT(wchar_t)*,int);
-MSVCRT(wchar_t)*_ltow(long,MSVCRT(wchar_t)*,int);
-MSVCRT(wchar_t)*_ui64tow(unsigned __int64,MSVCRT(wchar_t)*,int);
-MSVCRT(wchar_t)*_ultow(unsigned long,MSVCRT(wchar_t)*,int);
-MSVCRT(wchar_t)*_wfullpath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
-MSVCRT(wchar_t)*_wgetenv(const MSVCRT(wchar_t)*);
-void            _wmakepath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
-void            _wperror(const MSVCRT(wchar_t)*);
-int             _wputenv(const MSVCRT(wchar_t)*);
-void            _wsearchenv(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(wchar_t)*);
-void            _wsplitpath(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)*,MSVCRT(wchar_t)*,MSVCRT(wchar_t)*,MSVCRT(wchar_t)*);
-int             _wsystem(const MSVCRT(wchar_t)*);
-int             _wtoi(const MSVCRT(wchar_t)*);
-__int64         _wtoi64(const MSVCRT(wchar_t)*);
-long            _wtol(const MSVCRT(wchar_t)*);
+#ifndef _WSTDLIB_DEFINED
+#define _WSTDLIB_DEFINED
+wchar_t*_itow(int,wchar_t*,int);
+wchar_t*_i64tow(__int64,wchar_t*,int);
+wchar_t*_ltow(long,wchar_t*,int);
+wchar_t*_ui64tow(unsigned __int64,wchar_t*,int);
+wchar_t*_ultow(unsigned long,wchar_t*,int);
+wchar_t*_wfullpath(wchar_t*,const wchar_t*,size_t);
+wchar_t*_wgetenv(const wchar_t*);
+void            _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
+void            _wperror(const wchar_t*);
+int             _wputenv(const wchar_t*);
+void            _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
+void            _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wchar_t*);
+int             _wsystem(const wchar_t*);
+int             _wtoi(const wchar_t*);
+__int64         _wtoi64(const wchar_t*);
+long            _wtol(const wchar_t*);
 
-MSVCRT(size_t) MSVCRT(mbstowcs)(MSVCRT(wchar_t)*,const char*,MSVCRT(size_t));
-int            MSVCRT(mbtowc)(MSVCRT(wchar_t)*,const char*,MSVCRT(size_t));
-double         MSVCRT(wcstod)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)**);
-long           MSVCRT(wcstol)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)**,int);
-MSVCRT(size_t) MSVCRT(wcstombs)(char*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
-unsigned long  MSVCRT(wcstoul)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)**,int);
-int            MSVCRT(wctomb)(char*,MSVCRT(wchar_t));
-#endif /* MSVCRT_WSTDLIB_DEFINED */
+size_t mbstowcs(wchar_t*,const char*,size_t);
+int            mbtowc(wchar_t*,const char*,size_t);
+double         wcstod(const wchar_t*,wchar_t**);
+long           wcstol(const wchar_t*,wchar_t**,int);
+size_t wcstombs(char*,const wchar_t*,size_t);
+unsigned long  wcstoul(const wchar_t*,wchar_t**,int);
+int            wctomb(char*,wchar_t);
+#endif /* _WSTDLIB_DEFINED */
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 #define environ _environ
 #define onexit_t _onexit_t
 
@@ -262,7 +243,5 @@ static inline ldiv_t __wine_msvcrt_ldiv(long num, long denom)
 #define div(num,denom) __wine_msvcrt_div(num,denom)
 #define ldiv(num,denom) __wine_msvcrt_ldiv(num,denom)
 #endif
-
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_STDLIB_H */

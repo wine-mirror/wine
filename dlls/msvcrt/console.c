@@ -20,14 +20,10 @@
  * Note: init and free don't need MT locking since they are called at DLL
  * (de)attachment time, which is syncronised for us
  */
+
 #include "msvcrt.h"
 #include "wincon.h"
-
-#include "msvcrt/conio.h"
-#include "msvcrt/malloc.h"
-#include "msvcrt/stdio.h"
 #include "mtdll.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);

@@ -22,10 +22,6 @@
  */
 #include "wine/unicode.h"
 #include "msvcrt.h"
-
-#include "msvcrt/stdlib.h"
-
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -97,10 +93,10 @@ int _putenv(const char *str)
 
  ret = !SetEnvironmentVariableA(name, value[0] ? value : NULL);
  /* Update the __p__environ array only when already initialized */
- if (MSVCRT__environ)
-   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
- if (MSVCRT__wenviron)
-   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
+ if (_environ)
+   _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
+ if (_wenviron)
+   _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
  return ret;
 }
 
@@ -129,9 +125,9 @@ int _wputenv(const MSVCRT_wchar_t *str)
 
  ret = !SetEnvironmentVariableW(name, value[0] ? value : NULL);
  /* Update the __p__environ array only when already initialized */
- if (MSVCRT__environ)
-   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
- if (MSVCRT__wenviron)
-   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
+ if (_environ)
+   _environ = msvcrt_SnapshotOfEnvironmentA(_environ);
+ if (_wenviron)
+   _wenviron = msvcrt_SnapshotOfEnvironmentW(_wenviron);
  return ret;
 }

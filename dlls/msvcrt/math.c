@@ -28,10 +28,6 @@
 #endif
 
 #include "msvcrt.h"
-#include "msvcrt/errno.h"
-#include "msvcrt/stdlib.h"
-#include "msvcrt/math.h"
-#include "msvcrt/float.h"
 
 #include "wine/debug.h"
 
@@ -262,50 +258,50 @@ int _fpclass(double num)
   switch (fpclass( num ))
   {
 #ifdef FP_SNAN
-  case FP_SNAN:  return _FPCLASS_SNAN;
+  case FP_SNAN:  return MSVCRT__FPCLASS_SNAN;
 #endif
 #ifdef FP_QNAN
-  case FP_QNAN:  return _FPCLASS_QNAN;
+  case FP_QNAN:  return MSVCRT__FPCLASS_QNAN;
 #endif
 #ifdef FP_NINF
-  case FP_NINF:  return _FPCLASS_NINF;
+  case FP_NINF:  return MSVCRT__FPCLASS_NINF;
 #endif
 #ifdef FP_PINF
-  case FP_PINF:  return _FPCLASS_PINF;
+  case FP_PINF:  return MSVCRT__FPCLASS_PINF;
 #endif
 #ifdef FP_NDENORM
-  case FP_NDENORM: return _FPCLASS_ND;
+  case FP_NDENORM: return MSVCRT__FPCLASS_ND;
 #endif
 #ifdef FP_PDENORM
-  case FP_PDENORM: return _FPCLASS_PD;
+  case FP_PDENORM: return MSVCRT__FPCLASS_PD;
 #endif
 #ifdef FP_NZERO
-  case FP_NZERO: return _FPCLASS_NZ;
+  case FP_NZERO: return MSVCRT__FPCLASS_NZ;
 #endif
 #ifdef FP_PZERO
-  case FP_PZERO: return _FPCLASS_PZ;
+  case FP_PZERO: return MSVCRT__FPCLASS_PZ;
 #endif
 #ifdef FP_NNORM
-  case FP_NNORM: return _FPCLASS_NN;
+  case FP_NNORM: return MSVCRT__FPCLASS_NN;
 #endif
 #ifdef FP_PNORM
-  case FP_PNORM: return _FPCLASS_PN;
+  case FP_PNORM: return MSVCRT__FPCLASS_PN;
 #endif
   }
-  return _FPCLASS_PN;
+  return MSVCRT__FPCLASS_PN;
 #elif defined (fpclassify)
   switch (fpclassify( num ))
   {
-  case FP_NAN: return _FPCLASS_QNAN;
-  case FP_INFINITE: return signbit(num) ? _FPCLASS_NINF : _FPCLASS_PINF;
-  case FP_SUBNORMAL: return signbit(num) ?_FPCLASS_ND : _FPCLASS_PD;
-  case FP_ZERO: return signbit(num) ? _FPCLASS_NZ : _FPCLASS_PZ;
+  case FP_NAN: return MSVCRT__FPCLASS_QNAN;
+  case FP_INFINITE: return signbit(num) ? MSVCRT__FPCLASS_NINF : MSVCRT__FPCLASS_PINF;
+  case FP_SUBNORMAL: return signbit(num) ?MSVCRT__FPCLASS_ND : MSVCRT__FPCLASS_PD;
+  case FP_ZERO: return signbit(num) ? MSVCRT__FPCLASS_NZ : MSVCRT__FPCLASS_PZ;
   }
-  return signbit(num) ? _FPCLASS_NN : _FPCLASS_PN;
+  return signbit(num) ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
 #else
   if (!finite(num))
-    return _FPCLASS_QNAN;
-  return num == 0.0 ? _FPCLASS_PZ : (num < 0 ? _FPCLASS_NN : _FPCLASS_PN);
+    return MSVCRT__FPCLASS_QNAN;
+  return num == 0.0 ? MSVCRT__FPCLASS_PZ : (num < 0 ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN);
 #endif
 }
 
@@ -400,12 +396,12 @@ unsigned int _statusfp(void)
   unsigned int fpword;
 
   __asm__ __volatile__( "fstsw %0" : "=m" (fpword) : );
-  if (fpword & 0x1)  retVal |= _SW_INVALID;
-  if (fpword & 0x2)  retVal |= _SW_DENORMAL;
-  if (fpword & 0x4)  retVal |= _SW_ZERODIVIDE;
-  if (fpword & 0x8)  retVal |= _SW_OVERFLOW;
-  if (fpword & 0x10) retVal |= _SW_UNDERFLOW;
-  if (fpword & 0x20) retVal |= _SW_INEXACT;
+  if (fpword & 0x1)  retVal |= MSVCRT__SW_INVALID;
+  if (fpword & 0x2)  retVal |= MSVCRT__SW_DENORMAL;
+  if (fpword & 0x4)  retVal |= MSVCRT__SW_ZERODIVIDE;
+  if (fpword & 0x8)  retVal |= MSVCRT__SW_OVERFLOW;
+  if (fpword & 0x10) retVal |= MSVCRT__SW_UNDERFLOW;
+  if (fpword & 0x20) retVal |= MSVCRT__SW_INEXACT;
 #else
   FIXME(":Not implemented!\n");
 #endif
@@ -482,46 +478,46 @@ unsigned int _control87(unsigned int newval, unsigned int mask)
   TRACE("Control word before : %08x\n", fpword);
 
   /* Convert into mask constants */
-  if (fpword & 0x1)  flags |= _EM_INVALID;
-  if (fpword & 0x2)  flags |= _EM_DENORMAL;
-  if (fpword & 0x4)  flags |= _EM_ZERODIVIDE;
-  if (fpword & 0x8)  flags |= _EM_OVERFLOW;
-  if (fpword & 0x10) flags |= _EM_UNDERFLOW;
-  if (fpword & 0x20) flags |= _EM_INEXACT;
+  if (fpword & 0x1)  flags |= MSVCRT__EM_INVALID;
+  if (fpword & 0x2)  flags |= MSVCRT__EM_DENORMAL;
+  if (fpword & 0x4)  flags |= MSVCRT__EM_ZERODIVIDE;
+  if (fpword & 0x8)  flags |= MSVCRT__EM_OVERFLOW;
+  if (fpword & 0x10) flags |= MSVCRT__EM_UNDERFLOW;
+  if (fpword & 0x20) flags |= MSVCRT__EM_INEXACT;
   switch(fpword & 0xC00) {
-  case 0xC00: flags |= _RC_UP|_RC_DOWN; break;
-  case 0x800: flags |= _RC_UP; break;
-  case 0x400: flags |= _RC_DOWN; break;
+  case 0xC00: flags |= MSVCRT__RC_UP|MSVCRT__RC_DOWN; break;
+  case 0x800: flags |= MSVCRT__RC_UP; break;
+  case 0x400: flags |= MSVCRT__RC_DOWN; break;
   }
   switch(fpword & 0x300) {
-  case 0x0:   flags |= _PC_24; break;
-  case 0x200: flags |= _PC_53; break;
-  case 0x300: flags |= _PC_64; break;
+  case 0x0:   flags |= MSVCRT__PC_24; break;
+  case 0x200: flags |= MSVCRT__PC_53; break;
+  case 0x300: flags |= MSVCRT__PC_64; break;
   }
-  if (fpword & 0x1000) flags |= _IC_AFFINE;
+  if (fpword & 0x1000) flags |= MSVCRT__IC_AFFINE;
 
   /* Mask with parameters */
   flags = (flags & ~mask) | (newval & mask);
 
   /* Convert (masked) value back to fp word */
   fpword = 0;
-  if (flags & _EM_INVALID)    fpword |= 0x1;
-  if (flags & _EM_DENORMAL)   fpword |= 0x2;
-  if (flags & _EM_ZERODIVIDE) fpword |= 0x4;
-  if (flags & _EM_OVERFLOW)   fpword |= 0x8;
-  if (flags & _EM_UNDERFLOW)  fpword |= 0x10;
-  if (flags & _EM_INEXACT)    fpword |= 0x20;
-  switch(flags & (_RC_UP | _RC_DOWN)) {
-  case _RC_UP|_RC_DOWN: fpword |= 0xC00; break;
-  case _RC_UP:          fpword |= 0x800; break;
-  case _RC_DOWN:        fpword |= 0x400; break;
+  if (flags & MSVCRT__EM_INVALID)    fpword |= 0x1;
+  if (flags & MSVCRT__EM_DENORMAL)   fpword |= 0x2;
+  if (flags & MSVCRT__EM_ZERODIVIDE) fpword |= 0x4;
+  if (flags & MSVCRT__EM_OVERFLOW)   fpword |= 0x8;
+  if (flags & MSVCRT__EM_UNDERFLOW)  fpword |= 0x10;
+  if (flags & MSVCRT__EM_INEXACT)    fpword |= 0x20;
+  switch(flags & (MSVCRT__RC_UP | MSVCRT__RC_DOWN)) {
+  case MSVCRT__RC_UP|MSVCRT__RC_DOWN: fpword |= 0xC00; break;
+  case MSVCRT__RC_UP:          fpword |= 0x800; break;
+  case MSVCRT__RC_DOWN:        fpword |= 0x400; break;
   }
-  switch (flags & (_PC_24 | _PC_53)) {
-  case _PC_64: fpword |= 0x300; break;
-  case _PC_53: fpword |= 0x200; break;
-  case _PC_24: fpword |= 0x0; break;
+  switch (flags & (MSVCRT__PC_24 | MSVCRT__PC_53)) {
+  case MSVCRT__PC_64: fpword |= 0x300; break;
+  case MSVCRT__PC_53: fpword |= 0x200; break;
+  case MSVCRT__PC_24: fpword |= 0x0; break;
   }
-  if (flags & _IC_AFFINE) fpword |= 0x1000;
+  if (flags & MSVCRT__IC_AFFINE) fpword |= 0x1000;
 
   TRACE("Control word after  : %08x\n", fpword);
 
@@ -541,7 +537,7 @@ unsigned int _control87(unsigned int newval, unsigned int mask)
 unsigned int _controlfp(unsigned int newval, unsigned int mask)
 {
 #ifdef __i386__
-  return _control87( newval, mask & ~_EM_DENORMAL );
+  return _control87( newval, mask & ~MSVCRT__EM_DENORMAL );
 #else
   FIXME(":Not Implemented!\n");
   return 0;
@@ -598,7 +594,7 @@ double _y0(double num)
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y0(num);
-  if (_fpclass(retval) == _FPCLASS_NINF)
+  if (_fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
@@ -614,7 +610,7 @@ double _y1(double num)
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y1(num);
-  if (_fpclass(retval) == _FPCLASS_NINF)
+  if (_fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
@@ -630,7 +626,7 @@ double _yn(int order, double num)
   double retval;
   if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = yn(order,num);
-  if (_fpclass(retval) == _FPCLASS_NINF)
+  if (_fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
     *MSVCRT__errno() = MSVCRT_EDOM;
     retval = sqrt(-1);
@@ -654,7 +650,7 @@ double _nextafter(double num, double next)
  */
 char *_ecvt( double number, int ndigits, int *decpt, int *sign )
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    thread_data_t *data = msvcrt_get_thread_data();
     char *dec;
 
     if (!data->efcvt_buffer)
@@ -672,7 +668,7 @@ char *_ecvt( double number, int ndigits, int *decpt, int *sign )
  */
 char *_fcvt( double number, int ndigits, int *decpt, int *sign )
 {
-    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    thread_data_t *data = msvcrt_get_thread_data();
     char *dec;
 
     if (!data->efcvt_buffer)

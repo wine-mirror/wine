@@ -23,31 +23,13 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT_LC_ALL          0
-#define MSVCRT_LC_COLLATE      1
-#define MSVCRT_LC_CTYPE        2
-#define MSVCRT_LC_MONETARY     3
-#define MSVCRT_LC_NUMERIC      4
-#define MSVCRT_LC_TIME         5
-#define MSVCRT_LC_MIN          MSVCRT_LC_ALL
-#define MSVCRT_LC_MAX          MSVCRT_LC_TIME
-#else
 #define LC_ALL                 0
 #define LC_COLLATE             1
 #define LC_CTYPE               2
@@ -56,11 +38,10 @@ typedef unsigned short MSVCRT(wchar_t);
 #define LC_TIME                5
 #define LC_MIN                 LC_ALL
 #define LC_MAX                 LC_TIME
-#endif /* USE_MSVCRT_PREFIX */
 
-#ifndef MSVCRT_LCONV_DEFINED
-#define MSVCRT_LCONV_DEFINED
-struct MSVCRT(lconv)
+#ifndef _LCONV_DEFINED
+#define _LCONV_DEFINED
+struct lconv
 {
     char* decimal_point;
     char* thousands_sep;
@@ -81,20 +62,20 @@ struct MSVCRT(lconv)
     char p_sign_posn;
     char n_sign_posn;
 };
-#endif /* MSVCRT_LCONV_DEFINED */
+#endif /* _LCONV_DEFINED */
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-char*       MSVCRT(setlocale)(int,const char*);
-struct MSVCRT(lconv)* MSVCRT(localeconv)(void);
+char*       setlocale(int,const char*);
+struct lconv* localeconv(void);
 
-#ifndef MSVCRT_WLOCALE_DEFINED
-#define MSVCRT_WLOCALE_DEFINED
-MSVCRT(wchar_t)* _wsetlocale(int,const MSVCRT(wchar_t)*);
-#endif /* MSVCRT_WLOCALE_DEFINED */
+#ifndef _WLOCALE_DEFINED
+#define _WLOCALE_DEFINED
+wchar_t* _wsetlocale(int,const wchar_t*);
+#endif /* _WLOCALE_DEFINED */
 
 #ifdef __cplusplus
 }

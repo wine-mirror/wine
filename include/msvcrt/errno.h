@@ -22,57 +22,6 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifdef USE_MSVCRT_PREFIX
-
-#  define MSVCRT_EPERM   1
-#  define MSVCRT_ENOENT  2
-#  define MSVCRT_ESRCH   3
-#  define MSVCRT_EINTR   4
-#  define MSVCRT_EIO     5
-#  define MSVCRT_ENXIO   6
-#  define MSVCRT_E2BIG   7
-#  define MSVCRT_ENOEXEC 8
-#  define MSVCRT_EBADF   9
-#  define MSVCRT_ECHILD  10
-#  define MSVCRT_EAGAIN  11
-#  define MSVCRT_ENOMEM  12
-#  define MSVCRT_EACCES  13
-#  define MSVCRT_EFAULT  14
-#  define MSVCRT_EBUSY   16
-#  define MSVCRT_EEXIST  17
-#  define MSVCRT_EXDEV   18
-#  define MSVCRT_ENODEV  19
-#  define MSVCRT_ENOTDIR 20
-#  define MSVCRT_EISDIR  21
-#  define MSVCRT_EINVAL  22
-#  define MSVCRT_ENFILE  23
-#  define MSVCRT_EMFILE  24
-#  define MSVCRT_ENOTTY  25
-#  define MSVCRT_EFBIG   27
-#  define MSVCRT_ENOSPC  28
-#  define MSVCRT_ESPIPE  29
-#  define MSVCRT_EROFS   30
-#  define MSVCRT_EMLINK  31
-#  define MSVCRT_EPIPE   32
-#  define MSVCRT_EDOM    33
-#  define MSVCRT_ERANGE  34
-#  define MSVCRT_EDEADLK 36
-#  define MSVCRT_EDEADLOCK MSVCRT_EDEADLK
-#  define MSVCRT_ENAMETOOLONG 38
-#  define MSVCRT_ENOLCK  39
-#  define MSVCRT_ENOSYS  40
-#  define MSVCRT_ENOTEMPTY 41
-
-#else /* USE_MSVCRT_PREFIX */
-
 #  define EPERM   1
 #  define ENOENT  2
 #  define ESRCH   3
@@ -112,22 +61,16 @@
 #  define ENOSYS  40
 #  define ENOTEMPTY 41
 
-#endif /* USE_MSVCRT_PREFIX */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int* MSVCRT(_errno)(void);
+extern int* _errno(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#ifndef USE_MSVCRT_PREFIX
-# define errno        (*_errno())
-#else
-# define MSVCRT_errno (*MSVCRT__errno())
-#endif
+#define errno        (*_errno())
 
 #endif  /* __WINE_ERRNO_H */

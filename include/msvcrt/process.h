@@ -11,18 +11,10 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
@@ -80,40 +72,39 @@ int         _spawnve(int,const char*,const char* const *,const char* const *);
 int         _spawnvp(int,const char*,const char* const *);
 int         _spawnvpe(int,const char*,const char* const *,const char* const *);
 
-void        MSVCRT(_c_exit)(void);
-void        MSVCRT(_cexit)(void);
-void        MSVCRT(_exit)(int);
-void        MSVCRT(abort)(void);
-void        MSVCRT(exit)(int);
-int         MSVCRT(system)(const char*);
+void        _c_exit(void);
+void        _cexit(void);
+void        _exit(int);
+void        abort(void);
+void        exit(int);
+int         system(const char*);
 
-#ifndef MSVCRT_WPROCESS_DEFINED
-#define MSVCRT_WPROCESS_DEFINED
-int         _wexecl(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wexecle(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wexeclp(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wexeclpe(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wexecv(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
-int         _wexecve(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
-int         _wexecvp(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
-int         _wexecvpe(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
-int         _wspawnl(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wspawnle(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wspawnlp(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wspawnlpe(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
-int         _wspawnv(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
-int         _wspawnve(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
-int         _wspawnvp(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
-int         _wspawnvpe(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
-int         _wsystem(const MSVCRT(wchar_t)*);
-#endif /* MSVCRT_WPROCESS_DEFINED */
+#ifndef _WPROCESS_DEFINED
+#define _WPROCESS_DEFINED
+int         _wexecl(const wchar_t*,const wchar_t*,...);
+int         _wexecle(const wchar_t*,const wchar_t*,...);
+int         _wexeclp(const wchar_t*,const wchar_t*,...);
+int         _wexeclpe(const wchar_t*,const wchar_t*,...);
+int         _wexecv(const wchar_t*,const wchar_t* const *);
+int         _wexecve(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
+int         _wexecvp(const wchar_t*,const wchar_t* const *);
+int         _wexecvpe(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
+int         _wspawnl(int,const wchar_t*,const wchar_t*,...);
+int         _wspawnle(int,const wchar_t*,const wchar_t*,...);
+int         _wspawnlp(int,const wchar_t*,const wchar_t*,...);
+int         _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
+int         _wspawnv(int,const wchar_t*,const wchar_t* const *);
+int         _wspawnve(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
+int         _wspawnvp(int,const wchar_t*,const wchar_t* const *);
+int         _wspawnvpe(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
+int         _wsystem(const wchar_t*);
+#endif /* _WPROCESS_DEFINED */
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 #define P_WAIT          _P_WAIT
 #define P_NOWAIT        _P_NOWAIT
 #define P_OVERLAY       _P_OVERLAY
@@ -153,7 +144,5 @@ extern int spawnlpe(int,const char*,const char*,...) __attribute__((alias("_spaw
 #define spawnlp  _spawnlp
 #define spawnlpe _spawnlpe
 #endif  /* __GNUC__ */
-
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_PROCESS_H */

@@ -23,34 +23,26 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-#ifndef MSVCRT_WCHAR_T_DEFINED
-#define MSVCRT_WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED
 #ifndef __cplusplus
-typedef unsigned short MSVCRT(wchar_t);
+typedef unsigned short wchar_t;
 #endif
 #endif
 
-#ifndef MSVCRT_TIME_T_DEFINED
-typedef long MSVCRT(time_t);
-#define MSVCRT_TIME_T_DEFINED
+#ifndef _TIME_T_DEFINED
+typedef long time_t;
+#define _TIME_T_DEFINED
 #endif
 
-#ifndef MSVCRT_UTIMBUF_DEFINED
-#define MSVCRT_UTIMBUF_DEFINED
+#ifndef _UTIMBUF_DEFINED
+#define _UTIMBUF_DEFINED
 struct _utimbuf
 {
-    MSVCRT(time_t) actime;
-    MSVCRT(time_t) modtime;
+    time_t actime;
+    time_t modtime;
 };
-#endif /* MSVCRT_UTIMBUF_DEFINED */
+#endif /* _UTIMBUF_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,17 +51,15 @@ extern "C" {
 int         _futime(int,struct _utimbuf*);
 int         _utime(const char*,struct _utimbuf*);
 
-int         _wutime(const MSVCRT(wchar_t)*,struct _utimbuf*);
+int         _wutime(const wchar_t*,struct _utimbuf*);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#ifndef USE_MSVCRT_PREFIX
 #define utimbuf _utimbuf
 
 static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_SYS_UTIME_H */

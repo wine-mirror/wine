@@ -269,7 +269,7 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
     void *addr, *object = (void *)rec->ExceptionInformation[1];
     struct catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
-    MSVCRT_thread_data *thread_data = msvcrt_get_thread_data();
+    thread_data_t *thread_data = msvcrt_get_thread_data();
 
     for (i = 0; i < descr->tryblock_count; i++)
     {

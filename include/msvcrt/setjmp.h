@@ -23,15 +23,6 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
-
 #ifdef __i386__
 
 typedef struct __JUMP_BUFFER
@@ -52,30 +43,22 @@ typedef struct __JUMP_BUFFER
 
 #endif /* __i386__ */
 
-#ifndef USE_MSVCRT_PREFIX
 #define _JBLEN                     16
 #define _JBTYPE                    int
 typedef _JBTYPE                    jmp_buf[_JBLEN];
-#else
-#define MSVCRT__JBLEN              16
-#define MSVCRT__JBTYPE             int
-typedef MSVCRT__JBTYPE             MSVCRT_jmp_buf[MSVCRT__JBLEN];
-#endif
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int         MSVCRT(_setjmp)(MSVCRT(jmp_buf));
-int         MSVCRT(longjmp)(MSVCRT(jmp_buf),int);
+int         _setjmp(jmp_buf);
+int         longjmp(jmp_buf,int);
 
 #ifdef __cplusplus
 }
 #endif
 
-#ifndef USE_MSVCRT_PREFIX
 #define setjmp _setjmp
-#endif
 
 #endif /* __WINE_SETJMP_H */

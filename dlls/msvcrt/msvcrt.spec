@@ -137,8 +137,8 @@
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long) MSVCRT___toascii
-@ cdecl __unDName(ptr str long ptr ptr long) MSVCRT___unDName
-@ cdecl __unDNameEx(ptr str long ptr ptr ptr long) MSVCRT___unDNameEx
+@ cdecl __unDName(ptr str long ptr ptr long)
+@ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
@@ -161,7 +161,7 @@
 @ cdecl _adj_fptan()
 @ cdecl _adjust_fdiv()
 @ extern _aexit_rtn
-@ cdecl _amsg_exit(long) MSVCRT__amsg_exit
+@ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl #(ptr str)
 @ cdecl -ret64 _atoi64(str) ntdll._atoi64
@@ -200,7 +200,7 @@
 @ cdecl _ecvt(double long ptr ptr)
 @ cdecl _endthread ()
 @ cdecl _endthreadex(long)
-@ extern _environ MSVCRT__environ
+@ extern _environ
 @ cdecl _eof(long)
 @ cdecl _errno() MSVCRT__errno
 @ cdecl _except_handler2(ptr ptr ptr ptr)
@@ -504,7 +504,7 @@
 @ cdecl _wcsset(wstr long)
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
 @ stub _wctime #(ptr)
-@ extern _wenviron MSVCRT__wenviron
+@ extern _wenviron
 @ stub _wexecl #(wstr wstr) varargs
 @ stub _wexecle #(wstr wstr) varargs
 @ stub _wexeclp #(wstr wstr) varargs

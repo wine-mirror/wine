@@ -23,22 +23,14 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int size_t;
+#define _SIZE_T_DEFINED
 #endif
 
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
-#endif
-
-#ifndef MSVCRT_NLSCMP_DEFINED
+#ifndef _NLSCMP_DEFINED
 #define _NLSCMPERROR               ((unsigned int)0x7fffffff)
-#define MSVCRT_NLSCMP_DEFINED
+#define _NLSCMP_DEFINED
 #endif
 
 #ifdef __cplusplus
@@ -67,64 +59,64 @@ int         _mbbtype(unsigned char,int);
 void        _mbccpy(unsigned char*,const unsigned char*);
 unsigned int _mbcjistojms(unsigned int);
 unsigned int _mbcjmstojis(unsigned int);
-MSVCRT(size_t) _mbclen(const unsigned char*);
+size_t _mbclen(const unsigned char*);
 unsigned int _mbctohira(unsigned int);
 unsigned int _mbctokata(unsigned int);
 unsigned int _mbctolower(unsigned int);
 unsigned int _mbctombb(unsigned int);
 unsigned int _mbctoupper(unsigned int);
-int         _mbsbtype(const unsigned char*,MSVCRT(size_t));
+int         _mbsbtype(const unsigned char*,size_t);
 unsigned char* _mbscat(unsigned char*,const unsigned char*);
 unsigned char* _mbschr(const unsigned char*,unsigned int);
 int         _mbscmp(const unsigned char*,const unsigned char*);
 int         _mbscoll(const unsigned char*,const unsigned char*);
 unsigned char* _mbscpy(unsigned char*,const unsigned char*);
-MSVCRT(size_t) _mbscspn(const unsigned char*,const unsigned char*);
+size_t _mbscspn(const unsigned char*,const unsigned char*);
 unsigned char* _mbsdec(const unsigned char*,const unsigned char*);
 unsigned char* _mbsdup(const unsigned char*);
 int         _mbsicmp(const unsigned char*,const unsigned char*);
 int         _mbsicoll(const unsigned char*,const unsigned char*);
 unsigned char* _mbsinc(const unsigned char*);
-MSVCRT(size_t) _mbslen(const unsigned char*);
+size_t _mbslen(const unsigned char*);
 unsigned char* _mbslwr(unsigned char*);
-unsigned char* _mbsnbcat(unsigned char*,const unsigned char*,MSVCRT(size_t));
-int         _mbsnbcmp(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-int         _mbsnbcoll(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-MSVCRT(size_t) _mbsnbcnt(const unsigned char*,MSVCRT(size_t));
+unsigned char* _mbsnbcat(unsigned char*,const unsigned char*,size_t);
+int         _mbsnbcmp(const unsigned char*,const unsigned char*,size_t);
+int         _mbsnbcoll(const unsigned char*,const unsigned char*,size_t);
+size_t _mbsnbcnt(const unsigned char*,size_t);
 unsigned char* _mbsnbcpy(unsigned char*,const unsigned char*
-,MSVCRT(size_t));
-int         _mbsnbicmp(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-int         _mbsnbicoll(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-unsigned char* _mbsnbset(unsigned char*,unsigned int,MSVCRT(size_t))
+,size_t);
+int         _mbsnbicmp(const unsigned char*,const unsigned char*,size_t);
+int         _mbsnbicoll(const unsigned char*,const unsigned char*,size_t);
+unsigned char* _mbsnbset(unsigned char*,unsigned int,size_t)
 ;
 unsigned char* _mbsncat(unsigned char*,const unsigned char*,
- MSVCRT(size_t));
-MSVCRT(size_t) _mbsnccnt(const unsigned char*,MSVCRT(size_t));
-int         _mbsncmp(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-int         _mbsncoll(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-unsigned char* _mbsncpy(unsigned char*,const unsigned char*,MSVCRT(size_t));
+ size_t);
+size_t _mbsnccnt(const unsigned char*,size_t);
+int         _mbsncmp(const unsigned char*,const unsigned char*,size_t);
+int         _mbsncoll(const unsigned char*,const unsigned char*,size_t);
+unsigned char* _mbsncpy(unsigned char*,const unsigned char*,size_t);
 unsigned int _mbsnextc (const unsigned char*);
-int         _mbsnicmp(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-int         _mbsnicoll(const unsigned char*,const unsigned char*,MSVCRT(size_t));
-unsigned char* _mbsninc(const unsigned char*,MSVCRT(size_t));
-unsigned char* _mbsnset(unsigned char*,unsigned int,MSVCRT(size_t));
+int         _mbsnicmp(const unsigned char*,const unsigned char*,size_t);
+int         _mbsnicoll(const unsigned char*,const unsigned char*,size_t);
+unsigned char* _mbsninc(const unsigned char*,size_t);
+unsigned char* _mbsnset(unsigned char*,unsigned int,size_t);
 unsigned char* _mbspbrk(const unsigned char*,const unsigned char*);
 unsigned char* _mbsrchr(const unsigned char*,unsigned int);
 unsigned char* _mbsrev(unsigned char*);
 unsigned char* _mbsset(unsigned char*,unsigned int);
-MSVCRT(size_t) _mbsspn(const unsigned char*,const unsigned char*);
+size_t _mbsspn(const unsigned char*,const unsigned char*);
 unsigned char* _mbsspnp(const unsigned char*,const unsigned char*);
 unsigned char* _mbsstr(const unsigned char*,const unsigned char*);
 unsigned char* _mbstok(unsigned char*,const unsigned char*);
 unsigned char* _mbsupr(unsigned char*);
 
-#ifndef MSVCRT_MBLEADTRAIL_DEFINED
-#define MSVCRT_MBLEADTRAIL_DEFINED
+#ifndef _MBLEADTRAIL_DEFINED
+#define _MBLEADTRAIL_DEFINED
 int         _ismbblead(unsigned int);
 int         _ismbbtrail(unsigned int);
 int         _ismbslead(const unsigned char*,const unsigned char*);
 int         _ismbstrail(const unsigned char*,const unsigned char*);
-#endif /* MSVCRT_MBLEADTRAIL_DEFINED */
+#endif /* _MBLEADTRAIL_DEFINED */
 
 #ifdef __cplusplus
 }

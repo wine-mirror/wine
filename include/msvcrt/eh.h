@@ -23,16 +23,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#if !defined(__cplusplus) && !defined(USE_MSVCRT_PREFIX)
+#if !defined(__cplusplus) && !defined(__WINE_MSVCRT_TEST)
 #error "eh.h is meant only for C++ applications"
-#endif
-
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
 #endif
 
 struct _EXCEPTION_POINTERS;
@@ -43,11 +35,11 @@ typedef void (*unexpected_handler)();
 typedef void (*unexpected_function)();
 typedef void (*_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
 
-terminate_function MSVCRT(set_terminate)(terminate_function func);
-unexpected_function MSVCRT(set_unexpected)(unexpected_function func);
-_se_translator_function MSVCRT(_set_se_translator)(_se_translator_function func);
+terminate_function set_terminate(terminate_function func);
+unexpected_function set_unexpected(unexpected_function func);
+_se_translator_function _set_se_translator(_se_translator_function func);
 
-void        MSVCRT(terminate)();
-void        MSVCRT(unexpected)();
+void        terminate();
+void        unexpected();
 
 #endif /* __WINE_EH_H */

@@ -29,7 +29,6 @@
 #define _O_RAW         _O_BINARY
 
 
-#ifndef USE_MSVCRT_PREFIX
 #define O_RDONLY    _O_RDONLY
 #define O_WRONLY    _O_WRONLY
 #define O_RDWR      _O_RDWR
@@ -45,6 +44,5 @@
 #define O_TEXT      _O_TEXT
 #define O_BINARY    _O_BINARY
 #define O_RAW       _O_BINARY
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_FCNTL_H */

@@ -30,7 +30,6 @@
 #include "winuser.h"
 
 #include "msvcrt.h"
-#include "msvcrt/locale.h"
 #include "mtdll.h"
 
 #include "wine/debug.h"
@@ -44,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define MAX_LOCALE_LENGTH 256
 char MSVCRT_current_lc_all[MAX_LOCALE_LENGTH];
 LCID MSVCRT_current_lc_all_lcid;
-int MSVCRT_current_lc_all_cp;
+int msvcrt_current_lc_all_cp;
 
 /* MT */
 #define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);
@@ -275,7 +274,7 @@ static void msvcrt_set_ctype(unsigned int codepage, LCID lcid)
     unsigned char *traverse = (unsigned char *)cp.LeadByte;
 
     memset(MSVCRT_current_ctype, 0, sizeof(MSVCRT__ctype));
-    MSVCRT_current_lc_all_cp = codepage;
+    msvcrt_current_lc_all_cp = codepage;
 
     /* Switch ctype macros to MBCS if needed */
     MSVCRT___mb_cur_max = cp.MaxCharSize;
@@ -342,7 +341,7 @@ char* MSVCRT_setlocale(int category, const char* locale)
   {
     MSVCRT_current_lc_all[0] = 'C';
     MSVCRT_current_lc_all[1] = '\0';
-    MSVCRT_current_lc_all_cp = GetACP();
+    msvcrt_current_lc_all_cp = GetACP();
 
     switch (category) {
     case MSVCRT_LC_ALL:
@@ -520,10 +519,10 @@ const char* _Strftime(char *out, unsigned int len, const char *fmt,
 void _setmbcp(int cp)
 {
   LOCK_LOCALE;
-  if (MSVCRT_current_lc_all_cp != cp)
+  if (msvcrt_current_lc_all_cp != cp)
   {
     /* FIXME: set ctype behaviour for this cp */
-    MSVCRT_current_lc_all_cp = cp;
+    msvcrt_current_lc_all_cp = cp;
   }
   UNLOCK_LOCALE;
 }
@@ -533,7 +532,7 @@ void _setmbcp(int cp)
  */
 int _getmbcp(void)
 {
-  return MSVCRT_current_lc_all_cp;
+  return msvcrt_current_lc_all_cp;
 }
 
 /*********************************************************************

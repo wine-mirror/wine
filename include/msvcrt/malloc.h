@@ -23,14 +23,6 @@
 #define __WINE_USE_MSVCRT
 #endif
 
-#ifndef MSVCRT
-# ifdef USE_MSVCRT_PREFIX
-#  define MSVCRT(x)    MSVCRT_##x
-# else
-#  define MSVCRT(x)    x
-# endif
-#endif
-
 /* heap function constants */
 #define _HEAPEMPTY    -1
 #define _HEAPOK       -2
@@ -43,48 +35,46 @@
 #define _USEDENTRY     1
 
 
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int size_t;
+#define _SIZE_T_DEFINED
 #endif
 
-#ifndef MSVCRT_HEAPINFO_DEFINED
-#define MSVCRT_HEAPINFO_DEFINED
+#ifndef _HEAPINFO_DEFINED
+#define _HEAPINFO_DEFINED
 typedef struct _heapinfo
 {
   int*           _pentry;
-  MSVCRT(size_t) _size;
+  size_t _size;
   int            _useflag;
 } _HEAPINFO;
-#endif /* MSVCRT_HEAPINFO_DEFINED */
+#endif /* _HEAPINFO_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void*       _expand(void*,MSVCRT(size_t));
-int         _heapadd(void*,MSVCRT(size_t));
+void*       _expand(void*,size_t);
+int         _heapadd(void*,size_t);
 int         _heapchk(void);
 int         _heapmin(void);
 int         _heapset(unsigned int);
-MSVCRT(size_t) _heapused(MSVCRT(size_t)*,MSVCRT(size_t)*);
+size_t _heapused(size_t*,size_t*);
 int         _heapwalk(_HEAPINFO*);
-MSVCRT(size_t) _msize(void*);
+size_t _msize(void*);
 
-void*       MSVCRT(calloc)(MSVCRT(size_t),MSVCRT(size_t));
-void        MSVCRT(free)(void*);
-void*       MSVCRT(malloc)(MSVCRT(size_t));
-void*       MSVCRT(realloc)(void*,MSVCRT(size_t));
+void*       calloc(size_t,size_t);
+void        free(void*);
+void*       malloc(size_t);
+void*       realloc(void*,size_t);
 
 #ifdef __cplusplus
 }
 #endif
 
-#ifndef USE_MSVCRT_PREFIX
 # ifdef __GNUC__
 # define _alloca(x) __builtin_alloca((x))
 # define alloca(x) __builtin_alloca((x))
 # endif
-#endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_MALLOC_H */

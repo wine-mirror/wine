@@ -19,15 +19,12 @@
  */
 #include "msvcrt.h"
 
-#include "msvcrt/locale.h"
-#include "msvcrt/stdio.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* Index to TLS */
-DWORD MSVCRT_tls_index;
+DWORD msvcrt_tls_index;
 
 static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
@@ -38,12 +35,12 @@ const char* msvcrt_get_reason(DWORD reason) WINE_UNUSED;
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-  MSVCRT_thread_data *tls;
+  thread_data_t *tls;
 
   TRACE("(%p, %s, %p) pid(%lx), tid(%lx), tls(%ld)\n",
         hinstDLL, msvcrt_get_reason(fdwReason), lpvReserved,
         GetCurrentProcessId(), GetCurrentThreadId(),
-        (long)MSVCRT_tls_index);
+        (long)msvcrt_tls_index);
 
   switch (fdwReason)
   {
@@ -70,7 +67,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     break;
   case DLL_THREAD_DETACH:
     /* Free TLS */
-    tls = TlsGetValue(MSVCRT_tls_index);
+    tls = TlsGetValue(msvcrt_tls_index);
     if (tls) HeapFree(GetProcessHeap(), 0, tls);
     TRACE("finished thread free\n");
     break;
@@ -80,9 +77,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static inline BOOL msvcrt_init_tls(void)
 {
-  MSVCRT_tls_index = TlsAlloc();
+  msvcrt_tls_index = TlsAlloc();
 
-  if (MSVCRT_tls_index == TLS_OUT_OF_INDEXES)
+  if (msvcrt_tls_index == TLS_OUT_OF_INDEXES)
   {
     ERR("TlsAlloc() failed!\n");
     return FALSE;
@@ -92,7 +89,7 @@ static inline BOOL msvcrt_init_tls(void)
 
 static inline BOOL msvcrt_free_tls(void)
 {
-  if (!TlsFree(MSVCRT_tls_index))
+  if (!TlsFree(msvcrt_tls_index))
   {
     ERR("TlsFree() failed!\n");
     return FALSE;
@@ -140,11 +137,9 @@ void MSVCRT_I10_OUTPUT(void)
  *  Success: A string pointing to the unmangled name, allocated with memget.
  *  Failure: NULL.
  */
-char* MSVCRT___unDNameEx(char * OutStr, const char* mangled, int OutStrLen,
-                       MSVCRT_malloc_func memget,
-                       MSVCRT_free_func memfree,
-                       void * unknown,
-                       unsigned short int flags)
+char* __unDNameEx(char * OutStr, const char* mangled, int OutStrLen,
+                  malloc_func_t memget, free_func_t memfree,
+                  void * unknown, unsigned short int flags)
 {
   FIXME("(%p,%s,%d,%p,%p,%p,%x) stub!\n",
           OutStr, mangled, OutStrLen, memget, memfree, unknown, flags);
@@ -177,11 +172,9 @@ char* MSVCRT___unDNameEx(char * OutStr, const char* mangled, int OutStrLen,
 /*********************************************************************
  *		__unDName (MSVCRT.@)
  */
-char* MSVCRT___unDName(char * OutStr, const char* mangled, int OutStrLen,
-                       MSVCRT_malloc_func memget,
-                       MSVCRT_free_func memfree,
-                       unsigned short int flags)
+char* __unDName(char * OutStr, const char* mangled, int OutStrLen,
+                malloc_func_t memget, free_func_t memfree,
+                unsigned short int flags)
 {
-   return MSVCRT___unDNameEx( OutStr, mangled, OutStrLen, memget, memfree,
-           NULL, flags);
+   return __unDNameEx( OutStr, mangled, OutStrLen, memget, memfree, 0, flags);
 }
