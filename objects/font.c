@@ -317,6 +317,11 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC,
 					(HGDIOBJ *)&hFont, &font_funcs )))
 	{
+            static const WCHAR ItalicW[] = {' ','I','t','a','l','i','c','\0'};
+            static const WCHAR BoldW[]   = {' ','B','o','l','d','\0'};
+            WCHAR *pFaceNameItalicSuffix, *pFaceNameBoldSuffix;
+            WCHAR* pFaceNameSuffix = NULL;
+
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
 	    TRACE("(%ld %ld %ld %ld %x %d %x %d %d) %s %s %s => %p\n",
@@ -336,6 +341,26 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
                    "escapement angle %f for new font %p\n",
                    plf->lfOrientation/10., plf->lfEscapement/10., hFont);
 	    }
+
+            pFaceNameItalicSuffix = strstrW(fontPtr->logfont.lfFaceName, ItalicW);
+            if (pFaceNameItalicSuffix) {
+                fontPtr->logfont.lfItalic = TRUE;
+                pFaceNameSuffix = pFaceNameItalicSuffix;
+            }
+
+            pFaceNameBoldSuffix = strstrW(fontPtr->logfont.lfFaceName, BoldW);
+            if (pFaceNameBoldSuffix) {
+                if (fontPtr->logfont.lfWeight < FW_BOLD) {
+                    fontPtr->logfont.lfWeight = FW_BOLD;
+                }
+                if (!pFaceNameSuffix ||
+                    (pFaceNameBoldSuffix < pFaceNameSuffix)) {
+                    pFaceNameSuffix = pFaceNameBoldSuffix;
+                }
+            }
+
+            if (pFaceNameSuffix) *pFaceNameSuffix = 0;
+
 	    GDI_ReleaseObj( hFont );
 	}
     }
