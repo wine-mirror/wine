@@ -354,20 +354,27 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
  *
  * Glorified "enter xxxx".
  */
+#ifdef __i386__
 void WINAPI NTDLL_chkstk( CONTEXT86 *context )
 {
     context->Esp -= context->Eax;
 }
+DEFINE_REGS_ENTRYPOINT( _chkstk, NTDLL_chkstk, 0, 0 );
+#endif
 
 /**************************************************************************
  *                 _alloca_probe		        [NTDLL.@]
  *
  * Glorified "enter xxxx".
  */
+#ifdef __i386__
 void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
 {
     context->Esp -= context->Eax;
 }
+DEFINE_REGS_ENTRYPOINT( _alloca_probe, NTDLL_alloca_probe, 0, 0 );
+#endif
+
 
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]

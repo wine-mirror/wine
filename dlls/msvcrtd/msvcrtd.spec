@@ -94,7 +94,7 @@
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _Strftime(str long str ptr ptr) msvcrt._Strftime
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ cdecl -register -i386 __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ cdecl -i386 __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stub __CxxLongjmpUnwind #(ptr) stdcall
 @ cdecl __RTCastToVoid(ptr) msvcrt.__RTCastToVoid
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) msvcrt.__RTDynamicCast
@@ -456,8 +456,8 @@
 @ stub _set_error_mode #(long)
 @ stub _set_sbh_threshold #(long)
 @ stub _seterrormode #(long)
-@ cdecl -register -i386 _setjmp(ptr) msvcrt._setjmp
-@ cdecl -register -i386 _setjmp3(ptr long) msvcrt._setjmp3
+@ cdecl -i386 _setjmp(ptr) msvcrt._setjmp
+@ cdecl -i386 _setjmp3(ptr long) msvcrt._setjmp3
 @ stub _setmaxstdio #(long)
 @ cdecl _setmbcp(long) msvcrt._setmbcp
 @ cdecl _setmode(long long) msvcrt._setmode
@@ -689,7 +689,7 @@
 @ cdecl localtime(ptr)
 @ cdecl log(double)
 @ cdecl log10(double)
-@ cdecl -register -i386 longjmp(ptr long) msvcrt.longjmp
+@ cdecl -i386 longjmp(ptr long) msvcrt.longjmp
 @ cdecl malloc(long) msvcrt.malloc
 @ cdecl mblen(ptr long) msvcrt.mblen
 @ cdecl mbstowcs(ptr str long) ntdll.mbstowcs

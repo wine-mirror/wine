@@ -384,14 +384,15 @@ static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* fram
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)
  */
-void __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_REGISTRATION_RECORD* frame,
-                        PCONTEXT exc_context, EXCEPTION_REGISTRATION_RECORD** dispatch,
-                        CONTEXT86 *context )
+void MSVCRT__CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_REGISTRATION_RECORD* frame,
+                              PCONTEXT exc_context, EXCEPTION_REGISTRATION_RECORD** dispatch,
+                              CONTEXT86 *context )
 {
     cxx_function_descr *descr = (cxx_function_descr *)context->Eax;
     context->Eax = cxx_frame_handler( rec, (cxx_exception_frame *)frame,
                                       exc_context, dispatch, descr, NULL, 0, context );
 }
+DEFINE_REGS_ENTRYPOINT( __CxxFrameHandler, MSVCRT__CxxFrameHandler, 16, 0 );
 
 #endif  /* __i386__ */
 

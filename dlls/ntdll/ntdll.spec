@@ -904,12 +904,12 @@
 @ stub __eGetStatusWord
 @ stdcall -ret64 _alldiv(long long long long)
 @ stdcall -ret64 _allmul(long long long long)
-@ stdcall -register -i386 _alloca_probe() NTDLL_alloca_probe
+@ stdcall -i386 _alloca_probe()
 @ stdcall -ret64 _allrem(long long long long)
 @ cdecl -ret64 _atoi64(str)
 @ stdcall -ret64 _aulldiv(long long long long)
 @ stdcall -ret64 _aullrem(long long long long)
-@ stdcall -register -i386 _chkstk() NTDLL_chkstk
+@ stdcall -i386 _chkstk()
 @ stub _fltused
 @ cdecl -ret64 _ftol() NTDLL__ftol
 @ cdecl _i64toa(long long ptr long)
