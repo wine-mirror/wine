@@ -121,6 +121,11 @@ BOOL WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA pInfo)
 	return 1;
 }
 
+/******************************************************************************
+ * GetCurrentHwProfileW [ADVAPI32.@]
+ *
+ * See GetCurrentHwProfileA.
+ */
 BOOL WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW pInfo)
 {
        FIXME("(%p)\n", pInfo);
