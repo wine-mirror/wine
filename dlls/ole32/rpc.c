@@ -654,28 +654,7 @@ _StubMgrThread(LPVOID param) {
     sprintf(pipefn,OLESTUBMGR"_%08lx",GetCurrentProcessId());
     TRACE("Stub Manager Thread starting on (%s)\n",pipefn);
 
-    listenPipe = CreateNamedPipeA(
-	pipefn,
-	PIPE_ACCESS_DUPLEX,
-	PIPE_TYPE_BYTE|PIPE_WAIT,
-	PIPE_UNLIMITED_INSTANCES,
-	4096,
-	4096,
-	NMPWAIT_USE_DEFAULT_WAIT,
-	NULL
-    );
-    if (listenPipe == INVALID_HANDLE_VALUE) {
-	FIXME("pipe creation failed for %s, le is %lx\n",pipefn,GetLastError());
-	return 1; /* permanent failure, so quit stubmgr thread */
-    }
-
     while (1) {
-	if (!ConnectNamedPipe(listenPipe,NULL)) {
-	    ERR("Failure during ConnectNamedPipe %lx!\n",GetLastError());
-	    CloseHandle(listenPipe);
-	    continue;
-	}
-	PIPE_StartRequestThread(listenPipe);
 	listenPipe = CreateNamedPipeA(
 	    pipefn,
 	    PIPE_ACCESS_DUPLEX,
@@ -690,6 +669,12 @@ _StubMgrThread(LPVOID param) {
 	    FIXME("pipe creation failed for %s, le is %lx\n",pipefn,GetLastError());
 	    return 1; /* permanent failure, so quit stubmgr thread */
 	}
+	if (!ConnectNamedPipe(listenPipe,NULL)) {
+	    ERR("Failure during ConnectNamedPipe %lx!\n",GetLastError());
+	    CloseHandle(listenPipe);
+	    continue;
+	}
+	PIPE_StartRequestThread(listenPipe);
     }
     return 0;
 }
