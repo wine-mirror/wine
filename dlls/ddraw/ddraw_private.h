@@ -381,6 +381,14 @@ extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
 extern BOOL opengl_initialized;
 extern BOOL s3tc_initialized;
 
+typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT1)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT3)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+typedef void (*FUNC_FETCH_2D_TEXEL_RGBA_DXT5)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+
+extern FUNC_FETCH_2D_TEXEL_RGBA_DXT1 fetch_2d_texel_rgba_dxt1;
+extern FUNC_FETCH_2D_TEXEL_RGBA_DXT3 fetch_2d_texel_rgba_dxt3;
+extern FUNC_FETCH_2D_TEXEL_RGBA_DXT5 fetch_2d_texel_rgba_dxt5;
+
 /******************************************************************************
  * Structure conversion (for thunks)
  */
