@@ -1768,7 +1768,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                 WCHAR url[1023];
                 static const WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
 
-                sprintfW(url,szFmt,lpreq->lpszHostName,lpreq->lpszPath);
+                sprintfW(url,szFmt,lpreq->StdHeaders[HTTP_QUERY_HOST].lpszValue,lpreq->lpszPath);
                 TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
                 if (*lpdwBufferLength < strlenW(url)+1)
                     INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);

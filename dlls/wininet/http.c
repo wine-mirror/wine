@@ -58,14 +58,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 static const WCHAR g_szHttp[] = {' ','H','T','T','P','/','1','.','0',0 };
-static const WCHAR g_szHost[] = {'\r','\n','H','o','s','t',':',' ',0 };
 static const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
 static const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
 static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0};
+static const WCHAR g_szHost[] = {'H','o','s','t',0};
 
 
 #define HTTPHEADER g_szHttp
-#define HTTPHOSTHEADER g_szHost
 #define MAXHOSTNAME 100
 #define MAX_FIELD_VALUE_LEN 256
 #define MAX_FIELD_LEN 256
@@ -746,10 +745,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 
         InternetCrackUrlW(lpszReferrer, 0, 0, &UrlComponents);
         if (strlenW(UrlComponents.lpszHostName))
-            lpwhr->lpszHostName = WININET_strdupW(UrlComponents.lpszHostName);
-    } else {
-        lpwhr->lpszHostName = WININET_strdupW(lpwhs->lpszServerName);
+            HTTP_ProcessHeader(lpwhr, g_szHost, UrlComponents.lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
     }
+    else
+        HTTP_ProcessHeader(lpwhr, g_szHost, lpwhs->lpszServerName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
+
     if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
 
@@ -767,9 +767,9 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         HeapFree(GetProcessHeap(), 0, agent_header);
     }
 
-    len = strlenW(lpwhr->lpszHostName) + strlenW(szUrlForm);
+    len = strlenW(lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue) + strlenW(szUrlForm);
     lpszUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    sprintfW( lpszUrl, szUrlForm, lpwhr->lpszHostName );
+    sprintfW( lpszUrl, szUrlForm, lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue );
 
     if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES) &&
         InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
@@ -1379,9 +1379,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         lpwhs->lpszUserName = WININET_strdupW(userName);
         lpwhs->nServerPort = urlComponents.nPort;
 
-        if (NULL != lpwhr->lpszHostName)
-            HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
-        lpwhr->lpszHostName=WININET_strdupW(hostName);
+        HTTP_ProcessHeader(lpwhr, g_szHost, hostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
         SendAsyncCallback(hIC, &lpwhs->hdr, lpwhr->hdr.dwContext,
                       INTERNET_STATUS_RESOLVING_NAME,
@@ -1524,7 +1522,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         DWORD len, n;
         char *ascii_req;
 
-        TRACE("Going to url %s %s\n", debugstr_w(lpwhr->lpszHostName), debugstr_w(lpwhr->lpszPath));
+        TRACE("Going to url %s %s\n", debugstr_w(lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue), debugstr_w(lpwhr->lpszPath));
         loop_next = FALSE;
 
         /* If we don't have a path we set it to root */
@@ -1600,12 +1598,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                        debugstr_w(lpwhr->pCustHeaders[i].lpszField),
                        debugstr_w(lpwhr->pCustHeaders[i].lpszValue));
             }
-        }
-
-        if (lpwhr->lpszHostName)
-        {
-            req[n++] = HTTPHOSTHEADER;
-            req[n++] = lpwhr->lpszHostName;
         }
 
         if( n >= len )
@@ -1731,9 +1723,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                 cookie_data = &buf_cookie[nEqualPos + 1];
 
 
-                len = strlenW((domain ? domain : lpwhr->lpszHostName)) + strlenW(lpwhr->lpszPath) + 9;
+                len = strlenW((domain ? domain : lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue)) + 
+                    strlenW(lpwhr->lpszPath) + 9;
                 buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-                sprintfW(buf_url, szFmt, (domain ? domain : lpwhr->lpszHostName)); /* FIXME PATH!!! */
+                sprintfW(buf_url, szFmt, (domain ? domain : lpwhr->StdHeaders[HTTP_QUERY_HOST].lpszValue)); /* FIXME PATH!!! */
                 InternetSetCookieW(buf_url, cookie_name, cookie_data);
 
                 HeapFree(GetProcessHeap(), 0, buf_url);
@@ -2260,6 +2253,8 @@ INT HTTP_GetStdHeaderIndex(LPCWSTR lpszField)
         index = HTTP_QUERY_VARY;
     else if (!strcmpiW(lpszField,szVia))
         index = HTTP_QUERY_VIA;
+    else if (!strcmpiW(lpszField,g_szHost))
+        index = HTTP_QUERY_HOST;
     else
     {
         TRACE("Couldn't find %s in standard header table\n", debugstr_w(lpszField));
@@ -2472,8 +2467,6 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     if (lpwhr->lpszVerb)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
-    if (lpwhr->lpszHostName)
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
     if (lpwhr->lpszRawHeaders)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
 
