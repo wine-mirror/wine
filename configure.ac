@@ -1017,7 +1017,7 @@ case $host_os in
 	    AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
             AC_SUBST(IOKITLIB,"-framework IOKit")
 	    dnl using IOKit imply we use CoreFoundation too
-	    IOKITLIB = "$IOKITLIB $COREFOUNDATIONLIB"
+	    IOKITLIB="$IOKITLIB $COREFOUNDATIONLIB"
           else
             AC_CACHE_CHECK(whether we can build an HP-UX dll, ac_cv_c_dll_hpux,
               [WINE_TRY_SHLIB_FLAGS([-shared], ac_cv_c_dll_hpux="yes", ac_cv_c_dll_hpux="no")])

@@ -14121,7 +14121,7 @@ echo "${ECHO_T}$ac_cv_c_dll_macho" >&6
 
             IOKITLIB="-framework IOKit"
 
-	    	    IOKITLIB = "$IOKITLIB $COREFOUNDATIONLIB"
+	    	    IOKITLIB="$IOKITLIB $COREFOUNDATIONLIB"
           else
             echo "$as_me:$LINENO: checking whether we can build an HP-UX dll" >&5
 echo $ECHO_N "checking whether we can build an HP-UX dll... $ECHO_C" >&6
