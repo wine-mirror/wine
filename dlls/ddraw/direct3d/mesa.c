@@ -82,7 +82,7 @@ GL_IDirect3DImpl_3_2T_1T_CreateLight(LPDIRECT3D3 iface,
 				     IUnknown* pUnkOuter)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
-    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
+    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This->d3d_private;
     int fl;
     IDirect3DLightImpl *d3dlimpl;
     HRESULT ret_value;
@@ -292,7 +292,7 @@ GL_IDirect3DImpl_7_3T_CreateVertexBuffer(LPDIRECT3D7 iface,
 
 static void light_released(IDirectDrawImpl *This, GLenum light_num)
 {
-    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
+    IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This->d3d_private;
     glThis->free_lights |= (light_num - GL_LIGHT0);
 }
 

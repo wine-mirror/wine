@@ -194,7 +194,7 @@ GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
     
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (!--(This->ref)) {
-        ((IDirect3DGLImpl *) This->d3d)->light_released(This->d3d, glThis->light_num);
+        ((IDirect3DGLImpl *) This->d3d->d3d_private)->light_released(This->d3d, glThis->light_num);
         HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }

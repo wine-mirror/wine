@@ -787,8 +787,7 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 	    TRACE(" activating material %p.\n", mat);
 	    mat->activate(mat);
 	} else {
-	    ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
-	    return DDERR_INVALIDPARAMS;
+	    FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
 	}
     } else if (dwLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
 	switch (dwLightState) {

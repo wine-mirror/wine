@@ -197,7 +197,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			if (mat != NULL) {
 			    mat->activate(mat);
 			} else {
-			    ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
+			    FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
 			}
 		    }
 		   else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
