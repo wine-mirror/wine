@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -71,16 +72,26 @@ static const char Usage[] =
 
 
 /*******************************************************************
+ *         fatal_error
+ */
+static void fatal_error( const char *msg, ... )
+{
+    va_list valist;
+    va_start( valist, msg );
+    vfprintf( stderr, msg, valist );
+    va_end( valist );
+    exit(1);
+}
+
+
+/*******************************************************************
  *         xmalloc
  */
 static void *xmalloc( int size )
 {
     void *res;
     if (!(res = malloc (size ? size : 1)))
-    {
-        fprintf( stderr, "%s: Virtual memory exhausted.\n", ProgramName );
-        exit(1);
-    }
+        fatal_error( "%s: Virtual memory exhausted.\n", ProgramName );
     return res;
 }
 
@@ -91,11 +102,7 @@ static void *xmalloc( int size )
 static char *xstrdup( const char *str )
 {
     char *res = strdup( str );
-    if (!res)
-    {
-        fprintf( stderr, "%s: Virtual memory exhausted.\n", ProgramName );
-        exit(1);
-    }
+    if (!res) fatal_error( "%s: Virtual memory exhausted.\n", ProgramName );
     return res;
 }
 
@@ -169,14 +176,42 @@ static INCL_FILE *add_src_file( const char *name )
 static INCL_FILE *add_include( INCL_FILE *pFile, const char *name, int line, int system )
 {
     INCL_FILE **p = &firstInclude;
+    char *ext;
     int pos;
 
     for (pos = 0; pos < MAX_INCLUDES; pos++) if (!pFile->files[pos]) break;
     if (pos >= MAX_INCLUDES)
+        fatal_error( "%s: %s: too many included files, please fix MAX_INCLUDES\n",
+                     ProgramName, pFile->name );
+
+    /* enforce some rules for the Wine tree */
+
+    if (!memcmp( name, "../", 3 ))
+        fatal_error( "%s:%d: #include directive with relative path not allowed\n",
+                     pFile->filename, line );
+
+    if (!strcmp( name, "config.h" ))
     {
-        fprintf( stderr, "%s: %s: too many included files, please fix MAX_INCLUDES\n",
-                 ProgramName, pFile->name );
-        exit(1);
+        if ((ext = strrchr( pFile->filename, '.' )) && !strcmp( ext, ".h" ))
+            fatal_error( "%s:%d: config.h must not be included by a header file\n",
+                         pFile->filename, line );
+        if (pos)
+            fatal_error( "%s:%d: config.h must be included before anything else\n",
+                         pFile->filename, line );
+    }
+    else if (!strcmp( name, "wine/port.h" ))
+    {
+        if ((ext = strrchr( pFile->filename, '.' )) && !strcmp( ext, ".h" ))
+            fatal_error( "%s:%d: wine/port.h must not be included by a header file\n",
+                         pFile->filename, line );
+        if (!pos) fatal_error( "%s:%d: config.h must be included before wine/port.h\n",
+                               pFile->filename, line );
+        if (pos > 1)
+            fatal_error( "%s:%d: wine/port.h must be included before everything except config.h\n",
+                         pFile->filename, line );
+        if (strcmp( pFile->files[0]->name, "config.h" ))
+            fatal_error( "%s:%d: config.h must be included before wine/port.h\n",
+                         pFile->filename, line );
     }
 
     while (*p && strcmp( name, (*p)->name )) p = &(*p)->next;
@@ -317,12 +352,8 @@ static void parse_idl_file( INCL_FILE *pFile, FILE *file )
         if (quote == '<') quote = '>';
         include = p;
         while (*p && (*p != quote)) p++;
-        if (!*p)
-        {
-            fprintf( stderr, "%s:%d: Malformed #include or import directive\n",
-                     pFile->filename, line );
-            exit(1);
-        }
+        if (!*p) fatal_error( "%s:%d: Malformed #include or import directive\n",
+                              pFile->filename, line );
         *p = 0;
         add_include( pFile, include, line, (quote == '>') );
     }
@@ -353,12 +384,8 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
         if (quote == '<') quote = '>';
         include = p;
         while (*p && (*p != quote)) p++;
-        if (!*p)
-        {
-            fprintf( stderr, "%s:%d: Malformed #include directive\n",
-                     pFile->filename, line );
-            exit(1);
-        }
+        if (!*p) fatal_error( "%s:%d: Malformed #include directive\n",
+                              pFile->filename, line );
         *p = 0;
         add_include( pFile, include, line, (quote == '>') );
     }
