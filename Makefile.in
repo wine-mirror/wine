@@ -13,7 +13,7 @@
 # etags:           create a TAGS file for Emacs.
 # manpages:        compile manpages for Wine API
 # htmlpages:       compile html pages for Wine API
-# sgmlpages:       compile sqml source for the Wine API Guide
+# sgmlpages:       compile sgml source for the Wine API Guide
 
 # Directories
 
