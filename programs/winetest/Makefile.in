@@ -21,6 +21,7 @@ RC_BINARIES = wine.ico
 TESTS = \
 	advapi32 \
 	comctl32 \
+	dsound \
 	gdi32 \
 	iphlpapi \
 	kernel32 \
@@ -82,6 +83,8 @@ advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+dsound_test.exe$(DLLEXT): $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
+	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe$(DLLEXT): $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 iphlpapi_test.exe$(DLLEXT): $(DLLDIR)/iphlpapi/tests/iphlpapi_test.exe$(DLLEXT)
