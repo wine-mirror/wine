@@ -234,16 +234,18 @@ int	WINECON_GrabChanges(struct inner_data* data)
     }
     /* step 2: manage update events */
     ev_found = -1;
-    for (i = 0; i < num - 1; i++)
+    for (i = 0; i < num; i++)
     {
-	if (evts[i].event == CONSOLE_RENDERER_NONE_EVENT) continue;
+	if (evts[i].event == CONSOLE_RENDERER_NONE_EVENT ||
+	    evts[i].event == CONSOLE_RENDERER_CURSOR_POS_EVENT ||
+	    evts[i].event == CONSOLE_RENDERER_CURSOR_GEOM_EVENT) continue;
 	if (evts[i].event != CONSOLE_RENDERER_UPDATE_EVENT)
         {
 	    ev_found = -1;
 	    continue;
-            }
+	}
 
-	if (ev_found != -1 &&
+	if (ev_found != -1 &&  /* Only 2 cases where they can NOT merge */
 	    !(evts[i       ].u.update.bottom + 1 < evts[ev_found].u.update.top ||
 	      evts[ev_found].u.update.bottom + 1 < evts[i       ].u.update.top))
 	{
@@ -262,8 +264,10 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	switch (evts[i].event)
 	{
 	case CONSOLE_RENDERER_NONE_EVENT:
+	    WINE_TRACE(" NOP");
 	    break;
 	case CONSOLE_RENDERER_TITLE_EVENT:
+	    WINE_TRACE(" title()");
 	    data->fnSetTitle(data);
 	    break;
 	case CONSOLE_RENDERER_ACTIVE_SB_EVENT:
