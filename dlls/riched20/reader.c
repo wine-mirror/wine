@@ -95,7 +95,7 @@ int ansi_gen[] =
   rtfSC_dollar  	 ,'$',
   rtfSC_percent 	 ,'%',
   rtfSC_ampersand	 ,'&',
-  rtfSC_quoteright	 ,'\\',
+  rtfSC_quoteright	 ,'\'',
   rtfSC_parenleft	 ,'(',
   rtfSC_parenright	 ,')',
   rtfSC_asterisk	 ,'*',
@@ -936,11 +936,19 @@ int _RTFGetChar(RTF_Info *info)
 
 	TRACE("\n");
 
-	if (info->dwInputSize <= info->dwInputUsed)
+	/* if the last buffer wasn't full, it's EOF */
+  if (info->dwInputSize > 0 &&
+    info->dwInputSize == info->dwInputUsed && info->dwInputSize < sizeof(info->InputBuffer))
+    return EOF;
+  if (info->dwInputSize <= info->dwInputUsed)
 	{
 		long count = 0;
-		info->editstream.pfnCallback(info->editstream.dwCookie, 
+		info->editstream.dwError = info->editstream.pfnCallback(info->editstream.dwCookie, 
 			info->InputBuffer, sizeof(info->InputBuffer), &count);
+  	/* if error, it's EOF */
+		if (info->editstream.dwError)
+		  return EOF;
+  	/* if no bytes read, it's EOF */
 		if(count == 0)
 			return EOF;
 		info->dwInputSize = count;
