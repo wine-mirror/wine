@@ -1378,11 +1378,13 @@ static BOOL LISTVIEW_GetItemListOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOIN
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] nItem  : item number
+ * [I] lpLVItem : item to compute the measures for
  * [O] lprcBox : ptr to Box rectangle
  *                The internal LVIR_BOX rectangle
  * [O] lprcBounds : ptr to Bounds rectangle
  *                Same as LVM_GETITEMRECT with LVIR_BOUNDS
+ * [0] lprcState : ptr to State icon rectangle
+ *  		  The internal LVIR_STATE rectangle
  * [O] lprcIcon : ptr to Icon rectangle
  *                Same as LVM_GETITEMRECT with LVIR_ICON
  * [O] lprcLabel : ptr to Label rectangle
@@ -1392,54 +1394,73 @@ static BOOL LISTVIEW_GetItemListOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOIN
  *   TRUE if computations OK
  *   FALSE otherwise
  */
-static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
+static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 				    LPRECT lprcBox, LPRECT lprcBounds,
-				    LPRECT lprcIcon, LPRECT lprcLabel)
+				    LPRECT lprcState, LPRECT lprcIcon, LPRECT lprcLabel)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    BOOL doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
-    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    RECT Box, Icon, Label;
-    POINT Position, Origin;
-    LVITEMW lvItem;
+    BOOL doState = FALSE, doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
+    RECT Box, State, Icon, Label;
 
+    ERR("(lpLVItem=%s)\n", debuglvitem_t(lpLVItem, TRUE));
+	
     /* Be smart and try to figure out the minimum we have to do */
     if (lprcBounds)
     {
 	if (uView == LVS_REPORT) doIcon = TRUE;
         else doLabel = TRUE;
     }
-    if (uView == LVS_ICON && infoPtr->bFocus &&
-	!(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
-	LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
-	oversizedBox = doLabel = TRUE;
+    if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel))
+    {
+	if (!(lpLVItem->mask & LVIF_STATE) || 
+	    !(lpLVItem->stateMask & LVIS_FOCUSED)) 
+	    return FALSE;
+	if ((lpLVItem->state & LVIS_FOCUSED) &&
+	    !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
+	    oversizedBox = doLabel = TRUE;
+    }
     if (lprcLabel) doLabel = TRUE;
     if (doLabel || lprcIcon) doIcon = TRUE;
+    if (doIcon || lprcState) doState = TRUE;
     
-    /* get what we need from the item before hand, so we make
-     * only one request. This can speed up things, if data
-     * is stored on the app side */
-    if (doLabel || (doIcon && uView == LVS_REPORT))
-    {
-	lvItem.mask = 0;
-	if (doIcon) lvItem.mask |= LVIF_INDENT;
-	if (doLabel) lvItem.mask |= LVIF_TEXT;
-	lvItem.iItem = nItem;
-	lvItem.iSubItem = 0;
-    	lvItem.pszText = szDispText;
-    	lvItem.cchTextMax = DISP_TEXT_SIZE;
-	if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-    }
-
     /************************************************************/
     /* compute the box rectangle (it should be cheap to do)     */
     /************************************************************/
-    if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) return FALSE;
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
-    Box.left = Position.x + Origin.x;
-    Box.top = Position.y + Origin.y;
-    Box.right = Box.left + infoPtr->nItemWidth;
-    Box.bottom = Box.top + infoPtr->nItemHeight;
+    Box.left = 0;
+    Box.top = 0;
+    Box.right = infoPtr->nItemWidth;
+    Box.bottom = infoPtr->nItemHeight;
+
+    /************************************************************/
+    /* compute STATEICON bounding box                           */
+    /************************************************************/
+    if (doState)
+    {
+	if (uView == LVS_ICON)
+	{
+     	    State.left = Box.left - infoPtr->iconStateSize.cx + 10;
+	    if (infoPtr->himlNormal) 
+		State.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2 - ICON_LR_HALF;
+	    State.top  = Box.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
+	}
+	else
+	{
+	    /* we need the ident in report mode, if we don't have it, we fail */
+	    if (uView == LVS_REPORT && !(lpLVItem->mask & LVIF_INDENT)) return FALSE;
+	    State.left = Box.left;
+	    if (uView == LVS_REPORT) State.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
+	    State.top  = Box.top;
+	}	
+	State.right    = State.left;
+	State.bottom   = State.top;
+	if (infoPtr->himlState)
+	{
+	    State.right  += infoPtr->iconStateSize.cx;
+	    State.bottom += infoPtr->iconStateSize.cy;
+	}
+	if (lprcState) *lprcState = State;
+	TRACE("    - state=%s\n", debugrect(&State));
+    }
 
     /************************************************************/
     /* compute ICON bounding box (ala LVM_GETITEMRECT)          */
@@ -1462,17 +1483,15 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
-	    /* do indent */
-	    Icon.left = Box.left;
-	    if (uView == LVS_REPORT) Icon.left += infoPtr->iconSize.cx * lvItem.iIndent;
-	    if (infoPtr->himlState) Icon.left += infoPtr->iconStateSize.cx;
+	    Icon.left = State.right;
+	    if (infoPtr->himlState) Icon.left += IMAGE_PADDING;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
 	    if (infoPtr->himlSmall) Icon.right += infoPtr->iconSize.cx;
 	    Icon.bottom = Icon.top + infoPtr->nItemHeight;
 	}
 	if(lprcIcon) *lprcIcon = Icon;
-	TRACE("hwnd=%x, item=%d, icon=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Icon));
+	TRACE("    - icon=%s\n", debugrect(&Icon));
      }
 
     /************************************************************/
@@ -1481,13 +1500,16 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     if (doLabel)
     {
 	SIZE labelSize = { 0, 0 };
+
+	/* we need the text in non owner draw mode */
+	if (!(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && !(lpLVItem->mask & LVIF_TEXT)) return FALSE;
 	
 	if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
 	{
 	   labelSize.cx = infoPtr->nItemWidth;
 	   labelSize.cy = infoPtr->nItemHeight;
 	}
-	else if (is_textT(lvItem.pszText, TRUE))
+	else if (is_textT(lpLVItem->pszText, TRUE))
         {
     	    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
     	    HDC hdc = GetDC(infoPtr->hwndSelf);
@@ -1508,7 +1530,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	    else
 		uFormat = LV_SL_DT_FLAGS;
 	    
-    	    DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat | DT_CALCRECT);
+    	    DrawTextW (hdc, lpLVItem->pszText, -1, &rcText, uFormat | DT_CALCRECT);
 
 	    labelSize.cx = min(rcText.right - rcText.left + TRAILING_PADDING, infoPtr->nItemWidth);
 	    labelSize.cy = rcText.bottom - rcText.top;
@@ -1540,15 +1562,15 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
 	    Label.left = Icon.right;
+	    if (infoPtr->himlSmall) Label.left += IMAGE_PADDING;
 	    Label.top = Box.top;
 	    Label.right = Label.left + labelSize.cx;
-	    if (infoPtr->himlSmall) Label.right += IMAGE_PADDING;
 	    if (Label.right > Box.right) Label.right = Box.right;
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
 	}
   
 	if (lprcLabel) *lprcLabel = Label;
-	TRACE("hwnd=%x, item=%d, label=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Label));
+	TRACE("    - label=%s\n", debugrect(&Label));
     }
 
     /***********************************************************/
@@ -1566,12 +1588,87 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
         }
         else
 	    UnionRect(lprcBounds, &Icon, &Label);
-        TRACE("hwnd=%x, item=%d, bounds=%s\n", infoPtr->hwndSelf, nItem, debugrect(lprcBounds));
+        TRACE("    - bounds=%s\n", debugrect(lprcBounds));
     }
     
     if (oversizedBox) UnionRect(lprcBox, &Box, &Label);
     else if (lprcBox) *lprcBox = Box; 
-    TRACE("hwnd=%x, item=%d, box=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Box));
+    TRACE("    - box=%s\n", debugrect(&Box));
+
+    return TRUE;
+}
+
+/***
+ * DESCRIPTION:            [INTERNAL]
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nItem : item number
+ * [O] lprcBox : ptr to Box rectangle
+ *                The internal LVIR_BOX rectangle
+ * [O] lprcBounds : ptr to Bounds rectangle
+ *                Same as LVM_GETITEMRECT with LVIR_BOUNDS
+ * [O] lprcIcon : ptr to Icon rectangle
+ *                Same as LVM_GETITEMRECT with LVIR_ICON
+ * [O] lprcLabel : ptr to Label rectangle
+ *                Same as LVM_GETITEMRECT with LVIR_LABEL
+ *
+ * RETURN:
+ *   TRUE if computations OK
+ *   FALSE otherwise
+ */
+static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
+				    LPRECT lprcBox, LPRECT lprcBounds,
+				    LPRECT lprcIcon, LPRECT lprcLabel)
+{
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    BOOL doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
+    POINT Position, Origin;
+    LVITEMW lvItem;
+
+    if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) return FALSE;
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+
+    /* Be smart and try to figure out the minimum we have to do */
+    if (lprcBounds)
+    {
+	if (uView == LVS_REPORT) doIcon = TRUE;
+        else doLabel = TRUE;
+    }
+    if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel) &&
+	infoPtr->bFocus && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
+	LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
+	oversizedBox = doLabel = TRUE;
+    if (lprcLabel) doLabel = TRUE;
+    if (doLabel || lprcIcon) doIcon = TRUE;
+
+    /* get what we need from the item before hand, so we make
+     * only one request. This can speed up things, if data
+     * is stored on the app side */
+    lvItem.mask = 0;
+    if (doIcon && uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
+    if (doLabel) lvItem.mask |= LVIF_TEXT;
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = 0;
+    lvItem.pszText = szDispText;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    if (lvItem.mask && !LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
+    if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel))
+    {
+	lvItem.mask |= LVIF_STATE;
+	lvItem.stateMask = LVIS_FOCUSED;
+	lvItem.state = (oversizedBox ? LVIS_FOCUSED : 0);
+    }
+    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprcBox, lprcBounds, 0, lprcIcon, lprcLabel)) return FALSE;
+
+    Position.x += Origin.x;
+    Position.y += Origin.y;
+
+    if (lprcBox) OffsetRect(lprcBox, Position.x, Position.y);
+    if (lprcBounds) OffsetRect(lprcBounds, Position.x, Position.y);
+    if (lprcIcon) OffsetRect(lprcIcon, Position.x, Position.y);
+    if (lprcLabel) OffsetRect(lprcLabel, Position.x, Position.y);
 
     return TRUE;
 }
@@ -2131,6 +2228,7 @@ static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper,
 
     return TRUE;
 }
+
 /***
  * Helper function for LISTVIEW_AddSelectionRange, and LISTVIEW_SetItem.
  */
