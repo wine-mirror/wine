@@ -286,6 +286,7 @@ extern BOOL PSDRV_WriteFill(DC *dc);
 extern BOOL PSDRV_WriteEOFill(DC *dc);
 extern BOOL PSDRV_WriteGSave(DC *dc);
 extern BOOL PSDRV_WriteGRestore(DC *dc);
+extern BOOL PSDRV_WriteNewPath(DC *dc);
 extern BOOL PSDRV_WriteClosePath(DC *dc);
 extern BOOL PSDRV_WriteClip(DC *dc);
 extern BOOL PSDRV_WriteRectClip(DC *dc, CHAR *pszArrayName);
