@@ -4,19 +4,9 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include <stdlib.h>
-#include <signal.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/timeb.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "selectors.h"
-#include "sig_context.h"
-#include "miscemu.h"
+#include "services.h"
 #include "debug.h"
 
 typedef struct
@@ -31,16 +21,15 @@ typedef struct
 
 static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
 static int SYS_NbTimers = 0;
-static BOOL SYS_TimersDisabled = FALSE;
+static HANDLE SYS_Service = INVALID_HANDLE_VALUE;
 
 
 /***********************************************************************
  *           SYSTEM_TimerTick
  */
-static HANDLER_DEF(SYSTEM_TimerTick)
+static void CALLBACK SYSTEM_TimerTick( ULONG_PTR arg )
 {
     int i;
-    HANDLER_INIT();
 
     for (i = 0; i < NB_SYS_TIMERS; i++)
     {
@@ -60,23 +49,8 @@ static HANDLER_DEF(SYSTEM_TimerTick)
  */
 static void SYSTEM_StartTicks(void)
 {
-    static BOOL handler_installed = FALSE;
-
-    if (!handler_installed)
-    {
-        handler_installed = TRUE;
-	SIGNAL_SetHandler( SIGALRM, SYSTEM_TimerTick, 1 );
-    }
-#ifndef __EMX__ /* FIXME: Time don't work... Use BIOS directly instead */
-    {
-        struct itimerval vt_timer;
-
-        vt_timer.it_interval.tv_sec = 0;
-        vt_timer.it_interval.tv_usec = 54929;
-        vt_timer.it_value = vt_timer.it_interval;
-        setitimer( ITIMER_REAL, &vt_timer, NULL );
-    }
-#endif
+    if ( SYS_Service == INVALID_HANDLE_VALUE )
+        SYS_Service = SERVICE_AddTimer( SYS_TIMER_RATE, SYSTEM_TimerTick, 0L );
 }
 
 
@@ -87,14 +61,11 @@ static void SYSTEM_StartTicks(void)
  */
 static void SYSTEM_StopTicks(void)
 {
-#ifndef __EMX__ /* FIXME: Time don't work... Use BIOS directly instead */
-    struct itimerval vt_timer;
-
-    vt_timer.it_interval.tv_sec = 0;
-    vt_timer.it_interval.tv_usec = 0;
-    vt_timer.it_value = vt_timer.it_interval;
-    setitimer( ITIMER_REAL, &vt_timer, NULL );
-#endif
+    if ( SYS_Service != INVALID_HANDLE_VALUE )
+    {
+        SERVICE_Delete( SYS_Service );
+        SYS_Service = INVALID_HANDLE_VALUE;
+    }
 }
 
 
@@ -140,8 +111,7 @@ WORD WINAPI CreateSystemTimer( WORD rate, SYSTEMTIMERPROC callback )
                 SYS_Timers[i].rate = SYS_TIMER_RATE;
             SYS_Timers[i].ticks = SYS_Timers[i].rate;
             SYS_Timers[i].callback = callback;
-            if ((++SYS_NbTimers == 1) && !SYS_TimersDisabled)
-                SYSTEM_StartTicks();
+            if (++SYS_NbTimers == 1) SYSTEM_StartTicks();
             return i + 1;  /* 0 means error */
         }
     return 0;
@@ -157,7 +127,7 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 {
     if (!timer || (timer > NB_SYS_TIMERS)) return timer;  /* Error */
     SYS_Timers[timer-1].callback = NULL;
-    if ((!--SYS_NbTimers) && !SYS_TimersDisabled) SYSTEM_StopTicks();
+    if (!--SYS_NbTimers) SYSTEM_StopTicks();
     return 0;
 }
 
@@ -167,8 +137,8 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
  */
 void WINAPI EnableSystemTimers16(void)
 {
-    SYS_TimersDisabled = FALSE;
-    if (SYS_NbTimers) SYSTEM_StartTicks();
+    if ( SYS_Service != INVALID_HANDLE_VALUE )
+        SERVICE_Enable( SYS_Service );
 }
 
 
@@ -177,6 +147,6 @@ void WINAPI EnableSystemTimers16(void)
  */
 void WINAPI DisableSystemTimers16(void)
 {
-    SYS_TimersDisabled = TRUE;
-    if (SYS_NbTimers) SYSTEM_StopTicks();
+    if ( SYS_Service != INVALID_HANDLE_VALUE )
+        SERVICE_Disable( SYS_Service );
 }
