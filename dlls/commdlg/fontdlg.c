@@ -122,8 +122,8 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpChFont->hwndOwner,
-                      (DLGPROC16)MODULE_GetWndProcEntry16("FormatCharDlgProc"),
-                                        (DWORD)lpChFont, WIN_PROC_16 );
+                                        (DLGPROC16)FormatCharDlgProcA,
+                                        (DWORD)lpChFont, WIN_PROC_32A );
     if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);
     if (hDlgTmpl) FreeResource16( hDlgTmpl );
     lpChFont->lpTemplateName=lpTemplateName;

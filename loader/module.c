@@ -420,61 +420,6 @@ HMODULE MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
 }
 
 
-/***********************************************************************
- *           MODULE_GetWndProcEntry16  (not a Windows API function)
- *
- * Return an entry point from the WPROCS dll.
- */
-FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
-{
-    FARPROC16 ret = NULL;
-
-    if (__winelib)
-    {
-        /* FIXME: hack for Winelib */
-        extern LRESULT ColorDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT FileOpenDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT FileSaveDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT FindTextDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT PrintDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT PrintSetupDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-        extern LRESULT ReplaceTextDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-
-        if (!strcmp(name,"ColorDlgProc"))
-            return (FARPROC16)ColorDlgProc16;
-        if (!strcmp(name,"FileOpenDlgProc"))
-            return (FARPROC16)FileOpenDlgProc16;
-        if (!strcmp(name,"FileSaveDlgProc"))
-            return (FARPROC16)FileSaveDlgProc16;
-        if (!strcmp(name,"FindTextDlgProc"))
-            return (FARPROC16)FindTextDlgProc16;
-        if (!strcmp(name,"PrintDlgProc"))
-            return (FARPROC16)PrintDlgProc16;
-        if (!strcmp(name,"PrintSetupDlgProc"))
-            return (FARPROC16)PrintSetupDlgProc16;
-        if (!strcmp(name,"ReplaceTextDlgProc"))
-            return (FARPROC16)ReplaceTextDlgProc16;
-        FIXME_(module)("No mapping for %s(), add one in library/miscstubs.c\n",name);
-        assert( FALSE );
-        return NULL;
-    }
-    else
-    {
-        WORD ordinal;
-        static HMODULE hModule = 0;
-
-        if (!hModule) hModule = GetModuleHandle16( "WPROCS" );
-        ordinal = NE_GetOrdinal( hModule, name );
-        if (!(ret = NE_GetEntryPoint( hModule, ordinal )))
-        {            
-            WARN_(module)("%s not found\n", name );
-            assert( FALSE );
-        }
-    }
-    return ret;
-}
-
-
 /**********************************************************************
  *	    MODULE_FindModule32
  *

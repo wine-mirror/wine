@@ -1,18 +1,9 @@
 name	wprocs
 type	win16
 
-14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc16
-15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc16
-16 pascal ColorDlgProc(word word word long) ColorDlgProc16
-17 pascal FindTextDlgProc(word word word long) FindTextDlgProc16
-18 pascal ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc16
-19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc16
-20 pascal PrintDlgProc(word word word long) PrintDlgProc16
 23 pascal UTGlue16(ptr long ptr long) UTGlue16
-24 pascal16 TASK_Reschedule() TASK_Reschedule
 27 pascal EntryAddrProc(word word) NE_GetEntryPoint
 28 pascal MyAlloc(word word word) NE_AllocateSegment
-30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc16
  
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt

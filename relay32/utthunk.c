@@ -4,6 +4,7 @@
  * Copyright 1999 Ulrich Weigand 
  */
 
+#include "wine/winbase16.h"
 #include "windef.h"
 #include "heap.h"
 #include "module.h"
@@ -139,7 +140,20 @@ static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefin
 static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
                         FARPROC16 target16, FARPROC target32 )
 {
-    UTINFO *ut = HeapAlloc( SegptrHeap, HEAP_ZERO_MEMORY, sizeof(UTINFO) );
+    static FARPROC16 UTGlue16_Segptr = NULL;
+    UTINFO *ut;
+
+    if ( !UTGlue16_Segptr )
+    {
+        HMODULE16 hModule = GetModuleHandle16( "WPROCS" );
+        int       ordinal = NE_GetOrdinal( hModule, "UTGlue16" );
+        if ( hModule && ordinal )
+            UTGlue16_Segptr = NE_GetEntryPoint( hModule, ordinal );
+
+        if ( !UTGlue16_Segptr ) return NULL;
+    }
+
+    ut = HeapAlloc( SegptrHeap, HEAP_ZERO_MEMORY, sizeof(UTINFO) );
     if ( !ut ) return NULL;
 
     ut->hModule   = hModule;
@@ -150,7 +164,7 @@ static UTINFO *UTAlloc( HMODULE hModule, HMODULE16 hModule16,
     ut->ut16.target    = (DWORD)target32;
     ut->ut16.pushl_eax = 0x50;
     ut->ut16.ljmp      = 0xea;
-    ut->ut16.utglue16  = (DWORD)MODULE_GetWndProcEntry16( "UTGlue16" );
+    ut->ut16.utglue16  = (DWORD)UTGlue16_Segptr;
 
     ut->ut32.popl_eax  = 0x58;
     ut->ut32.pushl     = 0x68;

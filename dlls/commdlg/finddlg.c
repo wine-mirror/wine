@@ -25,6 +25,50 @@ DEFAULT_DEBUG_CHANNEL(commdlg)
 #include "cdlg.h"
 
 /***********************************************************************
+ *           FindTextDlgProc [internal]
+ *
+ * FIXME: Convert to real 32-bit message processing
+ */
+static LRESULT WINAPI FindTextDlgProc(HWND hDlg, UINT msg,
+                                      WPARAM wParam, LPARAM lParam)
+{
+    UINT16 msg16;
+    MSGPARAM16 mp16;
+
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
+                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
+        return 0;
+    mp16.lResult = FindTextDlgProc16( (HWND16)hDlg, msg16, 
+                                      mp16.wParam, mp16.lParam );
+    
+    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
+}
+
+/***********************************************************************
+ *           ReplaceTextDlgProc [internal]
+ *
+ * FIXME: Convert to real 32-bit message processing
+ */
+static LRESULT WINAPI ReplaceTextDlgProc(HWND hDlg, UINT msg,
+                                      WPARAM wParam, LPARAM lParam)
+{
+    UINT16 msg16;
+    MSGPARAM16 mp16;
+
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
+                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
+        return 0;
+    mp16.lResult = ReplaceTextDlgProc16( (HWND16)hDlg, msg16, 
+                                         mp16.wParam, mp16.lParam );
+    
+    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
+}
+
+/***********************************************************************
  *           FindText16   (COMMDLG.11)
  */
 HWND16 WINAPI FindText16( SEGPTR find )
@@ -53,8 +97,8 @@ HWND16 WINAPI FindText16( SEGPTR find )
     }
     hInst = GetWindowLongA( lpFind->hwndOwner , GWL_HINSTANCE);
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                        (DLGPROC16)MODULE_GetWndProcEntry16("FindTextDlgProc"),
-                                  find, WIN_PROC_16 );
+                                  (DLGPROC16)FindTextDlgProc,
+                                  find, WIN_PROC_32A );
 }
 
 
@@ -87,8 +131,8 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
     }
     hInst = GetWindowLongA( lpFind->hwndOwner , GWL_HINSTANCE);
     return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                     (DLGPROC16)MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
-                                  find, WIN_PROC_16 );
+                                  (DLGPROC16)ReplaceTextDlgProc,
+                                  find, WIN_PROC_32A );
 }
 
 

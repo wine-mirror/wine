@@ -627,13 +627,7 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPAR
 LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI ColorDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI FindTextDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI FindTextDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-#define FindTextDlgProc WINELIB_NAME_AW(FindTextDlgProc)
 LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT WINAPI ReplaceTextDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI ReplaceTextDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-#define ReplaceTextProc WINELIB_NAME_AW(ReplaceTextDlgProc)
 LRESULT WINAPI PrintDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 LRESULT WINAPI PrintDlgProcA(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI PrintDlgProcW(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);

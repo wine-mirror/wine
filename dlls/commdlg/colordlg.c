@@ -27,6 +27,27 @@ DEFAULT_DEBUG_CHANNEL(commdlg)
 #include "cdlg.h"
 
 /***********************************************************************
+ *           ColorDlgProc [internal]
+ *
+ * FIXME: Convert to real 32-bit message processing
+ */
+static LRESULT WINAPI ColorDlgProc(HWND hDlg, UINT msg,
+                                   WPARAM wParam, LPARAM lParam)
+{
+    UINT16 msg16;
+    MSGPARAM16 mp16;
+
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
+                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
+        return 0;
+    mp16.lResult = ColorDlgProc16( (HWND16)hDlg, msg16, mp16.wParam, mp16.lParam );
+
+    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
+}
+
+/***********************************************************************
  *           ChooseColor   (COMMDLG.5)
  */
 BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
@@ -85,8 +106,8 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
     hInst = GetWindowLongA( lpChCol->hwndOwner, GWL_HINSTANCE );
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpChCol->hwndOwner,
-                           (DLGPROC16)MODULE_GetWndProcEntry16("ColorDlgProc"),
-                                        (DWORD)lpChCol, WIN_PROC_16 );
+                                        (DLGPROC16)ColorDlgProc,
+                                        (DWORD)lpChCol, WIN_PROC_32A );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpChCol->hwndOwner);
     if (hDlgTmpl) FreeResource16( hDlgTmpl );
 
@@ -1164,7 +1185,6 @@ LRESULT WINAPI ColorDlgProc16(HWND16 hDlg, UINT16 message,
 	}
      return FALSE ;
 }
-
 
 /***********************************************************************
  *            ChooseColorA  (COMDLG32.1)

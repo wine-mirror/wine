@@ -74,6 +74,50 @@ static BOOL FileDlg_Init(void)
 }
 
 /***********************************************************************
+ *           FileOpenDlgProc [internal]
+ *
+ * FIXME: Convert to real 32-bit message processing
+ */
+static LRESULT WINAPI FileOpenDlgProc(HWND hDlg, UINT msg,
+                                      WPARAM wParam, LPARAM lParam)
+{
+    UINT16 msg16;
+    MSGPARAM16 mp16;
+
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
+                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
+        return 0;
+    mp16.lResult = FileOpenDlgProc16( (HWND16)hDlg, msg16, 
+                                      mp16.wParam, mp16.lParam );
+    
+    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
+}
+
+/***********************************************************************
+ *           FileSaveDlgProc [internal]
+ *
+ * FIXME: Convert to real 32-bit message processing
+ */
+static LRESULT WINAPI FileSaveDlgProc(HWND hDlg, UINT msg,
+                                      WPARAM wParam, LPARAM lParam)
+{
+    UINT16 msg16;
+    MSGPARAM16 mp16;
+
+    mp16.lParam = lParam;
+    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
+                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
+        return 0;
+    mp16.lResult = FileSaveDlgProc16( (HWND16)hDlg, msg16, 
+                                      mp16.wParam, mp16.lParam );
+    
+    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
+    return mp16.lResult;
+}
+
+/***********************************************************************
  *           GetOpenFileName16   (COMMDLG.1)
  *
  * Creates a dialog box for the user to select a file to open.
@@ -199,8 +243,8 @@ BOOL16 WINAPI GetOpenFileName16(
     /* FIXME: doesn't handle win32 format correctly yet */
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpofn->hwndOwner,
-                                        (DLGPROC16)MODULE_GetWndProcEntry16("FileOpenDlgProc"),
-                                        ofn, WIN_PROC_16 );
+                                        (DLGPROC16)FileOpenDlgProc,
+                                        ofn, WIN_PROC_32A );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
 
     if (str1)
@@ -361,8 +405,8 @@ BOOL16 WINAPI GetSaveFileName16(
 
     hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
                                         lpofn->hwndOwner,
-                                        (DLGPROC16)MODULE_GetWndProcEntry16("FileSaveDlgProc"),
-                                        ofn, WIN_PROC_16 );
+                                        (DLGPROC16)FileSaveDlgProc,
+                                        ofn, WIN_PROC_32A );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
 
     if (str1)

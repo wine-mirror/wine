@@ -67,9 +67,9 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
     hwndDialog = DIALOG_CreateIndirect( hInst, template, TRUE,
                                         lpPrint->hwndOwner,
                                (DLGPROC16)((lpPrint->Flags & PD_PRINTSETUP) ?
-                                MODULE_GetWndProcEntry16("PrintSetupDlgProc") :
-                                MODULE_GetWndProcEntry16("PrintDlgProc")),
-                                printdlg, WIN_PROC_16 );
+                                /* FIXME: PrintSetupDlgProc */ PrintDlgProcA :
+                                PrintDlgProcA ),
+                                printdlg, WIN_PROC_32A );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpPrint->hwndOwner);
     return bRet;
 }
