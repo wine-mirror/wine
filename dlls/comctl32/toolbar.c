@@ -1223,8 +1223,6 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
 			  MAKELPARAM((WORD)22, (WORD)22));
 	}
-	
-	TOOLBAR_CalcToolbar (hwnd);
     }
     else
     {
@@ -1336,6 +1334,8 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
          infoPtr->nNumBitmaps += nButtons;
     }
 
+    InvalidateRect(hwnd, NULL, FALSE);
+
     return nIndex;
 }
 
@@ -1393,8 +1393,6 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			    0, (LPARAM)&ti);
 	}
     }
-
-    TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect(hwnd, NULL, FALSE);
 
@@ -1455,8 +1453,6 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			    0, (LPARAM)&ti);
 	}
     }
-
-    TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect(hwnd, NULL, FALSE);
 
@@ -1674,7 +1670,6 @@ TOOLBAR_AutoSize (HWND hwnd)
     }
     else {
 	infoPtr->nWidth = parent_rect.right - parent_rect.left;
-	TOOLBAR_CalcToolbar (hwnd);
 	InvalidateRect( hwnd, NULL, TRUE );
 	cy = infoPtr->nHeight;
 	cx = infoPtr->nWidth;
@@ -1903,8 +1898,6 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	COMCTL32_Free (oldButtons);
     }
-
-    TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
 
@@ -2397,8 +2390,6 @@ TOOLBAR_HideButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	btnPtr->fsState |= TBSTATE_HIDDEN;
 
-    TOOLBAR_CalcToolbar (hwnd);
-
     InvalidateRect (hwnd, NULL, TRUE);
 
     return TRUE;
@@ -2519,8 +2510,6 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     COMCTL32_Free (oldButtons);
 
-    TOOLBAR_CalcToolbar (hwnd);
-
     InvalidateRect (hwnd, NULL, FALSE);
 
     return TRUE;
@@ -2584,8 +2573,6 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     COMCTL32_Free (oldButtons);
-
-    TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect (hwnd, NULL, FALSE);
 
@@ -3084,7 +3071,6 @@ TOOLBAR_SetIndent (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if(infoPtr->nIndent != (INT)wParam)
     {
         infoPtr->nIndent = (INT)wParam;
-        TOOLBAR_CalcToolbar (hwnd);
         InvalidateRect(hwnd, NULL, FALSE);
     }
 
@@ -3157,9 +3143,6 @@ TOOLBAR_SetRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if(infoPtr->nRows != LOWORD(wParam))
     {
         infoPtr->nRows = LOWORD(wParam);
-
-        /* recalculate toolbar */
-        TOOLBAR_CalcToolbar (hwnd);
 
         /* repaint toolbar */
         InvalidateRect(hwnd, NULL, FALSE);
@@ -3327,9 +3310,6 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			  (WPARAM)nmttc.hdr.idFrom, (LPARAM)&nmttc);
 	}
     }
-
-    TOOLBAR_CalcToolbar(hwnd);
-
     return 0;
 }
 
