@@ -32,7 +32,6 @@
 #define DRIVE_CASE_SENSITIVE  0x0004  /* Drive fs is case sensitive */
 #define DRIVE_CASE_PRESERVING 0x0008  /* Drive fs is case preserving */
 #define DRIVE_FAIL_READ_ONLY  0x0010  /* Fail opening read-only files for writing */
-#define DRIVE_READ_VOL_INFO   0x0020  /* Try to read volume info from the device? */
 
 extern int DRIVE_Init(void);
 extern int DRIVE_IsValid( int drive );
@@ -44,13 +43,8 @@ extern const char * DRIVE_GetRoot( int drive );
 extern LPCWSTR DRIVE_GetDosCwd( int drive );
 extern const char * DRIVE_GetUnixCwd( int drive );
 extern const char * DRIVE_GetDevice( int drive );
-extern LPCWSTR DRIVE_GetLabel( int drive );
-extern DWORD DRIVE_GetSerialNumber( int drive );
-extern int DRIVE_SetSerialNumber( int drive, DWORD serial );
 extern UINT DRIVE_GetFlags( int drive );
 extern int DRIVE_Chdir( int drive, LPCWSTR path );
-extern int DRIVE_Disable( int drive  );
-extern int DRIVE_Enable( int drive  );
 extern WCHAR *DRIVE_BuildEnv(void);
 
 #endif  /* __WINE_DRIVE_H */

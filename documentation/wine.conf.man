@@ -60,19 +60,6 @@ Used to specify the drive type this drive appears as in Windows
 or DOS programs; supported types are "floppy", "hd", "cdrom"
 and "network".
 .PP
-.I format: """Label""=""<label>"""
-.br
-default: "Drive X"
-.br
-Used to specify the drive label; limited to 11 characters.
-.PP
-.I format: """Serial""=""<serial>"""
-.br
-default: "12345678"
-.br
-Used to specify the drive serial number, as an 8-character hexadecimal
-number.
-.PP
 .I format: """Filesystem""=""<fstype>"""
 .br
 default: "win95"

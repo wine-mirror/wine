@@ -11,8 +11,6 @@ WINE REGISTRY Version 2
 ;; [Drive X]
 ;; "Path"="xxx"       (Unix path for drive root)
 ;; "Type"="xxx"       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
-;; "Label"="xxx"      (drive label, at most 11 characters)
-;; "Serial"="xxx"     (serial number, 8 characters hexadecimal number)
 ;; "Filesystem"="xxx" (supported types are 'msdos'/'dos'/'fat', 'win95'/'vfat', 'unix')
 ;;   This is the FS Wine is supposed to emulate on a certain
 ;;   directory structure.
@@ -25,21 +23,17 @@ WINE REGISTRY Version 2
 [Drive A]
 "Path" = "/mnt/fd0"
 "Type" = "floppy"
-"Label" = "Floppy"
 "Filesystem" = "win95"
-"Serial" = "87654321"
 "Device" = "/dev/fd0"
 
 [Drive C]
 "Path" = "/c"
 "Type" = "hd"
-"Label" = "MS-DOS"
 "Filesystem" = "win95"
 
 [Drive D]
 "Path" = "/cdrom"
 "Type" = "cdrom"
-"Label" = "CD-Rom"
 "Filesystem" = "win95"
 ; make sure that device is correct and has proper permissions !
 "Device" = "/dev/cdrom"
@@ -47,19 +41,16 @@ WINE REGISTRY Version 2
 [Drive E]
 "Path" = "/tmp"
 "Type" = "hd"
-"Label" = "Tmp Drive"
 "Filesystem" = "win95"
 
 [Drive F]
 "Path" = "%HOME%"
 "Type" = "network"
-"Label" = "Home"
 "Filesystem" = "win95"
 
 [Drive Z]
 "Path" = "/"
 "Type" = "hd"
-"Label" = "Root"
 "Filesystem" = "win95"
 
 [wine]

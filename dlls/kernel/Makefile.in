@@ -75,6 +75,7 @@ C_SRCS = \
 	utthunk.c \
 	version.c \
 	virtual.c \
+	volume.c \
 	vxd.c \
 	win87em.c \
 	windebug.c \
