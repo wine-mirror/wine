@@ -495,9 +495,9 @@ int _fcloseall(void)
 /*********************************************************************
  *		_lseek (MSVCRT.@)
  */
-LONG _lseek(int fd, LONG offset, int whence)
+__int64 _lseeki64(int fd, __int64 offset, int whence)
 {
-  DWORD ret;
+  DWORD ret, hoffset = (DWORD) (offset >> 32);
   HANDLE hand = msvcrt_fdtoh(fd);
 
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
@@ -510,17 +510,20 @@ LONG _lseek(int fd, LONG offset, int whence)
     return -1;
   }
 
-  TRACE(":fd (%d) to 0x%08lx pos %s\n",
-        fd,offset,(whence==SEEK_SET)?"SEEK_SET":
+  TRACE(":fd (%d) to 0x%08lx%08lx pos %s\n",
+        fd,hoffset,(long)offset,
+        (whence==SEEK_SET)?"SEEK_SET":
         (whence==SEEK_CUR)?"SEEK_CUR":
         (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
 
-  if ((ret = SetFilePointer(hand, offset, NULL, whence)) != 0xffffffff)
+  if (((ret = SetFilePointer(hand, (long)offset, &hoffset,
+                             whence)) != INVALID_SET_FILE_POINTER) || !GetLastError())
   {
     if (MSVCRT_files[fd])
       MSVCRT_files[fd]->_flag &= ~MSVCRT__IOEOF;
     /* FIXME: What if we seek _to_ EOF - is EOF set? */
-    return ret;
+
+    return ((__int64)hoffset << 32) | ret;
   }
   TRACE(":error-last error (%ld)\n",GetLastError());
   if (MSVCRT_files[fd])
@@ -535,6 +538,14 @@ LONG _lseek(int fd, LONG offset, int whence)
       break;
     }
   return -1;
+}
+
+/*********************************************************************
+ *		_lseek (MSVCRT.@)
+ */
+LONG _lseek(int fd, LONG offset, int whence)
+{
+    return _lseeki64(fd, offset, whence);
 }
 
 /*********************************************************************
