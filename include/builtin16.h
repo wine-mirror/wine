@@ -56,7 +56,6 @@ typedef struct
 
 typedef struct
 {
-    const char *name;              /* DLL name */
     void       *module_start;      /* 32-bit address of the module data */
     int         module_size;       /* Size of the module data */
     void       *code_start;        /* 32-bit address of DLL code */

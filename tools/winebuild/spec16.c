@@ -776,7 +776,6 @@ void BuildSpec16File( FILE *outfile )
     /* Output the DLL descriptor */
 
     fprintf( outfile, "\nstatic const BUILTIN16_DESCRIPTOR descriptor = \n{\n" );
-    fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
     fprintf( outfile, "    &Code_Segment,\n" );

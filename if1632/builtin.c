@@ -67,8 +67,6 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     /* NOTE: (Ab)use the hRsrcMap parameter for resource data pointer */
     pModule->hRsrcMap = (void *)descr->rsrc;
 
-    TRACE( "Built-in %s: hmodule=%04x\n", descr->name, hModule );
-
     /* Allocate the code segment */
 
     pSegTable = NE_SEG_TABLE( pModule );
@@ -96,7 +94,38 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     if (descr->rsrc) NE_InitResourceHandler(hModule);
 
     NE_RegisterModule( pModule );
+
+    /* make sure the 32-bit library containing this one is loaded too */
+    LoadLibraryA( descr->owner );
+
     return hModule;
+}
+
+
+/***********************************************************************
+ *           find_dll_descr
+ *
+ * Find a descriptor in the list
+ */
+static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
+{
+    int i;
+    for (i = 0; i < nb_dlls; i++)
+    {
+        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
+        NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
+        OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
+        BYTE *name_table = (BYTE *)pModule + pModule->name_table;
+
+        /* check the dll file name */
+        if (!FILE_strcasecmp( pOfs->szPathName, dllname ))
+            return descr;
+        /* check the dll module name (without extension) */
+        if (!FILE_strncasecmp( dllname, name_table+1, *name_table ) &&
+            !strcmp( dllname + *name_table, ".dll" ))
+            return descr;
+    }
+    return NULL;
 }
 
 
@@ -107,9 +136,9 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
  */
 HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 {
+    const BUILTIN16_DESCRIPTOR *descr;
     char dllname[20], *p;
     void *handle;
-    int i;
 
     /* Fix the name in case we have a full path and extension */
 
@@ -123,25 +152,14 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name )
     if (!p) strcat( dllname, ".dll" );
     for (p = dllname; *p; p++) *p = FILE_tolower(*p);
 
-    for (i = 0; i < nb_dlls; i++)
-    {
-        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
-        NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
-        OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-        if (!FILE_strcasecmp( pOfs->szPathName, dllname ))
-            return BUILTIN_DoLoadModule16( descr );
-    }
+    if ((descr = find_dll_descr( dllname )))
+        return BUILTIN_DoLoadModule16( descr );
 
     if ((handle = BUILTIN32_dlopen( dllname )))
     {
-        for (i = 0; i < nb_dlls; i++)
-        {
-            const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
-            NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
-            OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-            if (!FILE_strcasecmp( pOfs->szPathName, dllname ))
-                return BUILTIN_DoLoadModule16( descr );
-        }
+        if ((descr = find_dll_descr( dllname )))
+            return BUILTIN_DoLoadModule16( descr );
+
         ERR( "loaded .so but dll %s still not found\n", dllname );
         BUILTIN32_dlclose( handle );
     }
