@@ -36,6 +36,7 @@
 
 /* For invalid registers fixup */
 extern DWORD CallFrom16_Start,CallFrom16_End;
+extern DWORD CALLTO16_Start,CALLTO16_End;
 
 
 /***********************************************************************
@@ -51,15 +52,18 @@ extern DWORD CallFrom16_Start,CallFrom16_End;
  */
 static BOOL INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
 {
-    if (IS_SELECTOR_SYSTEM(CS_sig(context)) &&
-        (EIP_sig(context) >= (DWORD)&CallFrom16_Start) &&
-        (EIP_sig(context) < (DWORD)&CallFrom16_End))
-    {
-        /* Saved selector may have become invalid when the relay code */
-        /* tries to restore it. We simply clear it. */
-        *sel = 0;
-        return TRUE;
-    }
+    if ( IS_SELECTOR_SYSTEM(CS_sig(context)) )
+        if (    ( EIP_sig(context) >= (DWORD)&CallFrom16_Start &&
+                  EIP_sig(context) <  (DWORD)&CallFrom16_End )
+             || ( EIP_sig(context) >= (DWORD)&CALLTO16_Start &&
+                  EIP_sig(context) <  (DWORD)&CALLTO16_End ) )
+        {
+            /* Saved selector may have become invalid when the relay code */
+            /* tries to restore it. We simply clear it. */
+            *sel = 0;
+            return TRUE;
+        }
+
     if (*sel == 0x40)
     {
         static WORD sys_timer = 0;
