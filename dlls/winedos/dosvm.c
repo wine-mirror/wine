@@ -539,7 +539,7 @@ INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 /***********************************************************************
  *		Wait (WINEDOS.@)
  */
-void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject) {}
+void WINAPI DOSVM_Wait( CONTEXT86 *waitctx ) { }
 
 /***********************************************************************
  *		OutPIC (WINEDOS.@)
