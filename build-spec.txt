@@ -8,12 +8,18 @@ ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]])
 		 HANDLERNAME([ARGNUM [ARGNUM [...]]])
 
 ORDINAL equate EXPORTNAME DATA
+
+ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
+
+# COMMENT_TEXT
+
 --------------------
 General:
 
     "name", "id" and "length" fields are mandatory.  Specific ordinal 
 declarations are optional, but the default handler will print an
-error message.
+error message.  Lines whose first character is a '#' will be ignored
+as comments.
 
 Variable ordinals:
 

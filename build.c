@@ -1,6 +1,6 @@
-/*
- * Copyright  Robert J. Amstadt, 1993
- */
+static char RCSId[] = "$Id: build.c,v 1.2 1993/06/30 14:24:33 root Exp root $";
+static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +17,7 @@
 #define FUNCTYPE_REG	19
 
 #define EQUATETYPE_ABS	18
+#define TYPE_RETURN	20
 
 #define MAX_ORDINALS	1024
 
@@ -44,6 +45,12 @@ typedef struct ordinal_function_definition_s
     int n_args_32;
     int arg_indices_32[16];
 } ORDFUNCDEF;
+
+typedef struct ordinal_return_definition_s
+{
+    int arg_size;
+    int ret_value;
+} ORDRETDEF;
 
 ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 
@@ -146,16 +153,26 @@ GetToken(void)
 	ParseBuffer = malloc(512);
 	ParseNext = ParseBuffer;
 	Line++;
-	if (fgets(ParseBuffer, 511, SpecFp) == NULL)
-	    return NULL;
+	while (1)
+	{
+	    if (fgets(ParseBuffer, 511, SpecFp) == NULL)
+		return NULL;
+	    if (ParseBuffer[0] != '#')
+		break;
+	}
     }
 
     while ((token = GetTokenInLine()) == NULL)
     {
 	ParseNext = ParseBuffer;
 	Line++;
-	if (fgets(ParseBuffer, 511, SpecFp) == NULL)
-	    return NULL;
+	while (1)
+	{
+	    if (fgets(ParseBuffer, 511, SpecFp) == NULL)
+		return NULL;
+	    if (ParseBuffer[0] != '#')
+		break;
+	}
     }
 
     return token;
@@ -388,6 +405,50 @@ ParseEquate(int ordinal)
 }
 
 int
+ParseReturn(int ordinal)
+{
+    ORDDEF *odp;
+    ORDRETDEF *rdp;
+    char *token;
+    char *endptr;
+    int value;
+    
+    if (ordinal >= MAX_ORDINALS)
+    {
+	fprintf(stderr, "%d: Ordinal number too large\n", Line);
+	exit(1);
+    }
+
+    rdp = malloc(sizeof(*rdp));
+    
+    odp = &OrdinalDefinitions[ordinal];
+    strcpy(odp->export_name, GetToken());
+    odp->valid = 1;
+    odp->type = TYPE_RETURN;
+    odp->additional_data = rdp;
+
+    token = GetToken();
+    rdp->arg_size = strtol(token, &endptr, 0);
+    if (endptr == NULL || *endptr != '\0')
+    {
+	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
+		token);
+	exit(1);
+    }
+
+    token = GetToken();
+    rdp->ret_value = strtol(token, &endptr, 0);
+    if (endptr == NULL || *endptr != '\0')
+    {
+	fprintf(stderr, "%d: Expected number value, got '%s'\n", Line,
+		token);
+	exit(1);
+    }
+
+    return 0;
+}
+
+int
 ParseOrdinal(int ordinal)
 {
     char *token;
@@ -415,6 +476,8 @@ ParseOrdinal(int ordinal)
 	return ParseExportFunction(ordinal, FUNCTYPE_REG);
     else if (stricmp(token, "equate") == 0)
 	return ParseEquate(ordinal);
+    else if (stricmp(token, "return") == 0)
+	return ParseReturn(ordinal);
     else
     {
 	fprintf(stderr, 
@@ -509,6 +572,7 @@ main(int argc, char **argv)
 {
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
+    ORDRETDEF *rdp;
     FILE *fp;
     char filename[80];
     char buffer[80];
@@ -553,6 +617,7 @@ main(int argc, char **argv)
 	else
 	{
 	    fdp = odp->additional_data;
+	    rdp = odp->additional_data;
 	    
 	    switch (odp->type)
 	    {
@@ -571,6 +636,18 @@ main(int argc, char **argv)
 
 	      case VARTYPE_LONG:
 		OutputVariableCode(fp, ".long", odp);
+		break;
+
+	      case TYPE_RETURN:
+		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, "\tmovw\t$%d,%%ax\n", rdp->ret_value & 0xffff);
+		fprintf(fp, "\tmovw\t$%d,%%dx\n", 
+			(rdp->ret_value >> 16) & 0xffff);
+		fprintf(fp, "\t.byte\t0x66\n");
+		if (rdp->arg_size != 0)
+		    fprintf(fp, "\tlret\t$%d\n", rdp->arg_size);
+		else
+		    fprintf(fp, "\tlret\n");
 		break;
 
 	      case FUNCTYPE_REG:

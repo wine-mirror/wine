@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: dlls.h,v 1.1 1993/06/29 15:55:18 root Exp $
  */
 /*
  * Copyright  Robert J. Amstadt, 1993
@@ -52,5 +52,7 @@ extern struct dll_table_entry_s KERNEL_table[];
 extern struct dll_table_entry_s USER_table[];
 extern struct dll_table_entry_s GDI_table[];
 extern struct dll_table_entry_s UNIXLIB_table[];
+extern struct dll_table_entry_s WIN87EM_table[];
+extern struct dll_table_entry_s SHELL_table[];
 
 #endif /* DLLS_H */

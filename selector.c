@@ -1,8 +1,5 @@
-/* $Id: exedump.c,v 1.1 1993/06/09 03:28:10 root Exp root $
- */
-/*
- * Copyright  Robert J. Amstadt, 1993
- */
+static char RCSId[] = "$Id: selector.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +26,78 @@ unsigned short PSPSelector;
 extern void KERNEL_Ordinal_102();
 extern void UNIXLIB_Ordinal_0();
 
+/**********************************************************************
+ *					GetEntryPointFromOrdinal
+ */
+unsigned int 
+GetEntryPointFromOrdinal(int fd, struct mz_header_s *mz_header, 
+			 struct ne_header_s *ne_header, int ordinal)
+{
+    struct entry_tab_header_s eth;
+    struct entry_tab_movable_s etm;
+    struct entry_tab_fixed_s etf;
+    int current_ordinal;
+    int i;
+    
+    /*
+     * Move to the beginning of the entry table.
+     */
+    lseek(fd, mz_header->ne_offset + ne_header->entry_tab_offset, SEEK_SET);
+
+    /*
+     * Let's walk through the table until we get to our entry.
+     */
+    current_ordinal = 1;
+    while (1)
+    {
+	/*
+	 * Read header for this bundle.
+	 */
+	if (read(fd, &eth, sizeof(eth)) != sizeof(eth))
+	    myerror("Error reading entry table");
+	
+	if (eth.n_entries == 0)
+	    return 0;
+
+	if (eth.seg_number == 0)
+	{
+	    current_ordinal++;
+	    continue;
+	}
+
+	/*
+	 * Read each of the bundle entries.
+	 */
+	for (i = 0; i < eth.n_entries; i++, current_ordinal++)
+	{
+	    if (eth.seg_number >= 0xfe)
+	    {
+		if (read(fd, &etm, sizeof(etm)) != sizeof(etm))
+		    myerror("Error reading entry table");
+
+		if (current_ordinal == ordinal)
+		{
+		    return ((unsigned int) 
+			    (SelectorTable[etm.seg_number - 1].base_addr + 
+			     etm.offset));
+		}
+	    }
+	    else
+	    {
+		if (read(fd, &etf, sizeof(etf)) != sizeof(etf))
+		    myerror("Error reading entry table");
+
+		if (current_ordinal == ordinal)
+		{
+		    return ((unsigned int) 
+			    (SelectorTable[eth.seg_number - 1].base_addr + 
+			     (int) etf.offset[0] + 
+			     ((int) etf.offset[1] << 8)));
+		}
+	    }
+	}
+    }
+}
 
 /**********************************************************************
  *					GetDOSEnvironment
@@ -113,9 +182,12 @@ CreatePSP(int sel_idx, struct segment_descriptor_s *s, FILE *zfile)
     usp = (unsigned short *) &psp->pspDispatcher[1];
     *usp       = (unsigned short) KERNEL_Ordinal_102;
     *(usp + 1) = 0x23;
-    psp->pspTerminateVector = 0x00230000 | ((int) UNIXLIB_Ordinal_0 & 0xffff);
-    psp->pspControlCVector = 0x00230000 | ((int) UNIXLIB_Ordinal_0 & 0xffff);
-    psp->pspCritErrorVector = 0x00230000 | ((int) UNIXLIB_Ordinal_0 & 0xffff);
+    psp->pspTerminateVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
+    psp->pspTerminateVector[1] = 0x0023;
+    psp->pspControlCVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
+    psp->pspControlCVector[1] = 0x0023;
+    psp->pspCritErrorVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
+    psp->pspCritErrorVector[1] = 0x0023;
     psp->pspEnvironment = SelectorTable[EnvironmentSelectorIdx].selector;
     psp->pspCommandTailCount = 1;
     strcpy(psp->pspCommandTail, "\r");
@@ -161,6 +233,14 @@ CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
     zfile = fopen("/dev/zero","r");
     for (i = 0; i < ne_header->n_segment_tab; i++, s++)
     {
+#ifdef DEBUG_SEGMENT
+	printf("  %2d: OFFSET %04.4x, LENGTH %04.4x, ",
+	       i + 1, seg_table[i].seg_data_offset, 
+	       seg_table[i].seg_data_length);
+	printf("FLAGS %04.4x, MIN ALLOC %04.4x\n",
+	       seg_table[i].seg_flags, seg_table[i].min_alloc);
+#endif
+
 	/*
 	 * Store the flags in our table.
 	 */
@@ -231,9 +311,10 @@ CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
 	    /*
 	     * Image in file.
 	     */
-	    status = lseek(fd, seg_table[i].seg_data_offset * 512, SEEK_SET);
+	    status = lseek(fd, seg_table[i].seg_data_offset * 
+			   (1 << ne_header->align_shift_count), SEEK_SET);
 	    if(read(fd, s->base_addr, old_length) != old_length)
-	      myerror("Unable to read segment from file");
+		myerror("Unable to read segment from file");
 	}
 	/*
 	 * Create entry in LDT for this segment.

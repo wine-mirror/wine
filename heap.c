@@ -1,4 +1,4 @@
-static char RCSId[] = "$Id$";
+static char RCSId[] = "$Id: heap.c,v 1.1 1993/06/29 15:55:18 root Exp $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
@@ -34,7 +34,7 @@ HEAP_LocalAlloc(int flags, int bytes)
     MDESC *m, *m_new;
     
 #ifdef HEAP_DEBUG
-    fprintf(stderr, "LocalAlloc: flags %x, bytes %d, ", flags, bytes);
+    printf("LocalAlloc: flags %x, bytes %d, ", flags, bytes);
 #endif
 
     /*
@@ -63,7 +63,7 @@ HEAP_LocalAlloc(int flags, int bytes)
 	    m->length -= (m_new->length + sizeof(MDESC));
 
 #ifdef HEAP_DEBUG
-	    fprintf(stderr, "Returning %x\n", (int) (m + 1));
+	    printf("Returning %x\n", (int) (m + 1));
 #endif
 	    return (void *) (m + 1);
 	}
@@ -80,13 +80,13 @@ HEAP_LocalAlloc(int flags, int bytes)
 	    m->next->prev = m->prev;
 	
 #ifdef HEAP_DEBUG
-	fprintf(stderr, "Returning %x\n", (int) (m + 1));
+	printf("Returning %x\n", (int) (m + 1));
 #endif
 	return (void *) (m + 1);
     }
 
 #ifdef HEAP_DEBUG
-    fprintf(stderr, "Returning 0\n");
+    printf("Returning 0\n");
 #endif
     return 0;
 }

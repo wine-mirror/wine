@@ -1,4 +1,4 @@
-CFLAGS=-g
+CFLAGS=-g -DDEBUG_RESOURCE
 
 ######################################################################
 # FILES:
@@ -11,12 +11,15 @@ CFLAGS=-g
 DLL_LENGTH=256
 
 BUILDOBJS=dll_kernel.o dll_user.o dll_gdi.o dll_unixlib.o \
-	  dll_kernel_tab.o dll_user_tab.o dll_gdi_tab.o dll_unixlib_tab.o
+	  dll_win87em.o dll_shell.o \
+	  dll_kernel_tab.o dll_user_tab.o dll_gdi_tab.o dll_unixlib_tab.o \
+	  dll_win87em_tab.o dll_shell_tab.o
 
 MUST_BE_LINKED_FIRST=if1632.o $(BUILDOBJS)
 
 OBJS=$(MUST_BE_LINKED_FIRST) \
-	dump.o heap.o ldt.o kernel.o relay.o selector.o user.o wine.o
+	dump.o heap.o ldt.o kernel.o relay.o resource.o \
+	selector.o user.o wine.o
 
 TARGET=wine
 LIBS=-lldt
@@ -47,3 +50,9 @@ dll_gdi.S dll_gdi_tab.c: build gdi.spec
 
 dll_unixlib.S dll_unixlib_tab.c: build unixlib.spec
 	build unixlib.spec
+
+dll_win87em.S dll_win87em_tab.c: build win87em.spec
+	build win87em.spec
+
+dll_shell.S dll_shell_tab.c: build shell.spec
+	build shell.spec

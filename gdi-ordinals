@@ -1,0 +1,283 @@
+  1   1  4e0c  SETBKCOLOR exported, shared data
+  2   1  4e22  SETBKMODE exported
+  3   1  4b46  SETMAPMODE exported, shared data
+  4   1  4e6b  SETROP2 exported
+  5   1  5218  SETRELABS exported
+  6   1  4eb9  SETPOLYFILLMODE exported
+  7   1  4e92  SETSTRETCHBLTMODE exported
+  8   1  4a00  SETTEXTCHARACTEREXTRA exported, shared data
+  9   1  4df8  SETTEXTCOLOR exported, shared data
+ 10   1  49ec  SETTEXTJUSTIFICATION exported, shared data
+ 11   1  4ee0  SETWINDOWORG exported, shared data
+ 12   4  06c8  SETWINDOWEXT exported
+ 13   1  4f14  SETVIEWPORTORG exported, shared data
+ 14   4  06fc  SETVIEWPORTEXT exported
+ 15   1  4b12  OFFSETWINDOWORG exported
+ 16   4  0764  SCALEWINDOWEXT exported
+ 17   1  4ade  OFFSETVIEWPORTORG exported
+ 18   4  0730  SCALEVIEWPORTEXT exported
+ 19  21  0e96  LINETO exported, shared data
+ 20  21  0eaa  MOVETO exported, shared data
+ 21   1  4c50  EXCLUDECLIPRECT exported
+ 22   1  4c84  INTERSECTCLIPRECT exported
+ 23   9  1030  ARC exported, shared data
+ 24   9  101c  ELLIPSE exported, shared data
+ 25  15  08fc  FLOODFILL exported, shared data
+ 26   9  1044  PIE exported, shared data
+ 27  25  0000  RECTANGLE exported, shared data
+ 28   9  106c  ROUNDRECT exported, shared data
+ 29   1  4c14  PATBLT exported, shared data
+ 30   1  48cb  SAVEDC exported, shared data
+ 31  23  0383  SETPIXEL exported, shared data
+ 32   1  4d3a  OFFSETCLIPRGN exported, shared data
+ 33   1  4f95  TEXTOUT exported, shared data
+ 34   1  4bfa  BITBLT exported, shared data
+ 35   1  4be0  STRETCHBLT exported, shared data
+ 36  24  0000  POLYGON exported, shared data
+ 37  21  0ede  POLYLINE exported, shared data
+ 38   7  06d1  ESCAPE exported, shared data
+ 39   1  48b7  RESTOREDC exported, shared data
+ 40  26  0000  FILLRGN exported, shared data
+ 41  26  003a  FRAMERGN exported, shared data
+ 42   1  4dbd  INVERTRGN exported, shared data
+ 43  26  0020  PAINTRGN exported, shared data
+ 44   1  4c98  SELECTCLIPRGN exported, shared data
+ 45   1  4dd7  SELECTOBJECT exported, shared data
+ 46   1  79f4  __GP exported, shared data
+ 47   1  4d4e  COMBINERGN exported, shared data
+ 48   1  4929  CREATEBITMAP exported, shared data
+ 49   1  4943  CREATEBITMAPINDIRECT exported, shared data
+ 50   4  05d7  CREATEBRUSHINDIRECT exported, shared data
+ 51   4  05f1  CREATECOMPATIBLEBITMAP exported
+ 52   1  47c4  CREATECOMPATIBLEDC exported, shared data
+ 53   1  480a  CREATEDC exported
+ 54   9  020e  CREATEELLIPTICRGN exported, shared data
+ 55   9  0f99  CREATEELLIPTICRGNINDIRECT exported, shared data
+ 56   3  1589  CREATEFONT exported, shared data
+ 57   3  15b1  CREATEFONTINDIRECT exported, shared data
+ 58   4  05a7  CREATEHATCHBRUSH exported, shared data
+ 59   1  1ec0  WEP exported, shared data
+ 60   4  05c3  CREATEPATTERNBRUSH exported, shared data
+ 61   1  48f3  CREATEPEN exported, shared data
+ 62   1  490f  CREATEPENINDIRECT exported, shared data
+ 63   9  0fb3  CREATEPOLYGONRGN exported, shared data
+ 64   1  59cd  CREATERECTRGN exported, shared data
+ 65   1  4cb2  CREATERECTRGNINDIRECT exported, shared data
+ 66   4  017a  CREATESOLIDBRUSH exported, shared data
+ 67   1  4a14  DPTOLP exported
+ 68   1  4897  DELETEDC exported, shared data
+ 69   1  48df  DELETEOBJECT exported, shared data
+ 70   5  05a7  ENUMFONTS exported, shared data
+ 71   4  0678  ENUMOBJECTS exported, shared data
+ 72   1  4ccc  EQUALRGN exported, shared data
+ 73   1  16a5  EXCLUDEVISRECT exported
+ 74   1  4a76  GETBITMAPBITS exported
+ 75   1  515d  GETBKCOLOR exported, shared data
+ 76   1  5142  GETBKMODE exported
+ 77   1  4c64  GETCLIPBOX exported, shared data
+ 78   1  5157  GETCURRENTPOSITION exported
+ 79   1  5154  GETDCORG exported
+ 80   1  4a96  GETDEVICECAPS exported, shared data
+ 81   1  513f  GETMAPMODE exported
+ 82   4  06a8  GETOBJECT exported, shared data
+ 83  23  036f  GETPIXEL exported, shared data
+ 84   1  5139  GETPOLYFILLMODE exported
+ 85   1  5133  GETROP2 exported
+ 86   1  5145  GETRELABS exported
+ 87   1  4a5a  GETSTOCKOBJECT exported, shared data
+ 88   1  513c  GETSTRETCHBLTMODE exported
+ 89  16  0c63  GETTEXTCHARACTEREXTRA exported, shared data
+ 90   1  5160  GETTEXTCOLOR exported, shared data
+ 91   1  4b8d  GETTEXTEXTENT exported, shared data
+ 92   3  166a  GETTEXTFACE exported, shared data
+ 93   3  169a  GETTEXTMETRICS exported, shared data
+ 94   1  5151  GETVIEWPORTEXT exported
+ 95   1  514b  GETVIEWPORTORG exported
+ 96   1  514e  GETWINDOWEXT exported
+ 97   1  5148  GETWINDOWORG exported
+ 98   1  16a2  INTERSECTVISRECT exported
+ 99   1  4a37  LPTODP exported
+100  23  039b  LINEDDA exported, shared data
+101   1  4d26  OFFSETRGN exported, shared data
+102   1  2929  OFFSETVISRGN exported, shared data
+103   1  4da9  PTVISIBLE exported, shared data
+104   1  4d06  RECTVISIBLE exported, shared data
+105   1  1635  SELECTVISRGN exported, shared data
+106   1  4aaa  SETBITMAPBITS exported
+117   1  1118  SETDCORG exported, shared data
+119   2  0e25  ADDFONTRESOURCE exported, shared data
+121   1  2067  DEATH exported, shared data
+122   1  208e  RESURRECTION exported, shared data
+123  19  1603  PLAYMETAFILE exported, shared data
+124  19  1624  GETMETAFILE exported, shared data
+125  20  248b  CREATEMETAFILE exported, shared data
+126  20  24a5  CLOSEMETAFILE exported, shared data
+127  19  15ef  DELETEMETAFILE exported, shared data
+128   1  41b0  MULDIV exported, shared data
+129   1  076c  SAVEVISRGN exported, shared data
+130   1  07b2  RESTOREVISRGN exported, shared data
+131   1  200a  INQUIREVISRGN exported, shared data
+132   7  073d  SETENVIRONMENT exported, shared data
+133   7  0707  GETENVIRONMENT exported, shared data
+134   1  4b6d  GETRGNBOX exported, shared data
+135  15  087f  SCANLR exported, shared data
+136   6  0507  REMOVEFONTRESOURCE exported, shared data
+148   1  4c28  SETBRUSHORG exported, shared data
+149   1  515a  GETBRUSHORG exported
+150   1  4c3c  UNREALIZEOBJECT exported, shared data
+151  20  246b  COPYMETAFILE exported, shared data
+153   1  47d8  CREATEIC exported
+154   1  4aca  GETNEARESTCOLOR exported, shared data
+155   7  052d  QUERYABORT exported, shared data
+156   4  0605  CREATEDISCARDABLEBITMAP exported
+159  20  24b9  GETMETAFILEBITS exported, shared data
+160  20  24cd  SETMETAFILEBITS exported, shared data
+161   1  4d95  PTINREGION exported, shared data
+162   1  49b8  GETBITMAPDIMENSION exported, shared data
+163   1  4984  SETBITMAPDIMENSION exported, shared data
+169   1  4352  ISDCDIRTY exported, shared data
+170   1  439b  SETDCSTATUS exported, shared data
+172   1  4d81  SETRECTRGN exported, shared data
+173   1  5130  GETCLIPRGN exported, shared data
+175  19  166a  ENUMMETAFILE exported, shared data
+176  19  163e  PLAYMETAFILERECORD exported, shared data
+179   1  0601  GETDCSTATE exported, shared data
+180   1  0615  SETDCSTATE exported, shared data
+181   1  4ce6  RECTINREGION exported, shared data
+190  31  04ec  SETDCHOOK exported, shared data
+191  31  04b5  GETDCHOOK exported, shared data
+192   1  76b0  SETHOOKFLAGS exported, shared data
+193  31  0526  SETBOUNDSRECT exported, shared data
+194   1  76e4  GETBOUNDSRECT exported, shared data
+195   1  1ac6  SELECTBITMAP exported, shared data
+196  20  24e1  SETMETAFILEBITSBETTER exported, shared data
+201  13  014a  DMBITBLT exported
+202  13  014f  DMCOLORINFO exported
+206  13  0163  DMENUMDFONTS exported
+207  13  0169  DMENUMOBJ exported
+208  13  0159  DMOUTPUT exported
+209  13  0154  DMPIXEL exported
+210  13  015e  DMREALIZEOBJECT exported
+211  13  00df  DMSTRBLT exported, shared data
+212  13  016e  DMSCANLR exported
+213  13  0171  BRUTE exported, shared data
+214  13  0000  DMEXTTEXTOUT exported, shared data
+215  13  0130  DMGETCHARWIDTH exported, shared data
+216  13  0136  DMSTRETCHBLT exported, shared data
+217  13  013b  DMDIBBITS exported, shared data
+218  13  0140  DMSTRETCHDIBITS exported, shared data
+219  13  0145  DMSETDIBTODEV exported, shared data
+220  13  024d  DMTRANSPOSE exported, shared data
+230  27  0000  CREATEPQ exported
+231  27  00fb  MINPQ exported
+232  27  00fe  EXTRACTPQ exported
+233  27  0045  INSERTPQ exported
+234  27  01dc  SIZEPQ exported
+235  27  01cb  DELETEPQ exported
+240  28  01c3  OPENJOB exported, shared data
+241  28  08eb  WRITESPOOL exported, shared data
+242  28  0e82  WRITEDIALOG exported, shared data
+243  28  1292  CLOSEJOB exported, shared data
+244  28  13e0  DELETEJOB exported, shared data
+245  28  1802  GETSPOOLJOB exported, shared data
+246  28  06a1  STARTSPOOLPAGE exported, shared data
+247  28  1112  ENDSPOOLPAGE exported, shared data
+248  28  18e4  QUERYJOB exported, shared data
+250  28  0000  COPY exported, shared data
+253  28  0ff3  DELETESPOOLPAGE exported, shared data
+254  28  156f  SPOOLFILE exported, shared data
+300   5  093c  ENGINEENUMERATEFONT exported, shared data
+301   6  0560  ENGINEDELETEFONT exported, shared data
+302   3  2b2d  ENGINEREALIZEFONT exported, shared data
+303   3  2c8a  ENGINEGETCHARWIDTH exported, shared data
+304   5  0993  ENGINESETFONTCONTEXT exported, shared data
+305   7  09e9  ENGINEGETGLYPHBMP exported, shared data
+306   7  1184  ENGINEMAKEFONTDIR exported, shared data
+307   7  083d  GETCHARABCWIDTHS exported, shared data
+308   7  0876  GETOUTLINETEXTMETRICS exported, shared data
+309   7  0795  GETGLYPHOUTLINE exported, shared data
+310   7  0763  CREATESCALABLEFONTRESOURCE exported, shared data
+311   7  07fc  GETFONTDATA exported, shared data
+312   7  0d8a  CONVERTOUTLINEFONTFILE exported, shared data
+313   7  0d36  GETRASTERIZERCAPS exported, shared data
+314   1  669a  ENGINEEXTTEXTOUT exported, shared data
+330   5  05d7  ENUMFONTFAMILIES exported, shared data
+332   7  0896  GETKERNINGPAIRS exported, shared data
+345   1  5136  GETTEXTALIGN exported, shared data
+346   1  4e49  SETTEXTALIGN exported, shared data
+348   9  1058  CHORD exported, shared data
+349   3  163f  SETMAPPERFLAGS exported, shared data
+350   3  15cb  GETCHARWIDTH exported, shared data
+351   1  4f48  EXTTEXTOUT exported, shared data
+352   1  0a2e  GETPHYSICALFONTHANDLE exported, shared data
+353   3  160b  GETASPECTRATIOFILTER exported, shared data
+354   1  1fdf  SHRINKGDIHEAP exported, shared data
+355  48  02ef  FTRAPPING0 exported, shared data
+360  22  0023  CREATEPALETTE exported, shared data
+361  22  0271  GDISELECTPALETTE exported, shared data
+362  22  1088  GDIREALIZEPALETTE exported, shared data
+363  22  0050  GETPALETTEENTRIES exported, shared data
+364  22  00d2  SETPALETTEENTRIES exported, shared data
+365  22  101d  REALIZEDEFAULTPALETTE exported, shared data
+366  22  0109  UPDATECOLORS exported, shared data
+367  22  0000  ANIMATEPALETTE exported, shared data
+368  22  00be  RESIZEPALETTE exported, shared data
+370  22  0073  GETNEARESTPALETTEINDEX exported, shared data
+372  15  0910  EXTFLOODFILL exported, shared data
+373  22  00f5  SETSYSTEMPALETTEUSE exported, shared data
+374  22  00aa  GETSYSTEMPALETTEUSE exported, shared data
+375  22  0087  GETSYSTEMPALETTEENTRIES exported, shared data
+376  31  009c  RESETDC exported, shared data
+377  31  0045  STARTDOC exported, shared data
+378  31  002e  ENDDOC exported, shared data
+379  31  0068  STARTPAGE exported, shared data
+380  31  0017  ENDPAGE exported, shared data
+381  31  007c  SETABORTPROC exported, shared data
+382  31  0000  ABORTDOC exported, shared data
+400   1  420e  FASTWINDOWFRAME exported, shared data
+401   2  0403  GDIMOVEBITMAP exported, shared data
+403   2  042a  GDIINIT2 exported, shared data
+405   2  012e  FINALGDIINIT exported, shared data
+407   1  0ec1  CREATEUSERBITMAP exported
+409   4  0200  CREATEUSERDISCARDABLEBITMAP exported
+410  19  1490  ISVALIDMETAFILE exported, shared data
+411   1  511a  GETCURLOGFONT exported, shared data
+412  22  0b0c  ISDCCURRENTPALETTE exported, shared data
+439  11  0202  STRETCHDIBITS exported, shared data
+440  11  0000  SETDIBITS exported, shared data
+441  11  0196  GETDIBITS exported, shared data
+442  11  006c  CREATEDIBITMAP exported, shared data
+443  11  010a  SETDIBITSTODEVICE exported, shared data
+444   9  01be  CREATEROUNDRECTRGN exported, shared data
+445   4  0619  CREATEDIBPATTERNBRUSH exported, shared data
+449  11  1015  DEVICECOLORMATCH exported, shared data
+450  24  0023  POLYPOLYGON exported, shared data
+451   9  0fe3  CREATEPOLYPOLYGONRGN exported, shared data
+452  21  19a0  GDISEEGDIDO exported, shared data
+460   1  7690  GDITASKTERMINATION exported, shared data
+461   1  76a2  SETOBJECTOWNER exported, shared data
+462   1  1ec6  ISGDIOBJECT exported, shared data
+463   1  0e68  MAKEOBJECTPRIVATE exported, shared data
+464  19  1862  FIXUPBOGUSPUBLISHERMETAFILE exported, shared data
+465   1  29b7  RECTVISIBLE_EHH exported, shared data
+466   1  2aab  RECTINREGION_EHH exported, shared data
+467   1  56a3  UNICODETOANSI exported, shared data
+468   1  49cc  GETBITMAPDIMENSIONEX exported, shared data
+469   1  5eb5  GETBRUSHORGEX exported
+470   1  5ed8  GETCURRENTPOSITIONEX exported
+471   1  4bb4  GETTEXTEXTENTPOINT exported, shared data
+472   1  5f27  GETVIEWPORTEXTEX exported
+473   1  5f4a  GETVIEWPORTORGEX exported
+474   1  5f6d  GETWINDOWEXTEX exported
+475   1  5f90  GETWINDOWORGEX exported
+476   1  4af2  OFFSETVIEWPORTORGEX exported
+477   1  4b26  OFFSETWINDOWORGEX exported
+478   1  4998  SETBITMAPDIMENSIONEX exported, shared data
+479   4  0710  SETVIEWPORTEXTEX exported
+480   1  4f28  SETVIEWPORTORGEX exported, shared data
+481   4  06dc  SETWINDOWEXTEX exported
+482   1  4ef4  SETWINDOWORGEX exported, shared data
+483  21  0ebe  MOVETOEX exported, shared data
+484   4  0744  SCALEVIEWPORTEXTEX exported
+485   4  0778  SCALEWINDOWEXTEX exported
+486   3  161f  GETASPECTRATIOFILTEREX exported, shared data

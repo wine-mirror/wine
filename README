@@ -2,9 +2,19 @@ Copyright  Robert J. Amstadt, 1993.  All code is provided without
 warranty.  It is my intent to cover this code with the Gnu Public
 License.
 
-So here goes release 0.0.2 of the Windows loader.  It will do some 
-relocations and then run the program.  The program test.exe is a 
-Windows executable.  Try the command "wine test.exe".
+So here goes release 0.0.3 of the Windows loader.  It will do some 
+relocations and then run the program.  I have successfully loaded 
+the Windows solitaire game.  Try it.  It currently stops a call to
+GetObject().
+
+WHAT'S NEW with version 0.0.3:
+    - Fixed bug with sector sizes.
+    - Registers at program startup are now set correctly.
+    - Segment fixups for relocatable-segment internal entry points.
+    - Fixed bug in DOS PSP structure.
+    - Some resource loading is done.
+    - Added "return" ordinal type to build program.
+    - Added comment capability to build program.
 
 WHAT'S NEW with version 0.0.2:
 
@@ -34,10 +44,12 @@ TODO:
     - Make changes to the kernel to allow more than 32 LDT entries.
     - Trap and handle DOS and DPMI calls.
     - Windows emulation library (connect to Peter MacDonald's library).
-    - Set registers correctly when starting Windows program.
     - Allowing loading of 16-bit DLLs for use with program.
-    - global memory allocation
-    - complete and improve local heap allocation
+    - global memory allocation.
+    - complete and improve local heap allocation.
+    - Handle self-loading applications.
+    - Deal with callback functions.
+    - Resource loading
 
 INSTALLATION:
 

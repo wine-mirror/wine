@@ -1,8 +1,5 @@
-/* $Id: exedump.c,v 1.1 1993/06/09 03:28:10 root Exp root $
- */
-/*
- * Copyright  Robert J. Amstadt, 1993
- */
+static char RCSId[] = "$Id: wine.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,13 +17,18 @@
 #include "prototypes.h"
 #include "dlls.h"
 
-extern int CallTo16(unsigned long csip, unsigned long sssp, unsigned short ds);
+extern int CallToInit16(unsigned long csip, unsigned long sssp, 
+			unsigned short ds);
 extern void CallTo32();
 
 unsigned short WIN_StackSize;
+unsigned short WIN_HeapSize;
 
 char **Argv;
 int Argc;
+struct mz_header_s *CurrentMZHeader;
+struct ne_header_s *CurrentNEHeader;
+int CurrentNEFile;
 
 /**********************************************************************
  *					DebugPrintString
@@ -34,7 +36,7 @@ int Argc;
 int
 DebugPrintString(char *str)
 {
-    fprintf(stderr, "%s", str);
+    printf("%s", str);
     return 0;
 }
 
@@ -119,8 +121,12 @@ main(int argc, char **argv)
     if (ne_header->header_type[0] != 'N' || ne_header->header_type[1] != 'E')
 	myerror("This is not a Windows program");
 
+    CurrentMZHeader = mz_header;
+    CurrentNEHeader = ne_header;
+    CurrentNEFile   = fd;
+
     WIN_StackSize = ne_header->stack_length;
-    
+    WIN_HeapSize = ne_header->local_heap_length;
 
     /*
      * Create segment selectors.
@@ -146,7 +152,6 @@ main(int argc, char **argv)
 	}
     }
 
-    close(fd);
     /*
      * Fixup stack and jump to start.
      */
@@ -156,7 +161,7 @@ main(int argc, char **argv)
     ss_reg = selector_table[ne_header->ss-1].selector;
     sp_reg = ne_header->sp;
 
-    rv = CallTo16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
+    rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
     printf ("rv = %x\n", rv);
 }
 
@@ -244,7 +249,8 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
     if (i == 0)
 	i = 0x10000;
 
-    status = lseek(fd, seg->seg_data_offset * 512 + i, SEEK_SET);
+    status = lseek(fd, seg->seg_data_offset * 
+		       (1 << ne_header->align_shift_count) + i, SEEK_SET);
     n_entries = 0;
     read(fd, &n_entries, sizeof(short int));
     rep = (struct relocation_entry_s *)
@@ -273,6 +279,15 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 	    }
 	    
  	    dll_table = FindDLLTable(dll_name);
+	    if (dll_table == NULL)
+	    {
+		char s[80];
+		
+		sprintf(s, "Bad DLL name '%s'", dll_name);
+		myerror(s);
+		return -1;
+	    }
+
 	    ordinal = rep->target2;
 	    selector = dll_table[ordinal].selector;
 	    address  = (unsigned int) dll_table[ordinal].address;
@@ -289,6 +304,14 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 		return -1;
 	    }
  	    dll_table = FindDLLTable(dll_name);
+	    if (dll_table == NULL)
+	    {
+		char s[80];
+		
+		sprintf(s, "Bad DLL name '%s'", dll_name);
+		myerror(s);
+		return -1;
+	    }
 
 	    if (GetImportedName(fd, mz_header, ne_header, 
 				rep->target2, func_name) == NULL)
@@ -305,7 +328,48 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
+	    if (rep->target1 == 0x00ff)
+	    {
+		address  = GetEntryPointFromOrdinal(fd, mz_header, ne_header,
+						    rep->target2);
+		selector = (address >> 16) & 0xffff;
+		address &= 0xffff;
+	    }
+	    else
+	    {
+		selector = selector_table[rep->target1-1].selector;
+		address  = rep->target2;
+	    }
+	    
+#ifdef DEBUG_FIXUP
+	    printf("%d: %04.4x:%04.4x\n", i + 1, selector, address);
+#endif
+	    break;
+
+	  case 7:
+	    /* Relocation type 7:
+	     *
+	     *    These appear to be used as fixups for the Windows
+	     * floating point emulator.  Let's just ignore them and
+	     * try to use the hardware floating point.  Linux should
+	     * successfully emulate the coprocessor if it doesn't
+	     * exist.
+	     */
+#ifdef DEBUG_FIXUP
+	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   i + 1, rep->address_type, rep->relocation_type, 
+		   rep->offset);
+	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+#endif
+	    continue;
+	    
 	  default:
+#ifdef DEBUG_FIXUP
+	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   i + 1, rep->address_type, rep->relocation_type, 
+		   rep->offset);
+	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+#endif
 	    free(rep1);
 	    return -1;
 	}
@@ -337,7 +401,23 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 
 	    break;
 	    
+	  case NE_RADDR_SELECTOR:
+	    do {
+		next_addr = *sp;
+		*sp     = (unsigned short) selector;
+		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
+	    } 
+	    while (next_addr != 0xffff);
+
+	    break;
+	    
 	  default:
+#ifdef DEBUG_FIXUP
+	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   i + 1, rep->address_type, rep->relocation_type, 
+		   rep->offset);
+	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+#endif
 	    free(rep1);
 	    return -1;
 	}

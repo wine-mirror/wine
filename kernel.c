@@ -1,4 +1,4 @@
-static char RCSId[] = "$Id$";
+static char RCSId[] = "$Id: kernel.c,v 1.1 1993/06/29 15:55:18 root Exp $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
@@ -28,7 +28,7 @@ KERNEL_LockSegment(int segment)
 	segment = *(Stack16Frame + 6);
 
 #ifdef RELAY_DEBUG
-    fprintf(stderr, "LockSegment: segment %x\n", segment);
+    printf("LockSegment: segment %x\n", segment);
 #endif
 
     return segment;
@@ -44,7 +44,7 @@ KERNEL_UnlockSegment(int segment)
 	segment = *(Stack16Frame + 6);
 
 #ifdef RELAY_DEBUG
-    fprintf(stderr, "UnlockSegment: segment %x\n", segment);
+    printf("UnlockSegment: segment %x\n", segment);
 #endif
 
     return segment;
@@ -57,7 +57,7 @@ int
 KERNEL_WaitEvent(int task)
 {
 #ifdef RELAY_DEBUG
-    fprintf(stderr, "WaitEvent: task %d\n", task);
+    printf("WaitEvent: task %d\n", task);
 #endif
     return 0;
 }
@@ -68,7 +68,7 @@ int
 KERNEL_GetModuleFileName(int module, char *filename, int bytes)
 {
 #ifdef RELAY_DEBUG
-    fprintf(stderr, "GetModuleFileName: module %d, filename %x, bytes %d\n", 
+    printf("GetModuleFileName: module %d, filename %x, bytes %d\n", 
 	    module, filename, bytes);
 #endif
     

@@ -1,8 +1,10 @@
+# $Id: kernel.spec,v 1.2 1993/06/30 14:24:33 root Exp root $
+#
 name	kernel
 id	1
-length	256
+length	410
 
-3   pascal GetVersion() KERNEL_GetVersion()
+3   return GetVersion 0 0x301
 5   pascal LocalAlloc(word word) HEAP_LocalAlloc(1 2)
 23  pascal LockSegment(s_word) KERNEL_LockSegment(1)
 24  pascal UnlockSegment(s_word) KERNEL_UnlockSegment(1)

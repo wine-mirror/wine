@@ -36,7 +36,7 @@ offset:
 	.text
 
 /**********************************************************************
- *	int CallTo16(unsigned long csip, unsigned long sssp,
+ *	int CallToInit16(unsigned long csip, unsigned long sssp,
  *		     unsigned short ds)
  *
  *	Stack:	 	0	ebp
@@ -48,8 +48,8 @@ offset:
  *			16	target ds
  */
 	.align	4
-	.globl _CallTo16
-_CallTo16:
+	.globl _CallToInit16
+_CallToInit16:
 	pushl	%ebp
 	movl	%esp,%ebp
 
@@ -76,13 +76,17 @@ _CallTo16:
 	movl	%ebp,saved_ebp
 
 	/*
-	 * Load ds, es, sp, ss & bp
+	 * Load initial registers
 	 */
-	movl	$0,%eax
+	movw	_WIN_StackSize,%bx
+	movw	_WIN_HeapSize,%cx
+	movl	$0,%esi
+	xorl	%eax,%eax
 	movw	_PSPSelector,%ax
 	movw	%ax,%es
 	movw	16(%ebp),%ax
 	movw	%ax,%ds
+	movl	%eax,%edi
 	xorl	%eax,%eax
 	movw	12(%ebp),%ax
 	movl	%eax,%esp
@@ -257,6 +261,8 @@ _KERNEL_InitTask:
 	popl	saved_16esp
 
 	popw	%es
+/*	movw	_PSPSelector,%ax
+	movw	%ax,%es */
 	popw	%ds
 
 	.align	2,0x90
@@ -283,12 +289,11 @@ noargs_2:
 	/*
 	 * Last, we need to load the return values.
 	 */
+	movl	$0,%esi
 	movw	$1,%ax
 	movw	%gs:_WIN_StackSize,%cx
 	movw	$1,%dx
 	movw	0x80,%bx
-	movl	$0,%esi
-	movl	$1,%edi
 
 	.byte	0x66
 	lret

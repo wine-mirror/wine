@@ -1,8 +1,5 @@
-/* $Id$
- */
-/*
- * Copyright  Robert J. Amstadt, 1993
- */
+static char RCSId[] = "$Id: relay.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,12 +17,16 @@
 #include "prototypes.h"
 #include "dlls.h"
 
-struct dll_name_table_entry_s dll_builtin_table[4] =
+#define N_BUILTINS	6
+
+struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
 {
-    { "KERNEL",  KERNEL_table, 	256, 1 },
-    { "USER",    USER_table, 	256, 2 },
-    { "GDI",     GDI_table, 	256, 3 },
-    { "UNIXLIB", UNIXLIB_table, 256, 4 },
+    { "KERNEL",  KERNEL_table, 	410, 1 },
+    { "USER",    USER_table, 	540, 2 },
+    { "GDI",     GDI_table, 	490, 3 },
+    { "UNIXLIB", UNIXLIB_table,  10, 4 },
+    { "WIN87EM", WIN87EM_table,  10, 5 },
+    { "SHELL",   SHELL_table,   256, 6 },
 };
 
 unsigned short *Stack16Frame;
@@ -170,7 +171,7 @@ FindDLLTable(char *dll_name)
 {
     int i;
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < N_BUILTINS; i++)
 	if (strcmp(dll_builtin_table[i].dll_name, dll_name) == 0)
 	    return dll_builtin_table[i].dll_table;
     
@@ -185,11 +186,11 @@ FindOrdinalFromName(struct dll_table_entry_s *dll_table, char *func_name)
 {
     int i, limit;
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < N_BUILTINS; i++)
 	if (dll_table == dll_builtin_table[i].dll_table)
 	    break;
     
-    if (i == 4)
+    if (i == N_BUILTINS)
 	return 0;
 
     limit = dll_builtin_table[i].dll_table_length;

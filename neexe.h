@@ -1,4 +1,4 @@
-/* $Id: neexe.h,v 1.1 1993/06/09 03:28:10 root Exp root $
+/* $Id: neexe.h,v 1.3 1993/06/30 14:24:33 root Exp root $
  */
 /*
  * Copyright  Robert J. Amstadt, 1993
@@ -143,9 +143,9 @@ struct dos_psp_s
     unsigned short pspNextParagraph;
     unsigned char  pspReserved1;
     unsigned char  pspDispatcher[5];
-    unsigned long  pspTerminateVector;
-    unsigned long  pspControlCVector;
-    unsigned long  pspCritErrorVector;
+    unsigned short pspTerminateVector[2];
+    unsigned short pspControlCVector[2];
+    unsigned short pspCritErrorVector[2];
     unsigned short pspReserved2[11];
     unsigned short pspEnvironment;
     unsigned short pspReserved3[23];
@@ -154,5 +154,64 @@ struct dos_psp_s
     unsigned char  pspCommandTailCount;
     unsigned char  pspCommandTail[128];
 };
+
+/*
+ * Entry table structures.
+ */
+struct entry_tab_header_s
+{
+    unsigned char n_entries;
+    unsigned char seg_number;
+};
+
+struct entry_tab_movable_s
+{
+    unsigned char flags;
+    unsigned char int3f[2];
+    unsigned char seg_number;
+    unsigned short offset;
+};
+
+struct entry_tab_fixed_s
+{
+    unsigned char flags;
+    unsigned char offset[2];
+};
+
+/*
+ * Resource table structures.
+ */
+struct resource_nameinfo_s
+{
+    unsigned short offset;
+    unsigned short length;
+    unsigned short flags;
+    unsigned short id;
+    unsigned short handle;
+    unsigned short usage;
+};
+
+struct resource_typeinfo_s
+{
+    unsigned short type_id;	/* Type identifier */
+    unsigned short count;	/* Number of resources of this type */
+    unsigned long  reserved;
+    /*
+     * Name info array.
+     */
+};
+
+#define NE_RSCTYPE_ACCELERATOR		0x8009
+#define NE_RSCTYPE_BITMAP		0x8002
+#define NE_RSCTYPE_CURSOR		0x8001
+#define NE_RSCTYPE_DIALOG		0x8005
+#define NE_RSCTYPE_FONT			0x8008
+#define NE_RSCTYPE_FONTDIR		0x8007
+#define NE_RSCTYPE_GROUP_CURSOR		0x800c
+#define NE_RSCTYPE_GROUP_ICON		0x800e
+#define NE_RSCTYPE_ICON			0x8003
+#define NE_RSCTYPE_MENU			0x8004
+#define NE_RSCTYPE_RCDATA		0x800a
+#define NE_RSCTYPE_STRING		0x8006
 
 #endif /* NEEXE_H */
