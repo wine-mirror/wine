@@ -22,7 +22,6 @@
 
 SHELL     = /bin/sh
 CC        = @CC@
-CPP       = @CPP@
 CFLAGS    = @CFLAGS@
 CPPFLAGS  = @CPPFLAGS@
 LIBS      = @LIBS@

@@ -5,7 +5,7 @@ DEFS = \
 	-DDLLFLAGS="\"@DLLFLAGS@\"" \
 	-DLDDLLFLAGS="\"$(LDDLLFLAGS)\"" \
 	-DCC="\"$(CC)\"" \
-	-DCPP="\"$(CPP)\"" \
+	-DCPP="\"@CPPBIN@\"" \
 	-DCXX="\"$(CXX)\""
 
 TOPSRCDIR = @top_srcdir@
