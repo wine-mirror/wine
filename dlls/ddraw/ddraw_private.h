@@ -21,6 +21,8 @@
 
 /* MAY NOT CONTAIN X11 or DGA specific includes/defines/structs! */
 
+#include <stdio.h>
+
 #include "winbase.h"
 #include "wtypes.h"
 #include "wingdi.h"
@@ -371,6 +373,7 @@ extern void DDRAW_dump_cooperativelevel(DWORD cooplevel);
 extern void DDRAW_dump_lockflag(DWORD lockflag);
 extern void DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *in);
 extern void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps);
+extern void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f) ;
 
 /* Used for generic dumping */
 typedef struct

@@ -41,90 +41,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 #ifdef TEXTURE_SNOOP
 #include <stdio.h>
 
-#define SNOOP_PALETTED() 									\
-      {												\
-	FILE *f;										\
-	char buf[32];										\
-	int x, y;										\
-												\
-	sprintf(buf, "%ld.pnm", glThis->tex_name);						\
-	f = fopen(buf, "wb");									\
-	fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);			\
-	for (y = 0; y < src_d->dwHeight; y++) {							\
-	  for (x = 0; x < src_d->dwWidth; x++) {						\
-	    unsigned char c = ((unsigned char *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
-	    fputc(table[c][0], f);								\
-	    fputc(table[c][1], f);								\
-	    fputc(table[c][2], f);								\
-	  }											\
-	}											\
-	fclose(f);										\
-      }
+static void snoop_texture(IDirectDrawSurfaceImpl *This) {
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
+    char buf[128];
+    FILE *f;
+    
+    sprintf(buf, "tex_%05d.pnm", glThis->tex_name);
+    f = fopen(buf, "wb");
+    DDRAW_dump_surface_to_disk(This, f);
+}
 
-#define SNOOP_5650()											\
-	  {												\
-	    FILE *f;											\
-	    char buf[32];										\
-	    int x, y;											\
-	    												\
-	    sprintf(buf, "%ld.pnm", glThis->tex_name);							\
-	    f = fopen(buf, "wb");									\
-	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
-	    for (y = 0; y < src_d->dwHeight; y++) {							\
-	      for (x = 0; x < src_d->dwWidth; x++) {							\
-		unsigned short c = ((unsigned short *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
-		fputc((c & 0xF800) >> 8, f);								\
-		fputc((c & 0x07E0) >> 3, f);								\
-		fputc((c & 0x001F) << 3, f);								\
-	      }												\
-	    }												\
-	    fclose(f);											\
-	  }
-
-#define SNOOP_5551()											\
-	  {												\
-	    FILE *f;											\
-	    char buf[32];										\
-	    int x, y;											\
-	    												\
-	    sprintf(buf, "%ld.pnm", glThis->tex_name);							\
-	    f = fopen(buf, "wb");									\
-	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
-	    for (y = 0; y < src_d->dwHeight; y++) {							\
-	      for (x = 0; x < src_d->dwWidth; x++) {							\
-		unsigned short c = ((unsigned short *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
-		fputc((c & 0xF800) >> 8, f);								\
-		fputc((c & 0x07C0) >> 3, f);								\
-		fputc((c & 0x003E) << 2, f);								\
-	      }												\
-	    }												\
-	    fclose(f);											\
-	  }
-
-#define SNOOP_1555()											\
-	  {												\
-	    FILE *f;											\
-	    char buf[32];										\
-	    int x, y;											\
-	    												\
-	    sprintf(buf, "%ld.pnm", glThis->tex_name);							\
-	    f = fopen(buf, "wb");									\
-	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
-	    for (y = 0; y < src_d->dwHeight; y++) {							\
-	      for (x = 0; x < src_d->dwWidth; x++) {							\
-		unsigned short c = ((unsigned short *) src_d->lpSurface)[y * src_d->dwWidth + x];	\
-		fputc((c & 0x7C00) >> 7, f);								\
-		fputc((c & 0x03E0) >> 2, f);								\
-		fputc((c & 0x001F) << 3, f);								\
-	      }												\
-	    }												\
-	    fclose(f);											\
-	  }
 #else
-#define SNOOP_PALETTED()
-#define SNOOP_5650()
-#define SNOOP_5551()
-#define SNOOP_1555()
+
+#define snoop_texture(a)
+
 #endif
 
 /*******************************************************************************
@@ -224,6 +154,9 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
     glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
 
+    /* Texture snooping for the curious :-) */
+    snoop_texture(This);
+    
     if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
 	  /* ****************
 	     Paletted Texture
@@ -256,9 +189,6 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	    else
 	        table[i][3] = 0xFF;
 	}
-
-	/* Texture snooping */
-	SNOOP_PALETTED();
 
 	if (ptr_ColorTableEXT != NULL) {
 	    /* use Paletted Texture Extension */
@@ -337,9 +267,6 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				src_d->lpSurface);
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
   	    if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
-	        /* Texture snooping */
-	        SNOOP_5650();
-		    
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
 				 glThis->mipmap_level,
@@ -359,9 +286,6 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 				    src_d->lpSurface);
 
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
-	        /* Texture snooping */
-  	        SNOOP_5551();
-		    
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,
 				 glThis->mipmap_level,
@@ -439,7 +363,6 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			      ((*src & 0x7FFF) <<  1));
 		    src++;
 		}
-		SNOOP_1555();
 		
 		if (init_upload)
 		    glTexImage2D(GL_TEXTURE_2D,

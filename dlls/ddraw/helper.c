@@ -24,6 +24,7 @@
 #include "wine/port.h"
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include "d3d.h"
 #include "ddraw.h"
@@ -556,4 +557,75 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps) {
     DPRINTF(" - dwMaxOverlayStretch : %ld\n", lpcaps->dwMaxOverlayStretch);
     DPRINTF("...\n");
     DPRINTF(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps); DPRINTF("\n");
+}
+
+/* Debug function that can be helpful to debug various surface-related problems */
+static int get_shift(DWORD color_mask) {
+    int shift = 0;
+    while (color_mask > 0xFF) {
+        color_mask >>= 1;
+	shift += 1;
+    }
+    while ((color_mask & 0x80) == 0) {
+        color_mask <<= 1;
+	shift -= 1;
+    }
+    return shift;
+}
+
+void DDRAW_dump_surface_to_disk(IDirectDrawSurfaceImpl *surface, FILE *f)
+{
+    int i;
+
+    DDRAW_dump_surface_desc(&(surface->surface_desc));
+    
+    fprintf(f, "P6\n%ld %ld\n255\n", surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
+
+    if (surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+        unsigned char table[256][3];
+	unsigned char *src = (unsigned char *) surface->surface_desc.lpSurface;
+	if (surface->palette == NULL) {
+	    fclose(f);
+	    return;
+	}
+	for (i = 0; i < 256; i++) {
+	    table[i][0] = surface->palette->palents[i].peRed;
+	    table[i][1] = surface->palette->palents[i].peGreen;
+	    table[i][2] = surface->palette->palents[i].peBlue;
+	}
+	for (i = 0; i < surface->surface_desc.dwHeight * surface->surface_desc.dwWidth; i++) {
+	    unsigned char color = *src++;
+	    fputc(table[color][0], f);
+	    fputc(table[color][1], f);
+	    fputc(table[color][2], f);
+	}
+    } else if (surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_RGB) {
+        int red_shift, green_shift, blue_shift;
+	red_shift = get_shift(surface->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask);
+	green_shift = get_shift(surface->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask);
+	blue_shift = get_shift(surface->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask);
+
+	for (i = 0; i < surface->surface_desc.dwHeight * surface->surface_desc.dwWidth; i++) {
+	    int color;
+	    int comp;
+	    
+	    if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 8) {
+	        color = ((unsigned char *) surface->surface_desc.lpSurface)[i];
+	    } else if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	        color = ((unsigned short *) surface->surface_desc.lpSurface)[i];
+	    } else if (surface->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) {
+	        color = ((unsigned int *) surface->surface_desc.lpSurface)[i];
+	    } else {
+	        /* Well, this won't work on platforms without support for non-aligned memory accesses or big endian :-) */
+	        color = *((unsigned int *) (((char *) surface->surface_desc.lpSurface) + (3 * i)));
+	    }
+	    comp = color & surface->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask;
+	    fputc(red_shift > 0 ? comp >> red_shift : comp << -red_shift, f);
+	    comp = color & surface->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask;
+	    fputc(green_shift > 0 ? comp >> green_shift : comp << -green_shift, f);
+	    comp = color & surface->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask;
+	    fputc(blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift, f);
+	}
+    }
+    fclose(f);
 }
