@@ -62,6 +62,9 @@ typedef	struct tagWAVEMAPDATA {
     /* ratio to compute position from a PCM playback to any format */
     DWORD       avgSpeedOuter;
     DWORD       avgSpeedInner;
+    /* channel size of inner and outer */
+    DWORD       nSamplesPerSecOuter;
+    DWORD       nSamplesPerSecInner;
 } WAVEMAPDATA;
 
 static	BOOL	WAVEMAP_IsData(WAVEMAPDATA* wm)
@@ -177,6 +180,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wom->dwClientInstance = lpDesc->dwInstance;
     wom->u.out.hOuterWave = (HWAVEOUT)lpDesc->hWave;
     wom->avgSpeedOuter = wom->avgSpeedInner = lpDesc->lpFormat->nAvgBytesPerSec;
+    wom->nSamplesPerSecOuter = wom->nSamplesPerSecInner = lpDesc->lpFormat->nSamplesPerSec;
 
     for (i = ndlo; i < ndhi; i++) {
 	/* if no ACM stuff is involved, no need to handle callbacks at this
@@ -198,7 +202,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
                         switch (res=wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
-                            case MMSYSERR_NOERROR: wom->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
+                            case MMSYSERR_NOERROR: wom->avgSpeedInner = wfx.nAvgBytesPerSec; wom->nSamplesPerSecInner = wfx.nSamplesPerSec; goto found; \
                             case WAVERR_BADFORMAT: break; \
                             default: goto error; \
                         }
@@ -419,6 +423,8 @@ static	DWORD	wodGetPosition(WAVEMAPDATA* wom, LPMMTIME lpTime, DWORD dwParam2)
     val = waveOutGetPosition(wom->u.out.hInnerWave, lpTime, dwParam2);
     if (lpTime->wType == TIME_BYTES)
         lpTime->u.cb = MulDiv(lpTime->u.cb, wom->avgSpeedOuter, wom->avgSpeedInner);
+    if (lpTime->wType == TIME_SAMPLES)
+        lpTime->u.cb = MulDiv(lpTime->u.cb, wom->nSamplesPerSecOuter, wom->nSamplesPerSecInner);
     /* other time types don't require conversion */
     return val;
 }
@@ -691,6 +697,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     wim->avgSpeedOuter = wim->avgSpeedInner = lpDesc->lpFormat->nAvgBytesPerSec;
+    wim->nSamplesPerSecOuter = wim->nSamplesPerSecInner = lpDesc->lpFormat->nSamplesPerSec;
 
     for (i = ndlo; i < ndhi; i++) {
 	if (waveInOpen(&wim->u.in.hInnerWave, i, lpDesc->lpFormat, (DWORD)widCallback,
@@ -710,7 +717,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
                         switch (res=widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
-                        case MMSYSERR_NOERROR: wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
+                        case MMSYSERR_NOERROR: wim->avgSpeedInner = wfx.nAvgBytesPerSec; wim->nSamplesPerSecInner = wfx.nSamplesPerSec; goto found; \
                         case WAVERR_BADFORMAT: break; \
                         default: goto error; \
                         }
@@ -915,6 +922,8 @@ static	DWORD	widGetPosition(WAVEMAPDATA* wim, LPMMTIME lpTime, DWORD dwParam2)
     val = waveInGetPosition(wim->u.in.hInnerWave, lpTime, dwParam2);
     if (lpTime->wType == TIME_BYTES)
         lpTime->u.cb = MulDiv(lpTime->u.cb, wim->avgSpeedOuter, wim->avgSpeedInner);
+    if (lpTime->wType == TIME_SAMPLES)
+        lpTime->u.cb = MulDiv(lpTime->u.cb, wim->nSamplesPerSecOuter, wim->nSamplesPerSecInner);
     /* other time types don't require conversion */
     return val;
 }
