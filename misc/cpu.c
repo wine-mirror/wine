@@ -27,14 +27,75 @@
 #include <stdio.h>
 
 #include "winbase.h"
-#include "winreg.h"
 #include "winnt.h"
+#include "winternl.h"
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 static BYTE PF[64] = {0,};
+
+static void create_registry_keys( const SYSTEM_INFO *info )
+{
+    static const WCHAR SystemW[] = {'M','a','c','h','i','n','e','\\',
+                                    'H','a','r','d','w','a','r','e','\\',
+                                    'D','e','s','c','r','i','p','t','i','o','n','\\',
+                                    'S','y','s','t','e','m',0};
+    static const WCHAR fpuW[] = {'F','l','o','a','t','i','n','g','P','o','i','n','t','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
+    static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
+
+    int i;
+    HKEY hkey, system_key, cpu_key;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitUnicodeString( &nameW, SystemW );
+    if (NtCreateKey( &system_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return;
+
+    RtlInitUnicodeString( &valueW, IdentifierW );
+    NtSetValueKey( system_key, &valueW, 0, REG_SZ, SysidW, (strlenW(SysidW)+1) * sizeof(WCHAR) );
+
+    attr.RootDirectory = system_key;
+    RtlInitUnicodeString( &nameW, fpuW );
+    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
+
+    RtlInitUnicodeString( &nameW, cpuW );
+    if (!NtCreateKey( &cpu_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+    {
+        for (i = 0; i < info->dwNumberOfProcessors; i++)
+        {
+            char num[10], id[20];
+
+            attr.RootDirectory = cpu_key;
+            sprintf( num, "%d", i );
+            RtlCreateUnicodeStringFromAsciiz( &nameW, num );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
+                WCHAR idW[20];
+
+                sprintf( id, "CPU %ld", info->dwProcessorType );
+                RtlMultiByteToUnicodeN( idW, sizeof(idW), NULL, id, strlen(id)+1 );
+                NtSetValueKey( hkey, &valueW, 0, REG_SZ, idW, (strlenW(idW)+1)*sizeof(WCHAR) );
+                NtClose( hkey );
+            }
+            RtlFreeUnicodeString( &nameW );
+        }
+        NtClose( cpu_key );
+    }
+    NtClose( system_key );
+}
+
 
 /***********************************************************************
  * 			GetSystemInfo            	[KERNEL32.@]
@@ -62,7 +123,6 @@ VOID WINAPI GetSystemInfo(
 ) {
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
-	HKEY	xhkey=0,hkey;
 
 	if (cache) {
 		memcpy(si,&cachedsi,sizeof(*si));
@@ -91,23 +151,13 @@ VOID WINAPI GetSystemInfo(
 
 	/* Hmm, reasonable processor feature defaults? */
 
-        /* Create these registry keys for all systems
-	 * FPU entry is often empty on Windows, so we don't care either */
-	if ( (RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\FloatingPointProcessor",&hkey)!=ERROR_SUCCESS)
-	  || (RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System\\CentralProcessor",&hkey)!=ERROR_SUCCESS) )
-	{
-            WARN("Unable to write FPU/CPU info to registry\n");
-        }
-
 #ifdef linux
 	{
-	char buf[20];
 	char line[200];
 	FILE *f = fopen ("/proc/cpuinfo", "r");
 
 	if (!f)
 		return;
-        xhkey = 0;
 	while (fgets(line,200,f)!=NULL) {
 		char	*s,*value;
 
@@ -149,10 +199,6 @@ VOID WINAPI GetSystemInfo(
 					break;
 				}
 			}
-			/* set the CPU type of the current processor */
-			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
-			if (xhkey)
-				RegSetValueExA(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
 		/* old 2.0 method */
@@ -177,14 +223,6 @@ VOID WINAPI GetSystemInfo(
 					break;
 				}
 			}
-			/* set the CPU type of the current processor
-			 * FIXME: someone reported P4 as being set to
-			 * "              Intel(R) Pentium(R) 4 CPU 1500MHz"
-			 * Do we need to do the same ?
-			 * */
-			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
-			if (xhkey)
-				RegSetValueExA(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
 		if (!strncasecmp(line,"fdiv_bug",strlen("fdiv_bug"))) {
@@ -206,14 +244,6 @@ VOID WINAPI GetSystemInfo(
 			if (sscanf(value,"%d",&x))
 				if (x+1>cachedsi.dwNumberOfProcessors)
 					cachedsi.dwNumberOfProcessors=x+1;
-
-			/* Create a new processor subkey on a multiprocessor
-			 * system
-			 */
-			sprintf(buf,"%d",x);
-			if (xhkey)
-				RegCloseKey(xhkey);
-			RegCreateKeyA(hkey,buf,&xhkey);
 		}
 		if (!strncasecmp(line,"stepping",strlen("stepping"))) {
 			int	x;
@@ -238,19 +268,15 @@ VOID WINAPI GetSystemInfo(
 	memcpy(si,&cachedsi,sizeof(*si));
 #else  /* linux */
 	FIXME("not yet supported on this system\n");
-	RegCreateKeyA(hkey,"0",&xhkey);
-	RegSetValueExA(xhkey,"Identifier",0,REG_SZ,"CPU 386",strlen("CPU 386"));
 #endif  /* !linux */
-	if (xhkey)
-		RegCloseKey(xhkey);
-	if (hkey)
-		RegCloseKey(hkey);
         TRACE("<- CPU arch %d, res'd %d, pagesize %ld, minappaddr %p, maxappaddr %p,"
               " act.cpumask %08lx, numcpus %ld, CPU type %ld, allocgran. %ld, CPU level %d, CPU rev %d\n",
               si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,
               si->lpMinimumApplicationAddress, si->lpMaximumApplicationAddress,
               si->dwActiveProcessorMask, si->dwNumberOfProcessors, si->dwProcessorType,
               si->dwAllocationGranularity, si->wProcessorLevel, si->wProcessorRevision);
+
+        create_registry_keys( &cachedsi );
 }
 
 

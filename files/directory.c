@@ -40,7 +40,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "drive.h"
@@ -745,37 +744,53 @@ static BOOL DIR_TryModulePath( LPCWSTR name, DOS_FULL_NAME *full_name, BOOL win3
 static BOOL DIR_TryAppPath( LPCWSTR name, DOS_FULL_NAME *full_name )
 {
     HKEY hkAppPaths = 0, hkApp = 0;
-    WCHAR lpAppName[MAX_PATHNAME_LEN], lpAppPaths[MAX_PATHNAME_LEN];
+    WCHAR buffer[MAX_PATHNAME_LEN], *lpAppPaths;
     LPWSTR lpFileName;
     BOOL res = FALSE;
-    DWORD type, count;
+    DWORD count;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    KEY_VALUE_PARTIAL_INFORMATION *info;
     static const WCHAR PathW[] = {'P','a','t','h',0};
+    static const WCHAR AppPathsW[] = {'M','a','c','h','i','n','e','\\',
+                                      'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                      'A','p','p',' ','P','a','t','h','s',0};
 
-    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths", &hkAppPaths) != ERROR_SUCCESS)
-	return FALSE;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, AppPathsW );
+    if (NtOpenKey( &hkAppPaths, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return FALSE;
 
-    if (!GetModuleFileNameW(0, lpAppName, MAX_PATHNAME_LEN))
+    if (!GetModuleFileNameW(0, buffer, MAX_PATHNAME_LEN))
     {
 	WARN("huh, module not found ??\n");
 	goto end;
     }
-    lpFileName = strrchrW(lpAppName, '\\');
-    if (!lpFileName)
-	goto end;
+    lpFileName = strrchrW(buffer, '\\');
+    if (!lpFileName) lpFileName = buffer;
     else lpFileName++; /* skip '\\' */
-    if (RegOpenKeyW(hkAppPaths, lpFileName, &hkApp) != ERROR_SUCCESS)
-	goto end;
-    count = sizeof(lpAppPaths);
-    if (RegQueryValueExW(hkApp, PathW, 0, &type, (LPBYTE)lpAppPaths, &count) != ERROR_SUCCESS)
-        goto end;
-    TRACE("successfully opened App Paths for %s\n", debugstr_w(lpFileName));
 
+    attr.RootDirectory = hkAppPaths;
+    RtlInitUnicodeString( &nameW, lpFileName );
+    if (NtOpenKey( &hkApp, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) goto end;
+
+    RtlInitUnicodeString( &nameW, PathW );
+    if (NtQueryValueKey( hkApp, &nameW, KeyValuePartialInformation,
+                         buffer, sizeof(buffer)-sizeof(WCHAR), &count )) goto end;
+    info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    lpAppPaths = (WCHAR *)info->Data;
+    lpAppPaths[info->DataLength/sizeof(WCHAR)] = 0;
     res = DIR_SearchSemicolonedPaths(name, full_name, lpAppPaths);
 end:
-    if (hkApp)
-	RegCloseKey(hkApp);
-    if (hkAppPaths)
-	RegCloseKey(hkAppPaths);
+    if (hkApp) NtClose(hkApp);
+    if (hkAppPaths) NtClose(hkAppPaths);
     return res;
 }
 

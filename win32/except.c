@@ -48,9 +48,10 @@
 #include "wine/library.h"
 #include "thread.h"
 #include "stackframe.h"
-#include "wine/server.h"
-#include "wine/debug.h"
 #include "msvcrt/excpt.h"
+#include "wine/server.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
@@ -210,6 +211,8 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
  */
 static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 {
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
     HKEY		hDbgConf;
     DWORD		bAuto = FALSE;
     PROCESS_INFORMATION	info;
@@ -219,40 +222,75 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     DWORD		format_size;
     BOOL		ret = FALSE;
 
+    static const WCHAR AeDebugW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','o','f','t','w','a','r','e','\\',
+                                     'M','i','c','r','o','s','o','f','t','\\',
+                                     'W','i','n','d','o','w','s',' ','N','T','\\',
+                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                     'A','e','D','e','b','u','g',0};
+    static const WCHAR DebuggerW[] = {'D','e','b','u','g','g','e','r',0};
+    static const WCHAR AutoW[] = {'A','u','t','o',0};
+
     MESSAGE("wine: Unhandled exception, starting debugger...\n");
 
-    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE,
-		     "Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug", &hDbgConf)) {
-       DWORD 	type;
-       DWORD 	count;
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, AeDebugW );
 
-       format_size = 0;
-       if (!RegQueryValueExA(hDbgConf, "Debugger", 0, &type, NULL, &format_size)) {
-           format = HeapAlloc(GetProcessHeap(), 0, format_size);
-           RegQueryValueExA(hDbgConf, "Debugger", 0, &type, format, &format_size);
-           if (type==REG_EXPAND_SZ) {
-               char* tmp;
+    if (!NtOpenKey( &hDbgConf, KEY_ALL_ACCESS, &attr ))
+    {
+        char buffer[64];
+        KEY_VALUE_PARTIAL_INFORMATION *info;
 
-               /* Expand environment variable references */
-               format_size=ExpandEnvironmentStringsA(format,NULL,0);
-               tmp=HeapAlloc(GetProcessHeap(), 0, format_size);
-               ExpandEnvironmentStringsA(format,tmp,format_size);
-               HeapFree(GetProcessHeap(), 0, format);
-               format=tmp;
+        format_size = 0;
+        RtlInitUnicodeString( &nameW, DebuggerW );
+        if (NtQueryValueKey( hDbgConf, &nameW, KeyValuePartialInformation,
+                             NULL, 0, &format_size ) == STATUS_BUFFER_OVERFLOW)
+        {
+            char *data = HeapAlloc(GetProcessHeap(), 0, format_size);
+            NtQueryValueKey( hDbgConf, &nameW, KeyValuePartialInformation,
+                             data, format_size, &format_size );
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)data;
+            RtlUnicodeToMultiByteSize( &format_size, (WCHAR *)info->Data, info->DataLength );
+            format = HeapAlloc( GetProcessHeap(), 0, format_size+1 );
+            RtlUnicodeToMultiByteN( format, format_size, NULL,
+                                    (WCHAR *)info->Data, info->DataLength );
+            format[format_size] = 0;
+
+            if (info->Type == REG_EXPAND_SZ)
+            {
+                char* tmp;
+
+                /* Expand environment variable references */
+                format_size=ExpandEnvironmentStringsA(format,NULL,0);
+                tmp=HeapAlloc(GetProcessHeap(), 0, format_size);
+                ExpandEnvironmentStringsA(format,tmp,format_size);
+                HeapFree(GetProcessHeap(), 0, format);
+                format=tmp;
+            }
+            HeapFree( GetProcessHeap(), 0, data );
+        }
+
+        RtlInitUnicodeString( &nameW, AutoW );
+        if (!NtQueryValueKey( hDbgConf, &nameW, KeyValuePartialInformation,
+                              buffer, sizeof(buffer)-sizeof(WCHAR), &format_size ))
+       {
+           info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+           if (info->Type == REG_DWORD) memcpy( &bAuto, info->Data, sizeof(DWORD) );
+           else if (info->Type == REG_SZ)
+           {
+               WCHAR *str = (WCHAR *)info->Data;
+               str[info->DataLength/sizeof(WCHAR)] = 0;
+               bAuto = atoiW( str );
            }
        }
+       else bAuto = TRUE;
 
-       count = sizeof(bAuto);
-       if (RegQueryValueExA(hDbgConf, "Auto", 0, &type, (char*)&bAuto, &count))
-	  bAuto = TRUE;
-       else if (type == REG_SZ)
-       {
-           char autostr[10];
-           count = sizeof(autostr);
-           if (!RegQueryValueExA(hDbgConf, "Auto", 0, &type, autostr, &count))
-               bAuto = atoi(autostr);
-       }
-       RegCloseKey(hDbgConf);
+       NtClose(hDbgConf);
     } else {
 	/* try a default setup... */
 	strcpy( format, "winedbg --debugmsg -all --auto %ld %ld" );

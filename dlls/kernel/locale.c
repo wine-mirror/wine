@@ -71,6 +71,35 @@ inline static UINT get_lcid_codepage( LCID lcid )
 
 
 /***********************************************************************
+ *		create_registry_key
+ *
+ * Create the Control Panel\\International registry key.
+ */
+inline static HKEY create_registry_key(void)
+{
+    static const WCHAR intlW[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                  'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HKEY hkey;
+
+    if (RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey ) != STATUS_SUCCESS) return 0;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, intlW );
+
+    if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS) hkey = 0;
+    NtClose( attr.RootDirectory );
+    return hkey;
+}
+
+
+/***********************************************************************
  *		update_registry
  *
  * Update registry contents on startup if the user locale has changed.
@@ -78,20 +107,27 @@ inline static UINT get_lcid_codepage( LCID lcid )
  */
 inline static void update_registry( LCID lcid )
 {
+    static const WCHAR LocaleW[] = {'L','o','c','a','l','e',0};
+    UNICODE_STRING nameW;
     char buffer[20];
     WCHAR bufferW[80];
     DWORD count = sizeof(buffer);
     HKEY hkey;
 
-    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Control Panel\\International", 0, NULL,
-                         0, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    if (!(hkey = create_registry_key()))
         return;  /* don't do anything if we can't create the registry key */
 
-    if (!RegQueryValueExA( hkey, "Locale", NULL, NULL, (LPBYTE)buffer, &count ))
+    RtlInitUnicodeString( &nameW, LocaleW );
+    count = sizeof(bufferW);
+    if (!NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation, (LPBYTE)bufferW, count, &count))
     {
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
+        RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &count,
+                                (WCHAR *)info->Data, info->DataLength );
+        buffer[count] = 0;
         if (strtol( buffer, NULL, 16 ) == lcid)  /* already set correctly */
         {
-            RegCloseKey( hkey );
+            NtClose( hkey );
             return;
         }
         TRACE( "updating registry, locale changed %s -> %08lx\n", buffer, lcid );
@@ -99,8 +135,9 @@ inline static void update_registry( LCID lcid )
     else TRACE( "updating registry, locale changed none -> %08lx\n", lcid );
 
     sprintf( buffer, "%08lx", lcid );
-    RegSetValueExA( hkey, "Locale", 0, REG_SZ, (LPBYTE)buffer, strlen(buffer)+1 );
-    RegCloseKey( hkey );
+    RtlMultiByteToUnicodeN( bufferW, sizeof(bufferW), NULL, buffer, strlen(buffer)+1 );
+    NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, (strlenW(bufferW)+1) * sizeof(WCHAR) );
+    NtClose( hkey );
 
 #define UPDATE_VALUE(lctype) do { \
     GetLocaleInfoW( lcid, (lctype)|LOCALE_NOUSEROVERRIDE, bufferW, sizeof(bufferW)/sizeof(WCHAR) ); \
@@ -445,15 +482,14 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
     KEY_VALUE_PARTIAL_INFORMATION *info;
     static const int info_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
 
-    if (RegOpenKeyExA( HKEY_CURRENT_USER, "Control Panel\\International", 0, KEY_READ, &hkey))
-        return -1;
+    if (!(hkey = create_registry_key())) return -1;
 
     RtlInitUnicodeString( &nameW, value );
     size = info_size + len * sizeof(WCHAR);
 
     if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
     {
-        RegCloseKey( hkey );
+        NtClose( hkey );
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
@@ -489,7 +525,7 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
             ret = 0;
         }
     }
-    RegCloseKey( hkey );
+    NtClose( hkey );
     HeapFree( GetProcessHeap(), 0, info );
     return ret;
 }
@@ -714,11 +750,10 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     /* FIXME: profile functions should map to registry */
     WriteProfileStringW( intlW, value, data );
 
-    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Control Panel\\International", 0, NULL,
-                         0, KEY_ALL_ACCESS, NULL, &hkey, NULL )) return FALSE;
+    if (!(hkey = create_registry_key())) return FALSE;
     RtlInitUnicodeString( &valueW, value );
     status = NtSetValueKey( hkey, &valueW, 0, REG_SZ, data, (strlenW(data)+1)*sizeof(WCHAR) );
-    RegCloseKey( hkey );
+    NtClose( hkey );
 
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;

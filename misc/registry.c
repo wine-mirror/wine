@@ -73,6 +73,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 #define SAVE_LOCAL_REGBRANCH_USER_DEFAULT  "userdef.reg"
 #define SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE "system.reg"
 
+static const WCHAR ClassesRootW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','o','f','t','w','a','r','e','\\',
+                                     'C','l','a','s','s','e','s',0};
+
 /* _xmalloc [Internal] */
 static void *_xmalloc( size_t size )
 {
@@ -309,44 +313,64 @@ struct _w31_valent {
 /* recursive helper function to display a directory tree  [Internal] */
 void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab,struct _w31_header *head,HKEY hkey,time_t lastmodified, int level)
 {
+    static const WCHAR classesW[] = {'.','c','l','a','s','s','e','s',0};
     struct _w31_dirent *dir;
     struct _w31_keyent *key;
     struct _w31_valent *val;
     HKEY subkey = 0;
-    static char	tail[400];
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+    static WCHAR tail[400];
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = hkey;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &valueW, NULL );
 
     while (idx!=0) {
         dir=(struct _w31_dirent*)&tab[idx];
 
         if (dir->key_idx) {
+            DWORD len;
             key = (struct _w31_keyent*)&tab[dir->key_idx];
 
-            memcpy(tail,&txt[key->string_off],key->length);
-            tail[key->length]='\0';
+            RtlMultiByteToUnicodeN( tail, sizeof(tail)-sizeof(WCHAR), &len,
+                                    &txt[key->string_off], key->length);
+            tail[len/sizeof(WCHAR)] = 0;
+
             /* all toplevel entries AND the entries in the
              * toplevel subdirectory belong to \SOFTWARE\Classes
              */
-            if (!level && !strcmp(tail,".classes")) {
+            if (!level && !strcmpW(tail,classesW))
+            {
                 _w31_dumptree(dir->child_idx,txt,tab,head,hkey,lastmodified,level+1);
                 idx=dir->sibling_idx;
                 continue;
             }
-            if (subkey) RegCloseKey( subkey );
-            if (RegCreateKeyA( hkey, tail, &subkey ) != ERROR_SUCCESS) subkey = 0;
+
+            if (subkey) NtClose( subkey );
+            RtlInitUnicodeString( &nameW, tail );
+            if (NtCreateKey( &subkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) subkey = 0;
+
             /* only add if leaf node or valued node */
             if (dir->value_idx!=0||dir->child_idx==0) {
                 if (dir->value_idx) {
+                    DWORD len;
                     val=(struct _w31_valent*)&tab[dir->value_idx];
-                    memcpy(tail,&txt[val->string_off],val->length);
-                    tail[val->length]='\0';
-                    RegSetValueA( subkey, NULL, REG_SZ, tail, 0 );
+                    RtlMultiByteToUnicodeN( tail, sizeof(tail) - sizeof(WCHAR), &len,
+                                            &txt[val->string_off], val->length);
+                    tail[len/sizeof(WCHAR)] = 0;
+                    NtSetValueKey( subkey, &valueW, 0, REG_SZ, tail, len + sizeof(WCHAR) );
                 }
             }
         } else TRACE("strange: no directory key name, idx=%04x\n", idx);
         _w31_dumptree(dir->child_idx,txt,tab,head,subkey,lastmodified,level+1);
         idx=dir->sibling_idx;
     }
-    if (subkey) RegCloseKey( subkey );
+    if (subkey) NtClose( subkey );
 }
 
 
@@ -356,6 +380,9 @@ void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab
 void _w31_loadreg(void)
 {
     HFILE hf;
+    HKEY root;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
     struct _w31_header	head;
     struct _w31_tabent	*tab;
     unsigned char		*txt;
@@ -416,7 +443,20 @@ void _w31_loadreg(void)
         return;
     }
     lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
-    _w31_dumptree(tab[0].w1,txt,tab,&head,HKEY_CLASSES_ROOT,lastmodified,0);
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, ClassesRootW );
+
+    if (!NtCreateKey( &root, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+    {
+        _w31_dumptree(tab[0].w1,txt,tab,&head,root,lastmodified,0);
+        NtClose( root );
+    }
     free(tab);
     free(txt);
     _lclose(hf);
@@ -1077,42 +1117,61 @@ static void _init_registry_saving( HKEY hkey_users_default )
  * _allocate_default_keys [Internal]
  * Registry initialisation, allocates some default keys.
  */
-static void _allocate_default_keys(void) {
-	HKEY	hkey;
-	char	buf[200];
+static void _allocate_default_keys(void)
+{
+    HKEY hkey;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, valueW;
+    WCHAR computer_name[200];
+    DWORD size = sizeof(computer_name)/sizeof(WCHAR);
 
-	TRACE("(void)\n");
+    static const WCHAR StatDataW[] = {'D','y','n','D','a','t','a','\\',
+                                      'P','e','r','f','S','t','a','t','s','\\',
+                                      'S','t','a','t','D','a','t','a',0};
+    static const WCHAR ComputerW[] = {'M','a','c','h','i','n','e','\\',
+                                      'S','y','s','t','e','m','\\',
+                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                      'C','o','n','t','r','o','l','\\',
+                                      'C','o','m','p','u','t','e','r','N','a','m','e','\\',
+                                      'C','o','m','p','u','t','e','r','N','a','m','e',0};
+    static const WCHAR ComputerNameW[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
 
-	RegCreateKeyA(HKEY_DYN_DATA,"PerfStats\\StatData",&hkey);
-	RegCloseKey(hkey);
+    TRACE("(void)\n");
 
-        /* This was an Open, but since it is called before the real registries
-           are loaded, it was changed to a Create - MTB 980507*/
-	RegCreateKeyA(HKEY_LOCAL_MACHINE,"HARDWARE\\DESCRIPTION\\System",&hkey);
-	RegSetValueExA(hkey,"Identifier",0,REG_SZ,"SystemType WINE",strlen("SystemType WINE"));
-	RegCloseKey(hkey);
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
 
-	/* \\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
-	 *						CurrentVersion
-	 *						CurrentBuildNumber
-	 *						CurrentType
-	 *					string	RegisteredOwner
-	 *					string	RegisteredOrganization
-	 *
-	 */
-	/* System\\CurrentControlSet\\Services\\SNMP\\Parameters\\RFC1156Agent
-	 * 					string	SysContact
-	 * 					string	SysLocation
-	 * 						SysServices
-	 */
-	if (-1!=gethostname(buf,200)) {
-		RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\Control\\ComputerName\\ComputerName",&hkey);
-		RegSetValueExA(hkey,"ComputerName",0,REG_SZ,buf,strlen(buf)+1);
-		RegCloseKey(hkey);
-	}
+    RtlInitUnicodeString( &nameW, StatDataW );
+    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
 
-        RegCreateKeyA(HKEY_USERS,".Default",&hkey);
-        RegCloseKey(hkey);
+    /* \\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
+     *						CurrentVersion
+     *						CurrentBuildNumber
+     *						CurrentType
+     *					string	RegisteredOwner
+     *					string	RegisteredOrganization
+     *
+     */
+    /* System\\CurrentControlSet\\Services\\SNMP\\Parameters\\RFC1156Agent
+     * 					string	SysContact
+     * 					string	SysLocation
+     * 						SysServices
+     */
+    if (GetComputerNameW( computer_name, &size ))
+    {
+        RtlInitUnicodeString( &nameW, ComputerW );
+        if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+        {
+            RtlInitUnicodeString( &valueW, ComputerNameW );
+            NtSetValueKey( hkey, &valueW, 0, REG_SZ, computer_name,
+                           (strlenW(computer_name) + 1) * sizeof(WCHAR) );
+            NtClose(hkey);
+        }
+    }
 }
 
 #define REG_DONTLOAD -1
@@ -1449,9 +1508,26 @@ static void _load_windows_registry( HKEY hkey_users_default )
     int reg_type;
     WCHAR windir[MAX_PATHNAME_LEN];
     WCHAR path[MAX_PATHNAME_LEN];
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HKEY hkey;
+
     static const WCHAR WineW[] = {'W','i','n','e',0};
     static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
     static const WCHAR empty_strW[] = { 0 };
+    static const WCHAR Machine[] = {'M','a','c','h','i','n','e',0};
+    static const WCHAR System[] = {'M','a','c','h','i','n','e','\\','S','y','s','t','e','m',0};
+    static const WCHAR Software[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e',0};
+    static const WCHAR Clone[] = {'M','a','c','h','i','n','e','\\',
+                                  'S','y','s','t','e','m','\\',
+                                  'C','l','o','n','e',0};
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
 
     GetWindowsDirectoryW(windir, MAX_PATHNAME_LEN);
 
@@ -1483,31 +1559,39 @@ static void _load_windows_registry( HKEY hkey_users_default )
             * FIXME
             *  map HLM\System\ControlSet001 to HLM\System\CurrentControlSet
             */
-
-            if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SYSTEM", &hkey)) {
-	      strcpyW(path, windir);
-	      strcatW(path, systemW);
-              _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
-              RegCloseKey(hkey);
+            RtlInitUnicodeString( &nameW, System );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
+                strcpyW(path, windir);
+                strcatW(path, systemW);
+                _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
+                NtClose( hkey );
             }
-
-            if (!RegCreateKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE", &hkey)) {
+            RtlInitUnicodeString( &nameW, Software );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
                 strcpyW(path, windir);
                 strcatW(path, softwareW);
                 _convert_and_load_native_registry(path,hkey,REG_WINNT,1);
-                RegCloseKey(hkey);
+                NtClose( hkey );
             }
 
-            strcpyW(path, windir);
-            strcatW(path, samW);
-            _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WINNT,0);
+            RtlInitUnicodeString( &nameW, Machine );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
+                strcpyW(path, windir);
+                strcatW(path, samW);
+                _convert_and_load_native_registry(path,hkey,REG_WINNT,0);
 
-            strcpyW(path,windir);
-            strcatW(path, securityW);
-            _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WINNT,0);
+                strcpyW(path,windir);
+                strcatW(path, securityW);
+                _convert_and_load_native_registry(path,hkey,REG_WINNT,0);
+                NtClose( hkey );
+            }
 
             /* this key is generated when the nt-core booted successfully */
-            if (!RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\Clone",&hkey)) RegCloseKey(hkey);
+            RtlInitUnicodeString( &nameW, Clone );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
             break;
         }
 
@@ -1518,15 +1602,25 @@ static void _load_windows_registry( HKEY hkey_users_default )
             static const WCHAR classes_datW[] = {'\\','c','l','a','s','s','e','s','.','d','a','t',0};
             static const WCHAR user_datW[] = {'\\','u','s','e','r','.','d','a','t',0};
 
-            _convert_and_load_native_registry(system_1stW,HKEY_LOCAL_MACHINE,REG_WIN95,0);
+            RtlInitUnicodeString( &nameW, Machine );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
+                _convert_and_load_native_registry(system_1stW,hkey,REG_WIN95,0);
 
-            strcpyW(path, windir);
-            strcatW(path, system_datW);
-            _convert_and_load_native_registry(path,HKEY_LOCAL_MACHINE,REG_WIN95,0);
+                strcpyW(path, windir);
+                strcatW(path, system_datW);
+                _convert_and_load_native_registry(path,hkey,REG_WIN95,0);
+                NtClose( hkey );
+            }
 
-            strcpyW(path, windir);
-            strcatW(path, classes_datW);
-            _convert_and_load_native_registry(path,HKEY_CLASSES_ROOT,REG_WIN95,0);
+            RtlInitUnicodeString( &nameW, ClassesRootW );
+            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
+            {
+                strcpyW(path, windir);
+                strcatW(path, classes_datW);
+                _convert_and_load_native_registry(path,hkey,REG_WIN95,0);
+                NtClose( hkey );
+            }
 
             if (PROFILE_GetWineIniString(WineW, ProfileW, empty_strW, path, MAX_PATHNAME_LEN)) {
 	        /* user specific user.dat */
@@ -1600,6 +1694,10 @@ static void _load_home_registry( HKEY hkey_users_default )
 void SHELL_LoadRegistry( void )
 {
     HKEY hkey_users_default;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
+    static const WCHAR DefaultW[] = {'U','s','e','r','\\','.','D','e','f','a','u','l','t',0};
     static const WCHAR RegistryW[] = {'R','e','g','i','s','t','r','y',0};
     static const WCHAR load_win_reg_filesW[] = {'L','o','a','d','W','i','n','d','o','w','s','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
@@ -1609,14 +1707,22 @@ void SHELL_LoadRegistry( void )
 
     if (!CLIENT_IsBootThread()) return;  /* already loaded */
 
-    if (RegCreateKeyA(HKEY_USERS,".Default",&hkey_users_default))
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    RtlInitUnicodeString( &nameW, DefaultW );
+    if (NtCreateKey( &hkey_users_default, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
     {
         ERR("Cannot create HKEY_USERS/.Default\n" );
         ExitProcess(1);
     }
 
-    _allocate_default_keys();
     _set_registry_levels(0,0,0);
+    _allocate_default_keys();
     if (PROFILE_GetWineIniBool(RegistryW, load_win_reg_filesW, 1))
         _load_windows_registry( hkey_users_default );
     if (PROFILE_GetWineIniBool(RegistryW, load_global_reg_filesW, 1))
