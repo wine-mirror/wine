@@ -238,8 +238,7 @@
             </listitem>
             <listitem>
               <para>
-                Printing: supports native Win16 printer drivers,
-                Internal PostScript driver
+                Printing through internal PostScript driver
               </para>
             </listitem>
             <listitem>
