@@ -107,11 +107,12 @@ inline static void process_sent_messages(void)
  *
  * store a hardware message in the thread queue
  */
-static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message_type type )
+#if 0
+static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info )
 {
     SERVER_START_REQ( send_message )
     {
-        req->type   = type;
+        req->type   = MSG_HARDWARE;
         req->id     = GetWindowThreadProcessId( msg->hwnd, NULL );
         req->win    = msg->hwnd;
         req->msg    = msg->message;
@@ -126,6 +127,7 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
     }
     SERVER_END_REQ;
 }
+#endif
 
 
 /***********************************************************************
@@ -274,7 +276,7 @@ void MSG_JournalPlayBackMsg(void)
                 msg.lParam |= 0x01000000;
 
             msg.pt.x = msg.pt.y = 0;
-            queue_hardware_message( &msg, 0, MSG_HARDWARE_RAW );
+            queue_hardware_message( &msg, 0 );
         }
         else if ((tmpMsg.message>= WM_MOUSEFIRST) && (tmpMsg.message <= WM_MOUSELAST))
         {
@@ -311,7 +313,7 @@ void MSG_JournalPlayBackMsg(void)
 
             msg.pt.x = tmpMsg.paramL;
             msg.pt.y = tmpMsg.paramH;
-            queue_hardware_message( &msg, 0, MSG_HARDWARE_RAW );
+            queue_hardware_message( &msg, 0 );
         }
         HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_SKIP, 0, (LPARAM)&tmpMsg, TRUE );
     }
@@ -399,7 +401,7 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
+static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL remove )
 {
     static MSG clk_msg;
 
@@ -407,6 +409,7 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
     INT hittest;
     EVENTMSG event;
     GUITHREADINFO info;
+    HWND hWndScope = msg->hwnd;
 
     /* find the window to dispatch this mouse message to */
 
@@ -416,8 +419,6 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
     {
         /* If no capture HWND, find window which contains the mouse position.
          * Also find the position of the cursor hot spot (hittest) */
-        HWND hWndScope = (HWND)extra_info;
-
         if (!IsWindow(hWndScope)) hWndScope = 0;
         if (!(msg->hwnd = WINPOS_WindowFromPoint( hWndScope, msg->pt, &hittest )))
             msg->hwnd = GetDesktopWindow();
@@ -436,7 +437,7 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
         (msg->message == WM_RBUTTONDOWN) ||
         (msg->message == WM_MBUTTONDOWN))
     {
-        BOOL update = TRUE;
+        BOOL update = remove;
         /* translate double clicks -
 	 * note that ...MOUSEMOVEs can slip in between
 	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
@@ -452,8 +453,11 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
            {
                msg->message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
-               clk_msg.message = 0;
-               update = FALSE;
+               if (remove)
+               {
+                   clk_msg.message = 0;
+                   update = FALSE;
+               }
            }
         }
         /* update static double click conditions */
@@ -602,26 +606,14 @@ BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd
     }
     else if (is_mouse_message( msg->message ))
     {
-        if (!process_raw_mouse_message( msg, extra_info )) return FALSE;
+        if (!process_raw_mouse_message( msg, extra_info, remove )) return FALSE;
     }
     else
     {
         ERR( "unknown message type %x\n", msg->message );
         return FALSE;
     }
-
-    /* check destination thread and filters */
-    if (!check_message_filter( msg, hwnd_filter, first, last ) ||
-        !WIN_IsCurrentThread( msg->hwnd ))
-    {
-        /* queue it for later, or for another thread */
-        queue_hardware_message( msg, extra_info, MSG_HARDWARE_COOKED );
-        return FALSE;
-    }
-
-    /* save the message in the cooked queue if we didn't want to remove it */
-    if (!remove) queue_hardware_message( msg, extra_info, MSG_HARDWARE_COOKED );
-    return TRUE;
+    return check_message_filter( msg, hwnd_filter, first, last );
 }
 
 

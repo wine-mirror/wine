@@ -35,8 +35,8 @@
 #include "request.h"
 #include "user.h"
 
-enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAGE };
-#define NB_MSG_KINDS (RAW_HW_MESSAGE+1)
+enum message_kind { SEND_MESSAGE, POST_MESSAGE };
+#define NB_MSG_KINDS (POST_MESSAGE+1)
 
 
 struct message_result
@@ -101,6 +101,9 @@ struct thread_input
     rectangle_t            caret_rect;    /* caret rectangle */
     int                    caret_hide;    /* caret hide count */
     int                    caret_state;   /* caret on/off state */
+    struct message        *msg;           /* message currently processed */
+    struct thread         *msg_thread;    /* thread processing the message */
+    struct message_list    msg_list;      /* list of hardware messages */
     unsigned char          keystate[256]; /* state of each key */
 };
 
@@ -115,8 +118,6 @@ struct msg_queue
     struct message_list    msg_list[NB_MSG_KINDS];  /* lists of messages */
     struct message_result *send_result;   /* stack of sent messages waiting for result */
     struct message_result *recv_result;   /* stack of received messages waiting for result */
-    struct message        *last_msg;      /* last msg returned to the app and not removed */
-    enum message_kind      last_msg_kind; /* message kind of last_msg */
     struct timer          *first_timer;   /* head of timer list */
     struct timer          *last_timer;    /* tail of timer list */
     struct timer          *next_timer;    /* next timer to expire */
@@ -169,6 +170,9 @@ static const struct object_ops thread_input_ops =
     thread_input_destroy          /* destroy */
 };
 
+/* pointer to input structure of foreground thread */
+static struct thread_input *foreground_input;
+
 
 /* set the caret window in a given thread input */
 static void set_caret_window( struct thread_input *input, user_handle_t win )
@@ -194,14 +198,14 @@ static struct thread_input *create_thread_input(void)
         input->active      = 0;
         input->menu_owner  = 0;
         input->move_size   = 0;
+        input->msg         = NULL;
+        input->msg_thread  = NULL;
+        input->msg_list.first = input->msg_list.last = NULL;
         set_caret_window( input, 0 );
         memset( input->keystate, 0, sizeof(input->keystate) );
     }
     return input;
 }
-
-/* pointer to input structure of foreground thread */
-static struct thread_input *foreground_input;
 
 /* create a message queue object */
 static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_input *input )
@@ -219,7 +223,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->paint_count     = 0;
         queue->send_result     = NULL;
         queue->recv_result     = NULL;
-        queue->last_msg        = NULL;
         queue->first_timer     = NULL;
         queue->last_timer      = NULL;
         queue->next_timer      = NULL;
@@ -278,11 +281,17 @@ inline static void clear_queue_bits( struct msg_queue *queue, unsigned int bits 
     queue->changed_bits &= ~bits;
 }
 
+/* check whether msg is a keyboard message */
+inline static int is_keyboard_msg( struct message *msg )
+{
+    return (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST);
+}
+
 /* get the QS_* bit corresponding to a given hardware message */
 inline static int get_hardware_msg_bit( struct message *msg )
 {
     if (msg->msg == WM_MOUSEMOVE || msg->msg == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
-    if (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST) return QS_KEY;
+    if (is_keyboard_msg( msg )) return QS_KEY;
     return QS_MOUSEBUTTON;
 }
 
@@ -313,11 +322,12 @@ inline static void unlink_message( struct message_list *list, struct message *ms
 }
 
 /* try to merge a message with the last in the list; return 1 if successful */
-static int merge_message( struct message_list *list, const struct message *msg )
+static int merge_message( struct thread_input *input, const struct message *msg )
 {
-    struct message *prev = list->last;
+    struct message *prev = input->msg_list.last;
 
     if (!prev) return 0;
+    if (input->msg == prev) return 0;
     if (prev->result) return 0;
     if (prev->win != msg->win) return 0;
     if (prev->msg != msg->msg) return 0;
@@ -378,10 +388,6 @@ static void free_message( struct message *msg )
 static void remove_queue_message( struct msg_queue *queue, struct message *msg,
                                   enum message_kind kind )
 {
-    int clr_bit;
-    struct message *other;
-
-    if (queue->last_msg == msg) queue->last_msg = NULL;
     unlink_message( &queue->msg_list[kind], msg );
     switch(kind)
     {
@@ -390,13 +396,6 @@ static void remove_queue_message( struct msg_queue *queue, struct message *msg,
         break;
     case POST_MESSAGE:
         if (!queue->msg_list[kind].first) clear_queue_bits( queue, QS_POSTMESSAGE );
-        break;
-    case COOKED_HW_MESSAGE:
-    case RAW_HW_MESSAGE:
-        clr_bit = get_hardware_msg_bit( msg );
-        for (other = queue->msg_list[kind].first; other; other = other->next)
-            if (get_hardware_msg_bit( other ) == clr_bit) break;
-        if (!other) clear_queue_bits( queue, clr_bit );
         break;
     }
     free_message( msg );
@@ -497,6 +496,58 @@ static void reply_message( struct msg_queue *queue, unsigned int result,
         if (len && (res->data = memdup( data, len ))) res->data_size = len;
         store_message_result( res, result, error );
     }
+}
+
+/* retrieve a posted message */
+static int get_posted_message( struct msg_queue *queue, user_handle_t win,
+                               unsigned int first, unsigned int last, unsigned int flags,
+                               struct get_message_reply *reply )
+{
+    struct message *msg;
+    struct message_list *list = &queue->msg_list[POST_MESSAGE];
+
+    /* check against the filters */
+    for (msg = list->first; msg; msg = msg->next)
+    {
+        if (msg->msg == WM_QUIT) break;  /* WM_QUIT is never filtered */
+        if (win && msg->win && msg->win != win && !is_child_window( win, msg->win )) continue;
+        if (msg->msg < first) continue;
+        if (msg->msg > last) continue;
+        break; /* found one */
+    }
+    if (!msg) return 0;
+
+    /* return it to the app */
+
+    reply->total = msg->data_size;
+    if (msg->data_size > get_reply_max_size())
+    {
+        set_error( STATUS_BUFFER_OVERFLOW );
+        return 1;
+    }
+    reply->type   = msg->type;
+    reply->win    = msg->win;
+    reply->msg    = msg->msg;
+    reply->wparam = msg->wparam;
+    reply->lparam = msg->lparam;
+    reply->x      = msg->x;
+    reply->y      = msg->y;
+    reply->time   = msg->time;
+    reply->info   = msg->info;
+
+    if (flags & GET_MSG_REMOVE)
+    {
+        if (msg->data)
+        {
+            set_reply_data_ptr( msg->data, msg->data_size );
+            msg->data = NULL;
+            msg->data_size = 0;
+        }
+        remove_queue_message( queue, msg, POST_MESSAGE );
+    }
+    else if (msg->data) set_reply_data( msg->data, msg->data_size );
+
+    return 1;
 }
 
 /* empty a message list and free all the messages */
@@ -617,6 +668,8 @@ static void thread_input_destroy( struct object *obj )
     struct thread_input *input = (struct thread_input *)obj;
 
     if (foreground_input == input) foreground_input = NULL;
+    if (input->msg_thread) release_object( input->msg_thread );
+    empty_msg_list( &input->msg_list );
 }
 
 /* fix the thread input data when a window is destroyed */
@@ -815,6 +868,152 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
     return timer;
 }
 
+/* release the hardware message currently being processed by the given thread */
+static void release_hardware_message( struct thread *thread, int remove )
+{
+    struct thread_input *input = thread->queue->input;
+
+    if (input->msg_thread != thread) return;
+    if (remove)
+    {
+        struct message *other;
+        int clr_bit;
+
+        unlink_message( &input->msg_list, input->msg );
+        clr_bit = get_hardware_msg_bit( input->msg );
+        for (other = input->msg_list.first; other; other = other->next)
+            if (get_hardware_msg_bit( other ) == clr_bit) break;
+        if (!other) clear_queue_bits( thread->queue, clr_bit );
+        free_message( input->msg );
+    }
+    release_object( input->msg_thread );
+    input->msg = NULL;
+    input->msg_thread = NULL;
+}
+
+/* find the window that should receive a given hardware message */
+static user_handle_t find_hardware_message_window( struct thread_input *input, struct message *msg )
+{
+    user_handle_t win = 0;
+
+    if (is_keyboard_msg( msg ))
+    {
+        if (input && !(win = input->focus)) win = input->active;
+    }
+    else  /* mouse message */
+    {
+        if (!input || !(win = input->capture))
+        {
+            if (!(win = msg->win)) win = window_from_point( msg->x, msg->y );
+        }
+    }
+    return win;
+}
+
+/* queue a hardware message into a given thread input */
+static void queue_hardware_message( struct msg_queue *queue, struct message *msg )
+{
+    user_handle_t win;
+    struct thread *thread;
+    struct thread_input *input;
+
+    win = find_hardware_message_window( queue ? queue->input : foreground_input, msg );
+    if (!win || !(thread = get_window_thread(win)))
+    {
+        free( msg );
+        return;
+    }
+    input = thread->queue->input;
+
+    if (msg->msg == WM_MOUSEMOVE && merge_message( input, msg )) free( msg );
+    else
+    {
+        append_message( &input->msg_list, msg );
+        set_queue_bits( thread->queue, get_hardware_msg_bit(msg) );
+    }
+    release_object( thread );
+}
+
+/* find a hardware message for the given queue */
+static int get_hardware_message( struct thread *thread, struct message *first,
+                                 user_handle_t filter_win, struct get_message_reply *reply )
+{
+    struct thread_input *input = thread->queue->input;
+    struct thread *win_thread;
+    struct message *msg;
+    user_handle_t win;
+    int clear_bits, got_one = 0;
+
+    if (input->msg_thread && input->msg_thread != thread)
+        return 0;  /* locked by another thread */
+
+    if (!first)
+    {
+        msg = input->msg_list.first;
+        clear_bits = QS_KEY | QS_MOUSEMOVE | QS_MOUSEBUTTON;
+    }
+    else
+    {
+        msg = first->next;
+        clear_bits = 0;  /* don't clear bits if we don't go through the whole list */
+    }
+
+    while (msg)
+    {
+        win = find_hardware_message_window( input, msg );
+        if (!win || !(win_thread = get_window_thread( win )))
+        {
+            /* no window at all, remove it */
+            struct message *next = msg->next;
+            unlink_message( &input->msg_list, msg );
+            free_message( msg );
+            msg = next;
+            continue;
+        }
+        if (win_thread != thread)
+        {
+            /* wake the other thread */
+            set_queue_bits( win_thread->queue, get_hardware_msg_bit(msg) );
+            release_object( win_thread );
+            got_one = 1;
+            msg = msg->next;
+            continue;
+        }
+        /* if we already got a message for another thread, or if it doesn't
+         * match the filter we skip it (filter is only checked for keyboard
+         * messages since the dest window for a mouse message depends on hittest)
+         */
+        if (got_one ||
+            (filter_win && is_keyboard_msg(msg) &&
+             win != filter_win && !is_child_window( filter_win, win )))
+        {
+            clear_bits &= ~get_hardware_msg_bit( msg );
+            msg = msg->next;
+            continue;
+        }
+        /* now we can return it */
+        if (!input->msg_thread) input->msg_thread = win_thread;
+        else release_object( win_thread );
+        input->msg = msg;
+
+        reply->type   = MSG_HARDWARE;
+        reply->win    = win;
+        reply->msg    = msg->msg;
+        reply->wparam = msg->wparam;
+        reply->lparam = msg->lparam;
+        reply->x      = msg->x;
+        reply->y      = msg->y;
+        reply->time   = msg->time;
+        reply->info   = msg->info;
+        return 1;
+    }
+    /* nothing found, clear the hardware queue bits */
+    clear_queue_bits( thread->queue, clear_bits );
+    if (input->msg_thread) release_object( input->msg_thread );
+    input->msg = NULL;
+    input->msg_thread = NULL;
+    return 0;
+}
 
 /* increment (or decrement if 'incr' is negative) the queue paint count */
 void inc_queue_paint_count( struct thread *thread, int incr )
@@ -951,12 +1150,21 @@ DECL_HANDLER(send_message)
 {
     struct message *msg;
     struct msg_queue *send_queue = get_current_queue();
-    struct msg_queue *recv_queue;
-    struct thread *thread = get_thread_from_id( req->id );
+    struct msg_queue *recv_queue = NULL;
+    struct thread *thread = NULL;
 
-    if (!thread) return;
+    if (req->id)
+    {
+        if (!(thread = get_thread_from_id( req->id ))) return;
+    }
+    else if (req->type != MSG_HARDWARE)
+    {
+        /* only hardware messages are allowed without destination thread */
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
 
-    if (!(recv_queue = thread->queue))
+    if (thread && !(recv_queue = thread->queue))
     {
         set_error( STATUS_INVALID_PARAMETER );
         release_object( thread );
@@ -1012,88 +1220,16 @@ DECL_HANDLER(send_message)
             append_message( &recv_queue->msg_list[POST_MESSAGE], msg );
             set_queue_bits( recv_queue, QS_POSTMESSAGE );
             break;
-        case MSG_HARDWARE_RAW:
-        case MSG_HARDWARE_COOKED:
-            {
-                struct message_list *list = ((msg->type == MSG_HARDWARE_RAW) ?
-                                             &recv_queue->msg_list[RAW_HW_MESSAGE] :
-                                             &recv_queue->msg_list[COOKED_HW_MESSAGE]);
-                if (msg->msg == WM_MOUSEMOVE && merge_message( list, msg ))
-                {
-                    free( msg );
-                    break;
-                }
-                append_message( list, msg );
-                set_queue_bits( recv_queue, get_hardware_msg_bit(msg) );
-                break;
-            }
+        case MSG_HARDWARE:
+            queue_hardware_message( recv_queue, msg );
+            break;
         default:
             set_error( STATUS_INVALID_PARAMETER );
             free( msg );
             break;
         }
     }
-    release_object( thread );
-}
-
-/* return a message to the application, removing it from the queue if needed */
-static void return_message_to_app( struct msg_queue *queue, int flags,
-                                   struct get_message_reply *reply,
-                                   struct message *msg, enum message_kind kind )
-{
-    reply->total = msg->data_size;
-    if (msg->data_size > get_reply_max_size())
-    {
-        set_error( STATUS_BUFFER_OVERFLOW );
-        return;
-    }
-    reply->type   = msg->type;
-    reply->win    = msg->win;
-    reply->msg    = msg->msg;
-    reply->wparam = msg->wparam;
-    reply->lparam = msg->lparam;
-    reply->x      = msg->x;
-    reply->y      = msg->y;
-    reply->time   = msg->time;
-    reply->info   = msg->info;
-
-    /* raw messages always get removed */
-    if ((msg->type == MSG_HARDWARE_RAW) || (flags & GET_MSG_REMOVE))
-    {
-        queue->last_msg = NULL;
-        if (msg->data)
-        {
-            set_reply_data_ptr( msg->data, msg->data_size );
-            msg->data = NULL;
-            msg->data_size = 0;
-        }
-        remove_queue_message( queue, msg, kind );
-    }
-    else  /* remember it as the last returned message */
-    {
-        if (msg->data) set_reply_data( msg->data, msg->data_size );
-        queue->last_msg = msg;
-        queue->last_msg_kind = kind;
-    }
-}
-
-
-inline static struct message *find_matching_message( const struct message_list *list,
-                                                     user_handle_t win,
-                                                     unsigned int first, unsigned int last )
-{
-    struct message *msg;
-
-    for (msg = list->first; msg; msg = msg->next)
-    {
-        /* check against the filters */
-        if (msg->msg == WM_QUIT) break;  /* WM_QUIT is never filtered */
-        if (win && msg->win && msg->win != win && !is_child_window( win, msg->win )) continue;
-        if (msg->msg < first) continue;
-        if (msg->msg > last) continue;
-        break; /* found one */
-    }
-    return msg;
+    if (thread) release_object( thread );
 }
 
 
@@ -1102,10 +1238,19 @@ DECL_HANDLER(get_message)
 {
     struct timer *timer;
     struct message *msg;
+    struct message *first_hw_msg = NULL;
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
 
     if (!queue) return;
+
+    /* first of all release the hardware input lock if we own it */
+    /* we'll grab it again if we find a hardware message */
+    if (queue->input->msg_thread == current)
+    {
+        first_hw_msg = queue->input->msg;
+        release_hardware_message( current, 0 );
+    }
 
     /* first check for sent messages */
     if ((msg = queue->msg_list[SEND_MESSAGE].first))
@@ -1115,36 +1260,16 @@ DECL_HANDLER(get_message)
     }
     if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
-    /* if requested, remove the last returned but not yet removed message */
-    if ((req->flags & GET_MSG_REMOVE_LAST) && queue->last_msg)
-        remove_queue_message( queue, queue->last_msg, queue->last_msg_kind );
-    queue->last_msg = NULL;
-
     /* clear changed bits so we can wait on them if we don't find a message */
     queue->changed_bits = 0;
 
     /* then check for posted messages */
-    if ((msg = find_matching_message( &queue->msg_list[POST_MESSAGE], get_win,
-                                      req->get_first, req->get_last )))
-    {
-        return_message_to_app( queue, req->flags, reply, msg, POST_MESSAGE );
+    if (get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
         return;
-    }
-
-    /* then check for cooked hardware messages */
-    if ((msg = find_matching_message( &queue->msg_list[COOKED_HW_MESSAGE], get_win,
-                                      req->get_first, req->get_last )))
-    {
-        return_message_to_app( queue, req->flags, reply, msg, COOKED_HW_MESSAGE );
-        return;
-    }
 
     /* then check for any raw hardware message */
-    if ((msg = queue->msg_list[RAW_HW_MESSAGE].first))
-    {
-        return_message_to_app( queue, req->flags, reply, msg, RAW_HW_MESSAGE );
+    if (get_hardware_message( current, first_hw_msg, get_win, reply ))
         return;
-    }
 
     /* now check for WM_PAINT */
     if (queue->paint_count &&
@@ -1186,11 +1311,20 @@ DECL_HANDLER(get_message)
 /* reply to a sent message */
 DECL_HANDLER(reply_message)
 {
-    if (current->queue && current->queue->recv_result)
+    if (!current->queue)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if (current->queue->recv_result)
         reply_message( current->queue, req->result, 0, req->remove,
                        get_req_data(), get_req_data_size() );
     else
-        set_error( STATUS_ACCESS_DENIED );
+    {
+        struct thread_input *input = current->queue->input;
+        if (input->msg_thread == current) release_hardware_message( current, req->remove );
+        else set_error( STATUS_ACCESS_DENIED );
+    }
 }
 
 

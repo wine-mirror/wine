@@ -1530,8 +1530,7 @@ enum message_type
     MSG_CALLBACK,       /* callback message (from SendMessageCallbackW), always Unicode */
     MSG_OTHER_PROCESS,  /* sent from other process, may include vararg data, always Unicode */
     MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
-    MSG_HARDWARE_RAW,   /* raw hardware message */
-    MSG_HARDWARE_COOKED /* cooked hardware message */
+    MSG_HARDWARE        /* hardware message */
 };
 
 
@@ -1556,7 +1555,6 @@ enum message_type
 @END
 #define GET_MSG_REMOVE      1  /* remove the message */
 #define GET_MSG_SENT_ONLY   2  /* only get sent messages */
-#define GET_MSG_REMOVE_LAST 4  /* remove last message returned before checking for a new one */
 
 /* Reply to a sent message */
 @REQ(reply_message)

@@ -1388,6 +1388,35 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
 
 /***********************************************************************
+ *           process_hardware_message
+ *
+ * Process a hardware message; return TRUE if message should be passed on to the app
+ */
+static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd,
+                                      UINT first, UINT last, BOOL remove )
+{
+    BOOL ret;
+
+    if (!MSG_process_raw_hardware_message( msg, extra_info, hwnd, first, last, remove ))
+        return FALSE;
+
+    ret = MSG_process_cooked_hardware_message( msg, extra_info, remove );
+
+    /* tell the server we have passed it to the app
+     * (even though we may end up dropping it later on)
+     */
+    SERVER_START_REQ( reply_message )
+    {
+        req->result = 0;
+        req->remove = remove || !ret;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
  *           MSG_peek_message
  *
  * Peek for a message matching the given parameters. Return FALSE if none available.
@@ -1471,17 +1500,12 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                 goto next;
             }
             break;
-        case MSG_HARDWARE_RAW:
-            if (!MSG_process_raw_hardware_message( &info.msg, extra_info,
-                                                   hwnd, first, last, flags & GET_MSG_REMOVE ))
-                goto next;
-            /* fall through */
-        case MSG_HARDWARE_COOKED:
-            if (!MSG_process_cooked_hardware_message( &info.msg, extra_info,
-                                                      flags & GET_MSG_REMOVE ))
+        case MSG_HARDWARE:
+            if (!process_hardware_message( &info.msg, extra_info,
+                                           hwnd, first, last, flags & GET_MSG_REMOVE ))
             {
-                flags |= GET_MSG_REMOVE_LAST;
-                goto next;
+                TRACE("dropping msg %x\n", info.msg.message );
+                goto next;  /* ignore it */
             }
             queue->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
             /* fall through */
@@ -1495,8 +1519,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 		    ERR( "invalid packed dde-message %x (%s) hwnd %p wp %x lp %lx size %d\n",
 			 info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd),
 			 info.msg.hwnd, info.msg.wParam, info.msg.lParam, size );
-		    /* ignore it */
-		    continue;
+                    goto next;  /* ignore it */
 		}
 	    }
             *msg = info.msg;

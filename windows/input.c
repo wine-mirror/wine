@@ -102,19 +102,19 @@ static WORD get_key_state(void)
 
 
 /***********************************************************************
- *           queue_raw_hardware_message
+ *           queue_hardware_message
  *
- * Add a message to the raw hardware queue.
+ * Add a message to the hardware queue.
  * Note: the position is relative to the desktop window.
  */
-static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lParam,
-                                        int xPos, int yPos, DWORD time, ULONG_PTR extraInfo )
+static void queue_hardware_message( UINT message, HWND hwnd, WPARAM wParam, LPARAM lParam,
+                                    int xPos, int yPos, DWORD time, ULONG_PTR extraInfo )
 {
     SERVER_START_REQ( send_message )
     {
         req->id     = GetCurrentThreadId();
-        req->type   = MSG_HARDWARE_RAW;
-        req->win    = 0;
+        req->type   = MSG_HARDWARE;
+        req->win    = hwnd;
         req->msg    = message;
         req->wparam = wParam;
         req->lparam = lParam;
@@ -182,8 +182,8 @@ static void queue_kbd_event( const KEYBDINPUT *ki, UINT injected_flags )
     hook.time        = ki->time;
     hook.dwExtraInfo = ki->dwExtraInfo;
     if (!HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE ))
-        queue_raw_hardware_message( message, ki->wVk, keylp.lp2,
-                                    PosX, PosY, ki->time, ki->dwExtraInfo );
+        queue_hardware_message( message, 0, ki->wVk, keylp.lp2,
+                                PosX, PosY, ki->time, ki->dwExtraInfo );
 }
 
 
@@ -202,8 +202,9 @@ static void queue_raw_mouse_message( UINT message, UINT flags, INT x, INT y, con
     hook.dwExtraInfo = mi->dwExtraInfo;
 
     if (!HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE ))
-        queue_raw_hardware_message( message, MAKEWPARAM( get_key_state(), mi->mouseData ),
-                                    0, x, y, mi->time, mi->dwExtraInfo );
+        queue_hardware_message( message, (HWND)mi->dwExtraInfo /*FIXME*/,
+                                MAKEWPARAM( get_key_state(), mi->mouseData ),
+                                0, x, y, mi->time, mi->dwExtraInfo );
 }
 
 

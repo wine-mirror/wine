@@ -62,6 +62,7 @@ extern int is_child_window( user_handle_t parent, user_handle_t child );
 extern int is_top_level_window( user_handle_t window );
 extern int make_window_active( user_handle_t window );
 extern struct thread *get_window_thread( user_handle_t handle );
+extern user_handle_t window_from_point( int x, int y );
 extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
 
 #endif  /* __WINE_SERVER_USER_H */

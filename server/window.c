@@ -343,6 +343,46 @@ int make_window_active( user_handle_t window )
     return 1;
 }
 
+/* find child of 'parent' that contains the given point (in parent-relative coords) */
+static struct window *child_window_from_point( struct window *parent, int x, int y )
+{
+    struct window *ptr, *ret = NULL;
+
+    for (ptr = parent->first_child; ptr && !ret; ptr = ptr->next)
+    {
+        if (!(ptr->style & WS_VISIBLE)) continue; /* not visible -> skip */
+        if ((ptr->style & (WS_POPUP|WS_CHILD|WS_DISABLED)) == (WS_CHILD|WS_DISABLED))
+            continue;  /* disabled child -> skip */
+        if ((ptr->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
+            continue;  /* transparent -> skip */
+        if (x < ptr->window_rect.left || x >= ptr->window_rect.right ||
+            y < ptr->window_rect.top || y >= ptr->window_rect.bottom)
+            continue;  /* not in window -> skip */
+
+        /* FIXME: check window region here */
+
+        /* if window is minimized or disabled, return at once */
+        if (ptr->style & (WS_MINIMIZE|WS_DISABLED)) return ptr;
+
+        /* if point is not in client area, return at once */
+        if (x < ptr->client_rect.left || x >= ptr->client_rect.right ||
+            y < ptr->client_rect.top || y >= ptr->client_rect.bottom)
+            return ptr;
+
+        return child_window_from_point( ptr, x - ptr->client_rect.left, y - ptr->client_rect.top );
+    }
+    return parent;  /* not found any child */
+}
+
+/* find window containing point (in absolute coords) */
+user_handle_t window_from_point( int x, int y )
+{
+    struct window *ret;
+
+    if (!top_window) return 0;
+    ret = child_window_from_point( top_window, x, y );
+    return ret->handle;
+}
 
 /* return the thread owning a window */
 struct thread *get_window_thread( user_handle_t handle )

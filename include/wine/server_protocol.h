@@ -2162,8 +2162,7 @@ enum message_type
     MSG_CALLBACK,
     MSG_OTHER_PROCESS,
     MSG_POSTED,
-    MSG_HARDWARE_RAW,
-    MSG_HARDWARE_COOKED
+    MSG_HARDWARE
 };
 
 
@@ -2193,7 +2192,6 @@ struct get_message_reply
 };
 #define GET_MSG_REMOVE      1
 #define GET_MSG_SENT_ONLY   2
-#define GET_MSG_REMOVE_LAST 4
 
 
 struct reply_message_request
@@ -3479,6 +3477,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 92
+#define SERVER_PROTOCOL_VERSION 93
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
