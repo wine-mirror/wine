@@ -8,9 +8,7 @@
 #
 # Each individual makefile may define the following additional variables:
 # C_SRCS       : C sources for the module
-# ASM_SRCS     : assembly sources
-# GEN_C_SRCS   : generated C files
-# GEN_ASM_SRCS : generated assembly sources
+# C_SRCS16     : 16-bit C sources for the module
 # RC_SRCS      : resource source files
 # SPEC_SRCS    : interface definition files
 # EXTRA_SRCS   : extra source files for make depend
@@ -100,7 +98,7 @@ conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.glue.c *.dbg.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
 
-OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
+OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
 
 RCOBJS = $(RC_SRCS:.rc=.res.o)
 LINTS  = $(C_SRCS:.c=.ln)
@@ -117,9 +115,6 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 .s.o:
 	$(AS) -o $@ $<
-
-.S.o:
-	$(CC) -c -o $@ $<
 
 .mc.mc.rc:
 	$(LDPATH) $(WMC) -i -H /dev/null -o $@ $<
@@ -156,13 +151,8 @@ filter:
 
 # Rule for main module debug channels
 
-$(MODULE).dbg.c: $(C_SRCS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -debug -C$(SRCDIR) $(C_SRCS)
-
-# Rule for 16-bit glue
-
-$(MODULE).glue.c: $(C_SRCS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -glue -C$(SRCDIR) $(C_SRCS)
+$(MODULE).dbg.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -debug -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
 
 # Rule to rebuild the tools
 
@@ -217,7 +207,7 @@ $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
 depend: $(MAKEDEP) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)
 
@@ -235,7 +225,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 testclean:: $(SUBDIRS:%=%/__testclean__)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
 
 .PHONY: clean testclean $(SUBDIRS:%=%/__clean__) $(SUBDIRS:%=%/__testclean__) $(EXTRASUBDIRS:%=%/__clean__)
 

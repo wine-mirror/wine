@@ -55,7 +55,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/winhelp.c \
 	$(TOPOBJDIR)/windows/winpos.c \
 	$(TOPOBJDIR)/windows/winproc.c \
-	bidi16.c \
 	cache.c \
 	comm16.c \
 	dde/client.c \
@@ -74,10 +73,13 @@ C_SRCS = \
 	property.c \
 	resource.c \
 	text.c \
-	user16.c \
 	user_main.c \
 	wnd16.c \
 	wsprintf.c
+
+C_SRCS16 = \
+	bidi16.c \
+	user16.c
 
 RC_SRCS = resources/user32.rc
 

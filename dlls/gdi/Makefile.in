@@ -36,7 +36,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/objects/pen.c \
 	$(TOPOBJDIR)/objects/region.c \
 	$(TOPOBJDIR)/objects/text.c \
-	bidi16.c \
 	driver.c \
 	enhmfdrv/bitblt.c \
 	enhmfdrv/dc.c \
@@ -62,6 +61,9 @@ C_SRCS = \
 	win16drv/prtdrv.c \
 	win16drv/text.c \
 	wing.c
+
+C_SRCS16 = \
+	bidi16.c
 
 RC_SRCS = version.rc
 RC_SRCS16 = version16.rc

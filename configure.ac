@@ -15,6 +15,7 @@ dnl **** Command-line arguments ****
 dnl Library type .so or .a
 AC_SUBST(LIBEXT,"so")
 
+AC_ARG_ENABLE(win16, AC_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
 AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
 AC_ARG_ENABLE(opengl,AC_HELP_STRING([--enable-opengl],[force usage of OpenGL even if the latter is thread-safe via pthread]))
@@ -22,6 +23,13 @@ AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
 AC_SUBST(OPTIONS)
+AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
+AC_SUBST(WIN16_INSTALL,"\$(WIN16_INSTALL)")
+if test "x$enable_win16" = "xno"
+then
+  WIN16_FILES=""
+  WIN16_INSTALL=""
+fi
 if test "x$enable_debug" = "xno"
 then
     AC_DEFINE(NO_DEBUG_MSGS,1,[Define to disable all debug messages.])

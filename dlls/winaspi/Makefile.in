@@ -11,10 +11,12 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	aspi.c \
-	winaspi16.c \
 	winaspi32.c
 
-EXTRA_OBJS = $(MODULE).glue.o
+C_SRCS16 = \
+	winaspi16.c
+
+EXTRA_OBJS16 = $(MODULE).glue.o
 
 @MAKE_DLL_RULES@
 

@@ -115,11 +115,11 @@ C_SRCS = \
 	time.c \
 	wcstring.c
 
-GEN_ASM_SRCS = \
+ASM_SRCS = \
 	relay16.s \
 	relay32.s
 
-EXTRA_OBJS = $(MODULE).glue.o
+EXTRA_OBJS = $(ASM_SRCS:.s=.o) $(MODULE).glue.o
 
 SUBDIRS = tests
 
@@ -142,5 +142,8 @@ relay16.s: $(WINEBUILD)
 
 relay32.s: $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -relay32
+
+clean::
+	$(RM) $(ASM_SRCS)
 
 ### Dependencies:

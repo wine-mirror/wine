@@ -832,6 +832,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-win16         do not include Win16 support
   --disable-debug         compile out all debugging messages
   --disable-trace         compile out TRACE messages
   --enable-opengl         force usage of OpenGL even if the latter is
@@ -1244,6 +1245,11 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 LIBEXT="so"
 
 
+# Check whether --enable-win16 or --disable-win16 was given.
+if test "${enable_win16+set}" = set; then
+  enableval="$enable_win16"
+
+fi;
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
@@ -1273,6 +1279,15 @@ if test "${with_wine_tools+set}" = set; then
 fi;
 
 
+WIN16_FILES="\$(WIN16_FILES)"
+
+WIN16_INSTALL="\$(WIN16_INSTALL)"
+
+if test "x$enable_win16" = "xno"
+then
+  WIN16_FILES=""
+  WIN16_INSTALL=""
+fi
 if test "x$enable_debug" = "xno"
 then
 
@@ -14940,6 +14955,8 @@ s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@LIBEXT@,$LIBEXT,;t t
 s,@OPTIONS@,$OPTIONS,;t t
+s,@WIN16_FILES@,$WIN16_FILES,;t t
+s,@WIN16_INSTALL@,$WIN16_INSTALL,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t

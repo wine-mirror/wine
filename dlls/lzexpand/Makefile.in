@@ -10,9 +10,8 @@ EXTRALIBS = $(LIBUNICODE)
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
-C_SRCS = \
-	lzexpand16.c \
-	lzexpand_main.c
+C_SRCS   = lzexpand_main.c
+C_SRCS16 = lzexpand16.c
 
 @MAKE_DLL_RULES@
 

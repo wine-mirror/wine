@@ -145,6 +145,7 @@ EOF
 # output the all: target
 
 my %targets = ();  # use a hash to get rid of duplicate target names
+my %targets16 = ();
 foreach my $mod (sort keys %directories)
 {
     next if defined($special_dlls{$directories{$mod}});  # skip special dlls
@@ -152,7 +153,7 @@ foreach my $mod (sort keys %directories)
     next unless defined $altnames{$mod};
     foreach my $i (sort @{$altnames{$mod}})
     {
-        $targets{sprintf("%s\$(DLLEXT)",$i)} = 1;
+        $targets16{sprintf("%s\$(DLLEXT)",$i)} = 1;
     }
 }
 print NEWMAKE <<EOF;
@@ -161,8 +162,15 @@ print NEWMAKE <<EOF;
 
 \@MAKE_RULES\@
 
+WIN16_FILES = \\
+EOF
+printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets16 );
+
+print NEWMAKE <<EOF;
+
 all: \\
 	\$(EXTRADIRS:%=%.dll\$(DLLEXT)) \\
+	\@WIN16_FILES\@ \\
 EOF
 printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
 

@@ -14,7 +14,8 @@ ALTSPECS    = $(ALTNAMES:%.dll=%)
 SPEC_SRCS   = $(ALTSPECS:%=%.spec)
 MAINSPEC    = $(MODULE:%.dll=%).spec
 SPEC_DEF    = $(MAINSPEC).def
-ALL_OBJS    = $(SPEC_SRCS:.spec=.spec.o) $(OBJS) $(MODULE).dbg.o
+WIN16_FILES = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
+ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
 all: $(MODULE)$(DLLEXT)
@@ -33,6 +34,11 @@ $(MODULE).tmp.o: $(ALL_OBJS) Makefile.in
 	$(LDCOMBINE) $(ALL_OBJS) -o $@
 	-$(STRIP) --strip-unneeded $@
 
+# Rule for 16-bit glue
+
+$(MODULE).glue.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -glue -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
+
 # Rules for .dll files
 
 $(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
@@ -46,6 +52,7 @@ CHECKLINK_RPATH = dlls library unicode
 
 checklink:: $(MODULE)$(DLLEXT) $(SUBDIRS:%=%/__checklink__)
 	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MODULE)$(DLLEXT) && $(RM) checklink
+	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) && $(RM) checklink
 
 # Rules for testing
 
@@ -63,7 +70,9 @@ Makedll.rules: $(TOPSRCDIR)/Makedll.rules.in $(TOPSRCDIR)/configure
 
 # Rules for installation
 
-.PHONY: install_lib $(ALTNAMES:%=_install_/%$(DLLEXT))
+WIN16_INSTALL = $(ALTNAMES:%=_install_/%$(DLLEXT))
+
+.PHONY: install_lib $(WIN16_INSTALL)
 
 $(ALTNAMES:%=_install_/%$(DLLEXT)): install_lib
 	cd $(dlldir) && $(RM) `basename $@` && $(LN_S) $(MODULE)$(DLLEXT) `basename $@`
@@ -72,7 +81,7 @@ install_lib: $(MODULE)$(DLLEXT)
 	$(MKINSTALLDIRS) $(dlldir)
 	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(dlldir)/$(MODULE)$(DLLEXT)
 
-install:: install_lib $(ALTNAMES:%=_install_/%$(DLLEXT))
+install:: install_lib @WIN16_INSTALL@
 
 uninstall::
 	$(RM) $(dlldir)/$(MODULE)$(DLLEXT) $(ALTNAMES:%=$(dlldir)/%$(DLLEXT))

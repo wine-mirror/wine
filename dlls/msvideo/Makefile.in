@@ -12,8 +12,10 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	mciwnd.c \
 	msvideo_main.c \
-	msvideo16.c \
 	drawdib.c
+
+C_SRCS16 = \
+	msvideo16.c
 
 EXTRA_OBJS = $(MODULE).glue.o
 

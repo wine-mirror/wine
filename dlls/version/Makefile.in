@@ -13,7 +13,9 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	info.c \
 	install.c \
-	resource.c \
+	resource.c
+
+C_SRCS16 = \
 	ver16.c
 
 @MAKE_DLL_RULES@

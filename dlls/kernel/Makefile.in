@@ -16,7 +16,6 @@ C_SRCS = \
 	format_msg.c \
 	kernel_main.c \
 	locale.c \
-	registry16.c \
 	stress.c \
 	string.c \
 	sync.c \
@@ -27,6 +26,9 @@ C_SRCS = \
 	win87em.c \
 	windebug.c \
 	wowthunk.c
+
+C_SRCS16 = \
+	registry16.c
 
 RC_SRCS = kernel.rc
 

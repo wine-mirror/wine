@@ -123,43 +123,79 @@ INSTALLSUBDIRS = $(BUILDSUBDIRS)
 
 @MAKE_RULES@
 
-all: \
-	$(EXTRADIRS:%=%.dll$(DLLEXT)) \
-	advapi32.dll$(DLLEXT) \
-	avicap32.dll$(DLLEXT) \
-	avifil32.dll$(DLLEXT) \
+WIN16_FILES = \
 	avifile.dll$(DLLEXT) \
-	comcat.dll$(DLLEXT) \
-	comctl32.dll$(DLLEXT) \
-	comdlg32.dll$(DLLEXT) \
 	comm.dll$(DLLEXT) \
 	commdlg.dll$(DLLEXT) \
 	compobj.dll$(DLLEXT) \
+	ddeml.dll$(DLLEXT) \
+	dispdib.dll$(DLLEXT) \
+	display.dll$(DLLEXT) \
+	gdi.exe$(DLLEXT) \
+	imm.dll$(DLLEXT) \
+	keyboard.dll$(DLLEXT) \
+	krnl386.exe$(DLLEXT) \
+	lzexpand.dll$(DLLEXT) \
+	mmsystem.dll$(DLLEXT) \
+	mouse.dll$(DLLEXT) \
+	msacm.dll$(DLLEXT) \
+	msvideo.dll$(DLLEXT) \
+	ole2.dll$(DLLEXT) \
+	ole2conv.dll$(DLLEXT) \
+	ole2disp.dll$(DLLEXT) \
+	ole2nls.dll$(DLLEXT) \
+	ole2prox.dll$(DLLEXT) \
+	ole2thk.dll$(DLLEXT) \
+	olecli.dll$(DLLEXT) \
+	olesvr.dll$(DLLEXT) \
+	rasapi16.dll$(DLLEXT) \
+	setupx.dll$(DLLEXT) \
+	shell.dll$(DLLEXT) \
+	sound.dll$(DLLEXT) \
+	storage.dll$(DLLEXT) \
+	stress.dll$(DLLEXT) \
+	system.dll$(DLLEXT) \
+	toolhelp.dll$(DLLEXT) \
+	typelib.dll$(DLLEXT) \
+	user.exe$(DLLEXT) \
+	ver.dll$(DLLEXT) \
+	w32sys.dll$(DLLEXT) \
+	win32s16.dll$(DLLEXT) \
+	win87em.dll$(DLLEXT) \
+	winaspi.dll$(DLLEXT) \
+	windebug.dll$(DLLEXT) \
+	wineps16.dll$(DLLEXT) \
+	wing.dll$(DLLEXT) \
+	winnls.dll$(DLLEXT) \
+	winsock.dll$(DLLEXT) \
+	wprocs.dll$(DLLEXT)
+
+all: \
+	$(EXTRADIRS:%=%.dll$(DLLEXT)) \
+	@WIN16_FILES@ \
+	advapi32.dll$(DLLEXT) \
+	avicap32.dll$(DLLEXT) \
+	avifil32.dll$(DLLEXT) \
+	comcat.dll$(DLLEXT) \
+	comctl32.dll$(DLLEXT) \
+	comdlg32.dll$(DLLEXT) \
 	crtdll.dll$(DLLEXT) \
 	crypt32.dll$(DLLEXT) \
 	dciman32.dll$(DLLEXT) \
-	ddeml.dll$(DLLEXT) \
 	devenum.dll$(DLLEXT) \
 	dinput.dll$(DLLEXT) \
 	dinput8.dll$(DLLEXT) \
-	dispdib.dll$(DLLEXT) \
-	display.dll$(DLLEXT) \
 	dplay.dll$(DLLEXT) \
 	dplayx.dll$(DLLEXT) \
 	dsound.dll$(DLLEXT) \
-	gdi.exe$(DLLEXT) \
 	gdi32.dll$(DLLEXT) \
 	icmp.dll$(DLLEXT) \
 	imaadp32.acm$(DLLEXT) \
 	imagehlp.dll$(DLLEXT) \
-	imm.dll$(DLLEXT) \
 	imm32.dll$(DLLEXT) \
 	joystick.drv$(DLLEXT) \
 	kernel32.dll$(DLLEXT) \
-	keyboard.dll$(DLLEXT) \
-	krnl386.exe$(DLLEXT) \
 	lz32.dll$(DLLEXT) \
-	lzexpand.dll$(DLLEXT) \
 	mapi32.dll$(DLLEXT) \
 	mcianim.drv$(DLLEXT) \
 	mciavi.drv$(DLLEXT) \
@@ -167,10 +203,7 @@ all: \
 	mciseq.drv$(DLLEXT) \
 	mciwave.drv$(DLLEXT) \
 	midimap.drv$(DLLEXT) \
-	mmsystem.dll$(DLLEXT) \
-	mouse.dll$(DLLEXT) \
 	mpr.dll$(DLLEXT) \
-	msacm.dll$(DLLEXT) \
 	msacm.drv$(DLLEXT) \
 	msacm32.dll$(DLLEXT) \
 	msadp32.acm$(DLLEXT) \
@@ -183,62 +216,37 @@ all: \
 	msvcrt.dll$(DLLEXT) \
 	msvcrt20.dll$(DLLEXT) \
 	msvfw32.dll$(DLLEXT) \
-	msvideo.dll$(DLLEXT) \
 	netapi32.dll$(DLLEXT) \
 	ntdll.dll$(DLLEXT) \
 	odbc32.dll$(DLLEXT) \
-	ole2.dll$(DLLEXT) \
-	ole2conv.dll$(DLLEXT) \
-	ole2disp.dll$(DLLEXT) \
-	ole2nls.dll$(DLLEXT) \
-	ole2prox.dll$(DLLEXT) \
-	ole2thk.dll$(DLLEXT) \
 	ole32.dll$(DLLEXT) \
 	oleaut32.dll$(DLLEXT) \
-	olecli.dll$(DLLEXT) \
 	olecli32.dll$(DLLEXT) \
 	oledlg.dll$(DLLEXT) \
 	olepro32.dll$(DLLEXT) \
-	olesvr.dll$(DLLEXT) \
 	olesvr32.dll$(DLLEXT) \
 	psapi.dll$(DLLEXT) \
 	qcap.dll$(DLLEXT) \
 	quartz.dll$(DLLEXT) \
-	rasapi16.dll$(DLLEXT) \
 	rasapi32.dll$(DLLEXT) \
 	riched32.dll$(DLLEXT) \
 	rpcrt4.dll$(DLLEXT) \
 	serialui.dll$(DLLEXT) \
 	setupapi.dll$(DLLEXT) \
-	setupx.dll$(DLLEXT) \
 	shdocvw.dll$(DLLEXT) \
-	shell.dll$(DLLEXT) \
 	shell32.dll$(DLLEXT) \
 	shfolder.dll$(DLLEXT) \
 	shlwapi.dll$(DLLEXT) \
 	snmpapi.dll$(DLLEXT) \
-	sound.dll$(DLLEXT) \
 	sti.dll$(DLLEXT) \
-	storage.dll$(DLLEXT) \
-	stress.dll$(DLLEXT) \
-	system.dll$(DLLEXT) \
 	tapi32.dll$(DLLEXT) \
-	toolhelp.dll$(DLLEXT) \
 	ttydrv.dll$(DLLEXT) \
 	twain_32.dll$(DLLEXT) \
-	typelib.dll$(DLLEXT) \
 	url.dll$(DLLEXT) \
 	urlmon.dll$(DLLEXT) \
-	user.exe$(DLLEXT) \
 	user32.dll$(DLLEXT) \
-	ver.dll$(DLLEXT) \
 	version.dll$(DLLEXT) \
 	w32skrnl.dll$(DLLEXT) \
-	w32sys.dll$(DLLEXT) \
-	win32s16.dll$(DLLEXT) \
-	win87em.dll$(DLLEXT) \
-	winaspi.dll$(DLLEXT) \
-	windebug.dll$(DLLEXT) \
 	winealsa.drv$(DLLEXT) \
 	winearts.drv$(DLLEXT) \
 	wineaudioio.drv$(DLLEXT) \
@@ -247,18 +255,13 @@ all: \
 	winenas.drv$(DLLEXT) \
 	wineoss.drv$(DLLEXT) \
 	wineps.dll$(DLLEXT) \
-	wineps16.dll$(DLLEXT) \
-	wing.dll$(DLLEXT) \
 	wininet.dll$(DLLEXT) \
 	winmm.dll$(DLLEXT) \
-	winnls.dll$(DLLEXT) \
 	winnls32.dll$(DLLEXT) \
-	winsock.dll$(DLLEXT) \
 	winspool.drv$(DLLEXT) \
 	wintrust.dll$(DLLEXT) \
 	wnaspi32.dll$(DLLEXT) \
 	wow32.dll$(DLLEXT) \
-	wprocs.dll$(DLLEXT) \
 	ws2_32.dll$(DLLEXT) \
 	wsock32.dll$(DLLEXT)
 

@@ -20,13 +20,12 @@ TESTPROGRAM  = $(MODULE)$(DLLEXT)
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(TOPOBJDIR) -p $(TESTPROGRAM)
 
 C_SRCS       = $(CTESTS)
-GEN_C_SRCS   = $(TESTLIST)
-EXTRA_OBJS   = $(TESTMAIN)
+EXTRA_OBJS   = $(TESTMAIN) $(TESTLIST:.c=.o)
 ALL_LIBS     = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
 CROSSTESTMAIN= $(TOPOBJDIR)/programs/winetest/wtmain.cross.o
-CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(GEN_C_SRCS:.c=.cross.o) $(CROSSTESTMAIN)
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(TESTLIST:.c=.cross.o) $(CROSSTESTMAIN)
 
 @MAKE_RULES@
 

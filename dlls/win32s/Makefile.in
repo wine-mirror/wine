@@ -11,10 +11,11 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	w32skernel.c \
-	w32sys.c \
+	w32sys.c
+
+C_SRCS16 = \
 	win32s16.c
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
