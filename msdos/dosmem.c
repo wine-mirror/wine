@@ -147,7 +147,7 @@ static void DOSMEM_InitDPMI(void)
 
 BIOSDATA * DOSMEM_BiosData()
 {
-    return (BIOSDATA *)DOSMEM_MemoryBase(0)+0x400;
+    return (BIOSDATA *)(DOSMEM_MemoryBase(0)+0x400);
 }
 
 BYTE * DOSMEM_BiosSys()
