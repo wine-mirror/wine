@@ -424,7 +424,7 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
 	        TRACE(" returning D3DTRANSFORMSTATE_VIEW :\n");
 		dump_D3DMATRIX(lpD3DMatrix);
 	    }
-	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
+	    memcpy(lpD3DMatrix, This->view_mat, 16 * sizeof(D3DVALUE));
 	} break;
 
 	case D3DTRANSFORMSTATE_PROJECTION: {
@@ -432,7 +432,7 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
 	        TRACE(" returning D3DTRANSFORMSTATE_PROJECTION :\n");
 		dump_D3DMATRIX(lpD3DMatrix);
 	    }
-	    memcpy(lpD3DMatrix, This->world_mat, 16 * sizeof(D3DVALUE));
+	    memcpy(lpD3DMatrix, This->proj_mat, 16 * sizeof(D3DVALUE));
 	} break;
 
 	default:
@@ -440,6 +440,86 @@ Main_IDirect3DDeviceImpl_7_3T_2T_GetTransform(LPDIRECT3DDEVICE7 iface,
 	    return DDERR_INVALIDPARAMS;
     }
 
+    return DD_OK;
+}
+
+HRESULT WINAPI
+Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform(LPDIRECT3DDEVICE7 iface,
+                                                   D3DTRANSFORMSTATETYPE dtstTransformStateType,
+                                                   LPD3DMATRIX lpD3DMatrix)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    LPD3DMATRIX mat;
+    D3DMATRIX temp;
+    DWORD matrix_changed = 0x00000000;
+
+    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dtstTransformStateType, lpD3DMatrix);
+    
+    if (TRACE_ON(ddraw)) {
+        TRACE(" Multiplying by :\n"); dump_D3DMATRIX(lpD3DMatrix);
+    }
+    
+    switch (dtstTransformStateType) {
+        case D3DTRANSFORMSTATE_WORLD: {
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" Resulting D3DTRANSFORMSTATE_WORLD matrix is :\n");
+	    }
+	    mat = This->world_mat;
+	    matrix_changed = WORLDMAT_CHANGED;
+	} break;
+
+        case D3DTRANSFORMSTATE_VIEW: {
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" Resulting D3DTRANSFORMSTATE_VIEW matrix is :\n");
+	    }
+	    mat = This->view_mat;
+	    matrix_changed = VIEWMAT_CHANGED;
+	} break;
+
+        case D3DTRANSFORMSTATE_PROJECTION: {
+	    if (TRACE_ON(ddraw)) {
+	        TRACE(" Resulting D3DTRANSFORMSTATE_PROJECTION matrix is :\n");
+	    }
+	    mat = This->proj_mat;
+	    matrix_changed = PROJMAT_CHANGED;
+	} break;
+
+	default:
+	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
+	    return DDERR_INVALIDPARAMS;
+    }
+
+    /* Now do the multiplication 'by hand'.
+       I know that all this could be optimised, but this will be done later :-) */
+    temp._11 = (mat->_11 * lpD3DMatrix->_11) + (mat->_21 * lpD3DMatrix->_12) + (mat->_31 * lpD3DMatrix->_13) + (mat->_41 * lpD3DMatrix->_14);
+    temp._21 = (mat->_11 * lpD3DMatrix->_21) + (mat->_21 * lpD3DMatrix->_22) + (mat->_31 * lpD3DMatrix->_23) + (mat->_41 * lpD3DMatrix->_24);
+    temp._31 = (mat->_11 * lpD3DMatrix->_31) + (mat->_21 * lpD3DMatrix->_32) + (mat->_31 * lpD3DMatrix->_33) + (mat->_41 * lpD3DMatrix->_34);
+    temp._41 = (mat->_11 * lpD3DMatrix->_41) + (mat->_21 * lpD3DMatrix->_42) + (mat->_31 * lpD3DMatrix->_43) + (mat->_41 * lpD3DMatrix->_44);
+
+    temp._12 = (mat->_12 * lpD3DMatrix->_11) + (mat->_22 * lpD3DMatrix->_12) + (mat->_32 * lpD3DMatrix->_13) + (mat->_42 * lpD3DMatrix->_14);
+    temp._22 = (mat->_12 * lpD3DMatrix->_21) + (mat->_22 * lpD3DMatrix->_22) + (mat->_32 * lpD3DMatrix->_23) + (mat->_42 * lpD3DMatrix->_24);
+    temp._32 = (mat->_12 * lpD3DMatrix->_31) + (mat->_22 * lpD3DMatrix->_32) + (mat->_32 * lpD3DMatrix->_33) + (mat->_42 * lpD3DMatrix->_34);
+    temp._42 = (mat->_12 * lpD3DMatrix->_41) + (mat->_22 * lpD3DMatrix->_42) + (mat->_32 * lpD3DMatrix->_43) + (mat->_42 * lpD3DMatrix->_44);
+
+    temp._13 = (mat->_13 * lpD3DMatrix->_11) + (mat->_23 * lpD3DMatrix->_12) + (mat->_33 * lpD3DMatrix->_13) + (mat->_43 * lpD3DMatrix->_14);
+    temp._23 = (mat->_13 * lpD3DMatrix->_21) + (mat->_23 * lpD3DMatrix->_22) + (mat->_33 * lpD3DMatrix->_23) + (mat->_43 * lpD3DMatrix->_24);
+    temp._33 = (mat->_13 * lpD3DMatrix->_31) + (mat->_23 * lpD3DMatrix->_32) + (mat->_33 * lpD3DMatrix->_33) + (mat->_43 * lpD3DMatrix->_34);
+    temp._43 = (mat->_13 * lpD3DMatrix->_41) + (mat->_23 * lpD3DMatrix->_42) + (mat->_33 * lpD3DMatrix->_43) + (mat->_43 * lpD3DMatrix->_44);
+
+    temp._14 = (mat->_14 * lpD3DMatrix->_11) + (mat->_24 * lpD3DMatrix->_12) + (mat->_34 * lpD3DMatrix->_13) + (mat->_44 * lpD3DMatrix->_14);
+    temp._24 = (mat->_14 * lpD3DMatrix->_21) + (mat->_24 * lpD3DMatrix->_22) + (mat->_34 * lpD3DMatrix->_23) + (mat->_44 * lpD3DMatrix->_24);
+    temp._34 = (mat->_14 * lpD3DMatrix->_31) + (mat->_24 * lpD3DMatrix->_32) + (mat->_34 * lpD3DMatrix->_33) + (mat->_44 * lpD3DMatrix->_34);
+    temp._44 = (mat->_14 * lpD3DMatrix->_41) + (mat->_24 * lpD3DMatrix->_42) + (mat->_34 * lpD3DMatrix->_43) + (mat->_44 * lpD3DMatrix->_44);
+
+    
+    /* And copy the new matrix in the good storage.. */
+    memcpy(mat, &temp, 16 * sizeof(D3DVALUE));
+    if (TRACE_ON(ddraw)) {
+        dump_D3DMATRIX(mat);
+    }
+    
+    if (matrix_changed != 0x00000000) This->matrices_updated(This, matrix_changed);
+    
     return DD_OK;
 }
 
@@ -461,16 +541,6 @@ Main_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
     }
     This->active_viewport = *lpData;
 
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform(LPDIRECT3DDEVICE7 iface,
-                                                   D3DTRANSFORMSTATETYPE dtstTransformStateType,
-                                                   LPD3DMATRIX lpD3DMatrix)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08x,%p): stub!\n", This, iface, dtstTransformStateType, lpD3DMatrix);
     return DD_OK;
 }
 
