@@ -47,7 +47,6 @@ int main(int argc, char **argv)
 
     gcc_argv[i++] = "-fshort-wchar";
     gcc_argv[i++] = "-fPIC";
-    gcc_argv[i++] = "-I" INCLUDEDIR;
     gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
     gcc_argv[i++] = "-I" INCLUDEDIR "/windows";
     gcc_argv[i++] = "-DWINE_DEFINE_WCHAR_T";
