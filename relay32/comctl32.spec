@@ -30,41 +30,41 @@ type	win32
 # 23 pascal16 DrawStatusText(word ptr ptr word) DrawStatusText16
  23 stub DrawStatusText
  24 stdcall DrawStatusTextW(long ptr ptr long) DrawStatusText32W
- 25 stub ImageList_Add
+ 25 stdcall ImageList_Add(ptr long long) ImageList_Add
  26 stub ImageList_AddIcon
- 27 stub ImageList_AddMasked
+ 27 stdcall ImageList_AddMasked(ptr long long) ImageList_AddMasked
  28 stub ImageList_BeginDrag
  29 stub ImageList_Copy
- 30 stub ImageList_Create
- 31 stub ImageList_Destroy
+ 30 stdcall ImageList_Create(long long long long long) ImageList_Create
+ 31 stdcall ImageList_Destroy(ptr) ImageList_Destroy
  32 stub ImageList_DragEnter
  33 stub ImageList_DragLeave
  34 stub ImageList_DragMove
  35 stub ImageList_DragShowNolock
- 36 stub ImageList_Draw
+ 36 stdcall ImageList_Draw(ptr long long long long long) ImageList_Draw
  37 stub ImageList_DrawEx
  38 stub ImageList_EndDrag
- 39 stub ImageList_GetBkColor
+ 39 stdcall ImageList_GetBkColor(ptr) ImageList_GetBkColor
  40 stub ImageList_GetDragImage
  41 stub ImageList_GetIcon
- 42 stub ImageList_GetIconSize
- 43 stub ImageList_GetImageCount
- 44 stub ImageList_GetImageInfo
+ 42 stdcall ImageList_GetIconSize(ptr ptr ptr) ImageList_GetIconSize
+ 43 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
+ 44 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
  45 stub ImageList_GetImageRect
  46 stub ImageList_LoadImage
- 47 stub ImageList_LoadImageA
- 48 stub ImageList_LoadImageW
- 49 stub ImageList_Merge
+ 47 stdcall ImageList_LoadImageA(long ptr long long long long long) ImageList_LoadImage32A
+ 48 stdcall ImageList_LoadImageW(long ptr long long long long long) ImageList_LoadImage32W
+ 49 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
  50 stub ImageList_Read
  51 stub ImageList_Remove
- 52 stub ImageList_Replace
- 53 stub ImageList_ReplaceIcon
- 54 stub ImageList_SetBkColor
+ 52 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
+ 53 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
+ 54 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
  55 stub ImageList_SetDragCursorImage
  56 stub ImageList_SetFilter
  57 stub ImageList_SetIconSize
  58 stub ImageList_SetImageCount
- 59 stub ImageList_SetOverlayImage
+ 59 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
  60 stub ImageList_Write
  61 stub InitCommonControlsEx
  62 stub PropertySheet

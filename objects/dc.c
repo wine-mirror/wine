@@ -449,7 +449,7 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     }
     newdc = (DC *) GDI_HEAP_LOCK( handle );
 
-    dprintf_info(dc, "GetDCState(%04x): returning %04x\n", hdc, handle );
+    TRACE(dc, "(%04x): returning %04x\n", hdc, handle );
 
     memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
     newdc->w.flags           = dc->w.flags | DC_SAVED;
@@ -537,7 +537,7 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
       GDI_HEAP_UNLOCK( hdcs );
       return;
     }
-    dprintf_info(dc, "SetDCState: %04x %04x\n", hdc, hdcs );
+    TRACE(dc, "%04x %04x\n", hdc, hdcs );
 
     dc->w.flags           = dcs->w.flags & ~DC_SAVED;
     dc->w.devCaps         = dcs->w.devCaps;
@@ -642,7 +642,7 @@ INT32 WINAPI SaveDC32( HDC32 hdc )
     
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
-    dprintf_info(dc, "SaveDC(%04x): returning %d\n", hdc, dc->saveLevel+1 );
+    TRACE(dc, "(%04x): returning %d\n", hdc, dc->saveLevel+1 );
     ret = ++dc->saveLevel;
     GDI_HEAP_UNLOCK( hdcs );
     GDI_HEAP_UNLOCK( hdc );
@@ -667,7 +667,7 @@ BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
     DC * dc, * dcs;
     BOOL32 success;
 
-    dprintf_info(dc, "RestoreDC: %04x %d\n", hdc, level );
+    TRACE(dc, "%04x %d\n", hdc, level );
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -727,13 +727,13 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (!(dc = DC_AllocDC( funcs ))) return 0;
     dc->w.flags = 0;
 
-    dprintf_info(dc, "CreateDC(%s %s %s): returning %04x\n",
+    TRACE(dc, "(%s %s %s): returning %04x\n",
                driver, device, output, dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, driver, device, output, initData ))
     {
-        dprintf_warn(dc, "CreateDC: creation aborted by device\n" );
+        WARN(dc, "creation aborted by device\n" );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
@@ -829,7 +829,7 @@ HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
 
     if (!(dc = DC_AllocDC( funcs ))) return 0;
 
-    dprintf_info(dc, "CreateCompatibleDC(%04x): returning %04x\n",
+    TRACE(dc, "(%04x): returning %04x\n",
                hdc, dc->hSelf );
 
       /* Create default bitmap */
@@ -846,7 +846,7 @@ HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
-        dprintf_warn(dc, "CreateCompatibleDC: creation aborted by device\n");
+        WARN(dc, "creation aborted by device\n");
         DeleteObject32( hbitmap );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
@@ -875,7 +875,7 @@ BOOL32 WINAPI DeleteDC32( HDC32 hdc )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-    dprintf_info(dc, "DeleteDC: %04x\n", hdc );
+    TRACE(dc, "%04x\n", hdc );
 
     while (dc->saveLevel)
     {
@@ -961,7 +961,7 @@ INT32 WINAPI GetDeviceCaps32( HDC32 hdc, INT32 cap )
       return 0;
     }
     
-    dprintf_info(dc, "GetDeviceCaps(%04x,%d): returning %d\n",
+    TRACE(dc, "(%04x,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
     ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
     GDI_HEAP_UNLOCK( hdc );
@@ -1208,9 +1208,10 @@ INT32 WINAPI SetArcDirection32( HDC32 hdc, INT32 nDirection )
 
 /***********************************************************************
  *           GetWorldTransform    (GDI32.244)
+ * FIXME
+ *	Check that SetLastError is being called correctly
  */
 BOOL32 WINAPI GetWorldTransform( HDC32 hdc, LPXFORM xform )
-/* FIXME: Check that SetLastError is being called correctly */
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     
@@ -1268,7 +1269,7 @@ BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
     DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
 
-    dprintf_info(dc, "SetDCHook: hookProc %08x, default is %08x\n",
+    TRACE(dc, "hookProc %08x, default is %08x\n",
                 (UINT32)hookProc, (UINT32)DCHook );
 
     if (!dc) return FALSE;
@@ -1306,7 +1307,7 @@ WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
         /* "Undocumented Windows" info is slightly confusing.
          */
 
-        dprintf_info(dc,"SetHookFlags: hDC %04x, flags %04x\n",hDC,flags);
+        TRACE(dc,"hDC %04x, flags %04x\n",hDC,flags);
 
         if( flags & DCHF_INVALIDATEVISRGN )
             dc->w.flags |= DC_DIRTY;

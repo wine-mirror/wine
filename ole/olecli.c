@@ -106,13 +106,24 @@ OLESTATUS WINAPI OleQueryCreateFromClip32(LPCSTR name,OLEOPT_RENDER render,OLECL
 
 
 /***********************************************************************
- *           OleIsDcMeta
+ *           OleIsDcMeta16
  */
-BOOL16 WINAPI OleIsDcMeta(HDC16 hdc)
+BOOL16 WINAPI OleIsDcMeta16(HDC16 hdc)
 {
-	dprintf_info(ole,"OleIsDCMeta(%04x)\n",hdc);
+	TRACE(ole,"(%04x)\n",hdc);
 	return GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0;
 }
+
+
+/***********************************************************************
+ *           OleIsDcMeta32
+ */
+BOOL32 WINAPI OleIsDcMeta32(HDC32 hdc)
+{
+        TRACE(ole,"(%04x)\n",hdc);
+        return GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0;
+}
+
 
 /***********************************************************************
  *           OleSetHostNames

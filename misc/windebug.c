@@ -20,9 +20,10 @@ void WinNotify(CONTEXT *context)
 	switch (AX_reg(context))
 	{
 		case 0x000D:
-		case 0x000E:	/* __asm__("pushl $0x0\n\t"); ??? */
-				break;
+		case 0x000E:
 		case 0x0060:	/* do nothing */
+				break;
+		case 0x0062: 
 				break;
 		case 0x0063:	/* do something complicated */
 				break;

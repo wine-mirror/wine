@@ -227,8 +227,7 @@ BOOL32 WINAPI CloseFigure32(HDC32 hdc)
 INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
    INT16 nSize)
 {
-   /* FIXME: Not implemented */
-   fprintf(stdnimp, "GetPath16: Unimplemented stub\n");
+   FIXME(gdi, "Unimplemented stub\n");
 
    return 0;
 }

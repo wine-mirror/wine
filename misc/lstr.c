@@ -517,12 +517,10 @@ DWORD WINAPI FormatMessage32A(
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 	DWORD	nolinefeed = 0;
 
-	dprintf_info(resource,
-		"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
-		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args
-	);
+	TRACE(resource, "(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
 	if (width) 
-		fprintf(stdnimp,"	- line wrapping not supported.\n");
+		FIXME(resource,"line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
 		from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
@@ -596,6 +594,9 @@ DWORD WINAPI FormatMessage32A(
 							f+=strlen(f); /*at \0*/
 						}
 					} else
+					        if(!args) 
+						  break;
+					else
 						fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
 					if (args) {
 						if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
@@ -603,7 +604,7 @@ DWORD WINAPI FormatMessage32A(
 						else
                                                     argliststart=(*(DWORD**)args)+insertnr-1;
 
-						if (fmtstr[strlen(fmtstr)]=='s')
+						if (fmtstr[strlen(fmtstr)-1]=='s')
 							sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
 						else
 							sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
@@ -683,12 +684,10 @@ DWORD WINAPI FormatMessage32W(
 	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
 	DWORD	nolinefeed = 0;
 
-	dprintf_info(resource,
-		"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
-		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args
-	);
+	TRACE(resource, "(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
 	if (width) 
-		fprintf(stdnimp,"	- line wrapping not supported.\n");
+		FIXME(resource,"line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
 		from = HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)lpSource);
@@ -764,13 +763,16 @@ DWORD WINAPI FormatMessage32W(
 							f+=strlen(f); /*at \0*/
 						}
 					} else
+					        if(!args)
+						  break;
+					else
 						fmtstr=HEAP_strdupA( GetProcessHeap(),0,"%s");
 					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
 						argliststart=args+insertnr-1;
 					else
 						argliststart=(*(DWORD**)args)+insertnr-1;
 
-					if (fmtstr[strlen(fmtstr)]=='s') {
+					if (fmtstr[strlen(fmtstr)-1]=='s') {
 						DWORD	xarr[3];
 
 						xarr[0]=(DWORD)HEAP_strdupWtoA(GetProcessHeap(),0,(LPWSTR)(*(argliststart+0)));

@@ -65,7 +65,7 @@ INT32 WINAPI SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;
 
-    dprintf_info(clipping, "SelectClipRgn: %04x %04x\n", hdc, hrgn );
+    TRACE(clipping, "%04x %04x\n", hdc, hrgn );
 
     if (hrgn)
     {
@@ -94,7 +94,7 @@ INT16 WINAPI SelectVisRgn( HDC16 hdc, HRGN16 hrgn )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc || !hrgn) return ERROR;
 
-    dprintf_info(clipping, "SelectVisRgn: %04x %04x\n", hdc, hrgn );
+    TRACE(clipping, "%04x %04x\n", hdc, hrgn );
 
     dc->w.flags &= ~DC_DIRTY;
 
@@ -129,7 +129,7 @@ INT32 WINAPI OffsetClipRgn32( HDC32 hdc, INT32 x, INT32 y )
 	return NULLREGION;   /* ?? */
     }
 
-    dprintf_info(clipping, "OffsetClipRgn: %04x %d,%d\n", hdc, x, y );
+    TRACE(clipping, "%04x %d,%d\n", hdc, x, y );
 
     if (dc->w.hClipRgn)
     {
@@ -151,7 +151,7 @@ INT16 WINAPI OffsetVisRgn( HDC16 hdc, INT16 x, INT16 y )
     INT16 retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_info(clipping, "OffsetVisRgn: %04x %d,%d\n", hdc, x, y );
+    TRACE(clipping, "%04x %d,%d\n", hdc, x, y );
     retval = OffsetRgn32( dc->w.hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
     GDI_HEAP_UNLOCK( hdc );
@@ -228,7 +228,7 @@ INT32 WINAPI ExcludeClipRect32( HDC32 hdc, INT32 left, INT32 top,
     top    = YLPTODP( dc, top );
     bottom = YLPTODP( dc, bottom );
 
-    dprintf_info(clipping, "ExcludeClipRect: %04x %dx%d,%dx%d\n",
+    TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
     ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_EXCLUDE );
     GDI_HEAP_UNLOCK( hdc );
@@ -268,7 +268,7 @@ INT32 WINAPI IntersectClipRect32( HDC32 hdc, INT32 left, INT32 top,
     top    = YLPTODP( dc, top );
     bottom = YLPTODP( dc, bottom );
 
-    dprintf_info(clipping, "IntersectClipRect: %04x %dx%d,%dx%d\n",
+    TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
     ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_INTERSECT );
     GDI_HEAP_UNLOCK( hdc );
@@ -326,7 +326,7 @@ INT16 WINAPI ExcludeVisRect( HDC16 hdc, INT16 left, INT16 top,
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_info(clipping, "ExcludeVisRect: %04x %dx%d,%dx%d\n",
+    TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
 
     return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, TRUE );
@@ -341,7 +341,7 @@ INT16 WINAPI IntersectVisRect( HDC16 hdc, INT16 left, INT16 top,
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
-    dprintf_info(clipping, "IntersectVisRect: %04x %dx%d,%dx%d\n",
+    TRACE(clipping, "%04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
 
     return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, FALSE );
@@ -365,7 +365,7 @@ BOOL32 WINAPI PtVisible32( HDC32 hdc, INT32 x, INT32 y )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
 
-    dprintf_info(clipping, "PtVisible: %04x %d,%d\n", hdc, x, y );
+    TRACE(clipping, "%04x %d,%d\n", hdc, x, y );
     if (!dc->w.hGCClipRgn) return FALSE;
 
     if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
@@ -383,7 +383,7 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, LPRECT16 rect )
     RECT16 tmpRect;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
-    dprintf_info(clipping,"RectVisible: %04x %d,%dx%d,%d\n",
+    TRACE(clipping,"%04x %d,%dx%d,%d\n",
                      hdc, rect->left, rect->top, rect->right, rect->bottom );
     if (!dc->w.hGCClipRgn) return FALSE;
     /* copy rectangle to avoid overwriting by LPtoDP */
@@ -460,7 +460,7 @@ HRGN16 WINAPI SaveVisRgn( HDC16 hdc )
     RGNOBJ *obj, *copyObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-    dprintf_info(clipping, "SaveVisRgn: %04x\n", hdc );
+    TRACE(clipping, "%04x\n", hdc );
     if (!dc->w.hVisRgn)
     {
         fprintf( stderr, "SaveVisRgn: hVisRgn is zero. Please report this.\n" );
@@ -512,7 +512,7 @@ INT16 WINAPI RestoreVisRgn( HDC16 hdc )
         GDI_HEAP_UNLOCK( hdc );
         return ERROR;    
     }
-    dprintf_info(clipping, "RestoreVisRgn: %04x\n", hdc );
+    TRACE(clipping, "%04x\n", hdc );
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
     {
         GDI_HEAP_UNLOCK( hdc );

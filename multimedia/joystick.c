@@ -94,7 +94,9 @@ void joySendMessages(void)
 		} else
 			return;
         if (joyCaptured == FALSE) return;
-	dprintf_info(mmsys, "JoySendMessages()\n");
+
+	TRACE(mmsys, " --\n");
+
         for (joy=0; joy < MAXJOYDRIVERS; joy++) {
 		if (joyOpenDriver(joy) == FALSE) continue;
                 dev_stat = read(joy_dev[joy], &js, sizeof(js));
@@ -142,7 +144,7 @@ UINT16 WINAPI joyGetNumDevs16(void)
 		joyCloseDriver(joy);
 		joy_cnt++;
     }
-    dprintf_info(mmsys, "returning %d\n", joy_cnt);
+    TRACE(mmsys, "returning %d\n", joy_cnt);
     if (!joy_cnt) fprintf(stderr, "No joystick found - "
 			  "perhaps get joystick-0.8.0.tar.gz and load"
 			  "it as module or use Linux >= 2.1.45 to be "
@@ -226,7 +228,7 @@ MMRESULT32 WINAPI joyGetDevCaps32W(UINT32 wID, LPJOYCAPS32W lpCaps,UINT32 wSize)
  */
 MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
 {
-    dprintf_info(mmsys, "JoyGetDevCaps(%04X, %p, %d);\n",
+    TRACE(mmsys, "(%04X, %p, %d);\n",
             wID, lpCaps, wSize);
     if (joyOpenDriver(wID) == TRUE) {
         lpCaps->wMid = MM_MICROSOFT;
@@ -294,7 +296,7 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 {
         struct js_status js;
 
-        dprintf_info(mmsys, "JoyGetPos(%04X, %p)\n", wID, lpInfo);
+        TRACE(mmsys, "(%04X, %p)\n", wID, lpInfo);
         if (joyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
 	dev_stat = read(joy_dev[wID], &js, sizeof(js));
 	if (dev_stat != sizeof(js)) {
@@ -308,7 +310,7 @@ MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 	lpInfo->wYpos = js.y;
 	lpInfo->wZpos = 0; /* FIXME: Don't know what to do with this value as joystick driver doesn't provide a Z value */
 	lpInfo->wButtons = js.buttons;
-	dprintf_info(mmsys, "JoyGetPos: x: %d, y: %d, buttons: %d\n", js.x, js.y, js.buttons);
+	TRACE(mmsys, "x: %d, y: %d, buttons: %d\n", js.x, js.y, js.buttons);
 	return JOYERR_NOERROR;
 }
 
@@ -329,7 +331,7 @@ MMRESULT32 WINAPI joyGetThreshold32(UINT32 wID, LPUINT32 lpThreshold)
  */
 MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 {
-    dprintf_info(mmsys, "JoyGetThreshold(%04X, %p);\n", wID, lpThreshold);
+    TRACE(mmsys, "(%04X, %p);\n", wID, lpThreshold);
     if (wID >= MAXJOYDRIVERS) return JOYERR_PARMS;
     *lpThreshold = joy_threshold[wID];
     return JOYERR_NOERROR;
@@ -348,7 +350,7 @@ MMRESULT32 WINAPI joyReleaseCapture32(UINT32 wID)
  */
 MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
 {
-    dprintf_info(mmsys, "JoyReleaseCapture(%04X);\n", wID);
+    TRACE(mmsys, "(%04X);\n", wID);
     joyCaptured = FALSE;
     joyCloseDriver(wID);
     joy_dev[wID] = -1;
@@ -370,7 +372,7 @@ MMRESULT32 WINAPI joySetCapture32(HWND32 hWnd,UINT32 wID,UINT32 wPeriod,BOOL32 b
 MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd,UINT16 wID,UINT16 wPeriod,BOOL16 bChanged)
 {
 
-    dprintf_info(mmsys, "JoySetCapture(%04X, %04X, %d, %d);\n",
+    TRACE(mmsys, "(%04X, %04X, %d, %d);\n",
 	    hWnd, wID, wPeriod, bChanged);
 
     if (!CaptureWnd[wID]) {
@@ -395,7 +397,7 @@ MMRESULT32 WINAPI joySetThreshold32(UINT32 wID, UINT32 wThreshold)
  */
 MMRESULT16 WINAPI joySetThreshold16(UINT16 wID, UINT16 wThreshold)
 {
-    dprintf_info(mmsys, "JoySetThreshold(%04X, %d);\n", wID, wThreshold);
+    TRACE(mmsys, "(%04X, %d);\n", wID, wThreshold);
 
     if (wID > 3) return JOYERR_PARMS;
     joy_threshold[wID] = wThreshold;

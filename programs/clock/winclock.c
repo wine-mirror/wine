@@ -160,6 +160,8 @@ BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
 void Idle(HDC idc)
 {
   SYSTEMTIME st;
+  TEXTMETRIC tm;
+  static short xChar, yChar;
   WORD H, M, S, F;
   int MidX, MidY, DiffX, DiffY;
   HDC dc;
@@ -191,14 +193,22 @@ void Idle(HDC idc)
   if(UpdateSecondHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.79,MidY*0.79,F)) Redraw = TRUE;
   if (Globals.bAnalog)
   {
-  DeleteObject(SelectObject(dc,CreatePen(PS_SOLID,1,HandColor)));
-    if(Redraw)
-    {
-      DrawSecondHand(dc);
-      DrawMinuteHand(dc);
-      DrawHourHand(dc);
-    }
-  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN))); 
+    DeleteObject(SelectObject(dc,CreatePen(PS_SOLID,1,HandColor)));
+      if(Redraw)
+      {
+        DrawSecondHand(dc);
+        DrawMinuteHand(dc);
+        DrawHourHand(dc);
+      }
+    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN))); 
+  }
+  else 
+  {
+    SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
+    xChar = tm.tmAveCharWidth;
+    yChar = tm.tmHeight;
+    TextOut (dc, xChar, yChar, "Hola", strlen ("Hola")); 
+    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
   }
   if(!idc) ReleaseDC(Globals.hMainWnd,dc);
 }

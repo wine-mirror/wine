@@ -24,6 +24,8 @@ typedef struct
   HMENU   hPropertiesMenu;
   HMENU   hLanguageMenu;
   HMENU   hInfoMenu;
+  HMENU   hSystemMenu;
+  HMENU   hPopupMenu1;
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
   LPCSTR  lpszLanguage;
@@ -42,8 +44,7 @@ typedef struct
 extern CLOCK_GLOBALS Globals;
 
 /* function prototypes */
-VOID MAIN_SelectLanguageByName(LPCSTR);
-VOID MAIN_SelectLanguageByNumber(UINT);
+VOID MAIN_FileChooseFont(VOID);
 
 /* class names */
 

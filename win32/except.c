@@ -81,7 +81,7 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
           (TEB_EXCEPTION_FRAME(pcontext) != ((void *)0xffffffff)) &&
           (TEB_EXCEPTION_FRAME(pcontext) != pEndFrame))
    {
-       dprintf_info(win32, "calling exception handler at 0x%x\n",
+       TRACE(win32, "calling exception handler at 0x%x\n",
                       (int)TEB_EXCEPTION_FRAME(pcontext)->Handler );
 
        dispatch=0;       
@@ -89,7 +89,7 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
                                                 TEB_EXCEPTION_FRAME(pcontext),
                                                 pcontext, &dispatch);
                                          
-       dprintf_info(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
+       TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
   
        if (	(retval == ExceptionCollidedUnwind) &&
@@ -149,14 +149,14 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
     
     while((pframe!=NULL)&&(pframe!=((void *)0xFFFFFFFF)))
     {
-       dprintf_info(win32,"calling exception handler at 0x%x\n",
+       TRACE(win32,"calling exception handler at 0x%x\n",
                                                 (int) pframe->Handler);
        dispatch=0;  
-       dprintf_info(relay,"CallTo32(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
+       TRACE(relay,"(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
                      pframe->Handler, &record, pframe, pcontext, &dispatch );
        retval=pframe->Handler(&record,pframe,pcontext,&dispatch);
  
-       dprintf_info(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
+       TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
                               
        if(retval==ExceptionContinueExecution)
@@ -167,7 +167,7 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
    if (retval!=ExceptionContinueExecution)
    {    
        /* FIXME: what should we do here? */
-       dprintf_info(win32,"no handler wanted to handle the exception, exiting\n");
+       TRACE(win32,"no handler wanted to handle the exception, exiting\n");
        ExitProcess(dwExceptionCode); /* what status should be used here ? */
    }
 }

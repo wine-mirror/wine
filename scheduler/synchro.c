@@ -145,8 +145,8 @@ void SYNC_WaitForCondition( WAIT_STRUCT *wait, DWORD timeout )
 
     /* Now wait for it */
 
-    dprintf_info(win32, "SYNC: starting wait (%p %04x)\n",
-                   THREAD_Current(), THREAD_Current()->teb_sel );
+    TRACE(win32, "starting wait (%p %04x)\n",
+		 THREAD_Current(), THREAD_Current()->teb_sel );
 
     sigprocmask( SIG_SETMASK, NULL, &set );
     sigdelset( &set, SIGUSR1 );
@@ -181,8 +181,8 @@ void SYNC_WaitForCondition( WAIT_STRUCT *wait, DWORD timeout )
     /* Grab the system lock again */
 
     while (count--) SYSTEM_LOCK();
-    dprintf_info(win32, "SYNC: wait finished (%p %04x)\n",
-                   THREAD_Current(), THREAD_Current()->teb_sel );
+    TRACE(win32, "wait finished (%p %04x)\n",
+		 THREAD_Current(), THREAD_Current()->teb_sel );
 
     /* Remove ourselves from the lists */
 
@@ -244,7 +244,7 @@ void SYNC_WakeUp( THREAD_QUEUE *wait_queue, DWORD max )
         THDB *thdb = entry->thread;
         if (SYNC_CheckCondition( &thdb->wait_struct, THDB_TO_THREAD_ID(thdb) ))
         {
-            dprintf_info(win32, "SYNC: waking up %04x\n", thdb->teb_sel );
+            TRACE(win32, "waking up %04x\n", thdb->teb_sel );
             kill( thdb->unix_pid, SIGUSR1 );
             if (!--max) break;
         }

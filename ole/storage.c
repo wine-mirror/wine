@@ -586,7 +586,7 @@ HRESULT WINAPI IStream16_QueryInterface(
 	char    xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IStream16(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
 		return 0;
@@ -614,7 +614,7 @@ ULONG WINAPI IStream16_Release(LPSTREAM16 this) {
 HRESULT WINAPI IStream16_Seek(
 	LPSTREAM16 this,LARGE_INTEGER offset,DWORD whence,ULARGE_INTEGER *newpos
 ) {
-	dprintf_info(relay,"IStream16(%p)->Seek([%ld.%ld],%ld,%p)\n",this,offset.HighPart,offset.LowPart,whence,newpos);
+	TRACE(relay,"(%p)->Seek([%ld.%ld],%ld,%p)\n",this,offset.HighPart,offset.LowPart,whence,newpos);
 
 	switch (whence) {
 	/* unix SEEK_xx should be the same as win95 ones */
@@ -658,7 +658,7 @@ HRESULT WINAPI IStream16_Read(
 	ULONG	*bytesread=pcbRead,xxread;
 	int	blocknr;
 
-	dprintf_info(relay,"IStream16(%p)->Read(%p,%ld,%p)\n",this,pv,cb,pcbRead);
+	TRACE(relay,"(%p)->Read(%p,%ld,%p)\n",this,pv,cb,pcbRead);
 	if (!pcbRead) bytesread=&xxread;
 	*bytesread = 0;
 
@@ -719,7 +719,7 @@ HRESULT WINAPI IStream16_Write(
 	if (!pcbWrite) byteswritten=&xxwritten;
 	*byteswritten = 0;
 
-	dprintf_info(relay,"IStream16(%p)->Write(%p,%ld,%p)\n",this,pv,cb,pcbWrite);
+	TRACE(relay,"(%p)->Write(%p,%ld,%p)\n",this,pv,cb,pcbWrite);
 	/* do we need to junk some blocks? */
 	newsize	= this->offset.LowPart+cb;
 	oldsize	= this->stde.pps_size;
@@ -1029,7 +1029,7 @@ HRESULT WINAPI IStream32_QueryInterface(
 	char    xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IStream16(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
 		return 0;
@@ -1076,7 +1076,7 @@ HRESULT WINAPI IStorage16_QueryInterface(
 	char    xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IStorage16(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
@@ -1252,7 +1252,7 @@ HRESULT WINAPI IStorage16_OpenStorage(
 	WCHAR		name[33];
 	int		newpps;
 
-	dprintf_info(relay,"IStorage16(%p)->OpenStorage(%s,%p,0x%08lx,%p,0x%08lx,%p)\n",
+	TRACE(relay,"(%p)->OpenStorage(%s,%p,0x%08lx,%p,0x%08lx,%p)\n",
 		this,pwcsName,pstgPrio,grfMode,snbExclude,reserved,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
@@ -1282,7 +1282,7 @@ HRESULT WINAPI IStorage16_OpenStream(
 	WCHAR		name[33];
 	int		newpps;
 
-	dprintf_info(relay,"IStorage16(%p)->OpenStream(%s,%p,0x%08lx,0x%08lx,%p)\n",
+	TRACE(relay,"(%p)->OpenStream(%s,%p,0x%08lx,0x%08lx,%p)\n",
 		this,pwcsName,reserved1,grfMode,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
@@ -1378,7 +1378,7 @@ HRESULT WINAPI IStorage32_QueryInterface(
 	char    xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IStorage32(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;

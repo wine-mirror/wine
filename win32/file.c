@@ -37,8 +37,8 @@ BOOL32 WINAPI WriteFile(HANDLE32 hFile, LPCVOID lpBuffer,
 	K32OBJ *ioptr;
 	BOOL32 status = FALSE;
 	
-	dprintf_info(file, "WriteFile: %d %p %ld\n", hFile, lpBuffer, 
-		      numberOfBytesToWrite);
+	TRACE(file, "%d %p %ld\n", hFile, lpBuffer, 
+		     numberOfBytesToWrite);
 	
 	if (!(ioptr = HANDLE_GetObjPtr( hFile, K32OBJ_UNKNOWN, 0 ))) 
 		return HFILE_ERROR32;
@@ -58,8 +58,8 @@ BOOL32 WINAPI ReadFile(HANDLE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToRea
 	K32OBJ *ioptr;
 	BOOL32 status = FALSE;
 	
-	dprintf_info(file, "ReadFile: %d %p %ld\n", hFile, lpBuffer, 
-		      numberOfBytesToRead);
+	TRACE(file, "%d %p %ld\n", hFile, lpBuffer, 
+		     numberOfBytesToRead);
 	
 	if (!(ioptr = HANDLE_GetObjPtr( hFile, K32OBJ_UNKNOWN, 0 ))) 
 		return HFILE_ERROR32;
@@ -112,7 +112,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
     create_flags = TranslateCreationFlags(creation);
 
     if(template)
-        dprintf_fixme(file, "CreateFile: template handles not supported.\n");
+        FIXME(file, "template handles not supported.\n");
 
     /* If the name starts with '\\?' or '\\.', ignore the first 3 chars.
      */
@@ -123,7 +123,7 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
      */
     if(!strncmp(filename, "\\\\", 2))
     {
-        dprintf_fixme(file, "CreateFile: UNC names not supported.\n");
+        FIXME(file, "UNC names not supported.\n");
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
         return HFILE_ERROR32;
     }
@@ -225,7 +225,7 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
     if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name ))
         return FALSE;
 
-    dprintf_info(file,"SetFileAttributes(%s,%lx)\n",lpFileName,attributes);
+    TRACE(file,"(%s,%lx)\n",lpFileName,attributes);
     if (attributes & FILE_ATTRIBUTE_NORMAL) {
       attributes &= ~FILE_ATTRIBUTE_NORMAL;
       if (attributes)

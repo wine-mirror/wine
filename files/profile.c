@@ -215,12 +215,12 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         *prev_key  = key;
         prev_key = &key->next;
     }
-    if (debugging_info(profile))
+    if (TRACE_ON(profile))
     {
-        dprintf_info(profile, "PROFILE_Load:\n" );
+        TRACE(profile, "dump:\n" );
 	/* FIXME: improper use of stddeb! */
         PROFILE_Save(stddeb, first_section );
-        dprintf_info(profile, "PROFILE_Load finished.\n" );
+        TRACE(profile, "finished.\n" );
     }
     return first_section;
 }
@@ -357,7 +357,7 @@ static BOOL32 PROFILE_FlushFile(void)
         return FALSE;
     }
 
-    dprintf_info(profile, "Saving '%s' into '%s'\n",
+    TRACE(profile, "Saving '%s' into '%s'\n",
                      CurProfile.dos_name, unix_name );
     PROFILE_Save( file, CurProfile.section );
     fclose( file );
@@ -380,7 +380,7 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
 
     if (CurProfile.filename && !strcmp( filename, CurProfile.filename ))
     {
-        dprintf_info(profile, "PROFILE_Open(%s): already opened\n",
+        TRACE(profile, "(%s): already opened\n",
                          filename );
         return TRUE;
     }
@@ -400,7 +400,7 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
     if (CurProfile.dos_name &&
         !strcmp( full_name.short_name, CurProfile.dos_name ))
     {
-        dprintf_info(profile, "PROFILE_Open(%s): already opened\n",
+        TRACE(profile, "(%s): already opened\n",
                          filename );
         return TRUE;
     }
@@ -429,7 +429,7 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
         CharLower32A( p );
         if ((file = fopen( buffer, "r" )))
         {
-            dprintf_info(profile, "PROFILE_Open(%s): found it in %s\n",
+            TRACE(profile, "(%s): found it in %s\n",
                              filename, buffer );
             CurProfile.unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
         }
@@ -440,7 +440,7 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
         CurProfile.unix_name = HEAP_strdupA( SystemHeap, 0,
                                              full_name.long_name );
         if ((file = fopen( full_name.long_name, "r" )))
-            dprintf_info(profile, "PROFILE_Open(%s): found it in %s\n",
+            TRACE(profile, "(%s): found it in %s\n",
                              filename, full_name.long_name );
     }
 
@@ -506,7 +506,7 @@ static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
         key = PROFILE_Find( &CurProfile.section, section, key_name, FALSE );
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val,
                            len, FALSE );
-        dprintf_info(profile, "PROFILE_GetString('%s','%s','%s'): returning '%s'\n",
+        TRACE(profile, "('%s','%s','%s'): returning '%s'\n",
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
@@ -524,7 +524,7 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
 {
     if (!key_name)  /* Delete a whole section */
     {
-        dprintf_info(profile, "PROFILE_DeleteSection('%s')\n", section_name);
+        TRACE(profile, "('%s')\n", section_name);
         CurProfile.changed |= PROFILE_DeleteSection( &CurProfile.section,
                                                      section_name );
         return TRUE;         /* Even if PROFILE_DeleteSection() has failed,
@@ -532,7 +532,7 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     }
     else if (!value)  /* Delete a key */
     {
-        dprintf_info(profile, "PROFILE_DeleteKey('%s','%s')\n",
+        TRACE(profile, "('%s','%s')\n",
                          section_name, key_name );
         CurProfile.changed |= PROFILE_DeleteKey( &CurProfile.section,
                                                  section_name, key_name );
@@ -542,20 +542,20 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     {
         PROFILEKEY *key = PROFILE_Find( &CurProfile.section, section_name,
                                         key_name, TRUE );
-        dprintf_info(profile, "PROFILE_SetString('%s','%s','%s'): \n",
+        TRACE(profile, "('%s','%s','%s'): \n",
                          section_name, key_name, value );
         if (!key) return FALSE;
         if (key->value)
         {
             if (!strcmp( key->value, value ))
             {
-                dprintf_info(profile, "  no change needed\n" );
+                TRACE(profile, "  no change needed\n" );
                 return TRUE;  /* No change needed */
             }
-            dprintf_info(profile, "  replacing '%s'\n", key->value );
+            TRACE(profile, "  replacing '%s'\n", key->value );
             HeapFree( SystemHeap, 0, key->value );
         }
-        else dprintf_info(profile, "  creating key\n" );
+        else TRACE(profile, "  creating key\n" );
         key->value = HEAP_strdupA( SystemHeap, 0, value );
         CurProfile.changed = TRUE;
     }
@@ -576,7 +576,7 @@ int PROFILE_GetWineIniString( const char *section, const char *key_name,
         PROFILEKEY *key = PROFILE_Find(&WineProfile, section, key_name, FALSE);
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def,
                            len, TRUE );
-        dprintf_info(profile, "PROFILE_GetWineIniString('%s','%s','%s'): returning '%s'\n",
+        TRACE(profile, "('%s','%s','%s'): returning '%s'\n",
                          section, key_name, def, buffer );
         return strlen( buffer );
     }
@@ -707,7 +707,7 @@ int  PROFILE_GetWineIniBool(
 	retval = def;
     }
 
-    dprintf_info(profile, "PROFILE_GetWineIniBool(\"%s\", \"%s\", %s), "
+    TRACE(profile, "(\"%s\", \"%s\", %s), "
 		    "[%c], ret %s.\n", section, key_name,
 		    def ? "TRUE" : "FALSE", key_value[0],
 		    retval ? "TRUE" : "FALSE");
@@ -1031,11 +1031,11 @@ BOOL32 WINAPI WritePrivateProfileSection32A( LPCSTR section,
 {
     char *p =(char*)string;
 
-    dprintf_fixme(profile, "WritePrivateProfileSection32A empty stup\n");
-    if (debugging_info(profile)) {
-      dprintf_info(profile, "file(%s) => [%s]\n", filename, section);
+    FIXME(profile, "WritePrivateProfileSection32A empty stup\n");
+    if (TRACE_ON(profile)) {
+      TRACE(profile, "(%s) => [%s]\n", filename, section);
       while (*(p+1)) {
-	dprintf_info(profile, "%s\n", p);
+	TRACE(profile, "%s\n", p);
         p += strlen(p);
 	p += 1;
       }

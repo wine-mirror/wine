@@ -38,10 +38,10 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPS16 lpCaps, DWORD dwSize)
 #ifdef linux
 	int 		mixer,mask;
 
-	dprintf_info(mmaux,"MIX_GetDevCaps(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
+	TRACE(mmaux,"(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
-		dprintf_warn(mmaux, "MIX_GetDevCaps // mixer device not available !\n");
+		WARN(mmaux, "mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 	}
 	lpCaps->wMid = 0xAA;
@@ -77,7 +77,7 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINE16 lpml, DWORD fdwInfo)
 #ifdef linux
 	int 		mixer,i,j,devmask,recsrc,recmask;
 
-	dprintf_info(mmaux,"MIX_GetDevLineInfo(%04X, %p, %lu);\n", wDevID, lpml, fdwInfo);
+	TRACE(mmaux,"(%04X, %p, %lu);\n", wDevID, lpml, fdwInfo);
 	if (lpml == NULL) return MMSYSERR_NOTENABLED;
 	if ((mixer = open(MIXER_DEV, O_RDWR)) < 0)
 		return MMSYSERR_NOTENABLED;
@@ -178,7 +178,7 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpmod, DWORD flags)
 {
 #ifdef linux
 
-	dprintf_info(mmaux,"MIX_Open(%04X, %p, %lu);\n",wDevID,lpmod,flags);
+	TRACE(mmaux,"(%04X, %p, %lu);\n",wDevID,lpmod,flags);
 	if (lpmod == NULL) return MMSYSERR_NOTENABLED;
 	/* hmm. We don't keep the mixer device open. So just pretend it works */
 	return MMSYSERR_NOERROR;
@@ -193,7 +193,7 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpmod, DWORD flags)
 DWORD mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2)
 {
-	dprintf_info(mmaux,"mixMessage(%04X, %04X, %08lX, %08lX, %08lX);\n", 
+	TRACE(mmaux,"(%04X, %04X, %08lX, %08lX, %08lX);\n", 
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 	case MXDM_GETDEVCAPS:
@@ -201,12 +201,13 @@ DWORD mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	case MXDM_GETLINEINFO:
 		return MIX_GetLineInfo(wDevID,(LPMIXERLINE16)dwParam1,dwParam2);
 	case MXDM_GETNUMDEVS:
-		dprintf_info(mmsys,"MIX_GetNumDevs() return 1;\n");
+		TRACE(mmsys,"return 1;\n");
 		return 1;
 	case MXDM_OPEN:
 		return MIX_Open(wDevID,(LPMIXEROPENDESC)dwParam1,dwParam2);
 	default:
-		dprintf_warn(mmaux,"mixMessage // unknown message %d!\n",wMsg);
+		WARN(mmaux,"unknown message %d!\n",wMsg);
 	}
 	return MMSYSERR_NOTSUPPORTED;
 }
+

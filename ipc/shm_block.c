@@ -37,7 +37,7 @@ struct local_shm_map *shm_map=NULL;
  */
 void shm_setup_block(struct shm_block *block, int first, int size)
 {
-  dprintf_info(shm,"Setting up shm block at 0x%08x\n",(int )block);
+  TRACE(shm,"Setting up shm block at 0x%08x\n",(int )block);
   /* setup block internal data structure */
   if (first <= 0) {
      first=sizeof(*block);
@@ -53,8 +53,7 @@ void shm_setup_block(struct shm_block *block, int first, int size)
   /* block->size is initialized in shm_FragmentInit */
   shm_FragmentInit(block, first, size);  /* first item in the free list */
   
-  dprintf_info(shm,
-	      "block was set up at 0x%08x, size=0x%04xKB, 1st usable=%02x\n",
+  TRACE(shm, "block was set up at 0x%08x, size=0x%04xKB, 1st usable=%02x\n",
 	      (int )block,size/1024,first);
 }
 

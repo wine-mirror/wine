@@ -198,7 +198,7 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
     int width = rect->right - rect->left;
     int max_width = 0;
 
-    dprintf_info(text,"DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str,
+    TRACE(text,"'%s', %d , [(%d,%d),(%d,%d)]\n", str,
 		 count, rect->left, rect->top, rect->right, rect->bottom);
     
     if (count == -1) count = strlen(str);
@@ -636,7 +636,7 @@ LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
                              INT16 count, INT16 cTabStops,
                              const INT16 *lpTabPos, INT16 nTabOrg )
 {
-    dprintf_info(text, "TabbedTextOut16: %04x %d,%d '%.*s' %d\n",
+    TRACE(text, "%04x %d,%d '%.*s' %d\n",
                   hdc, x, y, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                lpTabPos, NULL, nTabOrg, TRUE );
@@ -650,7 +650,7 @@ LONG WINAPI TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr,
                               INT32 count, INT32 cTabStops,
                               const INT32 *lpTabPos, INT32 nTabOrg )
 {
-    dprintf_info(text, "TabbedTextOut32A: %04x %d,%d '%.*s' %d\n",
+    TRACE(text, "%04x %d,%d '%.*s' %d\n",
                   hdc, x, y, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
                                NULL, lpTabPos, nTabOrg, TRUE );
@@ -680,7 +680,7 @@ LONG WINAPI TabbedTextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str,
 DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count, 
                                     INT16 cTabStops, const INT16 *lpTabPos )
 {
-    dprintf_info(text, "GetTabbedTextExtent: %04x '%.*s' %d\n",
+    TRACE(text, "%04x '%.*s' %d\n",
                   hdc, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                lpTabPos, NULL, 0, FALSE );
@@ -693,7 +693,7 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 DWORD WINAPI GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count, 
                                      INT32 cTabStops, const INT32 *lpTabPos )
 {
-    dprintf_info(text, "GetTabbedTextExtent: %04x '%.*s' %d\n",
+    TRACE(text, "%04x '%.*s' %d\n",
                   hdc, count, lpstr, count );
     return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
                                NULL, lpTabPos, 0, FALSE );

@@ -53,7 +53,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     BYTE *relay_addr = (BYTE *)args[-1];
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
-    assert(debugging_info(relay));
+    assert(TRACE_ON(relay));
     func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
     printf( "Call %s(", buffer );
@@ -183,7 +183,7 @@ void RELAY_CallFrom32Regs( CONTEXT context,
                            void (CALLBACK *entry_point)(CONTEXT *),
                            BYTE *relay_addr, int ret_addr )
 {
-    if (!debugging_info(relay))
+    if (!TRACE_ON(relay))
     {
         /* Simply call the entry point */
         entry_point( &context );

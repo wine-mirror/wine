@@ -57,7 +57,7 @@
 #define DIALOG_PAGESETUP_CAPTION     "Sid Layout"
 #define DIALOG_PAGESETUP_HEAD        "&Huvudnot:"
 #define DIALOG_PAGESETUP_TAIL        "&Fotnot:"
-#define DIALOG_PAGESETUP_BORDER      "Kanter:"
+#define DIALOG_PAGESETUP_MARGIN      "Kanter:"
 #define DIALOG_PAGESETUP_LEFT        "&Vänster:"
 #define DIALOG_PAGESETUP_RIGHT       "&Höger:"
 #define DIALOG_PAGESETUP_TOP         "&Över:"

@@ -44,6 +44,7 @@ extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
  */
 static HANDLER_DEF(SIGNAL_break)
 {
+    HANDLER_INIT();
     if (Options.debug)
         wine_debug( signal, HANDLER_CONTEXT );  /* Enter our debugger */
     else exit(0);
@@ -57,6 +58,7 @@ static HANDLER_DEF(SIGNAL_break)
  */
 static HANDLER_DEF(SIGNAL_trap)
 {
+    HANDLER_INIT();
     wine_debug( signal, HANDLER_CONTEXT );  /* Enter our debugger */
 }
 
@@ -70,6 +72,7 @@ static HANDLER_DEF(SIGNAL_fault)
 {
     WORD cs;
     GET_CS(cs);
+    HANDLER_INIT();
     if (CS_sig(HANDLER_CONTEXT) == cs)
     {
         fprintf( stderr, "Segmentation fault in 32-bit code (0x%08lx).\n",

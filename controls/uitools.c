@@ -574,7 +574,7 @@ BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
  */
 BOOL32 WINAPI DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 {
-    dprintf_info(graphics, "DrawEdge: %04x %d,%d-%d,%d %04x %04x\n",
+    TRACE(graphics, "%04x %d,%d-%d,%d %04x %04x\n",
                       hdc, rc->left, rc->top, rc->right, rc->bottom,
                       edge, flags );
 
@@ -941,7 +941,7 @@ static BOOL32 UITOOLS_DrawFrameButton(HDC32 hdc, LPRECT32 rc, UINT32 uState)
         return UITOOLS_DFC_ButtonRadio(hdc, rc, uState);
 
     default:
-        fprintf(stdnimp, "UITOOLS_DrawFrameButton: Report this: Invalid button state: 0x%04x\n", uState);
+        WARN(uitools, "Invalid button state: 0x%04x\n", uState);
     }
 
     return FALSE;
@@ -1077,7 +1077,7 @@ static BOOL32 UITOOLS_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         break;
 
     default:
-        fprintf(stdnimp, "UITOOLS_DrawFrameCaption: Report this: Invalid caption; flags: 0x%04x\n", uFlags);
+        WARN(uitools, "Invalid caption; flags: 0x%04x\n", uFlags);
         return FALSE;
     }
 
@@ -1247,7 +1247,7 @@ static BOOL32 UITOOLS_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         return TRUE;
 
     default:
-        fprintf(stdnimp, "UITOOLS_DrawFrameScroll: Report this: Invalid scroll; flags: 0x%04x\n", uFlags);
+        WARN(uitools, "Invalid scroll; flags: 0x%04x\n", uFlags);
         return FALSE;
     }
 
@@ -1349,7 +1349,7 @@ static BOOL32 UITOOLS_DrawFrameMenu(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         break;
 
     default:
-        fprintf(stdnimp, "UITOOLS_DrawFrameMenu: Report this: Invalid menu; flags: 0x%04x\n", uFlags);
+        WARN(uitools, "Invalid menu; flags: 0x%04x\n", uFlags);
         retval = FALSE;
         break;
     }
@@ -1397,8 +1397,8 @@ BOOL32 WINAPI DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType,
     case DFC_SCROLL:
       return UITOOLS_DrawFrameScroll(hdc, rc, uState);
     default:
-      fprintf( stdnimp,"DrawFrameControl32(%x,%p,%d,%x), bad type!\n",
-	       hdc,rc,uType,uState );
+      WARN(uitools, "(%x,%p,%d,%x), bad type!\n",
+		  hdc,rc,uType,uState );
     }
     return FALSE;
 }

@@ -67,9 +67,22 @@ AC_CACHE_CHECK("for Open Sound System",
 #endif
 ],ac_cv_c_opensoundsystem="yes",ac_cv_c_opensoundsystem="no"))
 
-if test "$ac_cv_c_opensoundsystem" = "yes"
+AC_CACHE_CHECK("for Open Sound System on *BSD",
+	ac_cv_c_opensoundsystem_bsd,
+	AC_TRY_COMPILE([#include <machine/soundcard.h>],[
+/* check for one of the Open Sound System specific SNDCTL_ defines */
+#if !defined(SNDCTL_DSP_STEREO)
+#error No open sound system
+#endif
+],ac_cv_c_opensoundsystem_bsd="yes",ac_cv_c_opensoundsystem_bsd="no"))
+
+if test "$ac_cv_c_opensoundsystem" = "yes" -o "$ac_cv_c_opensoundsystem_bsd" = "yes"
 then
     AC_DEFINE(HAVE_OSS)
+    if test "$ac_cv_c_opensoundsystem_bsd" = "yes"
+    then
+        AC_DEFINE(HAVE_MACHINE_SOUNDCARD_H)
+    fi
 fi
 
 dnl **** Check for union semun ****
@@ -204,7 +217,7 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(clone memmove strerror tcgetattr usleep wait4 waitpid)
+AC_CHECK_FUNCS(clone memmove strerror tcgetattr timegm usleep wait4 waitpid)
 AC_CHECK_HEADERS(wctype.h)
 AC_HEADER_STAT()
 AC_C_CONST()

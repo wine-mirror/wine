@@ -50,7 +50,7 @@ BOOL32 WINAPI GetProcessAffinityMask(HANDLE32 hProcess,
                                      LPDWORD lpProcessAffinityMask,
                                      LPDWORD lpSystemAffinityMask)
 {
-	dprintf_info(task,"GetProcessAffinityMask(%x,%lx,%lx)\n",
+	TRACE(task,"(%x,%lx,%lx)\n",
 		hProcess,(lpProcessAffinityMask?*lpProcessAffinityMask:0),
 		(lpSystemAffinityMask?*lpSystemAffinityMask:0));
 	/* It is definitely important for a process to know on what processor

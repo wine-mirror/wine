@@ -24,11 +24,11 @@
  * IUnknown
  */
 static ULONG WINAPI IUnknown_AddRef(LPUNKNOWN this) { 
-	dprintf_info(relay,"IUnknown(%p)->AddRef()\n",this);
+	TRACE(relay,"(%p)->AddRef()\n",this);
 	return ++(this->ref);
 }
 static ULONG WINAPI IUnknown_Release(LPUNKNOWN this) {
-	dprintf_info(relay,"IUnknown(%p)->Release()\n",this);
+	TRACE(relay,"(%p)->Release()\n",this);
 	if (!--(this->ref)) {
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
@@ -40,7 +40,7 @@ static HRESULT WINAPI IUnknown_QueryInterface(LPUNKNOWN this,REFIID refiid,LPVOI
 	char	xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IUnknown(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = this;
@@ -70,12 +70,12 @@ IUnknown_Constructor() {
  * IMalloc16
  */
 ULONG WINAPI IMalloc16_AddRef(LPMALLOC16 this) {
-	dprintf_info(relay,"IMalloc16(%p)->AddRef()\n",this);
+	TRACE(relay,"(%p)->AddRef()\n",this);
 	return 1; /* cannot be freed */
 }
 
 ULONG WINAPI IMalloc16_Release(LPMALLOC16 this) {
-	dprintf_info(relay,"IMalloc16(%p)->Release()\n",this);
+	TRACE(relay,"(%p)->Release()\n",this);
 	return 1; /* cannot be freed */
 }
 
@@ -83,7 +83,7 @@ HRESULT WINAPI IMalloc16_QueryInterface(LPMALLOC16 this,REFIID refiid,LPVOID *ob
 	char	xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IMalloc16(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IMalloc,refiid,sizeof(IID_IMalloc))
 	) {
@@ -94,30 +94,30 @@ HRESULT WINAPI IMalloc16_QueryInterface(LPMALLOC16 this,REFIID refiid,LPVOID *ob
 }
 
 LPVOID WINAPI IMalloc16_Alloc(LPMALLOC16 this,DWORD cb) {
-	dprintf_info(relay,"IMalloc16(%p)->Alloc(%ld)\n",this,cb);
+	TRACE(relay,"(%p)->Alloc(%ld)\n",this,cb);
 	return (LPVOID)PTR_SEG_OFF_TO_SEGPTR(this->heap,LOCAL_Alloc(this->heap,0,cb));
 }
 
 LPVOID WINAPI IMalloc16_Realloc(LPMALLOC16 this,LPVOID pv,DWORD cb) {
-	dprintf_info(relay,"IMalloc16(%p)->Realloc(%p,%ld)\n",this,pv,cb);
+	TRACE(relay,"(%p)->Realloc(%p,%ld)\n",this,pv,cb);
 	return (LPVOID)PTR_SEG_OFF_TO_SEGPTR(this->heap,LOCAL_ReAlloc(this->heap,0,LOWORD(pv),cb));
 }
 VOID WINAPI IMalloc16_Free(LPMALLOC16 this,LPVOID pv) {
-	dprintf_info(relay,"IMalloc16(%p)->Free(%p)\n",this,pv);
+	TRACE(relay,"(%p)->Free(%p)\n",this,pv);
 	LOCAL_Free(this->heap,LOWORD(pv));
 }
 
 DWORD WINAPI IMalloc16_GetSize(LPMALLOC16 this,LPVOID pv) {
-	dprintf_info(relay,"IMalloc16(%p)->GetSize(%p)\n",this,pv);
+	TRACE(relay,"(%p)->GetSize(%p)\n",this,pv);
 	return LOCAL_Size(this->heap,LOWORD(pv));
 }
 
 INT16 WINAPI IMalloc16_DidAlloc(LPMALLOC16 this,LPVOID pv) {
-	dprintf_info(relay,"IMalloc16(%p)->DidAlloc(%p)\n",this,pv);
+	TRACE(relay,"(%p)->DidAlloc(%p)\n",this,pv);
 	return (INT16)-1;
 }
 LPVOID WINAPI IMalloc16_HeapMinimize(LPMALLOC16 this) {
-	dprintf_info(relay,"IMalloc16(%p)->HeapMinimize()\n",this);
+	TRACE(relay,"(%p)->HeapMinimize()\n",this);
 	return NULL;
 }
 
@@ -144,7 +144,8 @@ IMalloc16_Constructor() {
 	} else {
 		HMODULE16	hcomp = GetModuleHandle16("COMPOBJ");
 		if (!msegvt16) {
-			msegvt16 = SEGPTR_NEW(IMalloc16_VTable);
+			this->lpvtbl = msegvt16 = SEGPTR_NEW(IMalloc16_VTable);
+
 #define FN(x) this->lpvtbl->fn##x = (void*)WIN32_GetProcAddress16(hcomp,"IMalloc16_"#x);assert(this->lpvtbl->fn##x);
 			FN(QueryInterface)
 			FN(AddRef)
@@ -171,12 +172,12 @@ IMalloc16_Constructor() {
  * IMalloc32
  */
 static ULONG WINAPI IMalloc32_AddRef(LPMALLOC32 this) {
-	dprintf_info(relay,"IMalloc32(%p)->AddRef()\n",this);
+	TRACE(relay,"(%p)->AddRef()\n",this);
 	return 1; /* cannot be freed */
 }
 
 static ULONG WINAPI IMalloc32_Release(LPMALLOC32 this) {
-	dprintf_info(relay,"IMalloc32(%p)->Release()\n",this);
+	TRACE(relay,"(%p)->Release()\n",this);
 	return 1; /* cannot be freed */
 }
 
@@ -184,7 +185,7 @@ static HRESULT WINAPI IMalloc32_QueryInterface(LPMALLOC32 this,REFIID refiid,LPV
 	char	xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	dprintf_info(relay,"IMalloc32(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->QueryInterface(%s,%p)\n",this,xrefiid,obj);
 	if (	!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)) ||
 		!memcmp(&IID_IMalloc,refiid,sizeof(IID_IMalloc))
 	) {
@@ -195,30 +196,30 @@ static HRESULT WINAPI IMalloc32_QueryInterface(LPMALLOC32 this,REFIID refiid,LPV
 }
 
 static LPVOID WINAPI IMalloc32_Alloc(LPMALLOC32 this,DWORD cb) {
-	dprintf_info(relay,"IMalloc32(%p)->Alloc(%ld)\n",this,cb);
+	TRACE(relay,"(%p)->Alloc(%ld)\n",this,cb);
 	return HeapAlloc(GetProcessHeap(),0,cb);
 }
 
 static LPVOID WINAPI IMalloc32_Realloc(LPMALLOC32 this,LPVOID pv,DWORD cb) {
-	dprintf_info(relay,"IMalloc32(%p)->Realloc(%p,%ld)\n",this,pv,cb);
+	TRACE(relay,"(%p)->Realloc(%p,%ld)\n",this,pv,cb);
 	return HeapReAlloc(GetProcessHeap(),0,pv,cb);
 }
 static VOID WINAPI IMalloc32_Free(LPMALLOC32 this,LPVOID pv) {
-	dprintf_info(relay,"IMalloc32(%p)->Free(%p)\n",this,pv);
+	TRACE(relay,"(%p)->Free(%p)\n",this,pv);
 	HeapFree(GetProcessHeap(),0,pv);
 }
 
 static DWORD WINAPI IMalloc32_GetSize(LPMALLOC32 this,LPVOID pv) {
-	dprintf_info(relay,"IMalloc32(%p)->GetSize(%p)\n",this,pv);
+	TRACE(relay,"(%p)->GetSize(%p)\n",this,pv);
 	return HeapSize(GetProcessHeap(),0,pv);
 }
 
 static INT32 WINAPI IMalloc32_DidAlloc(LPMALLOC32 this,LPVOID pv) {
-	dprintf_info(relay,"IMalloc32(%p)->DidAlloc(%p)\n",this,pv);
+	TRACE(relay,"(%p)->DidAlloc(%p)\n",this,pv);
 	return -1;
 }
 static LPVOID WINAPI IMalloc32_HeapMinimize(LPMALLOC32 this) {
-	dprintf_info(relay,"IMalloc32(%p)->HeapMinimize()\n",this);
+	TRACE(relay,"(%p)->HeapMinimize()\n",this);
 	return NULL;
 }
 
@@ -246,7 +247,14 @@ IMalloc32_Constructor() {
 /****************************************************************************
  * API Functions
  */
-BOOL32 WINAPI IsValidInterface32(LPUNKNOWN punk) {
+/****************************************************************************
+ * 		IsValidInterface		(OLE32.78)
+ * RETURNS
+ *  True, if the passed pointer is a valid interface
+ */
+BOOL32 WINAPI IsValidInterface32(
+	LPUNKNOWN punk	/* [in] interface to be tested */
+) {
 	return !(
 		IsBadReadPtr32(punk,4)					||
 		IsBadReadPtr32(punk->lpvtbl,4)				||

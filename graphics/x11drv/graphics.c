@@ -270,7 +270,7 @@ BOOL32
 X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
                   INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
-    dprintf_info(graphics, "X11DRV_RoundRect(%d %d %d %d  %d %d\n", 
+    TRACE(graphics, "(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
 
     left   = XLPTODP( dc, left );
@@ -694,7 +694,7 @@ X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
     BOOL32 result;
     struct FloodFill_params params = { dc, x, y, color, fillType };
 
-    dprintf_info(graphics, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
+    TRACE(graphics, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
                       x, y, color, fillType );
 
     if (!PtVisible32( dc->hSelf, x, y )) return FALSE;

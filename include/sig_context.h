@@ -214,6 +214,17 @@ typedef struct _CONTEXT		/* Note 1 */
                             
 #define FL_sig(context)      (*(WORD*)&EFL_sig(context))
 
+#ifdef FS_sig
+#define HANDLER_INIT() SET_FS(FS_sig(HANDLER_CONTEXT))
+#else FS_sig
+#define HANDLER_INIT() /* nothing */
+#endif
+
+#else /* __i386__ */
+
+#define HANDLER_DEF(name) void name (int signal)
+#define HANDLER_INIT() /* nothing */
+
 #endif /* __i386__ */
 
 #endif /* __WINE_SIG_CONTEXT_H */

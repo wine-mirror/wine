@@ -136,7 +136,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
             + dll->descr->nb_names * sizeof(LPSTR)
             + dll->descr->nb_reg_funcs * sizeof(REG_ENTRY_POINT));
 #ifdef __i386__
-    if (debugging_info(relay))
+    if (TRACE_ON(relay))
         size += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
     addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
@@ -201,7 +201,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
     strcpy( sec->Name, ".code" );
     sec->SizeOfRawData = dll->descr->nb_reg_funcs * sizeof(REG_ENTRY_POINT);
 #ifdef __i386__
-    if (debugging_info(relay))
+    if (TRACE_ON(relay))
         sec->SizeOfRawData += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
     sec->Misc.VirtualSize = sec->SizeOfRawData;
@@ -222,7 +222,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
 
     /* Build the funcs table */
 
-    if (debugging_info(relay)) dll->dbg_funcs = debug;
+    if (TRACE_ON(relay)) dll->dbg_funcs = debug;
     for (i = 0; i < dll->descr->nb_funcs; i++, funcs++, debug++)
     {
         BYTE args = dll->descr->args[i];
@@ -236,7 +236,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
             regs->jmp         = 0xe9;
             regs->call32_regs = (DWORD)CALL32_Regs - (DWORD)&regs->nop;
             regs->nop         = 0x9090;
-            if (debugging_info(relay))
+            if (TRACE_ON(relay))
             {
                 debug->call       = 0xe8;
                 debug->callfrom32 = (DWORD)regs - (DWORD)&debug->ret;
@@ -251,7 +251,7 @@ static HMODULE32 BUILTIN32_DoLoadModule( BUILTIN32_DLL *dll, PDB32 *pdb )
             *funcs = (LPVOID)((BYTE *)dll->descr->functions[i] - addr);
             break;
         default:  /* normal function (stdcall or cdecl) */
-            if (debugging_info(relay))
+            if (TRACE_ON(relay))
             {
                 debug->call       = 0xe8;
                 debug->callfrom32 = (DWORD)RELAY_CallFrom32 -

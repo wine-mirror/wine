@@ -38,8 +38,6 @@ extern NOTEPAD_GLOBALS Globals;
 /* function prototypes */
 
 /* class names */
-VOID MAIN_SelectLanguageByName(LPCSTR);
-VOID MAIN_SelectLanguageByNumber(UINT);
 
 /* Resource names */
 extern CHAR STRING_MENU_Xx[];
@@ -54,11 +52,18 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #endif
 
 /* string table index */
-#define IDS_LANGUAGE_ID                STRINGID(00)
-#define IDS_LANGUAGE_MENU_ITEM         STRINGID(01)
-#define IDS_NOTEPAD                    STRINGID(02)
-#define IDS_TEXT_FILES_TXT	       STRINGID(03)
-#define IDS_ALL_FILES                  STRINGID(04)
+#define IDS_LANGUAGE_ID                	STRINGID(00)
+#define IDS_LANGUAGE_MENU_ITEM         	STRINGID(01)
+#define IDS_NOTEPAD                    	STRINGID(02)
+#define IDS_TEXT_FILES_TXT	       	STRINGID(03)
+#define IDS_ALL_FILES                  	STRINGID(04)
+#define IDS_ERROR			STRINGID(05)
+#define IDS_WARNING			STRINGID(06)
+#define IDS_INFO			STRINGID(07)
+#define IDS_TOOLARGE			STRINGID(08)
+#define IDS_NOTEXT			STRINGID(09)
+#define IDS_NOTFOUND			STRINGID(0A)
+#define IDS_OUT_OF_MEMORY		STRINGID(0B)
 
 /* main menu */
 
@@ -109,7 +114,7 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #define NP_PAGESETUP_BOTTOM     1011
 #define NP_PAGESETUP_BOTTOM_TXT	1012
 #define NP_HELP			1013
-#define NP_PAGESETUP_BORDER 	1014
+#define NP_PAGESETUP_MARGIN 	1014
 
 
 /* Local Variables:    */

@@ -78,11 +78,13 @@ static const char * const SHELL_People[] =
     "Jochen Karrer",
     "Andreas Kirschbaum",
     "Albrecht Kleine",
+    "Eric Kohl",
     "Jon Konrath",
     "Alex Korobka",
     "Greg Kreider",
     "Anand Kumria",
     "Scott A. Laird",
+    "David Lee Lambert",
     "Andrew Lewycky",
     "Martin von Loewis",
     "Michiel van Loon",
@@ -155,6 +157,7 @@ static const char * const SHELL_People[] =
     "Nikita V. Youshchenko",
     "Mikolaj Zalewski",
     "John Zero",
+    "Luiz Otavio L. Zorzella",
     NULL
 };
 
@@ -222,7 +225,7 @@ UINT16 WINAPI DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile,
     LPSTR lpCurrent;
     WORD  i;
     
-    dprintf_info(reg,"DragQueryFile(%04x, %i, %p, %u)\n",
+    TRACE(reg,"(%04x, %i, %p, %u)\n",
 		hDrop,wFile,lpszFile,wLength);
     
     lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock16(hDrop); 
@@ -296,7 +299,7 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     int i;                  /* random counter */
     char xlpFile[256];      /* result of SearchPath */
 
-    dprintf_info(exec, "SHELL_FindExecutable: %s\n",
+    TRACE(exec, "%s\n",
                  (lpFile != NULL?lpFile:"-") );
     lpResult[0]='\0'; /* Start off with an empty return string */
 
@@ -322,7 +325,7 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
     /* Make local copy & lowercase it for reg & 'programs=' lookup */
     lstrcpyn32A( tmpext, extension, 5 );
     CharLower32A( tmpext );
-    dprintf_info(exec, "SHELL_FindExecutable: %s file\n", tmpext);
+    TRACE(exec, "%s file\n", tmpext);
     
     /* Three places to check: */
     /* 1. win.ini, [windows], programs (NB no leading '.') */
@@ -348,7 +351,7 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
 				strcpy(lpResult, xlpFile);
 				/* Need to perhaps check that the file has a path
 				 * attached */
-				dprintf_info(exec, "SHELL_FindExecutable: found %s\n",
+				TRACE(exec, "found %s\n",
 							 lpResult);
                                 return 33;
 
@@ -366,7 +369,7 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
                          &filetypelen ) == SHELL_ERROR_SUCCESS )
     {
 	filetype[filetypelen]='\0';
-	dprintf_info(exec, "SHELL_FindExecutable: File type: %s\n",
+	TRACE(exec, "File type: %s\n",
 		     filetype);
 
 	/* Looking for ...buffer\shell\lpOperation\command */
@@ -420,7 +423,7 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
 	  }
 	}
 
-    dprintf_info(exec, "SHELL_FindExecutable: returning %s\n", lpResult);
+    TRACE(exec, "returning %s\n", lpResult);
     return retval;
 }
 
@@ -435,7 +438,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
     char old_dir[1024];
     char cmd[256];
 
-    dprintf_info(exec, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
+    TRACE(exec, "(%04x,'%s','%s','%s','%s',%x)\n",
 		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
 		lpParameters ? lpParameters : "<null>", 
 		lpDirectory ? lpDirectory : "<null>", iShowCmd);
@@ -460,7 +463,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
             strcat(cmd,lpParameters);
         }
 
-        dprintf_info(exec,"ShellExecute:starting %s\n",cmd);
+        TRACE(exec,"starting %s\n",cmd);
         retval = WinExec32( cmd, iShowCmd );
     }
     if (lpDirectory) SetCurrentDirectory32A( old_dir );
@@ -498,7 +501,7 @@ HINSTANCE32 WINAPI FindExecutable32A( LPCSTR lpFile, LPCSTR lpDirectory,
     HINSTANCE32 retval=31;    /* default - 'No association was found' */
     char old_dir[1024];
 
-    dprintf_info(exec, "FindExecutable: File %s, Dir %s\n", 
+    TRACE(exec, "File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
 		 (lpDirectory != NULL?lpDirectory:"-"));
 
@@ -519,7 +522,7 @@ HINSTANCE32 WINAPI FindExecutable32A( LPCSTR lpFile, LPCSTR lpDirectory,
 
     retval = SHELL_FindExecutable( lpFile, "open", lpResult );
 
-    dprintf_info(exec, "FindExecutable: returning %s\n", lpResult);
+    TRACE(exec, "returning %s\n", lpResult);
     if (lpDirectory) SetCurrentDirectory32A( old_dir );
     return retval;
 }
@@ -931,7 +934,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
   HFILE32 	hFile = OpenFile32( lpszExeFileName, &ofs, OF_READ );
   UINT16	iconDirCount = 0,iconCount = 0;
   
-  dprintf_info(reg,"InternalExtractIcon(%04x,file %s,start %d,extract %d\n", 
+  TRACE(reg,"(%04x,file %s,start %d,extract %d\n", 
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
   if( hFile == HFILE_ERROR32 || !n ) return 0;
@@ -966,13 +969,13 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	  {
 	     iconDirCount = pTInfo->count;
 	     pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
-	     dprintf_info(reg,"\tfound directory - %i icon families\n", iconDirCount);
+	     TRACE(reg,"\tfound directory - %i icon families\n", iconDirCount);
 	  }
 	if( pTInfo->type_id == NE_RSCTYPE_ICON ) 
 	  { 
 	     iconCount = pTInfo->count;
 	     pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
-	     dprintf_info(reg,"\ttotal icons - %i\n", iconCount);
+	     TRACE(reg,"\ttotal icons - %i\n", iconCount);
 	  }
   	pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
     }
@@ -1036,13 +1039,13 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	
 	fmapping = CreateFileMapping32A(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL);
 	if (fmapping == 0) { /* FIXME, INVALID_HANDLE_VALUE? */
-		fprintf(stderr,"InternalExtractIcon:failed to create filemap.\n");
+		WARN(reg,"failed to create filemap.\n");
 		_lclose32( hFile);
 		return 0;
 	}
 	peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0);
 	if (!peimage) {
-		fprintf(stderr,"InternalExtractIcon:failed to mmap filemap.\n");
+		WARN(reg,"failed to mmap filemap.\n");
 		CloseHandle(fmapping);
 		_lclose32( hFile);
 		return 0;
@@ -1066,7 +1069,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	}
 
 	if (!rootresdir) {
-		fprintf(stderr,"InternalExtractIcon: haven't found section for resource directory.\n");
+		WARN(reg,"haven't found section for resource directory.\n");
 		UnmapViewOfFile(peimage);
 		CloseHandle(fmapping);
 		_lclose32( hFile);
@@ -1074,7 +1077,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	}
 	icongroupresdir = GetResDirEntryW(rootresdir,(LPWSTR)RT_GROUP_ICON,(DWORD)rootresdir,FALSE);
 	if (!icongroupresdir) {
-		fprintf(stderr,"InternalExtractIcon: No Icongroupresourcedirectory!\n");
+		WARN(reg,"No Icongroupresourcedirectory!\n");
 		UnmapViewOfFile(peimage);
 		CloseHandle(fmapping);
 		_lclose32( hFile);
@@ -1091,9 +1094,8 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	}
 
 	if (nIconIndex >= iconDirCount) {
-		fprintf(stderr,"nIconIndex %d is larger than iconDirCount %d\n",
-			nIconIndex,iconDirCount
-		);
+		WARN(reg,"nIconIndex %d is larger than iconDirCount %d\n",
+			    nIconIndex,iconDirCount);
 		UnmapViewOfFile(peimage);
 		CloseHandle(fmapping);
 		_lclose32( hFile);
@@ -1131,7 +1133,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 			igdata = peimage+(igdataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
 		}
 		if (!igdata) {
-			fprintf(stderr,"InternalExtractIcon: no matching real address found for icongroup!\n");
+			WARN(reg,"no matching real address for icongroup!\n");
 			UnmapViewOfFile(peimage);
 			CloseHandle(fmapping);
 			_lclose32( hFile);
@@ -1144,7 +1146,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	}
 	iconresdir=GetResDirEntryW(rootresdir,(LPWSTR)RT_ICON,(DWORD)rootresdir,FALSE);
 	if (!iconresdir) {
-	    fprintf(stderr,"InternalExtractIcon: No Iconresourcedirectory!\n");
+	    WARN(reg,"No Iconresourcedirectory!\n");
 	    UnmapViewOfFile(peimage);
 	    CloseHandle(fmapping);
 	    _lclose32( hFile);
@@ -1168,7 +1170,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		idata = peimage+(idataent->OffsetToData-pe_sections[j].VirtualAddress+pe_sections[j].PointerToRawData);
 	    }
 	    if (!idata) {
-		fprintf(stderr,"InternalExtractIcon: no matching real address found for icondata!\n");
+		WARN(reg,"no matching real address found for icondata!\n");
 		RetPtr[i]=0;
 		continue;
 	    }
@@ -1323,7 +1325,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
 
   CharToOem32A(str,str);
 
-  dprintf_info(reg,"DoEnvSubst: accept %s\n", str);
+  TRACE(reg,"accept %s\n", str);
 
   while( *lpstr && lpbstr - lpBuffer < length )
    {
@@ -1343,8 +1345,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
 
 		   if( l > length - (lpbstr - lpBuffer) - 1 )
 		     {
-		       fprintf(stdnimp,"File %s, line %i: Env subst aborted - string too short\n", 
-					__FILE__, __LINE__);
+		       WARN(reg,"Env subst aborted - string too short\n");
 		      *lpend = '%';
 		       break;
 		     }
@@ -1372,7 +1373,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
   else
       length = 0;
 
-  dprintf_info(reg,"    return %s\n", str);
+  TRACE(reg,"    return %s\n", str);
 
   OemToChar32A(str,str);
   HeapFree( GetProcessHeap(), 0, lpBuffer);
@@ -1389,7 +1390,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
  */
 LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
-    dprintf_info(reg,"ShellHookProc: %i, %04x, %08x\n", code, wParam, 
+    TRACE(reg,"%i, %04x, %08x\n", code, wParam, 
 						      (unsigned)lParam );
     if( SHELL_hHook && SHELL_hWnd )
     {
@@ -1405,10 +1406,10 @@ LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
     return CallNextHookEx16( WH_SHELL, code, wParam, lParam );
 }
 
-LRESULT WINAPI FUNC004(INT16 code, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI FUNC004(INT16 code, WPARAM16 wParam, /*LPARAM*/WORD lParam)
 {
-	fprintf(stderr,"FUNC004(%d,%d,%ld),STUB!\n",code,wParam,lParam);
-	return ShellHookProc(code,wParam,lParam);
+	FIXME(reg,"(%d,%d,%d),STUB!\n",code,wParam,lParam);
+	return ShellHookProc(code,wParam,(DWORD)lParam);
 }
 
 /*************************************************************************
@@ -1416,7 +1417,7 @@ LRESULT WINAPI FUNC004(INT16 code, WPARAM16 wParam, LPARAM lParam)
  */
 BOOL32 WINAPI RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 {
-    dprintf_info(reg,"RegisterShellHook: %04x [%u]\n", hWnd, uAction );
+    TRACE(reg,"%04x [%u]\n", hWnd, uAction );
 
     switch( uAction )
     {
@@ -1434,7 +1435,7 @@ BOOL32 WINAPI RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 		    uMsgWndDestroyed = RegisterWindowMessage32A( lpstrMsgWndDestroyed );
 		    uMsgShellActivate = RegisterWindowMessage32A( lpstrMsgShellActivate );
 		} 
-		else fprintf( stderr, "\tunable to install ShellHookProc()!\n");
+		else WARN(reg, "unable to install ShellHookProc()!\n");
 	     }
 
 	     if( SHELL_hHook ) return ((SHELL_hWnd = hWnd) != 0);
@@ -1442,7 +1443,7 @@ BOOL32 WINAPI RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 
 	default:
 
-	     fprintf( stderr, "RegisterShellHook: unknown code %i\n", uAction );
+	     WARN(reg, "unknown code %i\n", uAction );
 
 	     /* just in case */
 
@@ -1547,11 +1548,9 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
 
 void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
 {
-  dprintf_info(exec, "Control_RunDLL (%08x, %p, \"%s\", %08lx)\n",
-		hwnd,
-		code ? code : "(null)",
-		cmd ? cmd : "(null)",
-		arg4);
+  TRACE(exec, "(%08x, %p, \"%s\", %08lx)\n",
+		hwnd, code ? code : "(null)",
+		cmd ? cmd : "(null)", arg4);
 }
 
 /*************************************************************************

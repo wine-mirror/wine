@@ -20,3 +20,6 @@
 
 /* Define if X libraries are not reentrant (compiled without -D_REENTRANT).  */
 #undef NO_REENTRANT_X11
+
+/* Define if you have machine/soundcard.h instead of sys/soundcard.h.  */
+#undef HAVE_MACHINE_SOUNDCARD_H

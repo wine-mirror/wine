@@ -140,3 +140,10 @@ VOID WINAPI Sleep(DWORD cMilliseconds)
         while(1) sleep(1000); /* Spin forever */
     usleep(cMilliseconds*1000);
 }
+
+/***********************************************************************
+ *              GetSystemTimeAsFileTime  (KERNEL32)
+ */
+VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime) {
+	DOSFS_UnixTimeToFileTime(time(NULL),systemtimeAsfiletime,NULL);
+}

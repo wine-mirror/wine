@@ -34,7 +34,9 @@ extern int h_errno;
 #include "heap.h"
 #include "ldt.h"
 #include "message.h"
+#include "selectors.h"
 #include "miscemu.h"
+#include "sig_context.h"
 #include "debug.h"
 
 #ifndef FASYNC
@@ -136,7 +138,7 @@ void WINSOCK_cancel_task_aops(HTASK16 hTask, void (*__opfree)(void*))
     int num = 0;
     ws_async_op*   p, *next;
 
-    dprintf_info(winsock," cancelling async DNS requests... \n");
+    TRACE(winsock," cancelling async DNS requests... \n");
 
     SIGNAL_MaskAsyncEvents( TRUE );
     next = __async_op_list;
@@ -153,7 +155,7 @@ void WINSOCK_cancel_task_aops(HTASK16 hTask, void (*__opfree)(void*))
 	}
     }
     SIGNAL_MaskAsyncEvents( FALSE );
-    dprintf_info(winsock," -> %i total\n", num );
+    TRACE(winsock," -> %i total\n", num );
 }
 
 void WINSOCK_link_async_op(ws_async_op* p_aop)
@@ -176,7 +178,7 @@ void WINSOCK_link_async_op(ws_async_op* p_aop)
 	  {
 	      ws_async_op* dead = p;
 
-	      dprintf_info(winsock,"\treaping dead aop [%08x]\n", (unsigned)p );
+	      TRACE(winsock,"\treaping dead aop [%08x]\n", (unsigned)p );
 
 	      p = p->next;
 	      WINSOCK_unlink_async_op( dead );
@@ -218,11 +220,13 @@ void WINSOCK_unlink_async_op(ws_async_op* p_aop)
  * Note: pipe-based handlers must raise explicit SIGIO with kill(2).
  */
 
-void WINSOCK_sigio(int signal)
+HANDLER_DEF(WINSOCK_sigio)
 {
  struct timeval         timeout;
  fd_set                 check_set;
  ws_async_op*		p_aop;
+
+ HANDLER_INIT();
 
  check_set = __async_io_fdset;
  memset(&timeout, 0, sizeof(timeout));
@@ -343,7 +347,7 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, L
 	    async_ctl.ws_aop->pid = fork();
 	    if( async_ctl.ws_aop->pid )
 	    {
-		dprintf_info(winsock, "\tasync_op = %04x (child %i)\n", 
+		TRACE(winsock, "\tasync_op = %04x (child %i)\n", 
 				handle, async_ctl.ws_aop->pid);
 
 		close(async_ctl.ws_aop->fd[1]);  /* write endpoint */
@@ -452,7 +456,7 @@ void WS_do_async_gethost(LPWSINFO pwsi, unsigned flag )
 	 : gethostbyaddr(async_ctl.rq.name,
 		 	 async_ctl.ilength, async_ctl.type);
 
-  dprintf_info(winsock,"DNS: got hostent for [%s]\n", async_ctl.rq.name );
+  TRACE(winsock,"DNS: got hostent for [%s]\n", async_ctl.rq.name );
 
   if( p_he ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_he(pwsi, p_he, WS_DUP_OFFSET | 
@@ -476,7 +480,7 @@ void WS_do_async_getproto(LPWSINFO pwsi, unsigned flag )
 	 ? getprotobyname(async_ctl.rq.name)
 	 : getprotobynumber(async_ctl.type);
 
-  dprintf_info(winsock,"DNS: got protoent for [%s]\n", async_ctl.rq.name );
+  TRACE(winsock,"DNS: got protoent for [%s]\n", async_ctl.rq.name );
 
   if( p_pe ) /* convert to the Winsock format with internal pointers as offsets */
       size = WS_dup_pe(pwsi, p_pe, WS_DUP_OFFSET |

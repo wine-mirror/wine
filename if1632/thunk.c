@@ -226,7 +226,7 @@ static void THUNK_Free( THUNK *thunk )
             return;
         }
     }
-    dprintf_err(thunk, "THUNK_Free: invalid thunk addr %p\n", thunk );
+    ERR(thunk, "invalid thunk addr %p\n", thunk );
 }
 
 
@@ -625,7 +625,7 @@ static BOOL32 WINAPI THUNK_WOWCallback16Ex(
     LPDWORD     args = (LPDWORD)xargs;
     DWORD       ret,i;
 
-    dprintf_info(relay,"WOWCallback16Ex(%p,0x%08lx,%ld,%p,%p)\n",
+    TRACE(relay,"(%p,0x%08lx,%ld,%p,%p)\n",
     	proc,dwFlags,cbArgs,xargs,pdwret
     );
     if (dwFlags == WCB16_CDECL) {

@@ -147,15 +147,14 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 {
     int ret = 0;
 
-    dprintf_info(ldt,
-	  "LDT_SetEntry: entry=%04x base=%08lx limit=%05lx %s %d-bit flags=%c%c%c\n",
-          entry, content->base, content->limit,
-          content->limit_in_pages ? "pages" : "bytes",
-          content->seg_32bit ? 32 : 16,
-          content->read_only && (content->type & SEGMENT_CODE) ? '-' : 'r',
-          content->read_only || (content->type & SEGMENT_CODE) ? '-' : 'w',
-          (content->type & SEGMENT_CODE) ? 'x' : '-' );
-
+    TRACE(ldt, "entry=%04x base=%08lx limit=%05lx %s %d-bit "
+		 "flags=%c%c%c\n", entry, content->base, content->limit,
+		 content->limit_in_pages ? "pages" : "bytes",
+		 content->seg_32bit ? 32 : 16,
+		 content->read_only && (content->type & SEGMENT_CODE) ? '-' : 'r',
+		 content->read_only || (content->type & SEGMENT_CODE) ? '-' : 'w',
+		 (content->type & SEGMENT_CODE) ? 'x' : '-' );
+    
     /* Entry 0 must not be modified; its base and limit are always 0 */
     if (!entry) return 0;
 

@@ -235,7 +235,7 @@ HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
     {
         if (!(pWnd->dwStyle & WS_VISIBLE))
         {
-            dprintf_info(win, "FindWinToRepaint: skipping window %04x\n",
+            TRACE(win, "skipping window %04x\n",
                          pWnd->hwndSelf );
             continue;
         }
@@ -258,7 +258,7 @@ HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
         pWnd = pWnd->next;
     }
     if (pWnd) hwndRet = pWnd->hwndSelf;
-    dprintf_info(win,"FindWinToRepaint: found %04x\n",hwndRet);
+    TRACE(win,"found %04x\n",hwndRet);
     return hwndRet;
 }
 
@@ -273,7 +273,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     HWND32 hwnd = wndPtr->hwndSelf;
     WND *pWnd;
 
-    dprintf_info(win, "WIN_DestroyWindow: %04x\n", wndPtr->hwndSelf );
+    TRACE(win, "%04x\n", wndPtr->hwndSelf );
 
 #ifdef CONFIG_IPC
     if (main_block)
@@ -403,7 +403,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     CLASS *class;
     HWND32 hwndDesktop;
 
-    dprintf_info(win,"Creating desktop window\n");
+    TRACE(win,"Creating desktop window\n");
 
     if (!ICONTITLE_Init() ||
 	!WINPOS_CreateInternalPosAtom() ||
@@ -467,7 +467,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     POINT32 maxSize, maxPos, minTrack, maxTrack;
     LRESULT (WINAPI *localSend32)(HWND32, UINT32, WPARAM32, LPARAM);
 
-    dprintf_info(win, "CreateWindowEx: %s %s %08lx %08lx %d,%d %dx%d "
+    TRACE(win, "%s %s %08lx %08lx %d,%d %dx%d "
 		 "%04x %04x %08x %p\n", debugres(cs->lpszName), 
 		 debugres(cs->lpszClass), cs->dwExStyle, 
 		 cs->style, cs->x, cs->y, cs->cx, cs->cy,
@@ -515,7 +515,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     if (!(hwnd = USER_HEAP_ALLOC( sizeof(*wndPtr) + classPtr->cbWndExtra
                                   - sizeof(wndPtr->wExtra) )))
     {
-	dprintf_info(win, "CreateWindowEx: out of memory\n" );
+	TRACE(win, "out of memory\n" );
 	return 0;
     }
 
@@ -574,7 +574,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	cbtc.hwndInsertAfter = hwndLinkAfter;
 	if ( HOOK_CallHooks32A(WH_CBT, HCBT_CREATEWND, hwnd, (LPARAM)&cbtc) )
 	{
-	    dprintf_info(win, "CreateWindowEx: CBT-hook returned 0\n");
+	    TRACE(win, "CBT-hook returned 0\n");
 	    USER_HEAP_FREE( hwnd );
 	    return 0;
 	}
@@ -776,14 +776,14 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
                 HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
 
-            dprintf_info(win, "CreateWindowEx: created window %04x\n", hwnd);
+            TRACE(win, "created window %04x\n", hwnd);
             return hwnd;
         }
     }
 
     /* Abort window creation */
 
-    dprintf_warn(win, "CreateWindowEx: aborted by WM_xxCREATE!\n");
+    WARN(win, "aborted by WM_xxCREATE!\n");
     WIN_UnlinkWindow( hwnd );
     WIN_DestroyWindow( wndPtr );
     return 0;
@@ -965,7 +965,7 @@ static void WIN_SendDestroyMsg( WND* pWnd )
 	WIN_CheckFocus(pWnd);
     }
     else
-	dprintf_warn(win, "\tdestroyed itself while in WM_DESTROY!\n");
+	WARN(win, "\tdestroyed itself while in WM_DESTROY!\n");
 }
 
 
@@ -985,7 +985,7 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
 {
     WND * wndPtr;
 
-    dprintf_info(win, "DestroyWindow(%04x)\n", hwnd);
+    TRACE(win, "(%04x)\n", hwnd);
     
       /* Initialization */
 
@@ -1188,7 +1188,7 @@ HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child,
 {
     ATOM atom = 0;
 
-    dprintf_info(win, "FindWindowEx16: %04x %04x '%s' '%s'\n", parent,
+    TRACE(win, "%04x %04x '%s' '%s'\n", parent,
 		child, HIWORD(className)?(char *)PTR_SEG_TO_LIN(className):"",
 		title ? title : "");
 
@@ -2239,7 +2239,7 @@ BOOL32 WINAPI FlashWindow32( HWND32 hWnd, BOOL32 bInvert )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    dprintf_info(win,"FlashWindow: %04x\n", hWnd);
+    TRACE(win,"%04x\n", hWnd);
 
     if (!wndPtr) return FALSE;
 
@@ -2282,7 +2282,7 @@ HWND16 WINAPI SetSysModalWindow16( HWND16 hWnd )
 {
     HWND32 hWndOldModal = hwndSysModal;
     hwndSysModal = hWnd;
-    dprintf_fixme(win, "EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
+    FIXME(win, "EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
     return hWndOldModal;
 }
 
@@ -2340,7 +2340,7 @@ BOOL16 DRAG_QueryUpdate( HWND32 hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
 
 	 if(ptrWnd)
          {
-	    dprintf_info(msg,"DragQueryUpdate: hwnd = %04x, %d %d - %d %d\n",
+	    TRACE(msg,"hwnd = %04x, %d %d - %d %d\n",
                         ptrWnd->hwndSelf, ptrWnd->rectWindow.left, ptrWnd->rectWindow.top,
 			ptrWnd->rectWindow.right, ptrWnd->rectWindow.bottom );
             if( !(ptrWnd->dwStyle & WS_DISABLED) )
@@ -2479,7 +2479,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	lpDragInfo->pt = msg.pt;
 
 	/* update DRAGINFO struct */
-	dprintf_info(msg,"drag: lpDI->hScope = %04x\n",lpDragInfo->hScope);
+	TRACE(msg,"lpDI->hScope = %04x\n",lpDragInfo->hScope);
 
 	if( DRAG_QueryUpdate(hwndScope, spDragInfo, FALSE) > 0 )
 	    hCurrentCursor = hCursor;

@@ -22,6 +22,12 @@ static BOOL32 mmTimeStarted = FALSE;
 static MMTIME16 mmSysTimeMS;
 static MMTIME16 mmSysTimeSMPTE;
 
+/* this is used to avoid infinite loop in timeGetTime, because
+   of the faked multimedia timers, and will desappear as soon as
+   the timers are implemented correctly.
+ */
+static int time_called=0;
+
 typedef struct tagTIMERENTRY {
     UINT32	wDelay;
     UINT32	wResol;
@@ -40,10 +46,11 @@ static LPTIMERENTRY lpTimerList = NULL;
 
 /*
  * FIXME
- * is this the minimum resolution ? 
+ * We're using "1" as the mininum resolution to the timer,
+ * as Windows 95 does, according to the docs. Maybe it should
+ * depend on the computers resources!
  */
-/*#define MMSYSTIME_MININTERVAL (33)*/
-#define MMSYSTIME_MININTERVAL (31)
+#define MMSYSTIME_MININTERVAL (1)
 #define MMSYSTIME_MAXINTERVAL (65535)
 
 
@@ -60,10 +67,10 @@ static VOID check_MMtimers()
 	    lpTimer->wCurTime = lpTimer->wDelay;
 
 	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
-		dprintf_info(mmtime, "MMSysTimeCallback // before CallBack16 !\n");
-		dprintf_info(mmtime, "MMSysTimeCallback // lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
+		TRACE(mmtime, "before CallBack16 !\n");
+		TRACE(mmtime, "lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
 			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
-		dprintf_info(mmtime, "MMSysTimeCallback // hInstance=%04X !\n", lpTimer->hInstance);
+		TRACE(mmtime, "hInstance=%04X !\n", lpTimer->hInstance);
 
 
 /*        - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
@@ -79,7 +86,7 @@ static VOID check_MMtimers()
 						    lpTimer->dwUser,0,0
 			);
 
-		dprintf_info(mmtime, "MMSysTimeCallback // after CallBack16 !\n");
+		TRACE(mmtime, "after CallBack16 !\n");
 	    }
 	    if (lpTimer->wFlags & TIME_ONESHOT)
 		timeKillEvent32(lpTimer->wTimerID);
@@ -103,16 +110,16 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
 	    lpTimer->wCurTime = lpTimer->wDelay;
 
 	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
-		dprintf_info(mmtime, "MMSysTimeCallback // before CallBack16 !\n");
-		dprintf_info(mmtime, "MMSysTimeCallback // lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
+		TRACE(mmtime, "before CallBack16 !\n");
+		TRACE(mmtime, "lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
 			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
-		dprintf_info(mmtime, "MMSysTimeCallback // hInstance=%04X !\n", lpTimer->hInstance);
+		TRACE(mmtime, "hInstance=%04X !\n", lpTimer->hInstance);
 
 /* This is wrong (lpFunc is NULL all the time)
 
    	        lpFunc = MODULE_GetEntryPoint( lpTimer->hInstance,
                          MODULE_GetOrdinal(lpTimer->hInstance,"TimerCallBack" ));
-		dprintf_info(mmtime, "MMSysTimeCallback // lpFunc=%08lx !\n", lpFunc);
+		TRACE(mmtime, "lpFunc=%08lx !\n", lpFunc);
 */
 
 
@@ -129,7 +136,7 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
 						    lpTimer->dwUser,0,0
 			);
 
-		dprintf_info(mmtime, "MMSysTimeCallback // after CallBack16 !\n");
+		TRACE(mmtime, "after CallBack16 !\n");
 		fflush(stdout);
 	    }
 	    if (lpTimer->wFlags & TIME_ONESHOT)
@@ -164,7 +171,7 @@ static void StartMMTime()
  */
 MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32 lpTime, UINT32 wSize)
 {
-    dprintf_info(mmsys, "timeGetSystemTime32(%p, %u);\n", lpTime, wSize);
+    TRACE(mmsys, "(%p, %u);\n", lpTime, wSize);
     if (!mmTimeStarted)
 	StartMMTime();
     lpTime->wType = TIME_MS;
@@ -177,7 +184,7 @@ MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32 lpTime, UINT32 wSize)
  */
 MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 {
-    dprintf_info(mmsys, "timeGetSystemTime16(%p, %u);\n", lpTime, wSize);
+    TRACE(mmsys, "(%p, %u);\n", lpTime, wSize);
     if (!mmTimeStarted)
 	StartMMTime();
     lpTime->wType = TIME_MS;
@@ -196,7 +203,7 @@ MMRESULT32 WINAPI timeSetEvent32(UINT32 wDelay,UINT32 wResol,
     LPTIMERENTRY lpNewTimer;
     LPTIMERENTRY lpTimer = lpTimerList;
 
-    dprintf_info(mmtime, "timeSetEvent32(%u, %u, %p, %08lX, %04X);\n",
+    TRACE(mmtime, "(%u, %u, %p, %08lX, %04X);\n",
 		  wDelay, wResol, lpFunc, dwUser, wFlags);
     if (!mmTimeStarted)
 	StartMMTime();
@@ -218,8 +225,8 @@ MMRESULT32 WINAPI timeSetEvent32(UINT32 wDelay,UINT32 wResol,
     lpNewTimer->lpFunc = (FARPROC16) lpFunc;
     lpNewTimer->iswin32 = 1;
     lpNewTimer->hInstance = GetTaskDS();
-	dprintf_info(mmtime, "timeSetEvent // hInstance=%04X !\n", lpNewTimer->hInstance);
-	dprintf_info(mmtime, "timeSetEvent // lpFunc=%p !\n", 
+	TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
+	TRACE(mmtime, "lpFunc=%p !\n", 
 				lpFunc);
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
@@ -236,7 +243,7 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
     WORD wNewID = 0;
     LPTIMERENTRY lpNewTimer;
     LPTIMERENTRY lpTimer = lpTimerList;
-    dprintf_info(mmtime, "timeSetEvent(%u, %u, %p, %08lX, %04X);\n",
+    TRACE(mmtime, "(%u, %u, %p, %08lX, %04X);\n",
 		  wDelay, wResol, lpFunc, dwUser, wFlags);
     if (!mmTimeStarted)
 	StartMMTime();
@@ -258,8 +265,8 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
     lpNewTimer->lpFunc = (FARPROC16) lpFunc;
     lpNewTimer->iswin32 = 0;
     lpNewTimer->hInstance = GetTaskDS();
-	dprintf_info(mmtime, "timeSetEvent // hInstance=%04X !\n", lpNewTimer->hInstance);
-	dprintf_info(mmtime, "timeSetEvent // PTR_SEG_TO_LIN(lpFunc)=%p !\n", 
+	TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
+	TRACE(mmtime, "(lpFunc)=%p !\n", 
 				PTR_SEG_TO_LIN(lpFunc));
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
@@ -297,7 +304,7 @@ MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
  */
 MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32 lpCaps,UINT32 wSize)
 {
-    dprintf_info(mmtime, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
+    TRACE(mmtime, "(%p, %u) !\n", lpCaps, wSize);
     if (!mmTimeStarted)
 	StartMMTime();
     lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
@@ -310,7 +317,7 @@ MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32 lpCaps,UINT32 wSize)
  */
 MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 {
-    dprintf_info(mmtime, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
+    TRACE(mmtime, "(%p, %u) !\n", lpCaps, wSize);
     if (!mmTimeStarted)
 	StartMMTime();
     lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
@@ -323,7 +330,7 @@ MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
  */
 MMRESULT32 WINAPI timeBeginPeriod32(UINT32 wPeriod)
 {
-    dprintf_info(mmtime, "timeBeginPeriod32(%u) !\n", wPeriod);
+    TRACE(mmtime, "(%u) !\n", wPeriod);
     if (!mmTimeStarted)
 	StartMMTime();
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
@@ -335,7 +342,7 @@ MMRESULT32 WINAPI timeBeginPeriod32(UINT32 wPeriod)
  */
 MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 {
-    dprintf_info(mmtime, "timeBeginPeriod(%u) !\n", wPeriod);
+    TRACE(mmtime, "(%u) !\n", wPeriod);
     if (!mmTimeStarted)
 	StartMMTime();
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
@@ -348,7 +355,7 @@ MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
  */
 MMRESULT32 WINAPI timeEndPeriod32(UINT32 wPeriod)
 {
-    dprintf_info(mmtime, "timeEndPeriod(%u) !\n", wPeriod);
+    TRACE(mmtime, "(%u) !\n", wPeriod);
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
         return TIMERR_NOCANDO;
     return 0;
@@ -359,7 +366,7 @@ MMRESULT32 WINAPI timeEndPeriod32(UINT32 wPeriod)
  */
 MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 {
-    dprintf_info(mmtime, "timeEndPeriod(%u) !\n", wPeriod);
+    TRACE(mmtime, "(%u) !\n", wPeriod);
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
         return TIMERR_NOCANDO;
     return 0;
@@ -370,18 +377,36 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
  */
 DWORD WINAPI timeGetTime()
 {
+  /* FIXME all this function should have to be is
+       long result;
+       struct timeval time;
+       dprintf_mmtime(stddeb, "timeGetTime(); !\n");
+       gettimeofday(&time, 0);
+       result = (((long)time.tv_sec * (long)1000) + ((long)time.tv_usec / (long)1000));
+
+     but the multimedia timers are not implemented correctly, so all the rest
+     is a workaround to fake them.
+       
+   */  
     static DWORD lasttick=0;
     DWORD	newtick;
 
-    dprintf_info(mmtime, "timeGetTime(); !\n");
+    TRACE(mmtime, "!\n");
     if (!mmTimeStarted)
 	StartMMTime();
     newtick = GetTickCount();
     mmSysTimeMS.u.ms+=newtick-lasttick; /* FIXME: faked timer */
     if (newtick!=lasttick)
+
+    if (!time_called) { /* to avoid infinite recursion if timeGetTime is called
+			   inside check_MMtimers
+			 */
+      time_called++;
     	check_MMtimers();
+      time_called--;
+    }    //check_MMtimers();
     lasttick = newtick;
-    dprintf_info(mmtime, "timeGetTime() // Time = %ld\n",mmSysTimeMS.u.ms);
+    TRACE(mmtime, "Time = %ld\n",mmSysTimeMS.u.ms);
 
 
     return mmSysTimeMS.u.ms;

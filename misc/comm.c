@@ -83,8 +83,7 @@ void COMM_Init(void)
 					COM[x].fd = 0;
 					strcpy(COM[x].devicename, temp);
 				}
-                dprintf_info(comm,
-                        "Comm_Init: %s = %s\n", option, COM[x].devicename);
+                TRACE(comm, "%s = %s\n", option, COM[x].devicename);
  		}
 
 		strcpy(option, "LPTx");
@@ -106,8 +105,7 @@ void COMM_Init(void)
 					LPT[x].fd = 0;
 					strcpy(LPT[x].devicename, temp);
 				}
-                dprintf_info(comm,
-                        "Comm_Init: %s = %s\n", option, LPT[x].devicename);
+                TRACE(comm, "%s = %s\n", option, LPT[x].devicename);
 		}
 
 	}
@@ -152,7 +150,7 @@ int ValidLPTPort(int x)
 
 int WinError(void)
 {
-        dprintf_info(comm, "WinError: errno = %d\n", errno);
+        TRACE(comm, "errno = %d\n", errno);
 	switch (errno) {
 		default:
 			return CE_IOE;
@@ -169,8 +167,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 	int port;
 	char *ptr, temp[256];
 
-	dprintf_info(comm,
-		"BuildCommDCB: (%s), ptr %p\n", device, lpdcb);
+	TRACE(comm, "(%s), ptr %p\n", device, lpdcb);
 	commerror = 0;
 
 	if (!lstrncmpi32A(device,"COM",3)) {
@@ -207,13 +204,13 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 			lpdcb->BaudRate = COM[port].baudrate;
 		else
 			lpdcb->BaudRate = atoi(ptr);
-        	dprintf_info(comm,"BuildCommDCB: baudrate (%d)\n", lpdcb->BaudRate);
+        	TRACE(comm,"baudrate (%d)\n", lpdcb->BaudRate);
 
 		ptr = strtok(NULL, ", ");
 		if (islower(*ptr))
 			*ptr = toupper(*ptr);
 
-        	dprintf_info(comm,"BuildCommDCB: parity (%c)\n", *ptr);
+        	TRACE(comm,"parity (%c)\n", *ptr);
 		lpdcb->fParity = 1;
 		switch (*ptr) {
 			case 'N':
@@ -235,11 +232,11 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 		}
 
 		ptr = strtok(NULL, ", "); 
-         	dprintf_info(comm, "BuildCommDCB: charsize (%c)\n", *ptr);
+         	TRACE(comm, "charsize (%c)\n", *ptr);
 		lpdcb->ByteSize = *ptr - '0';
 
 		ptr = strtok(NULL, ", ");
-        	dprintf_info(comm, "BuildCommDCB: stopbits (%c)\n", *ptr);
+        	TRACE(comm, "stopbits (%c)\n", *ptr);
 		switch (*ptr) {
 			case '1':
 				lpdcb->StopBits = ONESTOPBIT;
@@ -273,7 +270,7 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
 	int	port;
 	char	*ptr,*temp;
 
-	dprintf_info(comm,"BuildCommDCBAndTimeouts32A(%s,%p,%p)\n",device,lpdcb,lptimeouts);
+	TRACE(comm,"(%s,%p,%p)\n",device,lpdcb,lptimeouts);
 	commerror = 0;
 
 	if (!lstrncmpi32A(device,"COM",3)) {
@@ -400,7 +397,7 @@ BOOL32 WINAPI BuildCommDCBAndTimeouts32W( LPCWSTR devid, LPDCB32 lpdcb,
 	LPSTR	devidA;
 	BOOL32	ret;
 
-	dprintf_info(comm,"BuildCommDCBAndTimeouts32W(%p,%p,%p)\n",devid,lpdcb,lptimeouts);
+	TRACE(comm,"(%p,%p,%p)\n",devid,lpdcb,lptimeouts);
 	devidA = HEAP_strdupWtoA( GetProcessHeap(), 0, devid );
 	ret=BuildCommDCBAndTimeouts32A(devidA,lpdcb,lptimeouts);
         HeapFree( GetProcessHeap(), 0, devidA );
@@ -422,8 +419,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
 	int port,fd;
 
-    	dprintf_info(comm,
-		"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
+    	TRACE(comm, "%s, %d, %d\n", device, cbInQueue, cbOutQueue);
 	commerror = 0;
 
 	if (!lstrncmpi32A(device,"COM",3)) {
@@ -434,8 +430,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			commerror = IE_BADID;
 		}
 
-                dprintf_info(comm,
-                       "OpenComm: %s = %s\n", device, COM[port].devicename);
+                TRACE(comm, "%s = %s\n", device, COM[port].devicename);
 
 		if (!ValidCOMPort(port)) {
 			commerror = IE_BADID;
@@ -487,7 +482,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 INT16 WINAPI CloseComm(INT16 fd)
 {
         int port;
-    	dprintf_info(comm,"CloseComm: fd %d\n", fd);
+    	TRACE(comm,"fd %d\n", fd);
        	if ((port = GetCommPort(fd)) !=-1) {  /* [LW]       */
     	        SEGPTR_FREE(unknown[port]); 
     	        COM[port].fd = 0;       /*  my adaptation of RER's fix   */  
@@ -512,7 +507,7 @@ INT16 WINAPI SetCommBreak16(INT16 fd)
 {
 	struct DosDeviceStruct *ptr;
 
-	dprintf_info(comm,"SetCommBreak: fd: %d\n", fd);
+	TRACE(comm,"fd=%d\n", fd);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -531,7 +526,7 @@ BOOL32 WINAPI SetCommBreak32(INT32 fd)
 
 	struct DosDeviceStruct *ptr;
 
-	dprintf_info(comm,"SetCommBreak: fd: %d\n", fd);
+	TRACE(comm,"fd=%d\n", fd);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return FALSE;
@@ -549,7 +544,7 @@ INT16 WINAPI ClearCommBreak16(INT16 fd)
 {
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"ClearCommBreak: fd: %d\n", fd);
+    	TRACE(comm,"fd=%d\n", fd);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -567,7 +562,7 @@ BOOL32 WINAPI ClearCommBreak32(INT32 fd)
 {
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"ClearCommBreak: fd: %d\n", fd);
+    	TRACE(comm,"fd=%d\n", fd);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return FALSE;
@@ -586,7 +581,7 @@ LONG WINAPI EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
 	int	max;
 	struct termios port;
 
-    	dprintf_info(comm,"EscapeCommFunction fd: %d, function: %d\n", fd, nFunction);
+    	TRACE(comm,"fd=%d, function=%d\n", fd, nFunction);
 	if (tcgetattr(fd,&port) == -1) {
 		commerror=WinError();	
 		return -1;
@@ -662,7 +657,7 @@ BOOL32 WINAPI EscapeCommFunction32(INT32 fd,UINT32 nFunction)
 	struct termios	port;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"EscapeCommFunction fd: %d, function: %d\n", fd, nFunction);
+    	TRACE(comm,"fd=%d, function=%d\n", fd, nFunction);
 	if (tcgetattr(fd,&port) == -1) {
 		commerror=WinError();	
 		return FALSE;
@@ -734,7 +729,7 @@ INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
 {
 	int queue;
 
-    	dprintf_info(comm,"FlushComm fd: %d, queue: %d\n", fd, fnQueue);
+    	TRACE(comm,"fd=%d, queue=%d\n", fd, fnQueue);
 	switch (fnQueue) {
 		case 0:	queue = TCOFLUSH;
 			break;
@@ -759,7 +754,7 @@ INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
  */
 BOOL32 WINAPI PurgeComm( HANDLE32 hFile, DWORD flags) 
 {
-    dprintf_fixme(comm, "PurgeComm(%08x %08lx) unimplemented stub\n",
+    FIXME(comm, "(%08x %08lx) unimplemented stub\n",
                  hFile, flags);
     return 0;
 }
@@ -784,15 +779,13 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
                 if (rc) fprintf(stderr, "Error !\n");
 		lpStat->cbInQue = cnt;
 
-    		dprintf_info(comm,
-		       "GetCommError: fd %d, error %d, lpStat %d %d %d\n",
-		       fd, commerror, lpStat->status, lpStat->cbInQue, 
-		       lpStat->cbOutQue);
+    		TRACE(comm, "fd %d, error %d, lpStat %d %d %d\n",
+			     fd, commerror, lpStat->status, lpStat->cbInQue, 
+			     lpStat->cbOutQue);
 	}
 	else
-		dprintf_info(comm,
-		       "GetCommError: fd %d, error %d, lpStat NULL\n",
-		       fd, commerror);
+		TRACE(comm, "fd %d, error %d, lpStat NULL\n",
+			     fd, commerror);
 
 	/*
 	 * [RER] I have no idea what the following is trying to accomplish.
@@ -810,7 +803,7 @@ BOOL32 WINAPI ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
 {
 	int temperror;
 
-    	dprintf_info(comm, "ClearCommError: fd %d (current error %d)\n", 
+    	TRACE(comm, "fd %d (current error %d)\n", 
 	       fd, commerror);
 	temperror = commerror;
 	commerror = 0;
@@ -826,18 +819,18 @@ SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
         int act;
         int repid;
         unsigned int mstat;
-    	dprintf_info(comm,"SetCommEventMask:fd %d,mask %d\n",fd,fuEvtMask);
+    	TRACE(comm,"fd %d,mask %d\n",fd,fuEvtMask);
 	eventmask |= fuEvtMask;
         if ((act = GetCommPort(fd)) == -1) {
-            dprintf_warn(comm," fd %d not comm port\n",act);
+            WARN(comm," fd %d not comm port\n",act);
             return NULL;}
         stol =  unknown[act];
         stol += msr;    
 	repid = ioctl(fd,TIOCMGET,&mstat);
-	dprintf_info(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[act]);
+	TRACE(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[act]);
 	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
 	     else {*stol &=0x7f;}
-	dprintf_info(comm," modem dcd construct %x\n",*stol);
+	TRACE(comm," modem dcd construct %x\n",*stol);
 	return SEGPTR_GET(unknown[act]);	
 }
 
@@ -848,8 +841,7 @@ UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 {
 	int	events = 0;
 
-    	dprintf_info(comm,
-		"GetCommEventMask: fd %d, mask %d\n", fd, fnEvtClear);
+    	TRACE(comm, "fd %d, mask %d\n", fd, fnEvtClear);
 
 	/*
 	 *	Determine if any characters are available
@@ -862,8 +854,7 @@ UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 		rc = ioctl(fd, TIOCINQ, &cnt);
 		if (cnt) events |= EV_RXCHAR;
 
-		dprintf_info(comm,
-			"GetCommEventMask: rxchar %ld\n", cnt);
+		TRACE(comm, "rxchar %ld\n", cnt);
 	}
 
 	/*
@@ -871,8 +862,7 @@ UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 	 */
 	/* TODO */
 
-	dprintf_info(comm,
-		"GetCommEventMask: return events %d\n", events);
+	TRACE(comm, "return events %d\n", events);
 	return events;
 
 	/*
@@ -890,7 +880,7 @@ UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
  */
 BOOL32 WINAPI SetupComm( HANDLE32 hFile, DWORD insize, DWORD outsize)
 {
-        dprintf_fixme(comm, "SetupComm: insize %ld outsize %ld unimplemented stub\n", insize, outsize);
+        FIXME(comm, "insize %ld outsize %ld unimplemented stub\n", insize, outsize);
        return FALSE;
 } 
 
@@ -899,8 +889,7 @@ BOOL32 WINAPI SetupComm( HANDLE32 hFile, DWORD insize, DWORD outsize)
  */
 BOOL32 WINAPI GetCommMask(INT32 fd,LPDWORD evtmask)
 {
-    	dprintf_info(comm,
-		"GetCommMask: fd %d, mask %p\n", fd, evtmask);
+    	TRACE(comm, "fd %d, mask %p\n", fd, evtmask);
 	*evtmask = eventmask;
 	return TRUE;
 }
@@ -910,8 +899,7 @@ BOOL32 WINAPI GetCommMask(INT32 fd,LPDWORD evtmask)
  */
 BOOL32 WINAPI SetCommMask(INT32 fd,DWORD evtmask)
 {
-    	dprintf_info(comm,
-		"SetCommMask: fd %d, mask %lx\n", fd, evtmask);
+    	TRACE(comm, "fd %d, mask %lx\n", fd, evtmask);
 	eventmask = evtmask;
 	return TRUE;
 }
@@ -924,8 +912,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	struct termios port;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,
-		"SetCommState16: fd %d, ptr %p\n", lpdcb->Id, lpdcb);
+    	TRACE(comm, "fd %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if (tcgetattr(lpdcb->Id, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -955,7 +942,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	}
 	if (ptr->baudrate > 0)
 	  	lpdcb->BaudRate = ptr->baudrate;
-    	dprintf_info(comm,"SetCommState: baudrate %d\n",lpdcb->BaudRate);
+    	TRACE(comm,"baudrate %d\n",lpdcb->BaudRate);
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
 	switch (lpdcb->BaudRate) {
@@ -1049,7 +1036,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
         }
         port.c_ispeed = port.c_ospeed;
 #endif
-    	dprintf_info(comm,"SetCommState: bytesize %d\n",lpdcb->ByteSize);
+    	TRACE(comm,"bytesize %d\n",lpdcb->ByteSize);
 	port.c_cflag &= ~CSIZE;
 	switch (lpdcb->ByteSize) {
 		case 5:
@@ -1069,7 +1056,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 			return -1;
 	}
 
-    	dprintf_info(comm,"SetCommState: parity %d\n",lpdcb->Parity);
+    	TRACE(comm,"parity %d\n",lpdcb->Parity);
 	port.c_cflag &= ~(PARENB | PARODD);
 	if (lpdcb->fParity)
 		switch (lpdcb->Parity) {
@@ -1090,7 +1077,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 		}
 	
 
-    	dprintf_info(comm,"SetCommState: stopbits %d\n",lpdcb->StopBits);
+    	TRACE(comm,"stopbits %d\n",lpdcb->StopBits);
 
 	switch (lpdcb->StopBits) {
 		case ONESTOPBIT:
@@ -1137,7 +1124,7 @@ BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
 	struct termios port;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"SetCommState32: fd %d, ptr %p\n",fd,lpdcb);
+    	TRACE(comm,"fd %d, ptr %p\n",fd,lpdcb);
 	if (tcgetattr(fd,&port) == -1) {
 		commerror = WinError();	
 		return FALSE;
@@ -1167,7 +1154,7 @@ BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
 	}
 	if (ptr->baudrate > 0)
 	  	lpdcb->BaudRate = ptr->baudrate;
-    	dprintf_info(comm,"SetCommState: baudrate %ld\n",lpdcb->BaudRate);
+    	TRACE(comm,"baudrate %ld\n",lpdcb->BaudRate);
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
 	switch (lpdcb->BaudRate) {
@@ -1255,7 +1242,7 @@ BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
         }
         port.c_ispeed = port.c_ospeed;
 #endif
-    	dprintf_info(comm,"SetCommState: bytesize %d\n",lpdcb->ByteSize);
+    	TRACE(comm,"bytesize %d\n",lpdcb->ByteSize);
 	port.c_cflag &= ~CSIZE;
 	switch (lpdcb->ByteSize) {
 		case 5:
@@ -1275,7 +1262,7 @@ BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
 			return FALSE;
 	}
 
-    	dprintf_info(comm,"SetCommState: parity %d\n",lpdcb->Parity);
+    	TRACE(comm,"parity %d\n",lpdcb->Parity);
 	port.c_cflag &= ~(PARENB | PARODD);
 	if (lpdcb->fParity)
 		switch (lpdcb->Parity) {
@@ -1296,7 +1283,7 @@ BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
 		}
 	
 
-    	dprintf_info(comm,"SetCommState: stopbits %d\n",lpdcb->StopBits);
+    	TRACE(comm,"stopbits %d\n",lpdcb->StopBits);
 	switch (lpdcb->StopBits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
@@ -1344,7 +1331,7 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 {
 	struct termios port;
 
-    	dprintf_info(comm,"GetCommState16: fd %d, ptr %p\n", fd, lpdcb);
+    	TRACE(comm,"fd %d, ptr %p\n", fd, lpdcb);
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -1469,7 +1456,7 @@ BOOL32 WINAPI GetCommState32(INT32 fd, LPDCB32 lpdcb)
 {
 	struct termios	port;
 
-    	dprintf_info(comm,"GetCommState32: fd %d, ptr %p\n", fd, lpdcb);
+    	TRACE(comm,"fd %d, ptr %p\n", fd, lpdcb);
         if (GetDeviceStruct(fd) == NULL) return FALSE;
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
@@ -1585,8 +1572,7 @@ INT16 WINAPI TransmitCommChar16(INT16 fd,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,
-		"TransmitCommChar: fd %d, data %d \n", fd, chTransmit);
+    	TRACE(comm, "fd %d, data %d \n", fd, chTransmit);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -1613,7 +1599,7 @@ BOOL32 WINAPI TransmitCommChar32(INT32 fd,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"TransmitCommChar32(%d,'%c')\n",fd,chTransmit);
+    	TRACE(comm,"(%d,'%c')\n",fd,chTransmit);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return FALSE;
@@ -1639,7 +1625,7 @@ INT16 WINAPI UngetCommChar(INT16 fd,CHAR chUnget)
 {
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"UngetCommChar: fd %d (char %d)\n", fd, chUnget);
+    	TRACE(comm,"fd %d (char %d)\n", fd, chUnget);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -1664,8 +1650,7 @@ INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
 	int status, length;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,
-	    "ReadComm: fd %d, ptr %p, length %d\n", fd, lpvBuf, cbRead);
+    	TRACE(comm, "fd %d, ptr %p, length %d\n", fd, lpvBuf, cbRead);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -1696,7 +1681,7 @@ INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
                         return length;
                 }
  	} else {
-	        dprintf_info(comm,"%*s\n", length+status, lpvBuf);
+	        TRACE(comm,"%*s\n", length+status, lpvBuf);
 		commerror = 0;
 		return length + status;
 	}
@@ -1710,7 +1695,7 @@ INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 	int length;
 	struct DosDeviceStruct *ptr;
 
-    	dprintf_info(comm,"WriteComm: fd %d, ptr %p, length %d\n", 
+    	TRACE(comm,"fd %d, ptr %p, length %d\n", 
 		fd, lpvBuf, cbWrite);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
@@ -1722,7 +1707,7 @@ INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 		return -1;
 	}	
 	
-	dprintf_info(comm,"%*s\n", cbWrite, lpvBuf );
+	TRACE(comm,"%*s\n", cbWrite, lpvBuf );
 	length = write(fd, (void *) lpvBuf, cbWrite);
 	
 	if (length == -1) {

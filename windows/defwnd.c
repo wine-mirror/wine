@@ -36,10 +36,10 @@ static void DEFWND_HandleWindowPosChanged( WND *wndPtr, UINT32 flags )
 {
     WPARAM16 wp = SIZE_RESTORED;
 
-    if (!(flags & SWP_NOCLIENTMOVE))
+    if (!(flags & SWP_NOMOVE))
         SendMessage16( wndPtr->hwndSelf, WM_MOVE, 0,
                     MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top));
-    if (!(flags & SWP_NOCLIENTSIZE))
+    if (!(flags & SWP_NOSIZE))
     {
         if (wndPtr->dwStyle & WS_MAXIMIZE) wp = SIZE_MAXIMIZED;
         else if (wndPtr->dwStyle & WS_MINIMIZE) wp = SIZE_MINIMIZED;
@@ -97,7 +97,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM32 wParam )
 {
     BOOL32 bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
-dprintf_info(win,"SetRedraw: %04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
+TRACE(win,"%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
 
     if( wParam )
     {
@@ -184,7 +184,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 			SYSMETRICS_CXICON)/2;
 	        int y = (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top -
 			SYSMETRICS_CYICON)/2;
-		dprintf_info(win,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
+		TRACE(win,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
 		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
 	        DrawIcon32( hdc, x, y, wndPtr->class->hIcon );
 	      }

@@ -325,3 +325,28 @@ FARPROC16 SetEventHook(FARPROC16 lpfnEventHook)
 	fprintf(stderr, "SetEventHook(lpfnEventHook = %08x): stub !\n", (UINT32)lpfnEventHook);
 	return NULL;
 }
+
+/***********************************************************************
+ *           UserSeeUserDo   (USER.216)
+ */
+DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
+{
+    switch (wReqType)
+    {
+    case USUD_LOCALALLOC:
+        return LOCAL_Alloc(USER_HeapSel, wParam1, wParam3);
+    case USUD_LOCALFREE:
+        return LOCAL_Free(USER_HeapSel, wParam1);
+    case USUD_LOCALCOMPACT:
+        return LOCAL_Compact(USER_HeapSel, wParam3, 0);
+    case USUD_LOCALHEAP:
+        return USER_HeapSel;
+    case USUD_FIRSTCLASS:
+        FIXME(local, "return a pointer to the first window class.\n"); 
+        return (DWORD)-1;
+    default:
+        WARN(local, "wReqType %04x (unknown)", wReqType);
+        return (DWORD)-1;
+    }
+}
+

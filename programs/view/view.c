@@ -67,7 +67,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	    if (FileOpen(hwnd, filename)) {
 	      isAldus = FileIsPlaceable(filename);
 	      if (isAldus) {
-#if 0
+#if 1
 		hmf = GetPlaceableMetaFile(filename);
 #else
 		MessageBox(hwnd, "This is an Aldus placeable metafile: I can't deal with those!",
@@ -143,6 +143,7 @@ BOOL FileIsPlaceable( LPCSTR szFileName )
 }
 
 /* this code doesn't work */
+#if 1
 HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
 {
   HANDLE hData;
@@ -157,9 +158,8 @@ HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
   _llseek(fh, 0, 0);
   if (!_lread(fh, (LPSTR)&APMHeader, sizeof(APMFILEHEADER))) return NULL;
   _llseek(fh, sizeof(APMFILEHEADER), 0);
+  printf("sizeof(APMFILEHEADER) %d\n", sizeof(APMFILEHEADER));
   if (!_lread(fh, (LPSTR)&mfHeader, sizeof(METAHEADER))) return NULL;
-
-  /* somehow mtSize is being swapped */
 
   if (!(hData = GlobalAlloc(GHND, (mfHeader.mtSize * 2L)))) return NULL;
 
@@ -184,10 +184,12 @@ HMETAFILE GetPlaceableMetaFile( LPCSTR szFileName )
   
   width = APMHeader.bbox.right - APMHeader.bbox.left;
   height = APMHeader.bbox.bottom - APMHeader.bbox.top;
+
+  printf("Ok! width %d height %d\n", width, height);
   deltax = 0;
   deltay = 0 ;
   return hmf;
 }
-
+#endif
 
 

@@ -26,4 +26,5 @@ extern LICENSE WineLicense_En;
 /* extern LICENSE WineLicense_Pl; */
 /* extern LICENSE WineLicense_Po; */
 /* extern LICENSE WineLicense_Va; */
-
+/* extern LICENSE WineLicense_Sw; */
+/* extern LICENSE WineLicense_Ca; */

@@ -55,7 +55,7 @@ void WINAPI INT_Int1aHandler( CONTEXT *context )
             CX_reg(context) = HIWORD(ticks);
             DX_reg(context) = LOWORD(ticks);
             AX_reg(context) = 0;  /* No midnight rollover */
-            dprintf_info(int,"int1a_00 // ticks=%ld\n", ticks);
+            TRACE(int,"int1a: AH=00 -- ticks=%ld\n", ticks);
             break;
 		
 	case 2: 

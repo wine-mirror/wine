@@ -29,6 +29,7 @@ DLLS = \
 	stress.spec \
 	system.spec \
 	toolhelp.spec \
+	typelib.spec \
 	user.spec \
 	ver.spec \
 	w32sys.spec \

@@ -64,7 +64,9 @@ VOID DIALOG_FileOpen(VOID)
 	  openfilename.lpfnHook          = 0;
  	  openfilename.lpTemplateName    = 0;
 
-  	  if (GetOpenFileName(&openfilename));
+  	  if (GetOpenFileName(&openfilename)) {
+	  printf("Openfile: %s\n", openfilename.lpstrFile);
+	  }
 }
 
 VOID DIALOG_FileSave(VOID)
@@ -189,7 +191,7 @@ VOID DIALOG_EditSelectAll(VOID)
 
 VOID DIALOG_EditTimeDate(VOID)
 {
-  fprintf(stderr, "EditTimeDate()\n");
+  DIALOG_TimeDate();   
 }
 
 VOID DIALOG_EditWrap(VOID)
@@ -244,16 +246,13 @@ VOID DIALOG_HelpLicense(VOID)
 
 VOID DIALOG_HelpNoWarranty(VOID)
 {
-  printf("NP_ABOUT_NO_WARRANTY\n");
         WineWarranty(Globals.hMainWnd, Globals.lpszLanguage);
 }
 
 VOID DIALOG_HelpAboutWine(VOID)
 {
-  printf("NP_ABOUT_WINE\n");
   ShellAbout(Globals.hMainWnd, "Notepad", "Notepad\n" WINE_RELEASE_INFO, 0);
 }
-
 
 /***********************************************************************
  *
@@ -268,6 +267,25 @@ VOID DIALOG_PageSetup(VOID)
   FreeProcInstance(lpfnDlg);
 }
 
+/***********************************************************************
+ *
+ *           DIALOG_TimeDate
+ */
+
+VOID DIALOG_TimeDate(VOID)
+{
+  SYSTEMTIME st;
+   int H, Min, Y, M, D;
+   GetLocalTime(&st);
+   H = st.wHour; Min = st.wMinute; Y  = st.wYear; M = st.wMonth; D = st.wDay;
+   printf("TimeDate=%i:", H);
+   if (Min < 10) printf("0");
+   printf("%i  %i/", Min, Y);
+   if (M < 10) printf("0");
+   printf("%i/", M);
+   if (D < 10) printf("0");
+   printf("%i\n", D);
+}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *

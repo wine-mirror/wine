@@ -26,8 +26,8 @@
 
 /* Work constants */
 
-#define UNKNOWN_PARAM(msg, wParam, lParam) dprintf_warn(progress, \
-        "Progress Ctrl: Unknown parameter(s) for message " #msg     \
+#define UNKNOWN_PARAM(msg, wParam, lParam) WARN(progress, \
+        "Unknown parameter(s) for message " #msg     \
 	"(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
 
 #define PROGRESS_GetInfoPtr(wndPtr) ((PROGRESS_INFO *)wndPtr->wExtra)
@@ -47,8 +47,8 @@ static void PROGRESS_Paint(WND *wndPtr, HDC32 dc)
   RECT32 rect;
   HDC32 hdc;
 
-  dprintf_info(progress, "Progress Bar: paint pos=%d min=%d, max=%d\n",
-		   infoPtr->CurVal, infoPtr->MinVal, infoPtr->MaxVal);
+  TRACE(progress, "paint pos=%d min=%d, max=%d\n",
+	       infoPtr->CurVal, infoPtr->MinVal, infoPtr->MaxVal);
 
   /* get a dc */
   hdc = dc==0 ? BeginPaint32(wndPtr->hwndSelf, &ps) : dc;
@@ -114,11 +114,11 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       infoPtr->MaxVal=100;
       infoPtr->CurVal=0; 
       infoPtr->Step=10;
-      dprintf_info(updown, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
+      TRACE(updown, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
     case WM_DESTROY:
-      dprintf_info(updown, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+      TRACE(updown, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
       break;
 
     case WM_ERASEBKGND:
@@ -194,8 +194,8 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
     
     default: 
       if (message >= WM_USER) 
-	fprintf( stderr, "Progress Ctrl: unknown msg %04x wp=%04x lp=%08lx\n", 
-		 message, wParam, lParam );
+	ERR(progress, "unknown msg %04x wp=%04x lp=%08lx\n", 
+		    message, wParam, lParam );
       return DefWindowProc32A( hwnd, message, wParam, lParam ); 
     } 
 

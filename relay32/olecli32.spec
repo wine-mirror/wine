@@ -56,4 +56,4 @@ type win32
   57 stub OleExecute
   58 stub OleCreateInvisible
   59 stub OleQueryClientVersion
-  60 stub OleIsDcMeta
+  60 stdcall OleIsDcMeta(long) OleIsDcMeta32

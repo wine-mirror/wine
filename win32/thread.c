@@ -104,11 +104,17 @@ LONG WINAPI InterlockedDecrement(LPLONG lpAddend)
 }
 
 /************************************************************************
-*           InterlockedExchange				[KERNEL32]	*
-************************************************************************/
-
-LONG WINAPI InterlockedExchange(LPLONG target, LONG value)
-{
+ *           InterlockedExchange				[KERNEL32.???]
+ *
+ * Atomically exchanges a pair of values.
+ *
+ * RETURNS
+ *	Prior value of value pointed to by Target
+ */
+LONG WINAPI InterlockedExchange(
+	    LPLONG target, /* Address of 32-bit value to exchange */
+	    LONG value     /* New value for the value pointed to by target */
+) {
 #if defined(__i386__)&&defined(__GNUC__)	
 	LONG ret;
 	__asm__ ( /* lock for SMP systems */

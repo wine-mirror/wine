@@ -272,51 +272,7 @@ DWORD WINAPI UnhandledExceptionFilter( PEXCEPTION_POINTERS epointers );
 LPTOP_LEVEL_EXCEPTION_FILTER
 WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 
-/* Language IDs */
-
-#define LANG_NEUTRAL                     0x00
-#define LANG_ARABIC                      0x01
-#define LANG_AFRIKAANS                   0x36
-#define LANG_ALBANIAN                    0x1c
-#define LANG_BASQUE                      0x2d
-#define LANG_BULGARIAN                   0x02
-#define LANG_BYELORUSSIAN                0x23
-#define LANG_CATALAN                     0x03
-#define LANG_CHINESE                     0x04
-#define LANG_CROATIAN                    0x1a
-#define LANG_CZECH                       0x05
-#define LANG_DANISH                      0x06
-#define LANG_DUTCH                       0x13
-#define LANG_ENGLISH                     0x09
-#define LANG_ESTONIAN                    0x25
-#define LANG_FAEROESE                    0x38
-#define LANG_FARSI                       0x29
-#define LANG_FINNISH                     0x0b
-#define LANG_FRENCH                      0x0c
-#define LANG_GERMAN                      0x07
-#define LANG_GREEK                       0x08
-#define LANG_HEBREW                      0x0D
-#define LANG_HUNGARIAN                   0x0e
-#define LANG_ICELANDIC                   0x0f
-#define LANG_INDONESIAN                  0x21
-#define LANG_ITALIAN                     0x10
-#define LANG_JAPANESE                    0x11
-#define LANG_KOREAN                      0x12
-#define LANG_LATVIAN                     0x26
-#define LANG_LITHUANIAN                  0x27
-#define LANG_NORWEGIAN                   0x14
-#define LANG_POLISH                      0x15
-#define LANG_PORTUGUESE                  0x16
-#define LANG_ROMANIAN                    0x18
-#define LANG_RUSSIAN                     0x19
-#define LANG_SLOVAK                      0x1b
-#define LANG_SLOVENIAN                   0x24
-#define LANG_SORBIAN                     0x2e
-#define LANG_SPANISH                     0x0a
-#define LANG_SWEDISH                     0x1d
-#define LANG_THAI                        0x1e
-#define LANG_TURKISH                     0x1f
-#define LANG_UKRAINIAN                   0x22
+/* I moved the Language IDs to winnls.h (David Lee Lambert) */
 
 
 /* Access rights */

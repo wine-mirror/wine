@@ -17,7 +17,7 @@
 HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 {
     LOGPEN32 logpen = { style, { width, 0 }, color };
-    dprintf_info(gdi, "CreatePen16: %d %d %06lx\n", style, width, color );
+    TRACE(gdi, "%d %d %06lx\n", style, width, color );
     return CreatePenIndirect32( &logpen );
 }
 
@@ -28,7 +28,7 @@ HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 HPEN32 WINAPI CreatePen32( INT32 style, INT32 width, COLORREF color )
 {
     LOGPEN32 logpen = { style, { width, 0 }, color };
-    dprintf_info(gdi, "CreatePen32: %d %d %06lx\n", style, width, color );
+    TRACE(gdi, "%d %d %06lx\n", style, width, color );
     return CreatePenIndirect32( &logpen );
 }
 

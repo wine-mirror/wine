@@ -96,10 +96,10 @@ void DIR_ParseWindowsPath( char *path )
         DIR_PathElements++;
     }
 
-    if (debugging_info(dosfs))
+    if (TRACE_ON(dosfs))
         for (i = 0; i < DIR_PathElements; i++)
         {
-            dprintf_info(dosfs, "Path[%d]: %s = %s\n",
+            TRACE(dosfs, "Path[%d]: %s = %s\n",
                            i, DIR_DosPath[i], DIR_UnixPath[i] );
         }
 }
@@ -155,10 +155,11 @@ int DIR_Init(void)
                              path, sizeof(path) );
     DIR_ParseWindowsPath( path );
 
-    dprintf_info(dosfs, "WindowsDir = %s\nSystemDir  = %s\n",
-                   DIR_WindowsDosDir, DIR_SystemDosDir );
-    dprintf_info(dosfs, "TempDir    = %s\nCwd        = %c:\\%s\n",
-                   DIR_TempDosDir, 'A' + drive, DRIVE_GetDosCwd( drive ) );
+    TRACE(dosfs, "WindowsDir = %s\n", DIR_WindowsDosDir);
+    TRACE(dosfs, "SystemDir  = %s\n", DIR_SystemDosDir);
+    TRACE(dosfs, "TempDir    = %s\n", DIR_TempDosDir);
+    TRACE(dosfs, "Cwd        = %c:\\%s\n",
+		 'A' + drive, DRIVE_GetDosCwd( drive ) );
 
     /* Put the temp and Windows and system directories into the environment */
 
@@ -327,7 +328,7 @@ UINT32 WINAPI GetSystemDirectory32W( LPWSTR path, UINT32 count )
  */
 BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 {
-    dprintf_info(file,"CreateDirectory16(%s,%p)\n", path, dummy );
+    TRACE(file,"(%s,%p)\n", path, dummy );
     return (BOOL16)CreateDirectory32A( path, NULL );
 }
 
@@ -340,10 +341,10 @@ BOOL32 WINAPI CreateDirectory32A( LPCSTR path,
 {
     DOS_FULL_NAME full_name;
 
-    dprintf_info(file, "CreateDirectory32A(%s,%p)\n", path, lpsecattribs );
+    TRACE(file, "(%s,%p)\n", path, lpsecattribs );
     if (DOSFS_IsDevice( path ))
     {
-        dprintf_info(file, "CreateDirectory: cannot use device '%s'!\n",path);
+        TRACE(file, "cannot use device '%s'!\n",path);
         DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
         return FALSE;
     }
@@ -406,11 +407,11 @@ BOOL32 WINAPI RemoveDirectory32A( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
 
-    dprintf_info(file, "RemoveDirectory: '%s'\n", path );
+    TRACE(file, "'%s'\n", path );
 
     if (DOSFS_IsDevice( path ))
     {
-        dprintf_info(file, "RemoveDirectory: cannot remove device '%s'!\n", path);
+        TRACE(file, "cannot remove device '%s'!\n", path);
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return FALSE;
     }

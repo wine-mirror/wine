@@ -1,33 +1,35 @@
-Note: the debugging interface is under development. Please do not make
-      changes to it yet as I will do major changes in the next few weeks.
-      To make my life easier, PLEASE follow the guidelines described in
-      this document. If you have some ideas that you would like to
-      incorporate, please contact me first.
-      Please read the document before writing new code.
+Note: The new debugging interface is starting to take shape.
+      In general, I think it can be considered to be stable,
+      with the exception of the in-memory message construction functions.
+      However, there is still a lot of work to be done to polish
+      things up and to convert the remaining fprintf. To make my life 
+      easier, please follow the guidelines described in this document. 
+
+      Read this document before writing new code.
       Also, DO NOT USE fprintf (or printf) to output things. All these
-      will have to be translated to dprintf_ calls and there are already
+      will have to be translated to the new interface and there are already
       about 3000 of them! Also, instead of writing FIXMEs in the source,
-      output a dprintf_fixme message. But read on...
-25 Feb 1998, Dimitrie O. Paun <dimi@cs.toronto.edu>
+      output a FIXME message if you can. But read on...
+14 Mar 1998, Dimitrie O. Paun <dimi@cs.toronto.edu>
 
 
 Debugging classes
 -----------------
 
-The debugging messages are divided into 4 classes:
+There are 4 types (or classes) of debugging messages:
 
-fixme -- Messages in this class relate to behavior of Wine that does
+FIXME -- Messages in this class relate to behavior of Wine that does
          not correspond to standard Windows behavior and that should
          be fixed. 
          Examples: stubs, semi-implemented features, etc.
 
-err   -- Messages in this class relate to serious errors in Wine.
+ERR   -- Messages in this class relate to serious errors in Wine.
          This sort of messages are close to asserts -- that is,
-         you should output a 'err' message when the code detects a
+         you should output a error message when the code detects a
          condition which should not happen.
 	 Examples: unexpected change in internal state, etc.
 
-warn  -- This are warning messages. You should report a warning when
+WARN  -- These are warning messages. You should report a warning when
          something unwanted happen but the function behaves properly.
          That is, output a warning when you encounter something
          unexpected (ex: could not open a file) but the function deals
@@ -35,28 +37,24 @@ warn  -- This are warning messages. You should report a warning when
          If you do not deal correctly with it, output a fixme.
 	 Examples: fail to access a resource required by the app, etc.
 
-info  -- This are detailed debugging messages that are mainly useful 
-         to debug a component. This are usually turned off.
+TRACE -- These are detailed debugging messages that are mainly useful 
+         to debug a component. These are usually turned off.
          Examples: everything else that does not fall in one of the
                    above mentioned categories and the user does not
-                   need to know about it. This sort of messages simply
-                   outputs something about the state of some component 
-                   that is of interest mainly to the developer of that
-                   component.
-            
-We will refer to a generic class as yyy.
+                   need to know about it.
 
-The user has the capability to turn on or off messages in a particular
-class. You can expect the following patters of usage (but note that 
+            
+The user has the capability to turn on or off messages of a particular
+type. You can expect the following patterns of usage (but note that 
 any combination is possible):
-  -- when you debug a component, all classes (info,warn,err,fixme)
+  -- when you debug a component, all types (TRACE,WARN,ERR,FIXME)
      will be enabled.
   -- during the pre-alpha (maybe alpha) stage of Wine, most likely
-     the info class will be disabled by default, but all others
-     (warn,err,fixme) will be enabled by default.
-  -- when Wine will become stable, most likely the info and warn
-     classes will be disabled by default, but all err and fixme 
-     will be enabled by default.
+     the TRACE class will be disabled by default, but all others
+     (WARN,ERR,FIXME) will be enabled by default.
+  -- when Wine will become stable, most likely the TRACE and WARN
+     classes will be disabled by default, but all ERRs and FIXMEs 
+     will be enabled.
   -- in some installations that want the smallest footprint
      and where the debug information is of no interest, 
      all classes may be disabled by default.
@@ -70,11 +68,11 @@ Debugging channels
 ------------------
 
 Also, we divide the debugging messages per component. Each component
-is assigned a debugging channel (or type). The identifier of the
+is assigned a debugging channel. The identifier of the
 channel must be a valid C identifier but note that it may also be a
 reserve word like int or static.
 
-Examples of debugging channels/types:
+Examples of debugging channels:
 reg, updown, string
 
 We will refer to a generic channel as xxx.
@@ -89,26 +87,28 @@ Note: for those who know the old interface, the channel/type is
       In the new interface, we drop the stddeb as it is implicit.
       However, we add an orthogonal piece of information to the
       message: its class. This is very important as it will allow
-      us to selectively turn on or off certain messages based on
+      us to selectively turn on or off certain messages based on the
       type of information they report. For this reason it is VERY
       important to choose the right class for the message. 
       Anyhow, suppose we figured that this message should belong
-      in the warn class, so in the new interface, you write:
+      in the WARN class, so in the new interface, you write:
 
-      dprintf_warn(reg, "Could not access key!\n");
+      WARN(reg, "Could not access key!");
+
+      Notice the \n is no longer required.
 
 ---
 
 How to use it
 -------------
 
-So, to output a message (class yyy) on channel xxx, do:
+So, to output a message (class YYY) on channel xxx, do:
 
 #include "debug.h"
 
 ....
 
-dprintf_yyy(xxx, "<message>", ...);
+YYY(xxx, "<message>", ...);
 
 
 Some examples from the code:
@@ -117,14 +117,14 @@ Some examples from the code:
 
 ...
 
-  dprintf_info(crtdll,
-	       "CRTDLL_setbuf(file %p buf %p)\n",
+  TRACE(crtdll, "CRTDLL_setbuf(file %p buf %p)",
 	       file, buf);
 
-  dprintf_warn(aspi, "Error opening device errno=%d\n", save_error);
+  WARN(aspi, "Error opening device errno=%d", save_error);
 
 
-If you need to declare a new debugging channel, do:
+If you need to declare a new debugging channel, use it in your code
+and then do:
 %tools/make_debug
 in the root directory of Wine.
 
@@ -132,20 +132,20 @@ Note that this will result in almost complete recompilation of Wine.
 
 Notes:
    1. Please pay attention to which class you assign the message.
-      It is very, Very, VERY important to get the class right.
       There are only 4 classes, so it is not hard. The reason
       it is important to get it right is that too much information
       is no information. For example, if you put things into the 
-      warn class that should really be in the info class, the 
+      WARN class that should really be in the TRACE class, the 
       output will be too big and this will force the user to 
-      turn of warnings. But this way he will fail to see the important
-      ones. Also, if you put warnings into the info class lets say,
-      he will most likely miss those because usually the info class
+      turn warnings off. But this way he will fail to see the important
+      ones. Also, if you put warnings into the TRACE class lets say,
+      he will most likely miss those because usually the TRACE class
       is turned off. A similar argument can be made if you mix any
       other two classes.
-   2. ALL LINES MUST END WITH A NEWLINE!!! If you can NOT output
-      everything that you want in the line with only one dprintf_xxx
-      statement, then you need to build the string in memory.
+   2. All lines end by default with a newline. So you should not
+      add one more.  If you can NOT output everything that you want in 
+      the line with only one statement, then you need to build the string
+      in memory.
       Please read the section below "In-memory messages" on the
       preferred way to do it. PLEASE USE THAT INTERFACE TO BUILD
       MESSAGES IN MEMORY. The reason is that we are not sure that
@@ -158,17 +158,22 @@ Are we debugging?
 -----------------
 
 To test whether the debugging output of class yyy on channel xxx is
-enabled, do:
+enabled, use:
 
-debugging_yyy(xxx)
+TRACING  to test if TRACE is enabled
+WARNING  to test if WARN is enabled
+FIXMING  to test if FIXME is enabled
+ERRING   to test if ERR is enabled
 
 Examples:
 
-if(debugging_info(atom)){
+if(TRACING(atom)){
   ...blah...
 }
 
-
+Note that you should normaly need to test only if TRACING. At present,
+none of the other 3 tests (except for ERRING which is used only once!)
+are used in Wine.
 
 In-memory messages
 ------------------
@@ -204,11 +209,11 @@ void some_func(tabs)
 
   for (i = 0; i < descr->nb_tabs; i++) {
     descr->tabs[i] = *p++<<1; 
-    if(debugging_info(listbox))                  /* write in it only if
+    if(TRACING(listbox))                         /* write in it only if
       dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
   }
-  dprintf_info(listbox, "Listbox %04x: settabstops %s\n", 
-	       wnd->hwndSelf, dbg_str(listbox)); /* output the whole thing */
+  TRACE(listbox, "Listbox %04x: settabstops %s", 
+	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 }
 
 If you need to use it two times in the same scope do like this:
@@ -221,21 +226,21 @@ void some_func(tabs)
 
   for (i = 0; i < descr->nb_tabs; i++) {
     descr->tabs[i] = *p++<<1;  
-    if(debugging_info(listbox))                  /* write in it only if
+    if(TRACING(listbox))                         /* write in it only if
       dsprintf(listbox, "%hd ", descr->tabs[i]); /* we are gonna output it */
   }
-  dprintf_info(listbox, "Listbox %04x: settabstops %s\n", 
-	       wnd->hwndSelf, dbg_str(listbox)); /* output the whole thing */
+  TRACE(listbox, "Listbox %04x: settabstops %s\n", 
+	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 
   dbg_reset_str(listbox);                        /* !!!reset the string!!! */
   for (i = 0; i < descr->extrainfo_nr; i++) {
     descr->extrainfo = *p+1; 
-    if(debugging_info(listbox))                  /* write in it only if
+    if(TRACING(listbox))                         /* write in it only if
       dsprintf(listbox,"%3d ",descr->extrainfo); /* we are gonna output it */
   }
 
-  dprintf_info(listbox, "Listbox %04x: extrainfo %s\n", 
-	       wnd->hwndSelf, dbg_str(listbox)); /* output the whole thing */
+  TRACE(listbox, "Listbox %04x: extrainfo %s\n", 
+	wnd->hwndSelf, dbg_str(listbox));        /* output the whole thing */
 
 }
 
@@ -249,12 +254,12 @@ IMPORTANT NOTE:
   interface (when it will become available). So, if you need to use if,
   then follow the following guidelines:
    -- wrap calls to dsprintf with a 
-      if(debugging_yyy(xxx))
+      if(YYY(xxx))
         dsprintf(xxx,...);
       Of course, if the call to dsprintf is made from within a function 
-      which you know is called only if debugging_yyy(xxx) is true
+      which you know is called only if YYY(xxx) is true
       (say you call it only like this:
-        if(debugging_yyy(xxx))
+        if(YYY(xxx))
           print_some_debug_info();
       )
       then you need not (and should not) wrap calls to dsprintf with
@@ -298,7 +303,7 @@ Thus, to use it, do something on the following lines:
 
 ...
 
-   dprintf_yyy(xxx, "resource is %s", debugres(myresource));
+   YYY(xxx, "resource is %s", debugres(myresource));
 
 
 The -debugmsg command line option
@@ -316,15 +321,15 @@ So, the -debugmsg command line option has been changed as follows:
    
     enables all messages on the reg channel and disables all
     messages on the file channel.
-    This is very close (actually identical) to the old semantics.
+    This is same as the old semantics.
 
   - when the optional class argument (yyy) is present, 
     then the statement will enable(+)/disable(-) messages for
     the given channel (xxx) only on the given class. For example:
    
-    -debugmsg info+reg,warn-file
+    -debugmsg trace+reg,warn-file
    
-    enables info messages on the reg channel and disables warning
+    enables trace messages on the reg channel and disables warning
     messages on the file channel.
 
   - also, the pseudo-channel all is also supported and it has the 
@@ -343,8 +348,8 @@ So, the -debugmsg command line option has been changed as follows:
 
 
 Also, note that at the moment:
-   - the fixme, err, warn classes are all enabled by default
-   - the info class is disabled by default
+   - the fixme and err classes are enabled by default
+   - the trace and warn  classes are disabled by default
    - there is no way to compile out the messages. All are 
      runtime configurable. This will come next release.
 

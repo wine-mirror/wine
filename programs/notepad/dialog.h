@@ -35,6 +35,7 @@ VOID DIALOG_HelpNoWarranty(VOID);
 VOID DIALOG_HelpAboutWine(VOID);
 
 VOID DIALOG_PageSetup(VOID);
+VOID DIALOG_TimeDate(VOID);
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

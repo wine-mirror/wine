@@ -24,9 +24,9 @@ int main()
   int i,j,atom_n;
   int atom_len[TOGETHER];
   
-  debugging_info(shm)=1;
-  debugging_info(atom)=0;
-  debugging_info(sem)=0;
+  TRACE_ON(shm)=1;
+  TRACE_ON(atom)=0;
+  TRACE_ON(sem)=0;
   
   for (i=0 ; i<=10000/TOGETHER ; i++) {
      for (atom_n=0 ; atom_n<TOGETHER ; atom_n++) {

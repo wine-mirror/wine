@@ -85,7 +85,7 @@ void WINPOS_CheckInternalPos( HWND32 hwnd )
     if( hwnd == hwndActive )
     {
 	hwndActive = 0; 
-	dprintf_warn(win, "\tattempt to activate destroyed window!\n");
+	WARN(win, "\tattempt to activate destroyed window!\n");
     }
 
     if( lpPos )
@@ -723,7 +723,7 @@ BOOL32 WINAPI MoveWindow32( HWND32 hwnd, INT32 x, INT32 y, INT32 cx, INT32 cy,
 {    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    dprintf_info(win, "MoveWindow: %04x %d,%d %dx%d %d\n", 
+    TRACE(win, "%04x %d,%d %dx%d %d\n", 
 	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos32( hwnd, 0, x, y, cx, cy, flags );
 }
@@ -789,7 +789,7 @@ BOOL32 WINPOS_ShowIconTitle( WND* pWnd, BOOL32 bShow )
     {
 	HWND16 hWnd = lpPos->hwndIconTitle;
 
-	dprintf_info(win,"ShowIconTitle: 0x%04x %i\n", pWnd->hwndSelf, (bShow != 0) );
+	TRACE(win,"0x%04x %i\n", pWnd->hwndSelf, (bShow != 0) );
 
 	if( !hWnd )
 	    lpPos->hwndIconTitle = hWnd = ICONTITLE_Create( pWnd );
@@ -866,7 +866,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT32 *maxSize, POINT32 *maxPos,
 
       /* Some sanity checks */
 
-    dprintf_info(win,"GetMinMaxInfo: %d %d / %d %d / %d %d / %d %d\n",
+    TRACE(win,"%d %d / %d %d / %d %d / %d %d\n",
                       MinMax.ptMaxSize.x, MinMax.ptMaxSize.y,
                       MinMax.ptMaxPosition.x, MinMax.ptMaxPosition.y,
                       MinMax.ptMaxTrackSize.x, MinMax.ptMaxTrackSize.y,
@@ -897,7 +897,7 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
     LPINTERNALPOS lpPos = WINPOS_InitInternalPos( wndPtr, size,
                                                   &wndPtr->rectWindow );
 
-    dprintf_info(win,"MinMaximize: 0x%04x %u\n", wndPtr->hwndSelf, cmd );
+    TRACE(win,"0x%04x %u\n", wndPtr->hwndSelf, cmd );
 
     if (lpPos && !HOOK_CallHooks16(WH_CBT, HCBT_MINMAX, wndPtr->hwndSelf, cmd))
     {
@@ -995,7 +995,7 @@ BOOL32 WINAPI ShowWindow32( HWND32 hwnd, INT32 cmd )
 
     if (!wndPtr) return FALSE;
 
-    dprintf_info(win,"ShowWindow: hwnd=%04x, cmd=%d\n", hwnd, cmd);
+    TRACE(win,"hwnd=%04x, cmd=%d\n", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
@@ -1373,7 +1373,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     if( (wndTemp = WIN_FindWndPtr(hwndActive)) )
 	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
     else
-	dprintf_info(win,"WINPOS_ActivateWindow: no current active window.\n");
+	TRACE(win,"no current active window.\n");
 
     /* call CBT hook chain */
     if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT16)))
@@ -1615,7 +1615,7 @@ LONG WINPOS_SendNCCalcSize( HWND32 hwnd, BOOL32 calcValidRect,
     }
     result = SendMessage32A( hwnd, WM_NCCALCSIZE, calcValidRect,
                              (LPARAM)&params );
-    dprintf_info(win, "WINPOS_SendNCCalcSize: %d,%d-%d,%d\n",
+    TRACE(win, "%d,%d-%d,%d\n",
                  params.rgrc[0].left, params.rgrc[0].top,
                  params.rgrc[0].right, params.rgrc[0].bottom );
     *newClientRect = params.rgrc[0];
@@ -1815,16 +1815,16 @@ static UINT32 WINPOS_SizeMoveClean( WND* Wnd, HRGN32 oldVisRgn,
  HRGN32 dirtyRgn = CreateRectRgn32(0,0,0,0);
  int  other, my;
 
- dprintf_info(win,"cleaning up...new wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i)\n\
-\t\tnew client=(%i %i-%i %i) old client=(%i %i-%i %i)\n",
-             Wnd->rectWindow.left, Wnd->rectWindow.top,
-             Wnd->rectWindow.right, Wnd->rectWindow.bottom,
-             lpOldWndRect->left, lpOldWndRect->top,
-             lpOldWndRect->right, lpOldWndRect->bottom,
-             Wnd->rectClient.left, Wnd->rectClient.top,
-             Wnd->rectClient.right, Wnd->rectClient.bottom,
-             lpOldClientRect->left, lpOldClientRect->top,
-             lpOldClientRect->right,lpOldClientRect->bottom );
+ TRACE(win,"cleaning up...new wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i)\n",
+	      Wnd->rectWindow.left, Wnd->rectWindow.top,
+	      Wnd->rectWindow.right, Wnd->rectWindow.bottom,
+	      lpOldWndRect->left, lpOldWndRect->top,
+	      lpOldWndRect->right, lpOldWndRect->bottom);
+ TRACE(win,"\tnew client=(%i %i-%i %i) old client=(%i %i-%i %i)\n",
+	      Wnd->rectClient.left, Wnd->rectClient.top,
+	      Wnd->rectClient.right, Wnd->rectClient.bottom,
+	      lpOldClientRect->left, lpOldClientRect->top,
+	      lpOldClientRect->right,lpOldClientRect->bottom );
 
  if( (lpOldWndRect->right - lpOldWndRect->left) != (Wnd->rectWindow.right - Wnd->rectWindow.left) ||
      (lpOldWndRect->bottom - lpOldWndRect->top) != (Wnd->rectWindow.bottom - Wnd->rectWindow.top) )
@@ -2055,7 +2055,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     int 	result = 0;
     UINT32 	uFlags = 0;
 
-    dprintf_info(win,"SetWindowPos: hwnd %04x, (%i,%i)-(%i,%i) flags %08x\n", 
+    TRACE(win,"hwnd %04x, (%i,%i)-(%i,%i) flags %08x\n", 
 						 hwnd, x, y, x+cx, y+cy, flags);  
       /* Check window handle */
 
@@ -2190,16 +2190,14 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
          /* FIXME: WVR_ALIGNxxx */
 
-         if( !(winpos.flags & SWP_NOMOVE) &&
-	     (newClientRect.left != wndPtr->rectClient.left ||
-	      newClientRect.top != wndPtr->rectClient.top) )
+         if( newClientRect.left != wndPtr->rectClient.left ||
+             newClientRect.top != wndPtr->rectClient.top )
              winpos.flags &= ~SWP_NOCLIENTMOVE;
 
-         if( !(winpos.flags & SWP_NOSIZE) &&
-	     ((newClientRect.right - newClientRect.left !=
-	       wndPtr->rectClient.right - wndPtr->rectClient.left) ||
-	      (newClientRect.bottom - newClientRect.top !=
-	       wndPtr->rectClient.bottom - wndPtr->rectClient.top)) )
+         if( (newClientRect.right - newClientRect.left !=
+              wndPtr->rectClient.right - wndPtr->rectClient.left) ||
+	     (newClientRect.bottom - newClientRect.top !=
+	      wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
 	     winpos.flags &= ~SWP_NOCLIENTSIZE;
     }
     else
@@ -2398,7 +2396,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
-    dprintf_info(win,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
+    TRACE(win,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
 
     if ( ((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
 	 !(winpos.flags & SWP_NOSENDCHANGING))

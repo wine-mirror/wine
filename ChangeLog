@@ -1,5 +1,135 @@
 ----------------------------------------------------------------------
-Sun Feb 29 10:45:23 1997  Andreas Mohr <100.30936@germany.net>
+Sun Mar 15 03:46:50 1998  Dimitrie O. Paun  <dimi@mail.cs.toronto.edu>
+
+	* [*/*]
+	Fixed some dprintf_ such that there is one and only one
+	new line for each dprintf and that new line occurs at the end.
+	Transformed some fprintfs into proper debug statements.
+	Removed much redundancy from most of the debug statements. The
+	redundancy appeared because now the component and function
+	name is output automatically. Most debug statements also used to
+	output the name of the function.
+	All these changes prepared the source to switch completely to
+	the new debugging interface.
+	For more info, refer to ./documentation/debug-msg
+
+Sat Mar 14 19:45:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [misc/shell.c] [if1632/kernel.spec]
+	Changed parameters of FUNC004() to fix a crash.
+	Not sure if this fix is correct (doc wanted).
+
+	* [windows/user.c] [if1632/user.spec] [include/user.h]
+	Implemented UserSeeUserDo.
+
+	* [msdos/int21.c] [include/msdos.h]
+	Added "GET LIST OF LISTS" (INT 21/52h).
+
+Sat Mar 14 15:48:02 1998  Douglas Ridgway <ridgway@gmcl.com>
+
+	* [include/windows.h] [relay32/gdi32.spec] [objects/enhmetafile.c]
+	Beginnings of enhanced metafile support.
+
+Fri Mar 13 20:53:09 1998  John Richardson <jrichard@zko.dec.com>
+
+	* [win32/console.c]
+	Restart interrupted console writes.
+
+Fri Mar 13 18:59:24 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [*/*.c]
+	Updated documentation for API manpages.
+
+	* [windows/dce.c]
+	ReleaseDC16: Fixed cast.
+
+	* [include/windows.h] [memory/virtual.c]
+	VirtualQuery{Ex} should return DWORD instead of BOOL32.
+
+Fri Mar 13 13:03:06 1998  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [README][documentation/status/]
+	README updated, added lzexpand,version and multimedia
+	status notes to new documentation/status directory.
+
+	* [ole/*.c][if1632/typelib.spec]
+	Added typelib stubs, several small additions and fixes.
+
+	* [loader/pe_image.c]
+	Fixed a small bug (fixup_imports got passed the wrong hModule in a
+	remapcase).
+
+	* [loader/signal.c][if1632/signal.c][misc/winsock_dns.c]
+	  [loader/module.c]
+	Fixed some recursive debugger crashes (caused by invalid FS).
+
+	* [misc/registry.c]
+	Two bugs fixed.
+
+Fri Mar 13 04:55:01 1998  David Lee Lambert <lamber45@egr.msu.edu>
+
+	* [include/winnt.h] [include/winnls.h]
+	Moved LANG_xxx flags to winnls.h
+
+	* [include/winnls.h]
+	Added flags for GetDateFormat(); fixed validity of
+	LOCALE_SYSTEM_DEFAULT.
+
+	* [include/windows.h] 
+	Added GetTimeFormat() prototypes.
+
+	* [ole/ole2nls.c]
+	Implemented ASCII date- and time-functions,  using an
+	optimized common core;  added stubs for Unicode versions;  
+	started work on a Unicode core.
+
+	* [AUTHORS]
+	Added my name.
+
+Mon Mar  9 20:10:15 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [relay32/comctl32.spec] [include/imagelist.h]
+	  [include/commctrl.h] [misc/imagelist.c] [misc/Makefile.in]
+	First attempt at implementing ImageLists.
+
+Sun Mar  8 20:19:49 1998  Uwe Bonnes  <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [files/dos_fs.c] [configure.in]
+	Try to get FileTimeToLocalFileTime,FileTimeToSystemTime and
+	SystemTimeToFileTime right.
+	Use timegm() where available.
+
+	* [misc/lstr.c]
+	Fix an off by one error in FormatMessage and handle the case 
+	when args = NULL (used by programs to get the length of the 
+	string).
+
+	* [win32/console.c]
+	Actual display a per-process Title string, better working
+	attempt for WriteConsole32W and ReadConsole32W.
+
+Fri Mar  6 20:33:45 1998  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [include/config.h.in][configure.in][multimedia/audio.c]
+	  [multimedia/dsound.c]
+	Added check for FreeBSD sound system.
+
+Sun Mar  1 17:40:10 1998  Jason Schonberg <schon@mti.sgi.com>
+
+	* [controls/edit.c] [include/ole.h] [include/shlobj.h]
+	Removed final commas in enum types.
+
+Mon Feb 23 07:52:18 1998  Luiz Otavio L. Zorzella  <zorzella@nr.conexware.com>
+
+	* [multimedia/time.c]
+	Workaround to avoid infinite recursion inside timeGetTime.
+
+	* [multimedia/audio.c]
+	WODM_GETNUMDEVS and WIDM_GETNUMDEVS only return 1 now if the
+	SOUND_DEV can be opened, or if it's busy.
+
+----------------------------------------------------------------------
+Sun Mar  1 10:45:23 1998  Andreas Mohr <100.30936@germany.net>
 
 	* [loader/ne_image.c]
 	Fixed problem with weird DLLs (NE_FFLAGS_SINGLEDATA && DGROUP = 0).

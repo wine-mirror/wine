@@ -169,7 +169,7 @@ static void GetDrivePB( CONTEXT *context, int drive )
         }
         else if (heap || INT21_CreateHeap())
         {
-                dprintf_fixme(int, "int21: GetDrivePB not fully implemented.\n");
+                FIXME(int21, "GetDrivePB not fully implemented.\n");
 
                 /* FIXME: I have no idea what a lot of this information should
                  * say or whether it even really matters since we're not allowing
@@ -206,7 +206,7 @@ static void GetDrivePB( CONTEXT *context, int drive )
 static void ioctlGetDeviceInfo( CONTEXT *context )
 {
     int curr_drive;
-    dprintf_info(int, "int21: ioctl (%d, GetDeviceInfo)\n", BX_reg(context));
+    TRACE(int21, "(%d)\n", BX_reg(context));
     
     curr_drive = DRIVE_GetCurrentDrive();
     DX_reg(context) = 0x0140 + curr_drive + ((curr_drive > 1) ? 0x0800 : 0); /* no floppy */
@@ -238,7 +238,7 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 	switch (CL_reg(context)) 
 	{
 		case 0x4a: /* lock logical volume */
-			dprintf_info(int,"int21: lock logical volume (%d) level %d mode %d\n",drive,BH_reg(context),DX_reg(context));
+			TRACE(int21,"lock logical volume (%d) level %d mode %d\n",drive,BH_reg(context),DX_reg(context));
 			break;
 
 		case 0x60: /* get device parameters */
@@ -279,7 +279,7 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 			break;
 
 		case 0x6a:
-			dprintf_info(int,"int21: logical volume %d unlocked.\n",drive);
+			TRACE(int21,"logical volume %d unlocked.\n",drive);
 			break;
 
 		default:
@@ -336,9 +336,8 @@ static void OpenExistingFile( CONTEXT *context )
 	    break;
 
 	  case 0x30:    /* DENYREAD */
-	    dprintf_info(int,
-	      "OpenExistingFile (%s): DENYREAD changed to DENYALL\n",
-	      (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)));
+	    TRACE(int21, "(%s): DENYREAD changed to DENYALL\n",
+			 (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)));
 	  case 0x10:    /* DENYALL */  
 	    lock = LOCK_EX;
 	    break;
@@ -424,7 +423,7 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
 	  CloseFile(context);
 	  AX_reg(context) = 0x0050;	/*File exists*/
 	  SET_CFLAG(context);
-	  dprintf_warn(int, "int21: extended open/create: failed because file exists \n");
+	  WARN(int21, "extended open/create: failed because file exists \n");
       }
       else if ((action & 0x07) == 2) 
       {
@@ -433,7 +432,7 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
 	{
 		  BX_reg(context) = AX_reg(context);
 		  CloseFile(context);
-		  dprintf_warn(int, "int21: extended open/create: failed, trunc on ro file\n");
+		  WARN(int21, "extended open/create: failed, trunc on ro file\n");
 		  AX_reg(context) = 0x000C;	/*Access code invalid*/
 		  SET_CFLAG(context);
 	}
@@ -442,19 +441,19 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
 		/* Shuffle arguments to call CloseFile while
 		 * preserving BX and DX */
 
-		dprintf_info(int, "int21: extended open/create: Closing before truncate\n");
+		TRACE(int21, "extended open/create: Closing before truncate\n");
 		BX_reg(context) = AX_reg(context);
 		CloseFile(context);
 		if (EFL_reg(context) & 0x0001) 
 		{
-		   dprintf_warn(int, "int21: extended open/create: close before trunc failed\n");
+		   WARN(int21, "extended open/create: close before trunc failed\n");
 		   AX_reg(context) = 0x0019;	/*Seek Error*/
 		   CX_reg(context) = 0;
 		   SET_CFLAG(context);
 		}
 		/* Shuffle arguments to call CreateFile */
 
-		dprintf_info(int, "int21: extended open/create: Truncating\n");
+		TRACE(int21, "extended open/create: Truncating\n");
 		AL_reg(context) = BL_reg(context);
 		/* CX is still the same */
 		DX_reg(context) = SI_reg(context);
@@ -462,7 +461,7 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
 
 		if (EFL_reg(context) & 0x0001) 	/*no file open, flags set */
 		{
-		    dprintf_warn(int, "int21: extended open/create: trunc failed\n");
+		    WARN(int21, "extended open/create: trunc failed\n");
 		    return bExtendedError;
 		}
 		uReturnCX = 0x3;
@@ -479,19 +478,19 @@ static BOOL32 INT21_ExtendedOpenCreateFile(CONTEXT *context )
       {
 	CX_reg(context) = 0;
 	SET_CFLAG(context);
-	dprintf_warn(int, "int21: extended open/create: failed, file dosen't exist\n");
+	WARN(int21, "extended open/create: failed, file dosen't exist\n");
       }
       else
       {
         /* Shuffle arguments to call CreateFile */
-        dprintf_info(int, "int21: extended open/create: Creating\n");
+        TRACE(int21, "extended open/create: Creating\n");
         AL_reg(context) = BL_reg(context);
         /* CX should still be the same */
         DX_reg(context) = SI_reg(context);
         bExtendedError = INT21_CreateFile(context);
         if (EFL_reg(context) & 0x0001)  /*no file open, flags set */
 	{
-  	    dprintf_warn(int, "int21: extended open/create: create failed\n");
+  	    WARN(int21, "extended open/create: create failed\n");
 	    return bExtendedError;
         }
         CX_reg(context) = 2;
@@ -507,7 +506,7 @@ static BOOL32 INT21_ChangeDir( CONTEXT *context )
     int drive;
     char *dirname = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
 
-    dprintf_info(int,"int21: changedir %s\n", dirname);
+    TRACE(int21,"changedir %s\n", dirname);
     if (dirname[0] && (dirname[1] == ':'))
     {
         drive = toupper(dirname[0]) - 'A';
@@ -605,7 +604,7 @@ static BOOL32 INT21_CreateTempFile( CONTEXT *context )
 
         if ((AX_reg(context) = _lcreat_uniq( name, 0 )) != (WORD)HFILE_ERROR16)
         {
-            dprintf_info(int, "INT21_CreateTempFile: created %s\n", name );
+            TRACE(int21, "created %s\n", name );
             return TRUE;
         }
         if (DOS_ExtendedError != ER_FileExists) return FALSE;
@@ -800,6 +799,63 @@ static void fLock( CONTEXT * context )
      }
 } 
 
+SEGPTR INT21_GetListOfLists()
+{
+	static DOS_LISTOFLISTS *LOL;
+	static SEGPTR seg_LOL;
+
+/*
+Output of DOS 6.22:
+
+0133:0020                    6A 13-33 01 CC 00 33 01 59 00         j.3...3.Y.
+0133:0030  70 00 00 00 72 02 00 02-6D 00 33 01 00 00 2E 05   p...r...m.3.....
+0133:0040  00 00 FC 04 00 00 03 08-92 21 11 E0 04 80 C6 0D   .........!......
+0133:0050  CC 0D 4E 55 4C 20 20 20-20 20 00 00 00 00 00 00   ..NUL     ......
+0133:0060  00 4B BA C1 06 14 00 00-00 03 01 00 04 70 CE FF   .K...........p..
+0133:0070  FF 00 00 00 00 00 00 00-00 01 00 00 0D 05 00 00   ................
+0133:0080  00 FF FF 00 00 00 00 FE-00 00 F8 03 FF 9F 70 02   ..............p.
+0133:0090  D0 44 C8 FD D4 44 C8 FD-D4 44 C8 FD D0 44 C8 FD   .D...D...D...D..
+0133:00A0  D0 44 C8 FD D0 44                                 .D...D
+*/
+	if (!LOL) {
+		LOL = SEGPTR_ALLOC(sizeof(DOS_LISTOFLISTS));
+
+		LOL->CX_Int21_5e01		= 0x0;
+		LOL->LRU_count_FCB_cache	= 0x0;
+		LOL->LRU_count_FCB_open		= 0x0;
+		LOL->OEM_func_handler		= -1; /* not available */
+		LOL->INT21_offset		= 0x0;
+		LOL->sharing_retry_count	= sharing_retries; /* default value: 3 */
+		LOL->sharing_retry_delay	= sharing_pause; /* default value: 1 */
+		LOL->ptr_disk_buf		= 0x0;
+		LOL->offs_unread_CON		= 0x0;
+		LOL->seg_first_MCB		= 0x0;
+		LOL->ptr_first_DPB		= 0x0;
+		LOL->ptr_first_SysFileTable	= 0x0;
+		LOL->ptr_clock_dev_hdr		= 0x0;
+		LOL->ptr_CON_dev_hdr		= 0x0;
+		LOL->max_byte_per_sec		= 512;
+		LOL->ptr_disk_buf_info		= 0x0;
+		LOL->ptr_array_CDS		= 0x0;
+		LOL->ptr_sys_FCB		= 0x0;
+		LOL->nr_protect_FCB		= 0x0;
+		LOL->nr_block_dev		= 0x0;
+		LOL->nr_avail_drive_letters	= 26; /* A - Z */
+		LOL->nr_drives_JOINed		= 0x0;
+		LOL->ptr_spec_prg_names		= 0x0;
+		LOL->ptr_SETVER_prg_list	= 0x0; /* no SETVER list */
+		LOL->DOS_HIGH_A20_func_offs	= 0x0;
+		LOL->PSP_last_exec		= 0x0;
+		LOL->BUFFERS_val		= 99; /* maximum: 99 */
+		LOL->BUFFERS_nr_lookahead	= 8; /* maximum: 8 */
+		LOL->boot_drive			= 3; /* C: */
+		LOL->flag_DWORD_moves		= 0x01; /* i386+ */
+		LOL->size_extended_mem		= 0xf000; /* very high value */
+	}	
+	if (!seg_LOL) seg_LOL = SEGPTR_GET(LOL);
+	return seg_LOL+(WORD)&((DOS_LISTOFLISTS*)0)->ptr_first_DPB;
+}
+
 
 extern void LOCAL_PrintHeap (WORD ds);
 
@@ -810,7 +866,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 {
     BOOL32	bSetDOSExtendedError = FALSE;
 
-    dprintf_info(int, "int21: AX=%04x BX=%04x CX=%04x DX=%04x "
+    TRACE(int21, "AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
                  AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), SI_reg(context), DI_reg(context),
@@ -919,7 +975,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         {
             TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
             pTask->dta = PTR_SEG_OFF_TO_SEGPTR(DS_reg(context),DX_reg(context));
-            dprintf_info(int, "int21: Set DTA: %08lx\n", pTask->dta);
+            TRACE(int21, "Set DTA: %08lx\n", pTask->dta);
         }
         break;
 
@@ -1143,7 +1199,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 	    int	i;
 	    int	drive = DOS_GET_DRIVE(BL_reg(context));
 
-	    fprintf(stdnimp,"int21: program tried to write to block device control channel of drive %d:\n",drive);
+	    fprintf(stdnimp,"program tried to write to block device control channel of drive %d:\n",drive);
 	    for (i=0;i<CX_reg(context);i++)
 	    	fprintf(stdnimp,"%02x ",dataptr[i]);
 	    fprintf(stdnimp,"\n");
@@ -1285,9 +1341,12 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-        ES_reg(context) = 0x0;
-        BX_reg(context) = 0x0;
-        INT_BARF( context, 0x21 );
+        {
+                SEGPTR lol;
+                lol = INT21_GetListOfLists();
+                ES_reg(context) = HIWORD(lol);
+                BX_reg(context) = LOWORD(lol);
+        }
         break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
@@ -1583,9 +1642,9 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
     case 0x72: /* MS-DOS 7 (Windows95) - ??? */
     case 0x73: /* MS-DOS 7 (Windows95) - DRIVE LOCKING ??? */
-        dprintf_info(int,"int21: windows95 function AX %04x\n",
+        TRACE(int21,"windows95 function AX %04x\n",
                     AX_reg(context));
-        dprintf_warn(int, "        returning unimplemented\n");
+        WARN(int21, "        returning unimplemented\n");
         SET_CFLAG(context);
         AL_reg(context) = 0;
         break;
@@ -1606,7 +1665,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 	SET_CFLAG(context);
     }
 
-    dprintf_info(int, "ret21: AX=%04x BX=%04x CX=%04x DX=%04x "
+    TRACE(int21, "returning: AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
                  AX_reg(context), BX_reg(context), CX_reg(context),
                  DX_reg(context), SI_reg(context), DI_reg(context),

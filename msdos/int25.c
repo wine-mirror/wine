@@ -42,7 +42,7 @@ void WINAPI INT_Int25Handler( CONTEXT *context )
         begin  = DX_reg(context);
         length = CX_reg(context);
     }
-    dprintf_info(int, "int25: abs diskread, drive %d, sector %ld, "
+    TRACE(int, "int25: abs diskread, drive %d, sector %ld, "
                  "count %ld, buffer %d\n",
                  AL_reg(context), begin, length, (int) dataptr);
 

@@ -9,12 +9,14 @@ C_SRCS = \
 	compobj.c \
 	ifs.c \
 	folders.c \
+	moniker.c \
 	ole2.c \
 	ole2disp.c \
 	ole2nls.c \
 	olecli.c \
 	olesvr.c \
-	storage.c
+	storage.c \
+	typelib.c
 
 all: $(MODULE).o
 

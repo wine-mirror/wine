@@ -49,7 +49,7 @@ typedef enum
 	END_0 = 0,	/* line ends with terminating '\0' character */
 	END_WRAP,	/* line is wrapped */
 	END_HARD,	/* line ends with a hard return '\r\n' */
-	END_SOFT,	/* line ends with a soft return '\r\r\n' */
+	END_SOFT	/* line ends with a soft return '\r\r\n' */
 } LINE_END;
 
 typedef struct tagLINEDEF {
@@ -109,9 +109,8 @@ typedef struct
 #define ORDER_UINT32(x,y) do { if ((UINT32)(y) < (UINT32)(x)) SWAP_UINT32((x),(y)); } while(0)
 
 #define DPRINTF_EDIT_NOTIFY(hwnd, str) \
-	({dprintf_info(edit, \
-			"edit: notification " str " sent to hwnd=%08x\n", \
-			(UINT32)(hwnd));})
+	({TRACE(edit, "notification " str " sent to hwnd=%08x\n", \
+		       (UINT32)(hwnd));})
 
 #define EDIT_SEND_CTLCOLOR(wnd,hdc) \
 	(SendMessage32A((wnd)->parent->hwndSelf, WM_CTLCOLOREDIT, \
@@ -122,14 +121,13 @@ typedef struct
 			MAKEWPARAM((wnd)->wIDmenu, wNotifyCode), \
 			(LPARAM)(wnd)->hwndSelf))
 #define DPRINTF_EDIT_MSG16(str) \
-	dprintf_info(edit, \
-			"edit: 16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
-			(UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
+	TRACE(edit, \
+		     "16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
+		     (UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
 #define DPRINTF_EDIT_MSG32(str) \
-	dprintf_info(edit, \
-			"edit: 32 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
-			(UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
-
+	TRACE(edit, \
+		     "32 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
+		     (UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
 
 /*********************************************************************
  *
@@ -986,7 +984,7 @@ static INT32 EDIT_CallWordBreakProc(WND *wnd, EDITSTATE *es, INT32 start, INT32 
 	}
         else if (es->word_break_proc32A)
         {
-            dprintf_info(relay, "CallTo32(wordbrk=%p,str='%s',idx=%d,cnt=%d,act=%d)\n",
+            TRACE(relay, "(wordbrk=%p,str='%s',idx=%d,cnt=%d,act=%d)\n",
                            es->word_break_proc32A, es->text + start, index,
                            count, action );
             return (INT32)es->word_break_proc32A( es->text + start, index,
@@ -1168,7 +1166,7 @@ static LPSTR EDIT_GetPasswordPointer_SL(WND *wnd, EDITSTATE *es)
 static void EDIT_LockBuffer(WND *wnd, EDITSTATE *es)
 {
 	if (!es) {
-		fprintf(stderr, "edit: LockBuffer() without an EDITSTATE ... please report\n");
+		ERR(edit, "no EDITSTATE ... please report\n");
 		return;
 	}
 	if (!(es->style & ES_MULTILINE))
@@ -1179,7 +1177,7 @@ static void EDIT_LockBuffer(WND *wnd, EDITSTATE *es)
 		else if (es->hloc16)
 			es->text = LOCAL_Lock(wnd->hInstance, es->hloc16);
 		else {
-			fprintf(stderr, "edit: LockBuffer() without a buffer ... please report\n");
+			ERR(edit, "no buffer ... please report\n");
 			return;
 		}
 	}
@@ -1318,7 +1316,7 @@ static BOOL32 EDIT_MakeFit(WND *wnd, EDITSTATE *es, INT32 size)
 	if (size > es->buffer_limit)
 		size = es->buffer_limit;
 
-	dprintf_info(edit, "edit: EDIT_MakeFit: trying to ReAlloc to %d+1\n", size);
+	TRACE(edit, "trying to ReAlloc to %d+1\n", size);
 
 	EDIT_UnlockBuffer(wnd, es, TRUE);
 	if (es->text) {
@@ -1328,25 +1326,25 @@ static BOOL32 EDIT_MakeFit(WND *wnd, EDITSTATE *es, INT32 size)
 			es->buffer_size = 0;
 	} else if (es->hloc32) {
 		if ((hNew32 = LocalReAlloc32(es->hloc32, size + 1, 0))) {
-			dprintf_info(edit, "edit: EDIT_MakeFit: Old 32 bit handle %08x, new handle %08x\n", es->hloc32, hNew32);
+			TRACE(edit, "Old 32 bit handle %08x, new handle %08x\n", es->hloc32, hNew32);
 			es->hloc32 = hNew32;
 			es->buffer_size = MIN(LocalSize32(es->hloc32) - 1, es->buffer_limit);
 		}
 	} else if (es->hloc16) {
 		if ((hNew16 = LOCAL_ReAlloc(wnd->hInstance, es->hloc16, size + 1, LMEM_MOVEABLE))) {
-			dprintf_info(edit, "edit: EDIT_MakeFit: Old 16 bit handle %08x, new handle %08x\n", es->hloc16, hNew16);
+			TRACE(edit, "Old 16 bit handle %08x, new handle %08x\n", es->hloc16, hNew16);
 			es->hloc16 = hNew16;
 			es->buffer_size = MIN(LOCAL_Size(wnd->hInstance, es->hloc16) - 1, es->buffer_limit);
 		}
 	}
 	if (es->buffer_size < size) {
 		EDIT_LockBuffer(wnd, es);
-		dprintf_warn(edit, "edit: EDIT_MakeFit: FAILED !  We now have %d+1\n", es->buffer_size);
+		WARN(edit, "FAILED !  We now have %d+1\n", es->buffer_size);
 		EDIT_NOTIFY_PARENT(wnd, EN_ERRSPACE, "EN_ERRSPACE");
 		return FALSE;
 	} else {
 		EDIT_LockBuffer(wnd, es);
-		dprintf_info(edit, "edit: EDIT_MakeFit: We now have %d+1\n", es->buffer_size);
+		TRACE(edit, "We now have %d+1\n", es->buffer_size);
 		return TRUE;
 	}
 }
@@ -1365,12 +1363,12 @@ static BOOL32 EDIT_MakeUndoFit(WND *wnd, EDITSTATE *es, INT32 size)
 		return TRUE;
 	size = ((size / GROWLENGTH) + 1) * GROWLENGTH;
 
-	dprintf_info(edit, "edit: EDIT_MakeUndoFit: trying to ReAlloc to %d+1\n", size);
+	TRACE(edit, "trying to ReAlloc to %d+1\n", size);
 
 	if ((es->undo_text = HeapReAlloc(es->heap, 0, es->undo_text, size + 1))) {
 		es->undo_buffer_size = HeapSize(es->heap, 0, es->undo_text) - 1;
 		if (es->undo_buffer_size < size) {
-			dprintf_warn(edit, "edit: EDIT_MakeUndoFit: FAILED !  We now have %d+1\n", es->undo_buffer_size);
+			WARN(edit, "FAILED !  We now have %d+1\n", es->undo_buffer_size);
 			return FALSE;
 		}
 		return TRUE;
@@ -1658,7 +1656,7 @@ static void EDIT_PaintLine(WND *wnd, EDITSTATE *es, HDC32 dc, INT32 line, BOOL32
 	} else if (line)
 		return;
 
-	dprintf_info(edit, "edit: EDIT_PaintLine: line=%d\n", line);
+	TRACE(edit, "line=%d\n", line);
 
 	pos = EDIT_EM_PosFromChar(wnd, es, EDIT_EM_LineIndex(wnd, es, line), FALSE);
 	x = SLOWORD(pos);
@@ -1826,17 +1824,17 @@ static void EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT32 rc)
 static void EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL32 force)
 {
 	if (!es) {
-		fprintf(stderr, "edit: UnlockBuffer() without an EDITSTATE ... please report\n");
+		ERR(edit, "no EDITSTATE ... please report\n");
 		return;
 	}
 	if (!(es->style & ES_MULTILINE))
 		return;
 	if (!es->lock_count) {
-		fprintf(stderr, "edit: UnlockBuffer() with lock_count == 0 ... please report\n");
+		ERR(edit, "lock_count == 0 ... please report\n");
 		return;
 	}
 	if (!es->text) {
-		fprintf(stderr, "edit: UnlockBuffer() with es->text == 0 ... please report\n");
+		ERR(edit, "es->text == 0 ... please report\n");
 		return;
 	}
 	if (force || (es->lock_count == 1)) {
@@ -1867,8 +1865,8 @@ static INT32 EDIT_WordBreakProc(LPSTR s, INT32 index, INT32 count, INT32 action)
 {
 	INT32 ret = 0;
 
-	dprintf_info(edit, "edit: EDIT_WordBreakProc: s=%p, index=%u"
-			", count=%u, action=%d\n", s, index, count, action);
+	TRACE(edit, "s=%p, index=%u, count=%u, action=%d\n", 
+		     s, index, count, action);
 
 	switch (action) {
 	case WB_LEFT:
@@ -1911,7 +1909,7 @@ static INT32 EDIT_WordBreakProc(LPSTR s, INT32 index, INT32 count, INT32 action)
 		ret = (s[index] == ' ');
 		break;
 	default:
-		fprintf(stderr, "edit: EDIT_WordBreakProc: unknown action code, please report !\n");
+		ERR(edit, "unknown action code, please report !\n");
 		break;
 	}
 	return ret;
@@ -1953,7 +1951,7 @@ static LRESULT EDIT_EM_CharFromPos(WND *wnd, EDITSTATE *es, INT32 x, INT32 y)
  */
 static BOOL32 EDIT_EM_FmtLines(WND *wnd, EDITSTATE *es, BOOL32 add_eol)
 {
-	fprintf(stdnimp, "edit: EM_FMTLINES: message not implemented\n");
+	FIXME(edit, "message not implemented\n");
 	return add_eol;
 }
 
@@ -1989,12 +1987,12 @@ static HLOCAL32 EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es)
 		return (HLOCAL32)es->hloc16;
 
 	if (!(newBuf = LocalAlloc32(LMEM_MOVEABLE, lstrlen32A(es->text) + 1))) {
-		fprintf(stderr, "edit: EM_GETHANDLE: could not allocate new 32 bit buffer\n");
+		ERR(edit, "could not allocate new 32 bit buffer\n");
 		return 0;
 	}
 	newSize = MIN(LocalSize32(newBuf) - 1, es->buffer_limit);
 	if (!(newText = LocalLock32(newBuf))) {
-		fprintf(stderr, "edit: EM_GETHANDLE: could not lock new 32 bit buffer\n");
+		ERR(edit, "could not lock new 32 bit buffer\n");
 		LocalFree32(newBuf);
 		return 0;
 	}
@@ -2007,7 +2005,7 @@ static HLOCAL32 EDIT_EM_GetHandle(WND *wnd, EDITSTATE *es)
 	es->buffer_size = newSize;
 	es->text = newText;
 	EDIT_LockBuffer(wnd, es);
-	dprintf_info(edit, "edit: EM_GETHANDLE: switched to 32 bit local heap\n");
+	TRACE(edit, "switched to 32 bit local heap\n");
 
 	return es->hloc32;
 }
@@ -2043,18 +2041,18 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 	if (!LOCAL_HeapSize(wnd->hInstance)) {
 		if (!LocalInit(wnd->hInstance, 0,
 				GlobalSize16(wnd->hInstance))) {
-			fprintf(stderr, "edit: EM_GETHANDLE: could not initialize local heap\n");
+			ERR(edit, "could not initialize local heap\n");
 			return 0;
 		}
-		dprintf_info(edit, "edit: EM_GETHANDLE: local heap initialized\n");
+		TRACE(edit, "local heap initialized\n");
 	}
 	if (!(newBuf = LOCAL_Alloc(wnd->hInstance, LMEM_MOVEABLE, lstrlen32A(es->text) + 1))) {
-		fprintf(stderr, "edit: EM_GETHANDLE: could not allocate new 16 bit buffer\n");
+		ERR(edit, "could not allocate new 16 bit buffer\n");
 		return 0;
 	}
 	newSize = MIN(LOCAL_Size(wnd->hInstance, newBuf) - 1, es->buffer_limit);
 	if (!(newText = LOCAL_Lock(wnd->hInstance, newBuf))) {
-		fprintf(stderr, "edit: EM_GETHANDLE: could not lock new 16 bit buffer\n");
+		ERR(edit, "could not lock new 16 bit buffer\n");
 		LOCAL_Free(wnd->hInstance, newBuf);
 		return 0;
 	}
@@ -2071,7 +2069,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(WND *wnd, EDITSTATE *es)
 	es->buffer_size = newSize;
 	es->text = newText;
 	EDIT_LockBuffer(wnd, es);
-	dprintf_info(edit, "edit: EM_GETHANDLE: switched to 16 bit buffer\n");
+	TRACE(edit, "switched to 16 bit buffer\n");
 
 	return es->hloc16;
 }
@@ -2504,7 +2502,7 @@ static void EDIT_EM_SetHandle(WND *wnd, EDITSTATE *es, HLOCAL32 hloc)
 		return;
 
 	if (!hloc) {
-		fprintf(stderr, "edit: EM_SETHANDLE called with NULL handle\n");
+		WARN(edit, "called with NULL handle\n");
 		return;
 	}
 
@@ -2547,7 +2545,7 @@ static void EDIT_EM_SetHandle16(WND *wnd, EDITSTATE *es, HLOCAL16 hloc)
 		return;
 
 	if (!hloc) {
-		fprintf(stderr, "edit: EM_SETHANDLE called with NULL handle\n");
+		WARN(edit, "called with NULL handle\n");
 		return;
 	}
 
@@ -2623,7 +2621,7 @@ static void EDIT_EM_SetMargins(WND *wnd, EDITSTATE *es, INT32 action, INT32 left
 		if (action & EC_RIGHTMARGIN)
 			es->right_margin = right;
 	}
-	dprintf_info(edit, "EDIT_EM_SetMargins: left=%d, right=%d\n", es->left_margin, es->right_margin);
+	TRACE(edit, "left=%d, right=%d\n", es->left_margin, es->right_margin);
 }
 
 
@@ -2809,8 +2807,8 @@ static BOOL32 EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 
 	lstrcpy32A(utext, es->undo_text);
 
-	dprintf_info(edit, "edit: before UNDO:insertion length = %d, deletion buffer = %s\n",
-			es->undo_insert_count, utext);
+	TRACE(edit, "before UNDO:insertion length = %d, deletion buffer = %s\n",
+		     es->undo_insert_count, utext);
 
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	EDIT_EM_EmptyUndoBuffer(wnd, es);
@@ -2818,7 +2816,7 @@ static BOOL32 EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	HeapFree(es->heap, 0, utext);
 
-	dprintf_info(edit, "edit: after UNDO: insertion length = %d, deletion buffer = %s\n",
+	TRACE(edit, "after UNDO:insertion length = %d, deletion buffer = %s\n",
 			es->undo_insert_count, es->undo_text);
 
 	return TRUE;
@@ -2890,7 +2888,7 @@ static void EDIT_WM_Command(WND *wnd, EDITSTATE *es, INT32 code, INT32 id, HWND3
 			EDIT_EM_ScrollCaret(wnd, es);
 			break;
 		default:
-			dprintf_err(edit, "edit: unknown menu item, please report\n");
+			ERR(edit, "unknown menu item, please report\n");
 			break;
 	}
 }
@@ -3135,9 +3133,9 @@ static LRESULT EDIT_HScroll_Hack(WND *wnd, EDITSTATE *es, INT32 action, INT32 po
 	LRESULT ret = 0;
 
 	if (!(es->flags & EF_HSCROLL_HACK)) {
-		fprintf(stderr, "edit: hacked WM_HSCROLL handler invoked\n");
-		fprintf(stderr, "      if you are _not_ running 16 bit notepad, please report\n");
-		fprintf(stderr, "      (this message is only displayed once per edit control)\n");
+		ERR(edit, "hacked WM_HSCROLL handler invoked\n");
+		ERR(edit, "      if you are _not_ running 16 bit notepad, please report\n");
+		ERR(edit, "      (this message is only displayed once per edit control)\n");
 		es->flags |= EF_HSCROLL_HACK;
 	}
 
@@ -3192,7 +3190,7 @@ static LRESULT EDIT_HScroll_Hack(WND *wnd, EDITSTATE *es, INT32 action, INT32 po
 		break;
 
 	default:
-		dprintf_err(edit, "edit: undocumented (hacked) WM_HSCROLL parameter, please report\n");
+		ERR(edit, "undocumented (hacked) WM_HSCROLL parameter, please report\n");
 		return 0;
 	}
 	if (dx)
@@ -3262,7 +3260,7 @@ static LRESULT EDIT_WM_HScroll(WND *wnd, EDITSTATE *es, INT32 action, INT32 pos,
 		break;
 
 	default:
-		fprintf(stderr, "edit: undocumented WM_HSCROLL parameter, please report\n");
+		ERR(edit, "undocumented WM_HSCROLL parameter, please report\n");
 		return 0;
 	}
 	if (dx)
@@ -3285,8 +3283,8 @@ static BOOL32 EDIT_CheckCombo(WND *wnd, UINT32 msg, INT32 key, DWORD key_data)
 		HWND32 hCombo = wnd->parent->hwndSelf;
 		BOOL32 bUIFlip = TRUE;
 
-		dprintf_info(combo, "EDIT_CheckCombo [%04x]: handling msg %04x (%04x)\n",
-					wnd->hwndSelf, (UINT16)msg, (UINT16)key);
+		TRACE(combo, "[%04x]: handling msg %04x (%04x)\n",
+			     wnd->hwndSelf, (UINT16)msg, (UINT16)key);
 
 		switch (msg) {
 		case WM_KEYDOWN: /* Handle F4 and arrow keys */
@@ -3718,7 +3716,7 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 {
 	EDIT_EM_SetSel(wnd, es, 0, -1, FALSE);
 	if (text) {
-		dprintf_info(edit, "\t'%s'\n", text);
+		TRACE(edit, "\t'%s'\n", text);
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, text);
 		es->x_offset = 0;
 	}
@@ -3796,9 +3794,9 @@ static LRESULT EDIT_VScroll_Hack(WND *wnd, EDITSTATE *es, INT32 action, INT32 po
 	LRESULT ret = 0;
 
 	if (!(es->flags & EF_VSCROLL_HACK)) {
-		fprintf(stderr, "edit: hacked WM_VSCROLL handler invoked\n");
-		fprintf(stderr, "      if you are _not_ running 16 bit notepad, please report\n");
-		fprintf(stderr, "      (this message is only displayed once per edit control)\n");
+		ERR(edit, "hacked WM_VSCROLL handler invoked\n");
+		ERR(edit, "      if you are _not_ running 16 bit notepad, please report\n");
+		ERR(edit, "      (this message is only displayed once per edit control)\n");
 		es->flags |= EF_VSCROLL_HACK;
 	}
 
@@ -3841,7 +3839,7 @@ static LRESULT EDIT_VScroll_Hack(WND *wnd, EDITSTATE *es, INT32 action, INT32 po
 		break;
 
 	default:
-		fprintf(stderr, "edit: undocumented (hacked) WM_VSCROLL parameter, please report\n");
+		ERR(edit, "undocumented (hacked) WM_VSCROLL parameter, please report\n");
 		return 0;
 	}
 	if (dy)
@@ -3898,7 +3896,7 @@ static LRESULT EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT32 action, INT32 pos,
 		break;
 
 	default:
-		fprintf(stderr, "edit: undocumented WM_VSCROLL parameter, please report\n");
+		ERR(edit, "undocumented WM_VSCROLL parameter, please report\n");
 		return 0;
 	}
 	if (dy)

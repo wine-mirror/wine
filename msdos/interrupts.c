@@ -35,7 +35,7 @@ FARPROC16 INT_GetHandler( BYTE intnum )
  */
 void INT_SetHandler( BYTE intnum, FARPROC16 handler )
 {
-    dprintf_info(int, "Set interrupt vector %02x <- %04x:%04x\n",
+    TRACE(int, "Set interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
     INT_Vectors[intnum] = handler;
 }

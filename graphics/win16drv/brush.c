@@ -25,7 +25,7 @@ HBRUSH32 WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
 
     if ( physDev->BrushInfo )
     {
-        dprintf_info(win16drv, "UnRealizing BrushInfo\n");
+        TRACE(win16drv, "UnRealizing BrushInfo\n");
         nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, -DRVOBJ_BRUSH,
 				      physDev->BrushInfo,
 				      physDev->BrushInfo, 0);

@@ -45,7 +45,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 	char *ptr = PTR_SEG_TO_LIN( name );
 	if (ptr[0] == '#')
 	    if (!(name = (SEGPTR)atoi( ptr + 1 ))) {
-	      dprintf_warn(resource, "Incorrect resource name: %s\n", ptr);
+	      WARN(resource, "Incorrect resource name: %s\n", ptr);
 	      return 0;
 	    }
     }
@@ -55,12 +55,12 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 	char *ptr = PTR_SEG_TO_LIN( type );
 	if (ptr[0] == '#')
 	  if (!(type = (SEGPTR)atoi( ptr + 1 ))){
-	    dprintf_warn(resource, "Incorrect resource type: %s\n", ptr);
+	    WARN(resource, "Incorrect resource type: %s\n", ptr);
 	    return 0;
 	  }
     }
 
-    dprintf_info(resource, "FindResource16: module=%04x name=%s type=%s\n", 
+    TRACE(resource, "module=%04x name=%s type=%s\n", 
 		 hModule, debugres(PTR_SEG_TO_LIN(name)), 
 		 debugres(PTR_SEG_TO_LIN(type)) );
 
@@ -125,7 +125,7 @@ HRSRC32 WINAPI FindResourceEx32W( HINSTANCE32 hModule, LPCWSTR name,
 
         if (!hModule) hModule = GetTaskDS();
         hModule = MODULE_HANDLEtoHMODULE32( hModule );
-        dprintf_info(resource, "FindResource32W: module=%08x "
+        TRACE(resource, "module=%08x "
 			 "type=%s%p name=%s%p\n", hModule,
 			 (HIWORD(type))? "" : "#", type, 
 			 (HIWORD(name))? "" : "#", name);
@@ -154,7 +154,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
     NE_MODULE *pModule;
 
     hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    dprintf_info(resource, "LoadResource16: module=%04x res=%04x\n",
+    TRACE(resource, "module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if ((pModule = MODULE_GetPtr( hModule )))
@@ -182,7 +182,7 @@ HGLOBAL32 WINAPI LoadResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 
         if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
         hModule = MODULE_HANDLEtoHMODULE32( hModule );
-        dprintf_info(resource, "LoadResource32: module=%04x res=%04x\n",
+        TRACE(resource, "module=%04x res=%04x\n",
                          hModule, hRsrc );
         if (!hRsrc) return 0;
 
@@ -207,7 +207,7 @@ SEGPTR WINAPI WIN16_LockResource16(HGLOBAL16 handle)
     HMODULE16 hModule;
     NE_MODULE *pModule;
 
-    dprintf_info(resource, "LockResource: handle=%04x\n", handle );
+    TRACE(resource, "handle=%04x\n", handle );
     if (!handle) return (SEGPTR)0;
     hModule = MODULE_HANDLEtoHMODULE16( handle );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
@@ -227,7 +227,7 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
         HMODULE16 hModule;
         NE_MODULE *pModule;
 
-        dprintf_info(resource, "LockResource: handle=%04x\n", handle );
+        TRACE(resource, "handle=%04x\n", handle );
         if (!handle) return NULL;
         hModule = MODULE_HANDLEtoHMODULE16( handle );
         if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
@@ -261,7 +261,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
         HMODULE16 hModule;
         NE_MODULE *pModule;
 
-        dprintf_info(resource, "FreeResource16: handle=%04x\n", handle );
+        TRACE(resource, "handle=%04x\n", handle );
         if (!handle) return FALSE;
         hModule = MODULE_HANDLEtoHMODULE16( handle );
         if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
@@ -293,7 +293,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
     NE_MODULE *pModule;
 
     hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    dprintf_info(resource, "AccessResource16: module=%04x res=%04x\n",
+    TRACE(resource, "module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
@@ -316,7 +316,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 INT32 WINAPI AccessResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
     hModule = MODULE_HANDLEtoHMODULE32( hModule );
-    dprintf_info(resource, "AccessResource: module=%04x res=%04x\n",
+    TRACE(resource, "module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     fprintf(stderr,"AccessResource32: not implemented\n");
@@ -332,7 +332,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
     NE_MODULE *pModule;
 
     hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    dprintf_info(resource, "SizeofResource16: module=%04x res=%04x\n",
+    TRACE(resource, "module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!__winelib)
@@ -354,7 +354,7 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
     hModule = MODULE_HANDLEtoHMODULE32( hModule );
-    dprintf_info(resource, "SizeofResource32: module=%04x res=%04x\n",
+    TRACE(resource, "module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!__winelib) return PE_SizeofResource32(hModule,hRsrc);
     else
@@ -373,7 +373,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     NE_MODULE *pModule;
 
     hModule = MODULE_HANDLEtoHMODULE16( hModule );
-    dprintf_info(resource, "AllocResource: module=%04x res=%04x size=%ld\n",
+    TRACE(resource, "module=%04x res=%04x size=%ld\n",
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
@@ -397,7 +397,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
 HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
                                  UINT16 wSize )
 {
-    dprintf_info(resource,"DirectResAlloc(%04x,%04x,%04x)\n",
+    TRACE(resource,"(%04x,%04x,%04x)\n",
                      hInstance, wType, wSize );
     hInstance = MODULE_HANDLEtoHMODULE16(hInstance);
     if(!hInstance)return 0;
@@ -416,10 +416,10 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
     HRSRC16	hRsrc;
 
     if (HIWORD(lpTableName))
-        dprintf_info(accel, "LoadAccelerators: %04x '%s'\n",
+        TRACE(accel, "%04x '%s'\n",
                       instance, (char *)PTR_SEG_TO_LIN( lpTableName ) );
     else
-        dprintf_info(accel, "LoadAccelerators: %04x %04x\n",
+        TRACE(accel, "%04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR )))
@@ -441,10 +441,10 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     HRSRC32 hRsrc;
 
     if (HIWORD(lpTableName))
-        dprintf_info(accel, "LoadAccelerators: %04x '%s'\n",
+        TRACE(accel, "%04x '%s'\n",
                       instance, (char *)( lpTableName ) );
     else
-        dprintf_info(accel, "LoadAccelerators: %04x %04x\n",
+        TRACE(accel, "%04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource32W( instance, lpTableName, 
@@ -505,7 +505,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     int string_num;
     int i;
 
-    dprintf_info(resource,"LoadString: inst=%04x id=%04x buff=%08x len=%d\n",
+    TRACE(resource,"inst=%04x id=%04x buff=%08x len=%d\n",
                      instance, resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource16( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING );
@@ -518,7 +518,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
-    dprintf_info(resource, "strlen = %d\n", (int)*p );
+    TRACE(resource, "strlen = %d\n", (int)*p );
     
     i = MIN(buflen - 1, *p);
     if (buffer == NULL)
@@ -536,7 +536,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     }
     FreeResource16( hmem );
 
-    dprintf_info(resource,"LoadString // '%s' copied !\n", buffer);
+    TRACE(resource,"'%s' copied !\n", buffer);
     return i;
 }
 
@@ -554,7 +554,7 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
 	resource_id = (UINT32)(-((INT32)resource_id));
-    dprintf_info(resource, "LoadString: instance = %04x, id = %04x, buffer = %08x, "
+    TRACE(resource, "instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource32W( instance, (LPCWSTR)((resource_id>>4)+1), 
@@ -568,7 +568,7 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
-    dprintf_info(resource, "strlen = %d\n", (int)*p );
+    TRACE(resource, "strlen = %d\n", (int)*p );
     
     i = MIN(buflen - 1, *p);
     if (buffer == NULL)
@@ -587,7 +587,7 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 #endif
     }
 #if 0
-    dprintf_info(resource,"LoadString // '%s' copied !\n", buffer);
+    TRACE(resource,"'%s' copied !\n", buffer);
 #endif
     return i;
 }
@@ -658,7 +658,7 @@ INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
 	CHAR	str[1];
     } *stre;
 
-    dprintf_info(resource, "LoadMessage: instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
+    TRACE(resource, "instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
     /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
     hrsrc = FindResourceEx32W(instance,(LPWSTR)1,(LPCWSTR)RT_MESSAGELIST,lang);
@@ -686,7 +686,7 @@ INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
     	stre = (struct _stringentry*)(((char*)stre)+slen);
     }
     slen=stre->len;
-    dprintf_info(resource,"	- strlen=%d\n",slen);
+    TRACE(resource,"	- strlen=%d\n",slen);
     i = MIN(buflen - 1, slen);
     if (buffer == NULL)
 	return slen; /* different to LoadString */
@@ -700,7 +700,7 @@ INT32 LoadMessage32A( HINSTANCE32 instance, UINT32 id, WORD lang,
 	}
     }
     if (buffer)
-	    dprintf_info(resource,"LoadMessage // '%s' copied !\n", buffer);
+	    TRACE(resource,"'%s' copied !\n", buffer);
     return i;
 }
 
@@ -737,7 +737,7 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR s,
 
     hModule = GetExePtr( hModule );
 
-    dprintf_info(resource, "SetResourceHandler: module=%04x type=%s\n", 
+    TRACE(resource, "module=%04x type=%s\n", 
 		 hModule, debugres(PTR_SEG_TO_LIN(s)) );
 
     if ((pModule = MODULE_GetPtr( hModule )))

@@ -207,7 +207,7 @@ BOOL32 WINAPI IsDBCSLeadByte32( BYTE testchar )
  */
 BOOL32 WINAPI EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags)
 {
-	dprintf_info(win32,"EnumSystemCodePages32A(%p,%08lx)\n",
+	TRACE(win32,"(%p,%08lx)\n",
 		lpfnCodePageEnum,flags
 	);
 	lpfnCodePageEnum("437");
@@ -221,7 +221,7 @@ BOOL32 WINAPI EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum,
                                       DWORD flags)
 {
     WCHAR	*cp;
-    dprintf_info(win32,"EnumSystemCodePages32W(%p,%08lx)\n",
+    TRACE(win32,"(%p,%08lx)\n",
                   lpfnCodePageEnum,flags );
 
     cp = HEAP_strdupAtoW( GetProcessHeap(), 0, "437" );

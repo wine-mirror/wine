@@ -83,7 +83,7 @@ BOOL32 DIALOG_Init(void)
     if (!(tm.tmPitchAndFamily & TMPF_FIXED_PITCH))
         xBaseUnit = xBaseUnit * 5 / 4;
 
-    dprintf_info(dialog, "DIALOG_Init: base units = %d,%d\n",
+    TRACE(dialog, "base units = %d,%d\n",
                     xBaseUnit, yBaseUnit );
     return TRUE;
 }
@@ -146,12 +146,12 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
     p += *p + 1;
 
     if(int_id)
-      dprintf_info(dialog,"   %s %04x %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+      TRACE(dialog,"   %s %04x %d, %d, %d, %d, %d, %08lx, %08lx\n", 
 		      info->className,  LOWORD(info->windowName),
 		      info->id, info->x, info->y, info->cx, info->cy,
 		      info->style, (DWORD)info->data);
     else
-      dprintf_info(dialog,"   %s '%s' %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+      TRACE(dialog,"   %s '%s' %d, %d, %d, %d, %d, %08lx, %08lx\n", 
 		      info->className,  info->windowName,
 		      info->id, info->x, info->y, info->cx, info->cy,
 		      info->style, (DWORD)info->data);
@@ -221,12 +221,12 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
     p++;
 
     if(int_id)
-      dprintf_info(dialog,"   %p %04x %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
+      TRACE(dialog,"   %p %04x %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
 		      info->className, LOWORD(info->windowName),
 		      info->id, info->x, info->y, info->cx, info->cy,
 		      info->style, info->exStyle, (DWORD)info->data);
     else
-      dprintf_info(dialog,"   %p '%p' %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
+      TRACE(dialog,"   %p '%p' %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
 		      info->className, info->windowName,
 		      info->id, info->x, info->y, info->cx, info->cy,
 		      info->style, info->exStyle, (DWORD)info->data);
@@ -248,7 +248,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
     DLG_CONTROL_INFO info;
     HWND32 hwndCtrl, hwndDefButton = 0;
 
-    dprintf_info(dialog, " BEGIN\n" );
+    TRACE(dialog, " BEGIN\n" );
     while (items--)
     {
         if (!win32)
@@ -312,7 +312,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
             dlgInfo->idResult = GetWindowWord32( hwndCtrl, GWW_ID );
         }
     }    
-    dprintf_info(dialog, " END\n" );
+    TRACE(dialog, " END\n" );
     return TRUE;
 }
 
@@ -332,9 +332,9 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
     result->y       = GET_WORD(p);  p += sizeof(WORD);
     result->cx      = GET_WORD(p);  p += sizeof(WORD);
     result->cy      = GET_WORD(p);  p += sizeof(WORD);
-    dprintf_info(dialog, "DIALOG %d, %d, %d, %d\n",
+    TRACE(dialog, "DIALOG %d, %d, %d, %d\n",
                     result->x, result->y, result->cx, result->cy );
-    dprintf_info(dialog, " STYLE %08lx\n", result->style );
+    TRACE(dialog, " STYLE %08lx\n", result->style );
 
     /* Get the menu name */
 
@@ -347,11 +347,11 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
     case 0xff:
         result->menuName = (LPCSTR)(UINT32)GET_WORD( p + 1 );
         p += 3;
-	dprintf_info(dialog, " MENU %04x\n", LOWORD(result->menuName) );
+	TRACE(dialog, " MENU %04x\n", LOWORD(result->menuName) );
         break;
     default:
         result->menuName = p;
-        dprintf_info(dialog, " MENU '%s'\n", p );
+        TRACE(dialog, " MENU '%s'\n", p );
         p += strlen(p) + 1;
         break;
     }
@@ -361,7 +361,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
     if (*p)
     {
         result->className = p;
-        dprintf_info(dialog, " CLASS '%s'\n", result->className );
+        TRACE(dialog, " CLASS '%s'\n", result->className );
     }
     else result->className = DIALOG_CLASS_ATOM;
     p += strlen(p) + 1;
@@ -370,7 +370,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
 
     result->caption = p;
     p += strlen(p) + 1;
-    dprintf_info(dialog, " CAPTION '%s'\n", result->caption );
+    TRACE(dialog, " CAPTION '%s'\n", result->caption );
 
     /* Get the font name */
 
@@ -380,7 +380,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
         p += sizeof(WORD);
 	result->faceName = p;
         p += strlen(p) + 1;
-	dprintf_info(dialog, " FONT %d,'%s'\n",
+	TRACE(dialog, " FONT %d,'%s'\n",
                         result->pointSize, result->faceName );
     }
     return p;
@@ -404,10 +404,10 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     result->y       = GET_WORD(p); p++;
     result->cx      = GET_WORD(p); p++;
     result->cy      = GET_WORD(p); p++;
-    dprintf_info(dialog, "DIALOG %d, %d, %d, %d\n",
+    TRACE(dialog, "DIALOG %d, %d, %d, %d\n",
                     result->x, result->y, result->cx, result->cy );
-    dprintf_info(dialog, " STYLE %08lx\n", result->style );
-    dprintf_info(dialog, " EXSTYLE %08lx\n", result->exStyle );
+    TRACE(dialog, " STYLE %08lx\n", result->style );
+    TRACE(dialog, " EXSTYLE %08lx\n", result->exStyle );
 
     /* Get the menu name */
 
@@ -420,11 +420,11 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     case 0xffff:
         result->menuName = (LPCSTR)(UINT32)GET_WORD( p + 1 );
         p += 2;
-	dprintf_info(dialog, " MENU %04x\n", LOWORD(result->menuName) );
+	TRACE(dialog, " MENU %04x\n", LOWORD(result->menuName) );
         break;
     default:
         result->menuName = (LPCSTR)p;
-        dprintf_info(dialog, " MENU '%p'\n", p );
+        TRACE(dialog, " MENU '%p'\n", p );
         p += lstrlen32W( (LPCWSTR)p ) + 1;
         break;
     }
@@ -440,11 +440,11 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     case 0xffff:
         result->className = (LPCSTR)(UINT32)GET_WORD( p + 1 );
         p += 2;
-	dprintf_info(dialog, " CLASS %04x\n", LOWORD(result->className) );
+	TRACE(dialog, " CLASS %04x\n", LOWORD(result->className) );
         break;
     default:
         result->className = (LPCSTR)p;
-        dprintf_info(dialog, " CLASS '%p'\n", p );
+        TRACE(dialog, " CLASS '%p'\n", p );
         p += lstrlen32W( (LPCWSTR)p ) + 1;
         break;
     }
@@ -453,7 +453,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 
     result->caption = (LPCSTR)p;
     p += lstrlen32W( (LPCWSTR)p ) + 1;
-    dprintf_info(dialog, " CAPTION '%p'\n", result->caption );
+    TRACE(dialog, " CAPTION '%p'\n", result->caption );
 
     /* Get the font name */
 
@@ -463,7 +463,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
         p++;
 	result->faceName = (LPCSTR)p;
         p += lstrlen32W( (LPCWSTR)p ) + 1;
-	dprintf_info(dialog, " FONT %d,'%p'\n",
+	TRACE(dialog, " FONT %d,'%p'\n",
                         result->pointSize, result->faceName );
     }
     /* First control is on dword boundary */
@@ -666,7 +666,7 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
     HGLOBAL16 hmem;
     LPCVOID data;
 
-    dprintf_info(dialog, "CreateDialogParam16: %04x,%08lx,%04x,%08lx,%ld\n",
+    TRACE(dialog, "%04x,%08lx,%04x,%08lx,%ld\n",
                    hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
 
     if (!(hRsrc = FindResource16( hInst, dlgTemplate, RT_DIALOG ))) return 0;
@@ -914,7 +914,7 @@ BOOL32 WINAPI EndDialog32( HWND32 hwnd, INT32 retval )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
 
-    dprintf_info(dialog, "EndDialog: %04x %d\n", hwnd, retval );
+    TRACE(dialog, "%04x %d\n", hwnd, retval );
 
     if( dlgInfo )
     {
@@ -1556,7 +1556,7 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
     BOOL32 ret;
     HWND32 listbox = GetDlgItem32( hwnd, id );
 
-    dprintf_info(dialog, "DlgDirSelect: %04x '%s' %d\n", hwnd, str, id );
+    TRACE(dialog, "%04x '%s' %d\n", hwnd, str, id );
     if (!listbox) return FALSE;
     if (win32)
     {
@@ -1605,7 +1605,7 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
     if (unicode) lstrcpynAtoW( (LPWSTR)str, ptr, len );
     else lstrcpyn32A( str, ptr, len );
     SEGPTR_FREE( buffer );
-    dprintf_info(dialog, "Returning %d '%s'\n", ret, str );
+    TRACE(dialog, "Returning %d '%s'\n", ret, str );
     return ret;
 }
 
@@ -1626,7 +1626,7 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPSTR spec, INT32 idLBox,
     ((attrib & DDL_POSTMSGS) ? PostMessage32A( hwnd, msg, wparam, lparam ) \
                              : SendMessage32A( hwnd, msg, wparam, lparam ))
 
-    dprintf_info(dialog, "DlgDirList: %04x '%s' %d %d %04x\n",
+    TRACE(dialog, "%04x '%s' %d %d %04x\n",
                     hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
 
     if (spec && spec[0] && (spec[1] == ':'))
@@ -1658,7 +1658,7 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPSTR spec, INT32 idLBox,
         }
     }
 
-    dprintf_info(dialog, "ListBoxDirectory: path=%c:\\%s mask=%s\n",
+    TRACE(dialog, "path=%c:\\%s mask=%s\n",
                     'A' + drive, DRIVE_GetDosCwd(drive), spec );
 
     if (idLBox && ((hwnd = GetDlgItem32( hDlg, idLBox )) != 0))

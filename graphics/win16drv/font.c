@@ -24,7 +24,7 @@ BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     DWORD dwRet;
     
-    dprintf_info(win16drv, "WIN16DRV_GetTextExtPoint: %04x %s %d %p\n",
+    TRACE(win16drv, "%04x %s %d %p\n",
 		                dc->hSelf, str, count, size);
 
     dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
@@ -34,7 +34,7 @@ BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 			      win16drv_SegPtr_TextXForm, NULL, NULL, 0);
     size->cx = XDSTOLS(dc,LOWORD(dwRet));
     size->cy = YDSTOLS(dc,HIWORD(dwRet));
-    dprintf_info(win16drv, "WIN16DRV_GetTextExtPoint: cx=0x%x, cy=0x%x\n",
+    TRACE(win16drv, "cx=0x%x, cy=0x%x\n",
 		size->cx, size->cy );
     return TRUE;
 }
@@ -47,12 +47,11 @@ BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
 
-    dprintf_info(win16drv, "WIN16DRV_GetTextMetrics: %04x \n", dc->hSelf);
+    TRACE(win16drv, "%04x \n", dc->hSelf);
 
     FONT_TextMetric16to32A( &physDev->tm, metrics );
 
-    dprintf_info(win16drv,
-	   "H %d, A %d, D %d, Int %d, Ext %d, AW %d, MW %d, W %d\n",
+    TRACE(win16drv, "H %d, A %d, D %d, Int %d, Ext %d, AW %d, MW %d, W %d\n",
            metrics->tmHeight,
            metrics->tmAscent,
            metrics->tmDescent,
@@ -73,13 +72,13 @@ HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font)
 
     dc->w.hFont = hfont;
 
-    dprintf_info(win16drv, "WIN16DRV_FONT_SelectObject '%s' h=%d\n",
+    TRACE(win16drv, "WIN16DRV_FONT_SelectObject '%s' h=%d\n",
 		     font->logfont.lfFaceName, font->logfont.lfHeight);
 
 
     if( physDev->FontInfo )
     {
-        dprintf_info(win16drv, "UnRealizing FontInfo\n");
+        TRACE(win16drv, "UnRealizing FontInfo\n");
         nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, -DRVOBJ_FONT,
 				      physDev->FontInfo,
 				      physDev->FontInfo, 0);
@@ -129,8 +128,7 @@ HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font)
     physDev->tm.tmCharSet          = fi->dfCharSet;
 #undef fi
 
-    dprintf_info(win16drv,
-           "H %d, A %d, D %d, Int %d, Ext %d, AW %d, MW %d, W %d\n",
+    TRACE(win16drv, "H %d, A %d, D %d, Int %d, Ext %d, AW %d, MW %d, W %d\n",
            physDev->tm.tmHeight,
            physDev->tm.tmAscent,
            physDev->tm.tmDescent,
@@ -154,16 +152,16 @@ BOOL32 WIN16DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
 
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     
-    dprintf_info(win16drv, "WIN16DRV_GetCharWidth: %d - %d into %p\n",
+    TRACE(win16drv, "%d - %d into %p\n",
 		      firstChar, lastChar, buffer );
 
     wRet = PRTDRV_GetCharWidth( physDev->segptrPDEVICE, buffer, firstChar, 
 				lastChar, physDev->FontInfo, 
 				win16drv_SegPtr_DrawMode, 
 				win16drv_SegPtr_TextXForm );
-    if( debugging_info(win16drv) ){
+    if( TRACE_ON(win16drv) ){
         for(i = 0; i <= lastChar - firstChar; i++)
-	    dprintf_info(win16drv, "Char %x: width %d\n", i + firstChar,
+	    TRACE(win16drv, "Char %x: width %d\n", i + firstChar,
 			                 buffer[i]);
     }
 
@@ -207,7 +205,7 @@ WORD WINAPI WineEnumDFontCallback(LPLOGFONT16 lpLogFont,
                                   LPTEXTMETRIC16 lpTextMetrics,
                                   WORD wFontType, LONG lpClientData) 
 {
-    dprintf_info(win16drv, "In WineEnumDFontCallback plf=%p\n", lpLogFont);
+    TRACE(win16drv, "In WineEnumDFontCallback plf=%p\n", lpLogFont);
     return (*(((WEPFC *)lpClientData)->proc))( lpLogFont, lpTextMetrics, 
 				     wFontType, ((WEPFC *)lpClientData)->lp );
 }

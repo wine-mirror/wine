@@ -67,6 +67,7 @@ extern const WIN16_DESCRIPTOR STORAGE_Descriptor;
 extern const WIN16_DESCRIPTOR STRESS_Descriptor;
 extern const WIN16_DESCRIPTOR SYSTEM_Descriptor;
 extern const WIN16_DESCRIPTOR TOOLHELP_Descriptor;
+extern const WIN16_DESCRIPTOR TYPELIB_Descriptor;
 extern const WIN16_DESCRIPTOR USER_Descriptor;
 extern const WIN16_DESCRIPTOR VER_Descriptor;
 extern const WIN16_DESCRIPTOR W32SYS_Descriptor;
@@ -108,6 +109,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &STORAGE_Descriptor,  DLL_FLAG_NOT_USED },
     { &STRESS_Descriptor,   0 },
     { &TOOLHELP_Descriptor, 0 },
+    { &TYPELIB_Descriptor,  0 },
     { &VER_Descriptor,      0 },
     { &W32SYS_Descriptor,   0 },
     { &WIN32S16_Descriptor, 0 },
@@ -141,7 +143,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     if (!hModule) return 0;
     FarSetOwner( hModule, hModule );
 
-    dprintf_info(module, "Built-in %s: hmodule=%04x\n",
+    TRACE(module, "Built-in %s: hmodule=%04x\n",
                     descr->name, hModule );
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     pModule->self = hModule;

@@ -150,7 +150,7 @@ HDC16 WINAPI CreateMetaFile16(
     METAFILEDRV_PDEVICE *physDev;
     HFILE32 hFile;
 
-    dprintf_info(metafile, "CreateMetaFile16: '%s'\n", filename );
+    TRACE(metafile, "'%s'\n", filename );
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
@@ -175,7 +175,7 @@ HDC16 WINAPI CreateMetaFile16(
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
 
-    dprintf_info(metafile, "CreateMetaFile16: returning %04x\n", dc->hSelf);
+    TRACE(metafile, "returning %04x\n", dc->hSelf);
     return dc->hSelf;
 }
 
@@ -198,7 +198,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
     HFILE32 hFile;
     METAFILEDRV_PDEVICE *physDev;
     
-    dprintf_info(metafile, "CloseMetaFile(%04x)\n", hdc );
+    TRACE(metafile, "(%04x)\n", hdc );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;

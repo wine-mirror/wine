@@ -34,7 +34,7 @@ type	win16
 31 pascal CoDosDateTimeToFileTime(word word ptr) DosDateTimeToFileTime
 32 stub COMARSHALHRESULT
 33 stub COUNMARSHALHRESULT
-34 stub COGETCURRENTPROCESS
+34 pascal CoGetCurrentProcess() CoGetCurrentProcess
 #35 ___EXPORTEDSTUB
 36 stub COISOLE1CLASS
 37 stub _GUID_NULL
@@ -63,7 +63,7 @@ type	win16
 60 stub _IID_IMESSAGEFILTER
 61 pascal CLSIDFromProgID(str ptr) CLSIDFromProgID16
 62 stub PROGIDFROMCLSID
-63 stub COLOCKOBJECTEXTERNAL
+63 pascal CoLockObjectExternal(segptr word word) CoLockObjectExternal16
 64 stub _CLSID_STDMARSHAL
 65 stub COGETTREATASCLASS
 66 stub COTREATASCLASS
@@ -75,7 +75,7 @@ type	win16
 72 stub _IID_IEXTERNALCONNECTION
 73 stub COCREATEGUID
 75 stub FNASSERT
-76 stub STRINGFROMGUID2
+76 pascal STRINGFROMGUID2(ptr ptr word) StringFromGUID2
 77 stub COGETCLASSEXT
 78 stub OLE1CLASSFROMCLSID2
 79 stub CLSIDFROMOLE1CLASS

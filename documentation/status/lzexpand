@@ -1,0 +1,20 @@
+This file contains information about the LZ file decompression libraries.
+
+The LZ (Lempel Ziv) decompression was used in win16 installation programs.
+(Win32 installation programs now use mostly CAB or WINZIP selfextractors 
+ or something similair.)
+It is a simple tabledriven decompression engine, the algorithm is not
+documented as far as I know. WINE does not contain a compressor for
+this format.
+
+The libraries consist of LZEXPAND.DLL (win16) and LZ32.DLL (win32), the 
+implementation can be found in misc/lzexpand.c and there is a small
+example program in libtest/expand.c.
+
+The implementation is complete and there have been no reports of failures
+for some time.
+
+FIXMEs:
+	- Check for correct include files
+	- Check whether the return values are correct
+	- Write a compressor for this format.

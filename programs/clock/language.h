@@ -5,10 +5,10 @@
  * Copyright 1998 Karl Backström <karl_b@geocities.com>
  */
 
-VOID LANGUAGE_SelectLanguageByNumber(UINT num);
-VOID LANGUAGE_SelectLanguageByName(LPCSTR lang);
-VOID LANGUAGE_DefaultLanguageHandle(WPARAM wParam);
-VOID LANGUAGE_InitLanguage(VOID);
+VOID LANGUAGE_SelectByNumber(UINT num);
+VOID LANGUAGE_SelectByName(LPCSTR lang);
+VOID LANGUAGE_DefaultHandle(WPARAM wParam);
+VOID LANGUAGE_Init(VOID);
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

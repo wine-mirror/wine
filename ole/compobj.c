@@ -33,7 +33,7 @@ LPMALLOC32 currentMalloc32=NULL;
  */
 DWORD WINAPI CoBuildVersion()
 {
-    dprintf_info(ole,"CoBuildVersion()\n");
+    TRACE(ole,"(void)\n");
     return (rmm<<16)+rup;
 }
 
@@ -41,8 +41,9 @@ DWORD WINAPI CoBuildVersion()
  *           CoInitialize	[COMPOBJ.2]
  * lpReserved is an IMalloc pointer in 16bit OLE.
  */
-HRESULT WINAPI CoInitialize16(LPMALLOC16 lpReserved)
-{
+HRESULT WINAPI CoInitialize16(
+	LPMALLOC16 lpReserved	/* [in] pointer to win16 malloc interface */
+) {
     currentMalloc16 = lpReserved;
     return S_OK;
 }
@@ -51,8 +52,9 @@ HRESULT WINAPI CoInitialize16(LPMALLOC16 lpReserved)
  *           CoInitialize	(OLE32.26)
  * lpReserved is an IMalloc pointer in 32bit OLE.
  */
-HRESULT WINAPI CoInitialize32(LPMALLOC32 lpReserved)
-{
+HRESULT WINAPI CoInitialize32(
+	LPMALLOC32 lpReserved	/* [in] pointer to win32 malloc interface */
+) {
     currentMalloc32 = lpReserved;
     return S_OK;
 }
@@ -62,14 +64,16 @@ HRESULT WINAPI CoInitialize32(LPMALLOC32 lpReserved)
  */
 void WINAPI CoUnitialize()
 {
-    dprintf_info(ole,"CoUnitialize()\n");
+    TRACE(ole,"(void)\n");
 }
 
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
  */
-HRESULT WINAPI CoGetMalloc16(DWORD dwMemContext, LPMALLOC16 * lpMalloc)
-{
+HRESULT WINAPI CoGetMalloc16(
+	DWORD dwMemContext,	/* [in] unknown */
+	LPMALLOC16 * lpMalloc	/* [out] current win16 malloc interface */
+) {
     if(!currentMalloc16)
 	currentMalloc16 = IMalloc16_Constructor();
     *lpMalloc = currentMalloc16;
@@ -79,8 +83,10 @@ HRESULT WINAPI CoGetMalloc16(DWORD dwMemContext, LPMALLOC16 * lpMalloc)
 /***********************************************************************
  *           CoGetMalloc    (OLE32.4]
  */
-HRESULT WINAPI CoGetMalloc32(DWORD dwMemContext, LPMALLOC32 *lpMalloc)
-{
+HRESULT WINAPI CoGetMalloc32(
+	DWORD dwMemContext,	/* [in] unknown */
+	LPMALLOC32 *lpMalloc	/* [out] current win32 malloc interface */
+) {
     if(!currentMalloc32)
 	currentMalloc32 = IMalloc32_Constructor();
     *lpMalloc = currentMalloc32;
@@ -92,7 +98,7 @@ HRESULT WINAPI CoGetMalloc32(DWORD dwMemContext, LPMALLOC32 *lpMalloc)
  */
 OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
-    dprintf_info(ole,"CoDisconnectObject:%p %lx\n",lpUnk,reserved);
+    TRACE(ole,"%p %lx\n",lpUnk,reserved);
     return S_OK;
 }
 
@@ -117,7 +123,7 @@ OLESTATUS WINAPI CLSIDFromString16(const LPCOLESTR16 idstr, CLSID *id)
   int	i;
   BYTE table[256];
 
-  dprintf_info(ole,"ClsIDFromString() %s -> %p\n", idstr, id);
+  TRACE(ole,"%s -> %p\n", idstr, id);
 
   /* quick lookup table */
   memset(table, 0, 256);
@@ -213,7 +219,7 @@ OLESTATUS WINAPI WINE_StringFromCLSID(const CLSID *id, LPSTR idstr)
     idstr[i] = toupper(idstr[i]);
   }
 
-  dprintf_info(ole,"StringFromClsID: %p->%s\n", id, idstr);
+  TRACE(ole,"%p->%s\n", id, idstr);
 
   return OLE_OK;
 }
@@ -265,6 +271,16 @@ OLESTATUS WINAPI StringFromCLSID32(const CLSID *id, LPOLESTR32 *idstr)
 	return ret;
 }
 
+OLESTATUS WINAPI StringFromGUID2(
+	const CLSID *id, LPOLESTR16 idstr, INT16 max
+) {
+	char		buf[80];
+	OLESTATUS	ret = WINE_StringFromCLSID(id,buf);
+
+	if (!ret)
+		lstrcpyn32A(idstr,buf,max);
+	return ret;
+}
 
 /***********************************************************************
  *           CLSIDFromProgID [COMPOBJ.61]
@@ -393,8 +409,12 @@ HRESULT WINAPI CoFileTimeNow(FILETIME *lpFileTime)
 
 /***********************************************************************
  *           CoTaskMemAlloc (OLE32.43)
+ * RETURNS
+ *  pointer to newly allocated block
  */
-LPVOID WINAPI CoTaskMemAlloc(ULONG size) {
+LPVOID WINAPI CoTaskMemAlloc(
+	ULONG size	/* [in] size of memoryblock to be allocated */
+) {
     LPMALLOC32	lpmalloc;
     HRESULT	ret = CoGetMalloc32(0,&lpmalloc);
 
@@ -406,7 +426,9 @@ LPVOID WINAPI CoTaskMemAlloc(ULONG size) {
 /***********************************************************************
  *           CoTaskMemFree (OLE32.44)
  */
-VOID WINAPI CoTaskMemFree(LPVOID ptr) {
+VOID WINAPI CoTaskMemFree(
+	LPVOID ptr	/* [in] pointer to be freed */
+) {
     LPMALLOC32	lpmalloc;
     HRESULT	ret = CoGetMalloc32(0,&lpmalloc);
 
@@ -420,4 +442,16 @@ VOID WINAPI CoTaskMemFree(LPVOID ptr) {
 HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
     fprintf(stderr,"CoInitializeWOW(0x%08lx,0x%08lx),stub!\n",x,y);
     return 0;
+}
+
+/***********************************************************************
+ *           CoLockObjectExternal (COMPOBJ.63)
+ */
+HRESULT WINAPI CoLockObjectExternal16(
+    LPUNKNOWN pUnk,		/* [in] object to be locked */
+    BOOL16 fLock,		/* [in] do lock */
+    BOOL16 fLastUnlockReleases	/* [in] ? */
+) {
+    fprintf(stderr,"CoLockObjectExternal(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
+    return S_OK;
 }

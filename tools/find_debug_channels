@@ -36,6 +36,13 @@ case "$#" in
     *    )  files="$@";;
 esac
 
-grep -h dprintf_ $files /dev/null | \
-    sed 's/.*dprintf_[A-Za-z0-9_]\+ *( *\([A-Za-z0-9_]*\).*/\1/g' | \
-    sort | uniq
+(
+grep -h "TRACE *(" $files /dev/null | \
+    sed 's/.*TRACE *( *\([A-Za-z0-9_]*\).*/\1/g'
+grep -h "ERR *(" $files /dev/null | \
+    sed 's/.*ERR *( *\([A-Za-z0-9_]*\).*/\1/g'
+grep -h "FIXME *(" $files /dev/null | \
+    sed 's/.*FIXME *( *\([A-Za-z0-9_]*\).*/\1/g'
+grep -h "WARN *(" $files /dev/null | \
+    sed 's/.*WARN *( *\([A-Za-z0-9_]*\).*/\1/g'
+) | sort | uniq

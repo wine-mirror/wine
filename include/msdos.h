@@ -56,6 +56,42 @@ typedef struct
     DWORD  filesize;             /* 1c file size */
 } DOS_DIRENTRY_LAYOUT;
 
+typedef struct
+{
+    WORD  CX_Int21_5e01;	/* contents of CX from INT 21/AX=5E01h */
+    WORD  LRU_count_FCB_cache;	
+    WORD  LRU_count_FCB_open;
+    DWORD OEM_func_handler WINE_PACKED; /* OEM function of INT 21/AH=F8h */
+    WORD  INT21_offset;/* offset in DOS CS of code to return from INT 21 call */
+    WORD  sharing_retry_count;
+    WORD  sharing_retry_delay;
+    DWORD ptr_disk_buf;		/* ptr to current disk buf */
+    WORD  offs_unread_CON;	/* pointer in DOS data segment of unread CON input */
+    WORD  seg_first_MCB;
+    DWORD ptr_first_DPB;
+    DWORD ptr_first_SysFileTable;
+    DWORD ptr_clock_dev_hdr;
+    DWORD ptr_CON_dev_hdr;
+    WORD  max_byte_per_sec;   /* maximum bytes per sector of any block device */
+    DWORD ptr_disk_buf_info WINE_PACKED;
+    DWORD ptr_array_CDS WINE_PACKED; /* current directory structure */
+    DWORD ptr_sys_FCB WINE_PACKED;
+    WORD  nr_protect_FCB;
+    BYTE  nr_block_dev;
+    BYTE  nr_avail_drive_letters;
+    BYTE  NUL_dev_header[18];
+    BYTE  nr_drives_JOINed;
+    WORD  ptr_spec_prg_names WINE_PACKED;
+    DWORD ptr_SETVER_prg_list WINE_PACKED;
+    WORD DOS_HIGH_A20_func_offs WINE_PACKED;
+    WORD PSP_last_exec WINE_PACKED; /* if DOS in HMA: PSP of program executed last; if DOS low: 0000h */
+    WORD BUFFERS_val WINE_PACKED;
+    WORD BUFFERS_nr_lookahead WINE_PACKED;
+    BYTE boot_drive WINE_PACKED;
+    BYTE flag_DWORD_moves WINE_PACKED; /* 01h for 386+, 00h otherwise */
+    WORD size_extended_mem WINE_PACKED; /* size of extended mem in KB */
+} DOS_LISTOFLISTS;
+
 #define MAX_DOS_DRIVES	26
 
 extern struct DosDeviceStruct COM[MAX_PORTS];

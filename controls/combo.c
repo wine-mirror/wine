@@ -62,7 +62,7 @@ static BOOL32 COMBO_Init()
       CBitHeight = bm.bmHeight;
       CBitWidth  = bm.bmWidth;
 
-      dprintf_info(combo, "combo bitmap [%i,%i]\n", CBitWidth, CBitHeight );
+      TRACE(combo, "combo bitmap [%i,%i]\n", CBitWidth, CBitHeight );
 
       hPrevB = SelectObject16( hDC, hComboBmp);
       SetRect16( &r, 0, 0, CBitWidth, CBitHeight );
@@ -101,8 +101,8 @@ static LRESULT COMBO_NCCreate(WND* wnd, LPARAM lParam)
 	if( !(wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) )
 	      lphc->wState |= CBF_NOTIFY;
 
-	dprintf_info(combo, "COMBO_NCCreate: [0x%08x], style = %08x\n", 
-						(UINT32)lphc, lphc->dwStyle );
+	TRACE(combo, "[0x%08x], style = %08x\n", 
+		     (UINT32)lphc, lphc->dwStyle );
 
 	return (LRESULT)(UINT32)wnd->hwndSelf; 
     }
@@ -119,7 +119,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
    {
        WND*		wnd = lphc->self;
 
-       dprintf_info(combo,"Combo [%04x]: freeing storage\n", CB_HWND(lphc));
+       TRACE(combo,"[%04x]: freeing storage\n", CB_HWND(lphc));
 
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox ) 
    	   DestroyWindow32( lphc->hWndLBox );
@@ -218,13 +218,18 @@ static void CBCalcPlacement( LPHEADCOMBO lphc,
    if( lphc->droppedWidth > (lprLB->right - lprLB->left) )
        lprLB->right = lprLB->left + (INT16)lphc->droppedWidth;
 
-dprintf_info(combo,"Combo [%04x]: (%i,%i-%i,%i) placement\n\ttext\t= (%i,%i-%i,%i)\
-\n\tbutton\t= (%i,%i-%i,%i)\n\tlbox\t= (%i,%i-%i,%i)\n", CB_HWND(lphc),
-lphc->RectCombo.left, lphc->RectCombo.top, lphc->RectCombo.right, lphc->RectCombo.bottom,
-lprEdit->left, lprEdit->top, lprEdit->right, lprEdit->bottom,
-lprButton->left, lprButton->top, lprButton->right, lprButton->bottom, 
-lprLB->left, lprLB->top, lprLB->right, lprLB->bottom );
+   TRACE(combo,"[%04x]: (%i,%i-%i,%i) placement\n",
+		CB_HWND(lphc), lphc->RectCombo.left, lphc->RectCombo.top, 
+		lphc->RectCombo.right, lphc->RectCombo.bottom);
 
+   TRACE(combo,"\ttext\t= (%i,%i-%i,%i)\n",
+		lprEdit->left, lprEdit->top, lprEdit->right, lprEdit->bottom);
+
+   TRACE(combo,"\tbutton\t= (%i,%i-%i,%i)\n",
+		lprButton->left, lprButton->top, lprButton->right, lprButton->bottom);
+
+   TRACE(combo,"\tlbox\t= (%i,%i-%i,%i)\n", 
+		lprLB->left, lprLB->top, lprLB->right, lprLB->bottom );
 }
 
 /***********************************************************************
@@ -337,12 +342,12 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 				SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
 		lphc->wState &= ~CBF_NORESIZE;
 	      }
-	      dprintf_info(combo,"COMBO_Create: init done\n");
+	      TRACE(combo,"init done\n");
 	      return wnd->hwndSelf;
 	  }
-	  dprintf_err(combo, "COMBO_Create: edit control failure.\n");
-      } else dprintf_err(combo, "COMBO_Create: listbox failure.\n");
-  } else dprintf_err(combo, "COMBO_Create: no owner for visible combo.\n");
+	  ERR(combo, "edit control failure.\n");
+      } else ERR(combo, "listbox failure.\n");
+  } else ERR(combo, "no owner for visible combo.\n");
 
   /* CreateWindow() will send WM_NCDESTROY to cleanup */
 
@@ -561,7 +566,7 @@ static INT32 CBUpdateLBox( LPHEADCOMBO lphc )
    if( length > 0 ) 
        pText = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1);
 
-   dprintf_info(combo,"\tCBUpdateLBox: edit text length %i\n", length );
+   TRACE(combo,"\t edit text length %i\n", length );
 
    if( pText )
    {
@@ -597,7 +602,7 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT32 index )
    INT32	length;
    LPSTR	pText = NULL;
 
-   dprintf_info(combo,"\tCBUpdateEdit: %i\n", index );
+   TRACE(combo,"\t %i\n", index );
 
    if( index == -1 )
    {
@@ -642,7 +647,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
    RECT16	rect;
    LPRECT16	pRect = NULL;
 
-   dprintf_info(combo,"Combo [%04x]: drop down\n", CB_HWND(lphc));
+   TRACE(combo,"[%04x]: drop down\n", CB_HWND(lphc));
 
    CB_NOTIFY( lphc, CBN_DROPDOWN );
 
@@ -698,7 +703,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL32 ok, BOOL32 bButton )
    if( IsWindow32( hWnd ) && CB_GETTYPE(lphc) != CBS_SIMPLE )
    {
 
-       dprintf_info(combo,"Combo [%04x]: roll up [%i]\n", CB_HWND(lphc), (INT32)ok );
+       TRACE(combo,"[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT32)ok );
 
        /* always send WM_LBUTTONUP? */
        SendMessage32A( lphc->hWndLBox, WM_LBUTTONUP, 0, (LPARAM)(-1) );
@@ -839,16 +844,16 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM32 wParam, HWND32 hWnd )
        {   
 	   case (EN_SETFOCUS >> 8):
 
-		dprintf_info(combo,"Combo [%04x]: edit [%04x] got focus\n", 
-				     CB_HWND(lphc), (HWND16)lphc->hWndEdit );
+		TRACE(combo,"[%04x]: edit [%04x] got focus\n", 
+			     CB_HWND(lphc), (HWND16)lphc->hWndEdit );
 
 		if( !(lphc->wState & CBF_FOCUSED) ) COMBO_SetFocus( lphc );
 	        break;
 
 	   case (EN_KILLFOCUS >> 8):
 
-		dprintf_info(combo,"Combo [%04x]: edit [%04x] lost focus\n",
-				      CB_HWND(lphc), (HWND16)lphc->hWndEdit );
+		TRACE(combo,"[%04x]: edit [%04x] lost focus\n",
+			     CB_HWND(lphc), (HWND16)lphc->hWndEdit );
 
 		/* NOTE: it seems that Windows' edit control sends an
 		 * undocumented message WM_USER + 0x1B instead of this
@@ -888,8 +893,8 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM32 wParam, HWND32 hWnd )
 	   case LBN_SELCHANGE:
 	   case LBN_SELCANCEL:
 
-		dprintf_info(combo,"Combo [%04x]: lbox selection change [%04x]\n", 
-						      CB_HWND(lphc), lphc->wState );
+		TRACE(combo,"[%04x]: lbox selection change [%04x]\n", 
+			     CB_HWND(lphc), lphc->wState );
 
 		/* do not roll up if selection is being tracked 
 		 * by arrowkeys in the dropdown listbox */
@@ -922,8 +927,8 @@ static LRESULT COMBO_ItemOp32( LPHEADCOMBO lphc, UINT32 msg,
 {
    HWND32	hWnd = lphc->self->hwndSelf;
 
-   dprintf_info(combo,"Combo [%04x]: ownerdraw op %04x\n", 
-				       CB_HWND(lphc), (UINT16)msg );
+   TRACE(combo,"[%04x]: ownerdraw op %04x\n", 
+		CB_HWND(lphc), (UINT16)msg );
 
 #define lpIS    ((LPDELETEITEMSTRUCT32)lParam)
 
@@ -1060,7 +1065,7 @@ static void COMBO_Size( LPHEADCOMBO lphc )
   GetWindowRect16( lphc->self->hwndSelf, &rect );
   w = rect.right - rect.left; h = rect.bottom - rect.top;
 
-  dprintf_info(combo,"COMBO_Size: w = %i, h = %i\n", w, h );
+  TRACE(combo,"w = %i, h = %i\n", w, h );
 
   /* CreateWindow() may send a bogus WM_SIZE, ignore it */
 
@@ -1257,8 +1262,8 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
     {
       LPHEADCOMBO	lphc = CB_GETPTR(pWnd);
 
-      dprintf_info(combo, "Combo [%04x]: msg %s wp %08x lp %08lx\n",
-                     pWnd->hwndSelf, SPY_GetMsgName(message), wParam, lParam );
+      TRACE(combo, "[%04x]: msg %s wp %08x lp %08lx\n",
+		   pWnd->hwndSelf, SPY_GetMsgName(message), wParam, lParam );
 
       if( lphc || message == WM_NCCREATE )
       switch(message) 
@@ -1559,7 +1564,7 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return (lphc->wState & CBF_EUI) ? TRUE : FALSE;
 
 	case (WM_USER + 0x1B):
-	        dprintf_warn(combo, "Combo [%04x]: undocumented msg!\n", (HWND16)hwnd );
+	        WARN(combo, "[%04x]: undocumented msg!\n", (HWND16)hwnd );
     }
     return DefWindowProc32A(hwnd, message, wParam, lParam);
   }

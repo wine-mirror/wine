@@ -28,7 +28,7 @@ void shm_read_wait(shm_sem semid)
   struct sembuf sop[2];
   int ret;
   
-  dprintf_info(sem,"shm_read_wait(%d)\n",semid);
+  TRACE(sem,"(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=1;		   /* add this read instance */
   sop[0].sem_flg=SEM_UNDO;	   /* undo in case process dies */
@@ -50,7 +50,7 @@ void shm_write_wait(shm_sem semid)
   struct sembuf sop[3];
   int ret;
   
-  dprintf_info(sem,"shm_write_wait(%d)\n",semid);
+  TRACE(sem,"(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=0;		   /* wait until no reading instance exist */
   sop[0].sem_flg=SEM_UNDO;		   
@@ -76,7 +76,7 @@ void shm_write_signal(shm_sem semid)
   struct sembuf sop[2];
   int ret;
 
-  dprintf_info(sem,"shm_write_signal(%d)\n",semid);
+  TRACE(sem,"(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=-1;	
   sop[0].sem_flg=IPC_NOWAIT | SEM_UNDO;	/* no reason to wait */
@@ -99,7 +99,7 @@ void shm_read_signal(shm_sem semid)
   struct sembuf sop[2];
   int ret;
 
-  dprintf_info(sem,"shm_read_signal(%d)\n",semid);
+  TRACE(sem,"(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=-1;	
   sop[0].sem_flg=IPC_NOWAIT | SEM_UNDO;	/* no reason to wait */

@@ -31,7 +31,7 @@ HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
     HGDIOBJ32 ret = 0;
 
     if (!ptr) return 0;
-    dprintf_info(gdi, "SelectObject: hdc=%04x %04x\n", dc->hSelf, handle );
+    TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {

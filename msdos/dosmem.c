@@ -387,7 +387,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
    LPVOID       lin;
 
    lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
-   dprintf_info(selector,"DOSMEM_MapR2L(0x%08lx) returns 0x%p.\n",
+   TRACE(selector,"(0x%08lx) returns 0x%p.\n",
                     x,lin );
    return lin;
 }
@@ -406,7 +406,7 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 		GMEM_FIXED,DOSMEM_dosmem+realsel*16,0x10000,
 		hModule,FALSE,FALSE,FALSE,NULL
 	);
-	dprintf_info(selector,"DOSMEM_AllocSelector(0x%04x) returns 0x%04x.\n",
+	TRACE(selector,"(0x%04x) returns 0x%04x.\n",
 		realsel,sel
 	);
 	return sel;

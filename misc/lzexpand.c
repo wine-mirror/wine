@@ -118,7 +118,7 @@ static INT32 read_header(HFILE32 fd,struct lzfileheader *head)
  */
 INT16 WINAPI LZStart16(void)
 {
-    dprintf_info(file,"LZStart16(void)\n");
+    TRACE(file,"(void)\n");
     return 1;
 }
 
@@ -128,7 +128,7 @@ INT16 WINAPI LZStart16(void)
  */
 INT32 WINAPI LZStart32(void)
 {
-    dprintf_info(file,"LZStart32(void)\n");
+    TRACE(file,"(void)\n");
     return 1;
 }
 
@@ -161,7 +161,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 	struct	lzstate		*lzs;
 	DWORD	ret;
 
-	dprintf_info(file,"LZInit(%d)\n",hfSrc);
+	TRACE(file,"(%d)\n",hfSrc);
 	ret=read_header(hfSrc,&head);
 	if (ret<=0) {
 		_llseek32(hfSrc,0,SEEK_SET);
@@ -194,7 +194,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
  */
 void WINAPI LZDone(void)
 {
-    dprintf_info(file,"LZDone()\n");
+    TRACE(file,"(void)\n");
 }
 
 
@@ -226,7 +226,7 @@ INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
 	INT32		fnislowercased,ret,len;
 	LPSTR		s,t;
 
-	dprintf_info(file,"GetExpandedName(%s)\n",in);
+	TRACE(file,"(%s)\n",in);
 	fd=OpenFile32(in,&ofs,OF_READ);
 	if (fd==HFILE_ERROR32)
 		return (INT32)(INT16)LZERROR_BADINHANDLE;
@@ -322,7 +322,7 @@ INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
 	struct	lzstate	*lzs;
 
 	buf=(LPBYTE)vbuf;
-	dprintf_info(file,"LZRead32(%d,%p,%d)\n",fd,buf,toread);
+	TRACE(file,"(%d,%p,%d)\n",fd,buf,toread);
 	howmuch=toread;
 	for (i=0;i<nroflzstates;i++)
 		if (lzstates[i].lzfd==fd)
@@ -426,7 +426,7 @@ LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
 	struct	lzstate	*lzs;
 	LONG	newwanted;
 
-	dprintf_info(file,"LZSeek(%d,%ld,%d)\n",fd,off,type);
+	TRACE(file,"(%d,%ld,%d)\n",fd,off,type);
 	for (i=0;i<nroflzstates;i++)
 		if (lzstates[i].lzfd==fd)
 			break;
@@ -479,7 +479,7 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 	BYTE	buf[BUFLEN];
 	INT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
 
-	dprintf_info(file,"LZCopy(%d,%d)\n",src,dest);
+	TRACE(file,"(%d,%d)\n",src,dest);
 	for (i=0;i<nroflzstates;i++)
 		if (src==lzstates[i].lzfd)
 			break;
@@ -545,7 +545,7 @@ HFILE32 WINAPI LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 {
 	HFILE32	fd,cfd;
 
-	dprintf_info(file,"LZOpenFile(%s,%p,%d)\n",fn,ofs,mode);
+	TRACE(file,"(%s,%p,%d)\n",fn,ofs,mode);
 	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
 	fd=OpenFile32(fn,ofs,mode);
 	if (fd==HFILE_ERROR32)
@@ -603,7 +603,7 @@ void WINAPI LZClose32( HFILE32 fd )
 {
 	int	i;
 
-	dprintf_info(file,"LZClose(%d)\n",fd);
+	TRACE(file,"(%d)\n",fd);
 	for (i=0;i<nroflzstates;i++)
 		if (lzstates[i].lzfd==fd)
 			break;
@@ -626,7 +626,7 @@ void WINAPI LZClose32( HFILE32 fd )
  */
 LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 {
-    dprintf_info(file,"CopyLZFile16(%d,%d)\n",src,dest);
+    TRACE(file,"(%d,%d)\n",src,dest);
     return LZCopy32(src,dest);
 }
 
@@ -639,6 +639,6 @@ LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
  */
 LONG WINAPI CopyLZFile32( HFILE32 src, HFILE32 dest )
 {
-    dprintf_info(file,"CopyLZFile32(%d,%d)\n",src,dest);
+    TRACE(file,"(%d,%d)\n",src,dest);
     return LZCopy32(src,dest);
 }

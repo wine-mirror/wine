@@ -54,7 +54,7 @@ static void  ver_dstring(
     char const * teststring,
     char const * epilogue )
 {
-    dprintf_info(ver, "%s %p (\"%s\") %s\n", prologue, 
+    TRACE(ver, "%s %p (\"%s\") %s\n", prologue, 
 		(void const *) teststring, 
 		teststring ? teststring : "(null)",
 		epilogue);
@@ -72,7 +72,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 {
         dbg_decl_str(ver, 1024);
 
-	dprintf_info(ver," structversion=0x%lx.0x%lx, fileversion=0x%lx.0x%lx, productversion=0x%lx.0x%lx, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
+	TRACE(ver," structversion=0x%lx.0x%lx, fileversion=0x%lx.0x%lx, productversion=0x%lx.0x%lx, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
 		    (vffi->dwStrucVersion>>16),vffi->dwStrucVersion&0xFFFF,
 		    vffi->dwFileVersionMS,vffi->dwFileVersionLS,
 		    vffi->dwProductVersionMS,vffi->dwProductVersionLS,
@@ -106,7 +106,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 	case VOS__PM32:dsprintf(ver,"PM32");break;
 	default:dsprintf(ver,"UNKNOWN(0x%lx)",vffi->dwFileOS&0xFFFF);break;
 	}
-	dprintf_info(ver, "(%s)\n", dbg_str(ver));
+	TRACE(ver, "(%s)\n", dbg_str(ver));
 
 	dbg_reset_str(ver);
 	switch (vffi->dwFileType) {
@@ -172,9 +172,9 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 	case VFT_VXD:dsprintf(ver,"filetype=VXD");break;
 	case VFT_STATIC_LIB:dsprintf(ver,"filetype=STATIC_LIB");break;
 	}
-	dprintf_info(ver, "%s\n", dbg_str(ver));
+	TRACE(ver, "%s\n", dbg_str(ver));
 
-	dprintf_info(ver, "  filedata=0x%lx.0x%lx\n",
+	TRACE(ver, "  filedata=0x%lx.0x%lx\n",
 		    vffi->dwFileDateMS,vffi->dwFileDateLS);
 }
 
@@ -316,13 +316,13 @@ static int find_ne_resource(
 	nehdoffset = LZTELL(lzfd);
 	LZREAD(&nehd);
 	if (nehd.resource_tab_offset==nehd.rname_tab_offset) {
-		dprintf_info(ver,"no resources in NE dll\n");
+		TRACE(ver,"no resources in NE dll\n");
 		return 0;
 	}
 	LZSeek32(lzfd,nehd.resource_tab_offset+nehdoffset,SEEK_SET);
 	LZREAD(&shiftcount);
-	dprintf_info(ver,"shiftcount is %d\n",shiftcount);
-	dprintf_info(ver,"reading resource typeinfo dir.\n");
+	TRACE(ver,"shiftcount is %d\n",shiftcount);
+	TRACE(ver,"reading resource typeinfo dir.\n");
 
 	if (!HIWORD(typeid)) typeid = (SEGPTR)(LOWORD(typeid) | 0x8000);
 	if (!HIWORD(resid))  resid  = (SEGPTR)(LOWORD(resid) | 0x8000);
@@ -332,7 +332,7 @@ static int find_ne_resource(
 		LZREAD(&ti);
 		if (!ti.type_id)
 			return 0;
-		dprintf_info(ver,"    ti.typeid =%04x,count=%d\n",ti.type_id,ti.count);
+		TRACE(ver,"    ti.typeid =%04x,count=%d\n",ti.type_id,ti.count);
 
 		skipflag=0;
 		if (!HIWORD(typeid)) {
@@ -356,7 +356,7 @@ static int find_ne_resource(
 				str=xmalloc(len);
 				if (len!=LZRead32(lzfd,str,len))
 					return 0;
-				dprintf_info(ver,"read %s to compare it with %s\n",
+				TRACE(ver,"read %s to compare it with %s\n",
 					str,(char*)PTR_SEG_TO_LIN(typeid)
 				);
 				if (lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
@@ -374,7 +374,7 @@ static int find_ne_resource(
 			int	len;
 
 			LZREAD(&ni);
-			dprintf_info(ver,"	ni.id=%4x,offset=%d,length=%d\n",
+			TRACE(ver,"	ni.id=%4x,offset=%d,length=%d\n",
 				ni.id,ni.offset,ni.length
 			);
 			skipflag=1;
@@ -397,7 +397,7 @@ static int find_ne_resource(
 					str=xmalloc(len);
 					if (len!=LZRead32(lzfd,str,len))
 						return 0;
-					dprintf_info(ver,"read %s to compare it with %s\n",
+					TRACE(ver,"read %s to compare it with %s\n",
 						str,(char*)PTR_SEG_TO_LIN(typeid)
 					);
 					if (!lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
@@ -416,7 +416,7 @@ static int find_ne_resource(
 				free(rdata);
 				return 0;
 			}
-			dprintf_info(ver,"resource found.\n");
+			TRACE(ver,"resource found.\n");
 			*resdata= (BYTE*)rdata;
 			*reslen	= len;
 			return 1;
@@ -445,7 +445,7 @@ find_pe_resource(
 	pehdoffset = LZTELL(lzfd);
 	LZREAD(&pehd);
 	resdir = pehd.OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-	dprintf_info(ver,"find_pe_resource(.,%p,%p,....)\n",typeid,resid);
+	TRACE(ver,"(.,%p,%p,....)\n",typeid,resid);
 	if (!resdir.Size) {
 		fprintf(stderr,"misc/ver.c:find_pe_resource() no resource directory found in PE file.\n");
 		return 0;
@@ -480,20 +480,20 @@ find_pe_resource(
 	resourcedir = (LPIMAGE_RESOURCE_DIRECTORY)(image+resdir.VirtualAddress);
 	xresdir = GetResDirEntryW(resourcedir,typeid,(DWORD)resourcedir,FALSE);
 	if (!xresdir) {
-		dprintf_info(ver,"...no typeid entry found for %p\n",typeid);
+		TRACE(ver,"...no typeid entry found for %p\n",typeid);
 		HeapFree(GetProcessHeap(),0,image);
 		return 0;
 	}
 	xresdir = GetResDirEntryW(xresdir,resid,(DWORD)resourcedir,FALSE);
 	if (!xresdir) {
-		dprintf_info(ver,"...no resid entry found for %p\n",resid);
+		TRACE(ver,"...no resid entry found for %p\n",resid);
 		HeapFree(GetProcessHeap(),0,image);
 		return 0;
 	}
 	
 	xresdir = GetResDirEntryW(xresdir,0,(DWORD)resourcedir,TRUE);
 	if (!xresdir) {
-		dprintf_info(ver,"...no 0 (default language) entry found for %p\n",resid);
+		TRACE(ver,"...no 0 (default language) entry found for %p\n",resid);
 		HeapFree(GetProcessHeap(),0,image);
 		return 0;
 	}
@@ -527,7 +527,7 @@ DWORD WINAPI GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	int			reslen=0;
 	int			res=0;
 
-	dprintf_info(ver,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
+	TRACE(ver,"(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
 	);
 	lzfd=LZOpenFile32A(filename,&ofs,OF_READ);
@@ -564,7 +564,7 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	int			res=0;
 	int			reslen=datalen;
 
-	dprintf_info(ver,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
+	TRACE(ver,"(%s,%lx,%lx,%ld,%ld,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
 
@@ -603,7 +603,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 	BYTE	buf[144];
 	VS_FIXEDFILEINFO *vffi;
 
-	dprintf_info(ver,"GetFileVersionInfoSize16(%s,%p)\n",filename,handle);
+	TRACE(ver,"(%s,%p)\n",filename,handle);
 	len=GetFileResourceSize(filename,VS_FILE_INFO,VS_VERSION_INFO,handle);
 	if (!len)
 		return 0;
@@ -629,7 +629,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 	if (*(WORD*)buf < len)
 		len = *(WORD*)buf;
 
-	if(debugging_info(ver))
+	if(TRACE_ON(ver))
 	  print_vffi_debug(vffi);
 
 	return len;
@@ -638,7 +638,7 @@ DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
 /* GetFileVersionInfoSize32A			[VERSION.1] */
 DWORD WINAPI GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle)
 {
-	dprintf_info(ver,"GetFileVersionInfoSize32A(%s,%p)\n",filename,handle);
+	TRACE(ver,"(%s,%p)\n",filename,handle);
 	return GetFileVersionInfoSize16(filename,handle);
 }
 
@@ -655,7 +655,7 @@ DWORD WINAPI GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
 DWORD  WINAPI GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,
                                    LPVOID data)
 {
-	dprintf_info(ver,"GetFileVersionInfo16(%s,%ld,%ld,%p)\n",
+	TRACE(ver,"(%s,%ld,%ld,%p)\n",
 		filename,handle,datasize,data
 	);
 	return GetFileResource(
@@ -712,27 +712,27 @@ DWORD WINAPI VerFindFile16(
     retval = 0;
 
     /* Print out debugging information */
-    dprintf_info(ver, "VerFindFile() called with parameters:\n"
-		"\tflags = %x", flags);
+    TRACE(ver, "called with parameters:\n"
+		 "\tflags = %x", flags);
     if(flags & VFFF_ISSHAREDFILE)
-	dprintf_info(ver, " (VFFF_ISSHAREDFILE)\n");
+	TRACE(ver, " (VFFF_ISSHAREDFILE)\n");
     else
-	dprintf_info(ver, "\n");
+	TRACE(ver, "\n");
 
     ver_dstring("\tlpszFilename = ", lpszFilename, "");
     ver_dstring("\tlpszWinDir = ", lpszWinDir, "");
     ver_dstring("\tlpszAppDir = ", lpszAppDir, "");
 
-    dprintf_info(ver, "\tlpszCurDir = %p\n", lpszCurDir);
+    TRACE(ver, "\tlpszCurDir = %p\n", lpszCurDir);
     if(lpuCurDirLen)
-	dprintf_info(ver, "\tlpuCurDirLen = %p (%u)\n",
+	TRACE(ver, "\tlpuCurDirLen = %p (%u)\n",
 		    lpuCurDirLen, *lpuCurDirLen);
     else
-	dprintf_info(ver, "\tlpuCurDirLen = (null)\n");
+	TRACE(ver, "\tlpuCurDirLen = (null)\n");
 
-    dprintf_info(ver, "\tlpszDestDir = %p\n", lpszDestDir);
+    TRACE(ver, "\tlpszDestDir = %p\n", lpszDestDir);
     if(lpuDestDirLen)
-	dprintf_info(ver, "\tlpuDestDirLen = %p (%u)\n",
+	TRACE(ver, "\tlpuDestDirLen = %p (%u)\n",
 		    lpuDestDirLen, *lpuDestDirLen);
 
     /* Figure out where the file should go; shared files default to the
@@ -820,21 +820,21 @@ DWORD WINAPI VerFindFile16(
 	*lpuCurDirLen = curDirSizeReq;
     }
 
-    dprintf_info(ver, "VerFindFile() ret = %lu (%s%s%s)\n", retval,
-		(retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
-		(retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
-		(retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "");
+    TRACE(ver, "ret = %lu (%s%s%s)\n", retval,
+		 (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
+		 (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
+		 (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "");
 
     ver_dstring("\t(Exit) lpszCurDir = ", lpszCurDir, "");
     if(lpuCurDirLen)
-	dprintf_info(ver, "\t(Exit) lpuCurDirLen = %p (%u)\n",
+	TRACE(ver, "\t(Exit) lpuCurDirLen = %p (%u)\n",
 		    lpuCurDirLen, *lpuCurDirLen);
     else
-	dprintf_info(ver, "\t(Exit) lpuCurDirLen = (null)\n");
+	TRACE(ver, "\t(Exit) lpuCurDirLen = (null)\n");
 
     ver_dstring("\t(Exit) lpszDestDir = ", lpszDestDir, "");
     if(lpuDestDirLen)
-	dprintf_info(ver, "\t(Exit) lpuDestDirLen = %p (%u)\n",
+	TRACE(ver, "\t(Exit) lpuDestDirLen = %p (%u)\n",
 		    lpuDestDirLen, *lpuDestDirLen);
 
     return retval;
@@ -1191,13 +1191,13 @@ _find_dataA(BYTE *block,LPCSTR str, int buff_remain) {
 
 	while (1) {
 		db=(struct dbA*)block;
-		dprintf_info(ver,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s\n",
+		TRACE(ver,"db=%p,db->nextoff=%d,db->datalen=%d,db->name=%s\n",
 			db,db->nextoff,db->datalen,db->name
 		);
 		if ((!db->nextoff) || (buff_remain<=0)) /* no more entries ? */
 			return NULL;
 
-		dprintf_info(ver,"comparing with %s\n",db->name);
+		TRACE(ver,"comparing with %s\n",db->name);
 		if (!lstrncmpi32A(db->name,str,substrlen)) {
 			if (nextslash) {
 				inc_size=DATA_OFFSET_A(db)+((db->datalen+3)&~3);
@@ -1248,7 +1248,7 @@ _find_dataW(BYTE *block,LPCWSTR str, int buff_remain) {
 		} else
 			vs = HEAP_strdupA(GetProcessHeap(),0,"no data");
 
-		dprintf_info(ver,"db->nextoff=%d,db->name=%s,db->data=\"%s\"\n",
+		TRACE(ver,"db->nextoff=%d,db->name=%s,db->data=\"%s\"\n",
 			db->nextoff,xs,vs
 		);
 		HeapFree(GetProcessHeap(),0,vs);
@@ -1284,7 +1284,7 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 	LPSTR	s;
 	BYTE	*block=PTR_SEG_TO_LIN(segblock),*b;
 
-	dprintf_info(ver,"VerQueryValue16(%p,%s,%p,%d)\n",
+	TRACE(ver,"(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
 
@@ -1312,10 +1312,10 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 		*buflen	= db->datalen;
 		if (db->btext) {
 		    xs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
-		    dprintf_info(ver,"->%s\n",xs);
+		    TRACE(ver,"->%s\n",xs);
 		    HeapFree(GetProcessHeap(),0,xs);
 		} else
-		    dprintf_info(ver,"->%p\n",b);
+		    TRACE(ver,"->%p\n",b);
 	} else {
 		struct	dbA	*db;
 		b=_find_dataA(block,s,*(WORD*)block);
@@ -1330,9 +1330,9 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 		*buflen	= db->datalen;
 		/* the string is only printable, if it is below \\StringFileInfo*/
 		if (!lstrncmpi32A("VS_VERSION_INFO\\StringFileInfo\\",s,strlen("VS_VERSION_INFO\\StringFileInfo\\")))
-		    dprintf_info(ver,"	-> %s=%s\n",subblock,b);
+		    TRACE(ver,"	-> %s=%s\n",subblock,b);
 		else
-		    dprintf_info(ver,"	-> %s=%p\n",subblock,b);
+		    TRACE(ver,"	-> %s=%p\n",subblock,b);
 	}
 	*buffer	= (b-block)+segblock;
 	free(s);
@@ -1345,7 +1345,7 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 	BYTE	*b,*block=(LPBYTE)vblock,**buffer=(LPBYTE*)vbuffer;
 	LPSTR	s;
 
-	dprintf_info(ver,"VerQueryValue32A(%p,%s,%p,%d)\n",
+	TRACE(ver,"(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
 
@@ -1374,10 +1374,10 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		b	= b+DATA_OFFSET_W(db);
 		if (db->btext) {
 		    xs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
-		    dprintf_info(ver,"->%s\n",xs);
+		    TRACE(ver,"->%s\n",xs);
 		    HeapFree(GetProcessHeap(),0,xs);
 		} else
-		    dprintf_info(ver,"->%p\n",b);
+		    TRACE(ver,"->%p\n",b);
 		/* This is a leak.  */
 		b = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
 	} else {
@@ -1395,9 +1395,9 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 
 		/* the string is only printable, if it is below \\StringFileInfo*/
 		if (!lstrncmpi32A("VS_VERSION_INFO\\StringFileInfo\\",s,strlen("VS_VERSION_INFO\\StringFileInfo\\")))
-		    dprintf_info(ver,"	-> %s=%s\n",subblock,b);
+		    TRACE(ver,"	-> %s=%s\n",subblock,b);
 		else
-		    dprintf_info(ver,"	-> %s=%p\n",subblock,b);
+		    TRACE(ver,"	-> %s=%p\n",subblock,b);
 	}
 	*buffer	= b;
 	free(s);

@@ -16,7 +16,7 @@
 #include "version.h"
 #include "language.h"
 #include "winclock.h"
-// #include "commdlg.h"
+#include "commdlg.h"
 
 #ifdef WINELIB
    #include "options.h"
@@ -38,6 +38,7 @@ CLOCK_GLOBALS Globals;
 
 int CLOCK_MenuCommand (WPARAM wParam)
 {  
+   CHAR   caption[MAX_STRING_LEN];
    switch (wParam) {
      case CL_ANALOG: {
          Globals.bAnalog = TRUE;
@@ -45,6 +46,9 @@ int CLOCK_MenuCommand (WPARAM wParam)
 	               MF_BYCOMMAND | MF_CHECKED);
 	 CheckMenuItem(Globals.hPropertiesMenu, CL_DIGITAL, \
 	               MF_BYCOMMAND | MF_UNCHECKED);
+	 EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
+                       MF_BYCOMMAND | MF_GRAYED);
+	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
 	 break;	     
        } 
      case CL_DIGITAL: {
@@ -53,35 +57,22 @@ int CLOCK_MenuCommand (WPARAM wParam)
 	               MF_BYCOMMAND | MF_UNCHECKED);
 	 CheckMenuItem(Globals.hPropertiesMenu, CL_DIGITAL, \
 	               MF_BYCOMMAND | MF_CHECKED);
+	 EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
+                       MF_BYCOMMAND | MF_ENABLED);
+	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
 	 break;	       
        }
      case CL_FONT:
-       printf("FONT:");
-/*	CHOOSEFONT fontl;
-	fontl.lStructSize	= 0;
-        fontl.hwndOwner		= Globals.hMainWnd;
-        fontl.hDC		= NULL;
-        fontl.lpLogFont  	= 0;
-        fontl.iPointSize	   	= 0;
-        fontl.Flags		= 0;
-        fontl.rgbColors		= 0;
-        fontl.lCustData		= 0;
-        fontl.lpfnHook		= 0;
-        fontl.lpTemplateName	= 0;
-        fontl.hInstance		= Globals.hInstance;
-        fontl.lpszStyle		= 0;
-        fontl.nFontType		= 0;
-        fontl.nSizeMin		= 0;
-        fontl.nSizeMax		= 100;
-
-	if (ChooseFont(&font)); 
-*/
+	MAIN_FileChooseFont();
        break;
      case CL_WITHOUT_TITLE:
        Globals.bWithoutTitle = !Globals.bWithoutTitle;
        CheckMenuItem(Globals.hPropertiesMenu, CL_WITHOUT_TITLE, MF_BYCOMMAND | \
                      (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
-       printf("NO TITLE:");
+	SetMenu(Globals.hMainWnd, NULL);
+  	SetWindowText(Globals.hMainWnd, NULL);
+    	UpdateWindow (Globals.hMainWnd);
+        printf("NO TITLE:");
        break;
      case CL_ON_TOP:
        Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
@@ -92,11 +83,34 @@ int CLOCK_MenuCommand (WPARAM wParam)
        Globals.bSeconds = !Globals.bSeconds;
        CheckMenuItem(Globals.hPropertiesMenu, CL_SECONDS, MF_BYCOMMAND | \
                      (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
+       SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
        break;
      case CL_DATE:
        Globals.bDate = !Globals.bDate;
        CheckMenuItem(Globals.hPropertiesMenu, CL_DATE, MF_BYCOMMAND | \
                      (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
+       LoadString(Globals.hInstance, IDS_CLOCK, caption, sizeof(caption));
+       if (Globals.bDate)
+       {
+	 if (Globals.bAnalog)
+	 {
+	   /* FIXME: Add date to caption */
+	   SetWindowText(Globals.hMainWnd, caption);
+	 }
+	 else
+	 {
+	 }
+       }
+       else 
+       {
+	 if (Globals.bAnalog)
+         {
+           SetWindowText(Globals.hMainWnd, caption);
+         }
+         else
+         {
+         }
+       }
        break;
      case CL_INFO_LICENSE:
        WineLicense(Globals.hMainWnd, Globals.lpszLanguage);
@@ -109,12 +123,33 @@ int CLOCK_MenuCommand (WPARAM wParam)
      break;
      // Handle languages
      default:
-       LANGUAGE_DefaultLanguageHandle(wParam); 
+       LANGUAGE_DefaultHandle(wParam); 
    }
    return 0;
 }
 
+VOID MAIN_FileChooseFont(VOID) {
 
+  CHOOSEFONT font;
+        font.lStructSize       = 0;
+        font.hwndOwner         = Globals.hMainWnd;
+        font.hDC               = NULL;
+        font.lpLogFont         = 0;
+        font.iPointSize        = 0;
+        font.Flags             = 0;
+        font.rgbColors         = 0;
+        font.lCustData         = 0;
+        font.lpfnHook          = 0;
+        font.lpTemplateName    = 0;
+        font.hInstance         = Globals.hInstance;
+        font.lpszStyle         = LF_FACESIZE;
+        font.nFontType         = 0;
+        font.nSizeMin          = 0;
+        font.nSizeMax          = 0;
+
+        if (ChooseFont(&font));
+
+}
 
 /***********************************************************************
  *
@@ -125,6 +160,7 @@ LRESULT CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC context;
+    CHAR   caption[MAX_STRING_LEN];
 
     switch (msg) {
 
@@ -134,6 +170,13 @@ LRESULT CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_RBUTTONUP:
 	  printf("WM_RBUTTONUP\n");
+	Globals.bWithoutTitle = !Globals.bWithoutTitle;
+	SetMenu(Globals.hMainWnd, Globals.hMainMenu);
+        UpdateWindow (Globals.hMainWnd);
+	CheckMenuItem(Globals.hPropertiesMenu, CL_WITHOUT_TITLE, \
+                       MF_BYCOMMAND | MF_UNCHECKED);
+	LoadString(Globals.hInstance, IDS_CLOCK, caption, sizeof(caption));
+        SetWindowText(Globals.hMainWnd, caption);
 	break;
 
 	case WM_PAINT:
@@ -205,14 +248,13 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     printf("WinMain()\n");
     
     /* Setup Globals */
-
     Globals.bAnalog	  = TRUE;
     Globals.bSeconds      = TRUE;
     Globals.lpszIniFile   = "clock.ini";
     Globals.lpszIcoFile   = "clock.ico";
 
   /* Select Language */
-    LANGUAGE_InitLanguage();
+    LANGUAGE_Init();
 
     Globals.hInstance     = hInstance;
     Globals.hMainIcon     = ExtractIcon(Globals.hInstance, 
@@ -242,8 +284,19 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 			LoadMenu(Globals.hInstance, STRING_MENU_Xx),
 			Globals.hInstance, 0);
 			
-    LANGUAGE_SelectLanguageByName(Globals.lpszLanguage);
+    LANGUAGE_SelectByName(Globals.lpszLanguage);
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
+
+//    Globals.hPopupMenu1 = CreatePopupMenu();
+//    Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
+//    printf("%i", Globals.hSystemMenu);
+    
+    AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND,
+                 1000, "item");
+    SetSystemMenu(Globals.hMainWnd, Globals.hSystemMenu);
+
+    EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
+                    MF_BYCOMMAND | MF_GRAYED);
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
 

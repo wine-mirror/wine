@@ -16,7 +16,7 @@ type	win32
  12 stub CheckColorsInGamut
  13 stub ChoosePixelFormat
  14 stdcall Chord(long long long long long long long long long) Chord32
- 15 stub CloseEnhMetaFile
+ 15 stdcall CloseEnhMetaFile(long) CloseEnhMetaFile32
  16 stdcall CloseFigure(long) CloseFigure32
  17 stub CloseMetaFile
  18 stub ColorMatchToTarget
@@ -42,7 +42,7 @@ type	win32
  38 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap32
  39 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn32
  40 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
- 41 stub CreateEnhMetaFileA
+ 41 stdcall CreateEnhMetaFileA(long ptr ptr ptr) CreateEnhMetaFile32A
  42 stub CreateEnhMetaFileW
  43 stdcall CreateFontA(long long long long long long long long
                         long long long long long str) CreateFont32A
@@ -72,7 +72,7 @@ type	win32
  65 stdcall DPtoLP(long ptr long) DPtoLP32
  66 stub DeleteColorSpace
  67 stdcall DeleteDC(long) DeleteDC32
- 68 stub DeleteEnhMetaFile
+ 68 stdcall DeleteEnhMetaFile(long) DeleteEnhMetaFile32
  69 stub DeleteMetaFile
  70 stdcall DeleteObject(long)	DeleteObject32
  71 stub DescribePixelFormat
@@ -83,7 +83,7 @@ type	win32
  76 stub EndDoc
  77 stub EndPage
  78 stdcall EndPath(long) EndPath32
- 79 stub EnumEnhMetaFile
+ 79 stdcall EnumEnhMetaFile(long long ptr ptr ptr) EnumEnhMetaFile32
  80 stdcall EnumFontFamiliesA(long str ptr long) EnumFontFamilies32A
  81 stdcall EnumFontFamiliesExA(long str ptr long long) EnumFontFamiliesEx32A
  82 stdcall EnumFontFamiliesExW(long wstr ptr long long) EnumFontFamiliesEx32W
@@ -178,11 +178,11 @@ type	win32
 171 stdcall GetDeviceCaps(long long) GetDeviceCaps32
 172 stub GetDeviceGammaRamp
 173 stub GetETM
-174 stub GetEnhMetaFileA
+174 stdcall GetEnhMetaFileA(ptr) GetEnhMetaFile32A
 175 stub GetEnhMetaFileBits
-176 stub GetEnhMetaFileDescriptionA
+176 stdcall GetEnhMetaFileDescriptionA(long long ptr) GetEnhMetaFileDescription32A
 177 stub GetEnhMetaFileDescriptionW
-178 stub GetEnhMetaFileHeader
+178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader32
 179 stub GetEnhMetaFilePaletteEntries
 180 stub GetEnhMetaFileW
 181 stub GetFontData
@@ -267,8 +267,8 @@ type	win32
 260 stdcall PatBlt(long long long long long long) PatBlt32
 261 stdcall PathToRegion(long) PathToRegion32
 262 stdcall Pie(long long long long long long long long long) Pie32
-263 stub PlayEnhMetaFile
-264 stub PlayEnhMetaFileRecord
+263 stdcall PlayEnhMetaFile(long long ptr) PlayEnhMetaFile32
+264 stdcall PlayEnhMetaFileRecord(long ptr ptr long) PlayEnhMetaFileRecord32
 265 stdcall PlayMetaFile(long long) PlayMetaFile32
 266 stub PlayMetaFileRecord
 267 stub PlgBlt

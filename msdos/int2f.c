@@ -78,6 +78,8 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
     case 0xbd:  /* some Novell network install check ??? */
         AX_reg(context) = 0xa5a5; /* pretend to have Novell IPX installed */
 	break;
+    case 0xfa:  /* Watcom debugger check, returns 0x666 if installed */
+        break;
     default:
         INT_BARF( context, 0x2f );
         break;

@@ -210,8 +210,8 @@ static int  TWEAK_VarInit()
 	    PROFILE_GetWineIniInt("Tweak.Colors", "Pen0095.Grn", 0x00),
 	    PROFILE_GetWineIniInt("Tweak.Colors", "Pen0095.Blu", 0x00)));
 
-    dprintf_info(tweak, "TWEAK_VarInit: Using %s look and feel.\n",
-		  TWEAK_Win95Look ? "Win95" : "Win3.1");
+    TRACE(tweak, "Using %s look and feel.\n",
+		 TWEAK_Win95Look ? "Win95" : "Win3.1");
     return 1;
 }
 

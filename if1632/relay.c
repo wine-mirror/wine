@@ -17,7 +17,7 @@
 
 #if 0
 /* Make make_debug think these were really used */
-dprintf_info(relay, "test - dummy");
+TRACE(relay, "test - dummy");
 #endif
 
 
@@ -81,7 +81,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     char *args16;
     int i;
 
-    if (!debugging_info(relay)) return;
+    if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
     printf( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
@@ -199,7 +199,7 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
     STACK16FRAME *frame;
     WORD ordinal;
 
-    if (!debugging_info(relay)) return;
+    if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
     printf( "Ret  %s() ", BUILTIN_GetEntryPoint16( frame->entry_cs,
                                                    frame->entry_ip,
@@ -257,7 +257,7 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 {
     THDB *thdb;
 
-    if (!debugging_info(relay)) return;
+    if (!TRACE_ON(relay)) return;
     thdb = THREAD_Current();
 
     if (nb_args == -1)  /* Register function */
@@ -383,7 +383,7 @@ void WINAPI Throw( CONTEXT *context )
     if (lpbuf[8] != SS_reg(context))
         fprintf( stderr, "Switching stack segment with Throw() not supported; expect crash now\n" );
 
-    if (debugging_info(relay))  /* Make sure we have a valid entry point address */
+    if (TRACE_ON(relay))  /* Make sure we have a valid entry point address */
     {
         static FARPROC16 entryPoint = NULL;
 
@@ -468,7 +468,7 @@ static DWORD RELAY_CallProc32W(int Ex)
         if (!Ex) STACK16_POP( THREAD_Current(),
                               (3 + nrofargs) * sizeof(DWORD) );
 
-	dprintf_info(relay,"%s - returns %08lx\n",dbg_str(relay),ret);
+	TRACE(relay,"%s - returns %08lx\n",dbg_str(relay),ret);
 	HeapFree( GetProcessHeap(), 0, args );
 	return ret;
 }

@@ -14,4 +14,6 @@ type	win16
 13  pascal freeallusermem()		FreeAllUserMem
 14  pascal allocgdimem(word)		AllocGDIMem
 15  pascal freeallgdimem()		FreeAllGDIMem
-
+16  stub   GETFREEHEAP32SPACE
+17  stub   ALLOCHEAP32MEM
+18  stub   FREEALLHEAP32MEM

@@ -4,10 +4,8 @@
  *	Copyright 1995	Martin von Loewis
  */
 
-/*	At the moment, these are only empty stubs.
- */
-
 #include "windows.h"
+#include "winerror.h"
 #include "ole2.h"
 #include "process.h"
 #include "debug.h"
@@ -17,7 +15,7 @@
  */
 DWORD WINAPI OleBuildVersion()
 {
-    dprintf_info(ole,"OleBuildVersion()\n");
+    TRACE(ole,"(void)\n");
     return (rmm<<16)+rup;
 }
 
@@ -26,7 +24,7 @@ DWORD WINAPI OleBuildVersion()
  */
 HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
-    dprintf_fixme(ole,"OleInitialize - stub\n");
+    FIXME(ole,"OleInitialize - stub\n");
     return S_OK;
 }
 
@@ -39,7 +37,7 @@ DWORD WINAPI CoGetCurrentProcess() {
  */
 void WINAPI OleUninitialize(void)
 {
-    dprintf_fixme(ole,"OleUninitialize() - stub\n");
+    FIXME(ole,"stub\n");
 }
 
 /***********************************************************************
@@ -57,7 +55,7 @@ HRESULT WINAPI CoRegisterMessageFilter32(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
     LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
 ) {
-    dprintf_fixme(ole,"CoRegisterMessageFilter() - stub\n");
+    FIXME(ole,"stub\n");
     if (lplpMessageFilter) {
 	*lplpMessageFilter = NULL;
     }
@@ -71,3 +69,23 @@ HRESULT WINAPI OleInitializeWOW(DWORD x) {
         fprintf(stderr,"OleInitializeWOW(0x%08lx),stub!\n",x);
         return 0;
 }
+
+/***********************************************************************
+ *           GetRunningObjectTable (OLE2.30)
+ */
+HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
+	fprintf(stderr,"GetRunningObjectTable(%ld,%p),stub!\n",reserved,pprot);
+	return E_FAIL;
+}
+
+/***********************************************************************
+ *           RegisterDragDrop (OLE2.35)
+ */
+HRESULT WINAPI RegisterDragDrop16(
+	HWND16 hwnd,
+	LPDROPTARGET pDropTarget
+) {
+	fprintf(stderr,"RegisterDragDrop(0x%04x,%p),stub!\n",hwnd,pDropTarget);
+	return S_OK;
+}
+

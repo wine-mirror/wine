@@ -301,6 +301,7 @@ file	krnl386.exe
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
 431 pascal16 KERNEL_431(str word) KERNEL_431
 432 stub FileTimeToLocalFileTime
+434 stub KERNEL_434
 435 stub KERNEL_435
 439 stub KERNEL_439
 440 stub KERNEL_440
@@ -355,6 +356,6 @@ file	krnl386.exe
 621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
 630 stub KERNEL_630
-631 pascal FUNC004(word word long) FUNC004	#C16ThkSl01?
+631 pascal FUNC004(word word word) FUNC004	#C16ThkSl01?
 651 stub KERNEL_651				#ThunkConnect16?
 700 pascal KERNEL_700() stub_KERNEL_700

@@ -82,7 +82,10 @@ BOOL32 WINAPI GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
   char *name;
 
   name=getlogin();
+#if 0
+  /* FIXME: should use getpwuid() here */
   if (!name) name=cuserid(NULL);
+#endif
   len = name ? strlen(name) : 0;
   if (!len || !lpSize || len > *lpSize) {
     if (lpszName) *lpszName = 0;

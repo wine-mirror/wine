@@ -20,6 +20,7 @@ type	win32
  
  10 stub _KERNEL32_stringconv1 #ansi2oem or reverse?
  
+ 17 stub _KERNEL32_17
  18 stdcall _KERNEL32_18(long long) _KERNEL32_18
  19 stub _KERNEL32_getheapsegment
  
@@ -396,7 +397,7 @@ type	win32
 405 stdcall GetSystemPowerStatus(ptr) GetSystemPowerStatus
 406 stdcall GetSystemTime(ptr) GetSystemTime
 407 stub GetSystemTimeAdjustment
-408 stub GetSystemTimeAsFileTime
+408 stdcall GetSystemTimeAsFileTime(ptr) GetSystemTimeAsFileTime
 409 stub GetTapeParameters
 410 stub GetTapePosition
 411 stub GetTapeStatus
@@ -408,7 +409,7 @@ type	win32
 417 stdcall GetThreadLocale() GetThreadLocale
 418 stdcall GetThreadPriority(long) GetThreadPriority
 419 stdcall GetThreadSelectorEntry(long long ptr) GetThreadSelectorEntry
-420 stub GetThreadTimes
+420 stdcall GetThreadTimes(long ptr ptr ptr ptr) GetThreadTimes
 421 stdcall GetTickCount() GetTickCount
 422 stdcall GetTimeFormatA(long long ptr str ptr long) GetTimeFormat32A
 423 stub GetTimeFormatW
@@ -734,7 +735,7 @@ type	win32
 743 stdcall WritePrivateProfileStringW(wstr wstr wstr wstr) WritePrivateProfileString32W
 744 stub WritePrivateProfileStructA
 745 stub WritePrivateProfileStructW
-746 stub WriteProcessMemory
+746 stdcall WriteProcessMemory(long ptr ptr long ptr) WriteProcessMemory
 747 stub WriteProfileSectionA
 748 stub WriteProfileSectionW
 749 stdcall WriteProfileStringA(str str str) WriteProfileString32A

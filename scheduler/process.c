@@ -906,6 +906,20 @@ BOOL32 WINAPI ReadProcessMemory( HANDLE32 hProcess, LPCVOID lpBaseAddress,
 }
 
 /***********************************************************************
+ *           WriteProcessMemory    		(KERNEL32)
+ * FIXME: check this, if we ever run win32 binaries in different addressspaces
+ *	  ... and add a sizecheck
+ */
+BOOL32 WINAPI WriteProcessMemory(HANDLE32 hProcess, LPCVOID lpBaseAddress,
+                                 LPVOID lpBuffer, DWORD nSize,
+                                 LPDWORD lpNumberOfBytesWritten )
+{
+	memcpy(lpBaseAddress,lpBuffer,nSize);
+	if (lpNumberOfBytesWritten) *lpNumberOfBytesWritten = nSize;
+	return TRUE;
+}
+
+/***********************************************************************
  *           ConvertToGlobalHandle    		(KERNEL32)
  * FIXME: this is not correctly implemented...
  */

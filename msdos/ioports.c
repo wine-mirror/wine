@@ -215,7 +215,7 @@ DWORD IO_inport( int port, int count )
                 case 2: res = inw( port ); break;
                 case 4: res = inl( port ); break;
                 default:
-                    fprintf( stderr, "IO_inport: invalid count %d\n", count);
+                    ERR(int, "invalid count %d\n", count);
             }
             iopl(0);
             return res;
@@ -223,7 +223,7 @@ DWORD IO_inport( int port, int count )
     }
 #endif
 
-    dprintf_info(int, "IO: %d bytes from port 0x%02x\n", count, port );
+    TRACE(int, "%d bytes from port 0x%02x\n", count, port );
 
     while (count-- > 0)
     {
@@ -243,7 +243,7 @@ DWORD IO_inport( int port, int count )
         port++;
         res = (res << 8) | b;
     }
-    dprintf_info(int, "  returning ( 0x%lx )\n", res );
+    TRACE(int, "  returning ( 0x%lx )\n", res );
     return res;
 }
 
@@ -255,7 +255,7 @@ void IO_outport( int port, int count, DWORD value )
 {
     BYTE b;
 
-    dprintf_info(int, "IO: 0x%lx (%d bytes) to port 0x%02x\n",
+    TRACE(int, "IO: 0x%lx (%d bytes) to port 0x%02x\n",
                  value, count, port );
 
 #ifdef DIRECT_IO_ACCESS

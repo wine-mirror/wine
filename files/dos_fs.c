@@ -500,13 +500,13 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
     if ((p = strchr( name, '\\' ))) len = MIN( (int)(p - name), len );
     if (long_len < len + 1) return FALSE;
 
-    dprintf_info(dosfs, "DOSFS_FindUnixName: %s,%s\n", path, name );
+    TRACE(dosfs, "%s,%s\n", path, name );
 
     if (!DOSFS_ToDosFCBFormat( name, dos_name )) dos_name[0] = '\0';
 
     if (!(dir = DOSFS_OpenDir( path )))
     {
-        dprintf_warn(dosfs, "DOSFS_FindUnixName(%s,%s): can't open dir: %s\n",
+        WARN(dosfs, "(%s,%s): can't open dir: %s\n",
                        path, name, strerror(errno) );
         return FALSE;
     }
@@ -546,11 +546,11 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
             else
                 DOSFS_Hash( long_name, short_buf, FALSE, ignore_case );
         }
-        dprintf_info(dosfs, "(%s,%s) -> %s (%s)\n",
+        TRACE(dosfs, "(%s,%s) -> %s (%s)\n",
 		     path, name, long_name, short_buf ? short_buf : "***");
     }
     else
-        dprintf_warn(dosfs, "file: '%s' NOT FOUND in dir: '%s'\n", name, path);
+        WARN(dosfs, "'%s' not found in '%s'\n", name, path);
     DOSFS_CloseDir( dir );
     return ret;
 }
@@ -613,7 +613,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 				return GetStdHandle( STD_OUTPUT_HANDLE );
 				break;
 			default:
-				fprintf(stderr,"DOSFS_OpenDevice: CON cannot be opened read/write currently, FIXME.\n");
+				FIXME(dosfs,"can't open CON read/write\n");
 				return HFILE_ERROR32;
 				break;
 			}
@@ -679,7 +679,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     UINT32 flags;
     char *p_l, *p_s, *root;
 
-    dprintf_info(dosfs, "DOSFS_GetFullName: %s (last=%d)\n",
+    TRACE(dosfs, "%s (last=%d)\n",
                    name, check_last );
 
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
@@ -787,7 +787,7 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
     }
     if (!full->long_name[0]) strcpy( full->long_name, "/" );
     if (!full->short_name[2]) strcpy( full->short_name + 2, "\\" );
-    dprintf_info(dosfs, "DOSFS_GetFullName: returning %s = %s\n",
+    TRACE(dosfs, "returning %s = %s\n",
                    full->long_name, full->short_name );
     return TRUE;
 }
@@ -877,7 +877,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     int drive;
     char *p;
 
-    dprintf_info(dosfs, "GetFullPathName: converting %s\n", name );
+    TRACE(dosfs, "converting %s\n", name );
 
     if (!name || !result) return 0;
 
@@ -941,7 +941,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     if (unicode) lstrcpynAtoW( (LPWSTR)result, buffer, len );
     else lstrcpyn32A( result, buffer, len );
 
-    dprintf_info(dosfs, "GetFullPathName: returning %s\n", buffer );
+    TRACE(dosfs, "returning %s\n", buffer );
     return strlen(buffer);
 }
 
@@ -1026,7 +1026,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     else  /* Not in the cache, open it anew */
     {
         const char *drive_path;
-        dprintf_info(dosfs, "DOSFS_FindNext: cache miss, path=%s skip=%d buf=%s cur=%d\n",
+        TRACE(dosfs, "cache miss, path=%s skip=%d buf=%s cur=%d\n",
                        path, skip, buffer, cur_pos );
         cur_pos = skip;
         if (dir) DOSFS_CloseDir(dir);
@@ -1035,7 +1035,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         drive_path = path + strlen(DRIVE_GetRoot(drive));
         while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
         drive_root = !*drive_path;
-        dprintf_info(dosfs, "DOSFS_FindNext: drive_root = %d\n", drive_root);
+        TRACE(dosfs, "drive_root = %d\n", drive_root);
         lstrcpyn32A( buffer, path, sizeof(buffer) - 1 );
     }
     strcat( buffer, "/" );
@@ -1079,7 +1079,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         lstrcpyn32A( p, long_name, sizeof(buffer) - (int)(p - buffer) );
         if (!FILE_Stat( buffer, &info ))
         {
-            fprintf( stderr, "DOSFS_FindNext: can't stat %s\n", buffer );
+            WARN(dosfs, "can't stat %s\n", buffer);
             continue;
         }
         if (info.dwFileAttributes & ~attr) continue;
@@ -1101,7 +1101,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 
         lstrcpyn32A( entry->cFileName, long_name, sizeof(entry->cFileName) );
         if (!(flags & DRIVE_CASE_PRESERVING)) CharLower32A( entry->cFileName );
-        dprintf_info(dosfs, "DOSFS_FindNext: returning %s (%s) %02lx %ld\n",
+        TRACE(dosfs, "returning %s (%s) %02lx %ld\n",
                        entry->cFileName, entry->cAlternateFileName,
                        entry->dwFileAttributes, entry->nFileSizeLow );
         cur_pos += count;
@@ -1547,13 +1547,26 @@ BOOL32 WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
 BOOL32 WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                        LPFILETIME localft )
 {
-    struct tm *xtm;
     DWORD remainder;
-
     /* convert from UTC to local. Perhaps not correct. FIXME */
     time_t unixtime = DOSFS_FileTimeToUnixTime( utcft, &remainder );
+#ifdef HAVE_TIMEGM
+    struct tm *xtm = localtime( &unixtime );
+    time_t localtime;
+
+    localtime = timegm(xtm);
+    DOSFS_UnixTimeToFileTime( localtime, localft, remainder );
+
+#else
+    struct tm *xtm,*gtm;
+    time_t time1,time2;
+
     xtm = localtime( &unixtime );
-    DOSFS_UnixTimeToFileTime( mktime(xtm), localft, remainder );
+    gtm = gmtime( &unixtime );
+    time1 = mktime(xtm);
+    time2 = mktime(gtm);
+    DOSFS_UnixTimeToFileTime( 2*time1-time2, localft, remainder );
+#endif
     return TRUE; 
 }
 
@@ -1567,7 +1580,7 @@ BOOL32 WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
     DWORD remainder;
     time_t xtime = DOSFS_FileTimeToUnixTime( ft, &remainder );
     xtm = gmtime(&xtime);
-    syst->wYear         = xtm->tm_year;
+    syst->wYear         = xtm->tm_year+1900;
     syst->wMonth        = xtm->tm_mon + 1;
     syst->wDayOfWeek    = xtm->tm_wday;
     syst->wDay	        = xtm->tm_mday;
@@ -1588,7 +1601,7 @@ DWORD WINAPI QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
     LPSTR s;
     char  buffer[200];
 
-    dprintf_info(dosfs,"QueryDosDevice(%s,...)\n",devname?devname:"<null>");
+    TRACE(dosfs,"(%s,...)\n",devname?devname:"<null>");
     if (!devname) {
 	/* return known MSDOS devices */
 	lstrcpy32A(buffer,"CON COM1 COM2 LPT1 NUL ");
@@ -1629,15 +1642,33 @@ DWORD WINAPI QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
  */
 BOOL32 WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 {
+#ifdef HAVE_TIMEGM
     struct tm xtm;
+    time_t utctime;
+#else
+    struct tm xtm,*local_tm,*utc_tm;
+    time_t localtim,utctime;
+#endif
 
-    xtm.tm_year	= syst->wYear;
+    xtm.tm_year	= syst->wYear-1900;
     xtm.tm_mon	= syst->wMonth - 1;
     xtm.tm_wday	= syst->wDayOfWeek;
     xtm.tm_mday	= syst->wDay;
     xtm.tm_hour	= syst->wHour;
     xtm.tm_min	= syst->wMinute;
-    xtm.tm_sec	= syst->wSecond;
-    DOSFS_UnixTimeToFileTime( mktime(&xtm), ft, syst->wMilliseconds * 10000 );
+    xtm.tm_sec	= syst->wSecond; /* this is UTC */
+    xtm.tm_isdst = -1;
+#ifdef HAVE_TIMEGM
+    utctime = timegm(&xtm);
+    DOSFS_UnixTimeToFileTime( utctime, ft, 
+			      syst->wMilliseconds * 10000 );
+#else
+    localtim = mktime(&xtm);    /* now we've got local time */
+    local_tm = localtime(&localtim);
+    utc_tm = gmtime(&localtim);
+    utctime = mktime(utc_tm);
+    DOSFS_UnixTimeToFileTime( 2*localtim -utctime, ft, 
+			      syst->wMilliseconds * 10000 );
+#endif
     return TRUE; 
 }

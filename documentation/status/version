@@ -1,0 +1,20 @@
+This file contains information about the versioning libraries.
+They consist of VER.DLL (win16) and VERSION.DLL (win32).
+The implementation can be found in misc/ver.c.
+
+The purpose of this library is to:
+	- Extract resource information from possibly compressed files
+	- Install dlls including versionchecking
+	- Query version dependend variables.
+
+The resource extraction is almost complete. There have been no reports of
+missing functionality, but I am not sure about absolute completeness. 
+
+The DLL installation APIs do work, but is probably not correct.
+
+The API to query version dependend variables (VerQueryValue) works for
+both win16/win32 resources, but is probably not correct for some cases.
+
+FIXME:
+	- Check the installation functions.
+	- Verify VerQueryValue.

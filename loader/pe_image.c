@@ -74,20 +74,19 @@ void dump_exports( HMODULE32 hModule )
   IMAGE_EXPORT_DIRECTORY *pe_exports = (IMAGE_EXPORT_DIRECTORY*)RVA(rva_start);
 
   Module = (char*)RVA(pe_exports->Name);
-  dprintf_info(win32,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
-	 Module,
-	 pe_exports->NumberOfFunctions,
-	 pe_exports->NumberOfNames);
+  TRACE(win32,"*******EXPORT DATA*******\n");
+  TRACE(win32,"Module name is %s, %ld functions, %ld names\n", 
+	       Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
 
   ordinal=(u_short*) RVA(pe_exports->AddressOfNameOrdinals);
   functions=function=(u_long*) RVA(pe_exports->AddressOfFunctions);
   name=(u_char**) RVA(pe_exports->AddressOfNames);
 
-  dprintf_info(win32," Ord    RVA     Addr   Name\n" );
+  TRACE(win32," Ord    RVA     Addr   Name\n" );
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
   {
       if (!*function) continue;  /* No such function */
-      if (debugging_info(win32)){
+      if (TRACE_ON(win32)){
 	dbg_decl_str(win32, 1024);
 
 	dsprintf(win32,"%4ld %08lx %08x",
@@ -98,7 +97,7 @@ void dump_exports( HMODULE32 hModule )
 	    dsprintf(win32, "  %s", (char*)RVA(name[j]) );
 	if ((*function >= rva_start) && (*function <= rva_end))
 	  dsprintf(win32, " (forwarded -> %s)", (char *)RVA(*function));
-	dprintf_info(win32,"%s\n", dbg_str(win32));
+	TRACE(win32,"%s\n", dbg_str(win32));
       }
   }
 }
@@ -135,9 +134,9 @@ FARPROC32 PE_FindExportedFunction( PDB32 *process, HMODULE32 hModule,
 	exports   = pem->pe_export;
 
 	if (HIWORD(funcName))
-		dprintf_info(win32,"PE_FindExportedFunction(%s)\n",funcName);
+		TRACE(win32,"(%s)\n",funcName);
 	else
-		dprintf_info(win32,"PE_FindExportedFunction(%d)\n",(int)funcName);
+		TRACE(win32,"(%d)\n",(int)funcName);
 	if (!exports) {
 		fprintf(stderr,"Module %08x/MODREF %p doesn't have a exports table.\n",hModule,pem);
 		return NULL;
@@ -168,7 +167,7 @@ FARPROC32 PE_FindExportedFunction( PDB32 *process, HMODULE32 hModule,
 		}
 	} else {
 		if (LOWORD(funcName)-exports->Base > exports->NumberOfFunctions) {
-			dprintf_info(win32,"	ordinal %d out of range!\n",
+			TRACE(win32,"	ordinal %d out of range!\n",
                                       LOWORD(funcName));
 			return NULL;
 		}
@@ -192,7 +191,7 @@ FARPROC32 PE_FindExportedFunction( PDB32 *process, HMODULE32 hModule,
 	return NULL;
 }
 
-DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
+DWORD fixup_imports (PDB32 *process,PE_MODREF *pem)
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     int	fixup_failed		= 0;
@@ -206,12 +205,12 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
         modname = "<unknown>";
 
     /* OK, now dump the import list */
-    dprintf_info(win32, "\nDumping imports list\n");
+    TRACE(win32, "Dumping imports list\n");
 
     /* first, count the number of imported non-internal modules */
     pe_imp = pem->pe_import;
     if (!pe_imp) 
-    	fprintf(stderr,"no import directory????\n");
+    	ERR(win32, "no import directory????\n");
 
     /* FIXME: should terminate on 0 Characteristics */
     for (i = 0; pe_imp->Name; pe_imp++)
@@ -232,14 +231,18 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 	/* don't use MODULE_Load, Win32 creates new task differently */
 	res = PE_LoadLibraryEx32A( name, process, 0, 0 );
 	if (res <= (HMODULE32) 32) {
-	    char *p, buffer[1024];
+	    char buffer[1024];
 
 	    /* Try with prepending the path of the current module */
-	    GetModuleFileName32A( hModule, buffer, sizeof (buffer));
-	    if (!(p = strrchr (buffer, '\\')))
-		p = buffer;
-	    strcpy (p + 1, name);
-	    res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
+	    if (GetModuleFileName32A( pem->module, buffer, sizeof (buffer))) {
+	        char *p;
+
+		if (!(p = strrchr (buffer, '\\')))
+		    p = buffer;
+		strcpy (p + 1, name);
+		res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
+	    } else
+	    	ERR(win32,"cannot find the module just loaded!\n");
 	}
 	if (res <= (HMODULE32) 32) {
 	    fprintf (stderr, "Module %s not found\n", name);
@@ -285,12 +288,12 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 
 	Module = (char *) RVA(pe_imp->Name);
         hImpModule = MODULE_HANDLEtoHMODULE32( MODULE_FindModule(Module) );
-	dprintf_info(win32, "%s\n", Module);
+	TRACE(win32, "%s\n", Module);
 
 	/* FIXME: forwarder entries ... */
 
 	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
-	    dprintf_info(win32, "Microsoft style imports used\n");
+	    TRACE(win32, "Microsoft style imports used\n");
 	    import_list =(LPIMAGE_THUNK_DATA) RVA(pe_imp->u.OriginalFirstThunk);
 	    thunk_list = (LPIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 
@@ -298,7 +301,7 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
-		    dprintf_info(win32, "--- Ordinal %s,%d\n", Module, ordinal);
+		    TRACE(win32, "--- Ordinal %s,%d\n", Module, ordinal);
 		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
                         process, hImpModule, (LPCSTR)ordinal);
 		    if (!thunk_list->u1.Function) {
@@ -308,7 +311,7 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		    }
 		} else {		/* import by name */
 		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
-		    dprintf_info(win32, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
+		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
                         process, hImpModule, pe_name->Name);
 		    if (!thunk_list->u1.Function) {
@@ -321,14 +324,14 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		thunk_list++;
 	    }
 	} else {	/* Borland style */
-	    dprintf_info(win32, "Borland style imports used\n");
+	    TRACE(win32, "Borland style imports used\n");
 	    thunk_list = (LPIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 	    while (thunk_list->u1.Ordinal) {
 		if (IMAGE_SNAP_BY_ORDINAL(thunk_list->u1.Ordinal)) {
 		    /* not sure about this branch, but it seems to work */
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
-		    dprintf_info(win32,"--- Ordinal %s.%d\n",Module,ordinal);
+		    TRACE(win32,"--- Ordinal %s.%d\n",Module,ordinal);
 		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
                         process, hImpModule, (LPCSTR) ordinal);
 		    if (!thunk_list->u1.Function) {
@@ -338,7 +341,7 @@ DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 		    }
 		} else {
 		    pe_name=(LPIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
-		    dprintf_info(win32,"--- %s %s.%d\n",
+		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,Module,pe_name->Hint);
 		    thunk_list->u1.Function=(LPDWORD)PE_FindExportedFunction(
                         process, hImpModule, pe_name->Name );
@@ -362,11 +365,11 @@ static int calc_vma_size( HMODULE32 hModule )
     int i,vma_size = 0;
     IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(hModule);
 
-    dprintf_info(win32, "Dump of segment table\n");
-    dprintf_info(win32, "   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
+    TRACE(win32, "Dump of segment table\n");
+    TRACE(win32, "   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
     for (i = 0; i< PE_HEADER(hModule)->FileHeader.NumberOfSections; i++)
     {
-        dprintf_info(win32, "%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
+        TRACE(win32, "%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
                       pe_seg->Name, 
                       pe_seg->Misc.VirtualSize,
                       pe_seg->VirtualAddress,
@@ -401,14 +404,14 @@ static void do_relocations(PE_MODREF *pem)
 		char *page = (char*) RVA(r->VirtualAddress);
 		int count = (r->SizeOfBlock - 8)/2;
 		int i;
-		dprintf_info(fixup, "%x relocations for page %lx\n",
+		TRACE(fixup, "%x relocations for page %lx\n",
 			count, r->VirtualAddress);
 		/* patching in reverse order */
 		for(i=0;i<count;i++)
 		{
 			int offset = r->TypeOffset[i] & 0xFFF;
 			int type = r->TypeOffset[i] >> 12;
-			dprintf_info(fixup,"patching %x type %x\n", offset, type);
+			TRACE(fixup,"patching %x type %x\n", offset, type);
 			switch(type)
 			{
 			case IMAGE_REL_BASED_ABSOLUTE: break;
@@ -545,7 +548,7 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
 
 	load_addr = nt_header->OptionalHeader.ImageBase;
 	vma_size = calc_vma_size( hModule );
-	dprintf_info(win32, "Load addr is %lx\n",load_addr);
+	TRACE(win32, "Load addr is %lx\n",load_addr);
 	load_addr = (DWORD)VirtualAlloc( (void*)load_addr, vma_size,
                                          MEM_RESERVE | MEM_COMMIT,
                                          PAGE_EXECUTE_READWRITE );
@@ -559,7 +562,7 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
 	 */
 	pem->module = *phModule = (HMODULE32)load_addr;
 
-	dprintf_info(win32, "Load addr is really %lx, range %x\n",
+	TRACE(win32, "Load addr is really %lx, range %x\n",
                       load_addr, vma_size);
 	
         /* Store the NT header at the load addr
@@ -635,10 +638,10 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
 	}
 
 	if(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size)
-		dprintf_fixme(win32,"Exception directory ignored\n");
+		FIXME(win32,"Exception directory ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY].Size)
-		dprintf_fixme(win32,"Security directory ignored\n");
+		FIXME(win32,"Security directory ignored\n");
 
 
 
@@ -652,34 +655,34 @@ static BOOL32 PE_MapImage( HMODULE32 *phModule, PDB32 *process,
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_COPYRIGHT].Size)
-		dprintf_fixme(win32,"Copyright string ignored\n");
+		FIXME(win32,"Copyright string ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size)
-		dprintf_fixme(win32,"Global Pointer (MIPS) ignored\n");
+		FIXME(win32,"Global Pointer (MIPS) ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size)
-		dprintf_fixme(win32,"Load Configuration directory ignored\n");
+		FIXME(win32,"Load Configuration directory ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size)
-		dprintf_fixme(win32,"Bound Import directory ignored\n");
+		FIXME(win32,"Bound Import directory ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_IAT].Size)
-		dprintf_fixme(win32,"Import Address Table directory ignored\n");
+		FIXME(win32,"Import Address Table directory ignored\n");
 	if(nt_header->OptionalHeader.DataDirectory[13].Size)
-		dprintf_fixme(win32,"Unknown directory 13 ignored\n");
+		FIXME(win32,"Unknown directory 13 ignored\n");
 	if(nt_header->OptionalHeader.DataDirectory[14].Size)
-		dprintf_fixme(win32,"Unknown directory 14 ignored\n");
+		FIXME(win32,"Unknown directory 14 ignored\n");
 	if(nt_header->OptionalHeader.DataDirectory[15].Size)
-		dprintf_fixme(win32,"Unknown directory 15 ignored\n");
+		FIXME(win32,"Unknown directory 15 ignored\n");
 
 	if(pem->pe_reloc)	do_relocations(pem);
 	if(pem->pe_export)	dump_exports(pem->module);
 	if(pem->pe_import)	{
-		if (fixup_imports(process,pem,hModule)) {
+		if (fixup_imports(process,pem)) {
 			PE_MODREF	**xpem;
 
 			/* remove entry from modref chain */
@@ -869,7 +872,7 @@ static void PE_InitDLL(PE_MODREF *pem, DWORD type,LPVOID lpReserved)
     ) {
         FARPROC32 entry = (FARPROC32)RVA_PTR( pem->module,
                                           OptionalHeader.AddressOfEntryPoint );
-        dprintf_info(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
+        TRACE(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, pem->module, type, lpReserved );
         entry( pem->module, type, lpReserved );
     }

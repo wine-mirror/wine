@@ -31,7 +31,7 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     if (count == 0)
       return FALSE;
 
-    dprintf_info(win16drv, "WIN16DRV_ExtTextOut: %04x %d %d %x %p %*s %p\n",
+    TRACE(win16drv, "%04x %d %d %x %p %*s %p\n",
 	   dc->hSelf, x, y, flags,  lprect, count > 0 ? count : 8, str, lpDx);
 
 
@@ -54,7 +54,7 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
             
         }
         
-	dprintf_info(win16drv, "textalign = %d\n", dc->w.textAlign);
+	TRACE(win16drv, "textalign = %d\n", dc->w.textAlign);
 
 	if (dc->w.textAlign & TA_UPDATECP)
 	{

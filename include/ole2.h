@@ -7,7 +7,10 @@
 
 typedef LONG HRESULT;
 
+/* to be implemented */
 typedef LPVOID LPMESSAGEFILTER;
+typedef LPVOID LPDROPTARGET;
+typedef LPVOID LPMONIKER;
 
 #define S_OK	0
 #define S_FALSE	1

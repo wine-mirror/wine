@@ -1,3 +1,11 @@
+Fri Feb 27 21:03:37 1998  Karl Backström <karl_b@geocities.com>
+	* Fixed some minor features.
+
+Sat Feb 14 17:42:29 1998  Karl Backström <karl_b@geocities.com>
+        * NEW [language.c] [language.h]
+	Takes care of all language related stuff.
+	A new [programs] in .winerc is in use.
+
 Tue Feb 10 23:34:08 1998  Marcel Baur <mbaur@g26.ethz.ch>
         * Fixed broken language menus
 

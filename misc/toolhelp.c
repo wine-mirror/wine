@@ -35,7 +35,7 @@ BOOL16 WINAPI NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback,
 {
     int	i;
 
-    dprintf_info(toolhelp, "NotifyRegister(%x,%lx,%x) called.\n",
+    TRACE(toolhelp, "(%x,%lx,%x) called.\n",
                       htask, (DWORD)lpfnCallback, wFlags );
     if (!htask) htask = GetCurrentTask();
     for (i=0;i<nrofnotifys;i++)
@@ -61,7 +61,7 @@ BOOL16 WINAPI NotifyUnregister( HTASK16 htask )
 {
     int	i;
     
-    dprintf_info(toolhelp, "NotifyUnregister(%x) called.\n", htask );
+    TRACE(toolhelp, "(%x) called.\n", htask );
     if (!htask) htask = GetCurrentTask();
     for (i=nrofnotifys;i--;)
         if (notifys[i].htask==htask)

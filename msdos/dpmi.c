@@ -350,7 +350,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             ldt_entry entry;
             LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                   DI_reg(context) ), &entry );
-            LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
+            LDT_SetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
         }
         break;
 

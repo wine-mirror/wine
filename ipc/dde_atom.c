@@ -129,7 +129,7 @@ ATOM DDE_GlobalAddAtom( SEGPTR name )
      return (atom<MIN_STR_ATOM) ? atom : 0;
   }
 
-  dprintf_info(atom,"GlobalAddAtom(\"%s\")\n",str);
+  TRACE(atom,"(\"%s\")\n",str);
 
   DDE_IPC_init();		/* will initialize only if needed */
   
@@ -174,7 +174,7 @@ ATOM DDE_GlobalDeleteAtom( ATOM atom )
   AtomData_ptr atom_ptr;
   ATOM retval=(ATOM) 0;
   
-  dprintf_info(atom,"GlobalDeleteAtom(\"%d\")\n",(int)atom);
+  TRACE(atom,"(\"%d\")\n",(int)atom);
   atom_idx=(int)atom - MIN_STR_ATOM;
   
   if (atom_idx < 0 )
@@ -211,7 +211,7 @@ ATOM DDE_GlobalFindAtom( SEGPTR name )
   int atom_ofs;
   char *str;
 
-  dprintf_info(atom,"GlobalFindAtom(%08lx)\n", name );
+  TRACE(atom,"(%08lx)\n", name );
 
   /* First check for integer atom */
 
@@ -223,7 +223,7 @@ ATOM DDE_GlobalFindAtom( SEGPTR name )
      ATOM atom= (ATOM) atoi(&str[1]);
      return (atom<MIN_STR_ATOM) ? atom : 0;
   }
-  dprintf_info(atom,"GlobalFindAtom(\"%s\")\n",str);
+  TRACE(atom,"(\"%s\")\n",str);
 
   DDE_IPC_init();		/* will initialize only if needed */
 

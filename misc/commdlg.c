@@ -137,7 +137,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 		    FreeResource16( hDlgTmpl );
     }
 
-    dprintf_info(commdlg,"GetOpenFileName // return lpstrFile='%s' !\n", 
+    TRACE(commdlg,"return lpstrFile='%s' !\n", 
            (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
     return bRet;
 }
@@ -231,7 +231,7 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 		    FreeResource16( hDlgTmpl );
     }
 
-    dprintf_info(commdlg, "GetSaveFileName // return lpstrFile='%s' !\n", 
+    TRACE(commdlg, "return lpstrFile='%s' !\n", 
             (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
     return bRet;
 }
@@ -483,7 +483,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
     {
       pstr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter);
       n = 0;
-      dprintf_info(commdlg,"lpstrCustomFilter = %p\n", pstr);
+      TRACE(commdlg,"lpstrCustomFilter = %p\n", pstr);
       while(*pstr)
 	{
 	  old_pstr = pstr;
@@ -491,7 +491,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
                                    (LPARAM)lpofn->lpstrCustomFilter + n );
           n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
-	  dprintf_info(commdlg,"lpstrCustomFilter // add str='%s' "
+	  TRACE(commdlg,"add str='%s' "
 			  "associated to '%s'\n", old_pstr, pstr);
           SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA16, i, (LPARAM)pstr);
           n += strlen(pstr) + 1;
@@ -508,7 +508,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 				       (LPARAM)lpofn->lpstrFilter + n );
 	  n += strlen(pstr) + 1;
 	  pstr += strlen(pstr) + 1;
-	  dprintf_info(commdlg,"lpstrFilter // add str='%s' "
+	  TRACE(commdlg,"add str='%s' "
 			  "associated to '%s'\n", old_pstr, pstr);
 	  SendDlgItemMessage16(hWnd, cmb1, CB_SETITEMDATA16, i, (LPARAM)pstr);
 	  n += strlen(pstr) + 1;
@@ -522,7 +522,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   strncpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),511);
   tmpstr[511]=0;
-  dprintf_info(commdlg,"nFilterIndex = %ld // SetText of edt1 to '%s'\n", 
+  TRACE(commdlg,"nFilterIndex = %ld, SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
   SetDlgItemText32A( hWnd, edt1, tmpstr );
   /* get drive list */
@@ -637,7 +637,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       if (lRet == LB_ERR)
 	return TRUE;
       pstr = (LPSTR)SendDlgItemMessage16(hWnd, cmb1, CB_GETITEMDATA16, lRet, 0);
-      dprintf_info(commdlg,"Selected filter : %s\n", pstr);
+      TRACE(commdlg,"Selected filter : %s\n", pstr);
       SetDlgItemText32A( hWnd, edt1, pstr );
       FILEDLG_ScanDir(hWnd, tmpstr);
       return TRUE;
@@ -665,7 +665,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	      strcpy(tmpstr2, tmpstr);
 	      *tmpstr=0;
 	    }
-	  dprintf_info(commdlg,"commdlg: %s, %s\n", tmpstr, tmpstr2);
+	  TRACE(commdlg,"tmpstr=%s, tmpstr2=%s\n", tmpstr, tmpstr2);
           SetDlgItemText32A( hWnd, edt1, tmpstr2 );
 	  FILEDLG_ScanDir(hWnd, tmpstr);
 	  return TRUE;
@@ -678,7 +678,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       lRet = SendDlgItemMessage16(hWnd, cmb1, CB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
-      dprintf_info(commdlg,"commdlg: lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
+      TRACE(commdlg,"lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
       lstrcpyn32A(tmpstr2, 
 	     FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
@@ -1128,7 +1128,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
     HWND32 hwndDialog;
     LPPRINTDLG16 lpPrint = (LPPRINTDLG16)PTR_SEG_TO_LIN(printdlg);
 
-    dprintf_info(commdlg,"PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
+    TRACE(commdlg,"(%p) -- Flags=%08lX\n", lpPrint, lpPrint->Flags );
 
     if (lpPrint->Flags & PD_RETURNDEFAULT)
         /* FIXME: should fill lpPrint->hDevMode and lpPrint->hDevNames here */
@@ -1180,7 +1180,7 @@ LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      dprintf_info(commdlg,"PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow16(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -1208,7 +1208,7 @@ LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      dprintf_info(commdlg,"PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+      TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
       ShowWindow16(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
@@ -1240,7 +1240,7 @@ DWORD WINAPI CommDlgExtendedError(void)
 short WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 {
     int i, len;
-    dprintf_info(commdlg,"GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
+    TRACE(commdlg,"(%p %p %d); \n", lpFile, lpTitle, cbBuf);
     if (lpFile == NULL || lpTitle == NULL)
     	return -1;
     len = strlen(lpFile);
@@ -1257,7 +1257,7 @@ short WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 	i++;
 	break;
     }
-    dprintf_info(commdlg,"---> '%s' \n", &lpFile[i]);
+    TRACE(commdlg,"---> '%s' \n", &lpFile[i]);
     
     len = strlen(lpFile+i)+1;
     if (cbBuf < len)
@@ -1306,7 +1306,7 @@ BOOL16 WINAPI ChooseColor(LPCHOOSECOLOR lpChCol)
     LPCVOID template;
     HWND32 hwndDialog;
 
-    dprintf_info(commdlg,"ChooseColor\n");
+    TRACE(commdlg,"ChooseColor\n");
     if (!lpChCol) return FALSE;    
 
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
@@ -2070,7 +2070,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    POINT16 point;
    struct CCPRIVATE * lpp; 
    
-   dprintf_info(commdlg,"ColorDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+   TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
    lpp=calloc(1,sizeof(struct CCPRIVATE));
    lpp->lpcc=(LPCHOOSECOLOR)lParam;
    if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLOR))
@@ -2139,7 +2139,7 @@ static LRESULT CC_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
     HDC32 hdc;
     COLORREF *cr;
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
-    dprintf_info(commdlg,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
+    TRACE(commdlg,"CC_WMCommand wParam=%x lParam=%lx\n",wParam,lParam);
     switch (wParam)
     {
           case 0x2c2:  /* edit notify RGB */
@@ -2401,7 +2401,7 @@ BOOL16 WINAPI ChooseFont(LPCHOOSEFONT lpChFont)
     LPCVOID template;
     HWND32 hwndDialog;
 
-    dprintf_info(commdlg,"ChooseFont\n");
+    TRACE(commdlg,"ChooseFont\n");
     if (!lpChFont) return FALSE;    
 
     if (lpChFont->Flags & CF_ENABLETEMPLATEHANDLE)
@@ -2483,8 +2483,7 @@ INT16 WINAPI FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
 
-  dprintf_info(commdlg,"FontFamilyEnumProc: font=%s (nFontType=%d)\n",
-     			lplf->lfFaceName,nFontType);
+  TRACE(commdlg,"font=%s (nFontType=%d)\n", lplf->lfFaceName,nFontType);
 
   if (lpcf->Flags & CF_FIXEDPITCHONLY)
    if (!(lplf->lfPitchAndFamily & FIXED_PITCH))
@@ -2602,11 +2601,14 @@ INT16 WINAPI FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
   TEXTMETRIC16 *lptm = (TEXTMETRIC16 *)PTR_SEG_TO_LIN(metrics);
   int i;
   
-  dprintf_info(commdlg,"FontStyleEnumProc: (nFontType=%d)\n",nFontType);
-  dprintf_info(commdlg,"  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d ch=%d op=%d cp=%d q=%d pf=%xh\n",
-	lplf->lfFaceName,lplf->lfHeight,lplf->lfWidth,lplf->lfEscapement,lplf->lfOrientation,
-	lplf->lfWeight,lplf->lfItalic,lplf->lfUnderline,lplf->lfStrikeOut,lplf->lfCharSet,
-	lplf->lfOutPrecision,lplf->lfClipPrecision,lplf->lfQuality,lplf->lfPitchAndFamily);
+  TRACE(commdlg,"(nFontType=%d)\n",nFontType);
+  TRACE(commdlg,"  %s h=%d w=%d e=%d o=%d wg=%d i=%d u=%d s=%d"
+	       " ch=%d op=%d cp=%d q=%d pf=%xh\n",
+	       lplf->lfFaceName,lplf->lfHeight,lplf->lfWidth,
+	       lplf->lfEscapement,lplf->lfOrientation,
+	       lplf->lfWeight,lplf->lfItalic,lplf->lfUnderline,
+	       lplf->lfStrikeOut,lplf->lfCharSet, lplf->lfOutPrecision,
+	       lplf->lfClipPrecision,lplf->lfQuality, lplf->lfPitchAndFamily);
 
   if (SetFontSizesToCombo3(hcmb3, lplf ,lpcf))
    return 0;
@@ -2639,11 +2641,11 @@ LRESULT CFn_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
   SetWindowLong32A(hDlg, DWL_USER, lParam); 
   lpcf=(LPCHOOSEFONT)lParam;
   lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
-  dprintf_info(commdlg,"FormatCharDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
+  TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
 
   if (lpcf->lStructSize != sizeof(CHOOSEFONT))
   {
-    dprintf_err(commdlg,"WM_INITDIALOG: structure size failure !!!\n");
+    ERR(commdlg,"structure size failure !!!\n");
     EndDialog32 (hDlg, 0); 
     return FALSE;
   }
@@ -2682,7 +2684,7 @@ LRESULT CFn_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
   {
     if (!EnumFontFamilies16(hdc, NULL,FontFamilyEnumProc,
                             (LPARAM)GetDlgItem32(hDlg,cmb1)))
-      dprintf_info(commdlg,"WM_INITDIALOG: EnumFontFamilies returns 0\n");
+      TRACE(commdlg,"EnumFontFamilies returns 0\n");
     if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
     {
       /* look for fitting font name in combobox1 */
@@ -2729,7 +2731,7 @@ LRESULT CFn_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
   }
   else
   {
-    dprintf_warn(commdlg,"WM_INITDIALOG: HDC failure !!!\n");
+    WARN(commdlg,"HDC failure !!!\n");
     EndDialog32 (hDlg, 0); 
     return FALSE;
   }
@@ -2794,7 +2796,7 @@ LRESULT CFn_WMDrawItem(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    buffer = SEGPTR_ALLOC(40);
    switch (lpdi->CtlID)
    {
-    case cmb1:	/* dprintf_info(commdlg,"WM_Drawitem cmb1\n"); */
+    case cmb1:	/* TRACE(commdlg,"WM_Drawitem cmb1\n"); */
 		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT16, lpdi->itemID,
 			(LPARAM)SEGPTR_GET(buffer));	          
 		GetObject16( hBitmapTT, sizeof(bm), &bm );
@@ -2815,14 +2817,14 @@ LRESULT CFn_WMDrawItem(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 #endif
 		break;
     case cmb2:
-    case cmb3:	/* dprintf_info(commdlg,"WM_DRAWITEN cmb2,cmb3\n"); */
+    case cmb3:	/* TRACE(commdlg,"WM_DRAWITEN cmb2,cmb3\n"); */
 		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT16, lpdi->itemID,
 			(LPARAM)SEGPTR_GET(buffer));
 		TextOut16(lpdi->hDC, lpdi->rcItem.left,
                           lpdi->rcItem.top, buffer, lstrlen16(buffer));
 		break;
 
-    case cmb4:	/* dprintf_info(commdlg,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
+    case cmb4:	/* TRACE(commdlg,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
 		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT16, lpdi->itemID,
     		    (LPARAM)SEGPTR_GET(buffer));
 		TextOut16(lpdi->hDC, lpdi->rcItem.left +  25+5,
@@ -2881,7 +2883,7 @@ LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LPLOGFONT16 lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
   
-  dprintf_info(commdlg,"FormatCharDlgProc // WM_COMMAND lParam=%08lX\n", lParam);
+  TRACE(commdlg,"WM_COMMAND lParam=%08lX\n", lParam);
   switch (wParam)
   {
 	case cmb1:if (HIWORD(lParam)==CBN_SELCHANGE)
@@ -2898,7 +2900,7 @@ LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
                         char *str = SEGPTR_ALLOC(256);
                         SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT16,i,
                                              (LPARAM)SEGPTR_GET(str));
-	                dprintf_info(commdlg,"WM_COMMAND/cmb1 =>%s\n",str);
+	                TRACE(commdlg,"WM_COMMAND/cmb1 =>%s\n",str);
        		        EnumFontFamilies16(hdc,str,FontStyleEnumProc,
 		             MAKELONG(GetDlgItem32(hDlg,cmb2),GetDlgItem32(hDlg,cmb3)));
 		        SetCursor16(hcursor);
@@ -2909,7 +2911,7 @@ LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
  		    }
  		    else
                     {
-                      dprintf_warn(commdlg,"WM_COMMAND: HDC failure !!!\n");
+                      WARN(commdlg,"HDC failure !!!\n");
                       EndDialog32 (hDlg, 0); 
                       return TRUE;
                     }
@@ -2920,7 +2922,7 @@ LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 	case cmb3:if (HIWORD(lParam)==CBN_SELCHANGE || HIWORD(lParam)== BN_CLICKED )
 	          {
                     char *str = SEGPTR_ALLOC(256);
-                    dprintf_info(commdlg,"WM_COMMAND/cmb2,3 =%08lX\n", lParam);
+                    TRACE(commdlg,"WM_COMMAND/cmb2,3 =%08lX\n", lParam);
 		    i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL16,0,0);
 		    if (i==CB_ERR)
                       i=GetDlgItemText32A( hDlg, cmb1, str, 256 );
@@ -3036,9 +3038,9 @@ LRESULT WINAPI FormatCharDlgProc(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
       case WM_COMMAND:
                         return CFn_WMCommand(hDlg,wParam,lParam);
       case WM_CHOOSEFONT_GETLOGFONT: 
-                         dprintf_info(commdlg,
-                          "FormatCharDlgProc // WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n", lParam);
-                        /* FIXME:  current logfont back to caller */
+                         TRACE(commdlg,"WM_CHOOSEFONT_GETLOGFONT lParam=%08lX\n",
+				      lParam);
+			 FIXME(commdlg, "current logfont back to caller\n");
                         break;
     }
   return FALSE;

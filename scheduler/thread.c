@@ -418,6 +418,12 @@ DWORD THREAD_TlsAlloc(THDB *thread)
 
 /**********************************************************************
  *           TlsAlloc   (KERNEL32.530)
+ *
+ * Allocates a thread local storage index
+ *
+ * RETURNS
+ *	TLS Index
+ *	0xFFFFFFFF: Failure
  */
 DWORD WINAPI TlsAlloc(void)
 {
@@ -457,9 +463,13 @@ BOOL32 WINAPI TlsFree( DWORD index )
 
 /**********************************************************************
  *           TlsGetValue   (KERNEL32.532)
+ * RETURNS
+ *	!0: Value stored in calling thread's TLS slot for index
+ *	0: Check GetLastError() for error code
  */
-LPVOID WINAPI TlsGetValue( DWORD index )
-{
+LPVOID WINAPI TlsGetValue(
+	      DWORD index /* TLS index to retrieve value for */
+) {
     THDB *thread = THREAD_Current();
     if (index >= 64)
     {
@@ -473,9 +483,14 @@ LPVOID WINAPI TlsGetValue( DWORD index )
 
 /**********************************************************************
  *           TlsSetValue   (KERNEL32.533)
+ * RETURNS
+ *	TRUE: Successful
+ *      FALSE: Failure
  */
-BOOL32 WINAPI TlsSetValue( DWORD index, LPVOID value )
-{
+BOOL32 WINAPI TlsSetValue(
+	      DWORD index, /* TLS index to set value for */
+	      LPVOID value /* value to be stored */
+) {
     THDB *thread = THREAD_Current();
     if (index >= 64)
     {
@@ -569,4 +584,18 @@ BOOL32 WINAPI SuspendThread( HANDLE32 handle )
 {
     fprintf(stdnimp,"SuspendThread(0x%08x), STUB!\n",handle);
     return TRUE;
+}
+
+/**********************************************************************
+ *           GetThreadTimes   (KERNEL32)
+ */
+BOOL32 WINAPI GetThreadTimes( 
+	HANDLE32 thread, 
+	LPFILETIME creationtime,
+	LPFILETIME exittime,
+	LPFILETIME kerneltime,
+	LPFILETIME usertime
+) {
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }

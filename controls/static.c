@@ -12,6 +12,7 @@
 #include "cursoricon.h"
 #include "static.h"
 #include "heap.h"
+#include "debug.h"
 
 static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc );
 static void STATIC_PaintRectfn( WND *wndPtr, HDC32 hdc );
@@ -61,7 +62,7 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 
     if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_ICON) return 0;
     if (hicon && !info) {
-	fprintf(stderr,"STATIC_SetIcon: huh? hicon!=0, but info=0???\n");
+	ERR(static, "huh? hicon!=0, but info=0???\n");
     	return 0;
     }
     prevIcon = infoPtr->hIcon;
@@ -88,7 +89,7 @@ static HICON16 STATIC_SetBitmap( WND *wndPtr, HICON16 hicon )
 
     if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hicon && !info) {
-	fprintf(stderr,"STATIC_SetBitmap: huh? hicon!=0, but info=0???\n");
+	ERR(static, "huh? hicon!=0, but info=0???\n");
     	return 0;
     }
     prevIcon = infoPtr->hIcon;
@@ -184,7 +185,8 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
             if (cs->lpszName)
                 STATIC_SetBitmap( wndPtr,
                                 STATIC_LoadBitmap( wndPtr, cs->lpszName ));
-	    fprintf(stderr,"STATIC:style SS_BITMAP, dwStyle is 0x%08lx\n",wndPtr->dwStyle);
+	    WARN(static, "style SS_BITMAP, dwStyle is 0x%08lx\n",
+			wndPtr->dwStyle);
             return 1;
 	}
         return DefWindowProc32A( hWnd, uMsg, wParam, lParam );
@@ -192,7 +194,7 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
     case WM_CREATE:
         if (style < 0L || style > SS_TYPEMASK)
         {
-            fprintf( stderr, "STATIC: Unknown style 0x%02lx\n", style );
+            ERR(static, "Unknown style 0x%02lx\n", style );
             lResult = -1L;
             break;
         }

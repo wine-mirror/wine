@@ -44,6 +44,7 @@ typedef struct _CONSOLE {
 	int	master;			/* xterm side of pty */
 	int	slave;			/* wine side of pty */
 	int	pid;			/* xterm's pid, -1 if no xterm */
+        LPSTR   title;                  /* title of console */
 } CONSOLE;
 
 
@@ -79,6 +80,9 @@ static void CONSOLE_Destroy(K32OBJ *obj)
 
 	obj->type = K32OBJ_UNKNOWN;
 
+	if (console->title)
+	  	  HeapFree( SystemHeap, 0, console->title );
+	console->title = NULL;
 	/* make sure a xterm exists to kill */
 	if (console->pid != -1) {
 		kill(console->pid, SIGTERM);
@@ -94,8 +98,8 @@ static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 	CONSOLE *console = (CONSOLE *)ptr;
 	int result;
 
-	dprintf_info(console, "CONSOLE_Read: %p %p %ld\n", ptr, lpBuffer,
-		      nNumberOfChars);
+	TRACE(console, "%p %p %ld\n", ptr, lpBuffer,
+		     nNumberOfChars);
 
 	*lpNumberOfChars = 0; 
 
@@ -107,6 +111,7 @@ static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 	return TRUE;
 }
 
+
 /* lpOverlapped is ignored */
 static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer, 
 			    DWORD nNumberOfChars,
@@ -115,19 +120,28 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
 	CONSOLE *console = (CONSOLE *)ptr;
 	int result;
 
-	dprintf_info(console, "CONSOLE_Write: %p %p %ld\n", ptr, lpBuffer,
-		      nNumberOfChars);
+	TRACE(console, "%p %p %ld\n", ptr, lpBuffer,
+		     nNumberOfChars);
 
 	*lpNumberOfChars = 0; 
 
-	/* FIXME: there was a loop here before, why??? */
+	/* 
+	 * I assume this loop around EAGAIN is here because
+	 * win32 doesn't have interrupted system calls 
+	 */
 
-	if ((result = write(console->slave, lpBuffer, nNumberOfChars)) == -1) {
-		FILE_SetDosError();
-		return FALSE;
-	}
-	*lpNumberOfChars = result;
-	return TRUE;
+	for (;;)
+        {
+		result = write(console->slave, lpBuffer, nNumberOfChars);
+		if (result != -1) {
+			*lpNumberOfChars = result;
+                        return TRUE;
+		}
+		if (errno != EINTR) {
+			FILE_SetDosError();
+			return FALSE;
+		}
+        }
 }
 
 
@@ -365,6 +379,7 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->header.type     = K32OBJ_CONSOLE;
         console->header.refcount = 1;
         console->pid             = -1;
+        console->title           = NULL;
 
 	if (wine_createConsole(&master, &slave, &pid) == FALSE) {
 		K32OBJ_DecCount(&console->header);
@@ -413,6 +428,7 @@ BOOL32 WINAPI AllocConsole(VOID)
 
 	SetLastError(ERROR_SUCCESS);
 	SYSTEM_UNLOCK();
+	SetConsoleTitle32A("Wine Console");
 	return TRUE;
 }
 
@@ -449,8 +465,8 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
  */
 BOOL32 WINAPI SetConsoleMode(HANDLE32 hcon,DWORD mode)
 {
-    fprintf(stdnimp,"SetConsoleMode(%08x,%08lx)\n",hcon,mode);
-    return TRUE;
+	fprintf(stdnimp,"SetConsoleMode(%08x,%08lx)\n",hcon,mode);
+	return TRUE;
 }
 
 /***********************************************************************
@@ -458,8 +474,15 @@ BOOL32 WINAPI SetConsoleMode(HANDLE32 hcon,DWORD mode)
  */
 DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
 {
-    lstrcpyn32A(title,"Console",size);
-    return strlen("Console");
+	PDB32 *pdb = PROCESS_Current();
+	CONSOLE *console= (CONSOLE *)pdb->console;
+
+	if(console->title) 
+	  {
+	    lstrcpyn32A(title,console->title,size);
+	    return strlen(title);
+	  }
+	return 0;
 }
 
 /***********************************************************************
@@ -467,8 +490,14 @@ DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
  */
 DWORD WINAPI GetConsoleTitle32W(LPWSTR title,DWORD size)
 {
-    lstrcpynAtoW(title,"Console",size);
-    return strlen("Console");
+	PDB32 *pdb = PROCESS_Current();
+	CONSOLE *console= (CONSOLE *)pdb->console;
+	if(console->title) 
+	  {
+	    lstrcpynAtoW(title,console->title,size);
+	    return (lstrlen32W(title));
+	  }
+	return 0;
 }
 
 /***********************************************************************
@@ -506,10 +535,16 @@ BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
                                LPDWORD lpNumberOfCharsWritten,
                                LPVOID lpReserved )
 {
+        BOOL32 ret;
+        LPSTR xstring=HeapAlloc( GetProcessHeap(), 0, nNumberOfCharsToWrite );
+
+	lstrcpynWtoA( xstring,  lpBuffer,nNumberOfCharsToWrite);
 
 	/* FIXME: should I check if this is a console handle? */
-	return WriteFile(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite,
+	ret= WriteFile(hConsoleOutput, xstring, nNumberOfCharsToWrite,
 			 lpNumberOfCharsWritten, NULL);
+	HeapFree( GetProcessHeap(), 0, xstring );
+	return ret;
 
 }
 
@@ -546,8 +581,15 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-	return ReadFile(hConsoleInput, lpBuffer, nNumberOfCharsToRead,
+        BOOL32 ret;
+	LPSTR buf = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 
+				       nNumberOfCharsToRead);
+	ret = ReadFile(hConsoleInput, buf, nNumberOfCharsToRead,
 			lpNumberOfCharsRead, NULL);
+	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
+	*lpNumberOfCharsRead = strlen(buf);
+	HeapFree( GetProcessHeap(), 0, buf );
+	return ret;
 
 #ifdef OLD
 	LPSTR buf = (LPSTR)HEAP_xalloc(GetProcessHeap(), 0, 
@@ -563,8 +605,8 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
 	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
 	*lpNumberOfCharsRead = strlen(buf);
 	HeapFree( GetProcessHeap(), 0, buf );
-#endif
 	return TRUE;
+#endif
 
 }
 
@@ -573,8 +615,34 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
  */
 BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 {
-    fprintf(stderr,"SetConsoleTitle(%s)\n",title);
-    return TRUE;
+	PDB32 *pdb = PROCESS_Current();
+	CONSOLE *console;
+	DWORD written;
+	char titleformat[]="\033]2;%s\a"; /*this should work for xterms*/
+	LPSTR titlestring; 
+	BOOL32 ret=FALSE;
+
+	TRACE(console,"SetConsoleTitle(%s)\n",title);
+	
+	console = (CONSOLE *)pdb->console;
+	if (!console)
+	  return FALSE;
+	if(console->title) /* Free old title, if there is one */
+	  HeapFree( SystemHeap, 0, console->title );
+	console->title = (LPSTR)HeapAlloc(SystemHeap, 0,strlen(title)+1);
+	if(console->title) strcpy(console->title,title);
+
+	titlestring = HeapAlloc(GetProcessHeap(), 0,strlen(title)+strlen(titleformat)+1);
+	if (!titlestring)
+	  return FALSE;
+	
+ 	sprintf(titlestring,titleformat,title);
+	/* Ugly casting */
+	CONSOLE_Write((K32OBJ *)console,titlestring,strlen(titlestring),&written,NULL);
+	if (written == strlen(titlestring))
+	  ret =TRUE;
+	HeapFree( GetProcessHeap(), 0, titlestring );
+	return ret;
 }
 
 /***********************************************************************
@@ -582,10 +650,12 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
  */
 BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
 {
+    BOOL32 ret;
+
     LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
-    fprintf(stderr,"SetConsoleTitle(%s)\n",titleA);
+    ret = SetConsoleTitle32A(titleA);
     HeapFree( GetProcessHeap(), 0, titleA );
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
@@ -678,3 +748,22 @@ BOOL32 WINAPI SetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
   fprintf (stdnimp, "SetConsoleCursorInfo32 -- STUB!\n");
   return TRUE;
 }
+
+/***********************************************************************
+ *            SetConsoleWindowInfo32   (KERNEL32.634)
+ */
+BOOL32 WINAPI SetConsoleWindowInfo32(HANDLE32 hcon, BOOL32 flag, LPSMALL_RECT window)
+{
+  fprintf (stdnimp, "SetConsoleWindowInfo32-- STUB!\n");
+  return TRUE;
+}
+
+/***********************************************************************
+ *               (KERNEL32.631)
+ */
+BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hcon, DWORD attributes)
+{
+  fprintf (stdnimp, "SetConsoleTextAttribute32-- STUB!\n");
+  return TRUE;
+}
+

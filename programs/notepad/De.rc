@@ -57,7 +57,7 @@
 #define DIALOG_PAGESETUP_CAPTION     "Seite einrichten"
 #define DIALOG_PAGESETUP_HEAD        "&Kopfzeile:"
 #define DIALOG_PAGESETUP_TAIL        "&Fuﬂzeile:"
-#define DIALOG_PAGESETUP_BORDER      "R‰nder"
+#define DIALOG_PAGESETUP_MARGIN      "R‰nder"
 #define DIALOG_PAGESETUP_LEFT        "&Links:"
 #define DIALOG_PAGESETUP_RIGHT       "&Rechts:"
 #define DIALOG_PAGESETUP_TOP         "&Oben:"

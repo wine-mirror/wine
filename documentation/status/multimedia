@@ -1,0 +1,176 @@
+This file contains information about the implementation of the multimedia
+layer of WINE.
+
+The libraries consist of MMSYSTEM.DLL (win16), WINMM.DLL (win32) and some
+(abstracted, not Windows compatible) lowlevel drivers. The implementation
+can be found in the multimedia/ subdirectory.
+
+The multimedia stuff is split into 3 layers. The lowlevel (device drivers),
+midlevel (MCI commands) and highlevel abstraction layers.
+
+1. Lowlevel layers
+
+   Following lowlevel layers are implemented:
+1.1 (Waveform) Audio
+
+   The API consists of the waveIn*/waveOut* functions found in
+   multimedia/mmsystem.c. They call the real lowlevel audiodriver using
+   the wodMessage/widMessage function in multimedia/audio.c, which handles
+   the different requests.
+
+   The lowlevel audio driver is currently only implemented for the
+   OpenSoundSystem (OSS) as supplied in the Linux and FreeBSD kernels by
+   4Front Technologies (http://www.4front-tech.com/). The presence of this
+   driver is checked by configure (depends on the <sys/soundcard.h> file).
+
+   The implementation contains all features commonly used, but has several
+   problems. For instance:
+      Writes and reads are not done asynchronously as they are supposed to
+   be done. This breaks some programs (soundrec.exe from the Windows applets),
+   but doesn't worry other programs. Some callbacks are probably done
+   incorrectly (there are reports of some broken multimedia applications,
+   but I haven't found one yet.)
+
+   TODO:
+   	- add asynchronous writes and reads (must use threads)
+	- check the callback functions
+	- verify all functions for correctness
+	- add drivers for other soundsystems (Sun Audio, remote audio systems
+	  (using X extensions, ...)
+
+1.2 Mixer
+
+   The API consists of the mixer* functions found in multimedia/mmsystem.c.
+   They call the lowlevel driver functions in multimedia/mixer.c using the
+   mixMessage function.
+
+   The current implementation tries to use the OpenSoundSystem mixer, but is
+   missing nearly everything. There is no report of a working application.
+   
+   TODO:
+   	- implement mixing functionality for OSS correctly.
+	- implement mixing lowlevel drivers for other mixers.
+
+1.3 MIDI
+	
+   The API consists of the midi* functions found in multimedia/mmsystem.c.
+   They call the lowlevel driver functions in multimedia/midi.c using the
+   midMessage and the modMessage functions.
+
+   The current implementation is completely broken. (I think open(), read()
+   and write() of the /dev/midi device would make this implementation nearly
+   complete...)
+
+   TODO:
+   	- Implement correct MIDI output
+	- Do not implement a software synthesizer. This should be done
+	  using MIDI loopback devices in an external program (like timidity).
+
+1.4 Timers
+
+   The API consists of the timer* functions found in multimedia/timer.c. 
+   There is currently only one implementation, which uses normal windows timers.
+   The implementation works for most cases found. The only problem is that
+   it doesn't support asynchronous timer events (as it is supposed to do).
+
+   There is a workaround for this lack in timeGetTime() to make Diablo work
+   and 'Pinball! SpaceCadet' at least start up.
+
+   TODO:
+   	- Implemented asynchronous timers (using a thread probably)
+
+1.5 MMIO
+   
+   The API consists of the mmio* functions found in multimedia/mmio.c.
+
+   FIXME: I am not sure about the status of this implementation.
+
+   TODO:
+   	- add win32 support.
+	- ...
+
+1.6 AUX
+   
+   The API consists of the aux* functions found in multimedia/mmsystem.c.
+   They call auxMessage in multimedia/mmaux.c.
+
+   The aux* functions are the predecessor of the mixer* functions.
+
+   The implementation uses the OSS mixer API, and is incomplete.
+
+   TODO:
+   	- verify the implementation
+
+1.7 JOYSTICK
+   
+   The API consists of the joy* functions found in multimedia/joystick.c.
+   The implementation currently uses the Linux joystick device driver API.
+   It is lacking support for enhanced joysticks and has not been extensively
+   tested.
+
+   TODO:
+   	- better support of enhanced joysticks
+	- support more joystick drivers (like the XInput extension)
+
+2. Midlevel drivers (MCI)
+   
+   The midlevel drivers are represented by some common API functions, 
+   mostly mciSendCommand and mciSendString. The mciSendString function
+   uses commandstrings, which are translated into normal MCI commands as
+   used by mciSendCommand. The API can be found in multimedia/mmsystem.c
+   and multimedia/mcistring.c.
+   The functions there (mciOpen,mciSysInfo) handle midlevel driver
+   allocation and calls.
+
+   The implementation is not complete, but works for most cases.
+   Win32 support for mciSendCommand is missing (mciSendString works
+   in the Win32 case, since the use of strings doesn't differ between
+   win16 and win32).
+
+   TODO:
+   	- Win32 support
+	- support windows MCI drivers (should be possible for they usually 
+	  do not use lowlevel calls)
+	- MCI command loading support
+	- implement other stuff as yet unknown
+
+   WINE implements several MCI midlevel drivers:
+
+2.1 CDAUDIO
+   
+   The currently best implementation is the MCI CDAUDIO driver that can
+   be found in multimedia/mcicda.c. The implementation is mostly complete,
+   there have been no reports of errors.
+   The implementation currently uses only the Linux /dev/cdrom controlling
+   functions. (Sun and BSD like should be similair, but are not implemented.)
+
+   A very small example of a cdplayer consists just of the line
+   mciSendString("play cdaudio",NULL,0,0);
+
+   TODO:
+   	- add support for other cdaudio drivers
+
+2.2 MCIWAVE
+   
+   The implementation is rather complete and can be found in multimedia/audio.c.
+   It uses the lowlevel audio API (although not abstracted correctly).
+   FIXME: The MCI_STATUS command is broken.
+
+   TODO: - check for correctness
+
+2.3 MIDI/SEQUENCER
+   
+   The implementation can be found in multimedia/midi.c. I am not sure
+   about the completeness.
+   It uses the lowlevel midi driver and is probably broken too.
+
+   TODO: 
+   	- implement it correctly
+
+2.4 MCIANIM
+
+   The implementation consists of stubs and is in multimedia/mcianim.c.
+
+   TODO: 
+   	- implement it, probably using xanim or something similair. Could
+	  also be implemented by using the Windows MCI video drivers.

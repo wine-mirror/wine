@@ -79,7 +79,7 @@ HMETAFILE32 WINAPI GetMetaFile32A(
   HFILE32 hFile;
   DWORD size;
   
-  dprintf_info(metafile,"GetMetaFile: %s\n", lpFilename);
+  TRACE(metafile,"%s\n", lpFilename);
 
   if (!lpFilename)
     return 0;
@@ -178,18 +178,15 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
  *  Copying to disk returns NULL even if successful.
  */
 HMETAFILE32 WINAPI CopyMetaFile32A(
-				   HMETAFILE32 hSrcMetaFile, 
-				   /* handle of metafile to copy */
-				   LPCSTR lpFilename
-				   /* filename if copying to a file */
-)
-{
+		   HMETAFILE32 hSrcMetaFile, /* handle of metafile to copy */
+		   LPCSTR lpFilename /* filename if copying to a file */
+) {
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
     METAHEADER *mh2;
     HFILE32 hFile;
     
-    dprintf_info(metafile,"CopyMetaFile: %s\n", lpFilename);
+    TRACE(metafile,"%s\n", lpFilename);
     
     mh = (METAHEADER *)GlobalLock16(hSrcMetaFile);
     
@@ -260,7 +257,7 @@ BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
             resu=TRUE;
       GlobalUnlock16(hmf);
     }
-    dprintf_info(metafile,"IsValidMetaFile %x => %d\n",hmf,resu);
+    TRACE(metafile,"IsValidMetaFile %x => %d\n",hmf,resu);
     return resu;         
 }
 
@@ -296,7 +293,7 @@ BOOL32 WINAPI PlayMetaFile32(
     HFONT32 hFont;
     DC *dc;
     
-    dprintf_info(metafile,"PlayMetaFile(%04x %04x)\n",hdc,hmf);
+    TRACE(metafile,"(%04x %04x)\n",hdc,hmf);
     if (!mh) return FALSE;
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     hPen = dc->w.hPen;
@@ -314,7 +311,7 @@ BOOL32 WINAPI PlayMetaFile32(
     while (offset < mh->mtSize * 2)
     {
         mr = (METARECORD *)((char *)mh + offset);
-	dprintf_info(metafile,"offset = %04x size = %08lx\n",
+	TRACE(metafile,"offset = %04x size = %08lx\n",
 			 offset, mr->rdSize);
 	if (!mr->rdSize) {
 		fprintf(stderr,"METAFILE entry got size 0 at offset %d, total mf length is %ld\n",offset,mh->mtSize*2);
@@ -374,7 +371,7 @@ BOOL16 WINAPI EnumMetaFile16(
     DC *dc;
     BOOL16 result = TRUE;
     
-    dprintf_info(metafile,"EnumMetaFile(%04x, %04x, %08lx, %08lx)\n",
+    TRACE(metafile,"(%04x, %04x, %08lx, %08lx)\n",
 		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
@@ -443,26 +440,19 @@ static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn );
  *  ABORTDOC, ENDDOC, CREATEBRUSH, CREATEBITMAPINDIRECT, and CREATEBITMAP.
  *
  */
-
 void WINAPI PlayMetaFileRecord16( 
-				 HDC16 hdc, 
-				 /* DC to render metafile into */
-				 HANDLETABLE16 *ht, 
-				 /* pointer to handle table for metafile objects */
-				 METARECORD *mr, 
-				 /* pointer to metafile record to render */
-				 UINT16 nHandles 
-				 /* size of handle table */
-)
-{
+	    HDC16 hdc, /* DC to render metafile into */
+	    HANDLETABLE16 *ht, /* pointer to handle table for metafile objects */
+	    METARECORD *mr, /* pointer to metafile record to render */
+	    UINT16 nHandles /* size of handle table */
+) {
     short s1;
     HANDLE16 hndl;
     char *ptr;
     BITMAPINFOHEADER *infohdr;
 
-    dprintf_info(metafile,
-"PlayMetaFileRecord(%04x %08lx %08lx %04x) function %04x\n",
-		     hdc,(LONG)ht, (LONG)mr, nHandles, mr->rdFunction);
+    TRACE(metafile,"(%04x %08lx %08lx %04x) function %04x\n",
+		 hdc,(LONG)ht, (LONG)mr, nHandles, mr->rdFunction);
     
     switch (mr->rdFunction)
     {
@@ -711,7 +701,7 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_ESCAPE:
-	dprintf_fixme(metafile, "PlayMetaFileRecord: META_ESCAPE unimplemented.\n");
+	FIXME(metafile, "META_ESCAPE unimplemented.\n");
         break;
 
         /* --- Begin of fixed or new metafile operations. July 1996 ----*/
@@ -736,7 +726,7 @@ void WINAPI PlayMetaFileRecord16(
             dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
           else 
 	  {
-	   dprintf_info(metafile,"EXTTEXTOUT: %s  len: %ld\n",
+	   TRACE(metafile,"%s  len: %ld\n",
              sot,mr->rdSize);
            fprintf(stderr,
 	     "Please report: PlayMetaFile/ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
@@ -750,7 +740,7 @@ void WINAPI PlayMetaFileRecord16(
 		           sot,				/* string */
                            s1, dxx);                    /* length, dx array */
         if (dxx)                      
-          dprintf_info(metafile,"EXTTEXTOUT: %s  len: %ld  dx0: %d\n",
+          TRACE(metafile,"%s  len: %ld  dx0: %d\n",
             sot,mr->rdSize,dxx[0]);
        }
        break;
@@ -841,7 +831,7 @@ void WINAPI PlayMetaFileRecord16(
 
      case META_DIBCREATEPATTERNBRUSH:
 	/*  *(mr->rdParam) may be BS_PATTERN or BS_DIBPATTERN: but there's no difference */
-        dprintf_info(metafile,"META_DIBCREATEPATTERNBRUSH: %d\n",*(mr->rdParam));
+        TRACE(metafile,"%d\n",*(mr->rdParam));
 	s1 = mr->rdSize * 2 - sizeof(METARECORD) - 2;
 	hndl = GlobalAlloc16(GMEM_MOVEABLE, s1);
 	ptr = GlobalLock16(hndl);
@@ -907,7 +897,7 @@ HGLOBAL16 WINAPI GetMetaFileBits(
 				 HMETAFILE16 hmf /* metafile handle */
 				 )
 {
-    dprintf_info(metafile,"GetMetaFileBits: hMem out: %04x\n", hmf);
+    TRACE(metafile,"hMem out: %04x\n", hmf);
     return hmf;
 }
 
@@ -924,7 +914,7 @@ HMETAFILE16 WINAPI SetMetaFileBits(
 			/* handle to a memory region holding a metafile */
 )
 {
-    dprintf_info(metafile,"SetMetaFileBits: hmf out: %04x\n", hMem);
+    TRACE(metafile,"hmf out: %04x\n", hMem);
 
     return hMem;
 }
@@ -1042,7 +1032,7 @@ static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
 	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
         break;
     case METAFILE_DISK:
-        dprintf_info(metafile,"Writing record to disk\n");
+        TRACE(metafile,"Writing record to disk\n");
 	if (_lwrite32(physDev->mh->mtNoParameters, (char *)mr, rlen) == -1)
 	    return FALSE;
         break;
@@ -1442,7 +1432,7 @@ BOOL32 MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
     *(mr->rdParam + 9) = BM.bmWidthBytes;
     *(mr->rdParam +10) = BM.bmPlanes;
     *(mr->rdParam +11) = BM.bmBitsPixel;
-    dprintf_info(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
+    TRACE(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
     if (GetBitmapBits32(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
                         mr->rdParam +12))
     {
@@ -1507,7 +1497,7 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     lpBMI->biYPelsPerMeter = MulDiv32(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
-    dprintf_info(metafile,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
+    TRACE(metafile,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
                len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
     if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT32)lpBMI->biHeight,
                   (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
@@ -1524,7 +1514,7 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     *(mr->rdParam +12) = BM.bmWidthBytes;
     *(mr->rdParam +13) = BM.bmPlanes;
     *(mr->rdParam +14) = BM.bmBitsPixel;
-    dprintf_info(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
+    TRACE(metafile,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
     if (GetBitmapBits32( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
                          mr->rdParam +15))
 #endif    

@@ -317,7 +317,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
         return 0;
     }
 
-    dprintf_info(class, "RegisterClass16: atom=%04x wndproc=%08lx hinst=%04x
+    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x
 bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
                    atom, (DWORD)wc->lpfnWndProc, hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
@@ -338,9 +338,13 @@ bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
 
 /***********************************************************************
  *           RegisterClass32A      (USER32.426)
+ * RETURNS
+ *	>0: Unique identifier
+ *	0: Failure
  */
-ATOM WINAPI RegisterClass32A( const WNDCLASS32A* wc )
-{
+ATOM WINAPI RegisterClass32A(
+	    const WNDCLASS32A* wc /* Address of structure with class data */
+) {
     ATOM atom;
     CLASS *classPtr;
 
@@ -354,7 +358,7 @@ ATOM WINAPI RegisterClass32A( const WNDCLASS32A* wc )
         return 0;
     }
 
-    dprintf_info(class, "RegisterClass32A: atom=%04x wndproc=%08lx
+    TRACE(class, "atom=%04x wndproc=%08lx
 hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
@@ -388,7 +392,7 @@ ATOM WINAPI RegisterClass32W( const WNDCLASS32W* wc )
         return 0;
     }
 
-    dprintf_info(class, "RegisterClass32W: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
+    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
@@ -420,7 +424,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
         return 0;
     }
 
-    dprintf_info(class, "RegisterClassEx16: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
+    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
                    atom, (DWORD)wc->lpfnWndProc, hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
@@ -454,7 +458,7 @@ ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
         return 0;
     }
 
-    dprintf_info(class, "RegisterClassEx32A: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
+    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
@@ -486,7 +490,7 @@ ATOM WINAPI RegisterClassEx32W( const WNDCLASSEX32W* wc )
         return 0;
     }
 
-    dprintf_info(class, "RegisterClassEx32W: atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
+    TRACE(class, "atom=%04x wndproc=%08lx hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );

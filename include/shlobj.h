@@ -96,7 +96,7 @@ typedef enum
 {
     SHGDN_NORMAL            = 0,        /* default (display purpose) */
     SHGDN_INFOLDER          = 1,        /* displayed under a folder (relative)*/
-    SHGDN_FORPARSING        = 0x8000,   /* for ParseDisplayName or path */
+    SHGDN_FORPARSING        = 0x8000    /* for ParseDisplayName or path */
 } SHGNO;
 
 /* IShellFolder::EnumObjects */
@@ -104,7 +104,7 @@ typedef enum tagSHCONTF
 {
     SHCONTF_FOLDERS         = 32,       /* for shell browser */
     SHCONTF_NONFOLDERS      = 64,       /* for default view */
-    SHCONTF_INCLUDEHIDDEN   = 128,      /* for hidden/system objects */
+    SHCONTF_INCLUDEHIDDEN   = 128       /* for hidden/system objects */
 } SHCONTF;
 
 /* from oleidl.h */
@@ -183,13 +183,13 @@ struct tagSHELLFOLDER {
 typedef enum {
     SLR_NO_UI           = 0x0001,
     SLR_ANY_MATCH       = 0x0002,
-    SLR_UPDATE          = 0x0004,
+    SLR_UPDATE          = 0x0004
 } SLR_FLAGS;
 
 /* IShellLink::GetPath fFlags */
 typedef enum {
     SLGP_SHORTPATH      = 0x0001,
-    SLGP_UNCPRIORITY    = 0x0002,
+    SLGP_UNCPRIORITY    = 0x0002
 } SLGP_FLAGS;
 
 

@@ -26,6 +26,8 @@
 #endif
 
 #include "miscemu.h"
+#include "selectors.h"
+#include "sig_context.h"
 #include "winsock.h"
 
 
@@ -83,8 +85,9 @@ static char SIGNAL_Stack[16384];
  * 
  * wait4 terminated child processes
  */
-static void SIGNAL_child(void)
+static HANDLER_DEF(SIGNAL_child)
 {
+    HANDLER_INIT();
 #ifdef HAVE_WAIT4
     wait4( 0, NULL, WNOHANG, NULL);
 #elif defined (HAVE_WAITPID)

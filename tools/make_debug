@@ -13,21 +13,32 @@ DEBUG_H="include/debug.h"
 DEBUG_DEFS_H="include/debugdefs.h"
 
 DEBUG_CHANNELS="$( tools/find_debug_channels )"
+DEBUG_CLASSES="fixme err warn trace"
 
 {
     cat <<EOF
 /* Do not modify this file -- it is automatically generated! */
 
-#ifndef __DEBUGTOOLS_H
+#ifndef __WINE_DEBUGTOOLS_H
 #include "debugtools.h"
 #endif
 
 EOF
-    i=0
+    echo "/* Definitions for channels identifiers */"
+
+    chno=0
     for ch in $DEBUG_CHANNELS
     do
-	echo "#define dbch_${ch} $i"
-	let i=$i+1
+	echo "#define dbch_${ch} $chno"
+	let chno=$chno+1
+    done
+
+    echo "/* Definitions for classes identifiers */"
+    clno=0
+    for cl in $DEBUG_CLASSES
+    do
+	echo "#define dbcl_${cl} $clno"
+	let clno=$clno+1
     done
 } > $DEBUG_H
 
@@ -38,11 +49,11 @@ EOF
     cat <<EOF
 /* Do not modify this file -- it is automatically generated! */
 
-#ifndef __DEBUGTOOLS_H
+#ifndef __WINE_DEBUGTOOLS_H
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT $i
+#define DEBUG_CHANNEL_COUNT $chno
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
 EOF
@@ -60,10 +71,14 @@ EOF
     done
     echo '};'
     
-    cat <<EOF
+    echo 'const char* debug_cl_name[] = {'
+    for ch in $DEBUG_CLASSES
+    do
+	echo "\"${ch}\","
+    done
+    echo '};'
 
-const char* debug_cl_name[] =
-{ "fixme", "err", "warn", "info" };
+    cat <<EOF
 
 #endif /*DEBUG_RUNTIME*/
 

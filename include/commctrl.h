@@ -108,4 +108,84 @@ VOID       WINAPI DrawStatusText32A(HDC32,LPRECT32,LPCSTR,UINT32);
 VOID       WINAPI DrawStatusText32W(HDC32,LPRECT32,LPCWSTR,UINT32);
 #define    DrawStatusText WINELIB_NAME_AW(DrawStatusText)
 
+
+/* ImageList */
+
+#if defined(__WINE__) && defined(__WINE_IMAGELIST_C)
+#else
+struct _IMAGELIST;
+typedef struct _IMAGELIST *HIMAGELIST;
+#endif  /* __WINE__ */
+
+#define CLR_NONE      0xFFFFFFFF
+#define CLR_DEFAULT   0x00000000
+#define CLR_HILIGHT   CLR_DEFAULT
+
+#define ILC_MASK       0x0001
+#define ILC_COLOR      0x0000
+#define ILC_COLORDDB   0x00FE
+#define ILC_COLOR4     0x0004
+#define ILC_COLOR8     0x0008
+#define ILC_COLOR16    0x0010
+#define ILC_COLOR24    0x0018
+#define ILC_COLOR32    0x0020
+#define ILC_PALETTE    0x0800
+
+#define ILD_NORMAL       0x0000
+#define ILD_TRANSPARENT  0x0001
+#define ILD_BLEND25      0x0002
+#define ILD_BLEND50      0x0004
+#define ILD_MASK         0x0010
+#define ILD_IMAGE        0x0020
+#define ILD_ROP          0x0040
+#define ILD_OVERLAYMASK  0x0F00
+
+#define ILD_SELECTED     ILD_BLEND50
+#define ILD_FOCUS        ILD_BLEND25
+#define ILD_BLEND        ILD_BLEND50
+
+#define INDEXTOOVERLAYMASK(i)  ((i)<<8)
+
+typedef struct _IMAGEINFO
+{
+    HBITMAP32 hbmImage;
+    HBITMAP32 hbmMask;
+    INT32     Unused1;
+    INT32     Unused2;
+    RECT32    rcImage;
+} IMAGEINFO;
+
+
+INT32      WINAPI ImageList_Add(HIMAGELIST,HBITMAP32,HBITMAP32);
+INT32      WINAPI ImageList_AddMasked(HIMAGELIST,HBITMAP32,COLORREF);
+
+HIMAGELIST WINAPI ImageList_Create(INT32,INT32,UINT32,INT32,INT32);
+BOOL32     WINAPI ImageList_Destroy(HIMAGELIST);
+
+BOOL32     WINAPI ImageList_Draw(HIMAGELIST,INT32,HDC32,INT32,INT32,UINT32);
+
+COLORREF   WINAPI ImageList_GetBkColor(HIMAGELIST);
+
+BOOL32     WINAPI ImageList_GetIconSize(HIMAGELIST,INT32*,INT32*);
+INT32      WINAPI ImageList_GetImageCount(HIMAGELIST);
+BOOL32     WINAPI ImageList_GetImageInfo(HIMAGELIST,INT32,IMAGEINFO*);
+
+HIMAGELIST WINAPI ImageList_LoadImage32A(HINSTANCE32,LPCSTR,INT32,INT32,
+                                         COLORREF,UINT32,UINT32);
+HIMAGELIST WINAPI ImageList_LoadImage32W(HINSTANCE32,LPCWSTR,INT32,INT32,
+                                         COLORREF,UINT32,UINT32);
+#define    ImageList_LoadImage WINELIB_NAME_AW(ImageList_LoadImage)
+HIMAGELIST WINAPI ImageList_Merge(HIMAGELIST,INT32,HIMAGELIST,INT32,INT32,INT32);
+
+BOOL32     WINAPI ImageList_Replace(HIMAGELIST,INT32,HBITMAP32,HBITMAP32);
+INT32      WINAPI ImageList_ReplaceIcon(HIMAGELIST,INT32,HICON32);
+
+COLORREF   WINAPI ImageList_SetBkColor(HIMAGELIST,COLORREF);
+
+BOOL32     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT32,INT32);
+
+#define ImageList_AddIcon(himl,hicon) ImageList_ReplaceIcon(himl,-1,hicon)
+#define ImageList_LoadBitmap(hi,lpbmp,cx,cGrow,crMask) \
+  ImageList_LoadImage(hi,lpbmp,cx,cGrow,crMask,IMAGE_BITMAP,0)
+
 #endif  /* __WINE_COMMCTRL_H */

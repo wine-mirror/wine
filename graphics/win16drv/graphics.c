@@ -60,9 +60,9 @@ WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     BOOL32 bRet = 0;
     POINT16 points[2];
 
-    dprintf_info(win16drv, "In WIN16DRV_Rectangle, x %d y %d DCOrgX %d y %d\n",
+    TRACE(win16drv, "In WIN16DRV_Rectangle, x %d y %d DCOrgX %d y %d\n",
            left, top, dc->w.DCOrgX, dc->w.DCOrgY);
-    dprintf_info(win16drv, "In WIN16DRV_Rectangle, VPortOrgX %d y %d\n",
+    TRACE(win16drv, "In WIN16DRV_Rectangle, VPortOrgX %d y %d\n",
            dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
     points[0].y = YLPTODP(dc, top);
@@ -152,9 +152,9 @@ WIN16DRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     BOOL32 bRet = 0;
     POINT16 points[2];
-    dprintf_info(win16drv, "In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
+    TRACE(win16drv, "In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
            left, top, dc->w.DCOrgX, dc->w.DCOrgY);
-    dprintf_info(win16drv, "In WIN16DRV_Ellipse, VPortOrgX %d y %d\n",
+    TRACE(win16drv, "In WIN16DRV_Ellipse, VPortOrgX %d y %d\n",
            dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
     points[0].y = YLPTODP(dc, top);

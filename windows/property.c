@@ -73,10 +73,10 @@ HANDLE32 WINAPI GetProp32A( HWND32 hwnd, LPCSTR str )
     PROPERTY *prop = PROP_FindProp( hwnd, str );
 
     if (HIWORD(str))
-        dprintf_info(prop, "GetProp(%08x,'%s'): returning %08x\n",
+        TRACE(prop, "(%08x,'%s'): returning %08x\n",
                       hwnd, str, prop ? prop->handle : 0 );
     else
-        dprintf_info(prop, "GetProp(%08x,#%04x): returning %08x\n",
+        TRACE(prop, "(%08x,#%04x): returning %08x\n",
                       hwnd, LOWORD(str), prop ? prop->handle : 0 );
 
     return prop ? prop->handle : 0;
@@ -116,9 +116,9 @@ BOOL32 WINAPI SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
     PROPERTY *prop;
 
     if (HIWORD(str))
-        dprintf_info(prop, "SetProp: %04x '%s' %08x\n", hwnd, str, handle );
+        TRACE(prop, "%04x '%s' %08x\n", hwnd, str, handle );
     else
-        dprintf_info(prop, "SetProp: %04x #%04x %08x\n",
+        TRACE(prop, "%04x #%04x %08x\n",
                       hwnd, LOWORD(str), handle );
 
     if (!(prop = PROP_FindProp( hwnd, str )))
@@ -177,9 +177,9 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
     WND *pWnd = WIN_FindWndPtr( hwnd );
 
     if (HIWORD(str))
-      dprintf_info(prop, "RemoveProp: %04x '%s'\n", hwnd, str );
+      TRACE(prop, "%04x '%s'\n", hwnd, str );
     else
-      dprintf_info(prop, "RemoveProp: %04x #%04x\n", hwnd, LOWORD(str));
+      TRACE(prop, "%04x #%04x\n", hwnd, LOWORD(str));
 
 
     if (!pWnd) return NULL;
@@ -262,7 +262,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
     WND *pWnd;
     INT16 ret = -1;
 
-    dprintf_info(prop, "EnumProps: %04x %08x\n", hwnd, (UINT32)func );
+    TRACE(prop, "%04x %08x\n", hwnd, (UINT32)func );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -270,7 +270,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
         /* function removes the current property.    */
         next = prop->next;
 
-        dprintf_info(prop, "  Callback: handle=%08x str='%s'\n",
+        TRACE(prop, "  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
         ret = func( hwnd, SEGPTR_GET(prop->string), prop->handle );
         if (!ret) break;
@@ -306,7 +306,7 @@ INT32 WINAPI EnumPropsEx32A(HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam)
     WND *pWnd;
     INT32 ret = -1;
 
-    dprintf_info(prop, "EnumPropsEx32A: %04x %08x %08lx\n",
+    TRACE(prop, "%04x %08x %08lx\n",
                   hwnd, (UINT32)func, lParam );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
@@ -315,7 +315,7 @@ INT32 WINAPI EnumPropsEx32A(HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam)
         /* function removes the current property.    */
         next = prop->next;
 
-        dprintf_info(prop, "  Callback: handle=%08x str='%s'\n",
+        TRACE(prop, "  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
         ret = func( hwnd, prop->string, prop->handle, lParam );
         if (!ret) break;
@@ -333,7 +333,7 @@ INT32 WINAPI EnumPropsEx32W(HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam)
     WND *pWnd;
     INT32 ret = -1;
 
-    dprintf_info(prop, "EnumPropsEx32W: %04x %08x %08lx\n",
+    TRACE(prop, "%04x %08x %08lx\n",
                   hwnd, (UINT32)func, lParam );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
@@ -342,7 +342,7 @@ INT32 WINAPI EnumPropsEx32W(HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam)
         /* function removes the current property.    */
         next = prop->next;
 
-        dprintf_info(prop, "  Callback: handle=%08x str='%s'\n",
+        TRACE(prop, "  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
         if (HIWORD(prop->string))
         {

@@ -119,7 +119,7 @@ typedef enum {
 	oleupdate_always,
 	oleupdate_onsave,
 	oleupdate_oncall,
-	oleupdate_onclose,
+	oleupdate_onclose
 } OLEOPT_UPDATE;
 
 typedef	LONG	LHSERVER;

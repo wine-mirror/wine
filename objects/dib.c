@@ -577,10 +577,8 @@ static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
 			  line 	-= (*pIn++);
 			  if (line == 0)
 			    {
-			      dprintf_info(bitmap, 
-					     "DIB_SetImageBits_RLE8(): "
-					     "Delta to last line of bitmap "
-					     "(wrongly?) causes loop exit\n");
+			      TRACE(bitmap, "Delta to last line of bitmap "
+					   "(wrongly?) causes loop exit\n");
 			    }
 			  break;
 		      }
@@ -624,7 +622,7 @@ static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
      */
     if ( (*(pIn-2) != 0/*escape*/) || (*(pIn-1)!= RleEnd) )
       {
-	dprintf_info(bitmap, "DIB_SetImageBits_RLE8(): End-of-bitmap "
+	TRACE(bitmap, "End-of-bitmap "
 		       "without (strictly) proper escape code.  Last two "
 		       "bytes were: %02X %02X.\n",
 		       (int)*(pIn-2),
@@ -1179,7 +1177,7 @@ INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	BYTE*	bbits = bits;
 	int	pad, yend, xend = bmp->bitmap.bmWidth;
 
-        dprintf_info(bitmap, "GetDIBits: %u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
+        TRACE(bitmap, "%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
 			    lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 			    (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight, startscan );
 

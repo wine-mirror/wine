@@ -435,26 +435,24 @@ static DWORD _get_instance(REFCLSID clsid,LPSTR dllname,
 ) {
 	DWORD	WINAPI	(*dllgetclassob)(REFCLSID,REFIID,LPVOID);
 	DWORD		hres;
-/*
 	LPCLASSFACTORY	classfac;
- */
 
 	dllgetclassob = (DWORD(*)(REFCLSID,REFIID,LPVOID))_find_moduleproc(dllname,NULL,"DllGetClassObject");
 	if (!dllgetclassob)
 		return 0x80070000|GetLastError();
 
 /* FIXME */
+/*
 	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,inst);
 	if (hres<0)
 		return hres;
 
-/*
+ */
 	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
 	if (hres<0)
 		return hres;
 	classfac->lpvtbl->fnCreateInstance(classfac,unknownouter,refiid,inst);
 	classfac->lpvtbl->fnRelease(classfac);
- */
 	return 0;
 }
 /*************************************************************************

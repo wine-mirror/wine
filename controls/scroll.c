@@ -615,8 +615,8 @@ void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar, UINT32 msg, POINT32 pt)
           return;  /* Should never happen */
     }
 
-    dprintf_info(scroll, "ScrollBar Event: hwnd=%04x bar=%d msg=%x pt=%d,%d hit=%d\n",
-                    hwnd, nBar, msg, pt.x, pt.y, hittest );
+    TRACE(scroll, "Event: hwnd=%04x bar=%d msg=%x pt=%d,%d hit=%d\n",
+		 hwnd, nBar, msg, pt.x, pt.y, hittest );
 
     switch(trackHitTest)
     {
@@ -766,8 +766,8 @@ LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 	    CREATESTRUCT32A *lpCreat = (CREATESTRUCT32A *)lParam;
             if (lpCreat->style & SBS_SIZEBOX)
             {
-                fprintf( stdnimp, "Unimplemented style SBS_SIZEBOX.\n" );
-                return 0;  /* FIXME */
+                FIXME(scroll, "Unimplemented style SBS_SIZEBOX.\n" );
+                return 0;
             }
             
 	    if (lpCreat->style & SBS_VERT)
@@ -794,7 +794,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
-        dprintf_info(scroll, "ScrollBar creation, hwnd=%04x\n", hwnd );
+        TRACE(scroll, "ScrollBar creation, hwnd=%04x\n", hwnd );
         return 0;
 	
     case WM_LBUTTONDOWN:
@@ -845,9 +845,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
         return 0;  /* FIXME: return previous position */
 
     case SBM_GETRANGE16:
-        /* FIXME */
-        fprintf( stderr, "ScrollBar: don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n",
-                 wParam, lParam );
+        FIXME(scroll, "don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n", wParam, lParam );
         return 0;
 
     case SBM_GETRANGE32:
@@ -876,14 +874,14 @@ LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     case 0x00ed:
     case 0x00ee:
     case 0x00ef:
-        fprintf(stderr, "ScrollBar: unknown Win32 msg %04x wp=%08x lp=%08lx\n",
-                message, wParam, lParam );
+        ERR(scroll, "unknown Win32 msg %04x wp=%08x lp=%08lx\n",
+		    message, wParam, lParam );
         break;
 
     default:
         if (message >= WM_USER)
-            fprintf( stderr, "ScrollBar: unknown msg %04x wp=%04x lp=%08lx\n",
-                     message, wParam, lParam );
+            WARN(scroll, "unknown msg %04x wp=%04x lp=%08lx\n",
+			 message, wParam, lParam );
         return DefWindowProc32A( hwnd, message, wParam, lParam );
     }
     return 0;
@@ -952,7 +950,7 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
         }
     }
 
-    dprintf_info(scroll, "SetScrollInfo: hwnd=%04x bar=%d %s\n", 
+    TRACE(scroll, "hwnd=%04x bar=%d %s\n", 
 		    hwnd, nBar, dbg_str(scroll));
 
     /* Make sure the page size is valid */
@@ -968,9 +966,9 @@ INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
     else if (infoPtr->CurVal > infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
         infoPtr->CurVal = infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 );
 
-    dprintf_info(scroll, "\n   new values: page=%d pos=%d min=%d max=%d\n",
-                    infoPtr->Page, infoPtr->CurVal,
-                    infoPtr->MinVal, infoPtr->MaxVal );
+    TRACE(scroll, "    new values: page=%d pos=%d min=%d max=%d\n",
+		 infoPtr->Page, infoPtr->CurVal,
+		 infoPtr->MinVal, infoPtr->MaxVal );
 
     /* Check if the scrollbar should be hidden or disabled */
 
@@ -1209,7 +1207,7 @@ BOOL32 WINAPI ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return FALSE;
-    dprintf_info(scroll, "ShowScrollBar: hwnd=%04x bar=%d on=%d\n",
+    TRACE(scroll, "hwnd=%04x bar=%d on=%d\n",
                     hwnd, nBar, fShow );
 
     switch(nBar)
@@ -1285,7 +1283,7 @@ BOOL32 WINAPI EnableScrollBar32( HWND32 hwnd, INT32 nBar, UINT32 flags )
     SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return FALSE;
-    dprintf_info(scroll, "EnableScrollBar: %04x %d %d\n",
+    TRACE(scroll, "%04x %d %d\n",
                     hwnd, nBar, flags );
     flags &= ESB_DISABLE_BOTH;
     if (infoPtr->flags == flags) return FALSE;

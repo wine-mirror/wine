@@ -58,18 +58,18 @@ static struct handle_info *locate_handle(HGLOBAL16 h, struct local_shm_map *map)
 {
   struct shm_block *block;
   
-  dprintf_info(global,"shm:locate_handle(0x%04x)\n", h);
+  TRACE(global,"shm: (0x%04x)\n", h);
 
 
   if (SampleBit( &free_handles, DDE_MEM_IDX(h)) == 0) {
-     dprintf_info(global, "shm:locate_handle: return NULL\n");
+     TRACE(global, "shm: return NULL\n");
      return NULL;		   /* free!!! */
   }
   
   block= shm_locate_block(DDE_MEM_INFO(h).shmid, map);
   if (block == NULL) {
       /* nothing found */
-      dprintf_info(global, "shm:locate_handle: return NULL\n");
+      TRACE(global, "shm: return NULL\n");
       return NULL;
   }
 
@@ -87,7 +87,7 @@ static HGLOBAL16 dde_alloc_handle()
   if (bit_nr != -1)
      return DDE_MEM_HANDLE(bit_nr);
 
-  dprintf_info(global,"dde_alloc_handle: no free DDE handle found\n");
+  TRACE(global,"dde_alloc_handle: no free DDE handle found\n");
   return 0;
 }
 /**********************************************************************
@@ -102,7 +102,7 @@ DDE_malloc(unsigned int flags, unsigned long size, SHMDATA *shmdata)
     struct local_shm_map *curr;
     HGLOBAL16 handle;
     
-    dprintf_info(global,"DDE_malloc flags %4X, size %ld\n", flags, size);
+    TRACE(global,"DDE_malloc flags %4X, size %ld\n", flags, size);
     DDE_IPC_init();		/* make sure main shm block allocated */ 
 
     shm_write_wait(main_block->proc[curr_proc_idx].sem);
@@ -151,14 +151,13 @@ DDE_malloc(unsigned int flags, unsigned long size, SHMDATA *shmdata)
     handle= dde_alloc_handle();
     
     if (handle) {
-       dprintf_info(global,
-		      "DDE_malloc returning handle=0x%4x, ptr=0x%08lx\n",
+       TRACE(global, "returning handle=0x%4x, ptr=0x%08lx\n",
 		      (int)handle, (long) HINFO2DATAPTR(h_info));
        DDE_MEM_INFO(handle).rel=  PTR2REL(block, h_info);
        DDE_MEM_INFO(handle).shmid= shmid;
     }
     else
-       dprintf_warn(global, "DDE_malloc failed\n");
+       WARN(global, "failed\n");
 
     shm_write_signal(main_block->proc[curr_proc_idx].sem);
     
@@ -172,7 +171,7 @@ HGLOBAL16 DDE_GlobalFree(HGLOBAL16 h)
   int handle_index= h & 0x7fff;
   struct local_shm_map map;
 
-  dprintf_info(global,"DDE_GlobalFree(0x%04x)\n",h);
+  TRACE(global,"(0x%04x)\n",h);
 
   if (h==0)
      return 0;
@@ -238,18 +237,18 @@ void *DDE_AttachHandle(HGLOBAL16 handle, SEGPTR *segptr)
   if (segptr != NULL)
       *segptr=0;
 
-  dprintf_info(global,"DDE_AttachHandle(%04x)\n",handle);
+  TRACE(global,"(%04x)\n",handle);
   h_info=locate_handle(handle, NULL);
 
   if (h_info == NULL) 
       return NULL;
 
   if ( !(h_info->flags & GMEM_DDESHARE) ) {
-      fprintf(stderr,"DDE_AttachHandle: Corrupted memory handle info\n");
+      ERR(global,"Corrupted memory handle info\n");
       return NULL;
   }
   
-  dprintf_info(global,"DDE_AttachHandle: h_info=%06lx\n",(long)h_info);
+  TRACE(global,"h_info=%06lx\n",(long)h_info);
 
   shmdata.handle= handle;
   shmdata.shmid= DDE_MEM_INFO(handle).shmid;
@@ -263,10 +262,10 @@ void *DDE_AttachHandle(HGLOBAL16 handle, SEGPTR *segptr)
   if (segptr != NULL) 
       *segptr= (SEGPTR)MAKELONG( 0, shmdata.sel);
 
-  if (debugging_info(dde))
+  if (TRACE_ON(dde))
       debug_last_handle_size= h_info->size;
 
-  dprintf_info(global,"DDE_AttachHandle returns ptr=0x%08lx\n", (long)ptr);
+  TRACE(global,"DDE_AttachHandle returns ptr=0x%08lx\n", (long)ptr);
 
   return (LPSTR)ptr;
 

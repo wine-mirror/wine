@@ -218,7 +218,7 @@ file	user.exe
 213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB16
 214 pascal   EscapeCommFunction(word word) EscapeCommFunction16
 215 pascal16 FlushComm(word word) FlushComm
-216 stub USERSEEUSERDO
+216 pascal   UserSeeUserDo(word word word word) UserSeeUserDo
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect16
 219 pascal16 CreateDialogIndirect(word ptr word segptr) CreateDialogIndirect16

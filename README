@@ -11,16 +11,19 @@ Basically, you can do anything with it, except claim that you wrote it.
 
 2. COMPILATION
 
-You must have one of:
+To compile the emulator, you must have one of:
 
 	Linux version 0.99.13 or above
 	NetBSD-current
 	FreeBSD-current or FreeBSD 1.1
 	OpenBSD/i386 2.1 or later
+	Solaris x86 2.5 or later
 
 You also need to have libXpm installed on your system. The sources for
 it are probably available on the ftp site where you got Wine. They can
 also be found on ftp.x.org and all its mirror sites.
+
+On x86 Systems gcc >= 2.7.0 is required. You will probably need flex too.
 
 To build Wine, first do a "./configure" and then a "make depend; make".
 This will build the library "libwine.a" and the program "wine".

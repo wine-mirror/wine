@@ -7,7 +7,7 @@
 
 int WINAPI AllocDiskSpace(long lLeft, UINT16 uDrive)
 {
-	dprintf_fixme(stress, "stress.dll: AllocDiskSpace(%d, %ld) - stub\n", 
+	FIXME(stress, "(%d, %ld) - stub\n", 
 		       uDrive, lLeft);
 
 	return 1;
@@ -15,7 +15,7 @@ int WINAPI AllocDiskSpace(long lLeft, UINT16 uDrive)
 
 int WINAPI AllocFileHandles(int Left)
 {
-	dprintf_info(stress, "stress.dll: AllocFileHandles(%d) - stub\n", Left);
+	TRACE(stress, "(%d) - stub\n", Left);
 
 	if (Left < 0)
 		return -1;
@@ -25,48 +25,48 @@ int WINAPI AllocFileHandles(int Left)
 
 BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 {
-	dprintf_info(stress, "stress.dll: AllocGDIMem(%d) - stub\n", uLeft);
+	TRACE(stress, "(%d) - stub\n", uLeft);
 
 	return 1;
 }
 
 BOOL16 WINAPI AllocMem(DWORD dwLeft)
 {
-	dprintf_fixme(stress, "stress.dll: AllocMem(%ld) - stub\n", dwLeft);
+	FIXME(stress, "(%ld) - stub\n", dwLeft);
 
 	return 1;
 }
 
 BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 {
-	dprintf_info(stress, "stress.dll: AllocUserMem %d\n", uContig);
+	TRACE(stress, "AllocUserMem %d\n", uContig);
 
 	return 1;
 }
 
 void WINAPI FreeAllMem(void)
 {
-	dprintf_info(stress, "stress.dll: FreeAllMem\n");
+	TRACE(stress, "FreeAllMem\n");
 }
 
 void WINAPI FreeAllGDIMem(void)
 {
-	dprintf_info(stress, "stress.dll: FreeAllGDIMem\n");
+	TRACE(stress, "FreeAllGDIMem\n");
 }
 
 void WINAPI FreeAllUserMem(void)
 {
-	dprintf_info(stress, "stress.dll: FreeAllUserMem\n");
+	TRACE(stress, "FreeAllUserMem\n");
 }
 
 void WINAPI GetFreeAllUserMem(void)
 {
-       dprintf_info(stress, "stress.dll: GetFreeAllUserMem\n");
+       TRACE(stress, "GetFreeAllUserMem\n");
 }
 
 int WINAPI GetFreeFileHandles(void)
 {
-	dprintf_info(stress, "stress.dll: GetFreeFileHandles\n");
+	TRACE(stress, "GetFreeFileHandles\n");
 
 #ifndef OPEN_MAX
 	return _POSIX_OPEN_MAX;
@@ -77,10 +77,10 @@ int WINAPI GetFreeFileHandles(void)
 
 void WINAPI UnAllocDiskSpace(UINT16 drive)
 {
-	dprintf_info(stress, "stress.dll: UnAllocDiskSpace %d\n", drive);
+	TRACE(stress, "UnAllocDiskSpace %d\n", drive);
 }
 
 void WINAPI UnAllocFileHandles(void)
 {
-	dprintf_info(stress, "stress.dll: GetFreeAllUserMem\n");
+	TRACE(stress, "GetFreeAllUserMem\n");
 }

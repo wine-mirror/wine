@@ -40,12 +40,20 @@ works correctly.
 FreeConsole is called on process exit (in ExitProcess) if 
 pdb->console is not NULL.
 
+
 BUGS
 ----
 Console processes do not inherit their parent's handles.  I think
 there needs to be two cases, one where they have to inherit
 the stdin/stdout/stderr from unix, and one where they have to
 inherit from another windows app.
+
+SetConsoleMode -- UNIX only has ICANON and various ECHOs
+to play around with for processing input.  Win32 has
+line-at-a-time processing, character processing, and
+echo.  I'm putting together an intermediate driver
+that will handle this (and hopefully won't be any more
+buggy then the NT4 console implementation).
 
 
 ================================================================
@@ -80,3 +88,7 @@ FreeConsole
 	o even when all the handles to it are freed, the win32 console
 	  stays visible, the only way I could find to free it
 	  was via the FreeConsole
+
+
+Is it possible to interrupt win32's FileWrite?  I'm not sure.
+It may not be possible to interrupt any system calls.

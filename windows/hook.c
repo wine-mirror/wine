@@ -847,7 +847,7 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
 
     if ((id < WH_MINHOOK) || (id > WH_MAXHOOK)) return 0;
 
-    dprintf_info(hook, "Setting hook %d: %08x %04x %04x\n",
+    TRACE(hook, "Setting hook %d: %08x %04x %04x\n",
                   id, (UINT32)proc, hInst, hTask );
 
     if (!hInst && (type!=HOOK_WIN16))
@@ -885,7 +885,7 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
         data->next = HOOK_systemHooks[id - WH_MINHOOK];
         HOOK_systemHooks[id - WH_MINHOOK] = handle;
     }
-    dprintf_info(hook, "Setting hook %d: ret=%04x [next=%04x]\n", 
+    TRACE(hook, "Setting hook %d: ret=%04x [next=%04x]\n", 
 			   id, handle, data->next );
     return handle;
 }
@@ -901,13 +901,13 @@ static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
     HOOKDATA *data;
     HANDLE16 *prevHook;
 
-    dprintf_info(hook, "Removing hook %04x\n", hook );
+    TRACE(hook, "Removing hook %04x\n", hook );
 
     if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return FALSE;
     if (data->flags & HOOK_INUSE)
     {
         /* Mark it for deletion later on */
-        dprintf_warn(hook, "Hook still running, deletion delayed\n" );
+        WARN(hook, "Hook still running, deletion delayed\n" );
         data->proc = (HOOKPROC32)0;
         return TRUE;
     }
@@ -981,12 +981,12 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
 
-    dprintf_info(hook, "Calling hook %04x: %d %08x %08lx\n",
+    TRACE(hook, "Calling hook %04x: %d %08x %08lx\n",
                   hook, code, wParam, lParam );
 
     ret = data->proc(code, wParam, lParam);
 
-    dprintf_info(hook, "Ret hook %04x = %08lx\n", hook, ret );
+    TRACE(hook, "Ret hook %04x = %08lx\n", hook, ret );
 
     data->flags &= ~HOOK_INUSE;
     queue->hCurHook = prevHook;
@@ -1274,7 +1274,7 @@ BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
 
-    dprintf_info(hook, "UnhookWindowsHook: %d %08lx\n", id, (DWORD)proc );
+    TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
 
     while (hook)
     {
@@ -1294,7 +1294,7 @@ BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
 {
     HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
 
-    dprintf_info(hook, "UnhookWindowsHook: %d %08lx\n", id, (DWORD)proc );
+    TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
 
     while (hook)
     {

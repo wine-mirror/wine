@@ -20,7 +20,7 @@ OLESTATUS WINAPI OleRegisterServer16( LPCSTR name, LPOLESERVER serverStruct,
                                       LHSERVER *hRet, HINSTANCE16 hServer,
                                       OLE_SERVER_USE use )
 {
-    dprintf_fixme(ole,"OleRegisterServer:%s - stub\n",name);
+    FIXME(ole,"%s - stub\n",name);
     *hRet=++OLE_current_handle;
     /* return OLE_ERROR_MEMORY, OLE_ERROR_PROTECT_ONLY if you want it fail*/
     return OLE_OK;
@@ -73,7 +73,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
                                          LPOLESERVERDOC document,
                                          LHSERVERDOC *hRet)
 {
-    dprintf_fixme(ole,"OleRegisterServerDoc:%ld,%s - stub\n", 
+    FIXME(ole,"%ld,%s - stub\n", 
 		hServer, docname);
     *hRet=++OLE_current_handle;
     return OLE_OK;
@@ -84,7 +84,7 @@ OLESTATUS WINAPI OleRegisterServerDoc16( LHSERVER hServer, LPCSTR docname,
  */
 OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC hServerDoc)
 {
-    dprintf_fixme(ole,"OleRevokeServerDoc:%ld  - stub\n",hServerDoc);
+    FIXME(ole,"%ld  - stub\n",hServerDoc);
     return OLE_OK;
 }
 
@@ -102,7 +102,7 @@ OLESTATUS WINAPI OleRevokeServerDoc32(LHSERVERDOC hServerDoc)
  */
 OLESTATUS WINAPI OleRevokeServer(LHSERVER hServer)
 {
-    dprintf_fixme(ole,"OleRevokeServer:%ld - stub\n",hServer);
+    FIXME(ole,"%ld - stub\n",hServer);
     return OLE_OK;
 }
 

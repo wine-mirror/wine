@@ -133,6 +133,18 @@ void WINAPI INT_Int13Handler( CONTEXT *context )
                 SET_CFLAG(context);
 		break;
 
+	case 0x17:	   /* SET DISK TYPE FOR FORMAT */
+		if (DL_reg(context) < 4)
+		    AH_reg(context) = 0x00; /* successful completion */
+		else
+		    AH_reg(context) = 0x01; /* error */
+		break;
+	case 0x18:
+		if (DL_reg(context) < 4)
+		    AH_reg(context) = 0x00; /* successful completion */
+		else
+		    AH_reg(context) = 0x01; /* error */
+		break;
 	default:
 		INT_BARF( context, 0x13 );
     }

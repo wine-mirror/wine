@@ -200,7 +200,7 @@ BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
     if (!pTimer || (pTimer->expires > curTime)) return FALSE; /* No timer */
     if (remove)	TIMER_RestartTimer( pTimer, curTime );  /* Restart it */
 
-    dprintf_info(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
+    TRACE(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
 		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
       /* Build the message */
@@ -262,7 +262,7 @@ static UINT32 TIMER_SetTimer( HWND32 hwnd, UINT32 id, UINT32 timeout,
     pTimer->expires = GetTickCount() + timeout;
     pTimer->proc    = (HWINDOWPROC)0;
     if (proc) WINPROC_SetProc( &pTimer->proc, proc, type, WIN_PROC_TIMER );
-    dprintf_info(timer, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
+    TRACE(timer, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
     TIMER_InsertTimer( pTimer );
@@ -302,7 +302,7 @@ static BOOL32 TIMER_KillTimer( HWND32 hwnd, UINT32 id, BOOL32 sys )
 UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                           TIMERPROC16 proc )
 {
-    dprintf_info(timer, "SetTimer16: %04x %d %d %08lx\n",
+    TRACE(timer, "%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, FALSE );
@@ -315,7 +315,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT32 WINAPI SetTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
                           TIMERPROC32 proc )
 {
-    dprintf_info(timer, "SetTimer32: %04x %d %d %08lx\n",
+    TRACE(timer, "%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_32A, FALSE );
@@ -328,7 +328,7 @@ UINT32 WINAPI SetTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
 UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                                 TIMERPROC16 proc )
 {
-    dprintf_info(timer, "SetSystemTimer16: %04x %d %d %08lx\n", 
+    TRACE(timer, "%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, TRUE );
@@ -341,7 +341,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT32 WINAPI SetSystemTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
                                 TIMERPROC32 proc )
 {
-    dprintf_info(timer, "SetSystemTimer32: %04x %d %d %08lx\n", 
+    TRACE(timer, "%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_32A, TRUE );
@@ -353,7 +353,7 @@ UINT32 WINAPI SetSystemTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
  */
 BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
 {
-    dprintf_info(timer, "KillTimer16: %04x %d\n", hwnd, id );
+    TRACE(timer, "%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -363,7 +363,7 @@ BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
  */
 BOOL32 WINAPI KillTimer32( HWND32 hwnd, UINT32 id )
 {
-    dprintf_info(timer, "KillTimer32: %04x %d\n", hwnd, id );
+    TRACE(timer, "%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -373,7 +373,7 @@ BOOL32 WINAPI KillTimer32( HWND32 hwnd, UINT32 id )
  */
 BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
 {
-    dprintf_info(timer, "KillSystemTimer16: %04x %d\n", hwnd, id );
+    TRACE(timer, "%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }
 
@@ -383,6 +383,6 @@ BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
  */
 BOOL32 WINAPI KillSystemTimer32( HWND32 hwnd, UINT32 id )
 {
-    dprintf_info(timer, "KillSystemTimer32: %04x %d\n", hwnd, id );
+    TRACE(timer, "%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }

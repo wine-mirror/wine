@@ -28,7 +28,7 @@ struct Win87EmInfoStruct
 
 void WINAPI WIN87_fpmath( CONTEXT *context )
 {
-    dprintf_info(int, "_fpmath: (cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
+    TRACE(int, "(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
                  (WORD)CS_reg(context), EIP_reg(context),
                  (WORD)ES_reg(context), BX_reg(context),
                  AX_reg(context), DX_reg(context) );
@@ -74,7 +74,7 @@ void WINAPI WIN87_fpmath( CONTEXT *context )
              */
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
-            dprintf_info(int,"emulate.c:On top of stack was %ld\n",dw);
+            TRACE(int,"On top of stack was %ld\n",dw);
             AX_reg(context) = LOWORD(dw);
             DX_reg(context) = HIWORD(dw);
         }
@@ -108,18 +108,18 @@ void WINAPI WIN87_fpmath( CONTEXT *context )
 void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
                               int cbWin87EmInfoStruct)
 {
-  dprintf_info(int, "__WinEm87Info(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
+  TRACE(int, "(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
 }
 
 void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
                                  int cbWin87EmSaveArea)
 {
-  dprintf_info(int, "__WinEm87Restore(%p,%d)\n",
+  TRACE(int, "(%p,%d)\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
 
 void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
-  dprintf_info(int, "__WinEm87Save(%p,%d)\n",
+  TRACE(int, "(%p,%d)\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
