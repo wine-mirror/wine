@@ -183,6 +183,14 @@ then {
   }
   fi
 
+  if [ ! -w . ]
+  then {
+    echo "The source directory is not writable. You probably extracted the sources as root."
+    echo "You should remove the source tree and extract it again as a normal user."
+    exit 1
+  }
+  fi
+
   # check whether RPM installed, and if it is, remove any old wine rpm.
   hash rpm &>/dev/null
   RET=$?
