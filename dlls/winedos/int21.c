@@ -6,6 +6,7 @@
  * Copyright 1997 Andreas Mohr
  * Copyright 1998 Uwe Bonnes
  * Copyright 1998, 1999 Ove Kaaven
+ * Copyright 2003 Thomas Mertes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -86,6 +87,34 @@ typedef struct _INT21_HEAP {
 } INT21_HEAP;
 
 #include "poppack.h"
+
+
+struct FCB {
+    BYTE  drive_number;
+    CHAR  file_name[8];
+    CHAR  file_extension[3];
+    WORD  current_block_number;
+    WORD  logical_record_size;
+    DWORD file_size;
+    WORD  date_of_last_write;
+    WORD  time_of_last_write;
+    BYTE  file_number;
+    BYTE  attributes;
+    WORD  starting_cluster;
+    WORD  sequence_number;
+    BYTE  file_attributes;
+    BYTE  unused;
+    BYTE  record_within_current_block;
+    BYTE  random_access_record_number[4];
+};
+
+
+struct XFCB {
+    BYTE  xfcb_signature;
+    BYTE  reserved[5];
+    BYTE  xfcb_file_attribute;
+    BYTE  fcb[37];
+};
 
 
 /***********************************************************************
@@ -344,6 +373,643 @@ static WORD INT21_BufferedInput( CONTEXT86 *context, BYTE *ptr, WORD capacity )
             length++;
         }
     }
+}
+
+
+static BYTE *GetCurrentDTA( CONTEXT86 *context )
+{
+    TDB *pTask = GlobalLock16(GetCurrentTask());
+
+    /* FIXME: This assumes DTA was set correctly! */
+    return (BYTE *)CTX_SEG_OFF_TO_LIN( context, SELECTOROF(pTask->dta),
+                                                (DWORD)OFFSETOF(pTask->dta) );
+}
+
+
+/***********************************************************************
+ *           INT21_OpenFileUsingFCB
+ *
+ * Handler for function 0x0f.
+ *
+ * PARAMS
+ *  DX:DX [I/O] File control block (FCB or XFCB) of unopened file
+ *
+ * RETURNS (in AL)
+ *  0x00: successful
+ *  0xff: failed
+ *
+ * NOTES
+ *  Opens a FCB file for read/write in compatibility mode. Upon calling
+ *  the FCB must have the drive_number, file_name, and file_extension
+ *  fields filled and all other bytes cleared.
+ */
+static void INT21_OpenFileUsingFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    char current_directory[MAX_PATH];
+    char file_path[16];
+    char *pos;
+    HANDLE handle;
+    HFILE16 hfile16;
+    BY_HANDLE_FILE_INFORMATION info;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    AL_result = 0;
+    if (fcb->drive_number == 0) {
+        if (!GetCurrentDirectoryA(sizeof(current_directory), current_directory) ||
+                current_directory[1] != ':') {
+            TRACE("GetCurrentDirectoryA failed\n");
+            AL_result = 0xff; /* failed */
+        } /* if */
+        file_path[0] = toupper(current_directory[0]);
+    } else {
+        file_path[0] = 'A' + fcb->drive_number - 1;
+    } /* if */
+
+    if (AL_result == 0) {
+        file_path[1] = ':';
+        pos = &file_path[2];
+        memcpy(pos, fcb->file_name, 8);
+        pos[8] = ' ';
+        pos[9] = '\0';
+        pos = strchr(pos, ' ');
+        *pos = '.';
+        pos++;
+        memcpy(pos, fcb->file_extension, 3);
+        pos[3] = ' ';
+        pos[4] = '\0';
+        pos = strchr(pos, ' ');
+        *pos = '\0';
+
+        handle = (HANDLE) _lopen(file_path, OF_READWRITE);
+        if (handle == INVALID_HANDLE_VALUE) {
+            TRACE("_lopen(\"%s\") failed: INVALID_HANDLE_VALUE\n", file_path);
+            AL_result = 0xff; /* failed */
+        } else {
+            hfile16 = Win32HandleToDosFileHandle(handle);
+            if (hfile16 == HFILE_ERROR16) {
+                TRACE("Win32HandleToDosFileHandle(%p) failed: HFILE_ERROR\n", handle);
+                CloseHandle(handle);
+                AL_result = 0xff; /* failed */
+            } else if (hfile16 > 255) {
+                TRACE("hfile16 (=%d) larger than 255 for \"%s\"\n", hfile16, file_path);
+                _lclose16(hfile16);
+                AL_result = 0xff; /* failed */
+            } else {
+                if (!GetFileInformationByHandle(handle, &info)) {
+                    TRACE("GetFileInformationByHandle(%d, %p) for \"%s\" failed\n",
+                          hfile16, handle, file_path);
+                    _lclose16(hfile16);
+                    AL_result = 0xff; /* failed */
+                } else {
+                    fcb->drive_number = file_path[0] - 'A' + 1;
+                    fcb->current_block_number = 0;
+                    fcb->logical_record_size = 128;
+                    fcb->file_size = info.nFileSizeLow;
+                    FileTimeToDosDateTime(&info.ftLastWriteTime,
+                        &fcb->date_of_last_write, &fcb->time_of_last_write);
+                    fcb->file_number = hfile16;
+                    fcb->attributes = 0xc2;
+                    fcb->starting_cluster = 0; /* don't know correct init value */
+                    fcb->sequence_number = 0; /* don't know correct init value */
+                    fcb->file_attributes = info.dwFileAttributes;
+                    /* The following fields are not initialized */
+                    /* by the native function: */
+                    /* unused */
+                    /* record_within_current_block */
+                    /* random_access_record_number */
+
+                    TRACE("successful opened file \"%s\" as %d (handle %p)\n",
+                          file_path, hfile16, handle);
+                    AL_result = 0x00; /* successful */
+                } /* if */
+            } /* if */
+        } /* if */
+    } /* if */
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_CloseFileUsingFCB
+ *
+ * Handler for function 0x10.
+ *
+ * PARAMS
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0x00: successful
+ *  0xff: failed
+ *
+ * NOTES
+ *  Closes a FCB file.
+ */
+static void INT21_CloseFileUsingFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    if (_lclose16((HFILE16) fcb->file_number) != 0) {
+        TRACE("_llclose16(%d) failed\n", fcb->file_number);
+        AL_result = 0xff; /* failed */
+    } else {
+        TRACE("successful closed file %d\n", fcb->file_number);
+        AL_result = 0x00; /* successful */
+    } /* if */
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_SequenialReadFromFCB
+ *
+ * Handler for function 0x14.
+ *
+ * PARAMS
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0: successful
+ *  1: end of file, no data read
+ *  2: segment wrap in DTA, no data read (not returned now)
+ *  3: end of file, partial record read
+ *
+ * NOTES
+ *  Reads a record with the size FCB->logical_record_size from the FCB
+ *  to the disk transfer area. The position of the record is specified
+ *  with FCB->current_block_number and FCB->record_within_current_block.
+ *  Then FCB->current_block_number and FCB->record_within_current_block
+ *  are updated to point to the next record. If a partial record is
+ *  read, it is filled with zeros up to the FCB->logical_record_size.
+ */
+static void INT21_SequenialReadFromFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    HANDLE handle;
+    DWORD record_number;
+    long position;
+    BYTE *disk_transfer_area;
+    UINT bytes_read;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    handle = DosFileHandleToWin32Handle((HFILE16) fcb->file_number);
+    if (handle == INVALID_HANDLE_VALUE) {
+        TRACE("DosFileHandleToWin32Handle(%d) failed: INVALID_HANDLE_VALUE\n",
+            fcb->file_number);
+        AL_result = 0x01; /* end of file, no data read */
+    } else {
+        record_number = 128 * fcb->current_block_number + fcb->record_within_current_block;
+        position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
+        if (position != record_number * fcb->logical_record_size) {
+            TRACE("seek(%d, %ld, 0) failed with %ld\n",
+                  fcb->file_number, record_number * fcb->logical_record_size, position);
+            AL_result = 0x01; /* end of file, no data read */
+        } else {
+            disk_transfer_area = GetCurrentDTA(context);
+            bytes_read = _lread((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
+            if (bytes_read != fcb->logical_record_size) {
+                TRACE("_lread(%d, %p, %d) failed with %d\n",
+                      fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_read);
+                if (bytes_read == 0) {
+                    AL_result = 0x01; /* end of file, no data read */
+                } else {
+                    memset(&disk_transfer_area[bytes_read], 0, fcb->logical_record_size - bytes_read);
+                    AL_result = 0x03; /* end of file, partial record read */
+                } /* if */
+            } else {
+                TRACE("successful read %d bytes from record %ld (position %ld) of file %d (handle %p)\n",
+                    bytes_read, record_number, position, fcb->file_number, handle);
+                AL_result = 0x00; /* successful */
+            } /* if */
+        } /* if */
+    } /* if */
+    if (AL_result == 0x00 || AL_result == 0x03) {
+        if (fcb->record_within_current_block == 127) {
+            fcb->record_within_current_block = 0;
+            fcb->current_block_number++;
+        } else {
+            fcb->record_within_current_block++;
+        } /* if */
+    } /* if */
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_SequenialWriteToFCB
+ *
+ * Handler for function 0x15.
+ *
+ * PARAMS
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0: successful
+ *  1: disk full
+ *  2: segment wrap in DTA (not returned now)
+ *
+ * NOTES
+ *  Writes a record with the size FCB->logical_record_size from the disk
+ *  transfer area to the FCB. The position of the record is specified
+ *  with FCB->current_block_number and FCB->record_within_current_block.
+ *  Then FCB->current_block_number and FCB->record_within_current_block
+ *  are updated to point to the next record. 
+ */
+static void INT21_SequenialWriteToFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    HANDLE handle;
+    DWORD record_number;
+    long position;
+    BYTE *disk_transfer_area;
+    UINT bytes_written;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    handle = DosFileHandleToWin32Handle((HFILE16) fcb->file_number);
+    if (handle == INVALID_HANDLE_VALUE) {
+        TRACE("DosFileHandleToWin32Handle(%d) failed: INVALID_HANDLE_VALUE\n",
+            fcb->file_number);
+        AL_result = 0x01; /* disk full */
+    } else {
+        record_number = 128 * fcb->current_block_number + fcb->record_within_current_block;
+        position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
+        if (position != record_number * fcb->logical_record_size) {
+            TRACE("seek(%d, %ld, 0) failed with %ld\n",
+                  fcb->file_number, record_number * fcb->logical_record_size, position);
+            AL_result = 0x01; /* disk full */
+        } else {
+            disk_transfer_area = GetCurrentDTA(context);
+            bytes_written = _lwrite((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
+            if (bytes_written != fcb->logical_record_size) {
+                TRACE("_lwrite(%d, %p, %d) failed with %d\n",
+                      fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
+                AL_result = 0x01; /* disk full */
+            } else {
+                TRACE("successful written %d bytes from record %ld (position %ld) of file %d (handle %p)\n",
+                    bytes_written, record_number, position, fcb->file_number, handle);
+                AL_result = 0x00; /* successful */
+            } /* if */
+        } /* if */
+    } /* if */
+    if (AL_result == 0x00) {
+        if (fcb->record_within_current_block == 127) {
+            fcb->record_within_current_block = 0;
+            fcb->current_block_number++;
+        } else {
+            fcb->record_within_current_block++;
+        } /* if */
+    } /* if */
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_ReadRandomRecordFromFCB
+ *
+ * Handler for function 0x21.
+ *
+ * PARAMS
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0: successful
+ *  1: end of file, no data read
+ *  2: segment wrap in DTA, no data read (not returned now)
+ *  3: end of file, partial record read
+ *
+ * NOTES
+ *  Reads a record with the size FCB->logical_record_size from
+ *  the FCB to the disk transfer area. The position of the record
+ *  is specified with FCB->random_access_record_number. The
+ *  FCB->random_access_record_number is not updated. If a partial record
+ *  is read, it is filled with zeros up to the FCB->logical_record_size.
+ */
+static void INT21_ReadRandomRecordFromFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    HANDLE handle;
+    DWORD record_number;
+    long position;
+    BYTE *disk_transfer_area;
+    UINT bytes_read;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    memcpy(&record_number, fcb->random_access_record_number, 4);
+    handle = DosFileHandleToWin32Handle((HFILE16) fcb->file_number);
+    if (handle == INVALID_HANDLE_VALUE) {
+        TRACE("DosFileHandleToWin32Handle(%d) failed: INVALID_HANDLE_VALUE\n",
+            fcb->file_number);
+        AL_result = 0x01; /* end of file, no data read */
+    } else {
+        position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
+        if (position != record_number * fcb->logical_record_size) {
+            TRACE("seek(%d, %ld, 0) failed with %ld\n",
+                  fcb->file_number, record_number * fcb->logical_record_size, position);
+            AL_result = 0x01; /* end of file, no data read */
+        } else {
+            disk_transfer_area = GetCurrentDTA(context);
+            bytes_read = _lread((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
+            if (bytes_read != fcb->logical_record_size) {
+                TRACE("_lread(%d, %p, %d) failed with %d\n",
+                      fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_read);
+                if (bytes_read == 0) {
+                    AL_result = 0x01; /* end of file, no data read */
+                } else {
+                    memset(&disk_transfer_area[bytes_read], 0, fcb->logical_record_size - bytes_read);
+                    AL_result = 0x03; /* end of file, partial record read */
+                } /* if */
+            } else {
+                TRACE("successful read %d bytes from record %ld (position %ld) of file %d (handle %p)\n",
+                    bytes_read, record_number, position, fcb->file_number, handle);
+                AL_result = 0x00; /* successful */
+            } /* if */
+        } /* if */
+    } /* if */
+    fcb->current_block_number = record_number / 128;
+    fcb->record_within_current_block = record_number % 128;
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_WriteRandomRecordToFCB
+ *
+ * Handler for function 0x22.
+ *
+ * PARAMS
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0: successful
+ *  1: disk full
+ *  2: segment wrap in DTA (not returned now)
+ *
+ * NOTES
+ *  Writes a record with the size FCB->logical_record_size from
+ *  the disk transfer area to the FCB. The position of the record
+ *  is specified with FCB->random_access_record_number. The
+ *  FCB->random_access_record_number is not updated.
+ */
+static void INT21_WriteRandomRecordToFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    HANDLE handle;
+    DWORD record_number;
+    long position;
+    BYTE *disk_transfer_area;
+    UINT bytes_written;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    memcpy(&record_number, fcb->random_access_record_number, 4);
+    handle = DosFileHandleToWin32Handle((HFILE16) fcb->file_number);
+    if (handle == INVALID_HANDLE_VALUE) {
+        TRACE("DosFileHandleToWin32Handle(%d) failed: INVALID_HANDLE_VALUE\n",
+            fcb->file_number);
+        AL_result = 0x01; /* disk full */
+    } else {
+        position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
+        if (position != record_number * fcb->logical_record_size) {
+            TRACE("seek(%d, %ld, 0) failed with %ld\n",
+                  fcb->file_number, record_number * fcb->logical_record_size, position);
+            AL_result = 0x01; /* disk full */
+        } else {
+            disk_transfer_area = GetCurrentDTA(context);
+            bytes_written = _lwrite((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
+            if (bytes_written != fcb->logical_record_size) {
+                TRACE("_lwrite(%d, %p, %d) failed with %d\n",
+                      fcb->file_number, disk_transfer_area, fcb->logical_record_size, bytes_written);
+                AL_result = 0x01; /* disk full */
+            } else {
+                TRACE("successful written %d bytes from record %ld (position %ld) of file %d (handle %p)\n",
+                    bytes_written, record_number, position, fcb->file_number, handle);
+                AL_result = 0x00; /* successful */
+            } /* if */
+        } /* if */
+    } /* if */
+    fcb->current_block_number = record_number / 128;
+    fcb->record_within_current_block = record_number % 128;
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_RandomBlockReadFromFCB
+ *
+ * Handler for function 0x27.
+ *
+ * PARAMS
+ *  CX    [I/O] Number of records to read
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0: successful
+ *  1: end of file, no data read
+ *  2: segment wrap in DTA, no data read (not returned now)
+ *  3: end of file, partial record read
+ *
+ * NOTES
+ *  Reads several records with the size FCB->logical_record_size from
+ *  the FCB to the disk transfer area. The number of records to be
+ *  read is specified in the CX register. The position of the first
+ *  record is specified with FCB->random_access_record_number. The
+ *  FCB->random_access_record_number, the FCB->current_block_number
+ *  and FCB->record_within_current_block are updated to point to the
+ *  next record after the records read. If a partial record is read,
+ *  it is filled with zeros up to the FCB->logical_record_size. The
+ *  CX register is set to the number of successfully read records.
+ */
+static void INT21_RandomBlockReadFromFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    HANDLE handle;
+    DWORD record_number;
+    long position;
+    BYTE *disk_transfer_area;
+    UINT records_requested;
+    UINT bytes_requested;
+    UINT bytes_read;
+    UINT records_read;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    memcpy(&record_number, fcb->random_access_record_number, 4);
+    handle = DosFileHandleToWin32Handle((HFILE16) fcb->file_number);
+    if (handle == INVALID_HANDLE_VALUE) {
+        TRACE("DosFileHandleToWin32Handle(%d) failed: INVALID_HANDLE_VALUE\n",
+            fcb->file_number);
+        records_read = 0;
+        AL_result = 0x01; /* end of file, no data read */
+    } else {
+        position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
+        if (position != record_number * fcb->logical_record_size) {
+            TRACE("seek(%d, %ld, 0) failed with %ld\n",
+                  fcb->file_number, record_number * fcb->logical_record_size, position);
+            records_read = 0;
+            AL_result = 0x01; /* end of file, no data read */
+        } else {
+            disk_transfer_area = GetCurrentDTA(context);
+            records_requested = CX_reg(context);
+            bytes_requested = (UINT) records_requested * fcb->logical_record_size;
+            bytes_read = _lread((HFILE) handle, disk_transfer_area, bytes_requested);
+            if (bytes_read != bytes_requested) {
+                TRACE("_lread(%d, %p, %d) failed with %d\n",
+                      fcb->file_number, disk_transfer_area, bytes_requested, bytes_read);
+                records_read = bytes_read / fcb->logical_record_size;
+                if (bytes_read % fcb->logical_record_size == 0) {
+                    AL_result = 0x01; /* end of file, no data read */
+                } else {
+                    records_read++;
+                    memset(&disk_transfer_area[bytes_read], 0, records_read * fcb->logical_record_size - bytes_read);
+                    AL_result = 0x03; /* end of file, partial record read */
+                } /* if */
+            } else {
+                TRACE("successful read %d bytes from record %ld (position %ld) of file %d (handle %p)\n",
+                    bytes_read, record_number, position, fcb->file_number, handle);
+                records_read = records_requested;
+                AL_result = 0x00; /* successful */
+            } /* if */
+        } /* if */
+    } /* if */
+    record_number += records_read;
+    memcpy(fcb->random_access_record_number, &record_number, 4);
+    fcb->current_block_number = record_number / 128;
+    fcb->record_within_current_block = record_number % 128;
+    SET_CX(context, records_read);
+    SET_AL(context, AL_result);
+}
+
+
+/***********************************************************************
+ *           INT21_RandomBlockWriteToFCB
+ *
+ * Handler for function 0x28.
+ *
+ * PARAMS
+ *  CX    [I/O] Number of records to write
+ *  DX:DX [I/O] File control block (FCB or XFCB) of open file
+ *
+ * RETURNS (in AL)
+ *  0: successful
+ *  1: disk full
+ *  2: segment wrap in DTA (not returned now)
+ *
+ * NOTES
+ *  Writes several records with the size FCB->logical_record_size from
+ *  the disk transfer area to the FCB. The number of records to be
+ *  written is specified in the CX register. The position of the first
+ *  record is specified with FCB->random_access_record_number. The
+ *  FCB->random_access_record_number, the FCB->current_block_number
+ *  and FCB->record_within_current_block are updated to point to the
+ *  next record after the records written. The CX register is set to
+ *  the number of successfully written records.
+ */
+static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
+{
+    struct FCB *fcb;
+    struct XFCB *xfcb;
+    HANDLE handle;
+    DWORD record_number;
+    long position;
+    BYTE *disk_transfer_area;
+    UINT records_requested;
+    UINT bytes_requested;
+    UINT bytes_written;
+    UINT records_written;
+    BYTE AL_result;
+
+    fcb = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+    if (fcb->drive_number == 0xff) {
+        xfcb = (struct XFCB *) fcb;
+        fcb = (struct FCB *) xfcb->fcb;
+    } /* if */
+
+    memcpy(&record_number, fcb->random_access_record_number, 4);
+    handle = DosFileHandleToWin32Handle((HFILE16) fcb->file_number);
+    if (handle == INVALID_HANDLE_VALUE) {
+        TRACE("DosFileHandleToWin32Handle(%d) failed: INVALID_HANDLE_VALUE\n",
+            fcb->file_number);
+        records_written = 0;
+        AL_result = 0x01; /* disk full */
+    } else {
+        position = SetFilePointer(handle, record_number * fcb->logical_record_size, NULL, 0);
+        if (position != record_number * fcb->logical_record_size) {
+            TRACE("seek(%d, %ld, 0) failed with %ld\n",
+                  fcb->file_number, record_number * fcb->logical_record_size, position);
+            records_written = 0;
+            AL_result = 0x01; /* disk full */
+        } else {
+            disk_transfer_area = GetCurrentDTA(context);
+            records_requested = CX_reg(context);
+            bytes_requested = (UINT) records_requested * fcb->logical_record_size;
+            bytes_written = _lwrite((HFILE) handle, disk_transfer_area, bytes_requested);
+            if (bytes_written != bytes_requested) {
+                TRACE("_lwrite(%d, %p, %d) failed with %d\n",
+                      fcb->file_number, disk_transfer_area, bytes_requested, bytes_written);
+                records_written = bytes_written / fcb->logical_record_size;
+                AL_result = 0x01; /* disk full */
+            } else {
+                TRACE("successful write %d bytes from record %ld (position %ld) of file %d (handle %p)\n",
+                    bytes_written, record_number, position, fcb->file_number, handle);
+                records_written = records_requested;
+                AL_result = 0x00; /* successful */
+            } /* if */
+        } /* if */
+    } /* if */
+    record_number += records_written;
+    memcpy(fcb->random_access_record_number, &record_number, 4);
+    fcb->current_block_number = record_number / 128;
+    fcb->record_within_current_block = record_number % 128;
+    SET_CX(context, records_written);
+    SET_AL(context, AL_result);
 }
 
 
@@ -1461,8 +2127,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x0f: /* OPEN FILE USING FCB */
+        INT21_OpenFileUsingFCB( context );
+        break;
+
     case 0x10: /* CLOSE FILE USING FCB */
-        INT_BARF( context, 0x21 );
+        INT21_CloseFileUsingFCB( context );
         break;
 
     case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
@@ -1471,8 +2140,17 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x13: /* DELETE FILE USING FCB */
+        INT_BARF( context, 0x21 );
+        break;
+
     case 0x14: /* SEQUENTIAL READ FROM FCB FILE */
+        INT21_SequenialReadFromFCB( context );
+        break;
+
     case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
+        INT21_SequenialWriteToFCB( context );
+        break;
+
     case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
     case 0x17: /* RENAME FILE USING FCB */
         INT_BARF( context, 0x21 );
@@ -1514,7 +2192,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x21: /* READ RANDOM RECORD FROM FCB FILE */
+        INT21_ReadRandomRecordFromFCB( context );
+        break;
+
     case 0x22: /* WRITE RANDOM RECORD TO FCB FILE */
+        INT21_WriteRandomRecordToFCB( context );
+        break;
+
     case 0x23: /* GET FILE SIZE FOR FCB */
     case 0x24: /* SET RANDOM RECORD NUMBER FOR FCB */
         INT_BARF( context, 0x21 );
@@ -1532,9 +2216,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x26: /* CREATE NEW PROGRAM SEGMENT PREFIX */
-    case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
-    case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
         INT_BARF( context, 0x21 );
+        break;
+
+    case 0x27: /* RANDOM BLOCK READ FROM FCB FILE */
+        INT21_RandomBlockReadFromFCB( context );
+        break;
+
+    case 0x28: /* RANDOM BLOCK WRITE TO FCB FILE */
+        INT21_RandomBlockWriteToFCB( context );
         break;
 
     case 0x29: /* PARSE FILENAME INTO FCB */
