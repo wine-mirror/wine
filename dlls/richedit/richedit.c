@@ -12,6 +12,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "riched32.h"

@@ -59,6 +59,95 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 
 typedef DWORD CALLBACK(* EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
 
+/* Rich edit control styles */
+#define ES_SAVESEL            0x00008000
+#define ES_SUNKEN             0x00004000
+#define ES_DISABLENOSCROLL    0x00002000
+#define ES_SELECTIONBAR       0x01000000
+#define ES_VERTICAL           0x00400000
+#define ES_NOIME              0x00080000
+#define ES_SELFIME            0x00040000
+
+/* CHARFORMAT structure */
+typedef struct _charformat
+{
+    UINT       cbSize;
+    DWORD      dwMask;
+    DWORD      dwEffects;
+    LONG       yHeight;
+    LONG       yOffset;
+    COLORREF   crTextColor;
+    BYTE       bCharSet;
+    BYTE       bPitchAndFamily;
+    char       szFaceName[LF_FACESIZE];
+} CHARFORMATA;
+
+typedef struct _charformatw
+{
+    UINT       cbSize;
+    DWORD      dwMask;
+    DWORD      dwEffects;
+    LONG       yHeight;
+    LONG       yOffset;
+    COLORREF   crTextColor;
+    BYTE       bCharSet;
+    BYTE       bPitchAndFamily;
+    WCHAR      szFaceName[LF_FACESIZE];
+} CHARFORMATW;
+
+DECL_WINELIB_TYPE_AW(CHARFORMAT)
+
+/* CHARFORMAT masks */
+#define CFM_BOLD              0x00000001
+#define CFM_ITALIC            0x00000002
+#define CFM_UNDERLINE         0x00000004
+#define CFM_STRIKEOUT         0x00000008
+#define CFM_PROTECTED         0x00000010
+#define CFM_SIZE              0x80000000
+#define CFM_COLOR             0x40000000
+#define CFM_FACE              0x20000000
+#define CFM_OFFSET            0x10000000
+#define CFM_CHARSET           0x08000000
+
+/* CHARFORMAT effects */
+#define CFE_BOLD              0x00000001
+#define CFE_ITALIC            0x00000002
+#define CFE_UNDERLINE         0x00000004
+#define CFE_STRIKEOUT         0x00000008
+#define CFE_PROTECTED         0x00000010
+#define CFE_AUTOCOLOR         0x40000000
+
+/* ECO operations */
+#define ECOOP_SET             0x0001
+#define ECOOP_OR              0x0002
+#define ECOOP_AND             0x0003
+#define ECOOP_XOR             0x0004
+
+/* edit control options */
+#define ECO_AUTOWORDSELECTION 0x00000001
+#define ECO_AUTOVSCROLL       0x00000040
+#define ECO_AUTOHSCROLL       0x00000080
+#define ECO_NOHIDESEL         0x00000100
+#define ECO_READONLY          0x00000800
+#define ECO_WANTRETURN        0x00001000
+#define ECO_SAVESEL           0x00008000
+#define ECO_SELECTIONBAR      0x01000000
+#define ECO_VERTICAL          0x00400000
+
+/* Event notification masks */
+#define ENM_NONE              0x00000000
+#define ENM_CHANGE            0x00000001
+#define ENM_UPDATE            0x00000002
+#define ENM_SCROLL            0x00000004
+#define ENM_KEYEVENTS         0x00010000
+#define ENM_MOUSEEVENTS       0x00020000
+#define ENM_REQUESTRESIZE     0x00040000
+#define ENM_SELCHANGE         0x00080000
+#define ENM_DROPFILES         0x00100000
+#define ENM_PROTECTED         0x00200000
+#define ENM_CORRECTTEXT       0x00400000
+#define ENM_IMECHANGE         0x00800000
+
 typedef struct _charrange
 {
     LONG    cpMin;
