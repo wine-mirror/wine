@@ -504,18 +504,18 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
  *
  * NOTES
  *     This function is documented in MSDN online for the case of
- *     dwCode == SYSRGN (4).
+ *     iCode == SYSRGN (4).
  *
- *     For dwCode == 1 it should return the clip region
- *                   2 "    "       "   the meta region
- *                   3 "    "       "   the intersection of the clip with
- *                                      the meta region (== 'Rao' region).
+ *     For iCode == 1 it should return the clip region
+ *                  2 "    "       "   the meta region
+ *                  3 "    "       "   the intersection of the clip with
+ *                                     the meta region (== 'Rao' region).
  *
  *     See http://www.codeproject.com/gdi/cliprgnguide.asp
  */
-INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
+INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
 {
-    switch (dwCode)
+    switch (iCode)
     {
     case SYSRGN: /* == 4 */
 	{
@@ -543,7 +543,7 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
             return GetClipRgn (hDC, hRgn);
 
     default:
-        WARN("Unknown dwCode %ld\n", dwCode);
+        WARN("Unknown iCode %d\n", iCode);
         return -1;
     }
 
