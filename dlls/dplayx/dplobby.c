@@ -1156,22 +1156,16 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
                                    LPHANDLE lphRead )
 {
   /* These are the handles for the created process */
-  HANDLE hAppStart, hAppDeath, hAppRead, hTemp;
+  HANDLE hAppStart = 0, hAppDeath = 0, hAppRead  = 0;
   SECURITY_ATTRIBUTES s_attrib;
 
   s_attrib.nLength              = sizeof( s_attrib );
   s_attrib.lpSecurityDescriptor = NULL;
   s_attrib.bInheritHandle       = TRUE;
 
-  /* FIXME: Is there a handle leak here? */
-  hTemp = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
-  *lphStart = ConvertToGlobalHandle( hTemp );
-
-  hTemp = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
-  *lphDeath = ConvertToGlobalHandle( hTemp );
-
-  hTemp = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
-  *lphRead  = ConvertToGlobalHandle( hTemp );
+  *lphStart = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
+  *lphDeath = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
+  *lphRead  = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
 
   if( ( !DuplicateHandle( GetCurrentProcess(), *lphStart,
                           hDestProcess, &hAppStart,
@@ -1184,6 +1178,9 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
                           0, FALSE, DUPLICATE_SAME_ACCESS ) )
     )
   {
+    if (*lphStart) { CloseHandle(*lphStart); *lphStart = 0; }
+    if (*lphDeath) { CloseHandle(*lphDeath); *lphDeath = 0; }
+    if (*lphRead)  { CloseHandle(*lphRead);  *lphRead  = 0; }
     /* FIXME: Handle leak... */
     ERR( "Unable to dup handles\n" );
     return FALSE;
@@ -1192,6 +1189,7 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
   if( !DPLAYX_SetLobbyHandles( dwDestProcessId,
                                hAppStart, hAppDeath, hAppRead ) )
   {
+    /* FIXME: Handle leak... */
     return FALSE;
   }
 
