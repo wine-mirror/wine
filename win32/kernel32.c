@@ -81,30 +81,32 @@ static void _write_qtthunk(
 /***********************************************************************
  *           _loadthunk
  */
-static LPVOID _loadthunk(LPSTR module, LPSTR func, LPSTR module32, 
-                         struct ThunkDataCommon *TD32)
+static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32, 
+                         struct ThunkDataCommon *TD32, DWORD checksum)
 {
     struct ThunkDataCommon *TD16;
     HMODULE32 hmod;
+    int ordinal;
 
     if ((hmod = LoadLibrary16(module)) <= 32) 
     {
-        ERR(thunk, "(%s, %s, %s, %p): Unable to load '%s', error %d\n",
-                   module, func, module32, TD32, module, hmod);
+        ERR(thunk, "(%s, %s, %s): Unable to load '%s', error %d\n",
+                   module, func, module32, module, hmod);
         return 0;
     }
 
-    if (!(TD16 = PTR_SEG_TO_LIN(WIN32_GetProcAddress16(hmod, func))))
+    if (   !(ordinal = NE_GetOrdinal(hmod, func))
+        || !(TD16 = PTR_SEG_TO_LIN(NE_GetEntryPointEx(hmod, ordinal, FALSE))))
     {
-        ERR(thunk, "(%s, %s, %s, %p): Unable to find '%s'\n",
-                   module, func, module32, TD32, func);
+        ERR(thunk, "(%s, %s, %s): Unable to find '%s'\n",
+                   module, func, module32, func);
         return 0;
     }
 
     if (TD32 && memcmp(TD16->magic, TD32->magic, 4))
     {
-        ERR(thunk, "(%s, %s, %s, %p): Bad magic %c%c%c%c (should be %c%c%c%c)\n",
-                   module, func, module32, TD32, 
+        ERR(thunk, "(%s, %s, %s): Bad magic %c%c%c%c (should be %c%c%c%c)\n",
+                   module, func, module32, 
                    TD16->magic[0], TD16->magic[1], TD16->magic[2], TD16->magic[3],
                    TD32->magic[0], TD32->magic[1], TD32->magic[2], TD32->magic[3]);
         return 0;
@@ -112,8 +114,15 @@ static LPVOID _loadthunk(LPSTR module, LPSTR func, LPSTR module32,
 
     if (TD32 && TD16->checksum != TD32->checksum)
     {
-        ERR(thunk, "(%s, %s, %s, %p): Wrong checksum %08lx (should be %08lx)\n",
-                   module, func, module32, TD32, TD16->checksum, TD32->checksum);
+        ERR(thunk, "(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
+                   module, func, module32, TD16->checksum, TD32->checksum);
+        return 0;
+    }
+
+    if (!TD32 && checksum && checksum != *(LPDWORD)TD16)
+    {
+        ERR(thunk, "(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
+                   module, func, module32, *(LPDWORD)TD16, checksum);
         return 0;
     }
 
@@ -125,7 +134,7 @@ static LPVOID _loadthunk(LPSTR module, LPSTR func, LPSTR module32,
  */
 LPVOID WINAPI GetThunkStuff(LPSTR module, LPSTR func)
 {
-    return _loadthunk(module, func, "<kernel>", NULL);
+    return _loadthunk(module, func, "<kernel>", NULL, 0L);
 }
 
 /***********************************************************************
@@ -177,7 +186,7 @@ UINT32 WINAPI ThunkConnect32(
         case DLL_PROCESS_ATTACH:
         {
             struct ThunkDataCommon *TD16;
-            if (!(TD16 = _loadthunk(module16, thunkfun16, module32, TD)))
+            if (!(TD16 = _loadthunk(module16, thunkfun16, module32, TD, 0L)))
                 return 0;
 
             if (directionSL)
@@ -489,33 +498,14 @@ DWORD WINAPI ThunkInitLS(
 	LPCSTR dll16,	/* [in] name of win16 dll */
 	LPCSTR dll32	/* [in] name of win32 dll (FIXME: not used?) */
 ) {
-	HINSTANCE16	hmod;
 	LPDWORD		addr;
-	SEGPTR		segaddr;
 
-	hmod = LoadLibrary16(dll16);
-	if (hmod<32) {
-		WARN(thunk,"failed to load 16bit DLL %s, error %d\n",
-			     dll16,hmod);
+	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
 		return 0;
-	}
-	segaddr = (DWORD)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
-	if (!segaddr) {
-	        WARN(thunk,"no %s exported from %s!\n",thkbuf,dll16);
-		return 0;
-	}
-	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
-	if (addr[0] != len) {
-		WARN(thunk,"thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
-		return 0;
-	}
+
 	if (!addr[1])
 		return 0;
 	*(DWORD*)thunk = addr[1];
-
-	TRACE(thunk, "loaded module %d, func %s (%d) @ %p (%p), returning %p\n",
-		     hmod, HIWORD(thkbuf)==0 ? "<ordinal>" : thkbuf, (int)thkbuf, 
-		     (void*)segaddr, addr, (void*)addr[1]);
 
 	return addr[1];
 }
@@ -684,9 +674,7 @@ LPVOID WINAPI ThunkInitLSF(
 	LPCSTR dll32	/* [in] name of win32 dll */
 ) {
 	HMODULE32	hkrnl32 = GetModuleHandle32A("KERNEL32");
-	HMODULE16	hmod;
 	LPDWORD		addr,addr2;
-	DWORD		segaddr;
 
 	/* FIXME: add checks for valid code ... */
 	/* write pointers to kernel32.89 and kernel32.90 (+ordinal base of 1) */
@@ -694,29 +682,12 @@ LPVOID WINAPI ThunkInitLSF(
 	*(DWORD*)(thunk+0x6D) = (DWORD)GetProcAddress32(hkrnl32,(LPSTR)89);
 
 	
-	hmod = LoadLibrary16(dll16);
-	if (hmod<32) {
-		ERR(thunk,"failed to load 16bit DLL %s, error %d\n",
-			     dll16,hmod);
-		return NULL;
-	}
-	segaddr = (DWORD)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
-	if (!segaddr) {
-		ERR(thunk,"no %s exported from %s!\n",thkbuf,dll16);
-		return NULL;
-	}
-	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
-	if (addr[0] != len) {
-		ERR(thunk,"thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
-		return NULL;
-	}
+	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
+		return 0;
+
 	addr2 = PTR_SEG_TO_LIN(addr[1]);
 	if (HIWORD(addr2))
 		*(DWORD*)thunk = (DWORD)addr2;
-
-	TRACE(thunk, "loaded module %d, func %s(%d) @ %p (%p), returning %p\n",
-		      hmod, HIWORD(thkbuf)==0 ? "<ordinal>" : thkbuf, (int)thkbuf, 
-		     (void*)segaddr, addr, addr2);
 
 	return addr2;
 }
@@ -796,30 +767,11 @@ VOID WINAPI ThunkInitSL(
 	LPCSTR dll32		/* [in] win32 dll. FIXME: strange, unused */
 ) {
 	LPDWORD		addr;
-	HMODULE16	hmod;
-	SEGPTR		segaddr;
 
-	hmod = LoadLibrary16(dll16);
-	if (hmod < 32) {
-		ERR(thunk,"couldn't load %s, error %d\n",dll16,hmod);
+	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
 		return;
-	}
-	segaddr = (SEGPTR)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
-	if (!segaddr) {
-		ERR(thunk,"haven't found %s in %s!\n",thkbuf,dll16);
-		return;
-	}
-	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
-	if (addr[0] != len) {
-	        ERR(thunk,"length of thkbuf differs from expected length! "
-			     "(%ld vs %ld)\n",addr[0],len);
-		return;
-	}
+
 	*(DWORD*)PTR_SEG_TO_LIN(addr[1]) = (DWORD)thunk;
-
-	TRACE(thunk, "loaded module %d, func %s(%d) @ %p (%p)\n",
-		     hmod, HIWORD(thkbuf)==0 ? "<ordinal>" : thkbuf, 
-		     (int)thkbuf, (void*)segaddr, addr);
 }
 
 /**********************************************************************
@@ -908,82 +860,17 @@ DWORD WINAPIV SSCall(
 }
 
 /**********************************************************************
- * 		InitCBClient		(KERNEL.623)
+ *           W32S_BackTo32                      (KERNEL32.51)
  */
-WORD WINAPI InitCBClient(DWORD x)
+REGS_ENTRYPOINT(W32S_BackTo32)
 {
-    FIXME(thunk,"(0x%08lx): stub\n",x);
-    return TRUE;
-}
+    LPDWORD stack = (LPDWORD)ESP_reg( context );
+    FARPROC32 proc = (FARPROC32) stack[0];
 
-/**********************************************************************
- * 		RegisterCBClient	(KERNEL.619)
- * Seems to store y and z depending on x in some internal lists...
- */
-WORD WINAPI RegisterCBClient(WORD x,DWORD y,DWORD z)
-{
-    FIXME(thunk,"(0x%04x,0x%08lx,0x%08lx): stub\n",x,y,z);
-    return x;
-}
+    EAX_reg( context ) = proc( stack[2], stack[3], stack[4], stack[5], stack[6],
+                               stack[7], stack[8], stack[9], stack[10], stack[11] );
 
-/**********************************************************************
- * 		KERNEL_607		(KERNEL)
- */
-LPVOID WINAPI _KERNEL_607(SEGPTR target, LPVOID relay, DWORD dummy)
-{
-    TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
-    LPBYTE thunk = HeapAlloc( GetProcessHeap(), 0, 22 ), x = thunk;
-
-    *x++=0x90; *x++=0x68; *((DWORD*)x)++=(DWORD)relay;	/* nop; pushl relay */
-    *x++=0x90; *x++=0x68; *((DWORD*)x)++=(DWORD)target; /* nop; pushl target */
-    *x++=0x90; *x++=0x58;				/* nop; popl eax */
-    *x++=0xC3;						/* ret */
-    *x++=0xCC; *x++=0xCC;
-    *x++=0x01;						/* type: LS */
-    *((WORD *)x)++ = pTask->hInstance;			/* owner */
-    *((WORD *)x)++ = 0;					/* next */
-
-    return thunk;
-}
-
-/**********************************************************************
- * 		KERNEL_608		(KERNEL)
- */
-SEGPTR WINAPI _KERNEL_608(LPVOID target, SEGPTR relay, DWORD dummy)
-{
-    TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
-    LPBYTE thunk = HeapAlloc( GetProcessHeap(), 0, 22 ), x = thunk;
-    WORD sel;
-
-    *x++=0x66; *x++=0x68; *((DWORD*)x)++=(DWORD)relay;	/* pushl relay */
-    *x++=0x66; *x++=0x68; *((DWORD*)x)++=(DWORD)target; /* pushl target */
-    *x++=0x66; *x++=0x58;				/* popl eax */
-    *x++=0xCB;						/* ret */
-    *x++=0xCC; *x++=0xCC;
-    *x++=0x02;						/* type: SL */
-    *((WORD *)x)++ = pTask->hInstance;			/* owner */
-    *((WORD *)x)++ = 0;					/* next */
-
-    sel = SELECTOR_AllocBlock( thunk, 22, SEGMENT_CODE, FALSE, FALSE );
-    return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
-}
-
-/**********************************************************************
- * 		KERNEL_611		(KERNEL)
- */
-VOID WINAPI _KERNEL_611(DWORD relay, DWORD target)
-{
-}
-
-/**********************************************************************
- * 		KERNEL_612		(KERNEL)
- */
-BOOL16 WINAPI _KERNEL_612(LPBYTE target)
-{
-    return    target[ 0] == 0x66 && target[ 1] == 0x68 
-           && target[ 6] == 0x66 && target[ 2] == 0x68
-           && target[12] == 0x66 && target[13] == 0x58 
-           && target[14] == 0xCB;
+    EIP_reg( context ) = stack[1];
 }
 
 /**********************************************************************

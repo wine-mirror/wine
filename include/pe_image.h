@@ -27,7 +27,7 @@ struct _PDB32;
 struct _wine_modref;
 extern int PE_unloadImage(HMODULE32 hModule);
 extern FARPROC32 PE_FindExportedFunction( 
-	struct _PDB32 *process,struct _wine_modref *wm, LPCSTR funcName
+	struct _PDB32 *process,struct _wine_modref *wm, LPCSTR funcName, BOOL32 snoop
 );
 extern void my_wcstombs(char * result, u_short * source, int len);
 extern BOOL32 PE_EnumResourceTypes32A(HMODULE32,ENUMRESTYPEPROC32A,LONG);
@@ -45,8 +45,8 @@ extern HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
                                      LPPROCESS_INFORMATION info );
 
 struct _THDB; /* forward definition */
-extern void PE_InitializeDLLs(struct _PDB32*,DWORD,LPVOID);
 extern void PE_InitTls(struct _THDB*);
+extern void PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);
 
 extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
 

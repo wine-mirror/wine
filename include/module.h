@@ -119,10 +119,15 @@ typedef struct _wine_modref
 
 	HMODULE32		module;
 
+	int			nDeps;
+	struct _wine_modref	**deps;
+	int			initDone;
+
 	char			*modname;
 	char			*shortname;
 	char 			*longname;
 } WINE_MODREF;
+
 
 /* Resource types */
 typedef struct resource_typeinfo_s NE_TYPEINFO;
@@ -138,8 +143,9 @@ typedef struct resource_nameinfo_s NE_NAMEINFO;
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
 /* module.c */
-extern FARPROC32 MODULE_GetProcAddress32( struct _PDB32*pdb,HMODULE32 hModule,LPCSTR function );
+extern FARPROC32 MODULE_GetProcAddress32( struct _PDB32*pdb,HMODULE32 hModule,LPCSTR function,BOOL32 snoop );
 extern WINE_MODREF *MODULE32_LookupHMODULE( struct _PDB32 *process, HMODULE32 hModule );
+extern void MODULE_InitializeDLLs( struct _PDB32 *process, HMODULE32 root, DWORD type, LPVOID lpReserved );
 extern HMODULE32 MODULE_FindModule32( struct _PDB32 *process, LPCSTR path );
 extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
@@ -154,6 +160,7 @@ extern void NE_WalkModules(void);
 extern void NE_RegisterModule( NE_MODULE *pModule );
 extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
+extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
 extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
 extern int NE_OpenFile( NE_MODULE *pModule );
 extern HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,

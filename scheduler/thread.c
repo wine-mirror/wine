@@ -365,7 +365,7 @@ void THREAD_Start( THDB *thdb )
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
     assert( THREAD_Current() == thdb );
     CLIENT_InitThread();
-    PE_InitializeDLLs( thdb->process, DLL_THREAD_ATTACH, NULL );
+    MODULE_InitializeDLLs( thdb->process, NULL, DLL_THREAD_ATTACH, NULL );
     ExitThread( func( thdb->entry_arg ) );
 }
 
@@ -413,7 +413,7 @@ void WINAPI ExitThread(
     /* Remove thread from process's list */
     THREAD_RemoveQueue( &thdb->process->thread_list, thdb );
 
-    PE_InitializeDLLs( thdb->process, DLL_THREAD_DETACH, NULL );
+    MODULE_InitializeDLLs( thdb->process, NULL, DLL_THREAD_DETACH, NULL );
 
     SYSTEM_LOCK();
     thdb->exit_code = code;

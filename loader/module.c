@@ -52,6 +52,71 @@ MODULE32_LookupHMODULE(PDB32 *process,HMODULE32 hmod) {
     return NULL;
 }
 
+/*************************************************************************
+ *		MODULE_InitializeDLLs
+ * 
+ * Call the initialization routines of all DLLs belonging to the
+ * current process. This is somewhat complicated due to the fact that
+ *
+ * - we have to respect the module dependencies, i.e. modules implicitly
+ *   referenced by another module have to be initialized before the module
+ *   itself can be initialized
+ * 
+ * - the initialization routine of a DLL can itself call LoadLibrary,
+ *   thereby introducing a whole new set of dependencies (even involving
+ *   the 'old' modules) at any time during the whole process
+ *
+ * (Note that this routine can be recursively entered not only directly
+ *  from itself, but also via LoadLibrary from one of the called initialization
+ *  routines.)
+ */
+void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
+                            DWORD type, LPVOID lpReserved )
+{
+    WINE_MODREF *wm = MODULE32_LookupHMODULE( process, root );
+    int i;
+
+    if (!wm) return;
+
+    /* If called for main EXE, check for invalid recursion */
+    if ( !root && wm->initDone )
+    {
+        FIXME(module, "Invalid recursion!\n");
+        return;
+    }
+
+    /* Tag current MODREF to prevent recursive loop */
+    wm->initDone = TRUE;
+
+    /* Recursively initialize all child DLLs */
+    for ( i = 0; i < wm->nDeps; i++ )
+        if ( wm->deps[i] && !wm->deps[i]->initDone )
+            MODULE_InitializeDLLs( process, 
+                                   wm->deps[i]->module, type, lpReserved );
+
+    /* Now we can call the initialization routine */
+    switch ( wm->type )
+    {
+    case MODULE32_PE:
+        PE_InitDLL( wm, type, lpReserved );
+        break;
+
+    default:
+    	ERR(module, "wine_modref type %d not handled.\n", wm->type);
+        break;
+    }
+
+    /* If called for main EXE, reset recursion flags */
+    if ( !root )
+        for ( wm = process->modref_list; wm; wm = wm->next )
+        {
+            if (!wm->initDone)
+                FIXME(module, "Orphaned module in modref_list?\n");
+
+            wm->initDone = FALSE;
+        }
+}
+
 
 /***********************************************************************
  *           MODULE_CreateDummyModule
@@ -305,7 +370,7 @@ static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env,
     }
     else
     {
-        hInstance = NE_LoadModule( name, &hPrevInstance, FALSE, FALSE );
+        hInstance = NE_LoadModule( name, &hPrevInstance, TRUE, FALSE );
         if (hInstance < 32) return hInstance;
 
         if (   !(pModule = NE_GetPtr(hInstance)) 
@@ -699,9 +764,9 @@ HMODULE32 MODULE_LoadLibraryEx32A(LPCSTR libname,PDB32*process,HFILE32 hfile,DWO
 	strcat( buffer, ".dll" );
 	hmod = PE_LoadLibraryEx32A(buffer,process,hfile,flags);
     }
-    /* initialize all DLLs, which haven't been initialized yet. */
+    /* initialize DLL just loaded */
     if (hmod >= 32)
-        PE_InitializeDLLs( process, DLL_PROCESS_ATTACH, NULL);
+        MODULE_InitializeDLLs( PROCESS_Current(), hmod, DLL_PROCESS_ATTACH, NULL);
     return hmod;
 }
 
@@ -996,9 +1061,16 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
  */
 FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress32( PROCESS_Current(), hModule, function );
+    return MODULE_GetProcAddress32( PROCESS_Current(), hModule, function, TRUE );
 }
 
+/***********************************************************************
+ *           WIN16_GetProcAddress32   		(KERNEL.453)
+ */
+FARPROC32 WINAPI WIN16_GetProcAddress32( HMODULE32 hModule, LPCSTR function )
+{
+    return MODULE_GetProcAddress32( PROCESS_Current(), hModule, function, FALSE );
+}
 
 /***********************************************************************
  *           MODULE_GetProcAddress32   		(internal)
@@ -1006,7 +1078,8 @@ FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 FARPROC32 MODULE_GetProcAddress32( 
 	PDB32 *process,		/* [in] process context */
 	HMODULE32 hModule, 	/* [in] current module handle */
-	LPCSTR function )	/* [in] function to be looked up */
+	LPCSTR function,	/* [in] function to be looked up */
+	BOOL32 snoop )
 {
     WINE_MODREF	*wm = MODULE32_LookupHMODULE(process,hModule);
 
@@ -1019,7 +1092,7 @@ FARPROC32 MODULE_GetProcAddress32(
     switch (wm->type)
     {
     case MODULE32_PE:
-    	return PE_FindExportedFunction( process, wm, function);
+     	return PE_FindExportedFunction( process, wm, function, snoop );
     case MODULE32_ELF:
     	return ELF_FindExportedFunction( process, wm, function);
     default:
@@ -1062,11 +1135,13 @@ typedef struct _GPHANDLERDEF
 SEGPTR WINAPI HasGPHandler( SEGPTR address )
 {
     HMODULE16 hModule;
+    int gpOrdinal;
     SEGPTR gpPtr;
     GPHANDLERDEF *gpHandler;
    
     if (    (hModule = FarGetOwner( SELECTOROF(address) )) != 0
-         && (gpPtr = (SEGPTR)WIN32_GetProcAddress16( hModule, "__GP" )) != 0
+         && (gpOrdinal = NE_GetOrdinal( hModule, "__GP" )) != 0
+         && (gpPtr = (SEGPTR)NE_GetEntryPointEx( hModule, gpOrdinal, FALSE )) != 0
          && !IsBadReadPtr16( gpPtr, sizeof(GPHANDLERDEF) )
          && (gpHandler = PTR_SEG_TO_LIN( gpPtr )) != NULL )
     {

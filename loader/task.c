@@ -250,7 +250,7 @@ static void TASK_CallToStart(void)
             LocalInit( pTask->hInstance, 0, pModule->heap_size );
 
         InitApp( pTask->hModule );
-        PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, (LPVOID)-1 );
+        MODULE_InitializeDLLs( PROCESS_Current(), 0, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         TRACE(relay, "(entryproc=%p)\n", entry );
 
 #if 1
@@ -892,9 +892,8 @@ void WINAPI PostEvent( HTASK16 hTask )
 
     if ( !THREAD_IsWin16( THREAD_Current() ) )
     {
-        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
-        memset(0, 0, 4096);
-        return;
+        WARN(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        /* return; */
     }
 
     pTask->nEvents++;

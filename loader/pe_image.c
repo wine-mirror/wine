@@ -60,7 +60,6 @@
 #include "snoop.h"
 #include "debug.h"
 
-static void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved);
 
 /* convert PE image VirtualAddress to Real Address */
 #define RVA(x) ((unsigned int)load_addr+(unsigned int)(x))
@@ -122,7 +121,8 @@ void dump_exports( HMODULE32 hModule )
 FARPROC32 PE_FindExportedFunction( 
 	PDB32 *process,		/* [in] process context */
 	WINE_MODREF *wm,	/* [in] WINE modreference */
-	LPCSTR funcName )	/* [in] function name */
+	LPCSTR funcName,	/* [in] function name */
+        BOOL32 snoop )
 {
 	u_short				* ordinal;
 	u_long				* function;
@@ -163,7 +163,8 @@ FARPROC32 PE_FindExportedFunction(
                             addr = function[*ordinal];
                             if (!addr) return NULL;
                             if ((addr < rva_start) || (addr >= rva_end))
-				return SNOOP_GetProcAddress32(wm->module,ename,*ordinal,(FARPROC32)RVA(addr));
+				return snoop? SNOOP_GetProcAddress32(wm->module,ename,*ordinal,(FARPROC32)RVA(addr))
+                                            : (FARPROC32)RVA(addr);
                             forward = (char *)RVA(addr);
                             break;
 			}
@@ -192,7 +193,8 @@ FARPROC32 PE_FindExportedFunction(
 		    	ename = "";
 		}
 		if ((addr < rva_start) || (addr >= rva_end))
-			return SNOOP_GetProcAddress32(wm->module,ename,(DWORD)funcName-exports->Base,(FARPROC32)RVA(addr));
+			return snoop? SNOOP_GetProcAddress32(wm->module,ename,(DWORD)funcName-exports->Base,(FARPROC32)RVA(addr))
+                                    : (FARPROC32)RVA(addr);
 		forward = (char *)RVA(addr);
 	}
 	if (forward)
@@ -207,7 +209,7 @@ FARPROC32 PE_FindExportedFunction(
 		module[end-forward] = 0;
                 hMod = MODULE_FindModule32(process,module);
 		assert(hMod);
-		return MODULE_GetProcAddress32( process, hMod, end + 1);
+		return MODULE_GetProcAddress32( process, hMod, end + 1, snoop );
 	}
 	return NULL;
 }
@@ -240,6 +242,10 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     for (i = 0; pe_imp->Name; pe_imp++)
 	i++;
 
+    /* Allocate module dependency list */
+    wm->nDeps = i;
+    wm->deps  = HeapAlloc(process->heap, 0, i*sizeof(WINE_MODREF *));
+
     /* load the imported modules. They are automatically 
      * added to the modref list of the process.
      */
@@ -247,7 +253,6 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     /* FIXME: should terminate on 0 Characteristics */
     for (i = 0, pe_imp = pem->pe_import; pe_imp->Name; pe_imp++) {
     	HMODULE32		hImpModule;
-	WINE_MODREF		**ywm;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	LPIMAGE_THUNK_DATA	import_list,thunk_list;
  	char			*name = (char *) RVA(pe_imp->Name);
@@ -268,35 +273,9 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	    ERR (module, "Module %s not found\n", name);
 	    return 1;
 	}
-	xwm = wm->next;
-	while (xwm) {
-		if (xwm->module == hImpModule)
-			break;
-		xwm = xwm->next;
-	}
-	if (xwm) {
-		/* It has been loaded *BEFORE* us, so we have to initialize
-		 * it before us. We cannot just link in the xwm before wm,
-		 * since xwm might reference more dlls which would be in the
-		 * wrong order after that.
-		 * Instead we link in wm right AFTER xwm, which should keep
-		 * the correct order. (I am not 100% sure about that.)
-		 */
-		/* unlink wm from chain */
-		ywm = &(process->modref_list);
-		while (*ywm) {
-			if ((*ywm)==wm)
-				break;
-			ywm = &((*ywm)->next);
-		}
-		*ywm		= wm->next;
-
-		/* link wm directly AFTER xwm */
-		wm->next	= xwm->next;
-		xwm->next	= wm;
-		
-	}
-	i++;
+        xwm = MODULE32_LookupHMODULE(process, hImpModule);
+        assert( xwm );
+        wm->deps[i++] = xwm;
 
 	/* FIXME: forwarder entries ... */
 
@@ -311,7 +290,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 
 		    TRACE(win32, "--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, (LPCSTR)ordinal
+                        process, hImpModule, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -322,7 +301,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, pe_name->Name
+                        process, hImpModule, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32,"No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
@@ -343,7 +322,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 
 		    TRACE(win32,"--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, (LPCSTR) ordinal
+                        process, hImpModule, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -355,7 +334,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    TRACE(win32,"--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=MODULE_GetProcAddress32(
-                        process, hImpModule, pe_name->Name
+                        process, hImpModule, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR(win32, "No implementation for %s.%d, setting to 0xdeadbeef\n",
@@ -915,12 +894,19 @@ int PE_UnloadImage( HMODULE32 hModule )
  * DLL_PROCESS_ATTACH. Only new created threads do DLL_THREAD_ATTACH
  * (SDK)
  */
-static void PE_InitDLL(WINE_MODREF *wm, DWORD type,LPVOID lpReserved)
+void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
 {
     if (wm->type!=MODULE32_PE)
     	return;
+    if (wm->binfmt.pe.flags & PE_MODREF_NO_DLL_CALLS)
+    	return;
     if (type==DLL_PROCESS_ATTACH)
-	wm->binfmt.pe.flags |= PE_MODREF_PROCESS_ATTACHED;
+    {
+        if (wm->binfmt.pe.flags & PE_MODREF_PROCESS_ATTACHED)
+            return;
+
+        wm->binfmt.pe.flags |= PE_MODREF_PROCESS_ATTACHED;
+    }
 
     /*  DLL_ATTACH_PROCESS:
      *		lpreserved is NULL for dynamic loads, not-NULL for static loads
@@ -936,30 +922,9 @@ static void PE_InitDLL(WINE_MODREF *wm, DWORD type,LPVOID lpReserved)
         DLLENTRYPROC32 entry = (void*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
         TRACE(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, wm->module, type, lpReserved );
+
         entry( wm->module, type, lpReserved );
     }
-}
-
-/* Call the DLLentry function of all dlls used by that process.
- * (NOTE: this may recursively call this function (if a library calls
- * LoadLibrary) ... but it won't matter)
- */
-void PE_InitializeDLLs(PDB32 *process,DWORD type,LPVOID lpReserved) {
-	WINE_MODREF	*wm;
-
-	for (wm = process->modref_list;wm;wm=wm->next) {
-		PE_MODREF	*pem = NULL;
-		if (wm->type!=MODULE32_PE)
-			continue;
-		pem = &(wm->binfmt.pe);
-		if (pem->flags & PE_MODREF_NO_DLL_CALLS)
-			continue;
-		if (type==DLL_PROCESS_ATTACH) {
-			if (pem->flags & PE_MODREF_PROCESS_ATTACHED)
-				continue;
-		}
-		PE_InitDLL( wm, type, lpReserved );
-	}
 }
 
 void PE_InitTls(THDB *thdb)
