@@ -72,7 +72,7 @@ extern void post_win_event( struct thread *thread, unsigned int event,
 
 /* region functions */
 
-extern struct region *create_region( const rectangle_t *rects, unsigned int nb_rects );
+extern struct region *create_empty_region(void);
 extern struct region *create_region_from_req_data( const void *data, size_t size );
 extern void free_region( struct region *region );
 extern void set_region_rect( struct region *region, const rectangle_t *rect );
@@ -94,7 +94,6 @@ extern struct region *xor_region( struct region *dst, const struct region *src1,
                                   const struct region *src2 );
 extern int point_in_region( struct region *region, int x, int y );
 extern int rect_in_region( struct region *region, const rectangle_t *rect );
-static inline struct region *create_empty_region(void) { return create_region( NULL, 0 ); }
 
 /* window functions */
 

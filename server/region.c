@@ -557,39 +557,56 @@ static int union_overlapping( struct region *pReg,
 }
 
 
-/* create a region from an array of rectangles */
-struct region *create_region( const rectangle_t *rects, unsigned int nb_rects )
+/* create an empty region */
+struct region *create_empty_region(void)
 {
     struct region *region;
-    unsigned int size = max( nb_rects, RGN_DEFAULT_RECTS );
 
-    if (!validate_rectangles( rects, nb_rects ))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
-    }
     if (!(region = mem_alloc( sizeof(*region) ))) return NULL;
-    if (!(region->rects = mem_alloc( size * sizeof(*region->rects) )))
+    if (!(region->rects = mem_alloc( RGN_DEFAULT_RECTS * sizeof(*region->rects) )))
     {
         free( region );
         return NULL;
     }
-    region->size = size;
-    region->num_rects = nb_rects;
-    memcpy( region->rects, rects, nb_rects * sizeof(*rects) );
-    set_region_extents( region );
+    region->size = RGN_DEFAULT_RECTS;
+    region->num_rects = 0;
+    region->extents.left = 0;
+    region->extents.top = 0;
+    region->extents.right = 0;
+    region->extents.bottom = 0;
     return region;
 }
 
 /* create a region from request data */
 struct region *create_region_from_req_data( const void *data, size_t size )
 {
+    unsigned int alloc_rects;
+    struct region *region;
     const rectangle_t *rects = data;
     int nb_rects = size / sizeof(rectangle_t);
 
     /* special case: empty region can be specified by a single all-zero rectangle */
     if (nb_rects == 1 && !memcmp( rects, &empty_rect, sizeof(empty_rect) )) nb_rects = 0;
-    return create_region( rects, nb_rects );
+
+    if (!validate_rectangles( rects, nb_rects ))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if (!(region = mem_alloc( sizeof(*region) ))) return NULL;
+
+    alloc_rects = max( nb_rects, RGN_DEFAULT_RECTS );
+    if (!(region->rects = mem_alloc( alloc_rects * sizeof(*region->rects) )))
+    {
+        free( region );
+        return NULL;
+    }
+    region->size = alloc_rects;
+    region->num_rects = nb_rects;
+    memcpy( region->rects, rects, nb_rects * sizeof(*rects) );
+    set_region_extents( region );
+    return region;
 }
 
 /* free a region */
@@ -677,6 +694,7 @@ void offset_region( struct region *region, int x, int y )
 {
     rectangle_t *rect, *end;
 
+    if (!region->num_rects) return;
     for (rect = region->rects, end = rect + region->num_rects; rect < end; rect++)
     {
         rect->left += x;
