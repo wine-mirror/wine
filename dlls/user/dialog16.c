@@ -60,7 +60,7 @@ typedef struct
     LPCSTR     menuName;
     LPCSTR     className;
     LPCSTR     caption;
-    WORD       pointSize;
+    INT16      pointSize;
     LPCSTR     faceName;
 } DLG_TEMPLATE;
 

@@ -75,7 +75,7 @@ typedef struct
     LPCWSTR    menuName;
     LPCWSTR    className;
     LPCWSTR    caption;
-    WORD       pointSize;
+    INT16      pointSize;
     WORD       weight;
     BOOL       italic;
     LPCWSTR    faceName;
