@@ -1423,7 +1423,7 @@ BOOL WINAPI HeapValidate(
  */
 BOOL WINAPI HeapWalk(
               HANDLE heap,               /* [in]  Handle to heap to enumerate */
-              LPPROCESS_HEAP_ENTRY *entry  /* [out] Pointer to structure of enumeration info */
+              LPPROCESS_HEAP_ENTRY entry  /* [out] Pointer to structure of enumeration info */
 ) {
     FIXME("(%08x): stub.\n", heap );
     return FALSE;
