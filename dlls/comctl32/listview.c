@@ -229,6 +229,7 @@ static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem);
 static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask);
 static LRESULT LISTVIEW_SetItemState(HWND hwnd, INT nItem, LPLVITEMA lpLVItem);
 static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem);
+static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem);
 
 /******** Defines that LISTVIEW_ProcessLetterKeys uses ****************/
 #define KEY_DELAY       900
@@ -1444,16 +1445,16 @@ static LRESULT LISTVIEW_RemoveAllSelections(HWND hwnd)
   {
     selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,0);
     if (selection)
-{
-TRACE("Removing %lu to %lu\n",selection->lower, selection->upper);
+    {
+      TRACE("Removing %lu to %lu\n",selection->lower, selection->upper);
       for (i = selection->lower; i<=selection->upper; i++)
         LISTVIEW_SetItemState(hwnd,i,&item);
-}
+      LISTVIEW_RemoveSelectionRange(hwnd,selection->lower,selection->upper);
+    }
   } 
   while (infoPtr->hdpaSelectionRanges->nItemCount>0);
 
-TRACE("done\n");
-
+  TRACE("done\n");
   return TRUE; 
 }
 
@@ -1573,6 +1574,8 @@ static VOID LISTVIEW_ShiftSelections(HWND hwnd, INT nItem, INT direction)
   LISTVIEW_SELECTION selection,*checkselection;
   INT index;
 
+  TRACE("Shifting %iu, %i steps\n",nItem,direction);
+
   selection.upper = nItem;
   selection.lower = nItem;
 
@@ -1583,9 +1586,11 @@ static VOID LISTVIEW_ShiftSelections(HWND hwnd, INT nItem, INT direction)
   while ((index < infoPtr->hdpaSelectionRanges->nItemCount)&&(index != -1)) 
   {
     checkselection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,index);
-    if (checkselection->lower >= nItem)
+    if ((checkselection->lower >= nItem)&&
+       (checkselection->lower + direction >= 0))
         checkselection->lower += direction;
-    if (checkselection->upper >= nItem)
+    if ((checkselection->upper >= nItem)&&
+       (checkselection->upper + direction >=0))
         checkselection->upper += direction;
     index ++;
   }
@@ -3926,8 +3931,14 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
   LISTVIEW_ITEM *lpItem;
   LISTVIEW_SUBITEM *lpSubItem;
   INT i;
+  LVITEMA item;
 
   TRACE("(hwnd=%x,nItem=%d)\n", hwnd, nItem);
+
+  /* remove it from the selection range */
+  ZeroMemory(&item,sizeof(LVITEMA));
+  item.stateMask = LVIS_SELECTED;
+  LISTVIEW_SetItemState(hwnd,nItem,&item);
 
   LISTVIEW_ShiftSelections(hwnd,nItem,-1);
 
@@ -7045,14 +7056,24 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 
   FIXME("(%d %08lx)stub!\n", nItems, dwFlags);
 
-  if (nItems == 0)
-    return LISTVIEW_DeleteAllItems (hwnd);
-
   if (GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA)
   {
       int precount,topvisible;
       TRACE("LVS_OWNERDATA is set!\n");
 
+      /*
+       * Internally remove all the selections. 
+       */
+      do
+      {
+        LISTVIEW_SELECTION *selection;
+        selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,0);
+        if (selection)
+            LISTVIEW_RemoveSelectionRange(hwnd,selection->lower,
+                                          selection->upper);
+      }
+      while (infoPtr->hdpaSelectionRanges->nItemCount>0);
+ 
       precount = infoPtr->hdpaItems->nItemCount;
       topvisible = ListView_GetTopIndex(hwnd) +
                    LISTVIEW_GetCountPerColumn(hwnd) + 1;
@@ -7066,7 +7087,10 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
   }
   else
   {
-    if (nItems > GETITEMCOUNT(infoPtr))
+   if (nItems == 0)
+    return LISTVIEW_DeleteAllItems (hwnd);
+
+   if (nItems > GETITEMCOUNT(infoPtr))
     {
       /* append items */
       FIXME("append items\n");
