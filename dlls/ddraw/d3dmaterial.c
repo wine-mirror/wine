@@ -290,19 +290,19 @@ static void activate(IDirect3DMaterialImpl* This) {
 
   /* Set the current Material */
   _dump_colorvalue("Diffuse", This->mat.u.diffuse);
-  glMaterialfv(GL_FRONT,
+  glMaterialfv(GL_FRONT_AND_BACK,
 	       GL_DIFFUSE,
 	       (float *) &(This->mat.u.diffuse));
   _dump_colorvalue("Ambient", This->mat.u1.ambient);
-  glMaterialfv(GL_FRONT,
+  glMaterialfv(GL_FRONT_AND_BACK,
 	       GL_AMBIENT,
 	       (float *) &(This->mat.u1.ambient));
   _dump_colorvalue("Specular", This->mat.u2.specular);
-  glMaterialfv(GL_FRONT,
+  glMaterialfv(GL_FRONT_AND_BACK,
 	       GL_SPECULAR,
 	       (float *) &(This->mat.u2.specular));
   _dump_colorvalue("Emissive", This->mat.u3.emissive);
-  glMaterialfv(GL_FRONT,
+  glMaterialfv(GL_FRONT_AND_BACK,
 	       GL_EMISSION,
 	       (float *) &(This->mat.u3.emissive));
 

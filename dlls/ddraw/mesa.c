@@ -312,12 +312,12 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 			 /* Not sure about these... The DirectX doc is, well, pretty unclear :-) */
 		    case D3DCULL_CW:
 			 glEnable(GL_CULL_FACE);
-			 glFrontFace(GL_CW);
+			 glFrontFace(GL_CCW);
 			 glCullFace(GL_BACK);
 			 break;
 		    case D3DCULL_CCW:
 			 glEnable(GL_CULL_FACE);
-			 glFrontFace(GL_CCW);
+			 glFrontFace(GL_CW);
 			 glCullFace(GL_BACK);
 			 break;
 		    default:

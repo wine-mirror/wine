@@ -110,7 +110,7 @@ Main_IDirect3DVertexBufferImpl_7_1T_Unlock(LPDIRECT3DVERTEXBUFFER7 iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     TRACE("(%p/%p)->()\n", This, iface);
-    /* Nothing to do */
+    /* Nothing to do here for now. Maybe some optimizations if ever we want to do some :-) */
     return DD_OK;
 }
 

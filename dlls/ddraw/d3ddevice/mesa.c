@@ -1478,19 +1478,19 @@ GL_IDirect3DDeviceImpl_7_SetMaterial(LPDIRECT3DDEVICE7 iface,
     
     This->current_material = *lpMat;
 
-    glMaterialfv(GL_FRONT,
+    glMaterialfv(GL_FRONT_AND_BACK,
 		 GL_DIFFUSE,
 		 (float *) &(This->current_material.u.diffuse));
-    glMaterialfv(GL_FRONT,
+    glMaterialfv(GL_FRONT_AND_BACK,
 		 GL_AMBIENT,
 		 (float *) &(This->current_material.u1.ambient));
-    glMaterialfv(GL_FRONT,
+    glMaterialfv(GL_FRONT_AND_BACK,
 		 GL_SPECULAR,
 		 (float *) &(This->current_material.u2.specular));
-    glMaterialfv(GL_FRONT,
+    glMaterialfv(GL_FRONT_AND_BACK,
 		 GL_EMISSION,
 		 (float *) &(This->current_material.u3.emissive));
-    glMaterialf(GL_FRONT,
+    glMaterialf(GL_FRONT_AND_BACK,
 		GL_SHININESS,
 		This->current_material.u4.power); /* Not sure about this... */
 
