@@ -544,6 +544,12 @@ typedef struct _SINGLE_LIST_ENTRY {
 #define PF_RDTSC_INSTRUCTION_AVAILABLE		8
 
 
+/* Execution state flags */
+#define ES_SYSTEM_REQUIRED    0x00000001
+#define ES_DISPLAY_REQUIRED   0x00000002
+#define ES_USER_PRESENT       0x00000004
+#define ES_CONTINUOUS         0x80000000
+
 /* The Win32 register context */
 
 /* CONTEXT is the CPU-dependent context; it should be used        */
