@@ -765,9 +765,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             break;
         }
     }
-    *sz = sectSize * raw->SectorCount;
-    ret = CDROM_GetStatusCode(io);
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__)
     {
         struct ioc_read_audio   ira;
 
@@ -791,9 +789,24 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             break;
         }
     }
+#elif defined(__NetBSD__)
+    {
+        switch (raw->TrackMode)
+        {
+        case YellowMode2:
+            FIXME("YellowMode2: NIY\n");
+            return ret;
+        case XAForm2:
+            FIXME("XAForm2: NIY\n");
+            return ret;
+        case CDDA:
+	    FIXME("CDDA: NIY\n");
+	    return ret;
+	}
+    }
+#endif
     *sz = sectSize * raw->SectorCount;
     ret = CDROM_GetStatusCode(io);
-#endif
     return ret;
 }
 
