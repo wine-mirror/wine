@@ -3210,6 +3210,38 @@ typedef struct tagCOMBOBOXEXITEMW
 
 #define COMBOBOXEXITEM WINELIB_NAME_AW(COMBOBOXEXITEM)
 
+
+#define CBENF_KILLFOCUS               1
+#define CBENF_RETURN                  2
+#define CBENF_ESCAPE                  3
+#define CBENF_DROPDOWN                4
+
+#define CBEMAXSTRLEN 260
+
+typedef struct tagNMCBEENDEDITW
+{
+    NMHDR hdr;
+    BOOL fChandged;
+    int iNewSelection;
+    WCHAR szText[CBEMAXSTRLEN];
+    int iWhy;
+} NMCBEENDEDITW, *LPNMCBEENDEDITW, *PNMCBEENDEDITW;
+
+typedef struct tagNMCBEENDEDITA
+{
+    NMHDR hdr;
+    BOOL fChanged;
+    int iNewSelection;
+    char szText[CBEMAXSTRLEN];
+    int iWhy;
+} NMCBEENDEDITA, *LPNMCBEENDEDITA, *PNMCBEENDEDITA;
+
+#define NMCBEENDEDIT WINELIB_NAME_AW(NMCBEENDEDIT)
+#define LPNMCBEENDEDIT WINELIB_NAME_AW(LPNMCBEENDEDIT)
+#define PNMCBEENDEDIT WINELIB_NAME_AW(PNMCBEENDEDIT)
+
+
+
 /* Hotkey control */
 
 #define HOTKEY_CLASS16          "msctls_hotkey"
