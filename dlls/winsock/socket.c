@@ -1244,7 +1244,7 @@ INT WINAPI WSOCK32_getsockopt(SOCKET s, INT level,
 {
     LPWSINFO      pwsi = WINSOCK_GetIData();
 
-    TRACE("(%08x): socket: %04x, opt %d, ptr %8x, ptr %8x\n", 
+    TRACE("(%08x): socket: %04x, opt 0x%x, ptr %8x, len %d\n", 
 			   (unsigned)pwsi, s, level, (int) optval, (int) *optlen);
     if( _check_ws(pwsi, s) )
     {
@@ -2084,7 +2084,7 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
 {
     LPWSINFO      pwsi = WINSOCK_GetIData();
 
-    TRACE("(%08x): socket %04x, lev %d, opt %d, ptr %08x, len %d\n",
+    TRACE("(%08x): socket %04x, lev %d, opt 0x%x, ptr %08x, len %d\n",
 			  (unsigned)pwsi, s, level, optname, (int) optval, optlen);
     if( _check_ws(pwsi, s) )
     {
@@ -2119,6 +2119,12 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
 	    optval= (char*) &woptval;
 	    optlen=sizeof(int);
 	}
+        if(optname == SO_RCVBUF && *(int*)optval < 2048) {
+            WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(int*)optval );
+            close( fd);
+            return 0;
+        }
+
 	if (setsockopt(fd, level, optname, optval, optlen) == 0)
 	{
 	    close(fd);
