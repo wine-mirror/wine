@@ -107,7 +107,7 @@ send_file (const char *name)
     SOCKET s;
     FILE *f;
 #define BUFLEN 8192
-    unsigned char *buffer;
+    unsigned char buffer[BUFLEN+1];
     size_t bytes_read, total, filesize;
     char *str;
     int ret;
@@ -127,7 +127,6 @@ send_file (const char *name)
         "Upload File\r\n"
         "--" SEP "--\r\n";
 
-    buffer = xmalloc (BUFLEN + 1);
     s = open_http ("test.winehq.org");
     if (s == INVALID_SOCKET) return 1;
 
@@ -209,17 +208,16 @@ send_file (const char *name)
     if (ret) {
         buffer[total] = 0;
         str = strstr (buffer, "\r\n\r\n");
-        if (str) buffer = str + 4;
+        if (!str) str = buffer;
+        else str = str + 4;
         report (R_ERROR, "Can't submit logfile '%s'. "
-                "Server response: %s", name, buffer);
+                "Server response: %s", name, str);
     }
-    free (buffer);
     return ret;
 
  abort2:
     fclose (f);
  abort1:
     close_http (s);
-    free (buffer);
     return 1;
 }
