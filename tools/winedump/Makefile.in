@@ -12,6 +12,7 @@ C_SRCS = \
 	main.c  \
 	misc.c  \
 	msmangle.c  \
+	ne.c \
 	output.c  \
 	pe.c \
 	search.c  \

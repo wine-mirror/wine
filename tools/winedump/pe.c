@@ -50,7 +50,7 @@ void*			PE_base;
 unsigned long		PE_total_len;
 IMAGE_NT_HEADERS*	PE_nt_headers;
 
-enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG};
+enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE};
 
 char*	get_time_str(DWORD _t)
 {
@@ -653,7 +653,7 @@ static const char *get_resource_type( int id )
     return NULL;
 }
 
-static void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
+void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
 {
     unsigned int i, j;
 
@@ -735,9 +735,15 @@ static void dump_dir_resource(void)
     printf( "\n\n" );
 }
 
-static	void	do_dump(void)
+static	void	do_dump( enum FileSig sig )
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
+
+    if (sig == SIG_NE)
+    {
+        ne_dump( PE_base, PE_total_len );
+        return;
+    }
 
     if (globals.do_dumpheader)
     {
@@ -797,6 +803,10 @@ static	enum FileSig	check_headers(void)
 		    PE_nt_headers = PRD(dh->e_lfanew, sizeof(DWORD));
 		    sig = SIG_PE;
 		}
+                else if (*(WORD *)pdw == IMAGE_OS2_SIGNATURE)
+                {
+                    sig = SIG_NE;
+                }
 		else
 		{
 		    printf("No PE Signature found\n");
@@ -819,7 +829,7 @@ static	enum FileSig	check_headers(void)
     return sig;
 }
 
-int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
+int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig wanted_sig)
 {
     int			fd;
     enum FileSig	effective_sig;
@@ -856,8 +866,9 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 	case SIG_UNKNOWN: /* shouldn't happen... */
 	    ret = 0; break;
 	case SIG_PE:
+	case SIG_NE:
 	    printf("Contents of \"%s\": %ld bytes\n\n", name, PE_total_len);
-	    (*fn)();
+	    (*fn)(effective_sig);
 	    break;
 	case SIG_DBG:
 	    dump_separate_dbg();
@@ -931,7 +942,7 @@ static void dll_close (void)
 }
 */
 
-static	void	do_grab_sym(void)
+static	void	do_grab_sym( enum FileSig sig )
 {
     IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY);
     unsigned			i, j;

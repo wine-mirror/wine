@@ -214,6 +214,10 @@ const char *str_find_set (const char *str, const char *findset);
 
 char *str_toupper (char *str);
 
+void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
+
+void ne_dump( const void *exe, size_t exe_size );
+
 FILE *open_file (const char *name, const char *ext, const char *mode);
 
 #ifdef __GNUC__
