@@ -484,6 +484,10 @@ char *p, *q;
 	  GetTimeFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL, q, MAX_PATH);
 	  while (*q) q++;
 	  break;
+       case 'V':
+           lstrcat (q, version_string);
+           while (*q) q++;
+         break;
 	case '_':
 	  *q++ = '\n';
 	  break;
