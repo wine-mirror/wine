@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
@@ -34,7 +36,6 @@
 
 #include "wine/unicode.h"
 #include "wine/test.h"
-#include "wine/debug.h"
 
 
 IMalloc *ppM;
