@@ -54,7 +54,7 @@ THHOOK *pThhook = &DefaultThhook;
 
 static UINT16 nTaskCount = 0;
 
-static HTASK initial_task;
+static HTASK16 initial_task;
 
 /***********************************************************************
  *	     TASK_InstallTHHook
@@ -437,7 +437,8 @@ static DWORD CALLBACK task_start( TDB *pTask )
  *
  * Spawn a new 16-bit task.
  */
-HTASK TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmdline, BYTE len, HANDLE *hThread )
+HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
+                        LPCSTR cmdline, BYTE len, HANDLE *hThread )
 {
     TDB *pTask;
 

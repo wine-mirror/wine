@@ -987,7 +987,7 @@ static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmd
 {
     HANDLE hThread;
     TDB *pTask;
-    HTASK hTask;
+    HTASK16 hTask;
     HINSTANCE16 instance = 0;
 
     if (!(hTask = TASK_SpawnTask( pModule, cmdShow, cmdline + 1, *cmdline, &hThread )))
