@@ -62,33 +62,26 @@ IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-/** DGA control is disabled until this feature isn't totally broken **/
-/*
-    CONTROL         "Use XFree DGA extension",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
- */
-
     LTEXT	    "Screen color depth: ",IDC_STATIC,8,10,60,30
     COMBOBOX	    IDC_SCREEN_DEPTH,70,8,180,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
- 
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    CONTROL	    "Can DirectX programs prevent the mouse leaving their window?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,242,8
+    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,242,8
+    CONTROL	    "UseTakeFocus (FIXME)",IDC_USE_TAKE_FOCUS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,55,242,8
     
-    GROUPBOX        " Window settings ",IDC_STATIC,8,65,244,170
+    GROUPBOX        " Window settings ",IDC_STATIC,8,25,244,120
 
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
-                    IDC_STATIC,15,77,228,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,17,125,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,125,8,8,WS_DISABLED
+                    IDC_STATIC,15,73,228,28
+    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
     CONTROL         "Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,110,84,10
-
-    LTEXT 	    "If windows are managed by your window manager, then they will have the standard borders, they will respect your virtual desktop and appear in your window list. \n\nIf the windows are unmanaged, they will be disconnected from your window manager. This will mean the windows do not integrate as closely with your desktop, but the emulation will be more accurate so it can help some programs to work better.",
-    		    IDC_STATIC,15,145,228,50
-    CONTROL	    "Allow the window manager to control the windows", IDC_ENABLE_MANAGED, "Button",
-    		    BS_AUTOCHECKBOX | WS_TABSTOP, 17,215,154,10
-    
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,84,10
+		    
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+		    
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250

@@ -109,11 +109,26 @@ void initX11DrvDlg (HWND hDlg)
     SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
-    buf = getConfigValue("x11drv", "Managed", "Y");
+    buf = getConfigValue("x11drv", "DXGrab", "Y");
     if (IS_OPTION_TRUE(*buf))
-	CheckDlgButton(hDlg, IDC_ENABLE_MANAGED, BST_CHECKED);
+	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_CHECKED);
     else
-	CheckDlgButton(hDlg, IDC_ENABLE_MANAGED, BST_UNCHECKED);
+	CheckDlgButton(hDlg, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
+    free(buf);
+
+    buf = getConfigValue("x11drv", "DesktopDoubleBuffered", "Y");
+    if (IS_OPTION_TRUE(*buf))
+	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_CHECKED);
+    else
+	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
+    free(buf);
+    
+    buf = getConfigValue("x11drv", "UseTakeFocus", "N");
+    if (IS_OPTION_TRUE(*buf))
+	CheckDlgButton(hDlg, IDC_USE_TAKE_FOCUS, BST_CHECKED);
+    else
+	CheckDlgButton(hDlg, IDC_USE_TAKE_FOCUS, BST_UNCHECKED);
+    free(buf);
     
     updatingUI = FALSE;
 }
@@ -167,12 +182,28 @@ void onScreenDepthChanged(HWND hDlg) {
     free(newvalue);
 }
 
-void onEnableManagedClicked(HWND hDlg) {
-    if (IsDlgButtonChecked(hDlg, IDC_ENABLE_MANAGED) == BST_CHECKED)
-	addTransaction("x11drv", "Managed", ACTION_SET, "Y");
+void onDXMouseGrabClicked(HWND hDlg) {
+    if (IsDlgButtonChecked(hDlg, IDC_DX_MOUSE_GRAB) == BST_CHECKED)
+	addTransaction("x11drv", "DXGrab", ACTION_SET, "Y");
     else
-	addTransaction("x11drv", "Managed", ACTION_SET, "N");
+	addTransaction("x11drv", "DXGrab", ACTION_SET, "N");
 }
+
+
+void onDoubleBufferClicked(HWND hDlg) {
+    if (IsDlgButtonChecked(hDlg, IDC_DOUBLE_BUFFER) == BST_CHECKED)
+	addTransaction("x11drv", "DesktopDoubleBuffered", ACTION_SET, "Y");
+    else
+	addTransaction("x11drv", "DesktopDoubleBuffered", ACTION_SET, "N");
+}
+
+void onUseTakeFocusClicked(HWND hDlg) {
+    if (IsDlgButtonChecked(hDlg, IDC_USE_TAKE_FOCUS) == BST_CHECKED)
+	addTransaction("x11drv", "UseTakeFocus", ACTION_SET, "Y");
+    else
+	addTransaction("x11drv", "UseTakeFocus", ACTION_SET, "N");
+}
+
 
 INT_PTR CALLBACK
 X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -192,7 +223,9 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    WINE_TRACE("%d\n", LOWORD(wParam));
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
-			case IDC_ENABLE_MANAGED: onEnableManagedClicked(hDlg); break;
+			case IDC_DX_MOUSE_GRAB:  onDXMouseGrabClicked(hDlg); break;
+			case IDC_USE_TAKE_FOCUS: onUseTakeFocusClicked(hDlg); break;
+			case IDC_DOUBLE_BUFFER:  onDoubleBufferClicked(hDlg); break;
 		    };
 		    break;
 		}

@@ -104,3 +104,6 @@
 #define IDS_DRIVE_NO_C                  1075
 #define IDC_ENABLE_MANAGED              1076
 #define IDC_SCREEN_DEPTH                1077
+#define IDC_DX_MOUSE_GRAB               1078
+#define IDC_USE_TAKE_FOCUS              1079
+#define IDC_DOUBLE_BUFFER               1080
