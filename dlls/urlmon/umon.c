@@ -477,7 +477,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
     if(SUCCEEDED(hres)) {
 	TRACE("Created dummy stream...\n");
 
-	hres = IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown**)&pbscb);
+	hres = IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown**)&pbscb);
 	if(SUCCEEDED(hres)) {
 	    TRACE("Got IBindStatusCallback...\n");
 
@@ -1139,16 +1139,16 @@ HRESULT WINAPI RegisterBindStatusCallback(
     if (pbc == NULL || pbsc == NULL)
         return E_INVALIDARG;
 
-    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown **)&prev)))
+    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown **)&prev)))
     {
-        IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
+        IBindCtx_RevokeObjectParam(pbc, (LPOLESTR)BSCBHolder);
         if (ppbscPrevious)
             *ppbscPrevious = prev;
         else
             IBindStatusCallback_Release(prev);
     }
 
-	return IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown *)pbsc);
+	return IBindCtx_RegisterObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown *)pbsc);
 }
 
 /***********************************************************************
@@ -1176,11 +1176,11 @@ HRESULT WINAPI RevokeBindStatusCallback(
     if (pbc == NULL || pbsc == NULL)
         return E_INVALIDARG;
 
-    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown **)&callback)))
+    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown **)&callback)))
     {
         if (callback == pbsc)
         {
-            IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
+            IBindCtx_RevokeObjectParam(pbc, (LPOLESTR)BSCBHolder);
             hr = S_OK;
         }
         IBindStatusCallback_Release(pbsc);

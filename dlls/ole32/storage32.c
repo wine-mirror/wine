@@ -6663,7 +6663,7 @@ static HRESULT CLSIDFromUserType(LPCWSTR lpszUserType, CLSID *clsid)
     HKEY hkey, hkeyclsid;
     LPWSTR buffer = NULL;
     BOOL found = FALSE;
-    const WCHAR szclsid[] = { 'C','L','S','I','D',0 };
+    static const WCHAR szclsid[] = { 'C','L','S','I','D',0 };
 
     TRACE("Finding CLSID for %s\n", debugstr_w(lpszUserType));
 
@@ -6770,7 +6770,7 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
 {
     HRESULT r;
     IStream *stm = 0;
-    const WCHAR szCompObj[] = { 1, 'C','o','m','p','O','b','j', 0 };
+    static const WCHAR szCompObj[] = { 1, 'C','o','m','p','O','b','j', 0 };
     unsigned char unknown1[12];
     unsigned char unknown2[16];
     DWORD count;

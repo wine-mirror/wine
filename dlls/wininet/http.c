@@ -536,11 +536,12 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 {
     WCHAR buf[MAXHOSTNAME];
     WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
-    WCHAR* url, szNul[] = { 0 };
+    WCHAR* url;
+    static const WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
-    const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 }, szSlash[] = { '/',0 } ;
-    const WCHAR szFormat1[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
-    const WCHAR szFormat2[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
+    static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 }, szSlash[] = { '/',0 } ;
+    static const WCHAR szFormat1[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
+    static const WCHAR szFormat2[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
     int len;
 
     memset( &UrlComponents, 0, sizeof UrlComponents );
@@ -559,7 +560,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
         return FALSE;
 
     if( !lpwhr->lpszPath )
-        lpwhr->lpszPath = szNul;
+        lpwhr->lpszPath = (LPWSTR)szNul;
     TRACE("server='%s' path='%s'\n",
           debugstr_w(lpwhs->lpszServerName), debugstr_w(lpwhr->lpszPath));
     /* for constant 15 see above */

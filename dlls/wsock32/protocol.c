@@ -79,7 +79,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
                                         LPDWORD lpSize, BOOL unicode)
 { DWORD  dwLength = 0, dwOldSize = *lpSize;
   INT    iAnz = 1;
-  WCHAR  *lpProtName = NULL;
+  const WCHAR* lpProtName = NULL;
 
   *lpSize = sizeof( PROTOCOL_INFOA);
   switch (iProtocol) {

@@ -62,8 +62,7 @@ static int init_wksta_tests(void)
 
 static void run_get_comp_name_tests(void)
 {
-    WCHAR empty[] = {0};
-    LPWSTR ws = empty;
+    LPWSTR ws = NULL;
     if (!pNetpGetComputerName)
         return;
 

@@ -358,7 +358,7 @@ static int ctl2_find_name(
  */
 static int ctl2_encode_name(
 	ICreateTypeLib2Impl *This, /* [I] The typelib to operate against (used for LCID only). */
-	WCHAR *name,               /* [I] The name string to encode. */
+	const WCHAR *name,         /* [I] The name string to encode. */
 	char **result)             /* [O] A pointer to a pointer to receive the encoded name. */
 {
     int length;
@@ -402,7 +402,7 @@ static int ctl2_encode_name(
  */
 static int ctl2_encode_string(
 	ICreateTypeLib2Impl *This, /* [I] The typelib to operate against (not used?). */
-	WCHAR *string,             /* [I] The string to encode. */
+	const WCHAR *string,       /* [I] The string to encode. */
 	char **result)             /* [O] A pointer to a pointer to receive the encoded string. */
 {
     int length;
@@ -581,7 +581,7 @@ static int ctl2_alloc_guid(
  */
 static int ctl2_alloc_name(
 	ICreateTypeLib2Impl *This, /* [I] The type library to allocate in. */
-	WCHAR *name)               /* [I] The name to store. */
+	const WCHAR *name)         /* [I] The name to store. */
 {
     int length;
     int offset;
@@ -624,7 +624,7 @@ static int ctl2_alloc_name(
  */
 static int ctl2_alloc_string(
 	ICreateTypeLib2Impl *This, /* [I] The type library to allocate in. */
-	WCHAR *string)             /* [I] The string to store. */
+	const WCHAR *string)       /* [I] The string to store. */
 {
     int length;
     int offset;
@@ -698,7 +698,7 @@ static int ctl2_alloc_importfile(
 	int guidoffset,            /* [I] The offset to the GUID for the imported library. */
 	int major_version,         /* [I] The major version number of the imported library. */
 	int minor_version,         /* [I] The minor version number of the imported library. */
-	WCHAR *filename)           /* [I] The filename of the imported library. */
+	const WCHAR *filename)     /* [I] The filename of the imported library. */
 {
     int length;
     int offset;
@@ -1220,7 +1220,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 	int guidoffset;
 	int fileoffset;
 	MSFT_ImpInfo impinfo;
-	WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
+	static const WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
 
 	foo.guid = IID_StdOle;
 	foo.hreftype = 2;

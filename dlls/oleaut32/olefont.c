@@ -311,10 +311,10 @@ HRESULT WINAPI OleCreateFontIndirect(
   if (!lpFontDesc) {
     FONTDESC fd;
 
-    WCHAR fname[] = { 'S','y','s','t','e','m',0 };
+    static const WCHAR fname[] = { 'S','y','s','t','e','m',0 };
 
     fd.cbSizeofstruct = sizeof(fd);
-    fd.lpstrName      = fname;
+    fd.lpstrName      = (WCHAR*)fname;
     fd.cySize.s.Lo    = 80000;
     fd.cySize.s.Hi    = 0;
     fd.sWeight 	      = 0;
