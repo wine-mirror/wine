@@ -70,7 +70,8 @@ Function ordinals:
     This type defines a function entry point.  The prototype defined by
 "EXPORTNAME ([ARGTYPE [ARGTYPE [...]]])" specifies the name available for
 dynamic linking and the format of the arguments. "ORDINAL" is replaced
-by the ordinal number corresponding to the function.
+by the ordinal number corresponding to the function, or "@" for
+automatic ordinal allocation (Win32 only).
 
 "FUNCTYPE" should be one of:
 - "pascal16" for a Win16 function returning a 16-bit value

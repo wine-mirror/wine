@@ -9,6 +9,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +45,6 @@
 
 typedef enum
 {
-    TYPE_INVALID,
     TYPE_BYTE,         /* byte variable (Win16) */
     TYPE_WORD,         /* word variable (Win16) */
     TYPE_LONG,         /* long variable (Win16) */
@@ -64,7 +64,6 @@ typedef enum
 
 static const char * const TypeNames[TYPE_NBTYPES] =
 {
-    NULL,
     "byte",         /* TYPE_BYTE */
     "word",         /* TYPE_WORD */
     "long",         /* TYPE_LONG */
@@ -110,12 +109,6 @@ typedef struct
 
 typedef struct
 {
-    int arg_size;
-    int ret_value;
-} ORD_RETURN;
-
-typedef struct
-{
     int value;
 } ORD_ABS;
 
@@ -132,6 +125,7 @@ typedef struct
 typedef struct
 {
     ORD_TYPE    type;
+    int         ordinal;
     int         offset;
     int		lineno;
     char        name[80];
@@ -139,14 +133,15 @@ typedef struct
     {
         ORD_VARIABLE   var;
         ORD_FUNCTION   func;
-        ORD_RETURN     ret;
         ORD_ABS        abs;
         ORD_EXTERN     ext;
         ORD_FORWARD    fwd;
     } u;
 } ORDDEF;
 
-static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
+static ORDDEF EntryPoints[MAX_ORDINALS];
+static ORDDEF *Ordinals[MAX_ORDINALS];
+static ORDDEF *Names[MAX_ORDINALS];
 
 static SPEC_TYPE SpecType = SPEC_INVALID;
 static char DLLName[80];
@@ -154,12 +149,15 @@ static char DLLFileName[80];
 static int Limit = 0;
 static int Base = MAX_ORDINALS;
 static int DLLHeapSize = 0;
-static char *SpecName;
 static FILE *SpecFp;
 static WORD Code_Selector, Data_Selector;
 static char DLLInitFunc[80];
 static char *DLLImports[MAX_IMPORTS];
-static int nb_imports = 0;
+static int nb_imports;
+static int nb_entry_points;
+static int nb_names;
+static const char *input_file_name;
+static const char *output_file_name;
 
 char *ParseBuffer = NULL;
 char *ParseNext;
@@ -195,6 +193,7 @@ static void *xmalloc (size_t size)
     if (res == NULL)
     {
         fprintf (stderr, "Virtual memory exhausted.\n");
+        if (output_file_name) unlink( output_file_name );
         exit (1);
     }
     return res;
@@ -207,6 +206,7 @@ static void *xrealloc (void *ptr, size_t size)
     if (res == NULL)
     {
         fprintf (stderr, "Virtual memory exhausted.\n");
+        if (output_file_name) unlink( output_file_name );
         exit (1);
     }
     return res;
@@ -218,9 +218,21 @@ static char *xstrdup( const char *str )
     if (!res)
     {
         fprintf (stderr, "Virtual memory exhausted.\n");
+        if (output_file_name) unlink( output_file_name );
         exit (1);
     }
     return res;
+}
+
+static void fatal_error( const char *msg, ... )
+{
+    va_list valist;
+    va_start( valist, msg );
+    fprintf( stderr, "%s:%d: ", input_file_name, Line );
+    vfprintf( stderr, msg, valist );
+    va_end( valist );
+    if (output_file_name) unlink( output_file_name );
+    exit(1);
 }
 
 static int IsNumberString(char *s)
@@ -313,12 +325,60 @@ static char * GetToken(void)
 }
 
 
+static int name_compare( const void *name1, const void *name2 )
+{
+    ORDDEF *odp1 = *(ORDDEF **)name1;
+    ORDDEF *odp2 = *(ORDDEF **)name2;
+    return strcmp( odp1->name, odp2->name );
+}
+
+/*******************************************************************
+ *         AssignOrdinals
+ *
+ * Assign ordinals to all entry points.
+ */
+static void AssignOrdinals(void)
+{
+    int i, ordinal;
+
+    /* sort the list of names */
+    qsort( Names, nb_names, sizeof(Names[0]), name_compare );
+
+    /* check for duplicate names */
+    for (i = 0; i < nb_names - 1; i++)
+    {
+        if (!strcmp( Names[i]->name, Names[i+1]->name ))
+        {
+            Line = MAX( Names[i]->lineno, Names[i+1]->lineno );
+            fatal_error( "'%s' redefined (previous definition at line %d)\n",
+                         Names[i]->name, MIN( Names[i]->lineno, Names[i+1]->lineno ) );
+        }
+    }
+
+    /* start assigning from Base, or from 1 if no ordinal defined yet */
+    if (Base == MAX_ORDINALS) Base = 1;
+    for (i = 0, ordinal = Base; i < nb_names; i++)
+    {
+        if (Names[i]->ordinal != -1) continue;  /* already has an ordinal */
+        while (Ordinals[ordinal]) ordinal++;
+        if (ordinal >= MAX_ORDINALS)
+        {
+            Line = Names[i]->lineno;
+            fatal_error( "Too many functions defined (max %d)\n", MAX_ORDINALS );
+        }
+        Names[i]->ordinal = ordinal;
+        Ordinals[ordinal] = Names[i];
+    }
+    if (ordinal > Limit) Limit = ordinal;
+}
+
+
 /*******************************************************************
  *         ParseVariable
  *
  * Parse a variable definition.
  */
-static int ParseVariable( ORDDEF *odp )
+static void ParseVariable( ORDDEF *odp )
 {
     char *endptr;
     int *value_array;
@@ -326,12 +386,7 @@ static int ParseVariable( ORDDEF *odp )
     int value_array_size;
     
     char *token = GetToken();
-    if (*token != '(')
-    {
-	fprintf(stderr, "%s:%d: Expected '(' got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
+    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
     n_values = 0;
     value_array_size = 25;
@@ -351,24 +406,14 @@ static int ParseVariable( ORDDEF *odp )
 	}
 	
 	if (endptr == NULL || *endptr != '\0')
-	{
-	    fprintf(stderr, "%s:%d: Expected number value, got '%s'\n",
-                    SpecName, Line, token);
-	    return -1;
-	}
+	    fatal_error( "Expected number value, got '%s'\n", token );
     }
     
     if (token == NULL)
-    {
-	fprintf(stderr, "%s:%d: End of file in variable declaration\n",
-                SpecName, Line);
-	return -1;
-    }
+	fatal_error( "End of file in variable declaration\n" );
 
     odp->u.var.n_values = n_values;
     odp->u.var.values = xrealloc(value_array, sizeof(*value_array) * n_values);
-
-    return 0;
 }
 
 
@@ -377,7 +422,7 @@ static int ParseVariable( ORDDEF *odp )
  *
  * Parse a function definition.
  */
-static int ParseExportFunction( ORDDEF *odp )
+static void ParseExportFunction( ORDDEF *odp )
 {
     char *token;
     int i;
@@ -386,37 +431,20 @@ static int ParseExportFunction( ORDDEF *odp )
     {
     case SPEC_WIN16:
         if (odp->type == TYPE_STDCALL)
-        {
-            fprintf( stderr, "%s:%d: 'stdcall' not supported for Win16\n",
-                     SpecName, Line );
-            return -1;
-        }
-        else if (odp->type == TYPE_VARARGS)
-        {
-	    fprintf( stderr, "%s:%d: 'varargs' not supported for Win16\n",
-		     SpecName, Line );
-	    return -1;
-	}
+            fatal_error( "'stdcall' not supported for Win16\n" );
+        if (odp->type == TYPE_VARARGS)
+	    fatal_error( "'varargs' not supported for Win16\n" );
         break;
     case SPEC_WIN32:
         if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
-        {
-            fprintf( stderr, "%s:%d: 'pascal' not supported for Win32\n",
-                     SpecName, Line );
-            return -1;
-        }
+            fatal_error( "'pascal' not supported for Win32\n" );
         break;
     default:
         break;
     }
 
     token = GetToken();
-    if (*token != '(')
-    {
-	fprintf(stderr, "%s:%d: Expected '(' got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
+    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
     for (i = 0; i < sizeof(odp->u.func.arg_types)-1; i++)
     {
@@ -443,12 +471,8 @@ static int ParseExportFunction( ORDDEF *odp )
             odp->u.func.arg_types[i++] = 'l';
             odp->u.func.arg_types[i] = 'l';
         }
-        else
-        {
-            fprintf(stderr, "%s:%d: Unknown variable type '%s'\n",
-                    SpecName, Line, token);
-            return -1;
-        }
+        else fatal_error( "Unknown variable type '%s'\n", token );
+
         if (SpecType == SPEC_WIN32)
         {
             if (strcmp(token, "long") &&
@@ -457,29 +481,17 @@ static int ParseExportFunction( ORDDEF *odp )
                 strcmp(token, "wstr") &&
                 strcmp(token, "double"))
             {
-                fprintf( stderr, "%s:%d: Type '%s' not supported for Win32\n",
-                         SpecName, Line, token );
-                return -1;
+                fatal_error( "Type '%s' not supported for Win32\n", token );
             }
         }
     }
     if ((*token != ')') || (i >= sizeof(odp->u.func.arg_types)))
-    {
-        fprintf( stderr, "%s:%d: Too many arguments\n", SpecName, Line );
-        return -1;
-    }
+        fatal_error( "Too many arguments\n" );
+
     odp->u.func.arg_types[i] = '\0';
     if ((odp->type == TYPE_STDCALL) && !i)
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
     strcpy(odp->u.func.link_name, GetToken());
-
-    /* Ignore Win32 'register' routines on non-Intel archs */
-#ifndef __i386__
-    if ( odp->type == TYPE_REGISTER && SpecType == SPEC_WIN32 )
-        odp->type = TYPE_INVALID;
-#endif
-
-    return 0;
 }
 
 
@@ -488,28 +500,17 @@ static int ParseExportFunction( ORDDEF *odp )
  *
  * Parse an 'equate' definition.
  */
-static int ParseEquate( ORDDEF *odp )
+static void ParseEquate( ORDDEF *odp )
 {
     char *endptr;
     
     char *token = GetToken();
     int value = strtol(token, &endptr, 0);
     if (endptr == NULL || *endptr != '\0')
-    {
-	fprintf(stderr, "%s:%d: Expected number value, got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
-
+	fatal_error( "Expected number value, got '%s'\n", token );
     if (SpecType == SPEC_WIN32)
-    {
-        fprintf( stderr, "%s:%d: 'equate' not supported for Win32\n",
-                 SpecName, Line );
-        return -1;
-    }
-
+        fatal_error( "'equate' not supported for Win32\n" );
     odp->u.abs.value = value;
-    return 0;
 }
 
 
@@ -518,11 +519,10 @@ static int ParseEquate( ORDDEF *odp )
  *
  * Parse a 'stub' definition.
  */
-static int ParseStub( ORDDEF *odp )
+static void ParseStub( ORDDEF *odp )
 {
     odp->u.func.arg_types[0] = '\0';
     strcpy( odp->u.func.link_name, STUB_CALLBACK );
-    return 0;
 }
 
 
@@ -531,35 +531,21 @@ static int ParseStub( ORDDEF *odp )
  *
  * Parse an 'interrupt' definition.
  */
-static int ParseInterrupt( ORDDEF *odp )
+static void ParseInterrupt( ORDDEF *odp )
 {
     char *token;
 
     if (SpecType == SPEC_WIN32)
-    {
-        fprintf( stderr, "%s:%d: 'interrupt' not supported for Win32\n",
-                 SpecName, Line );
-        return -1;
-    }
+        fatal_error( "'interrupt' not supported for Win32\n" );
 
     token = GetToken();
-    if (*token != '(')
-    {
-	fprintf(stderr, "%s:%d: Expected '(' got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
+    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
+
     token = GetToken();
-    if (*token != ')')
-    {
-	fprintf(stderr, "%s:%d: Expected ')' got '%s'\n",
-                SpecName, Line, token);
-	return -1;
-    }
+    if (*token != ')') fatal_error( "Expected ')' got '%s'\n", token );
 
     odp->u.func.arg_types[0] = '\0';
     strcpy( odp->u.func.link_name, GetToken() );
-    return 0;
 }
 
 
@@ -568,16 +554,10 @@ static int ParseInterrupt( ORDDEF *odp )
  *
  * Parse an 'extern' definition.
  */
-static int ParseExtern( ORDDEF *odp )
+static void ParseExtern( ORDDEF *odp )
 {
-    if (SpecType == SPEC_WIN16)
-    {
-        fprintf( stderr, "%s:%d: 'extern' not supported for Win16\n",
-                 SpecName, Line );
-        return -1;
-    }
+    if (SpecType == SPEC_WIN16) fatal_error( "'extern' not supported for Win16\n" );
     strcpy( odp->u.ext.link_name, GetToken() );
-    return 0;
 }
 
 
@@ -586,16 +566,10 @@ static int ParseExtern( ORDDEF *odp )
  *
  * Parse a 'forward' definition.
  */
-static int ParseForward( ORDDEF *odp )
+static void ParseForward( ORDDEF *odp )
 {
-    if (SpecType == SPEC_WIN16)
-    {
-        fprintf( stderr, "%s:%d: 'forward' not supported for Win16\n",
-                 SpecName, Line );
-        return -1;
-    }
+    if (SpecType == SPEC_WIN16) fatal_error( "'forward' not supported for Win16\n" );
     strcpy( odp->u.fwd.link_name, GetToken() );
-    return 0;
 }
 
 
@@ -604,73 +578,89 @@ static int ParseForward( ORDDEF *odp )
  *
  * Parse an ordinal definition.
  */
-static int ParseOrdinal(int ordinal)
+static void ParseOrdinal(int ordinal)
 {
-    ORDDEF *odp;
     char *token;
 
-    if (ordinal >= MAX_ORDINALS)
-    {
-	fprintf(stderr, "%s:%d: Ordinal number too large\n", SpecName, Line );
-	return -1;
-    }
-    if (ordinal > Limit) Limit = ordinal;
-    if (ordinal < Base) Base = ordinal;
+    ORDDEF *odp = &EntryPoints[nb_entry_points++];
 
-    odp = &OrdinalDefinitions[ordinal];
-    if (!(token = GetToken()))
-    {
-	fprintf(stderr, "%s:%d: Expected type after ordinal\n", SpecName, Line);
-	return -1;
-    }
+    if (!(token = GetToken())) fatal_error( "Expected type after ordinal\n" );
 
     for (odp->type = 0; odp->type < TYPE_NBTYPES; odp->type++)
         if (TypeNames[odp->type] && !strcmp( token, TypeNames[odp->type] ))
             break;
 
     if (odp->type >= TYPE_NBTYPES)
-    {
-        fprintf( stderr,
-                 "%s:%d: Expected type after ordinal, found '%s' instead\n",
-                 SpecName, Line, token );
-        return -1;
-    }
+        fatal_error( "Expected type after ordinal, found '%s' instead\n", token );
 
-    if (!(token = GetToken()))
-    {
-        fprintf( stderr, "%s:%d: Expected name after type\n", SpecName, Line );
-        return -1;
-    }
+    if (!(token = GetToken())) fatal_error( "Expected name after type\n" );
+
     strcpy( odp->name, token );
     odp->lineno = Line;
+    odp->ordinal = ordinal;
 
     switch(odp->type)
     {
     case TYPE_BYTE:
     case TYPE_WORD:
     case TYPE_LONG:
-	return ParseVariable( odp );
+        ParseVariable( odp );
+        break;
+    case TYPE_REGISTER:
+	ParseExportFunction( odp );
+#ifndef __i386__
+        /* ignore Win32 'register' routines on non-Intel archs */
+        if (SpecType == SPEC_WIN32)
+        {
+            nb_entry_points--;
+            return;
+        }
+#endif
+        break;
     case TYPE_PASCAL_16:
     case TYPE_PASCAL:
-    case TYPE_REGISTER:
     case TYPE_STDCALL:
     case TYPE_VARARGS:
     case TYPE_CDECL:
-	return ParseExportFunction( odp );
+        ParseExportFunction( odp );
+        break;
     case TYPE_INTERRUPT:
-	return ParseInterrupt( odp );
+        ParseInterrupt( odp );
+        break;
     case TYPE_ABS:
-	return ParseEquate( odp );
+        ParseEquate( odp );
+        break;
     case TYPE_STUB:
-	return ParseStub( odp );
+        ParseStub( odp );
+        break;
     case TYPE_EXTERN:
-	return ParseExtern( odp );
+        ParseExtern( odp );
+        break;
     case TYPE_FORWARD:
-	return ParseForward( odp );
+        ParseForward( odp );
+        break;
     default:
-        fprintf( stderr, "Should not happen\n" );
-        return -1;
+        assert( 0 );
     }
+
+    if (ordinal != -1)
+    {
+        if (ordinal >= MAX_ORDINALS) fatal_error( "Ordinal number %d too large\n", ordinal );
+        if (ordinal > Limit) Limit = ordinal;
+        if (ordinal < Base) Base = ordinal;
+        odp->ordinal = ordinal;
+        Ordinals[ordinal] = odp;
+    }
+
+    if (!strcmp( odp->name, "@" ))
+    {
+        if (ordinal == -1)
+            fatal_error( "Nameless function needs an explicit ordinal number\n" );
+        if (SpecType != SPEC_WIN32)
+            fatal_error( "Nameless functions not supported for Win16\n" );
+        odp->name[0] = 0;
+    }
+    else Names[nb_names++] = odp;
 }
 
 
@@ -679,7 +669,7 @@ static int ParseOrdinal(int ordinal)
  *
  * Parse a spec file.
  */
-static int ParseTopLevel(void)
+static void ParseTopLevel(void)
 {
     char *token;
     
@@ -701,73 +691,43 @@ static int ParseTopLevel(void)
             token = GetToken();
             if (!strcmp(token, "win16" )) SpecType = SPEC_WIN16;
             else if (!strcmp(token, "win32" )) SpecType = SPEC_WIN32;
-            else
-            {
-                fprintf(stderr, "%s:%d: Type must be 'win16' or 'win32'\n",
-                        SpecName, Line);
-                return -1;
-            }
+            else fatal_error( "Type must be 'win16' or 'win32'\n" );
         }
 	else if (strcmp(token, "heap") == 0)
 	{
             token = GetToken();
-            if (!IsNumberString(token))
-            {
-		fprintf(stderr, "%s:%d: Expected number after heap\n",
-                        SpecName, Line);
-		return -1;
-            }
+            if (!IsNumberString(token)) fatal_error( "Expected number after heap\n" );
             DLLHeapSize = atoi(token);
 	}
         else if (strcmp(token, "init") == 0)
         {
             strcpy(DLLInitFunc, GetToken());
 	    if (SpecType == SPEC_WIN16)
-            {
-		fprintf(stderr, "%s:%d: init cannot be used for Win16 spec files\n",
-                        SpecName, Line);
-                return -1;
-            }
+                fatal_error( "init cannot be used for Win16 spec files\n" );
             if (!DLLInitFunc[0])
-            {
-                fprintf(stderr, "%s:%d: Expected function name after init\n", SpecName, Line);
-                return -1;
-            }
+                fatal_error( "Expected function name after init\n" );
         }
         else if (strcmp(token, "import") == 0)
         {
             if (nb_imports >= MAX_IMPORTS)
-            {
-                fprintf( stderr, "%s:%d: Too many imports (limit %d)\n",
-                         SpecName, Line, MAX_IMPORTS );
-                return -1;
-            }
+                fatal_error( "Too many imports (limit %d)\n", MAX_IMPORTS );
             if (SpecType != SPEC_WIN32)
-            {
-                fprintf( stderr, "%s:%d: Imports not supported for Win16\n", SpecName, Line );
-                return -1;
-            }
+                fatal_error( "Imports not supported for Win16\n" );
             DLLImports[nb_imports++] = xstrdup(GetToken());
         }
+        else if (strcmp(token, "@") == 0)
+	{
+            if (SpecType != SPEC_WIN32)
+                fatal_error( "'@' ordinals not supported for Win16\n" );
+	    ParseOrdinal( -1 );
+	}
 	else if (IsNumberString(token))
 	{
-	    int ordinal;
-	    int rv;
-	    
-	    ordinal = atoi(token);
-	    if ((rv = ParseOrdinal(ordinal)) < 0)
-		return rv;
+	    ParseOrdinal( atoi(token) );
 	}
 	else
-	{
-	    fprintf(stderr, 
-		    "%s:%d: Expected name, id, length or ordinal\n",
-                    SpecName, Line);
-	    return -1;
-	}
+            fatal_error( "Expected name, id, length or ordinal\n" );
     }
-
-    return 0;
 }
 
 
@@ -830,7 +790,6 @@ static void DumpBytes( FILE *outfile, const unsigned char *data, int len,
 static int BuildModule16( FILE *outfile, int max_code_offset,
                           int max_data_offset )
 {
-    ORDDEF *odp;
     int i;
     char *buffer;
     NE_MODULE *pModule;
@@ -940,10 +899,10 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     *(WORD *)pstr = 0;
     pstr += sizeof(WORD);
     /* Store all ordinals */
-    odp = OrdinalDefinitions + 1;
-    for (i = 1; i <= Limit; i++, odp++)
+    for (i = 1; i <= Limit; i++)
     {
-        if (!odp->name[0]) continue;
+        ORDDEF *odp = Ordinals[i];
+        if (!odp || !odp->name[0]) continue;
         *pstr = strlen( odp->name );
         strcpy( pstr + 1, odp->name );
         strupper( pstr + 1 );
@@ -956,10 +915,11 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
       /* Entry table */
 
     pModule->entry_table = (int)pstr - (int)pModule;
-    odp = OrdinalDefinitions + 1;
-    for (i = 1; i <= Limit; i++, odp++)
+    for (i = 1; i <= Limit; i++)
     {
         int selector = 0;
+        ORDDEF *odp = Ordinals[i];
+        if (!odp) continue;
 
 	switch (odp->type)
 	{
@@ -1028,29 +988,22 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
  *
  * Build a Win32 C file from a spec file.
  */
-static int BuildSpec32File( char * specfile, FILE *outfile )
+static int BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
-    int i, nb_names, fwd_size = 0, have_regs = FALSE;
+    int i, fwd_size = 0, have_regs = FALSE;
+
+    AssignOrdinals();
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
-             specfile );
+             input_file_name );
     fprintf( outfile, "#include \"builtin32.h\"\n\n" );
-
-    /* Output code for all stubs functions */
-
     fprintf( outfile, "extern const BUILTIN32_DESCRIPTOR %s_Descriptor;\n",
              DLLName );
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
-    {
-        if (odp->type != TYPE_STUB) continue;
-        fprintf( outfile, "static void __stub_%d() { BUILTIN32_Unimplemented(&%s_Descriptor,%d); }\n",
-                 i, DLLName, i );
-    }
 
     /* Output the DLL functions prototypes */
 
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
     {
         switch(odp->type)
         {
@@ -1066,11 +1019,12 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             fwd_size += strlen(odp->u.fwd.link_name) + 1;
             break;
         case TYPE_REGISTER:
-            fprintf( outfile, "extern void __regs_%d();\n", i );
+            fprintf( outfile, "extern void __regs_%d();\n", odp->ordinal );
             have_regs = TRUE;
             break;
-        case TYPE_INVALID:
         case TYPE_STUB:
+            fprintf( outfile, "static void __stub_%d() { BUILTIN32_Unimplemented(&%s_Descriptor,%d); }\n",
+                     odp->ordinal, DLLName, odp->ordinal );
             break;
         default:
             fprintf(stderr,"build: function type %d not available for Win32\n",
@@ -1090,7 +1044,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         fprintf( outfile, "#ifndef __GNUC__\n" );
         fprintf( outfile, "static void __asm__dummy() {\n" );
         fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-        for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+        for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
         {
             if (odp->type != TYPE_REGISTER) continue;
             fprintf( outfile,
@@ -1100,7 +1054,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
                      "        \"call " PREFIX "CALL32_Regs\\n\\t\"\n"
                      "        \".long " PREFIX "%s\\n\\t\"\n"
                      "        \".byte %d,%d\");\n",
-                     i, i, odp->u.func.link_name,
+                     odp->ordinal, odp->ordinal, odp->u.func.link_name,
                      4 * strlen(odp->u.func.arg_types),
                      4 * strlen(odp->u.func.arg_types) );
         }
@@ -1113,13 +1067,12 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
 
     fprintf( outfile, "\nstatic const ENTRYPOINT32 Functions[%d] =\n{\n",
              Limit - Base + 1 );
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    for (i = Base; i <= Limit; i++)
     {
-        switch(odp->type)
+        ORDDEF *odp = Ordinals[i];
+        if (!odp) fprintf( outfile, "    0" );
+        else switch(odp->type)
         {
-        case TYPE_INVALID:
-            fprintf( outfile, "    0" );
-            break;
         case TYPE_EXTERN:
             fprintf( outfile, "    %s", odp->u.ext.link_name );
             break;
@@ -1146,13 +1099,21 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
 
     /* Output the DLL names table */
 
-    nb_names = 0;
-    fprintf( outfile, "static const char * const FuncNames[] =\n{\n" );
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    fprintf( outfile, "static const char * const FuncNames[%d] =\n{\n", nb_names );
+    for (i = 0; i < nb_names; i++)
     {
-        if (odp->type == TYPE_INVALID) continue;
-        if (nb_names++) fprintf( outfile, ",\n" );
-        fprintf( outfile, "    \"%s\"", odp->name );
+        if (i) fprintf( outfile, ",\n" );
+        fprintf( outfile, "    \"%s\"", Names[i]->name );
+    }
+    fprintf( outfile, "\n};\n\n" );
+
+    /* Output the DLL ordinals table */
+
+    fprintf( outfile, "static const unsigned short FuncOrdinals[%d] =\n{\n", nb_names );
+    for (i = 0; i < nb_names; i++)
+    {
+        if (i) fprintf( outfile, ",\n" );
+        fprintf( outfile, "    %d", Names[i]->ordinal - Base );
     }
     fprintf( outfile, "\n};\n\n" );
 
@@ -1160,11 +1121,13 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
 
     fprintf( outfile, "static const unsigned int ArgTypes[%d] =\n{\n",
              Limit - Base + 1 );
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    for (i = Base; i <= Limit; i++)
     {
+        ORDDEF *odp = Ordinals[i];
     	unsigned int j, mask = 0;
-	if ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL) ||
-            (odp->type == TYPE_REGISTER))
+	if (odp &&
+            ((odp->type == TYPE_STDCALL) || (odp->type == TYPE_CDECL) ||
+            (odp->type == TYPE_REGISTER)))
 	    for (j = 0; odp->u.func.arg_types[j]; j++)
             {
                 if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
@@ -1175,26 +1138,15 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     }
     fprintf( outfile, "\n};\n\n" );
 
-    /* Output the DLL ordinals table */
-
-    fprintf( outfile, "static const unsigned short FuncOrdinals[] =\n{\n" );
-    nb_names = 0;
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
-    {
-        if (odp->type == TYPE_INVALID) continue;
-        if (nb_names++) fprintf( outfile, ",\n" );
-        fprintf( outfile, "    %d", i - Base );
-    }
-    fprintf( outfile, "\n};\n\n" );
-
     /* Output the DLL functions arguments */
 
     fprintf( outfile, "static const unsigned char FuncArgs[%d] =\n{\n",
              Limit - Base + 1 );
-    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    for (i = Base; i <= Limit; i++)
     {
-        unsigned char args;
-        switch(odp->type)
+        unsigned char args = 0xff;
+        ORDDEF *odp = Ordinals[i];
+        if (odp) switch(odp->type)
         {
         case TYPE_STDCALL:
             args = (unsigned char)strlen(odp->u.func.arg_types);
@@ -1283,9 +1235,9 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
  *
  * Build a Win16 assembly file from a spec file.
  */
-static int BuildSpec16File( char * specfile, FILE *outfile )
+static int BuildSpec16File( FILE *outfile )
 {
-    ORDDEF *odp, **type, **typelist;
+    ORDDEF **type, **typelist;
     int i, nFuncs, nTypes;
     int code_offset, data_offset, module_size;
     unsigned char *data;
@@ -1293,7 +1245,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
     /* File header */
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
-             specfile );
+             input_file_name );
     fprintf( outfile, "#define __FLATCS__ 0x%04x\n", Code_Selector );
     fprintf( outfile, "#include \"builtin16.h\"\n\n" );
 
@@ -1306,9 +1258,10 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
 
     typelist = (ORDDEF **)calloc( Limit+1, sizeof(ORDDEF *) );
 
-    odp = OrdinalDefinitions;
-    for (i = nFuncs = 0; i <= Limit; i++, odp++)
+    for (i = nFuncs = 0; i <= Limit; i++)
     {
+        ORDDEF *odp = Ordinals[i];
+        if (!odp) continue;
         switch (odp->type)
         {
           case TYPE_REGISTER:
@@ -1352,9 +1305,10 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
 
     /* Output the DLL functions prototypes */
 
-    odp = OrdinalDefinitions;
-    for (i = 0; i <= Limit; i++, odp++)
+    for (i = 0; i <= Limit; i++)
     {
+        ORDDEF *odp = Ordinals[i];
+        if (!odp) continue;
         switch(odp->type)
         {
         case TYPE_REGISTER:
@@ -1418,15 +1372,12 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
     }
     fprintf( outfile, "    },\n    {\n" );
 
-    odp = OrdinalDefinitions;
-    for (i = 0; i <= Limit; i++, odp++)
+    for (i = 0; i <= Limit; i++)
     {
+        ORDDEF *odp = Ordinals[i];
+        if (!odp) continue;
         switch (odp->type)
         {
-          case TYPE_INVALID:
-            odp->offset = 0xffff;
-            break;
-
           case TYPE_ABS:
             odp->offset = LOWORD(odp->u.abs.value);
             break;
@@ -1506,27 +1457,21 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
  *
  * Build an assembly file from a spec file.
  */
-static int BuildSpecFile( FILE *outfile, char *specname )
+static void BuildSpecFile( FILE *outfile, FILE *infile )
 {
-    SpecName = specname;
-    SpecFp = fopen( specname, "r");
-    if (SpecFp == NULL)
-    {
-	fprintf(stderr, "Could not open specification file, '%s'\n", specname);
-        return -1;
-    }
-
-    if (ParseTopLevel() < 0) return -1;
+    SpecFp = infile;
+    ParseTopLevel();
 
     switch(SpecType)
     {
     case SPEC_WIN16:
-        return BuildSpec16File( specname, outfile );
+        BuildSpec16File( outfile );
+        break;
     case SPEC_WIN32:
-        return BuildSpec32File( specname, outfile );
+        BuildSpec32File( outfile );
+        break;
     default:
-        fprintf( stderr, "%s: Missing 'type' declaration\n", specname );
-        return -1;
+        fatal_error( "Missing 'type' declaration\n" );
     }
 }
 
@@ -2900,43 +2845,18 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
 
 /*******************************************************************
- *         BuildSpec
- *
- * Build the spec files
- */
-static int BuildSpec( FILE *outfile, int argc, char *argv[] )
-{
-    int i;
-    for (i = 2; i < argc; i++)
-        if (BuildSpecFile( outfile, argv[i] ) < 0) return -1;
-    return 0;
-}
-
-/*******************************************************************
  *         BuildGlue
  *
  * Build the 16-bit-to-Wine/Wine-to-16-bit callback glue code
  */
-static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
+static void BuildGlue( FILE *outfile, FILE *infile )
 {
     char buffer[1024];
-    FILE *infile;
-
-    if (argc > 2)
-    {
-        infile = fopen( argv[2], "r" );
-        if (!infile)
-        {
-            perror( argv[2] );
-            exit( 1 );
-        }
-    }
-    else infile = stdin;
 
     /* File header */
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
-             argc > 2? argv[2] : "<stdin>" );
+             input_file_name );
     fprintf( outfile, "#include \"builtin16.h\"\n" );
     fprintf( outfile, "#include \"stackframe.h\"\n\n" );
 
@@ -2975,7 +2895,6 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
     }
 
     fclose( infile );
-    return 0;
 }
 
 /*******************************************************************
@@ -2983,12 +2902,8 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
  *
  * Build the 16-bit callbacks
  */
-static int BuildCall16( FILE *outfile, char * outname )
+static void BuildCall16( FILE *outfile )
 {
-#ifdef USE_STABS
-    char buffer[1024];
-#endif
-
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
@@ -2997,18 +2912,20 @@ static int BuildCall16( FILE *outfile, char * outname )
 #ifdef __i386__
 
 #ifdef USE_STABS
-    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
-    getcwd(buffer, sizeof(buffer));
+    if (output_file_name)
+    {
+        char buffer[1024];
+        getcwd(buffer, sizeof(buffer));
+        fprintf( outfile, "\t.file\t\"%s\"\n", output_file_name );
 
-    /*
-     * The stabs help the internal debugger as they are an indication that it
-     * is sensible to step into a thunk/trampoline.
-     */
-    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
-    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
-    fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, "\t.align 4\n" );
-    fprintf( outfile, "Code_Start:\n\n" );
+        /*
+         * The stabs help the internal debugger as they are an indication that it
+         * is sensible to step into a thunk/trampoline.
+         */
+        fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+        fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", output_file_name );
+        fprintf( outfile, "Code_Start:\n\n" );
+    }
 #endif
     fprintf( outfile, PREFIX"Call16_Start:\n" );
     fprintf( outfile, "\t.globl "PREFIX"Call16_Start\n" );
@@ -3086,8 +3003,6 @@ static int BuildCall16( FILE *outfile, char * outname )
     fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
 
 #endif  /* __i386__ */
-
-    return 0;
 }
 
 /*******************************************************************
@@ -3095,12 +3010,8 @@ static int BuildCall16( FILE *outfile, char * outname )
  *
  * Build the 32-bit callbacks
  */
-static int BuildCall32( FILE *outfile, char * outname )
+static void BuildCall32( FILE *outfile )
 {
-#ifdef USE_STABS
-    char buffer[1024];
-#endif
-
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
@@ -3109,18 +3020,20 @@ static int BuildCall32( FILE *outfile, char * outname )
 #ifdef __i386__
 
 #ifdef USE_STABS
-    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
-    getcwd(buffer, sizeof(buffer));
+    if (output_file_name)
+    {
+        char buffer[1024];
+        getcwd(buffer, sizeof(buffer));
+        fprintf( outfile, "\t.file\t\"%s\"\n", output_file_name );
 
-    /*
-     * The stabs help the internal debugger as they are an indication that it
-     * is sensible to step into a thunk/trampoline.
-     */
-    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
-    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
-    fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, "\t.align 4\n" );
-    fprintf( outfile, "Code_Start:\n" );
+        /*
+         * The stabs help the internal debugger as they are an indication that it
+         * is sensible to step into a thunk/trampoline.
+         */
+        fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+        fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", output_file_name );
+        fprintf( outfile, "Code_Start:\n" );
+    }
 #endif
 
     /* Build the 32-bit large stack callback */
@@ -3143,7 +3056,6 @@ static int BuildCall32( FILE *outfile, char * outname )
     fprintf( outfile, "\t.long 0\n" );
 
 #endif  /* __i386__ */
-    return 0;
 }
 
 
@@ -3153,22 +3065,43 @@ static int BuildCall32( FILE *outfile, char * outname )
 static void usage(void)
 {
     fprintf( stderr,
-             "usage: build [-pic] [-o outfile] -spec SPECNAMES\n"
+             "usage: build [-pic] [-o outfile] -spec SPEC_FILE\n"
              "       build [-pic] [-o outfile] -glue SOURCE_FILE\n"
              "       build [-pic] [-o outfile] -call16\n"
              "       build [-pic] [-o outfile] -call32\n" );
+    if (output_file_name) unlink( output_file_name );
     exit(1);
 }
 
+
+/*******************************************************************
+ *         open_input
+ */
+static FILE *open_input( const char *name )
+{
+    FILE *f;
+
+    if (!name)
+    {
+        input_file_name = "<stdin>";
+        return stdin;
+    }
+    input_file_name = name;
+    if (!(f = fopen( name, "r" )))
+    {
+        fprintf( stderr, "Cannot open input file '%s'\n", name );
+        if (output_file_name) unlink( output_file_name );
+        exit(1);
+    }
+    return f;
+}
 
 /*******************************************************************
  *         main
  */
 int main(int argc, char **argv)
 {
-    char *outname = NULL;
     FILE *outfile = stdout;
-    int res = -1;
 
     if (argc < 2) usage();
 
@@ -3182,13 +3115,13 @@ int main(int argc, char **argv)
 
     if (!strcmp( argv[1], "-o" ))
     {
-        outname = argv[2];
+        output_file_name = argv[2];
         argv += 2;
         argc -= 2;
         if (argc < 2) usage();
-        if (!(outfile = fopen( outname, "w" )))
+        if (!(outfile = fopen( output_file_name, "w" )))
         {
-            fprintf( stderr, "Unable to create output file '%s'\n", outname );
+            fprintf( stderr, "Unable to create output file '%s'\n", output_file_name );
             exit(1);
         }
     }
@@ -3200,26 +3133,16 @@ int main(int argc, char **argv)
     GET_CS( Code_Selector );
     GET_DS( Data_Selector );
 
-    if (!strcmp( argv[1], "-spec" ))
-        res = BuildSpec( outfile, argc, argv );
-    else if (!strcmp( argv[1], "-glue" ))
-        res = BuildGlue( outfile, outname, argc, argv );
-    else if (!strcmp( argv[1], "-call16" ))
-        res = BuildCall16( outfile, outname );
-    else if (!strcmp( argv[1], "-call32" ))
-        res = BuildCall32( outfile, outname );
+    if (!strcmp( argv[1], "-spec" )) BuildSpecFile( outfile, open_input( argv[2] ) );
+    else if (!strcmp( argv[1], "-glue" )) BuildGlue( outfile, open_input( argv[2] ) );
+    else if (!strcmp( argv[1], "-call16" )) BuildCall16( outfile );
+    else if (!strcmp( argv[1], "-call32" )) BuildCall32( outfile );
     else
     {
         fclose( outfile );
-        unlink( outname );
         usage();
     }
 
     fclose( outfile );
-    if (res < 0)
-    {
-        unlink( outname );
-        return 1;
-    }
     return 0;
 }

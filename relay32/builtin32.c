@@ -537,10 +537,9 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
 
     for (i = 0; i < dll->descr->nb_names; i++)
         if (dll->descr->ordinals[i] == ordinal) break;
-    assert( i < dll->descr->nb_names );
 
     sprintf( buffer, "%s.%d: %s", dll->descr->name, ordinal + dll->descr->base,
-             dll->descr->names[i] );
+             (i < dll->descr->nb_names) ? dll->descr->names[i] : "@" );
     *typemask = dll->descr->argtypes[ordinal];
     return dll->descr->functions[ordinal];
 }
