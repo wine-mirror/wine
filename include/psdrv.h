@@ -282,8 +282,16 @@ extern BOOL PSDRV_WriteClip(DC *dc);
 extern BOOL PSDRV_WriteEOClip(DC *dc);
 extern BOOL PSDRV_WriteHatch(DC *dc);
 extern BOOL PSDRV_WriteRotate(DC *dc, float ang);
-
-
+extern BOOL PSDRV_WriteIndexColorSpaceBegin(DC *dc, int size);
+extern BOOL PSDRV_WriteIndexColorSpaceEnd(DC *dc);
+extern BOOL PSDRV_WriteRGB(DC *dc, COLORREF *map, int number);
+extern BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
+				 INT widthDst, INT heightDst, INT widthSrc,
+				 INT heightSrc);
+extern BOOL PSDRV_WriteBytes(DC *dc, const BYTE *bytes, int number);
+extern BOOL PSDRV_WriteDIBits16(DC *dc, const WORD *words, int number);
+extern BOOL PSDRV_WriteDIBits24(DC *dc, const BYTE *bits, int number);
+extern BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number);
 
 
 

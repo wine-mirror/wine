@@ -690,4 +690,167 @@ BOOL PSDRV_WriteRotate(DC *dc, float ang)
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
+BOOL PSDRV_WriteIndexColorSpaceBegin(DC *dc, int size)
+{
+    char buf[256];
+    sprintf(buf, "[/Indexed /DeviceRGB %d\n<\n", size);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
 
+BOOL PSDRV_WriteIndexColorSpaceEnd(DC *dc)
+{
+    char buf[] = ">\n] setcolorspace\n";
+    return PSDRV_WriteSpool(dc, buf, sizeof(buf) - 1);
+} 
+
+BOOL PSDRV_WriteRGB(DC *dc, COLORREF *map, int number)
+{
+    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1), *ptr;
+    int i;
+
+    ptr = buf;
+    for(i = 0; i < number; i++) {
+        sprintf(ptr, "%02x%02x%02x%c", (int)GetRValue(map[i]), 
+		(int)GetGValue(map[i]), (int)GetBValue(map[i]),
+		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
+	ptr += 7;
+    }
+    PSDRV_WriteSpool(dc, buf, number * 7);
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+
+BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
+			  INT widthDst, INT heightDst, INT widthSrc,
+			  INT heightSrc)
+{
+    char start[] = "%d %d translate\n%d %d scale\n<<\n"
+      " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
+      " /ImageMatrix [%d 0 0 %d 0 %d]\n";
+
+    char decode1[] = " /Decode [0 %d]\n";
+    char decode3[] = " /Decode [0 1 0 1 0 1]\n";
+
+    char end[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> image\n";
+
+    char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
+
+    sprintf(buf, start, xDst, yDst, widthDst, heightDst, widthSrc, heightSrc,
+	    (depth < 8) ? depth : 8, widthSrc, -heightSrc, heightSrc);
+
+    PSDRV_WriteSpool(dc, buf, strlen(buf));
+
+    switch(depth) {
+    case 8:
+        sprintf(buf, decode1, 255);
+	break;
+
+    case 4:
+        sprintf(buf, decode1, 15);
+	break;
+
+    case 1:
+        sprintf(buf, decode1, 1);
+	break;
+
+    default:
+        strcpy(buf, decode3);
+	break;
+    }
+
+    PSDRV_WriteSpool(dc, buf, strlen(buf));
+
+    PSDRV_WriteSpool(dc, end, sizeof(end) - 1);
+
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+BOOL PSDRV_WriteBytes(DC *dc, const BYTE *bytes, int number)
+{
+    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 3 + 1);
+    char *ptr;
+    int i;
+    
+    ptr = buf;
+    
+    for(i = 0; i < number; i++) {
+        sprintf(ptr, "%02x%c", bytes[i],
+		((i & 0xf) == 0xf) || (i == number - 1) ? '\n' : ' ');
+	ptr += 3;
+    }
+    PSDRV_WriteSpool(dc, buf, number * 3);
+
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+BOOL PSDRV_WriteDIBits16(DC *dc, const WORD *words, int number)
+{
+    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
+    char *ptr;
+    int i;
+    
+    ptr = buf;
+    
+    for(i = 0; i < number; i++) {
+        int r, g, b;
+
+	/* We want 0x0 -- 0x1f to map to 0x0 -- 0xff */
+
+	r = words[i] >> 10 & 0x1f;
+	r = r << 3 | r >> 2;
+	g = words[i] >> 5 & 0x1f;
+	g = g << 3 | g >> 2;
+	b = words[i] & 0x1f;
+	b = b << 3 | b >> 2;
+        sprintf(ptr, "%02x%02x%02x%c", r, g, b,
+		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
+	ptr += 7;
+    }
+    PSDRV_WriteSpool(dc, buf, number * 7);
+
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+BOOL PSDRV_WriteDIBits24(DC *dc, const BYTE *bits, int number)
+{
+    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
+    char *ptr;
+    int i;
+    
+    ptr = buf;
+    
+    for(i = 0; i < number; i++) {
+        sprintf(ptr, "%02x%02x%02x%c", bits[i * 3 + 2], bits[i * 3 + 1],
+		bits[i * 3],
+		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
+	ptr += 7;
+    }
+    PSDRV_WriteSpool(dc, buf, number * 7);
+
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number)
+{
+    char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
+    char *ptr;
+    int i;
+    
+    ptr = buf;
+    
+    for(i = 0; i < number; i++) {
+        sprintf(ptr, "%02x%02x%02x%c", bits[i * 4 + 2], bits[i * 4 + 1],
+		bits[i * 4],
+		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
+	ptr += 7;
+    }
+    PSDRV_WriteSpool(dc, buf, number * 7);
+
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
