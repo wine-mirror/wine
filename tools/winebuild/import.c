@@ -666,7 +666,7 @@ void read_undef_symbols( char **argv )
         if (p[0] == 'U' && p[1] == ' ' && p[2]) p += 2;
         add_undef_symbol( p );
     }
-    if ((err = pclose( f ))) fatal_error( "nm -u %s error %d\n", name, err );
+    if ((err = pclose( f ))) warning( "nm -u %s error %d\n", name, err );
 }
 
 static void remove_ignored_symbols(void)
