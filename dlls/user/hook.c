@@ -70,7 +70,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "heap.h"
 #include "message.h"
 #include "win.h"
 #include "user_private.h"
@@ -220,15 +219,24 @@ static LRESULT call_hook_WtoA( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
         CBT_CREATEWNDW *cbtcwW = (CBT_CREATEWNDW *)lparam;
         CBT_CREATEWNDA cbtcwA;
         CREATESTRUCTA csA;
+        int len;
 
         cbtcwA.lpcs = &csA;
         cbtcwA.hwndInsertAfter = cbtcwW->hwndInsertAfter;
         csA = *(CREATESTRUCTA *)cbtcwW->lpcs;
 
-        if (HIWORD(cbtcwW->lpcs->lpszName))
-            csA.lpszName = HEAP_strdupWtoA( GetProcessHeap(), 0, cbtcwW->lpcs->lpszName );
-        if (HIWORD(cbtcwW->lpcs->lpszClass))
-            csA.lpszClass = HEAP_strdupWtoA( GetProcessHeap(), 0, cbtcwW->lpcs->lpszClass );
+        if (HIWORD(cbtcwW->lpcs->lpszName)) {
+            len = WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszName, -1, NULL, 0, NULL, NULL );
+            csA.lpszName = HeapAlloc( GetProcessHeap(), 0, len*sizeof(CHAR) );
+            WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszName, -1, (LPSTR)csA.lpszName, len, NULL, NULL );
+        }
+
+        if (HIWORD(cbtcwW->lpcs->lpszClass)) {
+            len = WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszClass, -1, NULL, 0, NULL, NULL );
+            csA.lpszClass = HeapAlloc( GetProcessHeap(), 0, len*sizeof(CHAR) );
+            WideCharToMultiByte( CP_ACP, 0, cbtcwW->lpcs->lpszClass, -1, (LPSTR)csA.lpszClass, len, NULL, NULL );
+        }
+
         ret = proc( code, wparam, (LPARAM)&cbtcwA );
         cbtcwW->hwndInsertAfter = cbtcwA.hwndInsertAfter;
         if (HIWORD(csA.lpszName)) HeapFree( GetProcessHeap(), 0, (LPSTR)csA.lpszName );
