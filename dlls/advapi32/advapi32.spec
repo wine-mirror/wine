@@ -138,7 +138,7 @@
 @ stub IsValidAcl
 @ stdcall IsValidSecurityDescriptor(ptr) IsValidSecurityDescriptor
 @ stdcall IsValidSid(ptr) IsValidSid
-@ stub LockServiceDatabase
+@ stdcall LockServiceDatabase(ptr) LockServiceDatabase
 @ stub LogonUserA
 @ stub LogonUserW
 @ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr) LookupAccountNameA
@@ -260,7 +260,7 @@
 @ stdcall StartServiceCtrlDispatcherA(ptr) StartServiceCtrlDispatcherA
 @ stdcall StartServiceCtrlDispatcherW(ptr) StartServiceCtrlDispatcherW
 @ stdcall StartServiceW(long long ptr) StartServiceW
-@ stub UnlockServiceDatabase
+@ stdcall UnlockServiceDatabase (ptr) UnlockServiceDatabase
 @ stdcall LsaOpenPolicy(long long long long) LsaOpenPolicy
 @ stdcall LsaLookupSids(ptr long ptr ptr ptr) LsaLookupSids
 @ stdcall LsaFreeMemory(ptr)LsaFreeMemory

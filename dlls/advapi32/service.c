@@ -166,6 +166,24 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 }
 
 /******************************************************************************
+ * LockServiceDatabase  [ADVAPI32.@]
+ */
+LPVOID WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
+{
+        FIXME("%p\n",hSCManager);
+        return (SC_HANDLE)0xcacacafe;
+}
+
+/******************************************************************************
+ * UnlockServiceDatabase  [ADVAPI32.@]
+ */
+BOOL WINAPI UnlockServiceDatabase (LPVOID ScLock)
+{
+        FIXME(": %p\n",ScLock);
+	return TRUE;
+}
+
+/******************************************************************************
  * RegisterServiceCtrlHandlerA [ADVAPI32.@]
  */
 SERVICE_STATUS_HANDLE WINAPI
