@@ -34,6 +34,10 @@ typedef struct
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
     UINT       nextHandle;         /* Next handle number */
     HANDLE     hFile;              /* Handle for disk based MetaFile */
+    INT        horzres, vertres;
+    INT        horzsize, vertsize;
+    INT        logpixelsx, logpixelsy;
+    INT        bitspixel;
 } EMFDRV_PDEVICE;
 
 
@@ -69,6 +73,7 @@ extern BOOL     EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush );
 extern BOOL     EMFDRV_FlattenPath( PHYSDEV dev );
 extern BOOL     EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width,
                                  INT height );
+extern INT      EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap );
 extern INT      EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right,
                                           INT bottom );
 extern BOOL     EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn );

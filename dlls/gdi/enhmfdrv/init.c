@@ -67,7 +67,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetDIBColorTable */
     NULL,                            /* pGetDIBits */
-    NULL,                            /* pGetDeviceCaps */
+    EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetNearestColor */
     NULL,                            /* pGetPixel */
@@ -311,6 +311,14 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->nextHandle = 1;
     physDev->hFile = 0;
 
+    physDev->horzres = GetDeviceCaps(hRefDC, HORZRES);
+    physDev->vertres = GetDeviceCaps(hRefDC, VERTRES);
+    physDev->logpixelsx = GetDeviceCaps(hRefDC, LOGPIXELSX);
+    physDev->logpixelsy = GetDeviceCaps(hRefDC, LOGPIXELSY);
+    physDev->horzsize = GetDeviceCaps(hRefDC, HORZSIZE);
+    physDev->vertsize = GetDeviceCaps(hRefDC, VERTSIZE);
+    physDev->bitspixel = GetDeviceCaps(hRefDC, BITSPIXEL);
+
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;
 
@@ -341,12 +349,12 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->emh->nPalEntries = 0; /* I guess this should start at 0 */
 
     /* Size in pixels */
-    physDev->emh->szlDevice.cx = GetDeviceCaps( hRefDC, HORZRES );
-    physDev->emh->szlDevice.cy = GetDeviceCaps( hRefDC, VERTRES );
+    physDev->emh->szlDevice.cx = physDev->horzres;
+    physDev->emh->szlDevice.cy = physDev->vertres;
 
     /* Size in millimeters */
-    physDev->emh->szlMillimeters.cx = GetDeviceCaps( hRefDC, HORZSIZE );
-    physDev->emh->szlMillimeters.cy = GetDeviceCaps( hRefDC, VERTSIZE );
+    physDev->emh->szlMillimeters.cx = physDev->horzsize;
+    physDev->emh->szlMillimeters.cy = physDev->vertsize;
 
     memcpy((char *)physDev->emh + sizeof(ENHMETAHEADER), description, length);
 

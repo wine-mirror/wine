@@ -278,3 +278,31 @@ BOOL EMFDRV_WidenPath( PHYSDEV dev )
 
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
+
+INT EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+
+    switch(cap) {
+
+    case HORZRES:
+        return physDev->horzres;
+    case VERTRES:
+        return physDev->vertres;
+    case LOGPIXELSX:
+        return physDev->logpixelsx;
+    case LOGPIXELSY:
+        return physDev->logpixelsy;
+    case HORZSIZE:
+        return physDev->horzsize;
+    case VERTSIZE:
+        return physDev->vertsize;
+    case BITSPIXEL:
+        return physDev->bitspixel;
+
+    default:
+        FIXME("Unimplemented cap %d\n", cap);
+	return 0;
+
+    }
+}
