@@ -1844,6 +1844,7 @@ static void dump_send_message_request( const struct send_message_request *req )
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " timeout=%d,", req->timeout );
+    fprintf( stderr, " callback=%p,", req->callback );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
 }

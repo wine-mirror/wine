@@ -112,17 +112,19 @@ static void queue_hardware_message( UINT message, HWND hwnd, WPARAM wParam, LPAR
 {
     SERVER_START_REQ( send_message )
     {
-        req->id     = GetCurrentThreadId();
-        req->type   = MSG_HARDWARE;
-        req->win    = hwnd;
-        req->msg    = message;
-        req->wparam = wParam;
-        req->lparam = lParam;
-        req->x      = xPos;
-        req->y      = yPos;
-        req->time   = time;
-        req->info   = extraInfo;
-        req->timeout = 0;
+        req->id       = GetCurrentThreadId();
+        req->type     = MSG_HARDWARE;
+        req->flags    = 0;
+        req->win      = hwnd;
+        req->msg      = message;
+        req->wparam   = wParam;
+        req->lparam   = lParam;
+        req->x        = xPos;
+        req->y        = yPos;
+        req->time     = time;
+        req->info     = extraInfo;
+        req->timeout  = -1;
+        req->callback = NULL;
         wine_server_call( req );
     }
     SERVER_END_REQ;

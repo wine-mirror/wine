@@ -42,16 +42,17 @@ enum message_kind { SEND_MESSAGE, POST_MESSAGE };
 
 struct message_result
 {
-    struct message_result *send_next;   /* next in sender list */
-    struct message_result *recv_next;   /* next in receiver list */
-    struct msg_queue      *sender;      /* sender queue */
-    struct msg_queue      *receiver;    /* receiver queue */
-    int                    replied;     /* has it been replied to? */
-    unsigned int           result;      /* reply result */
-    unsigned int           error;       /* error code to pass back to sender */
-    void                  *data;        /* message reply data */
-    unsigned int           data_size;   /* size of message reply data */
-    struct timeout_user   *timeout;     /* result timeout */
+    struct list            sender_entry;  /* entry in sender list */
+    struct message_result *recv_next;     /* next in receiver list */
+    struct msg_queue      *sender;        /* sender queue */
+    struct msg_queue      *receiver;      /* receiver queue */
+    int                    replied;       /* has it been replied to? */
+    unsigned int           result;        /* reply result */
+    unsigned int           error;         /* error code to pass back to sender */
+    struct message        *callback_msg;  /* message to queue for callback */
+    void                  *data;          /* message reply data */
+    unsigned int           data_size;     /* size of message reply data */
+    struct timeout_user   *timeout;       /* result timeout */
 };
 
 struct message
@@ -110,22 +111,23 @@ struct thread_input
 
 struct msg_queue
 {
-    struct object          obj;           /* object header */
-    unsigned int           wake_bits;     /* wakeup bits */
-    unsigned int           wake_mask;     /* wakeup mask */
-    unsigned int           changed_bits;  /* changed wakeup bits */
-    unsigned int           changed_mask;  /* changed wakeup mask */
-    int                    paint_count;   /* pending paint messages count */
+    struct object          obj;             /* object header */
+    unsigned int           wake_bits;       /* wakeup bits */
+    unsigned int           wake_mask;       /* wakeup mask */
+    unsigned int           changed_bits;    /* changed wakeup bits */
+    unsigned int           changed_mask;    /* changed wakeup mask */
+    int                    paint_count;     /* pending paint messages count */
     struct message_list    msg_list[NB_MSG_KINDS];  /* lists of messages */
-    struct message_result *send_result;   /* stack of sent messages waiting for result */
-    struct message_result *recv_result;   /* stack of received messages waiting for result */
-    struct timer          *first_timer;   /* head of timer list */
-    struct timer          *last_timer;    /* tail of timer list */
-    struct timer          *next_timer;    /* next timer to expire */
-    struct timeout_user   *timeout;       /* timeout for next timer to expire */
-    struct thread_input   *input;         /* thread input descriptor */
-    struct hook_table     *hooks;         /* hook table */
-    struct timeval         last_get_msg;  /* time of last get message call */
+    struct list            send_result;     /* stack of sent messages waiting for result */
+    struct list            callback_result; /* list of callback messages waiting for result */
+    struct message_result *recv_result;     /* stack of received messages waiting for result */
+    struct timer          *first_timer;     /* head of timer list */
+    struct timer          *last_timer;      /* tail of timer list */
+    struct timer          *next_timer;      /* next timer to expire */
+    struct timeout_user   *timeout;         /* timeout for next timer to expire */
+    struct thread_input   *input;           /* thread input descriptor */
+    struct hook_table     *hooks;           /* hook table */
+    struct timeval         last_get_msg;    /* time of last get message call */
 };
 
 static void msg_queue_dump( struct object *obj, int verbose );
@@ -214,7 +216,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->changed_bits    = 0;
         queue->changed_mask    = 0;
         queue->paint_count     = 0;
-        queue->send_result     = NULL;
         queue->recv_result     = NULL;
         queue->first_timer     = NULL;
         queue->last_timer      = NULL;
@@ -223,6 +224,8 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
         gettimeofday( &queue->last_get_msg, NULL );
+        list_init( &queue->send_result );
+        list_init( &queue->callback_result );
         for (i = 0; i < NB_MSG_KINDS; i++)
             queue->msg_list[i].first = queue->msg_list[i].last = NULL;
 
@@ -359,7 +362,18 @@ static void free_result( struct message_result *result )
 {
     if (result->timeout) remove_timeout_user( result->timeout );
     if (result->data) free( result->data );
+    if (result->callback_msg) free( result->callback_msg );
     free( result );
+}
+
+/* remove the result from the sender list it is on */
+static inline void remove_result_from_sender( struct message_result *result )
+{
+    assert( result->sender );
+
+    list_remove( &result->sender_entry );
+    result->sender = NULL;
+    if (!result->receiver) free_result( result );
 }
 
 /* store the message result in the appropriate structure */
@@ -374,9 +388,25 @@ static void store_message_result( struct message_result *res, unsigned int resul
         remove_timeout_user( res->timeout );
         res->timeout = NULL;
     }
-    /* wake sender queue if waiting on this result */
-    if (res->sender && res->sender->send_result == res)
-        set_queue_bits( res->sender, QS_SMRESULT );
+    if (res->sender)
+    {
+        if (res->callback_msg)
+        {
+            /* queue the callback message in the sender queue */
+            res->callback_msg->lparam = result;
+            append_message( &res->sender->msg_list[SEND_MESSAGE], res->callback_msg );
+            set_queue_bits( res->sender, QS_SENDMESSAGE );
+            res->callback_msg = NULL;
+            remove_result_from_sender( res );
+        }
+        else
+        {
+            /* wake sender queue if waiting on this result */
+            if (list_head(&res->sender->send_result) == &res->sender_entry)
+                set_queue_bits( res->sender, QS_SMRESULT );
+        }
+    }
+
 }
 
 /* free a message when deleting a queue or window */
@@ -427,20 +457,49 @@ static void result_timeout( void *private )
 /* allocate and fill a message result structure */
 static struct message_result *alloc_message_result( struct msg_queue *send_queue,
                                                     struct msg_queue *recv_queue,
-                                                    unsigned int timeout )
+                                                    struct message *msg, unsigned int timeout,
+                                                    void *callback, unsigned int callback_data )
 {
     struct message_result *result = mem_alloc( sizeof(*result) );
     if (result)
     {
-        /* put the result on the sender result stack */
         result->sender    = send_queue;
         result->receiver  = recv_queue;
         result->replied   = 0;
         result->data      = NULL;
         result->data_size = 0;
         result->timeout   = NULL;
-        result->send_next = send_queue->send_result;
-        send_queue->send_result = result;
+
+        if (msg->type == MSG_CALLBACK)
+        {
+            struct message *callback_msg = mem_alloc( sizeof(*callback_msg) );
+            if (!callback_msg)
+            {
+                free( result );
+                return NULL;
+            }
+            callback_msg->type      = MSG_CALLBACK_RESULT;
+            callback_msg->win       = msg->win;
+            callback_msg->msg       = msg->msg;
+            callback_msg->wparam    = (unsigned int)callback;
+            callback_msg->lparam    = 0;
+            callback_msg->time      = get_tick_count();
+            callback_msg->x         = 0;
+            callback_msg->y         = 0;
+            callback_msg->info      = callback_data;
+            callback_msg->result    = NULL;
+            callback_msg->data      = NULL;
+            callback_msg->data_size = 0;
+
+            result->callback_msg = callback_msg;
+            list_add_head( &send_queue->callback_result, &result->sender_entry );
+        }
+        else
+        {
+            result->callback_msg = NULL;
+            list_add_head( &send_queue->send_result, &result->sender_entry );
+        }
+
         if (timeout != -1)
         {
             struct timeval when;
@@ -577,15 +636,16 @@ static void empty_msg_list( struct message_list *list )
 /* cleanup all pending results when deleting a queue */
 static void cleanup_results( struct msg_queue *queue )
 {
-    struct message_result *result, *next;
+    struct list *entry;
 
-    result = queue->send_result;
-    while (result)
+    while ((entry = list_head( &queue->send_result )) != NULL)
     {
-        next = result->send_next;
-        result->sender = NULL;
-        if (!result->receiver) free_result( result );
-        result = next;
+        remove_result_from_sender( LIST_ENTRY( entry, struct message_result, sender_entry ) );
+    }
+
+    while ((entry = list_head( &queue->callback_result )) != NULL)
+    {
+        remove_result_from_sender( LIST_ENTRY( entry, struct message_result, sender_entry ) );
     }
 
     while (queue->recv_result)
@@ -1309,9 +1369,10 @@ DECL_HANDLER(send_message)
         case MSG_ASCII:
         case MSG_UNICODE:
         case MSG_CALLBACK:
-            if (!(msg->result = alloc_message_result( send_queue, recv_queue, req->timeout )))
+            if (!(msg->result = alloc_message_result( send_queue, recv_queue, msg,
+                                                      req->timeout, req->callback, req->info )))
             {
-                free( msg );
+                free_message( msg );
                 break;
             }
             /* fall through */
@@ -1333,6 +1394,7 @@ DECL_HANDLER(send_message)
         case MSG_HARDWARE:
             queue_hardware_message( recv_queue, msg );
             break;
+        case MSG_CALLBACK_RESULT:  /* cannot send this one */
         default:
             set_error( STATUS_INVALID_PARAMETER );
             free( msg );
@@ -1442,16 +1504,19 @@ DECL_HANDLER(reply_message)
 /* retrieve the reply for the last message sent */
 DECL_HANDLER(get_message_reply)
 {
+    struct message_result *result;
+    struct list *entry;
     struct msg_queue *queue = current->queue;
 
     if (queue)
     {
-        struct message_result *result = queue->send_result;
-
         set_error( STATUS_PENDING );
         reply->result = 0;
 
-        if (result && (result->replied || req->cancel))
+        if (!(entry = list_head( &queue->send_result ))) return;  /* no reply ready */
+
+        result = LIST_ENTRY( entry, struct message_result, sender_entry );
+        if (result->replied || req->cancel)
         {
             if (result->replied)
             {
@@ -1465,11 +1530,15 @@ DECL_HANDLER(get_message_reply)
                     result->data_size = 0;
                 }
             }
-            queue->send_result = result->send_next;
-            result->sender = NULL;
-            if (!result->receiver) free_result( result );
-            if (!queue->send_result || !queue->send_result->replied)
-                clear_queue_bits( queue, QS_SMRESULT );
+            remove_result_from_sender( result );
+
+            entry = list_head( &queue->send_result );
+            if (!entry) clear_queue_bits( queue, QS_SMRESULT );
+            else
+            {
+                result = LIST_ENTRY( entry, struct message_result, sender_entry );
+                if (!result->replied) clear_queue_bits( queue, QS_SMRESULT );
+            }
         }
     }
     else set_error( STATUS_ACCESS_DENIED );

@@ -1574,6 +1574,7 @@ enum char_info_mode
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info */
     int             timeout;   /* timeout for reply */
+    void*           callback;  /* callback address */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
 
@@ -1583,6 +1584,7 @@ enum message_type
     MSG_UNICODE,        /* Unicode message (from SendMessageW) */
     MSG_NOTIFY,         /* notify message (from SendNotifyMessageW), always Unicode */
     MSG_CALLBACK,       /* callback message (from SendMessageCallbackW), always Unicode */
+    MSG_CALLBACK_RESULT,/* result of a callback message */
     MSG_OTHER_PROCESS,  /* sent from other process, may include vararg data, always Unicode */
     MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
     MSG_HARDWARE        /* hardware message */
@@ -1600,12 +1602,12 @@ enum message_type
     int             type;      /* message type */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
-    unsigned int    wparam;    /* parameters */
-    unsigned int    lparam;    /* parameters */
+    unsigned int    wparam;    /* parameters (callback function for MSG_CALLBACK_RESULT) */
+    unsigned int    lparam;    /* parameters (result for MSG_CALLBACK_RESULT) */
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    time;      /* message time */
-    unsigned int    info;      /* extra info */
+    unsigned int    info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
     size_t          total;     /* total size of extra data */
     VARARG(data,bytes);        /* message data for sent messages */
 @END

@@ -38,6 +38,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST  WM_NCMBUTTONDBLCLK
@@ -1469,6 +1470,26 @@ static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd,
 
 
 /***********************************************************************
+ *           call_sendmsg_callback
+ *
+ * Call the callback function of SendMessageCallback.
+ */
+static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UINT msg,
+                                          ULONG_PTR data, LRESULT result )
+{
+    if (TRACE_ON(relay))
+        DPRINTF( "%04lx:Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+                 GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
+                 data, result );
+    callback( hwnd, msg, data, result );
+    if (TRACE_ON(relay))
+        DPRINTF( "%04lx:Ret  message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+                 GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
+                 data, result );
+}
+
+
+/***********************************************************************
  *           MSG_peek_message
  *
  * Peek for a message matching the given parameters. Return FALSE if none available.
@@ -1540,6 +1561,10 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
         case MSG_CALLBACK:
             info.flags = ISMEX_CALLBACK;
             break;
+        case MSG_CALLBACK_RESULT:
+            call_sendmsg_callback( (SENDASYNCPROC)info.msg.wParam, info.msg.hwnd,
+                                   info.msg.message, extra_info, info.msg.lParam );
+            goto next;
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
@@ -1690,6 +1715,13 @@ static BOOL put_message_in_queue( DWORD dest_tid, const struct send_message_info
         req->lparam  = info->lparam;
         req->time    = GetCurrentTime();
         req->timeout = timeout;
+
+        if (info->type == MSG_CALLBACK)
+        {
+            req->callback = info->callback;
+            req->info     = info->data;
+        }
+
         if (info->flags & SMTO_ABORTIFHUNG) req->flags |= SEND_MSG_ABORT_IF_HUNG;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
         if ((res = wine_server_call( req )))
@@ -2043,7 +2075,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     if (dest_tid == GetCurrentThreadId())
     {
         result = call_window_proc( hwnd, msg, wparam, lparam, TRUE, TRUE );
-        callback( hwnd, msg, data, result );
+        call_sendmsg_callback( callback, hwnd, msg, data, result );
         return TRUE;
     }
     FIXME( "callback will not be called\n" );

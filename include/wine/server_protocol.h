@@ -2214,6 +2214,7 @@ struct send_message_request
     unsigned int    time;
     unsigned int    info;
     int             timeout;
+    void*           callback;
     /* VARARG(data,bytes); */
 };
 struct send_message_reply
@@ -2227,6 +2228,7 @@ enum message_type
     MSG_UNICODE,
     MSG_NOTIFY,
     MSG_CALLBACK,
+    MSG_CALLBACK_RESULT,
     MSG_OTHER_PROCESS,
     MSG_POSTED,
     MSG_HARDWARE
@@ -3645,6 +3647,6 @@ union generic_reply
     struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 117
+#define SERVER_PROTOCOL_VERSION 118
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
