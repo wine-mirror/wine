@@ -1419,14 +1419,13 @@ HRESULT WINAPI OleSetMenuDescriptor(
  */
 BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd)
 {
-    /* YES, Accel16! */
-    LPACCEL16 lpAccelTbl;
+    LPACCEL lpAccelTbl;
     int i;
 
     if(!lpMsg) return FALSE;
-    if (!hAccel || !(lpAccelTbl = (LPACCEL16)LockResource16(HACCEL_16(hAccel))))
+    if (!hAccel)
     {
-	WARN_(accel)("invalid accel handle=%p\n", hAccel);
+	WARN_(accel)("NULL accel handle\n");
 	return FALSE;
     }
     if((lpMsg->message != WM_KEYDOWN &&
@@ -1434,6 +1433,17 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
 	lpMsg->message != WM_SYSKEYDOWN &&
 	lpMsg->message != WM_SYSKEYUP &&
 	lpMsg->message != WM_CHAR)) return FALSE;
+    lpAccelTbl = HeapAlloc(GetProcessHeap(), 0, cAccelEntries * sizeof(ACCEL));
+    if (NULL == lpAccelTbl)
+    {
+	return FALSE;
+    }
+    if (CopyAcceleratorTableW(hAccel, lpAccelTbl, cAccelEntries) != cAccelEntries)
+    {
+	WARN_(accel)("CopyAcceleratorTableW failed\n");
+	HeapFree(GetProcessHeap(), 0, lpAccelTbl);
+	return FALSE;
+    }
 
     TRACE_(accel)("hAccel=%p, cAccelEntries=%d,"
 		"msg->hwnd=%p, msg->message=%04x, wParam=%08x, lParam=%08lx\n",
@@ -1480,10 +1490,12 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
     }
 
     WARN_(accel)("couldn't translate accelerator key\n");
+    HeapFree(GetProcessHeap(), 0, lpAccelTbl);
     return FALSE;
 
 found:
     if(lpwCmd) *lpwCmd = lpAccelTbl[i].cmd;
+    HeapFree(GetProcessHeap(), 0, lpAccelTbl);
     return TRUE;
 }
 
