@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Ivan Leo Puoti
+ * Copyright (C) 2005 Peter Berg Larsen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,11 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define WINE_FILEDESCRIPTION_STR "Wine Direct3D Retained Mode Utility Functions"
-#define WINE_FILENAME_STR "d3drm.dll"
-#define WINE_FILEVERSION 5,0,2134,14
-#define WINE_FILEVERSION_STR "5.0.2134.14"
-#define WINE_PRODUCTVERSION 5,0,2134,14
-#define WINE_PRODUCTVERSION_STR "5.0"
+#ifndef __D3DRM_H__
+#define __D3DRM_H__
 
-#include "wine/wine_common_ver.rc"
+#include <ddraw.h>
+/* #include <d3drmobj.h> */
+
+#endif /* __D3DRM_H__ */
