@@ -87,7 +87,7 @@
 # command line to start a debugger when an exception occurs
 "Debugger"="debugger/winedbg %ld %ld"
 # to 0 if a message box has to be presented before running the debugger
-"Auto"=dword:00000001
+"Auto"="1"
 
 #
 # This identifies the files for available code pages

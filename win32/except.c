@@ -192,7 +192,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 		     &hDbgConf)) {
        DWORD 	type;
        DWORD 	count;
-       
+
        count = sizeof(format);
        if (RegQueryValueExA(hDbgConf, "Debugger", 0, &type, format, &count))
 	  format[0] = 0;
@@ -200,7 +200,13 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        count = sizeof(bAuto);
        if (RegQueryValueExA(hDbgConf, "Auto", 0, &type, (char*)&bAuto, &count))
 	  bAuto = TRUE;
-       
+       else if (type == REG_SZ)
+       {
+           char autostr[10];
+           count = sizeof(autostr);
+           if (!RegQueryValueExA(hDbgConf, "Auto", 0, &type, autostr, &count))
+               bAuto = atoi(autostr);
+       }
        RegCloseKey(hDbgConf);
     } else {
        /* format[0] = 0; */
