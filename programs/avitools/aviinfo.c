@@ -147,10 +147,10 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 		type[4]='\0';memcpy(type,&(asi.fccType),4);
 
 	    	fprintf(stderr,"Unhandled streamtype %s\n",type);
-	    	fnAVIStreamRelease(ast);
 		break;
 	    }
 	    }
+	    fnAVIStreamRelease(ast);
     }
     fnAVIFileRelease(avif);
     fnAVIFileExit();
