@@ -75,6 +75,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->vportOrgY           = 0;
     dc->vportExtX           = 1;
     dc->vportExtY           = 1;
+    dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
     dc->flags               = 0;
     dc->hClipRgn            = 0;
     dc->hVisRgn             = 0;
@@ -2033,4 +2034,52 @@ DWORD WINAPI SetVirtualResolution(HDC hdc, DWORD dw2, DWORD dw3, DWORD dw4, DWOR
 {
     FIXME("(%p %08lx %08lx %08lx %08lx): stub!\n", hdc, dw2, dw3, dw4, dw5);
     return FALSE;
+}
+
+/*******************************************************************
+ *      GetMiterLimit [GDI32.@]
+ *
+ *
+ */
+BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
+{
+    BOOL bRet = FALSE;
+    DC *dc;
+
+    TRACE("(%p,%p)\n", hdc, peLimit);
+
+    dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        if (peLimit)
+            *peLimit = dc->miterLimit;
+
+        GDI_ReleaseObj( hdc );
+        bRet = TRUE;
+    }
+    return bRet;
+}
+
+/*******************************************************************
+ *      SetMiterLimit [GDI32.@]
+ *
+ *
+ */
+BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
+{
+    BOOL bRet = FALSE;
+    DC *dc;
+
+    TRACE("(%p,%f,%p)\n", hdc, eNewLimit, peOldLimit);
+
+    dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        if (peOldLimit)
+            *peOldLimit = dc->miterLimit;
+        dc->miterLimit = eNewLimit;
+        GDI_ReleaseObj( hdc );
+        bRet = TRUE;
+    }
+    return bRet;
 }

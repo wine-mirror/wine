@@ -205,8 +205,76 @@ todo_wine
     ReleaseDC(0, hdc);
 }
 
+static void test_gdi_objects(void)
+{
+    BYTE buff[256];
+    HDC hdc = GetDC(NULL);
+    HPEN hp;
+    int i;
+
+    /* SelectObject() with a NULL DC returns 0 and sets ERROR_INVALID_HANDLE.
+     * Note: Under XP at least invalid ptrs can also be passed, not just NULL;
+     *       Don't test that here in case it crashes earlier win versions.
+     */
+    SetLastError(0);
+    hp = SelectObject(NULL, GetStockObject(BLACK_PEN));
+    ok(!hp && GetLastError() == ERROR_INVALID_HANDLE,
+       "SelectObject(NULL DC) expected 0, ERROR_INVALID_HANDLE, got %p, 0x%08lx\n",
+       hp, GetLastError());
+
+    /* With a valid DC and a NULL object, the call returns 0 but does not SetLastError() */
+    SetLastError(0);
+    hp = SelectObject(hdc, NULL);
+    ok(!hp && !GetLastError(),
+       "SelectObject(NULL obj) expected 0, NO_ERROR, got %p, 0x%08lx\n",
+       hp, GetLastError());
+
+    /* The DC is unaffected by the NULL SelectObject */
+    SetLastError(0);
+    hp = SelectObject(hdc, GetStockObject(BLACK_PEN));
+    ok(hp && !GetLastError(),
+       "SelectObject(post NULL) expected non-null, NO_ERROR, got %p, 0x%08lx\n",
+       hp, GetLastError());
+
+    /* GetCurrentObject does not SetLastError() on a null object */
+    SetLastError(0);
+    hp = GetCurrentObject(NULL, OBJ_PEN);
+    ok(!hp && !GetLastError(),
+       "GetCurrentObject(NULL DC) expected 0, NO_ERROR, got %p, 0x%08lx\n",
+       hp, GetLastError());
+
+    /* DeleteObject does not SetLastError() on a null object */
+    ok(!DeleteObject(NULL) && !GetLastError(),
+       "DeleteObject(NULL obj), expected 0, NO_ERROR, got %d, 0x%08lx\n",
+       DeleteObject(NULL), GetLastError());
+
+    /* GetObject does not SetLastError() on a null object */
+    SetLastError(0);
+    i = GetObjectA(NULL, sizeof(buff), buff);
+    ok (!i && !GetLastError(),
+        "GetObject(NULL obj), expected 0, NO_ERROR, got %d, 0x%08lx\n",
+	i, GetLastError());
+
+    /* GetObjectType does SetLastError() on a null object */
+    SetLastError(0);
+    i = GetObjectType(NULL);
+    ok (!i && GetLastError() == ERROR_INVALID_HANDLE,
+        "GetObjectType(NULL obj), expected 0, ERROR_INVALID_HANDLE, got %d, 0x%08lx\n",
+        i, GetLastError());
+
+    /* UnrealizeObject does not SetLastError() on a null object */
+    SetLastError(0);
+    i = UnrealizeObject(NULL);
+    ok (!i && !GetLastError(),
+        "UnrealizeObject(NULL obj), expected 0, NO_ERROR, got %d, 0x%08lx\n",
+        i, GetLastError());
+
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(gdiobj)
 {
     test_logfont();
     test_bitmap_font();
+    test_gdi_objects();
 }

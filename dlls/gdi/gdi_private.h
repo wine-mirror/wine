@@ -215,6 +215,7 @@ typedef struct tagDC
     INT          vportOrgY;
     INT          vportExtX;        /* Viewport extent */
     INT          vportExtY;
+    FLOAT        miterLimit;
 
     int           flags;
     HRGN          hClipRgn;     /* Clip region (may be 0) */

@@ -875,7 +875,6 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
     if (!ptr)
     {
         _LeaveSysLevel( &GDI_level );
-        SetLastError( ERROR_INVALID_HANDLE );
         WARN( "Invalid handle %p\n", handle );
     }
     else TRACE_SEC( handle, "enter" );
@@ -907,6 +906,17 @@ void GDI_CheckNotLock(void)
 
 /***********************************************************************
  *           DeleteObject    (GDI32.@)
+ *
+ * Delete a Gdi object.
+ *
+ * PARAMS
+ *  obj [I] Gdi object to delete
+ *
+ * RETURNS
+ *  Success: TRUE. If obj was not returned from GetStockObject(), any resources
+ *           it consumed are released.
+ *  Failure: FALSE, if obj is not a valid Gdi object, or is currently selected
+ *           into a DC.
  */
 BOOL WINAPI DeleteObject( HGDIOBJ obj )
 {
@@ -1120,7 +1130,11 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
     INT result = 0;
     TRACE("%p\n", handle );
 
-    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
+    if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
 
     switch(GDIMAGIC(ptr->wMagic))
     {
@@ -1173,6 +1187,24 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
 
 /***********************************************************************
  *           GetCurrentObject    	(GDI32.@)
+ *
+ * Get the currently selected object of a given type in a device context.
+ *
+ * PARAMS
+ *  hdc  [I] Device context to get the current object from
+ *  type [I] Type of current object to get (OBJ_* defines from "wingdi.h")
+ *
+ * RETURNS
+ *  Success: The current object of the given type selected in hdc.
+ *  Failure: A NULL handle.
+ *
+ * NOTES
+ * - only the following object types are supported:
+ *| OBJ_PEN
+ *| OBJ_BRUSH
+ *| OBJ_PAL
+ *| OBJ_FONT
+ *| OBJ_BITMAP
  */
 HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 {
@@ -1200,25 +1232,49 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 
 /***********************************************************************
  *           SelectObject    (GDI32.@)
+ *
+ * Select a Gdi object into a device context.
+ *
+ * PARAMS
+ *  hdc  [I] Device context to associate the object with
+ *  hObj [I] Gdi object to associate with hdc
+ *
+ * RETURNS
+ *  Success: A non-NULL handle representing the previously selected object of
+ *           the same type as hObj.
+ *  Failure: A NULL object. If hdc is invalid, GetLastError() returns ERROR_INVALID_HANDLE.
+ *           if hObj is not a valid object handle, no last error is set. In either
+ *           case, hdc is unaffected by the call.
  */
-HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
+HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
 {
     HGDIOBJ ret = 0;
-    GDIOBJHDR *header = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    if (!header) return 0;
+    GDIOBJHDR *header;
+    DC *dc;
 
-    TRACE("hdc=%p %p\n", hdc, handle );
+    TRACE( "(%p,%p)\n", hdc, hObj );
 
-    if (header->funcs && header->funcs->pSelectObject)
+    if (!(dc = DC_GetDCPtr( hdc )))
+        SetLastError( ERROR_INVALID_HANDLE );
+    else
     {
-        ret = header->funcs->pSelectObject( handle, header, hdc );
-        if (ret && ret != handle && (INT)ret > COMPLEXREGION)
+        GDI_ReleaseObj( (GDIOBJHDR *)dc );
+
+        header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
+        if (header)
         {
-            inc_ref_count( handle );
-            dec_ref_count( ret );
+            if (header->funcs && header->funcs->pSelectObject)
+            {
+                ret = header->funcs->pSelectObject( hObj, header, hdc );
+                if (ret && ret != hObj && (INT)ret > COMPLEXREGION)
+                {
+                    inc_ref_count( hObj );
+                    dec_ref_count( ret );
+                }
+            }
+	    GDI_ReleaseObj( hObj );
         }
     }
-    GDI_ReleaseObj( handle );
     return ret;
 }
 
@@ -1476,30 +1532,6 @@ BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 {
         FIXME("GetColorAdjustment, stub\n");
         return 0;
-}
-
-/*******************************************************************
- *      GetMiterLimit [GDI32.@]
- *
- *
- */
-BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
-{
-        FIXME("GetMiterLimit, stub\n");
-        return 0;
-}
-
-/*******************************************************************
- *      SetMiterLimit [GDI32.@]
- *
- *
- */
-BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
-{
-    FIXME("(%p,%f,%p) stub\n", hdc, eNewLimit, peOldLimit);
-    if (peOldLimit)
-        *peOldLimit = 10.0; /* Default miter is 10, see msdn */
-    return TRUE;
 }
 
 /*******************************************************************
