@@ -445,10 +445,10 @@ User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
     }
 
     if (pDriverCaps != NULL)
-	memcpy(pDriverCaps, &caps, pDriverCaps->dwSize);
+	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&caps);
 
     if (pHELCaps != NULL)
-	memcpy(pHELCaps, &caps, pHELCaps->dwSize);
+	DD_STRUCT_COPY_BYSIZE(pHELCaps,&caps);
 
     return DD_OK;
 }

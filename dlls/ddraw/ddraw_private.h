@@ -21,9 +21,12 @@
 
 #define DD_STRUCT_COPY_BYSIZE(to,from)			\
 	do {						\
-	    	DWORD __size = to->dwSize;		\
-		memcpy(to,from,__size);			\
-		to->dwSize = __size;/*restore size*/	\
+	    	DWORD __size = (to)->dwSize;		\
+	    	DWORD __copysize = __size;		\
+	        if ((from)->dwSize < __size) 		\
+		    __copysize = (from)->dwSize;	\
+		memcpy(to,from,__copysize);		\
+		(to)->dwSize = __size;/*restore size*/	\
 	} while (0)
 
 /*****************************************************************************

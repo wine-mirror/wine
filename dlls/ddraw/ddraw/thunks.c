@@ -213,8 +213,6 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
     LPDIRECTDRAWSURFACE7 pSurface7;
     HRESULT hr;
 
-    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok, 
-     * since the data layout is the same */
     hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
 						       IDirectDraw2,
 						       IDirectDraw7,
@@ -235,13 +233,11 @@ IDirectDraw4Impl_CreateSurface(LPDIRECTDRAW4 This, LPDDSURFACEDESC2 pSDesc,
 			       LPDIRECTDRAWSURFACE4 *ppSurface,
 			       IUnknown *pUnkOuter)
 {
-    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok, 
-     * since the data layout is the same */
     return IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
 							 IDirectDraw4,
 							 IDirectDraw7,
 							 This),
-				      (LPDDSURFACEDESC2)pSDesc,
+				      pSDesc,
 				      (LPDIRECTDRAWSURFACE7 *)ppSurface,
 				      pUnkOuter);
 }

@@ -283,7 +283,8 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     if ((pDDSD->dwFlags&(DDSD_HEIGHT|DDSD_WIDTH)) != (DDSD_HEIGHT|DDSD_WIDTH))
 	return DDERR_INVALIDPARAMS;
 
-    ddsd = *pDDSD;
+    ddsd.dwSize = sizeof(ddsd);
+    DD_STRUCT_COPY_BYSIZE((&ddsd),pDDSD);
 
     if (!(ddsd.dwFlags & DDSD_PIXELFORMAT))
     {
@@ -365,7 +366,8 @@ create_primary(IDirectDrawImpl* This, LPDDSURFACEDESC2 pDDSD,
     if (pDDSD->dwFlags & (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT))
 	return DDERR_INVALIDPARAMS;
 
-    ddsd = *pDDSD;
+    ddsd.dwSize = sizeof(ddsd);
+    DD_STRUCT_COPY_BYSIZE((&ddsd),pDDSD);
     ddsd.dwFlags |= DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH | DDSD_PIXELFORMAT;
     ddsd.dwHeight = This->height;
     ddsd.dwWidth = This->width;
@@ -438,7 +440,8 @@ create_offscreen(IDirectDrawImpl* This, LPDDSURFACEDESC2 pDDSD,
     if ((pDDSD->dwFlags&(DDSD_HEIGHT|DDSD_WIDTH)) != (DDSD_HEIGHT|DDSD_WIDTH))
 	return DDERR_INVALIDPARAMS;
 
-    ddsd = *pDDSD;
+    ddsd.dwSize = sizeof(ddsd);
+    DD_STRUCT_COPY_BYSIZE((&ddsd),pDDSD);
 
     if (!(ddsd.dwFlags & DDSD_PIXELFORMAT))
     {

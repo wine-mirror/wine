@@ -25,8 +25,10 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 				 IDirectDrawImpl *pDD,
 				 const DDSURFACEDESC2 *pDDSD)
 {
-    if (pDDSD != &This->surface_desc)
-	This->surface_desc = *pDDSD;
+    if (pDDSD != &This->surface_desc) {
+	This->surface_desc.dwSize = sizeof(This->surface_desc);
+	DD_STRUCT_COPY_BYSIZE(&(This->surface_desc),pDDSD);
+    }
     This->uniqueness_value = 1; /* unchecked */
     This->ref = 1;
 
@@ -680,7 +682,7 @@ Main_DirectDrawSurface_GetPixelFormat(LPDIRECTDRAWSURFACE7 iface,
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
     TRACE("(%p)->(%p)\n",This,pDDPixelFormat);
-    *pDDPixelFormat = This->surface_desc.u4.ddpfPixelFormat;
+    DD_STRUCT_COPY_BYSIZE(pDDPixelFormat,&This->surface_desc.u4.ddpfPixelFormat);
     return DD_OK;
 }
 
@@ -793,7 +795,8 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
 		 This,prect,pDDSD,flags,(DWORD)h);
 
     /* First, copy the Surface description */
-    memcpy(pDDSD, &(This->surface_desc), pDDSD->dwSize);
+    DD_STRUCT_COPY_BYSIZE(pDDSD,&(This->surface_desc));
+
     TRACE("locked surface: height=%ld, width=%ld, pitch=%ld\n",
 	  pDDSD->dwHeight,pDDSD->dwWidth,pDDSD->u1.lPitch);
 
