@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "color.h"
+#include "palette.h"
 #include "debugtools.h"
 #include "winnt.h"
 #include "x11drv.h"
@@ -42,7 +42,6 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     X11DRV_CreateBitmap,             /* pCreateBitmap */
     X11DRV_CreateDC,                 /* pCreateDC */
     X11DRV_DIB_CreateDIBSection,     /* pCreateDIBSection */
-    X11DRV_DIB_CreateDIBSection16,   /* pCreateDIBSection16 */
     X11DRV_DeleteDC,                 /* pDeleteDC */
     X11DRV_DeleteObject,             /* pDeleteObject */
     X11DRV_DescribePixelFormat,      /* pDescribePixelFormat */

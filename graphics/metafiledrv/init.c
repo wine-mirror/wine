@@ -32,7 +32,6 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pCreateBitmap */
     NULL, /* no implementation */    /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
-    NULL,                            /* pCreateDIBSection16 */
     NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */

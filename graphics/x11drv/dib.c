@@ -25,8 +25,7 @@
 #include "x11drv.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "color.h"
-#include "selectors.h"
+#include "palette.h"
 #include "global.h"
 
 DEFAULT_DEBUG_CHANNEL(bitmap);
@@ -3732,46 +3731,6 @@ void X11DRV_UnlockDIBSection(DC *dc, BOOL commit)
   X11DRV_UnlockDIBSection2( dc->hBitmap, commit );
 }
 
-/***********************************************************************
- *           X11DRV_DIB_CreateDIBSection16
- */
-HBITMAP16 X11DRV_DIB_CreateDIBSection16(
-  DC *dc, BITMAPINFO *bmi, UINT16 usage,
-  SEGPTR *bits, HANDLE section,
-  DWORD offset, DWORD ovr_pitch)
-{
-  HBITMAP res = X11DRV_DIB_CreateDIBSection(dc, bmi, usage, NULL, 
-					    section, offset, ovr_pitch);
-  if ( res )
-    {
-      BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
-      if ( bmp && bmp->dib )
-	{
-	  DIBSECTION *dib = bmp->dib;
-	  INT height = dib->dsBm.bmHeight >= 0 ?
-	    dib->dsBm.bmHeight : -dib->dsBm.bmHeight;
-	  /* same as above - only use biSizeImage as the correct size if it a
-	     compressed image and it's currently non-zero.  In other cases, use
-	     width * height as the value. */
-	  INT size = dib->dsBmih.biSizeImage && dib->dsBmih.biCompression != BI_RGB
-	    ? dib->dsBmih.biSizeImage
-	    : dib->dsBm.bmWidthBytes * height;
-	  if ( dib->dsBm.bmBits )
-	    {
-	      ((X11DRV_DIBSECTION *) bmp->dib)->selector = 
-                  SELECTOR_AllocBlock( dib->dsBm.bmBits, size, WINE_LDT_FLAGS_DATA );
-	    }
-	  TRACE("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
-			 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
-			 MAKESEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
-      if ( bits ) 
-	*bits = MAKESEGPTR( ((X11DRV_DIBSECTION *) bmp->dib)->selector, 0 );
-    }
-      if (bmp) GDI_ReleaseObj( res );
-    }
-
-    return res;
-}
 
 #ifdef HAVE_LIBXXSHM
 /***********************************************************************
@@ -3945,8 +3904,6 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       dib->dibSection.dsOffset = offset;
       
       dib->status    = DIB_Status_None;
-      dib->selector  = 0;
-      
       dib->nColorMap = nColorMap;
       dib->colorMap  = colorMap;
     }
@@ -4055,7 +4012,6 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
   if (dib->colorMap)
     HeapFree(GetProcessHeap(), 0, dib->colorMap);
 
-  if (dib->selector) SELECTOR_FreeBlock( dib->selector );
   DeleteCriticalSection(&(dib->lock));
 }
 

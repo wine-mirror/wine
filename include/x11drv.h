@@ -214,9 +214,6 @@ typedef struct
     /* Cached XImage */
     XImage     *image;
 
-    /* Selector for 16-bit access to bits */
-    WORD selector;
-
 #ifdef HAVE_LIBXXSHM
     /* Shared memory segment info */
     XShmSegmentInfo shminfo;
@@ -243,8 +240,6 @@ extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 
 extern HBITMAP X11DRV_DIB_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage,
 					   LPVOID *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
-extern HBITMAP16 X11DRV_DIB_CreateDIBSection16(struct tagDC *dc, BITMAPINFO *bmi, UINT16 usage,
-					       SEGPTR *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
 
 extern struct tagBITMAP_DRIVER X11DRV_BITMAP_Driver;
 

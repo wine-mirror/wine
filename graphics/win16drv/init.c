@@ -58,7 +58,6 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pCreateBitmap */
     WIN16DRV_CreateDC,               /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
-    NULL,                            /* pCreateDIBSection16 */
     NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */

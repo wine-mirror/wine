@@ -33,7 +33,6 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   TTYDRV_DC_CreateBitmap, /* pCreateBitmap */
   TTYDRV_DC_CreateDC,  /* pCreateDC */
   NULL,                /* pCreateDIBSection */
-  NULL,                /* pCreateDIBSection16 */
   TTYDRV_DC_DeleteDC,  /* pDeleteDC */
   TTYDRV_DC_DeleteObject, /* pDeleteObject */
   NULL,                /* pDescribePixelFormat */

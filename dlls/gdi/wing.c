@@ -6,10 +6,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-#include "x11drv.h"
-#endif /* !defined(X_DISPLAY_MISSING) */
-
 #include "wine/winuser16.h"
 #include "bitmap.h"
 #include "debugtools.h"
@@ -89,19 +85,15 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
  */
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
-  BITMAPOBJ*	bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
+    BITMAPOBJ* bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
     SEGPTR res = 0;
 
     TRACE("(%d,%p)\n", hWinGBitmap, bmpi);
-    if (!bmp) return (SEGPTR)NULL;
+    if (!bmp) return 0;
 
-    if (bmpi)
-	FIXME(": Todo - implement setting BITMAPINFO\n");
+    if (bmpi) FIXME(": Todo - implement setting BITMAPINFO\n");
 
-#ifndef X_DISPLAY_MISSING
-    res = MAKESEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
-#endif /* !defined(X_DISPLAY_MISSING) */
-    
+    res = bmp->segptr_bits;
     GDI_ReleaseObj( hWinGBitmap );
     return res;
 }

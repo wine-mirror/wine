@@ -184,19 +184,6 @@ HBITMAP TTYDRV_BITMAP_CreateDIBSection(
   return (HBITMAP) NULL;
 }
 
-/**********************************************************************
- *		TTYDRV_BITMAP_CreateDIBSection16
- */
-HBITMAP16 TTYDRV_DIB_CreateDIBSection16(
-  DC *dc, BITMAPINFO *bmi, UINT16 usage,
-  SEGPTR *bits, HANDLE section, DWORD offset)
-{
-  FIXME("(%p, %p, %u, %p, 0x%04x, %ld): stub\n",
-	dc, bmi, usage, bits, section, offset);
-
-  return (HBITMAP16) NULL;
-}
-
 /***********************************************************************
  *		TTYDRV_BITMAP_DeleteDIBSection
  */

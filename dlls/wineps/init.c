@@ -45,7 +45,6 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pCreateBitmap */
     PSDRV_CreateDC,                  /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
-    NULL,                            /* pCreateDIBSection16 */
     PSDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */

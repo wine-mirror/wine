@@ -138,6 +138,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     bmp->funcs = NULL;
     bmp->physBitmap = NULL;
     bmp->dib = NULL;
+    bmp->segptr_bits = 0;
 
     if (bits) /* Set bitmap bits */
 	SetBitmapBits( hbitmap, height * bmp->bitmap.bmWidthBytes,

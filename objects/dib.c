@@ -11,6 +11,7 @@
 #include "winbase.h"
 #include "bitmap.h"
 #include "callback.h"
+#include "selectors.h"
 #include "gdi.h"
 #include "debugtools.h"
 #include "palette.h"
@@ -853,29 +854,29 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
  *           CreateDIBSection    (GDI.489)
  */
 HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
-				     SEGPTR *bits, HANDLE section,
-				     DWORD offset)
+                                     SEGPTR *bits16, HANDLE section, DWORD offset)
 {
-    HBITMAP16 hbitmap = 0;
-    DC *dc;
-    BOOL bDesktopDC = FALSE;
+    LPVOID bits32;
+    HBITMAP hbitmap;
 
-    /* If the reference hdc is null, take the desktop dc */
-    if (hdc == 0)
+    hbitmap = CreateDIBSection( hdc, bmi, usage, &bits32, section, offset );
+    if (hbitmap)
     {
-        hdc = CreateCompatibleDC(0);
-        bDesktopDC = TRUE;
+        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(hbitmap, BITMAP_MAGIC);
+        if (bmp && bmp->dib && bits32)
+        {
+            BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+            INT height = bi->biHeight >= 0 ? bi->biHeight : -bi->biHeight;
+            INT width_bytes = DIB_GetDIBWidthBytes(bi->biWidth, bi->biBitCount);
+            INT size  = (bi->biSizeImage && bi->biCompression != BI_RGB) ?
+                         bi->biSizeImage : width_bytes * height;
+
+            WORD sel = SELECTOR_AllocBlock( bits32, size, WINE_LDT_FLAGS_DATA );
+            bmp->segptr_bits = MAKESEGPTR( sel, 0 );
+            if (bits16) *bits16 = bmp->segptr_bits;
+        }
+        if (bmp) GDI_ReleaseObj( hbitmap );
     }
-
-    if ((dc = DC_GetDCPtr( hdc )))
-    {
-        hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset, 0);
-        GDI_ReleaseObj(hdc);
-    }
-
-    if (bDesktopDC)
-      DeleteDC(hdc);
-
     return hbitmap;
 }
 
@@ -945,6 +946,7 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
 
         HeapFree(GetProcessHeap(), 0, dib);
         bmp->dib = NULL;
+        if (bmp->segptr_bits) SELECTOR_FreeBlock( SELECTOROF(bmp->segptr_bits) );
     }
 }
 

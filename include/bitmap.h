@@ -31,6 +31,7 @@ typedef struct tagBITMAPOBJ
     void	*physBitmap; /* ptr to device specific data */
     /* For device-independent bitmaps: */
     DIBSECTION *dib;
+    SEGPTR      segptr_bits;  /* segptr to DIB bits */
 } BITMAPOBJ;
 
 typedef struct tagBITMAP_DRIVER
