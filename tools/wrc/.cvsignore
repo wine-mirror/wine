@@ -1,0 +1,5 @@
+Makefile
+lex.yy.c
+wrc
+y.tab.c
+y.tab.h

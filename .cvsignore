@@ -1,0 +1,8 @@
+Make.rules
+Makefile
+config.cache
+config.log
+config.status
+libwine.so.1.0
+wine
+wine.sym
