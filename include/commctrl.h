@@ -1460,6 +1460,10 @@ static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
 
 #define TTS_ALWAYSTIP           0x01
 #define TTS_NOPREFIX            0x02
+#define TTS_NOANIMATE           0x10
+#define TTS_NOFADE              0x20
+#define TTS_BALLOON             0x40
+#define TTS_CLOSE               0x80
 
 #define TTF_IDISHWND            0x0001
 #define TTF_CENTERTIP           0x0002
