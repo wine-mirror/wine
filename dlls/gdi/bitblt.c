@@ -106,15 +106,8 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
     return ret;
 }
 
-static inline BYTE SwapROP3_SrcDst(BYTE bRop3)
-{
-    return (bRop3 & 0x99) | ((bRop3 & 0x22) << 1) | ((bRop3 & 0x44) >> 1);
-}
-
 #define FRGND_ROP3(ROP4)	((ROP4) & 0x00FFFFFF)
-#define BKGND_ROP3(ROP4)	(ROP3Table[(SwapROP3_SrcDst((ROP4)>>24)) & 0xFF])
-#define DSTCOPY 		0x00AA0029
-#define DSTERASE		0x00220326 /* dest = dest & (~src) : DSna */
+#define BKGND_ROP3(ROP4)	(ROP3Table[((ROP4)>>24) & 0xFF])
 
 /***********************************************************************
  *           MaskBlt [GDI32.@]
@@ -124,8 +117,10 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 			INT nXSrc, INT nYSrc, HBITMAP hbmMask,
 			INT xMask, INT yMask, DWORD dwRop)
 {
-    HBITMAP hOldMaskBitmap, hBitmap2, hOldBitmap2, hBitmap3, hOldBitmap3;
-    HDC hDCMask, hDC1, hDC2;
+    HBITMAP hBitmap1, hOldBitmap1, hBitmap2, hOldBitmap2;
+    HDC hDC1, hDC2;
+    HBRUSH hbrMask, hbrDst, hbrTmp;
+
     static const DWORD ROP3Table[256] = 
     {
         0x00000042, 0x00010289,
@@ -261,50 +256,50 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     if (!hbmMask)
 	return BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop));
 
-    /* 1. make mask bitmap's dc */
-    hDCMask = CreateCompatibleDC(hdcDest);
-    hOldMaskBitmap = (HBITMAP)SelectObject(hDCMask, hbmMask);
+    hbrMask = CreatePatternBrush(hbmMask);
+    hbrDst = SelectObject(hdcDest, GetStockObject(NULL_BRUSH));
 
-    /* 2. make masked Background bitmap */
-
-    /* 2.1 make bitmap */
+    /* make bitmap */
     hDC1 = CreateCompatibleDC(hdcDest);
-    hBitmap2 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
-    hOldBitmap2 = (HBITMAP)SelectObject(hDC1, hBitmap2);
+    hBitmap1 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
+    hOldBitmap1 = SelectObject(hDC1, hBitmap1);
 
-    /* 2.2 draw dest bitmap and mask */
-    BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, SRCCOPY);
-    BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, BKGND_ROP3(dwRop));
-    BitBlt(hDC1, 0, 0, nWidth, nHeight, hDCMask, xMask, yMask, DSTERASE);
+    /* draw using bkgnd rop */
+    BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY);
+    hbrTmp = SelectObject(hDC1, hbrDst);
+    BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, BKGND_ROP3(dwRop));
+    SelectObject(hDC1, hbrTmp);
 
-    /* 3. make masked Foreground bitmap */
-
-    /* 3.1 make bitmap */
+    /* make bitmap */
     hDC2 = CreateCompatibleDC(hdcDest);
-    hBitmap3 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
-    hOldBitmap3 = (HBITMAP)SelectObject(hDC2, hBitmap3);
+    hBitmap2 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
+    hOldBitmap2 = SelectObject(hDC2, hBitmap2);
 
-    /* 3.2 draw src bitmap and mask */
+    /* draw using foregnd rop */
     BitBlt(hDC2, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY);
+    hbrTmp = SelectObject(hDC2, hbrDst);
     BitBlt(hDC2, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop));
-    BitBlt(hDC2, 0, 0, nWidth, nHeight, hDCMask, xMask, yMask, SRCAND);
 
-    /* 4. combine two bitmap and copy it to hdcDest */
-    BitBlt(hDC1, 0, 0, nWidth, nHeight, hDC2, 0, 0, SRCPAINT);
-    BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hDC1, 0, 0, SRCCOPY);
+    /* combine both using the mask as a pattern brush */
+    SelectObject(hDC2, hbrMask);
+    BitBlt(hDC2, 0, 0, nWidth, nHeight, hDC1, 0, 0, 0xac0744 ); /* (D & P) | (S & ~P) */ 
+    SelectObject(hDC2, hbrTmp);
 
-    /* 5. restore all object */
-    SelectObject(hDCMask, hOldMaskBitmap);
-    SelectObject(hDC1, hOldBitmap2);
-    SelectObject(hDC2, hOldBitmap3);
+    /* blit to dst */
+    BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hDC2, 0, 0, SRCCOPY);
 
-    /* 6. delete all temp object */
-    DeleteObject(hBitmap2);
-    DeleteObject(hBitmap3);
+    /* restore all objects */
+    SelectObject(hdcDest, hbrDst);
+    SelectObject(hDC1, hOldBitmap1);
+    SelectObject(hDC2, hOldBitmap2);
+
+    /* delete all temp objects */
+    DeleteObject(hBitmap1);
+    DeleteObject(hBitmap1);
+    DeleteObject(hbrMask);
 
     DeleteDC(hDC1);
     DeleteDC(hDC2);
-    DeleteDC(hDCMask);
 
     return TRUE;
 }
