@@ -33,6 +33,9 @@ DEFAULT_DEBUG_CHANNEL(statusbar)
 
 #define STATUSBAR_GetInfoPtr(hwnd) ((STATUSWINDOWINFO *)GetWindowLongA (hwnd, 0))
 
+/* prototype */
+static void
+STATUSBAR_SetPartBounds (HWND hwnd);
 
 static void
 STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
@@ -173,6 +176,8 @@ STATUSBAR_Refresh (HWND hwnd, HDC hdc)
 
     if (!IsWindowVisible(hwnd))
         return (TRUE);
+
+    STATUSBAR_SetPartBounds(hwnd);
 
     GetClientRect (hwnd, &rect);
 
