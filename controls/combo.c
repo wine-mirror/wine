@@ -605,6 +605,8 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, HWND hwndParent, LONG s
 	      else if( lphc->dwStyle & CBS_UPPERCASE )
 		  lbeStyle |= ES_UPPERCASE;
 
+              if (wnd->dwStyle & WS_DISABLED) lbeStyle |= WS_DISABLED;
+
 	      lphc->hWndEdit = CreateWindowExW(0,
 					       editName, 
 					       NULL, 
@@ -635,7 +637,7 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, HWND hwndParent, LONG s
                */
 	      CBForceDummyResize(lphc);
 	    }
-	    
+
 	    TRACE("init done\n");
 	    return wnd->hwndSelf;
 	  }
