@@ -43,6 +43,8 @@ static int vga_height;
 static int vga_depth;
 static BYTE vga_text_attr;
 
+static BOOL vga_mode_initialized = FALSE;
+
 static CRITICAL_SECTION vga_lock = CRITICAL_SECTION_INIT("VGA");
 
 typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
@@ -315,6 +317,8 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     }
 
     par.Depth = (Depth < 8) ? 8 : Depth;
+
+    vga_mode_initialized = TRUE;
 
     MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
     return par.ret;
@@ -734,7 +738,12 @@ BYTE VGA_ioport_in( WORD port )
             /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
                we need to fake the occurrence of the vertical refresh */
             ret=vga_refresh?0x00:0x08;
-            vga_refresh=0;
+            if (vga_mode_initialized)
+                vga_refresh=0;
+            else
+                /* Also fake the occurence of the vertical refresh when no graphic
+                   mode has been set */
+                vga_refresh=!vga_refresh;
             break;
         default:
             ret=0xff;
