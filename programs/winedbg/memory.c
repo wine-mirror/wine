@@ -483,22 +483,23 @@ void print_address(const ADDRESS* addr, BOOLEAN with_line)
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
     void*               lin = memory_to_linear_addr(addr);
-    DWORD64             disp;
+    DWORD64             disp64;
+    DWORD               disp;
 
     print_bare_address(addr);
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (!SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, si)) return;
+    if (!SymFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp64, si)) return;
     dbg_printf(" %s", si->Name);
-    if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp);
+    if (disp64) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
     if (with_line)
     {
         IMAGEHLP_LINE               il;
         IMAGEHLP_MODULE             im;
 
         il.SizeOfStruct = sizeof(il);
-        if (SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, NULL, &il))
+        if (SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
             dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         im.SizeOfStruct = sizeof(im);
         if (SymGetModuleInfo(dbg_curr_process->handle, (DWORD_PTR)lin, &im))
@@ -542,7 +543,7 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
     IMAGEHLP_STACK_FRAME        isf;
     IMAGEHLP_LINE               il;
     IMAGEHLP_MODULE             im;
-    DWORD64                     disp;
+    DWORD64                     disp64;
 
     print_bare_address(pc);
 
@@ -556,13 +557,14 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (SymFromAddr(dbg_curr_process->handle, isf.InstructionOffset, &disp, si))
+    if (SymFromAddr(dbg_curr_process->handle, isf.InstructionOffset, &disp64, si))
     {
         struct sym_enum se;
         char            tmp[1024];
+        DWORD           disp;
 
         dbg_printf(" %s", si->Name);
-        if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp);
+        if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
 
         SymSetContext(dbg_curr_process->handle, &isf, NULL);
         se.tmp = tmp;
@@ -573,7 +575,7 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
 
         il.SizeOfStruct = sizeof(il);
         if (SymGetLineFromAddr(dbg_curr_process->handle, isf.InstructionOffset,
-                               NULL, &il))
+                               &disp, &il))
             dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }

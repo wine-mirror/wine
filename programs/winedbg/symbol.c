@@ -127,8 +127,9 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     }
     else
     {
+        DWORD disp;
         il.SizeOfStruct = sizeof(il);
-        SymGetLineFromAddr(dbg_curr_process->handle, sym->Address, NULL, &il);
+        SymGetLineFromAddr(dbg_curr_process->handle, sym->Address, &disp, &il);
         if (sgv->filename && strcmp(sgv->filename, il.FileName))
         {
             WINE_FIXME("File name mismatch (%s / %s)\n", sgv->filename, il.FileName);
@@ -425,7 +426,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 {
     IMAGEHLP_LINE       il;
     DWORD               disp, size;
-    ULONG64             start;
+    ULONG64             disp64, start;
     DWORD               lin = (DWORD)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;
@@ -436,7 +437,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
     sym->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
 
     /* do we have some info for lin address ? */
-    if (!SymFromAddr(dbg_curr_process->handle, lin, NULL, sym))
+    if (!SymFromAddr(dbg_curr_process->handle, lin, &disp64, sym))
         return dbg_no_line_info;
 
     switch (sym->Tag)
@@ -480,7 +481,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 {
     struct sgv_data     sgv;
     char                buffer[512];
-    DWORD               opt;
+    DWORD               opt, disp;
 
     sgv.num        = 0;
     sgv.num_thunks = 0;
@@ -527,7 +528,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
     case 1:
         return SymGetLineFromAddr(dbg_curr_process->handle, 
                                   (DWORD)memory_to_linear_addr(&sgv.syms[0].lvalue.addr), 
-                                  NULL, line);
+                                  &disp, line);
     }
     return TRUE;
 }

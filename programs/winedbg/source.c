@@ -228,7 +228,7 @@ static int source_display(const char* sourcefile, int start, int end)
                     ol->nlines = 0;
                     ol->linelist = NULL;
                     source_ofiles = ol;
-                    dbg_printf("Unable to open file %s\n", tmppath);
+                    dbg_printf("Unable to open file '%s'\n", tmppath);
                     return FALSE;
                 }
             }
@@ -359,6 +359,7 @@ void source_list_from_addr(const ADDRESS* addr, int nlines)
 {
     IMAGEHLP_LINE       il;
     ADDRESS             la;
+    DWORD               disp;
 
     if (!addr)
     {
@@ -369,6 +370,6 @@ void source_list_from_addr(const ADDRESS* addr, int nlines)
     il.SizeOfStruct = sizeof(il);
     if (SymGetLineFromAddr(dbg_curr_process->handle,
                            (unsigned long)memory_to_linear_addr(addr),
-                           NULL, &il))
+                           &disp, &il))
         source_list(&il, NULL, nlines);
 }

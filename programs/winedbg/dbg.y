@@ -170,8 +170,8 @@ list_arg:
     | pathname ':' tNUM	        { $$.FileName = $1; $$.LineNumber = $3; }
     | identifier	        { symbol_get_line(NULL, $1, &$$); }
     | pathname ':' identifier   { symbol_get_line($3, $1, &$$); }
-    | '*' expr_lvalue	        { $$.SizeOfStruct = sizeof($$);
-                                  SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& $2.addr), NULL, & $$); }
+    | '*' expr_lvalue	        { DWORD disp; $$.SizeOfStruct = sizeof($$);
+                                  SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& $2.addr), &disp, & $$); }
     ;
 
 run_command:

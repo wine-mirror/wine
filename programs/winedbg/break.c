@@ -269,10 +269,11 @@ void	break_add_break_from_lineno(int lineno)
         IMAGEHLP_LINE   il;
         IMAGEHLP_LINE   iil;
         BOOL            found = FALSE;
+        DWORD           disp;
 
         il.SizeOfStruct = sizeof(il);
         if (!SymGetLineFromAddr(dbg_curr_process->handle, 
-                                (DWORD)memory_to_linear_addr(&addr), NULL, &il))
+                                (DWORD)memory_to_linear_addr(&addr), &disp, &il))
         {
             dbg_printf("Unable to add breakpoint (unknown address)\n");
             return;
@@ -353,8 +354,8 @@ void break_check_delayed_bp(void)
  */
 static void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
 {
-    int		num;
-    DWORD	l = 4;
+    int         num;
+    DWORD       l = 4;
 
     num = init_xpoint((is_write) ? be_xpoint_watch_write : be_xpoint_watch_read,
                       &lvalue->addr);

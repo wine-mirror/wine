@@ -888,7 +888,7 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
     sym = module->addr_sorttab[idx];
 
     symt_fill_sym_info(module, &sym->symt, Symbol);
-    if (Displacement) *Displacement = Address - Symbol->Address;
+    *Displacement = Address - Symbol->Address;
     return TRUE;
 }
 
@@ -1081,7 +1081,7 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
     if (!symt_fill_func_line_info(module, 
                                   (struct symt_function*)module->addr_sorttab[idx],
                                   dwAddr, Line)) return FALSE;
-    if (pdwDisplacement) *pdwDisplacement = dwAddr - Line->Address;
+    *pdwDisplacement = dwAddr - Line->Address;
     return TRUE;
 }
 

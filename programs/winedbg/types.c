@@ -154,8 +154,9 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue,
 
     if (types_get_info(type, TI_GET_BITPOSITION, &bitoffset))
     {
-        types_get_info(type, TI_GET_LENGTH, &length);
-        if (length > sizeof(*tmpbuf)) return FALSE;
+        if (!types_get_info(type, TI_GET_LENGTH, &length) ||
+            length > sizeof(*tmpbuf))
+            return FALSE;
         /*
          * Bitfield operation.  We have to extract the field and store
          * it in a temporary buffer so that we get it all right.

@@ -78,6 +78,7 @@ int stack_set_frame(int newframe)
 
 int stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
 {
+    DWORD64     disp;
     /*
      * If we don't have a valid backtrace, then just return.
      */
@@ -87,8 +88,9 @@ int stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
      * If we don't know what the current function is, then we also have
      * nothing to report here.
      */
-    SymFromAddr(dbg_curr_process->handle, frames[dbg_curr_frame].InstructionOffset,
-                NULL, symbol);
+    if (!SymFromAddr(dbg_curr_process->handle, frames[dbg_curr_frame].InstructionOffset,
+                     &disp, symbol))
+        return FALSE;
     if (ihsf) *ihsf = frames[dbg_curr_frame];
 
     return TRUE;

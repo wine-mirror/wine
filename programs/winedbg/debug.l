@@ -207,7 +207,7 @@ all                                     { return tALL; }
 
 <PATH_EXPECTED>{PATHNAME}		{ yylval.string = lexeme_alloc(yytext); return tPATH; }
 
-<*>[ \t]+                               /* Eat up whitespace */
+<*>[ \t\r]+                             /* Eat up whitespace and DOS LF */
 
 <NOPROCESS>.                            { BEGIN(ASTRING_EXPECTED); yyless(0); return tNOPROCESS;}
 <*>.                                    { if (syntax_error == 0) { syntax_error++; dbg_printf("Syntax Error (%s)\n", yytext); } }

@@ -137,7 +137,7 @@ typedef struct _IMAGEHLP_LINE
 
 typedef struct _SOURCEFILE
 {
-    DWORD                       ModBase;
+    DWORD64                     ModBase;
     PCHAR                       FileName;
 } SOURCEFILE, *PSOURCEFILE;
 
@@ -160,7 +160,8 @@ typedef struct _IMAGEHLP_CBA_READ_MEMORY
     DWORD    *bytesread;
 } IMAGEHLP_CBA_READ_MEMORY, *PIMAGEHLP_CBA_READ_MEMORY;
 
-enum {
+enum
+{
     sevInfo = 0,
     sevProblem,
     sevAttn,
@@ -170,16 +171,16 @@ enum {
 
 typedef struct _IMAGEHLP_CBA_EVENT
 {
-    DWORD severity;
-    DWORD code;
-    PCHAR desc;
-    PVOID object;
+    DWORD       severity;
+    DWORD       code;
+    PCHAR       desc;
+    PVOID       object;
 } IMAGEHLP_CBA_EVENT, *PIMAGEHLP_CBA_EVENT;
 
 typedef struct _IMAGEHLP_DEFERRED_SYMBOL_LOAD
 {
     DWORD                       SizeOfStruct;
-    DWORD64                     BaseOfImage;
+    DWORD                       BaseOfImage;
     DWORD                       CheckSum;
     DWORD                       TimeDateStamp;
     CHAR                        FileName[MAX_PATH];
@@ -540,27 +541,17 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID,ULONG,PMINIDUMP_DIRECTORY*,PVOID*,ULONG
 /*************************
  *    MODULE handling    *
  *************************/
-typedef BOOL (CALLBACK *PENUMLOADED_MODULES_CALLBACK)(PSTR ModuleName, DWORD ModuleBase,
-                                                      ULONG ModuleSize, PVOID UserContext);
-BOOL   WINAPI EnumerateLoadedModules(HANDLE hProcess,
-                                     PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
-                                     PVOID UserContext);
-typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(PSTR ModuleName, DWORD BaseOfDll,
-                                                   PVOID UserContext);
-BOOL    WINAPI SymEnumerateModules(HANDLE hProcess,
-                                   PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,
-                                    PVOID UserContext);
-BOOL    WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr, 
-                                PIMAGEHLP_MODULE ModuleInfo);
-BOOL    WINAPI SymGetModuleInfoW(HANDLE hProcess, DWORD dwAddr,
-                                 PIMAGEHLP_MODULEW ModuleInfo);
-DWORD   WINAPI SymGetModuleBase(HANDLE hProcess, DWORD dwAddr);
-DWORD   WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
-                             PSTR ModuleName, DWORD BaseOfDll, DWORD SizeOfDll);
-DWORD64 WINAPI SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PSTR ImageName,
-                               PSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
-                               PMODLOAD_DATA Data, DWORD Flags);
-BOOL    WINAPI SymUnloadModule(HANDLE hProcess, DWORD BaseOfDll);
+typedef BOOL (CALLBACK *PENUMLOADED_MODULES_CALLBACK)(PSTR, DWORD, ULONG, PVOID);
+BOOL   WINAPI EnumerateLoadedModules(HANDLE, PENUMLOADED_MODULES_CALLBACK, PVOID);
+typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(PSTR, DWORD, PVOID);
+BOOL    WINAPI SymEnumerateModules(HANDLE, PSYM_ENUMMODULES_CALLBACK, PVOID);
+BOOL    WINAPI SymGetModuleInfo(HANDLE, DWORD, PIMAGEHLP_MODULE);
+BOOL    WINAPI SymGetModuleInfoW(HANDLE, DWORD, PIMAGEHLP_MODULEW);
+DWORD   WINAPI SymGetModuleBase(HANDLE, DWORD);
+DWORD   WINAPI SymLoadModule(HANDLE, HANDLE, PSTR, PSTR, DWORD, DWORD);
+DWORD64 WINAPI SymLoadModuleEx(HANDLE, HANDLE, PSTR, PSTR, DWORD64, DWORD,
+                               PMODLOAD_DATA, DWORD);
+BOOL    WINAPI SymUnloadModule(HANDLE, DWORD);
 
 /*************************
  *    Symbol Handling    *
@@ -664,101 +655,70 @@ typedef struct _TI_FINDCHILDREN_PARAMS
 #define UNDNAME_NO_ARGUMENTS             (0x2000)
 #define UNDNAME_NO_SPECIAL_SYMS          (0x4000)
 
-BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId,
-                           IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID);
-typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO pSymInfo,
-                                                        ULONG SymbolSize, PVOID UserContext);
-BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
-                         PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
-                         PVOID UserContext);
-BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 addr, DWORD64* displacement, 
-                        SYMBOL_INFO* sym_info);
-BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol);
-BOOL WINAPI SymGetSymFromAddr(HANDLE,DWORD,PDWORD,PIMAGEHLP_SYMBOL);
-BOOL WINAPI SymGetSymFromName(HANDLE,PSTR,PIMAGEHLP_SYMBOL);
-BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll, LPSTR Name,
-                               PSYMBOL_INFO Symbol);
-BOOL WINAPI SymGetSymNext(HANDLE,PIMAGEHLP_SYMBOL);
-BOOL WINAPI SymGetSymPrev(HANDLE,PIMAGEHLP_SYMBOL);
-BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
-                           PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
-                           PVOID UserContext);
-typedef BOOL (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK)(PSTR SymbolName, DWORD SymbolAddress,
-                                                   ULONG SymbolSize, PVOID UserContext);
-BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
-                                PSYM_ENUMSYMBOLS_CALLBACK EnumSymbolsCallback,
-                                PVOID UserContext);
-typedef BOOL (CALLBACK *PSYMBOL_REGISTERED_CALLBACK)(HANDLE hProcess, ULONG ActionCode,
-                                                     PVOID CallbackData, PVOID UserContext);
-BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
-                                PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
-                                PVOID UserContext);
-BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL,PSTR,DWORD);
-DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
-                                  DWORD UndecoratedLength, DWORD Flags);
+BOOL WINAPI SymGetTypeInfo(HANDLE, DWORD64, ULONG, IMAGEHLP_SYMBOL_TYPE_INFO, PVOID);
+typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO, ULONG, PVOID);
+BOOL WINAPI SymEnumTypes(HANDLE, ULONG64, PSYM_ENUMERATESYMBOLS_CALLBACK, PVOID);
+BOOL WINAPI SymFromAddr(HANDLE, DWORD64, DWORD64*, SYMBOL_INFO*);
+BOOL WINAPI SymFromName(HANDLE, LPSTR, PSYMBOL_INFO);
+BOOL WINAPI SymGetSymFromAddr(HANDLE, DWORD, PDWORD, PIMAGEHLP_SYMBOL);
+BOOL WINAPI SymGetSymFromName(HANDLE, PSTR, PIMAGEHLP_SYMBOL);
+BOOL WINAPI SymGetTypeFromName(HANDLE, ULONG64, LPSTR, PSYMBOL_INFO);
+BOOL WINAPI SymGetSymNext(HANDLE, PIMAGEHLP_SYMBOL);
+BOOL WINAPI SymGetSymPrev(HANDLE, PIMAGEHLP_SYMBOL);
+BOOL WINAPI SymEnumSymbols(HANDLE, ULONG64, PCSTR, PSYM_ENUMERATESYMBOLS_CALLBACK,
+                           PVOID);
+typedef BOOL (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK)(PSTR, DWORD, ULONG, PVOID);
+BOOL WINAPI SymEnumerateSymbols(HANDLE, DWORD, PSYM_ENUMSYMBOLS_CALLBACK, PVOID);
+typedef BOOL (CALLBACK *PSYMBOL_REGISTERED_CALLBACK)(HANDLE, ULONG, PVOID, PVOID);
+BOOL WINAPI SymRegisterCallback(HANDLE, PSYMBOL_REGISTERED_CALLBACK, PVOID);
+BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL, PSTR, DWORD);
+DWORD WINAPI UnDecorateSymbolName(LPCSTR, LPSTR, DWORD, DWORD);
 
 /*************************
  *      Source Files     *
  *************************/
-typedef BOOL (CALLBACK *PSYM_ENUMSOURCFILES_CALLBACK)(PSOURCEFILE pSourceFile,
-                                                      PVOID UserContext);
+typedef BOOL (CALLBACK *PSYM_ENUMSOURCFILES_CALLBACK)(PSOURCEFILE, PVOID);
 
-BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, LPSTR Mask,
-                               PSYM_ENUMSOURCFILES_CALLBACK cbSrcFiles,
-                               PVOID UserContext);
-BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, 
-                               PDWORD pdwDisplacement, PIMAGEHLP_LINE Line);
-BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line);
-BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line);
+BOOL WINAPI SymEnumSourceFiles(HANDLE, ULONG64, LPSTR, PSYM_ENUMSOURCFILES_CALLBACK,
+                               PVOID);
+BOOL WINAPI SymGetLineFromAddr(HANDLE, DWORD, PDWORD, PIMAGEHLP_LINE);
+BOOL WINAPI SymGetLinePrev(HANDLE, PIMAGEHLP_LINE);
+BOOL WINAPI SymGetLineNext(HANDLE, PIMAGEHLP_LINE);
 
 /*************************
  * File & image handling *
  *************************/
-BOOL WINAPI SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProcess);
-BOOL WINAPI SymCleanup(HANDLE hProcess);
+BOOL WINAPI SymInitialize(HANDLE, PSTR, BOOL);
+BOOL WINAPI SymCleanup(HANDLE);
 
-HANDLE WINAPI FindDebugInfoFile(PSTR FileName, PSTR SymbolPath, PSTR DebugFilePath);
-typedef BOOL (CALLBACK *PFIND_DEBUG_FILE_CALLBACK)(HANDLE FileHandle, PSTR FileName,
-                                                   PVOID CallerData);
-HANDLE WINAPI FindDebugInfoFileEx(PSTR FileName, PSTR SymbolPath, PSTR DebugFilePath,
-                                  PFIND_DEBUG_FILE_CALLBACK Callback, PVOID CallerData);
-typedef BOOL (CALLBACK *PFINDFILEINPATHCALLBACK)(PSTR filename, PVOID context);
-
-BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR FileName,
-                              PVOID id, DWORD two, DWORD three, DWORD flags,
-                              LPSTR FilePath, PFINDFILEINPATHCALLBACK callback,
-                              PVOID context);
-HANDLE WINAPI FindExecutableImage(PSTR FileName, PSTR SymbolPath, PSTR ImageFilePath);
-typedef BOOL (CALLBACK *PFIND_EXE_FILE_CALLBACK)(HANDLE FileHandle, PSTR FileName,
-                                                 PVOID CallerData);
-HANDLE WINAPI FindExecutableImageEx(PSTR FileName, PSTR SymbolPath, PSTR ImageFilePath,
-                                    PFIND_EXE_FILE_CALLBACK Callback, PVOID CallerData);
-PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base);
-
-PVOID WINAPI ImageDirectoryEntryToDataEx(PVOID Base, BOOLEAN MappedAsImage,
-                                         USHORT DirectoryEntry, PULONG Size,
-                                         PIMAGE_SECTION_HEADER *FoundHeader);
-PVOID WINAPI ImageDirectoryEntryToData(PVOID Base, BOOLEAN MappedAsImage,
-                                       USHORT DirectoryEntry, PULONG Size);
-PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(PIMAGE_NT_HEADERS NtHeaders,
-                                               PVOID Base, ULONG Rva);
-PVOID WINAPI ImageRvaToVa(PIMAGE_NT_HEADERS NtHeaders, PVOID Base,
-                          ULONG Rva, OUT PIMAGE_SECTION_HEADER *LastRvaSection);
-BOOL WINAPI SymGetSearchPath(HANDLE,PSTR,DWORD);
-BOOL WINAPI SymSetSearchPath(HANDLE,PSTR);
+HANDLE WINAPI FindDebugInfoFile(PSTR, PSTR, PSTR);
+typedef BOOL (CALLBACK *PFIND_DEBUG_FILE_CALLBACK)(HANDLE, PSTR, PVOID);
+HANDLE WINAPI FindDebugInfoFileEx(PSTR, PSTR, PSTR, PFIND_DEBUG_FILE_CALLBACK, PVOID);
+typedef BOOL (CALLBACK *PFINDFILEINPATHCALLBACK)(PSTR, PVOID);
+BOOL WINAPI SymFindFileInPath(HANDLE, LPSTR, LPSTR, PVOID, DWORD, DWORD, DWORD,
+                              LPSTR, PFINDFILEINPATHCALLBACK, PVOID);
+HANDLE WINAPI FindExecutableImage(PSTR, PSTR, PSTR);
+typedef BOOL (CALLBACK *PFIND_EXE_FILE_CALLBACK)(HANDLE, PSTR, PVOID);
+HANDLE WINAPI FindExecutableImageEx(PSTR, PSTR, PSTR, PFIND_EXE_FILE_CALLBACK, PVOID);
+PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID);
+PVOID WINAPI ImageDirectoryEntryToDataEx(PVOID, BOOLEAN, USHORT, PULONG,
+                                         PIMAGE_SECTION_HEADER *);
+PVOID WINAPI ImageDirectoryEntryToData(PVOID, BOOLEAN, USHORT, PULONG);
+PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(PIMAGE_NT_HEADERS, PVOID, ULONG);
+PVOID WINAPI ImageRvaToVa(PIMAGE_NT_HEADERS, PVOID, ULONG, PIMAGE_SECTION_HEADER*);
+BOOL WINAPI SymGetSearchPath(HANDLE, PSTR, DWORD);
+BOOL WINAPI SymSetSearchPath(HANDLE, PSTR);
 DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE);
 BOOL WINAPI MakeSureDirectoryPathExists(PCSTR);
-BOOL WINAPI SearchTreeForFile(PSTR,PSTR,PSTR);
-typedef BOOL (CALLBACK *PENUMDIRTREE_CALLBACK)(LPCSTR path, PVOID user);
-BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
-                        LPSTR buffer, PENUMDIRTREE_CALLBACK cb, void* user);
-BOOL WINAPI SymMatchFileName(LPSTR file, LPSTR match, LPSTR* filestop, LPSTR* matchstop);
+BOOL WINAPI SearchTreeForFile(PSTR, PSTR, PSTR);
+typedef BOOL (CALLBACK *PENUMDIRTREE_CALLBACK)(LPCSTR, PVOID);
+BOOL WINAPI EnumDirTree(HANDLE, PCSTR, PCSTR, LPSTR, PENUMDIRTREE_CALLBACK, void*);
+BOOL WINAPI SymMatchFileName(LPSTR, LPSTR, LPSTR*, LPSTR*);
 
 /*************************
  *   Context management  *
  *************************/
-BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
-                          PIMAGEHLP_CONTEXT Context);
+BOOL WINAPI SymSetContext(HANDLE, PIMAGEHLP_STACK_FRAME, PIMAGEHLP_CONTEXT);
 
 
 /*************************
@@ -788,29 +748,21 @@ typedef struct _STACKFRAME
     BOOL        Virtual;
     DWORD       Reserved[3];
     KDHELP      KdHelp;
+    ADDRESS     AddrBStore;
 } STACKFRAME, *LPSTACKFRAME;
 
 typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)
-    (HANDLE  hProcess, LPCVOID lpBaseAddress, PVOID lpBuffer,
-     DWORD nSize, PDWORD lpNumberOfBytesRead);
+    (HANDLE, LPCVOID, PVOID, DWORD, PDWORD);
+typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE)(HANDLE, DWORD);
+typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE)(HANDLE, DWORD);
+typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE)(HANDLE, HANDLE, LPADDRESS);
+BOOL WINAPI StackWalk(DWORD, HANDLE, HANDLE, LPSTACKFRAME, PVOID,
+                      PREAD_PROCESS_MEMORY_ROUTINE,
+                      PFUNCTION_TABLE_ACCESS_ROUTINE,
+                      PGET_MODULE_BASE_ROUTINE,
+                      PTRANSLATE_ADDRESS_ROUTINE);
 
-typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE)
-    (HANDLE hProcess, DWORD AddrBase);
-
-typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE)
-    (HANDLE hProcess, DWORD ReturnAddress);
-
-typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE)
-    (HANDLE hProcess, HANDLE hThread, LPADDRESS lpaddr);
-
-BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-                      LPSTACKFRAME StackFrame, PVOID ContextRecord,
-                      PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,
-                      PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
-                      PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
-                      PTRANSLATE_ADDRESS_ROUTINE TranslateAddress);
-
-PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase);
+PVOID WINAPI SymFunctionTableAccess(HANDLE, DWORD);
 
 /*************************
  * Version, global stuff *
@@ -825,7 +777,7 @@ typedef struct API_VERSION
 } API_VERSION, *LPAPI_VERSION;
 
 LPAPI_VERSION WINAPI ImagehlpApiVersion(void);
-LPAPI_VERSION WINAPI ImagehlpApiVersionEx(LPAPI_VERSION AppVersion);
+LPAPI_VERSION WINAPI ImagehlpApiVersionEx(LPAPI_VERSION);
 
 typedef struct _IMAGE_DEBUG_INFORMATION
 {
@@ -863,10 +815,9 @@ typedef struct _IMAGE_DEBUG_INFORMATION
 } IMAGE_DEBUG_INFORMATION, *PIMAGE_DEBUG_INFORMATION;
 
 
-PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(HANDLE FileHandle, PSTR FileName,
-                                                    PSTR SymbolPath, DWORD ImageBase);
+PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(HANDLE, PSTR, PSTR, DWORD);
 
-BOOL WINAPI UnmapDebugInformation(PIMAGE_DEBUG_INFORMATION DebugInfo);
+BOOL WINAPI UnmapDebugInformation(PIMAGE_DEBUG_INFORMATION);
 
 DWORD   WINAPI  SymGetOptions(void);
 DWORD   WINAPI  SymSetOptions(DWORD);
