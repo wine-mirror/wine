@@ -48,7 +48,7 @@ typedef struct CONSOLE_DRIVER
    void (*resizeScreen)(int, int);
    void (*notifyResizeScreen)(int, int); /* May be rethought later... */
 
-   /* Accellerator Functions (Screen) */
+   /* Accelerator Functions (Screen) */
    void (*clearWindow)(char, char, char, char, int, int);
    void (*scrollUpWindow)(char, char, char, char, char, int, int);
    void (*scrollDownWindow)(char, char, char, char, char, int, int);

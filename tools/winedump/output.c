@@ -65,7 +65,7 @@ void  output_spec_symbol (const parsed_symbol *sym)
     ord_spec[1] = '\0';
   }
   if (sym->flags & SYM_THISCALL)
-    strcat (ord_spec, " -i386"); /* For binary compatability only */
+    strcat (ord_spec, " -i386"); /* For binary compatibility only */
 
   if (!globals.do_code || !sym->function_name)
   {
