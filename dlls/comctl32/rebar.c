@@ -20,7 +20,7 @@
 
 
 /*
- * Rebar control    rev 8c
+ * Rebar control    rev 8d
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -109,6 +109,8 @@
  * 19. Fix problem in _Layout when all lengths are 0.
  * 20. If CLR_NONE specified, we will use default BtnFace color when drawing.
  * 21. Fix test in REBAR_Layout.
+ * rev 8d
+ * 22. Add support for WM_WINDOWPOSCHANGED to save new origin of window.
  *
  *
  *    Still to do:
@@ -240,6 +242,7 @@ typedef struct
     POINTS   dragNow;     /* x,y of this MouseMove */
     INT      ihitBand;    /* band number of band whose gripper was grabbed */
     INT      ihitoffset;  /* offset of hotspot from gripper.left */
+    POINT    origin;      /* left/upper corner of client */
 
     REBAR_ROW  *rows;       /* pointer to row indexes              */
     REBAR_BAND *bands;      /* pointer to the array of rebar bands */
@@ -1213,9 +1216,11 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
     else {
 	width += infoPtr->calcSize.cx;
 	height += infoPtr->calcSize.cy;
+	x = infoPtr->origin.x;
+	y = infoPtr->origin.y;
     }
 
-    TRACE("hwnd %04x, style=%08lx, setting at (%d,%d) for (%d,%d)\n",
+    TRACE("hwnd %08x, style=%08lx, setting at (%d,%d) for (%d,%d)\n",
 	infoPtr->hwndSelf, infoPtr->dwStyle,
 	x, y, width, height);
     SetWindowPos (infoPtr->hwndSelf, 0, x, y, width, height,
@@ -4223,6 +4228,25 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
+static LRESULT
+REBAR_WindowPosChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+{
+    WINDOWPOS *lpwp = (WINDOWPOS *)lParam;
+    LRESULT ret;
+    RECT rc;
+
+    /* Save the new origin of this window - used by _ForceResize */
+    infoPtr->origin.x = lpwp->x;
+    infoPtr->origin.y = lpwp->y;
+    ret = DefWindowProcA(infoPtr->hwndSelf, WM_WINDOWPOSCHANGED, 
+			 wParam, lParam);
+    GetWindowRect(infoPtr->hwndSelf, &rc);
+    TRACE("hwnd %08x new pos (%d,%d)-(%d,%d)\n",
+	  infoPtr->hwndSelf, rc.left, rc.top, rc.right, rc.bottom);
+    return ret;
+}
+
+
 static LRESULT WINAPI
 REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -4435,6 +4459,9 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /*      case WM_VKEYTOITEM:     supported according to ControlSpy */
 /*	case WM_WININICHANGE: */
+
+        case WM_WINDOWPOSCHANGED:
+	    return REBAR_WindowPosChanged (infoPtr, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)
