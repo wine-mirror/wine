@@ -33,6 +33,12 @@
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
+typedef struct
+{   BOOL    bIsAscending;
+    INT     nHeaderID;
+    INT     nLastHeaderID;
+}LISTVIEW_SORT_INFO, *LPLISTVIEW_SORT_INFO;
+
 typedef struct 
 {	ICOM_VTABLE(IShellView)* lpvtbl;
 	DWORD		ref;
@@ -51,6 +57,7 @@ typedef struct
 	UINT		uState;
 	UINT		cidl;
 	LPITEMIDLIST	*apidl;
+        LISTVIEW_SORT_INFO ListViewSortInfo;
 } IShellViewImpl;
 
 static struct ICOM_VTABLE(IShellView) svvt;
@@ -233,7 +240,7 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 
 	TRACE("%p\n",This);
 
-	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
+	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS | LVS_ALIGNLEFT | LVS_AUTOARRANGE;
 
 	switch (This->FolderSettings.ViewMode)
@@ -262,7 +269,11 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 	if(!This->hWndList)
 	  return FALSE;
 
-	/*  UpdateShellSettings(); */
+        This->ListViewSortInfo.bIsAscending = TRUE;
+        This->ListViewSortInfo.nHeaderID = -1;
+        This->ListViewSortInfo.nLastHeaderID = -1;
+
+        /*  UpdateShellSettings(); */
 	return TRUE;
 }
 /**********************************************************
@@ -348,6 +359,7 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
     BOOL bIsFolder1, bIsFolder2,bIsBothFolder;
     LPITEMIDLIST pItemIdList1 = (LPITEMIDLIST) lParam1;
     LPITEMIDLIST pItemIdList2 = (LPITEMIDLIST) lParam2;
+    LISTVIEW_SORT_INFO *pSortInfo = (LPLISTVIEW_SORT_INFO) lpData;
 
 
     bIsFolder1 = _ILIsFolder(pItemIdList1);
@@ -363,21 +375,21 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
     {   
         /* Sort by Time: Folders or Files can be sorted */
  
-        if(lpData == LISTVIEW_COLUMN_TIME)
+        if(pSortInfo->nHeaderID == LISTVIEW_COLUMN_TIME)
         {
             _ILGetFileDateTime(pItemIdList1, &fd1);
             _ILGetFileDateTime(pItemIdList2, &fd2);
             nDiff = CompareFileTime(&fd2, &fd1);
         }
         /* Sort by Attribute: Folder or Files can be sorted */
-        else if(lpData == LISTVIEW_COLUMN_ATTRIB)
+        else if(pSortInfo->nHeaderID == LISTVIEW_COLUMN_ATTRIB)
         {
             _ILGetAttributeStr(pItemIdList1, strName1, MAX_PATH);
             _ILGetAttributeStr(pItemIdList2, strName2, MAX_PATH);
             nDiff = strcasecmp(strName1, strName2);
         }
         /* Sort by FileName: Folder or Files can be sorted */
-        else if(lpData == LISTVIEW_COLUMN_NAME || bIsBothFolder)
+        else if(pSortInfo->nHeaderID == LISTVIEW_COLUMN_NAME || bIsBothFolder)
         {
             /* Sort by Text */
             _ILSimpleGetText(pItemIdList1, strName1, MAX_PATH);
@@ -385,12 +397,12 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
             nDiff = strcasecmp(strName1, strName2);
         }
         /* Sort by File Size, Only valid for Files */
-        else if(lpData == LISTVIEW_COLUMN_SIZE)
+        else if(pSortInfo->nHeaderID == LISTVIEW_COLUMN_SIZE)
         {
-            nDiff = _ILGetFileSize(pItemIdList1, NULL, 0) - _ILGetFileSize(pItemIdList2, NULL, 0);
+            nDiff = (INT)(_ILGetFileSize(pItemIdList1, NULL, 0) - _ILGetFileSize(pItemIdList2, NULL, 0));
         }
         /* Sort by File Type, Only valid for Files */
-        else if(lpData == LISTVIEW_COLUMN_TYPE)
+        else if(pSortInfo->nHeaderID == LISTVIEW_COLUMN_TYPE)
         {
             /* Sort by Type */
             _ILGetFileType(pItemIdList1, strName1, MAX_PATH);
@@ -405,6 +417,11 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
         _ILSimpleGetText(pItemIdList1, strName1, MAX_PATH);
         _ILSimpleGetText(pItemIdList2, strName2, MAX_PATH);
         nDiff = strcasecmp(strName1, strName2);
+    }
+
+    if(!pSortInfo->bIsAscending)
+    {
+        nDiff = -nDiff;
     }
 
     return nDiff;
@@ -998,7 +1015,19 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	  case LVN_COLUMNCLICK:
 	  {
-	    ListView_SortItems(lpnmlv->hdr.hwndFrom, ShellView_ListViewCompareItems, (LPARAM) (lpnmlv->iSubItem));
+            This->ListViewSortInfo.nHeaderID = lpnmlv->iSubItem;
+            if(This->ListViewSortInfo.nLastHeaderID == This->ListViewSortInfo.nHeaderID)
+            {
+                This->ListViewSortInfo.bIsAscending = !This->ListViewSortInfo.bIsAscending;
+            }
+            else
+            {
+                This->ListViewSortInfo.bIsAscending = TRUE;
+            }
+            This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
+
+	    ListView_SortItems(lpnmlv->hdr.hwndFrom, ShellView_ListViewCompareItems, (LPARAM) (&(This->ListViewSortInfo)));
+
 	    break;
 	  }
 

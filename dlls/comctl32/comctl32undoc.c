@@ -1487,8 +1487,8 @@ DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
     j = r;
     v = lpPtrs[(int)(l+r)/2];
     do {
-	while ((pfnCompare)(lpPtrs[i], v, lParam) > 0) i++;
-	while ((pfnCompare)(lpPtrs[j], v, lParam) < 0) j--;
+	while ((pfnCompare)(lpPtrs[i], v, lParam) < 0) i++;
+	while ((pfnCompare)(lpPtrs[j], v, lParam) > 0) j--;
 	if (i <= j) 
 	{
 	    t = lpPtrs[i];
