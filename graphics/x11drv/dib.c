@@ -2151,16 +2151,16 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 	bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
 	bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
   
+  effHeight = bi->biHeight >= 0 ? bi->biHeight : -bi->biHeight;
   bm.bmType = 0;
   bm.bmWidth = bi->biWidth;
-  bm.bmHeight = bi->biHeight;
+  bm.bmHeight = effHeight;
   bm.bmWidthBytes = DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
   bm.bmPlanes = bi->biPlanes;
   bm.bmBitsPixel = bi->biBitCount;
   bm.bmBits = NULL;
   
   /* Get storage location for DIB bits */
-  effHeight = bm.bmHeight >= 0 ? bm.bmHeight : -bm.bmHeight;
   totalSize = bi->biSizeImage? bi->biSizeImage : bm.bmWidthBytes * effHeight;
   
   if (section)
