@@ -1033,7 +1033,7 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 BOOL WINAPI GetTransform( HDC hdc, DWORD unknown, LPXFORM xform )
 {
     if (unknown == 0x0203) return GetWorldTransform( hdc, xform );
-    ERR("stub: don't know what to do for code %lx\n", unknown );
+    FIXME("stub: don't know what to do for code %lx\n", unknown );
     return FALSE;
 }
 
