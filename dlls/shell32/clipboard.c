@@ -63,24 +63,25 @@ HRESULT (WINAPI *pOleGetClipboard)(IDataObject** ppDataObj);
  */
 BOOL GetShellOle(void)
 {
-	if(!hShellOle32)
-	{
-	  hShellOle32 = LoadLibraryA("ole32.dll");
-	  if(hShellOle32)
-	  {
-	    pOleInitialize=(void*)GetProcAddress(hShellOle32,"OleInitialize");
-	    pOleUninitialize=(void*)GetProcAddress(hShellOle32,"OleUninitialize");
-	    pRegisterDragDrop=(void*)GetProcAddress(hShellOle32,"RegisterDragDrop");
-	    pRevokeDragDrop=(void*)GetProcAddress(hShellOle32,"RevokeDragDrop");
-	    pDoDragDrop=(void*)GetProcAddress(hShellOle32,"DoDragDrop");
-	    pReleaseStgMedium=(void*)GetProcAddress(hShellOle32,"ReleaseStgMedium");
-	    pOleSetClipboard=(void*)GetProcAddress(hShellOle32,"OleSetClipboard");
-	    pOleGetClipboard=(void*)GetProcAddress(hShellOle32,"OleGetClipboard");
+    static HANDLE hOle32 = NULL;
+    if(!hOle32)
+    {
+        hOle32 = LoadLibraryA("ole32.dll");
+        if(hOle32)
+        {
+            pOleInitialize=(void*)GetProcAddress(hOle32,"OleInitialize");
+            pOleUninitialize=(void*)GetProcAddress(hOle32,"OleUninitialize");
+            pRegisterDragDrop=(void*)GetProcAddress(hOle32,"RegisterDragDrop");
+            pRevokeDragDrop=(void*)GetProcAddress(hOle32,"RevokeDragDrop");
+            pDoDragDrop=(void*)GetProcAddress(hOle32,"DoDragDrop");
+            pReleaseStgMedium=(void*)GetProcAddress(hOle32,"ReleaseStgMedium");
+            pOleSetClipboard=(void*)GetProcAddress(hOle32,"OleSetClipboard");
+            pOleGetClipboard=(void*)GetProcAddress(hOle32,"OleGetClipboard");
 
-	    pOleInitialize(NULL);
-	  }
-	}
-	return TRUE;
+            pOleInitialize(NULL);
+        }
+    }
+    return TRUE;
 }
 
 /**************************************************************************
