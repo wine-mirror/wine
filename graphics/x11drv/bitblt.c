@@ -894,8 +894,21 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
         if (!X11DRV_PALETTE_XPixelToPalette ||
             (dcDst->w.bitsPerPixel == 1))  /* monochrome -> monochrome */
         {
-            XCopyArea( display, physDevSrc->drawable, pixmap, gc,
-                       visRectSrc->left, visRectSrc->top, width, height, 0, 0);
+            if (dcDst->w.bitsPerPixel == 1)
+            {
+                /* MSDN says if StretchBlt must convert a bitmap from monochrome
+                   to color or vice versa, the forground and background color of
+                   the device context are used.  In fact, it also applies to the
+                   case when it is converted from mono to mono. */ 
+                XSetBackground( display, gc, physDevDst->textPixel );
+                XSetForeground( display, gc, physDevDst->backgroundPixel );
+                XCopyPlane( display, physDevSrc->drawable, pixmap, gc,
+                            visRectSrc->left, visRectSrc->top,
+                            width, height, 0, 0, 1);
+            }
+            else
+                XCopyArea( display, physDevSrc->drawable, pixmap, gc, visRectSrc
+                           ->left, visRectSrc->top, width, height, 0, 0);
         }
         else  /* color -> color */
         {
