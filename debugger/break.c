@@ -178,7 +178,7 @@ void DEBUG_SetBreakpoints( BOOL set )
       case DBG_BREAK:
 	 {
 #ifdef __i386__
-	    char ch = set ? INT3 : breakpoints[i].u.opcode;
+	    char ch = set ? INT3 : breakpoints[i].u.b.opcode;
 #endif
 	    
 	    if (!DEBUG_WRITE_MEM( (void*)DEBUG_ToLinear(&breakpoints[i].addr), 
@@ -322,7 +322,7 @@ static	BOOL	DEBUG_GetWatchedValue( int num, LPDWORD val )
  *
  * Add a breakpoint.
  */
-void DEBUG_AddBreakpoint( const DBG_VALUE *_value )
+void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
 {
     DBG_VALUE value = *_value;
     int num;
@@ -358,7 +358,8 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value )
     if ((num = DEBUG_InitXPoint(DBG_BREAK, &value.addr)) == -1)
        return;
 
-    breakpoints[num].u.opcode  = ch;
+    breakpoints[num].u.b.opcode = ch;
+    breakpoints[num].u.b.func = func;
 
     DEBUG_Printf( DBG_CHN_MESG, "Breakpoint %d at ", num );
     DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? 32 : 16,
@@ -628,7 +629,7 @@ static	BOOL DEBUG_ShallBreak( int bpnum )
    if ( breakpoints[bpnum].skipcount > 0 && --breakpoints[bpnum].skipcount > 0 )
       return FALSE;
 
-   return TRUE;
+   return (breakpoints[bpnum].u.b.func) ? (breakpoints[bpnum].u.b.func)() : TRUE;
 }
 
 /***********************************************************************
@@ -881,7 +882,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
       breakpoints[0].enabled = TRUE;
       breakpoints[0].refcount = 1;
       breakpoints[0].skipcount = 0;
-      DEBUG_READ_MEM((void*)DEBUG_ToLinear( &addr ), &breakpoints[0].u.opcode, 
+      DEBUG_READ_MEM((void*)DEBUG_ToLinear( &addr ), &breakpoints[0].u.b.opcode, 
 		     sizeof(char));
       DEBUG_SetBreakpoints( TRUE );
       break;
@@ -899,7 +900,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
             breakpoints[0].enabled = TRUE;
             breakpoints[0].refcount = 1;
 	    breakpoints[0].skipcount = 0;
-	    DEBUG_READ_MEM((void*)DEBUG_ToLinear( &addr ), &breakpoints[0].u.opcode, 
+	    DEBUG_READ_MEM((void*)DEBUG_ToLinear( &addr ), &breakpoints[0].u.b.opcode,
 			   sizeof(char));
             DEBUG_SetBreakpoints( TRUE );
             break;

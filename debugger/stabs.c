@@ -120,16 +120,17 @@ static unsigned int stab_hash( const char * name )
 }
 
 
-static void stab_strcpy(char * dest, const char * source)
+static void stab_strcpy(char * dest, int sz, const char * source)
 {
   /*
    * A strcpy routine that stops when we hit the ':' character.
    * Faster than copying the whole thing, and then nuking the
    * ':'.
    */
-  while(*source != '\0' && *source != ':')
+  while(*source != '\0' && *source != ':' && sz-- > 0)
       *dest++ = *source++;
-  *dest++ = '\0';
+  *dest = '\0';
+  assert(sz > 0);
 }
 
 typedef struct {
@@ -402,7 +403,7 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
 	  expect = DT_FUNC;
 	  break;
 	default:
-	  DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%c).\n",ptr[1]);
+	  DEBUG_Printf(DBG_CHN_FIXME, "Unknown type (%c).\n",ptr[1]);
 	  return FALSE;
 	}
       if( expect != -1 && expect != DEBUG_GetType(ktd->types[count]) )
@@ -521,7 +522,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  curr_types[ntypes++] = *dt;
 	  break;
 	case 'x':
-	  stab_strcpy(element_name, c + 3);
+	  stab_strcpy(element_name, sizeof(element_name), c + 3);
 	  *dt = DEBUG_NewDataType(DT_STRUCT, element_name);
 	  curr_types[ntypes++] = *dt;
 	  break;
@@ -534,7 +535,8 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  curr_types[ntypes++] = *dt;
 	  break;
 	default:
-	  DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%c).\n",c[1]);
+	  DEBUG_Printf(DBG_CHN_FIXME, "Unknown type (%c).\n",c[1]);
+	  return FALSE;
 	}
       typename = NULL;
       
@@ -722,8 +724,8 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	    strcpy(c, tc + 1);
 	  break;
 	default:
-	  DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%c).\n",c[1]);
-	  break;
+	  DEBUG_Printf(DBG_CHN_FIXME, "Unknown type (%c).\n",c[1]);
+	  return FALSE;
 	}
     }
   /*
@@ -838,8 +840,12 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
               strcpy(stabbuff, ptr);
               ptr = stabbuff;
             }
-          stab_strcpy(symname, ptr);
-          DEBUG_ParseTypedefStab(ptr, symname);
+          stab_strcpy(symname, sizeof(symname), ptr);
+          if (!DEBUG_ParseTypedefStab(ptr, symname)) {
+	    /* skip this definition */
+	    stabbuff[0] = '\0';
+	    continue;
+	  }
         }
 
       switch(stab_ptr->n_type)
@@ -858,7 +864,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           new_value.addr.off = load_offset + stab_ptr->n_value;
 	  new_value.cookie = DV_TARGET;
 
-          stab_strcpy(symname, ptr);
+          stab_strcpy(symname, sizeof(symname), ptr);
 #ifdef __ELF__
           curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA | SYM_INVALID );
@@ -887,7 +893,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           new_value.addr.off = load_offset + stab_ptr->n_value;
 	  new_value.cookie = DV_TARGET;
 
-          stab_strcpy(symname, ptr);
+          stab_strcpy(symname, sizeof(symname), ptr);
           curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath, 
                                       SYM_WINE | SYM_DATA );
           break;
@@ -897,7 +903,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            */
           if( curr_func != NULL && !in_external_file )
             {
-              stab_strcpy(symname, ptr);
+              stab_strcpy(symname, sizeof(symname), ptr);
               curr_loc = DEBUG_AddLocal( curr_func, 0, 
                                          stab_ptr->n_value, 0, 0, symname );
               DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
@@ -906,7 +912,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
         case N_RSYM:
           if( curr_func != NULL && !in_external_file )
             {
-              stab_strcpy(symname, ptr);
+              stab_strcpy(symname, sizeof(symname), ptr);
               curr_loc = DEBUG_AddLocal( curr_func, stab_ptr->n_value + 1, 
 					 0, 0, 0, symname );
               DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
@@ -915,7 +921,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
         case N_LSYM:
           if( curr_func != NULL && !in_external_file )
             {
-              stab_strcpy(symname, ptr);
+              stab_strcpy(symname, sizeof(symname), ptr);
               curr_loc = DEBUG_AddLocal( curr_func, 0, 
 					 stab_ptr->n_value, 0, 0, symname );
 	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
@@ -957,7 +963,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            */
           if( !in_external_file)
             {
-              stab_strcpy(symname, ptr);
+              stab_strcpy(symname, sizeof(symname), ptr);
 	      if (*symname)
 		{
 		  new_value.addr.seg = 0;
@@ -1302,15 +1308,61 @@ leave:
   return rtn;
 }
 
+static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
+{
+  u_long		lm_addr;
+  struct link_map       lm;
+  Elf32_Ehdr	        ehdr;
+  char			bufstr[256];
+
+  /*
+   * Now walk the linked list.  In all known ELF implementations,
+   * the dynamic loader maintains this linked list for us.  In some
+   * cases the first entry doesn't appear with a name, in other cases it
+   * does.
+   */
+  for (lm_addr = (u_long)dbg_hdr->r_map; lm_addr; lm_addr = (u_long)lm.l_next) {
+    if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
+      return FALSE;
+    if (lm.l_addr != 0 &&
+	DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
+	ehdr.e_type == ET_DYN && /* only look at dynamic modules */
+	lm.l_name != NULL &&
+	DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr))) {
+      bufstr[sizeof(bufstr) - 1] = '\0';
+      DEBUG_ProcessElfObject(bufstr, lm.l_addr);
+    }
+  }
+  
+  return TRUE;
+}
+
+static BOOL DEBUG_RescanElf(void)
+{
+    struct r_debug        dbg_hdr;
+
+    if (!DEBUG_CurrProcess || 
+	!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_CurrProcess->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)))
+       return FALSE;
+
+    switch (dbg_hdr.r_state) {
+    case RT_CONSISTENT:	
+       DEBUG_WalkList(&dbg_hdr);
+       break;
+    case RT_ADD:
+       break;
+    case RT_DELETE:
+       /*FIXME: this is not currently handled, would need some kind of mark&sweep algo */
+      break;
+    }
+    return FALSE;
+}
+
 int
 DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 {
   Elf32_Dyn		dyn;
   struct r_debug        dbg_hdr;
-  u_long		lm_addr;
-  struct link_map       lm;
-  Elf32_Ehdr	        ehdr;
-  char			bufstr[256];
   int			rtn = FALSE;
   DBG_VALUE		val;
 
@@ -1341,27 +1393,25 @@ DEBUG_ReadExecutableDbgInfo(const char* exe_name)
   if (!DEBUG_READ_MEM_VERBOSE((void*)dyn.d_un.d_ptr, &dbg_hdr, sizeof(dbg_hdr)))
     goto leave;
 
-  /*
-   * Now walk the linked list.  In all known ELF implementations,
-   * the dynamic loader maintains this linked list for us.  In some
-   * cases the first entry doesn't appear with a name, in other cases it
-   * does.
-   */
-  for (lm_addr = (u_long)dbg_hdr.r_map; lm_addr; lm_addr = (u_long)lm.l_next)
-    {
-      if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
-	goto leave;
-      if (lm.l_addr != 0 &&
-	  DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
-	  ehdr.e_type == ET_DYN && /* only look at dynamic modules */
-	  lm.l_name != NULL &&
-	  DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr))) {
-	bufstr[sizeof(bufstr) - 1] = '\0';
-	DEBUG_ProcessElfObject(bufstr, lm.l_addr);
-      }
-    }
-  
-  rtn = TRUE;
+  assert(!DEBUG_CurrProcess->dbg_hdr_addr);
+  DEBUG_CurrProcess->dbg_hdr_addr = (u_long)dyn.d_un.d_ptr;
+
+  if (dbg_hdr.r_brk) {
+    DBG_VALUE	value;
+
+    DEBUG_Printf(DBG_CHN_TRACE, "Setting up a breakpoint on r_brk(%lx)\n",
+		 dbg_hdr.r_brk);
+
+    DEBUG_SetBreakpoints(FALSE);
+    value.type = NULL;
+    value.cookie = DV_TARGET;
+    value.addr.seg = 0;
+    value.addr.off = dbg_hdr.r_brk;
+    DEBUG_AddBreakpoint(&value, DEBUG_RescanElf);
+    DEBUG_SetBreakpoints(TRUE);
+  }
+
+  rtn = DEBUG_WalkList(&dbg_hdr);
 
 leave:
   return rtn;

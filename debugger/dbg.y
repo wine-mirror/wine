@@ -197,12 +197,12 @@ print_command:
  					     DEBUG_FreeExprMem(); }
 
 break_command:
-      tBREAK '*' expr_addr tEOL { DEBUG_AddBreakpoint( &$3 ); 
+      tBREAK '*' expr_addr tEOL { DEBUG_AddBreakpoint( &$3, NULL ); 
  					     DEBUG_FreeExprMem(); }
     | tBREAK tIDENTIFIER tEOL  { DBG_VALUE value;
 				 if( DEBUG_GetSymbolValue($2, -1, &value, TRUE) )
 				   {
-				     DEBUG_AddBreakpoint( &value );
+				     DEBUG_AddBreakpoint( &value, NULL );
 				   }
 				 else
 				   {
@@ -212,7 +212,7 @@ break_command:
     | tBREAK tIDENTIFIER ':' tNUM tEOL  { DBG_VALUE value;
 				 if( DEBUG_GetSymbolValue($2, $4, &value, TRUE) )
 				   {
-				     DEBUG_AddBreakpoint( &value );
+				     DEBUG_AddBreakpoint( &value, NULL );
 				   }
 				 else
 				   {
@@ -229,7 +229,7 @@ break_command:
 				     DEBUG_GetLineNumberAddr(nh, $2, &value.addr, TRUE);
 				     value.type = NULL;
 				     value.cookie = DV_TARGET;
-				     DEBUG_AddBreakpoint( &value );
+				     DEBUG_AddBreakpoint( &value, NULL );
 				   }
 				 else
 				   {
@@ -241,7 +241,7 @@ break_command:
 				 DEBUG_GetCurrentAddress( &value.addr );
 				 value.type = NULL;
 				 value.cookie = DV_TARGET;
-                                 DEBUG_AddBreakpoint( &value );
+                                 DEBUG_AddBreakpoint( &value, NULL );
                                }
 
 watch_command:

@@ -44,8 +44,14 @@ int	DEBUG_Printf(int chn, const char* format, ...)
     int		len;
 
     va_start(valist, format);
-    len = vsprintf(buf, format, valist);
+    len = wvsnprintf(buf, sizeof(buf), format, valist);
     va_end(valist);
+
+    if (len <= -1) {
+	len = sizeof(buf) - 1;
+	buf[len] = 0;
+	buf[len - 1] = buf[len - 2] = buf[len - 3] = '.';
+    }
     DEBUG_Output(chn, buf, len);
     return len;
 }
@@ -110,8 +116,8 @@ DBG_INTVAR*	DEBUG_GetIntVar(const char* name)
 		       
 static WINE_EXCEPTION_FILTER(wine_dbg)
 {
+    DEBUG_Printf(DBG_CHN_MESG, "\nwine_dbg: Exception (%lx) inside debugger, continuing...\n", GetExceptionCode());
     DEBUG_ExternalDebugger();
-    DEBUG_Printf(DBG_CHN_MESG, "\nwine_dbg: Exception %lx\n", GetExceptionCode());
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -133,8 +139,10 @@ static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
     p->pid = pid;
     p->threads = NULL;
     p->num_threads = 0;
+    p->continue_on_first_exception = FALSE;
     p->modules = NULL;
     p->next_index = 0;
+    p->dbg_hdr_addr = 0;
 
     p->next = proc;
     p->prev = NULL;
@@ -229,7 +237,7 @@ static	void			DEBUG_InitCurrThread(void)
 	    value.cookie = DV_TARGET;
 	    value.addr.seg = 0;
 	    value.addr.off = (DWORD)DEBUG_CurrThread->start;
-	    DEBUG_AddBreakpoint(&value);
+	    DEBUG_AddBreakpoint(&value, NULL);
 	    DEBUG_SetBreakpoints(TRUE);
 	}
     } else {
@@ -268,7 +276,7 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
         /* print some infos */
         DEBUG_Printf( DBG_CHN_MESG, "%s: ",
 		      first_chance ? "First chance exception" : "Unhandled exception" );
-        switch(rec->ExceptionCode)
+        switch (rec->ExceptionCode)
         {
         case EXCEPTION_INT_DIVIDE_BY_ZERO:
             DEBUG_Printf( DBG_CHN_MESG, "divide by zero" );
@@ -312,9 +320,8 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
             DEBUG_Printf( DBG_CHN_MESG, "%08lx", rec->ExceptionCode );
             break;
         }
+	DEBUG_Printf(DBG_CHN_MESG, "\n");
     }
-
-    DEBUG_Printf(DBG_CHN_MESG, "\n");
 
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Entering debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
@@ -353,19 +360,23 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 		break;
 	    }
 	    
-	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: exception code=%08lx %d\n", 
+	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: exception code=%08lx\n", 
 			 de->dwProcessId, de->dwThreadId, 
-			 de->u.Exception.ExceptionRecord.ExceptionCode,
-			 DEBUG_CurrThread->wait_for_first_exception);
-	    
+			 de->u.Exception.ExceptionRecord.ExceptionCode);
+
+	    if (DEBUG_CurrProcess->continue_on_first_exception) {
+		DEBUG_CurrProcess->continue_on_first_exception = FALSE;
+		if (!DBG_IVAR(BreakOnAttach)) {
+		    *cont = DBG_CONTINUE;
+		    break;
+		}
+	    }
+
 	    DEBUG_context.ContextFlags = CONTEXT_CONTROL|CONTEXT_INTEGER|CONTEXT_SEGMENTS|CONTEXT_DEBUG_REGISTERS;
 	    if (!GetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context)) {
 		DEBUG_Printf(DBG_CHN_WARN, "Can't get thread's context\n");
 		break;
 	    }
-	    
-	    DEBUG_Printf(DBG_CHN_TRACE, "%p:%p\n", de->u.Exception.ExceptionRecord.ExceptionAddress, 
-			 (void*)DEBUG_context.Eip);
 	    
 	    *cont = DEBUG_HandleException(&de->u.Exception.ExceptionRecord, 
 					  de->u.Exception.dwFirstChance, 
@@ -416,15 +427,19 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 			 de->u.CreateProcessInfo.dwDebugInfoFileOffset,
 			 de->u.CreateProcessInfo.nDebugInfoSize);
 	    
-	    if (DEBUG_GetProcess(de->dwProcessId) != NULL) {
-		DEBUG_Printf(DBG_CHN_TRACE, "Skipping already defined process\n");
-		break;
-	    }
-	    DEBUG_CurrProcess = DEBUG_AddProcess(de->dwProcessId,
-						 de->u.CreateProcessInfo.hProcess);
-	    if (DEBUG_CurrProcess == NULL) {
-		DEBUG_Printf(DBG_CHN_ERR, "Unknown process\n");
-		break;
+	    if ((DEBUG_CurrProcess = DEBUG_GetProcess(de->dwProcessId)) != NULL) {
+		if (DEBUG_CurrProcess->handle) {
+		    DEBUG_Printf(DBG_CHN_ERR, "Skipping already defined process\n");
+		    break;
+		}
+		DEBUG_CurrProcess->handle = de->u.CreateProcessInfo.hProcess;
+	    } else {
+		DEBUG_CurrProcess = DEBUG_AddProcess(de->dwProcessId,
+						     de->u.CreateProcessInfo.hProcess);
+		if (DEBUG_CurrProcess == NULL) {
+		    DEBUG_Printf(DBG_CHN_ERR, "Unknown process\n");
+		    break;
+		}
 	    }
 	    
 	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread I @%p\n", 
@@ -566,7 +581,7 @@ int DEBUG_main(int argc, char** argv)
     DEBUG_InitTypes();
     DEBUG_InitCVDataTypes();    
 
-    /* Initialize internal vars */
+    /* Initialize internal vars (types must be initialized before) */
     if (!DEBUG_IntVarsRW(TRUE)) return -1;
 
     /* keep it as a guiexe for now, so that Wine won't touch the Unix stdin, 
@@ -585,6 +600,9 @@ int DEBUG_main(int argc, char** argv)
 	HANDLE	hEvent;
 
 	if ((pid = atoi(argv[1])) != 0 && (hEvent = atoi(argv[2])) != 0) {
+	    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) goto leave;
+	    DEBUG_CurrProcess->continue_on_first_exception = TRUE;
+
 	    if (!DebugActiveProcess(pid)) {
 		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
 			     pid, GetLastError());

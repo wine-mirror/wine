@@ -14,6 +14,8 @@
 #include "file.h"
 #include "debugger.h"
 #include "toolhelp.h"
+#include "wingdi.h"
+#include "winuser.h"
 
 /***********************************************************************
  * Creates and links a new module to the current process 
@@ -235,7 +237,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
 void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 {
     DBG_VALUE			value;
-    char			buffer[256];
+    char			buffer[512];
     char			bufstr[256];
     int 			i;
     IMAGE_NT_HEADERS		pe_header;
@@ -273,7 +275,7 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
     DEBUG_AddSymbol(name, &value, NULL, SYM_WIN32 | SYM_FUNC);
     
     /* Add entry point */
-    sprintf(buffer, "%s.EntryPoint", name);
+    wsnprintf(buffer, sizeof(buffer), "%s.EntryPoint", name);
     value.addr.off = base + pe_header.OptionalHeader.AddressOfEntryPoint;
     DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 
@@ -284,7 +286,7 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
     for (i = 0; i < pe_header.FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
 	if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)))
 	    continue;
-	sprintf(buffer, "%s.%s", name, pe_seg.Name);
+	wsnprintf(buffer, sizeof(buffer), "%s.%s", name, pe_seg.Name);
 	value.addr.off = base + pe_seg.VirtualAddress;
 	DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
     }
@@ -320,7 +322,7 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 		    !DEBUG_READ_MEM_VERBOSE((void*)(base + names[i]), bufstr, sizeof(bufstr)))
 		    continue;
 		bufstr[sizeof(bufstr) - 1] = 0;
-		sprintf(buffer, "%s.%s", name, bufstr);
+		wsnprintf(buffer, sizeof(buffer), "%s.%s", name, bufstr);
 		value.addr.off = base + (DWORD)functions[ordinals[i]];
 		DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	    }
@@ -331,7 +333,7 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 		for (j = 0; j < exports.NumberOfNames; j++)
 		    if ((ordinals[j] == i) && names[j]) break;
 		if (j < exports.NumberOfNames) continue;
-		sprintf(buffer, "%s.%ld", name, i + exports.Base);
+		wsnprintf(buffer, sizeof(buffer), "%s.%ld", name, i + exports.Base);
 		value.addr.off = base + (DWORD)functions[i];
 		DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	    }

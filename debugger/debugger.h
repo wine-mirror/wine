@@ -115,8 +115,8 @@ enum exec_mode
     EXEC_KILL			/* terminate debugging session */
 };
 
-#define	DBG_BREAK 0
-#define	DBG_WATCH 1
+#define	DBG_BREAK 	0
+#define	DBG_WATCH 	1
 
 typedef struct
 {
@@ -127,7 +127,10 @@ typedef struct
                   refcount : 13;
     WORD	  skipcount;
     union {
-       BYTE          opcode;
+       struct {
+	  BYTE          opcode;
+	  BOOL		(*func)(void);
+       } b;
        struct {
 	  BYTE		rw : 1,
 	                len : 2;
@@ -158,7 +161,9 @@ typedef struct tagDBG_PROCESS {
     DWORD			pid;
     DBG_THREAD*			threads;
     int				num_threads;
+    unsigned			continue_on_first_exception;
     struct tagDBG_MODULE*	modules;
+    unsigned long		dbg_hdr_addr;
     /*
      * This is an index we use to keep track of the debug information
      * when we have multiple sources.  We use the same database to also
@@ -219,7 +224,7 @@ typedef struct {
 
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
-extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr );
+extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr, BOOL (*func)(void) );
 extern void DEBUG_AddWatchpoint( const DBG_VALUE *addr, int is_write );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
