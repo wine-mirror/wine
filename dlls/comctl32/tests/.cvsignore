@@ -1,4 +1,5 @@
 Makefile
 dpa.ok
+imagelist.ok
 tab.ok
 testlist.c
