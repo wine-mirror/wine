@@ -144,20 +144,24 @@ BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
  */
 INT WINAPI SetMapMode( HDC hdc, INT mode )
 {
-    INT prevMode;
+    INT ret;
     INT horzSize, vertSize, horzRes, vertRes;
 
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     if (dc->funcs->pSetMapMode)
     {
-        prevMode = dc->funcs->pSetMapMode( dc->physDev, mode );
-        goto done;
+        if((ret = dc->funcs->pSetMapMode( dc->physDev, mode )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
 
     TRACE("%04x %d\n", hdc, mode );
 
-    prevMode = dc->MapMode;
+    ret = dc->MapMode;
     horzSize = GetDeviceCaps( hdc, HORZSIZE );
     vertSize = GetDeviceCaps( hdc, VERTSIZE );
     horzRes  = GetDeviceCaps( hdc, HORZRES );
@@ -210,7 +214,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
-    return prevMode;
+    return ret;
 }
 
 
@@ -219,13 +223,17 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
  */
 BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pSetViewportExt)
     {
-        ret = dc->funcs->pSetViewportExt( dc->physDev, x, y );
-        goto done;
+        if((ret = dc->funcs->pSetViewportExt( dc->physDev, x, y )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
     if (size)
     {
@@ -254,22 +262,28 @@ BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
  */
 BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pSetViewportOrg)
-        ret = dc->funcs->pSetViewportOrg( dc->physDev, x, y );
-    else
     {
-        if (pt)
-        {
-            pt->x = dc->vportOrgX;
-            pt->y = dc->vportOrgY;
-        }
-        dc->vportOrgX = x;
-        dc->vportOrgY = y;
-        DC_UpdateXforms( dc );
+        if((ret = dc->funcs->pSetViewportOrg( dc->physDev, x, y )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
+    if (pt)
+    {
+        pt->x = dc->vportOrgX;
+	pt->y = dc->vportOrgY;
+    }
+    dc->vportOrgX = x;
+    dc->vportOrgY = y;
+    DC_UpdateXforms( dc );
+
+ done:
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -280,13 +294,17 @@ BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
  */
 BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pSetWindowExt)
     {
-        ret = dc->funcs->pSetWindowExt( dc->physDev, x, y );
-        goto done;
+        if((ret = dc->funcs->pSetWindowExt( dc->physDev, x, y )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
     if (size)
     {
@@ -315,21 +333,27 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
  */
 BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
-    if (dc->funcs->pSetWindowOrg) ret = dc->funcs->pSetWindowOrg( dc->physDev, x, y );
-    else
+    if (dc->funcs->pSetWindowOrg)
     {
-        if (pt)
-        {
-            pt->x = dc->wndOrgX;
-            pt->y = dc->wndOrgY;
-        }
-        dc->wndOrgX = x;
-        dc->wndOrgY = y;
-        DC_UpdateXforms( dc );
+        if((ret = dc->funcs->pSetWindowOrg( dc->physDev, x, y )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
+    if (pt)
+    {
+        pt->x = dc->wndOrgX;
+	pt->y = dc->wndOrgY;
+    }
+    dc->wndOrgX = x;
+    dc->wndOrgY = y;
+    DC_UpdateXforms( dc );
+ done:
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -340,22 +364,27 @@ BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
  */
 BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pOffsetViewportOrg)
-        ret = dc->funcs->pOffsetViewportOrg( dc->physDev, x, y );
-    else
     {
-        if (pt)
-        {
-            pt->x = dc->vportOrgX;
-            pt->y = dc->vportOrgY;
-        }
-        dc->vportOrgX += x;
-        dc->vportOrgY += y;
-        DC_UpdateXforms( dc );
+        if((ret = dc->funcs->pOffsetViewportOrg( dc->physDev, x, y )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
+    if (pt)
+    {
+        pt->x = dc->vportOrgX;
+	pt->y = dc->vportOrgY;
+    }
+    dc->vportOrgX += x;
+    dc->vportOrgY += y;
+    DC_UpdateXforms( dc );
+ done:
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -366,22 +395,27 @@ BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
  */
 BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pOffsetWindowOrg)
-        ret = dc->funcs->pOffsetWindowOrg( dc->physDev, x, y );
-    else
     {
-        if (pt)
-        {
-            pt->x = dc->wndOrgX;
-            pt->y = dc->wndOrgY;
-        }
-        dc->wndOrgX += x;
-        dc->wndOrgY += y;
-        DC_UpdateXforms( dc );
+        if((ret = dc->funcs->pOffsetWindowOrg( dc->physDev, x, y )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
+    if (pt)
+    {
+        pt->x = dc->wndOrgX;
+	pt->y = dc->wndOrgY;
+    }
+    dc->wndOrgX += x;
+    dc->wndOrgY += y;
+    DC_UpdateXforms( dc );
+ done:
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -393,13 +427,17 @@ BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
 BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
                                     INT yNum, INT yDenom, LPSIZE size )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pScaleViewportExt)
     {
-        ret = dc->funcs->pScaleViewportExt( dc->physDev, xNum, xDenom, yNum, yDenom );
-        goto done;
+        if((ret = dc->funcs->pScaleViewportExt( dc->physDev, xNum, xDenom, yNum, yDenom )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
     if (size)
     {
@@ -431,13 +469,17 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
 BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
                                   INT yNum, INT yDenom, LPSIZE size )
 {
-    BOOL ret = TRUE;
+    INT ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pScaleWindowExt)
     {
-        ret = dc->funcs->pScaleWindowExt( dc->physDev, xNum, xDenom, yNum, yDenom );
-        goto done;
+        if((ret = dc->funcs->pScaleWindowExt( dc->physDev, xNum, xDenom, yNum, yDenom )) != TRUE)
+	{
+	    if(ret == GDI_NO_MORE_WORK)
+	        ret = TRUE;
+	    goto done;
+	}
     }
     if (size)
     {

@@ -86,9 +86,9 @@ extern INT MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, I
 extern BOOL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn );
 extern BOOL MFDRV_LineTo( PHYSDEV dev, INT x, INT y );
 extern BOOL MFDRV_MoveTo( PHYSDEV dev, INT x, INT y );
-extern INT MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y );
-extern BOOL MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y );
-extern BOOL MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y );
+extern INT  MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y );
+extern INT  MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y );
+extern INT  MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y );
 extern BOOL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn );
 extern BOOL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height,
                           DWORD rop );
@@ -108,10 +108,10 @@ extern BOOL MFDRV_RoundRect( PHYSDEV dev, INT left, INT top,
                              INT right, INT bottom, INT ell_width,
                              INT ell_height );
 extern INT MFDRV_SaveDC( PHYSDEV dev );
-extern BOOL MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-                                    INT yDenom );
-extern BOOL MFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-                                  INT yDenom );
+extern INT MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+				   INT yDenom );
+extern INT MFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+				 INT yDenom );
 extern HBITMAP MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle );
 extern HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle );
 extern BOOL MFDRV_SelectClipPath( PHYSDEV dev, INT iMode );
@@ -130,10 +130,10 @@ extern UINT MFDRV_SetTextAlign( PHYSDEV dev, UINT align );
 extern INT MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra );
 extern COLORREF MFDRV_SetTextColor( PHYSDEV dev, COLORREF color );
 extern INT MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks );
-extern BOOL MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y );
-extern BOOL MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y );
-extern BOOL MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y );
-extern BOOL MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y );
+extern INT MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y );
+extern INT MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y );
+extern INT MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y );
+extern INT MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y );
 extern BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
                               INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
                               INT widthSrc, INT heightSrc, DWORD rop );

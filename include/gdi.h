@@ -199,8 +199,8 @@ typedef struct tagDC_FUNCS
     BOOL     (*pLineTo)(PHYSDEV,INT,INT);
     BOOL     (*pMoveTo)(PHYSDEV,INT,INT);
     INT      (*pOffsetClipRgn)(PHYSDEV,INT,INT);
-    BOOL     (*pOffsetViewportOrg)(PHYSDEV,INT,INT);
-    BOOL     (*pOffsetWindowOrg)(PHYSDEV,INT,INT);
+    INT      (*pOffsetViewportOrg)(PHYSDEV,INT,INT);
+    INT      (*pOffsetWindowOrg)(PHYSDEV,INT,INT);
     BOOL     (*pPaintRgn)(PHYSDEV,HRGN);
     BOOL     (*pPatBlt)(PHYSDEV,INT,INT,INT,INT,DWORD);
     BOOL     (*pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
@@ -219,8 +219,8 @@ typedef struct tagDC_FUNCS
     BOOL     (*pRestoreDC)(PHYSDEV,INT);
     BOOL     (*pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
     INT      (*pSaveDC)(PHYSDEV);
-    BOOL     (*pScaleViewportExt)(PHYSDEV,INT,INT,INT,INT);
-    BOOL     (*pScaleWindowExt)(PHYSDEV,INT,INT,INT,INT);
+    INT      (*pScaleViewportExt)(PHYSDEV,INT,INT,INT,INT);
+    INT      (*pScaleWindowExt)(PHYSDEV,INT,INT,INT,INT);
     HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
     HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH);
     BOOL     (*pSelectClipPath)(PHYSDEV,INT);
@@ -249,10 +249,10 @@ typedef struct tagDC_FUNCS
     INT      (*pSetTextCharacterExtra)(PHYSDEV,INT);
     DWORD    (*pSetTextColor)(PHYSDEV,DWORD);
     INT      (*pSetTextJustification)(PHYSDEV,INT,INT);
-    BOOL     (*pSetViewportExt)(PHYSDEV,INT,INT);
-    BOOL     (*pSetViewportOrg)(PHYSDEV,INT,INT);
-    BOOL     (*pSetWindowExt)(PHYSDEV,INT,INT);
-    BOOL     (*pSetWindowOrg)(PHYSDEV,INT,INT);
+    INT      (*pSetViewportExt)(PHYSDEV,INT,INT);
+    INT      (*pSetViewportOrg)(PHYSDEV,INT,INT);
+    INT      (*pSetWindowExt)(PHYSDEV,INT,INT);
+    INT      (*pSetWindowOrg)(PHYSDEV,INT,INT);
     INT      (*pStartDoc)(PHYSDEV,const DOCINFOA*);
     INT      (*pStartPage)(PHYSDEV);
     BOOL     (*pStretchBlt)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,INT,INT,DWORD);
@@ -263,6 +263,10 @@ typedef struct tagDC_FUNCS
     BOOL     (*pSwapBuffers)(PHYSDEV);
     BOOL     (*pWidenPath)(PHYSDEV);
 } DC_FUNCTIONS;
+
+/* Certain functions will do no further processing if the driver returns this.
+   Used by mfdrv for example. */
+#define GDI_NO_MORE_WORK 2
 
   /* DC hook codes */
 #define DCHC_INVALIDVISRGN      0x0001

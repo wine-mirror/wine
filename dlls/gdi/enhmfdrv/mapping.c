@@ -20,7 +20,17 @@
 
 #include "enhmfdrv/enhmetafiledrv.h"
 
-BOOL EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
+INT EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
+{
+    EMRSETMAPMODE emr;
+    emr.emr.iType = EMR_SETMAPMODE;
+    emr.emr.nSize = sizeof(emr);
+    emr.iMode = mode;
+
+    return EMFDRV_WriteRecord( dev, &emr.emr );
+}
+
+INT EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
 {
     EMRSETVIEWPORTEXTEX emr;
 
@@ -32,7 +42,7 @@ BOOL EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
+INT EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
 {
     EMRSETWINDOWEXTEX emr;
 
@@ -44,7 +54,7 @@ BOOL EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
+INT EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
 {
     EMRSETVIEWPORTORGEX emr;
 
@@ -56,7 +66,7 @@ BOOL EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
+INT EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
 {
     EMRSETWINDOWORGEX emr;
 
@@ -68,8 +78,8 @@ BOOL EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-			      INT yDenom )
+INT EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+			     INT yDenom )
 {
     EMRSCALEVIEWPORTEXTEX emr;
 
@@ -83,8 +93,8 @@ BOOL EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-			    INT yDenom )
+INT EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+			   INT yDenom )
 {
     EMRSCALEWINDOWEXTEX emr;
 
@@ -97,5 +107,3 @@ BOOL EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
 
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
-
-

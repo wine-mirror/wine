@@ -80,8 +80,8 @@ extern BOOL     EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn );
 extern BOOL     EMFDRV_LineTo( PHYSDEV dev, INT x, INT y );
 extern BOOL     EMFDRV_MoveTo( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y );
-extern BOOL     EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y );
-extern BOOL     EMFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y );
+extern INT      EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y );
+extern INT      EMFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y );
 extern BOOL     EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn );
 extern BOOL     EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
                                INT width, INT height, DWORD rop );
@@ -101,9 +101,9 @@ extern BOOL     EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top,
                                   INT right, INT bottom, INT ell_width,
                                   INT ell_height );
 extern INT      EMFDRV_SaveDC( PHYSDEV dev );
-extern BOOL     EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum,
+extern INT      EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum,
                                          INT xDenom, INT yNum, INT yDenom );
-extern BOOL     EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom,
+extern INT      EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom,
                                        INT yNum, INT yDenom );
 extern HBITMAP  EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle );
 extern HBRUSH   EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle );
@@ -125,10 +125,10 @@ extern INT      EMFDRV_SetROP2( PHYSDEV dev, INT rop );
 extern INT      EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode );
 extern UINT     EMFDRV_SetTextAlign( PHYSDEV dev, UINT align );
 extern COLORREF EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color );
-extern BOOL     EMFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y );
-extern BOOL     EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y );
-extern BOOL     EMFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y );
-extern BOOL     EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y );
+extern INT      EMFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y );
+extern INT      EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y );
+extern INT      EMFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y );
+extern INT      EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y );
 extern BOOL     EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst,
                                    INT widthDst, INT heightDst,
                                    PHYSDEV devSrc, INT xSrc, INT ySrc,

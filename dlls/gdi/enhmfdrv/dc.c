@@ -85,15 +85,6 @@ INT EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-INT EMFDRV_SetMapMode( PHYSDEV dev, INT mode )
-{
-    EMRSETMAPMODE emr;
-    emr.emr.iType = EMR_SETMAPMODE;
-    emr.emr.nSize = sizeof(emr);
-    emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
-}
-
 INT EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     EMREXCLUDECLIPRECT emr;
