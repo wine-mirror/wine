@@ -263,13 +263,7 @@ static int _px_tcp_ops[] = {
 	0
 };
 
-/* Holds value of SO_OPENTYPE socket option.  This is essentially a global
- * variable that Windows uses to affect how new sockets are created.  See
- * <http://support.microsoft.com/default.aspx?scid=kb;EN-US;q181611>.  Right
- * now, Wine does not do anything with this value other than get and set it on
- * request.
- */
-static int opentype = 0;
+static DWORD opentype_tls_index = -1;  /* TLS index for SO_OPENTYPE flag */
 
 inline static DWORD NtStatusToWSAError ( const DWORD status )
 {
@@ -430,7 +424,11 @@ BOOL WINAPI WS_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        opentype_tls_index = TlsAlloc();
+        break;
     case DLL_PROCESS_DETACH:
+        TlsFree( opentype_tls_index );
 	WINSOCK_DeleteIData();
 	break;
     }
@@ -1763,9 +1761,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             SetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        *(int *)optval = opentype;
+        *(int *)optval = (int)TlsGetValue( opentype_tls_index );
         *optlen = sizeof(int);
-        TRACE("getting global SO_OPENTYPE = 0x%x\n", opentype);
+        TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
         return 0;
     }
 
@@ -2621,8 +2619,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             SetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        opentype = *(int *)optval;
-        TRACE("setting global SO_OPENTYPE to 0x%x\n", opentype);
+        TlsSetValue( opentype_tls_index, (LPVOID)*(int *)optval );
+        TRACE("setting global SO_OPENTYPE to 0x%x\n", *(int *)optval );
         return 0;
     }
 
@@ -2796,10 +2794,8 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
 {
     TRACE("af=%d type=%d protocol=%d\n", af, type, protocol);
 
-    /* The Winsock2 specification states that socket() always opens sockets
-       in overlapped mode.
-       FIXME: is the SO_OPENTYPE behaviour correct? */
-    return WSASocketA ( af, type, protocol, NULL, 0, (opentype ? 0 : WSA_FLAG_OVERLAPPED) );
+    return WSASocketA ( af, type, protocol, NULL, 0,
+                        (TlsGetValue(opentype_tls_index) ? 0 : WSA_FLAG_OVERLAPPED) );
 }
 
 /***********************************************************************
