@@ -1292,6 +1292,11 @@ BOOL WINAPI EnumEnhMetaFile(
 
     if (hdc)
     {
+        TRACE("rect: %d,%d - %d,%d. rclFrame: %ld,%ld - %ld,%ld\n",
+	      lpRect->left, lpRect->top, lpRect->right, lpRect->bottom,
+	      emh->rclFrame.left, emh->rclFrame.top, emh->rclFrame.right,
+	      emh->rclFrame.bottom);
+
 	xSrcPixSize = (FLOAT) emh->szlMillimeters.cx / emh->szlDevice.cx;
 	ySrcPixSize = (FLOAT) emh->szlMillimeters.cy / emh->szlDevice.cy;
 	xscale = (FLOAT)(lpRect->right - lpRect->left) * 100.0 /
@@ -1303,8 +1308,10 @@ BOOL WINAPI EnumEnhMetaFile(
 	xform.eM12 = 0;
 	xform.eM21 = 0;
 	xform.eM22 = yscale;
-	xform.eDx = (FLOAT)lpRect->left - (xscale * emh->rclFrame.left * 0.5);
-	xform.eDy = (FLOAT)lpRect->top - (yscale * (FLOAT)emh->rclFrame.top * 0.5);
+	xform.eDx = (FLOAT) lpRect->left - (lpRect->right - lpRect->left) *
+	  emh->rclFrame.left / (emh->rclFrame.right - emh->rclFrame.left);
+	xform.eDy = (FLOAT) lpRect->top - (lpRect->bottom - lpRect->top) *
+	  emh->rclFrame.top / (emh->rclFrame.bottom - emh->rclFrame.top);
 
 	savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
 	GetWorldTransform(hdc, &savedXform);
