@@ -827,6 +827,7 @@ static HRESULT WINAPI IShellFolder_fnGetUIObjectOf(
 	  if(IsEqualIID(riid, &IID_IContextMenu) && (cidl >= 1))
 	  {
 	    pObj  = (LPUNKNOWN)IContextMenu_Constructor((IShellFolder *)This, This->absPidl, apidl, cidl);
+	    hr = S_OK;
 	  }
 	  else if (IsEqualIID(riid, &IID_IDataObject) &&(cidl >= 1))
 	  {
