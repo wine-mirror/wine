@@ -161,8 +161,11 @@ BOOL32 WINAPI MAIN_GdiInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRese
         LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
     }
 
+    if (!TWEAK_Init()) return FALSE;
+
     /* GDI initialisation */
     if(!GDI_Init()) return FALSE;
+
 
     /* PSDRV initialization */
     if(!PSDRV_Init()) return FALSE;
@@ -192,9 +195,6 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
         USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
         LocalInit( USER_HeapSel, 0, 0xffff );
     }
-
-    /* Initialize Wine tweaks */
-    if (!TWEAK_Init()) return FALSE;
 
      /* Global atom table initialisation */
     if (!ATOM_Init( USER_HeapSel )) return FALSE;
