@@ -776,8 +776,13 @@ static  BOOL    HLPFILE_LoadGfxByIndex(HLPFILE *hlpfile, unsigned index,
         if (index >= hlpfile->numBmps)
         {
             hlpfile->numBmps = index + 1;
-            hlpfile->bmps = HeapReAlloc(GetProcessHeap(), 0, hlpfile->bmps, 
+	    if (hlpfile->bmps)
+        	hlpfile->bmps = HeapReAlloc(GetProcessHeap(), 0, hlpfile->bmps, 
                                         hlpfile->numBmps * sizeof(hlpfile->bmps[0]));
+	    else
+	    	hlpfile->bmps = HeapAlloc(GetProcessHeap(), 0, 
+                                        hlpfile->numBmps * sizeof(hlpfile->bmps[0]));
+
         }
         hlpfile->bmps[index] = paragraph->u.gfx.u.bmp.hBitmap;
     }
@@ -1395,8 +1400,14 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
         case 6:
             if (GET_USHORT(ptr, 2) != 90) {WINE_WARN("system6\n");break;}
-            hlpfile->windows = HeapReAlloc(GetProcessHeap(), 0, hlpfile->windows, 
+
+	    if (hlpfile->windows) 
+        	hlpfile->windows = HeapReAlloc(GetProcessHeap(), 0, hlpfile->windows, 
                                            sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows);
+	    else 
+        	hlpfile->windows = HeapAlloc(GetProcessHeap(), 0, 
+                                           sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows);
+	    
             if (hlpfile->windows)
             {
                 unsigned flags = GET_USHORT(ptr, 4);

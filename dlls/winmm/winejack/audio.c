@@ -450,7 +450,11 @@ int JACK_bufsize (nframes_t nframes, void *arg)
       wwo->buffer_size, buffer_required);
     TRACE("GetProcessHeap() == %p\n", GetProcessHeap());
     wwo->buffer_size = buffer_required;
-    wwo->sound_buffer = HeapReAlloc(GetProcessHeap(), 0, wwo->sound_buffer, wwo->buffer_size);
+
+    if (wwo->sound_buffer)
+        wwo->sound_buffer = HeapReAlloc(GetProcessHeap(), 0, wwo->sound_buffer, wwo->buffer_size);
+    else
+        wwo->sound_buffer = HeapAlloc(GetProcessHeap(), 0, wwo->buffer_size);
 
     /* if we don't have a buffer then error out */
     if(!wwo->sound_buffer)

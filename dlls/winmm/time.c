@@ -126,9 +126,14 @@ static void CALLBACK TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
 		lpTimer->uCurTime += lpTimer->wDelay - MMSYSTIME_MININTERVAL;
 		if (lpTimer->lpFunc) {
 		    if (idx == iData->nSizeLpTimers) {
-			iData->lpTimers = (LPWINE_TIMERENTRY)
+			if (iData->lpTimers) 
+			    iData->lpTimers = (LPWINE_TIMERENTRY)
 			    HeapReAlloc(GetProcessHeap(), 0,
 					iData->lpTimers,
+					++iData->nSizeLpTimers * sizeof(WINE_TIMERENTRY));
+			else 
+			    iData->lpTimers = (LPWINE_TIMERENTRY)
+			    HeapAlloc(GetProcessHeap(), 0,
 					++iData->nSizeLpTimers * sizeof(WINE_TIMERENTRY));
 		    }
 		    iData->lpTimers[idx++] = *lpTimer;

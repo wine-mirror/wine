@@ -223,7 +223,11 @@ static void WCCURSES_ResizeScreenBuffer(struct inner_data* data)
     PRIVATE(data)->pad = newpad(data->curcfg.sb_height, data->curcfg.sb_width);
     if (!PRIVATE(data)->pad)
         WINE_FIXME("Cannot create pad\n");
-    PRIVATE(data)->line = HeapReAlloc(GetProcessHeap(), 0, PRIVATE(data)->line, 
+    if (PRIVATE(data)->line) 
+	PRIVATE(data)->line = HeapReAlloc(GetProcessHeap(), 0, PRIVATE(data)->line, 
+                                      sizeof(chtype) * data->curcfg.sb_width);
+    else 
+	PRIVATE(data)->line = HeapAlloc(GetProcessHeap(), 0, 
                                       sizeof(chtype) * data->curcfg.sb_width);
 }
 

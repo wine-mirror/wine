@@ -3341,8 +3341,13 @@ static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
 
     /* Make an internal copy of the caller-supplied array.
      * Replace the existing copy if one is already present. */
-    This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-    This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+    if (This->notifies) 
+        This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+	This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+    else 
+        This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+	howmuch * sizeof(DSBPOSITIONNOTIFY));
+
     memcpy(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
     This->nrofnotifies = howmuch;
 

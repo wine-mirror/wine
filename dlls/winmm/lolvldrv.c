@@ -564,9 +564,15 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 	  part->nIDMin, part->nIDMax, llTypes[type].wMaxId,
 	  lpDrv->drvname, llTypes[type].typestr);
     /* realloc translation table */
-    llTypes[type].lpMlds = (LPWINE_MLD)
-	HeapReAlloc(GetProcessHeap(), 0, (llTypes[type].lpMlds) ? llTypes[type].lpMlds - 1 : NULL,
+    if (llTypes[type].lpMlds)
+        llTypes[type].lpMlds = (LPWINE_MLD)
+	HeapReAlloc(GetProcessHeap(), 0, llTypes[type].lpMlds - 1,
 		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
+    else
+        llTypes[type].lpMlds = (LPWINE_MLD)
+	HeapAlloc(GetProcessHeap(), 0,
+		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
+
     /* re-build the translation table */
     if (llTypes[type].nMapper != -1) {
 	TRACE("%s:Trans[%d] -> %s\n", llTypes[type].typestr, -1, MMDrvs[llTypes[type].nMapper].drvname);

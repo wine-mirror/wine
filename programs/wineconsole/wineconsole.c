@@ -291,8 +291,13 @@ int	WINECON_GrabChanges(struct inner_data* data)
 		data->curcfg.sb_width  = evts[i].u.resize.width;
 		data->curcfg.sb_height = evts[i].u.resize.height;
 
-		data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
+		if (data->cells) 
+		    data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
 					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
+		else 
+		    data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
+
 		if (!data->cells) WINECON_Fatal("OOM\n");
 		data->fnResizeScreenBuffer(data);
 		data->fnComputePositions(data);
