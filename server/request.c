@@ -273,10 +273,14 @@ static void call_req_handler( struct thread *thread )
         req_handlers[req]( &current->req, &reply );
         if (current)
         {
-            reply.reply_header.error = current->error;
-            reply.reply_header.reply_size = current->reply_size;
-            if (debug_level) trace_reply( req, &reply );
-            send_reply( &reply );
+            if (current->reply_fd)
+            {
+                reply.reply_header.error = current->error;
+                reply.reply_header.reply_size = current->reply_size;
+                if (debug_level) trace_reply( req, &reply );
+                send_reply( &reply );
+            }
+            else fatal_protocol_error( current, "no reply fd for request %d\n", req );
         }
         current = NULL;
         return;
