@@ -47,7 +47,7 @@ BOOL32 DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 
   while (fgets( buf, 79, fp)) {
     sscanf(buf, "%x-%x %3s", (int *) &start, (int *) &end, prot);
-    if ( end < addr)
+    if ( end <= addr)
       continue;
     if (start <= addr && addr+size < end) {
       if (rwflag) 

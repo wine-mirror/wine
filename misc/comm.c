@@ -22,6 +22,9 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <string.h>
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif
 #include <errno.h>
 #include <ctype.h>
 #include <sys/stat.h>
@@ -33,6 +36,12 @@
 
 #include "windows.h"
 #include "comm.h"
+#ifdef HAVE_SYS_MODEM_H
+# include <sys/modem.h>
+#endif
+#ifdef HAVE_SYS_STRTIO_H
+# include <sys/strtio.h>
+#endif
 #include "heap.h"
 #include "options.h"
 #include "debug.h"

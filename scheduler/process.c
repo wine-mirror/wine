@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "process.h"
 #include "module.h"
 #include "file.h"
@@ -689,4 +690,19 @@ BOOL32 WINAPI GetExitCodeProcess(
     if (lpExitCode) *lpExitCode = process->exit_code;
     K32OBJ_DecCount( &process->header );
     return TRUE;
+}
+
+/***********************************************************************
+ * GetProcessHeaps [KERNEL32.376]
+ */
+DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE32 *heaps) {
+	FIXME(win32,"(%ld,%p), incomplete implementation.\n",nrofheaps,heaps);
+
+	if (nrofheaps) {
+		heaps[0] = GetProcessHeap();
+		/* ... probably SystemHeap too ? */
+		return 1;
+	}
+	/* number of available heaps */
+	return 1;
 }

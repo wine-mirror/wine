@@ -234,7 +234,7 @@ K32OBJ *K32OBJ_FindName( LPCSTR name )
     entry = K32OBJ_FirstEntry;
     while (entry)
     {
-        if ((len == entry->len) && !lstrcmp32A( name, entry->name))
+        if ((len == entry->len) && !strcmp( name, entry->name))
         {
             K32OBJ *obj = entry->obj;
             K32OBJ_IncCount( obj );

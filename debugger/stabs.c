@@ -6,7 +6,6 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
-#include <assert.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <limits.h>
@@ -178,9 +177,9 @@ DEBUG_ReadTypeEnumBackwards(char*x) {
 	    x--;
 	x++;				/* '(' */
 	filenr=strtol(x,&x,10);		/* <int> */
-	assert(*(x++)==',');		/* ',' */
+	x++;				/* ',' */
 	subnr=strtol(x,&x,10);		/* <int> */
-	assert(*(x++)==')');		/* ')' */
+	x++;				/* ')' */
     } else {
 	while ((*x>='0') && (*x<='9'))
 	    x--;
@@ -478,13 +477,13 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	     /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo>,<int>,<int>;; */
 
 	     tc  = c + 3;
-	     assert(c[2]=='r');
+	     						/* 'r' */
 	     DEBUG_ReadTypeEnum(&tc);
-	     assert(*(tc++)==';'); 			/* ';' */
+	     tc++;		 			/* ';' */
 	     arrmin = strtol(tc, &tc, 10); 		/* <int> */
-	     assert(*(tc++)==';'); 			/* ';' */
+	     tc++;		 			/* ';' */
 	     arrmax = strtol(tc, &tc, 10);		/* <int> */
-	     assert(*(tc++)==';'); 			/* ';' */
+	     tc++;		 			/* ';' */
 	     datatype = stab_types[DEBUG_ReadTypeEnum(&tc)]; /* <typeinfo> */
 	     if( *tc == '\0' )
 		 *c = '\0';

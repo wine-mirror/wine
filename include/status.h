@@ -25,6 +25,7 @@ typedef struct
     UINT32              height;
     BOOL32              simple;
     HFONT32             hFont;
+    HFONT32             hDefaultFont;
     COLORREF            clrBk;  /* background color */
     STATUSWINDOWPART	part0;	/* simple window */
     STATUSWINDOWPART   *parts;

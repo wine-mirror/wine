@@ -108,7 +108,7 @@ type	win32
 105 stub NtFlushVirtualMemory
 106 stub NtFlushWriteBuffer
 107 stub NtFreeVirtualMemory
-108 stub NtFsControlFile
+108 stdcall NtFsControlFile() NtFsControlFile
 109 stub NtGetContextThread
 110 stub NtGetPlugPlayEvent
 111 stub NtGetTickCount
@@ -149,7 +149,7 @@ type	win32
 146 stub NtQueryAttributesFile
 147 stub NtQueryDefaultLocale
 148 stub NtQueryDirectoryFile
-149 stdcall NtQueryDirectoryObject(long long) NtQueryDirectoryObject
+149 stdcall NtQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 150 stub NtQueryEaFile
 151 stub NtQueryEvent
 152 stub NtQueryInformationFile
@@ -161,14 +161,14 @@ type	win32
 158 stub NtQueryIoCompletion
 159 stub NtQueryKey
 160 stub NtQueryMutant
-161 stdcall NtQueryObject(long long) NtQueryObject
+161 stdcall NtQueryObject(long long long long long) NtQueryObject
 162 stub NtQueryPerformanceCounter
 163 stub NtQuerySection
 164 stub NtQuerySecurityObject
 165 stub NtQuerySemaphore
 166 stub NtQuerySymbolicLinkObject
 167 stub NtQuerySystemEnvironmentValue
-168 stdcall NtQuerySystemInformation(long) NtQuerySystemInformation
+168 stdcall NtQuerySystemInformation(long long long long) NtQuerySystemInformation
 169 stub NtQuerySystemTime
 170 stub NtQueryTimer
 171 stub NtQueryTimerResolution
@@ -207,7 +207,7 @@ type	win32
 204 stub NtSetInformationFile
 205 stub NtSetInformationKey
 206 stub NtSetInformationObject
-207 stdcall NtSetInformationProcess(long) NtSetInformationProcess
+207 stdcall NtSetInformationProcess(long long long long) NtSetInformationProcess
 208 stub NtSetInformationThread
 209 stub NtSetInformationToken
 210 stub NtSetIntervalProfile
@@ -358,8 +358,8 @@ type	win32
 355 stub RtlEraseUnicodeString
 356 stub RtlExpandEnvironmentStrings_U
 357 stub RtlExtendHeap
-358 stub RtlExtendedIntegerMultiply
-359 stub RtlExtendedLargeIntegerDivide
+358 stdcall RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
+359 stdcall RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
 360 stub RtlExtendedMagicDivide
 361 stdcall RtlFillMemory(ptr long long) RtlFillMemory
 362 stub RtlFillMemoryUlong
@@ -502,7 +502,7 @@ type	win32
 499 stub RtlSubtreeSuccessor
 500 stub RtlSystemTimeToLocalTime
 501 stub RtlTimeFieldsToTime
-502 stdcall RtlTimeToElapsedTimeFields(long) RtlTimeToElapsedTimeFields
+502 stdcall RtlTimeToElapsedTimeFields(long long) RtlTimeToElapsedTimeFields
 503 stub RtlTimeToSecondsSince1970
 504 stub RtlTimeToSecondsSince1980
 505 stub RtlTimeToTimeFields
@@ -868,7 +868,7 @@ type	win32
 865 stub _itoa
 866 stub _ltoa
 867 stub _memccpy
-868 stub _memicmp
+868 cdecl _memicmp(str str long) CRTDLL__memicmp
 869 stub _snprintf
 870 stub _snwprintf
 871 stub _splitpath

@@ -87,9 +87,9 @@ type	win32
  73 stub K32RtlEnlargedIntegerMultiply
  74 stub K32RtlEnlargedUnsignedMultiply
  75 stub K32RtlEnlargedUnsignedDivide
- 76 stub K32RtlExtendedLargeIntegerDivide
+ 76 stdcall K32RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
  77 stub K32RtlExtendedMagicDivide
- 78 stub K32RtlExtendedIntegerMultiply
+ 78 stdcall K32RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
  79 stub K32RtlLargeIntegerShiftLeft
  80 stub K32RtlLargeIntegerShiftRight
  81 stub K32RtlLargeIntegerArithmeticShift
@@ -182,7 +182,7 @@ type	win32
 167 stdcall CreateMutexW(ptr long wstr) CreateMutex32W
 168 stdcall CreateNamedPipeA(str long long long long long long ptr) CreateNamedPipeA
 169 stdcall CreateNamedPipeW(wstr long long long long long long ptr) CreateNamedPipeW
-170 stub CreatePipe
+170 stdcall CreatePipe(ptr ptr ptr long) CreatePipe
 171 stdcall CreateProcessA(str str ptr ptr long long ptr str ptr ptr) CreateProcess32A
 172 stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr) CreateProcess32W
 173 stub CreateRemoteThread
@@ -263,7 +263,7 @@ type	win32
 247 stdcall FindCloseChangeNotification(long) FindCloseChangeNotification
 246 stdcall FindClose(long) FindClose32
 248 stdcall FindFirstChangeNotificationA(str long long) FindFirstChangeNotification32A
-249 stub FindFirstChangeNotificationW
+249 stdcall FindFirstChangeNotificationW(wstr long long) FindFirstChangeNotification32W
 250 stdcall FindFirstFileA(str ptr) FindFirstFile32A
 251 stdcall FindFirstFileW(wstr ptr) FindFirstFile32W
 252 stdcall FindNextChangeNotification(long) FindNextChangeNotification
@@ -390,7 +390,7 @@ type	win32
 373 stdcall GetProcessAffinityMask(long ptr ptr) GetProcessAffinityMask
 374 stdcall GetProcessFlags(long) GetProcessFlags
 375 stdcall GetProcessHeap() GetProcessHeap
-376 stub GetProcessHeaps
+376 stdcall GetProcessHeaps(long ptr) GetProcessHeaps
 377 stub GetProcessShutdownParameters
 378 stdcall GetProcessTimes(long ptr ptr ptr ptr) GetProcessTimes
 379 stdcall GetProcessVersion(long) GetProcessVersion
@@ -841,7 +841,7 @@ type	win32
 824 stub HeapSummary
 825 stub HeapUsage
 826 stub InvalidateConsoleDIBits
-827 stub IsDebuggerPresent
+827 stdcall IsDebuggerPresent() IsDebuggerPresent
 829 stub OpenConsoleW
 830 stub QueryWin31IniFilesMappedToRegistry
 831 stub RegisterConsoleVDM

@@ -35,6 +35,8 @@ typedef struct
 
 
 /* files/file.c */
+extern FILE_OBJECT *FILE_GetFile( HFILE32 handle );
+extern HFILE32 FILE_Alloc( FILE_OBJECT **file );
 extern void FILE_SetDosError(void);
 extern HFILE32 FILE_DupUnixHandle( int fd );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );

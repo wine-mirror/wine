@@ -299,8 +299,11 @@ HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force, PDB32 *process )
     for (table = BuiltinDLLs; table->descr; table++)
         if (!lstrcmpi32A( table->descr->name, dllname )) break;
     if (!table->descr) return 0;
-    if (!table->used && !force) return 0;
-
+    if (!table->used)
+    {
+        if (!force) return 0;
+        table->used = TRUE;  /* So next time we use it at once */
+    }
     return BUILTIN32_DoLoadModule( table, process );
 }
 
@@ -339,7 +342,8 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
             }
         }
     
-    assert(dll->descr);
+    if (!dll->descr)
+    	return (ENTRYPOINT32)NULL;
 
     /* Now find the function */
 

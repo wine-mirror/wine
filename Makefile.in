@@ -24,7 +24,6 @@ VPATH     = @srcdir@
 MODULE    = none
 
 LIBSUBDIRS = \
-	rc \
 	tools \
 	tools/wrc \
 	controls \
@@ -160,8 +159,8 @@ htmlpages:
 
 clean::
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	for i in include; do (cd $$i; $(RM) *.o \#*\# *~ *% *.bak *.orig *.rej *.flc); done
-	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
+	for i in include; do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
+	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS .#*
 
 distclean: clean
 	$(RM) config.* Make.rules include/config.h

@@ -12,6 +12,7 @@
 #include "heap.h"
 #include "debug.h"
 #include "cache.h"
+#include "debugstr.h"
 
 #define TAB     9
 #define LF     10
@@ -198,8 +199,9 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
     int width = rect->right - rect->left;
     int max_width = 0;
 
-    TRACE(text,"'%s', %d , [(%d,%d),(%d,%d)]\n", str,
-		 count, rect->left, rect->top, rect->right, rect->bottom);
+    TRACE(text,"%s, %d , [(%d,%d),(%d,%d)]\n",
+	  debugstr_an (str, count), count,
+	  rect->left, rect->top, rect->right, rect->bottom);
     
     if (count == -1) count = strlen(str);
     strPtr = str;

@@ -23,6 +23,8 @@ Windows requirements:
 (ASPI). At least with Mustek, they allow you the choice of using
 the builtin card or the "Adaptec (AHA)" compatible drivers. This will not
 work any other way.
+Software that accesses the scanner via a DOS ASPI driver (e.g. ASPI2DOS)
+is supported, too. [AM]
 
 1) You probably need a real windows install of the software to set the
 LUN's/SCSI id's up correctly. I'm not exactly sure.
@@ -70,9 +72,15 @@ NOTES/BUGS:
 The biggest is that it only works under linux at the moment.
 The ASPI code was only tested using a Mustek 800SP with a Buslogic
 controller under Linux.
+The ASPI code has only been tested with:
+- a Mustek 800SP with a Buslogic controller under Linux [BM]
+- a Siemens Nixdorf 9036 with Adaptec AVA-1505 under Linux
+  accessed via DOSASPI.
+  Note that I had color problems, though (barely readable result). [AM]
 
 I make no warranty to the aspi code. It makes my scanner work. Your scanner
 may explode. I have no way of determining this. I take zero responsibility!
 
 
 Bruce Milner
+Additions by Andreas Mohr

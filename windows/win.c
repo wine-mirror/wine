@@ -1647,6 +1647,15 @@ INT32 WINAPI GetWindowText32A( HWND32 hwnd, LPSTR lpString, INT32 nMaxCount )
                                   (LPARAM)lpString );
 }
 
+/*******************************************************************
+ *	     InternalGetWindowText    (USER32.326)
+ */
+INT32 WINAPI InternalGetWindowText(HWND32 hwnd,LPWSTR lpString,INT32 nMaxCount )
+{
+	FIXME(win,"(0x%08lx,0x%08lx,%ld),stub!\n",hwnd,lpString,nMaxCount);
+	return GetWindowText32W(hwnd,lpString,nMaxCount);
+}
+
 
 /*******************************************************************
  *	     GetWindowText32W    (USER32.312)
@@ -2557,4 +2566,3 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 
     return (DWORD)(msg.lParam);
 }
-

@@ -139,7 +139,7 @@ file	gdi.exe
 151 pascal16 CopyMetaFile(word str) CopyMetaFile16
 153 pascal16 CreateIC(str str str ptr) CreateIC16
 154 pascal   GetNearestColor(word long) GetNearestColor16
-155 stub QueryAbort
+155 pascal16 QueryAbort(word word) QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap16
 158 pascal16 EnumCallback(ptr ptr word long) WineEnumDFontCallback
 159 pascal16 GetMetaFileBits(word) GetMetaFileBits
@@ -207,7 +207,7 @@ file	gdi.exe
 272 stub EndDocPrinter
 274 stub ClosePrinter
 280 stub GetRealDriverInfo
-281 pascal DrvSetPrinterData(ptr ptr ptr ptr long) DrvSetPrinterData
+281 pascal DrvSetPrinterData(ptr ptr long ptr long) DrvSetPrinterData
 282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData
 299 stub ENGINEGETCHARWIDTHEX
 300 pascal EngineEnumerateFont(ptr segptr long) EngineEnumerateFont

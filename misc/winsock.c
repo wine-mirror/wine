@@ -1929,7 +1929,7 @@ INT32 WINAPI WSACancelAsyncRequest32(HANDLE32 hAsyncTaskHandle)
 
 INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
 {
-    return (HANDLE16)WSACancelAsyncRequest16((HANDLE32)hAsyncTaskHandle);
+    return (HANDLE16)WSACancelAsyncRequest32((HANDLE32)hAsyncTaskHandle);
 }
 
 /***********************************************************************

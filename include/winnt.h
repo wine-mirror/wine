@@ -8,6 +8,7 @@
 #define __WINE_WINNT_H
 
 #include "wintypes.h"
+#include "windows.h"
 
 /* Heap flags */
 
@@ -97,6 +98,7 @@ typedef struct
     DWORD   SegSs;
 } CONTEXT, *PCONTEXT;
 
+typedef HANDLE32 *PHANDLE;
 
 #ifdef __WINE__
 
@@ -271,6 +273,164 @@ typedef PTOP_LEVEL_EXCEPTION_FILTER LPTOP_LEVEL_EXCEPTION_FILTER;
 DWORD WINAPI UnhandledExceptionFilter( PEXCEPTION_POINTERS epointers );
 LPTOP_LEVEL_EXCEPTION_FILTER
 WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
+
+/*
+ * Here follows typedefs for security and tokens.
+ */ 
+
+/*
+ * First a constant for the following typdefs.
+ */
+
+#define ANYSIZE_ARRAY   1
+
+/*
+ * TOKEN_INFORMATION_CLASS
+ */
+
+typedef enum _TOKEN_INFORMATION_CLASS {
+  TokenUser = 1, 
+  TokenGroups, 
+  TokenPrivileges, 
+  TokenOwner, 
+  TokenPrimaryGroup, 
+  TokenDefaultDacl, 
+  TokenSource, 
+  TokenType, 
+  TokenImpersonationLevel, 
+  TokenStatistics 
+} TOKEN_INFORMATION_CLASS; 
+
+/* 
+ * SID_AND_ATTRIBUTES
+ */
+
+typedef struct _SID_AND_ATTRIBUTES {
+  PSID  Sid; 
+  DWORD Attributes; 
+} SID_AND_ATTRIBUTES ; 
+ 
+/*
+ * TOKEN_USER
+ */
+
+typedef struct _TOKEN_USER {
+  SID_AND_ATTRIBUTES User; 
+} TOKEN_USER; 
+
+/*
+ * TOKEN_GROUPS
+ */
+
+typedef struct _TOKEN_GROUPS  {
+  DWORD GroupCount; 
+  SID_AND_ATTRIBUTES Groups[ANYSIZE_ARRAY]; 
+} TOKEN_GROUPS; 
+
+/*
+ * LUID_AND_ATTRIBUTES
+ */
+
+typedef struct _LUID_AND_ATTRIBUTES {
+  LUID   Luid; 
+  DWORD  Attributes; 
+} LUID_AND_ATTRIBUTES; 
+
+/*
+ * TOKEN_PRIVILEGES
+ */
+
+typedef struct _TOKEN_PRIVILEGES {
+  DWORD PrivilegeCount; 
+  LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY]; 
+} TOKEN_PRIVILEGES; 
+
+/*
+ * TOKEN_OWNER
+ */
+
+typedef struct _TOKEN_OWNER {
+  PSID Owner; 
+} TOKEN_OWNER; 
+
+/*
+ * TOKEN_PRIMARY_GROUP
+ */
+
+typedef struct _TOKEN_PRIMARY_GROUP {
+  PSID PrimaryGroup; 
+} TOKEN_PRIMARY_GROUP; 
+
+
+/*
+ * ACL (and PACL LPACL?).
+ */
+/*
+
+are defined in ntddl.h.
+typedef struct _ACL {
+  BYTE AclRevision;
+  BYTE Sbz1;
+  WORD AclSize;
+  WORD AceCount;
+  WORD Sbz2;
+} ACL, *PACL; PACL <=> LPACL? */
+
+/*
+ * TOKEN_DEFAULT_DACL
+ */
+
+typedef struct _TOKEN_DEFAULT_DACL { 
+  LPACL DefaultDacl; 
+} TOKEN_DEFAULT_DACL; 
+
+/*
+ * TOKEN_SOURCEL
+ */
+
+typedef struct _TOKEN_SOURCE {
+  char Sourcename[8]; 
+  LUID SourceIdentifier; 
+} TOKEN_SOURCE; 
+
+/*
+ * TOKEN_TYPE
+ */
+
+typedef enum tagTOKEN_TYPE {
+  TokenPrimary = 1, 
+  TokenImpersonation 
+} TOKEN_TYPE; 
+
+/*
+ * SECURITY_IMPERSONATION_LEVEL
+ */
+
+typedef enum _SECURITY_IMPERSONATION_LEVEL {
+  SecurityAnonymous, 
+  SecurityIdentification, 
+  SecurityImpersonation, 
+  SecurityDelegation 
+} SECURITY_IMPERSONATION_LEVEL; 
+
+
+/*
+ * TOKEN_STATISTICS
+ */
+
+typedef struct _TOKEN_STATISTICS {
+  LUID  TokenId; 
+  LUID  AuthenticationId; 
+  LARGE_INTEGER ExpirationTime; 
+  TOKEN_TYPE    TokenType; 
+  SECURITY_IMPERSONATION_LEVEL ImpersonationLevel; 
+  DWORD DynamicCharged; 
+  DWORD DynamicAvailable; 
+  DWORD GroupCount; 
+  DWORD PrivilegeCount; 
+  LUID  ModifiedId; 
+} TOKEN_STATISTICS; 
+
 
 /* I moved the Language IDs to winnls.h (David Lee Lambert) */
 

@@ -300,8 +300,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
     }
     else
     {
-        TRACE(win, "%04x NULL %04x flags=%04x\n",
-                     hwnd, hrgnUpdate, flags);
+        TRACE(win, "%04x NULL %04x flags=%04x\n", hwnd, hrgnUpdate, flags);
     }
 
     GetClientRect32( hwnd, &rectClient );

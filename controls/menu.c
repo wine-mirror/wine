@@ -2784,7 +2784,7 @@ DWORD WINAPI CheckMenuItem32( HMENU32 hMenu, UINT32 id, UINT32 flags )
 /**********************************************************************
  *         EnableMenuItem16    (USER.155)
  */
-BOOL16 WINAPI EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
+UINT16 WINAPI EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 {
     return EnableMenuItem32( hMenu, wItemID, wFlags );
 }
@@ -2793,38 +2793,20 @@ BOOL16 WINAPI EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 /**********************************************************************
  *         EnableMenuItem32    (USER32.170)
  */
-BOOL32 WINAPI EnableMenuItem32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
+UINT32 WINAPI EnableMenuItem32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
 {
-    BOOL32    bRet = FALSE;
-    MENUITEM *item, *first = NULL;
+    UINT32    oldflags;
+    MENUITEM *item;
 
     TRACE(menu,"(%04x, %04X, %04X) !\n", 
 		 hMenu, wItemID, wFlags);
 
-    while( (item = MENU_FindItem( &hMenu, &wItemID, wFlags )) )
-    {
-      if( (wFlags & MF_BYPOSITION) || !(item->fType & MF_POPUP) )
-      {
-           /* We can't have MF_GRAYED and MF_DISABLED together */
-           if (wFlags & MF_GRAYED)
-           {
-  	     item->fState = (item->fState & ~MF_DISABLED) | MF_GRAYED;
-           }
-           else if (wFlags & MF_DISABLED)
-           {
-	     item->fState = (item->fState & ~MF_GRAYED) | MF_DISABLED;
-           }
-           else   /* MF_ENABLED */
-           {
-	     item->fState &= ~(MF_GRAYED | MF_DISABLED);
-           } 
-	   bRet = TRUE;
-	   break;
-      }
-      if( !first ) first = item;
-      else if( first == item ) break;
-    }
-    return bRet;
+    if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags )))
+	return (UINT32)-1;
+
+    oldflags = item->fState & (MF_GRAYED | MF_DISABLED);
+    item->fState ^= (oldflags ^ wFlags) & (MF_GRAYED | MF_DISABLED);
+    return oldflags;
 }
 
 

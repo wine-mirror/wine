@@ -554,3 +554,14 @@ HRESULT WINAPI CoLockObjectExternal16(
     FIXME(ole,"(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
     return S_OK;
 }
+/***********************************************************************
+ *           CoLockObjectExternal (OLE32.31)
+ */
+HRESULT WINAPI CoLockObjectExternal32(
+    LPUNKNOWN pUnk,		/* [in] object to be locked */
+    BOOL32 fLock,		/* [in] do lock */
+    BOOL32 fLastUnlockReleases	/* [in] ? */
+) {
+    FIXME(ole,"(%p,%d,%d),stub!\n",pUnk,fLock,fLastUnlockReleases);
+    return S_OK;
+}

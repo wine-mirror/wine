@@ -209,6 +209,10 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
  */
 static BOOL32 MAIN_ParseDebugOptions(char *options)
 {
+  /* defined in relay32/relay386.c */
+  extern char **debug_relay_includelist;
+  extern char **debug_relay_excludelist;
+
   int l, cls;
   if (strlen(options)<3)
     return FALSE;
@@ -242,6 +246,45 @@ static BOOL32 MAIN_ParseDebugOptions(char *options)
 	  for(j=0; j<DEBUG_CLASS_COUNT; j++)
 	    if(cls == -1 || cls == j)
 	      debug_msg_enabled[i][j]=(*options=='+');
+      }
+    else if (!lstrncmpi32A(options+1, "relay=", 6))
+      {
+	int i, j;
+	char *s, *s2, ***output, c;
+
+	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
+	  if (debug_ch_name && (!lstrncmpi32A(debug_ch_name[i],"relay",5))){
+	    for(j=0; j<DEBUG_CLASS_COUNT; j++)
+	      if(cls == -1 || cls == j)
+		debug_msg_enabled[i][j]=TRUE;
+	    break;
+	  }
+	/* should never happen, maybe assert(i!=DEBUG_CHANNEL_COUNT)? */
+	if (i==DEBUG_CHANNEL_COUNT)
+	  return FALSE;
+	if (*options == '+')
+	  output = &debug_relay_includelist;
+	else
+	  output = &debug_relay_excludelist;
+	s = options + 7;
+	i = 1;
+	while((s = strchr(s, ':'))) i++, s++;
+	*output = malloc(sizeof(char **) * i + 1);
+	i = 0;
+	s = options + 7;
+	while((s2 = strchr(s, ':'))) {
+          c = *s2;
+          *s2 = '\0';
+	  *((*output)+i) = strdup(s);
+          *s2 = c;
+	  s = s2 + 1;
+	  i++;
+	}
+	c = *(options + l);
+	*(options + l) = '\0';
+	*((*output)+i) = strdup(s);
+	*(options + l) = c;
+	*((*output)+i+1) = NULL;
       }
     else
       {
@@ -758,7 +801,6 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 		GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 			lpLogFont->lfFaceName, LF_FACESIZE );
 		lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
-
 		lpLogFont->lfWidth = 0;
 		lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
 		lpLogFont->lfWeight = FW_NORMAL;
@@ -787,6 +829,7 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 
 		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfCaptionFont),0);
+		    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMenuFont),0);
 		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
@@ -975,7 +1018,6 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 		    GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 					lpLogFont->lfFaceName, LF_FACESIZE );
                     lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
-
                     lpLogFont->lfWidth = 0;
                     lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
                     lpLogFont->lfWeight = FW_NORMAL;
@@ -996,6 +1038,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			/* FIXME: initialize geometry entries */
 			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0, 
 							(LPVOID)&(lpnm->lfCaptionFont),0);
+			lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfMenuFont),0);
 			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
@@ -1085,6 +1128,7 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 	LPNONCLIENTMETRICS32W	lpnm=(LPNONCLIENTMETRICS32W)lpvParam;
 
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
+	lpnm->lfCaptionFont.lfWeight = FW_BOLD;
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
 	SystemParametersInfo32W(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);

@@ -395,8 +395,7 @@ int NE_OpenFile( NE_MODULE *pModule )
     name = NE_MODULE_NAME( pModule );
     if (!DOSFS_GetFullName( name, TRUE, &full_name ) ||
         (cachedfd = open( full_name.long_name, O_RDONLY )) == -1)
-        WARN( module, "Can't open file '%s' for module %04x\n",
-              name, pModule->self );
+        MSG( "Can't open file '%s' for module %04x\n", name, pModule->self );
     TRACE(module, "opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;
@@ -695,9 +694,9 @@ static BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
             {
                 /* FIXME: cleanup what was done */
 
-               WARN( module, "Could not load '%s' required by '%.*s', error=%d\n",
-                         buffer, *((BYTE*)pModule + pModule->name_table),
-                         (char *)pModule + pModule->name_table + 1, hDLL );
+                MSG( "Could not load '%s' required by '%.*s', error=%d\n",
+                     buffer, *((BYTE*)pModule + pModule->name_table),
+                     (char *)pModule + pModule->name_table + 1, hDLL );
                 return FALSE;
             }
             *pModRef = GetExePtr( hDLL );
@@ -751,7 +750,8 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
         /* Now try the built-in even if disabled */
         if ((hModule = fnBUILTIN_LoadModule( name, TRUE )))
         {
-            WARN(module, "Could not load Windows DLL '%s', using built-in module.\n", name );
+            MSG( "Could not load Windows DLL '%s', using built-in module.\n",
+                 name );
             return hModule;
         }
         return 2;  /* File not found */

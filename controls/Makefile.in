@@ -8,6 +8,7 @@ MODULE    = controls
 C_SRCS = \
 	button.c \
 	combo.c \
+	comctl32undoc.c \
 	commctrl.c \
 	desktop.c \
 	edit.c \

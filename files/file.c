@@ -73,14 +73,14 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file);
  *
  * Allocate a file.
  */
-static HFILE32 FILE_Alloc( FILE_OBJECT **file )
+HFILE32 FILE_Alloc( FILE_OBJECT **file )
 {
     HFILE32 handle;
     *file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) );
     if (!*file)
     {
         DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
-        return NULL;
+        return (HFILE32)NULL;
     }
     (*file)->header.type = K32OBJ_FILE;
     (*file)->header.refcount = 0;
@@ -185,7 +185,7 @@ static void FILE_Destroy( K32OBJ *ptr )
  * Return the DOS file associated to a task file handle. FILE_ReleaseFile must
  * be called to release the file.
  */
-static FILE_OBJECT *FILE_GetFile( HFILE32 handle )
+FILE_OBJECT *FILE_GetFile( HFILE32 handle )
 {
     return (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
                                             K32OBJ_FILE, 0 /*FIXME*/ );

@@ -32,7 +32,7 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
         break;
 
     case 0x15: /* mscdex */
-        do_mscdex(context);
+        do_mscdex(context, FALSE );
         break;
 
     case 0x16:
@@ -184,7 +184,7 @@ static void do_int2f_16( CONTEXT *context )
     }
 }
 
-void do_mscdex( CONTEXT *context )
+void do_mscdex( CONTEXT *context, int dorealmode )
 {
     int drive, count;
     char *p;
@@ -217,7 +217,10 @@ void do_mscdex( CONTEXT *context )
             break;
 
         case 0x0D: /* get drive letters */
-            p = PTR_SEG_OFF_TO_LIN(ES_reg(context), BX_reg(context));
+	    if (dorealmode)
+	    	p = DOSMEM_MapRealToLinear(MAKELONG(BX_reg(context),ES_reg(context)));
+	    else
+		p = PTR_SEG_OFF_TO_LIN(ES_reg(context), BX_reg(context));
             memset( p, 0, MAX_DOS_DRIVES );
             for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
             {

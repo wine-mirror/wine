@@ -8,6 +8,7 @@
 #include <string.h>
 #include "windows.h"
 #include "heap.h"
+#include "global.h"
 #include "ldt.h"
 #include "module.h"
 #include "miscemu.h"
@@ -24,6 +25,7 @@
 
 void CreateBPB(int drive, BYTE *data, BOOL16 limited);  /* defined in int21.c */
 
+static void* lastvalloced = NULL;
 
 /* Structure for real-mode callbacks */
 typedef struct
@@ -57,6 +59,72 @@ typedef struct tagRMCB {
 
 static RMCB *FirstRMCB = NULL;
 
+/**********************************************************************
+ *	    DPMI_xalloc
+ * special virtualalloc, allocates lineary monoton growing memory.
+ * (the usual VirtualAlloc does not satisfy that restriction)
+ */
+static LPVOID
+DPMI_xalloc(int len) {
+	LPVOID	ret;
+	LPVOID	oldlastv = lastvalloced;
+
+	if (lastvalloced) {
+		int	xflag = 0;
+		ret = NULL;
+		while (!ret) {
+			ret=VirtualAlloc(lastvalloced,len,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
+			if (!ret)
+				lastvalloced+=0x10000;
+			/* we failed to allocate one in the first round. 
+			 * try non-linear
+			 */
+			if (!xflag && (lastvalloced<oldlastv)) { /* wrapped */
+				FIXME(int31,"failed to allocate lineary growing memory (%d bytes), using non-linear growing...\n",len);
+				xflag++;
+			}
+			/* if we even fail to allocate something in the next 
+			 * round, return NULL
+			 */
+			if ((xflag==1) && (lastvalloced >= oldlastv))
+				xflag++;
+			if ((xflag==2) && (lastvalloced < oldlastv)) {
+				FIXME(int31,"failed to allocate any memory of %d bytes!\n",len);
+				return NULL;
+			}
+		}
+	} else
+		 ret=VirtualAlloc(NULL,len,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
+	lastvalloced = (LPVOID)(((DWORD)ret+len+0xffff)&~0xffff);
+	return ret;
+}
+
+static void
+DPMI_xfree(LPVOID ptr) {
+	VirtualFree(ptr,0,MEM_RELEASE);
+}
+
+/* FIXME: perhaps we could grow this mapped area... */
+static LPVOID
+DPMI_xrealloc(LPVOID ptr,int newsize) {
+	MEMORY_BASIC_INFORMATION	mbi;
+	LPVOID				newptr;
+
+	if (!VirtualQuery(ptr,&mbi,sizeof(mbi))) {
+		FIXME(int31,"reallocing non DPMI_xalloced region?\n");
+		return NULL;
+	}
+	/* We do not shrink allocated memory. most reallocs only do grows
+	 * anyway
+	 */
+	if (newsize<=mbi.RegionSize)
+		return ptr;
+
+	newptr = DPMI_xalloc(newsize);
+	memcpy(newptr,ptr,newsize);
+	DPMI_xfree(ptr);
+	return newptr;
+}
 /**********************************************************************
  *	    INT_GetRealModeContext
  */
@@ -121,7 +189,7 @@ static void INT_DoRealModeInt( CONTEXT *context )
         {
         case 0x15:
             /* MSCDEX hook */
-            do_mscdex( &realmode_ctx );
+            do_mscdex( &realmode_ctx, 1 );
             break;
         default:
             SET_CFLAG(context);
@@ -207,12 +275,28 @@ static void INT_DoRealModeInt( CONTEXT *context )
                         break;
                     }
                 }
-            break;
+                break;
             default:
                 SET_CFLAG(context);
                 break;
             }
             break;
+	case 0x60: {/* CANONICALIZE PATH */
+		LPCSTR path = (LPCSTR)DOSMEM_MapRealToLinear((DS_reg(&realmode_ctx)<<16)+SI_reg(&realmode_ctx));
+
+		TRACE(int31,"TRUENAME %s\n",path);
+		if (!GetFullPathName32A( 
+		    path,
+		    128,
+		    (LPSTR)DOSMEM_MapRealToLinear(
+		    (ES_reg(&realmode_ctx)<<16)+DI_reg(&realmode_ctx)),
+		    NULL
+		))
+		    SET_CFLAG(context);
+		else
+		    AX_reg(&realmode_ctx) = 0;
+	    }
+	    break;
         default:
             SET_CFLAG(context);
             break;
@@ -525,7 +609,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 	break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
-    	TRACE(int31,"set protected mode interrupt handler (0x%02x,0x%08lx), stub!\n",BL_reg(context),PTR_SEG_OFF_TO_LIN(CX_reg(context),DX_reg(context)));
+    	TRACE(int31,"set protected mode interrupt handler (0x%02x,0x%08lx), stub!\n",
+            BL_reg(context),PTR_SEG_OFF_TO_LIN(CX_reg(context),DX_reg(context)));
 	INT_SetHandler( BL_reg(context),
                         (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CX_reg(context),
                                                           DX_reg(context) ));
@@ -584,13 +669,11 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         }
     case 0x0501:  /* Allocate memory block */
         TRACE(int31,"allocate memory block (%ld)\n",MAKELONG(CX_reg(context),BX_reg(context)));
-	if (!(ptr = (BYTE *)VirtualAlloc(NULL, MAKELONG(CX_reg(context), BX_reg(context)), MEM_COMMIT, PAGE_EXECUTE_READWRITE)))
+	if (!(ptr = (BYTE *)DPMI_xalloc(MAKELONG(CX_reg(context), BX_reg(context)))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
-        }
-        else
-        {
+        } else {
             BX_reg(context) = SI_reg(context) = HIWORD(ptr);
             CX_reg(context) = DI_reg(context) = LOWORD(ptr);
         }
@@ -598,20 +681,18 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 
     case 0x0502:  /* Free memory block */
         TRACE(int31,"free memory block (0x%08lx)\n",MAKELONG(DI_reg(context),SI_reg(context)));
-	VirtualFree((void *)MAKELONG(DI_reg(context), SI_reg(context)), 0, MEM_RELEASE);
+	DPMI_xfree((void *)MAKELONG(DI_reg(context), SI_reg(context)));
         break;
 
     case 0x0503:  /* Resize memory block */
         TRACE(int31,"resize memory block (0x%08lx,%ld)\n",MAKELONG(DI_reg(context),SI_reg(context)),MAKELONG(CX_reg(context),BX_reg(context)));
-        if (!(ptr = (BYTE *)HeapReAlloc( GetProcessHeap(), 0,
+        if (!(ptr = (BYTE *)DPMI_xrealloc(
                            (void *)MAKELONG(DI_reg(context),SI_reg(context)),
                                    MAKELONG(CX_reg(context),BX_reg(context)))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
-        }
-        else
-        {
+        } else {
             BX_reg(context) = SI_reg(context) = HIWORD(ptr);
             CX_reg(context) = DI_reg(context) = LOWORD(ptr);
         }

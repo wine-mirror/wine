@@ -332,7 +332,7 @@ DWORD /* NTSTATUS */ WINAPI RtlOemToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD 
 }
 
 /**************************************************************************
- *                 RtlInitString			[NTDLL]
+ *                 RtlInitAnsiString			[NTDLL]
  */
 VOID WINAPI RtlInitAnsiString(LPANSI_STRING target,LPCSTR source)
 {
@@ -429,7 +429,7 @@ DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LP
  */
 DWORD WINAPI RtlNtStatusToDosError(DWORD error)
 {
-    FIXME(ntdll, "(%x): map STATUS_ to ERROR_\n",error);
+    FIXME(ntdll, "(%lx): map STATUS_ to ERROR_\n",error);
     return error;
 }
 
@@ -556,6 +556,9 @@ DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,D
 
 /**************************************************************************
  *                 NTDLL_chkstk   (NTDLL.862)
+ *
+ * NOTES
+ *    Should this be WINAPI?
  */
 void NTDLL_chkstk(void)
 {
@@ -574,12 +577,13 @@ DWORD WINAPI NtOpenDirectoryObject(DWORD x1,DWORD x2,DWORD x3)
 }
 
 
-/**************************************************************************
+/******************************************************************************
  * NtQueryDirectoryObject [NTDLL.149]
  */
-DWORD WINAPI NtQueryDirectoryObject(DWORD x1, DWORD x2)
+DWORD WINAPI NtQueryDirectoryObject( DWORD x1, DWORD x2, DWORD x3, DWORD x4,
+                                     DWORD x5, DWORD x6, DWORD x7 )
 {
-    FIXME(ntdll,"(%lx,%lx): stub\n",x1,x2);
+    FIXME(ntdll,"(%lx,%lx,%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5,x6,x7);
     return 0;
 }
 
@@ -587,19 +591,19 @@ DWORD WINAPI NtQueryDirectoryObject(DWORD x1, DWORD x2)
 /**************************************************************************
  * RtlFreeAnsiString [NTDLL.373]
  */
-DWORD WINAPI RtlFreeAnsiString(DWORD x1)
+VOID WINAPI RtlFreeAnsiString(LPANSI_STRING AnsiString)
 {
-    FIXME(ntdll,"(%lx): stub\n",x1);
-    return 0;
+    if( AnsiString->Buffer )
+        HeapFree( GetProcessHeap(),0,AnsiString->Buffer );
 }
 
 
-/**************************************************************************
+/******************************************************************************
  * NtQuerySystemInformation [NTDLL.168]
  */
-DWORD WINAPI NtQuerySystemInformation( DWORD x1 )
+DWORD WINAPI NtQuerySystemInformation( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 {
-    FIXME(ntdll,"(%lx): stub\n",x1);
+    FIXME(ntdll,"(%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4);
     return 0;
 }
 
@@ -607,9 +611,9 @@ DWORD WINAPI NtQuerySystemInformation( DWORD x1 )
 /******************************************************************************
  * NtQueryObject [NTDLL.161]
  */
-DWORD WINAPI NtQueryObject( DWORD x1, DWORD x2 )
+DWORD WINAPI NtQueryObject( DWORD x1, DWORD x2 ,DWORD x3, DWORD x4, DWORD x5 )
 {
-    FIXME(ntdll,"(%lx,%lx): stub\n",x1,x2);
+    FIXME(ntdll,"(%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5);
     return 0;
 }
 
@@ -617,9 +621,9 @@ DWORD WINAPI NtQueryObject( DWORD x1, DWORD x2 )
 /******************************************************************************
  * RtlTimeToElapsedTimeFields [NTDLL.502]
  */
-DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1 )
+DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1, DWORD x2 )
 {
-    FIXME(ntdll,"(%lx): stub\n",x1);
+    FIXME(ntdll,"(%lx,%lx): stub\n",x1,x2);
     return 0;
 }
 
@@ -627,10 +631,52 @@ DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1 )
 /******************************************************************************
  * NtSetInformationProcess [NTDLL.207]
  */
-DWORD WINAPI NtSetInformationProcess( DWORD x1 )
+DWORD WINAPI NtSetInformationProcess( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 {
-    FIXME(ntdll,"(%lx): stub\n",x1);
+    FIXME(ntdll,"(%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4);
     return 0;
 }
 
+/******************************************************************************
+ * NtFsControlFile [NTDLL.108]
+ */
+VOID WINAPI NtFsControlFile(VOID)
+{
+    FIXME(ntdll,"(void): stub\n");
+}
 
+/******************************************************************************
+ * RtlExtendedLargeIntegerDivide [NTDLL.359]
+ */
+INT32 WINAPI RtlExtendedLargeIntegerDivide(
+	LARGE_INTEGER dividend,
+	DWORD divisor,
+	LPDWORD rest
+) {
+#if SIZEOF_LONG_LONG==8
+	long long x1 = *(long long*)&dividend;
+
+	if (*rest)
+		*rest = x1 % divisor;
+	return x1/divisor;
+#else
+	FIXME(ntdll,"((%d<<32)+%d,%d,%p), implement this using normal integer arithmetic!\n",dividend.HighPart,dividend.LowPart,divisor,rest);
+	return 0;
+#endif
+}
+
+/******************************************************************************
+ * RtlExtendedLargeIntegerMultiply [NTDLL.359]
+ * Note: This even works, since gcc returns 64bit values in eax/edx just like
+ * the caller expects. However... The relay code won't grok this I think.
+ */
+long long /*LARGE_INTEGER*/ WINAPI RtlExtendedIntegerMultiply(
+	LARGE_INTEGER factor1,INT32 factor2
+) {
+#if SIZEOF_LONG_LONG==8
+	return (*(long long*)&factor1)*factor2;
+#else
+	FIXME(ntdll,"((%d<<32)+%d,%ld), implement this using normal integer arithmetic!\n",factor1.HighPart,factor1.LowPart,factor2);
+	return 0;
+#endif
+}

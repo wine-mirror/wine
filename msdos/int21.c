@@ -1313,6 +1313,13 @@ void WINAPI DOS3Call( CONTEXT *context )
 
         case 0x01:
             break;
+        case 0x02:{
+           FILE_OBJECT *file;
+           file = FILE_GetFile(BX_reg(context));
+            if (!lstrcmpi32A(file->unix_name, "SCSIMGR$"))
+                        ASPI_DOS_HandleInt(context);
+           break;
+       }
 	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */
 	    /*BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));*/
 	    int	drive = DOS_GET_DRIVE(BL_reg(context));

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "class.h"
+#include "dc.h"
 #include "win.h"
 #include "gdi.h"
 #include "dce.h"
@@ -193,7 +194,10 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     }
 
     if( rDClip.left >= rDClip.right || rDClip.top >= rDClip.bottom )
+    {
+        GDI_HEAP_UNLOCK( hdc );
 	return FALSE;
+    }
     
     hrgnClip = GetClipRgn16(hdc);
     hrgnScrollClip = CreateRectRgnIndirect32(&rDClip);
@@ -236,7 +240,10 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
 
 	if (!BitBlt32( hdc, dest.x, dest.y, ldx, ldy,
 		       hdc, src.x, src.y, SRCCOPY))
+	{
+	    GDI_HEAP_UNLOCK( hdc );
 	    return FALSE;
+	}
     }
 
     /* restore clipping region */
@@ -287,6 +294,7 @@ BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     }
 
     DeleteObject32( hrgnScrollClip );     
+    GDI_HEAP_UNLOCK( hdc );
     return TRUE;
 }
 
@@ -415,6 +423,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 		if( rcUpdate ) GetRgnBox32( hrgnUpdate, rcUpdate );
 	    }
 	    ReleaseDC32(hwnd, hDC);
+	    GDI_HEAP_UNLOCK( hDC );
 	}
 
 	if( wnd->hrgnUpdate > 1 )

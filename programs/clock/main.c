@@ -213,8 +213,6 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
       LIBWINE_Register_Sw();
     #endif
 
-    printf("WinMain()\n");
-    
     /* Setup Globals */
     Globals.bAnalog	    = TRUE;
     Globals.bSeconds        = TRUE;
@@ -255,12 +253,17 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
 
     Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
+
+    /*
+        FIXME: The next few lines are an attempt to add a menu item to the 
+               window system menu. 
+    */
     
     AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, "item");
     SetSystemMenu(Globals.hMainWnd, Globals.hSystemMenu);
 
-    EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
-                    MF_BYCOMMAND | MF_GRAYED);
+    LANGUAGE_UpdateMenuCheckmarks();
+
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
 
@@ -278,5 +281,4 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     // We will never reach the following statement !  
     return 0;    
 }
-
 

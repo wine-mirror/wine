@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "ldt.h"
 #include "debug.h"
+#include "winnls.h"
 
 static const BYTE STRING_Oem2Ansi[256] =
 "\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\244"
@@ -144,7 +145,7 @@ LPWSTR WINAPI lstrcatn32W( LPWSTR dst, LPCWSTR src, INT32 n )
  */
 INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
 {
-    return (INT16)lstrcmp32A( str1, str2 );
+    return (INT16)strcmp( str1, str2 );
 }
 
 
@@ -153,19 +154,14 @@ INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
  */
 INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
 {
-    TRACE(string,"%s and %s\n",
-		   debugstr_a (str1), debugstr_a (str2));
-    /* Win95 KERNEL32.DLL does it that way. Hands off! */
-    if (!str1 || !str2) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-    return (INT32)strcmp( str1, str2 );
+    return CompareString32A(LOCALE_SYSTEM_DEFAULT,0,str1,-1,str2,-1) - 2 ;
 }
 
 
 /***********************************************************************
  *           lstrcmp32W   (KERNEL.603)
+ * FIXME : should call CompareString32W, when it is implemented.
+ *    This implementation is not "word sort", as it should.
  */
 INT32 WINAPI lstrcmp32W( LPCWSTR str1, LPCWSTR str2 )
 {
@@ -198,17 +194,7 @@ INT32 WINAPI lstrcmpi32A( LPCSTR str1, LPCSTR str2 )
 
     TRACE(string,"strcmpi %s and %s\n",
 		   debugstr_a (str1), debugstr_a (str2));
-    if (!str1 || !str2) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-    while (*str1)
-    {
-        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
-        str1++;
-        str2++;
-    }
-    return toupper(*str1) - toupper(*str2);
+    return CompareString32A(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
 }
 
 

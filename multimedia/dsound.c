@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>	/* Insomnia - pow() function */
 #include "windows.h"
 #include "winerror.h"
 #include "interfaces.h"
@@ -179,6 +180,7 @@ static HRESULT WINAPI IDirectSoundBuffer_SetVolume(
 	TRACE(dsound,"(%p,%ld)\n",this,vol);
 	this->volume = vol;
 	this->volfac = ((double)vol+10000.0)/10000.0;
+
 	return 0;
 }
 
@@ -340,7 +342,7 @@ static HRESULT WINAPI IDirectSoundBuffer_GetPan(
 static HRESULT WINAPI IDirectSoundBuffer_Unlock(
 	LPDIRECTSOUNDBUFFER this,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
-	FIXME(dsound,"(%p,%p,%ld,%p,%ld):stub\n", this,p1,x1,p2,x2);
+/*	FIXME(dsound,"(%p,%p,%ld,%p,%ld):stub\n", this,p1,x1,p2,x2); */
 	return 0;
 }
 
@@ -356,6 +358,7 @@ static HRESULT WINAPI IDirectSoundBuffer_Initialize(
 	LPDIRECTSOUNDBUFFER this,LPDIRECTSOUND dsound,LPDSBUFFERDESC dbsd
 ) {
 	FIXME(dsound,"(%p,%p,%p):stub\n",this,dsound,dbsd);
+	printf("Re-Init!!!\n");
 	return DSERR_ALREADYINITIALIZED;
 }
 
@@ -622,7 +625,29 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 	int	j,buflen = dsb->buflen;
 	LPDSBPOSITIONNOTIFY	nextevent;
 	int	xdiff = dsb->wfx.nSamplesPerSec-dsound->wfx.nSamplesPerSec;
-	double	volfac = dsb->volfac;
+
+	/* Insomnia - Going along with REAL author's style */
+	long	Rvoldec, Lvoldec;
+	long	pan = dsb->pan;
+	long samp;	/* temporary sample workspace */
+
+	{
+		double	tmpr=dsb->volume-500;
+		double  tmpl=tmpr;
+		if(pan>0)  tmpl -= (double)pan;
+		else  tmpr += (double)pan;
+		tmpl /= 1000.0;
+		tmpr /= 1000.0;
+		tmpl = pow(2.0, tmpl);
+		tmpr = pow(2.0, tmpr);
+		tmpl *= 65536;	/* Set to the correct multiple times */
+		tmpr *= 65536;	/* 65536 to be convenient for bit shifting */
+		tmpl += 0.5;	/* Add .5 for rounding accuracy */
+		tmpr += 0.5;
+		Lvoldec = (long)tmpl;
+		Rvoldec = (long)tmpr;
+	}
+	/* End Insomnia's mod */
 
 	if (xdiff<0) xdiff=-xdiff;
 	if (xdiff>1500) {
@@ -646,9 +671,26 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					playbuf8[(j<<1)  ]+=xbuf[dsb->playpos]*volfac;
-					playbuf8[(j<<1)+1]+=xbuf[dsb->playpos]*volfac;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					/* Left Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Lvoldec;
+					samp >>= 16;
+					samp += playbuf8[(j<<1)];
+					if(samp > 127L)  samp = 127L;
+					else if(samp < -128L)  samp = -128L;
+					playbuf8[(j<<1)] = (short)samp;
+
+					/* Right Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Rvoldec;
+					samp >>= 16;
+					samp += playbuf8[(j<<1)+1];
+					if(samp > 127L)  samp = 127L;
+					else if(samp < -128L)  samp = -128L;
+					playbuf8[(j<<1)+1] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			} else {
@@ -659,8 +701,21 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					playbuf8[j]+=xbuf[dsb->playpos]*volfac;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					samp = xbuf[dsb->playpos>>1];
+
+					/* Right Channel */
+					if(j&1) samp *= Rvoldec;
+					/* Left Channel */
+					else    samp *= Lvoldec;
+
+					samp >>= 16;
+					samp += playbuf8[j];
+					if(samp > 127L)  samp = 127L;
+					else if(samp < -128L)  samp = -128L;
+					playbuf8[j] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			}
@@ -674,9 +729,26 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					playbuf8[(j<<1)  ]+=(xbuf[dsb->playpos>>1]>>8)*volfac;
-					playbuf8[(j<<1)+1]+=(xbuf[dsb->playpos>>1]>>8)*volfac;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					/* Left Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Lvoldec;
+					samp >>= 24;
+					samp += playbuf8[(j<<1)];
+					if(samp > 127L)  samp = 127L;
+					else if(samp < -128L)  samp = -128L;
+					playbuf8[(j<<1)] = (short)samp;
+
+					/* Right Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Rvoldec;
+					samp >>= 24;
+					samp += playbuf8[(j<<1)+1];
+					if(samp > 127L)  samp = 127L;
+					else if(samp < -128L)  samp = -128L;
+					playbuf8[(j<<1)+1] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			} else {
@@ -687,16 +759,31 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					playbuf8[j]+=(xbuf[dsb->playpos>>1]>>8)*volfac;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					samp = xbuf[dsb->playpos>>1];
+
+					/* Right Channel */
+					if(j&1) samp *= Rvoldec;
+					/* Left Channel */
+					else    samp *= Lvoldec;
+
+					samp >>= 24;
+					samp += playbuf8[j];
+					if(samp > 127L)  samp = 127L;
+					else if(samp < -128L)  samp = -128L;
+					playbuf8[j] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			}
 		}
 	} else { /* 16 bit */
 		if (dsb->wfx.wBitsPerSample == 8) {
-			unsigned char	*xbuf = (unsigned char*)(dsb->buffer);
+/*			unsigned char	*xbuf = (unsigned char*)(dsb->buffer); */
+			char	*xbuf = dsb->buffer;
 			if (dsb->wfx.nChannels == 1) {
+	printf("Mixing 8-bit stereo into 16!!\n");
 				for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
 					dsb->playpos=(dsb->playpos+1)%buflen;
 					if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
@@ -704,10 +791,26 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					/* FIXME: should be *256 */
-					playbuf[(j<<1)  ]+=(xbuf[dsb->playpos]<<7)*volfac;
-					playbuf[(j<<1)+1]+=(xbuf[dsb->playpos]<<7)*volfac;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					/* Left Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Lvoldec;
+					samp >>= 8;
+					samp += playbuf[(j<<1)];
+					if(samp > 32767L)  samp = 32767L;
+					else if(samp < -32768L)  samp = -32768L;
+					playbuf[(j<<1)] = (short)samp;
+
+					/* Right Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Rvoldec;
+					samp >>= 8;
+					samp += playbuf[(j<<1)+1];
+					if(samp > 32767L)  samp = 32767L;
+					else if(samp < -32768L)  samp = -32768L;
+					playbuf[(j<<1)+1] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			} else {
@@ -718,9 +821,21 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					/* FIXME: should be *256 */
-					playbuf[j]+=(xbuf[dsb->playpos]<<7)*volfac;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					samp = xbuf[dsb->playpos>>1];
+
+					/* Right Channel */
+					if(j&1) samp *= Rvoldec;
+					/* Left Channel */
+					else    samp *= Lvoldec;
+
+					samp >>= 8;
+					samp += playbuf[j];
+					if(samp > 32767L)  samp = 32767L;
+					else if(samp < -32768L)  samp = -32768L;
+					playbuf[j] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			}
@@ -734,9 +849,26 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					playbuf[(j<<1)  ]+=(xbuf[dsb->playpos>>1]*volfac);
-					playbuf[(j<<1)+1]+=(xbuf[dsb->playpos>>1]*volfac);
+					/* Insomnia- volume, panning, and correcting against wrap */
+					/* Left Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Lvoldec;
+					samp >>= 16;
+					samp += playbuf[(j<<1)];
+					if(samp > 32767L)  samp = 32767L;
+					else if(samp < -32768L)  samp = -32768L;
+					playbuf[(j<<1)] = (short)samp;
+
+					/* Right Channel */
+					samp = xbuf[dsb->playpos>>1];
+					samp *= Rvoldec;
+					samp >>= 16;
+					samp += playbuf[(j<<1)+1];
+					if(samp > 32767L)  samp = 32767L;
+					else if(samp < -32768L)  samp = -32768L;
+					playbuf[(j<<1)+1] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			} else {
@@ -747,8 +879,21 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						dsb->playpos = buflen;
 						return;
 					}
-					/* FIXME: pan,volume */
-					playbuf[j]+=xbuf[dsb->playpos>>1]/**volfac*/;
+					/* Insomnia- volume, panning, and correcting against wrap */
+					samp = xbuf[dsb->playpos>>1];
+
+					/* Right Channel */
+					if(j&1) samp *= Rvoldec;
+					/* Left Channel */
+					else    samp *= Lvoldec;
+
+					samp >>= 16;
+					samp += playbuf[j];
+					if(samp > 32767L)  samp = 32767L;
+					else if(samp < -32768L)  samp = -32768L;
+					playbuf[j] = (short)samp;
+					/* End Insomnia's mod */
+
 					CHECK_EVENT
 				}
 			}
@@ -784,6 +929,8 @@ DSOUND_thread(LPVOID arg) {
 		for (i=dsound->nrofbuffers;i--;) {
 			IDirectSoundBuffer	*dsb = dsound->buffers[i];
 
+			if (!dsb || !dsb->lpvtbl)
+				continue;
 			dsb->lpvtbl->fnAddRef(dsb);
 			if (dsb->playing && dsb->buflen)
 				playing++;
@@ -814,6 +961,8 @@ DSOUND_thread(LPVOID arg) {
 		for (i=dsound->nrofbuffers;i--;) {
 			IDirectSoundBuffer	*dsb = dsound->buffers[i];
 
+			if (!dsb || !dsb->lpvtbl)
+				continue;
 			dsb->lpvtbl->fnAddRef(dsb);
 			if (dsb->buflen && dsb->playing) {
 				playing++;
@@ -882,7 +1031,7 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
 		DWORD		xid;
 
 		dsound = (*ppDS);
-		hnd = CreateThread(NULL,NULL,DSOUND_thread,0,0,&xid);
+		hnd = CreateThread(NULL,0,DSOUND_thread,0,0,&xid);
 	}
 	return 0;
 #else

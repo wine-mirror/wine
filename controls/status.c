@@ -103,9 +103,19 @@ SB_DrawPart( HDC32 hdc, LPRECT32 lprc, HICON32 hIcon,
     /* now draw text */
     if (text) {
       int oldbkmode = SetBkMode32(hdc, TRANSPARENT);
+      LPSTR p = text;
+      UINT32 align = DT_LEFT;
+      if (*p == '\t') {
+	p++;
+	align = DT_CENTER;
+
+	if (*p == '\t') {
+	  p++;
+	  align = DT_RIGHT;
+	}
+      }
       r.left += 3;
-      DrawText32A(hdc, text, lstrlen32A(text),
-		  &r, DT_LEFT|DT_VCENTER|DT_SINGLELINE);  
+      DrawText32A(hdc, p, lstrlen32A(p), &r, align|DT_VCENTER|DT_SINGLELINE);
       if (oldbkmode != TRANSPARENT)
 	SetBkMode32(hdc, oldbkmode);
     }
@@ -118,6 +128,7 @@ SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
     int      i;
     RECT32   rect;
     HBRUSH32 hbrBk;
+    HFONT32 hOldFont;
     WND *wndPtr;
 
     wndPtr = WIN_FindWndPtr(hwnd);
@@ -133,6 +144,8 @@ SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
     else
 	hbrBk = GetSysColorBrush32 (COLOR_3DFACE);
     FillRect32(hdc, &rect, hbrBk);
+
+    hOldFont = SelectObject32 (hdc, self->hFont ? self->hFont : self->hDefaultFont);
 
     if (self->simple) {
 	SB_DrawPart (hdc,
@@ -164,6 +177,8 @@ SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
 			     self->parts[i].style);
 	}
     }
+
+    SelectObject32 (hdc, hOldFont);
 
     if (self->clrBk != CLR_DEFAULT)
 	DeleteObject32 (hbrBk);
@@ -252,6 +267,7 @@ SW_SetText(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 	}
     }
     InvalidateRect32(hwnd, &part->bound, FALSE);
+//    SW_RefreshPart (hdc, part);
     return TRUE;
 }
 
@@ -320,9 +336,10 @@ SW_GetParts(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 {
-    RECT32	rect;
     LPCREATESTRUCT32A lpCreate = (LPCREATESTRUCT32A) lParam;
-    int	height, width, len;
+    NONCLIENTMETRICS32A nclm;
+    RECT32	rect;
+    int	        width, len;
     HDC32	hdc;
     HWND32	parent;
     WND *wndPtr;
@@ -331,7 +348,6 @@ SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     wndPtr = WIN_FindWndPtr(hwnd);
     self = (STATUSWINDOWINFO*)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
 					 sizeof(STATUSWINDOWINFO));
-
     wndPtr->wExtra[0] = (DWORD)self;
 
     self->numParts = 1;
@@ -340,6 +356,10 @@ SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     self->clrBk = CLR_DEFAULT;
     self->hFont = 0;
     GetClientRect32(hwnd, &rect);
+
+    nclm.cbSize = sizeof(NONCLIENTMETRICS32A);
+    SystemParametersInfo32A (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+    self->hDefaultFont = CreateFontIndirect32A (&nclm.lfStatusFont);
 
     /* initialize simple case */
     self->part0.bound = rect;
@@ -362,11 +382,14 @@ SW_Create(HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
         lstrcpy32A (self->parts[0].text, lpCreate->lpszName);
     }
 
-    height = 20;
     if ((hdc = GetDC32 (0))) {
 	TEXTMETRIC32A tm;
+	HFONT32 hOldFont;
+
+	hOldFont = SelectObject32 (hdc,self->hDefaultFont);
 	GetTextMetrics32A(hdc, &tm);
 	self->textHeight = tm.tmHeight;
+	SelectObject32 (hdc, hOldFont);
 	ReleaseDC32(0, hdc);
     }
 
@@ -554,6 +577,11 @@ SW_Destroy(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     if (self->part0.text && (self->part0.style != SBT_OWNERDRAW))
 	HeapFree(SystemHeap, 0, self->part0.text);
     HeapFree(SystemHeap, 0, self->parts);
+
+    /* delete default font */
+    if (self->hDefaultFont)
+	DeleteObject32 (self->hDefaultFont);
+
     HeapFree(SystemHeap, 0, self);
     return 0;
 }
@@ -673,6 +701,7 @@ SW_WMSetText (STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lPara
         lstrcpy32A (part->text, (LPCSTR)lParam);
     }
     InvalidateRect32(hwnd, &part->bound, FALSE);
+//    SW_RefreshPart (hdc, part);
 
     return TRUE;
 }

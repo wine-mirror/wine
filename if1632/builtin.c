@@ -89,7 +89,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &GDI_Descriptor,      DLL_FLAG_ALWAYS_USED },
     { &SYSTEM_Descriptor,   DLL_FLAG_ALWAYS_USED },
     { &WPROCS_Descriptor,   DLL_FLAG_ALWAYS_USED },
-    { &WINDEBUG_Descriptor, DLL_FLAG_ALWAYS_USED },
+    { &WINDEBUG_Descriptor, DLL_FLAG_NOT_USED },
     { &COMMDLG_Descriptor,  DLL_FLAG_NOT_USED },
     { &COMPOBJ_Descriptor,  DLL_FLAG_NOT_USED },
     { &DDEML_Descriptor,    DLL_FLAG_NOT_USED },

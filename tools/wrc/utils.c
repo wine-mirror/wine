@@ -98,7 +98,7 @@ void error(const char *s, ...)
 
 void warning(const char *s, ...)
 {
-	va_list ap;
+	va_list ap;
 	va_start(ap, s);
 	fprintf(stderr, "Warning: ");
 	vfprintf(stderr, s, ap);
@@ -107,7 +107,7 @@ void warning(const char *s, ...)
 }
 
 void chat(const char *s, ...)
-{
+{
 	if(debuglevel & DEBUGLEVEL_CHAT)
 	{
 		va_list ap;
@@ -124,9 +124,14 @@ char *dup_basename(const char *name, const char *ext)
 	int namelen;
 	int extlen = strlen(ext);
 	char *base;
+	char *slash;
 
 	if(!name)
 		name = "wrc.tab";
+
+	slash = strrchr(name, '/');
+	if (slash)
+		name = slash + 1;
 
 	namelen = strlen(name);
 

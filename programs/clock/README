@@ -8,11 +8,5 @@
  Please see file TODO for things to do and keep the file ChangeLog
  up to date.
 
- Code is currently under heavy construction. Nearly all files will 
- change until next release. You can speed up development of clock
- if you send patches and additions directly to my personal email 
- address <mbaur@g26.ethz.ch>.
-
- I also try to read news:comp.emulators.ms-windows.wine frequently, 
- so I can also integrate patches posted via usenet.
-
+ Code is currently under heavy construction. Please direct patches and
+ additions to my personal email address <mbaur@g26.ethz.ch>

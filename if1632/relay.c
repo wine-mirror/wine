@@ -253,7 +253,10 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
         DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
         nb_args = stack[1] / sizeof(WORD);
-        while (nb_args--) printf( ",0x%04x", *(--stack16) );
+        while (nb_args--) {
+	    --stack16;
+	    DPRINTF( ",0x%04x", *stack16 );
+	}
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
@@ -267,7 +270,10 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
                 HIWORD(stack[0]), LOWORD(stack[0]),
                 SELECTOROF(thdb->cur_stack) );
         stack++;
-        while (nb_args--) DPRINTF(",0x%04x", *stack++ );
+        while (nb_args--) {
+	    DPRINTF(",0x%04x", *stack );
+	    stack++;
+	}
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(thdb->cur_stack),
                 OFFSETOF(thdb->cur_stack) );
     }

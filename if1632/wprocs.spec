@@ -13,6 +13,7 @@ type	win16
 28 pascal MyAlloc(word word word) NE_AllocateSegment
 29 pascal DefResourceHandler(word word word) NE_DefResourceHandler
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc16
+31 pascal16 ASPI_DOS_func(long) ASPI_DOS_func
  
 # Interrupt vectors 0-255 are ordinals 100-355
 # The 'word' parameter are the flags pushed on the stack by the interrupt

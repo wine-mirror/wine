@@ -153,7 +153,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
     case WM_RBUTTONDOWN:
     case WM_NCRBUTTONDOWN:
-        if( wndPtr->flags & WIN_ISWIN32 ) 
+        if ((wndPtr->flags & WIN_ISWIN32) || TWEAK_Win95Look)
         {
 	    ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
             SendMessage32A( wndPtr->hwndSelf, WM_CONTEXTMENU,
@@ -167,7 +167,6 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
      /* else 
       *     FIXME: Track system popup if click was in the caption area. */
-
 	break;
 
     case WM_NCACTIVATE:

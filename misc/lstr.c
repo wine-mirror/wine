@@ -178,7 +178,7 @@ void WINAPI OutputDebugString16( LPCSTR str )
     if ((p > buffer) && (p[-1] == '\n')) p[1] = '\0'; /* Remove trailing \n */
     if (!GetModuleName( GetCurrentTask(), module, sizeof(module) ))
         strcpy( module, "???" );
-    TRACE(resource, "%s says '%s'\n", module, buffer );
+    DUMP("%s says '%s'\n", module, buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 

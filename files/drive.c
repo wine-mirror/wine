@@ -542,6 +542,9 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
 	                        "drive %c already exists\n",
 			'A' + existing_drive, 'A' + new_drive,
 			'A' + new_drive );
+	/* it is already mapped there, so return success */
+	if (!strcmp(old->root,new->root))
+	    return 1;
 	return 0;
     }
 
@@ -851,6 +854,10 @@ BOOL32 WINAPI SetCurrentDirectory32A( LPCSTR dir )
 {
     int drive = DRIVE_GetCurrentDrive();
 
+    if (!dir) {
+    	ERR(file,"(NULL)!\n");
+	return FALSE;
+    }
     if (dir[0] && (dir[1]==':'))
     {
         drive = tolower( *dir ) - 'a';

@@ -173,7 +173,7 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
             return (FARPROC16)PrintSetupDlgProc;
         if (!strcmp(name,"ReplaceTextDlgProc"))
             return (FARPROC16)ReplaceTextDlgProc16;
-        WARN(module,"No mapping for %s(), add one in library/miscstubs.c\n",name);
+        FIXME(module,"No mapping for %s(), add one in library/miscstubs.c\n",name);
         assert( FALSE );
         return NULL;
     }
@@ -496,7 +496,7 @@ HMODULE32 WINAPI LoadLibraryEx32W(LPCWSTR libnameW,HFILE32 hfile,DWORD flags)
  */
 BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
 {
-    WARN(module,"(%08x): stub\n", hLibModule);
+    FIXME(module,"(%08x): stub\n", hLibModule);
     return TRUE;  /* FIXME */
 }
 

@@ -15,6 +15,8 @@
 #include "callback.h"
 #include "windows.h"
 #include "miscemu.h"
+#include "selectors.h"
+#include "sig_context.h"
 #include "debug.h"
 
 typedef struct
@@ -33,10 +35,17 @@ static BOOL32 SYS_TimersDisabled = FALSE;
 
 /***********************************************************************
  *           SYSTEM_TimerTick
+ * FIXME: It is a very bad idea to call 16bit code in a signal handler:
+ *	  If the signal reached us in 16 bit code, we could have a broken
+ *	  %FS, which is in turned saved into the single global
+ *	  CALLTO16_Current_fs temporary storage, so a single misplaced
+ *	  signal crashes the whole WINE process.
+ *	  This needs more thought. -MM
  */
-static void SYSTEM_TimerTick(void)
+static HANDLER_DEF(SYSTEM_TimerTick)
 {
     int i;
+    HANDLER_INIT();
 
     for (i = 0; i < NB_SYS_TIMERS; i++)
     {
@@ -44,11 +53,14 @@ static void SYSTEM_TimerTick(void)
         if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
         {
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
-            Callbacks->CallSystemTimerProc( SYS_Timers[i].callback );
+
+	    if (SYS_Timers[i].callback == (FARPROC16)DOSMEM_Tick) {
+	    	DOSMEM_Tick();
+	    } else
+		Callbacks->CallSystemTimerProc( SYS_Timers[i].callback );
         }
     }
 }
-
 
 /**********************************************************************
  *           SYSTEM_StartTicks
@@ -62,7 +74,7 @@ static void SYSTEM_StartTicks(void)
     if (!handler_installed)
     {
         handler_installed = TRUE;
-        SIGNAL_SetHandler( SIGALRM, SYSTEM_TimerTick, 1 );
+	SIGNAL_SetHandler( SIGALRM, SYSTEM_TimerTick, 1 );
     }
 #ifndef __EMX__ /* FIXME: Time don't work... Use BIOS directly instead */
     {
@@ -129,6 +141,14 @@ DWORD WINAPI InquireSystem( WORD code, WORD arg )
 WORD WINAPI CreateSystemTimer( WORD rate, FARPROC16 callback )
 {
     int i;
+
+    /* FIXME: HACK: do not create system timers due to problems mentioned
+     * above, except DOSMEM_Tick().
+     */
+    if (callback!=(FARPROC16)DOSMEM_Tick) {
+    	FIXME(system,"are currently broken, returning 0.\n");
+    	return 0;
+    }
 
     for (i = 0; i < NB_SYS_TIMERS; i++)
         if (!SYS_Timers[i].callback)  /* Found one */

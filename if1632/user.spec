@@ -255,10 +255,10 @@ file	user.exe
 248 pascal16 GetOpenClipboardWindow() GetOpenClipboardWindow16
 249 pascal16 GetAsyncKeyState(word) GetAsyncKeyState16
 250 pascal16 GetMenuState(word word word) GetMenuState16
-251 pascal   SendDriverMessage(word word long long) SendDriverMessage
-252 pascal16 OpenDriver(str str long) OpenDriver
-253 pascal   CloseDriver(word long long) CloseDriver
-254 pascal16 GetDriverModuleHandle(word) GetDriverModuleHandle
+251 pascal   SendDriverMessage(word word long long) SendDriverMessage16
+252 pascal16 OpenDriver(str str long) OpenDriver16
+253 pascal   CloseDriver(word long long) CloseDriver16
+254 pascal16 GetDriverModuleHandle(word) GetDriverModuleHandle16
 255 pascal   DefDriverProc(long word word long long) DefDriverProc
 256 pascal16 GetDriverInfo(word ptr) GetDriverInfo
 257 pascal16 GetNextDriver(word long) GetNextDriver
@@ -477,7 +477,7 @@ file	user.exe
 529 pascal16 WNetPropertyDialog(word word ptr word) WNetPropertyDialog
 530 pascal16 WNetGetDirectoryType(ptr ptr) WNetGetDirectoryType16
 531 pascal16 WNetDirectoryNotify(word ptr word) WNetDirectoryNotify
-532 pascal16 WNetGetPropertyText(word word word ptr word) WNetGetPropertyText
+532 pascal16 WNetGetPropertyText(word word str str word word) WNetGetPropertyText
 533 stub WNetInitialize
 534 stub WNetLogon
 600 pascal16 GetShellWindow() GetShellWindow16

@@ -960,11 +960,19 @@ static ULONG WINAPI IDirectDrawClipper_Release(LPDIRECTDRAWCLIPPER this) {
 	return 0;
 }
 
+static HRESULT WINAPI IDirectDrawClipper_GetClipList(
+	LPDIRECTDRAWCLIPPER this,LPRECT32 rects,LPRGNDATA lprgn,LPDWORD hmm
+) {
+	FIXME(ddraw,"(%p,%p,%p,%p),stub!\n",this,rects,lprgn,hmm);
+	if (hmm) *hmm=0;
+	return 0;
+}
+
 static struct IDirectDrawClipper_VTable ddclipvt = {
 	(void*)1,
 	(void*)2,
 	IDirectDrawClipper_Release,
-	(void*)4,
+	IDirectDrawClipper_GetClipList,
 	(void*)5,
 	(void*)6,
 	(void*)7,
@@ -1511,6 +1519,14 @@ static HRESULT WINAPI IDirectDraw_GetMonitorFrequency(
 	return 0;
 }
 
+/* what can we directly decompress? */
+static HRESULT WINAPI IDirectDraw_GetFourCCCodes(
+	LPDIRECTDRAW this,LPDWORD x,LPDWORD y
+) {
+	FIXME(ddraw,"(%p,%p,%p), stub\n",this,x,y);
+	return 0;
+}
+
 static IDirectDraw_VTable ddvt = {
 	IDirectDraw_QueryInterface,
 	IDirectDraw_AddRef,
@@ -1525,7 +1541,7 @@ static IDirectDraw_VTable ddvt = {
 	IDirectDraw_FlipToGDISurface,
 	IDirectDraw_GetCaps,
 	IDirectDraw_GetDisplayMode,
-	(void*)14,
+	IDirectDraw_GetFourCCCodes,
 	(void*)15,
 	IDirectDraw_GetMonitorFrequency,
 	(void*)17,

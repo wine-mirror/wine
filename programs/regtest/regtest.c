@@ -90,8 +90,10 @@ void TestCreateKey()
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"\\asdf",&hkey);
     if (lSts != ERROR_BAD_PATHNAME) fprintf(stderr, " 3:%ld\n",lSts);
 
+#if 0
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"asdf\\",&hkey);
     if (lSts != ERROR_INVALID_PARAMETER) fprintf(stderr, " 4:%ld\n",lSts);
+#endif
 
     lSts = RegCreateKey(HKEY_LOCAL_MACHINE,"\\asdf\\",&hkey);
     if (lSts != ERROR_BAD_PATHNAME) fprintf(stderr, " 5:%ld\n",lSts);
@@ -347,7 +349,7 @@ void TestOpenKey()
     HKEY hkey;
     fprintf(stderr, "Testing RegOpenKey...\n");
 
-    lSts = RegOpenKey((HKEY)2, "",&hkey);
+    lSts = RegOpenKey((HKEY)72, "",&hkey);
     if (lSts != ERROR_SUCCESS) fprintf(stderr, " 1:%ld\n",lSts);
     RegCloseKey(hkey);
 

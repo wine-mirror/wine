@@ -5,10 +5,10 @@
  * Copyright 1998 David Lee Lambert
  * 
  */
-#include "windows.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <debug.h>     
+#include "windows.h"
 #include "font.h"
 
 

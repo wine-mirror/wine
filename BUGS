@@ -5,26 +5,27 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Dec 1997 -
+As of Jun 1998 -
 
 General:
 
  * TrueType, .FON rasterizer.
 
- * No thread/process scheduling support in Win32 code. 
+ * Incomplete thread/process scheduling support in Win32 code.
 
- * Very alpha printing code. [john@division.co.uk]
+ * Very alpha printing code using win16 drivers.
+   We should add a WINE internal PostScript driver (all other printers
+   can be supported using ghostscript filters).
 
  * Extremely alpha Win95 interface code.
 
  * No OLE2 and OLE32 support (including OLE2 interfaces etc.).
 
- * No MS Video support (perhaps interface with xanim, don't hold
-   your breath for this one).
+ * No MS Video support. [just started, marcus@jet.franken.de]
 
- * COMDLG32 support not complete yet.
+ * COMDLG32 support not complete yet [bertho@akhphd.au.dk?]
 
- * No COMMCTRL/COMCTL32 support.
+ * COMMCTRL/COMCTL32 support in progress [ekohl@abo.rhein-zeitung.de].
 
  * No manual pages describing the various Windows calls.
 	- You can find information about most of the Win32 API calls
@@ -38,6 +39,7 @@ Miscellaneous:
 
  * 16-bit Eudora 1.5.2 goes into recursion trying to display
    a horizontal scrollbar (SetScrollPos() artifact).
+   Windows95 telnet.exe and NT 3.51 telnet.exe exhibit the same behaviour.
 
  * mIRC 'commands' menu stays on top and will not refresh.
 
@@ -53,7 +55,7 @@ Miscellaneous:
    (probably because of bytes width stuff).
 
  * Netscape displays partially downloaded inline graphics with
-   wrong offsets. 
+   wrong offsets.
 
  * Text alignment problems in Word and Write (variable pitch fonts).
 

@@ -57,6 +57,7 @@
 #include "module.h"
 #include "global.h"
 #include "task.h"
+#include "snoop.h"
 #include "debug.h"
 
 static void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved);
@@ -162,14 +163,15 @@ FARPROC32 PE_FindExportedFunction(
                             addr = function[*ordinal];
                             if (!addr) return NULL;
                             if ((addr < rva_start) || (addr >= rva_end))
-                                return (FARPROC32)RVA(addr);
+				return SNOOP_GetProcAddress32(wm->module,ename,*ordinal,(FARPROC32)RVA(addr));
                             forward = (char *)RVA(addr);
                             break;
 			}
 			ordinal++;
 			name++;
 		}
-	} else {
+	} else 	{
+		int i;
 		if (LOWORD(funcName)-exports->Base > exports->NumberOfFunctions) {
 			TRACE(win32,"	ordinal %d out of range!\n",
                                       LOWORD(funcName));
@@ -177,8 +179,20 @@ FARPROC32 PE_FindExportedFunction(
 		}
 		addr = function[(int)funcName-exports->Base];
                 if (!addr) return NULL;
+		ename = "";
+		if (name) {
+		    for (i=0;i<exports->NumberOfNames;i++) {
+			    ename = (char*)RVA(*name);
+			    if (*ordinal == LOWORD(funcName)-exports->Base)
+			    	break;
+			    ordinal++;
+			    name++;
+		    }
+		    if (i==exports->NumberOfNames)
+		    	ename = "";
+		}
 		if ((addr < rva_start) || (addr >= rva_end))
-			return (FARPROC32)RVA(addr);
+			return SNOOP_GetProcAddress32(wm->module,ename,(DWORD)funcName-exports->Base,(FARPROC32)RVA(addr));
 		forward = (char *)RVA(addr);
 	}
 	if (forward)
@@ -584,6 +598,7 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
          */
         *(IMAGE_DOS_HEADER *)load_addr = *dos_header;
         *(IMAGE_NT_HEADERS *)(load_addr + dos_header->e_lfanew) = *nt_header;
+	memcpy(PE_SECTIONS(load_addr),PE_SECTIONS(hModule),sizeof(IMAGE_SECTION_HEADER)*nt_header->FileHeader.NumberOfSections);
 
         pe_seg = PE_SECTIONS(hModule);
 	for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++, pe_seg++)
@@ -681,11 +696,11 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size)
-		FIXME(win32,"Bound Import directory ignored\n");
+		TRACE(win32,"Bound Import directory ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_IAT].Size)
-		FIXME(win32,"Import Address Table directory ignored\n");
+		TRACE(win32,"Import Address Table directory ignored\n");
 	if(nt_header->OptionalHeader.DataDirectory[13].Size)
 		FIXME(win32,"Unknown directory 13 ignored\n");
 	if(nt_header->OptionalHeader.DataDirectory[14].Size)
@@ -769,7 +784,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 		    WARN( module, "Could not load external DLL '%s', using built-in module.\n", name );
 		    return hModule;
 		}
-		return 1;
+		return 0;
 	}
 	/* will go away ... */
 	if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {
@@ -795,7 +810,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 	    FreeLibrary16( hModule);
 	    HeapFree(process->heap,0,wm);
 	    ERR(win32,"can't load %s\n",ofs.szPathName);
-            return 21; /* FIXME: probably 0 */
+            return 0;
         }
 
 	/* (possible) recursion */
@@ -815,6 +830,8 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
 	    return 0;
 	}
         pModule->module32 = wm->module;
+	if (wm->binfmt.pe.pe_export)
+		SNOOP_RegisterDLL(wm->module,wm->modname,wm->binfmt.pe.pe_export->NumberOfFunctions);
 	return wm->module;
 }
 

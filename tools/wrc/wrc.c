@@ -33,6 +33,7 @@
 #include <ctype.h>
 
 #include <config.h>
+#include <resource.h>	/* For HAVE_WINE_CONSTRUCTOR */
 #include "wrc.h"
 #include "utils.h"
 #include "writeres.h"
@@ -45,6 +46,7 @@
 
 char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
+	"   -A          Auto register resources (only with gcc 2.7 and better)\n"
 	"   -b          Create a C array from a binary .res file\n"
 	"   -c          Add 'const' prefix to C constants\n"
 	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
@@ -86,7 +88,11 @@ char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
  * Default prefix for resource names used in the C array.
  * Option '-p name' sets it to 'name'
  */
+#ifdef NEED_UNDERSCORE_PREFIX
+char *prefix = "__Resource";
+#else
 char *prefix = "_Resource";
+#endif
 
 /*
  * Set if compiling in 32bit mode (default).
@@ -177,6 +183,11 @@ DWORD codepage = 0;
  */
 int pedantic = 0;
 
+/*
+ * Set when autoregister code must be added to the output (-A option)
+ */
+int auto_register = 0;
+
 char *output_name;		/* The name given by the -o option */
 char *input_name;		/* The name given on the command-line */
 char *header_name;		/* The name given by the -H option */
@@ -212,12 +223,15 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "a:bcC:d:D:eghH:I:l:no:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, "a:AbcC:d:D:eghH:I:l:no:p:rstTVw:W")) != EOF)
 	{
 		switch(optc)
 		{
 		case 'a':
 			alignment = atoi(optarg);
+			break;
+		case 'A':
+			auto_register = 1;
 			break;
 		case 'b':
 			binary = 1;
@@ -263,7 +277,13 @@ int main(int argc,char *argv[])
 			output_name = strdup(optarg);
 			break;
 		case 'p':
-			prefix = strdup(optarg);
+#ifdef NEED_UNDERSCORE_PREFIX
+			prefix = (char *)xmalloc(strlen(optarg)+2);
+			prefix[0] = '_';
+			strcpy(prefix+1, optarg);
+#else
+			prefix = xstrdup(optarg);
+#endif
 			break;
 		case 'r':
 			create_res = 1;
@@ -356,6 +376,14 @@ int main(int argc,char *argv[])
 			error("Option -r and -b cannot be used together\n");
 		}
 	}
+
+#if !defined(HAVE_WINE_CONSTRUCTOR)
+	if(auto_register)
+	{
+		warning("Autoregister code non-operable (HAVE_WINE_CONSTRUCTOR not defined)");
+		auto_register = 0;
+	}
+#endif
 
 	/* Set alignment power */
 	a = alignment;

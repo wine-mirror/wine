@@ -987,11 +987,18 @@ VOID __cdecl CRTDLL_delete(VOID* ptr)
 /*********************************************************************
  *                  _strdup          (CRTDLL.285)
  */
-LPSTR __cdecl CRTDLL__strdup(LPSTR ptr)
+LPSTR __cdecl CRTDLL__strdup(LPCSTR ptr)
 {
     return HEAP_strdupA(GetProcessHeap(),0,ptr);
 }
 
+/*********************************************************************
+ *                  _wcsdup          (CRTDLL.320)
+ */
+LPWSTR __cdecl CRTDLL__wcsdup(LPCWSTR ptr)
+{
+    return HEAP_strdupW(GetProcessHeap(),0,ptr);
+}
 
 /*********************************************************************
  *                  fclose           (CRTDLL.362)
@@ -1832,4 +1839,28 @@ LPSTR __cdecl CRTDLL_getenv(const char *name)
 LPSTR __cdecl CRTDLL__mbsrchr(LPSTR s,CHAR x) {
 	/* FIXME: handle multibyte strings */
 	return strrchr(s,x);
+}
+
+/*********************************************************************
+ *                  _memicmp           (CRTDLL.233)(NTDLL.868)
+ * A stringcompare, without \0 check
+ * RETURNS
+ *	-1:if first string is alphabetically before second string
+ *	1:if second ''    ''      ''          ''   first   ''
+ *      0:if both are equal.
+ */
+INT32 __cdecl CRTDLL__memicmp(
+	LPCSTR s1,	/* [in] first string */
+	LPCSTR s2,	/* [in] second string */
+	DWORD len	/* [in] length to compare */
+) { 
+	int	i;
+
+	for (i=0;i<len;i++) {
+		if (tolower(s1[i])<tolower(s2[i]))
+			return -1;
+		if (tolower(s1[i])>tolower(s2[i]))
+			return  1;
+	}
+	return 0;
 }

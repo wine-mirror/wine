@@ -1736,3 +1736,13 @@ LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM l
 	);
 	return 0;
 }
+
+BOOL32 WINAPI SendMessageCallBack32A(
+	HWND32 hWnd,UINT32 Msg,WPARAM32 wParam,LPARAM lParam,
+	/*SENDASYNCPROC*/FARPROC32 lpResultCallBack,DWORD dwData
+) {
+	FIXME(msg,"(0x%04x,0x%04x,0x%08lx,0x%08lx,%p,0x%08lx),stub!\n",
+		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData
+	);
+	return FALSE;
+}

@@ -430,7 +430,7 @@ VOID DIALOG_TimeDate(VOID)
   
   printf("Date: %s\n", date);
   
-  GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, date, MAX_STRING_LEN);
+  GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, date, MAX_STRING_LEN);
   
   printf("Time: %s\n", date);
 

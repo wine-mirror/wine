@@ -5,6 +5,7 @@
 #ifdef __WINE__  /* Debugging interface is internal to Wine */
 
 #include <stdio.h>
+#include "config.h"
 #include "debugstr.h"
 
 #define DEBUG_RUNTIME
@@ -39,18 +40,44 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
   if(!DEBUGGING(cl, ch)) ; \
   else DPRINTF(# cl ":" # ch ":%s " format, __FUNCTION__ , ## args)
 
+/* use configure to allow user to compile out debugging messages */
+
+#ifndef NO_TRACE_MSGS
 #define TRACE(ch, fmt, args...) DPRINTF_(trace, ch, fmt, ## args)
+#else
+#define TRACE(ch, fmt, args...)
+#endif /* NO_TRACE_MSGS */
+
+#ifndef NO_DEBUG_MSGS
 #define WARN(ch, fmt, args...)  DPRINTF_(warn,  ch, fmt, ## args)
 #define FIXME(ch, fmt, args...) DPRINTF_(fixme, ch, fmt, ## args)
-#define ERR(ch, fmt, args...)   DPRINTF_(err, ch, fmt, ## args)
-
 #define DUMP(format, args...)   DPRINTF(format, ## args)
+#else
+#define WARN(ch, fmt, args...)
+#define FIXME(ch, fmt, args...)
+#define DUMP(format, args...)
+#endif /* NO_DEBUG_MSGS */
+
+/* define error macro regardless of what is configured */
+#define ERR(ch, fmt, args...)   DPRINTF_(err, ch, fmt, ## args)
 #define MSG(format, args...)    fprintf(stderr, format, ## args)
 
-#define FIXME_ON(ch)  DEBUGGING(fixme, ch)
-#define ERR_ON(ch)    DEBUGGING(err, ch)
-#define WARN_ON(ch)   DEBUGGING(warn, ch)
+/* if the debug message is compiled out, make these return false */
+#ifndef NO_TRACE_MSGS
 #define TRACE_ON(ch)  DEBUGGING(trace, ch)
+#else
+#define TRACE_ON(ch) 0
+#endif /* NO_TRACE_MSGS */
+
+#ifndef NO_DEBUG_MSGS
+#define WARN_ON(ch)   DEBUGGING(warn, ch)
+#define FIXME_ON(ch)  DEBUGGING(fixme, ch)
+#else
+#define WARN_ON(ch) 0
+#define FIXME_ON(ch) 0
+#endif /* NO_DEBUG_MSGS */
+
+#define ERR_ON(ch)    DEBUGGING(err, ch)
 
 #endif  /* __WINE__ */
 

@@ -4,6 +4,12 @@
  * Copyright 1993,1994 Alexandre Julliard
  */
 
+
+/*
+ * FIXME: none of these functions obey the GM_ADVANCED
+ * graphics mode
+ */
+
 #include <math.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
@@ -72,6 +78,9 @@ X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
  *
  * Helper functions for Arc(), Chord() and Pie().
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
+ *
+ * FIXME: incorrect with thick pen and/or PS_INSIDEFRAME style
+ *        see ellipse and rectangle functions
  */
 static BOOL32
 X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
@@ -191,24 +200,32 @@ X11DRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 BOOL32
 X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 {
+    INT32 width, oldwidth;
+
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
-    if ((left == right) || (top == bottom)) return FALSE;
+    if ((left == right) || (top == bottom)) return TRUE;
 
     if (right < left) { INT32 tmp = right; right = left; left = tmp; }
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
     
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
-        (dc->u.x.pen.width < right-left-1) &&
-        (dc->u.x.pen.width < bottom-top-1))
+    oldwidth = width = dc->u.x.pen.width;
+    if (!width) width = 1;
+    if(dc->u.x.pen.style == PS_NULL) width = 0;
+
+    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
     {
-        left   += dc->u.x.pen.width / 2;
-        right  -= (dc->u.x.pen.width + 1) / 2;
-        top    += dc->u.x.pen.width / 2;
-        bottom -= (dc->u.x.pen.width + 1) / 2;
+        if (2*width > (right-left)) width=(right-left + 1)/2;
+        if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
+        left   += width / 2;
+        right  -= (width - 1) / 2;
+        top    += width / 2;
+        bottom -= (width - 1) / 2;
     }
+    if(width == 1) width=0;
+    dc->u.x.pen.width=width;
 
     if (DC_SetupGCForBrush( dc ))
 	TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
@@ -218,6 +235,7 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 	TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
+    dc->u.x.pen.width=oldwidth;
     return TRUE;
 }
 
@@ -228,39 +246,36 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 BOOL32
 X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 {
-    INT32 width;
+    INT32 width, oldwidth;
+
+    TRACE(graphics, "(%d %d %d %d)\n", 
+    	left, top, right, bottom);
+
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
 
+    if ((left == right) || (top == bottom)) return TRUE;
+
     if (right < left) { INT32 tmp = right; right = left; left = tmp; }
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
 
-    if ((left == right) || (top == bottom))
-    {
-#if 0
-	if (DC_SetupGCForPen( dc ))
-	    TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
-		  dc->w.DCOrgX + left,
-		  dc->w.DCOrgY + top,
-		  dc->w.DCOrgX + right,
-		  dc->w.DCOrgY + bottom);
-#endif
-	return TRUE;
-    }
-    width = dc->u.x.pen.width;
+    oldwidth = width = dc->u.x.pen.width;
     if (!width) width = 1;
     if(dc->u.x.pen.style == PS_NULL) width = 0;
 
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
-        (width < right-left) && (width < bottom-top))
+    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
     {
+        if (2*width > (right-left)) width=(right-left + 1)/2;
+        if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
         left   += width / 2;
-        right  -= (width + 1) / 2;
+        right  -= (width - 1) / 2;
         top    += width / 2;
-        bottom -= (width + 1) / 2;
+        bottom -= (width - 1) / 2;
     }
+    if(width == 1) width=0;
+    dc->u.x.pen.width=width;
 
     if ((right > left + width) && (bottom > top + width))
     {
@@ -274,6 +289,8 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
+
+    dc->u.x.pen.width=oldwidth;
     return TRUE;
 }
 
@@ -284,6 +301,8 @@ BOOL32
 X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
                   INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
+    INT32 width, oldwidth;
+
     TRACE(graphics, "(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
 
@@ -291,6 +310,10 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
+
+    if ((left == right) || (top == bottom))
+	return TRUE;
+
     ell_width  = abs( ell_width * dc->vportExtX / dc->wndExtX );
     ell_height = abs( ell_height * dc->vportExtY / dc->wndExtY );
 
@@ -298,25 +321,62 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
 
     if (right < left) { INT32 tmp = right; right = left; left = tmp; }
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
-    if (ell_width > right - left) ell_width = right - left;
-    if (ell_height > bottom - top) ell_height = bottom - top;
+
+    oldwidth=width = dc->u.x.pen.width;
+    if (!width) width = 1;
+    if(dc->u.x.pen.style == PS_NULL) width = 0;
+
+    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
+    {
+        if (2*width > (right-left)) width=(right-left + 1)/2;
+        if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
+        left   += width / 2;
+        right  -= (width - 1) / 2;
+        top    += width / 2;
+        bottom -= (width - 1) / 2;
+    }
+    if(width == 1) width=0;
+    dc->u.x.pen.width=width;
 
     if (DC_SetupGCForBrush( dc ))
     {
-        if (ell_width && ell_height)
-        {
-            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+        if (ell_width > (right-left) )
+            if (ell_height > (bottom-top) )
+                    TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                              dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                              right - left - 1, bottom - top - 1,
+                              0, 360 * 64 );
+            else{
+                    TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                              dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                              right - left - 1, ell_height, 0, 180 * 64 );
+                    TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                              dc->w.DCOrgX + left,
+                              dc->w.DCOrgY + bottom - ell_height - 1,
+                              right - left - 1, ell_height, 180 * 64, 180 * 64 );
+           }
+	else if (ell_height > (bottom-top) ){
+                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                      ell_width, bottom - top - 1, 90 * 64, 180 * 64 );
+                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width -1, dc->w.DCOrgY + top,
+                      ell_width, bottom - top - 1, 270 * 64, 180 * 64 );
+        }else{
+                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width, ell_height, 90 * 64, 90 * 64 );
-            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
+                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left,
+                      dc->w.DCOrgY + bottom - ell_height - 1,
                       ell_width, ell_height, 180 * 64, 90 * 64 );
-            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + right - ell_width,
-                      dc->w.DCOrgY + bottom - ell_height,
+                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width - 1,
+                      dc->w.DCOrgY + bottom - ell_height - 1,
                       ell_width, ell_height, 270 * 64, 90 * 64 );
-            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
+                TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width - 1,
+                      dc->w.DCOrgY + top,
                       ell_width, ell_height, 0, 90 * 64 );
         }
         if (ell_width < right - left)
@@ -328,61 +388,83 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
             TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left + ell_width / 2,
                             dc->w.DCOrgY + bottom - (ell_height+1) / 2,
-                            right - left - ell_width, (ell_height+1) / 2 );
+                            right - left - ell_width,
+                            (ell_height+1) / 2 - 1 );
         }
         if  (ell_height < bottom - top)
         {
             TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left,
                             dc->w.DCOrgY + top + ell_height / 2,
-                            right - left, bottom - top - ell_height );
+                            right - left - 1, bottom - top - ell_height );
         }
     }
-    if (DC_SetupGCForPen(dc))
-    {
-        if (ell_width && ell_height)
-        {
+    if (DC_SetupGCForPen(dc)) {
+        if (ell_width > (right-left) )
+            if (ell_height > (bottom-top) )
+                TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+		      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		      right - left - 1, bottom -top - 1, 0 , 360 * 64 );
+            else{
+		TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+		      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		      right - left - 1, ell_height - 1, 0 , 180 * 64 );
+		TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+		      dc->w.DCOrgX + left, 
+                      dc->w.DCOrgY + bottom - ell_height,
+		      right - left - 1, ell_height - 1, 180 * 64 , 180 * 64 );
+            }
+	else if (ell_height > (bottom-top) ){
+                TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                      ell_width - 1 , bottom - top - 1, 90 * 64 , 180 * 64 );
+                TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width, 
+                      dc->w.DCOrgY + top,
+                      ell_width - 1 , bottom - top - 1, 270 * 64 , 180 * 64 );
+	}else{
             TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-                      ell_width, ell_height, 90 * 64, 90 * 64 );
+                      ell_width - 1, ell_height - 1, 90 * 64, 90 * 64 );
             TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
-                      ell_width, ell_height, 180 * 64, 90 * 64 );
+                      ell_width - 1, ell_height - 1, 180 * 64, 90 * 64 );
             TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + right - ell_width,
                       dc->w.DCOrgY + bottom - ell_height,
-                      ell_width, ell_height, 270 * 64, 90 * 64 );
+                      ell_width - 1, ell_height - 1, 270 * 64, 90 * 64 );
             TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
-                      ell_width, ell_height, 0, 90 * 64 );
+                      ell_width - 1, ell_height - 1, 0, 90 * 64 );
 	}
-        if (ell_width < right - left)
-        {
-            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + left + ell_width / 2,
-                       dc->w.DCOrgY + top,
-                       dc->w.DCOrgX + right - ell_width / 2,
-                       dc->w.DCOrgY + top );
-            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + left + ell_width / 2,
-                       dc->w.DCOrgY + bottom,
-                       dc->w.DCOrgX + right - ell_width / 2,
-                       dc->w.DCOrgY + bottom );
-        }
-        if (ell_height < bottom - top)
-        {
-            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + right,
-                       dc->w.DCOrgY + top + ell_height / 2,
-                       dc->w.DCOrgX + right,
-                       dc->w.DCOrgY + bottom - ell_height / 2 );
-            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + left,
-                       dc->w.DCOrgY + top + ell_height / 2,
-                       dc->w.DCOrgX + left,
-                       dc->w.DCOrgY + bottom - ell_height / 2 );
-        }
+	if (ell_width < right - left)
+	{
+	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+		       dc->w.DCOrgX + left + ell_width / 2 - 2,
+		       dc->w.DCOrgY + top,
+		       dc->w.DCOrgX + right - ell_width / 2,
+		       dc->w.DCOrgY + top);
+	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+		       dc->w.DCOrgX + left + ell_width / 2 - 2,
+		       dc->w.DCOrgY + bottom - 1,
+		       dc->w.DCOrgX + right - ell_width / 2,
+		       dc->w.DCOrgY + bottom - 1);
+	}
+	if (ell_height < bottom - top)
+	{
+	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+		       dc->w.DCOrgX + right - 1,
+		       dc->w.DCOrgY + top + ell_height / 2 - 1,
+		       dc->w.DCOrgX + right - 1,
+		       dc->w.DCOrgY + bottom - ell_height / 2);
+	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+		       dc->w.DCOrgX + left,
+		       dc->w.DCOrgY + top + ell_height / 2 - 1,
+		       dc->w.DCOrgX + left,
+		       dc->w.DCOrgY + bottom - ell_height / 2);
+	}
     }
+    dc->u.x.pen.width=oldwidth;
     return TRUE;
 }
 

@@ -131,8 +131,8 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
   INT32 cCount;
   DWORD dwMask;
 
-  if (lpInitCtrls == NULL) return (FALSE);
-  if (lpInitCtrls->dwSize < sizeof(INITCOMMONCONTROLSEX)) return (FALSE);
+  if (lpInitCtrls == NULL) return FALSE;
+  if (lpInitCtrls->dwSize < sizeof(INITCOMMONCONTROLSEX)) return FALSE;
 
   for (cCount = 0; cCount <= 31; cCount++) {
     dwMask = 1 << cCount;
@@ -160,6 +160,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
       case ICC_TAB_CLASSES:
         TRACE (commctrl, "No tab class implemented!\n");
         TRACE (commctrl, "No tooltip class implemented!\n");
+        UPDOWN_Register ();
         break;
 
       case ICC_UPDOWN_CLASS:
@@ -178,6 +179,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
         TRACE (commctrl, "No animation class implemented!\n");
         break;
 
+      /* advanced classes - not included in Win95 */
       case ICC_DATE_CLASSES:
         TRACE (commctrl, "No month calendar class implemented!\n");
         TRACE (commctrl, "No date picker class implemented!\n");
@@ -211,7 +213,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
     }
   }
 
-  return (TRUE);
+  return TRUE;
 }
 
 
@@ -242,13 +244,13 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
             }
             else {
                 if (HIWORD(wParam) & MF_POPUP) {
-                    TRACE (commctrl, "Popup menu selected!\n");
-                    FIXME (commctrl, "No popup menu texts!\n");
+                    TRACE (commctrl, "popup menu selected!\n");
+                    FIXME (commctrl, "no popup menu texts!\n");
 
                     szStatusText[0] = 0;
                 }
                 else {
-                    TRACE (commctrl, "Menu item selected!\n");
+                    TRACE (commctrl, "menu item selected!\n");
                     if (!LoadString32A (hInst, LOWORD(wParam), szStatusText, 128))
                         szStatusText[0] = 0;
                 }
@@ -284,7 +286,8 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
     if(hwndTB) {
 	TBADDBITMAP tbab;
 
-        SendMessage32A (hwndTB, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+        SendMessage32A (hwndTB, TB_BUTTONSTRUCTSIZE,
+			(WPARAM32)uStructSize, 0);
 
 	/* set bitmap and button size */
 
@@ -296,10 +299,10 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
 
 	/* add buttons */
 	SendMessage32A (hwndTB, TB_ADDBUTTONS32A,
-			(WPARAM32)iNumButtons, (LPARAM)&lpButtons);
+			(WPARAM32)iNumButtons, (LPARAM)lpButtons);
     }
 
-    return (hwndTB);
+    return hwndTB;
 }
 
 
@@ -339,5 +342,41 @@ CreateToolbar (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
     return CreateToolbarEx (hwnd, style | CCS_NODIVIDER, wID, nBitmaps,
 			    hBMInst, wBMID, (LPCTBBUTTON)lpButtons,
 			    iNumButtons, 0, 0, 0, 0, sizeof (OLDTBBUTTON));
+}
+
+
+/***********************************************************************
+ * GetEffectiveClientRect [COMCTL32.4]
+ *
+ *
+ *
+ */
+
+VOID WINAPI
+GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
+{
+    RECT32  rcClient, rcCtrl;
+    HWND32  hwndCtrl;
+    LPINT32 lpRun;
+
+    TRACE (commctrl, "hwnd=0x%08lx lpRect=0x%08lx lpInfo=0x%08lx\n",
+	   (DWORD)hwnd, (DWORD)lpRect, (DWORD)lpInfo);
+
+    GetClientRect32 (hwnd, &rcClient);
+
+    lpRun = lpInfo;
+    TRACE (commctrl, "*lpRun=0x%08x\n", *lpRun);
+    while (*lpRun) {
+	lpRun++;
+	TRACE (commctrl, "control id 0x%08x\n", *lpRun);
+	hwndCtrl = GetDlgItem32 (hwnd, *lpRun);
+	GetWindowRect32 (hwndCtrl, &rcCtrl);
+	MapWindowPoints32 (NULL, hwnd, (LPPOINT32)&rcCtrl, 2);
+	SubtractRect32 (&rcClient, &rcClient, &rcCtrl);
+	lpRun++;
+	TRACE (commctrl, "*lpRun=0x%08x\n", *lpRun);
+    }
+
+    CopyRect32 (lpRect, &rcClient);
 }
 

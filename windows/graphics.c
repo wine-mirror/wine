@@ -52,6 +52,7 @@ BOOL32 GRAPH_DrawLines( HDC32 hdc, LPPOINT32 pXY, INT32 N, HPEN32 hPen )
 	    bRet = TRUE;
 	}
 	if( hPrevPen ) SelectObject32( hdc, hPrevPen );
+	GDI_HEAP_UNLOCK( hdc );
     }
     return bRet;
 }
@@ -69,10 +70,14 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 {
     BITMAPOBJ *bmp;
     DC *dc;
+    BOOL32 ret = TRUE;
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    {
+        GDI_HEAP_UNLOCK( hdc );
         return FALSE;
+    }
 
     xdest += dc->w.DCOrgX; ydest += dc->w.DCOrgY;
 
@@ -104,17 +109,19 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 			xsrc, ysrc, width, height, xdest, ydest, plane );
 	}
 	else 
+	{
 	    TSXCopyArea( display, bmp->pixmap, dc->u.x.drawable, 
 		       dc->u.x.gc, xsrc, ysrc, width, height, xdest, ydest );
+	}
     }
     else 
     {
-      GDI_HEAP_UNLOCK( hbitmap );
-      return FALSE;
+      ret = FALSE;
     }
 
+    GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hbitmap );
-    return TRUE;
+    return ret;
 }
 
 
@@ -195,6 +202,7 @@ void  GRAPH_DrawGenericReliefRect(
     }
 
     SelectObject32( hdc, hPrevBrush );
+    GDI_HEAP_UNLOCK( hdc );
 }
 
 
@@ -216,6 +224,7 @@ void GRAPH_DrawRectangle( HDC32 hdc, INT32 x, INT32 y,
 	    TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc, 
 			    x + dc->w.DCOrgX, y + dc->w.DCOrgY, w - 1, h - 1);
 	if( hPrevPen ) SelectObject32( hdc, hPrevPen );
+	GDI_HEAP_UNLOCK( hdc );
     }
 }
 
@@ -231,13 +240,17 @@ BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMonoBitmap, INT32 x, INT32 y)
     if ( hMonoBitmap ) 
     {
        if ( !(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hMonoBitmap, BITMAP_MAGIC)) 
-	   || bmp->bitmap.bmBitsPixel != 1 ) return FALSE;
-	  
+	   || bmp->bitmap.bmBitsPixel != 1 ) 
+       {
+	   GDI_HEAP_UNLOCK( hdc );
+	   return FALSE;
+       }
        TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX + x, dc->w.DCOrgY + y);
     }
 
     TSXSetClipMask( display, dc->u.x.gc, (bmp) ? bmp->pixmap : None );
 
+    GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hMonoBitmap );
     return TRUE;
 }

@@ -43,6 +43,9 @@ extern void SIGNAL_MaskAsyncEvents( BOOL32 flag );
 /* if1632/signal.c */
 extern BOOL32 SIGNAL_InitEmulator(void);
 
+/* misc/aspi.c */
+extern void ASPI_DOS_HandleInt(CONTEXT *context);
+
 #define INT_BARF(context,num) \
     fprintf( stderr, "int%x: unknown/not implemented parameters:\n" \
                      "int%x: AX %04x, BX %04x, CX %04x, DX %04x, " \

@@ -17,7 +17,7 @@
 #include "debug.h"
 
 static CRITICAL_SECTION Win16Mutex;
-static SEGPTR segWin16Mutex = NULL;
+static SEGPTR segWin16Mutex = (SEGPTR)NULL;
 
 
 /***********************************************
@@ -33,7 +33,7 @@ VOID WINAPI GetpWin16Lock(CRITICAL_SECTION **lock)
 /***********************************************
  *           _ConfirmWin16Lock    (KERNEL32.96)
  */
-DWORD _ConfirmWin16Lock(void)
+DWORD WINAPI _ConfirmWin16Lock(void)
 {
     FIXME(win32, "()\n");
     return 1;
@@ -42,7 +42,7 @@ DWORD _ConfirmWin16Lock(void)
 /***********************************************
  *           _EnterSysLevel    (KERNEL32.97)
  */
-VOID _EnterSysLevel(CRITICAL_SECTION *lock)
+VOID WINAPI _EnterSysLevel(CRITICAL_SECTION *lock)
 {
     FIXME(win32, "(%p)\n", lock);
 }
@@ -50,7 +50,7 @@ VOID _EnterSysLevel(CRITICAL_SECTION *lock)
 /***********************************************
  *           _EnterSysLevel    (KERNEL32.98)
  */
-VOID _LeaveSysLevel(CRITICAL_SECTION *lock)
+VOID WINAPI _LeaveSysLevel(CRITICAL_SECTION *lock)
 {
     FIXME(win32, "(%p)\n", lock);
 }
@@ -58,7 +58,7 @@ VOID _LeaveSysLevel(CRITICAL_SECTION *lock)
 /***********************************************
  *           ReleaseThunkLock    (KERNEL32.48)
  */
-VOID ReleaseThunkLock(DWORD *mutex_count)
+VOID WINAPI ReleaseThunkLock(DWORD *mutex_count)
 {
     _LeaveSysLevel(&Win16Mutex);
 
@@ -69,7 +69,7 @@ VOID ReleaseThunkLock(DWORD *mutex_count)
 /***********************************************
  *           RestoreThunkLock    (KERNEL32.49)
  */
-VOID RestoreThunkLock(DWORD mutex_count)
+VOID WINAPI RestoreThunkLock(DWORD mutex_count)
 {
     NtCurrentTeb()->mutex_count = (WORD)mutex_count;
 

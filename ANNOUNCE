@@ -1,14 +1,13 @@
-This is release 980601 of Wine, the MS Windows emulator.  This is still a
+This is release 980614 of Wine, the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-980601: (see ChangeLog for details)
-	- New resource compiler.
-	- Toolbar control.
-	- Partial implementation of CreateDIBSection.
+WHAT'S NEW with Wine-980614: (see ChangeLog for details)
+	- Many drawing fixes.
+	- Inter-DLL calls snooping.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,10 +16,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980601.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980601.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980601.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980601.tar.gz
+  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980614.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980614.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980614.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980614.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 

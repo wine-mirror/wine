@@ -7,10 +7,11 @@ MODULE    = none
 PROGRAMS  = winver
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
+WRCEXTRA  = -A -p $*
 
 C_SRCS = winver.c
 
-all: check_winerc $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 

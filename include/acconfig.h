@@ -21,6 +21,12 @@
 /* Define if X libraries are not reentrant (compiled without -D_REENTRANT).  */
 #undef NO_REENTRANT_X11
 
+/* Define if all debug messages are to be compiled out */
+#undef NO_DEBUG_MSGS
+
+/* Define if TRACE messages are to be compiled out */
+#undef NO_TRACE_MSGS
+
 /* Define if the struct statfs has the member bavail */
 #undef STATFS_HAS_BAVAIL
 

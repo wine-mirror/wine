@@ -1692,72 +1692,6 @@ INT32 WINAPI GetLocaleInfo32W(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT32 len)
 }
 
 /***********************************************************************
- *           CompareString16       (OLE2NLS.8)
- */
-UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
-                              LPCSTR s1,DWORD l1,LPCSTR s2,DWORD l2)
-{
-	return (UINT16)CompareString32A(lcid,fdwStyle,s1,l1,s2,l2);
-}
-
-/***********************************************************************
- *           CompareString32A   (KERNEL32.29)
- * This implementation ignores the locale
- * FIXME
- */
-UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle, 
-                               LPCSTR s1, DWORD l1, LPCSTR s2,DWORD l2)
-{
-	int len,ret;
-	if(fdwStyle & NORM_IGNORENONSPACE)
-		FIXME(ole, "IGNORENONSPACE not supported\n");
-	if(fdwStyle & NORM_IGNORESYMBOLS)
-		FIXME(ole, "IGNORESYMBOLS not supported\n");
-	/* Is strcmp defaulting to string sort or to word sort?? */
-	/* FIXME: Handle NORM_STRINGSORT */
-	l1 = (l1==-1)?strlen(s1):l1;
-	l2 = (l2==-1)?strlen(s2):l2;
-	len = l1<l2 ? l1:l2;
-	ret = (fdwStyle & NORM_IGNORECASE) ?
-		lstrncmpi32A(s1,s2,len)	: lstrncmp32A(s1,s2,len);
-	/* not equal, return 1 or 3 */
-	if(ret!=0)return ret+2;
-	/* same len, return 2 */
-	if(l1==l2)return 2;
-	/* the longer one is lexically greater */
-	return (l1<l2)? 1 : 3;
-}
-
-/***********************************************************************
- *           CompareString32W       (KERNEL32.30)
- * This implementation ignores the locale
- * FIXME
- */
-UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle, 
-                               LPCWSTR s1, DWORD l1, LPCWSTR s2,DWORD l2)
-{
-	int len,ret;
-	if(fdwStyle & NORM_IGNORENONSPACE)
-		FIXME(ole,"IGNORENONSPACE not supprted\n");
-	if(fdwStyle & NORM_IGNORESYMBOLS)
-		FIXME(ole,"IGNORESYMBOLS not supported\n");
-
-	/* Is strcmp defaulting to string sort or to word sort?? */
-	/* FIXME: Handle NORM_STRINGSORT */
-	l1 = (l1==-1)?lstrlen32W(s1):l1;
-	l2 = (l2==-1)?lstrlen32W(s2):l2;
-	len = l1<l2 ? l1:l2;
-	ret = (fdwStyle & NORM_IGNORECASE) ?
-		lstrncmpi32W(s1,s2,len)	: lstrncmp32W(s1,s2,len);
-	/* not equal, return 1 or 3 */
-	if(ret!=0) return ret+2;
-	/* same len, return 2 */
-	if(l1==l2) return 2;
-	/* the longer one is lexically greater */
-	return (l1<l2)? 1 : 3;
-}
-
-/***********************************************************************
  *           SetLocaleInfoA       [KERNEL32.499]
  */
 BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
@@ -2027,10 +1961,14 @@ DWORD WINAPI VerLanguageName32W(UINT32 langid,LPWSTR langname,
 	return langnamelen;
 }
  
-static int is_punctuation(unsigned char c)
+static int is_punctuation(unsigned char c) 
 {
   /* punctuation characters are :
-     39, 45, 127-129, 141-144, 150-151, 157-158, 173 */
+     1-8, 14-31, 39, 45, 127-129, 141-144, 150-151, 157-158, 173 
+
+     "punctuation character" in this context is a character which is 
+     considered "less important" during word sort comparison.
+     See LCMapString for the precise definition of "less important". */
   if (c>=141)
   {
     if (c<=151)
@@ -2041,7 +1979,9 @@ static int is_punctuation(unsigned char c)
   }
   if (c>=127)
     return (c<=129);
-  return (c==39) || (c==45);
+  if (c>=14)
+    return (c<=31) || (c==39) || (c==45);
+  return (c<=8);
 }
 
 static int identity(int c)
@@ -2050,6 +1990,37 @@ static int identity(int c)
 }
 
 static const unsigned char LCM_Unicode_LUT[] = {
+  6      ,   3, /*   -   1 */  
+  6      ,   4, /*   -   2 */  
+  6      ,   5, /*   -   3 */  
+  6      ,   6, /*   -   4 */  
+  6      ,   7, /*   -   5 */  
+  6      ,   8, /*   -   6 */  
+  6      ,   9, /*   -   7 */  
+  6      ,  10, /*   -   8 */  
+  7      ,   5, /*   -   9 */  
+  7      ,   6, /*   -  10 */  
+  7      ,   7, /*   -  11 */  
+  7      ,   8, /*   -  12 */  
+  7      ,   9, /*   -  13 */  
+  6      ,  11, /*   -  14 */  
+  6      ,  12, /*   -  15 */  
+  6      ,  13, /*   -  16 */  
+  6      ,  14, /*   -  17 */  
+  6      ,  15, /*   -  18 */  
+  6      ,  16, /*   -  19 */  
+  6      ,  17, /*   -  20 */  
+  6      ,  18, /*   -  21 */  
+  6      ,  19, /*   -  22 */  
+  6      ,  20, /*   -  23 */  
+  6      ,  21, /*   -  24 */  
+  6      ,  22, /*   -  25 */  
+  6      ,  23, /*   -  26 */  
+  6      ,  24, /*   -  27 */  
+  6      ,  25, /*   -  28 */  
+  6      ,  26, /*   -  29 */  
+  6      ,  27, /*   -  30 */  
+  6      ,  28, /*   -  31 */  
   7      ,   2, /*   -  32 */
   7      ,  28, /* ! -  33 */
   7      ,  29, /* " -  34 */ /* " */
@@ -2415,14 +2386,17 @@ static const unsigned char LCM_Diacritic_LUT[] = {
  * accordingly to the flags LCMAP_UPPERCASE, LCMAP_LOWERCASE,...
  *
  * RETURNS
- *    Error : (destination buffer too small) 0.
+ *    Error : 0.
  *    Success : length of the result string.
  *
  * REMARKS
  *    If called with scrlen = -1, the function will compute the length
  *      of the 0-terminated string strsrc by itself.      
+ * 
+ *    If called with dstlen = 0, returns the buffer length that 
+ *      would be required.
  */
- INT32 WINAPI LCMapString32A(
+INT32 WINAPI LCMapString32A(
 	LCID lcid /* locale identifier created with MAKELCID; 
 		     LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are predefined
 		     values. */,
@@ -2433,17 +2407,20 @@ static const unsigned char LCM_Diacritic_LUT[] = {
 	INT32 dstlen   /* destination buffer length */) 
 {
   int i;
- 
+
   TRACE(string,"(0x%04lx,0x%08lx,%s,%d,%p,%d)\n",
 	lcid,mapflags,srcstr,srclen,dststr,dstlen);
 
-  if ((dststr==NULL) || (srcstr==NULL))
+  if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
+  {
+    SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
+  }
   if (srclen==-1) 
     srclen = lstrlen32A(srcstr);
 
   if (mapflags & ~ ( LCMAP_UPPERCASE | LCMAP_LOWERCASE | LCMAP_SORTKEY |
-		     SORT_STRINGSORT) )
+		     NORM_IGNORECASE | NORM_IGNORENONSPACE | SORT_STRINGSORT) )
   {
     FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
 	  "unimplemented flags: 0x%08lx\n",
@@ -2457,7 +2434,10 @@ static const unsigned char LCM_Diacritic_LUT[] = {
     if (dstlen==0)
       return srclen;  /* dstlen=0 means "do nothing but return required length" */
     if (dstlen<srclen)
-      return 0;       /* it's an error */
+    {
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      return 0;
+    }
     if (mapflags & LCMAP_UPPERCASE)
       f = toupper;
     else if (mapflags & LCMAP_LOWERCASE)
@@ -2472,8 +2452,10 @@ static const unsigned char LCM_Diacritic_LUT[] = {
     int unicode_len=0;
     int case_len=0;
     int diacritic_len=0;
+    int delayed_punctuation_len=0;
     char *case_component;
     char *diacritic_component;
+    char *delayed_punctuation_component;
     int room,count;
     int flag_stringsort = mapflags & SORT_STRINGSORT;
 
@@ -2481,89 +2463,117 @@ static const unsigned char LCM_Diacritic_LUT[] = {
     for (i=0;i<srclen;i++)
     {
       int ofs;
-      if ((srcstr[i]!='\0') && (flag_stringsort || !is_punctuation(srcstr[i])))
+      unsigned char source_char = srcstr[i];
+      if (source_char!='\0') 
       {
-	unicode_len++;
-	if(((unsigned char)srcstr[i])<=31)
+	if (flag_stringsort || !is_punctuation(source_char))
 	{
-	  FIXME(string," control characters in argument string\n");
-	  return 0;
+	  unicode_len++;
+	  if ( LCM_Unicode_LUT[-2+2*source_char] & ~15 )
+	    unicode_len++;             /* double letter */
 	}
-	if ( LCM_Unicode_LUT[2*((unsigned char)srcstr[i]-32)] & ~15 )
-	  unicode_len++;             /* double letter */
+	else
+	{
+	  delayed_punctuation_len++;
+	}	  
       }
 	  
-      if (isupper(srcstr[i]))
+      if (isupper(source_char))
 	case_len=unicode_len; 
 
-      ofs = (unsigned char)srcstr[i] - LCM_Diacritic_Start;
+      ofs = source_char - LCM_Diacritic_Start;
       if ((ofs>=0) && (LCM_Diacritic_LUT[ofs]!=2))
 	diacritic_len=unicode_len;
     }
 
-    room =  2 * unicode_len         /* "unicode" component */
-      +     diacritic_len           /* "diacritic" component */
-      +     case_len                /* "case" component */
-      +     4                       /* four '\1' separators */
-      +     1  ;                    /* terminal '\0' */
+    if (mapflags & NORM_IGNORECASE)
+      case_len=0;                   
+    if (mapflags & NORM_IGNORENONSPACE)
+      diacritic_len=0;
+
+    room =  2 * unicode_len              /* "unicode" component */
+      +     diacritic_len                /* "diacritic" component */
+      +     case_len                     /* "case" component */
+      +     4 * delayed_punctuation_len  /* punctuation in word sort mode */
+      +     4                            /* four '\1' separators */
+      +     1  ;                         /* terminal '\0' */
     if (dstlen==0)
       return room;      
     else if (dstlen<room)
-      return 0;   
+    {
+      SetLastError(ERROR_INSUFFICIENT_BUFFER);
+      return 0;
+    }
 
     /* locate each component, write separators */
     diacritic_component = dststr + 2*unicode_len ;
     *diacritic_component++ = '\1'; 
-
     case_component = diacritic_component + diacritic_len ;
     *case_component++ = '\1'; 
+    delayed_punctuation_component = case_component + case_len ;
+    *delayed_punctuation_component++ = '\1';
+    *delayed_punctuation_component++ = '\1';
 
     /* read source string char by char, write 
        corresponding weight in each component. */
-    for (i=0,count=0;count<unicode_len;i++)
+    for (i=0,count=0;i<srclen;i++)
     {
-      unsigned char c=srcstr[i];
-      if ( (c!='\0') && (flag_stringsort || !is_punctuation(c)) )
+      unsigned char source_char=srcstr[i];
+      if (source_char!='\0') 
       {
 	int type,longcode;
-	int LUT_offset = 2*(c-32);
-	type = LCM_Unicode_LUT[LUT_offset];
+	type = LCM_Unicode_LUT[-2+2*source_char];
 	longcode = type >> 4;
 	type &= 15;
-	dststr[2*count] = type;
-	dststr[2*count+1] = LCM_Unicode_LUT[LUT_offset+1];  
-	if (longcode)
+	if (!flag_stringsort && is_punctuation(source_char)) 
 	{
-	  if (count<case_len)
-	    case_component[count] = ( isupper(srcstr[i]) ? 18 : 2 ) ;
-	  if (count<diacritic_len)
-	    diacritic_component[count] = 2; /* assumption: a double letter
-					       is never accented */
-	  count++;
+	  UINT16 encrypted_location = (1<<15) + 7 + 4*count;
+	  *delayed_punctuation_component++ = (unsigned char) (encrypted_location>>8);
+	  *delayed_punctuation_component++ = (unsigned char) (encrypted_location&255);
+                     /* big-endian is used here because it lets string comparison be
+			compatible with numerical comparison */
 
+	  *delayed_punctuation_component++ = type;
+	  *delayed_punctuation_component++ = LCM_Unicode_LUT[-1+2*source_char];  
+                     /* assumption : a punctuation character is never a 
+			double or accented letter */
+	}
+	else
+	{
 	  dststr[2*count] = type;
-	  dststr[2*count+1] = *(LCM_Unicode_LUT_2 - 1 + longcode); 
-	  /* 16 in the first column of LCM_Unicode_LUT  -->  longcode = 1 
-	     32 in the first column of LCM_Unicode_LUT  -->  longcode = 2 
-	     48 in the first column of LCM_Unicode_LUT  -->  longcode = 3 */
-	}
+	  dststr[2*count+1] = LCM_Unicode_LUT[-1+2*source_char];  
+	  if (longcode)
+	  {
+	    if (count<case_len)
+	      case_component[count] = ( isupper(source_char) ? 18 : 2 ) ;
+	    if (count<diacritic_len)
+	      diacritic_component[count] = 2; /* assumption: a double letter
+						 is never accented */
+	    count++;
+	    
+	    dststr[2*count] = type;
+	    dststr[2*count+1] = *(LCM_Unicode_LUT_2 - 1 + longcode); 
+	    /* 16 in the first column of LCM_Unicode_LUT  -->  longcode = 1 
+	       32 in the first column of LCM_Unicode_LUT  -->  longcode = 2 
+	       48 in the first column of LCM_Unicode_LUT  -->  longcode = 3 */
+	  }
 
-	if (count<case_len)
-	  case_component[count] = ( isupper(srcstr[i]) ? 18 : 2 ) ;
-	if (count<diacritic_len)
-	{
-	  int ofs = (unsigned char)srcstr[i] - LCM_Diacritic_Start;
-	  diacritic_component[count] = (ofs>=0 ? LCM_Diacritic_LUT[ofs] : 2);
+	  if (count<case_len)
+	    case_component[count] = ( isupper(source_char) ? 18 : 2 ) ;
+	  if (count<diacritic_len)
+	  {
+	    int ofs = source_char - LCM_Diacritic_Start;
+	    diacritic_component[count] = (ofs>=0 ? LCM_Diacritic_LUT[ofs] : 2);
+	  }
+	  count++;
 	}
-	count++;
       }
     }
-    dststr[room-3] = dststr[room-2] = '\1';
     dststr[room-1] = '\0';
     return room;
   }
 }
- 
+		     
 INT32 WINAPI LCMapString32W(
 	LCID lcid,DWORD mapflags,LPCWSTR srcstr,INT32 srclen,LPWSTR dststr,
 	INT32 dstlen)
@@ -2573,8 +2583,11 @@ INT32 WINAPI LCMapString32W(
   TRACE(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
 	lcid,mapflags,srcstr,srclen,dststr,dstlen);
 
-  if ((dststr==NULL) || (srcstr==NULL))
+  if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
+  {
+    SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
+  }
   if (srclen==-1) 
     srclen = lstrlen32W(srcstr);
   if (mapflags & LCMAP_SORTKEY) 
@@ -2602,6 +2615,90 @@ INT32 WINAPI LCMapString32W(
   }
 }
 
+/***********************************************************************
+ *           CompareString16       (OLE2NLS.8)
+ */
+UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
+                              LPCSTR s1,DWORD l1,LPCSTR s2,DWORD l2)
+{
+	return (UINT16)CompareString32A(lcid,fdwStyle,s1,l1,s2,l2);
+}
+
+/***********************************************************************
+ *           CompareString32A   (KERNEL32.29)
+ * This implementation ignores the locale
+ * FIXME
+ * Moreover it is quite inefficient. FIXME too!
+ */
+UINT32 WINAPI CompareString32A(DWORD lcid, DWORD fdwStyle, 
+                               LPCSTR s1, DWORD l1, LPCSTR s2,DWORD l2)
+{
+  int mapstring_flags;
+  int len1,len2;
+
+  TRACE(ole,"%s and %s\n",
+	debugstr_a (s1), debugstr_a (s2));
+
+  if ( (s1==NULL) || (s2==NULL) )
+  {    
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return 0;
+  }
+
+  if(fdwStyle & NORM_IGNORENONSPACE)
+    FIXME(ole, "IGNORENONSPACE not supported\n");
+  if(fdwStyle & NORM_IGNORESYMBOLS)
+    FIXME(ole, "IGNORESYMBOLS not supported\n");
+  	
+  mapstring_flags = LCMAP_SORTKEY | fdwStyle ;
+  len1 = LCMapString32A(lcid,mapstring_flags,s1,l1,NULL,0);
+  len2 = LCMapString32A(lcid,mapstring_flags,s2,l2,NULL,0);
+
+  if ((len1==0)||(len2==0))
+    return 0;     /* something wrong happened */
+
+  {
+    char sk1[len1];    
+    char sk2[len2];    
+    if ( (!LCMapString32A(lcid,mapstring_flags,s1,l1,sk1,len1))
+	 || (!LCMapString32A(lcid,mapstring_flags,s2,l2,sk2,len2)) )
+    {
+      ERR(ole,"Bug in LCmapString32A.");
+      return 0;
+    }
+    return strcmp(sk1,sk2)+2;
+  }
+}
+
+/***********************************************************************
+ *           CompareString32W       (KERNEL32.30)
+ * This implementation ignores the locale
+ * FIXME :  Does only string sort.  Should
+ * be reimplemented the same way as CompareString32A.
+ */
+UINT32 WINAPI CompareString32W(DWORD lcid, DWORD fdwStyle, 
+                               LPCWSTR s1, DWORD l1, LPCWSTR s2,DWORD l2)
+{
+	int len,ret;
+	if(fdwStyle & NORM_IGNORENONSPACE)
+		FIXME(ole,"IGNORENONSPACE not supprted\n");
+	if(fdwStyle & NORM_IGNORESYMBOLS)
+		FIXME(ole,"IGNORESYMBOLS not supported\n");
+
+	/* Is strcmp defaulting to string sort or to word sort?? */
+	/* FIXME: Handle NORM_STRINGSORT */
+	l1 = (l1==-1)?lstrlen32W(s1):l1;
+	l2 = (l2==-1)?lstrlen32W(s2):l2;
+	len = l1<l2 ? l1:l2;
+	ret = (fdwStyle & NORM_IGNORECASE) ?
+		lstrncmpi32W(s1,s2,len)	: lstrncmp32W(s1,s2,len);
+	/* not equal, return 1 or 3 */
+	if(ret!=0) return ret+2;
+	/* same len, return 2 */
+	if(l1==l2) return 2;
+	/* the longer one is lexically greater */
+	return (l1<l2)? 1 : 3;
+}
 
 /*****************************************************************
  *

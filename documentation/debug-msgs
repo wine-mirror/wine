@@ -1,14 +1,12 @@
 Note: The new debugging interface can be considered to be stable,
       with the exception of the in-memory message construction functions.
       However, there is still a lot of work to be done to polish
-      things up and to convert the remaining fprintf. To make my life 
-      easier, please follow the guidelines described in this document. 
+      things up. To make my life easier, please follow the guidelines
+      described in this document. 
 
-      Read this document before writing new code.
-      Also, DO NOT USE fprintf (or printf) to output things. All these
-      will have to be translated to the new interface and there are already
-      about 1000 of them! Also, instead of writing FIXMEs in the source,
-      output a FIXME message if you can. 
+      Read this document before writing new code. DO NOT USE fprintf 
+      (or printf) to output things. Also, instead of writing 
+      FIXMEs in the source, output a FIXME message if you can. 
 
       IMPORTANT: at the end of the document, there is a "Style Guide"
       for debugging messages. Please read it.
@@ -349,9 +347,24 @@ So, the -debugmsg command line option has been changed as follows:
 Also, note that at the moment:
    - the fixme and err classes are enabled by default
    - the trace and warn  classes are disabled by default
-   - there is no way to compile out the messages. All are 
-     runtime configurable. This will (hopefully) come next 
-     release.
+
+
+Compiling Out Debugging Messages
+--------------------------------
+
+To compile out the debugging messages, provide configure with the
+following options:
+
+--disable-debug      -- turns off TRACE, WARN, and FIXME (and DUMP).
+
+--disable-trace      -- turns off TRACE only.
+
+This will result in an executable that, when stripped, is about 15%-20%
+smaller.  Note, however, that you will not be able to effectively debug
+Wine without these messages.  
+
+This feature has not been extensively tested--it may subtly break some
+things.
 
 
 A Few Notes on Style

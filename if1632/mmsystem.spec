@@ -139,7 +139,7 @@ type	win16
 1100   pascal  DRVOPEN(str str long) DrvOpen
 1101   pascal  DRVCLOSE(word long long) DrvClose
 1102   pascal  DRVSENDMESSAGE(word word long long) DrvSendMessage
-1103   pascal  DRVGETMODULEHANDLE(word) DrvGetModuleHandle
+1103   pascal  drvGetModuleHandle(word) DrvGetModuleHandle16
 1104   pascal  DRVDEFDRIVERPROC(long word word long long) DrvDefDriverProc
 1120   pascal  mmThreadCreate(ptr ptr long long) mmThreadCreate16
 1121   pascal  mmThreadSignal(word) mmThreadSignal16
@@ -148,23 +148,25 @@ type	win16
 1124   stub    MMTHREADISVALID
 1125   pascal  mmThreadGetTask(word) mmThreadGetTask16
 1150   stub    MMSHOWMMCPLPROPERTYSHEET
+
 1210   pascal  mmioOpen(str ptr long) mmioOpen16
-1211   pascal  MMIOCLOSE(word word) mmioClose
-1212   pascal  MMIOREAD(word ptr long) mmioRead
-1213   pascal  MMIOWRITE(word ptr long) mmioWrite
-1214   pascal  MMIOSEEK(word long word) mmioSeek
-1215   pascal  MMIOGETINFO(word ptr word) mmioGetInfo
+1211   pascal  mmioClose(word word) mmioClose16
+1212   pascal  mmioRead(word ptr long) mmioRead16
+1213   pascal  mmioWrite(word ptr long) mmioWrite16
+1214   pascal  mmioSeek(word long word) mmioSeek16
+1215   pascal  mmioGetInfo(word ptr word) mmioGetInfo16
 1216   pascal  MMIOSETINFO(word ptr word) mmioSetInfo
 1217   pascal  MMIOSETBUFFER(word ptr long word) mmioSetBuffer
-1218   pascal  MMIOFLUSH(word word) mmioFlush
-1219   pascal  MMIOADVANCE(word ptr word) mmioAdvance
+1218   pascal  mmioFlush(word word) mmioFlush16
+1219   pascal  mmioAdvance(word ptr word) mmioAdvance16
 1220   pascal  mmioStringToFOURCC(str word) mmioStringToFOURCC16
 1221   pascal  MMIOINSTALLIOPROC(long ptr long) mmioInstallIOProc16
 1222   pascal  MMIOSENDMESSAGE(word word long long) mmioSendMessage
 1223   pascal  MMIODESCEND(word ptr ptr word) mmioDescend
-1224   pascal  MMIOASCEND(word ptr word) mmioAscend
+1224   pascal  mmioAscend(word ptr word) mmioAscend16
 1225   pascal  MMIOCREATECHUNK(word ptr word) mmioCreateChunk
 1226   pascal  MMIORENAME(ptr ptr ptr long) mmioRename
+
 #2000   stub    WINMMF_THUNKDATA16
 #2001   stub    RING3_DEVLOADER
 #2002   stub    WINMMTILEBUFFER

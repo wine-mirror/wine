@@ -22,6 +22,7 @@
 #include "callback.h"
 #include "options.h"
 #include "debug.h"
+#include "dc.h"
 
 #define SUPPORT_REALIZED_FONTS 1
 #pragma pack(1)
@@ -175,6 +176,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     if (lstrcmpi32A(printerEnabled,"on"))
     {
         MSG("WIN16DRV_CreateDC disabled in wine.conf file\n");
+	MSG("Enable printing with \"printer=on\"");
         return FALSE;
     }
 
@@ -284,8 +286,12 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
             nRet = 0;
 	    break;
           case SETABORTPROC:
-	    FIXME(win16drv,"Escape: SetAbortProc ignored should be stored in dc somewhere\n");
-            /* Make calling application believe this worked */
+		/* FIXME: The AbortProc should be called:
+		- After every write to printer port or spool file
+		- Several times when no more disk space
+		- Before every metafile record when GDI does banding
+		*/ 
+/*	    dc->w.lpfnPrint = (FARPROC16)lpInData; FIXME! */
             nRet = 1;
 	    break;
 
@@ -340,9 +346,40 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 }
 
 
+/**********************************************************************
+ *           QueryAbort   (GDI.155)
+ *
+ *  Calls the app's AbortProc function if avail.
+ *
+ * RETURNS
+ * TRUE if no AbortProc avail or AbortProc wants to continue printing.
+ * FALSE if AbortProc wants to abort printing.
+ */
+BOOL16 WINAPI QueryAbort(HDC16 hdc, INT16 reserved)
+{
+    DC *dc = DC_GetDCPtr( hdc );
 
+    if ((!dc) || (!dc->w.lpfnPrint))
+	return TRUE;
+    return dc->w.lpfnPrint(hdc, 0);
+}
 
-/****************** misc. printer releated functions */
+/**********************************************************************
+ *           SetAbortProc   (GDI.381)
+ *
+ */
+INT16 WINAPI SetAbortProc(HDC16 hdc, FARPROC16 abrtprc)
+{
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (dc) {
+	dc->w.lpfnPrint = abrtprc;
+	return 1;
+    }
+    return -1;
+} 
+
+/****************** misc. printer related functions */
 
 /*
  * The following function should implement a queing system
@@ -600,6 +637,15 @@ int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
 	  nRet = SP_OUTOFDISK;
 	else
 	  nRet = cch;
+	if (pPrintJob->hDC == 0) {
+	    ERR(print, "hDC == 0 !\n");
+	    return SP_ERROR;
+	}
+	if (!(QueryAbort(pPrintJob->hDC, (nRet == SP_OUTOFDISK) ? nRet : 0 )))
+	{
+	    CloseJob(hJob); /* printing aborted */
+	    nRet = SP_APPABORT;
+	}
     }
     return nRet;
 }

@@ -46,8 +46,8 @@ type	win32
 0042 stdcall FreeSid(ptr) FreeSid
 0043 stub GetAce
 0044 stub GetAclInformation
-0045 stub GetFileSecurityA
-0046 stub GetFileSecurityW
+0045 stdcall GetFileSecurityA(str long ptr long ptr) GetFileSecurity32A
+0046 stdcall GetFileSecurityW(wstr long ptr long ptr) GetFileSecurity32W
 0047 stub GetKernelObjectSecurity
 0048 stdcall GetLengthSid(ptr) GetLengthSid
 0049 stub GetNumberOfEventLogRecords

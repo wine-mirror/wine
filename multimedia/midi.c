@@ -81,7 +81,7 @@ static DWORD MIDI_NotifyClient(UINT16 wDevID, WORD wMsg,
 static DWORD MIDI_ReadByte(UINT16 wDevID, BYTE *lpbyt)
 {
 	if (lpbyt != NULL) {
-		if (mmioRead(MCIMidiDev[wDevID].hFile, (HPSTR)lpbyt,
+		if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)lpbyt,
 			(long) sizeof(BYTE)) == (long) sizeof(BYTE)) {
 			return 0;
 		}
@@ -166,11 +166,11 @@ static DWORD MIDI_ReadMThd(UINT16 wDevID, DWORD dwOffset)
 	DWORD	toberead;
 	FOURCC	fourcc;
 	TRACE(midi, "(%04X, %08lX);\n", wDevID, dwOffset);
-	if (mmioSeek(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
+	if (mmioSeek32(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
 		WARN(midi, "can't seek at %08lX begin of 'MThd' \n", dwOffset);
 		return MCIERR_INTERNAL;
 	}
-	if (mmioRead(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
+	if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
 		(long) sizeof(FOURCC)) != (long) sizeof(FOURCC))
 		return MCIERR_INTERNAL;
 	if (MIDI_ReadLong(wDevID, &toberead) != 0)
@@ -198,10 +198,10 @@ static DWORD MIDI_ReadMTrk(UINT16 wDevID, DWORD dwOffset)
 {
 	DWORD	toberead;
 	FOURCC	fourcc;
-	if (mmioSeek(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
+	if (mmioSeek32(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
 		WARN(midi, "can't seek at %08lX begin of 'MThd' \n", dwOffset);
 		}
-	if (mmioRead(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
+	if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
 		(long) sizeof(FOURCC)) != (long) sizeof(FOURCC)) {
 		return MCIERR_INTERNAL;
 		}
@@ -290,12 +290,12 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS16 lpPar
 			WARN(midi, "can't read 'MThd' header \n");
 			return MCIERR_INTERNAL;
 		}
-		dwOffset = mmioSeek(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR);
+		dwOffset = mmioSeek32(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR);
 		if (MIDI_ReadMTrk(wDevID, dwOffset) != 0) {
 			WARN(midi, "can't read 'MTrk' header \n");
 			return MCIERR_INTERNAL;
 		}
-		dwOffset = mmioSeek(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR);
+		dwOffset = mmioSeek32(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR);
 		MCIMidiDev[wDevID].dwBeginData = dwOffset;
 		TRACE(midi, "Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
@@ -337,10 +337,10 @@ static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 	MCIMidiDev[wDevID].nUseCount--;
 	if (MCIMidiDev[wDevID].nUseCount == 0) {
 		if (MCIMidiDev[wDevID].hFile != 0) {
-			mmioClose(MCIMidiDev[wDevID].hFile, 0);
+			mmioClose32(MCIMidiDev[wDevID].hFile, 0);
 			MCIMidiDev[wDevID].hFile = 0;
 			TRACE(midi, "hFile closed !\n");
-			}
+		}
 		USER_HEAP_FREE(MCIMidiDev[wDevID].hMidiHdr);
 		dwRet = modMessage(wDevID, MODM_CLOSE, 0, 0L, 0L);
 		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
@@ -417,7 +417,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 			*ptr = LOWORD(dwData);
 		}
 /*
-		count = mmioRead(MCIMidiDev[wDevID].hFile, lpMidiHdr->lpData, lpMidiHdr->dwBufferLength);
+		count = mmioRead32(MCIMidiDev[wDevID].hFile, lpMidiHdr->lpData, lpMidiHdr->dwBufferLength);
 */
 		TRACE(midi, "after read count = %d\n",count);
 

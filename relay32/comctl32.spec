@@ -8,9 +8,9 @@ type	win32
 
   2 stdcall MenuHelp(long long long long long long ptr) MenuHelp
   3 stub ShowHideMenuCtl
-  4 stub GetEffectiveClientRect
-  5 stdcall DrawStatusTextA(long ptr ptr long) DrawStatusText32A
-  6 stdcall CreateStatusWindowA(long ptr long long) CreateStatusWindow32A
+  4 stdcall GetEffectiveClientRect(long long long) GetEffectiveClientRect
+  5 stdcall DrawStatusTextA(long ptr str long) DrawStatusText32A
+  6 stdcall CreateStatusWindowA(long str long long) CreateStatusWindow32A
   7 stdcall CreateToolbar(long long long long long long ptr long) CreateToolbar
   8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
   9 stub COMCTL32_9
@@ -25,14 +25,14 @@ type	win32
  18 stub CreatePropertySheetPage
  19 stub CreatePropertySheetPageA
  20 stub CreatePropertySheetPageW
- 21 stdcall CreateStatusWindow(long ptr long long) CreateStatusWindow32A
- 22 stdcall CreateStatusWindowW(long ptr long long) CreateStatusWindow32W
+ 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32A
+ 22 stdcall CreateStatusWindowW(long wstr long long) CreateStatusWindow32W
  23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
  24 stub DestroyPropertySheetPage
- 25 stub DllGetVersion
+ 25 stdcall DllGetVersion(ptr) COMCTL32_DllGetVersion
  26 stub DllInstall
- 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32A
- 28 stdcall DrawStatusTextW(long ptr ptr long) DrawStatusText32W
+ 27 stdcall DrawStatusText(long ptr str long) DrawStatusText32A
+ 28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusText32W
  29 stub FlatSB_EnableScrollBar
  30 stub FlatSB_GetScrollInfo
  31 stub FlatSB_GetScrollPos
@@ -66,18 +66,18 @@ type	win32
  59 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
  60 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
  61 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
- 63 stdcall ImageList_LoadImage(long ptr long long long long long) ImageList_LoadImage32A
- 63 stdcall ImageList_LoadImageA(long ptr long long long long long) ImageList_LoadImage32A
- 64 stdcall ImageList_LoadImageW(long ptr long long long long long) ImageList_LoadImage32W
+ 63 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImage32A
+ 63 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImage32A
+ 64 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImage32W
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
  66 stdcall ImageList_Read(ptr) ImageList_Read
  67 stdcall ImageList_Remove(ptr long) ImageList_Remove
  68 stdcall ImageList_Replace(ptr long long long) ImageList_Replace
  69 stdcall ImageList_ReplaceIcon(ptr long long) ImageList_ReplaceIcon
  70 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
- 71 stub Alloc
- 72 stub ReAlloc
- 73 stub Free
+ 71 stdcall Alloc(long) Alloc
+ 72 stdcall ReAlloc(long long) ReAlloc
+ 73 stdcall Free(long) Free
  74 stub GetSize
  75 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
  76 stub ImageList_SetFilter
@@ -112,22 +112,22 @@ type	win32
 235 stub Str_GetPtrW
 236 stub Str_SetPtrW
 
-320 stub DSA_Create
-321 stub DSA_Destroy
+320 stdcall DSA_Create(long long) DSA_Create
+321 stdcall DSA_Destroy(long) DSA_Destroy
 322 stub DSA_GetItem
-323 stub DSA_GetItemPtr
-324 stub DSA_InsertItem
+323 stdcall DSA_GetItemPtr(long long) DSA_GetItemPtr
+324 stdcall DSA_InsertItem(long long long) DSA_InsertItem
 325 stub DSA_SetItem
-326 stub DSA_DeleteItem
+326 stdcall DSA_DeleteItem(long long) DSA_DeleteItem
 327 stub DSA_DeleteAllItems
 
-328 stub DPA_Create
+328 stdcall DPA_Create(long) DPA_Create
 329 stub DPA_Destroy
 330 stub DPA_Grow
 331 stub DPA_Clone
-332 stub DPA_GetPtr
+332 stdcall DPA_GetPtr(long long) DPA_GetPtr
 333 stub DPA_GetPtrIndex
-334 stub DPA_InsertPtr
+334 stdcall DPA_InsertPtr(long long long) DPA_InsertPtr
 335 stub DPA_SetPtr
 336 stub DPA_DeletePtr
 337 stub DPA_DeleteAllPtrs
@@ -137,7 +137,7 @@ type	win32
 341 stub SendNotify
 342 stub SendNotifyEx
 
-350 stub StrChrA
+350 stdcall StrChrA(long long) COMCTL32_StrChrA
 351 stub StrRChr
 352 stub StrCmpNA
 353 stub StrCmpNIA

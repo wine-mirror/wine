@@ -444,14 +444,16 @@ BOOL32 WINAPI PlayEnhMetaFile(
   HANDLETABLE32 *ht = (HANDLETABLE32 *)GlobalAlloc32(GPTR, 
 				    sizeof(HANDLETABLE32)*count);
   BOOL32 ret = FALSE;
+  INT32 savedMode = 0;
   if (lpRect) {
     LPENHMETAHEADER h = (LPENHMETAHEADER) p;
     FLOAT xscale = (h->rclBounds.right-h->rclBounds.left)/(lpRect->right-lpRect->left);
     FLOAT yscale = (h->rclBounds.bottom-h->rclBounds.top)/(lpRect->bottom-lpRect->top);
     XFORM xform = {xscale, 0, 0, yscale, 0, 0};
-    /*    xform.eDx = lpRect->left;
-	  xform.eDy = lpRect->top; */
+        xform.eDx = lpRect->left;
+	  xform.eDy = lpRect->top; 
     FIXME(metafile, "play into rect doesn't work\n");
+    savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
     if (!SetWorldTransform(hdc, &xform)) {
       WARN(metafile, "World transform failed!\n");
     }
@@ -464,6 +466,7 @@ BOOL32 WINAPI PlayEnhMetaFile(
     p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
   }
   GlobalUnlock32(hmf);
+  if (savedMode) SetGraphicsMode(hdc, savedMode);
   ret = TRUE; /* FIXME: calculate a more accurate return value */
   return ret;
 }

@@ -42,6 +42,9 @@ DWORD WINAPI SHELL32_2(HWND32 hwnd,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6)
 /*************************************************************************
  *	 		 SHELL32_16   			[SHELL32.16]
  * find_lastitem_in_itemidlist()
+ *
+ * NOTES
+ *     Original name: ILFindLast (exported by ordinal)
  */
 LPSHITEMID WINAPI SHELL32_16(LPITEMIDLIST iil) {
 	LPSHITEMID	lastsii,sii;
@@ -56,9 +59,13 @@ LPSHITEMID WINAPI SHELL32_16(LPITEMIDLIST iil) {
 	}
 	return lastsii;
 }
+
 /*************************************************************************
  *	 		 SHELL32_29   			[SHELL32.29]
  * is_rootdir(const char*path)
+ *
+ * NOTES
+ *     Original Name: PathIsRoot
  */
 BOOL32 WINAPI SHELL32_29(LPCSTR x) {
 	if (!lstrcmp32A(x+1,":\\"))		/* "X:\" */
@@ -81,6 +88,9 @@ BOOL32 WINAPI SHELL32_29(LPCSTR x) {
 /*************************************************************************
  *	 		 SHELL32_30   			[SHELL32.30]
  * get_rootdir(char*path,int drive)
+ *
+ * NOTES
+ *     Original Name: PathBuildRoot
  */
 LPSTR WINAPI SHELL32_30(LPSTR root,BYTE drive) {
 	strcpy(root,"A:\\");
@@ -381,9 +391,16 @@ void WINAPI SHELL32_175(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 /*************************************************************************
  *				SHELL32_181	[SHELL32.181]
  * unknown
+ *
+ * PARAMS
+ *      hwnd [I]  window handle
+ *      y    [I]  flag ????
+ *
+ * NOTES
+ *     Original name: RegisterShellHook (exported by ordinal)
  */
-void WINAPI SHELL32_181(DWORD x,DWORD y) {
-    FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",x,y);
+void WINAPI SHELL32_181(HWND32 hwnd, DWORD y) {
+    FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",hwnd,y);
 }
 
 /*************************************************************************
@@ -524,6 +541,9 @@ LRESULT WINAPI SHELL32_102(
 /*************************************************************************
  *			 SHELL32_183   			[SHELL32.183]
  * Format and output errormessage.
+ *
+ * NOTES
+ *     Original name: ShellMessageBoxA
  */
 void __cdecl SHELL32_183(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID arglist) {
 	char	buf[100],buf2[100],*buf3;
@@ -698,6 +718,46 @@ DWORD WINAPI SHELL32_86(HWND32 hwnd,DWORD x2) {
  */
 DWORD WINAPI SHELL32_87(DWORD x) {
     FIXME(shell,"(0x%08lx):stub.\n",x);
+    return 0;
+}
+
+
+/*************************************************************************
+ * SHELL32_61 [SHELL32.61]
+ * Shell/Run-Dialog
+ */
+DWORD WINAPI
+SHELL32_61 (HWND32 hwndOwner, DWORD dwParam1, DWORD dwParam2,
+	    LPSTR lpszTitle, LPSTR lpszPrompt, UINT32 uFlags)
+{
+    FIXME (shell,"(0x%08x 0x%lx 0x%lx \"%s\" \"%s\" 0x%lx):stub.\n",
+	   hwndOwner, dwParam1, dwParam2, lpszTitle, lpszPrompt, uFlags);
+    return 0;
+}
+
+
+/*************************************************************************
+ * SHELL32_60 [SHELL32.60]
+ * Shell/Shutdown-Dialog
+ */
+DWORD WINAPI
+SHELL32_60 (HWND32 hwndOwner)
+{
+    FIXME (shell,"(0x%08x):stub.\n", hwndOwner);
+    return 0;
+}
+
+
+/*************************************************************************
+ * SHELL32_184 [SHELL32.184]
+ * unknown
+ */
+DWORD WINAPI
+SHELL32_184 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
+	     DWORD dwParam4, DWORD dwParam5)
+{
+    FIXME (shell,"(0x%lx 0x%lx 0x%lx 0x%lx 0x%lx):stub.\n",
+	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5);
     return 0;
 }
 

@@ -13,8 +13,8 @@
   /* Constant system metrics */
 #if 0
 #ifdef WIN_95_LOOK
-#define SYSMETRICS_CXDLGFRAME         2
-#define SYSMETRICS_CYDLGFRAME         2
+#define SYSMETRICS_CXDLGFRAME         3
+#define SYSMETRICS_CYDLGFRAME         3
 #define SYSMETRICS_CYVTHUMB          13
 #define SYSMETRICS_CXHTHUMB          13
 #else
@@ -123,8 +123,8 @@
 
 /* Use the following instead of sysMetrics[SM_CXMENUCHECK] GetMenuCheckMarkDimensions()! */
 #define SYSMETRICS_CXMENUCHECK          sysMetrics[SM_CXMENUCHECK]          /* 71 */
-
 #define SYSMETRICS_CYMENUCHECK          sysMetrics[SM_CYMENUCHECK]          /* 72 */
+
 #define SYSMETRICS_SLOWMACHINE          sysMetrics[SM_SLOWMACHINE]          /* 73 */
 #define SYSMETRICS_MIDEASTENABLED       sysMetrics[SM_MIDEASTENABLED]       /* 74 */
 #define SYSMETRICS_MOUSEWHEELPRESENT    sysMetrics[SM_MOUSEWHEELPRESENT]    /* 75 */

@@ -178,8 +178,14 @@ INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
        {
 	   dc->w.hClipRgn = newRgn;
 	   CLIPPING_UpdateGCRegion( dc );
+           return SIMPLEREGION;
        }
-       return SIMPLEREGION;
+       else if( flags & CLIP_EXCLUDE )
+       {
+           dc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
+     	   CombineRgn32( dc->w.hClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
+       }
+       else WARN(clipping,"No hClipRgn and flags are %x\n",flags);
     }
 
     ret = CombineRgn32( newRgn, dc->w.hClipRgn, newRgn, 

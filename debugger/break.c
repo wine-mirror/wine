@@ -352,13 +352,31 @@ void DEBUG_AddModuleBreakpoints(void)
             addr.off = pModule->ip;
             fprintf( stderr, "Win16 task '%s': ", entry.szModule );
             DEBUG_AddBreakpoint( &addr );
-        }
-    }
-    for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next) {
-	addr.seg = 0;
-	addr.off =(DWORD)RVA_PTR(wm->module,OptionalHeader.AddressOfEntryPoint);
-        fprintf( stderr, "Win32 module '%s': ", wm->modname );
-        DEBUG_AddBreakpoint( &addr );
+	}
+	else /* PE module */
+	{
+    
+	    if (!(wm = PROCESS_Current()->modref_list))
+	    {
+		addr.seg = 0;
+		addr.off = (DWORD)RVA_PTR( pModule->module32,
+			   OptionalHeader.AddressOfEntryPoint);
+	    }
+	    else
+	    {
+		while (wm)
+		{
+		    if (wm->module == pModule->module32) break;
+		    wm = wm->next;
+		}
+		if (!wm) continue;
+		addr.seg = 0;
+		addr.off = (DWORD)RVA_PTR( wm->module,
+			   OptionalHeader.AddressOfEntryPoint);
+	    }
+	    fprintf( stderr, "Win32 task '%s': ", entry.szModule );
+	    DEBUG_AddBreakpoint( &addr );
+	}
     }
 
     DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */

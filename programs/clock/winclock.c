@@ -28,6 +28,7 @@
 #include "winclock.h"
 #include "windows.h"
 #include "main.h"
+#include "winnls.h"
 
 COLORREF FaceColor = RGB(192,192,192);
 COLORREF HandColor = RGB(0,0,0);
@@ -153,8 +154,8 @@ BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
     Ex = MidX+sin(Pos*Pi/3000)*XExt;
     Ey = MidY-cos(Pos*Pi/3000)*YExt;
     rv = ( Sx!=OldSecond.StartX || Ex!=OldSecond.EndX ||
-  	 Sy!=OldSecond.StartY || Ey!=OldSecond.EndY );
-    if (Globals.bAnalog && rv)DrawSecondHand(dc);
+           Sy!=OldSecond.StartY || Ey!=OldSecond.EndY );
+    if (Globals.bAnalog && rv) DrawSecondHand(dc);
     OldSecond.StartX = Sx; OldSecond.EndX = Ex;
     OldSecond.StartY = Sy; OldSecond.EndY = Ey;
     OldSecond.DontRedraw=FALSE;
@@ -163,21 +164,39 @@ BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
   return rv;
 }
 
-void Idle(HDC idc)
-{
-  SYSTEMTIME st;
-  TEXTMETRIC tm;
+void DigitalClock(HDC dc) {
+
+  CHAR szTime[MAX_STRING_LEN];
+  LPSTR time = szTime;
   static short xChar, yChar;
+  TEXTMETRIC tm;
+  
+  SYSTEMTIME st;
+  LPSYSTEMTIME lpst = &st;
+  
+  GetLocalTime(&st);
+  GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, time, 
+                MAX_STRING_LEN);
+                
+  SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
+  xChar = tm.tmAveCharWidth;
+  yChar = tm.tmHeight;
+  
+  xChar = 100;
+  yChar = 100;
+  TextOut (dc, xChar, yChar, szTime, strlen (szTime)); 
+  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
+              
+}
+
+
+
+void AnalogClock(HDC dc) {
+
+  SYSTEMTIME st;
   WORD H, M, S, F;
   int MidX, MidY, DiffX, DiffY;
-  HDC dc;
   BOOL Redraw;
-
-  if(idc)
-    dc=idc;
-  else
-    dc=GetDC(Globals.hMainWnd);
-  if(!dc)return;
 
   GetLocalTime(&st);
   H = st.wHour;
@@ -197,26 +216,36 @@ void Idle(HDC idc)
   if(UpdateHourHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.5,MidY*0.5,H)) Redraw = TRUE;
   if(UpdateMinuteHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.65,MidY*0.65,M)) Redraw = TRUE;
   if(UpdateSecondHand(dc,MidX+DiffX,MidY+DiffY,MidX*0.79,MidY*0.79,F)) Redraw = TRUE;
-  if (Globals.bAnalog)
-  {
-    DeleteObject(SelectObject(dc,CreatePen(PS_SOLID,1,HandColor)));
-      if(Redraw)
+
+  DeleteObject(SelectObject(dc,CreatePen(PS_SOLID,1,HandColor)));
+    if(Redraw)
       {
         DrawSecondHand(dc);
         DrawMinuteHand(dc);
         DrawHourHand(dc);
       }
-    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN))); 
+  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN))); 
+  
+}
+
+void Idle(HDC idc)
+{
+  HDC context;
+
+  if(idc)
+        context=idc;
+  else
+        context=GetDC(Globals.hMainWnd);
+
+  if (!context) return;
+
+  if (Globals.bAnalog)
+  {
+    AnalogClock(context);
   }
   else 
   {
-    SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
-    xChar = tm.tmAveCharWidth;
-    yChar = tm.tmHeight;
-    TextOut (dc, xChar, yChar, "Hola", strlen ("Hola")); 
-    DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
+    DigitalClock(context);
   }
-  if(!idc) ReleaseDC(Globals.hMainWnd,dc);
+  if(!idc) ReleaseDC(Globals.hMainWnd, context);
 }
-
-//    class.hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1);

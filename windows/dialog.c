@@ -576,6 +576,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     {
           /* The font height must be negative as it is a point size */
           /* (see CreateFont() documentation in the Windows SDK).   */
+
 	if (win32Template)
 	    hFont = CreateFont32W( -template.pointSize, 0, 0, 0,
                                    template.weight, template.italic, FALSE,
@@ -583,9 +584,9 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
                                    FF_DONTCARE, (LPCWSTR)template.faceName );
 	else
 	    hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
-			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
-			    PROOF_QUALITY, FF_DONTCARE,
-                            template.faceName );
+				  FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
+				  PROOF_QUALITY, FF_DONTCARE,
+				  template.faceName );
 	if (hFont)
 	{
 	    TEXTMETRIC16 tm;

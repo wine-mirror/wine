@@ -2177,9 +2177,9 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 			SEGPTR	dname;
 
 			dname=(SEGPTR)GetOpenDrv(wDevID)->lpstrAlias;
-			if (dname==NULL) 
+			if (dname==(SEGPTR)NULL) 
 				dname=(SEGPTR)GetOpenDrv(wDevID)->lpstrDeviceType;
-			if ((dname!=NULL)&&(!STRCMP(PTR_SEG_TO_LIN(dname),dev)))
+			if ((dname!=(SEGPTR)NULL)&&(!STRCMP(PTR_SEG_TO_LIN(dname),dev)))
 				break;
 			wDevID = MMSYSTEM_NextDevID(wDevID);
 			if (!MMSYSTEM_DevIDValid(wDevID)) {

@@ -1,3 +1,4 @@
+#include "windows.h"
 #include "progman.h"
 
 ACCEL ACCELERATORS

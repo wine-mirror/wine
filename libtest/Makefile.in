@@ -20,13 +20,13 @@ C_SRCS = \
 RC_SRCS = \
 	hello3res.rc
 
-all: check_winerc $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 depend:: $(RC_SRCS:.rc=.h)
 
 @MAKE_RULES@
 
-$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
+$(RC_SRCS:.rc=.s): $(WRC)
 
 expand: expand.o
 	$(CC) -o expand expand.o $(LDOPTIONS) $(ALL_LIBS)

@@ -32,6 +32,21 @@ char s_file_tail_str[] =
 	"# <eof>\n\n"
 	;
 
+char s_file_autoreg_str[] =
+	"\t.text\n"
+	".LAuto_Register:\n"
+	"\tpushl\t$%s%s\n"
+#ifdef NEED_UNDERSCORE_PREFIX
+	"\tcall\t_LIBRES_RegisterResources\n"
+#else
+	"\tcall\tLIBRES_RegisterResources\n"
+#endif
+	"\taddl\t$4,%%esp\n"
+	"\tret\n\n"
+	"\t.section .ctors,\"aw\"\n"
+	"\t.long\t.LAuto_Register\n\n"
+	;
+
 char h_file_head_str[] =
 	"/*\n"
 	" * This file is generated with wrc version " WRC_FULLVERSION ". Do not edit!\n"
@@ -1031,6 +1046,9 @@ void write_s_file(char *outname, resource_t *top)
 		fprintf(fo, "\n");
 	}
 
+	if(auto_register)
+		fprintf(fo, s_file_autoreg_str, prefix, _ResTable);
+
 	fprintf(fo, s_file_tail_str);
 	fclose(fo);
 }
@@ -1052,24 +1070,12 @@ void write_h_file(char *outname, resource_t *top)
 	FILE *fo;
 	resource_t *rsc;
 	char *h_prefix;
-	int cnameidx;
 
-	if(prefix[0] == '_')
-	{
-		h_prefix = prefix + 1;
-		cnameidx = 0;
-	}
-	else if(prefix[0] == '\0')
-	{
-		h_prefix = prefix;
-		cnameidx = 1;
-	}
-	else
-	{
-		h_prefix = prefix;
-		cnameidx = 0;
-		warning("Resources might not be visible in c-namespace (missing '_' in prefix)\n");
-	}
+#ifdef NEED_UNDERSCORE_PREFIX
+	h_prefix = prefix + 1;
+#else
+	h_prefix = prefix;
+#endif
 
 	fo = fopen(outname, "wt");
 	if(!fo)
@@ -1086,7 +1092,7 @@ void write_h_file(char *outname, resource_t *top)
 		fprintf(fo, "extern %schar %s%s[];\n\n",
 			constant ? "const " : "",
 			h_prefix,
-			(win32 ? _PEResTab : _NEResTab) + cnameidx);
+			win32 ? _PEResTab : _NEResTab);
 	}
 
 	/* Write the resource data */
@@ -1098,7 +1104,7 @@ void write_h_file(char *outname, resource_t *top)
 		fprintf(fo, "extern %schar %s%s_data[];\n",
 			constant ? "const " : "",
 			h_prefix,
-			rsc->c_name + cnameidx);
+			rsc->c_name);
 	}
 
 	if(indirect)
@@ -1113,7 +1119,7 @@ void write_h_file(char *outname, resource_t *top)
 				constant ? "const " : "",
 				win32 ? 32 : 16,
 				h_prefix,
-				rsc->c_name + cnameidx);
+				rsc->c_name);
 		}
 
 		if(global)
@@ -1124,7 +1130,7 @@ void write_h_file(char *outname, resource_t *top)
 			constant ? "const " : "",
 			win32 ? 32 : 16,
 			h_prefix,
-			_ResTable + cnameidx);
+			_ResTable);
 	}
 
 	fprintf(fo, h_file_tail_str);

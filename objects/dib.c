@@ -1074,6 +1074,7 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
     DC_SetupGCForText( dc );  /* To have the correct colors */
     TSXSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
 
+    descr.dc = dc;
     if (descr.infoBpp <= 8)
     {
         descr.colorMap = DIB_BuildColorMap( info, coloruse == DIB_PAL_COLORS?
@@ -1083,8 +1084,6 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
         if (!descr.colorMap)
             return 0;
     }
-
-    descr.dc        = dc;
     descr.bits      = bits;
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.infoWidth = width;

@@ -7,6 +7,7 @@ MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
+WRCEXTRA  = -A -p $*
 
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va Sw
 
@@ -28,27 +29,18 @@ C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
 MOSTOBJS = $(MOSTSRCS:.c=.o) $(EXTRA_OBJS)
 STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
 
-all: check_winerc $(PROGRAMS)
+all: check_wrc $(PROGRAMS)
 
 depend:: $(RC_SRCS:.rc=.h) y.tab.h
 
 @MAKE_RULES@
 
-# Rules for using old resource compiler
-.rc.c:
-	echo "#include \"windows.h\"" >$*-tmp.c
-	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
-	cat $< >>$*-tmp.c
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
-	$(RM) $*-tmp.c
+# Override resource compiler rules
+.rc.s:
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
+
 .rc.h:
-	echo "#include \"windows.h\"" >$*-tmp.c
-	echo WINDOWS_H_ENDS_HERE >>$*-tmp.c
-	cat $< >>$*-tmp.c
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P $*-tmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
-	$(RM) $*-tmp.c
-clean::
-	$(RM) $(RC_SRCS:.rc=.c)
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
 
 # Some strings need addresses >= 0x10000
 winhelp: $(MOSTOBJS) $(STRINGOBJS)
@@ -67,7 +59,7 @@ y.tab.c y.tab.h: macro.yacc.y
 lex.yy.c: macro.lex.l
 	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
 
-$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
+$(RC_SRCS:.rc=.s): $(WRC)
 
 dummy:
 

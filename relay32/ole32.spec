@@ -31,7 +31,7 @@ type	win32
  28 stub CoIsHandlerConnected
  29 stub CoIsOle1Class
  30 stub CoLoadLibrary
- 31 stub CoLockObjectExternal
+ 31 stdcall CoLockObjectExternal(ptr long long) CoLockObjectExternal32
  32 stub CoMarshalHresult
  33 stub CoMarshalInterThreadInterfaceInStream
  34 stub CoMarshalInterface

@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "libres.h"
 #include "winerror.h"
+#include "debugstr.h"
 
 extern WORD WINE_LanguageId;
 
@@ -69,10 +70,11 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
     WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
     HRSRC32	hrsrc;
 
-    TRACE(resource, "module=%08x "
-		     "type=%s%p name=%s%p\n", wm->module,
-		     (HIWORD(type))? "" : "#", type,
-		     (HIWORD(name))? "" : "#", name);
+    TRACE(resource, "module=%08x type=%s name=%s\n",
+	  hModule,
+	  debugres_w (type),
+	  debugres_w (name));
+
     if (__winelib) {
     	hrsrc = LIBRES_FindResource( hModule, name, type );
 	if (hrsrc)
@@ -346,7 +348,7 @@ HACCEL32 WINAPI CreateAcceleratorTable32A(LPACCEL32 lpaccel, INT32 cEntries)
 			       cEntries * sizeof(ACCEL32));
   TRACE(accel, "handle %p\n", (LPVOID)hAccel);
   if(!hAccel) {
-    WARN(accel, "Out of memory.\n");
+    ERR(accel, "Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return (HACCEL32)NULL;
   }
@@ -389,13 +391,15 @@ BOOL32 WINAPI DestroyAcceleratorTable( HACCEL32 handle )
      from LoadAccelerators(). WTH? */
   
   /* Parameter checking to avoid any embarassing situations. */
-/*   if(!handle) { */
-/*     WARN(accel, "Application sent NULL ptr.\n"); */
-/*     SetLastError(ERROR_INVALID_PARAMETER); */
-/*     return FALSE; */
-/*   } */
+#if 0
+     if(!handle) {
+       WARN(accel, "Application sent NULL ptr.\n");
+       SetLastError(ERROR_INVALID_PARAMETER);
+       return FALSE;
+     }
   
-/*   HeapFree(GetProcessHeap(), 0, (LPACCEL32)handle); */
+     HeapFree(GetProcessHeap(), 0, (LPACCEL32)handle);
+#endif
 
   return TRUE;
 }

@@ -25,7 +25,8 @@ extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
 extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,
                                BOOL16 isCode, BOOL16 is32Bit,
                                BOOL16 isReadOnly );
-extern WORD GlobalHandleToSel( HGLOBAL16 handle );
+
+extern WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle );
 
 /* memory/virtual.c */
 extern BOOL32 VIRTUAL_Init( void );

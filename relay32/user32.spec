@@ -21,7 +21,7 @@ type	win32
  18 stdcall CallWindowProcA(ptr long long long long) CallWindowProc32A
  19 stdcall CallWindowProcW(ptr long long long long) CallWindowProc32W
  20 stub CascadeChildWindows
- 21 stub CascadeWindows
+ 21 stdcall CascadeWindows(long long ptr long ptr) CascadeWindows
  22 stdcall ChangeClipboardChain(long long) ChangeClipboardChain32
  23 stdcall ChangeMenuA(long long ptr long long) ChangeMenu32A
  24 stdcall ChangeMenuW(long long ptr long long) ChangeMenu32W
@@ -328,7 +328,7 @@ type	win32
 323 stdcall InsertMenuItemA(long long long ptr) InsertMenuItem32A
 324 stdcall InsertMenuItemW(long long long ptr) InsertMenuItem32W
 325 stdcall InsertMenuW(long long long long ptr) InsertMenu32W
-326 stub InternalGetWindowText
+326 stdcall InternalGetWindowText(long long long) InternalGetWindowText
 327 stdcall IntersectRect(ptr ptr ptr) IntersectRect32
 328 stdcall InvalidateRect(long ptr long) InvalidateRect32
 329 stdcall InvalidateRgn(long long long) InvalidateRgn32
@@ -362,8 +362,8 @@ type	win32
 357 stdcall LoadBitmapA(long str) LoadBitmap32A
 358 stdcall LoadBitmapW(long wstr) LoadBitmap32W
 359 stdcall LoadCursorA(long str) LoadCursor32A
-360 stub LoadCursorFromFileA
-361 stub LoadCursorFromFileW
+360 stdcall LoadCursorFromFileA(str) LoadCursorFromFile32A
+361 stdcall LoadCursorFromFileW(wstr) LoadCursorFromFile32W
 362 stdcall LoadCursorW(long wstr) LoadCursor32W
 363 stdcall LoadIconA(long str) LoadIcon32A
 364 stdcall LoadIconW(long wstr) LoadIcon32W
@@ -410,7 +410,7 @@ type	win32
 405 stdcall OemToCharW(ptr ptr) OemToChar32W
 406 stdcall OffsetRect(ptr long long) OffsetRect32
 407 stdcall OpenClipboard(long) OpenClipboard32
-408 stub OpenDesktopA
+408 stdcall OpenDesktopA(str long long long) OpenDesktop32A
 409 stub OpenDesktopW
 410 stdcall OpenIcon(long) OpenIcon32
 411 stub OpenInputDesktop
@@ -457,7 +457,7 @@ type	win32
 452 stdcall SendDlgItemMessageA(long long long long long) SendDlgItemMessage32A
 453 stdcall SendDlgItemMessageW(long long long long long) SendDlgItemMessage32W
 454 stdcall SendMessageA(long long long long) SendMessage32A
-455 stub SendMessageCallbackA
+455 stdcall SendMessageCallbackA(long long long long ptr long) SendMessageCallBack32A
 456 stub SendMessageCallbackW
 457 stdcall SendMessageTimeoutA(long long long long ptr ptr) SendMessageTimeout32A
 458 stdcall SendMessageTimeoutW(long long long long ptr ptr) SendMessageTimeout32W
@@ -512,9 +512,9 @@ type	win32
 507 stub SetSystemCursor
 508 stdcall SetSystemMenu(long long) SetSystemMenu32
 509 stdcall SetSystemTimer(long long long ptr) SetSystemTimer32
-510 stub SetThreadDesktop
+510 stdcall SetThreadDesktop(long) SetThreadDesktop
 511 stdcall SetTimer(long long long ptr) SetTimer32
-512 stub SetUserObjectInformationA
+512 stdcall SetUserObjectInformationA(long long long long) SetUserObjectInformation32A
 513 stub SetUserObjectInformationW
 514 stub SetUserObjectSecurity
 515 stdcall SetWindowContextHelpId(long long) SetWindowContextHelpId
@@ -547,7 +547,7 @@ type	win32
 542 stdcall TabbedTextOutA(long long long str long long ptr long) TabbedTextOut32A
 543 stdcall TabbedTextOutW(long long long wstr long long ptr long) TabbedTextOut32W
 544 stub TileChildWindows
-545 stub TileWindows
+545 stdcall TileWindows(long long ptr long ptr) TileWindows
 546 stdcall ToAscii(long long ptr ptr long) ToAscii32
 547 stub ToAsciiEx
 548 stub ToUnicode

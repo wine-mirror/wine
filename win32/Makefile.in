@@ -9,6 +9,7 @@ C_SRCS = \
 	advapi.c \
 	code_page.c \
 	console.c \
+	device.c \
 	error.c \
 	except.c \
 	file.c \

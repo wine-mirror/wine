@@ -1580,54 +1580,64 @@ LPMMIOPROC32 WINAPI mmioInstallIOProc32A(FOURCC,LPMMIOPROC32,DWORD);
 LPMMIOPROC32 WINAPI mmioInstallIOProc32W(FOURCC,LPMMIOPROC32,DWORD);
 #define      mmioInstallIOPro WINELIB_NAME_AW(mmioInstallIOProc)
 
-FOURCC WINAPI mmioStringToFOURCC16(LPCSTR sz, UINT16 uFlags);
-FOURCC WINAPI mmioStringToFOURCC32A(LPCSTR sz, UINT32 uFlags);
-FOURCC WINAPI mmioStringToFOURCC32W(LPCWSTR sz, UINT32 uFlags);
+FOURCC WINAPI	mmioStringToFOURCC16(LPCSTR,UINT16);
+FOURCC WINAPI	mmioStringToFOURCC32A(LPCSTR,UINT32);
+FOURCC WINAPI	mmioStringToFOURCC32W(LPCWSTR,UINT32);
 #define mmioStringToFOURCC WINELIB_NAME_AW(mmioStringToFOURCC)
-HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16 * lpmmioinfo, DWORD dwOpenFlags);
-HMMIO32 WINAPI mmioOpen32A(LPSTR szFileName, MMIOINFO32 * lpmmioinfo, DWORD dwOpenFlags);
-HMMIO32 WINAPI mmioOpen32W(LPWSTR szFileName, MMIOINFO32 * lpmmioinfo, DWORD dwOpenFlags);
-#define mmioOpen WINELIB_NAME_AW(mmioOpen)
+HMMIO16	WINAPI	mmioOpen16 (LPSTR ,MMIOINFO16*,DWORD);
+HMMIO32	WINAPI	mmioOpen32A(LPSTR ,MMIOINFO32*,DWORD);
+HMMIO32	WINAPI	mmioOpen32W(LPWSTR,MMIOINFO32*,DWORD);
+#define		mmioOpen WINELIB_NAME_AW(mmioOpen)
 
-UINT16 WINAPI mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
+UINT16 WINAPI	mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO16 * lpmmioinfo, DWORD dwRenameFlags);
 
-UINT16 WINAPI mmioClose(HMMIO16 hmmio, UINT16 uFlags);
-LONG WINAPI mmioRead(HMMIO16 hmmio, HPSTR pch, LONG cch);
-LONG WINAPI mmioWrite(HMMIO16 hmmio, HPCSTR pch, LONG cch);
-LONG WINAPI mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin);
-UINT16 WINAPI mmioGetInfo(HMMIO16 hmmio, MMIOINFO16 * lpmmioinfo, UINT16 uFlags);
-UINT16 WINAPI mmioSetInfo(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 uFlags);
-UINT16 WINAPI mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, LONG cchBuffer,
-    UINT16 uFlags);
-UINT16 WINAPI mmioFlush(HMMIO16 hmmio, UINT16 uFlags);
-UINT16 WINAPI mmioAdvance(HMMIO16 hmmio, MMIOINFO16 * lpmmioinfo, UINT16 uFlags);
-LONG WINAPI mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
-    LPARAM lParam1, LPARAM lParam2);
-UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
-    const MMCKINFO * lpckParent, UINT16 uFlags);
-UINT16 WINAPI mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags);
-UINT16 WINAPI mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags);
+MMRESULT16 WINAPI mmioClose16(HMMIO16,UINT16);
+MMRESULT32 WINAPI mmioClose32(HMMIO32,UINT32);
+#define		  mmioClose WINELIB_NAME(mmioClose)
+LONG WINAPI	mmioRead16(HMMIO16,HPSTR,LONG);
+LONG WINAPI	mmioRead32(HMMIO32,HPSTR,LONG);
+#define		mmioRead WINELIB_NAME(mmioRead)
+LONG WINAPI	mmioWrite16(HMMIO16,HPCSTR,LONG);
+LONG WINAPI	mmioWrite32(HMMIO32,HPCSTR,LONG);
+#define		mmioWrite WINELIB_NAME(mmioWrite)
+LONG WINAPI	mmioSeek16(HMMIO16,LONG,INT16);
+LONG WINAPI	mmioSeek32(HMMIO32,LONG,INT32);
+#define		mmioSeek WINELIB_NAME(mmioSeek)
 
-typedef UINT16 (CALLBACK *YIELDPROC) (UINT16 uDeviceID, DWORD dwYieldData);
+MMRESULT16 WINAPI	mmioGetInfo16(HMMIO16,MMIOINFO16*,UINT16);
+MMRESULT32 WINAPI	mmioGetInfo32(HMMIO32,MMIOINFO32*,UINT32);
+#define			mmioGetInfo WINELIB_NAME(mmioGetInfo)
+MMRESULT16 WINAPI	mmioSetInfo(HMMIO16,const MMIOINFO16*,UINT16);
+UINT16 WINAPI mmioSetBuffer(HMMIO16,LPSTR,LONG,UINT16);
+UINT16 WINAPI	mmioFlush16(HMMIO16,UINT16);
+UINT32 WINAPI	mmioFlush32(HMMIO32,UINT32);
+#define		mmioFlush WINELIB_NAME(mmioFlush)
 
-DWORD WINAPI mciSendCommand (UINT16 uDeviceID, UINT16 uMessage,
-                             DWORD dwParam1, DWORD dwParam2);
-DWORD WINAPI mciSendString (LPCSTR lpstrCommand,
-                            LPSTR lpstrReturnString, UINT16 uReturnLength,
-                            HWND16 hwndCallback);
-UINT16 WINAPI mciGetDeviceID (LPCSTR lpstrName);
-UINT16 WINAPI mciGetDeviceIDFromElementID (DWORD dwElementID,
-                                           LPCSTR lpstrType);
+UINT16 WINAPI	mmioAdvance16(HMMIO16,MMIOINFO16*,UINT16);
+UINT32 WINAPI	mmioAdvance32(HMMIO32,MMIOINFO32*,UINT32);
+#define		mmioAdvance WINELIB_NAME(mmioAdvance)
+LONG WINAPI mmioSendMessage(HMMIO16,UINT16,LPARAM,LPARAM);
+UINT16 WINAPI mmioDescend(HMMIO16,MMCKINFO*,const MMCKINFO*,UINT16);
+UINT16 WINAPI	mmioAscend16(HMMIO16,MMCKINFO*,UINT16);
+UINT32 WINAPI	mmioAscend32(HMMIO32,MMCKINFO*,UINT32);
+#define		mmioAscend WINELIB_NAME(mmioAscend)
+UINT16 WINAPI mmioCreateChunk(HMMIO16,MMCKINFO*,UINT16);
+
+typedef UINT16 (CALLBACK *YIELDPROC)(UINT16,DWORD);
+
+DWORD WINAPI mciSendCommand (UINT16,UINT16,DWORD,DWORD);
+DWORD WINAPI mciSendString (LPCSTR,LPSTR,UINT16,HWND16);
+UINT16 WINAPI mciGetDeviceID(LPCSTR);
+UINT16 WINAPI mciGetDeviceIDFromElementID(DWORD,LPCSTR);
 BOOL16 WINAPI mciGetErrorString16 (DWORD,LPSTR,UINT16);
 BOOL32 WINAPI mciGetErrorString32A(DWORD,LPSTR,UINT32);
 BOOL32 WINAPI mciGetErrorString32W(DWORD,LPWSTR,UINT32);
 #define mciGetErrorString WINELIB_NAME_AW(mciGetErrorString)
-BOOL16 WINAPI mciSetYieldProc (UINT16 uDeviceID, YIELDPROC fpYieldProc,
-                               DWORD dwYieldData);
+BOOL16 WINAPI mciSetYieldProc (UINT16,YIELDPROC,DWORD);
 
-HTASK16 WINAPI mciGetCreatorTask(UINT16 uDeviceID);
-YIELDPROC WINAPI mciGetYieldProc (UINT16 uDeviceID, DWORD * lpdwYieldData);
+HTASK16 WINAPI mciGetCreatorTask(UINT16);
+YIELDPROC WINAPI mciGetYieldProc(UINT16,DWORD*);
 
 #define MCIERR_INVALID_DEVICE_ID        (MCIERR_BASE + 1)
 #define MCIERR_UNRECOGNIZED_KEYWORD     (MCIERR_BASE + 3)

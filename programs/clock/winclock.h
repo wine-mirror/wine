@@ -21,8 +21,6 @@ extern HandData OldMinute, OldHour, OldSecond;
 
 
 void DrawFace(HDC dc);
-
-
 void DrawHourHand(HDC dc);
 void DrawMinuteHand(HDC dc);
 void DrawSecondHand(HDC dc);
@@ -30,4 +28,3 @@ BOOL UpdateHourHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos);
 BOOL UpdateMinuteHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos);
 BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos);
 void Idle(HDC idc);
-

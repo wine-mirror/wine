@@ -149,7 +149,7 @@ file	krnl386.exe
 146 pascal16 DeleteFile(ptr) DeleteFile16
 147 pascal16 SetLastError(long) SetLastError
 148 pascal   GetLastError() GetLastError
-149 stub GetVersionEx
+149 pascal16 GetVersionEx(ptr) GetVersionEx16
 150 pascal16 DirectedYield(word) DirectedYield
 151 stub WinOldApCall
 152 pascal16 GetNumTasks() GetNumTasks

@@ -11,6 +11,7 @@
 #include "process.h"
 #include "options.h"
 #include "debug.h"
+#include "ole.h"
 
 typedef enum
 {
@@ -163,6 +164,26 @@ LONG WINAPI GetVersion32(void)
 
 
 /***********************************************************************
+ *         GetVersionEx16   (KERNEL.149)
+ */
+BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
+{
+    VERSION ver = VERSION_GetVersion();
+    if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
+    {
+        WARN(ver,"wrong OSVERSIONINFO size from app");
+        return FALSE;
+    }
+    v->dwMajorVersion = VersionData[ver].getVersionEx.dwMajorVersion;
+    v->dwMinorVersion = VersionData[ver].getVersionEx.dwMinorVersion;
+    v->dwBuildNumber  = VersionData[ver].getVersionEx.dwBuildNumber;
+    v->dwPlatformId   = VersionData[ver].getVersionEx.dwPlatformId;
+    strcpy( v->szCSDVersion, VersionData[ver].getVersionEx.szCSDVersion );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *         GetVersionEx32A   (KERNEL32.428)
  */
 BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
@@ -299,4 +320,82 @@ void WINAPI DiagOutput(LPCSTR str)
 {
         /* FIXME */
 	DPRINTF("DIAGOUTPUT:%s\n",str);
+}
+
+/***********************************************************************
+ * DllGetVersion [COMCTL32.25]
+ *
+ *
+ *
+ */
+HRESULT WINAPI COMCTL32_DllGetVersion(DLLVERSIONINFO *pdvi)
+{
+    VERSION ver = VERSION_GetVersion();
+
+    if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
+    {
+        WARN(ver, "wrong DLLVERSIONINFO size from app");
+        return OLE_ERROR_SIZE; /* FIXME: is this error correct ? */
+    }
+
+    pdvi->dwPlatformID = VersionData[ver].getVersionEx.dwPlatformId;
+    switch(VersionData[ver].getVersion32)
+    {
+        case 0x80000a03: /* Win 3.1 */
+        {
+            pdvi->dwMajorVersion = 3;
+            pdvi->dwMinorVersion = 51;
+            pdvi->dwBuildNumber = 0;
+        }
+        break;
+        case 0xc0000004: /* Win 95 */
+        {
+            pdvi->dwMajorVersion = 4;
+            pdvi->dwMinorVersion = 0;
+            pdvi->dwBuildNumber = 950;
+        }
+        break;
+        case 0x04213303: /* NT 3.51 FIXME: correct ? */
+        {
+            pdvi->dwMajorVersion = 3;
+            pdvi->dwMinorVersion = 51;
+            pdvi->dwBuildNumber = 0x421;
+        }
+        break;
+        case 0x05650004: /* NT 4.0 FIXME: correct ? */
+        {
+            pdvi->dwMajorVersion = 4;
+            pdvi->dwMinorVersion = 0;
+            pdvi->dwBuildNumber = 0x565;
+        }
+        break;
+        default:
+        {
+            ERR(ver, "Unknown Windows version, please add it to the list !\n");
+        }
+        break;
+    }
+    return 0; /* winerror.h: NOERROR */
+}
+
+/***********************************************************************
+ *           OaBuildVersion           [OLEAUT32.170]
+ */
+UINT32 WINAPI OaBuildVersion()
+{
+    VERSION ver = VERSION_GetVersion();
+
+    switch(VersionData[ver].getVersion32)
+    {
+        case 0x80000a03: /* Win 3.1 */
+		return 0x140fd1; /* from Win32s 1.1e */
+        case 0xc0000004: /* Win 95 */
+		return 0x0a0bd3;
+        case 0x04213303: /* NT 3.51 */
+		return 0x0; /* FIXME */
+        case 0x05650004: /* NT 4.0 */
+		return 0x141016;
+	default:
+		return 0x0;
+    }
 }

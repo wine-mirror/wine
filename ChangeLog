@@ -1,4 +1,213 @@
 ----------------------------------------------------------------------
+Sun Jun 15 10:30:35 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [files/dos_fs.c] [files/file.c] [if1632/wprocs.spec]
+	  [misc/aspi.c]
+	Added support for scanners that need Adaptec's ASPI2DOS.
+
+	* [graphics/env.c] [misc/printerdrv.c] [graphics/win16drv/init.c]
+	  [if1632/gdi.spec] [include/gdi.h]
+	Enhanced printer support (especially Win95):
+	Drv[GS]etPrinterData, [GS]etEnvironment; added AbortProc handling.
+
+	* [misc/tapi32.c] [relay32/tapi32.spec]
+	Added some stubs.
+
+	* [configure.in] [graphics/fontengine.c] [include/windows.h]
+	  [misc/comm.c] [misc/w32skrnl.c] [misc/win32s16.c]
+	Made Wine compile on HP-UX (just for fun ;)
+
+	* [controls/menu.c] [include/windows.h]
+	Complete rewrite of EnableMenuItem32.
+	Free Agent 32 still doesn't work :(
+
+	* [misc/version.c] [if1632/kernel.spec] [include/winbase.h]
+	Implemented GetVersionEx16.
+
+	* [misc/network.c] [if1632/user.spec]
+	Fixed arguments of WNetGetPropertyText.
+
+	* [misc/version.c] [relay32/comctl32.spec] [relay32/oleaut32.spec]
+	Implemented COMCTL32_DllGetVersion, OaBuildVersion.
+
+	* [win32/file.c]
+	Fixed UNC handling of CreateFile32.
+
+Sat Jun 13 22:35:12 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [Makefile.in] [Make.rules.in]
+	Added pattern for CVS merge files to 'make clean'
+
+	* [ole/olecli.c] [windows/scroll.c] [windows/grahics.c]
+	Add some DC handle unlocking. (When hdc's are always unlocked,
+	they can be made moveable.)
+
+	* [documentation/wine.texinfo] 
+	Started a Wine Design chapter with discussion of 
+	graphics driver model.
+
+Sat Jun 13 11:19:25 1998  David Luyer <luyer@ucs.uwa.edu.au>
+
+	* [misc/main.c] [relay32/relay386.c]
+	Added new option -debugmsg +relay=.... or -debugmsg -relay=...
+
+Fri Jun 12 22:56:09 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [relay32/snoop.c][relay32/builtin.c][loader/pe_image.c]
+	Added inter win32 dll snooping. Use -debugmsg +snoop.
+	Number of arguments and string references are autodetected.
+	Some small bugfixes in the PE loader.
+
+	* [misc/system.c]
+	Disabled SystemTimers. They do not work with the current
+	%fs handling in the 32->16 relaycode. (helps labview)
+
+	* [msdos/dpmi.c][msdos/int2f.c][files/drive.c]
+	Added a monoton linear increasing memory allocator for DPMI (required
+	for LabView, HAFAS, ...)
+	mscdex handling in emulated realmode interrupts (for mcicda.drv)
+	allocate logical drives only once. (helps Myst)
+
+	* [files/profile.c]
+	Handle ^Z as space. Found on CDROMS (helps Myst Installer).
+
+	* [multimedia/mmio.c]
+	mmio* partially updated to win32. No funny additions.
+
+	* [windows/driver.c]
+	Added win32 driver handling (will be used for win32 multimedia/
+	msvideo drivers).
+
+	* [win32/device.c]
+	Added device handling (K32OBJ_DEVICE_IOCTL). Implemented 
+	VTDAPI.5 (used by win95' WINMM.timeGetTime())
+
+Fri Jun 12 18:01:18 1998 Rein Klazes <rklazes@casema.net>
+
+	* [ole/compobj.c relay32/ole32.spec]
+	Add a stub for CoLockObjectExternal32.
+
+	* [objects/clipping.c]
+	Fix in IntersectClipRect(), when there is no initial clipping
+	region.
+
+	* [graphics/x11drv/graphics.c]
+	Corrected several "one-off" errors for the Ellipse, Rectangle
+	and RoundRectangle (especially small ones) draw routines. 
+	Arc and friends still have to be done.
+
+Fri Jun 12 06:23:19 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [misc/ntdll.c]
+	Fixed some of the parameter counts.
+
+	* [misc/registry.c]
+	General cleanup, documentation.
+	Standard keys are allowed to be 'closed' and succeed.
+
+	* [misc/shell.c]
+	Check for correct return values from Reg* functions.
+
+	* [win32/newfns.c]
+	Added stubs for OpenDesktopA, SetThreadDesktop, and
+	SetUserObjectInformationA.
+
+Tue Jun 10 22:00:18 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [windows/sysmetrics.c][include/sysmetrics.h]
+	Fixed some Win95 values.
+
+	* [windows/nonclient.c][include/windows.h]
+	Fixed some Win95 drawing bugs.
+	Added extended window style flags (WS_EX_xxx).
+
+	* [misc/printdrv.c][relay32/winspool.spec]
+	Added stubs for DeletePrinterDriver32A, DeleteMonitor32A
+	and DeletePort32A.
+
+	* [windows/mdi.c][include/windows.h][relay32/user32.spec]
+	Added stubs for CascadeWindows and TileWindows.
+
+	* [controls/toolbar.c][include/toolbar.h]
+	Fixed a few bugs and implemented new features.
+
+	* [misc/shellord.c][relay32/shell32.spec]
+	Added stubs for SHELL32_60, SHELL32_61 and SHELL32_184.
+
+	* [controls/comctl32undoc.c][relay32/comctl32.spec]
+	New file comctl32undoc.c. Contains undocumented functions
+	of COMCTL32.DLL. These functions are needed to run EXPLORER.EXE
+	IEXPLORE.EXE and TASKMAN.EXE.
+
+	* [controls/status.c]
+	Added text alignment.
+
+Tue Jun  8 22:00:00 1998  Bertho Stultiens <bertho@akhphd.au.dk>
+
+	* [programs/*/Makefile.in]
+	Changed the rules to use wrc as resource compiler but
+	passing the source through gcc first for macro expansion.
+
+	* [programs/*/*.rc]
+	Added #include "windows.h" for the resource compiler in the
+	appropriate files.
+
+	* [tools/wrc/wrc.[ch]] [tools/wrc/writeres.c]
+	Added commandline option -A for autoregister code.
+	Corrected the underscore problem by checking the proper define
+	from config.h.
+
+Sun Jun  7 22:09:29 1998  Pascal Cuoq <pcuoq@ens-lyon.fr>
+
+	* [ole/ole2nls.c] [memory/string.c]
+	Improved LCMapString32A, and changed CompareString32A,
+	lstrcmp, lstrcmpi to use it.
+
+Sat Jun  6 19:00:50 1998  Martin Strömberg <ams@ludd.luth.se>
+
+	* [include/winnt.h]
+	Added typedefs for security and tokens.
+
+Sat Jun  6 12:26:31 1998  Morten Welinder  <terra@diku.dk>
+
+	* [objects/text.c]
+	Use debugstr_an in DrawText16.
+
+	* [loader/resource.c]
+	Use debugres_w in FindResourceEx32W.  Avoid crashing during
+	debug when wm is NULL.
+
+	* [if1632/relay.c]
+	In RELAY_DebugCallTo16, send output to the right place and
+	avoid side effects in macro arguments.
+
+Wed Jun  3 20:56:03 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [controls/scroll.c] [windows/nonclient.c]
+	Fix several off by one errors in scrollbar painting.
+
+Tue Jun  2 23:58:59 1998  Insomnia (Stea Greene) <insomnia@core.binghamton.edu>
+
+	* [graphics/dsound.c]
+	Rewrote mixer code to handle panning and volume for 16->16, 16->8,
+	8->16, and 8->8 bit mixes.  Conforms to DirectX's "logarithmic
+	hearing scale" as specified in M$VC docs.  Still does not handle
+	mixing of different frequencies (I am still working on that). 
+	Tested 16->16 extensively with StarCraft.  Other mixing combinations
+	untested but should work fine.  Still kind of a work in progress,
+	so be warned.
+
+Tue Jun  2 03:31:33 1998  Alexander V. Lukyanov <lav@long.yar.ru>
+
+	* [tools/wrc/utils.c]
+	dup_basename: fix to strip directory.
+
+Mon Jun  1 20:00:00 1998  Juergen Schmied <juergen.schmied@metronet.de>
+
+	* [include/windows.h] [objects/cursoricon.c] [relay32/user32.spec]
+	Added stubs LoadCursorFromFileW and LoadCursorFromFileA.
+
+----------------------------------------------------------------------
 Sun May 31 13:40:13 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [if1632/signal.c]

@@ -150,6 +150,14 @@ static void PROFILE_Free( PROFILESECTION *section )
     }
 }
 
+static int
+PROFILE_isspace(char c) {
+	if (isspace(c)) return 1;
+	if (c=='\r' || c==0x1a) return 1;
+	/* CR and ^Z (DOS EOF) are spaces too  (found on CD-ROMs) */
+	return 0;
+}
+
 
 /***********************************************************************
  *           PROFILE_Load
@@ -176,9 +184,9 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
     {
         line++;
         p = buffer + strlen(buffer) - 1;
-        while ((p > buffer) && ((*p == '\n') || isspace(*p))) *p-- = '\0';
+        while ((p > buffer) && ((*p == '\n') || PROFILE_isspace(*p))) *p--='\0';
         p = buffer;
-        while (*p && isspace(*p)) p++;
+        while (*p && PROFILE_isspace(*p)) p++;
         if (*p == '[')  /* section start */
         {
             if (!(p2 = strrchr( p, ']' )))
@@ -203,9 +211,9 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         if ((p2 = strchr( p, '=' )) != NULL)
         {
             char *p3 = p2 - 1;
-            while ((p3 > p) && isspace(*p3)) *p3-- = '\0';
+            while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
             *p2++ = '\0';
-            while (*p2 && isspace(*p2)) p2++;
+            while (*p2 && PROFILE_isspace(*p2)) p2++;
         }
         key = HEAP_xalloc( SystemHeap, 0, sizeof(*key) );
         key->name  = HEAP_strdupA( SystemHeap, 0, p );
@@ -765,7 +773,7 @@ int PROFILE_LoadWineIni(void)
         fclose( f );
         return 1;
     }
-    WARN(profile, "Can't open configuration file %s or $HOME%s\n",
+    MSG( "Can't open configuration file %s or $HOME%s\n",
 	 WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
 }
@@ -787,9 +795,9 @@ char* PROFILE_GetStringItem( char* start )
         {
             if( lpch ) *lpch = '\0'; else *lpchX = '\0';
             while( *(++lpchX) )
-                if( !isspace(*lpchX) ) return lpchX;
+                if( !PROFILE_isspace(*lpchX) ) return lpchX;
         }
-	else if( isspace( *lpchX ) && !lpch ) lpch = lpchX;
+	else if( PROFILE_isspace( *lpchX ) && !lpch ) lpch = lpchX;
 	     else lpch = NULL;
     }
     if( lpch ) *lpch = '\0';

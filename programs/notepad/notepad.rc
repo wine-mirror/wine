@@ -4,6 +4,7 @@
  * Copyright 1997 Marcel Baur <mbaur@g26.ethz.ch>
  */
 
+#include "windows.h"
 #include "main.h"
  
 #define CONCAT(a, b) CONCAT1(a, b)

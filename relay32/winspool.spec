@@ -35,9 +35,9 @@ type	win32
 132 stub DEVICEMODE
 133 stub DeleteFormA
 134 stub DeleteFormW
-135 stub DeleteMonitorA
+135 stdcall DeleteMonitorA(str str str) DeleteMonitor32A
 136 stub DeleteMonitorW
-137 stub DeletePortA
+137 stdcall DeletePortA(str long str) DeletePort32A
 138 stub DeletePortW
 139 stub DeletePrintProcessorA
 140 stub DeletePrintProcessorW
@@ -46,7 +46,7 @@ type	win32
 143 stub DeletePrinter
 144 stub DeletePrinterConnectionA
 145 stub DeletePrinterConnectionW
-146 stub DeletePrinterDriverA
+146 stdcall DeletePrinterDriverA(str str str) DeletePrinterDriver32A
 147 stub DeletePrinterDriverW
 148 stub DeletePrinterIC
 149 stub DevQueryPrint

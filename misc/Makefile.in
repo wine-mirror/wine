@@ -30,6 +30,7 @@ C_SRCS = \
 	spy.c \
 	stress.c \
 	system.c \
+	tapi32.c \
 	toolhelp.c \
 	tweak.c \
 	ver.c \

@@ -3928,3 +3928,11 @@ BOOL32 WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol )
   SEGPTR_FREE(lpcc16);
   return (BOOL32)ret;
 }
+
+/***********************************************************************
+ *            PageSetupDlgA  (COMDLG32.15)
+ */
+BOOL32 WINAPI PageSetupDlg32A(LPPAGESETUPDLG32A setupdlg) {
+	FIXME(commdlg,"(%p), stub!\n",setupdlg);
+	return FALSE;
+}

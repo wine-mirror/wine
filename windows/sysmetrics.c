@@ -33,7 +33,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CXDLGFRAME] =
 	PROFILE_GetWineIniInt("Tweak.Layout", "DialogFrameWidth",
-			      TWEAK_Win95Look ? 2 : 4);
+			      TWEAK_Win95Look ? 3 : 4);
     sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL] - 1;
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
@@ -118,8 +118,8 @@ void SYSMETRICS_Init(void)
     /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
     sysMetrics[SM_CLEANBOOT] = 0;
 
-    sysMetrics[SM_CXDRAG] = 0;
-    sysMetrics[SM_CYDRAG] = 0;
+    sysMetrics[SM_CXDRAG] = 2;
+    sysMetrics[SM_CYDRAG] = 2;
     sysMetrics[SM_SHOWSOUNDS] = 0;
     sysMetrics[SM_CXMENUCHECK] = 2;
     sysMetrics[SM_CYMENUCHECK] = 2;

@@ -38,6 +38,9 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
                        MF_BYCOMMAND | MF_UNCHECKED);
         CheckMenuItem(Globals.hPropertiesMenu, CL_DIGITAL, \
                        MF_BYCOMMAND | MF_CHECKED);
+        EnableMenuItem(Globals.hPropertiesMenu, CL_FONT, \
+                       MF_BYCOMMAND);
+                       
     }
     
     CheckMenuItem(Globals.hPropertiesMenu, CL_WITHOUT_TITLE, MF_BYCOMMAND | \
@@ -123,10 +126,8 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   LoadString(Globals.hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang));
   Globals.lpszLanguage = lang;
 
-  LANGUAGE_UpdateWindowCaption();
-
   /* Change Resource names */
-  lstrcpyn(STRING_MENU_Xx    + sizeof(STRING_MENU_Xx)    - 3, lang, 3);
+  lstrcpyn(STRING_MENU_Xx + sizeof(STRING_MENU_Xx) - 3, lang, 3);
 
   /* Create menu */
   hMainMenu = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
@@ -157,6 +158,7 @@ VOID LANGUAGE_SelectByNumber(UINT num)
    /* specific for Clock: */
 
    LANGUAGE_UpdateMenuCheckmarks();
+   LANGUAGE_UpdateWindowCaption();   
 }
 
 VOID LANGUAGE_DefaultHandle(WPARAM wParam)

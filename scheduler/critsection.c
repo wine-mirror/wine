@@ -21,6 +21,7 @@
 #include "winbase.h"
 #include "heap.h"
 #include "k32obj.h"
+#include "debug.h"
 #include "thread.h"
 
 typedef struct
@@ -122,6 +123,10 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
 {
+    if ((crit->Reserved==-1) && !(crit->LockSemaphore)) {
+    	FIXME(win32,"entering uninitialized section(%p)?\n",crit);
+    	InitializeCriticalSection(crit);
+    }
     if (InterlockedIncrement( &crit->LockCount ))
     {
         if (crit->OwningThread == GetCurrentThreadId())

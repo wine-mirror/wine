@@ -43,6 +43,7 @@
 #include "user.h"
 #include "keyboard.h"
 #include "x11drv.h"
+#include "winerror.h"
 
 Cursor CURSORICON_XCursor = None;    /* Current X cursor */
 static HCURSOR32 hActiveCursor = 0;  /* Active cursor */
@@ -1471,7 +1472,25 @@ HCURSOR32 WINAPI LoadCursor32A(HINSTANCE32 hInstance, LPCSTR name)
         }
         return res;
 }
+/***********************************************************************
+*            LoadCursorFromFile32W    (USER32.361)
+*/
+HCURSOR32 WINAPI LoadCursorFromFile32W (LPCWSTR name)
+{       FIXME(cursor, ":stub LoadCursorFromFile32W\n");
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);  
+	return 0;
+}
 
+/***********************************************************************
+*            LoadCursorFromFile32A    (USER32.360)
+*/
+HCURSOR32 WINAPI LoadCursorFromFile32A (LPCSTR name)
+{	FIXME(cursor, ":stub LoadCursorFromFile32A %s\n", name);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);  
+	return 0;
+
+}
+  
 /***********************************************************************
  *           LoadIconW          (USER32.364)
  */

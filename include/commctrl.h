@@ -7,6 +7,9 @@
 
 #include "windows.h"
 
+VOID WINAPI GetEffectiveClientRect (HWND32, LPRECT32, LPINT32);
+
+
 void WINAPI InitCommonControls(void);
 
 typedef struct tagINITCOMMONCONTROLSEX {
@@ -76,11 +79,17 @@ BOOL32 WINAPI InitCommonControlsEx(LPINITCOMMONCONTROLSEX);
 #define NM_TOOLTIPSCREATED   (NM_FIRST-19)
 
 
+/* callback constants */
+#define LPSTR_TEXTCALLBACK32A    ((LPSTR)-1L)
+#define LPSTR_TEXTCALLBACK32W    ((LPWSTR)-1L)
+#define LPSTR_TEXTCALLBACK WINELIB_NAME_AW(LPSTR_TEXTCALLBACK)
+
+
 /* StatusWindow */
 
 #define STATUSCLASSNAME16     "msctls_statusbar"
 #define STATUSCLASSNAME32A    "msctls_statusbar32"
-#define STATUSCLASSNAME32W   L"msctls_statusbar32"       /*FIXME*/
+#define STATUSCLASSNAME32W   L"msctls_statusbar32"
 #define STATUSCLASSNAME WINELIB_NAME_AW(STATUSCLASSNAME)
 
 #define SB_SETTEXT32A         (WM_USER+1)
@@ -497,47 +506,46 @@ typedef struct tagNMHEADERA
 
 /* Toolbar */
 
-#define TOOLBARCLASSNAME16        "ToolbarWindow" 
-#define TOOLBARCLASSNAME32W       L"ToolbarWindow32" 
-#define TOOLBARCLASSNAME32A       "ToolbarWindow32" 
+#define TOOLBARCLASSNAME16        "ToolbarWindow"
+#define TOOLBARCLASSNAME32W       L"ToolbarWindow32"
+#define TOOLBARCLASSNAME32A       "ToolbarWindow32"
 #define TOOLBARCLASSNAME WINELIB_NAME_AW(TOOLBARCLASSNAME)
 
- 
-#define CMB_MASKED              0x02 
- 
-#define TBSTATE_CHECKED         0x01 
-#define TBSTATE_PRESSED         0x02 
-#define TBSTATE_ENABLED         0x04 
-#define TBSTATE_HIDDEN          0x08 
-#define TBSTATE_INDETERMINATE   0x10 
-#define TBSTATE_WRAP            0x20 
+
+#define CMB_MASKED              0x02
+
+#define TBSTATE_CHECKED         0x01
+#define TBSTATE_PRESSED         0x02
+#define TBSTATE_ENABLED         0x04
+#define TBSTATE_HIDDEN          0x08
+#define TBSTATE_INDETERMINATE   0x10
+#define TBSTATE_WRAP            0x20
 #define TBSTATE_ELLIPSES        0x40
-#define TBSTATE_MARKED          0x80 
+#define TBSTATE_MARKED          0x80
+
+#define TBSTYLE_BUTTON          0x00
+#define TBSTYLE_SEP             0x01
+#define TBSTYLE_CHECK           0x02
+#define TBSTYLE_GROUP           0x04
+#define TBSTYLE_CHECKGROUP      (TBSTYLE_GROUP | TBSTYLE_CHECK)
+#define TBSTYLE_DROPDOWN        0x08
  
- 
-#define TBSTYLE_BUTTON          0x00 
-#define TBSTYLE_SEP             0x01 
-#define TBSTYLE_CHECK           0x02 
-#define TBSTYLE_GROUP           0x04 
-#define TBSTYLE_CHECKGROUP      (TBSTYLE_GROUP | TBSTYLE_CHECK) 
-#define TBSTYLE_DROPDOWN        0x08 
- 
-#define TBSTYLE_TOOLTIPS        0x0100 
-#define TBSTYLE_WRAPABLE        0x0200 
-#define TBSTYLE_ALTDRAG         0x0400 
-#define TBSTYLE_FLAT            0x0800 
-#define TBSTYLE_LIST            0x1000 
-#define TBSTYLE_CUSTOMERASE     0x2000 
- 
+#define TBSTYLE_TOOLTIPS        0x0100
+#define TBSTYLE_WRAPABLE        0x0200
+#define TBSTYLE_ALTDRAG         0x0400
+#define TBSTYLE_FLAT            0x0800
+#define TBSTYLE_LIST            0x1000
+#define TBSTYLE_CUSTOMERASE     0x2000
+
 #define TB_ENABLEBUTTON          (WM_USER+1)
 #define TB_CHECKBUTTON           (WM_USER+2)
 #define TB_PRESSBUTTON           (WM_USER+3)
 #define TB_HIDEBUTTON            (WM_USER+4)
 #define TB_INDETERMINATE         (WM_USER+5)
-#define TB_ISBUTTONENABLED       (WM_USER+9) 
-#define TB_ISBUTTONCHECKED       (WM_USER+10) 
-#define TB_ISBUTTONPRESSED       (WM_USER+11) 
-#define TB_ISBUTTONHIDDEN        (WM_USER+12) 
+#define TB_ISBUTTONENABLED       (WM_USER+9)
+#define TB_ISBUTTONCHECKED       (WM_USER+10)
+#define TB_ISBUTTONPRESSED       (WM_USER+11)
+#define TB_ISBUTTONHIDDEN        (WM_USER+12)
 #define TB_ISBUTTONINDETERMINATE (WM_USER+13)
 #define TB_ISBUTTONHIGHLIGHTED   (WM_USER+14)
 #define TB_SETSTATE              (WM_USER+17)
@@ -558,8 +566,8 @@ typedef struct tagNMHEADERA
 #define TB_SAVERESTORE32W        (WM_USER+76)
 #define TB_SAVERESTORE WINELIB_NAME_AW(TB_SAVERESTORE)
 #define TB_CUSTOMIZE             (WM_USER+27)
-#define TB_ADDSTRING32A          (WM_USER+28) 
-#define TB_ADDSTRING32W          (WM_USER+77) 
+#define TB_ADDSTRING32A          (WM_USER+28)
+#define TB_ADDSTRING32W          (WM_USER+77)
 #define TB_ADDSTRING WINELIB_NAME_AW(TB_ADDSTRING)
 #define TB_GETITEMRECT           (WM_USER+29)
 #define TB_BUTTONSTRUCTSIZE      (WM_USER+30)
@@ -571,6 +579,7 @@ typedef struct tagNMHEADERA
 #define TB_SETPARENT             (WM_USER+37)
 #define TB_SETROWS               (WM_USER+39)
 #define TB_GETROWS               (WM_USER+40)
+#define TB_GETBITMAPFLAGS        (WM_USER+41)
 #define TB_SETCMDID              (WM_USER+42)
 #define TB_CHANGEBITMAP          (WM_USER+43)
 #define TB_GETBITMAP             (WM_USER+44)
@@ -593,6 +602,10 @@ typedef struct tagNMHEADERA
 #define TB_SETBUTTONWIDTH        (WM_USER+59)
 #define TB_SETMAXTEXTROWS        (WM_USER+60)
 #define TB_GETTEXTROWS           (WM_USER+61)
+
+#define TB_MAPACCELERATOR32A     (WM_USER+78)
+#define TB_MAPACCELERATOR32W     (WM_USER+90)
+#define TB_MAPACCELERATOR WINELIB_NAME_AW(TB_MAPACCELERATOR)
 
 
 /* This is just for old CreateToolbar. */
@@ -633,18 +646,12 @@ typedef struct tagTBADDBITMAP {
 #define HINST_COMMCTRL         ((HINSTANCE32)-1)
 
 
-HWND32 WINAPI
-CreateToolbar(HWND32, DWORD, UINT32, INT32, HINSTANCE32,
-              UINT32, LPCOLDTBBUTTON, INT32); 
- 
-HWND32 WINAPI
-CreateToolbarEx(HWND32, DWORD, UINT32, INT32,
-                HINSTANCE32, UINT32, LPCTBBUTTON, 
-                INT32, INT32, INT32, INT32, INT32, UINT32); 
-
-HBITMAP32 WINAPI
-CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32); 
-
-
+HWND32 WINAPI CreateToolbar(HWND32, DWORD, UINT32, INT32, HINSTANCE32,
+                            UINT32, LPCOLDTBBUTTON, INT32);
+HWND32 WINAPI CreateToolbarEx(HWND32, DWORD, UINT32, INT32, HINSTANCE32,
+                              UINT32, LPCTBBUTTON, INT32, INT32, INT32,
+                              INT32, INT32, UINT32);
+HBITMAP32 WINAPI CreateMappedBitmap (HINSTANCE32, INT32, UINT32,
+                                     LPCOLORMAP, INT32);
 
 #endif  /* __WINE_COMMCTRL_H */

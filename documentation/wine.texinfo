@@ -271,6 +271,7 @@ Wine is free software. Wine is still in development-only state.
 @menu
 * Copying::                     License, Warranty, and Authors of Wine.
 * Introduction::                A short overview.
+* Wine Design::                 The design of Wine.
 * Reference Manual::            The Wine reference manual.
 * Installation::                Installing and configuring Wine.
 * The Wine Project::            How to contribute to Wine.
@@ -340,54 +341,37 @@ Alexandre Julliard @*
 
 
 
-@node Introduction, Reference Manual, Copying, Top
+@node Introduction, Wine Design, Copying, Top
 @chapter Introduction
-
-@center Wine:
-@center the WINdows Emulator,
-@center or Wine Is Not an Emulator
-
-FIXME: make an easy-readable fluent text out of this.
-
-Welcome to @winemanualtitle{}. This is edition @winemanualversion{},
-last updated @winemanualdate{}.
 
 @strong{What is Wine?}
 
-Wine is a program that allows running MS-Windows programs under X11.
-
-
-Wine incorporates two features, the program loader and @winelib{}:
+Wine is a Windows-compatibility layer for Unix and X11.
+The Wine system consists of several thing:
 @enumerate
 @item
-You can run @mswindows{} binaries (programs) in Wine. Wine contains a
-program loader which loads and executes an @mswindows{} binary. It uses
-the @winelib{} features of Wine to translate @WIN32{} and @WIN16{} calls
-to their @unix{}/X11 equivalent.
-
-Both 16 bit and 32 bit binaries can be loaded.
+An API, sometimes referred to as the Wine API,
+designed to be as compatible as possible with the
+@mswindows{} API
 @item
-@winelib{}: Wine can also be used as a library which implements the 
-@mswindows{} API on top of a @unix{} or @unix{}-like operating system
-with X11. @winelib{} (i.e. the Wine library) translates @WIN16{} or
-@WIN32{} API calls to their @unix{}/X11 equivalent.
+A library, called @winelib{}, which implements this API
+@item
+A binary compatibility layer, sometimes referred to as the Wine
+emulator, which acts as a program loader for native Windows binaries.
+The emulator works for both 16 and 32 bit Intel binaries, and
+provides all the appropriate translation between 16 and 32 bit code
+(thunking). Real mode interrupts are also supported, and their
+functionality is implemented in @winelib{}.
 
-You can write a user-level application program that calls the @WIN16{}
-or @WIN32{} API functions and compile it on a @unix{} box.
 @end enumerate
 
-@strong{Status}
+@strong{System Requirements}
 
-Wine is still at development stage. The file @file{ANNOUNCE} says,
-``This is still a developer's only release.  There are many bugs and
-many unimplemented API features.  Most applications still do not work
-correctly.''
-@xref{Warranty}, for additional information.
 
-@strong{Requirements}
-
-Wine needs an 80x86 CPU to run on. Emulating the CPU is currently not
-possible.
+Wine provides binary support for Intel code on Intel hardware only. 
+Neither hardware emulation
+nor non-Intel binaries are supported.
+@winelib{} should be possible to port to just about any Unix system.
 
 Currently, you must have one of:
 @itemize @bullet
@@ -397,21 +381,18 @@ Linux version 0.99.13 or above
 NetBSD-current
 @item
 FreeBSD-current or FreeBSD 1.1
+@item
+OpenBSD/i386 2.1 or later
+@item
+Solaris x86 2.5 or later
 @end itemize
 You need X11, and you must have @file{libXpm} installed on your system.
 
 @strong{Availability}
 
-Wine is free software. The file @file{README} says, ``Basically, you can do
-anything with it, except claim that you wrote it.''
+Wine is free software; the license is BSD-style. Basically, you can do
+anything with it, except claim that you wrote it.
 @xref{Copying}, for more information.
-
-@strong{Performance}
-
-Wine is expected to run @mswindows{} binaries about the same speed as
-@mswindows{} would. However, be aware that the 16 bit versions of
-@mswindows{} programs are generally slower than their 32 bit
-counterparts.
 
 @strong{Further information}
 
@@ -419,24 +400,142 @@ You should consult the files @file{README}, @file{ANNOUNCE},
 @file{RELEASE-NOTES}, @file{BUGS}, @file{LICENSE}, and @file{WARRANTY},
 in the root directory of the Wine distribution.
 
-The Wine FAQ, available from @*
-@url{ftp://ftp.asgardpro.com/wine/dave/Wine.FAQ}, @*
-@url{ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/Wine.FAQ}, @*
-@url{ftp://rtfm.mit.edu/pub/usenet-by-group/comp.emulators.ms-windows.wine/WINE_(WINdows_Emulator)_Frequently_Asked_Questions}, @*
-@url{ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/Wine.FAQ}, @*
-@url{http://www.asgardpro.com/wine/index.html}, @*
-gives answer to a lot of questions.
+The Wine USENET newsgroup  @url{news:comp.emulators.ms-windows.wine} 
+is useful for both Wine developers and Wine users. The Wine home page
+is @url{http://www.winehq.com/}.
 
-The Wine USENET newsgroup is interesting for developers. It discusses technical
-matters about Wine. The address is: @url{news:comp.emulators.ms-windows.wine}.
+@node Wine Design,  Reference Manual,  Introduction,  Top
+@chapter Wine Design
+
+@subsection The Wine Graphics Driver Model
+
+Wine, like Windows, abstracts drawing code so that applications may access
+a wide variety of devices, from different kinds of graphics cards,
+X displays and printers, using a single unified graphics model.
+This model is referred to as GDI: _G_raphics _D_river _I_nterface.
+This section discusses the Wine implementation of GDI.
+There are 61 functions in the Wine graphics model, including Arc, BitBlt,
+Chord, etc. For a complete list and prototypes, see the definition
+of DC_FUNCTIONS in [include/gdi.h].
+
+Wine, as of 2Q1998, has three native drivers: these provide support
+for rendering to X displays, metafiles, and Win16 native printer drivers.
+As far as Wine is concerned, a driver
+simply consists of a name and a table of function pointers 
+(see [graphics/driver.c]). These functions
+are the driver's implementation of the various Wine graphics
+operations (the GDI).  Wine maintains a linked list of all drivers which
+register themselves with Wine, as well as a ``generic''
+driver. Currently, the X11 driver registers itself as DISPLAY, the
+win16 driver registers itself as the generic driver, and the metafile
+driver doesn't register itself at all.
+
+@subsubsection How a driver function gets invoked
+
+All drawing by Wine applications 
+is done in terms of a Device Context (DC).
+Before an application can draw, it must create a DC, and all drawing calls
+must pass a handle to the DC they wish to draw to.
+[include/gdi.h] defines several structures relating to DCs, including
+DC, WIN_DC_INFO, and DeviceCaps. The DeviceCaps structure is at the lowest
+level: it holds
+information relating to specifics of the graphics display 
+hardware and associated
+driver. 
+WIN_DC_INFO holds information about several device independent
+modes the DC can be in, plus a pointer to DeviceCaps.
+Finally,
+the DC structure is the toplevel structure usually passed around.
+It holds viewport information, a pointer to WIN_DC_INFO, and a
+pointer to the function table to be used while rendering that DC.
+This function table is filled at the time of creating the DC.
+
+@c Modes
+
+@c  Some discussion of the various modalities available to a DC would be nice.
+
+@c Coordinate Systems
+
+@c  Some discussion of the maze of coordinate systems would also be nice.
+
+@c  Device Coordinates
+
+@c  Logical Coordinates
+
+@c  World transforms
 
 
+@subsubsection The X11 driver
 
-@xref{The Wine Project}, if you consider contributing some work.
+As a part of the Wine loading process,
+X11DRV_Init in [graphics/x11drv/init.c] is called. 
+This initializes various aspects of the X11 driver and
+registers it as DISPLAY.  This function first 
+calls initialization procedures for various parts of the X11 driver.
+It then
+creates and 
+fills a static DeviceCaps
+structure to be used for every X11 DC.
+Finally, it fills the table of GDI functions to be used for X11
+rendering and registers itself as ``DISPLAY''.
+
+@subsubsection The Metafile Driver
+
+The metafile driver is unusual, in that it is not a driver for any
+kind of display device, but rather a mechanism which allows using
+the Wine graphics model as a file format for saving graphics.
+The advantage of this is that it allows using identical formats for
+saving pictures as is actually used to display them; it is analogous
+to Display PostScript.
+
+The metafile driver is invoked explicitly by the application. The
+application calls CreateMetaFile() to create a special DC for recording
+graphics drawing operations in a metafile. Any drawing operations
+performed in this DC are not drawn physically anywhere, they are
+instead stored in the metafile.  The DC is explicitly destroyed by a
+call to CloseMetaFile(), which also finishes writing the metafile.
+Metafiles may be written either to a file or to memory. Later, the
+metafile can be rendered (in a physical DC) by PlayMetaFile().
+
+The way that this works is that device contexts contain a pointer
+to the function lookup table for drawing operations appropriate for
+that device.
+
+Not all functions in the Wine graphics model are relevant to metafiles, but
+some relevant but rarely used functions are unimplemented.
+
+@subsubsection The WIN16 Driver
+
+WIN16DRV_Init is called by MAIN_EmulatorInit, and registers the
+WIN16DRV function table WIN16DRV_Funcs [graphics/win16drv/init.c]
+for the generic driver. The WIN16 driver is designed to load 
+specified native Windows printer drivers. I don't understand 
+how the whole scheme works, 
+start studying what happens when a printer DC is
+created via WIN16DRV_CreateDC.
+
+If a DC is created explicitly, via the
+CreateDC() call, the driver name is specified explicitly and Wine
+finds the appropriate driver by leafing through its table of registered
+drivers. Metafile DCs can only be created by the CreateMetaFile function.
+
+Alternatively, most of the time, the DISPLAY driver is invoked
+implicitly. 
+The application creates a window with
+CreateWindow(). If the CS_CLASSDC or CS_OWNDC flag is passed, a new DC
+is created and saved for the window in a structure called DCE, which holds
+a DC, a clipping region, and flags. Whenever the application wants to
+paint in that window, it calls GetDC(hwnd), which returns the DC in the
+DCE saved in the window.
+
+If neither of those flags are used, the window gets a DCE assigned to it
+from a pool of DCEs created during Wine initialization and temporarily
+assigned during the GetDC() call.
+All DCEs, whether part of the Wine DC pool or created by request of a window,
+use the ``DISPLAY'' driver. 
 
 
-
-@node Reference Manual, Installation, Introduction, Top
+@node Reference Manual, Installation, Wine Design, Top
 
 @menu
 * WIN32 Reference Manual::      The @WIN32{} function calls and data types.

@@ -15,6 +15,8 @@ dnl **** Command-line arguments ****
 dnl Default values
 MAIN_TARGET=emu
 LIB_TARGET=libwine.a
+TRACE_MSGS=yes	# the TRACE() macro
+DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
 
 AC_ARG_ENABLE(emulator,
 [  --disable-emulator      build only the Wine library, not the emulator],
@@ -28,12 +30,31 @@ dnl AC_ARG_WITH(ipc,
 dnl [  --enable-ipc            use inter-process communication for DDE],
 dnl [if test "$enableval" = "no"; then : ; else OPTIONS="-DCONFIG_IPC"; fi])
 
+AC_ARG_ENABLE(debug,
+[  --disable-debug         compile out all debugging messages],
+[if test "$enableval" = "no"; then DEBUG_MSGS="no"; fi])
+
+AC_ARG_ENABLE(trace,
+[  --disable-trace         compile out TRACE messages],
+[if test "$enableval" = "no"; then TRACE_MSGS="no"; fi])
+
 AC_ARG_WITH(reentrant-x,
 [  --without-reentrant-x   Compile for use with non-reentrant X libraries])
 
 AC_SUBST(MAIN_TARGET)
 AC_SUBST(LIB_TARGET)
 AC_SUBST(OPTIONS)
+
+if test "$DEBUG_MSGS" = "no"
+then
+    AC_DEFINE(NO_DEBUG_MSGS)
+    AC_DEFINE(NO_TRACE_MSGS)
+else
+    if test "$TRACE_MSGS" = "no"
+    then
+        AC_DEFINE(NO_TRACE_MSGS)
+    fi
+fi
 
 dnl **** Check for some programs ****
 
@@ -215,7 +236,7 @@ fi
 dnl **** Check for functions and header files ****
 
 AC_CHECK_FUNCS(clone getpagesize memmove sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h sys/cdio.h sys/filio.h)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()

@@ -12,6 +12,9 @@
 #include "options.h"
 #include "heap.h"
 #include "debug.h"
+#include "selectors.h"
+#include "module.h"
+#include "miscemu.h"
 
 
 /* FIXME!
@@ -95,6 +98,8 @@ struct ASPI_DEVICE_INFO {
 typedef struct ASPI_DEVICE_INFO ASPI_DEVICE_INFO;
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
+static BOOL16 DOSASPI = FALSE;
+
 #ifdef linux
 static int
 ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
@@ -157,7 +162,10 @@ ASPI_DebugPrintCmd16(SRB_ExecSCSICmd16 *prb)
   BYTE *lpBuf;
   dbg_decl_str(aspi, 512);
 
-  lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+  if ((DOSASPI) && (prb->SRB_BufPointer)) /* translate real mode address */
+    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+  else
+    lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -229,7 +237,10 @@ ASPI_DebugPrintResult16(SRB_ExecSCSICmd16 *prb)
 {
   BYTE *lpBuf;
 
-  lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+  if ((DOSASPI) && (prb->SRB_BufPointer)) /* translate real mode address */
+    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+  else
+    lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -255,6 +266,7 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
 
   fd = ASPI_OpenDevice16(prb);
   if (fd == -1) {
+      WARN(aspi, "ASPI_ExecScsiCmd16 failed: could not open device.\n");
       prb->SRB_Status = SS_ERR;
       return SS_ERR;
   }
@@ -263,9 +275,13 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
   sg_reply_hdr = NULL;
 
   prb->SRB_Status = SS_PENDING;
-  lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+  if ((DOSASPI) && (prb->SRB_BufPointer)) /* translate real mode address */
+    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+  else
+    lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
 
   if (!prb->SRB_CDBLen) {
+      WARN(aspi, "ASPI_ExecScsiCmd16 failed: prb->SRB_CDBLen = 0.\n");
       prb->SRB_Status = SS_ERR;
       return SS_ERR;
   }
@@ -406,7 +422,14 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 
   switch (lpSRB->common.SRB_cmd) {
   case SC_HA_INQUIRY:
-    FIXME(aspi, "Not implemented SC_HA_INQUIRY\n");
+    lpSRB->inquiry.SRB_Status = 0x1;           /* completed successfully */
+    lpSRB->inquiry.SRB_HaId = 1;               /* bogus value */
+    lpSRB->inquiry.HA_Count = 1;               /* not always */
+    lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
+    strcat(lpSRB->inquiry.HA_ManagerId, "Wine ASPI"); /* max 15 chars */
+    lpSRB->inquiry.SRB_55AASignature = 0x55aa; /* correct ??? */
+    lpSRB->inquiry.SRB_ExtBufferSize = 0x2000; /* bogus value */
+    FIXME(aspi, "ASPI: Partially implemented SC_HA_INQUIRY\n");
     break;
   case SC_GET_DEV_TYPE:
     FIXME(aspi, "Not implemented SC_GET_DEV_TYPE\n");
@@ -436,5 +459,41 @@ DWORD WINAPI GetASPIDLLVersion()
 	return (DWORD)2;
 #else
 	return (DWORD)0;
+#endif
+}
+
+
+void WINAPI ASPI_DOS_func(DWORD srb)
+{
+       LPSRB16 lpSRB = (LPSRB16)DOSMEM_MapRealToLinear(srb);
+       SEGPTR spSRB = MapLS(lpSRB);
+
+       TRACE(aspi, "DOSASPI: function #%d\n", lpSRB->common.SRB_cmd);
+       DOSASPI = TRUE;
+       SendASPICommand16(spSRB);
+       DOSASPI = FALSE;
+       UnMapLS(spSRB);
+}
+
+void ASPI_DOS_HandleInt(CONTEXT *context)
+/* returns a real mode call address to ASPI_DOS_func() */
+{
+#ifdef linux
+       FARPROC16 DOS_func;
+       DWORD dos;
+       LPBYTE dosptr;
+
+       DOS_func = MODULE_GetWndProcEntry16("ASPI_DOS_func");
+       dos = GlobalDOSAlloc(5);
+       dosptr = (BYTE *)PTR_SEG_OFF_TO_LIN(LOWORD(dos), 0);
+       *dosptr++ = 0xea; /* ljmp */
+       *(FARPROC16 *)dosptr = DOS_func;
+
+       *(DWORD *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context))
+               = MAKELONG(0, HIWORD(dos)); /* real mode address */
+       RESET_CFLAG(context);
+       AX_reg(context) = CX_reg(context);
+#else
+       SET_CFLAG(context);
 #endif
 }

@@ -10,7 +10,16 @@
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "debug.h"
+
+#define INT_PD_DEFAULT_DEVMODE	1
+#define INT_PD_DEFAULT_MODEL	2
+
+static char PrinterModel[]	= "Printer Model";
+static char DefaultDevMode[]	= "Default DevMode";
+static char PrinterDriverData[] = "PrinterDriverData";
+static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
 INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 {
@@ -32,42 +41,172 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
   return  Escape16(hdc, ENDDOC, 0, 0, 0);
 }
 
+WORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer, LPBYTE lpPrinterData, int cbData)
+{
+    WORD res = -1;
+    HKEY hkey;
+    DWORD dwType, cbQueryData;
+
+    if (!(RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
+        if (cbData > 1) { /* "Default DevMode" */
+            if (!(RegQueryValueEx32A(hkey, DefaultDevMode, 0, &dwType, 0, &cbQueryData))) {
+                if (!lpPrinterData) res = cbQueryData;
+		else
+		if ((cbQueryData) && (cbQueryData <= cbData)) {
+		    cbQueryData = cbData;
+		    if (RegQueryValueEx32A(hkey, DefaultDevMode, 0,
+				&dwType, lpPrinterData, &cbQueryData))
+		        res = cbQueryData;
+		}
+            }
+            else /* "Printer Driver" */
+	    {
+		cbQueryData = 32;
+	        RegQueryValueEx32A(hkey, "Printer Driver", 0,
+			&dwType, lpPrinterData, &cbQueryData);
+		res = cbQueryData;
+	    }
+	}
+    }
+    if (hkey) RegCloseKey(hkey);
+    return res;
+}
 
 
 DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
                                LPDWORD lpType, LPBYTE lpPrinterData,
                                int cbData, LPDWORD lpNeeded)
 {
-    FIXME(print, "stub.\n");
+    LPSTR RegStr_Printer;
+    HKEY hkey = 0, hkey2 = 0;
+    DWORD res = 0;
+    DWORD dwType, PrinterAttr, cbPrinterAttr, SetData, size;
+
     if (HIWORD(lpPrinter))
-	    TRACE(print,"printer %s\n",lpPrinter);
+            TRACE(print,"printer %s\n",lpPrinter);
     else
-	    TRACE(print,"printer %p\n",lpPrinter);
+            TRACE(print,"printer %p\n",lpPrinter);
     if (HIWORD(lpProfile))
-	    TRACE(print,"profile %s\n",lpProfile);
+            TRACE(print,"profile %s\n",lpProfile);
     else
-	    TRACE(print,"profile %p\n",lpProfile);
+            TRACE(print,"profile %p\n",lpProfile);
     TRACE(print,"lpType %p\n",lpType);
-    return 0;
+
+    if ((!lpPrinter) || (!lpProfile) || (!lpNeeded))
+	return ERROR_INVALID_PARAMETER;
+
+    RegStr_Printer = HeapAlloc(GetProcessHeap(), 0,
+                               strlen(Printers) + strlen(lpPrinter) + 2);
+    strcpy(RegStr_Printer, Printers);
+    strcat(RegStr_Printer, lpPrinter);
+
+    if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) ||
+    (!lstrcmp32A(lpProfile, DefaultDevMode))) {
+	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, cbData);
+	if (size+1) {
+	    *lpNeeded = size;
+	    if ((lpPrinterData) && (*lpNeeded > cbData))
+		res = ERROR_MORE_DATA;
+	}
+	else res = ERROR_INVALID_PRINTER_NAME;
+    }
+    else
+    if (((DWORD)lpProfile == INT_PD_DEFAULT_MODEL) ||
+    (!lstrcmp32A(lpProfile, PrinterModel))) {
+	*lpNeeded = 32;
+	if (!lpPrinterData) goto failed;
+	if (cbData < 32) {
+	    res = ERROR_MORE_DATA;
+	    goto failed;
+	}
+	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, 1);
+	if ((size+1) && (lpType))
+	    *lpType = REG_SZ;
+	else
+	    res = ERROR_INVALID_PRINTER_NAME;
+    }
+    else
+    {
+	if ((res = RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)))
+	    goto failed;
+        cbPrinterAttr = 4;
+	if ((res = RegQueryValueEx32A(hkey, "Attributes", 0, &dwType, (LPBYTE)&PrinterAttr, &cbPrinterAttr)))
+	    goto failed;
+	if ((res = RegOpenKey32A(hkey, PrinterDriverData, &hkey2)))
+	    goto failed;
+        *lpNeeded = cbData;
+	res = RegQueryValueEx32A(hkey2, lpProfile, 0, lpType, lpPrinterData, lpNeeded);
+	if ((res != ERROR_CANTREAD) && ((PrinterAttr & (0x800|0x10)) == 0x10))
+        {
+	    if (!(res) && (*lpType == REG_DWORD) && (*(LPDWORD)lpPrinterData == -1))
+	        res = ERROR_INVALID_DATA;
+	}
+	else
+        {
+	    SetData = -1;
+	    RegSetValueEx32A(hkey2, lpProfile, 0, REG_DWORD, (LPBYTE)&SetData, 4); /* no result returned */
+	}
+    }
+	
+failed:
+    if (hkey2) RegCloseKey(hkey2);
+    if (hkey) RegCloseKey(hkey);
+    HeapFree(GetProcessHeap(), 0, RegStr_Printer);
+    return res;
 }
 
 
 
 DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
-                               LPDWORD lpType, LPBYTE lpPrinterData,
+                               DWORD lpType, LPBYTE lpPrinterData,
                                DWORD dwSize)
 {
-    FIXME(print, "stub.\n");
+    LPSTR RegStr_Printer;
+    HKEY hkey = 0;
+    DWORD res = 0;
+
     if (HIWORD(lpPrinter))
-	    TRACE(print,"printer %s\n",lpPrinter);
+            TRACE(print,"printer %s\n",lpPrinter);
     else
-	    TRACE(print,"printer %p\n",lpPrinter);
+            TRACE(print,"printer %p\n",lpPrinter);
     if (HIWORD(lpProfile))
-	    TRACE(print,"profile %s\n",lpProfile);
+            TRACE(print,"profile %s\n",lpProfile);
     else
-	    TRACE(print,"profile %p\n",lpProfile);
-    TRACE(print,"lpType %p\n",lpType);
-    return 0;
+            TRACE(print,"profile %p\n",lpProfile);
+    TRACE(print,"lpType %08lx\n",lpType);
+
+    if ((!lpPrinter) || (!lpProfile) ||
+    ((DWORD)lpProfile == INT_PD_DEFAULT_MODEL) ||
+    (!lstrcmp32A(lpProfile, PrinterModel)))
+	return ERROR_INVALID_PARAMETER;
+
+    RegStr_Printer = HeapAlloc(GetProcessHeap(), 0,
+			strlen(Printers) + strlen(lpPrinter) + 2);
+    strcpy(RegStr_Printer, Printers);
+    strcat(RegStr_Printer, lpPrinter);
+
+    if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) ||
+    (!lstrcmp32A(lpProfile, DefaultDevMode))) {
+	if (!(RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)) ||
+	    (RegSetValueEx32A(hkey, DefaultDevMode, 0, REG_BINARY, lpPrinterData, dwSize)))
+	        res = ERROR_INVALID_PRINTER_NAME;
+    }
+    else
+    {
+	strcat(RegStr_Printer, "\\");
+
+	if (!(res = RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
+
+	    if (!lpPrinterData) 
+	        res = RegDeleteValue32A(hkey, lpProfile);
+	    else
+                res = RegSetValueEx32A(hkey, lpProfile, 0, lpType, lpPrinterData, dwSize);
+	}
+    }
+
+    if (hkey) RegCloseKey(hkey);
+    HeapFree(GetProcessHeap(), 0, RegStr_Printer);
+    return res;
 }
 
 
@@ -105,9 +244,39 @@ BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
     *lpdwReturned=0;
     return TRUE;
 }
+
+
 BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
 {
     FIXME(print, "(%s,%lx,%p):stub!\n", pName, Level, pMonitors);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+
+BOOL32 WINAPI
+DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
+{
+    FIXME(print, "(%s,%s,%s):stub!\n", pName, pEnvironment, pDriverName);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+BOOL32 WINAPI
+DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
+{
+    FIXME(print, "(%s,%s,%s):stub!\n", pName, pEnvironment, pMonitorName);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+BOOL32 WINAPI
+DeletePort32A (LPSTR pName, HWND32 hWnd, LPSTR pPortName)
+{
+    FIXME(print, "(%s,0x%08x,%s):stub!\n", pName, hWnd, pPortName);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+

@@ -212,6 +212,40 @@ BOOL32 WINAPI CloseServiceHandle( HANDLE32 hSCObject )
 
 
 /******************************************************************************
+ * GetFileSecurityA [32.45]
+ * Obtains Specified information about the security of a file or directory
+ * The information obtained is constrained by the callers acces rights and
+ * priviliges
+ */
+
+BOOL32 WINAPI GetFileSecurity32A( LPCSTR lpFileName,
+                                SECURITY_INFORMATION RequestedInformation,
+                                LPSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                DWORD nLength,
+                                LPDWORD lpnLengthNeeded)
+{
+  FIXME(advapi, "(%s) : stub\n", debugstr_a(lpFileName));
+  return TRUE;
+}
+
+/******************************************************************************
+ * GetFileSecurityiW [32.46]
+ * Obtains Specified information about the security of a file or directory
+ * The information obtained is constrained by the callers acces rights and
+ * priviliges
+ */
+
+BOOL32 WINAPI GetFileSecurity32W( LPCWSTR lpFileName,
+                                SECURITY_INFORMATION RequestedInformation,
+                                LPSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                DWORD nLength,
+                                LPDWORD lpnLengthNeeded)
+{
+  FIXME(advapi, "(%s) : stub\n", debugstr_w(lpFileName) ); 
+  return TRUE;
+}
+
+/******************************************************************************
  * OpenService32A [ADVAPI32.112]
  */
 HANDLE32 WINAPI OpenService32A( HANDLE32 hSCManager, LPCSTR lpServiceName,

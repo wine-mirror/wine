@@ -34,12 +34,16 @@
 #define GND_FORWARD  			0x00000000
 #define GND_REVERSE    			0x00000002
 
+/* FIXME: unused? */
 typedef struct {
 	DWORD   dwDCISize;
 	LPCSTR  lpszDCISectionName;
 	LPCSTR  lpszDCIAliasName;
-} DRVCONFIGINFO, *LPDRVCONFIGINFO;
+} xDRVCONFIGINFO, *xLPDRVCONFIGINFO;
 
+/* GetDriverInfo16 references this structure, so this a struct defined
+ * in the Win16 API.
+ */
 typedef struct
 {
     UINT16       length;
@@ -48,6 +52,7 @@ typedef struct
     CHAR         szAliasName[128];
 } DRIVERINFOSTRUCT16, *LPDRIVERINFOSTRUCT16;
 
+/* FIXME: Is this a WINE internal struct? */
 typedef struct tagDRIVERITEM
 {
     DRIVERINFOSTRUCT16    dis;
@@ -57,14 +62,45 @@ typedef struct tagDRIVERITEM
     DRIVERPROC16          lpDrvProc;
 } DRIVERITEM, *LPDRIVERITEM;
 
+/* internal */
+typedef struct
+{
+    UINT32	length;
+    HDRVR32	hDriver;
+    HMODULE32	hModule;
+    CHAR	szAliasName[128];
+} DRIVERINFOSTRUCT32A, *LPDRIVERINFOSTRUCT32A;
+
+/* internal */
+typedef struct tagDRIVERITEM32A {
+	DRIVERINFOSTRUCT32A	dis;
+	DWORD			count;
+	struct tagDRIVERITEM32A	*next;
+	DRIVERPROC32		driverproc;
+} DRIVERITEM32A,*LPDRIVERITEM32A;
+
 LRESULT WINAPI DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
                              LPARAM dwParam1, LPARAM dwParam2);
-HDRVR16 WINAPI OpenDriver(LPSTR szDriverName, LPSTR szSectionName,
-                          LPARAM lParam2);
-LRESULT WINAPI CloseDriver(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
-LRESULT WINAPI SendDriverMessage( HDRVR16 hDriver, UINT16 message,
-                                  LPARAM lParam1, LPARAM lParam2 );
-HMODULE16 WINAPI GetDriverModuleHandle(HDRVR16 hDriver);
+HDRVR16 WINAPI OpenDriver16(LPCSTR szDriverName, LPCSTR szSectionName,
+                            LPARAM lParam2);
+HDRVR32 WINAPI OpenDriver32A(LPCSTR szDriverName, LPCSTR szSectionName,
+                             LPARAM lParam2);
+HDRVR32 WINAPI OpenDriver32W(LPCWSTR szDriverName, LPCWSTR szSectionName,
+                             LPARAM lParam2);
+#define OpenDriver WINELIB_NAME_AW(OpenDriver)
+LRESULT WINAPI CloseDriver16(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
+LRESULT WINAPI CloseDriver32(HDRVR32 hDriver, LPARAM lParam1, LPARAM lParam2);
+#define CloseDriver WINELIB_NAME(CloseDriver)
+LRESULT WINAPI SendDriverMessage16( HDRVR16 hDriver, UINT16 message,
+                                    LPARAM lParam1, LPARAM lParam2 );
+LRESULT WINAPI SendDriverMessage32( HDRVR32 hDriver, UINT32 message,
+                                    LPARAM lParam1, LPARAM lParam2 );
+#define SendDriverMessage WINELIB_NAME(SendDriverMessage)
+HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDriver);
+HMODULE32 WINAPI GetDriverModuleHandle32(HDRVR32 hDriver);
+#define GetDriverModuleHandle WINELIB_NAME(GetDriverModuleHandle)
+
+/* only win31 version for those below ? */
 HDRVR16 WINAPI GetNextDriver(HDRVR16, DWORD);
 BOOL16 WINAPI GetDriverInfo(HDRVR16, DRIVERINFOSTRUCT16 *);
 

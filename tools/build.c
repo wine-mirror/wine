@@ -998,7 +998,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
                  "__asm__(\".align 4\\n\\t\"\n"
                  "        \".globl " PREFIX "%s\\n\\t\"\n"
                  "        \".type " PREFIX "%s,@function\\n\\t\"\n"
-                 "        \"%s:\\n\\t\"\n"
+                 "        \"" PREFIX "%s:\\n\\t\"\n"
                  "        \"pushl $" PREFIX "__regs_%s\\n\\t\"\n"
                  "        \"pushl $" PREFIX "CALL32_Regs\\n\\t\"\n"
                  "        \"ret\");\n",

@@ -46,6 +46,9 @@ static HBITMAP32 hRgArrowI = 0;
   /* Minimum size of the thumb in pixels */
 #define SCROLL_MIN_THUMB 6
 
+  /* Overlap between arrows and thumb */
+#define SCROLL_ARROW_THUMB_OVERLAP 1
+
   /* Delay (in ms) before first repetition when holding the button down */
 #define SCROLL_FIRST_DELAY   200
 
@@ -159,18 +162,28 @@ static BOOL32 SCROLL_GetScrollBarRect( HWND32 hwnd, INT32 nBar, RECT32 *lprect,
     switch(nBar)
     {
       case SB_HORZ:
-        lprect->left   = wndPtr->rectClient.left - wndPtr->rectWindow.left - 1;
+        lprect->left   = wndPtr->rectClient.left - wndPtr->rectWindow.left;
         lprect->top    = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;
-        lprect->right  = wndPtr->rectClient.right - wndPtr->rectWindow.left +1;
-        lprect->bottom = lprect->top + SYSMETRICS_CYHSCROLL + 1;
+        lprect->right  = wndPtr->rectClient.right - wndPtr->rectWindow.left;
+        lprect->bottom = lprect->top + SYSMETRICS_CYHSCROLL;
+	if(wndPtr->dwStyle & WS_BORDER) {
+	  lprect->left--;
+	  lprect->right++;
+	} else if(wndPtr->dwStyle & WS_VSCROLL)
+	  lprect->right++;
         vertical = FALSE;
 	break;
 
       case SB_VERT:
         lprect->left   = wndPtr->rectClient.right - wndPtr->rectWindow.left;
-        lprect->top    = wndPtr->rectClient.top - wndPtr->rectWindow.top - 1;
-        lprect->right  = lprect->left + SYSMETRICS_CXVSCROLL + 1;
-        lprect->bottom = wndPtr->rectClient.bottom - wndPtr->rectWindow.top +1;
+        lprect->top    = wndPtr->rectClient.top - wndPtr->rectWindow.top;
+        lprect->right  = lprect->left + SYSMETRICS_CXVSCROLL;
+        lprect->bottom = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;
+	if(wndPtr->dwStyle & WS_BORDER) {
+	  lprect->top--;
+	  lprect->bottom++;
+	} else if(wndPtr->dwStyle & WS_HSCROLL)
+	  lprect->bottom++;
         vertical = TRUE;
 	break;
 
@@ -199,7 +212,7 @@ static BOOL32 SCROLL_GetScrollBarRect( HWND32 hwnd, INT32 nBar, RECT32 *lprect,
         SCROLLBAR_INFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
 
         *arrowSize = SYSMETRICS_CXVSCROLL;
-        pixels -= 2 * SYSMETRICS_CXVSCROLL;
+        pixels -= (2 * (SYSMETRICS_CXVSCROLL - SCROLL_ARROW_THUMB_OVERLAP));
 
         if (info->Page)
         {
@@ -208,7 +221,7 @@ static BOOL32 SCROLL_GetScrollBarRect( HWND32 hwnd, INT32 nBar, RECT32 *lprect,
         }
         else *thumbSize = SYSMETRICS_CXVSCROLL;
 
-        if (((pixels -= *thumbSize + 1) < 0) ||
+        if (((pixels -= *thumbSize ) < 0) ||
             ((info->flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH))
         {
             /* Rectangle too small or scrollbar disabled -> no thumb */
@@ -218,10 +231,10 @@ static BOOL32 SCROLL_GetScrollBarRect( HWND32 hwnd, INT32 nBar, RECT32 *lprect,
         {
             INT32 max = info->MaxVal - MAX( info->Page-1, 0 );
             if (info->MinVal >= max)
-                *thumbPos = *arrowSize;
+                *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
             else
-                *thumbPos = *arrowSize + pixels * (info->CurVal-info->MinVal) /
-                                                  (max - info->MinVal);
+                *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP
+		 + pixels * (info->CurVal-info->MinVal) / (max - info->MinVal);
         }
     }
     return vertical;
@@ -240,7 +253,8 @@ static UINT32 SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT32 *rect,
     INT32 thumbSize;
     INT32 pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
 
-    if ((pixels -= 2*SYSMETRICS_CXVSCROLL) <= 0) return infoPtr->MinVal;
+    if ((pixels -= 2*(SYSMETRICS_CXVSCROLL - SCROLL_ARROW_THUMB_OVERLAP)) <= 0)
+        return infoPtr->MinVal;
 
     if (infoPtr->Page)
     {
@@ -249,9 +263,9 @@ static UINT32 SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT32 *rect,
     }
     else thumbSize = SYSMETRICS_CXVSCROLL;
 
-    if ((pixels -= thumbSize + 1) <= 0) return infoPtr->MinVal;
+    if ((pixels -= thumbSize) <= 0) return infoPtr->MinVal;
 
-    pos = MAX( 0, pos - SYSMETRICS_CXVSCROLL );
+    pos = MAX( 0, pos - (SYSMETRICS_CXVSCROLL - SCROLL_ARROW_THUMB_OVERLAP) );
     if (pos > pixels) pos = pixels;
 
     if (!infoPtr->Page) pos *= infoPtr->MaxVal - infoPtr->MinVal;
@@ -277,22 +291,22 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND32 hwnd, INT32 nBar,
 
     if (vertical)
     {
-        if (pt.y <= rect.top + arrowSize + 1) return SCROLL_TOP_ARROW;
+        if (pt.y < rect.top + arrowSize) return SCROLL_TOP_ARROW;
         if (pt.y >= rect.bottom - arrowSize) return SCROLL_BOTTOM_ARROW;
         if (!thumbPos) return SCROLL_TOP_RECT;
         pt.y -= rect.top;
         if (pt.y < thumbPos) return SCROLL_TOP_RECT;
-        if (pt.y > thumbPos + thumbSize) return SCROLL_BOTTOM_RECT;
+        if (pt.y >= thumbPos + thumbSize) return SCROLL_BOTTOM_RECT;
         return SCROLL_THUMB;
     }
     else  /* horizontal */
     {
-        if (pt.x <= rect.left + arrowSize) return SCROLL_TOP_ARROW;
+        if (pt.x < rect.left + arrowSize) return SCROLL_TOP_ARROW;
         if (pt.x >= rect.right - arrowSize) return SCROLL_BOTTOM_ARROW;
         if (!thumbPos) return SCROLL_TOP_RECT;
         pt.x -= rect.left;
         if (pt.x < thumbPos) return SCROLL_TOP_RECT;
-        if (pt.x > thumbPos + thumbSize) return SCROLL_BOTTOM_RECT;
+        if (pt.x >= thumbPos + thumbSize) return SCROLL_BOTTOM_RECT;
         return SCROLL_THUMB;
     }
 }
@@ -313,26 +327,26 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
     SetStretchBltMode32( hdc, STRETCH_DELETESCANS );
     StretchBlt32( hdc, rect->left, rect->top,
-                  vertical ? rect->right-rect->left : arrowSize+1,
-                  vertical ? arrowSize+1 : rect->bottom-rect->top,
+                  vertical ? rect->right-rect->left : arrowSize,
+                  vertical ? arrowSize : rect->bottom-rect->top,
                   hdcMem, 0, 0,
-                  SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
+                  SYSMETRICS_CXVSCROLL, SYSMETRICS_CYHSCROLL,
                   SRCCOPY );
 
     SelectObject32( hdcMem, vertical ?
                     BOTTOM_ARROW( infoPtr->flags, bottom_pressed )
                     : RIGHT_ARROW( infoPtr->flags, bottom_pressed ) );
     if (vertical)
-        StretchBlt32( hdc, rect->left, rect->bottom - arrowSize - 1,
-                      rect->right - rect->left, arrowSize + 1,
+        StretchBlt32( hdc, rect->left, rect->bottom - arrowSize,
+                      rect->right - rect->left, arrowSize,
                       hdcMem, 0, 0,
-                      SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
+                      SYSMETRICS_CXVSCROLL, SYSMETRICS_CYHSCROLL,
                       SRCCOPY );
     else
-        StretchBlt32( hdc, rect->right - arrowSize - 1, rect->top,
-                      arrowSize + 1, rect->bottom - rect->top,
+        StretchBlt32( hdc, rect->right - arrowSize, rect->top,
+                      arrowSize, rect->bottom - rect->top,
                       hdcMem, 0, 0,
-                      SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
+                      SYSMETRICS_CXVSCROLL, SYSMETRICS_CYHSCROLL,
                       SRCCOPY );
     SelectObject32( hdcMem, hbmpPrev );
     DeleteDC32( hdcMem );
@@ -351,20 +365,25 @@ static void SCROLL_DrawMovingThumb( HDC32 hdc, RECT32 *rect, BOOL32 vertical,
     if (vertical)
     {
         r.top += SCROLL_TrackingPos;
-        if (r.top < rect->top + arrowSize) r.top = rect->top + arrowSize;
-        if (r.top + thumbSize >= rect->bottom - arrowSize)
-            r.top = rect->bottom - arrowSize - thumbSize - 1;
-        r.bottom = r.top + thumbSize + 1;
+        if (r.top < rect->top + arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
+	    r.top = rect->top + arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
+        if (r.top + thumbSize >
+	               rect->bottom - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP))
+            r.top = rect->bottom - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
+	                                                          - thumbSize;
+        r.bottom = r.top + thumbSize;
     }
     else
     {
         r.left += SCROLL_TrackingPos;
-        if (r.left < rect->left + arrowSize) r.left = rect->left + arrowSize;
-        if (r.left + thumbSize >= rect->right - arrowSize)
-            r.left = rect->right - arrowSize - thumbSize - 1;
-        r.right = r.left + thumbSize + 1;
+        if (r.left < rect->left + arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
+	    r.left = rect->left + arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
+        if (r.left + thumbSize >
+	               rect->right - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP))
+            r.left = rect->right - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP) 
+	                                                          - thumbSize;
+        r.right = r.left + thumbSize;
     }
-    InflateRect32( &r, -1, -1 );
     DrawFocusRect32( hdc, &r );
     SCROLL_MovingThumb = !SCROLL_MovingThumb;
 }
@@ -407,15 +426,13 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
     r = *rect;
     if (vertical)
     {
-        r.top    += arrowSize - 1;
-        r.bottom -= arrowSize;
-	r.right--;
+        r.top    += arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
+        r.bottom -= (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
     }
     else
     {
-        r.left  += arrowSize - 1;
-        r.right -= arrowSize;
-	r.bottom--;
+        r.left  += arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
+        r.right -= (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
     }
 
       /* Draw the scroll bar frame */
@@ -435,27 +452,27 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
     {
         PatBlt32( hdc, r.left + 1, r.top + 1,
                   r.right - r.left - 2,
-                  thumbPos - arrowSize,
+                  thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP) - 1,
                   top_selected ? 0x0f0000 : PATCOPY );
-        r.top += thumbPos - arrowSize;
-        PatBlt32( hdc, r.left + 1, r.top + thumbSize + 1,
+        r.top += thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
+        PatBlt32( hdc, r.left + 1, r.top + thumbSize,
                   r.right - r.left - 2,
-                  r.bottom - r.top - thumbSize - 2,
+                  r.bottom - r.top - thumbSize - 1,
                   bottom_selected ? 0x0f0000 : PATCOPY );
-        r.bottom = r.top + thumbSize + 2;
+        r.bottom = r.top + thumbSize;
     }
     else  /* horizontal */
     {
         PatBlt32( hdc, r.left + 1, r.top + 1,
-                  thumbPos - arrowSize,
+                  thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP) - 1,
                   r.bottom - r.top - 2,
                   top_selected ? 0x0f0000 : PATCOPY );
-        r.left += thumbPos - arrowSize;
-        PatBlt32( hdc, r.left + thumbSize + 1, r.top + 1,
-                  r.right - r.left - thumbSize - 2,
+        r.left += thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
+        PatBlt32( hdc, r.left + thumbSize, r.top + 1,
+                  r.right - r.left - thumbSize - 1,
                   r.bottom - r.top - 2,
                   bottom_selected ? 0x0f0000 : PATCOPY );
-        r.right = r.left + thumbSize + 2;
+        r.right = r.left + thumbSize;
     }
 
       /* Draw the thumb */
@@ -493,6 +510,7 @@ void SCROLL_DrawScrollBar( HWND32 hwnd, HDC32 hdc, INT32 nBar, BOOL32 arrows )
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
+
       /* Draw the arrows */
 
     if (arrows && arrowSize) SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize,

@@ -143,6 +143,15 @@ typedef struct {
 }CRITICAL_SECTION;
 
 typedef struct {
+        DWORD dwOSVersionInfoSize;
+        DWORD dwMajorVersion;
+        DWORD dwMinorVersion;
+        DWORD dwBuildNumber;
+        DWORD dwPlatformId;
+        CHAR szCSDVersion[128];
+} OSVERSIONINFO16;
+
+typedef struct {
 	DWORD dwOSVersionInfoSize;
 	DWORD dwMajorVersion;
 	DWORD dwMinorVersion;
@@ -167,6 +176,7 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFO)
 #define VER_PLATFORM_WIN32_NT           2
 
 /*DWORD WINAPI GetVersion( void );*/
+BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16*);
 BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A*);
 BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W*);
 #define GetVersionEx WINELIB_NAME_AW(GetVersionEx)

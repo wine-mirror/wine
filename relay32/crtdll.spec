@@ -234,7 +234,7 @@ type	win32
 230 stub _mbstrlen
 231 stub _mbsupr
 232 stub _memccpy
-233 stub _memicmp
+233 cdecl _memicmp(str str long) CRTDLL__memicmp
 234 cdecl _mkdir(str) CRTDLL__mkdir
 235 stub _mktemp
 236 stub _msize
@@ -321,7 +321,7 @@ type	win32
 317 stub _utime
 318 stub _vsnprintf
 319 stub _vsnwprintf
-320 stub _wcsdup
+320 cdecl _wcsdup(wstr) CRTDLL__wcsdup
 321 cdecl _wcsicmp(wstr wstr) CRTDLL__wcsicmp
 322 cdecl _wcsicoll(wstr wstr) CRTDLL__wcsicoll
 323 cdecl _wcslwr(wstr) CRTDLL__wcslwr

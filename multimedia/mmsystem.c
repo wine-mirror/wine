@@ -201,7 +201,7 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 		    TRACE(mmsys, "Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 				(LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
 
-		    if (mmioRead(hmmio, (HPSTR) &pcmWaveFormat,
+		    if (mmioRead32(hmmio,(HPSTR)&pcmWaveFormat,
 			        (long) sizeof(PCMWAVEFORMAT)) == (long) sizeof(PCMWAVEFORMAT))
 		    {
 
@@ -246,7 +246,7 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 				{
 				    while( TRUE )
 				    {
-					count = mmioRead(hmmio, waveHdr.lpData, bufsize);
+					count = mmioRead32(hmmio,waveHdr.lpData,bufsize);
 					if (count < 1) break;
 					waveHdr.dwBufferLength = count;
 				/*	waveHdr.dwBytesRecorded = count; */
@@ -269,7 +269,7 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 	    }
 	}
 
-	if (hmmio != 0) mmioClose(hmmio, 0);
+	if (hmmio != 0) mmioClose32(hmmio, 0);
 	return bRet;
 }
 
@@ -3631,47 +3631,45 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
 }
 
 /**************************************************************************
-* 				DrvOpen	       		[MMSYSTEM.1100]
-*/
+ * 				DrvOpen	       		[MMSYSTEM.1100]
+ */
 HDRVR16 WINAPI DrvOpen(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 {
-	TRACE(mmsys, "('%s', '%s', %08lX);\n",
-		lpDriverName, lpSectionName, lParam);
-	return OpenDriver(lpDriverName, lpSectionName, lParam);
+	TRACE(mmsys,"('%s','%s',%08lX);\n",lpDriverName,lpSectionName,lParam);
+	return OpenDriver16(lpDriverName, lpSectionName, lParam);
 }
 
 
 /**************************************************************************
-* 				DrvClose       		[MMSYSTEM.1101]
-*/
+ * 				DrvClose       		[MMSYSTEM.1101]
+ */
 LRESULT WINAPI DrvClose(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
 	TRACE(mmsys, "(%04X, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
-	return CloseDriver(hDrvr, lParam1, lParam2);
+	return CloseDriver16(hDrvr, lParam1, lParam2);
 }
 
 
 /**************************************************************************
-* 				DrvSendMessage		[MMSYSTEM.1102]
-*/
+ * 				DrvSendMessage		[MMSYSTEM.1102]
+ */
 LRESULT WINAPI DrvSendMessage(HDRVR16 hDriver, WORD msg, LPARAM lParam1,
                               LPARAM lParam2)
 {
 	DWORD 	dwDriverID = 0;
-	TRACE(mmsys, "(%04X, %04X, %08lX, %08lX);\n",
+	FIXME(mmsys, "(%04X, %04X, %08lX, %08lX);\n",
 					hDriver, msg, lParam1, lParam2);
+	/* FIXME: wrong ... */
 	return CDAUDIO_DriverProc(dwDriverID, hDriver, msg, lParam1, lParam2);
 }
 
 /**************************************************************************
-* 				DrvGetModuleHandle	[MMSYSTEM.1103]
-*/
-HANDLE16 WINAPI DrvGetModuleHandle(HDRVR16 hDrvr)
+ * 				DrvGetModuleHandle	[MMSYSTEM.1103]
+ */
+HANDLE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrvr)
 {
-	TRACE(mmsys, "(%04X);\n", hDrvr);
-        return 0;
+        return GetDriverModuleHandle16(hDrvr);
 }
-
 
 /**************************************************************************
  * 				DrvDefDriverProc	[MMSYSTEM.1104]

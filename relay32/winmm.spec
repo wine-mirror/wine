@@ -9,14 +9,14 @@ type win32
   6 stub DriverCallback
   7 stub DrvClose
   8 stub DrvDefDriverProc
-  9 stub DrvGetModuleHandle
+  9 stdcall DrvGetModuleHandle(long) GetDriverModuleHandle32
  10 stub DrvOpen
  11 stub DrvOpenA
  12 stub DrvSendMessage
  13 stub GetDriverFlags
- 14 stub GetDriverModuleHandle
- 15 stdcall OpenDriver(ptr ptr long) OpenDriver
- 16 stub OpenDriverA
+ 14 stdcall GetDriverModuleHandle(long) GetDriverModuleHandle32
+ 15 stdcall OpenDriver(wstr wstr long) OpenDriver32W
+ 16 stdcall OpenDriverA(str str long) OpenDriver32A
  17 stdcall PlaySound(ptr long long) PlaySound32A
  18 stdcall PlaySoundW(ptr long long) PlaySound32W
  19 stub SendDriverMessage
@@ -112,19 +112,19 @@ type win32
 109 stdcall mixerMessage(long long long long) mixerMessage32
 110 stdcall mixerOpen(ptr long long long long) mixerOpen32
 111 stdcall mixerSetControlDetails(long ptr long) mixerSetControlDetails32
-112 stub mmioAdvance
-113 stub mmioAscend
-114 stub mmioClose
+112 stdcall mmioAdvance(long ptr long) mmioAdvance32
+113 stdcall mmioAscend(long ptr long) mmioAscend32
+114 stdcall mmioClose(long long) mmioClose32
 115 stub mmioCreateChunk
-116 stub mmioDescend
-117 stub mmioFlush
-118 stub mmioGetInfo
+116 stdcall mmioDescend(long ptr ptr long) mmioDescend
+117 stdcall mmioFlush(long long) mmioFlush32
+118 stdcall mmioGetInfo(long ptr long) mmioGetInfo32
 119 stub mmioInstallIOProc16
 120 stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProc32A
 121 stub mmioInstallIOProcW
 122 stdcall mmioOpenA(str ptr long) mmioOpen32A
 123 stdcall mmioOpenW(wstr ptr long) mmioOpen32W
-124 stub mmioRead
+124 stdcall mmioRead(long ptr long) mmioRead32
 125 stub mmioRenameA
 126 stub mmioRenameW
 127 stub mmioSeek

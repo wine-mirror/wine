@@ -7,6 +7,7 @@ MODULE    = none
 PROGRAMS  = regtest
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
+WRCEXTRA  = -A -p $*
 
 C_SRCS = regtest.c
 

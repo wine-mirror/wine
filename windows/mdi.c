@@ -1708,3 +1708,39 @@ void WINAPI ScrollChildren32(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
 			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
 }
 
+
+/******************************************************************************
+ * CascadeWindows [USER32.21] Cascades MDI child windows
+ *
+ * RETURNS
+ *    Success: Number of cascaded windows.
+ *    Failure: 0
+ */
+WORD WINAPI
+CascadeWindows (HWND32 hwndParent, UINT32 wFlags, const LPRECT32 lpRect,
+		UINT32 cKids, const HWND32 *lpKids)
+{
+    FIXME (mdi, "(0x%08x,0x%08x,...,%u,...): stub\n",
+	   hwndParent, wFlags, cKids);
+
+    return 0;
+}
+
+
+/******************************************************************************
+ * TileWindows [USER32.545] Tiles MDI child windows
+ *
+ * RETURNS
+ *    Success: Number of tiled windows.
+ *    Failure: 0
+ */
+WORD WINAPI
+TileWindows (HWND32 hwndParent, UINT32 wFlags, const LPRECT32 lpRect,
+	     UINT32 cKids, const HWND32 *lpKids)
+{
+    FIXME (mdi, "(0x%08x,0x%08x,...,%u,...): stub\n",
+	   hwndParent, wFlags, cKids);
+
+    return 0;
+}
+

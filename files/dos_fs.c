@@ -47,7 +47,7 @@ typedef struct
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 
 static const char *DOSFS_Devices[] = {
-"CON","PRN","NUL","AUX","LPT1","LPT2","LPT3","LPT4","COM1","COM2","COM3","COM4",
+"CON","PRN","NUL","AUX","LPT1","LPT2","LPT3","LPT4","COM1","COM2","COM3","COM4","SCSIMGR$"
 };
 
 
@@ -587,6 +587,8 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 {
     int i;
     const char *p;
+    FILE_OBJECT *file;
+    HFILE32 handle;
 
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
@@ -613,6 +615,14 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 				FIXME(dosfs,"can't open CON read/write\n");
 				return HFILE_ERROR32;
 				break;
+			}
+		}
+		if (!strcmp(DOSFS_Devices[i],"SCSIMGR$")) {
+		        if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
+				return HFILE_ERROR32;
+			else {
+				file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
+				return handle;
 			}
 		}
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i]);

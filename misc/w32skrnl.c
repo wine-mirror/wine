@@ -5,10 +5,10 @@
  * Copyright (c) 1997 Andreas Mohr
  */
 
-#include "windows.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "windows.h"
 
 LPSTR WINAPI GetWin32sDirectory(void)
 {

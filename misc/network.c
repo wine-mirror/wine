@@ -281,6 +281,22 @@ WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
 	return ret;
 }
 
+/**************************************************************************
+ *				WNetGetConnectionW	[MPR.72]
+ */
+DWORD WINAPI
+WNetGetConnection32W(LPCWSTR localnameW,LPSTR remotenameW,LPDWORD buflen)
+{
+	UINT16	x;
+	CHAR	buf[200];	
+	LPSTR	lnA = HEAP_strdupWtoA(GetProcessHeap(),0,localnameW);
+	DWORD	ret = WNetGetConnection16(lnA,buf,&x);
+
+	*buflen = x; /* FIXME: *2 ? */
+	lstrcpyAtoW(remotenameW,buf);
+	HeapFree(GetProcessHeap(),0,lnA);
+	return ret;
+}
 
 /**************************************************************************
  *				WNetGetCaps		[USER.513]
@@ -508,11 +524,11 @@ int WINAPI WNetDirectoryNotify(HWND16 hwndOwner,void *lpDir,WORD wOper)
 /**************************************************************************
  *              WNetGetPropertyText       [USER.532]
  */
-int WINAPI WNetGetPropertyText(HWND16 hwndParent,WORD iButton,WORD nPropSel,
-                               LPSTR lpszName,WORD nType)
+int WINAPI WNetGetPropertyText(WORD iButton, WORD nPropSel, LPSTR lpszName,
+                          LPSTR lpszButtonName, WORD cbButtonName, WORD nType)
 {
-	FIXME(wnet, "(%04x,%x,%x,'%s',%x): stub\n",
-	      hwndParent,iButton,nPropSel,lpszName,nType);
+	FIXME(wnet, "(%04x,%04x,'%s','%s',%04x): stub\n",
+	      iButton,nPropSel,lpszName,lpszButtonName, nType);
 	return WN_NO_NETWORK;
 }
 

@@ -59,8 +59,8 @@ type	win32
   57 stub SHELL32_57
   58 stdcall SHELL32_58(long long long long) SHELL32_58
   59 stub SHELL32_59
-  60 stub SHELL32_60
-  61 stub SHELL32_61
+  60 stdcall SHELL32_60(long) SHELL32_60
+  61 stdcall SHELL32_61(long long long str str long) SHELL32_61
   62 stdcall SHELL32_62(long long long long) SHELL32_62
   63 stdcall SHELL32_63(long long long long str str str) SHELL32_63
   64 stub SHELL32_64
@@ -183,7 +183,7 @@ type	win32
  181 stdcall SHELL32_181(long long) SHELL32_181
  182 stub ExtractVersionResource16W
  183 cdecl SHELL32_183(long long long long long long) SHELL32_183
- 184 stub SHELL32_184
+ 184 stdcall SHELL32_184(long long long long long) SHELL32_184
  185 stub SHELL32_185
  186 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A
  187 stub FindExecutableW
@@ -223,7 +223,7 @@ type	win32
  221 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDList
  222 stub SHGetPathFromIDListA
  223 stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation
- 224 stub SHHelpShortcuts_RunDLL
+ 224 stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL
  225 stub SHLoadInProc
  226 stub SheChangeDirA
  227 stub SheChangeDirExA

@@ -146,5 +146,5 @@ VOID WINAPI Sleep(DWORD cMilliseconds)
  *              GetSystemTimeAsFileTime  (KERNEL32)
  */
 VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime) {
-	DOSFS_UnixTimeToFileTime(time(NULL),systemtimeAsfiletime,NULL);
+	DOSFS_UnixTimeToFileTime(time(NULL),systemtimeAsfiletime,0);
 }

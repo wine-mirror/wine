@@ -130,6 +130,7 @@ typedef struct
     INT32         GraphicsMode;      /* Graphics mode */
     INT32         DCOrgX;            /* DC origin */
     INT32         DCOrgY;
+    FARPROC16     lpfnPrint;         /* AbortProc for Printing */
     INT32         CursPosX;          /* Current position */
     INT32         CursPosY;
     INT32         ArcDirection;

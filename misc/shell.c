@@ -375,8 +375,8 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
 	  }
 
     /* Check registry */
-    if (RegQueryValue16( (HKEY)HKEY_CLASSES_ROOT, tmpext, filetype,
-                         &filetypelen ) == SHELL_ERROR_SUCCESS )
+    if (RegQueryValue16( HKEY_CLASSES_ROOT, tmpext, filetype,
+                         &filetypelen ) == ERROR_SUCCESS )
     {
 	filetype[filetypelen]='\0';
 	TRACE(exec, "File type: %s\n",
@@ -387,8 +387,8 @@ static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile,
 	strcat( filetype, lpOperation );
 	strcat( filetype, "\\command" );
 	
-	if (RegQueryValue16( (HKEY)HKEY_CLASSES_ROOT, filetype, command,
-                             &commandlen ) == SHELL_ERROR_SUCCESS )
+	if (RegQueryValue16( HKEY_CLASSES_ROOT, filetype, command,
+                             &commandlen ) == ERROR_SUCCESS )
 	{
 	    /* Is there a replace() function anywhere? */
 	    command[commandlen]='\0';
@@ -1172,7 +1172,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	for (i=0;i<n;i++) {
 	    LPIMAGE_RESOURCE_DIRECTORY	xresdir;
 
-	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)RetPtr[i],(DWORD)rootresdir,FALSE);
+	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)&(RetPtr[i]),(DWORD)rootresdir,FALSE);
 	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
 
 	    idataent = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
@@ -1563,11 +1563,11 @@ void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
 }
 
 /*************************************************************************
+ * FreeIconList
  */
-
 void WINAPI FreeIconList( DWORD dw )
 {
-    FIXME(reg, "empty stub\n" );
+    FIXME(reg, "(%lx): stub\n",dw);
 }
 
 /*************************************************************************
@@ -1579,7 +1579,6 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 {
     char	xclsid[50],xiid[50];
     HRESULT	hres = E_OUTOFMEMORY;
-
 
     WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
     WINE_StringFromCLSID((LPCLSID)iid,xiid);
@@ -1610,7 +1609,7 @@ DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 	return 0;
     }
 
-    FIXME(shell, "   -> clsid not found. returning E_OUTOFMEMORY.\n");
+    FIXME(shell, "clsid(%s) not found.  Returning E_OUTOFMEMORY.\n",xclsid);
     return hres;
 }
 
@@ -1669,3 +1668,18 @@ BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) {
 	lstrcpy32A(pszPath,"E:\\"); /* FIXME */
 	return NOERROR;
 }
+
+/*************************************************************************
+ * SHHelpShortcuts_RunDLL [SHELL32.224]
+ *
+ */
+
+DWORD WINAPI
+SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, DWORD dwArg4)
+{
+    FIXME (exec, "(%lx, %lx, %lx, %lx) empty stub!\n",
+	   dwArg1, dwArg2, dwArg3, dwArg4);
+
+    return 0;
+}
+

@@ -15,6 +15,7 @@ at a later date. */
 #include "winerror.h"
 #include "heap.h"
 #include "debug.h"
+#include "debugstr.h"
 
 /****************************************************************************
  *		UTRegister (KERNEL32.697)
@@ -60,6 +61,12 @@ HANDLE32 WINAPI FindFirstChangeNotification32A(LPCSTR lpPathName,BOOL32 bWatchSu
 	return 0xcafebabe;
 }
 
+HANDLE32 WINAPI FindFirstChangeNotification32W(LPCWSTR lpPathName,BOOL32 bWatchSubtree,DWORD dwNotifyFilter) {
+	FIXME(file,"(%s,%d,%08lx): stub\n",
+	      debugstr_w(lpPathName),bWatchSubtree,dwNotifyFilter);
+	return 0xcafebabe;
+}
+
 BOOL32 WINAPI FindNextChangeNotification(HANDLE32 fcnhandle) {
 	FIXME(file,"(%08x): stub!\n",fcnhandle);
 	return FALSE;
@@ -81,22 +88,6 @@ BOOL32 WINAPI QueryPerformanceFrequency(LPLARGE_INTEGER frequency)
 }
 
 /****************************************************************************
- *		DeviceIoControl (KERNEL32.188)
- */
-BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode, 
-			      LPVOID lpvlnBuffer, DWORD cblnBuffer,
-			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-			      LPDWORD lpcbBytesReturned,
-			      LPOVERLAPPED lpoPverlapped)
-{
-
-        FIXME(comm, "(...): stub!\n");
-	/* FIXME: Set appropriate error */
-	return FALSE;
-
-}
-
-/****************************************************************************
  *		FlushInstructionCache (KERNEL32.261)
  */
 BOOL32 WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
@@ -110,12 +101,12 @@ BOOL32 WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
 HANDLE32 WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
 				  DWORD dwPipeMode, DWORD nMaxInstances,
 				  DWORD nOutBufferSize, DWORD nInBufferSize,
-				  DWORD nDafaultTimeOut,
+				  DWORD nDefaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
   FIXME (win32, "(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
 	 debugstr_a(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
-	 nOutBufferSize, nInBufferSize, nDafaultTimeOut, 
+	 nOutBufferSize, nInBufferSize, nDefaultTimeOut, 
 	 lpSecurityAttributes);
   /* if (nMaxInstances > PIPE_UNLIMITED_INSTANCES) {
     SetLastError (ERROR_INVALID_PARAMETER);
@@ -132,16 +123,31 @@ HANDLE32 WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
 HANDLE32 WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 				  DWORD dwPipeMode, DWORD nMaxInstances,
 				  DWORD nOutBufferSize, DWORD nInBufferSize,
-				  DWORD nDafaultTimeOut,
+				  DWORD nDefaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
   FIXME (win32, "(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
 	 debugstr_w(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
-	 nOutBufferSize, nInBufferSize, nDafaultTimeOut, 
+	 nOutBufferSize, nInBufferSize, nDefaultTimeOut, 
 	 lpSecurityAttributes);
 
   SetLastError (ERROR_UNKNOWN);
   return INVALID_HANDLE_VALUE32;
+}
+
+/***********************************************************************
+ *	CreatePipe (KERNEL32.170)
+ */
+
+BOOL32 WINAPI CreatePipe(PHANDLE hReadPipe,
+                         PHANDLE hWritePipe,
+                         LPSECURITY_ATTRIBUTES lpPipeAttributes,
+                         DWORD nSize)
+{
+  FIXME (win32,"ReadPipe=%p WritePipe=%p SecAttr=%p Size=%ld",
+               hReadPipe,hWritePipe,lpPipeAttributes,nSize);
+  SetLastError(ERROR_UNKNOWN);
+  return FALSE;
 }
 
 /***********************************************************************
@@ -299,7 +305,7 @@ DWORD WINAPI GetProcessWindowStation(void)
  */
 DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
 {
-    FIXME(win32, "(%ld): stub\n",dwThreadId);
+    FIXME(win32, "(%lx): stub\n",dwThreadId);
     return 1;
 }
 
@@ -363,6 +369,46 @@ BOOL32 WINAPI SetComputerName32W( LPCWSTR lpComputerName )
 
 
 BOOL32 WINAPI EnumPorts32A(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD bufneeded,LPDWORD bufreturned) {
-	FIXME(win32,"(%s,%d,%p,%d,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
+	FIXME(win32,"(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
 	return FALSE;
 }
+
+/******************************************************************************
+ * IsDebuggerPresent [KERNEL32.827]
+ *
+ */
+BOOL32 WINAPI IsDebuggerPresent() {
+	FIXME(win32," ... no debuggers yet, returning FALSE.\n");
+	return FALSE; 
+}
+
+
+/******************************************************************************
+ * OpenDesktop32A [USER32.408]
+ *
+ * NOTES
+ *    Return type should be HDESK
+ */
+HANDLE32 WINAPI OpenDesktop32A( LPCSTR lpszDesktop, DWORD dwFlags, 
+                                BOOL32 fInherit, DWORD dwDesiredAccess )
+{
+    FIXME(win32,"(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
+          fInherit,dwDesiredAccess);
+    return 1;
+}
+
+
+BOOL32 WINAPI SetUserObjectInformation32A( HANDLE32 hObj, int nIndex, 
+                                           LPVOID pvInfo, DWORD nLength )
+{
+    FIXME(win32,"(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
+    return TRUE;
+}
+
+
+BOOL32 WINAPI SetThreadDesktop( HANDLE32 hDesktop )
+{
+    FIXME(win32,"(%x): stub\n",hDesktop);
+    return TRUE;
+}
+

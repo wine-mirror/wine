@@ -31,6 +31,7 @@ extern int WIN32_LastError;
 #define ERROR_NOT_ENOUGH_MEMORY     8
 #define ERROR_BAD_FORMAT            11
 #define ERROR_INVALID_ACCESS        12
+#define ERROR_INVALID_DATA          13
 #define ERROR_OUTOFMEMORY           14
 #define ERROR_NO_MORE_FILES         18
 #define ERROR_SHARING_VIOLATION     32
@@ -57,6 +58,7 @@ extern int WIN32_LastError;
 #define ERROR_INVALID_ADDRESS       487
 #define ERROR_CAN_NOT_COMPLETE      1003
 #define ERROR_BADKEY                1010 /* Config reg key invalid */
+#define ERROR_CANTREAD              1012 /* Config reg key couldn't be read */
 #define ERROR_CANTWRITE             1013 /* Config reg key couldn't be written */
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
@@ -65,6 +67,7 @@ extern int WIN32_LastError;
 #define ERROR_ALREADY_INITIALIZED   1247
 #define ERROR_PRIVILEGE_NOT_HELD    1314
 #define ERROR_COMMITMENT_LIMIT      1455
+#define ERROR_INVALID_PRINTER_NAME  1801
 
 /* HRESULT values for OLE, SHELL and other Interface stuff */
 #define	NOERROR				0

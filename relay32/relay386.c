@@ -7,12 +7,15 @@
 #ifdef __i386__
 
 #include <assert.h>
+#include <string.h>
 #include "winnt.h"
 #include "windows.h"
 #include "builtin32.h"
 #include "selectors.h"
 #include "debugstr.h"
 #include "debug.h"
+
+char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 
 /***********************************************************************
  *           RELAY_CallFrom32
@@ -26,7 +29,7 @@
  */
 int RELAY_CallFrom32( int ret_addr, ... )
 {
-    int i, ret;
+    int i, ret, show = 1;
     char buffer[80];
     FARPROC32 func;
     unsigned int mask, typemask;
@@ -38,12 +41,41 @@ int RELAY_CallFrom32( int ret_addr, ... )
     WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
 
     assert(TRACE_ON(relay));
+    GET_FS( fs );
     func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
-    DPRINTF( "Call %s(", buffer );
-    args++;
-    for (i = 0, mask = 3; i < nb_args; i++, mask <<= 2)
-    {
+    if(debug_relay_excludelist || debug_relay_includelist) {
+      char *term = strchr(buffer, ':'), **listitem;
+      int len, len2, itemlen;
+
+      if(debug_relay_excludelist) {
+	show = 1;
+	listitem = debug_relay_excludelist;
+      } else {
+	show = 0;
+	listitem = debug_relay_includelist;
+      }
+      assert(term);
+      assert(strlen(term) > 2);
+      len = term - buffer;
+      len2 = strchr(buffer, '.') - buffer;
+      assert(len2 && len2 > 0 && len2 < 64);
+      term += 2;
+      for(; *listitem; listitem++) {
+        itemlen = strlen(*listitem);
+        if((itemlen == len && !strncmp(*listitem, buffer, len)) ||
+           (itemlen == len2 && !strncmp(*listitem, buffer, len2)) ||
+           !strcmp(*listitem, term)) {
+          show = !show;
+          break;
+        }
+      }
+    }
+    if(show) {
+      DPRINTF( "Call %s(", buffer );
+      args++;
+      for (i = 0, mask = 3; i < nb_args; i++, mask <<= 2)
+      {
         if (i) DPRINTF( "," );
 	if ((typemask & mask) && HIWORD(args[i]))
         {
@@ -53,9 +85,10 @@ int RELAY_CallFrom32( int ret_addr, ... )
 	    	DPRINTF( "%08x %s", args[i], debugstr_a((LPCSTR)args[i]) );
 	}
         else DPRINTF( "%08x", args[i] );
-    }
-    GET_FS( fs );
-    DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
+      }
+      DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
+    } else
+      args++;
     if (*relay_addr == 0xc3) /* cdecl */
     {
         LRESULT (*cfunc)() = (LRESULT(*)())func;
@@ -136,8 +169,9 @@ int RELAY_CallFrom32( int ret_addr, ... )
             assert(FALSE);
         }
     }
-    DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
-             buffer, ret, ret_addr, fs );
+    if(show)
+      DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
+               buffer, ret, ret_addr, fs );
     return ret;
 }
 
@@ -207,31 +241,39 @@ void RELAY_CallFrom32Regs( CONTEXT context )
 	 */
 
         relay_addr = *(BYTE **) ESP_reg(&context); 
-        ESP_reg(&context) += sizeof(BYTE *);
-	EIP_reg(&context) = *(DWORD *)ESP_reg(&context);
+        if (BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask )) {
+	    /* correct win32 spec generated register function found. 
+	     * remove extra call stuff from stack
+	     */
+            ESP_reg(&context) += sizeof(BYTE *);
+	    EIP_reg(&context) = *(DWORD *)ESP_reg(&context);
+	    DPRINTF("Call %s(regs) ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
+	    DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+		    EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
+		    EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
+	    DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+		    EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
+		    DS_reg(&context), ES_reg(&context), FS_reg(&context),
+		    GS_reg(&context), EFL_reg(&context) );
 
-        BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
-        DPRINTF("Call %s(regs) ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
-        DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
-                EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
-                EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
-        DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-                EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
-                DS_reg(&context), ES_reg(&context), FS_reg(&context),
-                GS_reg(&context), EFL_reg(&context) );
+	    /* Now call the real function */
+	    entry_point( &context );
 
-        /* Now call the real function */
-        entry_point( &context );
 
-        DPRINTF("Ret  %s() retval=regs ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
-        DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
-                EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
-                EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
-        DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-                EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
-                DS_reg(&context), ES_reg(&context), FS_reg(&context),
-                GS_reg(&context), EFL_reg(&context) );
+	    DPRINTF("Ret  %s() retval=regs ret=%08x\n", buffer, *(int *)ESP_reg(&context) );
+	    DPRINTF(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+		    EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
+		    EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
+	    DPRINTF(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+		    EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
+		    DS_reg(&context), ES_reg(&context), FS_reg(&context),
+		    GS_reg(&context), EFL_reg(&context) );
+	} else
+	    /* WINE internal register function found. Do not remove anything.
+	     * Do not print any debuginfo (it is not a normal relayed one).
+	     * Currently only used for snooping.
+	     */
+	   entry_point( &context );
     }
 }
-
 #endif  /* __i386__ */

@@ -42,12 +42,12 @@ type	win32
  39 stub    lineGetTranslateCaps
  40 stub    lineHandoff
  41 stub    lineHold
- 42 stub    lineInitialize
+ 42 stdcall lineInitialize(ptr long ptr str ptr) lineInitialize
  43 stub    lineMakeCall
  44 stub    lineMonitorDigits
  45 stub    lineMonitorMedia
  46 stub    lineMonitorTones
- 47 stub    lineNegotiateAPIVersion
+ 47 stdcall lineNegotiateAPIVersion(long long long long ptr ptr) lineNegotiateAPIVersion
  48 stub    lineNegotiateExtVersion
  49 stub    lineOpen
  50 stub    linePark
@@ -74,7 +74,7 @@ type	win32
  71 stub    lineSetTollList
  72 stub    lineSetupConference
  73 stub    lineSetupTransfer
- 74 stub    lineShutdown
+ 74 stdcall lineShutdown(long) lineShutdown
  75 stub    lineSwapHold
  76 stub    lineTranslateAddress
  77 stub    lineTranslateDialog

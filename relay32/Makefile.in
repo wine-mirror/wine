@@ -39,7 +39,8 @@ DLLS = \
 
 C_SRCS = \
 	builtin32.c \
-	relay386.c
+	relay386.c \
+	snoop.c
 
 SPEC_FILES = $(DLLS:.spec=.c)
 

@@ -68,10 +68,9 @@ relevant developer as feasonable.
 
  3. If you have found a misbehaving function, try to find out why it
     misbehaves. Find the function in the source code. Try to make sense of
-    the arguments passed. Usually there is a
-    "dprintf_xyz(stddeb,"Function(...)"...);" at the beginning of the
-    function. Rerun wine with "-debugmsg +xyz,+relay" added to the
-    commandline.
+    the arguments passed. Usually there is a 'TRACE(<channel>,"(...)\n");' 
+    at the beginning of the function. Rerun wine with 
+    "-debugmsg +xyz,+relay" added to the commandline.
 
  4. Additional information on how to debug using the internal debugger can be 
     found in debugger/README.
@@ -81,7 +80,7 @@ relevant developer as feasonable.
     +all", which dumps ALL included debug information in wine.
 
  6. If that isn't enough add more debug output for yourself into the
-    functions you find relevant.
+    functions you find relevant.  See documentation/debug-msgs.
     You might also try to run the program in gdb instead of using the
     WINE-debugger. If you don't use the "-desktop" or "-managed" option,
     start the WINE process with "-sync", or chances are good to get X into

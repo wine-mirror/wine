@@ -212,7 +212,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS16 
 		TRACE(mciwave, "Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 			     (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType,
 			     mmckInfo.cksize);
-		if (mmioRead(MCIWavDev[wDevID].hFile, (HPSTR) lpWaveFormat,
+		if (mmioRead32(MCIWavDev[wDevID].hFile, (HPSTR) lpWaveFormat,
 		    (long) sizeof(PCMWAVEFORMAT)) != (long) sizeof(PCMWAVEFORMAT))
 			return MCIERR_INTERNAL;
 		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
@@ -263,7 +263,7 @@ static DWORD WAVE_mciCue(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpPar
 /* always close elements ? */
 
 	if (MCIWavDev[wDevID].hFile != 0) {
-	  mmioClose(MCIWavDev[wDevID].hFile, 0);
+	  mmioClose32(MCIWavDev[wDevID].hFile, 0);
 	  MCIWavDev[wDevID].hFile = 0;
 	}
 
@@ -300,7 +300,7 @@ static DWORD WAVE_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpP
 	MCIWavDev[wDevID].nUseCount--;
 	if (MCIWavDev[wDevID].nUseCount == 0) {
 	        if (MCIWavDev[wDevID].hFile != 0) {
-		        mmioClose(MCIWavDev[wDevID].hFile, 0);
+		        mmioClose32(MCIWavDev[wDevID].hFile, 0);
 			MCIWavDev[wDevID].hFile = 0;
 		}
 		if (MCIWavDev[wDevID].fInput)
@@ -370,7 +370,7 @@ static DWORD WAVE_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	lpWaveHdr->dwLoops = 0L;
 	dwRet=wodMessage(wDevID,WODM_PREPARE,0,(DWORD)lpWaveHdr,sizeof(WAVEHDR));
 	while(TRUE) {
-		count = mmioRead(MCIWavDev[wDevID].hFile, lpWaveHdr->lpData, bufsize);
+		count = mmioRead32(MCIWavDev[wDevID].hFile, lpWaveHdr->lpData, bufsize);
 		TRACE(mciwave,"mmioRead bufsize=%ld count=%ld\n", bufsize, count);
 		if (count < 1) break;
 		lpWaveHdr->dwBufferLength = count;
@@ -1056,10 +1056,12 @@ static DWORD wodRestart(WORD wDevID)
 		return MMSYSERR_NOTENABLED;
 	}
 	/* FIXME: is NotifyClient with WOM_DONE right ? (Comet Busters 1.3.3 needs this notification) */
+	/* FIXME: Myst crashes with this ... hmm -MM
        	if (WAVE_NotifyClient(wDevID, WOM_DONE, 0L, 0L) != MMSYSERR_NOERROR) {
                	WARN(mciwave, "can't notify client !\n");
                	return MMSYSERR_INVALPARAM;
         }
+	*/
 
 	return MMSYSERR_NOERROR;
 }

@@ -1,4 +1,7 @@
-Henrik Olsen <henrik@iaeste.dk>
+Fri Jun 12 23:29:44 1998  Marcel Baur  <mbaur@g26.ethz.ch>
+        * Fixed GetDateFormat()->GetTimeFormat() for locale time.
+
+Mon May 25 14:30:00 1998  Henrik Olsen <henrik@iaeste.dk>
         * [Da.rc]
         Added Danish language support.
 
@@ -46,4 +49,3 @@ Fri Dec 05 20:51:55 1997  Marcel Baur <mbaur@g26.ethz.ch>
           [license.c] [license.h] [License_En.c]
           [README] [TODO] [ChangeLog]
           Originals by Marcel Baur
-
