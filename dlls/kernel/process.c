@@ -413,30 +413,45 @@ static BOOL build_initial_environment( char **environ )
  *
  * Set environment variables by enumerating the values of a key;
  * helper for set_registry_environment().
+ * Note that Windows happily truncates the value if it's too big.
  */
-static void set_registry_variables( HKEY hkey )
+static void set_registry_variables( HKEY hkey, ULONG type )
 {
     UNICODE_STRING env_name, env_value;
     NTSTATUS status;
     DWORD size;
     int index;
-    char buffer[1024 + sizeof(KEY_VALUE_FULL_INFORMATION)];
+    char buffer[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_FULL_INFORMATION)];
     KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
 
     for (index = 0; ; index++)
     {
         status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
                                       buffer, sizeof(buffer), &size );
-        if (status == STATUS_BUFFER_OVERFLOW) continue;
-        if (status != STATUS_SUCCESS) break;
-        if (info->Type != REG_SZ) continue;  /* FIXME: handle REG_EXPAND_SZ */
+        if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW)
+            break;
+        if (info->Type != type)
+            continue;
         env_name.Buffer = info->Name;
         env_name.Length = env_name.MaximumLength = info->NameLength;
         env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
         env_value.Length = env_value.MaximumLength = info->DataLength;
         if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
             env_value.Length--;  /* don't count terminating null if any */
-        RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
+        if (info->Type == REG_EXPAND_SZ)
+        {
+            WCHAR buf_expanded[1024];
+            UNICODE_STRING env_expanded;
+            env_expanded.Length = env_expanded.MaximumLength = sizeof(buf_expanded);
+            env_expanded.Buffer=buf_expanded;
+            status = RtlExpandEnvironmentStrings_U(NULL, &env_value, &env_expanded, NULL);
+            if (status == STATUS_SUCCESS || status == STATUS_BUFFER_OVERFLOW)
+                RtlSetEnvironmentVariable( NULL, &env_name, &env_expanded );
+        }
+        else
+        {
+            RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
+        }
     }
 }
 
@@ -445,6 +460,13 @@ static void set_registry_variables( HKEY hkey )
  *           set_registry_environment
  *
  * Set the environment variables specified in the registry.
+ *
+ * Note: Windows handles REG_SZ and REG_EXPAND_SZ in one pass with the
+ * consequence that REG_EXPAND_SZ cannot be used reliably as it depends
+ * on the order in which the variables are processed. But on Windows it
+ * does not really matter since they only use %SystemDrive% and
+ * %SystemRoot% which are predefined. But Wine defines these in the
+ * registry, so we need two passes.
  */
 static void set_registry_environment(void)
 {
@@ -471,7 +493,8 @@ static void set_registry_environment(void)
     RtlInitUnicodeString( &nameW, env_keyW );
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
     {
-        set_registry_variables( hkey );
+        set_registry_variables( hkey, REG_SZ );
+        set_registry_variables( hkey, REG_EXPAND_SZ );
         NtClose( hkey );
     }
 
@@ -480,7 +503,8 @@ static void set_registry_environment(void)
     RtlInitUnicodeString( &nameW, envW );
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
     {
-        set_registry_variables( hkey );
+        set_registry_variables( hkey, REG_SZ );
+        set_registry_variables( hkey, REG_EXPAND_SZ );
         NtClose( hkey );
     }
     NtClose( attr.RootDirectory );
