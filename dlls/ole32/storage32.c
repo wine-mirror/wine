@@ -49,7 +49,7 @@ typedef struct
     DWORD dwOleObjFileNameLength;
     DWORD dwMetaFileWidth;
     DWORD dwMetaFileHeight;
-    CHAR  strUnknown[8]; //don't know what is this 8 byts information in OLE stream.
+    CHAR  strUnknown[8]; /* don't know what is this 8 byts information in OLE stream. */
     DWORD dwDataLength;
     BYTE *pData;
 }OLECONVERT_OLESTREAM_DATA;
@@ -6004,7 +6004,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 				}
 			if(hRes == S_OK)
 			{
-					if(pData->dwOleObjFileNameLength < 1) //there is no file name exist
+					if(pData->dwOleObjFileNameLength < 1) /* there is no file name exist */
 						pData->dwOleObjFileNameLength = sizeof(pData->dwOleObjFileNameLength);
 					pData->pstrOleObjFileName = (CHAR *)malloc(pData->dwOleObjFileNameLength);
 					if(pData->pstrOleObjFileName)
@@ -6047,9 +6047,9 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 				}
 			}
 
-			if(hRes == S_OK) // I don't know what is this 8 byts information is we have to figure out
+			if(hRes == S_OK) /* I don't know what is this 8 byts information is we have to figure out */
 			{
-				if(!bStrem1) //if it is a second OLE stream data
+				if(!bStrem1) /* if it is a second OLE stream data */
 				{
 					pData->dwDataLength -= 8;
 					dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)(pData->strUnknown), sizeof(pData->strUnknown));

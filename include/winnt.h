@@ -1070,6 +1070,7 @@ typedef struct _NT_TIB
 struct _TEB;
 
 #if defined(__i386__) && defined(__GNUC__)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void);
 extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;

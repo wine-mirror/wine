@@ -579,7 +579,7 @@ static HANDLER_DEF(trap_handler)
         context.EFlags &= ~0x100;  /* clear single-step flag */
         break;
     case T_BPTFLT:   /* Breakpoint exception */
-        rec.ExceptionAddress--;  /* back up over the int3 instruction */
+        rec.ExceptionAddress = (char *) rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
         /* fall through */
     default:
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
@@ -732,11 +732,13 @@ BOOL SIGNAL_Init(void)
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL)
  */
-__ASM_GLOBAL_FUNC( DbgBreakPoint, "int3; ret");
+void WINAPI DbgBreakPoint(void);
+__ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret");
 
 /**********************************************************************
  *		DbgUserBreakPoint   (NTDLL)
  */
-__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int3; ret");
+void WINAPI DbgUserBreakPoint(void);
+__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");
 
 #endif  /* __i386__ */

@@ -3616,7 +3616,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 		    *(roundbuffer+1)='0';
 		} else
 		    *roundbuffer='0';
-		dptr=roundbuffer+(sptr-lpValue);  // +1-1
+		dptr=roundbuffer+(sptr-lpValue);  /* +1-1 */
 		
 		while ( (++*dptr) > '9') {
 		    *(dptr--)='0';

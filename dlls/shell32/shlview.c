@@ -1284,7 +1284,9 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      msg.pt = 0;*/
 	      
 	      LPNMLVKEYDOWN plvKeyDown = (LPNMLVKEYDOWN) lpnmh;
-//	      TranslateAccelerator(This->hWnd, This->hAccel, &msg)
+#if 0
+	      TranslateAccelerator(This->hWnd, This->hAccel, &msg)
+#endif
 	      FIXME("LVN_KEYDOWN key=0x%08x\n",plvKeyDown->wVKey);
 	    }
 	    break;
