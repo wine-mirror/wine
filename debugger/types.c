@@ -727,10 +727,11 @@ int DEBUG_GetObjectSize(struct datatype * dt)
        * when we insert the element into the structure.
        */
       return 0;
-    case DT_TYPEDEF:
     case DT_FUNC:
-    case DT_CONST:
       assert(FALSE);
+    default:
+      DEBUG_Printf(DBG_CHN_ERR, "Unknown type???\n");
+      break;
     }
   return 0;
 }
@@ -827,7 +828,6 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
     {
     case DT_BASIC:
     case DT_ENUM:
-    case DT_CONST:
     case DT_POINTER:
       DEBUG_PrintBasic(value, 1, format);
       break;
@@ -976,9 +976,8 @@ DEBUG_DumpTypes(void)
 	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - FUNC(%s)(%08lx)\n",
 			   (unsigned long)dt, name, (unsigned long)dt->un.funct.rettype);
 	      break;
-	    case DT_CONST:
-	    case DT_TYPEDEF:
-	      DEBUG_Printf(DBG_CHN_MESG, "What???\n");
+	    default:
+	      DEBUG_Printf(DBG_CHN_ERR, "Unknown type???\n");
 	      break;
 	    }
 	}
@@ -996,7 +995,6 @@ struct datatype *
 DEBUG_TypeCast(enum debug_type type, const char * name)
 {
   int			  hash;
-  struct datatype	* rtn;
 
   /*
    * The last bucket is special, and is used to hold typeless names.
@@ -1010,10 +1008,7 @@ DEBUG_TypeCast(enum debug_type type, const char * name)
       hash = type_hash(name);
     }
 
-  rtn = DEBUG_LookupDataType(type, hash, name);
-
-  return rtn;
-
+  return DEBUG_LookupDataType(type, hash, name);
 }
 
 int
@@ -1051,10 +1046,9 @@ DEBUG_PrintTypeCast(const struct datatype * dt)
       DEBUG_PrintTypeCast(dt->un.funct.rettype);
       DEBUG_Printf(DBG_CHN_MESG, "(*%s)()", name);
       break;
-    case DT_CONST:
-    case DT_TYPEDEF:
-      DEBUG_Printf(DBG_CHN_MESG, "What???\n");
-      break;
+    default:
+       DEBUG_Printf(DBG_CHN_ERR, "Unknown type???\n");
+       break;
     }
 
   return TRUE;
