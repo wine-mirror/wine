@@ -41,11 +41,19 @@ DEFAULT_DEBUG_CHANNEL(tab)
 #define TAB_GetInfoPtr(hwnd) ((TAB_INFO *)GetWindowLongA(hwnd,0))
 
 /******************************************************************************
+ * Hot-tracking timer constants
+ */
+#define TAB_HOTTRACK_TIMER            1
+#define TAB_HOTTRACK_TIMER_INTERVAL   100   /* milliseconds */
+
+/******************************************************************************
  * Prototypes
  */
 static void TAB_Refresh (HWND hwnd, HDC hdc);
 static void TAB_InvalidateTabArea(HWND      hwnd, TAB_INFO* infoPtr);
 static void TAB_EnsureSelectionVisible(HWND hwnd, TAB_INFO* infoPtr);
+static void TAB_DrawItem(HWND hwnd, HDC hdc, INT iItem);
+static void TAB_DrawItemInterior(HWND hwnd, HDC hdc, INT iItem, RECT* drawRect);
 
 static BOOL
 TAB_SendSimpleNotify (HWND hwnd, UINT code)
@@ -455,14 +463,191 @@ TAB_RButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
+/******************************************************************************
+ * TAB_DrawLoneItemInterior
+ *
+ * This calls TAB_DrawItemInterior.  However, TAB_DrawItemInterior is normally
+ * called by TAB_DrawItem which is normally called by TAB_Refresh which sets
+ * up the device context and font.  This routine does the same setup but
+ * only calls TAB_DrawItemInterior for the single specified item.
+ */
+static void
+TAB_DrawLoneItemInterior(HWND hwnd, TAB_INFO* infoPtr, int iItem)
+{
+  HDC hdc = GetDC(hwnd);
+  HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
+  TAB_DrawItemInterior(hwnd, hdc, iItem, NULL);
+  SelectObject(hdc, hOldFont);
+  ReleaseDC(hwnd, hdc);
+}
+
+/******************************************************************************
+ * TAB_HotTrackTimerProc
+ *
+ * When a mouse-move event causes a tab to be highlighted (hot-tracking), a
+ * timer is setup so we can check if the mouse is moved out of our window.
+ * (We don't get an event when the mouse leaves, the mouse-move events just
+ * stop being delivered to our window and just start being delivered to
+ * another window.)  This function is called when the timer triggers so
+ * we can check if the mouse has left our window.  If so, we un-highlight
+ * the hot-tracked tab.
+ */
+static VOID CALLBACK
+TAB_HotTrackTimerProc
+  (
+  HWND hwnd,    // handle of window for timer messages
+  UINT uMsg,    // WM_TIMER message
+  UINT idEvent, // timer identifier
+  DWORD dwTime  // current system time
+  )
+{
+  TAB_INFO* infoPtr = TAB_GetInfoPtr(hwnd);
+
+  if (infoPtr != NULL && infoPtr->iHotTracked >= 0)
+  {
+    POINT pt;
+
+    /*
+    ** If we can't get the cursor position, or if the cursor is outside our
+    ** window, we un-highlight the hot-tracked tab.  Note that the cursor is
+    ** "outside" even if it is within our bounding rect if another window
+    ** overlaps.  Note also that the case where the cursor stayed within our
+    ** window but has moved off the hot-tracked tab will be handled by the
+    ** WM_MOUSEMOVE event. 
+    */
+    if (!GetCursorPos(&pt) || WindowFromPoint(pt) != hwnd)
+    {
+      // Redraw iHotTracked to look normal
+      INT iRedraw = infoPtr->iHotTracked;
+      infoPtr->iHotTracked = -1;
+      TAB_DrawLoneItemInterior(hwnd, infoPtr, iRedraw);
+
+      // Kill this timer
+      KillTimer(hwnd, TAB_HOTTRACK_TIMER);
+    }
+  }
+}
+
+/******************************************************************************
+ * TAB_RecalcHotTrack
+ *
+ * If a tab control has the TCS_HOTTRACK style, then the tab under the mouse
+ * should be highlighted.  This function determines which tab in a tab control,
+ * if any, is under the mouse and records that information.  The caller may
+ * supply output parameters to receive the item number of the tab item which
+ * was highlighted but isn't any longer and of the tab item which is now
+ * highlighted but wasn't previously.  The caller can use this information to
+ * selectively redraw those tab items.
+ *
+ * If the caller has a mouse position, it can supply it through the pos
+ * parameter.  For example, TAB_MouseMove does this.  Otherwise, the caller
+ * supplies NULL and this function determines the current mouse position
+ * itself.
+ */
+static void
+TAB_RecalcHotTrack
+  (
+  HWND            hwnd,
+  const LPARAM*   pos,
+  int*            out_redrawLeave,
+  int*            out_redrawEnter
+  )
+{
+  TAB_INFO* infoPtr = TAB_GetInfoPtr(hwnd);
+
+  int item = -1;
+
+
+  if (out_redrawLeave != NULL)
+    *out_redrawLeave = -1;
+  if (out_redrawEnter != NULL)
+    *out_redrawEnter = -1;
+
+  if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_HOTTRACK)
+  {
+    POINT pt;
+    UINT  flags;
+
+    if (pos == NULL)
+    {
+      GetCursorPos(&pt);
+      ScreenToClient(hwnd, &pt);
+    }
+    else
+    {
+      pt.x = LOWORD(*pos);
+      pt.y = HIWORD(*pos);
+    }
+
+    item = TAB_InternalHitTest(hwnd, infoPtr, pt, &flags);
+  }
+
+  if (item != infoPtr->iHotTracked)
+  {
+    if (infoPtr->iHotTracked >= 0)
+    {
+      // Mark currently hot-tracked to be redrawn to look normal
+      if (out_redrawLeave != NULL)
+        *out_redrawLeave = infoPtr->iHotTracked;
+
+      if (item < 0)
+      {
+        // Kill timer which forces recheck of mouse pos
+        KillTimer(hwnd, TAB_HOTTRACK_TIMER);
+      }
+    }
+    else
+    {
+      // Start timer so we recheck mouse pos
+      UINT timerID = SetTimer
+        (
+        hwnd,
+        TAB_HOTTRACK_TIMER,
+        TAB_HOTTRACK_TIMER_INTERVAL,
+        TAB_HotTrackTimerProc
+        );
+
+      if (timerID == 0)
+        return; /* Hot tracking not available */
+    }
+
+    infoPtr->iHotTracked = item;
+
+    if (item >= 0)
+    {
+      // Mark new hot-tracked to be redrawn to look highlighted
+      if (out_redrawEnter != NULL)
+        *out_redrawEnter = item;
+    }
+  }
+}
+
+/******************************************************************************
+ * TAB_MouseMove
+ *
+ * Handles the mouse-move event.  Updates tooltips.  Updates hot-tracking.
+ */
 static LRESULT
 TAB_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+  int redrawLeave;
+  int redrawEnter;
+
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
   if (infoPtr->hwndToolTip)
     TAB_RelayEvent (infoPtr->hwndToolTip, hwnd,
 		    WM_LBUTTONDOWN, wParam, lParam);
+
+  /* Determine which tab to highlight.  Redraw tabs which change highlight
+  ** status. */
+  TAB_RecalcHotTrack(hwnd, &lParam, &redrawLeave, &redrawEnter);
+
+  if (redrawLeave != -1)
+    TAB_DrawLoneItemInterior(hwnd, infoPtr, redrawLeave);
+  if (redrawEnter != -1)
+    TAB_DrawLoneItemInterior(hwnd, infoPtr, redrawEnter);
+
   return 0;
 }
 
@@ -553,6 +738,7 @@ static LRESULT TAB_OnHScroll(
      else
         infoPtr->leftmostVisible++;
 
+     TAB_RecalcHotTrack(hwnd, NULL, NULL, NULL);
      TAB_InvalidateTabArea(hwnd, infoPtr);
      SendMessageA(infoPtr->hwndUpDown, UDM_SETPOS, 0,
                    MAKELONG(infoPtr->leftmostVisible, 0));
@@ -923,11 +1109,196 @@ static void TAB_SetItemBounds (HWND hwnd)
   }
 
   TAB_EnsureSelectionVisible(hwnd,infoPtr);
+  TAB_RecalcHotTrack(hwnd, NULL, NULL, NULL);
   /*
    * Cleanup
    */
   SelectObject (hdc, hOldFont);
   ReleaseDC (hwnd, hdc);
+}
+
+/******************************************************************************
+ * TAB_DrawItemInterior
+ *
+ * This method is used to draw the interior (text and icon) of a single tab
+ * into the tab control.
+ */         
+static void
+TAB_DrawItemInterior
+  (
+  HWND        hwnd,
+  HDC         hdc,
+  INT         iItem,
+  RECT*       drawRect
+  )
+{
+  TAB_INFO* infoPtr = TAB_GetInfoPtr(hwnd);
+  LONG      lStyle  = GetWindowLongA(hwnd, GWL_STYLE);
+
+  RECT localRect;
+
+  HPEN   htextPen   = GetSysColorPen (COLOR_BTNTEXT);
+  HPEN   holdPen;
+  INT    oldBkMode;
+
+  if (drawRect == NULL)
+  {
+    BOOL isVisible;
+    RECT itemRect;
+    RECT selectedRect;
+
+    /*
+     * Get the rectangle for the item.
+     */
+    isVisible = TAB_InternalGetItemRect
+      (
+      hwnd,
+      infoPtr,
+      iItem,
+      &itemRect,
+      &selectedRect
+      );
+    if (!isVisible)
+      return;
+
+    /*
+     * Make sure drawRect points to something valid; simplifies code.
+     */
+    drawRect = &localRect;
+
+    /*
+     * This logic copied from the part of TAB_DrawItem which draws
+     * the tab background.  It's important to keep it in sync.  I
+     * would have liked to avoid code duplication, but couldn't figure
+     * out how without making spaghetti of TAB_DrawItem.
+     */
+    if (lStyle & TCS_BUTTONS)
+    {
+      *drawRect = itemRect;
+      if (iItem == infoPtr->iSelected)
+      {
+        drawRect->right--;
+        drawRect->bottom--;
+      }
+    }
+    else
+    {
+      if (iItem == infoPtr->iSelected)
+        *drawRect = selectedRect;
+      else
+        *drawRect = itemRect;
+      drawRect->right--;
+      drawRect->bottom--;
+    }
+  }
+
+  /*
+   * Text pen
+   */
+  holdPen = SelectObject(hdc, htextPen); 
+
+  oldBkMode = SetBkMode(hdc, TRANSPARENT); 
+  SetTextColor
+    (
+    hdc,
+    GetSysColor
+      (
+      (iItem == infoPtr->iHotTracked) ? COLOR_HIGHLIGHT : COLOR_BTNTEXT
+      )
+    );
+
+  /*
+   * Deflate the rectangle to acount for the padding
+   */
+  InflateRect(drawRect, -HORIZONTAL_ITEM_PADDING, -VERTICAL_ITEM_PADDING);
+
+  /*
+   * if owner draw, tell the owner to draw
+   */
+  if ( (lStyle & TCS_OWNERDRAWFIXED) && GetParent(hwnd) )
+  {
+    DRAWITEMSTRUCT dis;
+    WND *pwndPtr;
+    UINT id;
+
+    /*
+     * get the control id
+     */
+    pwndPtr = WIN_FindWndPtr( hwnd );
+    id = pwndPtr->wIDmenu;
+    WIN_ReleaseWndPtr(pwndPtr);
+
+    /* 
+     * put together the DRAWITEMSTRUCT
+     */
+    dis.CtlType    = ODT_TAB;	
+    dis.CtlID      = id;		
+    dis.itemID     = iItem;		
+    dis.itemAction = ODA_DRAWENTIRE;	
+    if ( iItem == infoPtr->iSelected )
+      dis.itemState = ODS_SELECTED;	
+    else				
+      dis.itemState = 0;		
+    dis.hwndItem = hwnd;		/* */
+    dis.hDC      = hdc;		
+    dis.rcItem   = *drawRect;		/* */
+    dis.itemData = infoPtr->items[iItem].lParam;
+
+    /*
+     * send the draw message
+     */
+    SendMessageA( GetParent(hwnd), WM_DRAWITEM, (WPARAM)id, (LPARAM)&dis );
+  }
+  else
+  {
+    UINT uHorizAlign;
+    
+    /*
+     * If not owner draw, then do the drawing ourselves.
+     *
+     * Draw the icon.
+     */
+    if (infoPtr->himl && (infoPtr->items[iItem].mask & TCIF_IMAGE))
+    {
+      INT cx;
+      INT cy;
+
+      ImageList_Draw
+        (
+        infoPtr->himl,
+        infoPtr->items[iItem].iImage,
+        hdc,
+        drawRect->left,
+        drawRect->top + 1,
+        ILD_NORMAL
+        );
+      ImageList_GetIconSize(infoPtr->himl, &cx, &cy);
+      drawRect->left += (cx + HORIZONTAL_ITEM_PADDING);
+    }
+
+    /*
+     * Draw the text;
+     */
+    if (lStyle & TCS_RIGHTJUSTIFY)
+      uHorizAlign = DT_CENTER;
+    else
+      uHorizAlign = DT_LEFT;
+
+    DrawTextA
+      (
+      hdc,
+      infoPtr->items[iItem].pszText,
+      lstrlenA(infoPtr->items[iItem].pszText),
+      drawRect,
+      uHorizAlign | DT_SINGLELINE | DT_VCENTER
+      );
+  }
+
+  /*
+  * Cleanup
+  */
+  SetBkMode(hdc, oldBkMode);
+  SelectObject(hdc, holdPen);
 }
 
 /******************************************************************************
@@ -961,11 +1332,9 @@ static void TAB_DrawItem(
     HBRUSH hbr       = CreateSolidBrush (GetSysColor(COLOR_BTNFACE));    
     HPEN   hwPen     = GetSysColorPen (COLOR_3DHILIGHT);
     HPEN   hbPen     = GetSysColorPen (COLOR_BTNSHADOW);
-    HPEN   hsdPen    = GetSysColorPen (COLOR_BTNTEXT);
     HPEN   hfocusPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_BTNTEXT));
     HPEN   holdPen;
     INT    oldBkMode;
-    INT    cx,cy; 
     BOOL   deleteBrush = TRUE;
 
     if (lStyle & TCS_BUTTONS)
@@ -1106,87 +1475,10 @@ static void TAB_DrawItem(
       }
     }
   
-    /*
-     * Text pen
-     */
-    SelectObject(hdc, hsdPen); 
-
-    oldBkMode = SetBkMode(hdc, TRANSPARENT); 
-    SetTextColor (hdc, COLOR_BTNTEXT);
-
-    /*
-     * Deflate the rectangle to acount for the padding
-     */
-    InflateRect(&r, -HORIZONTAL_ITEM_PADDING, -VERTICAL_ITEM_PADDING);
-
-    /*
-     * if owner draw, tell the owner to draw
-     */
-    if ( (lStyle & TCS_OWNERDRAWFIXED) && GetParent(hwnd) )
-    {
-	DRAWITEMSTRUCT dis;
-	WND *pwndPtr;
-	UINT id;
-
-	/*
-	 * get the control id
-	 */
-	pwndPtr = WIN_FindWndPtr( hwnd );
-	id = pwndPtr->wIDmenu;
-	WIN_ReleaseWndPtr(pwndPtr);
-
-	/* 
-	 * put together the DRAWITEMSTRUCT
-	 */
-	dis.CtlType    = ODT_TAB;	
-	dis.CtlID      = id;		
-	dis.itemID     = iItem;		
-	dis.itemAction = ODA_DRAWENTIRE;	
-	if ( iItem == infoPtr->iSelected )
-	    dis.itemState = ODS_SELECTED;	
-	else				
-	    dis.itemState = 0;		
-	dis.hwndItem = hwnd;		/* */
-	dis.hDC      = hdc;		
-	dis.rcItem   = r;		/* */
-	dis.itemData = infoPtr->items[iItem].lParam;
-
-	/*
-	 * send the draw message
-	 */
-	SendMessageA( GetParent(hwnd), WM_DRAWITEM, (WPARAM)id, (LPARAM)&dis );
-    }
-    else
-    {
-	/*
-	 * If not owner draw, then do the drawing ourselves.
-	 *
-     * Draw the icon.
-     */
-    if (infoPtr->himl && (infoPtr->items[iItem].mask & TCIF_IMAGE) )
-    {
-      ImageList_Draw (infoPtr->himl, infoPtr->items[iItem].iImage, hdc, 
-		      r.left, r.top+1, ILD_NORMAL);
-      ImageList_GetIconSize (infoPtr->himl, &cx, &cy);
-      r.left+=(cx + HORIZONTAL_ITEM_PADDING);
-    }
-
-    /*
-     * Draw the text;
-     */
-    if (lStyle & TCS_RIGHTJUSTIFY)
-      DrawTextA(hdc,
-	      infoPtr->items[iItem].pszText, 
-	      lstrlenA(infoPtr->items[iItem].pszText),
-	      &r, 
-	      DT_CENTER|DT_SINGLELINE|DT_VCENTER);
-    else
-       DrawTextA(hdc,
-	      infoPtr->items[iItem].pszText, 
-	      lstrlenA(infoPtr->items[iItem].pszText),
-	      &r, 
-	      DT_LEFT|DT_SINGLELINE|DT_VCENTER);
-    }
+    oldBkMode = SetBkMode(hdc, TRANSPARENT);
+    
+    /* This modifies r to be the text rectangle. */
+    TAB_DrawItemInterior(hwnd, hdc, iItem, &r);
 
     /*
      * Draw the focus rectangle
@@ -1373,6 +1665,8 @@ static void TAB_EnsureSelectionVisible(
 {
   INT iSelected = infoPtr->iSelected;
 
+  INT iOrigLeftmostVisible = infoPtr->leftmostVisible;
+
   /* 
    * set the items row to the bottommost row or topmost row depending on 
    * style 
@@ -1405,6 +1699,8 @@ static void TAB_EnsureSelectionVisible(
                    if (infoPtr->items[i].rect.top > newselected)
                      infoPtr->items[i].rect.top-=1;
                  }
+
+        TAB_RecalcHotTrack(hwnd, NULL, NULL, NULL);
       }
   }
 
@@ -1451,6 +1747,9 @@ static void TAB_EnsureSelectionVisible(
         infoPtr->leftmostVisible = i;
      }
   }
+
+  if (infoPtr->leftmostVisible != iOrigLeftmostVisible)
+    TAB_RecalcHotTrack(hwnd, NULL, NULL, NULL);
 
   SendMessageA(infoPtr->hwndUpDown, UDM_SETPOS, 0,
                MAKELONG(infoPtr->leftmostVisible, 0));
@@ -1730,6 +2029,9 @@ TAB_DeleteAllItems (HWND hwnd, WPARAM wParam, LPARAM lParam)
   COMCTL32_Free (infoPtr->items);
   infoPtr->uNumItem = 0;
   infoPtr->iSelected = -1;
+  if (infoPtr->iHotTracked >= 0)
+    KillTimer(hwnd, TAB_HOTTRACK_TIMER);
+  infoPtr->iHotTracked = -1;
  
   TAB_SetItemBounds(hwnd);
   TAB_InvalidateTabArea(hwnd,infoPtr);
@@ -1847,6 +2149,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->items           = 0;
   infoPtr->hcurArrow       = LoadCursorA (0, IDC_ARROWA);
   infoPtr->iSelected       = -1;
+  infoPtr->iHotTracked     = -1;
   infoPtr->uFocus          = -1;  
   infoPtr->hwndToolTip     = 0;
   infoPtr->DoRedraw        = TRUE;
@@ -1937,6 +2240,9 @@ TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
  
   if (infoPtr->hwndUpDown)
     DestroyWindow(infoPtr->hwndUpDown);
+
+  if (infoPtr->iHotTracked >= 0)
+    KillTimer(hwnd, TAB_HOTTRACK_TIMER);
 
   COMCTL32_Free (infoPtr);
   SetWindowLongA(hwnd, 0, 0);

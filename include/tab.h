@@ -40,6 +40,7 @@ typedef struct tagTAB_INFO
   INT        leftmostVisible; /* Used for scrolling, this member contains
 			       * the index of the first visible item */
   INT        iSelected;       /* the currently selected item */
+  INT        iHotTracked;     /* the highlighted item under the mouse */
   INT        uFocus;          /* item which has the focus */
   TAB_ITEM*  items;           /* pointer to an array of TAB_ITEM's */
   BOOL       DoRedraw;        /* flag for redrawing when tab contents is changed*/
