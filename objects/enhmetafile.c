@@ -269,7 +269,7 @@ INT CALLBACK cbCountSizeOfEnhMetaFile( HDC a,
 {
   LPUINT uSizeOfRecordData = (LPUINT)lpData;
 
-  uSizeOfRecordData += lpEMR->nSize;
+  *uSizeOfRecordData += lpEMR->nSize;
 
   return TRUE;
 }
