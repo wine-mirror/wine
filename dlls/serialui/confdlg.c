@@ -176,7 +176,7 @@ static BOOL SERIALUI_GetConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, LPDWO
         return FALSE;
     }
 
-    if(!GetWindowTextA(hControl, &lpEntry[0], sizeof lpEntry))
+    if(!GetWindowTextA(hControl, &lpEntry[0], sizeof(lpEntry)))
     {
         TRACE("Couldn't get window text for item %lx\n",id);
         return FALSE;
@@ -349,7 +349,7 @@ INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
         if(!info)
             return FALSE;
         SetWindowLongA(hWnd, DWL_USER, lParam);
-        snprintf(szTitle, sizeof szTitle, "Settings for %s", info->lpszDevice);
+        snprintf(szTitle, sizeof(szTitle), "Settings for %s", info->lpszDevice);
         SetWindowTextA(hWnd, szTitle);
         SERIALUI_DCBToDialogInfo(hWnd, info);
         return TRUE;
@@ -457,7 +457,7 @@ BOOL WINAPI SERIALUI_SetDefaultCommConfig(
     if(r != ERROR_SUCCESS)
         return FALSE;
 
-    snprintf(szKeyName, sizeof szKeyName, "%s\\%s", lpszCommKey ,lpszDevice);
+    snprintf(szKeyName, sizeof(szKeyName), "%s\\%s", lpszCommKey ,lpszDevice);
     r = RegCreateKeyA(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {
@@ -509,7 +509,7 @@ BOOL WINAPI SERIALUI_GetDefaultCommConfig(
     if(r != ERROR_SUCCESS)
         return FALSE;
 
-    snprintf(szKeyName, sizeof szKeyName, "%s\\%s", lpszCommKey ,lpszDevice);
+    snprintf(szKeyName, sizeof(szKeyName), "%s\\%s", lpszCommKey ,lpszDevice);
     r = RegOpenKeyA(hKeyReg, szKeyName, &hKeyPort);
     if(r == ERROR_SUCCESS)
     {

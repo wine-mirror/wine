@@ -370,7 +370,7 @@ static LONG recursive_delete_key(HKEY key)
     HKEY subkey;
 
     for (;;) {
-	cName = sizeof subkey_name / sizeof(WCHAR);
+	cName = sizeof(subkey_name) / sizeof(WCHAR);
 	res = RegEnumKeyExW(key, 0, subkey_name, &cName,
 			    NULL, NULL, NULL, NULL);
 	if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) {

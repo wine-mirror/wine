@@ -2091,7 +2091,7 @@ TOOLTIPS_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     LOGFONTW lf;
 
-    if(!GetObjectW((HFONT)wParam, sizeof lf, &lf))
+    if(!GetObjectW((HFONT)wParam, sizeof(lf), &lf))
         return 0;
 
     if(infoPtr->hFont) DeleteObject (infoPtr->hFont);

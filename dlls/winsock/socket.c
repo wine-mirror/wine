@@ -910,7 +910,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 #ifdef IPX_FRAME_NONE
             uipx->sipx_type=IPX_FRAME_NONE;
 #endif
-            memset(&uipx->sipx_zero,0,sizeof uipx->sipx_zero);
+            memset(&uipx->sipx_zero,0,sizeof(uipx->sipx_zero));
             return (const struct sockaddr*)uipx;
         }
 #endif

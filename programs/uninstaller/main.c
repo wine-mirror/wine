@@ -80,7 +80,7 @@ struct {
     { BS_PUSHBUTTON, "Exit", 0 }
 };
 
-#define NUM (sizeof button/sizeof button[0])
+#define NUM (sizeof(button)/sizeof(button[0]))
 
 int FetchUninstallInformation(void);
 void UninstallProgram(void);

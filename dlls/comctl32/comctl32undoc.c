@@ -2081,7 +2081,7 @@ DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
         if(pfnCompare(lpPtrs[l],lpPtrs[m+1],lParam)>0)
         {
             t = lpPtrs[m+1];
-            memmove(&lpPtrs[l+1],&lpPtrs[l],(m-l+1)*sizeof lpPtrs[l]);
+            memmove(&lpPtrs[l+1],&lpPtrs[l],(m-l+1)*sizeof(lpPtrs[l]));
             lpPtrs[l] = t;
 
             m++;

@@ -1704,7 +1704,7 @@ static void XFONT_LoadAliases(void)
     {
         BOOL bSubst;
 	char subsection[32];
-        snprintf( subsection, sizeof subsection, "%s%i", INIAliasSection, i++ );
+        snprintf( subsection, sizeof(subsection), "%s%i", INIAliasSection, i++ );
 
 	buffer[0] = 0;
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
@@ -2109,7 +2109,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    lfd1.resolution_x = res_string;
 	    lfd1.resolution_y = res_string;
 
-	    LFD_UnParse(buffer, sizeof buffer, &lfd1);
+	    LFD_UnParse(buffer, sizeof(buffer), &lfd1);
 
 	    lpstr = buffer;
 	}
@@ -2330,7 +2330,7 @@ static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, 
 
 	for( j = i = 0, pfr = fontList; pfr; pfr = pfr->next )
 	{
-	    LFD_UnParse(buffer, sizeof buffer, pfr->resource);
+	    LFD_UnParse(buffer, sizeof(buffer), pfr->resource);
 	    i += strlen( buffer) + 1;
 	    j += pfr->fi_count;
 	}
@@ -2368,7 +2368,7 @@ static BOOL XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count, 
 	    write( fd, &i, sizeof(int) );
 	    for( pfr = fontList; pfr && i == j; pfr = pfr->next )
 	    {
-		LFD_UnParse(buffer, sizeof buffer, pfr->resource);
+		LFD_UnParse(buffer, sizeof(buffer), pfr->resource);
 	        i = strlen( buffer ) + 1;
 		j = write( fd, buffer, i );
 	    }

@@ -6553,7 +6553,7 @@ static HRESULT STREAM_WriteString( IStream *stm, LPCWSTR string )
 
     if( string )
         len = WideCharToMultiByte( CP_ACP, 0, string, -1, NULL, 0, NULL, NULL);
-    r = IStream_Write( stm, &len, sizeof len, NULL);
+    r = IStream_Write( stm, &len, sizeof(len), NULL);
     if( FAILED( r ) )
         return r;
     if(len == 0)
@@ -6573,10 +6573,10 @@ static HRESULT STREAM_ReadString( IStream *stm, LPWSTR *string )
     LPSTR str;
     LPWSTR wstr;
 
-    r = IStream_Read( stm, &len, sizeof len, &count );
+    r = IStream_Read( stm, &len, sizeof(len), &count );
     if( FAILED( r ) )
         return r;
-    if( count != sizeof len )
+    if( count != sizeof(len) )
         return E_OUTOFMEMORY;
 
     TRACE("%ld bytes\n",len);
@@ -6633,7 +6633,7 @@ static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
         return r;
 
     /* Write CompObj Structure to stream */
-    r = IStream_Write(pstm, unknown1, sizeof unknown1, NULL);
+    r = IStream_Write(pstm, unknown1, sizeof(unknown1), NULL);
 
     if( SUCCEEDED( r ) )
         r = WriteClassStm( pstm, clsid );
@@ -6645,7 +6645,7 @@ static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
     if( SUCCEEDED( r ) )
         r = STREAM_WriteString( pstm, szProgIDName );
     if( SUCCEEDED( r ) )
-        r = IStream_Write(pstm, unknown2, sizeof unknown2, NULL);
+        r = IStream_Write(pstm, unknown2, sizeof(unknown2), NULL);
 
     IStream_Release( pstm );
 
@@ -6675,7 +6675,7 @@ static HRESULT CLSIDFromUserType(LPCWSTR lpszUserType, CLSID *clsid)
 
     for(i=0; !found; i++ )
     {
-        r = RegEnumKeyW( hkeyclsid, i, szKey, sizeof szKey/sizeof(WCHAR));
+        r = RegEnumKeyW( hkeyclsid, i, szKey, sizeof(szKey)/sizeof(WCHAR));
         if( r != ERROR_SUCCESS )
             break;
         hkey = 0;
@@ -6727,7 +6727,7 @@ HRESULT WINAPI WriteFmtUserTypeStg(
         return E_OUTOFMEMORY;
 
     /* get the clipboard format name */
-    n = GetClipboardFormatNameW( cf, szwClipName, sizeof szwClipName );
+    n = GetClipboardFormatNameW( cf, szwClipName, sizeof(szwClipName) );
     szwClipName[n]=0;
 
     TRACE("Clipboard name is %s\n", debugstr_w(szwClipName));
@@ -6785,8 +6785,8 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
     }
 
     /* read the various parts of the structure */
-    r = IStream_Read( stm, unknown1, sizeof unknown1, &count );
-    if( FAILED( r ) || ( count != sizeof unknown1 ) )
+    r = IStream_Read( stm, unknown1, sizeof(unknown1), &count );
+    if( FAILED( r ) || ( count != sizeof(unknown1) ) )
         goto end;
     r = ReadClassStm( stm, &clsid );
     if( FAILED( r ) )
@@ -6804,8 +6804,8 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
     if( FAILED( r ) )
         goto end;
 
-    r = IStream_Read( stm, unknown2, sizeof unknown2, &count );
-    if( FAILED( r ) || ( count != sizeof unknown2 ) )
+    r = IStream_Read( stm, unknown2, sizeof(unknown2), &count );
+    if( FAILED( r ) || ( count != sizeof(unknown2) ) )
         goto end;
 
     /* ok, success... now we just need to store what we found */

@@ -1924,7 +1924,7 @@ DECL_HANDLER(set_registry_notification)
             }
             else
             {
-                notify = (struct notify *) malloc (sizeof *notify);
+                notify = (struct notify *) malloc (sizeof(*notify));
                 if( notify )
                 {
                     grab_object( event );

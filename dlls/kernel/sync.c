@@ -848,7 +848,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 
     TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
 
-    memset(&ov,0,sizeof ov);
+    memset(&ov,0,sizeof(ov));
     ov.hEvent = CreateEventA( NULL, 0, 0, NULL );
     if (!ov.hEvent)
         return FALSE;
@@ -917,7 +917,7 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
         return FALSE;
     }
 
-    memset(&ov,0,sizeof ov);
+    memset(&ov,0,sizeof(ov));
     ov.hEvent = CreateEventA(NULL,0,0,NULL);
     if (!ov.hEvent)
         return FALSE;

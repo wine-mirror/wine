@@ -116,7 +116,7 @@ static struct msghdr msghdr;
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 struct cmsg_fd
 {
-    int len;   /* sizeof structure */
+    int len;   /* size of structure */
     int level; /* SOL_SOCKET */
     int type;  /* SCM_RIGHTS */
     int fd;    /* fd to pass */

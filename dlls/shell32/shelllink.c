@@ -247,8 +247,8 @@ static BOOL StartLinkProcessor( LPCOLESTR szLink )
 
     TRACE("starting %s\n",debugstr_w(buffer));
 
-    memset(&si, 0, sizeof si);
-    si.cb = sizeof si;
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
     if (!CreateProcessW( NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return FALSE;
 
     /* wait for a while to throttle the creation of linker processes */
@@ -404,8 +404,8 @@ static HRESULT Stream_LoadString( IStream* stm, BOOL unicode, LPWSTR *pstr )
     TRACE("%p\n", stm);
 
     count = 0;
-    r = IStream_Read(stm, &len, sizeof len, &count);
-    if ( FAILED (r) || ( count != sizeof len ) )
+    r = IStream_Read(stm, &len, sizeof(len), &count);
+    if ( FAILED (r) || ( count != sizeof(len) ) )
         return E_FAIL;
 
     if( unicode )
@@ -455,20 +455,20 @@ static HRESULT Stream_LoadLocation( IStream* stm )
 
     TRACE("%p\n",stm);
 
-    r = IStream_Read( stm, &size, sizeof size, &count );
+    r = IStream_Read( stm, &size, sizeof(size), &count );
     if( FAILED( r ) )
         return r;
-    if( count != sizeof loc->dwTotalSize )
+    if( count != sizeof(loc->dwTotalSize) )
         return E_FAIL;
 
     loc = HeapAlloc( GetProcessHeap(), 0, size );
     if( ! loc )
         return E_OUTOFMEMORY;
 
-    r = IStream_Read( stm, &loc->dwHeaderSize, size-sizeof size, &count );
+    r = IStream_Read( stm, &loc->dwHeaderSize, size-sizeof(size), &count );
     if( FAILED( r ) )
         goto end;
-    if( count != (size - sizeof size) )
+    if( count != (size - sizeof(size)) )
     {
         r = E_FAIL;
         goto end;
@@ -507,13 +507,13 @@ static HRESULT WINAPI IPersistStream_fnLoad(
 	  return STG_E_INVALIDPOINTER;
 
     dwBytesRead = 0;
-    r = IStream_Read(stm, &hdr, sizeof hdr, &dwBytesRead);
+    r = IStream_Read(stm, &hdr, sizeof(hdr), &dwBytesRead);
     if( FAILED( r ) )
         return r;
 
-    if( dwBytesRead != sizeof hdr)
+    if( dwBytesRead != sizeof(hdr))
         return E_FAIL;
-    if( hdr.dwSize != sizeof hdr)
+    if( hdr.dwSize != sizeof(hdr))
         return E_FAIL;
     if( !IsEqualIID(&hdr.MagicGuid, &CLSID_ShellLink) )
         return E_FAIL;
@@ -604,7 +604,7 @@ static HRESULT Stream_WriteString( IStream* stm, LPCWSTR str )
     DWORD count;
     HRESULT r;
 
-    r = IStream_Write( stm, &len, sizeof len, &count );
+    r = IStream_Write( stm, &len, sizeof(len), &count );
     if( FAILED( r ) )
         return r;
 
@@ -624,8 +624,8 @@ static HRESULT Stream_WriteLocationInfo( IStream* stm, LPCWSTR filename )
 
     FIXME("writing empty location info\n");
 
-    memset( &loc, 0, sizeof loc );
-    loc.dwTotalSize = sizeof loc - sizeof loc.dwTotalSize;
+    memset( &loc, 0, sizeof(loc) );
+    loc.dwTotalSize = sizeof(loc) - sizeof(loc.dwTotalSize);
 
     /* FIXME: fill this in */
 
@@ -658,9 +658,9 @@ static HRESULT WINAPI IPersistStream_fnSave(
         This->pPidl = ILCreateFromPathW( This->sPath );
     }
 
-    memset(&header, 0, sizeof header);
-    header.dwSize = sizeof header;
-    memcpy(&header.MagicGuid, &CLSID_ShellLink, sizeof header.MagicGuid );
+    memset(&header, 0, sizeof(header));
+    header.dwSize = sizeof(header);
+    memcpy(&header.MagicGuid, &CLSID_ShellLink, sizeof(header.MagicGuid) );
 
     header.wHotKey = This->wHotKey;
     header.nIcon = This->iIcoNdx;
@@ -682,7 +682,7 @@ static HRESULT WINAPI IPersistStream_fnSave(
     SystemTimeToFileTime ( &This->time3, &header.Time3 );
 
     /* write the Shortcut header */
-    r = IStream_Write( stm, &header, sizeof header, &count );
+    r = IStream_Write( stm, &header, sizeof(header), &count );
     if( FAILED( r ) )
     {
         ERR("Write failed at %d\n",__LINE__);

@@ -797,7 +797,7 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
         {
             WCHAR name[MAX_PATH];
 
-            while(!RegEnumKeyW(tmp, 0, name, sizeof name))
+            while(!RegEnumKeyW(tmp, 0, name, sizeof(name)))
             {
                 if(RegDeleteKeyW(tmp, name))  /* recurse */
                     break;
@@ -831,7 +831,7 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
         {
             CHAR name[MAX_PATH];
 
-            while(!RegEnumKeyA(tmp, 0, name, sizeof name))
+            while(!RegEnumKeyA(tmp, 0, name, sizeof(name)))
             {
                 if(RegDeleteKeyA(tmp, name))  /* recurse */
                     break;

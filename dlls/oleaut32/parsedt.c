@@ -260,7 +260,7 @@ static datetkn datetktbl[] = {
 	{ZULU, RESERV, DTK_ZULU},	/* 00:00:00 */
 };
 
-static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
+static unsigned int szdatetktbl = sizeof(datetktbl) / sizeof(datetktbl[0]);
 
 
 

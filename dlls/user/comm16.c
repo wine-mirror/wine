@@ -332,7 +332,7 @@ static INT COMM16_WriteFile(HANDLE hComm, LPCVOID buffer, DWORD len)
 	OVERLAPPED ov;
 	DWORD count= -1;
 
-	ZeroMemory(&ov,sizeof ov);
+	ZeroMemory(&ov,sizeof(ov));
 	ov.hEvent = CreateEventA(NULL,0,0,NULL);
 	if(ov.hEvent==INVALID_HANDLE_VALUE)
 		return -1;
@@ -577,7 +577,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
                         /* set default parameters */
                         if(COM[port].baudrate>-1){
                             DCB16 dcb;
-			    memcpy(&dcb,&COM[port].dcb,sizeof dcb);
+			    memcpy(&dcb,&COM[port].dcb,sizeof(dcb));
                             dcb.BaudRate=COM[port].baudrate;
                             /* more defaults:
                              * databits, parity, stopbits
@@ -923,8 +923,8 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 		return -1;
 	}
 
-	memset(&dcb,0,sizeof dcb);
-	dcb.DCBlength = sizeof dcb;
+	memset(&dcb,0,sizeof(dcb));
+	dcb.DCBlength = sizeof(dcb);
 
 	/*
 	 * according to MSDN, we should first interpret lpdcb->BaudRate as follows:

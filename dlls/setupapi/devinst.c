@@ -108,7 +108,7 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
 
     if(info==NULL)
         return FALSE;
-    if(info->cbSize < sizeof *info)
+    if(info->cbSize < sizeof(*info))
         return FALSE;
 
     return FALSE;

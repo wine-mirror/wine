@@ -248,7 +248,7 @@ static void queue_connect_waiter( struct named_pipe *pipe,
 {
     struct connect_wait *waiter;
 
-    waiter = mem_alloc( sizeof *waiter );
+    waiter = mem_alloc( sizeof(*waiter) );
     if( waiter )
     {
         set_waiter( &waiter->wait, func, overlapped );

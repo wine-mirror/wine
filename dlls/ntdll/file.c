@@ -217,8 +217,8 @@ NTSTATUS WINAPI NtReadFile (
 		FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
 
 	if (IsBadWritePtr( Buffer, Length ) ||
-	    IsBadWritePtr( IoStatusBlock, sizeof *IoStatusBlock) ||
-	    IsBadWritePtr( ByteOffset, sizeof *ByteOffset) )
+	    IsBadWritePtr( IoStatusBlock, sizeof(*IoStatusBlock)) ||
+	    IsBadWritePtr( ByteOffset, sizeof(*ByteOffset)) )
 		return STATUS_ACCESS_VIOLATION;
 
 	IoStatusBlock->Information = 0;

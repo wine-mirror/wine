@@ -1105,7 +1105,7 @@ BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
 
 	TRACE("%p %d \n",cs,length);
 
-	if( (cs == NULL) || (length < sizeof *cs)  )
+	if( (cs == NULL) || (length < sizeof(*cs))  )
 		return FALSE;
 
 	r = RegOpenKeyW( HKEY_CURRENT_USER, szwCabLocation, &hkey );
@@ -1119,12 +1119,12 @@ BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
 	}
 
 	/* if we can't read from the registry, create default values */
-	if ( (r != ERROR_SUCCESS) || (cs->cLength < sizeof *cs) || 
+	if ( (r != ERROR_SUCCESS) || (cs->cLength < sizeof(*cs)) ||
 		(cs->cLength != length) )
 	{
 		ERR("Initializing shell cabinet settings\n");
-		memset(cs, 0, sizeof *cs);
-		cs->cLength          = sizeof *cs;
+		memset(cs, 0, sizeof(*cs));
+		cs->cLength          = sizeof(*cs);
 		cs->nVersion         = 2;
 		cs->fFullPathTitle   = FALSE;
 		cs->fSaveLocalView   = TRUE;

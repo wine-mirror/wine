@@ -68,7 +68,7 @@
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
 {
-    int len;   /* sizeof structure */
+    int len;   /* size of structure */
     int level; /* SOL_SOCKET */
     int type;  /* SCM_RIGHTS */
     int fd;    /* fd to pass */

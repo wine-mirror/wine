@@ -955,7 +955,7 @@ static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(
 	WCHAR prefix[6] = { 'C', 'L', 'S', 'I', 'D', '\\' };
 
 	This->lpVtbl = &COMCAT_CATID_IEnumGUID_Vtbl;
-	memcpy(This->keyname, prefix, sizeof prefix);
+	memcpy(This->keyname, prefix, sizeof(prefix));
 	StringFromGUID2(rclsid, This->keyname + 6, 39);
 	lstrcpyW(This->keyname + 44, postfix);
 	RegOpenKeyExW(HKEY_CLASSES_ROOT, This->keyname, 0, KEY_READ, &This->key);

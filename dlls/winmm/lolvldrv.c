@@ -478,7 +478,7 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
     case DRV_QUERYDRIVERIDS:
 	WARN("NIY call VxD\n");
 	/* should call VxD MMDEVLDR with (DevNode, dwParam1 and dwParam2) as pmts
-	 * dwParam1 is buffer and dwParam2 is sizeof buffer
+	 * dwParam1 is buffer and dwParam2 is sizeof(buffer)
 	 * I don't know where the result is stored though
 	 */
 	break;

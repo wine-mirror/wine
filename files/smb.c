@@ -216,7 +216,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     if(fd<0)
         return FALSE;
 
-    r = setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof on);
+    r = setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
     if(r<0)
         goto err;
 
@@ -228,11 +228,11 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     sin.sin_family = AF_INET;
     sin.sin_port    = htons(137);
 
-    len = NB_NameReq(host,buffer,sizeof buffer);
+    len = NB_NameReq(host,buffer,sizeof(buffer));
     if(len<=0)
         goto err;
 
-    r = sendto(fd, buffer, len, 0, (struct sockaddr*)&sin, sizeof sin);
+    r = sendto(fd, buffer, len, 0, (struct sockaddr*)&sin, sizeof(sin));
     if(r<0)
     {
         FIXME("Error sending packet\n");
@@ -253,7 +253,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
     TRACE("Got response!\n");
 
     fromsize = sizeof (fromaddr);
-    r = recvfrom(fd, buffer, sizeof buffer, 0, (struct sockaddr*)&fromaddr, &fromsize);
+    r = recvfrom(fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&fromaddr, &fromsize);
     if(r<0)
         goto err;
 
@@ -271,7 +271,7 @@ static BOOL NB_Lookup(LPCSTR host, struct sockaddr_in *addr)
 
     TRACE("packet is OK\n");
 
-    memcpy(&addr->sin_addr, &buffer[58], sizeof addr->sin_addr);
+    memcpy(&addr->sin_addr, &buffer[58], sizeof(addr->sin_addr));
 
     close(fd);
     return TRUE;
@@ -525,7 +525,7 @@ static BOOL SMB_NegotiateProtocol(int fd, USHORT *dialect)
 
     TRACE("\n");
 
-    memset(buf,0,sizeof buf);
+    memset(buf,0,sizeof(buf));
 
     tx.buffer = buf;
     tx.len = SMB_Header(tx.buffer, SMB_COM_NEGOTIATE, 0, 0);
@@ -578,7 +578,7 @@ static BOOL SMB_SessionSetup(int fd, USHORT *userid)
     int pcount,bcount;
     struct NB_Buffer rx, tx;
 
-    memset(buf,0,sizeof buf);
+    memset(buf,0,sizeof(buf));
     tx.buffer = buf;
 
     tx.len = SMB_Header(tx.buffer, SMB_COM_SESSION_SETUP_ANDX, 0, 0);
@@ -675,7 +675,7 @@ static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *t
 
     TRACE("%s\n",share_name);
 
-    memset(buf,0,sizeof buf);
+    memset(buf,0,sizeof(buf));
     tx.buffer = buf;
 
     tx.len = SMB_Header(tx.buffer, SMB_COM_TREE_CONNECT, 0, user_id);
@@ -697,7 +697,7 @@ static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *t
     tx.buffer[tx.len++] = 0; /* null terminated password */
 
     slen = strlen(share_name);
-    if(slen<(sizeof buf-tx.len))
+    if(slen<(sizeof(buf)-tx.len))
         strcpy(&tx.buffer[tx.len], share_name);
     else
         return FALSE;
@@ -739,7 +739,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
 
     TRACE("%s\n",filename);
 
-    memset(buffer,0,sizeof buffer);
+    memset(buffer,0,sizeof(buffer));
 
     len = SMB_Header(buffer, SMB_COM_NT_CREATE_ANDX, tree_id, user_id);
 
@@ -789,7 +789,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
     /* 0x39 */
     SMB_ADDWORD(&buffer[len],slen); len += 2; /* size of buffer */
 
-    if(slen<(sizeof buffer-len))
+    if(slen<(sizeof(buffer)-len))
         strcpy(&buffer[len], filename);
     else
         return FALSE;
@@ -865,7 +865,7 @@ static BOOL SMB_OpenAndX(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 
     mode = SMB_GetMode(access,sharing);
 
-    memset(buffer,0,sizeof buffer);
+    memset(buffer,0,sizeof(buffer));
 
     len = SMB_Header(buffer, SMB_COM_OPEN_ANDX, tree_id, user_id);
 
@@ -896,7 +896,7 @@ static BOOL SMB_Open(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 
     TRACE("%s\n",filename);
 
-    memset(buf,0,sizeof buf);
+    memset(buf,0,sizeof(buf));
 
     tx.buffer = buf;
     tx.len = SMB_Header(tx.buffer, SMB_COM_OPEN, tree_id, user_id);
@@ -1167,7 +1167,7 @@ static BOOL SMB_SetupFindFirst(struct SMB_Trans2Info *send, LPSTR filename)
     int storagetype = 0;
     int len, buf_size;
 
-    memset(send,0,sizeof send);
+    memset(send,0,sizeof(send));
 
     send->setup_count = 1;
     send->setup = HeapAlloc(GetProcessHeap(),0,send->setup_count*2);
@@ -1216,7 +1216,7 @@ static SMB_DIR *SMB_Trans2FindFirst(int fd, USHORT tree_id,
     if(!SMB_SetupFindFirst(&send, filename))
         return FALSE;
 
-    memset(&recv,0,sizeof recv);
+    memset(&recv,0,sizeof(recv));
 
     ret = SMB_Transaction2(fd, tree_id, user_id, &send, &recv);
     HeapFree(GetProcessHeap(),0,send.params);
@@ -1323,7 +1323,7 @@ connect:
         unsigned char *x = (unsigned char *)&sin.sin_addr;
         TRACE("Connecting to %d.%d.%d.%d ...\n", x[0],x[1],x[2],x[3]);
     }
-    r = connect(fd, (struct sockaddr*)&sin, sizeof sin);
+    r = connect(fd, (struct sockaddr*)&sin, sizeof(sin));
 
     if(!NB_SessionReq(fd, "*SMBSERVER", "WINE"))
     {
@@ -1596,7 +1596,7 @@ BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAW *data )
     if(dir->current >= dir->num_entries)
         return FALSE;
 
-    memset(data, 0, sizeof *data);
+    memset(data, 0, sizeof(*data));
 
     ent = dir->entries[dir->current];
     len = SMB_GETDWORD(&ent[0]);
@@ -1612,13 +1612,13 @@ BOOL WINAPI SMB_FindNext(SMB_DIR *dir, WIN32_FIND_DATAW *data )
 
     /* copy the long filename */
     fnlen = SMB_GETDWORD(&ent[0x3c]);
-    if ( fnlen > (sizeof data->cFileName/sizeof(WCHAR)) )
+    if ( fnlen > (sizeof(data->cFileName)/sizeof(WCHAR)) )
         return FALSE;
     MultiByteToWideChar( CP_ACP, 0, &ent[0x5e], fnlen, data->cFileName,
                          sizeof(data->cFileName)/sizeof(WCHAR) );
 
     /* copy the short filename */
-    if ( ent[0x44] > (sizeof data->cAlternateFileName/sizeof(WCHAR)) )
+    if ( ent[0x44] > (sizeof(data->cAlternateFileName)/sizeof(WCHAR)) )
         return FALSE;
     MultiByteToWideChar( CP_ACP, 0, &ent[0x5e + len], ent[0x44], data->cAlternateFileName,
                          sizeof(data->cAlternateFileName)/sizeof(WCHAR) );
@@ -1632,7 +1632,7 @@ BOOL WINAPI SMB_CloseDir(SMB_DIR *dir)
 {
     HeapFree(GetProcessHeap(),0,dir->buffer);
     HeapFree(GetProcessHeap(),0,dir->entries);
-    memset(dir,0,sizeof *dir);
+    memset(dir,0,sizeof(*dir));
     HeapFree(GetProcessHeap(),0,dir);
     return TRUE;
 }

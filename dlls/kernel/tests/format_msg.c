@@ -43,176 +43,176 @@ void test_message_from_string(void)
 
     /* the basics */
     r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "test", 0,
-        0, out, sizeof out/sizeof (CHAR),NULL);
+        0, out, sizeof(out)/sizeof(CHAR),NULL);
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* using the format feature */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!s!", 0,
-        0, out, sizeof out/sizeof (CHAR), "test");
+        0, out, sizeof(out)/sizeof(CHAR), "test");
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* no format */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1", 0,
-        0, out, sizeof out/sizeof (CHAR), "test");
+        0, out, sizeof(out)/sizeof(CHAR), "test");
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* two pieces */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1%2", 0,
-        0, out, sizeof out/sizeof (CHAR), "te","st");
+        0, out, sizeof(out)/sizeof(CHAR), "te","st");
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* three pieces */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1%3%2%1", 0,
-        0, out, sizeof out/sizeof (CHAR), "t","s","e");
+        0, out, sizeof(out)/sizeof(CHAR), "t","s","e");
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* s doesn't seem to work in format strings */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%!s!", 0,
-        0, out, sizeof out/sizeof (CHAR), "test");
+        0, out, sizeof(out)/sizeof(CHAR), "test");
     ok(!strcmp("!s!", out),"failed out=[%s]",out);
     ok(r==3,"failed: r=%ld",r);
 
     /* S is unicode */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!S!", 0,
-        0, out, sizeof out/sizeof (CHAR), szwTest);
+        0, out, sizeof(out)/sizeof(CHAR), szwTest);
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* as characters */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!c!%2!c!%3!c!%1!c!", 0,
-        0, out, sizeof out/sizeof (CHAR), 't','e','s');
+        0, out, sizeof(out)/sizeof(CHAR), 't','e','s');
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* some numbers */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!d!%2!d!%3!d!", 0,
-        0, out, sizeof out/sizeof (CHAR), 1,2,3);
+        0, out, sizeof(out)/sizeof(CHAR), 1,2,3);
     ok(!strcmp("123", out),"failed out=[%s]",out);
     ok(r==3,"failed: r=%ld",r);
 
     /* a single digit with some spacing */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4d!", 0,
-        0, out, sizeof out/sizeof (CHAR), 1);
+        0, out, sizeof(out)/sizeof(CHAR), 1);
     ok(!strcmp("   1", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* a single digit, left justified */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!-4d!", 0,
-        0, out, sizeof out/sizeof (CHAR), 1);
+        0, out, sizeof(out)/sizeof(CHAR), 1);
     ok(!strcmp("1   ", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* two digit decimal number */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4d!", 0,
-        0, out, sizeof out/sizeof (CHAR), 11);
+        0, out, sizeof(out)/sizeof(CHAR), 11);
     ok(!strcmp("  11", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* a hex number */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4x!", 0,
-        0, out, sizeof out/sizeof (CHAR), 11);
+        0, out, sizeof(out)/sizeof(CHAR), 11);
     ok(!strcmp("   b", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* a hex number, upper case */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4X!", 0,
-        0, out, sizeof out/sizeof (CHAR), 11);
+        0, out, sizeof(out)/sizeof(CHAR), 11);
     ok(!strcmp("   B", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* a hex number, upper case, left justified */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!-4X!", 0,
-        0, out, sizeof out/sizeof (CHAR), 11);
+        0, out, sizeof(out)/sizeof(CHAR), 11);
     ok(!strcmp("B   ", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* a long hex number, upper case */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!4X!", 0,
-        0, out, sizeof out/sizeof (CHAR), 0x1ab);
+        0, out, sizeof(out)/sizeof(CHAR), 0x1ab);
     ok(!strcmp(" 1AB", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* two percent... */
     r = doit(FORMAT_MESSAGE_FROM_STRING, " %%%% ", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp(" %% ", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* periods are special cases */
     r = doit(FORMAT_MESSAGE_FROM_STRING, " %.%. %1!d!", 0,
-        0, out, sizeof out/sizeof (CHAR), 0x1ab);
+        0, out, sizeof(out)/sizeof(CHAR), 0x1ab);
     ok(!strcmp(" .. 427", out),"failed out=[%s]",out);
     ok(r==7,"failed: r=%ld",r);
 
     /* %0 ends the line */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "test%0test", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("test", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* %! prints an exclaimation */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "yah%!%0   ", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("yah!", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* %space */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "% %   ", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("    ", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "hi\n", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("hi\r\n", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "hi\r\n", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("hi\r\n", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "\r", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("\r\n", out),"failed out=[%s]",out);
     ok(r==2,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "\r\r\n", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("\r\n\r\n", out),"failed out=[%s]",out);
     ok(r==4,"failed: r=%ld",r);
 
     /* change of pace... test the low byte of dwflags */
     /* line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\n", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("hi ", out) || !strcmp("hi\r\n", out),"failed out=[%s]",out);
     ok(r==3 || r==4,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "hi\r\n", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("hi ", out),"failed out=[%s]",out);
     ok(r==3,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "\r", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp(" ", out),"failed out=[%s]",out);
     ok(r==1,"failed: r=%ld",r);
 
     /* carriage return line feed */
     r = doit(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, "\r\r\n", 0,
-        0, out, sizeof out/sizeof (CHAR));
+        0, out, sizeof(out)/sizeof(CHAR));
     ok(!strcmp("  ", out),"failed out=[%s]",out);
     ok(r==2,"failed: r=%ld",r);
 }

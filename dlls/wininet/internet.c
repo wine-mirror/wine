@@ -1569,7 +1569,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
 
         proxlen = MultiByteToWideChar( CP_ACP, 0, pi->lpszProxy, -1, NULL, 0);
         prbylen= MultiByteToWideChar( CP_ACP, 0, pi->lpszProxyBypass, -1, NULL, 0);
-        wlen = sizeof *piw + proxlen + prbylen;
+        wlen = sizeof(*piw) + proxlen + prbylen;
         wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen );
         piw = (LPINTERNET_PROXY_INFOW) wbuffer;
         piw->dwAccessType = pi->dwAccessType;

@@ -127,7 +127,7 @@ void ClassTest(HINSTANCE hInstance, BOOL global)
     }
 
     /* check GetClassName */
-    i = GetClassNameW(hTestWnd, str, sizeof str);
+    i = GetClassNameW(hTestWnd, str, sizeof(str));
     ok(i == lstrlenW(className),
         "GetClassName returned incorrect length");
     ok(!lstrcmpW(className,str),

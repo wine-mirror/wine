@@ -2933,7 +2933,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     ofs = info_size*count; 
     for ( i=0; i<count; i++)
     {
-        DWORD vallen = sizeof portname - 1;
+        DWORD vallen = sizeof(portname) - 1;
 
         /* get the serial port values, then the printer values */
         if ( i < serial_count )

@@ -329,8 +329,8 @@ EnumDisplayModesCallbackThunk(LPDDSURFACEDESC2 pDDSD2, LPVOID context)
     DDSURFACEDESC DDSD;
     struct displaymodescallback_context *cbcontext = context;
 
-    memcpy(&DDSD,pDDSD2,sizeof DDSD);
-    DDSD.dwSize = sizeof DDSD;
+    memcpy(&DDSD,pDDSD2,sizeof(DDSD));
+    DDSD.dwSize = sizeof(DDSD);
 
     return cbcontext->func(&DDSD, cbcontext->context);
 }

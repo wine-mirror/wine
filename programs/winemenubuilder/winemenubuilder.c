@@ -683,7 +683,7 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *ofs, DWORD *loc )
     if( !GetFullPathNameW( linkfile, MAX_PATH, filename, NULL ))
         return FALSE;
 
-    for( i=0; i<sizeof locations/sizeof locations[0]; i++ )
+    for( i=0; i<sizeof(locations)/sizeof(locations[0]); i++ )
     {
         if (!SHGetSpecialFolderPathW( 0, buffer, locations[i], FALSE ))
             continue;
@@ -743,24 +743,24 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
     }
 
     szWorkDir[0]=0;
-    IShellLinkA_GetWorkingDirectory( sl, szWorkDir, sizeof szWorkDir);
+    IShellLinkA_GetWorkingDirectory( sl, szWorkDir, sizeof(szWorkDir));
     WINE_TRACE("workdir    : %s\n", szWorkDir);
 
     szDescription[0] = 0;
-    IShellLinkA_GetDescription( sl, szDescription, sizeof szDescription);
+    IShellLinkA_GetDescription( sl, szDescription, sizeof(szDescription));
     WINE_TRACE("description: %s\n", szDescription);
 
     szPath[0] = 0;
-    IShellLinkA_GetPath( sl, szPath, sizeof szPath, NULL, SLGP_RAWPATH );
+    IShellLinkA_GetPath( sl, szPath, sizeof(szPath), NULL, SLGP_RAWPATH );
     WINE_TRACE("path       : %s\n", szPath);
 
     szArgs[0] = 0;
-    IShellLinkA_GetArguments( sl, szArgs, sizeof szArgs );
+    IShellLinkA_GetArguments( sl, szArgs, sizeof(szArgs) );
     WINE_TRACE("args       : %s\n", szArgs);
 
     szIconPath[0] = 0;
     IShellLinkA_GetIconLocation( sl, szIconPath,
-                        sizeof szIconPath, &iIconId );
+                        sizeof(szIconPath), &iIconId );
     WINE_TRACE("icon file  : %s\n", szIconPath );
 
     if( !szPath[0] )
@@ -963,7 +963,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         {
             WCHAR link[MAX_PATH];
 
-            MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof link );
+            MultiByteToWideChar( CP_ACP, 0, token, -1, link, sizeof(link) );
             if( !Process_Link( link, bAgain ) )
             {
 	        WINE_ERR( "failed to build menu item for %s\n",token);

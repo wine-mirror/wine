@@ -624,11 +624,11 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,
           lpServiceArgVectors);
 
-    size = sizeof str;
+    size = sizeof(str);
     r = RegQueryValueExW(hService, _ImagePathW, NULL, &type, (LPVOID)str, &size);
     if (r!=ERROR_SUCCESS)
         return FALSE;
-    ExpandEnvironmentStringsW(str,path,sizeof path);
+    ExpandEnvironmentStringsW(str,path,sizeof(path));
 
     TRACE("Starting service %s\n", debugstr_w(path) );
 
@@ -718,7 +718,7 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
     FIXME("(%p,%p) partial\n",hService,lpservicestatus);
 
     /* read the service type from the registry */
-    size = sizeof val;
+    size = sizeof(val);
     r = RegQueryValueExA(hService, "Type", NULL, &type, (LPBYTE)&val, &size);
     if(type!=REG_DWORD)
     {
