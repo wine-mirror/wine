@@ -246,7 +246,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
         /* NOTE: for 16-bit tasks, the instance handles are updated later on
            in NE_InitProcess */
     }
-    if (pModule->lpDosTask) pTask->flags |= TDBF_WINOLDAP;
+    if (MZ_Current() && MZ_Current()->load_seg) pTask->flags |= TDBF_WINOLDAP;
 
     pTask->version       = pModule->expected_version;
     pTask->hModule       = pModule->self;
@@ -398,15 +398,6 @@ void TASK_KillTask( HTASK16 hTask )
     }
 
     TRACE("Killing task %04x\n", hTask );
-
-#ifdef MZ_SUPPORTED
-{
-    /* Kill DOS VM task */
-    NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
-    if ( pModule->lpDosTask )
-        MZ_KillModule( pModule->lpDosTask );
-}
-#endif
 
     /* Perform USER cleanup */
 
