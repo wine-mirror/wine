@@ -2185,9 +2185,17 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 			{
 			   if( offset > length ||
 			       pfi->cptable >= (UINT16)X11DRV_CPTABLE_COUNT ||
-			      (int)(pfi->next) != j++ ) goto fail;
+			      (int)(pfi->next) != j++ )
+			   {
+			       TRACE("error: offset=%ld length=%ld cptable=%d pfi->next=%d j=%d\n",(long)offset,(long)length,pfi->cptable,(int)pfi->next,j-1);
+			       goto fail;
+			   }
 
-			   if( pfi->df.dfPixHeight == 0 ) goto fail;
+			   if( pfi->df.dfPixHeight == 0 )
+			   {
+			       TRACE("error: dfPixHeight==0\n");
+			       goto fail;
+			   }
 
 			   pfi->df.dfFace = pfr->lfFaceName;
 			   if( pfi->fi_flags & FI_SCALABLE )
@@ -2225,13 +2233,21 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 			    lpch += len;
 			    offset += len;
 			    if (offset > length)
+			    {
+			        TRACE("error: offset=%ld length=%ld\n",(long)offset,(long)length);
 			        goto fail;
+			    }
 			}
 			close( fd );
 			return TRUE;
 		    }
 		}
+	    } else {
+	        TRACE("Wrong length: %ld!=%ld\n",(long)length,(long)(i+offset));
 	    }
+	} else {
+	    TRACE("Checksum (%x vs. %x) or count (%d vs. %d) mismatch\n",
+	          u,x_checksum,i,x_count);
 	}
 fail:
 	if( fontList ) HeapFree( GetProcessHeap(), 0, fontList );
