@@ -111,6 +111,12 @@ typedef struct font_id {
 	int		italic;
 } font_id_t;
 
+/* control styles */
+typedef struct style {
+    	DWORD 			or_mask;
+	DWORD			and_mask;
+} style_t;
+
 /* resource types */
 /* These are in the same order (and ordinal) as the RT_xxx
  * defines. This is _required_.
@@ -171,8 +177,8 @@ typedef struct control {
 	int		y;
 	int		width;		/* Size */
 	int		height;
-	DWORD		style;		/* Style */
-	DWORD		exstyle;
+	style_t		*style;		/* Style */
+	style_t		*exstyle;
 	DWORD		helpid;		/* EX: */
 	int		gotstyle;	/* Used to determine whether the default */
 	int		gotexstyle;	/* styles must be set */
@@ -186,8 +192,8 @@ typedef struct dialog {
 	int		y;
 	int		width;		/* Size */
 	int		height;
-	DWORD		style;		/* Style */
-	DWORD		exstyle;
+	style_t		*style;		/* Style */
+	style_t		*exstyle;
 	int		gotstyle;	/* Used to determine whether the default */
 	int		gotexstyle;	/* styles must be set */
 	name_id_t	*menu;
@@ -205,8 +211,8 @@ typedef struct dialogex {
 	int		y;
 	int		width;		/* Size */
 	int		height;
-	DWORD		style;		/* Style */
-	DWORD		exstyle;
+	style_t		*style;		/* Style */
+	style_t		*exstyle;
 	DWORD		helpid;		/* EX: */
 	int		gotstyle;	/* Used to determine whether the default */
 	int		gotexstyle;	/* styles must be set */
@@ -529,8 +535,8 @@ typedef struct res_count {
 } res_count_t;
 
 typedef struct style_pair {
-    	int 			style;
-	int			exstyle;
+    	style_t			*style;
+	style_t			*exstyle;
 } style_pair_t;
 
 #endif

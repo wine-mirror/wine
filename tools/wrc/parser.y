@@ -2,7 +2,10 @@
 /*
  * Copyright  Martin von Loewis, 1994
  * Copyright 1998 Bertho A. Stultiens (BS)
+ *           1999 Juergen Schmied (JS)
  *
+ * 6-Nov-1999 JS        - see CHANGES
+ * 
  * 29-Dec-1998 AdH	- Grammar and function extensions.
  *			     grammar: TOOLBAR resources, Named ICONs in 
  *				DIALOGS
@@ -109,7 +112,6 @@
 #pragma warn -sig
 #endif
 
-DWORD andmask;		/* Used to parse 'NOT NUMBER' expressions */
 int indialog = 0;	/* Signal flex that we're parsing a dialog */
 int want_rscname = 0;	/* Set when a resource's name is required */
 stringtable_t *tagstt;	/* Stringtable tag.
@@ -157,10 +159,10 @@ dialogex_t *dialogex_menu(name_id_t *m, dialogex_t *dlg);
 dialogex_t *dialogex_class(name_id_t *n, dialogex_t *dlg);
 dialogex_t *dialogex_font(font_id_t *f, dialogex_t *dlg);
 dialogex_t *dialogex_caption(string_t *s, dialogex_t *dlg);
-dialogex_t *dialogex_exstyle(int st, dialogex_t *dlg);
-dialogex_t *dialogex_style(int st, dialogex_t *dlg);
+dialogex_t *dialogex_exstyle(style_t *st, dialogex_t *dlg);
+dialogex_t *dialogex_style(style_t *st, dialogex_t *dlg);
 name_id_t *convert_ctlclass(name_id_t *cls);
-control_t *ins_ctrl(int type, int style, control_t *ctrl, control_t *prev);
+control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev);
 dialog_t *dialog_version(version_t *v, dialog_t *dlg);
 dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg);
 dialog_t *dialog_language(language_t *l, dialog_t *dlg);
@@ -168,8 +170,8 @@ dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg);
 dialog_t *dialog_class(name_id_t *n, dialog_t *dlg);
 dialog_t *dialog_font(font_id_t *f, dialog_t *dlg);
 dialog_t *dialog_caption(string_t *s, dialog_t *dlg);
-dialog_t *dialog_exstyle(int st, dialog_t *dlg);
-dialog_t *dialog_style(int st, dialog_t *dlg);
+dialog_t *dialog_exstyle(style_t * st, dialog_t *dlg);
+dialog_t *dialog_style(style_t * st, dialog_t *dlg);
 resource_t *build_stt_resources(stringtable_t *stthead);
 stringtable_t *find_stringtable(lvc_t *lvc);
 toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec);
@@ -217,6 +219,7 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 	toolbar_item_t	*tlbarItems;
 	dlginit_t       *dginit;
 	style_pair_t	*styles;
+	style_t		*style;
 }
 
 %token tIF tIFDEF tIFNDEF tELSE tELIF tENDIF tDEFINED tNL
@@ -263,7 +266,7 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <curg> 	cursor
 %type <dlg> 	dialog dlg_attributes
 %type <ctl> 	ctrls gen_ctrl lab_ctrl ctrl_desc iconinfo
-%type <iptr>	optional_style helpid
+%type <iptr>	helpid
 %type <dlgex> 	dialogex dlgex_attribs
 %type <ctl>	exctrls gen_exctrl lab_exctrl exctrl_desc
 %type <rdt> 	rcdata
@@ -288,7 +291,7 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <lan>	opt_language
 %type <chars>	opt_characts
 %type <ver>	opt_version
-%type <num>	expr xpr dummy
+%type <num>	expr xpr
 %type <iptr>	e_expr
 %type <iptr>	pp_expr pp_constant
 %type <tlbar>	toolbar
@@ -296,6 +299,8 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <dginit>  dlginit
 %type <styles>  optional_style_pair 
 %type <num>	any_num
+%type <style>   optional_style
+%type <style>   style
 
 %%
 
@@ -673,13 +678,17 @@ dialog	: DIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
 		$$ = $10;
 		if(!$$->gotstyle)
 		{
-			$$->style = WS_POPUP;
+			$$->style->or_mask = WS_POPUP;
 			$$->gotstyle = TRUE;
 		}
 		if($$->title)
-			$$->style |= WS_CAPTION;
+			$$->style->or_mask |= WS_CAPTION;
 		if($$->font)
-			$$->style |= DS_SETFONT;
+			$$->style->or_mask |= DS_SETFONT;
+
+		$$->style->or_mask &= ~($$->style->and_mask);
+		$$->style->and_mask = 0;
+
 		indialog = FALSE;
 		if(!$$->lvc.language)
 			$$->lvc.language = dup_language(currentlanguage);
@@ -688,8 +697,8 @@ dialog	: DIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
 
 dlg_attributes
 	: /* Empty */			{ $$=new_dialog(); }
-	| dlg_attributes STYLE expr	{ $$=dialog_style($3,$1); }
-	| dlg_attributes EXSTYLE expr	{ $$=dialog_exstyle($3,$1); }
+	| dlg_attributes STYLE style	{ $$=dialog_style($3,$1); }
+	| dlg_attributes EXSTYLE style	{ $$=dialog_exstyle($3,$1); }
 	| dlg_attributes CAPTION tSTRING { $$=dialog_caption($3,$1); }
 	| dlg_attributes opt_font	{ $$=dialog_font($2,$1); }
 	| dlg_attributes CLASS nameid_s	{ $$=dialog_class($3,$1); }
@@ -741,9 +750,8 @@ lab_ctrl
 		$$->height = $11;
 		if($12)
 		{
-			$$->style = *($12);
+			$$->style = $12;
 			$$->gotstyle = TRUE;
-			free($12);
 		}
 		}
 	;
@@ -758,9 +766,8 @@ ctrl_desc
 		$$->height = $9;
 		if($10)
 		{
-			$$->style = *($10);
+			$$->style = $10;
 			$$->gotstyle = TRUE;
-			free($10);
 		}
 		}
 	;
@@ -773,14 +780,14 @@ iconinfo: /* Empty */
 		$$->width = $2;
 		$$->height = $4;
 		}
-	| ',' expr ',' expr ',' expr {
+	| ',' expr ',' expr ',' style {
 		$$ = new_control();
 		$$->width = $2;
 		$$->height = $4;
 		$$->style = $6;
 		$$->gotstyle = TRUE;
 		}
-	| ',' expr ',' expr ',' expr ',' expr {
+	| ',' expr ',' expr ',' style ',' style {
 		$$ = new_control();
 		$$->width = $2;
 		$$->height = $4;
@@ -791,7 +798,7 @@ iconinfo: /* Empty */
 		}
 	;
 
-gen_ctrl: nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr ',' expr {
+gen_ctrl: nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr ',' style {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -805,7 +812,7 @@ gen_ctrl: nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ','
 		$$->exstyle = $17;
 		$$->gotexstyle = TRUE;
 		}
-	| nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr {
+	| nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -823,16 +830,24 @@ opt_font
 	: FONT expr ',' tSTRING	{ $$ = new_font_id($2, $4, 0, 0); }
 	;
 
+/* ------------------------------ style flags ------------------------------ */
 optional_style		/* Abbused once to get optional ExStyle */
 	: /* Empty */	{ $$ = NULL; }
-	| ',' expr	{ $$ = new_int($2); }
+	| ',' style	{ $$ = $2; }
 	;
 
 optional_style_pair
-	: /* Enpty */		{ $$ = NULL; }
-	| ',' expr		{ $$ = new_style_pair($2, 0); }
-	| ',' expr ',' expr 	{ $$ = new_style_pair($2, $4); }
+	: /* Empty */		{ $$ = NULL; }
+	| ',' style		{ $$ = new_style_pair($2, 0); }
+	| ',' style ',' style 	{ $$ = new_style_pair($2, $4); }
 	;
+
+style
+	: style '|' style	{ $$ = new_style($1->or_mask | $3->or_mask, $1->and_mask | $3->and_mask); free($1); free($3);}
+	| '(' style ')'		{ $$ = $2; }
+        | any_num       	{ $$ = new_style($1, 0); }
+        | NOT any_num		{ $$ = new_style(0, $2); }
+        ;   
 
 ctlclass
 	: expr	{
@@ -871,15 +886,21 @@ dialogex: DIALOGEX loadmemopts expr ',' expr ',' expr ',' expr helpid dlgex_attr
 		}
 		$11->controls = get_control_head($13);
 		$$ = $11;
+
+		assert($$->style != NULL);
 		if(!$$->gotstyle)
 		{
-			$$->style = WS_POPUP;
+			$$->style->or_mask = WS_POPUP;
 			$$->gotstyle = TRUE;
 		}
 		if($$->title)
-			$$->style |= WS_CAPTION;
+			$$->style->or_mask |= WS_CAPTION;
 		if($$->font)
-			$$->style |= DS_SETFONT;
+			$$->style->or_mask |= DS_SETFONT;
+
+		$$->style->or_mask &= ~($$->style->and_mask);
+		$$->style->and_mask = 0;
+
 		indialog = FALSE;
 		if(!$$->lvc.language)
 			$$->lvc.language = dup_language(currentlanguage);
@@ -888,8 +909,8 @@ dialogex: DIALOGEX loadmemopts expr ',' expr ',' expr ',' expr helpid dlgex_attr
 
 dlgex_attribs
 	: /* Empty */			{ $$=new_dialogex(); }
-	| dlgex_attribs STYLE expr	{ $$=dialogex_style($3,$1); }
-	| dlgex_attribs EXSTYLE expr	{ $$=dialogex_exstyle($3,$1); }
+	| dlgex_attribs STYLE style	{ $$=dialogex_style($3,$1); }
+	| dlgex_attribs EXSTYLE style	{ $$=dialogex_exstyle($3,$1); }
 	| dlgex_attribs CAPTION tSTRING { $$=dialogex_caption($3,$1); }
 	| dlgex_attribs opt_font	{ $$=dialogex_font($2,$1); }
 	| dlgex_attribs opt_exfont	{ $$=dialogex_font($2,$1); }
@@ -930,8 +951,8 @@ exctrls	: /* Empty */				{ $$ = NULL; }
 	;
 
 gen_exctrl
-	: nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ','
-	  expr ',' e_expr helpid opt_data {
+	: nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ','
+	  expr ',' style helpid opt_data {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -944,9 +965,8 @@ gen_exctrl
 		$$->height = $15;
 		if($17)
 		{
-			$$->exstyle = *($17);
+			$$->exstyle = $17;
 			$$->gotexstyle = TRUE;
-			free($17);
 		}
 		if($18)
 		{
@@ -956,7 +976,7 @@ gen_exctrl
 		}
 		$$->extra = $19;
 		}
-	| nameid_s ',' expr ',' ctlclass ',' expr ',' expr ',' expr ',' expr ',' expr opt_data {
+	| nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr opt_data {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -1601,10 +1621,7 @@ raw_elements
 e_expr	: /* Empty */	{ $$ = 0; }
 	| expr		{ $$ = new_int($1); }
 	;
-expr	: dummy xpr	{ $$ = ($2) & andmask; }
-	;
-
-dummy	: /* Empty */	{ $$ = 0; andmask = -1; }
+expr	: xpr	{ $$ = ($1) }
 	;
 
 xpr	: xpr '+' xpr	{ $$ = ($1) + ($3); }
@@ -1618,7 +1635,7 @@ xpr	: xpr '+' xpr	{ $$ = ($1) + ($3); }
 /*	| '+' xpr	{ $$ = $2; } */
 	| '(' xpr ')'	{ $$ = $2; }
 	| any_num	{ $$ = $1; want_rscname = 0; }
-	| NOT any_num	{ $$ = 0; andmask &= ~($2); }
+	| NOT any_num	{ $$ = ~($2); }
 	;
 
 any_num	: NUMBER	{ $$ = $1; }
@@ -1627,31 +1644,51 @@ any_num	: NUMBER	{ $$ = $1; }
 
 %%
 /* Dialog specific functions */
-dialog_t *dialog_style(int st, dialog_t *dlg)
+dialog_t *dialog_style(style_t * st, dialog_t *dlg)
 {
-	DWORD s = 0;
 	assert(dlg != NULL);
+	if(dlg->style == NULL)
+	{
+		dlg->style = new_style(0,0);
+	}
+
 	if(dlg->gotstyle)
 	{
 		yywarning("Style already defined, or-ing together");
-		s = dlg->style;
 	}
-	dlg->style = st | s;
+	else
+	{
+		dlg->style->or_mask = 0;
+		dlg->style->and_mask = 0;
+	}
+	dlg->style->or_mask |= st->or_mask;
+	dlg->style->and_mask |= st->and_mask;
 	dlg->gotstyle = TRUE;
+	free(st);
 	return dlg;
 }
 
-dialog_t *dialog_exstyle(int st, dialog_t *dlg)
+dialog_t *dialog_exstyle(style_t *st, dialog_t *dlg)
 {
-	DWORD s = 0;
 	assert(dlg != NULL);
+	if(dlg->exstyle == NULL)
+	{
+		dlg->exstyle = new_style(0,0);
+	}
+
 	if(dlg->gotexstyle)
 	{
 		yywarning("ExStyle already defined, or-ing together");
-		s = dlg->style;
 	}
-	dlg->exstyle = st | s;
+	else
+	{
+		dlg->exstyle->or_mask = 0;
+		dlg->exstyle->and_mask = 0;
+	}
+	dlg->exstyle->or_mask |= st->or_mask;
+	dlg->exstyle->and_mask |= st->and_mask;
 	dlg->gotexstyle = TRUE;
+	free(st);
 	return dlg;
 }
 
@@ -1719,12 +1756,17 @@ dialog_t *dialog_version(version_t *v, dialog_t *dlg)
 }
 
 /* Controls specific functions */
-control_t *ins_ctrl(int type, int style, control_t *ctrl, control_t *prev)
+control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev)
 {
+	/* Hm... this seems to be jammed in at all time... */
+	int defaultstyle = WS_CHILD | WS_VISIBLE;
+
 	assert(ctrl != NULL);
 	ctrl->prev = prev;
+
 	if(prev)
 		prev->next = ctrl;
+
 	if(type != -1)
 	{
 		ctrl->ctlclass = new_name_id();
@@ -1732,28 +1774,24 @@ control_t *ins_ctrl(int type, int style, control_t *ctrl, control_t *prev)
 		ctrl->ctlclass->name.i_name = type;
 	}
 
-	/* Hm... this seems to be jammed in at all time... */
-	ctrl->style |= WS_CHILD | WS_VISIBLE;
 	switch(type)
 	{
 	case CT_BUTTON:
-		ctrl->style |= style;
-		if(style != BS_GROUPBOX && style != BS_RADIOBUTTON)
-			ctrl->style |= WS_TABSTOP;
+		if(special_style != BS_GROUPBOX && special_style != BS_RADIOBUTTON)
+			defaultstyle |= WS_TABSTOP;
 		break;
 	case CT_EDIT:
-		ctrl->style |= WS_TABSTOP | WS_BORDER;
+		defaultstyle |= WS_TABSTOP | WS_BORDER;
 		break;
 	case CT_LISTBOX:
-		ctrl->style |= LBS_NOTIFY | WS_BORDER;
+		defaultstyle |= LBS_NOTIFY | WS_BORDER;
 		break;
 	case CT_COMBOBOX:
-		ctrl->style |= CBS_SIMPLE;
+		defaultstyle |= CBS_SIMPLE;
 		break;
 	case CT_STATIC:
-		ctrl->style |= style;
-		if(style == SS_CENTER || style == SS_LEFT || style == SS_RIGHT)
-			ctrl->style |= WS_GROUP;
+		if(special_style == SS_CENTER || special_style == SS_LEFT || special_style == SS_RIGHT)
+			defaultstyle |= WS_GROUP;
 		break;
 	}
 
@@ -1762,19 +1800,19 @@ control_t *ins_ctrl(int type, int style, control_t *ctrl, control_t *prev)
 		switch(type)
 		{
 		case CT_EDIT:
-			ctrl->style |= ES_LEFT;
+			defaultstyle |= ES_LEFT;
 			break;
 		case CT_LISTBOX:
-			ctrl->style |= LBS_NOTIFY;
+			defaultstyle |= LBS_NOTIFY;
 			break;
 		case CT_COMBOBOX:
-			ctrl->style |= CBS_SIMPLE | WS_TABSTOP;
+			defaultstyle |= CBS_SIMPLE | WS_TABSTOP;
 			break;
 		case CT_SCROLLBAR:
-			ctrl->style |= SBS_HORZ;
+			defaultstyle |= SBS_HORZ;
 			break;
 		case CT_BUTTON:
-			switch(style)
+			switch(special_style)
 			{
 			case BS_CHECKBOX:
 			case BS_DEFPUSHBUTTON:
@@ -1785,27 +1823,27 @@ control_t *ins_ctrl(int type, int style, control_t *ctrl, control_t *prev)
 			case BS_AUTO3STATE:
 			case BS_3STATE:
 			case BS_AUTOCHECKBOX:
-				ctrl->style |= WS_TABSTOP;
+				defaultstyle |= WS_TABSTOP;
 				break;
 			default:
-				yywarning("Unknown default button control-style 0x%08x", style);
+				yywarning("Unknown default button control-style 0x%08x", special_style);
 			case BS_RADIOBUTTON:
 				break;
 			}
 			break;
 
 		case CT_STATIC:
-			switch(style)
+			switch(special_style)
 			{
 			case SS_LEFT:
 			case SS_RIGHT:
 			case SS_CENTER:
-				ctrl->style |= WS_GROUP;
+				defaultstyle |= WS_GROUP;
 				break;
 			case SS_ICON:	/* Special case */
 				break;
 			default:
-				yywarning("Unknown default static control-style 0x%08x", style);
+				yywarning("Unknown default static control-style 0x%08x", special_style);
 				break;
 			}
 			break;
@@ -1818,11 +1856,27 @@ control_t *ins_ctrl(int type, int style, control_t *ctrl, control_t *prev)
 	}
 
 	/* The SS_ICON flag is always forced in for icon controls */
-	if(type == CT_STATIC && style == SS_ICON)
-		ctrl->style |= SS_ICON;
+	if(type == CT_STATIC && special_style == SS_ICON)
+		defaultstyle |= SS_ICON;
 
+	if (!ctrl->gotstyle)
+		ctrl->style = new_style(0,0);
+
+	/* combine all styles */
+	ctrl->style->or_mask = ctrl->style->or_mask | defaultstyle | special_style;
 	ctrl->gotstyle = TRUE;
 byebye:
+	/* combine with NOT mask */
+	if (ctrl->gotstyle)
+	{
+		ctrl->style->or_mask &= ~(ctrl->style->and_mask);
+		ctrl->style->and_mask = 0;
+	}
+	if (ctrl->gotexstyle)
+	{
+		ctrl->exstyle->or_mask &= ~(ctrl->exstyle->and_mask);
+		ctrl->exstyle->and_mask = 0;
+	}
 	return ctrl;
 }
 
@@ -1864,31 +1918,51 @@ name_id_t *convert_ctlclass(name_id_t *cls)
 }
 
 /* DialogEx specific functions */
-dialogex_t *dialogex_style(int st, dialogex_t *dlg)
+dialogex_t *dialogex_style(style_t * st, dialogex_t *dlg)
 {
-	DWORD s = 0;
 	assert(dlg != NULL);
+	if(dlg->style == NULL)
+	{
+		dlg->style = new_style(0,0);
+	}
+
 	if(dlg->gotstyle)
 	{
 		yywarning("Style already defined, or-ing together");
-		s = dlg->style;
 	}
-	dlg->style = st | s;
+	else
+	{
+		dlg->style->or_mask = 0;
+		dlg->style->and_mask = 0;
+	}
+	dlg->style->or_mask |= st->or_mask;
+	dlg->style->and_mask |= st->and_mask;
 	dlg->gotstyle = TRUE;
+	free(st);
 	return dlg;
 }
 
-dialogex_t *dialogex_exstyle(int st, dialogex_t *dlg)
+dialogex_t *dialogex_exstyle(style_t * st, dialogex_t *dlg)
 {
-	DWORD s = 0;
 	assert(dlg != NULL);
+	if(dlg->exstyle == NULL)
+	{
+		dlg->exstyle = new_style(0,0);
+	}
+
 	if(dlg->gotexstyle)
 	{
 		yywarning("ExStyle already defined, or-ing together");
-		s = dlg->exstyle;
 	}
-	dlg->exstyle = st | s;
+	else
+	{
+		dlg->exstyle->or_mask = 0;
+		dlg->exstyle->and_mask = 0;
+	}
+	dlg->exstyle->or_mask |= st->or_mask;
+	dlg->exstyle->and_mask |= st->and_mask;
 	dlg->gotexstyle = TRUE;
+	free(st);
 	return dlg;
 }
 

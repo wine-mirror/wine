@@ -279,10 +279,18 @@ dlginit_t *new_dlginit(raw_data_t *rd, int *memopt)
 	return di;
 }
 
-style_pair_t *new_style_pair(int style, int exstyle)
+style_pair_t *new_style_pair(style_t *style, style_t *exstyle)
 {
 	style_pair_t *sp = (style_pair_t *)xmalloc(sizeof(style_pair_t));
 	sp->style = style;
 	sp->exstyle = exstyle;
 	return sp;
+}
+
+style_t *new_style(DWORD or_mask, DWORD and_mask)
+{
+	style_t *st = (style_t *)xmalloc(sizeof(style_t));
+	st->or_mask = or_mask;
+	st->and_mask = and_mask;
+	return st;
 }

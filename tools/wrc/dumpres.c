@@ -7,6 +7,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -497,9 +498,17 @@ void dump_control(control_t *ctrl)
 	printf("\tId: %d\n", ctrl->id);
 	printf("\tx, y, w, h: %d, %d, %d, %d\n", ctrl->x, ctrl->y, ctrl->width, ctrl->height);
 	if(ctrl->gotstyle)
-		printf("\tStyle: %08lx\n", ctrl->style);
+	{
+		assert(ctrl->style != NULL);
+		assert(ctrl->style->and_mask == 0);
+		printf("\tStyle: %08lx\n", ctrl->style->or_mask);
+	}
 	if(ctrl->gotexstyle)
-		printf("\tExStyle: %08lx\n", ctrl->exstyle);
+	{
+		assert(ctrl->exstyle != NULL);
+		assert(ctrl->exstyle->and_mask == 0);
+		printf("\tExStyle: %08lx\n", ctrl->exstyle->or_mask);
+	}
 	if(ctrl->gothelpid)
 		printf("\tHelpid: %ld\n", ctrl->helpid);
 	if(ctrl->extra)
@@ -529,9 +538,18 @@ void dump_dialog(dialog_t *dlg)
 	dump_lvc(&(dlg->lvc));
 	printf("x, y, w, h: %d, %d, %d, %d\n", dlg->x, dlg->y, dlg->width, dlg->height);
 	if(dlg->gotstyle)
-		printf("Style: %08lx\n", dlg->style);
+	{
+		assert(dlg->style != NULL);
+		assert(dlg->style->and_mask == 0);
+		printf("Style: %08lx\n", dlg->style->or_mask);
+		
+	}
 	if(dlg->gotexstyle)
-		printf("ExStyle: %08lx\n", dlg->exstyle);
+	{
+		assert(dlg->exstyle != NULL);
+		assert(dlg->exstyle->and_mask == 0);
+		printf("ExStyle: %08lx\n", dlg->exstyle->or_mask);
+	}
 	printf("Menu: %s\n", get_nameid_str(dlg->menu));
 	printf("Class: %s\n", get_nameid_str(dlg->dlgclass));
 	printf("Title: "); print_string(dlg->title); printf("\n");
@@ -570,9 +588,17 @@ void dump_dialogex(dialogex_t *dlgex)
 	dump_lvc(&(dlgex->lvc));
 	printf("x, y, w, h: %d, %d, %d, %d\n", dlgex->x, dlgex->y, dlgex->width, dlgex->height);
 	if(dlgex->gotstyle)
-		printf("Style: %08lx\n", dlgex->style);
+	{
+		assert(dlgex->style != NULL);
+		assert(dlgex->style->and_mask == 0);
+		printf("Style: %08lx\n", dlgex->style->or_mask);
+	}
 	if(dlgex->gotexstyle)
-		printf("ExStyle: %08lx\n", dlgex->exstyle);
+	{
+		assert(dlgex->exstyle != NULL);
+		assert(dlgex->exstyle->and_mask == 0);
+		printf("ExStyle: %08lx\n", dlgex->exstyle->or_mask);
+	}
 	if(dlgex->gothelpid)
 		printf("Helpid: %ld\n", dlgex->helpid);
 	printf("Menu: %s\n", get_nameid_str(dlgex->menu));

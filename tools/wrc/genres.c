@@ -415,8 +415,8 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 	{
 		restag = put_res_header(res, WRC_RT_DIALOG, NULL, name, dlg->memopt, &(dlg->lvc));
 
-		put_dword(res, dlg->style);
-		put_dword(res, dlg->gotexstyle ? dlg->exstyle : 0);
+		put_dword(res, dlg->style->or_mask);
+		put_dword(res, dlg->gotexstyle ? dlg->exstyle->or_mask : 0);
 		tag_nctrl = res->size;
 		put_word(res, 0);		/* Number of controls */
 		put_word(res, dlg->x);
@@ -445,8 +445,8 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		while(ctrl)
 		{
 			/* FIXME: what is default control style? */
-			put_dword(res, ctrl->gotstyle ? ctrl->style : WS_CHILD);
-			put_dword(res, ctrl->gotexstyle ? ctrl->exstyle : 0);
+			put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask: WS_CHILD);
+			put_dword(res, ctrl->gotexstyle ? ctrl->exstyle->or_mask : 0);
 			put_word(res, ctrl->x);
 			put_word(res, ctrl->y);
 			put_word(res, ctrl->width);
@@ -481,7 +481,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 	{
 		restag = put_res_header(res, WRC_RT_DIALOG, NULL, name, dlg->memopt, NULL);
 
-		put_dword(res, dlg->gotstyle ? dlg->style : WS_POPUPWINDOW);
+		put_dword(res, dlg->gotstyle ? dlg->style->or_mask : WS_POPUPWINDOW);
 		tag_nctrl = res->size;
 		put_byte(res, 0);		/* Number of controls */
 		put_word(res, dlg->x);
@@ -513,7 +513,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			put_word(res, ctrl->width);
 			put_word(res, ctrl->height);
 			put_word(res, ctrl->id);
-			put_dword(res, ctrl->gotstyle ? ctrl->style : WS_CHILD);
+			put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask: WS_CHILD);
 			if(ctrl->ctlclass)
 			{
 				if(ctrl->ctlclass->type == name_ord
@@ -583,8 +583,8 @@ res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 		put_word(res, 1);		/* Signature */
 		put_word(res, 0xffff);		/* DlgVer */
 		put_dword(res, dlgex->gothelpid ? dlgex->helpid : 0);
-		put_dword(res, dlgex->gotexstyle ? dlgex->exstyle : 0);
-		put_dword(res, dlgex->gotstyle ? dlgex->style : WS_POPUPWINDOW);
+		put_dword(res, dlgex->gotexstyle ? dlgex->exstyle->or_mask : 0);
+		put_dword(res, dlgex->gotstyle ? dlgex->style->or_mask : WS_POPUPWINDOW);
 		tag_nctrl = res->size;
 		put_word(res, 0);		/* Number of controls */
 		put_word(res, dlgex->x);
@@ -619,9 +619,9 @@ res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 		while(ctrl)
 		{
 			put_dword(res, ctrl->gothelpid ? ctrl->helpid : 0);
-			put_dword(res, ctrl->gotexstyle ? ctrl->exstyle : 0);
+			put_dword(res, ctrl->gotexstyle ? ctrl->exstyle->or_mask : 0);
 			/* FIXME: what is default control style? */
-			put_dword(res, ctrl->gotstyle ? ctrl->style : WS_CHILD | WS_VISIBLE);
+			put_dword(res, ctrl->gotstyle ? ctrl->style->or_mask : WS_CHILD | WS_VISIBLE);
 			put_word(res, ctrl->x);
 			put_word(res, ctrl->y);
 			put_word(res, ctrl->width);

@@ -64,7 +64,8 @@ void copy_raw_data(raw_data_t *dst, raw_data_t *src, int offs, int len);
 int *new_int(int i);
 stringtable_t *new_stringtable(lvc_t *lvc);
 toolbar_t *new_toolbar(int button_width, int button_Height, toolbar_item_t *items, int nitems);
-style_pair_t *new_style_pair(int style, int exstyle);
+style_pair_t *new_style_pair(style_t *style, style_t *exstyle);
+style_t *new_style(DWORD or_mask, DWORD and_mask);
 
 #endif
 

@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------
+Version 1.0.16 (6-Nov-1999)
+
+Juergen.Schmied@debitel.net
+- Bugfix: Styles were evaluated as expressions. The NOT in combination
+  with style flags was not overwriting the default styles like WS_VISIBLE.
+  Solved by introducing own rules for parsing styles.
+
+---------------------------------------------------------------------------
 Version 1.0.15 (13-Aug-1999)
 
 Bertho Stultiens <bertho@akhphd.au.dk>
