@@ -142,8 +142,8 @@ double      MSVCRT(atof)(const char*);
 int         MSVCRT(atoi)(const char*);
 long        MSVCRT(atol)(const char*);
 #ifdef __i386__
-LONGLONG    MSVCRT(div)(int,int);
-ULONGLONG   MSVCRT(ldiv)(long,long);
+long long    MSVCRT(div)(int,int);
+unsigned long long MSVCRT(ldiv)(long,long);
 #else
 MSVCRT(div_t) MSVCRT(div)(int,int);
 MSVCRT(ldiv_t) MSVCRT(ldiv)(long,long);
