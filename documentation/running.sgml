@@ -23,10 +23,12 @@
       <para>
         The standard way to uninstall things is for the application to provide an
         uninstaller, usually registered with the "Add/Remove Programs" control panel
-        applet. Unfortunately as of the time of writing, Wine doesn't provide an
-        Add/Remove control panel applet, so you'll have to run the uninstall manually, either
-        from the menu or from the command line.
+        applet. To access the Wine equivalent, run the "uninstaller" program:
       </para>
+
+      <screen>
+        <prompt>$</prompt> <userinput>uninstaller</userinput>
+      </screen>
 
       <para>
         Some programs install associated control panel applets, examples of this would be
