@@ -365,12 +365,12 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 	    if (dwVertexTypeDesc & D3DFVF_NORMAL) { 
 	        D3DVALUE *normal = 
 		  (D3DVALUE *) (((char *) lpStrideData->normal.lpvData) + i * lpStrideData->normal.dwStride);	    
-		DPRINTF(" / %f %f %f", normal[0], normal[1], normal[2]);
+		TRACE(" / %f %f %f", normal[0], normal[1], normal[2]);
 	    }
 	    if (dwVertexTypeDesc & D3DFVF_DIFFUSE) {
 	        DWORD *color_d = 
 		  (DWORD *) (((char *) lpStrideData->diffuse.lpvData) + i * lpStrideData->diffuse.dwStride);
-		DPRINTF(" / %02lx %02lx %02lx %02lx",
+		TRACE(" / %02lx %02lx %02lx %02lx",
 			(*color_d >> 16) & 0xFF,
 			(*color_d >>  8) & 0xFF,
 			(*color_d >>  0) & 0xFF,
@@ -379,7 +379,7 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 	    if (dwVertexTypeDesc & D3DFVF_SPECULAR) { 
 	        DWORD *color_s = 
 		  (DWORD *) (((char *) lpStrideData->specular.lpvData) + i * lpStrideData->specular.dwStride);
-		DPRINTF(" / %02lx %02lx %02lx %02lx",
+		TRACE(" / %02lx %02lx %02lx %02lx",
 			(*color_s >> 16) & 0xFF,
 			(*color_s >>  8) & 0xFF,
 			(*color_s >>  0) & 0xFF,
@@ -389,9 +389,9 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 	        D3DVALUE *tex_coord =
 		  (D3DVALUE *) (((char *) lpStrideData->textureCoords[tex_index].lpvData) + 
 				i * lpStrideData->textureCoords[tex_index].dwStride);
-		DPRINTF(" / %f %f", tex_coord[0], tex_coord[1]);
+		TRACE(" / %f %f", tex_coord[0], tex_coord[1]);
 	    }
-	    DPRINTF("\n");
+	    TRACE("\n");
 	}
     }
 
@@ -419,8 +419,8 @@ GL_IDirect3DVertexBufferImpl_7_1T_ProcessVertices(LPDIRECT3DVERTEXBUFFER7 iface,
     TRACE("(%p/%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx)\n", This, iface, dwVertexOp, dwDestIndex, dwCount, lpSrcBuffer, dwSrcIndex, lpD3DDevice, dwFlags);    
 
     if (TRACE_ON(ddraw)) {
-        DPRINTF(" - vertex operations : "); dump_D3DVOP(dwVertexOp);
-	DPRINTF(" - flags             : "); dump_D3DPV(dwFlags);
+        TRACE(" - vertex operations : "); dump_D3DVOP(dwVertexOp);
+	TRACE(" - flags             : "); dump_D3DPV(dwFlags);
     }
 
     if ((dwVertexOp & D3DVOP_TRANSFORM) == 0) return DDERR_INVALIDPARAMS;
@@ -446,9 +446,9 @@ GL_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided(LPDIRECT3DVERTEXBUFFER7 if
 
     TRACE("(%p/%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx)\n", This, iface, dwVertexOp, dwDestIndex, dwCount, lpStrideData, dwVertexTypeDesc, lpD3DDevice, dwFlags);
     if (TRACE_ON(ddraw)) {
-        DPRINTF(" - vertex operations : "); dump_D3DVOP(dwVertexOp);
-	DPRINTF(" - flags             : "); dump_D3DPV(dwFlags);
-	DPRINTF(" - vertex format     : "); dump_flexible_vertex(dwVertexTypeDesc);
+        TRACE(" - vertex operations : "); dump_D3DVOP(dwVertexOp);
+	TRACE(" - flags             : "); dump_D3DPV(dwFlags);
+	TRACE(" - vertex format     : "); dump_flexible_vertex(dwVertexTypeDesc);
     }
 
     if ((dwVertexOp & D3DVOP_TRANSFORM) == 0) return DDERR_INVALIDPARAMS;

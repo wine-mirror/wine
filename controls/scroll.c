@@ -1560,10 +1560,10 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     if (TRACE_ON(scroll))
     {
         TRACE("hwnd=%p bar=%d", hwnd, nBar);
-        if (info->fMask & SIF_PAGE) DPRINTF( " page=%d", info->nPage );
-        if (info->fMask & SIF_POS) DPRINTF( " pos=%d", info->nPos );
-        if (info->fMask & SIF_RANGE) DPRINTF( " min=%d max=%d", info->nMin, info->nMax );
-        DPRINTF("\n");
+        if (info->fMask & SIF_PAGE) TRACE( " page=%d", info->nPage );
+        if (info->fMask & SIF_POS) TRACE( " pos=%d", info->nPos );
+        if (info->fMask & SIF_RANGE) TRACE( " min=%d max=%d", info->nMin, info->nMax );
+        TRACE("\n");
     }
 
     /* Set the page size */

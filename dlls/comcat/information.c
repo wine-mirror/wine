@@ -200,10 +200,10 @@ static HRESULT WINAPI COMCAT_ICatInformation_IsClassOfCategories(
 	ULONG count;
 	TRACE("\n\tCLSID:\t%s\n\tImplemented %lu\n",debugstr_guid(rclsid),cImplemented);
 	for (count = 0; count < cImplemented; ++count)
-	    DPRINTF("\t\t%s\n",debugstr_guid(&rgcatidImpl[count]));
-	DPRINTF("\tRequired %lu\n",cRequired);
+	    TRACE("\t\t%s\n",debugstr_guid(&rgcatidImpl[count]));
+	TRACE("\tRequired %lu\n",cRequired);
 	for (count = 0; count < cRequired; ++count)
-	    DPRINTF("\t\t%s\n",debugstr_guid(&rgcatidReq[count]));
+	    TRACE("\t\t%s\n",debugstr_guid(&rgcatidReq[count]));
     }
 
     if ((cImplemented && rgcatidImpl == NULL) ||

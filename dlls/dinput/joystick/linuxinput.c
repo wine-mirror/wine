@@ -676,9 +676,9 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
   TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
   if (TRACE_ON(dinput)) {
-    DPRINTF("  - flags = ");
+    TRACE("  - flags = ");
     _dump_EnumObjects_flags(dwFlags);
-    DPRINTF("\n");
+    TRACE("\n");
   }
 
   if (xfd == -1) return DIERR_NOTACQUIRED;

@@ -934,8 +934,8 @@ static BOOL SMB_Open(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 
     TRACE("response, %d args: ",pcount);
     for(i=0; i<pcount; i++)
-        DPRINTF("%04x ",SMB_PARAM(rx.buffer,i));
-    DPRINTF("\n");
+        TRACE("%04x ",SMB_PARAM(rx.buffer,i));
+    TRACE("\n");
 
     *file_id = SMB_PARAM(rx.buffer,0);
 
@@ -996,8 +996,8 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
 
     TRACE("response, %d args: ",n);
     for(i=0; i<n; i++)
-        DPRINTF("%04x ",SMB_PARAM(rx.buffer,i));
-    DPRINTF("\n");
+        TRACE("%04x ",SMB_PARAM(rx.buffer,i));
+    TRACE("\n");
 
     n = SMB_PARAM(rx.buffer,5) - 3;
     if(n>count)

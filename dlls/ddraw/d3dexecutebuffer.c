@@ -154,22 +154,22 @@ static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
         if (TRACE_ON(ddraw)) {				\
 	    /* Wireframe */				\
 	    if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)	\
-	        DPRINTF("EDGEENABLE1 ");		\
+	        TRACE("EDGEENABLE1 ");		\
 	    if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)	\
-	        DPRINTF("EDGEENABLE2 ");		\
+	        TRACE("EDGEENABLE2 ");		\
 	    if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)	\
-	        DPRINTF("EDGEENABLE3 ");		\
+	        TRACE("EDGEENABLE3 ");		\
 							\
 	    /* Strips / Fans */				\
 	    if (ci->wFlags == D3DTRIFLAG_EVEN)		\
-	        DPRINTF("EVEN ");			\
+	        TRACE("EVEN ");			\
 	    if (ci->wFlags == D3DTRIFLAG_ODD)		\
-	        DPRINTF("ODD ");			\
+	        TRACE("ODD ");			\
 	    if (ci->wFlags == D3DTRIFLAG_START)		\
-	        DPRINTF("START ");			\
+	        TRACE("START ");			\
 	    if ((ci->wFlags > 0) && (ci->wFlags < 30))	\
-	        DPRINTF("STARTFLAT(%d) ", ci->wFlags);	\
-	    DPRINTF("\n");				\
+	        TRACE("STARTFLAT(%d) ", ci->wFlags);	\
+	    TRACE("\n");				\
         }						\
 							\
         /* Draw the triangle */				\
@@ -461,18 +461,18 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    TRACE("  Flags : ");
 		    if (TRACE_ON(ddraw)) {
 		        if (ci->dwFlags & D3DPROCESSVERTICES_COPY)
-			    DPRINTF("COPY ");
+			    TRACE("COPY ");
 			if (ci->dwFlags & D3DPROCESSVERTICES_NOCOLOR)
-			    DPRINTF("NOCOLOR ");
+			    TRACE("NOCOLOR ");
 			if (ci->dwFlags == D3DPROCESSVERTICES_OPMASK)
-			    DPRINTF("OPMASK ");
+			    TRACE("OPMASK ");
 			if (ci->dwFlags & D3DPROCESSVERTICES_TRANSFORM)
-			    DPRINTF("TRANSFORM ");
+			    TRACE("TRANSFORM ");
 			if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT)
-			    DPRINTF("TRANSFORMLIGHT ");
+			    TRACE("TRANSFORMLIGHT ");
 			if (ci->dwFlags & D3DPROCESSVERTICES_UPDATEEXTENTS)
-			    DPRINTF("UPDATEEXTENTS ");
-			DPRINTF("\n");
+			    TRACE("UPDATEEXTENTS ");
+			TRACE("\n");
 		    }
 		    
 		    /* This is where doing Direct3D on top on OpenGL is quite difficult.

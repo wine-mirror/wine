@@ -1378,9 +1378,9 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
                         ksname = XKeysymToString(keysym);
                         if (!ksname)
 			    ksname = "NoSymbol";
-                        DPRINTF( "%lX (%s) ", keysym, ksname);
+                        TRACE( "%lX (%s) ", keysym, ksname);
                     }
-                    DPRINTF(")\n");
+                    TRACE(")\n");
                 }
             }
         }

@@ -1680,8 +1680,8 @@ BOOL WINAPI SetupGetBinaryField( const INFCONTEXT *context, DWORD index, BYTE *b
     {
         TRACE( "%p/%p/%d/%d index %ld returning",
                context->Inf, context->CurrentInf, context->Section, context->Line, index );
-        for (i = index; i < line->nb_fields; i++) DPRINTF( " %02x", buffer[i - index] );
-        DPRINTF( "\n" );
+        for (i = index; i < line->nb_fields; i++) TRACE( " %02x", buffer[i - index] );
+        TRACE( "\n" );
     }
     return TRUE;
 }

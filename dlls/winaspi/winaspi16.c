@@ -184,12 +184,12 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   cmd = prb->CDBByte[0];
   if (TRACE_ON(aspi))
   {
-      DPRINTF("CDB buffer[");
+      TRACE("CDB buffer[");
       for (i = 0; i < prb->SRB_CDBLen; i++) {
-          if (i != 0) DPRINTF(",");
-          DPRINTF("%02x", *cdb++);
+          if (i != 0) TRACE(",");
+          TRACE("%02x", *cdb++);
       }
-      DPRINTF("]\n");
+      TRACE("]\n");
   }
 }
 
@@ -202,12 +202,12 @@ ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
   if (TRACE_ON(aspi))
   {
       cdb = &prb->CDBByte[0];
-      DPRINTF("SenseArea[");
+      TRACE("SenseArea[");
       for (i = 0; i < prb->SRB_SenseLen; i++) {
-          if (i) DPRINTF(",");
-          DPRINTF("%02x", *cdb++);
+          if (i) TRACE(",");
+          TRACE("%02x", *cdb++);
       }
-      DPRINTF("]\n");
+      TRACE("]\n");
   }
 }
 

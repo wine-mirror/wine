@@ -179,12 +179,12 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd *prb)
   cdb = &prb->CDBByte[0];
   cmd = prb->CDBByte[0];
   if (TRACE_ON(aspi)) {
-      DPRINTF("CDB buffer[");
+      TRACE("CDB buffer[");
       for (i = 0; i < prb->SRB_CDBLen; i++) {
-          if (i != 0) DPRINTF(",");
-          DPRINTF("%02x", *cdb++);
+          if (i != 0) TRACE(",");
+          TRACE("%02x", *cdb++);
       }
-      DPRINTF("]\n");
+      TRACE("]\n");
   }
 }
 
@@ -194,12 +194,12 @@ ASPI_PrintCDBArea(SRB_ExecSCSICmd *prb)
     if (TRACE_ON(aspi))
     {
 	int i;
-        DPRINTF("CDB[");
+        TRACE("CDB[");
         for (i = 0; i < prb->SRB_CDBLen; i++) {
-            if (i) DPRINTF(",");
-            DPRINTF("%02x", prb->CDBByte[i]);
+            if (i) TRACE(",");
+            TRACE("%02x", prb->CDBByte[i]);
         }
-        DPRINTF("]\n");
+        TRACE("]\n");
     }
 }
 
@@ -211,32 +211,32 @@ ASPI_PrintSenseArea(SRB_ExecSCSICmd *prb)
 
   if (TRACE_ON(aspi))
   {
-      DPRINTF("Request Sense reports:\n");
+      TRACE("Request Sense reports:\n");
       if ((rqbuf[0]&0x7f)!=0x70) {
-	      DPRINTF("\tInvalid sense header: 0x%02x instead of 0x70\n", rqbuf[0]&0x7f);
+	      TRACE("\tInvalid sense header: 0x%02x instead of 0x70\n", rqbuf[0]&0x7f);
 	      return;
       }
-      DPRINTF("\tCurrent command read filemark: %s\n",(rqbuf[2]&0x80)?"yes":"no");
-      DPRINTF("\tEarly warning passed: %s\n",(rqbuf[2]&0x40)?"yes":"no");
-      DPRINTF("\tIncorrect blocklength: %s\n",(rqbuf[2]&0x20)?"yes":"no");
-      DPRINTF("\tSense Key: %d\n",rqbuf[2]&0xf);
+      TRACE("\tCurrent command read filemark: %s\n",(rqbuf[2]&0x80)?"yes":"no");
+      TRACE("\tEarly warning passed: %s\n",(rqbuf[2]&0x40)?"yes":"no");
+      TRACE("\tIncorrect blocklength: %s\n",(rqbuf[2]&0x20)?"yes":"no");
+      TRACE("\tSense Key: %d\n",rqbuf[2]&0xf);
       if (rqbuf[0]&0x80)
-	DPRINTF("\tResidual Length: %d\n",rqbuf[3]*0x1000000+rqbuf[4]*0x10000+rqbuf[5]*0x100+rqbuf[6]);
-      DPRINTF("\tAdditional Sense Length: %d\n",rqbuf[7]);
-      DPRINTF("\tAdditional Sense Code: %d\n",rqbuf[12]);
-      DPRINTF("\tAdditional Sense Code Qualifier: %d\n",rqbuf[13]);
+	TRACE("\tResidual Length: %d\n",rqbuf[3]*0x1000000+rqbuf[4]*0x10000+rqbuf[5]*0x100+rqbuf[6]);
+      TRACE("\tAdditional Sense Length: %d\n",rqbuf[7]);
+      TRACE("\tAdditional Sense Code: %d\n",rqbuf[12]);
+      TRACE("\tAdditional Sense Code Qualifier: %d\n",rqbuf[13]);
       if (rqbuf[15]&0x80) {
-	DPRINTF("\tIllegal Param is in %s\n",(rqbuf[15]&0x40)?"the CDB":"the Data Out Phase");
+	TRACE("\tIllegal Param is in %s\n",(rqbuf[15]&0x40)?"the CDB":"the Data Out Phase");
 	if (rqbuf[15]&0x8) {
-	  DPRINTF("Pointer at %d, bit %d\n",rqbuf[16]*256+rqbuf[17],rqbuf[15]&0x7);
+	  TRACE("Pointer at %d, bit %d\n",rqbuf[16]*256+rqbuf[17],rqbuf[15]&0x7);
 	}
       }
-      DPRINTF("SenseArea[");
+      TRACE("SenseArea[");
       for (i = 0; i < prb->SRB_SenseLen; i++) {
-	if (i) DPRINTF(",");
-	DPRINTF("%02x", *rqbuf++);
+	if (i) TRACE(",");
+	TRACE("%02x", *rqbuf++);
       }
-      DPRINTF("]\n");
+      TRACE("]\n");
   }
 }
 

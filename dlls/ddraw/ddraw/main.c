@@ -543,7 +543,7 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
 
     TRACE("(%p)->(%p,%p,%p)\n",This,pDDSD,ppSurf,pUnkOuter);
     if (TRACE_ON(ddraw)) {
-        DPRINTF("Requesting surface desc :\n");
+        TRACE("Requesting surface desc :\n");
         DDRAW_dump_surface_desc(pDDSD);
     }
 
@@ -851,14 +851,14 @@ Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
     if (pDriverCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&This->caps);
 	if (TRACE_ON(ddraw)) {
-	  DPRINTF("Driver Caps : \n");
+	  TRACE("Driver Caps : \n");
 	  DDRAW_dump_DDCAPS(pDriverCaps);
 	}
     }
     if (pHELCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pHELCaps,&This->caps);
 	if (TRACE_ON(ddraw)) {
-	  DPRINTF("HEL Caps : \n");
+	  TRACE("HEL Caps : \n");
 	  DDRAW_dump_DDCAPS(pHELCaps);
 	}
     }
@@ -1135,7 +1135,7 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
 
     if (TRACE_ON(ddraw)) {
         TRACE(" Asking for memory of type : ");
-        DDRAW_dump_DDSCAPS2(ddscaps); DPRINTF("\n");
+        DDRAW_dump_DDSCAPS2(ddscaps); TRACE("\n");
     }
 
     /* We have 16 MB videomemory */

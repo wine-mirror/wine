@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 HANDLE RICHED32_hHeap = NULL;
 /* LPSTR  RICHED32_aSubclass = NULL; */
 
-#define DPRINTF_EDIT_MSG32(str) \
+#define TRACE_EDIT_MSG32(str) \
         TRACE(\
                      "32 bit : " str ": hwnd=%p, wParam=%08x, lParam=%08x\n"\
                      , \
@@ -119,12 +119,12 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     {
 
     case WM_CREATE:
-            DPRINTF_EDIT_MSG32("WM_CREATE Passed to default");
+            TRACE_EDIT_MSG32("WM_CREATE Passed to default");
             DefWindowProcA( hwnd,uMsg,wParam,lParam);
             return 0 ;
         
     case WM_NCCREATE :
-	    DPRINTF_EDIT_MSG32("WM_NCCREATE");
+	    TRACE_EDIT_MSG32("WM_NCCREATE");
 
 	    /* remove SCROLLBARS from the current window style */
 	    hwndParent = ((LPCREATESTRUCTA) lParam)->hwndParent;
@@ -149,17 +149,17 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                 return FALSE ;
 
     case WM_SETFOCUS :
-	    DPRINTF_EDIT_MSG32("WM_SETFOCUS");
+	    TRACE_EDIT_MSG32("WM_SETFOCUS");
             SetFocus (hwndEdit) ;
             return 0 ;
 
     case WM_SIZE :
-            DPRINTF_EDIT_MSG32("WM_SIZE");
+            TRACE_EDIT_MSG32("WM_SIZE");
             MoveWindow (hwndEdit, 0, 0, LOWORD (lParam), HIWORD (lParam), TRUE) ;
             return 0 ;
 
     case WM_COMMAND :
-        DPRINTF_EDIT_MSG32("WM_COMMAND");
+        TRACE_EDIT_MSG32("WM_COMMAND");
 	switch(HIWORD(wParam)) {
 		case EN_CHANGE:
 		case EN_HSCROLL:
@@ -178,7 +178,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 		}
 
     case EM_STREAMIN:
-            DPRINTF_EDIT_MSG32("EM_STREAMIN");
+            TRACE_EDIT_MSG32("EM_STREAMIN");
 
 	    /* setup the RTF parser */
 	    RTFSetEditStream(( EDITSTREAM*)lParam);
@@ -206,23 +206,23 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 /* Messages specific to Richedit controls */
 
     case EM_AUTOURLDETECT:
-            DPRINTF_EDIT_MSG32("EM_AUTOURLDETECT Ignored");
+            TRACE_EDIT_MSG32("EM_AUTOURLDETECT Ignored");
 	    return 0;
 
     case EM_CANPASTE:
-            DPRINTF_EDIT_MSG32("EM_CANPASTE Ignored");
+            TRACE_EDIT_MSG32("EM_CANPASTE Ignored");
 	    return 0;
 
     case EM_CANREDO:
-            DPRINTF_EDIT_MSG32("EM_CANREDO Ignored");
+            TRACE_EDIT_MSG32("EM_CANREDO Ignored");
 	    return 0;
 
     case EM_DISPLAYBAND:
-            DPRINTF_EDIT_MSG32("EM_DISPLAYBAND Ignored");
+            TRACE_EDIT_MSG32("EM_DISPLAYBAND Ignored");
 	    return 0;
 
     case EM_EXGETSEL:
-            DPRINTF_EDIT_MSG32("EM_EXGETSEL -> EM_GETSEL");
+            TRACE_EDIT_MSG32("EM_EXGETSEL -> EM_GETSEL");
             cr = (VOID *) lParam;
             if (hwndEdit) SendMessageA( hwndEdit, EM_GETSEL, (INT)&cr->cpMin, (INT)&cr->cpMax);
             TRACE("cpMin: 0x%x cpMax: 0x%x\n",(INT)cr->cpMin,(INT)cr->cpMax);
@@ -231,7 +231,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     case EM_EXLIMITTEXT:
         {
            DWORD limit = lParam;
-           DPRINTF_EDIT_MSG32("EM_EXLIMITTEXT");
+           TRACE_EDIT_MSG32("EM_EXLIMITTEXT");
            if (limit > 65534)
            {
                 limit = 0xFFFFFFFF;
@@ -240,403 +240,403 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
         }
 
     case EM_EXLINEFROMCHAR:
-            DPRINTF_EDIT_MSG32("EM_EXLINEFROMCHAR -> LINEFROMCHAR");
+            TRACE_EDIT_MSG32("EM_EXLINEFROMCHAR -> LINEFROMCHAR");
             if (hwndEdit) return SendMessageA( hwndEdit, EM_LINEFROMCHAR, lParam, wParam);
             return 0;
 
     case EM_EXSETSEL:
-            DPRINTF_EDIT_MSG32("EM_EXSETSEL -> EM_SETSEL");
+            TRACE_EDIT_MSG32("EM_EXSETSEL -> EM_SETSEL");
             cr = (VOID *) lParam;
             if (hwndEdit) SendMessageA( hwndEdit, EM_SETSEL, cr->cpMin, cr->cpMax);
             return 0;
 
     case EM_FINDTEXT:
-            DPRINTF_EDIT_MSG32("EM_FINDTEXT Ignored");
+            TRACE_EDIT_MSG32("EM_FINDTEXT Ignored");
             return 0;
 
     case EM_FINDTEXTEX:
-            DPRINTF_EDIT_MSG32("EM_FINDTEXTEX Ignored");
+            TRACE_EDIT_MSG32("EM_FINDTEXTEX Ignored");
             return 0;
 
     case EM_FINDTEXTEXW:
-            DPRINTF_EDIT_MSG32("EM_FINDTEXTEXW Ignored");
+            TRACE_EDIT_MSG32("EM_FINDTEXTEXW Ignored");
             return 0;
 
     case EM_FINDTEXTW:
-            DPRINTF_EDIT_MSG32("EM_FINDTEXTW Ignored");
+            TRACE_EDIT_MSG32("EM_FINDTEXTW Ignored");
             return 0;
 
     case EM_FINDWORDBREAK:
-            DPRINTF_EDIT_MSG32("EM_FINDWORDBREAK Ignored");
+            TRACE_EDIT_MSG32("EM_FINDWORDBREAK Ignored");
             return 0;
 
     case EM_FORMATRANGE:
-            DPRINTF_EDIT_MSG32("EM_FORMATRANGE Ignored");
+            TRACE_EDIT_MSG32("EM_FORMATRANGE Ignored");
             return 0;
 
     case EM_GETAUTOURLDETECT:
-            DPRINTF_EDIT_MSG32("EM_GETAUTOURLDETECT Ignored");
+            TRACE_EDIT_MSG32("EM_GETAUTOURLDETECT Ignored");
             return 0;
 
     case EM_GETBIDIOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_GETBIDIOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_GETBIDIOPTIONS Ignored");
             return 0;
 
     case EM_GETCHARFORMAT:
-            DPRINTF_EDIT_MSG32("EM_GETCHARFORMAT Ignored");
+            TRACE_EDIT_MSG32("EM_GETCHARFORMAT Ignored");
             return 0;
 
     case EM_GETEDITSTYLE:
-            DPRINTF_EDIT_MSG32("EM_GETEDITSTYLE Ignored");
+            TRACE_EDIT_MSG32("EM_GETEDITSTYLE Ignored");
             return 0;
 
     case EM_GETEVENTMASK:
-            DPRINTF_EDIT_MSG32("EM_GETEVENTMASK Ignored");
+            TRACE_EDIT_MSG32("EM_GETEVENTMASK Ignored");
             return 0;
 
     case EM_GETIMECOLOR:
-            DPRINTF_EDIT_MSG32("EM_GETIMECOLOR Ignored");
+            TRACE_EDIT_MSG32("EM_GETIMECOLOR Ignored");
             return 0;
 
     case EM_GETIMECOMPMODE:
-            DPRINTF_EDIT_MSG32("EM_GETIMECOMPMODE Ignored");
+            TRACE_EDIT_MSG32("EM_GETIMECOMPMODE Ignored");
             return 0;
 
     case EM_GETIMEOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_GETIMEOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_GETIMEOPTIONS Ignored");
             return 0;
 
     case EM_GETLANGOPTIONS:
-            DPRINTF_EDIT_MSG32("STUB: EM_GETLANGOPTIONS");
+            TRACE_EDIT_MSG32("STUB: EM_GETLANGOPTIONS");
             return 0;
 
     case EM_GETOLEINTERFACE:
-            DPRINTF_EDIT_MSG32("EM_GETOLEINTERFACE Ignored");
+            TRACE_EDIT_MSG32("EM_GETOLEINTERFACE Ignored");
             return 0;
 
     case EM_GETOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_GETOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_GETOPTIONS Ignored");
             return 0;
 
     case EM_GETPARAFORMAT:
-            DPRINTF_EDIT_MSG32("EM_GETPARAFORMAT Ignored");
+            TRACE_EDIT_MSG32("EM_GETPARAFORMAT Ignored");
             return 0;
 
     case EM_GETPUNCTUATION:
-            DPRINTF_EDIT_MSG32("EM_GETPUNCTUATION Ignored");
+            TRACE_EDIT_MSG32("EM_GETPUNCTUATION Ignored");
             return 0;
 
     case EM_GETREDONAME:
-            DPRINTF_EDIT_MSG32("EM_GETREDONAME Ignored");
+            TRACE_EDIT_MSG32("EM_GETREDONAME Ignored");
             return 0;
 
     case EM_GETSCROLLPOS:
-            DPRINTF_EDIT_MSG32("EM_GETSCROLLPOS Ignored");
+            TRACE_EDIT_MSG32("EM_GETSCROLLPOS Ignored");
             return 0;
 
     case EM_GETSELTEXT:
-            DPRINTF_EDIT_MSG32("EM_GETSELTEXT");
+            TRACE_EDIT_MSG32("EM_GETSELTEXT");
             return RICHEDIT_GetSelText(hwndEdit,(void *)lParam);
 
     case EM_GETTEXTEX:
-            DPRINTF_EDIT_MSG32("EM_GETTEXTEX Ignored");
+            TRACE_EDIT_MSG32("EM_GETTEXTEX Ignored");
             return 0;
 
     case EM_GETTEXTLENGTHEX:
-            DPRINTF_EDIT_MSG32("EM_GETTEXTLENGTHEX Ignored");
+            TRACE_EDIT_MSG32("EM_GETTEXTLENGTHEX Ignored");
             return 0;
 
     case EM_GETTEXTMODE:
-            DPRINTF_EDIT_MSG32("EM_GETTEXTMODE Ignored");
+            TRACE_EDIT_MSG32("EM_GETTEXTMODE Ignored");
             return 0;
 
     case EM_GETTEXTRANGE:
-            DPRINTF_EDIT_MSG32("EM_GETTEXTRANGE");
+            TRACE_EDIT_MSG32("EM_GETTEXTRANGE");
             return RICHEDIT_GetTextRange(hwndEdit,(TEXTRANGEA *)lParam);
 
     case EM_GETTYPOGRAPHYOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_GETTYPOGRAPHYOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_GETTYPOGRAPHYOPTIONS Ignored");
             return 0;
 
     case EM_GETUNDONAME:
-            DPRINTF_EDIT_MSG32("EM_GETUNDONAME Ignored");
+            TRACE_EDIT_MSG32("EM_GETUNDONAME Ignored");
             return 0;
 
     case EM_GETWORDBREAKPROCEX:
-            DPRINTF_EDIT_MSG32("EM_GETWORDBREAKPROCEX Ignored");
+            TRACE_EDIT_MSG32("EM_GETWORDBREAKPROCEX Ignored");
             return 0;
 
     case EM_GETWORDWRAPMODE:
-            DPRINTF_EDIT_MSG32("EM_GETWORDWRAPMODE Ignored");
+            TRACE_EDIT_MSG32("EM_GETWORDWRAPMODE Ignored");
             return 0;
 
     case EM_GETZOOM:
-            DPRINTF_EDIT_MSG32("EM_GETZOOM Ignored");
+            TRACE_EDIT_MSG32("EM_GETZOOM Ignored");
             return 0;
 
     case EM_HIDESELECTION:
-            DPRINTF_EDIT_MSG32("EM_HIDESELECTION Ignored");
+            TRACE_EDIT_MSG32("EM_HIDESELECTION Ignored");
             return 0;
 
     case EM_PASTESPECIAL:
-            DPRINTF_EDIT_MSG32("EM_PASTESPECIAL Ignored");
+            TRACE_EDIT_MSG32("EM_PASTESPECIAL Ignored");
             return 0;
 
     case EM_RECONVERSION:
-            DPRINTF_EDIT_MSG32("EM_RECONVERSION Ignored");
+            TRACE_EDIT_MSG32("EM_RECONVERSION Ignored");
             return 0;
 
     case EM_REDO:
-            DPRINTF_EDIT_MSG32("EM_REDO Ignored");
+            TRACE_EDIT_MSG32("EM_REDO Ignored");
             return 0;
 
     case EM_REQUESTRESIZE:
-            DPRINTF_EDIT_MSG32("EM_REQUESTRESIZE Ignored");
+            TRACE_EDIT_MSG32("EM_REQUESTRESIZE Ignored");
             return 0;
 
     case EM_SELECTIONTYPE:
-            DPRINTF_EDIT_MSG32("EM_SELECTIONTYPE Ignored");
+            TRACE_EDIT_MSG32("EM_SELECTIONTYPE Ignored");
             return 0;
 
     case EM_SETBIDIOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_SETBIDIOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_SETBIDIOPTIONS Ignored");
             return 0;
 
     case EM_SETBKGNDCOLOR:
-            DPRINTF_EDIT_MSG32("EM_SETBKGNDCOLOR Ignored");
+            TRACE_EDIT_MSG32("EM_SETBKGNDCOLOR Ignored");
             return 0;
 
     case EM_SETCHARFORMAT:
-            DPRINTF_EDIT_MSG32("EM_SETCHARFORMAT Ignored");
+            TRACE_EDIT_MSG32("EM_SETCHARFORMAT Ignored");
             return 0;
 
     case EM_SETEDITSTYLE:
-            DPRINTF_EDIT_MSG32("EM_SETEDITSTYLE Ignored");
+            TRACE_EDIT_MSG32("EM_SETEDITSTYLE Ignored");
             return 0;
 
     case EM_SETEVENTMASK:
-            DPRINTF_EDIT_MSG32("EM_SETEVENTMASK Ignored");
+            TRACE_EDIT_MSG32("EM_SETEVENTMASK Ignored");
             return 0;
 
     case EM_SETFONTSIZE:
-            DPRINTF_EDIT_MSG32("EM_SETFONTSIZE Ignored");
+            TRACE_EDIT_MSG32("EM_SETFONTSIZE Ignored");
             return 0;
 
     case EM_SETIMECOLOR:
-            DPRINTF_EDIT_MSG32("EM_SETIMECOLO Ignored");
+            TRACE_EDIT_MSG32("EM_SETIMECOLO Ignored");
             return 0;
 
     case EM_SETIMEOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_SETIMEOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_SETIMEOPTIONS Ignored");
             return 0;
 
     case EM_SETLANGOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_SETLANGOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_SETLANGOPTIONS Ignored");
             return 0;
 
     case EM_SETOLECALLBACK:
-            DPRINTF_EDIT_MSG32("EM_SETOLECALLBACK Ignored");
+            TRACE_EDIT_MSG32("EM_SETOLECALLBACK Ignored");
             return 0;
 
     case EM_SETOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_SETOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_SETOPTIONS Ignored");
             return 0;
 
     case EM_SETPALETTE:
-            DPRINTF_EDIT_MSG32("EM_SETPALETTE Ignored");
+            TRACE_EDIT_MSG32("EM_SETPALETTE Ignored");
             return 0;
 
     case EM_SETPARAFORMAT:
-            DPRINTF_EDIT_MSG32("EM_SETPARAFORMAT Ignored");
+            TRACE_EDIT_MSG32("EM_SETPARAFORMAT Ignored");
             return 0;
 
     case EM_SETPUNCTUATION:
-            DPRINTF_EDIT_MSG32("EM_SETPUNCTUATION Ignored");
+            TRACE_EDIT_MSG32("EM_SETPUNCTUATION Ignored");
             return 0;
 
     case EM_SETSCROLLPOS:
-            DPRINTF_EDIT_MSG32("EM_SETSCROLLPOS Ignored");
+            TRACE_EDIT_MSG32("EM_SETSCROLLPOS Ignored");
             return 0;
 
     case EM_SETTARGETDEVICE:
-            DPRINTF_EDIT_MSG32("EM_SETTARGETDEVICE Ignored");
+            TRACE_EDIT_MSG32("EM_SETTARGETDEVICE Ignored");
             return 0;
 
     case EM_SETTEXTEX:
-            DPRINTF_EDIT_MSG32("EM_SETTEXTEX Ignored");
+            TRACE_EDIT_MSG32("EM_SETTEXTEX Ignored");
             return 0;
 
     case EM_SETTEXTMODE:
-            DPRINTF_EDIT_MSG32("EM_SETTEXTMODE Ignored");
+            TRACE_EDIT_MSG32("EM_SETTEXTMODE Ignored");
             return 0;
 
     case EM_SETTYPOGRAPHYOPTIONS:
-            DPRINTF_EDIT_MSG32("EM_SETTYPOGRAPHYOPTIONS Ignored");
+            TRACE_EDIT_MSG32("EM_SETTYPOGRAPHYOPTIONS Ignored");
             return 0;
 
     case EM_SETUNDOLIMIT:
-            DPRINTF_EDIT_MSG32("EM_SETUNDOLIMIT Ignored");
+            TRACE_EDIT_MSG32("EM_SETUNDOLIMIT Ignored");
             return 0;
 
     case EM_SETWORDBREAKPROCEX:
-            DPRINTF_EDIT_MSG32("EM_SETWORDBREAKPROCEX Ignored");
+            TRACE_EDIT_MSG32("EM_SETWORDBREAKPROCEX Ignored");
             return 0;
 
     case EM_SETWORDWRAPMODE:
-            DPRINTF_EDIT_MSG32("EM_SETWORDWRAPMODE Ignored");
+            TRACE_EDIT_MSG32("EM_SETWORDWRAPMODE Ignored");
             return 0;
 
     case EM_SETZOOM:
-            DPRINTF_EDIT_MSG32("EM_SETZOOM Ignored");
+            TRACE_EDIT_MSG32("EM_SETZOOM Ignored");
             return 0;
 
     case EM_SHOWSCROLLBAR:
-            DPRINTF_EDIT_MSG32("EM_SHOWSCROLLBAR Ignored");
+            TRACE_EDIT_MSG32("EM_SHOWSCROLLBAR Ignored");
             return 0;
 
     case EM_STOPGROUPTYPING:
-            DPRINTF_EDIT_MSG32("EM_STOPGROUPTYPING Ignored");
+            TRACE_EDIT_MSG32("EM_STOPGROUPTYPING Ignored");
             return 0;
 
     case EM_STREAMOUT:
-            DPRINTF_EDIT_MSG32("EM_STREAMOUT Ignored");
+            TRACE_EDIT_MSG32("EM_STREAMOUT Ignored");
             return 0;
 
 /* Messages dispatched to the edit control */
      case EM_CANUNDO:
-            DPRINTF_EDIT_MSG32("EM_CANUNDO Passed to edit control");
+            TRACE_EDIT_MSG32("EM_CANUNDO Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_CHARFROMPOS:
-            DPRINTF_EDIT_MSG32("EM_CHARFROMPOS Passed to edit control");
+            TRACE_EDIT_MSG32("EM_CHARFROMPOS Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_EMPTYUNDOBUFFER:
-            DPRINTF_EDIT_MSG32("EM_EMPTYUNDOBUFFER Passed to edit control");
+            TRACE_EDIT_MSG32("EM_EMPTYUNDOBUFFER Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_FMTLINES:
-            DPRINTF_EDIT_MSG32("EM_FMTLINES Passed to edit control");
+            TRACE_EDIT_MSG32("EM_FMTLINES Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETFIRSTVISIBLELINE:
-            DPRINTF_EDIT_MSG32("EM_GETFIRSTVISIBLELINE Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETFIRSTVISIBLELINE Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETHANDLE:
-            DPRINTF_EDIT_MSG32("EM_GETHANDLE Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETHANDLE Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
  /*    case EM_GETIMESTATUS:*/
      case EM_GETLIMITTEXT:
-            DPRINTF_EDIT_MSG32("EM_GETLIMITTEXT Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETLIMITTEXT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETLINE:
-            DPRINTF_EDIT_MSG32("EM_GETLINE Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETLINE Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETLINECOUNT:
-            DPRINTF_EDIT_MSG32("EM_GETLINECOUNT Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETLINECOUNT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETMARGINS:
-            DPRINTF_EDIT_MSG32("EM_GETMARGINS Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETMARGINS Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETMODIFY:
-            DPRINTF_EDIT_MSG32("EM_GETMODIFY Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETMODIFY Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETPASSWORDCHAR:
-            DPRINTF_EDIT_MSG32("EM_GETPASSWORDCHAR Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETPASSWORDCHAR Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETRECT:
-            DPRINTF_EDIT_MSG32("EM_GETRECT Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETRECT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETSEL:
-            DPRINTF_EDIT_MSG32("EM_GETSEL Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETSEL Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETTHUMB:
-            DPRINTF_EDIT_MSG32("EM_GETTHUMB Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETTHUMB Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_GETWORDBREAKPROC:
-            DPRINTF_EDIT_MSG32("EM_GETWORDBREAKPROC Passed to edit control");
+            TRACE_EDIT_MSG32("EM_GETWORDBREAKPROC Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_LINEFROMCHAR:
-            DPRINTF_EDIT_MSG32("EM_LINEFROMCHAR Passed to edit control");
+            TRACE_EDIT_MSG32("EM_LINEFROMCHAR Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_LINEINDEX:
-            DPRINTF_EDIT_MSG32("EM_LINEINDEX Passed to edit control");
+            TRACE_EDIT_MSG32("EM_LINEINDEX Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_LINELENGTH:
-            DPRINTF_EDIT_MSG32("EM_LINELENGTH Passed to edit control");
+            TRACE_EDIT_MSG32("EM_LINELENGTH Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_LINESCROLL:
-            DPRINTF_EDIT_MSG32("EM_LINESCROLL Passed to edit control");
+            TRACE_EDIT_MSG32("EM_LINESCROLL Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_POSFROMCHAR:
-            DPRINTF_EDIT_MSG32("EM_POSFROMCHAR Passed to edit control");
+            TRACE_EDIT_MSG32("EM_POSFROMCHAR Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_REPLACESEL:
-            DPRINTF_EDIT_MSG32("case EM_REPLACESEL Passed to edit control");
+            TRACE_EDIT_MSG32("case EM_REPLACESEL Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SCROLL:
-            DPRINTF_EDIT_MSG32("case EM_SCROLL Passed to edit control");
+            TRACE_EDIT_MSG32("case EM_SCROLL Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SCROLLCARET:
-            DPRINTF_EDIT_MSG32("EM_SCROLLCARET Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SCROLLCARET Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETHANDLE:
-            DPRINTF_EDIT_MSG32("EM_SETHANDLE Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETHANDLE Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
  /*    case EM_SETIMESTATUS:*/
      case EM_SETLIMITTEXT:
-            DPRINTF_EDIT_MSG32("EM_SETLIMITTEXT Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETLIMITTEXT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETMARGINS:
-            DPRINTF_EDIT_MSG32("case EM_SETMARGINS Passed to edit control");
+            TRACE_EDIT_MSG32("case EM_SETMARGINS Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETMODIFY:
-            DPRINTF_EDIT_MSG32("EM_SETMODIFY Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETMODIFY Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETPASSWORDCHAR:
-            DPRINTF_EDIT_MSG32("EM_SETPASSWORDCHAR Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETPASSWORDCHAR Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETREADONLY:
-            DPRINTF_EDIT_MSG32("EM_SETREADONLY Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETREADONLY Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETRECT:
-            DPRINTF_EDIT_MSG32("EM_SETRECT Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETRECT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETRECTNP:
-            DPRINTF_EDIT_MSG32("EM_SETRECTNP Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETRECTNP Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETSEL:
-            DPRINTF_EDIT_MSG32("EM_SETSEL Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETSEL Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETTABSTOPS:
-            DPRINTF_EDIT_MSG32("EM_SETTABSTOPS Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETTABSTOPS Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_SETWORDBREAKPROC:
-            DPRINTF_EDIT_MSG32("EM_SETWORDBREAKPROC Passed to edit control");
+            TRACE_EDIT_MSG32("EM_SETWORDBREAKPROC Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case EM_UNDO:
-            DPRINTF_EDIT_MSG32("EM_UNDO Passed to edit control");
+            TRACE_EDIT_MSG32("EM_UNDO Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
 
      case WM_STYLECHANGING:
-            DPRINTF_EDIT_MSG32("WM_STYLECHANGING Passed to edit control");
+            TRACE_EDIT_MSG32("WM_STYLECHANGING Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_STYLECHANGED:
-            DPRINTF_EDIT_MSG32("WM_STYLECHANGED Passed to edit control");
+            TRACE_EDIT_MSG32("WM_STYLECHANGED Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_GETTEXT:
-            DPRINTF_EDIT_MSG32("WM_GETTEXT Passed to edit control");
+            TRACE_EDIT_MSG32("WM_GETTEXT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_GETTEXTLENGTH:
-            DPRINTF_EDIT_MSG32("WM_GETTEXTLENGTH Passed to edit control");
+            TRACE_EDIT_MSG32("WM_GETTEXTLENGTH Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_SETTEXT:
-            DPRINTF_EDIT_MSG32("WM_SETTEXT Passed to edit control");
+            TRACE_EDIT_MSG32("WM_SETTEXT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_CUT:
-            DPRINTF_EDIT_MSG32("WM_CUT Passed to edit control");
+            TRACE_EDIT_MSG32("WM_CUT Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
      case WM_COPY:
-            DPRINTF_EDIT_MSG32("WM_COPY Passed to edit control");
+            TRACE_EDIT_MSG32("WM_COPY Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
     case WM_PASTE:
-            DPRINTF_EDIT_MSG32("WM_PASTE Passed to edit control");
+            TRACE_EDIT_MSG32("WM_PASTE Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
 
     /* Messages passed to default handler. */
@@ -660,80 +660,80 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
            WM_SIZE message above. Since it is very unlikely that an app would call
            and use the WM_NCCALCSIZE message, we stick with the easy fix for now.
          */
-        DPRINTF_EDIT_MSG32("WM_NCCALCSIZE Passed to default");
+        TRACE_EDIT_MSG32("WM_NCCALCSIZE Passed to default");
 	return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_NCPAINT:
-        DPRINTF_EDIT_MSG32("WM_NCPAINT Passed to default");
+        TRACE_EDIT_MSG32("WM_NCPAINT Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_PAINT:
-        DPRINTF_EDIT_MSG32("WM_PAINT Passed to default");
+        TRACE_EDIT_MSG32("WM_PAINT Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_ERASEBKGND:
-        DPRINTF_EDIT_MSG32("WM_ERASEBKGND Passed to default");
+        TRACE_EDIT_MSG32("WM_ERASEBKGND Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_KILLFOCUS:
-        DPRINTF_EDIT_MSG32("WM_KILLFOCUS Passed to default");
+        TRACE_EDIT_MSG32("WM_KILLFOCUS Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_DESTROY:
-        DPRINTF_EDIT_MSG32("WM_DESTROY Passed to default");
+        TRACE_EDIT_MSG32("WM_DESTROY Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_CHILDACTIVATE:
-	DPRINTF_EDIT_MSG32("WM_CHILDACTIVATE Passed to default");
+	TRACE_EDIT_MSG32("WM_CHILDACTIVATE Passed to default");
 	return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 
     case WM_WINDOWPOSCHANGING:
-        DPRINTF_EDIT_MSG32("WM_WINDOWPOSCHANGING Passed to default");
+        TRACE_EDIT_MSG32("WM_WINDOWPOSCHANGING Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_WINDOWPOSCHANGED:
-        DPRINTF_EDIT_MSG32("WM_WINDOWPOSCHANGED Passed to default");
+        TRACE_EDIT_MSG32("WM_WINDOWPOSCHANGED Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 /*    case WM_INITIALUPDATE:
-        DPRINTF_EDIT_MSG32("WM_INITIALUPDATE Passed to default");
+        TRACE_EDIT_MSG32("WM_INITIALUPDATE Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam); */
     case WM_CTLCOLOREDIT:
-        DPRINTF_EDIT_MSG32("WM_CTLCOLOREDIT Passed to default");
+        TRACE_EDIT_MSG32("WM_CTLCOLOREDIT Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_SETCURSOR:
-        DPRINTF_EDIT_MSG32("WM_SETCURSOR Passed to default");
+        TRACE_EDIT_MSG32("WM_SETCURSOR Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_MOVE:
-        DPRINTF_EDIT_MSG32("WM_MOVE Passed to default");
+        TRACE_EDIT_MSG32("WM_MOVE Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_SHOWWINDOW:
-        DPRINTF_EDIT_MSG32("WM_SHOWWINDOW Passed to default");
+        TRACE_EDIT_MSG32("WM_SHOWWINDOW Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_PARENTNOTIFY:
-        DPRINTF_EDIT_MSG32("WM_PARENTNOTIFY Passed to default");
+        TRACE_EDIT_MSG32("WM_PARENTNOTIFY Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_SETREDRAW:
-        DPRINTF_EDIT_MSG32("WM_SETREDRAW Passed to default");
+        TRACE_EDIT_MSG32("WM_SETREDRAW Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_NCDESTROY:
-        DPRINTF_EDIT_MSG32("WM_NCDESTROY Passed to default");
+        TRACE_EDIT_MSG32("WM_NCDESTROY Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_NCHITTEST:
-        DPRINTF_EDIT_MSG32("WM_NCHITTEST Passed to default");
+        TRACE_EDIT_MSG32("WM_NCHITTEST Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_CTLCOLORSTATIC:
-        DPRINTF_EDIT_MSG32("WM_CTLCOLORSTATIC Passed to default");
+        TRACE_EDIT_MSG32("WM_CTLCOLORSTATIC Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_NCMOUSEMOVE:
-        DPRINTF_EDIT_MSG32("WM_NCMOUSEMOVE Passed to default");
+        TRACE_EDIT_MSG32("WM_NCMOUSEMOVE Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_CLEAR:
-        DPRINTF_EDIT_MSG32("WM_CLEAR Passed to default");
+        TRACE_EDIT_MSG32("WM_CLEAR Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
    /*
     * used by IE in the EULA box
     */
     case WM_ALTTABACTIVE:
-        DPRINTF_EDIT_MSG32("WM_ALTTABACTIVE");
+        TRACE_EDIT_MSG32("WM_ALTTABACTIVE");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_GETDLGCODE:
-        DPRINTF_EDIT_MSG32("WM_GETDLGCODE");
+        TRACE_EDIT_MSG32("WM_GETDLGCODE");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
     case WM_SETFONT:
-        DPRINTF_EDIT_MSG32("WM_SETFONT");
+        TRACE_EDIT_MSG32("WM_SETFONT");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 
     }

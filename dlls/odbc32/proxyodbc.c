@@ -600,10 +600,10 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle,
         {
            TRACE("returns: %d \t", ret);
            if (*NameLength1 > 0)
-             DPRINTF("DataSource = %s,", ServerName);
+             TRACE("DataSource = %s,", ServerName);
            if (*NameLength2 > 0)
-             DPRINTF(" Description = %s", Description);
-           DPRINTF("\n");
+             TRACE(" Description = %s", Description);
+           TRACE("\n");
         }
 
         return ret;

@@ -59,28 +59,28 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 		    );
 
         TRACE("(");
-	DPRINTF(" OS=0x%x.0x%x ",
+	TRACE(" OS=0x%x.0x%x ",
 		HIWORD(vffi->dwFileOS),
 		LOWORD(vffi->dwFileOS)
 	);
 	switch (vffi->dwFileOS&0xFFFF0000) {
-	case VOS_DOS:DPRINTF("DOS,");break;
-	case VOS_OS216:DPRINTF("OS/2-16,");break;
-	case VOS_OS232:DPRINTF("OS/2-32,");break;
-	case VOS_NT:DPRINTF("NT,");break;
+	case VOS_DOS:TRACE("DOS,");break;
+	case VOS_OS216:TRACE("OS/2-16,");break;
+	case VOS_OS232:TRACE("OS/2-32,");break;
+	case VOS_NT:TRACE("NT,");break;
 	case VOS_UNKNOWN:
 	default:
-		DPRINTF("UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
+		TRACE("UNKNOWN(0x%lx),",vffi->dwFileOS&0xFFFF0000);break;
 	}
 	switch (LOWORD(vffi->dwFileOS)) {
-	case VOS__BASE:DPRINTF("BASE");break;
-	case VOS__WINDOWS16:DPRINTF("WIN16");break;
-	case VOS__WINDOWS32:DPRINTF("WIN32");break;
-	case VOS__PM16:DPRINTF("PM16");break;
-	case VOS__PM32:DPRINTF("PM32");break;
-	default:DPRINTF("UNKNOWN(0x%x)",LOWORD(vffi->dwFileOS));break;
+	case VOS__BASE:TRACE("BASE");break;
+	case VOS__WINDOWS16:TRACE("WIN16");break;
+	case VOS__WINDOWS32:TRACE("WIN32");break;
+	case VOS__PM16:TRACE("PM16");break;
+	case VOS__PM32:TRACE("PM32");break;
+	default:TRACE("UNKNOWN(0x%x)",LOWORD(vffi->dwFileOS));break;
 	}
-	DPRINTF(")\n");
+	TRACE(")\n");
 
 	switch (vffi->dwFileType) {
 	default:
@@ -94,40 +94,40 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 		switch(vffi->dwFileSubtype) {
 		default:
 		case VFT2_UNKNOWN:
-			DPRINTF("UNKNOWN(0x%lx)",vffi->dwFileSubtype);
+			TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);
 			break;
 		case VFT2_DRV_PRINTER:
-			DPRINTF("PRINTER");
+			TRACE("PRINTER");
 			break;
 		case VFT2_DRV_KEYBOARD:
-			DPRINTF("KEYBOARD");
+			TRACE("KEYBOARD");
 			break;
 		case VFT2_DRV_LANGUAGE:
-			DPRINTF("LANGUAGE");
+			TRACE("LANGUAGE");
 			break;
 		case VFT2_DRV_DISPLAY:
-			DPRINTF("DISPLAY");
+			TRACE("DISPLAY");
 			break;
 		case VFT2_DRV_MOUSE:
-			DPRINTF("MOUSE");
+			TRACE("MOUSE");
 			break;
 		case VFT2_DRV_NETWORK:
-			DPRINTF("NETWORK");
+			TRACE("NETWORK");
 			break;
 		case VFT2_DRV_SYSTEM:
-			DPRINTF("SYSTEM");
+			TRACE("SYSTEM");
 			break;
 		case VFT2_DRV_INSTALLABLE:
-			DPRINTF("INSTALLABLE");
+			TRACE("INSTALLABLE");
 			break;
 		case VFT2_DRV_SOUND:
-			DPRINTF("SOUND");
+			TRACE("SOUND");
 			break;
 		case VFT2_DRV_COMM:
-			DPRINTF("COMM");
+			TRACE("COMM");
 			break;
 		case VFT2_DRV_INPUTMETHOD:
-			DPRINTF("INPUTMETHOD");
+			TRACE("INPUTMETHOD");
 			break;
 		}
 		break;
@@ -135,17 +135,17 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
                 TRACE("filetype=FONT.");
 		switch (vffi->dwFileSubtype) {
 		default:
-			DPRINTF("UNKNOWN(0x%lx)",vffi->dwFileSubtype);
+			TRACE("UNKNOWN(0x%lx)",vffi->dwFileSubtype);
 			break;
-		case VFT2_FONT_RASTER:DPRINTF("RASTER");break;
-		case VFT2_FONT_VECTOR:DPRINTF("VECTOR");break;
-		case VFT2_FONT_TRUETYPE:DPRINTF("TRUETYPE");break;
+		case VFT2_FONT_RASTER:TRACE("RASTER");break;
+		case VFT2_FONT_VECTOR:TRACE("VECTOR");break;
+		case VFT2_FONT_TRUETYPE:TRACE("TRUETYPE");break;
 		}
 		break;
 	case VFT_VXD:TRACE("filetype=VXD");break;
 	case VFT_STATIC_LIB:TRACE("filetype=STATIC_LIB");break;
 	}
-        DPRINTF("\n");
+        TRACE("\n");
 	TRACE("  filedata=0x%lx.0x%lx\n",
 		    vffi->dwFileDateMS,vffi->dwFileDateLS);
 }

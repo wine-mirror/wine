@@ -1171,12 +1171,12 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	        if (d3dvtVertexType & D3DFVF_NORMAL) { 
 		    D3DVALUE *normal = 
 		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->normal.lpvData) + i * lpD3DDrawPrimStrideData->normal.dwStride);	    
-		    DPRINTF(" / %f %f %f", normal[0], normal[1], normal[2]);
+		    TRACE(" / %f %f %f", normal[0], normal[1], normal[2]);
 		}
 		if (d3dvtVertexType & D3DFVF_DIFFUSE) {
 		    DWORD *color_d = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
-		    DPRINTF(" / %02lx %02lx %02lx %02lx",
+		    TRACE(" / %02lx %02lx %02lx %02lx",
 			    (*color_d >> 16) & 0xFF,
 			    (*color_d >>  8) & 0xFF,
 			    (*color_d >>  0) & 0xFF,
@@ -1185,7 +1185,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
 		    DWORD *color_s = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
-		    DPRINTF(" / %02lx %02lx %02lx %02lx",
+		    TRACE(" / %02lx %02lx %02lx %02lx",
 			    (*color_s >> 16) & 0xFF,
 			    (*color_s >>  8) & 0xFF,
 			    (*color_s >>  0) & 0xFF,
@@ -1195,9 +1195,9 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
                     D3DVALUE *tex_coord =
 		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
 				    i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
-		    DPRINTF(" / %f %f", tex_coord[0], tex_coord[1]);
+		    TRACE(" / %f %f", tex_coord[0], tex_coord[1]);
 		}
-		DPRINTF("\n");
+		TRACE("\n");
 	    }
 	}
     } else {
@@ -1427,7 +1427,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
     if (TRACE_ON(ddraw)) {
         TRACE(" Stage type is : ");
 	switch (d3dTexStageStateType) {
-#define GEN_CASE(a) case a: DPRINTF(#a " "); break
+#define GEN_CASE(a) case a: TRACE(#a " "); break
 	    GEN_CASE(D3DTSS_COLOROP);
 	    GEN_CASE(D3DTSS_COLORARG1);
 	    GEN_CASE(D3DTSS_COLORARG2);
@@ -1453,18 +1453,18 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    GEN_CASE(D3DTSS_BUMPENVLOFFSET);
 	    GEN_CASE(D3DTSS_TEXTURETRANSFORMFLAGS);
 #undef GEN_CASE
-	    default: DPRINTF("UNKNOWN !!!");
+	    default: TRACE("UNKNOWN !!!");
 	}
-	DPRINTF(" => ");
+	TRACE(" => ");
     }
 
     switch (d3dTexStageStateType) {
         case D3DTSS_MINFILTER:
 	    if (TRACE_ON(ddraw)) {
 	        switch ((D3DTEXTUREMINFILTER) dwState) {
-	            case D3DTFN_POINT:  DPRINTF("D3DTFN_POINT\n"); break;
-		    case D3DTFN_LINEAR: DPRINTF("D3DTFN_LINEAR\n"); break;
-		    default: DPRINTF(" state unhandled (%ld).\n", dwState); break;
+	            case D3DTFN_POINT:  TRACE("D3DTFN_POINT\n"); break;
+		    case D3DTFN_LINEAR: TRACE("D3DTFN_LINEAR\n"); break;
+		    default: TRACE(" state unhandled (%ld).\n", dwState); break;
 		}
 	    }
 	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convert_min_filter_to_GL(dwState));
@@ -1473,9 +1473,9 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
         case D3DTSS_MAGFILTER:
 	    if (TRACE_ON(ddraw)) {
 	        switch ((D3DTEXTUREMAGFILTER) dwState) {
-	            case D3DTFG_POINT:  DPRINTF("D3DTFN_POINT\n"); break;
-		    case D3DTFG_LINEAR: DPRINTF("D3DTFN_LINEAR\n"); break;
-		    default: DPRINTF(" state unhandled (%ld).\n", dwState); break;
+	            case D3DTFG_POINT:  TRACE("D3DTFN_POINT\n"); break;
+		    case D3DTFG_LINEAR: TRACE("D3DTFN_LINEAR\n"); break;
+		    default: TRACE(" state unhandled (%ld).\n", dwState); break;
 		}
 	    }
 	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convert_mag_filter_to_GL(dwState));
@@ -1486,10 +1486,10 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
         case D3DTSS_ADDRESSV: {
 	    GLenum arg = GL_REPEAT; /* Default value */
 	    switch ((D3DTEXTUREADDRESS) dwState) {
-	        case D3DTADDRESS_WRAP:   if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_WRAP\n"); arg = GL_REPEAT; break;
-	        case D3DTADDRESS_CLAMP:  if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_CLAMP\n"); arg = GL_CLAMP; break;
-	        case D3DTADDRESS_BORDER: if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_BORDER\n"); arg = GL_CLAMP_TO_EDGE; break;
-	        default: DPRINTF(" state unhandled (%ld).\n", dwState);
+	        case D3DTADDRESS_WRAP:   if (TRACE_ON(ddraw)) TRACE("D3DTADDRESS_WRAP\n"); arg = GL_REPEAT; break;
+	        case D3DTADDRESS_CLAMP:  if (TRACE_ON(ddraw)) TRACE("D3DTADDRESS_CLAMP\n"); arg = GL_CLAMP; break;
+	        case D3DTADDRESS_BORDER: if (TRACE_ON(ddraw)) TRACE("D3DTADDRESS_BORDER\n"); arg = GL_CLAMP_TO_EDGE; break;
+	        default: TRACE(" state unhandled (%ld).\n", dwState);
 	    }
 	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
 		(d3dTexStageStateType == D3DTSS_ADDRESSU))
@@ -1500,7 +1500,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
         } break;
 	    
 	default:
-	    if (TRACE_ON(ddraw)) DPRINTF(" unhandled.\n");
+	    if (TRACE_ON(ddraw)) TRACE(" unhandled.\n");
     }
    
     This->state_block.texture_stage_state[dwStage][d3dTexStageStateType - 1] = dwState;

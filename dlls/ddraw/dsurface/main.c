@@ -625,7 +625,7 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
     if (TRACE_ON(ddraw)) {
         TRACE("(%p)->Looking for caps: %lx,%lx,%lx,%lx output: %p\n",This,pCaps->dwCaps, pCaps->dwCaps2,
 	      pCaps->dwCaps3, pCaps->dwCaps4, ppSurface);
-	DPRINTF("   Caps are : "); DDRAW_dump_DDSCAPS2(pCaps); DPRINTF("\n");
+	TRACE("   Caps are : "); DDRAW_dump_DDSCAPS2(pCaps); TRACE("\n");
     }
 
     our_caps = *pCaps;
@@ -636,7 +636,7 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 	our_caps.dwCaps3 = 0;
 	our_caps.dwCaps4 = 0;
 	if (TRACE_ON(ddraw)) {
-	    DPRINTF("   Real caps are : "); DDRAW_dump_DDSCAPS2(&our_caps); DPRINTF("\n");
+	    TRACE("   Real caps are : "); DDRAW_dump_DDSCAPS2(&our_caps); TRACE("\n");
 	}
     }
     
@@ -648,7 +648,7 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 		  surf->surface_desc.ddsCaps.dwCaps2,
 		  surf->surface_desc.ddsCaps.dwCaps3,
 		  surf->surface_desc.ddsCaps.dwCaps4);
-	    DPRINTF("   Surface caps are : "); DDRAW_dump_DDSCAPS2(&(surf->surface_desc.ddsCaps)); DPRINTF("\n");
+	    TRACE("   Surface caps are : "); DDRAW_dump_DDSCAPS2(&(surf->surface_desc.ddsCaps)); TRACE("\n");
 	}
 	if (((surf->surface_desc.ddsCaps.dwCaps & our_caps.dwCaps) == our_caps.dwCaps) &&
 	    ((surf->surface_desc.ddsCaps.dwCaps2 & our_caps.dwCaps2) == our_caps.dwCaps2))

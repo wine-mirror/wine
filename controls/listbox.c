@@ -750,9 +750,9 @@ static BOOL LISTBOX_SetTabStops( HWND hwnd, LB_DESCR *descr, INT count,
         TRACE("[%p]: settabstops ", hwnd );
         for (i = 0; i < descr->nb_tabs; i++) {
 	    descr->tabs[i] = *p++<<1; /* FIXME */
-            if (TRACE_ON(listbox)) DPRINTF("%hd ", descr->tabs[i]);
+            if (TRACE_ON(listbox)) TRACE("%hd ", descr->tabs[i]);
 	}
-        if (TRACE_ON(listbox)) DPRINTF("\n");
+        if (TRACE_ON(listbox)) TRACE("\n");
     }
     else memcpy( descr->tabs, tabs, descr->nb_tabs * sizeof(INT) );
     /* FIXME: repaint the window? */
