@@ -11,11 +11,13 @@
 #include "x11drv.h"
 #include "debugtools.h"
 
-static const char PEN_dash[]       = { 5,3 };      /* -----   -----   -----  */
-static const char PEN_dot[]        = { 1,1 };      /* --  --  --  --  --  -- */
-static const char PEN_dashdot[]    = { 4,3,2,3 };  /* ----   --   ----   --  */
-static const char PEN_dashdotdot[] = { 4,2,2,2,2,2 }; /* ----  --  --  ----  */
-static const char PEN_alternate[]  = { 1,1 };      /* FIXME */
+DEFAULT_DEBUG_CHANNEL(x11drv);
+
+static const char PEN_dash[]       = { 16,8 };
+static const char PEN_dot[]        = { 4,4 };
+static const char PEN_dashdot[]    = { 12,8,4,8 };
+static const char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
+static const char PEN_alternate[]  = { 1,1 };
 
 /***********************************************************************
  *           PEN_SelectObject
@@ -59,7 +61,7 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 	physDev->pen.dash_len = sizeof(PEN_alternate)/sizeof(*PEN_alternate);
 	break;
       case PS_USERSTYLE:
-	/* FIXME */
+        FIXME("PS_USERSTYLE is not supported\n");
 	break;
     }
     
