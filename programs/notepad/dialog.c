@@ -162,6 +162,8 @@ static VOID DoSaveFile(VOID)
 
     if (!WriteFile(hFile, pTemp, size, &dwNumWrite, NULL))
         ShowLastError();
+    else
+        SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
 
     CloseHandle(hFile);
     HeapFree(GetProcessHeap(), 0, pTemp);
