@@ -31,7 +31,6 @@
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
 struct tagCLASS;
-struct tagDCE;
 
 typedef struct tagWND
 {
@@ -48,7 +47,6 @@ typedef struct tagWND
     LPWSTR         text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
-    struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     DWORD          clsStyle;      /* Class style at window creation */
@@ -107,5 +105,8 @@ inline static void WIN_ReleasePtr( WND *ptr )
 #define WND_DESKTOP       ((WND *)2)  /* returned by WIN_GetPtr on the desktop window */
 
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
+
+/* internal GetDC flag (FIXME) */
+#define DCX_WINDOWPAINT 0x00020000
 
 #endif  /* __WINE_WIN_H */

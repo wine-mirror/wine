@@ -18,7 +18,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/class.c \
 	$(TOPOBJDIR)/windows/clipboard.c \
 	$(TOPOBJDIR)/windows/cursoricon.c \
-	$(TOPOBJDIR)/windows/dce.c \
 	$(TOPOBJDIR)/windows/defdlg.c \
 	$(TOPOBJDIR)/windows/defwnd.c \
 	$(TOPOBJDIR)/windows/dialog.c \

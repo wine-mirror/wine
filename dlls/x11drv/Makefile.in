@@ -14,6 +14,7 @@ C_SRCS = \
 	clipboard.c \
 	clipping.c \
 	codepage.c \
+	dce.c \
 	desktop.c \
 	dga2.c \
 	dib.c \

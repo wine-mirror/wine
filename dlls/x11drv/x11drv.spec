@@ -92,7 +92,7 @@
 @ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
 @ cdecl GetClipboardData(long ptr ptr) X11DRV_GetClipboardData
 @ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
-@ cdecl GetDC(long long long long) X11DRV_GetDC
+@ cdecl GetDCEx(long long long) X11DRV_GetDCEx
 @ cdecl IsClipboardFormatAvailable(long) X11DRV_IsClipboardFormatAvailable
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) X11DRV_MsgWaitForMultipleObjectsEx
 @ cdecl RegisterClipboardFormat(str) X11DRV_RegisterClipboardFormat
@@ -109,6 +109,7 @@
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl ShowWindow(long long) X11DRV_ShowWindow
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
+@ cdecl WindowFromDC(long) X11DRV_WindowFromDC
 @ cdecl WindowMessage(long long long long) X11DRV_WindowMessage
 
 # WinTab32

@@ -845,6 +845,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
 
+    free_window_dce( data );
     destroy_whole_window( display, data );
     destroy_icon_window( display, data );
 
@@ -902,6 +903,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->icon_window   = 0;
     data->xic           = 0;
     data->managed       = FALSE;
+    data->dce           = NULL;
     data->hWMIconBitmap = 0;
     data->hWMIconMask   = 0;
 
@@ -927,8 +929,11 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         if (!create_whole_window( display, data, cs->style )) goto failed;
     }
 
+    /* get class or window DC if needed */
+    alloc_window_dce( data );
+
     /* Call the WH_CBT hook */
-    
+
     /* the window style passed to the hook must be the real window style,
      * rather than just the window style that the caller to CreateWindowEx
      * passed in, so we have to copy the original CREATESTRUCT and get the

@@ -34,7 +34,6 @@
 #include "wine/unicode.h"
 #include "win.h"
 #include "user_private.h"
-#include "dce.h"
 #include "controls.h"
 #include "cursoricon.h"
 #include "message.h"
@@ -578,7 +577,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
 
-    DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
     if (USER_Driver.pDestroyWindow) USER_Driver.pDestroyWindow( hwnd );
 
     free_window_handle( hwnd );
@@ -1065,10 +1063,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         wine_server_call( req );
     }
     SERVER_END_REQ;
-
-    /* Get class or window DC if needed */
-
-    if (wndPtr->clsStyle & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
 
     /* Set the window menu */
 

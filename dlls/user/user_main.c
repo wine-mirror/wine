@@ -116,7 +116,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(EnumDisplaySettingsExW);
     GET_USER_FUNC(CreateWindow);
     GET_USER_FUNC(DestroyWindow);
-    GET_USER_FUNC(GetDC);
+    GET_USER_FUNC(GetDCEx);
     GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     GET_USER_FUNC(ReleaseDC);
     GET_USER_FUNC(ScrollDC);
@@ -129,6 +129,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(SetWindowText);
     GET_USER_FUNC(ShowWindow);
     GET_USER_FUNC(SysCommandSizeMove);
+    GET_USER_FUNC(WindowFromDC);
     GET_USER_FUNC(WindowMessage);
 
     return TRUE;

@@ -811,6 +811,16 @@ BOOL16 WINAPI IsMenu16( HMENU16 hmenu )
 }
 
 
+/***********************************************************************
+ *		DCHook (USER.362)
+ */
+BOOL16 WINAPI DCHook16( HDC16 hdc, WORD code, DWORD data, LPARAM lParam )
+{
+    FIXME( "hDC = %x, %i: stub\n", hdc, code );
+    return FALSE;
+}
+
+
 /**********************************************************************
  *         SetMenuContextHelpId    (USER.384)
  */

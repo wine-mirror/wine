@@ -36,7 +36,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
-#include "dce.h"
 #include "winproc.h"
 #include "wine/server.h"
 #include "wine/list.h"
@@ -55,7 +54,6 @@ typedef struct tagCLASS
     INT              cbWndExtra;    /* Window extra bytes */
     LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
     SEGPTR           segMenuName;   /* Default menu name as SEGPTR */
-    struct tagDCE   *dce;           /* Class DCE (if CS_CLASSDC) */
     HINSTANCE        hInstance;     /* Module that created the task */
     HICON            hIcon;         /* Default icon */
     HICON            hIconSm;       /* Default small icon */
@@ -292,7 +290,6 @@ static void CLASS_FreeClass( CLASS *classPtr )
     USER_Lock();
 
     list_remove( &classPtr->entry );
-    if (classPtr->dce) DCE_FreeDCE( classPtr->dce );
     if (classPtr->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         DeleteObject( classPtr->hbrBackground );
     UnMapLS( classPtr->segMenuName );
@@ -421,7 +418,6 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance, BOOL local,
     classPtr->cbClsExtra  = classExtra;
     classPtr->hInstance   = hInstance;
     classPtr->atomName    = atom;
-    classPtr->dce         = (style & CS_CLASSDC) ? DCE_AllocDCE( 0, DCE_CLASS_DC ) : NULL;
 
     /* Other non-null values must be set by caller */
 
@@ -509,7 +505,6 @@ void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
     }
     win->class    = class;
     win->clsStyle = class->style;
-    win->dce      = class->dce;
 }
 
 

@@ -725,7 +725,6 @@
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl DCE_InvalidateDCE(long ptr)
 @ cdecl HOOK_CallHooks(long long long long long)
 @ cdecl USER_Unlock()
 @ cdecl WINPOS_ActivateOtherWindow(long)

@@ -40,7 +40,6 @@
 #include "x11drv.h"
 #include "win.h"
 #include "winpos.h"
-#include "dce.h"
 
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -83,58 +82,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 
 /***********************************************************************
- *		get_server_visible_region
- */
-static HRGN get_server_visible_region( HWND hwnd, UINT flags )
-{
-    RGNDATA *data;
-    NTSTATUS status;
-    HRGN ret = 0;
-    size_t size = 256;
-
-    do
-    {
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 ))) return 0;
-        SERVER_START_REQ( get_visible_region )
-        {
-            req->window  = hwnd;
-            req->flags   = flags;
-            wine_server_set_reply( req, data->Buffer, size );
-            if (!(status = wine_server_call( req )))
-            {
-                size_t reply_size = wine_server_reply_size( reply );
-                data->rdh.dwSize   = sizeof(data->rdh);
-                data->rdh.iType    = RDH_RECTANGLES;
-                data->rdh.nCount   = reply_size / sizeof(RECT);
-                data->rdh.nRgnSize = reply_size;
-                ret = ExtCreateRegion( NULL, size, data );
-            }
-            else size = reply->total_size;
-        }
-        SERVER_END_REQ;
-        HeapFree( GetProcessHeap(), 0, data );
-    } while (status == STATUS_BUFFER_OVERFLOW);
-
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return ret;
-}
-
-
-/***********************************************************************
- *           get_top_clipping_window
- *
- * Get the top window to clip against (i.e. the top parent that has
- * an associated X window).
- */
-static HWND get_top_clipping_window( HWND hwnd )
-{
-    HWND ret = GetAncestor( hwnd, GA_ROOT );
-    if (!ret) ret = GetDesktopWindow();
-    return ret;
-}
-
-
-/***********************************************************************
  *           X11DRV_Expose
  */
 void X11DRV_Expose( HWND hwnd, XEvent *xev )
@@ -173,116 +120,6 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
     /* make position relative to client area instead of window */
     OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
     RedrawWindow( hwnd, &rect, 0, flags );
-}
-
-
-/***********************************************************************
- *		GetDC (X11DRV.@)
- *
- * Set the drawable, origin and dimensions for the DC associated to
- * a given window.
- */
-BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
-{
-    HWND top = get_top_clipping_window( hwnd );
-    struct x11drv_escape_set_drawable escape;
-    struct x11drv_win_data *data;
-
-    escape.mode = IncludeInferiors;
-    /* don't clip siblings if using parent clip region */
-    if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
-
-    if (top != hwnd || !(data = X11DRV_get_win_data( hwnd )))
-    {
-        POINT client_offset;
-
-        if (flags & DCX_WINDOW)
-        {
-            RECT rect;
-            GetWindowRect( hwnd, &rect );
-            escape.org.x = rect.left;
-            escape.org.y = rect.top;
-            MapWindowPoints( 0, top, &escape.org, 1 );
-            escape.drawable_org.x = rect.left - escape.org.x;
-            escape.drawable_org.y = rect.top - escape.org.y;
-        }
-        else
-        {
-            escape.org.x = escape.org.y = 0;
-            escape.drawable_org.x = escape.drawable_org.y = 0;
-            MapWindowPoints( hwnd, top, &escape.org, 1 );
-            MapWindowPoints( top, 0, &escape.drawable_org, 1 );
-        }
-
-        /* now make origins relative to the X window and not the client area */
-        client_offset = X11DRV_get_client_area_offset( top );
-        escape.org.x += client_offset.x;
-        escape.org.y += client_offset.y;
-        escape.drawable_org.x -= client_offset.x;
-        escape.drawable_org.y -= client_offset.y;
-        escape.drawable = X11DRV_get_whole_window( top );
-    }
-    else
-    {
-        if (IsIconic( hwnd ))
-        {
-            escape.drawable = data->icon_window ? data->icon_window : data->whole_window;
-            escape.org.x = 0;
-            escape.org.y = 0;
-            escape.drawable_org = escape.org;
-            MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
-        }
-        else
-        {
-            escape.drawable = data->whole_window;
-            escape.drawable_org.x = data->whole_rect.left;
-            escape.drawable_org.y = data->whole_rect.top;
-            if (flags & DCX_WINDOW)
-            {
-                escape.org.x = data->window_rect.left - data->whole_rect.left;
-                escape.org.y = data->window_rect.top - data->whole_rect.top;
-            }
-            else
-            {
-                escape.org.x = data->client_rect.left;
-                escape.org.y = data->client_rect.top;
-            }
-        }
-    }
-
-    escape.code = X11DRV_SET_DRAWABLE;
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
-
-    if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
-        SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
-    {
-        /* need to recompute the visible region */
-        HRGN visRgn = get_server_visible_region( hwnd, flags );
-
-        if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
-            CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-
-        SelectVisRgn16( HDC_16(hdc), HRGN_16(visRgn) );
-        DeleteObject( visRgn );
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		ReleaseDC (X11DRV.@)
- */
-void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
-{
-    struct x11drv_escape_set_drawable escape;
-
-    escape.code = X11DRV_SET_DRAWABLE;
-    escape.drawable = root_window;
-    escape.mode = IncludeInferiors;
-    escape.org.x = escape.org.y = 0;
-    escape.drawable_org.x = escape.drawable_org.y = 0;
-
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 
@@ -659,7 +496,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
             }
             /* we don't unmap windows, that causes trouble with the window manager */
         }
-        DCE_InvalidateDCE( hwnd, &data->window_rect );
+        invalidate_dce( hwnd, &data->window_rect );
     }
 
     if (changed & WS_DISABLED)
@@ -764,7 +601,7 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
         {
             RECT rect;
             UnionRect( &rect, rectWindow, &win->rectWindow );
-            DCE_InvalidateDCE( hwnd, &rect );
+            invalidate_dce( hwnd, &rect );
         }
 
         win->rectWindow   = *rectWindow;
@@ -1238,7 +1075,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         rect.bottom = y + height;
         X11DRV_X_to_window_rect( data, &rect );
 
-        DCE_InvalidateDCE( hwnd, &data->window_rect );
+        invalidate_dce( hwnd, &data->window_rect );
 
         if (win->flags & WIN_RESTORE_MAX) style |= WS_MAXIMIZE;
         WIN_SetStyle( hwnd, style, WS_MINIMIZE );

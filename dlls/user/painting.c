@@ -32,7 +32,7 @@
 #include "winuser.h"
 #include "wine/server.h"
 #include "win.h"
-#include "dce.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -412,6 +412,111 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 
     ReleaseDC( hwnd, lps->hdc );
     ShowCaret( hwnd );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		GetDCEx (USER32.@)
+ */
+HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
+{
+    if (!hwnd) hwnd = GetDesktopWindow();
+    else hwnd = WIN_GetFullHandle( hwnd );
+
+    if (USER_Driver.pGetDCEx) return USER_Driver.pGetDCEx( hwnd, hrgnClip, flags );
+    return 0;
+}
+
+
+/***********************************************************************
+ *		GetDC (USER32.@)
+ *
+ * Get a device context.
+ *
+ * RETURNS
+ *	Success: Handle to the device context
+ *	Failure: NULL.
+ */
+HDC WINAPI GetDC( HWND hwnd )
+{
+    if (!hwnd) return GetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+    return GetDCEx( hwnd, 0, DCX_USESTYLE );
+}
+
+
+/***********************************************************************
+ *		GetWindowDC (USER32.@)
+ */
+HDC WINAPI GetWindowDC( HWND hwnd )
+{
+    return GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+}
+
+
+/***********************************************************************
+ *		ReleaseDC (USER32.@)
+ *
+ * Release a device context.
+ *
+ * RETURNS
+ *	Success: Non-zero. Resources used by hdc are released.
+ *	Failure: 0.
+ */
+INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
+{
+    if (USER_Driver.pReleaseDC) return USER_Driver.pReleaseDC( hwnd, hdc );
+    return 0;
+}
+
+
+/**********************************************************************
+ *		WindowFromDC (USER32.@)
+ */
+HWND WINAPI WindowFromDC( HDC hDC )
+{
+    if (USER_Driver.pWindowFromDC) return USER_Driver.pWindowFromDC( hDC );
+    return 0;
+}
+
+
+/***********************************************************************
+ *		LockWindowUpdate (USER32.@)
+ */
+BOOL WINAPI LockWindowUpdate( HWND hwnd )
+{
+    static HWND lockedWnd;
+
+    /* This function is fully implemented by the following patch:
+     *
+     * http://www.winehq.org/hypermail/wine-patches/2004/01/0142.html
+     *
+     * but in order to work properly, it needs the ability to invalidate
+     * DCEs in other processes when the lock window is changed, which
+     * isn't possible yet.
+     * -mike
+     */
+
+    FIXME("(%p), partial stub!\n",hwnd);
+
+    USER_Lock();
+    if (lockedWnd)
+    {
+        if (!hwnd)
+        {
+            /* Unlock lockedWnd */
+            /* FIXME: Do something */
+        }
+        else
+        {
+            /* Attempted to lock a second window */
+            /* Return FALSE and do nothing */
+            USER_Unlock();
+            return FALSE;
+        }
+    }
+    lockedWnd = hwnd;
+    USER_Unlock();
     return TRUE;
 }
 

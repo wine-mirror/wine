@@ -627,16 +627,17 @@ enum x11drv_window_messages
 /* x11drv private window data */
 struct x11drv_win_data
 {
-    HWND    hwnd;           /* hwnd that this private data belongs to */
-    Window  whole_window;   /* X window for the complete window */
-    Window  icon_window;    /* X window for the icon */
-    RECT    window_rect;    /* USER window rectangle relative to parent */
-    RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
-    RECT    client_rect;    /* client area relative to whole window */
-    XIC     xic;            /* X input context */
-    BOOL    managed;        /* is window managed? */
-    HBITMAP hWMIconBitmap;
-    HBITMAP hWMIconMask;
+    HWND        hwnd;           /* hwnd that this private data belongs to */
+    Window      whole_window;   /* X window for the complete window */
+    Window      icon_window;    /* X window for the icon */
+    RECT        window_rect;    /* USER window rectangle relative to parent */
+    RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
+    RECT        client_rect;    /* client area relative to whole window */
+    XIC         xic;            /* X input context */
+    BOOL        managed;        /* is window managed? */
+    struct dce *dce;            /* DCE for CS_OWNDC or CS_CLASSDC windows */
+    HBITMAP     hWMIconBitmap;
+    HBITMAP     hWMIconMask;
 };
 
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
@@ -645,6 +646,9 @@ extern Window X11DRV_get_whole_window( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
 
+extern void alloc_window_dce( struct x11drv_win_data *data );
+extern void free_window_dce( struct x11drv_win_data *data );
+extern void invalidate_dce( HWND hwnd, const RECT *rect );
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
