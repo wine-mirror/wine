@@ -1,6 +1,6 @@
 /* dplayx.dll global data implementation.
  *
- * Copyright 1999 - Peter Hunnisett
+ * Copyright 1999,2000 - Peter Hunnisett
  *
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
@@ -36,27 +36,34 @@ static HANDLE hDplayxSema;
 
 
 /* HACK for simple global data right now */ 
-enum { numSupportedLobbies = 32 };
+enum { numSupportedLobbies = 32, numSupportedSessions = 32 };
 typedef struct tagDirectPlayLobbyData
 {
+  /* Just a DPLCONNECTION struct */
   DWORD           dwConnFlags;
   DPSESSIONDESC2  sessionDesc;
   DPNAME          playerName;
   GUID            guidSP;
   LPVOID          lpAddress;
   DWORD           dwAddressSize;
+
+  /* Information for dplobby interfaces */
   DWORD           dwAppID;
   HANDLE          hReceiveEvent;
   DWORD           dwAppLaunchedFromID;
+
 } DirectPlayLobbyData, *lpDirectPlayLobbyData;
 
 static DirectPlayLobbyData lobbyData[ numSupportedLobbies ];
 
+/* Hack for now */
+static DPSESSIONDESC2 sessionData[ numSupportedSessions ];
+
 /* Function prototypes */
 BOOL  DPLAYX_IsAppIdLobbied( DWORD dwAppId, lpDirectPlayLobbyData* dplData );
 void DPLAYX_InitializeLobbyDataEntry( lpDirectPlayLobbyData lpData );
-
-
+BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
+                                   LPCDPSESSIONDESC2 lpSessionSrc );
 
 
 
@@ -85,6 +92,12 @@ void DPLAYX_ConstructData(void)
   for( i=0; i < numSupportedLobbies; i++ )
   {
     DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
+  }
+
+  /* Set all sessions to be "empty" */
+  for( i=0; i < numSupportedSessions; i++ )
+  {
+    sessionData[i].dwSize = 0;
   }
 
 }
@@ -576,6 +589,89 @@ HRESULT DPLAYX_SetConnectionSettingsW
   DPLAYX_ReleaseSemaphore();
 
   return DP_OK;
+}
+
+LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateSessionDesc2A( LPCDPSESSIONDESC2 lpSessionSrc )
+{
+   LPDPSESSIONDESC2 lpSessionDest = (LPDPSESSIONDESC2) HeapAlloc( GetProcessHeap(),
+                                                    HEAP_ZERO_MEMORY, 
+                                                    sizeof( *lpSessionSrc ) );
+   DPLAYX_CopyIntoSessionDesc2A( lpSessionDest, lpSessionSrc );
+
+   return lpSessionDest;
+}
+
+/* Copy an ANSI session desc structure to the given buffer */
+BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
+                                   LPCDPSESSIONDESC2 lpSessionSrc )
+{
+  memcpy( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
+
+  if( lpSessionSrc->sess.lpszSessionNameA )
+  {
+    lpSessionDest->sess.lpszSessionNameA =
+      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpSessionSrc->sess.lpszSessionNameA );
+  }
+  if( lpSessionSrc->pass.lpszPasswordA )
+  {
+    lpSessionDest->pass.lpszPasswordA =
+      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpSessionSrc->pass.lpszPasswordA );
+  }
+
+  return TRUE;
+}
+
+/* Start the index at 0. index will be updated to equal that which should
+   be passed back into this function for the next element */
+LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateLocalSession( UINT* index )
+{
+  for( ; (*index) < numSupportedSessions; (*index)++ )
+  {
+    if( sessionData[(*index)].dwSize != 0 )
+    {
+      return DPLAYX_CopyAndAllocateSessionDesc2A( &sessionData[(*index)++] ); 
+    }
+  }
+ 
+  /* No more sessions */
+  return NULL;
+}
+
+/* Start the index at 0. index will be updated to equal that which should
+   be passed back into this function for the next element */
+BOOL DPLAYX_CopyLocalSession( UINT* index, LPDPSESSIONDESC2 lpsd )
+{
+  for( ; (*index) < numSupportedSessions; (*index)++ )
+  {
+    if( sessionData[(*index)].dwSize != 0 )
+    {
+      return DPLAYX_CopyIntoSessionDesc2A( lpsd, &sessionData[(*index)++] );
+    }
+  }
+
+  /* No more sessions */
+  return FALSE;
+}
+
+void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd )
+{
+  UINT i;
+
+  FIXME( ": stub\n" );
+
+  /* FIXME: Is this an error if it exists already? */
+ 
+  /* Crude/wrong implementation for now. Just always add to first empty spot */
+  for( i=0; i < numSupportedSessions; i++ )
+  {
+    /* Is this one empty? */
+    if( sessionData[i].dwSize == 0 )
+    {
+      DPLAYX_CopyIntoSessionDesc2A( &sessionData[i], lpsd );  
+      break;
+    }
+  }
+
 }
 
 /* NOTE: This is potentially not thread safe. You are not guaranteed to end up 

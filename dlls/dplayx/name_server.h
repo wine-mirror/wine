@@ -4,6 +4,13 @@
 
 #include "dplay.h"
 
-void DPLAYX_NS_SetLocalComputerAsNameServer( LPDPSESSIONDESC2 lpsd );
+void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd );
+void NS_SendSessionRequestBroadcast( LPVOID lpNSInfo );
+
+BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo );
+void NS_DeleteSessionCache( LPVOID lpNSInfo );
+
+void NS_ResetSessionEnumeration( LPVOID lpNSInfo );
+LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo );
 
 #endif /* __WINE_DPLAYX_NAMESERVER */

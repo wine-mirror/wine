@@ -71,6 +71,8 @@ typedef struct tagDirectPlay2Data
   HANDLE hEnumSessionThread;
 
   EnumSessionAsyncCallbackData enumSessionAsyncCallbackData;
+
+  LPVOID lpNameServerData; /* DPlay interface doesn't know type */
 } DirectPlay2Data;
 
 typedef struct tagDirectPlay3Data
@@ -163,6 +165,11 @@ BOOL DP_CreateDirectPlay2( LPVOID lpDP )
   This->dp2->enumSessionAsyncCallbackData.lpContext = NULL;
   This->dp2->enumSessionAsyncCallbackData.dwTimeout = INFINITE;
 
+  if( !NS_InitializeSessionCache( &This->dp2->lpNameServerData ) )
+  {
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -175,6 +182,8 @@ BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
     TerminateThread( This->dp2->hEnumSessionThread, 0 );
     CloseHandle( This->dp2->hEnumSessionThread );
   }
+
+  NS_DeleteSessionCache( This->dp2->lpNameServerData );
   
   /* Delete the contents */
   HeapFree( GetProcessHeap(), 0, This->dp2 );
@@ -751,21 +760,30 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumPlayers
   return DP_OK;
 }
 
-/* This function is responsible for sending a request for all other known
-   nameservers to send us what sessions they have registered locally
- */
-void DP_SendSessionRequestBroadcast()
-{
-  FIXME( ": stub\n" );
-} 
-
 /* This function should call the registered callback function that the user
-   passed into EnumSessions 
+   passed into EnumSessions for each entry available.
  */
 static void DP_InvokeEnumSessionCallbacksA( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
+                                     LPVOID lpNSInfo,
+                                     DWORD dwTimeout,
                                      LPVOID lpContext )
 {
-  FIXME( ": stub\n" );
+  LPDPSESSIONDESC2 lpSessionDesc;
+
+  FIXME( ": not checking for conditions\n" );
+
+  NS_ResetSessionEnumeration( lpNSInfo );
+
+  /* Enumerate all sessions */
+  while( (lpSessionDesc = NS_WalkSessions( lpNSInfo ) ) != NULL )
+  {
+    TRACE( "EnumSessionsCallback2 invoked\n" );
+    if( !lpEnumSessionsCallback2( lpSessionDesc, &dwTimeout, 0, lpContext ) )
+    {
+      return;
+    }
+  }
+
 }
 
 static DWORD CALLBACK DP_EnumSessionsSpwanThreadA( LPVOID lpContext )
@@ -773,21 +791,34 @@ static DWORD CALLBACK DP_EnumSessionsSpwanThreadA( LPVOID lpContext )
   ICOM_THIS(IDirectPlay2Impl,lpContext);
   DWORD dwTimeout = This->dp2->enumSessionAsyncCallbackData.dwTimeout;
 
-  TRACE( "->(%p)->(0x%08lx)\n", This, dwTimeout );
+  TRACE( "(%p)->(0x%08lx)\n", This, dwTimeout );
 
   /* FIXME: Don't think this is exactly right. It'll do for now */
   for( ;; )
   {
     /* 2: Send the broadcast for session enumeration */
-    DP_SendSessionRequestBroadcast( NULL, 0 ); /* Should pass lpsd */
+    NS_SendSessionRequestBroadcast( This->dp2->lpNameServerData );
 
     SleepEx( dwTimeout, FALSE ); 
 
     DP_InvokeEnumSessionCallbacksA( This->dp2->enumSessionAsyncCallbackData.cb,
+                                    This->dp2->lpNameServerData, 
+                                    dwTimeout,
                                     This->dp2->enumSessionAsyncCallbackData.lpContext );
+
+    /* All sessions have been enumerated. Invoke the callback function
+       once more indicating a timeout has occured. This is the way
+       that the application can indicate that it wishes to continue with the
+       enumeration */
+    if( !(This->dp2->enumSessionAsyncCallbackData.cb)( NULL, &dwTimeout, DPESC_TIMEDOUT, lpContext ) )
+    {
+      /* The application doesn't want us to continue - end this thread */
+      return 0;
+    }
+
   }
 
-  return 0;
+  return 1;
 }
 
 static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
@@ -800,6 +831,8 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
 
   if( dwTimeout == 0 )
   {
+    /* Should actually be getting the dwTimeout value through 
+       IDirectPlay_GetCaps( This, ...)  */
     FIXME( ": should provide a dependent dwTimeout\n" );
     dwTimeout = 5 * 1000; /* 5 seconds */
   }
@@ -833,10 +866,14 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
   {
     DWORD dwThreadId;
  
+    /* Enumerate everything presently in the local session cache */
+    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, This->dp2->lpNameServerData, dwTimeout, lpContext );
+
     /* See if we've already created a thread to service this interface */
     if( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
     {
-
+      /* FIXME: Should be adding a reference here - another thread now knows
+                how to call this interface */
       This->dp2->enumSessionAsyncCallbackData.cb        = lpEnumSessionsCallback2;
       This->dp2->enumSessionAsyncCallbackData.lpContext = lpContext;
       This->dp2->enumSessionAsyncCallbackData.dwTimeout = dwTimeout;
@@ -851,17 +888,15 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
                                                     &dwThreadId );
     }
 
-    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, lpContext );
   }
   else
   {
     /* Send the broadcast for session enumeration */
-    /* FIXME: How to handle the replies? Queue? */
-    DP_SendSessionRequestBroadcast( lpsd, dwFlags );
+    NS_SendSessionRequestBroadcast( This->dp2->lpNameServerData );
 
     SleepEx( dwTimeout, FALSE ); 
  
-    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, lpContext );
+    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, This->dp2->lpNameServerData, dwTimeout, lpContext );
   }
 
   return DP_OK;
@@ -1061,7 +1096,7 @@ static HRESULT WINAPI DirectPlay2AImpl_Open
 
     /* Rightoo - this computer is the host and the local computer needs to be
        the name server so that others can join this session */
-    DPLAYX_NS_SetLocalComputerAsNameServer( lpsd );
+    NS_SetLocalComputerAsNameServer( lpsd );
 
   }
 
@@ -1593,9 +1628,31 @@ static HRESULT WINAPI DirectPlay3AImpl_SecureOpen
 
   FIXME("(%p)->(%p,0x%08lx,%p,%p): stub\n", This, lpsd, dwFlags, lpSecurity, lpCredentials );
 
+  if( This->dp2->bConnectionOpen )
+  {
+    TRACE( ": rejecting already open connection.\n" );
+    return DPERR_ALREADYINITIALIZED;
+  }
+
+  /* When we open we need to stop any EnumSession activity */
   IDirectPlayX_EnumSessions( iface, NULL, 0, NULL, NULL, DPENUMSESSIONS_STOPASYNC );
 
+  if( dwFlags & DPOPEN_CREATE )
+  {
+    dwFlags &= ~DPOPEN_CREATE;
+
+    /* Rightoo - this computer is the host and the local computer needs to be
+       the name server so that others can join this session */
+    NS_SetLocalComputerAsNameServer( lpsd );
+
+  }
+  if( dwFlags )
+  {
+    ERR( ": ignored dwFlags 0x%08lx\n", dwFlags );
+  }
+
   return DP_OK;
+
 }
 
 static HRESULT WINAPI DirectPlay3WImpl_SecureOpen

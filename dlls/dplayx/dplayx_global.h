@@ -16,6 +16,10 @@ HRESULT DPLAYX_SetConnectionSettingsW ( DWORD dwFlags, DWORD dwAppID, LPDPLCONNE
 BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID, HANDLE hReceiveEvent );
 BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID );
 
+LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateLocalSession( UINT* index );
+BOOL DPLAYX_CopyLocalSession( UINT* index, LPDPSESSIONDESC2 lpsd );
+void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd );
+
 /* Convert a DP or DPL HRESULT code into a string for human consumption */
 LPCSTR DPLAYX_HresultToString( HRESULT hr );
 
