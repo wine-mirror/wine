@@ -1878,7 +1878,7 @@ typedef struct tagACCEL
 #define TPM_NONOTIFY      0x0080
 #define TPM_RETURNCMD     0x0100
 
-typedef struct
+typedef struct tagTPMPARAMS
 {
     UINT   cbSize;
     RECT   rcExclude;
@@ -1899,8 +1899,7 @@ typedef struct tagCOMBOBOXINFO
     HWND  hwndList;
 } COMBOBOXINFO, *PCOMBOBOXINFO, *LPCOMBOBOXINFO;
 
-/* FIXME: not sure this one is correct */
-typedef struct {
+typedef struct tagMENUITEMINFOA {
   UINT    cbSize;
   UINT    fMask;
   UINT    fType;
@@ -1915,7 +1914,7 @@ typedef struct {
   HBITMAP hbmpItem;
 } MENUITEMINFOA, *LPMENUITEMINFOA;
 
-typedef struct {
+typedef struct tagMENUITEMINFOW {
   UINT    cbSize;
   UINT    fMask;
   UINT    fType;
