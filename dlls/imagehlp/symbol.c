@@ -4,7 +4,7 @@
  *	Copyright 1998	Patrik Stridvall
  */
 
-#include "windows.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wintypes.h"
 #include "debug.h"

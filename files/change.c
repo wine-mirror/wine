@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
-#include "windows.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "process.h"

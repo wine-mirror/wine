@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "wine/winbase16.h"
 #include "class.h"
 #include "heap.h"
 #include "win.h"

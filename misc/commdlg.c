@@ -8,14 +8,15 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include "wine/winbase16.h"
 #include "win.h"
 #include "heap.h"
 #include "message.h"
 #include "commdlg.h"
+#include "resource.h"
 #include "dialog.h"
 #include "dlgs.h"
 #include "module.h"
-#include "resource.h"
 #include "drive.h"
 #include "debug.h"
 #include "font.h"

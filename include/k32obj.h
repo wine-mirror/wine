@@ -8,7 +8,7 @@
 #define __WINE_K32OBJ_H
 
 #include "wintypes.h"
-#include "windows.h"
+#include "winbase.h" /* SECURITY_ATTRIBUTES */
 
 /* Object types */
 typedef enum

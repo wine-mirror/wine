@@ -9,7 +9,6 @@
 
 #include "win.h"
 #include "queue.h"
-#include "wintypes.h"
 
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 

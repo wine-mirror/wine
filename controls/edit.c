@@ -11,9 +11,9 @@
  *	please read EDIT.TODO (and update it when you change things)
  */
 
-#include "windows.h"
 #include "winnt.h"
 #include "win.h"
+#include "wine/winbase16.h"
 #include "combo.h"
 #include "local.h"
 #include "resource.h"

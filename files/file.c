@@ -24,8 +24,11 @@
 #include <unistd.h>
 #include <utime.h>
 
-#include "windows.h"
 #include "winerror.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "drive.h"
 #include "device.h"
 #include "file.h"

@@ -5,8 +5,8 @@
  *  since dll geting never unloaded the iconcache will never be freed
  */
 #include <string.h>
-#include "windows.h"
 #include "wine/winuser16.h"
+#include "wine/winbase16.h"
 #include "neexe.h"
 #include "cursoricon.h"
 #include "module.h"

@@ -6,9 +6,11 @@
 
 #include <assert.h>
 #include <string.h>
+#include <ctype.h>
 #include "winuser.h"
 #include "builtin32.h"
 #include "peexe.h"
+#include "neexe.h"
 #include "heap.h"
 #include "debug.h"
 #include "main.h"

@@ -4,10 +4,12 @@
  * Copyright 1995 Sven Verdoolaege, 1998 Juergen Schmied
  */
 
-#include "windows.h"
+#include "wintypes.h"
+#include "winreg.h"
 #include "winerror.h"
-#include "debug.h"
 #include "heap.h"
+
+#include "debug.h"
 
 /******************************************************************************
  * BackupEventLog32A [ADVAPI32.15]

@@ -4,7 +4,7 @@
  * Copyright 1998 Marcus Meissner
  */
 
-#include "windows.h"
+#include "wintypes.h"
 #include "ras.h"
 #include "debug.h"
 

@@ -5,8 +5,9 @@
  */
 
 #include <stdlib.h>
-#include "debug.h"
 #include "libres.h"
+#include "resource.h"
+#include "debug.h"
 #include "heap.h"
 #include "windows.h"
 #include "xmalloc.h"

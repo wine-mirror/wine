@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "k32obj.h"
-#include "windows.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "selectors.h"  /* for SET_FS */

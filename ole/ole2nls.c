@@ -8,7 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "windows.h"
+#include "winuser.h"
 #include "heap.h"
 #include "ole.h"
 #include "options.h"

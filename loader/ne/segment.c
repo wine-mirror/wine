@@ -15,8 +15,9 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+
+#include "wine/winbase16.h"
 #include "neexe.h"
-#include "windows.h"
 #include "global.h"
 #include "task.h"
 #include "selectors.h"

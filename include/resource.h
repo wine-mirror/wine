@@ -7,8 +7,6 @@
 #ifndef __WINE_RESOURCE_H
 #define __WINE_RESOURCE_H
 
-#include "windows.h"
-
 #ifndef __WRC_RSC_H
 #include "wrc_rsc.h"
 #endif

@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+
 #include "winerror.h"
 
 #include "pidl.h"
@@ -21,6 +21,8 @@
 #include "if_macros.h"
 #include "shell32_main.h"
 #include "shresdef.h"
+
+#include "debug.h"
 
 /***********************************************************************
 *   IShellView implementation

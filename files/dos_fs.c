@@ -19,7 +19,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "windef.h"
+#include "winuser.h"
+#include "wine/winbase16.h"
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"

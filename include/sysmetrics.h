@@ -7,9 +7,7 @@
 #ifndef __WINE_SYSMETRICS_H
 #define __WINE_SYSMETRICS_H
 
-#include "windows.h"
-
-
+#include "wingdi.h"
   /* Constant system metrics */
 #if 0
 #ifdef WIN_95_LOOK

@@ -13,14 +13,11 @@
  *   - All notifications.
  */
 
-#include "windows.h"
-#include "winnt.h"
-#include "winbase.h"
+
+#include "win.h"
 #include "commctrl.h"
 #include "animate.h"
-#include "win.h"
 #include "debug.h"
-
 
 #define ANIMATE_GetInfoPtr(wndPtr) ((ANIMATE_INFO *)wndPtr->wExtra[0])
 

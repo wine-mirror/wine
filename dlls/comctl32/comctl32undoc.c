@@ -15,9 +15,9 @@
  */
 
 #include <string.h>
-#include <stdlib.h>
+#include <stdlib.h> /* atoi */
 #include <ctype.h>
-#include "windows.h"
+
 #include "commctrl.h"
 #include "heap.h"
 #include "debug.h"

@@ -38,7 +38,7 @@
 
 
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
 #include "commctrl.h"
 #include "treeview.h"
 #include "win.h"

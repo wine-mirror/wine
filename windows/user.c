@@ -7,7 +7,6 @@
 
 #include <stdlib.h>
 #include "windows.h"
-#include "resource.h"
 #include "heap.h"
 #include "gdi.h"
 #include "user.h"

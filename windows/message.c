@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include "wine/winbase16.h"
 #include "message.h"
 #include "winerror.h"
 #include "win.h"

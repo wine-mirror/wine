@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <unistd.h>
+#include "wine/winbase16.h"
 #include "thread.h"
 #include "process.h"
 #include "task.h"

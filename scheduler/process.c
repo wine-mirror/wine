@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "process.h"
 #include "module.h"
+#include "neexe.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"

@@ -7,8 +7,6 @@
 #ifndef __WINE_STACKFRAME_H
 #define __WINE_STACKFRAME_H
 
-#include <string.h>
-#include "windows.h"
 #include "ldt.h"
 #include "thread.h"
 

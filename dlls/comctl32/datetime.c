@@ -14,7 +14,6 @@
  *
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "datetime.h"
 #include "win.h"

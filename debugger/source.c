@@ -20,6 +20,7 @@
 #endif
 
 #include "win.h"
+#include "wine/winbase16.h"
 #include "pe_image.h"
 #include "peexe.h"
 #include "debugger.h"

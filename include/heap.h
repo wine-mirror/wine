@@ -8,7 +8,6 @@
 #define __WINE_HEAP_H
 
 #include "winbase.h"
-#include "winnt.h"
 
 extern HANDLE32 SystemHeap;
 extern HANDLE32 SegptrHeap;

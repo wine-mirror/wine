@@ -4,6 +4,7 @@
  * Check debugsys.inc from the DDK for docu.
  */
 
+#include <stdio.h>
 #include "miscemu.h"
 
 /***********************************************************************

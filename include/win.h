@@ -7,12 +7,8 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
-#include "class.h"
-#include "ldt.h"
-#include "windows.h"
-#include "winproc.h"
 #include "queue.h"
-
+#include "class.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 

@@ -7,7 +7,6 @@
 #ifndef __WINE_DCE_H
 #define __WINE_DCE_H
 
-#include "windows.h"
 #include "win.h"
 
 /* additional DCX flags 

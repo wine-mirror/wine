@@ -4,19 +4,19 @@
  */
 
 #include <assert.h>
+#include "wine/winbase16.h"
 #include "callback.h"
-#include "debug.h"
 #include "debugger.h"
 #include "main.h"
 #include "miscemu.h"
+#include "win16drv.h"
 #include "module.h"
 #include "options.h"
 #include "process.h"
-#include "win16drv.h"
 #include "thread.h"
 #include "task.h"
 #include "stackframe.h"
-#include "windows.h"
+#include "debug.h"
 
 static int MAIN_argc;
 static char **MAIN_argv;

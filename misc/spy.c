@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winuser16.h"
+#include "wine/winbase16.h"
 #include "win.h"
 #include "module.h"
 #include "options.h"

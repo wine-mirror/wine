@@ -4,10 +4,10 @@
  * Copyright 1998 Ulrich Weigand
  */
 
+#include "wine/winuser16.h"
 #include "module.h"
 #include "debug.h"
 #include "debugtools.h"
-#include "windows.h"
 
 /**********************************************************************
  *	    ConvertDialog32To16   (KERNEL.615)

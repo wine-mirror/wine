@@ -8,7 +8,6 @@
  *
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "prsht.h"
 #include "propsheet.h"

@@ -11,6 +11,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <neexe.h>
+#include "wine/winbase16.h"
 #include "module.h"
 #include "task.h"
 #include "selectors.h"

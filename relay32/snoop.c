@@ -6,12 +6,14 @@
 
 
 #include <assert.h>
+#include <string.h>
 #include "windows.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "heap.h"
 #include "builtin32.h"
 #include "snoop.h"
+#include "neexe.h"
 #include "peexe.h"
 #include "selectors.h"
 #include "stackframe.h"

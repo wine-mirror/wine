@@ -5,14 +5,14 @@
  * Copyright 1998       Ulrich Weigand
  */
 
-#include "windows.h"
+#include <string.h>
+#include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "hook.h"
 #include "callback.h"
-#include "resource.h"
 #include "task.h"
 #include "user.h"
 #include "heap.h"
-#include "hook.h"
 #include "module.h"
 #include "process.h"
 #include "stackframe.h"

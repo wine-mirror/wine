@@ -13,7 +13,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "windows.h"
+#include "windef.h"
+#include "wine/winbase16.h"
 #include "global.h"
 #include "ldt.h"
 #include "module.h"

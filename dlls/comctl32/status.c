@@ -5,7 +5,6 @@
  * Copyright 1998 Eric Kohl
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "status.h"
 #include "win.h"

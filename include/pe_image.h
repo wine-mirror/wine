@@ -1,11 +1,9 @@
 #ifndef __WINE_PE_IMAGE_H
 #define __WINE_PE_IMAGE_H
 
-#include <sys/types.h>
-#include "windows.h"
-#include "winnt.h"
+#include "wintypes.h"
+#include "winbase.h"
 #include "peexe.h"
-
 /* modreference used for attached processes
  * all section are calculated here, relocations etc.
  */

@@ -6,12 +6,12 @@
  * Copyright 1999 Eric Pouech
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include "winbase.h"
-
 #ifndef __WINE_CDROM_H__
 #define __WINE_CDROM_H__
+
+#include <stdlib.h>
+#include <unistd.h>
+#include "wintypes.h"
 
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>

@@ -61,10 +61,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>	/* Insomnia - pow() function */
-#include "windows.h"
+#include "dsound.h"
 #include "winerror.h"
 #include "multimedia.h"
-#include "dsound.h"
 #include "objbase.h"
 #include "thread.h"
 #include "debug.h"

@@ -5,9 +5,9 @@
 #ifndef __WINE_IMAGEHLP_H
 #define __WINE_IMAGEHLP_H
 
-#include "toolhelp.h"
-#include "winnt.h"
 #include "wintypes.h"
+#include "windef.h"
+#include "winbase.h"
 
 /***********************************************************************
  * Types

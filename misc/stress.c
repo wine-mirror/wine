@@ -1,5 +1,4 @@
 #include <limits.h>
-#include "windows.h"
 #include "stress.h"
 #include "debug.h"
 

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "winuser.h"
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"

@@ -22,7 +22,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "windows.h"
 #include "win.h"
 #include "commctrl.h"
 #include "ipaddress.h"

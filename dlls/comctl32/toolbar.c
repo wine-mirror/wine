@@ -25,7 +25,6 @@
  *   - Microsofts controlspy examples.
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "sysmetrics.h"
 #include "cache.h"

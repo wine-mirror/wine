@@ -81,6 +81,7 @@ SOFTWARE.
  */
 
 #include "region.h"
+#include "winuser.h"
 #include "debug.h"
 #include "heap.h"
 #include "dc.h"

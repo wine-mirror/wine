@@ -9,9 +9,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "bitmap.h"
 #include "comm.h"
+#include "neexe.h"
 #include "win.h"
 #include "main.h"
 #include "menu.h"

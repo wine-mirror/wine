@@ -1,6 +1,7 @@
 /* ncurses.c */
 /* Copyright 1999 - Joseph Pranevich */
 
+#include <stdio.h>
 #include "config.h"
 #include "console.h"
 

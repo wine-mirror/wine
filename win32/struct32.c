@@ -4,9 +4,8 @@
  * Copyright 1996 Martin von Loewis
  */
 
-#include "windows.h"
-#include "winerror.h"
 #include "struct32.h"
+#include "winerror.h"
 #include "debug.h"
 
 void STRUCT32_MSG16to32(const MSG16 *msg16,MSG32 *msg32)

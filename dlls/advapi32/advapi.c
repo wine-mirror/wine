@@ -4,12 +4,15 @@
  * Copyright 1995 Sven Verdoolaege
  */
 
-#include "windows.h"
+#include <unistd.h>
+
+#include "wintypes.h"
 #include "winerror.h"
-#include "debug.h"
+#include "wine/winestring.h"
 #include "heap.h"
 
-#include <unistd.h>
+#include "debug.h"
+
 
 /******************************************************************************
  * GetUserName32A [ADVAPI32.67]

@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include "winbase.h"
 #include "brush.h"
 #include "bitmap.h"
 #include "debug.h"

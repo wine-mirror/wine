@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "windows.h"
+#include "windef.h"
 #include "console.h"
 #include "config.h"
 

@@ -13,7 +13,6 @@
  *   - All notifications.
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "nativefont.h"
 #include "win.h"

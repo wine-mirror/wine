@@ -27,10 +27,10 @@
 #ifndef PATH_MAX
 #define PATH_MAX _MAX_PATH
 #endif
+#include "debugger.h"
 #include "win.h"
 #include "pe_image.h"
-#include "peexe.h"
-#include "debugger.h"
+#include "neexe.h"
 #include "peexe.h"
 #include "xmalloc.h"
 #include "file.h"

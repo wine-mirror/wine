@@ -6,7 +6,6 @@
  */
 #include <string.h>
 #include <ctype.h>
-#include "windows.h"
 #include "debug.h"
 #include "winnls.h"
 #include "winversion.h"

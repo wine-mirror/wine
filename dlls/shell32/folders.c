@@ -9,11 +9,9 @@
 #include "debug.h"
 #include "objbase.h"
 #include "winerror.h"
-
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shlguid.h"
-#include "shlobj.h"
 
 
 /******************************************************************************

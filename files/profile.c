@@ -11,7 +11,9 @@
 
 #include <sys/stat.h>
 
-#include "windows.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
+#include "winuser.h"
 #include "file.h"
 #include "heap.h"
 #include "debug.h"

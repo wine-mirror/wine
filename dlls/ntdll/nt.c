@@ -10,19 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "win.h"
-#include "file.h"
-#include "windows.h"
-#include "winnls.h"
-#include "heap.h"
-#include "debug.h"
-#include "module.h"
-#include "debugstr.h"
-
-#include "winnt.h"
+#include "wintypes.h"
 #include "windef.h"
+#include "ntdll.h"
 #include "ntdef.h"
 #include "ntddk.h"
+#include "debugstr.h"
+#include "debug.h"
 
 /* move to winbase.h */
 typedef VOID (CALLBACK *PTIMERAPCROUTINE)(LPVOID lpArgToCompletionRoutine,DWORD dwTimerLowValue,DWORD dwTimerHighValue);   

@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "process.h"
 #include "thread.h"

@@ -3,7 +3,6 @@
  *
  *	Copyright 1998	Juergen Schmied <juergen.schmied@metronet.de>
  */
-#include "windows.h"
 #include "winerror.h"
 #include "debug.h"
 
@@ -11,7 +10,6 @@
 #include "objbase.h"
 #include "if_macros.h"
 #include "shlguid.h"
-#include "shlobj.h"
 #include "shell32_main.h"
 #include "shresdef.h"
 

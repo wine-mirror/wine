@@ -15,6 +15,7 @@
 #include "options.h"
 #include "debug.h"
 #include "ole.h"
+#include "neexe.h"
 #include "winversion.h"
 
 typedef struct

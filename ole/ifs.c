@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "ldt.h"
 #include "heap.h"
+#include "wine/winbase16.h"
 #include "wine/obj_base.h"
 #include "objbase.h"
 #include "local.h"

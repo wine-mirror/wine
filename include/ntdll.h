@@ -9,8 +9,6 @@
 
 #include "winbase.h"
 
-/* assumes windows.h already included */
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <signal.h>
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "miscemu.h"
 #include "module.h"
 #include "queue.h"

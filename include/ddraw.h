@@ -6,6 +6,8 @@
 #include <X11/extensions/XShm.h>
 #endif /* defined(HAVE_LIBXXSHM) */
 
+#include "winbase.h" /* LARGE_INTEGER ... */
+#include "wingdi.h" /* PALETTE stuff ... */
 #include "wine/obj_base.h"
 
 #ifndef	DIRECTDRAW_VERSION

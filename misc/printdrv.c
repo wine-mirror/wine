@@ -8,12 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "windows.h"
-#include "win.h"
+#include "winspool.h"
+#include "ldt.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "debug.h"
-#include "winspool.h"
 
 static char PrinterModel[]	= "Printer Model";
 static char DefaultDevMode[]	= "Default DevMode";

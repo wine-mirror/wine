@@ -4,9 +4,8 @@
 #ifndef __WINE_SHELL_H
 #define __WINE_SHELL_H
 
-#include "windows.h"
-#include "winreg.h"
-#include "imagelist.h"
+#include "wintypes.h"
+#include "windef.h"
 
 
 /****************************************************************************

@@ -8,13 +8,12 @@
 
 #include <string.h>
 #include <fcntl.h>
-#include "windows.h"
-#include "gdi.h"
+#include "wine/winbase16.h"
+#include "metafiledrv.h"
+#include "metafile.h"
 #include "bitmap.h"
 #include "file.h"
 #include "heap.h"
-#include "metafile.h"
-#include "metafiledrv.h"
 #include "toolhelp.h"
 #include "debug.h"
 

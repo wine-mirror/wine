@@ -7,7 +7,7 @@
 #ifndef __WINE_BUTTON_H
 #define __WINE_BUTTON_H
 
-#include "windows.h"
+#include "wingdi.h"
 
   /* Extra info for BUTTON windows */
   /* Note: under MS-Windows, state is a BYTE and this structure is */

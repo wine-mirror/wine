@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "debugger.h"
+#include "miscemu.h"
 
 
 /************************************************************

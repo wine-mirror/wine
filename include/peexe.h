@@ -5,7 +5,6 @@
 #define __WINE_PEEXE_H
 
 #include "wintypes.h"
-#include "neexe.h"
 
 typedef struct _IMAGE_FILE_HEADER {
 	WORD	Machine;			/* 00 */

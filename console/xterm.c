@@ -8,6 +8,7 @@
    It does not currently support changing the title bar.
 */
 
+#include <stdio.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -15,7 +16,6 @@
 #include <termios.h>
 #include <errno.h>
 
-#include "windows.h"
 #include "console.h"
 #include "options.h"
 #include "debug.h"

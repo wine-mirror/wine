@@ -4,11 +4,12 @@
  * Copyright 1995 Sven Verdoolaege
  */
 
-#include "windows.h"
-#include "winerror.h"
-#include "debug.h"
-#include "heap.h"
 #include <time.h>
+#include "wintypes.h"
+#include "winreg.h"
+#include "winerror.h"
+#include "heap.h"
+#include "debug.h"
 
 /* FIXME: Where do these belong? */
 typedef DWORD	SERVICE_STATUS_HANDLE;

@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "wine/winestring.h"
 #include "font.h"
 #include "heap.h"
 #include "metafile.h"

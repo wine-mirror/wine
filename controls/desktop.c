@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "desktop.h"
+#include "windef.h"
 #include "heap.h"
 #include "monitor.h"
 #include "win.h"

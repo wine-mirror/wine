@@ -13,7 +13,6 @@
  *
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "tab.h"
 #include "win.h"

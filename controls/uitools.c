@@ -5,7 +5,6 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
-#include "windows.h"
 #include "wine/winuser16.h"
 #include "debug.h"
 

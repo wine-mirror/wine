@@ -1,7 +1,7 @@
 #ifndef __WINE_TOOLHELP_H
 #define __WINE_TOOLHELP_H
 
-#include "windows.h"
+#include "windef.h"
 #include "tlhelp32.h"
 
 #define MAX_DATA	11

@@ -8,10 +8,6 @@
 #ifndef __WINE_IPADDRESS_H
 #define __WINE_IPADDRESS_H
 
-#include "win.h"
-
-
-
 typedef struct tagIPADDRESS_INFO
 {
 	BYTE LowerLimit[4];

@@ -14,7 +14,6 @@
  *
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "monthcal.h"
 #include "win.h"

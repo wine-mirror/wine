@@ -1,9 +1,10 @@
 #ifndef _WINE_DINPUT_H
 #define _WINE_DINPUT_H
 
+#include "windef.h" /* for MAX_PATH */
+#include "wintypes.h"
 #include "unknwn.h"
 #include "mouse.h"
-#include "windef.h" /* for MAX_PATH */
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)

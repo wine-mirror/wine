@@ -9,11 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "windows.h"
+#include "winreg.h"
+#include "winver.h"
+#include "wine/winuser16.h"
 #include "winerror.h"
 #include "heap.h"
 #include "ver.h"
-#include "winreg.h"
 #include "debug.h"
 
 

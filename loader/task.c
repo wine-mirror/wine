@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "wine/winbase16.h"
 #include "user.h"
 #include "callback.h"
 #include "drive.h"

@@ -7,7 +7,7 @@
 #ifndef __WINE_HOOK_H
 #define __WINE_HOOK_H
 
-#include "windows.h"
+#include "wintypes.h"
 
 #define HOOK_WIN16	0x00
 #define HOOK_WIN32A	0x01

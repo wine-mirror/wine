@@ -7,9 +7,7 @@
 #ifndef __WINE_PROCESS_H
 #define __WINE_PROCESS_H
 
-#include "windows.h"
-#include "winbase.h"
-#include "winnt.h"
+#include "wintypes.h"
 #include "module.h"
 #include "k32obj.h"
 

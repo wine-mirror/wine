@@ -4,11 +4,13 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include "metafiledrv.h"
+#include "windef.h"
+#include "wine/winbase16.h"
 #include "dc.h"
 #include "heap.h"
 #include "global.h"
 #include "metafile.h"
+#include "metafiledrv.h"
 #include "debug.h"
 
 #include <string.h>

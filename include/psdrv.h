@@ -6,7 +6,7 @@
  *
  *	Copyright 1998  Huw D M Davies
  */
-#include "windows.h"
+#include "wingdi.h"
 #include "font.h"
 #include "pen.h"
 #include "brush.h"

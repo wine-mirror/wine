@@ -7,6 +7,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "wine/winbase16.h"
 #include "gdi.h"
 #include "dc.h"
 #include "bitmap.h"

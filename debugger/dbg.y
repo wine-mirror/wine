@@ -20,6 +20,7 @@
 #include "options.h"
 #include "queue.h"
 #include "win.h"
+#include "wine/winbase16.h"
 #include "winnt.h"
 #include "debugger.h"
 #include "neexe.h"

@@ -1,14 +1,12 @@
 #ifndef __WINE_SHLOBJ_H
 #define __WINE_SHLOBJ_H
 
+#include "wintypes.h"
 #include "wine/obj_base.h"
 #include "shell.h"
-#include "ole.h"
-#include "ole2.h"
 #include "oleobj.h"
 #include "commctrl.h"
 #include "prsht.h"
-#include "wintypes.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(type,xfn) type (CALLBACK *fn##xfn)

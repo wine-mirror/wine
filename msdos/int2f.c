@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "wine/winbase16.h"
 #include "ldt.h"
 #include "drive.h"
 #include "msdos.h"

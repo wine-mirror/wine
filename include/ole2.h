@@ -5,8 +5,8 @@
 #ifndef __WINE_OLE2_H
 #define __WINE_OLE2_H
 
-#include "oleidl.h"
 #include "wintypes.h"
+#include "oleidl.h"
 
 /* OLE version */
 #define rmm             23

@@ -5,7 +5,7 @@
 #ifndef __WINE_WIN16DRV_H
 #define __WINE_WIN16DRV_H
 
-#include "windows.h"
+#include "wingdi.h"
 #include "gdi.h"
 
 #define SETHIGHBIT 

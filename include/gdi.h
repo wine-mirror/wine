@@ -7,7 +7,8 @@
 #ifndef __WINE_GDI_H
 #define __WINE_GDI_H
 
-#include "windows.h"
+#include "wintypes.h"
+#include "wingdi.h"
 #include "ldt.h"
 #include "local.h"
 #include "path.h"

@@ -16,8 +16,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "windows.h"
-#include "winbase.h"
+
+#include "wine/winbase16.h"
 #include "winnt.h"
 #include "sig_context.h"
 #include "msdos.h"

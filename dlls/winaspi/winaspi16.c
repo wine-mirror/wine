@@ -8,14 +8,13 @@
 #include <unistd.h>
 #include <callback.h>
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
 #include "aspi.h"
 #include "winaspi.h"
 #include "options.h"
 #include "heap.h"
 #include "debug.h"
 #include "selectors.h"
-#include "module.h"
 #include "miscemu.h"
 
 

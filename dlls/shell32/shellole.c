@@ -8,14 +8,16 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
-#include "objbase.h"
+#include "winreg.h"
 #include "winerror.h"
+#include "objbase.h"
 #include "winversion.h"
 
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shell32_main.h"
+
+#include "debug.h"
 
 /*************************************************************************
  *

@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include "module.h"
+#include "neexe.h"
 #include "process.h"
 #include "task.h"
 #include "miscemu.h"

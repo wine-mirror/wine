@@ -9,7 +9,6 @@
 #define CONSOLE_H
 
 #include <stdio.h>
-
 #include "config.h"
 
 /* Can we compile with curses/ncurses? */

@@ -7,7 +7,6 @@
 #ifndef __WINE_DIALOG_H
 #define __WINE_DIALOG_H
 
-#include "windows.h"
 #include "winproc.h"
 
   /* Dialog info structure.

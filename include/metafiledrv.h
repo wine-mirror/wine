@@ -5,7 +5,7 @@
 #ifndef __WINE_METAFILEDRV_H
 #define __WINE_METAFILEDRV_H
 
-#include "windows.h"
+#include "wingdi.h"
 #include "gdi.h"
 
 /* FIXME: SDK docs says these should be 1 and 2 */

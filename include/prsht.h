@@ -1,6 +1,7 @@
 #ifndef _WINE_PRSHT_H
 #define _WINE_PRSHT_H
 
+#include "winuser.h"
 
 #ifdef __cplusplus
 extern "C" {

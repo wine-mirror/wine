@@ -1,9 +1,10 @@
-#include "win.h"
-#include "debug.h"
-#include "windows.h"
+#include "windef.h"
+#include "wintypes.h"
 #include "winreg.h"
 #include "ntdll.h"
 #include "ntddk.h"
+
+#include "debug.h"
 
 /******************************************************************************
  * NtCreateKey [NTDLL]

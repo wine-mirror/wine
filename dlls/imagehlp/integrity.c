@@ -4,11 +4,11 @@
  *	Copyright 1998	Patrik Stridvall
  */
 
-#include "windows.h"
-#include "winerror.h"
 #include "wintypes.h"
-#include "debug.h"
+#include "winbase.h"
+#include "winerror.h"
 #include "imagehlp.h"
+#include "debug.h"
 
 /***********************************************************************
  *           ImageAddCertificate32 (IMAGEHLP.10)

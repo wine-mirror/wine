@@ -14,7 +14,6 @@
  *     hittest.exe, needtext.exe, newrect.exe, updtext.exe and winfrpt.exe.
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "tooltips.h"
 #include "win.h"

@@ -7,7 +7,8 @@
 #ifndef __WINE_METAFILE_H
 #define __WINE_METAFILE_H
 
-#include "windows.h"
+#include "wingdi.h"
+#include "gdi.h"
 
 #define MFHEADERSIZE (sizeof(METAHEADER))
 #define MFVERSION 0x300

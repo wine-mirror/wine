@@ -56,6 +56,7 @@ HANDLE16    WINAPI GetAtomHandle(ATOM);
 HANDLE16    WINAPI GetCodeHandle(FARPROC16);
 VOID        WINAPI GetCodeInfo(FARPROC16,SEGINFO*);
 DWORD       WINAPI GetCurrentPDB(void);
+HTASK16     WINAPI GetCurrentTask(void);
 SEGPTR      WINAPI GetDOSEnvironment(void);
 HMODULE16   WINAPI GetExePtr(HANDLE16);
 WORD        WINAPI GetExeVersion(void);

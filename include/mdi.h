@@ -9,7 +9,7 @@
 #ifndef __WINE_MDI_H
 #define __WINE_MDI_H
 
-#include "windows.h"
+#include "wintypes.h"
 
 #define MDI_MAXLISTLENGTH	0x40
 #define MDI_MAXTITLELENGTH	0xA1

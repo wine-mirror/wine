@@ -12,7 +12,6 @@
  *   - Everything.
  */
 
-#include "windows.h"
 #include "commctrl.h"
 
 #include "debug.h"

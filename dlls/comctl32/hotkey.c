@@ -13,7 +13,6 @@
  *   - Display code.
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "hotkey.h"
 #include "win.h"

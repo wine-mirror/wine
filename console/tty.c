@@ -14,7 +14,6 @@
 #include "console.h"
 #include "config.h"
 #include "wintypes.h" /* FALSE */
-#include "windows.h" /* _lread16() */
 void TTY_Start()
 {
    /* This should be the root driver so we can ignore anything

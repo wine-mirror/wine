@@ -7,11 +7,9 @@
 #ifndef __WINE_DOSEXE_H
 #define __WINE_DOSEXE_H
 
-#include <sys/types.h>
-#include "windows.h"
-#include "winnt.h"
-#include "sig_context.h"
+#include <sys/types.h> /* pid_t */
 #include "wintypes.h"
+#include "sig_context.h"
 
 typedef struct _DOSTASK {
  LPVOID img;

@@ -5,7 +5,6 @@
  *
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "progress.h"
 #include "win.h"

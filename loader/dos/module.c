@@ -16,9 +16,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include "windows.h"
-#include "winbase.h"
+#include "windef.h"
+#include "wine/winbase16.h"
 #include "module.h"
+#include "peexe.h"
+#include "neexe.h"
 #include "task.h"
 #include "selectors.h"
 #include "file.h"

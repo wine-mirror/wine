@@ -7,7 +7,6 @@
 #ifndef __WINE_MISCEMU_H
 #define __WINE_MISCEMU_H
 
-#include <stdio.h>
 #include "winnt.h"
 #include "ldt.h"
 

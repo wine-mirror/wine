@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include "selectors.h"
 #include "debugger.h"
 
 CONTEXT DEBUG_context;

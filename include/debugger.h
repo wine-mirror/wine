@@ -7,10 +7,9 @@
 #ifndef __WINE_DEBUGGER_H
 #define __WINE_DEBUGGER_H
 
-#include "winnt.h"
-#include "selectors.h"
+#include <sys/types.h> /* u_long ... */
+#include "wintypes.h"
 #include "sig_context.h"
-#include "pe_image.h"
 #include "miscemu.h"
 
 #define STEP_FLAG 0x100 /* single step flag */

@@ -24,7 +24,6 @@
 
 
 
-#include "windows.h"
 #include "commctrl.h"
 #include "trackbar.h"
 #include "win.h"

@@ -12,6 +12,7 @@
 #include "miscemu.h"
 #include "selectors.h"
 #include "module.h"
+#include "neexe.h"
 #include "task.h"
 #include "process.h"
 #include "file.h"

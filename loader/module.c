@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "wine/winuser16.h"
+#include "wine/winbase16.h"
 #include "winerror.h"
 #include "class.h"
 #include "file.h"
@@ -22,7 +23,6 @@
 #include "dosexe.h"
 #include "process.h"
 #include "thread.h"
-#include "resource.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "task.h"

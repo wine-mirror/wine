@@ -5,7 +5,6 @@
 #define __WINE_LIBRES_H
 
 #include "wintypes.h"
-#include "resource.h"
 
 extern HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type );
 extern HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc );

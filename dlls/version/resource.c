@@ -9,12 +9,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "windows.h"
-#include "heap.h"
-#include "ver.h"
-#include "lzexpand.h"
-#include "module.h"
+#include "peexe.h"
 #include "neexe.h"
+#include "module.h"
+#include "winver.h"
+#include "ver.h"
+#include "heap.h"
+#include "lzexpand.h"
+#include "peexe.h"
 #include "debug.h"
 
 

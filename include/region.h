@@ -54,7 +54,7 @@ SOFTWARE.
 #ifndef __WINE_REGION_H
 #define __WINE_REGION_H
 
-#include "windows.h"
+#include "wingdi.h"
 #include "gdi.h"
 
 

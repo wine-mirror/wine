@@ -26,7 +26,7 @@
 # define HAVE_IPX
 #endif
 
-#include "windows.h"
+#include "wintypes.h"
 #include "task.h"
 
 #pragma pack(1)

@@ -22,7 +22,6 @@
 #include "process.h"
 #include "module.h"
 #include "file.h"
-#include "resource.h"
 #include "debug.h"
 #include "libres.h"
 #include "winerror.h"

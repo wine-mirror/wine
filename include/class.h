@@ -7,7 +7,7 @@
 #ifndef __WINE_CLASS_H
 #define __WINE_CLASS_H
 
-#include "windows.h"
+#include "wintypes.h"
 #include "winproc.h"
 
 #define CLASS_MAGIC   ('C' | ('L' << 8) | ('A' << 16) | ('S' << 24))

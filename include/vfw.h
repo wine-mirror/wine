@@ -1,9 +1,10 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
-#include <wintypes.h>
-#include <driver.h>
-#include <objbase.h>
+#include "wintypes.h"
+#include "wingdi.h"
+#include "driver.h"
+#include "objbase.h"
 
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV

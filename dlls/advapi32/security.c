@@ -1,11 +1,12 @@
 /*
  * dlls/advapi32/security.c
  */
-#include "windows.h"
+#include "wintypes.h"
+#include "winreg.h"
 #include "winerror.h"
-#include "debug.h"
 #include "heap.h"
 #include "ntdll.h"
+#include "debug.h"
 
 /* FIXME: move it to a header */
 BOOL32 WINAPI IsValidSid (PSID pSid);

@@ -8,7 +8,9 @@
 #ifndef __WINE_WINSPOOL_H
 #define __WINE_WINSPOOL_H
 
-#include "windows.h"
+#include "wintypes.h"
+#include "winbase.h"
+#include "wingdi.h"
 
 #ifdef __cplusplus
 extern "C" {

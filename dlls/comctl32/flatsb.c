@@ -15,7 +15,6 @@
  *
  */
 
-#include "windows.h"
 #include "commctrl.h"
 #include "flatsb.h" 
 #include "win.h"

@@ -10,11 +10,11 @@
 
 #include "windows.h"
 #include "callback.h"
-#include "resource.h"
 #include "task.h"
 #include "user.h"
 #include "heap.h"
 #include "module.h"
+#include "neexe.h"
 #include "process.h"
 #include "stackframe.h"
 #include "heap.h"

@@ -8,6 +8,7 @@
 #include <string.h>
 #include "debug.h"
 #include "winerror.h"
+#include "winreg.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"

@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "windows.h"
+#include "windef.h"
+#include "winver.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 #include "heap.h"
 #include "ver.h"

@@ -30,7 +30,6 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
 #include "commctrl.h"
 #include "winnls.h"
 #include "sysmetrics.h"

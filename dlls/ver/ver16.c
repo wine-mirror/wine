@@ -4,10 +4,11 @@
  * Copyright 1999 Ulrich Weigand
  */
 
-#include "windows.h"
-#include "debug.h"
-#include "ver.h"
+#include "winbase.h"
+#include "winver.h"
 #include "ldt.h"
+#include "ver.h"
+#include "debug.h"
 
 
 /*************************************************************************

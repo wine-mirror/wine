@@ -12,20 +12,19 @@
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
-#include "win.h"
-#include "stackframe.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wine/winestring.h"
 #include "file.h"
-#include "windows.h"
+#include "stackframe.h"
 #include "winnls.h"
 #include "ntdll.h"
-#include "heap.h"
-#include "debug.h"
-#include "module.h"
-#include "heap.h"
 #include "debugstr.h"
-
+#include "heap.h"
 #include "ntdef.h"
 #include "winreg.h"
+
+#include "debug.h"
 
 /* fixme: move to windef.h*/
 typedef BOOL32 *LPBOOL;   

@@ -5,7 +5,7 @@
 #ifndef __WINE_VER_H
 #define __WINE_VER_H
 
-#include "windows.h"
+#include "wintypes.h"
 
 /* resource ids for different version infos */
 #define	VS_FILE_INFO	MAKEINTRESOURCE16(16)

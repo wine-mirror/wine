@@ -2,6 +2,7 @@
  * DOS interrupt 4bh handler
  */
 
+#include <stdio.h>
 #include "miscemu.h"
 
 /***********************************************************************

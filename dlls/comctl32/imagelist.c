@@ -30,7 +30,6 @@
 #define __WINE_IMAGELIST_C
 
  
-#include "windows.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "imagelist.h"

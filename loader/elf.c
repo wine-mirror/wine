@@ -19,6 +19,7 @@
 #include "windows.h"
 #include "snoop.h"
 #include "process.h"
+#include "neexe.h"
 #include "peexe.h"
 #include "heap.h"
 #include "pe_image.h"

@@ -9,7 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "wine/winbase16.h"
 #include "module.h"
+#include "neexe.h"
+#include "peexe.h"
+#include "toolhelp.h"
 #include "file.h"
 #include "ldt.h"
 #include "callback.h"

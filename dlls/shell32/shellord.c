@@ -6,8 +6,8 @@
  *           1998 Jürgen Schmied
  */
 #include <string.h>
-#include "windows.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "debug.h"
 #include "winnls.h"
 #include "winversion.h"

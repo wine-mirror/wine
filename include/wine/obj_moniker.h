@@ -5,11 +5,11 @@
  */
 
 
-#include "wine/obj_misc.h"
 
 #ifndef __WINE_WINE_OBJ_MONIKER_H
 #define __WINE_WINE_OBJ_MONIKER_H
 
+#include "wine/obj_misc.h"
 /*****************************************************************************
  * Predeclare the interfaces
  */

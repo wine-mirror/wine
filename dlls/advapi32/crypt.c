@@ -1,10 +1,10 @@
 /*
  * dlls/advapi32/crypt.c
  */
-#include "windows.h"
+#include "wintypes.h"
 #include "winerror.h"
-#include "debug.h"
 #include "wincrypt.h"
+#include "debug.h"
 
 /******************************************************************************
  * CryptAcquireContextA

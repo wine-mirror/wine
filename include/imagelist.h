@@ -8,7 +8,7 @@
 #define __WINE_IMAGELIST_H
 
 #include "wingdi.h"
- 
+
 struct _IMAGELIST
 {
     HBITMAP32 hbmImage;

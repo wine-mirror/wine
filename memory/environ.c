@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "winuser.h"
+#include "wine/winestring.h"
 #include "process.h"
 #include "heap.h"
 #include "selectors.h"

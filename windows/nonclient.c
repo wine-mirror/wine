@@ -23,6 +23,7 @@
 #include "tweak.h"
 #include "debug.h"
 #include "options.h"
+#include "shellapi.h"
 #include "cache.h"
 
 static HBITMAP16 hbitmapClose = 0;

@@ -7,9 +7,9 @@
 #ifndef __WINE_MODULE_H
 #define __WINE_MODULE_H
 
+#include "wintypes.h"
 #include "dosexe.h"
 #include "pe_image.h"
-#include "wintypes.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE

@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "windows.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
 #include "heap.h"
@@ -20,6 +19,7 @@
 #include "authors.h"
 
 #include "shell.h"
+#include "shellapi.h"
 #include "pidl.h"
 #include "shlobj.h"
 #include "shell32_main.h"
