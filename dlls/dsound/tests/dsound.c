@@ -28,6 +28,34 @@
 #include "initguid.h"
 #include "dsound.h"
 
+static const unsigned int formats[][3]={
+    { 8000,  8, 1},
+    { 8000,  8, 2},
+    { 8000, 16, 1},
+    { 8000, 16, 2},
+    {11025,  8, 1},
+    {11025,  8, 2},
+    {11025, 16, 1},
+    {11025, 16, 2},
+    {22050,  8, 1},
+    {22050,  8, 2},
+    {22050, 16, 1},
+    {22050, 16, 2},
+    {44100,  8, 1},
+    {44100,  8, 2},
+    {44100, 16, 1},
+    {44100, 16, 2},
+    {48000,  8, 1},
+    {48000,  8, 2},
+    {48000, 16, 1},
+    {48000, 16, 2},
+    {96000,  8, 1},
+    {96000,  8, 2},
+    {96000, 16, 1},
+    {96000, 16, 2}
+};
+#define NB_FORMATS (sizeof(formats)/sizeof(*formats))
+
 /* The time slice determines how often we will service the buffer and the
  * buffer will be four time slices long
  */
@@ -371,6 +399,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     DSBUFFERDESC bufdesc;
     WAVEFORMATEX wfx;
     DSCAPS dscaps;
+    int f;
 
     trace("Testing %s - %s : %s\n",lpcstrDescription,lpcstrModule,wine_dbgstr_guid(lpGuid));
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
@@ -418,34 +447,21 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         goto EXIT;
 
     /* Testing secondary buffers */
-    init_format(&wfx,11025,8,1);
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=DSBCAPS_CTRLDEFAULT|DSBCAPS_GETCURRENTPOSITION2;
-    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
-    bufdesc.dwReserved=0;
-    bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing a secondary buffer at %ldx%dx%d\n",
-          wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
-    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&dsbo,NULL);
-    ok(rc==DS_OK,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_buffer(dso,dsbo,0,winetest_interactive);
-        IDirectSoundBuffer_Release(dsbo);
-    }
-
-    init_format(&wfx,48000,16,2);
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=DSBCAPS_CTRLDEFAULT|DSBCAPS_GETCURRENTPOSITION2;
-    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
-    bufdesc.dwReserved=0;
-    bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing a secondary buffer at %ldx%dx%d\n",
-          wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
-    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&dsbo,NULL);
-    ok(rc==DS_OK,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_buffer(dso,dsbo,0,winetest_interactive);
-        IDirectSoundBuffer_Release(dsbo);
+    for (f=0;f<NB_FORMATS;f++) {
+	init_format(&wfx,formats[f][0],formats[f][1],formats[f][2]);
+	bufdesc.dwSize=sizeof(bufdesc);
+	bufdesc.dwFlags=DSBCAPS_CTRLDEFAULT|DSBCAPS_GETCURRENTPOSITION2;
+	bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+	bufdesc.dwReserved=0;
+	bufdesc.lpwfxFormat=&wfx;
+	trace("  Testing a secondary buffer at %ldx%dx%d\n",
+	    wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+	rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&dsbo,NULL);
+	ok(rc==DS_OK,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n",rc);
+	if (rc==DS_OK) {
+	    test_buffer(dso,dsbo,0,winetest_interactive);
+	    IDirectSoundBuffer_Release(dsbo);
+	}
     }
 
 EXIT:
@@ -628,6 +644,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     DSCBUFFERDESC bufdesc;
     WAVEFORMATEX wfx;
     DSCCAPS dsccaps;
+    int f;
 
     /* Private dsound.dll: Error: Invalid interface buffer */
     trace("Testing %s - %s : %s\n",lpcstrDescription,lpcstrModule,wine_dbgstr_guid(lpGuid));
@@ -638,7 +655,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 
     rc=DirectSoundCaptureCreate(lpGuid,&dsco,NULL);
     ok((rc==DS_OK)||(rc==DSERR_NODRIVER),"DirectSoundCaptureCreate failed: 0x%lx\n",rc);
-    if ((rc!=DS_OK)&&(rc!=DSERR_NODRIVER))
+    if (rc!=DS_OK)
         goto EXIT;
 
     /* Private dsound.dll: Error: Invalid caps buffer */
@@ -716,23 +733,27 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         IDirectSoundCaptureBuffer_Release(dscbo);
     }
 
-    init_format(&wfx,11025,8,1);
-    ZeroMemory(&bufdesc, sizeof(bufdesc));
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=0;
-    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
-    bufdesc.dwReserved=0;
-    bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %ldx%dx%d\n",
-        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
-    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_capture_buffer(dsco, dscbo);
-        IDirectSoundCaptureBuffer_Release(dscbo);
+    for (f=0;f<NB_FORMATS;f++) {
+	init_format(&wfx,formats[f][0],formats[f][1],formats[f][2]);
+	ZeroMemory(&bufdesc, sizeof(bufdesc));
+	bufdesc.dwSize=sizeof(bufdesc);
+	bufdesc.dwFlags=0;
+	bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+	bufdesc.dwReserved=0;
+	bufdesc.lpwfxFormat=&wfx;
+	trace("  Testing the capture buffer at %ldx%dx%d\n",
+	    wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
+	ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
+	if (rc==DS_OK) {
+	    test_capture_buffer(dsco, dscbo);
+	    IDirectSoundCaptureBuffer_Release(dscbo);
+	}
     }
 
-    init_format(&wfx,11025,8,1);
+    /* Try an invalid format to test error handling */
+#if 0
+    init_format(&wfx,2000000,16,2);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
@@ -740,61 +761,10 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.dwReserved=0;
     bufdesc.lpwfxFormat=&wfx;
     trace("  Testing the capture buffer at %ldx%dx%d\n",
-        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+	wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_capture_buffer(dsco, dscbo);
-        IDirectSoundCaptureBuffer_Release(dscbo);
-    }
-
-    init_format(&wfx,11025,16,2);
-    ZeroMemory(&bufdesc, sizeof(bufdesc));
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=0;
-    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
-    bufdesc.dwReserved=0;
-    bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %ldx%dx%d\n",
-        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
-    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_capture_buffer(dsco, dscbo);
-        IDirectSoundCaptureBuffer_Release(dscbo);
-    }
-
-    init_format(&wfx,11025,16,2);
-    ZeroMemory(&bufdesc, sizeof(bufdesc));
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
-    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
-    bufdesc.dwReserved=0;
-    bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %ldx%dx%d\n",
-        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
-    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_capture_buffer(dsco, dscbo);
-        IDirectSoundCaptureBuffer_Release(dscbo);
-    }
-
-    init_format(&wfx,44100,16,1);
-    ZeroMemory(&bufdesc, sizeof(bufdesc));
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=DSCBCAPS_WAVEMAPPED;
-    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
-    bufdesc.dwReserved=0;
-    bufdesc.lpwfxFormat=&wfx;
-    trace("  Testing the capture buffer at %ldx%dx%d\n",
-        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
-    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-    ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
-    if (rc==DS_OK) {
-        test_capture_buffer(dsco, dscbo);
-        IDirectSoundCaptureBuffer_Release(dscbo);
-    }
+    ok(rc!=DS_OK,"CreateCaptureBuffer should have failed at 2 MHz 0x%lx\n",rc);
+#endif
 
 EXIT:
     if (dsco!=NULL)
