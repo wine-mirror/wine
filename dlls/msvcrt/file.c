@@ -1412,6 +1412,7 @@ char *_tempnam(const char *dir, const char *prefix)
   if (GetTempFileNameA(dir,prefix,0,tmpbuf))
   {
     TRACE("got name (%s)\n",tmpbuf);
+    DeleteFileA(tmpbuf);
     return _strdup(tmpbuf);
   }
   TRACE("failed (%ld)\n",GetLastError());
@@ -1429,6 +1430,7 @@ MSVCRT_wchar_t *_wtempnam(const MSVCRT_wchar_t *dir, const MSVCRT_wchar_t *prefi
   if (GetTempFileNameW(dir,prefix,0,tmpbuf))
   {
     TRACE("got name (%s)\n",debugstr_w(tmpbuf));
+    DeleteFileW(tmpbuf);
     return _wcsdup(tmpbuf);
   }
   TRACE("failed (%ld)\n",GetLastError());
