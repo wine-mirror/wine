@@ -1582,8 +1582,9 @@ static void register_branch_for_saving( struct key *key, const char *path, size_
 /* save a registry branch to a file */
 static int save_branch( struct key *key, const char *path )
 {
+    struct stat st;
     char *p, *real, *tmp = NULL;
-    int fd, count = 0, ret = 0;
+    int fd, count = 0, ret = 0, by_symlink;
     FILE *f;
 
     if (!(key->flags & KEY_DIRTY))
@@ -1594,6 +1595,7 @@ static int save_branch( struct key *key, const char *path )
 
     /* get the real path */
 
+    by_symlink = (!lstat(path, &st) && S_ISLNK (st.st_mode));
     if (!(real = malloc( PATH_MAX ))) return 0;
     if (!realpath( path, real ))
     {
@@ -1606,10 +1608,10 @@ static int save_branch( struct key *key, const char *path )
 
     if ((fd = open( path, O_WRONLY )) != -1)
     {
-        struct stat st;
-        /* if file is not a regular file or has multiple links,
-           write directly into it; otherwise use a temp file */
-        if (!fstat( fd, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1))
+        /* if file is not a regular file or has multiple links or is accessed
+         * via symbolic links, write directly into it; otherwise use a temp file */
+        if (by_symlink ||
+            (!fstat( fd, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1)))
         {
             ftruncate( fd, 0 );
             goto save;
