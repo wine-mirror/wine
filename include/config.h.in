@@ -167,6 +167,9 @@
 /* Define to 1 if you have the <GL/gl.h> header file. */
 #undef HAVE_GL_GL_H
 
+/* Define to 1 if the ICU libraries are installed */
+#undef HAVE_ICU
+
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #undef HAVE_IEEEFP_H
 
@@ -640,6 +643,9 @@
 
 /* Define to 1 if you have the <ucontext.h> header file. */
 #undef HAVE_UCONTEXT_H
+
+/* Define to 1 if you have the <unicode/ubidi.h> header file. */
+#undef HAVE_UNICODE_UBIDI_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

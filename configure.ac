@@ -409,6 +409,26 @@ fi
 AC_SUBST(SANELIBS)
 AC_SUBST(SANEINCL)
 
+dnl **** Check for the ICU library ****
+AC_CHECK_HEADERS(unicode/ubidi.h)
+if test "$ac_cv_header_unicode_ubidi_h" = "yes"
+then
+    AC_CACHE_CHECK([whether we can statically link the ICU libraries], ac_cv_lib_icu,
+        [saved_libs="$LIBS"
+         ICU_LIB_DIR="${ICU_LIB_DIR-/usr/lib}"
+         ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libicuuc.a}"
+         ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libicudata.a}"
+         LIBS="$LIBS $ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
+         AC_TRY_LINK([#include <unicode/ubidi.h>],[ubidi_open()],
+                     [ac_cv_lib_icu="yes"],[ac_cv_lib_icu="no"])
+        LIBS="$saved_libs"])
+    if test "$ac_cv_lib_icu" = "yes"
+    then
+        AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
+        AC_SUBST(ICULIBS,"$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s")
+    fi
+fi
+
 dnl **** Check for FreeType 2 ****
 AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
