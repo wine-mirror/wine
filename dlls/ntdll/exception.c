@@ -8,7 +8,7 @@
 #include "debugtools.h"
 #include "winnt.h"
 #include "ntddk.h"
-#include "except.h"
+#include "wine/exception.h"
 #include "stackframe.h"
 
 DEFAULT_DEBUG_CHANNEL(seh)
@@ -248,7 +248,7 @@ REGS_ENTRYPOINT(NtRaiseException)
     first = (BOOL)STACK32_POP(context);
     STACK32_PUSH(context,ret);  /* restore return addr */
 
-    EXC_RaiseException( rec, context );
+    EXC_RaiseException( rec, ctx );
     *context = *ctx;
 }
 
@@ -275,9 +275,6 @@ REGS_ENTRYPOINT(RtlRaiseException)
 
 /*******************************************************************
  *         RtlUnwind  (KERNEL32.590) (NTDLL.518)
- *
- *  This function is undocumented. This is the general idea of 
- *  RtlUnwind, though. Note that error handling is not yet implemented.
  *
  * The real prototype is:
  * void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 

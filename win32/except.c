@@ -20,27 +20,18 @@
  *  But exception handling is so basic to Win32 that it should be 
  *  documented!
  *
- * Fixmes:
- *  -Most functions need better parameter checking.
- *  -I do not know how to handle exceptions within an exception handler.
- *   or what is done when ExceptionNestedException is returned from an 
- *   exception handler
- *  -Real exceptions are not yet implemented. only the exception functions
- *   are implemented. A real implementation needs some new code in
- *   loader/signal.c. There would also be a need for showing debugging
- *   information in UnhandledExceptionFilter.
- *
  */
 
 #include <assert.h>
 #include "winuser.h"
 #include "winerror.h"
+#include "ntddk.h"
+#include "wine/exception.h"
 #include "ldt.h"
 #include "process.h"
 #include "thread.h"
-#include "debugtools.h"
-#include "except.h"
 #include "stackframe.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh)
 
@@ -106,4 +97,56 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
     LPTOP_LEVEL_EXCEPTION_FILTER old = pdb->top_filter;
     pdb->top_filter = filter;
     return old;
+}
+
+
+/*************************************************************
+ *            WINE_exception_handler
+ *
+ * Exception handler for exception blocks declared in Wine code.
+ */
+DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                                     CONTEXT *context, LPVOID pdispatcher )
+{
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
+
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+        return ExceptionContinueSearch;
+    if (wine_frame->u.e.filter)
+    {
+        EXCEPTION_POINTERS ptrs;
+        ptrs.ExceptionRecord = record;
+        ptrs.ContextRecord = context;
+        switch(wine_frame->u.e.filter( &ptrs, wine_frame->u.e.param ))
+        {
+        case EXCEPTION_CONTINUE_SEARCH:
+            return ExceptionContinueSearch;
+        case EXCEPTION_CONTINUE_EXECUTION:
+            return ExceptionContinueExecution;
+        case EXCEPTION_EXECUTE_HANDLER:
+            break;
+        default:
+            /* FIXME: should probably raise a nested exception here */
+            return ExceptionContinueSearch;
+        }
+    }
+    RtlUnwind( frame, 0, record, 0 );
+    longjmp( wine_frame->u.e.jmp, 1 );
+}
+
+
+/*************************************************************
+ *            WINE_finally_handler
+ *
+ * Exception handler for try/finally blocks declared in Wine code.
+ */
+DWORD WINAPI WINE_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                                   CONTEXT *context, LPVOID pdispatcher )
+{
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
+
+    if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
+        return ExceptionContinueSearch;
+    wine_frame->u.f.finally_func( wine_frame->u.f.param );
+    return ExceptionContinueSearch;
 }

@@ -19,7 +19,6 @@
 #include "selectors.h"
 #include "syslevel.h"
 #include "task.h"
-#include "except.h"
 #include "win.h"
 #include "flatthunk.h"
 #include "mouse.h"
