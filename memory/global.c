@@ -1129,11 +1129,13 @@ BOOL WINAPI GlobalUnlock(
       if((pintern->LockCount<GLOBAL_LOCK_MAX)&&(pintern->LockCount>0))
 	 pintern->LockCount--;
 
-      locked=(pintern->LockCount==0) ? FALSE : TRUE;
+      locked = (pintern->LockCount != 0);
+      if (!locked) SetLastError(NO_ERROR);
    }
    else
    {
       WARN("invalid handle\n");
+      SetLastError(ERROR_INVALID_HANDLE);
       locked=FALSE;
    }
    /* HeapUnlock(GetProcessHeap()); */
