@@ -60,8 +60,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  */
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran);
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package);
-
 static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq);
+static UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name, 
+                            LPWSTR *FilePath);
+
+/* 
+ * action handlers
+ */
+typedef UINT (*STANDARDACTIONHANDLER)(MSIPACKAGE*);
 
 static UINT ACTION_LaunchConditions(MSIPACKAGE *package);
 static UINT ACTION_CostInitialize(MSIPACKAGE *package);
@@ -86,10 +92,8 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package);
 static UINT ACTION_InstallExecute(MSIPACKAGE *package);
 static UINT ACTION_InstallFinalize(MSIPACKAGE *package);
 static UINT ACTION_ForceReboot(MSIPACKAGE *package);
+static UINT ACTION_ResolveSource(MSIPACKAGE *package);
 
-
-static UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name, 
-                            LPWSTR *FilePath);
  
 /*
  * consts and values used
@@ -151,6 +155,43 @@ const static WCHAR szInstallFinalize[] =
 {'I','n','s','t','a','l','l','F','i','n','a','l','i','z','e',0};
 const static WCHAR szForceReboot[] = 
 {'F','o','r','c','e','R','e','b','o','o','t',0};
+const static WCHAR szResolveSource[] = 
+{'R','e','s','o','l','v','e','S','o','u','r','c','e',0};
+
+struct _actions {
+    LPCWSTR action;
+    STANDARDACTIONHANDLER handler;
+};
+
+struct _actions StandardActions[] = {
+    { szCostFinalize, ACTION_CostFinalize },
+    { szCostInitialize, ACTION_CostInitialize },
+    { szCreateFolders, ACTION_CreateFolders },
+    { szCreateShortcuts, ACTION_CreateShortcuts },
+    { szDuplicateFiles, ACTION_DuplicateFiles},
+    { szFileCost, ACTION_FileCost },
+    { szForceReboot, ACTION_ForceReboot },
+    { szInstallExecute, ACTION_InstallExecute },
+    { szInstallExecuteAgain, ACTION_InstallExecute },
+    { szInstallFiles, ACTION_InstallFiles},
+    { szInstallFinalize, ACTION_InstallFinalize },
+    { szInstallInitialize, ACTION_InstallInitialize },
+    { szInstallValidate, ACTION_InstallValidate },
+    { szLaunchConditions, ACTION_LaunchConditions },
+    { szProcessComponents, ACTION_ProcessComponents },
+    { szPublishFeatures, ACTION_PublishFeatures },
+    { szPublishProduct, ACTION_PublishProduct },
+    { szRegisterClassInfo, ACTION_RegisterClassInfo },
+    { szRegisterProduct, ACTION_RegisterProduct },
+    { szRegisterProgIdInfo, ACTION_RegisterProgIdInfo },
+    { szRegisterTypeLibraries, ACTION_RegisterTypeLibraries },
+    { szResolveSource, ACTION_ResolveSource},
+    { szSelfRegModules, ACTION_SelfRegModules },
+    { szWriteIniValues, ACTION_WriteIniValues },
+    { szWriteRegistryValues, ACTION_WriteRegistryValues},
+    { NULL, NULL},
+};
+
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -720,13 +761,13 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
-        rc = ACTION_PerformActionSequence(package,-1);
+        ACTION_PerformActionSequence(package,-1);
     else if (rc == ERROR_INSTALL_USEREXIT) 
-        rc = ACTION_PerformActionSequence(package,-2);
+        ACTION_PerformActionSequence(package,-2);
     else if (rc == ERROR_FUNCTION_FAILED) 
-        rc = ACTION_PerformActionSequence(package,-3);
+        ACTION_PerformActionSequence(package,-3);
     else if (rc == ERROR_INSTALL_SUSPEND) 
-        rc = ACTION_PerformActionSequence(package,-4);
+        ACTION_PerformActionSequence(package,-4);
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
@@ -1047,76 +1088,39 @@ end:
 UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
 {
     UINT rc = ERROR_SUCCESS; 
+    BOOL handled = FALSE;
+    int i;
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
-    ui_actioninfo(package, action, TRUE, 0);
-    ui_actionstart(package, action);
 
-    /* pre install, setup and configuration block */
-    if (strcmpW(action,szLaunchConditions)==0)
-        rc = ACTION_LaunchConditions(package);
-    else if (strcmpW(action,szCostInitialize)==0)
-        rc = ACTION_CostInitialize(package);
-    else if (strcmpW(action,szFileCost)==0)
-        rc = ACTION_FileCost(package);
-    else if (strcmpW(action,szCostFinalize)==0)
-        rc = ACTION_CostFinalize(package);
-    else if (strcmpW(action,szInstallValidate)==0)
-        rc = ACTION_InstallValidate(package);
+    i = 0;
+    while (StandardActions[i].action != NULL)
+    {
+        if (strcmpW(StandardActions[i].action, action)==0)
+        {
+            ui_actioninfo(package, action, TRUE, 0);
+            ui_actionstart(package, action);
+            rc = StandardActions[i].handler(package);
+            ui_actioninfo(package, action, FALSE, rc);
+            handled =TRUE;
+            break;
+        }
+        i++;
+    }
 
-    /* install block */
-    else if (strcmpW(action,szProcessComponents)==0)
-        rc = ACTION_ProcessComponents(package);
-    else if (strcmpW(action,szInstallInitialize)==0)
-        rc = ACTION_InstallInitialize(package);
-    else if (strcmpW(action,szCreateFolders)==0)
-        rc = ACTION_CreateFolders(package);
-    else if (strcmpW(action,szInstallFiles)==0)
-        rc = ACTION_InstallFiles(package);
-    else if (strcmpW(action,szDuplicateFiles)==0)
-        rc = ACTION_DuplicateFiles(package);
-    else if (strcmpW(action,szWriteRegistryValues)==0)
-        rc = ACTION_WriteRegistryValues(package);
-     else if (strcmpW(action,szRegisterTypeLibraries)==0)
-        rc = ACTION_RegisterTypeLibraries(package);
-     else if (strcmpW(action,szRegisterClassInfo)==0)
-        rc = ACTION_RegisterClassInfo(package);
-     else if (strcmpW(action,szRegisterProgIdInfo)==0)
-        rc = ACTION_RegisterProgIdInfo(package);
-     else if (strcmpW(action,szCreateShortcuts)==0)
-        rc = ACTION_CreateShortcuts(package);
-    else if (strcmpW(action,szPublishProduct)==0)
-        rc = ACTION_PublishProduct(package);
-    else if (strcmpW(action,szWriteIniValues)==0)
-        rc = ACTION_WriteIniValues(package);
-    else if (strcmpW(action,szSelfRegModules)==0)
-        rc = ACTION_SelfRegModules(package);
-    else if (strcmpW(action,szPublishFeatures)==0)
-        rc = ACTION_PublishFeatures(package);
-    else if (strcmpW(action,szRegisterProduct)==0)
-        rc = ACTION_RegisterProduct(package);
-    else if (strcmpW(action,szInstallExecute)==0)
-        rc = ACTION_InstallExecute(package);
-    else if (strcmpW(action,szInstallExecuteAgain)==0)
-        rc = ACTION_InstallExecute(package);
-    else if (strcmpW(action,szInstallFinalize)==0)
-        rc = ACTION_InstallFinalize(package);
-    else if (strcmpW(action,szForceReboot)==0)
-        rc = ACTION_ForceReboot(package);
+    /* Try for Custom Actions */
+    if (!handled)
+    {
+        rc = ACTION_CustomAction(package,action,FALSE);
 
-    /*
-     Called during iTunes but unimplemented and seem important
-
-     ResolveSource  (sets SourceDir)
-     */
-     else if ((rc = ACTION_CustomAction(package,action,FALSE)) != ERROR_SUCCESS)
-     {
-        FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
-        rc = ERROR_FUNCTION_NOT_CALLED;
-     }
+        if (rc != ERROR_SUCCESS)
+        {
+            FIXME("UNHANDLED MSI ACTION %s\n",debugstr_w(action));
+            rc = ERROR_FUNCTION_NOT_CALLED;
+        }
+    }
 
     package->CurrentInstallState = rc;
-    ui_actioninfo(package, action, FALSE, rc);
     return rc;
 }
 
@@ -2794,9 +2798,17 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
              INSTALLSTATE_LOCAL)
         {
             TRACE("Skipping copy due to disabled component\n");
+
+            /* the action taken was the same as the current install state */        
+            package->components[component_index].Action =
+                package->components[component_index].Installed;
+
             msiobj_release(&row->hdr);
             continue;
         }
+
+        package->components[component_index].Action = INSTALLSTATE_LOCAL;
+        package->components[component_index].Installed = INSTALLSTATE_LOCAL;
 
         sz=0x100;
         rc = MSI_RecordGetStringW(row,3,file_key,&sz);
@@ -3029,8 +3041,15 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         {
             TRACE("Skipping write due to disabled component\n");
             msiobj_release(&row->hdr);
+
+            package->components[component_index].Action =
+                package->components[component_index].Installed;
+
             goto next;
         }
+
+        package->components[component_index].Action = INSTALLSTATE_LOCAL;
+        package->components[component_index].Installed = INSTALLSTATE_LOCAL;
 
         /* null values have special meanings during uninstalls and such */
         
@@ -3460,8 +3479,15 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
         {
             TRACE("Skipping typelib reg due to disabled component\n");
             msiobj_release(&row->hdr);
+
+            package->components[index].Action =
+                package->components[index].Installed;
+
             continue;
         }
+
+        package->components[index].Action = INSTALLSTATE_LOCAL;
+        package->components[index].Installed = INSTALLSTATE_LOCAL;
 
         index = get_loaded_file(package,package->components[index].KeyPath); 
    
@@ -3650,7 +3676,9 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szProgID[] = { 'P','r','o','g','I','D',0 };
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
+    static const WCHAR szSpace[] = {' ',0};
     HKEY hkey,hkey2,hkey3;
+    LPWSTR argument,deformated;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3681,6 +3709,7 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         WCHAR desc[0x100];
         DWORD sz;
         INT index;
+        DWORD size;
      
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -3704,8 +3733,15 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         {
             TRACE("Skipping class reg due to disabled component\n");
             msiobj_release(&row->hdr);
+
+            package->components[index].Action =
+                package->components[index].Installed;
+
             continue;
         }
+
+        package->components[index].Action = INSTALLSTATE_LOCAL;
+        package->components[index].Installed = INSTALLSTATE_LOCAL;
 
         sz=0x100;
         MSI_RecordGetStringW(row,1,clsid,&sz);
@@ -3728,10 +3764,25 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         RegCreateKeyW(hkey2,buffer,&hkey3);
 
         index = get_loaded_file(package,package->components[index].KeyPath);
-        RegSetValueExW(hkey3,NULL,0,REG_SZ,
-                       (LPVOID)package->files[index].TargetPath,
-                       (strlenW(package->files[index].TargetPath)+1)
-                        *sizeof(WCHAR));
+
+        argument = load_dynamic_stringW(row,11); 
+        size = deformat_string(package,argument,&deformated);
+        if (deformated)
+            size+=sizeof(WCHAR);
+        HeapFree(GetProcessHeap(),0,argument);
+        size += (strlenW(package->files[index].TargetPath))*sizeof(WCHAR);
+
+        argument = (LPWSTR)HeapAlloc(GetProcessHeap(),0,size+sizeof(WCHAR));
+        strcpyW(argument,package->files[index].TargetPath);
+        if (deformated)
+        {
+            strcatW(argument,szSpace);
+            strcatW(argument,deformated);
+        }
+
+        RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)argument, size);
+        HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,argument);
 
         RegCloseKey(hkey3);
 
@@ -3759,9 +3810,94 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             register_appid(package,buffer,desc);
         }
 
-        RegCloseKey(hkey2);
 
-        FIXME("Process the rest of the fields >7\n");
+        if (!MSI_RecordIsNull(row,7))
+        {
+            FIXME("Process field 7\n");
+        }
+
+        if (!MSI_RecordIsNull(row,8))
+        {
+            static const WCHAR szDefaultIcon[] = 
+            {'D','e','f','a','u','l','t','I','c','o','n',0};
+
+            LPWSTR FileName = load_dynamic_stringW(row,8);
+            LPWSTR FilePath;
+            INT index;
+
+            RegCreateKeyW(hkey2,szDefaultIcon,&hkey3);
+            build_icon_path(package,FileName,&FilePath);
+            if (!MSI_RecordIsNull(row,9))
+            {
+                static const WCHAR index_fmt[] = {',','%','i',0};
+                WCHAR index_buf[20];
+                index = MSI_RecordGetInteger(row,9);
+                sprintfW(index_buf,index_fmt,index);
+                size = strlenW(FilePath)+strlenW(index_buf)+1;
+                size *= sizeof(WCHAR);
+                HeapReAlloc(GetProcessHeap(),0,FilePath,size);
+            }
+            RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)FilePath,
+                           (strlenW(FilePath)+1) * sizeof(WCHAR));
+            HeapFree(GetProcessHeap(),0,FilePath);
+            HeapFree(GetProcessHeap(),0,FileName);
+            RegCloseKey(hkey3);
+        }
+
+        if (!MSI_RecordIsNull(row,10))
+        {
+            static const WCHAR szInproc32[] = {
+            'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
+            static const WCHAR szInproc[] = {
+            'I','n','p','r','o','c','H','a','n','d','l','e','r',0};
+            INT i = MSI_RecordGetInteger(row,10);
+            if (i != MSI_NULL_INTEGER && i > 0 &&  i < 4)
+            {
+                static const WCHAR ole2[] = {'o','l','e','2','.','d','l','l',0};
+                static const WCHAR ole32[] = {
+                        'o','l','e','3','2','.','d','l','l',0};
+                switch(i)
+                {
+                    case 1:
+                        size = strlenW(ole2) * sizeof(WCHAR);
+                        RegCreateKeyW(hkey2,szInproc,&hkey3);
+                        RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)ole2, size);
+                        RegCloseKey(hkey3);
+                        break;
+                    case 2:
+                        size = strlenW(ole32) * sizeof(WCHAR);
+                        RegCreateKeyW(hkey2,szInproc32,&hkey3);
+                        RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)ole32,size);
+                        RegCloseKey(hkey3);
+                        break;
+                    case 3:
+                        size = strlenW(ole2) * sizeof(WCHAR);
+                        RegCreateKeyW(hkey2,szInproc,&hkey3);
+                        RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)ole2, size);
+                        RegCloseKey(hkey3);
+                        size = strlenW(ole32) * sizeof(WCHAR);
+                        RegCreateKeyW(hkey2,szInproc32,&hkey3);
+                        RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)ole32,size);
+                        RegCloseKey(hkey3);
+                        break;
+                }
+                
+            }
+            else
+            {
+                RegCreateKeyW(hkey2,szInproc32,&hkey3);
+                argument = load_dynamic_stringW(row,10);
+                reduce_to_longfilename(argument);
+                size = strlenW(argument)*sizeof(WCHAR);
+
+                RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)argument, size);
+                HeapFree(GetProcessHeap(),0,argument);
+
+                RegCloseKey(hkey3);
+            }
+        }
+
+        RegCloseKey(hkey2);
 
         ui_actiondata(package,szRegisterClassInfo,row);
 
@@ -4099,8 +4235,15 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         {
             TRACE("Skipping shortcut creation due to disabled component\n");
             msiobj_release(&row->hdr);
+
+            package->components[index].Action =
+                package->components[index].Installed;
+
             continue;
         }
+
+        package->components[index].Action = INSTALLSTATE_LOCAL;
+        package->components[index].Installed = INSTALLSTATE_LOCAL;
 
         ui_actiondata(package,szCreateShortcuts,row);
 
@@ -4443,8 +4586,15 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
         {
             TRACE("Skipping ini file due to disabled component\n");
             msiobj_release(&row->hdr);
+
+            package->components[component_index].Action =
+                package->components[component_index].Installed;
+
             continue;
         }
+
+        package->components[component_index].Action = INSTALLSTATE_LOCAL;
+        package->components[component_index].Installed = INSTALLSTATE_LOCAL;
    
         identifier = load_dynamic_stringW(row,1); 
         filename = load_dynamic_stringW(row,2);
@@ -4957,6 +5107,15 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     return ERROR_INSTALL_SUSPEND;
 }
 
+UINT ACTION_ResolveSource(MSIPACKAGE* package)
+{
+    /*
+     * we are currently doing what should be done here in the top level Install
+     * however for Adminastrative and uninstalls this step will be needed
+     */
+    return ERROR_SUCCESS;
+}
+
 /* Msi functions that seem appropriate here */
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 {
@@ -5408,7 +5567,10 @@ piAction);
         *piInstalled = package->components[index].Installed;
 
     if (piAction)
-        *piInstalled = package->components[index].Action;
+        *piAction = package->components[index].Action;
+
+    TRACE("states (%i, %i)\n",
+(piInstalled)?*piInstalled:-1,(piAction)?*piAction:-1);
 
     return ERROR_SUCCESS;
 }
