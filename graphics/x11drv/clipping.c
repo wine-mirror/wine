@@ -14,7 +14,7 @@
 #include "dc.h"
 #include "x11drv.h"
 #include "region.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "local.h"
 
@@ -35,7 +35,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
     if (!obj)
     {
-        ERR(x11drv, "Rgn is 0. Please report this.\n");
+        ERR("Rgn is 0. Please report this.\n");
 	return;
     }
     
@@ -49,7 +49,8 @@ void X11DRV_SetDeviceClipping( DC * dc )
 			    sizeof(*pXrect) * obj->rgn->numRects );
 	if(!pXrect)
 	{
-	    WARN(x11drv, "Can't alloc buffer\n");
+	    WARN("Can't alloc buffer\n");
+	    GDI_HEAP_UNLOCK( dc->w.hGCClipRgn );
 	    return;
 	}
 
