@@ -245,8 +245,8 @@ init	RPCRT4_LibMain
 @ stub NdrMesTypeFree2
 @ stub NdrNsGetBuffer
 @ stub NdrNsSendReceive
-@ stub NdrOleAllocate
-@ stub NdrOleFree
+@ stdcall NdrOleAllocate(long) NdrOleAllocate
+@ stdcall NdrOleFree(ptr) NdrOleFree
 @ stub NdrPipePull
 @ stub NdrPipePush
 @ stub NdrPipeSendReceive
@@ -326,11 +326,11 @@ init	RPCRT4_LibMain
 @ stub NdrHardStructMarshall
 @ stub NdrHardStructMemorySize
 @ stub NdrHardStructUnmarshall
-@ stub NdrInterfacePointerBufferSize
-@ stub NdrInterfacePointerFree
-@ stub NdrInterfacePointerMarshall
-@ stub NdrInterfacePointerMemorySize
-@ stub NdrInterfacePointerUnmarshall
+@ stdcall NdrInterfacePointerBufferSize(ptr ptr ptr) NdrInterfacePointerBufferSize
+@ stdcall NdrInterfacePointerFree(ptr ptr ptr) NdrInterfacePointerFree
+@ stdcall NdrInterfacePointerMarshall(ptr ptr ptr) NdrInterfacePointerMarshall
+@ stdcall NdrInterfacePointerMemorySize(ptr ptr) NdrInterfacePointerMemorySize
+@ stdcall NdrInterfacePointerUnmarshall(ptr ptr ptr long) NdrInterfacePointerUnmarshall
 @ stub NdrNonConformantStringBufferSize
 @ stub NdrNonConformantStringMarshall
 @ stub NdrNonConformantStringMemorySize
