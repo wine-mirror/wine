@@ -388,7 +388,7 @@ COLORREF WINAPI GetPixel16( HDC16 hdc, INT16 x, INT16 y )
  */
 COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 {
-    COLORREF ret = 0;
+    COLORREF ret = CLR_INVALID;
     DC * dc = DC_GetDCUpdate( hdc );
 
     if (dc)
