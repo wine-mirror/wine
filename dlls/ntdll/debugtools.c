@@ -29,7 +29,7 @@ struct debug_info
     char  output[1024];  /* current output line */
 };
 
-static struct debug_info tmp;
+static struct debug_info initial_thread_info;  /* debug info for initial thread */
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -43,20 +43,12 @@ static WINE_EXCEPTION_FILTER(page_fault)
 static inline struct debug_info *get_info(void)
 {
     struct debug_info *info = NtCurrentTeb()->debug_info;
-    if (!info)
+
+    if (!info) NtCurrentTeb()->debug_info = info = &initial_thread_info;
+    if (!info->str_pos)
     {
-        if (!tmp.str_pos)
-        {
-            tmp.str_pos = tmp.strings;
-            tmp.out_pos = tmp.output;
-        }
-        if (!GetProcessHeap()) return &tmp;
-        /* setup the temp structure in case RtlAllocateHeap wants to print something */
-        NtCurrentTeb()->debug_info = &tmp;
-        info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*info) );
         info->str_pos = info->strings;
         info->out_pos = info->output;
-        NtCurrentTeb()->debug_info = info;
     }
     return info;
 }

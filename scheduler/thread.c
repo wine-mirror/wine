@@ -22,7 +22,6 @@
 #include "selectors.h"
 #include "winnt.h"
 #include "wine/server.h"
-#include "services.h"
 #include "stackframe.h"
 #include "debugtools.h"
 #include "winnls.h"
@@ -98,20 +97,12 @@ static BOOL THREAD_InitTEB( TEB *teb )
  * Free data structures associated with a thread.
  * Must be called from the context of another thread.
  */
-static void CALLBACK THREAD_FreeTEB( TEB *teb )
+static void THREAD_FreeTEB( TEB *teb )
 {
     TRACE("(%p) called\n", teb );
-    if (teb->cleanup) SERVICE_Delete( teb->cleanup );
-
     /* Free the associated memory */
-
-    close( teb->request_fd );
-    close( teb->reply_fd );
-    close( teb->wait_fd[0] );
-    close( teb->wait_fd[1] );
-    if (teb->stack_sel) FreeSelector16( teb->stack_sel );
+    FreeSelector16( teb->stack_sel );
     FreeSelector16( teb->teb_sel );
-    if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
 }
 
@@ -155,24 +146,22 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
      * stack_size          normal stack
      * 64Kb                16-bit stack (optional)
      * 1 page              TEB (except for initial thread)
+     * 1 page              debug info (except for initial thread)
      */
 
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
     total_size = stack_size + SIGNAL_STACK_SIZE + 3 * page_size;
     total_size += 0x10000; /* 16-bit stack */
-    if (!teb) total_size += page_size;
+    if (!teb) total_size += 2 * page_size;
 
     if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
         return NULL;
 
     if (!teb)
     {
-        teb = (TEB *)((char *)base + total_size - page_size);
-        if (!THREAD_InitTEB( teb ))
-        {
-            VirtualFree( base, 0, MEM_RELEASE );
-            return NULL;
-        }
+        teb = (TEB *)((char *)base + total_size - 2 * page_size);
+        if (!THREAD_InitTEB( teb )) goto error;
+        teb->debug_info = (char *)teb + page_size;
     }
 
     teb->stack_low    = base;
@@ -196,7 +185,8 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     return teb;
 
 error:
-    THREAD_FreeTEB( teb );
+    FreeSelector16( teb->teb_sel );
+    VirtualFree( base, 0, MEM_RELEASE );
     return NULL;
 }
 
@@ -251,15 +241,7 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init) { THREAD_Init(); }
  */
 static void THREAD_Start(void)
 {
-    HANDLE cleanup_object;
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)NtCurrentTeb()->entry_point;
-
-    /* install cleanup handler */
-    if (DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
-                         GetCurrentProcess(), &cleanup_object, 
-                         0, FALSE, DUPLICATE_SAME_ACCESS ))
-        NtCurrentTeb()->cleanup = SERVICE_AddObject( cleanup_object, (PAPCFUNC)THREAD_FreeTEB,
-                                                     (ULONG_PTR)NtCurrentTeb() );
 
     if (TRACE_ON(relay))
         DPRINTF("%08lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
@@ -323,6 +305,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );
+        close( request_pipe[1] );
         THREAD_FreeTEB( teb );
         return 0;
     }
