@@ -31,7 +31,7 @@ extern LPSTR COMCTL32_aSubclass; /* global subclassing atom */
 /* property name of tooltip window handle */
 /*#define TT_SUBCLASS_PROP "CC32SubclassInfo" */
 
-#define TOOLTIPS_GetInfoPtr(wndPtr) ((TOOLTIPS_INFO *)GetWindowLongA (hwnd, 0))
+#define TOOLTIPS_GetInfoPtr(hWindow) ((TOOLTIPS_INFO *)GetWindowLongA (hWindow, 0))
 
 
 LRESULT CALLBACK
