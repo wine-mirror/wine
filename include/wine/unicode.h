@@ -24,6 +24,7 @@
 #include <stdarg.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 
 /* code page info common to SBCS and DBCS */
