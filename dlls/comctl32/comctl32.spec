@@ -3,11 +3,11 @@ type	win32
 init	COMCTL32_LibMain
 rsrc	rsrc.res
 
-import	user32.dll
-import	gdi32.dll
-import	advapi32.dll
-import	kernel32.dll
-import	ntdll.dll
+#import	user32.dll
+#import	gdi32.dll
+#import	advapi32.dll
+#import	kernel32.dll
+#import	ntdll.dll
 
 debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddress
                 listview message monthcal nativefont pager progress propsheet
