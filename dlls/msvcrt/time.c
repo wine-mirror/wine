@@ -124,11 +124,10 @@ struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
  
   tzid = GetTimeZoneInformation(&tzinfo);
 
-  if (tzid == TIME_ZONE_ID_UNKNOWN || tzid == TIME_ZONE_ID_INVALID) {
+  if (tzid == TIME_ZONE_ID_INVALID)
     tm.tm_isdst = -1;
-  } else {
+  else 
     tm.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
-  }
 
   return &tm;
 }
