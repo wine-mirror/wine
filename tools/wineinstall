@@ -152,6 +152,11 @@ function configure_wine_applications {
 echo "WINE Installer v0.74"
 echo
 
+# check for redhat 9 so we can enable --with-nptl until runtime detection is complete
+if cat /etc/redhat-release | grep Shrike &>/dev/null; then
+    CONFARGS="$CONFARGS --with-nptl"
+fi
+
 if [ "$BINDIST" = 'no' ]
 then {
 
@@ -227,7 +232,7 @@ then {
   else {
     echo "Running configure..."
     echo
-    if ! ./configure -C $CONFARGS
+    if ! ./configure -C $CONFARGS --prefix=$prefix
     then {
       echo
       echo "Configure failed, aborting install."
