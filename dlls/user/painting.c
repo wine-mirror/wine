@@ -326,7 +326,7 @@ static void erase_now( HWND hwnd, UINT rdw_flags )
  */
 static void update_now( HWND hwnd, UINT rdw_flags )
 {
-    HWND child;
+    HWND prev = 0, child;
 
     /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
     if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
@@ -342,8 +342,24 @@ static void update_now( HWND hwnd, UINT rdw_flags )
         if (!get_update_flags( hwnd, &child, &flags )) break;
         if (!flags) break;  /* nothing more to do */
 
-        SendMessageW( child, WM_PAINT, 0, 0 );
+        if (child == prev)  /* same window again, didn't get repainted properly */
+        {
+            UINT erase_flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_NOCHILDREN;
+            HRGN hrgn;
+            RECT rect;
 
+            TRACE( "%p not repainted properly, erasing\n", child );
+            if ((hrgn = send_ncpaint( child, NULL, &erase_flags )))
+            {
+                send_erase( child, erase_flags, hrgn, &rect, NULL );
+                DeleteObject( hrgn );
+            }
+        }
+        else
+        {
+            prev = child;
+            SendMessageW( child, WM_PAINT, 0, 0 );
+        }
         if (rdw_flags & RDW_NOCHILDREN) break;
     }
 }
