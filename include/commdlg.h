@@ -288,7 +288,7 @@ typedef struct
 	HDC  		hDC; 
 	LPLOGFONTA    lpLogFont; 
 	INT		iPointSize; 
-	UINT		Flags; 
+	DWORD		Flags; 
 	COLORREF	rgbColors; 
 	LPARAM		lCustData; 
 	WNDPROC 	lpfnHook; 
@@ -308,7 +308,7 @@ typedef struct
 	HDC  		hDC; 
 	LPLOGFONTW    lpLogFont; 
 	INT		iPointSize; 
-	UINT		Flags; 
+	DWORD		Flags; 
 	COLORREF	rgbColors; 
 	LPARAM		lCustData; 
 	WNDPROC 	lpfnHook; 
