@@ -28,9 +28,12 @@
 #include "winnls.h"
 #include "setupapi.h"
 #include "advpub.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
+
+typedef HRESULT (WINAPI *DLLREGISTER) (void);
 
 
 /***********************************************************************
@@ -171,4 +174,56 @@ HRESULT WINAPI GetVersionFromFileEx( LPSTR lpszFilename, LPDWORD pdwMSVer,
     }
 
     return S_OK;
+}
+
+/***********************************************************************
+ *             RegisterOCX    (ADVPACK.@)
+ */
+void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+{
+    WCHAR wszBuff[MAX_PATH];
+    WCHAR* pwcComma;
+    HMODULE hm;
+    DLLREGISTER pfnRegister;
+    HRESULT hr;
+
+    TRACE("(%s)\n", cmdline);
+
+    MultiByteToWideChar(CP_ACP, 0, cmdline, strlen(cmdline), wszBuff, MAX_PATH);
+    if ((pwcComma = strchrW( wszBuff, ',' ))) *pwcComma = 0;
+
+    TRACE("Parsed DLL name (%s)\n", debugstr_w(wszBuff));
+
+    hm = LoadLibraryExW(wszBuff, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    if (!hm)
+    {
+        ERR("Couldn't load DLL: %s\n", debugstr_w(wszBuff));
+        return;
+    }
+
+    pfnRegister = (DLLREGISTER)GetProcAddress(hm, "DllRegisterServer");
+    if (pfnRegister == NULL)
+    {
+        ERR("DllRegisterServer entry point not found\n");
+    }
+    else
+    {
+        hr = pfnRegister();
+        if (hr != S_OK)
+        {
+            ERR("DllRegisterServer entry point returned %08lx\n", hr);
+        }
+    }
+
+    TRACE("Successfully registered OCX\n");
+
+    FreeLibrary(hm);
+}
+
+/***********************************************************************
+ *             DelNodeRunDLL32    (ADVPACK.@)
+ */
+void WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+{
+    FIXME("(%s) FIXME: stub\n", cmdline);
 }

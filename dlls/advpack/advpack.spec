@@ -2,7 +2,7 @@
 @ stub AdvInstallFile
 @ stub CloseINFEngine
 @ stub DelNode
-@ stub DelNodeRunDLL32
+@ stdcall DelNodeRunDLL32(ptr ptr str long)
 @ stdcall DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
 @ stub ExecuteCab
@@ -23,7 +23,7 @@
 @ stub RegRestoreAll
 @ stub RegSaveRestore
 @ stub RegSaveRestoreOnINF
-@ stub RegisterOCX
+@ stdcall RegisterOCX(ptr ptr str long)
 @ stub RunSetupCommand
 @ stub SetPerUserSecValues
 @ stub TranslateInfString
