@@ -1,7 +1,7 @@
 #ifndef __WINE_SHLGUID_H
 #define __WINE_SHLGUID_H
 
-#include "initguid.h"
+#include "wine/obj_base.h"
 
 DEFINE_SHLGUID(CLSID_ShellDesktop,      0x00021400L, 0, 0);
 DEFINE_SHLGUID(CLSID_ShellLink,         0x00021401L, 0, 0);

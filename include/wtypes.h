@@ -63,8 +63,8 @@ typedef GUID	FMTID,*LPFMTID;
 #define REFFMTID            const FMTID* const
 #endif // !__cplusplus
 
-#define GUID_NULL  ((GUID*)NULL) /* Is this right? */
-#define CLSID_NULL ((REFCLSID)NULL)
+extern const IID GUID_NULL;
+#define CLSID_NULL GUID_NULL
    
 typedef enum tagDVASPECT
 { 
