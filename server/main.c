@@ -29,6 +29,11 @@ int main( int argc, char *argv[] )
     if (debug_level) fprintf( stderr, "Server: starting (pid=%d)\n", getpid() );
     create_initial_thread( fd );
     if (debug_level) fprintf( stderr, "Server: exiting (pid=%d)\n", getpid() );
+
+#ifdef DEBUG_OBJECTS
+    dump_objects();  /* dump any remaining objects */
+#endif
+
     exit(0);
 
  error:    

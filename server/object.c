@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "winerror.h"
@@ -26,6 +27,21 @@ struct object_name
 #define NAME_HASH_SIZE 37
 
 static struct object_name *names[NAME_HASH_SIZE];
+
+#ifdef DEBUG_OBJECTS
+static struct object *first;
+
+void dump_objects(void)
+{
+    struct object *ptr = first;
+    while (ptr)
+    {
+        fprintf( stderr, "%p:%d: ", ptr, ptr->refcount );
+        ptr->ops->dump( ptr, 1 );
+        ptr = ptr->next;
+    }
+}
+#endif
 
 /*****************************************************************/
 
@@ -83,7 +99,20 @@ int init_object( struct object *obj, const struct object_ops *ops,
     obj->tail     = NULL;
     if (!name) obj->name = NULL;
     else if (!(obj->name = add_name( obj, name ))) return 0;
+#ifdef DEBUG_OBJECTS
+    obj->prev = NULL;
+    if ((obj->next = first) != NULL) obj->next->prev = obj;
+    first = obj;
+#endif
     return 1;
+}
+
+/* allocate and initialize an object */
+void *alloc_object( size_t size, const struct object_ops *ops, const char *name )
+{
+    struct object *obj = mem_alloc( size );
+    if (obj) init_object( obj, ops, name );
+    return obj;
 }
 
 struct object *create_named_object( const char *name, const struct object_ops *ops, size_t size )
@@ -136,6 +165,11 @@ void release_object( void *ptr )
         assert( !obj->head );
         assert( !obj->tail );
         if (obj->name) free_name( obj );
+#ifdef DEBUG_OBJECTS
+        if (obj->next) obj->next->prev = obj->prev;
+        if (obj->prev) obj->prev->next = obj->next;
+        else first = obj->next;
+#endif
         obj->ops->destroy( obj );
     }
 }

@@ -15,6 +15,8 @@
 #include "server.h"
 #include "server/request.h"
 
+#define DEBUG_OBJECTS
+
 /* kernel objects */
 
 struct object;
@@ -56,9 +58,14 @@ struct object
     struct wait_queue_entry  *head;
     struct wait_queue_entry  *tail;
     struct object_name       *name;
+#ifdef DEBUG_OBJECTS
+    struct object            *prev;
+    struct object            *next;
+#endif
 };
 
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
+extern void *alloc_object( size_t size, const struct object_ops *ops, const char *name );
 extern struct object *create_named_object( const char *name, const struct object_ops *ops,
                                            size_t size );
 extern int init_object( struct object *obj, const struct object_ops *ops, const char *name );
@@ -75,6 +82,9 @@ extern int no_write_fd( struct object *obj );
 extern int no_flush( struct object *obj );
 extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info );
 extern void default_select_event( int event, void *private );
+#ifdef DEBUG_OBJECTS
+extern void dump_objects(void);
+#endif
 
 /* request handlers */
 
