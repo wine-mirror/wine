@@ -303,7 +303,18 @@ int WINAPI SysStringLen(BSTR str)
  */
 int WINAPI SysStringByteLen(BSTR str)
 {
-  return SysStringLen(str)*sizeof(WCHAR);
+    DWORD* bufferPointer;
+
+     if (!str) return 0;
+    /*
+     * The length of the string (in bytes) is contained in a DWORD placed 
+     * just before the BSTR pointer
+     */
+    bufferPointer = (DWORD*)str;
+
+    bufferPointer--;
+
+    return (int)(*bufferPointer);
 }
 
 /******************************************************************************
