@@ -781,6 +781,7 @@ static int get_ansi_notification(INT unicodeNotificationCode)
     }
     ERR("unknown notification %x\n", unicodeNotificationCode);
     assert(FALSE);
+    return 0;
 }
 
 /*
@@ -4754,6 +4755,7 @@ static INT LISTVIEW_GetCountPerPage(LISTVIEW_INFO *infoPtr)
 	return LISTVIEW_GetCountPerRow(infoPtr) * LISTVIEW_GetCountPerColumn(infoPtr);
     }
     assert(FALSE);
+    return 0;
 }
 
 /***
