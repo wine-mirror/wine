@@ -29,6 +29,10 @@ BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 
 #define COMCTL32_VERSION                5  /* dll version */
 
+#ifndef _WIN32_IE
+#define _WIN32_IE 0x0400
+#endif
+
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
 #define ICC_BAR_CLASSES        0x00000004  /* toolbar, statusbar, trackbar, tooltips */
@@ -64,8 +68,8 @@ BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define CCM_FIRST            0x2000
 
 #define CCM_SETBKCOLOR       (CCM_FIRST+1)     /* lParam = bkColor */
-#define CCM_SETCOLORSCHEME   (CCM_FIRST+2)
-#define CCM_GETCOLORSCHEME   (CCM_FIRST+3)
+#define CCM_SETCOLORSCHEME   (CCM_FIRST+2)     /* lParam = COLORSCHEME struct ptr */
+#define CCM_GETCOLORSCHEME   (CCM_FIRST+3)     /* lParam = COLORSCHEME struct ptr */
 #define CCM_GETDROPTARGET    (CCM_FIRST+4)
 #define CCM_SETUNICODEFORMAT (CCM_FIRST+5)
 #define CCM_GETUNICODEFORMAT (CCM_FIRST+6)
@@ -250,6 +254,13 @@ VOID WINAPI DrawStatusTextW (HDC, LPRECT, LPCWSTR, UINT);
 #define DrawStatusText WINELIB_NAME_AW(DrawStatusText)
 VOID WINAPI MenuHelp (UINT, WPARAM, LPARAM, HMENU,
                       HINSTANCE, HWND, LPUINT);
+
+typedef struct tagCOLORSCHEME 
+{
+   DWORD            dwSize;
+   COLORREF         clrBtnHighlight;       /* highlight color */
+   COLORREF         clrBtnShadow;          /* shadow color */
+} COLORSCHEME, *LPCOLORSCHEME;
 
 /**************************************************************************
  *  Drag List control
@@ -835,6 +846,7 @@ typedef struct tagNMHDDISPINFOW
 #define TB_PRESSBUTTON           (WM_USER+3)
 #define TB_HIDEBUTTON            (WM_USER+4)
 #define TB_INDETERMINATE         (WM_USER+5)
+#define TB_MARKBUTTON		 (WM_USER+6)
 #define TB_ISBUTTONENABLED       (WM_USER+9) 
 #define TB_ISBUTTONCHECKED       (WM_USER+10) 
 #define TB_ISBUTTONPRESSED       (WM_USER+11) 
@@ -1124,6 +1136,14 @@ typedef struct
 	UINT      nIDNew;
 	INT       nButtons;
 } TBREPLACEBITMAP, *LPTBREPLACEBITMAP;
+
+typedef struct 
+{
+    int   iButton;
+    DWORD dwFlags;
+} TBINSERTMARK, *LPTBINSERTMARK;
+#define TBIMHT_AFTER      0x00000001 /* TRUE = insert After iButton, otherwise before */
+#define TBIMHT_BACKGROUND 0x00000002 /* TRUE if and only if missed buttons completely */
 
 HWND WINAPI
 CreateToolbar(HWND, DWORD, UINT, INT, HINSTANCE,
@@ -1943,6 +1963,7 @@ typedef struct tagTVINSERTSTRUCTW {
 } TVINSERTSTRUCTW, *LPTVINSERTSTRUCTW;
 
 #define TV_INSERTSTRUCT   WINELIB_NAME_AW(TVINSERTSTRUCT)
+#define LPTVINSERTSTRUCT WINELIB_NAME_AW(LPTVINSERTSTRUCT)
 #define LPTV_INSERTSTRUCT WINELIB_NAME_AW(LPTVINSERTSTRUCT)
 
 #define TVINSERTSTRUCT_V1_SIZEA CCSIZEOF_STRUCT(TVINSERTSTRUCTA, item)
@@ -2263,6 +2284,21 @@ typedef struct tagNMTVGETINFOTIPW
 #define LVS_NOCOLUMNHEADER      0x4000
 #define LVS_NOSORTHEADER        0x8000
 
+#define LVS_EX_GRIDLINES        0x0001
+#define LVS_EX_SUBITEMIMAGES    0x0002
+#define LVS_EX_CHECKBOXES       0x0004
+#define LVS_EX_TRACKSELECT      0x0008
+#define LVS_EX_HEADERDRAGDROP   0x0010
+#define LVS_EX_FULLROWSELECT    0x0020
+#define LVS_EX_ONECLICKACTIVATE 0x0040
+#define LVS_EX_TWOCLICKACTIVATE 0x0080
+#define LVS_EX_FLATSB           0x0100
+#define LVS_EX_REGIONAL         0x0200
+#define LVS_EX_INFOTIP          0x0400
+#define LVS_EX_UNDERLINEHOT     0x0800
+#define LVS_EX_UNDERLINECOLD    0x1000
+#define LVS_EX_MULTIWORKAREAS   0x2000
+
 #define LVCF_FMT                0x0001
 #define LVCF_WIDTH              0x0002
 #define LVCF_TEXT               0x0004
@@ -2281,6 +2317,12 @@ typedef struct tagNMTVGETINFOTIPW
 #define LVSIL_NORMAL            0
 #define LVSIL_SMALL             1
 #define LVSIL_STATE             2
+
+/* following 2 flags only for LVS_OWNERDATA listviews */
+/* and only in report or list mode */
+#define LVSICF_NOINVALIDATEALL  0x0001
+#define LVSICF_NOSCROLL         0x0002
+
 
 #define LVFI_PARAM              0X0001
 #define LVFI_STRING             0X0002
@@ -2502,6 +2544,45 @@ typedef struct tagLVITEMW
     LPARAM lParam;
     INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
 } LVITEMW, *LPLVITEMW;
+
+/* ListView background image structs and constants
+   For _WIN32_IE version 0x400 and later. */
+
+typedef struct tagLVBKIMAGEA
+{
+    ULONG ulFlags;
+    HBITMAP hbm;
+    LPSTR pszImage;
+    UINT cchImageMax;
+    int xOffsetPercent;
+    int yOffsetPercent;
+} LVBKIMAGEA, *LPLVBKIMAGEA;
+
+typedef struct tagLVBKIMAGEW
+{
+    ULONG ulFlags;
+    HBITMAP hbm;
+    LPWSTR pszImage;
+    UINT cchImageMax;
+    int xOffsetPercent;
+    int yOffsetPercent;
+} LVBKIMAGEW, *LPLVBKIMAGEW;
+
+#define LVBKIMAGE WINELIB_NAME_AW(LVBKIMAGE)
+
+#define LVBKIF_SOURCE_NONE      0x00000000
+#define LVBKIF_SOURCE_HBITMAP   0x00000001
+#define LVBKIF_SOURCE_URL       0x00000002
+#define LVBKIF_SOURCE_MASK      0x00000003
+#define LVBKIF_STYLE_NORMAL     0x00000000
+#define LVBKIF_STYLE_TILE       0x00000010
+#define LVBKIF_STYLE_MASK       0x00000010
+
+#define ListView_SetBkImage(hwnd, plvbki) \
+    (BOOL)SNDMSG((hwnd), LVM_SETBKIMAGE, 0, (LPARAM)plvbki)
+
+#define ListView_GetBkImage(hwnd, plvbki) \
+    (BOOL)SNDMSG((hwnd), LVM_GETBKIMAGE, 0, (LPARAM)plvbki)
 
 #define LVITEM   WINELIB_NAME_AW(LVITEM)
 #define LPLVITEM WINELIB_NAME_AW(LPLVITEM)
@@ -2781,7 +2862,7 @@ typedef struct tagNMLVCACHEHINT
 #define TCM_SETTOOLTIPS         (TCM_FIRST + 46)
 #define TCM_GETCURFOCUS         (TCM_FIRST + 47)
 #define TCM_SETCURFOCUS         (TCM_FIRST + 48)
-#define TCM_SETMINTTABWIDTH     (TCM_FIRST + 49)
+#define TCM_SETMINTABWIDTH     (TCM_FIRST + 49)
 #define TCM_DESELECTALL         (TCM_FIRST + 50)
 #define TCM_HIGHLIGHTITEM		(TCM_FIRST + 51)
 #define TCM_SETEXTENDEDSTYLE	(TCM_FIRST + 52)
@@ -2930,6 +3011,35 @@ typedef struct tagTCITEMW
 #define CBEN_FIRST              (0U-800U)
 #define CBEN_LAST               (0U-830U)
 
+typedef struct tagCOMBOBOXEXITEMA
+{
+    UINT mask;
+    int iItem;
+    LPSTR pszText;
+    int cchTextMax;
+    int iImage;
+    int iSelectedImage;
+    int iOverlay;
+    int iIndent;
+    LPARAM lParam;
+} COMBOBOXEXITEMA, *PCOMBOBOXEXITEMA;
+typedef COMBOBOXEXITEMA CONST *PCCOMBOEXITEMA;
+
+
+typedef struct tagCOMBOBOXEXITEMW
+{
+    UINT mask;
+    int iItem;
+    LPWSTR pszText;
+    int cchTextMax;
+    int iImage;
+    int iSelectedImage;
+    int iOverlay;
+    int iIndent;
+    LPARAM lParam;
+} COMBOBOXEXITEMW, *PCOMBOBOXEXITEMW;
+
+#define COMBOBOXEXITEM WINELIB_NAME_AW(COMBOBOXEXITEM)
 
 /* Hotkey control */
 
