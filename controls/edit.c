@@ -3962,15 +3962,14 @@ static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode
     if(unicode)
     {
 	LPWSTR textW = (LPWSTR)lParam;
-	strncpyW(textW, es->text, count);
-	textW[count - 1] = 0; /* ensure 0 termination */
+	lstrcpynW(textW, es->text, count);
 	return strlenW(textW);
     }
     else
     {
 	LPSTR textA = (LPSTR)lParam;
-	WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, count, NULL, NULL);
-	textA[count - 1] = 0; /* ensure 0 termination */
+	if (!WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, count, NULL, NULL))
+            textA[count - 1] = 0; /* ensure 0 termination */
 	return strlen(textA);
     }
 }
