@@ -3062,6 +3062,10 @@ dummy:
  * Copyright 2000 Francois Gouget <fgouget@codeweavers.com> for CodeWeavers
  */
 
+#ifndef STRICT
+#define STRICT
+#endif
+
 #include <dlfcn.h>
 #include <windows.h>
 
