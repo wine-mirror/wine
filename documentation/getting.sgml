@@ -141,7 +141,7 @@
 	  newer versions via patch files that we release.
 	  You won't have the newest code and the flexibility offered by CVS,
 	  though.
-	<para>
+	</para>
 
 	<para>
 	  About binary package files: not sure. There's about a zillion

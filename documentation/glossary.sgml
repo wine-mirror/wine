@@ -31,6 +31,7 @@ EXAMPLE:
   <glossdef>
   <para>
     Concurrent Versions System, a software package to manage software development done by several people. See the CVS chapter in the Wine Developers Guide for detailed usage information.
+  </para>
   </glossdef>
 </glossentry>
 <glossentry>
@@ -183,4 +184,5 @@ EXAMPLE:
   </para>
   </glossdef>
 </glossentry>
+</glossdiv>
 </glossary>
