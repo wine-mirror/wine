@@ -1310,7 +1310,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
 	    BitBlt( hdc, rect.left, top, rect.right - rect.left,
 		  rect.bottom - rect.top, hdcMem, 0, 0,
-		  (lpitem->fState & MF_HILITE) ? NOTSRCCOPY : SRCCOPY );
+		  ((lpitem->fState & MF_HILITE) && !((LOWORD((DWORD)lpitem->text)) < 12)) ? NOTSRCCOPY : SRCCOPY );
 	}
 	DeleteDC( hdcMem );
 
