@@ -24,8 +24,8 @@ IDS_EDIT,		"Edi&tieren"
 IDS_DEFAULT,		"Stan&dard"
 IDS_PROPERTIES,		"&Eigenschaften"
 IDS_MARK,		"&Markieren"
-IDS_COPY,		"&Copy"
-IDS_PASTE,		"&Paste"
+IDS_COPY,		"&Kopieren"
+IDS_PASTE,		"&Einfügen"
 IDS_SELECTALL,		"&Alles auswählen"
 IDS_SCROLL,		"Sc&rollen"
 IDS_SEARCH,		"&Suchen"
@@ -34,8 +34,8 @@ IDS_FNT_PREVIEW_1,	"Dies ist ein Test"
 IDS_FNT_PREVIEW_2,	""
 IDS_DLG_TIT_DEFAULT,    "Setup - Standardeinstellungen"
 IDS_DLG_TIT_CURRENT,    "Setup - aktuelle Einstellungen"
-IDS_DLG_TIT_ERROR,      "Configuration error"
-IDS_DLG_ERR_SBWINSIZE,  "Screen buffer size must be greater or equal to the window's one"
+IDS_DLG_TIT_ERROR,      "Konfigurationsfehler"
+IDS_DLG_ERR_SBWINSIZE,  "Die Bildschirmgröße muß größer oder gleich der des Fensters sein"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
@@ -99,8 +99,8 @@ FONT 8, "MS Shell Dlg"
 	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
-	GROUPBOX "End of program", -1, 115, 11, 80, 42, BS_GROUPBOX
-	AUTOCHECKBOX "&Close console", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
+	GROUPBOX "Programmende", -1, 115, 11, 80, 42, BS_GROUPBOX
+	AUTOCHECKBOX "Konsole &schließen", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 	
 	GROUPBOX "Edition", -1, 115, 55, 80, 42
 	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
@@ -108,13 +108,13 @@ FONT 8, "MS Shell Dlg"
 
 IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 140, 60
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Console parameters"
+CAPTION "Konsolenparameter"
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "Retain these settings for later sessions", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
-	AUTORADIOBUTTON "Modify only current session", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Übernehme diese Einstellungen für spätere Sitzungen", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Verändere nur die aktuelle Sitzung", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
 
 	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
-	PUSHBUTTON "Cancel", IDCANCEL, 65, 45, 35, 12
+	PUSHBUTTON "Abbrechen", IDCANCEL, 65, 45, 35, 12
 }
