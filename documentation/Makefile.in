@@ -34,6 +34,7 @@ BOOK_SRCS = \
 	printing.sgml \
 	registry.sgml \
 	running.sgml \
+	testing.sgml \
 	tools.sgml \
 	wine-doc.sgml \
 	winelib-bindlls.sgml \
