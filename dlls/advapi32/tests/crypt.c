@@ -86,10 +86,8 @@ static void test_acquire_context(void)
 	 * The order of the error tests seems to match Windows XP's rsaenh.dll CSP,
 	 * but since this is likely to change between CSP versions, we don't check
 	 * this. Please don't change the order of tests. */
-	todo_wine {
-		result = CryptAcquireContext(&hProv, NULL, NULL, 0, 0);
-		ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%08x\n", (unsigned int)GetLastError());
-	}
+	result = CryptAcquireContext(&hProv, NULL, NULL, 0, 0);
+	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%08x\n", (unsigned int)GetLastError());
 	
 	result = CryptAcquireContext(&hProv, NULL, NULL, 1000, 0);
 	ok(!result && GetLastError()==NTE_BAD_PROV_TYPE, "%08x\n", (unsigned int)GetLastError());

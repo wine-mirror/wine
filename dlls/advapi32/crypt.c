@@ -79,7 +79,7 @@ static inline PSTR CRYPT_GetTypeKeyName(DWORD dwType, BOOL user)
 		user ? strcpy(keyname, USERSTR) : strcpy(keyname, MACHINESTR);
 		ptr = keyname + strlen(keyname);
 		*(--ptr) = (dwType % 10) + '0';
-		*(--ptr) = (dwType / 10) + '0';
+		*(--ptr) = ((dwType / 10) % 10) + '0';
 		*(--ptr) = (dwType / 100) + '0';
 	} else
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -266,14 +266,15 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	TRACE("(%p, %s, %s, %ld, %08lx)\n", phProv, pszContainer,
 		pszProvider, dwProvType, dwFlags);
 
-	if (!phProv || !dwProvType)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
-	if (dwProvType > MAXPROVTYPES)
+	if (dwProvType < 1 || dwProvType > MAXPROVTYPES)
 	{
 		SetLastError(NTE_BAD_PROV_TYPE);
+		return FALSE;
+	}
+	
+	if (!phProv)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
