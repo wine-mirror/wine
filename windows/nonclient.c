@@ -1954,53 +1954,21 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
  */
 static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 {
-    MSG msg;
     INT scrollbar;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if ((wParam & 0xfff0) == SC_HSCROLL)
     {
-	if ((wParam & 0x0f) != HTHSCROLL) goto END;
+        if ((wParam & 0x0f) != HTHSCROLL) return;
 	scrollbar = SB_HORZ;
     }
     else  /* SC_VSCROLL */
     {
-	if ((wParam & 0x0f) != HTVSCROLL) goto END;
+        if ((wParam & 0x0f) != HTVSCROLL) return;
 	scrollbar = SB_VERT;
     }
-
-    pt.x -= wndPtr->rectWindow.left;
-    pt.y -= wndPtr->rectWindow.top;
-    SetCapture( hwnd );
-    SCROLL_HandleScrollEvent( hwnd, scrollbar, WM_LBUTTONDOWN, pt );
-
-    do
-    {
-        if (!GetMessageW( &msg, 0, 0, 0 )) break;
-        if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
-	switch(msg.message)
-	{
-	case WM_LBUTTONUP:
-	case WM_MOUSEMOVE:
-        case WM_SYSTIMER:
-            pt.x = LOWORD(msg.lParam) + wndPtr->rectClient.left - wndPtr->rectWindow.left;
-            pt.y = HIWORD(msg.lParam) + wndPtr->rectClient.top - wndPtr->rectWindow.top;
-            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
-	    break;
-        default:
-            TranslateMessage( &msg );
-            DispatchMessageW( &msg );
-            break;
-	}
-        if (!IsWindow( hwnd ))
-        {
-            ReleaseCapture();
-            break;
-        }
-    } while (msg.message != WM_LBUTTONUP);
-END:
-    WIN_ReleaseWndPtr(wndPtr);
+    SCROLL_TrackScrollBar( hwnd, scrollbar, pt );
 }
+
 
 /***********************************************************************
  *           NC_HandleNCLButtonDown
@@ -2130,20 +2098,11 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
+LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    UINT16 uCommand = wParam & 0xFFF0;
+    TRACE("Handling WM_SYSCOMMAND %x %lx\n", wParam, lParam );
 
-    TRACE("Handling WM_SYSCOMMAND %x %ld,%ld\n", wParam, pt.x, pt.y );
-
-    if (uCommand != SC_KEYMENU)
-    {
-        HWND parent = GetAncestor( hwnd, GA_PARENT );
-        if (parent != GetDesktopWindow()) ScreenToClient( parent, &pt );
-    }
-
-    switch (uCommand)
+    switch (wParam & 0xfff0)
     {
     case SC_SIZE:
     case SC_MOVE:
@@ -2170,22 +2129,31 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 	break;
 
     case SC_CLOSE:
-        WIN_ReleaseWndPtr(wndPtr);
 	return SendMessageA( hwnd, WM_CLOSE, 0, 0 );
 
     case SC_VSCROLL:
     case SC_HSCROLL:
-	NC_TrackScrollBar( hwnd, wParam, pt );
+        {
+            POINT pt;
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
+            NC_TrackScrollBar( hwnd, wParam, pt );
+        }
 	break;
 
     case SC_MOUSEMENU:
-        MENU_TrackMouseMenuBar( hwnd, wParam & 0x000F, pt );
+        {
+            POINT pt;
+            pt.x = SLOWORD(lParam);
+            pt.y = SHIWORD(lParam);
+            MENU_TrackMouseMenuBar( hwnd, wParam & 0x000F, pt );
+        }
 	break;
 
     case SC_KEYMENU:
-	MENU_TrackKbdMenuBar( hwnd, wParam , pt.x );
+        MENU_TrackKbdMenuBar( hwnd, wParam, LOWORD(lParam) );
 	break;
-	
+
     case SC_TASKLIST:
 	WinExec( "taskman.exe", SW_SHOWNORMAL ); 
 	break;
@@ -2213,7 +2181,6 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
  	FIXME("unimplemented!\n");
         break;
     }
-    WIN_ReleaseWndPtr(wndPtr);
     return 0;
 }
 

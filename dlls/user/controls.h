@@ -50,7 +50,7 @@ extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget );
 
 /* scrollbar */
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, BOOL arrows, BOOL interior );
-extern void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt );
+extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt );
 extern INT SCROLL_SetNCSbState( HWND hwnd, int vMin, int vMax, int vPos,
                                 int hMin, int hMax, int hPos );
 

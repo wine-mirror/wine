@@ -500,12 +500,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:
-        {
-            POINT pt;
-            pt.x = SLOWORD(lParam);
-            pt.y = SHIWORD(lParam);
-            return NC_HandleSysCommand( hwnd, wParam, pt );
-        }
+        return NC_HandleSysCommand( hwnd, wParam, lParam );
 
     case WM_KEYDOWN:
 	if(wParam == VK_F10) iF10Key = VK_F10;

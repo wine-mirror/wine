@@ -895,7 +895,7 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WPARAM wParam )
  * 'pt' is the location of the mouse event in client (for SB_CTL) or
  * windows coordinates.
  */
-void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
+static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 {
       /* Previous mouse position for timer events */
     static POINT prevPt;
@@ -1110,6 +1110,58 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 
 
 /***********************************************************************
+ *           SCROLL_TrackScrollBar
+ *
+ * Track a mouse button press on a scroll-bar.
+ * pt is in screen-coordinates for non-client scroll bars.
+ */
+void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
+{
+    MSG msg;
+    INT xoffset = 0, yoffset = 0;
+
+    if (scrollbar != SB_CTL)
+    {
+        WND *wndPtr = WIN_GetPtr( hwnd );
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
+        xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
+        yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
+        WIN_ReleasePtr( wndPtr );
+        ScreenToClient( hwnd, &pt );
+        pt.x += xoffset;
+        pt.y += yoffset;
+    }
+
+    SCROLL_HandleScrollEvent( hwnd, scrollbar, WM_LBUTTONDOWN, pt );
+
+    do
+    {
+        if (!GetMessageW( &msg, 0, 0, 0 )) break;
+        if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
+        switch(msg.message)
+        {
+        case WM_LBUTTONUP:
+        case WM_MOUSEMOVE:
+        case WM_SYSTIMER:
+            pt.x = LOWORD(msg.lParam) + xoffset;
+            pt.y = HIWORD(msg.lParam) + yoffset;
+            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
+            break;
+        default:
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+            break;
+        }
+        if (!IsWindow( hwnd ))
+        {
+            ReleaseCapture();
+            break;
+        }
+    } while (msg.message != WM_LBUTTONUP);
+}
+
+
+/***********************************************************************
  *           ScrollBarWndProc
  */
 static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
@@ -1156,38 +1208,9 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_LBUTTONDOWN:
         {
 	    POINT pt;
-	    MSG msg;
-
 	    pt.x = SLOWORD(lParam);
 	    pt.y = SHIWORD(lParam);
-	    SetCapture( hwnd );
-	    SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, pt );
-
-	    TRACE("Doing LBUTTONDOWN loop hwnd=%08x\n", hwnd);
-	    do {
-		if (!GetMessageW( &msg, 0, 0, 0 )) break;
-		if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
-		switch(msg.message)
-		    {
-		    case WM_LBUTTONUP:
-		    case WM_MOUSEMOVE:
-		    case WM_SYSTIMER:
-			pt.x = LOWORD(msg.lParam);
-			pt.y = HIWORD(msg.lParam);
-			SCROLL_HandleScrollEvent( hwnd, SB_CTL, msg.message, pt );
-			break;
-		    default:
-			TranslateMessage( &msg );
-			DispatchMessageW( &msg );
-			break;
-		    }
-		if (!IsWindow( hwnd ))
-		    {
-			ReleaseCapture();
-			break;
-		    }
-	    } while (msg.message != WM_LBUTTONUP);
-	    TRACE("Out ofLBUTTON loop hwnd=%08x\n", hwnd);
+            SCROLL_TrackScrollBar( hwnd, SB_CTL, pt );
 	}
         break;
     case WM_LBUTTONUP:
