@@ -728,7 +728,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
     }
 
     if (removable) hmapping = 0;  /* don't keep handle open on removable media */
-    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0, VPROT_COMMITTED|VPROT_READ, hmapping )))
+    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
+                                     VPROT_COMMITTED | VPROT_READ | VPROT_WRITE |
+                                     VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE, hmapping )))
     {
         status = STATUS_NO_MEMORY;
         goto error;
@@ -915,7 +917,6 @@ static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
                             DWORD offset_low, DWORD offset_high,
                             int prot, int flags, BOOL *removable )
 {
-    int pos;
     LPVOID ret;
     off_t offset;
     BOOL is_shared_write = FALSE;
@@ -955,13 +956,7 @@ static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
     if (ret == (LPVOID)-1) return ret;
     /* Now read in the file */
     offset = ((off_t)offset_high << 32) | offset_low;
-    if ((pos = lseek( fd, offset, SEEK_SET )) == -1)
-    {
-        munmap( ret, size );
-        return (LPVOID)-1;
-    }
-    read( fd, ret, size );
-    lseek( fd, pos, SEEK_SET );  /* Restore the file pointer */
+    pread( fd, ret, size, offset );
     mprotect( ret, size, prot );  /* Set the right protection */
     return ret;
 }
@@ -1021,35 +1016,40 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
 
     /* Compute the alloc type flags */
 
-    if (!(type & (MEM_COMMIT | MEM_RESERVE | MEM_SYSTEM)) ||
-        (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_SYSTEM)))
+    if (type & MEM_SYSTEM)
     {
-        ERR("called with wrong alloc type flags (%08lx) !\n", type);
-        return STATUS_INVALID_PARAMETER;
-    }
-    if (type & (MEM_COMMIT | MEM_SYSTEM))
         vprot = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
-    else vprot = 0;
+        if (type & MEM_IMAGE) vprot |= VPROT_IMAGE;
+    }
+    else
+    {
+        if (!(type & (MEM_COMMIT | MEM_RESERVE)) || (type & ~(MEM_COMMIT | MEM_RESERVE)))
+        {
+            WARN("called with wrong alloc type flags (%08lx) !\n", type);
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (type & MEM_COMMIT)
+            vprot = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
+        else
+            vprot = 0;
+    }
 
     /* Reserve the memory */
 
-    if ((type & MEM_RESERVE) || !base)
+    if (type & MEM_SYSTEM)
     {
-        if (type & MEM_SYSTEM)
-        {
-            if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC | VFLAG_SYSTEM, vprot, 0 )))
-                return STATUS_NO_MEMORY;
-        }
-        else
-        {
-            NTSTATUS res = anon_mmap_aligned( &base, size, VIRTUAL_GetUnixProt( vprot ), 0 );
-            if (res) return res;
+        if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC | VFLAG_SYSTEM, vprot, 0 )))
+            return STATUS_NO_MEMORY;
+    }
+    else if ((type & MEM_RESERVE) || !base)
+    {
+        NTSTATUS res = anon_mmap_aligned( &base, size, VIRTUAL_GetUnixProt( vprot ), 0 );
+        if (res) return res;
 
-            if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC, vprot, 0 )))
-            {
-                munmap( base, size );
-                return STATUS_NO_MEMORY;
-            }
+        if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC, vprot, 0 )))
+        {
+            munmap( base, size );
+            return STATUS_NO_MEMORY;
         }
     }
     else
@@ -1251,8 +1251,10 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         VIRTUAL_GetWin32Prot( vprot, &info->Protect, &info->State );
         for (size = base - alloc_base; size < view->size; size += page_mask+1)
             if (view->prot[size >> page_shift] != vprot) break;
-        info->AllocationProtect = view->protect;
-        info->Type              = MEM_PRIVATE;  /* FIXME */
+        VIRTUAL_GetWin32Prot( view->protect, &info->AllocationProtect, NULL );
+        if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
+        else if (view->flags & VFLAG_VALLOC) info->Type = MEM_PRIVATE;
+        else info->Type = MEM_MAPPED;
     }
 
     info->BaseAddress    = (LPVOID)base;

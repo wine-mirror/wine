@@ -163,7 +163,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
       }
       dga_dev = new_dev;
       vram = dga_dev->mode.bytesPerScanline * dga_dev->mode.imageHeight;
-      VirtualAlloc(dga_dev->data, vram, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
+      VirtualAlloc(dga_dev->data, vram, MEM_SYSTEM, PAGE_READWRITE);
       dga_mem.fpStart = (FLATPTR)dga_dev->data;
       dga_mem.u1.dwWidth = dga_dev->mode.bytesPerScanline;
       dga_mem.u2.dwHeight = dga_dev->mode.imageHeight;
