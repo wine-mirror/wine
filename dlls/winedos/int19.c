@@ -32,5 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  */
 void WINAPI DOSVM_Int19Handler( CONTEXT86 *context )
 {
-    WARN("Attempted Reboot\n");
+    TRACE( "Attempted Reboot\n" );
+    ExitProcess(0);
 }

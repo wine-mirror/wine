@@ -265,6 +265,9 @@ static void DOSMEM_FillBiosSegments(void)
 
     /* BIOS ID */
     *(pBiosSys+0xfffe) = 0xfc;
+
+    /* Reboot vector (f000:fff0 or ffff:0000) */
+    *(DWORD*)(pBiosSys + 0xfff0) = VM_STUB(0x19);
 }
 
 /***********************************************************************
