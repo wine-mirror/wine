@@ -220,6 +220,7 @@ typedef struct
   /* Dialog messages */
 #define DM_GETDEFID         (WM_USER+0)
 #define DM_SETDEFID         (WM_USER+1)
+#define DM_REPOSITION       (WM_USER+2)
 
 #define DC_HASDEFID         0x534b
 
