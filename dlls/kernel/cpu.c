@@ -166,6 +166,18 @@ static void create_registry_keys( const SYSTEM_INFO *info )
 
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.@)
+ *
+ * Get the current value of the performance counter.
+ * 
+ * PARAMS
+ *  counter [O] Destination for the current counter reading
+ *
+ * RETURNS
+ *  Success: TRUE. counter contains the current reading
+ *  Failure: FALSE.
+ *
+ * SEE ALSO
+ *  See QueryPerformanceFrequency.
  */
 BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 {
@@ -190,6 +202,18 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 
 /****************************************************************************
  *		QueryPerformanceFrequency (KERNEL32.@)
+ *
+ * Get the resolution of the performace counter.
+ *
+ * PARAMS
+ *  frequency [O] Destination for the counter resolution
+ *
+ * RETURNS
+ *  Success. TRUE. Frequency contains the resolution of the counter.
+ *  Failure: FALSE.
+ *
+ * SEE ALSO
+ *  See QueryPerformanceCounter.
  */
 BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 {
@@ -211,27 +235,25 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 /***********************************************************************
  * 			GetSystemInfo            	[KERNEL32.@]
  *
- * Gets the current system information.
+ * Get information about the system.
  *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
  * On the first call it creates cached values, so it doesn't have to determine
- * them repeatedly. On Linux, the /proc/cpuinfo special file is used.
+ * them repeatedly. On Linux, the "/proc/cpuinfo" special file is used.
  *
  * It creates a registry subhierarchy, looking like:
- * \HARDWARE\DESCRIPTION\System\CentralProcessor\<processornumber>\
- *							Identifier (CPU x86)
+ * "\HARDWARE\DESCRIPTION\System\CentralProcessor\<processornumber>\Identifier (CPU x86)".
  * Note that there is a hierarchy for every processor installed, so this
  * supports multiprocessor systems. This is done like Win95 does it, I think.
  *
  * It also creates a cached flag array for IsProcessorFeaturePresent().
- *
- * No NULL ptr check for LPSYSTEM_INFO in Win9x.
- *
- * RETURNS
- *	nothing, really
  */
 VOID WINAPI GetSystemInfo(
-	LPSYSTEM_INFO si	/* [out] system information */
-) {
+	LPSYSTEM_INFO si	/* [out] Destination for system information, may not be NULL */)
+{
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
 
@@ -568,13 +590,16 @@ VOID WINAPI GetSystemInfo(
 
 /***********************************************************************
  * 			IsProcessorFeaturePresent	[KERNEL32.@]
- * RETURNS:
- *	TRUE if processor feature present
- *	FALSE otherwise
+ *
+ * Determine if the cpu supports a given feature.
+ * 
+ * RETURNS
+ *  TRUE, If the processor supports feature,
+ *  FALSE otherwise.
  */
 BOOL WINAPI IsProcessorFeaturePresent (
-	DWORD feature	/* [in] feature number, see PF_ defines */
-) {
+	DWORD feature	/* [in] Feature number, (PF_ constants from "winnt.h") */) 
+{
   SYSTEM_INFO si;
   GetSystemInfo (&si); /* To ensure the information is loaded and cached */
 

@@ -727,7 +727,7 @@ GetDateTimeFormatA_InvalidParameter:
  *  cchOut    [I] Size of lpDateStr, or 0 to calculate the resulting size
  *
  * NOTES
- *  - If lpFormat is NULL, lpszValue will be formatted according to the format
+ *  - If lpFormat is NULL, lpDateStr will be formatted according to the format
  *    details returned by GetLocaleInfoA() and modified by dwFlags.
  *  - lpFormat is a string of characters and formatting tokens. Any characters
  *    in the string are copied verbatim to lpDateStr, with tokens being replaced
