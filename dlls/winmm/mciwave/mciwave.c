@@ -1084,7 +1084,7 @@ static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
     } else {
 	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 	
-	switch(dwFlags) {
+	switch (dwFlags & ~(MCI_WAIT|MCI_NOTIFY)) {
 	case MCI_INFO_PRODUCT:
 	    str = "Wine's audio player";
 	    break;
