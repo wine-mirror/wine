@@ -3651,7 +3651,10 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
 			if(es->style & WS_HSCROLL) rc.bottom++;
 			if(es->style & WS_VSCROLL) rc.right++;
 		}
-		Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+		if (TWEAK_WineLook != WIN31_LOOK)
+			DrawEdge(dc, &rc, EDGE_SUNKEN, BF_RECT);
+		else
+			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
 	}
 	IntersectClipRect(dc, es->format_rect.left,
 				es->format_rect.top,
