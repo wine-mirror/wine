@@ -212,6 +212,11 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 
     while ((entry = getmntent( f )))
     {
+        /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
+        if (!strcmp( entry->mnt_type, "nfs" ) ||
+            !strcmp( entry->mnt_type, "smbfs" ) ||
+            !strcmp( entry->mnt_type, "ncpfs" )) continue;
+
         if (stat( entry->mnt_dir, &st ) == -1) continue;
         if (st.st_dev != dev || st.st_ino != ino) continue;
         if (!strcmp( entry->mnt_type, "supermount" ))
