@@ -276,8 +276,8 @@ glue the main() entry point to the WinMain() in the windows program.
 In WineLib, the glue is provided by the spec file. Spec files are used
 in several places in Wine and WineLib to provide glue between windows
 code and code for non-windows compilers. WineLib provides a tool
-called build in the tools/ directory that converts a spec file into a
-C file that can be compiled and linked with the windows source
+called winebuild in the tools/winebuild directory that converts a spec file
+into a C file that can be compiled and linked with the windows source
 files. If you examine hello2.spec, you will see the following:
 
 name	hello2
@@ -286,31 +286,28 @@ type	win32
 init	WinMain
 
 Name is the name of the application. Mode is the type of "glue" that
-build needs to create. Possible modes are 'dll' for a library,
+winebuild needs to create. Possible modes are 'dll' for a library,
 'cuiexe' for a console application, and 'guiexe' for a regular
 graphical application. Type is the type of API, either win32 or
 win16. Win16 is supported only in Wine, not WineLib, so you should use
 win32. Init is the function to call for initialization: in this case,
 WinMain.
 
-FIXME: tools/build-spec.txt appears out of date. No "mode" is in the
-documentation. 
-
 During compilation of the hello2 executable, the following command is
 executed. 
 
-../tools/build -pic -o hello2.spec.c -spec hello2.spec
+../tools/winebuild/winebuild -fPIC -o hello2.spec.c -spec hello2.spec
 
-The program build will generate the output file hello2.spec.c (option
+The program winebuild will generate the output file hello2.spec.c (option
 -o hello2.spec.c) from the spec file hello2.spec (option -spec
 hello2.spec). The output file contains some assembly directives and
-these directives are position independent code (option -pic). The
-build program is used in several places in Wine as well as WineLib;
+these directives are position independent code (option -fPIC). The
+winebuild program is used in several places in Wine as well as WineLib;
 however, only the -spec option will be used in WineLib. The output
 file hello2.spec.c contains main() and the glue code to initialize
 WineLib and call WinMain().
 
-FIXME: for WineLib users -- is there ever a need to not specify -pic?
+FIXME: for WineLib users -- is there ever a need to not specify -fPIC?
 
 Now the compilation of hello2 can proceed as any other compilation for
 a program.
@@ -887,8 +884,8 @@ and all releated errors can be fixed in this way.
     use -rdynamic wnen link libmfc.so to get ARGV and
 ARGC from loader
     
-5. I didn'n build a extention dll with Wine but I suspect that there
-will be some problems releated to a chaining Runtime classes form MFC
+5. I didn'n build a extension dll with Wine but I suspect that there
+will be some problems related to a chaining Runtime classes form MFC
 to a new dll
 
 6. build your app as a MODULE too.
