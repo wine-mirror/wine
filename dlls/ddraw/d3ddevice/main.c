@@ -41,7 +41,7 @@ DWORD InitRenderStateTab[] = {
     D3DRENDERSTATE_TEXTUREPERSPECTIVE,      TRUE,
     /* FIXME: D3DRENDERSTATE_WRAPU */
     /* FIXME: D3DRENDERSTATE_WRAPV */
-    D3DRENDERSTATE_ZENABLE,                 FALSE,
+    D3DRENDERSTATE_ZENABLE,                 D3DZB_TRUE, /* This needs to be set differently according to the Z buffer status */
     D3DRENDERSTATE_FILLMODE,                D3DFILL_SOLID,
     D3DRENDERSTATE_SHADEMODE,               D3DSHADE_GOURAUD,
     D3DRENDERSTATE_LINEPATTERN,             0,
