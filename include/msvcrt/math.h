@@ -86,6 +86,18 @@ double yn(int, double);
 int MSVCRT(_matherr)(struct MSVCRT(_exception)*);
 double MSVCRT(_cabs)(struct MSVCRT(_complex));
 
+#ifndef HUGE_VAL
+#  if defined(__GNUC__) && (__GNUC__ >= 3)
+#    define HUGE_VAL    (__extension__ 0x1.0p2047)
+#  else
+static const union {
+    unsigned char __c[8];
+    double __d;
+} __huge_val = { { 0, 0, 0, 0, 0, 0, 0xf0, 0x7f } };
+#    define HUGE_VAL    (__huge_val.__d)
+#  endif
+#endif
+
 #ifdef __cplusplus
 }
 #endif
