@@ -121,6 +121,7 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 
 	TRACE("%s\n",xriid );
 
+	szDest[0] = 0;
 	if (!RegOpenKeyExA(HKEY_CLASSES_ROOT,xriid,0,KEY_READ,&hkey))
 	{
 	  if (!RegQueryValueExA(hkey,"",0,NULL,szDest,&len))
@@ -134,13 +135,13 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 	{ 
 	  if(IsEqualIID(riid, &CLSID_ShellDesktop))
 	  {
-	    LoadStringA(shell32_hInstance, IDS_DESKTOP, szDest, buflen);
-	    ret = TRUE;
+	    if (LoadStringA(shell32_hInstance, IDS_DESKTOP, szDest, buflen))
+	      ret = TRUE;
 	  }
 	  else if (IsEqualIID(riid, &CLSID_MyComputer))
 	  {
-	    LoadStringA(shell32_hInstance, IDS_MYCOMPUTER, szDest, buflen);
-	    ret = TRUE;
+	    if(LoadStringA(shell32_hInstance, IDS_MYCOMPUTER, szDest, buflen))
+	      ret = TRUE;
 	  }	
 	}
 
