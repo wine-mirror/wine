@@ -172,15 +172,6 @@ HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
 }
 
 /******************************************************************************
- *              OleRun        [OLE32.123]
- */
-HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
-{
-  FIXME("(%p), stub!\n", pUnknown);
-  return S_OK;
-}
-
-/******************************************************************************
  *              OleCreateLinkFromData        [OLE32.95]
  */
 

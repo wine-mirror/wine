@@ -473,3 +473,20 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot
 
     return res;
 }
+
+/******************************************************************************
+ *              OleRun        [OLE32.123]
+ */
+HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
+{
+  IRunnableObject	*runable;
+  ICOM_THIS(IRunnableObject,pUnknown);
+  LRESULT		ret;
+
+  ret = IRunnableObject_QueryInterface(This,&IID_IRunnableObject,(LPVOID*)&runable);
+  if (ret) 
+	return 0; /* Appears to return no error. */
+  ret  = IRunnableObject_Run(runable,NULL);
+  IRunnableObject_Release(runable);
+  return ret;
+}
