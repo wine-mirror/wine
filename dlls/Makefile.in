@@ -428,7 +428,7 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 
 advapi32/libadvapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 avifil32/libavifil32.@LIBEXT@: libmsvfw32.@LIBEXT@ libole32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-comctl32/libcomctl32.@LIBEXT@: libmsvfw32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+comctl32/libcomctl32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 commdlg/libcomdlg32.@LIBEXT@: libshell32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libwinspool.drv.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 crtdll/libcrtdll.@LIBEXT@: libmsvcrt.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 dciman32/libdciman32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
@@ -457,7 +457,7 @@ olepro32/libolepro32.@LIBEXT@: liboleaut32.@LIBEXT@ libntdll.@LIBEXT@
 olesvr/libolesvr32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 opengl32/libopengl32.@LIBEXT@: libuser32.@LIBEXT@ libx11drv.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 psapi/libpsapi.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-quartz/libquartz.@LIBEXT@: libole2.@LIBEXT@ libntdll.@LIBEXT@
+quartz/libquartz.@LIBEXT@: libole2.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 rasapi32/librasapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 richedit/libriched32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 rpcrt4/librpcrt4.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@

@@ -23,6 +23,14 @@
 
 DEFAULT_DEBUG_CHANNEL(animate);
 
+static struct {
+    HMODULE	hModule;
+    HIC         WINAPI  (*fnICOpen)(DWORD, DWORD, UINT);
+    LRESULT     WINAPI  (*fnICClose)(HIC);
+    LRESULT     WINAPI  (*fnICSendMessage)(HIC, UINT, DWORD, DWORD);
+    DWORD       WINAPIV (*fnICDecompress)(HIC,DWORD,LPBITMAPINFOHEADER,LPVOID,LPBITMAPINFOHEADER,LPVOID);
+} fnIC;
+
 typedef struct
 {
    /* reference to input stream (file or resource) */
@@ -146,7 +154,7 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
 	    infoPtr->lpIndex = NULL;
 	}
 	if (infoPtr->hic) {
-	    ICClose(infoPtr->hic);
+	    fnIC.fnICClose(infoPtr->hic);
 	    infoPtr->hic = 0;
 	}
 	if (infoPtr->inbih) {
@@ -320,7 +328,7 @@ static LRESULT ANIMATE_DrawFrame(ANIMATE_INFO* infoPtr)
     mmioRead(infoPtr->hMMio, infoPtr->indata, infoPtr->ash.dwSuggestedBufferSize);
     
     if (infoPtr->hic &&
-	ICDecompress(infoPtr->hic, 0, infoPtr->inbih, infoPtr->indata, 
+	fnIC.fnICDecompress(infoPtr->hic, 0, infoPtr->inbih, infoPtr->indata, 
 		     infoPtr->outbih, infoPtr->outdata) != ICERR_OK) {
 	LeaveCriticalSection(&infoPtr->cs);
 	WARN("Decompression error\n");
@@ -615,13 +623,13 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
     }
 
     /* try to get a decompressor for that type */
-    infoPtr->hic = ICOpen(ICTYPE_VIDEO, infoPtr->ash.fccHandler, ICMODE_DECOMPRESS);
+    infoPtr->hic = fnIC.fnICOpen(ICTYPE_VIDEO, infoPtr->ash.fccHandler, ICMODE_DECOMPRESS);
     if (!infoPtr->hic) {
 	WARN("Can't load codec for the file\n");
 	return FALSE;
     }
     
-    outSize = ICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT, 
+    outSize = fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT, 
 			    (DWORD)infoPtr->inbih, 0L);
 
     infoPtr->outbih = HeapAlloc(GetProcessHeap(), 0, outSize);
@@ -630,7 +638,7 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    if (ICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT, 
+    if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT, 
 		      (DWORD)infoPtr->inbih, (DWORD)infoPtr->outbih) != ICERR_OK) {
 	WARN("Can't get output BIH\n");
 	return FALSE;
@@ -642,7 +650,7 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    if (ICSendMessage(infoPtr->hic, ICM_DECOMPRESS_BEGIN, 
+    if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_BEGIN, 
 		      (DWORD)infoPtr->inbih, (DWORD)infoPtr->outbih) != ICERR_OK) {
 	WARN("Can't begin decompression\n");
 	return FALSE;
@@ -729,6 +737,22 @@ static LRESULT ANIMATE_Stop(HWND hWnd, WPARAM wParam, LPARAM lParam)
 static LRESULT ANIMATE_Create(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     ANIMATE_INFO*	infoPtr;
+
+    if (!fnIC.hModule) /* FIXME: not thread safe */
+    {
+	/* since there's a circular dep between msvfw32 and comctl32, we could either:
+	 * - fix the build chain to allow this circular dep
+	 * - handle it by hand
+	 * AJ wants the latter :-(
+	 */
+	fnIC.hModule = LoadLibraryA("msvfw32.dll");
+	if (!fnIC.hModule) return FALSE;
+
+	fnIC.fnICOpen        = (void*)GetProcAddress(fnIC.hModule, "ICOpen");
+	fnIC.fnICClose       = (void*)GetProcAddress(fnIC.hModule, "ICClose");
+	fnIC.fnICSendMessage = (void*)GetProcAddress(fnIC.hModule, "ICSendMessage");
+	fnIC.fnICDecompress  = (void*)GetProcAddress(fnIC.hModule, "ICDecompress");
+    }
 
     /* allocate memory for info structure */
     infoPtr = (ANIMATE_INFO *)COMCTL32_Alloc(sizeof(ANIMATE_INFO));
@@ -884,7 +908,6 @@ static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     }
     return 0;
 }
-
 
 void ANIMATE_Register(void)
 {
