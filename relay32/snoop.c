@@ -113,9 +113,9 @@ int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
     len2 = strlen(buf);
     for(; *listitem; listitem++) {
       itemlen = strlen(*listitem);
-      if((itemlen == len && !strncmp(*listitem, buf, len)) ||
-         (itemlen == len2 && !strncmp(*listitem, buf, len2)) ||
-         !strcmp(*listitem, fname)) {
+      if((itemlen == len && !strncasecmp(*listitem, buf, len)) ||
+         (itemlen == len2 && !strncasecmp(*listitem, buf, len2)) ||
+         !strcasecmp(*listitem, fname)) {
         show = !show;
        break;
       }
