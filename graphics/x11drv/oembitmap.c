@@ -295,17 +295,6 @@ static XpmColorSymbol OBM_BlackAndWhite[2] =
 #endif /* defined(HAVE_LIBXXPM) */
 
 
-/* This structure holds the arguments for OBM_CreateBitmaps() */
-typedef struct
-{
-    char     **data;      /* In: bitmap data */
-    BOOL     color;     /* In: color or monochrome */
-    BOOL     need_mask; /* In: do we need a mask? */
-    HBITMAP16  bitmap;    /* Out: resulting bitmap */
-    HBITMAP16  mask;      /* Out: resulting mask (if needed) */
-    POINT    hotspot;   /* Out: bitmap hotspot */
-} OBM_BITMAP_DESCR;
-
 
 /***********************************************************************
  *           OBM_InitColorSymbols
@@ -365,53 +354,90 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
 #endif /* defined(HAVE_LIBXXPM) */
 
 /***********************************************************************
- *           OBM_CreateBitmaps
+ *           OBM_CreatePixmaps
  *
- * Create the 2 bitmaps from XPM data.
+ * Create the 2 pixmaps from XPM data.
  *
  * The Xlib critical section must be entered before calling this function.
  */
-static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
+#ifdef HAVE_LIBXXPM
+
+typedef struct
+{
+    char         **data;
+    XpmAttributes *attrs;
+    Pixmap         pixmap;
+    Pixmap         pixmask;
+} OBM_PIXMAP_DESCR;
+
+static int OBM_CreatePixmaps( OBM_PIXMAP_DESCR *descr )
+{
+    return XpmCreatePixmapFromData( display, X11DRV_GetXRootWindow(), descr->data,
+                                    &descr->pixmap, &descr->pixmask, descr->attrs );
+}
+#endif /* defined(HAVE_LIBXXPM) */
+
+
+/***********************************************************************
+ *           OBM_CreateBitmaps
+ *
+ * Create the 2 bitmaps from XPM data.
+ */
+static BOOL OBM_CreateBitmaps( char **data, BOOL color,
+                               HBITMAP16 *bitmap, HBITMAP16 *mask, POINT *hotspot )
 {
 #ifdef HAVE_LIBXXPM
-    Pixmap pixmap, pixmask;
-    XpmAttributes *attrs;
+    OBM_PIXMAP_DESCR descr;
     int err;
 
-    attrs = (XpmAttributes *)HeapAlloc( GetProcessHeap(), 0,
-		                         XpmAttributesSize() );
-    if(attrs == NULL) return FALSE;
-    attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
-    attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
-    attrs->depth        = descr->color ? X11DRV_GetDepth() : 1;
-    attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
-    attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
-        
-    err = XpmCreatePixmapFromData( display, X11DRV_GetXRootWindow(), descr->data,
-                                   &pixmap, &pixmask, attrs );
+    descr.attrs = (XpmAttributes *)HeapAlloc( GetProcessHeap(), 0,
+		                              XpmAttributesSize() );
+    if (descr.attrs == NULL) return FALSE;
+    descr.attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols | XpmHotspot;
+    descr.attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
+    descr.attrs->depth        = color ? X11DRV_GetDepth() : 1;
+    descr.attrs->colorsymbols = (descr.attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
+    descr.attrs->numsymbols   = (descr.attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
+
+    descr.data = data;
+     
+    EnterCriticalSection( &X11DRV_CritSection );
+    err = CALL_LARGE_STACK( OBM_CreatePixmaps, &descr );
+    LeaveCriticalSection( &X11DRV_CritSection );
 
     if (err != XpmSuccess)
     {
-        HeapFree( GetProcessHeap(), 0, attrs );
+        HeapFree( GetProcessHeap(), 0, descr.attrs );
         return FALSE;
     }
-    descr->hotspot.x = attrs->x_hotspot;
-    descr->hotspot.y = attrs->y_hotspot;
-    descr->bitmap = OBM_MakeBitmap( attrs->width, attrs->height,
-                                    attrs->depth, pixmap );
-    if (descr->need_mask)
-        descr->mask = OBM_MakeBitmap( attrs->width, attrs->height,
-                                      1, pixmask );
-    HeapFree( GetProcessHeap(), 0, attrs );
-    if (!descr->bitmap)
+
+    if (hotspot)
     {
-        if (pixmap) XFreePixmap( display, pixmap );
-        if (pixmask) XFreePixmap( display, pixmask );
-        if (descr->bitmap) DeleteObject( descr->bitmap );
-        if (descr->need_mask && descr->mask) DeleteObject( descr->mask );
+        hotspot->x = descr.attrs->x_hotspot;
+        hotspot->y = descr.attrs->y_hotspot;
+    }
+
+    if (bitmap)
+        *bitmap = OBM_MakeBitmap( descr.attrs->width, descr.attrs->height,
+                                  descr.attrs->depth, descr.pixmap );
+        
+    if (mask)
+        *mask = OBM_MakeBitmap( descr.attrs->width, descr.attrs->height,
+                                1, descr.pixmask );
+
+    HeapFree( GetProcessHeap(), 0, descr.attrs );
+
+    if (descr.pixmap && (!bitmap || !*bitmap)) 
+        TSXFreePixmap( display, descr.pixmap );
+    if (descr.pixmask && (!mask || !*mask)) 
+        TSXFreePixmap( display, descr.pixmask );
+
+    if (bitmap && !*bitmap)
+    {
+        if (mask && *mask) DeleteObject( *mask );
         return FALSE;
     }
-    else return TRUE;
+    return TRUE;
 #else /* defined(HAVE_LIBXXPM) */
     FIXME_(x11drv)(
         "Xpm support not in the binary, "
@@ -427,26 +453,20 @@ static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
  */
 static HBITMAP16 OBM_LoadBitmap( WORD id )
 {
-    OBM_BITMAP_DESCR descr;
+    HBITMAP16 bitmap;
 
     if ((id < OBM_FIRST) || (id > OBM_LAST)) return 0;
     id -= OBM_FIRST;
 
     if (!OBM_InitColorSymbols()) return 0;
 
-    descr.data      = OBM_Pixmaps_Data[id].data;
-    descr.color     = OBM_Pixmaps_Data[id].color;
-    descr.need_mask = FALSE;
-
-    EnterCriticalSection( &X11DRV_CritSection );
-    if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
+    if (!OBM_CreateBitmaps( OBM_Pixmaps_Data[id].data, OBM_Pixmaps_Data[id].color,
+                            &bitmap, NULL, NULL ))
     {
-        LeaveCriticalSection( &X11DRV_CritSection );
         WARN_(bitmap)("Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
     }
-    LeaveCriticalSection( &X11DRV_CritSection );
-    return descr.bitmap;
+    return bitmap;
 }
 
 
@@ -455,7 +475,8 @@ static HBITMAP16 OBM_LoadBitmap( WORD id )
  */
 static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 {
-    OBM_BITMAP_DESCR descr;
+    HBITMAP16 bitmap, mask;
+    POINT hotspot;
     HGLOBAL16 handle;
     CURSORICONINFO *pInfo;
     BITMAPOBJ *bmpXor, *bmpAnd;
@@ -484,21 +505,15 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 
     if (!OBM_InitColorSymbols()) return 0;
     
-    descr.data      = fCursor ? OBM_Cursors_Data[id] : OBM_Icons_Data[id];
-    descr.color     = !fCursor;
-    descr.need_mask = TRUE;
-
-    EnterCriticalSection( &X11DRV_CritSection );
-    if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
+    if (!OBM_CreateBitmaps( fCursor ? OBM_Cursors_Data[id] : OBM_Icons_Data[id],
+                            !fCursor, &bitmap, &mask, &hotspot ))
     {
-        LeaveCriticalSection( &X11DRV_CritSection );
         WARN_(cursor)("Error creating OEM cursor/icon %d\n", id );
         return 0;
     }
-    LeaveCriticalSection( &X11DRV_CritSection );
 
-    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( descr.bitmap, BITMAP_MAGIC );
-    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( descr.mask, BITMAP_MAGIC );
+    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( bitmap, BITMAP_MAGIC );
+    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( mask, BITMAP_MAGIC );
     sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
     sizeAnd = bmpXor->bitmap.bmHeight * 
 			BITMAP_GetWidthBytes( bmpXor->bitmap.bmWidth, 1 );
@@ -508,15 +523,15 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
         goto done;
 
     pInfo = (CURSORICONINFO *)GlobalLock16( handle );
-    pInfo->ptHotSpot.x   = descr.hotspot.x;
-    pInfo->ptHotSpot.y   = descr.hotspot.y;
+    pInfo->ptHotSpot.x   = hotspot.x;
+    pInfo->ptHotSpot.y   = hotspot.y;
     pInfo->nWidth        = bmpXor->bitmap.bmWidth;
     pInfo->nHeight       = bmpXor->bitmap.bmHeight;
     pInfo->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
     pInfo->bPlanes       = bmpXor->bitmap.bmPlanes;
     pInfo->bBitsPerPixel = bmpXor->bitmap.bmBitsPixel;
 
-    if (descr.mask)
+    if (mask)
     {
           /* Invert the mask */
 
@@ -540,15 +555,15 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
         }
     }
 
-    if (descr.mask) GetBitmapBits( descr.mask, sizeAnd, (char *)(pInfo + 1));
+    if (mask) GetBitmapBits( mask, sizeAnd, (char *)(pInfo + 1));
     else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
-    GetBitmapBits( descr.bitmap, sizeXor, (char *)(pInfo + 1) + sizeAnd );
+    GetBitmapBits( bitmap, sizeXor, (char *)(pInfo + 1) + sizeAnd );
     if (fCursor) OBM_Cursors[id] = handle;
  done:
-    GDI_ReleaseObj( descr.mask );
-    GDI_ReleaseObj( descr.bitmap );
-    DeleteObject( descr.bitmap );
-    DeleteObject( descr.mask );
+    GDI_ReleaseObj( mask );
+    GDI_ReleaseObj( bitmap );
+    DeleteObject( bitmap );
+    DeleteObject( mask );
     return handle;
 }
 
