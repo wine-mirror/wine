@@ -376,8 +376,9 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 				this->t.xlib.image->width,
 				this->t.xlib.image->height
 	);
-	TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
-
+	if (this->s.palette && this->s.palette->cm) {
+		TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+	}
 	return DD_OK;
 }
 
@@ -420,6 +421,7 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Flip(
 static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWSURFACE3 flipto,DWORD dwFlags
 ) {
+
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",this,flipto,dwFlags);
 	Xlib_MessagePump(this->s.ddraw->e.xlib.window);
 	if (!this->s.ddraw->e.xlib.paintable)
@@ -431,7 +433,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 		else
 			flipto = this;
 	}
-  
+ 
 	TSXPutImage(display,
 				this->s.ddraw->e.xlib.drawable,
 				DefaultGCOfScreen(screen),
@@ -439,7 +441,11 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 				0, 0, 0, 0,
 				flipto->t.xlib.image->width,
 				flipto->t.xlib.image->height);
-	TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+	if (this->s.palette && this->s.palette->cm) {
+		TSXSetWindowColormap(display,
+				     this->s.ddraw->e.xlib.drawable,
+				     this->s.palette->cm);
+	}
 	if (flipto!=this) {
 		XImage *tmp;
 		LPVOID	*surf;
@@ -493,7 +499,9 @@ static HRESULT WINAPI IDirectDrawSurface3_SetPalette(
            }
       
           /* Perform the refresh */
-          TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
+          TSXSetWindowColormap(display,
+			       this->s.ddraw->e.xlib.drawable,
+			       this->s.palette->cm);
         }
 
 	return 0;
@@ -670,7 +678,9 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 		TSXDestroyImage(this->t.xlib.image);
 		this->t.xlib.image = 0;
 
-                this->s.palette->lpvtbl->fnRelease(this->s.palette);
+		if (this->s.palette) {
+		  this->s.palette->lpvtbl->fnRelease(this->s.palette);
+		}
 
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
@@ -1354,10 +1364,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 		(lpddsd->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
 	) {
 		if (!(lpddsd->dwFlags & DDSD_WIDTH))
-			lpddsd->dwWidth = this->e.dga.fb_width;
+			lpddsd->dwWidth = this->d.width;
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-			lpddsd->dwHeight = this->e.dga.fb_height;
-		(*lpdsf)->s.surface = (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpddsd->dwWidth*lpddsd->dwHeight*this->d.depth/8);
+			lpddsd->dwHeight = this->d.height;
 		TRACE(ddraw,"using system memory for a primary surface\n");
 	} else {
 		TRACE(ddraw,"using standard XImage for a primary surface\n");
@@ -1366,10 +1375,11 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 			lpddsd->dwWidth	 = this->d.width;
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
 			lpddsd->dwHeight = this->d.height;
-		(*lpdsf)->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpddsd->dwHeight*lpddsd->dwWidth);
-		(*lpdsf)->s.width	= lpddsd->dwWidth;
-		(*lpdsf)->s.height	= lpddsd->dwHeight;
 	}
+
+	(*lpdsf)->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpddsd->dwHeight*lpddsd->dwWidth*this->d.depth/8);
+	(*lpdsf)->s.width	= lpddsd->dwWidth;
+	(*lpdsf)->s.height	= lpddsd->dwHeight;
 
 	{
 	(*lpdsf)->t.xlib.image = img =
@@ -1387,6 +1397,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 		);
 		/* END FIXME: Xlib */
 	}
+
 	(*lpdsf)->s.lpitch = img->bytes_per_line;
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
 		LPDIRECTDRAWSURFACE3	back;
@@ -1532,11 +1543,13 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
 		return DDERR_UNSUPPORTEDMODE;
 	}
+	/*
 	if (this->d.width < width) {
 		sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), width %ld exceeds framebuffer width %ld",width,height,depth,width,this->d.width);
 		MessageBox32A(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
 		return DDERR_UNSUPPORTEDMODE;
 	}
+	*/
 	this->e.xlib.window = CreateWindowEx32A(
 		0,
 		"WINE_DirectDraw",
@@ -1572,8 +1585,9 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	this->d.width	= width;
 	this->d.height	= height;
 	/* adjust fb_height, so we don't overlap */
+	/*
 	if (this->e.dga.fb_height < height)
-		this->e.dga.fb_height = height;
+	this->e.dga.fb_height = height; */
 	this->d.depth	= depth;
 	return 0;
 }
@@ -1672,6 +1686,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
 		 * TSXInstallColormap(display,(*lpddpal)->cm);
 		 * TSXSetWindowColormap(display,this->e.xlib.drawable,(*lpddpal)->cm);
 		 */
+		TSXInstallColormap(display,(*lpddpal)->cm);
 	} 
         else
         {
