@@ -532,6 +532,71 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
     vm86->regs.ss     = context->SegSs;
     vm86->regs.eflags = context->EFlags;
 }
+
+
+/**********************************************************************
+ *		merge_vm86_pending_flags
+ *
+ * Merges TEB.vm86_ptr and TEB.vm86_pending VIP flags and
+ * raises exception if there are pending events and VIF flag
+ * has been turned on.
+ *
+ * Called from __wine_enter_vm86 because vm86_enter
+ * doesn't check for pending events. 
+ *
+ * Called from raise_vm86_sti_exception to check for
+ * pending events in a signal safe way.
+ */
+static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
+{
+    BOOL check_pending = TRUE;
+    struct vm86plus_struct *vm86 =
+        (struct vm86plus_struct*)(NtCurrentTeb()->vm86_ptr);
+
+    /*
+     * In order to prevent a race when SIGUSR2 occurs while
+     * we are returning from exception handler, pending events
+     * will be rechecked after each raised exception.
+     */
+    while (check_pending && NtCurrentTeb()->vm86_pending)
+    {
+        check_pending = FALSE;
+        NtCurrentTeb()->vm86_ptr = NULL;
+            
+        /*
+         * If VIF is set, throw exception.
+         * Note that SIGUSR2 may turn VIF flag off so
+         * VIF check must occur only when TEB.vm86_ptr is NULL.
+         */
+        if (vm86->regs.eflags & VIF_MASK)
+        {
+            CONTEXT vcontext;
+            save_vm86_context( &vcontext, vm86 );
+            
+            rec->ExceptionCode    = EXCEPTION_VM86_STI;
+            rec->ExceptionFlags   = EXCEPTION_CONTINUABLE;
+            rec->ExceptionRecord  = NULL;
+            rec->NumberParameters = 0;
+            rec->ExceptionAddress = (LPVOID)vcontext.Eip;
+
+            vcontext.EFlags &= ~VIP_MASK;
+            NtCurrentTeb()->vm86_pending = 0;
+            EXC_RtlRaiseException( rec, &vcontext );
+
+            restore_vm86_context( &vcontext, vm86 );
+            check_pending = TRUE;
+        }
+
+        NtCurrentTeb()->vm86_ptr = vm86;
+    }
+
+    /*
+     * Merge VIP flags in a signal safe way. This requires
+     * that the following operation compiles into atomic
+     * instruction.
+     */
+    vm86->regs.eflags |= NtCurrentTeb()->vm86_pending;
+}
 #endif /* __HAVE_VM86 */
 
 
@@ -845,38 +910,21 @@ static void WINAPI raise_fpu_exception( EXCEPTION_RECORD *rec, CONTEXT *context 
 #ifdef __HAVE_VM86
 /**********************************************************************
  *		raise_vm86_sti_exception
- *
- * FIXME: this is most likely broken.
  */
 static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct vm86plus_struct *vm86;
-
-    /* __wine_enter_vm86() merges the vm86_pending flag in safely */
+    /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
     NtCurrentTeb()->vm86_pending |= VIP_MASK;
 
-    vm86 = (struct vm86plus_struct*)(NtCurrentTeb()->vm86_ptr);
-    if (vm86)
+    if (NtCurrentTeb()->vm86_ptr)
     {
-        if (vm86->regs.eflags & VIP_MASK) return;
-        vm86->regs.eflags |= VIP_MASK;
         if (((char*)context->Eip >= (char*)vm86_return) &&
             ((char*)context->Eip <= (char*)vm86_return_end) &&
             (VM86_TYPE(context->Eax) != VM86_SIGNAL)) {
             /* exiting from VM86, can't throw */
             return;
         }
-        if (vm86->regs.eflags & VIF_MASK) {
-            /* VIF is set, throw exception */
-            CONTEXT vcontext;
-            NtCurrentTeb()->vm86_pending = 0;
-            NtCurrentTeb()->vm86_ptr = NULL;
-            save_vm86_context( &vcontext, vm86 );
-            rec->ExceptionAddress = (LPVOID)vcontext.Eip;
-            EXC_RtlRaiseException( rec, &vcontext );
-            restore_vm86_context( &vcontext, vm86 );
-            NtCurrentTeb()->vm86_ptr = vm86;
-        }
+        merge_vm86_pending_flags( rec );
     }
     else if (NtCurrentTeb()->dpmi_vif &&
              !IS_SELECTOR_SYSTEM(context->SegCs) &&
@@ -1195,40 +1243,18 @@ void __wine_enter_vm86( CONTEXT *context )
     for (;;)
     {
         restore_vm86_context( context, &vm86 );
-        /* Linux doesn't preserve pending flag (VIP_MASK) on return,
-         * so save it on entry, just in case */
-        teb->vm86_pending |= (context->EFlags & VIP_MASK);
-        /* Work around race conditions with signal handler
-         * (avoiding sigprocmask for performance reasons) */
-        teb->vm86_ptr = &vm86;
-        vm86.regs.eflags |= teb->vm86_pending;
 
-        /* Check for VIF|VIP here, since vm86_enter doesn't */
-        if ((vm86.regs.eflags & (VIF_MASK|VIP_MASK)) == (VIF_MASK|VIP_MASK)) {
-            teb->vm86_ptr = NULL;
-            teb->vm86_pending = 0;
-            context->EFlags |= VIP_MASK;
-            rec.ExceptionCode    = EXCEPTION_VM86_STI;
-            rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-            rec.ExceptionRecord  = NULL;
-            rec.ExceptionAddress = (LPVOID)context->Eip;
-            rec.NumberParameters = 0;
-            EXC_RtlRaiseException( &rec, context );
-            continue;
+        teb->vm86_ptr = &vm86;
+        merge_vm86_pending_flags( &rec );
+
+        res = vm86_enter( &teb->vm86_ptr ); /* uses and clears teb->vm86_ptr */
+        if (res < 0)
+        {
+            errno = -res;
+            return;
         }
 
-        do
-        {
-            res = vm86_enter( &teb->vm86_ptr ); /* uses and clears teb->vm86_ptr */
-            if (res < 0)
-            {
-                errno = -res;
-                return;
-            }
-        } while (VM86_TYPE(res) == VM86_SIGNAL);
-
         save_vm86_context( context, &vm86 );
-        context->EFlags |= teb->vm86_pending;
 
         rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
         rec.ExceptionRecord  = NULL;
@@ -1263,12 +1289,15 @@ void __wine_enter_vm86( CONTEXT *context )
             rec.ExceptionInformation[0] = VM86_ARG(res);
             break;
         case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
+            context->EFlags |= VIF_MASK;
+            context->EFlags &= ~VIP_MASK;
             teb->vm86_pending = 0;
             rec.ExceptionCode = EXCEPTION_VM86_STI;
             break;
         case VM86_PICRETURN: /* return due to pending PIC request */
             rec.ExceptionCode = EXCEPTION_VM86_PICRETURN;
             break;
+        case VM86_SIGNAL: /* cannot happen because vm86_enter handles this case */
         default:
             ERR( "unhandled result from vm86 mode %x\n", res );
             continue;

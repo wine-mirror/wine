@@ -557,9 +557,6 @@ static WINE_EXCEPTION_FILTER(exception_handler)
   /* case EXCEPTION_VM86_PICRETURN: */
     if (!ISV86(context))
       ERR( "Protected mode STI caught by real mode handler!\n" );
-
-    context->EFlags |= VIF_MASK;
-    context->EFlags &= ~VIP_MASK;
     DOSVM_SendQueuedEvents(context);
     return EXCEPTION_CONTINUE_EXECUTION;
   }
