@@ -96,7 +96,7 @@
 542 stub	RasEditPhonebookEntryA
 543 stub	RasEditPhonebookEntryW
 544 stdcall	RasEnumConnectionsA(ptr ptr ptr) RasEnumConnectionsA
-545 stub	RasEnumConnectionsW
+545 stdcall	RasEnumConnectionsW(ptr ptr ptr) RasEnumConnectionsW
 546 stdcall	RasEnumEntriesA(str str ptr ptr ptr) RasEnumEntriesA
 547 stub	RasEnumEntriesW
 548 stub	RasGetConnectStatusA
