@@ -1293,13 +1293,35 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
       
 	    /* if the filename doesn't have an extension append .DLL */
 	    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-            strcat( filename, ".DLL" );
+	        strcat( filename, ".DLL" );
 	}
 
 	EnterCriticalSection(&PROCESS_Current()->crit_section);
 
 	/* Check for already loaded module */
-	if((pwm = MODULE_FindModule(filename))) 
+	if (!(pwm = MODULE_FindModule(filename)) && 
+	    /* no path in libpath */
+	    !strchr( libname, '\\' ) && !strchr( libname, ':') && !strchr( libname, '/' )) 
+        {
+	    LPSTR	fn = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
+	    if (fn)
+	    {
+	    	/* since the default loading mechanism uses a more detailed algorithm 
+		 * than SearchPath (like using PATH, which can even be modified between
+		 * two attempts of loading the same DLL), the look-up above (with
+		 * SearchPath) can have put the file in system directory, whereas it
+		 * has already been loaded but with a different path. So do a specific
+		 * look-up with filename (without any path)
+	     	 */
+	    	strcpy ( fn, libname );
+	    	/* if the filename doesn't have an extension append .DLL */
+	    	if (!strrchr( fn, '.')) strcat( fn, ".dll" );
+	    	if ((pwm = MODULE_FindModule( fn )) != NULL)
+		   strcpy( filename, fn );
+		HeapFree( GetProcessHeap(), 0, fn );
+	    }
+	}
+	if (pwm)
 	{
 		if(!(pwm->flags & WINE_MODREF_MARKER))
 			pwm->refCount++;
