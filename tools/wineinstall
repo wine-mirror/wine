@@ -83,6 +83,10 @@
 #   windows partition name in [Drive C] section
 #  it should now almost always find the windows partition and real-windows
 #  registry (if not, let me know)
+# Aug 29 2002 - Rok Mandeljc <rok.mandeljc@gimb.org>
+#  -added two symlinks; windows/winhelp.exe and windows/winhlp32.exe because it seems
+#   that some apps look for winhlp32.exe/winhelp to display help
+#
 
 #--- defaults (change these if you are a packager)
 CONFARGS="--enable-opengl"    # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -203,6 +207,8 @@ function configure_wine_applications {
   link_app regsvr32     "$CROOT/windows/system32/regsvr32.exe"
   link_app winemine     "$CROOT/windows/system32/winmine.exe"
   link_app winver       "$CROOT/windows/system32/winver.exe"
+  link_app winhelp      "$CROOT/windows/winhelp.exe"
+  link_app winhelp      "$CROOT/windows/winhlp32.exe"
 }
 
 # startup...
