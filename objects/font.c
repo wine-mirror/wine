@@ -1915,8 +1915,10 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 	if( (fontsig.fsCsb[0]&GCP_USEKERNING_MASK)!=0 )
 		result|=GCP_USEKERNING;
 
-	if( (fontsig.fsCsb[0]&GCP_REORDER_MASK)!=0 )
-		result|=GCP_REORDER;
+        /* this might need a test for a HEBREW- or ARABIC_CHARSET as well */
+        if( GetTextAlign( hdc) & TA_RTLREADING )
+            if( (fontsig.fsCsb[0]&GCP_REORDER_MASK)!=0 )
+                    result|=GCP_REORDER;
 
 	return result;
 }
