@@ -79,6 +79,7 @@ $DEF_CHAR = ord '?';
     [ 10079, "VENDORS/MICSFT/MAC/ICELAND.TXT",    "Mac Icelandic" ],
     [ 10081, "VENDORS/MICSFT/MAC/TURKISH.TXT",    "Mac Turkish" ],
     [ 20866, "VENDORS/MISC/KOI8-R.TXT",           "Russian KOI8" ],
+    [ 20932, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT", "EUC-JP" ],
     [ 28591, "ISO8859/8859-1.TXT",                "ISO 8859-1 Latin 1" ],
     [ 28592, "ISO8859/8859-2.TXT",                "ISO 8859-2 Latin 2 (East European)" ],
     [ 28593, "ISO8859/8859-3.TXT",                "ISO 8859-3 Latin 3 (South European)" ],
@@ -392,6 +393,71 @@ sub READ_SYMBOL_FILE
         {
             $uni = hex $1;
             $cp = hex $2;
+            $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
+            $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
+            next;
+        }
+        die "$name: Unrecognized line $_\n";
+    }
+}
+
+
+################################################################
+# build EUC-JP table from the JIS 0208 file
+# FIXME: for proper EUC-JP we should probably read JIS 0212 too
+# but this would require 3-byte DBCS characters
+sub READ_JIS0208_FILE
+{
+    my $name = shift;
+    @cp2uni = ();
+    @lead_bytes = ();
+    @uni2cp = ();
+
+    # ASCII chars
+    for ($i = 0x00; $i <= 0x7f; $i++)
+    {
+        $cp2uni[$i] = $i;
+        $uni2cp[$i] = $i;
+    }
+
+    # JIS X 0201 right plane
+    for ($i = 0xa1; $i <= 0xdf; $i++)
+    {
+        $cp2uni[0x8e00 + $i] = 0xfec0 + $i;
+        $uni2cp[0xfec0 + $i] = 0x8e00 + $i;
+    }
+
+    # lead bytes
+    foreach $i (0x8e, 0x8f, 0xa1 .. 0xfe)
+    {
+        push @lead_bytes,$i;
+        $cp2uni[$i] = 0;
+    }
+
+    # undefined chars
+    foreach $i (0x80 .. 0x8d, 0x90 .. 0xa0, 0xff)
+    {
+        $cp2uni[$i] = $DEF_CHAR;
+    }
+
+    # Shift-JIS compatibility
+    $uni2cp[0x00a5] = 0x5c;
+    $uni2cp[0x203e] = 0x7e;
+
+    # Fix backslash conversion
+    $cp2uni[0xa1c0] = 0xff3c;
+    $uni2cp[0xff3c] = 0xa1c0;
+
+    open INPUT, "$name" or die "Cannot open $name";
+    while (<INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^0x[0-9a-fA-F]+\s+0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
+        {
+            $cp = 0x8080 + hex $1;
+            $uni = hex $2;
             $cp2uni[$cp] = $uni unless defined($cp2uni[$cp]);
             $uni2cp[$uni] = $cp unless defined($uni2cp[$uni]);
             next;
@@ -907,6 +973,7 @@ sub HANDLE_FILE
 
     # symbol codepage file is special
     if ($codepage == 42) { READ_SYMBOL_FILE($MAPPREFIX . $filename); }
+    elsif ($codepage == 20932) { READ_JIS0208_FILE($MAPPREFIX . $filename); }
     else { READ_FILE($MAPPREFIX . $filename); }
 
     ADD_DEFAULT_MAPPINGS();
