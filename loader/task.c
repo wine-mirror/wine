@@ -467,10 +467,7 @@ void TASK_KillTask( HTASK16 hTask )
 
     /* Perform USER cleanup */
 
-    if (pTask->userhandler)
-        pTask->userhandler( hTask, USIG16_TERMINATION, 0,
-                            pTask->hInstance, pTask->hQueue );
-
+    TASK_CallTaskSignalProc( USIG16_TERMINATION, hTask );
     PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
     PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );     /* FIXME */
     PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
@@ -1447,8 +1444,6 @@ BOOL16 WINAPI IsWinOldApTask16( HTASK16 hTask )
 
 /***********************************************************************
  *           SetTaskSignalProc   (KERNEL.38)
- *
- * Real 16-bit interface is provided by the THUNK_SetTaskSignalProc.
  */
 FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 {
@@ -1457,11 +1452,26 @@ FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return NULL;
-    oldProc = (FARPROC16)pTask->userhandler;
-    pTask->userhandler = (USERSIGNALPROC)proc;
+    oldProc = pTask->userhandler;
+    pTask->userhandler = proc;
     return oldProc;
 }
 
+/***********************************************************************
+ *           TASK_CallTaskSignalProc
+ */
+/* ### start build ### */
+extern WORD CALLBACK TASK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
+/* ### stop build ### */
+void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule )
+{
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    if ( !pTask || !pTask->userhandler ) return;
+
+    TASK_CallTo16_word_wwwww( pTask->userhandler, 
+                              hTaskOrModule, uCode, 0, 
+                              pTask->hInstance, pTask->hQueue );
+}
 
 /***********************************************************************
  *           SetSigHandler   (KERNEL.140)

@@ -42,7 +42,7 @@ file	krnl386.exe
 35  pascal16 GetTaskQueue(word) GetTaskQueue16
 36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB16
-38  pascal   SetTaskSignalProc(word segptr) THUNK_SetTaskSignalProc
+38  pascal   SetTaskSignalProc(word segptr) SetTaskSignalProc
 41  pascal16 EnableDos() KERNEL_nop
 42  pascal16 DisableDos() KERNEL_nop
 45  pascal16 LoadModule(str ptr) LoadModule16
@@ -345,7 +345,7 @@ file	krnl386.exe
 438 pascal16 _CreateSysLevel(ptr long) _CreateSysLevel
 439 pascal16 _EnterSysLevel(ptr) _EnterSysLevel
 440 pascal16 _LeaveSysLevel(ptr) _LeaveSysLevel
-441 pascal CreateThread16(ptr long segptr segptr long ptr) THUNK_CreateThread16
+441 pascal CreateThread16(ptr long segptr segptr long ptr) CreateThread16
 442 pascal VWin32_EventCreate() VWin32_EventCreate
 443 pascal VWin32_EventDestroy(long) VWin32_EventDestroy
 444 pascal16 Local32Info(ptr word) Local32Info16

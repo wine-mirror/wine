@@ -1290,15 +1290,10 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     {
         if (pModule->flags & NE_FFLAGS_LIBMODULE)
         {
-            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
             MODULE_CallWEP( hModule );
 
             /* Free the objects owned by the DLL module */
-
-            if (pTask && pTask->userhandler)
-                pTask->userhandler( hModule, USIG16_DLL_UNLOAD, 0,
-                                    pTask->hInstance, pTask->hQueue );
-
+            TASK_CallTaskSignalProc( USIG16_DLL_UNLOAD, hModule );
             PROCESS_CallUserSignalProc( USIG_DLL_UNLOAD_WIN16, hModule );
         }
         else

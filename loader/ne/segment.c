@@ -613,9 +613,7 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
         (pModule->flags & NE_FFLAGS_WIN32)) return TRUE; /*not a library*/
 
     /* Call USER signal handler for Win3.1 compatibility. */
-    if (pTask && pTask->userhandler)
-        pTask->userhandler( pModule->self, USIG16_DLL_LOAD, 0, 
-                            pTask->hInstance, pTask->hQueue );
+    TASK_CallTaskSignalProc( USIG16_DLL_LOAD, pModule->self );
 
     if (!pModule->cs) return TRUE;  /* no initialization code */
 

@@ -81,7 +81,7 @@ typedef struct _TDB
     HTASK16   hParent;                    /* 22 Selector of TDB of parent */
     WORD      signal_flags;               /* 24 Flags for signal handler */
     FARPROC16 sighandler WINE_PACKED;     /* 26 Signal handler */
-    USERSIGNALPROC userhandler WINE_PACKED; /* 2a USER signal handler */
+    FARPROC16 userhandler WINE_PACKED;    /* 2a USER signal handler */
     FARPROC16 discardhandler WINE_PACKED; /* 2e Handler for GlobalNotify() */
     DWORD     int0 WINE_PACKED;           /* 32 int 0 (divide by 0) handler */
     DWORD     int2 WINE_PACKED;           /* 36 int 2 (NMI) handler */
@@ -152,6 +152,7 @@ extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern void TASK_Reschedule(void);
 extern void TASK_CallToStart(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
+extern void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule );
 
 extern HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue );
 extern HQUEUE16 WINAPI GetThreadQueue16( DWORD thread );

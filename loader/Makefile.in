@@ -18,6 +18,8 @@ C_SRCS = \
 	signal.c \
 	task.c
 
+GLUE = task.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@
