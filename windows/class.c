@@ -1127,7 +1127,9 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASS16 *wc )
     wc->hbrBackground = HBRUSH_16(classPtr->hbrBackground);
     wc->lpszClassName = name;
     wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
-    return TRUE;
+
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 
@@ -1168,7 +1170,9 @@ BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameA( classPtr );
     wc->lpszClassName = name;
-    return TRUE;
+
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 
@@ -1205,7 +1209,9 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
     wc->lpszMenuName  = CLASS_GetMenuNameW( classPtr );
     wc->lpszClassName = name;
-    return TRUE;
+
+    /* We must return the atom of the class here instead of just TRUE. */
+    return atom;
 }
 
 

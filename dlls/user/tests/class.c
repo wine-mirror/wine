@@ -43,6 +43,7 @@ void ClassTest(HINSTANCE hInstance, BOOL global)
     WNDCLASSW cls, wc;
     WCHAR className[] = {'T','e','s','t','C','l','a','s','s',0};
     WCHAR winName[]   = {'W','i','n','C','l','a','s','s','T','e','s','t',0};
+    ATOM test_atom;
     HWND hTestWnd;
     DWORD i;
     WCHAR str[20];
@@ -133,8 +134,10 @@ void ClassTest(HINSTANCE hInstance, BOOL global)
         "GetClassName returned incorrect name for this window's class");
 
     /* check GetClassInfo with our hInstance */
-    if(GetClassInfoW(hInstance, str, &wc))
+    if((test_atom = GetClassInfoW(hInstance, str, &wc)))
     {
+        ok(test_atom == classatom,
+            "class atom did not match");
         ok(wc.cbClsExtra == cls.cbClsExtra,
             "cbClsExtra did not match");
         ok(wc.cbWndExtra == cls.cbWndExtra,
@@ -152,8 +155,10 @@ void ClassTest(HINSTANCE hInstance, BOOL global)
     /* check GetClassInfo with zero hInstance */
     if(global)
     {
-        if(GetClassInfoW(0, str, &wc))
+        if((test_atom = GetClassInfoW(0, str, &wc)))
         {
+            ok(test_atom == classatom,
+                "class atom did not match %x != %x", test_atom, classatom);
             ok(wc.cbClsExtra == cls.cbClsExtra,
                 "cbClsExtra did not match %x!=%x",wc.cbClsExtra,cls.cbClsExtra);
             ok(wc.cbWndExtra == cls.cbWndExtra,
