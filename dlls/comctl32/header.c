@@ -207,7 +207,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
         else if ((phdi->fmt & HDF_JUSTIFYMASK) == HDF_RIGHT)
             uTextJustify = DT_RIGHT;
 
-	if ((phdi->fmt & HDF_BITMAP) && (phdi->hbm)) {
+	if ((phdi->fmt & HDF_BITMAP) && !(phdi->fmt & HDF_BITMAP_ON_RIGHT) && (phdi->hbm)) {
 	    BITMAP bmp;
 	    HDC    hdcBitmap;
 	    INT    yD, yS, cx, cy, rx, ry;
@@ -245,7 +245,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 	}
 
 
-	if ((phdi->fmt & HDF_BITMAP_ON_RIGHT) && (phdi->hbm)) {
+	if ((phdi->fmt & HDF_BITMAP) && (phdi->fmt & HDF_BITMAP_ON_RIGHT) && (phdi->hbm)) {
 	    BITMAP bmp;
 	    HDC    hdcBitmap;
 	    INT    xD, yD, yS, cx, cy, rx, ry, tx;
