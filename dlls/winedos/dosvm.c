@@ -90,7 +90,6 @@ static CRITICAL_SECTION qcrit = CRITICAL_SECTION_INIT("DOSVM");
 static struct _DOSEVENT *pending_event, *current_event;
 static int sig_sent;
 static HANDLE event_notifier;
-static CONTEXT86 *current_context;
 
 #define SHOULD_PEND(x) \
   (x && ((!current_event) || (x->priority < current_event->priority)))
@@ -140,7 +139,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 {
   LPDOSEVENT event, cur, prev;
 
-  if (current_context) {
+  if (MZ_Current()) {
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
       ERR("out of memory allocating event entry\n");
@@ -259,78 +258,73 @@ static void DOSVM_ProcessMessage(MSG *msg)
   }
 }
 
-/***********************************************************************
- *		Wait (WINEDOS.@)
- */
-void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject )
-{
-  MSG msg;
-  DWORD waitret;
-  HANDLE objs[3];
-  int objc;
-  BOOL got_msg = FALSE;
 
-  objs[0]=GetStdHandle(STD_INPUT_HANDLE);
-  objs[1]=event_notifier;
-  objs[2]=hObject;
-  objc=hObject?3:2;
-  do {
-    /* check for messages (waste time before the response check below) */
-    if (PeekMessageA)
+/***********************************************************************
+ *		DOSVM_Wait
+ *
+ * Wait for asynchronous events. This routine temporarily enables
+ * interrupts and waits until some asynchronous event has been 
+ * processed.
+ */
+void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
+{
+    if (SHOULD_PEND(pending_event)) 
     {
-        while (PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
-            /* got a message */
-            DOSVM_ProcessMessage(&msg);
-            /* we don't need a TranslateMessage here */
-            DispatchMessageA(&msg);
-            got_msg = TRUE;
-        }
-    }
-chk_console_input:
-    if (!got_msg) {
-      /* check for console input */
-      INPUT_RECORD msg;
-      DWORD num;
-      if (PeekConsoleInputA(objs[0],&msg,1,&num) && num) {
-        DOSVM_ProcessConsole();
-        got_msg = TRUE;
-      }
-    }
-    if (read_pipe == -1) {
-      /* dispatch pending events */
-      if (SHOULD_PEND(pending_event)) {
-        CONTEXT86 context = *current_context;
+        /*
+         * FIXME: This does not work in protected mode DOS programs.
+         * FIXME: If we have pending IRQ which has 16-bit handler,
+         *        DOSVM_SendQueuedEvents may stuck in which case application
+         *        deadlocks. This is why keyboard events must have top 
+         *        priority (default timer IRQ handler is 16-bit code).
+         * FIXME: Critical section locking is broken.
+         */
+        CONTEXT86 context = *waitctx;
         IF_SET(&context);
         SET_PEND(&context);
         DOSVM_SendQueuedEvents(&context);
-        got_msg = TRUE;
-      }
-      if (got_msg) break;
-    } else {
-      fd_set readfds;
-      struct timeval timeout={0,0};
-      /* quick check for response from dosmod
-       * (faster than doing the full blocking wait, if data already available) */
-      FD_ZERO(&readfds); FD_SET(read_pipe,&readfds);
-      if (select(read_pipe+1,&readfds,NULL,NULL,&timeout)>0)
-	break;
     }
-    /* nothing yet, block while waiting for something to do */
-    if (MsgWaitForMultipleObjects)
-        waitret = MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
     else
-        waitret = WaitForMultipleObjects(objc,objs,FALSE,INFINITE);
+    {
+        HANDLE objs[2];
+        int    objc = DOSVM_IsWin16() ? 2 : 1;
+        DWORD  waitret;
 
-    if (waitret==(DWORD)-1) {
-      ERR_(module)("dosvm wait error=%ld\n",GetLastError());
+        objs[0] = event_notifier;
+        objs[1] = GetStdHandle(STD_INPUT_HANDLE);
+
+        waitret = MsgWaitForMultipleObjects( objc, objs, FALSE, 
+                                             INFINITE, QS_ALLINPUT );
+        
+        if (waitret == WAIT_OBJECT_0)
+        {
+            /*
+             * New pending event has been queued, we ignore it
+             * here because it will be processed on next call to
+             * DOSVM_Wait.
+             */
+        }
+        else if (objc == 2 && waitret == WAIT_OBJECT_0 + 1)
+        {
+            DOSVM_ProcessConsole();
+        }
+        else if (waitret == WAIT_OBJECT_0 + objc)
+        {
+            MSG msg;
+            while (PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) 
+            {
+                /* got a message */
+                DOSVM_ProcessMessage(&msg);
+                /* we don't need a TranslateMessage here */
+                DispatchMessageA(&msg);
+            }
+        }
+        else
+        {
+            ERR_(module)( "dosvm wait error=%ld\n", GetLastError() );
+        }
     }
-    if ((read_pipe != -1) && hObject) {
-      if (waitret==(WAIT_OBJECT_0+2)) break;
-    }
-    if (waitret==WAIT_OBJECT_0)
-      goto chk_console_input;
-  } while (TRUE);
 }
+
 
 DWORD WINAPI DOSVM_Loop( HANDLE hThread )
 {
@@ -434,7 +428,7 @@ static WINE_EXCEPTION_FILTER(exception_handler)
        * QueryPerformanceCounter() or something like that */
       InterlockedDecrement(&(NtCurrentTeb()->alarms));
     }
-    TRACE_(int)("context=%p, current=%p\n", context, current_context);
+    TRACE_(int)("context=%p\n", context);
     TRACE_(int)("cs:ip=%04lx:%04lx, ss:sp=%04lx:%04lx\n", context->SegCs, context->Eip, context->SegSs, context->Esp);
     if (!ISV86(context)) {
       ERR_(int)("@#&*%%, winedos signal handling is *still* messed up\n");
@@ -450,9 +444,6 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 
 int WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
-  CONTEXT86 *old_context = current_context;
-
-  current_context = context;
   __TRY
   {
     __wine_enter_vm86( context );
@@ -463,7 +454,7 @@ int WINAPI DOSVM_Enter( CONTEXT86 *context )
     TRACE_(module)( "leaving vm86 mode\n" );
   }
   __ENDTRY
-  current_context = old_context;
+
   return 0;
 }
 
@@ -489,7 +480,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 	  /* another event is pending, which we should probably
 	   * be able to process now */
 	  TRACE("another event pending, setting flag\n");
-	  current_context->EFlags |= VIP_MASK;
+	  NtCurrentTeb()->vm86_pending |= VIP_MASK;
 	}
       } else {
 	WARN("EOI without active IRQ\n");

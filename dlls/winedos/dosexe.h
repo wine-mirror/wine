@@ -75,8 +75,8 @@ typedef void (*DOSRELAY)(CONTEXT86*,void*);
 typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 typedef void (WINAPI *INTPROC)(CONTEXT86*);
 
-#define DOS_PRIORITY_REALTIME 0  /* IRQ0 */
-#define DOS_PRIORITY_KEYBOARD 1  /* IRQ1 */
+#define DOS_PRIORITY_REALTIME 1  /* IRQ0 - FIXME: should be 0 */
+#define DOS_PRIORITY_KEYBOARD 0  /* IRQ1 - FIXME: should be 1 */
 #define DOS_PRIORITY_VGA      2  /* IRQ9 */
 #define DOS_PRIORITY_MOUSE    5  /* IRQ12 */
 #define DOS_PRIORITY_SERIAL   10 /* IRQ4 */
@@ -106,7 +106,7 @@ extern BOOL DOSVM_IsWin16(void);
 
 /* dosvm.c */
 extern INT WINAPI DOSVM_Enter( CONTEXT86 *context );
-extern void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject );
+extern void WINAPI DOSVM_Wait( CONTEXT86 * );
 extern DWORD WINAPI DOSVM_Loop( HANDLE hThread );
 extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
 extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
@@ -180,7 +180,7 @@ extern void WINAPI DOSVM_Int1aHandler(CONTEXT86*);
 
 /* int16.c */
 extern void WINAPI DOSVM_Int16Handler(CONTEXT86*);
-extern int WINAPI DOSVM_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek);
+extern BOOL WINAPI DOSVM_Int16ReadChar( BYTE *, BYTE *, CONTEXT86 * );
 extern int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan);
 
 /* int17.c */

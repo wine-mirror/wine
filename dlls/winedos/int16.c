@@ -59,7 +59,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       /* Returns: AH = Scan code
                   AL = ASCII character */
       TRACE("Get Keystroke\n");
-      DOSVM_Int16ReadChar(&ascii, &scan, FALSE);
+      DOSVM_Int16ReadChar(&ascii, &scan, context);
       SET_AL( context, ascii );
       SET_AH( context, scan );
       break;
@@ -69,7 +69,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Keystroke\n");
-      if (!DOSVM_Int16ReadChar(&ascii, &scan, TRUE))
+      if (!DOSVM_Int16ReadChar(&ascii, &scan, NULL))
       {
           SET_ZFLAG(context);
       }
@@ -111,7 +111,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       TRACE("Get Enhanced Keystroke - Partially supported\n");
       /* Returns: AH = Scan code
                   AL = ASCII character */
-      DOSVM_Int16ReadChar(&ascii, &scan, FALSE);
+      DOSVM_Int16ReadChar(&ascii, &scan, context);
       SET_AL( context, ascii );
       SET_AH( context, scan );
       break;
@@ -122,7 +122,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Enhanced Keystroke - Partially supported\n");
-      if (!DOSVM_Int16ReadChar(&ascii, &scan, TRUE))
+      if (!DOSVM_Int16ReadChar(&ascii, &scan, NULL))
       {
           SET_ZFLAG(context);
       }
@@ -145,31 +145,51 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
    }
 }
 
-int WINAPI DOSVM_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
+/**********************************************************************
+ *	    DOSVM_Int16ReadChar
+ *
+ * Either peek into keyboard buffer or wait for next keystroke.
+ *
+ * If waitctx is NULL, return TRUE if buffer had keystrokes and
+ * FALSE if buffer is empty. Returned keystroke will be left into buffer.
+ * 
+ * If waitctx is non-NULL, wait until keystrokes are available.
+ * Return value will always be TRUE and returned keystroke will be
+ * removed from buffer.
+ */
+int WINAPI DOSVM_Int16ReadChar(BYTE *ascii, BYTE *scan, CONTEXT86 *waitctx)
 {
-  BIOSDATA *data = BIOS_DATA;
-  WORD CurOfs = data->NextKbdCharPtr;
+    BIOSDATA *data = BIOS_DATA;
+    WORD CurOfs = data->NextKbdCharPtr;
 
-  /* check if there's data in buffer */
-  if (peek) {
-    if (CurOfs == data->FirstKbdCharPtr)
-      return 0;
-  } else {
-    while (CurOfs == data->FirstKbdCharPtr) {
-      /* no input available yet, so wait... */
-      DOSVM_Wait( -1, 0 );
+    /* check if there's data in buffer */
+    if (waitctx)
+    {
+        /* wait until input is available... */
+        while (CurOfs == data->FirstKbdCharPtr)
+            DOSVM_Wait( waitctx );
     }
-  }
-  /* read from keyboard queue */
-  TRACE("(%p,%p,%d) -> %02x %02x\n",ascii,scan,peek,((BYTE*)data)[CurOfs],((BYTE*)data)[CurOfs+1]);
-  if (ascii) *ascii = ((BYTE*)data)[CurOfs];
-  if (scan) *scan = ((BYTE*)data)[CurOfs+1];
-  if (!peek) {
-    CurOfs += 2;
-    if (CurOfs >= data->KbdBufferEnd) CurOfs = data->KbdBufferStart;
-    data->NextKbdCharPtr = CurOfs;
-  }
-  return 1;
+    else
+    {
+        if (CurOfs == data->FirstKbdCharPtr)
+            return FALSE;
+    }
+
+    /* read from keyboard queue */
+    TRACE( "(%p,%p,%p) -> %02x %02x\n", ascii, scan, waitctx,
+           ((BYTE*)data)[CurOfs], ((BYTE*)data)[CurOfs+1] );
+
+    if (ascii) *ascii = ((BYTE*)data)[CurOfs];
+    if (scan) *scan = ((BYTE*)data)[CurOfs+1];
+
+    if (waitctx) 
+    {
+        CurOfs += 2;
+        if (CurOfs >= data->KbdBufferEnd) CurOfs = data->KbdBufferStart;
+        data->NextKbdCharPtr = CurOfs;
+    }
+
+    return TRUE;
 }
 
 int WINAPI DOSVM_Int16AddChar(BYTE ascii,BYTE scan)

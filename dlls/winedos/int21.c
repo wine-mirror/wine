@@ -94,7 +94,7 @@ typedef struct _INT21_HEAP {
  * Reads a character from the standard input.
  * Extended keycodes will be returned as two separate characters.
  */
-static BOOL INT21_ReadChar( BYTE *input, BOOL peek )
+static BOOL INT21_ReadChar( BYTE *input, CONTEXT86 *waitctx )
 {
     static BYTE pending_scan = 0;
 
@@ -102,7 +102,7 @@ static BOOL INT21_ReadChar( BYTE *input, BOOL peek )
     {
         if (input)
             *input = pending_scan;
-        if (!peek)
+        if (waitctx)
             pending_scan = 0;
         return TRUE;
     }
@@ -110,12 +110,12 @@ static BOOL INT21_ReadChar( BYTE *input, BOOL peek )
     {
         BYTE ascii;
         BYTE scan;
-        if (!DOSVM_Int16ReadChar( &ascii, &scan, peek ))
+        if (!DOSVM_Int16ReadChar( &ascii, &scan, waitctx ))
             return FALSE;
 
         if (input)
             *input = ascii;
-        if (!peek && !ascii)
+        if (waitctx && !ascii)
             pending_scan = scan;
         return TRUE;
     }
@@ -328,7 +328,7 @@ static void INT21_BufferedInput( CONTEXT86 *context )
         BYTE ascii;
         BYTE scan;
 
-        DOSVM_Int16ReadChar( &ascii, &scan, FALSE );
+        DOSVM_Int16ReadChar( &ascii, &scan, context );
 
         if (ascii == '\r' || ascii == '\n')
         {
@@ -1312,7 +1312,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             BYTE ascii;
             TRACE("DIRECT CHARACTER INPUT WITH ECHO\n");
-            INT21_ReadChar( &ascii, FALSE );
+            INT21_ReadChar( &ascii, context );
             SET_AL( context, ascii );
             /*
              * FIXME: What to echo when extended keycodes are read?
@@ -1337,10 +1337,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             TRACE("Direct Console Input\n");
 
-            if (INT21_ReadChar( NULL, TRUE ))
+            if (INT21_ReadChar( NULL, NULL ))
             {
                 BYTE ascii;
-                INT21_ReadChar( &ascii, FALSE );
+                INT21_ReadChar( &ascii, context );
                 SET_AL( context, ascii );
                 RESET_ZFLAG( context );
             }
@@ -1367,7 +1367,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             BYTE ascii;
             TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-            INT21_ReadChar( &ascii, FALSE );
+            INT21_ReadChar( &ascii, context );
             SET_AL( context, ascii );
         }
         break;
@@ -1376,7 +1376,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             BYTE ascii;
             TRACE("CHARACTER INPUT WITHOUT ECHO\n");
-            INT21_ReadChar( &ascii, FALSE );
+            INT21_ReadChar( &ascii, context );
             SET_AL( context, ascii );
         }
         break;
@@ -1414,7 +1414,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x0b: /* GET STDIN STATUS */
         TRACE( "GET STDIN STATUS\n" );
         {
-            if (INT21_ReadChar( NULL, TRUE ))
+            if (INT21_ReadChar( NULL, NULL ))
                 SET_AL( context, 0xff ); /* character available */
             else
                 SET_AL( context, 0 ); /* no character available */

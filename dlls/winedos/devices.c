@@ -282,7 +282,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  /* check for new keyboard input */
 	  while (CurOfs == bios->FirstKbdCharPtr) {
 	    /* no input available yet, so wait... */
-	    DOSVM_Wait( -1, 0 );
+	    DOSVM_Wait( ctx );
 	  }
 	  /* read from keyboard queue (call int16?) */
 	  data = ((WORD*)bios)[CurOfs];
@@ -301,7 +301,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  /* check for new keyboard input */
 	  while (CurOfs == bios->FirstKbdCharPtr) {
 	    /* no input available yet, so wait... */
-	    DOSVM_Wait( -1, 0 );
+	    DOSVM_Wait( ctx );
 	  }
 	  /* read from keyboard queue (call int16?) */
 	  data = ((WORD*)bios)[CurOfs];
