@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "objbase.h"
 #include "shlwapi.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "mapival.h"
@@ -63,21 +64,21 @@ static inline ULONG PROP_BadArray(LPSPropValue lpProp, size_t elemSize)
  *  Any elements within the property returned should not be individually
  *  freed, as they will be freed when lpOrig is.
  */
-SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc, 
+SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc,
                           ALLOCATEMORE *lpMore, LPVOID lpOrig)
 {
     ULONG ulLen, i;
     SCODE scode = S_OK;
-    
+
     TRACE("(%p,%p,%p,%p)\n", lpDest, lpSrc, lpMore, lpOrig);
-    
+
     if (!lpDest || IsBadWritePtr(lpDest, sizeof(SPropValue)) ||
         FBadProp(lpSrc) || !lpMore)
         return MAPI_E_INVALID_PARAMETER;
 
     /* Shallow copy first, this is sufficient for properties without pointers */
     *lpDest = *lpSrc;
-        
+
    switch (PROP_TYPE(lpSrc->ulPropTag))
     {
     case PT_CLSID:
@@ -124,59 +125,59 @@ SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc,
             if (FAILED(scode))
                 break;
 
-            /* Note that we could allocate the memory for each value in a 
+            /* Note that we could allocate the memory for each value in a
              * multi-value property seperately, however if an allocation failed
              * we would be left with a bunch of allocated memory, which (while
-             * not really leaked) is unusable until lpOrig is freed. So for 
-             * strings and binary arrays we make a single allocation for all 
+             * not really leaked) is unusable until lpOrig is freed. So for
+             * strings and binary arrays we make a single allocation for all
              * of the data. This is consistent since individual elements can't
              * be freed anyway.
              */
-                                
+
             switch (PROP_TYPE(lpSrc->ulPropTag))
             {
             case PT_MV_STRING8:
             {
-                char *lpNextStr = (char*)(lpDest->Value.MVszA.lppszA + 
+                char *lpNextStr = (char*)(lpDest->Value.MVszA.lppszA +
                                           lpDest->Value.MVszA.cValues);
-                
+
                 for (i = 0; i < lpSrc->Value.MVszA.cValues; i++)
                 {
                     ULONG ulStrLen = lstrlenA(lpSrc->Value.MVszA.lppszA[i]) + 1u;
-                    
+
                     lpDest->Value.MVszA.lppszA[i] = lpNextStr;
                     memcpy(lpNextStr, lpSrc->Value.MVszA.lppszA[i], ulStrLen);
                     lpNextStr += ulStrLen;
-                }                    
+                }
                 break;
             }
             case PT_MV_UNICODE:
             {
-                WCHAR *lpNextStr = (WCHAR*)(lpDest->Value.MVszW.lppszW + 
+                WCHAR *lpNextStr = (WCHAR*)(lpDest->Value.MVszW.lppszW +
                                             lpDest->Value.MVszW.cValues);
 
                 for (i = 0; i < lpSrc->Value.MVszW.cValues; i++)
                 {
                     ULONG ulStrLen = strlenW(lpSrc->Value.MVszW.lppszW[i]) + 1u;
-                    
+
                     lpDest->Value.MVszW.lppszW[i] = lpNextStr;
                     memcpy(lpNextStr, lpSrc->Value.MVszW.lppszW[i], ulStrLen * sizeof(WCHAR));
                     lpNextStr += ulStrLen;
-                }                    
+                }
                 break;
             }
             case PT_MV_BINARY:
             {
-                LPBYTE lpNext = (LPBYTE)(lpDest->Value.MVbin.lpbin + 
+                LPBYTE lpNext = (LPBYTE)(lpDest->Value.MVbin.lpbin +
                                          lpDest->Value.MVbin.cValues);
-                
+
                 for (i = 0; i < lpSrc->Value.MVszW.cValues; i++)
                 {
                     lpDest->Value.MVbin.lpbin[i].cb = lpSrc->Value.MVbin.lpbin[i].cb;
                     lpDest->Value.MVbin.lpbin[i].lpb = lpNext;
                     memcpy(lpNext, lpSrc->Value.MVbin.lpbin[i].lpb, lpDest->Value.MVbin.lpbin[i].cb);
                     lpNext += lpDest->Value.MVbin.lpbin[i].cb;
-                }                    
+                }
                 break;
             }
             default:
@@ -189,7 +190,7 @@ SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc,
     }
     return scode;
 }
- 
+
 /*************************************************************************
  * UlPropSize@4 (MAPI32.77)
  *
@@ -723,7 +724,7 @@ SCODE WINAPI ScCountProps(INT iCount, LPSPropValue lpProps, ULONG *pcBytes)
     for (i = 0; i < ulCount; i++)
     {
         ULONG ulPropSize = 0;
-        
+
         if (FBadProp(&lpProps[i]) || lpProps[i].ulPropTag == PROP_ID_NULL ||
             lpProps[i].ulPropTag == PROP_ID_INVALID)
             return MAPI_E_INVALID_PARAMETER;
@@ -734,20 +735,20 @@ SCODE WINAPI ScCountProps(INT iCount, LPSPropValue lpProps, ULONG *pcBytes)
                 if (!ulPropSize)
                     return MAPI_E_INVALID_PARAMETER;
             }
-            
+
             switch (PROP_TYPE(lpProps[i].ulPropTag))
             {
             case PT_STRING8:
             case PT_UNICODE:
             case PT_CLSID:
             case PT_BINARY:
-            case PT_MV_I2:       
-            case PT_MV_I4:       
-            case PT_MV_I8:       
-            case PT_MV_R4:       
-            case PT_MV_R8:       
-            case PT_MV_CURRENCY: 
-            case PT_MV_SYSTIME:  
+            case PT_MV_I2:
+            case PT_MV_I4:
+            case PT_MV_I8:
+            case PT_MV_R4:
+            case PT_MV_R8:
+            case PT_MV_CURRENCY:
+            case PT_MV_SYSTIME:
             case PT_MV_APPTIME:
                 ulPropSize += sizeof(SPropValue);
                 break;
@@ -919,17 +920,17 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
  *  MSDN states that this function can be used for serialisation by passing
  *  NULL as either lpOld or lpNew, thus converting any pointers in lpProps
  *  between offsets and pointers. This does not work in native (it crashes),
- *  and cannot be made to work in Wine because the original interface design 
+ *  and cannot be made to work in Wine because the original interface design
  *  is deficient. The only use left for this function is to remap pointers
  *  in a contigous property array that has been copied with memcpy() to another
  *  memory location.
  */
-SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld, 
+SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                           LPVOID lpNew, ULONG *lpCount)
 {
     static const BOOL bBadPtr = TRUE; /* Windows bug - Assumes source is bad */
     LPSPropValue lpDest = (LPSPropValue)lpProps;
-    ULONG ulCount = cValues * sizeof(SPropValue);    
+    ULONG ulCount = cValues * sizeof(SPropValue);
     ULONG ulLen, i, iter;
 
     TRACE("(%d,%p,%p,%p,%p)\n", cValues, lpProps, lpOld, lpNew, lpCount);
@@ -1279,8 +1280,6 @@ ULONG WINAPI FBadRow(LPSRow lpRow)
  */
 ULONG WINAPI FBadProp(LPSPropValue lpProp)
 {
-    ULONG i;
-
     if (!lpProp || IsBadReadPtr(lpProp, sizeof(SPropValue)) ||
         FBadPropTag(lpProp->ulPropTag))
         return TRUE;
@@ -1332,16 +1331,7 @@ ULONG WINAPI FBadProp(LPSPropValue lpProp)
         return FBadRglpszW(lpProp->Value.MVszW.lppszW,
                            lpProp->Value.MVszW.cValues);
     case PT_MV_BINARY:
-        if (PROP_BadArray(lpProp, sizeof(SBinary)))
-            return TRUE;
-
-        for (i = 0; i < lpProp->Value.MVszW.cValues; i++)
-        {
-            if (IsBadReadPtr(lpProp->Value.MVbin.lpbin[i].lpb,
-                             lpProp->Value.MVbin.lpbin[i].cb))
-                return TRUE;
-        }
-        break;
+        return FBadEntryList((LPENTRYLIST)&lpProp->Value.MVbin);
     }
     return FALSE;
 }
@@ -1379,4 +1369,1180 @@ ULONG WINAPI FBadColumnSet(LPSPropTagArray lpCols)
     }
     TRACE("Returning %s\n", ulRet ? "TRUE" : "FALSE");
     return ulRet;
+}
+
+
+/**************************************************************************
+ *  IMAPIProp {MAPI32}
+ *
+ * The default Mapi interface for manipulating object properties.
+ *
+ * DESCRIPTION
+ *  This object provides an interface to an objects properties. It is exposed
+ *  by several types of Mapi objects in order to simplify the querying and
+ *  modification of properties.
+ *
+ * METHODS
+ */
+
+/* A single property in a property data collection */
+typedef struct
+{
+  struct list  entry;
+  ULONG        ulAccess; /* The property value access level */
+  LPSPropValue value;    /* The property value */
+} IPropDataItem, *LPIPropDataItem;
+
+ /* The main property data collection structure */
+typedef struct
+{
+    IPropDataVtbl   *lpVtbl;
+    LONG             lRef;        /* Reference count */
+    ALLOCATEBUFFER  *lpAlloc;     /* Memory allocation routine */
+    ALLOCATEMORE    *lpMore;      /* Linked memory allocation routine */
+    FREEBUFFER      *lpFree;      /* Memory free routine */
+    ULONG            ulObjAccess; /* Object access level */
+    ULONG            ulNumValues; /* Number of items in values list */
+    struct list      values;      /* List of property values */
+    CRITICAL_SECTION cs;          /* Lock for thread safety */
+} IPropDataImpl;
+
+/* Internal - Get a property value, assumes lock is held */
+static IPropDataItem *IMAPIPROP_GetValue(IPropDataImpl *This, ULONG ulPropTag)
+{
+    struct list *cursor;
+
+    LIST_FOR_EACH(cursor, &This->values)
+    {
+        LPIPropDataItem current = LIST_ENTRY(cursor, IPropDataItem, entry);
+        /* Note that propery types don't have to match, just Id's */
+        if (PROP_ID(current->value->ulPropTag) == PROP_ID(ulPropTag))
+            return current;
+    }
+    return NULL;
+}
+
+/* Internal - Add a new property value, assumes lock is held */
+static IPropDataItem *IMAPIPROP_AddValue(IPropDataImpl *This,
+                                         LPSPropValue lpProp)
+{
+    LPVOID lpMem;
+    LPIPropDataItem lpNew;
+    HRESULT hRet;
+
+    hRet = This->lpAlloc(sizeof(IPropDataItem), &lpMem);
+
+    if (SUCCEEDED(hRet))
+    {
+        lpNew = lpMem;
+        lpNew->ulAccess = IPROP_READWRITE;
+
+        /* Allocate the value seperately so we can update it easily */
+        lpMem = NULL;
+        hRet = This->lpAlloc(sizeof(SPropValue), &lpMem);
+        if (SUCCEEDED(hRet))
+        {
+            lpNew->value = lpMem;
+
+            hRet = PropCopyMore(lpNew->value, lpProp, This->lpMore, lpMem);
+            if (SUCCEEDED(hRet))
+            {
+                list_add_tail(&This->values, &lpNew->entry);
+                This->ulNumValues++;
+                return lpNew;
+            }
+            This->lpFree(lpNew->value);
+        }
+        This->lpFree(lpNew);
+    }
+    return NULL;
+}
+
+/* Internal - Lock an IPropData object */
+static inline void IMAPIPROP_Lock(IPropDataImpl *This)
+{
+    RtlEnterCriticalSection(&This->cs);
+}
+
+/* Internal - Unlock an IPropData object */
+static inline void IMAPIPROP_Unlock(IPropDataImpl *This)
+{
+    RtlLeaveCriticalSection(&This->cs);
+}
+
+/* This one seems to be missing from mapidefs.h */
+#define CbNewSPropProblemArray(c) \
+    (offsetof(SPropProblemArray,aProblem)+(c)*sizeof(SPropProblem))
+
+/**************************************************************************
+ *  IMAPIProp_QueryInterface {MAPI32}
+ *
+ * Inherited method from the IUnknown Interface.
+ * See IUnknown_QueryInterface.
+ *
+ * NOTES
+ * This object exposes the following interfaces:
+ * - IUnknown() : The default interface for all COM-Objects.
+ * - IMAPIProp() : The default Mapi interface for manipulating object properties.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnQueryInterface(LPMAPIPROP iface, REFIID riid, LPVOID *ppvObj)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppvObj);
+
+    if (!ppvObj || !riid)
+        return MAPI_E_INVALID_PARAMETER;
+
+    *ppvObj = NULL;
+
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+       IsEqualIID(riid, &IID_IMAPIProp) ||
+       IsEqualIID(riid, &IID_IMAPIPropData))
+    {
+        *ppvObj = This;
+        IPropData_AddRef(iface);
+        TRACE("returning %p\n", *ppvObj);
+        return S_OK;
+    }
+
+    TRACE("returning E_NOINTERFACE\n");
+    return MAPI_E_INTERFACE_NOT_SUPPORTED;
+}
+
+/**************************************************************************
+ *  IMAPIProp_AddRef {MAPI32}
+ *
+ * Inherited method from the IUnknown Interface.
+ * See IUnknown_AddRef.
+ */
+static inline ULONG WINAPI IMAPIProp_fnAddRef(LPMAPIPROP iface)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+
+    TRACE("(%p)->(count=%ld)\n", This, This->lRef);
+
+    return InterlockedIncrement(&This->lRef);
+}
+
+/**************************************************************************
+ *  IMAPIProp_Release {MAPI32}
+ *
+ * Inherited method from the IUnknown Interface.
+ * See IUnknown_Release.
+ */
+static inline ULONG WINAPI IMAPIProp_fnRelease(LPMAPIPROP iface)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+
+    TRACE("(%p)->()\n", This);
+
+    if (!InterlockedDecrement(&This->lRef))
+    {
+        TRACE("Destroying IPropData (%p)\n",This);
+
+        /* Note: No need to lock, since no other thread is referencing iface */
+        while (!list_empty(&This->values))
+        {
+            struct list *head = list_head(&This->values);
+            LPIPropDataItem current = LIST_ENTRY(head, IPropDataItem, entry);
+            list_remove(head);
+            This->lpFree(current->value);
+            This->lpFree(current);
+        }
+        RtlDeleteCriticalSection(&This->cs);
+        This->lpFree(This);
+        return 0U;
+    }
+    return (ULONG)This->lRef;
+}
+
+/**************************************************************************
+ *  IMAPIProp_GetLastError {MAPI32}
+ *
+ * Get information about the last error that ocurred in an IMAPIProp object.
+ *
+ * PARAMS
+ *  iface    [I] IMAPIProp object that experienced the error
+ *  hRes     [I] Result of the call that returned an error
+ *  ulFlags  [I] 0=return Ascii strings, MAPI_UNICODE=return Unicode strings
+ *  lppError [O] Destination for detailed error information
+ *
+ * RETURNS
+ *  Success: S_OK. *lppError contains details about the last error.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid,
+ *           MAPI_E_NOT_ENOUGH_MEMORY, if memory allocation fails.
+ *
+ * NOTES
+ *  - If this function succeeds, the returned information in *lppError must be
+ *  freed using MAPIFreeBuffer() once the caller is finished with it.
+ *  - It is possible for this function to suceed and set *lppError to NULL,
+ *  if there is no further information to report about hRes.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnGetLastError(LPMAPIPROP iface, HRESULT hRes,
+                         ULONG ulFlags, LPMAPIERROR *lppError)
+{
+    TRACE("(%p,0x%08lX,0x%08lX,%p)\n", iface, hRes, ulFlags, lppError);
+
+    if (!lppError  || SUCCEEDED(hRes) || (ulFlags & ~MAPI_UNICODE))
+        return MAPI_E_INVALID_PARAMETER;
+
+    *lppError = NULL;
+    return S_OK;
+}
+
+/**************************************************************************
+ *  IMAPIProp_SaveChanges {MAPI32}
+ *
+ * Update any changes made to a tansactional IMAPIProp object.
+ *
+ * PARAMS
+ *  iface    [I] IMAPIProp object to update
+ *  ulFlags  [I] Flags controlling the update.
+ *
+ * RETURNS
+ *  Success: S_OK. Any outstanding changes are committed to the object.
+ *  Failure: An HRESULT error code describing the error.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnSaveChanges(LPMAPIPROP iface, ULONG ulFlags)
+{
+    TRACE("(%p,0x%08lX)\n", iface, ulFlags);
+
+     /* Since this object is not transacted we do not need to implement this */
+     /* FIXME: Should we set the access levels to clean? */
+    return S_OK;
+}
+
+/**************************************************************************
+ *  IMAPIProp_GetProps {MAPI32}
+ *
+ * Get property values from an IMAPIProp object.
+ *
+ * PARAMS
+ *  iface    [I] IMAPIProp object to get the property values from
+ *  lpTags   [I] Property tage of property values to be retrieved
+ *  ulFlags  [I] Return 0=Ascii MAPI_UNICODE=Unicode strings for
+ *                 unspecified types
+ *  lpCount  [O] Destination for number of properties returned
+ *  lppProps [O] Destination for returned property values
+ *
+ * RETURNS
+ *  Success: S_OK. *lppProps and *lpCount are updated.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ *           MAPI_E_NOT_ENOUGH_MEMORY, if memory allocation fails, or
+ *           MAPI_W_ERRORS_RETURNED if not all properties were retrieved
+ *           successfully.
+ * NOTES
+ *  - If MAPI_W_ERRORS_RETURNED is returned, any properties that could not be
+ *    retrieved from iface are present in lppProps with thier type
+ *    changed to PT_ERROR and Id unchanged.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnGetProps(LPMAPIPROP iface, LPSPropTagArray lpTags,
+                     ULONG ulFlags, ULONG *lpCount, LPSPropValue *lppProps)
+{
+    ULONG i;
+    HRESULT hRet = S_OK;
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+
+    TRACE("(%p,%p,0x%08lx,%p,%p) stub\n", iface, lpTags, ulFlags,
+          lpCount, lppProps);
+
+    if (!iface || ulFlags & ~MAPI_UNICODE || !lpTags || *lpCount || !lppProps)
+        return MAPI_E_INVALID_PARAMETER;
+
+    FIXME("semi-stub, flags not supported\n");
+
+    *lpCount = lpTags->cValues;
+    *lppProps = NULL;
+
+    if (*lpCount)
+    {
+        hRet = MAPIAllocateBuffer(*lpCount * sizeof(SPropValue), (LPVOID*)lppProps);
+        if (FAILED(hRet))
+            return hRet;
+
+        IMAPIPROP_Lock(This);
+
+        for (i = 0; i < lpTags->cValues; i++)
+        {
+            HRESULT hRetTmp = E_INVALIDARG;
+            LPIPropDataItem item;
+
+            item = IMAPIPROP_GetValue(This, lpTags->aulPropTag[i]);
+
+            if (item)
+                hRetTmp = PropCopyMore(&(*lppProps)[i], item->value,
+                                       This->lpMore, *lppProps);
+            if (FAILED(hRetTmp))
+            {
+                hRet = MAPI_W_ERRORS_RETURNED;
+                (*lppProps)[i].ulPropTag =
+                    CHANGE_PROP_TYPE(lpTags->aulPropTag[i], PT_ERROR);
+            }
+        }
+
+        IMAPIPROP_Unlock(This);
+    }
+    return hRet;
+}
+
+/**************************************************************************
+ *  MAPIProp_GetPropList {MAPI32}
+ *
+ * Get the list of property tags for all values in an IMAPIProp object.
+ *
+ * PARAMS
+ *  iface   [I] IMAPIProp object to get the property tag list from
+ *  ulFlags [I] Return 0=Ascii MAPI_UNICODE=Unicode strings for
+ *              unspecified types
+ *  lppTags [O] Destination for the retrieved peoperty tag list
+ *
+ * RETURNS
+ *  Success: S_OK. *lppTags contains the tags for all available properties.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ *           MAPI_E_BAD_CHARWIDTH, if Ascii or Unicode strings are requested
+ *           and that type of string is not supported.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnGetPropList(LPMAPIPROP iface, ULONG ulFlags,
+                        LPSPropTagArray *lppTags)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+    ULONG i;
+    HRESULT hRet;
+
+    TRACE("(%p,0x%08lx,%p) stub\n", iface, ulFlags, lppTags);
+
+    if (!iface || ulFlags & ~MAPI_UNICODE || !lppTags)
+        return MAPI_E_INVALID_PARAMETER;
+
+    FIXME("semi-stub, flags not supported\n");
+
+    *lppTags = NULL;
+
+    IMAPIPROP_Lock(This);
+
+    hRet = MAPIAllocateBuffer(CbNewSPropTagArray(This->ulNumValues),
+                              (LPVOID*)lppTags);
+    if (SUCCEEDED(hRet))
+    {
+        struct list *cursor;
+
+        i = 0;
+        LIST_FOR_EACH(cursor, &This->values)
+        {
+            LPIPropDataItem current = LIST_ENTRY(cursor, IPropDataItem, entry);
+            (*lppTags)->aulPropTag[i] = current->value->ulPropTag;
+            i++;
+        }
+        (*lppTags)->cValues = This->ulNumValues;
+    }
+
+    IMAPIPROP_Unlock(This);
+    return hRet;
+}
+
+/**************************************************************************
+ *  IMAPIProp_OpenProperty {MAPI32}
+ *
+ * Not documented at this time.
+ *
+ * RETURNS
+ *  An HRESULT success/failure code.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnOpenProperty(LPMAPIPROP iface, ULONG ulPropTag, LPCIID iid,
+                         ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lpUnk)
+{
+    FIXME("(%p,%lu,%s,%lu,0x%08lx,%p) stub\n", iface, ulPropTag,
+          debugstr_guid(iid), ulOpts, ulFlags, lpUnk);
+    return MAPI_E_NO_SUPPORT;
+}
+
+
+/**************************************************************************
+ *  IMAPIProp_SetProps {MAPI32}
+ *
+ * Add or edit the property values in an IMAPIProp object.
+ *
+ * PARAMS
+ *  iface    [I] IMAPIProp object to get the property tag list from
+ *  ulValues [I] Number of properties in lpProps
+ *  lpProps  [I] Property values to set
+ *  lppProbs [O] Optional destination for any problems that occurred
+ *
+ * RETURNS
+ *  Success: S_OK. The properties in lpProps are added to iface if they don't
+ *           exist, or changed to the values in lpProps if they do
+ *  Failure: An HRESULT error code describing the error
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnSetProps(LPMAPIPROP iface, ULONG ulValues,
+                     LPSPropValue lpProps, LPSPropProblemArray *lppProbs)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+    HRESULT hRet = S_OK;
+    ULONG i;
+
+    TRACE("(%p,%lu,%p,%p)\n", iface, ulValues, lpProps, lppProbs);
+
+    if (!iface || !lpProps)
+      return MAPI_E_INVALID_PARAMETER;
+
+    for (i = 0; i < ulValues; i++)
+    {
+        if (FBadProp(&lpProps[i]) ||
+            PROP_TYPE(lpProps[i].ulPropTag) == PT_OBJECT ||
+            PROP_TYPE(lpProps[i].ulPropTag) == PT_NULL)
+          return MAPI_E_INVALID_PARAMETER;
+    }
+
+    IMAPIPROP_Lock(This);
+
+    /* FIXME: Under what circumstances is lpProbs created? */
+    for (i = 0; i < ulValues; i++)
+    {
+        LPIPropDataItem item = IMAPIPROP_GetValue(This, lpProps[i].ulPropTag);
+
+        if (item)
+        {
+            HRESULT hRetTmp;
+            LPVOID lpMem = NULL;
+
+            /* Found, so update the existing value */
+            if (item->value->ulPropTag != lpProps[i].ulPropTag)
+                FIXME("semi-stub, overwriting type (not coercing)\n");
+
+            hRetTmp = This->lpAlloc(sizeof(SPropValue), &lpMem);
+            if (SUCCEEDED(hRetTmp))
+            {
+                hRetTmp = PropCopyMore(lpMem, &lpProps[i], This->lpMore, lpMem);
+                if (SUCCEEDED(hRetTmp))
+                {
+                    This->lpFree(item->value);
+                    item->value = lpMem;
+                    continue;
+                }
+                This->lpFree(lpMem);
+            }
+            hRet = hRetTmp;
+        }
+        else
+        {
+            /* Add new value */
+            if (!(item = IMAPIPROP_AddValue(This, &lpProps[i])))
+                hRet = MAPI_E_NOT_ENOUGH_MEMORY;
+        }
+    }
+
+    IMAPIPROP_Unlock(This);
+    return hRet;
+}
+
+/**************************************************************************
+ *  IMAPIProp_DeleteProps {MAPI32}
+ *
+ * Delete one or more property values from a IMAPIProp objects.
+ *
+ * PARAMS
+ *  iface    [I] IMAPIProp object to remove property values from.
+ *  lpTags   [I] Collection of property Id's to remove from iface.
+ *  lppProbs [O] Destination for problems encountered, if any.
+ *
+ * RETURNS
+ *  Success: S_OK. Any properties in iface matching property Id's in lpTags have
+ *           been deleted. If lppProbs is non-NULL it contains details of any
+ *           errors that occurred.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ *           E_ACCESSDENIED, if this object was created using CreateIProp() and
+ *           a subsequent call to IPropData_SetObjAcess() was made specifying
+ *           IPROP_READONLY as the access type.
+ *
+ * NOTES
+ *  - lppProbs will not be populated for cases where a property Id is present
+ *    in lpTags but not in iface.
+ *  - lppProbs should be deleted with MAPIFreeBuffer() if returned.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnDeleteProps(LPMAPIPROP iface, LPSPropTagArray lpTags,
+                        LPSPropProblemArray *lppProbs)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+    ULONG i, numProbs = 0;
+    HRESULT hRet = S_OK;
+
+    TRACE("(%p,%p,%p)\n", iface, lpTags, lppProbs);
+
+    if (!iface || !lpTags)
+        return MAPI_E_INVALID_PARAMETER;
+
+    if (lppProbs)
+        *lppProbs = NULL;
+
+    for (i = 0; i < lpTags->cValues; i++)
+    {
+        if (FBadPropTag(lpTags->aulPropTag[i]) ||
+            PROP_TYPE(lpTags->aulPropTag[i]) == PT_OBJECT ||
+            PROP_TYPE(lpTags->aulPropTag[i]) == PT_NULL)
+          return MAPI_E_INVALID_PARAMETER;
+    }
+
+    IMAPIPROP_Lock(This);
+
+    if (This->ulObjAccess != IPROP_READWRITE)
+    {
+        IMAPIPROP_Unlock(This);
+        return E_ACCESSDENIED;
+    }
+
+    for (i = 0; i < lpTags->cValues; i++)
+    {
+        LPIPropDataItem item = IMAPIPROP_GetValue(This, lpTags->aulPropTag[i]);
+
+        if (item)
+        {
+            if (item->ulAccess & IPROP_READWRITE)
+            {
+                /* Everything hunky-dory, remove the item */
+                list_remove(&item->entry);
+                This->lpFree(item->value); /* Also frees value pointers */
+                This->lpFree(item);
+                This->ulNumValues--;
+            }
+            else if (lppProbs)
+            {
+                 /* Can't write the value. Create/populate problems array */
+                 if (!*lppProbs)
+                 {
+                     /* Create problems array */
+                     ULONG ulSize = CbNewSPropProblemArray(lpTags->cValues - i);
+                     HRESULT hRetTmp = MAPIAllocateBuffer(ulSize, (LPVOID*)lppProbs);
+                     if (FAILED(hRetTmp))
+                         hRet = hRetTmp;
+                 }
+                 if (*lppProbs)
+                 {
+                     LPSPropProblem lpProb = &(*lppProbs)->aProblem[numProbs];
+                     lpProb->ulIndex = i;
+                     lpProb->ulPropTag = lpTags->aulPropTag[i];
+                     lpProb->scode = E_ACCESSDENIED;
+                     numProbs++;
+                 }
+            }
+        }
+    }
+    if (lppProbs && *lppProbs)
+        (*lppProbs)->cProblem = numProbs;
+
+    IMAPIPROP_Unlock(This);
+    return hRet;
+}
+
+
+/**************************************************************************
+ *  IMAPIProp_CopyTo {MAPI32}
+ *
+ * Not documented at this time.
+ *
+ * RETURNS
+ *  An HRESULT success/failure code.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnCopyTo(LPMAPIPROP iface, ULONG niids, LPCIID lpiidExcl,
+                   LPSPropTagArray lpPropsExcl, ULONG ulParam,
+                   LPMAPIPROGRESS lpIProgress, LPCIID lpIfaceIid, LPVOID lpDstObj,
+                   ULONG ulFlags, LPSPropProblemArray *lppProbs)
+{
+    FIXME("(%p,%lu,%p,%p,%lx,%p,%s,%p,0x%08lX,%p) stub\n", iface, niids,
+          lpiidExcl, lpPropsExcl, ulParam, lpIProgress,
+          debugstr_guid(lpIfaceIid), lpDstObj, ulFlags, lppProbs);
+    return MAPI_E_NO_SUPPORT;
+}
+
+/**************************************************************************
+ *  IMAPIProp_CopyProps {MAPI32}
+ *
+ * Not documented at this time.
+ *
+ * RETURNS
+ *  An HRESULT success/failure code.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnCopyProps(LPMAPIPROP iface, LPSPropTagArray lpInclProps,
+                      ULONG ulParam, LPMAPIPROGRESS lpIProgress, LPCIID lpIface,
+                      LPVOID lpDstObj, ULONG ulFlags,
+                      LPSPropProblemArray *lppProbs)
+{
+    FIXME("(%p,%p,%lx,%p,%s,%p,0x%08lX,%p) stub\n", iface, lpInclProps,
+          ulParam, lpIProgress, debugstr_guid(lpIface), lpDstObj, ulFlags,
+          lppProbs);
+    return MAPI_E_NO_SUPPORT;
+}
+
+/**************************************************************************
+ *  IMAPIProp_GetNamesFromIDs {MAPI32}
+ *
+ * Get the names of properties from thier identifiers.
+ *
+ * PARAMS
+ *  iface       [I]   IMAPIProp object to operate on
+ *  lppPropTags [I/O] Property identifiers to get the names for, or NULL to
+ *                    get all names
+ *  iid         [I]   Property set identifier, or NULL
+ *  ulFlags     [I]   MAPI_NO_IDS=Don't return numeric named properties,
+ *                    or MAPI_NO_STRINGS=Don't return strings
+ *  lpCount     [O]   Destination for number of properties returned
+ *  lpppNames   [O]   Destination for returned names
+ *
+ * RETURNS
+ *  Success: S_OK. *lppPropTags and lpppNames contain the returned
+ *           name/identifiers.
+ *  Failure: MAPI_E_NO_SUPPORT, if the object does not support named properties,
+ *           MAPI_E_NOT_ENOUGH_MEMORY, if memory allocation fails, or
+ *           MAPI_W_ERRORS_RETURNED if not all properties were retrieved
+ *           successfully.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnGetNamesFromIDs(LPMAPIPROP iface, LPSPropTagArray *lppPropTags,
+                            LPGUID iid, ULONG ulFlags, ULONG *lpCount,
+                            LPMAPINAMEID **lpppNames)
+{
+    FIXME("(%p,%p,%s,0x%08lX,%p,%p) stub\n", iface, lppPropTags,
+          debugstr_guid(iid), ulFlags, lpCount, lpppNames);
+    return MAPI_E_NO_SUPPORT;
+}
+
+/**************************************************************************
+ *  IMAPIProp_GetIDsFromNames {MAPI32}
+ *
+ * Get property identifiers associated with one or more named properties.
+ *
+ * PARAMS
+ *  iface       [I] IMAPIProp object to operate on
+ *  ulNames     [I] Number of names in lppNames
+ *  lppNames    [I] Names to query or create, or NULL to query all names
+ *  ulFlags     [I] Pass MAPI_CREATE to create new named properties
+ *  lppPropTags [O] Destination for queried or created property identifiers
+ *
+ * RETURNS
+ *  Success: S_OK. *lppPropTags contains the property tags created or requested.
+ *  Failure: MAPI_E_NO_SUPPORT, if the object does not support named properties,
+ *           MAPI_E_TOO_BIG, if the object cannot process the number of
+ *           properties involved.
+ *           MAPI_E_NOT_ENOUGH_MEMORY, if memory allocation fails, or
+ *           MAPI_W_ERRORS_RETURNED if not all properties were retrieved
+ *           successfully.
+ */
+static inline HRESULT WINAPI
+IMAPIProp_fnGetIDsFromNames(LPMAPIPROP iface, ULONG ulNames,
+                            LPMAPINAMEID *lppNames, ULONG ulFlags,
+                            LPSPropTagArray *lppPropTags)
+{
+    FIXME("(%p,%ld,%p,0x%08lX,%p) stub\n",
+          iface, ulNames, lppNames, ulFlags, lppPropTags);
+    return MAPI_E_NO_SUPPORT;
+}
+
+/**************************************************************************
+ *  IPropData {MAPI32}
+ *
+ * A default Mapi interface to provide manipulation of object properties.
+ *
+ * DESCRIPTION
+ *  This object provides a default interface suitable in some cases as an
+ *  implementation of the IMAPIProp interface (which has no default
+ *  implementation). In addition to the IMAPIProp() methods inherited, this
+ *  interface allows read/write control over access to the object and its
+ *  individual properties.
+ *
+ *  To obtain the default implementation of this interface from Mapi, call
+ *  CreateIProp().
+ *
+ * METHODS
+ */
+
+/**************************************************************************
+ *  IPropData_QueryInterface {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_QueryInterface.
+ */
+static HRESULT WINAPI
+IPropData_fnQueryInterface(LPPROPDATA iface, REFIID riid, LPVOID *ppvObj)
+{
+    return IMAPIProp_fnQueryInterface((LPMAPIPROP)iface, riid, ppvObj);
+}
+
+/**************************************************************************
+ *  IPropData_AddRef {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_AddRef.
+ */
+static ULONG WINAPI
+IPropData_fnAddRef(LPPROPDATA iface)
+{
+    return IMAPIProp_fnAddRef((LPMAPIPROP)iface);
+}
+
+/**************************************************************************
+ *  IPropData_Release {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_Release.
+ */
+static ULONG WINAPI
+IPropData_fnRelease(LPPROPDATA iface)
+{
+    return IMAPIProp_fnRelease((LPMAPIPROP)iface);
+}
+
+/**************************************************************************
+ *  IPropData_GetLastError {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_GetLastError.
+ */
+static HRESULT WINAPI
+IPropData_fnGetLastError(LPPROPDATA iface, HRESULT hRes, ULONG ulFlags,
+                         LPMAPIERROR *lppError)
+{
+    return IMAPIProp_fnGetLastError((LPMAPIPROP)iface, hRes, ulFlags, lppError);
+}
+
+/**************************************************************************
+ *  IPropData_SaveChanges {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_SaveChanges.
+ */
+static HRESULT WINAPI
+IPropData_fnSaveChanges(LPPROPDATA iface, ULONG ulFlags)
+{
+    return IMAPIProp_fnSaveChanges((LPMAPIPROP)iface, ulFlags);
+}
+
+/**************************************************************************
+ *  IPropData_GetProps {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_GetProps.
+ */
+static HRESULT WINAPI
+IPropData_fnGetProps(LPPROPDATA iface, LPSPropTagArray lpPropTags,
+                     ULONG ulFlags, ULONG *lpCount, LPSPropValue *lppProps)
+{
+    return IMAPIProp_fnGetProps((LPMAPIPROP)iface, lpPropTags, ulFlags,
+                                lpCount, lppProps);
+}
+
+/**************************************************************************
+ *  IPropData_GetPropList {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_GetPropList.
+ */
+static HRESULT WINAPI
+IPropData_fnGetPropList(LPPROPDATA iface, ULONG ulFlags,
+                                              LPSPropTagArray *lppPropTags)
+{
+    return IMAPIProp_fnGetPropList((LPMAPIPROP)iface, ulFlags, lppPropTags);
+}
+
+/**************************************************************************
+ *  IPropData_OpenProperty {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_OpenProperty.
+ */
+static HRESULT WINAPI
+IPropData_fnOpenProperty(LPPROPDATA iface, ULONG ulPropTag, LPCIID iid,
+                         ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lpUnk)
+{
+    return IMAPIProp_fnOpenProperty((LPMAPIPROP)iface, ulPropTag, iid,
+                                    ulOpts, ulFlags, lpUnk);
+}
+
+/**************************************************************************
+ *  IPropData_SetProps {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_SetProps.
+ */
+static HRESULT WINAPI
+IPropData_fnSetProps(LPPROPDATA iface, ULONG cValues, LPSPropValue lpProps,
+                     LPSPropProblemArray *lppProbs)
+{
+    return IMAPIProp_fnSetProps((LPMAPIPROP)iface, cValues, lpProps, lppProbs);
+}
+
+/**************************************************************************
+ *  IPropData_DeleteProps {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_DeleteProps.
+ */
+static HRESULT WINAPI
+IPropData_fnDeleteProps(LPPROPDATA iface, LPSPropTagArray lpPropTags,
+                        LPSPropProblemArray *lppProbs)
+{
+    return IMAPIProp_fnDeleteProps((LPMAPIPROP)iface, lpPropTags, lppProbs);
+}
+
+/**************************************************************************
+ *  IPropData_CopyTo {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_CopyTo.
+ */
+static HRESULT WINAPI
+IPropData_fnCopyTo(LPPROPDATA iface, ULONG ciidExclude, LPCIID lpIid,
+                   LPSPropTagArray lpProps, ULONG ulParam,
+                   LPMAPIPROGRESS lpProgress, LPCIID lpIface, LPVOID lpDst,
+                   ULONG ulFlags, LPSPropProblemArray *lppProbs)
+{
+    return IMAPIProp_fnCopyTo((LPMAPIPROP)iface, ciidExclude, lpIid, lpProps,
+                              ulParam, lpProgress, lpIface, lpDst,
+                              ulFlags, lppProbs);
+}
+
+/**************************************************************************
+ *  IPropData_CopyProps {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_CopyProps.
+ */
+static HRESULT WINAPI
+IPropData_fnCopyProps(LPPROPDATA iface, LPSPropTagArray lpProps,
+                      ULONG ulParam, LPMAPIPROGRESS lpProgress, LPCIID lpIface,
+                      LPVOID lpDst, ULONG ulFlags, LPSPropProblemArray *lppProbs)
+{
+    return IMAPIProp_fnCopyProps((LPMAPIPROP)iface, lpProps, ulParam,
+                                 lpProgress, lpIface, lpDst, ulFlags, lppProbs);
+}
+
+/**************************************************************************
+ *  IPropData_GetNamesFromIDs {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_GetNamesFromIDs.
+ */
+static HRESULT WINAPI
+IPropData_fnGetNamesFromIDs(LPPROPDATA iface, LPSPropTagArray *lppPropTags,
+                            LPGUID iid, ULONG ulFlags, ULONG *lpCount,
+                            LPMAPINAMEID **lpppNames)
+{
+    return IMAPIProp_fnGetNamesFromIDs((LPMAPIPROP)iface, lppPropTags, iid,
+                                       ulFlags, lpCount, lpppNames);
+}
+
+/**************************************************************************
+ *  IPropData_GetIDsFromNames {MAPI32}
+ *
+ * Inherited method from the IMAPIProp Interface.
+ * See IMAPIProp_GetIDsFromNames.
+ */
+static HRESULT WINAPI
+IPropData_fnGetIDsFromNames(LPPROPDATA iface, ULONG ulNames,
+                            LPMAPINAMEID *lppNames, ULONG ulFlags,
+                            LPSPropTagArray *lppPropTags)
+{
+    return IMAPIProp_fnGetIDsFromNames((LPMAPIPROP)iface, ulNames, lppNames,
+                                       ulFlags, lppPropTags);
+}
+
+/**************************************************************************
+ *  IPropData_HrSetObjAccess {MAPI32}
+ *
+ * Set the access level of an IPropData object.
+ *
+ * PARAMS
+ *  iface    [I] IPropData object to set the access on
+ *  ulAccess [I] Either IPROP_READONLY or IPROP_READWRITE for read or
+ *               read/write access respectively.
+ *
+ * RETURNS
+ *  Success: S_OK. The objects access level is changed.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ */
+static HRESULT WINAPI
+IPropData_fnHrSetObjAccess(LPPROPDATA iface, ULONG ulAccess)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+
+    TRACE("(%p,%lx)\n", iface, ulAccess);
+
+    if (!iface || ulAccess < IPROP_READONLY || ulAccess > IPROP_READWRITE)
+        return MAPI_E_INVALID_PARAMETER;
+
+    IMAPIPROP_Lock(This);
+
+    This->ulObjAccess = ulAccess;
+
+    IMAPIPROP_Unlock(This);
+    return S_OK;
+}
+
+/* Internal - determine if an access value is bad */
+static inline BOOL PROP_IsBadAccess(ULONG ulAccess)
+{
+    switch (ulAccess)
+    {
+    case IPROP_READONLY|IPROP_CLEAN:
+    case IPROP_READONLY|IPROP_DIRTY:
+    case IPROP_READWRITE|IPROP_CLEAN:
+    case IPROP_READWRITE|IPROP_DIRTY:
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**************************************************************************
+ *  IPropData_HrSetPropAccess {MAPI32}
+ *
+ * Set the access levels for a group of property values in an IPropData object.
+ *
+ * PARAMS
+ *  iface    [I] IPropData object to set access levels in.
+ *  lpTags   [I] List of property Id's to set access for.
+ *  lpAccess [O] Access level for each property in lpTags.
+ *
+ * RETURNS
+ *  Success: S_OK. The access level of each property value in lpTags that is
+ *           present in iface is changed.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ *
+ * NOTES
+ *  - Each access level in lpAccess must contain at least one of IPROP_READONLY
+ *    or IPROP_READWRITE, but not both, and also IPROP_CLEAN or IPROP_DIRTY,
+ *    but not both. No other bits should be set.
+ *  - If a property Id in lpTags is not present in iface, it is ignored.
+ */
+static HRESULT WINAPI
+IPropData_fnHrSetPropAccess(LPPROPDATA iface, LPSPropTagArray lpTags,
+                            ULONG *lpAccess)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+
+    ULONG i;
+
+    TRACE("(%p,%p,%p)\n", iface, lpTags, lpAccess);
+
+    if (!iface || !lpTags || !lpAccess)
+        return MAPI_E_INVALID_PARAMETER;
+
+    for (i = 0; i < lpTags->cValues; i++)
+    {
+        if (FBadPropTag(lpTags->aulPropTag[i]) || PROP_IsBadAccess(lpAccess[i]))
+            return MAPI_E_INVALID_PARAMETER;
+    }
+
+    IMAPIPROP_Lock(This);
+
+    for (i = 0; i < lpTags->cValues; i++)
+    {
+        LPIPropDataItem item = IMAPIPROP_GetValue(This, lpTags->aulPropTag[i]);
+
+        if (item)
+            item->ulAccess = lpAccess[i];
+    }
+
+    IMAPIPROP_Unlock(This);
+    return S_OK;
+}
+
+/**************************************************************************
+ *  IPropData_HrGetPropAccess {MAPI32}
+ *
+ * Get the access levels for a group of property values in an IPropData object.
+ *
+ * PARAMS
+ *  iface     [I] IPropData object to get access levels from.
+ *  lppTags   [O] Destination for the list of property Id's in iface.
+ *  lppAccess [O] Destination for access level for each property in lppTags.
+ *
+ * RETURNS
+ *  Success: S_OK. lppTags and lppAccess contain the property Id's and the
+ *           Access level of each property value in iface.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid, or
+ *           MAPI_E_NOT_ENOUGH_MEMORY if memory allocation fails.
+ *
+ * NOTES
+ *  - *lppTags and *lppAccess should be freed with MAPIFreeBuffer() by the caller.
+ */
+static HRESULT WINAPI
+IPropData_fnHrGetPropAccess(LPPROPDATA iface, LPSPropTagArray *lppTags,
+                            ULONG **lppAccess)
+{
+    IPropDataImpl *This = (IPropDataImpl*)iface;
+    LPVOID lpMem;
+    HRESULT hRet;
+    ULONG i;
+
+    TRACE("(%p,%p,%p) stub\n", iface, lppTags, lppAccess);
+
+    if (!iface || !lppTags || !lppAccess)
+        return MAPI_E_INVALID_PARAMETER;
+
+    *lppTags = NULL;
+    *lppAccess = NULL;
+
+    IMAPIPROP_Lock(This);
+
+    hRet = This->lpAlloc(CbNewSPropTagArray(This->ulNumValues), &lpMem);
+    if (SUCCEEDED(hRet))
+    {
+        *lppTags = lpMem;
+
+        hRet = This->lpAlloc(This->ulNumValues * sizeof(ULONG), &lpMem);
+        if (SUCCEEDED(hRet))
+        {
+            struct list *cursor;
+
+            *lppAccess = lpMem;
+            (*lppTags)->cValues = This->ulNumValues;
+
+            i = 0;
+            LIST_FOR_EACH(cursor, &This->values)
+            {
+                LPIPropDataItem item = LIST_ENTRY(cursor, IPropDataItem, entry);
+                (*lppTags)->aulPropTag[i] = item->value->ulPropTag;
+                (*lppAccess)[i] = item->ulAccess;
+                i++;
+            }
+            IMAPIPROP_Unlock(This);
+            return S_OK;
+        }
+        This->lpFree(*lppTags);
+        *lppTags = 0;
+    }
+    IMAPIPROP_Unlock(This);
+    return MAPI_E_NOT_ENOUGH_MEMORY;
+}
+
+/**************************************************************************
+ *  IPropData_HrAddObjProps {MAPI32}
+ *
+ * Not documented at this time.
+ *
+ * RETURNS
+ *  An HRESULT success/failure code.
+ */
+static HRESULT WINAPI
+IPropData_fnHrAddObjProps(LPPROPDATA iface, LPSPropTagArray lpTags,
+                          LPSPropProblemArray *lppProbs)
+{
+#if 0
+    ULONG i;
+    HRESULT hRet;
+    LPSPropValue lpValues;
+#endif
+
+    FIXME("(%p,%p,%p) stub\n", iface, lpTags, lppProbs);
+
+    if (!iface || !lpTags)
+        return MAPI_E_INVALID_PARAMETER;
+
+    /* FIXME: Below is the obvious implementation, adding all the properties
+     *        in lpTags to the object. However, it doesn't appear that this
+     *        is what this function does.
+     */
+    return S_OK;
+#if 0
+    if (!lpTags->cValues)
+        return S_OK;
+
+    lpValues = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         lpTags->cValues * sizeof(SPropValue));
+    if (!lpValues)
+        return MAPI_E_NOT_ENOUGH_MEMORY;
+
+    for (i = 0; i < lpTags->cValues; i++)
+        lpValues[i].ulPropTag = lpTags->aulPropTag[i];
+
+    hRet = IPropData_SetProps(iface, lpTags->cValues, lpValues, lppProbs);
+    HeapFree(GetProcessHeap(), 0, lpValues);
+    return hRet;
+#endif
+}
+
+static struct IPropDataVtbl IPropDataImpl_vtbl =
+{
+    IPropData_fnQueryInterface,
+    IPropData_fnAddRef,
+    IPropData_fnRelease,
+    IPropData_fnGetLastError,
+    IPropData_fnSaveChanges,
+    IPropData_fnGetProps,
+    IPropData_fnGetPropList,
+    IPropData_fnOpenProperty,
+    IPropData_fnSetProps,
+    IPropData_fnDeleteProps,
+    IPropData_fnCopyTo,
+    IPropData_fnCopyProps,
+    IPropData_fnGetNamesFromIDs,
+    IPropData_fnGetIDsFromNames,
+    IPropData_fnHrSetObjAccess,
+    IPropData_fnHrSetPropAccess,
+    IPropData_fnHrGetPropAccess,
+    IPropData_fnHrAddObjProps
+};
+
+/*************************************************************************
+ * CreateIProp@24 (MAPI32.60)
+ *
+ * Create an IPropData object.
+ *
+ * PARAMS
+ *  iid         [I] GUID of the object to create. Use &IID_IMAPIPropData or NULL
+ *  lpAlloc     [I] Memory allocation function. Use MAPIAllocateBuffer()
+ *  lpMore      [I] Linked memory allocation function. Use MAPIAllocateMore()
+ *  lpFree      [I] Memory free function. Use MAPIFreeBuffer()
+ *  lpReserved  [I] Reserved, set to NULL
+ *  lppPropData [O] Destination for created IPropData object
+ *
+ * RETURNS
+ *  Success: S_OK. *lppPropData contains the newly created object.
+ *  Failure: MAPI_E_INTERFACE_NOT_SUPPORTED, if iid is non-NULL and not supported,
+ *           MAPI_E_INVALID_PARAMETER, if any parameter is invalid
+ */
+SCODE WINAPI CreateIProp(LPCIID iid, ALLOCATEBUFFER *lpAlloc,
+                         ALLOCATEMORE *lpMore, FREEBUFFER *lpFree,
+                         LPVOID lpReserved, LPPROPDATA *lppPropData)
+{
+    IPropDataImpl *lpPropData;
+    SCODE scode;
+
+    TRACE("(%s,%p,%p,%p,%p,%p)\n", debugstr_guid(iid), lpAlloc, lpMore, lpFree,
+          lpReserved, lppPropData);
+
+    if (lppPropData)
+        *lppPropData = NULL;
+
+    if (iid && !IsEqualGUID(iid, &IID_IMAPIPropData))
+        return MAPI_E_INTERFACE_NOT_SUPPORTED;
+
+    if (!lpAlloc || !lpMore || !lpFree || lpReserved || !lppPropData)
+        return MAPI_E_INVALID_PARAMETER;
+
+    scode = lpAlloc(sizeof(IPropDataImpl), (LPVOID*)&lpPropData);
+
+    if (SUCCEEDED(scode))
+    {
+        lpPropData->lpVtbl = &IPropDataImpl_vtbl;
+        lpPropData->lRef = 1;
+        lpPropData->lpAlloc = lpAlloc;
+        lpPropData->lpMore = lpMore;
+        lpPropData->lpFree = lpFree;
+        lpPropData->ulObjAccess = IPROP_READWRITE;
+        lpPropData->ulNumValues = 0;
+        list_init(&lpPropData->values);
+        RtlInitializeCriticalSection(&lpPropData->cs);
+        *lppPropData = (LPPROPDATA)lpPropData;
+    }
+    return scode;
 }

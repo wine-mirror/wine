@@ -747,6 +747,34 @@ ULONG WINAPI UlFromSzHex(LPCWSTR lpszHex)
     return ulRet;
 }
 
+/************************************************************************
+ * FBadEntryList@4 (MAPI32.190)
+ *
+ * Determine is an entry list is invalid.
+ *
+ * PARAMS
+ *  lpEntryList [I] List to check
+ *
+ * RETURNS
+ *  TRUE, if lpEntryList is invalid,
+ *  FALSE, otherwise.
+ */
+BOOL WINAPI FBadEntryList(LPENTRYLIST lpEntryList)
+{
+    ULONG i;
+
+    if (IsBadReadPtr(lpEntryList, sizeof(*lpEntryList)) ||
+        IsBadReadPtr(lpEntryList->lpbin,
+                     lpEntryList->cValues * sizeof(*lpEntryList->lpbin)))
+        return TRUE;
+
+    for (i = 0; i < lpEntryList->cValues; i++)
+        if(IsBadReadPtr(lpEntryList->lpbin[i].lpb, lpEntryList->lpbin[i].cb))
+            return TRUE;
+
+    return FALSE;
+}
+
 /*************************************************************************
  * CbOfEncoded@4 (MAPI32.207)
  *

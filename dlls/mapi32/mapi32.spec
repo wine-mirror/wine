@@ -42,7 +42,7 @@
  54 stub DeregisterIdleRoutine@4
  55 stub ChangeIdleRoutine@28
  59 stdcall MAPIGetDefaultMalloc@0() MAPIGetDefaultMalloc
- 60 stub CreateIProp@24
+ 60 stdcall CreateIProp@24(ptr ptr ptr ptr ptr ptr) CreateIProp
  61 stub CreateTable@36
  62 stdcall MNLS_lstrlenW@4(wstr) MNLS_lstrlenW
  63 stdcall MNLS_lstrcmpW@8(wstr wstr) MNLS_lstrcmpW
@@ -127,7 +127,7 @@
 187 stub __ValidateParameters@8
 188 stub __CPPValidateParameters@8
 189 stub FBadSortOrderSet@4
-190 stub FBadEntryList@4
+190 stdcall FBadEntryList@4(ptr) FBadEntryList
 191 stub FBadRestriction@4
 192 stub ScUNCFromLocalPath@12
 193 stub ScLocalPathFromUNC@12
