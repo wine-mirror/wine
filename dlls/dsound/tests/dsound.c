@@ -98,7 +98,7 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
             trace("  No Device\n");
             return;
         } else if (rc==DSERR_ALLOCATED) {
-            trace("  Already Allocated\n");
+            trace("  Already In Use\n");
             return;
         }
     }

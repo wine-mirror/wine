@@ -104,20 +104,18 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
            DXGetErrorString8(rc));
 
         rc=IDirectSound8_Initialize(dso,lpGuid);
-        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
            "IDirectSound8_Initialize() failed: %s\n",DXGetErrorString8(rc));
         if (rc==DSERR_NODRIVER) {
             trace("  No Driver\n");
             return;
-        }
-	if (rc==DSERR_ALLOCATED) {
+        } else if (rc==E_FAIL) {
+            trace("  No Device\n");
+            return;
+        } else if (rc==DSERR_ALLOCATED) {
             trace("  Already In Use\n");
             return;
         }
-	if (rc==E_FAIL) {
-            trace("  Could not initialize DirectSound.\n");
-	    return;
-	}
     }
 
     /* DSOUND: Error: Invalid caps buffer */
@@ -233,21 +231,21 @@ static void IDirectSound8_tests()
 
     /* try with no device specified */
     rc=pDirectSoundCreate8(NULL,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
         IDirectSound8_test(dso, TRUE, NULL);
 
     /* try with default playback device specified */
     rc=pDirectSoundCreate8(&DSDEVID_DefaultPlayback,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
         IDirectSound8_test(dso, TRUE, NULL);
 
     /* try with default voice playback device specified */
     rc=pDirectSoundCreate8(&DSDEVID_DefaultVoicePlayback,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
         IDirectSound8_test(dso, TRUE, NULL);
@@ -271,7 +269,7 @@ static HRESULT test_dsound8(LPGUID lpGuid)
 
     /* Create the DirectSound8 object */
     rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
