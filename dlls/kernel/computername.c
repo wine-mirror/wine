@@ -100,7 +100,7 @@ static BOOL dns_gethostbyname ( char *name, int *size )
         WARN ("Error in gethostbyname_r %d (%d)\n", res, locerr);
     else
     {
-        size_t len = strlen ( host->h_name );
+        int len = strlen ( host->h_name );
         if ( len < *size )
         {
             strcpy ( name, host->h_name );
@@ -382,7 +382,7 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
 {
     WCHAR nameW[ MAX_COMPUTERNAME_LENGTH + 1 ];
     DWORD sizeW = MAX_COMPUTERNAME_LENGTH;
-    int len;
+    unsigned int len;
     BOOL ret;
 
     if ( !GetComputerNameW (nameW, &sizeW) ) return FALSE;
@@ -515,7 +515,7 @@ BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD 
         TRACE ("-> %s (%d)\n", debugstr_a (buf), len);
         __TRY
         {
-            int lenW = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
+            unsigned int lenW = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
             if ( *size < lenW )
             {
                 MultiByteToWideChar( CP_ACP, 0, buf, len, name, *size );
@@ -550,7 +550,7 @@ static WCHAR netbios_char ( WCHAR wc )
 {
     static const WCHAR special[] = {'!','@','#','$','%','^','&','\'',')','(','-','_','{','}','~'};
     static const WCHAR deflt = '_';
-    int i;
+    unsigned int i;
     
     if ( isalnumW ( wc ) ) return wc;
     for ( i = 0; i < sizeof (special) / sizeof (WCHAR); i++ )

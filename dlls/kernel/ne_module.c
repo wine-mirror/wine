@@ -623,7 +623,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
     NE_MODULE *pModule;
     BYTE *pData, *pTempEntryTable;
     char *buffer, *fastload = NULL;
-    int fastload_offset = 0, fastload_length = 0;
+    unsigned int fastload_offset = 0, fastload_length = 0;
     ET_ENTRY *entry;
     ET_BUNDLE *bundle, *oldbundle;
     OFSTRUCT *ofs;

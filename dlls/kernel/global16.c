@@ -674,7 +674,7 @@ DWORD WINAPI GlobalCompact16( DWORD desired )
  */
 void WINAPI GlobalFreeAll16( HGLOBAL16 owner )
 {
-    DWORD i;
+    int i;
     GLOBALARENA *pArena;
 
     pArena = pGlobalArena;

@@ -198,7 +198,7 @@ static UINT get_registry_drive_type( const WCHAR *root )
     RtlInitUnicodeString( &nameW, driveW );
     if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
     {
-        int i;
+        unsigned int i;
         WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
 
         for (i = 0; i < sizeof(drive_types)/sizeof(drive_types[0]); i++)
@@ -569,7 +569,7 @@ static void VOLUME_GetSuperblockLabel( enum fs_type type, const BYTE *superblock
             if (superblock[0x58] == 0x25 && superblock[0x59] == 0x2f &&  /* Unicode ID */
                 ((ver == 0x40) || (ver == 0x43) || (ver == 0x45)))
             { /* yippee, unicode */
-                int i;
+                unsigned int i;
 
                 if (len > 17) len = 17;
                 for (i = 0; i < len-1; i++)

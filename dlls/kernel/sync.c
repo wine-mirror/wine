@@ -129,7 +129,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 {
     NTSTATUS status;
     HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
-    int i;
+    unsigned int i;
 
     if (count >= MAXIMUM_WAIT_OBJECTS)
     {

@@ -358,7 +358,7 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
     ATOMENTRY * entryPtr;
     HANDLE16 entry;
     char * strPtr;
-    UINT len;
+    INT len;
     char text[8];
 
     TRACE("%x\n",atom);

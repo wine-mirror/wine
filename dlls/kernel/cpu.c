@@ -112,7 +112,7 @@ static void create_registry_keys( const SYSTEM_INFO *info )
     static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
     static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
 
-    int i;
+    unsigned int i;
     HKEY hkey, system_key, cpu_key;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, valueW;

@@ -309,9 +309,8 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG_PTR l
  */
 BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG_PTR lparam )
 {
-    int i;
+    int i, len = 0;
     BOOL ret = FALSE;
-    DWORD len = 0;
     LPWSTR type = NULL;
     NTSTATUS status;
     const IMAGE_RESOURCE_DIRECTORY *resdir;
@@ -422,10 +421,9 @@ done:
  */
 BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpfun, LONG_PTR lparam )
 {
-    int i;
+    int i, len = 0;
     BOOL ret = FALSE;
     LPWSTR name = NULL;
-    DWORD len = 0;
     NTSTATUS status;
     UNICODE_STRING typeW;
     LDR_RESOURCE_INFO info;

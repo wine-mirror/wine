@@ -108,7 +108,7 @@ static inline BOOL WCEL_IsSingleLine(WCEL_Context* ctx, size_t len)
 static inline COORD WCEL_GetCoord(WCEL_Context* ctx, int ofs)
 {
     COORD       c;
-    unsigned    len = ctx->csbi.dwSize.X - ctx->csbi.dwCursorPosition.X;
+    int         len = ctx->csbi.dwSize.X - ctx->csbi.dwCursorPosition.X;
 
     c.Y = ctx->csbi.dwCursorPosition.Y;
     if (ofs >= len)
@@ -330,7 +330,7 @@ static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
 {
     int startPos = ctx->histPos;
     WCHAR*	data;
-    int		len, oldofs;
+    unsigned int    len, oldofs;
 
     if (ctx->histPos && ctx->histPos == ctx->histSize) {
         startPos--;
@@ -394,13 +394,13 @@ static void WCEL_MoveRight(WCEL_Context* ctx)
 
 static void WCEL_MoveToLeftWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetLeftWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetLeftWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs) ctx->ofs = new_ofs;
 }
 
 static void WCEL_MoveToRightWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs) ctx->ofs = new_ofs;
 }
 
@@ -461,7 +461,7 @@ static void WCEL_TransposeChar(WCEL_Context* ctx)
 
 static void WCEL_TransposeWords(WCEL_Context* ctx)
 {
-    int	left_ofs = WCEL_GetLeftWordTransition(ctx, ctx->ofs),
+    unsigned int	left_ofs = WCEL_GetLeftWordTransition(ctx, ctx->ofs),
         right_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (left_ofs < ctx->ofs && right_ofs > ctx->ofs)
     {
@@ -483,10 +483,10 @@ static void WCEL_TransposeWords(WCEL_Context* ctx)
 
 static void WCEL_LowerCaseWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
-	int	i;
+	unsigned int	i;
 	for (i = ctx->ofs; i <= new_ofs; i++)
 	    ctx->line[i] = tolowerW(ctx->line[i]);
         WCEL_Update(ctx, ctx->ofs, new_ofs - ctx->ofs + 1);
@@ -496,10 +496,10 @@ static void WCEL_LowerCaseWord(WCEL_Context* ctx)
 
 static void WCEL_UpperCaseWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
-	int	i;
+	unsigned int	i;
 	for (i = ctx->ofs; i <= new_ofs; i++)
 	    ctx->line[i] = toupperW(ctx->line[i]);
 	WCEL_Update(ctx, ctx->ofs, new_ofs - ctx->ofs + 1);
@@ -509,10 +509,10 @@ static void WCEL_UpperCaseWord(WCEL_Context* ctx)
 
 static void WCEL_CapitalizeWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
-	int	i;
+	unsigned int	i;
 
 	ctx->line[ctx->ofs] = toupperW(ctx->line[ctx->ofs]);
 	for (i = ctx->ofs + 1; i <= new_ofs; i++)
@@ -568,7 +568,7 @@ static void WCEL_DeleteCurrChar(WCEL_Context* ctx)
 
 static void WCEL_DeleteLeftWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetLeftWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetLeftWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
 	WCEL_DeleteString(ctx, new_ofs, ctx->ofs);
@@ -578,7 +578,7 @@ static void WCEL_DeleteLeftWord(WCEL_Context* ctx)
 
 static void WCEL_DeleteRightWord(WCEL_Context* ctx)
 {
-    int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
+    unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
 	WCEL_DeleteString(ctx, ctx->ofs, new_ofs);

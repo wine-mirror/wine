@@ -1891,7 +1891,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 
     if (mode & ENABLE_PROCESSED_OUTPUT)
     {
-	int	i;
+	unsigned int	i;
 
 	for (i = 0; i < nNumberOfCharsToWrite; i++)
 	{
