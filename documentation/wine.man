@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "February 3, 1999" "Version 990131" "Windows On Unix"
+.TH WINE 1 "April 26, 1999" "Version 990328" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -21,21 +21,24 @@ Win95.  Older, simpler applications work better than newer, more complex
 ones.  A large percentage of the API has been implemented, although there
 are still several major pieces of work left to do.
 .SH REQUIREMENTS
-At present, 
 .B wine
-will run under any Linux kernel more recent than 0.99.13, or
-under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386. Some bugs
-were fixed and additional features were added late in the Linux 2.0.x 
-series, so if you have an old Linux kernel, you may want to upgrade to the
-latest 2.0.x release. If you have FreeBSD, make sure you have the USER_LDT,
+requires kernel-level threads to run. Currently, only Linux version 2.0
+or later, FreeBSD-current or FreeBSD 3.0 or later, and Solaris x86
+version 2.5 or later are supported. Other operating systems which support
+kernel threads may be supported in the future.
+.PP
+Although Linux version 2.0 will mostly work, certain features (specifically
+LDT sharing) required for properly supporting Win32 threads were not
+implemented until kernel version 2.2. If you get consistent thread-related
+crashes, you may want to upgrade to 2.2. Also, some bugs were fixed and
+additional features were added late in the Linux 2.0.x series, so if you have
+a very old Linux kernel, you may want to upgrade to at least the latest 2.0.x
+release.
+.PP
+If you have FreeBSD, make sure you have the USER_LDT,
 SYSVSHM, SYSVSEM, and SYSVMSG options turned on in your kernel. If you
 are building Wine on Solaris, you will most likely need to build Wine
 with the GNU toolchain (gcc, gas, etc.)
-.PP
-The current support for multithreaded applications relies on the 
-.BR clone (2)
-system call, which is currently only available on Linux. It should be
-possible to implement this for other operating systems, however.
 .PP
 .B X
 must be installed.  To use Wine's support for multithreaded applications,
@@ -54,7 +57,7 @@ BUGS
 section to get it included in this man page.
 .PP
 .B gcc
-2.7.x or later is required to build
+2.7.2 or later is required to build
 .B wine.
 Versions earlier than 2.7.2.3 may have problems when certain files are
 compiled with optimization.
@@ -63,7 +66,7 @@ pgcc
 currently doesn't work with wine.  The cause of this problem is unknown. 
 .PP
 .B flex
-and 
+version 2.5 or later and 
 .B yacc
 are required.  Bison can be used in replace of yacc. If you have Redhat,
 make sure the bison and flex packages are installed.

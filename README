@@ -2,7 +2,7 @@
 
 Wine is a program which allows running Microsoft Windows programs
 (including DOS, Windows 3.x and Win32 executables) on Unix.  It
-consists of a program loader which loads and executes an Microsoft
+consists of a program loader which loads and executes a Microsoft
 Windows binary, and a library that implements Windows API calls using
 their Unix or X11 equivalents. The library may also be used for
 porting Win32 code into native Unix executables.
@@ -12,22 +12,30 @@ is BSD style.  Basically, you can do anything with it except claim
 that you wrote it.
 
 
-2. COMPILATION
+2. REQUIREMENTS
 
-To compile and run Wine, you must have one of:
+To compile and run Wine, you must have one of the following:
 
 	Linux version 2.0.36 or above
 	FreeBSD-current or FreeBSD 3.0 or later
 	Solaris x86 2.5 or later
 
-You also need to have libXpm installed on your system. The sources for
-it are probably available on the ftp site where you got Wine. They can
-also be found on ftp.x.org and all its mirror sites. If you are using
-RedHat, install the xpm and xpm-devel packages.
+Although Linux version 2.0.x will mostly work, certain features
+(specifically LDT sharing) required for properly supporting Win32
+threads were not implemented until kernel version 2.2.  If you get
+consistent thread-related crashes, you may want to upgrade to 2.2.
 
-On x86 Systems gcc >= 2.7.2 is required. You also need flex and yacc.
-Bison will work as a replacement for yacc. If you are using RedHat, 
-install the flex and bison packages.
+You also need to have libXpm installed on your system. The sources for
+it are probably available on the FTP site where you got Wine. They can
+also be found on ftp.x.org and all its mirror sites. If you are using
+RedHat, install the xpm and xpm-devel packages. Debian users need
+xpm4.7, xpm4g, and xpm4g-dev 3.4j.
+
+On x86 Systems gcc >= 2.7.2 is required. You also need flex version 2.5
+or later and yacc. Bison will work as a replacement for yacc. If you are
+using RedHat, install the flex and bison packages.
+
+3. COMPILATION
 
 To build Wine, first run "./configure" and then run "make depend; make".
 This will build the library "libwine.a" and the program "wine".
@@ -49,7 +57,7 @@ Wine-yymmdd.diff.gz). You can then re-run "./configure", and then
 run "make depend; make".
 
 
-3. SETUP
+4. SETUP
 
 Once Wine has been built correctly, you can do "make install"; this
 will install the wine executable, the Wine man page, and a few other
@@ -66,7 +74,7 @@ and copied to one of the two locations mentioned above.
 See www.winehq.com/config.html for further configuration hints.
 
 
-4. RUNNING PROGRAMS
+5. RUNNING PROGRAMS
 
 When invoking Wine, you may specify the entire path to the executable,
 or a filename only.
@@ -90,7 +98,7 @@ If you post a bug report, please read the file documentation/bugreports to
 see what information is required.
 
 
-5. GETTING MORE INFORMATION
+6. GETTING MORE INFORMATION
 
 FAQ:	The Wine FAQ is located at http://www.winehq.com/faq.html.
 
@@ -98,6 +106,9 @@ WWW:	A great deal of information about Wine is available from WineHQ at
 	http://www.winehq.com/. Untested patches against the current release
 	are available on the wine-patches mailing list; see 
 	http://www.winehq.com/dev.html#ml for more information.
+
+HOWTO:	A pre-release version of the Wine HOWTO is available at
+	http://www.westfalen.de/witch/wine-HOWTO.txt .
 
 Usenet:	Please browse old messages on http://www.dejanews.com/ to check whether 
 	your problem is already fixed before posting a bug report to the 
