@@ -1195,15 +1195,13 @@ static void WIN_SendDestroyMsg( WND* pWnd )
        */
       while (nKidCount>0)
       {
-	pChild = WIN_FindWndPtr(pWndArray[nKidCount]);
+	pChild = WIN_FindWndPtr(pWndArray[--nKidCount]);
 
 	if (pChild!=NULL)
 	{
 	  WIN_SendDestroyMsg( pChild );
 	  WIN_ReleaseWndPtr(pChild);	  
 	}
-       
-	nKidCount--;
       }
 
       /*
