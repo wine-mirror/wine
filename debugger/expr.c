@@ -314,19 +314,19 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	 rtn.cookie = DV_TARGET;
       break;
     case EXPR_TYPE_STRING:
-      rtn.type = DEBUG_TypeString;
+      rtn.type = DEBUG_GetBasicType(DT_BASIC_STRING);
       rtn.cookie = DV_HOST;
       rtn.addr.off = (unsigned int) &exp->un.string.str;
       rtn.addr.seg = 0;
       break;
     case EXPR_TYPE_CONST:
-      rtn.type = DEBUG_TypeIntConst;
+      rtn.type = DEBUG_GetBasicType(DT_BASIC_CONST_INT);
       rtn.cookie = DV_HOST;
       rtn.addr.off = (unsigned int) &exp->un.constant.value;
       rtn.addr.seg = 0;
       break;
     case EXPR_TYPE_US_CONST:
-      rtn.type = DEBUG_TypeUSInt;
+      rtn.type = DEBUG_GetBasicType(DT_BASIC_USHORTINT);
       rtn.cookie = DV_HOST;
       rtn.addr.off = (unsigned int) &exp->un.u_const.value;
       rtn.addr.seg = 0;
@@ -431,7 +431,7 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
        */
       exp->un.call.result = 0;
 #endif
-      rtn.type = DEBUG_TypeInt;
+      rtn.type = DEBUG_GetBasicType(DT_BASIC_INT);
       rtn.cookie = DV_HOST;
       rtn.addr.off = (unsigned int) &exp->un.call.result;
 
@@ -456,13 +456,14 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	{
 	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
-      if( exp1.type == DEBUG_TypeIntConst && exp2.type == DEBUG_TypeIntConst )
+      if( exp1.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) && 
+          exp2.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
 	{
 	  rtn.type = exp1.type;
 	}
       else
 	{
-	  rtn.type = DEBUG_TypeInt;
+          rtn.type = DEBUG_GetBasicType(DT_BASIC_INT);
 	}
       rtn.addr.seg = 0;
       rtn.addr.off = (unsigned int) &exp->un.binop.result;
@@ -595,13 +596,13 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	}
       rtn.addr.seg = 0;
       rtn.addr.off = (unsigned int) &exp->un.unop.result;
-      if( exp1.type == DEBUG_TypeIntConst )
+      if( exp1.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
 	{
 	  rtn.type = exp1.type;
 	}
       else
 	{
-	  rtn.type = DEBUG_TypeInt;
+	  rtn.type = DEBUG_GetBasicType(DT_BASIC_INT);
 	}
       switch(exp->un.unop.unop_type)
 	{

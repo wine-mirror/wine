@@ -243,20 +243,20 @@ type_cast:
 
 type_expr:
       type_expr '*'		{ $$ = DEBUG_FindOrMakePointerType($1); }
-    |  tINT			{ $$ = DEBUG_TypeCast(DT_BASIC, "int"); }
-    | tCHAR			{ $$ = DEBUG_TypeCast(DT_BASIC, "char"); }
-    | tLONG tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "long int"); }
-    | tUNSIGNED tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "unsigned int"); }
-    | tLONG tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(DT_BASIC, "long unsigned int"); }
-    | tLONG tLONG tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "long long int"); }
-    | tLONG tLONG tUNSIGNED tINT{ $$ = DEBUG_TypeCast(DT_BASIC, "long long unsigned int"); }
-    | tSHORT tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "short int"); }
-    | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(DT_BASIC, "short unsigned int"); }
-    | tSIGNED tCHAR		{ $$ = DEBUG_TypeCast(DT_BASIC, "signed char"); }
-    | tUNSIGNED tCHAR		{ $$ = DEBUG_TypeCast(DT_BASIC, "unsigned char"); }
-    | tFLOAT			{ $$ = DEBUG_TypeCast(DT_BASIC, "float"); }
-    | tDOUBLE			{ $$ = DEBUG_TypeCast(DT_BASIC, "double"); }
-    | tLONG tDOUBLE		{ $$ = DEBUG_TypeCast(DT_BASIC, "long double"); }
+    | tINT			{ $$ = DEBUG_GetBasicType(DT_BASIC_INT); }
+    | tCHAR			{ $$ = DEBUG_GetBasicType(DT_BASIC_CHAR); }
+    | tLONG tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGINT); }
+    | tUNSIGNED tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_UINT); }
+    | tLONG tUNSIGNED tINT	{ $$ = DEBUG_GetBasicType(DT_BASIC_ULONGINT); }
+    | tLONG tLONG tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGLONGINT); }
+    | tLONG tLONG tUNSIGNED tINT{ $$ = DEBUG_GetBasicType(DT_BASIC_ULONGLONGINT); }
+    | tSHORT tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_SHORTINT); }
+    | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_GetBasicType(DT_BASIC_USHORTINT); }
+    | tSIGNED tCHAR		{ $$ = DEBUG_GetBasicType(DT_BASIC_SCHAR); }
+    | tUNSIGNED tCHAR		{ $$ = DEBUG_GetBasicType(DT_BASIC_UCHAR); }
+    | tFLOAT			{ $$ = DEBUG_GetBasicType(DT_BASIC_FLOAT); }
+    | tDOUBLE			{ $$ = DEBUG_GetBasicType(DT_BASIC_DOUBLE); }
+    | tLONG tDOUBLE		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGDOUBLE); }
     | tSTRUCT tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
     | tUNION tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
     | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(DT_ENUM, $2); }

@@ -328,7 +328,7 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
     int num;
     BYTE ch;
 
-    if( value.type != NULL && value.type == DEBUG_TypeIntConst )
+    if( value.type != NULL && value.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
     {
         /*
          * We know that we have the actual offset stored somewhere
@@ -460,7 +460,7 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
    DEBUG_FixAddress( &value.addr, DEBUG_context.SegCs );
 #endif
    
-   if ( value.type != NULL && value.type == DEBUG_TypeIntConst )
+   if ( value.type != NULL && value.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
    {
       /*
        * We know that we have the actual offset stored somewhere

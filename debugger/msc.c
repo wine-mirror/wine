@@ -1104,21 +1104,21 @@ DEBUG_InitCVDataTypes(void)
    */
   cv_basic_types[T_NOTYPE] = NULL;
   cv_basic_types[T_ABS] = NULL;
-  cv_basic_types[T_VOID] = DEBUG_NewDataType(DT_BASIC, "void");
-  cv_basic_types[T_CHAR] = DEBUG_NewDataType(DT_BASIC, "char");
-  cv_basic_types[T_SHORT] = DEBUG_NewDataType(DT_BASIC, "short int");
-  cv_basic_types[T_LONG] = DEBUG_NewDataType(DT_BASIC, "long int");
-  cv_basic_types[T_QUAD] = DEBUG_NewDataType(DT_BASIC, "long long int");
-  cv_basic_types[T_UCHAR] = DEBUG_NewDataType(DT_BASIC, "unsigned char");
-  cv_basic_types[T_USHORT] = DEBUG_NewDataType(DT_BASIC, "short unsigned int");
-  cv_basic_types[T_ULONG] = DEBUG_NewDataType(DT_BASIC, "long unsigned int");
-  cv_basic_types[T_UQUAD] = DEBUG_NewDataType(DT_BASIC, "long long unsigned int");
-  cv_basic_types[T_REAL32] = DEBUG_NewDataType(DT_BASIC, "float");
-  cv_basic_types[T_REAL64] = DEBUG_NewDataType(DT_BASIC, "double");
-  cv_basic_types[T_RCHAR] = DEBUG_NewDataType(DT_BASIC, "char");
-  cv_basic_types[T_WCHAR] = DEBUG_NewDataType(DT_BASIC, "short");
-  cv_basic_types[T_INT4] = DEBUG_NewDataType(DT_BASIC, "int");
-  cv_basic_types[T_UINT4] = DEBUG_NewDataType(DT_BASIC, "unsigned int");
+  cv_basic_types[T_VOID] = DEBUG_GetBasicType(DT_BASIC_VOID);
+  cv_basic_types[T_CHAR] = DEBUG_GetBasicType(DT_BASIC_CHAR);
+  cv_basic_types[T_SHORT] = DEBUG_GetBasicType(DT_BASIC_SHORTINT);
+  cv_basic_types[T_LONG] = DEBUG_GetBasicType(DT_BASIC_LONGINT);
+  cv_basic_types[T_QUAD] = DEBUG_GetBasicType(DT_BASIC_LONGLONGINT);
+  cv_basic_types[T_UCHAR] = DEBUG_GetBasicType(DT_BASIC_UCHAR);
+  cv_basic_types[T_USHORT] = DEBUG_GetBasicType(DT_BASIC_USHORTINT);
+  cv_basic_types[T_ULONG] = DEBUG_GetBasicType(DT_BASIC_ULONGINT);
+  cv_basic_types[T_UQUAD] = DEBUG_GetBasicType(DT_BASIC_ULONGLONGINT);
+  cv_basic_types[T_REAL32] = DEBUG_GetBasicType(DT_BASIC_FLOAT);
+  cv_basic_types[T_REAL64] = DEBUG_GetBasicType(DT_BASIC_DOUBLE);
+  cv_basic_types[T_RCHAR] = DEBUG_GetBasicType(DT_BASIC_CHAR);
+  cv_basic_types[T_WCHAR] = DEBUG_GetBasicType(DT_BASIC_SHORTINT);
+  cv_basic_types[T_INT4] = DEBUG_GetBasicType(DT_BASIC_INT);
+  cv_basic_types[T_UINT4] = DEBUG_GetBasicType(DT_BASIC_UINT);
 
   cv_basic_types[T_32PVOID] = DEBUG_FindOrMakePointerType(cv_basic_types[T_VOID]);
   cv_basic_types[T_32PCHAR] = DEBUG_FindOrMakePointerType(cv_basic_types[T_CHAR]);

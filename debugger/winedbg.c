@@ -72,7 +72,7 @@ static	BOOL DEBUG_IntVarsRW(int read)
 /* initializes internal vars table */
 #define  INTERNAL_VAR(_var,_val,_ref,_typ) 			\
         div->val = _val; div->name = #_var; div->pval = _ref;	\
-        div->type = _typ; div++;
+        div->type = DEBUG_GetBasicType(_typ); div++;
 #include "intvar.h"
 #undef   INTERNAL_VAR
     }

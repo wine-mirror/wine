@@ -395,7 +395,7 @@ static inline int DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, struct datat
 static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typename,
 				 struct datatype** ret_dt)
 {
-    int			idx, lo, hi;
+    int			idx, lo, hi, sz = -1;
     struct datatype*	new_dt = NULL;	/* newly created data type */
     struct datatype*	ref_dt;		/* referenced data type (pointer...) */
     struct datatype* 	dt1;		/* intermediate data type (scope is limited) */
@@ -422,7 +422,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	case '@':
 	    if (*++ptd->ptr == 's') {
 		ptd->ptr++;
-		if (DEBUG_PTS_ReadNum(ptd, &lo) == -1) {
+		if (DEBUG_PTS_ReadNum(ptd, &sz) == -1) {
 		    DEBUG_Printf(DBG_CHN_MESG, "Not an attribute... NIY\n");
 		    ptd->ptr -= 2;
 		    return -1;
@@ -516,8 +516,56 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    new_dt = DEBUG_NewDataType(lo, ptd->buf + idx); 
 	    ptd->idx = idx;
 	    break;
+	case '-':
+	    if (DEBUG_PTS_ReadNum(ptd, &lo) == -1) {
+		DEBUG_Printf(DBG_CHN_MESG, "Should be a number (%s)...\n", ptd->ptr);
+		return -1;
+	    } else {
+                enum debug_type_basic basic = DT_BASIC_LAST;
+                switch (lo)
+                {
+                case  1: basic = DT_BASIC_INT; break;      
+                case  2: basic = DT_BASIC_CHAR; break;
+                case  3: basic = DT_BASIC_SHORTINT; break;
+                case  4: basic = DT_BASIC_LONGINT; break;
+                case  5: basic = DT_BASIC_UCHAR; break;
+                case  6: basic = DT_BASIC_SCHAR; break;
+                case  7: basic = DT_BASIC_USHORTINT; break;
+                case  8: basic = DT_BASIC_UINT; break;
+/*              case  9: basic = DT_BASIC_UINT";  */
+                case 10: basic = DT_BASIC_ULONGINT; break;
+                case 11: basic = DT_BASIC_VOID; break;
+                case 12: basic = DT_BASIC_FLOAT; break;
+                case 13: basic = DT_BASIC_DOUBLE; break;
+                case 14: basic = DT_BASIC_LONGDOUBLE; break;
+/*              case 15: basic = DT_BASIC_INT; break; */
+                case 16:
+                    switch (sz) {
+                    case 32: basic = DT_BASIC_BOOL1; break;
+                    case 16: basic = DT_BASIC_BOOL2; break;
+                    case  8: basic = DT_BASIC_BOOL4; break;
+                    }
+                    break;
+/*              case 17: basic = DT_BASIC_SHORT real; break; */
+/*              case 18: basic = DT_BASIC_REAL; break; */
+                case 25: basic = DT_BASIC_CMPLX_FLOAT; break;
+                case 26: basic = DT_BASIC_CMPLX_DOUBLE; break;
+/*              case 30: basic = DT_BASIC_wchar"; break; */
+                case 31: basic = DT_BASIC_LONGLONGINT; break;
+                case 32: basic = DT_BASIC_ULONGLONGINT; break;
+                default:
+                    DEBUG_Printf(DBG_CHN_MESG, "Unsupported integral type (%d/%d)\n", lo, sz);
+                    return -1;
+                }
+                if (!(new_dt = DEBUG_GetBasicType(basic))) {
+                    DEBUG_Printf(DBG_CHN_MESG, "Basic type %d not found\n", basic);
+                    return -1;
+                }
+                if (*ptd->ptr++ != ';') return -1;
+            }
+	    break;
 	default:
-	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", *ptd->ptr);
+	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", ptd->ptr[-1]);
 	    return -1;
 	}
     }

@@ -87,36 +87,12 @@ struct datatype
   } un;
 };
 
-#define	BASIC_INT		1
-#define BASIC_CHAR		2
-#define BASIC_LONG		3
-#define BASIC_UINT		4
-#define BASIC_LUI		5
-#define BASIC_LONGLONG		6
-#define BASIC_ULONGLONGI	7
-#define BASIC_SHORT		8
-#define BASIC_SHORTUI		9
-#define BASIC_SCHAR		10
-#define BASIC_UCHAR		11
-#define BASIC_FLT		12
-#define BASIC_LONG_DOUBLE	13
-#define BASIC_DOUBLE		14
-#define BASIC_CMPLX_INT		15
-#define BASIC_CMPLX_FLT		16
-#define BASIC_CMPLX_DBL		17
-#define BASIC_CMPLX_LONG_DBL	18
-#define BASIC_VOID		19
-
-struct datatype * DEBUG_TypeInt = NULL;
-struct datatype * DEBUG_TypeIntConst = NULL;
-struct datatype * DEBUG_TypeUSInt = NULL;
-struct datatype * DEBUG_TypeString = NULL;
-struct datatype * DEBUG_TypeShortUInt = NULL;
 /*
  * All of the types that have been defined so far.
  */
 static struct datatype * type_hash_table[NR_TYPE_HASH + 1];
 static struct datatype * pointer_types = NULL;
+static struct datatype * basic_types[DT_BASIC_LAST];
 
 static unsigned int type_hash( const char * name )
 {
@@ -168,6 +144,7 @@ DEBUG_InitBasic(int type, char * name, int size, int b_signed,
       dt->un.basic.basic_size = size;
       dt->un.basic.b_signed = b_signed;
       dt->un.basic.output_format = output_format;
+      basic_types[type] = dt;
     }
 
   return dt;
@@ -197,6 +174,16 @@ DEBUG_LookupDataType(enum debug_type xtype, int hash, const char * typename)
     }
 
   return dt;
+}
+
+struct datatype *
+DEBUG_GetBasicType(enum debug_type_basic basic)
+{
+    if (basic == 0 || basic >= DT_BASIC_LAST)
+    {
+        return NULL;
+    }
+    return basic_types[basic];
 }
 
 struct datatype *
@@ -293,7 +280,6 @@ void
 DEBUG_InitTypes(void)
 {
   static int beenhere = 0;
-  struct datatype * chartype;
 
   if( beenhere++ != 0 )
     {
@@ -301,36 +287,39 @@ DEBUG_InitTypes(void)
     }
 
   /*
-   * Special version of int used with constants of various kinds.
-   */
-  DEBUG_TypeIntConst = DEBUG_InitBasic(BASIC_INT,NULL,4,1,"%d");
-
-  /*
    * Initialize a few builtin types.
    */
 
-  DEBUG_TypeInt = DEBUG_InitBasic(BASIC_INT,"int",4,1,"%d");
-  chartype = DEBUG_InitBasic(BASIC_CHAR,"char",1,1,"'%c'");
-  DEBUG_InitBasic(BASIC_LONG,"long int",4,1,"%d");
-  DEBUG_TypeUSInt = DEBUG_InitBasic(BASIC_UINT,"unsigned int",4,0,"%d");
-  DEBUG_InitBasic(BASIC_LUI,"long unsigned int",4,0,"%d");
-  DEBUG_InitBasic(BASIC_LONGLONG,"long long int",8,1,"%ld");
-  DEBUG_InitBasic(BASIC_ULONGLONGI,"long long unsigned int",8,0,"%ld");
-  DEBUG_InitBasic(BASIC_SHORT,"short int",2,1,"%d");
-  DEBUG_TypeShortUInt = DEBUG_InitBasic(BASIC_SHORTUI,"short unsigned int",2,0,"%d");
-  DEBUG_InitBasic(BASIC_SCHAR,"signed char",1,1,"'%c'");
-  DEBUG_InitBasic(BASIC_UCHAR,"unsigned char",1,0,"'%c'");
-  DEBUG_InitBasic(BASIC_FLT,"float",4,0,"%f");
-  DEBUG_InitBasic(BASIC_LONG_DOUBLE,"double",8,0,"%lf");
-  DEBUG_InitBasic(BASIC_DOUBLE,"long double",12,0,NULL);
-  DEBUG_InitBasic(BASIC_CMPLX_INT,"complex int",8,1,NULL);
-  DEBUG_InitBasic(BASIC_CMPLX_FLT,"complex float",8,0,NULL);
-  DEBUG_InitBasic(BASIC_CMPLX_DBL,"complex double",16,0,NULL);
-  DEBUG_InitBasic(BASIC_CMPLX_LONG_DBL,"complex long double",24,0,NULL);
-  DEBUG_InitBasic(BASIC_VOID,"void",0,0,NULL);
+  DEBUG_InitBasic(DT_BASIC_INT,"int",4,1,"%d");
+  DEBUG_InitBasic(DT_BASIC_CHAR,"char",1,1,"'%c'");
+  DEBUG_InitBasic(DT_BASIC_LONGINT,"long int",4,1,"%d");
+  DEBUG_InitBasic(DT_BASIC_UINT,"unsigned int",4,0,"%d");
+  DEBUG_InitBasic(DT_BASIC_ULONGINT,"long unsigned int",4,0,"%d");
+  DEBUG_InitBasic(DT_BASIC_LONGLONGINT,"long long int",8,1,"%ld");
+  DEBUG_InitBasic(DT_BASIC_ULONGLONGINT,"long long unsigned int",8,0,"%ld");
+  DEBUG_InitBasic(DT_BASIC_SHORTINT,"short int",2,1,"%d");
+  DEBUG_InitBasic(DT_BASIC_USHORTINT,"short unsigned int",2,0,"%d");
+  DEBUG_InitBasic(DT_BASIC_SCHAR,"signed char",1,1,"'%c'");
+  DEBUG_InitBasic(DT_BASIC_UCHAR,"unsigned char",1,0,"'%c'");
+  DEBUG_InitBasic(DT_BASIC_FLOAT,"float",4,0,"%f");
+  DEBUG_InitBasic(DT_BASIC_DOUBLE,"long double",12,0,NULL);
+  DEBUG_InitBasic(DT_BASIC_LONGDOUBLE,"double",8,0,"%lf");
+  DEBUG_InitBasic(DT_BASIC_CMPLX_INT,"complex int",8,1,NULL);
+  DEBUG_InitBasic(DT_BASIC_CMPLX_FLOAT,"complex float",8,0,NULL);
+  DEBUG_InitBasic(DT_BASIC_CMPLX_DOUBLE,"complex double",16,0,NULL);
+  DEBUG_InitBasic(DT_BASIC_CMPLX_LONGDOUBLE,"complex long double",24,0,NULL);
+  DEBUG_InitBasic(DT_BASIC_VOID,"void",0,0,NULL);
+  DEBUG_InitBasic(DT_BASIC_BOOL1,NULL,1,0,"%B");
+  DEBUG_InitBasic(DT_BASIC_BOOL2,NULL,2,0,"%B");
+  DEBUG_InitBasic(DT_BASIC_BOOL4,NULL,4,0,"%B");
 
-  DEBUG_TypeString = DEBUG_NewDataType(DT_POINTER, NULL);
-  DEBUG_SetPointerType(DEBUG_TypeString, chartype);
+  basic_types[DT_BASIC_STRING] = DEBUG_NewDataType(DT_POINTER, NULL);
+  DEBUG_SetPointerType(basic_types[DT_BASIC_STRING], basic_types[DT_BASIC_CHAR]);
+
+  /*
+   * Special version of int used with constants of various kinds.
+   */
+  DEBUG_InitBasic(DT_BASIC_CONST_INT,NULL,4,1,"%d");
 
   /*
    * Now initialize the builtins for codeview.
@@ -381,7 +370,7 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
 	 rtn = rtn | ((-1) << (value.type->un.basic.basic_size * 8));
       }
       /* float type has to be promoted as a double */
-      if (value.type->un.basic.basic_type == BASIC_FLT) {
+      if (value.type->un.basic.basic_type == DT_BASIC_FLOAT) {
 	 float f;
 	 double d;
 	 memcpy(&f, &rtn, sizeof(f));

@@ -212,7 +212,7 @@ BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode )
      * and hope that this is a sensible thing to do.
      */
     if (value->type != NULL) {
-        if (value->type == DEBUG_TypeIntConst) {
+        if (value->type == DEBUG_GetBasicType(DT_BASIC_CONST_INT)) {
 	    /*
 	     * We know that we have the actual offset stored somewhere
 	     * else in 32-bit space.  Grab it, and we
@@ -227,7 +227,7 @@ BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode )
 
 	    if (DEBUG_TypeDerefPointer(value, &testtype) == 0)
 	        return FALSE;
-	    if (testtype != NULL || value->type == DEBUG_TypeIntConst)
+	    if (testtype != NULL || value->type == DEBUG_GetBasicType(DT_BASIC_CONST_INT))
 	        value->addr.off = DEBUG_GetExprValue(value, NULL);
 	}
     } else if (!value->addr.seg && !value->addr.off) {

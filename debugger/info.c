@@ -65,11 +65,7 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
     case 0:
       if( default_format != NULL )
 	{
-	  if (strstr(default_format, "%S") == NULL)
-	    {
-	       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, default_format, res );
-	    }
-	  else
+	  if (strstr(default_format, "%S") != NULL)
 	    {
 	       char* 	ptr;
 	       int	state = 0;
@@ -107,6 +103,14 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 		    }
 	       }
 	    } 
+	  else if (strcmp(default_format, "%B") == 0)
+            {
+	       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "%s", res ? "true" : "false");
+            }
+          else
+	    {
+	       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, default_format, res );
+	    }
 	}
       break;
     }
