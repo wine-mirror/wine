@@ -205,10 +205,6 @@ extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
 extern Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc );
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
-extern void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, const POINT *org,
-                                const POINT *drawable_org );
-extern void X11DRV_StartGraphicsExposures( HDC hdc );
-extern void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn );
 
 extern BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors );
 extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev );
@@ -332,9 +328,21 @@ extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
 #define X11DRV_ESCAPE 6789
 enum x11drv_escape_codes
 {
-    X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
-    X11DRV_GET_FONT,      /* get current X font for a DC */
+    X11DRV_GET_DISPLAY,      /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
+    X11DRV_GET_FONT,         /* get current X font for a DC */
+    X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
+    X11DRV_START_EXPOSURES,  /* start graphics exposures */
+    X11DRV_END_EXPOSURES,    /* end graphics exposures */
+};
+
+struct x11drv_escape_set_drawable
+{
+    enum x11drv_escape_codes code;         /* escape code (X11DRV_SET_DRAWABLE) */
+    Drawable                 drawable;     /* X drawable */
+    int                      mode;         /* ClipByChildren or IncludeInferiors */
+    POINT                    org;          /* origin of DC relative to drawable */
+    POINT                    drawable_org; /* origin of drawable relative to screen */
 };
 
 /**************************************************************************

@@ -424,11 +424,10 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     WND *win = WIN_GetPtr( hwnd );
     HWND top = 0;
     X11DRV_WND_DATA *data = win->pDriverData;
-    Drawable drawable;
+    struct x11drv_escape_set_drawable escape;
     BOOL visible;
-    POINT org, drawable_org;
-    int mode = IncludeInferiors;
 
+    escape.mode = IncludeInferiors;
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
@@ -460,48 +459,49 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     if (top)
     {
         HWND parent = GetAncestor( top, GA_PARENT );
-        org.x = org.y = 0;
+        escape.org.x = escape.org.y = 0;
         if (flags & DCX_WINDOW)
         {
-            org.x = win->rectWindow.left - win->rectClient.left;
-            org.y = win->rectWindow.top - win->rectClient.top;
+            escape.org.x = win->rectWindow.left - win->rectClient.left;
+            escape.org.y = win->rectWindow.top - win->rectClient.top;
         }
-        MapWindowPoints( hwnd, parent, &org, 1 );
-        drawable_org.x = drawable_org.y = 0;
-        MapWindowPoints( parent, 0, &drawable_org, 1 );
+        MapWindowPoints( hwnd, parent, &escape.org, 1 );
+        escape.drawable_org.x = escape.drawable_org.y = 0;
+        MapWindowPoints( parent, 0, &escape.drawable_org, 1 );
         /* have to use the parent so that we include siblings */
-        if (parent) drawable = X11DRV_get_client_window( parent );
-        else drawable = root_window;
+        if (parent) escape.drawable = X11DRV_get_client_window( parent );
+        else escape.drawable = root_window;
     }
     else
     {
         if (IsIconic( hwnd ))
         {
-            drawable = data->icon_window ? data->icon_window : data->whole_window;
-            org.x = 0;
-            org.y = 0;
-            drawable_org = org;
+            escape.drawable = data->icon_window ? data->icon_window : data->whole_window;
+            escape.org.x = 0;
+            escape.org.y = 0;
+            escape.drawable_org = escape.org;
         }
         else if (flags & DCX_WINDOW)
         {
-            drawable = data->whole_window;
-            org.x = win->rectWindow.left - data->whole_rect.left;
-            org.y = win->rectWindow.top - data->whole_rect.top;
-            drawable_org.x = data->whole_rect.left - win->rectClient.left;
-            drawable_org.y = data->whole_rect.top - win->rectClient.top;
+            escape.drawable = data->whole_window;
+            escape.org.x = win->rectWindow.left - data->whole_rect.left;
+            escape.org.y = win->rectWindow.top - data->whole_rect.top;
+            escape.drawable_org.x = data->whole_rect.left - win->rectClient.left;
+            escape.drawable_org.y = data->whole_rect.top - win->rectClient.top;
         }
         else
         {
-            drawable = data->client_window;
-            org.x = 0;
-            org.y = 0;
-            drawable_org = org;
-            if (flags & DCX_CLIPCHILDREN) mode = ClipByChildren;  /* can use X11 clipping */
+            escape.drawable = data->client_window;
+            escape.org.x = 0;
+            escape.org.y = 0;
+            escape.drawable_org = escape.org;
+            if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;  /* can use X11 clipping */
         }
-        MapWindowPoints( hwnd, 0, &drawable_org, 1 );
+        MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
     }
 
-    X11DRV_SetDrawable( hdc, drawable, mode, &org, &drawable_org );
+    escape.code = X11DRV_SET_DRAWABLE;
+    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
     if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ||
         SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
@@ -511,7 +511,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 
         if (visible)
         {
-            visRgn = get_visible_region( win, top, flags, mode );
+            visRgn = get_visible_region( win, top, flags, escape.mode );
 
             if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
                 CombineRgn( visRgn, visRgn, hrgn,
@@ -533,10 +533,15 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
  */
 void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
 {
-    POINT org;
+    struct x11drv_escape_set_drawable escape;
 
-    org.x = org.y = 0;
-    X11DRV_SetDrawable( hdc, root_window, IncludeInferiors, &org, &org );
+    escape.code = X11DRV_SET_DRAWABLE;
+    escape.drawable = root_window;
+    escape.mode = IncludeInferiors;
+    escape.org.x = escape.org.y = 0;
+    escape.drawable_org.x = escape.drawable_org.y = 0;
+
+    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 

@@ -75,14 +75,20 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     hDC = GetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE );
     if (hDC)
     {
-        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        X11DRV_StartGraphicsExposures( hDC );
+        enum x11drv_escape_codes code = X11DRV_START_EXPOSURES;
+        HRGN hrgn = 0;
+
+        ExtEscape( hDC, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
         ScrollDC( hDC, dx, dy, &rc, &cliprc, hrgnUpdate, rcUpdate );
-        X11DRV_EndGraphicsExposures( hDC, hrgn );
+        code = X11DRV_END_EXPOSURES;
+        ExtEscape( hDC, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(hrgn), (LPSTR)&hrgn );
         ReleaseDC( hwnd, hDC );
-        if (bUpdate) CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_OR );
-        else RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
-        DeleteObject( hrgn );
+        if (hrgn)
+        {
+            if (bUpdate) CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_OR );
+            else RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
+            DeleteObject( hrgn );
+        }
     }
 
     /* Take into account the fact that some damage may have occurred during the scroll */

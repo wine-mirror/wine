@@ -294,6 +294,77 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                     *(Font *)out_data = pfo->fs->fid;
                     return TRUE;
                 }
+                break;
+            case X11DRV_SET_DRAWABLE:
+                if (in_count >= sizeof(struct x11drv_escape_set_drawable))
+                {
+                    struct x11drv_escape_set_drawable *data = (struct x11drv_escape_set_drawable *)in_data;
+                    if(physDev->xrender) X11DRV_XRender_UpdateDrawable( physDev );
+                    physDev->org = data->org;
+                    physDev->drawable = data->drawable;
+                    physDev->drawable_org = data->drawable_org;
+                    wine_tsx11_lock();
+                    XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
+                    wine_tsx11_unlock();
+                    return TRUE;
+                }
+                break;
+            case X11DRV_START_EXPOSURES:
+                wine_tsx11_lock();
+                XSetGraphicsExposures( gdi_display, physDev->gc, True );
+                wine_tsx11_unlock();
+                physDev->exposures = 0;
+                return TRUE;
+            case X11DRV_END_EXPOSURES:
+                if (out_count >= sizeof(HRGN))
+                {
+                    HRGN hrgn = 0, tmp = 0;
+
+                    wine_tsx11_lock();
+                    XSetGraphicsExposures( gdi_display, physDev->gc, False );
+                    if (physDev->exposures)
+                    {
+                        for (;;)
+                        {
+                            XEvent event;
+
+                            XWindowEvent( gdi_display, physDev->drawable, ~0, &event );
+                            if (event.type == NoExpose) break;
+                            if (event.type == GraphicsExpose)
+                            {
+                                int x = event.xgraphicsexpose.x - physDev->org.x;
+                                int y = event.xgraphicsexpose.y - physDev->org.y;
+
+                                TRACE( "got %d,%d %dx%d count %d\n", x, y,
+                                       event.xgraphicsexpose.width,
+                                       event.xgraphicsexpose.height,
+                                       event.xgraphicsexpose.count );
+
+                                if (!tmp) tmp = CreateRectRgn( 0, 0, 0, 0 );
+                                SetRectRgn( tmp, x, y,
+                                            x + event.xgraphicsexpose.width,
+                                            y + event.xgraphicsexpose.height );
+                                if (hrgn) CombineRgn( hrgn, hrgn, tmp, RGN_OR );
+                                else
+                                {
+                                    hrgn = tmp;
+                                    tmp = 0;
+                                }
+                                if (!event.xgraphicsexpose.count) break;
+                            }
+                            else
+                            {
+                                ERR( "got unexpected event %d\n", event.type );
+                                break;
+                            }
+                        }
+                        if (tmp) DeleteObject( tmp );
+                    }
+                    wine_tsx11_unlock();
+                    *(HRGN *)out_data = hrgn;
+                    return TRUE;
+                }
+                break;
             }
         }
         break;
