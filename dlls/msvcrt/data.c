@@ -154,7 +154,7 @@ void msvcrt_init_args(void)
      We will free it at the end of processing. */
   cmdline = _strdup(MSVCRT__acmdln);
 
-  TRACE("got '%s', wide = '%s'\n", cmdline, debugstr_w(wcmdline));
+  TRACE("got '%s', wide = %s\n", cmdline, debugstr_w(wcmdline));
 
   version = GetVersion();
   MSVCRT__osver       = version >> 16;

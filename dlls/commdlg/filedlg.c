@@ -573,7 +573,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   SendDlgItemMessageW(hWnd, cmb1, CB_SETCURSEL, ofn->nFilterIndex - 1, 0);    
   lstrcpynW(tmpstr, FILEDLG_GetFileType(ofn->lpstrCustomFilter,
 	     (LPWSTR)ofn->lpstrFilter, ofn->nFilterIndex - 1),BUFFILE);
-  TRACE("nFilterIndex = %ld, SetText of edt1 to '%s'\n", 
+  TRACE("nFilterIndex = %ld, SetText of edt1 to %s\n", 
   			ofn->nFilterIndex, debugstr_w(tmpstr));
   SetDlgItemTextW( hWnd, edt1, tmpstr );
   /* get drive list */
@@ -1318,7 +1318,7 @@ BOOL WINAPI GetFileName31W(
         FILEDLG_DestroyPrivate(lfs);
     }
 
-    TRACE("return lpstrFile='%s' !\n", debugstr_w(lpofn->lpstrFile));
+    TRACE("return lpstrFile=%s !\n", debugstr_w(lpofn->lpstrFile));
     return bRet;
 }
 

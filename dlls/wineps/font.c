@@ -30,7 +30,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     char FaceName[LF_FACESIZE];
 
 
-    TRACE("FaceName = '%s' Height = %ld Italic = %d Weight = %ld\n",
+    TRACE("FaceName = %s Height = %ld Italic = %d Weight = %ld\n",
 	  debugstr_w(lf->lfFaceName), lf->lfHeight, lf->lfItalic,
 	  lf->lfWeight);
 

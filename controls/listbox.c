@@ -1554,7 +1554,7 @@ static LRESULT LISTBOX_InsertString( WND *wnd, LB_DESCR *descr, INT index,
         return ret;
     }
 
-    TRACE("[%04x]: added item %d '%s'\n",
+    TRACE("[%04x]: added item %d %s\n",
           wnd->hwndSelf, index, HAS_STRINGS(descr) ? debugstr_w(new_str) : "" );
     return index;
 }

@@ -251,7 +251,7 @@ HDC WINAPI CreateEnhMetaFileW(
     HFILE hFile;
     DWORD size = 0, length = 0;
 
-    TRACE("'%s'\n", debugstr_w(filename) );
+    TRACE("%s\n", debugstr_w(filename) );
 
     if (!(dc = DC_AllocDC( &EMFDRV_Funcs ))) return 0;
     dc->header.wMagic = ENHMETAFILE_DC_MAGIC;

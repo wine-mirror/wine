@@ -738,7 +738,7 @@ STATUSBAR_SetTextW (STATUSWINDOWINFO *infoPtr, HWND hwnd, WPARAM wParam, LPARAM 
     nPart = ((INT) wParam) & 0x00ff;
     style = ((INT) wParam) & 0xff00;
 
-    TRACE("part %d -> '%s' with style %04x\n", nPart, debugstr_w(text), style);
+    TRACE("part %d -> %s with style %04x\n", nPart, debugstr_w(text), style);
     if ((infoPtr->simple) || (infoPtr->parts==NULL) || (nPart==255))
 	part = &infoPtr->part0;
     else

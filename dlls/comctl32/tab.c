@@ -2271,7 +2271,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TAB_SetItemBounds(hwnd);
   TAB_InvalidateTabArea(hwnd, infoPtr);
   
-  TRACE("[%04x]: added item %d '%s'\n",
+  TRACE("[%04x]: added item %d %s\n",
 	hwnd, iItem, debugstr_w(infoPtr->items[iItem].pszText));
 
   return iItem;
@@ -2340,7 +2340,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TAB_SetItemBounds(hwnd);
   TAB_InvalidateTabArea(hwnd, infoPtr);
   
-  TRACE("[%04x]: added item %d '%s'\n",
+  TRACE("[%04x]: added item %d %s\n",
 	hwnd, iItem, debugstr_w(infoPtr->items[iItem].pszText));
 
   return iItem;

@@ -1201,7 +1201,7 @@ static UINT XFONT_GetFontMetric( const fontInfo* pfi,
     ptm->tmDefaultChar = pfi->df.dfDefaultChar;
     ptm->tmBreakChar = pfi->df.dfBreakChar;
  
-    TRACE("Calling Enum proc with FaceName '%s' FullName '%s'\n",
+    TRACE("Calling Enum proc with FaceName %s FullName %s\n",
 	  debugstr_w(pLF->elfLogFont.lfFaceName),
 	  debugstr_w(pLF->elfFullName));
 

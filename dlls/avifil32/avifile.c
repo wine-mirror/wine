@@ -174,7 +174,7 @@ static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile*iface,PAVISTREAM*avis,AVI
 	FIXME("\tfccHandler '%s'\n",fcc);
 	FIXME("\tdwFlags 0x%08lx\n",asi->dwFlags);
 	FIXME("\tdwCaps 0x%08lx\n",asi->dwCaps);
-	FIXME("\tname '%s'\n",debugstr_w(asi->szName));
+	FIXME("\tname %s\n",debugstr_w(asi->szName));
 
 	istream->curframe = 0;
 	*avis = (PAVISTREAM)istream;
@@ -470,7 +470,7 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,PAVISTREAM ppsS
 		return AVIERR_UNSUPPORTED;
 
 	ICGetInfo(as->hic,&(as->icinfo),sizeof(ICINFO));
-	FIXME("Opened compressor: '%s' '%s'\n",debugstr_w(as->icinfo.szName),debugstr_w(as->icinfo.szDescription));
+	FIXME("Opened compressor: %s %s\n",debugstr_w(as->icinfo.szName),debugstr_w(as->icinfo.szDescription));
 	as->iscompressing = TRUE;
 	memcpy(&(as->aco),aco,sizeof(*aco));
 	if (as->icinfo.dwFlags & VIDCF_COMPRESSFRAMES) {

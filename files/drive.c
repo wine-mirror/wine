@@ -1206,7 +1206,7 @@ UINT WINAPI GetDriveTypeA(LPCSTR root) /* [in] String describing drive */
     {
         if ((root[1]) && (root[1] != ':'))
 	{
-	    WARN("invalid root '%s'\n", debugstr_a(root));
+	    WARN("invalid root %s\n", debugstr_a(root));
 	    return DRIVE_NO_ROOT_DIR;
 	}
 	drive = toupper(root[0]) - 'A';

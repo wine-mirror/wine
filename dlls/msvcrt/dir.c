@@ -325,7 +325,7 @@ WCHAR* _wgetdcwd(int drive, WCHAR * buf, int size)
       return NULL; /* buf too small */
     }
 
-    TRACE(":returning '%s'\n", debugstr_w(dir));
+    TRACE(":returning %s\n", debugstr_w(dir));
     if (!buf)
       return _wcsdup(dir); /* allocate */
     strcpyW(buf,dir);
@@ -414,7 +414,7 @@ void _wsplitpath(const WCHAR *inpath, WCHAR *drv, WCHAR *dir,
   WCHAR ch, *ptr, *p;
   WCHAR pathbuff[MAX_PATH],*path=pathbuff;
 
-  TRACE(":splitting path '%s'\n",debugstr_w(path));
+  TRACE(":splitting path %s\n",debugstr_w(path));
   /* FIXME: Should be an strncpyW or something */
   strcpyW(pathbuff, inpath);
 

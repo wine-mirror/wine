@@ -453,7 +453,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	{
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
-	    TRACE("(%ld %ld %ld %ld) '%s' %s %s => %04x\n",
+	    TRACE("(%ld %ld %ld %ld) %s %s %s => %04x\n",
                   plf->lfHeight, plf->lfWidth, 
                   plf->lfEscapement, plf->lfOrientation,
                   debugstr_w(plf->lfFaceName),

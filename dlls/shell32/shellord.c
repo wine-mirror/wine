@@ -64,7 +64,7 @@ DWORD WINAPI ParseFieldA(
  */
 DWORD WINAPI ParseFieldW(LPCWSTR src, DWORD nField, LPWSTR dst, DWORD len) 
 {
-	FIXME("('%s',0x%08lx,%p,%ld) stub.\n",
+	FIXME("(%s,0x%08lx,%p,%ld) stub\n",
 	  debugstr_w(src), nField, dst, len);
 	return FALSE;
 }

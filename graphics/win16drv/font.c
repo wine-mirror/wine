@@ -80,7 +80,7 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 
     dc->hFont = hfont;
 
-    TRACE("WIN16DRV_FONT_SelectObject '%s' h=%ld\n",
+    TRACE("WIN16DRV_FONT_SelectObject %s h=%ld\n",
 	  debugstr_w(font->logfont.lfFaceName), font->logfont.lfHeight);
 
 

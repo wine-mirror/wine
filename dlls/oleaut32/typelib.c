@@ -215,7 +215,7 @@ HRESULT WINAPI LoadTypeLib16(
     LPOLESTR szFile, /* [in] Name of file to load from */
     ITypeLib** pptLib) /* [out] Pointer to pointer to loaded type library */
 {
-    FIXME("('%s',%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
+    FIXME("(%s,%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
 
     if (pptLib!=0)
       *pptLib=0;
