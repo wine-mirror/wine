@@ -3761,8 +3761,13 @@ INT       WINAPI wvsprintfA(LPSTR,LPCSTR,va_list);
 INT       WINAPI wvsprintfW(LPWSTR,LPCWSTR,va_list);
 #define     wvsprintf WINELIB_NAME_AW(wvsprintf)
 
+/* Undocumented functions */
+
 /* NOTE: This is SYSTEM.3, not USER.182, which is also named KillSystemTimer */
 WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
+
+HRESULT     WINAPI PrivateExtractIconsA(LPCSTR,INT,DWORD,DWORD,HICON*,DWORD,UINT,DWORD);
+HRESULT     WINAPI PrivateExtractIconsW(LPCWSTR,INT,DWORD,DWORD,HICON*,DWORD,UINT,DWORD);
 
 /* Extra functions that don't exist in the Windows API */
 
