@@ -1280,7 +1280,7 @@ HANDLE32 WINAPI GetFastQueue( void )
     {
         HMODULE16 hModule = GetModuleHandle16( "USER" );
         FARPROC16 proc = WIN32_GetProcAddress16( hModule, "InitThreadInput" );
-        Callbacks->CallBootAppProc( proc, 0, 4 );  /* FIXME! */
+        Callbacks->CallBootAppProc( proc, 0, THREAD_IsWin16(thdb)? 4 : 5 );  /* FIXME! */
     }
 
     if (!(thdb->teb.queue))
