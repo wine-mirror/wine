@@ -877,10 +877,8 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
       /* Delete object */
 
-    if (header->funcs &&
-        header->funcs->pDeleteObject &&
-        header->funcs->pDeleteObject( obj, header ))
-        return TRUE;
+    if (header->funcs && header->funcs->pDeleteObject)
+        return header->funcs->pDeleteObject( obj, header );
 
     GDI_ReleaseObj( obj );
     return FALSE;
