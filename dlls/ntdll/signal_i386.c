@@ -316,15 +316,15 @@ typedef struct
 #endif
 
 #ifdef linux
-#define CR2_sig(context)     ((context)->cr2)
 #define ERROR_sig(context)   ((context)->sc_err)
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->i387))
+#define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->cr2)
 #endif
 
 #ifdef __FreeBSD__
 #define EFL_sig(context)     ((context)->sc_efl)
 /* FreeBSD, see i386/i386/traps.c::trap_pfault va->err kludge  */
-#define CR2_sig(context)     ((context)->sc_err)
+#define FAULT_ADDRESS        ((void *)HANDLER_CONTEXT->sc_err)
 #else
 #define EFL_sig(context)     ((context)->sc_eflags)
 #endif
@@ -367,6 +367,8 @@ typedef struct
 #ifdef TRAPNO
 #define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
 #endif
+
+#define FAULT_ADDRESS         (__siginfo->si_addr)
 
 #endif  /* svr4 || SCO_DS */
 
@@ -452,21 +454,6 @@ static inline int get_error_code( const SIGCONTEXT *sigcontext )
     return 0;
 #endif
 }
-
-/***********************************************************************
- *           get_cr2_value
- *
- * Get the CR2 value for a signal.
- */
-static inline void *get_cr2_value( const SIGCONTEXT *sigcontext )
-{
-#ifdef CR2_sig
-    return (void *)CR2_sig(sigcontext);
-#else
-    return NULL;
-#endif
-}
-
 
 #ifdef __HAVE_VM86
 /***********************************************************************
@@ -761,7 +748,7 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
     EXCEPTION_RECORD rec;
     DWORD page_fault_code = EXCEPTION_ACCESS_VIOLATION;
 
-#ifdef CR2_sig
+#ifdef FAULT_ADDRESS
     /* we want the page-fault case to be fast */
     if (trap_code == T_PAGEFLT)
         if (!(page_fault_code = VIRTUAL_HandleFault( cr2 ))) return;
@@ -793,11 +780,11 @@ static void do_segv( CONTEXT *context, int trap_code, void *cr2, int err_code )
         rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
         break;
     case T_PAGEFLT:  /* Page fault */
-#ifdef CR2_sig
+#ifdef FAULT_ADDRESS
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (err_code & 2) != 0;
         rec.ExceptionInformation[1] = (DWORD)cr2;
-#endif /* CR2_sig */
+#endif
         rec.ExceptionCode = page_fault_code;
         break;
     case T_ALIGNFLT:  /* Alignment check exception */
@@ -1024,9 +1011,15 @@ static HANDLER_DEF(alrm_handler)
 static HANDLER_DEF(segv_handler)
 {
     CONTEXT context;
+    void *cr2;
+
     save_context( &context, HANDLER_CONTEXT );
-    do_segv( &context, get_trap_code(HANDLER_CONTEXT),
-             get_cr2_value(HANDLER_CONTEXT), get_error_code(HANDLER_CONTEXT) );
+#ifdef FAULT_ADDRESS
+    cr2 = FAULT_ADDRESS;
+#else
+    cr2 = NULL;
+#endif
+    do_segv( &context, get_trap_code(HANDLER_CONTEXT), cr2, get_error_code(HANDLER_CONTEXT) );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
