@@ -26,7 +26,6 @@
 #include "docobj.h"
 #include "undocshell.h"
 #include "wine/obj_shellfolder.h"
-#include "wine/obj_dataobject.h"
 #include "wine/obj_contextmenu.h"
 #include "wine/obj_shellview.h"
 #include "wine/obj_shelllink.h"

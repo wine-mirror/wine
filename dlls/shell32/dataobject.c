@@ -26,7 +26,6 @@
 #include "shell32_main.h"
 #include "wine/debug.h"
 #include "undocshell.h"
-#include "wine/obj_dataobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 

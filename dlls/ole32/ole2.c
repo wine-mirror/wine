@@ -38,7 +38,6 @@
 #include "winreg.h"
 #include "wownt32.h"
 
-#include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
 #include "wine/winuser16.h"
