@@ -213,64 +213,6 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 }
 
 /*
- *	heap functions
- */
-
-/******************************************************************************
- *  RtlCreateHeap		[NTDLL.@]
- */
-HANDLE WINAPI RtlCreateHeap(
-	ULONG Flags,
-	PVOID BaseAddress,
-	ULONG SizeToReserve,
-	ULONG SizeToCommit,
-	PVOID Unknown,
-	PRTL_HEAP_DEFINITION Definition)
-{
-	FIXME("(0x%08lx, %p, 0x%08lx, 0x%08lx, %p, %p) semi-stub\n",
-	Flags, BaseAddress, SizeToReserve, SizeToCommit, Unknown, Definition);
-	
-	return HeapCreate ( Flags, SizeToCommit, SizeToReserve);
-
-}	
-/******************************************************************************
- *  RtlAllocateHeap		[NTDLL.@]
- */
-PVOID WINAPI RtlAllocateHeap(
-	HANDLE Heap,
-	ULONG Flags,
-	ULONG Size)
-{
-	TRACE("(0x%08x, 0x%08lx, 0x%08lx) semi stub\n",
-	Heap, Flags, Size);
-	return HeapAlloc(Heap, Flags, Size);
-}
-
-/******************************************************************************
- *  RtlFreeHeap		[NTDLL.@]
- */
-BOOLEAN WINAPI RtlFreeHeap(
-	HANDLE Heap,
-	ULONG Flags,
-	PVOID Address)
-{
-	TRACE("(0x%08x, 0x%08lx, %p) semi stub\n",
-	Heap, Flags, Address);
-	return HeapFree(Heap, Flags, Address);
-}
-	
-/******************************************************************************
- *  RtlDestroyHeap		[NTDLL.@]
- */
-HANDLE WINAPI RtlDestroyHeap(
-	HANDLE Heap)
-{
-	TRACE("(0x%08x) semi stub\n", Heap);
-	if (!HeapDestroy(Heap)) return Heap;
-        return 0;
-}
-	
-/*
  *	misc functions
  */
 

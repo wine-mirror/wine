@@ -500,15 +500,15 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stub Heap32ListFirst
 @ stub Heap32ListNext
 @ stub Heap32Next
-@ stdcall HeapAlloc(long long long) HeapAlloc
+@ forward HeapAlloc ntdll.RtlAllocateHeap
 @ stdcall HeapCompact(long long) HeapCompact
 @ stdcall HeapCreate(long long long) HeapCreate
 @ stdcall HeapDestroy(long) HeapDestroy
-@ stdcall HeapFree(long long ptr) HeapFree
+@ forward HeapFree ntdll.RtlFreeHeap
 @ stdcall HeapLock(long) HeapLock
-@ stdcall HeapReAlloc(long long ptr long) HeapReAlloc
+@ forward HeapReAlloc ntdll.RtlReAllocateHeap
 @ stub HeapSetFlags
-@ stdcall HeapSize(long long ptr) HeapSize
+@ forward HeapSize ntdll.RtlSizeHeap
 @ stdcall HeapUnlock(long) HeapUnlock
 @ stdcall HeapValidate(long long ptr) HeapValidate
 @ stdcall HeapWalk(long ptr) HeapWalk

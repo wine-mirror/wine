@@ -14,6 +14,7 @@
 #include "thread.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "ntddk.h"
 #include "wtypes.h"
 
 DECLARE_DEBUG_CHANNEL(tid);
@@ -50,9 +51,9 @@ static inline struct debug_info *get_info(void)
             tmp.out_pos = tmp.output;
         }
         if (!GetProcessHeap()) return &tmp;
-        /* setup the temp structure in case HeapAlloc wants to print something */
+        /* setup the temp structure in case RtlAllocateHeap wants to print something */
         NtCurrentTeb()->debug_info = &tmp;
-        info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
+        info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*info) );
         info->str_pos = info->strings;
         info->out_pos = info->output;
         NtCurrentTeb()->debug_info = info;

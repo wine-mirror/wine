@@ -14,18 +14,16 @@
 #include "wine/unicode.h"
 #include "wine/windef16.h"  /* for SEGPTR */
 
-extern SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr );
-
 /* SEGPTR helper macros */
 
 #define SEGPTR_ALLOC(size) \
-     (HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, (size) ))
+     (HeapAlloc( GetProcessHeap(), 0, (size) ))
 #define SEGPTR_NEW(type) \
-     ((type *)HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, sizeof(type) ))
+     ((type *)HeapAlloc( GetProcessHeap(), 0, sizeof(type) ))
 #define SEGPTR_STRDUP_WtoA(str) \
-     (HIWORD(str) ? HEAP_strdupWtoA( GetProcessHeap(), HEAP_WINE_SEGPTR, (str) ) : (LPSTR)(str))
+     (HIWORD(str) ? HEAP_strdupWtoA( GetProcessHeap(), 0, (str) ) : (LPSTR)(str))
 #define SEGPTR_FREE(ptr) \
-     (HIWORD(ptr) ? HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, (ptr) ) : 0)
+     (HIWORD(ptr) ? HeapFree( GetProcessHeap(), 0, (ptr) ) : 0)
 #define SEGPTR_GET(ptr) MapLS(ptr)
 
 inline static LPSTR SEGPTR_STRDUP( LPCSTR str )
@@ -33,7 +31,7 @@ inline static LPSTR SEGPTR_STRDUP( LPCSTR str )
     if (HIWORD(str))
     {
         INT len = strlen(str) + 1;
-        LPSTR p = HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, len );
+        LPSTR p = HeapAlloc( GetProcessHeap(), 0, len );
         if (p) memcpy( p, str, len );
         return p;
     }

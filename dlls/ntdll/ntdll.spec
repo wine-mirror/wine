@@ -300,7 +300,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub RtlCheckRegistryKey
 @ stub RtlClearAllBits
 @ stdcall RtlClearBits(long long long) RtlClearBits
-@ stub RtlCompactHeap
+@ stdcall RtlCompactHeap(long long) RtlCompactHeap
 @ stdcall RtlCompareMemory(ptr ptr long) RtlCompareMemory
 @ stub RtlCompareMemoryUlong
 @ stdcall RtlCompareString(ptr ptr long) RtlCompareString
@@ -406,7 +406,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub RtlGetNtGlobalFlags
 @ stdcall RtlGetNtProductType(ptr) RtlGetNtProductType
 @ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr) RtlGetOwnerSecurityDescriptor
-@ stub RtlGetProcessHeaps
+@ stdcall RtlGetProcessHeaps(long ptr) RtlGetProcessHeaps
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)RtlGetSaclSecurityDescriptor
 @ stub RtlGetUserInfoHeap
 @ stdcall RtlIdentifierAuthoritySid(ptr) RtlIdentifierAuthoritySid
@@ -446,7 +446,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stdcall RtlLengthSecurityDescriptor(ptr) RtlLengthSecurityDescriptor
 @ stdcall RtlLengthSid(ptr) RtlLengthSid
 @ stub RtlLocalTimeToSystemTime
-@ stub RtlLockHeap
+@ stdcall RtlLockHeap(long) RtlLockHeap
 @ stub RtlLookupElementGenericTable
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr) RtlMakeSelfRelativeSD
 @ stub RtlMapGenericMask
@@ -482,7 +482,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stdcall RtlRaiseException(ptr) RtlRaiseException
 @ stdcall RtlRaiseStatus(long) RtlRaiseStatus
 @ stub RtlRandom
-@ stub RtlReAllocateHeap
+@ stdcall RtlReAllocateHeap(long long ptr long) RtlReAllocateHeap
 @ stub RtlRealPredecessor
 @ stub RtlRealSuccessor
 @ stdcall RtlReleasePebLock() RtlReleasePebLock
@@ -508,7 +508,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub RtlSetTimeZoneInformation
 @ stub RtlSetUserFlagsHeap
 @ stub RtlSetUserValueHeap
-@ stdcall RtlSizeHeap(long long long) HeapSize
+@ stdcall RtlSizeHeap(long long ptr) RtlSizeHeap
 @ stub RtlSplay
 @ stub RtlStartRXact
 @ stdcall RtlSubAuthorityCountSid(ptr) RtlSubAuthorityCountSid
@@ -532,7 +532,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stdcall RtlUnicodeToMultiByteSize(ptr wstr long) RtlUnicodeToMultiByteSize
 @ stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
 @ stub RtlUniform
-@ stub RtlUnlockHeap
+@ stdcall RtlUnlockHeap(long) RtlUnlockHeap
 @ stdcall RtlUnwind(ptr ptr ptr long) RtlUnwind
 @ stub RtlUpcaseUnicodeChar
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
@@ -548,9 +548,9 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub RtlValidAcl
 @ stdcall RtlValidSecurityDescriptor(ptr) RtlValidSecurityDescriptor
 @ stdcall RtlValidSid(ptr) RtlValidSid
-@ stub RtlValidateHeap
+@ stdcall RtlValidateHeap(long long ptr) RtlValidateHeap
 @ stub RtlValidateProcessHeaps
-@ stub RtlWalkHeap
+@ stdcall RtlWalkHeap(long ptr) RtlWalkHeap
 @ stub RtlWriteRegistryValue
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long) RtlZeroMemory

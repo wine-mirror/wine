@@ -524,11 +524,7 @@ typedef struct _SINGLE_LIST_ENTRY {
 
 /* This flag allows it to create heaps shared by all processes under win95,
    FIXME: correct name */
-#define HEAP_SHARED                     0x04000000  
-
-#define HEAP_WINE_SEGPTR                0x10000000  /* Not a Win32 flag */
-#define HEAP_WINE_CODESEG               0x20000000  /* Not a Win32 flag */
-#define HEAP_WINE_CODE16SEG             0x40000000  /* Not a Win32 flag */
+#define HEAP_SHARED                     0x04000000
 
 /* Processor feature flags.  */
 #define PF_FLOATING_POINT_PRECISION_ERRATA	0

@@ -985,20 +985,33 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
 
 /*int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);*/
 
-LONG WINAPI RtlEnterCriticalSection( CRITICAL_SECTION *crit );
-LONG WINAPI RtlLeaveCriticalSection( CRITICAL_SECTION *crit );
-LONG WINAPI RtlDeleteCriticalSection( CRITICAL_SECTION *crit );
-BOOL WINAPI RtlTryEnterCriticalSection( CRITICAL_SECTION *crit );
-/* FIXME: need to use defines because we don't have proper imports yet */
+/* FIXME: need to use defines because we don't have proper imports everywhere yet */
+#ifndef have_proper_imports
+LONG        WINAPI RtlEnterCriticalSection( CRITICAL_SECTION *crit );
+LONG        WINAPI RtlLeaveCriticalSection( CRITICAL_SECTION *crit );
+LONG        WINAPI RtlDeleteCriticalSection( CRITICAL_SECTION *crit );
+BOOL        WINAPI RtlTryEnterCriticalSection( CRITICAL_SECTION *crit );
+PVOID       WINAPI RtlAllocateHeap(HANDLE,ULONG,ULONG);
+BOOLEAN     WINAPI RtlFreeHeap(HANDLE,ULONG,PVOID);
+PVOID       WINAPI RtlReAllocateHeap(HANDLE,ULONG,PVOID,ULONG);
+ULONG       WINAPI RtlSizeHeap(HANDLE,ULONG,PVOID);
+#define     HeapAlloc(heap,flags,size) RtlAllocateHeap(heap,flags,size)
+#define     HeapFree(heap,flags,ptr) RtlFreeHeap(heap,flags,ptr)
+#define     HeapReAlloc(heap,flags,ptr,size) RtlReAllocateHeap(heap,flags,ptr,size)
+#define     HeapSize(heap,flags,ptr) RtlSizeHeap(heap,flags,ptr)
 #define     EnterCriticalSection(crit) RtlEnterCriticalSection(crit)
 #define     LeaveCriticalSection(crit) RtlLeaveCriticalSection(crit)
 #define     DeleteCriticalSection(crit) RtlDeleteCriticalSection(crit)
 #define     TryEnterCriticalSection(crit) RtlTryEnterCriticalSection(crit)
-#if 0
-void      WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
-void      WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
-BOOL      WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
-void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+#else
+LPVOID      WINAPI HeapAlloc(HANDLE,DWORD,DWORD);
+BOOL        WINAPI HeapFree(HANDLE,DWORD,LPVOID);
+LPVOID      WINAPI HeapReAlloc(HANDLE,DWORD,LPVOID,DWORD);
+DWORD       WINAPI HeapSize(HANDLE,DWORD,LPVOID);
+void        WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
+void        WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
+BOOL        WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
+void        WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 #endif
 
 void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
@@ -1237,14 +1250,10 @@ BOOL        WINAPI GetUserNameA(LPSTR,LPDWORD);
 BOOL        WINAPI GetUserNameW(LPWSTR,LPDWORD);
 #define     GetUserName WINELIB_NAME_AW(GetUserName)
 VOID        WINAPI GlobalMemoryStatus(LPMEMORYSTATUS);
-LPVOID      WINAPI HeapAlloc(HANDLE,DWORD,DWORD);
 DWORD       WINAPI HeapCompact(HANDLE,DWORD);
 HANDLE    WINAPI HeapCreate(DWORD,DWORD,DWORD);
 BOOL      WINAPI HeapDestroy(HANDLE);
-BOOL      WINAPI HeapFree(HANDLE,DWORD,LPVOID);
 BOOL      WINAPI HeapLock(HANDLE);
-LPVOID      WINAPI HeapReAlloc(HANDLE,DWORD,LPVOID,DWORD);
-DWORD       WINAPI HeapSize(HANDLE,DWORD,LPVOID);
 BOOL      WINAPI HeapUnlock(HANDLE);
 BOOL      WINAPI HeapValidate(HANDLE,DWORD,LPCVOID);
 BOOL        WINAPI HeapWalk(HANDLE,LPPROCESS_HEAP_ENTRY);

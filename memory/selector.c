@@ -518,6 +518,84 @@ DWORD WINAPI MemoryWrite16( WORD sel, DWORD offset, void *buffer, DWORD count )
  *
  */
 
+struct mapls_entry
+{
+    struct mapls_entry *next;
+    void               *addr;   /* linear address */
+    int                 count;  /* ref count */
+    WORD                sel;    /* selector */
+};
+
+static struct mapls_entry *first_entry;
+
+
+/***********************************************************************
+ *           MapLS   (KERNEL32.@)
+ *           MapLS   (KERNEL.358)
+ *
+ * Maps linear pointer to segmented.
+ */
+SEGPTR WINAPI MapLS( LPCVOID ptr )
+{
+    struct mapls_entry *entry, *free = NULL;
+    void *base;
+    SEGPTR ret = 0;
+
+    if (!HIWORD(ptr)) return (SEGPTR)ptr;
+
+    base = (char *)ptr - ((unsigned int)ptr & 0x7fff);
+    HeapLock( GetProcessHeap() );
+    for (entry = first_entry; entry; entry = entry->next)
+    {
+        if (entry->addr == base) break;
+        if (!entry->count) free = entry;
+    }
+
+    if (!entry)
+    {
+        if (!free)  /* no free entry found, create a new one */
+        {
+            if (!(free = HeapAlloc( GetProcessHeap(), 0, sizeof(*free) ))) goto done;
+            if (!(free->sel = SELECTOR_AllocBlock( base, 0x10000, WINE_LDT_FLAGS_DATA )))
+            {
+                HeapFree( GetProcessHeap(), 0, free );
+                goto done;
+            }
+            free->count = 0;
+            free->next = first_entry;
+            first_entry = free;
+        }
+        SetSelectorBase( free->sel, (DWORD)base );
+        free->addr = base;
+        entry = free;
+    }
+    entry->count++;
+    ret = MAKESEGPTR( entry->sel, (char *)ptr - (char *)entry->addr );
+ done:
+    HeapUnlock( GetProcessHeap() );
+    return ret;
+}
+
+/***********************************************************************
+ *           UnMapLS   (KERNEL32.@)
+ *           UnMapLS   (KERNEL.359)
+ *
+ * Free mapped selector.
+ */
+void WINAPI UnMapLS( SEGPTR sptr )
+{
+    struct mapls_entry *entry;
+    WORD sel = SELECTOROF(sptr);
+
+    if (sel)
+    {
+        HeapLock( GetProcessHeap() );
+        for (entry = first_entry; entry; entry = entry->next) if (entry->sel == sel) break;
+        if (entry && entry->count > 0) entry->count--;
+        HeapUnlock( GetProcessHeap() );
+    }
+}
+
 /***********************************************************************
  *           MapSL   (KERNEL32.@)
  *           MapSL   (KERNEL.357)

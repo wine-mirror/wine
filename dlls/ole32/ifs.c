@@ -143,25 +143,32 @@ ULONG WINAPI IMalloc16_fnRelease(IMalloc16* iface) {
 SEGPTR WINAPI IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
         ICOM_THIS(IMalloc16Impl,iface);
 	TRACE("(%p)->Alloc(%ld)\n",This,cb);
-        return MapLS( HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, cb ) );
+        return MapLS( HeapAlloc( GetProcessHeap(), 0, cb ) );
 }
 
 /******************************************************************************
  * IMalloc16_Realloc [COMPOBJ.504]
  */
-SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb) {
-        ICOM_THIS(IMalloc16Impl,iface);
-        TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
-        return MapLS( HeapReAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, MapSL(pv), cb ) );
+SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
+{
+    SEGPTR ret;
+    ICOM_THIS(IMalloc16Impl,iface);
+    TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
+    ret = MapLS( HeapReAlloc( GetProcessHeap(), 0, MapSL(pv), cb ) );
+    UnMapLS(pv);
+    return ret;
 }
 
 /******************************************************************************
  * IMalloc16_Free [COMPOBJ.505]
  */
-VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv) {
-        ICOM_THIS(IMalloc16Impl,iface);
-        TRACE("(%p)->Free(%08lx)\n",This,pv);
-        HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, MapSL(pv) );
+VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
+{
+    void *ptr = MapSL(pv);
+    ICOM_THIS(IMalloc16Impl,iface);
+    TRACE("(%p)->Free(%08lx)\n",This,pv);
+    UnMapLS(pv);
+    HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 /******************************************************************************
@@ -171,7 +178,7 @@ DWORD WINAPI IMalloc16_fnGetSize(const IMalloc16* iface,SEGPTR pv)
 {
 	ICOM_CTHIS(IMalloc16Impl,iface);
         TRACE("(%p)->GetSize(%08lx)\n",This,pv);
-        return HeapSize( GetProcessHeap(), HEAP_WINE_SEGPTR, MapSL(pv) );
+        return HeapSize( GetProcessHeap(), 0, MapSL(pv) );
 }
 
 /******************************************************************************
