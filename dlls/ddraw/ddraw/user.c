@@ -1,6 +1,6 @@
 /*	DirectDraw driver for User-based primary surfaces
  *
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 #include "config.h"
@@ -432,17 +432,6 @@ User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
     ICOM_THIS(IDirectDrawImpl, iface);
 	
     TRACE("(%p)->(%p,%p)\n",This,pDriverCaps,pHELCaps);
-    if ((pDriverCaps != NULL && pDriverCaps->dwSize != sizeof(DDCAPS))
-	|| (pHELCaps != NULL && pHELCaps->dwSize != sizeof(DDCAPS)))
-    {
-	FIXME("unsupported structure versions: %lu/%lu vs %u\n",
-	      pDriverCaps ? pDriverCaps->dwSize : sizeof(DDCAPS),
-	      pHELCaps ? pHELCaps->dwSize : sizeof(DDCAPS),
-	      sizeof(DDCAPS));
-	/* The old DD caps structures are contained in the DX7 SDK, and since
-	 * it's changed every version, we should probably try to support the
-	 * old ones. */
-    }
 
     if (pDriverCaps != NULL)
 	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&caps);
