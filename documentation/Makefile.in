@@ -7,7 +7,7 @@ DB2HTML   = @DB2HTML@
 DB2PDF    = @DB2PDF@
 DB2PS     = @DB2PS@
 
-EXTRASUBDIRS = samples status
+EXTRASUBDIRS = samples
 
 WINE_USER_SRCS = \
 	bugs.sgml \
