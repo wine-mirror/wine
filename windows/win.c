@@ -569,7 +569,8 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     /* Call the WH_CBT hook */
 
-    hwndLinkAfter = (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
+ ? HWND_BOTTOM : HWND_TOP;
 
     if (HOOK_IsHooked( WH_CBT ))
     {
@@ -712,9 +713,11 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 		UINT16 swFlag = (wndPtr->dwStyle & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
                 wndPtr->dwStyle &= ~(WS_MAXIMIZE | WS_MINIMIZE);
 		WINPOS_MinMaximize( wndPtr, swFlag, &newPos );
-		swFlag = ((wndPtr->dwStyle & WS_CHILD) || GetActiveWindow32()) ? SWP_NOACTIVATE : 0;
-                SetWindowPos32( hwnd, 0, newPos.left, newPos.top, 
-					 newPos.right, newPos.bottom, SWP_FRAMECHANGED | swFlag );
+                swFlag = ((wndPtr->dwStyle & WS_CHILD) || GetActiveWindow32())
+                    ? SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED
+                    : SWP_NOZORDER | SWP_FRAMECHANGED;
+                SetWindowPos32( hwnd, 0, newPos.left, newPos.top,
+                                newPos.right, newPos.bottom, swFlag );
             }
 
 	    if( wndPtr->dwStyle & WS_CHILD && !(wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) )
