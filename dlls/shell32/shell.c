@@ -363,41 +363,6 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWO
 }
 
 /*************************************************************************
- *				ExtractAssociatedIconA (SHELL32.@)
- *
- * Return icon for given file (either from file itself or from associated
- * executable) and patch parameters if needed.
- */
-HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lpiIcon)
-{	TRACE("\n");
-	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
-}
-
-/*************************************************************************
- *				ExtractAssociatedIconExA (SHELL32.@)
- *
- * Return icon for given file (either from file itself or from associated
- * executable) and patch parameters if needed.
- */
-HICON WINAPI ExtractAssociatedIconExA(DWORD d1, DWORD d2, DWORD d3, DWORD d4)
-{
-  FIXME("(%lx %lx %lx %lx): stub\n", d1, d2, d3, d4);
-  return 0;
-}
-
-/*************************************************************************
- *				ExtractAssociatedIconExW (SHELL32.@)
- *
- * Return icon for given file (either from file itself or from associated
- * executable) and patch parameters if needed.
- */
-HICON WINAPI ExtractAssociatedIconExW(DWORD d1, DWORD d2, DWORD d3, DWORD d4)
-{
-  FIXME("(%lx %lx %lx %lx): stub\n", d1, d2, d3, d4);
-  return 0;
-}
-
-/*************************************************************************
  *				FindEnvironmentString	[SHELL.38]
  *
  * Returns a pointer into the DOS environment... Ugh.
