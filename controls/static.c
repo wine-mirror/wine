@@ -182,9 +182,11 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
 
         if (style == SS_ICON)
         {
-            if (cs->lpszName)
-                STATIC_SetIcon( wndPtr,
+            if (cs->lpszName) {
+	    	if (!HIWORD(cs->lpszName) || cs->lpszName[0])
+		    STATIC_SetIcon( wndPtr,
                                 STATIC_LoadIcon( wndPtr, cs->lpszName ));
+	    }
             return 1;
         }
 	if (style == SS_BITMAP)
