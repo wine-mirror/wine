@@ -366,7 +366,7 @@ STRINGTABLE DISCARDABLE
     IDS_FILENOTFOUND        "Datei nicht gefunden"
     IDS_VERIFYFILE          "Bitte überprüfen sie, ob der korrekte Dateiname angegeben wurde"
     IDS_CREATEFILE          "Die Datei existiert nicht.\nWollen Sie sie neu anlegen?"
-    IDL_OVERWRITEFILE       "Die Datei existiert bereits.\nWollen Sie sie überschreiben?"
+    IDS_OVERWRITEFILE       "Die Datei existiert bereits.\nWollen Sie sie überschreiben?"
     IDS_INVALID_FILENAME_TITLE "Unzulässige Zeichen im Pfad"
     IDS_INVALID_FILENAME    "Ein Dateiname darf folgende Zeichen nicht enthalten:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Der Pfad existiert nicht"

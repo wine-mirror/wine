@@ -369,7 +369,7 @@ STRINGTABLE DISCARDABLE
     IDS_FILENOTFOUND	"Arquivo não encontrado"
     IDS_VERIFYFILE	"Por favor verifique se foi fornecido o nome correto do arquivo"
     IDS_CREATEFILE	"Arquivo não existe\nVocê gostaria de cria-lo"
-    IDL_OVERWRITEFILE       "Arquivo já existe.\nGostaria de substituí-lo?"
+    IDS_OVERWRITEFILE       "Arquivo já existe.\nGostaria de substituí-lo?"
     IDS_INVALID_FILENAME_TITLE "Caracter(es) inválidos no caminho"
     IDS_INVALID_FILENAME    "Um nome de arquivo não pode conter quaisquer dos seguintes caracteres: \n                          / : < > |"
     IDS_PATHNOTEXISTING     "Caminho não existe"

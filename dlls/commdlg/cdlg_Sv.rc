@@ -361,7 +361,7 @@ STRINGTABLE DISCARDABLE
  IDS_FILENOTFOUND        "Kunde inte hitta filen"
  IDS_VERIFYFILE          "Vad god verifiera så korrekt filnamn är angivet"
  IDS_CREATEFILE          "Filen finns inte\nVill du skapa fil"
- IDL_OVERWRITEFILE       "Filen finns redan.\nVill du ersätta den?"
+ IDS_OVERWRITEFILE       "Filen finns redan.\nVill du ersätta den?"
  IDS_INVALID_FILENAME_TITLE "Illegalt tecken i sökväg"
  IDS_INVALID_FILENAME    "Ett filnamn kan inte innehålla någon av följande tecken: \n                                               / : < > |"
  IDS_PATHNOTEXISTING     "Sökvägen finns inte"

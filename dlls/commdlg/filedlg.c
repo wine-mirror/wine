@@ -42,9 +42,9 @@
  * FIXME: add to recent docs
  *
  * FIXME: flags not implemented: OFN_CREATEPROMPT, OFN_DONTADDTORECENT,
- * OFN_ENABLEINCLUDENOTIFY, OFN_ENABLESIZING, OFN_EXTENSIONDIFFERENT,
+ * OFN_ENABLEINCLUDENOTIFY, OFN_ENABLESIZING,
  * OFN_NODEREFERENCELINKS, OFN_NOREADONLYRETURN,
- * OFN_NOTESTFILECREATE, OFN_OVERWRITEPROMPT, OFN_USEMONIKERS
+ * OFN_NOTESTFILECREATE, OFN_USEMONIKERS
  *
  * FIXME: lCustData for lpfnHook (WM_INITDIALOG)
  *
@@ -85,9 +85,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #define UNIMPLEMENTED_FLAGS \
 (OFN_CREATEPROMPT | OFN_DONTADDTORECENT |\
-OFN_ENABLEINCLUDENOTIFY | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT |\
+OFN_ENABLEINCLUDENOTIFY | OFN_ENABLESIZING |\
 OFN_NODEREFERENCELINKS | OFN_NOREADONLYRETURN |\
-OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT /*| OFN_USEMONIKERS*/)
+OFN_NOTESTFILECREATE /*| OFN_USEMONIKERS*/)
 
 #define IsHooked(fodInfos) \
 	((fodInfos->ofnInfos->Flags & OFN_ENABLEHOOK) && fodInfos->ofnInfos->lpfnHook)
@@ -168,6 +168,8 @@ typedef struct tagLookInInfo
 #define CBSetItemHeight(hwnd,index,height) \
   SendMessageA(hwnd,CB_SETITEMHEIGHT,(WPARAM)index,(LPARAM)height);
 
+#define CBSetExtendedUI(hwnd,flag) \
+  SendMessageA(hwnd,CB_SETEXTENDEDUI,(WPARAM)(flag),0)
 
 const char *FileOpenDlgInfosStr = "FileOpenDlgInfos"; /* windows property description string */
 const char *LookInInfosStr = "LookInInfos"; /* LOOKIN combo box property */
@@ -1875,7 +1877,9 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	/* add default extension */
 	if (fodInfos->defext)
 	{
-	  if (! *PathFindExtensionW(lpstrPathAndFile))
+	  WCHAR *ext = PathFindExtensionW(lpstrPathAndFile);
+	  
+	  if (! *ext)
 	  {
 	    /* only add "." in case a default extension does exist */
 	    if (*fodInfos->defext != '\0')
@@ -1886,10 +1890,37 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	        strcatW(lpstrPathAndFile, szwDot);
 	        strcatW(lpstrPathAndFile, fodInfos->defext);
 
-		/* if file does not exist try without extension */
-		if (!PathFileExistsW(lpstrPathAndFile))
+		/* In Open dialog: if file does not exist try without extension */
+		if (!(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+		    && !PathFileExistsW(lpstrPathAndFile))
 		  lpstrPathAndFile[PathLength] = '\0';
 	    }
+	  }
+
+	  /* Set/clear the output OFN_EXTENSIONDIFFERENT flag */
+	  if (*ext)
+	    ext++;
+	  if (!lstrcmpiW(fodInfos->defext, ext))
+	    fodInfos->ofnInfos->Flags &= ~OFN_EXTENSIONDIFFERENT;
+	  else
+	    fodInfos->ofnInfos->Flags |= OFN_EXTENSIONDIFFERENT;
+	}
+
+	/* In Save dialog: check if the file already exists */
+	if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG
+	    && fodInfos->ofnInfos->Flags & OFN_OVERWRITEPROMPT
+	    && PathFileExistsW(lpstrPathAndFile))
+	{
+	  WCHAR lpstrOverwrite[100];
+	  int answer;
+
+	  LoadStringW(COMDLG32_hInstance, IDS_OVERWRITEFILE, lpstrOverwrite, 100);
+	  answer = MessageBoxW(hwnd, lpstrOverwrite, fodInfos->title,
+			       MB_YESNO | MB_ICONEXCLAMATION);
+	  if (answer == IDNO)
+	  {
+	    ret = FALSE;
+	    goto ret;
 	  }
 	}
 
@@ -2291,6 +2322,9 @@ static HRESULT FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   /* set item height for both text field and listbox */
   CBSetItemHeight(hwndCombo,-1,GetSystemMetrics(SM_CYSMICON));
   CBSetItemHeight(hwndCombo,0,GetSystemMetrics(SM_CYSMICON));
+   
+  /* Turn on the extended UI for the combo box like Windows does */
+  CBSetExtendedUI(hwndCombo, TRUE);
 
   /* Initialise data of Desktop folder */
   SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidlTmp);
@@ -2807,6 +2841,9 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 	}
       }
       SetWindowTextA( fodInfos->DlgInfos.hwndFileName, lpstrAllFile );
+       
+      /* Select the file name like Windows does */ 
+      SendMessageA(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
     }
     HeapFree(GetProcessHeap(),0, lpstrAllFile );
 }

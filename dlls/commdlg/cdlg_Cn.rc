@@ -368,7 +368,7 @@ STRINGTABLE DISCARDABLE
     IDS_FILENOTFOUND        "找不到文件"
     IDS_VERIFYFILE          "请检验是否给予正确的文件名称。"
     IDS_CREATEFILE          "找不到文件\n是否创建新文件?"
-    IDL_OVERWRITEFILE       "文件已经存在。\n要替换吗?"
+    IDS_OVERWRITEFILE       "文件已经存在。\n要替换吗?"
     IDS_INVALID_FILENAME_TITLE "文件名中存在无效的字符"
     IDS_INVALID_FILENAME    "文件名中不能包含任何一下字符:: \n                          / : < > |"
     IDS_PATHNOTEXISTING     "文件夹不存在"
