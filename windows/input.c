@@ -170,8 +170,7 @@ static void queue_kbd_event( const KEYBDINPUT *ki, UINT injected_flags )
               ? WM_SYSKEYDOWN : WM_KEYDOWN;
     }
 
-    if (message == WM_SYSKEYDOWN || message == WM_SYSKEYUP )
-        keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
+    keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
 
     TRACE_(key)(" wParam=%04x, lParam=%08lx, InputKeyState=%x\n",
                 ki->wVk, keylp.lp2, InputKeyStateTable[ki->wVk] );
