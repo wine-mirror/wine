@@ -792,7 +792,7 @@ main()
     exit(0);
 } ], wine_cv_allow_unaligned_access=yes, wine_cv_allow_unaligned_access=no,
      wine_cv_allow_unaligned_access=no ) ])
-if test "$wine_allow_unaligned_access" = "yes"
+if test "$wine_cv_allow_unaligned_access" = "yes"
 then
   AC_DEFINE(ALLOW_UNALIGNED_ACCESS)
 fi

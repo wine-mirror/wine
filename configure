@@ -5400,7 +5400,7 @@ fi
 fi
 
 echo "$ac_t""$wine_cv_allow_unaligned_access" 1>&6
-if test "$wine_allow_unaligned_access" = "yes"
+if test "$wine_cv_allow_unaligned_access" = "yes"
 then
   cat >> confdefs.h <<\EOF
 #define ALLOW_UNALIGNED_ACCESS 1
