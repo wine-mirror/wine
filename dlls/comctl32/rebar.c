@@ -3746,6 +3746,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    ShowWindow (lpBand->hwndChild, SW_HIDE);
     }
 
+    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
     InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
