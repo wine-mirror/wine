@@ -3445,31 +3445,23 @@ TREEVIEW_GetEditControl(TREEVIEW_INFO *infoPtr)
 static LRESULT CALLBACK
 TREEVIEW_Edit_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TREEVIEW_INFO *infoPtr;
+    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(GetParent(hwnd));
     BOOL bCancel = FALSE;
+    LRESULT rc;
 
     switch (uMsg)
     {
     case WM_PAINT:
-	{
-	    LRESULT rc;
-	    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(GetParent(hwnd));
-
-	    TRACE("WM_PAINT start\n");
-	    rc = CallWindowProcA(infoPtr->wpEditOrig, hwnd, uMsg, wParam,
+	 TRACE("WM_PAINT start\n");
+	 rc = CallWindowProcA(infoPtr->wpEditOrig, hwnd, uMsg, wParam,
 				 lParam);
-	    TRACE("WM_PAINT done\n");
-	    return rc;
-	}
+	 TRACE("WM_PAINT done\n");
+	 return rc;
 
     case WM_KILLFOCUS:
-    {
-	TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(GetParent(hwnd));
 	if (infoPtr->bIgnoreEditKillFocus)
 	    return TRUE;
-
 	break;
-    }
 
     case WM_GETDLGCODE:
 	return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
@@ -3487,18 +3479,12 @@ TREEVIEW_Edit_SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	/* fall through */
     default:
-	{
-	    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(GetParent(hwnd));
-
-	    return CallWindowProcA(infoPtr->wpEditOrig, hwnd, uMsg, wParam,
-				   lParam);
-	}
+	return CallWindowProcA(infoPtr->wpEditOrig, hwnd, uMsg, wParam, lParam);
     }
 
     /* Processing TVN_ENDLABELEDIT message could kill the focus       */
     /* eg. Using a messagebox                                         */
 
-    infoPtr = TREEVIEW_GetInfoPtr(GetParent(hwnd));
     infoPtr->bIgnoreEditKillFocus = TRUE;
     TREEVIEW_EndEditLabelNow(infoPtr, bCancel || !infoPtr->bLabelChanged);
     infoPtr->bIgnoreEditKillFocus = FALSE;
@@ -3570,7 +3556,7 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	}
 
     default:
-	return SendMessageA(GetParent(infoPtr->hwnd), WM_COMMAND, wParam, lParam);
+	return SendMessageA(infoPtr->hwndNotify, WM_COMMAND, wParam, lParam);
     }
 
     return 0;
