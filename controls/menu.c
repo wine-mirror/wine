@@ -1162,7 +1162,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         dis.itemData  = (DWORD)lpitem->dwItemData;
         dis.itemState = 0;
         if (lpitem->fState & MF_CHECKED) dis.itemState |= ODS_CHECKED;
-        if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED;
+        if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED|ODS_DISABLED;
         if (lpitem->fState & MF_HILITE)  dis.itemState |= ODS_SELECTED;
         dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
         dis.hwndItem   = (HWND)hmenu;
