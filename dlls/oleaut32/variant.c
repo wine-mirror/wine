@@ -4331,6 +4331,74 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
     return TmToDATE( &t, pvtime );
 }
 
+
+/**********************************************************************
+ *              VarParseNumFromStr [OLEAUT32.46]
+ */
+HRESULT WINAPI VarParseNumFromStr(OLECHAR * strIn, LCID lcid, ULONG dwFlags,
+                                  NUMPARSE * pnumprs, BYTE * rgbDig)
+{
+    int i,lastent=0;
+    int cDig;
+    FIXME("(%s,flags=%lx,....), partial stub!\n",debugstr_w(strIn),dwFlags);
+    FIXME("numparse: cDig=%d, InFlags=%lx\n",pnumprs->cDig,pnumprs->dwInFlags);
+
+    /* The other struct components are to be set by us */
+
+    memset(rgbDig,0,pnumprs->cDig);
+
+    cDig = 0;
+    for (i=0; strIn[i] ;i++) {
+	if ((strIn[i]>='0') && (strIn[i]<='9')) {
+	    if (pnumprs->cDig > cDig) {
+		*(rgbDig++)=strIn[i]-'0';
+		cDig++;
+		lastent = i;
+	    }
+	}
+    }
+    pnumprs->cDig	= cDig;
+
+    /* FIXME: Just patching some values in */
+    pnumprs->nPwr10	= 0;
+    pnumprs->nBaseShift	= 0;
+    pnumprs->cchUsed	= lastent;
+    pnumprs->dwOutFlags	= NUMPRS_DECIMAL;
+    return S_OK;
+}
+
+
+/**********************************************************************
+ *              VarNumFromParseNum [OLEAUT32.47]
+ */
+HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
+                                  ULONG dwVtBits, VARIANT * pvar)
+{
+    DWORD xint;
+    int i;
+    FIXME("(,dwVtBits=%lx,....), partial stub!\n",dwVtBits);
+
+    xint = 0;
+    for (i=0;i<pnumprs->cDig;i++)
+	xint = xint*10 + rgbDig[i];
+
+    VariantInit(pvar);
+    if (dwVtBits & VTBIT_I4) {
+	pvar->vt = VT_I4;
+	pvar->u.intVal = xint;
+	return S_OK;
+    }
+    if (dwVtBits & VTBIT_R8) {
+	pvar->vt = VT_R8;
+	pvar->u.dblVal = xint;
+	return S_OK;
+    } else {
+	FIXME("vtbitmask is unsupported %lx\n",dwVtBits);
+	return E_FAIL;
+    }
+}
+
+
 /**********************************************************************
  *              VariantTimeToDosDateTime [OLEAUT32.??]
  * Convert variant representation of time to the date and time representation

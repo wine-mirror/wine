@@ -52,8 +52,8 @@ debug_channels (ole typelib)
 39 stdcall SafeArrayDestroyData(ptr) SafeArrayDestroyData
 40 stdcall SafeArrayRedim(ptr ptr) SafeArrayRedim
 41 stub OACreateTypeLib2
-46 stub VarParseNumFromStr
-47 stub VarNumFromParseNum
+46 stdcall VarParseNumFromStr(wstr long long ptr ptr) VarParseNumFromStr
+47 stdcall VarNumFromParseNum(ptr ptr long ptr) VarNumFromParseNum
 48 stdcall VarI2FromUI1(long ptr) VarI2FromUI1
 49 stdcall VarI2FromI4(long ptr) VarI2FromI4
 50 stdcall VarI2FromR4(long ptr) VarI2FromR4

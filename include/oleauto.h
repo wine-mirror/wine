@@ -526,6 +526,47 @@ typedef struct {
     USHORT wDayOfYear;
 } UDATE;
 
+typedef struct {
+    INT   cDig;
+    ULONG dwInFlags;
+    ULONG dwOutFlags;
+    INT   cchUsed;
+    INT   nBaseShift;
+    INT   nPwr10;
+} NUMPARSE;
+
+#define NUMPRS_LEADING_WHITE    0x0001
+#define NUMPRS_TRAILING_WHITE   0x0002
+#define NUMPRS_LEADING_PLUS     0x0004
+#define NUMPRS_TRAILING_PLUS    0x0008
+#define NUMPRS_LEADING_MINUS    0x0010
+#define NUMPRS_TRAILING_MINUS   0x0020
+#define NUMPRS_HEX_OCT          0x0040
+#define NUMPRS_PARENS           0x0080
+#define NUMPRS_DECIMAL          0x0100
+#define NUMPRS_THOUSANDS        0x0200
+#define NUMPRS_CURRENCY         0x0400
+#define NUMPRS_EXPONENT         0x0800
+#define NUMPRS_USE_ALL          0x1000
+#define NUMPRS_STD              0x1FFF
+
+#define NUMPRS_NEG              0x10000
+#define NUMPRS_INEXACT          0x20000
+
+#define VTBIT_I1        (1 << VT_I1)
+#define VTBIT_UI1       (1 << VT_UI1)
+#define VTBIT_I2        (1 << VT_I2)
+#define VTBIT_UI2       (1 << VT_UI2)
+#define VTBIT_I4        (1 << VT_I4)
+#define VTBIT_UI4       (1 << VT_UI4)
+#define VTBIT_R4        (1 << VT_R4)
+#define VTBIT_R8        (1 << VT_R8)
+#define VTBIT_CY        (1 << VT_CY)
+#define VTBIT_DECIMAL   (1 << VT_DECIMAL)
+
+HRESULT WINAPI VarParseNumFromStr(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
+HRESULT WINAPI VarNumFromParseNum(NUMPARSE*,BYTE*,ULONG,VARIANT*);
+
 INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
 INT WINAPI VariantTimeToDosDateTime(DATE, USHORT *, USHORT *);
 
