@@ -61,6 +61,7 @@ static const char * const FlagNames[] =
 {
     "noimport",    /* FLAG_NOIMPORT */
     "norelay",     /* FLAG_NORELAY */
+    "noname",      /* FLAG_NONAME */
     "ret64",       /* FLAG_RET64 */
     "i386",        /* FLAG_I386 */
     "register",    /* FLAG_REGISTER */
@@ -431,6 +432,7 @@ static void ParseOrdinal(int ordinal)
 
     if (ordinal != -1)
     {
+        if (!ordinal) fatal_error( "Ordinal 0 is not valid\n" );
         if (ordinal >= MAX_ORDINALS) fatal_error( "Ordinal number %d too large\n", ordinal );
         if (ordinal > Limit) Limit = ordinal;
         if (ordinal < Base) Base = ordinal;
@@ -438,13 +440,15 @@ static void ParseOrdinal(int ordinal)
         Ordinals[ordinal] = odp;
     }
 
-    if (!strcmp( odp->name, "@" ))
+    if (!strcmp( odp->name, "@" ) || odp->flags & FLAG_NONAME)
     {
         if (ordinal == -1)
             fatal_error( "Nameless function needs an explicit ordinal number\n" );
         if (SpecType != SPEC_WIN32)
             fatal_error( "Nameless functions not supported for Win16\n" );
-        odp->name[0] = 0;
+        if (!strcmp( odp->name, "@" )) free( odp->name );
+        else odp->export_name = odp->name;
+        odp->name = NULL;
     }
     else Names[nb_names++] = odp;
 }

@@ -166,6 +166,22 @@ static inline void fixup_rva_ptrs( void *array, void *base, int count )
 }
 
 
+/* fixup RVAs in the import directory */
+static void fixup_imports( IMAGE_IMPORT_DESCRIPTOR *dir, DWORD size, void *base )
+{
+    int count = size / sizeof(void *);
+    void **ptr = (void **)dir;
+
+    /* everything is either a pointer or a ordinal value below 0x10000 */
+    while (count--)
+    {
+        if (*ptr >= (void *)0x10000) *ptr = (void *)((char *)*ptr - (char *)base);
+        else if (*ptr) *ptr = (void *)(0x80000000 | (unsigned int)*ptr);
+        ptr++;
+    }
+}
+
+
 /* fixup RVAs in the resource directory */
 static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *base )
 {
@@ -268,8 +284,7 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     {
         IMAGE_IMPORT_DESCRIPTOR *imports = (void *)dir->VirtualAddress;
         fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
-        /* we can fixup everything at once since we only have pointers and 0 values */
-        fixup_rva_ptrs( imports, addr, dir->Size / sizeof(void*) );
+        fixup_imports( imports, dir->Size, addr );
     }
 
     /* Build the resource directory */

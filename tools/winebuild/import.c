@@ -33,6 +33,7 @@ struct func
 {
     const char *name;         /* function name */
     int         ordinal;      /* function ordinal */
+    int         ord_only;     /* non-zero if function is imported by ordinal */
 };
 
 struct import
@@ -140,7 +141,7 @@ static char *open_library( const char *name )
 static void read_exported_symbols( const char *name, struct import *imp )
 {
     FILE *f;
-    char buffer[1024], prefix[80];
+    char buffer[1024], prefix[80], ord_prefix[80];
     char *fullname, *cmdline;
     int size, err;
 
@@ -156,20 +157,27 @@ static void read_exported_symbols( const char *name, struct import *imp )
         fatal_error( "Cannot execute '%s'\n", cmdline );
 
     sprintf( prefix, "__wine_dllexport_%s_", make_c_identifier(name) );
+    sprintf( ord_prefix, "__wine_ordexport_%s_", make_c_identifier(name) );
 
     while (fgets( buffer, sizeof(buffer), f ))
     {
-        int ordinal = 0;
+        int ordinal = 0, ord_only = 0;
         char *p = buffer + strlen(buffer) - 1;
         if (p < buffer) continue;
         if (*p == '\n') *p-- = 0;
-        if (!(p = strstr( buffer, prefix ))) continue;
+        if (!(p = strstr( buffer, prefix )))
+        {
+            if (!(p = strstr( buffer, ord_prefix ))) continue;
+            ord_only = 1;
+        }
         p += strlen(prefix);
         if (isdigit(*p))
         {
             ordinal = strtol( p, &p, 10 );
             if (*p++ != '_') continue;
+            if (ordinal >= MAX_ORDINALS) continue;
         }
+        if (ord_only && !ordinal) continue;
 
         if (imp->nb_exports == size)
         {
@@ -178,6 +186,7 @@ static void read_exported_symbols( const char *name, struct import *imp )
         }
         imp->exports[imp->nb_exports].name     = xstrdup( p );
         imp->exports[imp->nb_exports].ordinal  = ordinal;
+        imp->exports[imp->nb_exports].ord_only = ord_only;
         imp->nb_exports++;
     }
     if ((err = pclose( f ))) fatal_error( "%s error %d\n", cmdline, err );
@@ -239,6 +248,7 @@ static void add_import_func( struct import *imp, const struct func *func )
     imp->imports = xrealloc( imp->imports, (imp->nb_imports+1) * sizeof(*imp->imports) );
     imp->imports[imp->nb_imports].name     = xstrdup( func->name );
     imp->imports[imp->nb_imports].ordinal  = func->ordinal;
+    imp->imports[imp->nb_imports].ord_only = func->ord_only;
     imp->nb_imports++;
     total_imports++;
     if (imp->delay) total_delayed++;
@@ -284,7 +294,7 @@ static int add_extra_symbol( const char **extras, int *count, const char *name )
                 odp->type == TYPE_VARARGS ||
                 odp->type == TYPE_EXTERN)
             {
-                if (!strcmp( odp->name, name )) return 0;
+                if (odp->name && !strcmp( odp->name, name )) return 0;
             }
         }
         extras[*count] = name;
@@ -489,9 +499,14 @@ static int output_immediate_imports( FILE *outfile )
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             struct func *import = &dll_imports[i]->imports[j];
-            unsigned short ord = import->ordinal;
-            fprintf( outfile, "    \"\\%03o\\%03o%s\",\n",
-                     *(unsigned char *)&ord, *((unsigned char *)&ord + 1), import->name );
+            if (!import->ord_only)
+            {
+                unsigned short ord = import->ordinal;
+                fprintf( outfile, "    \"\\%03o\\%03o%s\",\n",
+                         *(unsigned char *)&ord, *((unsigned char *)&ord + 1), import->name );
+            }
+            else
+                fprintf( outfile, "    (char *)%d,\n", import->ordinal );
         }
         fprintf( outfile, "    0,\n" );
     }
@@ -626,7 +641,11 @@ static int output_delayed_imports( FILE *outfile )
         fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
-            fprintf( outfile, "    \"\\0\\0%s\",\n", dll_imports[i]->imports[j].name );
+            struct func *import = &dll_imports[i]->imports[j];
+            if (import->ord_only)
+                fprintf( outfile, "    (char *)%d,\n", import->ordinal );
+            else
+                fprintf( outfile, "    \"%s\",\n", import->name );
         }
     }
     fprintf( outfile, "  }\n};\n\n" );
@@ -659,7 +678,7 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "  void *fn;\n\n" );
 
     fprintf( outfile, "  if (!*imd->phmod) *imd->phmod = LoadLibraryA(imd->szName);\n" );
-    fprintf( outfile, "  if (*imd->phmod && (fn = GetProcAddress(*imd->phmod, *pINT + 2)))\n");
+    fprintf( outfile, "  if (*imd->phmod && (fn = GetProcAddress(*imd->phmod, *pINT)))\n");
     fprintf( outfile, "    /* patch IAT with final value */\n" );
     fprintf( outfile, "    return *pIAT = fn;\n" );
     fprintf( outfile, "  else {\n");

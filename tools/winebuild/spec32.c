@@ -50,10 +50,11 @@ static int string_compare( const void *ptr1, const void *ptr2 )
 static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
 {
     static char buffer[256];
-    if (odp->name[0])
+    if (odp->name || odp->export_name)
     {
         char *p;
-        sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLFileName, odp->name );
+        sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLFileName,
+                 odp->name ? odp->name : odp->export_name );
         /* make sure name is a legal C identifier */
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
@@ -314,6 +315,24 @@ static int output_exports( FILE *outfile, int nr_exports )
         fprintf( outfile, "    \"" __ASM_NAME("__wine_dllexport_%s_%d_%s") ":\\n\"\n",
                  make_c_identifier(DLLFileName), i, Names[i]->name );
     }
+
+    /* output ordinal exports */
+
+    for (i = 0; i < nb_entry_points; i++)
+    {
+        ORDDEF *odp = EntryPoints[i];
+
+        if (odp->flags & FLAG_NOIMPORT) continue;
+        if (odp->name || !odp->export_name) continue;
+        /* check for invalid characters in the name */
+        for (p = odp->export_name; *p; p++)
+            if (!isalnum(*p) && *p != '_' && *p != '.') break;
+        if (*p) continue;
+        fprintf( outfile, "    \"\\t.globl " __ASM_NAME("__wine_ordexport_%s_%d_%s") "\\n\"\n",
+                 make_c_identifier(DLLFileName), odp->ordinal, odp->export_name );
+        fprintf( outfile, "    \"" __ASM_NAME("__wine_ordexport_%s_%d_%s") ":\\n\"\n",
+                 make_c_identifier(DLLFileName), odp->ordinal, odp->export_name );
+    }
     fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
 
     /* output variables */
@@ -388,8 +407,10 @@ static void output_stub_funcs( FILE *outfile )
         ORDDEF *odp = EntryPoints[i];
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "void %s(void) ", make_internal_name( odp, "stub" ) );
-        if (odp->name[0])
+        if (odp->name)
             fprintf( outfile, "{ __wine_unimplemented(\"%s\"); }\n", odp->name );
+        else if (odp->export_name)
+            fprintf( outfile, "{ __wine_unimplemented(\"%s\"); }\n", odp->export_name );
         else
             fprintf( outfile, "{ __wine_unimplemented(\"%d\"); }\n", odp->ordinal );
     }
@@ -803,6 +824,7 @@ void BuildSpec32File( FILE *outfile )
  */
 void BuildDef32File(FILE *outfile)
 {
+    const char *name;
     int i;
 
     AssignOrdinals();
@@ -819,10 +841,16 @@ void BuildDef32File(FILE *outfile)
     for(i = 0; i < nb_entry_points; i++)
     {
         ORDDEF *odp = EntryPoints[i];
-        if(!odp || !*odp->name || (odp->flags & FLAG_NOIMPORT)) continue;
+
+        if (!odp) continue;
+        if (odp->flags & FLAG_NOIMPORT) continue;
         if (odp->type == TYPE_STUB) continue;
 
-        fprintf(outfile, "  %s", odp->name);
+        if (odp->name) name = odp->name;
+        else if (odp->export_name) name = odp->export_name;
+        else continue;
+
+        fprintf(outfile, "  %s", name);
 
         switch(odp->type)
         {
@@ -831,7 +859,7 @@ void BuildDef32File(FILE *outfile)
         case TYPE_CDECL:
         case TYPE_VARIABLE:
             /* try to reduce output */
-            if(strcmp(odp->name, odp->link_name))
+            if(strcmp(name, odp->link_name))
                 fprintf(outfile, "=%s", odp->link_name);
             break;
         case TYPE_STDCALL:
@@ -841,7 +869,7 @@ void BuildDef32File(FILE *outfile)
             fprintf(outfile, "@%d", at_param);
 #endif /* NEED_STDCALL_DECORATION */
             /* try to reduce output */
-            if(strcmp(odp->name, odp->link_name))
+            if(strcmp(name, odp->link_name))
             {
                 fprintf(outfile, "=%s", odp->link_name);
 #ifdef NEED_STDCALL_DECORATION
@@ -856,7 +884,7 @@ void BuildDef32File(FILE *outfile)
         default:
             assert(0);
         }
-        fprintf(outfile, " @%d\n", odp->ordinal);
+        fprintf(outfile, " @%d%s\n", odp->ordinal, odp->name ? "" : " NONAME" );
     }
 }
 

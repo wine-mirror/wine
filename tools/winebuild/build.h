@@ -91,8 +91,9 @@ typedef struct
     int         offset;
     int         lineno;
     int         flags;
-    char       *name;
-    char       *link_name;
+    char       *name;         /* public name of this function */
+    char       *link_name;    /* name of the C symbol to link to */
+    char       *export_name;  /* name exported under for noname exports */
     union
     {
         ORD_VARIABLE   var;
@@ -104,10 +105,11 @@ typedef struct
 /* entry point flags */
 #define FLAG_NOIMPORT  0x01  /* don't make function available for importing */
 #define FLAG_NORELAY   0x02  /* don't use relay debugging for this function */
-#define FLAG_RET64     0x04  /* function returns a 64-bit value */
-#define FLAG_I386      0x08  /* function is i386 only */
-#define FLAG_REGISTER  0x10  /* use register calling convention */
-#define FLAG_INTERRUPT 0x20  /* function is an interrupt handler */
+#define FLAG_NONAME    0x04  /* don't import function by name */
+#define FLAG_RET64     0x08  /* function returns a 64-bit value */
+#define FLAG_I386      0x10  /* function is i386 only */
+#define FLAG_REGISTER  0x20  /* use register calling convention */
+#define FLAG_INTERRUPT 0x40  /* function is an interrupt handler */
 
   /* Offset of a structure field relative to the start of the struct */
 #define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)
