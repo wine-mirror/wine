@@ -77,15 +77,18 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetDevice(LPDIRECT3DVOLUME8 iface, IDirect3D
 }
 HRESULT WINAPI IDirect3DVolume8Impl_SetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID riid, void** ppContainer) {
@@ -101,7 +104,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_D
     memcpy(pDesc, &This->myDesc, sizeof(D3DVOLUME_DESC));
     return D3D_OK;
 }
-HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox, DWORD Flags) {
+HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     FIXME("(%p) : pBox=%p stub\n", This, pBox);    
 
@@ -120,23 +123,45 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
             (pLockedVolume->RowPitch * pBox->Top) + 
             (pBox->Left * This->bytesPerPixel);
     }
-    TRACE("returning pBits=%p, rpitch=%d, spitch=%d\n", pLockedVolume->pBits, pLockedVolume->RowPitch, pLockedVolume->SlicePitch);
+    
+    if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
+      /* Dont dirtify */
+    } else {
+      /**
+       * Dirtify on lock
+       * as seen in msdn docs
+       */
+      /**  Dirtify Container if needed */
+      if (NULL != This->Container) {
+        IDirect3DVolumeTexture8* cont = (IDirect3DVolumeTexture8*) This->Container;	
+        D3DRESOURCETYPE containerType = IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) cont);
+        if (containerType == D3DRTYPE_VOLUMETEXTURE) {
+	  IDirect3DBaseTexture8Impl* pTexture = (IDirect3DBaseTexture8Impl*) cont;
+	  pTexture->Dirty = TRUE;
+        } else {
+	  FIXME("Set dirty on container type %d\n", containerType);
+        }
+      }
+    }
+
+    TRACE("returning memory@%p rpitch(%d) spitch(%d)\n", pLockedVolume->pBits, pLockedVolume->RowPitch, pLockedVolume->SlicePitch);
     return D3D_OK;
 }
 HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     TRACE("(%p) : stub\n", This);
+#if 0
     if (This->Container) {
         IDirect3DVolumeTexture8* cont = (IDirect3DVolumeTexture8*) This->Container;
-
-        int containerType = IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) cont);
+        D3DRESOURCETYPE containerType = IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) cont);
         if (containerType == D3DRTYPE_VOLUMETEXTURE) {
-            IDirect3DTexture8Impl *pTexture = (IDirect3DTexture8Impl *)cont;
+            IDirect3DTexture8Impl* pTexture = (IDirect3DTexture8Impl*) cont;
             pTexture->Dirty = TRUE;
         } else {
             FIXME("Set dirty on container type %d\n", containerType);
         }
     }
+#endif
     return D3D_OK;
 }
 

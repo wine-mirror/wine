@@ -141,33 +141,50 @@ HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUME
     }
     return D3D_OK;
 }
-HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,IDirect3DVolume8** ppVolumeLevel) {
+HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetVolumeLevel(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, IDirect3DVolume8** ppVolumeLevel) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    IDirect3DVolume8Impl_AddRef((LPDIRECT3DVOLUME8)This->volumes[Level]);
-    *ppVolumeLevel = (LPDIRECT3DVOLUME8)This->volumes[Level];
-    TRACE("(%p) : returning %p for level %d\n", This, *ppVolumeLevel, Level);
-    return D3D_OK;
-}
-HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox,DWORD Flags) {
-    ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    TRACE("(%p) Level (%d)\n", This, Level);
     if (Level < This->levels) {
-        return IDirect3DVolume8Impl_LockBox((LPDIRECT3DVOLUME8)This->volumes[Level], pLockedVolume, pBox, Flags);
+      *ppVolumeLevel = (LPDIRECT3DVOLUME8)This->volumes[Level];
+      IDirect3DVolume8Impl_AddRef((LPDIRECT3DVOLUME8) *ppVolumeLevel);
+      TRACE("(%p) -> level(%d) returning volume@%p\n", This, Level, *ppVolumeLevel);
     } else {
-        FIXME("Volume Levels seems too high?!!\n");
+      FIXME("(%p) Level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+      return D3DERR_INVALIDCALL;
     }
     return D3D_OK;
+
+}
+HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
+    HRESULT hr;
+    ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
+    if (Level < This->levels) {
+      /**
+       * Not dirtified while Surfaces don't notify dirtification
+       * This->Dirty = TRUE;
+       */
+      hr = IDirect3DVolume8Impl_LockBox((LPDIRECT3DVOLUME8) This->volumes[Level], pLockedVolume, pBox, Flags);
+      TRACE("(%p) Level (%d) success(%lu)\n", This, Level, hr);
+    } else {
+      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+      return D3DERR_INVALIDCALL;
+    }
+    return hr;
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    This->Dirty = TRUE;
-    TRACE("(%p) : stub\n", This);
+    if (Level < This->levels) {
+      TRACE("(%p) level(%d) stub\n", This, Level);
+    } else {
+      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+      return D3DERR_INVALIDCALL;
+    }
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE8 iface, CONST D3DBOX* pDirtyBox) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 
 

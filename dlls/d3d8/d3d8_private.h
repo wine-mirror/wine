@@ -455,10 +455,13 @@ struct IDirect3DSwapChain8Impl
     DWORD                   ref;
 
     /* IDirect3DSwapChain8 fields */
+    IDirect3DSurface8Impl  *frontBuffer;
+    IDirect3DSurface8Impl  *backBuffer;
+    D3DPRESENT_PARAMETERS   PresentParms;
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface,REFIID refiid,LPVOID *obj);
+extern HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface, REFIID refiid, LPVOID *obj);
 extern ULONG WINAPI   IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface);
 extern ULONG WINAPI   IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface);
 
@@ -497,6 +500,7 @@ struct IDirect3DSurface8Impl
     BOOL                    lockable;
     BOOL                    locked;
     RECT                    lockedRect;
+    BOOL                    Dirty;
 };
 
 /* IUnknown: */
@@ -669,6 +673,8 @@ struct IDirect3DBaseTexture8Impl
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DBaseTexture8 fields */
+    BOOL                    Dirty;
+
     /*
      *BOOL                    isManaged;
      *DWORD                   lod;
@@ -718,6 +724,7 @@ struct IDirect3DCubeTexture8Impl
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DBaseTexture8 fields */
+    BOOL                    Dirty;
 
     /* IDirect3DCubeTexture8 fields */
     UINT                    edgeLength;
@@ -726,7 +733,6 @@ struct IDirect3DCubeTexture8Impl
     D3DFORMAT               format;
 
     IDirect3DSurface8Impl  *surfaces[6][MAX_LEVELS];
-    BOOL                    Dirty;
 };
 
 /* IUnknown: */
@@ -779,6 +785,7 @@ struct IDirect3DTexture8Impl
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DBaseTexture8 fields */
+    BOOL                    Dirty;
 
     /* IDirect3DTexture8 fields */
     UINT                    width;
@@ -787,9 +794,7 @@ struct IDirect3DTexture8Impl
     DWORD                   usage;
     D3DFORMAT               format;
 
-    IDirect3DDevice8Impl   *device;
     IDirect3DSurface8Impl  *surfaces[MAX_LEVELS];
-    BOOL                    Dirty;
 };
 
 /* IUnknown: */
@@ -842,6 +847,7 @@ struct IDirect3DVolumeTexture8Impl
     D3DRESOURCETYPE         ResourceType;
 
     /* IDirect3DBaseTexture8 fields */
+    BOOL                    Dirty;
 
     /* IDirect3DVolumeTexture8 fields */
     UINT                    width;
@@ -852,7 +858,6 @@ struct IDirect3DVolumeTexture8Impl
     D3DFORMAT               format;
 
     IDirect3DVolume8Impl   *volumes[MAX_LEVELS];
-    BOOL                    Dirty;
 };
 
 /* IUnknown: */

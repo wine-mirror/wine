@@ -31,8 +31,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* trace: */
-#if 1
-# define VTRACE(A) FIXME A
+#if 0
+# define VTRACE(A) TRACE A
 #else 
 # define VTRACE(A) 
 #endif
@@ -85,15 +85,18 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect
 }
 HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void** ppContainer) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
@@ -118,7 +121,9 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFAC
     return D3D_OK;
 }
 HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+    HRESULT hr;
     ICOM_THIS(IDirect3DSurface8Impl,iface);
+  
     /* fixme: should we really lock as such? */
 
     if (FALSE == This->lockable) {
@@ -126,7 +131,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       return D3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : rect=%p, output prect=%p, allMem=%p\n", This, pRect, pLockedRect, This->allocatedMemory);
+    TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
 
     pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
     
@@ -144,7 +149,6 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       This->lockedRect.right = pRect->right;
       This->lockedRect.bottom = pRect->bottom;
     }
-
 
 
     if (0 == This->myDesc.Usage) { /* classic surface */
@@ -227,35 +231,27 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
       FIXME("unsupported locking to surface surf@%p usage(%lu)\n", This, This->myDesc.Usage);
     }
 
-    TRACE("returning pBits=%p, pitch=%d\n", pLockedRect->pBits, pLockedRect->Pitch);
-
-    This->locked = TRUE;
-    return D3D_OK;
-}
-HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
-    HRESULT hr;
-    ICOM_THIS(IDirect3DSurface8Impl,iface);
-    
-    if (FALSE == This->locked) {
-      ERR("trying to lock unlocked surf@%p\n", This);  
-      return D3DERR_INVALIDCALL;
-    }
-
-    TRACE("(%p) : stub\n", This);
-
-    if (0 == This->myDesc.Usage) { /* classic surface */
-      if (This->Container) {
+    if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
+      /* Dont dirtify */
+    } else {
+      /**
+       * Dirtify on lock
+       * as seen in msdn docs
+       */
+      This->Dirty = TRUE;
+      /** Dirtify Container if needed */
+      if (NULL != This->Container) {
 	IDirect3DBaseTexture8* cont = NULL;
 	hr = IUnknown_QueryInterface(This->Container, &IID_IDirect3DBaseTexture8, (void**) &cont);
 	
 	if (SUCCEEDED(hr) && NULL != cont) {
 	  /* Now setup the texture appropraitly */
-	  int containerType = IDirect3DBaseTexture8Impl_GetType(cont);
+	  D3DRESOURCETYPE containerType = IDirect3DBaseTexture8Impl_GetType(cont);
 	  if (containerType == D3DRTYPE_TEXTURE) {
-            IDirect3DTexture8Impl *pTexture = (IDirect3DTexture8Impl *)cont;
+            IDirect3DTexture8Impl* pTexture = (IDirect3DTexture8Impl*) cont;
             pTexture->Dirty = TRUE;
 	  } else if (containerType == D3DRTYPE_CUBETEXTURE) {
-            IDirect3DCubeTexture8Impl *pTexture = (IDirect3DCubeTexture8Impl *)cont;
+            IDirect3DCubeTexture8Impl* pTexture = (IDirect3DCubeTexture8Impl*) cont;
             pTexture->Dirty = TRUE;
 	  } else {
             FIXME("Set dirty on container type %d\n", containerType);
@@ -264,6 +260,52 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
 	  cont = NULL;
 	}
       }
+    }
+
+    TRACE("returning pBits=%p, pitch=%d\n", pLockedRect->pBits, pLockedRect->Pitch);
+
+    This->locked = TRUE;
+    return D3D_OK;
+}
+HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
+    ICOM_THIS(IDirect3DSurface8Impl,iface);
+    
+    if (FALSE == This->locked) {
+      ERR("trying to lock unlocked surf@%p\n", This);  
+      return D3DERR_INVALIDCALL;
+    }
+
+    TRACE("(%p) : see if behavior is correct\n", This);
+
+    if (FALSE == This->Dirty) {
+      TRACE("(%p) : Not Dirtified so nothing to do, return now\n", This);
+      goto unlock_end;
+    }
+
+    if (0 == This->myDesc.Usage) { /* classic surface */
+#if 0
+      if (This->Container) {
+	HRESULT hr;
+	IDirect3DBaseTexture8* cont = NULL;
+	hr = IUnknown_QueryInterface(This->Container, &IID_IDirect3DBaseTexture8, (void**) &cont);
+	
+	if (SUCCEEDED(hr) && NULL != cont) {
+	  /* Now setup the texture appropraitly */
+	  int containerType = IDirect3DBaseTexture8Impl_GetType(cont);
+	  if (containerType == D3DRTYPE_TEXTURE) {
+	    IDirect3DTexture8Impl *pTexture = (IDirect3DTexture8Impl *)cont;
+	    pTexture->Dirty = TRUE;
+	  } else if (containerType == D3DRTYPE_CUBETEXTURE) {
+	    IDirect3DCubeTexture8Impl *pTexture = (IDirect3DCubeTexture8Impl *)cont;
+	    pTexture->Dirty = TRUE;
+	  } else {
+	    FIXME("Set dirty on container type %d\n", containerType);
+	  }
+	  IDirect3DBaseTexture8_Release(cont);
+	  cont = NULL;
+	}
+      }
+#endif
     } else if (D3DUSAGE_RENDERTARGET & This->myDesc.Usage) { /* render surfaces */
 
       if (This == This->Device->backBuffer || This == This->Device->frontBuffer) {
@@ -336,6 +378,8 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     } else {
       FIXME("unsupported unlocking to surface surf@%p usage(%lu)\n", This, This->myDesc.Usage);
     }
+
+unlock_end:
     This->locked = FALSE;
     return D3D_OK;
 }

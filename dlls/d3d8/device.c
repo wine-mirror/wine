@@ -432,10 +432,15 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                                 }
                             }
                             break;
+			    
+			case D3DRTYPE_CUBETEXTURE:
+                            r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
+                            FIXME("Unhandled texture type: D3DRTYPE_CUBETEXTURE\n");
+			    break;
 
                         default:
                             r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
-                            FIXME("Unhandled texture type\n");
+                            FIXME("Unhandled texture type: %u\n", IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock->textures[textureNo]));
                         }
                     } else {
                         /* Note I have seen a program actually do this, so just hide it and continue */
@@ -1247,8 +1252,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UIN
     TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
 
     if (BackBuffer > This->PresentParms.BackBufferCount - 1) {
-      FIXME("Only one backBuffer currently supported\n");
-      return D3DERR_INVALIDCALL;
+        FIXME("Only one backBuffer currently supported\n");
+        return D3DERR_INVALIDCALL;
     }
 
     /* Note inc ref on returned surface */
@@ -1282,7 +1287,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     TRACE("(%p) : W(%d) H(%d), Lvl(%d) Usage(%ld), Fmt(%d), Pool(%d)\n", This, Width, Height, Levels, Usage, Format, Pool);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTexture8Impl));
     object->lpVtbl = &Direct3DTexture8_Vtbl;
-    object->Device = This; /* FIXME: AddRef(This) */
+    object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->device);*/
     object->ResourceType = D3DRTYPE_TEXTURE;
     object->ref = 1;
     object->width = Width;
@@ -1290,8 +1296,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     object->levels = Levels;
     object->usage = Usage;
     object->format = Format;
-    object->device = This;
-    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->device);*/
+
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -1299,7 +1304,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
         tmpW = Width;
         tmpH = Height;
         while (tmpW > 1 && tmpH > 1) {
-            tmpW = max(1,tmpW / 2);
+            tmpW = max(1, tmpW / 2);
             tmpH = max(1, tmpH / 2);
             object->levels++;
         }
@@ -1309,7 +1314,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     /* Generate all the surfaces */
     tmpW = Width;
     tmpH = Height;
-    for (i=0; i<object->levels; i++) 
+    for (i = 0; i < object->levels; i++) 
     {
         IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpH, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[i]);
         object->surfaces[i]->Container = (IUnknown*) object;
@@ -1322,7 +1327,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
         tmpH = max(1, tmpH / 2);
     }
 
-    *ppTexture = (LPDIRECT3DTEXTURE8)object;
+    *ppTexture = (LPDIRECT3DTEXTURE8) object;
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,UINT Depth,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DVolumeTexture8** ppVolumeTexture) {
@@ -1371,7 +1376,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     tmpH = Height;
     tmpD = Depth;
 
-    for (i = 0; i< object->levels; i++) 
+    for (i = 0; i < object->levels; i++) 
     {
         IDirect3DVolume8Impl *volume;
 
@@ -1387,13 +1392,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
 	/*IUnknown_AddRef(volume->Container);*/	
         volume->ref = 1;
 
-        volume->myDesc.Width = Width;
-        volume->myDesc.Height= Height;
-        volume->myDesc.Depth = Depth;
-        volume->myDesc.Format= Format;
-        volume->myDesc.Type  = D3DRTYPE_VOLUME;
-        volume->myDesc.Pool  = Pool;
-        volume->myDesc.Usage = Usage;
+        volume->myDesc.Width  = Width;
+        volume->myDesc.Height = Height;
+        volume->myDesc.Depth  = Depth;
+        volume->myDesc.Format = Format;
+        volume->myDesc.Type   = D3DRTYPE_VOLUME;
+        volume->myDesc.Pool   = Pool;
+        volume->myDesc.Usage  = Usage;
         volume->bytesPerPixel   = bytesPerPixel(Format);
         volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth;
         volume->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->myDesc.Size);
@@ -1401,15 +1406,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         TRACE("(%p) : Volume at w(%d) h(%d) d(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Depth, Format, 
                   volume, volume->allocatedMemory, volume->myDesc.Size);
 
-        tmpW = max(1,tmpW / 2);
+        tmpW = max(1, tmpW / 2);
         tmpH = max(1, tmpH / 2);
         tmpD = max(1, tmpD / 2);
     }
 
-    *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE8)object;
+    *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE8) object;
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, UINT EdgeLength,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DCubeTexture8** ppCubeTexture) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DCubeTexture8** ppCubeTexture) {
 
     IDirect3DCubeTexture8Impl *object;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1435,7 +1440,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
         object->levels++;
         tmpW = EdgeLength;
         while (tmpW > 1) {
-            tmpW = max(1,tmpW / 2);
+            tmpW = max(1, tmpW / 2);
             object->levels++;
         }
         TRACE("Calculated levels = %d\n", object->levels);
@@ -1446,12 +1451,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     for (i = 0; i < object->levels; i++) 
     {
         /* Create the 6 faces */
-        for (j = 0;j < 6; j++) {
+        for (j = 0; j < 6; j++) {
            IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpW, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[j][i]);
            object->surfaces[j][i]->Container = (IUnknown*) object;
 	   /*IUnknown_AddRef(object->surfaces[j][i]->Container);*/
            object->surfaces[j][i]->myDesc.Usage = Usage;
-           object->surfaces[j][i]->myDesc.Pool = Pool ;
+           object->surfaces[j][i]->myDesc.Pool = Pool;
 
            TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
            tmpW = max(1, tmpW / 2);
@@ -1518,8 +1523,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
     IDirect3DSurface8Impl *object;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-
+    
     object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
+    if (NULL == object) {
+      *ppSurface = NULL;
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
     *ppSurface = (LPDIRECT3DSURFACE8) object;
     object->lpVtbl = &Direct3DSurface8_Vtbl;
     object->Device = This;
@@ -1534,7 +1543,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface
     object->myDesc.Format = Format;
     object->myDesc.Type = D3DRTYPE_SURFACE;
     object->myDesc.Usage = D3DUSAGE_RENDERTARGET;
-    object->myDesc.Pool = D3DPOOL_MANAGED;
+    object->myDesc.Pool = D3DPOOL_DEFAULT;
     object->myDesc.MultiSampleType = MultiSample;
     object->bytesPerPixel = bytesPerPixel(Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
@@ -1551,6 +1560,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
+    if (NULL == object) {
+      *ppSurface = NULL;
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
     *ppSurface = (LPDIRECT3DSURFACE8) object;
     object->lpVtbl = &Direct3DSurface8_Vtbl;
     object->Device = This;
@@ -1565,7 +1578,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE
     object->myDesc.Format = Format;
     object->myDesc.Type = D3DRTYPE_SURFACE;
     object->myDesc.Usage = D3DUSAGE_DEPTHSTENCIL;
-    object->myDesc.Pool = D3DPOOL_MANAGED;
+    object->myDesc.Pool = D3DPOOL_DEFAULT;
     object->myDesc.MultiSampleType = MultiSample;
     object->bytesPerPixel = bytesPerPixel(Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
@@ -1727,9 +1740,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture,IDirect3DBaseTexture8* pDestinationTexture) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDirect3DBaseTexture8* pSourceTexture, IDirect3DBaseTexture8* pDestinationTexture) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pDestSurface) {
     HRESULT hr;
@@ -1775,9 +1789,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     hr = IDirect3DSurface8Impl_UnlockRect(pDestSurface);
     return hr;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pRenderTarget,IDirect3DSurface8* pNewZStencil) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pRenderTarget, IDirect3DSurface8* pNewZStencil) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : invalid stub expect crash\n", This);
+
+    if ((IDirect3DSurface8Impl*) pRenderTarget == This->frontBuffer && (IDirect3DSurface8Impl*) pNewZStencil == This->depthStencilBuffer) {
+      TRACE("Trying to do a NOP SetRenderTarget operation\n");
+      return D3D_OK;
+    }
+    
+    FIXME("(%p) : invalid stub expect crash newRender@%p newZStencil@%p\n", This, pRenderTarget, pNewZStencil);
 
     return D3D_OK;
 }
@@ -1797,8 +1817,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 i
     TRACE("(%p)->(%p)\n", This, ppZStencilSurface);
     
     /* Note inc ref on returned surface */
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8)This->depthStencilBuffer);
-    *ppZStencilSurface = (LPDIRECT3DSURFACE8)This->depthStencilBuffer;
+    *ppZStencilSurface = (LPDIRECT3DSURFACE8) This->depthStencilBuffer;
+    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppZStencilSurface);
 
     return D3D_OK;
 }
@@ -1831,6 +1851,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
       render target does not have an attached depth buffer. Similarly, if you specify the D3DCLEAR_STENCIL flag
       when the depth-buffer format does not contain stencil buffer information, this method fails. */
     GLbitfield glMask = 0;
+    GLboolean old_ztest;
+    GLfloat old_z_clear_value;
+    GLint   old_stencil_clear_value;
+    GLfloat old_color_clear_value[4];
+
     int i;
     CONST D3DRECT   *curRect;
 
@@ -1858,13 +1883,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
         }
 
         /* Clear the whole screen */
-        if (Flags & D3DCLEAR_STENCIL) {
+        if (Flags & D3DCLEAR_STENCIL) {	
+	    glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
             glClearStencil(Stencil);
             checkGLcall("glClearStencil");
             glMask = glMask | GL_STENCIL_BUFFER_BIT;
         }
 
         if (Flags & D3DCLEAR_ZBUFFER) {
+	    glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
+	    glDepthMask(GL_TRUE); 
+	    glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
             glClearDepth(Z);
             checkGLcall("glClearDepth");
             glMask = glMask | GL_DEPTH_BUFFER_BIT;
@@ -1872,14 +1901,31 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 
         if (Flags & D3DCLEAR_TARGET) {
             TRACE("Clearing screen with glClear to color %lx\n", Color);
-            glClearColor(((Color >> 16) & 0xFF) / 255.0, ((Color >>  8) & 0xFF) / 255.0,
-                         ((Color >>  0) & 0xFF) / 255.0, ((Color >> 24) & 0xFF) / 255.0);
+	    glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
+            glClearColor(((Color >> 16) & 0xFF) / 255.0, 
+			 ((Color >>  8) & 0xFF) / 255.0,
+                         ((Color >>  0) & 0xFF) / 255.0, 
+			 ((Color >> 24) & 0xFF) / 255.0);
             checkGLcall("glClearColor");
             glMask = glMask | GL_COLOR_BUFFER_BIT;
         }
 
         glClear(glMask);
         checkGLcall("glClear");
+
+	if (Flags & D3DCLEAR_STENCIL) {
+	  glClearStencil(old_stencil_clear_value);
+	}    
+	if (Flags & D3DCLEAR_ZBUFFER) {
+	  glDepthMask(old_ztest);
+	  glClearDepth(old_z_clear_value);
+	}
+	if (Flags & D3DCLEAR_TARGET) {
+	  glClearColor(old_color_clear_value[0], 
+		       old_color_clear_value[1],
+		       old_color_clear_value[2], 
+		       old_color_clear_value[3]);
+	}
 
         if (curRect) curRect = curRect + sizeof(D3DRECT);
     }
@@ -3622,7 +3668,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 		        BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
 		        DWORD dwValue = 0;
 			GLenum source;
-			GLenum operand;
+			GLenum operand;			
 			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
 			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
 			if (isAlphaOp) {

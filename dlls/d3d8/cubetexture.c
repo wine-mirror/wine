@@ -86,23 +86,28 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetDevice(LPDIRECT3DCUBETEXTURE
 }
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_SetPrivateData(LPDIRECT3DCUBETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetPrivateData(LPDIRECT3DCUBETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_FreePrivateData(LPDIRECT3DCUBETEXTURE8 iface, REFGUID refguid) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 DWORD    WINAPI        IDirect3DCubeTexture8Impl_SetPriority(LPDIRECT3DCUBETEXTURE8 iface, DWORD PriorityNew) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetPriority(LPDIRECT3DCUBETEXTURE8 iface) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 iface) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
@@ -134,36 +139,62 @@ DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetLevelCount(LPDIRECT3DCUBETEX
 }
 
 /* IDirect3DCubeTexture8 */
-HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE8 iface,UINT Level,D3DSURFACE_DESC *pDesc) {
+HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetLevelDesc(LPDIRECT3DCUBETEXTURE8 iface, UINT Level, D3DSURFACE_DESC* pDesc) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     if (Level < This->levels) {
-        TRACE("(%p) Level (%d)\n", This, Level);
-        return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8)This->surfaces[Level], pDesc);
+        TRACE("(%p) level (%d)\n", This, Level);
+        return IDirect3DSurface8Impl_GetDesc((LPDIRECT3DSURFACE8) This->surfaces[Level], pDesc);
     } else {
-        FIXME("(%p) Level (%d)\n", This, Level);
+        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+        return D3DERR_INVALIDCALL;
     }
     return D3D_OK;
 }
-HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level,IDirect3DSurface8** ppCubeMapSurface) {
+HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetCubeMapSurface(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level, IDirect3DSurface8** ppCubeMapSurface) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    TRACE("(%p) : returning %p\n", This, This->surfaces[FaceType][Level]);
-    *ppCubeMapSurface = (LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level];
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8)This->surfaces[FaceType][Level]);
+    if (Level < This->levels) {
+        *ppCubeMapSurface = (LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level];
+        IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppCubeMapSurface);
+	TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p \n", This, FaceType, Level, This->surfaces[FaceType][Level]);
+    } else {
+        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+        return D3DERR_INVALIDCALL;
+    }
     return D3D_OK;
 }
-HRESULT  WINAPI        IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
+HRESULT  WINAPI        IDirect3DCubeTexture8Impl_LockRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+    HRESULT hr;
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    if (Level < This->levels) {
+      /**
+       * Not dirtified while Surfaces don't notify dirtification
+       * This->Dirty = TRUE;
+       */
+      hr = IDirect3DSurface8_LockRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
+      TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
+    } else {
+      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+      return D3DERR_INVALIDCALL;
+    }
+    return hr;
 }
-HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,UINT Level) {
+HRESULT  WINAPI        IDirect3DCubeTexture8Impl_UnlockRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, UINT Level) {
+    HRESULT hr;
+    ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
+    if (Level < This->levels) {
+      hr = IDirect3DSurface8_UnlockRect((LPDIRECT3DSURFACE8) This->surfaces[FaceType][Level]);
+      FIXME("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
+    } else {
+      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->levels);
+      return D3DERR_INVALIDCALL;
+    }
+    return hr;
+}
+HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE8 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
-}
-HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE8 iface,D3DCUBEMAP_FACES FaceType,CONST RECT* pDirtyRect) {
-    ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
-    This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return D3D_OK;
 }
 
 

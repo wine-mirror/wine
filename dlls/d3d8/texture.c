@@ -192,30 +192,36 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 ifa
 HRESULT  WINAPI        IDirect3DTexture8Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE8 iface, UINT Level,IDirect3DSurface8** ppSurfaceLevel) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     *ppSurfaceLevel = (LPDIRECT3DSURFACE8)This->surfaces[Level];
-    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8)This->surfaces[Level]);
+    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) This->surfaces[Level]);
     TRACE("(%p) : returning %p for level %d\n", This, *ppSurfaceLevel, Level);
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
+    HRESULT hr;
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     TRACE("(%p) Level (%d)\n", This, Level);
     if (Level < This->levels) {
-        return IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)This->surfaces[Level], pLockedRect, pRect, Flags);
+      /**
+       * Not dirtified while Surfaces don't notify dirtification
+       * This->Dirty = TRUE;
+       */
+      hr = IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->surfaces[Level], pLockedRect, pRect, Flags);
+      TRACE("(%p) Level (%d) success(%lu)\n", This, Level, hr);
     } else {
         FIXME("Levels seems too high?!!\n");
     }
-    return D3D_OK;
+    return hr;
 }
 HRESULT  WINAPI        IDirect3DTexture8Impl_UnlockRect(LPDIRECT3DTEXTURE8 iface, UINT Level) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
-    This->Dirty = TRUE;
     TRACE("(%p) : stub\n", This);
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 iface, CONST RECT* pDirtyRect) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     This->Dirty = TRUE;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 
 
