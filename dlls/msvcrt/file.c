@@ -349,6 +349,33 @@ int _wchmod(const MSVCRT_wchar_t *path, int flags)
 }
 
 /*********************************************************************
+ *		_chsize (MSVCRT.@)
+ */
+int _chsize(int fd, long size)
+{
+    FIXME("(fd=%d, size=%ld): stub\n", fd, size);
+    return -1;
+}
+
+/*********************************************************************
+ *		_dup (MSVCRT.@)
+ */
+int _dup(int od)
+{
+    FIXME("(od=%d): stub\n", od);
+    return -1;
+}
+
+/*********************************************************************
+ *		_dup2 (MSVCRT.@)
+ */
+int _dup2(int od, int nd)
+{
+    FIXME("(od=%d, nd=%d): stub\n", od, nd);
+    return -1;
+}
+
+/*********************************************************************
  *		_unlink (MSVCRT.@)
  */
 int _unlink(const char *path)

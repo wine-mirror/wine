@@ -179,7 +179,7 @@
 @ cdecl _chgsign( double ) _chgsign
 @ cdecl -i386 _chkesp() _chkesp
 @ cdecl _chmod(str long) _chmod
-@ stub _chsize #(long long)
+@ cdecl _chsize (long long) _chsize
 @ cdecl _clearfp() _clearfp
 @ cdecl _close(long) _close
 @ cdecl _commit(long) _commit
@@ -195,8 +195,8 @@
 @ cdecl _cwait(ptr long long) _cwait
 @ stub _daylight
 @ stub _dstbias
-@ stub _dup #(long)
-@ stub _dup2 #(long long)
+@ cdecl _dup (long) _dup
+@ cdecl _dup2 (long long) _dup2
 @ cdecl _ecvt( double long ptr ptr) ecvt
 @ cdecl _endthread () _endthread
 @ cdecl _endthreadex(long) _endthreadex
