@@ -5,7 +5,7 @@ type win32
   2 stdcall WINMM_2(ptr long long) PlaySound32A
   3 stub WINMM_3
   4 stub CloseDriver
-  5 stdcall DefDriverProc(long long long long long) DefDriverProc
+  5 stdcall DefDriverProc(long long long long long) DefDriverProc32
   6 stub DriverCallback
   7 stub DrvClose
   8 stub DrvDefDriverProc

@@ -570,7 +570,7 @@ LONG ANIM_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
     case MCI_PAUSE:		return ANIM_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
     case MCI_RESUME:		return ANIM_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
     case MCI_SEEK:		return ANIM_mciSeek(dwDevID, dwParam1, (LPMCI_SEEK_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    default:			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    default:			return DefDriverProc16(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
 /**************************************************************************
@@ -603,7 +603,7 @@ LONG ANIM_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_PAUSE:		return ANIM_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_RESUME:		return ANIM_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_SEEK:		return ANIM_mciSeek(dwDevID, dwParam1, (LPMCI_SEEK_PARMS)dwParam2);
-    default:			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    default:			return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
 

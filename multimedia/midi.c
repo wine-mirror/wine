@@ -2662,7 +2662,7 @@ LONG MIDI_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
     case MCI_STATUS:		return MIDI_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
     case MCI_INFO:		return MIDI_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)PTR_SEG_TO_LIN(dwParam2));
-    default:			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    default:			return DefDriverProc16(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
 
@@ -2696,7 +2696,7 @@ LONG MIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_STATUS:		return MIDI_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return MIDI_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
-    default:			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    default:			return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
 /*-----------------------------------------------------------------------*/

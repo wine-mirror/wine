@@ -335,10 +335,10 @@ HMODULE32 WINAPI GetDriverModuleHandle32(HDRVR32 hDrvr)
 }
 
 /**************************************************************************
- *				DefDriverProc			[USER.255]
+ *				DefDriverProc16			[USER.255]
  */
-LRESULT WINAPI DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
-                             LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
+                               LPARAM lParam1, LPARAM lParam2)
 {
     switch(wMsg)
     {

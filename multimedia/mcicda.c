@@ -1075,7 +1075,7 @@ LONG CDAUDIO_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 	CDADev[dwDevID].nTracks = 0;
 	return 0;
     default:
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc16(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 #else
     return MCIERR_HARDWARE;
@@ -1133,7 +1133,7 @@ LONG CDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	CDADev[dwDevID].nTracks = 0;
 	return 0;
     default:
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 #else
     return MCIERR_HARDWARE;

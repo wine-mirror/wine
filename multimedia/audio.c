@@ -1760,7 +1760,7 @@ LONG WAVE_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
     case MCI_PASTE:		return MMSYSERR_NOTSUPPORTED;
 	
     default:
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc16(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MMSYSERR_NOTENABLED;
 }
@@ -1817,7 +1817,7 @@ LONG WAVE_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
 	
     default:
 	FIXME(mciwave, "is probably wrong\n");
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
     return MMSYSERR_NOTENABLED;
 }

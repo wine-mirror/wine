@@ -4262,7 +4262,27 @@ HANDLE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrvr)
 LRESULT WINAPI DrvDefDriverProc(DWORD dwDriverID, HDRVR16 hDriv, WORD wMsg, 
                                 DWORD dwParam1, DWORD dwParam2)
 {
-    return DefDriverProc(dwDriverID, hDriv, wMsg, dwParam1, dwParam2);
+    return DefDriverProc16(dwDriverID, hDriv, wMsg, dwParam1, dwParam2);
+}
+
+/**************************************************************************
+ * 				DefDriverProc32  [WINMM.5]
+ */
+LRESULT WINAPI DefDriverProc32(DWORD dwDriverIdentifier, HDRVR32 hdrvr,
+                               UINT32 Msg, LPARAM lParam1, LPARAM lParam2)
+{
+    switch (Msg) {
+      case DRV_LOAD:
+      case DRV_DISABLE:
+      case DRV_INSTALL:
+        return 0;
+      case DRV_ENABLE:
+      case DRV_FREE:
+      case DRV_REMOVE:
+        return 1;
+      default:
+        return 0;
+    }
 }
 
 /**************************************************************************

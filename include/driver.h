@@ -79,8 +79,11 @@ typedef struct tagDRIVERITEM32A {
 	DRIVERPROC32		driverproc;
 } DRIVERITEM32A,*LPDRIVERITEM32A;
 
-LRESULT WINAPI DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
-                             LPARAM dwParam1, LPARAM dwParam2);
+LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
+                               LPARAM dwParam1, LPARAM dwParam2);
+LRESULT WINAPI DefDriverProc32(DWORD dwDriverIdentifier, HDRVR32 hdrvr,
+                               UINT32 Msg, LPARAM lParam1, LPARAM lParam2);
+#define DefDriverProc WINELIB_NAME(DefDriverProc)
 HDRVR16 WINAPI OpenDriver16(LPCSTR szDriverName, LPCSTR szSectionName,
                             LPARAM lParam2);
 HDRVR32 WINAPI OpenDriver32A(LPCSTR szDriverName, LPCSTR szSectionName,

@@ -259,7 +259,7 @@ file	user.exe
 252 pascal16 OpenDriver(str str long) OpenDriver16
 253 pascal   CloseDriver(word long long) CloseDriver16
 254 pascal16 GetDriverModuleHandle(word) GetDriverModuleHandle16
-255 pascal   DefDriverProc(long word word long long) DefDriverProc
+255 pascal   DefDriverProc(long word word long long) DefDriverProc16
 256 pascal16 GetDriverInfo(word ptr) GetDriverInfo
 257 pascal16 GetNextDriver(word long) GetNextDriver
 258 pascal16 MapWindowPoints(word word ptr word) MapWindowPoints16
