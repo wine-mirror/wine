@@ -678,21 +678,18 @@ static HRESULT WINAPI IPersistStream_fnSave(
     *exePath = '\0';
 
     if (This->sPath)
-	SHELL_FindExecutable(NULL, This->sPath, wOpen, exePath, MAX_PATH, NULL, NULL, NULL, NULL);
-
-    /* if there's no PIDL, generate one */
-    if( ! This->pPidl )
     {
+        SHELL_FindExecutable(NULL, This->sPath, wOpen, exePath, MAX_PATH, NULL, NULL, NULL, NULL);
         /*
          * windows can create lnk files to executables that do not exist yet
          * so if the executable does not exist the just trust the path they
          * gave us
          */
-        if( !*exePath )
-            This->pPidl = ILCreateFromPathW(This->sPath);
-        else
-            This->pPidl = ILCreateFromPathW(exePath);
+        if( !*exePath ) strcpyW(exePath,This->sPath);
     }
+
+    /* if there's no PIDL, generate one */
+    if( ! This->pPidl ) This->pPidl = ILCreateFromPathW(exePath);
 
     memset(&header, 0, sizeof(header));
     header.dwSize = sizeof(header);
