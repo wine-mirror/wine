@@ -1,0 +1,52 @@
+How to Report a Bug
+-------------------
+
+Some simple advice on making your bug report more useful (and thus more
+likely to get answered and fixed):
+
+1) Post as much information as possible.  
+
+	This means we need more information than,
+	"MS Word crashes whenever I run it.  Do you know why?"  Include at 
+	least the following information:
+
+	- Version of Wine you're using (run 'wine -v')
+	- Operating system you're using, what distribution (if any), and what
+		version.
+	- Compiler and version (run 'gcc -v')
+	- Program you're trying to run, its version number, and a URL for 
+		where the program can be obtained (if available).
+	- Command line you used to start wine
+	- Any other information you think may be relevant or helpful.
+
+2) Re-run the program with the -debugmsg +relay option 
+   (i.e., 'wine -debugmsg +relay sol.exe').
+
+	If Wine crashes while running your program, it is important that we
+	have this information to have a chance at figuring out what is causing
+	the crash.  This can put out quite a lot (several MB) of information,
+	though, so it's best to output it to a file.  When the Wine-dbg> prompt
+	appears, type 'quit'.
+
+	To accomplish this, use the following commands:
+
+	wine -debugmsg +relay [other_options] program_name | tee filename.out
+	head -100 filename.out > report_file
+
+	'report_file' will now contain the last hundred lines of the debugging
+	output, including the register dump and backtrace, which are the most
+	important pieces of information.  Please do not delete this part, even
+	if you don't understand what it means.
+
+3) Post your report to the newsgroup comp.emulators.ms-windows.wine
+
+	In your post, include all of the information from part 1), and insert
+	the text from the output file in part 2).  If you do this, your chances
+	of receiving some sort of helpful response should be very good.
+
+4) Questions and comments
+
+	If after reading this document there is something you couldn't figure
+	out, or think could be explained better, or that should have been
+	included, please post to comp.emulators.ms-windows.wine to let us know
+	how this document can be improved.

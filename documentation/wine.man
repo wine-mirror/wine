@@ -1,23 +1,15 @@
 .\" -*- nroff -*-
-.TH WINE 1 "October 20, 1998" "Version 981018" "Windows On Unix"
+.TH WINE 1 "November 22, 1998" "Version 981108" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.B wine
-[
-.I wine_options
-] "
-.I program_name
-[
-.I program_args
-] "
-[ "
-.I program_name
-[
-.I program_args
-]"
-.I ...
-]
+.BI "wine " "[wine_options]"
+"
+.BI "program_name [program_args]"
+" "
+.IB "[program_name [program_args] "
+"
+.BI "..." " ]"
 .SH DESCRIPTION
 .B wine
 .I program
@@ -36,26 +28,33 @@ will run under any Linux kernel more recent than 0.99.13, or
 under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386.
 .PP
 The current support for multithreaded applications relies on the 
-.B clone(2)
+.BR clone (2)
 system call, which is currently available only on Linux systems running
-libc6 (glibc2).
+libc6 (aka glibc2).
 .PP
 .B X
 must be installed.  To use Wine's support for multithreaded applications,
 your X libraries must be reetrant.  If you have libc6 (glibc2), or you 
-compiled the libraries yourself, they were probably compiled with the 
+compiled the X libraries yourself, they were probably compiled with the 
 reetrant option enabled.  
 .PP
 .B libXpm
 must be installed.  If you're using Red Hat, the name of the package is
-XFree86-devel.  The sources may be obtained via FTP from ftp.Xfree86.org 
-or its mirrors.
+XFree86-devel.  If you're using Debian, the packages you need are xpm4g
+and xpm4g-dev. If you have some other distribution, please send email to
+the address listed in the 
+.B
+BUGS
+section to get it included in this man page.
 .PP
 .B gcc
 2.7.x or later is required to build
 .B wine.
 Versions earlier than 2.7.2.3 may have problems when certain files are
 compiled with optimization.
+.B
+pgcc
+currently doesn't work with wine.  The cause of this problem is unknown. 
 .SH INSTALLATION
 To install 
 .B Wine,
@@ -66,12 +65,12 @@ detect your specific setup and create the Makefiles.  You can run
 .B wine
 executable, and then "make install" to install it. By default,
 .B wine
-is installed in /usr/local/bin; you can specify a different path with
+is installed in the /usr/local/ heirarchy; you can specify a different path with
 the --prefix option when running
 .B configure.
 .PP
 For more information, see the 
-.B README
+.I README
 file contained in the source distribution.
 .SH OPTIONS
 .TP
@@ -111,18 +110,19 @@ on all relay messages (API calls).
 .PP
 The full list of names is: all, accel, advapi, animate, aspi, atom, 
 bitblt, bitmap, caret, cd, cdaudio, class, clipboard, clipping, combo, 
-comboex, comm, commctrl, commdlg, console, crtdll, cursor, dc, dde, ddeml, 
-ddraw, debug, dialog, dinput, dll, dosfs, dosmem, dplay, driver, dsound, 
-edit, event, exec, file, fixup, font, gdi, global, graphics, header, heap, 
-hook, hotkey, icon, imagehlp, imagelist, imm, int, int10, int16, int21, 
-int31, ipaddress, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi, menu, message, metafile, midi, mmaux, mmio, mmsys, mmtime, module, mpr, 
-msg, nativefont, nonclient, ntdll, ole, pager, palette, pidl, print, process, 
-profile, progress, prop, psapi, psdrv, rebar, reg, region, relay, resource, 
-s, scroll, security, segment, selector, sem, sendmsg, shell, shm, snoop, 
-sound, static, statusbar, stress, string, syscolor, system, tab, task, text, 
-thread, thunk, timer, toolbar, toolhelp, tooltips, trackbar, treeview, tweak, 
-uitools, updown, ver, virtual, vxd, win, win16drv, win32, wing, winsock, 
-wnet, x11, x11drv.
+comboex, comm, commctrl, commdlg, console, crtdll, cursor, datetime, dc, 
+dde, ddeml, ddraw, debug, dialog, dinput, dll, dosfs, dosmem, dplay, driver, 
+dsound, edit, event, exec, file, fixup, font, gdi, global, graphics, header, 
+heap, hook, hotkey, icon, imagehlp, imagelist, imm, int, int10, int16, int17, 
+int19, int21, int31, io, ipaddress, key, keyboard, ldt, listbox, listview, 
+local, mci, mcianim, mciwave, mdi, menu, message, metafile, midi, mmaux, mmio, 
+mmsys, mmtime, module, monthcal, mpr, msacm, msg, nativefont, nonclient, ntdll, 
+ole, pager, palette, pidl, print, process, profile, progress, prop, psapi, 
+psdrv, rebar, reg, region, relay, resource, s, scroll, security, segment, 
+selector, sem, sendmsg, shell, shm, snoop, sound, static, statusbar, stress, 
+string, syscolor, system, tab, task, text, thread, thunk, timer, toolbar, 
+toolhelp, tooltips, trackbar, treeview, tweak, uitools, updown, ver, virtual, 
+vxd, win, win16drv, win32, wing, winsock, wnet, x11, x11drv.
 .PP
 For more information on debugging messages, see the file 
 .I documentation/debug-msgs
@@ -195,9 +195,13 @@ Specify which Windows version WINE should imitate.
 Possible arguments are: win31, win95, nt351, and nt40.
 .PD 1
 .SH PROGRAM/ARGUMENTS
-The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 
-Unix format (/msdos/windows/sol.exe).  The program being executed may be 
-passed arguments by adding them on to the end of the command line invoking
+The program name may be specified in DOS format (
+.I
+C:\\WINDOWS\\SOL.EXE)
+or in Unix format (
+.I /msdos/windows/sol.exe
+).  The program being executed may be passed arguments by adding them on 
+to the end of the command line invoking
 .B wine
 (such as: wine "notepad C:\\TEMP\\README.TXT").  Note that
 the program name and its arguments 
@@ -207,7 +211,9 @@ them together in quotation marks.  Multiple applications may be started
 by placing all of them on the command line (such as: wine notepad clock).
 .SH CONFIGURATION FILE
 .B wine
-expects a configuration file (/usr/local/etc/wine.conf), which should
+expects a configuration file (
+.I /usr/local/etc/wine.conf
+), which should
 conform to the following rules (the format is just like a Windows .ini
 file).  The actual file name may be specified during the execution of
 the
@@ -421,18 +427,19 @@ of the authors, please see the file
 .B AUTHORS
 in the top-level directory of the source distribution.
 .SH BUGS
-There are too many to count, much less list.  Some bugs of note, however,
-are that programs requiring VBRUNxxx.DLL are unreliable (with reports of
-some working), OLE is not in place, the internal COMMDLG support is not yet
-at 100% (although rapidly improving).  Color support for other than 8bpp
-(256 colors) is currently flaky.
 .PP
 A status report on many appplications is available from
-.I http://www.winehq.com/apps.cgi.
-Users can add, modify, and delete entries on this list.
+.I http://www.winehq.com/Apps.
+Please add entries to this list for applications you currently run.
 .PP
 Bug reports and successes may be posted to 
 .I comp.emulators.ms-windows.wine.
+If you do so, please read the file
+.I documentation/bugreports
+in the Wine source.
+.PP
+For problems and suggestions with this manpage, please send a note to
+James Juran <jrj120@psu.edu>.
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
@@ -464,13 +471,16 @@ All discussions about the project take place in this forum.
 .I /usr/local/bin/wine
 The Wine program loader.
 .TP
+.I /usr/local/bin/dosmod
+The DOS program loader.
+.TP
 .I /usr/local/etc/wine.conf
 Global configuration file for wine.
 .TP
-.I /usr/local/lib/wine.sym
-Global symbol table (used in debugger)
-.TP
 .I ~/.winerc
 User-specific configuration file
+.TP
+.I /usr/local/lib/wine.sym
+Global symbol table (used in debugger)
 .SH "SEE ALSO"
-clone(2)
+.BR clone (2)
