@@ -275,18 +275,18 @@ typedef struct tagLISTVIEW_INFO
  * forward declarations
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
-static BOOL LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
+static void LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
 static INT LISTVIEW_CalculateMaxHeight(LISTVIEW_INFO *);
-static BOOL LISTVIEW_GetItemOrigin(LISTVIEW_INFO *, INT, LPPOINT);
+static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
 static INT LISTVIEW_CalculateMaxWidth(LISTVIEW_INFO *);
 static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *, INT);
 static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *, INT);
-static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
+static void LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
@@ -922,7 +922,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
     /* in case we fail, we want to return an empty iterator */
     if (!iterator_empty(i)) return FALSE;
 
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
 
     TRACE("(lprc=%s)\n", debugrect(lprc));
     OffsetRect(&frame, -Origin.x, -Origin.y);
@@ -931,9 +931,10 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
     {
 	INT nItem;
 	
-	if (uView == LVS_ICON)
+	if (uView == LVS_ICON && infoPtr->nFocusedItem != -1)
 	{
-	    if (LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcItem) && IntersectRect(&rcTemp, &rcItem, lprc))
+	    LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcItem);
+	    if (IntersectRect(&rcTemp, &rcItem, lprc))
 		i->nSpecial = infoPtr->nFocusedItem;
 	}
 	if (!(i->ranges = ranges_create(50))) return FALSE;
@@ -1015,11 +1016,14 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     if (rgntype == SIMPLEREGION) return TRUE;
 
     /* first deal with the special item */
-    if (LISTVIEW_GetItemBox(infoPtr, i->nSpecial, &rcItem) && !RectVisible(hdc, &rcItem))
-	i->nSpecial = -1;
+    if (i->nSpecial != -1)
+    {
+	LISTVIEW_GetItemBox(infoPtr, i->nSpecial, &rcItem);
+	if (!RectVisible(hdc, &rcItem)) i->nSpecial = -1;
+    }
     
     /* if we can't deal with the region, we'll just go with the simple range */
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return TRUE;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
     TRACE("building visible range:\n");
     if (!i->ranges && i->range.lower < i->range.upper)
     {
@@ -1035,7 +1039,7 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     /* now delete the invisible items from the list */
     while(iterator_next(i))
     {
-	if (!LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position)) continue;
+	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
 	rcItem.left = Position.x + Origin.x;
 	rcItem.top = Position.y + Origin.y;
 	rcItem.right = rcItem.left + infoPtr->nItemWidth;
@@ -1069,33 +1073,36 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 
 #define LISTVIEW_InvalidateItem(infoPtr, nItem) do { \
     RECT rcBox; \
-    if(LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox)) \
-	LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
+    LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox); \
+    LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
 } while (0)
 
 #define LISTVIEW_InvalidateSubItem(infoPtr, nItem, nSubItem) do { \
     POINT Origin, Position; \
     RECT rcBox; \
-    if (LISTVIEW_GetOrigin(infoPtr, &Origin) && \
-	LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position) && \
-	LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox)) { \
-	OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y); \
-	LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
-    }\
+    LISTVIEW_GetOrigin(infoPtr, &Origin); \
+    LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position); \
+    LISTVIEW_GetHeaderRect(infoPtr, nSubItem, &rcBox); \
+    OffsetRect(&rcBox, Origin.x + Position.x, Origin.y + Position.y); \
+    LISTVIEW_InvalidateRect(infoPtr, &rcBox); \
 } while (0)
 
 #define LISTVIEW_InvalidateList(infoPtr)\
     LISTVIEW_InvalidateRect(infoPtr, NULL)
 
 
-static inline BOOL LISTVIEW_GetHeaderRect(LISTVIEW_INFO *infoPtr, INT nSubItem, RECT *lprc)
+static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(LISTVIEW_INFO *infoPtr, INT nSubItem)
 {
     COLUMN_INFO *columnInfo;
-    
+    assert (nSubItem >= 0 && nSubItem < infoPtr->hdpaColumns->nItemCount);
     columnInfo = (COLUMN_INFO *)DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
-    if (!columnInfo) return FALSE;
-    *lprc = columnInfo->rcHeader;
-    return TRUE;
+    assert (columnInfo);
+    return columnInfo;
+}
+	
+static inline void LISTVIEW_GetHeaderRect(LISTVIEW_INFO *infoPtr, INT nSubItem, RECT *lprc)
+{
+    *lprc = LISTVIEW_GetColumnInfo(infoPtr, nSubItem)->rcHeader;
 }
 	
 static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
@@ -1453,8 +1460,7 @@ static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
     {
 	RECT rcBox;
 
-	if (!LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcBox)) 
-	    return;
+	LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcBox); 
 	if ((rcBox.bottom - rcBox.top) > infoPtr->nItemHeight)
 	{
 	    LISTVIEW_InvalidateRect(infoPtr, &rcBox);
@@ -1483,7 +1489,7 @@ static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 	if (fShow) dis.itemState |= ODS_FOCUS;
 	dis.hwndItem = infoPtr->hwndSelf;
 	dis.hDC = hdc;
-	if (!LISTVIEW_GetItemBox(infoPtr, dis.itemID, &dis.rcItem)) goto done;
+	LISTVIEW_GetItemBox(infoPtr, dis.itemID, &dis.rcItem);
 	dis.itemData = item.lParam;
 
 	SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
@@ -1555,14 +1561,13 @@ static void LISTVIEW_UnsupportedStyles(LONG lStyle)
  * [O] lpptOrig : item top, left corner
  *
  * RETURN:
- *   TRUE if computations OK
- *   FALSE otherwise
+ *   None.
  */
-static BOOL LISTVIEW_GetItemOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lpptPosition)
+static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lpptPosition)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
-    if (nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
+    assert(nItem >= 0 && nItem < infoPtr->nItemCount);
 
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
@@ -1580,8 +1585,6 @@ static BOOL LISTVIEW_GetItemOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lp
 	lpptPosition->x = REPORT_MARGINX;
 	lpptPosition->y = nItem * infoPtr->nItemHeight;
     }
-
-    return TRUE;
 }
     
 /***
@@ -1623,10 +1626,9 @@ static BOOL LISTVIEW_GetItemOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lp
  *                Same as LVM_GETITEMRECT with LVIR_LABEL
  *
  * RETURN:
- *   TRUE if computations OK
- *   FALSE otherwise
+ *   None.
  */
-static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
+static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 				    LPRECT lprcBox, LPRECT lprcState, 
 				    LPRECT lprcIcon, LPRECT lprcLabel)
 {
@@ -1652,10 +1654,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     /* compute the box rectangle (it should be cheap to do)     */
     /************************************************************/
     if (lpLVItem->iSubItem || uView == LVS_REPORT)
-    {
-	lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, lpLVItem->iSubItem);
-	assert(lpColumnInfo);
-    }
+	lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, lpLVItem->iSubItem);
 
     if (lpLVItem->iSubItem)    
     {
@@ -1831,8 +1830,6 @@ calc_label:
 	else *lprcBox = Box;
     }
     TRACE("    - box=%s\n", debugrect(&Box));
-
-    return TRUE;
 }
 
 /***
@@ -1844,18 +1841,17 @@ calc_label:
  * [O] lprcBox : ptr to Box rectangle
  *
  * RETURN:
- *   TRUE if computations OK
- *   FALSE otherwise
+ *   None.
  */
-static BOOL LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBox)
+static void LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBox)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     POINT Position, Origin;
     LVITEMW lvItem;
 
-    if (!LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position)) return FALSE;
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
 
     /* Be smart and try to figure out the minimum we have to do */
     lvItem.mask = 0;
@@ -1865,18 +1861,16 @@ static BOOL LISTVIEW_GetItemBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprcBo
     lvItem.iSubItem = 0;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
-    if (lvItem.mask && !LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
+    if (lvItem.mask) LISTVIEW_GetItemW(infoPtr, &lvItem);
     if (uView == LVS_ICON)
     {
 	lvItem.mask |= LVIF_STATE;
 	lvItem.stateMask = LVIS_FOCUSED;
 	lvItem.state = (lvItem.mask & LVIF_TEXT ? LVIS_FOCUSED : 0);
     }
-    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprcBox, 0, 0, 0)) return FALSE;
+    LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprcBox, 0, 0, 0);
 
     OffsetRect(lprcBox, Position.x + Origin.x, Position.y + Origin.y);
-
-    return TRUE;
 }
 
 /***
@@ -2033,7 +2027,7 @@ static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *infoPtr, LPRECT lprcView)
 
     if (!lprcView) return FALSE;
   
-    if (!LISTVIEW_GetOrigin(infoPtr, &ptOrigin)) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
    
     *lprcView = infoPtr->rcView;
     OffsetRect(lprcView, ptOrigin.x, ptOrigin.y); 
@@ -2096,8 +2090,10 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr, INT nItem)
 	
 	/* calculate width of header */
 	for (i = 0; i < infoPtr->hdpaColumns->nItemCount; i++)
-	    if (LISTVIEW_GetHeaderRect(infoPtr, i, &rcHeaderItem))
-		nItemWidth += (rcHeaderItem.right - rcHeaderItem.left);
+	{
+	    LISTVIEW_GetHeaderRect(infoPtr, i, &rcHeaderItem);
+	    nItemWidth += (rcHeaderItem.right - rcHeaderItem.left);
+	}
     }
     else
     {
@@ -3306,7 +3302,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
     
     if (!lprcFocus) lvItem.state &= ~LVIS_FOCUSED;
-    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, &rcState, &rcIcon, &rcLabel)) return FALSE;
+    LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, &rcState, &rcIcon, &rcLabel);
     OffsetRect(&rcBox, pos.x, pos.y);
     OffsetRect(&rcState, pos.x, pos.y);
     OffsetRect(&rcIcon, pos.x, pos.y);
@@ -3383,14 +3379,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 	uFormat = (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS);
     else if (nSubItem)
     {
-	COLUMN_INFO *lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
-	if (lpColumnInfo)
-	    switch (lpColumnInfo->fmt & LVCFMT_JUSTIFYMASK)
-	    {
-	    case LVCFMT_RIGHT:  uFormat |= DT_RIGHT;  break;
-	    case LVCFMT_CENTER: uFormat |= DT_CENTER; break;
-	    default:            uFormat |= DT_LEFT;
-	    }
+	switch (LISTVIEW_GetColumnInfo(infoPtr, nSubItem)->fmt & LVCFMT_JUSTIFYMASK)
+	{
+	case LVCFMT_RIGHT:  uFormat |= DT_RIGHT;  break;
+	case LVCFMT_CENTER: uFormat |= DT_CENTER; break;
+	default:            uFormat |= DT_LEFT;
+	}
     }
     if (!(uFormat & (DT_RIGHT | DT_CENTER))) rcLabel.left += 2;
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
@@ -3426,7 +3420,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
     ZeroMemory(&dis, sizeof(dis));
     
     /* Get scroll info once before loop */
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
 
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
@@ -3461,7 +3455,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 	if (infoPtr->bFocus && (item.state & LVIS_FOCUSED)) dis.itemState |= ODS_FOCUS;
 	dis.hwndItem = infoPtr->hwndSelf;
 	dis.hDC = hdc;
-	if (!LISTVIEW_GetItemOrigin(infoPtr, dis.itemID, &Position)) continue;
+	LISTVIEW_GetItemOrigin(infoPtr, dis.itemID, &Position);
 	dis.rcItem.left = Position.x + Origin.x;
 	dis.rcItem.right = dis.rcItem.left + infoPtr->nItemWidth;
 	dis.rcItem.top = Position.y + Origin.y;
@@ -3500,15 +3494,19 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     if (rgntype == NULLREGION) return;
     
     /* Get scroll info once before loop */
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
     
     /* narrow down the columns we need to paint */
     for(nFirstCol = 0; nFirstCol < infoPtr->hdpaColumns->nItemCount; nFirstCol++)
-	if (LISTVIEW_GetHeaderRect(infoPtr, nFirstCol, &rcItem) &&
-	    rcItem.right + Origin.x >= rcClip.left) break;
+    {
+	LISTVIEW_GetHeaderRect(infoPtr, nFirstCol, &rcItem);
+	if (rcItem.right + Origin.x >= rcClip.left) break;
+    }
     for(nLastCol = infoPtr->hdpaColumns->nItemCount - 1; nLastCol >= 0; nLastCol--)
-	if (LISTVIEW_GetHeaderRect(infoPtr, nLastCol, &rcItem) &&
-	    rcItem.left + Origin.x < rcClip.right) break;
+    {
+	LISTVIEW_GetHeaderRect(infoPtr, nLastCol, &rcItem);
+	if (rcItem.left + Origin.x < rcClip.right) break;
+    }
 
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
@@ -3522,12 +3520,13 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	/* iterate through the invalidated columns */
 	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
 	{
-	    if (!LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position)) continue;
+	    LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position);
 	    Position.x += Origin.x;
 	    Position.y += Origin.y;
 
-	    if (rgntype == COMPLEXREGION && LISTVIEW_GetHeaderRect(infoPtr, nCol, &rcItem))
+	    if (rgntype == COMPLEXREGION)
 	    {
+		LISTVIEW_GetHeaderRect(infoPtr, nCol, &rcItem);
 		rcItem.top = 0;
 	        rcItem.bottom = infoPtr->nItemHeight;
 		OffsetRect(&rcItem, Position.x, Position.y);
@@ -3558,14 +3557,14 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     ITERATOR i;
 
     /* Get scroll info once before loop */
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
     
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
     
     while(iterator_prev(&i))
     {
-	if (!LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position)) continue;
+	LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position);
 	Position.x += Origin.x;
 	Position.y += Origin.y;
 
@@ -3885,27 +3884,29 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
  * [I] dx : amount of scroll, in pixels
  *
  * RETURN:
- *   SUCCESS : TRUE
- *   FAILURE : FALSE
+ *   None.
  */
-static BOOL LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
+static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
 {
     COLUMN_INFO *lpColumnInfo;
     RECT rcOld, rcCol;
     INT nCol;
-    
-    if ((lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nColumn)))
-	rcCol = lpColumnInfo->rcHeader;
+   
+    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, min(nColumn, infoPtr->hdpaColumns->nItemCount - 1));
+    rcCol = lpColumnInfo->rcHeader;
+    if (nColumn >= infoPtr->hdpaColumns->nItemCount)
+	rcCol.left = rcCol.right;
     
     /* ajust the other columns */
-    for (nCol = nColumn; (lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nCol)); nCol++)
+    for (nCol = nColumn; nCol < infoPtr->hdpaColumns->nItemCount; nCol++)
     {
+	lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nCol);
         lpColumnInfo->rcHeader.left += dx;
         lpColumnInfo->rcHeader.right += dx;
     }
 
     /* do not update screen if not in report mode */
-    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return TRUE;
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return;
     
     /* if we have a focus, must first erase the focus rect */
     if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
@@ -3922,8 +3923,6 @@ static BOOL LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     
     /* we can restore focus now */
     if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
-
-    return TRUE;
 }
 
 /***
@@ -3944,10 +3943,9 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     
     TRACE("nColumn=%d\n", nColumn);
 
-    if (nColumn <= 0) return FALSE;
+    if (nColumn <= 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
 
-    if (!LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol))
-	return FALSE;
+    LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
     
     if (!Header_DeleteItem(infoPtr->hwndHeader, nColumn))
 	return FALSE;
@@ -4346,7 +4344,7 @@ static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 	POINT Origin;
 	
 	FIXME("LVFI_NEARESTXY is slow.\n");
-        if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
+        LISTVIEW_GetOrigin(infoPtr, &Origin);
 	Destination.x = lpFindInfo->pt.x - Origin.x;
 	Destination.y = lpFindInfo->pt.y - Origin.y;
 	switch(lpFindInfo->vkDirection)
@@ -4398,7 +4396,7 @@ again:
 	
 	/* This is very inefficient. To do a good job here,
 	 * we need a sorted array of (x,y) item positions */
-	if (!LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position)) continue;
+	LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
 
 	/* compute the distance^2 to the destination */
 	xdist = Destination.x - Position.x;
@@ -4490,7 +4488,7 @@ static LRESULT LISTVIEW_GetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn, LPLVCOLU
     HDITEMW hdi;
 
     if (!lpColumn || nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
-    if (!(lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nColumn))) return FALSE;
+    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nColumn);
 
     /* initialize memory */
     ZeroMemory(&hdi, sizeof(hdi));
@@ -4566,8 +4564,9 @@ static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 	nColumnWidth = infoPtr->nItemWidth;
 	break;
     case LVS_REPORT:
-	if (LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcHeader))
-	    nColumnWidth = rcHeader.right - rcHeader.left;
+	if (nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return 0;
+	LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcHeader);
+	nColumnWidth = rcHeader.right - rcHeader.left;
 	break;
     }
 
@@ -4923,8 +4922,9 @@ static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT 
     TRACE("(nItem=%d, lpptPosition=%p)\n", nItem, lpptPosition);
 
     if (!lpptPosition || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
-    if (!LISTVIEW_GetItemOrigin(infoPtr, nItem, lpptPosition)) return FALSE;
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    LISTVIEW_GetItemOrigin(infoPtr, nItem, lpptPosition);
 
     if (uView == LVS_ICON)
     {
@@ -5012,8 +5012,9 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
     TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
 
     if (!lprc || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
-    if (!LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position)) return FALSE;
+
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
 
     /* Be smart and try to figure out the minimum we have to do */
     if (lprc->left == LVIR_ICON) doLabel = FALSE;
@@ -5046,19 +5047,19 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
     switch(lprc->left)
     {
     case LVIR_ICON:
-	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL)) return FALSE;
+	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL);
         break;
 
     case LVIR_LABEL:
-	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, NULL, lprc)) return FALSE;
+	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, NULL, lprc);
         break;
 
     case LVIR_BOUNDS:
-	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprc, NULL, NULL, NULL)) return FALSE;
+	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprc, NULL, NULL, NULL);
         break;
 
     case LVIR_SELECTBOUNDS:
-	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, &label_rect)) return FALSE;
+	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, &label_rect);
 	UnionRect(lprc, lprc, &label_rect);
         break;
 
@@ -5101,7 +5102,7 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
     
     TRACE("(nItem=%d, nSubItem=%d)\n", nItem, lprc->top);
 
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
     if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
 
     lvItem.mask = lprc->top == 0 ? LVIF_INDENT : 0;
@@ -5112,12 +5113,12 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
     switch(lprc->left)
     {
     case LVIR_ICON:
-	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL)) return FALSE;
+	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, NULL, NULL, lprc, NULL);
         break;
 
     case LVIR_LABEL:
     case LVIR_BOUNDS:
-	if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprc, NULL, NULL, NULL)) return FALSE;
+	LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprc, NULL, NULL, NULL);
         break;
 
     default:
@@ -5408,17 +5409,14 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
  * [O] lpptOrigin : coordinate information
  *
  * RETURN:
- *   SUCCESS : TRUE
- *   FAILURE : FALSE
+ *   None.
  */
-static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
+static void LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
 {
     DWORD lStyle = infoPtr->dwStyle;
     UINT uView = lStyle & LVS_TYPEMASK;
     INT nHorzPos = 0, nVertPos = 0;
     SCROLLINFO scrollInfo;
-
-    if (!lpptOrigin) return FALSE;
 
     scrollInfo.cbSize = sizeof(SCROLLINFO);    
     scrollInfo.fMask = SIF_POS;
@@ -5441,8 +5439,6 @@ static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
     lpptOrigin->y -= nVertPos;
 
     TRACE(" origin=%s\n", debugpoint(lpptOrigin));
-
-    return TRUE;
 }
 
 /***
@@ -5528,7 +5524,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 
     lpht->flags |= LVHT_NOWHERE;
 
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
    
     /* first deal with the large items */
     rcSearch.left = lpht->pt.x;
@@ -5555,8 +5551,8 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
     if (!infoPtr->bFocus) lvItem.state &= ~LVIS_FOCUSED; 
     
-    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, &rcState, &rcIcon, &rcLabel)) return -1;
-    if (!LISTVIEW_GetItemOrigin(infoPtr, lpht->iItem, &Position)) return -1;
+    LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, &rcState, &rcIcon, &rcLabel);
+    LISTVIEW_GetItemOrigin(infoPtr, lpht->iItem, &Position);
     opt.x = lpht->pt.x - Position.x - Origin.x;
     opt.y = lpht->pt.y - Position.y - Origin.y;
     
@@ -5678,12 +5674,14 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     is_sorted = (lStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
 	        !(lStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
 
-    nItem = DPA_InsertPtr( infoPtr->hdpaItems, 
-		           is_sorted ? infoPtr->nItemCount + 1 : lpLVItem->iItem, 
-			   hdpaSubItems );
+    nItem = is_sorted ? infoPtr->nItemCount + 1 : lpLVItem->iItem;
+    TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
+    nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
+    TRACE(" result of insert is %d\n", nItem);
     if (nItem == -1) goto fail;
     /* the array may be sparsly populated, we can't just increment the count here */
     infoPtr->nItemCount = infoPtr->hdpaItems->nItemCount;
+    TRACE(" item count is %d\n", infoPtr->nItemCount);
   
     /* set the item attributes */ 
     if (!set_main_item(infoPtr, lpLVItem, TRUE, isW, &has_changed)) goto undo;
@@ -5891,8 +5889,10 @@ static void column_fill_hditem(LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT nColu
             INT item_index;
 
             for(item_index = 0; item_index < (nColumn - 1); item_index++)
-            	if (LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader))
-		    lphdi->cxy += rcHeader.right - rcHeader.left;
+	    {
+            	LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader);
+		lphdi->cxy += rcHeader.right - rcHeader.left;
+	    }
 
             /* retrieve the layout of the header */
             GetClientRect(infoPtr->hwndSelf, &rcHeader);
@@ -6079,7 +6079,7 @@ static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 	      hdi.fmt = hdiget.fmt & HDF_STRING;
     }
 
-    if (!(lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, nColumn))) return FALSE;
+    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nColumn);
 
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
 
@@ -6208,8 +6208,8 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
 
         for(item_index = 0; item_index < (header_item_count - 1); item_index++) 
 	{
-	  if (LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader))
-	    cx += rcHeader.right - rcHeader.left;
+	  LISTVIEW_GetHeaderRect(infoPtr, item_index, &rcHeader);
+	  cx += rcHeader.right - rcHeader.left;
         }
 
         /* retrieve the layout of the header */
@@ -7661,8 +7661,10 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnm
 	    RECT rcCol;
 	    INT dx;
 
-	    if (!(lpColumnInfo = DPA_GetPtr(infoPtr->hdpaColumns, lphnm->iItem))) return 0;
+	    if (lphnm->iItem < 0 || lphnm->iItem >= infoPtr->hdpaColumns->nItemCount) return 0;
 	    if (!(lphnm->pitem->mask & HDI_WIDTH)) return 0;
+
+	    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, lphnm->iItem);
 	    
 	    /* determine how much we change since the last know position */
 	    dx = lphnm->pitem->cxy - (lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
@@ -8334,7 +8336,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 1;
 
   case LVM_GETORIGIN:
-    return LISTVIEW_GetOrigin(infoPtr, (LPPOINT)lParam);
+    if (!lParam) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, (LPPOINT)lParam);
+    return TRUE;
 
   /* case LVN_GETOUTLINECOLOR: */
 
