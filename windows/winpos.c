@@ -320,9 +320,11 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 
     /* Size the window to the rectangle of the new region 
        (if it isn't NULL) */
+       /* James: Added SWP_NOACTIVATE because SetWindowRgn in Windows doesn't activate the
+                 window (and this was REALLY screwing up my app) */
     SetWindowPos( hwnd, 0, tempRect.left, tempRect.top,
                   tempRect.right  - tempRect.left, tempRect.bottom - tempRect.top,
-                  SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE |
+                  SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOACTIVATE |
                   SWP_NOZORDER | (bRedraw ? 0 : SWP_NOREDRAW) );
 
     
