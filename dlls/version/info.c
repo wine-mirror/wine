@@ -285,11 +285,9 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
  *           VERSION_GetFileVersionInfo_PE             [internal]
  *
  *    NOTE: returns size of the PE VERSION resource or 0xFFFFFFFF
- *    in the case if file exists, but VERSION_INFO not found.
- *    FIXME: handle is not used.
+ *    in the case the file is a PE module, but VERSION_INFO not found.
  */
-static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, LPDWORD handle,
-                                    DWORD datasize, LPVOID data )
+static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, DWORD datasize, LPVOID data )
 {
     VS_FIXEDFILEINFO *vffi;
     DWORD len;
@@ -298,7 +296,7 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, LPDWORD handle,
     HRSRC hRsrc;
     HGLOBAL hMem;
 
-    TRACE("(%s,%p)\n", debugstr_w(filename), handle );
+    TRACE("%s\n", debugstr_w(filename));
 
     hModule = GetModuleHandleW(filename);
     if(!hModule)
@@ -351,7 +349,6 @@ static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, LPDWORD handle,
 	else
 	    len = 0xFFFFFFFF;
     }
-    SetLastError(0);
 END:
     FreeResource(hMem);
     FreeLibrary(hModule);
@@ -363,21 +360,87 @@ END:
  *           VERSION_GetFileVersionInfo_16             [internal]
  *
  *    NOTE: returns size of the 16-bit VERSION resource or 0xFFFFFFFF
- *    in the case if file exists, but VERSION_INFO not found.
- *    FIXME: handle is not used.
+ *    in the case the file exists, but VERSION_INFO not found.
  */
-static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
-                                    DWORD datasize, LPVOID data )
+static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPVOID data )
 {
     VS_FIXEDFILEINFO *vffi;
-    DWORD len;
+    DWORD len, offset;
     BYTE *buf;
     HMODULE16 hModule;
     HRSRC16 hRsrc;
     HGLOBAL16 hMem;
+    char dllname[20], owner[20], *p;
+    const char *basename;
+    BOOL is_builtin = FALSE;
 
-    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+    TRACE("%s\n", debugstr_a(filename));
 
+    /* strip path information */
+
+    basename = filename;
+    if (basename[0] && basename[1] == ':') basename += 2;  /* strip drive specification */
+    if ((p = strrchr( basename, '\\' ))) basename = p + 1;
+    if ((p = strrchr( basename, '/' ))) basename = p + 1;
+
+    if (strlen(basename) < sizeof(dllname)-4)
+    {
+        int file_exists;
+
+        strcpy( dllname, basename );
+        p = strrchr( dllname, '.' );
+        if (!p) strcat( dllname, ".dll" );
+        for (p = dllname; *p; p++) if (*p >= 'A' && *p <= 'Z') *p += 32;
+
+        if (wine_dll_get_owner( dllname, owner, sizeof(owner), &file_exists ) == 0)
+            is_builtin = TRUE;
+    }
+
+    /* first try without loading a 16-bit module */
+    if (is_builtin)
+        len = 0;
+    else
+        len = GetFileResourceSize16( filename,
+                                     MAKEINTRESOURCEA(VS_FILE_INFO),
+                                     MAKEINTRESOURCEA(VS_VERSION_INFO),
+                                     &offset );
+    if (len)
+    {
+        if (!data) return len;
+
+        len = GetFileResource16( filename,
+                                 MAKEINTRESOURCEA(VS_FILE_INFO),
+                                 MAKEINTRESOURCEA(VS_VERSION_INFO),
+                                 offset, datasize, data );
+        if (len)
+        {
+            if ( VersionInfoIs16( data ) )
+                vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)data );
+            else
+                vffi = (VS_FIXEDFILEINFO *)VersionInfo32_Value( (VS_VERSION_INFO_STRUCT32 *)data );
+
+            if ( vffi->dwSignature == VS_FFI_SIGNATURE )
+            {
+                if ( ((VS_VERSION_INFO_STRUCT16 *)data)->wLength < len )
+                    len = ((VS_VERSION_INFO_STRUCT16 *)data)->wLength;
+
+                if ( TRACE_ON(ver) )
+                    print_vffi_debug( vffi );
+
+                if ( datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
+                     && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
+                     && !VersionInfoIs16( data ) )
+                {
+                    /* convert resource from PE format to NE format */
+                    ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)data,
+                                              (VS_VERSION_INFO_STRUCT16 *)data );
+                }
+                return len;
+            }
+        }
+    }
+
+    /* this might be a builtin 16-bit module */
     hModule = LoadLibrary16(filename);
     if(hModule < 32)
     {
@@ -404,7 +467,10 @@ static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
     buf = LockResource16(hMem);
 
     if(!VersionInfoIs16(buf))
+    {
+        len = 0xFFFFFFFF;
 	goto END;
+    }
 
     vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)buf );
 
@@ -440,95 +506,39 @@ END:
  */
 DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
-    DWORD ret, offset, len = (filename && strlenW(filename)) ? strlenW(filename) + 1: MAX_PATH;
-    LPSTR filenameA = NULL;
-    LPWSTR filenameW;
-    VS_FIXEDFILEINFO *vffi;
-    BYTE buf[144];
+    DWORD len;
 
     TRACE("(%s,%p)\n", debugstr_w(filename), handle );
 
-    filenameW = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * len );
-    if (filename && strlenW(filename))
-	strcpyW(filenameW, filename);
-    else {
-	DWORD nSize = GetModuleFileNameW(NULL, filenameW, len);
-	if (!nSize || nSize >= len)
+    if (handle) *handle = 0;
+
+    len = VERSION_GetFileVersionInfo_PE(filename, 0, NULL);
+    /* 0xFFFFFFFF means: file is a PE module, but VERSION_INFO not found */
+    if(len == 0xFFFFFFFF)
+    {
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        return 0;
+    }
+
+    if (!len)
+    {
+        LPSTR filenameA;
+
+        len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+        filenameA = HeapAlloc( GetProcessHeap(), 0, len );
+        WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
+
+        len = VERSION_GetFileVersionInfo_16(filenameA, 0, NULL);
+        HeapFree( GetProcessHeap(), 0, filenameA );
+        /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+        if (!len || len == 0xFFFFFFFF)
         {
-	    len = 0;
-            goto End;
+            SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+            return 0;
         }
     }
 
-    len = VERSION_GetFileVersionInfo_PE(filenameW, handle, 0, NULL);
-    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-    if(len == 0xFFFFFFFF)
-    {
-    	if ( handle ) *handle = 0L;
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-	len = 0;
-        goto End;
-    }
-    if(len) {
-    	if ( handle ) *handle = 0L;
-        goto End;
-    }
-
-    /* FIXME: handle not set correctly after this point
-     */
-
-    len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
-    filenameA = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
-
-    len = VERSION_GetFileVersionInfo_16(filenameA, handle, 0, NULL);
-    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-    if(len == 0xFFFFFFFF)
-    {
-        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
-	len = 0;
-        goto End;
-    }
-    if(len) goto End;
-
-    /* FIXME: last error not handled after this point
-     */
-    len = GetFileResourceSize16( filenameA,
-                                 MAKEINTRESOURCEA(VS_FILE_INFO),
-                                 MAKEINTRESOURCEA(VS_VERSION_INFO),
-                                 &offset );
-    if (!len) goto End;
-
-    ret = GetFileResource16( filenameA,
-                             MAKEINTRESOURCEA(VS_FILE_INFO),
-                             MAKEINTRESOURCEA(VS_VERSION_INFO),
-                             offset, sizeof( buf ), buf );
-    if (!ret) goto End;
-
-    if ( handle ) *handle = offset;
-
-    if ( VersionInfoIs16( buf ) )
-        vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)buf );
-    else
-        vffi = (VS_FIXEDFILEINFO *)VersionInfo32_Value( (VS_VERSION_INFO_STRUCT32 *)buf );
-
-    if ( vffi->dwSignature != VS_FFI_SIGNATURE )
-    {
-        WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
-                   vffi->dwSignature, VS_FFI_SIGNATURE );
-        len = 0;
-	goto End;
-    }
-
-    if ( ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength < len )
-        len = ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength;
-
-    if ( TRACE_ON(ver) )
-        print_vffi_debug( vffi );
-End:
-    HeapFree( GetProcessHeap(), 0, filenameW);
-    if (filenameA)
-	HeapFree( GetProcessHeap(), 0, filenameA);
+    SetLastError(0);
     return len;
 }
 
@@ -558,23 +568,26 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
 
     if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
     else filenameW.Buffer = NULL;
-    len = VERSION_GetFileVersionInfo_PE(filenameW.Buffer, &handle, datasize, data);
-    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    len = VERSION_GetFileVersionInfo_PE(filenameW.Buffer, datasize, data);
+    /* 0xFFFFFFFF means: file is a PE module, but VERSION_INFO not found */
     RtlFreeUnicodeString(&filenameW);
-    if(len == 0xFFFFFFFF) return FALSE;
-    if(len)
-	goto DO_CONVERT;
-    len = VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data);
-    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
-    if(len == 0xFFFFFFFF) return FALSE;
-    if(len)
-	goto DO_CONVERT;
-
-    if ( !GetFileResource16( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
-                                       MAKEINTRESOURCEA(VS_VERSION_INFO),
-                                       handle, datasize, data ) )
+    if (len == 0xFFFFFFFF)
+    {
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
         return FALSE;
-DO_CONVERT:
+    }
+
+    if (!len)
+    {
+        len = VERSION_GetFileVersionInfo_16(filename, datasize, data);
+        /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+        if (!len || len == 0xFFFFFFFF)
+        {
+            SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+            return FALSE;
+        }
+    }
+
     if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
          && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
          && !VersionInfoIs16( data ) )
@@ -584,6 +597,7 @@ DO_CONVERT:
                                   (VS_VERSION_INFO_STRUCT16 *)data );
     }
 
+    SetLastError(0);
     return TRUE;
 }
 
@@ -593,35 +607,48 @@ DO_CONVERT:
 BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
-    DWORD len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
-    LPSTR fn = HeapAlloc( GetProcessHeap(), 0, len );
-    DWORD retv = TRUE;
-
-    WideCharToMultiByte( CP_ACP, 0, filename, -1, fn, len, NULL, NULL );
+    DWORD len;
 
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_w(filename), handle, datasize, data );
 
-    if(VERSION_GetFileVersionInfo_PE(filename, &handle, datasize, data))
-	goto END;
-    if(VERSION_GetFileVersionInfo_16(fn, &handle, datasize, data))
-	goto END;
-
-    if ( !GetFileResource16( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
-                                 MAKEINTRESOURCEA(VS_VERSION_INFO),
-                                 handle, datasize, data ) )
-        retv = FALSE;
-
-    else if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
-              && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
-              && VersionInfoIs16( data ) )
+    len = VERSION_GetFileVersionInfo_PE(filename, datasize, data);
+    /* 0xFFFFFFFF means: file is a PE module, but VERSION_INFO not found */
+    if (len == 0xFFFFFFFF)
     {
-        ERR("Cannot access NE resource in %s\n", debugstr_a(fn) );
-        retv =  FALSE;
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        return FALSE;
     }
-END:
-    HeapFree( GetProcessHeap(), 0, fn );
-    return retv;
+
+    if (!len)
+    {
+        LPSTR filenameA;
+
+        len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+        filenameA = HeapAlloc( GetProcessHeap(), 0, len );
+        WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
+
+        len = VERSION_GetFileVersionInfo_16(filenameA, datasize, data);
+        HeapFree( GetProcessHeap(), 0, filenameA );
+        /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+        if (!len || len == 0xFFFFFFFF)
+        {
+            SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+            return FALSE;
+        }
+    }
+
+    if ( datasize >= sizeof(VS_VERSION_INFO_STRUCT16) &&
+         datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength &&
+         VersionInfoIs16( data ) )
+    {
+        ERR("Cannot access NE resource in %s\n", debugstr_w(filename) );
+        SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+        return  FALSE;
+    }
+
+    SetLastError(0);
+    return TRUE;
 }
 
 
