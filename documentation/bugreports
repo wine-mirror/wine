@@ -33,12 +33,12 @@ likely to get answered and fixed):
 	tcsh and other csh-like shells:
 
 	    wine -debugmsg +relay [other_options] program_name |& tee filename.out
-	head -100 filename.out > report_file
+	    tail -100 filename.out > report_file
 
 	bash and other sh-like shells:
 
 	    wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out
-	    head -100 filename.out > report_file
+	    tail -100 filename.out > report_file
 
 	'report_file' will now contain the last hundred lines of the debugging
 	output, including the register dump and backtrace, which are the most
