@@ -1683,16 +1683,18 @@ set $BreakAllThreadsStartup = 1
 	      <tbody>
 		<row>
 		  <entry>
-		    <msgtext>
-		      <simplelist type="inline">
-			<member><command>display</command></member>
-			<member>
-			  <command>info&nbsp;display</command>
-			</member>
-		      </simplelist>
-		    </msgtext>
+		    <command>info&nbsp;display</command>
 		  </entry>
 		  <entry>lists the active displays</entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>display</command>
+		  </entry>
+		  <entry>
+		    print the active displays' values (as done each
+		    time the debugger stops)
+		  </entry>
 		</row>
 		<row>
 		  <entry>

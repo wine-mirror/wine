@@ -45,6 +45,9 @@
  *      + make the output as close as possible to what gdb does
  * - symbol management:
  *      + symbol table loading is broken
+ *      + in symbol_get_lvalue, we don't do any scoping (as C does) between local and
+ *        global vars (we may need this to force some display for example). A solution
+ *        would be always to return arrays with: local vars, global vars, thunks
  * - type management:
  *      + some bits of internal types are missing (like type casts and the address
  *        operator)
@@ -55,7 +58,10 @@
  *              o bitfield size is on a 4-bytes
  *      + some bits of internal types are missing (like type casts and the address
  *        operator)
- * - execution
+ * - execution:
+ *      + display: we shouldn't need to tell whether a display is local or not. This
+ *        should be automatically guessed by checking whether the variables that are
+ *        references are local or not
  *      + set a better fix for gdb (proxy mode) than the step-mode hack
  *      + implement function call in debuggee
  *      + trampoline management is broken when getting 16 <=> 32 thunk destination
@@ -339,6 +345,8 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->wait_for_first_exception = 0;
     t->exec_mode = dbg_exec_cont;
     t->exec_count = 0;
+    t->step_over_bp.enabled = FALSE;
+    t->step_over_bp.refcount = 0;
 
     snprintf(t->name, sizeof(t->name), "0x%08lx", tid);
 
@@ -354,8 +362,8 @@ static void dbg_init_current_thread(void* start)
 {
     if (start)
     {
-	if (dbg_curr_thread->process->threads && 
-            !dbg_curr_thread->process->threads->next && /* first thread ? */
+	if (dbg_curr_process->threads && 
+            !dbg_curr_process->threads->next && /* first thread ? */
 	    DBG_IVAR(BreakAllThreadsStartup)) 
         {
 	    ADDRESS     addr;
@@ -562,8 +570,7 @@ static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance,
         else
             pThread = dbg_get_thread(dbg_curr_process, pThreadName->dwThreadID);
 
-        if (ReadProcessMemory(dbg_curr_thread->process->handle, pThreadName->szName,
-                              pThread->name, 9, NULL))
+        if (dbg_read_memory(pThreadName->szName, pThread->name, 9))
             dbg_printf("Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
                        pThread->tid, pThread->name);
         return DBG_CONTINUE;
@@ -636,11 +643,11 @@ static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance,
         case EXCEPTION_WINE_STUB:
         {
             char dll[32], name[64];
-            memory_get_string(dbg_curr_thread->process->handle,
-                              (void*)rec->ExceptionInformation[0], DLV_TARGET, FALSE,
+            memory_get_string(dbg_curr_process->handle,
+                              (void*)rec->ExceptionInformation[0], TRUE, FALSE,
                               dll, sizeof(dll));
-            memory_get_string(dbg_curr_thread->process->handle,
-                              (void*)rec->ExceptionInformation[1], DLV_TARGET, FALSE,
+            memory_get_string(dbg_curr_process->handle,
+                              (void*)rec->ExceptionInformation[1], TRUE, FALSE,
                               name, sizeof(name));
             dbg_printf("unimplemented function %s.%s called", dll, name);
         }
@@ -854,7 +861,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             WINE_ERR("Unknown thread\n");
             break;
         }
-        memory_get_string_indirect(dbg_curr_thread->process->handle,
+        memory_get_string_indirect(dbg_curr_process->handle, 
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
                                    buffer, sizeof(buffer));
@@ -894,8 +901,8 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             break;
         }
 
-        memory_get_string(dbg_curr_thread->process->handle,
-                          de->u.DebugString.lpDebugStringData, DLV_TARGET,
+        memory_get_string(dbg_curr_process->handle,
+                          de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, buffer, sizeof(buffer));
         WINE_TRACE("%08lx:%08lx: output debug string (%s)\n",
                    de->dwProcessId, de->dwThreadId, buffer);

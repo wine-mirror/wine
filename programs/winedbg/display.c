@@ -43,10 +43,18 @@ struct display
 static struct display *displaypoints = NULL;
 static unsigned int maxdisplays = 0, ndisplays = 0;
 
+#define OFFSET_OF(_f,_s)        ((unsigned)(&(((_s*)NULL)->_f)))
+
 static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
 {
-    if (si1->NameLen != si2->NameLen) return FALSE;
-    return !memcmp(si1, si2, sizeof(SYMBOL_INFO) + si1->NameLen);
+    /* FIXME: !memcmp(si1, si2, sizeof(SYMBOL_INFO) + si1->NameLen)
+     * is wrong because sizeof(SYMBOL_INFO) can be aligned on 4-byte boundary
+     * Note: we also need to zero out the structures before calling 
+     * stack_get_frame, so that un-touched fields by stack_get_frame
+     * get the same value!!
+     */
+    return !memcmp(si1, si2, OFFSET_OF(Name, SYMBOL_INFO)) &&
+        !memcmp(si1->Name, si2->Name, si1->NameLen);
 }
 
 int display_add(struct expr *exp, int count, char format, int in_frame)
@@ -74,6 +82,7 @@ int display_add(struct expr *exp, int count, char format, int in_frame)
     if (in_frame)
     {
         displaypoints[i].func = (SYMBOL_INFO*)displaypoints[i].func_buffer;
+        memset(displaypoints[i].func, 0, sizeof(SYMBOL_INFO));
         displaypoints[i].func->SizeOfStruct = sizeof(SYMBOL_INFO);
         displaypoints[i].func->MaxNameLen = sizeof(displaypoints[i].func_buffer) -
             sizeof(*displaypoints[i].func);
@@ -97,6 +106,7 @@ int display_info(void)
     const char*         info;
 
     func = (SYMBOL_INFO*)buffer;
+    memset(func, 0, sizeof(SYMBOL_INFO));
     func->SizeOfStruct = sizeof(SYMBOL_INFO);
     func->MaxNameLen = sizeof(buffer) - sizeof(*func);
     if (!stack_get_frame(func, NULL)) return FALSE;
@@ -104,6 +114,9 @@ int display_info(void)
     for (i = 0; i < ndisplays; i++)
     {
         if (displaypoints[i].exp == NULL) continue;
+
+        dbg_printf("%d: ", i + 1);
+        expr_print(displaypoints[i].exp);
 
         if (displaypoints[i].enabled)
         {
@@ -114,10 +127,9 @@ int display_info(void)
         }
         else
             info = " (disabled)";
-        dbg_printf("%d in %s%s: ", 
-                   i + 1, func ? displaypoints[i].func->Name : "", info);
-        expr_print(displaypoints[i].exp);
-        dbg_printf("\n");
+        if (displaypoints[i].func)
+            dbg_printf(" in %s", displaypoints[i].func->Name);
+        dbg_printf("%s\n", info);
     }
     return TRUE;
 }
@@ -129,7 +141,7 @@ static void print_one_display(int i)
     if (displaypoints[i].enabled) 
     {
         lvalue = expr_eval(displaypoints[i].exp);
-        if (lvalue.typeid == dbg_itype_none)
+        if (lvalue.type.id == dbg_itype_none)
         {
             dbg_printf("Unable to evaluate expression ");
             expr_print(displaypoints[i].exp);
@@ -146,7 +158,8 @@ static void print_one_display(int i)
         dbg_printf("(disabled)\n");
     else
 	if (displaypoints[i].format == 'i')
-            memory_examine(&lvalue, displaypoints[i].count, displaypoints[i].format);
+            memory_examine((void*)types_extract_as_integer(&lvalue), 
+                           displaypoints[i].count, displaypoints[i].format);
 	else
             print_value(&lvalue, displaypoints[i].format, 0);
 }
@@ -158,6 +171,7 @@ int display_print(void)
     SYMBOL_INFO*        func;
 
     func = (SYMBOL_INFO*)buffer;
+    memset(func, 0, sizeof(SYMBOL_INFO));
     func->SizeOfStruct = sizeof(SYMBOL_INFO);
     func->MaxNameLen = sizeof(buffer) - sizeof(*func);
     if (!stack_get_frame(func, NULL)) return FALSE;
@@ -226,6 +240,7 @@ int display_enable(int displaynum, int enable)
     SYMBOL_INFO*        func;
 
     func = (SYMBOL_INFO*)buffer;
+    memset(func, 0, sizeof(SYMBOL_INFO));
     func->SizeOfStruct = sizeof(SYMBOL_INFO);
     func->MaxNameLen = sizeof(buffer) - sizeof(*func);
     if (!stack_get_frame(func, NULL)) return FALSE;

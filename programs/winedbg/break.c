@@ -59,8 +59,7 @@ void  break_set_xpoints(BOOL set)
 
     for (i = 0; i < dbg_curr_process->next_bp; i++)
     {
-        if (!bp[i].refcount && !bp[i].enabled)
-            continue;
+        if (!bp[i].refcount || !bp[i].enabled) continue;
 
         if (bp[i].xpoint_type == be_xpoint_break)
             size = 0;
@@ -78,8 +77,9 @@ void  break_set_xpoints(BOOL set)
                                         bp[i].info, size);
         if (!ret)
         {
-            dbg_printf("Invalid address (%p) for breakpoint %d, disabling it\n", 
-                       addr, i);
+            dbg_printf("Invalid address (");
+            print_address(&bp[i].addr, FALSE);
+            dbg_printf(") for breakpoint %d, disabling it\n", i);
             bp[i].enabled = FALSE;
         }
     }
@@ -375,10 +375,9 @@ void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
                       &lvalue->addr);
     if (num == -1) return;
 
-    if (lvalue->typeid != dbg_itype_none)
+    if (lvalue->type.id != dbg_itype_none)
     {
-        if (types_get_info((DWORD)memory_to_linear_addr(&lvalue->addr),
-                           lvalue->typeid, TI_GET_LENGTH, &l))
+        if (types_get_info(&lvalue->type, TI_GET_LENGTH, &l))
         {
             switch (l)
             {
@@ -679,7 +678,7 @@ static	BOOL should_stop(int bpnum)
     {
         struct dbg_lvalue lvalue = expr_eval(bp->condition);
 
-        if (lvalue.typeid == dbg_itype_none)
+        if (lvalue.type.id == dbg_itype_none)
         {
 	    /*
 	     * Something wrong - unable to evaluate this expression.

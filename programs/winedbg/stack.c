@@ -42,27 +42,24 @@ static IMAGEHLP_STACK_FRAME*    frames = NULL;
  */
 void stack_info(void)
 {
-    struct dbg_lvalue    lvalue;
+    ADDRESS             addr;
 
-    lvalue.typeid = dbg_itype_none;
-    lvalue.cookie = DLV_TARGET;
     /* FIXME: we assume stack grows the same way as on i386 */
-    if (!memory_get_current_stack(&lvalue.addr))
-        dbg_printf("Bad segment (%d)\n", lvalue.addr.Segment);
+    if (!memory_get_current_stack(&addr))
+        dbg_printf("Bad segment (%d)\n", addr.Segment);
 
     dbg_printf("Stack dump:\n");
-    switch (lvalue.addr.Mode)
+    switch (addr.Mode)
     {
     case AddrModeFlat: /* 32-bit mode */
     case AddrMode1632: /* 32-bit mode */
-        memory_examine(&lvalue, 24, 'x');
+        memory_examine(memory_to_linear_addr(&addr), 24, 'x');
         break;
     case AddrModeReal:  /* 16-bit mode */
     case AddrMode1616:
-        memory_examine(&lvalue, 24, 'w');
+        memory_examine(memory_to_linear_addr(&addr), 24, 'w');
 	break;
     }
-    dbg_printf("\n");
 }
 
 int stack_set_frame(int newframe)

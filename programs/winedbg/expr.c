@@ -282,13 +282,13 @@ struct dbg_lvalue expr_eval(struct expr* exp)
     struct dbg_lvalue                   exp2;
     unsigned int	                cexp[5];
     DWORD	                        scale1, scale2, scale3;
-    DWORD                               type1, type2;
-    DWORD                               linear1, linear2;
+    struct dbg_type                     type1, type2;
     DWORD                               tag;
     const struct dbg_internal_var*      div;
-    
-    rtn.typeid       = dbg_itype_none;
+
     rtn.cookie       = 0;
+    rtn.type.id      = dbg_itype_none;
+    rtn.type.module  = 0;
     rtn.addr.Mode    = AddrModeFlat;
     rtn.addr.Offset  = 0;
     rtn.addr.Segment = 0;
@@ -300,30 +300,31 @@ struct dbg_lvalue expr_eval(struct expr* exp)
          * checking if this is right or not
          */
         rtn = expr_eval(exp->un.cast.expr);
-        linear1 = (DWORD)memory_to_linear_addr(&rtn.addr);
         switch (exp->un.cast.cast_to.type)
         {
         case type_expr_type_id:
-            if (exp->un.cast.cast_to.u.typeid == dbg_itype_none)
+            if (exp->un.cast.cast_to.u.type.id == dbg_itype_none)
             {
                 dbg_printf("Can't cast to unknown type\n");
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
             }
-            rtn.typeid = exp->un.cast.cast_to.u.typeid;
+            rtn.type = exp->un.cast.cast_to.u.type;
             break;
         case type_expr_udt_class:
         case type_expr_udt_struct:
         case type_expr_udt_union:
-            rtn.typeid = types_find_type(linear1, exp->un.cast.cast_to.u.name, SymTagUDT);
-            if (rtn.typeid == dbg_itype_none)
+            rtn.type = types_find_type((DWORD)memory_to_linear_addr(&rtn.addr),
+                                       exp->un.cast.cast_to.u.name, SymTagUDT);
+            if (rtn.type.id == dbg_itype_none)
             {
                 dbg_printf("Can't cast to UDT %s\n", exp->un.cast.cast_to.u.name);
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
             }
             break;
         case type_expr_enumeration:
-            rtn.typeid = types_find_type(linear1, exp->un.cast.cast_to.u.name, SymTagEnum);
-            if (rtn.typeid == dbg_itype_none)
+            rtn.type = types_find_type((DWORD)memory_to_linear_addr(&rtn.addr),
+                                       exp->un.cast.cast_to.u.name, SymTagEnum);
+            if (rtn.type.id == dbg_itype_none)
             {
                 dbg_printf("Can't cast to enumeration %s\n", exp->un.cast.cast_to.u.name);
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
@@ -335,8 +336,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         }
         for (i = 0; i < exp->un.cast.cast_to.deref_count; i++)
         {
-            rtn.typeid = types_find_pointer(linear1, rtn.typeid);
-            if (rtn.typeid == dbg_itype_none)
+            rtn.type = types_find_pointer(&rtn.type);
+            if (rtn.type.id == dbg_itype_none)
             {
                 dbg_printf("Cannot find pointer type\n");
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
@@ -344,18 +345,21 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         }
         break;
     case EXPR_TYPE_STRING:
-        rtn.typeid = dbg_itype_astring;
-        rtn.cookie = DLV_HOST;
+        rtn.cookie      = DLV_HOST;
+        rtn.type.id     = dbg_itype_astring;
+        rtn.type.module = 0;
         rtn.addr.Offset = (unsigned int)&exp->un.string.str;
         break;
     case EXPR_TYPE_U_CONST:
-        rtn.typeid      = dbg_itype_unsigned_int;
         rtn.cookie      = DLV_HOST;
+        rtn.type.id     = dbg_itype_unsigned_int;
+        rtn.type.module = 0;
         rtn.addr.Offset = (unsigned int)&exp->un.u_const.value;
         break;
     case EXPR_TYPE_S_CONST:
-        rtn.typeid      = dbg_itype_signed_int;
         rtn.cookie      = DLV_HOST;
+        rtn.type.id     = dbg_itype_signed_int;
+        rtn.type.module = 0;
         rtn.addr.Offset = (unsigned int)&exp->un.s_const.value;
         break;
     case EXPR_TYPE_SYMBOL:
@@ -373,8 +377,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         break;
     case EXPR_TYPE_PSTRUCT:
         exp1 = expr_eval(exp->un.structure.exp1);
-        if (exp1.typeid == dbg_itype_none || !types_deref(&exp1, &rtn) ||
-            rtn.typeid == dbg_itype_none)
+        if (exp1.type.id == dbg_itype_none || !types_deref(&exp1, &rtn) ||
+            rtn.type.id == dbg_itype_none)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         if (!types_udt_find_element(&rtn, exp->un.structure.element_name,
                                     &exp->un.structure.result))
@@ -385,7 +389,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         break;
     case EXPR_TYPE_STRUCT:
         exp1 = expr_eval(exp->un.structure.exp1);
-        if (exp1.typeid == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
+        if (exp1.type.id == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         rtn = exp1;
         if (!types_udt_find_element(&rtn, exp->un.structure.element_name,
                                     &exp->un.structure.result))
@@ -402,7 +406,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         for (i = 0; i < exp->un.call.nargs; i++)
 	{
             exp1 = expr_eval(exp->un.call.arg[i]);
-            if (exp1.typeid == dbg_itype_none)
+            if (exp1.type.id == dbg_itype_none)
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
             cexp[i] = types_extract_as_integer(&exp1);
 	}
@@ -458,93 +462,93 @@ struct dbg_lvalue expr_eval(struct expr* exp)
          */
         exp->un.call.result = 0;
 #endif
-        linear1 = (DWORD)memory_to_linear_addr(&rtn.addr);
-        /* get function signature type */
-        types_get_info(linear1, rtn.typeid, TI_GET_TYPE, &rtn.typeid);
-        /* and now, return type */
-        types_get_info(linear1, rtn.typeid, TI_GET_TYPE, &rtn.typeid);
         rtn.cookie = DLV_HOST;
-        rtn.addr.Mode = AddrModeFlat;
+        /* get function signature type */
+        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type);
+        /* and now, return type */
+        types_get_info(&rtn.type, TI_GET_TYPE, &rtn.type);
         rtn.addr.Offset = (unsigned int)&exp->un.call.result;
         break;
     case EXPR_TYPE_INTVAR:
+        rtn.cookie = DLV_HOST;
         if (!(div = dbg_get_internal_var(exp->un.intvar.name)))
             RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
-        rtn.cookie = DLV_HOST;
-        rtn.typeid = div->typeid;
+        rtn.type.id     = div->typeid;
+        rtn.type.module = 0;
         rtn.addr.Offset = (unsigned int)div->pval;
         break;
     case EXPR_TYPE_BINOP:
+        rtn.cookie = DLV_HOST;
         exp1 = expr_eval(exp->un.binop.exp1);
         exp2 = expr_eval(exp->un.binop.exp2);
-        rtn.cookie = DLV_HOST;
-        if (exp1.typeid == dbg_itype_none || exp2.typeid == dbg_itype_none)
+        if (exp1.type.id == dbg_itype_none || exp2.type.id == dbg_itype_none)
             RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-        linear1 = (DWORD)memory_to_linear_addr(&exp1.addr);
-        linear2 = (DWORD)memory_to_linear_addr(&exp2.addr);
-        rtn.typeid = dbg_itype_signed_int;
+        rtn.type.id = dbg_itype_signed_int;
+        rtn.type.module = 0;
         rtn.addr.Offset = (unsigned int)&exp->un.binop.result;
         switch (exp->un.binop.binop_type)
 	{
 	case EXP_OP_ADD:
-            if (!types_get_info(linear1, exp1.typeid, TI_GET_SYMTAG, &tag) ||
+            if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(linear1, exp1.typeid, TI_GET_TYPE, &type1))
-                type1 = dbg_itype_none;
-            if (!types_get_info(linear1, exp2.typeid, TI_GET_SYMTAG, &tag) ||
+                !types_get_info(&exp1.type, TI_GET_TYPE, &type1))
+                type1.id = dbg_itype_none;
+            if (!types_get_info(&exp2.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(linear1, exp2.typeid, TI_GET_TYPE, &type2))
-                type2 = dbg_itype_none;
+                !types_get_info(&exp2.type, TI_GET_TYPE, &type2))
+                type2.id = dbg_itype_none;
             scale1 = 1;
             scale2 = 1;
-            if (type1 != dbg_itype_none && type2 != dbg_itype_none)
+            if (type1.id != dbg_itype_none && type2.id != dbg_itype_none)
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-            if (type1 != dbg_itype_none)
+            if (type1.id != dbg_itype_none)
 	    {
-                types_get_info(linear1, type1, TI_GET_LENGTH, &scale2);
-                rtn.typeid = exp1.typeid;
+                types_get_info(&type1, TI_GET_LENGTH, &scale2);
+                rtn.type = exp1.type;
 	    }
-            else if (type2 != dbg_itype_none)
+            else if (type2.id != dbg_itype_none)
 	    {
-                types_get_info(linear2, type2, TI_GET_LENGTH, &scale1);
-                rtn.typeid = exp2.typeid;
+                types_get_info(&type2, TI_GET_LENGTH, &scale1);
+                rtn.type = exp2.type;
 	    }
             exp->un.binop.result = (types_extract_as_integer(&exp1) * scale1 +
                                     scale2 * types_extract_as_integer(&exp2));
             break;
 	case EXP_OP_SUB:
-            if (!types_get_info(linear1, exp1.typeid, TI_GET_SYMTAG, &tag) ||
+            if (!types_get_info(&exp1.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(linear1, exp1.typeid, TI_GET_TYPE, &type1))
-                type1 = dbg_itype_none;
-            if (!types_get_info(linear2, exp2.typeid, TI_GET_SYMTAG, &tag) ||
+                !types_get_info(&exp1.type, TI_GET_TYPE, &type1))
+                type1.id = dbg_itype_none;
+            if (!types_get_info(&exp2.type, TI_GET_SYMTAG, &tag) ||
                 tag != SymTagPointerType ||
-                !types_get_info(linear2, exp2.typeid, TI_GET_TYPE, &type2))
-                type2 = dbg_itype_none;
+                !types_get_info(&exp2.type, TI_GET_TYPE, &type2))
+                type2.id = dbg_itype_none;
             scale1 = 1;
             scale2 = 1;
             scale3 = 1;
-            if (type1 != dbg_itype_none && type2 != dbg_itype_none)
+            if (type1.id != dbg_itype_none && type2.id != dbg_itype_none)
 	    {
-                if (type1 != type2) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-                types_get_info(linear1, type1, TI_GET_LENGTH, &scale3);
+                WINE_FIXME("This may fail (if module base address are wrongly calculated)\n");
+                if (memcmp(&type1, &type2, sizeof(struct dbg_type)))
+                    RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
+                types_get_info(&type1, TI_GET_LENGTH, &scale3);
 	    }
-            else if (type1 != dbg_itype_none)
+            else if (type1.id != dbg_itype_none)
 	    {
-                types_get_info(linear1, type1, TI_GET_LENGTH, &scale2);
-                rtn.typeid = exp1.typeid;
+                types_get_info(&type1, TI_GET_LENGTH, &scale2);
+                rtn.type = exp1.type;
 	    }
-            else if (type2 != dbg_itype_none)
+            else if (type2.id != dbg_itype_none)
 	    {
-                types_get_info(linear2, type2, TI_GET_LENGTH, &scale1);
-                rtn.typeid = exp2.typeid;
+                types_get_info(&type2, TI_GET_LENGTH, &scale1);
+                rtn.type = exp2.type;
 	    }
             exp->un.binop.result = (types_extract_as_integer(&exp1) * scale1 - 
                                     types_extract_as_integer(&exp2) * scale2) / scale3;
             break;
 	case EXP_OP_SEG:
-            rtn.cookie = DLV_TARGET;
-            rtn.typeid = dbg_itype_none;
+            rtn.type.id = dbg_itype_none;
+            rtn.type.module = 0;
             rtn.addr.Mode = AddrMode1632;
             rtn.addr.Segment = types_extract_as_integer(&exp1);
             rtn.addr.Offset = types_extract_as_integer(&exp2);
@@ -607,11 +611,12 @@ struct dbg_lvalue expr_eval(struct expr* exp)
 	}
         break;
     case EXPR_TYPE_UNOP:
-        exp1 = expr_eval(exp->un.unop.exp1);
-        if (exp1.typeid == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         rtn.cookie = DLV_HOST;
+        exp1 = expr_eval(exp->un.unop.exp1);
+        if (exp1.type.id == dbg_itype_none) RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
         rtn.addr.Offset = (unsigned int)&exp->un.unop.result;
-        rtn.typeid = dbg_itype_signed_int;
+        rtn.type.id     = dbg_itype_signed_int;
+        rtn.type.module = 0;
         switch (exp->un.unop.unop_type)
 	{
 	case EXP_OP_NEG:
@@ -624,19 +629,6 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             exp->un.unop.result = ~types_extract_as_integer(&exp1);
             break;
 	case EXP_OP_DEREF:
-            /* FIXME: this is currently buggy.
-             * there is no way to tell were the deref:ed value is...
-             * for example:
-             *	x is a pointer to struct s, x being on the stack
-             *		=> exp1 is target, result is target
-             *	x is a pointer to struct s, x being optimized into a reg
-             *		=> exp1 is host, result is target
-             *	x is a pointer to internal variable x
-             *	       	=> exp1 is host, result is host
-             * so we force DLV_TARGET, because dereferencing pointers to
-             * internal variables is very unlikely. a correct fix would be
-             * rather large.
-             */
             if (!types_deref(&exp1, &rtn))
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
             break;
@@ -650,7 +642,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             if (exp1.addr.Mode != AddrModeFlat)
                 RaiseException(DEBUG_STATUS_CANT_DEREF, 0, 0, NULL);
             exp->un.unop.result = (unsigned int)memory_to_linear_addr(&exp1.addr);
-            rtn.typeid = types_find_pointer(exp->un.unop.result, exp1.typeid);
+            rtn.type = types_find_pointer(&exp1.type);
             break;
 	default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
 	}
@@ -661,14 +653,13 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         break;
     }
 
-    assert(rtn.cookie == DLV_TARGET || rtn.cookie == DLV_HOST);
-
     return rtn;
 }
 
 int expr_print(const struct expr* exp)
 {
-    int		i;
+    int		        i;
+    struct dbg_type     type;
 
     switch (exp->type)
     {
@@ -678,7 +669,9 @@ int expr_print(const struct expr* exp)
         switch (exp->un.cast.cast_to.type)
         {
         case type_expr_type_id:
-            types_print_type(0, exp->un.cast.cast_to.type, FALSE); break;
+            type.module = 0;
+            type.id = exp->un.cast.cast_to.type;
+            types_print_type(&type, FALSE); break;
         case type_expr_udt_class:
             dbg_printf("class %s", exp->un.cast.cast_to.u.name); break;
         case type_expr_udt_struct:

@@ -39,19 +39,16 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
     long int            rtn = 0;
     DWORD               tag, size, bt;
-    DWORD               linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
-
-    if (lvalue->typeid == dbg_itype_none ||
-        !types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag))
+    if (lvalue->type.id == dbg_itype_none ||
+        !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
         return 0;
 
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &size) ||
-            !types_get_info(linear, lvalue->typeid, TI_GET_BASETYPE, &bt))
+        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size) ||
+            !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
@@ -107,23 +104,34 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
 {
     DWORD       tag;
-    DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
-
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
 
     memset(result, 0, sizeof(*result));
-    result->typeid = dbg_itype_none;
+    result->type.id = dbg_itype_none;
+    result->type.module = 0;
 
     /*
      * Make sure that this really makes sense.
      */
-    if (!types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag) ||
+    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag) ||
         tag != SymTagPointerType ||
         memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset) ||
-        !types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &result->typeid))
+        !types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id))
         return FALSE;
-
-    result->cookie = DLV_TARGET; /* see comment on DEREF below */
+    result->type.module = lvalue->type.module;
+    result->cookie = DLV_TARGET;
+    /* FIXME: this is currently buggy.
+     * there is no way to tell were the deref:ed value is...
+     * for example:
+     *	x is a pointer to struct s, x being on the stack
+     *		=> lvalue is in debuggee, result is in debugger
+     *	x is a pointer to struct s, x being optimized into a reg
+     *		=> lvalue is debugger, result is debuggee
+     *	x is a pointer to internal variable x
+     *	       	=> lvalue is debugger, result is debuggee
+     * so we force debuggee address space, because dereferencing pointers to
+     * internal variables is very unlikely. A correct fix would be
+     * rather large.
+     */
     result->addr.Mode = AddrModeFlat;
     return TRUE;
 }
@@ -133,19 +141,20 @@ BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
  *
  * Implement a structure derefencement
  */
-static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, DWORD linear,
-                                         DWORD typeid, long int* tmpbuf)
+static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, 
+                                         const struct dbg_type* type, long int* tmpbuf)
 {
     DWORD       offset, length, bitoffset;
     DWORD       bt;
     unsigned    mask;
 
-    types_get_info(linear, typeid, TI_GET_TYPE, &lvalue->typeid);
-    types_get_info(linear, typeid, TI_GET_OFFSET, &offset);
+    types_get_info(type, TI_GET_TYPE, &lvalue->type.id);
+    lvalue->type.module = type->module;
+    types_get_info(type, TI_GET_OFFSET, &offset);
 
-    if (types_get_info(linear, typeid, TI_GET_BITPOSITION, &bitoffset))
+    if (types_get_info(type, TI_GET_BITPOSITION, &bitoffset))
     {
-        types_get_info(linear, typeid, TI_GET_LENGTH, &length);
+        types_get_info(type, TI_GET_LENGTH, &length);
         if (length > sizeof(*tmpbuf)) return FALSE;
         /*
          * Bitfield operation.  We have to extract the field and store
@@ -157,8 +166,7 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, DWORD linear
         *tmpbuf >>= bitoffset & 7;
         *tmpbuf &= ~mask;
 
-        lvalue->cookie = DLV_HOST;
-        lvalue->addr.Mode = AddrModeFlat;
+        lvalue->cookie      = DLV_HOST;
         lvalue->addr.Offset = (DWORD)tmpbuf;
 
         /*
@@ -166,14 +174,14 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, DWORD linear
          * Check to see whether the basic type is signed or not, and if so,
          * we need to sign extend the number.
          */
-        if (types_get_info(linear, lvalue->typeid, TI_GET_BASETYPE, &bt) && 
+        if (types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt) && 
             bt == btInt && (*tmpbuf & (1 << (length - 1))))
         {
             *tmpbuf |= mask;
         }
         return TRUE;
     }
-    if (types_get_info(linear, typeid, TI_GET_OFFSET, &offset))
+    if (types_get_info(type, TI_GET_OFFSET, &offset))
     {
         lvalue->addr.Offset += offset;
         return TRUE;
@@ -187,39 +195,38 @@ static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, DWORD linear
  */
 BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long int* tmpbuf)
 {
-    DWORD                       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
     DWORD                       tag, count;
     char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
     TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
     WCHAR*                      ptr;
     char                        tmp[256];
     int                         i;
+    struct dbg_type             type;
 
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
-
-    if (!types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag) ||
+    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag) ||
         tag != SymTagUDT)
         return FALSE;
 
-    if (types_get_info(linear, lvalue->typeid, TI_GET_CHILDRENCOUNT, &count))
+    if (types_get_info(&lvalue->type, TI_GET_CHILDRENCOUNT, &count))
     {
         fcp->Start = 0;
         while (count)
         {
             fcp->Count = min(count, 256);
-            if (types_get_info(linear, lvalue->typeid, TI_FINDCHILDREN, fcp))
+            if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
             {
+                type.module = lvalue->type.module;
                 for (i = 0; i < min(fcp->Count, count); i++)
                 {
                     ptr = NULL;
-                    types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                    type.id = fcp->ChildId[i];
+                    types_get_info(&type, TI_GET_SYMNAME, &ptr);
                     if (!ptr) continue;
                     WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                     HeapFree(GetProcessHeap(), 0, ptr);
                     if (strcmp(tmp, name)) continue;
 
-                    return types_get_udt_element_lvalue(lvalue, linear, 
-                                                        fcp->ChildId[i], tmpbuf);
+                    return types_get_udt_element_lvalue(lvalue, &type, tmpbuf);
                 }
             }
             count -= min(count, 256);
@@ -238,26 +245,23 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index,
                        struct dbg_lvalue* result)
 {
     DWORD       tag, length, count;
-    DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
-
-    if (!types_get_info(0, lvalue->typeid, TI_GET_SYMTAG, &tag))
+    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
         return FALSE;
     switch (tag)
     {
     case SymTagArrayType:
-        types_get_info(linear, lvalue->typeid, TI_GET_COUNT, &count);
+        types_get_info(&lvalue->type, TI_GET_COUNT, &count);
         if (index < 0 || index >= count) return FALSE;
         /* fall through */
     case SymTagPointerType:
         /*
          * Get the base type, so we know how much to index by.
          */
-        types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &result->typeid);
-        types_get_info(linear, result->typeid, TI_GET_LENGTH, &length);
+        types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id);
+        result->type.module = lvalue->type.module;
+        types_get_info(&result->type, TI_GET_LENGTH, &length);
         /* Contents of array must be on same target */
-        result->cookie = lvalue->cookie;
         result->addr.Mode = lvalue->addr.Mode;
         memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset);
         result->addr.Offset += index * length;
@@ -283,7 +287,7 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
 {
     struct type_find_t* user = (struct type_find_t*)_user;
     BOOL                ret = TRUE;
-    DWORD               typeid;
+    struct dbg_type     type;
 
     if (sym->Tag == user->tag)
     {
@@ -297,9 +301,9 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
             }
             break;
         case SymTagPointerType:
-            types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, &typeid);
-            if (types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, &typeid) &&
-                typeid == user->u.typeid)
+            type.module = sym->ModBase;
+            type.id = sym->TypeIndex;
+            if (types_get_info(&type, TI_GET_TYPE, &type.id) && type.id == user->u.typeid)
             {
                 user->result = sym->TypeIndex;
                 ret = FALSE;
@@ -316,14 +320,18 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
  * Should look up in module based at linear whether (typeid*) exists
  * Otherwise, we could create it locally
  */
-unsigned long types_find_pointer(unsigned long linear, unsigned long typeid)
+struct dbg_type types_find_pointer(const struct dbg_type* type)
 {
     struct type_find_t  f;
+    struct dbg_type     ret;
+
     f.result = dbg_itype_none;
     f.tag = SymTagPointerType;
-    f.u.typeid = typeid;
-    SymEnumTypes(dbg_curr_process->handle, linear, types_cb, &f);
-    return f.result;
+    f.u.typeid = type->id;
+    SymEnumTypes(dbg_curr_process->handle, type->module, types_cb, &f);
+    ret.module = type->module;
+    ret.id = f.result;
+    return ret;
 }
 
 /******************************************************************
@@ -332,15 +340,19 @@ unsigned long types_find_pointer(unsigned long linear, unsigned long typeid)
  * Should look up in the module based at linear address whether a type
  * named 'name' and with the correct tag exists
  */
-unsigned long types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag)
+struct dbg_type types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag)
 
 {
     struct type_find_t  f;
+    struct dbg_type     ret;
+
     f.result = dbg_itype_none;
     f.tag = tag;
     f.u.name = name;
     SymEnumTypes(dbg_curr_process->handle, linear, types_cb, &f);
-    return f.result;
+    ret.module = linear;
+    ret.id = f.result;
+    return ret;
 }
 
 /***********************************************************************
@@ -352,15 +364,11 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
 {
     struct dbg_lvalue   lvalue_field;
     int		        i;
-    unsigned long       linear;
     DWORD               tag;
     DWORD               count;
     DWORD               size;
 
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
-    linear = (unsigned long)memory_to_linear_addr(&lvalue->addr);
-
-    if (lvalue->typeid == dbg_itype_none)
+    if (lvalue->type.id == dbg_itype_none)
     {
         /* No type, just print the addr value */
         print_bare_address(&lvalue->addr);
@@ -373,7 +381,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         format = '\0';
     }
 
-    if (!types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag))
+    if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
     {
         WINE_FIXME("---error\n");
         return;
@@ -386,32 +394,34 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         print_basic(lvalue, 1, format);
         break;
     case SymTagUDT:
-        if (types_get_info(linear, lvalue->typeid, TI_GET_CHILDRENCOUNT, &count))
+        if (types_get_info(&lvalue->type, TI_GET_CHILDRENCOUNT, &count))
         {
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
             char                        tmp[256];
             long int                    tmpbuf;
+            struct dbg_type             type;
 
             dbg_printf("{");
             fcp->Start = 0;
             while (count)
             {
                 fcp->Count = min(count, 256);
-                if (types_get_info(linear, lvalue->typeid, TI_FINDCHILDREN, fcp))
+                if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
                 {
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
                         ptr = NULL;
-                        types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                        type.module = (unsigned long)memory_to_linear_addr(&lvalue->addr);
+                        type.id = fcp->ChildId[i];
+                        types_get_info(&type, TI_GET_SYMNAME, &ptr);
                         if (!ptr) continue;
                         WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                         dbg_printf("%s=", tmp);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         lvalue_field = *lvalue;
-                        if (types_get_udt_element_lvalue(&lvalue_field, linear,
-                                                         fcp->ChildId[i], &tmpbuf))
+                        if (types_get_udt_element_lvalue(&lvalue_field, &type, &tmpbuf))
                         {
                             print_value(&lvalue_field, format, level + 1);
                         }
@@ -429,8 +439,8 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
          * Loop over all of the entries, printing stuff as we go.
          */
         count = 1; size = 1;
-        types_get_info(linear, lvalue->typeid, TI_GET_COUNT, &count);
-        types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &size);
+        types_get_info(&lvalue->type, TI_GET_COUNT, &count);
+        types_get_info(&lvalue->type, TI_GET_LENGTH, &size);
 
         if (size == count)
 	{
@@ -441,14 +451,14 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
              */
             /* FIXME should check basic type here (should be a char!!!!)... */
             len = min(count, sizeof(buffer));
-            memory_get_string(dbg_curr_thread->handle,
+            memory_get_string(dbg_curr_process->handle,
                               memory_to_linear_addr(&lvalue->addr),
-                              lvalue->cookie, TRUE, buffer, len);
+                              lvalue->cookie == DLV_TARGET, TRUE, buffer, len);
             dbg_printf("\"%s%s\"", buffer, (len < count) ? "..." : "");
             break;
         }
         lvalue_field = *lvalue;
-        types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &lvalue_field.typeid);
+        types_get_info(&lvalue->type, TI_GET_TYPE, &lvalue_field.type.id);
         dbg_printf("{");
         for (i = 0; i < count; i++)
 	{
@@ -461,7 +471,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         dbg_printf("Function ");
         print_bare_address(&lvalue->addr);
         dbg_printf(": ");
-        types_print_type(linear, lvalue->typeid, FALSE);
+        types_print_type(&lvalue->type, FALSE);
         break;
     default:
         WINE_FIXME("Unknown tag (%lu)\n", tag);
@@ -476,7 +486,11 @@ leave:
 
 static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
 {
-    types_print_type(sym->ModBase, sym->TypeIndex, TRUE);
+    struct dbg_type     type;
+    type.module = sym->ModBase;
+    type.id = sym->TypeIndex;
+    dbg_printf("Mod: %08lx ID: %08lx \n", type.module, type.id);
+    types_print_type(&type, TRUE);
     dbg_printf("\n");
     return TRUE;
 }
@@ -492,20 +506,21 @@ int print_types(void)
     return 0;
 }
 
-int types_print_type(DWORD linear, DWORD typeid, BOOL details)
+int types_print_type(const struct dbg_type* type, BOOL details)
 {
     WCHAR*              ptr;
     char                tmp[256];
     const char*         name;
-    DWORD               tag, subtype, count;
+    DWORD               tag, udt, count;
+    struct dbg_type     subtype;
 
-    if (typeid == dbg_itype_none || !types_get_info(linear, typeid, TI_GET_SYMTAG, &tag))
+    if (type->id == dbg_itype_none || !types_get_info(type, TI_GET_SYMTAG, &tag))
     {
-        dbg_printf("--invalid--<%lxh>--", typeid);
+        dbg_printf("--invalid--<%lxh>--", type->id);
         return FALSE;
     }
 
-    if (types_get_info(linear, typeid, TI_GET_SYMNAME, &ptr) && ptr)
+    if (types_get_info(type, TI_GET_SYMNAME, &ptr) && ptr)
     {
         WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
         name = tmp;
@@ -519,47 +534,50 @@ int types_print_type(DWORD linear, DWORD typeid, BOOL details)
         if (details) dbg_printf("Basic<%s>", name); else dbg_printf("%s", name);
         break;
     case SymTagPointerType:
-        types_get_info(linear, typeid, TI_GET_TYPE, &subtype);
-        types_print_type(linear, subtype, details);
+        types_get_info(type, TI_GET_TYPE, &subtype.id);
+        subtype.module = type->module;
+        types_print_type(&subtype, FALSE);
         dbg_printf("*");
         break;
     case SymTagUDT:
-        types_get_info(linear, typeid, TI_GET_UDTKIND, &subtype);
-        switch (subtype)
+        types_get_info(type, TI_GET_UDTKIND, &udt);
+        switch (udt)
         {
         case UdtStruct: dbg_printf("struct %s", name); break;
         case UdtUnion:  dbg_printf("union %s", name); break;
         case UdtClass:  dbg_printf("class %s", name); break;
         }
         if (details &&
-            types_get_info(linear, typeid, TI_GET_CHILDRENCOUNT, &count))
+            types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
         {
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
             WCHAR*                      ptr;
             char                        tmp[256];
             int                         i;
-
+            struct dbg_type             type_elt;
             dbg_printf(" {");
 
             fcp->Start = 0;
             while (count)
             {
                 fcp->Count = min(count, 256);
-                if (types_get_info(linear, typeid, TI_FINDCHILDREN, fcp))
+                if (types_get_info(type, TI_FINDCHILDREN, fcp))
                 {
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
                         ptr = NULL;
-                        types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                        type_elt.module = type->module;
+                        type_elt.id = fcp->ChildId[i];
+                        types_get_info(&type_elt, TI_GET_SYMNAME, &ptr);
                         if (!ptr) continue;
                         WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                         HeapFree(GetProcessHeap(), 0, ptr);
                         dbg_printf("%s", tmp);
-                        if (types_get_info(linear, fcp->ChildId[i], TI_GET_TYPE, &subtype))
+                        if (types_get_info(&type_elt, TI_GET_TYPE, &type_elt.id))
                         {
                             dbg_printf(":");
-                            types_print_type(linear, subtype, details);
+                            types_print_type(&type_elt, details);
                         }
                         if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
                     }
@@ -571,18 +589,20 @@ int types_print_type(DWORD linear, DWORD typeid, BOOL details)
         }
         break;
     case SymTagArrayType:
-        types_get_info(linear, typeid, TI_GET_TYPE, &subtype);
-        types_print_type(linear, subtype, details);
+        types_get_info(type, TI_GET_TYPE, &subtype.id);
+        subtype.module = type->module;
+        types_print_type(&subtype, details);
         dbg_printf(" %s[]", name);
         break;
     case SymTagEnum:
         dbg_printf("enum %s", name);
         break;
     case SymTagFunctionType:
-        types_get_info(linear, typeid, TI_GET_TYPE, &subtype);
-        types_print_type(linear, subtype, FALSE);
+        types_get_info(type, TI_GET_TYPE, &subtype.id);
+        subtype.module = type->module;
+        types_print_type(&subtype, FALSE);
         dbg_printf(" (*%s)(", name);
-        if (types_get_info(linear, typeid, TI_GET_CHILDRENCOUNT, &count))
+        if (types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
         {
             char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
             TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
@@ -592,11 +612,12 @@ int types_print_type(DWORD linear, DWORD typeid, BOOL details)
             while (count)
             {
                 fcp->Count = min(count, 256);
-                if (types_get_info(linear, typeid, TI_FINDCHILDREN, fcp))
+                if (types_get_info(type, TI_FINDCHILDREN, fcp))
                 {
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
-                        types_print_type(linear, fcp->ChildId[i], FALSE);
+                        subtype.id = fcp->ChildId[i];
+                        types_print_type(&subtype, FALSE);
                         if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
                     }
                 }
@@ -614,31 +635,17 @@ int types_print_type(DWORD linear, DWORD typeid, BOOL details)
     return TRUE;
 }
 
-BOOL types_get_info(unsigned long modbase, unsigned long typeid,
-                    IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
+BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
 {
-    if (typeid == dbg_itype_none) return FALSE;
-    if (typeid < dbg_itype_first)
-    {
-        BOOL    ret;
-        DWORD   tag;
+    if (type->id == dbg_itype_none) return FALSE;
+    if (type->module != 0)
+        return SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
 
-        ret = SymGetTypeInfo(dbg_curr_process->handle, modbase, typeid, ti, pInfo);
-        if (!ret && ti == TI_GET_LENGTH && 
-            (!SymGetTypeInfo(dbg_curr_process->handle, modbase, typeid, 
-                             TI_GET_SYMTAG, &tag) || tag == SymTagData))
-        {
-            WINE_FIXME("get length on symtag data is no longer supported\n");
-            assert(0);
-        }
-        return ret;
-    }
-    assert(modbase);
-
+    assert(type->id >= dbg_itype_first);
 /* helper to typecast pInfo to its expected type (_t) */
 #define X(_t) (*((_t*)pInfo))
 
-    switch (typeid)
+    switch (type->id)
     {
     case dbg_itype_unsigned_int:
         switch (ti)
@@ -712,7 +719,7 @@ BOOL types_get_info(unsigned long modbase, unsigned long typeid,
         default: WINE_FIXME("unsupported %u for a string\n", ti); return FALSE;
         }
         break;
-    default: WINE_FIXME("unsupported typeid 0x%lx\n", typeid);
+    default: WINE_FIXME("unsupported type id 0x%lx\n", type->id);
     }
 
 #undef X

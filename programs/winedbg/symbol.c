@@ -38,19 +38,24 @@ static BOOL symbol_get_debug_start(DWORD mod_base, DWORD typeid, DWORD* start)
     char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
     TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
     int                         i;
+    struct dbg_type             type;
 
-    if (!types_get_info(mod_base, typeid, TI_GET_CHILDRENCOUNT, &count)) return FALSE;
+    type.module = mod_base;
+    type.id = typeid;
+
+    if (!types_get_info(&type, TI_GET_CHILDRENCOUNT, &count)) return FALSE;
     fcp->Start = 0;
     while (count)
     {
         fcp->Count = min(count, 256);
-        if (types_get_info(mod_base, typeid, TI_FINDCHILDREN, fcp))
+        if (types_get_info(&type, TI_FINDCHILDREN, fcp))
         {
             for (i = 0; i < min(fcp->Count, count); i++)
             {
-                types_get_info(mod_base, fcp->ChildId[i], TI_GET_SYMTAG, &tag);
+                type.id = fcp->ChildId[i];
+                types_get_info(&type, TI_GET_SYMTAG, &tag);
                 if (tag != SymTagFuncDebugStart) continue;
-                return types_get_info(mod_base, fcp->ChildId[i], TI_GET_ADDRESS, start);
+                return types_get_info(&type, TI_GET_ADDRESS, start);
             }
             count -= min(count, 256);
             fcp->Start += 256;
@@ -107,7 +112,11 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     else if (sym->Flags & SYMFLAG_FRAMEREL)
     {
         ULONG   offset;
-        types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_OFFSET, &offset);
+        struct dbg_type type;
+
+        type.module = sym->ModBase;
+        type.id = sym->TypeIndex;
+        types_get_info(&type, TI_GET_OFFSET, &offset);
         addr = sgv->ihsf.FrameOffset + offset;
     }
     else if (sym->Flags & SYMFLAG_THUNK)
@@ -175,11 +184,13 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
         memmove(&sgv->syms[insp + 1], &sgv->syms[insp],
                 sizeof(sgv->syms[0]) * sgv->num_thunks);
     }
+    sgv->syms[insp].lvalue.cookie      = cookie;
     sgv->syms[insp].lvalue.addr.Mode   = AddrModeFlat;
     sgv->syms[insp].lvalue.addr.Offset = addr;
-    types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, 
-                   &sgv->syms[insp].lvalue.typeid);
-    sgv->syms[insp].lvalue.cookie      = cookie;
+    sgv->syms[insp].lvalue.type.module = sym->ModBase;
+    sgv->syms[insp].lvalue.type.id = sym->TypeIndex;
+    types_get_info(&sgv->syms[insp].lvalue.type, TI_GET_TYPE, 
+                   &sgv->syms[insp].lvalue.type.id);
     sgv->syms[insp].flags              = sym->Flags;
     sgv->num++;
   
@@ -314,8 +325,9 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     }
     else
     {
-        dbg_printf("More than one symbol named %s, picking the first one\n", name);
-        i = 0;
+        /* FIXME: could display the list of non-picked up symbols */
+        if (sgv.num > 1)
+            dbg_printf("More than one symbol named %s, picking the first one\n", name);
     }
     *rtn = sgv.syms[i].lvalue;
     return sglv_found;
@@ -390,6 +402,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
     DWORD               lin = (DWORD)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;
+    struct dbg_type     type;
 
     il.SizeOfStruct = sizeof(il);
     sym->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -419,7 +432,9 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 
     if (symbol_get_debug_start(sym->ModBase, sym->TypeIndex, &start) && lin < start)
         return dbg_not_on_a_line_number;
-    if (!types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_LENGTH, &size) || size == 0)
+    type.module = sym->ModBase;
+    type.id = sym->TypeIndex;
+    if (!types_get_info(&type, TI_GET_LENGTH, &size) || size == 0)
         size = 0x100000;
     if (il.FileName && il.FileName[0] && disp < size)
         return (disp == 0) ? dbg_on_a_line_number : dbg_not_on_a_line_number;
@@ -492,14 +507,16 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 
 static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
-    DWORD       tid;
-    ULONG       v, val;
-    const char* explain = NULL;
-    char        buf[128];
+    ULONG               v, val;
+    const char*         explain = NULL;
+    char                buf[128];
+    struct dbg_type     type;
 
     dbg_printf("\t");
-    types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, &tid);
-    types_print_type(sym->ModBase, tid, FALSE);
+    type.module = sym->ModBase;
+    type.id = sym->TypeIndex;
+    types_get_info(&type, TI_GET_TYPE, &type.id);
+    types_print_type(&type, FALSE);
 
     if (sym->Flags & SYMFLAG_LOCAL) explain = "local";
     else if (sym->Flags & SYMFLAG_PARAMETER) explain = "parameter";
@@ -527,7 +544,8 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     }
     else if (sym->Flags & SYMFLAG_FRAMEREL)
     {
-        types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_OFFSET, &v);
+        type.id = sym->TypeIndex;
+        types_get_info(&type, TI_GET_OFFSET, &v);
         v += ((IMAGEHLP_STACK_FRAME*)ctx)->FrameOffset;
 
         dbg_read_memory_verbose((void*)v, &val, sizeof(val));
@@ -556,13 +574,13 @@ int symbol_info_locals(void)
 
 static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
-    DWORD       type;
+    struct dbg_type     type;
 
     dbg_printf("%08lx: %s (", sym->Address, sym->Name);
     if (sym->TypeIndex != dbg_itype_none && sym->TypeIndex != 0 &&
-        types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, &type))
+        types_get_info(&type, TI_GET_TYPE, &type.id))
     {
-        types_print_type(sym->ModBase, type, FALSE);
+        types_print_type(&type, FALSE);
     }
     dbg_printf(")\n");
     return TRUE;

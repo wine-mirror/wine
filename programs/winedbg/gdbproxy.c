@@ -468,7 +468,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     case OUTPUT_DEBUG_STRING_EVENT:
         assert(dbg_curr_thread);
         memory_get_string(gdbctx->process->handle,
-                          de->u.DebugString.lpDebugStringData, DLV_TARGET,
+                          de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, buffer, sizeof(buffer));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%08lx:%08lx: output debug string (%s)\n",

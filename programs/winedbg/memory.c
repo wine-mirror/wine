@@ -99,7 +99,6 @@ BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result
     }
     else
     {
-        assert(lvalue->addr.Mode == AddrModeFlat);
         if (!lvalue->addr.Offset) return FALSE;
         memcpy(result, (void*)lvalue->addr.Offset, size);
     }
@@ -118,7 +117,7 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
     os = ~size;
-    types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &os);
+    types_get_info(&lvalue->type, TI_GET_LENGTH, &os);
     assert(size == os);
 
     /* FIXME: only works on little endian systems */
@@ -128,7 +127,6 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     }
     else 
     {
-        assert(lvalue->addr.Mode == AddrModeFlat);
         memcpy((void*)lvalue->addr.Offset, value, size);
     }
     return ret;
@@ -139,17 +137,18 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
  *
  * Implementation of the 'x' command.
  */
-void memory_examine(const struct dbg_lvalue* lvalue, int count, char format)
+void memory_examine(void* linear, int count, char format)
 {
     int			i;
-    ADDRESS             x;
     char                buffer[256];
+    ADDRESS             addr;
 
-    x.Mode = AddrModeFlat;
-    x.Offset = types_extract_as_integer(lvalue);
+    addr.Mode = AddrModeFlat;
+    addr.Offset = (unsigned long)linear;
+
     if (format != 'i' && count > 1)
     {
-        print_address(&x, FALSE);
+        print_address(&addr, FALSE);
         dbg_printf(": ");
     }
 
@@ -157,32 +156,33 @@ void memory_examine(const struct dbg_lvalue* lvalue, int count, char format)
     {
     case 'u':
         if (count == 1) count = 256;
-        memory_get_string(dbg_curr_thread->handle, (void*)x.Offset, lvalue->cookie, 
-                          TRUE, buffer, min(count, sizeof(buffer)));
+        memory_get_string(dbg_curr_process->handle, linear, 
+                          TRUE, TRUE, buffer, min(count, sizeof(buffer)));
         dbg_printf("%s\n", buffer);
         return;
     case 's':
         if (count == 1) count = 256;
-        memory_get_string(dbg_curr_thread->handle, (void*)x.Offset, lvalue->cookie, 
-                          FALSE, buffer, min(count, sizeof(buffer)));
+        memory_get_string(dbg_curr_process->handle, linear,
+                          TRUE, FALSE, buffer, min(count, sizeof(buffer)));
         dbg_printf("%s\n", buffer);
         return;
     case 'i':
-        while (count-- && memory_disasm_one_insn(&x));
+        while (count-- && memory_disasm_one_insn(&addr));
         return;
     case 'g':
         while (count--)
         {
             GUID guid;
-            if (!dbg_read_memory_verbose((void*)x.Offset, &guid, sizeof(guid))) break;
+            if (!dbg_read_memory_verbose(linear, &guid, sizeof(guid))) break;
             dbg_printf("{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
                        guid.Data1, guid.Data2, guid.Data3,
                        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
                        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-            x.Offset += sizeof(guid);
+            linear = (char*)linear + sizeof(guid);
+            addr.Offset += sizeof(guid);
             if (count)
             {
-                print_address(&x, FALSE);
+                print_address(&addr, FALSE);
                 dbg_printf(": ");
             }
         }
@@ -191,13 +191,15 @@ void memory_examine(const struct dbg_lvalue* lvalue, int count, char format)
 #define DO_DUMP2(_t,_l,_f,_vv) {                                        \
             _t _v;                                                      \
             for (i = 0; i < count; i++) {                               \
-                if (!dbg_read_memory_verbose((void*)x.Offset, &_v,      \
+                if (!dbg_read_memory_verbose(linear, &_v,               \
                                              sizeof(_t))) break;        \
                 dbg_printf(_f, (_vv));                                  \
-                x.Offset += sizeof(_t);                                 \
-                if ((i % (_l)) == (_l) - 1) {                           \
+                addr.Offset += sizeof(_t);                              \
+                linear = (char*)linear + sizeof(_t);                    \
+                if ((i % (_l)) == (_l) - 1 && i != count - 1)           \
+                {                                                       \
                     dbg_printf("\n");                                   \
-                    print_address(&x, FALSE);                           \
+                    print_address(&addr, FALSE);                        \
                     dbg_printf(": ");                                   \
                 }                                                       \
             }                                                           \
@@ -214,7 +216,7 @@ void memory_examine(const struct dbg_lvalue* lvalue, int count, char format)
     }
 }
 
-BOOL memory_get_string(HANDLE hp, void* addr, unsigned cookie, BOOL unicode, 
+BOOL memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode, 
                        char* buffer, int size)
 {
     DWORD       sz;
@@ -222,9 +224,8 @@ BOOL memory_get_string(HANDLE hp, void* addr, unsigned cookie, BOOL unicode,
 
     buffer[0] = 0;
     if (!addr) return FALSE;
-    switch (cookie)
+    if (in_debuggee)
     {
-    case DLV_TARGET:
         if (!unicode) return ReadProcessMemory(hp, addr, buffer, size, &sz);
 
         buffW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
@@ -232,13 +233,13 @@ BOOL memory_get_string(HANDLE hp, void* addr, unsigned cookie, BOOL unicode,
         WideCharToMultiByte(CP_ACP, 0, buffW, sz / sizeof(WCHAR), buffer, size, 
                             NULL, NULL);
         HeapFree(GetProcessHeap(), 0, buffW);
-        return TRUE;
-    case DLV_HOST:
+    }
+    else
+    {
         strncpy(buffer, addr, size);
         buffer[size - 1] = 0;
-        return TRUE;
     }
-    return FALSE;
+    return TRUE;
 }
 
 BOOL memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffer, int size)
@@ -250,7 +251,7 @@ BOOL memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffe
     if (addr && 
         ReadProcessMemory(hp, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
     {
-        return memory_get_string(hp, ad, DLV_TARGET, unicode, buffer, size);
+        return memory_get_string(hp, ad, TRUE, unicode, buffer, size);
     }
     return FALSE;
 }
@@ -260,20 +261,19 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     long long int       val_int;
     void*               val_ptr;
     long double         val_real;
-    DWORD               tag, size, count, bt, rtype;
+    DWORD               tag, size, count, bt;
+    struct dbg_type     rtype;
     DWORD               linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
-
-    if (lvalue->typeid == dbg_itype_none ||
-        !types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag))
+    if (lvalue->type.id == dbg_itype_none ||
+        !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
         return;
 
     switch (tag)
     {
     case SymTagBaseType:
-        if (!types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &size) ||
-            !types_get_info(linear, lvalue->typeid, TI_GET_BASETYPE, &bt))
+        if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &size) ||
+            !types_get_info(&lvalue->type, TI_GET_BASETYPE, &bt))
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
@@ -309,20 +309,21 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     case SymTagPointerType:
         if (!memory_read_value(lvalue, sizeof(void*), &val_ptr)) return;
 
-        if (!types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &rtype) ||
-            rtype == dbg_itype_none)
+        if (!types_get_info(&lvalue->type, TI_GET_TYPE, &rtype.id) ||
+            rtype.id == dbg_itype_none)
         {
             dbg_printf("Internal symbol error: unable to access memory location %p", val_ptr);
             break;
         }
-
-        if (types_get_info(linear, rtype, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
-            types_get_info(linear, rtype, TI_GET_BASETYPE, &bt) && bt == btChar &&
-            types_get_info(linear, rtype, TI_GET_LENGTH, &size))
+        rtype.module = lvalue->type.module;
+        if (types_get_info(&rtype, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
+            types_get_info(&rtype, TI_GET_BASETYPE, &bt) && bt == btChar &&
+            types_get_info(&rtype, TI_GET_LENGTH, &size))
         {
             char    buffer[1024];
 
-            memory_get_string(dbg_curr_thread->handle, (void*)val_ptr, lvalue->cookie,
+            memory_get_string(dbg_curr_process->handle, val_ptr, 
+                              lvalue->cookie == DLV_TARGET,
                               size == 2, buffer, sizeof(buffer));
             dbg_printf("\"%s\"", buffer);
         }
@@ -345,24 +346,27 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
              */
             if (!be_cpu->fetch_integer(lvalue, 4, TRUE, &val_int)) return;
 
-            if (types_get_info(linear, lvalue->typeid, TI_GET_CHILDRENCOUNT, &count))
+            if (types_get_info(&lvalue->type, TI_GET_CHILDRENCOUNT, &count))
             {
-                char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
-                TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
-                WCHAR*                      ptr;
-                char                        tmp[256];
-                VARIANT                     variant;
-                int                         i;
+                char                    buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+                TI_FINDCHILDREN_PARAMS* fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+                WCHAR*                  ptr;
+                char                    tmp[256];
+                VARIANT                 variant;
+                int                     i;
+                struct dbg_type         type;
 
                 fcp->Start = 0;
                 while (count)
                 {
                     fcp->Count = min(count, 256);
-                    if (types_get_info(linear, lvalue->typeid, TI_FINDCHILDREN, fcp))
+                    if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
                     {
+                        type.module = linear;
                         for (i = 0; i < min(fcp->Count, count); i++)
                         {
-                            if (!types_get_info(linear, fcp->ChildId[i], TI_GET_VALUE, &variant)) 
+                            type.id = fcp->ChildId[i];
+                            if (!types_get_info(&type, TI_GET_VALUE, &variant)) 
                                 continue;
                             switch (variant.n1.n2.vt)
                             {
@@ -372,7 +376,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                             if (ok)
                             {
                                 ptr = NULL;
-                                types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                                types_get_info(&type, TI_GET_SYMNAME, &ptr);
                                 if (!ptr) continue;
                                 WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
                                 HeapFree(GetProcessHeap(), 0, ptr);
@@ -404,8 +408,7 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
 {
     long int    res;
 
-    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
-    if (lvalue->typeid == dbg_itype_none)
+    if (lvalue->type.id == dbg_itype_none)
     {
         dbg_printf("Unable to evaluate expression\n");
         return;
@@ -465,6 +468,9 @@ void print_bare_address(const ADDRESS* addr)
     case AddrMode1632:
         dbg_printf("0x%04x:0x%08lx", addr->Segment, addr->Offset);
         break;
+    default:
+        dbg_printf("Unknown mode %x\n", addr->Mode);
+        break;
     }
 }
 
@@ -499,7 +505,7 @@ void print_address(const ADDRESS* addr, BOOLEAN with_line)
     }
 }
 
-struct foo
+struct sym_enum
 {
     char*       tmp;
     DWORD       frame;
@@ -507,19 +513,23 @@ struct foo
 
 static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
 {
-    struct foo* foo = (struct foo*)user;
-    DWORD       addr;
-    unsigned    val;
-    long        offset;
+    struct sym_enum*    se = (struct sym_enum*)user;
+    DWORD               addr;
+    unsigned            val;
+    long                offset;
 
     if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL)) == (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL))
     {
-        if (foo->tmp[0]) strcat(foo->tmp, ", ");
-        addr = foo->frame;
-        types_get_info(sym_info->ModBase, sym_info->TypeIndex, TI_GET_OFFSET, &offset);
+        struct dbg_type     type;
+
+        if (se->tmp[0]) strcat(se->tmp, ", ");
+        addr = se->frame;
+        type.module = sym_info->ModBase;
+        type.id = sym_info->TypeIndex;
+        types_get_info(&type, TI_GET_OFFSET, &offset);
         addr += offset;
         dbg_read_memory_verbose((char*)addr, &val, sizeof(val));
-        sprintf(foo->tmp + strlen(foo->tmp), "%s=0x%x", sym_info->Name, val);
+        sprintf(se->tmp + strlen(se->tmp), "%s=0x%x", sym_info->Name, val);
     }
     return TRUE;
 }
@@ -531,7 +541,7 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
     IMAGEHLP_STACK_FRAME        isf;
     IMAGEHLP_LINE               il;
     IMAGEHLP_MODULE             im;
-    struct foo                  foo;
+    struct sym_enum             se;
     char                        tmp[1024];
     DWORD                       disp;
 
@@ -552,10 +562,10 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
     if (disp) dbg_printf("+0x%lx", disp);
 
     SymSetContext(dbg_curr_process->handle, &isf, NULL);
-    foo.tmp = tmp;
-    foo.frame = isf.FrameOffset;
+    se.tmp = tmp;
+    se.frame = isf.FrameOffset;
     tmp[0] = '\0';
-    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &foo);
+    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &se);
     if (tmp[0]) dbg_printf("(%s)", tmp);
 
     il.SizeOfStruct = sizeof(il);

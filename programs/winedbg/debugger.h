@@ -82,6 +82,18 @@ enum dbg_internal_types
     dbg_itype_none              = 0xffffffff
 };
 
+/* type description (in the following order):
+ * - if 'id' is dbg_itype_none (whatever 'module' value), the type isn't known
+ * - if 'module' is 0, it's an internal type (id is one of dbg_itype...)
+ * - if 'module' is non 0, then 'id' is a type ID referring to module (loaded in
+ *   dbghelp) which (linear) contains address 'module'.
+ */
+struct dbg_type
+{
+    unsigned long       id;
+    DWORD               module;
+};
+
 struct dbg_lvalue       /* structure to hold left-values... */
 {
     int			cookie;	/* DLV_??? */
@@ -91,7 +103,7 @@ struct dbg_lvalue       /* structure to hold left-values... */
 #	define	DLV_TARGET	0xF00D
 #	define	DLV_HOST	0x50DA
     ADDRESS             addr;
-    unsigned long       typeid;
+    struct dbg_type     type;
 };
 
 enum dbg_exec_mode
@@ -202,7 +214,7 @@ struct dbg_internal_var
     DWORD		        val;
     const char*		        name;
     LPDWORD		        pval;
-    unsigned long               typeid;
+    unsigned long               typeid; /* always internal type */
 };
 
 enum sym_get_lval {sglv_found, sglv_unknown, sglv_aborted};
@@ -222,7 +234,7 @@ struct type_expr_t
     unsigned            deref_count;
     union
     {
-        unsigned long   typeid;
+        struct dbg_type type;
         const char*     name;
     } u;
 };
@@ -293,15 +305,15 @@ extern void             info_win32_segments(DWORD start, int length);
 extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const char* name);
 
   /* memory.c */
-extern BOOL             memory_read_value(const struct dbg_lvalue* val, DWORD size, void* result);
+extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
 extern BOOL             memory_write_value(const struct dbg_lvalue* val, DWORD size, void* value);
-extern void             memory_examine(const struct dbg_lvalue* addr, int count, char format);
+extern void             memory_examine(void* linear, int count, char format);
 extern void             memory_report_invalid_addr(const void* addr);
 extern void*            memory_to_linear_addr(const ADDRESS* address);
 extern BOOL             memory_get_current_pc(ADDRESS* address);
 extern BOOL             memory_get_current_stack(ADDRESS* address);
 extern BOOL             memory_get_current_frame(ADDRESS* address);
-extern BOOL             memory_get_string(HANDLE hp, void* addr, unsigned cookie, BOOL unicode, char* buffer, int size);
+extern BOOL             memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
 extern BOOL             memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffer, int size);
 extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int offset);
 extern BOOL             memory_disasm_one_insn(ADDRESS* addr);
@@ -333,16 +345,15 @@ extern int              symbol_info_locals(void);
 
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);
-extern int              types_print_type(DWORD linear, DWORD typeid, BOOL details);
+extern int              types_print_type(const struct dbg_type*, BOOL details);
 extern int              print_types(void);
 extern long int         types_extract_as_integer(const struct dbg_lvalue*);
 extern BOOL             types_deref(const struct dbg_lvalue* value, struct dbg_lvalue* result);
 extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const char* name, long int* tmpbuf);
 extern BOOL             types_array_index(const struct dbg_lvalue* value, int index, struct dbg_lvalue* result);
-extern BOOL             types_get_info(unsigned long, unsigned long,
-                                       IMAGEHLP_SYMBOL_TYPE_INFO, void*);
-extern unsigned long    types_find_pointer(unsigned long linear, unsigned long typeid);
-extern unsigned long    types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag);
+extern BOOL             types_get_info(const struct dbg_type*, IMAGEHLP_SYMBOL_TYPE_INFO, void*);
+extern struct dbg_type  types_find_pointer(const struct dbg_type* type);
+extern struct dbg_type  types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag);
 
   /* winedbg.c */
 extern void	        dbg_outputA(const char* buffer, int len);
