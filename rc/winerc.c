@@ -897,7 +897,7 @@ void create_output(gen_res* top)
     /* Perform autoregistration */
     fprintf( code, 
              "#ifndef __WINE__\n"
-             "#if defined(__GNUC__) && (__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)\n"
+             "#if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))\n"
              "static void DoIt(void) __attribute__((constructor));\n"
              "#else\n"
              "static void DoIt(void);\n"

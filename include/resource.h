@@ -35,7 +35,7 @@ typedef enum
 
 extern void LIBRES_RegisterResources(const wrc_resource32_t * const * Res);
 
-#if defined(__GNUC__) && (__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)
+#if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
 #define WINE_CONSTRUCTOR  __attribute__((constructor))
 #define HAVE_WINE_CONSTRUCTOR
 #else
