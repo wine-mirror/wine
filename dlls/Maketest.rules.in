@@ -47,13 +47,6 @@ $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
 $(TESTLIST): Makefile.in
 	$(TOPSRCDIR)/tools/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
 
-# Rules for checking that no imports are missing
-
-CHECKLINK_RPATH = library
-
-checklink:: $(MODULE).so $(SUBDIRS:%=%/__checklink__)
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MODULE).so && $(RM) checklink
-
 # Rules for testing
 
 check test:: $(TESTRESULTS) $(SUBDIRS:%=%/__test__)

@@ -76,13 +76,4 @@ uninstall:: uninstall_prog$(DLLEXT)
 clean::
 	$(RM) $(PROGRAMS:.exe=)
 
-# Rules for checking that no imports are missing
-
-CHECKLINK_RPATH = library
-
-checklink:: $(PROGRAMS:%=%.so)
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c aviinfo.exe.so && $(RM) checklink
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c aviplay.exe.so && $(RM) checklink
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c icinfo.exe.so && $(RM) checklink
-
 ### Dependencies:

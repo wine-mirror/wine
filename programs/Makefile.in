@@ -112,8 +112,6 @@ clean::
 
 # Rules for testing
 
-checklink:: $(SUBDIRS:%=%/__checklink__)
-
 check test:: $(SUBDIRS:%=%/__test__)
 
 # Rules for symlinks
