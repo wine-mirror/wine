@@ -243,24 +243,56 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     TRACE("(0x%4x, 0x%08lx, %p)\n", hinst, reason, reserved);
    
     switch(reason) {
+
 	case DLL_PROCESS_ATTACH:
-		/* FIXME: return FALSE if we fail any of these steps */
-		PSDRV_Heap = HeapCreate(0, 0x10000, 0);
-		PSDRV_GetFontMetrics();
-		PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
-		/* Register driver as "WINEPS", "WINEPS.DLL" and "WINEPS.DRV"
-		   to allow an easy configuring for users */
-		DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
-		DRIVER_RegisterDriver( "WINEPS.DLL", &PSDRV_Funcs );
-		DRIVER_RegisterDriver( "WINEPS.DRV", &PSDRV_Funcs );
-                break;
+
+	    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
+	    if (PSDRV_Heap == (HANDLE)NULL)
+		return FALSE;
+
+	    if (PSDRV_GetFontMetrics() == FALSE) {
+		HeapDestroy(PSDRV_Heap);
+		return FALSE;
+	    }
+
+	    PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
+	    if (PSDRV_DefaultFont == (HANDLE)NULL) {
+		HeapDestroy(PSDRV_Heap);
+		return FALSE;
+	    }
+
+	    /* Register driver as "WINEPS", "WINEPS.DLL" and "WINEPS.DRV"
+		to allow an easy configuring for users */
+
+	    if (DRIVER_RegisterDriver("WINEPS", &PSDRV_Funcs) == FALSE) {
+	 	HeapDestroy(PSDRV_Heap);
+		return FALSE;
+	    }
+
+	    if (DRIVER_RegisterDriver("WINEPS.DLL", &PSDRV_Funcs) == FALSE) {
+		DRIVER_UnregisterDriver("WINEPS");
+		HeapDestroy(PSDRV_Heap);
+		return FALSE;
+	    }
+
+	    if (DRIVER_RegisterDriver("WINEPS.DRV", &PSDRV_Funcs) == FALSE) {
+		DRIVER_UnregisterDriver("WINEPS");
+		DRIVER_UnregisterDriver("WINEPS.DLL");
+		HeapDestroy(PSDRV_Heap);
+		return FALSE;
+	    }
+
+            break;
+
 	case DLL_PROCESS_DETACH:
-		DeleteObject( PSDRV_DefaultFont );
-		HeapDestroy( PSDRV_Heap );
-		DRIVER_UnregisterDriver( "WINEPS" );
-		DRIVER_UnregisterDriver( "WINEPS.DLL" );
-		DRIVER_UnregisterDriver( "WINEPS.DRV" );
-                break;
+
+	    DeleteObject( PSDRV_DefaultFont );
+	    HeapDestroy( PSDRV_Heap );
+	    DRIVER_UnregisterDriver( "WINEPS" );
+	    DRIVER_UnregisterDriver( "WINEPS.DLL" );
+	    DRIVER_UnregisterDriver( "WINEPS.DRV" );
+
+            break;
     }
  
     return TRUE;
