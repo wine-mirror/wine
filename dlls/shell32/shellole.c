@@ -318,7 +318,7 @@ static LPVOID WINAPI IShellMalloc_fnAlloc(LPMALLOC iface, DWORD cb)
 {
         LPVOID addr;
 
-	addr = (LPVOID) LocalAlloc(GMEM_ZEROINIT, cb);
+	addr = (LPVOID) LocalAlloc(LMEM_ZEROINIT, cb);
         TRACE("(%p,%ld);\n",addr,cb);
         return addr;
 }
@@ -332,14 +332,14 @@ static LPVOID WINAPI IShellMalloc_fnRealloc(LPMALLOC iface, LPVOID pv, DWORD cb)
 
 	if (pv) {
 		if (cb) {
-			addr = (LPVOID) LocalReAlloc((HANDLE) pv, cb, GMEM_ZEROINIT | GMEM_MOVEABLE);
+			addr = (LPVOID) LocalReAlloc((HANDLE) pv, cb, LMEM_ZEROINIT | LMEM_MOVEABLE);
 		} else {
 			LocalFree((HANDLE) pv);
 			addr = NULL;
 		}
 	} else {
 		if (cb) {
-			addr = (LPVOID) LocalAlloc(GMEM_ZEROINIT, cb);
+			addr = (LPVOID) LocalAlloc(LMEM_ZEROINIT, cb);
 		} else {
 			addr = NULL;
 		}

@@ -837,7 +837,7 @@ HRESULT WINAPI ISF_Desktop_Constructor (
     if (!SHGetSpecialFolderPathW( 0, szMyPath, CSIDL_DESKTOPDIRECTORY, TRUE ))
         return E_UNEXPECTED;
 
-    sf = LocalAlloc( GMEM_ZEROINIT, sizeof (IGenericSFImpl) );
+    sf = LocalAlloc( LMEM_ZEROINIT, sizeof (IGenericSFImpl) );
     if (!sf)
         return E_OUTOFMEMORY;
 

@@ -1506,7 +1506,7 @@ HRESULT WINAPI SHELL32_256(LPDWORD lpdw0, LPDWORD lpdw1)
         ret = E_INVALIDARG;
     else
     {
-        LPVOID lpdata = 0;/*LocalAlloc(GMEM_ZEROINIT, 0x4E4);*/
+        LPVOID lpdata = 0;/*LocalAlloc(LMEM_ZEROINIT, 0x4E4);*/
 
 	if (!lpdata)
             ret = E_OUTOFMEMORY;

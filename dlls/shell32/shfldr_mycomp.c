@@ -108,7 +108,7 @@ HRESULT WINAPI ISF_MyComputer_Constructor (IUnknown * pUnkOuter, REFIID riid, LP
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    sf = LocalAlloc (GMEM_ZEROINIT, sizeof (IGenericSFImpl));
+    sf = LocalAlloc (LMEM_ZEROINIT, sizeof (IGenericSFImpl));
     if (!sf)
         return E_OUTOFMEMORY;
 

@@ -1340,7 +1340,7 @@ DWORD WINAPI SHQueryValueExA( HKEY hKey, LPCSTR lpszValue,
       char cNull = '\0';
       nBytesToAlloc = (!pvData || (dwRet == ERROR_MORE_DATA)) ? dwUnExpDataLen : *pcbData;
 
-      szData = (LPSTR) LocalAlloc(GMEM_ZEROINIT, nBytesToAlloc);
+      szData = (LPSTR) LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc);
       RegQueryValueExA (hKey, lpszValue, lpReserved, NULL, (LPBYTE)szData, &nBytesToAlloc);
       dwExpDataLen = ExpandEnvironmentStringsA(szData, &cNull, 1);
       dwUnExpDataLen = max(nBytesToAlloc, dwExpDataLen);
@@ -1349,7 +1349,7 @@ DWORD WINAPI SHQueryValueExA( HKEY hKey, LPCSTR lpszValue,
     else
     {
       nBytesToAlloc = (lstrlenA(pvData)+1) * sizeof (CHAR);
-      szData = (LPSTR) LocalAlloc(GMEM_ZEROINIT, nBytesToAlloc );
+      szData = (LPSTR) LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc );
       lstrcpyA(szData, pvData);
       dwExpDataLen = ExpandEnvironmentStringsA(szData, pvData, *pcbData / sizeof(CHAR));
       if (dwExpDataLen > *pcbData) dwRet = ERROR_MORE_DATA;
@@ -1401,7 +1401,7 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
       WCHAR cNull = '\0';
       nBytesToAlloc = (!pvData || (dwRet == ERROR_MORE_DATA)) ? dwUnExpDataLen : *pcbData;
 
-      szData = (LPWSTR) LocalAlloc(GMEM_ZEROINIT, nBytesToAlloc);
+      szData = (LPWSTR) LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc);
       RegQueryValueExW (hKey, lpszValue, lpReserved, NULL, (LPBYTE)szData, &nBytesToAlloc);
       dwExpDataLen = ExpandEnvironmentStringsW(szData, &cNull, 1);
       dwUnExpDataLen = max(nBytesToAlloc, dwExpDataLen);
@@ -1410,7 +1410,7 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
     else
     {
       nBytesToAlloc = (lstrlenW(pvData) + 1) * sizeof(WCHAR);
-      szData = (LPWSTR) LocalAlloc(GMEM_ZEROINIT, nBytesToAlloc );
+      szData = (LPWSTR) LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc );
       lstrcpyW(szData, pvData);
       dwExpDataLen = ExpandEnvironmentStringsW(szData, pvData, *pcbData/sizeof(WCHAR) );
       if (dwExpDataLen > *pcbData) dwRet = ERROR_MORE_DATA;

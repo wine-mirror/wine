@@ -1093,7 +1093,7 @@ HRESULT WINAPI IShellLink_Constructor (
 	*ppv = NULL;
 
 	if(pUnkOuter) return CLASS_E_NOAGGREGATION;
-	sl = (IShellLinkImpl *) LocalAlloc(GMEM_ZEROINIT,sizeof(IShellLinkImpl));
+	sl = (IShellLinkImpl *) LocalAlloc(LMEM_ZEROINIT,sizeof(IShellLinkImpl));
 	if (!sl) return E_OUTOFMEMORY;
 
 	sl->ref = 1;
