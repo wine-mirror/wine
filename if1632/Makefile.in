@@ -11,6 +11,7 @@ DLLS = \
 	commdlg.spec \
 	compobj.spec \
 	ddeml.spec \
+	dispdib.spec \
 	display.spec \
 	gdi.spec \
 	kernel.spec \

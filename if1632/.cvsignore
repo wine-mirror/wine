@@ -6,6 +6,7 @@ comm.s
 commdlg.s
 compobj.s
 ddeml.s
+dispdib.s
 display.s
 gdi.s
 kernel.s

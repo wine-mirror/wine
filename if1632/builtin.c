@@ -51,6 +51,7 @@ extern const WIN16_DESCRIPTOR COMM_Descriptor;
 extern const WIN16_DESCRIPTOR COMMDLG_Descriptor;
 extern const WIN16_DESCRIPTOR COMPOBJ_Descriptor;
 extern const WIN16_DESCRIPTOR DDEML_Descriptor;
+extern const WIN16_DESCRIPTOR DISPDIB_Descriptor;
 extern const WIN16_DESCRIPTOR DISPLAY_Descriptor;
 extern const WIN16_DESCRIPTOR GDI_Descriptor;
 extern const WIN16_DESCRIPTOR KERNEL_Descriptor;
@@ -103,6 +104,7 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &COMMDLG_Descriptor,  DLL_FLAG_NOT_USED },
     { &COMPOBJ_Descriptor,  DLL_FLAG_NOT_USED },
     { &DDEML_Descriptor,    DLL_FLAG_NOT_USED },
+    { &DISPDIB_Descriptor,  0 },
     { &KEYBOARD_Descriptor, 0 },
     { &COMM_Descriptor,     0 },
     { &LZEXPAND_Descriptor, 0 },
