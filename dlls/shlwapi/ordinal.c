@@ -119,14 +119,7 @@ DWORD WINAPI SHLWAPI_137(
   FIXME("(%#x)stub\n", what);
   return 0;
 }  
-/*************************************************************************
- *	SHLWAPI_141
- */
-DWORD WINAPI SHLWAPI_141( LPVOID ptr, DWORD x , LPVOID ptr2)
-{
-  FIXME("(%p,%ld,%p), stub\n", ptr,x,ptr2);
-  return 0;
-}  
+
 /*************************************************************************
  *      SHLWAPI_151	[SHLWAPI.151]
  */
@@ -211,10 +204,10 @@ LPWSTR WINAPI SHLWAPI_215 (
 HRESULT WINAPI SHLWAPI_219 (
 	LPVOID w, /* [???] NOTE: returned by LocalAlloc, 0x450 bytes, iface */
 	LPVOID x,
-	LPVOID y,
+	REFIID riid,
 	LPWSTR z) /* [???] NOTE: OUT: path */
 {
-	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+	FIXME("(%p %p %s %p)stub\n",w,x,debugstr_guid(riid),z);
 	return 0xabba1252;
 }
 

@@ -46,7 +46,7 @@ debug_channels (shell)
 34  stub @
 35  stub @
 36  stub @
-37  stub @
+37  forward @ user32.CallWindowProcW
 38  stdcall @(long) SHLWAPI_38
 39  stub @
 40  stub @
@@ -150,7 +150,7 @@ debug_channels (shell)
 138 stub @
 139 stub @
 140 stub @
-141 stdcall @(ptr long ptr) SHLWAPI_141
+141 forward @ user32.SetWindowLongW
 142 stub @
 143 stub @
 144 stub @
