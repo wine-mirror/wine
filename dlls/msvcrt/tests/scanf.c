@@ -57,19 +57,32 @@ static void test_sscanf( void )
     ok( sscanf(buffer, format, &result) == 1, "sscanf failed" );
     ok( result == 12, "sscanf reads %x instead of %x", result, 12 );
 
-    /*Check float */
+    /* Check float */
     ret = sprintf(buffer,"%f %f",res1, res2);
     ret = sscanf(buffer,"%f%f",&res11, &res12);
     ok( (res11 == res1) && (res12 == res2), "Error reading floats");
+
+    /* check strings */
     ret = sprintf(buffer," %s", pname);
     ret = sscanf(buffer,"%*c%[^\n]",buffer1);
     ok( ret == 1, "Error with format \"%s\"","%*c%[^\n]");
     ok( strncmp(pname,buffer1,strlen(buffer1)) == 0, "Error with \"%s\" \"%s\"",pname, buffer1);
+
+    ret = sscanf("abcefgdh","%*[a-cg-e]%c",&buffer[0]);
+    ok( ret == 1, "Error with format \"%s\"","%*[a-cg-e]%c");
+    ok( buffer[0] == 'd', "Error with \"abcefgdh\" \"%c\"", buffer[0]);
+
+    ret = sscanf("abcefgdh","%*[a-cd-dg-e]%c",&buffer[0]);
+    ok( ret == 1, "Error with format \"%s\"","%*[a-cd-dg-e]%c");
+    ok( buffer[0] == 'h', "Error with \"abcefgdh\" \"%c\"", buffer[0]);
+
+    /* check digits */
     ret = sprintf(buffer,"%d:%d:%d",hour,min,sec);
     ret = sscanf(buffer,"%d%n",&number,&number_so_far);
     ok(ret == 1 , "problem with format arg \"%%d%%n\"");
     ok(number == hour,"Read wrong arg %d instead of %d",number, hour);
     ok(number_so_far == 2,"Read wrong arg for \"%%n\" %d instead of 2",number_so_far);
+
     ret = sscanf(buffer+2,"%*c%n",&number_so_far);
     ok(ret == 0 , "problem with format arg \"%%*c%%n\"");
     ok(number_so_far == 1,"Read wrong arg for \"%%n\" %d instead of 2",number_so_far);

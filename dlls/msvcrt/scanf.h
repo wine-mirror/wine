@@ -444,13 +444,17 @@ int _FUNCTION_ {
 			format++;
 		    }
                     while(*format && (*format != ']')) {
+			/* According to:
+			 * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vccore98/html/_crt_scanf_width_specification.asp
+			 * "Note that %[a-z] and %[z-a] are interpreted as equivalent to %[abcde...z]." */
 			if((*format == '-') && (*(format + 1) != ']')) {
-			    int n = 0;
-			    for(;(n + *(format - 1)) < *(format + 1); n++)
-				RtlSetBits(&bitMask, n + *(format - 1), 1);
+			    if ((*(format - 1)) < *(format + 1))
+				RtlSetBits(&bitMask, *(format - 1) +1 , *(format + 1) - *(format - 1));
+			    else
+				RtlSetBits(&bitMask, *(format + 1)    , *(format - 1) - *(format + 1));			      
 			    format++;
-			}
-			RtlSetBits(&bitMask, *format, 1);
+			} else
+			    RtlSetBits(&bitMask, *format, 1);
 			format++;
 		    }
                     /* read until char is not suitable */
