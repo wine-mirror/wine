@@ -40,6 +40,7 @@ IDC_REGEDIT ACCELERATORS
 
 /* include localised resources */
 
+#include "De.rc"
 #include "En.rc"
 #include "Es.rc"
 #include "Fr.rc"
