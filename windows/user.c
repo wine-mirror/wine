@@ -582,7 +582,7 @@ BOOL WINAPI SetProcessWindowStation(HWINSTA hWinSta) {
  */
 BOOL WINAPI SetUserObjectSecurity(
 	HANDLE hObj,
-	/*LPSECURITY_INFORMATION*/LPVOID pSIRequested,
+	PSECURITY_INFORMATION pSIRequested,
 	PSECURITY_DESCRIPTOR pSID
 ) {
 	FIXME_(win32)("(0x%08x,%p,%p),stub!\n",hObj,pSIRequested,pSID);
@@ -661,7 +661,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, INT nIndex, LPVOID pvInfo, D
 /***********************************************************************
  *           GetUserObjectSecurity   (USER32.300)
  */
-BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, SECURITY_INFORMATION * pSIRequested,
+BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, PSECURITY_INFORMATION pSIRequested,
 	PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)
 {	FIXME_(win32)("(0x%x %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
 	return TRUE;

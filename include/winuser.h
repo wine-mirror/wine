@@ -3173,7 +3173,9 @@ BOOL      WINAPI ClearCommBreak(HANDLE);
 BOOL      WINAPI ClientToScreen(HWND,LPPOINT);
 BOOL      WINAPI ClipCursor(const RECT*);
 BOOL      WINAPI CloseClipboard(void);
+BOOL      WINAPI CloseDesktop(HDESK);
 BOOL      WINAPI CloseWindow(HWND);
+BOOL      WINAPI CloseWindowStation(HWINSTA);
 #define     CopyCursor(cur) ((HCURSOR)CopyIcon((HICON)(cur)))
 HICON     WINAPI CopyIcon(HICON);
 HICON     WINAPI CopyImage(HANDLE,UINT,INT,INT,UINT);
@@ -3413,6 +3415,9 @@ DWORD       WINAPI GetTabbedTextExtentW(HDC,LPCWSTR,INT,INT,const INT*);
 HWND      WINAPI GetTopWindow(HWND);
 BOOL      WINAPI GetUpdateRect(HWND,LPRECT,BOOL);
 INT       WINAPI GetUpdateRgn(HWND,HRGN,BOOL);
+BOOL        WINAPI GetUserObjectInformationA(HANDLE,INT,LPVOID,DWORD,LPDWORD);
+BOOL        WINAPI GetUserObjectInformationW(HANDLE,INT,LPVOID,DWORD,LPDWORD);
+#define     GetUserObjectInformation WINELIB_NAME_AW(GetUserObjectInformation)
 HWND      WINAPI GetWindow(HWND,WORD);
 HDC       WINAPI GetWindowDC(HWND);
 LONG        WINAPI GetWindowLongA(HWND,INT);
@@ -3618,6 +3623,7 @@ BOOL      WINAPI SetMenuContextHelpId(HMENU,DWORD);
 BOOL      WINAPI SetMenuItemBitmaps(HMENU,UINT,UINT,HBITMAP,HBITMAP);
 BOOL      WINAPI SetMessageQueue(INT);
 BOOL      WINAPI SetProcessDefaultLayout(DWORD);
+BOOL      WINAPI SetProcessWindowStation(HWINSTA);
 HWND      WINAPI SetParent(HWND,HWND);
 BOOL      WINAPI SetPropA(HWND,LPCSTR,HANDLE);
 BOOL      WINAPI SetPropW(HWND,LPCWSTR,HANDLE);

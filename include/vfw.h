@@ -10,7 +10,14 @@
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV
 
-DWORD VFWAPI VideoForWindowsVersion(void);
+typedef HANDLE HDRAWDIB;
+
+BOOL        VFWAPI DrawDibBegin(HDRAWDIB hdd, HDC hdc, INT dxDest, INT dyDest, LPBITMAPINFOHEADER lpbi, INT dxSrc, INT dySrc, UINT wFlags);
+BOOL        VFWAPI DrawDibClose(HDRAWDIB hdd);
+HDRAWDIB    VFWAPI DrawDibOpen(void);
+UINT        VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground);
+BOOL        VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal);
+DWORD       VFWAPI VideoForWindowsVersion(void);
 
 #ifndef mmioFOURCC
 #define mmioFOURCC( ch0, ch1, ch2, ch3 )				\

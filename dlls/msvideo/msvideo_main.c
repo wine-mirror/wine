@@ -421,7 +421,7 @@ LRESULT WINAPI ICClose(HIC hic) {
 /***********************************************************************
  *		DrawDibOpen		[MSVFW.10]
  */
-HANDLE /* HDRAWDIB */ WINAPI
+HDRAWDIB VFWAPI
 DrawDibOpen( void ) {
 	FIXME("stub!\n");
 	return 0xdead;
@@ -430,8 +430,8 @@ DrawDibOpen( void ) {
 /***********************************************************************
  *		DrawDibClose		[MSVFW.5]
  */
-BOOL WINAPI
-DrawDibClose( HANDLE /*HDRAWDIB*/ hDib ) {
+BOOL VFWAPI
+DrawDibClose( HDRAWDIB hDib ) {
        FIXME("stub!\n");
        return TRUE;
 }
@@ -439,7 +439,7 @@ DrawDibClose( HANDLE /*HDRAWDIB*/ hDib ) {
 /***********************************************************************
  *		DrawDibBegin		[MSVFW.3]
  */
-BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
+BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
                                     HDC      hdc,
                                     INT      dxDst,
                                     INT      dyDst,
@@ -458,7 +458,7 @@ BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
  *		DrawDibSetPalette	[MSVFW.13]
  */
 BOOL VFWAPI
-DrawDibSetPalette(HANDLE /*HDRAWDIB*/ hdd, HPALETTE hpal) {
+DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal) {
 	FIXME("(%d,%d),stub!\n",hdd,hpal);
 	return TRUE;
 }
@@ -466,7 +466,7 @@ DrawDibSetPalette(HANDLE /*HDRAWDIB*/ hdd, HPALETTE hpal) {
 /***********************************************************************
  *		DrawDibRealize		[MSVFW.12]
  */
-UINT VFWAPI DrawDibRealize(HANDLE /*HDRAWDIB*/ hdd, HDC hdc, BOOL fBackground) {
+UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 	FIXME("(0x%08lx,0x%08lx,%d),stub!\n",(DWORD)hdd,(DWORD)hdc,fBackground);
 	return 0;
 }
