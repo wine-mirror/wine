@@ -188,6 +188,7 @@ static const char * const event_names[] =
  * Prototypes 
  */
 
+int RunAsDaemon( void );
 BOOL Init(int argc, char **argv);
 void TerminateServer( int ret );
 int AcquireSelection();
@@ -209,6 +210,12 @@ int main(int argc, char **argv)
 {
     XEvent event;
 
+    if ( RunAsDaemon() == -1 )
+    {
+       ERR("could not run as daemon\n");
+       exit(1); 
+    }
+
     if ( !Init(argc, argv) )
         exit(0);
     
@@ -228,6 +235,36 @@ int main(int argc, char **argv)
         
         EVENT_ProcessEvent( &event );
     }
+}
+
+
+/**************************************************************************
+ *		RunAsDaemon()
+ */
+int RunAsDaemon( void )
+{
+    int i;
+
+    /* fork child process and let parent exit ; gets rid of original PID */
+    switch( fork() )
+    {
+    case -1:
+        ERR("fork failed\n");
+        return(-1);
+    case 0:
+        exit(0);
+        break;
+    }
+
+    /* below is child process w/ new PID, set as session leader */
+    setsid();
+
+    /* close stdin,stdout,stderr and file descriptors (overkill method) */
+    for ( i = 0; i < 256 ; i++ )
+        close(i);
+
+    TRACE("now running as daemon...\n");
+    return 0;
 }
 
 
