@@ -1,6 +1,6 @@
 /*	DirectDraw driver for XF86DGA2 primary surface
  *
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 #include "config.h"
@@ -100,16 +100,31 @@ static void cleanup(void)
     TSXFree(modes);
 }
 
-static XDGAMode* choose_mode(DWORD dwWidth, DWORD dwHeight,
+static XDGAMode* choose_mode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP,
 		       DWORD dwRefreshRate, DWORD dwFlags)
 {
     XDGAMode* best = NULL;
-    int i;
+    int depth, bpp, i;
+
+    switch (dwBPP) {
+    case 8:
+	depth = dwBPP; bpp = 8; break;
+    case 15:
+    case 16:
+	depth = dwBPP; bpp = 16; break;
+    case 24:
+    case 32:
+	depth = 24; bpp = dwBPP; break;
+    default:
+	ERR("invalid color depth (%ld)\n", dwBPP);
+	return NULL;
+    }
 
     /* Choose the smallest mode that is large enough. */
     for (i=0; i < num_modes; i++)
     {
-	if (modes[i].viewportWidth >= dwWidth && modes[i].viewportHeight >= dwHeight)
+	if (modes[i].viewportWidth >= dwWidth && modes[i].viewportHeight >= dwHeight &&
+	    modes[i].depth == depth && modes[i].bitsPerPixel == bpp)
 	{
 	    if (best == NULL) best = &modes[i];
 	    else
@@ -121,21 +136,30 @@ static XDGAMode* choose_mode(DWORD dwWidth, DWORD dwHeight,
 	}
     }
 
-    /* all modes were too small, use the largest */
     if (!best)
     {
 	TRACE("all modes too small\n");
+	/* use the largest */
 
 	for (i=1; i < num_modes; i++)
 	{
-	    if (best == NULL) best = &modes[i];
-	    else
+	    if (modes[i].depth == depth && modes[i].bitsPerPixel == bpp)
 	    {
-		if (modes[i].viewportWidth > best->viewportWidth
-		    || modes[i].viewportHeight > best->viewportHeight)
-		    best = &modes[i];
+		if (best == NULL) best = &modes[i];
+		else
+		{
+		    if (modes[i].viewportWidth > best->viewportWidth
+			|| modes[i].viewportHeight > best->viewportHeight)
+			best = &modes[i];
+		}
 	    }
 	}
+    }
+
+    if (!best)
+    {
+	ERR("requested color depth (%ld) not available, try reconfiguring X server\n", dwBPP);
+	return NULL;
     }
 
     TRACE("using %d %d for %lu %lu\n", best->viewportWidth, best->viewportHeight,
@@ -331,7 +355,11 @@ XF86DGA2_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 	XDGAMode* new_mode;
 	int old_mode_num = old_mode ? old_mode->mode.num : 0;
 
-	new_mode = choose_mode(dwWidth, dwHeight, dwRefreshRate, dwFlags);
+	new_mode = choose_mode(dwWidth, dwHeight, dwBPP, dwRefreshRate, dwFlags);
+	if (!new_mode)
+	{
+	    return DDERR_INVALIDMODE;
+	}
 
 	if (new_mode && new_mode->num != old_mode_num)
 	{
