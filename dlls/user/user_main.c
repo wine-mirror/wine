@@ -292,21 +292,6 @@ static void thread_detach(void)
     WIN_DestroyThreadWindows( GetDesktopWindow() );
     QUEUE_DeleteMsgQueue();
 
-    if (!(NtCurrentTeb()->tibflags & TEBF_WIN32))
-    {
-        HMODULE16 hModule = GetExePtr( MapHModuleLS(0) );
-
-        /* FIXME: maybe destroy menus (Windows only complains about them
-         * but does nothing);
-         */
-        if (GetModuleUsage16( hModule ) <= 1)
-        {
-            /* ModuleUnload() in "Internals" */
-            /* HOOK_FreeModuleHooks( hModule ); */
-            CLASS_FreeModuleClasses( hModule );
-            CURSORICON_FreeModuleIcons( hModule );
-        }
-    }
     exiting_thread_id = 0;
 }
 

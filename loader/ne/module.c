@@ -1282,13 +1282,11 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
 
     if (call_wep && !(pModule->flags & NE_FFLAGS_WIN32))
     {
-        if (pModule->flags & NE_FFLAGS_LIBMODULE)
-        {
-            MODULE_CallWEP( hModule );
+        /* Free the objects owned by the DLL module */
+        NE_CallUserSignalProc( hModule, USIG16_DLL_UNLOAD );
 
-            /* Free the objects owned by the DLL module */
-            NE_CallUserSignalProc( hModule, USIG16_DLL_UNLOAD );
-        }
+        if (pModule->flags & NE_FFLAGS_LIBMODULE)
+            MODULE_CallWEP( hModule );
         else
             call_wep = FALSE;  /* We are freeing a task -> no more WEPs */
     }

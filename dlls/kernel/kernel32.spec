@@ -1088,7 +1088,6 @@
 @ stdcall GetModuleFileName16(long ptr long)
 @ stdcall GetModuleHandle16(str)
 @ stdcall GetModuleName16(long ptr long)
-@ stdcall GetModuleUsage16(long)
 @ stdcall GetSelectorBase(long)
 @ stdcall GetSelectorLimit16(long)
 @ stdcall GetThreadQueue16(long)
