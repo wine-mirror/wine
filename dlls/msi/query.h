@@ -110,8 +110,8 @@ UINT DISTINCT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 UINT ORDER_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 UINT ORDER_AddColumn( MSIVIEW *group, LPWSTR name );
 
-UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
-UINT WHERE_AddCondition( MSIVIEW *view, struct expr *condition );
+UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
+                       struct expr *cond );
 
 UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         create_col_info *col_info, BOOL temp );

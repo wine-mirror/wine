@@ -215,40 +215,37 @@ column_def:
                 ;
 
             ci->next = HeapAlloc( GetProcessHeap(), 0, sizeof *$$ );
-            if( ci->next )
+            if( !ci->next )
             {
-                ci->next->colname = $3;
-                ci->next->type = $4;
-                ci->next->next = NULL;
+                /* FIXME: free $1 */
+                YYABORT;
             }
-            else if( $1 )
-            {
-                HeapFree( GetProcessHeap(), 0, $1 );
-                $1 = NULL;
-            }
+            ci->next->colname = $3;
+            ci->next->type = $4;
+            ci->next->next = NULL;
+
             $$ = $1;
         }
   | column column_type
         {
             $$ = HeapAlloc( GetProcessHeap(), 0, sizeof *$$ );
-            if( $$ )
-            {
-                $$->colname = $1;
-                $$->type = $2;
-                $$->next = NULL;
-            }
+            if( ! $$ )
+                YYABORT;
+            $$->colname = $1;
+            $$->type = $2;
+            $$->next = NULL;
         }
     ;
 
 column_type:
     data_type_l
         {
-            $$ = $1;
+            $$ = $1 | MSITYPE_VALID;
         }
   | data_type_l TK_LOCALIZABLE
         {
             FIXME("LOCALIZABLE ignored\n");
-            $$ = $1;
+            $$ = $1 | MSITYPE_VALID;
         }
     ;
 
@@ -270,7 +267,7 @@ data_type:
         }
   | TK_CHAR TK_LP data_count TK_RP
         {
-            $$ = MSITYPE_STRING | 0x500 | $3;
+            $$ = MSITYPE_STRING | 0x400 | $3;
         }
   | TK_LONGCHAR
         {
@@ -397,10 +394,7 @@ from:
             r = TABLE_CreateView( sql->db, $2, &view );
             if( r != ERROR_SUCCESS )
                 YYABORT;
-            r = WHERE_CreateView( sql->db, &view, view );
-            if( r != ERROR_SUCCESS )
-                YYABORT;
-            r = WHERE_AddCondition( view, $4 );
+            r = WHERE_CreateView( sql->db, &view, view, $4 );
             if( r != ERROR_SUCCESS )
                 YYABORT;
             $$ = view;

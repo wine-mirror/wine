@@ -321,36 +321,6 @@ MSIVIEWOPS where_ops =
     WHERE_delete
 };
 
-UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
-{
-    MSIWHEREVIEW *wv = NULL;
-    UINT count = 0, r;
-
-    TRACE("%p\n", wv );
-
-    r = table->ops->get_dimensions( table, NULL, &count );
-    if( r != ERROR_SUCCESS )
-    {
-        ERR("can't get table dimensions\n");
-        return r;
-    }
-
-    wv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *wv );
-    if( !wv )
-        return ERROR_FUNCTION_FAILED;
-    
-    /* fill the structure */
-    wv->view.ops = &where_ops;
-    wv->db = db;
-    wv->table = table;
-    wv->row_count = 0;
-    wv->reorder = NULL;
-    wv->cond = NULL;
-    *view = (MSIVIEW*) wv;
-
-    return ERROR_SUCCESS;
-}
-
 static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr *cond,
                                    UINT *valid )
 {
@@ -423,33 +393,42 @@ static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr 
     return ERROR_SUCCESS;
 }
 
-UINT WHERE_AddCondition( MSIVIEW *view, struct expr *cond )
+UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
+                       struct expr *cond )
 {
-    MSIWHEREVIEW *wv = (MSIWHEREVIEW *) view;
-    UINT r, valid = 0;
+    MSIWHEREVIEW *wv = NULL;
+    UINT count = 0, r, valid = 0;
 
-    if( wv->view.ops != &where_ops )
-        return ERROR_FUNCTION_FAILED;
-    if( !wv->table )
-        return ERROR_INVALID_PARAMETER;
-    
-    if( !cond )
-        return ERROR_SUCCESS;
+    TRACE("%p\n", wv );
 
-    TRACE("Adding condition\n");
-
-    r = WHERE_VerifyCondition( wv->db, wv->table, cond, &valid );
+    r = table->ops->get_dimensions( table, NULL, &count );
     if( r != ERROR_SUCCESS )
-        ERR("condition evaluation failed\n");
-
-    TRACE("condition is %s\n", valid ? "valid" : "invalid" );
-    if( !valid )
     {
-        delete_expr( cond );
-        return ERROR_FUNCTION_FAILED;
+        ERR("can't get table dimensions\n");
+        return r;
     }
 
+    if( cond )
+    {
+        r = WHERE_VerifyCondition( db, table, cond, &valid );
+        if( r != ERROR_SUCCESS )
+            return r;
+        if( !valid )
+            return ERROR_FUNCTION_FAILED;
+    }
+
+    wv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *wv );
+    if( !wv )
+        return ERROR_FUNCTION_FAILED;
+    
+    /* fill the structure */
+    wv->view.ops = &where_ops;
+    wv->db = db;
+    wv->table = table;
+    wv->row_count = 0;
+    wv->reorder = NULL;
     wv->cond = cond;
+    *view = (MSIVIEW*) wv;
 
     return ERROR_SUCCESS;
 }
