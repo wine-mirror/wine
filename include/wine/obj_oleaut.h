@@ -141,7 +141,10 @@ struct tagVARIANT {
 		DATE date;
 		BSTR bstrVal;
 		CY cyVal;
-		DECIMAL decVal;
+		/* FIXME: This is not supposed to be at this level
+		 * See bug #181 in bugzilla
+		 * DECIMAL decVal;
+		 */
 		IUnknown* punkVal;
 		IDispatch* pdispVal;
 	        SAFEARRAY* parray;
