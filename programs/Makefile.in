@@ -2,7 +2,6 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
 
 SUBDIRS = \
 	avitools \
@@ -11,12 +10,9 @@ SUBDIRS = \
 	control \
 	expand \
 	notepad \
-	osversioncheck \
 	progman \
-	regapi \
 	regedit \
 	regsvr32 \
-	regtest \
 	rpcss \
 	rundll32 \
 	start \

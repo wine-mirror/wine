@@ -1448,7 +1448,6 @@ WINE_CONFIG_EXTRA_DIR(graphics/x11drv)
 WINE_CONFIG_EXTRA_DIR(include/wine)
 WINE_CONFIG_EXTRA_DIR(misc)
 WINE_CONFIG_EXTRA_DIR(objects)
-WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/regedit/tests)
 WINE_CONFIG_EXTRA_DIR(windows)
 
@@ -1634,12 +1633,9 @@ programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/expand/Makefile
 programs/notepad/Makefile
-programs/osversioncheck/Makefile
 programs/progman/Makefile
-programs/regapi/Makefile
 programs/regedit/Makefile
 programs/regsvr32/Makefile
-programs/regtest/Makefile
 programs/rpcss/Makefile
 programs/rundll32/Makefile
 programs/start/Makefile

@@ -1,7 +1,0 @@
-Test data:
-
-after.reg       - registry file with the change, exported from regedit
-before.reg      - registry file without the change, exported from regedit
-orig.reg        - registry file ot the test change, exported from regedit
-
-Note, orig.reg must me in Unix format, after.reg and before.reg - in Dos format.
