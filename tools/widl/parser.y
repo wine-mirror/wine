@@ -100,7 +100,7 @@ static type_t std_int = { "int" };
 	var_t *var;
 	func_t *func;
 	char *str;
-	UUID *uuid;
+	uuid_t *uuid;
 	int num;
 }
 

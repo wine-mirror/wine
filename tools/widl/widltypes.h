@@ -22,7 +22,6 @@
 #define __WIDL_WIDLTYPES_H
 
 #include "windef.h"
-#include "oleauto.h"
 #include "wine/rpcfc.h"
 
 typedef struct _attr_t attr_t;
@@ -31,6 +30,7 @@ typedef struct _type_t type_t;
 typedef struct _typeref_t typeref_t;
 typedef struct _var_t var_t;
 typedef struct _func_t func_t;
+typedef struct _uuid_t uuid_t;
 
 #define DECL_LINK(type) \
   type *l_next; \
@@ -145,6 +145,13 @@ struct _func_t {
 
   /* parser-internal */
   DECL_LINK(func_t)
+};
+
+struct _uuid_t {
+    DWORD Data1;
+    WORD  Data2;
+    WORD  Data3;
+    BYTE  Data4[8];
 };
 
 #endif

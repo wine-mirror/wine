@@ -264,7 +264,7 @@ void write_typedef(type_t *type, var_t *names)
 
 /********** INTERFACES **********/
 
-UUID *get_uuid(attr_t *a)
+uuid_t *get_uuid(attr_t *a)
 {
   while (a) {
     if (a->type == ATTR_UUID) return a->u.pval;
@@ -470,7 +470,7 @@ void write_forward(type_t *iface)
 
 void write_guid(type_t *iface)
 {
-  UUID *uuid = get_uuid(iface->attrs);
+  uuid_t *uuid = get_uuid(iface->attrs);
   if (!uuid) return;
   fprintf(header, "DEFINE_GUID(IID_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
           iface->name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
