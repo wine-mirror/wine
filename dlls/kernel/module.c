@@ -441,7 +441,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
  *  This function always returns the long path of hModule (as opposed to
  *  GetModuleFileName16() which returns short paths when the modules version
  *  field is < 4.0).
- *  The function doesn't write a terminating '\0' is the buffer is too 
+ *  The function doesn't write a terminating '\0' if the buffer is too 
  *  small.
  */
 DWORD WINAPI GetModuleFileNameA(
