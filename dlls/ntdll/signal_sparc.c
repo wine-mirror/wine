@@ -438,6 +438,12 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGABRT, (void (*)())abrt_handler ) == -1) goto error;
     if (set_handler( SIGTERM, (void (*)())term_handler ) == -1) goto error;
     if (set_handler( SIGUSR1, (void (*)())usr1_handler ) == -1) goto error;
+    /* 'ta 6' tells the kernel to synthesize any unaligned accesses this 
+       process makes, instead of just signalling an error and terminating
+       the process.  wine-devel did not reach a conclusion on whether
+       this is correct, because that is what x86 does, or it is harmful 
+       because it could obscure problems in user code */
+    asm("ta 6"); /* 6 == ST_FIX_ALIGN defined in sys/trap.h */
    return TRUE;
 
  error:
