@@ -44,6 +44,30 @@ static DWORD id2[4] = {0x79eac9ee, 0x11cebaf9, 0xaa00828c, 0x0ba94b00};
 /* The following schemes were identified in the native version of
  * SHLWAPI.DLL version 5.50
  */
+typedef enum {
+    URL_SCHEME_INVALID     = -1,
+    URL_SCHEME_UNKNOWN     =  0,
+    URL_SCHEME_FTP,
+    URL_SCHEME_HTTP,
+    URL_SCHEME_GOPHER,
+    URL_SCHEME_MAILTO,
+    URL_SCHEME_NEWS,
+    URL_SCHEME_NNTP,
+    URL_SCHEME_TELNET,
+    URL_SCHEME_WAIS,
+    URL_SCHEME_FILE,
+    URL_SCHEME_MK,
+    URL_SCHEME_HTTPS,
+    URL_SCHEME_SHELL,
+    URL_SCHEME_SNEWS,
+    URL_SCHEME_LOCAL,
+    URL_SCHEME_JAVASCRIPT,
+    URL_SCHEME_VBSCRIPT,
+    URL_SCHEME_ABOUT,
+    URL_SCHEME_RES,
+    URL_SCHEME_MAXVALUE
+} URL_SCHEME;
+
 typedef struct {
     URL_SCHEME  scheme_number;
     LPCSTR scheme_name;

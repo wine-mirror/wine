@@ -584,10 +584,6 @@ BOOL WINAPI PathYetAnotherMakeUniqueNameA(
 	LPCSTR lpszShortName,
 	LPCSTR lpszLongName);
 
-BOOL WINAPI PathFindOnPathAW(
-	LPVOID lpszFile, 
-	LPCVOID alpszPaths);
-
 /* PathCleanupSpec return values */
 #define PCS_REPLACEDCHARS  0x00000001
 #define PCS_REMOVEDCHARS   0x00000002

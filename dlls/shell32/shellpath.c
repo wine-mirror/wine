@@ -485,8 +485,8 @@ BOOL WINAPI PathYetAnotherMakeUniqueNameA(
 BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
 {
 	if (SHELL_OsIsUnicode())
-	  return PathFindOnPathW(sFile, sOtherDirs);
-	return PathFindOnPathA(sFile, sOtherDirs);
+	  return PathFindOnPathW(sFile, (LPCWSTR *)sOtherDirs);
+	return PathFindOnPathA(sFile, (LPCSTR *)sOtherDirs);
 }
 
 /*************************************************************************

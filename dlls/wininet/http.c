@@ -25,6 +25,7 @@
 #include "wininet.h"
 #include "winreg.h"
 #include "winerror.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 
 #include "internet.h"

@@ -11,6 +11,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "debugtools.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "wine/unicode.h"
 
@@ -483,7 +484,7 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 /*************************************************************************
  *      SHRegQueryInfoUSKeyA	[SHLWAPI.@]
  */
-DWORD WINAPI SHRegQueryInfoUSKeyA(
+LONG WINAPI SHRegQueryInfoUSKeyA(
 	HUSKEY hUSKey,             /* [in]  */
 	LPDWORD pcSubKeys,
 	LPDWORD pcchMaxSubKeyLen,
@@ -522,7 +523,7 @@ DWORD WINAPI SHRegQueryInfoUSKeyA(
 /*************************************************************************
  *      SHRegQueryInfoUSKeyW	[SHLWAPI.@]
  */
-DWORD WINAPI SHRegQueryInfoUSKeyW(
+LONG WINAPI SHRegQueryInfoUSKeyW(
 	HUSKEY hUSKey,             /* [in]  */
 	LPDWORD pcSubKeys,
 	LPDWORD pcchMaxSubKeyLen,
@@ -727,7 +728,7 @@ DWORD WINAPI SHGetValueW(
 /*************************************************************************
  *      SHSetValueA   [SHLWAPI.@]
  */
-HRESULT WINAPI SHSetValueA(
+DWORD WINAPI SHSetValueA(
 	HKEY hkey,
 	LPCSTR pszSubKey,
 	LPCSTR pszValue,
@@ -749,7 +750,7 @@ HRESULT WINAPI SHSetValueA(
 /*************************************************************************
  *      SHSetValueW   [SHLWAPI.@]
  */
-HRESULT WINAPI SHSetValueW(
+DWORD WINAPI SHSetValueW(
 	HKEY hkey,
 	LPCWSTR pszSubKey,
 	LPCWSTR pszValue,
@@ -772,9 +773,9 @@ HRESULT WINAPI SHSetValueW(
  * SHQueryValueExA		[SHLWAPI.@]
  *
  */
-HRESULT WINAPI SHQueryValueExA(
+DWORD WINAPI SHQueryValueExA(
 	HKEY hkey,
-	LPSTR lpValueName,
+	LPCSTR lpValueName,
 	LPDWORD lpReserved,
 	LPDWORD lpType,
 	LPBYTE lpData,
@@ -792,9 +793,9 @@ HRESULT WINAPI SHQueryValueExA(
  *  if the datatype REG_EXPAND_SZ then expand the string and change
  *  *pdwType to REG_SZ.
  */
-HRESULT WINAPI SHQueryValueExW (
+DWORD WINAPI SHQueryValueExW (
 	HKEY hkey,
-	LPWSTR pszValue,
+	LPCWSTR pszValue,
 	LPDWORD pdwReserved,
 	LPDWORD pdwType,
 	LPVOID pvData,
@@ -814,7 +815,7 @@ HRESULT WINAPI SHQueryValueExW (
  * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
  * WinNt/2k will only delete the key if empty.
  */
-HRESULT WINAPI SHDeleteKeyA(
+DWORD WINAPI SHDeleteKeyA(
 	HKEY hKey,
 	LPCSTR lpszSubKey)
 {
@@ -880,7 +881,7 @@ HRESULT WINAPI SHDeleteKeyA(
  * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
  * WinNt/2k will only delete the key if empty.
  */
-HRESULT WINAPI SHDeleteKeyW(
+DWORD WINAPI SHDeleteKeyW(
 	HKEY hkey,
 	LPCWSTR pszSubKey)
 {
@@ -893,9 +894,9 @@ HRESULT WINAPI SHDeleteKeyW(
  *
  * Function opens the key, get/set/delete the value, then close the key.
  */
-HRESULT WINAPI SHDeleteValueA(HKEY hkey, LPCSTR pszSubKey, LPCSTR pszValue) {
+DWORD WINAPI SHDeleteValueA(HKEY hkey, LPCSTR pszSubKey, LPCSTR pszValue) {
     HKEY	subkey;
-    HRESULT	hres;
+    DWORD	hres;
 
     hres = RegOpenKeyA(hkey,pszSubKey,&subkey);
     if (hres)
@@ -910,9 +911,9 @@ HRESULT WINAPI SHDeleteValueA(HKEY hkey, LPCSTR pszSubKey, LPCSTR pszValue) {
  *
  * Function opens the key, get/set/delete the value, then close the key.
  */
-HRESULT WINAPI SHDeleteValueW(HKEY hkey, LPCWSTR pszSubKey, LPCWSTR pszValue) {
+DWORD WINAPI SHDeleteValueW(HKEY hkey, LPCWSTR pszSubKey, LPCWSTR pszValue) {
     HKEY	subkey;
-    HRESULT	hres;
+    DWORD	hres;
 
     hres = RegOpenKeyW(hkey,pszSubKey,&subkey);
     if (hres)

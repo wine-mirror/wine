@@ -7,12 +7,14 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "winbase.h"
 #include "heap.h"
 #include "commctrl.h"
 #include "winerror.h"
 #include "winreg.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "comctl32.h"
 #include "debugtools.h"

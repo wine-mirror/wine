@@ -13,13 +13,14 @@
 #include "winnls.h"
 #include "heap.h"
 
-#include "shlwapi.h"
+#include "wine/obj_base.h"
 #include "shellapi.h"
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "undocshell.h"
 #include "pidl.h"
+#include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 DECLARE_DEBUG_CHANNEL(pidl);

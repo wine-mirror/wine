@@ -9,6 +9,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "shlobj.h"
 #include "wine/unicode.h"

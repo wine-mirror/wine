@@ -9,6 +9,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "debugtools.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

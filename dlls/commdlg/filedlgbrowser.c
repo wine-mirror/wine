@@ -14,6 +14,7 @@
 #include "winuser.h"
 #include "winreg.h"
 
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "filedlgbrowser.h"
 #include "cdlg.h"

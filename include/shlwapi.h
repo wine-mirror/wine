@@ -1,20 +1,387 @@
+/*
+ * SHLWAPI.DLL functions
+ */
 #ifndef __WINE_SHLWAPI_H
 #define __WINE_SHLWAPI_H
-
-#include "objbase.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#ifndef NO_SHLWAPI_REG
 
-/* Mask returned by GetPathCharType */
-#define GCT_INVALID	0x0000
-#define GCT_LFNCHAR	0x0001
-#define GCT_SHORTCHAR	0x0002
-#define GCT_WILD	0x0004
-#define GCT_SEPARATOR	0x0008
+/* Registry functions */
 
+DWORD WINAPI SHDeleteEmptyKeyA(HKEY,LPCSTR);
+DWORD WINAPI SHDeleteEmptyKeyW(HKEY,LPCWSTR);
+#define SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
+
+DWORD WINAPI SHDeleteKeyA(HKEY,LPCSTR);
+DWORD WINAPI SHDeleteKeyW(HKEY,LPCWSTR);
+#define SHDeleteKey WINELIB_NAME_AW(SHDeleteKey)
+
+DWORD WINAPI SHDeleteValueA(HKEY,LPCSTR,LPCSTR);
+DWORD WINAPI SHDeleteValueW(HKEY,LPCWSTR,LPCWSTR);
+#define SHDeleteValue WINELIB_NAME_AW(SHDeleteValue)
+
+DWORD WINAPI SHGetValueA(HKEY,LPCSTR,LPCSTR,LPDWORD,LPVOID,LPDWORD);
+DWORD WINAPI SHGetValueW(HKEY,LPCWSTR,LPCWSTR,LPDWORD,LPVOID,LPDWORD);
+#define SHGetValue WINELIB_NAME_AW(SHGetValue)
+
+DWORD WINAPI SHSetValueA(HKEY,LPCSTR,LPCSTR,DWORD,LPCVOID,DWORD);
+DWORD WINAPI SHSetValueW(HKEY,LPCWSTR,LPCWSTR,DWORD,LPCVOID,DWORD);
+#define SHSetValue WINELIB_NAME_AW(SHSetValue)
+
+DWORD WINAPI SHQueryValueExA(HKEY,LPCSTR,LPDWORD,LPDWORD,LPBYTE, LPDWORD);
+DWORD WINAPI SHQueryValueExW(HKEY,LPCWSTR,LPDWORD,LPDWORD,LPVOID, LPDWORD);
+#define SHQueryValueEx WINELIB_NAME_AW(SHQueryValueEx)
+
+LONG WINAPI SHEnumKeyExA(HKEY,DWORD,LPSTR,LPDWORD);
+LONG WINAPI SHEnumKeyExW(HKEY,DWORD,LPWSTR,LPDWORD);
+#define SHEnumKeyEx WINELIB_NAME_AW(SHEnumKeyEx)
+
+LONG WINAPI SHEnumValueA(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPVOID,LPDWORD);
+LONG WINAPI SHEnumValueW(HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPVOID,LPDWORD);
+#define SHEnumValue WINELIB_NAME_AW(SHEnumValue)
+
+LONG WINAPI SHQueryInfoKeyA(HKEY,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
+LONG WINAPI SHQueryInfoKeyW(HKEY,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
+#define SHQueryInfoKey WINELIB_NAME_AW(SHQueryInfoKey)
+
+DWORD WINAPI SHRegGetPathA(HKEY,LPCSTR,LPCSTR,LPSTR,DWORD);
+DWORD WINAPI SHRegGetPathW(HKEY,LPCWSTR,LPCWSTR,LPWSTR,DWORD);
+#define SHRegGetPath WINELIB_NAME_AW(SHRegGetPath)
+
+DWORD WINAPI SHRegSetPathA(HKEY,LPCSTR,LPCSTR,LPCSTR,DWORD);
+DWORD WINAPI SHRegSetPathW(HKEY,LPCWSTR,LPCWSTR,LPCWSTR,DWORD);
+#define SHRegSetPath WINELIB_NAME_AW(SHRegSetPath)
+
+DWORD WINAPI SHCopyKeyA(HKEY,LPCSTR,HKEY,DWORD);
+DWORD WINAPI SHCopyKeyW(HKEY,LPCWSTR,HKEY,DWORD);
+#define SHCopyKey WINELIB_NAME_AW(SHCopyKey)
+
+/* Undocumented registry functions */
+
+HKEY WINAPI SHRegDuplicateHKey(HKEY hKey);
+
+/* FIXME: SHDeleteOrphanKey */
+
+
+/* User registry functions */
+
+typedef enum
+{
+  SHREGDEL_DEFAULT = 0,
+  SHREGDEL_HKCU    = 0x1,
+  SHREGDEL_HKLM    = 0x10,
+  SHREGDEL_BOTH    = SHREGDEL_HKLM | SHREGDEL_HKCU,
+} SHREGDEL_FLAGS;
+
+typedef enum
+{
+  SHREGENUM_DEFAULT = 0,
+  SHREGENUM_HKCU    = 0x1,
+  SHREGENUM_HKLM    = 0x10,
+  SHREGENUM_BOTH    = SHREGENUM_HKLM | SHREGENUM_HKCU,
+} SHREGENUM_FLAGS;
+
+#define SHREGSET_HKCU       0x1 /* Apply to HKCU if empty */
+#define SHREGSET_FORCE_HKCU 0x2 /* Always apply to HKCU */
+#define SHREGSET_HKLM       0x4 /* Apply to HKLM if empty */
+#define SHREGSET_FORCE_HKLM 0x8 /* Always apply to HKLM */
+#define SHREGSET_DEFAULT    (SHREGSET_FORCE_HKCU | SHREGSET_HKLM)
+
+typedef HANDLE HUSKEY;
+typedef HUSKEY *PHUSKEY;
+
+LONG WINAPI SHRegCreateUSKeyA(LPCSTR,REGSAM,HUSKEY,PHUSKEY,DWORD);
+LONG WINAPI SHRegCreateUSKeyW(LPCWSTR,REGSAM,HUSKEY,PHUSKEY,DWORD);
+#define SHRegCreateUSKey WINELIB_NAME_AW(SHRegCreateUSKey)
+
+LONG WINAPI SHRegOpenUSKeyA(LPCSTR,REGSAM,HUSKEY,PHUSKEY,BOOL);
+LONG WINAPI SHRegOpenUSKeyW(LPCWSTR,REGSAM,HUSKEY,PHUSKEY,BOOL);
+#define SHRegOpenUSKey WINELIB_NAME_AW(SHRegOpenUSKey)
+
+LONG WINAPI SHRegQueryUSValueA(HUSKEY,LPCSTR,LPDWORD,LPVOID,LPDWORD,
+                               BOOL,LPVOID,DWORD);
+LONG WINAPI SHRegQueryUSValueW(HUSKEY,LPCWSTR,LPDWORD,LPVOID,LPDWORD,
+                               BOOL,LPVOID,DWORD);
+#define SHRegQueryUSValue WINELIB_NAME_AW(SHRegQueryUSValue)
+
+LONG WINAPI SHRegWriteUSValueA(HUSKEY,LPCSTR,DWORD,LPVOID,DWORD,DWORD);
+LONG WINAPI SHRegWriteUSValueW(HUSKEY,LPCWSTR,DWORD,LPVOID,DWORD,DWORD);
+#define SHRegWriteUSValue WINELIB_NAME_AW(SHRegWriteUSValue)
+
+LONG WINAPI SHRegDeleteUSValueA(HUSKEY,LPCSTR,SHREGDEL_FLAGS);
+LONG WINAPI SHRegDeleteUSValueW(HUSKEY,LPCWSTR,SHREGDEL_FLAGS);
+#define SHRegDeleteUSValue WINELIB_NAME_AW(SHRegDeleteUSValue)
+
+LONG WINAPI SHRegDeleteEmptyUSKeyA(HUSKEY,LPCSTR,SHREGDEL_FLAGS);
+LONG WINAPI SHRegDeleteEmptyUSKeyW(HUSKEY,LPCWSTR,SHREGDEL_FLAGS);
+#define SHRegDeleteEmptyUSKey WINELIB_NAME_AW(SHRegDeleteEmptyUSKey)
+
+LONG WINAPI SHRegEnumUSKeyA(HUSKEY,DWORD,LPSTR,LPDWORD,SHREGENUM_FLAGS);
+LONG WINAPI SHRegEnumUSKeyW(HUSKEY,DWORD,LPWSTR,LPDWORD,SHREGENUM_FLAGS);
+#define SHRegEnumUSKey WINELIB_NAME_AW(SHRegEnumUSKey)
+
+LONG WINAPI SHRegEnumUSValueA(HUSKEY,DWORD,LPSTR,LPDWORD,LPDWORD,
+                              LPVOID,LPDWORD,SHREGENUM_FLAGS);
+LONG WINAPI SHRegEnumUSValueW(HUSKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,
+                              LPVOID,LPDWORD,SHREGENUM_FLAGS);
+#define SHRegEnumUSValue WINELIB_NAME_AW(SHRegEnumUSValue)
+
+LONG WINAPI SHRegQueryInfoUSKeyA(HUSKEY,LPDWORD,LPDWORD,LPDWORD,
+                                 LPDWORD,SHREGENUM_FLAGS);
+LONG WINAPI SHRegQueryInfoUSKeyW(HUSKEY,LPDWORD,LPDWORD,LPDWORD,
+                                 LPDWORD,SHREGENUM_FLAGS);
+#define SHRegQueryInfoUSKey WINELIB_NAME_AW(SHRegQueryInfoUSKey)
+
+LONG WINAPI SHRegCloseUSKey(HUSKEY);
+
+LONG WINAPI SHRegGetUSValueA(LPCSTR,LPCSTR,LPDWORD,LPVOID,LPDWORD,
+                             BOOL,LPVOID,DWORD);
+LONG WINAPI SHRegGetUSValueW(LPCWSTR,LPCWSTR,LPDWORD,LPVOID,LPDWORD,
+                             BOOL,LPVOID,DWORD);
+#define SHRegGetUSValue WINELIB_NAME_AW(SHRegGetUSValue)
+
+LONG WINAPI SHRegSetUSValueA(LPCSTR,LPCSTR,DWORD,LPVOID,DWORD,DWORD);
+LONG WINAPI SHRegSetUSValueW(LPCWSTR,LPCWSTR,DWORD,LPVOID,DWORD,DWORD);
+#define SHRegSetUSValue WINELIB_NAME_AW(SHRegSetUSValue)
+
+BOOL WINAPI SHRegGetBoolUSValueA(LPCSTR,LPCSTR,BOOL,BOOL);
+BOOL WINAPI SHRegGetBoolUSValueW(LPCWSTR,LPCWSTR,BOOL,BOOL);
+#define SHRegGetBoolUSValue WINELIB_NAME_AW(SHRegGetBoolUSValue)
+
+#endif /* NO_SHLWAPI_REG */
+
+
+/* Path functions */
+#ifndef NO_SHLWAPI_PATH
+
+/* GetPathCharType return flags */
+#define GCT_INVALID     0x0
+#define GCT_LFNCHAR     0x1
+#define GCT_SHORTCHAR   0x2
+#define GCT_WILD        0x4
+#define GCT_SEPARATOR   0x8
+
+LPSTR  WINAPI PathAddBackslashA(LPSTR);
+LPWSTR WINAPI PathAddBackslashW(LPWSTR);
+#define PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
+
+BOOL WINAPI PathAddExtensionA(LPSTR,LPCSTR);
+BOOL WINAPI PathAddExtensionW(LPWSTR,LPCWSTR);
+#define PathAddExtension WINELIB_NAME_AW(PathAddExtension)
+
+BOOL WINAPI PathAppendA(LPSTR,LPCSTR);
+BOOL WINAPI PathAppendW(LPWSTR,LPCWSTR);
+#define PathAppend WINELIB_NAME_AW(PathAppend)
+
+LPSTR  WINAPI PathBuildRootA(LPSTR,int);
+LPWSTR WINAPI PathBuildRootW(LPWSTR,int);
+#define PathBuildRoot WINELIB_NAME_AW(PathBuiltRoot)
+
+BOOL WINAPI PathCanonicalizeA(LPSTR,LPCSTR);
+BOOL WINAPI PathCanonicalizeW(LPWSTR,LPCWSTR);
+#define PathCanonicalize WINELIB_NAME_AW(PathCanonicalize)
+
+LPSTR  WINAPI PathCombineA(LPSTR,LPCSTR,LPCSTR);
+LPWSTR WINAPI PathCombineW(LPWSTR,LPCWSTR,LPCWSTR);
+#define PathCombine WINELIB_NAME_AW(PathCombine)
+
+BOOL WINAPI PathCompactPathA(HDC,LPSTR,UINT);
+BOOL WINAPI PathCompactPathW(HDC,LPWSTR,UINT);
+#define PathCompactPath WINELIB_NAME_AW(PathCompactPath)
+
+BOOL WINAPI PathCompactPathExA(LPSTR,LPCSTR,UINT,DWORD);
+BOOL WINAPI PathCompactPathExW(LPWSTR,LPCWSTR,UINT,DWORD);
+#define PathCompactPathEx WINELIB_NAME_AW(PathCompactPathEx)
+
+int WINAPI PathCommonPrefixA(LPCSTR,LPCSTR,LPSTR);
+int WINAPI PathCommonPrefixW(LPCWSTR,LPCWSTR,LPWSTR);
+#define PathCommonPrefix WINELIB_NAME_AW(PathCommonPrefix)
+
+BOOL WINAPI PathFileExistsA(LPCSTR);
+BOOL WINAPI PathFileExistsW(LPCWSTR);
+#define PathFileExists WINELIB_NAME_AW(PathFileExists)
+
+LPSTR  WINAPI PathFindExtensionA(LPCSTR);
+LPWSTR WINAPI PathFindExtensionW(LPCWSTR);
+#define PathFindExtension WINELIB_NAME_AW(PathFindExtension)
+
+LPSTR  WINAPI PathFindFileNameA(LPCSTR);
+LPWSTR WINAPI PathFindFileNameW(LPCWSTR);
+#define PathFindFileName WINELIB_NAME_AW(PathFindFileName)
+
+LPSTR  WINAPI PathFindNextComponentA(LPCSTR);
+LPWSTR WINAPI PathFindNextComponentW(LPCWSTR);
+#define PathFindNextComponent WINELIB_NAME_AW(PathFindNextComponent)
+
+BOOL WINAPI PathFindOnPathA(LPSTR,LPCSTR*);
+BOOL WINAPI PathFindOnPathW(LPWSTR,LPCWSTR*);
+#define PathFindOnPath WINELIB_NAME_AW(PathFindOnPath)
+
+LPSTR  WINAPI PathGetArgsA(LPCSTR);
+LPWSTR WINAPI PathGetArgsW(LPCWSTR);
+#define PathGetArgs WINELIB_NAME_AW(PathGetArgs)
+
+UINT WINAPI PathGetCharTypeA(UCHAR);
+UINT WINAPI PathGetCharTypeW(WCHAR);
+#define PathGetCharType WINELIB_NAME_AW(PathGetCharType)
+
+int WINAPI PathGetDriveNumberA(LPCSTR);
+int WINAPI PathGetDriveNumberW(LPCWSTR);
+#define PathGetDriveNumber WINELIB_NAME_AW(PathGetDriveNumber)
+
+BOOL WINAPI PathIsDirectoryA(LPCSTR);
+BOOL WINAPI PathIsDirectoryW(LPCWSTR);
+#define PathIsDirectory WINELIB_NAME_AW(PathIsDirectory)
+
+BOOL WINAPI PathIsDirectoryEmptyA(LPCSTR);
+BOOL WINAPI PathIsDirectoryEmptyW(LPCWSTR);
+#define PathIsDirectoryEmpty WINELIB_NAME_AW(PathIsDirectoryEmpty)
+
+BOOL WINAPI PathIsFileSpecA(LPCSTR);
+BOOL WINAPI PathIsFileSpecW(LPCWSTR);
+#define PathIsFileSpec WINELIB_NAME_AW(PathIsFileSpec);
+
+BOOL WINAPI PathIsPrefixA(LPCSTR,LPCSTR);
+BOOL WINAPI PathIsPrefixW(LPCWSTR,LPCWSTR);
+#define PathIsPrefix WINELIB_NAME_AW(PathIsPrefix)
+
+BOOL WINAPI PathIsRelativeA(LPCSTR);
+BOOL WINAPI PathIsRelativeW(LPCWSTR);
+#define PathIsRelative WINELIB_NAME_AW(PathIsRelative)
+
+BOOL WINAPI PathIsRootA(LPCSTR);
+BOOL WINAPI PathIsRootW(LPCWSTR);
+#define PathIsRoot WINELIB_NAME_AW(PathIsRoot)
+
+BOOL WINAPI PathIsSameRootA(LPCSTR,LPCSTR);
+BOOL WINAPI PathIsSameRootW(LPCWSTR,LPCWSTR);
+#define PathIsSameRoot WINELIB_NAME_AW(PathIsSameRoot)
+
+BOOL WINAPI PathIsUNCA(LPCSTR);
+BOOL WINAPI PathIsUNCW(LPCWSTR);
+#define PathIsUNC WINELIB_NAME_AW(PathIsUNC)
+
+BOOL WINAPI PathIsUNCServerA(LPCSTR);
+BOOL WINAPI PathIsUNCServerW(LPCWSTR);
+#define PathIsUNCServer WINELIB_NAME_AW(PathIsUNCServer)
+
+BOOL WINAPI PathIsUNCServerShareA(LPCSTR);
+BOOL WINAPI PathIsUNCServerShareW(LPCWSTR);
+#define PathIsUNCServerShare WINELIB_NAME_AW(PathIsUNCServerShare)
+
+BOOL WINAPI PathIsContentTypeA(LPCSTR,LPCSTR);
+BOOL WINAPI PathIsContentTypeW(LPCWSTR,LPCWSTR);
+#define PathIsContentType WINELIB_NAME_AW(PathIsContentType)
+
+BOOL WINAPI PathIsURLA(LPCSTR);
+BOOL WINAPI PathIsURLW(LPCWSTR);
+#define PathIsURL WINELIB_NAME_AW(PathIsURL)
+
+BOOL WINAPI PathMakePrettyA(LPSTR);
+BOOL WINAPI PathMakePrettyW(LPWSTR);
+#define PathMakePretty WINELIB_NAME_AW(PathMakePretty)
+
+BOOL WINAPI PathMatchSpecA(LPCSTR,LPCSTR);
+BOOL WINAPI PathMatchSpecW(LPCWSTR,LPCWSTR);
+#define PathMatchSpec WINELIB_NAME_AW(PathMatchSpec)
+
+int WINAPI PathParseIconLocationA(LPSTR);
+int WINAPI PathParseIconLocationW(LPWSTR);
+#define PathParseIconLocation WINELIB_NAME_AW(PathParseIconLocation)
+
+LPSTR  WINAPI PathQuoteSpacesA(LPSTR);
+LPWSTR WINAPI PathQuoteSpacesW(LPWSTR);
+#define PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
+
+BOOL WINAPI PathRelativePathToA(LPSTR,LPCSTR,DWORD,LPCSTR,DWORD);
+BOOL WINAPI PathRelativePathToW(LPWSTR,LPCWSTR,DWORD,LPCWSTR,DWORD);
+#define PathRelativePathTo WINELIB_NAME_AW(PathRelativePathTo)
+
+VOID WINAPI PathRemoveArgsA(LPSTR);
+VOID WINAPI PathRemoveArgsW(LPWSTR);
+#define PathRemoveArgs WINELIB_NAME_AW(PathRemoveArgs)
+
+LPSTR  WINAPI PathRemoveBackslashA(LPSTR);
+LPWSTR WINAPI PathRemoveBackslashW(LPWSTR);
+#define PathRemoveBackslash WINELIB_NAME_AW(PathRemoveBackslash)
+
+VOID WINAPI PathRemoveBlanksA(LPSTR);
+VOID WINAPI PathRemoveBlanksW(LPWSTR);
+#define PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
+
+VOID WINAPI PathRemoveExtensionA(LPSTR);
+VOID WINAPI PathRemoveExtensionW(LPWSTR);
+#define PathRemoveExtension WINELIB_NAME_AW(PathRemoveExtension)
+
+BOOL WINAPI PathRemoveFileSpecA(LPSTR);
+BOOL WINAPI PathRemoveFileSpecW(LPWSTR);
+#define PathRemoveFileSpec WINELIB_NAME_AW(PathRemoveFileSpec)
+
+BOOL WINAPI PathRenameExtensionA(LPSTR,LPCSTR);
+BOOL WINAPI PathRenameExtensionW(LPWSTR,LPCWSTR);
+#define PathRenameExtension WINELIB_NAME_AW(PathRenameExtension)
+
+BOOL WINAPI PathSearchAndQualifyA(LPCSTR,LPSTR,UINT);
+BOOL WINAPI PathSearchAndQualifyW(LPCWSTR,LPWSTR,UINT);
+#define PathSearchAndQualify WINELIB_NAME_AW(PathSearchAndQualify)
+
+BOOL WINAPI PathSetDlgItemPathA(HWND,int,LPCSTR);
+BOOL WINAPI PathSetDlgItemPathW(HWND,int,LPCWSTR);
+#define PathSetDlgItemPath WINELIB_NAME_AW(PathSetDlgItemPath)
+
+LPSTR  WINAPI PathSkipRootA(LPCSTR);
+LPWSTR WINAPI PathSkipRootW(LPCWSTR);
+#define PathSkipRoot WINELIB_NAME_AW(PathSkipRoot)
+
+VOID WINAPI PathStripPathA(LPSTR);
+VOID WINAPI PathStripPathW(LPWSTR);
+#define PathStripPath WINELIB_NAME_AW(PathStripPath)
+
+BOOL WINAPI PathStripToRootA(LPSTR);
+BOOL WINAPI PathStripToRootW(LPWSTR);
+#define PathStripToRoot WINELIB_NAME_AW(PathStripToRoot)
+
+VOID WINAPI PathUnquoteSpacesA(LPSTR);
+VOID WINAPI PathUnquoteSpacesW(LPWSTR);
+#define PathUnquoteSpaces WINELIB_NAME_AW(PathUnquoteSpaces)
+
+BOOL WINAPI PathMakeSystemFolderA(LPCSTR);
+BOOL WINAPI PathMakeSystemFolderW(LPCWSTR);
+#define PathMakeSystemFolder WINELIB_NAME_AW(PathMakeSystemFolder)
+
+BOOL WINAPI PathUnmakeSystemFolderA(LPCSTR);
+BOOL WINAPI PathUnmakeSystemFolderW(LPCWSTR);
+#define PathUnmakeSystemFolder WINELIB_NAME_AW(PathUnmakeSystemFolder)
+
+BOOL WINAPI PathIsSystemFolderA(LPCSTR,DWORD);
+BOOL WINAPI PathIsSystemFolderW(LPCWSTR,DWORD);
+#define PathIsSystemFolder WINELIB_NAME_AW(PathIsSystemFolder)
+
+BOOL WINAPI PathIsNetworkPathA(LPCSTR);
+BOOL WINAPI PathIsNetworkPathW(LPCWSTR);
+#define PathIsNetworkPath WINELIB_NAME_AW(PathIsNetworkPath)
+
+BOOL WINAPI PathIsLFNFileSpecA(LPCSTR);
+BOOL WINAPI PathIsLFNFileSpecW(LPCWSTR);
+#define PathIsLFNFileSpec WINELIB_NAME_AW(PathIsLFNFileSpec)
+
+LPCSTR  WINAPI PathFindSuffixArrayA(LPCSTR,LPCSTR *,int);
+LPCWSTR WINAPI PathFindSuffixArrayW(LPCWSTR,LPCWSTR *,int);
+#define PathFindSuffixArray WINELIB_NAME_AW(PathFindSuffixArray)
+
+VOID WINAPI PathUndecorateA(LPSTR);
+VOID WINAPI PathUndecorateW(LPWSTR);
+#define PathUndecorate WINELIB_NAME_AW(PathUndecorate)
+
+BOOL WINAPI PathUnExpandEnvStringsA(LPCSTR,LPSTR,UINT);
+BOOL WINAPI PathUnExpandEnvStringsW(LPCWSTR,LPWSTR,UINT);
+#define PathUnExpandEnvStrings WINELIB_NAME_AW(PathUnExpandEnvStrings)
+
+/* Url functions */
 
 /* These are used by UrlGetPart routine */
 typedef enum {
@@ -26,6 +393,7 @@ typedef enum {
     URL_PART_PORT,
     URL_PART_QUERY,
 } URL_PART;
+
 #define URL_PARTFLAG_KEEPSCHEME  0x00000001
 
 /* These are used by the UrlIs... routines */
@@ -44,31 +412,6 @@ typedef enum {
 #define URL_APPLY_GUESSFILE          0x00000004
 #define URL_APPLY_GUESSSCHEME        0x00000002
 #define URL_APPLY_DEFAULT            0x00000001
-
-/* This is used by shlwapi ordinal.1 & .2 */
-typedef enum {
-    URL_SCHEME_INVALID     = -1,
-    URL_SCHEME_UNKNOWN     =  0,
-    URL_SCHEME_FTP,
-    URL_SCHEME_HTTP,
-    URL_SCHEME_GOPHER,
-    URL_SCHEME_MAILTO,
-    URL_SCHEME_NEWS,
-    URL_SCHEME_NNTP,
-    URL_SCHEME_TELNET,
-    URL_SCHEME_WAIS,
-    URL_SCHEME_FILE,
-    URL_SCHEME_MK,
-    URL_SCHEME_HTTPS,
-    URL_SCHEME_SHELL,
-    URL_SCHEME_SNEWS,
-    URL_SCHEME_LOCAL,
-    URL_SCHEME_JAVASCRIPT,
-    URL_SCHEME_VBSCRIPT,
-    URL_SCHEME_ABOUT,
-    URL_SCHEME_RES,
-    URL_SCHEME_MAXVALUE
-} URL_SCHEME;
 
 /* The following are used by UrlEscape..., UrlUnEscape...,
  * UrlCanonicalize..., and UrlCombine... routines
@@ -95,217 +438,207 @@ typedef enum {
 #define URL_ESCAPE_SEGMENT_ONLY      0x00002000
 #define URL_ESCAPE_PERCENT           0x00001000
 
-LPSTR  WINAPI PathAddBackslashA(LPSTR path);	
-LPWSTR WINAPI PathAddBackslashW(LPWSTR path);	
-#define PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
+HRESULT WINAPI UrlApplySchemeA(LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlApplySchemeW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
+#define UrlApplyScheme WINELIB_NAME_AW(UrlApplyScheme)
 
-BOOL WINAPI PathAddExtensionA(LPSTR pszPath, LPCSTR pszExt);
-BOOL WINAPI PathAddExtensionW(LPWSTR pszPath, LPCWSTR pszExt);
-#define PathAddExtension WINELIB_NAME_AW(PathAddExtension)
+HRESULT WINAPI UrlCanonicalizeA(LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlCanonicalizeW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
+#define UrlCanonicalize WINELIB_NAME_AW(UrlCanoncalize)
 
-BOOL WINAPI PathAppendA(LPSTR lpszPath1,LPCSTR lpszPath2);
-BOOL WINAPI PathAppendW(LPWSTR lpszPath1,LPCWSTR lpszPath2);
-#define PathAppend WINELIB_NAME_AW(PathAppend)
+HRESULT WINAPI UrlCombineA(LPCSTR,LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlCombineW(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,DWORD);
+#define UrlCombine WINELIB_NAME_AW(UrlCombine)
 
-LPSTR WINAPI PathBuildRootA(LPSTR lpszPath, int drive);
-LPWSTR WINAPI PathBuildRootW(LPWSTR lpszPath, int drive);
-#define PathBuildRoot WINELIB_NAME_AW(PathBuiltRoot)
+INT WINAPI UrlCompareA(LPCSTR,LPCSTR,BOOL);
+INT WINAPI UrlCompareW(LPCWSTR,LPCWSTR,BOOL);
+#define UrlCompare WINELIB_NAME_AW(UrlCompare)
 
-BOOL WINAPI PathCanonicalizeA(LPSTR lpszDst, LPCSTR lpszSrc);
-BOOL WINAPI PathCanonicalizeW(LPWSTR lpszDst, LPCWSTR lpszSrc);
-#define PathCanonicalize WINELIB_NAME_AW(PathCanonicalize)
+HRESULT WINAPI UrlEscapeA(LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlEscapeW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
+#define UrlEscape WINELIB_NAME_AW(UrlEscape)
 
-LPSTR  WINAPI PathCombineA(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
-LPWSTR WINAPI PathCombineW(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile);
-#define PathCombine WINELIB_NAME_AW(PathCombine)
+#define UrlEscapeSpacesA(x,y,z) UrlCanonicalizeA(x, y, z, \
+                         URL_DONT_ESCAPE_EXTRA_INFO|URL_ESCAPE_SPACES_ONLY)
+#define UrlEscapeSpacesW(x,y,z) UrlCanonicalizeW(x, y, z, \
+                         URL_DONT_ESCAPE_EXTRA_INFO|URL_ESCAPE_SPACES_ONLY)
+#define UrlEscapeSpaces WINELIB_NAME_AW(UrlEscapeSpaces)
 
-BOOL WINAPI PathFileExistsA(LPCSTR lpszPath);
-BOOL WINAPI PathFileExistsW(LPCWSTR lpszPath);
-#define PathFileExists WINELIB_NAME_AW(PathFileExists)
+LPCSTR  WINAPI UrlGetLocationA(LPCSTR);
+LPCWSTR WINAPI UrlGetLocationW(LPCWSTR);
+#define UrlGetLocation WINELIB_NAME_AW(UrlGetLocation)
 
-LPSTR WINAPI PathFindExtensionA(LPCSTR path);
-LPWSTR WINAPI PathFindExtensionW(LPCWSTR path);
-#define PathFindExtension WINELIB_NAME_AW(PathFindExtension)
+HRESULT WINAPI UrlGetPartA(LPCSTR,LPSTR,LPDWORD,DWORD,DWORD);
+HRESULT WINAPI UrlGetPartW(LPCWSTR,LPWSTR,LPDWORD,DWORD,DWORD);
+#define UrlGetPart WINELIB_NAME_AW(UrlGetPart)
 
-LPSTR WINAPI PathFindFileNameA(LPCSTR pPath);
-LPWSTR WINAPI PathFindFileNameW(LPCWSTR pPath);
-#define PathFindFileName WINELIB_NAME_AW(PathFindFileName)
+BOOL    WINAPI HashData(const unsigned char *,INT,unsigned char *lpDest,INT);
 
-LPSTR WINAPI PathFindNextComponentA(LPCSTR pszPath);
-LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath);
-#define PathFindNextComponent WINELIB_NAME_AW(PathFindNextComponent)
+HRESULT WINAPI UrlHashA(LPCSTR,unsigned char *,INT);
+HRESULT WINAPI UrlHashW(LPCWSTR,unsigned char *,INT);
+#define UrlHash WINELIB_NAME_AW(UrlHash)
 
-BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR sOtherDirs);
-BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs);
-#define PathFindOnPath WINELIB_NAME_AW(PathFindOnPath)
+BOOL    WINAPI UrlIsA(LPCSTR,URLIS);
+BOOL    WINAPI UrlIsW(LPCWSTR,URLIS);
+#define UrlIs WINELIB_NAME_AW(UrlIs)
 
-LPSTR WINAPI PathGetArgsA(LPCSTR lpszPath);
-LPWSTR WINAPI PathGetArgsW(LPCWSTR lpszPath);
-#define PathGetArgs WINELIB_NAME_AW(PathGetArgs)
+BOOL    WINAPI UrlIsNoHistoryA(LPCSTR);
+BOOL    WINAPI UrlIsNoHistoryW(LPCWSTR);
+#define UrlIsNoHistory WINELIB_NAME_AW(UrlIsNoHistory)
 
-int WINAPI PathGetDriveNumberA(LPCSTR lpszPath);
-int WINAPI PathGetDriveNumberW(LPCWSTR lpszPath);
-#define PathGetDriveNumber WINELIB_NAME_AW(PathGetDriveNumber)
+BOOL    WINAPI UrlIsOpaqueA(LPCSTR);
+BOOL    WINAPI UrlIsOpaqueW(LPCWSTR);
+#define UrlIsOpaque WINELIB_NAME_AW(UrlIsOpaque)
 
-BOOL WINAPI PathIsDirectoryA(LPCSTR lpszPath);
-BOOL WINAPI PathIsDirectoryW(LPCWSTR lpszPath);
-#define PathIsDirectory WINELIB_NAME_AW(PathIsDirectory)
+#define UrlIsFileUrlA(x) UrlIsA(x, URLIS_FILEURL)
+#define UrlIsFileUrlW(y) UrlIsW(x, URLIS_FILEURL)
+#define UrlIsFileUrl WINELIB_NAME_AW(UrlIsFileUrl)
 
-BOOL WINAPI PathIsRelativeA(LPCSTR lpszPath);
-BOOL WINAPI PathIsRelativeW(LPCWSTR lpszPath);
-#define PathIsRelative WINELIB_NAME_AW(PathIsRelative)
+HRESULT WINAPI UrlUnescapeA(LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlUnescapeW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
+#define UrlUnescape WINELIB_AW_NAME(UrlUnescape)
 
-BOOL WINAPI PathIsRootA(LPCSTR x);
-BOOL WINAPI PathIsRootW(LPCWSTR x);
-#define PathIsRoot WINELIB_NAME_AW(PathIsRoot)
+#define UrlUnescapeInPlaceA(x,y) UrlUnescapeA(x, NULL, NULL, \
+                                              y | URL_UNESCAPE_INPLACE)
+#define UrlUnescapeInPlaceW(x,y) UrlUnescapeW(x, NULL, NULL, \
+                                              y | URL_UNESCAPE_INPLACE)
+#define UrlUnescapeInPlace WINELIB_AW_NAME(UrlUnescapeInPlace)
 
-BOOL WINAPI PathIsSameRootA(LPCSTR lpszPath1, LPCSTR lpszPath2);
-BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2);
-#define PathIsSameRoot WINELIB_NAME_AW(PathIsSameRoot)
+HRESULT WINAPI UrlCreateFromPathA(LPCSTR,LPSTR,LPDWORD,DWORD);
+HRESULT WINAPI UrlCreateFromPathW(LPCWSTR,LPWSTR,LPDWORD,DWORD);
+#define UrlCreateFromPath WINELIB_AW_NAME(UrlCreateFromPath)
 
-BOOL WINAPI PathIsUNCA(LPCSTR lpszPath);
-BOOL WINAPI PathIsUNCW(LPCWSTR lpszPath);
-#define PathIsUNC WINELIB_NAME_AW(PathIsUNC)
+#endif /* NO_SHLWAPI_PATH */
 
-BOOL WINAPI PathIsURLA(LPCSTR pszPath);
-BOOL WINAPI PathIsURLW(LPCWSTR pszPath);
-#define PathIsURL WINELIB_NAME_AW(PathIsURL)
 
-BOOL WINAPI PathMatchSpecA(LPCSTR lpszPath, LPCSTR lpszSpec);
-BOOL WINAPI PathMatchSpecW(LPCWSTR lpszPath, LPCWSTR lpszSpec);
-#define PathMatchSpec WINELIB_NAME_AW(PathMatchSpec)
+/* String functions */
+#ifndef NO_SHLWAPI_STRFCNS
 
-int WINAPI PathParseIconLocationA(LPSTR lpszPath);
-int WINAPI PathParseIconLocationW(LPWSTR lpszPath);
-#define PathParseIconLocation WINELIB_NAME_AW(PathParseIconLocation)
-
-LPSTR  WINAPI PathQuoteSpacesA(LPSTR path);	
-LPWSTR WINAPI PathQuoteSpacesW(LPWSTR path);	
-#define PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
-
-void WINAPI PathRemoveArgsA(LPSTR lpszPath);
-void WINAPI PathRemoveArgsW(LPWSTR lpszPath);
-#define PathRemoveArgs WINELIB_NAME_AW(PathRemoveArgs)
-
-LPSTR WINAPI PathRemoveBackslashA(LPSTR lpszPath);
-LPWSTR WINAPI PathRemoveBackslashW(LPWSTR lpszPath);
-#define PathRemoveBackslash WINELIB_NAME_AW(PathRemoveBackslash)
-
-void WINAPI PathRemoveBlanksA(LPSTR lpszPath);
-void WINAPI PathRemoveBlanksW(LPWSTR lpszPath);
-#define PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
-
-void WINAPI PathRemoveExtensionA(LPSTR lpszPath);
-void WINAPI PathRemoveExtensionW(LPWSTR lpszPath);
-#define PathRemoveExtension WINELIB_NAME_AW(PathRemoveExtension)
-
-BOOL WINAPI PathRemoveFileSpecA(LPSTR lpszPath);
-BOOL WINAPI PathRemoveFileSpecW(LPWSTR lpszPath);
-#define PathRemoveFileSpec WINELIB_NAME_AW(PathRemoveFileSpec)
-
-BOOL WINAPI PathRenameExtensionA(LPSTR pszPath, LPCSTR pszExt);
-BOOL WINAPI PathRenameExtensionW(LPWSTR pszPath, LPCWSTR pszExt);
-#define PathRenameExtension WINELIB_NAME_AW(PathRenameExtension)
-
-BOOL WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR pszPath);
-BOOL WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR pszPath);
-#define PathSetDlgItemPath WINELIB_NAME_AW(PathSetDlgItemPath)
-
-void WINAPI PathStripPathA(LPSTR lpszPath);
-void WINAPI PathStripPathW(LPWSTR lpszPath);
-#define PathStripPath WINELIB_NAME_AW(PathStripPath)
-
-BOOL WINAPI PathStripToRootA(LPSTR pszPath);
-BOOL WINAPI PathStripToRootW(LPWSTR pszPath);
-#define PathStripToRoot WINELIB_NAME_AW(PathStripToRoot)
-
-void WINAPI PathUnquoteSpacesA(LPSTR str);
-void WINAPI PathUnquoteSpacesW(LPWSTR str);
-#define PathUnquoteSpaces WINELIB_NAME_AW(PathUnquoteSpaces)
-
+/* StrToIntEx flags */
+#define STIF_DEFAULT     0x0L
+#define STIF_SUPPORT_HEX 0x1L
 
 BOOL WINAPI ChrCmpIA (WORD w1, WORD w2);
 BOOL WINAPI ChrCmpIW (WCHAR w1, WCHAR w2);
 #define ChrCmpI WINELIB_NAME_AW(ChrCmpI)
 
-INT WINAPI StrCSpnA(LPCSTR lpStr, LPCSTR lpSet);
-INT WINAPI StrCSpnW(LPCWSTR lpStr, LPCWSTR lpSet);
+INT WINAPI StrCSpnA(LPCSTR,LPCSTR);
+INT WINAPI StrCSpnW(LPCWSTR,LPCWSTR);
 #define StrCSpn WINELIB_NAME_AW(StrCSpn)
 
-INT WINAPI StrCSpnIA(LPCSTR lpStr, LPCSTR lpSet);
-INT WINAPI StrCSpnIW(LPCWSTR lpStr, LPCWSTR lpSet);
+INT WINAPI StrCSpnIA(LPCSTR,LPCSTR);
+INT WINAPI StrCSpnIW(LPCWSTR,LPCWSTR);
 #define StrCSpnI WINELIB_NAME_AW(StrCSpnI)
 
 #define StrCatA lstrcatA
-LPWSTR WINAPI StrCatW(LPWSTR front, LPCWSTR back);
+LPWSTR WINAPI StrCatW(LPWSTR,LPCWSTR);
 #define StrCat WINELIB_NAME_AW(StrCat)
 
-LPSTR WINAPI StrCatBuffA(LPSTR front, LPCSTR back, INT size);
-LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size);
+LPSTR WINAPI StrCatBuffA(LPSTR,LPCSTR,INT);
+LPWSTR WINAPI StrCatBuffW(LPWSTR,LPCWSTR,INT);
 #define StrCatBuff WINELIB_NAME_AW(StrCatBuff)
 
-LPSTR WINAPI StrChrA(LPCSTR lpStart, WORD wMatch);
-LPWSTR WINAPI StrChrW(LPCWSTR lpStart, WCHAR wMatch); 
+LPSTR WINAPI StrChrA(LPCSTR,WORD);
+LPWSTR WINAPI StrChrW(LPCWSTR,WCHAR);
 #define StrChr WINELIB_NAME_AW(StrChr)
 
-LPSTR WINAPI StrChrIA(LPCSTR lpStart, WORD wMatch);
-LPWSTR WINAPI StrChrIW(LPCWSTR lpStart, WCHAR wMatch); 
+LPSTR WINAPI StrChrIA(LPCSTR,CHAR);
+LPWSTR WINAPI StrChrIW(LPCWSTR,WCHAR);
 #define StrChrI WINELIB_NAME_AW(StrChrI)
 
-INT WINAPI StrCmpIW(LPCWSTR lpStr1, LPCWSTR lpStr2);
+#define StrCmpA lstrcmpA
+int WINAPI StrCmpW(LPCWSTR,LPCWSTR);
+#define StrCmp WINELIB_NAME_AW(StrCmp)
 
-INT WINAPI StrCmpNA(LPCSTR lpStr1, LPCSTR lpStr2, INT nChar);
-INT WINAPI StrCmpNW(LPCWSTR lpStr1, LPCWSTR lpStr2, INT nChar);
+#define StrCmpIA lstrcmpiA
+int WINAPI StrCmpIW(LPCWSTR,LPCWSTR);
+#define StrCmpI WINELIB_NAME_AW(StrCmpI)
+
+#define StrCpyA lstrcpyA
+LPWSTR WINAPI StrCpyW(LPWSTR,LPCWSTR);
+#define StrCpy WINELIB_NAME_AW(StrCpy)
+
+#define StrCpyNA lstrcpynA
+LPWSTR WINAPI StrCpyNW(LPWSTR,LPCWSTR,int);
+#define StrCpyN WINELIB_NAME_AW(StrCpyN)
+#define StrNCpy WINELIB_NAME_AW(StrCpyN)
+
+INT WINAPI StrCmpNA(LPCSTR,LPCSTR,INT);
+INT WINAPI StrCmpNW(LPCWSTR,LPCWSTR,INT);
 #define StrCmpN WINELIB_NAME_AW(StrCmpN)
+#define StrNCmp WINELIB_NAME_AW(StrCmpN)
 
-INT WINAPI StrCmpNIA(LPCSTR lpStr1, LPCSTR lpStr2, INT nChar);
-INT WINAPI StrCmpNIW(LPCWSTR lpStr1, LPCWSTR lpStr2, INT nChar);
+INT WINAPI StrCmpNIA(LPCSTR,LPCSTR,INT);
+INT WINAPI StrCmpNIW(LPCWSTR,LPCWSTR,INT);
 #define StrCmpNI WINELIB_NAME_AW(StrCmpNI)
+#define StrNCmpI WINELIB_NAME_AW(StrCmpNI)
 
-INT WINAPI StrCmpW(LPCWSTR lpStr1, LPCWSTR lpStr2);
-
-LPWSTR WINAPI StrCpyW(LPWSTR lpStr1, LPCWSTR lpStr2);
-
-LPWSTR WINAPI StrCpyNW(LPWSTR lpStr1, LPCWSTR lpStr2, int n);
-
-LPSTR WINAPI StrDupA(LPCSTR lpSrc);
-LPWSTR WINAPI StrDupW(LPCWSTR lpSrc);
+LPSTR WINAPI StrDupA(LPCSTR);
+LPWSTR WINAPI StrDupW(LPCWSTR);
 #define StrDup WINELIB_NAME_AW(StrDup)
 
-LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf );
-LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
+LPSTR WINAPI StrFormatByteSizeA (DWORD,LPSTR,UINT);
+LPWSTR WINAPI StrFormatByteSizeW (DWORD,LPWSTR,UINT);
 #define StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
 
-LPSTR WINAPI StrNCatA(LPSTR front, LPCSTR back, INT cchMax);
-LPWSTR WINAPI StrNCatW(LPWSTR front, LPCWSTR back, INT cchMax);
-#define StrNCat WINELIB_NAME_AW(StrNCat)
+int WINAPI StrFromTimeIntervalA(LPSTR,UINT,DWORD,int);
+int WINAPI StrFromTimeIntervalW(LPWSTR,UINT,DWORD,int);
+#define StrFromTimeInterval WINELIB_NAME_AW(StrFromTimeInterval)
 
-LPSTR WINAPI StrRChrA(LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch);
-LPWSTR WINAPI StrRChrW(LPCWSTR lpStart, LPCWSTR lpEnd, WCHAR wMatch); 
+BOOL WINAPI StrIsIntlEqualA(BOOL,LPCSTR,LPCSTR,int);
+BOOL WINAPI StrIsIntlEqualW(BOOL,LPCWSTR,LPCWSTR,int);
+#define StrIsIntlEqual WINELIB_NAME_AW(StrIsIntlEqual)
+
+#define StrIntlEqNA(a,b,c) StrIsIntlEqualA(TRUE,a,b,c)
+#define StrIntlEqNW(a,b,c) StrIsIntlEqualW(TRUE,a,b,c)
+
+#define StrIntlEqNIA(a,b,c) StrIsIntlEqualA(FALSE,a,b,c)
+#define StrIntlEqNIW(a,b,c) StrIsIntlEqualW(FALSE,a,b,c)
+
+LPSTR  WINAPI StrNCatA(LPSTR,LPCSTR,int);
+LPWSTR WINAPI StrNCatW(LPWSTR,LPCWSTR,int);
+#define StrNCat WINELIB_NAME_AW(StrNCat)
+#define StrCatN WINELIB_NAME_AW(StrNCat)
+
+LPSTR  WINAPI StrPBrkA(LPCSTR,LPCSTR);
+LPWSTR WINAPI StrPBrkW(LPCWSTR,LPCWSTR);
+#define StrPBrk WINELIB_NAME_AW(StrPBrk)
+
+LPSTR  WINAPI StrRChrA(LPCSTR,LPCSTR,WORD);
+LPWSTR WINAPI StrRChrW(LPCWSTR,LPCWSTR,WORD);
 #define StrRChr WINELIB_NAME_AW(StrRChr)
 
-LPSTR WINAPI StrRChrIA(LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch);
-LPWSTR WINAPI StrRChrIW(LPCWSTR lpStart, LPCWSTR lpEnd, WCHAR wMatch); 
+LPSTR  WINAPI StrRChrIA(LPCSTR,LPCSTR,WORD);
+LPWSTR WINAPI StrRChrIW(LPCWSTR,LPCWSTR,WORD);
 #define StrRChrI WINELIB_NAME_AW(StrRChrI)
 
-LPSTR WINAPI StrStrA(LPCSTR lpFirst, LPCSTR lpSrch);
-LPWSTR WINAPI StrStrW(LPCWSTR lpFirst, LPCWSTR lpSrch);
+LPSTR  WINAPI StrRStrIA(LPCSTR,LPCSTR,LPCSTR);
+LPWSTR WINAPI StrRStrIW(LPCWSTR,LPCWSTR,LPCWSTR);
+#define StrRStrI WINELIB_NAME_AW(StrRStrI)
+
+int WINAPI StrSpnA(LPCSTR,LPCSTR);
+int WINAPI StrSpnW(LPCWSTR,LPCWSTR);
+#define StrSpn WINELIB_NAME_AW(StrSpn)
+
+LPSTR  WINAPI StrStrA(LPCSTR,LPCSTR);
+LPWSTR WINAPI StrStrW(LPCWSTR,LPCWSTR);
 #define StrStr WINELIB_NAME_AW(StrStr)
 
-LPSTR WINAPI StrStrIA(LPCSTR lpFirst, LPCSTR lpSrch);
-LPWSTR WINAPI StrStrIW(LPCWSTR lpFirst, LPCWSTR lpSrch);
+LPSTR  WINAPI StrStrIA(LPCSTR,LPCSTR);
+LPWSTR WINAPI StrStrIW(LPCWSTR,LPCWSTR);
 #define StrStrI WINELIB_NAME_AW(StrStrI)
 
-int WINAPI StrToIntA(LPCSTR lpSrc);
-int WINAPI StrToIntW(LPCWSTR lpSrc);
+int WINAPI StrToIntA(LPCSTR);
+int WINAPI StrToIntW(LPCWSTR);
 #define StrToInt WINELIB_NAME_AW(StrToInt)
+#define StrToLong WINELIB_NAME_AW(StrToInt)
 
-int WINAPI StrToIntExA(LPCSTR lpSrc, DWORD dwFlags, LPINT piRet);
-int WINAPI StrToIntExW(LPCWSTR lpSrc, DWORD dwFlags, LPINT piRet);
+BOOL WINAPI StrToIntExA(LPCSTR,DWORD,int*);
+BOOL WINAPI StrToIntExW(LPCWSTR,DWORD,int*);
 #define StrToIntEx WINELIB_NAME_AW(StrToIntEx)
 
-BOOL WINAPI StrTrimA(LPSTR pszSrc, LPCSTR pszTrimChars);
-BOOL WINAPI StrTrimW(LPWSTR pszSrc, LPCWSTR pszTrimChars);
+BOOL WINAPI StrTrimA(LPSTR,LPCSTR);
+BOOL WINAPI StrTrimW(LPWSTR,LPCWSTR);
 #define StrTrim WINELIB_NAME_AW(StrTrim)
 
 INT WINAPI wvnsprintfA(LPSTR lpOut, INT cchLimitIn, LPCSTR lpFmt, va_list arglist);
@@ -316,206 +649,45 @@ INT WINAPIV wnsprintfA(LPSTR lpOut, INT cchLimitIn, LPCSTR lpFmt, ...);
 INT WINAPIV wnsprintfW(LPWSTR lpOut, INT cchLimitIn, LPCWSTR lpFmt, ...);
 #define wnsprintf WINELIB_NAME_AW(wnsprintf)
 
-
+/* Undocumented */
 struct _STRRET;
 struct _ITEMIDLIST;
 HRESULT WINAPI StrRetToBufA(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPSTR dest, DWORD len);
 HRESULT WINAPI StrRetToBufW(struct _STRRET *src, const struct _ITEMIDLIST *pidl, LPWSTR dest, DWORD len);
 #define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
-
-/* Shell Registry interfaces */
-
-HRESULT WINAPI SHQueryValueExA(HKEY hkey, LPSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
-HRESULT WINAPI SHQueryValueExW(HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserved, LPDWORD pdwType, LPVOID pvData, LPDWORD pcbData);
-#define SHQueryValueEx WINELIB_NAME_AW(SHQueryValueEx)
-
-HRESULT WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey);
-HRESULT WINAPI SHDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey);
-#define  SHDeleteKey WINELIB_NAME_AW(SHDeleteKey)
-
-HRESULT WINAPI SHDeleteValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR pszValue);
-HRESULT WINAPI SHDeleteValueW(HKEY hkey, LPCWSTR pszSubKey, LPCWSTR pszValue);
-#define  SHDeleteValue WINELIB_NAME_AW(SHDeleteValue)
-
-DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
-DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
-#define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
-
-HKEY WINAPI SHRegDuplicateHKey(HKEY hKey);
-
-DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR pcszSubKey,
-			   LPCSTR pcszValue, LPSTR pszPath, DWORD dwFlags);
-DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR pcszSubKey,
-			   LPCWSTR pcszValue, LPWSTR pszPath, DWORD dwFlags);
-#define  SHRegGetPath WINELIB_NAME_AW(SHRegGetPath)
-
-DWORD WINAPI SHGetValueA(HKEY hKey, LPCSTR pSubKey, LPCSTR pValue,
-			 LPDWORD pwType, LPVOID pvData, LPDWORD pbData);
-DWORD WINAPI SHGetValueW(HKEY hKey, LPCWSTR pSubKey, LPCWSTR pValue,
-			 LPDWORD pwType, LPVOID pvData, LPDWORD pbData);
-#define  SHGetValue WINELIB_NAME_AW(SHGetValue)
-
-HRESULT WINAPI SHSetValueA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
-			 DWORD dwType, LPCVOID pvData, DWORD cbData);
-HRESULT WINAPI SHSetValueW(HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
-			 DWORD dwType, LPCVOID pvData, DWORD cbData);
-#define  SHSetValue WINELIB_NAME_AW(SHSetValue)
+#endif /* NO_SHLWAPI_STRFCNS */
 
 
+/* GDI functions */
+#ifndef NO_SHLWAPI_GDI
 
-typedef HANDLE HUSKEY;
-typedef HUSKEY *PHUSKEY;
+HPALETTE WINAPI SHCreateShellPalette(HDC);
 
-typedef enum {
-    SHREGDEL_DEFAULT = 0,   /* delete HKCU if found or HKLM if not */
-    SHREGDEL_HKCU = 0x01,   /* delete HKCU */
-    SHREGDEL_HKLM = 0x10,   /* delete HKLM */
-    SHREGDEL_BOTH = 0x11,   /* delete HKCU *and* HKLM */
-} SHREGDEL_FLAGS; 
+COLORREF WINAPI ColorHLSToRGB(WORD,WORD,WORD);
 
-typedef enum {
-    SHREGENUM_DEFAULT = 0,  /* do HKCU or HKLM if not found */
-    SHREGENUM_HKCU = 0x01,  /* do HKCU only  */
-    SHREGENUM_HKLM = 0x10,  /* do HKLM only  */
-    SHREGENUM_BOTH = 0x11,  /* do both HKCU and HKLM without dups */
-} SHREGENUM_FLAGS; 
+COLORREF WINAPI ColorAdjustLuma(COLORREF,int,BOOL);
 
-#define SHREGSET_HKCU        0x00000001  /* Write to HKCU if empty */
-#define SHREGSET_FORCE_HKCU  0x00000002  /* Write to HKCU          */
-#define SHREGSET_HKLM        0x00000004  /* Write to HKLM if empty */
-#define SHREGSET_FORCE_HKLM  0x00000008  /* Write to HKLM          */
-#define SHREGSET_DEFAULT  (SHREGSET_FORCE_HKCU | SHREGSET_HKLM)
+VOID WINAPI ColorRGBToHLS(COLORREF,LPWORD,LPWORD,LPWORD);
 
-/* Shell User Key Registry interfaces */
+#endif /* NO_SHLWAPI_GDI */
 
-LONG  WINAPI SHRegOpenUSKeyA(LPCSTR Path, REGSAM AccessType, 
-			     HUSKEY hRelativeUSKey, PHUSKEY phNewUSKey,
-			     BOOL fIgnoreHKCU);
-LONG  WINAPI SHRegOpenUSKeyW(LPCWSTR Path, REGSAM AccessType, 
-			     HUSKEY hRelativeUSKey, PHUSKEY phNewUSKey,
-			     BOOL fIgnoreHKCU);
-#define SHRegOpenUSKey WINELIB_NAME_AW(SHRegOpenUSKey)
 
-LONG  WINAPI SHRegCloseUSKey(HUSKEY hUSKey);
+/* Stream functions */
+#ifndef NO_SHLWAPI_STREAM
 
-LONG  WINAPI SHRegGetUSValueA(LPCSTR pszSubKey, LPCSTR pszValue, 
-			      LPDWORD pdwType, LPVOID pvData,
-			      LPDWORD pcbData, BOOL fIgnoreHKCU,
-			      LPVOID pvDefaultData, DWORD dwDefaultDataSize);
-LONG  WINAPI SHRegGetUSValueW(LPCWSTR pszSubKey, LPCWSTR pszValue, 
-			      LPDWORD pdwType, LPVOID pvData,
-			      LPDWORD pcbData, BOOL fIgnoreHKCU, 
-			      LPVOID pvDefaultData, DWORD dwDefaultDataSize);
-#define SHRegGetUSValue WINELIB_NAME_AW(SHRegGetUSValue)
+IStream * WINAPI SHOpenRegStreamA(HKEY,LPCSTR,LPCSTR,DWORD);
+IStream * WINAPI SHOpenRegStreamW(HKEY,LPCWSTR,LPCWSTR,DWORD);
+#define SHOpenRegStream WINELIB_NAME_AW(SHOpenRegStream)
 
-BOOL  WINAPI SHRegGetBoolUSValueA(LPCSTR pszSubKey, LPCSTR pszValue, 
-				  BOOL fIgnoreHKCU, BOOL fDefault);
-BOOL  WINAPI SHRegGetBoolUSValueW(LPCWSTR pszSubKey, LPCWSTR pszValue, 
-				  BOOL fIgnoreHKCU, BOOL fDefault);
-#define SHRegGetBoolUSValue WINELIB_NAME_AW(SHRegGetBoolUSValue)
+IStream * WINAPI SHOpenRegStream2A(HKEY,LPCSTR,LPCSTR,DWORD);
+IStream * WINAPI SHOpenRegStream2W(HKEY,LPCWSTR,LPCWSTR,DWORD);
+#define SHOpenRegStream2 WINELIB_NAME_AW(SHOpenRegStream2)
 
-LONG  WINAPI SHRegQueryUSValueA(HUSKEY hUSKey, LPCSTR pszValue, 
-				LPDWORD pdwType, LPVOID pvData,
-				LPDWORD pcbData, BOOL fIgnoreHKCU, 
-				LPVOID pvDefaultData, DWORD dwDefaultDataSize);
-LONG  WINAPI SHRegQueryUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, 
-				LPDWORD pdwType, LPVOID pvData,
-				LPDWORD pcbData, BOOL fIgnoreHKCU, 
-				LPVOID pvDefaultData, DWORD dwDefaultDataSize);
-#define SHRegQueryUSValue WINELIB_NAME_AW(SHRegQueryUSValue)
+#endif /* NO_SHLWAPI_STREAM */
 
-DWORD  WINAPI SHRegQueryInfoUSKeyA(HUSKEY hUSKey, LPDWORD pcSubKeys,
-				  LPDWORD pcchMaxSubKeyLen,
-				  LPDWORD pcValues,
-				  LPDWORD pcchMaxValueNameLen,
-				  SHREGENUM_FLAGS enumRegFlags);
-DWORD  WINAPI SHRegQueryInfoUSKeyW(HUSKEY hUSKey, LPDWORD pcSubKeys,
-				  LPDWORD pcchMaxSubKeyLen,
-				  LPDWORD pcValues,
-				  LPDWORD pcchMaxValueNameLen,
-				  SHREGENUM_FLAGS enumRegFlags);
-#define SHRegQueryInfoUSKey WINELIB_NAME_AW(SHRegQueryInfoUSKey)
 
-LONG  WINAPI SHRegEnumUSKeyA(HUSKEY hUSKey, DWORD dwIndex, LPSTR pszName,
-			     LPDWORD pcchValueNameLen,
-			     SHREGENUM_FLAGS enumRegFlags);
-LONG  WINAPI SHRegEnumUSKeyW(HUSKEY hUSKey, DWORD dwIndex, LPWSTR pszName,
-			     LPDWORD pcchValueNameLen,
-			     SHREGENUM_FLAGS enumRegFlags);
-#define SHRegEnumUSKey WINELIB_NAME_AW(SHRegEnumUSKey)
-
-LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
-				LPVOID pvData, DWORD cbData, DWORD dwFlags);
-LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
-				LPVOID pvData, DWORD cbData, DWORD dwFlags);
-#define SHRegWriteUSValue WINELIB_NAME_AW(SHRegWriteUSValue)
-
-/* Shell URL interfaces */
-
-HRESULT WINAPI UrlApplySchemeA(LPCSTR pszIn, LPSTR pszOut, 
-			       LPDWORD pcchOut, DWORD dwFlags);
-HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, 
-			       LPDWORD pcchOut, DWORD dwFlags);
-#define UrlApplyScheme WINELIB_NAME_AW(UrlApplyScheme)
-
-HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized, 
-				LPDWORD pcchCanonicalized, DWORD dwFlags);
-HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized, 
-				LPDWORD pcchCanonicalized, DWORD dwFlags);
-#define UrlCanonicalize WINELIB_NAME_AW(UrlCanoncalize)
-
-HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
-			   LPSTR pszCombined, LPDWORD pcchCombined,
-			   DWORD dwFlags);
-HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
-			   LPWSTR pszCombined, LPDWORD pcchCombined,
-			   DWORD dwFlags);
-#define UrlCombine WINELIB_NAME_AW(UrlCombine)
-
-INT WINAPI UrlCompareA(LPCSTR pszUrl1, LPCSTR pszUrl2, BOOL fIgnoreSlash);
-INT WINAPI UrlCompareW(LPCWSTR pszUrl1, LPCWSTR pszUrl2, BOOL fIgnoreSlash);
-#define UrlCompare WINELIB_NAME_AW(UrlCompare)
-
-HRESULT WINAPI UrlEscapeA(LPCSTR pszUrl, LPSTR pszEscaped, LPDWORD pcchEscaped,
-			  DWORD dwFlags);
-HRESULT WINAPI UrlEscapeW(LPCWSTR pszUrl, LPWSTR pszEscaped,
-			  LPDWORD pcchEscaped, DWORD dwFlags);
-#define UrlEscape WINELIB_NAME_AW(UrlEscape)
-
-LPCSTR  WINAPI UrlGetLocationA(LPCSTR pszUrl);
-LPCWSTR WINAPI UrlGetLocationW(LPCWSTR pszUrl);
-#define UrlGetLocation WINELIB_NAME_AW(UrlGetLocation)
-
-HRESULT WINAPI UrlGetPartA(LPCSTR pszIn, LPSTR pszOut, LPDWORD pcchOut, 
-			   DWORD dwPart, DWORD dwFlags);
-HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, 
-			   DWORD dwPart, DWORD dwFlags);
-#define UrlGetPart WINELIB_NAME_AW(UrlGetPart)
-
-BOOL    WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
-			unsigned char *lpDest, INT nDestLen);
-HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestlen);
-HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, INT nDestlen);
-#define UrlHash WINELIB_NAME_AW(UrlHash)
-
-BOOL    WINAPI UrlIsA(LPCSTR pszUrl, URLIS UrlIs);
-BOOL    WINAPI UrlIsW(LPCWSTR pszUrl, URLIS UrlIs);
-#define UrlIs WINELIB_NAME_AW(UrlIs)
-
-BOOL    WINAPI UrlIsNoHistoryA(LPCSTR pszUrl);
-BOOL    WINAPI UrlIsNoHistoryW(LPCWSTR pszUrl);
-#define UrlIsNoHistory WINELIB_NAME_AW(UrlIsNoHistory)
-
-BOOL    WINAPI UrlIsOpaqueA(LPCSTR pszUrl);
-BOOL    WINAPI UrlIsOpaqueW(LPCWSTR pszUrl);
-#define UrlIsOpaque WINELIB_NAME_AW(UrlIsOpaque)
-
-HRESULT WINAPI UrlUnescapeA(LPCSTR pszUrl, LPSTR pszUnescaped,
-			    LPDWORD pcchUnescaped, DWORD dwFlags);
-HRESULT WINAPI UrlUnescapeW(LPCWSTR pszUrl, LPWSTR pszUnescaped,
-			    LPDWORD pcchUnescaped, DWORD dwFlags);
-#define UrlUnescape WINELIB_AW_NAME(UrlUnescape)
+/* Version Information */
 
 typedef struct _DllVersionInfo {
     DWORD cbSize;
@@ -525,8 +697,8 @@ typedef struct _DllVersionInfo {
     DWORD dwPlatformID;
 } DLLVERSIONINFO;
 
-#define DLLVER_PLATFORM_WINDOWS         0x00000001      // Windows 9x
-#define DLLVER_PLATFORM_NT              0x00000002      // Windows NT
+#define DLLVER_PLATFORM_WINDOWS 0x01 /* Win9x */
+#define DLLVER_PLATFORM_NT      0x02 /* WinNT */
 
 typedef HRESULT CALLBACK (*DLLGETVERSIONPROC)(DLLVERSIONINFO *);
 

@@ -5,6 +5,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winnls.h"
 #include "winbase.h"
@@ -12,6 +13,7 @@
 #include "wine/unicode.h"
 #include "wininet.h"
 #include "winreg.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "debugtools.h"
 #include "ordinal.h"

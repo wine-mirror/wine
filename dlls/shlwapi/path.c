@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "winerror.h"
 #include "wine/unicode.h"
@@ -11,6 +12,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "debugtools.h"
 #include "ordinal.h"
@@ -775,18 +777,18 @@ int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
 /*************************************************************************
  * PathFindOnPathA	[SHLWAPI.@]
  */
-BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR sOtherDirs)
+BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR *sOtherDirs)
 {
-	FIXME("%s %s\n",sFile, sOtherDirs);
+	FIXME("%s %p\n",sFile, sOtherDirs);
 	return FALSE;
 }
 
 /*************************************************************************
  * PathFindOnPathW	[SHLWAPI.@]
  */
-BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs)
+BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR *sOtherDirs)
 {
-	FIXME("%s %s\n",debugstr_w(sFile), debugstr_w(sOtherDirs));
+	FIXME("%s %p\n",debugstr_w(sFile), sOtherDirs);
 	return FALSE;
 }
 

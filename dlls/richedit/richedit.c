@@ -18,6 +18,7 @@
 #include "riched32.h"
 #include "richedit.h"
 #include "charlist.h"
+#define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 
 #include "rtf.h"

@@ -22,10 +22,10 @@
 #include <string.h>
 
 #include "winreg.h"
-#include "shlwapi.h"
 #include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"
+#include "shlwapi.h"
 
 #include "debugtools.h"
 
