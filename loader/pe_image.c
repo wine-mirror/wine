@@ -562,7 +562,7 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
         else 
         {
             FIXME( win32,
-                   "Need to relocate %s, but no relocation records present (%s).\n",
+                   "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
                    ofs->szPathName,
                    (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
                    "stripped during link" : "unknown reason" );

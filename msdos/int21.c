@@ -1826,7 +1826,7 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x4a: /* RESIZE MEMORY BLOCK */
         TRACE(int21,"RESIZE MEMORY segment %04lX to %d paragraphs\n", ES_reg(context), BX_reg(context));
 	if (!ISV86(context))
-	  FIXME(int21,"RESIZE MEMORY probably insufficent implementation. Expect crash soon\n");
+	  FIXME(int21,"RESIZE MEMORY probably insufficient implementation. Expect crash soon\n");
 	{
 	    LPVOID *mem = DOSMEM_ResizeBlock(0,DOSMEM_MapDosToLinear(ES_reg(context)<<4),
 					       BX_reg(context)<<4,NULL);
