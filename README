@@ -139,9 +139,6 @@ man page (documentation/wine.conf.man).
 The file documentation/samples/config contains an example configuration file
 which has to be adapted and copied to the location mentioned above.
 
-Don't forget to add vital registry entries by applying winedefault.reg
-with programs/regedit/. See documentation/ directory for details.
-
 See the Support area at http://www.winehq.org/ for further
 configuration hints.
 

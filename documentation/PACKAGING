@@ -140,14 +140,13 @@ Successfully installing Wine requires:
 	dump .exe/.dll/etc. files into C:\WINDOWS or C:\Program Files.
 
     * An initial set of registry entries.
-        The current Wine standard is to use the regedit tool against 
-	the 'winedefault.reg' file to generate a default registry.
-        The current preferred method of configuring/installing
-        Wine is to run /toos/wineinstall.  There are several other 
-	choices that could be made; registries can be imported from 
-	a Windows partition.  At this time, Wine does not completely 
-	support a complex multi-user installation ala Windows NT,
-        but it could fairly readily.
+	For custom changes to the default registry, tools/wine.inf
+	can be modified as needed. The current preferred method of 
+	configuring/installing Wine is to run /tools/wineinstall.  
+	There are several other choices that could be made; registries 
+	can be imported from a Windows partition.  At this time, Wine 
+	does not completely support a complex multi-user installation 
+	ala Windows NT, but it could fairly readily.
 
      * Special files
         Some special .dll and .exe files in the C:\WINDOWS\SYSTEM
@@ -159,10 +158,12 @@ WINE COMPONENTS
    * Executable Files
 	- notepad : The windows Notepad replacement.
 	- progman : A Program Manager replacement.
-	- regedit : A command-line tool to edit your registry or for 
+	- regedit : A graphical tool to edit your registry or for 
 		important a windows registry to Wine.
 	- regsvr32 : A program to register/unregister .DLL's and .OCX files. 
 		Only works on those dlls that can self-register.
+	- taskmgr : A clone of the windows taskmgr, used for debugging and
+		managing running Windows and Winlib processes.
 	- uninstaller: A program to uninstall installed Windows programs. 
 		Like the Add/Remove Program in the windows control panel.
 	- wcmd :  Wine's command line interpreter, a cmd.exe replacement.

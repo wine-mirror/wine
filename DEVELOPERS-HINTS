@@ -163,13 +163,14 @@ Winelib programs (under programs/):
 	cmdlgtst/		- Common dialog tests
 	control/		- Control panel
 	expand/			- Decompress Lempel-Ziv compressed archive
-	notepad/		- Notepad with RichEdit functionality
+	notepad/		- Notepad replacement 
 	progman/		- Program manager
 	regedit/		- Registry editor
 	regsvr32/		- Register COM server
 	rpcss/			- RPC services
 	rundll32/		- Execute DLL functions directly
 	start/			- Replacement for start.exe
+	taskmgr/		- Manage running Windows/Winelib applications
 	uninstaller/		- Remove installed programs
 	view/			- Metafile viewer
 	wcmd/			- Command line interface
