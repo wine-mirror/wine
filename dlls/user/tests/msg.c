@@ -572,6 +572,17 @@ static const struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
 };
+/* DrawMenuBar for a visible window */
+static const struct message WmDrawMenuBarSeq[] =
+{
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
 
 static const struct message WmSetRedrawFalseSeq[] =
 {
@@ -891,6 +902,9 @@ static void test_messages(void)
     ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");
     ok (SetMenu(hwnd, hmenu), "SetMenu\n");
     ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange");
+
+    ok(DrawMenuBar(hwnd), "DrawMenuBar\n");
+    ok_sequence(WmDrawMenuBarSeq, "DrawMenuBar");
 
     DestroyWindow(hwnd);
 }
