@@ -2548,6 +2548,129 @@ static void test_VarNeg(void)
        "VarNeg: VT_CY wrong, hres=0x%lX\n", hres);
 }
 
+static HRESULT (WINAPI *pVarRound)(LPVARIANT,int,LPVARIANT);
+
+#define VARROUND(vt,val,deci,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
+        memset(&vDst,0,sizeof(vDst)); hres = pVarRound(&v,deci,&vDst); \
+        ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
+        "VarRound: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+        hres, V_VT(&vDst), (int)V_##rvt(&vDst))
+
+#define VARROUNDF(vt,val,deci,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
+        memset(&vDst,0,sizeof(vDst)); hres = pVarRound(&v,deci,&vDst); \
+        ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
+        "VarRound: expected 0x0,%d,%f, got 0x%lX,%d,%f\n", VT_##rvt, rval, \
+        hres, V_VT(&vDst), V_##rvt(&vDst))
+
+static void test_VarRound(void)
+{
+    /* static const WCHAR szNumMin[] = {'-','1','.','4','5','\0' };
+       static const WCHAR szNum[] = {'1','.','4','5','\0' }; */
+    HRESULT hres;
+    VARIANT v, vDst;
+    CY *pcy = &V_CY(&v);
+
+    CHECKPTR(VarRound);
+
+    /* first check valid integer types */
+    VARROUND(BOOL,VARIANT_TRUE,0,I2,-1);
+    VARROUND(BOOL,VARIANT_FALSE,0,I2,0);
+    VARROUND(BOOL,1,0,I2,1);
+    VARROUND(UI1,1,0,UI1,1);
+    VARROUND(UI1,254,0,UI1,254);
+    VARROUND(I2,-32768,0,I2,-32768);
+    VARROUND(I2,-1,0,I2,-1);
+    VARROUND(I2,1,0,I2,1);
+    VARROUND(I4,-((int)(~0u >> 1)) - 1,0,I4,-((int)(~0u >> 1)) - 1);
+    VARROUND(I4,-1,0,I4,-1);
+    VARROUND(I4,1,0,I4,1);
+
+
+    /* MSDN states that rounding of R4/R8 is dependent on the underlying
+     * bit pattern of the number and so is architecture dependent. In this
+     * case Wine returns .2 (which is more correct) and Native returns .3
+     */
+
+    VARROUNDF(R4,1.0,0,R4,1.0);
+    VARROUNDF(R4,-1.0,0,R4,-1.0);
+    VARROUNDF(R8,1.0,0,R8,1.0);
+    VARROUNDF(R8,-1.0,0,R8,-1.0);
+
+    /* floating point numbers aren't exactly equal and we can't just
+     * compare the first few digits.
+    todo_wine {
+        VARROUNDF(DATE,1.451,1,DATE,1.5);
+        VARROUNDF(DATE,-1.45,1,DATE,-1.4);
+        VARROUNDF(BSTR,(BSTR)szNumMin,1,R8,-1.40);
+        VARROUNDF(BSTR,(BSTR)szNum,1,R8,1.50);
+
+        VARROUNDF(R4,1.23456,0,R4,1.0);
+        VARROUNDF(R4,1.23456,1,R4,1.2);
+        VARROUNDF(R4,1.23456,2,R4,1.23);
+        VARROUNDF(R4,1.23456,3,R4,1.235);
+        VARROUNDF(R4,1.23456,4,R4,1.2346);
+        VARROUNDF(R4,-1.23456,0,R4,-1.0);
+        VARROUNDF(R4,-1.23456,1,R4,-1.2);
+        VARROUNDF(R4,-1.23456,2,R4,-1.23);
+        VARROUNDF(R4,-1.23456,3,R4,-1.235);
+        VARROUNDF(R4,-1.23456,4,R4,-1.2346);
+
+        VARROUNDF(R8,1.23456,0,R8,1.0);
+        VARROUNDF(R8,1.23456,1,R8,1.2);
+        VARROUNDF(R8,1.23456,2,R8,1.23);
+        VARROUNDF(R8,1.23456,3,R8,1.235);
+        VARROUNDF(R8,1.23456,4,R8,1.2346);
+        VARROUNDF(R8,-1.23456,0,R8,-1.0);
+        VARROUNDF(R8,-1.23456,1,R8,-1.2);
+        VARROUNDF(R8,-1.23456,2,R8,-1.23);
+        VARROUNDF(R8,-1.23456,3,R8,-1.235);
+        VARROUNDF(R8,-1.23456,4,R8,-1.2346);
+    }
+    */
+
+    V_VT(&v) = VT_EMPTY;
+    hres = pVarRound(&v,0,&vDst);
+    ok(hres == S_OK && V_VT(&vDst) == VT_I2 && V_I2(&vDst) == 0,
+        "VarRound: expected 0x0,%d,0 got 0x%lX,%d,%d\n", VT_EMPTY,
+        hres, V_VT(&vDst), V_I2(&vDst));
+
+    V_VT(&v) = VT_NULL;
+    hres = pVarRound(&v,0,&vDst);
+    ok(hres == S_OK && V_VT(&vDst) == VT_NULL,
+        "VarRound: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
+
+    /* not yet implemented so no use testing yet
+    todo_wine {
+        DECIMAL *pdec = &V_DECIMAL(&v);
+        V_VT(&v) = VT_DECIMAL;
+        pdec->u.s.sign = DECIMAL_NEG;
+        pdec->u.s.scale = 0;
+        pdec->Hi32 = 0;
+        pdec->u1.s1.Mid32 = 0;
+        pdec->u1.s1.Lo32 = 1;
+        hres = pVarRound(&v,0,&vDst);
+        ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
+            V_DECIMAL(&vDst).u.s.sign == 0,
+            "VarRound: expected 0x0,%d,0x00, got 0x%lX,%d,%02x\n", VT_DECIMAL,
+            hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign);
+
+        pdec->u.s.sign = 0;
+        hres = pVarRound(&v,0,&vDst);
+        ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
+            V_DECIMAL(&vDst).u.s.sign == DECIMAL_NEG,
+            "VarRound: expected 0x0,%d,0x7f, got 0x%lX,%d,%02x\n", VT_DECIMAL,
+            hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign);
+    }
+    */
+
+    V_VT(&v) = VT_CY;
+    pcy->int64 = 10000;
+    hres = pVarRound(&v,0,&vDst);
+    ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == 10000,
+        "VarRound: VT_CY wrong, hres=0x%lX\n", hres);
+
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -2573,4 +2696,5 @@ START_TEST(vartest)
   test_VarFix();
   test_VarInt();
   test_VarNeg();
+  test_VarRound();
 }
