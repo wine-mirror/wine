@@ -2091,7 +2091,7 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 		else SetLastError(WSAENOBUFS);
 	    }
 	    else {
-                MESSAGE("service on port %ul protocol %s not found; You might want to add "
+                MESSAGE("service on port %lu protocol %s not found; You might want to add "
                         "this to /etc/services\n", (unsigned long)ntohl(port),
                         proto ? debugstr_a(pwsi->buffer) : "*"); 
                 SetLastError(WSANO_DATA);
