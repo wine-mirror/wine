@@ -31,6 +31,9 @@
 
 DEFAULT_DEBUG_CHANNEL(wave)
 
+/* Allow 1% deviation for sample rates (some ES137x cards) */
+#define NEAR_MATCH(rate1,rate2) (((100*(rate1-rate2))/rate1)==0)
+
 #ifdef HAVE_OSS
 
 #define SOUND_DEV "/dev/dsp"
@@ -632,7 +635,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (dsp_stereo != (WOutDev[wDevID].format.wf.nChannels > 1) ? 1 : 0) 
 	ERR("Can't set stereo to %u (%d)\n", 
 	    (WOutDev[wDevID].format.wf.nChannels > 1) ? 1 : 0, dsp_stereo);
-    if (sample_rate != WOutDev[wDevID].format.wf.nSamplesPerSec)
+    if (!NEAR_MATCH(sample_rate,WOutDev[wDevID].format.wf.nSamplesPerSec))
 	ERR("Can't set sample_rate to %lu (%d)\n", 
 	    WOutDev[wDevID].format.wf.nSamplesPerSec, sample_rate);
 
