@@ -778,7 +778,7 @@ HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 hSrc)
 }
 
 /***********************************************************************
- *           RegisterServiceProcess             (KERNEL32)
+ *           RegisterServiceProcess             (KERNEL, KERNEL32)
  *
  * A service process calls this function to ensure that it continues to run
  * even after a user logged off.

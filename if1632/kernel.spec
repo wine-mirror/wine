@@ -395,7 +395,7 @@ file	krnl386.exe
 488 pascal GetModuleHandle32(str) GetModuleHandle32A
 489 stub KERNEL_489  # VWin32_BoostWithDecay
 490 stub KERNEL_490
-491 stub RegisterServiceProcess
+491 pascal RegisterServiceProcess(long long) RegisterServiceProcess
 492 stub WOAAbort
 493 stub UTInit
 494 stub KERNEL_494
