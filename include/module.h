@@ -10,6 +10,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/windef16.h"
+#include "wine/winbase16.h"
 
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
@@ -99,15 +100,6 @@ typedef struct
     FARPROC16 SetOwner;      /* Set Owner procedure, exported by wine */
 } SELFLOADHEADER;
 
-  /* Parameters for LoadModule() */
-typedef struct
-{
-    HGLOBAL16 hEnvironment;         /* Environment segment */
-    SEGPTR    cmdLine WINE_PACKED;  /* Command-line */
-    SEGPTR    showCmd WINE_PACKED;  /* Code for ShowWindow() */
-    SEGPTR    reserved WINE_PACKED;
-} LOADPARAMS16;
-
 typedef struct 
 {
     LPSTR lpEnvAddress;
@@ -150,8 +142,6 @@ typedef struct _wine_modref
 
 
 /* Resource types */
-typedef struct resource_typeinfo_s NE_TYPEINFO;
-typedef struct resource_nameinfo_s NE_NAMEINFO;
 
 #define NE_SEG_TABLE(pModule) \
     ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->seg_table))

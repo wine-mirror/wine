@@ -37,6 +37,15 @@ typedef struct _SEGINFO {
 #define	WF_WIN32WOW     0x4000	/* undoc */
 #define	WF_WLO          0x8000
 
+/* Parameters for LoadModule() */
+typedef struct
+{
+    HGLOBAL16 hEnvironment;         /* Environment segment */
+    SEGPTR    cmdLine WINE_PACKED;  /* Command-line */
+    SEGPTR    showCmd WINE_PACKED;  /* Code for ShowWindow() */
+    SEGPTR    reserved WINE_PACKED;
+} LOADPARAMS16;
+
 #include "poppack.h"
 
 #define INVALID_HANDLE_VALUE16  ((HANDLE16) -1)
@@ -50,6 +59,88 @@ typedef struct {
         DWORD dwPlatformId;
         CHAR szCSDVersion[128];
 } OSVERSIONINFO16;
+
+
+/*
+ * NE Header FORMAT FLAGS
+ */
+#define NE_FFLAGS_SINGLEDATA    0x0001
+#define NE_FFLAGS_MULTIPLEDATA  0x0002
+#define NE_FFLAGS_WIN32         0x0010
+#define NE_FFLAGS_BUILTIN       0x0020  /* Wine built-in module */
+#define NE_FFLAGS_FRAMEBUF      0x0100  /* OS/2 fullscreen app */
+#define NE_FFLAGS_CONSOLE       0x0200  /* OS/2 console app */
+#define NE_FFLAGS_GUI           0x0300  /* right, (NE_FFLAGS_FRAMEBUF | NE_FFLAGS_CONSOLE) */
+#define NE_FFLAGS_SELFLOAD      0x0800
+#define NE_FFLAGS_LINKERROR     0x2000
+#define NE_FFLAGS_CALLWEP       0x4000
+#define NE_FFLAGS_LIBMODULE     0x8000
+
+/*
+ * NE Header OPERATING SYSTEM
+ */
+#define NE_OSFLAGS_UNKNOWN      0x01
+#define NE_OSFLAGS_WINDOWS      0x04
+
+/*
+ * NE Header ADDITIONAL FLAGS
+ */
+#define NE_AFLAGS_WIN2_PROTMODE 0x02
+#define NE_AFLAGS_WIN2_PROFONTS 0x04
+#define NE_AFLAGS_FASTLOAD      0x08
+
+/*
+ * Segment Flags
+ */
+#define NE_SEGFLAGS_DATA        0x0001
+#define NE_SEGFLAGS_ALLOCATED   0x0002
+#define NE_SEGFLAGS_LOADED      0x0004
+#define NE_SEGFLAGS_ITERATED    0x0008
+#define NE_SEGFLAGS_MOVEABLE    0x0010
+#define NE_SEGFLAGS_SHAREABLE   0x0020
+#define NE_SEGFLAGS_PRELOAD     0x0040
+#define NE_SEGFLAGS_EXECUTEONLY 0x0080
+#define NE_SEGFLAGS_READONLY    0x0080
+#define NE_SEGFLAGS_RELOC_DATA  0x0100
+#define NE_SEGFLAGS_SELFLOAD    0x0800
+#define NE_SEGFLAGS_DISCARDABLE 0x1000
+#define NE_SEGFLAGS_32BIT       0x2000
+
+/*
+ * Resource table structures.
+ */
+typedef struct
+{
+    WORD     offset;
+    WORD     length;
+    WORD     flags;
+    WORD     id;
+    HANDLE16 handle;
+    WORD     usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD        type_id;   /* Type identifier */
+    WORD        count;     /* Number of resources of this type */
+    FARPROC16   resloader; /* SetResourceHandler() */
+    /*
+     * Name info array.
+     */
+} NE_TYPEINFO;
+
+#define NE_RSCTYPE_CURSOR         0x8001
+#define NE_RSCTYPE_BITMAP         0x8002
+#define NE_RSCTYPE_ICON           0x8003
+#define NE_RSCTYPE_MENU           0x8004
+#define NE_RSCTYPE_DIALOG         0x8005
+#define NE_RSCTYPE_STRING         0x8006
+#define NE_RSCTYPE_FONTDIR        0x8007
+#define NE_RSCTYPE_FONT           0x8008
+#define NE_RSCTYPE_ACCELERATOR    0x8009
+#define NE_RSCTYPE_RCDATA         0x800a
+#define NE_RSCTYPE_GROUP_CURSOR   0x800c
+#define NE_RSCTYPE_GROUP_ICON     0x800e
 
 
 /* undocumented functions */
