@@ -1121,17 +1121,17 @@ typedef enum _D3DSAMPLERSTATETYPE {
 
 
 /*****************************************************************************
- * Direct 3D v8 typedefs
+ * Direct 3D v9 typedefs
  */
 typedef DWORD D3DCOLOR;
 
 /*****************************************************************************
- * Direct 3D v8 structures
+ * Direct 3D v9 structures
  */
-typedef struct _D3DADAPTER_IDENTIFIER8 {
+typedef struct _D3DADAPTER_IDENTIFIER9 {
     char            Driver[MAX_DEVICE_IDENTIFIER_STRING];
     char            Description[MAX_DEVICE_IDENTIFIER_STRING];
-
+    char            DeviceName[32];         /* Device name for GDI (ex. \\.\DISPLAY1) */
     LARGE_INTEGER   DriverVersion;
     DWORD           VendorId;
     DWORD           DeviceId;
@@ -1141,7 +1141,7 @@ typedef struct _D3DADAPTER_IDENTIFIER8 {
     GUID            DeviceIdentifier;
 
     DWORD           WHQLLevel;
-} D3DADAPTER_IDENTIFIER8;
+} D3DADAPTER_IDENTIFIER9;
 
 typedef struct _D3DBOX {
     UINT                Left;
@@ -1238,14 +1238,6 @@ typedef struct _D3DMATERIAL9 {
     float           Power;
 } D3DMATERIAL9;
 
-typedef enum _D3DMATERIALCOLORSOURCE
-{
-    D3DMCS_MATERIAL         = 0,
-    D3DMCS_COLOR1           = 1,
-    D3DMCS_COLOR2           = 2,
-    D3DMCS_FORCE_DWORD      = 0x7fffffff,
-} D3DMATERIALCOLORSOURCE;
-
 typedef struct _D3DMATRIX {
     union {
         struct {
@@ -1332,14 +1324,14 @@ typedef struct _D3DVERTEXBUFFER_DESC {
     DWORD               FVF;
 } D3DVERTEXBUFFER_DESC;
 
-typedef struct _D3DVIEWPORT8 {
+typedef struct _D3DVIEWPORT9 {
     DWORD       X;
     DWORD       Y;
     DWORD       Width;
     DWORD       Height;
     float       MinZ;
     float       MaxZ;
-} D3DVIEWPORT8;
+} D3DVIEWPORT9;
 
 typedef struct _D3DVOLUME_DESC {
     D3DFORMAT           Format;
@@ -1352,46 +1344,13 @@ typedef struct _D3DVOLUME_DESC {
     UINT                Depth;
 } D3DVOLUME_DESC;
 
-
-
-
-#undef  D3DFVF_POSITION_MASK /* DX9 value == DX8 Value | 0x4000 */
-#define D3DFVF_POSITION_MASK     0x400E
-#define D3DFVF_XYZW              0x4002
-#define D3DFVF_LASTBETA_D3DCOLOR 0x8000
-#undef  D3DFVF_RESERVED2 
-#define D3DFVF_RESERVED2         0x6000
-
-typedef enum _D3DDECLUSAGE {
-  D3DDECLUSAGE_POSITION     =  0,
-  D3DDECLUSAGE_BLENDWEIGHT  =  1,
-  D3DDECLUSAGE_BLENDINDICES =  2,
-  D3DDECLUSAGE_NORMAL       =  3,
-  D3DDECLUSAGE_PSIZE        =  4,
-  D3DDECLUSAGE_TEXCOORD     =  5,
-  D3DDECLUSAGE_TANGENT      =  6,
-  D3DDECLUSAGE_BINORMAL     =  7,
-  D3DDECLUSAGE_TESSFACTOR   =  8,
-  D3DDECLUSAGE_POSITIONT    =  9,
-  D3DDECLUSAGE_COLOR        = 10,
-  D3DDECLUSAGE_FOG          = 11,
-  D3DDECLUSAGE_DEPTH        = 12,
-  D3DDECLUSAGE_SAMPLE       = 13
-} D3DDECLUSAGE;
-
-#define MAXD3DDECLUSAGE         D3DDECLUSAGE_SAMPLE
-#define MAXD3DDECLUSAGEINDEX    15
-#define MAXD3DDECLLENGTH        64
-
-typedef enum _D3DDECLMETHOD {
-  D3DDECLMETHOD_DEFAULT          = 0,
-  D3DDECLMETHOD_PARTIALU         = 1,
-  D3DDECLMETHOD_PARTIALV         = 2,
-  D3DDECLMETHOD_CROSSUV          = 3,
-  D3DDECLMETHOD_UV               = 4,
-  D3DDECLMETHOD_LOOKUP           = 5,
-  D3DDECLMETHOD_LOOKUPPRESAMPLED = 6
-} D3DDECLMETHOD;
+typedef enum _D3DQUERYTYPE {
+  D3DQUERYTYPE_VCACHE           = 4, 
+  D3DQUERYTYPE_RESOURCEMANAGER  = 5, 
+  D3DQUERYTYPE_VERTEXSTATS      = 6, 
+  D3DQUERYTYPE_EVENT            = 8, 
+  D3DQUERYTYPE_OCCLUSION        = 9
+} D3DQUERYTYPE;
 
 
 #endif /* __WINE_D3D9TYPES_H */

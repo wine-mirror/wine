@@ -20,6 +20,10 @@
 #ifndef __WINE_D3D9_H
 #define __WINE_D3D9_H
 
+#ifndef DIRECT3D_VERSION
+#define DIRECT3D_VERSION  0x0900
+#endif
+
 #include "objbase.h"
 
 #include "d3d9types.h"
@@ -516,7 +520,7 @@ ICOM_DEFINE(IDirect3DSwapChain9,IUnknown)
     STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS) PURE; \
     STDMETHOD(GetDC)(THIS_ HDC* phdc) PURE; \
-    STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE; \
+    STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
 ICOM_DEFINE(IDirect3DSurface9,IUnknown)
 #undef INTERFACE
 
@@ -555,7 +559,7 @@ ICOM_DEFINE(IDirect3DSurface9,IUnknown)
     STDMETHOD_(DWORD, SetPriority)(THIS_ DWORD PriorityNew) PURE; \
     STDMETHOD_(DWORD, GetPriority)(THIS) PURE; \
     STDMETHOD_(void, PreLoad)(THIS) PURE; \
-    STDMETHOD_(D3DRESOURCETYPE, GetType)(THIS) PURE; \
+    STDMETHOD_(D3DRESOURCETYPE, GetType)(THIS) PURE;
 ICOM_DEFINE(IDirect3DResource9,IUnknown)
 #undef INTERFACE
 
@@ -580,7 +584,7 @@ ICOM_DEFINE(IDirect3DResource9,IUnknown)
  */
 #define INTERFACE IDirect3DVertexBuffer9
 #define IDirect3DVertexBuffer9_METHODS \
-    IDirect3DResource9_METHODS \ 
+    IDirect3DResource9_METHODS \
     STDMETHOD(Lock)(THIS_ UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC* pDesc) PURE;
@@ -616,7 +620,7 @@ ICOM_DEFINE(IDirect3DVertexBuffer9,IDirect3DResource9)
     STDMETHOD(Lock)(THIS_ UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC* pDesc) PURE;
-ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
+ICOM_DEFINE(IDirect3DIndexBuffer9,IDirect3DResource9)
 #undef INTERFACE
 
 #ifdef COBJMACROS
@@ -851,13 +855,13 @@ ICOM_DEFINE(IDirect3DVertexShader9,IUnknown)
 /*****************************************************************************
  * IDirect3DPixelShader9 interface
  */
-#define ICOM_INTERFACE IDirect3DPixelShader9
+#define INTERFACE IDirect3DPixelShader9
 #define IDirect3DPixelShader9_METHODS \
     IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice9** ppDevice) PURE; \
     STDMETHOD(GetFunction)(THIS_ void*, UINT* pSizeOfData) PURE;
 ICOM_DEFINE(IDirect3DPixelShader9,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef COBJMACROS
 /*** IUnknown methods ***/
