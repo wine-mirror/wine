@@ -1421,22 +1421,22 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename ))
+    if (!section && !entry && !string) /* documented "file flush" case */
     {
-        if (!section && !entry && !string) /* documented "file flush" case */
+        if (!filename || PROFILE_Open( filename ))
         {
-            PROFILE_FlushFile();
-            PROFILE_ReleaseFile();  /* always return FALSE in this case */
+            if (CurProfile) PROFILE_ReleaseFile();  /* always return FALSE in this case */
         }
-	else {
-	    if (!section) {
-		FIXME("(NULL?,%s,%s,%s)?\n",
-                      debugstr_w(entry), debugstr_w(string), debugstr_w(filename));
-	    } else {
-		ret = PROFILE_SetString( section, entry, string, FALSE);
-		PROFILE_FlushFile();
-	    }
-	}
+    }
+    else if (PROFILE_Open( filename ))
+    {
+        if (!section) {
+            FIXME("(NULL?,%s,%s,%s)?\n",
+                  debugstr_w(entry), debugstr_w(string), debugstr_w(filename));
+        } else {
+            ret = PROFILE_SetString( section, entry, string, FALSE);
+            PROFILE_FlushFile();
+        }
     }
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
@@ -1481,10 +1481,15 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
-    if (PROFILE_Open( filename )) {
-        if (!section && !string)
-            PROFILE_ReleaseFile();  /* always return FALSE in this case */
-        else if (!string) {/* delete the named section*/
+    if (!section && !string)
+    {
+        if (!filename || PROFILE_Open( filename ))
+        {
+            if (CurProfile) PROFILE_ReleaseFile();  /* always return FALSE in this case */
+        }
+    }
+    else if (PROFILE_Open( filename )) {
+        if (!string) {/* delete the named section*/
 	    ret = PROFILE_SetString(section,NULL,NULL, FALSE);
 	    PROFILE_FlushFile();
         } else {
