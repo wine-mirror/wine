@@ -447,6 +447,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     waveOutUnprepareHeader(hWave, &waveHdr[1], sizeof(WAVEHDR));
 
 errCleanUp:
+    TRACE("Done playing='%s' !\n", debugstr_w(wps->pszSound));
     CloseHandle(s.hEvent);
     HeapFree(GetProcessHeap(), 0, waveHdr);
     HeapFree(GetProcessHeap(), 0, lpWaveFormat);
@@ -461,6 +462,21 @@ errCleanUp:
     HeapFree(GetProcessHeap(), 0, wps);
 
     return bRet;
+}
+
+static BOOL MULTIMEDIA_IsString(DWORD fdwSound, const void* psz)
+{
+    /* SND_RESOURCE is 0x40004 while
+     * SND_MEMORY is 0x00004
+     */
+    switch (fdwSound & SND_RESOURCE)
+    {
+    case SND_RESOURCE:  return HIWORD(psz) != 0; /* by name or by ID ? */
+    case SND_MEMORY:    return FALSE;
+    /* any other case (SND_ALIAS, SND_FILENAME... shall drop into this one) */
+    case 0:             return TRUE; 
+    default:            FIXME("WTF\n"); return FALSE;
+    }
 }
 
 static BOOL MULTIMEDIA_PlaySound(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound, DWORD search)
@@ -515,10 +531,9 @@ static BOOL MULTIMEDIA_PlaySound(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound,
     } while (InterlockedCompareExchangePointer((void**)&iData->lpPlaySound, wps, NULL) != NULL);
 
     if (fdwSound & SND_ASYNC) {
-	if (!((fdwSound & SND_MEMORY) || ((fdwSound & SND_RESOURCE) && 
-					  !((DWORD)pszSound >> 16)) || 
-              !pszSound)) {
-	    wps->pszSound = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pszSound)+1) * sizeof(WCHAR) );
+	if (MULTIMEDIA_IsString(fdwSound, pszSound))
+        {
+	    wps->pszSound = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pszSound)+1) * sizeof(WCHAR));
 	    lstrcpyW((LPWSTR)wps->pszSound, pszSound);
 	}
 	wps->bLoop = fdwSound & SND_LOOP;
@@ -541,16 +556,13 @@ BOOL WINAPI PlaySoundA(LPCSTR pszSoundA, HMODULE hmod, DWORD fdwSound)
 {
     LPWSTR 	pszSoundW;
     BOOL	bSound;
+
+    pszSoundW = (MULTIMEDIA_IsString(fdwSound, pszSoundA)) ?
+        HEAP_strdupAtoW(GetProcessHeap(), 0, pszSoundA) : (LPWSTR)pszSoundA;
     
-    if (!((fdwSound & SND_MEMORY) || 
-          ((fdwSound & SND_RESOURCE) && !((DWORD)pszSoundA >> 16)) ||
-          !pszSoundA)) {
-	pszSoundW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszSoundA);
-	bSound = PlaySoundW(pszSoundW, hmod, fdwSound);
-	HeapFree(GetProcessHeap(), 0, pszSoundW);
-    } else  
-	bSound = PlaySoundW((LPWSTR)pszSoundA, hmod, fdwSound);
-    
+    bSound = PlaySoundW(pszSoundW, hmod, fdwSound);
+    if ((void*)pszSoundW != (void*)pszSoundA) HeapFree(GetProcessHeap(), 0, pszSoundW);
+
     return bSound;
 }
 
@@ -585,14 +597,12 @@ BOOL WINAPI sndPlaySoundA(LPCSTR pszSoundA, UINT uFlags)
     LPWSTR 	pszSoundW;
     BOOL	bSound;
     
-    if (!((uFlags & SND_MEMORY) || 
-          ((uFlags & SND_RESOURCE) && !((DWORD)pszSoundA >> 16)) ||
-          !pszSoundA)) {
-	pszSoundW = HEAP_strdupAtoW(GetProcessHeap(), 0, pszSoundA);
-	bSound = sndPlaySoundW(pszSoundW, uFlags);
+    pszSoundW = (MULTIMEDIA_IsString(uFlags, pszSoundA)) ?
+        HEAP_strdupAtoW(GetProcessHeap(), 0, pszSoundA) : (LPWSTR)pszSoundA;
+
+    bSound = sndPlaySoundW(pszSoundW, uFlags);
+    if ((void*)pszSoundW != (void*)pszSoundA)
 	HeapFree(GetProcessHeap(), 0, pszSoundW);
-    } else  
-	bSound = sndPlaySoundW((LPWSTR)pszSoundA, uFlags);
     
     return bSound;
 }
