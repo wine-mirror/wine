@@ -22,6 +22,8 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 
+static RTL_CRITICAL_SECTION peb_lock = CRITICAL_SECTION_INIT;
+
 /*
  *	resource functions
  */
@@ -293,17 +295,17 @@ void WINAPIV DbgPrint(LPCSTR fmt, ...)
 /******************************************************************************
  *  RtlAcquirePebLock		[NTDLL] 
  */
-VOID WINAPI RtlAcquirePebLock(void) {
-	FIXME("()\n");
-	/* enter critical section ? */
+VOID WINAPI RtlAcquirePebLock(void)
+{
+    RtlEnterCriticalSection( &peb_lock );
 }
 
 /******************************************************************************
  *  RtlReleasePebLock		[NTDLL] 
  */
-VOID WINAPI RtlReleasePebLock(void) {
-	FIXME("()\n");
-	/* leave critical section ? */
+VOID WINAPI RtlReleasePebLock(void)
+{
+    RtlLeaveCriticalSection( &peb_lock );
 }
 
 /******************************************************************************
