@@ -1214,7 +1214,8 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
 
     /* check that the file exists, and that the module hasn't been loaded yet */
     if (stat(module->module_name, &statbuf) == -1) goto leave;
-    
+    if (S_ISDIR(statbuf.st_mode)) goto leave;
+
     /*
      * Now open the file, so that we can mmap() it.
      */
