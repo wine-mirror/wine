@@ -400,8 +400,7 @@ static void COMBOEX_ReSize (COMBOEX_INFO *infoPtr)
 
     COMBOEX_GetComboFontSize (infoPtr, &mysize);
     cy = mysize.cy + CBE_EXTRA;
-    if (infoPtr->himl) {
-	ImageList_GetImageInfo(infoPtr->himl, 0, &iinfo);
+    if (infoPtr->himl && ImageList_GetImageInfo(infoPtr->himl, 0, &iinfo)) {
 	cy = max (iinfo.rcImage.bottom - iinfo.rcImage.top, cy);
 	TRACE("upgraded height due to image:  height=%d\n", cy);
     }
