@@ -522,13 +522,14 @@ DWORD TLB_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
 {
 	DWORD bytesread=0;
 	
-	if((where!=DO_NOT_SEEK && 
-		0xffffffff== SetFilePointer((HANDLE)pcx->hFile, where, 0, FILE_BEGIN))||
-		!ReadFile((HANDLE)pcx->hFile, buffer, count, &bytesread, NULL) ||
-		count != bytesread){
+	if ((   where != DO_NOT_SEEK &&
+		(0xffffffff == SetFilePointer( pcx->hFile, where, 0,FILE_BEGIN))
+	    ) ||
+	    !ReadFile(pcx->hFile, buffer, count, &bytesread, NULL)
+	) {
         /* FIXME */
-		ERR( typelib, "read error is 0x%lx reading %ld bytes at 0x%lx\n",
-				GetLastError(), count, where);
+		ERR(typelib,"read error is 0x%lx reading %ld bytes at 0x%lx\n",
+			    GetLastError(), count, where);
 		TLB_abort();
 		exit(1);
 	}
@@ -983,66 +984,69 @@ long TLB_FindTlb(TLBContext *pcx)
   */
 #define TLBBUFSZ 1024
     char buff[TLBBUFSZ+1]; /* room for a trailing '\0' */
-    long ret=0;
+    long ret=0,found=0;
     int count;
     char *pChr;
-	count=TLB_Read(buff, TLBBUFSZ, pcx, 0);
-    do {
-        buff[count]='\0';
-        if((pChr=strstr(buff,TLBMAGIC2))){
-            ret += pChr-buff;
-            break;
-        }
-        ret+=count;
-		count=TLB_Read(buff, TLBBUFSZ, pcx, DO_NOT_SEEK);
+
+#define LOOK_FOR_MAGIC(magic)				\
+    count=TLB_Read(buff, TLBBUFSZ, pcx, 0);		\
+    do {						\
+        buff[count]='\0';				\
+	pChr = buff;					\
+	while (pChr) {					\
+	    pChr = memchr(pChr,magic[0],count-(pChr-buff));\
+	    if (pChr) {					\
+		if (!memcmp(pChr,magic,4)) {		\
+		    ret+= pChr-buff;			\
+		    found = 1;				\
+		    break;				\
+		}					\
+		pChr++;					\
+	    }						\
+	}						\
+	if (found) break;				\
+        ret+=count;					\
+	count=TLB_Read(buff, TLBBUFSZ, pcx, DO_NOT_SEEK);\
     } while(count>0);
+
+
+    LOOK_FOR_MAGIC(TLBMAGIC2);
     if(count)
         return ret;
-/* try again for the other format */
-    ret=0;
-	count=TLB_Read(buff, TLBBUFSZ, pcx, 0);
-    do {
-        buff[count]='\0';
-        if((pChr=strstr(buff,TLBMAGIC1))){
-            ret += pChr-buff;
-            break;
-        }
-        ret+=count;
-		count=TLB_Read(buff, TLBBUFSZ, pcx, DO_NOT_SEEK);
-    } while(count>0);
+
+    LOOK_FOR_MAGIC(TLBMAGIC1);
     if(count)
         ERR(ole,"type library format not (yet) implemented\n");
     else
         ERR(ole,"not type library found in this file\n");
     return -1;
-
 }
+#undef LOOK_FOR_MAGIC
 
 int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
 {
     TLBContext cx;
-	OFSTRUCT ofStruct;
+    OFSTRUCT ofStruct;
     long oStart,lPSegDir;
     TLBLibInfo* pLibInfo=NULL;
     TLB2Header tlbHeader;
     TLBSegDir tlbSegDir;
-	if((cx.hFile=(HANDLE)OpenFile(file, &ofStruct, OF_READWRITE))
-		==(HANDLE)HFILE_ERROR){
-		ERR( typelib,"cannot open %s error 0x%lx\n",file, GetLastError());
-		exit(1);
-	}
+    if((cx.hFile=OpenFile(file, &ofStruct, OF_READWRITE))==HFILE_ERROR) {
+	ERR( typelib,"cannot open %s error 0x%lx\n",file, GetLastError());
+	return E_FAIL;
+    }
     /* get pointer to beginning of typelib data */
     if((oStart=TLB_FindTlb(&cx))<0){
         if(oStart==-1)
             ERR( typelib,"cannot locate typelib in  %s\n",file);
         else
             ERR( typelib,"unsupported typelib format in  %s\n",file);
-        exit(1);
+        return E_FAIL;
     }
     cx.oStart=oStart;
-    if((pLibInfo=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-									sizeof(TLBLibInfo)))==NULL){
-		CloseHandle(cx.hFile);
+    pLibInfo=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TLBLibInfo));
+    if (!pLibInfo){
+	CloseHandle(cx.hFile);
         return E_OUTOFMEMORY;
     }
     pLibInfo->lpvtbl = &tlbvt;
@@ -1060,8 +1064,9 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
     TLB_Read((void*)&tlbSegDir, sizeof(tlbSegDir), &cx, lPSegDir);  
     cx.pTblDir=&tlbSegDir;
     /* just check two entries */
-    if(tlbSegDir.pTypeInfoTab.res0c != 0x0F ||
-					tlbSegDir.pImpInfo.res0c != 0x0F){
+    if (	tlbSegDir.pTypeInfoTab.res0c != 0x0F ||
+		tlbSegDir.pImpInfo.res0c != 0x0F
+    ) {
         ERR( typelib,"cannot find the table directory, ptr=0x%lx\n",lPSegDir);
     }
     /* now fill our internal data */
