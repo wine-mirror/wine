@@ -1201,7 +1201,8 @@ WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 
 
 /***********************************************************************
- *		BroadcastSystemMessage (USER32.@)
+ *		BroadcastSystemMessage  (USER32.@)
+ *		BroadcastSystemMessageA (USER32.@)
  */
 LONG WINAPI BroadcastSystemMessage(
 	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,

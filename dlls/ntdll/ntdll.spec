@@ -373,11 +373,11 @@
 @ stdcall RtlFindClearRuns(ptr ptr long long) RtlFindClearRuns
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr) RtlFindLastBackwardRunClear
 @ stdcall RtlFindLastBackwardRunSet(ptr long ptr) RtlFindLastBackwardRunSet
-@ stdcall RtlFindLeastSignificantBit(ptr long long) RtlFindLeastSignificantBit
+@ stdcall RtlFindLeastSignificantBit(long long) RtlFindLeastSignificantBit
 @ stdcall RtlFindLongestRunClear(ptr long) RtlFindLongestRunClear
 @ stdcall RtlFindLongestRunSet(ptr long) RtlFindLongestRunSet
 @ stub RtlFindMessage
-@ stdcall RtlFindMostSignificantBit(ptr long long) RtlFindMostSignificantBit
+@ stdcall RtlFindMostSignificantBit(long long) RtlFindMostSignificantBit
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr) RtlFindNextForwardRunClear
 @ stdcall RtlFindNextForwardRunSet(ptr long ptr) RtlFindNextForwardRunSet
 @ stdcall RtlFindSetBits(ptr long long) RtlFindSetBits

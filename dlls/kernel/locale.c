@@ -554,7 +554,7 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
 
 
 /******************************************************************************
- *		GetLocaleInfoA (KERNEL32.@)
+ *		GetLocaleInfoW (KERNEL32.@)
  *
  * NOTES
  *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
