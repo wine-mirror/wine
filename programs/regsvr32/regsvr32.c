@@ -1,5 +1,5 @@
 /*
- * PURPOSE: Register an OLE component in the registry
+ * PURPOSE: Register OLE components in the registry
  *
  * Copyright 2001 ReactOS project
  * Copyright 2001 Jurgen Van Gael [jurgen.vangael@student.kuleuven.ac.be]
@@ -18,21 +18,29 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * This version deliberately differs in error handling compared to the 
+ * windows version.
  */
 
 /*
  *
- *  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname
+ *  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname ...
  *  [/u]    unregister server
  *  [/s]    silent (no message boxes)
  *  [/i]    Call DllInstall passing it an optional [cmdline];
  *          when used with /u calls dll uninstall.
  *  [/n]    Do not call DllRegisterServer; this option must be used with [/i]
+ *
+ *  Note the complication that this version may be passed unix format file names
+ *  which might be mistaken for flags.  Conveniently the Windows version
+ *  requires each flag to be separate (e.g. no /su ) and so we will simply 
+ *  assume that anything longer than /. is a filename.
  */
 
 /**
  * FIXME - currently receives command-line parameters in ASCII only and later
- * converts to Unicode. Ideally the function should have wWinMain etry point
+ * converts to Unicode. Ideally the function should have wWinMain entry point
  * and then work in Unicode only, but it seems Wine does not have necessary
  * support.
  */
@@ -52,7 +60,7 @@ int Silent = 0;
 
 int Usage()
 {
-    printf("regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname\n");
+    printf("regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname ...\n");
     printf("\t[/u]  unregister server\n");
     printf("\t[/s]  silent (no message boxes)\n");
     printf("\t[/i]  Call DllInstall passing it an optional [cmdline];\n");
@@ -175,6 +183,11 @@ int main(int argc, char* argv[])
     WCHAR           EmptyLine[1] = {0};
 
 
+    /* Strictly, the Microsoft version processes all the flags before
+     * the files (e.g. regsvr32 file1 /s file2 is silent even for file1.
+     * For ease, we will not replicate that and will process the arguments
+     * in order.
+     */
     for(i = 1; i < argc; i++)
     {
         if (!strcasecmp(argv[i], "/u"))
@@ -243,13 +256,15 @@ int main(int argc, char* argv[])
 
             if (res)
                 return res;
+	    /* Confirmed.  The windows version does stop on the first error.*/
 
             if (CallInstall)
             {
                 res = InstallDll(!Unregister, DllName, wsCommandLine);
             }
 
-            return res;
+            if (res)
+		return res;
         }
     }
 
