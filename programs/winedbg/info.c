@@ -58,7 +58,7 @@ void print_help(void)
             "  display <expr>                         undisplay <disnum>",
             "  local display <expr>                   delete display <disnum>",                  
             "  enable display <disnum>                disable display <disnum>",
-            "  bt                                     frame <n>",
+            "  bt [<tid>|all]                         frame <n>",
             "  up                                     down",
             "  list <lines>                           disassemble [<addr>][,<addr>]",
             "  show dir                               dir <path>",
