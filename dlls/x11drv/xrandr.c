@@ -126,7 +126,8 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 /* create the mode structures */
 static void make_modes(void)
 {
-    int i, j;
+    unsigned int i;
+    int j;
     for (i=0; i<real_xrandr_sizes_count; i++)
     {
         if (real_xrandr_rates_count[i])
@@ -154,7 +155,7 @@ static int X11DRV_XRandR_GetCurrentMode(void)
     Window root;
     XRRScreenConfiguration *sc;
     short rate;
-    int i;
+    unsigned int i;
     int res = -1;
     
     wine_tsx11_lock();
@@ -189,7 +190,8 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
     XRRScreenConfiguration *sc;
     Status stat = RRSetConfigSuccess;
     short rate;
-    int i, j;
+    unsigned int i;
+    int j;
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
     
@@ -243,7 +245,7 @@ void X11DRV_XRandR_Init(void)
 {
     Bool ok;
     int nmodes = 0;
-    int i;
+    unsigned int i;
 
     if (xrandr_major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */

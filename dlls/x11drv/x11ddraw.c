@@ -432,7 +432,7 @@ void X11DRV_DDHAL_SetPalEntries(Colormap pal, DWORD dwBase, DWORD dwNumEntries,
 				LPPALETTEENTRY lpEntries)
 {
   XColor c;
-  int n;
+  unsigned int n;
 
   if (pal) {
     wine_tsx11_lock();

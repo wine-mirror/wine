@@ -989,7 +989,7 @@ X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn )
 {
     if (X11DRV_SetupGCForBrush( physDev ))
     {
-        int i;
+        unsigned int i;
         XRectangle *rect;
         RGNDATA *data = X11DRV_GetRegionData( hrgn, physDev->hdc );
 
@@ -1123,7 +1123,8 @@ X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, const INT* counts,
 
     if (X11DRV_SetupGCForPen ( physDev ))
     {
-	int i, j, max = 0;
+	unsigned int i;
+	int j, max = 0;
 	XPoint *points;
 
 	/* Update the pixmap from the DIB section */
@@ -1169,7 +1170,7 @@ X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, const DWORD* coun
 {
     if (X11DRV_SetupGCForPen ( physDev ))
     {
-        int i, j, max = 0;
+        unsigned int i, j, max = 0;
         XPoint *points;
 
 	/* Update the pixmap from the DIB section */

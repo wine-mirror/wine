@@ -385,9 +385,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
    unsigned long*	pixDynMapping = NULL;
    unsigned long	plane_masks[1];
    int			i, j, warn = 0;
-   int			diff, r, g, b, max = 256, bp = 0, wp = 1;
+   int			diff, r, g, b, bp = 0, wp = 1;
    int			step = 1;
    int			defaultCM_max_copy;
+   unsigned int max = 256;
    Colormap		defaultCM;
    XColor		defaultColors[256];
    HKEY hkey;

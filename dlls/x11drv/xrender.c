@@ -521,7 +521,7 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
  */
 static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 {
-    int buflen;
+    unsigned int buflen;
     char *buf;
     Glyph gid;
     GLYPHMETRICS gm;
@@ -959,7 +959,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				const INT *lpDx, INT breakExtra )
 {
     XRenderColor col;
-    int idx;
+    unsigned int idx;
     TEXTMETRICW tm;
     RGNDATA *data;
     SIZE sz;
@@ -1082,7 +1082,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     TRACE("real x,y %d,%d\n", x, y);
 
     if((char_extra = GetTextCharacterExtra(hdc)) != 0) {
-        INT i;
+        UINT i;
 	SIZE tmpsz;
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
 	for(i = 0; i < count; i++) {

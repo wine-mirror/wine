@@ -580,7 +580,7 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
  */
 static BOOL EVENT_SelectionRequest_AddTARGETS(Atom* targets, unsigned long cTargets, Atom prop)
 {
-    int i;
+    unsigned int i;
     BOOL bExists;
 
     /* Scan through what we have so far to avoid duplicates */
@@ -669,7 +669,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     if (TRACE_ON(clipboard))
     {
-        int i;
+        unsigned int i;
         for ( i = 0; i < cTargets; i++)
         {
             if (targets[i])
@@ -752,7 +752,7 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
         */
        if(aformat == 32 /* atype == xAtomPair */ )
        {
-          int i;
+          unsigned int i;
 
           /* Iterate through the ATOM_PAIR list and execute a SelectionRequest
            * for each (target,property) pair */

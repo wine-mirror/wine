@@ -187,7 +187,7 @@ int X11DRV_resize_desktop( unsigned int width, unsigned int height )
 
 int X11DRV_desktop_GetCurrentMode(void)
 {
-    int i;
+    unsigned int i;
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
     for (i=0; i<dd_mode_count; i++)

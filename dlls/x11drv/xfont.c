@@ -331,7 +331,7 @@ static CRITICAL_SECTION crtsc_fonts_X11 = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static fontResource*	fontList = NULL;
 static fontObject*      fontCache = NULL;		/* array */
-static int		fontCacheSize = FONTCACHE;
+static unsigned int     fontCacheSize = FONTCACHE;
 static int		fontLF = -1, fontMRU = -1;	/* last free, most recently used */
 
 #define __PFONT(pFont)     ( fontCache + ((UINT)(pFont) & 0x0000FFFF) )
@@ -1113,7 +1113,7 @@ static INT XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, const XFontStruct* x_fs,
 
     if( x_fs->per_char )
     {
-	int  width = 0, chars = 0, j;
+	unsigned int width = 0, chars = 0, j;
 	if( (IS_LATIN_CHARSET(pFI->dfCharSet) ||
 	    pFI->dfCharSet == DEFAULT_CHARSET) &&
             (max - min) >= (unsigned char)'z' )
@@ -1150,7 +1150,7 @@ static INT XFONT_GetMaxCharWidth(const XFontStruct* xfs, const XFONTTRANS *XFT)
 {
     unsigned min = (unsigned char)xfs->min_char_or_byte2;
     unsigned max = (unsigned char)xfs->max_char_or_byte2;
-    int  maxwidth, j;
+    unsigned int maxwidth, j;
 
     if(!XFT || !xfs->per_char)
         return abs(xfs->max_bounds.width);
@@ -3424,7 +3424,7 @@ BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar, UINT lastChar
 
     if( pfo )
     {
-	int i;
+	unsigned int i;
 
 	if (pfo->fs->per_char == NULL)
 	    for (i = firstChar; i <= lastChar; i++)

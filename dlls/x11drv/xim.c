@@ -102,9 +102,9 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
                                         DWORD selLength, LPWSTR lpComp, DWORD dwCompLen)
 {
     /* Composition strings are edited in chunks */
-    int byte_length = dwCompLen * sizeof(WCHAR);
-    int byte_offset = dwOffset * sizeof(WCHAR);
-    int byte_selection = selLength * sizeof(WCHAR);
+    unsigned int byte_length = dwCompLen * sizeof(WCHAR);
+    unsigned int byte_offset = dwOffset * sizeof(WCHAR);
+    unsigned int byte_selection = selLength * sizeof(WCHAR);
     BOOL rc = FALSE;
 
     TRACE("( %li, %li, %ld, %p, %ld):\n", dwOffset, selLength, dwIndex, lpComp,
@@ -112,7 +112,7 @@ static BOOL X11DRV_ImmSetInternalString(DWORD dwIndex, DWORD dwOffset,
 
     if (dwIndex == GCS_COMPSTR)
     {
-        int i,j;
+        unsigned int i,j;
         LPBYTE ptr_new;
         LPBYTE ptr_old;
 

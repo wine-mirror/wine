@@ -1240,7 +1240,8 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
 					  int left, int *colors,
 					  XImage *bmpImage )
 {
-    int x = 0, y = lines - 1, c, length;
+    unsigned int x = 0;
+    int y = lines - 1, c, length;
     const BYTE *begin = bits;
 
     while (y >= 0)
@@ -1676,7 +1677,7 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
 					  int left, int *colors,
 					  XImage *bmpImage )
 {
-    int x;			/* X-positon on each line.  Increases. */
+    unsigned int x;		/* X-position on each line.  Increases. */
     int y;			/* Line #.  Starts at lines-1, decreases */
     const BYTE *pIn = bits;     /* Pointer to current position in bits */
     BYTE length;		/* The length pf a run */
@@ -3607,7 +3608,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
      */
     if (ySrc + cy <= startscan + lines)
     {
-        INT y = startscan + lines - (ySrc + cy);
+        UINT y = startscan + lines - (ySrc + cy);
         if (ySrc < startscan) cy -= (startscan - ySrc);
         if (!top_down)
         {
@@ -4806,7 +4807,8 @@ HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
     HGLOBAL hPackedDIB;
     LPBYTE pPackedDIB;
     LPBITMAPINFOHEADER pbmiHeader;
-    unsigned int cDataSize, cPackedSize, OffsetBits, nLinesCopied;
+    unsigned int cDataSize, cPackedSize, OffsetBits;
+    int nLinesCopied;
 
     if (!GetObjectW( hBmp, sizeof(bmp), &bmp )) return 0;
 

@@ -1214,8 +1214,8 @@ static void
 X11DRV_KEYBOARD_DetectLayout (void)
 {
   Display *display = thread_display();
-  unsigned current, match, mismatch, seq;
-  int score, keyc, i, key, pkey, ok, syms;
+  unsigned current, match, mismatch, seq, i, syms;
+  int score, keyc, key, pkey, ok;
   KeySym keysym;
   const char (*lkey)[MAIN_LEN][4];
   unsigned max_seq = 0;

@@ -275,7 +275,7 @@ static UINT wSeqNo = 0;
  */
 void X11DRV_InitClipboard(void)
 {
-    INT i;
+    UINT i;
     HKEY hkey;
 
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
@@ -1244,7 +1244,7 @@ HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
  */
 HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
-    INT i, j;
+    UINT i, j;
     UINT size;
     LPWSTR uni_text;
     LPSTR text, lpstr;
@@ -1466,7 +1466,7 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
  */
 static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* properties, UINT count)
 {
-     INT i, nb_atoms = 0;
+     UINT i, nb_atoms = 0;
      Atom *atoms = NULL;
 
      /* Cache these formats in the clipboard cache */

@@ -39,7 +39,7 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 {
     RGNDATA *data;
     DWORD size;
-    int i;
+    unsigned int i;
     RECT *rect, tmp;
     XRectangle *xrect;
 

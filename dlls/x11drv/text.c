@@ -45,7 +45,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                    const RECT *lprect, LPCWSTR wstr, UINT count,
                    const INT *lpDx, INT breakExtra )
 {
-    int 	        i;
+    unsigned int i;
     fontObject*		pfo;
     INT	 	        width, ascent, descent, xwidth, ywidth;
     XFontStruct*	font;
