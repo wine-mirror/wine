@@ -193,7 +193,23 @@ void WINAPI VXD_Shell( CONTEXT *context )
     case 0x0001:
     case 0x0002:
     case 0x0003:
+        /* SHELL_SYSMODAL_Message
+	ebx virtual maschine handle
+	eax message box flags
+	ecx address of message
+	edi address of caption
+	return response in eax
+	*/
     case 0x0004:
+	/* SHELL_Message
+	ebx virtual maschine handle
+	eax message box flags
+	ecx address of message
+	edi address of caption
+	esi address callback
+	edx reference data for callback
+	return response in eax
+	*/
     case 0x0005:
 	VXD_BARF( context, "shell" );
 	break;
