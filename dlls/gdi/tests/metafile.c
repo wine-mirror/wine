@@ -442,8 +442,5 @@ START_TEST(metafile)
     /* For win-format metafiles (mfdrv) */
     test_mf_Blank();
     test_mf_Graphics();
-
-    /* Crashes under wine: */
-    /* test_mf_PatternBrush(); */
-
+    test_mf_PatternBrush();
 }
