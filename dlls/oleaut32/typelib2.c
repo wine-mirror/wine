@@ -193,7 +193,7 @@ static void ctl2_init_header(
 }
 
 /****************************************************************************
- *	ctl2_init_header
+ *	ctl2_init_segdir
  *
  *  Initializes the segment directory of a new typelib.
  */
@@ -211,6 +211,42 @@ static void ctl2_init_segdir(
 	segdir[i].res08 = -1;
 	segdir[i].res0c = 0x0f;
     }
+}
+
+/****************************************************************************
+ *	ctl2_find_name
+ *
+ *  Locates a name in a type library.
+ *
+ * RETURNS
+ *
+ *  The offset into the NAME segment of the name, or -1 if not found.
+ *
+ * NOTES
+ *
+ *  The name must be encoded as with ctl2_encode_name().
+ */
+static int ctl2_find_name(
+	ICreateTypeLib2Impl *This, /* [I] The typelib to operate against. */
+	char *name)                /* [I] The encoded name to find. */
+{
+    int offset;
+    int *namestruct;
+
+    offset = This->typelib_namehash_segment[name[2] & 0x7f];
+    while (offset != -1) {
+	namestruct = (int *)&This->typelib_segment_data[MSFT_SEG_NAME][offset];
+
+	if (!((namestruct[2] ^ *((int *)name)) & 0xffff00ff)) {
+	    /* hash codes and lengths match, final test */
+	    if (!strncasecmp(name+4, (void *)(namestruct+3), name[0])) break;
+	}
+
+	/* move to next item in hash bucket */
+	offset = namestruct[1];
+    }
+
+    return offset;
 }
 
 /****************************************************************************
@@ -310,7 +346,7 @@ static int ctl2_alloc_segment(
 	ICreateTypeLib2Impl *This,       /* [I] The type library in which to allocate. */
 	enum MSFT_segment_index segment, /* [I] The segment in which to allocate. */
 	int size,                        /* [I] The amount to allocate. */
-	int block_size)                  /* [I] Just set it to 0. I'm not explaining it here. */
+	int block_size)                  /* [I] Initial allocation block size, or 0 for default. */
 {
     int offset;
 
@@ -323,9 +359,25 @@ static int ctl2_alloc_segment(
 	memset(This->typelib_segment_data[segment], 0x57, block_size);
     }
 
-    if ((This->typelib_segdir[segment].length + size) > This->typelib_segment_block_length[segment]) {
-	FIXME("Need to grow segment %d\n", segment);
-	return -1;
+    while ((This->typelib_segdir[segment].length + size) > This->typelib_segment_block_length[segment]) {
+	char *block;
+
+	block_size = This->typelib_segment_block_length[segment];
+	block = HeapReAlloc(GetProcessHeap(), 0, This->typelib_segment_data[segment], block_size << 1);
+	if (!block) return -1;
+
+	if (segment == MSFT_SEG_TYPEINFO) {
+	    /* TypeInfos have a direct pointer to their memory space, so we have to fix them up. */
+	    ICreateTypeInfo2Impl *typeinfo;
+
+	    for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
+		typeinfo->typeinfo = (void *)&block[((char *)typeinfo->typeinfo) - This->typelib_segment_data[segment]];
+	    }
+	}
+
+	memset(block + block_size, 0x57, block_size);
+	This->typelib_segment_block_length[segment] = block_size << 1;
+	This->typelib_segment_data[segment] = block;
     }
 
     offset = This->typelib_segdir[segment].length;
@@ -406,7 +458,16 @@ static int ctl2_alloc_guid(
     int offset;
     MSFT_GuidEntry *guid_space;
     int hash;
+    int hash_key;
     int i;
+
+    for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_GUID].length;
+	 offset += sizeof(MSFT_GuidEntry)) {
+	if (!memcmp(&(This->typelib_segment_data[MSFT_SEG_GUID][offset]),
+		    guid, sizeof(GUID))) {
+	    return offset;
+	}
+    }
 
     offset = ctl2_alloc_segment(This, MSFT_SEG_GUID, sizeof(MSFT_GuidEntry), 0);
     if (offset == -1) return -1;
@@ -419,7 +480,9 @@ static int ctl2_alloc_guid(
 	hash ^= *((short *)&This->typelib_segment_data[MSFT_SEG_GUID][offset + i]);
     }
 
-    This->typelib_guidhash_segment[(hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)))] = offset;
+    hash_key = (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));
+    guid_space->unk14 = This->typelib_guidhash_segment[hash_key];
+    This->typelib_guidhash_segment[hash_key] = offset;
 
     TRACE("Updating GUID hash table (%s,0x%x).\n", debugstr_guid(&guid->guid), hash);
 
@@ -448,12 +511,8 @@ static int ctl2_alloc_name(
 
     length = ctl2_encode_name(This, name, &encoded_name);
 
-#if 1
-    for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_NAME].length;
-	 offset += 8 + (This->typelib_segment_data[MSFT_SEG_NAME][offset + 8] & 0xff)) {
-	if (!memcmp(encoded_name, This->typelib_segment_data[MSFT_SEG_NAME] + offset + 8, length)) return offset;
-    }
-#endif
+    offset = ctl2_find_name(This, encoded_name);
+    if (offset != -1) return offset;
 
     offset = ctl2_alloc_segment(This, MSFT_SEG_NAME, length + 8, 0);
     if (offset == -1) return -1;
@@ -464,7 +523,7 @@ static int ctl2_alloc_name(
     memcpy(&name_space->namelen, encoded_name, length);
 
     if (This->typelib_namehash_segment[encoded_name[2] & 0x7f] != -1)
-	FIXME("Unahndled collision in name hash table.\n");
+	name_space->unk10 = This->typelib_namehash_segment[encoded_name[2] & 0x7f];
 
     This->typelib_namehash_segment[encoded_name[2] & 0x7f] = offset;
 
@@ -496,8 +555,8 @@ static int ctl2_alloc_string(
     length = ctl2_encode_string(This, string, &encoded_string);
 
     for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_STRING].length;
-	 offset += ((This->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) & 0xff)
-	     | (This->typelib_segment_data[MSFT_SEG_STRING][offset + 0] & 0xff)) {
+	 offset += ((((This->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) & 0xff)
+	     | (This->typelib_segment_data[MSFT_SEG_STRING][offset + 0] & 0xff)) + 5) & ~3) {
 	if (!memcmp(encoded_string, This->typelib_segment_data[MSFT_SEG_STRING] + offset, length)) return offset;
     }
 
@@ -526,6 +585,15 @@ static int ctl2_alloc_importinfo(
 {
     int offset;
     MSFT_ImpInfo *impinfo_space;
+
+    for (offset = 0;
+	 offset < This->typelib_segdir[MSFT_SEG_IMPORTINFO].length;
+	 offset += sizeof(MSFT_ImpInfo)) {
+	if (!memcmp(&(This->typelib_segment_data[MSFT_SEG_IMPORTINFO][offset]),
+		    impinfo, sizeof(MSFT_ImpInfo))) {
+	    return offset;
+	}
+    }
 
     offset = ctl2_alloc_segment(This, MSFT_SEG_IMPORTINFO, sizeof(MSFT_ImpInfo), 0);
     if (offset == -1) return -1;
@@ -758,8 +826,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetDocString(
     if (offset == -1) return E_OUTOFMEMORY;
     This->typeinfo->docstringoffs = offset;
     return S_OK;
-
-    return E_OUTOFMEMORY;
 }
 
 /******************************************************************************
@@ -1700,10 +1766,12 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetName(
 	LPOLESTR szName)
 {
     ICOM_THIS(ICreateTypeLib2Impl, iface);
-    int offset = ctl2_alloc_name(This, szName);
+
+    int offset;
 
     TRACE("(%p,%s)\n", iface, debugstr_w(szName));
 
+    offset = ctl2_alloc_name(This, szName);
     if (offset == -1) return E_OUTOFMEMORY;
     This->typelib_header.NameOffset = offset;
     return S_OK;
@@ -1778,10 +1846,12 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetDocString(ICreateTypeLib2 * iface, LP
 static HRESULT WINAPI ICreateTypeLib2_fnSetHelpFileName(ICreateTypeLib2 * iface, LPOLESTR szHelpFileName)
 {
     ICOM_THIS(ICreateTypeLib2Impl, iface);
-    int offset = ctl2_alloc_string(This, szHelpFileName);
+
+    int offset;
 
     TRACE("(%p,%s)\n", iface, debugstr_w(szHelpFileName));
 
+    offset = ctl2_alloc_string(This, szHelpFileName);
     if (offset == -1) return E_OUTOFMEMORY;
     This->typelib_header.helpfile = offset;
     This->typelib_header.varflags |= 0x10;
@@ -1853,16 +1923,10 @@ static void ctl2_finalize_typeinfos(ICreateTypeLib2Impl *This, int filesize)
     ICreateTypeInfo2Impl *typeinfo;
 
     for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
+	typeinfo->typeinfo->memoffset = filesize;
 	if (typeinfo->typedata) {
 	    ICreateTypeInfo2_fnLayOut((ICreateTypeInfo2 *)typeinfo);
-	    typeinfo->typeinfo->memoffset = filesize;
-	    filesize += typeinfo->typedata[0] + ((typeinfo->typeinfo->cElement >> 16) * 12) + 4;
-	}
-    }
-
-    for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
-	if (!typeinfo->typedata) {
-	    typeinfo->typeinfo->memoffset = filesize;
+	    filesize += typeinfo->typedata[0] + ((typeinfo->typeinfo->cElement >> 16) * 12) + ((typeinfo->typeinfo->cElement & 0xffff) * 12) + 4;
 	}
     }
 }
@@ -1886,9 +1950,9 @@ static void ctl2_write_typeinfos(ICreateTypeLib2Impl *This, HANDLE hFile)
 	if (!typeinfo->typedata) continue;
 
 	ctl2_write_chunk(hFile, typeinfo->typedata, typeinfo->typedata[0] + 4);
-	ctl2_write_chunk(hFile, typeinfo->indices, (typeinfo->typeinfo->cElement >> 16) * 4);
-	ctl2_write_chunk(hFile, typeinfo->names, (typeinfo->typeinfo->cElement >> 16) * 4);
-	ctl2_write_chunk(hFile, typeinfo->offsets, (typeinfo->typeinfo->cElement >> 16) * 4);
+	ctl2_write_chunk(hFile, typeinfo->indices, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
+	ctl2_write_chunk(hFile, typeinfo->names, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
+	ctl2_write_chunk(hFile, typeinfo->offsets, ((typeinfo->typeinfo->cElement & 0xffff) + (typeinfo->typeinfo->cElement >> 16)) * 4);
     }
 }
 
@@ -1925,22 +1989,26 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_STRING);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_TYPEDESC);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_ARRAYDESC);
+    filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_CUSTDATA);
+    filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_CUSTDATAGUID);
 
     ctl2_finalize_typeinfos(This, filepos);
 
     if (!ctl2_write_chunk(hFile, &This->typelib_header, sizeof(This->typelib_header))) return retval;
     if (!ctl2_write_chunk(hFile, This->typelib_typeinfo_offsets, This->typelib_header.nrtypeinfos * 4)) return retval;
     if (!ctl2_write_chunk(hFile, &This->typelib_segdir, sizeof(This->typelib_segdir))) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_TYPEINFO   )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUIDHASH   )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUID       )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTINFO )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTFILES)) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAMEHASH   )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAME       )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_STRING     )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_TYPEDESC   )) return retval;
-    if (!ctl2_write_segment(This, hFile, MSFT_SEG_ARRAYDESC  )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_TYPEINFO    )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUIDHASH    )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUID        )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTINFO  )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTFILES )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAMEHASH    )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAME        )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_STRING      )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_TYPEDESC    )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_ARRAYDESC   )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_CUSTDATA    )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_CUSTDATAGUID)) return retval;
 
     ctl2_write_typeinfos(This, hFile);
 
