@@ -25,7 +25,7 @@ static BYTE PF[64] = {0,};
  *
  * Gets the current system information.
  *
- * On the first call it reads cached values, so it doesn't have to determine
+ * On the first call it creates cached values, so it doesn't have to determine
  * them repeatedly. On Linux, the /proc/cpuinfo special file is used.
  *
  * It creates a registry subhierarchy, looking like:
@@ -36,6 +36,8 @@ static BYTE PF[64] = {0,};
  *							
  * It also creates a cached flag array for IsProcessorFeaturePresent().
  *
+ * No NULL ptr check for LPSYSTEM_INFO in Win9x.
+ * 
  * RETURNS
  *	nothing, really
  */
@@ -113,13 +115,20 @@ VOID WINAPI GetSystemInfo(
 				case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
 					cachedsi.wProcessorLevel= 4;
 					break;
-				case 5: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				case 5:
+				case 6: /* PPro/2/3 has same info as P1 */
+					cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 					cachedsi.wProcessorLevel= 5;
 					break;
-				case 6: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-					cachedsi.wProcessorLevel= 5;
-					break;
+				case 1: /* two-figure levels */
+					switch (value[1] - '0') {
+					case 5: /* P4; FIXME: data correct ? */
+					  cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+					  cachedsi.wProcessorLevel= 5;
+					  break;
+					} /* fall through to prev. default */
 				default:
+					FIXME("unknown cpu family '%s', please report ! (-> setting to 386)\n", value);
 					break;
 				}
 			}
@@ -141,17 +150,21 @@ VOID WINAPI GetSystemInfo(
 				case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
 					cachedsi.wProcessorLevel= 4;
 					break;
-				case 5: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-					cachedsi.wProcessorLevel= 5;
-					break;
-				case 6: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				case 5:
+				case 6: /* PPro/2/3 has same info as P1 */
+					cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 					cachedsi.wProcessorLevel= 5;
 					break;
 				default:
+					FIXME("unknown Linux 2.0 cpu family '%s', please report ! (-> setting to 386)\n", value);
 					break;
 				}
 			}
-			/* set the CPU type of the current processor */
+			/* set the CPU type of the current processor
+			 * FIXME: someone reported P4 as being set to
+			 * "              Intel(R) Pentium(R) 4 CPU 1500MHz"
+			 * Do we need to do the same ?
+			 * */
 			sprintf(buf,"CPU %ld",cachedsi.dwProcessorType);
 			if (xhkey)
 				RegSetValueExA(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
@@ -222,7 +235,7 @@ VOID WINAPI GetSystemInfo(
 /***********************************************************************
  * 			IsProcessorFeaturePresent	[KERNEL32.@]
  * RETURNS:
- *	TRUE if processorfeature present
+ *	TRUE if processor feature present
  *	FALSE otherwise
  */
 BOOL WINAPI IsProcessorFeaturePresent (
