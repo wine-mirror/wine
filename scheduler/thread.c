@@ -120,7 +120,6 @@ static void THREAD_FreeTEB( TEB *teb )
 {
     TRACE("(%p) called\n", teb );
     /* Free the associated memory */
-    wine_ldt_free_entries( teb->stack_sel, 1 );
     wine_ldt_free_fs( teb->teb_sel );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
 }
@@ -163,14 +162,12 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
      * 1 page              NOACCESS guard page
      * 1 page              PAGE_GUARD guard page
      * stack_size          normal stack
-     * 64Kb                16-bit stack (optional)
      * 1 page              TEB (except for initial thread)
      * 1 page              debug info (except for initial thread)
      */
 
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
     total_size = stack_size + SIGNAL_STACK_SIZE + 3 * page_size;
-    total_size += 0x10000; /* 16-bit stack */
     if (!teb) total_size += 2 * page_size;
 
     if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
@@ -179,7 +176,11 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     if (!teb)
     {
         teb = (TEB *)((char *)base + total_size - 2 * page_size);
-        if (!THREAD_InitTEB( teb )) goto error;
+        if (!THREAD_InitTEB( teb ))
+        {
+            VirtualFree( base, 0, MEM_RELEASE );
+            return NULL;
+        }
         teb->debug_info = (char *)teb + page_size;
     }
 
@@ -194,19 +195,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     VirtualProtect( (char *)teb->signal_stack + SIGNAL_STACK_SIZE, 1, PAGE_NOACCESS, &old_prot );
     VirtualProtect( (char *)teb->signal_stack + SIGNAL_STACK_SIZE + page_size, 1,
                     PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
-
-    /* Allocate the 16-bit stack selector */
-
-    teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, WINE_LDT_FLAGS_DATA );
-    if (!teb->stack_sel) goto error;
-    teb->cur_stack = MAKESEGPTR( teb->stack_sel, 0x10000 - sizeof(STACK16FRAME) );
-
     return teb;
-
-error:
-    wine_ldt_free_fs( teb->teb_sel );
-    VirtualFree( base, 0, MEM_RELEASE );
-    return NULL;
 }
 
 

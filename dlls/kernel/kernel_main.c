@@ -38,6 +38,8 @@
 #include "miscemu.h"
 #include "module.h"
 #include "task.h"
+#include "thread.h"
+#include "stackframe.h"
 #include "wincon.h"
 #include "console_private.h"
 
@@ -63,6 +65,31 @@ static void ldt_unlock(void)
 {
     LeaveCriticalSection( &ldt_section );
 }
+
+
+/***********************************************************************
+ *           KERNEL thread initialisation routine
+ */
+static void thread_attach(void)
+{
+    /* allocate the 16-bit stack (FIXME: should be done lazily) */
+    HGLOBAL16 hstack = K32WOWGlobalAlloc16( GMEM_FIXED, 0x10000 );
+    NtCurrentTeb()->stack_sel = GlobalHandleToSel16( hstack );
+    NtCurrentTeb()->cur_stack = MAKESEGPTR( NtCurrentTeb()->stack_sel,
+                                            0x10000 - sizeof(STACK16FRAME) );
+}
+
+
+/***********************************************************************
+ *           KERNEL thread finalisation routine
+ */
+static void thread_detach(void)
+{
+    /* free the 16-bit stack */
+    K32WOWGlobalFree16( NtCurrentTeb()->stack_sel );
+    NtCurrentTeb()->cur_stack = 0;
+}
+
 
 /***********************************************************************
  *           KERNEL process initialisation routine
@@ -144,6 +171,7 @@ static BOOL process_attach(void)
     if (main_create_flags & CREATE_NEW_PROCESS_GROUP)
         SetConsoleCtrlHandler(NULL, TRUE);
 
+    thread_attach();
     return TRUE;
 }
 
@@ -156,6 +184,12 @@ BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         return process_attach();
+    case DLL_THREAD_ATTACH:
+        thread_attach();
+        break;
+    case DLL_THREAD_DETACH:
+        thread_detach();
+        break;
     case DLL_PROCESS_DETACH:
         WriteOutProfiles16();
         break;

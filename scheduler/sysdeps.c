@@ -293,7 +293,6 @@ void SYSDEPS_ExitThread( int status )
     struct thread_cleanup_info info;
     MEMORY_BASIC_INFORMATION meminfo;
 
-    wine_ldt_free_entries( teb->stack_sel, 1 );
     VirtualQuery( teb->stack_top, &meminfo, sizeof(meminfo) );
     info.stack_base = meminfo.AllocationBase;
     info.stack_size = meminfo.RegionSize + ((char *)teb->stack_top - (char *)meminfo.AllocationBase);
