@@ -46,11 +46,15 @@ typedef struct tag_yyinput
     MSIHANDLE hInstall;
     LPCWSTR str;
     INT    n;
-    INT    start;
     MSICONDITION result;
 } COND_input;
 
-static LPWSTR COND_GetString( COND_input *info );
+struct cond_str {
+    LPCWSTR data;
+    INT len;
+};
+
+static LPWSTR COND_GetString( struct cond_str *str );
 static int COND_lex( void *COND_lval, COND_input *info);
 UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value);
 
@@ -99,6 +103,7 @@ static INT comp_ge_m2(INT a, LPWSTR b);
 
 %union
 {
+    struct cond_str str;
     LPWSTR    string;
     INT       value;
     comp_int  fn_comp_int;
@@ -112,7 +117,7 @@ static INT comp_ge_m2(INT a, LPWSTR b);
 %token COND_LT COND_GT COND_EQ 
 %token COND_LPAR COND_RPAR COND_DBLQ COND_TILDA
 %token COND_PERCENT COND_DOLLARS COND_QUESTION COND_AMPER COND_EXCLAM
-%token COND_IDENT COND_NUMBER
+%token <str> COND_IDENT <str> COND_NUMBER
 
 %nonassoc COND_EOF COND_ERROR
 
@@ -404,6 +409,7 @@ symbol_i:
       
             MsiGetComponentStateW(cond->hInstall, $2, &install, &action );
             $$ = action;
+            HeapFree( GetProcessHeap(), 0, $2 );
         }
   | COND_QUESTION identifier
         {
@@ -412,6 +418,7 @@ symbol_i:
       
             MsiGetComponentStateW(cond->hInstall, $2, &install, &action );
             $$ = install;
+            HeapFree( GetProcessHeap(), 0, $2 );
         }
   | COND_AMPER identifier
         {
@@ -420,6 +427,7 @@ symbol_i:
       
             MsiGetFeatureStateW(cond->hInstall, $2, &install, &action );
             $$ = action;
+            HeapFree( GetProcessHeap(), 0, $2 );
         }
   | COND_EXCLAM identifier
         {
@@ -428,6 +436,7 @@ symbol_i:
       
             MsiGetFeatureStateW(cond->hInstall, $2, &install, &action );
             $$ = install;
+            HeapFree( GetProcessHeap(), 0, $2 );
         }
     ;
 
@@ -445,6 +454,7 @@ symbol_s:
             {
                 $$[0]=0;
             }
+            HeapFree( GetProcessHeap(), 0, $1 );
         }
     | COND_PERCENT identifier
         {
@@ -462,8 +472,7 @@ symbol_s:
 identifier:
     COND_IDENT
         {
-            COND_input* cond = (COND_input*) info;
-            $$ = COND_GetString(cond);
+            $$ = COND_GetString(&$1);
             if( !$$ )
                 YYABORT;
         }
@@ -472,8 +481,7 @@ identifier:
 integer:
     COND_NUMBER
         {
-            COND_input* cond = (COND_input*) info;
-            LPWSTR szNum = COND_GetString(cond);
+            LPWSTR szNum = COND_GetString(&$1);
             if( !szNum )
                 YYABORT;
             $$ = atoiW( szNum );
@@ -578,27 +586,20 @@ static int COND_IsIdent( WCHAR x )
             || ( x == '#' ) || (x == '.') );
 }
 
-static int COND_lex( void *COND_lval, COND_input *cond )
+static int COND_GetOne( struct cond_str *str, COND_input *cond )
 {
+    static const WCHAR szNot[] = {'N','O','T',0};
+    static const WCHAR szAnd[] = {'A','N','D',0};
+    static const WCHAR szOr[] = {'O','R',0};
     WCHAR ch;
-    /* grammer */
-    static const WCHAR NOT[] = {'O','T',' ',0};
-    static const WCHAR AND[] = {'N','D',' ',0};
-    static const WCHAR OR[] = {'R',' ',0};
+    int rc, len = 1;
 
-    int rc = COND_SPACE;
+    str->data = &cond->str[cond->n];
 
-    while (rc == COND_SPACE)
-    {
-
-    cond->start = cond->n;
-    ch = cond->str[cond->n];
-    if( ch == 0 )
-        return 0;
-    cond->n++;
-
+    ch = str->data[0];
     switch( ch )
     {
+    case 0: return 0;
     case '(': rc = COND_LPAR; break;
     case ')': rc = COND_RPAR; break;
     case '&': rc = COND_AMPER; break;
@@ -612,46 +613,19 @@ static int COND_lex( void *COND_lval, COND_input *cond )
     case '~': rc = COND_TILDA; break;
     case '<': rc = COND_LT; break;
     case '>': rc = COND_GT; break;
-    case 'N': 
-    case 'n': 
-        if (strncmpiW(&cond->str[cond->n],NOT,3)==0)
-        {
-            cond->n+=3;
-            rc = COND_NOT;
-        }
-        break;
-    case 'A': 
-    case 'a': 
-        if (strncmpiW(&cond->str[cond->n],AND,3)==0)
-        {
-            cond->n+=3;
-            rc = COND_AND;
-        }
-        break;
-    case 'O':
-    case 'o':
-        if (strncmpiW(&cond->str[cond->n],OR,2)==0)
-        {
-            cond->n+=2;
-            rc = COND_OR;
-        }
-        break;
     default: 
         if( COND_IsAlpha( ch ) )
         {
-            ch = cond->str[cond->n];
-            while( COND_IsIdent( ch ) )
-                ch = cond->str[cond->n++];
-            cond->n--;
+            while( COND_IsIdent( str->data[len] ) )
+                len++;
             rc = COND_IDENT;
             break;
         }
 
         if( COND_IsNumber( ch ) )
         {
-            ch = cond->str[cond->n];
-            while( COND_IsNumber( ch ) )
-                ch = cond->str[cond->n++];
+            while( COND_IsNumber( str->data[len] ) )
+                len++;
             rc = COND_NUMBER;
             break;
         }
@@ -660,25 +634,48 @@ static int COND_lex( void *COND_lval, COND_input *cond )
         rc = COND_ERROR;
         break;
     }
+
+    /* keyword identifiers */
+    if( rc == COND_IDENT )
+    {
+        if( (len==3) && (strncmpiW(str->data,szNot,len)==0) )
+            rc = COND_NOT;
+        else if( (len==3) && (strncmpiW(str->data,szAnd,len)==0) )
+            rc = COND_AND;
+        else if( (len==2) && (strncmpiW(str->data,szOr,len)==0) )
+            rc = COND_OR;
     }
+
+    cond->n += len;
+    str->len = len;
+
+    return rc;
+}
+
+static int COND_lex( void *COND_lval, COND_input *cond )
+{
+    int rc;
+    struct cond_str *str = COND_lval;
+
+    do {
+        rc = COND_GetOne( str, cond );
+    } while (rc == COND_SPACE);
     
     return rc;
 }
 
-static LPWSTR COND_GetString( COND_input *cond )
+static LPWSTR COND_GetString( struct cond_str *str )
 {
-    int len;
-    LPWSTR str;
+    LPWSTR ret;
 
-    len = cond->n - cond->start;
-    str = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof (WCHAR) );
-    if( str )
+    ret = HeapAlloc( GetProcessHeap(), 0, (str->len+1) * sizeof (WCHAR) );
+    if( ret )
     {
-        strncpyW( str, &cond->str[cond->start], len );
-        str[len]=0;
+        strncpyW( ret, str->data, str->len );
+        ret[str->len]=0;
     }
-    TRACE("Got identifier %s\n",debugstr_w(str));
-    return str;
+    TRACE("Got identifier %s\n",debugstr_w(ret));
+    return ret;
 }
 
 static int COND_error(char *str)
@@ -694,7 +691,6 @@ MSICONDITION WINAPI MsiEvaluateConditionW( MSIHANDLE hInstall, LPCWSTR szConditi
     cond.hInstall = hInstall;
     cond.str   = szCondition;
     cond.n     = 0;
-    cond.start = 0;
     cond.result = -1;
     
     TRACE("Evaluating %s\n",debugstr_w(szCondition));    
