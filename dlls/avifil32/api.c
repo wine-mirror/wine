@@ -32,6 +32,7 @@
 
 #include "ole2.h"
 #include "shellapi.h"
+#include "shlobj.h"
 #include "vfw.h"
 #include "msacm.h"
 
@@ -42,11 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(avifile);
 
-/***********************************************************************
- * copied from dlls/shell32/undocshell.h
- */
-HRESULT WINAPI SHCoCreateInstance(LPCSTR lpszClsid,REFCLSID rClsid,
-				  LPUNKNOWN pUnkOuter,REFIID riid,LPVOID *ppv);
 
 /***********************************************************************
  * for AVIBuildFilterW -- uses fixed size table
