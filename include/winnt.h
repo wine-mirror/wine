@@ -3454,6 +3454,8 @@ typedef enum tagSID_NAME_USE {
 #define REG_RESOURCE_LIST	8	/* resource list? huh? */
 #define REG_FULL_RESOURCE_DESCRIPTOR	9	/* full resource descriptor? huh? */
 #define REG_RESOURCE_REQUIREMENTS_LIST	10
+#define REG_QWORD		11	/* QWORD in little endian format */
+#define REG_QWORD_LITTLE_ENDIAN	11	/* QWORD in little endian format */
 
 /* ----------------------------- begin registry ----------------------------- */
 
