@@ -1316,7 +1316,7 @@ UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
                                           filename )))
         return def_val;
 
-    if (len+1 == sizeof(buffer)/sizeof(WCHAR)) FIXME("result may be wrong!");
+    if (len+1 == sizeof(buffer)/sizeof(WCHAR)) FIXME("result may be wrong!\n");
 
     /* FIXME: if entry can be found but it's empty, then Win16 is
      * supposed to return 0 instead of def_val ! Difficult/problematic
