@@ -47,14 +47,14 @@ static CHAR *app_name = "UNKNOWN";
 
 static CHAR *reg_class_names[] = {
                                      "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CLASSES_ROOT",
-                                     "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER"
+                                     "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
                                  };
 
 #define REG_CLASS_NUMBER (sizeof(reg_class_names) / sizeof(reg_class_names[0]))
 
 static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
             HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CLASSES_ROOT,
-            HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER
+            HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER, HKEY_DYN_DATA
         };
 
 /* return values */
@@ -1372,7 +1372,8 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
             /* do not export HKEY_CLASSES_ROOT */
             if (reg_class_keys[i] != HKEY_CLASSES_ROOT &&
                     reg_class_keys[i] != HKEY_CURRENT_USER &&
-                    reg_class_keys[i] != HKEY_CURRENT_CONFIG) {
+                    reg_class_keys[i] != HKEY_CURRENT_CONFIG &&
+                    reg_class_keys[i] != HKEY_DYN_DATA) {
                 strcpy(reg_key_name_buf, reg_class_names[i]);
                 export_hkey(file, reg_class_keys[i],
                             &reg_key_name_buf, &reg_key_name_len,
