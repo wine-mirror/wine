@@ -468,7 +468,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
+HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
 {
     HMODULE	hModule;
     HANDLE	mapping;
@@ -505,6 +505,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     if ( *(WORD*)hModule !=IMAGE_DOS_SIGNATURE)
     {
         WARN("%s image doesn't have DOS signature, but 0x%04x\n", filename,*(WORD*)hModule);
+        SetLastError( ERROR_BAD_EXE_FORMAT );
         goto error;
     }
 
@@ -514,6 +515,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     if ( nt->Signature != IMAGE_NT_SIGNATURE )
     {
         WARN("%s image doesn't have PE signature, but 0x%08lx\n", filename, nt->Signature );
+        SetLastError( ERROR_BAD_EXE_FORMAT );
         goto error;
     }
 
@@ -533,6 +535,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
         default: MESSAGE("Unknown-%04x", nt->FileHeader.Machine); break;
         }
         MESSAGE(")\n");
+        SetLastError( ERROR_BAD_EXE_FORMAT );
         goto error;
     }
 
@@ -555,6 +558,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
         ERR("PE module is too small (header: %d, filesize: %d), "
                     "probably truncated download?\n", 
                     rawsize, file_size );
+        SetLastError( ERROR_BAD_EXE_FORMAT );
         goto error;
     }
 
@@ -616,6 +620,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
                    filename,
                    (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
                    "stripped during link" : "unknown reason" );
+            SetLastError( ERROR_BAD_EXE_FORMAT );
             goto error;
         }
 
@@ -698,10 +703,6 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Perform base relocation, if necessary */
     if ( reloc )
         do_relocations( load_addr, (IMAGE_BASE_RELOCATION *)RVA(reloc) );
-
-    /* Get expected OS / Subsystem version */
-    *version =   ( (nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 )
-               |   (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
 
     /* We don't need the orignal mapping any more */
     UnmapViewOfFile( (LPVOID)hModule );
@@ -919,7 +920,6 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	WINE_MODREF	*wm;
 	char        	filename[256];
 	HANDLE		hFile;
-	WORD		version = 0;
 
 	/* Search for and open PE file */
 	if ( SearchPathA( NULL, name, ".DLL", 
@@ -930,11 +930,10 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
 	
 	/* Load PE module */
-	hModule32 = PE_LoadImage( hFile, filename, &version );
+	hModule32 = PE_LoadImage( hFile, filename );
 	if (!hModule32)
 	{
                 CloseHandle( hFile );
-		SetLastError( ERROR_OUTOFMEMORY );	/* Not entirely right, but good enough */
 		return NULL;
 	}
 
@@ -993,13 +992,12 @@ BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
                        BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
-    WORD version = 0;
     HMODULE16 hModule16;
     HMODULE hModule32;
     NE_MODULE *pModule;
 
     /* Load file */
-    if ( (hModule32 = PE_LoadImage( hFile, filename, &version )) < 32 )
+    if ( (hModule32 = PE_LoadImage( hFile, filename )) < 32 )
     {
         SetLastError( hModule32 );
         return FALSE;
