@@ -418,6 +418,10 @@ static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWST
     int string_num;
     int i;
 
+    /* Replace SUBLANG_NEUTRAL by SUBLANG_DEFAULT */
+    if(SUBLANGID(lang_id) == SUBLANG_NEUTRAL)
+        lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
+
     hrsrc = FindResourceExW(hModule, RT_STRINGW, (LPCWSTR)((res_id >> 4) + 1), lang_id);
 
     if(!hrsrc) return 0;
