@@ -26,7 +26,7 @@
  * You could easily write one with the information in
  * this file...
  *
- * Up to date as of SHELL32 v4.72 (Win98, Win95 with MSIE 5)
+ * Up to date as of SHELL32 v5.00 (W2K)
  */
 
 #include <stdlib.h>
@@ -36,6 +36,7 @@
 #include "winerror.h"
 #include "winreg.h"
 
+#include "shell32_main.h"
 #include "undocshell.h"
 #include "wine/winuser16.h"
 
@@ -43,27 +44,31 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-#define SHELL_MAX_POLICIES 57
-
 #define SHELL_NO_POLICY 0xffffffff
 
 typedef struct tagPOLICYDAT
 {
-  DWORD polflags;        /* flags value passed to SHRestricted */
+  DWORD policy;          /* policy value passed to SHRestricted */
   LPCSTR appstr;         /* application str such as "Explorer" */
   LPCSTR keystr;         /* name of the actual registry key / policy */
   DWORD cache;           /* cached value or 0xffffffff for invalid */
 } POLICYDATA, *LPPOLICYDATA;
 
-#if 0
-extern POLICYDATA sh32_policy_table[SHELL_MAX_POLICIES];
-#endif
+/* registry strings */
+static const CHAR strRegistryPolicyA[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Policies";
+static const WCHAR strRegistryPolicyW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o',
+                                           's','o','f','t','\\','W','i','n','d','o','w','s','\\',
+                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+                                           '\\','P','o','l','i','c','i','e','s',0};
+static const CHAR strPolicyA[] = "Policy";
+static const WCHAR strPolicyW[] = {'P','o','l','i','c','y',0};
 
 /* application strings */
 
 static const char strExplorer[] = {"Explorer"};
 static const char strActiveDesk[] = {"ActiveDesktop"};
 static const char strWinOldApp[] = {"WinOldApp"};
+static const char strAddRemoveProgs[] = {"AddRemoveProgs"};
 
 /* key strings */
 
@@ -126,7 +131,6 @@ static const char strNoClose[] = {"NoClose"};
 static const char strNoRun[] = {"NoRun"};
 
 /* policy data array */
-
 POLICYDATA sh32_policy_table[] =
 {
   {
@@ -265,6 +269,12 @@ POLICYDATA sh32_policy_table[] =
     0x400000,
     strExplorer,
     strNoCommonGroups,
+    SHELL_NO_POLICY
+  },
+  {
+    0x800000,
+    strExplorer,
+    "SeparateProcess",
     SHELL_NO_POLICY
   },
   {
@@ -470,11 +480,299 @@ POLICYDATA sh32_policy_table[] =
     strExplorer,
     strNoFileURL,
     SHELL_NO_POLICY
-  }
+  },
+  {
+    0x40000022,
+    strExplorer,
+    "FindComputers",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000023,
+    strExplorer,
+    "IntelliMenus",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000024,
+    strExplorer,
+    "MemCheckBoxInRunDlg",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000025,
+    strAddRemoveProgs,
+    "ShowPostSetup",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000026,
+    strExplorer,
+    "NoSyncAll",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000027,
+    strExplorer,
+    "NoControlPanel",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000028,
+    strExplorer,
+    "EnumWorkgroup",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000029,
+    strAddRemoveProgs,
+    "NoAddRemovePrograms",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000002A,
+    strAddRemoveProgs,
+    "NoRemovePage",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000002B,
+    strAddRemoveProgs,
+    "NoAddPage",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000002C,
+    strAddRemoveProgs,
+    "NoWindowsSetupPage",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000002E,
+    strExplorer,
+    "NoChangeMappedDriveLabel",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000002F,
+    strExplorer,
+    "NoChangeMappedDriveComment",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000030,
+    strExplorer,
+    "MaxRecentDocs",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000031,
+    strExplorer,
+    "NoNetworkConnections",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000032,
+    strExplorer,
+    "ForceStartMenuLogoff",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000033,
+    strExplorer,
+     "NoWebView",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000034,
+    strExplorer,
+    "NoCustomizeThisFolder",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000035,
+    strExplorer,
+    "NoEncryption",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000036,
+    strExplorer,
+    "AllowFrenchEncryption",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000037,
+    strExplorer,
+    "DontShowSuperHidden",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000038,
+    strExplorer,
+    "NoShellSearchButton",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000039,
+    strExplorer,
+    "NoHardwareTab",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000003A,
+    strExplorer,
+    "NoRunasInstallPrompt",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000003B,
+    strExplorer,
+    "PromptRunasInstallNetPath",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000003C,
+    strExplorer,
+    "NoManageMyComputerVerb",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000003D,
+    strExplorer,
+    "NoRecentDocsNetHood",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000003E,
+    strExplorer,
+    "DisallowRun",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000003F,
+    strExplorer,
+    "NoWelcomeScreen",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000040,
+    strExplorer,
+    "RestrictCpl",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000041,
+    strExplorer,
+    "DisallowCpl",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000042,
+    strExplorer,
+    "NoSMBalloonTip",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000043,
+    strExplorer,
+    "NoSMHelp",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000044,
+    strExplorer,
+    "NoWinKeys",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000045,
+    strExplorer,
+    "NoEncryptOnMove",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000046,
+    strExplorer,
+    "DisableLocalMachineRun",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000047,
+    strExplorer,
+    "DisableCurrentUserRun",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000048,
+    strExplorer,
+    "DisableLocalMachineRunOnce",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000049,
+    strExplorer,
+    "DisableCurrentUserRunOnce",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000004A,
+    strExplorer,
+    "ForceActiveDesktopOn",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000004B,
+    strExplorer,
+    "NoComputersNearMe",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000004C,
+    strExplorer,
+    "NoViewOnDrive",
+    SHELL_NO_POLICY
+  },
+  {
+    0x4000004F,
+    strExplorer,
+    "NoSMMyDocs",
+    SHELL_NO_POLICY
+  },
+  {
+    0x40000061,
+    strExplorer,
+    "StartRunNoHOMEPATH",
+    SHELL_NO_POLICY
+  },
+  {
+    0x41000001,
+    strExplorer,
+    "NoDisconnect",
+    SHELL_NO_POLICY
+  },
+  {
+    0x41000002,
+    strExplorer,
+    "NoNTSecurity",
+    SHELL_NO_POLICY
+  },
+  {
+    0x41000003,
+    strExplorer,
+    "NoFileAssociate",
+    SHELL_NO_POLICY
+  },
+  {
+    0,
+    0,
+    0,
+    SHELL_NO_POLICY
+	}
 };
 
 /*************************************************************************
- * SHRestricted				[SHELL32.100]
+ * SHRestricted				 [SHELL32.100]
  *
  * Get the value associated with a policy Id.
  *
@@ -494,102 +792,103 @@ POLICYDATA sh32_policy_table[] =
  *     b: 98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
  *     c: 'The Windows 95 Registry', by John Woram, 1996 MIS: Press
  */
-DWORD WINAPI SHRestricted (DWORD pol) {
-        char regstr[256];
-	HKEY	xhkey;
-	DWORD   retval, polidx, i, datsize = 4;
+DWORD WINAPI SHRestricted (DWORD policy)
+{
+	char regstr[256];
+	HKEY    xhkey;
+	DWORD   retval, datsize = 4;
+	LPPOLICYDATA p;
 
-	TRACE("(%08lx)\n",pol);
-
-	polidx = -1;
+	TRACE("(%08lx)\n", policy);
 
 	/* scan to see if we know this policy ID */
-	for (i = 0; i < SHELL_MAX_POLICIES; i++)
+	for (p = sh32_policy_table; p->policy; p++)
 	{
-	     if (pol == sh32_policy_table[i].polflags)
-	     {
-	         polidx = i;
-		 break;
-	     }
+	  if (policy == p->policy)
+	  {
+	    break;
+	  }
 	}
 
-	if (polidx == -1)
+	if (p->policy == 0)
 	{
 	    /* we don't know this policy, return 0 */
-	    TRACE("unknown policy: (%08lx)\n", pol);
+	    TRACE("unknown policy: (%08lx)\n", policy);
 		return 0;
 	}
 
 	/* we have a known policy */
-      	strcpy(regstr, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\");
-	strcat(regstr, sh32_policy_table[polidx].appstr);
 
 	/* first check if this policy has been cached, return it if so */
-	if (sh32_policy_table[polidx].cache != SHELL_NO_POLICY)
+	if (p->cache != SHELL_NO_POLICY)
 	{
-	    return sh32_policy_table[polidx].cache;
+	    return p->cache;
 	}
+
+	lstrcpyA(regstr, strRegistryPolicyA);
+	lstrcatA(regstr, p->appstr);
 
 	/* return 0 and don't set the cache if any registry errors occur */
 	retval = 0;
 	if (RegOpenKeyA(HKEY_CURRENT_USER, regstr, &xhkey) == ERROR_SUCCESS)
 	{
-	    if (RegQueryValueExA(xhkey, sh32_policy_table[polidx].keystr, NULL, NULL, (LPBYTE)&retval, &datsize) == ERROR_SUCCESS)
-	    {
-	        sh32_policy_table[polidx].cache = retval;
-	    }
-
-	    RegCloseKey(xhkey);
+	  if (RegQueryValueExA(xhkey, p->keystr, NULL, NULL, (LPBYTE)&retval, &datsize) == ERROR_SUCCESS)
+	  {
+	    p->cache = retval;
+	  }
+	  RegCloseKey(xhkey);
 	}
-
 	return retval;
 }
 
 /*************************************************************************
- *      SHInitRestricted                         [SHELL32.244]
+ * SHInitRestricted          [SHELL32.244]
  *
  * Initialise the policy cache to speed up calls to SHRestricted().
  *
  * PARAMS
+ *  unused    [I] Reserved.
  *  inpRegKey [I] Registry key to scan.
- *  parm2     [I] Reserved.
  *
  * RETURNS
- *  Success: -1. The policy cache is initialsed.
- *  Failure: 0, if inpRegKey is any value other than NULL or
+ *  Success: -1. The policy cache is initialised.
+ *  Failure: 0, if inpRegKey is any value other than NULL, "Policy", or
  *           "Software\Microsoft\Windows\CurrentVersion\Policies".
  *
  * NOTES
  *  Exported by ordinal. Introduced in Win98.
- *
- * FIXME
- *  I haven't yet run into anything calling this with inputs other than
- *  (NULL, NULL), so I may have the parameters reversed.
  */
-BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
+BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey)
 {
-     int i;
+	LPPOLICYDATA p;
 
-     TRACE("(%p, %p)\n", inpRegKey, parm2);
+	TRACE("(%p, %p)\n", unused, inpRegKey);
 
-     /* first check - if input is non-NULL and points to the secret
-        key string, then pass.  Otherwise return 0.
-     */
+	/* first check - if input is non-NULL and points to the secret
+	   key string, then pass.  Otherwise return 0.
+	 */
+	if (inpRegKey != NULL)
+	{
+	  if (SHELL_OsIsUnicode())
+	  {
+	    if (lstrcmpiA((LPSTR)inpRegKey, strRegistryPolicyA) ||
+	        lstrcmpiA((LPSTR)inpRegKey, strPolicyA))
+	      /* doesn't match, fail */
+	      return 0;
+	  }
+	  else
+	  {
+	    if (lstrcmpiW((LPWSTR)inpRegKey, strRegistryPolicyW) ||
+	        lstrcmpiW((LPWSTR)inpRegKey, strPolicyW))
+	      /* doesn't match, fail */
+	      return 0;
+	  }
+	}
 
-     if (inpRegKey != NULL)
-     {
-         if (lstrcmpiA(inpRegKey, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies"))
-	 {
-	     /* doesn't match, fail */
-	     return 0;
-	 }
-     }
-
-     /* check passed, init all policy cache entries with SHELL_NO_POLICY */
-     for (i = 0; i < SHELL_MAX_POLICIES; i++)
-     {
-          sh32_policy_table[i].cache = SHELL_NO_POLICY;
-     }
-
-     return SHELL_NO_POLICY;
+	/* check passed, init all policy cache entries with SHELL_NO_POLICY */
+	for (p = sh32_policy_table; p->policy; p++)
+	{
+	  p->cache = SHELL_NO_POLICY;
+	}
+	return SHELL_NO_POLICY;
 }

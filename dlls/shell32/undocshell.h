@@ -902,7 +902,8 @@ BOOL WINAPI SHGetNewLinkInfoW(
 #define SHGetNewLinkInfo WINELIB_NAME_AW(SHGetNewLinkInfo)
 
 /* policy functions */
-BOOL WINAPI SHInitRestricted(LPSTR, LPSTR);
+BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey);
+DWORD WINAPI SHRestricted (DWORD policy);
 
 #ifdef __cplusplus
 } /* extern "C" */
