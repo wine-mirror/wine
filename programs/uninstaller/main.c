@@ -19,15 +19,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ToDo:
- * - add search box for locating entries quickly
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <windows.h>
+#include <shlwapi.h>
 #include "resource.h"
 #include "regstr.h"
 #include "wine/debug.h"
@@ -44,6 +42,7 @@ static uninst_entry *entries = NULL;
 static unsigned int numentries = 0;
 static int list_need_update = 1;
 static int oldsel = -1;
+static WCHAR *sFilter;
 static WCHAR sAppName[MAX_STRING_LEN];
 static WCHAR sAboutTitle[MAX_STRING_LEN];
 static WCHAR sAbout[MAX_STRING_LEN];
@@ -66,6 +65,7 @@ static const WCHAR PathUninstallW[] = {
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'U','n','i','n','s','t','a','l','l',0 };
 static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
+
 
 /**
  * Used to output program list when used with --list
@@ -228,6 +228,8 @@ static int FetchUninstallInformation(void)
             RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, (LPBYTE)entries[numentries-1].command, &uninstlen);
             WINE_TRACE("allocated entry #%d: %s (%s), %s\n",
             numentries, wine_dbgstr_w(entries[numentries-1].key), wine_dbgstr_w(entries[numentries-1].descr), wine_dbgstr_w(entries[numentries-1].command));
+            if(sFilter != NULL && StrStrIW(entries[numentries-1].descr,sFilter)==NULL)
+                numentries--;
         }
         RegCloseKey(hkeyApp);
         sizeOfSubKeyName = 255;
@@ -295,6 +297,22 @@ static INT_PTR CALLBACK DlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         case WM_COMMAND:
             switch(LOWORD(wParam))
             {
+                case IDC_FILTER:
+                {
+                    if (HIWORD(wParam) == EN_CHANGE)
+                    {
+                        int len = GetWindowTextLengthW(GetDlgItem(hwnd, IDC_FILTER));
+                        list_need_update = 1;
+                        if(len > 0)
+                        {
+                            sFilter = (WCHAR*)GlobalAlloc(GPTR, (len + 1)*sizeof(WCHAR));
+                            GetDlgItemTextW(hwnd, IDC_FILTER, sFilter, (len + 1)*sizeof(WCHAR));
+                        }
+                        else sFilter = NULL;
+                        UpdateList(hList);
+                    }
+                    break;
+                }
                 case IDC_UNINSTALL:
                 {
                     int count = SendMessageW(hList, LB_GETSELCOUNT, 0, 0);
