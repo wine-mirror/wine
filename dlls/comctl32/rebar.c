@@ -20,7 +20,7 @@
 
 
 /*
- * Rebar control    rev 8b
+ * Rebar control    rev 8c
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -2140,8 +2140,19 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
 	    /* testing only - make background green to see it */
 	    new = RGB(0,128,0);
 #endif
-	    old = SetBkColor (hdc, new);
 	}
+	else {
+	    /* In the absence of documentation for Rebar vs. CLR_NONE,
+	     * we will use the default BtnFace color. Note documentation
+	     * exists for Listview and Imagelist.
+	     */
+	    new = infoPtr->clrBtnFace;
+#if GLATESTING
+	    /* testing only - make background green to see it */
+	    new = RGB(0,128,0);
+#endif
+	}
+	old = SetBkColor (hdc, new);
 
 	rect = lpBand->rcBand;
 	TRACE("%s background color=0x%06lx, band (%d,%d)-(%d,%d), clip (%d,%d)-(%d,%d)\n",
