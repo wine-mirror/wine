@@ -32,15 +32,14 @@
 #define HWND_BROADCAST16  ((HWND16)0xffff)
 #define HWND_BROADCAST32  ((HWND32)0xffffffff)
 
-#define ASCII_CHAR_HACK 0x0800 
-
 typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, SYSQ_MSG_ACCEPT } SYSQ_STATUS;
 
-extern WPARAM16 lastEventChar;				 /* event.c */
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
-extern BYTE KeyStateTable[256];
+extern BYTE InputKeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];
+
+BYTE QueueKeyStateTable[256];
 
 extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
 extern MESSAGEQUEUE *pActiveQueue;
@@ -292,24 +291,10 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
     SEGPTR_FREE(event);
 }
 
-/*****************************************************************
- *              MSG_JournalPlayBackIsAscii
- */
-static BOOL MSG_JournalPlayBackIsAscii(WPARAM16 wParam)
-{
- return ((wParam>VK_HELP && wParam<VK_F1) || 
-          wParam == VK_SPACE  ||
-          wParam == VK_ESCAPE ||
-          wParam == VK_RETURN ||
-          wParam == VK_TAB    ||
-          wParam == VK_BACK);   
-}
-
-
 /***********************************************************************
  *          MSG_JournalPlayBackMsg
  *
- * Get an EVENTMSG struct via call JOURNALPAYBACK hook function 
+ * Get an EVENTMSG struct via call JOURNALPLAYBACK hook function 
  */
 static int MSG_JournalPlayBackMsg(void)
 {
@@ -332,29 +317,18 @@ static int MSG_JournalPlayBackMsg(void)
      if (tmpMsg->message == WM_KEYDOWN || tmpMsg->message == WM_SYSKEYDOWN)
      {
        for (keyDown=i=0; i<256 && !keyDown; i++)
-          if (KeyStateTable[i] & 0x80)
+          if (InputKeyStateTable[i] & 0x80)
             keyDown++;
        if (!keyDown)
          lParam |= 0x40000000;       
-       AsyncKeyStateTable[wParam]=KeyStateTable[wParam] |= 0x80;
-       if (MSG_JournalPlayBackIsAscii(wParam))
-       {
-         lastEventChar= wParam;         /* control TranslateMessage() */
-         lParam |= (LONG)((LONG)ASCII_CHAR_HACK*0x10000L);
-
-         if (!(KeyStateTable[VK_SHIFT] & 0x80) &&
-             !(KeyStateTable[VK_CAPITAL] & 0x80))
-           lastEventChar= tolower(lastEventChar);
-         if (KeyStateTable[VK_CONTROL] & 0x80)
-           lastEventChar&=0x1f;
-       }  
+       AsyncKeyStateTable[wParam]=InputKeyStateTable[wParam] |= 0x80;
      }  
      else                                       /* WM_KEYUP, WM_SYSKEYUP */
      {
        lParam |= 0xC0000000;      
-       AsyncKeyStateTable[wParam]=KeyStateTable[wParam] &= ~0x80;
+       AsyncKeyStateTable[wParam]=InputKeyStateTable[wParam] &= ~0x80;
      }
-     if (KeyStateTable[VK_MENU] & 0x80)
+     if (InputKeyStateTable[VK_MENU] & 0x80)
        lParam |= 0x20000000;     
      if (tmpMsg->paramH & 0x8000)              /*special_key bit*/
        lParam |= 0x01000000;
@@ -373,9 +347,9 @@ static int MSG_JournalPlayBackMsg(void)
       case WM_RBUTTONDOWN:MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=1;break;
       case WM_RBUTTONUP:  MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=0;break;      
      }
-     AsyncKeyStateTable[VK_LBUTTON]= KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] << 8;
-     AsyncKeyStateTable[VK_MBUTTON]= KeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] << 8;
-     AsyncKeyStateTable[VK_RBUTTON]= KeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] << 8;
+     AsyncKeyStateTable[VK_LBUTTON]= InputKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] << 8;
+     AsyncKeyStateTable[VK_MBUTTON]= InputKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] << 8;
+     AsyncKeyStateTable[VK_RBUTTON]= InputKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] << 8;
      SetCursorPos(tmpMsg->paramL,tmpMsg->paramH);
      lParam=MAKELONG(tmpMsg->paramL,tmpMsg->paramH);
      wParam=0;             
@@ -644,7 +618,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
 
         /* First handle a message put by SendMessage() */
 
-	if (msgQueue->wakeBits & QS_SENDMESSAGE)
+	while (msgQueue->wakeBits & QS_SENDMESSAGE)
             QUEUE_ReceiveMessage( msgQueue );
 
         /* Now handle a WM_QUIT message 
@@ -661,6 +635,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
             msg->message = WM_QUIT;
             msg->wParam  = msgQueue->wExitCode;
             msg->lParam  = 0;
+            if( !peek ) msgQueue->wPostQMsg = 0;
             break;
         }
     
@@ -695,7 +670,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
 
         /* Check again for SendMessage */
 
- 	if (msgQueue->wakeBits & QS_SENDMESSAGE)
+ 	while (msgQueue->wakeBits & QS_SENDMESSAGE)
             QUEUE_ReceiveMessage( msgQueue );
 
         /* Now find a WM_PAINT message */
@@ -734,7 +709,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
         if (!(flags & PM_NOYIELD))
         {
             UserYield();
-            if (msgQueue->wakeBits & QS_SENDMESSAGE)
+            while (msgQueue->wakeBits & QS_SENDMESSAGE)
                 QUEUE_ReceiveMessage( msgQueue );
         }
 	if ((msgQueue->wakeBits & mask) & QS_TIMER)
@@ -752,6 +727,21 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
     }
 
       /* We got a message */
+    if (flags & PM_REMOVE)
+    {
+	WORD message = msg->message;
+
+	if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN)
+	{
+	    BYTE *p = &QueueKeyStateTable[msg->wParam & 0xff];
+
+	    if (!(*p & 0x80))
+		*p ^= 0x01;
+	    *p |= 0x80;
+	}
+	else if (message == WM_KEYUP || message == WM_SYSKEYUP)
+	    QueueKeyStateTable[msg->wParam & 0xff] &= ~0x80;
+    }
     if (peek) return TRUE;
     else return (msg->message != WM_QUIT);
 }
@@ -1013,7 +1003,7 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         if (WINPROC_MapMsg32ATo16( msg, wParam, &msg16, &wParam16, &lParam ) == -1)
             return 0;
         ret = SendMessage16( hwnd, msg16, wParam16, lParam );
-        WINPROC_UnmapMsg32ATo16( msg16, wParam16, lParam );
+        WINPROC_UnmapMsg32ATo16( msg, wParam16, lParam );
         return ret;
     }
 
@@ -1088,32 +1078,42 @@ void WaitMessage( void )
 /***********************************************************************
  *           TranslateMessage   (USER.113)
  *
- * This should call ToAscii but it is currently broken
+ * TranlateMessage translate virtual-key messages into character-messages,
+ * as follows :
+ * WM_KEYDOWN/WM_KEYUP combinations produce a WM_CHAR or WM_DEADCHAR message.
+ * ditto replacing WM_* with WM_SYS*
+ * This produces WM_CHAR messages only for keys mapped to ASCII characters
+ * by the keyboard driver.
  */
 
 
 BOOL TranslateMessage( LPMSG16 msg )
 {
     UINT message = msg->message;
-    /* BYTE wparam[2]; */
+    BYTE wparam[2];
     
-    if ((message == WM_KEYDOWN) || (message == WM_KEYUP) ||
-	(message == WM_SYSKEYDOWN) || (message == WM_SYSKEYUP))
+    if ((debugging_msg
+	&& message != WM_MOUSEMOVE && message != WM_TIMER)
+    || (debugging_key
+	&& message >= WM_KEYFIRST && message <= WM_KEYLAST))
+	    fprintf(stddeb, "TranslateMessage(%s, %04x, %08lx)\n",
+		SPY_GetMsgName(msg->message), msg->wParam, msg->lParam);
+    if ((message == WM_KEYDOWN) || (message == WM_SYSKEYDOWN))
     {
-	dprintf_msg(stddeb, "Translating key %04x, scancode %04x\n", msg->wParam, 
-							      HIWORD(msg->lParam) );
+	if (debugging_msg || debugging_key)
+	    fprintf(stddeb, "Translating key %04x, scancode %04x\n",
+		msg->wParam, HIWORD(msg->lParam) );
 
-	if( HIWORD(msg->lParam) & ASCII_CHAR_HACK )
-
-	/*  if( ToAscii( msg->wParam, HIWORD(msg->lParam), (LPSTR)&KeyStateTable,
-				      wparam, 0 ) ) 
-         */
+	/* FIXME : should handle ToAscii yielding 2 */
+	if (ToAscii(msg->wParam, HIWORD(msg->lParam), (LPSTR)&QueueKeyStateTable,
+				      wparam, 0)) 
 	      {
-     		message += 2 - (message & 0x0001); 
+		/* Map WM_KEY* to WM_*CHAR */
+		message += 2 - (message & 0x0001); 
 
-	        PostMessage( msg->hwnd, message, lastEventChar, msg->lParam );
+		PostMessage( msg->hwnd, message, wparam[0], msg->lParam );
 
-	        return TRUE;
+		return TRUE;
 	      }
     }
     return FALSE;

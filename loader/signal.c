@@ -124,14 +124,14 @@ static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
 /**********************************************************************
  *		SIGNAL_SetHandler
  */
-static void SIGNAL_SetHandler( int sig, void (*func)() )
+static void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 {
     int ret;
     struct sigaction sig_act;
 
 #ifdef linux
     sig_act.sa_handler = func;
-    sig_act.sa_flags = SA_RESTART | SA_NOMASK;
+    sig_act.sa_flags = SA_RESTART | (flags) ? SA_NOMASK : 0;
     /* Point to the top of the stack, minus 4 just in case, and make
        it aligned  */
     sig_act.sa_restorer = 
@@ -165,6 +165,7 @@ static void SIGNAL_SetHandler( int sig, void (*func)() )
 }
 
 extern void stop_wait(int a);
+extern void WINSOCK_sigio(int a);
 
 
 /**********************************************************************
@@ -204,18 +205,19 @@ BOOL32 SIGNAL_Init(void)
     }
 #endif  /* __svr4__ || _SCO_DS */
     
-    SIGNAL_SetHandler( SIGALRM, (void (*)())wine_timer );
-    SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault );
-    SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault );
-    SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault );
-    SIGNAL_SetHandler( SIGTRAP, (void (*)())SIGNAL_trap ); /* debugger */
-    SIGNAL_SetHandler( SIGHUP,  (void (*)())SIGNAL_trap ); /* forced break */
+    SIGNAL_SetHandler( SIGALRM, (void (*)())wine_timer, 1);
+    SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault, 1);
+    SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault, 1);
+    SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault, 1);
+    SIGNAL_SetHandler( SIGTRAP, (void (*)())SIGNAL_trap, 1); 	/* debugger */
+    SIGNAL_SetHandler( SIGHUP,  (void (*)())SIGNAL_trap, 1); 	/* forced break */
 #ifdef SIGBUS
-    SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault );
+    SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault, 1);
 #endif
 #ifdef CONFIG_IPC
-    SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait ); /* For IPC */
+    SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait, 1); 	/* For IPC */
 #endif
+    SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0); 
     return TRUE;
 }
 
@@ -237,6 +239,21 @@ void SIGNAL_StartBIOSTimer(void)
     vt_timer.it_value = vt_timer.it_interval;
 
     setitimer(ITIMER_REAL, &vt_timer, NULL);
+}
+
+/**********************************************************************
+ *              SIGNAL_MaskAsyncEvents
+ */
+void SIGNAL_MaskAsyncEvents( BOOL32 flag )
+{
+  sigset_t 	set;
+  sigemptyset(&set);
+  sigaddset(&set, SIGIO);
+  sigaddset(&set, SIGUSR1);
+#ifdef CONFIG_IPC
+  sigaddset(&set, SIGUSR2);
+#endif
+  sigprocmask( (flag) ? SIG_BLOCK : SIG_UNBLOCK , &set, NULL);
 }
 
 #endif /* ifndef WINELIB */

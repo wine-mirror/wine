@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@
 #include "windows.h"
 #include "dos_fs.h"
 #include "xmalloc.h"
+#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -33,7 +35,7 @@ typedef struct tagPROFILESECTION
 
 typedef struct
 {
-    int              changed;
+    BOOL32           changed;
     PROFILESECTION  *section;
     char            *dos_name;
 } PROFILE;
@@ -54,6 +56,8 @@ static const char PROFILE_WineIniName[] = "/.winerc";
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
 #define WINE_INI_GLOBAL ETCDIR "/wine.conf"
+
+static LPCWSTR wininiW = NULL;
 
 /***********************************************************************
  *           PROFILE_CopyEntry
@@ -227,7 +231,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
  *
  * Delete a section from a profile tree.
  */
-static BOOL PROFILE_DeleteSection( PROFILESECTION **section, const char *name )
+static BOOL32 PROFILE_DeleteSection( PROFILESECTION **section, LPCSTR name )
 {
     while (*section)
     {
@@ -250,8 +254,8 @@ static BOOL PROFILE_DeleteSection( PROFILESECTION **section, const char *name )
  *
  * Delete a key from a profile tree.
  */
-static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
-                               const char *section_name, const char *key_name )
+static BOOL32 PROFILE_DeleteKey( PROFILESECTION **section,
+                                 LPCSTR section_name, LPCSTR key_name )
 {
     while (*section)
     {
@@ -323,7 +327,7 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
  *
  * Flush the current profile to disk if changed.
  */
-static BOOL PROFILE_FlushFile(void)
+static BOOL32 PROFILE_FlushFile(void)
 {
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *unix_name;
@@ -368,7 +372,7 @@ static BOOL PROFILE_FlushFile(void)
  *
  * Open a profile file, checking the cached file first.
  */
-static BOOL PROFILE_Open( const char *filename )
+static BOOL32 PROFILE_Open( LPCSTR filename )
 {
     char buffer[MAX_PATHNAME_LEN];
     const char *dos_name, *unix_name;
@@ -443,16 +447,15 @@ static BOOL PROFILE_Open( const char *filename )
  *
  * Enumerate all the keys of a section.
  */
-static INT PROFILE_GetSection( PROFILESECTION *section,
-                               const char *section_name,
-                               char *buffer, INT len, int handle_env )
+static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
+                                 LPSTR buffer, INT32 len, BOOL32 handle_env )
 {
     PROFILEKEY *key;
     while (section)
     {
         if (section->name && !lstrcmpi32A( section->name, section_name ))
         {
-            INT oldlen = len;
+            INT32 oldlen = len;
             for (key = section->key; key; key = key->next)
             {
                 if (len <= 2) break;
@@ -476,8 +479,8 @@ static INT PROFILE_GetSection( PROFILESECTION *section,
  *
  * Get a profile string.
  */
-static INT PROFILE_GetString( const char *section, const char *key_name,
-                              const char *def_val, char *buffer, INT len )
+static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
+                                LPCSTR def_val, LPSTR buffer, INT32 len )
 {
     PROFILEKEY *key = NULL;
 
@@ -500,10 +503,10 @@ static INT PROFILE_GetString( const char *section, const char *key_name,
  *
  * Set a profile string.
  */
-static BOOL PROFILE_SetString( const char *section_name, const char *key_name,
-                               const char *value )
+static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
+                                 LPCSTR value )
 {
-    BOOL ret;
+    BOOL32 ret;
 
     if (!key_name)  /* Delete a whole section */
     {
@@ -623,66 +626,156 @@ int PROFILE_LoadWineIni(void)
 }
 
 
+/********************* API functions **********************************/
+
 /***********************************************************************
- *           GetProfileInt   (KERNEL.57)
+ *           GetProfileInt16   (KERNEL.57)
  */
-UINT GetProfileInt( LPCSTR section, LPCSTR entry, INT def_val )
+UINT16 GetProfileInt16( LPCSTR section, LPCSTR entry, INT16 def_val )
 {
-    return GetPrivateProfileInt( section, entry, def_val, "win.ini" );
+    return GetPrivateProfileInt16( section, entry, def_val, "win.ini" );
 }
 
 
 /***********************************************************************
- *           GetProfileString   (KERNEL.58)
+ *           GetProfileInt32A   (KERNEL32.264)
  */
-INT GetProfileString( LPCSTR section, LPCSTR entry, LPCSTR def_val,
-                      LPSTR buffer, INT len )
+UINT32 GetProfileInt32A( LPCSTR section, LPCSTR entry, INT32 def_val )
 {
-    return GetPrivateProfileString( section, entry, def_val,
-                                    buffer, len, "win.ini" );
+    return GetPrivateProfileInt32A( section, entry, def_val, "win.ini" );
+}
+
+/***********************************************************************
+ *           GetProfileInt32W   (KERNEL32.264)
+ */
+UINT32 GetProfileInt32W( LPCWSTR section, LPCWSTR entry, INT32 def_val )
+{
+    if (!wininiW) wininiW = STRING32_DupAnsiToUni("win.ini");
+    return GetPrivateProfileInt32W( section, entry, def_val, wininiW );
+}
+
+/***********************************************************************
+ *           GetProfileString16   (KERNEL.58)
+ */
+INT16 GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
+                          LPSTR buffer, INT16 len )
+{
+    return GetPrivateProfileString16( section, entry, def_val,
+                                      buffer, len, "win.ini" );
+}
+
+/***********************************************************************
+ *           GetProfileString32A   (KERNEL32.268)
+ */
+INT32 GetProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR def_val,
+                           LPSTR buffer, INT32 len )
+{
+    return GetPrivateProfileString32A( section, entry, def_val,
+                                       buffer, len, "win.ini" );
+}
+
+/***********************************************************************
+ *           GetProfileString32W   (KERNEL32.269)
+ */
+INT32 GetProfileString32W( LPCWSTR section,LPCWSTR entry,LPCWSTR def_val,
+                           LPWSTR buffer, INT32 len )
+{
+    if (!wininiW) wininiW = STRING32_DupAnsiToUni("win.ini");
+    return GetPrivateProfileString32W( section, entry, def_val,
+                                       buffer, len, wininiW );
 }
 
 
 /***********************************************************************
- *           WriteProfileString   (KERNEL.59)
+ *           WriteProfileString16   (KERNEL.59)
  */
-BOOL WriteProfileString( LPCSTR section, LPCSTR entry, LPCSTR string )
+BOOL16 WriteProfileString16( LPCSTR section, LPCSTR entry, LPCSTR string )
 {
-    return WritePrivateProfileString( section, entry, string, "win.ini" );
+    return WritePrivateProfileString16( section, entry, string, "win.ini" );
+}
+
+/***********************************************************************
+ *           WriteProfileString32A   (KERNEL32.587)
+ */
+BOOL32 WriteProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR string )
+{
+    return WritePrivateProfileString32A( section, entry, string, "win.ini" );
+}
+
+/***********************************************************************
+ *           WriteProfileString32W   (KERNEL32.588)
+ */
+BOOL32 WriteProfileString32W( LPCWSTR section, LPCWSTR entry, LPCWSTR string )
+{
+    if (!wininiW) wininiW = STRING32_DupAnsiToUni("win.ini");
+    return WritePrivateProfileString32W( section, entry, string, wininiW );
 }
 
 
 /***********************************************************************
- *           GetPrivateProfileInt   (KERNEL.127)
+ *           GetPrivateProfileInt16   (KERNEL.127)
  */
-UINT GetPrivateProfileInt( LPCSTR section, LPCSTR entry, INT def_val,
-                           LPCSTR filename )
+UINT16 GetPrivateProfileInt16( LPCSTR section, LPCSTR entry, INT16 def_val,
+                               LPCSTR filename )
+{
+    long result=(long)GetPrivateProfileInt32A(section,entry,def_val,filename);
+
+    if (result > 65535) return 65535;
+    if (result >= 0) return (UINT16)result;
+    if (result < -32768) return -32768;
+    return (UINT16)(INT16)result;
+}
+
+/***********************************************************************
+ *           GetPrivateProfileInt32A   (KERNEL32.251)
+ */
+UINT32 GetPrivateProfileInt32A( LPCSTR section, LPCSTR entry, INT32 def_val,
+                                LPCSTR filename )
 {
     char buffer[20];
     char *p;
     long result;
 
-    GetPrivateProfileString( section, entry, "",
-                             buffer, sizeof(buffer), filename );
-    if (!buffer[0]) return (UINT)def_val;
+    GetPrivateProfileString32A( section, entry, "",
+                                buffer, sizeof(buffer), filename );
+    if (!buffer[0]) return (UINT32)def_val;
     result = strtol( buffer, &p, 0 );
     if (p == buffer) return 0;  /* No digits at all */
-#ifdef WINELIB32
-    return (UINT)result;
-#else
-    if (result > 65535) return 65535;
-    if (result >= 0) return (UINT)result;
-    if (result < -32768) return -32768;
-    return (UINT)(INT)result;
-#endif
+    return (UINT32)result;
 }
 
+/***********************************************************************
+ *           GetPrivateProfileInt32W   (KERNEL32.252)
+ */
+UINT32 GetPrivateProfileInt32W( LPCWSTR section, LPCWSTR entry, INT32 def_val,
+                                LPCWSTR filename )
+{
+    LPSTR sectionA=section?STRING32_DupUniToAnsi(section):NULL;
+    LPSTR entryA=entry?STRING32_DupUniToAnsi(entry):NULL;
+    LPSTR filenameA=filename?STRING32_DupUniToAnsi(filename):NULL;
+    UINT32 res;
+
+    res=GetPrivateProfileInt32A(sectionA,entryA,def_val,filenameA);
+    if (sectionA) free(sectionA);
+    if (filenameA) free(filenameA);
+    if (entryA) free(entryA);
+    return res;
+}
 
 /***********************************************************************
- *           GetPrivateProfileString   (KERNEL.128)
+ *           GetPrivateProfileString16   (KERNEL.128)
  */
-INT GetPrivateProfileString( LPCSTR section, LPCSTR entry, LPCSTR def_val,
-                             LPSTR buffer, INT len, LPCSTR filename )
+INT16 GetPrivateProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
+                                 LPSTR buffer, INT16 len, LPCSTR filename )
+{
+    return GetPrivateProfileString32A(section,entry,def_val,buffer,len,filename);
+}
+
+/***********************************************************************
+ *           GetPrivateProfileString32A   (KERNEL32.255)
+ */
+INT32 GetPrivateProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR def_val,
+                                  LPSTR buffer, INT32 len, LPCSTR filename )
 {
     if (PROFILE_Open( filename ))
         return PROFILE_GetString( section, entry, def_val, buffer, len );
@@ -690,16 +783,71 @@ INT GetPrivateProfileString( LPCSTR section, LPCSTR entry, LPCSTR def_val,
     return strlen( buffer );
 }
 
+/***********************************************************************
+ *           GetPrivateProfileString32W   (KERNEL32.256)
+ */
+INT32 GetPrivateProfileString32W( LPCWSTR section,LPCWSTR entry,LPCWSTR def_val,
+                                  LPWSTR buffer,INT32 len,LPCWSTR filename )
+{
+    LPSTR	sectionA = section?STRING32_DupUniToAnsi(section):NULL;
+    LPSTR	entryA = entry?STRING32_DupUniToAnsi(entry):NULL;
+    LPSTR	filenameA = filename?STRING32_DupUniToAnsi(filename):NULL;
+    LPSTR	def_valA = def_val?STRING32_DupUniToAnsi(def_val):NULL;
+    LPSTR	bufferA = xmalloc(len);
+    INT32	ret;
+
+    ret=GetPrivateProfileString32A(sectionA,entryA,def_valA,bufferA,len,filenameA);
+    if (sectionA) free(sectionA);
+    if (entryA) free(entryA);
+    if (filenameA) free(filenameA);
+    if (def_valA) free(def_valA);
+
+    lstrcpynAtoW( buffer, bufferA, len );
+    free(bufferA);
+    return ret;
+}
+
+
 
 /***********************************************************************
- *           WritePrivateProfileString   (KERNEL.129)
+ *           WritePrivateProfileString16   (KERNEL.129)
  */
-BOOL WritePrivateProfileString( LPCSTR section, LPCSTR entry, LPCSTR string,
-                                LPCSTR filename )
+BOOL16 WritePrivateProfileString16(LPCSTR section,LPCSTR entry,LPCSTR string,
+                                   LPCSTR filename)
+{
+    return WritePrivateProfileString32A(section,entry,string,filename);
+}
+
+/***********************************************************************
+ *           WritePrivateProfileString32A   (KERNEL32.582)
+ */
+BOOL32 WritePrivateProfileString32A(LPCSTR section,LPCSTR entry,LPCSTR string,
+                                    LPCSTR filename )
 {
     if (!PROFILE_Open( filename )) return FALSE;
     if (!section) return PROFILE_FlushFile();
     return PROFILE_SetString( section, entry, string );
+}
+
+/***********************************************************************
+ *           WritePrivateProfileString32W   (KERNEL32.583)
+ */
+BOOL32 WritePrivateProfileString32W(LPCWSTR section,LPCWSTR entry,LPCWSTR string,
+                                    LPCWSTR filename )
+{
+    LPSTR sectionA = section?STRING32_DupUniToAnsi(section):NULL;
+    LPSTR entryA = entry?STRING32_DupUniToAnsi(entry):NULL;
+    LPSTR stringA = string?STRING32_DupUniToAnsi(string):NULL;
+    LPSTR filenameA = filename?STRING32_DupUniToAnsi(filename):NULL;
+    BOOL32 res;
+
+    res = WritePrivateProfileString32A(sectionA,entryA,stringA,filenameA);
+
+    if (sectionA) free(sectionA);
+    if (entryA) free(entryA);
+    if (stringA) free(stringA);
+    if (filenameA) free(filenameA);
+    return res;
 }
 
 

@@ -59,7 +59,7 @@ OBJS = $(GEN_C_SRCS:.c=.o) $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
 	echo "#include \"windows.h\"" >winerctmp.c
 	echo WINDOWS_H_ENDS_HERE >>winerctmp.c
 	cat $< >>winerctmp.c
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) $(RCFLAGS) -c -o $* -p $*
 	$(RM) winerctmp.c
 
 

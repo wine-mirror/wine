@@ -54,7 +54,7 @@ static HBITMAP32 hRgArrowI = 0;
 #define SCROLL_FIRST_DELAY   200
 
   /* Delay (in ms) between scroll repetitions */
-#define SCROLL_REPEAT_DELAY  100
+#define SCROLL_REPEAT_DELAY  50
 
   /* Scroll timer id */
 #define SCROLL_TIMER   0

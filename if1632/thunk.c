@@ -117,9 +117,28 @@ INT16 THUNK_EnumFonts16( HDC16 hdc, LPCSTR lpFaceName,
                          FONTENUMPROC16 func, LPARAM lParam )
 {
     DECL_THUNK( thunk, func, CallTo16_word_llwl );
-    return EnumFonts( hdc, lpFaceName, (FONTENUMPROC16)&thunk, lParam );
+    return EnumFonts16( hdc, lpFaceName, (FONTENUMPROC16)&thunk, lParam );
 }
 
+/*************************************************************************
+ *           THUNK_EnumFonts32A   (GDI32.84)
+ */
+INT32 THUNK_EnumFonts32A( HDC32 hdc, LPCSTR lpFaceName,
+                          FONTENUMPROC32A func, LPARAM lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumFonts32A( hdc, lpFaceName, (FONTENUMPROC32A)&thunk, lParam );
+}
+
+/*************************************************************************
+ *           THUNK_EnumFonts32W   (GDI32.85)
+ */
+INT32 THUNK_EnumFonts32W( HDC32 hdc, LPCWSTR lpFaceName,
+                          FONTENUMPROC32W func, LPARAM lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumFonts32W( hdc, lpFaceName, (FONTENUMPROC32W)&thunk, lParam );
+}
 
 /******************************************************************
  *           THUNK_EnumMetaFile16   (GDI.175)
@@ -162,6 +181,44 @@ INT32 THUNK_EnumFontFamilies32W( HDC32 hdc, LPCWSTR lpszFamily,
 {
     DECL_THUNK( thunk, func, CallTo32_4 );
     return EnumFontFamilies32W(hdc,lpszFamily,(FONTENUMPROC32W)&thunk,lParam);
+}
+
+/*************************************************************************
+ *           THUNK_EnumFontFamiliesEx16   (GDI.613)
+ */
+INT16 THUNK_EnumFontFamiliesEx16( HDC16 hdc, LPLOGFONT16 lpLF,
+                                  FONTENUMPROCEX16 func, LPARAM lParam,
+                                  DWORD reserved )
+{
+    DECL_THUNK( thunk, func, CallTo16_word_llwl );
+    return EnumFontFamiliesEx16( hdc, lpLF, (FONTENUMPROCEX16)&thunk,
+                                 lParam, reserved );
+}
+
+
+/*************************************************************************
+ *           THUNK_EnumFontFamiliesEx32A   (GDI32.81)
+ */
+INT32 THUNK_EnumFontFamiliesEx32A( HDC32 hdc, LPLOGFONT32A lpLF,
+                                   FONTENUMPROCEX32A func, LPARAM lParam,
+                                   DWORD reserved)
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumFontFamiliesEx32A( hdc, lpLF, (FONTENUMPROCEX32A)&thunk,
+                                  lParam, reserved );
+}
+
+
+/*************************************************************************
+ *           THUNK_EnumFontFamiliesEx32W   (GDI32.82)
+ */
+INT32 THUNK_EnumFontFamiliesEx32W( HDC32 hdc, LPLOGFONT32W lpLF,
+                                   FONTENUMPROCEX32W func, LPARAM lParam,
+                                   DWORD reserved )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumFontFamiliesEx32W( hdc, lpLF, (FONTENUMPROCEX32W)&thunk,
+                                  lParam, reserved );
 }
 
 
@@ -318,6 +375,25 @@ BOOL32 THUNK_EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W func, DWORD flags )
 {
     DECL_THUNK( thunk, func, CallTo32_1 );
     return EnumSystemCodePages32W( (CODEPAGE_ENUMPROC32W)&thunk, flags );
+}
+
+/***********************************************************************
+ *           THUNK_EnumSystemLocales32A   (KERNEL32.92)
+ */
+BOOL32 THUNK_EnumSystemLocales32A( LOCALE_ENUMPROC32A func, DWORD flags )
+{
+    DECL_THUNK( thunk, func, CallTo32_1 );
+    return EnumSystemLocales32A( (LOCALE_ENUMPROC32A)&thunk, flags );
+}
+
+
+/***********************************************************************
+ *           THUNK_EnumSystemLocales32W   (KERNEL32.93)
+ */
+BOOL32 THUNK_EnumSystemLocales32W( LOCALE_ENUMPROC32W func, DWORD flags )
+{
+    DECL_THUNK( thunk, func, CallTo32_1 );
+    return EnumSystemLocales32W( (LOCALE_ENUMPROC32W)&thunk, flags );
 }
 
 

@@ -150,7 +150,7 @@ BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
     Caret.x = 0;
     Caret.y = 0;
 
-    Caret.timeout = GetProfileInt( "windows", "CursorBlinkRate", 750 );
+    Caret.timeout = GetProfileInt32A( "windows", "CursorBlinkRate", 750 );
     return TRUE;
 }
    

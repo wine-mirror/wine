@@ -3,47 +3,60 @@
  *
  * Copyright 1993 Bob Amstadt
  */
+#include <stdio.h>
 #include <string.h>
 #include "win.h"
 #include "windows.h"
+#include "debug.h"
 
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
-extern BYTE KeyStateTable[256];
-extern BYTE AsyncKeyStateTable[256];
+extern BYTE InputKeyStateTable[256];
+BYTE AsyncKeyStateTable[256];
+
+extern BYTE QueueKeyStateTable[256];
 
 /**********************************************************************
  *		GetKeyState			[USER.106]
+ * An application calls the GetKeyState function in response to a
+ * keyboard-input message.  This function retrieves the state of the key
+ * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
  */
 INT GetKeyState(INT keycode)
 {
     INT retval;
 
+    if (keycode >= 'a' && keycode <= 'z')
+        keycode += 'A' - 'a';
     switch(keycode) {
      case VK_LBUTTON:
-	return MouseButtonsStates[0];
+	retval = MouseButtonsStates[0];
      case VK_MBUTTON:
-	return MouseButtonsStates[1];
+	retval = MouseButtonsStates[1];
      case VK_RBUTTON:
-	return MouseButtonsStates[2];
+	retval = MouseButtonsStates[2];
      default:
-	retval = ( (INT)(KeyStateTable[keycode] & 0x80) << 8 ) |
-		   (INT)(KeyStateTable[keycode] & 0x01);
+	retval = ( (INT)(QueueKeyStateTable[keycode] & 0x80) << 8 ) |
+		   (INT)(QueueKeyStateTable[keycode] & 0x01);
     }
 
+    dprintf_key(stddeb, "GetKeyState(%x) -> %x\n", keycode, retval);
     return retval;
 }
 
 /**********************************************************************
  *		GetKeyboardState			[USER.222]
+ * An application calls the GetKeyboardState function in response to a
+ * keyboard-input message.  This function retrieves the state of the keyboard
+ * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
  */
 void GetKeyboardState(BYTE *lpKeyState)
 {
     if (lpKeyState != NULL) {
-	KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] >> 8;
-	KeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] >> 8;
-	KeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] >> 8;
-	memcpy(lpKeyState, KeyStateTable, 256);
+	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] >> 8;
+	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] >> 8;
+	QueueKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] >> 8;
+	memcpy(lpKeyState, QueueKeyStateTable, 256);
     }
 }
 
@@ -53,10 +66,10 @@ void GetKeyboardState(BYTE *lpKeyState)
 void SetKeyboardState(BYTE *lpKeyState)
 {
     if (lpKeyState != NULL) {
-	memcpy(KeyStateTable, lpKeyState, 256);
-	MouseButtonsStates[0] = KeyStateTable[VK_LBUTTON]? 0x8000: 0;
-	MouseButtonsStates[1] = KeyStateTable[VK_MBUTTON]? 0x8000: 0;
-	MouseButtonsStates[2] = KeyStateTable[VK_RBUTTON]? 0x8000: 0;
+	memcpy(QueueKeyStateTable, lpKeyState, 256);
+	MouseButtonsStates[0] = QueueKeyStateTable[VK_LBUTTON]? 0x8000: 0;
+	MouseButtonsStates[1] = QueueKeyStateTable[VK_MBUTTON]? 0x8000: 0;
+	MouseButtonsStates[2] = QueueKeyStateTable[VK_RBUTTON]? 0x8000: 0;
     }
 }
 
@@ -92,13 +105,13 @@ int GetAsyncKeyState(int nKey)
 	break;
      default:
 	retval = AsyncKeyStateTable[nKey] | 
-	(KeyStateTable[nKey] ? 0x8000 : 0);
+	(InputKeyStateTable[nKey] ? 0x8000 : 0);
 	break;
     }
 
     memset( AsyncMouseButtonsStates, 0, 3 );  /* all states to false */
     memset( AsyncKeyStateTable, 0, 256 );
 
+    dprintf_key(stddeb, "GetAsyncKeyState(%x) -> %x\n", nKey, retval);
     return retval;
 }
-

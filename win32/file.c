@@ -60,20 +60,16 @@ HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
         SetLastError(ErrnoToLastError(errno));
         return INVALID_HANDLE_VALUE;
     }
-    hfile = _lcreat(lpName,1);
-    if(hfile == HFILE_ERROR) {
-        SetLastError(ErrnoToLastError(errno));
-        return INVALID_HANDLE_VALUE;
-    }
     filemap_obj=(FILEMAP_OBJECT *)CreateKernelObject(sizeof(FILEMAP_OBJECT));
     if(filemap_obj == NULL) {
-    	_lclose(hfile);
         SetLastError(ERROR_UNKNOWN);
         return 0;
     }
+    if (h==INVALID_HANDLE_VALUE)
+    	h=_lcreat(lpName,1);/*FIXME*/
 
     filemap_obj->common.magic = KERNEL_OBJECT_FILEMAP;
-    filemap_obj->hfile = hfile;
+    filemap_obj->hfile = h;
     filemap_obj->prot = TranslateProtectionFlags(pot);
     filemap_obj->size = hlow;
     return (HANDLE32)filemap_obj;;
@@ -97,7 +93,6 @@ HANDLE32 CreateFileMapping32W(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
 
 /***********************************************************************
  *           MapViewOfFile                  (KERNEL32.385)
- *
  */
 LPVOID MapViewOfFile(HANDLE32 handle, DWORD access, DWORD offhi,
                       DWORD offlo, DWORD size)
@@ -112,12 +107,24 @@ LPVOID MapViewOfFile(HANDLE32 handle, DWORD access, DWORD offhi,
 LPVOID MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offhi,
                       DWORD offlo, DWORD size, DWORD st)
 {
-    if (!size) size = ((FILEMAP_OBJECT *)handle)->size;
-    return mmap ((caddr_t)st, size, ((FILEMAP_OBJECT *)handle)->prot, 
+    FILEMAP_OBJECT *fmap = (FILEMAP_OBJECT*)handle;
+
+    if (!size) size = fmap->size;
+    if (!size) size = 1;
+    return mmap ((caddr_t)st, size, fmap->prot, 
                  MAP_ANON|MAP_PRIVATE, 
-		 FILE_GetUnixHandle(((FILEMAP_OBJECT *)handle)->hfile),
+		 FILE_GetUnixHandle(fmap->hfile),
 		 offlo);
 }
+
+/***********************************************************************
+ *           UnmapViewOfFile                  (KERNEL32.385)
+ */
+BOOL32 UnmapViewOfFile(LPVOID address) {
+    munmap(address,/*hmm*/1); /* FIXME: size? */
+    return TRUE;
+}
+
 
 
 /***********************************************************************

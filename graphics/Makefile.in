@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = graphics
 
 C_SRCS = \
+	wing.c \
 	bitblt.c \
 	driver.c
 

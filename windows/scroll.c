@@ -162,7 +162,7 @@ BOOL32 ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
     if( rectClip.left >= rectClip.right || rectClip.top >= rectClip.bottom )
 	return FALSE;
     
-    hrgnClip = GetClipRgn(hdc);
+    hrgnClip = GetClipRgn16(hdc);
     hrgnScrollClip = CreateRectRgnIndirect32(&rectClip);
 
     if( hrgnClip )

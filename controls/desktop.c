@@ -173,7 +173,7 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 BOOL16 SetDeskPattern(void)
 {
     char buffer[100];
-    GetProfileString( "desktop", "Pattern", "(None)", buffer, 100 );
+    GetProfileString32A( "desktop", "Pattern", "(None)", buffer, 100 );
     return DESKTOP_SetPattern( buffer );
 }
 
@@ -202,7 +202,7 @@ BOOL32 SetDeskWallPaper32( LPCSTR filename )
 
     if (filename == (LPSTR)-1)
     {
-	GetProfileString( "desktop", "WallPaper", "(None)", buffer, 256 );
+	GetProfileString32A( "desktop", "WallPaper", "(None)", buffer, 256 );
 	filename = buffer;
     }
     hdc = GetDC32( 0 );
@@ -210,7 +210,7 @@ BOOL32 SetDeskWallPaper32( LPCSTR filename )
     ReleaseDC32( 0, hdc );
     if (infoPtr->hbitmapWallPaper) DeleteObject32( infoPtr->hbitmapWallPaper );
     infoPtr->hbitmapWallPaper = hbitmap;
-    infoPtr->fTileWallPaper = GetProfileInt( "desktop", "TileWallPaper", 0 );
+    infoPtr->fTileWallPaper = GetProfileInt32A( "desktop", "TileWallPaper", 0 );
     if (hbitmap)
     {
 	BITMAP32 bmp;

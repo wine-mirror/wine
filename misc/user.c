@@ -101,7 +101,7 @@ INT16 InitApp( HINSTANCE16 hInstance )
     int queueSize;
 
       /* Create task message queue */
-    queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
+    queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
     if (!SetMessageQueue( queueSize )) return 0;
 
     return 1;
@@ -112,8 +112,7 @@ INT16 InitApp( HINSTANCE16 hInstance )
  */
 void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
 {
-    /* FIXME: flush send messages (which are not implemented yet),
-     *        empty clipboard if needed, maybe destroy menus (Windows
+    /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
      *	      only complains about them but does nothing);
      */
 
@@ -126,18 +125,13 @@ void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
     /* Patch resident popup menu window */
     MENU_SwitchTPWndTo(0);
 
-    /* Nuke timers */
-
     TIMER_RemoveQueueTimers( hQueue );
 
+    QUEUE_FlushMessages( hQueue );
     HOOK_FreeQueueHooks( hQueue );
 
     QUEUE_SetDoomedQueue( hQueue );
-
-    /* Nuke orphaned windows */
-
-    WIN_DestroyQueueWindows( desktop->child, hQueue );
-
+    WIN_ResetQueueWindows( desktop->child, hQueue, (HQUEUE16)0);
     QUEUE_SetDoomedQueue( 0 );
 
     /* Free the message queue */

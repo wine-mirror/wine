@@ -5,10 +5,12 @@
  */
 
 #include <stdlib.h>
+#include <signal.h>
 #include "module.h"
 #include "queue.h"
 #include "task.h"
 #include "win.h"
+#include "hook.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -21,6 +23,8 @@ static MESSAGEQUEUE *sysMsgQueue = NULL;
 
 static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
 static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
+
+extern void SIGNAL_MaskAsyncEvents(BOOL32);
 
 MESSAGEQUEUE *pCursorQueue = NULL; 
 MESSAGEQUEUE *pActiveQueue = NULL;
@@ -137,6 +141,9 @@ static HQUEUE16 QUEUE_CreateMsgQueue( int size )
  *	     QUEUE_DeleteMsgQueue
  *
  * Unlinks and deletes a message queue.
+ *
+ * Note: We need to mask asynchronous events to make sure PostMessage works
+ * even in the signal handler.
  */
 BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
@@ -165,6 +172,8 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
       senderQ = sq->hPrevSendingTask;
     }
 
+    SIGNAL_MaskAsyncEvents( TRUE );
+
     pPrev = &hFirstQueue;
     while (*pPrev && (*pPrev != hQueue))
     {
@@ -173,6 +182,9 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     }
     if (*pPrev) *pPrev = msgQueue->next;
     msgQueue->self = 0;
+
+    SIGNAL_MaskAsyncEvents( FALSE );
+
     GlobalFree16( hQueue );
     return 1;
 }
@@ -333,6 +345,39 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     dprintf_msg(stddeb,"ReceiveMessage: done!\n");
 }
 
+/***********************************************************************
+ *           QUEUE_FlushMessage
+ * 
+ * Try to reply to all pending sent messages on exit.
+ */
+void QUEUE_FlushMessages( HQUEUE16 hQueue )
+{
+  MESSAGEQUEUE *queue = (MESSAGEQUEUE*)GlobalLock16( hQueue );
+
+  if( queue )
+  {
+    MESSAGEQUEUE *senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask);
+    QSMCTRL*      CtrlPtr = queue->smResultCurrent;
+
+    while( senderQ )
+    {
+      if( !(queue->hSendingTask = senderQ->hPrevSendingTask) )
+            queue->wakeBits &= ~QS_SENDMESSAGE;
+      QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
+      
+      queue->smResultCurrent = CtrlPtr;
+      while( senderQ->wakeBits & QS_SMRESULT ) OldYield();
+
+      senderQ->SendMessageReturn = 0;
+      senderQ->smResult = queue->smResultCurrent;
+      QUEUE_SetWakeBit( senderQ, QS_SMRESULT);
+
+      if( (senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask)) )
+	   CtrlPtr = senderQ->smResultInit;
+    }
+    queue->InSendMessageHandle = 0;
+  }  
+}
 
 /***********************************************************************
  *           QUEUE_AddMsg
@@ -344,12 +389,15 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG16 * msg, DWORD extraInfo )
     int pos;
     MESSAGEQUEUE *msgQueue;
 
+    SIGNAL_MaskAsyncEvents( TRUE );
+
     if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return FALSE;
     pos = msgQueue->nextFreeMessage;
 
       /* Check if queue is full */
     if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0))
     {
+	SIGNAL_MaskAsyncEvents( FALSE );
         fprintf(stderr,"MSG_AddMsg // queue is full !\n");
         return FALSE;
     }
@@ -361,6 +409,9 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG16 * msg, DWORD extraInfo )
     else pos = 0;
     msgQueue->nextFreeMessage = pos;
     msgQueue->msgCount++;
+
+    SIGNAL_MaskAsyncEvents( FALSE );
+
     QUEUE_SetWakeBit( msgQueue, QS_POSTMESSAGE );
     return TRUE;
 }
@@ -403,6 +454,8 @@ int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
  */
 void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 {
+    SIGNAL_MaskAsyncEvents( TRUE );
+
     if (pos >= msgQueue->nextMessage)
     {
 	for ( ; pos > msgQueue->nextMessage; pos--)
@@ -420,6 +473,8 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
     }
     msgQueue->msgCount--;
     if (!msgQueue->msgCount) msgQueue->wakeBits &= ~QS_POSTMESSAGE;
+
+    SIGNAL_MaskAsyncEvents( FALSE );
 }
 
 
@@ -633,12 +688,18 @@ BOOL SetMessageQueue( int size )
     }
     queuePtr = (MESSAGEQUEUE *)GlobalLock16( hNewQueue );
 
+    SIGNAL_MaskAsyncEvents( TRUE );
+
     /* Copy data and free the old message queue */
     if ((hQueue = GetTaskQueue(0)) != 0) 
     {
        MESSAGEQUEUE *oldQ = (MESSAGEQUEUE *)GlobalLock16( hQueue );
        memcpy( &queuePtr->reserved2, &oldQ->reserved2, 
 			(int)oldQ->messages - (int)(&oldQ->reserved2) );
+       HOOK_ResetQueueHooks( hNewQueue );
+       if( WIN_GetDesktop()->hmemTaskQ == hQueue )
+	   WIN_GetDesktop()->hmemTaskQ = hNewQueue;
+       WIN_ResetQueueWindows( WIN_GetDesktop()->child, hQueue, hNewQueue );
        QUEUE_DeleteMsgQueue( hQueue );
     }
 
@@ -648,8 +709,9 @@ BOOL SetMessageQueue( int size )
     hFirstQueue = hNewQueue;
     
     if( !queuePtr->next ) pCursorQueue = queuePtr;
-
     SetTaskQueue( 0, hNewQueue );
+    
+    SIGNAL_MaskAsyncEvents( FALSE );
     return TRUE;
 }
 

@@ -804,7 +804,8 @@ LONG GetWinFlags(void)
     fprintf(stderr, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
     break;
   }
-
+  if( getVersionEx.dwPlatformId == VER_PLATFORM_WIN32_NT )
+      result |= 0x4000; /* undocumented WF_WINNT */
   return result;
 }
 
@@ -1076,18 +1077,21 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 
 		case SPI_GETFASTTASKSWITCH:
-			*(BOOL *) lpvParam = FALSE;
-			/* FIXME GetProfileInt( "windows", "CoolSwitch", 1 ) */
+		    if ( GetProfileInt32A( "windows", "CoolSwitch", 1 ) == 1 )
+			  *(BOOL *) lpvParam = TRUE;
+			else
+			  *(BOOL *) lpvParam = FALSE;
 			break;
 
 		case SPI_GETGRIDGRANULARITY:
-			*(INT *) lpvParam = 1;
-		/* FIXME GetProfileInt( "desktop", "GridGranularity", 1 ) */
-			break;
+                    *(INT *) lpvParam = GetProfileInt32A( "desktop", 
+                                                          "GridGranularity",
+                                                          1 );
+                    break;
 
 		case SPI_GETICONTITLEWRAP:
 			*(BOOL *) lpvParam = FALSE;
-			/* FIXME GetProfileInt( "desktop", "?", True ) */
+			/* FIXME GetProfileInt32A( "desktop", "?", True ) */
 			break;
 
 		case SPI_GETKEYBOARDDELAY:
@@ -1105,9 +1109,11 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
-			/* FIXME GetProfileInt( "windows", "ScreenSaveActive", 1 ); */
-			*(BOOL *) lpvParam = FALSE;
-			break;
+                    if ( GetProfileInt32A( "windows", "ScreenSaveActive", 1 ) == 1 )
+                        *(BOOL *) lpvParam = TRUE;
+                    else
+                        *(BOOL *) lpvParam = FALSE;
+                    break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
 			/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
@@ -1116,18 +1122,20 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 
 		case SPI_ICONHORIZONTALSPACING:
+                    /* FIXME Get/SetProfileInt */
 			if (lpvParam == NULL)
-				fprintf(stderr, "SystemParametersInfo: Horizontal icon spacing set to %d\n.", uParam);
-			else
-				*(INT *) lpvParam = GetSystemMetrics( SM_CXICONSPACING );
+                            /*SetSystemMetrics( SM_CXICONSPACING, uParam )*/ ;
+                        else
+                            *(INT *) lpvParam = GetSystemMetrics( SM_CXICONSPACING );
 			break;
 
 		case SPI_ICONVERTICALSPACING:
-			if (lpvParam == NULL)
-				fprintf(stderr, "SystemParametersInfo: Vertical icon spacing set to %d\n.", uParam);
-			else
-				*(INT *) lpvParam = GetSystemMetrics( SM_CYICONSPACING );
-			break;
+                    /* FIXME Get/SetProfileInt */
+                    if (lpvParam == NULL)
+                        /*SetSystemMetrics( SM_CYICONSPACING, uParam )*/ ;
+		    else
+                        *(INT *) lpvParam = GetSystemMetrics(SM_CYICONSPACING);
+                    break;
 
 		case SPI_SETBEEP:
 			if (uParam == TRUE)
@@ -1147,7 +1155,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 
 		case SPI_SETSCREENSAVETIMEOUT:
 			XSetScreenSaver(display, uParam, 60, DefaultBlanking, 
-						DefaultExposures);
+							DefaultExposures);
 			break;
 
 		case SPI_SETDESKWALLPAPER:
@@ -1156,7 +1164,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 
 		case SPI_SETDESKPATTERN:
 			if ((INT) uParam == -1) {
-				GetProfileString("Desktop", "Pattern", 
+				GetProfileString32A("Desktop", "Pattern", 
 						"170 85 170 85 170 85 170 85", 
 						buffer, sizeof(buffer) );
 				return (DESKTOP_SetPattern((LPSTR) buffer));
@@ -1166,19 +1174,20 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 
 	        case SPI_GETICONTITLELOGFONT: 
 	        {
-		    /* FIXME GetProfileString( "?", "?", "?" ) */
-		  LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
-		  lpLogFont->lfHeight = 10;
-		  lpLogFont->lfWidth = 0;
-		  lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
-		  lpLogFont->lfWeight = FW_NORMAL;
-		  lpLogFont->lfItalic = lpLogFont->lfStrikeOut = lpLogFont->lfUnderline = FALSE;
-		  lpLogFont->lfCharSet = ANSI_CHARSET;
-		  lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
-		  lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-		  lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
-		  break;
-		}
+			  /* FIXME GetProfileString32A( "?", "?", "?" ) */
+			  LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
+			  lpLogFont->lfHeight = 10;
+			  lpLogFont->lfWidth = 0;
+			  lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
+			  lpLogFont->lfWeight = FW_NORMAL;
+			  lpLogFont->lfItalic = lpLogFont->lfStrikeOut = lpLogFont->lfUnderline = FALSE;
+			  lpLogFont->lfCharSet = ANSI_CHARSET;
+			  lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+			  lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+			  lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+			  break;
+			}
+
 		case SPI_LANGDRIVER:
 		case SPI_SETBORDER:
 		case SPI_SETDOUBLECLKHEIGHT:

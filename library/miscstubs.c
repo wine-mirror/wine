@@ -13,6 +13,11 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+void SIGNAL_MaskAsyncEvents( BOOL32 mask )
+{
+    /* FIXME: signals don't work in the library */
+}
+
 int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 {
   va_list arglist;
@@ -49,7 +54,6 @@ extern LRESULT EditWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT FileOpenDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT FileSaveDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT FindTextDlgProc(HWND,UINT,WPARAM16,LPARAM);
-extern LRESULT ListBoxWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT MDIClientWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT PopupMenuWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT PrintDlgProc(HWND,UINT,WPARAM16,LPARAM);
@@ -77,7 +81,6 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("FileOpenDlgProc",FileOpenDlgProc);
   MAP_STR_TO_PROC("FileSaveDlgProc",FileSaveDlgProc);
   MAP_STR_TO_PROC("FindTextDlgProc",FindTextDlgProc);
-  MAP_STR_TO_PROC("ListBoxWndProc",ListBoxWndProc);
   MAP_STR_TO_PROC("MDIClientWndProc",MDIClientWndProc);
   MAP_STR_TO_PROC("PopupMenuWndProc",PopupMenuWndProc);
   MAP_STR_TO_PROC("PrintDlgProc",PrintDlgProc);

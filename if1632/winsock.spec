@@ -37,17 +37,17 @@ type	win16
 56  pascal   getservbyport(word ptr) WINSOCK_getservbyport
 57  pascal   gethostname(ptr word) WINSOCK_gethostname
 101 pascal16 WSAAsyncSelect(word word word long) WSAAsyncSelect
-102 pascal16 WSAAsyncGetHostByAddr(word word ptr word word ptr word)
+102 pascal16 WSAAsyncGetHostByAddr(word word ptr word word segptr word)
              WSAAsyncGetHostByAddr
-103 pascal16 WSAAsyncGetHostByName(word word ptr ptr word)
+103 pascal16 WSAAsyncGetHostByName(word word ptr segptr word)
              WSAAsyncGetHostByName
-104 pascal16 WSAAsyncGetProtoByNumber(word word word ptr word)
+104 pascal16 WSAAsyncGetProtoByNumber(word word word segptr word)
              WSAAsyncGetProtoByNumber
-105 pascal16 WSAAsyncGetProtoByName(word word ptr ptr word)
+105 pascal16 WSAAsyncGetProtoByName(word word ptr segptr word)
              WSAAsyncGetProtoByName
-106 pascal16 WSAAsyncGetServByPort(word word word ptr ptr word)
+106 pascal16 WSAAsyncGetServByPort(word word word ptr segptr word)
              WSAAsyncGetServByPort
-107 pascal16 WSAAsyncGetServByName(word word ptr ptr ptr word)
+107 pascal16 WSAAsyncGetServByName(word word ptr ptr segptr word)
              WSAAsyncGetServByName
 108 pascal16 WSACancelAsyncRequest(word) WSACancelAsyncRequest
 109 pascal16 WSASetBlockingHook() WSASetBlockingHook
@@ -58,4 +58,4 @@ type	win16
 114 pascal16 WSAIsBlocking() WSAIsBlocking
 115 pascal   WSAStartup(word ptr) WSAStartup
 116 pascal   WSACleanup() WSACleanup
-151 pascal16 __WSAFDIsSet(word ptr) WSAFDIsSet
+151 pascal16 __WSAFDIsSet(word ptr) __WSAFDIsSet

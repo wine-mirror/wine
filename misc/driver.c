@@ -21,7 +21,7 @@ void LoadStartupDrivers(void)
     char  str[256];
     LPSTR ptr;
 
-    if (GetPrivateProfileString( "drivers", NULL, "", str, sizeof(str),
+    if (GetPrivateProfileString32A( "drivers", NULL, "", str, sizeof(str),
 				 "SYSTEM.INI" ) < 2)
     {
     	fprintf( stderr,
@@ -84,7 +84,7 @@ HDRVR16 OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 		    lpDriverName, lpSectionName, lParam );
 
     if (lpSectionName == NULL) lpSectionName = "drivers";
-    GetPrivateProfileString( lpSectionName, lpDriverName, "", DrvName,
+    GetPrivateProfileString32A( lpSectionName, lpDriverName, "", DrvName,
 			     sizeof(DrvName), "SYSTEM.INI" );
     dprintf_driver( stddeb,"OpenDriver // DrvName='%s'\n", DrvName );
     if (lstrlen32A(DrvName) < 1) return 0;

@@ -67,6 +67,7 @@ static FARPROC16 TASK_RescheduleProc;
 #endif
 
 static HGLOBAL16 TASK_CreateDOSEnvironment(void);
+static void	 TASK_YieldToSystem(TDB*);
 
 /***********************************************************************
  *           TASK_Init
@@ -514,7 +515,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
       /* Get the compatibility flags */
 
-    pTask->compat_flags = GetProfileInt( "Compatibility", name, 0 );
+    pTask->compat_flags = GetProfileInt32A( "Compatibility", name, 0 );
 
       /* Allocate a code segment alias for the TDB */
 
@@ -685,11 +686,22 @@ void TASK_KillCurrentTask( INT16 exitCode )
 
     /* Remove the task from the list to be sure we never switch back to it */
     TASK_UnlinkTask( hCurrentTask );
-    
+    if( nTaskCount )
+    {
+        TDB* p = (TDB *)GlobalLock16( hFirstTask );
+        while( p )
+        {
+            if( p->hYieldTo == hCurrentTask ) p->hYieldTo = 0;
+            p = (TDB *)GlobalLock16( p->hNext );
+        }
+    }
+
     hTaskToKill = hCurrentTask;
     hLockedTask = 0;
 
-    Yield();
+    pTask->nEvents = 0;
+    TASK_YieldToSystem(pTask);
+
     /* We should never return from this Yield() */
 
     fprintf(stderr,"Return of the living dead %04x!!!\n", hCurrentTask);
@@ -753,8 +765,9 @@ void TASK_Reschedule(void)
         /* check for DirectedYield() */
 
         hTask = pOldTask->hYieldTo;
-        if (!(pNewTask = (TDB *)GlobalLock16( hTask )) || !pNewTask->nEvents)
-            hTask = 0;
+        pNewTask = (TDB *)GlobalLock16( hTask );
+        if( !pNewTask || !pNewTask->nEvents) hTask = 0;
+        pOldTask->hYieldTo = 0;
     }
 
     /* extract hardware events only! */

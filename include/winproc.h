@@ -50,9 +50,9 @@ extern void WINPROC_UnmapMsg16To32A( UINT32 msg, WPARAM32 wParam,
                                      LPARAM lParam );
 extern void WINPROC_UnmapMsg16To32W( UINT32 msg, WPARAM32 wParam,
                                      LPARAM lParam );
-extern void WINPROC_UnmapMsg32ATo16( UINT16 msg, WPARAM16 wParam,
+extern void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
                                      LPARAM lParam );
-extern void WINPROC_UnmapMsg32WTo16( UINT16 msg, WPARAM16 wParam,
+extern void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam,
                                      LPARAM lParam );
 
 #endif  /* __WINE_WINPROC_H */

@@ -616,6 +616,22 @@ VOID* CRTDLL_malloc(DWORD size)
 }
 
 /*********************************************************************
+ *                  calloc        (CRTDLL.350)
+ */
+VOID* CRTDLL_calloc(DWORD size, DWORD count)
+{
+    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size * count );
+}
+
+/*********************************************************************
+ *                  realloc        (CRTDLL.447)
+ */
+VOID* CRTDLL_realloc( VOID *ptr, DWORD size )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, ptr, size );
+}
+
+/*********************************************************************
  *                  free          (CRTDLL.427)
  */
 VOID CRTDLL_free(LPVOID ptr)

@@ -133,7 +133,6 @@ static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
     data->ownerQueue  = hQueue;
     data->ownerModule = hInst;
     data->inHookProc  = 0;
-    dprintf_hook( stddeb, "Setting hook %d: ret=%04x\n", id, handle );
 
     /* Insert it in the correct linked list */
 
@@ -148,6 +147,8 @@ static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
         data->next = HOOK_systemHooks[id - WH_MINHOOK];
         HOOK_systemHooks[id - WH_MINHOOK] = handle;
     }
+    dprintf_hook( stddeb, "Setting hook %d: ret=%04x [next=%04x]\n", 
+			   id, handle, data->next );
     return handle;
 }
 
@@ -188,7 +189,7 @@ static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
     while (*prevHook && *prevHook != hook)
         prevHook = &((HOOKDATA *)USER_HEAP_LIN_ADDR(*prevHook))->next;
 
-     if (!*prevHook) return FALSE;
+    if (!*prevHook) return FALSE;
     *prevHook = data->next;
     USER_HEAP_FREE( hook );
     return TRUE;
@@ -249,6 +250,33 @@ LRESULT HOOK_CallHooks( INT16 id, INT16 code, WPARAM16 wParam, LPARAM lParam )
     return HOOK_CallHook( hook, code, wParam, lParam );
 }
 
+
+/***********************************************************************
+ *           HOOK_ResetQueueHooks
+ */
+void HOOK_ResetQueueHooks( HQUEUE16 hQueue )
+{
+    MESSAGEQUEUE *queue;
+
+    if ((queue = (MESSAGEQUEUE *)GlobalLock16( hQueue )) != NULL)
+    {
+	HOOKDATA*	data;
+	HHOOK		hook;
+	int		id;
+	for( id = WH_MINHOOK; id <= WH_MAXHOOK; id++ )
+	{
+	    hook = queue->hooks[id - WH_MINHOOK];
+	    while( hook )
+	    {
+	        if( (data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook)) )
+	        {
+		  data->ownerQueue = hQueue;
+		  hook = data->next;
+		} else break;
+	    }
+	}
+    }
+}
 
 /***********************************************************************
  *	     HOOK_FreeModuleHooks

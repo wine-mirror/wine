@@ -137,7 +137,7 @@ void SYSCOLOR_Init(void)
 
     for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)
     {
-	GetProfileString( "colors", p[0], p[1], buffer, 100 );
+	GetProfileString32A( "colors", p[0], p[1], buffer, 100 );
 	if (!sscanf( buffer, " %d %d %d", &r, &g, &b )) r = g = b = 0;
 	SYSCOLOR_SetColor( i, RGB(r,g,b) );
     }

@@ -283,7 +283,7 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 	rect->right = rect->left + max_width;
 	rect->bottom = y;
     }
-    return 1;
+    return y - rect->top;
 }
 
 

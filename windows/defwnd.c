@@ -376,7 +376,7 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         if (wParam && wndPtr->text)
         {
             lstrcpyn32A( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
-            result = (LRESULT)strlen( (LPSTR)PTR_SEG_TO_LIN(lParam) ) + 1;
+            result = (LRESULT)strlen( (LPSTR)PTR_SEG_TO_LIN(lParam) );
         }
         break;
 
@@ -442,7 +442,7 @@ LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         if (wParam && wndPtr->text)
         {
             lstrcpyn32A( (LPSTR)lParam, wndPtr->text, wParam );
-            result = (LRESULT)strlen( (LPSTR)lParam ) + 1;
+            result = (LRESULT)strlen( (LPSTR)lParam );
         }
         break;
 

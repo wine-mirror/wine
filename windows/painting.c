@@ -590,20 +590,28 @@ INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
  */
 INT16 ExcludeUpdateRgn( HDC32 hdc, HWND32 hwnd )
 {
-    INT32 retval = ERROR;
-    HRGN32 hrgn;
+    RECT16 rect;
     WND * wndPtr;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return ERROR;
-    if ((hrgn = CreateRectRgn32( 0, 0, 0, 0 )) != 0)
+
+    if (wndPtr->hrgnUpdate)
     {
-	retval = CombineRgn32( hrgn, InquireVisRgn(hdc),
-			       (wndPtr->hrgnUpdate>1) ? wndPtr->hrgnUpdate : 0,
-			       (wndPtr->hrgnUpdate>1) ? RGN_DIFF : RGN_COPY );
-	if (retval) SelectVisRgn( hdc, hrgn );
+	INT16  ret;
+	HRGN32 hrgn = CreateRectRgn32(wndPtr->rectWindow.left - wndPtr->rectClient.left,
+				      wndPtr->rectWindow.top - wndPtr->rectClient.top,
+				      wndPtr->rectClient.right - wndPtr->rectClient.left,
+				      wndPtr->rectClient.bottom - wndPtr->rectClient.top);
+	if( wndPtr->hrgnUpdate > 1 )
+	    CombineRgn32(hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY);
+
+	/* do ugly coordinate translations in dce.c */
+
+	ret = DCE_ExcludeRgn( hdc, wndPtr, hrgn );
 	DeleteObject32( hrgn );
-    }
-    return retval;
+	return ret;
+    } 
+    return GetClipBox16(hdc, &rect);
 }
 
 

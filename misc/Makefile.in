@@ -38,7 +38,8 @@ C_SRCS = \
 	user.c \
 	ver.c \
 	w32sys.c \
-	winsocket.c \
+	winsock.c \
+	winsock_async.c \
 	wsprintf.c \
 	xmalloc.c
 

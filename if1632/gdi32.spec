@@ -86,11 +86,11 @@ base	1
 0078 stub EndPath
 0079 stub EnumEnhMetaFile
 0080 stdcall EnumFontFamiliesA(long ptr ptr long) THUNK_EnumFontFamilies32A
-0081 stub EnumFontFamiliesExA
-0082 stub EnumFontFamiliesExW
+0081 stdcall EnumFontFamiliesExA(long ptr ptr long long) THUNK_EnumFontFamiliesEx32A
+0082 stdcall EnumFontFamiliesExW(long ptr ptr long long) THUNK_EnumFontFamiliesEx32W
 0083 stdcall EnumFontFamiliesW(long ptr ptr long) THUNK_EnumFontFamilies32W
-0084 stub EnumFontsA
-0085 stub EnumFontsW
+0084 stdcall EnumFontsA(long ptr ptr long) THUNK_EnumFonts32A
+0085 stdcall EnumFontsW(long ptr ptr long) THUNK_EnumFonts32W
 0086 stub EnumICMProfilesA
 0087 stub EnumICMProfilesW
 0088 stub EnumMetaFile
@@ -153,7 +153,7 @@ base	1
 0145 stdcall GetBkColor(long) GetBkColor
 0146 stub GetBkMode
 0147 stub GetBoundsRect
-0148 stub GetBrushOrgEx
+0148 stdcall GetBrushOrgEx(long ptr) GetBrushOrgEx32
 0149 stub GetCharABCWidthsA
 0150 stub GetCharABCWidthsFloatA
 0151 stub GetCharABCWidthsFloatW
@@ -168,12 +168,12 @@ base	1
 0160 stub GetCharacterPlacementA
 0161 stub GetCharacterPlacementW
 0162 stdcall GetClipBox(long ptr) GetClipBox32
-0163 stub GetClipRgn
+0163 stdcall GetClipRgn(long long) GetClipRgn32
 0164 stub GetColorAdjustment
 0165 stub GetColorSpace
 0166 stub GetCurrentObject
-0167 stub GetCurrentPositionEx
-0168 stub GetDCOrgEx
+0167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
+0168 stdcall GetDCOrgEx(long ptr) GetDCOrgEx
 0169 stub GetDIBColorTable
 0170 stub GetDIBits
 0171 stdcall GetDeviceCaps(long long) GetDeviceCaps
@@ -239,16 +239,16 @@ base	1
 0231 stub GetTextExtentPoint32W
 0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32A
 0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32W
-0234 stub GetTextFaceA
+0234 stdcall GetTextFaceA(long long ptr) GetTextFace
 0235 stub GetTextFaceW
 0236 stdcall GetTextMetricsA(long ptr) GetTextMetrics32A
 0237 stdcall GetTextMetricsW(long ptr) GetTextMetrics32W
 0238 stub GetTransform
-0239 stub GetViewportExtEx
-0240 stub GetViewportOrgEx
+0239 stdcall GetViewportExtEx(long ptr) GetViewportExtEx32
+0240 stdcall GetViewportOrgEx(long ptr) GetViewportOrgEx32
 0241 stub GetWinMetaFileBits
-0242 stub GetWindowExtEx
-0243 stub GetWindowOrgEx
+0242 stdcall GetWindowExtEx(long ptr) GetWindowExtEx32
+0243 stdcall GetWindowOrgEx(long ptr) GetWindowOrgEx32
 0244 stub GetWorldTransform
 0245 stdcall IntersectClipRect(long long long long long) IntersectClipRect32
 0246 stdcall InvertRgn(long long) InvertRgn32
@@ -328,7 +328,7 @@ base	1
 0319 stub SetICMProfileA
 0320 stub SetICMProfileW
 0321 stdcall SetMapMode(long long) SetMapMode
-0322 stub SetMapperFlags
+0322 stdcall SetMapperFlags(long long) SetMapperFlags
 0323 stub SetMetaFileBitsEx
 0324 stub SetMetaRgn
 0325 stub SetMiterLimit

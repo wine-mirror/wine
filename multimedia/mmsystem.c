@@ -91,7 +91,7 @@ BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags)
 		MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 	if (hmmio == 0) {
 		dprintf_mmsys(stddeb, "sndPlaySound // searching in SystemSound List !\n");
-		GetProfileString("Sounds", (LPSTR)lpszSoundName, "", str, sizeof(str));
+		GetProfileString32A("Sounds", (LPSTR)lpszSoundName, "", str, sizeof(str));
 		if (strlen(str) == 0) return FALSE;
 		if ( (ptr = (LPSTR)strchr(str, ',')) != NULL) *ptr = '\0';
 		hmmio = mmioOpen(str, NULL, MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
@@ -586,7 +586,7 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 		s=(char*)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
 		t=strrchr(s,'.');
 		if (t) {
-			GetProfileString("mci extensions",t+1,"*",str,sizeof(str));
+			GetProfileString32A("mci extensions",t+1,"*",str,sizeof(str));
 			AnsiUpper(str);
 			if (strcmp(str, "CDAUDIO") == 0) {
 				uDevTyp = MCI_DEVTYPE_CD_AUDIO;
@@ -745,7 +745,7 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS lpParms)
 				InstalledCount = 0;
 				InstalledListLen = 0;
 				ptr = lpInstallNames = xmalloc(2048);
-				GetPrivateProfileString("mci", NULL, "", lpInstallNames, 2000, SysFile);
+				GetPrivateProfileString32A("mci", NULL, "", lpInstallNames, 2000, SysFile);
 				while(strlen(ptr) > 0) {
 					dprintf_mci(stddeb, "---> '%s' \n", ptr);
 					len = strlen(ptr) + 1;

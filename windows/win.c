@@ -374,23 +374,23 @@ static void WIN_DestroyWindow( WND* wndPtr )
     USER_HEAP_FREE( hwnd );
 }
 
-
 /***********************************************************************
- *	     WIN_DestroyQueueWindows
+ *           WIN_ResetQueueWindows
  */
-void WIN_DestroyQueueWindows( WND* wnd, HQUEUE16 hQueue )
+void WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
 {
     WND* next;
 
     while (wnd)
     {
         next = wnd->next;
-        if (wnd->hmemTaskQ == hQueue) DestroyWindow( wnd->hwndSelf );
-        else WIN_DestroyQueueWindows( wnd->child, hQueue );
+        if (wnd->hmemTaskQ == hQueue)
+	   if( hNew ) wnd->hmemTaskQ = hNew;
+	   else DestroyWindow( wnd->hwndSelf );
+        else WIN_ResetQueueWindows( wnd->child, hQueue, hNew );
         wnd = next;
     }
 }
-
 
 /***********************************************************************
  *           WIN_CreateDesktopWindow
@@ -736,8 +736,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     }
     else wndPtr->wIDmenu = (UINT)cs->hMenu;
 
-    /* Send the WM_CREATE message */
+    /* Send the WM_CREATE message 
+     * Perhaps we shouldn't allow width/height changes as well. 
+     * See p327 in "Internals". 
+     */
 
+    maxPos.x = wndPtr->rectWindow.left; maxPos.y = wndPtr->rectWindow.top;
     if (unicode)
     {
         if (!SendMessage32W( hwnd, WM_NCCREATE, 0, (LPARAM)cs)) wmcreate = -1;
@@ -745,6 +749,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         {
             WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
                                    NULL, NULL, 0, &wndPtr->rectClient );
+	    OffsetRect16(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
+					    maxPos.y - wndPtr->rectWindow.top);
             wmcreate = SendMessage32W( hwnd, WM_CREATE, 0, (LPARAM)cs );
         }
     }
@@ -755,6 +761,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         {
             WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
                                    NULL, NULL, 0, &wndPtr->rectClient );
+            OffsetRect16(&wndPtr->rectWindow, maxPos.x - wndPtr->rectWindow.left,
+                                            maxPos.y - wndPtr->rectWindow.top);
             wmcreate = SendMessage32A( hwnd, WM_CREATE, 0, (LPARAM)cs );
         }
     }
@@ -799,7 +807,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     {
 	/* MinMaximize(hwnd, SW_SHOWMAXIMIZED, 1) */
 
-        POINT16 maxSize, maxPos, minTrack, maxTrack;
         NC_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
         SetWindowPos( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
             ((GetActiveWindow())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );

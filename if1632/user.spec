@@ -99,7 +99,7 @@ heap	65520
 97  pascal16 CheckDlgButton(word word word) CheckDlgButton
 98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked
 99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect
-100 pascal16 DlgDirList(word segptr word word word) DlgDirList
+100 pascal16 DlgDirList(word ptr word word word) DlgDirList16
 101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage16
 102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect16
 103 pascal16 MapDialogRect(word ptr) MapDialogRect16
@@ -194,7 +194,7 @@ heap	65520
 192 pascal16 InSendMessage() InSendMessage
 193 pascal16 IsClipboardFormatAvailable(word) IsClipboardFormatAvailable
 194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox
-195 pascal16 DlgDirListComboBox(word segptr word word word) DlgDirListComboBox16
+195 pascal16 DlgDirListComboBox(word ptr word word word) DlgDirListComboBox16
 196 pascal   TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
              TabbedTextOut
 197 pascal   GetTabbedTextExtent(word ptr word word ptr) GetTabbedTextExtent

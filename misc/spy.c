@@ -296,7 +296,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "LB_SETITEMHEIGHT32",       /* 0x01a0 */
     "LB_GETITEMHEIGHT32",       /* 0x01a1 */
     "LB_FINDSTRINGEXACT32",     /* 0x01a2 */
-    NULL, NULL,
+    "LB_CARETON32",             /* 0x01a3 */
+    "LB_CARETOFF32",            /* 0x01a4 */
     "LB_SETLOCALE32",           /* 0x01a5 */
     "LB_GETLOCALE32",           /* 0x01a6 */
     "LB_SETCOUNT32",            /* 0x01a7 */

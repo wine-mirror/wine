@@ -37,6 +37,7 @@
 #include "shell.h"
 #include "registers.h"
 #include "xmalloc.h"
+#include "keyboard.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
@@ -62,12 +63,8 @@ static XContext winContext = 0;
   /* State variables */
 BOOL MouseButtonsStates[NB_BUTTONS];
 BOOL AsyncMouseButtonsStates[NB_BUTTONS];
-BYTE KeyStateTable[256];
-BYTE AsyncKeyStateTable[256];
+BYTE InputKeyStateTable[256];
 
-
-WPARAM16 lastEventChar = 0; /* this will have to be changed once
-                             * ToAscii starts working */
 
 static HWND32 captureWnd = 0;
 static BOOL32 InputEnabled = TRUE;
@@ -128,8 +125,8 @@ typedef union
 	unsigned long count : 16;
 	unsigned long code : 8;
 	unsigned long extended : 1;
-	unsigned long : 2;
-	unsigned long reserved : 2;
+	unsigned long unused : 2;
+	unsigned long win_internal : 2;
 	unsigned long context : 1;
 	unsigned long previous : 1;
 	unsigned long transition : 1;
@@ -188,7 +185,7 @@ void EVENT_ProcessEvent( XEvent *event )
 {
     WND *pWnd;
     
-    if (XFindContext( display, ((XAnyEvent *)event)->window, winContext,
+    if (XFindContext( display, event->xany.window, winContext,
                       (char **)&pWnd ) != 0)
         return;  /* Not for a registered window */
 
@@ -521,8 +518,16 @@ static void EVENT_key( XKeyEvent *event )
     int ascii_chars = XLookupString(event, Str, 1, &keysym, &cs);
 
     Str[ascii_chars] = '\0';
-    dprintf_key(stddeb,"WM_KEY??? : keysym=%lX, ascii chars=%u / %X / '%s'\n", 
-	   keysym, ascii_chars, Str[0], Str);
+    if (debugging_key)
+	{
+	char	*ksname;
+
+	ksname = XKeysymToString(keysym);
+	if (!ksname)
+	    ksname = "No Name";
+	fprintf(stddeb, "WM_KEY??? : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
+	   keysym, ksname, ascii_chars, Str[0], Str);
+	}
 
     /* Ctrl-Alt-Return enters the debugger */
     if ((keysym == XK_Return) && (event->type == KeyPress) &&
@@ -556,6 +561,27 @@ static void EVENT_key( XKeyEvent *event )
 	    vkey = modifier_key[key - 0xE1];
 	else if (key == 0xFF)                      /* DEL key */
 	    vkey = VK_DELETE;
+	/* extended must also be set for ALT_R, CTRL_R,
+	INS, DEL, HOME, END, PAGE_UP, PAGE_DOWN, ARROW keys,
+	keypad / and keypad ENTER (SDK 3.1 Vol.3 p 138) */
+	switch (keysym)
+	    {
+	    case XK_Control_R :
+	    case XK_Alt_R :
+	    case XK_Insert :
+	    case XK_Delete :
+	    case XK_Home :
+	    case XK_End :
+	    case XK_Page_Up :
+	    case XK_Page_Down :
+	    case XK_Left :
+	    case XK_Up :
+	    case XK_Right :
+	    case XK_Down :
+	    case XK_KP_Divide :
+	    case XK_KP_Enter :
+		extended = 1;
+	    }
     }
     else if (key_type == 0)                        /* character key */
     {
@@ -568,24 +594,7 @@ static void EVENT_key( XKeyEvent *event )
 	  {
 #define vkcase(k,val) case k: vkey = val; break;
 #define vkcase2(k1,k2,val) case k1: case k2: vkey = val; break;
-
-	      /* I wish I had a bit-paired keyboard! */
-	      vkcase('!','1'); vkcase('@','2'); vkcase('#','3');
-	      vkcase('$','4'); vkcase('%','5'); vkcase('^','6');
-	      vkcase('&','7'); vkcase('*','8'); vkcase('(','9');
-	      vkcase(')','0');
-
-	      vkcase2('`','~',0xc0);
-	      vkcase2('-','_',0xbd);
-	      vkcase2('=','+',0xbb);
-	      vkcase2('[','{',0xdb);
-	      vkcase2(']','}',0xdd);
-	      vkcase2(';',':',0xba);
-	      vkcase2('\'','\"',0xde);
-	      vkcase2(',','<',0xbc);
-	      vkcase2('.','>',0xbe);
-	      vkcase2('/','?',0xbf);
-	      vkcase2('\\','|',0xdc);
+	    WINE_VKEY_MAPPINGS
 #undef vkcase
 #undef vkcase2
 	    default:
@@ -596,50 +605,41 @@ static void EVENT_key( XKeyEvent *event )
 
     if (event->type == KeyPress)
     {
-        if (!(KeyStateTable[vkey] & 0x80))
-            KeyStateTable[vkey] ^= 0x01;
-	KeyStateTable[vkey] |= 0x80;
+        if (!(InputKeyStateTable[vkey] & 0x80))
+            InputKeyStateTable[vkey] ^= 0x01;
+	InputKeyStateTable[vkey] |= 0x80;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
-	keylp.lp1.reserved = (ascii_chars ? 1 : 0);
+	keylp.lp1.win_internal = 0;
 	keylp.lp1.context = ( (event->state & Mod1Mask) || 
-			       (KeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
+			       (InputKeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
 	keylp.lp1.previous = (KeyDown ? 0 : 1);
 	keylp.lp1.transition = 0;
 	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
 		    vkey, keylp.lp2 );
-	dprintf_key(stddeb,"            KeyState=%X\n", KeyStateTable[vkey]);
-	hardware_event( KeyStateTable[VK_MENU] & 0x80 ? WM_SYSKEYDOWN : WM_KEYDOWN, 
+	dprintf_key(stddeb,"            InputKeyState=%X\n", InputKeyStateTable[vkey]);
+	hardware_event( InputKeyStateTable[VK_MENU] & 0x80 ? WM_SYSKEYDOWN : WM_KEYDOWN, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,
 		        event->time - MSG_WineStartTicks, 0 );
 	KeyDown = TRUE;
-
-	/* Currently we use reserved field in the scan-code byte to
-	 * make it possible for TranslateMessage to recognize character keys
-	 * and get them from lastEventChar global variable.
-	 *
-	 * ToAscii should handle it.
-	 */
-
-	if( ascii_chars ) lastEventChar = Str[0];
     }
     else
     {
-	UINT sysKey = KeyStateTable[VK_MENU];
+	UINT sysKey = InputKeyStateTable[VK_MENU];
 
-	KeyStateTable[vkey] &= ~0x80; 
+	InputKeyStateTable[vkey] &= ~0x80; 
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode) - 8;
 	keylp.lp1.extended = (extended ? 1 : 0);
-	keylp.lp1.reserved = 0;
+	keylp.lp1.win_internal = 0;
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = 1;
 	keylp.lp1.transition = 1;
 	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
 		    vkey, keylp.lp2 );
-	dprintf_key(stddeb,"            KeyState=%X\n", KeyStateTable[vkey]);
+	dprintf_key(stddeb,"            InputKeyState=%X\n", InputKeyStateTable[vkey]);
 	hardware_event( sysKey & 0x80 ? WM_SYSKEYUP : WM_KEYUP, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,

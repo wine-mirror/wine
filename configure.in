@@ -7,8 +7,6 @@ AC_CONFIG_HEADER(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
 # We want these before the checks, so the checks can modify their values.
-test -z "$CFLAGS" && CFLAGS="-g -O2" AC_SUBST(CFLAGS)
-test -z "$LDFLAGS" && LDFLAGS=-g AC_SUBST(LDFLAGS)
 test -z "$LDLIBS" && LDLIBS=-lm AC_SUBST(LDLIBS)
 
 dnl **** Command-line arguments ****

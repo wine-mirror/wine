@@ -282,7 +282,8 @@ HRGN32 DCE_GetVisRgn( HWND hwnd, WORD flags )
 
       /* Get visible rectangle and create a region with it. 
        * do we really need to calculate vis rgns for X windows? 
-       * - yes, to clip child windows.
+       * - yes, to clip child windows but we should skip 
+       *   siblings in this case.
        */
 
     if (!wndPtr || !DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &rect ))
@@ -377,7 +378,41 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
         dc->u.x.drawable = wndPtr->window;
     }
 }
+/***********************************************************************
+ *           DCE_ExcludeRgn
+ * 
+ *  Translate given region from the wnd client to the DC coordinates
+ *  and add it to the clipping region.
+ */
+INT16 DCE_ExcludeRgn( HDC32 hDC, WND* wnd, HRGN32 hRgn )
+{
+  INT16	   ret;
+  POINT32  pt = {0, 0};
+  HRGN32   hRgnClip = GetClipRgn16( hDC );
+  DCE     *dce = firstDCE;
 
+  while (dce && (dce->hDC != hDC)) dce = dce->next;
+  if( dce )
+  {
+      MapWindowPoints32( wnd->hwndSelf, dce->hwndCurrent, &pt, 1);
+      if( dce->DCXflags & DCX_WINDOW )
+      { 
+	  wnd = WIN_FindWndPtr(dce->hwndCurrent);
+	  pt.x += wnd->rectClient.left - wnd->rectWindow.left;
+	  pt.y += wnd->rectClient.top - wnd->rectWindow.top;
+      }
+  }
+  else return ERROR;
+  OffsetRgn32(hRgn, pt.x, pt.y);
+  if( hRgnClip ) ret = CombineRgn32( hRgnClip, hRgnClip, hRgn, RGN_DIFF );
+  else 
+  {
+      hRgnClip = InquireVisRgn( hDC );
+      ret = CombineRgn32( hRgn, hRgnClip, hRgn, RGN_DIFF );
+      SelectClipRgn32( hDC, hRgn );
+  }
+  return ret;
+}
 
 /***********************************************************************
  *           GetDCEx16    (USER.359)

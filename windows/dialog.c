@@ -4,11 +4,13 @@
  * Copyright 1993, 1994, 1996 Alexandre Julliard
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "windows.h"
 #include "dialog.h"
+#include "drive.h"
 #include "heap.h"
 #include "win.h"
 #include "ldt.h"
@@ -16,6 +18,7 @@
 #include "user.h"
 #include "winproc.h"
 #include "message.h"
+#include "sysmetrics.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -534,8 +537,22 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     {
         rect.left += template.x * xUnit / 4;
         rect.top += template.y * yUnit / 8;
-        if ( !(template.style & DS_ABSALIGN) && !(template.style & WS_CHILD) )
-            ClientToScreen16( owner, (POINT16 *)&rect );
+        if ( !(template.style & WS_CHILD) )
+	{
+            INT16 dX, dY;
+
+            if( !(template.style & DS_ABSALIGN) )
+                ClientToScreen16( owner, (POINT16 *)&rect );
+	    
+            /* try to fit it into the desktop */
+
+            if( (dX = rect.left + rect.right + SYSMETRICS_CXDLGFRAME 
+                 - SYSMETRICS_CXSCREEN) > 0 ) rect.left -= dX;
+            if( (dY = rect.top + rect.bottom + SYSMETRICS_CYDLGFRAME
+                 - SYSMETRICS_CYSCREEN) > 0 ) rect.top -= dY;
+            if( rect.left < 0 ) rect.left = 0;
+            if( rect.top < 0 ) rect.top = 0;
+        }
     }
 
     if (procType != WIN_PROC_16)
@@ -569,6 +586,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     dlgInfo->msgResult = 0;  /* This is used to store the default button id */
     dlgInfo->hDialogHeap = 0;
 
+    if (dlgInfo->hUserFont)
+        SendMessage32A( hwnd, WM_SETFONT, (WPARAM32)dlgInfo->hUserFont, 0 );
+
     /* Create controls */
 
     if (!DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
@@ -581,8 +601,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     /* Send initialisation messages and set focus */
 
     dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
-    if (dlgInfo->hUserFont)
-	SendMessage32A( hwnd, WM_SETFONT, (WPARAM32)dlgInfo->hUserFont, 0 );
     if (SendMessage32A( hwnd, WM_INITDIALOG,
                         (WPARAM32)dlgInfo->hwndFocus, param ))
 	SetFocus32( dlgInfo->hwndFocus );
@@ -1391,6 +1409,96 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
 
 
 /**********************************************************************
+ *	    DIALOG_DlgDirList
+ *
+ * Helper function for DlgDirList*
+ */
+static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
+                                INT32 idStatic, UINT32 attrib, BOOL32 combo )
+{
+    int drive;
+    HWND32 hwnd;
+
+#define SENDMSG(msg,wparam,lparam) \
+    ((attrib & DDL_POSTMSGS) ? PostMessage( hwnd, msg, wparam, lparam ) \
+                             : SendMessage32A( hwnd, msg, wparam, lparam ))
+
+    dprintf_dialog( stddeb, "DlgDirList: %04x '%s' %d %d %04x\n",
+                    hDlg, spec ? spec : "NULL", idLBox, idStatic, attrib );
+
+    if (spec && spec[0] && (spec[1] == ':'))
+    {
+        drive = toupper( spec[0] ) - 'A';
+        spec += 2;
+        if (!DRIVE_SetCurrentDrive( drive )) return FALSE;
+    }
+    else drive = DRIVE_GetCurrentDrive();
+
+    if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
+    {
+        /* If the path exists and is a directory, chdir to it */
+        if (!spec || !spec[0] || DRIVE_Chdir( drive, spec )) spec = "*.*";
+        else
+        {
+            const char *p, *p2;
+            p = spec;
+            if ((p2 = strrchr( p, '\\' ))) p = p2 + 1;
+            if ((p2 = strrchr( p, '/' ))) p = p2 + 1;
+            if (p != spec)
+            {
+                BOOL32 ret = FALSE;
+                char *dir = HeapAlloc( SystemHeap, 0, p - spec );
+                if (dir)
+                {
+                    lstrcpyn32A( dir, spec, p - spec );
+                    ret = DRIVE_Chdir( drive, dir );
+                    HeapFree( SystemHeap, 0, dir );
+                }
+                if (!ret) return FALSE;
+                spec = p;
+            }
+        }
+        
+        dprintf_dialog( stddeb, "ListBoxDirectory: path=%c:\\%s mask=%s\n",
+                        'A' + drive, DRIVE_GetDosCwd(drive), spec );
+        
+        SENDMSG( combo ? CB_RESETCONTENT32 : LB_RESETCONTENT32, 0, 0 );
+        if ((attrib & DDL_DIRECTORY) && !(attrib & DDL_EXCLUSIVE))
+        {
+            if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
+                         attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
+                         (LPARAM)spec ) == LB_ERR)
+                return FALSE;
+            if (SENDMSG( combo ? CB_DIR32 : LB_DIR32,
+                       (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
+                         (LPARAM)"*.*" ) == LB_ERR)
+                return FALSE;
+        }
+        else
+        {
+            if (SENDMSG( combo ? CB_DIR32 : LB_DIR32, attrib,
+                         (LPARAM)spec ) == LB_ERR)
+                return FALSE;
+        }
+    }
+
+    if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
+    {
+        char temp[512];
+        int drive = DRIVE_GetCurrentDrive();
+        strcpy( temp, "A:\\" );
+        temp[0] += drive;
+        lstrcpyn32A( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
+        AnsiLower( temp );
+        /* Can't use PostMessage() here, because the string is on the stack */
+        SetDlgItemText32A( hDlg, idStatic, temp );
+    }
+    return TRUE;
+#undef SENDMSG
+}
+
+
+/**********************************************************************
  *	    DlgDirSelect    (USER.99)
  */
 BOOL16 DlgDirSelect( HWND16 hwnd, LPSTR str, INT16 id )
@@ -1459,4 +1567,74 @@ BOOL32 DlgDirSelectComboBoxEx32A( HWND32 hwnd, LPSTR str, INT32 len, INT32 id )
 BOOL32 DlgDirSelectComboBoxEx32W( HWND32 hwnd, LPWSTR str, INT32 len, INT32 id)
 {
     return DIALOG_DlgDirSelect( hwnd, (LPSTR)str, len, id, TRUE, TRUE, TRUE );
+}
+
+
+/**********************************************************************
+ *	    DlgDirList16    (USER.100)
+ */
+INT16 DlgDirList16( HWND16 hDlg, LPCSTR spec, INT16 idLBox, INT16 idStatic,
+                    UINT16 attrib )
+{
+    return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
+}
+
+
+/**********************************************************************
+ *	    DlgDirList32A    (USER32.142)
+ */
+INT32 DlgDirList32A( HWND32 hDlg, LPCSTR spec, INT32 idLBox, INT32 idStatic,
+                     UINT32 attrib )
+{
+    return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
+}
+
+
+/**********************************************************************
+ *	    DlgDirList32W    (USER32.145)
+ */
+INT32 DlgDirList32W( HWND32 hDlg, LPCWSTR spec, INT32 idLBox, INT32 idStatic,
+                     UINT32 attrib )
+{
+    INT32 ret;
+    LPSTR specA = NULL;
+    if (spec) specA = STRING32_DupUniToAnsi(spec);
+    ret = DIALOG_DlgDirList( hDlg, specA, idLBox, idStatic, attrib, FALSE );
+    if (specA) free( specA );
+    return ret;
+}
+
+
+/**********************************************************************
+ *	    DlgDirListComboBox16    (USER.195)
+ */
+INT16 DlgDirListComboBox16( HWND16 hDlg, LPCSTR spec, INT16 idCBox,
+                            INT16 idStatic, UINT16 attrib )
+{
+    return DIALOG_DlgDirList( hDlg, spec, idCBox, idStatic, attrib, TRUE );
+}
+
+
+/**********************************************************************
+ *	    DlgDirListComboBox32A    (USER32.143)
+ */
+INT32 DlgDirListComboBox32A( HWND32 hDlg, LPCSTR spec, INT32 idCBox,
+                             INT32 idStatic, UINT32 attrib )
+{
+    return DIALOG_DlgDirList( hDlg, spec, idCBox, idStatic, attrib, TRUE );
+}
+
+
+/**********************************************************************
+ *	    DlgDirListComboBox32W    (USER32.144)
+ */
+INT32 DlgDirListComboBox32W( HWND32 hDlg, LPCWSTR spec, INT32 idCBox,
+                             INT32 idStatic, UINT32 attrib )
+{
+    INT32 ret;
+    LPSTR specA = NULL;
+    if (spec) specA = STRING32_DupUniToAnsi(spec);
+    ret = DIALOG_DlgDirList( hDlg, specA, idCBox, idStatic, attrib, FALSE );
+    if (specA) free( specA );
+    return ret;
 }

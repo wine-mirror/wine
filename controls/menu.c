@@ -84,8 +84,8 @@ static BOOL fEndMenuCalled = FALSE;
 #define NO_SELECTED_ITEM  0xffff
 #define SYSMENU_SELECTED  0xfffe  /* Only valid on menu-bars */
 
-#define IS_STRING_ITEM(flags) (!((flags) & (MF_BITMAP | MF_OWNERDRAW | \
-			     MF_MENUBARBREAK | MF_MENUBREAK | MF_SEPARATOR)))
+#define IS_STRING_ITEM(flags) \
+    (!((flags) & (MF_BITMAP | MF_OWNERDRAW | MF_SEPARATOR)))
 
 extern void  NC_DrawSysButton(HWND hwnd, HDC32 hdc, BOOL down); /*nonclient.c*/
 extern BOOL  NC_GetSysPopupPos(WND* wndPtr, RECT16* rect);
@@ -1923,8 +1923,9 @@ BOOL32 TrackPopupMenu32( HMENU32 hMenu, UINT32 wFlags, INT32 x, INT32 y,
                          INT32 nReserved, HWND32 hWnd, const RECT32 *lpRect )
 {
     RECT16 r;
-    CONV_RECT32TO16( lpRect, &r );
-    return TrackPopupMenu16( hMenu, wFlags, x, y, nReserved, hWnd, &r );
+    if (lpRect)
+   	 CONV_RECT32TO16( lpRect, &r );
+    return TrackPopupMenu16(hMenu,wFlags,x,y,nReserved,hWnd,lpRect?&r:NULL);
 }
 
 

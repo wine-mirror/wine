@@ -4,7 +4,6 @@ type	win16
 1  pascal WINPROC_CallProc16To32A(word word word long long) WINPROC_CallProc16To32A
 2  pascal StaticWndProc(word word word long) StaticWndProc
 3  pascal ScrollBarWndProc(word word word long) ScrollBarWndProc
-4  pascal ListBoxWndProc(word word word long) ListBoxWndProc
 5  pascal ComboBoxWndProc(word word word long) ComboBoxWndProc
 6  pascal EditWndProc(word word word long) EditWndProc
 7  pascal PopupMenuWndProc(word word word long) PopupMenuWndProc

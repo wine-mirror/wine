@@ -649,7 +649,6 @@ static int INT21_GetCurrentDirectory( SIGCONTEXT *context )
     }
 
     lstrcpyn32A( ptr, DRIVE_GetDosCwd(drive), 64 );
-    if (!ptr[0]) strcpy( ptr, "\\" );
     return 1;
 }
 

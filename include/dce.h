@@ -8,6 +8,7 @@
 #define DCE_H
 
 #include "windows.h"
+#include "win.h"
 
 /* additional DCX flags 
  */
@@ -44,8 +45,9 @@ typedef struct tagDCE
 } DCE;
 
 
-extern void DCE_Init(void);
-extern DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
-extern void DCE_FreeDCE( DCE *dce );
+extern void  DCE_Init(void);
+extern DCE*  DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
+extern void  DCE_FreeDCE( DCE *dce );
+extern INT16 DCE_ExcludeRgn( HDC32, WND*, HRGN32 );
 
 #endif  /* DCE_H */

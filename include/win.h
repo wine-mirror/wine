@@ -92,7 +92,7 @@ extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
 extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
 extern void WIN_SendParentNotify( HWND32 hwnd, WORD event,
                                   WORD idChild, LPARAM lValue );
-extern void WIN_DestroyQueueWindows( WND* wnd, HQUEUE16 hQueue );
+extern void WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew );
 extern BOOL32 WIN_CreateDesktopWindow(void);
 extern HWND32 WIN_GetTopParent( HWND32 hwnd );
 extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );

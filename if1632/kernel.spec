@@ -53,9 +53,9 @@ type	win16
 54  pascal16 GetInstanceData(word word word) GetInstanceData
 55  pascal16 Catch(ptr) Catch 
 56  pascal16 Throw(ptr word) Throw
-57  pascal16 GetProfileInt(ptr ptr s_word) GetProfileInt
-58  pascal16 GetProfileString(ptr ptr ptr ptr word) GetProfileString
-59  pascal16 WriteProfileString(ptr ptr ptr) WriteProfileString
+57  pascal16 GetProfileInt(ptr ptr s_word) GetProfileInt16
+58  pascal16 GetProfileString(ptr ptr ptr ptr word) GetProfileString16
+59  pascal16 WriteProfileString(ptr ptr ptr) WriteProfileString16
 60  pascal16 FindResource(word segptr segptr) FindResource16
 61  pascal16 LoadResource(word word) LoadResource16
 62  pascal LockResource(word) WIN16_LockResource16
@@ -123,11 +123,11 @@ type	win16
 124 return EnableKernel 0 0
 125 return DisableKernel 0 0
 126 stub MemoryFreed
-127 pascal16 GetPrivateProfileInt(ptr ptr s_word ptr) GetPrivateProfileInt
+127 pascal16 GetPrivateProfileInt(ptr ptr s_word ptr) GetPrivateProfileInt16
 128 pascal16 GetPrivateProfileString(ptr ptr ptr ptr word ptr)
-             GetPrivateProfileString
+             GetPrivateProfileString16
 129 pascal16 WritePrivateProfileString(ptr ptr ptr ptr)
-             WritePrivateProfileString
+             WritePrivateProfileString16
 130 pascal FileCDR(ptr) FileCDR
 131 pascal GetDOSEnvironment() GetDOSEnvironment
 132 pascal GetWinFlags() GetWinFlags

@@ -920,8 +920,40 @@ typedef struct
   WCHAR      elfStyle[LF_FACESIZE] WINE_PACKED;
 } ENUMLOGFONT32W, *LPENUMLOGFONT32W;
 
+typedef struct
+{
+  LOGFONT16  elfLogFont;
+  BYTE       elfFullName[LF_FULLFACESIZE] WINE_PACKED;
+  BYTE       elfStyle[LF_FACESIZE] WINE_PACKED;
+  BYTE       elfScript[LF_FACESIZE] WINE_PACKED;
+} ENUMLOGFONTEX16, *LPENUMLOGFONTEX16;
+
+typedef struct
+{
+  LOGFONT32A elfLogFont;
+  BYTE       elfFullName[LF_FULLFACESIZE] WINE_PACKED;
+  BYTE       elfStyle[LF_FACESIZE] WINE_PACKED;
+  BYTE       elfScript[LF_FACESIZE] WINE_PACKED;
+} ENUMLOGFONTEX32A,*LPENUMLOGFONTEX32A;
+
+typedef struct
+{
+  LOGFONT32W elfLogFont;
+  WCHAR      elfFullName[LF_FULLFACESIZE] WINE_PACKED;
+  WCHAR      elfStyle[LF_FACESIZE] WINE_PACKED;
+  WCHAR      elfScript[LF_FACESIZE] WINE_PACKED;
+} ENUMLOGFONTEX32W,*LPENUMLOGFONTEX32W;
+
 DECL_WINELIB_TYPE_AW(ENUMLOGFONT);
 DECL_WINELIB_TYPE_AW(LPENUMLOGFONT);
+DECL_WINELIB_TYPE_AW(LPENUMLOGFONTEX);
+
+typedef struct
+{
+  DWORD fsUsb[4];
+  DWORD fsCsb[2];
+} FONTSIGNATURE,*LPFONTSIGNATURE;
+
 
   /* lfWeight values */
 #define FW_DONTCARE	    0
@@ -1057,10 +1089,129 @@ typedef struct
 DECL_WINELIB_TYPE_AW(TEXTMETRIC);
 DECL_WINELIB_TYPE_AW(LPTEXTMETRIC);
 
+/* ntmFlags field flags */
+#define NTM_REGULAR     0x00000040L
+#define NTM_BOLD        0x00000020L
+#define NTM_ITALIC      0x00000001L
+
+typedef struct
+{
+    INT16     tmHeight;
+    INT16     tmAscent;
+    INT16     tmDescent;
+    INT16     tmInternalLeading;
+    INT16     tmExternalLeading;
+    INT16     tmAveCharWidth;
+    INT16     tmMaxCharWidth;
+    INT16     tmWeight;
+    BYTE      tmItalic;
+    BYTE      tmUnderlined;
+    BYTE      tmStruckOut;
+    BYTE      tmFirstChar;
+    BYTE      tmLastChar;
+    BYTE      tmDefaultChar;
+    BYTE      tmBreakChar;
+    BYTE      tmPitchAndFamily;
+    BYTE      tmCharSet;
+    INT16     tmOverhang WINE_PACKED;
+    INT16     tmDigitizedAspectX WINE_PACKED;
+    INT16     tmDigitizedAspectY WINE_PACKED;
+    DWORD     ntmFlags;
+    UINT16    ntmSizeEM;
+    UINT16    ntmCellHeight;
+    UINT16    ntmAvgWidth;
+} NEWTEXTMETRIC16,*LPNEWTEXTMETRIC16;
+
+typedef struct
+{
+    INT32     tmHeight;
+    INT32     tmAscent;
+    INT32     tmDescent;
+    INT32     tmInternalLeading;
+    INT32     tmExternalLeading;
+    INT32     tmAveCharWidth;
+    INT32     tmMaxCharWidth;
+    INT32     tmWeight;
+    INT32     tmOverhang;
+    INT32     tmDigitizedAspectX;
+    INT32     tmDigitizedAspectY;
+    BYTE      tmFirstChar;
+    BYTE      tmLastChar;
+    BYTE      tmDefaultChar;
+    BYTE      tmBreakChar;
+    BYTE      tmItalic;
+    BYTE      tmUnderlined;
+    BYTE      tmStruckOut;
+    BYTE      tmPitchAndFamily;
+    BYTE      tmCharSet;
+    DWORD     ntmFlags;
+    UINT32    ntmSizeEM;
+    UINT32    ntmCellHeight;
+    UINT32    ntmAvgWidth;
+} NEWTEXTMETRIC32A, *LPNEWTEXTMETRIC32A;
+
+typedef struct
+{
+    INT32     tmHeight;
+    INT32     tmAscent;
+    INT32     tmDescent;
+    INT32     tmInternalLeading;
+    INT32     tmExternalLeading;
+    INT32     tmAveCharWidth;
+    INT32     tmMaxCharWidth;
+    INT32     tmWeight;
+    INT32     tmOverhang;
+    INT32     tmDigitizedAspectX;
+    INT32     tmDigitizedAspectY;
+    WCHAR     tmFirstChar;
+    WCHAR     tmLastChar;
+    WCHAR     tmDefaultChar;
+    WCHAR     tmBreakChar;
+    BYTE      tmItalic;
+    BYTE      tmUnderlined;
+    BYTE      tmStruckOut;
+    BYTE      tmPitchAndFamily;
+    BYTE      tmCharSet;
+    DWORD     ntmFlags;
+    UINT32    ntmSizeEM;
+    UINT32    ntmCellHeight;
+    UINT32    ntmAvgWidth;
+} NEWTEXTMETRIC32W, *LPNEWTEXTMETRIC32W;
+
+DECL_WINELIB_TYPE_AW(NEWTEXTMETRIC);
+DECL_WINELIB_TYPE_AW(LPNEWTEXTMETRIC);
+
+typedef struct
+{
+    NEWTEXTMETRIC16	ntmetm;
+    FONTSIGNATURE       ntmeFontSignature;
+} NEWTEXTMETRICEX16,*LPNEWTEXTMETRICEX16;
+
+typedef struct
+{
+    NEWTEXTMETRIC32A	ntmetm;
+    FONTSIGNATURE       ntmeFontSignature;
+} NEWTEXTMETRICEX32A,*LPNEWTEXTMETRICEX32A;
+
+typedef struct
+{
+    NEWTEXTMETRIC32W	ntmetm;
+    FONTSIGNATURE       ntmeFontSignature;
+} NEWTEXTMETRICEX32W,*LPNEWTEXTMETRICEX32W;
+
+DECL_WINELIB_TYPE_AW(NEWTEXTMETRICEX);
+DECL_WINELIB_TYPE_AW(LPNEWTEXTMETRICEX);
+
+
 typedef INT16 (*FONTENUMPROC16)(SEGPTR,SEGPTR,UINT16,LPARAM);
-typedef INT32 (*FONTENUMPROC32A)(const LOGFONT32A*,const TEXTMETRIC32A*,UINT32,LPARAM);
-typedef INT32 (*FONTENUMPROC32W)(const LOGFONT32W*,const TEXTMETRIC32W*,UINT32,LPARAM);
+typedef INT32 (*FONTENUMPROC32A)(LPENUMLOGFONT32A,LPNEWTEXTMETRIC32A,UINT32,LPARAM);
+typedef INT32 (*FONTENUMPROC32W)(LPENUMLOGFONT32W,LPNEWTEXTMETRIC32W,UINT32,LPARAM);
 DECL_WINELIB_TYPE_AW(FONTENUMPROC);
+
+typedef INT16 (*FONTENUMPROCEX16)(SEGPTR,SEGPTR,UINT16,LPARAM);
+typedef INT32 (*FONTENUMPROCEX32A)(LPENUMLOGFONTEX32A,LPNEWTEXTMETRICEX32A,UINT32,LPARAM);
+typedef INT32 (*FONTENUMPROCEX32W)(LPENUMLOGFONTEX32W,LPNEWTEXTMETRICEX32W,UINT32,LPARAM);
+DECL_WINELIB_TYPE_AW(FONTENUMPROCEX);
 
   /* tmPitchAndFamily values */
 #define TMPF_FIXED_PITCH    1
@@ -2724,7 +2875,12 @@ typedef struct
 #define LB_FINDSTRINGEXACT16     (WM_USER+35)
 #define LB_FINDSTRINGEXACT32     0x01a2
 #define LB_FINDSTRINGEXACT       WINELIB_NAME(LB_FINDSTRINGEXACT)
-/* Here are 2 undocumented messages used by ComboLBoxes */
+#define LB_CARETON16             (WM_USER+36)
+#define LB_CARETON32             0x01a3
+#define LB_CARETON               WINELIB_NAME(LB_CARETON)
+#define LB_CARETOFF16            (WM_USER+37)
+#define LB_CARETOFF32            0x01a4
+#define LB_CARETOFF              WINELIB_NAME(LB_CARETOFF)
 #define LB_SETLOCALE16           WM_NULL  /* Not in Win16 */
 #define LB_SETLOCALE32           0x01a5
 #define LB_SETLOCALE             WINELIB_NAME(LB_SETLOCALE)
@@ -3088,16 +3244,22 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT);
 #define VK_RBUTTON          0x02
 #define VK_CANCEL           0x03
 #define VK_MBUTTON          0x04
+/*                          0x05-0x07  Undefined */
 #define VK_BACK             0x08
 #define VK_TAB              0x09
+/*                          0x0A-0x0B  Undefined */
 #define VK_CLEAR            0x0C
 #define VK_RETURN           0x0D
+/*                          0x0E-0x0F  Undefined */
 #define VK_SHIFT            0x10
 #define VK_CONTROL          0x11
 #define VK_MENU             0x12
 #define VK_PAUSE            0x13
 #define VK_CAPITAL          0x14
+/*                          0x15-0x19  Reserved for Kanji systems */
+/*                          0x1A       Undefined */
 #define VK_ESCAPE           0x1B
+/*                          0x1C-0x1F  Reserved for Kanji systems */
 #define VK_SPACE            0x20
 #define VK_PRIOR            0x21
 #define VK_NEXT             0x22
@@ -3108,12 +3270,50 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT);
 #define VK_RIGHT            0x27
 #define VK_DOWN             0x28
 #define VK_SELECT           0x29
-#define VK_PRINT            0x2A
+#define VK_PRINT            0x2A /* OEM specific in Windows 3.1 SDK */
 #define VK_EXECUTE          0x2B
 #define VK_SNAPSHOT         0x2C
 #define VK_INSERT           0x2D
 #define VK_DELETE           0x2E
 #define VK_HELP             0x2F
+#define VK_0                0x30
+#define VK_1                0x31
+#define VK_2                0x32
+#define VK_3                0x33
+#define VK_4                0x34
+#define VK_5                0x35
+#define VK_6                0x36
+#define VK_7                0x37
+#define VK_8                0x38
+#define VK_9                0x39
+/*                          0x3A-0x40  Undefined */
+#define VK_A                0x41
+#define VK_B                0x42
+#define VK_C                0x43
+#define VK_D                0x44
+#define VK_E                0x45
+#define VK_F                0x46
+#define VK_G                0x47
+#define VK_H                0x48
+#define VK_I                0x49
+#define VK_J                0x4A
+#define VK_K                0x4B
+#define VK_L                0x4C
+#define VK_M                0x4D
+#define VK_N                0x4E
+#define VK_O                0x4F
+#define VK_P                0x50
+#define VK_Q                0x51
+#define VK_R                0x52
+#define VK_S                0x53
+#define VK_T                0x54
+#define VK_U                0x55
+#define VK_V                0x56
+#define VK_W                0x57
+#define VK_X                0x58
+#define VK_Y                0x59
+#define VK_Z                0x5A
+/*                          0x5B-0x5F  Undefined */
 #define VK_NUMPAD0          0x60
 #define VK_NUMPAD1          0x61
 #define VK_NUMPAD2          0x62
@@ -3154,8 +3354,18 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT);
 #define VK_F22              0x85
 #define VK_F23              0x86
 #define VK_F24              0x87
+/*                          0x88-0x8F  Unassigned */
 #define VK_NUMLOCK          0x90
 #define VK_SCROLL           0x91
+/*                          0x92-0xB9  Unassigned */
+/*                          0xBA-0xC0  OEM specific */
+/*                          0xC1-0xDA  Unassigned */
+/*                          0xDB-0xE4  OEM specific */
+/*                          0xE5       Unassigned */
+/*                          0xE6       OEM specific */
+/*                          0xE7-0xE8  Unassigned */
+/*                          0xE9-0xF5  OEM specific */
+/*                          0xF6-0xFE  Unassigned */
 
   
 #define LMEM_FIXED          0   
@@ -3705,6 +3915,10 @@ typedef BOOL32 (*CODEPAGE_ENUMPROC32A)(LPSTR);
 typedef BOOL32 (*CODEPAGE_ENUMPROC32W)(LPWSTR);
 DECL_WINELIB_TYPE_AW(CODEPAGE_ENUMPROC);
 
+typedef BOOL32 (*LOCALE_ENUMPROC32A)(LPSTR);
+typedef BOOL32 (*LOCALE_ENUMPROC32W)(LPWSTR);
+DECL_WINELIB_TYPE_AW(LOCALE_ENUMPROC);
+
 typedef struct tagSYSTEM_INFO
 {
     DWORD   dwOemId;
@@ -3742,10 +3956,6 @@ BOOL16     FastWindowFrame(HDC16,const RECT16*,INT16,INT16,DWORD);
 VOID       FillWindow(HWND16,HWND16,HDC16,HBRUSH16);
 INT16      FlushComm(INT16,INT16);
 WORD       FreeSelector(WORD);
-void       GlobalFreeAll(HGLOBAL16);
-HGLOBAL16  GlobalLRUNewest(HGLOBAL16);
-HGLOBAL16  GlobalLRUOldest(HGLOBAL16);
-VOID       GlobalNotify(FARPROC16);
 HANDLE16   GetAtomHandle(ATOM);
 DWORD      GetBitmapDimension(HBITMAP16);
 HANDLE16   GetCodeHandle(FARPROC16);
@@ -3755,6 +3965,7 @@ VOID       GetCodeInfo(FARPROC16,LPVOID);
 HANDLE16   GetCurrentPDB(void);
 HTASK16    GetCurrentTask(void);
 DWORD      GetDCHook(HDC16,FARPROC16*);
+DWORD      GetDCOrg(HDC16);
 HWND16     GetDesktopHwnd(void);
 HMODULE16  GetExePtr(HANDLE16);
 WORD       GetExeVersion(void);
@@ -3768,6 +3979,10 @@ HINSTANCE16 GetTaskDS(void);
 HQUEUE16   GetTaskQueue(HTASK16);
 DWORD      GlobalDOSAlloc(DWORD);
 WORD       GlobalDOSFree(WORD);
+void       GlobalFreeAll(HGLOBAL16);
+HGLOBAL16  GlobalLRUNewest(HGLOBAL16);
+HGLOBAL16  GlobalLRUOldest(HGLOBAL16);
+VOID       GlobalNotify(FARPROC16);
 WORD       GlobalPageLock(HGLOBAL16);
 WORD       GlobalPageUnlock(HGLOBAL16);
 INT16      InitApp(HINSTANCE16);
@@ -3815,6 +4030,7 @@ INT16      UngetCommChar(INT16,CHAR);
 VOID       UserYield(void);
 BOOL16     WaitEvent(HTASK16);
 INT16      WriteComm(INT16,LPSTR,INT16);
+VOID       WriteOutProfiles(VOID);
 VOID       hmemcpy(LPVOID,LPCVOID,LONG);
 VOID       Yield(void);
 
@@ -3835,6 +4051,9 @@ INT32      EnumPropsEx32W(HWND32,PROPENUMPROCEX32W,LPARAM);
 BOOL32     EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A,DWORD);
 BOOL32     EnumSystemCodePages32W(CODEPAGE_ENUMPROC32W,DWORD);
 #define    EnumSystemCodePages WINELIB_NAME_AW(EnumSystemCodePages)
+BOOL32     EnumSystemLocales32A(LOCALE_ENUMPROC32A,DWORD);
+BOOL32     EnumSystemLocales32W(LOCALE_ENUMPROC32W,DWORD);
+#define    EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
 BOOL32     EnumThreadWindows(DWORD,WNDENUMPROC32,LPARAM);
 void       ExitProcess(DWORD);
 BOOL32     FileTimeToDosDateTime(LPFILETIME,LPWORD,LPWORD);
@@ -3848,6 +4067,7 @@ LPCSTR     GetCommandLine32A();
 LPCWSTR    GetCommandLine32W();
 #define    GetCommandLine WINELIB_NAME_AW(GetCommandLine)
 BOOL32     GetCommTimeouts(INT32,LPCOMMTIMEOUTS);
+BOOL32     GetDCOrgEx(HDC32,LPPOINT32);
 DWORD      GetFileInformationByHandle(HFILE,BY_HANDLE_FILE_INFORMATION*);
 DWORD      GetFileSize(HFILE,LPDWORD);
 DWORD      GetFileType(HFILE);
@@ -3873,6 +4093,7 @@ DWORD      HeapSize(HANDLE32,DWORD,LPVOID);
 BOOL32     HeapUnlock(HANDLE32);
 BOOL32     HeapValidate(HANDLE32,DWORD,LPVOID);
 BOOL32     IsWindowUnicode(HWND32);
+BOOL32     IsValidLocale(DWORD,DWORD);
 BOOL32     LocalFileTimeToFileTime(LPFILETIME,LPFILETIME);
 LPVOID     MapViewOfFileEx(HANDLE32,DWORD,DWORD,DWORD,DWORD,DWORD);
 BOOL32     MoveFile32A(LPCSTR,LPCSTR);
@@ -4220,7 +4441,11 @@ INT16      DialogBoxParam16(HINSTANCE16,SEGPTR,HWND16,DLGPROC16,LPARAM);
 INT32      DialogBoxParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC32,LPARAM);
 INT32      DialogBoxParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC32,LPARAM);
 #define    DialogBoxParam WINELIB_NAME_AW(DialogBoxParam)
-INT16      DlgDirListComboBox16(HWND16,SEGPTR,INT16,INT16,UINT16);
+INT16      DlgDirList16(HWND16,LPCSTR,INT16,INT16,UINT16);
+INT32      DlgDirList32A(HWND32,LPCSTR,INT32,INT32,UINT32);
+INT32      DlgDirList32W(HWND32,LPCWSTR,INT32,INT32,UINT32);
+#define    DlgDirList WINELIB_NAME_AW(DlgDirList)
+INT16      DlgDirListComboBox16(HWND16,LPCSTR,INT16,INT16,UINT16);
 INT32      DlgDirListComboBox32A(HWND32,LPCSTR,INT32,INT32,UINT32);
 INT32      DlgDirListComboBox32W(HWND32,LPCWSTR,INT32,INT32,UINT32);
 #define    DlgDirListComboBox WINELIB_NAME_AW(DlgDirListComboBox)
@@ -4264,6 +4489,14 @@ INT16      EnumFontFamilies16(HDC16,LPCSTR,FONTENUMPROC16,LPARAM);
 INT32      EnumFontFamilies32A(HDC32,LPCSTR,FONTENUMPROC32A,LPARAM);
 INT32      EnumFontFamilies32W(HDC32,LPCWSTR,FONTENUMPROC32W,LPARAM);
 #define    EnumFontFamilies WINELIB_NAME_AW(EnumFontFamilies)
+INT16      EnumFontFamiliesEx16(HDC16,LPLOGFONT16,FONTENUMPROCEX16,LPARAM,DWORD);
+INT32      EnumFontFamiliesEx32A(HDC32,LPLOGFONT32A,FONTENUMPROCEX32A,LPARAM,DWORD);
+INT32      EnumFontFamiliesEx32W(HDC32,LPLOGFONT32W,FONTENUMPROCEX32W,LPARAM,DWORD);
+#define    EnumFontFamiliesEx WINELIB_NAME_AW(EnumFontFamiliesEx)
+INT16      EnumFonts16(HDC16,LPCSTR,FONTENUMPROC16,LPARAM);
+INT32      EnumFonts32A(HDC32,LPCSTR,FONTENUMPROC32A,LPARAM);
+INT32      EnumFonts32W(HDC32,LPCWSTR,FONTENUMPROC32W,LPARAM);
+#define    EnumFonts WINELIB_NAME_AW(EnumFonts)
 INT16      EnumObjects16(HDC16,INT16,GOBJENUMPROC16,LPARAM);
 INT32      EnumObjects32(HDC32,INT32,GOBJENUMPROC32,LPARAM);
 #define    EnumObjects WINELIB_NAME(EnumObjects)
@@ -4384,6 +4617,9 @@ INT32      GetClipBox32(HDC32,LPRECT32);
 void       GetClipCursor16(LPRECT16);
 void       GetClipCursor32(LPRECT32);
 #define    GetClipCursor WINELIB_NAME(GetClipCursor)
+HRGN16     GetClipRgn16(HDC16);
+INT32      GetClipRgn32(HDC32,HRGN32);
+#define    GetClipRgn WINELIB_NAME(GetClipRgn)
 INT16      GetCommState16(INT16,LPDCB16);
 BOOL32     GetCommState32(INT32,LPDCB32);
 #define    GetCommState WINELIB_NAME(GetCommState)
@@ -4459,9 +4695,25 @@ HWND32     GetParent32(HWND32);
 COLORREF   GetPixel16(HDC16,INT16,INT16);
 COLORREF   GetPixel32(HDC32,INT32,INT32);
 #define    GetPixel WINELIB_NAME(GetPixel)
+UINT16     GetPrivateProfileInt16(LPCSTR,LPCSTR,INT16,LPCSTR);
+UINT32     GetPrivateProfileInt32A(LPCSTR,LPCSTR,INT32,LPCSTR);
+UINT32     GetPrivateProfileInt32W(LPCWSTR,LPCWSTR,INT32,LPCWSTR);
+#define    GetPrivateProfileInt WINELIB_NAME_AW(GetPrivateProfileInt)
+INT16      GetPrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT16,LPCSTR);
+INT32      GetPrivateProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT32,LPCSTR);
+INT32      GetPrivateProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,INT32,LPCWSTR);
+#define    GetPrivateProfileString WINELIB_NAME_AW(GetPrivateProfileString)
 FARPROC16  GetProcAddress16(HMODULE16,SEGPTR);
 FARPROC32  GetProcAddress32(HMODULE32,LPCSTR);
 #define    GetProcAddress WINELIB_NAME(GetProcAddress)
+UINT16     GetProfileInt16(LPCSTR,LPCSTR,INT16);
+UINT32     GetProfileInt32A(LPCSTR,LPCSTR,INT32);
+UINT32     GetProfileInt32W(LPCWSTR,LPCWSTR,INT32);
+#define    GetProfileInt WINELIB_NAME_AW(GetProfileInt)
+INT16      GetProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT16);
+INT32      GetProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT32);
+INT32      GetProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,INT32);
+#define    GetProfileString WINELIB_NAME_AW(GetProfileString)
 HANDLE16   GetProp16(HWND16,LPCSTR);
 HANDLE32   GetProp32A(HWND32,LPCSTR);
 HANDLE32   GetProp32W(HWND32,LPCWSTR);
@@ -5099,6 +5351,14 @@ HWND32     WindowFromDC32(HDC32);
 HWND16     WindowFromPoint16(POINT16);
 HWND32     WindowFromPoint32(POINT32);
 #define    WindowFromPoint WINELIB_NAME(WindowFromPoint)
+BOOL16     WritePrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
+BOOL32     WritePrivateProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
+BOOL32     WritePrivateProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR);
+#define    WritePrivateProfileString WINELIB_NAME_AW(WritePrivateProfileString)
+BOOL16     WriteProfileString16(LPCSTR,LPCSTR,LPCSTR);
+BOOL32     WriteProfileString32A(LPCSTR,LPCSTR,LPCSTR);
+BOOL32     WriteProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR);
+#define    WriteProfileString WINELIB_NAME_AW(WriteProfileString)
 SEGPTR     lstrcat16(SEGPTR,SEGPTR);
 LPSTR      lstrcat32A(LPSTR,LPCSTR);
 LPWSTR     lstrcat32W(LPWSTR,LPCWSTR);
@@ -5238,7 +5498,6 @@ BOOL       DestroyIcon(HICON16);
 BOOL       DestroyMenu(HMENU16);
 BOOL       DestroyWindow(HWND);
 LONG       DispatchMessage(const MSG16*);
-INT        DlgDirList(HWND,SEGPTR,INT,INT,UINT);
 BOOL16     DragDetect(HWND16,POINT16);
 DWORD      DragObject(HWND, HWND, WORD, HANDLE16, WORD, HCURSOR16);
 BOOL       DrawIcon(HDC16,INT,INT,HICON16);
@@ -5249,7 +5508,6 @@ BOOL       EnableMenuItem(HMENU16,UINT,UINT);
 BOOL       EnableWindow(HWND,BOOL);
 BOOL       EndDeferWindowPos(HDWP16);
 UINT16     EnumClipboardFormats(UINT16);
-INT        EnumFonts(HDC16,LPCSTR,FONTENUMPROC16,LPARAM);
 BOOL       EnumMetaFile(HDC16,HMETAFILE16,MFENUMPROC16,LPARAM);
 INT        Escape(HDC16,INT,INT,SEGPTR,SEGPTR);
 BOOL       ExitWindows(DWORD,WORD);
@@ -5271,7 +5529,6 @@ WORD       GetBkMode(HDC16);
 DWORD      GetBrushOrg(HDC16);
 BOOL       GetCharABCWidths(HDC16,UINT,UINT,LPABC16);
 BOOL       GetCharWidth(HDC16,WORD,WORD,LPINT16);
-HRGN32     GetClipRgn(HDC16);
 HANDLE16   GetClipboardData(WORD);
 int        GetClipboardFormatName(WORD,LPSTR,short);
 HWND       GetClipboardOwner(void);
@@ -5280,7 +5537,6 @@ HBRUSH16   GetControlBrush(HWND,HDC16,WORD);
 DWORD      GetCurrentPosition(HDC16);
 DWORD      GetCurrentTime(void);
 HCURSOR16  GetCursor(void);
-DWORD      GetDCOrg(HDC16);
 HDC16      GetDCState(HDC16);
 int        GetDIBits(HDC16,HBITMAP16,WORD,WORD,LPSTR,LPBITMAPINFO,WORD);
 SEGPTR     GetDOSEnvironment(void);
@@ -5323,10 +5579,6 @@ HWND       GetOpenClipboardWindow(void);
 WORD       GetPaletteEntries(HPALETTE16,WORD,WORD,LPPALETTEENTRY);
 WORD       GetPolyFillMode(HDC16);
 int        GetPriorityClipboardFormat(WORD*,short);
-UINT       GetPrivateProfileInt(LPCSTR,LPCSTR,INT,LPCSTR);
-INT        GetPrivateProfileString(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT,LPCSTR);
-UINT       GetProfileInt(LPCSTR,LPCSTR,INT);
-INT        GetProfileString(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT);
 DWORD      GetQueueStatus(UINT);
 BOOL       GetRasterizerCaps(LPRASTERIZER_STATUS,UINT);
 WORD       GetROP2(HDC16);
@@ -5484,9 +5736,6 @@ void       WaitMessage(void);
 int        WaitSoundState(int);
 HINSTANCE16 WinExec(LPSTR,WORD);
 BOOL       WinHelp(HWND,LPSTR,WORD,DWORD);
-void       WriteOutProfiles(void);
-BOOL       WritePrivateProfileString(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
-BOOL       WriteProfileString(LPCSTR,LPCSTR,LPCSTR);
 
 #endif  /* NO_TRANSITION_TYPES */
 

@@ -1290,6 +1290,7 @@ INT16 GetModuleFileName( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
 {
     NE_MODULE *pModule;
 
+    if (!hModule) hModule = GetCurrentTask();
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), nSize );
@@ -1407,7 +1408,8 @@ HINSTANCE16 WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 	{
 	    /* Check that the original file name did not have a suffix */
 	    p = strrchr(filename, '.');
-	    if (!p || (strchr(p, '/') && strchr(p, '\\')))
+	    /* if there is a '.', check if either \ OR / follow */
+	    if (!p || strchr(p, '/') || strchr(p, '\\'))
             {
                 p = filename + strlen(filename);
                 strcpy( p, ".exe" );

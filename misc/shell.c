@@ -195,29 +195,34 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
     /* extensions; however, it'd make sense to check the programs */
     /* section first, so that's what happens here. */
 
-    /* See if it's a program */
-    GetProfileString("windows", "programs", "exe pif bat com",
-		      buffer, sizeof(buffer)); /* FIXME check return code! */
+    /* See if it's a program - if GetProfileString fails, we skip this
+     * section. Actually, if GetProfileString fails, we've probably
+     * got a lot more to worry about than running a program... */
+    if ( GetProfileString32A("windows", "programs", "exe pif bat com",
+						  buffer, sizeof(buffer)) > 0 )
+	  {
+		for (i=0;i<strlen(buffer); i++) buffer[i]=tolower(buffer[i]);
 
-    for (i=0;i<strlen(buffer); i++) buffer[i]=tolower(buffer[i]);
+		tok = strtok(buffer, " \t"); /* ? */
+		while( tok!= NULL)
+		  {
+			if (strcmp(tok, &tmpext[1])==0) /* have to skip the leading "." */
+			  {
+				strcpy(lpResult, xlpFile);
+				/* Need to perhaps check that the file has a path
+				 * attached */
+				dprintf_exec(stddeb, "SHELL_FindExecutable: found %s\n",
+							 lpResult);
+	    return 33;
 
-    tok = strtok(buffer, " \t"); /* ? */
-    while( tok!= NULL)
-    {
-	if (strcmp(tok, &tmpext[1])==0) /* have to skip the leading "." */
-	{
-	    strcpy(lpResult, xlpFile); /* Need to perhaps check that */
-				      /* the file has a path attached */
-	    dprintf_exec(stddeb, "SHELL_FindExecutable: found %s\n",
-			 lpResult);
-	    return 33; /* Greater than 32 to indicate success FIXME */
-		       /* According to the docs, I should be returning */
-		       /* a handle for the executable. Does this mean */
-		       /* I'm supposed to open the executable file or */
-		       /* something? More RTFM, I guess... */
-	}
-	tok=strtok(NULL, " \t");
-    }
+		/* Greater than 32 to indicate success FIXME According to the
+		 * docs, I should be returning a handle for the
+		 * executable. Does this mean I'm supposed to open the
+		 * executable file or something? More RTFM, I guess... */
+			  }
+			tok=strtok(NULL, " \t");
+		  }
+	  }
 
     /* Check registry */
     if (RegQueryValue16( (HKEY)HKEY_CLASSES_ROOT, tmpext, filetype,
@@ -249,32 +254,34 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 		    strcat( lpResult, &tok[2] );
 		}
 	    }
-	    retval=33;
+	    retval=33; /* FIXME see above */
 	}
     }
     else /* Check win.ini */
     {
 	/* Toss the leading dot */
 	extension++;
-	GetProfileString( "extensions", extension, "", command,
-			 sizeof(command));
-	if (strlen(command)!=0)
-	{
-	    strcpy( lpResult, command );
-	    tok=strstr( lpResult, "^" ); /* should be ^.extension? */
-	    if (tok != NULL)
-	    {
-		tok[0]='\0';
-		strcat( lpResult, xlpFile ); /* what if no dir in xlpFile? */
-		tok=strstr( command, "^" ); /* see above */
-		if ((tok != NULL) && (strlen(tok)>5))
-		{
-		    strcat( lpResult, &tok[5]);
-		}
-	    }
-	    retval=33;
+	if ( GetProfileString32A( "extensions", extension, "", command,
+                                  sizeof(command)) > 0)
+	  {
+		if (strlen(command)!=0)
+		  {
+			strcpy( lpResult, command );
+			tok=strstr( lpResult, "^" ); /* should be ^.extension? */
+			if (tok != NULL)
+			  {
+				tok[0]='\0';
+				strcat( lpResult, xlpFile ); /* what if no dir in xlpFile? */
+				tok=strstr( command, "^" ); /* see above */
+				if ((tok != NULL) && (strlen(tok)>5))
+				  {
+					strcat( lpResult, &tok[5]);
+				  }
+			  }
+			retval=33; /* FIXME - see above */
+		  }
+	  }
 	}
-    }
 
     dprintf_exec(stddeb, "SHELL_FindExecutable: returning %s\n", lpResult);
     return retval;
@@ -804,7 +811,7 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
  */
 int RegisterShellHook(void *ptr) 
 {
-	fprintf(stdnimp, "RegisterShellHook : Empty Stub !!!\n");
+	fprintf(stdnimp, "RegisterShellHook( %p ) : Empty Stub !!!\n", ptr);
 	return 0;
 }
 

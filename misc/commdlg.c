@@ -166,22 +166,14 @@ static void FILEDLG_StripEditControl(HWND hwnd)
  */
 static BOOL FILEDLG_ScanDir(HWND hWnd, LPSTR newPath)
 {
-    BOOL32 ret = FALSE;
     int len;
-    char *str = SEGPTR_ALLOC(512);
-    if (!str) return TRUE;
+    char str[512];
 
     lstrcpyn32A( str, newPath, 512 );
     len = strlen(str);
-    GetDlgItemText32A( hWnd, edt1, str + len, 512 - len );
-    if (DlgDirList(hWnd, SEGPTR_GET(str), lst1, 0, 0x0000))
-    {
-        strcpy( str, "*.*" );
-        DlgDirList(hWnd, SEGPTR_GET(str), lst2, stc1, 0x8010 );
-        ret = TRUE;
-    }
-    SEGPTR_FREE(str);
-    return ret;
+    GetDlgItemText32A( hWnd, edt1, str + len, sizeof(str) - len );
+    if (!DlgDirList32A( hWnd, str, lst1, 0, 0x0000 )) return FALSE;
+    return DlgDirList32A( hWnd, "*.*", lst2, stc1, 0x8010 );
 }
 
 /***********************************************************************
@@ -388,10 +380,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
   			lpofn->nFilterIndex, tmpstr);
   SetDlgItemText32A( hWnd, edt1, tmpstr );
   /* get drive list */
-  pstr = SEGPTR_ALLOC(1);
-  *pstr = 0;
-  DlgDirListComboBox16(hWnd, SEGPTR_GET(pstr), cmb2, 0, 0xC000);
-  SEGPTR_FREE(pstr);
+  DlgDirListComboBox32A(hWnd, "", cmb2, 0, 0xC000);
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {

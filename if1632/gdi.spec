@@ -149,7 +149,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 169 stub IsDCDirty
 170 stub SetDCStatus
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn
-173 pascal16 GetClipRgn(word) GetClipRgn
+173 pascal16 GetClipRgn(word) GetClipRgn16
 175 pascal16 EnumMetaFile(word word segptr long) THUNK_EnumMetaFile16
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord
 179 pascal16 GetDCState(word) GetDCState
@@ -382,7 +382,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 610 stub GDISignalProc32
 611 stub GetRandomRgn
 612 stub GetTextCharSet
-613 stub EnumFontFamiliesEx
+613 pascal16 EnumFontFamiliesEx(word ptr segptr long long) THUNK_EnumFontFamiliesEx16
 614 stub AddLpkToGDI
 615 stub GetCharacterPlacement
 616 stub GetFontLanguageInfo

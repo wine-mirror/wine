@@ -719,19 +719,36 @@ WORD SetTextAlign( HDC16 hdc, WORD textAlign )
 
 
 /***********************************************************************
+ *           GetDCOrgEx  (GDI32.168)
+ */
+BOOL32 GetDCOrgEx(HDC32 hDC, LPPOINT32 lpp)
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC );
+    if (!dc || !lpp) return FALSE;
+
+    if (!(dc->w.flags & DC_MEMORY))
+    {
+       Window root;
+       int w, h, border, depth;
+
+       XGetGeometry( display, dc->u.x.drawable, &root,
+                    &lpp->x, &lpp->y, &w, &h, &border, &depth );
+    }
+    else lpp->x = lpp->y = 0;
+    lpp->x += dc->w.DCOrgX; lpp->y += dc->w.DCOrgY;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           GetDCOrg    (GDI.79)
  */
 DWORD GetDCOrg( HDC16 hdc )
 {
-    Window root;
-    int x, y, w, h, border, depth;
-
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
-    if (dc->w.flags & DC_MEMORY) return 0;
-    XGetGeometry( display, dc->u.x.drawable, &root,
-		  &x, &y, &w, &h, &border, &depth );
-    return MAKELONG( dc->w.DCOrgX + (WORD)x, dc->w.DCOrgY + (WORD)y );
+    POINT32	pt;
+    if( GetDCOrgEx( hdc, &pt) )
+  	return MAKELONG( (WORD)pt.x, (WORD)pt.y );    
+    return 0;
 }
 
 

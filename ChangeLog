@@ -1,4 +1,110 @@
 ----------------------------------------------------------------------
+Sat Nov 30 19:21:17 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [configure]
+	Re-generated with autoconf 2.11. Let me know if you have
+	problems.
+
+	* [controls/listbox.c] [controls/oldlbox.c]
+	Listboxes rewritten from scratch. Moved old code still used by
+	comboboxes to oldlbox.c
+
+	* [misc/registry.c]
+	Use temporary file when saving registry.
+
+	* [windows/dialog.c]
+	Implemented Win32 version of DlgDirList() and DlgDirListComboBox().
+
+	* [windows/winproc.c]
+	Added translation for listbox Win32 messages.
+
+Sat Nov 30 21:00:00 Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [controls/widgets.c] [controls/button.c]
+	Fixed some incompatibilities with CTL3D DLL.
+
+	* [windows/dialog.c]
+	Made dialog windows fit into the desktop.
+
+	* [misc/winsock.c] [misc/winsock_async.c]
+	New Winsock engine.
+
+	* [windows/message.c]
+	GetMessage() fixes.
+
+	* [windows/queue.c] [windows/hook.c] [windows/win.c]
+	SetMessageQueue() fixes.
+
+Fri Nov 29 10:25:12 1996  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [objects/text.c]
+	DrawText16(): Fixed return value.
+
+Tue Nov 26 14:47:09 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/profile.c] [*/*]
+	Added Win32 profile functions, updated to new naming standard.
+
+	* [objects/font.c] [if1632/thunk.c] [include/windows.h]
+	Added EnumFonts32*, EnumFontFamiliesEx*, changed prototypes and
+	structures.
+
+	* [misc/ole2nls.c] [if1632/thunk.c]
+	Added EnumSystemLocales() (winhelp.exe).
+
+	* [misc/registry.c]
+	Added Windows 3.1 registry loader supplied by Tor Sjxwall, tor@sn.no
+
+	* [win32/file.c]
+	Partially fixed CreateFileMapping(), added UnmapViewOfFile().
+
+Sat Nov 23 23:36:05 1996  Ronan Waide  <waider@waider.ie>
+
+	* [misc/shell.c]
+	Fixed some FIXMEs relating to ShellExec() and FindExecutable().
+
+	* [misc/main.c]
+	Implemented a few more of the SystemParametersInfo() cases.
+
+Tue Nov 19 01:24:34 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [include/keyboard.h]
+	New file, new macro WINE_VKEY_MAPPINGS (using code taken from event.c).
+
+	* [include/windows.h]
+	New [VK_A, VK_Z] and [VK_0, VK9] macros.
+
+	* [misc/keyboard.c]
+	Fixes in KeyTable and ToAscii.
+
+	* [objects/font.c]
+	FONT_init : Give default value for MSWIN "system" font.
+	FONT_MatchFont : Do not try every size of a font family if the
+	family does not exist.
+
+	* [windows/event.c]
+	lastEventChar hack removed.
+	KeyStateTable replaced by InputKeyStateTable (maintained in event.c)
+	and QueueKeyStateTable (maintained in message.c).
+	EVENT_key : Corrections to the extended bit setting.
+
+	* [windows/message.c] [windows/keyboard.c]
+	Implementation of a new QueueKeyStateTable : table of key states
+	valid when messages are retrieved by GetMessage or PeekMessage,
+	and valid for TranslateMessage.
+	TranslateMessage : Convert WM*KEY messages using QueueKeyStateTable
+	and ToAscii.
+	
+Mon Nov 18 16:59:01 1996  Robert Pouliot <krynos@clic.net>
+
+	* [graphics/Makefile.in] [graphics/wing.c]
+	  [if1632/wing.spec]
+	Some functions for WinG support, mostly empty stubs.
+
+	* [misc/crtdll.c] [if1632/crtdll.spec]
+	Many functions added to CRTDLL, mostly calls to Unix C library.
+
+----------------------------------------------------------------------
 Sun Nov 17 15:01:45 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [graphics/bitblt.c] [graphics/x11drv/bitblt.c]

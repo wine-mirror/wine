@@ -82,7 +82,7 @@ base	1
 0077 stub CreateIconIndirect
 0078 stub CreateMDIWindowA
 0079 stub CreateMDIWindowW
-0080 stub CreateMenu
+0080 stdcall CreateMenu() CreateMenu
 0081 stdcall CreatePopupMenu() CreatePopupMenu
 0082 stdcall CreateWindowExA(long ptr ptr long long long long long 
 				long long long ptr) CreateWindowEx32A
@@ -146,10 +146,10 @@ base	1
 0139 stdcall DialogBoxParamW(long ptr long ptr long) DialogBoxParam32W
 0140 stdcall DispatchMessageA(ptr) USER32_DispatchMessageA
 0141 stdcall DispatchMessageW(ptr) USER32_DispatchMessageA
-0142 stub DlgDirListA
+0142 stdcall DlgDirListA(long ptr long long long) DlgDirList32A
 0143 stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBox32A
 0144 stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBox32W
-0145 stub DlgDirListW
+0145 stdcall DlgDirListW(long ptr long long long) DlgDirList32W
 0146 stdcall DlgDirSelectComboBoxExA(long ptr long long) DlgDirSelectComboBoxEx32A
 0147 stdcall DlgDirSelectComboBoxExW(long ptr long long) DlgDirSelectComboBoxEx32W
 0148 stdcall DlgDirSelectExA(long ptr long long) DlgDirSelectEx32A
@@ -466,7 +466,7 @@ base	1
 0459 stub SendNotifyMessageA
 0460 stub SendNotifyMessageW
 0461 stub ServerSetFunctionPointers
-0462 stub SetActiveWindow
+0462 stdcall SetActiveWindow(long) SetActiveWindow
 0463 stdcall SetCapture(long) SetCapture32
 0464 stdcall SetCaretBlinkTime(long) SetCaretBlinkTime
 0465 stdcall SetCaretPos(long long) SetCaretPos

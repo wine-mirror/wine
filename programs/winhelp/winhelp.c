@@ -592,7 +592,7 @@ static LRESULT WINHELP_TextWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
       {
 	BOOL  update = TRUE;
 	RECT  rect;
-	INT16 Min, Max;
+	INT   Min, Max;
 	INT   CurPos = GetScrollPos(hWnd, SB_VERT);
 	GetScrollRange(hWnd, SB_VERT, &Min, &Max);
 	GetClientRect(hWnd, &rect);

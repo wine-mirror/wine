@@ -96,8 +96,8 @@ base	1
 0091 stub EnumResourceTypesW
 0092 stdcall EnumSystemCodePagesA(ptr long) THUNK_EnumSystemCodePages32A
 0093 stdcall EnumSystemCodePagesW(ptr long) THUNK_EnumSystemCodePages32W
-0094 stub EnumSystemLocalesA
-0095 stub EnumSystemLocalesW
+0094 stdcall EnumSystemLocalesA(ptr long) THUNK_EnumSystemLocales32A
+0095 stdcall EnumSystemLocalesW(ptr long) THUNK_EnumSystemLocales32W
 0096 stub EnumTimeFormatsA
 0097 stub EnumTimeFormatsW
 0098 stub EraseTape
@@ -253,12 +253,12 @@ base	1
 0248    stdcall GetOEMCP() GetOEMCP
 0249 stub GetOverlappedResult
 0250 stub GetPriorityClass
-0251 stdcall GetPrivateProfileIntA(ptr ptr long ptr) GetPrivateProfileInt
-0252 stub GetPrivateProfileIntW
+0251 stdcall GetPrivateProfileIntA(ptr ptr long ptr) GetPrivateProfileInt32A
+0252 stdcall GetPrivateProfileIntW(ptr ptr long ptr) GetPrivateProfileInt32W
 0253 stub GetPrivateProfileSectionA
 0254 stub GetPrivateProfileSectionW
-0255 stdcall GetPrivateProfileStringA(ptr ptr ptr ptr long ptr) GetPrivateProfileString
-0256 stub GetPrivateProfileStringW
+0255 stdcall GetPrivateProfileStringA(ptr ptr ptr ptr long ptr) GetPrivateProfileString32A
+0256 stdcall GetPrivateProfileStringW(ptr ptr ptr ptr long ptr) GetPrivateProfileString32W
 0257 stdcall GetProcAddress(long ptr) GetProcAddress32
 0258 stdcall GetProcessAffinityMask(long ptr ptr)	GetProcessAffinityMask
 0259 stdcall GetProcessHeap() GetProcessHeap
@@ -266,12 +266,12 @@ base	1
 0261 stub GetProcessShutdownParameters
 0262 stub GetProcessTimes
 0263 stub GetProcessWorkingSetSize
-0264 	stdcall GetProfileIntA(ptr ptr long) GetProfileInt
-0265 stub GetProfileIntW
+0264 stdcall GetProfileIntA(ptr ptr long) GetProfileInt32A
+0265 stdcall GetProfileIntW(ptr ptr long) GetProfileInt32W
 0266 stub GetProfileSectionA
 0267 stub GetProfileSectionW
-0268 stdcall GetProfileStringA(ptr ptr ptr ptr long) GetProfileString
-0269 stub GetProfileStringW
+0268 stdcall GetProfileStringA(ptr ptr ptr ptr long) GetProfileString32A
+0269 stdcall GetProfileStringW(ptr ptr ptr ptr long) GetProfileString32W
 0270 stub GetQueuedCompletionStatus
 0271 stdcall GetShortPathNameA(ptr ptr long) GetShortPathName32A
 0272 stdcall GetShortPathNameW(ptr ptr long) GetShortPathName32W
@@ -542,7 +542,7 @@ base	1
 0537    stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
 0538 stub UnlockFile
 0539 stub UnlockFileEx
-0540 stub UnmapViewOfFile
+0540 stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
 0541 stub UpdateResourceA
 0542 stub UpdateResourceW
 0543 stub VDMConsoleOperation
@@ -584,13 +584,13 @@ base	1
 0579 stub WriteFileEx
 0580 stub WritePrivateProfileSectionA
 0581 stub WritePrivateProfileSectionW
-0582 stdcall WritePrivateProfileStringA(ptr ptr ptr ptr)	WritePrivateProfileString
-0583 stub WritePrivateProfileStringW
+0582 stdcall WritePrivateProfileStringA(ptr ptr ptr ptr) WritePrivateProfileString32A
+0583 stdcall WritePrivateProfileStringW(ptr ptr ptr ptr) WritePrivateProfileString32W
 0584 stub WriteProcessMemory
 0585 stub WriteProfileSectionA
 0586 stub WriteProfileSectionW
-0587 stdcall WriteProfileStringA(ptr ptr ptr)	WriteProfileString
-0588 stub WriteProfileStringW
+0587 stdcall WriteProfileStringA(ptr ptr ptr) WriteProfileString32A
+0588 stdcall WriteProfileStringW(ptr ptr ptr) WriteProfileString32W
 0589 stub WriteTapemark
 0590 stdcall _hread(long ptr long) _hread
 0591 stdcall _hwrite(long ptr long) _hwrite

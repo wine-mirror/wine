@@ -139,7 +139,7 @@ type win32
 0138 stub timeEndPeriod
 0139 stub timeGetDevCaps
 0140 stub timeGetSystemTime
-0141 stub timeGetTime
+0141 stdcall timeGetTime() timeGetTime
 0142 stub timeKillEvent
 0143 stub timeSetEvent
 0144 stub waveInAddBuffer

@@ -9,7 +9,7 @@ wine \- run Windows programs under Unix
 ]
 .I program_name
 [
-.I arguments
+.I program_name...
 ]
 .SH DESCRIPTION
 .B wine

@@ -16,7 +16,12 @@
 #include "module.h"
 #include "heap.h"
 
-#define OLD_LISTBOX
+/* Window procedures */
+
+extern LRESULT ListBoxWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                               LPARAM lParam );
+
+/* Win16 class info */
 
 typedef struct
 {
@@ -27,42 +32,39 @@ typedef struct
     LPCSTR     className;
 } BUILTIN_CLASS_INFO16;
 
+/* Win16 built-in classes */
+
 static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 {
     { CS_GLOBALCLASS | CS_PARENTDC,
-       sizeof(STATICINFO), 0, "StaticWndProc", "STATIC" },
-#ifdef OLD_LISTBOX
+       sizeof(STATICINFO), 0, "StaticWndProc", "Static" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
-      8, 0, "ListBoxWndProc", "LISTBOX" },
-#endif
-    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
-      8, 0, "ComboBoxWndProc", "COMBOBOX" },
+      8, 0, "ComboBoxWndProc", "ComboBox" },
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
-      8, 0, "ComboLBoxWndProc", "COMBOLBOX" },
+      8, 0, "ComboLBoxWndProc", "ComboLBox" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
-      sizeof(DWORD), 0, "EditWndProc", "EDIT" },
+      sizeof(DWORD), 0, "EditWndProc", "Edit" },
     { CS_GLOBALCLASS | CS_SAVEBITS,
       sizeof(HMENU32), 0, "PopupMenuWndProc", POPUPMENU_CLASS_NAME },
     { CS_GLOBALCLASS | CS_SAVEBITS,
       DLGWINDOWEXTRA, 0, "DefDlgProc", DIALOG_CLASS_NAME },
     { CS_GLOBALCLASS, sizeof(MDICLIENTINFO),
-      STOCK_LTGRAY_BRUSH, "MDIClientWndProc", "MDICLIENT" }
+      STOCK_LTGRAY_BRUSH, "MDIClientWndProc", "MDIClient" }
 };
 
 #define NB_BUILTIN_CLASSES16 \
          (sizeof(WIDGETS_BuiltinClasses16)/sizeof(WIDGETS_BuiltinClasses16[0]))
 
+/* Win32 built-in classes */
 
 static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
 {
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-      ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "BUTTON" },
-#ifndef OLD_LISTBOX
+      ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "Button" },
     { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
-      ListBoxWndProc32, 0, sizeof(void *), 0, 0, 0, 0, 0, "LISTBOX" },
-#endif
+      ListBoxWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "ListBox" },
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-      ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, 0, 0, 0, "SCROLLBAR"},
+      ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, 0, 0, 0, "ScrollBar"},
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
       0, 0, 0, 0, 0, DESKTOP_CLASS_NAME }
 };
@@ -70,6 +72,8 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
 #define NB_BUILTIN_CLASSES32 \
          (sizeof(WIDGETS_BuiltinClasses32)/sizeof(WIDGETS_BuiltinClasses32[0]))
 
+
+/* Win32 common controls */
 
 static WNDCLASS32A WIDGETS_CommonControls32[] =
 {

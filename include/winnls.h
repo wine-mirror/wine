@@ -1,6 +1,9 @@
 #ifndef __WINE_WINNLS_H
 #define __WINE_WINNLS_H
 
+/* When adding new defines, don't forget to add an entry to the
+ * locale2id map in misc/ole2nls.c
+ */
 #define LOCALE_ILANGUAGE            0x00000001   
 #define LOCALE_SLANGUAGE            0x00000002   
 #define LOCALE_SENGLANGUAGE         0x00001001   

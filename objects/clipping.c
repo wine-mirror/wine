@@ -418,6 +418,24 @@ INT32 GetClipBox32( HDC32 hdc, LPRECT32 rect )
     return ret;
 }
 
+/***********************************************************************
+ *           GetClipRgn32  (GDI32.163)
+ */
+INT32 GetClipRgn32( HDC32 hdc, HRGN32 hRgn )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if( dc && hRgn )
+      if( dc->w.hClipRgn )
+      { 
+	/* this assumes that dc->w.hClipRgn is in coordinates
+	   relative to the DC origin (not device) */
+
+	if( CombineRgn32(hRgn, dc->w.hClipRgn, 0, RGN_COPY) != ERROR )
+	    return 1;
+      }
+      else return 0;
+    return -1;
+}
 
 /***********************************************************************
  *           SaveVisRgn    (GDI.129)

@@ -149,11 +149,11 @@ int MAIN_Init(void)
     if (!KERN32_Init()) return 0;
 
       /* Create system message queue */
-    queueSize = GetProfileInt( "windows", "TypeAhead", 120 );
+    queueSize = GetProfileInt32A( "windows", "TypeAhead", 120 );
     if (!QUEUE_CreateSysMsgQueue( queueSize )) return 0;
 
     /* Set double click time */
-    SetDoubleClickTime( GetProfileInt( "windows", "DoubleClickSpeed", 452 ) );
+    SetDoubleClickTime( GetProfileInt32A("windows","DoubleClickSpeed",452) );
 
     return 1;
 }

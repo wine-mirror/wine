@@ -13,7 +13,7 @@
 
 
 static const char PEN_dash[]       = { 5,3 };      /* -----   -----   -----  */
-static const char PEN_dot[]        = { 2,2 };      /* --  --  --  --  --  -- */
+static const char PEN_dot[]        = { 1,1 };      /* --  --  --  --  --  -- */
 static const char PEN_dashdot[]    = { 4,3,2,3 };  /* ----   --   ----   --  */
 static const char PEN_dashdotdot[] = { 4,2,2,2,2,2 }; /* ----  --  --  ----  */
 

@@ -450,7 +450,7 @@ _savesubreg(FILE *F,LPKEYSTRUCT lpkey,int all) {
 	return _savesubkey(F,lpkey->nextsub,0,all);
 }
 
-static void
+static BOOL32
 _savereg(LPKEYSTRUCT lpkey,char *fn,int all) {
 	FILE	*F;
 
@@ -459,15 +459,16 @@ _savereg(LPKEYSTRUCT lpkey,char *fn,int all) {
 		fprintf(stddeb,__FILE__":_savereg:Couldn't open %s for writing: %s\n",
 			fn,strerror(errno)
 		);
-		return;
+		return FALSE;
 	}
 	if (!_savesubreg(F,lpkey,all)) {
 		fclose(F);
 		unlink(fn);
 		fprintf(stddeb,__FILE__":_savereg:Failed to save keys, perhaps no more diskspace for %s?\n",fn);
-		return;
+		return FALSE;
 	}
 	fclose(F);
+        return TRUE;
 }
 
 void
@@ -500,19 +501,22 @@ SHELL_SaveRegistry() {
 	if (lstrcmpi32A(buf,"yes"))
 		all=1;
 	pwd=getpwuid(getuid());
-	if (pwd!=NULL && pwd->pw_dir!=NULL) {
-		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_USERS_DEFAULT)+2);
+	if (pwd!=NULL && pwd->pw_dir!=NULL)
+        {
+                char *tmp = tmpnam(NULL);
+		fn=(char*)xmalloc( strlen(pwd->pw_dir) + strlen(WINE_PREFIX) +
+                                   strlen(SAVE_CURRENT_USER) + 2 );
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX);
 		/* create the directory. don't care about errorcodes. */
 		mkdir(fn,0755); /* drwxr-xr-x */
 		strcat(fn,"/"SAVE_CURRENT_USER);
-		_savereg(key_current_user,fn,all);
+		if (_savereg(key_current_user,tmp,all)) rename(tmp,fn);
 		free(fn);
 		fn=(char*)xmalloc(strlen(pwd->pw_dir)+strlen(WINE_PREFIX)+strlen(SAVE_LOCAL_MACHINE)+2);
 		strcpy(fn,pwd->pw_dir);
 		strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
-		_savereg(key_local_machine,fn,all);
+		if (_savereg(key_local_machine,tmp,all)) rename(tmp,fn);
 		free(fn);
 	} else
 		fprintf(stderr,"SHELL_SaveRegistry:failed to get homedirectory of UID %d.\n",getuid());
@@ -1315,6 +1319,216 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	free(keys);
 }
 
+/* WINDOWS 31 REGISTRY LOADER, supplied by Tor Sjøwall, tor@sn.no */
+
+/*
+    reghack - windows 3.11 registry data format demo program.
+
+    The reg.dat file has 3 parts, a header, a table of 8-byte entries that is
+    a combined hash table and tree description, and finally a text table.
+
+    The header is obvious from the struct header. The taboff1 and taboff2
+    fields are always 0x20, and their usage is unknown.
+
+    The 8-byte entry table has various entry types.
+
+    tabent[0] is a root index. The second word has the index of the root of
+            the directory.
+    tabent[1..hashsize] is a hash table. The first word in the hash entry is
+            the index of the key/value that has that hash. Data with the same
+            hash value are on a circular list. The other three words in the
+            hash entry are always zero.
+    tabent[hashsize..tabcnt] is the tree structure. There are two kinds of
+            entry: dirent and keyent/valent. They are identified by context.
+    tabent[freeidx] is the first free entry. The first word in a free entry
+            is the index of the next free entry. The last has 0 as a link.
+            The other three words in the free list are probably irrelevant.
+
+    Entries in text table are preceeded by a word at offset-2. This word
+    has the value (2*index)+1, where index is the referring keyent/valent
+    entry in the table. I have no suggestion for the 2* and the +1.
+    Following the word, there are N bytes of data, as per the keyent/valent
+    entry length. The offset of the keyent/valent entry is from the start
+    of the text table to the first data byte.
+
+    This information is not available from Microsoft. The data format is
+    deduced from the reg.dat file by me. Mistakes may
+    have been made. I claim no rights and give no guarantees for this program.
+
+    Tor Sjøwall, tor@sn.no
+*/
+
+/* reg.dat header format */
+struct _w31_header {
+	char		cookie[8];	/* 'SHCC3.10' */
+	unsigned long	taboff1;	/* offset of hash table (??) = 0x20 */
+	unsigned long	taboff2;	/* offset of index table (??) = 0x20 */
+	unsigned long	tabcnt;		/* number of entries in index table */
+	unsigned long	textoff;	/* offset of text part */
+	unsigned long	textsize;	/* byte size of text part */
+	unsigned short	hashsize;	/* hash size */
+	unsigned short	freeidx;	/* free index */
+};
+
+/* generic format of table entries */
+struct _w31_tabent {
+	unsigned short w0, w1, w2, w3;
+};
+
+/* directory tabent: */
+struct _w31_dirent {
+	unsigned short	sibling_idx;	/* table index of sibling dirent */
+	unsigned short	child_idx;	/* table index of child dirent */
+	unsigned short	key_idx;	/* table index of key keyent */
+	unsigned short	value_idx;	/* table index of value valent */
+};
+
+/* key tabent: */
+struct _w31_keyent {
+	unsigned short	hash_idx;	/* hash chain index for string */
+	unsigned short	refcnt;		/* reference count */
+	unsigned short	length;		/* length of string */
+	unsigned short	string_off;	/* offset of string in text table */
+};
+
+/* value tabent: */
+struct _w31_valent {
+	unsigned short	hash_idx;	/* hash chain index for string */
+	unsigned short	refcnt;		/* reference count */
+	unsigned short	length;		/* length of string */
+	unsigned short	string_off;	/* offset of string in text table */
+};
+
+/* recursive helper function to display a directory tree */
+void
+__w31_dumptree(	unsigned short idx,
+		unsigned char *txt,
+		struct _w31_tabent *tab,
+		struct _w31_header *head,
+		LPKEYSTRUCT	lpkey,
+		time_t		lastmodified,
+		int		level
+) {
+	struct _w31_dirent	*dir;
+	struct _w31_keyent	*key;
+	struct _w31_valent	*val;
+	LPKEYSTRUCT		xlpkey;
+	LPWSTR			name,value;
+	static char		tail[400];
+
+	while (idx!=0) {
+		dir=(struct _w31_dirent*)&tab[idx];
+
+		if (dir->key_idx) {
+			key = (struct _w31_keyent*)&tab[dir->key_idx];
+
+			memcpy(tail,&txt[key->string_off],key->length);
+			tail[key->length]='\0';
+			/* all toplevel entries AND the entries in the 
+			 * toplevel subdirectory belong to \SOFTWARE\Classes
+			 */
+			if (!level && !lstrcmp32A(tail,".classes")) {
+				__w31_dumptree(dir->child_idx,txt,tab,head,lpkey,lastmodified,level+1);
+				idx=dir->sibling_idx;
+				continue;
+			}
+			name=STRING32_DupAnsiToUni(tail);
+
+			xlpkey=_find_or_add_key(lpkey,name);
+
+			/* only add if leaf node or valued node */
+			if (dir->value_idx!=0||dir->child_idx==0) {
+				if (dir->value_idx) {
+					val=(struct _w31_valent*)&tab[dir->value_idx];
+					memcpy(tail,&txt[val->string_off],val->length);
+					tail[val->length]='\0';
+					value=STRING32_DupAnsiToUni(tail);
+					_find_or_add_value(xlpkey,NULL,REG_SZ,(LPBYTE)value,lstrlen32W(value)*2+2,lastmodified);
+				}
+			}
+		} else {
+			dprintf_reg(stddeb,"__w31_dumptree:strange: no directory key name, idx=%04x\n", idx);
+		}
+		__w31_dumptree(dir->child_idx,txt,tab,head,xlpkey,lastmodified,level+1);
+		idx=dir->sibling_idx;
+	}
+}
+
+void
+_w31_loadreg() {
+	HFILE			hf;
+	struct _w31_header	head;
+	struct _w31_tabent	*tab;
+	unsigned char		*txt;
+	int			len;
+	OFSTRUCT		ofs;
+	BY_HANDLE_FILE_INFORMATION hfinfo;
+	time_t			lastmodified;
+	HKEY			hkey;
+	LPKEYSTRUCT		lpkey;
+
+	hf = OpenFile("reg.dat",&ofs,OF_READ);
+	if (hf==HFILE_ERROR)
+		return;
+
+	/* read & dump header */
+	if (sizeof(head)!=_lread32(hf,&head,sizeof(head))) {
+		dprintf_reg(stddeb,"_w31_loadreg:reg.dat is too short.\n");
+		_lclose(hf);
+		return;
+	}
+	if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
+		dprintf_reg(stddeb,"_w31_loadreg:reg.dat has bad signature.\n");
+		_lclose(hf);
+		return;
+	}
+
+	len = head.tabcnt * sizeof(struct _w31_tabent);
+	/* read and dump index table */
+	tab = xmalloc(len);
+	if (len!=_lread32(hf,tab,len)) {
+		dprintf_reg(stderr,"_w31_loadreg:couldn't read %d bytes.\n",len); 
+		free(tab);
+		_lclose(hf);
+		return;
+	}
+
+	/* read text */
+	txt = xmalloc(head.textsize);
+	if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
+		dprintf_reg(stderr,"_w31_loadreg:couldn't seek to textblock.\n"); 
+		free(tab);
+		free(txt);
+		_lclose(hf);
+		return;
+	}
+	if (head.textsize!=_lread32(hf,txt,head.textsize)) {
+		dprintf_reg(stderr,"_w31_loadreg:textblock too short (%d instead of %ld).\n",len,head.textsize); 
+		free(tab);
+		free(txt);
+		_lclose(hf);
+		return;
+	}
+
+	if (!GetFileInformationByHandle(hf,&hfinfo)) {
+		dprintf_reg(stderr,"_w31_loadreg:GetFileInformationByHandle failed?.\n"); 
+		free(tab);
+		free(txt);
+		_lclose(hf);
+		return;
+	}
+	lastmodified	= DOSFS_FileTimeToUnixTime(&(hfinfo.ftLastWriteTime));
+
+	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"\\SOFTWARE\\Classes",&hkey)!=ERROR_SUCCESS)
+		return;
+	lpkey = lookup_hkey(hkey);
+	__w31_dumptree(tab[0].w1,txt,tab,&head,lpkey,lastmodified,0);
+	free(tab);
+	free(txt);
+	_lclose(hf);
+	return;
+}
+
 void
 SHELL_LoadRegistry() {
 	char	*fn;
@@ -1326,12 +1540,12 @@ SHELL_LoadRegistry() {
 	if (key_classes_root==NULL)
 		SHELL_Init();
 
+	/* Load windows 3.1 entries */
+	_w31_loadreg();
 	/* Load windows 95 entries */
 	_w95_loadreg("C:\\system.1st",	key_local_machine);
 	_w95_loadreg("system.dat",	key_local_machine);
 	_w95_loadreg("user.dat",	key_users);
-
-	/* FIXME: win3.1 reg.dat loader still missing */
 
 	/* the global user default is loaded under HKEY_USERS\\.Default */
 	RegCreateKey16(HKEY_USERS,".Default",&hkey);

@@ -834,7 +834,7 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 {
     RECT32 rect32;
     CONV_RECT16TO32( rc, &rect32 );
-    return DrawFocusRect32( hdc, &rect32 );
+    DrawFocusRect32( hdc, &rect32 );
 }
 
 

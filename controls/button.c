@@ -187,7 +187,8 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     case WM_KILLFOCUS:
         infoPtr->state &= ~BUTTON_HASFOCUS;
-        PAINT_BUTTON( wndPtr, style, ODA_FOCUS );
+	PAINT_BUTTON( wndPtr, style, ODA_FOCUS );
+	InvalidateRect16( hWnd, NULL, TRUE );
         break;
 
     case WM_SYSCOLORCHANGE:
@@ -369,57 +370,70 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
 
 static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 {
-    RECT16 rc;
+    RECT16 rbox, rtext, client;
     HBRUSH16 hBrush;
-    int textlen, delta, x, y;
-    TEXTMETRIC16 tm;
+    int textlen, delta;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
-    GetClientRect16(wndPtr->hwndSelf, &rc);
+    textlen = 0;
+    GetClientRect16(wndPtr->hwndSelf, &client);
+    rbox = rtext = client;
 
     if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    if (action == ODA_DRAWENTIRE) FillRect16( hDC, &rc, hBrush );
+    if (wndPtr->dwStyle & BS_LEFTTEXT) 
+    {
+	/* magic +4 is what CTL3D expects */
 
-    GetTextMetrics16(hDC, &tm);
-    delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
+        rtext.right -= checkBoxWidth + 4;
+        rbox.left = rbox.right - checkBoxWidth;
+    }
+    else 
+    {
+        rtext.left += checkBoxWidth + 4;
+        rbox.right = checkBoxWidth;
+    }
 
       /* Draw the check-box bitmap */
-    x = y = 0;
-    if (infoPtr->state & BUTTON_HIGHLIGHTED) x += 2 * checkBoxWidth;
-    if (infoPtr->state & (BUTTON_CHECKED | BUTTON_3STATE)) x += checkBoxWidth;
-    if (((wndPtr->dwStyle & 0x0f) == BS_RADIOBUTTON) ||
-        ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
-    else if (infoPtr->state & BUTTON_3STATE) y += 2 * checkBoxHeight;
-    GRAPH_DrawBitmap( hDC, hbitmapCheckBoxes, rc.left, rc.top + delta,
-                      x, y, checkBoxWidth, checkBoxHeight );
-    rc.left += checkBoxWidth + tm.tmAveCharWidth / 2;
 
-    if (!wndPtr->text) return;
-    textlen = strlen( wndPtr->text );
+    if (wndPtr->text) textlen = strlen( wndPtr->text );
+    if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
+    { 
+        int x = 0, y = 0;
+        delta = (rbox.bottom - rbox.top - checkBoxHeight) >> 1;
 
-    if (action == ODA_DRAWENTIRE)
-    {
-        if (wndPtr->dwStyle & WS_DISABLED)
-            SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
-        DrawText16( hDC, wndPtr->text, textlen, &rc,
-                    DT_SINGLELINE | DT_VCENTER | DT_NOCLIP );
+        if (action == ODA_SELECT) FillRect16( hDC, &rbox, hBrush );
+        else FillRect16( hDC, &client, hBrush );
+
+        if (infoPtr->state & BUTTON_HIGHLIGHTED) x += 2 * checkBoxWidth;
+        if (infoPtr->state & (BUTTON_CHECKED | BUTTON_3STATE)) x += checkBoxWidth;
+        if (((wndPtr->dwStyle & 0x0f) == BS_RADIOBUTTON) ||
+            ((wndPtr->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)) y += checkBoxHeight;
+        else if (infoPtr->state & BUTTON_3STATE) y += 2 * checkBoxHeight;
+
+        GRAPH_DrawBitmap( hDC, hbitmapCheckBoxes, rbox.left, rbox.top + delta,
+                          x, y, checkBoxWidth, checkBoxHeight );
+        if( textlen && action != ODA_SELECT )
+        {
+            if (wndPtr->dwStyle & WS_DISABLED)
+                SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
+            DrawText16( hDC, wndPtr->text, textlen, &rtext,
+                        DT_SINGLELINE | DT_VCENTER );
+        }
     }
-    
+
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (infoPtr->state & BUTTON_HASFOCUS)))
     {
-        RECT16 rect = { 0, 0, 0, 0 };
-        DrawText16( hDC, wndPtr->text, textlen, &rect,
-                    DT_SINGLELINE | DT_CALCRECT );
-        if (delta > 1)
-        {
-            rc.top += delta - 1;
-            rc.bottom -= delta + 1;
-        }
-        rc.left--;
-        rc.right = rc.left + rect.right + 2;
-        DrawFocusRect16( hDC, &rc );
+	/* again, this is what CTL3D expects */
+
+        DWORD tm = (textlen) ? GetTextExtent( hDC, wndPtr->text, textlen) : 0x00020002;
+        delta = (rtext.bottom - rtext.top - HIWORD(tm) - 1)/2;
+
+        rbox.bottom = (rbox.top = rtext.top + delta - 1) + HIWORD(tm) + 2;
+        rbox.right = (rbox.left = --rtext.left) + LOWORD(tm) + 2;
+        IntersectRect16(&rbox, &rbox, &rtext);
+        DrawFocusRect16( hDC, &rbox );
     }
 }
 
