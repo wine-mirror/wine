@@ -84,9 +84,11 @@ Make.rules: Make.rules.in configure
 wine: dlls $(EMUOBJS)
 	$(CC) -o wine $(EMUOBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
 
-install:: all $(INSTALLSUBDIRS:%=%/__install__)
+install_wine:
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
+
+install:: all install_wine $(INSTALLSUBDIRS:%=%/__install__)
 	-$(LDCONFIG)
 
 uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)

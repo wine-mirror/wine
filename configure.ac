@@ -510,9 +510,6 @@ then
     AC_DEFINE(HAVE_OSS_MIDI, 1, [Define if you have the Open Sound system (MIDI interface)])
 fi
 
-dnl **** If ln -s doesn't work, use cp instead ****
-if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
-
 dnl **** Check for broken glibc mmap64 ****
 
 AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,
