@@ -21,7 +21,7 @@
 static int MAIN_argc;
 static char **MAIN_argv;
 
-extern void DEBUG_StartDebugger(DWORD);
+extern DWORD DEBUG_WinExec(LPSTR lpCmdLine, int sw);
 
 /***********************************************************************
  *           Main loop of initial task
@@ -29,6 +29,7 @@ extern void DEBUG_StartDebugger(DWORD);
 void MAIN_EmulatorRun( void )
 {
     char startProg[256], defProg[256];
+    HINSTANCE handle;
     int i, tasks = 0;
     MSG msg;
     BOOL err_msg = FALSE;
@@ -70,31 +71,25 @@ void MAIN_EmulatorRun( void )
     /* Load and run executables given on command line */
     for (i = 1; i < MAIN_argc; i++)
     {
-        PROCESS_INFORMATION info;
-	STARTUPINFOA startup;
-
-	memset(&startup, 0, sizeof(startup));
-	startup.cb = sizeof(startup);
-	startup.dwFlags = STARTF_USESHOWWINDOW;
-	startup.wShowWindow = SW_SHOWNORMAL;
-	
-        if (!CreateProcessA(NULL, MAIN_argv[i], NULL, NULL, FALSE, 0,
-			    NULL, NULL, &startup, &info)) {
+       if (Options.debug) 
+       {
+	  handle = DEBUG_WinExec( MAIN_argv[i], SW_SHOWNORMAL );
+       } else {
+	  handle = WinExec( MAIN_argv[i], SW_SHOWNORMAL );
+       }
+       
+       if (handle < 32) 
+       {
 	    err_msg = TRUE;
 	    MESSAGE("wine: can't exec '%s': ", MAIN_argv[i]);
-	    switch (GetLastError()) 
+	    switch (handle) 
 	    {
 	    case  2: MESSAGE("file not found\n" ); break;
 	    case 11: MESSAGE("invalid exe file\n" ); break;
-	    default: MESSAGE("error=%ld\n", GetLastError() ); break;
+	    default: MESSAGE("error=%d\n", handle ); break;
 	    }
         }
-	else 
-	{
-	   tasks++;
-	   /* hack until wine debugger can be moved to a separate process */
-	   DEBUG_StartDebugger(info.dwProcessId);
-	}
+	else tasks++;
     }
 
     if (!tasks)

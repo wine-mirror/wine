@@ -263,7 +263,7 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
 	    DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 #endif
 
-    ret = DEBUG_Main( is_debug, force );
+    ret = DEBUG_Main( is_debug, force, rec->ExceptionCode );
 #if 1
     fprintf(stderr, "Exiting debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
 	    DEBUG_context.Eip, DEBUG_context.EFlags, 
@@ -273,18 +273,12 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
     return ret;
 }
 
-
-static	DWORD	CALLBACK	DEBUG_MainLoop(LPVOID pid)
+static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 {
     DEBUG_EVENT		de;
     char		buffer[256];
     DWORD		cont;
 
-    TRACE("WineDbg started on pid %ld\n", (DWORD)pid);
-    
-    if (!DebugActiveProcess((DWORD)pid))
-	TRACE("Can't debug process %ld: %ld\n", (DWORD)pid, GetLastError());
-    
     while (WaitForDebugEvent(&de, INFINITE)) {
 	cont = 0L;
 
@@ -463,17 +457,80 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(LPVOID pid)
 	ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
     }
     
-    TRACE("WineDbg terminated on pid %ld\n", (DWORD)pid);
+    TRACE("WineDbg terminated on pid %ld\n", pid);
     
     return 0L;
 }
 
 #include "thread.h"
 #include "process.h"
+#include "wingdi.h"
+#include "winuser.h"
 
-void	DEBUG_StartDebugger(DWORD pid)
+static	DWORD	CALLBACK	DEBUG_StarterFromPID(LPVOID pid)
 {
-    if (Options.debug)
-	CreateThread(NULL, 0, DEBUG_MainLoop, (LPVOID)pid, 0, NULL);
+    TRACE("WineDbg started on pid %ld\n", (DWORD)pid);
+    
+    if (!DebugActiveProcess((DWORD)pid)) {
+	TRACE("Can't debug process %ld: %ld\n", (DWORD)pid, GetLastError());
+	return 0;
+    }
+    return DEBUG_MainLoop((DWORD)pid);
 }
 
+void	DEBUG_Attach(DWORD pid)
+{
+    CreateThread(NULL, 0, DEBUG_StarterFromPID, (LPVOID)pid, 0, NULL);
+}
+
+struct dsfcl {
+    HANDLE	hEvent;
+    LPSTR	lpCmdLine;
+    int		showWindow;
+    DWORD	error;
+};
+
+static	DWORD	CALLBACK	DEBUG_StarterFromCmdLine(LPVOID p)
+{
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+    BOOL		ok = TRUE;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = ((struct dsfcl*)p)->showWindow;
+
+    /* any value >= 32 will do, simulate a correct handle value */
+    ((struct dsfcl*)p)->error = 0xFFFFFFFF;
+    if (!CreateProcessA(NULL, ((struct dsfcl*)p)->lpCmdLine, NULL, NULL, 
+			FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info)) {
+	((struct dsfcl*)p)->error = GetLastError();
+	ok = FALSE;
+    }
+    SetEvent(((struct dsfcl*)p)->hEvent);
+    if (ok) DEBUG_MainLoop(info.dwProcessId);
+
+    return 0;
+}
+
+DWORD	DEBUG_WinExec(LPSTR lpCmdLine, int sw)
+{
+    struct dsfcl 	s;
+    BOOL		ret;
+
+    if ((s.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL))) {
+	s.lpCmdLine = lpCmdLine;
+	s.showWindow = sw;
+	if (CreateThread(NULL, 0, DEBUG_StarterFromCmdLine, (LPVOID)&s, 0, NULL)) {
+	    WaitForSingleObject(s.hEvent, INFINITE);
+	    ret = s.error;
+	} else {
+	    ret = 3; /* (dummy) error value for non created thread */
+	}
+	CloseHandle(s.hEvent);
+    } else {
+	ret = 1; /* (dummy) error value for non created event */
+    }
+    return ret;
+}
