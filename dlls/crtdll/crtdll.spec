@@ -266,7 +266,7 @@ init    CRTDLL_Init
 261 stub _scalb
 262 stub _searchenv
 263 stub _seterrormode
-264 stub _setjmp
+264 cdecl _setjmp (ptr) CRTDLL__setjmp
 265 cdecl _setmode(long long) CRTDLL__setmode
 266 stub _setsystime
 267 cdecl _sleep(long) CRTDLL__sleep

@@ -304,6 +304,14 @@ void __cdecl CRTDLL__local_unwind2( PEXCEPTION_FRAME endframe, DWORD nr )
 {
     TRACE("(%p,%ld)\n",endframe,nr);
 }
+/*******************************************************************
+ *         _setjmp  (CRTDLL.264)
+ */
+INT __cdecl CRTDLL__setjmp(LPDWORD *jmpbuf)
+{
+  FIXME(":(%p): stub\n",jmpbuf);
+  return 0;
+}
 /*********************************************************************
  *                  _read     (CRTDLL.256)
  * 
