@@ -157,7 +157,11 @@ int send_thread_signal( struct thread *thread, int sig )
 
     if (thread->unix_pid != -1)
     {
-        if (thread->unix_tid != -1) ret = tkill( thread->unix_tid, sig );
+        if (thread->unix_tid != -1)
+        {
+            ret = tkill( thread->unix_tid, sig );
+            if (ret == -1 && errno == ENOSYS) ret = kill( thread->unix_pid, sig );
+        }
         else ret = kill( thread->unix_pid, sig );
 
         if (ret == -1 && errno == ESRCH) /* thread got killed */
