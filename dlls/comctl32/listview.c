@@ -1194,7 +1194,6 @@ static inline void LISTVIEW_InvalidateList(LISTVIEW_INFO *infoPtr)
     LISTVIEW_InvalidateRect(infoPtr, NULL);
 }
 
-	
 static inline void LISTVIEW_InvalidateColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 {
     RECT rcCol;
@@ -2011,8 +2010,7 @@ static void LISTVIEW_NextIconPosLeft(LISTVIEW_INFO *infoPtr, LPPOINT lpPos)
  */
 static BOOL LISTVIEW_MoveIconTo(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lppt, BOOL isNew)
 {
-    POINT Origin, old;
-    RECT rcItem;
+    POINT old;
     
     if (!isNew)
     { 
@@ -2020,6 +2018,7 @@ static BOOL LISTVIEW_MoveIconTo(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lppt,
         old.y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
     
         if (lppt->x == old.x && lppt->y == old.y) return TRUE;
+	LISTVIEW_InvalidateItem(infoPtr, nItem);
     }
 
     /* Allocating a POINTER for every item is too resource intensive,
@@ -2027,21 +2026,7 @@ static BOOL LISTVIEW_MoveIconTo(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lppt,
     if (!DPA_SetPtr(infoPtr->hdpaPosX, nItem, (void *)lppt->x)) return FALSE;
     if (!DPA_SetPtr(infoPtr->hdpaPosY, nItem, (void *)lppt->y)) return FALSE;
 
-    LISTVIEW_GetOrigin(infoPtr, &Origin);
-    if (!isNew)
-    {
-	rcItem.left = old.x + Origin.x;
-	rcItem.top = old.y + Origin.y;
-	rcItem.right = rcItem.left + infoPtr->nItemWidth;
-	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-	LISTVIEW_InvalidateRect(infoPtr, &rcItem);
-    }
-	
-    rcItem.left = lppt->x + Origin.x;
-    rcItem.top = lppt->y + Origin.y;
-    rcItem.right = rcItem.left + infoPtr->nItemWidth;
-    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-    LISTVIEW_InvalidateRect(infoPtr, &rcItem);
+    LISTVIEW_InvalidateItem(infoPtr, nItem);
 
     return TRUE;
 }
@@ -4126,7 +4111,6 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     NMLISTVIEW nmlv;
     LVITEMW item;
-    RECT rcBox;
 
     TRACE("(nItem=%d)\n", nItem);
 
@@ -4136,16 +4120,16 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     item.state = 0;
     item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
     LISTVIEW_SetItemState(infoPtr, nItem, &item);
-
-    /* we need to do this here, because we'll be deleting stuff */  
-    if (uView == LVS_SMALLICON || uView == LVS_ICON)
-	LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
 	    
     /* send LVN_DELETEITEM notification. */
     ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
     nmlv.iItem = nItem;
     notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
 
+    /* we need to do this here, because we'll be deleting stuff */  
+    if (uView == LVS_SMALLICON || uView == LVS_ICON)
+	LISTVIEW_InvalidateItem(infoPtr, nItem);
+    
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
     {
         HDPA hdpaSubItems;
@@ -4166,7 +4150,6 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     {
 	DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
 	DPA_DeletePtr(infoPtr->hdpaPosY, nItem);
-	LISTVIEW_InvalidateRect(infoPtr, &rcBox);
     }
 
     infoPtr->nItemCount--;
