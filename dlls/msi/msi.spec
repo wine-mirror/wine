@@ -7,7 +7,7 @@
 7 stdcall MsiCloseAllHandles()
 8 stdcall MsiCloseHandle(long)
 9 stub MsiCollectUserInfoA
-10 stub MsiCollectUserInfoW
+10 stdcall MsiCollectUserInfoW(wstr)
 11 stub MsiConfigureFeatureA
 12 stub MsiConfigureFeatureFromDescriptorA
 13 stub MsiConfigureFeatureFromDescriptorW
@@ -79,7 +79,7 @@
 79 stdcall MsiGetTargetPathA(long str ptr ptr)
 80 stdcall MsiGetTargetPathW(long wstr ptr ptr)
 81 stub MsiGetUserInfoA
-82 stub MsiGetUserInfoW
+82 stdcall MsiGetUserInfoW(wstr ptr ptr ptr ptr ptr ptr)
 83 stub MsiInstallMissingComponentA
 84 stub MsiInstallMissingComponentW
 85 stub MsiInstallMissingFileA
@@ -187,10 +187,10 @@
 187 stub MsiQueryFeatureStateFromDescriptorA
 188 stub MsiQueryFeatureStateFromDescriptorW
 189 stub MsiConfigureProductExA
-190 stub MsiConfigureProductExW
+190 stdcall MsiConfigureProductExW (wstr long long wstr)
 191 stub MsiInvalidateFeatureCache
 192 stub MsiUseFeatureExA
-193 stub MsiUseFeatureExW
+193 stdcall MsiUseFeatureExW(wstr wstr long long)
 194 stdcall MsiGetFileVersionA(str str ptr str ptr)
 195 stdcall MsiGetFileVersionW(wstr wstr ptr wstr ptr)
 196 stdcall MsiLoadStringA(long long long long long)
@@ -200,7 +200,7 @@
 200 stub MsiDecomposeDescriptorA
 201 stub MsiDecomposeDescriptorW
 202 stub MsiProvideQualifiedComponentExA
-203 stub MsiProvideQualifiedComponentExW
+203 stdcall MsiProvideQualifiedComponentExW(wstr wstr long wstr long long ptr ptr)
 204 stdcall MsiEnumRelatedProductsA(str long long ptr)
 205 stdcall MsiEnumRelatedProductsW(wstr long long ptr)
 206 stub MsiSetFeatureAttributesA
