@@ -367,7 +367,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    num = DEBUG_GSV_Helper(name, lineno, value, NUMDBGV, bp_flag);
    if (!num && (name[0] != '_'))
    {
-      char buffer[256];
+      char buffer[512];
 	
       assert(strlen(name) < sizeof(buffer) - 2); /* one for '_', one for '\0' */
       buffer[0] = '_';
