@@ -185,8 +185,11 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         /* try some ACM stuff */
 
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) \
-                        {wom->avgSpeedInner = wfx.nAvgBytesPerSec; goto found;}
+                        switch (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
+                            case MMSYSERR_NOERROR: wom->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
+                            case WAVERR_BADFORMAT: break; \
+                            default: goto error; \
+                        }
 
         /* Our resampling algorithm is quite primitive so first try
          * to just change the bit depth and number of channels
@@ -248,6 +251,9 @@ found:
 	*lpdwUser = (DWORD)wom;
     }
     return MMSYSERR_NOERROR;
+error:
+    HeapFree(GetProcessHeap(), 0, wom);
+    return MMSYSERR_ERROR;
 }
 
 static	DWORD	wodClose(WAVEMAPDATA* wom)
@@ -627,8 +633,11 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         /* try some ACM stuff */
         
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        if (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) \
-                        {wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found;}
+                        switch (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
+                        case MMSYSERR_NOERROR: wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
+                        case WAVERR_BADFORMAT: break; \
+                        default: goto error; \
+                        }
         
         for (i = ndlo; i < ndhi; i++) {
 	    wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
@@ -689,6 +698,9 @@ found:
     }
     TRACE("Ok (stream=%08lx)\n", (DWORD)wim->hAcmStream);
     return MMSYSERR_NOERROR;
+error:
+    HeapFree(GetProcessHeap(), 0, wim);
+    return MMSYSERR_ERROR;
 }
 
 static	DWORD	widClose(WAVEMAPDATA* wim)

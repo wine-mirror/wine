@@ -284,7 +284,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
          */
         if (rc != 0 && errno != EINVAL) {
 	    ERR("ioctl(%s, SNDCTL_DSP_SETDUPLEX) failed (%s)\n", ossdev->dev_name, strerror(errno));
-            goto error;
+            goto error2;
 	}
     }
 
@@ -292,7 +292,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
         rc = ioctl(fd, SNDCTL_DSP_SETFRAGMENT, &ossdev->audio_fragment);
         if (rc != 0) {
 	    ERR("ioctl(%s, SNDCTL_DSP_SETFRAGMENT) failed (%s)\n", ossdev->dev_name, strerror(errno));
-            goto error;
+            goto error2;
 	}
     }
 
@@ -350,6 +350,9 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 error:
     close(fd);
     return WAVERR_BADFORMAT;
+ error2:
+    close(fd);
+    return MMSYSERR_ERROR;
 }
 
 /******************************************************************
@@ -1455,7 +1458,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     audio_buf_info      info;
     DWORD               ret;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p[cb=%08lx], %08lX);\n", wDevID, lpDesc, lpDesc->dwCallback, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
