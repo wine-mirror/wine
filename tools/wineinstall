@@ -45,6 +45,9 @@
 #  misc cleanups and reordering of questions
 #  added check to see if wine is installed when we are running as a normal
 #    user and print a message if wine cannot be found
+# Feb 16 2002 - Adam d. Moss
+#  Use config.status instead of config.cache to check whether we're
+#   configured/compiled and to recreate the configuration
 
 #--- defaults (change these if you are a packager)
 CONFARGS="--enable-opengl"    # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -144,7 +147,7 @@ function create_windows_directories {
 
 # startup...
 
-echo "WINE Installer v0.7"
+echo "WINE Installer v0.71"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -193,12 +196,12 @@ fi
 
 # run the configure script, if necessary
 
-if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
+if [ -f config.status ] && [ -f Makefile ] && [ Makefile -nt configure ]
 then {
   echo "I see that WINE has already been configured, so I'll skip that."
   std_sleep
   # load configure results
-  . ./config.cache
+  ./config.status > /dev/null
 }
 else {
   echo "Running configure..."
@@ -207,18 +210,18 @@ else {
   then {
     echo
     echo "Configure failed, aborting install."
-    rm -f config.cache
+    rm -f config.status
     exit 1
   }
   fi
   # load configure results
-  . ./config.cache
+  ./config.status
   # make sure X was found
   eval "$ac_cv_have_x"
   if [ "$have_x" != "yes" ]
   then {
     echo "Install the X development headers and try again."
-    rm -f config.cache
+    rm -f config.status
     exit 1
   }
   fi
@@ -227,7 +230,7 @@ fi
 
 # now do the compilation
 
-if [ -f wine ] && [ wine -nt Makefile ]
+if [ -f wine ] && [ wine -nt config.status ]
 then {
   echo "Hmm, looks like WINE is already compiled. I'll skip that too, I guess."
   std_sleep
@@ -307,7 +310,8 @@ fi # BINDIST
 
 # now check whether we should generate wine.conf
 if [ -z "$DOGLOBALCONF" ]
-then DOGLOBALCONF=auto
+then
+  DOGLOBALCONF=auto
 fi
 
 if [ "$DOGLOBALCONF" = 'auto' ]
