@@ -129,6 +129,30 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
    return 0;
 }
 
+/***********************************************************************
+ *           CBGetDefaultTextHeight
+ */
+static void CBGetDefaultTextHeight( LPHEADCOMBO lphc, LPSIZE32 lpSize )
+{
+   if( lphc->editHeight ) /* explicitly set height */
+       lpSize->cy = lphc->editHeight;
+   else
+   {
+       HDC32    hDC = GetDC32( lphc->self->hwndSelf );
+       HFONT32  hPrevFont = 0;
+
+       if( lphc->hFont ) hPrevFont = SelectObject32( hDC, lphc->hFont );
+
+       GetTextExtentPoint32A( hDC, "0", 1, lpSize);
+
+       lpSize->cy += lpSize->cy / 4 + 4 * SYSMETRICS_CYBORDER;
+
+       if( hPrevFont ) SelectObject32( hDC, hPrevFont );
+       ReleaseDC32( lphc->self->hwndSelf, hDC );
+   }
+   lpSize->cx = lphc->RectCombo.right - lphc->RectCombo.left;
+}
+
 
 /***********************************************************************
  *           CBCalcPlacement
@@ -143,47 +167,36 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
 
    /* get combo height and width */
 
-   size.cx = rect.right - rect.left;
-
    if( CB_OWNERDRAWN(lphc) )
    {
        UINT32	u = lphc->RectEdit.bottom - lphc->RectEdit.top;
 
        if( lphc->wState & CBF_MEASUREITEM ) /* first initialization */
        {
-	 MEASUREITEMSTRUCT32        mi32;
+	   MEASUREITEMSTRUCT32        mi32;
 
-	 lphc->wState &= ~CBF_MEASUREITEM;
-	 mi32.CtlType = ODT_COMBOBOX;
-	 mi32.CtlID   = lphc->self->wIDmenu;
-	 mi32.itemID  = -1;
-	 mi32.itemWidth  = size.cx;
-	 mi32.itemHeight = u - 6;	/* ownerdrawn cb is taller */
-	 mi32.itemData   = 0;
-	 SendMessage32A(lphc->owner, WM_MEASUREITEM, 
+	   /* calculate defaults before sending WM_MEASUREITEM */
+
+	   CBGetDefaultTextHeight( lphc, &size );
+
+	   lphc->wState &= ~CBF_MEASUREITEM;
+
+	   mi32.CtlType = ODT_COMBOBOX;
+	   mi32.CtlID   = lphc->self->wIDmenu;
+	   mi32.itemID  = -1;
+	   mi32.itemWidth  = size.cx;
+	   mi32.itemHeight = size.cy - 6; /* ownerdrawn cb is taller */
+	   mi32.itemData   = 0;
+	   SendMessage32A(lphc->owner, WM_MEASUREITEM, 
 				(WPARAM32)mi32.CtlID, (LPARAM)&mi32);
-	 u = 6 + (UINT16)mi32.itemHeight;
+	   u = 6 + (UINT16)mi32.itemHeight;
        }
+       else
+	   size.cx = rect.right - rect.left;
        size.cy = u;
    }
-   else if( lphc->editHeight ) /* explicitly set height */
-	size.cy = lphc->editHeight;
-   else
-   {
-       HDC32    hDC = GetDC32( lphc->self->hwndSelf );
-       HFONT32  hPrevFont = 0;
-       SIZE32   font_size;
-
-       if( lphc->hFont ) hPrevFont = SelectObject32( hDC, lphc->hFont );
-
-       GetTextExtentPoint32A( hDC, "0", 1, &font_size);
-
-       size.cy = font_size.cy + font_size.cy / 4 + 4 * SYSMETRICS_CYBORDER;
-
-       if( hPrevFont ) SelectObject32( hDC, hPrevFont );
-       ReleaseDC32( lphc->self->hwndSelf, hDC );
-   }
-
+   else 
+       CBGetDefaultTextHeight( lphc, &size );
 
    /* calculate text and button placement */
 
@@ -1071,7 +1084,8 @@ static void COMBO_Size( LPHEADCOMBO lphc )
 
   /* CreateWindow() may send a bogus WM_SIZE, ignore it */
 
-  if( w == (lphc->RectCombo.right - lphc->RectCombo.left) ) {
+  if( w == (lphc->RectCombo.right - lphc->RectCombo.left) )
+  {
       if( (CB_GETTYPE(lphc) == CBS_SIMPLE) &&
 	  (h == (lphc->RectCombo.bottom - lphc->RectCombo.top)) )
           return;
@@ -1079,7 +1093,6 @@ static void COMBO_Size( LPHEADCOMBO lphc )
 	       (h == (lphc->RectEdit.bottom - lphc->RectEdit.top))  )
 	       return;
   }
-  
   lphc->RectCombo = rect;
   CBCalcPlacement( lphc, &lphc->RectEdit, &lphc->RectButton, &rect );
   CBResetPos( lphc, &rect, TRUE );
@@ -1144,7 +1157,8 @@ static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT32 start, LPCSTR pText )
 {
    INT32 index = SendMessage32A( lphc->hWndLBox, LB_SELECTSTRING32, 
 				 (WPARAM32)start, (LPARAM)pText );
-   if( index >= 0 ) {
+   if( index >= 0 )
+   {
         if( lphc->wState & CBF_EDIT )
 	    CBUpdateEdit( lphc, index );
 	else
@@ -1425,14 +1439,14 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		return SendMessage32A( lphc->hWndLBox, LB_FINDSTRINGEXACT32, 
 						       wParam, lParam );
 	case CB_SETITEMHEIGHT16:
-		wParam = (INT32)(INT16)wParam; /* signed integer */
+		wParam = (INT32)(INT16)wParam;	/* signed integer */
 	case CB_SETITEMHEIGHT32:
 		return COMBO_SetItemHeight( lphc, (INT32)wParam, (INT32)lParam);
 
 	case CB_GETITEMHEIGHT16:
 		wParam = (INT32)(INT16)wParam;
 	case CB_GETITEMHEIGHT32:
-		if( (INT32)wParam >= 0 )
+		if( (INT32)wParam >= 0 )	/* listbox item */
 		    return SendMessage32A( lphc->hWndLBox, LB_GETITEMHEIGHT32, wParam, 0);
 		return (lphc->RectEdit.bottom - lphc->RectEdit.top);
 
@@ -1497,14 +1511,16 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 				       (LPSTR)lParam, (message == CB_DIR32));
 	case CB_SHOWDROPDOWN16:
 	case CB_SHOWDROPDOWN32:
-		if( CB_GETTYPE(lphc) != CBS_SIMPLE ) {
-		    if( wParam ) {
+		if( CB_GETTYPE(lphc) != CBS_SIMPLE )
+		{
+		    if( wParam )
+		    {
 			if( !(lphc->wState & CBF_DROPPED) )
 			    CBDropDown( lphc );
-		    } else  {
+		    }
+		    else 
 			if( lphc->wState & CBF_DROPPED ) 
 		            CBRollUp( lphc, FALSE, TRUE );
-		    }
 		}
 		return TRUE;
 

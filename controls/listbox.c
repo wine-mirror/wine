@@ -2280,7 +2280,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
         /* fall through */
     case LB_SETCURSEL32:
         if (wParam != -1) LISTBOX_MakeItemVisible( wnd, descr, wParam, TRUE );
-        return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, FALSE );
+        return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, (descr->lphc != NULL) );
 
     case LB_GETSELCOUNT16:
     case LB_GETSELCOUNT32:
