@@ -210,7 +210,7 @@ static HRESULT AVIFILE_FindStreamInTable(IAVIEditStreamImpl* const This,
 {
   DWORD n;
 
-  TRACE("(%p,%lu,%p,%p,%p,%d)",This,pos,ppStream,streamPos,
+  TRACE("(%p,%lu,%p,%p,%p,%d)\n",This,pos,ppStream,streamPos,
         streamNr,bFindSample);
 
   if (pos < This->sInfo.dwStart)
@@ -336,7 +336,7 @@ static BOOL AVIFILE_FormatsEqual(PAVISTREAM avi1, PAVISTREAM avi2)
     fmt2 = GlobalAllocPtr(GHND, size1);
     if (fmt2 != NULL) {
       if (SUCCEEDED(AVIStreamReadFormat(avi2, start2, fmt2, &size1)))
-        status = memcmp(fmt1, fmt2, size1);
+        status = (memcmp(fmt1, fmt2, size1) == 0);
     }
   }
 
@@ -544,27 +544,34 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
 {
   ICOM_THIS(IAVIEditStreamImpl,iface);
   AVISTREAMINFOW      srcInfo;
-  IEditStreamInternal*pTable = NULL;
-  IAVIEditStreamImpl *pEdit  = NULL;
+  IEditStreamInternal*pInternal = NULL;
+  IAVIEditStreamImpl *pEdit = NULL;
+  PAVISTREAM          pStream;
+  DWORD               startPos, endPos, streamNr, n, nStreams;
 
-  FIXME("(%p,%p,%p,%p,%ld,%ld),stub!\n",iface,plStart,plLength,
-        pSource,lStart,lLength);
+  TRACE("(%p,%p,%p,%p,%ld,%ld)\n",iface,plStart,plLength,
+	pSource,lStart,lLength);
 
-  if (plStart == NULL || pSource == NULL || lLength < 0)
+  if (pSource == NULL)
+    return AVIERR_BADHANDLE;
+  if (plStart == NULL || *plStart < 0)
     return AVIERR_BADPARAM;
   if (This->sInfo.dwStart + This->sInfo.dwLength < *plStart)
-    return AVIERR_BADPARAM; /* FIXME: or change plStart to end of stream? */
+    return AVIERR_BADPARAM; /* Can't paste with holes */
   if (FAILED(IAVIStream_Info(pSource, &srcInfo, sizeof(srcInfo))))
     return AVIERR_ERROR;
   if (lStart < srcInfo.dwStart || lStart >= srcInfo.dwStart + srcInfo.dwLength)
     return AVIERR_BADPARAM;
-  if (This->sInfo.fccType != srcInfo.fccType)
-    return AVIERR_UNSUPPORTED; /* different stream types */
   if (This->sInfo.fccType == 0) {
+    /* This stream is empty */
     IAVIStream_Info(pSource, &This->sInfo, sizeof(This->sInfo));
     This->sInfo.dwStart  = *plStart;
     This->sInfo.dwLength = 0;
   }
+  if (This->sInfo.fccType != srcInfo.fccType)
+    return AVIERR_UNSUPPORTED; /* different stream types */
+  if (lLength == -1) /* Copy the hole stream */
+    lLength = srcInfo.dwLength;
   if (lStart + lLength > srcInfo.dwStart + srcInfo.dwLength)
     lLength = srcInfo.dwStart + srcInfo.dwLength - lStart;
   if (lLength + *plStart >= 0x80000000)
@@ -587,20 +594,140 @@ static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
     /* FIXME: streamtypeMIDI and streamtypeTEXT */
     return AVIERR_UNSUPPORTED;
   }
-  
+
   /* try to get an IEditStreamInternal interface */
   if (SUCCEEDED(IAVIStream_QueryInterface(pSource, &IID_IEditStreamInternal,
-                                          (LPVOID*)&pTable))) {
-    pTable->lpVtbl->GetEditStreamImpl(pTable, (LPVOID*)&pEdit);
-    pTable->lpVtbl->Release(pTable);
+                                          (LPVOID*)&pInternal))) {
+    pInternal->lpVtbl->GetEditStreamImpl(pInternal, (LPVOID*)&pEdit);
+    pInternal->lpVtbl->Release(pInternal);
   }
 
-  /* FIXME: for video must check for change of format */
-  /* FIXME: if stream to insert is an editable stream insert the
-   *        'sub-streams' else the given stream.
-   */
+  /* for video must check for change of format */
+  if (This->sInfo.fccType == streamtypeVIDEO) {
+    if (! This->bDecompress) {
+      /* Need to decompress if any of the following conditions matches:
+       *  - pSource is an editable stream which decompresses
+       *  - the nearest keyframe of pSource isn't lStart
+       *  - the nearest keyframe of this stream isn't *plStart
+       *  - the format of pSource doesn't match this one
+       */
+      if ((pEdit != NULL && pEdit->bDecompress) ||
+	  AVIStreamNearestKeyFrame(pSource, lStart) != lStart ||
+	  AVIStreamNearestKeyFrame((PAVISTREAM)&This->iAVIStream, *plStart) != *plStart ||
+	  (This->nStreams > 0 && !AVIFILE_FormatsEqual((PAVISTREAM)&This->iAVIStream, pSource))) {
+	/* Use first stream part to get format to convert everything to */
+	AVIFILE_ReadFrame(This, This->pStreams[0].pStream,
+			  This->pStreams[0].dwStart);
 
-  return AVIERR_UNSUPPORTED;
+	/* Check if we could convert the source streams to the disired format... */
+	if (pEdit != NULL) {
+	  if (FAILED(AVIFILE_FindStreamInTable(pEdit, lStart, &pStream,
+					       &startPos, &streamNr, TRUE)))
+	    return AVIERR_INTERNAL;
+	  for (n = lStart; n < lStart + lLength; streamNr++) {
+	    if (AVIFILE_ReadFrame(This, pEdit->pStreams[streamNr].pStream, startPos) == NULL)
+	      return AVIERR_BADFORMAT;
+	    startPos = pEdit->pStreams[streamNr].dwStart;
+	    n += pEdit->pStreams[streamNr].dwLength;
+	  }
+	} else if (AVIFILE_ReadFrame(This, pSource, lStart) == NULL)
+	  return AVIERR_BADFORMAT;
+
+	This->bDecompress      = TRUE;
+	This->sInfo.fccHandler = 0;
+      }
+    } else if (AVIFILE_ReadFrame(This, pSource, lStart) == NULL)
+      return AVIERR_BADFORMAT; /* Can't convert source to own format */
+  } /* FIXME: something special for the other formats? */
+
+  /* Make sure we have enough memory for parts */
+  if (pEdit != NULL) {
+    DWORD nLastStream;
+
+    AVIFILE_FindStreamInTable(pEdit, lStart + lLength, &pStream,
+			      &endPos, &nLastStream, TRUE);
+    AVIFILE_FindStreamInTable(pEdit, lStart, &pStream,
+			      &startPos, &streamNr, FALSE);
+    if (nLastStream == streamNr)
+      nLastStream++;
+
+    nStreams = nLastStream - streamNr;
+  } else 
+    nStreams = 1;
+  if (This->nStreams + nStreams + 1 > This->nTableSize) {
+    n = This->nStreams + nStreams + 33;
+
+    This->pStreams =
+      GlobalReAllocPtr(This->pStreams, n * sizeof(EditStreamTable), GMEM_SHARE|GHND);
+    if (This->pStreams == NULL)
+      return AVIERR_MEMORY;
+    This->nTableSize = n;
+  }
+
+  if (plLength != NULL)
+    *plLength = lLength;
+
+  /* now do the real work */
+  if (This->sInfo.dwStart + This->sInfo.dwLength > *plStart) {
+    AVIFILE_FindStreamInTable(This, *plStart, &pStream,
+			      &startPos, &streamNr, FALSE);
+    if (startPos != This->pStreams[streamNr].dwStart) {
+      /* split stream streamNr at startPos */
+      memmove(This->pStreams + streamNr + nStreams + 1,
+	      This->pStreams + streamNr,
+	      (This->nStreams + nStreams - streamNr + 1) * sizeof(EditStreamTable));
+
+      This->pStreams[streamNr + 2].dwLength =
+	EditStreamEnd(This, streamNr + 2) - startPos;
+      This->pStreams[streamNr + 2].dwStart = startPos;
+      This->pStreams[streamNr].dwLength =
+	startPos - This->pStreams[streamNr].dwStart;
+      IAVIStream_AddRef(This->pStreams[streamNr].pStream);
+      streamNr++;
+    } else {
+      /* insert before stream at streamNr */
+      memmove(This->pStreams + streamNr + nStreams, This->pStreams + streamNr,
+	      (This->nStreams + nStreams - streamNr) * sizeof(EditStreamTable));
+    }
+  } else /* append the streams */
+    streamNr = This->nStreams;
+
+  if (pEdit != NULL) {
+    /* insert the parts of the editable stream instead of itself */
+    AVIFILE_FindStreamInTable(pEdit, lStart + lLength, &pStream,
+			      &endPos, NULL, FALSE);
+    AVIFILE_FindStreamInTable(pEdit, lStart, &pStream, &startPos, &n, FALSE);
+
+    memcpy(This->pStreams + streamNr, pEdit->pStreams + n,
+	   nStreams * sizeof(EditStreamTable));
+    if (This->pStreams[streamNr].dwStart < startPos) {
+      This->pStreams[streamNr].dwLength =
+	EditStreamEnd(This, streamNr) - startPos;
+      This->pStreams[streamNr].dwStart  = startPos;
+    }
+    if (endPos < EditStreamEnd(This, streamNr + nStreams))
+      This->pStreams[streamNr + nStreams].dwLength =
+	endPos - This->pStreams[streamNr + nStreams].dwStart;
+  } else {
+    /* a simple stream */
+    This->pStreams[streamNr].pStream  = pSource;
+    This->pStreams[streamNr].dwStart  = lStart;
+    This->pStreams[streamNr].dwLength = lLength;
+  }
+
+  for (n = 0; n < nStreams; n++) {
+    IAVIStream_AddRef(This->pStreams[streamNr + n].pStream);
+    if (0 < streamNr + n &&
+	This->pStreams[streamNr + n - 1].pStream != This->pStreams[streamNr + n].pStream) {
+      This->sInfo.dwFlags |= AVISTREAMINFO_FORMATCHANGES;
+      This->sInfo.dwFormatChangeCount++;
+    }
+  }
+  This->sInfo.dwEditCount++;
+  This->sInfo.dwLength += lLength;
+  This->nStreams += nStreams;
+
+  return AVIERR_OK;
 }
 
 static HRESULT WINAPI IAVIEditStream_fnClone(IAVIEditStream*iface,
@@ -1028,6 +1155,8 @@ static ULONG   WINAPI IEditStreamInternal_fnRelease(IEditStreamInternal*iface)
 static HRESULT  WINAPI IEditStreamInternal_fnGetEditStreamImpl(IEditStreamInternal*iface,LPVOID*ppimpl)
 {
   ICOM_THIS(IEditStreamInternalImpl,iface);
+
+  TRACE("(%p,%p) -> %p\n", iface, ppimpl, This->pae);
 
   assert(This->pae != NULL);
   assert(ppimpl != NULL);
