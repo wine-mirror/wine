@@ -1403,11 +1403,20 @@ BOOL WINAPI GetClipCursor( RECT *rect )
  *
  * FIXME: exact parameter sizes
  */
-INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
+INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE dir, BOOL16 bIcon,
 	     INT16 width, INT16 height, UINT16 cFlag )
 {
+    return LookupIconIdFromDirectoryEx( dir, bIcon, width, height, cFlag );
+}
+
+/**********************************************************************
+ *		LookupIconIdFromDirectoryEx (USER32.@)
+ */
+INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
+             INT width, INT height, UINT cFlag )
+{
     CURSORICONDIR	*dir = (CURSORICONDIR*)xdir;
-    UINT16 retVal = 0;
+    UINT retVal = 0;
     if( dir && !dir->idReserved && (dir->idType & 3) )
     {
 	CURSORICONDIRENTRY* entry;
@@ -1431,15 +1440,6 @@ INT16 WINAPI LookupIconIdFromDirectoryEx16( LPBYTE xdir, BOOL16 bIcon,
     }
     else WARN_(cursor)("invalid resource directory\n");
     return retVal;
-}
-
-/**********************************************************************
- *		LookupIconIdFromDirectoryEx (USER32.@)
- */
-INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
-             INT width, INT height, UINT cFlag )
-{
-    return LookupIconIdFromDirectoryEx16( dir, bIcon, width, height, cFlag );
 }
 
 /**********************************************************************
