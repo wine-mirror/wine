@@ -32,7 +32,6 @@ typedef struct
     LRESULT WINAPI  (*SendMessageA)( HWND, UINT, WPARAM, LPARAM );
     BOOL WINAPI     (*PostMessageA)( HWND, UINT, WPARAM, LPARAM );
     BOOL16 WINAPI   (*PostAppMessage16)( HTASK16, UINT16, WPARAM16, LPARAM );
-    BOOL WINAPI     (*PostThreadMessageA)( DWORD, UINT, WPARAM, LPARAM );
     BOOL WINAPI     (*TranslateMessage)( const MSG *msg );
     LONG WINAPI     (*DispatchMessageA)( const MSG* msg );
     BOOL WINAPI     (*RedrawWindow)( HWND, const RECT *, HRGN, UINT );
@@ -44,8 +43,6 @@ typedef struct
     DWORD WINAPI    (*WaitForInputIdle)( HANDLE, DWORD );
     DWORD WINAPI    (*MsgWaitForMultipleObjects)( DWORD, HANDLE *, BOOL, DWORD, DWORD );
     HWND WINAPI     (*WindowFromDC)( HDC );
-    HWND WINAPI     (*GetForegroundWindow)(void);
-    BOOL WINAPI     (*IsChild)( HWND parent, HWND );
     INT WINAPI      (*MessageBoxA)( HWND, LPCSTR, LPCSTR, UINT );
     INT WINAPI      (*MessageBoxW)( HWND, LPCWSTR, LPCWSTR, UINT );
 }  CALLOUT_TABLE;

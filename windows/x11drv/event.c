@@ -22,7 +22,8 @@
 
 #include <assert.h>
 #include <string.h>
-#include "callback.h"
+#include "wine/winuser16.h"
+
 #include "clipboard.h"
 #include "dce.h"
 #include "debugtools.h"
@@ -643,9 +644,8 @@ static void EVENT_Expose( HWND hWnd, XExposeEvent *event )
   rect.bottom = rect.top + event->height;
 
   WIN_ReleaseWndPtr(pWnd);
- 
-  Callout.RedrawWindow( hWnd, &rect, 0,
-          RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
+
+  RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
 
   /* FIXME: We should use SendNotifyMessage here, but this function is not
      implemented correctly, so for now we used SendMessage */
@@ -678,9 +678,8 @@ static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event )
   rect.bottom = rect.top + event->height;
 
   WIN_ReleaseWndPtr(pWnd);
- 
-  Callout.RedrawWindow( hWnd, &rect, 0,
-          RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
+
+  RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
 
   /* FIXME: We should use SendNotifyMessage here, but this function is not
      implemented correctly, so for now we used SendMessage */
