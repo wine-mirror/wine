@@ -17,7 +17,6 @@
 #include "combo.h"
 #include "debugtools.h"
 #include "tweak.h"
-#include "winversion.h"
 
 DEFAULT_DEBUG_CHANNEL(listbox)
 DECLARE_DEBUG_CHANNEL(combo)

@@ -45,7 +45,6 @@
 #include "xmalloc.h"
 #include "options.h"
 #include "winreg.h"
-#include "winversion.h"
 #include "server.h"
 #include "services.h"
 

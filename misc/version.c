@@ -206,10 +206,14 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 
 	if (!pdb->exe_modref)
 	{
-	  /* winn311 progs only link to user32 */
-	  if (pdb->modref_list && pdb->modref_list->next)
-            return WIN95;
-	  return WIN31;
+	  if (!pdb->modref_list)
+            return WIN31;
+
+	  /* FIXME: The above condition will never trigger, since all our
+	   * standard dlls load their win32 equivalents. We have usually at
+	   * this point: kernel32.dll and ntdll.dll.
+	   */
+	  return WIN95;
 	}
 	/* First check the native dlls provided. These have to be
 	from one windows version */
@@ -235,13 +239,9 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	      {
 	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm);
 	        if (WinVersion == NB_WINDOWS_VERSIONS) 
-	        {
 	          WinVersion = DllVersion;
-	        }
-	        else
-	        {
-	          if (WinVersion != DllVersion)
-	          {
+	        else {
+	          if (WinVersion != DllVersion) {
 	            ERR("You mixed system dlls from different windows versions! Expect a chrash!\n");
 	            return WIN31; /* this may let the exe exiting */
 	          }
@@ -304,16 +304,16 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 WINDOWS_VERSION VERSION_GetVersion(void)
 {
 	PDB *pdb = PROCESS_Current();
-    
 	if (versionForced) /* user has overridden any sensible checks */
 	  return defaultWinVersion;
 
-	if (pdb->winver == 0xffff) /* to be determined */
-	{
-	  pdb->winver = VERSION_GetLinkedDllVersion(pdb);
-	  TRACE("Autodetected: %s\n", VERSION_GetVersionName());
-        }
+	if (pdb->winver == 0xffff) /* to be determined */ {
+	  WINDOWS_VERSION retver = VERSION_GetLinkedDllVersion(pdb);
 
+	  if (retver != WIN31)
+	    pdb->winver = retver;
+	  return retver;
+	}
 	return pdb->winver;
 }
 
