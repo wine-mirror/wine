@@ -994,6 +994,10 @@ case $host_os in
     AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread wine-preloader")
     AC_SUBST(MAIN_BINARY,"wine-glibc")
     ;;
+  darwin*)
+    AC_SUBST(WINE_BINARIES,"wine-pthread")
+    AC_SUBST(MAIN_BINARY,"wine-pthread")
+    ;;
   *)
     AC_SUBST(WINE_BINARIES,"wine-kthread")
     AC_SUBST(MAIN_BINARY,"wine-kthread")

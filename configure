@@ -14685,6 +14685,12 @@ case $host_os in
     MAIN_BINARY="wine-glibc"
 
     ;;
+  darwin*)
+    WINE_BINARIES="wine-pthread"
+
+    MAIN_BINARY="wine-pthread"
+
+    ;;
   *)
     WINE_BINARIES="wine-kthread"
 
