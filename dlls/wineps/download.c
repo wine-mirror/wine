@@ -181,7 +181,8 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
 	strcpy(pdl->ps_name, ps_name);
 	pdl->next = NULL;
 
-        get_bbox(physDev, &bbox, &emsize);
+        if (!get_bbox(physDev, &bbox, &emsize))
+		return FALSE;
         if(!is_room_for_font(physDev))
             PSDRV_EmptyDownloadList(physDev, TRUE);
 
