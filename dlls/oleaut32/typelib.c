@@ -3797,18 +3797,16 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
     TLBFuncDesc * pFDesc; 
     TLBVarDesc * pVDesc; 
     HRESULT ret=S_OK;
-	UINT nNameLen = SysStringLen(*rgszNames);
-	
+
     TRACE("(%p) Name %s cNames %d\n", This, debugstr_w(*rgszNames),
             cNames);
     for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next) {
         int i, j;
-        if( !memcmp(*rgszNames, pFDesc->Name, nNameLen)) {
+        if(!lstrcmpiW(*rgszNames, pFDesc->Name)) {
             if(cNames) *pMemId=pFDesc->funcdesc.memid;
             for(i=1; i < cNames; i++){
-				UINT nParamLen = SysStringLen(rgszNames[i]);
                 for(j=0; j<pFDesc->funcdesc.cParams; j++)
-                    if(memcmp(rgszNames[i],pFDesc->pParamDesc[j].Name, nParamLen))
+                    if(!lstrcmpiW(rgszNames[i],pFDesc->pParamDesc[j].Name))
                             break;
                 if( j<pFDesc->funcdesc.cParams)
                     pMemId[i]=j;
@@ -3819,7 +3817,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
         }
     }   
     for(pVDesc=This->varlist; pVDesc; pVDesc=pVDesc->next) {
-        if( !memcmp(*rgszNames, pVDesc->Name, nNameLen)) {
+        if(!lstrcmpiW(*rgszNames, pVDesc->Name)) {
             if(cNames) *pMemId=pVDesc->vardesc.memid;
             return ret;
         }
@@ -4018,16 +4016,28 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	   return E_FAIL;
 	}
     } else {
-	FIXME("variable based invoking not supported yet.\n");
 	for(pVDesc=This->varlist; pVDesc; pVDesc=pVDesc->next) {
 	    if (pVDesc->vardesc.memid == memid) {
-		FIXME("varseek: Found memid name %s\n",debugstr_w(((LPWSTR)pVDesc->Name)));
+		FIXME("varseek: Found memid name %s, but variable-based invoking not supported\n",debugstr_w(((LPWSTR)pVDesc->Name)));
 		dump_TLBVarDesc(pVDesc);
 		break;
 	    }
 	}
     }
-    FIXME("Did not find member id %d!\n",(int)memid);
+    /* not found, look for it in inherited interfaces */
+    if (This->TypeAttr.typekind==TKIND_INTERFACE && This->TypeAttr.cImplTypes) {
+        /* recursive search */
+        ITypeInfo *pTInfo;
+        HRESULT hr;
+        hr=ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pTInfo);
+        if(SUCCEEDED(hr)){
+            hr=ITypeInfo_Invoke(pTInfo,pIUnk,memid,dwFlags,pDispParams,pVarResult,pExcepInfo,pArgErr);
+            ITypeInfo_Release(pTInfo);
+            return hr;
+        }
+        WARN("Could not search inherited interface!\n");
+    }
+    ERR("did not find member id %d, flags %d!\n", (int)memid, dwFlags);
     return DISP_E_MEMBERNOTFOUND;
 }
 
