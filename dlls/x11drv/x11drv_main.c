@@ -38,6 +38,7 @@ static int *ph_errno = &h_errno;
 #include "win.h"
 #include "wine_gl.h"
 #include "x11drv.h"
+#include "xvidmode.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -382,6 +383,11 @@ static void process_attach(void)
     /* initialize event handling */
     X11DRV_EVENT_Init();
 
+#ifdef HAVE_LIBXXF86VM
+    /* initialize XVidMode */
+    X11DRV_XF86VM_Init();
+#endif
+
     /* load display.dll */
     LoadLibrary16( "display" );
 }
@@ -403,6 +409,11 @@ static void process_detach(void)
   
     XChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
                            KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
+
+#ifdef HAVE_LIBXXF86VM
+    /* cleanup XVidMode */
+    X11DRV_XF86VM_Cleanup();
+#endif
 
     /* cleanup GDI */
     X11DRV_GDI_Finalize();

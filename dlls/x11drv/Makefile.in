@@ -7,7 +7,9 @@ EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
 IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
-	x11drv_main.c
+	x11ddraw.c \
+	x11drv_main.c \
+	xvidmode.c
 
 PROGRAMS = \
 	$(TOPOBJDIR)/windows/x11drv/wineclipsrv
