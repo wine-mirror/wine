@@ -141,10 +141,14 @@ ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
 UINT WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr )
 {
 #if defined(__i386__) && defined(__GNUC__)
-    UINT ret, rem;
+    UINT ret, rem, p1, p2;
+
+    p1 = a >> 32;
+    p2 = a &  0xffffffffLL;
+
     __asm__("div %4,%%eax"
             : "=a" (ret), "=d" (rem)
-            : "0" (*(UINT*)&a), "1" (*((UINT*)&a+1)), "g" (b) );
+            : "0" (p2), "1" (p1), "g" (b) );
     if (remptr) *remptr = rem;
     return ret;
 #else
