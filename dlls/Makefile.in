@@ -164,6 +164,7 @@ WIN16_FILES = \
 	win87em.dll$(DLLEXT) \
 	winaspi.dll$(DLLEXT) \
 	windebug.dll$(DLLEXT) \
+	winedos16.dll$(DLLEXT) \
 	wineps16.dll$(DLLEXT) \
 	wing.dll$(DLLEXT) \
 	winnls.dll$(DLLEXT) \
@@ -516,7 +517,7 @@ winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 wineaudioio.drv$(DLLEXT): winmm/wineaudioio/wineaudioio.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv$(DLLEXT) $@
 
-winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
+winedos.dll$(DLLEXT) winedos16.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
 winemp3.acm$(DLLEXT): msacm/winemp3/winemp3.acm$(DLLEXT)
@@ -832,7 +833,7 @@ shlwapi:  ole32.dll$(DLLEXT) user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll
           kernel32.dll$(DLLEXT)
 snmpapi:  kernel32.dll$(DLLEXT)
 sti:      kernel32.dll$(DLLEXT)
-tapi32:   kernel32.dll$(DLLEXT)
+tapi32:   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 ttydrv:   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 twain:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 url:      kernel32.dll$(DLLEXT)
