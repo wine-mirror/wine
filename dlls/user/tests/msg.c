@@ -800,10 +800,16 @@ static void flush_sequence()
     sequence_cnt = sequence_size = 0;
 }
 
-static void ok_sequence(const struct message *expected, const char *context, int todo)
+#define ok_sequence( exp, contx, todo) \
+        ok_sequence_( (exp), (contx), (todo), __FILE__, __LINE__)
+
+
+static void ok_sequence_(const struct message *expected, const char *context, int todo,
+        const char *file, int line)
 {
     static const struct message end_of_sequence = { 0, 0, 0, 0 };
     const struct message *actual;
+    int failcount = 0;
     
     add_message(&end_of_sequence);
 
@@ -811,7 +817,7 @@ static void ok_sequence(const struct message *expected, const char *context, int
 
     while (expected->message && actual->message)
     {
-	trace("expected %04x - actual %04x\n", expected->message, actual->message);
+	trace_( file, line)("expected %04x - actual %04x\n", expected->message, actual->message);
 
 	if (expected->message == actual->message)
 	{
@@ -820,33 +826,34 @@ static void ok_sequence(const struct message *expected, const char *context, int
 		if (expected->wParam != actual->wParam && todo)
 		{
 		    todo_wine {
-			ok (FALSE,
+                        failcount ++;
+                        ok_( file, line) (FALSE,
 			    "%s: in msg 0x%04x expecting wParam 0x%x got 0x%x\n",
 			    context, expected->message, expected->wParam, actual->wParam);
 		    }
 		}
 		else
-		ok (expected->wParam == actual->wParam,
+		ok_( file, line) (expected->wParam == actual->wParam,
 		     "%s: in msg 0x%04x expecting wParam 0x%x got 0x%x\n",
 		     context, expected->message, expected->wParam, actual->wParam);
 	    }
 	    if (expected->flags & lparam)
-		 ok (expected->lParam == actual->lParam,
+		 ok_( file, line) (expected->lParam == actual->lParam,
 		     "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
 		     context, expected->message, expected->lParam, actual->lParam);
-	    ok ((expected->flags & defwinproc) == (actual->flags & defwinproc),
+	    ok_( file, line) ((expected->flags & defwinproc) == (actual->flags & defwinproc),
 		"%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
 		context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
-	    ok ((expected->flags & beginpaint) == (actual->flags & beginpaint),
+	    ok_( file, line) ((expected->flags & beginpaint) == (actual->flags & beginpaint),
 		"%s: the msg 0x%04x should %shave been sent by BeginPaint\n",
 		context, expected->message, (expected->flags & beginpaint) ? "" : "NOT ");
-	    ok ((expected->flags & (sent|posted)) == (actual->flags & (sent|posted)),
+	    ok_( file, line) ((expected->flags & (sent|posted)) == (actual->flags & (sent|posted)),
 		"%s: the msg 0x%04x should have been %s\n",
 		context, expected->message, (expected->flags & posted) ? "posted" : "sent");
-	    ok ((expected->flags & parent) == (actual->flags & parent),
+	    ok_( file, line) ((expected->flags & parent) == (actual->flags & parent),
 		"%s: the msg 0x%04x was expected in %s\n",
 		context, expected->message, (expected->flags & parent) ? "parent" : "child");
-	    ok ((expected->flags & hook) == (actual->flags & hook),
+	    ok_( file, line) ((expected->flags & hook) == (actual->flags & hook),
 		"%s: the msg 0x%04x should have been sent by a hook\n",
 		context, expected->message);
 	    expected++;
@@ -856,8 +863,9 @@ static void ok_sequence(const struct message *expected, const char *context, int
 	    expected++;
 	else if (todo)
 	{
+            failcount++;
             todo_wine {
-                ok (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+                ok_( file, line) (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
                     context, expected->message, actual->message);
             }
             flush_sequence();
@@ -865,7 +873,7 @@ static void ok_sequence(const struct message *expected, const char *context, int
         }
         else
         {
-            ok (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+            ok_( file, line) (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
                 context, expected->message, actual->message);
             expected++;
             actual++;
@@ -879,17 +887,23 @@ static void ok_sequence(const struct message *expected, const char *context, int
     if (todo)
     {
         todo_wine {
-            if (expected->message || actual->message)
-                ok (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
+            if (expected->message || actual->message) {
+                failcount++;
+                ok_( file, line) (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
                     context, expected->message, actual->message);
+            }
         }
     }
     else
     {
         if (expected->message || actual->message)
-            ok (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
+            ok_( file, line) (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
                 context, expected->message, actual->message);
     }
+    if( todo && !failcount) /* succeeded yet marked todo */
+        todo_wine {
+            ok_( file, line)( TRUE, "%s: marked \"todo_wine\" but succeeds\n", context);
+        }
 
     flush_sequence();
 }
@@ -1921,7 +1935,7 @@ static void test_mdi_messages(void)
     ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE):MDI child", FALSE);
 
     ShowWindow(mdi_child2, SW_SHOW);
-    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):MDI child", TRUE);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW):MDI child", FALSE);
 
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
@@ -1948,7 +1962,7 @@ static void test_mdi_messages(void)
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     DestroyWindow(mdi_child2);
-    ok_sequence(WmDestroyMDIchildInvisibleSeq, "Destroy invisible MDI child window", TRUE);
+    ok_sequence(WmDestroyMDIchildInvisibleSeq, "Destroy invisible MDI child window", FALSE);
 
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
@@ -2167,7 +2181,7 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
         ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollRange(SB_HORZ/SB_VERT) NC", FALSE);
     else
-        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollRange(SB_HORZ/SB_VERT)", TRUE);
+        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollRange(SB_HORZ/SB_VERT)", FALSE);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     if (set) ok(style & set, "style %08lx should be set\n", set);
@@ -2207,7 +2221,7 @@ static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
     if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
         ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollInfo(SB_HORZ/SB_VERT) NC", FALSE);
     else
-        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollInfo(SB_HORZ/SB_VERT)", TRUE);
+        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollInfo(SB_HORZ/SB_VERT)", FALSE);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     if (set) ok(style & set, "style %08lx should be set\n", set);
@@ -2351,7 +2365,7 @@ static void test_messages(void)
     ok(GetActiveWindow() == hwnd, "window should be active\n");
     ok(GetFocus() == hwnd, "window should have input focus\n");
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", TRUE);
+    ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", FALSE);
     ok(!IsWindowVisible(hwnd), "window should not be visible at this point\n");
 
     /* test WM_SETREDRAW on a visible top level window */
@@ -3027,7 +3041,7 @@ static void test_paint_messages(void)
 
     flush_sequence();
     RedrawWindow( hwnd, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW );
-    ok_sequence( WmInvalidatePaint, "InvalidatePaint", TRUE );
+    ok_sequence( WmInvalidatePaint, "InvalidatePaint", FALSE );
     check_update_rgn( hwnd, 0 );
 
     flush_sequence();
@@ -3060,7 +3074,7 @@ static void test_paint_messages(void)
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
     SetRectRgn( hrgn, 0, 0, 50, 50 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOERASE | RDW_UPDATENOW );
-    ok_sequence( WmPaint, "Paint", TRUE );
+    ok_sequence( WmPaint, "Paint", FALSE );
 
     flush_sequence();
     SetRectRgn( hrgn, -4, -4, -2, -2 );
@@ -3076,7 +3090,7 @@ static void test_paint_messages(void)
     RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOFRAME );
     SetRectRgn( hrgn, 0, 0, 1, 1 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_UPDATENOW );
-    ok_sequence( WmPaint, "Paint", TRUE );
+    ok_sequence( WmPaint, "Paint", FALSE );
 
     flush_sequence();
     SetRectRgn( hrgn, -4, -4, -1, -1 );
