@@ -924,3 +924,13 @@ BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
     strcpy(lpszFilename, WINEICM);
     return TRUE;
 }
+
+/**********************************************************************
+ * SetICMProfileA [GDI32.@]
+ *
+ */
+BOOL WINAPI SetICMProfileA(HDC hDC, LPSTR lpszFilename)
+{
+    FIXME("hDC %p filename '%s': stub!\n", hDC, debugstr_a(lpszFilename));
+    return TRUE; /* success */
+}

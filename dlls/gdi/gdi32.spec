@@ -362,7 +362,7 @@
 @ stub SetFontEnumeration
 @ stdcall SetGraphicsMode(long long)
 @ stdcall SetICMMode(long long)
-@ stub SetICMProfileA
+@ stdcall SetICMProfileA (long ptr)
 @ stub SetICMProfileW
 @ stdcall SetLayout(long long)
 @ stub SetMagicColors
