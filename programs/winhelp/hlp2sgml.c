@@ -292,6 +292,11 @@ LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count )
     return fread(buffer, 1, count, file);
 }
 
+HANDLE WINAPI GetProcessHeap(void)
+{
+    return 0;
+}
+
 void* WINAPI HeapAlloc( HANDLE heap, DWORD flags, DWORD size )
 {
     assert(flags == 0);
