@@ -263,6 +263,7 @@ REGS_ENTRYPOINT(QT_Thunk)
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
+    EAX_reg(context) = LOWORD(EAX_reg(context));
 }
 
 
@@ -392,6 +393,7 @@ REGS_ENTRYPOINT(FT_Thunk)
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
     EDX_reg(context) = HIWORD(EAX_reg(context));
+    EAX_reg(context) = LOWORD(EAX_reg(context));
 }
 
 /**********************************************************************
@@ -564,6 +566,10 @@ REGS_ENTRYPOINT(Common32ThkLS)
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = HIWORD(EDX_reg(context)) * 4;
+
+    /* FIXME: hack for stupid USER32 CallbackGlueLS routine */
+    if (EDX_reg(context) == EIP_reg(context))
+        argsize = 6 * 4;
 
     memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
             (LPBYTE)ESP_reg(context)+4, argsize );
