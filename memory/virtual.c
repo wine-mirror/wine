@@ -1447,3 +1447,30 @@ BOOL32 WINAPI UnmapViewOfFile(
     VIRTUAL_DeleteView( view );
     return TRUE;
 }
+
+/***********************************************************************
+ *             VIRTUAL_MapFileW
+ *
+ * Helper function to map a file to memory:
+ *  name			-	file name 
+ *  [RETURN] ptr		-	pointer to mapped file
+ */
+LPVOID VIRTUAL_MapFileW( LPCWSTR name )
+{
+    HANDLE32 hFile, hMapping;
+    LPVOID ptr = NULL;
+
+    hFile = CreateFile32W( name, GENERIC_READ, FILE_SHARE_READ, NULL, 
+                           OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
+    if (hFile != INVALID_HANDLE_VALUE32)
+    {
+        hMapping = CreateFileMapping32A( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        CloseHandle( hFile );
+        if (hMapping)
+        {
+            ptr = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+            CloseHandle( hMapping );
+        }
+    }
+    return ptr;
+}

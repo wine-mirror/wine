@@ -33,6 +33,7 @@ extern WORD WINAPI GlobalHandleToSel( HGLOBAL16 handle );
 extern BOOL32 VIRTUAL_Init( void );
 extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);
+extern LPVOID VIRTUAL_MapFileW( LPCWSTR name );
 
 typedef BOOL32 (*HANDLERPROC)(LPVOID, LPVOID);
 extern BOOL32 VIRTUAL_SetFaultHandler(LPVOID addr, HANDLERPROC proc, LPVOID arg);
