@@ -856,7 +856,9 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     TRACE(resource, "instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResourceW( instance, (LPCWSTR)((resource_id>>4)+1),
+    /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out 
+     * 20 - 31. */
+    hrsrc = FindResourceW( instance, (LPCWSTR)(((resource_id>>4)&0xffff)+1),
                              RT_STRINGW );
     if (!hrsrc) return 0;
     hmem = LoadResource( instance, hrsrc );
