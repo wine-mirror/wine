@@ -4,6 +4,7 @@
  * Copyright (C) 1999 Alexandre Julliard
  */
 
+#include <ctype.h>
 #include <stdio.h>
 
 #include "unicode.h"

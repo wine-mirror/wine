@@ -507,9 +507,9 @@ DLLFLAGS=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
-    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) -L\$(TOPOBJDIR) -lwine"
+    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) -L\$(TOPOBJDIR) -lwine -lwine_unicode"
 else
-    DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) -L\$(TOPOBJDIR) -lwine \$(X_LIBS) \$(XLIB)"
+    DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) -L\$(TOPOBJDIR) -lwine -lwine_unicode \$(X_LIBS) \$(XLIB)"
     AC_CACHE_CHECK([whether the linker supports --[[no]]-whole-archive (Linux)],
  	           ac_cv_c_whole_archive,
             [saved_cflags=$CFLAGS

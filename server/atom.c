@@ -144,7 +144,7 @@ static int atom_hash( struct atom_table *table, const WCHAR *str )
 {
     int i;
     WCHAR hash = 0;
-    for (i = 0; str[i]; i++) hash ^= towupper(str[i]) + i;
+    for (i = 0; str[i]; i++) hash ^= toupperW(str[i]) + i;
     return hash % table->entries_count;
 }
 

@@ -32,6 +32,10 @@ PROGRAMS = \
 LIBPROGRAMS = \
 	debugger/winedbg
 
+# Libraries (not dlls) to build
+LIBRARIES = \
+	unicode/libwine_unicode.$(LIBEXT)
+
 # Sub-directories to run make depend/clean into
 SUBDIRS = \
 	console \
@@ -75,7 +79,8 @@ INSTALLSUBDIRS = \
 	documentation \
 	include \
 	server \
-	tools
+	tools \
+	unicode
 
 LIBOBJS = \
 	controls/controls.o \
@@ -98,7 +103,6 @@ LIBOBJS = \
 	relay32/relay32.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
-	unicode/unicode.o \
 	win32/win32.o \
 	windows/windows.o
 
@@ -126,20 +130,20 @@ Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine: lib$(MODULE).$(LIBEXT) $(DLLDIR) $(EMUOBJS)
+wine: libwine.$(LIBEXT) libwine_unicode.$(LIBEXT) dlls $(EMUOBJS)
 	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS)
 
 llib-lwine.ln : $(LIBLINTS)
 	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS)
 
-install_so: lib$(MODULE).so.$(SOVERSION)
+install_so: libwine.so.$(SOVERSION)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
-	cd $(libdir) && $(RM) lib$(MODULE).so && $(LN_S) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).so
+	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)
+	cd $(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
 
-install_a: lib$(MODULE).a
+install_a: libwine.a
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_DATA) lib$(MODULE).a $(libdir)/lib$(MODULE).a
+	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
 
 install:: all $(LIBEXT:%=install_%) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
@@ -151,29 +155,36 @@ uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
 	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION)
 	cd $(bindir) && $(RM) wine dosmod
 
-lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
+libwine.so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
 	$(LDSHARED) $(OBJS) -o $@
 
-lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
-	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
+libwine.so: libwine.so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
 
-lib$(MODULE).a: $(OBJS) Makefile.in Make.rules.in
+libwine.a: $(OBJS) Makefile.in Make.rules.in
 	$(RM) $@
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS): dummy
+$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS) $(LIBRARIES): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
-$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(DLLDIR): tools
+# Dependencies between directories
 
-$(LIBPROGRAMS): tools dlls lib$(MODULE).$(LIBEXT)
+$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) dlls: tools
+
+$(LIBPROGRAMS): tools dlls libwine.$(LIBEXT) libwine_unicode.$(LIBEXT)
+
+server tools dlls: libwine_unicode.$(LIBEXT)
+
+libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
+	$(RM) $@ && $(LN_S) unicode/libwine_unicode.$(LIBEXT) $@
 
 $(LIBLINTS) $(EMULINTS): dummy
 	@cd `dirname $@` && $(MAKE) lint
 
 checklink::
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine -lwine_unicode $(LIBS) && $(RM) checklink
 
 install_programs: dummy
 	@cd programs && $(MAKE) install
@@ -196,7 +207,7 @@ htmlpages:
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) html); done
 
 clean::
-	$(RM) wine libwine.so.1.0 TAGS
+	$(RM) wine libwine.so.$(SOVERSION) TAGS
 
 distclean: clean
 	$(RM) config.* Make.rules dlls/Makedll.rules include/config.h documentation/wine.man documentation/wine.conf.man

@@ -173,7 +173,7 @@ DLLS = \
 	$(CC) -c -o $*.o $<  
 
 .mc.rc:
-	$(WMC) -i -H /dev/null -o $@ $<
+	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WMC) -i -H /dev/null -o $@ $<
 
 .rc.s:
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) $(DIVINCL) $<

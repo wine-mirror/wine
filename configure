@@ -4553,9 +4553,9 @@ DLLFLAGS=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
-    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) -L\$(TOPOBJDIR) -lwine"
+    DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) -L\$(TOPOBJDIR) -lwine -lwine_unicode"
 else
-    DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) -L\$(TOPOBJDIR) -lwine \$(X_LIBS) \$(XLIB)"
+    DLL_LINK="-L\$(DLLDIR) \$(DLLS:%=-l%) -L\$(TOPOBJDIR) -lwine -lwine_unicode \$(X_LIBS) \$(XLIB)"
     echo $ac_n "checking whether the linker supports --[no]-whole-archive (Linux)""... $ac_c" 1>&6
 echo "configure:4561: checking whether the linker supports --[no]-whole-archive (Linux)" >&5
 if eval "test \"`echo '$''{'ac_cv_c_whole_archive'+set}'`\" = set"; then

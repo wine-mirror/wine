@@ -11,46 +11,9 @@
 #error This file can only be used in the Wine server
 #endif
 
-#include "config.h"
-
-#include <ctype.h>
-#ifdef HAVE_WCTYPE_H
-#include <wctype.h>
-#endif
-
 #include "windef.h"
+#include "wine/unicode.h"
 #include "object.h"
-
-static inline size_t strlenW( const WCHAR *str )
-{
-    const WCHAR *s = str;
-    while (*s) s++;
-    return s - str;
-}
-
-static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 ) 
-{
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
-}
-
-#ifndef HAVE_WCTYPE_H
-/* FIXME */
-#define towupper(ch) (HIBYTE(ch) ? ch : (WCHAR)toupper(LOBYTE(ch)))
-#endif
-
-static inline int strcmpiW( const WCHAR *str1, const WCHAR *str2 ) 
-{
-    while (*str1 && (towupper(*str1) == towupper(*str2))) { str1++; str2++; }
-    return towupper(*str1) - towupper(*str2);
-}
-
-static inline WCHAR *strcpyW( WCHAR *dst, const WCHAR *src ) 
-{
-    const WCHAR *ret = dst;
-    while ((*dst++ = *src++));
-    return (WCHAR *)ret;
-}
 
 static inline WCHAR *strdupW( const WCHAR *str )
 {

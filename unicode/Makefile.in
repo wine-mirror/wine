@@ -3,7 +3,11 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = unicode
+LIBEXT    = @LIBEXT@
+LDSHARED  = @LDSHARED@
+MODULE    = none
+SOVERSION = 1.0
+SONAME    = libwine_unicode.so
 
 CODEPAGES = \
 	037 \
@@ -69,8 +73,36 @@ C_SRCS = \
 	wctomb.c \
 	$(CODEPAGES:%=c_%.c)
 
-all: $(MODULE).o
+all: libwine_unicode.$(LIBEXT)
 
 @MAKE_RULES@
+
+libwine_unicode.so.$(SOVERSION): $(OBJS)
+	$(LDSHARED) $(OBJS) -o $@
+
+libwine_unicode.so: libwine_unicode.so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) libwine_unicode.so.$(SOVERSION) $@
+
+libwine_unicode.a: $(OBJS)
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+install_so: libwine_unicode.so.$(SOVERSION)
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_PROGRAM) libwine_unicode.so.$(SOVERSION) $(libdir)/libwine_unicode.so.$(SOVERSION)
+	cd $(libdir) && $(RM) libwine_unicode.so && $(LN_S) libwine_unicode.so.$(SOVERSION) libwine_unicode.so
+
+install_a: libwine_unicode.a
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
+	$(INSTALL_DATA) libwine_unicode.a $(libdir)/libwine_unicode.a
+
+install:: all $(LIBEXT:%=install_%)
+
+uninstall::
+	cd $(libdir) && $(RM) libwine_unicode.a libwine_unicode.so libwine_unicode.so.$(SOVERSION)
+
+clean::
+	$(RM) libwine_unicode.so.$(SOVERSION)
 
 ### Dependencies:

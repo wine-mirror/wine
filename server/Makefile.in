@@ -42,7 +42,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 wineserver: $(OBJS)
-	$(CC) -o $(PROGRAMS) $(OBJS) $(LIBS)
+	$(CC) -o $(PROGRAMS) $(OBJS) -L$(TOPOBJDIR) -lwine_unicode $(LIBS)
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
