@@ -622,7 +622,7 @@ static IDirectDrawSurfaceImpl *current_surface;
 static GLuint current_level;
 static DWORD current_tex_width;
 static DWORD current_tex_height;
-static BOOLEAN need_alignement_restore;
+static GLuint current_alignement_constraints;
 static int current_storage_width;
 
 HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLuint level, GLenum *current_internal_format,
@@ -635,14 +635,18 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     BYTE bpp = GET_BPP(surf_ptr->surface_desc);
     BOOL sub_texture = TRUE;
 
-    need_alignement_restore = FALSE;
-    
     current_surface = surf_ptr;
     current_level = level;
 
     /* First, do some sanity checks ... */
     if ((surf_ptr->surface_desc.u1.lPitch % bpp) != 0) {
 	FIXME("Warning : pitch is not a multiple of BPP - not supported yet !\n");
+    } else {
+	/* In that case, no need to have any alignement constraints... */
+	if (current_alignement_constraints != 1) {
+	    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	    current_alignement_constraints = 1;
+	}
     }
 
     /* Note: we only check width here as you cannot have width non-zero while height is set to zero */
@@ -911,7 +915,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     height = rect->bottom - rect->top;
 
     /* Used when converting stuff */
-    line_increase = src_d->dwWidth - width;
+    line_increase = src_d->u1.lPitch - (width * bpp);
     
     switch (convert_type) {
         case CONVERT_PALETTED: {
@@ -982,13 +986,13 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    for (y = 0; y < height; y++) {
 		for (x = 0; x < width; x++) {
 		    WORD color = *src++;
-		    *dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+		    *dst = ((color & 0xFFD0) | ((color & 0x1F) << 1));
 		    if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
 			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
 			*dst |= 0x0001;
 		    dst++;
 		}
-		src += line_increase;
+		src = (WORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1011,7 +1015,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= color & 0x0001;
 		    dst++;
 		}
-		src += line_increase;
+		src = (WORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1034,7 +1038,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= color & 0x000F;
 		    dst++;
 		}
-		src += line_increase;
+		src = (WORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1057,7 +1061,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= (color & 0xF000) >> 12;
 		    dst++;
 		}
-		src += line_increase;
+		src = (WORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1079,7 +1083,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= (color & 0x8000) >> 15;
 		    dst++;
 		}
-		src += line_increase;
+		src = (WORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1103,7 +1107,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			    *dst |= 0x0001;
 			dst++;
 		    }
-		    src += line_increase;
+		    src = (WORD *) (((BYTE *) src) + line_increase);
 		}
 	    } else {
 		for (y = 0; y < height; y++) {
@@ -1111,7 +1115,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			WORD color = *src++;
 			*dst++ = ((color & 0x7FFF) << 1) | 0x0001;
 		    }
-		    src += line_increase;
+		    src = (WORD *) (((BYTE *) src) + line_increase);
 		}
 	    }
 	    
@@ -1138,7 +1142,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= 0xFF;
 		    dst++;
 		}
-		src += 3 * line_increase;
+		src += line_increase;
 	    }
 	} break;
 
@@ -1161,7 +1165,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= color & 0x000000FF;
 		    dst++;
 		}
-		src += line_increase;
+		src = (DWORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1183,7 +1187,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			*dst |= (color & 0xFF000000) >> 24;
 		    dst++;
 		}
-		src += line_increase;
+		src = (DWORD *) (((BYTE *) src) + line_increase);
 	    }
 	} break;
 	
@@ -1207,14 +1211,14 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 			    *dst |= 0xFF;
 			dst++;
 		    }
-		    src += line_increase;
+		    src = (DWORD *) (((BYTE *) src) + line_increase);
 		}
 	    } else {
 		for (y = 0; y < height; y++) {
 		    for (x = 0; x < width; x++) {
 			*dst++ = (*src++ << 8) | 0xFF;
 		    }
-		    src += line_increase;
+		    src = (DWORD *) (((BYTE *) src) + line_increase);
 		}
 	    }
 	} break;
@@ -1226,31 +1230,13 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     }
 
     if (convert_type != NO_CONVERSION) {
-	int storage_width;
-	
+	/* When doing conversion, the storage is always of width 'width' as there will never
+	   be any Pitch issue... For now :-)
+	*/
 	surf_buffer = *temp_buffer;
-	if (width != current_tex_width) {
-	    /* Overide the default PixelStore parameter if only using part of the actual texture */
-	    storage_width = width;
-	    /* This is needed when locking with a rectangle with 'odd' width */
-	    if (need_alignement_restore == FALSE) {
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		need_alignement_restore = TRUE;
-	    }
-	} else {
-	    if (current_surface->surface_desc.u1.lPitch == (current_surface->surface_desc.dwWidth * bpp)) {
-		storage_width = 0;
-	    } else {
-		storage_width = current_surface->surface_desc.u1.lPitch / bpp;
-	    }
-	    if (need_alignement_restore == TRUE) {
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 0);
-		need_alignement_restore = FALSE;
-	    }
-	}
-	if (storage_width != current_storage_width) {
-	    glPixelStorei(GL_UNPACK_ROW_LENGTH, storage_width);
-	    current_storage_width = storage_width;
+	if (width != current_storage_width) {
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+	    current_storage_width = width;
 	}
     }
     
@@ -1269,9 +1255,5 @@ HRESULT upload_surface_to_tex_memory_release(void)
 {
     current_surface = NULL;
 
-    if (need_alignement_restore == TRUE) {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    }
-    
     return DD_OK;
 }

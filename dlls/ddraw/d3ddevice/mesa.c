@@ -2946,12 +2946,6 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		int x, y;
 		double x_stretch, y_stretch;
 		
-		if (dwFlags & DDBLT_KEYSRC) {
-		    /* As I have no game using this, did not bother to do it yet as I cannot test it anyway */
-		    FIXME(" Blt overide with color-keying not supported yet.\n");
-		    return DDERR_INVALIDPARAMS;
-		}
-
 		if (rsrc) {
 		    src_rect.u1.x1 = rsrc->left;
 		    src_rect.u2.y1 = rsrc->top;
@@ -2974,10 +2968,10 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 
 		ENTER_GL();
 
-		opt_bitmap = d3ddevice_set_state_for_flush(This->d3ddevice, (LPCRECT) &rect, FALSE, &initial);
+		opt_bitmap = d3ddevice_set_state_for_flush(This->d3ddevice, (LPCRECT) &rect, ((dwFlags & DDBLT_KEYSRC) != 0), &initial);
 		
 		if (upload_surface_to_tex_memory_init(src_impl, 0, &gl_d3d_dev->current_internal_format,
-						      initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
+						      initial, ((dwFlags & DDBLT_KEYSRC) != 0), UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
 		    ERR(" unsupported pixel format at memory to buffer Blt overide.\n");
 		    LEAVE_GL();
 		    return DDERR_INVALIDPARAMS;
@@ -3029,7 +3023,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		}
 		
 		upload_surface_to_tex_memory_release();
-		d3ddevice_restore_state_after_flush(This->d3ddevice, opt_bitmap, FALSE);
+		d3ddevice_restore_state_after_flush(This->d3ddevice, opt_bitmap, ((dwFlags & DDBLT_KEYSRC) != 0));
 		
 		if (((buffer_type == WINE_GL_BUFFER_FRONT) && (prev_draw == GL_BACK)) ||
 		    ((buffer_type == WINE_GL_BUFFER_BACK)  && (prev_draw == GL_FRONT)))
