@@ -1529,6 +1529,7 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
       X11DRV_CoerceDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
 
       X11DRV_DIB_CopyDIBSection( dcSrc, dcDst, xSrc, ySrc, xDst, yDst, width, height );
+      result = TRUE;
       goto END;
     }
 
