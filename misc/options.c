@@ -89,7 +89,7 @@ static void do_managed( const char *arg )
 
 static void do_debugmsg( const char *arg )
 {
-    static const char * const debug_class_names[__DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
+    static const char * const debug_class_names[__WINE_DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
 
     char *opt, *options = strdup(arg);
     int i;
@@ -109,7 +109,7 @@ static void do_debugmsg( const char *arg )
         if (!p || !p[1]) goto error;
         if (p > opt)
         {
-            for (i = 0; i < __DBCL_COUNT; i++)
+            for (i = 0; i < __WINE_DBCL_COUNT; i++)
             {
                 int len = strlen(debug_class_names[i]);
                 if (len != (p - opt)) continue;
@@ -120,7 +120,7 @@ static void do_debugmsg( const char *arg )
                     break;
                 }
             }
-            if (i == __DBCL_COUNT) goto error;  /* class name not found */
+            if (i == __WINE_DBCL_COUNT) goto error;  /* class name not found */
         }
         else
         {
@@ -184,7 +184,7 @@ static void do_debugmsg( const char *arg )
     MESSAGE("Example: --debugmsg +all,warn-heap\n"
             "  turn on all messages except warning heap messages\n");
     MESSAGE("Available message classes:\n");
-    for( i = 0; i < __DBCL_COUNT; i++) MESSAGE( "%-9s", debug_class_names[i] );
+    for( i = 0; i < __WINE_DBCL_COUNT; i++) MESSAGE( "%-9s", debug_class_names[i] );
     MESSAGE("\n\n");
     ExitProcess(1);
 }

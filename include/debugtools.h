@@ -2,63 +2,77 @@
 #ifndef __WINE_DEBUGTOOLS_H
 #define __WINE_DEBUGTOOLS_H
 
-#ifdef __WINE__  /* Debugging interface is internal to Wine */
 
 #include <stdarg.h>
 #include "windef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _GUID;
 
-/* Internal definitions (do not use these directly) */
+/*
+ * Internal definitions (do not use these directly)
+ */
 
-enum __DEBUG_CLASS { __DBCL_FIXME, __DBCL_ERR, __DBCL_WARN, __DBCL_TRACE, __DBCL_COUNT };
+enum __WINE_DEBUG_CLASS {
+    __WINE_DBCL_FIXME,
+    __WINE_DBCL_ERR,
+    __WINE_DBCL_WARN,
+    __WINE_DBCL_TRACE,
+    __WINE_DBCL_COUNT
+};
 
 #ifndef NO_TRACE_MSGS
-# define __GET_DEBUGGING_TRACE(dbch) ((dbch)[0] & (1 << __DBCL_TRACE))
+# define __WINE_GET_DEBUGGING_TRACE(dbch) ((dbch)[0] & (1 << __WINE_DBCL_TRACE))
 #else
-# define __GET_DEBUGGING_TRACE(dbch) 0
+# define __WINE_GET_DEBUGGING_TRACE(dbch) 0
 #endif
 
 #ifndef NO_DEBUG_MSGS
-# define __GET_DEBUGGING_WARN(dbch)  ((dbch)[0] & (1 << __DBCL_WARN))
-# define __GET_DEBUGGING_FIXME(dbch) ((dbch)[0] & (1 << __DBCL_FIXME))
+# define __WINE_GET_DEBUGGING_WARN(dbch)  ((dbch)[0] & (1 << __WINE_DBCL_WARN))
+# define __WINE_GET_DEBUGGING_FIXME(dbch) ((dbch)[0] & (1 << __WINE_DBCL_FIXME))
 #else
-# define __GET_DEBUGGING_WARN(dbch)  0
-# define __GET_DEBUGGING_FIXME(dbch) 0
+# define __WINE_GET_DEBUGGING_WARN(dbch)  0
+# define __WINE_GET_DEBUGGING_FIXME(dbch) 0
 #endif
 
 /* define error macro regardless of what is configured */
-#define __GET_DEBUGGING_ERR(dbch)  ((dbch)[0] & (1 << __DBCL_ERR))
+#define __WINE_GET_DEBUGGING_ERR(dbch)  ((dbch)[0] & (1 << __WINE_DBCL_ERR))
 
-#define __GET_DEBUGGING(dbcl,dbch)  __GET_DEBUGGING##dbcl(dbch)
-#define __SET_DEBUGGING(dbcl,dbch,on) \
+#define __WINE_GET_DEBUGGING(dbcl,dbch)  __WINE_GET_DEBUGGING##dbcl(dbch)
+#define __WINE_SET_DEBUGGING(dbcl,dbch,on) \
     ((on) ? ((dbch)[0] |= 1 << (dbcl)) : ((dbch)[0] &= ~(1 << (dbcl))))
 
 #ifdef __GNUC__
 
-#define __DPRINTF(dbcl,dbch) \
-  do { if(__GET_DEBUGGING(dbcl,(dbch))) { \
+#define __WINE_DPRINTF(dbcl,dbch) \
+  do { if(__WINE_GET_DEBUGGING(dbcl,(dbch))) { \
        const char * const __dbch = (dbch); \
-       const enum __DEBUG_CLASS __dbcl = __DBCL##dbcl; \
+       const enum __WINE_DEBUG_CLASS __dbcl = __WINE_DBCL##dbcl; \
        __WINE_DBG_LOG
 
 #define __WINE_DBG_LOG(args...) \
     wine_dbg_log( __dbcl, __dbch, __FUNCTION__, args); } } while(0)
 
-#define __PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 
 #else  /* __GNUC__ */
 
-#define __DPRINTF(dbcl,dbch) \
-    (!__GET_DEBUGGING(dbcl,(dbch)) || \
-     (wine_dbg_log(__DBCL##dbcl,(dbch),__FILE__,"%d: ",__LINE__),0)) ? \
+#define __WINE_DPRINTF(dbcl,dbch) \
+    (!__WINE_GET_DEBUGGING(dbcl,(dbch)) || \
+     (wine_dbg_log(__WINE_DBCL##dbcl,(dbch),__FILE__,"%d: ",__LINE__),0)) ? \
      (void)0 : (void)wine_dbg_printf
 
-#define __PRINTF_ATTR(fmt, args)
+#define __WINE_PRINTF_ATTR(fmt, args)
 
 #endif  /* __GNUC__ */
 
-/* Exported definitions and macros */
+
+/*
+ * Exported definitions and macros
+ */
 
 /* These function return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
@@ -67,10 +81,41 @@ extern const char *wine_dbgstr_an( const char * s, int n );
 extern const char *wine_dbgstr_wn( const WCHAR *s, int n );
 extern const char *wine_dbgstr_guid( const struct _GUID *id );
 
-extern int wine_dbg_vprintf( const char *format, va_list args ) __PRINTF_ATTR(1,0);
-extern int wine_dbg_printf( const char *format, ... ) __PRINTF_ATTR(1,2);
-extern int wine_dbg_log( enum __DEBUG_CLASS cls, const char *ch,
-                         const char *func, const char *format, ... ) __PRINTF_ATTR(4,5);
+extern int wine_dbg_vprintf( const char *format, va_list args ) __WINE_PRINTF_ATTR(1,0);
+extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
+extern int wine_dbg_log( enum __WINE_DEBUG_CLASS cls, const char *ch,
+                         const char *func, const char *format, ... ) __WINE_PRINTF_ATTR(4,5);
+
+inline static const char *wine_dbgstr_a( const char *s )  { return wine_dbgstr_an( s, 80 ); }
+inline static const char *wine_dbgstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, 80 ); }
+
+#define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)
+#define WINE_TRACE_(ch)            __WINE_DPRINTF(_TRACE,__wine_dbch_##ch)
+#define WINE_TRACE_ON(ch)          __WINE_GET_DEBUGGING(_TRACE,__wine_dbch_##ch)
+
+#define WINE_WARN                  __WINE_DPRINTF(_WARN,__wine_dbch___default)
+#define WINE_WARN_(ch)             __WINE_DPRINTF(_WARN,__wine_dbch_##ch)
+#define WINE_WARN_ON(ch)           __WINE_GET_DEBUGGING(_WARN,__wine_dbch_##ch)
+
+#define WINE_FIXME                 __WINE_DPRINTF(_FIXME,__wine_dbch___default)
+#define WINE_FIXME_(ch)            __WINE_DPRINTF(_FIXME,__wine_dbch_##ch)
+#define WINE_FIXME_ON(ch)          __WINE_GET_DEBUGGING(_FIXME,__wine_dbch_##ch)
+
+#define WINE_ERR                   __WINE_DPRINTF(_ERR,__wine_dbch___default)
+#define WINE_ERR_(ch)              __WINE_DPRINTF(_ERR,__wine_dbch_##ch)
+#define WINE_ERR_ON(ch)            __WINE_GET_DEBUGGING(_ERR,__wine_dbch_##ch)
+
+#define WINE_DECLARE_DEBUG_CHANNEL(ch) \
+    extern char __wine_dbch_##ch[]
+#define WINE_DEFAULT_DEBUG_CHANNEL(ch) \
+    extern char __wine_dbch_##ch[]; \
+    static char * const __wine_dbch___default = __wine_dbch_##ch
+
+#define WINE_DPRINTF               wine_dbg_printf
+#define WINE_MESSAGE               wine_dbg_printf
+
+#ifdef __WINE__
+/* Wine uses shorter names that are very likely to conflict with other software */
 
 inline static const char *debugstr_an( const char * s, int n ) { return wine_dbgstr_an( s, n ); }
 inline static const char *debugstr_wn( const WCHAR *s, int n ) { return wine_dbgstr_wn( s, n ); }
@@ -80,31 +125,33 @@ inline static const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( 
 inline static const char *debugres_a( const char *s )  { return wine_dbgstr_an( s, 80 ); }
 inline static const char *debugres_w( const WCHAR *s ) { return wine_dbgstr_wn( s, 80 ); }
 
-#define TRACE        __DPRINTF(_TRACE,__wine_dbch___default)
-#define TRACE_(ch)   __DPRINTF(_TRACE,__wine_dbch_##ch)
-#define TRACE_ON(ch) __GET_DEBUGGING(_TRACE,__wine_dbch_##ch)
+#define TRACE                      WINE_TRACE
+#define TRACE_(ch)                 WINE_TRACE_(ch)
+#define TRACE_ON(ch)               WINE_TRACE_ON(ch)
 
-#define WARN         __DPRINTF(_WARN,__wine_dbch___default)
-#define WARN_(ch)    __DPRINTF(_WARN,__wine_dbch_##ch)
-#define WARN_ON(ch)  __GET_DEBUGGING(_WARN,__wine_dbch_##ch)
+#define WARN                       WINE_WARN
+#define WARN_(ch)                  WINE_WARN_(ch)
+#define WARN_ON(ch)                WINE_WARN_ON(ch)
 
-#define FIXME        __DPRINTF(_FIXME,__wine_dbch___default)
-#define FIXME_(ch)   __DPRINTF(_FIXME,__wine_dbch_##ch)
-#define FIXME_ON(ch) __GET_DEBUGGING(_FIXME,__wine_dbch_##ch)
+#define FIXME                      WINE_FIXME
+#define FIXME_(ch)                 WINE_FIXME_(ch)
+#define FIXME_ON(ch)               WINE_FIXME_ON(ch)
 
 #undef ERR  /* Solaris got an 'ERR' define in <sys/reg.h> */
-#define ERR          __DPRINTF(_ERR,__wine_dbch___default)
-#define ERR_(ch)     __DPRINTF(_ERR,__wine_dbch_##ch)
-#define ERR_ON(ch)   __GET_DEBUGGING(_ERR,__wine_dbch_##ch)
+#define ERR                        WINE_ERR
+#define ERR_(ch)                   WINE_ERR_(ch)
+#define ERR_ON(ch)                 WINE_ERR_ON(ch)
 
-#define DECLARE_DEBUG_CHANNEL(ch) \
-    extern char __wine_dbch_##ch[]
-#define DEFAULT_DEBUG_CHANNEL(ch) \
-    extern char __wine_dbch_##ch[]; static char * const __wine_dbch___default = __wine_dbch_##ch
+#define DECLARE_DEBUG_CHANNEL(ch)  WINE_DECLARE_DEBUG_CHANNEL(ch)
+#define DEFAULT_DEBUG_CHANNEL(ch)  WINE_DEFAULT_DEBUG_CHANNEL(ch)
 
-#define DPRINTF wine_dbg_printf
-#define MESSAGE wine_dbg_printf
+#define DPRINTF                    WINE_DPRINTF
+#define MESSAGE                    WINE_MESSAGE
 
-#endif  /* __WINE__ */
+#endif /* __WINE__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_DEBUGTOOLS_H */

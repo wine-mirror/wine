@@ -1476,14 +1476,14 @@ HRESULT WINAPI CIDLData_CreateFromIDArray(
 	TRACE("(%p, %ld, %p, %p)\n", pidlFolder, cpidlFiles,
 	      lppidlFiles, ppdataObject);
 	boldpidl = TRACE_ON(pidl);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_shell, FALSE);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, TRUE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, FALSE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, TRUE);
 	pdump (pidlFolder);
 	for (i=0; i<cpidlFiles; i++){
 	    pdump (lppidlFiles[i]);
 	}
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_shell, TRUE);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, boldpidl);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, TRUE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, boldpidl);
     }
     *ppdataObject = IDataObject_Constructor( hwnd, pidlFolder,
 					     lppidlFiles, cpidlFiles);

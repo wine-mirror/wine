@@ -37,8 +37,8 @@ void pdump (LPCITEMIDLIST pidl)
 
 	/* silence the sub-functions */
 	bIsShellDebug = TRACE_ON(shell);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_shell, FALSE);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, FALSE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, FALSE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, FALSE);
 
 	if (! pidltemp)
 	{
@@ -78,8 +78,8 @@ void pdump (LPCITEMIDLIST pidl)
 	  pcheck(pidl);
 	}
 
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_shell, bIsShellDebug);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, TRUE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_shell, bIsShellDebug);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, TRUE);
 
 }
 #define BYTES_PRINTED 32
@@ -90,7 +90,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
         LPITEMIDLIST pidltemp = pidl;
 
 	bIsPidlDebug = TRACE_ON(shell);
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, FALSE);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, FALSE);
 
         if (pidltemp && pidltemp->mkid.cb)
         { do
@@ -137,7 +137,7 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	    pidltemp = ILGetNext(pidltemp);
 	  } while (pidltemp->mkid.cb);
 	}
-	__SET_DEBUGGING(__DBCL_TRACE, __wine_dbch_pidl, bIsPidlDebug);
+	__WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_pidl, bIsPidlDebug);
 	return ret;
 }
 

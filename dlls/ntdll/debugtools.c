@@ -296,17 +296,17 @@ int wine_dbg_printf(const char *format, ...)
 /***********************************************************************
  *		wine_dbg_log (NTDLL.@)
  */
-int wine_dbg_log(enum __DEBUG_CLASS cls, const char *channel,
+int wine_dbg_log(enum __WINE_DEBUG_CLASS cls, const char *channel,
                  const char *function, const char *format, ... )
 {
-    static const char *classes[__DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
+    static const char *classes[__WINE_DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
     va_list valist;
     int ret = 0;
 
     va_start(valist, format);
     if (TRACE_ON(tid))
         ret = wine_dbg_printf( "%08lx:", (DWORD)NtCurrentTeb()->tid );
-    if (cls < __DBCL_COUNT)
+    if (cls < __WINE_DBCL_COUNT)
         ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
     if (format)
         ret += wine_dbg_vprintf( format, valist );
