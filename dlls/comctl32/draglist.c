@@ -37,7 +37,7 @@ VOID WINAPI DrawInsert (HWND32 hwndParent, HWND32 hwndLB, INT32 nItem)
 
 INT32 WINAPI LBItemFromPt (HWND32 hwndLB, POINT32 pt, BOOL32 bAutoScroll)
 {
-    FIXME (commctrl, "(0x%x %dx %d %s)\n",
+    FIXME (commctrl, "(0x%x %ld x %ld %s)\n",
 	   hwndLB, pt.x, pt.y, bAutoScroll ? "TRUE" : "FALSE");
 
 

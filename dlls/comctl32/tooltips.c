@@ -1421,7 +1421,7 @@ TOOLTIPS_RelayEvent (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
 	    TRACE (tooltips, "tool (%x) %d %d\n",
 		   wndPtr->hwndSelf, infoPtr->nOldTool, infoPtr->nTool);
-	    TRACE (tooltips, "WM_MOUSEMOVE (%04x %d %d)\n",
+	    TRACE (tooltips, "WM_MOUSEMOVE (%04x %ld %ld)\n",
 		   wndPtr->hwndSelf, pt.x, pt.y);
 	    if ((infoPtr->bActive) && (infoPtr->nTool != infoPtr->nOldTool)) {
 		if (infoPtr->nOldTool == -1) {

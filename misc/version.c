@@ -151,9 +151,10 @@ WINDOWS_VERSION VERSION_GetVersion(void)
         if (peheader->OptionalHeader.MinorSubsystemVersion == 50) return NT351;
         if (peheader->OptionalHeader.MinorSubsystemVersion == 51) return NT351;
     }
-    ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
-	peheader->OptionalHeader.MajorSubsystemVersion,
-	peheader->OptionalHeader.MinorSubsystemVersion );
+    if (peheader->OptionalHeader.MajorSubsystemVersion)
+	ERR(ver,"unknown subsystem version: %04x.%04x, please report.\n",
+	    peheader->OptionalHeader.MajorSubsystemVersion,
+	    peheader->OptionalHeader.MinorSubsystemVersion );
     return defaultWinVersion;
 }
 

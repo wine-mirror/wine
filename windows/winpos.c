@@ -1034,7 +1034,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT32 *maxSize, POINT32 *maxPos,
 
       /* Some sanity checks */
 
-    TRACE(win,"%d %d / %d %d / %d %d / %d %d\n",
+    TRACE(win,"%ld %ld / %ld %ld / %ld %ld / %ld %ld\n",
                       MinMax.ptMaxSize.x, MinMax.ptMaxSize.y,
                       MinMax.ptMaxPosition.x, MinMax.ptMaxPosition.y,
                       MinMax.ptMaxTrackSize.x, MinMax.ptMaxTrackSize.y,
