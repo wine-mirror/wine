@@ -165,6 +165,7 @@
 @ stdcall NtQueryKey (long long ptr long ptr) NtQueryKey
 @ stub NtQueryMutant
 @ stdcall NtQueryObject(long long long long long) NtQueryObject
+@ stub NtQueryOpenSubKeys
 @ stdcall NtQueryPerformanceCounter (long long) NtQueryPerformanceCounter
 @ stdcall NtQuerySection (long long long long long) NtQuerySection
 @ stdcall NtQuerySecurityObject (long long long long long) NtQuerySecurityObject
@@ -240,6 +241,7 @@
 @ stub NtTestAlert
 @ stub NtUnloadDriver
 @ stdcall NtUnloadKey(long) NtUnloadKey
+@ stub NtUnloadKeyEx
 @ stub NtUnlockFile
 @ stdcall NtUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
 @ stdcall NtUnmapViewOfSection(long ptr) NtUnmapViewOfSection
@@ -682,6 +684,7 @@
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
 @ stub ZwQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
+@ stub ZwQueryOpenSubKeys
 @ stdcall ZwQueryPerformanceCounter (long long) NtQueryPerformanceCounter
 @ stdcall ZwQuerySection (long long long long long) NtQuerySection
 @ stdcall ZwQuerySecurityObject (long long long long long) NtQuerySecurityObject
@@ -755,6 +758,7 @@
 @ stub ZwTestAlert
 @ stub ZwUnloadDriver
 @ stdcall ZwUnloadKey(long) NtUnloadKey
+@ stub ZwUnloadKeyEx
 @ stub ZwUnlockFile
 @ stdcall ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
 @ stdcall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection

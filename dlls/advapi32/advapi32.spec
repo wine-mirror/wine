@@ -3,7 +3,9 @@
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck
 @ stub AccessCheckAndAuditAlarmA
 @ stub AccessCheckAndAuditAlarmW
+@ stub AccessCheckByType #(ptr ptr long long ptr long ptr ptr ptr ptr ptr) AccessCheckByType
 @ stdcall AddAccessAllowedAce (ptr long long ptr) AddAccessAllowedAce
+@ stub AddAccessAllowedAceEx #(ptr long long long ptr) AddAccessAllowedAceEx
 @ stub AddAccessDeniedAce
 @ stub AddAce
 @ stub AddAuditAccessAce
@@ -23,12 +25,17 @@
 @ stdcall CloseServiceHandle(long) CloseServiceHandle
 @ stub CommandLineFromMsiDescriptor
 @ stdcall ControlService(long long ptr) ControlService
+@ stub ConvertSidToStringSidA #(ptr str) ConvertSidToStringSidA
+@ stub ConvertSidToStringSidW #(ptr wstr) ConvertSidToStringSidW
+@ stub ConvertStringSecurityDescriptorToSecurityDescriptorA #(str long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorA
+@ stub ConvertStringSecurityDescriptorToSecurityDescriptorW #(wstr long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorW
 @ stdcall CopySid(long ptr ptr) CopySid
 @ stub CreatePrivateObjectSecurity
 @ stub CreateProcessAsUserA
 @ stub CreateProcessAsUserW
 @ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
 @ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceW
+@ stub CredProfileLoaded
 @ stdcall CryptAcquireContextA(ptr str str long long) CryptAcquireContextA
 @ stdcall CryptAcquireContextW(ptr wstr wstr long long) CryptAcquireContextW
 @ stdcall CryptContextAddRef(long ptr long) CryptContextAddRef
@@ -72,7 +79,8 @@
 @ stdcall DeleteService(long) DeleteService
 @ stdcall DeregisterEventSource(long) DeregisterEventSource
 @ stub DestroyPrivateObjectSecurity
-@ stub DuplicateToken
+@ stub DuplicateToken #(long long ptr) DuplicateToken
+@ stub DuplicateTokenEx #(long long ptr long long ptr) DuplicateTokenEx
 @ stub EnumDependentServicesA
 @ stub EnumDependentServicesW
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr) EnumServicesStatusA
@@ -90,6 +98,8 @@
 @ stub GetKernelObjectSecurity
 @ stdcall GetLengthSid(ptr) GetLengthSid
 @ stub GetMangledSiteSid
+@ stub GetNamedSecurityInfoA #(str long long ptr ptr ptr ptr ptr) GetNamedSecurityInfoA
+@ stub GetNamedSecurityInfoW #(wstr long long ptr ptr ptr ptr ptr) GetNamedSecurityInfoW
 @ stdcall GetNumberOfEventLogRecords (long ptr) GetNumberOfEventLogRecords
 @ stdcall GetOldestEventLogRecord (long ptr) GetOldestEventLogRecord
 @ stub GetPrivateObjectSecurity
@@ -99,6 +109,7 @@
 @ stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength
 @ stdcall GetSecurityDescriptorOwner(ptr ptr ptr) GetSecurityDescriptorOwner
 @ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr) GetSecurityDescriptorSacl
+@ stub GetSecurityInfo #(long long long ptr ptr ptr ptr ptr) GetSecurityInfo
 @ stub GetServiceDisplayNameA
 @ stub GetServiceDisplayNameW
 @ stub GetServiceKeyNameA
@@ -169,6 +180,7 @@
 @ stub QueryServiceLockStatusW
 @ stub QueryServiceObjectSecurity
 @ stdcall QueryServiceStatus(long ptr) QueryServiceStatus
+@ stdcall QueryServiceStatusEx (long long ptr long ptr) QueryServiceStatusEx
 @ stdcall ReadEventLogA (long long long ptr long ptr ptr) ReadEventLogA
 @ stdcall ReadEventLogW (long long long ptr long ptr ptr) ReadEventLogW
 @ stdcall RegCloseKey(long) RegCloseKey
@@ -233,6 +245,7 @@
 @ stdcall SetFileSecurityW(wstr long ptr) SetFileSecurityW
 @ stdcall SetKernelObjectSecurity(long long ptr) SetKernelObjectSecurity
 @ stub SetPrivateObjectSecurity
+@ stub SetSecurityDescriptorControl #(ptr long long)
 @ stdcall SetSecurityDescriptorDacl(ptr long ptr long) SetSecurityDescriptorDacl
 @ stdcall SetSecurityDescriptorGroup (ptr ptr long) SetSecurityDescriptorGroup
 @ stdcall SetSecurityDescriptorOwner (ptr ptr long) SetSecurityDescriptorOwner

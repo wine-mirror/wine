@@ -700,3 +700,22 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 
     return TRUE;
 }
+
+/******************************************************************************
+ * QueryServiceStatusEx [ADVAPI32.@]
+ *
+ * PARAMS
+ *   hService       [handle to service]
+ *   InfoLevel      [information level]
+ *   lpBuffer       [buffer]
+ *   cbBufSize      [size of buffer]
+ *   pcbBytesNeeded [bytes needed]
+*/
+BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
+                        LPBYTE lpBuffer, DWORD cbBufSize,
+                        LPDWORD pcbBytesNeeded)
+{
+    FIXME("stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

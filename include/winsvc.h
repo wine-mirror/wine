@@ -114,6 +114,10 @@ typedef struct _SERVICE_STATUS {
   DWORD dwWaitHint;
 } SERVICE_STATUS, *LPSERVICE_STATUS;
 
+typedef enum _SC_STATUS_TYPE {
+  SC_STATUS_PROCESS_INFO      = 0
+} SC_STATUS_TYPE;
+
 /* Service main function prototype */
 
 typedef VOID (CALLBACK *LPSERVICE_MAIN_FUNCTIONA)(DWORD,LPSTR*);
@@ -188,7 +192,7 @@ BOOL        WINAPI StartServiceCtrlDispatcherA(LPSERVICE_TABLE_ENTRYA);
 BOOL        WINAPI StartServiceCtrlDispatcherW(LPSERVICE_TABLE_ENTRYW);
 #define     StartServiceCtrlDispatcher WINELIB_NAME_AW(StartServiceCtrlDispatcher)
 BOOL        WINAPI QueryServiceStatus(SC_HANDLE,LPSERVICE_STATUS);
-
+BOOL        WINAPI QueryServiceStatusEx(SC_HANDLE,SC_STATUS_TYPE,LPBYTE,DWORD,LPDWORD);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
