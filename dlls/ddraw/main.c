@@ -213,29 +213,29 @@ static LRESULT WINAPI DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
     if( ddraw ) {
     /* Perform any special direct draw functions */
 	if (msg==WM_PAINT)
-	    ddraw->d.paintable = 1;
+	    ddraw->d->paintable = 1;
 
 	/* Now let the application deal with the rest of this */
-	if( ddraw->d.mainWindow ) {
+	if( ddraw->d->mainWindow ) {
 
 	    /* Don't think that we actually need to call this but... 
 	     * might as well be on the safe side of things...
 	     */
 
-	    /* I changed hwnd to ddraw->d.mainWindow as I did not see why
+	    /* I changed hwnd to ddraw->d->mainWindow as I did not see why
 	     * it should be the procedures of our fake window that gets called
 	     * instead of those of the window provided by the application.
 	     * And with this patch, mouse clicks work with Monkey Island III
 	     * - Lionel
 	     */
-	    ret = DefWindowProcA( ddraw->d.mainWindow, msg, wParam, lParam );
+	    ret = DefWindowProcA( ddraw->d->mainWindow, msg, wParam, lParam );
 
 	    if( !ret ) {
-		WND *tmpWnd =WIN_FindWndPtr(ddraw->d.mainWindow);
+		WND *tmpWnd =WIN_FindWndPtr(ddraw->d->mainWindow);
 		/* We didn't handle the message - give it to the application */
-		if (ddraw && ddraw->d.mainWindow && tmpWnd)
+		if (ddraw && ddraw->d->mainWindow && tmpWnd)
 		    ret = CallWindowProcA(tmpWnd->winproc,
-		ddraw->d.mainWindow, msg, wParam, lParam );
+		ddraw->d->mainWindow, msg, wParam, lParam );
 		WIN_ReleaseWndPtr(tmpWnd);
 	    }
 	    return ret;
@@ -320,7 +320,7 @@ HRESULT WINAPI DirectDrawCreate(
     wc.hbrBackground	= NULL_BRUSH;
     wc.lpszMenuName 	= 0;
     wc.lpszClassName	= "WINE_DirectDraw";
-    (*ilplpDD)->d.winclass = RegisterClassA(&wc);
+    (*ilplpDD)->d->winclass = RegisterClassA(&wc);
     return ret;
 }
 

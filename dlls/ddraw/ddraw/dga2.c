@@ -29,7 +29,7 @@ struct ICOM_VTABLE(IDirectDraw)		dga2_ddvt;
 struct ICOM_VTABLE(IDirectDraw2)	dga2_dd2vt;
 struct ICOM_VTABLE(IDirectDraw4)	dga2_dd4vt;
 
-#define DDPRIVATE(x) dga2_dd_private *ddpriv = ((dga2_dd_private*)(x)->private)
+#define DDPRIVATE(x) dga2_dd_private *ddpriv = ((dga2_dd_private*)(x)->d->private)
 #define DPPRIVATE(x) dga2_dp_private *dppriv = ((dga2_dp_private*)(x)->private)
 
 /*******************************************************************************
@@ -69,7 +69,7 @@ static HRESULT WINAPI DGA2_IDirectDraw2Impl_SetCooperativeLevel(
 }
 
 void _DGA2_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
-    DDPIXELFORMAT *pf = &(This->d.directdraw_pixelformat);
+    DDPIXELFORMAT *pf = &(This->d->directdraw_pixelformat);
     DDPRIVATE(This);
 
     /* Now, get the device / mode description */
@@ -89,8 +89,8 @@ void _DGA2_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
     /* Get the screen dimensions as seen by Wine.
      * In that case, it may be better to ignore the -desktop mode and return the
      * real screen size => print a warning */
-    This->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    This->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    This->d->height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    This->d->width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
     ddpriv->DGA.fb_addr = ddpriv->dev->data;
     ddpriv->DGA.fb_memsize = (ddpriv->dev->mode.imageWidth *
 			      ddpriv->dev->mode.imageHeight *
@@ -113,7 +113,7 @@ void _DGA2_Initialize_FrameBuffer(IDirectDrawImpl *This, int mode) {
 	pf->u3.dwBBitMask = ddpriv->dev->mode.blueMask;
     }
     pf->u4.dwRGBAlphaBitMask= 0;
-    This->d.screen_pixelformat = *pf; 
+    This->d->screen_pixelformat = *pf; 
 }
 
 static HRESULT WINAPI DGA2_IDirectDrawImpl_SetDisplayMode(
@@ -185,7 +185,7 @@ static HRESULT WINAPI DGA2_IDirectDraw2Impl_CreatePalette(
     dppriv = (dga_dp_private*)ddpal->private;
 
     ICOM_VTBL(ddpal)= &dga_ddpalvt;
-    if (This->d.directdraw_pixelformat.u.dwRGBBitCount<=8) {
+    if (This->d->directdraw_pixelformat.u.dwRGBBitCount<=8) {
 	dppriv->cm = TSXDGACreateColormap(display,DefaultScreen(display), ddpriv->dev, AllocAll);
     } else {
 	ERR("why are we doing CreatePalette in hi/truecolor?\n");
@@ -223,23 +223,25 @@ static ULONG WINAPI DGA2_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
-      TRACE("Closing access to the FrameBuffer\n");
-      VirtualFree(ddpriv->DGA.fb_addr, 0, MEM_RELEASE);
-      TSXDGACloseFramebuffer(display, DefaultScreen(display));
-      TRACE("Going back to normal X mode of operation\n");
-      TSXDGASetMode(display, DefaultScreen(display), 0);
+      if (!--(This->d->ref)) {
+	  TRACE("Closing access to the FrameBuffer\n");
+	  VirtualFree(ddpriv->DGA.fb_addr, 0, MEM_RELEASE);
+	  TSXDGACloseFramebuffer(display, DefaultScreen(display));
+	  TRACE("Going back to normal X mode of operation\n");
+	  TSXDGASetMode(display, DefaultScreen(display), 0);
 
-      /* Set the input handling back to absolute */
-      X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
-      
-      /* Remove the handling of DGA2 events */
-      X11DRV_EVENT_SetDGAStatus(0, -1);
-      
-      /* Free the modes list */
-      TSXFree(ddpriv->modes);
-
+	  /* Set the input handling back to absolute */
+	  X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
+	  
+	  /* Remove the handling of DGA2 events */
+	  X11DRV_EVENT_SetDGAStatus(0, -1);
+	  
+	  /* Free the modes list */
+	  TSXFree(ddpriv->modes);
+          HeapFree(GetProcessHeap(),0,This->d);
+      }
       HeapFree(GetProcessHeap(),0,This);
-      return S_OK;
+      return 0;
     }
     return This->ref;
 }

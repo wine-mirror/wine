@@ -51,8 +51,8 @@ HRESULT WINAPI Xlib_IDirectDrawPaletteImpl_SetEntries(
 
     /* Now, if we are in 'depth conversion mode', update the screen palette */
     /* FIXME: we need to update the image or we won't get palette fading. */
-    if (This->ddraw->d.palette_convert != NULL) {
-	This->ddraw->d.palette_convert(palent,This->screen_palents,start,count);
+    if (This->ddraw->d->palette_convert != NULL) {
+	This->ddraw->d->palette_convert(palent,This->screen_palents,start,count);
     }
     return DD_OK;
 }

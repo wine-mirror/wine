@@ -101,10 +101,12 @@ DGA2_Create( LPDIRECTDRAW *lplpDD ) {
     *lplpDD = (LPDIRECTDRAW)ddraw;
     ddraw->ref = 1;
     ICOM_VTBL(ddraw) = &dga2_ddvt;
-    
-    ddraw->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(dga2_dd_private));
 
-    dgpriv = (dga2_dd_private*)ddraw->private;
+    ddraw->d = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*(ddraw->d)));
+    ddraw->d->ref = 1;
+    ddraw->d->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(dga2_dd_private));
+
+    dgpriv = (dga2_dd_private*)ddraw->d->private;
     
     TSXDGAQueryVersion(display,&major,&minor);
     TRACE("XDGA is version %d.%d\n",major,minor);
@@ -157,7 +159,7 @@ DGA2_Create( LPDIRECTDRAW *lplpDD ) {
     /* Initialize the frame buffer */
     _DGA2_Initialize_FrameBuffer(ddraw, mode_to_use);
 
-    /* Register frame buffer with the kernel, it is as a potential DIB section */
+    /* Register frame buffer with the kernel, it is a potential DIB section */
     VirtualAlloc(dgpriv->DGA.fb_addr, dgpriv->DGA.fb_memsize, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
     
     /* Set the input handling for relative mouse movements */

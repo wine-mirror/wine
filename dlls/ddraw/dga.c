@@ -123,10 +123,10 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
     *lplpDD = (LPDIRECTDRAW)ddraw;
     ddraw->ref = 1;
     ICOM_VTBL(ddraw) = &dga_ddvt;
-    
-    ddraw->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(dga_dd_private));
-
-    dgpriv = (dga_dd_private*)ddraw->private;
+    ddraw->d = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*(ddraw->d)));
+    ddraw->d->ref = 1;
+    ddraw->d->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(dga_dd_private));
+    dgpriv = (dga_dd_private*)ddraw->d->private;
 
     TSXF86DGAQueryVersion(display,&major,&minor);
     TRACE("XF86DGA is version %d.%d\n",major,minor);
@@ -147,9 +147,9 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
      * In that case, it may be better to ignore the -desktop mode and
      * return the real screen size => print a warning
      */
-    ddraw->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    ddraw->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-    if ((ddraw->d.height != height) || (ddraw->d.width  != width))
+    ddraw->d->height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    ddraw->d->width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    if ((ddraw->d->height != height) || (ddraw->d->width  != width))
       WARN("You seem to be running in -desktop mode. This may prove dangerous in DGA mode...\n");
     dgpriv->fb_addr		= addr;
     dgpriv->fb_memsize	= memsize;

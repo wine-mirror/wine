@@ -29,7 +29,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 
 #include "x11_private.h"
 
-#define DDPRIVATE(x) x11_dd_private *ddpriv = ((x11_dd_private*)(x)->private)
+#define DDPRIVATE(x) x11_dd_private *ddpriv = ((x11_dd_private*)(x)->d->private)
 #define DPPRIVATE(x) x11_dp_private *dppriv = ((x11_dp_private*)(x)->private)
 #define DSPRIVATE(x) x11_ds_private *dspriv = ((x11_ds_private*)(x)->private)
 
@@ -46,11 +46,11 @@ int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw)
   int nvisuals, npixmap, i;
   int match = 0;
   int index = -2;
-  DDPIXELFORMAT *pixelformat = &(This->d.directdraw_pixelformat);
-  DDPIXELFORMAT *screen_pixelformat = &(This->d.screen_pixelformat);
+  DDPIXELFORMAT *pixelformat = &(This->d->directdraw_pixelformat);
+  DDPIXELFORMAT *screen_pixelformat = &(This->d->screen_pixelformat);
 
-  This->d.pixel_convert = NULL;
-  This->d.palette_convert = NULL;
+  This->d->pixel_convert = NULL;
+  This->d->palette_convert = NULL;
 
   vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
   pf = TSXListPixmapFormats(display, &npixmap);
@@ -76,17 +76,14 @@ int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw)
 	  pixelformat->dwFourCC = 0;
 	  pixelformat->u.dwRGBBitCount = pf[i].bits_per_pixel;
 	  pixelformat->u4.dwRGBAlphaBitMask= 0;
-
 	  *screen_pixelformat = *pixelformat;
-
-	  This->d.pixmap_depth = vi[j].depth;
-
+	  This->d->pixmap_depth = depth;
 	  match = 1;
 	  index = -1;
 	  goto clean_up_and_exit;
 	}
       }
-      WARN("No visual corresponding to pixmap format !\n");
+      FIXME("No visual corresponding to pixmap format (depth=%ld)!\n",depth);
     }
   }
 
@@ -131,19 +128,19 @@ int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw)
 		  pixelformat->u3.dwBBitMask = ModeEmulations[c].dest.bmask;
 		}
 		pixelformat->u4.dwRGBAlphaBitMask= 0;    
-		This->d.pixmap_depth = vi[j].depth;
+		This->d->pixmap_depth = vi[j].depth;
 		match = 2;
 		index = c;
-		This->d.pixel_convert  =ModeEmulations[c].funcs.pixel_convert;
-		This->d.palette_convert=ModeEmulations[c].funcs.palette_convert;
+		This->d->pixel_convert  =ModeEmulations[c].funcs.pixel_convert;
+		This->d->palette_convert=ModeEmulations[c].funcs.palette_convert;
 		goto clean_up_and_exit;
 	      }
-	      ERR("No visual corresponding to pixmap format !\n");
 	    }
 	  }
 	}
       }
     }
+    ERR("No emulation found for depth %ld!\n",depth);
   }
 
 clean_up_and_exit:
@@ -173,7 +170,7 @@ static XImage *create_xshmimage(
 
     img = TSXShmCreateImage(display,
 	DefaultVisualOfScreen(X11DRV_GetXScreen()),
-	This->d.pixmap_depth,
+	This->d->pixmap_depth,
 	ZPixmap,
 	NULL,
 	&(dspriv->shminfo),
@@ -188,6 +185,7 @@ static XImage *create_xshmimage(
     }
 
     dspriv->shminfo.shmid = shmget( IPC_PRIVATE, img->bytes_per_line * img->height, IPC_CREAT|0777 );
+
     if (dspriv->shminfo.shmid < 0) {
 	FIXME("Couldn't create shared memory segment (due to X11 remote display or failure).\nReverting to standard X images !\n");
 	ddpriv->xshm_active = 0;
@@ -247,8 +245,8 @@ static XImage *create_xshmimage(
 
     shmctl(dspriv->shminfo.shmid, IPC_RMID, 0);
 
-    if (This->d.pixel_convert != NULL) {
-	int bpp = PFGET_BPP(This->d.directdraw_pixelformat);
+    if (This->d->pixel_convert != NULL) {
+	int bpp = PFGET_BPP(This->d->directdraw_pixelformat);
 	lpdsf->s.surface_desc.u1.lpSurface = VirtualAlloc(
 	    NULL,
 	    lpdsf->s.surface_desc.dwWidth *
@@ -269,8 +267,8 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
     XImage *img = NULL;
     DDPRIVATE(This);
     void *img_data;
-    int bpp = PFGET_BPP(This->d.directdraw_pixelformat);
-    int screen_bpp = PFGET_BPP(This->d.screen_pixelformat);
+    int bpp = PFGET_BPP(This->d->directdraw_pixelformat);
+    int screen_bpp = PFGET_BPP(This->d->screen_pixelformat);
     
 #ifdef HAVE_LIBXXSHM
     if (ddpriv->xshm_active)
@@ -288,7 +286,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	    PAGE_READWRITE
 	);
 
-	if (This->d.pixel_convert != NULL)
+	if (This->d->pixel_convert != NULL)
 	    img_data = VirtualAlloc(
 		NULL,
 		lpdsf->s.surface_desc.dwWidth *
@@ -303,7 +301,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	/* In this case, create an XImage */
 	img = TSXCreateImage(display,
 	    DefaultVisualOfScreen(X11DRV_GetXScreen()),
-	    This->d.pixmap_depth,
+	    This->d->pixmap_depth,
 	    ZPixmap,
 	    0,
 	    img_data,
@@ -315,7 +313,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 #ifdef HAVE_LIBXXSHM
     }
 #endif
-    if (This->d.pixel_convert != NULL)
+    if (This->d->pixel_convert != NULL)
 	lpdsf->s.surface_desc.lPitch = bpp*lpdsf->s.surface_desc.dwWidth;
     else
 	lpdsf->s.surface_desc.lPitch = img->bytes_per_line;
@@ -360,9 +358,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
     dsurf->s.surface_desc = *lpddsd;
 
     if (!(lpddsd->dwFlags & DDSD_WIDTH))
-	dsurf->s.surface_desc.dwWidth  = This->d.width;
+	dsurf->s.surface_desc.dwWidth  = This->d->width;
     if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-	dsurf->s.surface_desc.dwHeight = This->d.height;
+	dsurf->s.surface_desc.dwHeight = This->d->height;
     dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT;
 
     /* Check if this a 'primary surface' or not */
@@ -371,19 +369,19 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
     ) {
 	XImage *img;
 
+	/* Add flags if there were not present */
+	dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE|DDSD_PIXELFORMAT;
+	dsurf->s.surface_desc.dwWidth = This->d->width;
+	dsurf->s.surface_desc.dwHeight = This->d->height;
+	dsurf->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
+	dsurf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
+
 	TRACE("using standard XImage for a primary surface (%p)\n", dsurf);
 	/* Create the XImage */
 	img = create_ximage(This,(IDirectDrawSurface4Impl*)dsurf);
 	if (img == NULL)
 	    return DDERR_OUTOFMEMORY;
 	dspriv->image = img;
-
-	/* Add flags if there were not present */
-	dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE|DDSD_PIXELFORMAT;
-	dsurf->s.surface_desc.dwWidth = This->d.width;
-	dsurf->s.surface_desc.dwHeight = This->d.height;
-	dsurf->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
-	dsurf->s.surface_desc.ddpfPixelFormat = This->d.directdraw_pixelformat;
 
 	/* Check for backbuffers */
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
@@ -457,7 +455,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_SetCooperativeLevel(
     FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
     if (TRACE_ON(ddraw))
 	_dump_cooperativelevel(cooplevel);
-    This->d.mainWindow = hwnd;
+    This->d->mainWindow = hwnd;
 
     /* This will be overwritten in the case of Full Screen mode.
        Windowed games could work with that :-) */
@@ -499,13 +497,13 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
       DPRINTF("DirectDraw warning: running in depth-conversion mode %d. Should run using a %ld depth for optimal performances.\n", c,depth);
     }
 	
-    This->d.width	= width;
-    This->d.height	= height;
+    This->d->width	= width;
+    This->d->height	= height;
 
     _common_IDirectDrawImpl_SetDisplayMode(This);
 
-    tmpWnd = WIN_FindWndPtr(This->d.window);
-    This->d.paintable = 1;
+    tmpWnd = WIN_FindWndPtr(This->d->window);
+    This->d->paintable = 1;
     ddpriv->drawable  = ((X11DRV_WND_DATA *) tmpWnd->pDriverData)->window;
     WIN_ReleaseWndPtr(tmpWnd);
 
@@ -593,20 +591,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreatePalette(
     return DD_OK;
 }
 
-static ULONG WINAPI Xlib_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
-
-    if (!--(This->ref)) {
-	if (This->d.window && GetPropA(This->d.window,ddProp))
-	    DestroyWindow(This->d.window);
-	HeapFree(GetProcessHeap(),0,This);
-	return S_OK;
-    }
-    /* FIXME: destroy window ... */
-    return This->ref;
-}
-
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
     LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj
 ) {
@@ -622,30 +606,32 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirectDraw, refiid ) ) {
-	ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&xlib_ddvt;
+	IDirectDrawImpl	*dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
 	IDirectDraw2_AddRef(iface);
-	*obj = This;
+
+	dd->ref = 1;ICOM_VTBL(dd) = &xlib_ddvt;dd->d = This->d;This->d->ref++;
+	*obj = dd;
 
 	TRACE("  Creating IDirectDraw interface (%p)\n", *obj);
-	
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) {
-	ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd2vt;
+	IDirectDraw2Impl *dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
 	IDirectDraw2_AddRef(iface);
-	*obj = This;
+
+	dd->ref = 1;ICOM_VTBL(dd) = &xlib_dd2vt;dd->d = This->d;This->d->ref++;
+	*obj = dd;
 
 	TRACE("  Creating IDirectDraw2 interface (%p)\n", *obj);
-	
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) {
-	ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd4vt;
+	IDirectDraw4Impl *dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
+	dd->ref = 1;ICOM_VTBL(dd) = &xlib_dd4vt;dd->d = This->d;This->d->ref++;
+	*obj = dd;
+
 	IDirectDraw2_AddRef(iface);
-	*obj = This;
-
 	TRACE("  Creating IDirectDraw4 interface (%p)\n", *obj);
-
 	return S_OK;
     }
 #ifdef HAVE_OPENGL
@@ -851,24 +837,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   return DD_OK;
 }
 
-static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
-    LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsfd
-) {
-    ICOM_THIS(IDirectDraw2Impl,iface);
-    TRACE("(%p)->GetDisplayMode(%p)\n",This,lpddsfd);
-    lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-    lpddsfd->dwHeight = This->d.height;
-    lpddsfd->dwWidth = This->d.width;
-    lpddsfd->lPitch = lpddsfd->dwWidth * PFGET_BPP(This->d.directdraw_pixelformat);
-    lpddsfd->dwBackBufferCount = 2;
-    lpddsfd->u.dwRefreshRate = 60;
-    lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
-    lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
-    if (TRACE_ON(ddraw))
-	_dump_surface_desc(lpddsfd);
-    return DD_OK;
-}
-
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(xlib_ddvt.fn##fun))
@@ -880,7 +848,7 @@ ICOM_VTABLE(IDirectDraw) xlib_ddvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
     XCAST(AddRef)IDirectDraw2Impl_AddRef,
-    XCAST(Release)Xlib_IDirectDraw2Impl_Release,
+    XCAST(Release)IDirectDraw2Impl_Release,
     XCAST(Compact)IDirectDraw2Impl_Compact,
     XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
     XCAST(CreatePalette)Xlib_IDirectDraw2Impl_CreatePalette,
@@ -890,7 +858,7 @@ ICOM_VTABLE(IDirectDraw) xlib_ddvt = {
     XCAST(EnumSurfaces)IDirectDraw2Impl_EnumSurfaces,
     XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
     XCAST(GetCaps)Xlib_IDirectDraw2Impl_GetCaps,
-    XCAST(GetDisplayMode)Xlib_IDirectDraw2Impl_GetDisplayMode,
+    XCAST(GetDisplayMode)IDirectDraw2Impl_GetDisplayMode,
     XCAST(GetFourCCCodes)IDirectDraw2Impl_GetFourCCCodes,
     XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
     XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,
@@ -931,7 +899,7 @@ ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Xlib_IDirectDraw2Impl_QueryInterface,
     IDirectDraw2Impl_AddRef,
-    Xlib_IDirectDraw2Impl_Release,
+    IDirectDraw2Impl_Release,
     IDirectDraw2Impl_Compact,
     IDirectDraw2Impl_CreateClipper,
     Xlib_IDirectDraw2Impl_CreatePalette,
@@ -941,7 +909,7 @@ ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = {
     IDirectDraw2Impl_EnumSurfaces,
     IDirectDraw2Impl_FlipToGDISurface,
     Xlib_IDirectDraw2Impl_GetCaps,
-    Xlib_IDirectDraw2Impl_GetDisplayMode,
+    IDirectDraw2Impl_GetDisplayMode,
     IDirectDraw2Impl_GetFourCCCodes,
     IDirectDraw2Impl_GetGDISurface,
     IDirectDraw2Impl_GetMonitorFrequency,
@@ -965,7 +933,7 @@ ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     XCAST(QueryInterface)Xlib_IDirectDraw2Impl_QueryInterface,
     XCAST(AddRef)IDirectDraw2Impl_AddRef,
-    XCAST(Release)Xlib_IDirectDraw2Impl_Release,
+    XCAST(Release)IDirectDraw2Impl_Release,
     XCAST(Compact)IDirectDraw2Impl_Compact,
     XCAST(CreateClipper)IDirectDraw2Impl_CreateClipper,
     XCAST(CreatePalette)Xlib_IDirectDraw2Impl_CreatePalette,
@@ -975,7 +943,7 @@ ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = {
     XCAST(EnumSurfaces)IDirectDraw2Impl_EnumSurfaces,
     XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
     XCAST(GetCaps)Xlib_IDirectDraw2Impl_GetCaps,
-    XCAST(GetDisplayMode)Xlib_IDirectDraw2Impl_GetDisplayMode,
+    XCAST(GetDisplayMode)IDirectDraw2Impl_GetDisplayMode,
     XCAST(GetFourCCCodes)IDirectDraw2Impl_GetFourCCCodes,
     XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
     XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,

@@ -46,7 +46,7 @@ HRESULT WINAPI IDirectDraw2Impl_SetCooperativeLevel(
 
     FIXME("(%p)->(%08lx,%08lx)\n",This,(DWORD)hwnd,cooplevel);
     _dump_cooperativelevel(cooplevel);
-    This->d.mainWindow = hwnd;
+    This->d->mainWindow = hwnd;
     return DD_OK;
 }
 
@@ -60,45 +60,45 @@ void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
     RECT	rect;
 
     /* Do destroy only our window */
-    if (This->d.window && GetPropA(This->d.window,ddProp)) {
-	DestroyWindow(This->d.window);
-	This->d.window = 0;
+    if (This->d->window && GetPropA(This->d->window,ddProp)) {
+	DestroyWindow(This->d->window);
+	This->d->window = 0;
     }
     /* Sanity check cooperative window before assigning it to drawing. */
-    if (IsWindow(This->d.mainWindow) &&
-	IsWindowVisible(This->d.mainWindow)
+    if (IsWindow(This->d->mainWindow) &&
+	IsWindowVisible(This->d->mainWindow)
     ) {
-	GetWindowRect(This->d.mainWindow,&rect);
-	if ((((rect.right-rect.left) >= This->d.width)	&&
-	     ((rect.bottom-rect.top) >= This->d.height))
+	GetWindowRect(This->d->mainWindow,&rect);
+	if ((((rect.right-rect.left) >= This->d->width)	&&
+	     ((rect.bottom-rect.top) >= This->d->height))
 	) {
-	    This->d.window = This->d.mainWindow;
+	    This->d->window = This->d->mainWindow;
 	    /* FIXME: resizing is not windows compatible behaviour, need test */
-	    /* SetWindowPos(This->d.mainWindow,HWND_TOPMOST,0,0,This->d.width,This->d.height,SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER); */
-	    This->d.paintable = 1; /* don't wait for WM_PAINT */
+	    /* SetWindowPos(This->d->mainWindow,HWND_TOPMOST,0,0,This->d->width,This->d->height,SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER); */
+	    This->d->paintable = 1; /* don't wait for WM_PAINT */
 	}
     }
     /* ... failed, create new one. */
-    if (!This->d.window) {
-	This->d.window = CreateWindowExA(
+    if (!This->d->window) {
+	This->d->window = CreateWindowExA(
 	    0,
 	    "WINE_DirectDraw",
 	    "WINE_DirectDraw",
 	    WS_POPUP,
 	    0,0,
-	    This->d.width,
-	    This->d.height,
+	    This->d->width,
+	    This->d->height,
 	    0,
 	    0,
 	    0,
 	    NULL
 	);
 	/*Store THIS with the window. We'll use it in the window procedure*/
-	SetPropA(This->d.window,ddProp,(LONG)This);
-	ShowWindow(This->d.window,TRUE);
-	UpdateWindow(This->d.window);
+	SetPropA(This->d->window,ddProp,(LONG)This);
+	ShowWindow(This->d->window,TRUE);
+	UpdateWindow(This->d->window);
     }
-    SetFocus(This->d.window);
+    SetFocus(This->d->window);
 }
 
 HRESULT WINAPI IDirectDrawImpl_SetDisplayMode(
@@ -107,8 +107,8 @@ HRESULT WINAPI IDirectDrawImpl_SetDisplayMode(
         ICOM_THIS(IDirectDrawImpl,iface);
 
 	FIXME("(%p)->SetDisplayMode(%ld,%ld,%ld), needs to be implemented for your display adapter!\n",This,width,height,depth);
-	This->d.width	= width;
-	This->d.height	= height;
+	This->d->width	= width;
+	This->d->height	= height;
 	_common_IDirectDrawImpl_SetDisplayMode(This);
 	return DD_OK;
 }
@@ -192,7 +192,7 @@ HRESULT WINAPI common_IDirectDraw2Impl_CreatePalette(
 	ERR("unhandled palette format\n");
 
     *psize = size;
-    if (This->d.palette_convert == NULL) {
+    if (This->d->palette_convert == NULL) {
 	/* No depth conversion - create 8<->8 identity map */
 	int ent;
 	for (ent=0; ent<256; ent++)
@@ -200,11 +200,11 @@ HRESULT WINAPI common_IDirectDraw2Impl_CreatePalette(
     }
     if (palent) {
 	/* Now, if we are in depth conversion mode, create the screen palette */
-	if (This->d.palette_convert != NULL)	    
-	    This->d.palette_convert(palent,(*lpddpal)->screen_palents,0,size);
+	if (This->d->palette_convert != NULL)	    
+	    This->d->palette_convert(palent,(*lpddpal)->screen_palents,0,size);
 
 	memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
-    } else if (This->d.palette_convert != NULL) {
+    } else if (This->d->palette_convert != NULL) {
 	/* In that case, put all 0xFF */
 	memset((*lpddpal)->screen_palents, 0xFF, 256 * sizeof(int));
     }
@@ -253,8 +253,11 @@ ULONG WINAPI IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
-	if (This->d.window && GetPropA(This->d.window,ddProp))
-	    DestroyWindow(This->d.window);
+	if (!--(This->d->ref)) {
+	    if (This->d->window && GetPropA(This->d->window,ddProp))
+		DestroyWindow(This->d->window);
+	    HeapFree(GetProcessHeap(),0,This->d);
+	}
 	HeapFree(GetProcessHeap(),0,This);
 	return S_OK;
     }
@@ -379,13 +382,13 @@ HRESULT WINAPI IDirectDraw2Impl_GetDisplayMode(
     ICOM_THIS(IDirectDraw2Impl,iface);
     TRACE("(%p)->GetDisplayMode(%p)\n",This,lpddsfd);
     lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-    lpddsfd->dwHeight = This->d.height;
-    lpddsfd->dwWidth = This->d.width;
-    lpddsfd->lPitch =lpddsfd->dwWidth*PFGET_BPP(This->d.directdraw_pixelformat);
+    lpddsfd->dwHeight = This->d->height;
+    lpddsfd->dwWidth = This->d->width;
+    lpddsfd->lPitch =lpddsfd->dwWidth*PFGET_BPP(This->d->directdraw_pixelformat);
     lpddsfd->dwBackBufferCount = 2;
     lpddsfd->u.dwRefreshRate = 60;
     lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
-    lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
+    lpddsfd->ddpfPixelFormat = This->d->directdraw_pixelformat;
     if (TRACE_ON(ddraw))
 	_dump_surface_desc(lpddsfd);
     return DD_OK;
@@ -444,7 +447,7 @@ HRESULT WINAPI IDirectDraw2Impl_GetScanLine(
     FIXME("(%p)->(%p)\n", This, lpdwScanLine);
 
     if (lpdwScanLine)
-	*lpdwScanLine = 0;
+	*lpdwScanLine = 1;
     return DD_OK;
 }
 
@@ -543,7 +546,7 @@ HRESULT common_off_screen_CreateSurface(
 	/* This is a standard image */
 	if (!(lpdsf->s.surface_desc.dwFlags & DDSD_PIXELFORMAT)) {
 	    /* No pixel format => use DirectDraw's format */
-	    lpdsf->s.surface_desc.ddpfPixelFormat = This->d.directdraw_pixelformat;
+	    lpdsf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
 	    lpdsf->s.surface_desc.dwFlags |= DDSD_PIXELFORMAT;
 	}
 	bpp = GET_BPP(lpdsf->s.surface_desc);

@@ -52,6 +52,7 @@ extern struct ICOM_VTABLE(IDirectDrawPalette)	ddraw_ddpalvt;
  */
 struct _common_directdrawdata
 {
+    int		  ref;		/* for this structure, only once per obj */
     DDPIXELFORMAT directdraw_pixelformat;
     DDPIXELFORMAT screen_pixelformat;
 
@@ -66,6 +67,7 @@ struct _common_directdrawdata
     HWND          window;
     PAINTSTRUCT   ps;
     int           paintable;
+    LPVOID	  private;
 };
 
 /*****************************************************************************
@@ -79,26 +81,25 @@ struct IDirectDrawImpl
     /* IUnknown fields */
     ICOM_VFIELD(IDirectDraw);
     DWORD				ref;
+
     /* IDirectDraw fields */
-    struct _common_directdrawdata	d;
-    LPVOID				private;
+    struct _common_directdrawdata	*d;
 };
-extern HRESULT WINAPI IDirectDrawImpl_SetDisplayMode(
-	LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
-);
-/*
- * IDirectDraw2 implementation structure
- */
+
 struct IDirectDraw2Impl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectDraw2);
     DWORD				ref;
 
-    /* IDirectDraw2 fields */
-    struct _common_directdrawdata	d;
-    LPVOID				private;
+    /* IDirectDraw fields */
+    struct _common_directdrawdata	*d;
 };
+
+extern HRESULT WINAPI IDirectDrawImpl_SetDisplayMode(
+	LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
+);
+
 extern HRESULT WINAPI IDirectDraw2Impl_DuplicateSurface(
 	LPDIRECTDRAW2 iface,LPDIRECTDRAWSURFACE src,LPDIRECTDRAWSURFACE *dst
 );
@@ -175,9 +176,9 @@ struct IDirectDraw4Impl
     ICOM_VFIELD(IDirectDraw4);
     DWORD				ref;
     /* IDirectDraw4 fields */
-    struct _common_directdrawdata	d;
-    LPVOID				private;
+    struct _common_directdrawdata	*d;
 };
+
 extern HRESULT WINAPI IDirectDraw4Impl_GetSurfaceFromDC(
 	LPDIRECTDRAW4 iface, HDC hdc, LPDIRECTDRAWSURFACE *lpDDS
 );

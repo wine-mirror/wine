@@ -19,7 +19,7 @@
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
 #define DPPRIVATE(x) dga_dp_private *dppriv = ((dga_dp_private*)(x)->private)
-#define DDPRIVATE(x) dga_dd_private *ddpriv = ((dga_dd_private*)(x)->private)
+#define DDPRIVATE(x) dga_dd_private *ddpriv = ((dga_dd_private*)(x)->d->private)
 
 HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
     LPDIRECTDRAWPALETTE iface,DWORD x,DWORD start,DWORD count,LPPALETTEENTRY palent

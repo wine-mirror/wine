@@ -28,7 +28,7 @@ ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3;
 #undef HAVE_BUGGY_MESAGL
 
 #define D3DDPRIVATE(x) mesa_d3dd_private *odev=((mesa_d3dd_private*)x->private)
-#define DDPRIVATE(x) x11_dd_private *ddpriv=((x11_dd_private*)(x)->private)
+#define DDPRIVATE(x) x11_dd_private *ddpriv=((x11_dd_private*)(x)->d->private)
 
 static const float id_mat[16] = {
   1.0, 0.0, 0.0, 0.0,

@@ -17,7 +17,7 @@
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
-#define DDPRIVATE(x) dga2_dd_private *ddpriv = ((dga2_dd_private*)(x)->private)
+#define DDPRIVATE(x) dga2_dd_private *ddpriv = ((dga2_dd_private*)(x)->d->private)
 #define DPPRIVATE(x) dga2_dp_private *dppriv = ((dga2_dp_private*)(x)->private)
 #define DSPRIVATE(x) dga2_ds_private *dspriv = ((dga2_ds_private*)(x)->private)
 

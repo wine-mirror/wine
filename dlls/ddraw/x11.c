@@ -61,12 +61,15 @@ static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
     ddraw = (IDirectDrawImpl*)*lplpDD;
     ICOM_VTBL(ddraw)= &xlib_ddvt;
     ddraw->ref	= 1;
-    ddraw->private	= HeapAlloc(
+
+    ddraw->d = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*(ddraw->d)));
+    ddraw->d->ref = 1;
+    ddraw->d->private	= HeapAlloc(
 	GetProcessHeap(),
 	HEAP_ZERO_MEMORY,
 	sizeof(x11_dd_private)
     );
-    x11priv = (x11_dd_private*)ddraw->private;
+    x11priv = (x11_dd_private*)ddraw->d->private;
 
     /* At DirectDraw creation, the depth is the default depth */
     depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
@@ -77,8 +80,8 @@ static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
     case 0: MESSAGE("Conversion needed from %d.\n",depth); break;
     }
 
-    ddraw->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    ddraw->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+    ddraw->d->height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    ddraw->d->width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 #ifdef HAVE_LIBXXSHM
     /* Test if XShm is available. */
     if ((x11priv->xshm_active = DDRAW_XSHM_Available())) {

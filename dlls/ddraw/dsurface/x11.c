@@ -28,7 +28,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 
 #define VISIBLE(x) (SDDSCAPS(x) & (DDSCAPS_VISIBLE|DDSCAPS_PRIMARYSURFACE))
 
-#define DDPRIVATE(x) x11_dd_private *ddpriv = ((x11_dd_private*)(x)->private)
+#define DDPRIVATE(x) x11_dd_private *ddpriv = ((x11_dd_private*)(x)->d->private)
 #define DPPRIVATE(x) x11_dp_private *dppriv = ((x11_dp_private*)(x)->private)
 #define DSPRIVATE(x) x11_ds_private *dspriv = ((x11_ds_private*)(x)->private)
 
@@ -93,10 +93,10 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
     DSPRIVATE(This);
     DDPRIVATE(This->s.ddraw);
-    
+
     /* DO NOT AddRef the surface! Lock/Unlock are NOT guaranteed to come in 
      * matched pairs! - Marcus Meissner 20000509 */
-    TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,lprect,lpddsd,flags,(DWORD)hnd);
+    TRACE("(%p)->Lock(%p,%p,%08lx,%08lx) ret=%p\n",This,lprect,lpddsd,flags,(DWORD)hnd,__builtin_return_address(0));
     if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
 	WARN("(%p)->Lock(%p,%p,%08lx,%08lx)\n",
 		     This,lprect,lpddsd,flags,(DWORD)hnd);
@@ -159,7 +159,6 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
   DSPRIVATE(This);
   DDPRIVATE(This->s.ddraw);
-
   Drawable drawable = ddpriv->drawable;
   POINT adjust[2] = {{0, 0}, {0, 0}};
   SIZE imgsiz;
@@ -194,8 +193,8 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
     WIN_ReleaseWndPtr(wndPtr);
   }
   
-  if (This->s.ddraw->d.pixel_convert != NULL)
-    This->s.ddraw->d.pixel_convert(This->s.surface_desc.u1.lpSurface,
+  if (This->s.ddraw->d->pixel_convert != NULL)
+    This->s.ddraw->d->pixel_convert(This->s.surface_desc.u1.lpSurface,
 				   dspriv->image->data,
 				   This->s.surface_desc.dwWidth,
 				   This->s.surface_desc.dwHeight,
@@ -272,7 +271,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
 
     TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
-    if (!This->s.ddraw->d.paintable)
+    if (!This->s.ddraw->d->paintable)
 	return DD_OK;
 
     iflipto = _common_find_flipto(This,iflipto);
@@ -339,7 +338,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
     dppriv = (x11_dp_private*)ipal->private;
 
     if (!dppriv->cm &&
-	(This->s.ddraw->d.screen_pixelformat.u.dwRGBBitCount<=8)
+	(This->s.ddraw->d->screen_pixelformat.u.dwRGBBitCount<=8)
     ) {
 	dppriv->cm = TSXCreateColormap(
 	    display,

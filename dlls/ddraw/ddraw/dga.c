@@ -51,7 +51,7 @@ struct ICOM_VTABLE(IDirectDraw4)	dga_dd4vt;
 static XF86VidModeModeInfo *orig_mode = NULL;
 #endif
 
-#define DDPRIVATE(x) dga_dd_private *ddpriv = ((dga_dd_private*)(x)->private)
+#define DDPRIVATE(x) dga_dd_private *ddpriv = ((dga_dd_private*)(x)->d->private)
 #define DPPRIVATE(x) dga_dp_private *dppriv = ((dga_dp_private*)(x)->private)
 
 /*******************************************************************************
@@ -99,9 +99,9 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_with_VT(
     dsurf->s.surface_desc = *lpddsd;
 
     if (!(lpddsd->dwFlags & DDSD_WIDTH))
-	dsurf->s.surface_desc.dwWidth  = This->d.width;
+	dsurf->s.surface_desc.dwWidth  = This->d->width;
     if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-	dsurf->s.surface_desc.dwHeight = This->d.height;
+	dsurf->s.surface_desc.dwHeight = This->d->height;
 
     dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT;
 
@@ -118,7 +118,7 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_with_VT(
 	/* if i == 32 or maximum ... return error */
 	ddpriv->vpmask|=(1<<i);
 	lpddsd->lPitch = dsurf->s.surface_desc.lPitch = 
-		ddpriv->fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
+		ddpriv->fb_width*PFGET_BPP(This->d->directdraw_pixelformat);
 
 	dsurf->s.surface_desc.u1.lpSurface =
 	    ddpriv->fb_addr + i*fbheight*lpddsd->lPitch;
@@ -127,12 +127,12 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_with_VT(
 
 	/* Add flags if there were not present */
 	dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE|DDSD_PIXELFORMAT;
-	dsurf->s.surface_desc.dwWidth = This->d.width;
-	dsurf->s.surface_desc.dwHeight = This->d.height;
-	TRACE("primary surface: dwWidth=%ld, dwHeight=%ld, lPitch=%ld\n",This->d.width,This->d.height,lpddsd->lPitch);
+	dsurf->s.surface_desc.dwWidth = This->d->width;
+	dsurf->s.surface_desc.dwHeight = This->d->height;
+	TRACE("primary surface: dwWidth=%ld, dwHeight=%ld, lPitch=%ld\n",This->d->width,This->d->height,lpddsd->lPitch);
 	/* We put our surface always in video memory */
 	SDDSCAPS(dsurf) |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
-	dsurf->s.surface_desc.ddpfPixelFormat = This->d.directdraw_pixelformat;
+	dsurf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
 	dsurf->s.chain = NULL;
 
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
@@ -221,12 +221,12 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	return DDERR_UNSUPPORTEDMODE;
     }
 
-    if (This->d.width < width) {
-	ERR("SetDisplayMode(w=%ld,h=%ld,d=%ld), width %ld exceeds framebuffer width %ld\n",width,height,depth,width,This->d.width);
+    if (This->d->width < width) {
+	ERR("SetDisplayMode(w=%ld,h=%ld,d=%ld), width %ld exceeds framebuffer width %ld\n",width,height,depth,width,This->d->width);
 	return DDERR_UNSUPPORTEDMODE;
     }
-    This->d.width	= width;
-    This->d.height	= height;
+    This->d->width	= width;
+    This->d->height	= height;
 
     /* adjust fb_height, so we don't overlap */
     if (ddpriv->fb_height < height)
@@ -373,7 +373,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
     dppriv = (dga_dp_private*)ddpal->private;
 
     ICOM_VTBL(ddpal)= &dga_ddpalvt;
-    if (This->d.directdraw_pixelformat.u.dwRGBBitCount<=8) {
+    if (This->d->directdraw_pixelformat.u.dwRGBBitCount<=8) {
 	dppriv->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
     } else {
 	ERR("why are we doing CreatePalette in hi/truecolor?\n");
@@ -411,29 +411,32 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
-      VirtualFree(ddpriv->fb_addr, 0, MEM_RELEASE);
-      TSXF86DGADirectVideo(display,DefaultScreen(display),0);
-      if (This->d.window && GetPropA(This->d.window,ddProp))
-	DestroyWindow(This->d.window);
+      if (!--(This->d->ref)) {
+	  VirtualFree(ddpriv->fb_addr, 0, MEM_RELEASE);
+	  TSXF86DGADirectVideo(display,DefaultScreen(display),0);
+	  if (This->d->window && GetPropA(This->d->window,ddProp))
+	    DestroyWindow(This->d->window);
 #ifdef HAVE_LIBXXF86VM
-      if (orig_mode) {
-	TSXF86VidModeSwitchToMode(
-				  display,
-				  DefaultScreen(display),
-				  orig_mode
-				  );
-	if (orig_mode->privsize)
-		TSXFree(orig_mode->private);		
-	free(orig_mode);
-	orig_mode = NULL;
-      }
+	  if (orig_mode) {
+	    TSXF86VidModeSwitchToMode(
+				      display,
+				      DefaultScreen(display),
+				      orig_mode
+				      );
+	    if (orig_mode->privsize)
+		    TSXFree(orig_mode->private);		
+	    free(orig_mode);
+	    orig_mode = NULL;
+	  }
 #endif
-	
+	    
 #ifdef RESTORE_SIGNALS
-	SIGNAL_Init();
+	  SIGNAL_Init();
 #endif
-	HeapFree(GetProcessHeap(),0,This);
-	return S_OK;
+	  HeapFree(GetProcessHeap(),0,This->d);
+      }
+      HeapFree(GetProcessHeap(),0,This);
+      return S_OK;
     }
     return This->ref;
 }
@@ -453,30 +456,31 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirectDraw, refiid ) ) {
-	ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&dga_ddvt;
-	IDirectDraw2_AddRef(iface);
-	*obj = This;
+	IDirectDrawImpl	*dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
+	ICOM_VTBL(dd) = &dga_ddvt;dd->ref = 1;dd->d = This->d;This->d++;
+	*obj = dd;
 
+	IDirectDraw2_AddRef(iface);
 	TRACE("  Creating IDirectDraw interface (%p)\n", *obj);
 	
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) {
-	ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd2vt;
+	IDirectDraw2Impl	*dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
+	ICOM_VTBL(dd) = &dga_dd2vt;dd->ref = 1;dd->d = This->d;This->d++;
+	*obj = dd;
+
 	IDirectDraw2_AddRef(iface);
-	*obj = This;
-
 	TRACE("  Creating IDirectDraw2 interface (%p)\n", *obj);
-
 	return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) {
-	ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd4vt;
+	IDirectDraw2Impl	*dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
+	ICOM_VTBL(dd) = &dga_dd2vt;dd->ref = 1;dd->d = This->d;This->d++;
+	*obj = dd;
+
 	IDirectDraw2_AddRef(iface);
-	*obj = This;
-
 	TRACE("  Creating IDirectDraw4 interface (%p)\n", *obj);
-
 	return S_OK;
     }
     FIXME("(%p):interface for IID %s _NOT_ found!\n",This,debugstr_guid(refiid));
@@ -579,13 +583,13 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 
     TRACE("(%p)->(%p)\n",This,lpddsfd);
     lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-    lpddsfd->dwHeight = This->d.height;
-    lpddsfd->dwWidth = This->d.width;
-    lpddsfd->lPitch = ddpriv->fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
+    lpddsfd->dwHeight = This->d->height;
+    lpddsfd->dwWidth = This->d->width;
+    lpddsfd->lPitch = ddpriv->fb_width*PFGET_BPP(This->d->directdraw_pixelformat);
     lpddsfd->dwBackBufferCount = 2;
     lpddsfd->u.dwRefreshRate = 60;
     lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
-    lpddsfd->ddpfPixelFormat = This->d.directdraw_pixelformat;
+    lpddsfd->ddpfPixelFormat = This->d->directdraw_pixelformat;
     if (TRACE_ON(ddraw))
 	_dump_surface_desc(lpddsfd);
     return DD_OK;
