@@ -84,8 +84,6 @@ int RELAY_CallFrom32( int ret_addr, ... )
     assert(TRACE_ON(relay));
     func = (FARPROC32)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5,
                                                &typemask );
-    show = RELAY_ShowDebugmsgRelay(buffer);
-    if(show) {
       DPRINTF( "Call %s(", buffer );
       args++;
       for (i = 0, mask = 3; i < nb_args; i++, mask <<= 2)
@@ -102,10 +100,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
       }
       GET_FS( fs );
       DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
-    } else {
-      args++;
-      fs = 0; /* quieten gcc */
-    }
+
     if (*relay_addr == 0xc3) /* cdecl */
     {
         LRESULT (*cfunc)() = (LRESULT(*)())func;
