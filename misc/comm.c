@@ -823,7 +823,7 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
         int act;
         unsigned int mstat;
         if ((act = GetCommPort(fd)) == -1) {
-            WARN(comm," fd %d not comm port\n",act);
+            WARN(comm," fd %d not comm port\n",fd);
             return CE_MODE;
         }
         stol = (unsigned char *)unknown[act] + COMM_MSR_OFFSET;
