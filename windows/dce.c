@@ -239,6 +239,8 @@ static INT DCE_ReleaseDC( DCE* dce )
 
     if (dce->DCXflags & DCX_CACHE)
     {
+        /* make the DC clean so that SetDCState doesn't try to update the vis rgn */
+        SetHookFlags16( dce->hDC, DCHF_VALIDATEVISRGN );
         SetDCState16( dce->hDC, defaultDCstate );
         dce->DCXflags &= ~DCX_DCEBUSY;
 	if (dce->DCXflags & DCX_DCEDIRTY)
