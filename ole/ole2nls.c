@@ -774,7 +774,7 @@ BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
 
 	TRACE(win32,"(%p,%08lx)\n",lpfnLocaleEnum,flags );
 	/* see if we can reuse the Win95 registry entries.... */
-	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
+	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
 		i=0;
 		while (1) {
 			if (ERROR_SUCCESS!=RegEnumKey32W(xhkey,i,buffer,sizeof(buffer)))
@@ -788,7 +788,7 @@ BOOL32 WINAPI EnumSystemLocales32W( LOCALE_ENUMPROC32W lpfnLocaleEnum,
 	}
 
 	i=0;
-	while (languages[i].langname!=NULL)
+	while (languages[i].langid!=NULL)
         {
             LPWSTR cp;
 	    char   xbuffer[10];
@@ -817,7 +817,7 @@ BOOL32 WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,
 	TRACE(win32,"(%p,%08lx)\n",
 		lpfnLocaleEnum,flags
 	);
-	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
+	if (ERROR_SUCCESS==RegOpenKey32A(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\control\\Nls\\Locale\\",&xhkey)) {
 		i=0;
 		while (1) {
 			if (ERROR_SUCCESS!=RegEnumKey32A(xhkey,i,buffer,sizeof(buffer)))
@@ -830,7 +830,7 @@ BOOL32 WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A lpfnLocaleEnum,
 		return TRUE;
 	}
 	i=0;
-	while (languages[i].langname!=NULL) {
+	while (languages[i].langid!=NULL) {
 		sprintf(buffer,"%08lx",(DWORD)languages[i].langid);
 		if (!lpfnLocaleEnum(buffer))
 			break;
