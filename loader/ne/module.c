@@ -26,6 +26,7 @@
 #include "snoop.h"
 #include "stackframe.h"
 #include "debug.h"
+#include "file.h"
 
 FARPROC16 (*fnSNOOP16_GetProcAddress16)(HMODULE16,DWORD,FARPROC16) = NULL;
 void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
@@ -33,6 +34,7 @@ void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
 #define hFirstModule (pThhook->hExeHead)
 
 static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
+static HMODULE16 GetModuleFromPath(LPCSTR name);
 
 static HMODULE16 NE_LoadBuiltin(LPCSTR name,BOOL force) { return 0; }
 HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name,BOOL force) = NE_LoadBuiltin;
@@ -853,10 +855,9 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     NE_MODULE *pModule;
     PDB *pdb;
 
-
     /* Load module */
 
-    if ( ( hModule = GetModuleHandle16( name ) ) != 0 )
+    if ( (hModule = GetModuleFromPath(name) ) != 0 )
     {
         /* Special case: second instance of an already loaded NE module */
 
@@ -942,7 +943,7 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
 
     /* Special case: second instance of an already loaded NE module */
 
-    if ( ( hModule = GetModuleHandle16( ofs->szPathName ) ) != 0 )
+    if ( ( hModule = GetModuleFromPath( ofs->szPathName ) ) != 0 )
     {
         if (   !( pModule = NE_GetPtr( hModule) )
             ||  ( pModule->flags & NE_FFLAGS_LIBMODULE )
@@ -1202,7 +1203,7 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
 /**********************************************************************
  *	    GetModuleHandle16    (KERNEL.47)
  *
- * Find a module from a path name.
+ * Find a module from a module name.
  *
  * RETURNS
  *   LOWORD:
@@ -1221,11 +1222,16 @@ DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {
     HMODULE16 hModule = hFirstModule;
-    LPCSTR filename, dotptr, modulepath, modulename;
+    LPCSTR filename, dotptr;
     BYTE len, *name_table;
 
-    if (!(filename = strrchr( name, '\\' ))) filename = name;
-    else filename++;
+    if (!(filename = strrchr( name, '\\' ))) 
+	filename = name;
+    else 
+      {
+	FIXME(module,"illegal usage of GetModuleHandle16\n");
+	filename++;
+      }
     if ((dotptr = strrchr( filename, '.' )) != NULL)
         len = (BYTE)(dotptr - filename);
     else len = strlen( filename );
@@ -1234,11 +1240,15 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     {
         NE_MODULE *pModule = NE_GetPtr( hModule );
         if (!pModule) break;
+
+	/*
         modulepath = NE_MODULE_NAME(pModule);
+	TRACE(module,"name %s modulepath %s\n",name,modulepath);
         if (!(modulename = strrchr( modulepath, '\\' )))
             modulename = modulepath;
         else modulename++;
         if (!lstrcmpiA( modulename, filename )) return hModule;
+	  */
 
         name_table = (BYTE *)pModule + pModule->name_table;
         if ((*name_table == len) && !lstrncmpiA(filename, name_table+1, len))
@@ -1299,6 +1309,41 @@ BOOL16 WINAPI ModuleFindHandle16( MODULEENTRY *lpme, HMODULE16 hModule )
     lpme->wNext = hModule;
     return ModuleNext16( lpme );
 }
+/**********************************************************************
+ *
+ * try to find a ne-module with the same path as a given name
+ */
+static HMODULE16 GetModuleFromPath(LPCSTR name)
+{
+    MODULEENTRY lookforit;
+    NE_MODULE *pModule;
+    DOS_FULL_NAME nametoload, nametocompare;
+    LPCSTR modulepath;
+
+    if (!name)
+      return 0;
+    if (!DOSFS_GetFullName(name,TRUE,&nametoload))
+      /* we don't have a full qualified path */
+      return GetModuleHandle16( name );
+    lookforit.dwSize=sizeof(MODULEENTRY);
+    for (ModuleFirst16(&lookforit);
+	 ModuleNext16(&lookforit);)
+      {
+	pModule = NE_GetPtr( lookforit.hModule );
+        if (!pModule) 
+	  break;
+        modulepath = NE_MODULE_NAME(pModule);
+	if (!modulepath)
+	  break;
+	/* Only comparing the Unix path will give valid results*/
+	if (DOSFS_GetFullName(modulepath,TRUE,&nametocompare))
+	    if (!strcmp(nametoload.long_name,nametocompare.long_name))
+	      return lookforit.hModule;
+      }
+    return 0;
+}
+
+
 
 /***************************************************************************
  *		MapHModuleLS			(KERNEL32.520)
