@@ -1296,7 +1296,8 @@ HEADER_WindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void HEADER_Register( void )
+VOID
+HEADER_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -1311,5 +1312,13 @@ void HEADER_Register( void )
     wndClass.lpszClassName = WC_HEADER32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+VOID
+HEADER_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (WC_HEADER32A))
+	UnregisterClass32A (WC_HEADER32A, (HINSTANCE32)NULL);
 }
 

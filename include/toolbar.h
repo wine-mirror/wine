@@ -45,6 +45,7 @@ typedef struct tagTOOLBAR_INFO
     INT32      nOldHit;
     INT32      nHotItem;        /* index of the "hot" item */
     HFONT32    hFont;           /* text font */
+    HIMAGELIST himlStd;         /* standard image list */
     HIMAGELIST himlDef;         /* default image list */
     HIMAGELIST himlHot;         /* hot image list */
     HIMAGELIST himlDis;         /* disabled image list */
@@ -63,6 +64,7 @@ typedef struct tagTOOLBAR_INFO
 } TOOLBAR_INFO;
 
 
-extern void TOOLBAR_Register (void);
+extern VOID TOOLBAR_Register (VOID);
+extern VOID TOOLBAR_Unregister (VOID);
 
 #endif  /* __WINE_TOOLBAR_H */

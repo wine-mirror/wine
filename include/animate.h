@@ -15,6 +15,7 @@ typedef struct tagANIMATE_INFO
 } ANIMATE_INFO;
 
 
-extern void ANIMATE_Register (void);
+extern VOID ANIMATE_Register (VOID);
+extern VOID ANIMATE_Unregister (VOID);
 
 #endif  /* __WINE_ANIMATE_H */

@@ -16,6 +16,6 @@ typedef struct tagIPADDRESS_INFO
 
 
 extern VOID IPADDRESS_Register (VOID);
-extern VOID IPADDRESS_Register (VOID);
+extern VOID IPADDRESS_Unregister (VOID);
 
 #endif  /* __WINE_IPADDRESS_H */

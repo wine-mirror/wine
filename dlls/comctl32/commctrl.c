@@ -80,11 +80,23 @@ ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    COMCTL32_dwProcessesAttached--;
 	    if (COMCTL32_dwProcessesAttached == 0) {
 		/* unregister all common control classes */
+		ANIMATE_Unregister ();
+		COMBOEX_Unregister ();
+		HEADER_Unregister ();
+		HOTKEY_Unregister ();
 		IPADDRESS_Unregister ();
-
+		LISTVIEW_Unregister ();
 		NATIVEFONT_Unregister ();
-
+		PAGER_Unregister ();
+		PROGRESS_Unregister ();
+		REBAR_Unregister ();
+		STATUS_Unregister ();
+		TAB_Unregister ();
+		TOOLBAR_Unregister ();
 		TOOLTIPS_Unregister ();
+		TRACKBAR_Unregister ();
+		TREEVIEW_Unregister ();
+		UPDOWN_Unregister ();
 
 		/* destroy private heap */
 		HeapDestroy (COMCTL32_hHeap);
@@ -158,7 +170,7 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
 	    break;
 
 	default:
-	    FIXME (commctrl, "Invalid Message!\n");
+	    FIXME (commctrl, "Invalid Message 0x%x!\n", uMsg);
 	    break;
     }
 }
@@ -282,7 +294,7 @@ GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
  *     hdc   [I] handle to the window's display context
  *     lprc  [I] pointer to a rectangle
  *     text  [I] pointer to the text
- *     style [I] 
+ *     style [I]
  *
  * RETURNS
  *     No return value.
@@ -344,7 +356,7 @@ DrawStatusText32W (HDC32 hdc, LPRECT32 lprc, LPCWSTR text, UINT32 style)
  *     style  [I]
  *     text   [I]
  *     parent [I] handle to the parent window
- *     wid    [I]
+ *     wid    [I] control id of the status bar
  *
  * RETURNS
  *     Success: handle to the control

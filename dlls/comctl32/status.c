@@ -875,7 +875,7 @@ STATUSBAR_WMNCHitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static __inline__ LRESULT
 STATUSBAR_WMNCLButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    PostMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NCLBUTTONDOWN,
+    PostMessage32A (wndPtr->parent->hwndSelf, WM_NCLBUTTONDOWN,
 		    wParam, lParam);
     return 0;
 }
@@ -884,7 +884,7 @@ STATUSBAR_WMNCLButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static __inline__ LRESULT
 STATUSBAR_WMNCLButtonUp (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    PostMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NCLBUTTONUP,
+    PostMessage32A (wndPtr->parent->hwndSelf, WM_NCLBUTTONUP,
 		    wParam, lParam);
     return 0;
 }
@@ -1126,7 +1126,9 @@ StatusWindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
  *
  * Registers the status window class.
  */
-void STATUS_Register (void)
+
+VOID
+STATUS_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -1142,5 +1144,19 @@ void STATUS_Register (void)
     wndClass.lpszClassName = STATUSCLASSNAME32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+/***********************************************************************
+ * STATUS_Unregister [Internal]
+ *
+ * Unregisters the status window class.
+ */
+
+VOID
+STATUS_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (STATUSCLASSNAME32A))
+	UnregisterClass32A (STATUSCLASSNAME32A, (HINSTANCE32)NULL);
 }
 

@@ -20,6 +20,8 @@ typedef struct
   COLORREF    ColorBk;      /* Background color */
 } PROGRESS_INFO;
 
-extern void PROGRESS_Register (void);
+
+extern VOID PROGRESS_Register (VOID);
+extern VOID PROGRESS_Unregister (VOID);
 
 #endif  /* __WINE_PROGRESS_H */

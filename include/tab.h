@@ -31,6 +31,7 @@ typedef struct tagTAB_INFO
 } TAB_INFO;
 
 
-extern void TAB_Register (void);
+extern VOID TAB_Register (VOID);
+extern VOID TAB_Unregister (VOID);
 
 #endif  /* __WINE_TAB_H */

@@ -7,7 +7,6 @@
 #ifndef __WINE_HOTKEY_H
 #define __WINE_HOTKEY_H
 
-
 typedef struct tagHOTKEY_INFO
 {
     HFONT32 hFont;
@@ -17,6 +16,7 @@ typedef struct tagHOTKEY_INFO
 } HOTKEY_INFO;
 
 
-extern void HOTKEY_Register (void);
+extern VOID HOTKEY_Register (VOID);
+extern VOID HOTKEY_Unregister (VOID);
 
 #endif  /* __WINE_HOTKEY_H */

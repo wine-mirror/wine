@@ -18,6 +18,7 @@ typedef struct tagCOMBOEX_INFO
 } COMBOEX_INFO;
 
 
-extern void COMBOEX_Register (void);
+extern VOID COMBOEX_Register (VOID);
+extern VOID COMBOEX_Unregister (VOID);
 
 #endif  /* __WINE_COMBOEX_H */

@@ -40,6 +40,7 @@ typedef struct tagTRACKBAR_INFO
 
 
 
-extern void TRACKBAR_Register (void);
+extern VOID TRACKBAR_Register (VOID);
+extern VOID TRACKBAR_Unregister (VOID);
 
 #endif  /* __WINE_TRACKBAR_H */

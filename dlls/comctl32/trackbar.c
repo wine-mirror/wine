@@ -1,7 +1,7 @@
 /*
  * Trackbar control
  *
- * Copyright 1998 Eric Kohli <ekohl@abo.rhein-zeitung.de>
+ * Copyright 1998 Eric Kohl <ekohl@abo.rhein-zeitung.de>
  * Copyright 1998 Alex Priem <alexp@sci.kun.nl>
  *
  * NOTES
@@ -1440,8 +1440,8 @@ TRACKBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-TRACKBAR_Register (void)
+VOID
+TRACKBAR_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -1458,3 +1458,12 @@ TRACKBAR_Register (void)
  
     RegisterClass32A (&wndClass);
 }
+
+
+VOID
+TRACKBAR_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (TRACKBAR_CLASS32A))
+	UnregisterClass32A (TRACKBAR_CLASS32A, (HINSTANCE32)NULL);
+}
+

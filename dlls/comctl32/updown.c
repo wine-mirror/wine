@@ -361,7 +361,7 @@ static BOOL32 UPDOWN_SetBuddy(WND *wndPtr, HWND32 hwndBud)
   GetWindowRect32(infoPtr->Buddy, &budRect);
   MapWindowPoints32(HWND_DESKTOP, GetParent32(infoPtr->Buddy),
 		  (POINT32 *)(&budRect.left), 2);
-	  
+
   /* now do the positioning */
   if(wndPtr->dwStyle & UDS_ALIGNRIGHT){
     budRect.right -= DEFAULT_WIDTH+DEFAULT_XSEP;
@@ -820,12 +820,15 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     return 0;
 }
 
+
 /***********************************************************************
- * UPDOWN_Register [Internal]
+ *		UPDOWN_Register	[Internal]
  *
  * Registers the updown window class.
  */
-void UPDOWN_Register(void)
+
+VOID
+UPDOWN_Register(void)
 {
     WNDCLASS32A wndClass;
 
@@ -841,5 +844,19 @@ void UPDOWN_Register(void)
     wndClass.lpszClassName = UPDOWN_CLASS32A;
  
     RegisterClass32A( &wndClass );
+}
+
+
+/***********************************************************************
+ *		UPDOWN_Unregister	[Internal]
+ *
+ * Unregisters the updown window class.
+ */
+
+VOID
+UPDOWN_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (UPDOWN_CLASS32A))
+	UnregisterClass32A (UPDOWN_CLASS32A, (HINSTANCE32)NULL);
 }
 

@@ -80,6 +80,7 @@ typedef struct tagTREEVIEW_INFO
 } TREEVIEW_INFO;
 
 
-extern void TREEVIEW_Register (void);
+extern VOID TREEVIEW_Register (VOID);
+extern VOID TREEVIEW_Unregister (VOID);
 
 #endif  /* __WINE_TREEVIEW_H */

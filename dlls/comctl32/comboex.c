@@ -262,8 +262,8 @@ COMBOEX_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-COMBOEX_Register (void)
+VOID
+COMBOEX_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -279,5 +279,13 @@ COMBOEX_Register (void)
     wndClass.lpszClassName = WC_COMBOBOXEX32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+VOID
+COMBOEX_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (WC_COMBOBOXEX32A))
+	UnregisterClass32A (WC_COMBOBOXEX32A, (HINSTANCE32)NULL);
 }
 

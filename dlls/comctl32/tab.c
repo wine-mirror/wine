@@ -371,8 +371,8 @@ TAB_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-TAB_Register (void)
+VOID
+TAB_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -388,5 +388,13 @@ TAB_Register (void)
     wndClass.lpszClassName = WC_TABCONTROL32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+VOID
+TAB_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (WC_TABCONTROL32A))
+	UnregisterClass32A (WC_TABCONTROL32A, (HINSTANCE32)NULL);
 }
 

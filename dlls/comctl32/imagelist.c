@@ -673,7 +673,7 @@ ImageList_DragLeave (HWND32 hwndLock)
     DeleteDC32 (hdcBackBuffer);
     DeleteObject32 (hbmBackBuffer);
 
-    return (TRUE);
+    return TRUE;
 }
 
 
@@ -705,7 +705,7 @@ ImageList_DragMove (INT32 x, INT32 y)
 
     ImageList_DragShowNolock (TRUE);
 
-    return (FALSE);
+    return FALSE;
 }
 
 
@@ -753,7 +753,7 @@ ImageList_DragShowNolock (BOOL32 bShow)
 
     ReleaseDC32 (hwndInternalDrag, hdcDrag);
 
-    return (FALSE);
+    return FALSE;
 }
 
 
@@ -800,7 +800,7 @@ ImageList_Draw (HIMAGELIST himl, INT32 i, HDC32 hdc,
     imldp.fStyle  = fStyle;
     imldp.dwRop   = 0;
 
-    return (ImageList_DrawIndirect (&imldp));
+    return ImageList_DrawIndirect (&imldp);
 }
 
 
@@ -854,7 +854,7 @@ ImageList_DrawEx (HIMAGELIST himl, INT32 i, HDC32 hdc, INT32 x, INT32 y,
     imldp.fStyle  = fStyle;
     imldp.dwRop   = 0;
 
-    return (ImageList_DrawIndirect (&imldp));
+    return ImageList_DrawIndirect (&imldp);
 }
 
 
@@ -891,7 +891,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     if (pimldp == NULL)
 	return FALSE;
     if (pimldp->cbSize < sizeof(IMAGELISTDRAWPARAMS))
-	return (FALSE);
+	return FALSE;
     if (pimldp->himl == NULL)
 	return FALSE;
     if ((pimldp->i < 0) || (pimldp->i >= pimldp->himl->cCurImage))
@@ -1210,7 +1210,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
     HDC32    hdcSrc, hdcDst;
     INT32    nWidth, nHeight;
 
-    if ((himl == NULL) ||(i < 0) || (i >= himl->cCurImage))
+    if ((himl == NULL) || (i < 0) || (i >= himl->cCurImage))
 	return 0;
 
     nWidth = GetSystemMetrics32 (SM_CXICON);
@@ -2129,14 +2129,14 @@ ImageList_SetImageCount (HIMAGELIST himl, INT32 iImageCount)
 	/* delete 'empty' image space */
 	SetBkColor32 (hdcBitmap, RGB(255, 255, 255));
 	SetTextColor32 (hdcBitmap, RGB(0, 0, 0));
-        PatBlt32 (hdcBitmap,  nCopyCount * himl->cx, 0, 
+	PatBlt32 (hdcBitmap,  nCopyCount * himl->cx, 0, 
 		  (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
 
-        DeleteObject32 (himl->hbmImage);
-        himl->hbmImage = hbmNewBitmap;
+	DeleteObject32 (himl->hbmImage);
+	himl->hbmImage = hbmNewBitmap;
     }
     else
-        ERR (imagelist, "Could not create new image bitmap !\n");
+	ERR (imagelist, "Could not create new image bitmap !\n");
 
     if (himl->hbmMask)
     {

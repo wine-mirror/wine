@@ -7,8 +7,6 @@
 #ifndef __WINE_STATUS_H
 #define __WINE_STATUS_H
 
-extern void STATUS_Register(void);
-
 typedef struct
 {
     INT32	x;
@@ -31,5 +29,9 @@ typedef struct
     STATUSWINDOWPART	part0;	/* simple window */
     STATUSWINDOWPART   *parts;
 } STATUSWINDOWINFO;
+
+
+extern VOID STATUS_Register (VOID);
+extern VOID STATUS_Unregister (VOID);
 
 #endif  /* __WINE_STATUS_H */

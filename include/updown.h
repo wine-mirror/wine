@@ -29,6 +29,7 @@ typedef struct tagNM_UPDOWN
   int iDelta;
 } NM_UPDOWN;
 
-extern void UPDOWN_Register (void);
+extern VOID UPDOWN_Register (VOID);
+extern VOID UPDOWN_Unregister (VOID);
 
 #endif  /* __WINE_UPDOWN_H */

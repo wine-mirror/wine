@@ -42,9 +42,11 @@ typedef struct
 
     HIMAGELIST  himl;		/* handle to a image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
+    LPINT32     pOrder;         /* pointer to order array */
 } HEADER_INFO;
 
 
-extern void HEADER_Register (void);
+extern VOID HEADER_Register (VOID);
+extern VOID HEADER_Unregister (VOID);
 
 #endif /* __WINE_HEADER_H_ */

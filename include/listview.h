@@ -40,6 +40,7 @@ typedef struct tagLISTVIEW_INFO
 } LISTVIEW_INFO;
 
 
-extern void LISTVIEW_Register (void);
+extern VOID LISTVIEW_Register (VOID);
+extern VOID LISTVIEW_Unregister (VOID);
 
 #endif  /* __WINE_LISTVIEW_H */

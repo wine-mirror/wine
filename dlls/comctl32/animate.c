@@ -310,8 +310,8 @@ ANIMATE_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-ANIMATE_Register (void)
+VOID
+ANIMATE_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -328,3 +328,12 @@ ANIMATE_Register (void)
  
     RegisterClass32A (&wndClass);
 }
+
+
+VOID
+ANIMATE_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (ANIMATE_CLASS32A))
+	UnregisterClass32A (ANIMATE_CLASS32A, (HINSTANCE32)NULL);
+}
+

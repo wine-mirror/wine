@@ -1794,8 +1794,8 @@ TREEVIEW_HScroll (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-TREEVIEW_Register (void)
+VOID
+TREEVIEW_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -1813,5 +1813,13 @@ TREEVIEW_Register (void)
     wndClass.lpszClassName = WC_TREEVIEW32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+VOID
+TREEVIEW_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (WC_TREEVIEW32A))
+	UnregisterClass32A (WC_TREEVIEW32A, (HINSTANCE32)NULL);
 }
 

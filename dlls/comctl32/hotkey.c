@@ -340,8 +340,8 @@ HOTKEY_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-HOTKEY_Register (void)
+VOID
+HOTKEY_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -358,3 +358,12 @@ HOTKEY_Register (void)
  
     RegisterClass32A (&wndClass);
 }
+
+
+VOID
+HOTKEY_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (HOTKEY_CLASS32A))
+	UnregisterClass32A (HOTKEY_CLASS32A, (HINSTANCE32)NULL);
+}
+

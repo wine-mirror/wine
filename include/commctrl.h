@@ -1039,7 +1039,16 @@ typedef struct tagNMTTDISPINFOW
 #define REBARCLASSNAME16        "ReBarWindow"
 #define REBARCLASSNAME32A       "ReBarWindow32"
 #define REBARCLASSNAME32W       L"ReBarWindow32"
-#define REBARCLASSNAME  WINELIB_NAME_AW(REBARCLASSNAME)
+#define REBARCLASSNAME          WINELIB_NAME_AW(REBARCLASSNAME)
+
+#define RBS_TOOLTIPS            0x0100
+#define RBS_VARHEIGHT           0x0200
+#define RBS_BANDBORDERS         0x0400
+#define RBS_FIXEDORDER          0x0800
+#define RBS_REGISTERDROP        0x1000
+#define RBS_AUTOSIZE            0x2000
+#define RBS_VERTICALGRIPPER     0x4000
+#define RBS_DBLCLKTOGGLE        0x8000
 
 #define RBIM_IMAGELIST          0x00000001
 
@@ -1056,17 +1065,35 @@ typedef struct tagNMTTDISPINFOW
 #define RBBIM_LPARAM            0x00000400
 #define RBBIM_HEADERSIZE        0x00000800
 
+#define RBBS_BREAK              0x00000001
+#define RBBS_FIXEDSIZE          0x00000002
+#define RBBS_CHILDEDGE          0x00000004
+#define RBBS_HIDDEN             0x00000008
+#define RBBS_NOVERT             0x00000010
+#define RBBS_FIXEDBMP           0x00000020
+#define RBBS_VARIABLEHEIGHT     0x00000040
+#define RBBS_GRIPPERALWAYS      0x00000080
+#define RBBS_NOGRIPPER          0x00000100
+
+#define RBNM_ID                 0x00000001
+#define RBNM_STYLE              0x00000002
+#define RBNM_LPARAM             0x00000004
+
+#define RBHT_NOWHERE            0x0001
+#define RBHT_CAPTION            0x0002
+#define RBHT_CLIENT             0x0003
+#define RBHT_GRABBER            0x0004
 
 #define RB_INSERTBAND32A        (WM_USER+1)
 #define RB_INSERTBAND32W        (WM_USER+10)
-#define RB_INSERTBANND WINELIB_NAME_AW(RB_INSERTBAND)
+#define RB_INSERTBAND           WINELIB_NAME_AW(RB_INSERTBAND)
 #define RB_DELETEBAND           (WM_USER+2)
 #define RB_GETBARINFO           (WM_USER+3)
 #define RB_SETBARINFO           (WM_USER+4)
 #define RB_GETBANDINFO32        (WM_USER+5)   /* just for compatibility */
 #define RB_SETBANDINFO32A       (WM_USER+6)
 #define RB_SETBANDINFO32W       (WM_USER+11)
-#define RB_SETBANDINFO WINELIB_NAME_AW(RB_SETBANDINFO)
+#define RB_SETBANDINFO          WINELIB_NAME_AW(RB_SETBANDINFO)
 #define RB_SETPARENT            (WM_USER+7)
 #define RB_HITTEST              (WM_USER+8)
 #define RB_GETRECT              (WM_USER+9)
@@ -1087,7 +1114,7 @@ typedef struct tagNMTTDISPINFOW
 #define RB_GETBARHEIGHT         (WM_USER+27)
 #define RB_GETBANDINFO32W       (WM_USER+28)
 #define RB_GETBANDINFO32A       (WM_USER+29)
-#define RB_GETBANDINFO WINELIB_NAME_AW(RB_GETBANDINFO)
+#define RB_GETBANDINFO          WINELIB_NAME_AW(RB_GETBANDINFO)
 #define RB_MINIMIZEBAND         (WM_USER+30)
 #define RB_MAXIMIZEBAND         (WM_USER+31)
 #define RB_GETBANDORDERS        (WM_USER+34)
@@ -1103,7 +1130,15 @@ typedef struct tagNMTTDISPINFOW
 
 #define RBN_FIRST               (0U-831U)
 #define RBN_LAST                (0U-859U)
-
+#define RBN_HEIGHTCHANGE        (RBN_FIRST-0)
+#define RBN_GETOBJECT           (RBN_FIRST-1)
+#define RBN_LAYOUTCHANGED       (RBN_FIRST-2)
+#define RBN_AUTOSIZE            (RBN_FIRST-3)
+#define RBN_BEGINDRAG           (RBN_FIRST-4)
+#define RBN_ENDDRAG             (RBN_FIRST-5)
+#define RBN_DELETINGBAND        (RBN_FIRST-6)
+#define RBN_DELETEDBAND         (RBN_FIRST-7)
+#define RBN_CHILDSIZE           (RBN_FIRST-8)
 
 typedef struct tagREBARINFO
 {
@@ -1171,6 +1206,40 @@ typedef REBARBANDINFO32W const *LPCREBARBANDINFO32W;
 #define REBARBANDINFO_V3_SIZE32A CCSIZEOF_STRUCT(REBARBANDINFO32A, wID)
 #define REBARBANDINFO_V3_SIZE32W CCSIZEOF_STRUCT(REBARBANDINFO32W, wID)
 #define REBARBANDINFO_V3_SIZE WINELIB_NAME_AW(REBARBANDINFO_V3_SIZE)
+
+typedef struct tagNMREBARCHILDSIZE
+{
+    NMHDR  hdr;
+    UINT32 iBand;
+    UINT32 wID;
+    RECT32 rcChild;
+    RECT32 rcBand;
+} NMREBARCHILDSIZE, *LPNMREBARCHILDSIZE;
+
+typedef struct tagNMREBAR
+{
+    NMHDR  hdr;
+    DWORD  dwMask;
+    UINT32 uBand;
+    UINT32 fStyle;
+    UINT32 wID;
+    LPARAM lParam;
+} NMREBAR, *LPNMREBAR;
+
+typedef struct tagNMRBAUTOSIZE
+{
+    NMHDR hdr;
+    BOOL32 fChanged;
+    RECT32 rcTarget;
+    RECT32 rcActual;
+} NMRBAUTOSIZE, *LPNMRBAUTOSIZE;
+
+typedef struct _RB_HITTESTINFO
+{
+    POINT32 pt;
+    UINT32  flags;
+    INT32   iBand;
+} RBHITTESTINFO, *LPRBHITTESTINFO;
 
 
 /* Trackbar control */
@@ -1775,6 +1844,17 @@ typedef struct tagTVHITTESTINFO {
 #define LVIS_OVERLAYMASK        0x0F00
 #define LVIS_STATEIMAGEMASK     0xF000
 
+#define LVNI_ALL		0x0000
+#define LVNI_FOCUSED		0x0001
+#define LVNI_SELECTED		0x0002
+#define LVNI_CUT		0x0004
+#define LVNI_DROPHILITED	0x0008
+
+#define LVNI_ABOVE		0x0100
+#define LVNI_BELOW		0x0200
+#define LVNI_TOLEFT		0x0400
+#define LVNI_TORIGHT		0x0800
+
 #define LVM_FIRST               0x1000
 #define LVM_GETBKCOLOR          (LVM_FIRST+0)
 #define LVM_SETBKCOLOR          (LVM_FIRST+1)
@@ -1950,40 +2030,6 @@ typedef struct tagLVITEMW
 
 #define LV_ITEM LVITEM
 
-/* Tab Control */
-
-#define WC_TABCONTROL16		 "SysTabControl"
-#define WC_TABCONTROL32A	 "SysTabControl32"
-#define WC_TABCONTROL32W	L"SysTabControl32"
-
-#define WC_TABCONTROL		WINELIB_NAME_AW(WC_TABCONTROL)
-
-#define TCM_FIRST		0x1300
-
-#define	TCM_INSERTITEM		(TCM_FIRST + 7)
-#define TCM_GETCURSEL		(TCM_FIRST + 11)
-
-#define TCIF_TEXT		0x0001
-#define TCIF_IMAGE		0x0002
-#define TCIF_RTLREADING		0x0004
-#define TCIF_PARAM		0x0008
-
-typedef struct tagTCITEM {
-    UINT32 mask;
-    UINT32 lpReserved1;
-    UINT32 lpReserved2;
-    LPSTR  pszText;
-    int    cchTextMax;
-    int    iImage;
-    LPARAM lParam;
-} TCITEM, *LPTCITEM;
-
-#define TCN_FIRST               (0U-550U)
-#define TCN_LAST                (0U-580U)
-#define TCN_KEYDOWN             (TCN_FIRST - 0)
-#define TCN_SELCHANGE		(TCN_FIRST - 1)
-#define TCN_SELCHANGING         (TCN_FIRST - 2)
-
 typedef struct tagLVCOLUMNA
 {
     UINT32 mask;
@@ -2085,6 +2131,43 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
     (BOOL32)SendMessage32A((hwndLV),LVM_SETITEMPOSITION,(WPARAM32)(INT32)(i),MAKELPARAM((x),(y)))
 #define ListView_GetSelectedCount(hwndLV) \
     (UINT32)SendMessage32A((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
+
+
+/* Tab Control */
+
+#define WC_TABCONTROL16		 "SysTabControl"
+#define WC_TABCONTROL32A	 "SysTabControl32"
+#define WC_TABCONTROL32W	L"SysTabControl32"
+
+#define WC_TABCONTROL		WINELIB_NAME_AW(WC_TABCONTROL)
+
+#define TCM_FIRST		0x1300
+
+#define TCM_GETITEMCOUNT	(TCM_FIRST + 4)
+#define	TCM_INSERTITEM		(TCM_FIRST + 7)
+#define TCM_GETCURSEL		(TCM_FIRST + 11)
+#define TCM_SETITEMEXTRA	(TCM_FIRST + 14)
+
+#define TCIF_TEXT		0x0001
+#define TCIF_IMAGE		0x0002
+#define TCIF_RTLREADING		0x0004
+#define TCIF_PARAM		0x0008
+
+typedef struct tagTCITEM {
+    UINT32 mask;
+    UINT32 lpReserved1;
+    UINT32 lpReserved2;
+    LPSTR  pszText;
+    int    cchTextMax;
+    int    iImage;
+    LPARAM lParam;
+} TCITEM, *LPTCITEM;
+
+#define TCN_FIRST               (0U-550U)
+#define TCN_LAST                (0U-580U)
+#define TCN_KEYDOWN             (TCN_FIRST - 0)
+#define TCN_SELCHANGE		(TCN_FIRST - 1)
+#define TCN_SELCHANGING         (TCN_FIRST - 2)
 
 
 /* ComboBoxEx control */
@@ -2243,7 +2326,7 @@ typedef struct tagNMIPADDRESS
  *  UNDOCUMENTED functions
  */
 
-/* local heap memory functions */
+/* private heap memory functions */
 
 LPVOID WINAPI COMCTL32_Alloc (DWORD);
 LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);

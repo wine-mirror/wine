@@ -22,6 +22,7 @@ typedef struct tagPAGER_INFO
 } PAGER_INFO;
 
 
-extern void PAGER_Register (void);
+extern VOID PAGER_Register (VOID);
+extern VOID PAGER_Unregister (VOID);
 
 #endif  /* __WINE_PAGER_H */

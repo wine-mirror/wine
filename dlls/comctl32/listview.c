@@ -1515,8 +1515,8 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-LISTVIEW_Register (void)
+VOID
+LISTVIEW_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -1532,5 +1532,13 @@ LISTVIEW_Register (void)
     wndClass.lpszClassName = WC_LISTVIEW32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+VOID
+LISTVIEW_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (WC_LISTVIEW32A))
+	UnregisterClass32A (WC_LISTVIEW32A, (HINSTANCE32)NULL);
 }
 

@@ -329,24 +329,37 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
  * PROGRESS_Register [Internal]
  *
  * Registers the progress bar window class.
- * 
  */
 
-void 
-PROGRESS_Register(void)
+VOID
+PROGRESS_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
-    if( GlobalFindAtom32A( PROGRESS_CLASS32A ) ) return;
+    if (GlobalFindAtom32A (PROGRESS_CLASS32A)) return;
 
-    ZeroMemory( &wndClass, sizeof( WNDCLASS32A ) );
+    ZeroMemory (&wndClass, sizeof( WNDCLASS32A));
     wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC32)ProgressWindowProc;
     wndClass.cbClsExtra    = 0;
-    wndClass.cbWndExtra    = sizeof(PROGRESS_INFO *);
-    wndClass.hCursor       = LoadCursor32A( 0, IDC_ARROW32A );
+    wndClass.cbWndExtra    = sizeof (PROGRESS_INFO *);
+    wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);
     wndClass.lpszClassName = PROGRESS_CLASS32A;
 
-    RegisterClass32A( &wndClass );
+    RegisterClass32A (&wndClass);
+}
+
+
+/***********************************************************************
+ * PROGRESS_Unregister [Internal]
+ *
+ * Unregisters the progress bar window class.
+ */
+
+VOID
+PROGRESS_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (PROGRESS_CLASS32A))
+	UnregisterClass32A (PROGRESS_CLASS32A, (HINSTANCE32)NULL);
 }
 
