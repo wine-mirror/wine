@@ -11,6 +11,7 @@
 #include "winuser.h"
 #include "miscemu.h"
 #include "debugtools.h"
+#include "callback.h"
 #include "dosexe.h"
 
 DEFAULT_DEBUG_CHANNEL(int);
@@ -59,13 +60,13 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
       INT_Int16AddChar(0, scan);
     }
   }
-  DOSVM_PIC_ioport_out(0x20, 0x20); /* send EOI */
+  Dosvm.OutPIC(0x20, 0x20); /* send EOI */
 }
 
 static void KbdRelay( CONTEXT86 *context, void *data )
 {
   if (kbdinfo.queuelen) {
-    /* cleanup operation, called from DOSVM_PIC_ioport_out:
+    /* cleanup operation, called from Dosvm.OutPIC:
      * we'll remove current scancode from keyboard buffer here,
      * rather than in ReadScan, because some DOS apps depend on
      * the scancode being available for reading multiple times... */
@@ -86,7 +87,7 @@ void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
   kbdinfo.queue[kbdinfo.queuelen] = scan;
   kbdinfo.ascii[kbdinfo.queuelen++] = ascii;
   /* tell app to read it by triggering IRQ 1 (int 09) */
-  DOSVM_QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
+  Dosvm.QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
 }
 
 BYTE WINAPI INT_Int09ReadScan( BYTE*ascii )

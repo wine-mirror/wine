@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include "windef.h"
 #include "vga.h"
+#include "callback.h"
 #include "dosexe.h"
 #include "options.h"
 #include "miscemu.h"
@@ -91,7 +92,7 @@ static void set_timer_maxval(unsigned timer, unsigned maxval)
 {
     switch (timer) {
         case 0: /* System timer counter divisor */
-            DOSVM_SetTimer(maxval);
+            Dosvm.SetTimer(maxval);
             break;
         case 1: /* RAM refresh */
             FIXME("RAM refresh counter handling not implemented !");
@@ -292,8 +293,8 @@ DWORD IO_inport( int port, int size )
 	    dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
 	    if (chan == 0) /* System timer counter divisor */
 	    {
-		/* FIXME: DOSVM_GetTimer() returns quite rigid values */
-		tempval = dummy_ctr + (WORD)DOSVM_GetTimer();
+		/* FIXME: Dosvm.GetTimer() returns quite rigid values */
+		tempval = dummy_ctr + (WORD)Dosvm.GetTimer();
 	    }
 	    else
 	    {
@@ -393,7 +394,7 @@ void IO_outport( int port, int size, DWORD value )
     switch (port)
     {
     case 0x20:
-        DOSVM_PIC_ioport_out( port, (BYTE)value );
+        Dosvm.OutPIC( port, (BYTE)value );
         break;
     case 0x40:
     case 0x41:
@@ -450,7 +451,7 @@ void IO_outport( int port, int size, DWORD value )
 	    tmr_8253[chan].latched = TRUE;
 	    dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
 	    if (chan == 0) /* System timer divisor */
-		tmr_8253[chan].latch = dummy_ctr + (WORD)DOSVM_GetTimer();
+		tmr_8253[chan].latch = dummy_ctr + (WORD)Dosvm.GetTimer();
 	    else
 	    {
 		/* FIXME: intelligent hardware timer emulation needed */

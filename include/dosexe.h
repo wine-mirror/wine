@@ -30,16 +30,16 @@ typedef struct _DOSTASK {
 
 #define V86_FLAG 0x00020000
 
-extern BOOL MZ_LoadImage( LPCSTR cmdline );
-extern BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
-extern void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
-extern LPDOSTASK MZ_Current( void );
-extern LPDOSTASK MZ_AllocDPMITask( void );
-extern int DOSVM_Enter( CONTEXT86 *context );
-extern void DOSVM_Wait( int read_pipe, HANDLE hObject );
-extern void DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data );
-extern void DOSVM_PIC_ioport_out( WORD port, BYTE val );
-extern void DOSVM_SetTimer( unsigned ticks );
-extern unsigned DOSVM_GetTimer( void );
+extern BOOL WINAPI MZ_LoadImage( LPCSTR cmdline );
+extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
+extern void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
+extern LPDOSTASK WINAPI MZ_Current( void );
+extern LPDOSTASK WINAPI MZ_AllocDPMITask( void );
+extern int WINAPI DOSVM_Enter( CONTEXT86 *context );
+extern void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject );
+extern void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data );
+extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
+extern void WINAPI DOSVM_SetTimer( unsigned ticks );
+extern unsigned WINAPI DOSVM_GetTimer( void );
 
 #endif /* __WINE_DOSEXE_H */

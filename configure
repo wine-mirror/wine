@@ -6752,6 +6752,7 @@ dlls/user/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile
+dlls/winedos/Makefile
 dlls/wineps/Makefile
 dlls/wininet/Makefile
 dlls/winmm/Makefile
@@ -6994,6 +6995,7 @@ dlls/user/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
 dlls/winaspi/Makefile
+dlls/winedos/Makefile
 dlls/wineps/Makefile
 dlls/wininet/Makefile
 dlls/winmm/Makefile

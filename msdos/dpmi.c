@@ -63,6 +63,36 @@ typedef struct tagRMCB {
 static RMCB *FirstRMCB = NULL;
 
 
+static LPDOSTASK WINAPI DPMI_NoCurrent(void) { return NULL; }
+DOSVM_TABLE Dosvm = { DPMI_NoCurrent };
+
+static HMODULE DosModule;
+
+/**********************************************************************
+ *	    DPMI_LoadDosSystem
+ */
+BOOL DPMI_LoadDosSystem(void)
+{
+    if (DosModule) return TRUE;
+    DosModule = LoadLibraryA( "winedos.dll" );
+    if (!DosModule) {
+        ERR("could not load winedos.dll, DOS subsystem unavailable\n");
+        return FALSE;
+    }
+    Dosvm.Current    = (void *)GetProcAddress(DosModule, "GetCurrent");
+    Dosvm.LoadDPMI   = (void *)GetProcAddress(DosModule, "LoadDPMI");
+    Dosvm.LoadDosExe = (void *)GetProcAddress(DosModule, "LoadDosExe");
+    Dosvm.Exec       = (void *)GetProcAddress(DosModule, "Exec");
+    Dosvm.Exit       = (void *)GetProcAddress(DosModule, "Exit");
+    Dosvm.Enter      = (void *)GetProcAddress(DosModule, "Enter");
+    Dosvm.Wait       = (void *)GetProcAddress(DosModule, "Wait");
+    Dosvm.QueueEvent = (void *)GetProcAddress(DosModule, "QueueEvent");
+    Dosvm.OutPIC     = (void *)GetProcAddress(DosModule, "OutPIC");
+    Dosvm.SetTimer   = (void *)GetProcAddress(DosModule, "SetTimer");
+    Dosvm.GetTimer   = (void *)GetProcAddress(DosModule, "GetTimer");
+    return TRUE;
+}
+
 /**********************************************************************
  *	    DPMI_xalloc
  * special virtualalloc, allocates lineary monoton growing memory.
@@ -307,12 +337,10 @@ int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
     LPVOID addr = NULL; /* avoid gcc warning */
-    LPDOSTASK lpDosTask = MZ_Current();
+    LPDOSTASK lpDosTask = Dosvm.Current();
     RMCB *CurrRMCB;
     int alloc = 0, already = 0;
     BYTE *code;
-
-    GlobalUnlock16( GetCurrentTask() );
 
     TRACE("EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
                  context->Eax, context->Ebx, context->Ecx, context->Edx );
@@ -355,7 +383,7 @@ callrmproc_again:
     if (!(CurrRMCB || lpDosTask)) {
         FIXME("DPMI real-mode call using DOS VM task system, not fully tested!\n");
         TRACE("creating VM86 task\n");
-        if (!(lpDosTask = MZ_AllocDPMITask() )) {
+        if ((!DPMI_LoadDosSystem()) || !(lpDosTask = Dosvm.LoadDPMI() )) {
             ERR("could not setup VM86 task\n");
             return 1;
         }
@@ -401,7 +429,7 @@ callrmproc_again:
         }
     } else {
         TRACE("entering real mode...\n");
-        DOSVM_Enter( context );
+        Dosvm.Enter( context );
         TRACE("returned from real-mode call\n");
     }
     if (alloc) DOSMEM_FreeBlock( addr );
@@ -630,7 +658,7 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
 #if 0
 void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 {
-  LPDOSTASK lpDosTask = MZ_Current();
+  LPDOSTASK lpDosTask = Dosvm.Current();
   CONTEXT86 rm_ctx;
   int ret;
 
@@ -655,9 +683,9 @@ void WINAPI DPMI_RawModeSwitch( SIGCONTEXT *context )
 
   /* enter real mode again */
   TRACE("re-entering real mode at %04lx:%04lx\n",rm_ctx.SegCs,rm_ctx.Eip);
-  ret = DOSVM_Enter( &rm_ctx );
+  ret = Dosvm.Enter( &rm_ctx );
   /* when the real-mode stuff call its mode switch address,
-     DOSVM_Enter will return and we will continue here */
+     Dosvm.Enter will return and we will continue here */
 
   if (ret<0) {
     /* if the sync was lost, there's no way to recover */
@@ -698,7 +726,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     DWORD dw;
     BYTE *ptr;
 
-    LPDOSTASK lpDosTask = MZ_Current();
+    LPDOSTASK lpDosTask = Dosvm.Current();
 
     if (ISV86(context) && lpDosTask) {
         /* Called from real mode, check if it's our wrapper */

@@ -9,6 +9,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "miscemu.h"
+#include "callback.h"
 #include "dosexe.h"
 #include "vga.h"
 #include "debugtools.h"
@@ -150,6 +151,6 @@ void WINAPI INT_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
     data->but = mouse_info.but;
     data->x = mouse_info.x;
     data->y = mouse_info.y;
-    DOSVM_QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
+    Dosvm.QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
   }
 }

@@ -57,6 +57,7 @@ DLLFILES = \
 	version/libversion.@LIBEXT@ \
 	win32s/libw32skrnl.@LIBEXT@ \
 	winaspi/libwnaspi32.@LIBEXT@ \
+	winedos/libwinedos.@LIBEXT@ \
 	wineps/libwineps.@LIBEXT@ \
 	wininet/libwininet.@LIBEXT@ \
 	winmm/joystick/libjoystick.drv.@LIBEXT@ \
@@ -170,6 +171,7 @@ SUBDIRS = \
 	version \
 	win32s \
 	winaspi \
+	winedos \
 	wineps \
 	wininet \
 	winmm \
@@ -358,6 +360,9 @@ libversion.@LIBEXT@ libver.@LIBEXT@: version/libversion.@LIBEXT@
 libw32skrnl.@LIBEXT@ libw32sys.@LIBEXT@ libwin32s16.@LIBEXT@: win32s/libw32skrnl.@LIBEXT@
 	$(RM) $@ && $(LN_S) win32s/libw32skrnl.@LIBEXT@ $@
 
+libwinedos.@LIBEXT@: winedos/libwinedos.@LIBEXT@
+	$(RM) $@ && $(LN_S) winedos/libwinedos.@LIBEXT@ $@
+
 libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/wineoss/libwineoss.drv.@LIBEXT@ $@
 
@@ -438,6 +443,7 @@ user/libuser32.@LIBEXT@: libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIB
 version/libversion.@LIBEXT@: liblz32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 win32s/libw32skrnl.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winaspi/libwnaspi32.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winedos/libwinedos.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 wineps/libwineps.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 wininet/libwininet.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/joystick/libjoystick.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libntdll.@LIBEXT@

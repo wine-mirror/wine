@@ -33,7 +33,7 @@
 #include "file.h"
 #include "miscemu.h"
 #include "dosexe.h"
-#include "dosmod.h"
+#include "../../loader/dos/dosmod.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -212,7 +212,7 @@ static void DOSVM_SendQueuedEvents(CONTEXT86 *context)
     DOSVM_SendQueuedEvent(context);
 }
 
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
+void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
 {
   LPDOSEVENT event, cur, prev;
 
@@ -407,7 +407,7 @@ static void DOSVM_ProcessMessage(MSG *msg)
   }
 }
 
-void DOSVM_Wait( int read_pipe, HANDLE hObject )
+void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject )
 {
   MSG msg;
   DWORD waitret;
@@ -468,7 +468,7 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
   } while (TRUE);
 }
 
-int DOSVM_Enter( CONTEXT86 *context )
+int WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
  struct vm86plus_struct VM86;
  int stat,len,sig;
@@ -541,7 +541,7 @@ int DOSVM_Enter( CONTEXT86 *context )
  return 0;
 }
 
-void DOSVM_PIC_ioport_out( WORD port, BYTE val)
+void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
     LPDOSEVENT event;
 
@@ -571,7 +571,7 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
     }
 }
 
-void DOSVM_SetTimer( unsigned ticks )
+void WINAPI DOSVM_SetTimer( unsigned ticks )
 {
   int stat=DOSMOD_SET_TIMER;
   struct timeval tim;
@@ -595,7 +595,7 @@ void DOSVM_SetTimer( unsigned ticks )
   }
 }
 
-unsigned DOSVM_GetTimer( void )
+unsigned WINAPI DOSVM_GetTimer( void )
 {
   int stat=DOSMOD_GET_TIMER;
   struct timeval tim;
@@ -619,17 +619,17 @@ unsigned DOSVM_GetTimer( void )
 
 #else /* !MZ_SUPPORTED */
 
-int DOSVM_Enter( CONTEXT86 *context )
+int WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
  ERR_(module)("DOS realmode not supported on this architecture!\n");
  return -1;
 }
 
-void DOSVM_Wait( int read_pipe, HANDLE hObject) {}
-void DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
-void DOSVM_SetTimer( unsigned ticks ) {}
-unsigned DOSVM_GetTimer( void ) { return 0; }
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
+void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject) {}
+void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
+void WINAPI DOSVM_SetTimer( unsigned ticks ) {}
+unsigned WINAPI DOSVM_GetTimer( void ) { return 0; }
+void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
 {
   if (irq<0) {
     /* callback event, perform it with dummy context */

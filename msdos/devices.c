@@ -10,6 +10,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "dosexe.h"
+#include "callback.h"
 #include "debugtools.h"
 
 #include "pshpack1.h"
@@ -264,7 +265,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  /* check for new keyboard input */
 	  while (CurOfs == bios->FirstKbdCharPtr) {
 	    /* no input available yet, so wait... */
-	    DOSVM_Wait( -1, 0 );
+	    Dosvm.Wait( -1, 0 );
 	  }
 	  /* read from keyboard queue (call int16?) */
 	  data = ((WORD*)bios)[CurOfs];
@@ -283,7 +284,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  /* check for new keyboard input */
 	  while (CurOfs == bios->FirstKbdCharPtr) {
 	    /* no input available yet, so wait... */
-	    DOSVM_Wait( -1, 0 );
+	    Dosvm.Wait( -1, 0 );
 	  }
 	  /* read from keyboard queue (call int16?) */
 	  data = ((WORD*)bios)[CurOfs];

@@ -27,7 +27,7 @@
 #include "miscemu.h"
 #include "debugtools.h"
 #include "dosexe.h"
-#include "dosmod.h"
+#include "../../loader/dos/dosmod.h"
 #include "options.h"
 #include "vga.h"
 
@@ -199,7 +199,7 @@ static BOOL MZ_InitMemory(void)
     return TRUE;
 }
 
-BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
+static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 {
   LPDOSTASK lpDosTask = dos_current;
   IMAGE_DOS_HEADER mz_header;
@@ -333,7 +333,7 @@ load_error:
   return FALSE;
 }
 
-BOOL MZ_LoadImage( LPCSTR cmdline )
+BOOL WINAPI MZ_LoadImage( LPCSTR cmdline )
 {
     HFILE hFile;
     char *name, buffer[MAX_PATH];
@@ -362,7 +362,7 @@ BOOL MZ_LoadImage( LPCSTR cmdline )
     return FALSE;
 }
 
-BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
+BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
   /* this may only be called from existing DOS processes
    * (i.e. one DOS app spawning another) */
@@ -424,7 +424,7 @@ BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
   return ret;
 }
 
-LPDOSTASK MZ_AllocDPMITask( void )
+LPDOSTASK WINAPI MZ_AllocDPMITask( void )
 {
   LPDOSTASK lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
 
@@ -569,7 +569,7 @@ static void MZ_KillTask(void)
   kill(dosmod_pid,SIGTERM);
 }
 
-void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
+void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
   LPDOSTASK lpDosTask = MZ_Current();
   if (lpDosTask) {
@@ -608,34 +608,34 @@ void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 
 #else /* !MZ_SUPPORTED */
 
-BOOL MZ_LoadImage( LPCSTR cmdline )
+BOOL WINAPI MZ_LoadImage( LPCSTR cmdline )
 {
   WARN("DOS executables not supported on this platform\n");
   SetLastError(ERROR_BAD_FORMAT);
   return FALSE;
 }
 
-BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
+BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
   /* can't happen */
   SetLastError(ERROR_BAD_FORMAT);
   return FALSE;
 }
 
-LPDOSTASK MZ_AllocDPMITask( void )
+LPDOSTASK WINAPI MZ_AllocDPMITask( void )
 {
     ERR("Actual real-mode calls not supported on this platform!\n");
     return NULL;
 }
 
-void MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
+void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
   ExitThread( retval );
 }
 
 #endif /* !MZ_SUPPORTED */
 
-LPDOSTASK MZ_Current( void )
+LPDOSTASK WINAPI MZ_Current( void )
 {
   return dos_current;
 }

@@ -8,6 +8,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+#include "miscemu.h"
 #include "callback.h"
 #include "options.h"
 #include "dosexe.h"
@@ -34,7 +35,8 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
     {
         if (instance == 11)  /* try DOS format */
         {
-            MZ_LoadImage( GetCommandLineA() );
+            if (DPMI_LoadDosSystem())
+                Dosvm.LoadDosExe( GetCommandLineA() );
             /* if we get back here it failed */
             instance = GetLastError();
         }

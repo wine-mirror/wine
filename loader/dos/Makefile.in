@@ -3,22 +3,16 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = dos
 
-C_SRCS = \
-	module.c \
-	dosvm.c
+C_SRCS = dosmod.c
 
 PROGRAMS = dosmod
 
-all: $(MODULE).o $(PROGRAMS)
+all: $(PROGRAMS)
 
 dosmod: dosmod.c
 	$(CC) $(ALLCFLAGS) -o dosmod $(SRCDIR)/dosmod.c
 
 @MAKE_RULES@
-
-$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) $(OBJS) -o $@
 
 ### Dependencies:

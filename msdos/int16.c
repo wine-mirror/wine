@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "module.h"
+#include "callback.h"
 #include "dosexe.h"
 #include "wincon.h"
 #include "debugtools.h"
@@ -139,7 +140,7 @@ int WINAPI INT_Int16ReadChar(BYTE*ascii,BYTE*scan,BOOL peek)
   } else {
     while (CurOfs == data->FirstKbdCharPtr) {
       /* no input available yet, so wait... */
-      DOSVM_Wait( -1, 0 );
+      Dosvm.Wait( -1, 0 );
     }
   }
   /* read from keyboard queue */

@@ -48,6 +48,24 @@ typedef struct
 
 extern CALLOUT_TABLE Callout;
 
+
+typedef struct {
+    struct _DOSTASK* WINAPI (*Current)( void );
+    struct _DOSTASK* WINAPI (*LoadDPMI)( void );
+    BOOL WINAPI             (*LoadDosExe)( LPCSTR cmdline );
+    BOOL WINAPI             (*Exec)( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
+    void WINAPI             (*Exit)( CONTEXT86 *context, BOOL cs_psp, WORD retval );
+    int WINAPI              (*Enter)( CONTEXT86 *context );
+    void WINAPI             (*Wait)( int read_pipe, HANDLE hObject );
+    void WINAPI             (*QueueEvent)( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data );
+    void WINAPI             (*OutPIC)( WORD port, BYTE val );
+    void WINAPI             (*SetTimer)( unsigned ticks );
+    unsigned WINAPI         (*GetTimer)( void );
+} DOSVM_TABLE;
+
+extern DOSVM_TABLE Dosvm;
+
+
 #include "pshpack1.h"
 
 typedef struct tagTHUNK

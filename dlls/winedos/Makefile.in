@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winedos
+SOVERSION = 1.0
+IMPORTS   = user32 kernel32 ntdll
+
+C_SRCS = \
+	dosvm.c \
+	module.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

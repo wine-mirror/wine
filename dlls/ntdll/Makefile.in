@@ -33,7 +33,6 @@ EXTRA_OBJS = \
 	$(TOPOBJDIR)/if1632/if1632.o \
 	$(TOPOBJDIR)/loader/loader.o \
 	$(TOPOBJDIR)/loader/ne/ne.o \
-	$(TOPOBJDIR)/loader/dos/dos.o \
 	$(TOPOBJDIR)/memory/memory.o \
 	$(TOPOBJDIR)/misc/misc.o \
 	$(TOPOBJDIR)/msdos/msdos.o \

@@ -8,7 +8,7 @@
 /* #define DEBUG_INT */
 #include "debugtools.h"
 #include "task.h"
-#include "dosexe.h"
+#include "callback.h"
 
 /**********************************************************************
  *	    INT_Int20Handler
@@ -17,5 +17,6 @@
  */
 void WINAPI INT_Int20Handler( CONTEXT86 *context )
 {
-        MZ_Exit( context, TRUE, 0 );
+        if (Dosvm.Exit) Dosvm.Exit( context, TRUE, 0 );
+        else ExitThread( 0 );
 }

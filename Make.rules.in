@@ -152,6 +152,7 @@ DLLS = \
 	user32 \
 	version \
 	w32skrnl \
+	winedos \
 	wineoss.drv \
 	wineps \
 	wininet \

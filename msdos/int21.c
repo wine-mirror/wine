@@ -32,7 +32,8 @@
 #include "options.h"
 #include "miscemu.h"
 #include "task.h"
-#include "dosexe.h" /* for the MZ_SUPPORTED define */
+#include "dosexe.h"
+#include "callback.h"
 #include "debugtools.h"
 #include "console.h"
 
@@ -946,7 +947,7 @@ INT21_networkfunc (CONTEXT86 *context)
 
 static void INT21_SetCurrentPSP(WORD psp)
 {
-    LPDOSTASK lpDosTask = MZ_Current();
+    LPDOSTASK lpDosTask = Dosvm.Current();
     if (lpDosTask)
         lpDosTask->psp_seg = psp;
     else
@@ -955,7 +956,7 @@ static void INT21_SetCurrentPSP(WORD psp)
     
 static WORD INT21_GetCurrentPSP(void)
 {
-    LPDOSTASK lpDosTask = MZ_Current();
+    LPDOSTASK lpDosTask = Dosvm.Current();
     if (lpDosTask)
         return lpDosTask->psp_seg;
     else
@@ -964,7 +965,7 @@ static WORD INT21_GetCurrentPSP(void)
 
 static WORD INT21_GetReturnCode(void)
 {
-    LPDOSTASK lpDosTask = MZ_Current();
+    LPDOSTASK lpDosTask = Dosvm.Current();
     if (lpDosTask) {
         WORD ret = lpDosTask->retval;
         lpDosTask->retval = 0;
@@ -1144,7 +1145,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x00: /* TERMINATE PROGRAM */
         TRACE("TERMINATE PROGRAM\n");
-        MZ_Exit( context, FALSE, 0 );
+        if (Dosvm.Exit) Dosvm.Exit( context, FALSE, 0 );
+        else ExitThread( 0 );
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
@@ -1843,7 +1845,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         TRACE("EXEC %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx ));
 	if (ISV86(context)) {
-            if (!MZ_Exec( context, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx),
+            if (!Dosvm.Exec( context, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx),
                          AL_reg(context), CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx) ))
                 bSetDOSExtendedError = TRUE;
 	} else {
@@ -1856,7 +1858,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	
     case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
         TRACE("EXIT with return code %d\n",AL_reg(context));
-        MZ_Exit( context, FALSE, AL_reg(context) );
+        if (Dosvm.Exit) Dosvm.Exit( context, FALSE, AL_reg(context) );
+        else ExitThread( AL_reg(context) );
         break;
 
     case 0x4d: /* GET RETURN CODE */
