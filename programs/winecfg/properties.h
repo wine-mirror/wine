@@ -87,6 +87,12 @@ typedef struct
     int    nSynchronous;
 } X11DRV_DESC;
 
+typedef struct
+{
+  char szNode[MAX_NAME_LENGTH];
+  int nType;
+} DEV_NODES;
+
 VERSION_DESC *getWinVersions(void);
 VERSION_DESC *getDOSVersions(void);
 DLL_DESC *getDLLDefaults(void);

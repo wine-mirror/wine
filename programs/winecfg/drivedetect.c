@@ -43,6 +43,13 @@ BOOL gui_mode = TRUE;
 static long working_mask = 0;
 
 #ifdef HAVE_MNTENT_H
+
+static DEV_NODES sDeviceNodes[] = {
+  {"/dev/fd", DRIVE_REMOVABLE},
+  {"/dev/cdrom", DRIVE_CDROM},
+  {"",0}
+};
+
 static char *ignored_fstypes[] = {
     "devpts",
     "tmpfs",
@@ -58,6 +65,20 @@ static char *ignored_mnt_dirs[] = {
     "/boot",
     NULL
 };
+
+static int try_dev_node(char *dev)
+{
+    const DEV_NODES *pDevNodes = sDeviceNodes;
+    
+    while(pDevNodes->szNode[0])
+    {
+        if(!strncmp(dev,pDevNodes->szNode,strlen(pDevNodes->szNode)))
+            return pDevNodes->nType;
+        ++pDevNodes;
+    }
+    
+    return DRIVE_FIXED;
+}
 
 static BOOL should_ignore_fstype(char *type)
 {
@@ -288,11 +309,11 @@ int autodetect_drives()
             fclose(fstab);
             return FALSE;
         }
-            
-        WINE_TRACE("adding drive %c for %s, type %s\n", letter, ent->mnt_dir, ent->mnt_type);
         
         strncpy(label, "Drive X", 8);
         label[6] = letter;
+        
+        WINE_TRACE("adding drive %c for %s, type %s with label %s\n", letter, ent->mnt_dir, ent->mnt_type,label);
 
         if (!strcmp(ent->mnt_type, "nfs")) type = DRIVE_REMOTE;
         else if (!strcmp(ent->mnt_type, "nfs4")) type = DRIVE_REMOTE;
@@ -301,7 +322,7 @@ int autodetect_drives()
         else if (!strcmp(ent->mnt_type, "coda")) type = DRIVE_REMOTE;
         else if (!strcmp(ent->mnt_type, "iso9660")) type = DRIVE_CDROM;
         else if (!strcmp(ent->mnt_type, "ramfs")) type = DRIVE_RAMDISK;
-        else type = DRIVE_FIXED;
+        else type = try_dev_node(ent->mnt_fsname);
         
         add_drive(letter, ent->mnt_dir, label, "0", type);
         
