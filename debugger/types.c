@@ -354,24 +354,21 @@ DEBUG_GetExprValue(const DBG_VALUE *_value, char ** format)
   assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
 
   rtn = 0;
-  value.addr.seg = 0; /* FIXME? I don't quite get this... */
+  /* FIXME? I don't quite get this...
+   * if this is wrong, value.addr shall be linearized 
+   */
+  value.addr.seg = 0; 
   assert(value.type != NULL);
 
   switch(value.type->type)
     {
     case DT_BASIC:
 
-      if (value.type == DEBUG_TypeIntConst) 
-      {
-	 assert(_value->cookie == DV_HOST);
-	 rtn = *(int*)value.addr.off;
-	 def_format = value.type->un.basic.output_format;
-	 break;
-      }
-
       rtn = 0;
+      /* FIXME: following code implies i386 byte ordering */
       if (_value->cookie == DV_TARGET) {
-	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, value.type->un.basic.basic_size))
+	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, 
+				     value.type->un.basic.basic_size))
 	    return 0;
       } else {
 	 memcpy(&rtn, (void*)value.addr.off, value.type->un.basic.basic_size);
