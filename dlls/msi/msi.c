@@ -608,32 +608,23 @@ UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
                  LPSTR szBuffer, DWORD *pcchValueBuf)
 {
     LPWSTR szwProduct = NULL, szwAttribute = NULL, szwBuffer = NULL;
-    UINT hr = ERROR_INSTALL_FAILURE;
+    UINT hr = ERROR_OUTOFMEMORY;
 
-    FIXME("%s %s %p %p\n",debugstr_a(szProduct), debugstr_a(szAttribute),
+    TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szAttribute),
           szBuffer, pcchValueBuf);
 
-    if( NULL != szBuffer && NULL == pcchValueBuf )
-        return ERROR_INVALID_PARAMETER;
     if( szProduct )
     {
         szwProduct = strdupAtoW( szProduct );
         if( !szwProduct )
             goto end;
     }
-    else
-        return ERROR_INVALID_PARAMETER;
     
     if( szAttribute )
     {
         szwAttribute = strdupAtoW( szAttribute );
         if( !szwAttribute )
             goto end;
-    }
-    else
-    {
-        hr = ERROR_INVALID_PARAMETER;
-        goto end;
     }
 
     if( szBuffer )
@@ -679,40 +670,59 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
     return hr;
 }
 
-UINT WINAPI MsiDatabaseImportA(MSIHANDLE handle, LPCSTR szFolderPath, LPCSTR szFilename)
-{
-    FIXME("%lx %s %s\n",handle,debugstr_a(szFolderPath), debugstr_a(szFilename));
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
 UINT WINAPI MsiDatabaseImportW(MSIHANDLE handle, LPCWSTR szFolderPath, LPCWSTR szFilename)
 {
     FIXME("%lx %s %s\n",handle,debugstr_w(szFolderPath), debugstr_w(szFilename));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+UINT WINAPI MsiDatabaseImportA( MSIHANDLE handle,
+               LPCSTR szFolderPath, LPCSTR szFilename )
+{
+    LPWSTR path = NULL, file = NULL;
+    UINT r = ERROR_OUTOFMEMORY;
+
+    TRACE("%lx %s %s\n", handle, debugstr_a(szFolderPath), debugstr_a(szFilename));
+
+    if( szFolderPath )
+    {
+        path = strdupAtoW( szFolderPath );
+        if( !path )
+            goto end;
+    }
+
+    if( szFilename )
+    {
+        file = strdupAtoW( szFilename );
+        if( !file )
+            goto end;
+    }
+
+    r = MsiDatabaseImportW( handle, path, file );
+
+end:
+    HeapFree( GetProcessHeap(), 0, path );
+    HeapFree( GetProcessHeap(), 0, file );
+
+    return r;
+}
+
 UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, DWORD attributes)
 {
     LPWSTR szwLogFile = NULL;
-    UINT hr = ERROR_INSTALL_FAILURE;
+    UINT r;
 
-    FIXME("%08lx %s %08lx\n", dwLogMode, debugstr_a(szLogFile), attributes);
+    TRACE("%08lx %s %08lx\n", dwLogMode, debugstr_a(szLogFile), attributes);
 
     if( szLogFile )
     {
         szwLogFile = strdupAtoW( szLogFile );
         if( !szwLogFile )
-            goto end;
+            return ERROR_OUTOFMEMORY;
     }
-    else
-        return ERROR_INVALID_PARAMETER;
-
-    hr = MsiEnableLogW( dwLogMode, szwLogFile, attributes );
-
-end:
+    r = MsiEnableLogW( dwLogMode, szwLogFile, attributes );
     HeapFree( GetProcessHeap(), 0, szwLogFile );
-
-    return hr;
+    return r;
 }
 
 UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
@@ -721,7 +731,7 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
 
     TRACE("%08lx %s %08lx\n", dwLogMode, debugstr_w(szLogFile), attributes);
 
-    strcpyW(gszLogFile,szLogFile);
+    lstrcpyW(gszLogFile,szLogFile);
     if (!(attributes & INSTALLLOGATTRIBUTES_APPEND))
         DeleteFileW(szLogFile);
     file = CreateFileW(szLogFile, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
