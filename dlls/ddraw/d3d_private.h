@@ -35,12 +35,10 @@
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-typedef struct IDirect3DImpl IDirect3DImpl;
 typedef struct IDirect3DLightImpl IDirect3DLightImpl;
 typedef struct IDirect3DMaterialImpl IDirect3DMaterialImpl;
 typedef struct IDirect3DViewportImpl IDirect3DViewportImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
-typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
 typedef struct IDirect3DVertexBufferImpl IDirect3DVertexBufferImpl;
 
 #include "ddraw_private.h"
@@ -56,30 +54,6 @@ typedef struct STATEBLOCK {
    DWORD texture_stage_state[MAX_TEXTURES][HIGHEST_TEXTURE_STAGE_STATE];
 } STATEBLOCK;
 
-/*****************************************************************************
- * IDirect3D implementation structure.
- * This is common for interfaces 1, 2, 3 and 7.
- */
-struct IDirect3DImpl
-{
-    ICOM_VFIELD_MULTI(IDirect3D7);
-    ICOM_VFIELD_MULTI(IDirect3D3);
-    ICOM_VFIELD_MULTI(IDirect3D2);
-    ICOM_VFIELD_MULTI(IDirect3D);
-    DWORD                   ref;
-    /* IDirect3D fields */
-    IDirectDrawImpl*	ddraw;
-
-    /* Used as a callback function to create a texture */
-    HRESULT (*create_texture)(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *tex, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main);
-
-    /* Used as a callback for Devices to tell to the D3D object it's been created */
-    HRESULT (*added_device)(IDirect3DImpl *d3d, IDirect3DDeviceImpl *device);
-    HRESULT (*removed_device)(IDirect3DImpl *d3d, IDirect3DDeviceImpl *device);
-
-    /* This is needed for delayed texture creation and Z buffer blits */
-    IDirect3DDeviceImpl *current_device;
-};
 
 /*****************************************************************************
  * IDirect3DLight implementation structure
@@ -89,7 +63,7 @@ struct IDirect3DLightImpl
     ICOM_VFIELD_MULTI(IDirect3DLight);
     DWORD ref;
     /* IDirect3DLight fields */
-    IDirect3DImpl *d3d;
+    IDirectDrawImpl *d3d;
     /* If this light is active for one viewport, put the viewport here */
     IDirect3DViewportImpl *active_viewport;
 
@@ -117,7 +91,7 @@ struct IDirect3DMaterialImpl
     ICOM_VFIELD_MULTI(IDirect3DMaterial);
     DWORD  ref;
     /* IDirect3DMaterial2 fields */
-    IDirect3DImpl *d3d;
+    IDirectDrawImpl *d3d;
     IDirect3DDeviceImpl *active_device;
 
     D3DMATERIAL mat;
@@ -133,7 +107,7 @@ struct IDirect3DViewportImpl
     ICOM_VFIELD_MULTI(IDirect3DViewport3);
     DWORD ref;
     /* IDirect3DViewport fields */
-    IDirect3DImpl *d3d;
+    IDirectDrawImpl *d3d;
     /* If this viewport is active for one device, put the device here */
     IDirect3DDeviceImpl *active_device;
 
@@ -167,7 +141,7 @@ struct IDirect3DExecuteBufferImpl
     ICOM_VFIELD_MULTI(IDirect3DExecuteBuffer);
     DWORD ref;
     /* IDirect3DExecuteBuffer fields */
-    IDirect3DImpl *d3d;
+    IDirectDrawImpl *d3d;
     IDirect3DDeviceImpl* d3ddev;
 
     D3DEXECUTEBUFFERDESC desc;
@@ -217,7 +191,7 @@ struct IDirect3DDeviceImpl
     ICOM_VFIELD_MULTI(IDirect3DDevice);
     DWORD  ref;
     /* IDirect3DDevice fields */
-    IDirect3DImpl *d3d;
+    IDirectDrawImpl *d3d;
     IDirectDrawSurfaceImpl *surface;
 
     IDirect3DViewportImpl *viewport_list;
@@ -270,7 +244,7 @@ struct IDirect3DVertexBufferImpl
     ICOM_VFIELD_MULTI(IDirect3DVertexBuffer7);
     ICOM_VFIELD_MULTI(IDirect3DVertexBuffer);
     DWORD ref;
-    IDirect3DImpl *d3d;
+    IDirectDrawImpl *d3d;
     D3DVERTEXBUFFERDESC desc;
     LPVOID *vertices;
     DWORD vertex_buffer_size;

@@ -214,7 +214,7 @@ ICOM_VTABLE(IDirect3DLight) VTABLE_IDirect3DLight =
 
 
 
-HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum light_num)
+HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d, GLenum light_num)
 {
     IDirect3DLightImpl *object;
     IDirect3DLightGLImpl *gl_object;

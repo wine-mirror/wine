@@ -650,7 +650,7 @@ ICOM_VTABLE(IDirect3DTexture) VTABLE_IDirect3DTexture =
 #undef XCAST
 #endif
 
-HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, 
+HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, 
 			  IDirectDrawSurfaceImpl *main)
 {
     /* First, initialize the texture vtables... */

@@ -19,17 +19,6 @@
 /* This is defined here so as to be able to put them in 'drivers' */
 
 HRESULT WINAPI
-Main_IDirect3DImpl_7_3T_2T_1T_QueryInterface(LPDIRECT3D7 iface,
-                                             REFIID riid,
-                                             LPVOID* obp);
-
-ULONG WINAPI
-Main_IDirect3DImpl_7_3T_2T_1T_AddRef(LPDIRECT3D7 iface);
-
-ULONG WINAPI
-Main_IDirect3DImpl_7_3T_2T_1T_Release(LPDIRECT3D7 iface);
-
-HRESULT WINAPI
 Main_IDirect3DImpl_7_EnumDevices(LPDIRECT3D7 iface,
                                  LPD3DENUMDEVICESCALLBACK7 lpEnumDevicesCallback,
                                  LPVOID lpUserArg);
@@ -130,6 +119,11 @@ Main_IDirect3DImpl_1_FindDevice(LPDIRECT3D iface,
                                 LPD3DFINDDEVICERESULT lplpD3DDevice);
 
 HRESULT WINAPI
+Thunk_IDirect3DImpl_7_QueryInterface(LPDIRECT3D7 iface,
+                                     REFIID riid,
+                                     LPVOID* obp);
+
+HRESULT WINAPI
 Thunk_IDirect3DImpl_3_QueryInterface(LPDIRECT3D3 iface,
                                      REFIID riid,
                                      LPVOID* obp);
@@ -145,6 +139,9 @@ Thunk_IDirect3DImpl_1_QueryInterface(LPDIRECT3D iface,
                                      LPVOID* obp);
 
 ULONG WINAPI
+Thunk_IDirect3DImpl_7_AddRef(LPDIRECT3D7 iface);
+
+ULONG WINAPI
 Thunk_IDirect3DImpl_3_AddRef(LPDIRECT3D3 iface);
 
 ULONG WINAPI
@@ -152,6 +149,9 @@ Thunk_IDirect3DImpl_2_AddRef(LPDIRECT3D2 iface);
 
 ULONG WINAPI
 Thunk_IDirect3DImpl_1_AddRef(LPDIRECT3D iface);
+
+ULONG WINAPI
+Thunk_IDirect3DImpl_7_Release(LPDIRECT3D7 iface);
 
 ULONG WINAPI
 Thunk_IDirect3DImpl_3_Release(LPDIRECT3D3 iface);

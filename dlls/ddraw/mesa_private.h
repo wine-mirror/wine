@@ -45,11 +45,11 @@ typedef enum {
     SURFACE_MEMORY_DIRTY
 } SURFACE_STATE;
 
+/* This structure is used for the 'd3d_private' field of the IDirectDraw structure */
 typedef struct IDirect3DGLImpl
 {
-    struct IDirect3DImpl parent;
     DWORD free_lights;
-    void (*light_released)(IDirect3DImpl *, GLenum light_num);
+    void (*light_released)(IDirectDrawImpl *, GLenum light_num);
 } IDirect3DGLImpl;
 
 typedef struct IDirect3DLightGLImpl
@@ -124,19 +124,19 @@ typedef struct {
 } IDirect3DVertexBufferGLImpl;
 
 /* All non-static functions 'exported' by various sub-objects */
-extern HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw);
-extern HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf);
-extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLenum light_num);
-extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
-extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirect3DImpl *d3d);
-extern HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirect3DImpl *d3d);
-extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags);
-extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface);
+extern HRESULT direct3d_create(IDirectDrawImpl *This);
+extern HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf);
+extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirectDrawImpl *d3d, GLenum light_num);
+extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirectDrawImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
+extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirectDrawImpl *d3d);
+extern HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirectDrawImpl *d3d);
+extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirectDrawImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags);
+extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface);
 
 /* Used for Direct3D to request the device to enumerate itself */
 extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD version) ;
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
-extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
+extern HRESULT d3ddevice_find(IDirectDrawImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
 
 /* Used to upload the texture */
 extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This) ;

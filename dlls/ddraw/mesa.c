@@ -773,7 +773,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 		       (src_pf->u3.dwGBitMask ==        0x0000FF00) &&
 		       (src_pf->u4.dwBBitMask ==        0x000000FF) &&
 		       (src_pf->u5.dwRGBAlphaBitMask == 0x00000000)) {
-		if (need_alpha_ck) {
+		if (need_alpha_ck == TRUE) {
 		    convert_type = CONVERT_RGB32_888;
 		    current_format = GL_RGBA;
 		    internal_format = GL_RGBA;
@@ -889,7 +889,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
@@ -909,7 +909,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
@@ -929,7 +929,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
@@ -968,7 +968,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
@@ -988,7 +988,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
@@ -1017,7 +1017,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    BYTE *src = (BYTE *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top));
 	    DWORD *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(DWORD));
 	    dst = (DWORD *) *temp_buffer;
@@ -1038,7 +1038,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
@@ -1057,7 +1057,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;
@@ -1077,7 +1077,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    DWORD *src = (DWORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(DWORD));	    
 	    dst = (DWORD *) *temp_buffer;

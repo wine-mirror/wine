@@ -507,7 +507,7 @@ ICOM_VTABLE(IDirect3DVertexBuffer) VTABLE_IDirect3DVertexBuffer =
 #undef XCAST
 #endif
 
-HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags)
+HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirectDrawImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags)
 {
     IDirect3DVertexBufferImpl *object;
     static const flag_info flags[] = {

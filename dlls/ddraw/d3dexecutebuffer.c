@@ -661,7 +661,7 @@ ICOM_VTABLE(IDirect3DExecuteBuffer) VTABLE_IDirect3DExecuteBuffer =
 #endif
 
 
-HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc)
+HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirectDrawImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc)
 {
     IDirect3DExecuteBufferImpl* object;
 

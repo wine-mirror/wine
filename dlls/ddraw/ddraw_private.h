@@ -58,6 +58,7 @@ typedef struct IDirectDrawImpl IDirectDrawImpl;
 typedef struct IDirectDrawPaletteImpl IDirectDrawPaletteImpl;
 typedef struct IDirectDrawClipperImpl IDirectDrawClipperImpl;
 typedef struct IDirectDrawSurfaceImpl IDirectDrawSurfaceImpl;
+typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
 
 typedef void (*pixel_convert_func)(void *src, void *dst, DWORD width,
 				   DWORD height, LONG pitch,
@@ -73,6 +74,10 @@ struct IDirectDrawImpl
     ICOM_VFIELD_MULTI(IDirectDraw4);
     ICOM_VFIELD_MULTI(IDirectDraw2);
     ICOM_VFIELD_MULTI(IDirectDraw);
+    ICOM_VFIELD_MULTI(IDirect3D7);
+    ICOM_VFIELD_MULTI(IDirect3D3);
+    ICOM_VFIELD_MULTI(IDirect3D2);
+    ICOM_VFIELD_MULTI(IDirect3D);
 
     DWORD ref;
 
@@ -159,9 +164,19 @@ struct IDirectDrawImpl
     void (*free_memory)(IDirectDrawImpl *This, DWORD mem);
     DWORD total_vidmem, available_vidmem;
     
-    /* This is to get the D3D object associated to this DDraw object */
-    struct IDirect3DImpl *d3d;
-    
+    /* IDirect3D fields */
+    LPVOID d3d_private;
+
+    /* Used as a callback function to create a texture */
+    HRESULT (*d3d_create_texture)(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *tex, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main);
+
+    /* Used as a callback for Devices to tell to the D3D object it's been created */
+    HRESULT (*d3d_added_device)(IDirectDrawImpl *d3d, IDirect3DDeviceImpl *device);
+    HRESULT (*d3d_removed_device)(IDirectDrawImpl *d3d, IDirect3DDeviceImpl *device);
+
+    /* This is needed for delayed texture creation and Z buffer blits */
+    IDirect3DDeviceImpl *current_device;
+
     /* This is for the fake mainWindow */
     ATOM	winclass;
     PAINTSTRUCT	ps;

@@ -351,7 +351,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	}
 	
 	/* And warn the D3D object that this device is no longer active... */
-	This->d3d->removed_device(This->d3d, This);
+	This->d3d->d3d_removed_device(This->d3d, This);
 
 	HeapFree(GetProcessHeap(), 0, This->world_mat);
 	HeapFree(GetProcessHeap(), 0, This->view_mat);
@@ -415,19 +415,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     pformat->dwSize = sizeof(DDPIXELFORMAT);
     pformat->dwFourCC = 0;
 
-#if 0
-    /* See argument about the RGBA format for 'packed' texture formats */
-    TRACE("Enumerating GL_RGBA unpacked (32)\n");
-    pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    pformat->u1.dwRGBBitCount = 32;
-    pformat->u2.dwRBitMask =        0xFF000000;
-    pformat->u3.dwGBitMask =        0x00FF0000;
-    pformat->u4.dwBBitMask =        0x0000FF00;
-    pformat->u5.dwRGBAlphaBitMask = 0x000000FF;
-    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
-    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
-#endif
-    
     TRACE("Enumerating GL_RGBA unpacked (32)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
     pformat->u1.dwRGBBitCount = 32;
@@ -438,7 +425,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
-#if 0 /* Enabling this breaks Tomb Raider 3, need to investigate... */
     TRACE("Enumerating GL_RGB unpacked (32)\n");
     pformat->dwFlags = DDPF_RGB;
     pformat->u1.dwRGBBitCount = 32;
@@ -448,7 +434,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     pformat->u5.dwRGBAlphaBitMask = 0x00000000;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
-#endif
     
     TRACE("Enumerating GL_RGB unpacked (24)\n");
     pformat->dwFlags = DDPF_RGB;
@@ -508,6 +493,17 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
        
        So basically, forget our OpenGL roots and do not even enumerate our RGBA ones.
     */
+    /* See argument about the RGBA format for 'packed' texture formats */
+    TRACE("Enumerating GL_RGBA unpacked (32)\n");
+    pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    pformat->u1.dwRGBBitCount = 32;
+    pformat->u2.dwRBitMask =        0xFF000000;
+    pformat->u3.dwGBitMask =        0x00FF0000;
+    pformat->u4.dwBBitMask =        0x0000FF00;
+    pformat->u5.dwRGBAlphaBitMask = 0x000000FF;
+    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+    
     TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_4_4_4_4 (16)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
     pformat->u1.dwRGBBitCount = 16;
@@ -555,7 +551,7 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
 
 
 HRESULT
-d3ddevice_find(IDirect3DImpl *d3d,
+d3ddevice_find(IDirectDrawImpl *d3d,
 	       LPD3DFINDDEVICESEARCH lpD3DDFS,
 	       LPD3DFINDDEVICERESULT lplpD3DDevice)
 {
@@ -3079,7 +3075,7 @@ apply_texture_state(IDirect3DDeviceImpl *This)
 }     
 
 HRESULT
-d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface)
+d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surface)
 {
     IDirect3DDeviceImpl *object;
     IDirect3DDeviceGLImpl *gl_object;
@@ -3240,7 +3236,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     TRACE(" creating implementation at %p.\n", *obj);
 
     /* And finally warn D3D that this device is now present */
-    object->d3d->added_device(object->d3d, object);
+    object->d3d->d3d_added_device(object->d3d, object);
 
     /* FIXME: Should handle other versions than just 7 */
     InitDefaultStateBlock(&object->state_block, 7);

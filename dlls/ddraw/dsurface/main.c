@@ -189,7 +189,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
         IDirect3DDeviceImpl *d3ddevimpl;
 	HRESULT ret_value;
 
-	ret_value = d3ddevice_create(&d3ddevimpl, This->ddraw_owner->d3d, This);
+	ret_value = d3ddevice_create(&d3ddevimpl, This->ddraw_owner, This);
 	if (FAILED(ret_value)) return ret_value;
 
 	*ppObj = ICOM_INTERFACE(d3ddevimpl, IDirect3DDevice);
@@ -207,12 +207,12 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 
 	/* In case the texture surface was created before the D3D creation */
 	if (This->tex_private == NULL) {
-   	    if (This->ddraw_owner->d3d == NULL) {
+   	    if (This->ddraw_owner->d3d_private == NULL) {
 	        ERR("Texture created with no D3D object yet.. Not supported !\n");
 		return E_NOINTERFACE;
 	    }
 
-	    ret_value = This->ddraw_owner->d3d->create_texture(This->ddraw_owner->d3d, This, FALSE, This->mip_main);
+	    ret_value = This->ddraw_owner->d3d_create_texture(This->ddraw_owner, This, FALSE, This->mip_main);
 	    if (FAILED(ret_value)) return ret_value;
 	}
 	if (IsEqualGUID( &IID_IDirect3DTexture, riid )) {

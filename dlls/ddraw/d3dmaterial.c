@@ -388,7 +388,7 @@ ICOM_VTABLE(IDirect3DMaterial) VTABLE_IDirect3DMaterial =
 
 
 
-HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirect3DImpl *d3d)
+HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirectDrawImpl *d3d)
 {
     IDirect3DMaterialImpl *object;
 

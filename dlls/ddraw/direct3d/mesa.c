@@ -47,7 +47,7 @@ GL_IDirect3DImpl_1_EnumDevices(LPDIRECT3D iface,
 			       LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
 			       LPVOID lpUserArg)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
 
     /* Call functions defined in d3ddevices.c */
@@ -62,7 +62,7 @@ GL_IDirect3DImpl_3_2T_EnumDevices(LPDIRECT3D3 iface,
 				  LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
 				  LPVOID lpUserArg)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
 
     /* Call functions defined in d3ddevices.c */
@@ -77,7 +77,7 @@ GL_IDirect3DImpl_3_2T_1T_CreateLight(LPDIRECT3D3 iface,
 				     LPDIRECT3DLIGHT* lplpDirect3DLight,
 				     IUnknown* pUnkOuter)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
     int fl;
     IDirect3DLightImpl *d3dlimpl;
@@ -106,7 +106,7 @@ GL_IDirect3DImpl_3_2T_1T_CreateMaterial(LPDIRECT3D3 iface,
 {
     IDirect3DMaterialImpl *D3Dmat_impl;
     HRESULT ret_value;
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lplpDirect3DMaterial3, pUnkOuter);
     ret_value = d3dmaterial_create(&D3Dmat_impl, This);
@@ -123,7 +123,7 @@ GL_IDirect3DImpl_3_2T_1T_CreateViewport(LPDIRECT3D3 iface,
 {
     IDirect3DViewportImpl *D3Dvp_impl;
     HRESULT ret_value;
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lplpD3DViewport3, pUnkOuter);
     ret_value = d3dviewport_create(&D3Dvp_impl, This);
@@ -134,7 +134,7 @@ GL_IDirect3DImpl_3_2T_1T_CreateViewport(LPDIRECT3D3 iface,
 }
 
 static HRESULT
-create_device_helper(IDirect3DImpl *This,
+create_device_helper(IDirectDrawImpl *This,
 		     REFCLSID iid,
 		     IDirectDrawSurfaceImpl *lpDDS,
 		     void **obj,
@@ -186,7 +186,7 @@ GL_IDirect3DImpl_2_CreateDevice(LPDIRECT3D2 iface,
 				LPDIRECTDRAWSURFACE lpDDS,
 				LPDIRECT3DDEVICE2* lplpD3DDevice2)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D2, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D2, iface);
     IDirectDrawSurfaceImpl *ddsurfaceimpl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface3, lpDDS);
     TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_guid(rclsid), lpDDS, lplpD3DDevice2);
     return create_device_helper(This, rclsid, ddsurfaceimpl, (void **) lplpD3DDevice2, 2);
@@ -199,7 +199,7 @@ GL_IDirect3DImpl_3_CreateDevice(LPDIRECT3D3 iface,
 				LPDIRECT3DDEVICE3* lplpD3DDevice3,
 				LPUNKNOWN lpUnk)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     IDirectDrawSurfaceImpl *ddsurfaceimpl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpDDS);
     TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_guid(rclsid), lpDDS, lplpD3DDevice3);
     return create_device_helper(This, rclsid, ddsurfaceimpl, (void **) lplpD3DDevice3, 3);
@@ -210,7 +210,7 @@ GL_IDirect3DImpl_3_2T_1T_FindDevice(LPDIRECT3D3 iface,
 				    LPD3DFINDDEVICESEARCH lpD3DDFS,
 				    LPD3DFINDDEVICERESULT lpD3DFDR)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D3, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D3, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpD3DDFS, lpD3DFDR);
     return d3ddevice_find(This, lpD3DDFS, lpD3DFDR);
 }
@@ -221,7 +221,7 @@ GL_IDirect3DImpl_7_3T_EnumZBufferFormats(LPDIRECT3D7 iface,
 					 LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,
 					 LPVOID lpContext)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     DDPIXELFORMAT pformat;
     
     TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_guid(riidDevice), lpEnumCallback, lpContext);
@@ -246,7 +246,7 @@ GL_IDirect3DImpl_7_EnumDevices(LPDIRECT3D7 iface,
 			       LPD3DENUMDEVICESCALLBACK7 lpEnumDevicesCallback,
 			       LPVOID lpUserArg)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
 
     if (d3ddevice_enumerate7(lpEnumDevicesCallback, lpUserArg) != D3DENUMRET_OK)
@@ -261,7 +261,7 @@ GL_IDirect3DImpl_7_CreateDevice(LPDIRECT3D7 iface,
 				LPDIRECTDRAWSURFACE7 lpDDS,
 				LPDIRECT3DDEVICE7* lplpD3DDevice)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     IDirectDrawSurfaceImpl *ddsurfaceimpl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpDDS);
     TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_guid(rclsid), lpDDS, lplpD3DDevice);
     return create_device_helper(This, rclsid, ddsurfaceimpl, (void **) lplpD3DDevice, 7);
@@ -273,7 +273,7 @@ GL_IDirect3DImpl_7_3T_CreateVertexBuffer(LPDIRECT3D7 iface,
 					 LPDIRECT3DVERTEXBUFFER7* lplpD3DVertBuf,
 					 DWORD dwFlags)
 {
-    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    ICOM_THIS_FROM(IDirectDrawImpl, IDirect3D7, iface);
     IDirect3DVertexBufferImpl *vbimpl;
     HRESULT res;
     
@@ -286,7 +286,7 @@ GL_IDirect3DImpl_7_3T_CreateVertexBuffer(LPDIRECT3D7 iface,
     return res;
 }
 
-static void light_released(IDirect3DImpl *This, GLenum light_num)
+static void light_released(IDirectDrawImpl *This, GLenum light_num)
 {
     IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
     glThis->free_lights |= (light_num - GL_LIGHT0);
@@ -301,9 +301,9 @@ static void light_released(IDirect3DImpl *This, GLenum light_num)
 ICOM_VTABLE(IDirect3D7) VTABLE_IDirect3D7 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    XCAST(QueryInterface) Main_IDirect3DImpl_7_3T_2T_1T_QueryInterface,
-    XCAST(AddRef) Main_IDirect3DImpl_7_3T_2T_1T_AddRef,
-    XCAST(Release) Main_IDirect3DImpl_7_3T_2T_1T_Release,
+    XCAST(QueryInterface) Thunk_IDirect3DImpl_7_QueryInterface,
+    XCAST(AddRef) Thunk_IDirect3DImpl_7_AddRef,
+    XCAST(Release) Thunk_IDirect3DImpl_7_Release,
     XCAST(EnumDevices) GL_IDirect3DImpl_7_EnumDevices,
     XCAST(CreateDevice) GL_IDirect3DImpl_7_CreateDevice,
     XCAST(CreateVertexBuffer) GL_IDirect3DImpl_7_3T_CreateVertexBuffer,
@@ -393,13 +393,13 @@ ICOM_VTABLE(IDirect3D) VTABLE_IDirect3D =
 #undef XCAST
 #endif
 
-static HRESULT d3d_add_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
+static HRESULT d3d_add_device(IDirectDrawImpl *This, IDirect3DDeviceImpl *device)
 {
     if  (This->current_device == NULL) {
         /* Create delayed textures now that we have an OpenGL context...
 	   For that, go through all surface attached to our DDraw object and create
 	   OpenGL textures for all textures.. */
-        IDirectDrawSurfaceImpl *surf = This->ddraw->surfaces;
+        IDirectDrawSurfaceImpl *surf = This->surfaces;
 
 	while (surf != NULL) {
 	    if (surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) {
@@ -415,38 +415,34 @@ static HRESULT d3d_add_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
     return DD_OK;
 }
 
-static HRESULT d3d_remove_device(IDirect3DImpl *This, IDirect3DDeviceImpl *device)
+static HRESULT d3d_remove_device(IDirectDrawImpl *This, IDirect3DDeviceImpl *device)
 {
     This->current_device = NULL;
     return DD_OK;
 }
 
-HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw)
+HRESULT direct3d_create(IDirectDrawImpl *This)
 {
-    IDirect3DImpl *object;
     IDirect3DGLImpl *globject;
     
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DGLImpl));
-    if (object == NULL) return DDERR_OUTOFMEMORY;
+    globject = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DGLImpl));
+    if (globject == NULL) return DDERR_OUTOFMEMORY;
 
-    object->ref = 1;
-    object->ddraw = ddraw;
-    object->create_texture = d3dtexture_create;
-    object->added_device = d3d_add_device;
-    object->removed_device = d3d_remove_device;
+    This->d3d_create_texture = d3dtexture_create;
+    This->d3d_added_device = d3d_add_device;
+    This->d3d_removed_device = d3d_remove_device;
 
-    ICOM_INIT_INTERFACE(object, IDirect3D,  VTABLE_IDirect3D);
-    ICOM_INIT_INTERFACE(object, IDirect3D2, VTABLE_IDirect3D2);
-    ICOM_INIT_INTERFACE(object, IDirect3D3, VTABLE_IDirect3D3);
-    ICOM_INIT_INTERFACE(object, IDirect3D7, VTABLE_IDirect3D7);
+    ICOM_INIT_INTERFACE(This, IDirect3D,  VTABLE_IDirect3D);
+    ICOM_INIT_INTERFACE(This, IDirect3D2, VTABLE_IDirect3D2);
+    ICOM_INIT_INTERFACE(This, IDirect3D3, VTABLE_IDirect3D3);
+    ICOM_INIT_INTERFACE(This, IDirect3D7, VTABLE_IDirect3D7);
 
-    globject = (IDirect3DGLImpl *) object;
     globject->free_lights = (0x01 << MAX_LIGHTS) - 1; /* There are, in total, 8 lights in OpenGL */
     globject->light_released = light_released;
 
-    *obj = object;
+    This->d3d_private = globject;
 
-    TRACE(" creating implementation at %p.\n", *obj);
+    TRACE(" creating Mesa private storage at %p.\n", globject);
     
     return D3D_OK;
 }

@@ -318,15 +318,15 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_EndScene(LPDIRECT3DDEVICE7 iface)
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_2T_1T_GetDirect3D(LPDIRECT3DDEVICE7 iface,
-						LPDIRECT3D7* lplpDirect3D3)
+						LPDIRECT3D7* lplpDirect3D7)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    TRACE("(%p/%p)->(%p)\n", This, iface, lplpDirect3D3);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lplpDirect3D7);
 
-    *lplpDirect3D3 = ICOM_INTERFACE(This->d3d, IDirect3D7);
+    *lplpDirect3D7 = ICOM_INTERFACE(This->d3d, IDirect3D7);
     IDirect3D7_AddRef(ICOM_INTERFACE(This->d3d, IDirect3D7));
     
-    TRACE(" returning interface %p\n", *lplpDirect3D3);
+    TRACE(" returning interface %p\n", *lplpDirect3D7);
     return DD_OK;
 }
 
@@ -812,13 +812,12 @@ Main_IDirect3DDeviceImpl_7_3T_GetTexture(LPDIRECT3DDEVICE7 iface,
 
     if (This->current_texture[dwStage] != NULL) {
         *lpTexture = ICOM_INTERFACE(This->current_texture[dwStage], IDirectDrawSurface7);
+        IDirectDrawSurface7_AddRef(*lpTexture);
     } else {
         *lpTexture = NULL;
     }
 
     TRACE(" returning interface at %p (for implementation at %p).\n", *lpTexture, This->current_texture[dwStage]);
-
-    /* Note: should this method increase the reference count for this ?? */
 
     return DD_OK;
 }
@@ -1559,7 +1558,7 @@ Thunk_IDirect3DDeviceImpl_3_GetDirect3D(LPDIRECT3DDEVICE3 iface,
     TRACE("(%p)->(%p) thunking to IDirect3DDevice7 interface.\n", iface, lplpDirect3D3);
     ret = IDirect3DDevice7_GetDirect3D(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, iface),
 				       &ret_ptr);
-    *lplpDirect3D3 = COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D7, IDirect3D3, ret_ptr);
+    *lplpDirect3D3 = COM_INTERFACE_CAST(IDirectDrawImpl, IDirect3D7, IDirect3D3, ret_ptr);
     TRACE(" returning interface %p\n", *lplpDirect3D3);
     return ret;
 }
@@ -1574,7 +1573,7 @@ Thunk_IDirect3DDeviceImpl_2_GetDirect3D(LPDIRECT3DDEVICE2 iface,
     TRACE("(%p)->(%p) thunking to IDirect3DDevice7 interface.\n", iface, lplpDirect3D2);
     ret = IDirect3DDevice7_GetDirect3D(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice2, IDirect3DDevice7, iface),
 				       &ret_ptr);
-    *lplpDirect3D2 = COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D7, IDirect3D2, ret_ptr);
+    *lplpDirect3D2 = COM_INTERFACE_CAST(IDirectDrawImpl, IDirect3D7, IDirect3D2, ret_ptr);
     TRACE(" returning interface %p\n", *lplpDirect3D2);
     return ret;
 }
@@ -1589,7 +1588,7 @@ Thunk_IDirect3DDeviceImpl_1_GetDirect3D(LPDIRECT3DDEVICE iface,
     TRACE("(%p)->(%p) thunking to IDirect3DDevice7 interface.\n", iface, lplpDirect3D);
     ret = IDirect3DDevice7_GetDirect3D(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice, IDirect3DDevice7, iface),
 				       &ret_ptr);
-    *lplpDirect3D = COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D7, IDirect3D, ret_ptr);
+    *lplpDirect3D = COM_INTERFACE_CAST(IDirectDrawImpl, IDirect3D7, IDirect3D, ret_ptr);
     TRACE(" returning interface %p\n", *lplpDirect3D);
     return ret;
 }

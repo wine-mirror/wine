@@ -185,28 +185,24 @@ HRESULT WINAPI Main_DirectDraw_QueryInterface(
 	      IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
         if (opengl_initialized) {
-	    IDirect3DImpl *d3d_impl;
 	    HRESULT ret_value;
 
-	    ret_value = direct3d_create(&d3d_impl, This);
+	    ret_value = direct3d_create(This);
 	    if (FAILED(ret_value)) return ret_value;
 	    
 	    if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ) {
-	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
+	        *obj = ICOM_INTERFACE(This, IDirect3D);
 		TRACE(" returning Direct3D interface at %p.\n", *obj);	    
 	    } else if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) ) {
-	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D2);
+	        *obj = ICOM_INTERFACE(This, IDirect3D2);
 		TRACE(" returning Direct3D2 interface at %p.\n", *obj);	    
 	    } else if ( IsEqualGUID( &IID_IDirect3D3  , refiid ) ) {
-	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D3);
+	        *obj = ICOM_INTERFACE(This, IDirect3D3);
 		TRACE(" returning Direct3D3 interface at %p.\n", *obj);	    
 	    } else {
-	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D7);
+	        *obj = ICOM_INTERFACE(This, IDirect3D7);
 		TRACE(" returning Direct3D7 interface at %p.\n", *obj);	    
 	    }
-
-	    /* And store the D3D object */
-	    This->d3d = d3d_impl;
 	} else {
 	    ERR("Application requests a Direct3D interface but dynamic OpenGL support loading failed !\n");
 	    ERR("(%p)->(%s,%p): no interface\n",This,debugstr_guid(refiid),obj);
@@ -384,8 +380,8 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
     hr = This->create_texture(This, &ddsd, ppSurf, pUnkOuter, mipmap_level);
     if (FAILED(hr)) return hr;
 
-    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), TRUE, 
-					     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf));
+    if (This->d3d_private) This->d3d_create_texture(This, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), TRUE, 
+						    ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf));
 
     /* Create attached mipmaps if required. */
     if (more_mipmaps(&ddsd))
@@ -430,8 +426,8 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	    mipmap_impl->mip_main = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf);
 	    mipmap_impl->mipmap_level = mipmap_level;
 
-	    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, mipmap), TRUE,
-						     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf));
+	    if (This->d3d_private) This->d3d_create_texture(This, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, mipmap), TRUE,
+							    ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf));
 
 	    IDirectDrawSurface7_AddAttachedSurface(prev_mipmap, mipmap);
 	    IDirectDrawSurface7_Release(prev_mipmap);

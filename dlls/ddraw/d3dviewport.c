@@ -479,7 +479,7 @@ ICOM_VTABLE(IDirect3DViewport3) VTABLE_IDirect3DViewport3 =
 
 
 
-HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirect3DImpl *d3d)
+HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirectDrawImpl *d3d)
 {
     IDirect3DViewportImpl *object;
 

@@ -132,8 +132,8 @@ FakeZBuffer_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     }
 
     /* We only support the BLT with DEPTH_FILL for now */
-    if ((dwFlags & DDBLT_DEPTHFILL) && (This->ddraw_owner->d3d != NULL)) {
-        if (This->ddraw_owner->d3d->current_device != NULL) {
+    if ((dwFlags & DDBLT_DEPTHFILL) && (This->ddraw_owner->d3d_private != NULL)) {
+        if (This->ddraw_owner->current_device != NULL) {
 	    D3DRECT rect;
 	    if (rdst) {
 	        rect.u1.x1 = rdst->left;
@@ -141,12 +141,12 @@ FakeZBuffer_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		rect.u3.x2 = rdst->right;
 		rect.u4.y2 = rdst->bottom;
 	    }
-	    This->ddraw_owner->d3d->current_device->clear(This->ddraw_owner->d3d->current_device,
-							  (rdst == NULL ? 0 : 1), &rect,
-							  D3DCLEAR_ZBUFFER,
-							  0x00000000,
-							  ((double) lpbltfx->u5.dwFillDepth) / 4294967295.0,
-							  0x00000000);
+	    This->ddraw_owner->current_device->clear(This->ddraw_owner->current_device,
+						     (rdst == NULL ? 0 : 1), &rect,
+						     D3DCLEAR_ZBUFFER,
+						     0x00000000,
+						     ((double) lpbltfx->u5.dwFillDepth) / 4294967295.0,
+						     0x00000000);
 	    return DD_OK;
 	}
     }
