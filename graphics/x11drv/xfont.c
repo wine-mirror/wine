@@ -2036,6 +2036,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 
 	if (!(typeface = HeapAlloc(GetProcessHeap(), 0, strlen(x_pattern[i])+1))) break;
 	strcpy( typeface, x_pattern[i] );
+	if (i % 10 == 0) MESSAGE("Font metrics: %.1f%% done\n", 100.0 * i / x_count);
 
 	lfd = LFD_Parse(typeface);
 	if (!lfd)
@@ -2179,6 +2180,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    fr = fr->next;
     }
 
+    MESSAGE("Font metrics: 100.0%% done\n");
     return n_ff;
 }
 
