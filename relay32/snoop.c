@@ -24,7 +24,8 @@ DEFAULT_DEBUG_CHANNEL(snoop);
 
 static WINE_EXCEPTION_FILTER(page_fault)
 {
-    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
+        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
         return EXCEPTION_EXECUTE_HANDLER;
     return EXCEPTION_CONTINUE_SEARCH;
 }
