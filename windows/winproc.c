@@ -118,6 +118,38 @@ BOOL WINPROC_Init(void)
 }
 
 
+#ifdef __i386__
+/* Some window procedures modify register they shouldn't, or are not
+ * properly declared stdcall; so we need a small assembly wrapper to
+ * call them. */
+extern LRESULT WINPROC_wrapper( WNDPROC proc, HWND hwnd, UINT msg,
+                                WPARAM wParam, LPARAM lParam );
+__ASM_GLOBAL_FUNC( WINPROC_wrapper,
+                   "pushl %ebp\n\t"
+                   "movl %esp,%ebp\n\t"
+                   "pushl %edi\n\t"
+                   "pushl %esi\n\t"
+                   "pushl %ebx\n\t"
+                   "pushl 24(%ebp)\n\t"
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "movl 8(%ebp),%eax\n\t"
+                   "call *%eax\n\t"
+                   "leal -12(%ebp),%esp\n\t"
+                   "popl %ebx\n\t"
+                   "popl %esi\n\t"
+                   "popl %edi\n\t"
+                   "leave\n\t"
+                   "ret" );
+#else
+static inline LRESULT WINPROC_wrapper( WNDPROC proc, HWND hwnd, UINT msg,
+                                       WPARAM wParam, LPARAM lParam )
+{
+    return proc( hwnd, msg, wParam, lParam );
+}
+#endif  /* __i386__ */
+
 /**********************************************************************
  *	     WINPROC_CallWndProc32
  *
@@ -134,8 +166,10 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     /* To avoid any deadlocks, all the locks on the windows structures
        must be suspended before the control is passed to the application */
     iWndsLocks = WIN_SuspendWndsLock();
-    retvalue = proc( hwnd, msg, wParam, lParam );
+    retvalue = WINPROC_wrapper( proc, hwnd, msg, wParam, lParam );
     WIN_RestoreWndsLock(iWndsLocks);
+    TRACE_(relay)("(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx) ret=%08lx\n",
+                   proc, hwnd, SPY_GetMsgName(msg), wParam, lParam, retvalue );
     return retvalue;
 }
 
@@ -1812,15 +1846,15 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             WND *tempWnd = WIN_FindWndPtr(hwnd);
             if( WIDGETS_IsControl(tempWnd, BIC32_MDICLIENT) )
             {
-	    *pwparam16 = (HWND)wParam32;
-	    *plparam = 0;
-	}
-	else
-	{
-	    *pwparam16 = ((HWND)*plparam == hwnd);
-	    *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
-				   (HWND16)LOWORD(wParam32) );
-	}
+                *pwparam16 = (HWND)wParam32;
+                *plparam = 0;
+            }
+            else
+            {
+                *pwparam16 = ((HWND)*plparam == hwnd);
+                *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
+                                       (HWND16)LOWORD(wParam32) );
+            }
             WIN_ReleaseWndPtr(tempWnd);
         }
         return 0;
