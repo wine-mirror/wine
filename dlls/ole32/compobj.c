@@ -1030,9 +1030,9 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
       }
     }
     HeapFree(GetProcessHeap(), 0, buf2);
+    RegCloseKey(xhkey);
   }
 
-  RegCloseKey(xhkey);
   return ret;
 }
 
