@@ -28,13 +28,13 @@
 28 stdcall MsiDatabaseImportW(wstr wstr)
 29 stub MsiDatabaseMergeA
 30 stub MsiDatabaseMergeW
-31 stdcall MsiDatabaseOpenViewA(str ptr)
-32 stdcall MsiDatabaseOpenViewW(wstr ptr)
+31 stdcall MsiDatabaseOpenViewA(long str ptr)
+32 stdcall MsiDatabaseOpenViewW(long wstr ptr)
 33 stdcall MsiDoActionA(long str)
 34 stdcall MsiDoActionW(long wstr)
 35 stub MsiEnableUIPreview
-36 stdcall MsiEnumClientsA(long ptr)
-37 stdcall MsiEnumClientsW(long ptr)
+36 stdcall MsiEnumClientsA(str long ptr)
+37 stdcall MsiEnumClientsW(wstr long ptr)
 38 stdcall MsiEnumComponentQualifiersA(str long str ptr str ptr)
 39 stdcall MsiEnumComponentQualifiersW(wstr long wstr ptr wstr ptr)
 40 stdcall MsiEnumComponentsA(long ptr)
@@ -74,8 +74,8 @@
 74 stub MsiGetPropertyW
 75 stub MsiGetSourcePathA
 76 stub MsiGetSourcePathW
-77 stdcall MsiGetSummaryInformationA(str long ptr)
-78 stdcall MsiGetSummaryInformationW(wstr long ptr)
+77 stdcall MsiGetSummaryInformationA(long str long ptr)
+78 stdcall MsiGetSummaryInformationW(long wstr long ptr)
 79 stub MsiGetTargetPathA
 80 stub MsiGetTargetPathW
 81 stub MsiGetUserInfoA

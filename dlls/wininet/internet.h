@@ -36,6 +36,9 @@
 # include <openssl/ssl.h>
 #undef DSA
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 
 /* used for netconnection.c stuff */
 typedef struct

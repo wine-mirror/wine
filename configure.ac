@@ -1020,6 +1020,7 @@ AC_CHECK_HEADERS(\
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
 	openssl/ssl.h \
+	process.h \
 	pthread.h \
 	pty.h \
 	pwd.h \

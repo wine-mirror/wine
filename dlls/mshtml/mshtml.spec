@@ -10,7 +10,7 @@
 9 stub DllUnregisterServer
 10 stub MatchExactGetIDsOfNames
 11 stub RNIGetCompatibleVersion
-12 stdcall RunHTMLApplication()
+12 stdcall RunHTMLApplication(long long str long)
 13 stub ShowHTMLDialog
 14 stub ShowModalDialog
 15 stub ShowModelessHTMLDialog

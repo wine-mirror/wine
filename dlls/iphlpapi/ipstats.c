@@ -686,11 +686,16 @@ PMIB_IPNETTABLE getArpTable(void)
           if (ptr && *ptr) {
             DWORD flags = strtoul(ptr, &endPtr, 16);
 
+#ifdef ATF_COM
             if (flags & ATF_COM)
               ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_DYNAMIC;
-            else if (flags & ATF_PERM)
+            else
+#endif
+#ifdef ATF_PERM
+            if (flags & ATF_PERM)
               ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_STATIC;
             else
+#endif
               ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_OTHER;
 
             ptr = endPtr;

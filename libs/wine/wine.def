@@ -11,6 +11,7 @@ EXPORTS
     __wine_dll_register
     __wine_main_argc
     __wine_main_argv
+    __wine_main_environ
     __wine_main_wargv
     wine_anon_mmap
     wine_dbg_add_option
@@ -29,6 +30,7 @@ EXPORTS
     wine_dll_unload
     wine_dlopen
     wine_dlsym
+    wine_get_argv0_path
     wine_get_config_dir
     wine_get_cs
     wine_get_ds
@@ -50,5 +52,8 @@ EXPORTS
     wine_ldt_init_locking
     wine_ldt_realloc_entries
     wine_ldt_set_entry
+    wine_pthread_init_process
+    wine_pthread_init_thread
     wine_set_fs
     wine_set_gs
+    wine_switch_to_stack

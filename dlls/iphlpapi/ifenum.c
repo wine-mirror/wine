@@ -565,34 +565,48 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
 
       switch (ifr.ifr_hwaddr.sa_family)
       {
+#ifdef ARPHRD_LOOPBACK
         case ARPHRD_LOOPBACK:
           addrLen = 0;
           *type = MIB_IF_TYPE_LOOPBACK;
           break;
+#endif
+#ifdef ARPHRD_ETHER
         case ARPHRD_ETHER:
           addrLen = ETH_ALEN;
           *type = MIB_IF_TYPE_ETHERNET;
           break;
+#endif
+#ifdef ARPHRD_FDDI
         case ARPHRD_FDDI:
           addrLen = ETH_ALEN;
           *type = MIB_IF_TYPE_FDDI;
           break;
+#endif
+#ifdef ARPHRD_IEEE802
         case ARPHRD_IEEE802: /* 802.2 Ethernet && Token Ring, guess TR? */
           addrLen = ETH_ALEN;
           *type = MIB_IF_TYPE_TOKENRING;
           break;
+#endif
+#ifdef ARPHRD_IEEE802_TR
         case ARPHRD_IEEE802_TR: /* also Token Ring? */
           addrLen = ETH_ALEN;
           *type = MIB_IF_TYPE_TOKENRING;
           break;
+#endif
+#ifdef ARPHRD_SLIP
         case ARPHRD_SLIP:
           addrLen = 0;
           *type = MIB_IF_TYPE_SLIP;
           break;
+#endif
+#ifdef ARPHRD_PPP
         case ARPHRD_PPP:
           addrLen = 0;
           *type = MIB_IF_TYPE_PPP;
           break;
+#endif
         default:
           addrLen = min(MAX_INTERFACE_PHYSADDR, sizeof(ifr.ifr_hwaddr.sa_data));
           *type = MIB_IF_TYPE_OTHER;

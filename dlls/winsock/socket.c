@@ -283,7 +283,9 @@ static const int ws_ip_map[][2] =
     MAP_OPTION( IP_ADD_MEMBERSHIP ),
     MAP_OPTION( IP_DROP_MEMBERSHIP ),
     MAP_OPTION( IP_OPTIONS ),
+#ifdef IP_HDRINCL
     MAP_OPTION( IP_HDRINCL ),
+#endif
     MAP_OPTION( IP_TOS ),
     MAP_OPTION( IP_TTL ),
     { 0, 0 }
@@ -2032,8 +2034,10 @@ INT WINAPI WSAIoctl (SOCKET s,
                            intArray->iiFlags = 0;
                            if (ifInfo.ifr_flags & IFF_BROADCAST)
                               intArray->iiFlags |= WS_IFF_BROADCAST;
+#ifdef IFF_POINTOPOINT
                            if (ifInfo.ifr_flags & IFF_POINTOPOINT)
                               intArray->iiFlags |= WS_IFF_POINTTOPOINT;
+#endif
                            if (ifInfo.ifr_flags & IFF_LOOPBACK)
                               intArray->iiFlags |= WS_IFF_LOOPBACK;
                            if (ifInfo.ifr_flags & IFF_UP)
