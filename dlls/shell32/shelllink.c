@@ -870,48 +870,54 @@ static HRESULT WINAPI IPersistStream_fnLoad(
 	}
 
 	IStream_AddRef (pLoadStream);
-	if(lpLinkHeader)
+	if(!lpLinkHeader)
+          goto end;
+
+        dwBytesRead = 0;
+	if (!(SUCCEEDED(IStream_Read(pLoadStream, lpLinkHeader, LINK_HEADER_SIZE, &dwBytesRead))))
+          goto end;
+
+	if (dwBytesRead != LINK_HEADER_SIZE)
+          goto end;
+
+	if ( (lpLinkHeader->MagicStr != 0x0000004CL) || !IsEqualIID(&lpLinkHeader->MagicGuid, &CLSID_ShellLink) )
+          goto end;
+
+	if(lpLinkHeader->PidlSize)
 	{
-	  if (SUCCEEDED(IStream_Read(pLoadStream, lpLinkHeader, LINK_HEADER_SIZE, &dwBytesRead)))
-	  {
-	    if ((lpLinkHeader->MagicStr == 0x0000004CL) && IsEqualIID(&lpLinkHeader->MagicGuid, &CLSID_ShellLink))
-	    {
-	      lpLinkHeader = HeapReAlloc(GetProcessHeap(), 0, lpLinkHeader, LINK_HEADER_SIZE+lpLinkHeader->PidlSize);
-	      if (lpLinkHeader)
-	      {
-	        if (SUCCEEDED(IStream_Read(pLoadStream, &(lpLinkHeader->Pidl), lpLinkHeader->PidlSize, &dwBytesRead)))
-	        {
-	          if (pcheck (&lpLinkHeader->Pidl))
-	          {
-	            This->pPidl = ILClone (&lpLinkHeader->Pidl);
+	  lpLinkHeader = HeapReAlloc(GetProcessHeap(), 0, lpLinkHeader, LINK_HEADER_SIZE+lpLinkHeader->PidlSize);
+	  if (!lpLinkHeader)
+            goto end;
+          dwBytesRead = 0;
+	  if (!(SUCCEEDED(IStream_Read(pLoadStream, &(lpLinkHeader->Pidl), lpLinkHeader->PidlSize, &dwBytesRead))))
+            goto end;
+          if(dwBytesRead != lpLinkHeader->PidlSize)
+            goto end;
 
-	            SHGetPathFromIDListA(&lpLinkHeader->Pidl, sTemp);
-	            This->sPath = heap_strdup( sTemp );
-	          }
-		  This->wHotKey = lpLinkHeader->wHotKey;
-		  FileTimeToSystemTime (&lpLinkHeader->Time1, &This->time1);
-		  FileTimeToSystemTime (&lpLinkHeader->Time2, &This->time2);
-		  FileTimeToSystemTime (&lpLinkHeader->Time3, &This->time3);
+          if (pcheck (&lpLinkHeader->Pidl))
+          {
+            This->pPidl = ILClone (&lpLinkHeader->Pidl);
+
+            SHGetPathFromIDListA(&lpLinkHeader->Pidl, sTemp);
+            This->sPath = heap_strdup( sTemp );
+          }
+        }
+	This->wHotKey = lpLinkHeader->wHotKey;
+	FileTimeToSystemTime (&lpLinkHeader->Time1, &This->time1);
+	FileTimeToSystemTime (&lpLinkHeader->Time2, &This->time2);
+	FileTimeToSystemTime (&lpLinkHeader->Time3, &This->time3);
 #if 1
-		  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time1, NULL, sTemp, 256);
-		  TRACE("-- time1: %s\n", sTemp);
-		  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time2, NULL, sTemp, 256);
-		  TRACE("-- time1: %s\n", sTemp);
-		  GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time3, NULL, sTemp, 256);
-		  TRACE("-- time1: %s\n", sTemp);
-		  pdump (This->pPidl);
+	GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time1, NULL, sTemp, 256);
+	TRACE("-- time1: %s\n", sTemp);
+	GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time2, NULL, sTemp, 256);
+	TRACE("-- time1: %s\n", sTemp);
+	GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&This->time3, NULL, sTemp, 256);
+	TRACE("-- time1: %s\n", sTemp);
+	pdump (This->pPidl);
 #endif
-		  ret = S_OK;
-	        }
-	      }
-	    }
-	    else
-	    {
-	      WARN("stream contains no link!\n");
-	    }
-	  }
-	}
+	ret = S_OK;
 
+end:
 	IStream_Release (pLoadStream);
 
 	pdump(This->pPidl);
