@@ -105,10 +105,16 @@ BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size )
 {
     char *p;
     size = GetProfileStringA("devices", device, "", driver, size);
-    if(!size) return FALSE;
-
+    if(!size) {
+        WARN("Unable to find '%s' in [devices] section of win.ini\n", device);
+	return FALSE;
+    }
     p = strchr(driver, ',');
-    if(!p) return FALSE;
+    if(!p) {
+        WARN("'%s' entry in [devices] section of win.ini is malformed.\n",
+	     device);
+	return FALSE;
+    }
     *p = '\0';
     TRACE("Found '%s' for '%s'\n", driver, device);
     return TRUE;

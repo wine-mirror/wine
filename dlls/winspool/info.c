@@ -1720,4 +1720,31 @@ BOOL WINAPI PrinterProperties(HWND hWnd,      /* handle to parent window */
     return FALSE;
 }
 
+/*****************************************************************************
+ *          EnumJobsA [WINSPOOL.162]
+ *
+ */
+BOOL WINAPI EnumJobsA(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
+		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
+		      LPDWORD pcReturned)
+{
+    FIXME("stub\n");
+    if(pcbNeeded) *pcbNeeded = 0;
+    if(pcReturned) *pcReturned = 0;
+    return TRUE;
+}
 
+
+/*****************************************************************************
+ *          EnumJobsW [WINSPOOL.163]
+ *
+ */
+BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
+		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
+		      LPDWORD pcReturned)
+{
+    FIXME("stub\n");
+    if(pcbNeeded) *pcbNeeded = 0;
+    if(pcReturned) *pcReturned = 0;
+    return TRUE;
+}

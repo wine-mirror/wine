@@ -16,11 +16,11 @@ driver add
 
 device=Wine PostScript Driver,WINEPS,LPT1:
 
-to the [windows] section of win.ini . You may prefer to add
+to the [windows] section of win.ini and
 
 Wine PostScript Driver=WINEPS,LPT1:
 
-to the [devices] section of win.ini instead.
+to the [devices] section of win.ini .
 
 You will need Adobe Font Metric (AFM) files for the (type 1 PostScript) fonts
 that you wish to use. You can get these from
@@ -80,8 +80,6 @@ AdvancedSetup dialog box.
 Many partially implemented functions.
 
 ps.c is becoming messy.
-
-No clipping.
 
 Notepad often starts text too far to the left depending on the margin
 settings. However the win3.1 pscript.drv (under wine) also does this.

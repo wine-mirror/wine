@@ -246,7 +246,102 @@ DECL_WINELIB_TYPE_AW(PRINTER_INFO_5)
 DECL_WINELIB_TYPE_AW(PPRINTER_INFO_5)
 DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_5)
 
+typedef struct _JOB_INFO_1A {
+  DWORD JobID;
+  LPSTR pPrinterName;
+  LPSTR pMachineName;
+  LPSTR pUserName;
+  LPSTR pDocument;
+  LPSTR pDatatype;
+  LPSTR pStatus;
+  DWORD Status;
+  DWORD Priority;
+  DWORD Position;
+  DWORD TotalPages;
+  DWORD PagesPrinted;
+  SYSTEMTIME Submitted;
+} JOB_INFO_1A, *PJOB_INFO_1A, *LPJOB_INFO_1A;
+
+typedef struct _JOB_INFO_1W {
+  DWORD JobID;
+  LPWSTR pPrinterName;
+  LPWSTR pMachineName;
+  LPWSTR pUserName;
+  LPWSTR pDocument;
+  LPWSTR pDatatype;
+  LPWSTR pStatus;
+  DWORD Status;
+  DWORD Priority;
+  DWORD Position;
+  DWORD TotalPages;
+  DWORD PagesPrinted;
+  SYSTEMTIME Submitted;
+} JOB_INFO_1W, *PJOB_INFO_1W, *LPJOB_INFO_1W;
+
+DECL_WINELIB_TYPE_AW(JOB_INFO_1)
+DECL_WINELIB_TYPE_AW(PJOB_INFO_1)
+DECL_WINELIB_TYPE_AW(LPJOB_INFO_1)
+
+typedef struct _JOB_INFO_2A {
+  DWORD JobID;
+  LPSTR pPrinterName;
+  LPSTR pMachineName;
+  LPSTR pUserName;
+  LPSTR pDocument;
+  LPSTR pNotifyName;
+  LPSTR pDatatype;
+  LPSTR pPrintProcessor;
+  LPSTR pParameters;
+  LPSTR pDriverName;
+  LPDEVMODEA pDevMode;
+  LPSTR pStatus;
+  PSECURITY_DESCRIPTOR pSecurityDescriptor;
+  DWORD Status;
+  DWORD Priority;
+  DWORD Position;
+  DWORD StartTime;
+  DWORD UntilTime;
+  DWORD TotalPages;
+  DWORD Size;
+  SYSTEMTIME Submitted;
+  DWORD Time;
+  DWORD PagesPrinted;
+} JOB_INFO_2A, *PJOB_INFO_2A, *LPJOB_INFO_2A;
+  
+typedef struct _JOB_INFO_2W {
+  DWORD JobID;
+  LPWSTR pPrinterName;
+  LPWSTR pMachineName;
+  LPWSTR pUserName;
+  LPWSTR pDocument;
+  LPWSTR pNotifyName;
+  LPWSTR pDatatype;
+  LPWSTR pPrintProcessor;
+  LPWSTR pParameters;
+  LPWSTR pDriverName;
+  LPDEVMODEW pDevMode;
+  LPWSTR pStatus;
+  PSECURITY_DESCRIPTOR pSecurityDescriptor;
+  DWORD Status;
+  DWORD Priority;
+  DWORD Position;
+  DWORD StartTime;
+  DWORD UntilTime;
+  DWORD TotalPages;
+  DWORD Size;
+  SYSTEMTIME Submitted;
+  DWORD Time;
+  DWORD PagesPrinted;
+} JOB_INFO_2W, *PJOB_INFO_2W, *LPJOB_INFO_2W;
+  
+DECL_WINELIB_TYPE_AW(JOB_INFO_2)
+DECL_WINELIB_TYPE_AW(PJOB_INFO_2)
+DECL_WINELIB_TYPE_AW(LPJOB_INFO_2)
+
+
 #endif /* Status */
+
+  
 
 /* DECLARATIONS */
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort,WORD fwCapability,
@@ -275,6 +370,14 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 #define OpenPrinter WINELIB_NAME_AW(OpenPrinter)
 
 BOOL WINAPI ClosePrinter (HANDLE phPrinter);
+
+BOOL WINAPI EnumJobsA(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
+		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
+		      LPDWORD pcReturned);
+BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
+		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
+		      LPDWORD pcReturned);
+#define EnumJobs WINELIB_NAME_AW(EnumJobs)
 
 BOOL  WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,

@@ -62,8 +62,8 @@ type	win32
 159 stub EndPagePrinter
 160 stub EnumFormsA
 161 stub EnumFormsW
-162 stub EnumJobsA
-163 stub EnumJobsW
+162 stdcall EnumJobsA(long long long long ptr long ptr ptr) EnumJobsA
+163 stdcall EnumJobsW(long long long long ptr long ptr ptr) EnumJobsW
 164 stub EnumMonitorsA
 165 stub EnumMonitorsW
 166 stdcall EnumPortsA(ptr long ptr ptr ptr ptr) EnumPortsA
