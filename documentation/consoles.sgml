@@ -1,12 +1,5 @@
   <chapter id="consoles">
-    <title>Consoles in Wine</title>
-
-    <sect1 id="wine-consoles">
-      <title>Consoles</title>
-
-      <para>
-        Written by &name-eric-pouech; <email>&email-eric-pouech</email>
-      </para>
+      <title>Consoles in Wine</title>
 
       <para>
 	As described in the Wine User Guide's CUI section, Wine
@@ -142,11 +135,7 @@
 	  </tgroup>
 	</table>
       </para>
-    </sect1>
 
-    <sect1 id="wine-console-creation">
-      <title>Console creation</title>
-      
       <para>
 	The Win32 objects behind a console can be created in several occasions:
 	<itemizedlist>
@@ -175,7 +164,6 @@
 	calling <function>AllocConsole</function> in the child
 	process, hence creating a wineconsole with the USER32 backend.
       </para>
-    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file
