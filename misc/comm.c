@@ -2581,13 +2581,236 @@ BOOL WINAPI WaitCommEvent(HANDLE hFile,LPDWORD eventmask ,LPOVERLAPPED overlappe
 }
 
 /***********************************************************************
- *           GetCommProperties   (KERNEL32.???)
+ *           GetCommProperties   (KERNEL32.286)
+ *
+ * This function fills in a structure with the capabilities of the 
+ * communications port driver.
+ *
+ * RETURNS
+ *
+ *  TRUE on success, FALSE on failure
+ *  If successful, the lpCommProp structure be filled in with
+ *  properties of the comm port.
  */
-BOOL WINAPI GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
-{
+BOOL WINAPI GetCommProperties(
+	HANDLE hFile,          /* handle of the comm port */
+	LPCOMMPROP lpCommProp /* pointer to struct to be filled */
+) {
     FIXME("(%d %p )\n",hFile,lpCommProp);
+    if(!lpCommProp)
+        return FALSE;
+
+    /*
+     * These values should be valid for LINUX's serial driver
+     * FIXME: Perhaps they deserve an #ifdef LINUX
+     */
+    memset(lpCommProp,0,sizeof(COMMPROP));
+    lpCommProp->wPacketLength       = 1;
+    lpCommProp->wPacketVersion      = 1;
+    lpCommProp->dwServiceMask       = SP_SERIALCOMM;
+    lpCommProp->dwReserved1         = 0;
+    lpCommProp->dwMaxTxQueue        = 4096;
+    lpCommProp->dwMaxRxQueue        = 4096;
+    lpCommProp->dwMaxBaud           = BAUD_115200;
+    lpCommProp->dwProvSubType       = PST_RS232;
+    lpCommProp->dwProvCapabilities  = PCF_DTRDSR | PCF_PARITY_CHECK | PCF_RTSCTS ;
+    lpCommProp->dwSettableParams    = SP_BAUD | SP_DATABITS | SP_HANDSHAKING | 
+                                      SP_PARITY | SP_PARITY_CHECK | SP_STOPBITS ;
+    lpCommProp->dwSettableBaud      = BAUD_075 | BAUD_110 | BAUD_134_5 | BAUD_150 |
+                BAUD_300 | BAUD_600 | BAUD_1200 | BAUD_1800 | BAUD_2400 | BAUD_4800 |
+                BAUD_9600 | BAUD_19200 | BAUD_38400 | BAUD_57600 | BAUD_115200 ;
+    lpCommProp->wSettableData       = DATABITS_5 | DATABITS_6 | DATABITS_7 | DATABITS_8 ;
+    lpCommProp->wSettableStopParity = STOPBITS_10 | STOPBITS_15 | STOPBITS_20 | 
+                PARITY_NONE | PARITY_ODD |PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
+    lpCommProp->dwCurrentTxQueue    = lpCommProp->dwMaxTxQueue;
+    lpCommProp->dwCurrentRxQueue    = lpCommProp->dwMaxRxQueue;
+
     return TRUE;
 }
+
+/***********************************************************************
+ * FIXME:
+ * The functionality of CommConfigDialogA, GetDefaultCommConfig and
+ * SetDefaultCommConfig is implemented in a DLL (usually SERIALUI.DLL).
+ * This is dependent on the type of COMM port, but since it is doubtful
+ * anybody will get around to implementing support for fancy serial
+ * ports in WINE, this is hardcoded for the time being.  The name of 
+ * this DLL should be stored in and read from the system registry in 
+ * the hive HKEY_LOCAL_MACHINE, key
+ * System\\CurrentControlSet\\Services\\Class\\Ports\\????
+ * where ???? is the port number... that is determined by PNP
+ * The DLL should be loaded when the COMM port is opened, and closed 
+ * when the COMM port is closed. - MJM 20 June 2000
+ ***********************************************************************/
+static CHAR lpszSerialUI[] = "serialui.dll";
+
+
+/***********************************************************************
+ *           CommConfigDialogA   (KERNEL32.140)
+ *
+ * Raises a dialog that allows the user to configure a comm port.
+ * Fills the COMMCONFIG struct with information specified by the user.
+ * This function should call a similar routine in the COMM driver...
+ *
+ * RETURNS
+ *
+ *  TRUE on success, FALSE on failure
+ *  If successful, the lpCommConfig structure will contain a new
+ *  configuration for the comm port, as specified by the user.
+ *
+ * BUGS
+ *  The library with the CommConfigDialog code is never unloaded.
+ * Perhaps this should be done when the comm port is closed?
+ */
+BOOL WINAPI CommConfigDialogA(
+	LPCSTR lpszDevice,         /* name of communications device */
+	HANDLE hWnd,               /* parent window for the dialog */
+	LPCOMMCONFIG lpCommConfig  /* pointer to struct to fill */
+) {
+    FARPROC lpfnCommDialog;
+    HMODULE hConfigModule;
+    BOOL r;
+
+    TRACE("(%p %x %p)\n",lpszDevice, hWnd, lpCommConfig);
+
+    hConfigModule = LoadLibraryA(lpszSerialUI);
+    if(!hConfigModule)
+        return FALSE;
+
+    lpfnCommDialog = GetProcAddress(hConfigModule, (LPCSTR)3L);
+
+    if(!lpfnCommDialog)
+        return FALSE;
+
+    r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
+
+    /* UnloadLibrary(hConfigModule); */
+
+    return r;
+}
+
+/***********************************************************************
+ *           CommConfigDialogW   (KERNEL32.141)
+ *
+ * see CommConfigDialogA for more info
+ */
+BOOL WINAPI CommConfigDialogW(
+	LPCWSTR lpszDevice,        /* name of communications device */
+	HANDLE hWnd,               /* parent window for the dialog */
+	LPCOMMCONFIG lpCommConfig  /* pointer to struct to fill */
+) {
+    BOOL r;
+    LPSTR lpDeviceA;
+
+    lpDeviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszDevice );
+    if(lpDeviceA)
+        return FALSE;
+    r = CommConfigDialogA(lpDeviceA,hWnd,lpCommConfig);
+    HeapFree( GetProcessHeap(), 0, lpDeviceA );
+    return r;
+}
+
+/***********************************************************************
+ *           GetCommConfig     (KERNEL32.283)
+ *
+ * Fill in the COMMCONFIG structure for the comm port hFile
+ *
+ * RETURNS
+ *
+ *  TRUE on success, FALSE on failure
+ *  If successful, lpCommConfig contains the comm port configuration.
+ */
+BOOL WINAPI GetCommConfig(
+	HFILE hFile,
+	LPCOMMCONFIG lpCommConfig
+) {
+    BOOL r;
+
+    TRACE("(%x %p)\n",hFile,lpCommConfig);
+
+    if(lpCommConfig == NULL)
+        return FALSE;
+
+    lpCommConfig->dwSize = sizeof(COMMCONFIG);
+    lpCommConfig->wVersion = 1;
+    lpCommConfig->wReserved = 0;
+    r = GetCommState(hFile,&lpCommConfig->dcb);
+    lpCommConfig->dwProviderSubType = PST_RS232;
+    lpCommConfig->dwProviderOffset = 0;
+    lpCommConfig->dwProviderSize = 0;
+
+    return r;
+}
+
+/***********************************************************************
+ *           SetCommConfig     (KERNEL32.617)
+ *
+ */
+BOOL WINAPI SetCommConfig(
+	HFILE hFile,
+	LPCOMMCONFIG lpCommConfig
+) {
+    BOOL r;
+
+    TRACE("(%x %p)\n",hFile,lpCommConfig);
+    
+    r = SetCommState(hFile,&lpCommConfig->dcb);
+    return r;
+}
+
+/***********************************************************************
+ *           GetCommProperties   (KERNEL32.286)
+ */
+BOOL WINAPI SetDefaultCommConfigA(
+	LPCSTR lpszDevice, 
+	LPCOMMCONFIG lpCommConfig,
+	DWORD dwSize
+) {
+    FARPROC lpfnSetDefaultCommConfig;
+    HMODULE hConfigModule;
+    BOOL r;
+
+    TRACE("(%p %p %lx)\n",lpszDevice, lpCommConfig, dwSize);
+
+    hConfigModule = LoadLibraryA(lpszSerialUI);
+    if(!hConfigModule)
+        return FALSE;
+
+    lpfnSetDefaultCommConfig = GetProcAddress(hConfigModule, (LPCSTR)4L);
+
+    if(! lpfnSetDefaultCommConfig)
+	return TRUE;
+
+    r = lpfnSetDefaultCommConfig(lpszDevice, lpCommConfig, dwSize);
+
+    /* UnloadLibrary(hConfigModule); */
+
+    return r;
+}
+
+
+/***********************************************************************
+ *           SetDefaultCommConfigW     (KERNEL32.639)
+ *
+ */
+BOOL WINAPI SetDefaultCommConfigW(
+	LPCWSTR lpszDevice, 
+	LPCOMMCONFIG lpCommConfig,
+	DWORD dwSize
+) {
+    BOOL r;
+    LPSTR lpDeviceA;
+
+    TRACE("(%s %p %lx)\n",debugstr_w(lpszDevice),lpCommConfig,dwSize);
+
+    lpDeviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszDevice );
+    if(lpDeviceA)
+        return FALSE;
+    r = SetDefaultCommConfigA(lpDeviceA,lpCommConfig,dwSize);
+    HeapFree( GetProcessHeap(), 0, lpDeviceA );
+    return r;
+}
+
 
 /***********************************************************************
  *           GetDefaultCommConfigA   (KERNEL32.313)

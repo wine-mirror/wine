@@ -156,8 +156,8 @@ import  ntdll.dll
 137 stdcall CloseHandle(long) CloseHandle
 138 stdcall CloseProfileUserMapping() CloseProfileUserMapping
 139 stub CloseSystemHandle
-140 stub CommConfigDialogA
-141 stub CommConfigDialogW
+140 stdcall CommConfigDialogA(str long ptr) CommConfigDialogA
+141 stdcall CommConfigDialogW(wstr long ptr) CommConfigDialogW
 142 stdcall CompareFileTime(ptr ptr) CompareFileTime
 143 stdcall CompareStringA(long long str long str long) CompareStringA
 144 stdcall CompareStringW(long long wstr long wstr long) CompareStringW
@@ -299,7 +299,7 @@ import  ntdll.dll
 280 stdcall GetBinaryTypeA(ptr ptr) GetBinaryTypeA
 281 stdcall GetBinaryTypeW(ptr ptr) GetBinaryTypeW
 282 stdcall GetCPInfo(long ptr) GetCPInfo
-283 stub GetCommConfig
+283 stdcall GetCommConfig(long ptr) GetCommConfig
 284 stdcall GetCommMask(long ptr) GetCommMask
 285 stdcall GetCommModemStatus(long ptr) GetCommModemStatus
 286 stdcall GetCommProperties(long ptr) GetCommProperties
@@ -633,7 +633,7 @@ import  ntdll.dll
 614 stdcall SearchPathA(str str str long ptr ptr) SearchPathA
 615 stdcall SearchPathW(wstr wstr wstr long ptr ptr) SearchPathW
 616 stdcall SetCommBreak(long) SetCommBreak
-617 stub SetCommConfig
+617 stdcall SetCommConfig(long ptr) SetCommConfig
 618 stdcall SetCommMask(long ptr) SetCommMask
 619 stdcall SetCommState(long ptr) SetCommState
 620 stdcall SetCommTimeouts(long ptr) SetCommTimeouts
@@ -654,8 +654,8 @@ import  ntdll.dll
 635 stdcall SetCurrentDirectoryA(str) SetCurrentDirectoryA
 636 stdcall SetCurrentDirectoryW(wstr) SetCurrentDirectoryW
 637 stub SetDaylightFlag
-638 stub SetDefaultCommConfigA
-639 stub SetDefaultCommConfigW
+638 stdcall SetDefaultCommConfigA(str ptr long) SetDefaultCommConfigA
+639 stdcall SetDefaultCommConfigW(wstr ptr long) SetDefaultCommConfigW
 640 stdcall SetEndOfFile(long) SetEndOfFile
 641 stdcall SetEnvironmentVariableA(str str) SetEnvironmentVariableA
 642 stdcall SetEnvironmentVariableW(wstr wstr) SetEnvironmentVariableW
