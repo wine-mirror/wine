@@ -102,8 +102,10 @@ static void test_GetAcceptLanguagesA(void)
     switch(retval) {
 	case 0L:
             if(buffersize == exactsize) {
-            ok(ERROR_NO_IMPERSONATION_TOKEN == GetLastError(),
-                 "last error wrong: got %08lx; expected ERROR_NO_IMPERSONATION_TOKEN\n", GetLastError());
+            ok( (ERROR_SUCCESS == GetLastError()) || (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) ||
+		(ERROR_PROC_NOT_FOUND == GetLastError()) || (ERROR_NO_IMPERSONATION_TOKEN == GetLastError()),
+                "last error wrong: got %08lx; expected ERROR_SUCCESS(NT4)/ERROR_CALL_NOT_IMPLEMENTED(98/ME)/"
+		"ERROR_PROC_NOT_FOUND(NT4)/ERROR_NO_IMPERSONATION_TOKEN(XP)\n", GetLastError());
             ok(exactsize == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), exactsize);
             } else if((buffersize -1) == exactsize) {
