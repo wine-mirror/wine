@@ -124,6 +124,7 @@ WINE REGISTRY Version 2
 ; Use a desktop window of 640x480 for Wine
 ;"Desktop" = "640x480"
 ; Use XFree86 DGA extension if present
+; (make sure /dev/mem is accessible by you !)
 "UseDGA" = "Y"
 ; Use XShm extension if present
 "UseXShm" = "Y"

@@ -215,7 +215,7 @@ BOOL OSS_MidiInit(void)
 	midiOutDevices[i] = tmplpCaps;
 	
 	if (sinfo.capabilities & SYNTH_CAP_INPUT) {
-	    FIXME("Synthetizer support MIDI in. Not supported yet (please report)\n");
+	    FIXME("Synthesizer support MIDI in. Not supported yet (please report)\n");
 	}
 	
 	TRACE("name='%s', techn=%d voices=%d notes=%d support=%ld\n", 

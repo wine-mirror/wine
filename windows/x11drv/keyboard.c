@@ -909,7 +909,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
   if (!ismatch) {
     FIXME(
 	   "Your keyboard layout was not found!\n"
-	   "Instead of using closest match (%s) for scancode mapping.\n"
+	   "Using closest match instead (%s) for scancode mapping.\n"
 	   "Please define your layout in windows/x11drv/keyboard.c and submit them\n"
 	   "to us for inclusion into future Wine releases.\n"
 	   "See documentation/keyboard for more information.\n",
