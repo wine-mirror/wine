@@ -57,27 +57,15 @@ extern "C" {
  * This section defines the items that conflict with the Unix headers.
  */
 
-#ifndef __WINE_USE_MSVCRT
-/* Get the u_xxx types from the Unix headers. They will do and doing it
- * this way will avoid redefinitions. But on FreeBSD we may get macros
- * and prototypes for htonl & co. This means the functions will not be
- * called because of the macros. So this should not harm us too much unless
- * we try to define our own prototypes (different calling convention).
+#include <sys/types.h>
+/* On FreeBSD we may get macros and prototypes for htonl & co.
+ * This means the functions will not be called because of the macros.
+ * So this should not harm us too much unless we try to define our own
+ * prototypes (different calling convention).
  */
-# include <sys/types.h>
-# if defined(USE_WS_PREFIX) || !defined(htonl)
-#  define WS_DEFINE_HTONL
-# endif /* htonl */
-#else
-/* Since we are using the MSVCRT headers, we must define the u_xxx
- * types ourselves.
- */
-typedef unsigned char u_char;
-typedef unsigned short u_short;
-typedef unsigned int  u_int;
-typedef unsigned long u_long;
+#if defined(USE_WS_PREFIX) || !defined(htonl)
 # define WS_DEFINE_HTONL
-#endif /* __WINE_USE_MSVCRT */
+#endif /* htonl */
 
 
 

@@ -55,6 +55,14 @@ typedef long MSVCRT(time_t);
 #endif
 
 #ifndef USE_MSVCRT_PREFIX
+#ifndef MSVCRT_BSD_TYPES_DEFINED
+typedef unsigned char u_char;
+typedef unsigned short u_short;
+typedef unsigned int  u_int;
+typedef unsigned long u_long;
+#define MSVCRT_BSD_TYPES_DEFINED
+#endif
+
 #define dev_t _dev_t
 #define ino_t _ino_t
 #define mode_t _mode_t
