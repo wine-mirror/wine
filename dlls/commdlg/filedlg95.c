@@ -1005,6 +1005,7 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
    {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
    {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
   };
+  TBADDBITMAP tba = { HINST_COMMCTRL, IDB_VIEW_SMALL_COLOR };
   RECT rectTB;
   
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
@@ -1030,7 +1031,11 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
 	SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER );
 
   SendMessageA(fodInfos->DlgInfos.hwndTB, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, (WPARAM) IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);
+
+/* fixme: use TB_LOADIMAGES when implemented */
+/*  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, (WPARAM) IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);*/
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, (WPARAM) 12, (LPARAM) &tba);
+
   SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSA, (WPARAM) 6,(LPARAM) &tbb);
   SendMessageA(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0); 
 
