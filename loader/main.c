@@ -62,8 +62,6 @@ DEFAULT_DEBUG_CHANNEL(server);
  */
 BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
 {
-    char szGraphicsDriver[MAX_PATH];
-
     /* store the program name */
     argv0 = argv[0];
 
@@ -93,15 +91,6 @@ BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
 
     /* Initialize module loadorder */
     if (!MODULE_InitLoadOrder()) return FALSE;
-
-    /* Initialize KERNEL */
-    if (!LoadLibraryA( "KERNEL32" )) return FALSE;
-
-    if (PROFILE_GetWineIniString( "Wine", "GraphicsDriver", 
-        "x11drv", szGraphicsDriver, sizeof(szGraphicsDriver)))
-    {
-        if (!LoadLibraryA( szGraphicsDriver )) return FALSE;
-    }
 
     return TRUE;
 }

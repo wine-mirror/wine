@@ -215,8 +215,6 @@ typedef void (*dump_func)( const void *req );
 
 static void dump_new_process_request( const struct new_process_request *req )
 {
-    fprintf( stderr, " pinherit=%d,", req->pinherit );
-    fprintf( stderr, " tinherit=%d,", req->tinherit );
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
     fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " start_flags=%d,", req->start_flags );
@@ -225,12 +223,18 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
-    fprintf( stderr, " env_ptr=%p,", req->env_ptr );
-    fprintf( stderr, " cmdline=" );
-    dump_string( req, req->cmdline );
+    fprintf( stderr, " alloc_fd=%d", req->alloc_fd );
 }
 
-static void dump_new_process_reply( const struct new_process_request *req )
+static void dump_wait_process_request( const struct wait_process_request *req )
+{
+    fprintf( stderr, " pinherit=%d,", req->pinherit );
+    fprintf( stderr, " tinherit=%d,", req->tinherit );
+    fprintf( stderr, " timeout=%d,", req->timeout );
+    fprintf( stderr, " cancel=%d", req->cancel );
+}
+
+static void dump_wait_process_reply( const struct wait_process_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " phandle=%d,", req->phandle );
@@ -259,7 +263,8 @@ static void dump_boot_done_request( const struct boot_done_request *req )
 static void dump_init_process_request( const struct init_process_request *req )
 {
     fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
-    fprintf( stderr, " ldt_flags=%p", req->ldt_flags );
+    fprintf( stderr, " ldt_flags=%p,", req->ldt_flags );
+    fprintf( stderr, " ppid=%d", req->ppid );
 }
 
 static void dump_init_process_reply( const struct init_process_request *req )
@@ -269,10 +274,7 @@ static void dump_init_process_reply( const struct init_process_request *req )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
-    fprintf( stderr, " cmd_show=%d,", req->cmd_show );
-    fprintf( stderr, " env_ptr=%p,", req->env_ptr );
-    fprintf( stderr, " cmdline=" );
-    dump_string( req, req->cmdline );
+    fprintf( stderr, " cmd_show=%d", req->cmd_show );
 }
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
@@ -1326,6 +1328,7 @@ static void dump_get_atom_name_reply( const struct get_atom_name_request *req )
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
+    (dump_func)dump_wait_process_request,
     (dump_func)dump_new_thread_request,
     (dump_func)dump_boot_done_request,
     (dump_func)dump_init_process_request,
@@ -1430,7 +1433,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
-    (dump_func)dump_new_process_reply,
+    (dump_func)0,
+    (dump_func)dump_wait_process_reply,
     (dump_func)dump_new_thread_reply,
     (dump_func)0,
     (dump_func)dump_init_process_reply,
@@ -1536,6 +1540,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
+    "wait_process",
     "new_thread",
     "boot_done",
     "init_process",

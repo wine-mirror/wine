@@ -1533,7 +1533,7 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
     return 0; 
   }
   
-  pdb = PROCESS_IdToPDB( pid );
+  if (!(pdb = PROCESS_IdToPDB( pid ))) return 0;
 
   /* check whether we are waiting for a win32 process or the win16 subsystem */
   if ( pdb->flags & PDB32_WIN16_PROC ) {

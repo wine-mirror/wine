@@ -148,8 +148,9 @@ extern DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset );
 void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
 extern DWORD WINAPI MapProcessHandle( HANDLE handle );
 
-/* scheduler/environ.c */
-extern BOOL ENV_InheritEnvironment( LPCSTR env );
+/* memory/environ.c */
+extern BOOL ENV_BuildEnvironment(void);
+extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );
 extern void ENV_FreeEnvironment( PDB *pdb );
 
 /* scheduler/process.c */
@@ -161,6 +162,10 @@ extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, HFILE hFile,
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
+extern BOOL PROCESS_CreateUnixProcess( LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
+                                       LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
+                                       LPPROCESS_INFORMATION info );
 extern void PROCESS_FreePDB( PDB *pdb );
 extern void PROCESS_WalkProcess( void );
 

@@ -5,6 +5,8 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,31 +43,6 @@ static ENVDB initial_envdb;
 static STARTUPINFOA initial_startup;
 
 static PDB *PROCESS_First = &initial_pdb;
-
-
-/***********************************************************************
- *           PROCESS_WalkProcess
- */
-void PROCESS_WalkProcess(void)
-{
-    PDB  *pdb;
-    char *name;
-
-    pdb = PROCESS_First;
-    MESSAGE( " pid        PDB         #th  modref     module \n" );
-    while(pdb)
-    {
-        if (pdb == &initial_pdb)
-            name = "initial PDB";
-        else
-            name = (pdb->exe_modref) ? pdb->exe_modref->filename : "";
-
-        MESSAGE( " %8p %8p %5d  %8p %s\n", pdb->server_pid, pdb,
-               pdb->threads, pdb->exe_modref, name);
-        pdb = pdb->next;
-    }
-    return;
-}
 
 
 /***********************************************************************
@@ -210,27 +187,15 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 static BOOL PROCESS_CreateEnvDB(void)
 {
     struct init_process_request *req = get_req_buffer();
-    STARTUPINFOA *startup;
-    ENVDB *env_db;
-    char cmd_line[4096];
     PDB *pdb = PROCESS_Current();
-
-    /* Allocate the env DB */
-
-    if (!(env_db = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ENVDB) )))
-        return FALSE;
-    pdb->env_db = env_db;
-    InitializeCriticalSection( &env_db->section );
-
-    /* Allocate and fill the startup info */
-    if (!(startup = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
-        return FALSE;
-    env_db->startup_info = startup;
+    ENVDB *env_db = pdb->env_db;
+    STARTUPINFOA *startup = env_db->startup_info;
 
     /* Retrieve startup info from the server */
 
     req->ldt_copy  = ldt_copy;
     req->ldt_flags = ldt_flags_copy;
+    req->ppid      = getppid();
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
     pdb->exe_file        = req->exe_file;
     startup->dwFlags     = req->start_flags;
@@ -238,16 +203,6 @@ static BOOL PROCESS_CreateEnvDB(void)
     env_db->hStdin  = startup->hStdInput  = req->hstdin;
     env_db->hStdout = startup->hStdOutput = req->hstdout;
     env_db->hStderr = startup->hStdError  = req->hstderr;
-    lstrcpynA( cmd_line, req->cmdline, sizeof(cmd_line) );
-
-    /* Copy the parent environment */
-
-    if (!ENV_InheritEnvironment( req->env_ptr )) return FALSE;
-
-    /* Copy the command line */
-
-    if (!(pdb->env_db->cmd_line = HEAP_strdupA( GetProcessHeap(), 0, cmd_line )))
-        return FALSE;
 
     return TRUE;
 }
@@ -277,7 +232,8 @@ void PROCESS_FreePDB( PDB *pdb )
  */
 static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
 {
-    PDB *pdb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PDB) );
+    PDB *pdb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                          sizeof(PDB) + sizeof(ENVDB) + sizeof(STARTUPINFOA) );
 
     if (!pdb) return NULL;
     pdb->exit_code       = STILL_ACTIVE;
@@ -291,6 +247,11 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     pdb->next            = PROCESS_First;
     pdb->winver          = 0xffff; /* to be determined */
     pdb->main_queue      = INVALID_HANDLE_VALUE16;
+    pdb->env_db          = (ENVDB *)(pdb + 1);
+    pdb->env_db->startup_info = (STARTUPINFOA *)(pdb->env_db + 1);
+
+    InitializeCriticalSection( &pdb->env_db->section );
+
     PROCESS_First = pdb;
     return pdb;
 }
@@ -303,10 +264,6 @@ BOOL PROCESS_Init( BOOL win32 )
 {
     struct init_process_request *req;
     TEB *teb;
-    int server_fd;
-
-    /* Start the server */
-    server_fd = CLIENT_InitServer();
 
     /* Fill the initial process structure */
     initial_pdb.exit_code       = STILL_ACTIVE;
@@ -320,12 +277,31 @@ BOOL PROCESS_Init( BOOL win32 )
     initial_pdb.winver          = 0xffff; /* to be determined */
     initial_pdb.main_queue      = INVALID_HANDLE_VALUE16;
     initial_envdb.startup_info  = &initial_startup;
+    teb = THREAD_Init( &initial_pdb );
+
+    /* Setup the server connection */
+    teb->socket = CLIENT_InitServer();
+    if (CLIENT_InitThread()) return FALSE;
 
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
 
-    /* Create the initial thread structure and socket pair */
-    if (!(teb = THREAD_CreateInitialThread( &initial_pdb, server_fd ))) return FALSE;
+    /* Retrieve startup info from the server */
+    req = get_req_buffer();
+    req->ldt_copy  = ldt_copy;
+    req->ldt_flags = ldt_flags_copy;
+    req->ppid      = getppid();
+    if (server_call( REQ_INIT_PROCESS )) return FALSE;
+    initial_pdb.exe_file        = req->exe_file;
+    initial_startup.dwFlags     = req->start_flags;
+    initial_startup.wShowWindow = req->cmd_show;
+    initial_envdb.hStdin   = initial_startup.hStdInput  = req->hstdin;
+    initial_envdb.hStdout  = initial_startup.hStdOutput = req->hstdout;
+    initial_envdb.hStderr  = initial_startup.hStdError  = req->hstderr;
+    initial_envdb.cmd_line = "";
+
+    /* Initialize signal handling */
+    if (!SIGNAL_Init()) return FALSE;
 
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = teb->teb_sel;
@@ -342,24 +318,8 @@ BOOL PROCESS_Init( BOOL win32 )
     initial_pdb.idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
     initial_pdb.idle_event = ConvertToGlobalHandle ( initial_pdb.idle_event );
 
-    /* Initialize signal handling */
-    if (!SIGNAL_Init()) return FALSE;
-
-    /* Retrieve startup info from the server */
-    req = get_req_buffer();
-    req->ldt_copy  = ldt_copy;
-    req->ldt_flags = ldt_flags_copy;
-    if (server_call( REQ_INIT_PROCESS )) return FALSE;
-    initial_pdb.exe_file        = req->exe_file;
-    initial_startup.dwFlags     = req->start_flags;
-    initial_startup.wShowWindow = req->cmd_show;
-    initial_envdb.hStdin   = initial_startup.hStdInput  = req->hstdin;
-    initial_envdb.hStdout  = initial_startup.hStdOutput = req->hstdout;
-    initial_envdb.hStderr  = initial_startup.hStdError  = req->hstderr;
-    initial_envdb.cmd_line = "";
-
     /* Copy the parent environment */
-    if (!ENV_InheritEnvironment( NULL )) return FALSE;
+    if (!ENV_BuildEnvironment()) return FALSE;
 
     /* Create the SEGPTR heap */
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
@@ -369,6 +329,33 @@ BOOL PROCESS_Init( BOOL win32 )
     InitializeCriticalSection( &initial_envdb.section );
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           load_system_dlls
+ *
+ * Load system DLLs into the initial process (and initialize them)
+ */
+static int load_system_dlls(void)
+{
+    char driver[MAX_PATH];
+
+    if (!LoadLibraryA( "KERNEL32" )) return 0;
+
+    PROFILE_GetWineIniString( "Wine", "GraphicsDriver", "x11drv", driver, sizeof(driver) );
+    if (!LoadLibraryA( driver ))
+    {
+        MESSAGE( "Could not load graphics driver '%s'\n", driver );
+        return 0;
+    }
+
+    if (!LoadLibraryA("GDI32.DLL")) return 0;
+    if (!LoadLibrary16("GDI.EXE")) return 0;
+    if (!LoadLibrary16("USER.EXE")) return 0;
+    if (!LoadLibraryA("USER32.DLL")) return 0;
+
+    return 1;
 }
 
 
@@ -409,13 +396,8 @@ static void start_process(void)
 
     if (pdb->flags & PDB32_CONSOLE_PROC) AllocConsole();
 
-    /* Load system DLLs into the initial process (and initialize them) */
-    if (!LoadLibraryA( "KERNEL32" )) goto error;
-    if (!LoadLibraryA( "x11drv" )) goto error;
-
-    if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
-        || !LoadLibrary16("USER.EXE") || !LoadLibraryA("USER32.DLL"))
-        goto error;
+    /* Load the system dlls */
+    if (!load_system_dlls()) goto error;
 
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
@@ -544,6 +526,250 @@ void PROCESS_InitWinelib( int argc, char *argv[] )
     CALL32_Init( &IF1632_CallLargeStack, start_process, NtCurrentTeb()->stack_top );
  error:
     ExitProcess( GetLastError() );
+}
+
+
+/***********************************************************************
+ *           build_argv
+ *
+ * Build an argv array from a command-line.
+ * The command-line is modified to insert nulls.
+ */
+static char **build_argv( char *cmdline, char *argv0 )
+{
+    char **argv;
+    int count = 1;
+    char *p = cmdline;
+
+    while (*p)
+    {
+        while (*p && isspace(*p)) p++;
+        if (!*p) break;
+        count++;
+        while (*p && !isspace(*p)) p++;
+    }
+    if (argv0) count++;
+    if ((argv = malloc( count * sizeof(*argv) )))
+    {
+        char **argvptr = argv;
+        if (argv0) *argvptr++ = argv0;
+        p = cmdline;
+        while (*p)
+        {
+            while (*p && isspace(*p)) *p++ = 0;
+            if (!*p) break;
+            *argvptr++ = p;
+            while (*p && !isspace(*p)) p++;
+        }
+        *argvptr = 0;
+    }
+    return argv;
+}
+
+
+/***********************************************************************
+ *           build_envp
+ *
+ * Build the environment of a new child process.
+ */
+static char **build_envp( const char *env )
+{
+    const char *p;
+    char **envp;
+    int count;
+
+    for (p = env, count = 0; *p; count++) p += strlen(p) + 1;
+    count += 3;
+    if ((envp = malloc( count * sizeof(*envp) )))
+    {
+        extern char **environ;
+        char **envptr = envp;
+        char **unixptr = environ;
+        /* first put PATH, HOME and WINEPREFIX from the unix env */
+        for (unixptr = environ; unixptr && *unixptr; unixptr++)
+            if (!memcmp( *unixptr, "PATH=", 5 ) ||
+                !memcmp( *unixptr, "HOME=", 5 ) ||
+                !memcmp( *unixptr, "WINEPREFIX=", 11 )) *envptr++ = *unixptr;
+        /* now put the Windows environment strings */
+        for (p = env; *p; p += strlen(p) + 1)
+        {
+            if (memcmp( p, "PATH=", 5 ) &&
+                memcmp( p, "HOME=", 5 ) &&
+                memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = (char *)p;
+        }
+        *envptr = 0;
+    }
+    return envp;
+}
+
+
+/***********************************************************************
+ *           find_wine_binary
+ *
+ * Locate the Wine binary to exec for a new Win32 process.
+ */
+static void exec_wine_binary( char **argv, char **envp )
+{
+    const char *path, *pos, *ptr;
+
+    /* first try bin directory */
+    argv[0] = BINDIR "/wine";
+    execve( argv[0], argv, envp );
+
+    /* now try the path of argv0 of the current binary */
+    if (!(argv[0] = malloc( strlen(argv0) + 6 ))) return;
+    if ((ptr = strrchr( argv0, '/' )))
+    {
+        memcpy( argv[0], argv0, ptr - argv0 );
+        strcpy( argv[0] + (ptr - argv0), "/wine" );
+        execve( argv[0], argv, envp );
+    }
+    free( argv[0] );
+
+    /* now search in the Unix path */
+    if ((path = getenv( "PATH" )))
+    {
+        if (!(argv[0] = malloc( strlen(path) + 6 ))) return;
+        pos = path;
+        for (;;)
+        {
+            while (*pos == ':') pos++;
+            if (!*pos) break;
+            if (!(ptr = strchr( pos, ':' ))) ptr = pos + strlen(pos);
+            memcpy( argv[0], pos, ptr - pos );
+            strcpy( argv[0] + (ptr - pos), "/wine" );
+            execve( argv[0], argv, envp );
+            pos = ptr;
+        }
+    }
+    free( argv[0] );
+
+    /* finally try the current directory */
+    argv[0] = "./wine";
+    execve( argv[0], argv, envp );
+}
+
+
+/***********************************************************************
+ *           fork_and_exec
+ *
+ * Fork and exec a new Unix process, checking for errors.
+ */
+static int fork_and_exec( const char *filename, const char *cmdline, const char *env )
+{
+    int fd[2];
+    int pid, err;
+
+    if (pipe(fd) == -1)
+    {
+        FILE_SetDosError();
+        return -1;
+    }
+    fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
+    if (!(pid = fork()))  /* child */
+    {
+        char **argv = build_argv( (char *)cmdline, NULL );
+        char **envp = build_envp( env );
+        close( fd[0] );
+        if (argv && envp) execve( filename, argv, envp );
+        err = errno;
+        write( fd[1], &err, sizeof(err) );
+        _exit(1);
+    }
+    close( fd[1] );
+    if ((pid != -1) && (read( fd[0], &err, sizeof(err) ) > 0))  /* exec failed */
+    {
+        errno = err;
+        pid = -1;
+    }
+    if (pid == -1) FILE_SetDosError();
+    close( fd[0] );
+    return pid;
+}
+
+
+/***********************************************************************
+ *           PROCESS_CreateUnixProcess
+ */
+BOOL PROCESS_CreateUnixProcess( LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
+                                LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                                BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
+                                LPPROCESS_INFORMATION info )
+{
+    int pid;
+    const char *unixfilename = filename;
+    DOS_FULL_NAME full_name;
+    HANDLE load_done_evt = -1;
+    struct new_process_request *req = get_req_buffer();
+    struct wait_process_request *wait_req = get_req_buffer();
+
+    info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
+    
+    if (DOSFS_GetFullName( filename, TRUE, &full_name )) unixfilename = full_name.long_name;
+
+    /* create the process on the server side */
+
+    req->inherit_all  = inherit;
+    req->create_flags = flags;
+    req->start_flags  = startup->dwFlags;
+    req->exe_file     = -1;
+    if (startup->dwFlags & STARTF_USESTDHANDLES)
+    {
+        req->hstdin  = startup->hStdInput;
+        req->hstdout = startup->hStdOutput;
+        req->hstderr = startup->hStdError;
+    }
+    else
+    {
+        req->hstdin  = GetStdHandle( STD_INPUT_HANDLE );
+        req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
+        req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
+    }
+    req->cmd_show = startup->wShowWindow;
+    req->alloc_fd = 0;
+    if (server_call( REQ_NEW_PROCESS )) return FALSE;
+
+    /* fork and execute */
+
+    pid = fork_and_exec( unixfilename, cmd_line, env ? env : GetEnvironmentStringsA() );
+
+    wait_req->cancel   = (pid == -1);
+    wait_req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    wait_req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
+    wait_req->timeout  = 2000;
+    if (server_call( REQ_WAIT_PROCESS ) || (pid == -1)) goto error;
+    info->dwProcessId = (DWORD)wait_req->pid;
+    info->dwThreadId  = (DWORD)wait_req->tid;
+    info->hProcess    = wait_req->phandle;
+    info->hThread     = wait_req->thandle;
+    load_done_evt     = wait_req->event;
+
+    /* Wait until process is initialized (or initialization failed) */
+    if (load_done_evt != -1)
+    {
+        DWORD res;
+        HANDLE handles[2];
+
+        handles[0] = info->hProcess;
+        handles[1] = load_done_evt;
+        res = WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
+        CloseHandle( load_done_evt );
+        if (res == STATUS_WAIT_0)  /* the process died */
+        {
+            DWORD exitcode;
+            if (GetExitCodeProcess( info->hProcess, &exitcode )) SetLastError( exitcode );
+            CloseHandle( info->hThread );
+            CloseHandle( info->hProcess );
+            return FALSE;
+        }
+    }
+    return TRUE;
+
+error:
+    if (load_done_evt != -1) CloseHandle( load_done_evt );
+    if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
+    if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
+    return FALSE;
 }
 
 
@@ -691,6 +917,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     BOOL alloc_stack16;
     int fd = -1;
     struct new_process_request *req = get_req_buffer();
+    struct wait_process_request *wait_req = get_req_buffer();
     TEB *teb = NULL;
     PDB *parent = PROCESS_Current();
     PDB *pdb = PROCESS_CreatePDB( parent, inherit );
@@ -698,10 +925,11 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
     
+    if (!(pdb->env_db->cmd_line = HEAP_strdupA( GetProcessHeap(), 0, cmd_line ))) goto error;
+    if (!ENV_InheritEnvironment( pdb, env ? env : GetEnvironmentStringsA() )) goto error;
+
     /* Create the process on the server side */
 
-    req->pinherit     = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
-    req->tinherit     = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
     req->inherit_all  = 2 /*inherit*/;  /* HACK! */
     req->create_flags = flags;
     req->start_flags  = startup->dwFlags;
@@ -719,15 +947,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
         req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
     }
     req->cmd_show = startup->wShowWindow;
-    req->env_ptr = (void*)env;  /* FIXME: hack */
-    lstrcpynA( req->cmdline, cmd_line, server_remaining(req->cmdline) );
+    req->alloc_fd = 1;
     if (server_call_fd( REQ_NEW_PROCESS, -1, &fd )) goto error;
-    pdb->server_pid   = req->pid;
-    info->hProcess    = req->phandle;
-    info->dwProcessId = (DWORD)req->pid;
-    info->hThread     = req->thandle;
-    info->dwThreadId  = (DWORD)req->tid;
-    load_done_evt     = req->event;
 
     if (pModule->module32)   /* Win32 process */
     {
@@ -752,13 +973,26 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, req->pid, req->tid, fd, size, alloc_stack16 ))) goto error;
-    teb->startup = PROCESS_Start;
-    fd = -1;  /* don't close it */
+    if ((teb = THREAD_Create( pdb, fd, size, alloc_stack16 )))
+    {
+        teb->startup = PROCESS_Start;
+        fd = -1;  /* don't close it */
 
-    /* Pass module to new process (FIXME: hack) */
-    pdb->module = pModule->self;
-    SYSDEPS_SpawnThread( teb );
+        /* Pass module to new process (FIXME: hack) */
+        pdb->module = pModule->self;
+        SYSDEPS_SpawnThread( teb );
+    }
+
+    wait_req->cancel   = !teb;
+    wait_req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    wait_req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
+    wait_req->timeout  = 2000;
+    if (server_call( REQ_WAIT_PROCESS ) || !teb) goto error;
+    info->dwProcessId = (DWORD)wait_req->pid;
+    info->dwThreadId  = (DWORD)wait_req->tid;
+    info->hProcess    = wait_req->phandle;
+    info->hThread     = wait_req->thandle;
+    load_done_evt     = wait_req->event;
 
     /* Wait until process is initialized (or initialization failed) */
     handles[0] = info->hProcess;

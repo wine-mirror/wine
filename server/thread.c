@@ -116,7 +116,7 @@ static int alloc_client_buffer( struct thread *thread )
 }
 
 /* create a new thread */
-struct thread *create_thread( int fd, struct process *process, int suspend )
+struct thread *create_thread( int fd, struct process *process )
 {
     struct thread *thread;
 
@@ -131,6 +131,7 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     thread->mutex       = NULL;
     thread->debug_ctx   = NULL;
     thread->debug_event = NULL;
+    thread->info        = NULL;
     thread->wait        = NULL;
     thread->apc         = NULL;
     thread->apc_count   = 0;
@@ -143,7 +144,7 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     thread->prev        = NULL;
     thread->priority    = THREAD_PRIORITY_NORMAL;
     thread->affinity    = 1;
-    thread->suspend     = (suspend != 0);
+    thread->suspend     = 0;
     thread->buffer      = (void *)-1;
     thread->last_req    = REQ_GET_THREAD_BUFFER;
     thread->process     = (struct process *)grab_object( process );
@@ -194,6 +195,7 @@ static void destroy_thread( struct object *obj )
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
     if (thread->apc) free( thread->apc );
+    if (thread->info) release_object( thread->info );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
     if (thread->pass_fd != -1) close( thread->pass_fd );
 }
@@ -625,8 +627,9 @@ DECL_HANDLER(new_thread)
 
     if (socketpair( AF_UNIX, SOCK_STREAM, 0, sock ) != -1)
     {
-        if ((thread = create_thread( sock[0], current->process, req->suspend )))
+        if ((thread = create_thread( sock[0], current->process )))
         {
+            if (req->suspend) thread->suspend++;
             req->tid = thread;
             if ((req->handle = alloc_handle( current->process, thread,
                                              THREAD_ALL_ACCESS, req->inherit )) != -1)

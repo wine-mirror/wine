@@ -21,6 +21,7 @@ struct thread_apc;
 struct mutex;
 struct debug_ctx;
 struct debug_event;
+struct startup_info;
 
 enum run_state
 {
@@ -40,6 +41,7 @@ struct thread
     struct mutex       *mutex;       /* list of currently owned mutexes */
     struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
     struct debug_event *debug_event; /* debug event being sent to debugger */
+    struct startup_info*info;      /* startup info for child process */
     struct thread_wait *wait;      /* current wait condition if sleeping */
     struct thread_apc  *apc;       /* list of async procedure calls */
     int                 apc_count; /* number of outstanding APCs */
@@ -72,7 +74,7 @@ extern struct thread *current;
 
 /* thread functions */
 
-extern struct thread *create_thread( int fd, struct process *process, int suspend );
+extern struct thread *create_thread( int fd, struct process *process );
 extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
 extern struct thread *get_thread_from_pid( int pid );

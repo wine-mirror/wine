@@ -48,7 +48,6 @@ struct process
     struct process_dll   exe;             /* main exe file */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */
-    struct new_process_request *info;     /* startup info (freed after startup) */
 };
 
 struct process_snapshot
@@ -67,9 +66,7 @@ struct module_snapshot
 
 /* process functions */
 
-extern struct thread *create_process( int fd, struct process *parent,
-                                      struct new_process_request *req,
-                                      const char *cmd_line, size_t len );
+extern struct thread *create_process( int fd );
 extern struct process *get_process_from_id( void *id );
 extern struct process *get_process_from_handle( int handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );

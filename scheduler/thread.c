@@ -85,6 +85,8 @@ static BOOL THREAD_InitTEB( TEB *teb, PDB *pdb )
     teb->process   = pdb;
     teb->exit_code = STILL_ACTIVE;
     teb->socket    = -1;
+    teb->stack_top = (void *)~0UL;
+
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
@@ -194,20 +196,17 @@ error:
 
 
 /***********************************************************************
- *           THREAD_CreateInitialThread
+ *           THREAD_Init
  *
- * Create the initial thread.
+ * Setup the initial thread.
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
+TEB *THREAD_Init( struct _PDB *pdb )
 {
     if (!THREAD_InitTEB( &initial_teb, pdb )) return NULL;
     SYSDEPS_SetCurThread( &initial_teb );
-    initial_teb.socket = server_fd;
-
-    if (CLIENT_InitThread()) return NULL;
-    return THREAD_InitStack( &initial_teb, pdb, 0, TRUE );
+    return &initial_teb;
 }
 
 
@@ -215,15 +214,12 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
  *           THREAD_Create
  *
  */
-TEB *THREAD_Create( PDB *pdb, void *pid, void *tid, int fd,
-                    DWORD stack_size, BOOL alloc_stack16 )
+TEB *THREAD_Create( PDB *pdb, int fd, DWORD stack_size, BOOL alloc_stack16 )
 {
     TEB *teb;
 
     if ((teb = THREAD_InitStack( NULL, pdb, stack_size, alloc_stack16 )))
     {
-        teb->pid    = pid;
-        teb->tid    = tid;
         teb->socket = fd;
         fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
         TRACE("(%p) succeeded\n", teb);
@@ -266,14 +262,15 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     struct new_thread_request *req = get_req_buffer();
     int socket, handle = -1;
     TEB *teb;
+    void *tid;
 
     req->suspend = ((flags & CREATE_SUSPENDED) != 0);
     req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     if (server_call_fd( REQ_NEW_THREAD, -1, &socket )) return 0;
     handle = req->handle;
+    tid = req->tid;
 
-    if (!(teb = THREAD_Create( PROCESS_Current(), (void *)GetCurrentProcessId(),
-                               req->tid, socket, stack, TRUE )))
+    if (!(teb = THREAD_Create( PROCESS_Current(), socket, stack, TRUE )))
     {
         close( socket );
         return 0;
@@ -282,7 +279,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
-    if (id) *id = (DWORD)teb->tid;
+    if (id) *id = (DWORD)tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );

@@ -289,7 +289,7 @@ static void master_socket_poll_event( struct object *obj, int event )
         struct sockaddr_un dummy;
         int len = sizeof(dummy);
         int client = accept( master_socket->obj.fd, (struct sockaddr *) &dummy, &len );
-        if (client != -1) create_process( client, NULL, NULL, "", 1 );
+        if (client != -1) create_process( client );
     }
 }
 

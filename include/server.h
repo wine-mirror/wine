@@ -104,8 +104,6 @@ typedef struct
 /* Create a new process from the context of the parent */
 struct new_process_request
 {
-    IN  int          pinherit;     /* process handle inherit flag */
-    IN  int          tinherit;     /* thread handle inherit flag */
     IN  int          inherit_all;  /* inherit all handles from parent */
     IN  int          create_flags; /* creation flags */
     IN  int          start_flags;  /* flags from startup info */
@@ -114,13 +112,22 @@ struct new_process_request
     IN  int          hstdout;      /* handle for stdout */
     IN  int          hstderr;      /* handle for stderr */
     IN  int          cmd_show;     /* main window show mode */
-    IN  void*        env_ptr;      /* pointer to environment (FIXME: hack) */
+    IN  int          alloc_fd;     /* create the fd pair right now? */
+};
+
+
+/* Wait for the new process to start */
+struct wait_process_request
+{
+    IN  int          pinherit;     /* process handle inherit flag */
+    IN  int          tinherit;     /* thread handle inherit flag */
+    IN  int          timeout;      /* wait timeout */
+    IN  int          cancel;       /* cancel the process creation? */
     OUT void*        pid;          /* process id */
     OUT int          phandle;      /* process handle (in the current process) */
     OUT void*        tid;          /* thread id */
     OUT int          thandle;      /* thread handle (in the current process) */
     OUT int          event;        /* event handle to signal startup */
-    IN  char         cmdline[1];   /* command line */
 };
 
 
@@ -146,14 +153,13 @@ struct init_process_request
 {
     IN  void*        ldt_copy;     /* addr of LDT copy */
     IN  void*        ldt_flags;    /* addr of LDT flags */
+    IN  int          ppid;         /* parent Unix pid */
     OUT int          start_flags;  /* flags from startup info */
     OUT int          exe_file;     /* file handle for main exe */
     OUT int          hstdin;       /* handle for stdin */
     OUT int          hstdout;      /* handle for stdout */
     OUT int          hstderr;      /* handle for stderr */
     OUT int          cmd_show;     /* main window show mode */
-    OUT void*        env_ptr;      /* pointer to environment (FIXME: hack) */
-    OUT char         cmdline[1];   /* command line */
 };
 
 
@@ -1142,6 +1148,7 @@ struct get_atom_name_request
 enum request
 {
     REQ_NEW_PROCESS,
+    REQ_WAIT_PROCESS,
     REQ_NEW_THREAD,
     REQ_BOOT_DONE,
     REQ_INIT_PROCESS,
@@ -1246,7 +1253,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 9
+#define SERVER_PROTOCOL_VERSION 10
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

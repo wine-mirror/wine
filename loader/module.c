@@ -684,60 +684,6 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
     return ret;
 }
 
-/**********************************************************************
- *	    MODULE_CreateUnixProcess
- */
-static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
-                                      LPSTARTUPINFOA lpStartupInfo,
-                                      LPPROCESS_INFORMATION lpProcessInfo )
-{
-    const char *argv[256], **argptr;
-    char *cmdline = NULL;
-    char *p;
-    const char *unixfilename = filename;
-    DOS_FULL_NAME full_name;
-
-    /* Build argument list */
-    argptr = argv;
-
-    p = cmdline = strdup(lpCmdLine);
-    if (strchr(filename, '/') || strchr(filename, ':') || strchr(filename, '\\'))
-    {
-        if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
-            unixfilename = full_name.long_name;
-    }
-    while (1)
-    {
-        while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
-        if (!*p) break;
-        *argptr++ = p;
-        while (*p && *p != ' ' && *p != '\t') p++;
-    }
-    *argptr++ = 0;
-    /* overwrite program name gotten from tidy_cmd */
-    argv[0] = unixfilename;
-
-    /* Fork and execute */
-
-    if ( !fork() )
-    {
-        /* Note: don't use Wine routines here, as this process
-                 has not been correctly initialized! */
-
-        execvp( argv[0], (char**)argv );
-        exit( 1 );
-    }
-
-    /* Fake success return value */
-
-    memset( lpProcessInfo, '\0', sizeof( *lpProcessInfo ) );
-    lpProcessInfo->hProcess = INVALID_HANDLE_VALUE;
-    lpProcessInfo->hThread  = INVALID_HANDLE_VALUE;
-    if (cmdline) free(cmdline);
-
-    SetLastError( ERROR_SUCCESS );
-    return TRUE;
-}
 
 /***********************************************************************
  *           WinExec16   (KERNEL.166)
@@ -1027,7 +973,10 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     {
         CloseHandle( hFile );
         /* FIXME: Try Unix executable only when appropriate! */
-        retv = MODULE_CreateUnixProcess( name, tidy_cmdline, lpStartupInfo, lpProcessInfo );
+        retv = PROCESS_CreateUnixProcess( name, tidy_cmdline, lpEnvironment, 
+                                          lpProcessAttributes, lpThreadAttributes,
+                                          bInheritHandles, dwCreationFlags,
+                                          lpStartupInfo, lpProcessInfo );
         goto done;
     }
 

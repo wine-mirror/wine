@@ -67,7 +67,7 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
  *
  * Build the environment for the initial process
  */
-static BOOL ENV_BuildEnvironment( PDB *pdb )
+BOOL ENV_BuildEnvironment(void)
 {
     extern char **environ;
     LPSTR p, *e;
@@ -81,7 +81,7 @@ static BOOL ENV_BuildEnvironment( PDB *pdb )
     /* Now allocate the environment */
 
     if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    pdb->env_db->environ = p;
+    PROCESS_Current()->env_db->environ = p;
 
     /* And fill it with the Unix environment */
 
@@ -104,20 +104,11 @@ static BOOL ENV_BuildEnvironment( PDB *pdb )
  * Make a process inherit the environment from its parent or from an
  * explicit environment.
  */
-BOOL ENV_InheritEnvironment( LPCSTR env )
+BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
 {
     DWORD size;
     LPCSTR src;
     LPSTR dst;
-    PDB *pdb = PROCESS_Current();
-
-    /* FIXME: should lock the parent environment */
-    if (!env)
-    {
-        if (!pdb->parent)  /* initial process */
-            return ENV_BuildEnvironment( pdb );
-        env = pdb->parent->env_db->environ;
-    }
 
     /* Compute the environment size */
 

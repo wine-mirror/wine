@@ -42,6 +42,13 @@ void MAIN_EmulatorRun( void )
     char startProg[256], defProg[256];
     int i, tasks = 0;
     MSG msg;
+    char szGraphicsDriver[MAX_PATH];
+
+    if (PROFILE_GetWineIniString( "Wine", "GraphicsDriver", 
+        "x11drv", szGraphicsDriver, sizeof(szGraphicsDriver)))
+    {
+        if (!LoadLibraryA( szGraphicsDriver )) return FALSE;
+    }
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibraryA("GDI32.DLL" )
@@ -101,6 +108,12 @@ int main( int argc, char *argv[] )
 
     /* Initialize everything */
     if (!MAIN_MainInit( argc, argv, FALSE )) return 1;
+
+    if (!THREAD_InitStack( NtCurrentTeb(), PROCESS_Current(), 0, TRUE )) return 1;
+    SIGNAL_Init();  /* reinitialize signal stack */
+
+    /* Initialize KERNEL */
+    if (!LoadLibraryA( "KERNEL32" )) return FALSE;
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;

@@ -71,6 +71,7 @@ static inline size_t get_req_strlenW( const void *req, const WCHAR *str )
 /* ### make_requests begin ### */
 
 DECL_HANDLER(new_process);
+DECL_HANDLER(wait_process);
 DECL_HANDLER(new_thread);
 DECL_HANDLER(boot_done);
 DECL_HANDLER(init_process);
@@ -179,6 +180,7 @@ typedef void (*req_handler)( void *req );
 static const req_handler req_handlers[REQ_NB_REQUESTS] =
 {
     (req_handler)req_new_process,
+    (req_handler)req_wait_process,
     (req_handler)req_new_thread,
     (req_handler)req_boot_done,
     (req_handler)req_init_process,
