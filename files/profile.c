@@ -1485,7 +1485,7 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
     EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
-        if (!section && !string && !filename)
+        if (!section && !string)
             PROFILE_ReleaseFile();  /* always return FALSE in this case */
         else if (!string) /* delete the named section*/
 	    ret = PROFILE_SetString(section,NULL,NULL);
