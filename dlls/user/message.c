@@ -1339,10 +1339,18 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
  */
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode )
 {
-    LRESULT result;
+    LRESULT result = 0;
     WNDPROC winproc;
+    MESSAGEQUEUE *queue = QUEUE_Current();
 
-    if (msg & 0x80000000) return handle_internal_message( hwnd, msg, wparam, lparam );
+    if (queue->recursion_count > MAX_SENDMSG_RECURSION) return 0;
+    queue->recursion_count++;
+
+    if (msg & 0x80000000)
+    {
+        result = handle_internal_message( hwnd, msg, wparam, lparam );
+        goto done;
+    }
 
     /* first the WH_CALLWNDPROC hook */
     if (HOOK_IsHooked( WH_CALLWNDPROC ))
@@ -1363,12 +1371,12 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     /* now call the window procedure */
     if (unicode)
     {
-        if (!(winproc = (WNDPROC)GetWindowLongW( hwnd, GWL_WNDPROC ))) return 0;
+        if (!(winproc = (WNDPROC)GetWindowLongW( hwnd, GWL_WNDPROC ))) goto done;
         result = CallWindowProcW( winproc, hwnd, msg, wparam, lparam );
     }
     else
     {
-        if (!(winproc = (WNDPROC)GetWindowLongA( hwnd, GWL_WNDPROC ))) return 0;
+        if (!(winproc = (WNDPROC)GetWindowLongA( hwnd, GWL_WNDPROC ))) goto done;
         result = CallWindowProcA( winproc, hwnd, msg, wparam, lparam );
     }
 
@@ -1384,6 +1392,8 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         if (unicode) HOOK_CallHooksW( WH_CALLWNDPROCRET, HC_ACTION, 1, (LPARAM)&cwp );
         else HOOK_CallHooksA( WH_CALLWNDPROCRET, HC_ACTION, 1, (LPARAM)&cwp );
     }
+ done:
+    queue->recursion_count--;
     return result;
 }
 

@@ -53,6 +53,7 @@ typedef struct tagMESSAGEQUEUE
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   TEB*      teb;                    /* Thread owning queue */
   HANDLE    server_queue;           /* Handle to server-side queue */
+  DWORD     recursion_count;        /* Counter to prevent infinite SendMessage recursion */
   struct received_message_info *receive_info; /* Info about message being currently received */
 
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
@@ -73,7 +74,8 @@ typedef struct tagMESSAGEQUEUE
 } MESSAGEQUEUE;
 
 
-#define QUEUE_MAGIC        0xD46E80AF
+#define QUEUE_MAGIC            0xD46E80AF
+#define MAX_SENDMSG_RECURSION  64
 
 /* Per queue data management methods */
 HWND PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData );
