@@ -6,44 +6,9 @@
       <title>Porting</title>
 
       <para>
-        written by ???
+	This document provides a few tips on porting Wine to your
+	favorite operating system. 
       </para>
-      <para>
-        (Extracted from <filename>wine/documentation/how-to-port</filename>)
-      </para>
-
-      <sect2>
-        <title>What is this?</title>
-
-        <para>
-          This note is a short description of:
-        </para>
-
-        <itemizedlist>
-          <listitem>
-            <para>
-              How to port Wine to your favorite operating system
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Why you probably shouldn't use <symbol>#ifdef MyOS</symbol>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              What to do instead.
-            </para>
-          </listitem>
-        </itemizedlist>
-
-        <para>
-          This document does not say a thing about how to port Wine to
-          non-386 operating systems, though.  You would need a CPU
-          emulator.  Let's get Wine into a better shape on 386 first,
-          OK?
-        </para>
-      </sect2>
 
       <sect2>
         <title>Why <symbol>#ifdef MyOS</symbol> is probably a mistake.</title>
@@ -90,16 +55,11 @@
               bugs in header files, library functions, the compiler, ...
             </para>
           </listitem>
-          <listitem>
-            <para>
-              (you name it)
-            </para>
-          </listitem>
         </itemizedlist>
         <para>
           You will need Gnu Autoconf, which you can get from your
           friendly Gnu mirror.  This program takes Wine's
-          <filename>configure.in</filename> file and produces a
+          <filename>configure.ac</filename> file and produces a
           <filename>configure</filename> shell script that users use
           to configure Wine to their system.
         </para>
@@ -107,7 +67,11 @@
           There <emphasis>are</emphasis> exceptions to the "avoid
           <symbol>#ifdef MyOS</symbol>" rule. Wine, for example, needs
           the internals of the signal stack -- that cannot easily be
-          described in terms of features.
+          described in terms of features. Moreover, you can not use
+	  <filename>autoconf</filename>'s <symbol>HAVE_*</symbol>
+	  symbols in Wine's headers, as these may be used by Winelib
+	  users who may not be using a <filename>configure</filename>
+	  script.
         </para>
         <para>
           Let's now turn to specific porting problems and how to solve
@@ -246,198 +210,6 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
         </para>
 
       </sect2>
-    </sect1>
-
-    <sect1 id="os2-wine">
-      <title>Running & Compiling Wine in OS/2</title>
-
-      <para>
-        Written by &name-robert-pouliot; <email>&email-robert-pouliot;</email>,
-        January 9, 1997
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/wine_os2</filename>)
-      </para>
-
-      <para>
-        If you want to help the port of Wine to OS/2, send me a
-        message at <email>krynos@clic.net</email> I currently don't
-        want beta testers. It must work before we can test it.
-      </para>
-      <para>
-        Here is what you need to (try to) compile Wine for OS/2:
-      </para>
-
-      <itemizedlist>
-        <listitem>
-          <para>
-            EMX 0.9c (fix 2)
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            XFree86 3.2 OS/2 (with development libraries)
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <command>bash</command>, gnu <command>make</command>,
-            <command>grep</command>, <command>tar</command>,
-            <command>bison</command>, <command>flex</command>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <command>sed</command> (a working copy of)
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <command>diff</command> and <command>patch</command>
-            are recommended
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Lots of disk space (about 40-50 megs after EMX and XFree installed)
-          </para>
-        </listitem>
-      </itemizedlist>
-
-      <para>
-        To compile:
-      </para>
-
-      <screen>
-<prompt>$ </prompt><userinput>sh</userinput>
-<prompt>$ </prompt><userinput>tools/make_os2.sh</userinput>
-<prompt>$ </prompt><userinput>make depend</userinput>
-<prompt>$ </prompt><userinput>make</userinput>
-<prompt>$ </prompt><userinput>emxbind wine</userinput>
-      </screen>
-
-      <para>
-        Currently:
-      </para>
-
-      <itemizedlist>
-        <listitem>
-          <para>
-            <command>configure</command> and <command>make depend</command> work...
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <command>make</command> compiles (with a modified
-            Linux <filename>mman.h</filename>), but doesn't
-            link.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            signal handling is horrible... (if any)
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            EMX doesn't support <function>mmap</function> (and
-            related), SysV IPC and <function>stafs()</function>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            XFree86/OS2 3.2 doesn't support
-            <function>XShmQueryExtension()</function> and
-            <function>XShmPixmapFormat()</function> due to the same
-            lack in EMX...
-          </para>
-        </listitem>
-      </itemizedlist>
-
-      <para>
-        What needs to be redone:
-      </para>
-
-      <itemizedlist>
-        <listitem>
-          <para>
-            LDT (using <function>DosAllocSeg</function> in
-            <filename>memory/ldt.c</filename>) *
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Implement <function>mmap()</function> and SysV IPC in EMX *
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            File functions,
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            I/O access (do it!),
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Communication (modem),
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Interrupt (if int unknown, call current RealMode one...),
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Verify that everything is thread safe (how does Win95/NT handle multi-thread?),
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Move X functions in some files (and make a wrapper, to use PM instead latter),
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Return right CPU type,
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Make winsock work
-          </para>
-        </listitem>
-      </itemizedlist>
-
-      <para>
-        The good things:
-      </para>
-
-      <itemizedlist>
-        <listitem>
-          <para>
-            OS/2 have DOS interrupts
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            OS/2 have I/O port access
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            OS/2 have multi-thread
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Merlin have Open32 (to be used later...)
-          </para>
-        </listitem>
-      </itemizedlist>
     </sect1>
 
     </chapter>
