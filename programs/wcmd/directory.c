@@ -73,8 +73,10 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   if (bare) wide = FALSE;
 
   if (wide) {
-     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
-     max_width = consoleInfo.dwSize.X;
+      if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo))
+          max_width = consoleInfo.dwSize.X;
+      else
+          max_width = 80;
   }
   if (paged_mode) {
      WCMD_enter_paged_mode();

@@ -55,22 +55,25 @@ extern DWORD errorlevel;
  * Clear the terminal screen.
  */
 
-void WCMD_clear_screen () {
+void WCMD_clear_screen (void) {
 
   /* Emulate by filling the screen from the top left to bottom right with
         spaces, then moving the cursor to the top left afterwards */
-  COORD topLeft;
-  long screenSize;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-  GetConsoleScreenBufferInfo(hStdOut, &consoleInfo);
-  screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
+  if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
+  {
+      COORD topLeft;
+      long screenSize;
+      
+      screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
 
-  topLeft.X = 0;
-  topLeft.Y = 0;
-  FillConsoleOutputCharacter(hStdOut, ' ', screenSize, topLeft, &screenSize);
-  SetConsoleCursorPosition(hStdOut, topLeft);
+      topLeft.X = 0;
+      topLeft.Y = 0;
+      FillConsoleOutputCharacter(hStdOut, ' ', screenSize, topLeft, &screenSize);
+      SetConsoleCursorPosition(hStdOut, topLeft);
+  }
 }
 
 /****************************************************************************
@@ -79,7 +82,7 @@ void WCMD_clear_screen () {
  * Change the default i/o device (ie redirect STDin/STDout).
  */
 
-void WCMD_change_tty () {
+void WCMD_change_tty (void) {
 
   WCMD_output (nyi);
 
@@ -92,7 +95,7 @@ void WCMD_change_tty () {
  * FIXME: No wildcard support
  */
 
-void WCMD_copy () {
+void WCMD_copy (void) {
 
 DWORD count;
 WIN32_FIND_DATA fd;
@@ -145,7 +148,7 @@ char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
  * Create a directory.
  */
 
-void WCMD_create_dir () {
+void WCMD_create_dir (void) {
 
   if (!CreateDirectory (param1, NULL)) WCMD_print_error ();
 }
@@ -351,7 +354,7 @@ char buffer[2048];
  * FIXME: DOS is supposed to allow labels with spaces - we don't.
  */
 
-void WCMD_goto () {
+void WCMD_goto (void) {
 
 char string[MAX_PATH];
 
@@ -423,7 +426,7 @@ char condition[MAX_PATH], *command, *s;
  * FIXME: Needs input and output files to be fully specified.
  */
 
-void WCMD_move () {
+void WCMD_move (void) {
 
 int status;
 char outpath[MAX_PATH], inpath[MAX_PATH], *infile;
@@ -462,7 +465,7 @@ HANDLE hff;
  * Wait for keyboard input.
  */
 
-void WCMD_pause () {
+void WCMD_pause (void) {
 
 DWORD count;
 char string[32];
@@ -477,7 +480,7 @@ char string[32];
  * Delete a directory.
  */
 
-void WCMD_remove_dir () {
+void WCMD_remove_dir (void) {
 
   if (!RemoveDirectory (param1)) WCMD_print_error ();
 }
@@ -489,7 +492,7 @@ void WCMD_remove_dir () {
  * FIXME: Needs input and output files to be fully specified.
  */
 
-void WCMD_rename () {
+void WCMD_rename (void) {
 
 int status;
 
@@ -514,7 +517,7 @@ int status;
  *
  */
 
-void WCMD_setshow_attrib () {
+void WCMD_setshow_attrib (void) {
 
 DWORD count;
 HANDLE hff;
@@ -570,7 +573,7 @@ char flags[9] = {"        "};
  *	Set/Show the current default directory
  */
 
-void WCMD_setshow_default () {
+void WCMD_setshow_default (void) {
 
 BOOL status;
 char string[1024];
@@ -597,7 +600,7 @@ char string[1024];
  * FIXME: Can't change date yet
  */
 
-void WCMD_setshow_date () {
+void WCMD_setshow_date (void) {
 
 char curdate[64], buffer[64];
 DWORD count;
@@ -698,7 +701,7 @@ DWORD status;
  * Set or show the command prompt.
  */
 
-void WCMD_setshow_prompt () {
+void WCMD_setshow_prompt (void) {
 
 char *s;
 
@@ -722,7 +725,7 @@ char *s;
  * FIXME: Can't change time yet
  */
 
-void WCMD_setshow_time () {
+void WCMD_setshow_time (void) {
 
 char curtime[64], buffer[64];
 DWORD count;
@@ -751,7 +754,7 @@ SYSTEMTIME st;
  * Shift batch parameters.
  */
 
-void WCMD_shift () {
+void WCMD_shift (void) {
 
   if (context != NULL) context -> shift_count++;
 
@@ -772,7 +775,7 @@ void WCMD_title (char *command) {
  * Copy a file to standard output.
  */
 
-void WCMD_type () {
+void WCMD_type (void) {
 
 HANDLE h;
 char buffer[512];
@@ -786,7 +789,8 @@ DWORD count;
   }
   while (ReadFile (h, buffer, sizeof(buffer), &count, NULL)) {
     if (count == 0) break;	/* ReadFile reports success on EOF! */
-    WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), buffer, count, &count, NULL);
+    buffer[count] = 0;
+    WCMD_output_asis (buffer);
   }
   CloseHandle (h);
 }
@@ -827,7 +831,7 @@ int count;
  * Display version info.
  */
 
-void WCMD_version () {
+void WCMD_version (void) {
 
   WCMD_output (version_string);
 
@@ -857,7 +861,7 @@ static char syntax[] = "Syntax Error\n\n";
   }
   else {
     if ((path[1] != ':') || (lstrlen(path) != 2)) {
-      WriteFile (GetStdHandle(STD_OUTPUT_HANDLE), syntax, strlen(syntax), &count, NULL);
+      WCMD_output_asis(syntax);
       return 0;
     }
     wsprintf (curdir, "%s\\", path);

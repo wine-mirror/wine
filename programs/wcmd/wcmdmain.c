@@ -50,7 +50,7 @@ BATCH_CONTEXT *context = NULL;
 int main (int argc, char *argv[]) {
 
 char string[1024], args[MAX_PATH], param[MAX_PATH];
-int status, i;
+int i;
 DWORD count;
 HANDLE h;
 
@@ -77,14 +77,6 @@ HANDLE h;
     return 0;
   }
 
-/*
- *	Allocate a console and set it up.
- */
-
-  status = FreeConsole ();
-  if (!status) WCMD_print_error();
-  status = AllocConsole();
-  if (!status) WCMD_print_error();
   SetConsoleMode (GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT |
   	ENABLE_PROCESSED_INPUT);
   SetConsoleTitle("Wine Command Prompt");
@@ -425,7 +417,7 @@ char filetorun[MAX_PATH];
  *
  */
 
-void WCMD_show_prompt () {
+void WCMD_show_prompt (void) {
 
 int status;
 char out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
@@ -506,7 +498,7 @@ char *p, *q;
  * Print the message for GetLastError
  */
 
-void WCMD_print_error () {
+void WCMD_print_error (void) {
 LPVOID lpMsgBuf;
 DWORD error_code;
 int status;
@@ -603,8 +595,10 @@ void WCMD_enter_paged_mode(void)
 {
 CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
-  GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
-  max_height = consoleInfo.dwSize.Y;
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo))
+    max_height = consoleInfo.dwSize.Y;
+  else
+    max_height = 25;
   paged_mode = TRUE;
   line_count = 5; /* keep 5 lines from previous output */
 }
