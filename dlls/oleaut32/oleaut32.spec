@@ -150,7 +150,7 @@
 152 stub VarEqv # stdcall (ptr ptr ptr)
 153 stub VarIdiv # stdcall (ptr ptr ptr)
 154 stub VarImp # stdcall (ptr ptr ptr)
-155 stub VarMod # stdcall (ptr ptr ptr)
+155 stdcall VarMod(ptr ptr ptr)
 156 stdcall VarMul(ptr ptr ptr)
 157 stdcall VarOr(ptr ptr ptr)
 158 stub VarPow # stdcall (ptr ptr ptr)

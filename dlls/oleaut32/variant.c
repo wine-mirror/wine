@@ -6265,3 +6265,13 @@ HRESULT WINAPI VarCyMulI4(CY cyIn, LONG mulBy, CY *pcyOut) {
     }
     return rc;
 }
+
+/**********************************************************************
+ *              VarMod [OLEAUT32.154]
+ *
+ */
+HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    FIXME("%p %p %p\n", left, right, result);
+    return E_FAIL;
+}
