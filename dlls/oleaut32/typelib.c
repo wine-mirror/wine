@@ -280,6 +280,8 @@ HRESULT WINAPI LoadTypeLibEx(
 	    if(!SearchPathW(NULL,szFileCopy,NULL,sizeof(szPath)/sizeof(WCHAR),
 			    szPath,NULL))
 	        return TYPE_E_CANTLOADLIBRARY;
+	    if (GetFileAttributesW(szFileCopy) & FILE_ATTRIBUTE_DIRECTORY)
+		return TYPE_E_CANTLOADLIBRARY;
 	} else
 	    return TYPE_E_CANTLOADLIBRARY;
     }
