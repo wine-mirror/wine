@@ -581,7 +581,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         LPWSTR ptr,ptr2;
         ptr = (LPWSTR)szCommandLine;
-        
+       
         while (*ptr)
         {
             WCHAR prop[0x100];
@@ -594,6 +594,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
             {
                 BOOL quote=FALSE;
                 DWORD len = 0;
+
+                while (*ptr == ' ') ptr++;
                 strncpyW(prop,ptr,ptr2-ptr);
                 prop[ptr2-ptr]=0;
                 ptr2++;
@@ -615,12 +617,13 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                 strncpyW(val,ptr2,len);
                 val[len]=0;
 
-                if (*ptr)
-                    ptr++;
-            }            
-            TRACE("Found commandline property (%s) = (%s)\n", debugstr_w(prop),
-                  debugstr_w(val));
-            MSI_SetPropertyW(package,prop,val);
+                if (strlenW(prop) > 0)
+                {
+                    TRACE("Found commandline property (%s) = (%s)\n", debugstr_w(prop), debugstr_w(val));
+                    MSI_SetPropertyW(package,prop,val);
+                }
+            }
+            ptr++;
         }
     }
   
