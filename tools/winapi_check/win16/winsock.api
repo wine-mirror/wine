@@ -11,7 +11,7 @@ u_long
 %ptr
 
 INT16 *
-LPWSADATA
+LPWSADATA16
 ULONG *
 char *
 struct sockaddr *

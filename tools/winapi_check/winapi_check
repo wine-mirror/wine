@@ -169,7 +169,9 @@ if($options->headers) {
 		} elsif($options->headers_duplicated) {
 		    my $file = $previous_function->file;
 		    my $function_line = $previous_function->function_line;
-		    $output->write("duplicate declaration (first declaration at $file:$function_line)\n");
+		    if($file =~ /\.h$/) {
+			$output->write("duplicate declaration (first declaration at $file:$function_line)\n");
+		    }
 		}
 	    }
 	    $output->prefix("");

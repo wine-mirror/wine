@@ -80,20 +80,22 @@ sub line {
 	my $progress = "";
 	if($directory && $directory ne ".") {
 	    $progress .= "$directory: ";
+	} 
+	if($tool) {
+	    $progress .= "$tool: ";
 	}
-	$progress .= "$tool: ";
 
 	if($tool =~ /^cd|make$/) {
 	    # Nothing
 	} elsif($tool =~ /^ld$/) {
 	    foreach my $file (@{$read_files}) {
-		$output->lazy_progress("$progress: reading '$file'");
+		$output->lazy_progress("${progress}reading '$file'");
 	    }
 	    my $file = $$write_files[0];
 	    $output->progress("$progress: writing '$file'");
 	} elsif($tool =~ /^rm$/) {
 	    foreach my $file (@{$remove_files}) {
-		$output->lazy_progress("$progress: removing '$file'");
+		$output->lazy_progress("${progress}removing '$file'");
 	    }
 	} else {
 	    if($#$read_files >= 0) {
@@ -118,24 +120,34 @@ sub line {
 	return 0;
     }
 
+    my $make = $options->make;
+
     if(/^Wine build complete\.$/) {
 	# Nothing
     } elsif(/^(.*?) is newer than (.*?), please rerun (.*?)\!$/) {
 	$message = "$_";
     } elsif(/^(.*?) is older than (.*?), please rerun (.*?)$/) {
 	$message = "$_";
-    } elsif(s/^make(?:\[(\d+)\])?:\s*//) {
+    } elsif(/^\`(.*?)\' is up to date.$/) {
+	$tool = "make";
+	make_output($1, $_);
+    } elsif(s/^$make(?:\[(\d+)\])?:\s*//) {
 	$tool = "make";
 	make_output($1, $_);
     } elsif(!defined($tool)) {
 	error("line");
+    } elsif($tool eq "make") {
+	make_output($1, $_);
     } elsif($tool eq "bison" && /^conflicts:\s+\d+\s+shift\/reduce$/) {
 	# Nothing
     } elsif($tool eq "gcc" && /^(?:In file included |\s*)from (.+?):(\d+)[,:]$/) {
 	# Nothing
     } elsif($tool =~ /^gcc|ld$/ && s/^(.+?\.s?o)(?:\(.*?\))?:\s*//) {
 	$tool = "ld";
-	ld_output($1, $_);
+	ld_output($1, $_)
+    } elsif($tool =~ /^gcc|ld$/ && s/^(.*?)ld:\s*//) {
+	$tool = "ld";
+	ld_output("", $_)
     } elsif($tool =~ /^gcc|ld$/ && s/^collect2:\s*//) {
 	$tool = "ld";
 	ld_output("collect2", $_);
@@ -149,6 +161,8 @@ sub line {
 	wrc_output($1, $_);
     } elsif($tool eq "cd" && s/^\/bin\/sh:\s*cd:\s*//) {
 	parse_cd_output($_);
+    } elsif(/^\s*$/) {
+	# Nothing
     } else {
 	error("line");
     }
@@ -172,7 +186,9 @@ sub make_output {
     if(0) {
 	# Nothing
     } elsif(/^\*\*\* \[(.*?)\] Error (\d+)$/) {
-	$message = "$_";
+	# Nothing
+    } elsif(/^\*\*\* Error code (\d+)$/) {
+	# Nothing
     } elsif(/^\*\*\* Warning:\s+/) { # 
 	if(/^File \`(.+?)\' has modification time in the future \((.+?) > \(.+?\)\)$/) {
 	    # Nothing
@@ -183,6 +199,8 @@ sub make_output {
 	# Nothing
     } elsif(/^\[(.*?)\] Error (\d+) \(ignored\)$/) {
 	# Nothing
+    } elsif(/^don\'t know how to make (.*?)\. Stop$/) {
+	$message = "$_";
     } elsif(/^(Entering|Leaving) directory \`(.*?)\'$/) {
 	if($1 eq "Entering") {
 	    $directory = $2;
@@ -209,6 +227,10 @@ sub make_output {
 	} else {
 	    error("make_output");
 	}
+    } elsif(/^Stop in (.*?)\.$/) {
+	# Nothing
+    } elsif(/^\s*$/) {
+	# Nothing
     } else {
 	error("make_output");
     }
@@ -399,13 +421,27 @@ sub gcc_command {
     my $write_files;
 
     if(/-o\s+(\S+)\s+(\S+)$/) {
-	$write_files = [$1];
-	$read_files = [$2];
+	my $write_file = $1;
+	my $read_file = $2;
+
+	$write_file =~ s%^\./%%;
+	$read_file =~ s%^\./%%;
+
+	$write_files = [$write_file];
+	$read_files = [$read_file];
     } elsif(/-o\s+(\S+)/) {
-	$write_files = [$1];
+	my $write_file = $1;
+
+	$write_file =~ s%^\./%%;
+
+	$write_files = [$write_file];
 	$read_files = ["<???>"];
     } elsif(/^-shared.*?-o\s+(\S+)/) {
-	$write_files = [$1];
+	my $write_file = $1;
+
+	$write_file =~ s%^\./%%;
+
+	$write_files = [$write_file];
 	$read_files = ["<???>"];
     } else {
 	error("gcc_command");
@@ -588,8 +624,16 @@ sub ld_output {
 	# Nothing
     } elsif(/^In function \`(.*?)\':$/) {
 	$function = $1;
-    } elsif(0 && /^the use of \`(.+?)\' is dangerous, better use \`(.+?)\'$/) {
+    } elsif(/^more undefined references to \`(.*?)\' follow$/) {
 	# Nothing
+    } elsif(/^the use of \`(.+?)\' is dangerous, better use \`(.+?)\'$/) {
+	# Nothing
+    } elsif(/^undefined reference to \`(.*?)\'$/) {
+	# Nothing
+    } elsif(/^warning: (.*?)\(\) possibly used unsafely; consider using (.*?)\(\)$/) {
+	# Nothing
+    } elsif(/^warning: type and size of dynamic symbol \`(.*?)\' are not defined$/) {
+	$message = "$_";
     } else {
 	$message = "$_";
     }

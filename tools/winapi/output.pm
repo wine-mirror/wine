@@ -137,10 +137,17 @@ sub progress {
     my $progress = \${$self->{PROGRESS}};
     my $last_time = \${$self->{LAST_TIME}};
 
-    $$progress = shift;
+    my $new_progress = shift;
+    if(defined($new_progress)) {
+	if(!defined($$progress) || $new_progress ne $$progress) {
+	    $$progress = $new_progress;
 
-    $self->update_progress;
-    $$last_time = 0;
+	    $self->update_progress;
+	    $$last_time = 0;
+	}
+    } else {
+	return $$progress;
+    }
 }
 
 sub lazy_progress {
@@ -164,8 +171,10 @@ sub prefix {
 
     my $new_prefix = shift;
     if(defined($new_prefix)) {
-	$$prefix = $new_prefix;
-	$$prefix_callback = undef;
+	if(!defined($$prefix) || $new_prefix ne $$prefix) {
+	    $$prefix = $new_prefix;
+	    $$prefix_callback = undef;
+	}
     } else {
 	return $$prefix;
     }

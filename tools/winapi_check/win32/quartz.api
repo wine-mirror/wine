@@ -1,5 +1,6 @@
 %long
 
+DWORD
 HRESULT
 
 %ptr
@@ -7,3 +8,11 @@ HRESULT
 CLSID *
 IID *
 void **
+
+%str
+
+LPSTR
+
+%wstr
+
+LPWSTR

@@ -162,20 +162,26 @@ sub fixup_user_message_2_windowsx {
 }
 
 ########################################################################
-# _fixup_user_message
+# _get_messages
 
 sub _get_messages {
     local $_ = shift;
 
-    if(/^WM_\w+$/) {
-	return ($_)
-    } elsif(/^(.*?)\s*\?\s*(WM_\w+)\s*:\s*(WM_\w+)$/) {
+    if(/^(?:BM|CB|EM|LB|STM|WM)_\w+(.*?)$/) {
+	if(!$1) {
+	    return ($_);
+	} else {
+	    return ();
+	}
+    } elsif(/^(.*?)\s*\?\s*((?:BM|CB|EM|LB|STM|WM)_\w+)\s*:\s*((?:BM|CB|EM|LB|STM|WM)_\w+)$/) {
 	return ($2, $3);
     } elsif(/^\w+$/) {
 	return ();
+    } elsif(/^RegisterWindowMessage[AW]\s*\(.*?\)$/) {
+	return ();
     } else {
-	$output->write("_fixup_user_message: '$_'\n");
-	exit 1;
+	$output->write("warning: _get_messages: '$_'\n");
+	return ();
     }
 }
 
@@ -215,7 +221,9 @@ sub _fixup_user_message {
 
 	if(!defined($kind)) {
 	    if($msg =~ /^WM_/) {
-		$output->write("messsage $msg not defined\n");
+		$output->write("messsage $msg not properly defined\n");
+		$modified = 0;
+		last;
 	    }
 	} elsif($kind eq "ptr") {
 	    if($$refparam =~ /^(\(${upper}PARAM\))?\s*($lower[pP]aram)$/) {
@@ -263,15 +271,6 @@ sub fixup_statements {
 	return;
     }
 
-    if(0 && $statements_line > 490) {
-	$output->write("$statements_line: \\\n");
-	my $line = $statements_line;
-	foreach my $statement (split(/\n/, $statements)) {
-	    $output->write("$line: $statement\n");
-	    $line++;
-	}
-    }
-
     my $parser = new c_parser($file);
     
     my $found_function_call = sub {
@@ -302,7 +301,7 @@ sub fixup_statements {
 	    if(defined($replace)) {
 		$editor->replace($begin_line, $begin_column, $end_line, $end_column, $replace);
 	    }
-	}  elsif(0 || $options->debug) {
+	} elsif($options->debug) {
 	    $output->write("$begin_line.$begin_column-$end_line.$end_column: " .
 			   "$name(" . join(", ", @$arguments) . ")\n");
 	}

@@ -53,8 +53,42 @@ foreach my $file (@c_files) {
 	$_ = <IN>;
 	close(IN);
     }
-    
+   
+    my $max_line = 0;
+    { 
+      local $_ = $_;
+      while(s/^.*?\n//) { $max_line++; }
+      if($_) { $max_line++; }
+    }
+
     my $parser = new c_parser($file);
+
+    my $function;
+    my $line;
+
+    my $update_output = sub {
+	my $progress = "";
+	my $prefix = "";
+
+	$progress .= "$file (file $progress_current of $progress_max)";
+	$prefix .= "$file:";
+
+	if(defined($function)) {
+	    my $name = $function->name;
+	    my $begin_line = $function->begin_line;
+	    my $begin_column = $function->begin_column;
+
+	    $progress .= ": function $name";
+	    $prefix .= "$begin_line.$begin_column: function $name: ";
+	}
+
+	if(defined($line)) {
+	    $progress .= ": line $line of $max_line";
+	}
+
+	$output->progress($progress);
+	$output->prefix($prefix);
+    };
 
     my $found_preprocessor = sub {
 	my $begin_line = shift;
@@ -80,6 +114,17 @@ foreach my $file (@c_files) {
 
     $parser->set_found_comment_callback($found_comment);  
 
+    my $found_line = sub {
+	$line = shift;
+	# local $_ = shift;
+
+	&$update_output;
+
+	# $output->progress("$file: line $line of ?");
+    };
+
+    $parser->set_found_line_callback($found_line);
+
     my $found_declaration = sub {
 	my $begin_line = shift;
 	my $begin_column = shift;
@@ -94,19 +139,17 @@ foreach my $file (@c_files) {
 
     $parser->set_found_declaration_callback($found_declaration);  
 
-    my $function;
-
     my $found_function = sub {
 	$function = shift;
-	
+
+	&$update_output;
+
 	my $name = $function->name;
 	my $begin_line = $function->begin_line;
 	my $begin_column = $function->begin_column;
-	
-	$output->progress("$file (file $progress_current of $progress_max): $name");
-	$output->prefix("$file:$begin_line: function $name: ");
-	# $output->prefix_callback(sub { return $function->prefix; });
-	
+	my $end_line = $function->end_line;
+	my $end_column = $function->end_column;
+
 	if($options->documentation) {
 	    # fixup_documentation($function, $editor);
 	}
@@ -119,6 +162,8 @@ foreach my $file (@c_files) {
 	if(!defined($statements)) {
 	    $function = undef;
 	    $output->prefix("$file: ");
+	} else {
+	    # $output->write("$begin_line.$begin_column-$end_line.$end_column: function $name\n");
 	}
 
 	return 0;
@@ -133,20 +178,38 @@ foreach my $file (@c_files) {
 	my $type = shift;
 	my $name = shift;
 
-	# $output->write("$begin_line.$begin_column: $linkage $type $name\n");
+	# $output->write("$begin_line.$begin_column: $linkage $type $name = /* ... */\n");
 	
 	return 1;
     };
 
     $parser->set_found_variable_callback($found_variable);        
 
-    my $line = 1;
-    my $column = 0;
-    if(!$parser->parse_c_file(\$_, \$line, \$column)) {
-	$output->write("can't parse file\n");
+    my $found_function_call = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $end_line = shift;
+	my $end_column = shift;
+	my $name = shift;
+	my $arguments = shift;
+
+	$output->write("$begin_line.$begin_column-$end_line.$end_column: $name(" . join(", ", @$arguments) . ")\n");
+
+	return 1;
+    };
+
+    $parser->set_found_function_call_callback($found_function_call);
+
+    {
+	my $line = 1;
+	my $column = 0;
+	if(!$parser->parse_c_file(\$_, \$line, \$column)) {
+	    $output->write("can't parse file\n");
+	}
     }
 
     $output->prefix("");
 
     $editor->flush;
 }
+

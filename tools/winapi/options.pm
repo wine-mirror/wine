@@ -63,6 +63,7 @@ sub new {
     $self->options_set("default");
 
     my $arguments = \@{$self->{_ARGUMENTS}};
+    @$arguments = ();
 
     my $end_of_options = 0;
     while(defined($_ = shift @ARGV)) {
@@ -121,6 +122,9 @@ sub new {
 		}
 
 		if(defined($parser)) { 
+		    if(!defined($value)) {
+			$value = shift @ARGV;
+		    }
 		    $$refvalue = &$parser($prefix,$value);
 		} else {
 		    if(defined($value)) {

@@ -18,8 +18,10 @@ RPC_AUTH_KEY_RETRIEVAL_FN
 RPC_BINDING_HANDLE *
 RPC_IF_CALLBACK_FN *
 RPC_MGR_EPV *
+RPC_STATUS *
 UUID *
 unsigned char **
+unsigned short
 void **
 
 %str
