@@ -6,6 +6,7 @@ TESTDLL   = ntdll.dll
 IMPORTS   = ntdll
 
 CTESTS = \
+	env.c \
 	error.c \
 	generated.c \
 	large_int.c \

@@ -1,4 +1,5 @@
 Makefile
+env.ok
 error.ok
 generated.ok
 large_int.ok
