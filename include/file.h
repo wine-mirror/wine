@@ -46,8 +46,6 @@ extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 
 /* files/directory.c */
 extern int DIR_Init(void);
-extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
-                             DOS_FULL_NAME *full_name, BOOL win32 );
 
 /* files/dos_fs.c */
 extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,

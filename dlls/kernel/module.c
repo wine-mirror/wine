@@ -507,42 +507,35 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
  */
 static const WCHAR *get_dll_system_path(void)
 {
-    static WCHAR *path;
+    static WCHAR *cached_path;
 
-    if (!path)
+    if (!cached_path)
     {
-        WCHAR *p, *exe_name;
+        WCHAR *p, *path;
         int len = 3;
 
-        exe_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
-        if (!(p = strrchrW( exe_name, '\\' ))) p = exe_name;
-        /* include trailing backslash only on drive root */
-        if (p == exe_name + 2 && exe_name[1] == ':') p++;
-        len += p - exe_name;
         len += GetSystemDirectoryW( NULL, 0 );
         len += GetWindowsDirectoryW( NULL, 0 );
-        path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        memcpy( path, exe_name, (p - exe_name) * sizeof(WCHAR) );
-        p = path + (p - exe_name);
-        *p++ = ';';
+        p = path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
         *p++ = '.';
         *p++ = ';';
         GetSystemDirectoryW( p, path + len - p);
         p += strlenW(p);
         *p++ = ';';
         GetWindowsDirectoryW( p, path + len - p);
+        cached_path = path;
     }
-    return path;
+    return cached_path;
 }
 
 
 /******************************************************************
- *		get_dll_load_path
+ *		MODULE_get_dll_load_path
  *
  * Compute the load path to use for a given dll.
  * Returned pointer must be freed by caller.
  */
-static WCHAR *get_dll_load_path( LPCWSTR module )
+WCHAR *MODULE_get_dll_load_path( LPCWSTR module )
 {
     static const WCHAR pathW[] = {'P','A','T','H',0};
 
@@ -554,6 +547,7 @@ static WCHAR *get_dll_load_path( LPCWSTR module )
 
     /* adjust length for module name */
 
+    if (!module) module = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
     if (module)
     {
         mod_end = module;
@@ -561,8 +555,7 @@ static WCHAR *get_dll_load_path( LPCWSTR module )
         if ((p = strrchrW( mod_end, '/' ))) mod_end = p;
         if (mod_end == module + 2 && module[1] == ':') mod_end++;
         if (mod_end == module && module[0] && module[1] == ':') mod_end += 2;
-        len += (mod_end - module);
-        system_path = strchrW( system_path, ';' );
+        len += (mod_end - module) + 1;
     }
     len += strlenW( system_path ) + 2;
 
@@ -581,6 +574,7 @@ static WCHAR *get_dll_load_path( LPCWSTR module )
     {
         memcpy( ret, module, (mod_end - module) * sizeof(WCHAR) );
         p += (mod_end - module);
+        *p++ = ';';
     }
     strcpyW( p, system_path );
     p += strlenW(p);
@@ -605,18 +599,6 @@ static WCHAR *get_dll_load_path( LPCWSTR module )
     }
     value.Buffer[value.Length / sizeof(WCHAR)] = 0;
     return ret;
-}
-
-
-/******************************************************************
- *		MODULE_InitLoadPath
- *
- * Create the initial dll load path.
- */
-void MODULE_InitLoadPath(void)
-{
-    WCHAR *path = get_dll_load_path( NULL );
-    RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath, path );
 }
 
 
@@ -682,7 +664,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
         /* Fallback to normal behaviour */
     }
 
-    load_path = get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
+    load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
     nts = LdrLoadDll( load_path, flags, libname, &hModule );
     HeapFree( GetProcessHeap(), 0, load_path );
     if (nts != STATUS_SUCCESS)

@@ -35,6 +35,7 @@
 #include "winreg.h"
 #include "winternl.h"
 
+#include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -420,5 +421,158 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath, DWORD shortlen
     }
 
     RtlFreeUnicodeString(&longpathW);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           contains_pathW
+ *
+ * Check if the file name contains a path; helper for SearchPathW.
+ * A relative path is not considered a path unless it starts with ./ or ../
+ */
+inline static BOOL contains_pathW (LPCWSTR name)
+{
+    if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH) return TRUE;
+    if (name[0] != '.') return FALSE;
+    if (name[1] == '/' || name[1] == '\\') return TRUE;
+    return (name[1] == '.' && (name[2] == '/' || name[2] == '\\'));
+}
+
+
+/***********************************************************************
+ * SearchPathW [KERNEL32.@]
+ *
+ * Searches for a specified file in the search path.
+ *
+ * PARAMS
+ *    path	[I] Path to search
+ *    name	[I] Filename to search for.
+ *    ext	[I] File extension to append to file name. The first
+ *		    character must be a period. This parameter is
+ *                  specified only if the filename given does not
+ *                  contain an extension.
+ *    buflen	[I] size of buffer, in characters
+ *    buffer	[O] buffer for found filename
+ *    lastpart  [O] address of pointer to last used character in
+ *                  buffer (the final '\')
+ *
+ * RETURNS
+ *    Success: length of string copied into buffer, not including
+ *             terminating null character. If the filename found is
+ *             longer than the length of the buffer, the length of the
+ *             filename is returned.
+ *    Failure: Zero
+ *
+ * NOTES
+ *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
+ *    (tested on NT 4.0)
+ */
+DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
+                          LPWSTR buffer, LPWSTR *lastpart )
+{
+    DWORD ret = 0;
+
+    /* If the name contains an explicit path, ignore the path */
+
+    if (contains_pathW(name))
+    {
+        /* try first without extension */
+        if (RtlDoesFileExists_U( name ))
+            return GetFullPathNameW( name, buflen, buffer, lastpart );
+
+        if (ext)
+        {
+            LPCWSTR p = strrchrW( name, '.' );
+            if (p && !strchrW( p, '/' ) && !strchrW( p, '\\' ))
+                ext = NULL;  /* Ignore the specified extension */
+        }
+
+        /* Allocate a buffer for the file name and extension */
+        if (ext)
+        {
+            LPWSTR tmp;
+            DWORD len = strlenW(name) + strlenW(ext);
+
+            if (!(tmp = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+            {
+                SetLastError( ERROR_OUTOFMEMORY );
+                return 0;
+            }
+            strcpyW( tmp, name );
+            strcatW( tmp, ext );
+            if (RtlDoesFileExists_U( tmp ))
+                ret = GetFullPathNameW( tmp, buflen, buffer, lastpart );
+            HeapFree( GetProcessHeap(), 0, tmp );
+        }
+    }
+    else if (path && path[0])  /* search in the specified path */
+    {
+        ret = RtlDosSearchPath_U( path, name, ext, buflen * sizeof(WCHAR),
+                                  buffer, lastpart ) / sizeof(WCHAR);
+    }
+    else  /* search in the default path */
+    {
+        WCHAR *dll_path = MODULE_get_dll_load_path( NULL );
+
+        if (dll_path)
+        {
+            ret = RtlDosSearchPath_U( dll_path, name, ext, buflen * sizeof(WCHAR),
+                                      buffer, lastpart ) / sizeof(WCHAR);
+            HeapFree( GetProcessHeap(), 0, dll_path );
+        }
+        else
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+    }
+
+    if (!ret) SetLastError( ERROR_FILE_NOT_FOUND );
+    else TRACE( "found %s\n", debugstr_w(buffer) );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SearchPathA   (KERNEL32.@)
+ */
+DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
+                          DWORD buflen, LPSTR buffer, LPSTR *lastpart )
+{
+    UNICODE_STRING pathW, nameW, extW;
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret, retW;
+
+    if (path) RtlCreateUnicodeStringFromAsciiz(&pathW, path);
+    else pathW.Buffer = NULL;
+    if (name) RtlCreateUnicodeStringFromAsciiz(&nameW, name);
+    else nameW.Buffer = NULL;
+    if (ext) RtlCreateUnicodeStringFromAsciiz(&extW, ext);
+    else extW.Buffer = NULL;
+
+    retW = SearchPathW(pathW.Buffer, nameW.Buffer, extW.Buffer, MAX_PATH, bufferW, NULL);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (buflen >= ret)
+        {
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, buflen, NULL, NULL);
+            ret--; /* length without 0 */
+            if (lastpart) *lastpart = strrchr(buffer, '\\') + 1;
+        }
+    }
+
+    RtlFreeUnicodeString(&pathW);
+    RtlFreeUnicodeString(&nameW);
+    RtlFreeUnicodeString(&extW);
     return ret;
 }

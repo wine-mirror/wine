@@ -84,7 +84,6 @@ static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
 extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const WCHAR *appname );
-extern void MODULE_InitLoadPath(void);
 extern void LOCALE_Init(void);
 
 /***********************************************************************
@@ -835,7 +834,8 @@ void __wine_kernel_init(void)
     TRACE( "starting process name=%s file=%p argv[0]=%s\n",
            debugstr_w(main_exe_name), main_exe_file, debugstr_a(__wine_main_argv[0]) );
 
-    MODULE_InitLoadPath();
+    RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
+                          MODULE_get_dll_load_path(NULL) );
     VERSION_Init( main_exe_name );
 
     if (!main_exe_file)  /* no file handle -> Winelib app */
