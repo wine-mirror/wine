@@ -1202,6 +1202,8 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
     if (!RegQueryValueExW(userShellFolderKey, value, NULL, &dwType,
      (LPBYTE)path, &dwPathLen) && (dwType == REG_EXPAND_SZ || dwType == REG_SZ))
     {
+        LONG ret;
+
         path[dwPathLen / sizeof(WCHAR)] = '\0';
         if (dwType == REG_EXPAND_SZ && path[0] == '%')
         {
@@ -1210,9 +1212,12 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
             _SHExpandEnvironmentStrings(path, szTemp);
             strncpyW(path, szTemp, MAX_PATH);
         }
-        RegSetValueExW(shellFolderKey, value, 0, REG_SZ, (LPBYTE)path,
+        ret = RegSetValueExW(shellFolderKey, value, 0, REG_SZ, (LPBYTE)path,
          (strlenW(path) + 1) * sizeof(WCHAR));
-        hr = S_OK;
+        if (ret != ERROR_SUCCESS)
+            hr = HRESULT_FROM_WIN32(ret);
+        else
+            hr = S_OK;
     }
     else
         hr = E_FAIL;
@@ -1267,7 +1272,8 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
         }
         else
         {
-            FIXME("(%d,%s), LoadString failed, missing translation?\n", folder, debugstr_w(pszPath));
+            FIXME("(%d,%s), LoadString failed, missing translation?\n", folder,
+             debugstr_w(pszPath));
             hr = E_FAIL;
         }
     }
@@ -1762,21 +1768,21 @@ HRESULT WINAPI SHGetFolderPathA(
 }
 
 /* For each folder in folders, if its value has not been set in the registry,
- * call _SHGetUserProfilePath or _SHGetAllUsersProfilePath (depending on the
+ * calls _SHGetUserProfilePath or _SHGetAllUsersProfilePath (depending on the
  * folder's type) to get the unexpanded value first.
- * This will create the expanded value in the Shell Folders key, and
- * return the unexpanded value.
- * Write the unexpanded value to User Shell Folders, and query it with
- * SHGetFolderPath to force the creation of the directory if it doesn't
- * already exist.
+ * Writes the unexpanded value to User Shell Folders, and queries it with
+ * SHGetFolderPathW to force the creation of the directory if it doesn't
+ * already exist.  SHGetFolderPathW also returns the expanded value, which
+ * this then writes to Shell Folders.
  */
 static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
- LPCWSTR szUserShellFolderPath, const UINT folders[], UINT foldersLen)
+ LPCWSTR szUserShellFolderPath, LPCWSTR szShellFolderPath, const UINT folders[],
+ UINT foldersLen)
 {
     UINT i;
     WCHAR path[MAX_PATH];
     HRESULT hr = S_OK;
-    HKEY hKey = NULL;
+    HKEY hUserKey = NULL, hKey = NULL;
     DWORD dwDisp, dwType, dwPathLen;
     LONG ret;
 
@@ -1784,13 +1790,20 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
      debugstr_w(szUserShellFolderPath), folders, foldersLen);
 
     ret = RegCreateKeyExW(hRootKey, szUserShellFolderPath, 0, NULL, 0,
-     KEY_ALL_ACCESS, NULL, &hKey, &dwDisp);
+     KEY_ALL_ACCESS, NULL, &hUserKey, &dwDisp);
     if (ret)
         hr = HRESULT_FROM_WIN32(ret);
+    else
+    {
+        ret = RegCreateKeyExW(hRootKey, szShellFolderPath, 0, NULL, 0,
+         KEY_ALL_ACCESS, NULL, &hKey, &dwDisp);
+        if (ret)
+            hr = HRESULT_FROM_WIN32(ret);
+    }
     for (i = 0; SUCCEEDED(hr) && i < foldersLen; i++)
     {
         dwPathLen = MAX_PATH * sizeof(WCHAR);
-        if (RegQueryValueExW(hKey, CSIDL_Data[folders[i]].szValueName, NULL,
+        if (RegQueryValueExW(hUserKey, CSIDL_Data[folders[i]].szValueName, NULL,
          &dwType, (LPBYTE)path, &dwPathLen) || (dwType != REG_SZ &&
          dwType != REG_EXPAND_SZ))
         {
@@ -1804,17 +1817,26 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
                 hr = E_FAIL;
             if (*path)
             {
-                ret = RegSetValueExW(hKey, CSIDL_Data[folders[i]].szValueName,
-                 0, REG_EXPAND_SZ, (LPBYTE)path,
-                 (strlenW(path) + 1) * sizeof(WCHAR));
+                ret = RegSetValueExW(hUserKey,
+                 CSIDL_Data[folders[i]].szValueName, 0, REG_EXPAND_SZ,
+                 (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR));
                 if (ret)
                     hr = HRESULT_FROM_WIN32(ret);
                 else
+                {
                     hr = SHGetFolderPathW(NULL, folders[i] | CSIDL_FLAG_CREATE,
-                     hToken, SHGFP_TYPE_DEFAULT, NULL);
+                     hToken, SHGFP_TYPE_DEFAULT, path);
+                    ret = RegSetValueExW(hKey,
+                     CSIDL_Data[folders[i]].szValueName, 0, REG_SZ,
+                     (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR));
+                    if (ret)
+                        hr = HRESULT_FROM_WIN32(ret);
+                }
             }
         }
     }
+    if (hUserKey)
+        RegCloseKey(hUserKey);
     if (hKey)
         RegCloseKey(hKey);
 
@@ -1839,8 +1861,8 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
      CSIDL_COOKIES,
      CSIDL_HISTORY,
     };
-    WCHAR userShellFolderPath[MAX_PATH];
-    LPCWSTR pUserShellFolderPath;
+    WCHAR userShellFolderPath[MAX_PATH], shellFolderPath[MAX_PATH];
+    LPCWSTR pUserShellFolderPath, pShellFolderPath;
     HRESULT hr = S_OK;
     HKEY hRootKey;
     HANDLE hToken;
@@ -1854,16 +1876,21 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
         PathAddBackslashW(userShellFolderPath);
         strcatW(userShellFolderPath, szSHUserFolders);
         pUserShellFolderPath = userShellFolderPath;
+        strcpyW(shellFolderPath, DefaultW);
+        PathAddBackslashW(shellFolderPath);
+        strcatW(shellFolderPath, szSHFolders);
+        pShellFolderPath = shellFolderPath;
     }
     else
     {
         hToken = NULL;
         hRootKey = HKEY_CURRENT_USER;
         pUserShellFolderPath = szSHUserFolders;
+        pShellFolderPath = szSHFolders;
     }
 
     hr = _SHRegisterFolders(hRootKey, hToken, pUserShellFolderPath,
-     folders, sizeof(folders) / sizeof(folders[0]));
+     pShellFolderPath, folders, sizeof(folders) / sizeof(folders[0]));
     TRACE("returning 0x%08lx\n", hr);
     return hr;
 }
@@ -1884,7 +1911,7 @@ static HRESULT _SHRegisterCommonShellFolders(void)
 
     TRACE("\n");
     hr = _SHRegisterFolders(HKEY_LOCAL_MACHINE, NULL, szSHUserFolders,
-     folders, sizeof(folders) / sizeof(folders[0]));
+     szSHFolders, folders, sizeof(folders) / sizeof(folders[0]));
     TRACE("returning 0x%08lx\n", hr);
     return hr;
 }
