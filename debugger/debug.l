@@ -29,8 +29,8 @@
 
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = DEBUG_ReadLine("Wine-dbg>", (char *) buf, max_size, TRUE, TRUE )) < 0 ) \
-	    YY_FATAL_ERROR( "read() in flex scanner failed" );
+	if ( (result = DEBUG_ReadLine("Wine-dbg>", buf, max_size, TRUE, TRUE)) <= 0 ) \
+	    YY_FATAL_ERROR( "ReadLine() in flex scanner failed" );
 
 
 #define YY_NO_UNPUT
