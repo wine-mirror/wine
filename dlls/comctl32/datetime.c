@@ -127,7 +127,7 @@ static void DATETIME_Refresh (HWND hwnd, HDC hdc)
   SYSTEMTIME date = infoPtr->date;
   SIZE size;
   BOOL prssed=FALSE;
-  COLORREF oldBk;
+  COLORREF oldBk = 0;
   
 
 	

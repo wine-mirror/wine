@@ -503,7 +503,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     for(i=0; i<dwNumServiceArgs; i++)
         lpwstr[i]=HEAP_strdupAtoW(GetProcessHeap(), 0, lpServiceArgVectors[i]);
 
-    StartServiceW(hService, dwNumServiceArgs, lpwstr);
+    StartServiceW(hService, dwNumServiceArgs, (LPCWSTR *)lpwstr);
 
     if(dwNumServiceArgs)
     {
@@ -598,7 +598,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
         return FALSE;
 
     start_dwNumServiceArgs    = dwNumServiceArgs;
-    start_lpServiceArgVectors = lpServiceArgVectors;
+    start_lpServiceArgVectors = (LPWSTR *)lpServiceArgVectors;
 
     ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
     startupinfo.cb = sizeof(STARTUPINFOA);

@@ -218,10 +218,12 @@ void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadId, HMODULE hModule )
     /* Call USER signal proc */
 
     if ( Callout.UserSignalProc )
+    {
         if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
             Callout.UserSignalProc( uCode, dwThreadId, dwFlags, hModule );
         else
             Callout.UserSignalProc( uCode, GetCurrentProcessId(), dwFlags, hModule );
+    }
 }
 
 /***********************************************************************

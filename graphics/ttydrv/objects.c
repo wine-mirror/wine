@@ -30,9 +30,9 @@ extern BOOL TTYDRV_DC_BITMAP_DeleteObject(HBITMAP hbitmap, BITMAPOBJ *bitmap);
 HGDIOBJ TTYDRV_DC_SelectObject(DC *dc, HGDIOBJ handle)
 {
   GDIOBJHDR *ptr = GDI_GetObjPtr(handle, MAGIC_DONTCARE);
-  HGDIOBJ result = NULL;
+  HGDIOBJ result = 0;
 
-  if(!ptr) return NULL;
+  if(!ptr) return 0;
 
   switch(ptr->wMagic) 
   {

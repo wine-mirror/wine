@@ -1259,7 +1259,6 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
   HMODULE hServiceProvider;
   typedef DWORD (WINAPI *SP_SPInit)(LPVOID lpCompoundAddress, ...); /* FIXME: How many arguments? */
   SP_SPInit SPInit;
-  DWORD dwReturnValue = 0;
 
   ICOM_THIS(IDirectPlay3Impl,iface);
 

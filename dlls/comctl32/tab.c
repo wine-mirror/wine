@@ -814,7 +814,7 @@ static void TAB_DrawItem(
     HPEN   holdPen;
     INT    oldBkMode;
     INT    cx,cy; 
-    BOOL   deleteBrush;
+    BOOL   deleteBrush = TRUE;
 
     if (lStyle & TCS_BUTTONS)
     {
