@@ -104,20 +104,23 @@ void WINAPI Control_RunDLL( HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
                               UINT32 flags )
-{	CHAR szTemp[MAX_PATH];
+{	CHAR		szTemp[MAX_PATH];
 	LPPIDLDATA 	pData;
-	DWORD ret=0;
+	LPITEMIDLIST	pPidlTemp = NULL;
+	DWORD		ret=0;
   
 	TRACE(shell,"(%s,0x%lx,%p,0x%x,0x%x)\n",
 	      path,dwFileAttributes,psfi,sizeofpsfi,flags);
 
 	/* translate the pidl to a path*/
 	if (flags & SHGFI_PIDL)
-	{ SHGetPathFromIDList32A ((LPCITEMIDLIST)path,szTemp);
-	  TRACE(shell,"pidl=%p is %s\n",path,szTemp);
+	{ pPidlTemp = (LPCITEMIDLIST)path;
+	  SHGetPathFromIDList32A (pPidlTemp, szTemp);
+	  TRACE(shell,"pidl=%p is %s\n", path, szTemp);
 	}
 	else
-	{ TRACE(shell,"path=%p\n",path);
+	{ strcpy(szTemp,path);
+	  TRACE(shell,"path=%s\n", szTemp);
 	}
 
 	if (flags & SHGFI_ATTRIBUTES)
@@ -188,21 +191,24 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
      }      
   }
 
-  if (flags & SHGFI_SYSICONINDEX)
-  {  FIXME(shell,"get the SYSICONINDEX\n");
-     psfi->iIcon=32;
-     if (flags & SHGFI_SMALLICON)
-     { TRACE(shell,"set to small icon\n"); 
-       ret = (DWORD) ShellSmallIconList;
-     }
-     else        
-     { TRACE(shell,"set to big icon\n");
-       ret = (DWORD) ShellBigIconList;
-     }
-  }
+	if (flags & SHGFI_SYSICONINDEX)
+	{ if (!pPidlTemp)
+	  { pPidlTemp = ILCreateFromPath (szTemp);
+	  }
+	  psfi->iIcon = SHMapPIDLToSystemImageListIndex (NULL, pPidlTemp, 0);
+	  TRACE(shell,"-- SYSICONINDEX %i\n", psfi->iIcon);
 
- 
-  return ret;
+	  if (flags & SHGFI_SMALLICON)
+	  { TRACE(shell,"set to small icon\n"); 
+	    ret = (DWORD) ShellSmallIconList;
+	  }
+	  else        
+	  { TRACE(shell,"set to big icon\n");
+	    ret = (DWORD) ShellBigIconList;
+	  }
+	}
+
+ 	return ret;
 }
 
 /*************************************************************************
