@@ -2138,7 +2138,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   * it means that we also may have line number information
 	   * for this function.
 	   */
-	  for(i=0; linetab[i].linetab != NULL; i++)
+	  for(i=0; linetab && linetab[i].linetab != NULL; i++)
 	    {
 	      if(     ((unsigned int) deefer->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
@@ -2152,7 +2152,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	    }
 
  	  DEBUG_Normalize(curr_func);
-	  if( linetab[i].linetab == NULL )
+	  if( !linetab || linetab[i].linetab == NULL )
 	    {
 	      curr_func = DEBUG_AddSymbol( symname, &new_addr, NULL,
 					   SYM_WIN32 | SYM_FUNC);
@@ -2203,7 +2203,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   * it means that we also may have line number information
 	   * for this function.
 	   */
-	  for(i=0; linetab[i].linetab != NULL; i++)
+	  for(i=0; linetab && linetab[i].linetab != NULL; i++)
 	    {
 	      if(     ((unsigned int) deefer->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
@@ -2217,7 +2217,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	    }
 
  	  DEBUG_Normalize(curr_func);
-	  if( linetab[i].linetab == NULL )
+	  if( !linetab || linetab[i].linetab == NULL )
 	    {
 	      curr_func = DEBUG_AddSymbol( symname, &new_addr, NULL,
 					   SYM_WIN32 | SYM_FUNC);
