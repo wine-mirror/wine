@@ -50,9 +50,8 @@ Information Linux :
 Information FreeBSD :
   Assurez-vous d'avoir les options USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG
   enclanchées dans votre noyau.
-  Plus d'informations invoquant les patches pour la branche 4-STABLE dans
-  l'arbre de ports :
-  ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/emulators/wine/files/
+  Plus d'information est située dans l'arbre de ports :
+  ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
 
 Information Solaris :
   Il est plus que probable que vous devrez construire Wine avec la chaîne
@@ -77,10 +76,9 @@ Information des système de fichier :
   écriture.
 
 Wine a besoin de "threads" du niveau noyau. Actuellement, seul Linux version
-2.0 ou supérieur, FreeBSD-current ou FreeBSD 3.0 ou supérieur, Solaris x86
-version 2.5 ou supérieur et NetBSD-current sont supportés. D'autres systèmes
-d'exploitations qui implémentent les "threads" noyau peuvent être supportés dans
-le futur.
+2.0 ou supérieur, FreeBSD 4.x ou supérieur, Solaris x86 version 2.5 ou supérieur
+et NetBSD-current sont supportés. D'autres systèmes d'exploitations qui
+implémentent les "threads" noyau peuvent être supportés dans le futur.
 
 Vous avez besoin d'avoir les fichiers "include" de X11 installés
 (appelés xlib6g-dev pour Debian et XFree86-devel pour RedHat).
