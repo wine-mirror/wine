@@ -1889,7 +1889,8 @@ void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
     INT  vmin, vmax, hmin, hmax, vpos, hpos;
     WND *pWnd, *Wnd;
 
-    if (!(Wnd = pWnd = WIN_FindWndPtr( hwnd ))) return;
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return;
+    Wnd = WIN_FindWndPtr(hwnd);
     GetClientRect( hwnd, &clientRect );
     SetRectEmpty( &childRect );
 
@@ -1899,6 +1900,7 @@ void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
 	  {
 	      ShowScrollBar(hwnd, SB_BOTH, FALSE);
               WIN_ReleaseWndPtr(pWnd);
+              WIN_ReleaseWndPtr(Wnd);
 	      return;
 	  }
 	  UnionRect( &childRect, &pWnd->rectWindow, &childRect );
