@@ -624,13 +624,13 @@ MLANGCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 
 static ULONG WINAPI MLANGCF_AddRef(LPCLASSFACTORY iface) {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI MLANGCF_Release(LPCLASSFACTORY iface) {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
     {
@@ -733,12 +733,12 @@ typedef struct tagMLang_impl
 
 static ULONG WINAPI MLang_AddRef( MLang_impl* This)
 {
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI MLang_Release( MLang_impl* This )
 {
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref = %ld\n", This, ref);
     if (ref == 0)
@@ -823,14 +823,14 @@ static ULONG WINAPI fnIEnumCodePage_AddRef(
         IEnumCodePage* iface)
 {
     ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI fnIEnumCodePage_Release(
         IEnumCodePage* iface)
 {
     ICOM_THIS_MULTI(EnumCodePage_impl, vtbl_IEnumCodePage, iface);
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref = %ld\n", This, ref);
     if (ref == 0)
@@ -1009,14 +1009,14 @@ static ULONG WINAPI fnIEnumScript_AddRef(
         IEnumScript* iface)
 {
     ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI fnIEnumScript_Release(
         IEnumScript* iface)
 {
     ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p ref = %ld\n", This, ref);
     if (ref == 0)
