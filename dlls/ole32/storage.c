@@ -885,6 +885,8 @@ HRESULT WINAPI IStream16_fnWrite(
 				 * (we just migrate newsize bytes)
 				 */
 				LPBYTE	curdata,data = HeapAlloc(GetProcessHeap(),0,newsize+BIGSIZE);
+				HRESULT r = E_FAIL;
+
 				cc	= newsize;
 				blocknr = This->stde.pps_sb;
 				curdata = data;
@@ -899,31 +901,35 @@ HRESULT WINAPI IStream16_fnWrite(
 				}
 				/* frees complete chain for this stream */
 				if (!STORAGE_set_big_chain(hf,This->stde.pps_sb,STORAGE_CHAINENTRY_FREE))
-					return E_FAIL;
+					goto err;
 				curdata	= data;
 				blocknr = This->stde.pps_sb = STORAGE_get_free_small_blocknr(hf);
 				if (blocknr<0)
-					return E_FAIL;
+					goto err;
 				cc	= newsize;
 				while (cc>0) {
 					if (!STORAGE_put_small_block(hf,blocknr,curdata))
-						return E_FAIL;
+						goto err;
 					cc	-= SMALLSIZE;
 					if (cc<=0) {
 						if (!STORAGE_set_small_chain(hf,blocknr,STORAGE_CHAINENTRY_ENDOFCHAIN))
-							return E_FAIL;
+							goto err;
 						break;
 					} else {
 						int newblocknr = STORAGE_get_free_small_blocknr(hf);
 						if (newblocknr<0)
-							return E_FAIL;
+							goto err;
 						if (!STORAGE_set_small_chain(hf,blocknr,newblocknr))
-							return E_FAIL;
+							goto err;
 						blocknr = newblocknr;
 					}
 					curdata	+= SMALLSIZE;
 				}
+				r = S_OK;
+			err:
 				HeapFree(GetProcessHeap(),0,data);
+				if(r != S_OK)
+					return r;
 			}
 		}
 		This->stde.pps_size = newsize;
@@ -978,47 +984,51 @@ HRESULT WINAPI IStream16_fnWrite(
 				} else {
 					/* Migrate small blocks to big blocks */
 					LPBYTE	curdata,data = HeapAlloc(GetProcessHeap(),0,oldsize+BIGSIZE);
+					HRESULT r = E_FAIL;
+
 					cc	= oldsize;
 					blocknr = This->stde.pps_sb;
 					curdata = data;
 					/* slurp in */
 					while (cc>0) {
-						if (!STORAGE_get_small_block(hf,blocknr,curdata)) {
-							HeapFree(GetProcessHeap(),0,data);
-							return E_FAIL;
-						}
+						if (!STORAGE_get_small_block(hf,blocknr,curdata))
+							goto err2;
 						curdata	+= SMALLSIZE;
 						cc	-= SMALLSIZE;
 						blocknr	 = STORAGE_get_next_small_blocknr(hf,blocknr);
 					}
 					/* free small block chain */
 					if (!STORAGE_set_small_chain(hf,This->stde.pps_sb,STORAGE_CHAINENTRY_FREE))
-						return E_FAIL;
+						goto err2;
 					curdata	= data;
 					blocknr = This->stde.pps_sb = STORAGE_get_free_big_blocknr(hf);
 					if (blocknr<0)
-						return E_FAIL;
+						goto err2;
 					/* put the data into the big blocks */
 					cc	= This->stde.pps_size;
 					while (cc>0) {
 						if (!STORAGE_put_big_block(hf,blocknr,curdata))
-							return E_FAIL;
+							goto err2;
 						cc	-= BIGSIZE;
 						if (cc<=0) {
 							if (!STORAGE_set_big_chain(hf,blocknr,STORAGE_CHAINENTRY_ENDOFCHAIN))
-								return E_FAIL;
+								goto err2;
 							break;
 						} else {
 							int newblocknr = STORAGE_get_free_big_blocknr(hf);
 							if (newblocknr<0)
-								return E_FAIL;
+								goto err2;
 							if (!STORAGE_set_big_chain(hf,blocknr,newblocknr))
-								return E_FAIL;
+								goto err2;
 							blocknr = newblocknr;
 						}
 						curdata	+= BIGSIZE;
 					}
+					r = S_OK;
+				err2:
 					HeapFree(GetProcessHeap(),0,data);
+					if(r != S_OK)
+						return r;
 				}
 				/* generate big blocks to fit the new data */
 				lastblocknr	= blocknr;

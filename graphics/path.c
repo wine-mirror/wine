@@ -1222,14 +1222,15 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    /* Create a region from the strokes */
    hrgn=CreatePolyPolygonRgn(pPath->pPoints, pNumPointsInStroke,
       numStrokes, nPolyFillMode);
+
+   /* Free memory for number-of-points-in-stroke array */
+   HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
+
    if(hrgn==(HRGN)0)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return FALSE;
    }
-
-   /* Free memory for number-of-points-in-stroke array */
-   HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
 
    /* Success! */
    *pHrgn=hrgn;

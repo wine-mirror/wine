@@ -115,9 +115,9 @@ inline static void queue_file_op( struct file_op_queue *queue, struct file_op *o
 /* free all the file operations on a given queue */
 static void free_file_op_queue( struct file_op_queue *queue )
 {
-    struct file_op *op;
+    struct file_op *t, *op = queue->head;
 
-    for (op = queue->head; op; op = op->next)
+    while( op )
     {
         HeapFree( GetProcessHeap(), 0, op->src_root );
         HeapFree( GetProcessHeap(), 0, op->src_path );
@@ -126,6 +126,9 @@ static void free_file_op_queue( struct file_op_queue *queue )
         HeapFree( GetProcessHeap(), 0, op->src_tag );
         HeapFree( GetProcessHeap(), 0, op->dst_path );
         if (op->dst_file != op->src_file) HeapFree( GetProcessHeap(), 0, op->dst_file );
+        t = op;
+        op = op->next;
+        HeapFree( GetProcessHeap(), 0, t );
     }
 }
 

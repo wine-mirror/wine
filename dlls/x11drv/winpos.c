@@ -1053,6 +1053,7 @@ static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
             /* No window was found, so it's OK for us */
             pt.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
             pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
+            HeapFree( GetProcessHeap(), 0, list );
             return pt;
 
         } while(x <= rectParent.right-xspacing);

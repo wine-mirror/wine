@@ -711,6 +711,7 @@ DWORD WINAPI FormatMessage16(
 			    b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz);
 			}
 			for (x=b; *x; x++) ADD_TO_T(*x);
+                        HeapFree(GetProcessHeap(), 0, b);
 		    } else {
 		        /* NULL args - copy formatstr
 			 * (probably wrong)
