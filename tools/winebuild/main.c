@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "build.h"
 
@@ -159,7 +160,7 @@ static const struct option_descr option_table[] =
     { "-sym",     0, do_sym,     NULL },  /* ignored for backwards compatibility */
     { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
     { "-def",     1, do_def,     "-def file.spec   Build a .def file from a spec file" },
-    { "-exe",     1, do_exe,     "-exe name        Build a .c file from the named executable" },
+    { "-exe",     1, do_exe,     "-exe name        Build a .c file for the named executable" },
     { "-debug",   0, do_debug,   "-debug [files]   Build a .c file containing debug channels declarations" },
     { "-glue",    0, do_glue,    "-glue [files]    Build the 16-bit glue for the source files" },
     { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
