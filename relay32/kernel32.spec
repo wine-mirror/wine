@@ -317,8 +317,8 @@ import  ntdll.dll
 299 stdcall GetConsoleScreenBufferInfo(long ptr) GetConsoleScreenBufferInfo
 300 stdcall GetConsoleTitleA(ptr long) GetConsoleTitleA
 301 stdcall GetConsoleTitleW(ptr long) GetConsoleTitleW
-302 stub GetCurrencyFormatA
-303 stub GetCurrencyFormatW
+302 stdcall GetCurrencyFormatA(long long str ptr str long) GetCurrencyFormatA
+303 stdcall GetCurrencyFormatW(long long str ptr str long) GetCurrencyFormatW
 304 stdcall GetCurrentDirectoryA(long ptr) GetCurrentDirectoryA
 305 stdcall GetCurrentDirectoryW(long ptr) GetCurrentDirectoryW
 306 stdcall GetCurrentProcess() GetCurrentProcess
@@ -627,7 +627,7 @@ import  ntdll.dll
 609 register SUnMapLS_IP_EBP_36() SUnMapLS_IP_EBP_36
 610 register SUnMapLS_IP_EBP_40() SUnMapLS_IP_EBP_40
 611 register SUnMapLS_IP_EBP_8() SUnMapLS_IP_EBP_8
-612 stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) ScrollConsoleScreenBuffer
+612 stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) ScrollConsoleScreenBufferA
 613 stub ScrollConsoleScreenBufferW
 614 stdcall SearchPathA(str str str long ptr ptr) SearchPathA
 615 stdcall SearchPathW(wstr wstr wstr long ptr ptr) SearchPathW
@@ -682,7 +682,7 @@ import  ntdll.dll
 664 stdcall SetSystemPowerState(long long) SetSystemPowerState
 665 stdcall SetSystemTime(ptr) SetSystemTime
 666 stub SetSystemTimeAdjustment
-667 stdcall SetTapeParemeters(ptr long ptr) SetTapeParameters
+667 stdcall SetTapeParameters(ptr long ptr) SetTapeParameters
 668 stdcall SetTapePosition(ptr long long long long long) SetTapePosition
 669 stdcall SetThreadAffinityMask(long long) SetThreadAffinityMask
 670 stdcall SetThreadContext(long ptr) SetThreadContext

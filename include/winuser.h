@@ -1837,6 +1837,30 @@ typedef struct _numberfmt32w {
     UINT NegativeOrder;
 } NUMBERFMTW;
 
+typedef struct _currencyfmt32a
+{   
+	UINT      NumDigits;   
+	UINT      LeadingZero; 
+	UINT      Grouping;   
+	LPCSTR    lpDecimalSep;   
+	LPCSTR    lpThousandSep; 
+	UINT      NegativeOrder;   
+	UINT      PositiveOrder; 
+	LPCSTR    lpCurrencySymbol;
+} CURRENCYFMTA; 
+
+typedef struct _currencyfmt32w
+{   
+	UINT      NumDigits;   
+	UINT      LeadingZero; 
+	UINT      Grouping;   
+	LPCWSTR   lpDecimalSep;   
+	LPCWSTR   lpThousandSep; 
+	UINT      NegativeOrder;   
+	UINT      PositiveOrder; 
+	LPCWSTR   lpCurrencySymbol;
+} CURRENCYFMTW; 
+
 #define MONITOR_DEFAULTTONULL       0x00000000
 #define MONITOR_DEFAULTTOPRIMARY    0x00000001
 #define MONITOR_DEFAULTTONEAREST    0x00000002

@@ -3369,7 +3369,8 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 BOOL WINAPI EnumDateFormatsA(
   DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
 {
-  FIXME("Only US English supported\n");
+  LCID Loc = GetUserDefaultLCID(); 
+  FIXME("Only different English Locales supported \n");
 
   if(!lpDateFmtEnumProc)
     {
@@ -3377,7 +3378,169 @@ BOOL WINAPI EnumDateFormatsA(
       return FALSE;
     }
 
-  switch(dwFlags)
+  switch( Loc )
+ {
+
+   case 0x00000809:  /* (Loc,"en_UK") */ 
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d.M.yy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00000c09:  /* (Loc,"en_AU") */   
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("d/MM/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dddd,d MMMM yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00001009:  /* (Loc,"en_CA") */ 
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("yy-MM-dd")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("M/dd/yy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("d-MMM-yy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("MMMM d, yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00001409:  /* (Loc,"en_NZ") */ 
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("d/MM/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d.MM.yy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("dddd, d MMMM yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00001809:  /* (Loc,"en_IE") */   
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("dd/MM/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d/M/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("d.M.yy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00001c09:  /* (Loc,"en_ZA") */   
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("yy/MM/dd")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00002009:  /* (Loc,"en_JM") */  
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dddd,MMMM dd,yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("MMMM dd,yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("dddd,dd MMMM,yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("dd MMMM,yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   case 0x00002809:  /* (Loc,"en_BZ") */
+   case 0x00002c09:  /* (Loc,"en_TT") */  
+  {    
+   switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("dd/MM/yyyy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dddd,dd MMMM yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+  }
+
+   default:  /* default to US English "en_US" */
+  {
+   switch(dwFlags)
     {
       case DATE_SHORTDATE:
 	if(!(*lpDateFmtEnumProc)("M/d/yy")) return TRUE;
@@ -3398,6 +3561,8 @@ BOOL WINAPI EnumDateFormatsA(
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
+  }
+ }
 }
 
 /**************************************************************************
@@ -3417,25 +3582,69 @@ BOOL WINAPI EnumDateFormatsW(
 BOOL WINAPI EnumTimeFormatsA(
   TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
-  FIXME("Only US English supported\n");
-
+  LCID Loc = GetUserDefaultLCID(); 
   if(!lpTimeFmtEnumProc)
     {
       SetLastError(ERROR_INVALID_PARAMETER);
       return FALSE;
     }
-
   if(dwFlags)
     {
       FIXME("Unknown time format (%ld)\n", dwFlags); 
     }
-  
-  if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
-  if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
-  if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
-  if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
 
-  return TRUE;
+  switch( Loc )
+ {
+   case 0x00000407:  /* (Loc,"de_DE") */
+   {
+    if(!(*lpTimeFmtEnumProc)("HH.mm")) return TRUE; 
+    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("H.mm")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("H.mm'Uhr'")) return TRUE;
+    return TRUE;
+   }       
+
+   case 0x0000040c:  /* (Loc,"fr_FR") */
+   case 0x00000c0c:  /* (Loc,"fr_CA") */
+   {
+    if(!(*lpTimeFmtEnumProc)("H:mm")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("HH.mm")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("HH'h'mm")) return TRUE;
+    return TRUE;
+   }
+
+   case 0x00000809:  /* (Loc,"en_UK") */
+   case 0x00000c09:  /* (Loc,"en_AU") */ 
+   case 0x00001409:  /* (Loc,"en_NZ") */
+   case 0x00001809:  /* (Loc,"en_IE") */ 
+   {
+    if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
+    return TRUE;
+   }
+
+   case 0x00001c09:  /* (Loc,"en_ZA") */   
+   case 0x00002809:  /* (Loc,"en_BZ") */
+   case 0x00002c09:  /* (Loc,"en_TT") */ 
+   {
+    if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE; 
+    return TRUE;  
+   }
+
+   default:  /* default to US style "en_US" */   
+   {
+    if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
+    if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
+    return TRUE;
+   }
+ }
 }
 
 /**************************************************************************
@@ -3449,269 +3658,368 @@ BOOL WINAPI EnumTimeFormatsW(
   return FALSE;
 }
 
+/**************************************************************************
+ *           This function is used just locally !
+ *  Description: Inverts a string.
+ */ 
+static void OLE_InvertString(char* string)
+{    
+    char    sTmpArray[128];
+    INT     counter, i = 0;
+
+    for (counter = strlen(string); counter > 0; counter--)
+    {
+        memcpy(sTmpArray + i, string + counter-1, 1);
+        i++;
+    }
+    memcpy(sTmpArray + i, "\0", 1);
+    strcpy(string, sTmpArray);
+}
+
+/***************************************************************************************
+ *           This function is used just locally !
+ *  Description: Test if the given string (psNumber) is valid or not.
+ *               The valid characters are the following:
+ *               - Characters '0' through '9'. 
+ *               - One decimal point (dot) if the number is a floating-point value. 
+ *               - A minus sign in the first character position if the number is 
+ *                 a negative value.
+ *              If the function succeeds, psBefore/psAfter will point to the string
+ *              on the right/left of the decimal symbol. pbNegative indicates if the 
+ *              number is negative.
+ */
+static INT OLE_GetNumberComponents(char* pInput, char* psBefore, char* psAfter, BOOL* pbNegative)
+{
+char	sNumberSet[] = "0123456789";
+BOOL	bInDecimal = FALSE;
+
+	/* Test if we do have a minus sign */
+	if ( *pInput == '-' )
+	{
+		*pbNegative = TRUE;
+		pInput++; /* Jump to the next character. */
+	}
+	
+	while(*pInput != '\0')
+	{
+		/* Do we have a valid numeric character */
+		if ( strchr(sNumberSet, *pInput) != NULL )
+		{
+			if (bInDecimal == TRUE)
+                *psAfter++ = *pInput;
+			else
+                *psBefore++ = *pInput;
+		}
+		else
+		{
+			/* Is this a decimal point (dot) */
+			if ( *pInput == '.' )
+			{
+				/* Is it the first time we find it */
+				if ((bInDecimal == FALSE))
+					bInDecimal = TRUE;
+				else
+					return -1; /* ERROR: Invalid parameter */
+			}
+			else
+			{
+				/* It's neither a numeric character, nor a decimal point.
+				 * Thus, return an error.
+                 */
+				return -1;
+			}
+		}
+        pInput++;
+	}
+	
+	/* Add an End of Line character to the output buffers */
+	*psBefore = '\0';
+	*psAfter = '\0';
+
+	return 0; 
+}
+
+/**************************************************************************
+ *           This function is used just locally !
+ *  Description: A number could be formatted using different numbers 
+ *               of "digits in group" (example: 4;3;2;0).
+ *               The first parameter of this function is an array
+ *               containing the rule to be used. It's format is the following:
+ *               |NDG|DG1|DG2|...|0|
+ *               where NDG is the number of used "digits in group" and DG1, DG2,
+ *               are the corresponding "digits in group".
+ *               Thus, this function returns the grouping value in the array
+ *               pointed by the second parameter.
+ */
+static INT OLE_GetGrouping(char* sRule, INT index)
+{
+    char    sData[2], sRuleSize[2];
+    INT     nData, nRuleSize;
+
+    memcpy(sRuleSize, sRule, 1);
+    memcpy(sRuleSize+1, "\0", 1);
+    nRuleSize = atoi(sRuleSize);
+
+    if (index > 0 && index < nRuleSize)
+    {
+        memcpy(sData, sRule+index, 1);
+        memcpy(sData+1, "\0", 1);
+        nData = atoi(sData);            
+    }
+        
+    else
+    {
+        memcpy(sData, sRule+nRuleSize-1, 1);
+        memcpy(sData+1, "\0", 1);
+        nData = atoi(sData);            
+    }
+    
+    return nData;
+}
 
 /**************************************************************************
  *              GetNumberFormatA	(KERNEL32.355)
  */
 INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
-                               LPCSTR lpValue,   const NUMBERFMTA * lpFormat,
-                               LPSTR lpNumberStr, int cchNumber)
+			       LPCSTR lpvalue,   const NUMBERFMTA * lpFormat,
+			       LPSTR lpNumberStr, int cchNumber)
 {
-	LCID thislocale;
-	UINT thisnumdigits;
-    UINT thisleadingzero;
-    UINT thisgrouping[8]={ -1 };
-    LPCSTR thisdecimalsep;
-    LPCSTR thisthousandsep;
-    UINT thisnegativeorder;
+    char   sNumberDigits[3], sDecimalSymbol[5], sDigitsInGroup[11], sDigitGroupSymbol[5], sILZero[2];
+    INT    nNumberDigits, nNumberDecimal, i, j, nCounter, nStep, nRuleIndex, nGrouping, nDigits, retVal, nLZ;
+    char   sNumber[128], sDestination[128], sDigitsAfterDecimal[10], sDigitsBeforeDecimal[128];
+    char   sRule[10], sSemiColumn[]=";", sBuffer[5], sNegNumber[2];    
+    char   *pStr = NULL, *pTmpStr = NULL;
+    LCID   systemDefaultLCID;
+    BOOL   bNegative = FALSE;
+    enum   Operations 
+    {
+        USE_PARAMETER,
+        USE_LOCALEINFO,
+        USE_SYSTEMDEFAULT,
+        RETURN_ERROR
+    } used_operation;
 
+    strncpy(sNumber, lpvalue, 128);
+    sNumber[127] = '\0';
 
-	LPCSTR sptr;
-	LPSTR dptr;
-	char roundbuffer[24]; /* Should be enough */
-	char *gptr;
-	int i,j;
-	int dotflag=0,negflag=0;
-	char misc_buf[8], negative_buf[4], decimal_buf[4], thousand_buf[4];
-	char digits_buf[11];
-	int intsize=0,decsize=0,totalsize,lastgroup, leadingzeros=0;
-	int negsignsize,decimalsepsize,thousandsepsize;
-
-/* Default setting stuff - partially borrowed from GetFormatedDate */
-	if (!locale) {
-		locale = LOCALE_SYSTEM_DEFAULT;
-	}
-
-	if (locale == LOCALE_SYSTEM_DEFAULT) {
-		thislocale = GetSystemDefaultLCID();
-	} else if (locale == LOCALE_USER_DEFAULT) {
-		thislocale = GetUserDefaultLCID();
-	} else {
-		thislocale = locale;
-	}
-/* Partial implementation: things like native digits are not considered */
-	if (lpFormat == NULL) {
-
-	GetLocaleInfoA(thislocale, LOCALE_IDIGITS,
-					misc_buf, sizeof(misc_buf));
-	thisnumdigits = atoi(misc_buf);
-
-	GetLocaleInfoA(thislocale, LOCALE_ILZERO,
-					misc_buf, sizeof(misc_buf));
-     thisleadingzero = atoi(misc_buf);
-
-     GetLocaleInfoA(thislocale, LOCALE_SGROUPING,
-					misc_buf, sizeof(misc_buf));
-
-/* About grouping mechanism:
-   I parse the string and pour the group size values along the 
-   thisgrouping[] array, starting by element 1. Then I convert these
-   values to indexes for insertion into the integer part.
-   thisgrouping[0]==-1, therefore I ensure index correctness without
-   need for range checking and related stuff.
-   The only drawback is the 7 separators limit, hopefully that means
-   it will fail with numbers bigger than 10^21 if using groups of three
-   as usual. */
-
-
-	for (i=1,gptr=misc_buf;*gptr!='\0';i++) {
-		/* In control panel, groups up 9 digits long are allowed. If there is any way to use larger groups,
-		   then the next line must be replaced with the following code:
-		   thisgrouping[i] = atoi(gptr);
-		   for (;*gptr!=';' && *gptr!='\0';gptr++) ; */
-	
-		thisgrouping[i] = *(gptr++)-'0';
-     	
-		if (*gptr==';')
-	  		gptr++;
-	}
-
-    /* Take care for repeating group size */
-	if (thisgrouping[i-1]==0) {
-		for (j=i-1;j<8;j++)
-			thisgrouping[j]=thisgrouping[i-2];
-		lastgroup=7;
-	} else
-		lastgroup=i-1;
-
-	for (i=2;i<=lastgroup;i++)
-		thisgrouping[i]+=thisgrouping[i-1];
-
-	GetLocaleInfoA(thislocale, LOCALE_SDECIMAL,
-					decimal_buf, sizeof(decimal_buf));
-	thisdecimalsep  = decimal_buf;
-
-	GetLocaleInfoA(thislocale, LOCALE_STHOUSAND,
-					thousand_buf, sizeof(thousand_buf));
-	thisthousandsep  = thousand_buf;
-
-	GetLocaleInfoA(thislocale, LOCALE_INEGNUMBER,
-					misc_buf, sizeof(misc_buf));
-	thisnegativeorder = atoi(misc_buf); 
-
-	} else {
-
-		thisnumdigits = lpFormat->NumDigits;
-		thisleadingzero = lpFormat->LeadingZero;
-		
-		thisgrouping[1] = lpFormat->Grouping;	
-		for (i=2;i<8;i++)
-			thisgrouping[i]=thisgrouping[i-1]+lpFormat->Grouping;
-		lastgroup=7;
-		
-		thisdecimalsep = lpFormat->lpDecimalSep;
-		thisthousandsep = lpFormat->lpThousandSep;
-		thisnegativeorder = lpFormat->NegativeOrder;
-
+    /* Make sure we have a valid input string, get the number
+     * of digits before and after the decimal symbol, and check
+     * if this is a negative number.
+     */
+    if ( OLE_GetNumberComponents(sNumber, sDigitsBeforeDecimal, sDigitsAfterDecimal, &bNegative) != -1)
+    {
+        nNumberDecimal = strlen(sDigitsBeforeDecimal);
+        nDigits = strlen(sDigitsAfterDecimal);
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
     }
 
-	GetLocaleInfoA(thislocale, LOCALE_SNATIVEDIGITS,
-					digits_buf, sizeof(digits_buf));
+    /* Which source will we use to format the string */
+    used_operation = RETURN_ERROR;
+    if (lpFormat != NULL)
+    {
+        if (dwflags == 0)
+            used_operation = USE_PARAMETER; 
+    }
+    else
+    {
+        if (dwflags & LOCALE_NOUSEROVERRIDE)
+            used_operation = USE_LOCALEINFO;
+        else
+            used_operation = USE_SYSTEMDEFAULT;
+    }
 
-	GetLocaleInfoA(thislocale, LOCALE_SNEGATIVESIGN,
-					negative_buf, sizeof(negative_buf));
+    /* Load the fields we need */
+    switch(used_operation)
+    {
+    case USE_LOCALEINFO:
+        GetLocaleInfoA(locale, LOCALE_IDIGITS, sNumberDigits, sizeof(sNumberDigits));
+        GetLocaleInfoA(locale, LOCALE_SDECIMAL, sDecimalSymbol, sizeof(sDecimalSymbol));
+        GetLocaleInfoA(locale, LOCALE_SGROUPING, sDigitsInGroup, sizeof(sDigitsInGroup));
+        GetLocaleInfoA(locale, LOCALE_STHOUSAND, sDigitGroupSymbol, sizeof(sDigitGroupSymbol));
+        GetLocaleInfoA(locale, LOCALE_ILZERO, sILZero, sizeof(sILZero));
+        GetLocaleInfoA(locale, LOCALE_INEGNUMBER, sNegNumber, sizeof(sNegNumber));
+        break;
+    case USE_PARAMETER:
+        sprintf(sNumberDigits, "%d",lpFormat->NumDigits);
+        strcpy(sDecimalSymbol, lpFormat->lpDecimalSep);
+        sprintf(sDigitsInGroup, "%d;0",lpFormat->Grouping);
+        strcpy(sDigitGroupSymbol, lpFormat->lpThousandSep);
+        sprintf(sILZero, "%d",lpFormat->LeadingZero);
+        sprintf(sNegNumber, "%d",lpFormat->NegativeOrder);
+        break;
+    case USE_SYSTEMDEFAULT:
+        systemDefaultLCID = GetSystemDefaultLCID();
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_IDIGITS, sNumberDigits, sizeof(sNumberDigits));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_SDECIMAL, sDecimalSymbol, sizeof(sDecimalSymbol));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_SGROUPING, sDigitsInGroup, sizeof(sDigitsInGroup));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_STHOUSAND, sDigitGroupSymbol, sizeof(sDigitGroupSymbol));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_ILZERO, sILZero, sizeof(sILZero));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_INEGNUMBER, sNegNumber, sizeof(sNegNumber));
+        break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
-	negsignsize=strlen(negative_buf);
-	decimalsepsize=strlen(thisdecimalsep);
-	thousandsepsize=strlen(thisthousandsep);
+    nNumberDigits = atoi(sNumberDigits);
+    
+    /* Remove the ";" */
+    i=0;
+    j = 1;
+    for (nCounter=0; nCounter<strlen(sDigitsInGroup); nCounter++)
+    {
+        if ( memcmp(sDigitsInGroup + nCounter, sSemiColumn, 1) != 0 )
+        {
+            memcpy(sRule + j, sDigitsInGroup + nCounter, 1);
+            i++;
+            j++;
+        }
+    }
+    sprintf(sBuffer, "%d", i);
+    memcpy(sRule, sBuffer, 1); /* Number of digits in the groups ( used by OLE_GetGrouping() ) */
+    memcpy(sRule + j, "\0", 1);
+    
+    /* First, format the digits before the decimal. */
+    if ((nNumberDecimal>0) && (atoi(sDigitsBeforeDecimal) != 0)) 
+    {
+        /* Working on an inverted string is easier ! */
+        OLE_InvertString(sDigitsBeforeDecimal);
 
-	/* Size calculation */
-	sptr=lpValue;
-	if (*sptr=='-') {
-		negflag=1;
-		sptr++;
-	}
-	for (; *sptr=='0'; sptr++) leadingzeros++; /* Ignore leading zeros */
-	for (; *sptr!='\0'; sptr++) {
-		if (!dotflag && *sptr=='.') {
-			dotflag=1;
-		} else if (*sptr<'0' || *sptr>'9') {
-			SetLastError(ERROR_INVALID_PARAMETER);
-			return 0;
-		} else {
-			if (dotflag) {
-				decsize++;
-			} else {
-       			intsize++;
-			}
-    	}
-	}
+        nStep = nCounter = i = j = 0;
+        nRuleIndex = 1;
+        nGrouping = OLE_GetGrouping(sRule, nRuleIndex);
+        
+        /* Here, we will loop until we reach the end of the string.
+         * An internal counter (j) is used in order to know when to 
+         * insert the "digit group symbol".
+         */
+        while (nNumberDecimal > 0)
+        {
+            i = nCounter + nStep;
+            memcpy(sDestination + i, sDigitsBeforeDecimal + nCounter, 1);
+            nCounter++;
+            j++;
+            if (j >= nGrouping)
+            {
+                j = 0;
+                if (nRuleIndex < sRule[0])
+                    nRuleIndex++;
+                nGrouping = OLE_GetGrouping(sRule, nRuleIndex);
+                memcpy(sDestination + i+1, sDigitGroupSymbol, strlen(sDigitGroupSymbol));
+                nStep+= strlen(sDigitGroupSymbol);
+            }
 
+            nNumberDecimal--;
+        }
 
-/* Take care of eventual rounding. Only, if I need to do it, then I write
-   the rounded lpValue copy into roundbuffer, and create the formatted
-   string from the proper source. This is smarter than copying it always
-   The buffer includes an extra leading zero, as the number can carry and
-   get and extra one. If it doesn't, the zero is ignored as any other
-   useless leading zero
-*/
+        memcpy(sDestination + i+1, "\0", 1);
+        /* Get the string in the right order ! */
+        OLE_InvertString(sDestination);
+     }
+     else
+     {
+        nLZ = atoi(sILZero);
+        if (nLZ != 0)
+        {        
+            /* Use 0.xxx instead of .xxx */
+            memcpy(sDestination, "0", 1);
+            memcpy(sDestination+1, "\0", 1);
+        }
+        else
+            memcpy(sDestination, "\0", 1);
 
-	if (decsize>0 && decsize>thisnumdigits) {
-	    sptr-=(decsize-thisnumdigits);
-	    
-	    if (*sptr>='5') {
-		strcpy(roundbuffer+1,lpValue);
-		if (negflag) {
-		    *roundbuffer='-';
-		    *(roundbuffer+1)='0';
-		} else
-		    *roundbuffer='0';
-		dptr=roundbuffer+(sptr-lpValue);  /* +1-1 */
-		
-		while ( (++*dptr) > '9') {
-		    *(dptr--)='0';
-		    if (*dptr=='.') dptr--;
-		}
-		if ((negflag ? *(roundbuffer+leadingzeros+1) : *(roundbuffer+leadingzeros))  == '1')
-		    intsize++;	
-		sptr=roundbuffer;
-	    } else
-		sptr=lpValue;
-	} else
-	    sptr=lpValue;
+     }
 
-	totalsize=intsize;
+    /* Second, format the digits after the decimal. */
+    j = 0;
+    nCounter = nNumberDigits;
+    if ( (nDigits>0) && (pStr = strstr (sNumber, ".")) )
+    {
+        i = strlen(sNumber) - strlen(pStr) + 1;        
+        strncpy ( sDigitsAfterDecimal, sNumber + i, nNumberDigits);
+        j = strlen(sDigitsAfterDecimal);
+        if (j < nNumberDigits)
+            nCounter = nNumberDigits-j;            
+    }
+    for (i=0;i<nCounter;i++)
+         memcpy(sDigitsAfterDecimal+i+j, "0", 1);    
+    memcpy(sDigitsAfterDecimal + nNumberDigits, "\0", 1);    
 
-	if (intsize==0 && (decsize==0 || thisleadingzero))
-		totalsize++;
+    i = strlen(sDestination);
+    j = strlen(sDigitsAfterDecimal);
+    /* Finally, construct the resulting formatted string. */
+        
+    for (nCounter=0; nCounter<i; nCounter++)
+        memcpy(sNumber + nCounter, sDestination + nCounter, 1);
+       
+    memcpy(sNumber + nCounter, sDecimalSymbol, strlen(sDecimalSymbol));
 
-	if (negflag)
-		totalsize+= thisnegativeorder == 1 || thisnegativeorder == 3 ? negsignsize
-			: thisnegativeorder == 2 || thisnegativeorder == 4 ? negsignsize+1 : 2 ;
+    for (i=0; i<j; i++)
+        memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), sDigitsAfterDecimal + i, 1);
+    memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), "\0", 1);
+        
+    /* Is it a negative number */
+    if (bNegative == TRUE)
+    {
+        i = atoi(sNegNumber);
+        pStr = sDestination;
+        pTmpStr = sNumber;
+        switch (i)
+        {          
+        case 0:
+            *pStr++ = '(';
+            while (*sNumber != '\0')
+                *pStr++ =  *pTmpStr++;
+            *pStr++ = ')';                
+            break;  
+        case 1:
+            *pStr++ = '-';
+            while (*pTmpStr != '\0')
+                *pStr++ =  *pTmpStr++;
+            break;
+        case 2:
+            *pStr++ = '-';
+            *pStr++ = ' ';
+            while (*pTmpStr != '\0')
+                *pStr++ =  *pTmpStr++;
+            break;
+        case 3:
+            while (*pTmpStr != '\0')
+                *pStr++ =  *pTmpStr++;
+            *pStr++ = '-';
+            break;
+        case 4:
+            while (*pTmpStr != '\0')
+                *pStr++ =  *pTmpStr++;
+            *pStr++ = ' ';
+            *pStr++ = '-';
+            break;
+        default:
+            while (*pTmpStr != '\0')
+                *pStr++ =  *pTmpStr++;
+            break;
+        }
+    }
+    else
+        strcpy(sDestination, sNumber);
 
-	/* Look for the first grouping to be done */
-	for (j=lastgroup;thisgrouping[j]>=intsize && j>0;j--) ;
-
-  
-	totalsize+=thousandsepsize * j;
-	if (thisnumdigits>0)
-		totalsize+=decimalsepsize+thisnumdigits;
-
-	if (cchNumber==0) /* if cchNumber is zero, just return size needed */
-		return totalsize+1;
-	else
-		if (cchNumber<totalsize+1)  { /* +1 = Null terminator (right?) */
-			SetLastError(ERROR_INSUFFICIENT_BUFFER);
-			return 0;
-		} else {
-
-
-			/* Formatting stuff starts here */
-
-			dptr=lpNumberStr;
-
-			if (negflag) {
-				if (thisnegativeorder==0)
-					*dptr++='(';
-				else if (thisnegativeorder<=2) {
-					strcpy(dptr,negative_buf);
-					dptr+=negsignsize;
-					if (thisnegativeorder==2)
-						*dptr++=' ';
-				}
-				sptr++;
-			}
-
-			for (i=1;*sptr=='0' ;i++, sptr++) ; /* Ignore leading zeros from source*/
-				if (intsize==0 && (decsize==0 || thisleadingzero)) /* Insert one leading zero into destination if required */
-					*(dptr++)=digits_buf[0];
-				for (i=1;i<=intsize;i++) {
-
-					*(dptr++)=digits_buf[*(sptr++)-'0'];
-					
-					/* Insert a group separator if we just reached the end of a group */
-					if (i==intsize-thisgrouping[j]) {
-						strcpy(dptr,thisthousandsep);
-						dptr+=thousandsepsize;
-						j--;
-					}
-				}
-
-				if (decsize>0)
-					sptr++;
-				if (thisnumdigits>0) {
-					strcpy(dptr,decimal_buf);
-					dptr+=decimalsepsize;
-					for (i=0;i<thisnumdigits;i++)
-						*(dptr++)=*sptr !='\0' ? digits_buf[*(sptr++)-'0'] : digits_buf[0];
-				}
-
-				if (negflag) {
-					if (thisnegativeorder==0)
-						*dptr++=')';
-					else if (thisnegativeorder>=3) {
-						if (thisnegativeorder==4)
-							*dptr++=' ';      	
-							strcpy(dptr,negative_buf);
-							dptr+=negsignsize;
-							sptr++;
-					}
-				}
-
-				*dptr='\0';
-
-		}
-    return totalsize+1;
+    /* If cchNumber is zero, then returns the number of bytes or characters 
+     * required to hold the formatted number string
+     */
+    if (cchNumber==0)
+        retVal = strlen(sDestination) + 1;
+    else           
+    {
+        strncpy (lpNumberStr, sDestination, cchNumber-1);
+        *(lpNumberStr+cchNumber-1) = '\0';   /* ensure we got a NULL at the end */
+        retVal = strlen(lpNumberStr);
+    }
+          
+    return retVal;
 }
 
 /**************************************************************************
@@ -3726,6 +4034,259 @@ INT WINAPI GetNumberFormatW(LCID locale, DWORD dwflags,
  lstrcpynW( lpNumberStr, lpvalue, cchNumber );
  return cchNumber? lstrlenW( lpNumberStr ) : 0;
 }
+
+/**************************************************************************
+ *              GetCurrencyFormatA	(KERNEL32.302)
+ */
+INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
+			       LPCSTR lpvalue,   const CURRENCYFMTA * lpFormat,
+			       LPSTR lpCurrencyStr, int cchCurrency)
+{
+    UINT   nPosOrder, nNegOrder;
+    INT    retVal;
+    char   sDestination[128], sNegOrder[8], sPosOrder[8], sCurrencySymbol[8];
+    char   *pDestination = sDestination;
+    char   sNumberFormated[128];
+    char   *pNumberFormated = sNumberFormated;
+    LCID   systemDefaultLCID;
+    BOOL   bIsPositive = FALSE, bValidFormat = FALSE;
+    enum   Operations 
+    {
+        USE_PARAMETER,
+        USE_LOCALEINFO,
+        USE_SYSTEMDEFAULT,
+        RETURN_ERROR
+    } used_operation;
+
+    NUMBERFMTA  numberFmt;
+
+    /* Which source will we use to format the string */
+    used_operation = RETURN_ERROR;
+    if (lpFormat != NULL)
+    {
+        if (dwflags == 0)
+            used_operation = USE_PARAMETER; 
+    }
+    else
+    {
+        if (dwflags & LOCALE_NOUSEROVERRIDE)
+            used_operation = USE_LOCALEINFO;
+        else
+            used_operation = USE_SYSTEMDEFAULT;
+    }
+
+    /* Load the fields we need */
+    switch(used_operation)
+    {
+    case USE_LOCALEINFO:        
+        /* Specific to CURRENCYFMTA*/
+        GetLocaleInfoA(locale, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
+        GetLocaleInfoA(locale, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
+        GetLocaleInfoA(locale, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
+        
+        nPosOrder = atoi(sPosOrder);
+        nNegOrder = atoi(sNegOrder);
+        break;
+    case USE_PARAMETER:        
+        /* Specific to CURRENCYFMTA*/
+        nNegOrder = lpFormat->NegativeOrder;
+        nPosOrder = lpFormat->PositiveOrder;
+        strcpy(sCurrencySymbol, lpFormat->lpCurrencySymbol);
+        break;
+    case USE_SYSTEMDEFAULT:
+        systemDefaultLCID = GetSystemDefaultLCID();        
+        /* Specific to CURRENCYFMTA*/
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
+        GetLocaleInfoA(systemDefaultLCID, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
+        
+        nPosOrder = atoi(sPosOrder);
+        nNegOrder = atoi(sNegOrder);
+        break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    
+    /* Construct a temporary number format structure */
+    if (lpFormat != NULL)
+    {
+        numberFmt.NumDigits     = lpFormat->NumDigits;
+        numberFmt.LeadingZero   = lpFormat->LeadingZero;
+        numberFmt.Grouping      = lpFormat->Grouping;
+        numberFmt.NegativeOrder = 0;
+        numberFmt.lpDecimalSep = lpFormat->lpDecimalSep;
+        numberFmt.lpThousandSep = lpFormat->lpThousandSep;
+        bValidFormat = TRUE;
+    }
+
+    /* Make a call to GetNumberFormatA() */
+    if (*lpvalue == '-')
+    {
+        bIsPositive = FALSE;
+        retVal = GetNumberFormatA(locale,0,lpvalue+1,(bValidFormat)?&numberFmt:NULL,pNumberFormated,128);
+    }
+    else
+    {
+        bIsPositive = TRUE;
+        retVal = GetNumberFormatA(locale,0,lpvalue,(bValidFormat)?&numberFmt:NULL,pNumberFormated,128);
+    }
+        
+    if (retVal == 0)
+        return 0;
+
+    /* construct the formatted string */
+    if (bIsPositive)
+    {
+        switch (nPosOrder)
+        {
+        case 0:   /* Prefix, no separation */
+            strcpy (pDestination, sCurrencySymbol);
+            strcat (pDestination, pNumberFormated);
+            break;
+        case 1:   /* Suffix, no separation */
+            strcpy (pDestination, pNumberFormated);
+            strcat (pDestination, sCurrencySymbol);
+            break;
+        case 2:   /* Prefix, 1 char separation */
+            strcpy (pDestination, sCurrencySymbol);
+            strcat (pDestination, " ");
+            strcat (pDestination, pNumberFormated);
+            break;
+        case 3:   /* Suffix, 1 char separation */
+            strcpy (pDestination, pNumberFormated);
+            strcat (pDestination, " ");
+            strcat (pDestination, sCurrencySymbol);
+            break;
+        default:
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+    }
+    else  /* negative number */
+    {
+        switch (nNegOrder)
+        {
+        case 0:   /* format: ($1.1) */
+            strcpy (pDestination, "(");
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, ")");
+            break;
+        case 1:   /* format: -$1.1 */
+            strcpy (pDestination, "-");
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, pNumberFormated);
+            break;
+        case 2:   /* format: $-1.1 */
+            strcpy (pDestination, sCurrencySymbol);
+            strcat (pDestination, "-");
+            strcat (pDestination, pNumberFormated);
+            break;
+        case 3:   /* format: $1.1- */
+            strcpy (pDestination, sCurrencySymbol);
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, "-");
+            break;
+        case 4:   /* format: (1.1$) */
+            strcpy (pDestination, "(");
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, ")");
+            break;
+        case 5:   /* format: -1.1$ */
+            strcpy (pDestination, "-");
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, sCurrencySymbol);
+            break;
+        case 6:   /* format: 1.1-$ */
+            strcpy (pDestination, pNumberFormated);
+            strcat (pDestination, "-");
+            strcat (pDestination, sCurrencySymbol);
+            break;
+        case 7:   /* format: 1.1$- */
+            strcpy (pDestination, pNumberFormated);
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, "-");
+            break;
+        case 8:   /* format: -1.1 $ */
+            strcpy (pDestination, "-");
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, " ");
+            strcat (pDestination, sCurrencySymbol);
+            break;
+        case 9:   /* format: -$ 1.1 */
+            strcpy (pDestination, "-");
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, " ");
+            strcat (pDestination, pNumberFormated);
+            break;
+        case 10:   /* format: 1.1 $- */
+            strcpy (pDestination, pNumberFormated);
+            strcat (pDestination, " ");
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, "-");
+            break;
+        case 11:   /* format: $ 1.1- */
+            strcpy (pDestination, sCurrencySymbol);
+            strcat (pDestination, " ");
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, "-");
+            break;
+        case 12:   /* format: $ -1.1 */
+            strcpy (pDestination, sCurrencySymbol);
+            strcat (pDestination, " ");
+            strcat (pDestination, "-");
+            strcat (pDestination, pNumberFormated);
+            break;
+        case 13:   /* format: 1.1- $ */
+            strcpy (pDestination, pNumberFormated);
+            strcat (pDestination, "-");
+            strcat (pDestination, " ");
+            strcat (pDestination, sCurrencySymbol);
+            break;
+        case 14:   /* format: ($ 1.1) */
+            strcpy (pDestination, "("); 
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, " ");
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, ")");
+            break;
+        case 15:   /* format: (1.1 $) */
+            strcpy (pDestination, "("); 
+            strcat (pDestination, pNumberFormated);
+            strcat (pDestination, " ");
+            strcat (pDestination, sCurrencySymbol);
+            strcat (pDestination, ")");
+            break;
+        default:
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+    }
+
+    if (cchCurrency == 0)
+        return strlen(pDestination) + 1;
+
+    else
+    {
+        strncpy (lpCurrencyStr, pDestination, cchCurrency-1);
+        *(lpCurrencyStr+cchCurrency-1) = '\0';   /* ensure we got a NULL at the end */
+        return  strlen(lpCurrencyStr);
+    }    
+}
+
+/**************************************************************************
+ *              GetCurrencyFormatW	(KERNEL32.303)
+ */
+INT WINAPI GetCurrencyFormatW(LCID locale, DWORD dwflags,
+			       LPCWSTR lpvalue,   const CURRENCYFMTW * lpFormat,
+			       LPWSTR lpCurrencyStr, int cchCurrency)
+{
+    FIXME("This API function is NOT implemented !\n");
+    return 0;
+}
+
 /******************************************************************************
  *		OLE2NLS_CheckLocale	[intern]
  */ 
