@@ -623,6 +623,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
                WARN("Application trying to delete a busy DC\n");
                retv = FALSE;
            }
+           else DCE_FreeDCE( dce );
 	   break;
 
       default:

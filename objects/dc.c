@@ -745,7 +745,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
             DWORD data = dc->dwHookData;
             GDI_ReleaseObj( hdc );
             if (!proc( hdc, DCHC_DELETEDC, data, 0 )) return FALSE;
-            if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
+            if (!(dc = DC_GetDCPtr( hdc ))) return TRUE;  /* deleted by the hook */
         }
     }
 
