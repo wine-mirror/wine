@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msiexec);
 static const char UsageStr[] =
 "Usage:\n"
 "  Install a product:\n"
-"    msiexec {package|productcode} [property] (UNIMPLEMENTED)\n"
+"    msiexec {package|productcode} [property]\n"
 "    msiexec /i {package|productcode} [property]\n"
 "    msiexec /a package [property]\n"
 "  Repair an installation:\n"
@@ -562,6 +562,17 @@ int main(int argc, char *argv[])
 		else if(!strcasecmp(argv[i], "/h") || !strcasecmp(argv[i], "/?"))
 		{
 			ShowUsage(0);
+		}
+		else
+		{
+			FunctionInstall = TRUE;
+			GotProductCode = GetProductCode(argv[i], ProductCode);
+			if(!GotProductCode)
+			{
+				HeapFree(GetProcessHeap(), 0, ProductCode);
+				ProductCode = NULL;
+				PackageName = argv[i];
+			}
 		}
 	}
 
