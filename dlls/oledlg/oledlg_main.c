@@ -32,6 +32,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+HINSTANCE OLEDLG_hInstance = 0;
+
+/***********************************************************************
+ *		DllMain
+ */
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+
+    switch(fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        OLEDLG_hInstance = hinstDLL;
+        break;
+
+    case DLL_PROCESS_DETACH:
+        OLEDLG_hInstance = 0;
+        break;
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           OleUIAddVerbMenuA (OLEDLG.1)
  */
@@ -77,16 +100,6 @@ BOOL WINAPI OleUICanConvertOrActivateAs(
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
-}
-
-/***********************************************************************
- *           OleUIInsertObjectA (OLEDLG.3)
- */
-UINT WINAPI OleUIInsertObjectA(LPOLEUIINSERTOBJECTA lpOleUIInsertObject)
-{
-  FIXME("(%p): stub\n", lpOleUIInsertObject);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return OLEUI_FALSE;
 }
 
 /***********************************************************************
