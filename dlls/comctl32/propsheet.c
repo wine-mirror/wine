@@ -483,7 +483,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
     else
       pTitle = lppsp->pszTitle;
 
-    len = strlenW(szTitle);
+    len = strlenW(pTitle);
     psInfo->proppage[index].pszText = COMCTL32_Alloc( (len+1)*sizeof (WCHAR) );
     strcpyW( (LPWSTR)psInfo->proppage[index].pszText,pTitle);
   }
@@ -1310,7 +1310,6 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
  */
 static BOOL PROPSHEET_Back(HWND hwndDlg)
 {
-  BOOL res;
   PSHNOTIFY psn;
   HWND hwndPage;
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
