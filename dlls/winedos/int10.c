@@ -87,14 +87,17 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
     BIOSDATA *data = DOSMEM_BiosData();
 
-    if(AL_reg(context) == 0x4F) { /* VESA functions */
-	switch(AH_reg(context)) {
+    if(AH_reg(context) == 0x4F) { /* VESA functions */
+	switch(AL_reg(context)) {
 
 	case 0x00: /* GET SuperVGA INFORMATION */
-	    FIXME("Vesa Get SuperVGA Info STUB!\n");
+	    TRACE("VESA GET SuperVGA INFORMATION\n");
+	    memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
+	    DOSMEM_BiosSys()+DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),sizeof(VESAINFO));
 	    AL_reg(context) = 0x4f;
-	    AH_reg(context) = 0x01; /* 0x01=failed 0x00=succesful */
+	    AH_reg(context) = 0x00; /* 0x00 = successful 0x01 = failed */
 	    break;
+ 
 	case 0x01: /* GET SuperVGA MODE INFORMATION */
 	    FIXME("VESA GET SuperVGA Mode Information - Not supported\n");
 	    AL_reg(context) = 0x4f;
@@ -739,7 +742,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
           AL_reg(context) = 0x1b;
           /* Copy state information structure to ES:DI */
           memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-              DOSMEM_BiosSys()+0xe010,sizeof(VIDEOSTATE));
+              DOSMEM_BiosSys()+DOSMEM_GetBiosSysStructOffset(OFF_VIDEOSTATE),sizeof(VIDEOSTATE));
         }
         break;
 
@@ -747,20 +750,6 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         FIXME("Save/Restore Video State - Not Supported\n");
         break;
 
-    case 0x4f: /* Get SuperVGA INFORMATION */
-        {
-          BYTE *p =
-               CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi);
-          /* BOOL16 vesa20 = (*(DWORD *)p == *(DWORD *)"VBE2"); */
-  
-          TRACE("Get SuperVGA information\n");
-          AH_reg(context) = 0;
-          *(DWORD *)p = *(DWORD *)"VESA";
-          *(WORD *)(p+0x04) = 0x0200; /* VESA 2.0 */
-          *(DWORD *)(p+0x06) = 0x00000000; /* pointer to OEM name */
-          *(DWORD *)(p+0x0a) = 0xfffffffd; /* capabilities flags :-) */
-        }
-        break;
         case 0xef:  /* get video mode for hercules-compatibles   */
                     /* There's no reason to really support this  */
                     /* is there?....................(A.C.)       */

@@ -134,7 +134,23 @@ typedef struct
 
 } VIDEOFUNCTIONALITY;
 
+typedef struct
+{
+    DWORD Signature;
+    BYTE  Minor;
+    BYTE  Major;
+    DWORD StaticVendorString;
+    DWORD CapabilitiesFlags;
+    DWORD StaticModeList;
+} VESAINFO;
+
 #include "poppack.h"
+
+/* Index for bios structures stored at f000:e000 */ 
+enum {OFF_VIDEOSTATE,OFF_VIDEOFUNCTIONALITY,OFF_VESAINFO,OFF_VESASTRING,OFF_VESAMODELIST};
+
+extern WORD DOSMEM_AddBiosSysStruct(int,int);
+extern WORD DOSMEM_GetBiosSysStructOffset(int);
 
 extern WORD DOSMEM_0000H;
 extern WORD DOSMEM_BiosDataSeg;
