@@ -210,7 +210,7 @@ void VIRTUAL_Dump(void)
 /***********************************************************************
  *           VIRTUAL_FindView
  *
- * Find the view containing a given address.
+ * Find the view containing a given address. The csVirtual section must be held by caller.
  *
  * RETURNS
  *	View: Success
@@ -218,10 +218,8 @@ void VIRTUAL_Dump(void)
  */
 static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
 {
-    FILE_VIEW *view;
+    FILE_VIEW *view = VIRTUAL_FirstView;
 
-    RtlEnterCriticalSection(&csVirtual);
-    view = VIRTUAL_FirstView;
     while (view)
     {
         if (view->base > addr)
@@ -232,27 +230,25 @@ static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
         if ((char*)view->base + view->size > (char*)addr) break;
         view = view->next;
     }
-    RtlLeaveCriticalSection(&csVirtual);
     return view;
 }
 
 
 /***********************************************************************
  *           VIRTUAL_DeleteView
- * Deletes a view.
+ *
+ * Deletes a view. The csVirtual section must be held by caller.
  *
  * RETURNS
  *	None
  */
 static void VIRTUAL_DeleteView( FILE_VIEW *view ) /* [in] View */
 {
-    RtlEnterCriticalSection(&csVirtual);
     if (!(view->flags & VFLAG_SYSTEM))
         munmap( (void *)view->base, view->size );
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
-    RtlLeaveCriticalSection(&csVirtual);
     if (view->mapping) NtClose( view->mapping );
     free( view );
 }
@@ -747,10 +743,12 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
     }
 
     if (removable) hmapping = 0;  /* don't keep handle open on removable media */
+    RtlEnterCriticalSection( &csVirtual );
     if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
                                      VPROT_COMMITTED | VPROT_READ | VPROT_WRITE |
                                      VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE, hmapping )))
     {
+        RtlLeaveCriticalSection( &csVirtual );
         status = STATUS_NO_MEMORY;
         goto error;
     }
@@ -774,6 +772,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
 
         VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
+    RtlLeaveCriticalSection( &csVirtual );
 
     *addr_ptr = ptr;
     return STATUS_SUCCESS;
@@ -827,11 +826,17 @@ void virtual_init(void)
 BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
 {
     FILE_VIEW *view;
+    BOOL ret = FALSE;
 
-    if (!(view = VIRTUAL_FindView( addr ))) return FALSE;
-    view->handlerProc = proc;
-    view->handlerArg  = arg;
-    return TRUE;
+    RtlEnterCriticalSection( &csVirtual );
+    if ((view = VIRTUAL_FindView( addr )))
+    {
+        view->handlerProc = proc;
+        view->handlerArg  = arg;
+        ret = TRUE;
+    }
+    RtlLeaveCriticalSection( &csVirtual );
+    return ret;
 }
 
 /***********************************************************************
@@ -839,14 +844,19 @@ BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
  */
 DWORD VIRTUAL_HandleFault( LPCVOID addr )
 {
-    FILE_VIEW *view = VIRTUAL_FindView( addr );
+    FILE_VIEW *view;
     DWORD ret = EXCEPTION_ACCESS_VIOLATION;
 
-    if (view)
+    RtlEnterCriticalSection( &csVirtual );
+    if ((view = VIRTUAL_FindView( addr )))
     {
         if (view->handlerProc)
         {
-            if (view->handlerProc(view->handlerArg, addr)) ret = 0;  /* handled */
+            HANDLERPROC proc = view->handlerProc;
+            void *arg = view->handlerArg;
+            RtlLeaveCriticalSection( &csVirtual );
+            if (proc( arg, addr )) ret = 0;  /* handled */
+            return ret;
         }
         else
         {
@@ -863,6 +873,7 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
                 ret = STATUS_STACK_OVERFLOW;
         }
     }
+    RtlLeaveCriticalSection( &csVirtual );
     return ret;
 }
 
@@ -988,7 +999,6 @@ static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
 NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
                                          ULONG *size_ptr, ULONG type, ULONG protect )
 {
-    FILE_VIEW *view;
     void *base;
     BYTE vprot;
     DWORD size = *size_ptr;
@@ -1059,7 +1069,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
 
     if (type & MEM_SYSTEM)
     {
-        if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC | VFLAG_SYSTEM, vprot, 0 )))
+        if (!VIRTUAL_CreateView( base, size, VFLAG_VALLOC | VFLAG_SYSTEM, vprot, 0 ))
             return STATUS_NO_MEMORY;
     }
     else if ((type & MEM_RESERVE) || !base)
@@ -1067,7 +1077,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
         NTSTATUS res = anon_mmap_aligned( &base, size, VIRTUAL_GetUnixProt( vprot ), 0 );
         if (res) return res;
 
-        if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC, vprot, 0 )))
+        if (!VIRTUAL_CreateView( base, size, VFLAG_VALLOC, vprot, 0 ))
         {
             munmap( base, size );
             return STATUS_NO_MEMORY;
@@ -1075,12 +1085,17 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
     }
     else
     {
+        FILE_VIEW *view;
+        NTSTATUS status = STATUS_SUCCESS;
+
         /* Commit the pages */
 
+        RtlEnterCriticalSection( &csVirtual );
         if (!(view = VIRTUAL_FindView( base )) ||
-            ((char *)base + size > (char *)view->base + view->size)) return STATUS_NOT_MAPPED_VIEW;
-
-        if (!VIRTUAL_SetProt( view, base, size, vprot )) return STATUS_ACCESS_DENIED;
+            ((char *)base + size > (char *)view->base + view->size)) status = STATUS_NOT_MAPPED_VIEW;
+        else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
+        RtlLeaveCriticalSection( &csVirtual );
+        if (status != STATUS_SUCCESS) return status;
     }
 
     *ret = base;
@@ -1097,6 +1112,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
 {
     FILE_VIEW *view;
     char *base;
+    NTSTATUS status = STATUS_SUCCESS;
     LPVOID addr = *addr_ptr;
     DWORD size = *size_ptr;
 
@@ -1113,29 +1129,33 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
 
+    RtlEnterCriticalSection(&csVirtual);
+
     if (!(view = VIRTUAL_FindView( base )) ||
         (base + size > (char *)view->base + view->size) ||
         !(view->flags & VFLAG_VALLOC))
-        return STATUS_INVALID_PARAMETER;
-
-    /* Check the type */
-
-    if (type & MEM_SYSTEM)
+    {
+        status = STATUS_INVALID_PARAMETER;
+    }
+    else if (type & MEM_SYSTEM)
     {
         /* return the values that the caller should use to unmap the area */
         *addr_ptr = view->base;
         *size_ptr = view->size;
         view->flags |= VFLAG_SYSTEM;
         VIRTUAL_DeleteView( view );
-        return STATUS_SUCCESS;
     }
-
-    if (type == MEM_RELEASE)
+    else if (type == MEM_RELEASE)
     {
         /* Free the pages */
 
-        if (size || (base != view->base)) return STATUS_INVALID_PARAMETER;
-        VIRTUAL_DeleteView( view );
+        if (size || (base != view->base)) status = STATUS_INVALID_PARAMETER;
+        else
+        {
+            VIRTUAL_DeleteView( view );
+            *addr_ptr = base;
+            *size_ptr = size;
+        }
     }
     else if (type == MEM_DECOMMIT)
     {
@@ -1143,17 +1163,21 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
 
         if (wine_anon_mmap( (LPVOID)base, size, VIRTUAL_GetUnixProt(0), MAP_FIXED ) != (LPVOID)base)
             ERR( "Could not remap pages, expect trouble\n" );
-        if (!VIRTUAL_SetProt( view, base, size, 0 )) return STATUS_ACCESS_DENIED;  /* FIXME */
+        if (!VIRTUAL_SetProt( view, base, size, 0 )) status = STATUS_ACCESS_DENIED;  /* FIXME */
+        else
+        {
+            *addr_ptr = base;
+            *size_ptr = size;
+        }
     }
     else
     {
         WARN("called with wrong free type flags (%08lx) !\n", type);
-        return STATUS_INVALID_PARAMETER;
+        status = STATUS_INVALID_PARAMETER;
     }
 
-    *addr_ptr = base;
-    *size_ptr = size;
-    return STATUS_SUCCESS;
+    RtlLeaveCriticalSection(&csVirtual);
+    return status;
 }
 
 
@@ -1165,6 +1189,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
                                         ULONG new_prot, ULONG *old_prot )
 {
     FILE_VIEW *view;
+    NTSTATUS status = STATUS_SUCCESS;
     char *base;
     UINT i;
     BYTE vprot, *p;
@@ -1184,26 +1209,41 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
 
-    if (!(view = VIRTUAL_FindView( base )) ||
-        (base + size > (char *)view->base + view->size))
-        return STATUS_INVALID_PARAMETER;
+    RtlEnterCriticalSection( &csVirtual );
 
-    /* Make sure all the pages are committed */
-
-    p = view->prot + ((base - (char *)view->base) >> page_shift);
-    VIRTUAL_GetWin32Prot( *p, &prot, NULL );
-    for (i = size >> page_shift; i; i--, p++)
+    if (!(view = VIRTUAL_FindView( base )) || (base + size > (char *)view->base + view->size))
     {
-        if (!(*p & VPROT_COMMITTED)) return STATUS_NOT_COMMITTED;
+        status = STATUS_INVALID_PARAMETER;
     }
+    else
+    {
+        /* Make sure all the pages are committed */
 
-    if (old_prot) *old_prot = prot;
-    vprot = VIRTUAL_GetProt( new_prot ) | VPROT_COMMITTED;
-    if (!VIRTUAL_SetProt( view, base, size, vprot )) return STATUS_ACCESS_DENIED;
+        p = view->prot + ((base - (char *)view->base) >> page_shift);
+        VIRTUAL_GetWin32Prot( *p, &prot, NULL );
+        for (i = size >> page_shift; i; i--, p++)
+        {
+            if (!(*p & VPROT_COMMITTED))
+            {
+                status = STATUS_NOT_COMMITTED;
+                break;
+            }
+        }
+        if (!i)
+        {
+            if (old_prot) *old_prot = prot;
+            vprot = VIRTUAL_GetProt( new_prot ) | VPROT_COMMITTED;
+            if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
+        }
+    }
+    RtlLeaveCriticalSection( &csVirtual );
 
-    *addr_ptr = base;
-    *size_ptr = size;
-    return STATUS_SUCCESS;
+    if (status == STATUS_SUCCESS)
+    {
+        *addr_ptr = base;
+        *size_ptr = size;
+    }
+    return status;
 }
 
 
@@ -1258,7 +1298,6 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         alloc_base = (char *)view->base + view->size;
         view = view->next;
     }
-    RtlLeaveCriticalSection(&csVirtual);
 
     /* Fill the info structure */
 
@@ -1280,6 +1319,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         else if (view->flags & VFLAG_VALLOC) info->Type = MEM_PRIVATE;
         else info->Type = MEM_MAPPED;
     }
+    RtlLeaveCriticalSection(&csVirtual);
 
     info->BaseAddress    = (LPVOID)base;
     info->AllocationBase = (LPVOID)alloc_base;
@@ -1394,7 +1434,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     ULONG commit_size, const LARGE_INTEGER *offset, ULONG *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
-    FILE_VIEW *view;
     NTSTATUS res;
     UINT size = 0;
     int flags = MAP_PRIVATE;
@@ -1526,7 +1565,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
     if (removable) handle = 0;  /* don't keep handle open on removable media */
 
-    if (!(view = VIRTUAL_CreateView( ptr, size, 0, prot, handle )))
+    if (!VIRTUAL_CreateView( ptr, size, 0, prot, handle ))
     {
         res = STATUS_NO_MEMORY;
         goto error;
@@ -1549,6 +1588,7 @@ error:
 NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 {
     FILE_VIEW *view;
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
     void *base = ROUND_ADDR( addr, page_mask );
 
     if (!is_current_process( process ))
@@ -1556,9 +1596,14 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-    if (!(view = VIRTUAL_FindView( base )) || (base != view->base)) return STATUS_INVALID_PARAMETER;
-    VIRTUAL_DeleteView( view );
-    return STATUS_SUCCESS;
+    RtlEnterCriticalSection( &csVirtual );
+    if ((view = VIRTUAL_FindView( base )) && (base == view->base))
+    {
+        VIRTUAL_DeleteView( view );
+        status = STATUS_SUCCESS;
+    }
+    RtlLeaveCriticalSection( &csVirtual );
+    return status;
 }
 
 
@@ -1570,6 +1615,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
                                       ULONG *size_ptr, ULONG unknown )
 {
     FILE_VIEW *view;
+    NTSTATUS status = STATUS_SUCCESS;
     void *addr = ROUND_ADDR( *addr_ptr, page_mask );
 
     if (!is_current_process( process ))
@@ -1577,11 +1623,16 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-    if (!(view = VIRTUAL_FindView( addr ))) return STATUS_INVALID_PARAMETER;
-    if (!*size_ptr) *size_ptr = view->size;
-    *addr_ptr = addr;
-    if (!msync( addr, *size_ptr, MS_SYNC )) return STATUS_SUCCESS;
-    return STATUS_NOT_MAPPED_DATA;
+    RtlEnterCriticalSection( &csVirtual );
+    if (!(view = VIRTUAL_FindView( addr ))) status = STATUS_INVALID_PARAMETER;
+    else
+    {
+        if (!*size_ptr) *size_ptr = view->size;
+        *addr_ptr = addr;
+        if (msync( addr, *size_ptr, MS_SYNC )) status = STATUS_NOT_MAPPED_DATA;
+    }
+    RtlLeaveCriticalSection( &csVirtual );
+    return status;
 }
 
 
