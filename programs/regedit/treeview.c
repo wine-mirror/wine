@@ -19,6 +19,9 @@
  */
 
 #define WIN32_LEAN_AND_MEAN     /* Exclude rarely-used stuff from Windows headers */
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include <windows.h>
 #include <commctrl.h>
 #include <stdlib.h>
@@ -90,7 +93,7 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HK
     tvi.iSelectedImage = Image_Open;
     tvi.cChildren = dwChildren;
     tvi.lParam = (LPARAM)hKey;
-    tvins.item = tvi;
+    tvins.u.item = tvi;
     if (hKey) tvins.hInsertAfter = (HTREEITEM)TVI_LAST;
     else      tvins.hInsertAfter = (HTREEITEM)TVI_SORT;
     tvins.hParent = hParent;
@@ -115,7 +118,7 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
     tvi.cChildren = 5;
     /* Save the heading level in the item's application-defined data area.  */
     tvi.lParam = (LPARAM)NULL;
-    tvins.item = tvi;
+    tvins.u.item = tvi;
     tvins.hInsertAfter = (HTREEITEM)TVI_FIRST;
     tvins.hParent = TVI_ROOT;
     /* Add the item to the tree view control.  */
