@@ -144,10 +144,17 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 	    	strcat(x,"."UNIX_DLL_ENDING);
 	}
 
-	/* FIXME: make UNIX filename from DOS fn? */
+        /* grab just the last piece of the path/filename
+           which should be the name of the library we are
+           looking to load. increment by 1 to skip the DOS slash */
+        s = strrchr(t,'\\');
+        s++;
 
-	/* ... and open it */
-	dlhandle = ELFDLL_dlopen(t,RTLD_NOW);
+       /* ... and open the library pointed by s, while t points
+         points to the ENTIRE DOS filename of the library
+         t is returned by HeapAlloc() above and so is also used
+         with HeapFree() below */
+	dlhandle = ELFDLL_dlopen(s,RTLD_NOW);
 	if (!dlhandle) {
 		HeapFree( GetProcessHeap(), 0, t );
 		SetLastError( ERROR_FILE_NOT_FOUND );
