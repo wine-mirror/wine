@@ -646,6 +646,15 @@ static const char main_key_EL[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Thai (Kedmanee) keyboard layout by Supphachoke Suntiwichaya <mrchoke@opentle.org> */
+static const char main_key_th[MAIN_LEN][4] =
+{
+ "`~_%","1!å+","2@/ñ","3#-ò","4$Àó","5%¶ô","6^ØÙ","7&Öß","8*¤õ","9(µö","0)¨÷","-_¢ø","=+ªù",
+ "qQæð","wWä\"","eEÓ®","rR¾±","tTÐ¸","yYÑí","uUÕê","iIÃ³","oO¹Ï","pPÂ­","[{º°","]}Å,",
+ "aA¿Ä","sSË¦","dD¡¯","fF´â","gGà¬","hHéç","jJèë","kKÒÉ","lLÊÈ",";:Ç«","\'\"§.","\\|£¥",
+ "zZ¼(","xX»)","cCá©","vVÍÎ","bBÚ","nN×ì","mM·?",",<Á²",".>ãÌ","/?½Æ"
+}; 
+
 /*** VNC keyboard layout */
 static const WORD main_key_scan_vnc[MAIN_LEN] =
 {
@@ -724,6 +733,7 @@ static const struct {
  {"Israeli keyboard layout", &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"VNC keyboard layout", &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
  {"Greek keyboard layout", &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Thai (Kedmanee)  keyboard layout", &main_key_th, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, NULL, NULL, NULL} /* sentinel */
 };
