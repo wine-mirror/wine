@@ -1053,8 +1053,10 @@ int _wcreat(const WCHAR *path, int flags)
  */
 int _open_osfhandle(long hand, int flags)
 {
-  int fd = msvcrt_alloc_fd(hand,flags);
-  TRACE(":handle (%ld) fd (%d)\n",hand,fd);
+  /* _O_RDONLY (0) always matches, so set the read flag*/
+  /* FIXME: handle more flags */
+  int fd= msvcrt_alloc_fd(hand,flags|MSVCRT__IOREAD);
+  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n",hand,fd, flags |MSVCRT__IOREAD);
   return fd;
 }
 
