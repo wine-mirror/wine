@@ -2193,6 +2193,12 @@ if (@opt_spec_file_list == 0)
   exit 0; # Don't bother processing non-dll files
 }
 
+# Make sure the output directory exists
+unless (-d $opt_output_directory)
+{
+    mkdir $opt_output_directory or die "Cannot create directory $opt_output_directory\n";
+}
+
 # Read in each .spec files exports and other details
 while(my $spec_file = shift @opt_spec_file_list)
 {
