@@ -60,7 +60,6 @@ typedef struct _heapinfo
 extern "C" {
 #endif
 
-void*       _alloca(MSVCRT(size_t));
 void*       _expand(void*,MSVCRT(size_t));
 int         _heapadd(void*,MSVCRT(size_t));
 int         _heapchk(void);
@@ -79,9 +78,11 @@ void*       MSVCRT(realloc)(void*,MSVCRT(size_t));
 }
 #endif
 
-
 #ifndef USE_MSVCRT_PREFIX
-static inline void* alloca(MSVCRT(size_t) i) { return _alloca(i); }
+# ifdef __GNUC__
+# define _alloca(x) __builtin_alloca((x))
+# define alloca(x) __builtin_alloca((x))
+# endif
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_MALLOC_H */
