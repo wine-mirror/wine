@@ -15,6 +15,7 @@
         This section explains how to build Wine locally. If you are a packager, please also refer to
         <filename>wine/documentation/PACKAGING</filename> for package specific considerations.
       </para>
+    </sect1>
     <sect1 id="soft-vs-hard-dep">
       <title>Before you compile - Soft vs. Hard dependencies</title>
 
@@ -42,7 +43,7 @@
               <title>Fixme</title>
               <para>
                 How many of those are there?
-              <para>
+              </para>
             </note>
           </listitem>
         </varlistentry>
@@ -74,7 +75,7 @@
           install each and every last of those before building the package. These libraries are not
           dependencies in the RPM sense. In DEB packages, they should appear as "Suggests" or "Recommends",
           as the case may be.
-        <para>
+        </para>
         <variablelist>
           <varlistentry>
             <term><ulink url="http://www.freetype.org/">FreeType</ulink></term>
@@ -182,6 +183,7 @@ U wine/COPYING.LIB</screen>
         </para>
       </sect2>
     </sect1>
+  </chapter>
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
