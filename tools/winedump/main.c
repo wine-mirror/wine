@@ -79,6 +79,13 @@ static void do_dump (const char *arg)
 }
 
 
+static void do_dumpemf(void)
+{
+    if (globals.mode != NONE) fatal("Only one mode can be specified\n");
+    globals.mode = EMF;
+}
+
+
 static void do_code (void)
 {
   globals.do_code = 1;
@@ -213,6 +220,7 @@ static const struct option option_table[] = {
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
   {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug, resource, tls)"},
   {"-x",    DUMP, 0, do_dumpall,  "-x           Dumps everything"},
+  {"emf",   EMF,  0, do_dumpemf,  "emf          Dumps an Enhanced Meta File"},
   {NULL,    NONE, 0, NULL,        NULL}
 };
 
@@ -236,6 +244,10 @@ void do_usage (void)
     printf ("\tWhen used in dump mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == DUMP)
+	    printf ("\t   %s\n", opt->usage);
+    printf ("\tWhen used in emf mode\n");
+    for (opt = option_table; opt->name; opt++)
+	if (opt->mode == EMF)
 	    printf ("\t   %s\n", opt->usage);
 
     puts ("\n");
@@ -469,6 +481,11 @@ int   main (int argc, char *argv[])
 	set_module_name(0);
 	dump_file(globals.input_name);
 	break;
+    case EMF:
+        if (globals.input_name == NULL)
+            fatal("No file name has been given\n");
+        dump_emf(globals.input_name);
+        break;
     }
 
     return 0;
