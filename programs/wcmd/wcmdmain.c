@@ -33,8 +33,7 @@ BATCH_CONTEXT *context = NULL;
  * winmain().
  */
 
-
-int wine_main (int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
 
 char string[1024], args[MAX_PATH], param[MAX_PATH];
 int status, i;

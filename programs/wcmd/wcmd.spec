@@ -1,7 +1,7 @@
 name	wcmd
 mode    cuiexe
 type	win32
-init	wine_main
+init	main
 rsrc	wcmdrc.res
 
 import	shell32.dll

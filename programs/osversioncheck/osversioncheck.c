@@ -40,7 +40,8 @@ show_last_error(void)
 }
 
 int
-wine_main(int argc, char ** argv)
+main(int argc, char ** argv)
+
 {
   BOOL result;
   OSVERSIONINFO oiv;
