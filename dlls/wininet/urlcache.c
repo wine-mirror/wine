@@ -89,6 +89,32 @@ BOOL WINAPI SetUrlCacheEntryGroup(LPCSTR lpszUrlName, DWORD dwFlags,
 }
 
 /***********************************************************************
+ *           CommitUrlCacheEntryA (WININET.@)
+ *
+ */
+BOOL WINAPI CommitUrlCacheEntryA(LPCSTR lpszUrl, LPCSTR lpszLocalName,
+    FILETIME ExpireTime, FILETIME lastModified, DWORD cacheEntryType,
+    LPBYTE lpHeaderInfo, DWORD headerSize, LPCSTR fileExtension,
+    DWORD originalUrl)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetUrlCacheEntryInfoA (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoA(LPCSTR lpszUrl,
+  LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntry,
+  LPDWORD lpCacheEntrySize)
+{
+    FIXME("(%s) stub\n",lpszUrl);
+    SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetUrlCacheEntryInfoExA (WININET.@)
  *
  */
@@ -102,6 +128,24 @@ BOOL WINAPI GetUrlCacheEntryInfoExA(
     DWORD dwFlags)
 {
     FIXME(" url=%s, flags=%ld\n",lpszUrl,dwFlags);
+    INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetUrlCacheEntryInfoExW (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoExW(
+    LPCWSTR lpszUrl,
+    LPINTERNET_CACHE_ENTRY_INFOW lpCacheEntryInfo,
+    LPDWORD lpdwCacheEntryInfoBufSize,
+    LPWSTR lpszReserved,
+    LPDWORD lpdwReserved,
+    LPVOID lpReserved,
+    DWORD dwFlags)
+{
+    FIXME(" url=%s, flags=%ld\n",debugstr_w(lpszUrl),dwFlags);
     INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
 }

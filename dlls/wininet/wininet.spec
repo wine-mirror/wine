@@ -52,7 +52,7 @@
 @ stub GetUrlCacheConfigInfoW
 @ stdcall GetUrlCacheEntryInfoA(str ptr long) GetUrlCacheEntryInfoA
 @ stdcall GetUrlCacheEntryInfoExA(str ptr ptr str ptr ptr long) GetUrlCacheEntryInfoExA
-@ stub GetUrlCacheEntryInfoExW
+@ stdcall GetUrlCacheEntryInfoExW(wstr ptr ptr wstr ptr ptr long) GetUrlCacheEntryInfoExW
 @ stub GetUrlCacheEntryInfoW
 @ stub GetUrlCacheHeaderData
 @ stub GopherCreateLocatorA
@@ -87,8 +87,8 @@
 @ stdcall InternetCheckConnectionA(ptr long long) InternetCheckConnectionA
 @ stdcall InternetCheckConnectionW(ptr long long) InternetCheckConnectionW
 @ stdcall InternetCloseHandle(long) InternetCloseHandle
-@ stub InternetCombineUrlA
-@ stub InternetCombineUrlW
+@ stdcall InternetCombineUrlA(str str str ptr long) InternetCombineUrlA
+@ stdcall InternetCombineUrlW(wstr wstr wstr ptr long) InternetCombineUrlW
 @ stub InternetConfirmZoneCrossing
 @ stdcall InternetConnectA(ptr str long str str long long long) InternetConnectA
 @ stdcall InternetConnectW(ptr wstr long wstr wstr long long long) InternetConnectW
@@ -117,7 +117,7 @@
 @ stdcall InternetOpenUrlW(ptr wstr wstr long long long) InternetOpenUrlW
 @ stdcall InternetQueryDataAvailable(ptr ptr long long) InternetQueryDataAvailable
 @ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
-@ stub InternetQueryOptionW
+@ stdcall InternetQueryOptionW(ptr long ptr ptr) InternetQueryOptionW
 @ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile
 @ stdcall InternetReadFileExA(ptr ptr long long) InternetReadFileExA
 @ stdcall InternetReadFileExW(ptr ptr long long) InternetReadFileExW

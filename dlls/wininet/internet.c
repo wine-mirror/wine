@@ -887,31 +887,6 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 }
 
 /***********************************************************************
- *           GetUrlCacheEntryInfoA (WININET.@)
- *
- */
-BOOL WINAPI GetUrlCacheEntryInfoA(LPCSTR lpszUrl,
-  LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntry,
-  LPDWORD lpCacheEntrySize)
-{
-    FIXME("stub\n");
-    return FALSE;
-}
-
-/***********************************************************************
- *           CommitUrlCacheEntryA (WININET.@)
- *
- */
-BOOL WINAPI CommitUrlCacheEntryA(LPCSTR lpszUrl, LPCSTR lpszLocalName,
-    FILETIME ExpireTime, FILETIME lastModified, DWORD cacheEntryType,
-    LPBYTE lpHeaderInfo, DWORD headerSize, LPCSTR fileExtension,
-    DWORD originalUrl)
-{
-    FIXME("stub\n");
-    return FALSE;
-}
-
-/***********************************************************************
  *           InternetAttemptConnect (WININET.@)
  *
  * Attempt to make a connection to the internet
@@ -1139,17 +1114,10 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 }
 
 /***********************************************************************
- *           InternetQueryOptionA (WININET.@)
- *
- * Queries an options on the specified handle
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
+ *           INET_QueryOptionHelper (internal)
  */
-BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
-	LPVOID lpBuffer, LPDWORD lpdwBufferLength)
+static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD dwOption,
+                                   LPVOID lpBuffer, LPDWORD lpdwBufferLength)
 {
     LPWININETHANDLEHEADER lpwhh;
     BOOL bSuccess = FALSE;
@@ -1212,8 +1180,15 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
                     INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 else
                 {
-                    memcpy(lpBuffer, url, strlen(url)+1);
+                    if(bIsUnicode)
+                    {
+                        *lpdwBufferLength=MultiByteToWideChar(CP_ACP,0,url,-1,lpBuffer,*lpdwBufferLength);
+                    }
+                    else
+                    {
+                        memcpy(lpBuffer, url, strlen(url)+1);
                         *lpdwBufferLength = strlen(url)+1;
+                    }
                     bSuccess = TRUE;
                 }
             }
@@ -1238,6 +1213,38 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
     return bSuccess;
 }
 
+/***********************************************************************
+ *           InternetQueryOptionW (WININET.@)
+ *
+ * Queries an options on the specified handle
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
+                                 LPVOID lpBuffer, LPDWORD lpdwBufferLength)
+{
+    return INET_QueryOptionHelper(TRUE, hInternet, dwOption, lpBuffer, lpdwBufferLength);
+}
+
+/***********************************************************************
+ *           InternetQueryOptionA (WININET.@)
+ *
+ * Queries an options on the specified handle
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
+                                 LPVOID lpBuffer, LPDWORD lpdwBufferLength)
+{
+    return INET_QueryOptionHelper(FALSE, hInternet, dwOption, lpBuffer, lpdwBufferLength);
+}
+
 
 /***********************************************************************
  *           InternetSetOptionW (WININET.@)
@@ -1253,27 +1260,50 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                            LPVOID lpBuffer, DWORD dwBufferLength)
 {
     LPWININETHANDLEHEADER lpwhh;
-    BOOL bSuccess = FALSE;
 
     TRACE("0x%08lx\n", dwOption);
 
     if (NULL == hInternet)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+        return FALSE;
     }
 
     lpwhh = (LPWININETHANDLEHEADER) hInternet;
 
     switch (dwOption)
     {
+    case INTERNET_OPTION_HTTP_VERSION:
+      {
+        HTTP_VERSION_INFO* pVersion=(HTTP_VERSION_INFO*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_HTTP_VERSION(%ld,%ld): STUB\n",pVersion->dwMajorVersion,pVersion->dwMinorVersion);
+      }
+      break;
+    case INTERNET_OPTION_ERROR_MASK:
+      {
+        unsigned long flags=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_ERROR_MASK(%ld): STUB\n",flags);
+      }
+      break;
+    case INTERNET_OPTION_CODEPAGE:
+      {
+        unsigned long codepage=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_CODEPAGE (%ld): STUB\n",codepage);
+      }
+      break;
+    case INTERNET_OPTION_REQUEST_PRIORITY:
+      {
+        unsigned long priority=*(unsigned long*)lpBuffer;
+        FIXME("Option INTERNET_OPTION_REQUEST_PRIORITY (%ld): STUB\n",priority);
+      }
+      break;
     default:
+        FIXME("Option %ld STUB\n",dwOption);
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        FIXME("STUB\n");
-        break;
+        return FALSE;
     }
 
-    return bSuccess;
+    return TRUE;
 }
 
 
@@ -1653,7 +1683,8 @@ void INTERNET_SetLastError(DWORD dwError)
     LPWITHREADERROR lpwite = (LPWITHREADERROR)TlsGetValue(g_dwTlsErrIndex);
 
     SetLastError(dwError);
-    lpwite->dwError = dwError;
+    if(lpwite)
+        lpwite->dwError = dwError;
 }
 
 
@@ -2142,4 +2173,52 @@ BOOL WINAPI InternetAutodialHangup(DWORD dwReserved)
 
     /* we didn't dial, we don't disconnect */
     return TRUE;
+}
+
+/***********************************************************************
+ *
+ *         InternetCombineUrlA
+ *
+ * Combine a base URL with a relative URL
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+
+BOOL WINAPI InternetCombineUrlA(LPCSTR lpszBaseUrl, LPCSTR lpszRelativeUrl,
+                                LPSTR lpszBuffer, LPDWORD lpdwBufferLength,
+                                DWORD dwFlags)
+{
+    HRESULT hr=S_OK;
+    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+    dwFlags ^= ICU_NO_ENCODE;
+    hr=UrlCombineA(lpszBaseUrl,lpszRelativeUrl,lpszBuffer,lpdwBufferLength,dwFlags);
+
+    return (hr==S_OK);
+}
+
+/***********************************************************************
+ *
+ *         InternetCombineUrlW
+ *
+ * Combine a base URL with a relative URL
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+
+BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
+                                LPWSTR lpszBuffer, LPDWORD lpdwBufferLength,
+                                DWORD dwFlags)
+{
+    HRESULT hr=S_OK;
+    /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
+    dwFlags ^= ICU_NO_ENCODE;
+    hr=UrlCombineW(lpszBaseUrl,lpszRelativeUrl,lpszBuffer,lpdwBufferLength,dwFlags);
+
+    return (hr==S_OK);
 }
