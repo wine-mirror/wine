@@ -617,6 +617,8 @@ const struct map_lcid2str {
 	{0x0000,"Unbekannt"},
 };
 
+static char *GetLocaleSubkeyName( DWORD lctype );
+
 /***********************************************************************
  *           GetUserDefaultLCID       (OLE2NLS.1)
  */
@@ -725,6 +727,9 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
   LPCSTR  retString;
 	int	found,i;
 	int	lang=0;
+    char    *pacKey;
+    char    acBuffer[128];
+    DWORD   dwBufferSize=128;
 
   TRACE("(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",lcid,LCType,buf,len);
 
@@ -762,7 +767,33 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 		return 0;
 	}
 
-    found=0;lang=lcid;
+    found=0;
+
+    /* First, check if it's in the registry. */
+
+    if ( (pacKey = GetLocaleSubkeyName(LCType)) )
+    {
+        char    acRealKey[128];
+        HKEY    hKey;
+
+        sprintf( acRealKey, "Control Panel\\International\\%s", pacKey );
+
+        if ( RegOpenKeyExA( HKEY_CURRENT_USER, acRealKey, 
+                            0, KEY_READ, &hKey) == ERROR_SUCCESS )
+        {
+            if ( RegQueryValueExA( hKey, NULL, NULL, NULL, (LPBYTE)acBuffer, 
+                                   &dwBufferSize ) == ERROR_SUCCESS )
+            {
+                retString = acBuffer;
+                found = 1;
+            }
+            RegCloseKey(hKey);
+        }
+    }
+
+    /* If not in the registry, get it from the NLS entries. */
+
+    lang=lcid;
     for (i=0;(i<3 && !found);i++) {
       int j;
 
@@ -832,11 +863,161 @@ INT WINAPI GetLocaleInfoW(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT len)
 }
 
 /******************************************************************************
+ *
+ *		GetLocaleSubkeyName [helper function]
+ *
+ *          - For use with the registry.
+ *          - Gets the registry subkey name for a given lctype.
+ */
+static char *GetLocaleSubkeyName( DWORD lctype )
+{
+    char    *pacKey=NULL;
+
+    switch ( lctype )
+    {
+    /* These values are used by SetLocaleInfo and GetLocaleInfo, and
+     * the values are stored in the registry, confirmed under Windows,
+     * for the ones that actually assign pacKey. Cases that aren't finished
+     * have not been confirmed, so that must be done before they can be
+     * added.
+     */
+    case LOCALE_SDATE :        /* The date separator. */
+        pacKey = "sDate";
+        break;
+    case LOCALE_ICURRDIGITS:
+        pacKey = "iCurrDigits";
+        break;
+    case LOCALE_SDECIMAL :
+        pacKey = "sDecimal";
+        break;
+    case LOCALE_ICURRENCY:
+        pacKey = "iCurrency";
+        break;
+    case LOCALE_SGROUPING :
+        pacKey = "sGrouping";
+        break;
+    case LOCALE_IDIGITS:
+        pacKey = "iDigits";
+        break;
+    case LOCALE_SLIST :
+        pacKey = "sList";
+        break;
+    /* case LOCALE_ICALENDARTYPE: */
+    /* case LOCALE_IFIRSTDAYOFWEEK: */
+    /* case LOCALE_IFIRSTWEEKOFYEAR: */
+    /* case LOCALE_SYEARMONTH : */
+    /* case LOCALE_SPOSITIVESIGN : */
+    /* case LOCALE_IPAPERSIZE: */
+    /*     break; */
+    case LOCALE_SLONGDATE :
+        pacKey = "sLongDate";
+        break;
+    case LOCALE_SMONDECIMALSEP :
+        pacKey = "sMonDecimalSep";
+        break;
+    case LOCALE_SMONGROUPING:
+        pacKey = "sMonGrouping";
+        break;
+    case LOCALE_IMEASURE:
+        pacKey = "iMeasure";
+        break;
+    case LOCALE_SMONTHOUSANDSEP :
+        pacKey = "sMonThousandSep";
+        break;
+    case LOCALE_INEGCURR:
+        pacKey = "iNegCurr";
+        break;
+    case LOCALE_SNEGATIVESIGN :
+        pacKey = "sNegativeSign";
+        break;
+    case LOCALE_INEGNUMBER:
+        pacKey = "iNegNumber";
+        break;
+    case LOCALE_SSHORTDATE :
+        pacKey = "sShortDate";
+        break;
+    case LOCALE_ILDATE:        /* Long Date format ordering specifier. */
+        pacKey = "iLDate";
+        break;
+    case LOCALE_ILZERO:
+        pacKey = "iLZero";
+        break;
+    case LOCALE_ITLZERO:
+        pacKey = "iTLZero";
+        break;
+    case LOCALE_ITIME:        /* Time format specifier. */
+        pacKey = "iTime";
+        break;
+    case LOCALE_STHOUSAND :
+        pacKey = "sThousand";
+        break;
+    case LOCALE_S1159:        /* AM */
+        pacKey = "s1159";
+        break;
+    case LOCALE_STIME:
+        pacKey = "sTime";
+        break;
+    case LOCALE_S2359:        /* PM */
+        pacKey = "s2359";
+        break;
+    case LOCALE_STIMEFORMAT :
+        pacKey = "sTimeFormat";
+        break;
+    case LOCALE_SCURRENCY:
+        pacKey = "sCurrency";
+        break;
+
+    /* The following are not listed under MSDN as supported, 
+     * but seem to be used and also stored in the registry.
+     */
+
+    case LOCALE_IDATE:
+        pacKey = "iDate";
+        break;
+    case LOCALE_SCOUNTRY:
+        pacKey = "sCountry";
+        break;
+    case LOCALE_ICOUNTRY:
+        pacKey = "iCountry";
+        break;
+    case LOCALE_SLANGUAGE:
+        pacKey = "sLanguage";
+        break;
+
+    default:
+        break;
+    }
+
+    return( pacKey );
+}
+
+/******************************************************************************
  *		SetLocaleInfoA	[KERNEL32.656]
  */
 BOOL16 WINAPI SetLocaleInfoA(DWORD lcid, DWORD lctype, LPCSTR data)
 {
+    HKEY    hKey;
+    char    *pacKey;
+    char    acRealKey[128];
+
+    if ( (pacKey = GetLocaleSubkeyName(lctype)) )
+    {
+        sprintf( acRealKey, "Control Panel\\International\\%s", pacKey );
+        if ( RegCreateKeyA( HKEY_CURRENT_USER, acRealKey, 
+                               &hKey ) == ERROR_SUCCESS )
+        {
+            if ( RegSetValueExA( hKey, NULL, 0, REG_SZ, 
+                                 data, strlen(data)+1 ) != ERROR_SUCCESS )
+            {
+                ERR("SetLocaleInfoA: %s did not work\n", pacKey );
+            }
+            RegCloseKey( hKey );
+        }
+    }
+    else
+    {
     FIXME("(%ld,%ld,%s): stub\n",lcid,lctype,data);
+    }
     return TRUE;
 }
 
