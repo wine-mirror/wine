@@ -115,8 +115,9 @@ int wpp_parse_temp( const char *input, char **output_name )
     if(!(temp_name = tmpnam(NULL)))
     {
         fprintf(stderr, "Could not generate a temp-name\n");
-        temp_name = pp_xstrdup(temp_name);
+        exit(2);
     }
+    temp_name = pp_xstrdup(temp_name);
 
     if (!(output = fopen(temp_name, "wt")))
     {
