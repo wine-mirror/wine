@@ -1421,6 +1421,37 @@ UINT WINAPI SetErrorMode( UINT mode )
 }
 
 
+/**************************************************************************
+ *              SetFileApisToOEM   (KERNEL32.@)
+ */
+VOID WINAPI SetFileApisToOEM(void)
+{
+    current_process.flags |= PDB32_FILE_APIS_OEM;
+}
+
+
+/**************************************************************************
+ *              SetFileApisToANSI   (KERNEL32.@)
+ */
+VOID WINAPI SetFileApisToANSI(void)
+{
+    current_process.flags &= ~PDB32_FILE_APIS_OEM;
+}
+
+
+/******************************************************************************
+ * AreFileApisANSI [KERNEL32.@]  Determines if file functions are using ANSI
+ *
+ * RETURNS
+ *    TRUE:  Set of file functions is using ANSI code page
+ *    FALSE: Set of file functions is using OEM code page
+ */
+BOOL WINAPI AreFileApisANSI(void)
+{
+    return !(current_process.flags & PDB32_FILE_APIS_OEM);
+}
+
+
 /**********************************************************************
  * TlsAlloc [KERNEL32.@]  Allocates a TLS index.
  *

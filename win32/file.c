@@ -119,36 +119,3 @@ BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }
-
-
-/**************************************************************************
- *              SetFileApisToOEM   (KERNEL32.645)
- */
-VOID WINAPI SetFileApisToOEM(void)
-{
-  /*FIXME(file,"(): stub!\n");*/
-}
-
-
-/**************************************************************************
- *              SetFileApisToANSI   (KERNEL32.644)
- */
-VOID WINAPI SetFileApisToANSI(void)
-{
-    /*FIXME(file,"(): stub\n");*/
-}
-
-
-/******************************************************************************
- * AreFileApisANSI [KERNEL32.@]  Determines if file functions are using ANSI
- *
- * RETURNS
- *    TRUE:  Set of file functions is using ANSI code page
- *    FALSE: Set of file functions is using OEM code page
- */
-BOOL WINAPI AreFileApisANSI(void)
-{
-    FIXME("(void): stub\n");
-    return TRUE;
-}
-
