@@ -1224,7 +1224,7 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return -1;
     if (lpTbInfo == NULL)
 	return -1;
-    if (lpTbInfo->cbSize < sizeof(LPTBBUTTONINFOA))
+    if (lpTbInfo->cbSize < sizeof(TBBUTTONINFOA))
 	return -1;
 
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
@@ -1815,7 +1815,7 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lptbbi == NULL)
 	return FALSE;
-    if (lptbbi->cbSize < sizeof(LPTBBUTTONINFOA))
+    if (lptbbi->cbSize < sizeof(TBBUTTONINFOA))
 	return FALSE;
     
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
