@@ -102,7 +102,7 @@ HANDLE h;
   if (h != INVALID_HANDLE_VALUE) {
     CloseHandle (h);
 #if 0
-    WCMD_batch (string, " ");
+    WCMD_batch_command (string);
 #endif
   }
 
