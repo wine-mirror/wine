@@ -1402,7 +1402,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     BOOL doState = FALSE, doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
     RECT Box, State, Icon, Label;
 
-    ERR("(lpLVItem=%s)\n", debuglvitem_t(lpLVItem, TRUE));
+    TRACE("(lpLVItem=%s)\n", debuglvitem_t(lpLVItem, TRUE));
 	
     /* Be smart and try to figure out the minimum we have to do */
     if (lprcBounds)
@@ -3157,17 +3157,18 @@ postpaint:
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
  * [I] nItem : item index
+ * [I] pos : item position in client coordinates
  * [I] cdmode : custom draw mode
  *
  * RETURN:
  *   Success: TRUE
  *   Failure: FALSE
  */
-static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD cdmode)
+static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT pos, DWORD cdmode)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     DWORD cditemmode = CDRF_DODEFAULT;
-    RECT* lprcFocus, rcSelect, rcBox, rcIcon, rcLabel;
+    RECT* lprcFocus, rcSelect, rcBox, rcState, rcIcon, rcLabel;
     NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
 
@@ -3186,7 +3187,11 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD 
     /* now check if we need to update the focus rectangle */
     lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
     
-    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, &rcBox, NULL, &rcIcon, &rcLabel)) return FALSE;
+    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, NULL, &rcState, &rcIcon, &rcLabel)) return FALSE;
+    OffsetRect(&rcBox, pos.x, pos.y);
+    OffsetRect(&rcState, pos.x, pos.y);
+    OffsetRect(&rcIcon, pos.x, pos.y);
+    OffsetRect(&rcLabel, pos.x, pos.y);
 
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
     if (cdmode & CDRF_NOTIFYITEMDRAW)
@@ -3197,9 +3202,6 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD 
     if (infoPtr->himlState)
     {
         UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-	RECT rcState = rcBox;
-	
-	rcState.left += infoPtr->iconSize.cx * lvItem.iIndent;
         if (uStateImage)
 	     ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, 
 			    rcState.left, rcState.top, ILD_NORMAL);
@@ -3242,17 +3244,18 @@ postpaint:
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
  * [I] nItem : item index
+ * [I] pos : item position in client coordinates
  * [I] cdmode : custom draw mode
  *
  * RETURN:
  *   Success: TRUE
  *   Failure: FALSE
  */
-static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD cdmode)
+static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT pos, DWORD cdmode)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     DWORD cditemmode = CDRF_DODEFAULT;
-    RECT rcBounds, rcIcon, rcLabel, *lprcFocus;
+    RECT rcBox, rcState, rcIcon, rcLabel, *lprcFocus;
     NMLVCUSTOMDRAW nmlvcd;
     LVITEMW lvItem;
     UINT uFormat;
@@ -3271,10 +3274,15 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
 
     /* now check if we need to update the focus rectangle */
     lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
-  
-    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, &rcBounds, &rcIcon, &rcLabel)) return FALSE;
+    
+    if (!lprcFocus) lvItem.state &= ~LVIS_FOCUSED;
+    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, NULL, &rcState, &rcIcon, &rcLabel)) return FALSE;
+    OffsetRect(&rcBox, pos.x, pos.y);
+    OffsetRect(&rcState, pos.x, pos.y);
+    OffsetRect(&rcIcon, pos.x, pos.y);
+    OffsetRect(&rcLabel, pos.x, pos.y);
 
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBounds, &lvItem);
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
     if (cdmode & CDRF_NOTIFYITEMDRAW)
         cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
@@ -3286,10 +3294,8 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, D
     if (infoPtr->himlState)
     {
      	UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-     	INT x = rcIcon.left - infoPtr->iconStateSize.cx + 10;
-     	INT y = rcIcon.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
     	if (uStateImage > 0)
-	    ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, x, y, ILD_NORMAL);
+	    ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcState.left, rcState.top, ILD_NORMAL);
     }
 
     /* draw the icon */
@@ -3495,7 +3501,10 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    if (rgntype == COMPLEXREGION && !RectVisible(hdc, &rcItem)) continue;
 
 	    if (j == 0)
-		LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, cdmode);
+	    {
+		POINT pos = { rcItem.left, rcItem.top };
+		LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, pos, cdmode);
+	    }
 	    else
 		LISTVIEW_DrawSubItem(infoPtr, hdc, i.nItem, j, rcItem, lpCols[j].align, cdmode);
 	}
@@ -3532,8 +3541,10 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     while(iterator_next(&i))
     {
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
+	Position.x += Origin.x;
+	Position.y += Origin.y;
 
-        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, cdmode);
+        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, Position, cdmode);
     }
     iterator_destroy(&i);
 }
@@ -3568,14 +3579,23 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 	    continue;
 
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
-        LISTVIEW_DrawLargeItem(infoPtr, hdc, i.nItem, cdmode);
+	Position.x += Origin.x;
+	Position.y += Origin.y;
+        LISTVIEW_DrawLargeItem(infoPtr, hdc, i.nItem, Position, cdmode);
     }
     iterator_destroy(&i);
 
     /* draw the focused item last, in case it's oversized */
     if (LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcBox, 0, 0, 0) &&
         RectVisible(hdc, &rcBox))
-	LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, cdmode);
+    {
+	if (LISTVIEW_GetItemListOrigin(infoPtr, infoPtr->nFocusedItem, &Position))
+	{
+	    Position.x += Origin.x;
+	    Position.y += Origin.y;
+	    LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, Position, cdmode);
+	}
+    }
 }
 
 /***
