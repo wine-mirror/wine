@@ -211,8 +211,11 @@ FARPROC PE_FindExportedFunction(
 		assert(end-forward<256);
 		strncpy(module, forward, (end - forward));
 		module[end-forward] = 0;
-                wm = MODULE_FindModule( module );
-		assert(wm);
+                if (!(wm = MODULE_FindModule( module )))
+                {
+                    ERR_(win32)("module not found for forward '%s'\n", forward );
+                    return NULL;
+                }
 		return MODULE_GetProcAddress( wm->module, end + 1, snoop );
 	}
 	return NULL;
@@ -238,8 +241,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 
     /* first, count the number of imported non-internal modules */
     pe_imp = pem->pe_import;
-    if (!pe_imp) 
-    	ERR_(win32)("no import directory????\n");
+    if (!pe_imp) return 0;
 
     /* We assume that we have at least one import with !0 characteristics and
      * detect broken imports with all characteristsics 0 (notably Borland) and
@@ -252,6 +254,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 		break;
 	i++;
     }
+    if (!i) return 0;  /* no imports */
 
     /* Allocate module dependency list */
     wm->nDeps = i;
