@@ -317,14 +317,14 @@ static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL la
  *	NULL: Failure
  */
 static SUBHEAP *HEAP_FindSubHeap(
-                HEAP *heap, /* [in] Heap pointer */
+                const HEAP *heap, /* [in] Heap pointer */
                 LPCVOID ptr /* [in] Address */
 ) {
-    SUBHEAP *sub = &heap->subheap;
+    const SUBHEAP *sub = &heap->subheap;
     while (sub)
     {
-        if (((char *)ptr >= (char *)sub) &&
-            ((char *)ptr < (char *)sub + sub->size)) return sub;
+        if (((const char *)ptr >= (const char *)sub) &&
+            ((const char *)ptr < (const char *)sub + sub->size)) return (SUBHEAP*)sub;
         sub = sub->next;
     }
     return NULL;
@@ -705,15 +705,15 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
  *
  * Check that the pointer is inside the range possible for arenas.
  */
-static BOOL HEAP_IsValidArenaPtr( HEAP *heap, void *ptr )
+static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const void *ptr )
 {
     int i;
-    SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
+    const SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
     if (!subheap) return FALSE;
-    if ((char *)ptr >= (char *)subheap + subheap->headerSize) return TRUE;
+    if ((const char *)ptr >= (const char *)subheap + subheap->headerSize) return TRUE;
     if (subheap != &heap->subheap) return FALSE;
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        if (ptr == (void *)&heap->freeList[i].arena) return TRUE;
+        if (ptr == (const void *)&heap->freeList[i].arena) return TRUE;
     return FALSE;
 }
 
@@ -813,9 +813,9 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 /***********************************************************************
  *           HEAP_ValidateInUseArena
  */
-static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL quiet )
+static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *pArena, BOOL quiet )
 {
-    char *heapEnd = (char *)subheap + subheap->size;
+    const char *heapEnd = (const char *)subheap + subheap->size;
 
     /* Check for unaligned pointers */
     if ( (long)pArena % ALIGNMENT != 0 )
@@ -861,15 +861,15 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
         return FALSE;
     }
     /* Check arena size */
-    if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
+    if ((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
         ERR("Heap %08lx: bad size %08lx for in-use arena %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->size & ARENA_SIZE_MASK, (DWORD)pArena );
         return FALSE;
     }
     /* Check next arena PREV_FREE flag */
-    if (((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) < heapEnd) &&
-        (*(DWORD *)((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
+    if (((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) < heapEnd) &&
+        (*(const DWORD *)((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
     {
         ERR("Heap %08lx: in-use arena %08lx next block has PREV_FREE flag\n",
                  (DWORD)subheap->heap, (DWORD)pArena );
@@ -878,7 +878,7 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
     /* Check prev free arena */
     if (pArena->size & ARENA_FLAG_PREV_FREE)
     {
-        ARENA_FREE *pPrev = *((ARENA_FREE **)pArena - 1);
+        const ARENA_FREE *pPrev = *((const ARENA_FREE * const*)pArena - 1);
         /* Check prev pointer */
         if (!HEAP_IsValidArenaPtr( subheap->heap, pPrev ))
         {
@@ -895,7 +895,7 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
             return FALSE;
         }
         /* Check that prev arena is really the previous block */
-        if ((char *)(pPrev + 1) + (pPrev->size & ARENA_SIZE_MASK) != (char *)pArena)
+        if ((const char *)(pPrev + 1) + (pPrev->size & ARENA_SIZE_MASK) != (const char *)pArena)
         {
             ERR("Heap %08lx: prev arena %08lx is not prev for in-use %08lx\n",
                      (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
@@ -940,8 +940,8 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
         /* Only check this single memory block */
 
         if (!(subheap = HEAP_FindSubHeap( heapPtr, block )) ||
-            ((char *)block < (char *)subheap + subheap->headerSize
-                              + sizeof(ARENA_INUSE)))
+            ((const char *)block < (char *)subheap + subheap->headerSize
+                                   + sizeof(ARENA_INUSE)))
         {
             if (quiet == NOISY)
                 ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
@@ -949,7 +949,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
                 WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
             ret = FALSE;
         } else
-            ret = HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)block - 1, quiet );
+            ret = HEAP_ValidateInUseArena( subheap, (const ARENA_INUSE *)block - 1, quiet );
 
         if (!(flags & HEAP_NO_SERIALIZE))
             RtlLeaveCriticalSection( &heapPtr->critSection );

@@ -222,7 +222,7 @@ static struct file_view *VIRTUAL_FindView( const void *addr ) /* [in] Address */
     {
         struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
         if (view->base > addr) break;
-        if ((char *)view->base + view->size > (const char *)addr) return view;
+        if ((const char*)view->base + view->size > (const char*)addr) return view;
     }
     return NULL;
 }
@@ -241,8 +241,8 @@ static struct file_view *find_view_range( const void *addr, size_t size )
     LIST_FOR_EACH( ptr, &views_list )
     {
         struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
-        if ((char *)view->base >= (const char *)addr + size) break;
-        if ((char *)view->base + view->size > (const char *)addr) return view;
+        if ((const char *)view->base >= (const char *)addr + size) break;
+        if ((const char *)view->base + view->size > (const char *)addr) return view;
     }
     return NULL;
 }
@@ -1063,7 +1063,7 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
         }
         else
         {
-            BYTE vprot = view->prot[((char *)addr - (char *)view->base) >> page_shift];
+            BYTE vprot = view->prot[((const char *)addr - (const char *)view->base) >> page_shift];
             void *page = (void *)((UINT_PTR)addr & ~page_mask);
             char *stack = NtCurrentTeb()->Tib.StackLimit;
             if (vprot & VPROT_GUARD)
@@ -1072,7 +1072,7 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
                 ret = STATUS_GUARD_PAGE_VIOLATION;
             }
             /* is it inside the stack guard page? */
-            if (((char *)addr >= stack) && ((char *)addr < stack + (page_mask+1)))
+            if (((const char *)addr >= stack) && ((const char *)addr < stack + (page_mask+1)))
                 ret = STATUS_STACK_OVERFLOW;
         }
     }

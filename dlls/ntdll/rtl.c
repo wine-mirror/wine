@@ -482,7 +482,7 @@ VOID WINAPI RtlZeroMemory( VOID *Destination, SIZE_T Length )
 SIZE_T WINAPI RtlCompareMemory( const VOID *Source1, const VOID *Source2, SIZE_T Length)
 {
     SIZE_T i;
-    for(i=0; (i<Length) && (((LPBYTE)Source1)[i]==((LPBYTE)Source2)[i]); i++);
+    for(i=0; (i<Length) && (((const BYTE*)Source1)[i]==((const BYTE*)Source2)[i]); i++);
     return i;
 }
 

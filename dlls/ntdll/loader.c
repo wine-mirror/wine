@@ -106,7 +106,7 @@ static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
 
 static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_MODREF** pwm );
-static FARPROC find_named_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                   DWORD exp_size, const char *name, int hint );
 
 /* convert PE image VirtualAddress to Real Address */
@@ -245,11 +245,11 @@ static WINE_MODREF *find_fullname_module( LPCWSTR name )
  */
 static FARPROC find_forwarded_export( HMODULE module, const char *forward )
 {
-    IMAGE_EXPORT_DIRECTORY *exports;
+    const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
     WINE_MODREF *wm;
     WCHAR mod_name[32];
-    char *end = strchr(forward, '.');
+    const char *end = strchr(forward, '.');
     FARPROC proc = NULL;
 
     if (!end) return NULL;
@@ -285,11 +285,11 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
  * The exports base must have been subtracted from the ordinal already.
  * The loader_section must be locked while calling this function.
  */
-static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                     DWORD exp_size, int ordinal )
 {
     FARPROC proc;
-    DWORD *functions = get_rva( module, exports->AddressOfFunctions );
+    const DWORD *functions = get_rva( module, exports->AddressOfFunctions );
 
     if (ordinal >= exports->NumberOfFunctions)
     {
@@ -301,8 +301,9 @@ static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *expo
     proc = get_rva( module, functions[ordinal] );
 
     /* if the address falls into the export dir, it's a forward */
-    if (((char *)proc >= (char *)exports) && ((char *)proc < (char *)exports + exp_size))
-        return find_forwarded_export( module, (char *)proc );
+    if (((const char *)proc >= (const char *)exports) && 
+        ((const char *)proc < (const char *)exports + exp_size))
+        return find_forwarded_export( module, (const char *)proc );
 
     if (TRACE_ON(snoop) && current_modref)
     {
@@ -324,11 +325,11 @@ static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *expo
  * Find an exported function by name.
  * The loader_section must be locked while calling this function.
  */
-static FARPROC find_named_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                   DWORD exp_size, const char *name, int hint )
 {
-    WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
-    DWORD *names = get_rva( module, exports->AddressOfNames );
+    const WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
+    const DWORD *names = get_rva( module, exports->AddressOfNames );
     int min = 0, max = exports->NumberOfNames - 1;
 
     /* first check the hint */
@@ -360,16 +361,17 @@ static FARPROC find_named_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *export
  * Import the dll specified by the given import descriptor.
  * The loader_section must be locked while calling this function.
  */
-static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, LPCWSTR load_path )
+static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LPCWSTR load_path )
 {
     NTSTATUS status;
     WINE_MODREF *wmImp;
     HMODULE imp_mod;
-    IMAGE_EXPORT_DIRECTORY *exports;
+    const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
-    IMAGE_THUNK_DATA *import_list, *thunk_list;
+    const IMAGE_THUNK_DATA *import_list;
+    IMAGE_THUNK_DATA *thunk_list;
     WCHAR buffer[32];
-    char *name = get_rva( module, descr->Name );
+    const char *name = get_rva( module, descr->Name );
     DWORD len = strlen(name) + 1;
 
     thunk_list = get_rva( module, (DWORD)descr->FirstThunk );
@@ -476,7 +478,7 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
 static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 {
     int i, nb_imports;
-    IMAGE_IMPORT_DESCRIPTOR *imports;
+    const IMAGE_IMPORT_DESCRIPTOR *imports;
     WINE_MODREF *prev;
     DWORD size;
     NTSTATUS status;
@@ -525,8 +527,8 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
 {
     WINE_MODREF *wm;
-    WCHAR *p;
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
+    const WCHAR *p;
+    const IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
     PLIST_ENTRY entry, mark;
 
     if (!(wm = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wm) ))) return NULL;
@@ -587,7 +589,7 @@ static NTSTATUS alloc_process_tls(void)
 {
     PLIST_ENTRY mark, entry;
     PLDR_MODULE mod;
-    IMAGE_TLS_DIRECTORY *dir;
+    const IMAGE_TLS_DIRECTORY *dir;
     ULONG size, i;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
@@ -929,7 +931,7 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
     {
         mod = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
         if ((const void *)mod->BaseAddress <= addr &&
-            (char *)addr < (char*)mod->BaseAddress + mod->SizeOfImage)
+            (const char *)addr < (char*)mod->BaseAddress + mod->SizeOfImage)
         {
             *pmod = mod;
             return STATUS_SUCCESS;
@@ -1972,12 +1974,14 @@ PIMAGE_SECTION_HEADER WINAPI RtlImageRvaToSection( const IMAGE_NT_HEADERS *nt,
                                                    HMODULE module, DWORD rva )
 {
     int i;
-    IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader +
-                                                        nt->FileHeader.SizeOfOptionalHeader);
+    const IMAGE_SECTION_HEADER *sec;
+
+    sec = (const IMAGE_SECTION_HEADER*)((const char*)&nt->OptionalHeader +
+                                        nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
     {
         if ((sec->VirtualAddress <= rva) && (sec->VirtualAddress + sec->SizeOfRawData > rva))
-            return sec;
+            return (PIMAGE_SECTION_HEADER)sec;
     }
     return NULL;
 }

@@ -654,7 +654,7 @@ CCHAR WINAPI RtlFindLeastSignificantBit(ULONGLONG ulLong)
  */
 static int NTDLL_RunSortFn(const void *lhs, const void *rhs)
 {
-  if (((PCRTL_BITMAP_RUN)lhs)->SizeOfRun > ((PRTL_BITMAP_RUN)rhs)->SizeOfRun)
+  if (((const RTL_BITMAP_RUN*)lhs)->SizeOfRun > ((const RTL_BITMAP_RUN*)rhs)->SizeOfRun)
     return -1;
   return 1;
 }

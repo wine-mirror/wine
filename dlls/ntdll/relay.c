@@ -691,18 +691,18 @@ __ASM_GLOBAL_FUNC( RELAY_CallFrom32Regs,
 static BOOL is_register_entry_point( const BYTE *addr )
 {
     extern void __wine_call_from_32_regs();
-    int *offset;
-    void *ptr;
+    const int *offset;
+    const void *ptr;
 
     if (*addr != 0xe8) return FALSE;  /* not a call */
     /* check if call target is __wine_call_from_32_regs */
-    offset = (int *)(addr + 1);
-    if (*offset == (char *)__wine_call_from_32_regs - (char *)(offset + 1)) return TRUE;
+    offset = (const int *)(addr + 1);
+    if (*offset == (const char *)__wine_call_from_32_regs - (const char *)(offset + 1)) return TRUE;
     /* now check if call target is an import table jump to __wine_call_from_32_regs */
-    addr = (BYTE *)(offset + 1) + *offset;
+    addr = (const BYTE *)(offset + 1) + *offset;
     if (addr[0] != 0xff || addr[1] != 0x25) return FALSE;  /* not an indirect jmp */
-    ptr = *(void **)(addr + 2);  /* get indirect jmp target address */
-    return (*(char **)ptr == (char *)__wine_call_from_32_regs);
+    ptr = *(const void * const*)(addr + 2);  /* get indirect jmp target address */
+    return (*(const char * const*)ptr == (char *)__wine_call_from_32_regs);
 }
 
 
@@ -711,11 +711,11 @@ static BOOL is_register_entry_point( const BYTE *addr )
  *
  * Return the proc address to use for a given function.
  */
-FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                               DWORD exp_size, FARPROC proc, const WCHAR *user )
 {
-    DEBUG_ENTRY_POINT *debug = (DEBUG_ENTRY_POINT *)proc;
-    DEBUG_ENTRY_POINT *list = (DEBUG_ENTRY_POINT *)((char *)exports + exp_size);
+    const DEBUG_ENTRY_POINT *debug = (DEBUG_ENTRY_POINT *)proc;
+    const DEBUG_ENTRY_POINT *list = (const DEBUG_ENTRY_POINT *)((const char *)exports + exp_size);
 
     if (debug < list || debug >= list + exports->NumberOfFunctions) return proc;
     if (list + (debug - list) != debug) return proc;  /* not a valid address */
@@ -857,64 +857,64 @@ void SNOOP_SetupDLL(HMODULE hmod)
  *
  * Return the proc address to use for a given function.
  */
-FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports,
+FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports,
                               DWORD exp_size, FARPROC origfun, DWORD ordinal,
                               const WCHAR *user)
 {
-        int i;
-        const char *ename;
-        WORD *ordinals;
-        DWORD *names;
-	SNOOP_DLL			*dll = firstdll;
-	SNOOP_FUN			*fun;
-        IMAGE_SECTION_HEADER *sec;
+    int i;
+    const char *ename;
+    const WORD *ordinals;
+    const DWORD *names;
+    SNOOP_DLL *dll = firstdll;
+    SNOOP_FUN *fun;
+    const IMAGE_SECTION_HEADER *sec;
 
-	if (!TRACE_ON(snoop)) return origfun;
-       if (!check_from_module( debug_from_snoop_includelist, debug_from_snoop_excludelist, user ))
-           return origfun; /* the calling module was explicitly excluded */
+    if (!TRACE_ON(snoop)) return origfun;
+    if (!check_from_module( debug_from_snoop_includelist, debug_from_snoop_excludelist, user ))
+        return origfun; /* the calling module was explicitly excluded */
 
-	if (!*(LPBYTE)origfun) /* 0x00 is an imposs. opcode, poss. dataref. */
-		return origfun;
+    if (!*(LPBYTE)origfun) /* 0x00 is an imposs. opcode, poss. dataref. */
+        return origfun;
 
-        sec = RtlImageRvaToSection( RtlImageNtHeader(hmod), hmod, (char *)origfun - (char *)hmod );
+    sec = RtlImageRvaToSection( RtlImageNtHeader(hmod), hmod, (char *)origfun - (char *)hmod );
 
-        if (!sec || !(sec->Characteristics & IMAGE_SCN_CNT_CODE))
-            return origfun;  /* most likely a data reference */
+    if (!sec || !(sec->Characteristics & IMAGE_SCN_CNT_CODE))
+        return origfun;  /* most likely a data reference */
 
-	while (dll) {
-		if (hmod == dll->hmod)
-			break;
-		dll=dll->next;
-	}
-	if (!dll)	/* probably internal */
-		return origfun;
+    while (dll) {
+        if (hmod == dll->hmod)
+            break;
+        dll = dll->next;
+    }
+    if (!dll)	/* probably internal */
+        return origfun;
 
-        /* try to find a name for it */
-        ename = NULL;
-        names = (DWORD *)((char *)hmod + exports->AddressOfNames);
-        ordinals = (WORD *)((char *)hmod + exports->AddressOfNameOrdinals);
-        if (names) for (i = 0; i < exports->NumberOfNames; i++)
+    /* try to find a name for it */
+    ename = NULL;
+    names = (const DWORD *)((const char *)hmod + exports->AddressOfNames);
+    ordinals = (const WORD *)((const char *)hmod + exports->AddressOfNameOrdinals);
+    if (names) for (i = 0; i < exports->NumberOfNames; i++)
+    {
+        if (ordinals[i] == ordinal)
         {
-            if (ordinals[i] == ordinal)
-            {
-                ename = (char *)hmod + names[i];
-                break;
-            }
+            ename = (const char *)hmod + names[i];
+            break;
         }
-	if (!SNOOP_ShowDebugmsgSnoop(dll->name,ordinal,ename))
-		return origfun;
-	assert(ordinal < dll->nrofordinals);
-	fun = dll->funs+ordinal;
-	if (!fun->name)
-	  {
-	    fun->name = ename;
-	    fun->lcall	= 0xe8;
-	    /* NOTE: origreturn struct member MUST come directly after snoopentry */
-	    fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
-	    fun->origfun	= origfun;
-	    fun->nrofargs	= -1;
-	  }
-	return (FARPROC)&(fun->lcall);
+    }
+    if (!SNOOP_ShowDebugmsgSnoop(dll->name,ordinal,ename))
+        return origfun;
+    assert(ordinal < dll->nrofordinals);
+    fun = dll->funs + ordinal;
+    if (!fun->name)
+    {
+        fun->name       = ename;
+        fun->lcall	= 0xe8;
+        /* NOTE: origreturn struct member MUST come directly after snoopentry */
+        fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
+        fun->origfun	= origfun;
+        fun->nrofargs	= -1;
+    }
+    return (FARPROC)&(fun->lcall);
 }
 
 static void SNOOP_PrintArg(DWORD x)

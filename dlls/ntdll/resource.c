@@ -99,7 +99,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_first_entry( const IMAGE_RESOURCE_DI
     for (pos = 0; pos < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; pos++)
     {
         if (!entry[pos].u2.s3.DataIsDirectory == !want_dir)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
+            return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s3.OffsetToDirectory);
     }
     return NULL;
 }
@@ -127,8 +127,8 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
             if (!entry[pos].u2.s3.DataIsDirectory == !want_dir)
             {
                 TRACE("root %p dir %p id %04x ret %p\n",
-                      root, dir, id, (char *)root + entry[pos].u2.s3.OffsetToDirectory);
-                return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
+                      root, dir, id, (const char*)root + entry[pos].u2.s3.OffsetToDirectory);
+                return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s3.OffsetToDirectory);
             }
             break;
         }
@@ -161,15 +161,15 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
     while (min <= max)
     {
         pos = (min + max) / 2;
-        str = (IMAGE_RESOURCE_DIR_STRING_U *)((char *)root + entry[pos].u1.s1.NameOffset);
+        str = (const IMAGE_RESOURCE_DIR_STRING_U *)((const char *)root + entry[pos].u1.s1.NameOffset);
         res = strncmpW( name, str->NameString, str->Length );
         if (!res && namelen == str->Length)
         {
             if (!entry[pos].u2.s3.DataIsDirectory == !want_dir)
             {
                 TRACE("root %p dir %p name %s ret %p\n",
-                      root, dir, debugstr_w(name), (char *)root + entry[pos].u2.s3.OffsetToDirectory);
-                return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
+                      root, dir, debugstr_w(name), (const char*)root + entry[pos].u2.s3.OffsetToDirectory);
+                return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s3.OffsetToDirectory);
             }
             break;
         }
@@ -389,9 +389,9 @@ NTSTATUS WINAPI RtlFindMessage( HMODULE hmod, ULONG type, ULONG lang,
         {
             const MESSAGE_RESOURCE_ENTRY *entry;
 
-            entry = (MESSAGE_RESOURCE_ENTRY *)((char *)data + block->OffsetToEntries);
+            entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)data + block->OffsetToEntries);
             for (i = msg_id - block->LowId; i > 0; i--)
-                entry = (MESSAGE_RESOURCE_ENTRY *)((char *)entry + entry->Length);
+                entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)entry + entry->Length);
             *ret = entry;
             return STATUS_SUCCESS;
         }
