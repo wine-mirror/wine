@@ -767,7 +767,16 @@ LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
     }
 
     if( out )
-        return ICERR_UNSUPPORTED;
+    {
+        if( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes )
+            return ICERR_UNSUPPORTED;
+        if( in->bmiHeader.biBitCount != out->bmiHeader.biBitCount )
+            return ICERR_UNSUPPORTED;
+        if( in->bmiHeader.biHeight != out->bmiHeader.biHeight )
+            return ICERR_UNSUPPORTED;
+        if( in->bmiHeader.biWidth != out->bmiHeader.biWidth )
+            return ICERR_UNSUPPORTED;
+    }
 
     return ICERR_OK;
 }
@@ -824,6 +833,28 @@ LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
     return ICERR_OK;
 }
 
+LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size )
+{
+    LONG width, height;
+    WORD bit_per_pixel;
+
+    TRACE("ICM_DECOMPRESSEX %p %p %ld\n", info, icd, size);
+
+    if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
+        return ICERR_BADPARAM;
+
+    /* FIXME: flags are ignored */
+
+    width  = icd->lpbiSrc->biWidth;
+    height = icd->lpbiSrc->biHeight;
+    bit_per_pixel = icd->lpbiSrc->biBitCount;
+
+    decode_cinepak(info->cvinfo, icd->lpSrc, icd->lpbiSrc->biSizeImage,
+                   icd->lpDst, width, height, bit_per_pixel);
+
+    return ICERR_OK;
+}
+
 LRESULT ICCVID_Close( ICCVID_Info *info )
 {
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
@@ -848,6 +879,10 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
         return 1;
     case DRV_ENABLE:
         return 0;
+    case DRV_DISABLE:
+        return 0;
+    case DRV_FREE:
+        return 0;
 
     case DRV_OPEN:
         TRACE("Opened\n");
@@ -871,11 +906,15 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
     case ICM_DECOMPRESS:
         return ICCVID_Decompress( info, (ICDECOMPRESS*) lParam1,
                                   (DWORD) lParam2 );
+    case ICM_DECOMPRESSEX:
+        return ICCVID_DecompressEx( info, (ICDECOMPRESSEX*) lParam1, 
+                                  (DWORD) lParam2 );
+
     case DRV_CLOSE:
         return ICCVID_Close( info );
 
     default:
-        FIXME("Unknown message: %d %ld %ld\n", msg, lParam1, lParam2);
+        FIXME("Unknown message: %04x %ld %ld\n", msg, lParam1, lParam2);
     }
     return 0;
 }
