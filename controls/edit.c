@@ -890,13 +890,6 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_MOUSEACTIVATE:
-		/*
-		 *	FIXME: maybe DefWindowProc() screws up, but it seems that
-		 *		modeless dialog boxes need this.  If we don't do this, the focus
-		 *		will _not_ be set by DefWindowProc() for edit controls in a
-		 *		modeless dialog box ???
-		 */
-		SetFocus(hwnd);
 		result = MA_ACTIVATE;
 		break;
 
@@ -4242,6 +4235,7 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
 	INT e;
 	BOOL after_wrap;
 
+        SetFocus(es->hwndSelf);
 	if (!(es->flags & EF_FOCUSED))
 		return 0;
 
