@@ -50,8 +50,6 @@ unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
  */
 BOOL X11DRV_GDI_Initialize( Display *display )
 {
-    Screen *screen = DefaultScreenOfDisplay(display);
-
     gdi_display = display;
 
     palette_size = X11DRV_PALETTE_Init();
@@ -63,8 +61,7 @@ BOOL X11DRV_GDI_Initialize( Display *display )
 
     /* Initialize fonts and text caps */
 
-    log_pixels_x = MulDiv( WidthOfScreen(screen), 254, WidthMMOfScreen(screen) * 10 );
-    log_pixels_y = MulDiv( HeightOfScreen(screen), 254, HeightMMOfScreen(screen) * 10 );
+    log_pixels_x = log_pixels_y = 96;
     X11DRV_FONT_Init( &log_pixels_x, &log_pixels_y );
     horz_size = MulDiv( screen_width, 254, log_pixels_x * 10 );
     vert_size = MulDiv( screen_height, 254, log_pixels_y * 10 );
