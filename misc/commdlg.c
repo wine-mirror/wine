@@ -1589,6 +1589,8 @@ short WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 	i++;
 	break;
     }
+    if (i == -1)
+      i++;
     TRACE(commdlg,"---> '%s' \n", &lpFile[i]);
     
     len = strlen(lpFile+i)+1;
