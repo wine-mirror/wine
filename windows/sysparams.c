@@ -27,7 +27,9 @@ DEFAULT_DEBUG_CHANNEL(system);
 /* System parameter indexes */
 #define SPI_SETBEEP_IDX                         0
 #define SPI_SETBORDER_IDX                       1
-#define SPI_SETSHOWSOUNDS_IDX                   2
+#define SPI_ICONHORIZONTALSPACING_IDX           2
+#define SPI_ICONVERTICALSPACING_IDX             3
+#define SPI_SETSHOWSOUNDS_IDX                   4
 #define SPI_WINE_IDX                            SPI_SETSHOWSOUNDS_IDX
 
 /**
@@ -39,10 +41,14 @@ DEFAULT_DEBUG_CHANNEL(system);
  */
 #define SPI_SETBEEP_REGKEY           "Control Panel\\Sound"
 #define SPI_SETBEEP_VALNAME          "Beep"
-#define SPI_SETSHOWSOUNDS_REGKEY     "Control Panel\\Accessibility\\ShowSounds"
-#define SPI_SETSHOWSOUNDS_VALNAME    "On"
 #define SPI_SETBORDER_REGKEY         "Control Panel\\Desktop"
 #define SPI_SETBORDER_VALNAME        "BorderWidth"
+#define SPI_ICONHORIZONTALSPACING_REGKEY        "Control Panel\\Desktop"
+#define SPI_ICONHORIZONTALSPACING_VALNAME       "IconSpacing"
+#define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop"
+#define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
+#define SPI_SETSHOWSOUNDS_REGKEY     "Control Panel\\Accessibility\\ShowSounds"
+#define SPI_SETSHOWSOUNDS_VALNAME    "On"
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 #define WINE_CURRENT_USER_REGKEY     "Wine"
@@ -184,6 +190,8 @@ void SYSPARAMS_Reset( UINT uiAction )
         memset( spi_loaded, 0, sizeof(spi_loaded) );
 
     WINE_RELOAD_SPI(SPI_SETBORDER);
+    WINE_RELOAD_SPI(SPI_ICONHORIZONTALSPACING);
+    WINE_RELOAD_SPI(SPI_ICONVERTICALSPACING);
     WINE_RELOAD_SPI(SPI_SETSHOWSOUNDS);
 
     default:
@@ -447,11 +455,41 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_WARN(SPI_LANGDRIVER);		/*     12 */
 
     case SPI_ICONHORIZONTALSPACING:		/*     13 */
-	/* FIXME Get/SetProfileInt */
-	if (pvParam == NULL)
-	    /*SetSystemMetrics( SM_CXICONSPACING, uiParam )*/ ;
+        spi_idx = SPI_ICONHORIZONTALSPACING_IDX;
+	if (pvParam != NULL)
+        {
+            if (!spi_loaded[spi_idx])
+            {
+                char buf[10];
+            
+                if (SYSPARAMS_Load( SPI_ICONHORIZONTALSPACING_REGKEY,
+                                    SPI_ICONHORIZONTALSPACING_VALNAME, buf ))
+                {
+                    SYSMETRICS_Set( SM_CXICONSPACING, atoi( buf ) );
+                }
+                spi_loaded[spi_idx] = TRUE;
+            }
+
+            *(INT *)pvParam = GetSystemMetrics( SM_CXICONSPACING );
+        }
 	else
-	    *(INT *)pvParam = GetSystemMetrics( SM_CXICONSPACING );
+        {
+            char buf[10];
+
+            if (uiParam < 32) uiParam = 32;
+
+            sprintf(buf, "%u", uiParam);
+            if (SYSPARAMS_Save( SPI_ICONHORIZONTALSPACING_REGKEY,
+                                SPI_ICONHORIZONTALSPACING_VALNAME,
+                                buf, fWinIni ))
+            {
+                SYSMETRICS_Set( SM_CXICONSPACING, uiParam );
+                spi_loaded[spi_idx] = TRUE;
+            }
+            else
+                ret = FALSE;
+        }
+        
 	break;
 
     case SPI_GETSCREENSAVETIMEOUT:		/*     14 */
@@ -506,11 +544,41 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_WARN(SPI_SETKEYBOARDDELAY);	/*     23 */
 
     case SPI_ICONVERTICALSPACING:		/*     24 */
-	/* FIXME Get/SetProfileInt */
-	if (pvParam == NULL)
-	    /*SetSystemMetrics( SM_CYICONSPACING, uiParam )*/ ;
+        spi_idx = SPI_ICONVERTICALSPACING_IDX;
+	if (pvParam != NULL)
+        {
+            if (!spi_loaded[spi_idx])
+            {
+                char buf[10];
+            
+                if (SYSPARAMS_Load( SPI_ICONVERTICALSPACING_REGKEY,
+                                    SPI_ICONVERTICALSPACING_VALNAME, buf ))
+                {
+                    SYSMETRICS_Set( SM_CYICONSPACING, atoi( buf ) );
+                }
+                spi_loaded[spi_idx] = TRUE;
+            }
+
+            *(INT *)pvParam = GetSystemMetrics( SM_CYICONSPACING );
+        }
 	else
-	    *(INT *)pvParam = GetSystemMetrics( SM_CYICONSPACING );
+        {
+            char buf[10];
+
+            if (uiParam < 32) uiParam = 32;
+
+            sprintf(buf, "%u", uiParam);
+            if (SYSPARAMS_Save( SPI_ICONVERTICALSPACING_REGKEY,
+                                SPI_ICONVERTICALSPACING_VALNAME,
+                                buf, fWinIni ))
+            {
+                SYSMETRICS_Set( SM_CYICONSPACING, uiParam );
+                spi_loaded[spi_idx] = TRUE;
+            }
+            else
+                ret = FALSE;
+        }
+        
 	break;
 
     case SPI_GETICONTITLEWRAP:			/*     25 */

@@ -184,10 +184,14 @@ void SYSMETRICS_Init(void)
 	(GetProfileIntA("Windows", "DoubleClickWidth", 4) + 1) & ~1;
     sysMetrics[SM_CYDOUBLECLK] =
 	(GetProfileIntA("Windows","DoubleClickHeight", 4) + 1) & ~1;
-    sysMetrics[SM_CXICONSPACING] =
-	GetProfileIntA("Desktop","IconSpacing", 75);
-    sysMetrics[SM_CYICONSPACING] =
-	GetProfileIntA("Desktop", "IconVerticalSpacing", 75);
+
+    sysMetrics[SM_CXICONSPACING] = 75;
+    SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0,
+                           &sysMetrics[SM_CXICONSPACING], 0 );
+    sysMetrics[SM_CYICONSPACING] = 75;
+    SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0,
+                           &sysMetrics[SM_CYICONSPACING], 0 );
+
     sysMetrics[SM_MENUDROPALIGNMENT] =
 	GetProfileIntA("Windows", "MenuDropAlignment", 0);
     sysMetrics[SM_PENWINDOWS] = 0;
@@ -249,7 +253,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
 
-    SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], FALSE );
+    SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], 0 );
 
     if (hkey) RegCloseKey (hkey);
     DeleteDC( hdc );
