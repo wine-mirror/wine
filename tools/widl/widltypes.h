@@ -26,6 +26,7 @@
 #include "wine/rpcfc.h"
 
 typedef struct _attr_t attr_t;
+typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
 typedef struct _typeref_t typeref_t;
 typedef struct _var_t var_t;
@@ -57,8 +58,27 @@ enum attr_type
     ATTR_POINTERDEFAULT,
     ATTR_POINTERTYPE,
     ATTR_STRING,
+    ATTR_UUID,
     ATTR_V1ENUM,
     ATTR_WIREMARSHAL,
+};
+
+enum expr_type
+{
+    EXPR_VOID,
+    EXPR_NUM,
+    EXPR_IDENTIFIER,
+    EXPR_NEG,
+    EXPR_PPTR,
+    EXPR_CAST,
+    EXPR_SHL,
+    EXPR_SHR,
+    EXPR_MUL,
+    EXPR_DIV,
+    EXPR_ADD,
+    EXPR_SUB,
+    EXPR_AND,
+    EXPR_OR,
 };
 
 struct _attr_t {
@@ -71,6 +91,18 @@ struct _attr_t {
   DECL_LINK(attr_t)
 };
 
+struct _expr_t {
+  enum expr_type type;
+  expr_t *ref;
+  union {
+    long lval;
+    char *sval;
+    expr_t *ext;
+  } u;
+  /* parser-internal */
+  DECL_LINK(expr_t)
+};
+
 struct _type_t {
   char *name;
   BYTE type;
@@ -79,7 +111,7 @@ struct _type_t {
   attr_t *attrs;
   func_t *funcs;
   var_t *fields;
-  int ignore, is_const;
+  int ignore, is_const, sign;
   int defined, written;
 
   /* parser-internal */
@@ -95,9 +127,12 @@ struct _typeref_t {
 struct _var_t {
   char *name;
   int ptr_level;
+  expr_t *array;
   type_t *type;
   char *tname;
   attr_t *attrs;
+  int has_val;
+  long lval;
 
   /* parser-internal */
   DECL_LINK(var_t)

@@ -53,13 +53,13 @@ int is_void(type_t *t, var_t *v)
   return 0;
 }
 
-static void write_pident(var_t *v)
+static void write_pident(FILE *h, var_t *v)
 {
   int c;
   for (c=0; c<v->ptr_level; c++) {
-    fprintf(header, "*");
+    fprintf(h, "*");
   }
-  if (v->name) fprintf(header, "%s", v->name);
+  if (v->name) fprintf(h, "%s", v->name);
 }
 
 void write_name(FILE *h, var_t *v)
@@ -72,22 +72,66 @@ char* get_name(var_t *v)
   return v->name;
 }
 
+static void write_array(FILE *h, expr_t *v)
+{
+  if (!v) return;
+  while (NEXT_LINK(v)) v = NEXT_LINK(v);
+  fprintf(h, "[");
+  while (v) {
+    if (v->type == EXPR_NUM)
+      fprintf(h, "%ld", v->u.lval); /* statically sized array */
+    else
+      fprintf(h, "1"); /* dynamically sized array */
+    if (PREV_LINK(v))
+      fprintf(h, ", ");
+    v = PREV_LINK(v);
+  }
+  fprintf(h, "]");
+}
+
+static void write_field(FILE *h, var_t *v)
+{
+  if (!v) return;
+  if (v->type) {
+    indent(0);
+    write_type(h, v->type, NULL, v->tname);
+    if (get_name(v)) {
+      fprintf(h, " ");
+      write_pident(h, v);
+    }
+    write_array(h, v->array);
+    fprintf(h, ";\n");
+  }
+}
+
 static void write_fields(FILE *h, var_t *v)
+{
+  var_t *first = v;
+  if (!v) return;
+  while (NEXT_LINK(v)) v = NEXT_LINK(v);
+  while (v) {
+    write_field(h, v);
+    if (v == first) break;
+    v = PREV_LINK(v);
+  }
+}
+
+static void write_enums(FILE *h, var_t *v)
 {
   if (!v) return;
   while (NEXT_LINK(v)) v = NEXT_LINK(v);
   while (v) {
-    if (v->type) {
+    if (get_name(v)) {
       indent(0);
-      write_type(h, v->type, NULL, v->tname);
-      if (get_name(v)) {
-        fprintf(header, " ");
-        write_pident(v);
-      }
-      fprintf(header, ";\n");
+      write_name(h, v);
+      if (v->has_val)
+        fprintf(h, " = %ld", v->lval);
     }
+    if (PREV_LINK(v))
+      fprintf(h, ",\n");
     v = PREV_LINK(v);
   }
+  fprintf(h, "\n");
 }
 
 void write_type(FILE *h, type_t *t, var_t *v, char *n)
@@ -98,24 +142,51 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
   else {
     if (t->is_const) fprintf(h, "const ");
     if (t->type) {
+      if (t->sign > 0) fprintf(h, "signed ");
+      else if (t->sign < 0) fprintf(h, "unsigned ");
       switch (t->type) {
       case RPC_FC_BYTE:
-        fprintf(h, "byte");
+        if (t->ref) fprintf(h, t->ref->name);
+        else fprintf(h, "byte");
         break;
       case RPC_FC_CHAR:
-        fprintf(h, "char");
+        if (t->ref) fprintf(h, t->ref->name);
+        else fprintf(h, "char");
+        break;
+      case RPC_FC_WCHAR:
+        fprintf(h, "wchar_t");
         break;
       case RPC_FC_USHORT:
-        fprintf(h, "unsigned ");
       case RPC_FC_SHORT:
         if (t->ref) fprintf(h, t->ref->name);
-        fprintf(h, "short");
+        else fprintf(h, "short");
         break;
       case RPC_FC_ULONG:
-        fprintf(h, "unsigned ");
       case RPC_FC_LONG:
         if (t->ref) fprintf(h, t->ref->name);
         else fprintf(h, "long");
+        break;
+      case RPC_FC_HYPER:
+        if (t->ref) fprintf(h, t->ref->name);
+        else fprintf(h, "__int64");
+        break;
+      case RPC_FC_FLOAT:
+        fprintf(h, "float");
+        break;
+      case RPC_FC_DOUBLE:
+        fprintf(h, "double");
+        break;
+      case RPC_FC_ENUM16:
+      case RPC_FC_ENUM32:
+        if (t->defined && !t->written) {
+          if (t->name) fprintf(h, "enum %s {\n", t->name);
+          else fprintf(h, "enum {\n");
+          indentation++;
+          write_enums(h, t->fields);
+          indent(-1);
+          fprintf(h, "}");
+        }
+        else fprintf(h, "enum %s", t->name);
         break;
       case RPC_FC_STRUCT:
         if (t->defined && !t->written) {
@@ -123,6 +194,24 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
           else fprintf(h, "struct {\n");
           indentation++;
           write_fields(h, t->fields);
+          indent(-1);
+          fprintf(h, "}");
+        }
+        else fprintf(h, "struct %s", t->name);
+        break;
+      case RPC_FC_ENCAPSULATED_UNION:
+        if (t->defined && !t->written) {
+          var_t *d = t->fields;
+          if (t->name) fprintf(h, "struct %s {\n", t->name);
+          else fprintf(h, "struct {\n");
+          indentation++;
+          write_field(h, d);
+          indent(0);
+          fprintf(h, "union {\n");
+          indentation++;
+          write_fields(h, NEXT_LINK(d));
+          indent(-1);
+          fprintf(h, "} u;\n");
           indent(-1);
           fprintf(h, "}");
         }
@@ -165,15 +254,24 @@ void write_typedef(type_t *type, var_t *names)
   write_type(header, type, NULL, tname);
   fprintf(header, " ");
   while (names) {
-    write_pident(names);
+    write_pident(header, names);
     if (PREV_LINK(names))
       fprintf(header, ", ");
     names = PREV_LINK(names);
   }
-  fprintf(header, ";\n");
+  fprintf(header, ";\n\n");
 }
 
 /********** INTERFACES **********/
+
+UUID *get_uuid(attr_t *a)
+{
+  while (a) {
+    if (a->type == ATTR_UUID) return a->u.pval;
+    a = NEXT_LINK(a);
+  }
+  return NULL;
+}
 
 int is_object(attr_t *a)
 {
@@ -364,10 +462,19 @@ static void write_method_proto(type_t *iface)
 
 void write_forward(type_t *iface)
 {
-  if (!iface->written) {
+  if (is_object(iface->attrs) && !iface->written) {
     fprintf(header, "typedef struct %s %s;\n", iface->name, iface->name);
     iface->written = TRUE;
   }
+}
+
+void write_guid(type_t *iface)
+{
+  UUID *uuid = get_uuid(iface->attrs);
+  if (!uuid) return;
+  fprintf(header, "DEFINE_GUID(IID_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
+          iface->name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1],
+          uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
 }
 
 void write_interface(type_t *iface)
@@ -386,18 +493,19 @@ void write_interface(type_t *iface)
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface\n", iface->name);
   fprintf(header, " */\n");
+  write_guid(iface);
   write_forward(iface);
-  if (iface->ref)
-    fprintf(header, "#define ICOM_INTERFACE %s\n", iface->name);
+  fprintf(header, "#define ICOM_INTERFACE %s\n", iface->name);
   write_method_def(iface);
   fprintf(header, "#define %s_IMETHODS \\\n", iface->name);
   if (iface->ref)
     fprintf(header, "    %s_IMETHODS \\\n", iface->ref->name);
   fprintf(header, "    %s_METHODS \\\n", iface->name);
-  if (iface->ref) {
+  if (iface->ref)
     fprintf(header, "ICOM_DEFINE(%s,%s)\n", iface->name, iface->ref->name);
-    fprintf(header, "#undef ICOM_INTERFACE\n");
-  }
+  else
+    fprintf(header, "ICOM_DEFINE1(%s)\n", iface->name);
+  fprintf(header, "#undef ICOM_INTERFACE\n");
   fprintf(header, "\n");
   write_method_macro(iface, iface->name);
   fprintf(header, "\n");

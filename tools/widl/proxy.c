@@ -302,12 +302,13 @@ void finish_proxy(void)
 {
   if_list *lcur = if_first;
   if_list *cur;
+  char *file_id = "XXX";
   int c;
 
   if (!lcur) return;
   while (NEXT_LINK(lcur)) lcur = NEXT_LINK(lcur);
 
-  fprintf(proxy, "const CInterfaceProxyVtbl* _XXX_ProxyVtblList[] = {\n");
+  fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] = {\n", file_id);
   cur = lcur;
   while (cur) {
     fprintf(proxy, "    (CInterfaceProxyVtbl*)&%sProxyVtbl,\n", cur->iface->name);
@@ -317,7 +318,7 @@ void finish_proxy(void)
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "const CInterfaceStubVtbl* _XXX_StubVtblList[] = {\n");
+  fprintf(proxy, "const CInterfaceStubVtbl* _%s_StubVtblList[] = {\n", file_id);
   cur = lcur;
   while (cur) {
     fprintf(proxy, "    (CInterfaceStubVtbl*)&%sStubVtbl,\n", cur->iface->name);
@@ -327,7 +328,7 @@ void finish_proxy(void)
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "const PCInterfaceName _XXX_InterfaceNamesList[] = {\n");
+  fprintf(proxy, "const PCInterfaceName _%s_InterfaceNamesList[] = {\n", file_id);
   cur = lcur;
   while (cur) {
     fprintf(proxy, "    \"%s\",\n", cur->iface->name);
@@ -337,14 +338,14 @@ void finish_proxy(void)
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "#define _XXX_CHECK_IID(n) IID_GENERIC_CHECK_IID(_XXX, pIID, n)\n");
+  fprintf(proxy, "#define _%s_CHECK_IID(n) IID_GENERIC_CHECK_IID(_XXX, pIID, n)\n", file_id);
   fprintf(proxy, "\n");
-  fprintf(proxy, "int __stdcall _XXX_IID_Lookup(const IID* pIID, int* pIndex)\n");
+  fprintf(proxy, "int __stdcall _%s_IID_Lookup(const IID* pIID, int* pIndex)\n", file_id);
   fprintf(proxy, "{\n");
   cur = lcur;
   c = 0;
   while (cur) {
-    fprintf(proxy, "    if (!_XXX_CHECK_IID(%d)) {\n", c);
+    fprintf(proxy, "    if (!_%s_CHECK_IID(%d)) {\n", file_id, c);
     fprintf(proxy, "        *pIndex = %d\n", c);
     fprintf(proxy, "        return 1;\n");
     fprintf(proxy, "    }\n");
@@ -355,12 +356,12 @@ void finish_proxy(void)
   fprintf(proxy, "}\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "const ExtendedProxyFileInfo XXX_ProxyFileInfo = {\n");
-  fprintf(proxy, "    (PCInterfaceProxyVtblList*)&_XXX_ProxyVtblList,\n");
-  fprintf(proxy, "    (PCInterfaceStubVtblList*)&_XXX_StubVtblList,\n");
-  fprintf(proxy, "    (const PCInterfaceName*)&_XXX_InterfaceNamesList,\n");
+  fprintf(proxy, "const ExtendedProxyFileInfo %s_ProxyFileInfo = {\n", file_id);
+  fprintf(proxy, "    (PCInterfaceProxyVtblList*)&_%s_ProxyVtblList,\n", file_id);
+  fprintf(proxy, "    (PCInterfaceStubVtblList*)&_%s_StubVtblList,\n", file_id);
+  fprintf(proxy, "    (const PCInterfaceName*)&_%s_InterfaceNamesList,\n", file_id);
   fprintf(proxy, "    0,\n");
-  fprintf(proxy, "    &_XXX_IID_Lookup,\n");
+  fprintf(proxy, "    &_%s_IID_Lookup,\n", file_id);
   fprintf(proxy, "    %d,\n", c);
   fprintf(proxy, "    1\n");
   fprintf(proxy, "};\n");

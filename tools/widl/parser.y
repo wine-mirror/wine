@@ -64,11 +64,16 @@
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, DWORD val);
 static attr_t *make_attrp(enum attr_type type, void *val);
+static expr_t *make_expr(enum expr_type type);
+static expr_t *make_exprl(enum expr_type type, long val);
+static expr_t *make_exprs(enum expr_type type, char *val);
+static expr_t *make_expr1(enum expr_type type, expr_t *expr);
+static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
 static type_t *make_type(BYTE type, type_t *ref);
 static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
 static type_t *type_ref(typeref_t *ref);
-static void set_type(var_t *v, typeref_t *ref);
+static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
 static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
 
@@ -83,16 +88,19 @@ static type_t *get_typev(BYTE type, var_t *name, int t);
 #define tsSTRUCT 2
 #define tsUNION  3
 
+static type_t std_bool = { "boolean" };
 static type_t std_int = { "int" };
 
 %}
 %union {
 	attr_t *attr;
+	expr_t *expr;
 	type_t *type;
 	typeref_t *tref;
 	var_t *var;
 	func_t *func;
 	char *str;
+	UUID *uuid;
 	int num;
 }
 
@@ -145,14 +153,15 @@ static type_t std_int = { "int" };
 %token tPOINTERTYPE
 
 %type <attr> m_attributes attributes attrib_list attribute
-%type <type> inherit interface interfacedef
+%type <expr> aexprs aexpr_list aexpr array
+%type <type> inherit interface interfacedef lib_statements
 %type <type> base_type int_std
 %type <type> enumdef structdef typedef uniondef
 %type <tref> type
 %type <var> m_args no_args args arg
-%type <var> fields field
+%type <var> fields field s_field cases case enums enum_list enum constdef
 %type <var> m_ident t_ident ident p_ident pident pident_list
-%type <func> funcdef statements
+%type <func> funcdef int_statements
 %type <num> expr pointer_type
 
 %left ','
@@ -167,22 +176,38 @@ static type_t std_int = { "int" };
 
 %%
 
-statements:					{ $$ = NULL; }
-	| statements funcdef ';'		{ LINK($2, $1); $$ = $2; }
-	| statements statement
+input:	  lib_statements			{ /* FIXME */ }
+	;
+
+lib_statements:					{ $$ = NULL; }
+	| lib_statements import
+	| lib_statements interface ';'
+	| lib_statements interfacedef		{ LINK($2, $1); $$ = $2; }
+/*	| lib_statements librarydef (when implemented) */
+	| lib_statements statement
+	;
+
+/* we can't import from inside interfaces yet
+ * (it's not entirely clear how Microsoft manages that yet,
+ *  but in MIDL you can derive a class from a base class and then
+ *  import the base class definition from inside the interface,
+ *  which I don't quite know how to pull off in yacc/bison yet) */
+int_statements:					{ $$ = NULL; }
+	| int_statements funcdef ';'		{ LINK($2, $1); $$ = $2; }
+	| int_statements statement
 	;
 
 statement: ';'					{}
 	| constdef				{}
 	| cppquote				{}
-	| enumdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n"); } }
+	| enumdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	| externdef ';'				{}
-	| import				{}
-	| interface ';'				{}
-	| interfacedef				{}
-	| structdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n"); } }
+/*	| import				{} */
+/*	| interface ';'				{} */
+/*	| interfacedef				{} */
+	| structdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	| typedef ';'				{}
-	| uniondef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n"); } }
+	| uniondef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	;
 
 cppquote:	tCPPQUOTE '(' aSTRING ')'	{ if (!parse_only) fprintf(header, "%s\n", $3); }
@@ -204,40 +229,42 @@ args:	  arg
 
 /* split into two rules to get bison to resolve a tVOID conflict */
 arg:	  attributes type pident array		{ $$ = $3;
-						  set_type($$, $2);
-						  $$->attrs = $1; /* FIXME: array */
+						  set_type($$, $2, $4);
+						  $$->attrs = $1;
 						}
 	| type pident array			{ $$ = $2;
-						  set_type($$, $1); /* FIXME: array */
+						  set_type($$, $1, $3);
 						}
 	;
 
-aexprs:
+aexprs:						{ $$ = make_expr(EXPR_VOID); }
 	| aexpr_list
 	;
 
 aexpr_list: aexpr
-	| aexprs ',' aexpr
+	| aexpr_list ',' aexpr			{ LINK($3, $1); $$ = $3; }
 	;
 
-aexpr:	  aNUM					{}
-	| aIDENTIFIER				{}
-	| aexpr '|' aexpr
-	| aexpr '&' aexpr
-	| aexpr '+' aexpr
-	| aexpr '-' aexpr
-	| aexpr '*' aexpr
-	| aexpr '/' aexpr
-	| '-' aexpr %prec NEG
-	| '*' aexpr %prec PPTR
-	| '(' type ')' aexpr %prec CAST
-	| '(' aexpr ')'
-	| tSIZEOF '(' type ')'
+aexpr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
+	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
+	| aexpr '|' aexpr			{ $$ = make_expr2(EXPR_OR , $1, $3); }
+	| aexpr '&' aexpr			{ $$ = make_expr2(EXPR_AND, $1, $3); }
+	| aexpr '+' aexpr			{ $$ = make_expr2(EXPR_ADD, $1, $3); }
+	| aexpr '-' aexpr			{ $$ = make_expr2(EXPR_SUB, $1, $3); }
+	| aexpr '*' aexpr			{ $$ = make_expr2(EXPR_MUL, $1, $3); }
+	| aexpr '/' aexpr			{ $$ = make_expr2(EXPR_DIV, $1, $3); }
+	| aexpr SHL aexpr			{ $$ = make_expr2(EXPR_SHL, $1, $3); }
+	| aexpr SHR aexpr			{ $$ = make_expr2(EXPR_SHR, $1, $3); }
+	| '-' aexpr %prec NEG			{ $$ = make_expr1(EXPR_NEG, $2); }
+	| '*' aexpr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
+	| '(' type ')' aexpr %prec CAST		{ $$ = $4; /* FIXME */ free($2); }
+	| '(' aexpr ')'				{ $$ = $2; }
+	| tSIZEOF '(' type ')'			{ $$ = make_exprl(EXPR_NUM, 0); /* FIXME */ free($3); warning("can't do sizeof() yet\n"); }
 	;
 
-array:
-	| '[' aexprs ']'
-	| '[' '*' ']'
+array:						{ $$ = NULL; }
+	| '[' aexprs ']'			{ $$ = $2; }
+	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
 	;
 
 m_attributes:					{ $$ = NULL; }
@@ -272,7 +299,7 @@ attribute:
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
 	| tSWITCHIS '(' aexpr ')'		{ $$ = NULL; }
 	| tSWITCHTYPE '(' type ')'		{ $$ = NULL; }
-	| tUUID '(' aUUID ')'			{ $$ = NULL; }
+	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVERSION '(' version ')'		{ $$ = NULL; }
 	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, type_ref($3)); }
@@ -283,31 +310,39 @@ callconv:
 	| tSTDCALL
 	;
 
-cases:
-	| cases case
+cases:						{ $$ = NULL; }
+	| cases case				{ LINK($2, $1); $$ = $2; }
 	;
 
-case:	  tCASE expr ':' field
-	| tDEFAULT ':' field
+case:	  tCASE expr ':' field			{ $$ = $4; }
+	| tDEFAULT ':' field			{ $$ = $3; }
 	;
 
-constdef: tCONST type ident '=' expr
+constdef: tCONST type ident '=' expr		{ $$ = $3;
+						  set_type($$, $2, NULL);
+						  $$->has_val = TRUE;
+						  $$->lval = $5;
+						}
 	;
 
-enums:
-	| enum_list ','
+enums:						{ $$ = NULL; }
+	| enum_list ','				{ $$ = $1; }
 	| enum_list
 	;
 
 enum_list: enum
-	| enum_list ',' enum
+	| enum_list ',' enum			{ LINK($3, $1); $$ = $3; }
 	;
 
-enum:	  ident '=' expr			{}
-	| ident					{}
+enum:	  ident '=' expr			{ $$ = $1;
+						  $$->has_val = TRUE;
+						  $$->lval = $3;
+						}
+	| ident					{ $$ = $1; }
 	;
 
-enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_SHORT /* FIXME */, $2, tsENUM);
+enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM);
+						  $$->fields = $4;
 						  $$->defined = TRUE;
 						}
 	;
@@ -317,11 +352,12 @@ expr_list: expr					{}
 	;
 
 expr:	  aNUM
-	| aIDENTIFIER				{}
-	| expr '|' expr				{}
-	| expr SHL expr				{}
-	| expr SHR expr				{}
-	| '-' expr %prec NEG			{}
+	| aIDENTIFIER				{ $$ = 0; /* FIXME */ }
+	| expr '|' expr				{ $$ = $1 | $3; }
+	| expr '&' expr				{ $$ = $1 & $3; }
+	| expr SHL expr				{ $$ = $1 << $3; }
+	| expr SHR expr				{ $$ = $1 >> $3; }
+	| '-' expr %prec NEG			{ $$ = -$2; }
 	;
 
 externdef: tEXTERN tCONST type ident
@@ -331,15 +367,18 @@ fields:						{ $$ = NULL; }
 	| fields field				{ LINK($2, $1); $$ = $2; }
 	;
 
-field:	  m_attributes type pident array ';'	{ $$ = $3; set_type($$, $2); $$->attrs = $1; /* FIXME: array */ }
+field:	  s_field ';'				{ $$ = $1; }
 	| m_attributes uniondef ';'		{ $$ = make_var(NULL); $$->type = $2; $$->attrs = $1; }
 	| attributes ';'			{ $$ = make_var(NULL); $$->attrs = $1; }
 	| ';'					{ $$ = NULL; }
 	;
 
+s_field:  m_attributes type pident array	{ $$ = $3; set_type($$, $2, $4); $$->attrs = $1; }
+	;
+
 funcdef:
 	  m_attributes type callconv pident
-	  '(' m_args ')'			{ set_type($4, $2);
+	  '(' m_args ')'			{ set_type($4, $2, NULL);
 						  $4->attrs = $1;
 						  $$ = make_func($4, $6);
 						}
@@ -358,15 +397,20 @@ ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 	;
 
 base_type: tBYTE				{ $$ = make_type(RPC_FC_BYTE, NULL); }
-	| tCHAR					{ $$ = make_type(RPC_FC_CHAR, NULL); }
-	| tUNSIGNED tCHAR			{ $$ = make_type(RPC_FC_CHAR, NULL); }
 	| tWCHAR				{ $$ = make_type(RPC_FC_WCHAR, NULL); }
 	| int_std
-	| tSIGNED int_std			{ $$ = $2; /* FIXME */ }
-	| tUNSIGNED int_std			{ $$ = $2; /* FIXME */ }
+	| tSIGNED int_std			{ $$ = $2; $$->sign = 1; }
+	| tUNSIGNED int_std			{ $$ = $2; $$->sign = -1;
+						  switch ($$->type) {
+						  case RPC_FC_SMALL: $$->type = RPC_FC_USMALL; break;
+						  case RPC_FC_SHORT: $$->type = RPC_FC_USHORT; break;
+						  case RPC_FC_LONG:  $$->type = RPC_FC_ULONG;  break;
+						  default: break;
+						  }
+						}
 	| tFLOAT				{ $$ = make_type(RPC_FC_FLOAT, NULL); }
 	| tDOUBLE				{ $$ = make_type(RPC_FC_DOUBLE, NULL); }
-	| tBOOLEAN				{ $$ = make_type(RPC_FC_BYTE, NULL); /* ? */ }
+	| tBOOLEAN				{ $$ = make_type(RPC_FC_BYTE, &std_bool); /* ? */ }
 	;
 
 m_int:
@@ -378,6 +422,7 @@ int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 	| tLONG m_int				{ $$ = make_type(RPC_FC_LONG, NULL); }
 	| tHYPER m_int				{ $$ = make_type(RPC_FC_HYPER, NULL); }
 	| tINT64				{ $$ = make_type(RPC_FC_HYPER, NULL); }
+	| tCHAR					{ $$ = make_type(RPC_FC_CHAR, NULL); }
 	;
 
 inherit:					{ $$ = NULL; }
@@ -389,7 +434,7 @@ interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); if (!parse
 	;
 
 interfacedef: attributes interface inherit
-	  '{' statements '}'			{ $$ = $2;
+	  '{' int_statements '}'		{ $$ = $2;
 						  if ($$->defined) yyerror("multiple definition error\n");
 						  $$->ref = $3;
 						  $$->attrs = $1;
@@ -400,7 +445,7 @@ interfacedef: attributes interface inherit
 	;
 
 p_ident:  '*' pident %prec PPTR			{ $$ = $2; $$->ptr_level++; }
-	| tCONST p_ident			{ $$ = $2; }
+	| tCONST p_ident			{ $$ = $2; /* FIXME */ }
 	;
 
 pident:	  ident
@@ -451,8 +496,9 @@ uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATE
 						  $$->defined = TRUE;
 						}
 	| tUNION t_ident
-	  tSWITCH '(' type ident ')'
+	  tSWITCH '(' s_field ')'
 	  m_ident '{' cases '}'			{ $$ = get_typev(RPC_FC_ENCAPSULATED_UNION, $2, tsUNION);
+						  LINK($5, $9); $$->fields = $5;
 						  $$->defined = TRUE;
 						}
 	;
@@ -469,6 +515,7 @@ static attr_t *make_attr(enum attr_type type)
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
   a->u.ival = 0;
+  INIT_LINK(a);
   return a;
 }
 
@@ -477,6 +524,7 @@ static attr_t *make_attrv(enum attr_type type, DWORD val)
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
   a->u.ival = val;
+  INIT_LINK(a);
   return a;
 }
 
@@ -485,7 +533,109 @@ static attr_t *make_attrp(enum attr_type type, void *val)
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
   a->u.pval = val;
+  INIT_LINK(a);
   return a;
+}
+
+static expr_t *make_expr(enum expr_type type)
+{
+  expr_t *e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = NULL;
+  e->u.lval = 0;
+  INIT_LINK(e);
+  return e;
+}
+
+static expr_t *make_exprl(enum expr_type type, long val)
+{
+  expr_t *e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = NULL;
+  e->u.lval = val;
+  INIT_LINK(e);
+  return e;
+}
+
+static expr_t *make_exprs(enum expr_type type, char *val)
+{
+  expr_t *e = xmalloc(sizeof(expr_t));
+  /* FIXME: if type is EXPR_IDENTIFIER, we could check for match against const
+   * declaration, and change to appropriate type and value if so */
+  e->type = type;
+  e->ref = NULL;
+  e->u.sval = val;
+  INIT_LINK(e);
+  return e;
+}
+
+static expr_t *make_expr1(enum expr_type type, expr_t *expr)
+{
+  expr_t *e;
+  /* check for compile-time optimization */
+  if (expr->type == EXPR_NUM) {
+    switch (type) {
+    case EXPR_NEG:
+      expr->u.lval = -expr->u.lval;
+      return expr;
+    default:
+    }
+  }
+  e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = expr;
+  e->u.lval = 0;
+  INIT_LINK(e);
+  return e;
+}
+
+static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
+{
+  expr_t *e;
+  /* check for compile-time optimization */
+  if (expr1->type == EXPR_NUM && expr2->type == EXPR_NUM) {
+    switch (type) {
+    case EXPR_ADD:
+      expr1->u.lval += expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_SUB:
+      expr1->u.lval -= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_MUL:
+      expr1->u.lval *= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_DIV:
+      expr1->u.lval /= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_OR:
+      expr1->u.lval |= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_AND:
+      expr1->u.lval &= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_SHL:
+      expr1->u.lval <<= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    case EXPR_SHR:
+      expr1->u.lval >>= expr2->u.lval;
+      free(expr2);
+      return expr1;
+    default:
+    }
+  }
+  e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = expr1;
+  e->u.ext = expr2;
+  INIT_LINK(e);
+  return e;
 }
 
 static type_t *make_type(BYTE type, type_t *ref)
@@ -500,6 +650,7 @@ static type_t *make_type(BYTE type, type_t *ref)
   t->fields = NULL;
   t->ignore = parse_only;
   t->is_const = FALSE;
+  t->sign = 0;
   t->defined = FALSE;
   t->written = FALSE;
   INIT_LINK(t);
@@ -536,12 +687,13 @@ static type_t *type_ref(typeref_t *ref)
   return t;
 }
 
-static void set_type(var_t *v, typeref_t *ref)
+static void set_type(var_t *v, typeref_t *ref, expr_t *arr)
 {
   v->type = ref->ref;
   v->tname = ref->name;
   ref->name = NULL;
   free(ref);
+  v->array = arr;
 }
 
 static var_t *make_var(char *name)
@@ -552,6 +704,9 @@ static var_t *make_var(char *name)
   v->type = NULL;
   v->tname = NULL;
   v->attrs = NULL;
+  v->array = NULL;
+  v->has_val = FALSE;
+  v->lval = 0;
   INIT_LINK(v);
   return v;
 }
@@ -574,7 +729,7 @@ struct rtype {
   struct rtype *next;
 };
 
-struct rtype *first;
+struct rtype *first_type;
 
 static type_t *reg_type(type_t *type, char *name, int t)
 {
@@ -587,8 +742,8 @@ static type_t *reg_type(type_t *type, char *name, int t)
   nt->name = name;
   nt->type = type;
   nt->t = t;
-  nt->next = first;
-  first = nt;
+  nt->next = first_type;
+  first_type = nt;
   return type;
 }
 
@@ -623,7 +778,7 @@ static type_t *reg_types(type_t *type, var_t *names, int t)
 
 static type_t *find_type(char *name, int t)
 {
-  struct rtype *cur = first;
+  struct rtype *cur = first_type;
   while (cur && (cur->t != t || strcmp(cur->name, name)))
     cur = cur->next;
   if (!cur) {
@@ -642,7 +797,7 @@ static type_t *find_type2(char *name, int t)
 
 int is_type(const char *name)
 {
-  struct rtype *cur = first;
+  struct rtype *cur = first_type;
   while (cur && (cur->t || strcmp(cur->name, name)))
     cur = cur->next;
   if (cur) return TRUE;
@@ -654,7 +809,7 @@ static type_t *get_type(BYTE type, char *name, int t)
   struct rtype *cur = NULL;
   type_t *tp;
   if (name) {
-    cur = first;
+    cur = first_type;
     while (cur && (cur->t != t || strcmp(cur->name, name)))
       cur = cur->next;
   }
