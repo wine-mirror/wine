@@ -162,7 +162,7 @@ LONG OSS_WaveInit(void)
     ioctl(audio, SNDCTL_DSP_RESET, 0);
 
     /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The name have to match in order the program to work 
+     * for MM drivers. The names have to match in order for the program to work 
      * (e.g. MS win9x mplayer.exe)
      */
 #ifdef EMULATE_SB16

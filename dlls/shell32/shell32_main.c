@@ -323,8 +323,8 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
 /*************************************************************************
  * ExtractIconA				[SHELL32.133]
  *
- * fixme
- *  is the filename is not a file return 1
+ * FIXME
+ *  if the filename is not a file return 1
  */
 HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 	UINT nIconIndex )

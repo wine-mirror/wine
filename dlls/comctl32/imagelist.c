@@ -18,7 +18,7 @@
  *  Comments:
  *    - ImageList_Draw, ImageList_DrawEx and ImageList_GetIcon use
  *      ImageList_DrawIndirect. Since ImageList_DrawIndirect is still
- *      partially imlemented, the functions mentioned above will be 
+ *      partially implemented, the functions mentioned above will be 
  *      limited in functionality too.
  */
 

@@ -612,7 +612,7 @@ static ULONG WINAPI IShellFolder_fnRelease(IShellFolder2 * iface)
 *  ULONG*        pdwAttributes   //[out] items attributes
 *
 * NOTES
-*  every folder trys to parse only it's own (the leftmost) pidl and creates a 
+*  every folder tries to parse only its own (the leftmost) pidl and creates a 
 *  subfolder to evaluate the remaining parts
 *  now we can parse into namespaces implemented by shell extensions
 *

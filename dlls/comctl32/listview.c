@@ -4679,7 +4679,7 @@ static LRESULT LISTVIEW_GetBkColor(HWND hwnd)
  *
  * RETURN:
  *   SUCCESS : TRUE
- *   FAILURE : FALSE`
+ *   FAILURE : FALSE
  */
 /* static LRESULT LISTVIEW_GetBkImage(HWND hwnd, LPLVBKIMAGE lpBkImage)   */
 /* {   */
@@ -7768,7 +7768,7 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT : scroll code
- * [I] SHORT : current scroll position if scroll code is SB_THIMBPOSITION 
+ * [I] SHORT : current scroll position if scroll code is SB_THUMBPOSITION 
  *             or SB_THUMBTRACK.
  * [I] HWND : scrollbar control window handle
  *

@@ -559,7 +559,7 @@ InitCommonControls (void)
  *     Failure: FALSE
  *
  * NOTES
- *     Only the additinal common controls are registered by this function.
+ *     Only the additional common controls are registered by this function.
  *     The Win95 controls are registered at the DLL's initialization.
  */
 

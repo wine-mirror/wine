@@ -856,7 +856,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
  *           RegQueryValueExA   [ADVAPI32.157]
  *
  * NOTES:
- * the documentation is wrong: if the buffer is to small it remains untouched 
+ * the documentation is wrong: if the buffer is too small it remains untouched 
  */
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
                                LPBYTE data, LPDWORD count )

@@ -37,6 +37,7 @@ static struct tagDllOverride {
 	{"kernel32,gdi32,user32",	"builtin"},
 	{"krnl386,gdi,user",		"builtin"},
 	{"toolhelp",			"builtin"},
+	{"windebug",			"native,builtin"},
 	{"system,display",		"builtin"},
 	{"w32skrnl,wow32",		"builtin"},
 	{"advapi32,crtdll,ntdll",	"builtin,native"},
@@ -49,8 +50,7 @@ static struct tagDllOverride {
 	{"shfolder",                    "builtin,native"},
 	{"comctl32,commctrl",		"builtin,native"},
 	/* network */
-	{"wsock32,winsock",		"builtin"},
-	{"ws2_32",			"builtin"},
+	{"wsock32,ws2_32,winsock",	"builtin"},
         {"icmp",                        "builtin"},
 	/* multimedia */
 	{"ddraw,dinput,dsound",		"builtin,native"},
@@ -61,9 +61,8 @@ static struct tagDllOverride {
 	{"mciavi.drv,mcianim.drv",	"native,builtin"},
 	{"msacm.drv,midimap.drv",       "builtin,native"},
 	{"opengl32",                    "builtin,native"},
-	/* we have to use libglide2x.so instead of glide2x.dll ... */
-	{"glide2x",			"so,native"},
-	{"glide3x",			"so,native"},
+	/* we have to use libglideXx.so instead of glideXx.dll ... */
+	{"glide2x,glide3x",		"so,native"},
 	/* other stuff */
 	{"mpr,winspool.drv",		"builtin,native"},
 	{"wnaspi32,winaspi",		"builtin"},
