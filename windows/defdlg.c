@@ -119,8 +119,10 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
 static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
                                    HWND hwndNew )
 {
+    DWORD dlgcode;
     if (hwndNew &&
-        !(SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 ) & DLGC_UNDEFPUSHBUTTON))
+        !((dlgcode=SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 )) 
+            & (DLGC_UNDEFPUSHBUTTON | DLGC_BUTTON)))
         return FALSE;  /* Destination is not a push button */
     
     if (dlgInfo->idResult)  /* There's already a default pushbutton */
@@ -131,7 +133,8 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
     }
     if (hwndNew)
     {
-        SendMessageA( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+        if(dlgcode==DLGC_UNDEFPUSHBUTTON)
+            SendMessageA( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
         dlgInfo->idResult = GetDlgCtrlID( hwndNew );
     }
     else dlgInfo->idResult = 0;
