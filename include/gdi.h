@@ -483,6 +483,7 @@ extern DWORD WineEngGetGlyphOutline(GdiFont, UINT glyph, UINT format,
 				    LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
 				    const MAT2*);
 extern UINT WineEngGetOutlineTextMetrics(GdiFont, UINT, LPOUTLINETEXTMETRICW);
+extern UINT WineEngGetTextCharsetInfo(GdiFont font, LPFONTSIGNATURE fs, DWORD flags);
 extern BOOL WineEngGetTextExtentPoint(GdiFont, LPCWSTR, INT, LPSIZE);
 extern BOOL WineEngGetTextExtentPointI(GdiFont, const WORD *, INT, LPSIZE);
 extern INT  WineEngGetTextFace(GdiFont, INT, LPWSTR);

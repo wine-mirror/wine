@@ -2235,3 +2235,33 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
     return WineEngRemoveFontResourceEx(str, fl, pdv);
 }
+
+/***********************************************************************
+ *           GetTextCharset    (GDI32.@)
+ */
+UINT WINAPI GetTextCharset(HDC hdc)
+{
+    /* MSDN docs say this is equivalent */
+    return GetTextCharsetInfo(hdc, NULL, 0);
+}
+
+/***********************************************************************
+ *           GetTextCharsetInfo    (GDI32.@)
+ */
+UINT WINAPI GetTextCharsetInfo(HDC hdc, LPFONTSIGNATURE fs, DWORD flags)
+{
+    UINT ret = DEFAULT_CHARSET;
+    DC *dc = DC_GetDCPtr(hdc);
+
+    if (!dc) goto done;
+
+    if (dc->gdiFont)
+        ret = WineEngGetTextCharsetInfo(dc->gdiFont, fs, flags);
+
+    GDI_ReleaseObj(hdc);
+
+done:
+    if (ret == DEFAULT_CHARSET && fs)
+        memset(fs, 0, sizeof(FONTSIGNATURE));
+    return ret;
+}

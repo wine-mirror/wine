@@ -207,61 +207,6 @@ BOOL WINAPI TextOutW(HDC hdc, INT x, INT y, LPCWSTR str, INT count)
 
 
 /***********************************************************************
- * GetTextCharset [GDI32.@]  Gets character set for font in DC
- *
- * NOTES
- *    Should it return a UINT32 instead of an INT32?
- *    => YES, as GetTextCharsetInfo returns UINT32
- *
- * RETURNS
- *    Success: Character set identifier
- *    Failure: DEFAULT_CHARSET
- */
-UINT WINAPI GetTextCharset(
-    HDC hdc) /* [in] Handle to device context */
-{
-    /* MSDN docs say this is equivalent */
-    return GetTextCharsetInfo(hdc, NULL, 0);
-}
-
-
-/***********************************************************************
- * GetTextCharsetInfo [GDI32.@]  Gets character set for font
- *
- * NOTES
- *    Should csi be an LPFONTSIGNATURE instead of an LPCHARSETINFO?
- *    Should it return a UINT32 instead of an INT32?
- *    => YES and YES, from win32.hlp from Borland
- *
- *    This returns the actual charset selected by the driver rather than the
- *    value in lf.lfCharSet during CreateFont, to get that use
- *    GetObject(GetCurrentObject(...),...)
- *
- * RETURNS
- *    Success: Character set identifier
- *    Failure: DEFAULT_CHARSET
- */
-UINT WINAPI GetTextCharsetInfo(
-    HDC hdc,            /* [in]  Handle to device context */
-    LPFONTSIGNATURE fs, /* [out] Pointer to struct to receive data */
-    DWORD flags)        /* [in]  Reserved - must be 0 */
-{
-    UINT charSet = DEFAULT_CHARSET;
-    CHARSETINFO csinfo;
-    TEXTMETRICW tm;
-
-    if(!GetTextMetricsW(hdc, &tm)) return DEFAULT_CHARSET;
-    charSet = tm.tmCharSet;
-
-    if (fs != NULL) {
-      if (!TranslateCharsetInfo((LPDWORD)charSet, &csinfo, TCI_SRCCHARSET))
-           return DEFAULT_CHARSET;
-      memcpy(fs, &csinfo.fs, sizeof(FONTSIGNATURE));
-    }
-    return charSet;
-}
-
-/***********************************************************************
  *		PolyTextOutA (GDI32.@)
  *
  * Draw several Strings
