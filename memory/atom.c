@@ -690,7 +690,8 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
             req->local = local;
             if (!server_call( REQ_GET_ATOM_NAME ))
             {
-                len = WideCharToMultiByte( CP_ACP, 0, server_data_ptr(req), server_data_size(req),
+                len = WideCharToMultiByte( CP_ACP, 0, server_data_ptr(req),
+                                           server_data_size(req) / sizeof(WCHAR),
                                            buffer, count - 1, NULL, NULL );
                 if (!len) len = count; /* overflow */
                 else buffer[len] = 0;
