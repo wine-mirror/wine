@@ -93,6 +93,8 @@ static void set_dll_file_name( const char *name )
 {
     char *p;
 
+    if (*DLLFileName) return;
+
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     strcpy( DLLFileName, name );
@@ -132,6 +134,7 @@ static void do_exe_mode( const char *arg );
 static void do_module( const char *arg );
 static void do_heap( const char *arg );
 static void do_name( const char *arg );
+static void do_file( const char *arg );
 static void do_entry( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
@@ -164,6 +167,7 @@ static const struct option_descr option_table[] =
     { "-d",        1, do_dimport, "-d lib.dll       Delay-import the specified library" },
     { "-H",        1, do_heap,    "-H size          Set the heap size for a Win16 dll" },
     { "-N",        1, do_name,    "-N dllname       Set the DLL name (default: set from input file name)" },
+    { "-F",        1, do_file,    "-F dllfile       Set the DLL filename (default: set from input file name)" },
     { "-e",        1, do_entry,   "-e function      Set the DLL entry point function (default: DllMain)" },
     { "-r",        1, do_rsrc,    "-r rsrc.res      Load resources from rsrc.res" },
     { "-res",      1, do_rsrc,    NULL },  /* for backwards compatibility, will disappear */
@@ -263,6 +267,12 @@ static void do_name( const char *arg )
 {
     strncpy( DLLName, arg, sizeof(DLLName) );
     DLLName[sizeof(DLLName) - 1] = 0;
+}
+
+static void do_file( const char *arg )
+{
+    strncpy( DLLFileName, arg, sizeof(DLLFileName) );
+    DLLFileName[sizeof(DLLFileName) - 1] = 0;
 }
 
 static void do_entry( const char *arg )
