@@ -2923,6 +2923,52 @@ static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *infoPtr)
     return nItem;
 }
 
+/* used by the drawing code */
+typedef struct tagTEXTATTR
+{
+    int      bkMode;
+    COLORREF bkColor;
+    COLORREF fgColor;
+} TEXTATTR;
+
+/* helper function for the drawing code */
+static inline void set_text_attr(HDC hdc, TEXTATTR *ta)
+{
+    ta->bkMode = SetBkMode(hdc, ta->bkMode);
+    ta->bkColor = SetBkColor(hdc, ta->bkColor);
+    ta->fgColor = SetTextColor(hdc, ta->fgColor);
+}
+
+/* helper function for the drawing code */
+static void select_text_attr(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL isSelected, TEXTATTR *ta)
+{
+    ta->bkMode = OPAQUE;
+
+    if (isSelected && infoPtr->bFocus)
+    {
+	ta->bkColor = comctl32_color.clrHighlight;
+	ta->fgColor = comctl32_color.clrHighlightText;
+    }
+    else if (isSelected && (infoPtr->dwStyle & LVS_SHOWSELALWAYS))
+    {
+	ta->bkColor = comctl32_color.clr3dFace;
+	ta->fgColor = comctl32_color.clrBtnText;
+    }
+    else if ( (infoPtr->clrTextBk != CLR_DEFAULT) && (infoPtr->clrTextBk != CLR_NONE) )
+    {
+	ta->bkColor = infoPtr->clrTextBk;
+	ta->fgColor = infoPtr->clrText;
+    }
+    else
+    {
+	ta->bkMode  = TRANSPARENT;
+	ta->bkColor = GetBkColor(hdc);
+	ta->fgColor = infoPtr->clrText;
+    }
+
+    set_text_attr(hdc, ta);
+}
+
 /***
  * DESCRIPTION:
  * Erases the background of the given rectangle
@@ -3001,155 +3047,83 @@ static void LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem,
  */
 static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT rcItem)
 {
-  WCHAR szDispText[DISP_TEXT_SIZE];
-  INT nLabelWidth;
-  LVITEMW lvItem;
-  INT nMixMode;
-  DWORD dwBkColor;
-  DWORD dwTextColor,dwTextX;
-  BOOL bImage = FALSE;
-  INT   iBkMode = -1;
-  RECT* lprcFocus;
-  UINT  textoutOptions = ETO_OPAQUE | ETO_CLIPPED;
+    WCHAR szDispText[DISP_TEXT_SIZE];
+    INT nLabelWidth, imagePadding = 0;
+    RECT* lprcFocus, rcOrig = rcItem;
+    LVITEMW lvItem;
+    TEXTATTR ta;
 
-  TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
+    TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
-  /* get information needed for drawing the item */
-  lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
-  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
-  lvItem.iItem = nItem;
-  lvItem.iSubItem = 0;
-  lvItem.cchTextMax = DISP_TEXT_SIZE;
-  lvItem.pszText = szDispText;
-  *lvItem.pszText = '\0';
-  LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE);
-  TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
+    /* get information needed for drawing the item */
+    lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
+    lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = 0;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    lvItem.pszText = szDispText;
+    *lvItem.pszText = '\0';
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) return FALSE;
+    TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
-  /* now check if we need to update the focus rectangle */
-  lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
-  
-  /* do indent */
-  if (lvItem.iIndent>0 && infoPtr->iconSize.cx > 0)
-  {
+    /* now check if we need to update the focus rectangle */
+    lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
+    if (lprcFocus) SetRectEmpty(lprcFocus);
+
+    /* do indent */  
     rcItem.left += infoPtr->iconSize.cx * lvItem.iIndent;
-  }
 
-  /* state icons */
-  if (infoPtr->himlState != NULL)
-  {
-     UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-     if (uStateImage > 0)
-       ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcItem.left,
-                      rcItem.top, ILD_NORMAL);
-
-     rcItem.left += infoPtr->iconStateSize.cx;
-     bImage = TRUE;
-  }
-
-  /* small icons */
-  if (infoPtr->himlSmall != NULL)
-  {
-    if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) &&
-        (lvItem.iImage>=0))
+    /* state icons */
+    if (infoPtr->himlState)
     {
-      ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
-      ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcItem.left,
-                     rcItem.top, ILD_SELECTED);
-    }
-    else if (lvItem.iImage>=0)
-    {
-      ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
-      ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, rcItem.left,
-                     rcItem.top, ILD_NORMAL);
+        UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+        if (uStateImage)
+	{
+	     ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, 
+			    rcItem.left, rcItem.top, ILD_NORMAL);
+	}
+        rcItem.left += infoPtr->iconStateSize.cx;
+	imagePadding = IMAGE_PADDING;
     }
 
-    rcItem.left += infoPtr->iconSize.cx;
-    bImage = TRUE;
-  }
-
-  /* Don't bother painting item being edited */
-  if (infoPtr->bEditing && lprcFocus) 
-  {
-    SetRectEmpty(lprcFocus);
-    return FALSE;
-  }
-
-  if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus))
-  {
-    /* set item colors */
-    dwBkColor = SetBkColor(hdc, comctl32_color.clrHighlight);
-    dwTextColor = SetTextColor(hdc, comctl32_color.clrHighlightText);
-    /* set raster mode */
-    nMixMode = SetROP2(hdc, R2_XORPEN);
-  }
-  else if ((infoPtr->dwStyle & LVS_SHOWSELALWAYS) &&
-           (lvItem.state & LVIS_SELECTED) && (!infoPtr->bFocus))
-  {
-    dwBkColor = SetBkColor(hdc, comctl32_color.clr3dFace);
-    dwTextColor = SetTextColor(hdc, comctl32_color.clrBtnText);
-    /* set raster mode */
-    nMixMode = SetROP2(hdc, R2_COPYPEN);
-  }
-  else
-  {
-    /* set item colors */
-    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
+    /* small icons */
+    if (infoPtr->himlSmall)
     {
-      dwBkColor = GetBkColor(hdc);
-      iBkMode = SetBkMode(hdc, TRANSPARENT);
-      textoutOptions &= ~ETO_OPAQUE;
-    }
-    else
-    {
-      dwBkColor = SetBkColor(hdc, infoPtr->clrTextBk);
-      iBkMode = SetBkMode(hdc, OPAQUE);
+	if (lvItem.iImage >= 0)
+	{
+	    UINT mode = (lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ?
+		        ILD_SELECTED : ILD_NORMAL;
+	    ImageList_SetBkColor(infoPtr->himlSmall, CLR_NONE);
+	    ImageList_Draw(infoPtr->himlSmall, lvItem.iImage, hdc, 
+			   rcItem.left, rcItem.top, mode);
+	}
+        rcItem.left += infoPtr->iconSize.cx;
+	imagePadding = IMAGE_PADDING;
     }
 
-    dwTextColor = SetTextColor(hdc, infoPtr->clrText);
-    /* set raster mode */
-    nMixMode = SetROP2(hdc, R2_COPYPEN);
-  }
+    /* Don't bother painting item being edited */
+    if (infoPtr->bEditing && lprcFocus) 
+    	return FALSE;
 
-  nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
-  if (rcItem.left + nLabelWidth < rcItem.right)
-  {
+    select_text_attr(infoPtr, hdc, lvItem.state & LVIS_SELECTED, &ta);
+
+    nLabelWidth = LISTVIEW_GetStringWidthT(infoPtr, lvItem.pszText, TRUE);
+    rcItem.left += imagePadding;
     rcItem.right = rcItem.left + nLabelWidth + TRAILING_PADDING;
-    if (bImage)
-      rcItem.right += IMAGE_PADDING;
-  }
-
-  /* draw label */
-  dwTextX = rcItem.left + 1;
-  if (bImage)
-    dwTextX += IMAGE_PADDING;
-
-  /* compute the focus rectangle */
-  if(lprcFocus) 
-  {
+    if (rcItem.right > rcOrig.right) rcItem.right = rcOrig.right;
+    
     if (lvItem.pszText)
-      *lprcFocus = rcItem;
-    else 
-      SetRectEmpty(lprcFocus);
-  }
-  
-  if (lvItem.pszText)
-  {
-    TRACE("drawing text  rect=(%d,%d)-(%d,%d)\n",
-	  rcItem.left, rcItem.top, rcItem.right, rcItem.bottom);
-    ExtTextOutW(hdc, dwTextX, rcItem.top, textoutOptions,
-                &rcItem, lvItem.pszText, lstrlenW(lvItem.pszText), NULL);
-  }
+    {
+    	TRACE("drawing text=%s, in rect=%s\n", debugstr_w(lvItem.pszText), debugrect(&rcItem));
+	if(lprcFocus) *lprcFocus = rcItem;
+	if (lvItem.state & LVIS_SELECTED)
+	    ExtTextOutW(hdc, rcItem.left, rcItem.top, ETO_OPAQUE, &rcItem, 0, 0, 0);
+        DrawTextW(hdc, lvItem.pszText, -1, &rcItem, 
+	          DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CENTER);
+    }
 
-  if (nMixMode != 0)
-  {
-    SetROP2(hdc, R2_COPYPEN);
-    SetBkColor(hdc, dwBkColor);
-    SetTextColor(hdc, dwTextColor);
-    if (iBkMode != -1)
-      SetBkMode(hdc, iBkMode);
-  }
-
-  return lprcFocus != NULL;
+    set_text_attr(hdc, &ta);
+    return lprcFocus != NULL;
 }
 
 /***
@@ -3352,8 +3326,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     DWORD cditemmode = CDRF_DODEFAULT;
     LONG lStyle = infoPtr->dwStyle;
     UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
-    COLORREF oldBkClr, oldFgClr;
-    INT oldBkMode;
+    TEXTATTR tmpTa, oldTa;
     COLUMNCACHE *lpCols;
     LVCOLUMNW lvColumn;
     LVITEMW lvItem;
@@ -3422,9 +3395,9 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     nDrawPosY = infoPtr->rcList.top + (nItem - nTop) * infoPtr->nItemHeight;
 
     /* save dc values we're gonna trash while drawing */
-    oldBkMode = GetBkMode(hdc);
-    oldBkClr = GetBkColor(hdc);
-    oldFgClr = GetTextColor(hdc);
+    oldTa.bkMode = GetBkMode(hdc);
+    oldTa.bkColor = GetBkColor(hdc);
+    oldTa.fgColor = GetTextColor(hdc);
    
     /* iterate through the invalidated rows */ 
     for (; nItem < nLast; nItem++, nDrawPosY += infoPtr->nItemHeight)
@@ -3482,27 +3455,9 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	}
 
 	/* draw the background of the selection rectangle, if need be */
-	SetBkMode(hdc, OPAQUE);
+	select_text_attr(infoPtr, hdc, bFullSelected && (lvItem.state & LVIS_SELECTED), &tmpTa);
 	if (bFullSelected && (lvItem.state & LVIS_SELECTED))
-	{
-	    if (infoPtr->bFocus)
-	    {
-		SetBkColor(hdc, comctl32_color.clrHighlight);
-   		SetTextColor(hdc, comctl32_color.clrHighlightText);
-	    }
-	    else
-	    {
-		SetBkColor(hdc, comctl32_color.clr3dFace);
-		SetTextColor(hdc, comctl32_color.clrBtnText);
-	    }
-	    ExtTextOutW(hdc, rcFullSelect.left, rcFullSelect.top, ETO_CLIPPED | ETO_OPAQUE, &rcFullSelect, 0, 0, 0);
-	}
-	else
-	{
-	    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
-		SetBkMode(hdc, TRANSPARENT);
-	    SetTextColor(hdc, infoPtr->clrText);
-	}
+	    ExtTextOutW(hdc, rcFullSelect.left, rcFullSelect.top, ETO_OPAQUE, &rcFullSelect, 0, 0, 0);
 	    
 	/* iterate through the invalidated columns */
     	isFocused = FALSE;	    
@@ -3535,9 +3490,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     }
 
     /* cleanup the mess */
-    SetTextColor(hdc, oldFgClr);
-    SetBkColor(hdc, oldBkClr);
-    SetBkMode(hdc, oldBkMode);
+    set_text_attr(hdc, &oldTa);
     COMCTL32_Free(lpCols);
 }
 
