@@ -575,6 +575,14 @@ void WINAPI MZ_AllocDPMITask( void )
 }
 
 /***********************************************************************
+ *		MZ_RunInThread
+ */
+void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
+{
+    proc(arg);
+}
+
+/***********************************************************************
  *		MZ_Exit
  */
 void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
