@@ -355,7 +355,7 @@ typedef struct tagITypeLibImpl
 static struct ICOM_VTABLE(ITypeLib2) tlbvt;
 
 /* ITypeLib methods */
-static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib);
+static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib, DWORD dwTLBLength);
 
 /*======================= ITypeInfo implementation =======================*/
 
@@ -1107,7 +1107,10 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
 	  dwSignature = *((DWORD*) pBase);
 	  if ( dwSignature == MSFT_SIGNATURE)
 	  {
-	    *ppTypeLib = ITypeLib2_Constructor(pBase);
+            /* retrieve file size */
+            DWORD dwTLBLength = GetFileSize(hFile, NULL);
+
+	    *ppTypeLib = ITypeLib2_Constructor(pBase, dwTLBLength);
 	  }
 	  UnmapViewOfFile(pBase);
 	}
@@ -1130,12 +1133,14 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
           if (hGlobal)
           {
             LPVOID pBase = LockResource(hGlobal);
+            DWORD  dwTLBLength = SizeofResource(hinstDLL, hrsrc);
+            
             if (pBase)
             {
 	      /* try to load as incore resource */
 	      dwSignature = *((DWORD*) pBase);
 	      if ( dwSignature == MSFT_SIGNATURE)
-		  *ppTypeLib = ITypeLib2_Constructor(pBase);
+		  *ppTypeLib = ITypeLib2_Constructor(pBase, dwTLBLength);
 	      else
 	        FIXME("Header type magic 0x%08lx not supported.\n",dwSignature);
             }
@@ -1161,7 +1166,7 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
  *
  * loading a typelib from a in-memory image
  */
-static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib)
+static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib, DWORD dwTLBLength)
 {
     TLBContext cx;
     long lPSegDir;
@@ -1169,7 +1174,7 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib)
     TLBSegDir tlbSegDir;
     ITypeLibImpl * pTypeLibImpl;
 
-    TRACE("%p\n", pLib);
+    TRACE("%p, TLB length = %ld\n", pLib, dwTLBLength);
 
     pTypeLibImpl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ITypeLibImpl));
     if (!pTypeLibImpl) return NULL;
@@ -1182,7 +1187,8 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib)
     cx.oStart=0;
     cx.mapping = pLib;
     cx.pLibInfo = pTypeLibImpl;
-
+    cx.length = dwTLBLength;
+    
     /* read header */
     TLB_Read((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
     TRACE("header:\n");
@@ -1257,7 +1263,7 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib)
                 if(td[3] < 0)
                     V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lptdesc)= & stndTypeDesc[td[2]];
                 else
-                    V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lptdesc)= & pTypeLibImpl->pTypeDesc[td[3]/8];
+                    V_UNION(&(pTypeLibImpl->pTypeDesc[i]),lptdesc)= & pTypeLibImpl->pTypeDesc[td[2]/8];
             }
 	    else if(td[0] == VT_CARRAY)
             {
@@ -2013,7 +2019,7 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
     TLBVarDesc * pVDesc; 
     int i;
     TRACE("(%p) memid=0x%08lx Maxname=%d\n", This, memid, cMaxNames);
-    for(pFDesc=This->funclist; pFDesc->funcdesc.memid != memid && pFDesc; pFDesc=pFDesc->next);
+    for(pFDesc=This->funclist; pFDesc && pFDesc->funcdesc.memid != memid; pFDesc=pFDesc->next);
     if(pFDesc)
     {
       /* function found, now return function and parameter names */
@@ -2028,10 +2034,10 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
     }
     else
     {
-      for(pVDesc=This->varlist; pVDesc->vardesc.memid != memid && pVDesc; pVDesc=pVDesc->next);
+      for(pVDesc=This->varlist; pVDesc && pVDesc->vardesc.memid != memid; pVDesc=pVDesc->next);
       if(pVDesc)
       {
-        *rgBstrNames=TLB_DupAtoBstr(pFDesc->Name);
+        *rgBstrNames=TLB_DupAtoBstr(pVDesc->Name);
         *pcNames=1;
       }
       else
@@ -2081,6 +2087,12 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
 
     TRACE("(%p) index %d\n", This, index);
     dump_TypeInfo(This);
+    
+    if (!pIref)
+    {
+       *pRefType = 0;      
+       return S_OK;
+    }
 
     if(index==(UINT)-1)
     {
