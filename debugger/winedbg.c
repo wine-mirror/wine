@@ -33,6 +33,7 @@ int 		curr_frame = 0;
 static char*	DEBUG_LastCmdLine = NULL;
 
 static DBG_PROCESS* DEBUG_ProcessList = NULL;
+static int automatic_mode;
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
 void	DEBUG_Output(int chn, const char* buffer, int len)
@@ -519,6 +520,12 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 #endif
 
+    if (automatic_mode)
+    {
+        DEBUG_ExceptionProlog(is_debug, FALSE, rec->ExceptionCode);
+        return FALSE;  /* terminate execution */
+    }
+
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
 	DEBUG_interactiveP = TRUE;
 	while ((ret = DEBUG_Parser())) {
@@ -822,6 +829,29 @@ static	DWORD	DEBUG_MainLoop(void)
     return 0;
 }
 
+static DWORD DEBUG_AutoMode(void)
+{
+    DEBUG_EVENT de;
+    DWORD cont;
+    BOOL ret = TRUE;
+
+    DEBUG_Printf(DBG_CHN_MESG, " on pid %lx\n", DEBUG_CurrPid);
+
+    while (ret && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE))
+    {
+        ret = DEBUG_HandleDebugEvent(&de, &cont);
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
+    }
+    /* print some extra information */
+    DEBUG_Printf(DBG_CHN_MESG, "Modules:\n");
+    DEBUG_WalkModules();
+    DEBUG_Printf(DBG_CHN_MESG, "Threads:\n");
+    DEBUG_WalkThreads();
+
+    DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %lx\n", DEBUG_CurrPid);
+    return 0;
+}
+
 static	BOOL	DEBUG_Start(LPSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
@@ -874,6 +904,18 @@ int DEBUG_main(int argc, char** argv)
 
     /* Initialize internal vars (types must have been initialized before) */
     if (!DEBUG_IntVarsRW(TRUE)) return -1;
+
+    if (argc > 1 && !strcmp( argv[1], "--auto" ))
+    {
+        argc--;
+        argv++;
+        automatic_mode = 1;
+        /* force some internal variables */
+        DBG_IVAR(UseXTerm) = 0;
+        DBG_IVAR(BreakOnDllLoad) = 0;
+        DBG_IVAR(ConChannelMask) = 0;
+        DBG_IVAR(StdChannelMask) = DBG_CHN_MESG;
+    }
 
     /* keep it as a guiexe for now, so that Wine won't touch the Unix stdin, 
      * stdout and stderr streams
@@ -930,10 +972,17 @@ int DEBUG_main(int argc, char** argv)
 	DEBUG_LastCmdLine = cmdLine;
     }
 
-    retv = DEBUG_MainLoop();
-
-    /* saves modified variables */
-    DEBUG_IntVarsRW(FALSE);
+    if (automatic_mode)
+    {
+        retv = DEBUG_AutoMode();
+        /* don't save modified variables in auto mode */
+    }
+    else
+    {
+        retv = DEBUG_MainLoop();
+        /* saves modified variables */
+        DEBUG_IntVarsRW(FALSE);
+    }
 
  leave:
     return retv;
