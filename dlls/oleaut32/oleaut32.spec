@@ -51,7 +51,7 @@ import ole32.dll
 50 stdcall VarI2FromR4(long ptr) VarI2FromR4
 51 stdcall VarI2FromR8(double ptr) VarI2FromR8
 52 stdcall VarI2FromCy(double ptr) VarI2FromCy
-53 stdcall VarI2FromDate(long ptr) VarI2FromDate
+53 stdcall VarI2FromDate(double ptr) VarI2FromDate
 54 stdcall VarI2FromStr(wstr long long ptr) VarI2FromStr
 55 stub VarI2FromDisp
 56 stdcall VarI2FromBool(long ptr) VarI2FromBool
@@ -60,7 +60,7 @@ import ole32.dll
 60 stdcall VarI4FromR4(long ptr) VarI4FromR4
 61 stdcall VarI4FromR8(double ptr) VarI4FromR8
 62 stdcall VarI4FromCy(double ptr) VarI4FromCy
-63 stdcall VarI4FromDate(long ptr) VarI4FromDate
+63 stdcall VarI4FromDate(double ptr) VarI4FromDate
 64 stdcall VarI4FromStr(wstr long long ptr) VarI4FromStr
 65 stub VarI4FromDisp
 66 stdcall VarI4FromBool(long ptr) VarI4FromBool
@@ -69,7 +69,7 @@ import ole32.dll
 70 stdcall VarR4FromI4(long ptr) VarR4FromI4
 71 stdcall VarR4FromR8(double ptr) VarR4FromR8
 72 stdcall VarR4FromCy(double ptr) VarR4FromCy
-73 stdcall VarR4FromDate(long ptr) VarR4FromDate
+73 stdcall VarR4FromDate(double ptr) VarR4FromDate
 74 stdcall VarR4FromStr(wstr long long ptr) VarR4FromStr
 75 stub VarR4FromDisp
 76 stdcall VarR4FromBool(long ptr) VarR4FromBool
@@ -78,7 +78,7 @@ import ole32.dll
 80 stdcall VarR8FromI4(long ptr) VarR8FromI4
 81 stdcall VarR8FromR4(long ptr) VarR8FromR4
 82 stdcall VarR8FromCy(double ptr) VarR8FromCy
-83 stdcall VarR8FromDate(long ptr) VarR8FromDate
+83 stdcall VarR8FromDate(double ptr) VarR8FromDate
 84 stdcall VarR8FromStr(wstr long long ptr) VarR8FromStr
 85 stub VarR8FromDisp
 86 stdcall VarR8FromBool(long ptr) VarR8FromBool
@@ -106,7 +106,7 @@ import ole32.dll
 111 stdcall VarBstrFromR4(long long long ptr) VarBstrFromR4
 112 stdcall VarBstrFromR8(double long long ptr) VarBstrFromR8
 113 stdcall VarBstrFromCy(double long long ptr) VarBstrFromCy
-114 stdcall VarBstrFromDate(long long long ptr) VarBstrFromDate
+114 stdcall VarBstrFromDate(double long long ptr) VarBstrFromDate
 115 stub VarBstrFromDisp
 116 stdcall VarBstrFromBool(long long long ptr) VarBstrFromBool
 118 stdcall VarBoolFromUI1(long ptr) VarBoolFromUI1
@@ -114,7 +114,7 @@ import ole32.dll
 120 stdcall VarBoolFromI4(long ptr) VarBoolFromI4
 121 stdcall VarBoolFromR4(long ptr) VarBoolFromR4
 122 stdcall VarBoolFromR8(double ptr) VarBoolFromR8
-123 stdcall VarBoolFromDate(long ptr) VarBoolFromDate
+123 stdcall VarBoolFromDate(double ptr) VarBoolFromDate
 124 stdcall VarBoolFromCy(double ptr) VarBoolFromCy
 125 stdcall VarBoolFromStr(wstr long long ptr) VarBoolFromStr
 126 stub VarBoolFromDisp
@@ -123,7 +123,7 @@ import ole32.dll
 132 stdcall VarUI1FromR4(long ptr) VarUI1FromR4
 133 stdcall VarUI1FromR8(double ptr) VarUI1FromR8
 134 stdcall VarUI1FromCy(double ptr) VarUI1FromCy
-135 stdcall VarUI1FromDate(long ptr) VarUI1FromDate
+135 stdcall VarUI1FromDate(double ptr) VarUI1FromDate
 136 stdcall VarUI1FromStr(wstr long long ptr) VarUI1FromStr
 137 stub VarUI1FromDisp
 138 stdcall VarUI1FromBool(long ptr) VarUI1FromBool
@@ -203,7 +203,7 @@ import ole32.dll
 246 stdcall VarI1FromI4(long ptr) VarI1FromI4
 247 stdcall VarI1FromR4(long ptr) VarI1FromR4
 248 stdcall VarI1FromR8(double ptr) VarI1FromR8
-249 stdcall VarI1FromDate(long ptr) VarI1FromDate
+249 stdcall VarI1FromDate(double ptr) VarI1FromDate
 250 stdcall VarI1FromCy(double ptr) VarI1FromCy
 251 stdcall VarI1FromStr(wstr long long ptr) VarI1FromStr
 252 stub VarI1FromDisp
@@ -216,7 +216,7 @@ import ole32.dll
 259 stdcall VarUI2FromI4(long ptr) VarUI2FromI4
 260 stdcall VarUI2FromR4(long ptr) VarUI2FromR4
 261 stdcall VarUI2FromR8(double ptr) VarUI2FromR8
-262 stdcall VarUI2FromDate(long ptr) VarUI2FromDate
+262 stdcall VarUI2FromDate(double ptr) VarUI2FromDate
 263 stdcall VarUI2FromCy(double ptr) VarUI2FromCy
 264 stdcall VarUI2FromStr(wstr long long ptr) VarUI2FromStr
 265 stub VarUI2FromDisp
@@ -229,7 +229,7 @@ import ole32.dll
 272 stdcall VarUI4FromI4(long ptr) VarUI4FromI4
 273 stdcall VarUI4FromR4(long ptr) VarUI4FromR4
 274 stdcall VarUI4FromR8(double ptr) VarUI4FromR8
-275 stdcall VarUI4FromDate(long ptr) VarUI4FromDate
+275 stdcall VarUI4FromDate(double ptr) VarUI4FromDate
 276 stdcall VarUI4FromCy(double ptr) VarUI4FromCy
 277 stdcall VarUI4FromStr(wstr long long ptr) VarUI4FromStr
 278 stub VarUI4FromDisp
