@@ -748,7 +748,7 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
 
-    if( lpDatabaseName )
+    if( lpDatabaseName && lpDatabaseName[0] )
     {
         if( strcmpiW( lpDatabaseName, SERVICES_ACTIVE_DATABASEW ) == 0 )
         {
