@@ -1552,8 +1552,12 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
        * we can pass TRUE instead of FALSE to CoerceDIBSection(dcDst...),
        * which may avoid a copy in some situations */
     }
+
     sDst = X11DRV_LockDIBSection( physDevDst, DIB_Status_None, FALSE );
-    sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None, FALSE );
+    if (physDevDst != physDevSrc)
+        sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None, FALSE );
+    else
+        sSrc = sDst;
 
     if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY) &&
         (physDevSrc->depth == physDevDst->depth))
