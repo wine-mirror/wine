@@ -50,7 +50,11 @@ static void* BSTR_GetAddr(BSTR16 in)
  */
 BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 {
-	BSTR16 out=BSTR_AllocBytes(strlen(in)+1);
+	BSTR16 out;
+    
+	if (!in) return 0;
+    
+	out = BSTR_AllocBytes(strlen(in)+1);
 	if(!out)return 0;
 	strcpy(BSTR_GetAddr(out),in);
 	return out;
@@ -61,6 +65,8 @@ BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
  */
 BSTR WINAPI SysAllocString(LPCOLESTR in)
 {
+    if (!in) return 0;
+    
     /* Delegate this to the SysAllocStringLen32 method. */
     return SysAllocStringLen(in, lstrlenW(in));
 }
