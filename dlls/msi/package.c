@@ -101,7 +101,7 @@ static const UINT clone_properties(MSIDATABASE *db)
        '`','_','P','r','o','p','e','r','t','y','`',' ',
        '(','`','_','P','r','o','p','e','r','t','y','`',',',
        '`','V','a','l','u','e','`',')',' ',
-       'V','A','L','U','E','S',' ','(','?',')',0};
+       'V','A','L','U','E','S',' ','(','?',',','?',')',0};
 
     /* create the temporary properties table */
     rc = MSI_DatabaseOpenViewW(db, CreateSql, &view);
@@ -664,7 +664,7 @@ UINT MSI_SetPropertyW( MSIPACKAGE *package, LPCWSTR szName, LPCWSTR szValue)
      {'I','N','S','E','R','T',' ','i','n','t','o',' ','`','_','P','r','o','p'
 ,'e','r','t','y','`',' ','(','`','_','P','r','o','p','e','r','t','y','`'
 ,',','`','V','a','l','u','e','`',')',' ','V','A','L','U','E','S'
-,' ','(','?',')',0};
+,' ','(','?',',','?',')',0};
     static const WCHAR Update[]=
      {'U','P','D','A','T','E',' ','_','P','r','o','p','e'
 ,'r','t','y',' ','s','e','t',' ','`','V','a','l','u','e','`',' ','='
