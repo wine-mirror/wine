@@ -312,7 +312,7 @@ extern void DEBUG_Exit( DWORD );
   /* debugger/debug.l */
 extern void DEBUG_FlushSymbols(void);
 extern char*DEBUG_MakeSymbol(const char*);
-extern int  DEBUG_ReadLine(const char* pfx, char* buffer, int size, int flush_sym, int keep_hist);
+extern int  DEBUG_ReadLine(const char* pfx, char* buffer, int size);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);

@@ -427,7 +427,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
       }
       do {
 	  i = 0;
-	  if (DEBUG_ReadLine("=> ", buffer, sizeof(buffer), FALSE, FALSE))
+	  if (DEBUG_ReadLine("=> ", buffer, sizeof(buffer)))
 	  {
 	      i = atoi(buffer);
 	      if (i < 1 || i > num)

@@ -28,8 +28,11 @@
 #include "y.tab.h"
 
 #undef YY_INPUT
+
+static int DEBUG_FetchFromLine(const char* pfx, char* buf, int size);
+
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = DEBUG_ReadLine("Wine-dbg>", buf, max_size, TRUE, TRUE)) <= 0 ) \
+	if ( (result = DEBUG_FetchFromLine("Wine-dbg>", buf, max_size)) <= 0 ) \
 	    YY_FATAL_ERROR( "ReadLine() in flex scanner failed" );
 
 
@@ -188,95 +191,120 @@ int yywrap(void) { return 1; }
 
 
 /* Strip whitespace from the start and end of STRING. */
-static void stripwhite (char *string)
+static void stripwhite(char *string)
 {
-  register int i = 0;
+    int         i, last;
 
-  while (whitespace (string[i]))
-    i++;
+    for (i = 0; whitespace(string[i]); i++);
+    if (i) strcpy(string, string + i);
 
-  if (i)
-    strcpy (string, string + i);
+    last = i = strlen(string) - 1;
+    if (string[last] == '\n') i--;
 
-  i = strlen (string) - 1;
-
-  while (i > 0 && whitespace (string[i]))
-    i--;
-
-  string[++i] = '\0';
+    while (i > 0 && whitespace(string[i])) i--;
+    if (string[last] == '\n')
+        string[++i] = '\n';
+    string[++i] = '\0';
 }
 
-int DEBUG_ReadLine(const char* pfx, char * buf, int size, int flush_sym, int keep_hist)
+static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
 {
     char 	buf_line[256];
-    char*	ptr;
-    int 	len;
     DWORD	nread;
+    size_t      len;
 
-    for (;;)
+    /* as of today, console handles can be file handles... so better use file APIs rather than
+     * consoles
+     */
+    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), pfx, strlen(pfx), NULL, NULL);
+
+    len = 0;
+    do
     {
-        if (flush_sym) DEBUG_FlushSymbols();
-	/* as of today, console handles can be file handles... so better use file APIs rather than
-	 * consoles
-	 */
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), pfx, strlen(pfx), &nread, NULL);
-
-	if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf_line, sizeof(buf_line), &nread, NULL))
+	if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf_line, sizeof(buf_line) - 1, &nread, NULL))
 	    break;
-	/* FIXME: should be rewritten not to remove and then add the trailing '\n' */
-	if (nread > 0 && buf_line[nread - 1] == '\n') nread--;
-	buf_line[nread] = 0;
+	buf_line[nread] = '\0';
 
-        /* Remove leading and trailing whitespace from the line */
-        stripwhite (buf_line);
+        if (check_nl && len == 0 && nread == 1 && buf_line[0] == '\n')
+            return 0;
 
-	if (keep_hist)
-	{
-	    static char last_line[256] = "";
-	    /* If there is anything left, add it to the history list
-	       and execute it. Otherwise, re-execute last command. */
-
-	    if (*buf_line)
-	    {
-		strncpy( last_line, buf_line, sizeof(last_line) - 1 );
-		last_line[sizeof(last_line) - 1] = '\0';
-	    }
-	    ptr = last_line;
-	}
-	else
-	{
-	    /* I should also tweak with the undoc functions to remove this line from the console
-	     * history... */
-	    ptr = buf_line;
-	}
-
-        if ((len = strlen(ptr)) > 0)
+        /* store stuff at the end of last_line */
+        if (len + nread + 1 > *alloc)
         {
-	    if (size < len + 1)
-            {
-		DEBUG_Printf(DBG_CHN_MESG, "Fatal readline goof.\n");
-		DEBUG_Exit(0);
-            }
-            strcpy(buf, ptr);
-            buf[len] = '\n';
-            buf[len+1] = 0;
-            return len + 1;
+            *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc += nread + 1);
         }
-    }
-    return 0;
+        strcpy(*line + len, buf_line);
+        len += nread;
+    } while (nread == 0 || buf_line[nread - 1] != '\n');
+
+    /* Remove leading and trailing whitespace from the line */
+    stripwhite(*line);
+    return 1;
 }
 
-static char *local_symbols[30];
-static int next_symbol;
-
-char * DEBUG_MakeSymbol(const char * symbol)
+static int DEBUG_FetchFromLine(const char* pfx, char* buf, int size)
 {
-        assert(0 <= next_symbol && next_symbol < (sizeof(local_symbols) / sizeof(local_symbols[0])));
-	return local_symbols[next_symbol++] = DBG_strdup(symbol);
+    size_t      len;
+static char*  last_line = NULL;
+static size_t last_line_size = 0;
+static size_t last_line_idx = 0;
+
+    /* first alloc of our current buffer */
+    if (!last_line)
+    {
+        last_line = HeapAlloc(GetProcessHeap(), 0, last_line_size = 2);
+        assert(last_line);
+        last_line[0] = '\n';
+        last_line[1] = '\0';
+    }
+
+    /* try first to fetch the remaining of an existing line */
+    if (last_line_idx == 0)
+    {
+        /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
+        DEBUG_FlushSymbols();
+
+        DEBUG_FetchEntireLine(pfx, &last_line, &last_line_size, TRUE);
+    }
+
+    len = min(strlen(last_line + last_line_idx), size - 1);
+    memcpy(buf, last_line + last_line_idx, len);
+    buf[len] = '\0';
+    if ((last_line_idx += len) >= strlen(last_line))
+        last_line_idx = 0;
+    return len;
+}
+
+int DEBUG_ReadLine(const char* pfx, char* buf, int size)
+{
+    char*       line = NULL;
+    size_t      len = 0;
+
+    DEBUG_FetchEntireLine(pfx, &line, &len, FALSE);
+    len = min(size, len);
+    memcpy(buf, line, len - 1);
+    buf[len] = '\0';
+    return len - 1;
+}
+
+static char** local_symbols /* = NULL */;
+static int next_symbol /* = 0 */;
+static int alloc_symbol /* = 0 */;
+
+char* DEBUG_MakeSymbol(const char* symbol)
+{
+    assert(0 <= next_symbol && next_symbol < alloc_symbol + 1);
+    if (next_symbol >= alloc_symbol)
+    {
+        local_symbols = HeapReAlloc(GetProcessHeap(), 0, local_symbols,
+                                    (alloc_symbol += 32) * sizeof(local_symbols[0]));
+        assert(local_symbols);
+    }
+    return local_symbols[next_symbol++] = DBG_strdup(symbol);
 }
 
 void DEBUG_FlushSymbols(void)
 {
-	while(--next_symbol >= 0) DBG_free(local_symbols[next_symbol]);
-	next_symbol = 0;
+    while(--next_symbol >= 0) DBG_free(local_symbols[next_symbol]);
+    next_symbol = 0;
 }
