@@ -50,6 +50,10 @@
 #define N_UNDF		0x00
 #endif
 
+#ifndef STN_UNDEF
+# define STN_UNDEF	0
+#endif
+
 #define N_GSYM		0x20
 #define N_FUN		0x24
 #define N_STSYM		0x26
