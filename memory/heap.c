@@ -1672,7 +1672,7 @@ DWORD WINAPI Local32Alloc( HANDLE32 heap, DWORD size, INT16 type, DWORD flags )
             for (i = 0; i < HTABLE_PAGESIZE; i += 4)
                 *(DWORD *)((LPBYTE)header + i) = i+4;
 
-            if (page < 31) 
+            if (page < HTABLE_NPAGES-1) 
                 header->freeListFirst[page+1] = 0xffff;
         }
 
@@ -1756,7 +1756,7 @@ BOOL32 WINAPI Local32Free( HANDLE32 heap, DWORD addr, INT16 type )
             header->freeListFirst[page] = header->freeListLast[page]  = offset;
         else
             *(LPDWORD)((LPBYTE)header + header->freeListLast[page]) = offset,
-            header->freeListLast[page] = *handle;
+            header->freeListLast[page] = offset;
 
         *handle = 0;
 
@@ -1769,7 +1769,7 @@ BOOL32 WINAPI Local32Free( HANDLE32 heap, DWORD addr, INT16 type )
                 break;
 
             header->limit -= HTABLE_PAGESIZE;
-            header->freeListFirst[page] = -1;
+            header->freeListFirst[page] = 0xffff;
             page--;
         }
     }
