@@ -987,16 +987,6 @@ wine -debug myprog.exe
 		The path to the debugger you chose to use must be reachable
 		via a DOS drive in the Wine config file !
               </para>
-	      <para>
-	        You can also set a shell script to launch the debugger. In
-	        this case, you need to be sure that the invocation in
-	        this shell script is of the form:
-		<programlisting>
-		  WINEPRELOAD=&lt;path_to_winedbg.so&gt; exec wine $*
-		</programlisting>
-	        (Shell script must use exec, and the debugger .so file must
-	        be preloaded to override the shell script information).
-              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -1018,7 +1008,7 @@ wine -debug myprog.exe
         <programlisting>
 [MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug] 957636538
 "Auto"=dword:00000001
-"Debugger"="/usr/local/bin/winedbg %ld %ld"
+"Debugger"="winedbg --debugmsg -all %ld %ld"
         </programlisting>
 
         <note>
