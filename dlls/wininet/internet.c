@@ -1776,3 +1776,25 @@ BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
     FIXME("STUB\n");
     return FALSE;
 }
+
+
+/***********************************************************************
+ *           InternetAutoDial
+ *
+ * On windows this function is supposed to dial the default internet
+ * connection. We don't want to have Wine dial out to the internet so
+ * we return TRUE by default. It might be nice to check if we are connected.
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+
+BOOL InternetAutoDial(DWORD dwFlags, HWND hwndParent)
+{
+    FIXME("STUB\n");
+
+    /* Tell that we are connected to the internet. */
+    return TRUE;
+}

@@ -81,7 +81,7 @@ init    WININET_LibMain
 @ stub HttpSendRequestW
 @ stub IncrementUrlCacheHeaderData
 @ stdcall InternetAttemptConnect(long) InternetAttemptConnect
-@ stub InternetAutodial
+@ stdcall InternetAutodial(long ptr) InternetAutoDial
 @ stub InternetAutodialCallback
 @ stub InternetAutodialHangup
 @ stdcall InternetCanonicalizeUrlA(str str ptr long) InternetCanonicalizeUrlA
