@@ -2875,9 +2875,50 @@ export LIB_ODBC_DRIVER_MANAGER=/usr/lib/libodbc.so.1.0.0
       <sect2>
         <title>Using Windows ODBC drivers</title>
         <para>
-          Does anyone actually have any experience of this and anything to
-          add?
+	  Native ODBC drivers have been reported to work for many types of 
+	  databases including MSSQL and Oracle. In fact, some like MSSQL can 
+          only be accessed on Linux through a Winelib app.   Rather than
+          just copying DLL files, most ODBC drivers require a Windows-based
+          installer to run to properly configure things such as registry keys.
+	</para>
+	<para>
+	  In order to set up MSSQL support you will first need to download
+	  and run the mdac_typ.exe installer from microsoft.com.  In order to 
+          configure your ODBC connections you must then run CLICONFG.EXE and 
+	  ODBCAD32.EXE under Wine.  You can find them in the windows\system
+          directory after mdac_typ runs.  Compare the output of these programs
+          with the output on a native Windows machine.  Some things, such
+          as protocols, may be missing because they rely on being installed
+	  along with the operating system.  If so, you may be able to copy
+          missing functionality from an existing Windows installation as
+          well as any registry values required.  A native Windows installation
+          configured to be used by Wine should work the same way it did
+          when run natively.
+	</para>
+	<para>
+	  Types successfully tested under wine:
         </para>
+        <informaltable>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>DB Type</entry>
+                <entry>Usefulness</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>MS SQL</entry>
+                <entry>100%</entry>
+              </row>
+      	     </tbody>
+    	   </tgroup>
+    	 </informaltable>
+        <para> 
+	  Please report any other successes to the
+	  <ulink url="mailto:wine-devel@winehq.org">wine-devel</ulink> 
+	  mailing list.
+	</para>
       </sect2>
     </sect1>
 
