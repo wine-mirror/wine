@@ -1871,9 +1871,13 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 
     TRACE( "%x %d %lx %x\n", hwnd, offset, newval, type );
 
-    if (!WIN_IsCurrentThread( hwnd ))
+    if (!WIN_IsCurrentProcess( hwnd ))
     {
-        ERR("set %x %d %x\n", hwnd, offset, newval );
+        if (offset == GWL_WNDPROC)
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
+            return 0;
+        }
         return SendMessageW( hwnd, WM_WINE_SETWINDOWLONG, offset, newval );
     }
 
@@ -2702,24 +2706,62 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 HWND *WIN_ListParents( HWND hwnd )
 {
-    HWND *list = NULL;
+    WND *win;
+    HWND current, *list;
+    int pos = 0, size = 16, count;
 
+    if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
+
+    current = hwnd;
+    for (;;)
+    {
+        if (!(win = WIN_GetPtr( current ))) goto empty;
+        if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
+        list[pos] = win->parent;
+        WIN_ReleasePtr( win );
+        if (!(current = list[pos]))
+        {
+            if (!pos) goto empty;
+            return list;
+        }
+        if (++pos == size - 1)
+        {
+            /* need to grow the list */
+            HWND *new_list = HeapReAlloc( GetProcessHeap(), 0, list, (size+16) * sizeof(HWND) );
+            if (!new_list) goto empty;
+            list = new_list;
+            size += 16;
+        }
+    }
+
+    /* at least one parent belongs to another process, have to query the server */
     SERVER_START_VAR_REQ( get_window_parents, REQUEST_MAX_VAR_SIZE )
     {
         req->handle = hwnd;
         if (!SERVER_CALL())
         {
             user_handle_t *data = server_data_ptr(req);
-            int i, count = server_data_size(req) / sizeof(*data);
-            if (count && ((list = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(HWND) ))))
+            count = server_data_size(req) / sizeof(*data);
+            if (count)
             {
-                for (i = 0; i < count; i++) list[i] = data[i];
-                list[i] = 0;
+                HWND *new_list = HeapReAlloc( GetProcessHeap(), 0,
+                                              list, (count + 1) * sizeof(HWND) );
+                if (new_list)
+                {
+                    list = new_list;
+                    for (pos = 0; pos < count; pos++) list[pos] = data[pos];
+                    list[pos] = 0;
+                }
+                else count = 0;
             }
         }
     }
     SERVER_END_VAR_REQ;
-    return list;
+    if (count) return list;
+
+ empty:
+    HeapFree( GetProcessHeap(), 0, list );
+    return NULL;
 }
 
 
