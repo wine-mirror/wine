@@ -84,7 +84,7 @@ kde_entry()
 # KDE Config File
 [KDE Desktop Entry]
 Name=$xname
-Exec=wine "$path" -- $args
+Exec=wine '$path' -- $args
 Type=Application
 Comment=$descr
 EOF
