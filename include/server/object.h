@@ -203,6 +203,7 @@ extern int create_pipe( struct object *obj[2] );
 
 /* console functions */
 
+struct tagINPUT_RECORD;
 extern int create_console( int fd, struct object *obj[2] );
 extern int set_console_fd( int handle, int fd, int pid );
 extern int get_console_mode( int handle, int *mode );
@@ -211,6 +212,8 @@ extern int set_console_info( int handle, struct set_console_info_request *req,
                              const char *title );
 extern int get_console_info( int handle, struct get_console_info_reply *reply,
                              const char **title );
+extern int write_console_input( int handle, int count, struct tagINPUT_RECORD *records );
+extern int read_console_input( int handle, int count, int flush );
 
 
 /* change notification functions */

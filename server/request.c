@@ -15,6 +15,7 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "winbase.h"
+#include "wincon.h"
 #define WANT_REQUEST_HANDLERS
 #include "server.h"
 #include "server/request.h"
@@ -675,6 +676,25 @@ DECL_HANDLER(set_console_mode)
 {
     set_console_mode( req->handle, req->mode );
     send_reply( current, -1, 0 );
+}
+
+/* add input records to a console input queue */
+DECL_HANDLER(write_console_input)
+{
+    struct write_console_input_reply reply;
+    INPUT_RECORD *records = (INPUT_RECORD *)data;
+
+    if (len != req->count * sizeof(INPUT_RECORD))
+        fatal_protocol_error( "write_console_input: bad length %d for %d records\n",
+                              len, req->count );
+    reply.written = write_console_input( req->handle, req->count, records );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* fetch input records from a console input queue */
+DECL_HANDLER(read_console_input)
+{
+    read_console_input( req->handle, req->count, req->flush );
 }
 
 /* create a change notification */

@@ -1043,43 +1043,121 @@ BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
 				  LPINPUT_RECORD lpBuffer,
 				  DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
+    struct read_console_input_request req;
+    int len;
 
-    TRACE(console, "(%d,%p,%ld,%p)\n",hConsoleInput, lpBuffer, nLength,
-          lpNumberOfEventsRead);
-    if (!console) {
-    	FIXME(console, "(%d,%p,%ld,%p), No console handle!\n",hConsoleInput,
-		lpBuffer, nLength, lpNumberOfEventsRead);
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hConsoleInput,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
+    req.count = nLength;
+    req.flush = 1;
 
-        /* Indicate that nothing was read */
-        *lpNumberOfEventsRead = 0;
-
-	return FALSE;
+    /* loop until we get at least one event */
+    for (;;)
+    {
+        CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
+        if (CLIENT_WaitReply( &len, NULL, 1, lpBuffer, nLength * sizeof(*lpBuffer) ))
+            return FALSE;
+        assert( !(len % sizeof(INPUT_RECORD)) );
+        if (len) break;
+        WaitForSingleObject( hConsoleInput, INFINITE32 );
     }
-    CONSOLE_get_input(hConsoleInput);
-    /* SDK: return at least 1 input record */
-    while (!console->nrofirs) {
-    	DWORD res;
-
-    	res=WaitForSingleObject(hConsoleInput,0);
-	switch (res) {
-	case STATUS_TIMEOUT:	continue;
-	case 0:			break; /*ok*/
-	case WAIT_FAILED:	return 0;/*FIXME: SetLastError?*/
-	default:		break;	/*hmm*/
-	}
-	CONSOLE_get_input(hConsoleInput);
-    }
-    
-    if (nLength>console->nrofirs)
-    	nLength = console->nrofirs;
-    memcpy(lpBuffer,console->irs,sizeof(INPUT_RECORD)*nLength);
-    if (lpNumberOfEventsRead)
-	*lpNumberOfEventsRead = nLength;
-    CONSOLE_drain_input(console,nLength);
-    K32OBJ_DecCount(&console->header);
+    if (lpNumberOfEventsRead) *lpNumberOfEventsRead = len / sizeof(INPUT_RECORD);
     return TRUE;
 }
+
+
+/***********************************************************************
+ *            ReadConsoleInput32W   (KERNEL32.570)
+ */
+BOOL32 WINAPI ReadConsoleInput32W( HANDLE32 handle, LPINPUT_RECORD buffer,
+                                   DWORD count, LPDWORD read )
+{
+    /* FIXME: Fix this if we get UNICODE input. */
+    return ReadConsoleInput32A( handle, buffer, count, read );
+}
+
+
+/***********************************************************************
+ *            FlushConsoleInputBuffer   (KERNEL32.132)
+ */
+BOOL32 WINAPI FlushConsoleInputBuffer( HANDLE32 handle )
+{
+    struct read_console_input_request req;
+    int len;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
+    req.count = -1;  /* get all records */
+    req.flush = 1;
+    CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( &len, NULL, 0 );
+}
+
+
+/***********************************************************************
+ *            PeekConsoleInputA   (KERNEL32.550)
+ *
+ * Gets 'count' first events (or less) from input queue.
+ *
+ * Does not need a complex console.
+ */
+BOOL32 WINAPI PeekConsoleInput32A( HANDLE32 handle, LPINPUT_RECORD buffer,
+                                   DWORD count, LPDWORD read )
+{
+    struct read_console_input_request req;
+    int len;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
+    req.count = count;
+    req.flush = 0;
+
+    CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitReply( &len, NULL, 1, buffer, count * sizeof(*buffer) ))
+        return FALSE;
+    assert( !(len % sizeof(INPUT_RECORD)) );
+    if (read) *read = len / sizeof(INPUT_RECORD);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *            PeekConsoleInputW   (KERNEL32.551)
+ */
+BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
+                                  LPINPUT_RECORD pirBuffer,
+                                  DWORD cInRecords,
+                                  LPDWORD lpcRead)
+{
+    /* FIXME: Hmm. Fix this if we get UNICODE input. */
+    return PeekConsoleInput32A(hConsoleInput,pirBuffer,cInRecords,lpcRead);
+}
+
+
+/******************************************************************************
+ * WriteConsoleInput32A [KERNEL32.730]  Write data to a console input buffer
+ *
+ */
+BOOL32 WINAPI WriteConsoleInput32A( HANDLE32 handle, INPUT_RECORD *buffer,
+                                    DWORD count, LPDWORD written )
+{
+    struct write_console_input_request req;
+    struct write_console_input_reply reply;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                              K32OBJ_CONSOLE, GENERIC_WRITE )) == -1)
+        return FALSE;
+    req.count = count;
+    CLIENT_SendRequest( REQ_WRITE_CONSOLE_INPUT, -1, 2, &req, sizeof(req),
+                        buffer, count * sizeof(*buffer) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    if (written) *written = reply.written;
+    return TRUE;
+}
+
 
 /***********************************************************************
  *            SetConsoleTitle32A   (KERNEL32.476)
@@ -1185,33 +1263,6 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
     return ret;
 }
 
-/***********************************************************************
- *            ReadConsoleInput32W   (KERNEL32.570)
- */
-BOOL32 WINAPI ReadConsoleInput32W(HANDLE32 hConsoleInput,
-                                LPINPUT_RECORD lpBuffer,
-                                DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-    FIXME(console, "(%d,%p,%ld,%p): stub\n",hConsoleInput, lpBuffer, nLength,
-          lpNumberOfEventsRead);
-    return 0;
-}
-
-/***********************************************************************
- *            FlushConsoleInputBuffer   (KERNEL32.132)
- */
-BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
-{
-    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
-
-    if (!console)
-    	return FALSE;
-    CONSOLE_drain_input(console,console->nrofirs);
-    K32OBJ_DecCount(&console->header);
-    return TRUE;
-}
-
-
 /******************************************************************************
  * SetConsoleCursorPosition [KERNEL32.627]
  * Sets the cursor position in console
@@ -1270,53 +1321,6 @@ BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
     *nrofbuttons = 2;
     return TRUE;
 }
-
-/***********************************************************************
- *            PeekConsoleInputA   (KERNEL32.550)
- *
- * Gets 'cInRecords' first events (or less) from input queue.
- *
- * Does not need a complex console.
- */
-BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
-                                  LPINPUT_RECORD pirBuffer,
-                                  DWORD cInRecords,
-                                  LPDWORD lpcRead)
-{
-    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
-
-    if (!console) {
-        FIXME(console,"(%d,%p,%ld,%p), No console handle passed!\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
-
-        /* Indicate that nothing was read */
-        *lpcRead = 0; 
-
-    	return FALSE;
-    }
-    TRACE(console,"(%d,%p,%ld,%p)\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
-    CONSOLE_get_input(hConsoleInput);
-    if (cInRecords>console->nrofirs)
-    	cInRecords = console->nrofirs;
-    if (pirBuffer)
-	memcpy(pirBuffer,console->irs,cInRecords*sizeof(INPUT_RECORD));
-    if (lpcRead)
-	*lpcRead = cInRecords;
-    K32OBJ_DecCount(&console->header);
-    return TRUE;
-}
-
-/***********************************************************************
- *            PeekConsoleInputW   (KERNEL32.551)
- */
-BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
-                                  LPINPUT_RECORD pirBuffer,
-                                  DWORD cInRecords,
-                                  LPDWORD lpcRead)
-{
-    /* FIXME: Hmm. Fix this if we get UNICODE input. */
-    return PeekConsoleInput32A(hConsoleInput,pirBuffer,cInRecords,lpcRead);
-}
-
 
 /******************************************************************************
  * GetConsoleCursorInfo32 [KERNEL32.296]  Gets size and visibility of console

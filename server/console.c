@@ -33,6 +33,8 @@ struct console_input
     int                   fd;            /* Unix file descriptor */
     int                   mode;          /* input mode */
     struct screen_buffer *output;        /* associated screen buffer */
+    int                   recnum;        /* number of input records */
+    INPUT_RECORD         *records;       /* input records */
 };
 
 struct screen_buffer
@@ -135,6 +137,8 @@ int create_console( int fd, struct object *obj[2] )
     console_input->mode           = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                                     ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
     console_input->output         = screen_buffer;
+    console_input->recnum         = 0;
+    console_input->records        = NULL;
     screen_buffer->fd             = write_fd;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->input          = console_input;
@@ -279,6 +283,60 @@ int get_console_info( int handle, struct get_console_info_reply *reply, const ch
     *title                = console->title;
     release_object( console );
     return 1;
+}
+
+/* add input events to a console input queue */
+int write_console_input( int handle, int count, INPUT_RECORD *records )
+{
+    INPUT_RECORD *new_rec;
+    struct console_input *console;
+
+    if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
+                                                            GENERIC_WRITE, &console_input_ops )))
+        return -1;
+    if (!(new_rec = realloc( console->records,
+                             (console->recnum + count) * sizeof(INPUT_RECORD) )))
+    {
+        SET_ERROR( ERROR_NOT_ENOUGH_MEMORY );
+        release_object( console );
+        return -1;
+    }
+    console->records = new_rec;
+    memcpy( new_rec + console->recnum, records, count * sizeof(INPUT_RECORD) );
+    console->recnum += count;
+    release_object( console );
+    return count;
+}
+
+/* retrieve a pointer to the console input records */
+int read_console_input( int handle, int count, int flush )
+{
+    struct console_input *console;
+
+    if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
+                                                            GENERIC_READ, &console_input_ops )))
+        return -1;
+    if ((count < 0) || (count > console->recnum)) count = console->recnum;
+    send_reply( current, -1, 1, console->records, count * sizeof(INPUT_RECORD) );
+    if (flush)
+    {
+        int i;
+        for (i = count; i < console->recnum; i++)
+            console->records[i-count] = console->records[i];
+        if ((console->recnum -= count) > 0)
+        {
+            INPUT_RECORD *new_rec = realloc( console->records,
+                                             console->recnum * sizeof(INPUT_RECORD) );
+            if (new_rec) console->records = new_rec;
+        }
+        else
+        {
+            free( console->records );
+            console->records = NULL;
+        }
+    }
+    release_object( console );
+    return count;
 }
 
 static void console_input_dump( struct object *obj, int verbose )

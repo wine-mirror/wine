@@ -746,7 +746,7 @@ init	MAIN_KernelInit
 727 stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr) WideCharToMultiByte
 728 stdcall WinExec(str long) WinExec32
 729 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsole32A
-730 stub WriteConsoleInputA
+730 stdcall WriteConsoleInputA(long ptr long ptr) WriteConsoleInput32A
 731 stub WriteConsoleInputW
 732 stdcall WriteConsoleOutputA(long ptr long long ptr) WriteConsoleOutput32A
 733 stub WriteConsoleOutputAttribute

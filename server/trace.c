@@ -458,6 +458,32 @@ static int dump_get_console_info_reply( struct get_console_info_reply *req, int 
     return (int)sizeof(*req);
 }
 
+static int dump_write_console_input_request( struct write_console_input_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " count=%d", req->count );
+    return (int)sizeof(*req);
+}
+
+static int dump_write_console_input_reply( struct write_console_input_reply *req, int len )
+{
+    fprintf( stderr, " written=%d", req->written );
+    return (int)sizeof(*req);
+}
+
+static int dump_read_console_input_request( struct read_console_input_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " flush=%d", req->flush );
+    return (int)sizeof(*req);
+}
+
+static int dump_read_console_input_reply( struct read_console_input_reply *req, int len )
+{
+    return (int)sizeof(*req);
+}
+
 static int dump_create_change_notification_request( struct create_change_notification_request *req, int len )
 {
     fprintf( stderr, " subtree=%d,", req->subtree );
@@ -607,6 +633,10 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())0 },
     { (int(*)(void *,int))dump_get_console_info_request,
       (void(*)())dump_get_console_info_reply },
+    { (int(*)(void *,int))dump_write_console_input_request,
+      (void(*)())dump_write_console_input_reply },
+    { (int(*)(void *,int))dump_read_console_input_request,
+      (void(*)())dump_read_console_input_reply },
     { (int(*)(void *,int))dump_create_change_notification_request,
       (void(*)())dump_create_change_notification_reply },
     { (int(*)(void *,int))dump_create_mapping_request,
@@ -661,6 +691,8 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "set_console_mode",
     "set_console_info",
     "get_console_info",
+    "write_console_input",
+    "read_console_input",
     "create_change_notification",
     "create_mapping",
     "get_mapping_info",

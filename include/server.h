@@ -510,6 +510,31 @@ struct get_console_info_reply
 };
 
 
+/* Add input records to a console input queue */
+struct write_console_input_request
+{
+    int          handle;        /* handle to the console input */
+    int          count;         /* number of input records */
+/*  INPUT_RECORD records[0]; */ /* input records */
+};
+struct write_console_input_reply
+{
+    int          written;       /* number of records written */
+};
+
+/* Fetch input records from a console input queue */
+struct read_console_input_request
+{
+    int          handle;        /* handle to the console input */
+    int          count;         /* max number of records to retrieve */
+    int          flush;         /* flush the retrieved records from the queue? */
+};
+struct read_console_input_reply
+{
+/*  INPUT_RECORD records[0]; */ /* input records */
+};
+
+
 /* Create a change notification */
 struct create_change_notification_request
 {

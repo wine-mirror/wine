@@ -1102,8 +1102,7 @@ BOOL16 WINAPI ModuleNext( MODULEENTRY *lpme )
     lpme->szModule[min(*name, MAX_MODULE_NAME)] = '\0';
     lpme->hModule = lpme->wNext;
     lpme->wcUsage = pModule->count;
-    strncpy( lpme->szExePath, NE_MODULE_NAME(pModule), MAX_PATH );
-    lpme->szExePath[MAX_PATH] = '\0';
+    lstrcpyn32A( lpme->szExePath, NE_MODULE_NAME(pModule), sizeof(lpme->szExePath) );
     lpme->wNext = pModule->next;
     return TRUE;
 }

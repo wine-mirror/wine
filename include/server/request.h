@@ -47,6 +47,8 @@ enum request
     REQ_SET_CONSOLE_MODE,
     REQ_SET_CONSOLE_INFO,
     REQ_GET_CONSOLE_INFO,
+    REQ_WRITE_CONSOLE_INPUT,
+    REQ_READ_CONSOLE_INPUT,
     REQ_CREATE_CHANGE_NOTIFICATION,
     REQ_CREATE_MAPPING,
     REQ_GET_MAPPING_INFO,
@@ -101,6 +103,8 @@ DECL_HANDLER(get_console_mode);
 DECL_HANDLER(set_console_mode);
 DECL_HANDLER(set_console_info);
 DECL_HANDLER(get_console_info);
+DECL_HANDLER(write_console_input);
+DECL_HANDLER(read_console_input);
 DECL_HANDLER(create_change_notification);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(get_mapping_info);
@@ -152,6 +156,8 @@ static const struct handler {
     { (void(*)())req_set_console_mode, sizeof(struct set_console_mode_request) },
     { (void(*)())req_set_console_info, sizeof(struct set_console_info_request) },
     { (void(*)())req_get_console_info, sizeof(struct get_console_info_request) },
+    { (void(*)())req_write_console_input, sizeof(struct write_console_input_request) },
+    { (void(*)())req_read_console_input, sizeof(struct read_console_input_request) },
     { (void(*)())req_create_change_notification, sizeof(struct create_change_notification_request) },
     { (void(*)())req_create_mapping, sizeof(struct create_mapping_request) },
     { (void(*)())req_get_mapping_info, sizeof(struct get_mapping_info_request) },
