@@ -32,6 +32,7 @@ void   __cdecl CRTDLL_free( void *ptr );
 
 LPSTR  __cdecl CRTDLL__mbsinc( LPCSTR str );
 INT    __cdecl CRTDLL__mbslen( LPCSTR str );
+LPSTR  __cdecl CRTDLL__strlwr( LPSTR str );
 LPWSTR __cdecl CRTDLL__wcsdup( LPCWSTR str );
 INT    __cdecl CRTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 );
 INT    __cdecl CRTDLL__wcsicoll( LPCWSTR str1, LPCWSTR str2 );

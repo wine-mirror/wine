@@ -69,8 +69,6 @@ static char port_permissions[0x10000];
 #define IO_READ  1
 #define IO_WRITE 2
 
-#endif  /* DIRECT_IO_ACCESS */
-
 static void IO_FixCMOSCheckSum(void)
 {
 	WORD sum = 0;
@@ -82,6 +80,8 @@ static void IO_FixCMOSCheckSum(void)
 	cmosimage[0x2f] = sum & 0xff;
 	TRACE("calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
 }
+
+#endif  /* DIRECT_IO_ACCESS */
 
 static void set_timer_maxval(unsigned timer, unsigned maxval)
 {
@@ -220,11 +220,8 @@ static inline void outl( DWORD value, WORD port )
     __asm__ __volatile__( "outl %0,%w1" : : "a" (value), "d" (port) );
 }
 
-#endif  /* DIRECT_IO_ACCESS */
-
 static void IO_port_init(void)
 {
-#ifdef DIRECT_IO_ACCESS
 	char temp[1024];
 
         do_direct_port_access = 0;
@@ -239,10 +236,10 @@ static void IO_port_init(void)
 					 temp, sizeof(temp) );
 		do_IO_port_init_read_or_write(temp, IO_WRITE);
 	}
-#endif  /* DIRECT_IO_ACCESS */
     IO_FixCMOSCheckSum();
 }
 
+#endif  /* DIRECT_IO_ACCESS */
 
 /**********************************************************************
  *	    IO_inport

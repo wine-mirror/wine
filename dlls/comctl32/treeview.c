@@ -3012,7 +3012,7 @@ TREEVIEW_EditLabelA (HWND hwnd, WPARAM wParam, LPARAM lParam)
       if ( wineItem == NULL )
         {
         ERR("Cannot get valid TREEVIEW_ITEM for lParam\n");
-        return NULL;
+        return 0;
         }
 
       TRACE("Edit started for %s.\n", wineItem->pszText);
@@ -3069,7 +3069,7 @@ TREEVIEW_EditLabelA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         TREEVIEW_EndEditLabelNow(hwnd, (WPARAM)TRUE, 0);
 
-        return NULL;
+        return 0;
       }
 
       SetWindowPos (
@@ -3091,7 +3091,7 @@ TREEVIEW_EditLabelA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   ** return NULL since we cannot edit this.
   */
 
-  return NULL;
+    return 0;
   }
 
   return infoPtr->hwndEdit;
@@ -3214,7 +3214,7 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* update the window to eliminate fragments and the like */
   TreeView_GetItemRect(hwnd,infoPtr->editItem,&itemRect,FALSE);
-  RedrawWindow(hwnd,&itemRect,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+  RedrawWindow(hwnd,&itemRect,0,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
   infoPtr->editItem = 0;
 
@@ -3355,7 +3355,7 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     if ( infoPtr->editItem == 0 ) /* If we are not curently editing */
     {
-    if( SendMessageA(hwnd, TVM_EDITLABELA, 0, (LPARAM)iItem) == NULL)
+    if( SendMessageA(hwnd, TVM_EDITLABELA, 0, (LPARAM)iItem) == 0)
         return 0;
     }
   }
