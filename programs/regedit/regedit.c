@@ -153,11 +153,14 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
         }
     }
 
+    if (*s && action == ACTION_UNDEF)
+        action = ACTION_ADD;
+
     if (action == ACTION_UNDEF)
         return FALSE;
 
     return PerformRegAction(action, s);
-    }
+}
 
 BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 {
@@ -235,5 +238,5 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
         exit(1);
         break;
     }
-    return 0;
+    return TRUE;
 }
