@@ -181,6 +181,26 @@ START_TEST(listbox)
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
      {     1,      1,      1, LB_ERR}, {0,0,0,0},
      {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+  const struct listbox_test ES =
+    {{LBS_EXTENDEDSEL},
+     {     0, LB_ERR,      0,      0}, {0,0,0,0},
+     {     1,      1,      1,      1}, {0,0,0,0},
+     {     2,      2,      2,      1}, {0,0,0,0}};
+  const struct listbox_test ES_NS =
+    {{LBS_EXTENDEDSEL | LBS_NOSEL},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
+     {     1,      1,      1, LB_ERR}, {0,0,0,0},
+     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+  const struct listbox_test EMS =
+    {{LBS_EXTENDEDSEL | LBS_MULTIPLESEL},
+     {     0, LB_ERR,      0,      0}, {0,0,0,0},
+     {     1,      1,      1,      1}, {0,0,0,0},
+     {     2,      2,      2,      1}, {0,0,0,0}};
+  const struct listbox_test EMS_NS =
+    {{LBS_EXTENDEDSEL | LBS_MULTIPLESEL | LBS_NOSEL},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
+     {     1,      1,      1, LB_ERR}, {0,0,0,0},
+     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
 
   trace (" Testing single selection...\n");
   check (SS);
@@ -190,6 +210,14 @@ START_TEST(listbox)
   check (MS);
   trace (" ... with NOSEL\n");
   check (MS_NS);
+  trace (" Testing extended selection...\n");
+  check (ES);
+  trace (" ... with NOSEL\n");
+  check (ES_NS);
+  trace (" Testing extended and multiple selection...\n");
+  check (EMS);
+  trace (" ... with NOSEL\n");
+  check (EMS_NS);
 
   check_item_height();
 }

@@ -2010,11 +2010,16 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
         {
             LISTBOX_MoveCaret( descr, index, FALSE );
 
-            if (descr->style & LBS_MULTIPLESEL)
+            if (descr->style & LBS_EXTENDEDSEL)
             {
                 LISTBOX_SetSelection( descr, index,
-                              (!(descr->style & LBS_MULTIPLESEL) ||
-                               !descr->items[index].selected),
+                               descr->items[index].selected,
+                              (descr->style & LBS_NOTIFY) != 0 );
+            }
+            else
+            {
+                LISTBOX_SetSelection( descr, index,
+                               !descr->items[index].selected,
                               (descr->style & LBS_NOTIFY) != 0 );
             }
         }
