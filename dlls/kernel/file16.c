@@ -580,6 +580,16 @@ BOOL16 WINAPI GetPrivateProfileStruct16(LPCSTR section, LPCSTR key,
  */
 BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
 {
+    char fulldir[MAX_PATH];
+
+    if (!GetFullPathNameA( dir, MAX_PATH, fulldir, NULL )) return FALSE;
+
+    if (fulldir[0] && fulldir[1] == ':')
+    {
+        char env_var[4] = "=A:";
+        env_var[1] = fulldir[0];
+        SetEnvironmentVariableA( env_var, fulldir );
+    }
     return SetCurrentDirectoryA( dir );
 }
 

@@ -666,16 +666,15 @@ static BOOL INT21_FillDrivePB( BYTE drive )
 static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context, BOOL islong )
 {
     char  *buffer = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Esi);
-    BYTE   new_drive = INT21_MapDrive( DL_reg(context) );
-    BYTE   old_drive = INT21_GetCurrentDrive();
+    BYTE   drive = INT21_MapDrive( DL_reg(context) );
     WCHAR  pathW[MAX_PATH];
     char   pathA[MAX_PATH];
     WCHAR *ptr = pathW;
 
     TRACE( "drive %d\n", DL_reg(context) );
 
-    if (new_drive == MAX_DOS_DRIVES)
-    {        
+    if (drive == MAX_DOS_DRIVES)
+    {
         SetLastError(ERROR_INVALID_DRIVE);
         return FALSE;
     }
@@ -684,13 +683,25 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context, BOOL islong )
      * Grab current directory.
      */
 
-    INT21_SetCurrentDrive( new_drive );
-    if (!GetCurrentDirectoryW( MAX_PATH, pathW ))
-    {        
-        INT21_SetCurrentDrive( old_drive );
-        return FALSE;
+    if (!GetCurrentDirectoryW( MAX_PATH, pathW )) return FALSE;
+
+    if (toupperW(pathW[0]) - 'A' != drive || pathW[1] != ':')
+    {
+        /* cwd is not on the requested drive, get the environment string instead */
+
+        WCHAR env_var[4];
+
+        env_var[0] = '=';
+        env_var[1] = 'A' + drive;
+        env_var[2] = ':';
+        env_var[3] = 0;
+        if (!GetEnvironmentVariableW( env_var, pathW, MAX_PATH ))
+        {
+            /* return empty path */
+            buffer[0] = 0;
+            return TRUE;
+        }
     }
-    INT21_SetCurrentDrive( old_drive );
 
     /*
      * Convert into short format.
@@ -761,7 +772,7 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context, BOOL islong )
         pathA[63] = 0;
     }
 
-    TRACE( "%c:=%s\n", 'A' + new_drive, pathA );
+    TRACE( "%c:=%s\n", 'A' + drive, pathA );
 
     strcpy( buffer, pathA );
     return TRUE;
@@ -778,6 +789,7 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context, BOOL islong )
 static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
 {
     WCHAR dirW[MAX_PATH];
+    WCHAR env_var[4];
     char *dirA = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     BYTE  drive = INT21_GetCurrentDrive();
     BOOL  result;
@@ -785,10 +797,16 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
     TRACE( "SET CURRENT DIRECTORY %s\n", dirA );
 
     MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
-    result = SetCurrentDirectoryW( dirW );
+    if (!GetFullPathNameW( dirW, MAX_PATH, dirW, NULL )) return FALSE;
 
-    /* This function must not change current drive. */
-    INT21_SetCurrentDrive( drive );
+    env_var[0] = '=';
+    env_var[1] = dirW[0];
+    env_var[2] = ':';
+    env_var[3] = 0;
+    result = SetEnvironmentVariableW( env_var, dirW );
+
+    /* only set current directory if on the current drive */
+    if (result && (toupperW(dirW[0]) - 'A' == drive)) result = SetCurrentDirectoryW( dirW );
 
     return result;
 }
