@@ -1146,12 +1146,15 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
     MSG *msg;
-    QMSG  *qmsg = sysMsgQueue->lastMsg;
+    QMSG  *qmsg;
     int  mergeMsg = 0;
 
     if (!sysMsgQueue) return;
 
-      /* Merge with previous event if possible */
+    EnterCriticalSection( &sysMsgQueue->cSection );
+
+    /* Merge with previous event if possible */
+    qmsg = sysMsgQueue->lastMsg;
 
     if ((message == WM_MOUSEMOVE) && sysMsgQueue->lastMsg)
     {
@@ -1173,7 +1176,10 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
         /* Don't merge allocate a new msg in the global heap */
         
         if (!(qmsg = (QMSG *) HeapAlloc( SystemHeap, 0, sizeof(QMSG) ) ))
-        return;
+        {
+            LeaveCriticalSection( &sysMsgQueue->cSection );
+            return;
+        }
         
         /* put message at the end of the linked list */
         qmsg->nextMsg = 0;
@@ -1200,6 +1206,8 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
     msg->pt.x    = xPos;
     msg->pt.y    = yPos;
     qmsg->extraInfo = extraInfo;
+
+    LeaveCriticalSection( &sysMsgQueue->cSection );
 
     QUEUE_WakeSomeone( message );
 }

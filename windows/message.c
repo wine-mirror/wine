@@ -502,10 +502,12 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
 
     qmsg = sysMsgQueue->firstMsg;
     
+#if 0 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && THREAD_IsWin16( THREAD_Current() )
                                && EVENT_Pending())
         EVENT_WaitNetEvent( FALSE, FALSE );
+#endif
 
     for ( kbd_msg = 0; qmsg; qmsg = nextqmsg)
     {
@@ -1819,6 +1821,8 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
       for (i = 0; i < nCount; i++)
 	handles[i] = pHandles[i];
     handles[nCount] = msgQueue->hEvent;
+
+    EVENT_Pending();
 
     ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
     } 
