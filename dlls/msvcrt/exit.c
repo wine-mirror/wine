@@ -17,11 +17,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#include <stdio.h>
 #include "msvcrt.h"
 
 #include "msvcrt/conio.h"
 #include "msvcrt/stdlib.h"
 #include "mtdll.h"
+#include "winuser.h"
 
 #include "wine/debug.h"
 
@@ -35,7 +37,10 @@ static _onexit_t *MSVCRT_atexit_table = NULL;
 static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 
+static LPCSTR szMsgBoxTitle = "Wine C++ Runtime Library";
+
 extern int MSVCRT_app_type;
+extern char *MSVCRT__pgmptr;
 
 /* INTERNAL: call atexit functions */
 void __MSVCRT__call_atexit(void)
@@ -95,6 +100,33 @@ void MSVCRT__exit(int exitcode)
   ExitProcess(exitcode);
 }
 
+/* Print out an error message with an option to debug */
+static void DoMessageBox(LPCSTR lead, LPCSTR message)
+{
+  MSGBOXPARAMSA msgbox;
+  char text[2048];
+  INT ret;
+
+  snprintf(text,sizeof(text),"%s\n\nProgram: %s\n%s\n\n"
+               "Press OK to exit the program, or Cancel to start the Wine debugger.\n ",
+               lead, MSVCRT__pgmptr, message);
+
+  msgbox.cbSize = sizeof(msgbox);
+  msgbox.hwndOwner = GetActiveWindow();
+  msgbox.hInstance = 0;
+  msgbox.lpszText = text;
+  msgbox.lpszCaption = szMsgBoxTitle;
+  msgbox.dwStyle = MB_OKCANCEL|MB_ICONERROR;
+  msgbox.lpszIcon = NULL;
+  msgbox.dwContextHelpId = 0;
+  msgbox.lpfnMsgBoxCallback = NULL;
+  msgbox.dwLanguageId = LANG_NEUTRAL;
+
+  ret = MessageBoxIndirectA(&msgbox);
+  if (ret == IDCANCEL)
+    DebugBreak();
+}
+
 /*********************************************************************
  *		_amsg_exit (MSVCRT.@)
  */
@@ -104,9 +136,12 @@ void MSVCRT__amsg_exit(int errnum)
   /* FIXME: text for the error number. */
   if (MSVCRT_app_type == 2)
   {
-    /* FIXME: MsgBox */
+    char text[32];
+    sprintf(text, "Error: R60%d",errnum);
+    DoMessageBox("Runtime error!", text);
   }
-  _cprintf("\nruntime error R60%d\n",errnum);
+  else
+    _cprintf("\nruntime error R60%d\n",errnum);
   MSVCRT__exit(255);
 }
 
@@ -115,12 +150,13 @@ void MSVCRT__amsg_exit(int errnum)
  */
 void MSVCRT_abort(void)
 {
-  TRACE("(void)\n");
+  TRACE("()\n");
   if (MSVCRT_app_type == 2)
   {
-    /* FIXME: MsgBox */
+    DoMessageBox("Runtime error!", "abnormal program termination");
   }
-  _cputs("\nabnormal program termination\n");
+  else
+    _cputs("\nabnormal program termination\n");
   MSVCRT__exit(3);
 }
 
@@ -132,10 +168,13 @@ void MSVCRT__assert(const char* str, const char* file, unsigned int line)
   TRACE("(%s,%s,%d)\n",str,file,line);
   if (MSVCRT_app_type == 2)
   {
-    /* FIXME: MsgBox */
+    char text[2048];
+    snprintf(text, sizeof(text), "File: %s\nLine: %d\n\nEpression: \"%s\"", file, line, str);
+    DoMessageBox("Assertion failed!", text);
   }
-  _cprintf("Assertion failed: %s, file %s, line %d\n\n",str,file, line);
-  MSVCRT_abort();
+  else
+    _cprintf("Assertion failed: %s, file %s, line %d\n\n",str, file, line);
+  MSVCRT__exit(3);
 }
 
 /*********************************************************************

@@ -5,6 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt.dll
 IMPORTS   = kernel32 ntdll
+DELAYIMPORTS = user32
 EXTRALIBS = $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
