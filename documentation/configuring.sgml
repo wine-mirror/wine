@@ -906,7 +906,12 @@ OPTIONAL:
 
       <sect2>
         <title>x11drv modes of operation</title>
-  
+
+        <para>
+          <!-- FIXME: This is outdated -->
+          Note: This is now all done in the config file. Needs an update...
+        </para>
+
         <para>
           The x11drv driver consists of two conceptually distinct
           pieces, the graphics driver (GDI part), and the windowing
@@ -1117,6 +1122,33 @@ OPTIONAL:
                 create the desktop window with a double-buffered
                 visual, something most OpenGL games need to run
                 correctly.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>TextCP</term>
+            <listitem>
+              <para>
+                <!-- FIXME: To be documented -->
+                To be documented...
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>XVideoPort</term>
+            <listitem>
+              <para>
+                <!-- FIXME: To be documented -->
+                To be documented...
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Synchronous</term>
+            <listitem>
+              <para>
+                <!-- FIXME: To be documented -->
+                To be documented...
               </para>
             </listitem>
           </varlistentry>

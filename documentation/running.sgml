@@ -27,16 +27,11 @@ Usage: ./wine [options] program_name [arguments]
 
 Options:
    --debugmsg name  Turn debugging-messages on or off
-   --desktop geom   Use a desktop window of the given geometry
-   --display name   Use the specified display
    --dll name       Enable or disable built-in DLLs
    --dosver x.xx    DOS version to imitate (e.g. 6.22)
                     Only valid with --winver win31
    --help,-h        Show this help message
-   --language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv,
-                    Hr,Hu,It,Ja,Ko,Kw,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)
    --managed        Allow the window manager to manage created windows
-   --synchronous    Turn on synchronous display mode
    --version,-v     Display the Wine version
    --winver         Version to imitate (win95,nt40,win31,nt2k,win98,nt351,win30,win20)
         </screen>
@@ -206,83 +201,6 @@ wing      wininet   winsock   winspool  wnet      x11       x11drv
       </sect2>
 
       <sect2>
-        <title>--desktop [geometry]</title>
-        <para>
-          By default, <command>wine</command> runs applications on
-          your regular desktop.  Wine application windows intermingle
-          with native X11 applications.  Windows overlap each other,
-          and you can resize them in relation to each other.
-          Normally, when you minimize Wine windows, they collapse into
-          a small icon at the lower left corner of your desktop,
-          circumventing the behavior of your other non-Wine windows.
-          However, if you're running in <link linkend="managed-parameter">
-          --managed mode</link>, your Wine applications will minimize
-          just like your other windows.
-        </para>
-        <para>
-          Sometimes, you may want to restrict Wine windows to a
-          smaller area of your desktop.  This is what the
-          <parameter>--desktop</parameter> option controls.  Whenever
-          you pass this option to <command>wine</command>, it will
-          create a window of that size and use that as Wine's desktop
-          instead of borrowing the regular desktop space.  Wine will
-          then place the application window inside the new desktop
-          window.  If you minimize the application, it will iconize to
-          the bottom left corner of its own desktop window.
-        </para>
-        <para>
-          The <parameter>--desktop</parameter> option geometry info in
-          the standard X11 geometry format, e.g., "640x480" for a
-          desktop window 640 pixels wide and 480 pixels high.  You can
-          also in theory specify the coordinates of the upper left
-          corner of the desktop window, but your window manager may
-          choose to override that request.  The following invocation
-          would open a new 640 x 480 desktop window at coordinates
-          (10, 25):
-          <screen>
-<prompt>$</prompt> <userinput>wine --desktop 640x480+10+25 foo.exe</userinput>
-          </screen>
-        </para>
-        <para>
-          More commonly, you'll leave off the starting coordinates,
-          and only use the height and width:
-          <screen>
-<prompt>$</prompt> <userinput>wine --desktop 640x480 foo.exe</userinput>
-          </screen>
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>--display</title>
-        <para>
-          By default, wine will display its windows on whichever X
-          Display you have in the <envar>$DISPLAY</envar> environment
-          variable.  Often, <envar>$DISPLAY</envar> is set to
-          <literal>:0</literal>, which sends all windows to the
-          primary video monitor on the current host machine.
-        </para>
-        <para>
-          To send windows to a different monitor on the same system,
-          you could change <literal>:0</literal> to a different
-          number, for example <literal>:1</literal> to send output to
-          the second monitor.  You can also specify other systems.  If
-          you were logged into the system <systemitem
-          class="systemname">alpha</systemitem>, but wanted wine to
-          run on another system on the network, <systemitem
-          class="systemname">beta</systemitem>, you might use a
-          <envar>$DISPLAY</envar> of <literal>beta:0</literal>.
-        </para>
-        <para>
-          You can also declare display values on the wine command
-          line, using the <parameter>--display</parameter> option.
-          The last example above might look like this:
-        </para>
-        <programlisting>
-<prompt>$</prompt> wine --display="beta:0" foo.exe
-        </programlisting>
-      </sect2>
-
-      <sect2>
         <title>--dll</title>
         <para>
           
@@ -303,22 +221,8 @@ wing      wininet   winsock   winspool  wnet      x11       x11drv
         </para>
       </sect2>
 
-      <sect2>
-        <title>--language</title>
-        <para>
-          
-        </para>
-      </sect2>
-
       <sect2 id="managed-parameter">
         <title>--managed</title>
-        <para>
-          
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>--synchronous</title>
         <para>
           
         </para>
