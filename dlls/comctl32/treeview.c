@@ -62,6 +62,8 @@ DEFAULT_DEBUG_CHANNEL(treeview)
 #define TREEVIEW_GetInfoPtr(hwnd) \
   ((TREEVIEW_INFO *) GetWindowLongA( hwnd, 0))
 
+#define FOCUS_BORDER 3
+
 static BOOL
 TREEVIEW_SendSimpleNotify (HWND hwnd, UINT code);
 static BOOL
@@ -1062,6 +1064,8 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
     TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
 	TEXTMETRICA tm;
 	HBRUSH hbrBk;
+    HFONT hOldFont;
+
     RECT rect;
     INT iItem, indent, x, y, height, itemHeight;
     INT viewtop,viewbottom,viewleft,viewright;
@@ -1077,14 +1081,14 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
 
     
     GetClientRect (hwnd, &rect);
-    if ((rect.left-rect.right ==0) || (rect.top-rect.bottom==0)) return;
+    if ((rect.left >= rect.right) || (rect.top >= rect.bottom)) return;
 
     infoPtr->cdmode=TREEVIEW_SendCustomDrawNotify(hwnd,CDDS_PREPAINT,hdc,rect);
 
     if (infoPtr->cdmode==CDRF_SKIPDEFAULT) return;
 
-    infoPtr->uVisibleHeight= rect.bottom-rect.top;
-    infoPtr->uVisibleWidth= rect.right-rect.left;
+    infoPtr->uVisibleHeight= rect.bottom-rect.top + 1;
+    infoPtr->uVisibleWidth= rect.right-rect.left + 1;
 
     viewtop=infoPtr->cy;
     viewbottom=infoPtr->cy + rect.bottom-rect.top;
@@ -1103,9 +1107,12 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
     if (infoPtr->uItemHeight>itemHeight)
 	itemHeight=infoPtr->uItemHeight;
 
+    // assume that bold and normal fonts have same height
+    hOldFont = SelectObject (hdc, infoPtr->hBoldFont);
     GetTextMetricsA (hdc, &tm);
-    if ((tm.tmHeight + tm.tmExternalLeading) > itemHeight)
-	 itemHeight=tm.tmHeight + tm.tmExternalLeading;
+    if ((tm.tmHeight + tm.tmExternalLeading + FOCUS_BORDER) > itemHeight)
+	 itemHeight=tm.tmHeight + tm.tmExternalLeading + FOCUS_BORDER;
+    SelectObject (hdc, hOldFont);
 
     infoPtr->uRealItemHeight=itemHeight;
 
@@ -1134,12 +1141,12 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
 				wineItem->rect.left, wineItem->rect.right);
 */
 
-		height=itemHeight * wineItem->iIntegral +1;
+		height=itemHeight * wineItem->iIntegral; 
 		if ((y >= viewtop) && (y <= viewbottom) &&
 	    	(x >= viewleft  ) && (x <= viewright)) {
 				wineItem->visible = TRUE;
         		wineItem->rect.top = y - infoPtr->cy + rect.top;
-        		wineItem->rect.bottom = wineItem->rect.top + height ;
+        		wineItem->rect.bottom = wineItem->rect.top + height-1;
          		wineItem->rect.left = x - infoPtr->cx + rect.left;
         		wineItem->rect.right = rect.right;
 			if (!infoPtr->firstVisible)
@@ -3651,7 +3658,7 @@ TREEVIEW_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
  hdc = GetDC (0);
  hOldFont = SelectObject (hdc, hFont);
  GetTextMetricsA (hdc, &tm);
- height= tm.tmHeight + tm.tmExternalLeading;
+ height= tm.tmHeight + tm.tmExternalLeading + FOCUS_BORDER;
  if (height>infoPtr->uRealItemHeight) 
  	infoPtr->uRealItemHeight=height;
  SelectObject (hdc, hOldFont);
@@ -3670,6 +3677,7 @@ TREEVIEW_VScroll (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+  WORD nVisibleItems;
   int maxHeight;
 
   TRACE("wp %x, lp %lx\n", wParam, lParam);
@@ -3682,10 +3690,11 @@ TREEVIEW_VScroll (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			if (infoPtr->cy < 0) infoPtr->cy=0;
 			break;
 	case SB_LINEDOWN: 
-			maxHeight=infoPtr->uTotalHeight-infoPtr->uVisibleHeight;
-			if (infoPtr->cy == maxHeight) return FALSE;
+			nVisibleItems = infoPtr->uVisibleHeight / infoPtr->uRealItemHeight;
+			maxHeight=infoPtr->uTotalHeight - nVisibleItems * infoPtr->uRealItemHeight;
+			if (infoPtr->cy >= maxHeight) return FALSE;
 			infoPtr->cy += infoPtr->uRealItemHeight;
-			if (infoPtr->cy > maxHeight) 
+			if (infoPtr->cy >= maxHeight) 
 				infoPtr->cy = maxHeight;
 			break;
 	case SB_PAGEUP:	
@@ -3694,11 +3703,12 @@ TREEVIEW_VScroll (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			if (infoPtr->cy < 0) infoPtr->cy=0;
 			break;
 	case SB_PAGEDOWN:
-			maxHeight=infoPtr->uTotalHeight-infoPtr->uVisibleHeight;
+			nVisibleItems = infoPtr->uVisibleHeight / infoPtr->uRealItemHeight;
+			maxHeight=infoPtr->uTotalHeight - nVisibleItems * infoPtr->uRealItemHeight;
 			if (infoPtr->cy == maxHeight) return FALSE;
 			infoPtr->cy += infoPtr->uVisibleHeight;
-            if (infoPtr->cy > maxHeight)
-                infoPtr->cy = maxHeight;
+            		if (infoPtr->cy >= maxHeight)
+                		infoPtr->cy = maxHeight;
 			break;
 	case SB_THUMBTRACK: 
 			infoPtr->cy = HIWORD (wParam);
