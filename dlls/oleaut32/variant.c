@@ -1905,6 +1905,9 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 		  /* Dereference the inner variant.
 		   */
 		  res = VariantCopyInd( pvargDest, pvargSrc->u.pvarVal );
+		  /* We must also copy its type, I think.
+		   */
+		  pvargSrc->vt = pvargSrc->u.pvarVal->vt; 
 		}
 	      }
 	      break;
