@@ -869,7 +869,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     ossdev->dsc_caps.dwFormats = 0x00000000;
     ossdev->dsc_caps.dwChannels = 1;
 
-    /* See the comment in OSS_WaveOutInit */
+    /* See the comment in OSS_WaveOutInit for the loop order */
     for (f=0;f<2;f++) {
         arg=win_std_oss_fmts[f];
         rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
@@ -933,46 +933,57 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
     int caps;
     TRACE("(%p) %s\n", ossdev, ossdev->dev_name);
 
-    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0,-1,-1,-1) != 0)
+    /* The OSS documentation says we must call SNDCTL_SETDUPLEX
+     * *before* checking for SNDCTL_DSP_GETCAPS otherwise we may
+     * get the wrong result. This ioctl must even be done before
+     * setting the fragment size so that only OSS_RawOpenDevice is
+     * in a position to do it. So we set full_duplex speculatively
+     * and adjust right after.
+     */
+    ossdev->full_duplex=1;
+    rc=OSS_OpenDevice(ossdev, O_RDWR, NULL, 0,-1,-1,-1);
+    ossdev->full_duplex=0;
+    if (rc != 0)
         return;
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
-
     TRACE("%s\n", ossdev->ds_desc.szDesc);
 
-    if (WINE_TRACE_ON(wave))
-        OSS_Info(ossdev->fd);
-
-    /* See the comment in OSS_WaveOutInit */
-    for (f=0;f<2;f++) {
-        arg=win_std_oss_fmts[f];
-        rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
-        if (rc!=0 || arg!=win_std_oss_fmts[f]) {
-            TRACE("DSP_SAMPLESIZE: rc=%d returned 0x%x for 0x%x\n",
-                  rc,arg,win_std_oss_fmts[f]);
-            continue;
-        }
-
-        for (c=0;c<2;c++) {
-            arg=c;
-            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
-            if (rc!=0 || arg!=c) {
-                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
-                continue;
-            }
-
-            for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
-                arg=win_std_rates[r];
-                rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
-                TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
-                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
-            }
-        }
-    }
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
         ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
 
+    if (WINE_TRACE_ON(wave))
+    {
+        OSS_Info(ossdev->fd);
+
+        /* See the comment in OSS_WaveOutInit for the loop order */
+        for (f=0;f<2;f++) {
+            arg=win_std_oss_fmts[f];
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
+            if (rc!=0 || arg!=win_std_oss_fmts[f]) {
+                TRACE("DSP_SAMPLESIZE: rc=%d returned 0x%x for 0x%x\n",
+                      rc,arg,win_std_oss_fmts[f]);
+                continue;
+            }
+
+            for (c=0;c<2;c++) {
+                arg=c;
+                rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+                if (rc!=0 || arg!=c) {
+                    TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
+                    continue;
+                }
+
+                for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
+                    arg=win_std_rates[r];
+                    rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
+                    TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
+                          rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
+                }
+            }
+        }
+    }
     OSS_CloseDevice(ossdev);
 }
 
