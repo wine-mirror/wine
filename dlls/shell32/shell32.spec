@@ -115,7 +115,7 @@
  119 stdcall IsLFNDrive(ptr) IsLFNDriveAW
  120 stdcall FileMenu_AbortInitMenu ()
  121 stdcall SHFlushClipboard ()
- 122 stdcall RunDLL_CallEntry16 (long long long long long) #name wrong?
+ 122 stdcall -noname RunDLL_CallEntry16(long long long str long) #name wrong?
  123 stdcall SHFreeUnusedLibraries ()
  124 stdcall FileMenu_AppendFilesForPidl(long ptr long)
  125 stdcall FileMenu_AddFilesForPidl(long long long ptr long long ptr)

@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/winbase16.h"
+#include "wownt32.h"
 #include "wine/debug.h"
 #include "cpl.h"
 #include "wine/unicode.h"
@@ -464,10 +466,23 @@ HRESULT WINAPI Control_FillCache_RunDLLW(HWND hWnd, HANDLE hModule, DWORD w, DWO
  * RunDLL_CallEntry16				[SHELL32.122]
  * the name is probably wrong
  */
-HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
+void WINAPI RunDLL_CallEntry16( DWORD proc, HWND hwnd, HINSTANCE inst,
+                                LPCSTR cmdline, INT cmdshow )
 {
-    FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
-    return 0;
+    WORD args[5];
+    SEGPTR cmdline_seg;
+
+    TRACE( "proc %lx hwnd %p inst %p cmdline %s cmdshow %d\n",
+           proc, hwnd, inst, debugstr_a(cmdline), cmdshow );
+
+    cmdline_seg = MapLS( cmdline );
+    args[4] = HWND_16(hwnd);
+    args[3] = MapHModuleLS(inst);
+    args[2] = SELECTOROF(cmdline_seg);
+    args[1] = OFFSETOF(cmdline_seg);
+    args[0] = cmdshow;
+    WOWCallback16Ex( proc, WCB16_PASCAL, sizeof(args), args, NULL );
+    UnMapLS( cmdline_seg );
 }
 
 /*************************************************************************
