@@ -1863,6 +1863,40 @@ done:
     return res;
 }
 
+/******************************************************************************
+ *              CoGetTreatAsClass        [OLE32.25]
+ *
+ * Reads the TreatAs value from a class.
+ */
+HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID clsidNew)
+{
+    HKEY hkey = 0;
+    char buf[200], szClsidNew[200];
+    HRESULT res = S_OK;
+    LONG len = sizeof(szClsidNew);
+
+    FIXME("(%s,%p)\n", debugstr_guid(clsidOld), clsidNew);
+    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
+    memcpy(clsidNew,clsidOld,sizeof(CLSID)); /* copy over old value */
+
+    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    {
+        res = REGDB_E_CLASSNOTREG;
+	goto done;
+    }
+    if (RegQueryValueA(hkey, "TreatAs", szClsidNew, &len))
+    {
+        res = S_FALSE;
+	goto done;
+    }
+    res = __CLSIDFromStringA(szClsidNew,clsidNew);
+    if (FAILED(res))
+    	FIXME("Failed CLSIDFromStringA(%s), hres %lx?\n",szClsidNew,res);
+done:
+    if (hkey) RegCloseKey(hkey);
+    return res;
+    
+}
 
 /***********************************************************************
  *           IsEqualGUID [OLE32.76]
