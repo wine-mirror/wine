@@ -360,34 +360,34 @@ void EMF_SetMapMode(HDC hdc, enum_emh_data *info)
         break;
     case MM_LOMETRIC:
     case MM_ISOTROPIC:
-        info->wndExtX   = horzSize;
-        info->wndExtY   = vertSize;
-        info->vportExtX = horzRes / 10;
-        info->vportExtY = vertRes / -10;
+        info->wndExtX   = horzSize * 10;
+        info->wndExtY   = vertSize * 10;
+        info->vportExtX = horzRes;
+        info->vportExtY = -vertRes;
         break;
     case MM_HIMETRIC:
-        info->wndExtX   = horzSize * 10;
-        info->wndExtY   = vertSize * 10;
-        info->vportExtX = horzRes / 10;
-        info->vportExtY = vertRes / -10;
+        info->wndExtX   = horzSize * 100;
+        info->wndExtY   = vertSize * 100;
+        info->vportExtX = horzRes;
+        info->vportExtY = -vertRes;
         break;
     case MM_LOENGLISH:
-        info->wndExtX   = horzSize;
-        info->wndExtY   = vertSize;
-        info->vportExtX = 254L * horzRes / 1000;
-        info->vportExtY = -254L * vertRes / 1000;
+        info->wndExtX   = MulDiv(1000, horzSize, 254);
+        info->wndExtY   = MulDiv(1000, vertSize, 254);
+        info->vportExtX = horzRes;
+        info->vportExtY = -vertRes;
         break;
     case MM_HIENGLISH:
-        info->wndExtX   = horzSize * 10;
-        info->wndExtY   = vertSize * 10;
-        info->vportExtX = 254L * horzRes / 1000;
-        info->vportExtY = -254L * vertRes / 1000;
+        info->wndExtX   = MulDiv(10000, horzSize, 254);
+        info->wndExtY   = MulDiv(10000, vertSize, 254);
+        info->vportExtX = horzRes;
+        info->vportExtY = -vertRes;
         break;
     case MM_TWIPS:
-        info->wndExtX   = 144L * horzSize / 10;
-        info->wndExtY   = 144L * vertSize / 10;
-        info->vportExtX = 254L * horzRes / 1000;
-        info->vportExtY = -254L * vertRes / 1000;
+        info->wndExtX   = MulDiv(14400, horzSize, 254);
+        info->wndExtY   = MulDiv(14400, vertSize, 254);
+        info->vportExtX = horzRes;
+        info->vportExtY = -vertRes;
         break;
     case MM_ANISOTROPIC:
         break;
@@ -516,7 +516,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	PEMRSETMAPMODE pSetMapMode = (PEMRSETMAPMODE) mr;
 
-        if(info->mode == pSetMapMode->iMode)
+        if(info->mode == pSetMapMode->iMode && (info->mode == MM_ISOTROPIC || info->mode == MM_ANISOTROPIC))
             break;
         info->mode = pSetMapMode->iMode;
         EMF_SetMapMode(hdc, info);

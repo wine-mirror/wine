@@ -38,12 +38,12 @@ void MAPPING_FixIsotropic( DC * dc )
                   (GetDeviceCaps( dc->hSelf, VERTRES ) * dc->wndExtY);
     if (xdim > ydim)
     {
-	dc->vportExtX = dc->vportExtX * fabs( ydim / xdim );
+	dc->vportExtX = floor(dc->vportExtX * fabs( ydim / xdim ) + 0.5);
 	if (!dc->vportExtX) dc->vportExtX = 1;
     }
     else
     {
-	dc->vportExtY = dc->vportExtY * fabs( xdim / ydim );
+	dc->vportExtY = floor(dc->vportExtY * fabs( xdim / ydim ) + 0.5);
 	if (!dc->vportExtY) dc->vportExtY = 1;
     }
 }
@@ -163,6 +163,10 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     TRACE("%p %d\n", hdc, mode );
 
     ret = dc->MapMode;
+
+    if (mode == dc->MapMode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC))
+        goto done;
+
     horzSize = GetDeviceCaps( hdc, HORZSIZE );
     vertSize = GetDeviceCaps( hdc, VERTSIZE );
     horzRes  = GetDeviceCaps( hdc, HORZRES );
@@ -177,34 +181,34 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
         break;
     case MM_LOMETRIC:
     case MM_ISOTROPIC:
-        dc->wndExtX   = horzSize;
-        dc->wndExtY   = vertSize;
-        dc->vportExtX = horzRes / 10;
-        dc->vportExtY = vertRes / -10;
+        dc->wndExtX   = horzSize * 10;
+        dc->wndExtY   = vertSize * 10;
+        dc->vportExtX = horzRes;
+        dc->vportExtY = -vertRes;
         break;
     case MM_HIMETRIC:
-        dc->wndExtX   = horzSize * 10;
-        dc->wndExtY   = vertSize * 10;
-        dc->vportExtX = horzRes / 10;
-        dc->vportExtY = vertRes / -10;
+        dc->wndExtX   = horzSize * 100;
+        dc->wndExtY   = vertSize * 100;
+        dc->vportExtX = horzRes;
+        dc->vportExtY = -vertRes;
         break;
     case MM_LOENGLISH:
-        dc->wndExtX   = horzSize;
-        dc->wndExtY   = vertSize;
-        dc->vportExtX = 254L * horzRes / 1000;
-        dc->vportExtY = -254L * vertRes / 1000;
+        dc->wndExtX   = MulDiv(1000, horzSize, 254);
+        dc->wndExtY   = MulDiv(1000, vertSize, 254);
+        dc->vportExtX = horzRes;
+        dc->vportExtY = -vertRes;
         break;
     case MM_HIENGLISH:
-        dc->wndExtX   = horzSize * 10;
-        dc->wndExtY   = vertSize * 10;
-        dc->vportExtX = 254L * horzRes / 1000;
-        dc->vportExtY = -254L * vertRes / 1000;
+        dc->wndExtX   = MulDiv(10000, horzSize, 254);
+        dc->wndExtY   = MulDiv(10000, vertSize, 254);
+        dc->vportExtX = horzRes;
+        dc->vportExtY = -vertRes;
         break;
     case MM_TWIPS:
-        dc->wndExtX   = 144L * horzSize / 10;
-        dc->wndExtY   = 144L * vertSize / 10;
-        dc->vportExtX = 254L * horzRes / 1000;
-        dc->vportExtY = -254L * vertRes / 1000;
+        dc->wndExtX   = MulDiv(14400, horzSize, 254);
+        dc->wndExtY   = MulDiv(14400, vertSize, 254);
+        dc->vportExtX = horzRes;
+        dc->vportExtY = -vertRes;
         break;
     case MM_ANISOTROPIC:
         break;
@@ -321,7 +325,7 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     }
     dc->wndExtX = x;
     dc->wndExtY = y;
-    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    /* Windows fixes MM_ISOTROPIC mode only in SetViewportExtEx() */
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
