@@ -903,8 +903,8 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	            tmp = s[x]; \
 	            if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
 	        } \
-	        (LPBYTE)s += sdesc.u1.lPitch; \
-	        (LPBYTE)d += ddesc.u1.lPitch; \
+	        s = (type *)((BYTE *)s + sdesc.u1.lPitch); \
+	        d = (type *)((BYTE *)d + ddesc.u1.lPitch); \
             } \
             break; \
         }
@@ -913,6 +913,26 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	    case 1: COPYBOX_COLORKEY(BYTE)
 	    case 2: COPYBOX_COLORKEY(WORD)
 	    case 4: COPYBOX_COLORKEY(DWORD)
+	    case 3:
+            {
+                BYTE *d, *s;
+                DWORD tmp;
+                s = (BYTE *) sdesc.lpSurface;
+                d = (BYTE *) ddesc.lpSurface;
+                for (y = 0; y < h; y++) {
+                    for (x = 0; x < w * 3; x += 3) {
+                        tmp = (DWORD)s[x] + ((DWORD)s[x + 1] << 8) + ((DWORD)s[x + 2] << 16);
+                        if (tmp < keylow || tmp > keyhigh) {
+                            d[x + 0] = s[x + 0];
+                            d[x + 1] = s[x + 1];
+                            d[x + 2] = s[x + 2];
+                        }
+                    }
+                    s += sdesc.u1.lPitch;
+                    d += ddesc.u1.lPitch;
+                }
+                break;
+            }
 	    default:
 		FIXME("Source color key blitting not supported for bpp %d\n",bpp*8);
 	        ret = DDERR_UNSUPPORTED;
