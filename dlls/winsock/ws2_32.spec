@@ -86,7 +86,7 @@
 82  stdcall  WSAWaitForMultipleEvents(long ptr long long long) kernel32.WaitForMultipleObjectsEx
 83  stdcall  WSCDeinstallProvider(ptr ptr)
 84  stub     WSCEnableNSProvider
-85  stub     WSCEnumProtocols
+85  stdcall  WSCEnumProtocols(ptr ptr ptr ptr)
 86  stub     WSCGetProviderPath
 87  stub     WSCInstallNameSpace
 88  stdcall  WSCInstallProvider(ptr wstr ptr long ptr)
