@@ -432,14 +432,12 @@ void  output_makefile (void)
            "TOPOBJDIR = ../..\nSRCDIR    = @srcdir@\nVPATH     = @srcdir@\n"
            "MODULE    = %s.dll\n", globals.input_name, OUTPUT_DLL_NAME);
 
-  fprintf (makefile, "IMPORTS   = user32 advapi32 kernel32 ntdll");
+  fprintf (makefile, "IMPORTS   = kernel32");
   if (globals.forward_dll)
     fprintf (makefile, " %s", globals.forward_dll);
 
   fprintf (makefile,
-           "\nEXTRALIBS = $(LIBUNICODE)\n\nLDDLLFLAGS = @LDDLLFLAGS@\n"
-           "SYMBOLFILE = $(MODULE).tmp.o\n\n"
-           "C_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n### Dependencies:",
+           "\n\nC_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n### Dependencies:",
            OUTPUT_DLL_NAME);
 
   if (globals.forward_dll)
