@@ -1159,19 +1159,31 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
           DWORD result;
 
           strcpyW(tmpBuf, fodInfos->initdir);
-          if (tmpBuf[strlenW(tmpBuf)-1] != '\\') {
-             strcatW(tmpBuf, szwSlash);
+          if( PathFileExistsW(tmpBuf) ) {
+              /* initdir does not have to be a directory. If a file is
+               * specified, the dir part is taken */
+              if( PathIsDirectoryW(tmpBuf)) {
+                  if (tmpBuf[strlenW(tmpBuf)-1] != '\\') {
+                     strcatW(tmpBuf, szwSlash);
+                  }
+                  strcatW(tmpBuf, szwStar);
+              }
+              result = GetFullPathNameW(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
+              if (result) {
+                 *nameBit = 0x00;
+                 if (fodInfos->initdir)
+                    MemFree(fodInfos->initdir);
+                 fodInfos->initdir = MemAlloc((strlenW(tmpBuf2) + 1)*sizeof(WCHAR));
+                 strcpyW(fodInfos->initdir, tmpBuf2);
+                 handledPath = TRUE;
+                 TRACE("Value in InitDir changed to %s\n", debugstr_w(fodInfos->initdir));
+              }
           }
-          strcatW(tmpBuf, szwStar);
-          result = GetFullPathNameW(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
-          if (result) {
-             *nameBit = 0x00;
-             if (fodInfos->initdir)
-                MemFree(fodInfos->initdir);
-             fodInfos->initdir = MemAlloc((strlenW(tmpBuf2) + 1)*sizeof(WCHAR));
-             strcpyW(fodInfos->initdir, tmpBuf2);
-             handledPath = TRUE;
-             TRACE("Value in InitDir changed to %s\n", debugstr_w(fodInfos->initdir));
+          else if (fodInfos->initdir)
+          {
+                    MemFree(fodInfos->initdir);
+                    fodInfos->initdir = NULL;
+                    TRACE("Value in InitDir is not an existing path, changed to (nil)\n");
           }
       }
   }
