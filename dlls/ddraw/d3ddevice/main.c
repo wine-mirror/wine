@@ -104,7 +104,7 @@ DWORD InitRenderStateTab[] = {
     D3DRENDERSTATE_WRAP6,                   0,
     D3DRENDERSTATE_WRAP7,                   0,
     D3DRENDERSTATE_CLIPPING,                FALSE,
-    D3DRENDERSTATE_LIGHTING,                FALSE, /* FIXME: Should be TRUE */
+    D3DRENDERSTATE_LIGHTING,                TRUE,
     D3DRENDERSTATE_EXTENTS,                 FALSE,
     D3DRENDERSTATE_AMBIENT,                 D3DRGBA(0,0,0,0),
     D3DRENDERSTATE_FOGVERTEXMODE,           D3DFOG_NONE,
@@ -160,42 +160,35 @@ void InitDefaultStateBlock(STATEBLOCK* lpStateBlock, int version)
 {
     int i,j;  
     TRACE("(%p,%d)\n", lpStateBlock, version);    
-    memset(lpStateBlock,0,sizeof(STATEBLOCK));
+    memset(lpStateBlock, 0, sizeof(STATEBLOCK));
     
     /* Initialize render states */
-    for(i=0;i<sizeof(InitRenderStateTab)/4;i+=2)
+    for(i = 0; i < sizeof(InitRenderStateTab) / sizeof(InitRenderStateTab[0]); i += 2)
     {
-        lpStateBlock->render_state[InitRenderStateTab[i]-1] = InitRenderStateTab[i+1];
-	lpStateBlock->set_flags.render_state[InitRenderStateTab[i]-1] = TRUE;
-    }
-
-    /* Initialize render states */
-    for(i=0;i<sizeof(InitLightStateTab)/4;i+=2)
-    {
-        lpStateBlock->light_state[InitLightStateTab[i]-1] = InitLightStateTab[i+1];
-	lpStateBlock->set_flags.light_state[InitLightStateTab[i]-1] = TRUE;
+        lpStateBlock->render_state[InitRenderStateTab[i] - 1] = InitRenderStateTab[i + 1];
+	lpStateBlock->set_flags.render_state[InitRenderStateTab[i] - 1] = TRUE;
     }
 
     /* Initialize texture stages states */
-    for(i=0;i<8;i++)
+    for(i = 0; i < MAX_TEXTURES; i++)
     {
-       for(j=0;j<sizeof(InitTextureStageStateTab)/4;j+=2)
+       for(j = 0; j < sizeof(InitTextureStageStateTab) / sizeof(InitTextureStageStateTab[0]); j += 2)
        {
-           lpStateBlock->texture_stage_state[i][InitTextureStageStateTab[j]-1] = InitTextureStageStateTab[j+1];
-           lpStateBlock->set_flags.texture_stage_state[i][InitTextureStageStateTab[j]-1] = TRUE;
+           lpStateBlock->texture_stage_state[i][InitTextureStageStateTab[j] - 1] = InitTextureStageStateTab[j + 1];
+           lpStateBlock->set_flags.texture_stage_state[i][InitTextureStageStateTab[j] - 1] = TRUE;
        }
        /* Map texture coords 0 to stage 0, 1 to stage 1, etc... */
-       lpStateBlock->texture_stage_state[i][D3DTSS_TEXCOORDINDEX-1] = i;
-       lpStateBlock->set_flags.texture_stage_state[i][D3DTSS_TEXCOORDINDEX-1] = TRUE;
+       lpStateBlock->texture_stage_state[i][D3DTSS_TEXCOORDINDEX - 1] = i;
+       lpStateBlock->set_flags.texture_stage_state[i][D3DTSS_TEXCOORDINDEX - 1] = TRUE;
     }
     
     /* The first texture is particular, update it consequently */
-    lpStateBlock->texture_stage_state[0][D3DTSS_COLOROP-1] = D3DTOP_MODULATE;
-    lpStateBlock->texture_stage_state[0][D3DTSS_ALPHAOP-1] = D3DTOP_SELECTARG1;
+    lpStateBlock->texture_stage_state[0][D3DTSS_COLOROP - 1] = D3DTOP_MODULATE;
+    lpStateBlock->texture_stage_state[0][D3DTSS_ALPHAOP - 1] = D3DTOP_SELECTARG1;
     
     /* Updates for particular versions */
-    if ((version == 1)||(version==2))
-       lpStateBlock->render_state[D3DRENDERSTATE_SPECULARENABLE-1] = TRUE;
+    if ((version == 1) || (version==2))
+       lpStateBlock->render_state[D3DRENDERSTATE_SPECULARENABLE - 1] = TRUE;
 }
 
 HRESULT WINAPI
@@ -1112,12 +1105,8 @@ Main_IDirect3DDeviceImpl_3_2T_GetLightState(LPDIRECT3DDEVICE3 iface,
                                             LPDWORD lpdwLightState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dwLightStateType, lpdwLightState);
-    if (lpdwLightState && dwLightStateType && (dwLightStateType <= HIGHEST_LIGHT_STATE) ) {
-       *lpdwLightState = This->state_block.light_state[dwLightStateType-1];
-       return DD_OK;
-    }
-    return DDERR_INVALIDPARAMS;
+    FIXME("(%p/%p)->(%08x,%p): stub !\n", This, iface, dwLightStateType, lpdwLightState);
+    return DD_OK;
 }
 
 HRESULT WINAPI

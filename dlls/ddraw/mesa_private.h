@@ -58,32 +58,6 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 
 extern const GUID IID_D3DDEVICE_OpenGL;
 
-typedef struct render_state {
-    /* This is used for the device mode */
-    GLenum src, dst;
-    /* This is used for textures */
-    GLenum mag, min;
-
-    /* This is needed for the Alpha stuff */
-    GLenum alpha_func;
-    GLclampf alpha_ref;
-    BOOLEAN alpha_blend_enable;
-
-    /* This is needed for the stencil stuff */
-    GLint stencil_ref;
-    GLuint stencil_mask;
-    GLenum stencil_func;
-    BOOLEAN stencil_enable;
-    GLenum stencil_fail, stencil_zfail, stencil_pass;
-  
-    /* This is needed for proper lighting */
-    BOOLEAN lighting_enable, specular_enable;
-    D3DMATERIALCOLORSOURCE color_diffuse, color_specular, color_ambient, color_emissive;
-
-    /* This is needed to re-enable fogging when XYZRHW and XYZ primitives are mixed */
-    BOOLEAN fog_on;
-} RenderState;
-
 typedef struct IDirect3DGLImpl
 {
     struct IDirect3DImpl parent;
@@ -127,9 +101,6 @@ typedef struct IDirect3DDeviceGLImpl
     
     GLXContext gl_context;
 
-    /* The current render state */
-    RenderState render_state;
-
     /* The last type of vertex drawn */
     GL_TRANSFORM_STATE transform_state;
 
@@ -167,20 +138,17 @@ extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This) ;
 /* Used to set-up our orthographic projection */
 extern void d3ddevice_set_ortho(IDirect3DDeviceImpl *This) ;
 
-/* Common functions defined in d3dcommon.c */
-void set_render_state(IDirect3DDeviceGLImpl* This,
-		      D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState);
-void store_render_state(D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState,
-		        STATEBLOCK* lpStateBlock);
-void get_render_state(D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState,
-		      STATEBLOCK* lpStateBlock);
-void apply_render_state(IDirect3DDeviceGLImpl* This, STATEBLOCK* lpStateBlock);
+/* Rendering state management functions */
+extern void set_render_state(IDirect3DDeviceImpl* This, D3DRENDERSTATETYPE dwRenderStateType, STATEBLOCK *lpStateBlock);
+extern void store_render_state(IDirect3DDeviceImpl *This, D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState, STATEBLOCK* lpStateBlock);
+extern void get_render_state(IDirect3DDeviceImpl *This, D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState, STATEBLOCK* lpStateBlock);
+extern void apply_render_state(IDirect3DDeviceImpl* This, STATEBLOCK* lpStateBlock);
 
 /* This structure contains all the function pointers to OpenGL extensions
    that are used by Wine */
 typedef struct {
-  void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
-			     GLsizei width, GLenum format, GLenum type, const GLvoid *table);
+    void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
+			       GLsizei width, GLenum format, GLenum type, const GLvoid *table);
 } Mesa_DeviceCapabilities;
 
 #endif /* HAVE_OPENGL */

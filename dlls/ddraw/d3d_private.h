@@ -26,9 +26,11 @@
 
 #include "d3d.h"
 
+#define MAX_TEXTURES 8
+#define MAX_LIGHTS  16
+
 #define HIGHEST_RENDER_STATE         152
 #define HIGHEST_TEXTURE_STAGE_STATE   24
-#define HIGHEST_LIGHT_STATE            8
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -45,15 +47,13 @@ typedef struct IDirect3DVertexBufferImpl IDirect3DVertexBufferImpl;
 
 typedef struct STATEBLOCKFLAGS {
    BOOL render_state[HIGHEST_RENDER_STATE];
-   BOOL texture_stage_state[8][HIGHEST_TEXTURE_STAGE_STATE];
-   BOOL light_state[HIGHEST_LIGHT_STATE];
+   BOOL texture_stage_state[MAX_TEXTURES][HIGHEST_TEXTURE_STAGE_STATE];
 } STATEBLOCKFLAGS;
 
 typedef struct STATEBLOCK {
    STATEBLOCKFLAGS set_flags; 
    DWORD render_state[HIGHEST_RENDER_STATE];
-   DWORD texture_stage_state[8][HIGHEST_TEXTURE_STAGE_STATE];
-   DWORD light_state[HIGHEST_LIGHT_STATE];
+   DWORD texture_stage_state[MAX_TEXTURES][HIGHEST_TEXTURE_STAGE_STATE];
 } STATEBLOCK;
 
 /*****************************************************************************
@@ -187,9 +187,6 @@ typedef struct d3d7clippingplane
 /*****************************************************************************
  * IDirect3DDevice implementation structure
  */
-
-#define MAX_TEXTURES 8
-#define MAX_LIGHTS  16
 
 #define WORLDMAT_CHANGED (0x00000001 << 0)
 #define VIEWMAT_CHANGED  (0x00000001 << 1)

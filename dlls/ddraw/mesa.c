@@ -62,10 +62,30 @@ GLenum convert_D3D_stencilop_to_GL(D3DSTENCILOP dwRenderState)
     return GL_KEEP;
 }
 
-void set_render_state(IDirect3DDeviceGLImpl* This,
-		      D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState)
+GLenum convert_D3D_blendop_to_GL(D3DBLEND dwRenderState)
 {
-    RenderState* rs = &This->render_state;
+    switch ((D3DBLEND) dwRenderState) {
+        case D3DBLEND_ZERO: return GL_ZERO;
+        case D3DBLEND_ONE: return GL_ONE;
+	case D3DBLEND_SRCALPHA: return GL_SRC_ALPHA;
+	case D3DBLEND_INVSRCALPHA: return GL_ONE_MINUS_SRC_ALPHA;
+	case D3DBLEND_DESTALPHA: return GL_DST_ALPHA;
+	case D3DBLEND_INVDESTALPHA: return GL_ONE_MINUS_DST_ALPHA;
+	case D3DBLEND_DESTCOLOR: return GL_DST_COLOR;
+	case D3DBLEND_INVDESTCOLOR: return GL_ONE_MINUS_DST_COLOR;
+	case D3DBLEND_SRCALPHASAT: return GL_SRC_ALPHA_SATURATE;
+	case D3DBLEND_SRCCOLOR: return GL_SRC_COLOR;
+	case D3DBLEND_INVSRCCOLOR: return GL_ONE_MINUS_SRC_COLOR;
+        default: ERR("Unhandled blend mode %d !\n", dwRenderState); return GL_ZERO;
+    }
+}
+
+void set_render_state(IDirect3DDeviceImpl* This,
+		      D3DRENDERSTATETYPE dwRenderStateType, STATEBLOCK *lpStateBlock)
+{
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    DWORD dwRenderState = lpStateBlock->render_state[dwRenderStateType - 1];
+
     if (TRACE_ON(ddraw))
         TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
 
@@ -82,7 +102,7 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 	        IDirectDrawSurfaceImpl *tex = (IDirectDrawSurfaceImpl*) dwRenderState;
 		
 		LEAVE_GL();
-		IDirect3DDevice7_SetTexture(ICOM_INTERFACE(&(This->parent), IDirect3DDevice7),
+		IDirect3DDevice7_SetTexture(ICOM_INTERFACE(This, IDirect3DDevice7),
 					    0, 
 					    ICOM_INTERFACE(tex, IDirectDrawSurface7));
 		ENTER_GL();
@@ -91,19 +111,17 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 	    case D3DRENDERSTATE_TEXTUREADDRESSU:  /* 44 */
 	    case D3DRENDERSTATE_TEXTUREADDRESSV:  /* 45 */
 	    case D3DRENDERSTATE_TEXTUREADDRESS: { /*  3 */
-	        GLenum arg = GL_REPEAT; /* Default value */
-	        switch ((D3DTEXTUREADDRESS) dwRenderState) {
-		    case D3DTADDRESS_WRAP:   arg = GL_REPEAT; break;
-		    case D3DTADDRESS_CLAMP:  arg = GL_CLAMP; break;
-		    case D3DTADDRESS_BORDER: arg = GL_CLAMP_TO_EDGE; break;
-		    default: ERR("Unhandled TEXTUREADDRESS mode %ld !\n", dwRenderState);
-		}
-		if ((dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSU) ||
-		    (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS))
-		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, arg);
-		if ((dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSV) ||
-		    (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS))
-		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, arg);
+	        D3DTEXTURESTAGESTATETYPE d3dTexStageStateType;
+
+		if (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS) d3dTexStageStateType = D3DTSS_ADDRESS;
+		else if (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSU) d3dTexStageStateType = D3DTSS_ADDRESSU;
+		else d3dTexStageStateType = D3DTSS_ADDRESSV;
+
+		LEAVE_GL();
+		IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7),
+						      0, d3dTexStageStateType,
+						      dwRenderState);
+		ENTER_GL();
 	    } break;
 	      
 	    case D3DRENDERSTATE_TEXTUREPERSPECTIVE: /* 4 */
@@ -181,113 +199,52 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 		    glDisable(GL_ALPHA_TEST);
 	        break;
 
-	    case D3DRENDERSTATE_TEXTUREMAG:       /* 17 */
+	    case D3DRENDERSTATE_TEXTUREMAG: {     /* 17 */
+	        DWORD tex_mag = 0xFFFFFFFF;
+
 	        switch ((D3DTEXTUREFILTER) dwRenderState) {
 		    case D3DFILTER_NEAREST:
-		        rs->mag = GL_NEAREST;
+		        tex_mag = D3DTFG_POINT;
 			break;
 		    case D3DFILTER_LINEAR:
-			rs->mag = GL_LINEAR;
+		        tex_mag = D3DTFG_LINEAR;
 			break;
 		    default:
 			ERR("Unhandled texture mag %ld !\n",dwRenderState);
 	        }
-	        break;
 
-	    case D3DRENDERSTATE_TEXTUREMIN:         /* 18 */
+		if (tex_mag != 0xFFFFFFFF) {
+		    LEAVE_GL();
+		    IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7), 0, D3DTSS_MAGFILTER, tex_mag);
+		    ENTER_GL();
+		}
+	    } break;
+
+	    case D3DRENDERSTATE_TEXTUREMIN: {       /* 18 */
+	        DWORD tex_min = 0xFFFFFFFF;
+
 	        switch ((D3DTEXTUREFILTER) dwRenderState) {
 		    case D3DFILTER_NEAREST:
-		        rs->min = GL_NEAREST;
+		        tex_min = D3DTFN_POINT;
 			break;
 		    case D3DFILTER_LINEAR:
-			rs->mag = GL_LINEAR;
+		        tex_min = D3DTFN_LINEAR;
 			break;
 		    default:
 			ERR("Unhandled texture min %ld !\n",dwRenderState);
+	        }
+
+		if (tex_min != 0xFFFFFFFF) {
+		    LEAVE_GL();
+		    IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7), 0, D3DTSS_MINFILTER, tex_min);
+		    ENTER_GL();
 		}
-	        break;
+	    } break;
 
 	    case D3DRENDERSTATE_SRCBLEND:           /* 19 */
-	        switch ((D3DBLEND) dwRenderState) {
-		    case D3DBLEND_ZERO:
-		          rs->src = GL_ZERO;
-			  break;
-		    case D3DBLEND_ONE:
-		          rs->src = GL_ONE;
-			  break;
-		    case D3DBLEND_SRCALPHA:
-		          rs->src = GL_SRC_ALPHA;
-			  break;
-		    case D3DBLEND_INVSRCALPHA:
-		          rs->src = GL_ONE_MINUS_SRC_ALPHA;
-			  break;
-		    case D3DBLEND_DESTALPHA:
-		          rs->src = GL_DST_ALPHA;
-			  break;
-		    case D3DBLEND_INVDESTALPHA:
-		          rs->src = GL_ONE_MINUS_DST_ALPHA;
-			  break;
-		    case D3DBLEND_DESTCOLOR:
-		          rs->src = GL_DST_COLOR;
-			  break;
-		    case D3DBLEND_INVDESTCOLOR:
-		          rs->src = GL_ONE_MINUS_DST_COLOR;
-			  break;
-		    case D3DBLEND_BOTHSRCALPHA:
-		          rs->src = GL_SRC_ALPHA;
-			  rs->dst = GL_SRC_ALPHA;
-			  break;
-		    case D3DBLEND_BOTHINVSRCALPHA:
-		          rs->src = GL_ONE_MINUS_SRC_ALPHA;
-			  rs->dst = GL_ONE_MINUS_SRC_ALPHA;
-			  break;
-		    case D3DBLEND_SRCALPHASAT:
-		          rs->src = GL_SRC_ALPHA_SATURATE;
-			  break;
-		    case D3DBLEND_SRCCOLOR:
-		    case D3DBLEND_INVSRCCOLOR:
-		          /* Cannot be supported with OpenGL */
-			  break;
-		    default:
-			  ERR("Unhandled src blend mode %ld !\n",dwRenderState);
-		}
-	        glBlendFunc(rs->src, rs->dst);
-	        break;
-
 	    case D3DRENDERSTATE_DESTBLEND:          /* 20 */
-	        switch ((D3DBLEND) dwRenderState) {
-		    case D3DBLEND_ZERO:
-		        rs->dst = GL_ZERO;
-			break;
-		    case D3DBLEND_ONE:
-		        rs->dst = GL_ONE;
-			break;
-		    case D3DBLEND_SRCCOLOR:
-		        rs->dst = GL_SRC_COLOR;
-			break;
-		    case D3DBLEND_INVSRCCOLOR:
-		        rs->dst = GL_ONE_MINUS_SRC_COLOR;
-			break;
-		    case D3DBLEND_SRCALPHA:
-		        rs->dst = GL_SRC_ALPHA;
-			break;
-		    case D3DBLEND_INVSRCALPHA:
-		        rs->dst = GL_ONE_MINUS_SRC_ALPHA;
-			break;
-		    case D3DBLEND_DESTALPHA:
-		        rs->dst = GL_DST_ALPHA;
-			break;
-		    case D3DBLEND_INVDESTALPHA:
-		        rs->dst = GL_ONE_MINUS_DST_ALPHA;
-			break;
-		    case D3DBLEND_DESTCOLOR:
-		    case D3DBLEND_INVDESTCOLOR:
-		        /* Cannot be supported with OpenGL */
-			break;
-		    default:
-			ERR("Unhandled dest blend mode %ld !\n",dwRenderState);
-		}
-	        glBlendFunc(rs->src, rs->dst);
+	        glBlendFunc(convert_D3D_blendop_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_SRCBLEND - 1]),
+			    convert_D3D_blendop_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1]));
 	        break;
 
 	    case D3DRENDERSTATE_TEXTUREMAPBLEND:    /* 21 */
@@ -297,7 +254,7 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			break;
 		    default:
-			  ERR("Unhandled texture environment %ld !\n",dwRenderState);
+		        ERR("Unhandled texture environment %ld !\n",dwRenderState);
 		}
 	        break;
 
@@ -306,7 +263,6 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 		    case D3DCULL_NONE:
 		         glDisable(GL_CULL_FACE);
 			 break;
-			 /* Not sure about these... The DirectX doc is, well, pretty unclear :-) */
 		    case D3DCULL_CW:
 			 glEnable(GL_CULL_FACE);
 			 glFrontFace(GL_CCW);
@@ -327,13 +283,9 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 	        break;
 	      
 	    case D3DRENDERSTATE_ALPHAREF:   /* 24 */
-	        rs->alpha_ref = dwRenderState / 255.0;
-	        glAlphaFunc(rs->alpha_func, rs->alpha_ref);
-	        break;
-	      
-	    case D3DRENDERSTATE_ALPHAFUNC: /* 25 */
-	        rs->alpha_func = convert_D3D_compare_to_GL(dwRenderState);
-	        glAlphaFunc(rs->alpha_func, rs->alpha_ref);
+	    case D3DRENDERSTATE_ALPHAFUNC:  /* 25 */
+	        glAlphaFunc(convert_D3D_compare_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_ALPHAFUNC - 1]),
+			    (lpStateBlock->render_state[D3DRENDERSTATE_ALPHAREF - 1] & 0x000000FF) / 255.0);
 	        break;
 
 	    case D3DRENDERSTATE_DITHERENABLE:     /* 26 */
@@ -346,20 +298,17 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 	    case D3DRENDERSTATE_ALPHABLENDENABLE:   /* 27 */
 	        if (dwRenderState) {
 		    glEnable(GL_BLEND);
-		    rs->alpha_blend_enable = TRUE;
 		} else {
 		    glDisable(GL_BLEND);
-		    rs->alpha_blend_enable = FALSE;
 		}
 	        break;
 	      
 	    case D3DRENDERSTATE_FOGENABLE: /* 28 */
-	        if (dwRenderState) {
+	        if ((dwRenderState == TRUE) &&
+		    (glThis->transform_state != GL_TRANSFORM_ORTHO)) {
 		    glEnable(GL_FOG);
-		    rs->fog_on = TRUE;
 		} else {
 		    glDisable(GL_FOG);
-		    rs->fog_on = FALSE;
 		}
 	        break;
 
@@ -415,57 +364,43 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 
 	    case D3DRENDERSTATE_STENCILENABLE:    /* 52 */
 	        if (dwRenderState)
-		    glDisable(GL_STENCIL_TEST);
+		    glEnable(GL_STENCIL_TEST);
 		else
 		    glDisable(GL_STENCIL_TEST);
 		break;
 	    
 	    case D3DRENDERSTATE_STENCILFAIL:      /* 53 */
-	        rs->stencil_fail = convert_D3D_stencilop_to_GL(dwRenderState);
-		glStencilOp(rs->stencil_fail, rs->stencil_zfail, rs->stencil_pass);
-		break;
-
 	    case D3DRENDERSTATE_STENCILZFAIL:     /* 54 */
-	        rs->stencil_zfail = convert_D3D_stencilop_to_GL(dwRenderState);
-		glStencilOp(rs->stencil_fail, rs->stencil_zfail, rs->stencil_pass);
-		break;
-
 	    case D3DRENDERSTATE_STENCILPASS:      /* 55 */
-	        rs->stencil_pass = convert_D3D_stencilop_to_GL(dwRenderState);
-		glStencilOp(rs->stencil_fail, rs->stencil_zfail, rs->stencil_pass);
+		glStencilOp(convert_D3D_stencilop_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_STENCILFAIL - 1]),
+			    convert_D3D_stencilop_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_STENCILZFAIL - 1]),
+			    convert_D3D_stencilop_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_STENCILPASS - 1]));
 		break;
 
 	    case D3DRENDERSTATE_STENCILFUNC:      /* 56 */
-	        rs->stencil_func = convert_D3D_compare_to_GL(dwRenderState);
-		glStencilFunc(rs->stencil_func, rs->stencil_ref, rs->stencil_mask);
-		break;
-
 	    case D3DRENDERSTATE_STENCILREF:       /* 57 */
-	        rs->stencil_ref = dwRenderState;
-		glStencilFunc(rs->stencil_func, rs->stencil_ref, rs->stencil_mask);
-		break;
-
 	    case D3DRENDERSTATE_STENCILMASK:      /* 58 */
-	        rs->stencil_mask = dwRenderState;
-		glStencilFunc(rs->stencil_func, rs->stencil_ref, rs->stencil_mask);
+		glStencilFunc(convert_D3D_compare_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_STENCILFUNC - 1]),
+			      lpStateBlock->render_state[D3DRENDERSTATE_STENCILREF - 1],
+			      lpStateBlock->render_state[D3DRENDERSTATE_STENCILMASK - 1]);
 		break;
 	  
 	    case D3DRENDERSTATE_STENCILWRITEMASK: /* 59 */
 	        glStencilMask(dwRenderState);
 	        break;
 
-	    case D3DRENDERSTATE_CLIPPING:    /* 136 */
-	    case D3DRENDERSTATE_CLIPPLANEENABLE: /*152*/
-		{
+	    case D3DRENDERSTATE_CLIPPING:          /* 136 */
+	    case D3DRENDERSTATE_CLIPPLANEENABLE: { /* 152 */
 		    GLint i;
 		    DWORD mask, runner;
 		    
-		    if (dwRenderStateType==D3DRENDERSTATE_CLIPPING) {
-			mask = ((dwRenderState)?(This->parent.state_block.render_state[D3DRENDERSTATE_CLIPPLANEENABLE-1]):(0x0000));
+		    if (dwRenderStateType == D3DRENDERSTATE_CLIPPING) {
+			mask = ((dwRenderState) ?
+				(This->state_block.render_state[D3DRENDERSTATE_CLIPPLANEENABLE - 1]) : (0x0000));
 		    } else {
 			mask = dwRenderState;
 		    }
-		    for (i = 0, runner = 1; i < This->parent.max_clipping_planes; i++, runner = (runner<<1)) {
+		    for (i = 0, runner = 0x00000001; i < This->max_clipping_planes; i++, runner = (runner << 1)) {
 			if (mask & runner) {
 			    glEnable(GL_CLIP_PLANE0 + i);
 			} else {
@@ -510,19 +445,10 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 		break;
 
 	    case D3DRENDERSTATE_DIFFUSEMATERIALSOURCE:    /* 145 */
-	        rs->color_diffuse = dwRenderState;
-		break;
-
 	    case D3DRENDERSTATE_SPECULARMATERIALSOURCE:   /* 146 */
-	        rs->color_specular = dwRenderState;
-		break;
-
 	    case D3DRENDERSTATE_AMBIENTMATERIALSOURCE:    /* 147 */
-	        rs->color_ambient = dwRenderState;
-		break;
-
 	    case D3DRENDERSTATE_EMISSIVEMATERIALSOURCE:   /* 148 */
-	        rs->color_emissive = dwRenderState;
+	        /* Nothing to do here. Only the storage matters :-) */
 		break;
 
 	    default:
@@ -532,26 +458,44 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
     }
 }
 
-void store_render_state(D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState,
-		        STATEBLOCK* lpStateBlock)
+void store_render_state(IDirect3DDeviceImpl *This,
+			D3DRENDERSTATETYPE dwRenderStateType, DWORD dwRenderState, STATEBLOCK *lpStateBlock)
 {
     TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
-    lpStateBlock->render_state[dwRenderStateType-1] = dwRenderState;
+    
+    /* Some special cases first.. */
+    if (dwRenderStateType == D3DRENDERSTATE_SRCBLEND) {
+        if (dwRenderState == D3DBLEND_BOTHSRCALPHA) {
+	    lpStateBlock->render_state[D3DRENDERSTATE_SRCBLEND - 1] = D3DBLEND_SRCALPHA;
+	    lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1] = D3DBLEND_SRCALPHA;
+	    return;
+	} else if (dwRenderState == D3DBLEND_BOTHINVSRCALPHA) {
+	    lpStateBlock->render_state[D3DRENDERSTATE_SRCBLEND - 1] = D3DBLEND_INVSRCALPHA;
+	    lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1] = D3DBLEND_INVSRCALPHA;
+	    return;
+	}
+    } else if (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS) {
+        lpStateBlock->render_state[D3DRENDERSTATE_TEXTUREADDRESSU - 1] = dwRenderState;
+        lpStateBlock->render_state[D3DRENDERSTATE_TEXTUREADDRESSV - 1] = dwRenderState;
+    }
+    
+    /* Default case */
+    lpStateBlock->render_state[dwRenderStateType - 1] = dwRenderState;
 }
 
-void get_render_state(D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState,
-		      STATEBLOCK* lpStateBlock)
+void get_render_state(IDirect3DDeviceImpl *This,
+		      D3DRENDERSTATETYPE dwRenderStateType, LPDWORD lpdwRenderState, STATEBLOCK *lpStateBlock)
 {
-    *lpdwRenderState = lpStateBlock->render_state[dwRenderStateType-1];
+    *lpdwRenderState = lpStateBlock->render_state[dwRenderStateType - 1];
     if (TRACE_ON(ddraw))
         TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), *lpdwRenderState);
 }
 
-void apply_render_state(IDirect3DDeviceGLImpl* This, STATEBLOCK* lpStateBlock)
+void apply_render_state(IDirect3DDeviceImpl *This, STATEBLOCK *lpStateBlock)
 {
     DWORD i;
     TRACE("(%p,%p)\n", This, lpStateBlock);
-    for(i=0;i<HIGHEST_RENDER_STATE;i++)
+    for(i = 0; i < HIGHEST_RENDER_STATE; i++)
 	if (lpStateBlock->set_flags.render_state[i])
-            set_render_state(This, i+1, lpStateBlock->render_state[i]);    
+            set_render_state(This, i + 1, lpStateBlock);
 }

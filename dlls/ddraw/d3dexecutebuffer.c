@@ -187,7 +187,6 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		    IDirect3DDeviceImpl *lpDevice,
 		    IDirect3DViewportImpl *lpViewport)
 {
-    IDirect3DDeviceGLImpl* lpDeviceGL = (IDirect3DDeviceGLImpl*) lpDevice;
     /* DWORD bs = This->desc.dwBufferSize; */
     DWORD vs = This->data.dwVertexOffset;
     /* DWORD vc = This->data.dwVertexCount; */
@@ -441,8 +440,10 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		for (i = 0; i < count; i++) {
 		    LPD3DSTATE ci = (LPD3DSTATE) instr;
 		    
-		    /* Handle the state transform */
-		    set_render_state(lpDeviceGL, ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
+		    LEAVE_GL();
+		    IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(lpDevice, IDirect3DDevice7),
+						    ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
+		    ENTER_GL();
 
 		    instr += size;
 		}

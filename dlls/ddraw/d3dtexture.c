@@ -149,7 +149,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 	} else {
 	    DWORD i;
 	    BYTE *src = (BYTE *) src_d->lpSurface, *dst;
-	    
+
 	    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
 	    dst = (BYTE *) surface;
 	    
