@@ -152,11 +152,6 @@ function configure_wine_applications {
 echo "WINE Installer v0.74"
 echo
 
-# check for redhat 9 with tls libs so we can enable --with-nptl until runtime detection is complete
-if [ -e /etc/redhat-release ] && grep "Shrike" /etc/redhat-release &>/dev/null && [ -e /lib/tls ]; then
-    CONFARGS="$CONFARGS --with-nptl"
-fi
-
 if [ "$BINDIST" = 'no' ]
 then {
 

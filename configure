@@ -858,7 +858,6 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-opengl        do not use OpenGL
   --without-curses        do not use curses
-  --with-nptl             use glibc NPTL threading support
   --with-wine-tools=<dir> use Wine tools from directory <dir>
   --with-x                use the X Window System
 
@@ -1343,12 +1342,6 @@ fi;
 # Check whether --with-curses or --without-curses was given.
 if test "${with_curses+set}" = set; then
   withval="$with_curses"
-
-fi;
-
-# Check whether --with-nptl or --without-nptl was given.
-if test "${with_nptl+set}" = set; then
-  withval="$with_nptl"
 
 fi;
 
@@ -12635,16 +12628,10 @@ esac
 
 case $host_os in
   linux*)
-    WINE_BINARIES="wine-kthread wine-pthread"
+    WINE_BINARIES="wine-glibc wine-kthread wine-pthread"
 
-    if test "x$with_nptl" = "xyes"
-    then
-        MAIN_BINARY="wine-pthread"
+    MAIN_BINARY="wine-glibc"
 
-    else
-        MAIN_BINARY="wine-kthread"
-
-    fi
     ;;
   *)
     WINE_BINARIES="wine-kthread"

@@ -18,7 +18,6 @@ AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE message
 
 AC_ARG_WITH(opengl,    AC_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
-AC_ARG_WITH(nptl,      AC_HELP_STRING([--with-nptl],[use glibc NPTL threading support]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
 AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
@@ -934,13 +933,8 @@ esac
 
 case $host_os in
   linux*)
-    AC_SUBST(WINE_BINARIES,"wine-kthread wine-pthread")
-    if test "x$with_nptl" = "xyes"
-    then
-        AC_SUBST(MAIN_BINARY,"wine-pthread")
-    else
-        AC_SUBST(MAIN_BINARY,"wine-kthread")
-    fi
+    AC_SUBST(WINE_BINARIES,"wine-glibc wine-kthread wine-pthread")
+    AC_SUBST(MAIN_BINARY,"wine-glibc")
     ;;
   *)
     AC_SUBST(WINE_BINARIES,"wine-kthread")

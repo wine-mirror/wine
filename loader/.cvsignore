@@ -1,4 +1,5 @@
 Makefile
 wine
+wine-glibc
 wine-kthread
 wine-pthread

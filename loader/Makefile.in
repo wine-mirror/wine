@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = wine
 
 C_SRCS = \
+	glibc.c \
 	kthread.c \
 	main.c \
 	pthread.c
@@ -21,6 +22,9 @@ all: $(WINE_BINARIES) $(MODULE)
 
 LIBPTHREAD  = @LIBPTHREAD@
 LDEXECFLAGS = @LDEXECFLAGS@
+
+wine-glibc: glibc.o Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
 
 wine-kthread: $(KTHREAD_OBJS) Makefile.in
 	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)
