@@ -1424,6 +1424,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
                hwnd, rect.left, rect.top, winpos.x, winpos.y );
 
     if ((rect.right - rect.left == winpos.cx && rect.bottom - rect.top == winpos.cy) ||
+        IsIconic(hwnd) ||
         (IsRectEmpty( &rect ) && winpos.cx == 1 && winpos.cy == 1))
         winpos.flags |= SWP_NOSIZE;
     else
