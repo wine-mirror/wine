@@ -933,10 +933,9 @@ void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down )
     {
       NC_GetInsideRect( hwnd, &rect );
       hdcMem = CreateCompatibleDC32( hdc );
-      hbitmap = SelectObject32( hdcMem, hbitmapClose );
+      hbitmap = SelectObject32( hdcMem, (down ? hbitmapCloseD : hbitmapClose));
       BitBlt32(hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
-               hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
-               down ? NOTSRCCOPY : SRCCOPY );
+               hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0, SRCCOPY );
       SelectObject32( hdcMem, hbitmap );
       DeleteDC32( hdcMem );
     }
@@ -1070,7 +1069,7 @@ void NC_DrawCloseButton95 (HWND32 hwnd, HDC32 hdc, BOOL32 down)
 	GetObject32A (hBmp, sizeof(BITMAP32), &bmp);
 	BitBlt32 (hdc, rect.right - (sysMetrics[SM_CYCAPTION] + 1 + bmp.bmWidth) / 2,
 		  rect.top + (sysMetrics[SM_CYCAPTION] - 1 - bmp.bmHeight) / 2,
-		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, down ? NOTSRCCOPY : SRCCOPY);
+		  bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0,  SRCCOPY);
 
 	SelectObject32 (hdcMem, hOldBmp);
 	DeleteDC32 (hdcMem);
@@ -1363,7 +1362,7 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
     {
 	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
 	    return;
-	hbitmapCloseD    = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) );
+	hbitmapCloseD    = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSED) );
 	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
 	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );
@@ -1469,6 +1468,7 @@ static void  NC_DrawCaption95(
     if (!hbitmapClose) {
 	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSE) )))
 	    return;
+        hbitmapCloseD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_CLOSED));
 	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_REDUCED) );
 	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_ZOOM) );

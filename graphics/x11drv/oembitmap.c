@@ -86,7 +86,7 @@ typedef unsigned long Pixel;
 #include "bitmaps/obm_restored_95"
 
 
-#define OBM_FIRST  OBM_RADIOCHECK  /* First OEM bitmap */
+#define OBM_FIRST  OBM_CLOSED  /* First OEM bitmap */
 #define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
 
 static struct
@@ -94,6 +94,7 @@ static struct
     char** data;   /* Pointer to bitmap data */
     BOOL32 color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
+    { obm_closed_95,TRUE},      /* OBM_CLOSED */
     { obm_radiocheck, FALSE },	/* OBM_RADIOCHECK */
     { obm_trtype, TRUE },	/* OBM_TRTYPE */    
     { obm_cdrom, TRUE },        /* OBM_CDROM    */

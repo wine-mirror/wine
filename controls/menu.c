@@ -143,6 +143,8 @@ static HBITMAP32 hBmpMinimizeD = 0;
 static HBITMAP32 hBmpMaximize = 0;
 static HBITMAP32 hBmpMaximizeD = 0;
 static HBITMAP32 hBmpClose = 0;
+static HBITMAP32 hBmpCloseD = 0;
+
 
 static HBRUSH32 hShadeBrush = 0;
 static HMENU32 MENU_DefSysPopup = 0;  /* Default system menu popup */
@@ -338,6 +340,7 @@ BOOL32 MENU_Init()
     hBmpMaximize = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_RESTORE));
     hBmpMaximizeD = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_RESTORED));
     hBmpClose = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_CLOSE));
+    hBmpCloseD = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_CLOSED));
 
     if (hStdCheck)
     {
@@ -616,7 +619,7 @@ static HBITMAP32 MENU_LoadMagicItem(UINT32 id,BOOL32 hilite)
     {
     case MAGIC_REDUCE   : return (hilite ? hBmpMinimizeD : hBmpMinimize);
     case MAGIC_RESTORE  : return (hilite ? hBmpMaximizeD: hBmpMaximize);
-    case MAGIC_CLOSE    : return (hilite ? hBmpClose : hBmpClose);
+    case MAGIC_CLOSE    : return (hilite ? hBmpCloseD : hBmpClose);
     default : return 0;
     }
 

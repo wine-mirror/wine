@@ -250,6 +250,7 @@ DECL_WINELIB_TYPE(LPWINDOWPLACEMENT)
 #define OBM_TRTYPE          32728
 
 /* Wine extension, I think.  */
+#define OBM_CLOSED          32726
 #define OBM_RADIOCHECK      32727
 
 #define OBM_OLD_CLOSE       32767
