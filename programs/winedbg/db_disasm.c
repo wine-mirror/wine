@@ -220,8 +220,8 @@ static const char * const db_Grp12[] = {
 };
 
 static const struct inst db_inst_0f0x[] = {
-/*00*/	{ "",	   TRUE,  NONE,  op1(Ew),     (char *)db_Grp6 },
-/*01*/	{ "",	   TRUE,  NONE,  op1(Ew),     (char *)db_Grp7 },
+/*00*/	{ "",	   TRUE,  NONE,  op1(Ew),     (const char *)db_Grp6 },
+/*01*/	{ "",	   TRUE,  NONE,  op1(Ew),     (const char *)db_Grp7 },
 /*02*/	{ "lar",   TRUE,  LONG,  op2(E,R),    0 },
 /*03*/	{ "lsl",   TRUE,  LONG,  op2(E,R),    0 },
 /*04*/	{ "",      FALSE, NONE,  0,	      0 },
@@ -341,9 +341,9 @@ static const struct inst db_inst_0f6x[] = {
 
 static const struct inst db_inst_0f7x[] = {
 /*70*/	{ "pshufw",    TRUE, NONE,  op2(MX, EMX), 0 },
-/*71*/	{ "(grp10)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp10 },
-/*72*/	{ "(grp11)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp11 },
-/*73*/	{ "(grp12)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp12 },
+/*71*/	{ "(grp10)",   TRUE, BYTE,  op2(EMX, I), (const char*)db_Grp10 },
+/*72*/	{ "(grp11)",   TRUE, BYTE,  op2(EMX, I), (const char*)db_Grp11 },
+/*73*/	{ "(grp12)",   TRUE, BYTE,  op2(EMX, I), (const char*)db_Grp12 },
 /*74*/	{ "pcmpeqb",   TRUE, NONE,  op2(E, MX), 0 },
 /*75*/	{ "pcmpeqw",   TRUE, NONE,  op2(E, MX), 0 },
 /*76*/	{ "pcmpeqd",   TRUE, NONE,  op2(E, MX), 0 },
@@ -431,7 +431,7 @@ static const struct inst db_inst_0fbx[] = {
 
 /*b8*/	{ "",      FALSE, NONE,  0,	      0 },
 /*b9*/	{ "",      FALSE, NONE,  0,	      0 },
-/*ba*/	{ "",      TRUE,  LONG,  op2(Ib, E),  (char *)db_Grp8 },
+/*ba*/	{ "",      TRUE,  LONG,  op2(Ib, E),  (const char *)db_Grp8 },
 /*bb*/	{ "btc",   TRUE,  LONG,  op2(R, E),   0 },
 /*bc*/	{ "bsf",   TRUE,  LONG,  op2(E, R),   0 },
 /*bd*/	{ "bsr",   TRUE,  LONG,  op2(E, R),   0 },
@@ -584,12 +584,12 @@ static const struct finst db_Esc8[] = {
 static const struct finst db_Esc9[] = {
 /*0*/	{ "fld",    SNGL,  op1(STI),	0 },
 /*1*/	{ "",       NONE,  op1(STI),	"fxch" },
-/*2*/	{ "fst",    SNGL,  op1(X),	(char *)db_Esc92 },
-/*3*/	{ "fstp",   SNGL,  op1(X),	(char *)db_Esc93 },
-/*4*/	{ "fldenv", NONE,  op1(X),	(char *)db_Esc94 },
-/*5*/	{ "fldcw",  NONE,  op1(X),	(char *)db_Esc95 },
-/*6*/	{ "fnstenv",NONE,  op1(X),	(char *)db_Esc96 },
-/*7*/	{ "fnstcw", NONE,  op1(X),	(char *)db_Esc97 },
+/*2*/	{ "fst",    SNGL,  op1(X),	(const char *)db_Esc92 },
+/*3*/	{ "fstp",   SNGL,  op1(X),	(const char *)db_Esc93 },
+/*4*/	{ "fldenv", NONE,  op1(X),	(const char *)db_Esc94 },
+/*5*/	{ "fldcw",  NONE,  op1(X),	(const char *)db_Esc95 },
+/*6*/	{ "fnstenv",NONE,  op1(X),	(const char *)db_Esc96 },
+/*7*/	{ "fnstcw", NONE,  op1(X),	(const char *)db_Esc97 },
 };
 
 static const struct finst db_Esca[] = {
@@ -597,7 +597,7 @@ static const struct finst db_Esca[] = {
 /*1*/	{ "fimul",  WORD,  0,		0 },
 /*2*/	{ "ficom",  WORD,  0,		0 },
 /*3*/	{ "ficomp", WORD,  0,		0 },
-/*4*/	{ "fisub",  WORD,  op1(X),	(char *)db_Esca4 },
+/*4*/	{ "fisub",  WORD,  op1(X),	(const char *)db_Esca4 },
 /*5*/	{ "fisubr", WORD,  0,		0 },
 /*6*/	{ "fidiv",  WORD,  0,		0 },
 /*7*/	{ "fidivr", WORD,  0,		0 }
@@ -608,7 +608,7 @@ static const struct finst db_Escb[] = {
 /*1*/	{ "",       NONE,  0,		0 },
 /*2*/	{ "fist",   WORD,  0,		0 },
 /*3*/	{ "fistp",  WORD,  0,		0 },
-/*4*/	{ "",       WORD,  op1(X),	(char *)db_Escb4 },
+/*4*/	{ "",       WORD,  op1(X),	(const char *)db_Escb4 },
 /*5*/	{ "fld",    EXTR,  0,		0 },
 /*6*/	{ "",       WORD,  0,		0 },
 /*7*/	{ "fstp",   EXTR,  0,		0 },
@@ -640,7 +640,7 @@ static const struct finst db_Esce[] = {
 /*0*/	{ "fiadd",  LONG,  op2(ST,STI),	"faddp" },
 /*1*/	{ "fimul",  LONG,  op2(ST,STI),	"fmulp" },
 /*2*/	{ "ficom",  LONG,  0,		0 },
-/*3*/	{ "ficomp", LONG,  op1(X),	(char *)db_Esce3 },
+/*3*/	{ "ficomp", LONG,  op1(X),	(const char *)db_Esce3 },
 /*4*/	{ "fisub",  LONG,  op2(ST,STI),	"fsubrp" },
 /*5*/	{ "fisubr", LONG,  op2(ST,STI),	"fsubp" },
 /*6*/	{ "fidiv",  LONG,  op2(ST,STI),	"fdivrp" },
@@ -652,7 +652,7 @@ static const struct finst db_Escf[] = {
 /*1*/	{ "",       LONG,  0,		0 },
 /*2*/	{ "fist",   LONG,  0,		0 },
 /*3*/	{ "fistp",  LONG,  0,		0 },
-/*4*/	{ "fbld",   NONE,  op1(XA),	(char *)db_Escf4 },
+/*4*/	{ "fbld",   NONE,  op1(XA),	(const char *)db_Escf4 },
 /*5*/	{ "fld",    QUAD,  0,		0 },
 /*6*/	{ "fbstp",  NONE,  0,		0 },
 /*7*/	{ "fstp",   QUAD,  0,		0 },
@@ -864,10 +864,10 @@ static const struct inst db_inst_table[256] = {
 /*7e*/	{ "jle",   FALSE, NONE,  op1(Db),     0 },
 /*7f*/	{ "jnle",  FALSE, NONE,  op1(Db),     0 },
 
-/*80*/  { "",	   TRUE,  BYTE,  op2(I, E),   (char *)db_Grp1 },
-/*81*/  { "",	   TRUE,  LONG,  op2(I, E),   (char *)db_Grp1 },
-/*82*/  { "",	   TRUE,  BYTE,  op2(Is,E),   (char *)db_Grp1 },
-/*83*/  { "",	   TRUE,  LONG,  op2(Ibs,E),  (char *)db_Grp1 },
+/*80*/  { "",	   TRUE,  BYTE,  op2(I, E),   (const char *)db_Grp1 },
+/*81*/  { "",	   TRUE,  LONG,  op2(I, E),   (const char *)db_Grp1 },
+/*82*/  { "",	   TRUE,  BYTE,  op2(Is,E),   (const char *)db_Grp1 },
+/*83*/  { "",	   TRUE,  LONG,  op2(Ibs,E),  (const char *)db_Grp1 },
 /*84*/	{ "test",  TRUE,  BYTE,  op2(R, E),   0 },
 /*85*/	{ "test",  TRUE,  LONG,  op2(R, E),   0 },
 /*86*/	{ "xchg",  TRUE,  BYTE,  op2(R, E),   0 },
@@ -936,8 +936,8 @@ static const struct inst db_inst_table[256] = {
 /*be*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
 /*bf*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
 
-/*c0*/	{ "",	   TRUE,  BYTE,  op2(Ib, E),  (char *)db_Grp2 },
-/*c1*/	{ "",	   TRUE,  LONG,  op2(Ib, E),  (char *)db_Grp2 },
+/*c0*/	{ "",	   TRUE,  BYTE,  op2(Ib, E),  (const char *)db_Grp2 },
+/*c1*/	{ "",	   TRUE,  LONG,  op2(Ib, E),  (const char *)db_Grp2 },
 /*c2*/	{ "ret",   FALSE, NONE,  op1(Iw),     0 },
 /*c3*/	{ "ret",   FALSE, NONE,  0,	      0 },
 /*c4*/	{ "les",   TRUE,  LONG,  op2(E, R),   0 },
@@ -954,23 +954,23 @@ static const struct inst db_inst_table[256] = {
 /*ce*/	{ "into",  FALSE, NONE,  0,	      0 },
 /*cf*/	{ "iret",  FALSE, NONE,  0,	      0 },
 
-/*d0*/	{ "",	   TRUE,  BYTE,  op2(o1, E),  (char *)db_Grp2 },
-/*d1*/	{ "",	   TRUE,  LONG,  op2(o1, E),  (char *)db_Grp2 },
-/*d2*/	{ "",	   TRUE,  BYTE,  op2(CL, E),  (char *)db_Grp2 },
-/*d3*/	{ "",	   TRUE,  LONG,  op2(CL, E),  (char *)db_Grp2 },
+/*d0*/	{ "",	   TRUE,  BYTE,  op2(o1, E),  (const char *)db_Grp2 },
+/*d1*/	{ "",	   TRUE,  LONG,  op2(o1, E),  (const char *)db_Grp2 },
+/*d2*/	{ "",	   TRUE,  BYTE,  op2(CL, E),  (const char *)db_Grp2 },
+/*d3*/	{ "",	   TRUE,  LONG,  op2(CL, E),  (const char *)db_Grp2 },
 /*d4*/	{ "aam",   TRUE,  NONE,  0,	      0 },
 /*d5*/	{ "aad",   TRUE,  NONE,  0,	      0 },
 /*d6*/	{ "",      FALSE, NONE,  0,	      0 },
 /*d7*/	{ "xlat",  FALSE, BYTE,  op1(BX),     0 },
 
-/*d8*/  { "",      TRUE,  NONE,  0,	      (char *)db_Esc8 },
-/*d9*/  { "",      TRUE,  NONE,  0,	      (char *)db_Esc9 },
-/*da*/  { "",      TRUE,  NONE,  0,	      (char *)db_Esca },
-/*db*/  { "",      TRUE,  NONE,  0,	      (char *)db_Escb },
-/*dc*/  { "",      TRUE,  NONE,  0,	      (char *)db_Escc },
-/*dd*/  { "",      TRUE,  NONE,  0,	      (char *)db_Escd },
-/*de*/  { "",      TRUE,  NONE,  0,	      (char *)db_Esce },
-/*df*/  { "",      TRUE,  NONE,  0,	      (char *)db_Escf },
+/*d8*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esc8 },
+/*d9*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esc9 },
+/*da*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esca },
+/*db*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escb },
+/*dc*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escc },
+/*dd*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escd },
+/*de*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esce },
+/*df*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escf },
 
 /*e0*/	{ "loopne",FALSE, NONE,  op1(Db),     0 },
 /*e1*/	{ "loope", FALSE, NONE,  op1(Db),     0 },
@@ -996,8 +996,8 @@ static const struct inst db_inst_table[256] = {
 /*f3*/	{ "",      FALSE, NONE,  0,	     0 },
 /*f4*/	{ "hlt",   FALSE, NONE,  0,	     0 },
 /*f5*/	{ "cmc",   FALSE, NONE,  0,	     0 },
-/*f6*/	{ "",      TRUE,  BYTE,  0,	     (char *)db_Grp3 },
-/*f7*/	{ "",	   TRUE,  LONG,  0,	     (char *)db_Grp3 },
+/*f6*/	{ "",      TRUE,  BYTE,  0,	     (const char *)db_Grp3 },
+/*f7*/	{ "",	   TRUE,  LONG,  0,	     (const char *)db_Grp3 },
 
 /*f8*/	{ "clc",   FALSE, NONE,  0,	     0 },
 /*f9*/	{ "stc",   FALSE, NONE,  0,	     0 },
@@ -1005,8 +1005,8 @@ static const struct inst db_inst_table[256] = {
 /*fb*/	{ "sti",   FALSE, NONE,  0,	     0 },
 /*fc*/	{ "cld",   FALSE, NONE,  0,	     0 },
 /*fd*/	{ "std",   FALSE, NONE,  0,	     0 },
-/*fe*/	{ "",	   TRUE,  NONE,  0,	     (char *)db_Grp4 },
-/*ff*/	{ "",	   TRUE,  NONE,  0,	     (char *)db_Grp5 },
+/*fe*/	{ "",	   TRUE,  NONE,  0,	     (const char *)db_Grp4 },
+/*ff*/	{ "",	   TRUE,  NONE,  0,	     (const char *)db_Grp5 },
 };
 
 static const struct inst db_bad_inst =
@@ -1063,46 +1063,49 @@ static const int db_lengths[] = {
 	10,	/* EXTR */
 };
 
-static unsigned int db_get_task_value( const DBG_ADDR *addr,
+static unsigned int db_get_task_value( const ADDRESS* addr,
                                        int size, int is_signed )
 {
     unsigned int 	result = 0;
     char       		buffer[4];
 
-    if (size != 1 && size != 2 && size != 4) {
-        DEBUG_Printf("Illegal size specified\n");
-    } else {
-       DEBUG_READ_MEM((void*)DEBUG_ToLinear( addr ), buffer, size);
+    if (size != 1 && size != 2 && size != 4)
+    {
+        dbg_printf("Illegal size specified\n");
+    }
+    else 
+    {
+        dbg_read_memory(memory_to_linear_addr(addr), buffer, size);
 
-       switch(size)
-       {
-       case 4:
-	   if (is_signed) result = (unsigned int) *(int *)buffer;
-	   else result = *(unsigned int *)buffer;
-	   break;
-       case 2:
-	   if (is_signed) result = (unsigned int) *(short int *)buffer;
-	   else result = *(unsigned short int *)buffer;
-	   break;
-       case 1:
-	   if (is_signed) result = (unsigned int) *(char *)buffer;
-	   else result = *(unsigned char *)buffer;
-	   break;
-       }
+        switch (size)
+        {
+        case 4:
+            if (is_signed) result = (unsigned int) *(int *)buffer;
+            else result = *(unsigned int *)buffer;
+            break;
+        case 2:
+            if (is_signed) result = (unsigned int) *(short int *)buffer;
+            else result = *(unsigned short int *)buffer;
+            break;
+        case 1:
+            if (is_signed) result = (unsigned int) *(char *)buffer;
+            else result = *(unsigned char *)buffer;
+            break;
+        }
     }
     return result;
 }
 
 #define	get_value_inc(result, addr, size, is_signed) \
     result = db_get_task_value((addr), (size), (is_signed)); \
-    if (!db_disasm_16) (addr)->off += (size); \
-    else (addr)->off = ((addr)->off + (size)) & 0xffff;
+    if (!db_disasm_16) (addr)->Offset += (size); \
+    else (addr)->Offset = ((addr)->Offset + (size)) & 0xffff;
 
 /*
  * Read address at location and return updated location.
  */
-void db_read_address( DBG_ADDR *addr, int short_addr, int regmodrm,
-                      struct i_addr *addrp )
+static void db_read_address( ADDRESS* addr, int short_addr, int regmodrm,
+                             struct i_addr *addrp )
 {
 	int mod, rm, sib, index, disp;
 
@@ -1183,48 +1186,47 @@ void db_read_address( DBG_ADDR *addr, int short_addr, int regmodrm,
 
 static void db_task_printsym(unsigned int addr, int size)
 {
-    DBG_ADDR address;
+    ADDRESS     a;
+    a.Mode   = AddrModeFlat;
+    a.Offset = addr;
 
-    address.seg = 0;
-    address.off = addr;
-
-    DEBUG_PrintAddress( &address, db_disasm_16 ? MODE_16 : MODE_32, TRUE );
+    print_address(&a, TRUE);
 }
 
-void db_print_address(const char *seg, int size, struct i_addr *addrp, int byref)
+static void db_print_address(const char *seg, int size, struct i_addr *addrp, int byref)
 {
 	if (addrp->is_reg) {
-	    DEBUG_Printf("%s", db_reg[size][addrp->disp]);
+	    dbg_printf("%s", db_reg[size][addrp->disp]);
 	    return;
 	}
 
 	if (seg) {
-	    DEBUG_Printf("%s:", seg);
+	    dbg_printf("%s:", seg);
 	}
 
 	if (addrp->base != 0 || addrp->index != 0) {
-	    DEBUG_Printf("0x%x(", addrp->disp);
+	    dbg_printf("0x%x(", addrp->disp);
 	    if (addrp->base)
-		DEBUG_Printf("%s", addrp->base);
+		dbg_printf("%s", addrp->base);
 	    if (addrp->index)
-		DEBUG_Printf(",%s,%d", addrp->index, 1<<addrp->ss);
-	    DEBUG_Printf(")");
+		dbg_printf(",%s,%d", addrp->index, 1<<addrp->ss);
+	    dbg_printf(")");
 	}
 	else {
 
 	    /* try to get destination of indirect call
 	       does not work for segmented adresses */
 	    if (!seg && byref) {
-	       void*	a1;
-	       void*	a2;
-
-               DEBUG_Printf("0x%x -> ", addrp->disp);
-	       if (!DEBUG_READ_MEM((void*)addrp->disp, &a1, sizeof(a1))) {
-		   DEBUG_Printf("(invalid source)");
-	       } else if (!DEBUG_READ_MEM(a1, &a2, sizeof(a2))) {
-		  DEBUG_Printf("(invalid destination)");
+               void*    a1;
+               void*    a2;
+               
+               dbg_printf("0x%x -> ", addrp->disp);
+	       if (!dbg_read_memory((void*)addrp->disp, &a1, sizeof(a1))) {
+		   dbg_printf("(invalid source)");
+	       } else if (!dbg_read_memory(a1, &a2, sizeof(a2))) {
+		  dbg_printf("(invalid destination)");
 	       } else {
-		  db_task_printsym((unsigned long)a1, 0);
+                   db_task_printsym((unsigned long)a1, 0);
                }
 	    }
 	    else
@@ -1236,8 +1238,8 @@ void db_print_address(const char *seg, int size, struct i_addr *addrp, int byref
  * Disassemble floating-point ("escape") instruction
  * and return updated location.
  */
-void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
-                    int size, const char *seg )
+static void db_disasm_esc( ADDRESS* addr, int inst, int short_addr,
+                           int size, const char *seg )
 {
 	int		regmodrm;
 	const struct finst *fp;
@@ -1259,7 +1261,7 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	     * Normal address modes.
 	     */
 	    db_read_address( addr, short_addr, regmodrm, &address);
-	    DEBUG_Printf(fp->f_name);
+	    dbg_printf(fp->f_name);
 	    switch(fp->f_size) {
 		case SNGL: p = "s"; break;
 		case DBLR: p = "l"; break;
@@ -1269,7 +1271,7 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 		case QUAD: p = "q"; break;
 		default:   p = "";  break;
 	    }
-	    DEBUG_Printf("%s\t", p);
+	    dbg_printf("%s\t", p);
 	    db_print_address(seg, BYTE, &address, 0);
 	}
 	else {
@@ -1279,24 +1281,24 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	    switch (fp->f_rrmode) {
 		case op2(ST,STI):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    DEBUG_Printf("%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
+		    dbg_printf("%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
 		    break;
 		case op2(STI,ST):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    DEBUG_Printf("%s\t%%st(%d),%%st",name, f_rm(regmodrm));
+		    dbg_printf("%s\t%%st(%d),%%st",name, f_rm(regmodrm));
 		    break;
 		case op1(STI):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    DEBUG_Printf("%s\t%%st(%d)",name, f_rm(regmodrm));
+		    dbg_printf("%s\t%%st(%d)",name, f_rm(regmodrm));
 		    break;
 		case op1(X):
-		    DEBUG_Printf("%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+		    dbg_printf("%s", ((char * const*)fp->f_rrname)[f_rm(regmodrm)]);
 		    break;
 		case op1(XA):
-		    DEBUG_Printf("%s\t%%ax", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+		    dbg_printf("%s\t%%ax", ((char * const*)fp->f_rrname)[f_rm(regmodrm)]);
 		    break;
 		default:
-		    DEBUG_Printf("<bad instruction>");
+		    dbg_printf("<bad instruction>");
 		    break;
 	    }
 	}
@@ -1304,12 +1306,12 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 
 
 /***********************************************************************
- *           DEBUG_Disasm
+ *              disasm_one_insn
  *
  * Disassemble instruction at 'addr'.  addr is changed to point to the
  * start of the next instruction.
  */
-void DEBUG_Disasm( DBG_ADDR *addr, int display )
+void be_i386_disasm_one_insn(ADDRESS *addr, int display)
 {
 	int	inst;
 	int	size;
@@ -1331,12 +1333,11 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	 * Set this so we get can supress the printout if we need to.
 	 */
 	db_display = display;
-        switch (DEBUG_GetSelectorType(addr->seg))
+        switch (addr->Mode)
         {
-        case MODE_VM86:
-	case MODE_16: db_disasm_16 = 1; break;
-	case MODE_32: db_disasm_16 = 0; break;
-	default: DEBUG_Printf("Bad selector %lx\n", addr->seg); return;
+        case AddrModeReal:
+        case AddrMode1616: db_disasm_16 = 1; break;
+        default: db_disasm_16 = 0; break;
 	}
 
 	get_value_inc( inst, addr, 1, FALSE );
@@ -1386,15 +1387,15 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    break;
 		case 0xf0:
 		    if( db_display )
-			DEBUG_Printf("lock ");
+			dbg_printf("lock ");
 		    break;
 		case 0xf2:
 		    if( db_display )
-			DEBUG_Printf("repne ");
+			dbg_printf("repne ");
 		    break;
 		case 0xf3:
 		    if( db_display )
-			DEBUG_Printf("repe ");	/* XXX repe VS rep */
+			dbg_printf("repe ");	/* XXX repe VS rep */
 		    break;
 		default:
 		    prefix = FALSE;
@@ -1433,25 +1434,25 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	i_size = ip->i_size;
 	i_mode = ip->i_mode;
 
-	if (ip->i_extra == (char *)db_Grp1 ||
-	    ip->i_extra == (char *)db_Grp2 ||
-	    ip->i_extra == (char *)db_Grp6 ||
-	    ip->i_extra == (char *)db_Grp7 ||
-	    ip->i_extra == (char *)db_Grp8 ||
-	    ip->i_extra == (char *)db_Grp10 ||
-	    ip->i_extra == (char *)db_Grp11 ||
-	    ip->i_extra == (char *)db_Grp12) {
-	    i_name = ((char **)ip->i_extra)[f_reg(regmodrm)];
+	if (ip->i_extra == (const char *)db_Grp1 ||
+	    ip->i_extra == (const char *)db_Grp2 ||
+	    ip->i_extra == (const char *)db_Grp6 ||
+	    ip->i_extra == (const char *)db_Grp7 ||
+	    ip->i_extra == (const char *)db_Grp8 ||
+	    ip->i_extra == (const char *)db_Grp10 ||
+	    ip->i_extra == (const char *)db_Grp11 ||
+	    ip->i_extra == (const char *)db_Grp12) {
+	    i_name = ((const char * const*)ip->i_extra)[f_reg(regmodrm)];
 	}
-	else if (ip->i_extra == (char *)db_Grp3) {
-	    ip = (struct inst *)ip->i_extra;
+	else if (ip->i_extra == (const char *)db_Grp3) {
+	    ip = (const struct inst *)ip->i_extra;
 	    ip = &ip[f_reg(regmodrm)];
 	    i_name = ip->i_name;
 	    i_mode = ip->i_mode;
 	}
-	else if (ip->i_extra == (char *)db_Grp4 ||
-		 ip->i_extra == (char *)db_Grp5) {
-	    ip = (struct inst *)ip->i_extra;
+	else if (ip->i_extra == (const char *)db_Grp4 ||
+		 ip->i_extra == (const char *)db_Grp5) {
+	    ip = (const struct inst *)ip->i_extra;
 	    ip = &ip[f_reg(regmodrm)];
 	    i_name = ip->i_name;
 	    i_mode = ip->i_mode;
@@ -1462,28 +1463,28 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	  if( db_display )
 	    {
 	      if (size == WORD)
-		DEBUG_Printf(i_name);
+		dbg_printf(i_name);
 	      else
-		DEBUG_Printf(ip->i_extra);
+		dbg_printf(ip->i_extra);
 	    }
 	}
 	else {
 	  if( db_display )
 	    {
-	      DEBUG_Printf(i_name);
+	      dbg_printf(i_name);
 	    }
 	    if (i_size != NONE) {
 		if (i_size == BYTE) {
 		  if( db_display )
 		    {
-		      DEBUG_Printf("b");
+		      dbg_printf("b");
 		    }
 		    size = BYTE;
 		}
 		else if (i_size == WORD) {
 		  if( db_display )
 		    {
-		      DEBUG_Printf("w");
+		      dbg_printf("w");
 		    }
 		    size = WORD;
 		}
@@ -1491,28 +1492,28 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  {
 		  if( db_display )
 		    {
-		      DEBUG_Printf("w");
+		      dbg_printf("w");
 		    }
 		  }
 		else
 		  {
 		  if( db_display )
 		    {
-		      DEBUG_Printf("l");
+		      dbg_printf("l");
 		    }
 		  }
 	    }
 	}
 	if( db_display )
 	  {
-	    DEBUG_Printf("\t");
+	    dbg_printf("\t");
 	  }
 	for (first = TRUE;
 	     i_mode != 0;
 	     i_mode >>= 8, first = FALSE)
 	{
 	    if (!first && db_display)
-		DEBUG_Printf(",");
+		dbg_printf(",");
 
 	    switch (i_mode & 0xFF) {
 
@@ -1526,7 +1527,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case Eind:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("*");
+		      dbg_printf("*");
 		      db_print_address(seg, size, &address, 1);
 		    }
 		    break;
@@ -1548,31 +1549,31 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case R:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%s", db_reg[size][f_reg(regmodrm)]);
+		      dbg_printf("%s", db_reg[size][f_reg(regmodrm)]);
 		    }
 		    break;
 		case MX:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%mm%d", f_reg(regmodrm));
+		      dbg_printf("%%mm%d", f_reg(regmodrm));
 		    }
 		    break;
 		case EMX:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%mm%d", f_rm(regmodrm));
+		      dbg_printf("%%mm%d", f_rm(regmodrm));
 		    }
 		    break;
 		case XMM:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%xmm%d", f_reg(regmodrm));
+		      dbg_printf("%%xmm%d", f_reg(regmodrm));
 		    }
 		    break;
 		case EXMM:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%xmm%d", f_rm(regmodrm));
+		      dbg_printf("%%xmm%d", f_rm(regmodrm));
 		    }
 		    break;
 
@@ -1580,35 +1581,35 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case Rw:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%s", db_reg[WORD][f_reg(regmodrm)]);
+		      dbg_printf("%s", db_reg[WORD][f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Ri:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%s", db_reg[size][f_rm(inst)]);
+		      dbg_printf("%s", db_reg[size][f_rm(inst)]);
 		    }
 		    break;
 
 		case S:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%s", db_seg_reg[f_reg(regmodrm)]);
+		      dbg_printf("%s", db_seg_reg[f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Si:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%s", db_seg_reg[f_reg(inst)]);
+		      dbg_printf("%s", db_seg_reg[f_reg(inst)]);
 		    }
 		    break;
 
 		case A:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%s", db_reg[size][0]);	/* acc */
+		      dbg_printf("%s", db_reg[size][0]);	/* acc */
 		    }
 		    break;
 
@@ -1616,22 +1617,22 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      if (seg)
-			DEBUG_Printf("%s:", seg);
-		      DEBUG_Printf("(%s)", short_addr ? "%bx" : "%ebx");
+			dbg_printf("%s:", seg);
+		      dbg_printf("(%s)", short_addr ? "%bx" : "%ebx");
 		    }
 		    break;
 
 		case CL:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%cl");
+		      dbg_printf("%%cl");
 		    }
 		    break;
 
 		case DX:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%dx");
+		      dbg_printf("%%dx");
 		    }
 		    break;
 
@@ -1639,36 +1640,36 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      if (seg)
-			DEBUG_Printf("%s:", seg);
-		      DEBUG_Printf("(%s)", short_addr ? "%si" : "%esi");
+			dbg_printf("%s:", seg);
+		      dbg_printf("(%s)", short_addr ? "%si" : "%esi");
 		    }
 		    break;
 
 		case DI:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%es:(%s)", short_addr ? "%di" : "%edi");
+		      dbg_printf("%%es:(%s)", short_addr ? "%di" : "%edi");
 		    }
 		    break;
 
 		case CR:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%cr%d", f_reg(regmodrm));
+		      dbg_printf("%%cr%d", f_reg(regmodrm));
 		    }
 		    break;
 
 		case DR:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%dr%d", f_reg(regmodrm));
+		      dbg_printf("%%dr%d", f_reg(regmodrm));
 		    }
 		    break;
 
 		case TR:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("%%tr%d", f_reg(regmodrm));
+		      dbg_printf("%%tr%d", f_reg(regmodrm));
 		    }
 		    break;
 
@@ -1677,7 +1678,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, len, FALSE);/* unsigned */
 		    if( db_display )
 		      {
-			DEBUG_Printf("$0x%x", imm);
+			dbg_printf("$0x%x", imm);
 		      }
 		    break;
 
@@ -1686,7 +1687,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, len, TRUE); /* signed */
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$%d", imm);
+		      dbg_printf("$%d", imm);
 		    }
 		    break;
 
@@ -1694,7 +1695,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 1, FALSE); /* unsigned */
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$0x%x", imm);
+		      dbg_printf("$0x%x", imm);
 		    }
 		    break;
 
@@ -1702,7 +1703,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 1, TRUE); /* signed */
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$%d", imm);
+		      dbg_printf("$%d", imm);
 		    }
 		    break;
 
@@ -1710,7 +1711,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 2, FALSE); /* unsigned */
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$0x%x", imm);
+		      dbg_printf("$0x%x", imm);
 		    }
 		    break;
 
@@ -1718,7 +1719,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 4, FALSE);
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$0x%x", imm);
+		      dbg_printf("$0x%x", imm);
 		    }
 		    break;
 
@@ -1735,7 +1736,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		      }
 
 		    if (seg)
-			DEBUG_Printf("%s:0x%x",seg, displ);
+			dbg_printf("%s:0x%x",seg, displ);
 		    else
 			db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;
@@ -1749,23 +1750,23 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 
 		    if (size == WORD) {
 			/* offset only affects low 16 bits */
-		        displ = (addr->off & 0xffff0000)
-			      | ((addr->off + displ) & 0xffff);
+		        displ = (addr->Offset & 0xffff0000)
+			      | ((addr->Offset + displ) & 0xffff);
 		    }
-		    else displ += addr->off;
+		    else displ += addr->Offset;
 		    db_task_printsym(displ, size);
 		    break;
 
 		case Dl:
 		    if (size == WORD) {
 			get_value_inc(displ, addr, 2, TRUE);
-			/* offset only affects low 16 bits */
-		        displ = (addr->off & 0xffff0000)
-			      | ((addr->off + displ) & 0xffff);
+			/* Offsetset only affects low 16 bits */
+		        displ = (addr->Offset & 0xffff0000)
+			      | ((addr->Offset + displ) & 0xffff);
 		    }
 		    else {
 			get_value_inc(displ, addr, 4, TRUE);
-			displ += addr->off;
+			displ += addr->Offset;
 		    }
 		    if( !db_display )
 		      {
@@ -1777,27 +1778,29 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case o1:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$1");
+		      dbg_printf("$1");
 		    }
 		    break;
 
 		case o3:
 		  if( db_display )
 		    {
-		      DEBUG_Printf("$3");
+		      dbg_printf("$3");
 		    }
 		    break;
 
 		case OS:
                     {
-                        DBG_ADDR address;
-                        get_value_inc( address.off, addr,  /* offset */
+                        ADDRESS address;
+                        get_value_inc( address.Offset, addr,  /* offset */
                                        short_addr ? 2 : 4, FALSE );
-                        get_value_inc( address.seg, addr,  /* segment */
+                        get_value_inc( address.Segment, addr,  /* segment */
                                        2, FALSE );
+                        be_cpu->build_addr(dbg_curr_thread->handle, &dbg_context,
+                                           &address, address.Segment, address.Offset);
 			if( db_display )
 			  {
-			    DEBUG_PrintAddress( &address, short_addr ? MODE_16 : MODE_32, TRUE );
+                              print_address( &address, TRUE );
 			  }
 
                     }
@@ -1805,11 +1808,4 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	    }
 	}
 }
-
-#else  /* __i386__ */
-
-void DEBUG_Disasm( DBG_ADDR *addr, int display )
-{
-}
-
 #endif  /* __i386__ */

@@ -24,41 +24,36 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
 
 #include "wine/exception.h"
 #include "debugger.h"
 #include "expr.h"
-#include "excpt.h"
 
-static void mode_command(int);
 int yylex(void);
-int yyerror(const char *);
+int yyerror(const char*);
 
 %}
 
 %union
 {
-    DBG_VALUE        value;
-    char *           string;
-    int              integer;
-    struct list_id   listing;
-    struct expr *    expression;
-    struct datatype* type;
+    struct dbg_lvalue   lvalue;
+    char*               string;
+    int                 integer;
+    IMAGEHLP_LINE       listing;
+    struct expr*        expression;
+    struct type_expr_t  type;
 }
 
-%token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
+%token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
-%token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
+%token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
-%token <string> tPATH
-%token <string> tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
+%token <string> tPATH tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
 %token <integer> tNUM tFORMAT
 %token tSYMBOLFILE tRUN tATTACH tDETACH tNOPROCESS tMAINTENANCE tTYPE
 
@@ -84,225 +79,239 @@ int yyerror(const char *);
 %left '.' '[' OP_DRF
 %nonassoc ':'
 
-%type <expression> expr lval lvalue
-%type <type> type_expr
-%type <value> expr_addr lval_addr
-%type <integer> expr_value
+%type <expression> expr lvalue
+%type <lvalue> expr_lvalue lvalue_addr
+%type <integer> expr_rvalue
 %type <string> pathname identifier
-
 %type <listing> list_arg
+%type <type> type_expr
 
 %%
 
-input: line
+input:
+      line
     | input line
     ;
 
-line: command                   { DEBUG_FreeExprMem(); }
+line:
+      command tEOL              { expr_free_all(); }
     | tEOL
     | tEOF                      { return 1; }
-    | error tEOL               	{ yyerrok; DEBUG_FreeExprMem(); }
+    | error tEOL               	{ yyerrok; expr_free_all(); }
     ;
 
 command:
-      tQUIT tEOL                { /*DEBUG_Quit();*/ return 1; }
-    | tHELP tEOL                { DEBUG_Help(); }
-    | tHELP tINFO tEOL          { DEBUG_HelpInfo(); }
-    | tPASS tEOL                { DEBUG_WaitNextException(DBG_EXCEPTION_NOT_HANDLED, 0, 0); }
-    | tCONT tEOL                { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_CONT); }
-    | tCONT tNUM tEOL         	{ DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_CONT); }
-    | tSTEP tEOL               	{ DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEP_INSTR); }
-    | tSTEP tNUM tEOL           { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEP_INSTR); }
-    | tNEXT tEOL                { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEP_OVER); }
-    | tNEXT tNUM tEOL           { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEP_OVER); }
-    | tSTEPI tEOL               { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEPI_INSTR); }
-    | tSTEPI tNUM tEOL          { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEPI_INSTR); }
-    | tNEXTI tEOL               { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEPI_OVER); }
-    | tNEXTI tNUM tEOL          { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEPI_OVER); }
-    | tFINISH tEOL	       	{ DEBUG_WaitNextException(DBG_CONTINUE, 0,  EXEC_FINISH); }
-    | tABORT tEOL              	{ abort(); }
-    | tMODE tNUM tEOL          	{ mode_command($2); }
-    | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
-    | tBACKTRACE tEOL	       	{ DEBUG_BackTrace(DEBUG_CurrTid, TRUE); }
-    | tBACKTRACE tNUM tEOL     	{ DEBUG_BackTrace($2, TRUE); }
-    | tUP tEOL		       	{ DEBUG_SetFrame( curr_frame + 1 );  }
-    | tUP tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame + $2 ); }
-    | tDOWN tEOL	       	{ DEBUG_SetFrame( curr_frame - 1 );  }
-    | tDOWN tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame - $2 ); }
-    | tFRAME tNUM tEOL         	{ DEBUG_SetFrame( $2 ); }
-    | tSHOW tDIR tEOL	       	{ DEBUG_ShowDir(); }
-    | tDIR pathname tEOL       	{ DEBUG_AddPath( $2 ); }
-    | tDIR tEOL		       	{ DEBUG_NukePath(); }
-    | tCOND tNUM tEOL          	{ DEBUG_AddBPCondition($2, NULL); }
-    | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
-    | tSOURCE pathname tEOL     { DEBUG_Parser($2); }
-    | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2, 0); }
-    | tSYMBOLFILE pathname expr_value tEOL	{ DEBUG_ReadSymbolTable($2, $3); }
-    | tWHATIS expr_addr tEOL    { DEBUG_PrintType(&$2); }
-    | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE, TRUE); }
-    | tDETACH tEOL              { return DEBUG_Detach(); /* FIXME: we shouldn't return, but since we cannot simply clean the symbol table, exit debugger for now */ }
+      tQUIT                     { return 1; }
+    | tHELP                     { print_help(); }
+    | tHELP tINFO               { info_help(); }
+    | tPASS                     { dbg_wait_next_exception(DBG_EXCEPTION_NOT_HANDLED, 0, 0); }
+    | tCONT                     { dbg_wait_next_exception(DBG_CONTINUE, 1,  dbg_exec_cont); }
+    | tCONT tNUM              	{ dbg_wait_next_exception(DBG_CONTINUE, $2, dbg_exec_cont); }
+    | tSTEP                    	{ dbg_wait_next_exception(DBG_CONTINUE, 1,  dbg_exec_step_into_line); }
+    | tSTEP tNUM                { dbg_wait_next_exception(DBG_CONTINUE, $2, dbg_exec_step_into_line); }
+    | tNEXT                     { dbg_wait_next_exception(DBG_CONTINUE, 1,  dbg_exec_step_over_line); }
+    | tNEXT tNUM                { dbg_wait_next_exception(DBG_CONTINUE, $2, dbg_exec_step_over_line); }
+    | tSTEPI                    { dbg_wait_next_exception(DBG_CONTINUE, 1,  dbg_exec_step_into_insn); }
+    | tSTEPI tNUM               { dbg_wait_next_exception(DBG_CONTINUE, $2, dbg_exec_step_into_insn); }
+    | tNEXTI                    { dbg_wait_next_exception(DBG_CONTINUE, 1,  dbg_exec_step_over_insn); }
+    | tNEXTI tNUM               { dbg_wait_next_exception(DBG_CONTINUE, $2, dbg_exec_step_over_insn); }
+    | tFINISH     	       	{ dbg_wait_next_exception(DBG_CONTINUE, 0,  dbg_exec_finish); }
+    | tABORT                   	{ abort(); }
+    | tBACKTRACE     	       	{ stack_backtrace(dbg_curr_tid, TRUE); }
+    | tBACKTRACE tNUM          	{ stack_backtrace($2, TRUE); }
+    | tUP     		       	{ stack_set_frame(dbg_curr_frame + 1);  }
+    | tUP tNUM     	       	{ stack_set_frame(dbg_curr_frame + $2); }
+    | tDOWN     	       	{ stack_set_frame(dbg_curr_frame - 1);  }
+    | tDOWN tNUM     	       	{ stack_set_frame(dbg_curr_frame - $2); }
+    | tFRAME tNUM              	{ stack_set_frame($2); }
+    | tSHOW tDIR     	       	{ source_show_path(); }
+    | tDIR pathname            	{ source_add_path($2); }
+    | tDIR     		       	{ source_nuke_path(); }
+    | tCOND tNUM               	{ break_add_condition($2, NULL); }
+    | tCOND tNUM expr     	{ break_add_condition($2, $3); }
+    | tSOURCE pathname          { parser($2); }
+    | tSYMBOLFILE pathname     	{ symbol_read_symtable($2, 0); }
+    | tSYMBOLFILE pathname expr_rvalue { symbol_read_symtable($2, $3); }
+    | tWHATIS expr_lvalue       { types_print_type((DWORD)memory_to_linear_addr(&$2.addr), $2.typeid, FALSE); dbg_printf("\n"); }
+    | tATTACH tNUM     		{ dbg_attach_debuggee($2, FALSE, TRUE); }
+    | tDETACH                   { dbg_detach_debuggee(); }
+    | run_command
     | list_command
     | disassemble_command
     | set_command
     | x_command
-    | print_command
-    | break_commands
-    | display_commands
+    | print_command     
+    | break_command
     | watch_command
+    | display_command
     | info_command
-    | walk_command
-    | run_command
     | maintenance_command
     | noprocess_state
     ;
 
-display_commands:
-    | tDISPLAY tEOL	       	{ DEBUG_InfoDisplay(); }
-    | tDISPLAY expr tEOL       	{ DEBUG_AddDisplay($2, 1, 0, FALSE); }
-    | tDISPLAY tFORMAT expr tEOL{ DEBUG_AddDisplay($3, $2 >> 8, $2 & 0xff, FALSE); }
-    | tLOCAL tDISPLAY expr tEOL	{ DEBUG_AddDisplay($3, 1, 0, TRUE); }
-    | tLOCAL tDISPLAY tFORMAT expr tEOL	{ DEBUG_AddDisplay($4, $3 >> 8, $3 & 0xff, TRUE); }
-    | tENABLE tDISPLAY tNUM tEOL{ DEBUG_EnableDisplay( $3, TRUE ); }
-    | tDISABLE tDISPLAY tNUM tEOL	{ DEBUG_EnableDisplay( $3, FALSE ); }
-    | tDELETE tDISPLAY tNUM tEOL{ DEBUG_DelDisplay( $3 ); }
-    | tDELETE tDISPLAY tEOL    	{ DEBUG_DelDisplay( -1 ); }
-    | tUNDISPLAY tNUM tEOL     	{ DEBUG_DelDisplay( $2 ); }
-    | tUNDISPLAY tEOL          	{ DEBUG_DelDisplay( -1 ); }
-    ;
-
-set_command:
-      tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2, $4); }
-    | tSET '+' tIDENTIFIER tEOL { DEBUG_DbgChannel(TRUE, NULL, $3); }
-    | tSET '-' tIDENTIFIER tEOL { DEBUG_DbgChannel(FALSE, NULL, $3); }
-    | tSET tIDENTIFIER '+' tIDENTIFIER tEOL { DEBUG_DbgChannel(TRUE, $2, $4); }
-    | tSET tIDENTIFIER '-' tIDENTIFIER tEOL { DEBUG_DbgChannel(FALSE, $2, $4); }
-    ;
-
 pathname:
-      tIDENTIFIER               { $$ = $1; }
+      identifier                { $$ = $1; }
     | tPATH                     { $$ = $1; }
     ;
 
-disassemble_command:
-      tDISASSEMBLE tEOL         { DEBUG_Disassemble( NULL, NULL, 10 ); }
-    | tDISASSEMBLE expr_addr tEOL       { DEBUG_Disassemble( & $2, NULL, 10 ); }
-    | tDISASSEMBLE expr_addr ',' expr_addr tEOL { DEBUG_Disassemble( & $2, & $4, 0 ); }
-    ;
-
-list_command:
-      tLIST tEOL                { DEBUG_List( NULL, NULL, 10 ); }
-    | tLIST '-' tEOL            { DEBUG_List( NULL, NULL, -10 ); }
-    | tLIST list_arg tEOL       { DEBUG_List( & $2, NULL, 10 ); }
-    | tLIST ',' list_arg tEOL   { DEBUG_List( NULL, & $3, -10 ); }
-    | tLIST list_arg ',' list_arg tEOL { DEBUG_List( & $2, & $4, 0 ); }
+identifier:
+      tIDENTIFIER               { $$ = $1; }
+    | tIDENTIFIER '!' tIDENTIFIER { char* ptr = HeapAlloc(GetProcessHeap(), 0, strlen($1) + 1 + strlen($3) + 1);
+                                    sprintf(ptr, "%s!%s", $1, $3); $$ = lexeme_alloc(ptr);
+                                    HeapFree(GetProcessHeap(), 0, ptr); }
+    | identifier ':' ':' tIDENTIFIER { char* ptr = HeapAlloc(GetProcessHeap(), 0, strlen($1) + 2 + strlen($4) + 1);
+                                       sprintf(ptr, "%s::%s", $1, $4); $$ = lexeme_alloc(ptr);
+                                       HeapFree(GetProcessHeap(), 0, ptr); }
     ;
 
 list_arg:
-      tNUM		       { $$.sourcefile = NULL; $$.line = $1; }
-    | pathname ':' tNUM	       { $$.sourcefile = $1; $$.line = $3; }
-    | tIDENTIFIER	       { DEBUG_GetFuncInfo( & $$, NULL, $1); }
-    | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
-    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ ); }
-    ;
-
-x_command:
-      tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); }
-    | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
-    ;
-
-print_command:
-      tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); }
-    | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); }
-    ;
-
-break_commands:
-      tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpointFromValue( &$3 ); }
-    | tBREAK identifier tEOL   { DEBUG_AddBreakpointFromId($2, -1); }
-    | tBREAK identifier ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
-    | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }
-    | tBREAK tEOL              { DEBUG_AddBreakpointFromLineno(-1); }
-    | tENABLE tNUM tEOL         { DEBUG_EnableBreakpoint( $2, TRUE ); }
-    | tENABLE tBREAK tNUM tEOL	{ DEBUG_EnableBreakpoint( $3, TRUE ); }
-    | tDISABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, FALSE ); }
-    | tDISABLE tBREAK tNUM tEOL	{ DEBUG_EnableBreakpoint( $3, FALSE ); }
-    | tDELETE tNUM tEOL 	{ DEBUG_DelBreakpoint( $2 ); }
-    | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
-    ;
-
-watch_command:
-      tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); }
-    | tWATCH identifier tEOL    { DEBUG_AddWatchpointFromId($2); }
-    ;
-
-info_command:
-      tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
-    | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); }
-    | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
-    | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); }
-    | tINFO tREGS tEOL          { DEBUG_InfoRegisters(&DEBUG_context); }
-    | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); }
-    | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
-    | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
-    | tINFO tSYMBOL tSTRING tEOL{ DEBUG_InfoSymbols($3); }
-    | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); }
-    | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
-    | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
-    ;
-
-walk_command:
-      tWALK tCLASS tEOL         { DEBUG_WalkClasses(); }
-    | tWALK tMODULE tEOL        { DEBUG_WalkModules(); }
-    | tWALK tWND tEOL           { DEBUG_WalkWindows( 0, 0 ); }
-    | tWALK tWND expr_value tEOL{ DEBUG_WalkWindows( (HWND)$3, 0 ); }
-    | tWALK tMAPS tEOL          { DEBUG_InfoVirtual(0); }
-    | tWALK tMAPS expr_value tEOL { DEBUG_InfoVirtual($3); }
-    | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
-    | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
-    | tWALK tEXCEPTION tEOL     { DEBUG_WalkExceptions(DEBUG_CurrTid); }
-    | tWALK tEXCEPTION expr_value tEOL{ DEBUG_WalkExceptions($3); }
+      tNUM		        { $$.FileName = NULL; $$.LineNumber = $1; }
+    | pathname ':' tNUM	        { $$.FileName = $1; $$.LineNumber = $3; }
+    | identifier	        { symbol_get_line(NULL, $1, &$$); }
+    | pathname ':' identifier   { symbol_get_line($3, $1, &$$); }
+    | '*' expr_lvalue	        { $$.SizeOfStruct = sizeof($$);
+                                  SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)memory_to_linear_addr(& $2.addr), NULL, & $$); }
     ;
 
 run_command:
-      tRUN tEOL                 { DEBUG_Run(NULL); }
-    | tRUN tSTRING tEOL         { DEBUG_Run($2); }
+      tRUN                      { dbg_run_debuggee(NULL); }
+    | tRUN tSTRING              { dbg_run_debuggee($2); }
+    ;
+
+list_command:
+      tLIST                     { source_list(NULL, NULL, 10); }
+    | tLIST '-'                 { source_list(NULL,  NULL, -10); }
+    | tLIST list_arg            { source_list(& $2, NULL, 10); }
+    | tLIST ',' list_arg        { source_list(NULL, & $3, -10); }
+    | tLIST list_arg ',' list_arg      { source_list(& $2, & $4, 0); }
+    ;
+
+disassemble_command:
+      tDISASSEMBLE              { memory_disassemble(NULL, NULL, 10); }
+    | tDISASSEMBLE expr_lvalue  { memory_disassemble(&$2, NULL, 10); }
+    | tDISASSEMBLE expr_lvalue ',' expr_lvalue { memory_disassemble(&$2, &$4, 0); }
+    ;
+
+set_command:
+      tSET lvalue_addr '=' expr_rvalue { memory_write_value(&$2, sizeof(int), &$4); }
+    | tSET '+' tIDENTIFIER      { info_wine_dbg_channel(TRUE, NULL, $3); }
+    | tSET '-' tIDENTIFIER      { info_wine_dbg_channel(FALSE, NULL, $3); }
+    | tSET tIDENTIFIER '+' tIDENTIFIER { info_wine_dbg_channel(TRUE, $2, $4); }
+    | tSET tIDENTIFIER '-' tIDENTIFIER { info_wine_dbg_channel(FALSE, $2, $4); }
+    ;
+
+x_command:
+      tEXAM expr_lvalue         { memory_examine(&$2, 1, 'x'); }
+    | tEXAM tFORMAT expr_lvalue { memory_examine(&$3, $2 >> 8, $2 & 0xff); }
+    ;
+
+print_command:
+      tPRINT expr_lvalue         { print_value(&$2, 0, 0); }
+    | tPRINT tFORMAT expr_lvalue { if (($2 >> 8) == 1) print_value(&$3, $2 & 0xff, 0); else dbg_printf("Count is meaningless in print command\n"); }
+    ;
+
+break_command:
+      tBREAK '*' expr_lvalue    { break_add_break_from_lvalue(&$3); }
+    | tBREAK identifier         { break_add_break_from_id($2, -1); }
+    | tBREAK identifier ':' tNUM { break_add_break_from_id($2, $4); }
+    | tBREAK tNUM     	        { break_add_break_from_lineno($2); }
+    | tBREAK                    { break_add_break_from_lineno(-1); }
+    | tENABLE tNUM              { break_enable_xpoint($2, TRUE); }
+    | tENABLE tBREAK tNUM     	{ break_enable_xpoint($3, TRUE); }
+    | tDISABLE tNUM             { break_enable_xpoint($2, FALSE); }
+    | tDISABLE tBREAK tNUM     	{ break_enable_xpoint($3, FALSE); }
+    | tDELETE tNUM      	{ break_delete_xpoint($2); }
+    | tDELETE tBREAK tNUM      	{ break_delete_xpoint($3); }
+    ;
+
+watch_command:
+      tWATCH '*' expr_lvalue    { break_add_watch(&$3, 1); }
+    | tWATCH identifier         { break_add_watch_from_id($2); }
+    ;
+
+display_command:
+      tDISPLAY     	       	{ display_info(); }
+    | tDISPLAY expr            	{ display_add($2, 1, 0, FALSE); }
+    | tDISPLAY tFORMAT expr     { display_add($3, $2 >> 8, $2 & 0xff, FALSE); }
+    | tLOCAL tDISPLAY expr     	{ display_add($3, 1, 0, TRUE); }
+    | tLOCAL tDISPLAY tFORMAT expr     	{ display_add($4, $3 >> 8, $3 & 0xff, TRUE); }
+    | tENABLE tDISPLAY tNUM     { display_enable($3, TRUE); }
+    | tDISABLE tDISPLAY tNUM    { display_enable($3, FALSE); }
+    | tDELETE tDISPLAY tNUM     { display_delete($3); }
+    | tDELETE tDISPLAY         	{ display_delete(-1); }
+    | tUNDISPLAY tNUM          	{ display_delete($2); }
+    | tUNDISPLAY               	{ display_delete(-1); }
+    ;
+
+info_command:
+      tINFO tBREAK              { break_info(); }
+    | tINFO tSHARE     		{ info_win32_module(0); }
+    | tINFO tSHARE expr_rvalue  { info_win32_module($3); }
+    | tINFO tREGS               { be_cpu->print_context(dbg_curr_thread->handle, &dbg_context); }
+    | tINFO tSEGMENTS expr_rvalue { info_win32_segments($3, 1); }
+    | tINFO tSEGMENTS           { info_win32_segments(0, -1); }
+    | tINFO tSTACK              { stack_info(); }
+    | tINFO tSYMBOL tSTRING     { symbol_info($3); }
+    | tINFO tLOCAL              { symbol_info_locals(); }
+    | tINFO tDISPLAY            { display_info(); }
+    | tINFO tCLASS              { info_win32_class(NULL, NULL); }
+    | tINFO tCLASS tSTRING     	{ info_win32_class(NULL, $3); }
+    | tINFO tWND                { info_win32_window(NULL, FALSE); }
+    | tINFO tWND expr_rvalue    { info_win32_window((HWND)$3, FALSE); }
+    | tINFO '*' tWND            { info_win32_window(NULL, TRUE); }
+    | tINFO '*' tWND expr_rvalue { info_win32_window((HWND)$4, TRUE); }
+    | tINFO tPROCESS            { info_win32_processes(); }
+    | tINFO tTHREAD             { info_win32_threads(); }
+    | tINFO tEXCEPTION          { info_win32_exceptions(dbg_curr_tid); }
+    | tINFO tEXCEPTION expr_rvalue { info_win32_exceptions($3); }
+    | tINFO tMAPS               { info_win32_virtual(dbg_curr_pid); }
+    | tINFO tMAPS expr_rvalue   { info_win32_virtual($3); }
     ;
 
 maintenance_command:
-      tMAINTENANCE tTYPE        { DEBUG_DumpTypes(); }
+      tMAINTENANCE tTYPE        { print_types(); }
     ;
 
 noprocess_state:
-      tNOPROCESS tEOL		{} /* <CR> shall not barf anything */
-    | tNOPROCESS tSTRING tEOL	{ DEBUG_Printf("No process loaded, cannot execute '%s'\n", $2); }
+      tNOPROCESS     		{} /* <CR> shall not barf anything */
+    | tNOPROCESS tSTRING     	{ dbg_printf("No process loaded, cannot execute '%s'\n", $2); }
     ;
 
 type_expr:
-      type_expr '*'		{ $$ = $1 ? DEBUG_FindOrMakePointerType($1) : NULL; }
-    | tINT			{ $$ = DEBUG_GetBasicType(DT_BASIC_INT); }
-    | tCHAR			{ $$ = DEBUG_GetBasicType(DT_BASIC_CHAR); }
-    | tLONG tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGINT); }
-    | tUNSIGNED tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_UINT); }
-    | tLONG tUNSIGNED tINT	{ $$ = DEBUG_GetBasicType(DT_BASIC_ULONGINT); }
-    | tLONG tLONG tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGLONGINT); }
-    | tLONG tLONG tUNSIGNED tINT{ $$ = DEBUG_GetBasicType(DT_BASIC_ULONGLONGINT); }
-    | tSHORT tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_SHORTINT); }
-    | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_GetBasicType(DT_BASIC_USHORTINT); }
-    | tSIGNED tCHAR		{ $$ = DEBUG_GetBasicType(DT_BASIC_SCHAR); }
-    | tUNSIGNED tCHAR		{ $$ = DEBUG_GetBasicType(DT_BASIC_UCHAR); }
-    | tFLOAT			{ $$ = DEBUG_GetBasicType(DT_BASIC_FLOAT); }
-    | tDOUBLE			{ $$ = DEBUG_GetBasicType(DT_BASIC_DOUBLE); }
-    | tLONG tDOUBLE		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGDOUBLE); }
-    | tSTRUCT tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
-    | tUNION tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
-    | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(DT_ENUM, $2); }
+      tCHAR			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_char; }
+    | tINT			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_int; }
+    | tLONG tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_long_int; }
+    | tLONG     		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_long_int; }
+    | tUNSIGNED tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_int; }
+    | tUNSIGNED 		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_int; }
+    | tLONG tUNSIGNED tINT	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_long_int; }
+    | tLONG tUNSIGNED   	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_long_int; }
+    | tSHORT tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_short_int; }
+    | tSHORT    		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_short_int; }
+    | tSHORT tUNSIGNED tINT	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_short_int; }
+    | tSHORT tUNSIGNED  	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_short_int; }
+    | tSIGNED tCHAR		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_char_int; }
+    | tUNSIGNED tCHAR		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_char_int; }
+    | tLONG tLONG tUNSIGNED tINT{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_longlong_int; }
+    | tLONG tLONG tUNSIGNED     { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_unsigned_longlong_int; }
+    | tLONG tLONG tINT          { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_longlong_int; }
+    | tLONG tLONG               { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_signed_longlong_int; }
+    | tFLOAT			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_short_real; }
+    | tDOUBLE			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_real; }
+    | tLONG tDOUBLE		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.typeid = dbg_itype_long_real; }
+    | type_expr '*'		{ $$ = $1; $$.deref_count++; }
+    | tCLASS identifier	        { $$.type = type_expr_udt_class; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
+    | tSTRUCT identifier	{ $$.type = type_expr_udt_struct; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
+    | tUNION identifier	        { $$.type = type_expr_udt_union; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
+    | tENUM identifier	        { $$.type = type_expr_enumeration; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
     ;
 
-expr_addr: expr                 { $$ = DEBUG_EvalExpr($1); }
+expr_lvalue:
+      expr                      { $$ = expr_eval($1); }
     ;
 
-expr_value: expr                { DBG_VALUE value = DEBUG_EvalExpr($1);
-                                  /* expr_value is typed as an integer */
-                                  $$ = DEBUG_ReadMemory(&value); }
+expr_rvalue:
+      expr_lvalue               { $$ = types_extract_as_integer(&$1); }
     ;
 
 /*
@@ -312,149 +321,209 @@ expr_value: expr                { DBG_VALUE value = DEBUG_EvalExpr($1);
  * use in 'display' commands, and in conditional watchpoints.
  */
 expr:
-      tNUM                       { $$ = DEBUG_ConstExpr($1); }
-    | tSTRING			 { $$ = DEBUG_StringExpr($1); }
-    | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
-    | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
-    | expr OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); }
-    | expr '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); }
-    | tIDENTIFIER '(' ')'	 { $$ = DEBUG_CallExpr($1, 0); }
-    | tIDENTIFIER '(' expr ')'	 { $$ = DEBUG_CallExpr($1, 1, $3); }
-    | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, $5); }
-    | tIDENTIFIER '(' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7); }
-    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 4, $3, $5, $7, $9); }
-    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 5, $3, $5, $7, $9, $11); }
-    | expr '[' expr ']'		 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); }
-    | expr ':' expr		 { $$ = DEBUG_BinopExpr(EXP_OP_SEG, $1, $3); }
-    | expr OP_LOR expr           { $$ = DEBUG_BinopExpr(EXP_OP_LOR, $1, $3); }
-    | expr OP_LAND expr          { $$ = DEBUG_BinopExpr(EXP_OP_LAND, $1, $3); }
-    | expr '|' expr              { $$ = DEBUG_BinopExpr(EXP_OP_OR, $1, $3); }
-    | expr '&' expr              { $$ = DEBUG_BinopExpr(EXP_OP_AND, $1, $3); }
-    | expr '^' expr              { $$ = DEBUG_BinopExpr(EXP_OP_XOR, $1, $3); }
-    | expr OP_EQ expr            { $$ = DEBUG_BinopExpr(EXP_OP_EQ, $1, $3); }
-    | expr '>' expr              { $$ = DEBUG_BinopExpr(EXP_OP_GT, $1, $3); }
-    | expr '<' expr              { $$ = DEBUG_BinopExpr(EXP_OP_LT, $1, $3); }
-    | expr OP_GE expr            { $$ = DEBUG_BinopExpr(EXP_OP_GE, $1, $3); }
-    | expr OP_LE expr            { $$ = DEBUG_BinopExpr(EXP_OP_LE, $1, $3); }
-    | expr OP_NE expr            { $$ = DEBUG_BinopExpr(EXP_OP_NE, $1, $3); }
-    | expr OP_SHL expr           { $$ = DEBUG_BinopExpr(EXP_OP_SHL, $1, $3); }
-    | expr OP_SHR expr           { $$ = DEBUG_BinopExpr(EXP_OP_SHR, $1, $3); }
-    | expr '+' expr              { $$ = DEBUG_BinopExpr(EXP_OP_ADD, $1, $3); }
-    | expr '-' expr              { $$ = DEBUG_BinopExpr(EXP_OP_SUB, $1, $3); }
-    | expr '*' expr              { $$ = DEBUG_BinopExpr(EXP_OP_MUL, $1, $3); }
-    | expr '/' expr              { $$ = DEBUG_BinopExpr(EXP_OP_DIV, $1, $3); }
-    | expr '%' expr              { $$ = DEBUG_BinopExpr(EXP_OP_REM, $1, $3); }
-    | '-' expr %prec OP_SIGN     { $$ = DEBUG_UnopExpr(EXP_OP_NEG, $2); }
+      tNUM                      { $$ = expr_alloc_sconstant($1); }
+    | tSTRING			{ $$ = expr_alloc_string($1); }
+    | tINTVAR                   { $$ = expr_alloc_internal_var($1); }
+    | identifier		{ $$ = expr_alloc_symbol($1); }
+    | expr OP_DRF tIDENTIFIER	{ $$ = expr_alloc_pstruct($1, $3); }
+    | expr '.' tIDENTIFIER      { $$ = expr_alloc_struct($1, $3); }
+    | identifier '(' ')'	{ $$ = expr_alloc_func_call($1, 0); }
+    | identifier '(' expr ')'	{ $$ = expr_alloc_func_call($1, 1, $3); }
+    | identifier '(' expr ',' expr ')' { $$ = expr_alloc_func_call($1, 2, $3, $5); }
+    | identifier '(' expr ',' expr ',' expr ')'	{ $$ = expr_alloc_func_call($1, 3, $3, $5, $7); }
+    | identifier '(' expr ',' expr ',' expr ',' expr ')' { $$ = expr_alloc_func_call($1, 4, $3, $5, $7, $9); }
+    | identifier '(' expr ',' expr ',' expr ',' expr ',' expr ')' { $$ = expr_alloc_func_call($1, 5, $3, $5, $7, $9, $11); }
+    | expr '[' expr ']'		 { $$ = expr_alloc_binary_op(EXP_OP_ARR, $1, $3); }
+    | expr ':' expr		 { $$ = expr_alloc_binary_op(EXP_OP_SEG, $1, $3); }
+    | expr OP_LOR expr           { $$ = expr_alloc_binary_op(EXP_OP_LOR, $1, $3); }
+    | expr OP_LAND expr          { $$ = expr_alloc_binary_op(EXP_OP_LAND, $1, $3); }
+    | expr '|' expr              { $$ = expr_alloc_binary_op(EXP_OP_OR, $1, $3); }
+    | expr '&' expr              { $$ = expr_alloc_binary_op(EXP_OP_AND, $1, $3); }
+    | expr '^' expr              { $$ = expr_alloc_binary_op(EXP_OP_XOR, $1, $3); }
+    | expr OP_EQ expr            { $$ = expr_alloc_binary_op(EXP_OP_EQ, $1, $3); }
+    | expr '>' expr              { $$ = expr_alloc_binary_op(EXP_OP_GT, $1, $3); }
+    | expr '<' expr              { $$ = expr_alloc_binary_op(EXP_OP_LT, $1, $3); }
+    | expr OP_GE expr            { $$ = expr_alloc_binary_op(EXP_OP_GE, $1, $3); }
+    | expr OP_LE expr            { $$ = expr_alloc_binary_op(EXP_OP_LE, $1, $3); }
+    | expr OP_NE expr            { $$ = expr_alloc_binary_op(EXP_OP_NE, $1, $3); }
+    | expr OP_SHL expr           { $$ = expr_alloc_binary_op(EXP_OP_SHL, $1, $3); }
+    | expr OP_SHR expr           { $$ = expr_alloc_binary_op(EXP_OP_SHR, $1, $3); }
+    | expr '+' expr              { $$ = expr_alloc_binary_op(EXP_OP_ADD, $1, $3); }
+    | expr '-' expr              { $$ = expr_alloc_binary_op(EXP_OP_SUB, $1, $3); }
+    | expr '*' expr              { $$ = expr_alloc_binary_op(EXP_OP_MUL, $1, $3); }
+    | expr '/' expr              { $$ = expr_alloc_binary_op(EXP_OP_DIV, $1, $3); }
+    | expr '%' expr              { $$ = expr_alloc_binary_op(EXP_OP_REM, $1, $3); }
+    | '-' expr %prec OP_SIGN     { $$ = expr_alloc_unary_op(EXP_OP_NEG, $2); }
     | '+' expr %prec OP_SIGN     { $$ = $2; }
-    | '!' expr                   { $$ = DEBUG_UnopExpr(EXP_OP_NOT, $2); }
-    | '~' expr                   { $$ = DEBUG_UnopExpr(EXP_OP_LNOT, $2); }
+    | '!' expr                   { $$ = expr_alloc_unary_op(EXP_OP_NOT, $2); }
+    | '~' expr                   { $$ = expr_alloc_unary_op(EXP_OP_LNOT, $2); }
     | '(' expr ')'               { $$ = $2; }
-    | '*' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_DEREF, $2); }
-    | '&' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_ADDR, $2); }
-    | '(' type_expr ')' expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($2, $4); }
+    | '*' expr %prec OP_DEREF    { $$ = expr_alloc_unary_op(EXP_OP_DEREF, $2); }
+    | '&' expr %prec OP_DEREF    { $$ = expr_alloc_unary_op(EXP_OP_ADDR, $2); }
+    | '(' type_expr ')' expr %prec OP_DEREF { $$ = expr_alloc_typecast(&$2, $4); }
     ;
 
 /*
  * The lvalue rule builds an expression tree.  This is a limited form
  * of expression that is suitable to be used as an lvalue.
  */
-lval_addr: lval                  { $$ = DEBUG_EvalExpr($1); }
+lvalue_addr: 
+      lvalue                     { $$ = expr_eval($1); }
     ;
 
-lval: lvalue                     { $$ = $1; }
-    | '*' expr			 { $$ = DEBUG_UnopExpr(EXP_OP_FORCE_DEREF, $2); }
-    ;
-
-lvalue: tNUM                     { $$ = DEBUG_ConstExpr($1); }
-    | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
-    | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
-    | lvalue OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); }
-    | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); }
-    | lvalue '[' expr ']'	 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); }
-    ;
-
-identifier: tIDENTIFIER          { $$ = $1; }
-    | identifier '.' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 1 + strlen($3)+ 1);
-                                   sprintf(ptr, "%s.%s", $1, $3); $$ = DEBUG_MakeSymbol(ptr);
-                                   DBG_free(ptr); }
-    | identifier ':' ':' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 2 + strlen($4) + 1);
-                                   sprintf(ptr, "%s::%s", $1, $4); $$ = DEBUG_MakeSymbol(ptr);
-                                   DBG_free(ptr); }
+lvalue: tNUM                     { $$ = expr_alloc_sconstant($1); }
+    | tINTVAR                    { $$ = expr_alloc_internal_var($1); }
+    | identifier		 { $$ = expr_alloc_symbol($1); }
+    | lvalue OP_DRF tIDENTIFIER	 { $$ = expr_alloc_pstruct($1, $3); }
+    | lvalue '.' tIDENTIFIER	 { $$ = expr_alloc_struct($1, $3); }
+    | lvalue '[' expr ']'	 { $$ = expr_alloc_binary_op(EXP_OP_ARR, $1, $3); }
+    | '*' expr			 { $$ = expr_alloc_unary_op(EXP_OP_FORCE_DEREF, $2); }
     ;
 
 %%
 
-static void mode_command(int newmode)
-{
-    switch(newmode)
-    {
-    case 16: DEBUG_CurrThread->dbg_mode = MODE_16; break;
-    case 32: DEBUG_CurrThread->dbg_mode = MODE_32; break;
-    default: DEBUG_Printf("Invalid mode (use 16, 32 or vm86)\n");
-    }
-}
-
-void DEBUG_Exit(DWORD ec)
-{
-   ExitProcess(ec);
-}
-
 static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
 {
-    if (DBG_IVAR(ExtDbgOnInternalException))
-        DEBUG_ExternalDebugger();
-    DEBUG_Printf("\nwine_dbg_cmd: ");
-    switch (GetExceptionCode()) {
+    switch (GetExceptionCode())
+    {
     case DEBUG_STATUS_INTERNAL_ERROR:
-        DEBUG_Printf("WineDbg internal error\n");
-        if (DBG_IVAR(ExtDbgOnInternalException))
-            DEBUG_ExternalDebugger();
+        dbg_printf("\nWineDbg internal error\n");
         break;
     case DEBUG_STATUS_NO_SYMBOL:
-        DEBUG_Printf("Undefined symbol\n");
+        dbg_printf("\nUndefined symbol\n");
         break;
     case DEBUG_STATUS_DIV_BY_ZERO:
-        DEBUG_Printf("Division by zero\n");
+        dbg_printf("\nDivision by zero\n");
         break;
     case DEBUG_STATUS_BAD_TYPE:
-        DEBUG_Printf("No type or type mismatch\n");
+        dbg_printf("\nNo type or type mismatch\n");
         break;
     case DEBUG_STATUS_NO_FIELD:
-        DEBUG_Printf("No such field in structure or union\n");
+        dbg_printf("\nNo such field in structure or union\n");
+        break;
+    case DEBUG_STATUS_CANT_DEREF:
+        dbg_printf("\nDereference failed (not a pointer, or out of array bounds)\n");
         break;
     case DEBUG_STATUS_ABORT:
         break;
+    case DEBUG_STATUS_NOT_AN_INTEGER:
+        dbg_printf("\nNeeding an integral value\n");
+        break;
     case CONTROL_C_EXIT:
         /* this is generally sent by a ctrl-c when we run winedbg outside of wineconsole */
-        DEBUG_Printf("Ctrl-C\n");
-        /* stop the debuggee, and continue debugger execution, we will be reintered by the
+        dbg_printf("\nCtrl-C\n");
+        /* stop the debuggee, and continue debugger execution, we will be reentered by the
          * debug events generated by stopping
          */
-        DEBUG_InterruptDebuggee();
+        dbg_interrupt_debuggee();
         return EXCEPTION_CONTINUE_EXECUTION;
     default:
-        DEBUG_Printf("Exception %lx\n", GetExceptionCode());
-        DEBUG_ExternalDebugger();
+        dbg_printf("\nException %lx\n", GetExceptionCode());
         break;
     }
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-static  void set_default_channels(void)
+#ifndef whitespace
+#define whitespace(c) (((c) == ' ') || ((c) == '\t'))
+#endif
+
+/* Strip whitespace from the start and end of STRING. */
+static void stripwhite(char *string)
 {
-    DEBUG_hParserOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    DEBUG_hParserInput  = GetStdHandle(STD_INPUT_HANDLE);
+    int         i, last;
+
+    for (i = 0; whitespace(string[i]); i++);
+    if (i) strcpy(string, string + i);
+
+    last = i = strlen(string) - 1;
+    if (string[last] == '\n') i--;
+
+    while (i > 0 && whitespace(string[i])) i--;
+    if (string[last] == '\n')
+        string[++i] = '\n';
+    string[++i] = '\0';
+}
+
+static HANDLE dbg_parser_input;
+static HANDLE dbg_parser_output;
+
+int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
+{
+    char 	buf_line[256];
+    DWORD	nread;
+    size_t      len;
+
+    /* as of today, console handles can be file handles... so better use file APIs rather than
+     * console's
+     */
+    WriteFile(dbg_parser_output, pfx, strlen(pfx), NULL, NULL);
+
+    len = 0;
+    do
+    {
+	if (!ReadFile(dbg_parser_input, buf_line, sizeof(buf_line) - 1, &nread, NULL) || nread == 0)
+            break;
+	buf_line[nread] = '\0';
+
+        if (check_nl && len == 0 && nread == 1 && buf_line[0] == '\n')
+            return 0;
+
+        /* store stuff at the end of last_line */
+        if (len + nread + 1 > *alloc)
+        {
+            while (len + nread + 1 > *alloc) *alloc *= 2;
+            *line = dbg_heap_realloc(*line, *alloc);
+        }
+        strcpy(*line + len, buf_line);
+        len += nread;
+    } while (nread == 0 || buf_line[nread - 1] != '\n');
+
+    if (!len)
+    {
+        *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc = 1);
+        **line = '\0';
+    }
+
+    /* Remove leading and trailing whitespace from the line */
+    stripwhite(*line);
+    return 1;
+}
+
+int input_read_line(const char* pfx, char* buf, int size)
+{
+    char*       line = NULL;
+    size_t      len = 0;
+
+    /* first alloc of our current buffer */
+    line = HeapAlloc(GetProcessHeap(), 0, len = 2);
+    assert(line);
+    line[0] = '\n';
+    line[1] = '\0';		      
+	
+    input_fetch_entire_line(pfx, &line, &len, FALSE);
+    len = strlen(line);
+    /* remove trailing \n */
+    if (len > 0 && line[len - 1] == '\n') len--;
+    len = min(size - 1, len);
+    memcpy(buf, line, len);
+    buf[len] = '\0';
+    HeapFree(GetProcessHeap(), 0, line);
+    return 1;
 }
 
 /***********************************************************************
- *           DEBUG_Parser
+ *           parser
  *
  * Debugger command line parser
  */
-void	DEBUG_Parser(LPCSTR filename)
+void	parser(const char* filename)
 {
     BOOL 	        ret_ok;
+    HANDLE              in_copy  = dbg_parser_input;
+    HANDLE              out_copy = dbg_parser_output;
+
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
@@ -463,16 +532,16 @@ void	DEBUG_Parser(LPCSTR filename)
 
     if (filename)
     {
-        DEBUG_hParserOutput = 0;
-        DEBUG_hParserInput  = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
-        if (DEBUG_hParserInput == INVALID_HANDLE_VALUE)
-        {
-            set_default_channels();
-            return;
-        }
+        HANDLE  h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0L, 0);
+        if (h == INVALID_HANDLE_VALUE) return;
+        dbg_parser_output = 0;
+        dbg_parser_input  = h;
     }
     else
-        set_default_channels();
+    {
+        dbg_parser_output = GetStdHandle(STD_OUTPUT_HANDLE);
+        dbg_parser_input  = GetStdHandle(STD_INPUT_HANDLE);
+    }
 
     do
     {
@@ -486,16 +555,16 @@ void	DEBUG_Parser(LPCSTR filename)
 	  ret_ok = FALSE;
        }
        __ENDTRY;
-       DEBUG_FlushSymbols();
+       lexeme_flush();
     } while (!ret_ok);
 
-    if (filename)
-        CloseHandle(DEBUG_hParserInput);
-    set_default_channels();
+    if (filename) CloseHandle(dbg_parser_input);
+    dbg_parser_input  = in_copy;
+    dbg_parser_output = out_copy;
 }
 
 int yyerror(const char* s)
 {
-   DEBUG_Printf("%s\n", s);
-   return 0;
+    dbg_printf("%s\n", s);
+    return 0;
 }

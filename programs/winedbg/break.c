@@ -26,638 +26,497 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-#ifdef __i386__
-#define DR7_CONTROL_SHIFT	16
-#define DR7_CONTROL_SIZE 	4
-
-#define DR7_RW_EXECUTE 		(0x0)
-#define DR7_RW_WRITE		(0x1)
-#define DR7_RW_READ		(0x3)
-
-#define DR7_LEN_1		(0x0)
-#define DR7_LEN_2		(0x4)
-#define DR7_LEN_4		(0xC)
-
-#define DR7_LOCAL_ENABLE_SHIFT	0
-#define DR7_GLOBAL_ENABLE_SHIFT 1
-#define DR7_ENABLE_SIZE 	2
-
-#define DR7_LOCAL_ENABLE_MASK	(0x55)
-#define DR7_GLOBAL_ENABLE_MASK	(0xAA)
-
-#define DR7_CONTROL_RESERVED	(0xFC00)
-#define DR7_LOCAL_SLOWDOWN	(0x100)
-#define DR7_GLOBAL_SLOWDOWN	(0x200)
-
-#define	DR7_ENABLE_MASK(dr)	(1<<(DR7_LOCAL_ENABLE_SHIFT+DR7_ENABLE_SIZE*(dr)))
-#define	IS_DR7_SET(ctrl,dr) 	((ctrl)&DR7_ENABLE_MASK(dr))
-#define INT3          0xcc   /* int 3 opcode */
-#endif
-
-#define MAX_BREAKPOINTS 100
-
-static DBG_BREAKPOINT breakpoints[MAX_BREAKPOINTS];
-
-static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
-
 /***********************************************************************
- *           DEBUG_IsStepOverInstr
+ *           is_at_func_return
  *
- * Determine if the instruction at CS:EIP is an instruction that
- * we need to step over (like a call or a repetitive string move).
- */
-static BOOL DEBUG_IsStepOverInstr(void)
-{
-#ifdef __i386__
-    BYTE*	instr;
-    BYTE	ch;
-    DBG_ADDR	addr;
-
-    addr.seg = DEBUG_context.SegCs;
-    addr.off = DEBUG_context.Eip;
-    /* FIXME: old code was using V86BASE(DEBUG_context)
-     * instead of passing through DOSMEM_MemoryBase
-     */
-    instr = (BYTE*)DEBUG_ToLinear(&addr);
-
-    for (;;)
-    {
-        if (!DEBUG_READ_MEM(instr, &ch, sizeof(ch)))
-	    return FALSE;
-
-        switch (ch)
-        {
-          /* Skip all prefixes */
-
-        case 0x2e:  /* cs: */
-        case 0x36:  /* ss: */
-        case 0x3e:  /* ds: */
-        case 0x26:  /* es: */
-        case 0x64:  /* fs: */
-        case 0x65:  /* gs: */
-        case 0x66:  /* opcode size prefix */
-        case 0x67:  /* addr size prefix */
-        case 0xf0:  /* lock */
-        case 0xf2:  /* repne */
-        case 0xf3:  /* repe */
-            instr++;
-            continue;
-
-          /* Handle call instructions */
-
-        case 0xcd:  /* int <intno> */
-        case 0xe8:  /* call <offset> */
-        case 0x9a:  /* lcall <seg>:<off> */
-            return TRUE;
-
-        case 0xff:  /* call <regmodrm> */
-	    if (!DEBUG_READ_MEM(instr + 1, &ch, sizeof(ch)))
-	        return FALSE;
-	    return (((ch & 0x38) == 0x10) || ((ch & 0x38) == 0x18));
-
-          /* Handle string instructions */
-
-        case 0x6c:  /* insb */
-        case 0x6d:  /* insw */
-        case 0x6e:  /* outsb */
-        case 0x6f:  /* outsw */
-        case 0xa4:  /* movsb */
-        case 0xa5:  /* movsw */
-        case 0xa6:  /* cmpsb */
-        case 0xa7:  /* cmpsw */
-        case 0xaa:  /* stosb */
-        case 0xab:  /* stosw */
-        case 0xac:  /* lodsb */
-        case 0xad:  /* lodsw */
-        case 0xae:  /* scasb */
-        case 0xaf:  /* scasw */
-            return TRUE;
-
-        default:
-            return FALSE;
-        }
-    }
-#else
-    return FALSE;
-#endif
-}
-
-
-/***********************************************************************
- *           DEBUG_IsFctReturn
- *
- * Determine if the instruction at CS:EIP is an instruction that
+ * Determine if the instruction at current PC is an instruction that
  * is a function return.
  */
-BOOL DEBUG_IsFctReturn(void)
+static BOOL is_at_func_return(void)
 {
-#ifdef __i386__
-    BYTE*	instr;
-    BYTE  	ch;
-    DBG_ADDR	addr;
+    ADDRESS     addr;
 
-    addr.seg = DEBUG_context.SegCs;
-    addr.off = DEBUG_context.Eip;
-    /* FIXME: old code was using V86BASE(DEBUG_context)
-     * instead of passing through DOSMEM_MemoryBase
-     */
-    instr = (BYTE*)DEBUG_ToLinear(&addr);
-
-    if (!DEBUG_READ_MEM(instr, &ch, sizeof(ch)))
-        return FALSE;
-
-    return (ch == 0xc2) || (ch == 0xc3);
-#else
-    return FALSE;
-#endif
+    memory_get_current_pc(&addr);
+    return be_cpu->is_function_return(memory_to_linear_addr(&addr));
 }
 
-
 /***********************************************************************
- *           DEBUG_SetBreakpoints
+ *           break_set_xpoints
  *
- * Set or remove all the breakpoints.
+ * Set or remove all the breakpoints & watchpoints
  */
-void DEBUG_SetBreakpoints( BOOL set )
+void  break_set_xpoints(BOOL set)
 {
-   int		i;
+    static BOOL                 last; /* = 0 = FALSE */
 
-#ifdef __i386__
-   DEBUG_context.Dr7 &= ~DR7_LOCAL_ENABLE_MASK;
-#endif
+    int		                i;
+    unsigned                    ret, size;
+    void*                       addr;
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-   for (i = 0; i < next_bp; i++)
-   {
-      if (!(breakpoints[i].refcount && breakpoints[i].enabled))
-	 continue;
+    if (set == last) return;
+    last = set;
 
-      switch (breakpoints[i].type) {
-      case DBG_BREAK:
-	 {
-#ifdef __i386__
-	    char ch = set ? INT3 : breakpoints[i].u.b.opcode;
+    for (i = 0; i < dbg_curr_process->next_bp; i++)
+    {
+        if (!bp[i].refcount && !bp[i].enabled)
+            continue;
 
-	    if (!DEBUG_WRITE_MEM( (void*)DEBUG_ToLinear(&breakpoints[i].addr),
-				  &ch, sizeof(ch) ))
-	    {
-	       DEBUG_Printf("Invalid address for breakpoint %d, disabling it\n", i);
-	       breakpoints[i].enabled = FALSE;
-	    }
-#endif
-	 }
-	 break;
-      case DBG_WATCH:
-	 if (set)
-	 {
-#ifdef __i386__
-	    DWORD	bits;
-	    int		reg = breakpoints[i].u.w.reg;
-	    LPDWORD	lpdr = NULL;
+        if (bp[i].xpoint_type == be_xpoint_break)
+            size = 0;
+        else
+            size = bp[i].w.len + 1;
+        addr = (void*)memory_to_linear_addr(&bp[i].addr);
 
-	    switch (reg)
-	    {
-	       case 0: lpdr = &DEBUG_context.Dr0; break;
-	       case 1: lpdr = &DEBUG_context.Dr1; break;
-	       case 2: lpdr = &DEBUG_context.Dr2; break;
-	       case 3: lpdr = &DEBUG_context.Dr3; break;
-	       default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-	    }
-
-	    *lpdr = DEBUG_ToLinear(&breakpoints[i].addr);
-	    bits = (breakpoints[i].u.w.rw) ? DR7_RW_WRITE : DR7_RW_READ;
-	    switch (breakpoints[i].u.w.len + 1)
-	    {
-	       case 4: bits |= DR7_LEN_4;	break;
-	       case 2: bits |= DR7_LEN_2;	break;
-	       case 1: bits |= DR7_LEN_1;	break;
-	       default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-	    }
-
-	    DEBUG_context.Dr7 &= ~(0x0F << (DR7_CONTROL_SHIFT + DR7_CONTROL_SIZE * reg));
-	    DEBUG_context.Dr7 |= bits << (DR7_CONTROL_SHIFT + DR7_CONTROL_SIZE * reg);
-	    DEBUG_context.Dr7 |= DR7_ENABLE_MASK(reg) | DR7_LOCAL_SLOWDOWN;
-#endif
-	 }
-	 break;
-      }
-   }
+        if (set)
+            ret = be_cpu->insert_Xpoint(dbg_curr_process->handle, &dbg_context, 
+                                        bp[i].xpoint_type, addr,
+                                        &bp[i].info, size);
+        else
+            ret = be_cpu->remove_Xpoint(dbg_curr_process->handle, &dbg_context, 
+                                        bp[i].xpoint_type, addr,
+                                        bp[i].info, size);
+        if (!ret)
+        {
+            dbg_printf("Invalid address (%p) for breakpoint %d, disabling it\n", 
+                       addr, i);
+            bp[i].enabled = FALSE;
+        }
+    }
 }
 
 /***********************************************************************
- *           DEBUG_FindBreakpoint
+ *           find_xpoint
  *
  * Find the breakpoint for a given address. Return the breakpoint
  * number or -1 if none.
- * If type is DBG_BREAKPOINT, addr is a complete addr
- * If type is DBG_WATCHPOINT, only addr.off is meaningful and contains
- * linear address
  */
-static int DEBUG_FindBreakpoint( const DBG_ADDR *addr, int type )
+static int find_xpoint(const ADDRESS* addr, enum be_xpoint_type type)
 {
-   int i;
+    int                         i;
+    void*                       lin = memory_to_linear_addr(addr);
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-   for (i = 0; i < next_bp; i++)
-   {
-      if (breakpoints[i].refcount && breakpoints[i].enabled &&
-	  breakpoints[i].type == type )
-      {
-	 if ((type == DBG_BREAK &&
-	      breakpoints[i].addr.seg == addr->seg &&
-	      breakpoints[i].addr.off == addr->off) ||
-	     (type == DBG_WATCH &&
-	      DEBUG_ToLinear(&breakpoints[i].addr) == addr->off))
-	    return i;
-      }
-   }
-   return -1;
+    for (i = 0; i < dbg_curr_process->next_bp; i++)
+    {
+        if (bp[i].refcount && bp[i].enabled && bp[i].xpoint_type == type &&
+            memory_to_linear_addr(&bp[i].addr) == lin)
+            return i;
+    }
+    return -1;
 }
 
 /***********************************************************************
- *           DEBUG_InitXPoint
+ *           init_xpoint
  *
  * Find an empty slot in BP table to add a new break/watch point
  */
-static	int	DEBUG_InitXPoint(int type, const DBG_ADDR* addr)
+static	int init_xpoint(int type, const ADDRESS* addr)
 {
-   int	num;
+    int	                        num;
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-   for (num = (next_bp < MAX_BREAKPOINTS) ? next_bp++ : 1;
-	num < MAX_BREAKPOINTS; num++)
-   {
-      if (breakpoints[num].refcount == 0)
-      {
-          breakpoints[num].refcount = 1;
-          breakpoints[num].enabled = TRUE;
-          breakpoints[num].type    = type;
-          breakpoints[num].skipcount = 0;
-          breakpoints[num].addr = *addr;
-          switch (DEBUG_GetSelectorType( addr->seg ))
-          {
-          case MODE_32:
-              breakpoints[num].is32 = 1;
-              break;
-          case MODE_VM86:
-          case MODE_16:
-              breakpoints[num].is32 = 0;
-              break;
-          default:
-              RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-          }
-          return num;
-      }
-   }
+    for (num = (dbg_curr_process->next_bp < MAX_BREAKPOINTS) ? 
+             dbg_curr_process->next_bp++ : 1;
+         num < MAX_BREAKPOINTS; num++)
+    {
+        if (bp[num].refcount == 0)
+        {
+            bp[num].refcount    = 1;
+            bp[num].enabled     = TRUE;
+            bp[num].xpoint_type = type;
+            bp[num].skipcount   = 0;
+            bp[num].addr        = *addr;
+            return num;
+        }
+    }
 
-   DEBUG_Printf("Too many breakpoints. Please delete some.\n");
-   return -1;
+    dbg_printf("Too many bp. Please delete some.\n");
+    return -1;
 }
 
 /***********************************************************************
- *           DEBUG_GetWatchedValue
+ *           get_watched_value
  *
  * Returns the value watched by watch point 'num'.
  */
-static	BOOL	DEBUG_GetWatchedValue( int num, LPDWORD val )
+static	BOOL	get_watched_value(int num, LPDWORD val)
 {
-   BYTE		buf[4];
+    BYTE        buf[4];
 
-   if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear(&breakpoints[num].addr),
-		       buf, breakpoints[num].u.w.len + 1))
-      return FALSE;
+    if (!dbg_read_memory(memory_to_linear_addr(&dbg_curr_process->bp[num].addr),
+                         buf, dbg_curr_process->bp[num].w.len + 1))
+        return FALSE;
 
-   switch (breakpoints[num].u.w.len + 1)
-   {
-      case 4:	*val = *(DWORD*)buf;	break;
-      case 2:	*val = *(WORD*)buf;	break;
-      case 1:	*val = *(BYTE*)buf;	break;
-      default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-   }
-   return TRUE;
+    switch (dbg_curr_process->bp[num].w.len + 1)
+    {
+    case 4:	*val = *(DWORD*)buf;	break;
+    case 2:	*val = *(WORD*)buf;	break;
+    case 1:	*val = *(BYTE*)buf;	break;
+    default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+    }
+    return TRUE;
 }
 
 /***********************************************************************
- *           DEBUG_AddBreakpoint
+ *           break_add_break
  *
  * Add a breakpoint.
  */
-BOOL DEBUG_AddBreakpoint( const DBG_VALUE *value, BOOL (*func)(void), BOOL verbose )
+BOOL break_add_break(const ADDRESS* addr, BOOL verbose)
 {
-    int num;
-    BYTE ch;
+    int                         num;
+    BYTE                        ch;
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-    if ((num = DEBUG_FindBreakpoint(&value->addr, DBG_BREAK)) >= 1)
+    if ((num = find_xpoint(addr, be_xpoint_break)) >= 1)
     {
-        breakpoints[num].refcount++;
+        bp[num].refcount++;
+        dbg_printf("Breakpoint %d at ", num);
+        print_address(&bp[num].addr, TRUE);
+        dbg_printf(" (refcount=%d)\n", bp[num].refcount);
         return TRUE;
     }
 
-    if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear( &value->addr ), &ch, sizeof(ch)))
+    if (!dbg_read_memory(memory_to_linear_addr(addr), &ch, sizeof(ch)))
     {
         if (verbose)
-            DEBUG_Printf("Invalid address, can't set breakpoint\n");
+        {
+            dbg_printf("Invalid address ");
+            print_bare_address(addr);
+            dbg_printf(", can't set breakpoint\n");
+        }
         return FALSE;
     }
 
-    if ((num = DEBUG_InitXPoint(DBG_BREAK, &value->addr)) == -1)
+    if ((num = init_xpoint(be_xpoint_break, addr)) == -1)
         return FALSE;
 
-    breakpoints[num].u.b.opcode = ch;
-    breakpoints[num].u.b.func = func;
-
-    DEBUG_Printf("Breakpoint %d at ", num);
-    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16,
-			TRUE );
-    DEBUG_Printf("\n");
+    dbg_printf("Breakpoint %d at ", num);
+    print_address(&bp[num].addr, TRUE);
+    dbg_printf("\n");
 
     return TRUE;
 }
 
 /***********************************************************************
- *           DEBUG_AddBreakpointFromValue
+ *           break_add_break_from_lvalue
  *
  * Add a breakpoint.
  */
-BOOL DEBUG_AddBreakpointFromValue( const DBG_VALUE *_value )
+BOOL break_add_break_from_lvalue(const struct dbg_lvalue* lvalue)
 {
-    DBG_VALUE value = *_value;
+    ADDRESS     addr;
 
-    if (value.type != NULL && value.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) && value.cookie == DV_HOST)
-    {
-        /*
-         * We know that we have the actual offset stored somewhere
-         * else in 32-bit space.  Grab it, and we
-         * should be all set.
-         */
-        unsigned int seg2 = value.addr.seg;
-        value.addr.seg = 0;
-        value.addr.off = DEBUG_GetExprValue(&value, NULL);
-        value.addr.seg = seg2;
-        value.cookie = DV_TARGET;
-    }
+    addr.Mode = AddrModeFlat;
+    addr.Offset = types_extract_as_integer(lvalue);
 
-    if (!DEBUG_AddBreakpoint( &value, NULL, TRUE ))
+    if (!break_add_break(&addr, TRUE))
     {
         if (!DBG_IVAR(CanDeferOnBPByAddr))
         {
-            DEBUG_Printf("Invalid address, can't set breakpoint\n"
-                         "You can turn on deferring breakpoints by address by setting $CanDeferOnBPByAddr to 1\n");
+            dbg_printf("Invalid address, can't set breakpoint\n"
+                       "You can turn on deferring bp by address by setting $CanDeferOnBPByAddr to 1\n");
             return FALSE;
         }
-        DEBUG_Printf("Unable to add breakpoint, will check again any time a new DLL is loaded\n");
-        DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp,
-                                                    sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
+        dbg_printf("Unable to add breakpoint, will check again any time a new DLL is loaded\n");
+        dbg_curr_process->delayed_bp = 
+            dbg_heap_realloc(dbg_curr_process->delayed_bp,
+                             sizeof(struct dbg_delayed_bp) * ++dbg_curr_process->num_delayed_bp);
 
-        DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].is_symbol = FALSE;
-        DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].u.value = value;
+        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].is_symbol = FALSE;
+        dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.addr    = addr;
         return TRUE;
     }
-
-    return TRUE;
+    return FALSE;
 }
 
 /***********************************************************************
- *           DEBUG_AddBreakpointFromId
+ *           break_add_break_from_id
  *
  * Add a breakpoint from a function name (and eventually a line #)
  */
-void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
+void	break_add_break_from_id(const char *name, int lineno)
 {
-    DBG_VALUE 	value;
-    int		i;
+    struct dbg_lvalue 	lvalue;
+    int		        i;
 
-    switch (DEBUG_GetSymbolValue(name, lineno, &value, TRUE))
+    switch (symbol_get_lvalue(name, lineno, &lvalue, TRUE))
     {
-    case gsv_found:
-        DEBUG_AddBreakpoint(&value, NULL, TRUE);
+    case sglv_found:
+        break_add_break(&lvalue.addr, TRUE);
         return;
-    case gsv_unknown:
+    case sglv_unknown:
         break;
-    case gsv_aborted: /* user aborted symbol lookup */
+    case sglv_aborted: /* user aborted symbol lookup */
         return;
     }
 
-    DEBUG_Printf("Unable to add breakpoint, will check again when a new DLL is loaded\n");
-    for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++)
+    dbg_printf("Unable to add breakpoint, will check again when a new DLL is loaded\n");
+    for (i = 0; i < dbg_curr_process->num_delayed_bp; i++)
     {
-        if (DEBUG_CurrProcess->delayed_bp[i].is_symbol &&
-            !strcmp(name, DEBUG_CurrProcess->delayed_bp[i].u.symbol.name) &&
-            lineno == DEBUG_CurrProcess->delayed_bp[i].u.symbol.lineno)
+        if (dbg_curr_process->delayed_bp[i].is_symbol &&
+            !strcmp(name, dbg_curr_process->delayed_bp[i].u.symbol.name) &&
+            lineno == dbg_curr_process->delayed_bp[i].u.symbol.lineno)
             return;
     }
-    DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp,
-                                                sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
+    dbg_curr_process->delayed_bp = dbg_heap_realloc(dbg_curr_process->delayed_bp,
+                                                    sizeof(struct dbg_delayed_bp) * ++dbg_curr_process->num_delayed_bp);
 
-    DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].is_symbol = TRUE;
-    DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].u.symbol.name = strcpy(DBG_alloc(strlen(name) + 1), name);
-    DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].u.symbol.lineno = lineno;
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].is_symbol = TRUE;
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.symbol.name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(name) + 1), name);
+    dbg_curr_process->delayed_bp[dbg_curr_process->num_delayed_bp - 1].u.symbol.lineno = lineno;
 }
 
 /***********************************************************************
- *           DEBUG_AddBreakpointFromLineno
+ *           break_add_break_from_lineno
  *
  * Add a breakpoint from a line number in current file
  */
-void	DEBUG_AddBreakpointFromLineno(int lineno)
+void	break_add_break_from_lineno(int lineno)
 {
-    DBG_VALUE 			value;
+    ADDRESS             addr;
 
-    DEBUG_GetCurrentAddress(&value.addr);
+    memory_get_current_pc(&addr);
 
     if (lineno != -1)
     {
-        struct name_hash*	nh;
+        IMAGEHLP_LINE   il;
+        IMAGEHLP_LINE   iil;
+        BOOL            found = FALSE;
 
-        DEBUG_FindNearestSymbol(&value.addr, TRUE, &nh, 0, NULL);
-        if (nh == NULL)
+        il.SizeOfStruct = sizeof(il);
+        if (!SymGetLineFromAddr(dbg_curr_process->handle, 
+                                (DWORD)memory_to_linear_addr(&addr), NULL, &il))
         {
-            DEBUG_Printf("Unable to add breakpoint\n");
+            dbg_printf("Unable to add breakpoint (unknown address)\n");
             return;
         }
-        if (!DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE))
+
+        iil = il;
+        while (SymGetLinePrev(dbg_curr_process->handle, &iil))
         {
-            DEBUG_Printf("Unknown line number\n"
-                         "(either out of file, or no code at given line number)\n");
+            if (lineno == iil.LineNumber && !strcmp(il.FileName, iil.FileName))
+            {
+                addr.Mode = AddrModeFlat;
+                addr.Offset = iil.Address;
+                found = TRUE;
+                break;
+            }
+        }
+        iil = il;
+        if (!found) while (SymGetLineNext(dbg_curr_process->handle, &iil))
+        {
+            if (lineno == iil.LineNumber && !strcmp(il.FileName, iil.FileName))
+            {
+                addr.Mode = AddrModeFlat;
+                addr.Offset = iil.Address;
+                found = TRUE;
+                break;
+            }
+        }
+        if (!found)
+        {
+            dbg_printf("Unknown line number\n"
+                       "(either out of file, or no code at given line number)\n");
             return;
         }
     }
 
-    value.type = NULL;
-    value.cookie = DV_TARGET;
-    DEBUG_AddBreakpoint( &value, NULL, TRUE );
+    break_add_break(&addr, TRUE);
 }
 
 /***********************************************************************
- *           DEBUG_CheckDelayedBP
+ *           break_check_delayed_bp
  *
  * Check is a registered delayed BP is now available.
  */
-void		DEBUG_CheckDelayedBP(void)
+void break_check_delayed_bp(void)
 {
-    DBG_VALUE		value;
-    int			i;
-    DBG_DELAYED_BP*	dbp = DEBUG_CurrProcess->delayed_bp;
+    struct dbg_lvalue	        lvalue;
+    int			        i;
+    struct dbg_delayed_bp*	dbp = dbg_curr_process->delayed_bp;
 
-    for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++)
+    for (i = 0; i < dbg_curr_process->num_delayed_bp; i++)
     {
         if (dbp[i].is_symbol)
         {
-            if (DEBUG_GetSymbolValue(dbp[i].u.symbol.name, dbp[i].u.symbol.lineno, &value, TRUE) != gsv_found)
+            if (symbol_get_lvalue(dbp[i].u.symbol.name, dbp[i].u.symbol.lineno,
+                                  &lvalue, TRUE) != sglv_found)
                 continue;
+            if (lvalue.cookie != DLV_TARGET) continue;
         }
         else
-            value = dbp[i].u.value;
+            lvalue.addr = dbp[i].u.addr;
         WINE_TRACE("trying to add delayed %s-bp\n", dbp[i].is_symbol ? "S" : "A");
         if (!dbp[i].is_symbol)
-            WINE_TRACE("\t%04x %04lx:%08lx\n",
-                       dbp[i].u.value.cookie,
-                       dbp[i].u.value.addr.seg,
-                       dbp[i].u.value.addr.off);
+            WINE_TRACE("\t%04x:%08lx\n", 
+                       dbp[i].u.addr.Segment, dbp[i].u.addr.Offset);
         else
-            WINE_TRACE("\t'%s' @ %d\n",
+            WINE_TRACE("\t'%s' @ %d\n", 
                        dbp[i].u.symbol.name, dbp[i].u.symbol.lineno);
 
-        if (DEBUG_AddBreakpoint(&value, NULL, FALSE))
-            memmove(&dbp[i], &dbp[i+1], (--DEBUG_CurrProcess->num_delayed_bp - i) * sizeof(*dbp));
+        if (break_add_break(&lvalue.addr, FALSE))
+            memmove(&dbp[i], &dbp[i+1], (--dbg_curr_process->num_delayed_bp - i) * sizeof(*dbp));
     }
 }
 
 /***********************************************************************
- *           DEBUG_AddWatchpoint
+ *           break_add_watch
  *
  * Add a watchpoint.
  */
-void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
+void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
 {
-   DBG_VALUE	value = *_value;
-   int		num, reg = -1;
-   unsigned	seg2;
-   DWORD	mask = 0;
+    int		num;
+    DWORD	l = 4;
 
-   assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
+    num = init_xpoint((is_write) ? be_xpoint_watch_write : be_xpoint_watch_read,
+                      &lvalue->addr);
+    if (num == -1) return;
 
-#ifdef __i386__
-   DEBUG_FixAddress( &value.addr, DEBUG_context.SegCs );
-#endif
+    if (lvalue->typeid != dbg_itype_none)
+    {
+        if (types_get_info((DWORD)memory_to_linear_addr(&lvalue->addr),
+                           lvalue->typeid, TI_GET_LENGTH, &l))
+        {
+            switch (l)
+            {
+            case 4: case 2: case 1: break;
+            default:
+                dbg_printf("Unsupported length (%lu) for watch-points, defaulting to 4\n", l);
+                break;
+            }
+        }
+        else dbg_printf("Cannot get watch size, defaulting to 4\n");
+    }
+    dbg_curr_process->bp[num].w.len = l - 1;
 
-   if ( value.type != NULL && value.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
-   {
-      /*
-       * We know that we have the actual offset stored somewhere
-       * else in 32-bit space.  Grab it, and we
-       * should be all set.
-       */
-      seg2 = value.addr.seg;
-      value.addr.seg = 0;
-      value.addr.off = DEBUG_GetExprValue(&value, NULL);
-      value.addr.seg = seg2;
-   }
-
-   for (num = 1; num < next_bp; num++)
-   {
-      if (breakpoints[num].refcount && breakpoints[num].enabled &&
-	  breakpoints[num].type == DBG_WATCH) {
-	 mask |= (1 << breakpoints[num].u.w.reg);
-      }
-   }
-#ifdef __i386__
-   for (reg = 0; reg < 4 && (mask & (1 << reg)); reg++);
-   if (reg == 4)
-   {
-      DEBUG_Printf("All i386 hardware watchpoints have been set. Delete some\n");
-      return;
-   }
-#endif
-
-   if ((num = DEBUG_InitXPoint(DBG_WATCH, &value.addr)) == -1)
-      return;
-
-   breakpoints[num].u.w.len = 4 - 1;
-   if (_value->type && DEBUG_GetObjectSize(_value->type) < 4)
-      breakpoints[num].u.w.len = 2 - 1;
-
-   if (!DEBUG_GetWatchedValue( num, &breakpoints[num].u.w.oldval))
-   {
-      DEBUG_Printf("Bad address. Watchpoint not set\n");
-      breakpoints[num].refcount = 0;
-   }
-   else
-   {
-      breakpoints[num].u.w.rw = (is_write) ? TRUE : FALSE;
-      breakpoints[reg].u.w.reg = reg;
-
-      DEBUG_Printf("Watchpoint %d at ", num);
-      DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16, TRUE );
-      DEBUG_Printf("\n");
-   }
+    if (!get_watched_value(num, &dbg_curr_process->bp[num].w.oldval))
+    {
+        dbg_printf("Bad address. Watchpoint not set\n");
+        dbg_curr_process->bp[num].refcount = 0;
+        return;
+    }
+    dbg_printf("Watchpoint %d at ", num);
+    print_address(&dbg_curr_process->bp[num].addr, TRUE);
+    dbg_printf("\n");
 }
 
 /***********************************************************************
- *           DEBUG_AddWathpointFromId
+ *           break_add_watch_from_id
  *
  * Add a watchpoint from a symbol name (and eventually a line #)
  */
-void	DEBUG_AddWatchpointFromId(const char *name)
+void	break_add_watch_from_id(const char *name)
 {
-   DBG_VALUE value;
+    struct dbg_lvalue    lvalue;
 
-   switch (DEBUG_GetSymbolValue(name, -1, &value, TRUE))
-   {
-   case gsv_found:
-      DEBUG_AddWatchpoint( &value, 1 );
-      break;
-   case gsv_unknown:
-      DEBUG_Printf("Unable to add watchpoint\n");
-      break;
-   case gsv_aborted: /* user aborted symbol lookup */
-       break;
-   }
+    switch (symbol_get_lvalue(name, -1, &lvalue, TRUE))
+    {
+    case sglv_found:
+        break_add_watch(&lvalue, 1);
+        break;
+    case sglv_unknown:
+        dbg_printf("Unable to add watchpoint\n");
+        break;
+    case sglv_aborted: /* user aborted symbol lookup */
+        break;
+    }
 }
 
 /***********************************************************************
- *           DEBUG_DelBreakpoint
+ *           break_delete_xpoint
  *
  * Delete a breakpoint.
  */
-void DEBUG_DelBreakpoint( int num )
+void break_delete_xpoint(int num)
 {
-    if ((num <= 0) || (num >= next_bp) || breakpoints[num].refcount == 0)
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
+
+    if ((num <= 0) || (num >= dbg_curr_process->next_bp) ||
+        bp[num].refcount == 0)
     {
-        DEBUG_Printf("Invalid breakpoint number %d\n", num);
+        dbg_printf("Invalid breakpoint number %d\n", num);
         return;
     }
 
-    if (--breakpoints[num].refcount > 0)
-       return;
+    if (--bp[num].refcount > 0)
+        return;
 
-    if (breakpoints[num].condition != NULL)
+    if (bp[num].condition != NULL)
     {
-       DEBUG_FreeExpr(breakpoints[num].condition);
-       breakpoints[num].condition = NULL;
+        expr_free(bp[num].condition);
+        bp[num].condition = NULL;
     }
 
-    breakpoints[num].enabled = FALSE;
-    breakpoints[num].refcount = 0;
-    breakpoints[num].skipcount = 0;
+    bp[num].enabled = FALSE;
+    bp[num].refcount = 0;
+    bp[num].skipcount = 0;
+}
+
+static inline BOOL module_is_container(const IMAGEHLP_MODULE* wmod_cntnr,
+                                     const IMAGEHLP_MODULE* wmod_child)
+{
+    return wmod_cntnr->BaseOfImage <= wmod_child->BaseOfImage &&
+        (DWORD)wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
+        (DWORD)wmod_child->BaseOfImage + wmod_child->ImageSize;
+}
+
+/******************************************************************
+ *		break_delete_xpoints_from_module
+ *
+ * Remove all Xpoints from module which base is 'base'
+ */
+void break_delete_xpoints_from_module(unsigned long base)
+{
+    IMAGEHLP_MODULE             im, im_elf;
+    int                         i;
+    DWORD                       linear;
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
+
+    /* FIXME: should do it also on the ELF sibbling if any */
+    im.SizeOfStruct = sizeof(im);
+    im_elf.SizeOfStruct = sizeof(im_elf);
+    if (!SymGetModuleInfo(dbg_curr_process->handle, base, &im)) return;
+
+    /* try to get in fact the underlying ELF module (if any) */
+    if (SymGetModuleInfo(dbg_curr_process->handle, im.BaseOfImage - 1, &im_elf) &&
+        im_elf.BaseOfImage <= im.BaseOfImage &&
+        (DWORD)im_elf.BaseOfImage + im_elf.ImageSize >= (DWORD)im.BaseOfImage + im.ImageSize)
+        im = im_elf;
+
+    for (i = 0; i < dbg_curr_process->next_bp; i++)
+    {
+        linear = (DWORD)memory_to_linear_addr(&bp[i].addr);
+        if (bp[i].refcount && bp[i].enabled &&
+            im.BaseOfImage <= linear && linear < im.BaseOfImage + im.ImageSize)
+        {
+            break_delete_xpoint(i);
+        }
+    }
 }
 
 /***********************************************************************
- *           DEBUG_EnableBreakpoint
+ *           break_enable_xpoint
  *
  * Enable or disable a break point.
  */
-void DEBUG_EnableBreakpoint( int num, BOOL enable )
+void break_enable_xpoint(int num, BOOL enable)
 {
-    if ((num <= 0) || (num >= next_bp) || breakpoints[num].refcount == 0)
+    if ((num <= 0) || (num >= dbg_curr_process->next_bp) || 
+        dbg_curr_process->bp[num].refcount == 0)
     {
-        DEBUG_Printf("Invalid breakpoint number %d\n", num);
+        dbg_printf("Invalid breakpoint number %d\n", num);
         return;
     }
-    breakpoints[num].enabled = (enable) ? TRUE : FALSE;
-    breakpoints[num].skipcount = 0;
+    dbg_curr_process->bp[num].enabled = (enable) ? TRUE : FALSE;
+    dbg_curr_process->bp[num].skipcount = 0;
 }
 
 
 /***********************************************************************
- *           DEBUG_FindTriggeredWatchpoint
+ *           find_triggered_watch
  *
  * Lookup the watchpoints to see if one has been triggered
  * Return >= (watch point index) if one is found and *oldval is set to
@@ -669,211 +528,223 @@ void DEBUG_EnableBreakpoint( int num, BOOL enable )
  * cause of the TRAP.
  * -EP
  */
-static int DEBUG_FindTriggeredWatchpoint(LPDWORD oldval)
+static int find_triggered_watch(LPDWORD oldval)
 {
-   int				found = -1;
-#ifdef __i386__
-   int 				i;
+    int                         found = -1;
+    int                         i;
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-   /* Method 1 => get triggered watchpoint from context (doesn't work on Linux
-    * 2.2.x). This should be fixed in >= 2.2.16
-    */
-   for (i = 0; i < next_bp; i++)
-   {
-      DWORD val = 0;
+    /* Method 1 => get triggered watchpoint from context (doesn't work on Linux
+     * 2.2.x). This should be fixed in >= 2.2.16
+     */
+    for (i = 0; i < dbg_curr_process->next_bp; i++)
+    {
+        DWORD val = 0;
 
-      if (breakpoints[i].refcount && breakpoints[i].enabled &&
-	  breakpoints[i].type == DBG_WATCH &&
-	  (DEBUG_context.Dr6 & (1 << breakpoints[i].u.w.reg)))
-      {
-	 DEBUG_context.Dr6 &= ~(1 << breakpoints[i].u.w.reg);
+        if (bp[i].refcount && bp[i].enabled && bp[i].xpoint_type != be_xpoint_break &&
+            (be_cpu->is_watchpoint_set(&dbg_context, bp[i].info)))
+        {
+            be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
 
-	 *oldval = breakpoints[i].u.w.oldval;
-	 if (DEBUG_GetWatchedValue(i, &val)) {
-	    breakpoints[i].u.w.oldval = val;
-	    return i;
-	 }
-      }
-   }
+            *oldval = bp[i].w.oldval;
+            if (get_watched_value(i, &val))
+            {
+                bp[i].w.oldval = val;
+                return i;
+            }
+        }
+    }
 
-   /* Method 1 failed, trying method 2 */
+    /* Method 1 failed, trying method 2 */
 
-   /* Method 2 => check if value has changed among registered watchpoints
-    * this really sucks, but this is how gdb 4.18 works on my linux box
-    * -EP
-    */
-   for (i = 0; i < next_bp; i++)
-   {
-      DWORD val = 0;
+    /* Method 2 => check if value has changed among registered watchpoints
+     * this really sucks, but this is how gdb 4.18 works on my linux box
+     * -EP
+     */
+    for (i = 0; i < dbg_curr_process->next_bp; i++)
+    {
+        DWORD val = 0;
 
-      if (breakpoints[i].refcount && breakpoints[i].enabled &&
-	  breakpoints[i].type == DBG_WATCH &&
-	  DEBUG_GetWatchedValue(i, &val))
-      {
-	 *oldval = breakpoints[i].u.w.oldval;
-	 if (val != *oldval)
-	 {
-	    DEBUG_context.Dr6 &= ~(1 << breakpoints[i].u.w.reg);
-	    breakpoints[i].u.w.oldval = val;
-	    found = i;
-	    /* cannot break, because two watch points may have been triggered on
-	     * the same access
-	     * only one will be reported to the user (FIXME ?)
-	     */
-	 }
-      }
-   }
-#endif
-   return found;
+        if (bp[i].refcount && bp[i].enabled && bp[i].xpoint_type != be_xpoint_break &&
+            get_watched_value(i, &val))
+        {
+            *oldval = bp[i].w.oldval;
+            if (val != *oldval)
+            {
+                be_cpu->clear_watchpoint(&dbg_context, bp[i].info);
+                bp[i].w.oldval = val;
+                found = i;
+                /* cannot break, because two watch points may have been triggered on
+                 * the same access
+                 * only one will be reported to the user (FIXME ?)
+                 */
+            }
+        }
+    }
+    return found;
 }
 
 /***********************************************************************
- *           DEBUG_InfoBreakpoints
+ *           break_info
  *
- * Display break points information.
+ * Display break & watch points information.
  */
-void DEBUG_InfoBreakpoints(void)
+void break_info(void)
 {
-    int i;
+    int                         i;
+    int                         nbp = 0, nwp = 0;
+    struct dbg_delayed_bp*	dbp = dbg_curr_process->delayed_bp;
+    struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 
-    DEBUG_Printf("Breakpoints:\n");
-    for (i = 1; i < next_bp; i++)
+    for (i = 1; i < dbg_curr_process->next_bp; i++)
     {
-        if (breakpoints[i].refcount && breakpoints[i].type == DBG_BREAK)
+        if (bp[i].refcount)
         {
-            DEBUG_Printf("%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
-            DEBUG_PrintAddress( &breakpoints[i].addr,
-				breakpoints[i].is32 ? MODE_32 : MODE_16, TRUE);
-            DEBUG_Printf(" (%u)\n", breakpoints[i].refcount );
-	    if( breakpoints[i].condition != NULL )
+            if (bp[i].xpoint_type == be_xpoint_break) nbp++; else nwp++;
+        }
+    }
+
+    if (nbp)
+    {
+        dbg_printf("Breakpoints:\n");
+        for (i = 1; i < dbg_curr_process->next_bp; i++)
+        {
+            if (!bp[i].refcount || bp[i].xpoint_type != be_xpoint_break)
+                continue;
+            dbg_printf("%d: %c ", i, bp[i].enabled ? 'y' : 'n');
+            print_address(&bp[i].addr, TRUE);
+            dbg_printf(" (%u)\n", bp[i].refcount);
+	    if (bp[i].condition != NULL)
 	    {
-	        DEBUG_Printf("\t\tstop when  ");
- 		DEBUG_DisplayExpr(breakpoints[i].condition);
-		DEBUG_Printf("\n");
+	        dbg_printf("\t\tstop when  ");
+ 		expr_print(bp[i].condition);
+		dbg_printf("\n");
 	    }
         }
     }
-    DEBUG_Printf("Watchpoints:\n");
-    for (i = 1; i < next_bp; i++)
+    else dbg_printf("No breakpoints\n");
+    if (nwp)
     {
-        if (breakpoints[i].refcount && breakpoints[i].type == DBG_WATCH)
+        dbg_printf("Watchpoints:\n");
+        for (i = 1; i < dbg_curr_process->next_bp; i++)
         {
-            DEBUG_Printf("%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
-            DEBUG_PrintAddress( &breakpoints[i].addr,
-				breakpoints[i].is32 ? MODE_32 : MODE_16, TRUE);
-            DEBUG_Printf(" on %d byte%s (%c)\n",
-		     breakpoints[i].u.w.len + 1,
-		     breakpoints[i].u.w.len > 0 ? "s" : "",
-		     breakpoints[i].u.w.rw ? 'W' : 'R');
-	    if( breakpoints[i].condition != NULL )
+            if (!bp[i].refcount || bp[i].xpoint_type == be_xpoint_break)
+                continue;
+            dbg_printf("%d: %c ", i, bp[i].enabled ? 'y' : 'n');
+            print_address(&bp[i].addr, TRUE);
+            dbg_printf(" on %d byte%s (%c)\n",
+                       bp[i].w.len + 1, bp[i].w.len > 0 ? "s" : "",
+                       bp[i].xpoint_type == be_xpoint_watch_write ? 'W' : 'R');
+	    if (bp[i].condition != NULL)
 	    {
-	        DEBUG_Printf("\t\tstop when  ");
- 		DEBUG_DisplayExpr(breakpoints[i].condition);
-		DEBUG_Printf("\n");
+	        dbg_printf("\t\tstop when ");
+ 		expr_print(bp[i].condition);
+		dbg_printf("\n");
 	    }
+        }
+    }
+    else dbg_printf("No watchpoints\n");
+    if (dbg_curr_process->num_delayed_bp)
+    {
+        dbg_printf("Delayed breakpoints:\n");
+        for (i = 0; i < dbg_curr_process->num_delayed_bp; i++)
+        {
+            if (dbp[i].is_symbol)
+            {
+                dbg_printf("%d: %s", i, dbp[i].u.symbol.name);
+                if (dbp[i].u.symbol.lineno != -1)
+                    dbg_printf(" at line %u", dbp[i].u.symbol.lineno);
+            }
+            else
+            {
+                dbg_printf("%d: ", i);
+                print_address(&dbp[i].u.addr, FALSE);
+            }
+            dbg_printf("\n");
         }
     }
 }
 
 /***********************************************************************
- *           DEBUG_ShallBreak
+ *           should_stop
  *
  * Check whether or not the condition (bp / skipcount) of a break/watch
  * point are met.
  */
-static	BOOL DEBUG_ShallBreak( int bpnum )
+static	BOOL should_stop(int bpnum)
 {
-    if ( breakpoints[bpnum].condition != NULL )
-    {
-        DBG_VALUE value = DEBUG_EvalExpr(breakpoints[bpnum].condition);
+    struct dbg_breakpoint*      bp = &dbg_curr_process->bp[bpnum];
 
-        if ( value.type == NULL )
+    if (bp->condition != NULL)
+    {
+        struct dbg_lvalue lvalue = expr_eval(bp->condition);
+
+        if (lvalue.typeid == dbg_itype_none)
         {
 	    /*
 	     * Something wrong - unable to evaluate this expression.
 	     */
-	    DEBUG_Printf("Unable to evaluate expression ");
-	    DEBUG_DisplayExpr(breakpoints[bpnum].condition);
-	    DEBUG_Printf("\nTurning off condition\n");
-	    DEBUG_AddBPCondition(bpnum, NULL);
+	    dbg_printf("Unable to evaluate expression ");
+	    expr_print(bp->condition);
+	    dbg_printf("\nTurning off condition\n");
+	    break_add_condition(bpnum, NULL);
         }
-        else if( !DEBUG_GetExprValue( &value, NULL) )
+        else if (!types_extract_as_integer(&lvalue))
         {
 	    return FALSE;
         }
     }
 
-    if ( breakpoints[bpnum].skipcount > 0 && --breakpoints[bpnum].skipcount > 0 )
-        return FALSE;
-
-   if ((breakpoints[bpnum].type == DBG_BREAK) && breakpoints[bpnum].u.b.func)
-       return breakpoints[bpnum].u.b.func();
-   return TRUE;
+    if (bp->skipcount > 0) bp->skipcount--;
+    return bp->skipcount == 0;
 }
 
 /***********************************************************************
- *           DEBUG_ShouldContinue
+ *           break_should_continue
  *
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
+BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count)
 {
     int 	        bpnum;
     DWORD	        oldval;
     int 	        wpnum;
-    enum dbg_mode       addr_mode;
-    struct symbol_info  syminfo;
-    enum exec_mode      mode = DEBUG_CurrThread->exec_mode;
+    enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
 
-#ifdef __i386__
-    /* If not single-stepping, back up over the int3 instruction */
+    /* If not single-stepping, back up to the break instruction */
     if (code == EXCEPTION_BREAKPOINT)
+        addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
+
+    bpnum = find_xpoint(addr, be_xpoint_break);
+    dbg_curr_process->bp[0].enabled = FALSE;  /* disable the step-over breakpoint */
+
+    if (bpnum > 0)
     {
-       DEBUG_context.Eip--;
-       addr->off--;
-    }
-#endif
+        if (!should_stop(bpnum)) return TRUE;
 
-    bpnum = DEBUG_FindBreakpoint( addr, DBG_BREAK );
-    breakpoints[0].enabled = FALSE;  /* disable the step-over breakpoint */
-
-    if ((bpnum != 0) && (bpnum != -1))
-    {
-        if (!DEBUG_ShallBreak(bpnum)) return TRUE;
-
-        DEBUG_Printf("Stopped on breakpoint %d at ", bpnum);
-        syminfo = DEBUG_PrintAddress( &breakpoints[bpnum].addr,
-				      breakpoints[bpnum].is32 ? MODE_32 : MODE_16, TRUE );
-        DEBUG_Printf("\n");
-
-	if( syminfo.list.sourcefile != NULL )
-	    DEBUG_List(&syminfo.list, NULL, 0);
+        dbg_printf("Stopped on breakpoint %d at ", bpnum);
+        print_address(&dbg_curr_process->bp[bpnum].addr, TRUE);
+        dbg_printf("\n");
+        source_list_from_addr(addr, 0);
         return FALSE;
     }
 
-    wpnum = DEBUG_FindTriggeredWatchpoint(&oldval);
-    if ((wpnum != 0) && (wpnum != -1))
+    wpnum = find_triggered_watch(&oldval);
+    if (wpnum > 0)
     {
-       /* If not single-stepping, do not back up over the int3 instruction */
-       if (code == EXCEPTION_BREAKPOINT)
-       {
-#ifdef __i386__
-	   DEBUG_context.Eip++;
-	   addr->off++;
-#endif
-       }
-       if (!DEBUG_ShallBreak(wpnum)) return TRUE;
+        /* If not single-stepping, do not back up over the break instruction */
+        if (code == EXCEPTION_BREAKPOINT)
+            addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
 
-       addr_mode = DEBUG_GetSelectorType( addr->seg );
-       DEBUG_Printf("Stopped on watchpoint %d at ", wpnum);
-       syminfo = DEBUG_PrintAddress( addr, addr_mode, TRUE );
+        if (!should_stop(wpnum)) return TRUE;
 
-       DEBUG_Printf(" values: old=%lu new=%lu\n",
-                    oldval, breakpoints[wpnum].u.w.oldval);
-       if (syminfo.list.sourcefile != NULL)
-	  DEBUG_List(&syminfo.list, NULL, 0);
-       return FALSE;
+        dbg_printf("Stopped on watchpoint %d at ", wpnum);
+        print_address(addr, TRUE);
+        dbg_printf(" values: old=%lu new=%lu\n",
+                     oldval, dbg_curr_process->bp[wpnum].w.oldval);
+        source_list_from_addr(addr, 0);
+        return FALSE;
     }
 
     /*
@@ -881,19 +752,19 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
      * get the current function, and figure out if we are exactly
      * on a line number or not.
      */
-    if( mode == EXEC_STEP_OVER || mode == EXEC_STEP_INSTR )
+    if (mode == dbg_exec_step_over_line || mode == dbg_exec_step_into_line)
     {
-	if( DEBUG_CheckLinenoStatus(addr) == AT_LINENUMBER )
+	if (symbol_get_function_line_status(addr) == dbg_on_a_line_number)
 	{
 	    (*count)--;
 	}
     }
-    else if( mode == EXEC_STEPI_OVER || mode == EXEC_STEPI_INSTR )
+    else if (mode == dbg_exec_step_over_insn || mode == dbg_exec_step_into_insn)
     {
 	(*count)--;
     }
 
-    if( *count > 0 || mode == EXEC_FINISH )
+    if (*count > 0 || mode == dbg_exec_finish)
     {
 	/*
 	 * We still need to execute more instructions.
@@ -905,228 +776,189 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
      * If we are about to stop, then print out the source line if we
      * have it.
      */
-    if (mode != EXEC_CONT && mode != EXEC_FINISH)
-    {
-	DEBUG_FindNearestSymbol(addr, TRUE, NULL, 0, &syminfo.list);
-	if (syminfo.list.sourcefile != NULL)
-	{
-	    DEBUG_List(&syminfo.list, NULL, 0);
-	}
-    }
+    if (mode != dbg_exec_cont && mode != dbg_exec_finish)
+        source_list_from_addr(addr, 0);
 
-#ifdef __i386__
     /* If there's no breakpoint and we are not single-stepping, then
-     * either we must have encountered an int3 in the Windows program
+     * either we must have encountered a break insn in the Windows program
      * or someone is trying to stop us
-     * If the later, (no int3 opcode at current address) then stop,
-     * otherwise, let's skip it.
      */
-    if ((bpnum == -1) && code == EXCEPTION_BREAKPOINT)
+    if (bpnum == -1 && code == EXCEPTION_BREAKPOINT)
     {
-        unsigned char   c;
-
-        if (!DEBUG_READ_MEM(&addr, &c, 1)) c = 0xCC;
-        DEBUG_context.Eip++;
-	addr->off++;
-        if (c != 0xCC) return FALSE;
+        addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
+        return FALSE;
     }
-#endif
 
     /* no breakpoint, continue if in continuous mode */
-    return (mode == EXEC_CONT || mode == EXEC_FINISH);
+    return mode == dbg_exec_cont || mode == dbg_exec_finish;
 }
 
 /***********************************************************************
- *           DEBUG_SuspendExecution
+ *           break_suspend_execution
  *
- * Remove all breakpoints before entering the debug loop
+ * Remove all bp before entering the debug loop
  */
-void	DEBUG_SuspendExecution( void )
+void	break_suspend_execution(void)
 {
-   DEBUG_SetBreakpoints( FALSE );
-   breakpoints[0] = DEBUG_CurrThread->stepOverBP;
+    break_set_xpoints(FALSE);
+    dbg_curr_process->bp[0] = dbg_curr_thread->step_over_bp;
 }
 
 /***********************************************************************
- *           DEBUG_RestartExecution
+ *           break_restart_execution
  *
- * Set the breakpoints to the correct state to restart execution
+ * Set the bp to the correct state to restart execution
  * in the given mode.
  */
-void DEBUG_RestartExecution( int count )
+void break_restart_execution(int count)
 {
-    DBG_ADDR addr;
-    DBG_ADDR addr2;
-    int bp;
-    int	delta;
-    int status;
-    enum exec_mode mode, ret_mode;
-    DWORD instr;
-    unsigned char ch;
+    ADDRESS                     addr;
+    int                         bp;
+    enum dbg_line_status        status;
+    enum dbg_exec_mode          mode, ret_mode;
+    ADDRESS                     callee;
 
-    DEBUG_GetCurrentAddress( &addr );
+    memory_get_current_pc(&addr);
 
     /*
      * This is the mode we will be running in after we finish.  We would like
      * to be able to modify this in certain cases.
      */
-    ret_mode = mode = DEBUG_CurrThread->exec_mode;
+    ret_mode = mode = dbg_curr_thread->exec_mode;
 
-    bp = DEBUG_FindBreakpoint( &addr, DBG_BREAK );
-    if ( bp != -1 && bp != 0)
-      {
+    bp = find_xpoint(&addr, be_xpoint_break);
+    if (bp != -1 && bp != 0)
+    {
 	/*
 	 * If we have set a new value, then save it in the BP number.
 	 */
-	if( count != 0 && mode == EXEC_CONT )
-	  {
-	    breakpoints[bp].skipcount = count;
-	  }
-        mode = EXEC_STEPI_INSTR;  /* If there's a breakpoint, skip it */
-      }
-    else
-      {
-	if( mode == EXEC_CONT && count > 1 )
-	  {
-	    DEBUG_Printf("Not stopped at any breakpoint; argument ignored.\n");
-	  }
-      }
+	if (count != 0 && mode == dbg_exec_cont)
+        {
+	    dbg_curr_process->bp[bp].skipcount = count;
+        }
+        mode = dbg_exec_step_into_insn;  /* If there's a breakpoint, skip it */
+    }
+    else if (mode == dbg_exec_cont && count > 1)
+    {
+        dbg_printf("Not stopped at any breakpoint; argument ignored.\n");
+    }
 
-    if( mode == EXEC_FINISH && DEBUG_IsFctReturn() )
-      {
-	mode = ret_mode = EXEC_STEPI_INSTR;
-      }
+    if (mode == dbg_exec_finish && is_at_func_return())
+    {
+	mode = ret_mode = dbg_exec_step_into_insn;
+    }
 
-    instr = DEBUG_ToLinear( &addr );
-    DEBUG_READ_MEM((void*)instr, &ch, sizeof(ch));
     /*
      * See if the function we are stepping into has debug info
      * and line numbers.  If not, then we step over it instead.
      * FIXME - we need to check for things like thunks or trampolines,
      * as the actual function may in fact have debug info.
      */
-    if ( ch == 0xe8 )
-      {
-	DEBUG_READ_MEM((void*)(instr + 1), &delta, sizeof(delta));
-	addr2 = addr;
-	DEBUG_Disasm(&addr2, FALSE);
-	addr2.off += delta;
-
-	status = DEBUG_CheckLinenoStatus(&addr2);
+    if (be_cpu->is_function_call(memory_to_linear_addr(&addr), &callee))
+    {
+	status = symbol_get_function_line_status(&callee);
+#if 0
+        /* FIXME: we need to get the thunk type */
 	/*
 	 * Anytime we have a trampoline, step over it.
 	 */
-	if( ((mode == EXEC_STEP_OVER) || (mode == EXEC_STEPI_OVER))
-	    && status == FUNC_IS_TRAMPOLINE )
-	  {
-            WINE_TRACE("Not stepping into trampoline at %lx (no lines)\n",
-                       addr2.off);
+	if ((mode == EXEC_STEP_OVER || mode == EXEC_STEPI_OVER)
+	    && status == dbg_in_a_thunk)
+        {
+            WINE_WARN("Not stepping into trampoline at %p (no lines)\n", 
+                      memory_to_linear_addr(&callee));
 	    mode = EXEC_STEP_OVER_TRAMPOLINE;
-	  }
-
-	if( mode == EXEC_STEP_INSTR && status == FUNC_HAS_NO_LINES )
-	  {
-            WINE_TRACE("Not stepping into function at %lx (no lines)\n",
-                       addr2.off);
-	    mode = EXEC_STEP_OVER;
-	  }
-      }
-
-
-    if( mode == EXEC_STEP_INSTR )
-      {
-	if( DEBUG_CheckLinenoStatus(&addr) == FUNC_HAS_NO_LINES )
-	  {
-	    DEBUG_Printf("Single stepping until exit from function, \n"
-                         "which has no line number information.\n");
-
-	    ret_mode = mode = EXEC_FINISH;
-	  }
-      }
-
-    switch(mode)
-    {
-    case EXEC_CONT: /* Continuous execution */
-#ifdef __i386__
-        DEBUG_context.EFlags &= ~STEP_FLAG;
+        }
 #endif
-        DEBUG_SetBreakpoints( TRUE );
+	if (mode == dbg_exec_step_into_line && status == dbg_no_line_info)
+        {
+            WINE_WARN("Not stepping into function at %p (no lines)\n",
+                      memory_to_linear_addr(&callee));
+	    mode = dbg_exec_step_over_line;
+        }
+    }
+
+    if (mode == dbg_exec_step_into_line && 
+        symbol_get_function_line_status(&addr) == dbg_no_line_info)
+    {
+        dbg_printf("Single stepping until exit from function, \n"
+                   "which has no line number information.\n");
+        ret_mode = mode = dbg_exec_finish;
+    }
+
+    switch (mode)
+    {
+    case dbg_exec_cont: /* Continuous execution */
+        be_cpu->single_step(&dbg_context, FALSE);
+        break_set_xpoints(TRUE);
         break;
 
+#if 0
     case EXEC_STEP_OVER_TRAMPOLINE:
-      /*
-       * This is the means by which we step over our conversion stubs
-       * in callfrom*.s and callto*.s.  We dig the appropriate address
-       * off the stack, and we set the breakpoint there instead of the
-       * address just after the call.
-       */
-#ifdef __i386__
-      DEBUG_READ_MEM((void*)(DEBUG_context.Esp +
-			     2 * sizeof(unsigned int)),
-		     &addr.off, sizeof(addr.off));
-      DEBUG_context.EFlags &= ~STEP_FLAG;
+        /*
+         * This is the means by which we step over our conversion stubs
+         * in callfrom*.s and callto*.s.  We dig the appropriate address
+         * off the stack, and we set the breakpoint there instead of the
+         * address just after the call.
+         */
+        be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context,
+                         be_cpu_addr_stack, &addr);
+        /* FIXME: we assume stack grows as on a i386 */
+        addr.Offset += 2 * sizeof(unsigned int);
+        dbg_read_memory(memory_to_linear_addr(&addr),
+                        &addr.Offset, sizeof(addr.Offset));
+        dbg_curr_process->bp[0].addr = addr;
+        dbg_curr_process->bp[0].enabled = TRUE;
+        dbg_curr_process->bp[0].refcount = 1;
+        dbg_curr_process->bp[0].skipcount = 0;
+        be_cpu->single_step(&dbg_context, FALSE);
+        break_set_xpoints(TRUE);
+        break;
 #endif
-      breakpoints[0].addr    = addr;
-      breakpoints[0].enabled = TRUE;
-      breakpoints[0].refcount = 1;
-      breakpoints[0].skipcount = 0;
-      DEBUG_READ_MEM((void*)DEBUG_ToLinear( &addr ), &breakpoints[0].u.b.opcode,
-		     sizeof(char));
-      DEBUG_SetBreakpoints( TRUE );
-      break;
 
-    case EXEC_FINISH:
-    case EXEC_STEPI_OVER:  /* Stepping over a call */
-    case EXEC_STEP_OVER:  /* Stepping over a call */
-        if (DEBUG_IsStepOverInstr())
+    case dbg_exec_finish:
+    case dbg_exec_step_over_insn:  /* Stepping over a call */
+    case dbg_exec_step_over_line:  /* Stepping over a call */
+        if (be_cpu->is_step_over_insn(memory_to_linear_addr(&addr)))
         {
-#ifdef __i386__
-            DEBUG_context.EFlags &= ~STEP_FLAG;
-#endif
-            DEBUG_Disasm(&addr, FALSE);
-            breakpoints[0].addr    = addr;
-            breakpoints[0].enabled = TRUE;
-            breakpoints[0].refcount = 1;
-	    breakpoints[0].skipcount = 0;
-	    DEBUG_READ_MEM((void*)DEBUG_ToLinear( &addr ), &breakpoints[0].u.b.opcode,
-			   sizeof(char));
-            DEBUG_SetBreakpoints( TRUE );
+            be_cpu->single_step(&dbg_context, FALSE);
+            be_cpu->disasm_one_insn(&addr, FALSE);
+            dbg_curr_process->bp[0].addr = addr;
+            dbg_curr_process->bp[0].enabled = TRUE;
+            dbg_curr_process->bp[0].refcount = 1;
+	    dbg_curr_process->bp[0].skipcount = 0;
+            be_cpu->single_step(&dbg_context, FALSE);
+            break_set_xpoints(TRUE);
             break;
         }
         /* else fall through to single-stepping */
 
-    case EXEC_STEP_INSTR: /* Single-stepping an instruction */
-    case EXEC_STEPI_INSTR: /* Single-stepping an instruction */
-#ifdef __i386__
-        DEBUG_context.EFlags |= STEP_FLAG;
-#endif
+    case dbg_exec_step_into_line: /* Single-stepping a line */
+    case dbg_exec_step_into_insn: /* Single-stepping an instruction */
+        be_cpu->single_step(&dbg_context, TRUE);
         break;
-    default:
-        RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+    default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
     }
-    DEBUG_CurrThread->stepOverBP = breakpoints[0];
-    DEBUG_CurrThread->exec_mode = ret_mode;
+    dbg_curr_thread->step_over_bp = dbg_curr_process->bp[0];
+    dbg_curr_thread->exec_mode = ret_mode;
 }
 
-int
-DEBUG_AddBPCondition(int num, struct expr * exp)
+int break_add_condition(int num, struct expr* exp)
 {
-    if ((num <= 0) || (num >= next_bp) || !breakpoints[num].refcount)
+    if (num <= 0 || num >= dbg_curr_process->next_bp || 
+        !dbg_curr_process->bp[num].refcount)
     {
-        DEBUG_Printf("Invalid breakpoint number %d\n", num);
+        dbg_printf("Invalid breakpoint number %d\n", num);
         return FALSE;
     }
 
-    if( breakpoints[num].condition != NULL )
-      {
-	DEBUG_FreeExpr(breakpoints[num].condition);
-	breakpoints[num].condition = NULL;
-      }
+    if (dbg_curr_process->bp[num].condition != NULL)
+    {
+	expr_free(dbg_curr_process->bp[num].condition);
+	dbg_curr_process->bp[num].condition = NULL;
+    }
 
-    if( exp != NULL )
-      {
-	breakpoints[num].condition = DEBUG_CloneExpr(exp);
-      }
+    if (exp != NULL) dbg_curr_process->bp[num].condition = expr_clone(exp);
 
-   return TRUE;
+    return TRUE;
 }

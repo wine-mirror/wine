@@ -24,1086 +24,697 @@
 #include "config.h"
 #include <stdlib.h>
 
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <limits.h>
-#include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include "debugger.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-#define NR_TYPE_HASH 521
-
-int		  DEBUG_nchar;
-static const int  DEBUG_maxchar = 1024;
-
-struct en_values
-{
-  struct en_values* next;
-  char		  * name;
-  int		    value;
-};
-
-struct member
-{
-  struct member   * next;
-  char		  * name;
-  struct datatype * type;
-  int		    offset;
-  int		    size;
-};
-
-struct datatype
-{
-  enum	debug_type type;
-  struct datatype * next;
-  const char * name;
-  union
-  {
-    struct
-    {
-      char          basic_type;
-      const char  * output_format;
-      char          basic_size;
-      unsigned      b_signed:1;
-    } basic;
-    struct
-    {
-      unsigned short bitoff;
-      unsigned short nbits;
-      struct datatype * basetype;
-    } bitfield;
-
-    struct
-    {
-      struct datatype * pointsto;
-    } pointer;
-    struct
-    {
-      struct datatype * rettype;
-    } funct;
-    struct
-    {
-      int		start;
-      int		end;
-      struct datatype * basictype;
-    } array;
-    struct
-    {
-      int		size;
-      struct member * members;
-    } structure;
-    struct
-    {
-      struct en_values * members;
-    } enumeration;
-  } un;
-};
-
-/*
- * All of the types that have been defined so far.
- */
-static struct datatype * type_hash_table[NR_TYPE_HASH + 1];
-static struct datatype * pointer_types = NULL;
-static struct datatype * basic_types[DT_BASIC_LAST];
-
-static unsigned int type_hash( const char * name )
-{
-    unsigned int hash = 0;
-    unsigned int tmp;
-    const char * p;
-
-    p = name;
-
-    while (*p)
-      {
-	hash = (hash << 4) + *p++;
-
-	if( (tmp = (hash & 0xf0000000)) )
-	  {
-	    hash ^= tmp >> 24;
-	  }
-	hash &= ~tmp;
-      }
-    return hash % NR_TYPE_HASH;
-}
-
-
-static struct datatype *
-DEBUG_InitBasic(int type, const char * name, int size, int b_signed,
-			    const char * output_format)
-{
-  int hash;
-
-  struct datatype * dt;
-  dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
-
-  if( dt != NULL )
-    {
-      if( name != NULL )
-	{
-	  hash = type_hash(name);
-	}
-      else
-	{
-	  hash = NR_TYPE_HASH;
-	}
-
-      dt->type = DT_BASIC;
-      dt->name = name;
-      dt->next = type_hash_table[hash];
-      type_hash_table[hash] = dt;
-      dt->un.basic.basic_type = type;
-      dt->un.basic.basic_size = size;
-      dt->un.basic.b_signed = b_signed;
-      dt->un.basic.output_format = output_format;
-      basic_types[type] = dt;
-    }
-
-  return dt;
-}
-
-static
-struct datatype *
-DEBUG_LookupDataType(enum debug_type xtype, int hash, const char * typename)
-{
-  struct datatype * dt = NULL;
-
-  if( typename != NULL )
-    {
-      for( dt = type_hash_table[hash]; dt; dt = dt->next )
-	{
-	  if( xtype != dt->type || dt->name == NULL
-	      || dt->name[0] != typename[0])
-	    {
-	      continue;
-	    }
-
-	  if( strcmp(dt->name, typename) == 0 )
-	    {
-	      return dt;
-	    }
-	}
-    }
-
-  return dt;
-}
-
-struct datatype *
-DEBUG_GetBasicType(enum debug_type_basic basic)
-{
-    if (basic == 0 || basic >= DT_BASIC_LAST)
-    {
-        return NULL;
-    }
-    return basic_types[basic];
-}
-
-struct datatype *
-DEBUG_NewDataType(enum debug_type xtype, const char * typename)
-{
-  struct datatype * dt = NULL;
-  int hash;
-
-  /*
-   * The last bucket is special, and is used to hold typeless names.
-   */
-  if( typename == NULL )
-    {
-      hash = NR_TYPE_HASH;
-    }
-  else
-    {
-      hash = type_hash(typename);
-    }
-
-  dt = DEBUG_LookupDataType(xtype, hash, typename);
-
-  if( dt == NULL )
-    {
-      dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
-
-      if( dt != NULL )
-	{
-	  memset(dt, 0, sizeof(*dt));
-
-	  dt->type = xtype;
-	  if( typename != NULL )
-	    {
-	      dt->name = DBG_strdup(typename);
-	    }
-	  else
-	    {
-	      dt->name = NULL;
-	    }
-	  if( xtype == DT_POINTER )
-	    {
-	      dt->next = pointer_types;
-	      pointer_types = dt;
-	    }
-	  else
-	    {
-	      dt->next = type_hash_table[hash];
-	      type_hash_table[hash] = dt;
-	    }
-	}
-    }
-
-  return dt;
-}
-
-struct datatype *
-DEBUG_FindOrMakePointerType(struct datatype * reftype)
-{
-  struct datatype * dt = NULL;
-
-  if( reftype != NULL )
-    {
-      for( dt = pointer_types; dt; dt = dt->next )
-	{
-	  if( dt->type != DT_POINTER )
-	    {
-	      continue;
-	    }
-
-	  if( dt->un.pointer.pointsto == reftype )
-	    {
-	      return dt;
-	    }
-	}
-    }
-
-  if( dt == NULL )
-    {
-      dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
-
-      if( dt != NULL )
-	{
-	  dt->type = DT_POINTER;
-	  dt->un.pointer.pointsto = reftype;
-	  dt->next = pointer_types;
-	  pointer_types = dt;
-	}
-    }
-
-  return dt;
-}
-
-void
-DEBUG_InitTypes(void)
-{
-  static int beenhere = 0;
-
-  if( beenhere++ != 0 )
-    {
-      return;
-    }
-
-  /*
-   * Initialize a few builtin types.
-   */
-
-  DEBUG_InitBasic(DT_BASIC_INT,"int",4,1,"%d");
-  DEBUG_InitBasic(DT_BASIC_CHAR,"char",1,1,"'%c'");
-  DEBUG_InitBasic(DT_BASIC_LONGINT,"long int",4,1,"%d");
-  DEBUG_InitBasic(DT_BASIC_UINT,"unsigned int",4,0,"%d");
-  DEBUG_InitBasic(DT_BASIC_ULONGINT,"long unsigned int",4,0,"%d");
-  DEBUG_InitBasic(DT_BASIC_LONGLONGINT,"long long int",8,1,"%ld");
-  DEBUG_InitBasic(DT_BASIC_ULONGLONGINT,"long long unsigned int",8,0,"%ld");
-  DEBUG_InitBasic(DT_BASIC_SHORTINT,"short int",2,1,"%d");
-  DEBUG_InitBasic(DT_BASIC_USHORTINT,"short unsigned int",2,0,"%d");
-  DEBUG_InitBasic(DT_BASIC_SCHAR,"signed char",1,1,"'%c'");
-  DEBUG_InitBasic(DT_BASIC_UCHAR,"unsigned char",1,0,"'%c'");
-  DEBUG_InitBasic(DT_BASIC_FLOAT,"float",4,0,"%f");
-  DEBUG_InitBasic(DT_BASIC_DOUBLE,"long double",12,0,NULL);
-  DEBUG_InitBasic(DT_BASIC_LONGDOUBLE,"double",8,0,"%lf");
-  DEBUG_InitBasic(DT_BASIC_CMPLX_INT,"complex int",8,1,NULL);
-  DEBUG_InitBasic(DT_BASIC_CMPLX_FLOAT,"complex float",8,0,NULL);
-  DEBUG_InitBasic(DT_BASIC_CMPLX_DOUBLE,"complex double",16,0,NULL);
-  DEBUG_InitBasic(DT_BASIC_CMPLX_LONGDOUBLE,"complex long double",24,0,NULL);
-  DEBUG_InitBasic(DT_BASIC_VOID,"void",0,0,NULL);
-  DEBUG_InitBasic(DT_BASIC_BOOL1,NULL,1,0,"%B");
-  DEBUG_InitBasic(DT_BASIC_BOOL2,NULL,2,0,"%B");
-  DEBUG_InitBasic(DT_BASIC_BOOL4,NULL,4,0,"%B");
-
-  basic_types[DT_BASIC_STRING] = DEBUG_NewDataType(DT_POINTER, NULL);
-  DEBUG_SetPointerType(basic_types[DT_BASIC_STRING], basic_types[DT_BASIC_CHAR]);
-
-  /*
-   * Special version of int used with constants of various kinds.
-   */
-  DEBUG_InitBasic(DT_BASIC_CONST_INT,NULL,4,1,"%d");
-
-  /*
-   * Now initialize the builtins for codeview.
-   */
-  DEBUG_InitCVDataTypes();
-
-  DEBUG_InitBasic(DT_BASIC_CONTEXT,NULL,4,0,"%R");
-}
-
-long long int
-DEBUG_GetExprValue(const DBG_VALUE* _value, const char** format)
-{
-   long long int rtn;
-   unsigned int rtn2;
-   struct datatype * type2 = NULL;
-   struct en_values * e;
-   const char * def_format = "0x%x";
-   DBG_VALUE value = *_value;
-
-   assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
-
-   rtn = 0; rtn2 = 0;
-   /* FIXME? I don't quite get this...
-    * if this is wrong, value.addr shall be linearized
-    */
-   value.addr.seg = 0;
-   assert(value.type != NULL);
-
-   switch (value.type->type) {
-   case DT_BASIC:
-
-      if (value.type->un.basic.basic_size > sizeof(rtn)) {
-         WINE_ERR("Size too large (%d)\n", value.type->un.basic.basic_size);
-	 return 0;
-      }
-      /* FIXME: following code implies i386 byte ordering */
-      if (_value->cookie == DV_TARGET) {
-	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn,
-				     value.type->un.basic.basic_size))
-	    return 0;
-      } else {
-	 memcpy(&rtn, (void*)value.addr.off, value.type->un.basic.basic_size);
-      }
-
-      if (    (value.type->un.basic.b_signed)
-	  && ((value.type->un.basic.basic_size & 3) != 0)
-	  && ((rtn >> (value.type->un.basic.basic_size * 8 - 1)) != 0)) {
-	 rtn = rtn | ((-1) << (value.type->un.basic.basic_size * 8));
-      }
-      /* float type has to be promoted as a double */
-      if (value.type->un.basic.basic_type == DT_BASIC_FLOAT) {
-	 float f;
-	 double d;
-	 memcpy(&f, &rtn, sizeof(f));
-	 d = (double)f;
-	 memcpy(&rtn, &d, sizeof(rtn));
-      }
-      if (value.type->un.basic.output_format != NULL) {
-	 def_format = value.type->un.basic.output_format;
-      }
-
-      /*
-       * Check for single character prints that are out of range.
-       */
-      if (   value.type->un.basic.basic_size == 1
-	  && strcmp(def_format, "'%c'") == 0
-	  && ((rtn < 0x20) || (rtn > 0x80))) {
-	 def_format = "%d";
-      }
-      break;
-   case DT_POINTER:
-      if (_value->cookie == DV_TARGET) {
-	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn2, sizeof(void*)))
-	    return 0;
-      } else {
-	 rtn2 = *(unsigned int*)(value.addr.off);
-      }
-
-      type2 = value.type->un.pointer.pointsto;
-
-      if (!type2) {
-	 def_format = "Internal symbol error: unable to access memory location 0x%08x";
-	 rtn = 0;
-	 break;
-      }
-
-      if (type2->type == DT_BASIC && type2->un.basic.basic_size == 1) {
-	 if (_value->cookie == DV_TARGET) {
-	    char ch;
-	    def_format = "\"%S\"";
-	    /* FIXME: assuming little endian */
-	    if (!DEBUG_READ_MEM_VERBOSE((void*)rtn2, &ch, 1))
-	       return 0;
-	 } else {
-	    def_format = "\"%s\"";
-	 }
-      } else {
-	 def_format = "0x%8.8x";
-      }
-      rtn = rtn2;
-      break;
-   case DT_ARRAY:
-   case DT_STRUCT:
-      assert(_value->cookie == DV_TARGET);
-      if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn2, sizeof(rtn2)))
-	 return 0;
-      rtn = rtn2;
-      def_format = "0x%8.8x";
-      break;
-   case DT_ENUM:
-      assert(_value->cookie == DV_TARGET);
-      if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn2, sizeof(rtn2)))
-	 return 0;
-      rtn = rtn2;
-      def_format = "%d";
-      for (e = value.type->un.enumeration.members; e; e = e->next) {
-	 if (e->value == rtn) {
-	    rtn = (int)e->name;
-	    def_format = "%s";
-	    break;
-	 }
-      }
-      break;
-   default:
-      rtn = 0;
-      break;
-   }
-
-
-   if (format != NULL) {
-      *format = def_format;
-   }
-   return rtn;
-}
-
-unsigned int
-DEBUG_TypeDerefPointer(const DBG_VALUE *value, struct datatype ** newtype)
-{
-  DBG_ADDR	addr = value->addr;
-  unsigned int	val;
-
-  assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-
-  *newtype = NULL;
-
-  /*
-   * Make sure that this really makes sense.
-   */
-  if( value->type->type != DT_POINTER )
-     return 0;
-
-  if (value->cookie == DV_TARGET) {
-     if (!DEBUG_READ_MEM((void*)value->addr.off, &val, sizeof(val)))
-	return 0;
-  } else {
-     val = *(unsigned int*)value->addr.off;
-  }
-
-  *newtype = value->type->un.pointer.pointsto;
-  addr.off = val;
-  return DEBUG_ToLinear(&addr); /* FIXME: is this right (or "better") ? */
-}
-
-unsigned int
-DEBUG_FindStructElement(DBG_VALUE* value, const char * ele_name, int * tmpbuf)
-{
-  struct member * m;
-  unsigned int    mask;
-
-  assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-
-  /*
-   * Make sure that this really makes sense.
-   */
-  if( value->type->type != DT_STRUCT )
-    {
-      value->type = NULL;
-      return FALSE;
-    }
-
-  for(m = value->type->un.structure.members; m; m = m->next)
-    {
-      if( strcmp(m->name, ele_name) == 0 )
-	{
-	  value->type = m->type;
-	  if( (m->offset & 7) != 0 || (m->size & 7) != 0)
-	    {
-	      /*
-	       * Bitfield operation.  We have to extract the field and store
-	       * it in a temporary buffer so that we get it all right.
-	       */
-	      *tmpbuf = ((*(int* ) (value->addr.off + (m->offset >> 3))) >> (m->offset & 7));
-	      value->addr.off = (int) tmpbuf;
-
-	      mask = 0xffffffff << (m->size);
-	      *tmpbuf &= ~mask;
-	      /*
-	       * OK, now we have the correct part of the number.
-	       * Check to see whether the basic type is signed or not, and if so,
-	       * we need to sign extend the number.
-	       */
-	      if( m->type->type == DT_BASIC && m->type->un.basic.b_signed != 0
-		  && (*tmpbuf & (1 << (m->size - 1))) != 0 )
-		{
-		  *tmpbuf |= mask;
-		}
-	    }
-	  else
-	    {
-	      value->addr.off += (m->offset >> 3);
-	    }
-	  return TRUE;
-	}
-    }
-
-  value->type = NULL;
-  return FALSE;
-}
-
-int
-DEBUG_SetStructSize(struct datatype * dt, int size)
-{
-  assert(dt->type == DT_STRUCT);
-
-  if( dt->un.structure.members != NULL )
-    {
-      return FALSE;
-    }
-
-  dt->un.structure.size = size;
-  dt->un.structure.members = NULL;
-
-  return TRUE;
-}
-
-int
-DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2)
-{
-  if (!(dt->type == dt2->type && ((dt->type == DT_STRUCT) || (dt->type == DT_ENUM)))) {
-    DEBUG_Printf("Error: Copyfield list mismatch (%d<>%d): ", dt->type, dt2->type);
-    DEBUG_PrintTypeCast(dt);
-    DEBUG_Printf(" ");
-    DEBUG_PrintTypeCast(dt2);
-    DEBUG_Printf("\n");
-    return FALSE;
-  }
-
-  if( dt->type == DT_STRUCT )
-    {
-      dt->un.structure.members = dt2->un.structure.members;
-    }
-  else
-    {
-      dt->un.enumeration.members = dt2->un.enumeration.members;
-    }
-
-  return TRUE;
-}
-
-int
-DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type,
-		       int offset, int size)
-{
-  struct member * m;
-  struct member * last;
-  struct en_values * e;
-
-  if( dt->type == DT_STRUCT )
-    {
-      for(last = dt->un.structure.members; last; last = last->next)
-	{
-	  if(    (last->name[0] == name[0])
-	      && (strcmp(last->name, name) == 0) )
-	    {
-	      return TRUE;
-	    }
-	  if( last->next == NULL )
-	    {
-	      break;
-	    }
-	}
-      m = (struct member *) DBG_alloc(sizeof(struct member));
-      if( m == NULL )
-	{
-	  return FALSE;
-	}
-
-      m->name = DBG_strdup(name);
-      m->type = type;
-      m->offset = offset;
-      m->size = size;
-      if( last == NULL )
-	{
-	  m->next = dt->un.structure.members;
-	  dt->un.structure.members = m;
-	}
-      else
-	{
-	  last->next = m;
-	  m->next = NULL;
-	}
-      /*
-       * If the base type is bitfield, then adjust the offsets here so that we
-       * are able to look things up without lots of falter-all.
-       */
-      if( type && type->type == DT_BITFIELD )
-	{
-	  m->offset += m->type->un.bitfield.bitoff;
-	  m->size = m->type->un.bitfield.nbits;
-	  m->type = m->type->un.bitfield.basetype;
-	}
-    }
-  else if( dt->type == DT_ENUM )
-    {
-      e = (struct en_values *) DBG_alloc(sizeof(struct en_values));
-      if( e == FALSE )
-	{
-	  return FALSE;
-	}
-
-      e->name = DBG_strdup(name);
-      e->value = offset;
-      e->next = dt->un.enumeration.members;
-      dt->un.enumeration.members = e;
-    }
-  else
-    {
-      assert(FALSE);
-    }
-  return TRUE;
-}
-
-struct datatype *
-DEBUG_GetPointerType(struct datatype * dt)
-{
-  if( dt->type == DT_POINTER )
-    {
-      return dt->un.pointer.pointsto;
-    }
-
-  return NULL;
-}
-
-int
-DEBUG_SetPointerType(struct datatype * dt, struct datatype * dt2)
-{
-  switch(dt->type)
-    {
-    case DT_POINTER:
-      dt->un.pointer.pointsto = dt2;
-      break;
-    case DT_FUNC:
-      dt->un.funct.rettype = dt2;
-      break;
-    default:
-      assert(FALSE);
-    }
-
-  return TRUE;
-}
-
-int
-DEBUG_SetArrayParams(struct datatype * dt, int min, int max, struct datatype * dt2)
-{
-  assert(dt->type == DT_ARRAY);
-  dt->un.array.start = min;
-  dt->un.array.end   = max;
-  dt->un.array.basictype = dt2;
-
-  return TRUE;
-}
-
-int
-DEBUG_SetBitfieldParams(struct datatype * dt, int offset, int nbits,
-			struct datatype * dt2)
-{
-  assert(dt->type == DT_BITFIELD);
-  dt->un.bitfield.bitoff   = offset;
-  dt->un.bitfield.nbits    = nbits;
-  dt->un.bitfield.basetype = dt2;
-
-  return TRUE;
-}
-
-int DEBUG_GetObjectSize(struct datatype * dt)
-{
-  if( dt == NULL )
-    {
-      return 0;
-    }
-
-  switch(dt->type)
-    {
-    case DT_BASIC:
-      return dt->un.basic.basic_size;
-    case DT_POINTER:
-      return sizeof(int *);
-    case DT_STRUCT:
-      return dt->un.structure.size;
-    case DT_ENUM:
-      return sizeof(int);
-    case DT_ARRAY:
-      return (dt->un.array.end - dt->un.array.start)
-	* DEBUG_GetObjectSize(dt->un.array.basictype);
-    case DT_BITFIELD:
-      /*
-       * Bitfields have to be handled separately later on
-       * when we insert the element into the structure.
-       */
-      return 0;
-    case DT_FUNC:
-      assert(FALSE);
-    default:
-      WINE_ERR("Unknown type???\n");
-      break;
-    }
-  return 0;
-}
-
-unsigned int
-DEBUG_ArrayIndex(const DBG_VALUE * value, DBG_VALUE * result, int index)
-{
-  int size;
-
-  assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-
-  /*
-   * Make sure that this really makes sense.
-   */
-  if( value->type->type == DT_POINTER )
-    {
-      /*
-       * Get the base type, so we know how much to index by.
-       */
-      size = DEBUG_GetObjectSize(value->type->un.pointer.pointsto);
-      result->type = value->type->un.pointer.pointsto;
-      result->addr.off = (DWORD)DEBUG_ReadMemory(value) + size*index;
-
-      /* Contents of array must be on same target */
-      result->cookie = value->cookie;
-    }
-  else if (value->type->type == DT_ARRAY)
-    {
-      size = DEBUG_GetObjectSize(value->type->un.array.basictype);
-      result->type = value->type->un.array.basictype;
-      result->addr.off = value->addr.off + size * (index - value->type->un.array.start);
-
-      /* Contents of array must be on same target */
-      result->cookie = value->cookie;
-    }
-  else
-    {
-      assert(FALSE);
-    }
-
-  return TRUE;
-}
-
-/***********************************************************************
- *           DEBUG_Print
+/******************************************************************
+ *		types_extract_as_integer
  *
- * Implementation of the 'print' command.
+ * Given a lvalue, try to get an integral (or pointer/address) value
+ * out of it
  */
-void
-DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
+long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
 {
-  DBG_VALUE	  val1;
-  int		  i;
-  struct member * m;
-  char		* pnt;
-  int		  size;
-  int		  xval;
+    long int            rtn = 0;
+    DWORD               tag, size, bt;
+    DWORD               linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
-  assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
 
-  if (count != 1)
+    if (lvalue->typeid == dbg_itype_none ||
+        !types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag))
+        return 0;
+
+    switch (tag)
     {
-      DEBUG_Printf("Count other than 1 is meaningless in 'print' command\n");
-      return;
-    }
-
-  if( value->type == NULL )
-  {
-      /* No type, just print the addr value */
-      if (value->addr.seg && (value->addr.seg != 0xffffffff))
-          DEBUG_nchar += DEBUG_Printf("0x%04lx: ", value->addr.seg);
-      DEBUG_nchar += DEBUG_Printf("0x%08lx", value->addr.off);
-      goto leave;
-  }
-
-  if( level == 0 )
-    {
-      DEBUG_nchar = 0;
-    }
-
-  if( DEBUG_nchar > DEBUG_maxchar )
-    {
-      DEBUG_Printf("...");
-      goto leave;
-    }
-
-  if( format == 'i' || format == 's' || format == 'w' || format == 'b' || format == 'g')
-    {
-      DEBUG_Printf("Format specifier '%c' is meaningless in 'print' command\n", format);
-      format = '\0';
-    }
-
-  switch(value->type->type)
-    {
-    case DT_BASIC:
-    case DT_ENUM:
-    case DT_POINTER:
-      DEBUG_PrintBasic(value, 1, format);
-      break;
-    case DT_STRUCT:
-      DEBUG_nchar += DEBUG_Printf("{");
-      for(m = value->type->un.structure.members; m; m = m->next)
-	{
-	  val1 = *value;
-	  DEBUG_FindStructElement(&val1, m->name, &xval);
-	  DEBUG_nchar += DEBUG_Printf("%s=", m->name);
-	  DEBUG_Print(&val1, 1, format, level + 1);
-	  if( m->next != NULL )
-	    {
-	      DEBUG_nchar += DEBUG_Printf(", ");
-	    }
-	  if( DEBUG_nchar > DEBUG_maxchar )
-	    {
-	      DEBUG_Printf("...}");
-	      goto leave;
-	    }
-	}
-      DEBUG_nchar += DEBUG_Printf("}");
-      break;
-    case DT_ARRAY:
-      /*
-       * Loop over all of the entries, printing stuff as we go.
-       */
-      size = DEBUG_GetObjectSize(value->type->un.array.basictype);
-      if( size == 1 )
-	{
-          int   len, clen;
-
-	  /*
-	   * Special handling for character arrays.
-	   */
-	  pnt = (char *) value->addr.off;
-          len = value->type->un.array.end - value->type->un.array.start + 1;
-          clen = (DEBUG_nchar + len < DEBUG_maxchar)
-              ? len : (DEBUG_maxchar - DEBUG_nchar);
-
-          DEBUG_nchar += DEBUG_Printf("\"");
-          switch (value->cookie)
-          {
-          case DV_TARGET:
-              DEBUG_nchar += DEBUG_PrintStringA(&value->addr, clen);
-              break;
-          case DV_HOST:
-              DEBUG_OutputA(pnt, clen);
-              break;
-          default: assert(0);
-          }
-          DEBUG_nchar += DEBUG_Printf((len > clen) ? "...\"" : "\"");
-          break;
-        }
-      val1 = *value;
-      val1.type = value->type->un.array.basictype;
-      DEBUG_nchar += DEBUG_Printf("{");
-      for( i=value->type->un.array.start; i <= value->type->un.array.end; i++ )
-	{
-	  DEBUG_Print(&val1, 1, format, level + 1);
-	  val1.addr.off += size;
-	  if( i == value->type->un.array.end )
-	    {
-	      DEBUG_nchar += DEBUG_Printf("}");
-	    }
-	  else
-	    {
-	      DEBUG_nchar += DEBUG_Printf(", ");
-	    }
-	  if( DEBUG_nchar > DEBUG_maxchar )
-	    {
-	      DEBUG_Printf("...}");
-	      goto leave;
-	    }
-	}
-      break;
-    case DT_FUNC:
-      DEBUG_Printf("Function at ???\n");
-      break;
-    default:
-      DEBUG_Printf("Unknown type (%d)\n", value->type->type);
-      assert(FALSE);
-      break;
-    }
-
-leave:
-
-  if( level == 0 )
-    {
-      DEBUG_nchar += DEBUG_Printf("\n");
-    }
-}
-
-static void DEBUG_DumpAType(struct datatype* dt, BOOL deep)
-{
-    const char* name = (dt->name) ? dt->name : "--none--";
-
-    switch (dt->type)
-    {
-    case DT_BASIC:
-        DEBUG_Printf("BASIC(%s)", name);
-        break;
-    case DT_POINTER:
-        DEBUG_Printf("POINTER(%s)<", name);
-        DEBUG_DumpAType(dt->un.pointer.pointsto, FALSE);
-        DEBUG_Printf(">");
-        break;
-    case DT_STRUCT:
-        DEBUG_Printf("STRUCT(%s) %d {",
-                     name, dt->un.structure.size);
-        if (dt->un.structure.members != NULL)
+    case SymTagBaseType:
+        if (!types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &size) ||
+            !types_get_info(linear, lvalue->typeid, TI_GET_BASETYPE, &bt))
         {
-            struct member * m;
-            for (m = dt->un.structure.members; m; m = m->next)
-            {
-                DEBUG_Printf(" %s(%d", m->name, m->offset / 8);
-                if (m->offset % 8 != 0)
-                    DEBUG_Printf(".%d", m->offset / 8);
-                DEBUG_Printf("/%d", m->size / 8);
-                if (m->size % 8 != 0)
-                    DEBUG_Printf(".%d", m->size % 8);
-                DEBUG_Printf(")");
-            }
+            WINE_ERR("Couldn't get information\n");
+            RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         }
-        DEBUG_Printf(" }");
+        if (size > sizeof(rtn))
+        {
+            WINE_ERR("Size too large (%lu)\n", size);
+            return 0;
+        }
+        /* FIXME: we have an ugly & non portable thing here !!! */
+        if (!memory_read_value(lvalue, size, &rtn)) return 0;
+
+        /* now let's do some promotions !! */
+        switch (bt)
+        {
+        case btInt:
+            /* propagate sign information */
+            if (((size & 3) != 0) && (rtn >> (size * 8 - 1)) != 0)
+                rtn |= (-1) << (size * 8);
+            break;
+        case btUInt:
+        case btChar:
+            break;
+        case btFloat:
+            RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
+        }
         break;
-    case DT_ARRAY:
-        DEBUG_Printf("ARRAY(%s)[", name);
-        DEBUG_DumpAType(dt->un.array.basictype, FALSE);
-        DEBUG_Printf("]");
+    case SymTagPointerType:
+        if (!memory_read_value(lvalue, sizeof(void*), &rtn)) return 0;
         break;
-    case DT_ENUM:
-        DEBUG_Printf("ENUM(%s)", name);
+    case SymTagArrayType:
+    case SymTagUDT:
+        assert(lvalue->cookie == DLV_TARGET);
+        if (!memory_read_value(lvalue, sizeof(rtn), &rtn)) return 0;
         break;
-    case DT_BITFIELD:
-        DEBUG_Printf("BITFIELD(%s)", name);
-        break;
-    case DT_FUNC:
-        DEBUG_Printf("FUNC(%s)(", name);
-        DEBUG_DumpAType(dt->un.funct.rettype, FALSE);
-        DEBUG_Printf(")");
+    case SymTagEnum:
+        assert(lvalue->cookie == DLV_TARGET);
+        if (!memory_read_value(lvalue, sizeof(rtn), &rtn)) return 0;
         break;
     default:
-        WINE_ERR("Unknown type???");
+        WINE_FIXME("Unsupported tag %lu\n", tag);
+        rtn = 0;
         break;
     }
-    if (deep) DEBUG_Printf("\n");
+
+    return rtn;
 }
 
-int DEBUG_DumpTypes(void)
+/******************************************************************
+ *		types_deref
+ *
+ */
+BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
 {
-    struct datatype * dt = NULL;
-    int hash;
+    DWORD       tag;
+    DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
-    for (hash = 0; hash < NR_TYPE_HASH + 1; hash++)
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
+
+    memset(result, 0, sizeof(*result));
+    result->typeid = dbg_itype_none;
+
+    /*
+     * Make sure that this really makes sense.
+     */
+    if (!types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag) ||
+        tag != SymTagPointerType ||
+        memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset) ||
+        !types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &result->typeid))
+        return FALSE;
+
+    result->cookie = DLV_TARGET; /* see comment on DEREF below */
+    result->addr.Mode = AddrModeFlat;
+    return TRUE;
+}
+
+/******************************************************************
+ *		types_get_udt_element_lvalue
+ *
+ * Implement a structure derefencement
+ */
+static BOOL types_get_udt_element_lvalue(struct dbg_lvalue* lvalue, DWORD linear,
+                                         DWORD typeid, long int* tmpbuf)
+{
+    DWORD       offset, length, bitoffset;
+    DWORD       bt;
+    unsigned    mask;
+
+    types_get_info(linear, typeid, TI_GET_TYPE, &lvalue->typeid);
+    types_get_info(linear, typeid, TI_GET_OFFSET, &offset);
+
+    if (types_get_info(linear, typeid, TI_GET_BITPOSITION, &bitoffset))
     {
-        for (dt = type_hash_table[hash]; dt; dt = dt->next)
-	{
-            DEBUG_DumpAType(dt, TRUE);
-	}
+        types_get_info(linear, typeid, TI_GET_LENGTH, &length);
+        if (length > sizeof(*tmpbuf)) return FALSE;
+        /*
+         * Bitfield operation.  We have to extract the field and store
+         * it in a temporary buffer so that we get it all right.
+         */
+        lvalue->addr.Offset += offset;
+        if (!memory_read_value(lvalue, sizeof(*tmpbuf), tmpbuf)) return FALSE;
+        mask = 0xffffffff << length;
+        *tmpbuf >>= bitoffset & 7;
+        *tmpbuf &= ~mask;
+
+        lvalue->cookie = DLV_HOST;
+        lvalue->addr.Mode = AddrModeFlat;
+        lvalue->addr.Offset = (DWORD)tmpbuf;
+
+        /*
+         * OK, now we have the correct part of the number.
+         * Check to see whether the basic type is signed or not, and if so,
+         * we need to sign extend the number.
+         */
+        if (types_get_info(linear, lvalue->typeid, TI_GET_BASETYPE, &bt) && 
+            bt == btInt && (*tmpbuf & (1 << (length - 1))))
+        {
+            *tmpbuf |= mask;
+        }
+        return TRUE;
+    }
+    if (types_get_info(linear, typeid, TI_GET_OFFSET, &offset))
+    {
+        lvalue->addr.Offset += offset;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/******************************************************************
+ *		types_udt_find_element
+ *
+ */
+BOOL types_udt_find_element(struct dbg_lvalue* lvalue, const char* name, long int* tmpbuf)
+{
+    DWORD                       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
+    DWORD                       tag, count;
+    char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+    TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+    WCHAR*                      ptr;
+    char                        tmp[256];
+    int                         i;
+
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
+
+    if (!types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag) ||
+        tag != SymTagUDT)
+        return FALSE;
+
+    if (types_get_info(linear, lvalue->typeid, TI_GET_CHILDRENCOUNT, &count))
+    {
+        fcp->Start = 0;
+        while (count)
+        {
+            fcp->Count = min(count, 256);
+            if (types_get_info(linear, lvalue->typeid, TI_FINDCHILDREN, fcp))
+            {
+                for (i = 0; i < min(fcp->Count, count); i++)
+                {
+                    ptr = NULL;
+                    types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                    if (!ptr) continue;
+                    WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                    HeapFree(GetProcessHeap(), 0, ptr);
+                    if (strcmp(tmp, name)) continue;
+
+                    return types_get_udt_element_lvalue(lvalue, linear, 
+                                                        fcp->ChildId[i], tmpbuf);
+                }
+            }
+            count -= min(count, 256);
+            fcp->Start += 256;
+        }
+    }
+    return FALSE;
+}
+
+/******************************************************************
+ *		types_array_index
+ *
+ * Grab an element from an array
+ */
+BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, 
+                       struct dbg_lvalue* result)
+{
+    DWORD       tag, length, count;
+    DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
+
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
+
+    if (!types_get_info(0, lvalue->typeid, TI_GET_SYMTAG, &tag))
+        return FALSE;
+    switch (tag)
+    {
+    case SymTagArrayType:
+        types_get_info(linear, lvalue->typeid, TI_GET_COUNT, &count);
+        if (index < 0 || index >= count) return FALSE;
+        /* fall through */
+    case SymTagPointerType:
+        /*
+         * Get the base type, so we know how much to index by.
+         */
+        types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &result->typeid);
+        types_get_info(linear, result->typeid, TI_GET_LENGTH, &length);
+        /* Contents of array must be on same target */
+        result->cookie = lvalue->cookie;
+        result->addr.Mode = lvalue->addr.Mode;
+        memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset);
+        result->addr.Offset += index * length;
+        break;
+    default:
+        assert(FALSE);
     }
     return TRUE;
 }
 
-enum debug_type DEBUG_GetType(struct datatype * dt)
+struct type_find_t
 {
-  return dt->type;
+    unsigned long       result;  /* out: the found type */
+    enum SymTagEnum     tag;    /* in: the tag to look for */
+    union
+    {
+        unsigned long           typeid;
+        const char*             name;
+    } u;
+};
+
+static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
+{
+    struct type_find_t* user = (struct type_find_t*)_user;
+    BOOL                ret = TRUE;
+    DWORD               typeid;
+
+    if (sym->Tag == user->tag)
+    {
+        switch (user->tag)
+        {
+        case SymTagUDT:
+            if (!strcmp(user->u.name, sym->Name))
+            {
+                user->result = sym->TypeIndex;
+                ret = FALSE;
+            }
+            break;
+        case SymTagPointerType:
+            types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, &typeid);
+            if (types_get_info(sym->ModBase, sym->TypeIndex, TI_GET_TYPE, &typeid) &&
+                typeid == user->u.typeid)
+            {
+                user->result = sym->TypeIndex;
+                ret = FALSE;
+            }
+        default: break;
+        }
+    }
+    return ret;
 }
 
-const char* DEBUG_GetName(struct datatype * dt)
+/******************************************************************
+ *		types_find_pointer
+ *
+ * Should look up in module based at linear whether (typeid*) exists
+ * Otherwise, we could create it locally
+ */
+unsigned long types_find_pointer(unsigned long linear, unsigned long typeid)
 {
-  return dt->name;
+    struct type_find_t  f;
+    f.result = dbg_itype_none;
+    f.tag = SymTagPointerType;
+    f.u.typeid = typeid;
+    SymEnumTypes(dbg_curr_process->handle, linear, types_cb, &f);
+    return f.result;
 }
 
-struct datatype *
-DEBUG_TypeCast(enum debug_type type, const char * name)
+/******************************************************************
+ *		types_find_type
+ *
+ * Should look up in the module based at linear address whether a type
+ * named 'name' and with the correct tag exists
+ */
+unsigned long types_find_type(unsigned long linear, const char* name, enum SymTagEnum tag)
+
 {
-  int			  hash;
-
-  /*
-   * The last bucket is special, and is used to hold typeless names.
-   */
-  if( name == NULL )
-    {
-      hash = NR_TYPE_HASH;
-    }
-  else
-    {
-      hash = type_hash(name);
-    }
-
-  return DEBUG_LookupDataType(type, hash, name);
+    struct type_find_t  f;
+    f.result = dbg_itype_none;
+    f.tag = tag;
+    f.u.name = name;
+    SymEnumTypes(dbg_curr_process->handle, linear, types_cb, &f);
+    return f.result;
 }
 
-int
-DEBUG_PrintTypeCast(const struct datatype * dt)
+/***********************************************************************
+ *           print_value
+ *
+ * Implementation of the 'print' command.
+ */
+void print_value(const struct dbg_lvalue* lvalue, char format, int level)
 {
-  const char* name = "none";
+    struct dbg_lvalue   lvalue_field;
+    int		        i;
+    unsigned long       linear;
+    DWORD               tag;
+    DWORD               count;
+    DWORD               size;
 
-  if(dt == NULL)
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
+    linear = (unsigned long)memory_to_linear_addr(&lvalue->addr);
+
+    if (lvalue->typeid == dbg_itype_none)
     {
-      DEBUG_Printf("--invalid--");
-      return FALSE;
+        /* No type, just print the addr value */
+        print_bare_address(&lvalue->addr);
+        goto leave;
     }
 
-  if( dt->name != NULL )
+    if (format == 'i' || format == 's' || format == 'w' || format == 'b' || format == 'g')
     {
-      name = dt->name;
+        dbg_printf("Format specifier '%c' is meaningless in 'print' command\n", format);
+        format = '\0';
     }
 
-  switch(dt->type)
+    if (!types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag))
     {
-    case DT_BASIC:
-      DEBUG_Printf("%s", name);
-      break;
-    case DT_POINTER:
-      DEBUG_PrintTypeCast(dt->un.pointer.pointsto);
-      DEBUG_Printf("*");
-      break;
-    case DT_STRUCT:
-      DEBUG_Printf("struct %s", name);
-      break;
-    case DT_ARRAY:
-      DEBUG_Printf("%s[]", name);
-      break;
-    case DT_ENUM:
-      DEBUG_Printf("enum %s", name);
-      break;
-    case DT_BITFIELD:
-      DEBUG_Printf("unsigned %s", name);
-      break;
-    case DT_FUNC:
-      DEBUG_PrintTypeCast(dt->un.funct.rettype);
-      DEBUG_Printf("(*%s)()", name);
-      break;
+        WINE_FIXME("---error\n");
+        return;
+    }
+    switch (tag)
+    {
+    case SymTagBaseType:
+    case SymTagEnum:
+    case SymTagPointerType:
+        print_basic(lvalue, 1, format);
+        break;
+    case SymTagUDT:
+        if (types_get_info(linear, lvalue->typeid, TI_GET_CHILDRENCOUNT, &count))
+        {
+            char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+            TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+            WCHAR*                      ptr;
+            char                        tmp[256];
+            long int                    tmpbuf;
+
+            dbg_printf("{");
+            fcp->Start = 0;
+            while (count)
+            {
+                fcp->Count = min(count, 256);
+                if (types_get_info(linear, lvalue->typeid, TI_FINDCHILDREN, fcp))
+                {
+                    for (i = 0; i < min(fcp->Count, count); i++)
+                    {
+                        ptr = NULL;
+                        types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                        if (!ptr) continue;
+                        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                        dbg_printf("%s=", tmp);
+                        HeapFree(GetProcessHeap(), 0, ptr);
+                        lvalue_field = *lvalue;
+                        if (types_get_udt_element_lvalue(&lvalue_field, linear,
+                                                         fcp->ChildId[i], &tmpbuf))
+                        {
+                            print_value(&lvalue_field, format, level + 1);
+                        }
+                        if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
+                    }
+                }
+                count -= min(count, 256);
+                fcp->Start += 256;
+            }
+            dbg_printf("}");
+        }
+        break;
+    case SymTagArrayType:
+        /*
+         * Loop over all of the entries, printing stuff as we go.
+         */
+        count = 1; size = 1;
+        types_get_info(linear, lvalue->typeid, TI_GET_COUNT, &count);
+        types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &size);
+
+        if (size == count)
+	{
+            unsigned    len;
+            char        buffer[256];
+            /*
+             * Special handling for character arrays.
+             */
+            /* FIXME should check basic type here (should be a char!!!!)... */
+            len = min(count, sizeof(buffer));
+            memory_get_string(dbg_curr_thread->handle,
+                              memory_to_linear_addr(&lvalue->addr),
+                              lvalue->cookie, TRUE, buffer, len);
+            dbg_printf("\"%s%s\"", buffer, (len < count) ? "..." : "");
+            break;
+        }
+        lvalue_field = *lvalue;
+        types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &lvalue_field.typeid);
+        dbg_printf("{");
+        for (i = 0; i < count; i++)
+	{
+            print_value(&lvalue_field, format, level + 1);
+            lvalue_field.addr.Offset += size / count;
+            dbg_printf((i == count - 1) ? "}" : ", ");
+	}
+        break;
+    case SymTagFunctionType:
+        dbg_printf("Function ");
+        print_bare_address(&lvalue->addr);
+        dbg_printf(": ");
+        types_print_type(linear, lvalue->typeid, FALSE);
+        break;
     default:
-      WINE_ERR("Unknown type???\n");
-      break;
+        WINE_FIXME("Unknown tag (%lu)\n", tag);
+        RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+        break;
     }
 
-  return TRUE;
+leave:
+
+    if (level == 0) dbg_printf("\n");
 }
 
-int DEBUG_PrintType( const DBG_VALUE *value )
+static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
 {
-   assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+    types_print_type(sym->ModBase, sym->TypeIndex, TRUE);
+    dbg_printf("\n");
+    return TRUE;
+}
 
-   if (!value->type)
-   {
-      DEBUG_Printf("Unknown type\n");
-      return FALSE;
-   }
-   if (!DEBUG_PrintTypeCast(value->type))
-      return FALSE;
-   DEBUG_Printf("\n");
-   return TRUE;
+static BOOL CALLBACK print_types_mod_cb(PSTR mod_name, DWORD base, void* ctx)
+{
+    return SymEnumTypes(dbg_curr_process->handle, base, print_types_cb, ctx);
+}
+
+int print_types(void)
+{
+    SymEnumerateModules(dbg_curr_process->handle, print_types_mod_cb, NULL);
+    return 0;
+}
+
+int types_print_type(DWORD linear, DWORD typeid, BOOL details)
+{
+    WCHAR*              ptr;
+    char                tmp[256];
+    const char*         name;
+    DWORD               tag, subtype, count;
+
+    if (typeid == dbg_itype_none || !types_get_info(linear, typeid, TI_GET_SYMTAG, &tag))
+    {
+        dbg_printf("--invalid--<%lxh>--", typeid);
+        return FALSE;
+    }
+
+    if (types_get_info(linear, typeid, TI_GET_SYMNAME, &ptr) && ptr)
+    {
+        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+        name = tmp;
+        HeapFree(GetProcessHeap(), 0, ptr);
+    }
+    else name = "--none--";
+
+    switch (tag)
+    {
+    case SymTagBaseType:
+        if (details) dbg_printf("Basic<%s>", name); else dbg_printf("%s", name);
+        break;
+    case SymTagPointerType:
+        types_get_info(linear, typeid, TI_GET_TYPE, &subtype);
+        types_print_type(linear, subtype, details);
+        dbg_printf("*");
+        break;
+    case SymTagUDT:
+        types_get_info(linear, typeid, TI_GET_UDTKIND, &subtype);
+        switch (subtype)
+        {
+        case UdtStruct: dbg_printf("struct %s", name); break;
+        case UdtUnion:  dbg_printf("union %s", name); break;
+        case UdtClass:  dbg_printf("class %s", name); break;
+        }
+        if (details &&
+            types_get_info(linear, typeid, TI_GET_CHILDRENCOUNT, &count))
+        {
+            char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+            TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+            WCHAR*                      ptr;
+            char                        tmp[256];
+            int                         i;
+
+            dbg_printf(" {");
+
+            fcp->Start = 0;
+            while (count)
+            {
+                fcp->Count = min(count, 256);
+                if (types_get_info(linear, typeid, TI_FINDCHILDREN, fcp))
+                {
+                    for (i = 0; i < min(fcp->Count, count); i++)
+                    {
+                        ptr = NULL;
+                        types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                        if (!ptr) continue;
+                        WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                        HeapFree(GetProcessHeap(), 0, ptr);
+                        dbg_printf("%s", tmp);
+                        if (types_get_info(linear, fcp->ChildId[i], TI_GET_TYPE, &subtype))
+                        {
+                            dbg_printf(":");
+                            types_print_type(linear, subtype, details);
+                        }
+                        if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
+                    }
+                }
+                count -= min(count, 256);
+                fcp->Start += 256;
+            }
+            dbg_printf("}");
+        }
+        break;
+    case SymTagArrayType:
+        types_get_info(linear, typeid, TI_GET_TYPE, &subtype);
+        types_print_type(linear, subtype, details);
+        dbg_printf(" %s[]", name);
+        break;
+    case SymTagEnum:
+        dbg_printf("enum %s", name);
+        break;
+    case SymTagFunctionType:
+        types_get_info(linear, typeid, TI_GET_TYPE, &subtype);
+        types_print_type(linear, subtype, FALSE);
+        dbg_printf(" (*%s)(", name);
+        if (types_get_info(linear, typeid, TI_GET_CHILDRENCOUNT, &count))
+        {
+            char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+            TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+            int                         i;
+
+            fcp->Start = 0;
+            while (count)
+            {
+                fcp->Count = min(count, 256);
+                if (types_get_info(linear, typeid, TI_FINDCHILDREN, fcp))
+                {
+                    for (i = 0; i < min(fcp->Count, count); i++)
+                    {
+                        types_print_type(linear, fcp->ChildId[i], FALSE);
+                        if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
+                    }
+                }
+                count -= min(count, 256);
+                fcp->Start += 256;
+            }
+        }
+        dbg_printf(")");
+        break;
+    default:
+        WINE_ERR("Unknown type %lu for %s\n", tag, name);
+        break;
+    }
+    
+    return TRUE;
+}
+
+BOOL types_get_info(unsigned long modbase, unsigned long typeid,
+                    IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
+{
+    if (typeid == dbg_itype_none) return FALSE;
+    if (typeid < dbg_itype_first)
+    {
+        BOOL    ret;
+        DWORD   tag;
+
+        ret = SymGetTypeInfo(dbg_curr_process->handle, modbase, typeid, ti, pInfo);
+        if (!ret && ti == TI_GET_LENGTH && 
+            (!SymGetTypeInfo(dbg_curr_process->handle, modbase, typeid, 
+                             TI_GET_SYMTAG, &tag) || tag == SymTagData))
+        {
+            WINE_FIXME("get length on symtag data is no longer supported\n");
+            assert(0);
+        }
+        return ret;
+    }
+    assert(modbase);
+
+/* helper to typecast pInfo to its expected type (_t) */
+#define X(_t) (*((_t*)pInfo))
+
+    switch (typeid)
+    {
+    case dbg_itype_unsigned_int:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 4; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btUInt; break;
+        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_signed_int:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 4; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btInt; break;
+        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_unsigned_short_int:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btUInt; break;
+        default: WINE_FIXME("unsupported %u for u-short int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_signed_short_int:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btInt; break;
+        default: WINE_FIXME("unsupported %u for s-short int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_unsigned_char_int:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btUInt; break;
+        default: WINE_FIXME("unsupported %u for u-char int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_signed_char_int:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btInt; break;
+        default: WINE_FIXME("unsupported %u for s-char int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_char:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD) = btChar; break;
+        default: WINE_FIXME("unsupported %u for char int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_astring:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD) = SymTagPointerType; break;
+        case TI_GET_LENGTH:     X(DWORD) = 4; break;
+        case TI_GET_TYPE:       X(DWORD) = dbg_itype_char; break;
+        default: WINE_FIXME("unsupported %u for a string\n", ti); return FALSE;
+        }
+        break;
+    default: WINE_FIXME("unsupported typeid 0x%lx\n", typeid);
+    }
+
+#undef X
+    return TRUE;
 }

@@ -4,26 +4,21 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winedbg.exe
 APPMODE   = -mconsole
-IMPORTS   = advapi32 kernel32 ntdll
+IMPORTS   = dbghelp advapi32 kernel32 ntdll
 DELAYIMPORTS = user32
 
 C_SRCS = \
+	be_i386.c \
+	be_ppc.c \
 	break.c \
 	db_disasm.c \
 	display.c \
-	elf.c \
 	expr.c \
-	ext_debugger.c \
 	gdbproxy.c \
-	hash.c \
 	info.c \
 	memory.c \
-	module.c \
-	msc.c \
-	pe.c \
-	registers.c \
 	source.c \
-	stabs.c	\
+	symbol.c \
 	stack.c \
 	types.c \
 	winedbg.c
@@ -44,5 +39,12 @@ y.tab.o: y.tab.h
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
 @LEX_OUTPUT_ROOT@.o: y.tab.h
+
+install::
+	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) $(SRCDIR)/winedbg.man $(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
+
+uninstall::
+	$(RM) $(mandir)/man$(prog_manext)/winedbg.$(prog_manext)
 
 ### Dependencies:

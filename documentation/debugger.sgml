@@ -97,7 +97,7 @@
           </listitem>
           <listitem>
             <para>
-              the Wine integrated debugger, dubbed <command>WineDbg</command>.
+              the Wine integrated debugger, dubbed <command>winedbg</command>.
             </para>
           </listitem>
         </itemizedlist>
@@ -109,9 +109,16 @@
           <varname>W-process</varname>.
         </para>
         <para>
-          <command>WineDbg</command> is a Winelib application making
-          use of this API to allow debugging both any Wine or Winelib
-          applications as well as Wine itself (kernel and all DLLs).
+	  Wine also implements <filename>DBGHELP.DLL</filename> which
+	  allows to look into symbols and types from any module (if
+	  the module has been compiled with the proper options). 
+        </para>
+        <para>
+          <command>winedbg</command> is a Winelib application making
+          use of these APIs (<filename>KERNEL32.DLL</filename>'s
+	  debugging API and <filename>DBGHELP.DLL</filename>) to allow
+	  debugging both any Wine or Winelib applications as well as
+	  Wine itself (kernel and all DLLs).
         </para>
       </sect2>
     </sect1>
@@ -126,7 +133,7 @@
         <para>
           Any application (either a Windows' native executable, or a
           Winelib application) can be run through
-          <command>WineDbg</command>. Command line options and tricks
+          <command>winedbg</command>. Command line options and tricks
           are the same as for wine:
         </para>
         <screen>
@@ -139,11 +146,11 @@ winedbg "hl.exe -windowed"
         <title>Attaching</title>
 
         <para>
-          <command>WineDbg</command> can also be launched without any
-          command line argument: <command>WineDbg</command> is started
+          <command>winedbg</command> can also be launched without any
+          command line argument: <command>winedbg</command> is started
           without any attached process. You can get a list of running
           <varname>W-processes</varname> (and their
-          <varname>wpid</varname>'s) using the <command>walk
+          <varname>wpid</varname>'s) using the <command>info
             process</command> command, and then, with the
           <command>attach</command> command, pick up the
           <varname>wpid</varname> of the <varname>W-process</varname>
@@ -161,15 +168,16 @@ winedbg "hl.exe -windowed"
           stack overflow, division by zero, etc.
         </para>
         <para>
-          When an exception occurs, Wine checks if the <varname>W-process</varname> is
-          debugged. If so, the exception event is sent to the
-          debugger, which takes care of it: end of the story. This
-          mechanism is part of the standard Windows' debugging API.
+          When an exception occurs, Wine checks if the
+	  <varname>W-process</varname> is debugged. If so, the
+	  exception event is sent to the debugger, which takes care of
+	  it: end of the story. This mechanism is part of the standard
+	  Windows' debugging API.
         </para>
         <para>
           If the <varname>W-process</varname> is not debugged, Wine
           tries to launch a debugger. This debugger (normally
-          <command>WineDbg</command>, see III Configuration for more
+          <command>winedbg</command>, see III Configuration for more
           details), at startup, attaches to the
           <varname>W-process</varname> which generated the exception
           event. In this case, you are able to look at the causes of
@@ -178,7 +186,7 @@ winedbg "hl.exe -windowed"
           wrong.
         </para>
         <para>
-          If <command>WineDbg</command> is the standard debugger, the
+          If <command>winedbg</command> is the standard debugger, the
           <command>pass</command> and <command>cont</command> commands
           are the two ways to let the process go further for the
           handling of the  exception event.
@@ -221,7 +229,7 @@ winedbg "hl.exe -windowed"
           <para>
             since some of Wine's code uses exceptions and
             <function>try/catch</function> blocks to provide some
-            functionality, <command>WineDbg</command> can be entered
+            functionality, <command>winedbg</command> can be entered
             in such cases with segv exceptions. This happens, for
             example, with <function>IsBadReadPtr</function> function.
             In that case, the <command>pass</command> command shall be
@@ -248,10 +256,7 @@ winedbg "hl.exe -windowed"
         <para>
 	  Wine supports the new XP APIs, allowing for a debugger to
 	  detach from a program being debugged (see
-	  <command>detach</command> command). Unfortunately, as the
-	  debugger cannot, for now, neither clear its internal
-	  information, nor restart a new process, the debugger, after
-	  detaching itself, cannot do much except being quitted.  
+	  <command>detach</command> command).
         </para>
       </sect2>
     </sect1>
@@ -423,7 +428,7 @@ winedbg "hl.exe -windowed"
         <para>
           Start the program with <command>winedbg</command> instead of
           <command>wine</command>. When the program locks up switch to the 
-          winedbg terminal and press 
+          winedbg's terminal and press 
           <keycombo><keycap>Ctrl</keycap><keycap>C</keycap></keycombo>. this
           will stop the program and let you debug the program as you would for
           a crash. 
@@ -829,7 +834,7 @@ wine -debug myprog.exe
           starting point. Then you can set breakpoints:
         </para>
         <screen>
-  b RoutineName      (by outine name) OR
+  b RoutineName      (by routine name) OR
   b *0x812575        (by address)
         </screen>
         <para>
@@ -971,7 +976,7 @@ wine -debug myprog.exe
                 (<literal>%ld</literal>) to pass context dependent
                 information to  the debugger). You should put here a
                 complete path to your debugger
-                (<command>WineDbg</command> can of course be used, but
+                (<command>winedbg</command> can of course be used, but
                 any other Windows' debugging API aware debugger will
                 do).
 		The path to the debugger you chose to use must be reachable
@@ -1031,7 +1036,7 @@ wine -debug myprog.exe
         <title>WineDbg configuration</title>
 
         <para>
-          <command>WineDbg</command> can be configured through a number
+          <command>winedbg</command> can be configured through a number
           of options. Those options are stored in the registry, on a
           per user basis. The key is (in <emphasis>my</emphasis> registry)
         </para>
@@ -1040,7 +1045,7 @@ wine -debug myprog.exe
         </programlisting>
         <para>
           Those options can be read/written while inside
-          <command>WineDbg</command>, as part of the debugger
+          <command>winedbg</command>, as part of the debugger
           expressions. To refer to one of these options, its name must
           be  prefixed by a <literal>$</literal> sign. For example,
         </para>
@@ -1053,104 +1058,139 @@ set $BreakAllThreadsStartup = 1
         </para>
         <para>
           All the options are read from the registry when
-          <command>WineDbg</command> starts (if no corresponding value
+          <command>winedbg</command> starts (if no corresponding value
           is found, a default value is used), and are written back to
-          the registry when <command>WineDbg</command> exits (hence,
+          the registry when <command>winedbg</command> exits (hence,
           all modifications to those options are automatically saved
-          when <command>WineDbg</command> terminates).
+          when <command>winedbg</command> terminates).
         </para>
         <para>
           Here's the list of all options:
         </para>
 
-        <sect3>
-          <title>Controlling when the debugger is entered</title>
+	<variablelist>
+	  <varlistentry>
+	    <term><varname>BreakAllThreadsStartup</varname></term>
+	    <listitem>
+	      <para>
+		Set to <literal>TRUE</literal> if at all threads
+		start-up the debugger stops  set to
+		<literal>FALSE</literal> if only at the first thread
+		startup of a given process the debugger
+		stops. <literal>FALSE</literal> by default.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><varname>BreakOnCritSectTimeOut</varname></term>
+	    <listitem>
+	      <para>
+		Set to <literal>TRUE</literal> if the debugger stops
+		when a critical section times out (5 minutes);
+		<literal>TRUE</literal> by default.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><varname>BreakOnAttach</varname></term>
+	    <listitem>
+	      <para>
+		Set to <literal>TRUE</literal> if when
+		<command>winedbg</command> attaches to an existing
+		process after an unhandled exception,
+		<command>winedbg</command> shall be entered on the
+		first attach event. Since the attach event is
+		meaningless in the context of an exception event (the
+		next event  which is the exception event is of course
+		relevant), that option is likely to be
+		<literal>FALSE</literal>.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><varname>BreakOnFirstChance</varname></term>
+	    <listitem>
+	      <para>
+		An exception can generate two debug events. The first
+		one is passed to the debugger (known as a first
+		chance) just after the exception. The debugger can
+		then decide either to resume execution (see
+		<command>winedbg</command>'s <command>cont</command>
+		command) or pass the exception up to the exception
+		handler chain in the program (if it exists)
+		(<command>winedbg</command> implements this through
+		the <command>pass</command> command). If none of the
+		exception handlers takes care of the exception, the
+		exception event is sent again to the debugger (known
+		as last chance exception). You cannot pass on a last
+		exception. When the
+		<varname>BreakOnFirstChance</varname> exception is
+		<literal>TRUE</literal>, then winedbg is entered for
+		both first and last chance execptions (to
+		<literal>FALSE</literal>, it's only entered for last
+		chance exceptions).
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><varname>AlwaysShowThunk</varname></term>
+	    <listitem>
+	      <para>
+		Set to <literal>TRUE</literal> if the debugger, when
+		looking up for a symbol from its name, displays all
+		the thunks with that name. The default value
+		(<literal>FALSE</literal>) allows not to have to
+		choose between a symbol and all the import thunks
+		from all the DLLs using that symbols.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+    </sect1>
 
+    <sect1 id="dbg-expr">
+      <title>WineDbg Expressions and Variables</title>
+      <sect2>
+	<title>Expressions</title>
+
+	<para>
+	  Expressions in Wine Debugger are mostly written in a C
+	  form. However, there are a few discrepancies:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		Identifiers can take a '!' in their names. This allow
+		mainly to access symbols from different DLLs like
+		<function>USER32!CreateWindowExA</function>.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	        In cast operation, when specifying a structure or an
+		union, you must use the <type>struct</type> or
+		<type>union</type> keyword (even if your program uses a typedef). 
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  When specifying an identifier by its name, if several
+	  symbols with the same name exist, the debugger will prompt
+	  for the symbol you want to use. Pick up the one you want
+	  from its number.
+	</para>
+	<para>
+	  In lots of cases, you can also use regular expressions for
+	  looking for a symbol.
+	</para>
+	<para>
+	  <command>winedbg</command> defines its own set of
+	  variables. The configuration variables from above are part
+	  of them. Some others include:
           <variablelist>
             <varlistentry>
-              <term><varname>BreakAllThreadsStartup</varname></term>
-              <listitem>
-                <para>
-                  Set to <literal>TRUE</literal> if at all threads
-                  start-up the debugger stops  set to
-                  <literal>FALSE</literal> if only at the first thread
-                  startup of a given process the debugger stops.
-                  <literal>FALSE</literal> by default.
-                </para>
-              </listitem>
-            </varlistentry>
-            <varlistentry>
-              <term><varname>BreakOnCritSectTimeOut</varname></term>
-              <listitem>
-                <para>
-                  Set to <literal>TRUE</literal> if the debugger stops
-                  when a critical section times out (5 minutes);
-                  <literal>TRUE</literal> by default.
-                </para>
-              </listitem>
-            </varlistentry>
-            <varlistentry>
-              <term><varname>BreakOnAttach</varname></term>
-              <listitem>
-                <para>
-                  Set to <literal>TRUE</literal> if when
-                  <command>WineDbg</command> attaches to an existing
-                  process after an unhandled exception,
-                  <command>WineDbg</command> shall be entered on the
-                  first attach event. Since the attach event is
-                  meaningless in the context of an exception event
-                  (the next event  which is the exception event is of
-                  course relevant), that option is likely to be
-                  <literal>FALSE</literal>.
-                </para>
-              </listitem>
-            </varlistentry>
-            <varlistentry>
-              <term><varname>BreakOnFirstChance</varname></term>
-              <listitem>
-                <para>
-                  An exception can generate two debug events. The
-                  first one is passed to the debugger (known as a
-                  first chance) just after the exception. The debugger
-                  can then decides either to resume execution (see
-                  <command>WineDbg</command>'s <command>cont</command>
-                  command) or pass the exception up to the exception
-                  handler chain in the program (if it exists)
-                  (<command>WineDbg</command> implements this through the
-                  <command>pass</command> command). If none of the
-                  exception handlers takes care of the exception, the
-                  exception event is sent again to the debugger (known
-                  as last chance exception). You cannot pass on a last
-                  exception. When the
-                  <varname>BreakOnFirstChance</varname> exception is
-                  <literal>TRUE</literal>, then winedbg is entered for
-                  both first and last chance execptions (to
-                  <literal>FALSE</literal>, it's only entered for last
-                  chance exceptions).
-                </para>
-              </listitem>
-            </varlistentry>
-            <varlistentry>
-              <term><varname>BreakOnDllLoad</varname></term>
-              <listitem>
-                <para>
-                  Set to <literal>TRUE</literal> if the debugger stops
-                  when a DLL is loaded into memory; when the debugger
-                  is invoked after a crash, the DLLs already mapped in
-                  memory will not trigger this break.
-                  <literal>FALSE</literal> by default.
-                </para>
-              </listitem>
-            </varlistentry>
-          </variablelist>
-        </sect3>
-
-        <sect3>
-          <title>Context information</title>
-
-          <variablelist>
-            <varlistentry>
-              <term><varname>ThreadId</varname></term>
+              <term><varname>$ThreadId</varname></term>
               <listitem>
                 <para>
                   ID of the <varname>W-thread</varname> currently
@@ -1159,7 +1199,7 @@ set $BreakAllThreadsStartup = 1
               </listitem>
             </varlistentry>
             <varlistentry>
-              <term><varname>ProcessId</varname></term>
+              <term><varname>$ProcessId</varname></term>
               <listitem>
                 <para>
                   ID of the <varname>W-thread</varname> currently
@@ -1171,21 +1211,21 @@ set $BreakAllThreadsStartup = 1
               <term>&lt;registers></term>
               <listitem>
                 <para>
-                  All CPU registers are also available
+                  All CPU registers are also available, using $ as a
+		  prefix. You can use <command>info regs</command> to
+		  get a list of avaible CPU registers
                 </para>
               </listitem>
             </varlistentry>
           </variablelist>
-
-          <para>
-            The <varname>ThreadId</varname> and
-            <varname>ProcessId</varname> variables can be handy to set
-            conditional breakpoints on a given thread or process.
-          </para>
-        </sect3>
+	</para>
+	<para>
+	  The <varname>$ThreadId</varname> and
+	  <varname>$ProcessId</varname> variables can be handy to set
+	  conditional breakpoints on a given thread or process.
+	</para>
       </sect2>
     </sect1>
-
 
     <sect1 id="dbg-commands">
       <title>WineDbg Command Reference</title>
@@ -1193,137 +1233,439 @@ set $BreakAllThreadsStartup = 1
       <sect2>
         <title>Misc</title>
 
-        <screen>
-abort		aborts the debugger
-quit		exits the debugger
-
-attach N	attach to a W-process (N is its ID, numeric or hexadecimal(0xN)). 
-		IDs can be obtained using the walk process command.  Note the
-		walk process command returns hexadecimal values 
-detach          detach from a W-process. WineDbg will exit (this may
-                be changed later on)
-        </screen>
-        <screen>
-help		prints some help on the commands
-help info	prints some help on info commands
-        </screen>
-        <screen>
-mode 16		switch to 16 bit mode
-mode 32		switch to 32 bit mode
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's misc. commands</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>abort</command></entry>
+		  <entry>aborts the debugger</entry>
+		</row>
+		<row>
+		  <entry><command>quit</command></entry>
+		  <entry>exits the debugger</entry>
+		</row>
+		<row>
+		  <entry><command>attach&nbsp;N</command></entry>
+		  <entry>
+		    attach to a W-process (N is its ID, numeric
+		    or hexadecimal (0xN)). IDs can be obtained using
+		    the info process command. Note the info process
+		    command returns hexadecimal values.
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>detach</command></entry>
+		  <entry>detach from a W-process.</entry>
+		</row>
+		<row>
+		  <entry><command>help</command></entry>
+		  <entry>prints some help on the commands</entry>
+		</row>
+		<row>
+		  <entry><command>help info</command></entry>
+		  <entry>prints some help on info commands</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
       </sect2>
 
       <sect2>
         <title>Flow control</title>
 
-        <screen>
-cont		continue execution until next breakpoint or exception.
-pass		pass the exception event up to the filter chain.
-step		continue execution until next C line of code (enters
-		function call)
-next 		continue execution until next C line of code (doesn't
-		enter function call)
-stepi		execute next assembly instruction (enters function
-		call)
-nexti		execute next assembly instruction (doesn't enter
-		function call)
-finish		do nexti commands until current function is exited
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's flow control commands</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>cont</command></member>
+			<member><command>c</command></member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>continue execution until next breakpoint or
+		    exception.</entry>
+		</row>
+		<row>
+		  <entry><command>pass</command></entry>
+		  <entry>pass the exception event up to the filter
+		    chain.</entry>
+		</row>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>step</command></member>
+			<member><command>s</command></member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>
+		    continue execution until next 'C' line of code
+		    (enters function call)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>next</command></member>
+			<member><command>n</command></member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>
+		    continue execution until next 'C' line of code
+		    (doesn't enter function call)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>stepi</command></member>
+			<member><command>si</command></member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>
+		    execute next assembly instruction (enters function
+		    call)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>nexti</command></member>
+			<member><command>ni</command></member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>
+		    execute next assembly instruction (doesn't enter
+		    function call)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>finish</command></member>
+			<member><command>f</command></member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>execute until current function is exited</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
         <para>
-          cont, step, next, stepi, nexti can be postfixed by a
-          number (N), meaning that the command must be executed N
-          times.
+          <command>cont</command>, <command>step</command>,
+	  <command>next</command>, <command>stepi</command>,
+	  <command>nexti</command> can be postfixed by a number (N),
+	  meaning that the command must be executed N times. 
         </para>
       </sect2>
 
       <sect2>
         <title>Breakpoints, watch points</title>
 
-        <screen>
-enable N	enables (break|watch)point #N
-disable N	disables (break|watch)point #N
-delete N	deletes  (break|watch)point #N
-cond N		removes any a existing condition to (break|watch)point N
-cond N &lt;expr&gt;	adds condition &lt;expr&gt; to (break|watch)point N. &lt;expr&gt;
-		will be evaluated each time the breakpoint is hit. If
-		the result is a zero value, the breakpoint isn't
-		triggered
-break * N	adds a breakpoint at address N
-break &lt;id&gt;	adds a breakpoint at the address of symbol &lt;id&gt;
-break &lt;id&gt; N	adds a breakpoint at the address of symbol &lt;id&gt; (N ?)
-break N		adds a breakpoint at line N of current source file
-break		adds a breakpoint at current $pc address
-watch * N	adds a watch command (on write) at address N (on 4 bytes)
-watch &lt;id&gt;	adds a watch command (on write) at the address of
-		symbol &lt;id&gt;
-info break	lists all (break|watch)points (with state)
-        </screen>
 	<para>
-	  When setting a breakpoint on an &lt;id&gt;, if several symbols with this
-	  &lt;id&gt; exist, the debugger will prompt for the symbol you want to use.
-	  Pick up the one you want from its number.
+	  <table>
+	    <title>WineDbg's break & watch points</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>enable&nbsp;N</command></entry>
+		  <entry>enables (break|watch)point #N</entry>
+		</row>
+		<row>
+		  <entry><command>disable&nbsp;N</command></entry>
+		  <entry>disables (break|watch)point #N</entry>
+		</row>
+		<row>
+		  <entry><command>delete&nbsp;N</command></entry>
+		  <entry>deletes (break|watch)point #N</entry>
+		</row>
+		<row>
+		  <entry><command>cond&nbsp;N</command></entry>
+		  <entry>
+		    removes any existing condition to
+		    (break|watch)point N
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>cond&nbsp;N &lt;expr&gt;</command>
+		  </entry>
+		  <entry>
+		    adds condition &lt;expr&gt; to (break|watch)point
+		    N. &lt;expr&gt; will be evaluated each time the
+		    breakpoint is hit. If the result is a zero value,
+		    the breakpoint isn't triggered
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>break&nbsp;*&nbsp;N</command></entry>
+		  <entry>adds a breakpoint at address N</entry>
+		</row>
+		<row>
+		  <entry><command>break &lt;id&gt;</command></entry>
+		  <entry>
+		    adds a breakpoint at the address of symbol
+		    &lt;id&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>break &lt;id&gt;&nbsp;N</command></entry>
+		  <entry>
+		    adds a breakpoint at the address of symbol
+		    &lt;id&gt; (N ?)
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>break&nbsp;N</command></entry>
+		  <entry>
+		    adds a breakpoint at line N of current source file
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>break</command></entry>
+		  <entry>
+		    adds a breakpoint at current $PC address
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>watch&nbsp;*&nbsp;N</command></entry>
+		  <entry>
+		    adds a watch command (on write) at address N (on 4
+		    bytes)
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>watch &lt;id&gt;</command></entry>
+		  <entry>
+		    adds a watch command (on write) at the address of
+		    symbol &lt;id&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info break</command></entry>
+		  <entry>
+		    lists all (break|watch)points (with state)
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
 	</para>
-        <para>
-          Alternatively you can specify a DLL in the &lt;id&gt; (for example
-          MYDLL.DLL.myFunc for function myFunc of
-          <filename>G:\AnyPath\MyDll.dll)</filename>.
-        </para>
         <para>
           You can use the symbol <emphasis>EntryPoint</emphasis> to stand for
           the entry point of the Dll.
         </para>
 	<para>
-          When setting a break/watch-point by &lt;id&gt;, if the symbol cannot be found (for example, the symbol is contained in a not yet loaded module), winedbg will
-          recall the name of the symbol and will try to set the breakpoint each time a new module is loaded (until it succeeds).
+          When setting a break/watch-point by &lt;id&gt;, if the
+	  symbol cannot be found (for example, the symbol is contained
+	  in a not yet loaded module), winedbg will recall the name of
+	  the symbol and will try to set the breakpoint each time a
+	  new module is loaded (until it succeeds). 
         </para>
       </sect2>
 
       <sect2>
         <title>Stack manipulation</title>
 
-        <screen>
-bt		print calling stack of current thread
-bt N		print calling stack of thread of ID N (note: this
-                doesn't change the position of the current frame as
-		manipulated by the up & dn commands)
-up		goes up one frame in current thread's stack
-up N		goes up N frames in current thread's stack
-dn		goes down one frame in current thread's stack
-dn N		goes down N frames in current thread's stack
-frame N		set N as the current frame for current thread's stack
-info local	prints information on local variables for current
-		function
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's stack manipulation</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>bt</command></entry>
+		  <entry>print calling stack of current thread</entry>
+		</row>
+		<row>
+		  <entry><command>bt&nbsp;N</command></entry>
+		  <entry>
+		    print calling stack of thread of ID N (note: this
+		    doesn't change the position of the current frame
+		    as manipulated by the <command>up</command> and
+		    <command>dn</command> commands)
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>up</command></entry>
+		  <entry>
+		    goes up one frame in current thread's stack
+		  </entry> 
+		</row>
+		<row>
+		  <entry><command>up&nbsp;N</command></entry>
+		  <entry>
+		    goes up N frames in current thread's stack
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>dn</command></entry>
+		  <entry>
+		    goes down one frame in current thread's stack
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>dn&nbsp;N</command></entry>
+		  <entry>
+		    goes down N frames in current thread's stack
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>frame&nbsp;N</command></entry>
+		  <entry>
+		    set N as the current frame for current thread's
+		    stack
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;local</command></entry>
+		  <entry>
+		    prints information on local variables for current
+		    function frame
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
       </sect2>
 
       <sect2>
         <title>Directory & source file manipulation</title>
 
-        <screen>
-show dir
-dir &lt;pathname&gt;
-dir
-symbolfile &lt;pathname&gt;   loads external symbol definition
-symbolfile &lt;pathname&gt; N loads external symbol definition
-                           (applying an offset of N to addresses)
-        </screen>
-        <screen>
-list		lists 10 source lines from current position
-list - 		lists 10 source lines before current position
-list N		lists 10 source lines from line N in current file
-list &lt;path&gt;:N	lists 10 source lines from line N in file &lt;path&gt;
-list &lt;id&gt;	lists 10 source lines of function &lt;id&gt;
-list * N	lists 10 source lines from address N
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's directory & source file manipulation</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>show&nbsp;dir</command></entry>
+		  <entry>
+		    prints the list of dir:s where source files are
+		    looked for
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>dir&nbsp;&lt;pathname&gt;</command>
+		  </entry>
+		  <entry>
+		    adds &lt;pathname&gt; to the list of dir:s
+		    where to look for source files
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>dir</command></entry>
+		  <entry>
+		    deletes the list of dir:s where to look for source
+		    files
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      symbolfile&nbsp;&lt;pathname&gt;
+		    </command>
+		  </entry>
+		  <entry>loads external symbol definition</entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      symbolfile&nbsp;&lt;pathname&gt;&nbsp;N
+		    </command>
+		  </entry>
+		  <entry>
+		    loads external symbol definition (applying an
+		    offset of N to addresses)
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>list</command></entry>
+		  <entry>
+		    lists 10 source lines forwards from current
+		    position
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>list&nbsp;-</command></entry>
+		  <entry>
+		    lists 10 source lines backwards from current
+		    position
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>list&nbsp;N</command></entry>
+		  <entry>
+		    lists 10 source lines from line N in current file
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>list&nbsp;&lt;path&gt;:N</command>
+		  </entry>
+		  <entry>
+		    lists 10 source lines from line N in file
+		    &lt;path&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>list &lt;id&gt;</command></entry>
+		  <entry>
+		    lists 10 source lines of function &lt;id&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>list&nbsp;*&nbsp;N</command></entry>
+		  <entry>lists 10 source lines from address N</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
+
         <para>
           You can specify the end target (to change the 10 lines
           value) using the ','. For example:
-        </para>
-        <screen>
-list 123, 234 	lists source lines from line 123 up to line 234 in
-		current file
-list foo.c:1,56	lists source lines from line 1 up to 56 in file foo.c
-        </screen>
+	  <table>
+	    <title>WineDbg's list command examples</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>list 123, 234</command></entry>
+		  <entry>
+		    lists source lines from line 123 up to line 234 in
+		    current file
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>list foo.c:1,&nbsp;56</command></entry>
+		  <entry>
+		    lists source lines from line 1 up to 56 in file
+		    foo.c
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
       </sect2>
 
       <sect2>
@@ -1331,126 +1673,367 @@ list foo.c:1,56	lists source lines from line 1 up to 56 in file foo.c
 
         <para>
           A display is an expression that's evaluated and printed
-          after the execution of any <command>WineDbg</command>
+          after the execution of any <command>winedbg</command>
           command.
         </para>
-        <screen>
-display		lists the active displays
-info display	(same as above command)
-display &lt;expr&gt;	adds a display for expression &lt;expr&gt;
-display /fmt &lt;expr&gt;	adds a display for expression &lt;expr&gt;. Printing
-		evaluated &lt;expr&gt; is done using the given format (see
-		print command for more on formats)
-del display N	deletes display #N
-undisplay N	(same as del display)
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's displays</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member><command>display</command></member>
+			<member>
+			  <command>info&nbsp;display</command>
+			</member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>lists the active displays</entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>display&nbsp;&lt;expr&gt;</command>
+		  </entry>
+		  <entry>
+		    adds a display for expression &lt;expr&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      display&nbsp;/fmt&nbsp;&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    adds a display for expression
+		    &lt;expr&gt;. Printing evaluated &lt;expr&gt; is
+		    done using the given format (see
+		    <command>print</command> command for more on
+		    formats)
+		  </entry> 
+		</row>
+		<row>
+		  <entry>
+		    <msgtext>
+		      <simplelist type="inline">
+			<member>
+			  <command>del&nbsp;display&nbsp;N</command>
+			</member>
+			<member>
+			  <command>undisplay&nbsp;N</command>
+			</member>
+		      </simplelist>
+		    </msgtext>
+		  </entry>
+		  <entry>deletes display #N</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
       </sect2>
 
       <sect2>
         <title>Disassembly</title>
 
-        <screen>
-disas		disassemble from current position
-disas &lt;expr&gt;	disassemble from address &lt;expr&gt;
-disas &lt;expr&gt;,&lt;expr&gt;disassembles code between addresses specified by
-		the two &lt;expr&gt;
-        </screen>
-      </sect2>
-
-      <sect2>
-        <title>Information on Wine's internals</title>
-
-        <screen>
-info class &lt;id&gt; prints information on Windows's class &lt;id&gt;
-walk class	lists all Windows' class registered in Wine
-info share	lists all the dynamic libraries loaded the debugged
-		program (including .so files, NE and PE DLLs)
-info module &lt;N&gt; prints information on module of handle &lt;N&gt;
-walk module	lists all modules loaded by debugged program
-info regs	prints the value of CPU register
-info segment &lt;N&gt;prints information on segment &lt;N&gt;
-info segment	lists all allocated segments
-info stack	prints the values on top of the stack
-walk map	lists all virtual mappings used by the debugged
-		program
-walk map &lt;N&gt;    lists all virtual mappings used by the program of pid &lt;N&gt;
-info wnd &lt;N&gt;    prints information of Window of handle &lt;N&gt;
-walk wnd	lists all the window hierarchy starting from the
-		desktop window
-walk wnd &lt;N&gt;    lists all the window hierarchy starting from the
-		window of handle &lt;N&gt;
-walk process	lists all w-processes in Wine session
-walk thread	lists all w-threads in Wine session
-walk exception  lists the exception frames (starting from current
-                stack frame)
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's dissassembly</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>disas</command></entry>
+		  <entry>disassemble from current position</entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>disas&nbsp;&lt;expr&gt;</command>
+		  </entry>
+		  <entry>
+		    disassemble from address &lt;expr&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      disas&nbsp;&lt;expr&gt;,&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    disassembles code between addresses specified by
+		    the two &lt;expr&gt;
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
       </sect2>
 
       <sect2>
         <title>Memory (reading, writing, typing)</title>
 
-        <screen>
-x &lt;expr&gt;	examines memory at &lt;expr&gt; address
-x /fmt &lt;expr&gt;	examines memory at &lt;expr&gt; address using format /fmt
-print &lt;expr&gt;	prints the value of &lt;expr&gt; (possibly using its type)
-print /fmt &lt;expr&gt;	prints the value of &lt;expr&gt; (possibly using its
-		type)
-set &lt;lval&gt;=&lt;expr&gt;	writes the value of &lt;expr&gt; in &lt;lval&gt;
-whatis &lt;expr&gt;	prints the C type of expression &lt;expr&gt;
-        </screen>
+	<para>
+	  <table>
+	    <title>WineDbg's memory management</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry>
+		    <command>x&nbsp;&lt;expr&gt;</command>
+		  </entry>
+		  <entry>
+		    examines memory at &lt;expr&gt; address
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      x&nbsp;/fmt&nbsp;&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    examines memory at &lt;expr&gt; address using
+		    format /fmt
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      print&nbsp;&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    prints the value of &lt;expr&gt; (possibly using
+		    its type)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      print&nbsp;/fmt&nbsp;&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>prints the value of &lt;expr&gt; (possibly
+		    using its type)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      set&nbsp;&lt;lval&gt;&nbsp;=&nbsp;&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    writes the value of &lt;expr&gt; in &lt;lval&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      whatis&nbsp;&lt;expr&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    prints the C type of expression &lt;expr&gt;
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
         <para>
           <filename>/fmt</filename> is either <filename>/&lt;letter&gt;</filename> or
           <filename>/&lt;count&gt;&lt;letter&gt;</filename> letter can be
-        </para>
-        <screen>
-s =&gt; an ASCII string
-u =&gt; an Unicode UTF16 string
-i =&gt; instructions (disassemble)
-x =&gt; 32 bit unsigned hexadecimal integer
-d =&gt; 32 bit signed decimal integer
-w =&gt; 16 bit unsigned hexadecimal integer
-c =&gt; character (only printable 0x20-0x7f are actually printed)
-b =&gt; 8 bit unsigned hexadecimal integer
-g =&gt; GUID
-        </screen>
-      </sect2>
-
-      <sect2>
-	<title>Expressions</title>
-
-	<para>
-	  Expressions in Wine Debugger are mostly written in a C form. However, there
-	  are a few discrepancies:
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		Identifiers can take a '.' in their names. This allow
-		mainly to access symbols from different DLLs like
-		<function>USER32.DLL.CreateWindowA</function>.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-	        The debugger will try to distinguish this writing with structure operations.
-		Therefore, you can only use the previous writing in operations manipulating
-		symbols ({break|watch}points, type information command...).
-	      </para>
-	    </listitem>
-	  </itemizedlist>
+	  <simplelist type="horiz" columns="2">
+	    <member>s</member><member>an ASCII string</member>
+	    <member>u</member><member>an Unicode UTF16 string</member>
+	    <member>i</member><member>instructions (disassemble)</member>
+	    <member>x</member><member>32 bit unsigned hexadecimal integer</member>
+	    <member>d</member><member>32 bit signed decimal integer</member>
+	    <member>w</member><member>16 bit unsigned hexadecimal integer</member>
+	    <member>c</member><member>character (only printable 0x20-0x7f are actually printed)</member>
+	    <member>b</member><member>8 bit unsigned hexadecimal integer</member>
+	    <member>g</member><member>GUID</member>
+	  </simplelist>
 	</para>
       </sect2>
+
       <sect2>
-          <title>Debug channels</title>
-	      <para>
-               It is possible to turn on and off debug messages as you are debugging using
-               the set command.
-              </para>
-            <screen>
-set + warn win	=&gt; turn on warn on 'win' channel
-set + win	=&gt; turn on warn/fixme/err/trace on 'win' channel
-set - win	=&gt; turn off warn/fixme/err/trace on 'win' channel
-set - fixme	=&gt; turn off the 'fixme' class
-            </screen>
+        <title>Information on Wine's internals</title>
+
+	<para>
+	  <table>
+	    <title>WineDbg's Win32 objects management</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>info&nbsp;class</command></entry>
+		  <entry>
+		    lists all Windows' classes registered in Wine
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      info&nbsp;class&nbsp;&lt;id&gt;
+		    </command>
+		  </entry>
+		  <entry>
+		    prints information on Windows's class &lt;id&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;share;</command></entry>
+		  <entry>
+		    lists all the dynamic libraries loaded in the
+		    debugged program (including .so files, NE and PE
+		    DLLs)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>
+		      info&nbsp;share&nbsp;&lt;N&gt;;
+		    </command>
+		  </entry>
+		  <entry>
+		    prints information on module at address &lt;N&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info regs;</command></entry>
+		  <entry>
+		    prints the value of the CPU registers
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>info segment &lt;N&gt;;</command>
+		  </entry>
+		  <entry>
+		    prints information on segment &lt;N&gt; (i386
+		    only)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>info&nbsp;segment;</command>
+		  </entry>
+		  <entry>
+		    lists all allocated segments (i386 only)
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;stack;</command></entry>
+		  <entry>
+		    prints the values on top of the stack
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;map;</command></entry>
+		  <entry>
+		    lists all virtual mappings used by the debugged
+		    program
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>info&nbsp;map&nbsp;&lt;N&gt;</command>
+		  </entry>
+		  <entry>
+		    lists all virtual mappings used by the program of
+		    pid &lt;N&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>info&nbsp;wnd&nbsp;&lt;N&gt;</command>
+		  </entry>
+		  <entry>
+		    prints information of Window of handle &lt;N&gt;
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;wnd</command></entry>
+		  <entry>
+		    lists all the window hierarchy starting from the
+		    desktop window
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info process</command></entry>
+		  <entry>
+		    lists all w-processes in Wine session
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;thread</command></entry>
+		  <entry>lists all w-threads in Wine session</entry>
+		</row>
+		<row>
+		  <entry><command>info&nbsp;exception</command></entry>
+		  <entry>
+		    lists the exception frames (starting from current
+		    stack frame)
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
+      </sect2>
+
+      <sect2 id="winedbg-dbg-chan">
+	<title>Debug channels</title>
+	<para>
+	  It is possible to turn on and off debug messages as you
+	  are debugging using the set command.
+	  See <xref linkend="debugging"> for more details on debug
+	  channels.
+	</para>
+
+	<para>
+	  <table>
+	    <title>WineDbg's debug channels' management</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry>
+		    <command>set&nbsp;+&nbsp;warn&nbsp;win</command>
+		  </entry>
+		  <entry>turn on warn on 'win' channel</entry>	
+		</row>
+		<row>
+		  <entry>
+		    <command>set&nbsp;+&nbsp;win</command>
+		  </entry>
+		  <entry>
+		    turn on warn/fixme/err/trace on 'win' channel
+		  </entry> 
+		</row>
+		<row>
+		  <entry>
+		    <command>set&nbsp;-&nbsp;win</command>
+		  </entry>
+		  <entry>
+		    turn off warn/fixme/err/trace on 'win' channel
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <command>set&nbsp;-&nbsp;fixme</command>
+		  </entry>
+		  <entry>turn off the 'fixme' class</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
       </sect2>
 
     </sect1>
@@ -1467,7 +2050,7 @@ set - fixme	=&gt; turn off the 'fixme' class
 	  any Win32 application. To enable this mode, just add
 	  <parameter>--gdb</parameter> to winedbg command line. You'll
 	  end up on a GDB prompt. You'll have to use the GDB commands
-	  (not the wine nes).
+	  (not WineDbg's).
 	</para>
 
 	<para>
@@ -1491,13 +2074,30 @@ set - fixme	=&gt; turn off the 'fixme' class
 	</para>
 
 	<para>
-	  A few wine extensions available through the monitor command.
-<screen>
-monitor wnd           lists all window in the Wine session
-monitor proc          lists all processes in the Wine session
-monitor mem           displays memory mapping of debugged process
-                      (doesn't work)
-</screen>
+	  A few Wine extensions available through the monitor command.
+	  <table>
+	    <title>WineDbg's debug channels' management</title>
+	    <tgroup cols="2" align="left">
+	      <tbody>
+		<row>
+		  <entry><command>monitor&nbsp;wnd</command></entry>
+		  <entry>lists all window in the Wine session</entry>
+		</row>
+		<row>
+		  <entry><command>monitor&nbsp;proc</command></entry>
+		  <entry>
+		    lists all processes in the Wine session
+		  </entry>
+		</row>
+		<row>
+		  <entry><command>monitor&nbsp;mem</command></entry>
+		  <entry>
+		    displays memory mapping of debugged process
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
 	</para>
       </sect2>
 
@@ -1505,7 +2105,7 @@ monitor mem           displays memory mapping of debugged process
 	<title>Graphical frontends to gdb</title>
 
 	<para>
-          This section will describe how you can debug wine using the
+          This section will describe how you can debug Wine using the
           GDB mode of winedbg and some graphical front ends to GDB for
           those of you who really like graphical debuggers.
         </para>
@@ -1515,15 +2115,14 @@ monitor mem           displays memory mapping of debugged process
 	  
 	  <para>
             Use the following steps, in this order:
-<orderedlist>
+	    <orderedlist>
 	      <listitem>
 		<para>
-Start the wine debugger with a command line
-like:
+		  Start the Wine debugger with a command line like:
 <screen>
-	winedbg -- --gdb --no-start &lt;name_of_exe_to_debug.exe&gt;
+	winedbg --gdb --no-start &lt;name_of_exe_to_debug.exe&gt;
 </screen>
-</para>
+		</para>
 	      </listitem>
 	      <listitem>
 		<para>
@@ -1533,23 +2132,25 @@ like:
 	      <listitem>
 		<para>
 		  In ddd, use the 'Open File' or 'Open Program' to
-                  point to the wine executable
+                  point to the Wine executable (which is either
+		  wine-pthread or wine-kthread depending on your
+		  settings).
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-In the output of 1/, there's a line like 
+		  In the output of 1/, there's a line like 
 <screen>
 	target remote localhost:32878
 </screen>
-copy that line and paste into ddd command pane (the one with the (gdb)
-prompt)
-</para>
+		  copy that line and paste into ddd command pane (the
+		  one with the (gdb) prompt)
+		</para>
 	      </listitem>
 	    </orderedlist>
-The program should now be loaded and up and running. If you want, you
-can also add in 1/ after the name of the exec all the needed
-parameters
+	    The program should now be loaded and up and running. If
+	    you want, you can also add in 1/ after the name of the
+	    exec all the needed parameters
           </para>
 	</sect3>
 	<sect3>
@@ -1560,9 +2161,9 @@ parameters
             <orderedlist>
 	      <listitem>
 		<para>
-                  Start the wine debugger with a command line like:
+                  Start the Wine debugger with a command line like:
 <screen>
-	winedbg -- --gdb --no-start &lt;name_of_exe_to_debug.exe&gt;
+	winedbg --gdb --no-start &lt;name_of_exe_to_debug.exe&gt;
 </screen>
 </para>
 	      </listitem>
@@ -1572,18 +2173,20 @@ parameters
 <screen>
 	target remote localhost:32878
 </screen>
-Start kdbg with
+		  Start kdbg with
 <screen>
 kdbg -r localhost:32878 wine
 </screen>
-localhost:32878 is not a fixed value, but has been printed in step
-1/. 'wine' should also be the full path to the wine executable.
-</para>
+		  localhost:32878 is not a fixed value, but has been
+		  printed in step 1/. 'wine' should also be the full
+		  path to the Wine executable (which is either
+		  wine-pthread or wine-kthread depending on your settings).
+		</para>
 	      </listitem>
 	    </orderedlist>
-The program should now be loaded and up and running. If you want, you
-can also add in 1/ after the name of the exec all the needed
-parameters
+	    The program should now be loaded and up and running. If
+	    you want, you can also add in 1/ after the name of the
+	    exec all the needed parameters
           </para>
 	</sect3>
       </sect2>

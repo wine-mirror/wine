@@ -21,178 +21,229 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <sys/types.h>
 
 #include "debugger.h"
+#include "wine/debug.h"
 
-#include <stdarg.h>
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-#define DISPTAB_DELTA 8		/* needs to be power of 2, search for MARK to see why :) */
+/* needs to be power of 2, search for MARK to see why :) */
+#define DISPTAB_DELTA 8
 
-struct display {
-	struct expr *exp;
-	int count;
-	char format;
-	char enabled;
-	struct name_hash *function_name;
+struct display
+{
+    struct expr*        exp;
+    int                 count;
+    char                format;
+    char                enabled;
+    char                func_buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        func;
 };
 
 static struct display *displaypoints = NULL;
 static unsigned int maxdisplays = 0, ndisplays = 0;
 
-static struct name_hash *DEBUG_GetCurrentFrameFunctionName(void)
+static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
 {
-	struct name_hash *name;
-	unsigned int eip, ebp;
-
-	if (DEBUG_GetCurrentFrame(&name, &eip, &ebp))
-		return name;
-	return NULL;
+    if (si1->NameLen != si2->NameLen) return FALSE;
+    return !memcmp(si1, si2, sizeof(SYMBOL_INFO) + si1->NameLen);
 }
 
-int DEBUG_AddDisplay(struct expr *exp, int count, char format, int in_frame)
+int display_add(struct expr *exp, int count, char format, int in_frame)
 {
-	int i;
+    int                 i;
 
-	for (i = 0; i < ndisplays; i++)
-		if (displaypoints[i].exp == NULL)
-			break;
+    for (i = 0; i < ndisplays; i++)
+        if (displaypoints[i].exp == NULL)
+            break;
 
-	if (i == maxdisplays)	/* no space left - expand */
-		displaypoints = DBG_realloc(displaypoints,
-			(maxdisplays += DISPTAB_DELTA) * sizeof(*displaypoints));
+    if (i == maxdisplays)
+    {
+	/* no space left - expand */
+        maxdisplays += DISPTAB_DELTA;
+        displaypoints = dbg_heap_realloc(displaypoints,
+                                         maxdisplays * sizeof(*displaypoints));
+    }
 
-	if (i == ndisplays)
-		++ndisplays;
+    if (i == ndisplays) ndisplays++;
 
-	displaypoints[i].exp = DEBUG_CloneExpr(exp);
-	displaypoints[i].count = count;
-	displaypoints[i].format = format;
-	displaypoints[i].enabled = TRUE;
-	displaypoints[i].function_name =
-		(in_frame ? DEBUG_GetCurrentFrameFunctionName() : NULL);
+    displaypoints[i].exp           = expr_clone(exp);
+    displaypoints[i].count         = count;
+    displaypoints[i].format        = format;
+    displaypoints[i].enabled       = TRUE;
+    if (in_frame)
+    {
+        displaypoints[i].func = (SYMBOL_INFO*)displaypoints[i].func_buffer;
+        displaypoints[i].func->SizeOfStruct = sizeof(SYMBOL_INFO);
+        displaypoints[i].func->MaxNameLen = sizeof(displaypoints[i].func_buffer) -
+            sizeof(*displaypoints[i].func);
+        if (!stack_get_frame(displaypoints[i].func, NULL))
+        {
+            expr_free(displaypoints[i].exp);
+            displaypoints[i].exp = NULL;
+            return FALSE;
+        }
+    }
+    else displaypoints[i].func = NULL;
 
-	return TRUE;
+    return TRUE;
 }
 
-int DEBUG_InfoDisplay(void)
+int display_info(void)
 {
-	int i;
+    int                 i;
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        func;
+    const char*         info;
 
-	for (i = 0; i < ndisplays; i++) {
-		if (displaypoints[i].exp == NULL)
-			continue;
+    func = (SYMBOL_INFO*)buffer;
+    func->SizeOfStruct = sizeof(SYMBOL_INFO);
+    func->MaxNameLen = sizeof(buffer) - sizeof(*func);
+    if (!stack_get_frame(func, NULL)) return FALSE;
 
-		if (displaypoints[i].function_name)
-			DEBUG_Printf("%d in %s%s : ", i + 1,
-				DEBUG_GetSymbolName(displaypoints[i].function_name),
-				(displaypoints[i].enabled ?
-					(displaypoints[i].function_name != DEBUG_GetCurrentFrameFunctionName() ?
-						" (out of scope)" : "")
-					: " (disabled)")
-				);
-		else
-			DEBUG_Printf("%d%s : ", i + 1,
-                                     (displaypoints[i].enabled ? "" : " (disabled)"));
-		DEBUG_DisplayExpr(displaypoints[i].exp);
-		DEBUG_Printf("\n");
-	}
+    for (i = 0; i < ndisplays; i++)
+    {
+        if (displaypoints[i].exp == NULL) continue;
 
-	return TRUE;
+        if (displaypoints[i].enabled)
+        {
+            if (displaypoints[i].func && !cmp_symbol(displaypoints[i].func, func))
+                info = " (out of scope)";
+            else
+                info = "";
+        }
+        else
+            info = " (disabled)";
+        dbg_printf("%d in %s%s: ", 
+                   i + 1, func ? displaypoints[i].func->Name : "", info);
+        expr_print(displaypoints[i].exp);
+        dbg_printf("\n");
+    }
+    return TRUE;
 }
 
-void DEBUG_PrintOneDisplay(int i)
+static void print_one_display(int i)
 {
-	DBG_VALUE value;
+    struct dbg_lvalue   lvalue;
 
-	if (displaypoints[i].enabled) {
-		value = DEBUG_EvalExpr(displaypoints[i].exp);
-		if (value.type == NULL) {
-			DEBUG_Printf("Unable to evaluate expression ");
-			DEBUG_DisplayExpr(displaypoints[i].exp);
-			DEBUG_Printf("\nDisabling display %d ...\n", i + 1);
-			displaypoints[i].enabled = FALSE;
-			return;
-		}
-	}
+    if (displaypoints[i].enabled) 
+    {
+        lvalue = expr_eval(displaypoints[i].exp);
+        if (lvalue.typeid == dbg_itype_none)
+        {
+            dbg_printf("Unable to evaluate expression ");
+            expr_print(displaypoints[i].exp);
+            dbg_printf("\nDisabling display %d ...\n", i + 1);
+            displaypoints[i].enabled = FALSE;
+            return;
+        }
+    }
 
-	DEBUG_Printf("%d  : ", i + 1);
-	DEBUG_DisplayExpr(displaypoints[i].exp);
-	DEBUG_Printf(" = ");
-	if (!displaypoints[i].enabled)
-		DEBUG_Printf("(disabled)\n");
-	else
+    dbg_printf("%d: ", i + 1);
+    expr_print(displaypoints[i].exp);
+    dbg_printf(" = ");
+    if (!displaypoints[i].enabled)
+        dbg_printf("(disabled)\n");
+    else
 	if (displaypoints[i].format == 'i')
-		DEBUG_ExamineMemory(&value, displaypoints[i].count, displaypoints[i].format);
+            memory_examine(&lvalue, displaypoints[i].count, displaypoints[i].format);
 	else
-		DEBUG_Print(&value, displaypoints[i].count, displaypoints[i].format, 0);
+            print_value(&lvalue, displaypoints[i].format, 0);
 }
 
-int DEBUG_DoDisplay(void)
+int display_print(void)
 {
-	int i;
-	struct name_hash *cur_function_name = DEBUG_GetCurrentFrameFunctionName();
+    int                 i;
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        func;
 
-	for (i = 0; i < ndisplays; i++) {
-		if (displaypoints[i].exp == NULL || !displaypoints[i].enabled)
-			continue;
-		if (displaypoints[i].function_name
-		    && displaypoints[i].function_name != cur_function_name)
-			continue;
-		DEBUG_PrintOneDisplay(i);
-	}
+    func = (SYMBOL_INFO*)buffer;
+    func->SizeOfStruct = sizeof(SYMBOL_INFO);
+    func->MaxNameLen = sizeof(buffer) - sizeof(*func);
+    if (!stack_get_frame(func, NULL)) return FALSE;
 
-	return TRUE;
+    for (i = 0; i < ndisplays; i++)
+    {
+        if (displaypoints[i].exp == NULL || !displaypoints[i].enabled)
+            continue;
+        if (displaypoints[i].func && !cmp_symbol(displaypoints[i].func, func))
+            continue;
+        print_one_display(i);
+    }
+
+    return TRUE;
 }
 
-int DEBUG_DelDisplay(int displaynum)
+int display_delete(int displaynum)
 {
-	int i;
+    int i;
 
-	if (displaynum > ndisplays || displaynum == 0 || displaynum < -1
-	    || displaypoints[displaynum - 1].exp == NULL) {
-		DEBUG_Printf("Invalid display number\n");
-		return TRUE;
-	}
+    if (displaynum > ndisplays || displaynum == 0 || displaynum < -1 ||
+        displaypoints[displaynum - 1].exp == NULL)
+    {
+        dbg_printf("Invalid display number\n");
+        return TRUE;
+    }
 
-	if (displaynum == -1) {
-		for (i = 0; i < ndisplays; i++) {
-			if (displaypoints[i].exp != NULL) {
-				DEBUG_FreeExpr(displaypoints[i].exp);
-				displaypoints[i].exp = NULL;
-			}
-		}
-		displaypoints = DBG_realloc(displaypoints,
-			(maxdisplays = DISPTAB_DELTA) * sizeof(*displaypoints));
-		ndisplays = 0;
-	} else if (displaypoints[--displaynum].exp != NULL) {
-		DEBUG_FreeExpr(displaypoints[displaynum].exp);
-		displaypoints[displaynum].exp = NULL;
-		while (displaynum == ndisplays - 1
-		    && displaypoints[displaynum].exp == NULL)
-			--ndisplays, --displaynum;
-		if (maxdisplays - ndisplays >= 2 * DISPTAB_DELTA) {
-			maxdisplays = (ndisplays + DISPTAB_DELTA - 1) & ~(DISPTAB_DELTA - 1); /* MARK */
-			displaypoints = DBG_realloc(displaypoints,
-				maxdisplays * sizeof(*displaypoints));
-		}
-	}
-	return TRUE;
+    if (displaynum == -1)
+    {
+        for (i = 0; i < ndisplays; i++)
+        {
+            if (displaypoints[i].exp != NULL) 
+            {
+                expr_free(displaypoints[i].exp);
+                displaypoints[i].exp = NULL;
+            }
+        }
+        maxdisplays = DISPTAB_DELTA;
+        displaypoints = dbg_heap_realloc(displaypoints,
+                                         (maxdisplays = DISPTAB_DELTA) * sizeof(*displaypoints));
+        ndisplays = 0;
+    }
+    else if (displaypoints[--displaynum].exp != NULL) 
+    {
+        expr_free(displaypoints[displaynum].exp);
+        displaypoints[displaynum].exp = NULL;
+        while (displaynum == ndisplays - 1 && displaypoints[displaynum].exp == NULL)
+        {
+            --ndisplays;
+            --displaynum;
+        }
+        if (maxdisplays - ndisplays >= 2 * DISPTAB_DELTA)
+        {
+            /* MARK */
+            maxdisplays = (ndisplays + DISPTAB_DELTA - 1) & ~(DISPTAB_DELTA - 1);
+            displaypoints = dbg_heap_realloc(displaypoints,
+                                             maxdisplays * sizeof(*displaypoints));
+        }
+    }
+    return TRUE;
 }
 
-int DEBUG_EnableDisplay(int displaynum, int enable)
+int display_enable(int displaynum, int enable)
 {
-	--displaynum;
-	if (displaynum >= ndisplays || displaynum < 0 || displaypoints[displaynum].exp == NULL) {
-		DEBUG_Printf("Invalid display number\n");
-		return TRUE;
-	}
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        func;
 
-	displaypoints[displaynum].enabled = enable;
-	if (!displaypoints[displaynum].function_name
-	    || displaypoints[displaynum].function_name == DEBUG_GetCurrentFrameFunctionName())
-		DEBUG_PrintOneDisplay(displaynum);
+    func = (SYMBOL_INFO*)buffer;
+    func->SizeOfStruct = sizeof(SYMBOL_INFO);
+    func->MaxNameLen = sizeof(buffer) - sizeof(*func);
+    if (!stack_get_frame(func, NULL)) return FALSE;
 
-	return TRUE;
+    --displaynum;
+    if (displaynum >= ndisplays || displaynum < 0 || 
+        displaypoints[displaynum].exp == NULL) 
+    {
+        dbg_printf("Invalid display number\n");
+        return TRUE;
+    }
+
+    displaypoints[displaynum].enabled = enable;
+    if (!displaypoints[displaynum].func || 
+        cmp_symbol(displaypoints[displaynum].func, func))
+    {
+        print_one_display(displaynum);
+    }
+
+    return TRUE;
 }

@@ -220,14 +220,22 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
 
       </sect1>
 
-      <sect1 id="dbg-control">
-        <title>Controlling the debugging output</title>
+    <sect1 id="dbg-control">
+      <title>Controlling the debugging output</title>
 
-        <para>
-          It is possible to turn on and off debugging output from
-          within the debugger using the set command. Please see the
-          WineDbg Command Reference section for how to do this.
-        </para>
+      <para>
+	It is possible to turn on and off debugging output from
+	within the debugger using the set command. Please see the
+	WineDbg Command Reference section 
+	(<xref linkend="winedbg-dbg-chan">) for how to do this.
+      </para>
+      <para>
+        You can do the same using the task manager
+	(<command>taskmgr</command>) and selecting your application in
+	the application list. Right clicking on the application, and
+	selecting the debug option in the popup menu, will let you
+	select the modifications you want on the debug channels.
+      </para>
 
 	<para>
 	  Another way to conditionally log debug output (e.g. in case of

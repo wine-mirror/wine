@@ -22,93 +22,76 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sys/types.h>
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <limits.h>
-#include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
 #endif
 
 #include "debugger.h"
+#include "wine/debug.h"
 
-struct searchlist
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+
+struct search_list
 {
-  char * path;
-  struct searchlist * next;
+    char*               path;
+    struct search_list*  next;
 };
 
 
-struct open_filelist
+struct open_file_list
 {
-  char			* path;
-  char			* real_path;
-  struct open_filelist  * next;
-  unsigned int		  size;
-  signed int		  nlines;
-  unsigned int		* linelist;
+    char*                       path;
+    char*                       real_path;
+    struct open_file_list*      next;
+    unsigned int	        size;
+    signed int		        nlines;
+    unsigned int*               linelist;
 };
 
-static struct open_filelist * ofiles;
+static struct open_file_list*   source_ofiles;
 
-static struct searchlist * listhead;
-static char DEBUG_current_sourcefile[PATH_MAX];
-static int DEBUG_start_sourceline = -1;
-static int DEBUG_end_sourceline = -1;
+static struct search_list*      source_list_head;
+static char source_current_file[PATH_MAX];
+static int source_start_line = -1;
+static int source_end_line = -1;
 
-void
-DEBUG_ShowDir(void)
+void source_show_path(void)
 {
-  struct searchlist * sl;
+    struct search_list* sl;
 
-  DEBUG_Printf("Search list :\n");
-  for(sl = listhead; sl; sl = sl->next)
-    {
-      DEBUG_Printf("\t%s\n", sl->path);
-    }
-  DEBUG_Printf("\n");
+    dbg_printf("Search list:\n");
+    for (sl = source_list_head; sl; sl = sl->next) dbg_printf("\t%s\n", sl->path);
+    dbg_printf("\n");
 }
 
-void
-DEBUG_AddPath(const char * path)
+void source_add_path(const char* path)
 {
-  struct searchlist * sl;
+    struct search_list* sl;
 
-  sl = (struct searchlist *) DBG_alloc(sizeof(struct searchlist));
-  if( sl == NULL )
-    {
-      return;
-    }
+    if (!(sl = HeapAlloc(GetProcessHeap(), 0, sizeof(struct search_list))))
+        return;
 
-  sl->next = listhead;
-  sl->path = DBG_strdup(path);
-  listhead = sl;
+    sl->next = source_list_head;
+    sl->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(path) + 1), path);
+    source_list_head = sl;
 }
 
-void
-DEBUG_NukePath(void)
+void source_nuke_path(void)
 {
-  struct searchlist * sl;
-  struct searchlist * nxt;
+    struct search_list* sl;
+    struct search_list* nxt;
 
-  for(sl = listhead; sl; sl = nxt)
+    for (sl = source_list_head; sl; sl = nxt)
     {
-      nxt = sl->next;
-      DBG_free(sl->path);
-      DBG_free(sl);
+        nxt = sl->next;
+        HeapFree(GetProcessHeap(), 0, sl->path);
+        HeapFree(GetProcessHeap(), 0, sl);
     }
 
-  listhead = NULL;
+    source_list_head = NULL;
 }
 
-static  void*   DEBUG_MapFile(const char* name, HANDLE* hMap, unsigned* size)
+static  void*   source_map_file(const char* name, HANDLE* hMap, unsigned* size)
 {
     HANDLE              hFile;
 
@@ -122,35 +105,33 @@ static  void*   DEBUG_MapFile(const char* name, HANDLE* hMap, unsigned* size)
     return MapViewOfFile(*hMap, FILE_MAP_READ, 0, 0, 0);
 }
 
-static void     DEBUG_UnmapFile(void* addr, HANDLE hMap)
+static void     source_unmap_file(void* addr, HANDLE hMap)
 {
     UnmapViewOfFile(addr);
     CloseHandle(hMap);
 }
 
-static struct open_filelist*    DEBUG_SearchOpenFile(const char* name)
+static struct open_file_list* source_search_open_file(const char* name)
 {
-    struct open_filelist*       ol;
+    struct open_file_list*      ol;
 
-    for (ol = ofiles; ol; ol = ol->next)
+    for (ol = source_ofiles; ol; ol = ol->next)
     {
         if (strcmp(ol->path, name) == 0) break;
     }
     return ol;
 }
 
-static
-int
-DEBUG_DisplaySource(char * sourcefile, int start, int end)
+static int source_display(const char* sourcefile, int start, int end)
 {
     char*                       addr;
     int				i;
-    struct open_filelist*       ol;
+    struct open_file_list*      ol;
     int				nlines;
-    char*                       basename = NULL;
+    const char*                 basename = NULL;
     char*                       pnt;
     int				rtn;
-    struct searchlist*          sl;
+    struct search_list*         sl;
     HANDLE                      hMap;
     DWORD			status;
     char			tmppath[PATH_MAX];
@@ -159,44 +140,41 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
      * First see whether we have the file open already.  If so, then
      * use that, otherwise we have to try and open it.
      */
-    ol = DEBUG_SearchOpenFile(sourcefile);
+    ol = source_search_open_file(sourcefile);
 
-    if ( ol == NULL )
+    if (ol == NULL)
     {
         /*
          * Try again, stripping the path from the opened file.
          */
-        basename = strrchr(sourcefile, '\\' );
-        if ( !basename )
-            basename = strrchr(sourcefile, '/' );
-        if ( !basename )
-            basename = sourcefile;
-        else
-            basename++;
+        basename = strrchr(sourcefile, '\\');
+        if (!basename) basename = strrchr(sourcefile, '/');
+        if (!basename) basename = sourcefile;
+        else basename++;
 
-        ol = DEBUG_SearchOpenFile(basename);
+        ol = source_search_open_file(basename);
     }
 
-    if ( ol == NULL )
+    if (ol == NULL)
     {
         /*
          * Crapola.  We need to try and open the file.
          */
         status = GetFileAttributes(sourcefile);
-        if ( status != INVALID_FILE_ATTRIBUTES )
+        if (status != INVALID_FILE_ATTRIBUTES)
         {
             strcpy(tmppath, sourcefile);
         }
-        else if ( (status = GetFileAttributes(basename)) != INVALID_FILE_ATTRIBUTES )
+        else if ((status = GetFileAttributes(basename)) != INVALID_FILE_ATTRIBUTES)
         {
             strcpy(tmppath, basename);
         }
         else
         {
-            for (sl = listhead; sl; sl = sl->next)
+            for (sl = source_list_head; sl; sl = sl->next)
             {
                 strcpy(tmppath, sl->path);
-                if ( tmppath[strlen(tmppath)-1] != '/' && tmppath[strlen(tmppath)-1] != '\\' )
+                if (tmppath[strlen(tmppath) - 1] != '/' && tmppath[strlen(tmppath) - 1] != '\\')
                 {
                     strcat(tmppath, "/");
                 }
@@ -206,21 +184,21 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                 strcat(tmppath, basename);
 
                 status = GetFileAttributes(tmppath);
-                if ( status != INVALID_FILE_ATTRIBUTES ) break;
+                if (status != INVALID_FILE_ATTRIBUTES) break;
             }
 
-            if ( sl == NULL )
+            if (sl == NULL)
             {
-                if (DEBUG_InteractiveP)
+                if (dbg_interactiveP)
                 {
                     char zbuf[256];
                     /*
                      * Still couldn't find it.  Ask user for path to add.
                      */
                     snprintf(zbuf, sizeof(zbuf), "Enter path to file '%s': ", sourcefile);
-                    DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath));
+                    input_read_line(zbuf, tmppath, sizeof(tmppath));
 
-                    if ( tmppath[strlen(tmppath)-1] != '/' )
+                    if (tmppath[strlen(tmppath) - 1] != '/')
                     {
                         strcat(tmppath, "/");
                     }
@@ -237,20 +215,20 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                     strcpy(tmppath, sourcefile);
                 }
 
-                if ( status == INVALID_FILE_ATTRIBUTES )
+                if (status == INVALID_FILE_ATTRIBUTES)
                 {
                     /*
                      * OK, I guess the user doesn't really want to see it
                      * after all.
                      */
-                    ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
-                    ol->path = DBG_strdup(sourcefile);
+                    ol = HeapAlloc(GetProcessHeap(), 0, sizeof(*ol));
+                    ol->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(sourcefile) + 1), sourcefile);
                     ol->real_path = NULL;
-                    ol->next = ofiles;
+                    ol->next = source_ofiles;
                     ol->nlines = 0;
                     ol->linelist = NULL;
-                    ofiles = ol;
-                    DEBUG_Printf("Unable to open file %s\n", tmppath);
+                    source_ofiles = ol;
+                    dbg_printf("Unable to open file %s\n", tmppath);
                     return FALSE;
                 }
             }
@@ -258,56 +236,44 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
         /*
          * Create header for file.
          */
-        ol = (struct open_filelist *) DBG_alloc(sizeof(*ol));
-        ol->path = DBG_strdup(sourcefile);
-        ol->real_path = DBG_strdup(tmppath);
-        ol->next = ofiles;
+        ol = HeapAlloc(GetProcessHeap(), 0, sizeof(*ol));
+        ol->path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(sourcefile) + 1), sourcefile);
+        ol->real_path = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(tmppath) + 1), tmppath);
+        ol->next = source_ofiles;
         ol->nlines = 0;
         ol->linelist = NULL;
         ol->size = 0;
-        ofiles = ol;
+        source_ofiles = ol;
 
-        addr = DEBUG_MapFile(tmppath, &hMap, &ol->size);
-        if ( addr == (char *) -1 )
-        {
-            return FALSE;
-        }
+        addr = source_map_file(tmppath, &hMap, &ol->size);
+        if (addr == (char*)-1) return FALSE;
         /*
          * Now build up the line number mapping table.
          */
         ol->nlines = 1;
         pnt = addr;
-        while (pnt < addr + ol->size )
+        while (pnt < addr + ol->size)
         {
-            if ( *pnt++ == '\n' )
-            {
-                ol->nlines++;
-            }
+            if (*pnt++ == '\n') ol->nlines++;
         }
 
         ol->nlines++;
-        ol->linelist = (unsigned int*) DBG_alloc( ol->nlines * sizeof(unsigned int) );
+        ol->linelist = HeapAlloc(GetProcessHeap(), 0, ol->nlines * sizeof(unsigned int));
 
         nlines = 0;
         pnt = addr;
         ol->linelist[nlines++] = 0;
-        while(pnt < addr + ol->size )
+        while (pnt < addr + ol->size)
         {
-            if( *pnt++ == '\n' )
-            {
-                ol->linelist[nlines++] = pnt - addr;
-            }
+            if (*pnt++ == '\n') ol->linelist[nlines++] = pnt - addr;
         }
         ol->linelist[nlines++] = pnt - addr;
 
     }
     else
     {
-        addr = DEBUG_MapFile(ol->real_path, &hMap, NULL);
-        if ( addr == (char *) -1 )
-        {
-            return FALSE;
-        }
+        addr = source_map_file(ol->real_path, &hMap, NULL);
+        if (addr == (char*)-1) return FALSE;
     }
     /*
      * All we need to do is to display the source lines here.
@@ -317,176 +283,92 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
     {
         char    buffer[1024];
 
-        if (i < 0 || i >= ol->nlines - 1)
-	{
-            continue;
-	}
+        if (i < 0 || i >= ol->nlines - 1) continue;
 
         rtn = TRUE;
         memset(&buffer, 0, sizeof(buffer));
-        if ( ol->linelist[i+1] != ol->linelist[i] )
+        if (ol->linelist[i+1] != ol->linelist[i])
 	{
             memcpy(&buffer, addr + ol->linelist[i],
                    (ol->linelist[i+1] - ol->linelist[i]) - 1);
 	}
-        DEBUG_Printf("%d\t%s\n", i + 1,  buffer);
+        dbg_printf("%d\t%s\n", i + 1, buffer);
     }
 
-    DEBUG_UnmapFile(addr, hMap);
+    source_unmap_file(addr, hMap);
     return rtn;
 }
 
-void
-DEBUG_List(struct list_id * source1, struct list_id * source2,
-			 int delta)
+void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
 {
-  int    end;
-  int    rtn;
-  int    start;
-  char * sourcefile;
+    int         end;
+    int         start;
+    const char* sourcefile;
 
-  /*
-   * We need to see what source file we need.  Hopefully we only have
-   * one specified, otherwise we might as well punt.
-   */
-  if( source1 != NULL
-      && source2 != NULL
-      && source1->sourcefile != NULL
-      && source2->sourcefile != NULL
-      && strcmp(source1->sourcefile, source2->sourcefile) != 0 )
+    /*
+     * We need to see what source file we need.  Hopefully we only have
+     * one specified, otherwise we might as well punt.
+     */
+    if (src1 && src2 && src1->FileName && src2->FileName &&
+        strcmp(src1->FileName, src2->FileName) != 0)
     {
-      DEBUG_Printf("Ambiguous source file specification.\n");
-      return;
+        dbg_printf("Ambiguous source file specification.\n");
+        return;
     }
 
-  sourcefile = NULL;
-  if( source1 != NULL && source1->sourcefile != NULL )
-    {
-      sourcefile = source1->sourcefile;
-    }
+    sourcefile = NULL;
+    if (src1 && src1->FileName) sourcefile = src1->FileName;
+    if (!sourcefile && src2 && src2->FileName) sourcefile = src2->FileName;
+    if (!sourcefile) sourcefile = source_current_file;
 
-  if( sourcefile == NULL
-      && source2 != NULL
-      && source2->sourcefile != NULL )
-    {
-      sourcefile = source2->sourcefile;
-    }
+    /*
+     * Now figure out the line number range to be listed.
+     */
+    start = end = -1;
 
-  if( sourcefile == NULL )
+    if (src1) start = src1->LineNumber;
+    if (src2) end   = src2->LineNumber;
+    if (start == -1 && end == -1)
     {
-      sourcefile = (char *) &DEBUG_current_sourcefile;
-    }
-
-  if( sourcefile == NULL )
-    {
-      DEBUG_Printf("No source file specified.\n");
-      return;
-    }
-
-  /*
-   * Now figure out the line number range to be listed.
-   */
-  start = -1;
-  end = -1;
-
-  if( source1 != NULL )
-    {
-      start = source1->line;
-    }
-
-  if( source2 != NULL )
-    {
-      end = source2->line;
-    }
-
-  if( start == -1 && end == -1 )
-    {
-      if( delta < 0 )
+        if (delta < 0)
 	{
-	  end = DEBUG_start_sourceline;
-	  start = end + delta;
+            end = source_start_line;
+            start = end + delta;
 	}
-      else
+        else
 	{
-	  start = DEBUG_end_sourceline;
-	  end = start + delta;
+            start = source_end_line;
+            end = start + delta;
 	}
     }
-  else if( start == -1 )
-    {
-      start = end + delta;
-    }
-  else if (end == -1)
-    {
-      end = start + delta;
-    }
+    else if (start == -1) start = end + delta;
+    else if (end == -1)   end = start + delta;
 
-  /*
-   * Now call this function to do the dirty work.
-   */
-  rtn = DEBUG_DisplaySource(sourcefile, start, end);
+    /*
+     * Now call this function to do the dirty work.
+     */
+    source_display(sourcefile, start, end);
 
-  if( sourcefile != (char *) &DEBUG_current_sourcefile )
-    {
-      strcpy(DEBUG_current_sourcefile, sourcefile);
-    }
-  DEBUG_start_sourceline = start;
-  DEBUG_end_sourceline = end;
+    if (sourcefile != source_current_file)
+        strcpy(source_current_file, sourcefile);
+    source_start_line = start;
+    source_end_line = end;
 }
 
-DBG_ADDR DEBUG_LastDisassemble={0,0};
-
-BOOL DEBUG_DisassembleInstruction(DBG_ADDR *addr)
+void source_list_from_addr(const ADDRESS* addr, int nlines)
 {
-   char		ch;
-   BOOL		ret = TRUE;
+    IMAGEHLP_LINE       il;
+    DWORD               lin;
 
-   DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, TRUE);
-   DEBUG_Printf(": ");
-   if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(addr), &ch, sizeof(ch))) {
-      DEBUG_Printf("-- no code --");
-      ret = FALSE;
-   } else {
-      DEBUG_Disasm(addr, TRUE);
-   }
-   DEBUG_Printf("\n");
-   return ret;
-}
+    if (!addr)
+    {
+        ADDRESS la;
+        memory_get_current_pc(&la);
+        lin = (unsigned long)memory_to_linear_addr(&la);
+    }
+    else lin = (unsigned long)memory_to_linear_addr(addr);
 
-void
-DEBUG_Disassemble(const DBG_VALUE *xstart,const DBG_VALUE *xend,int offset)
-{
-  int i;
-  DBG_ADDR	last;
-  DBG_VALUE	end,start;
-
-  if (xstart) {
-    start = *xstart;
-    DEBUG_GrabAddress(&start, TRUE);
-  }
-  if (xend) {
-    end = *xend;
-    DEBUG_GrabAddress(&end, TRUE);
-  }
-  if (!xstart && !xend) {
-    last = DEBUG_LastDisassemble;
-    if (!last.seg && !last.off)
-      DEBUG_GetCurrentAddress( &last );
-
-    for (i=0;i<offset;i++)
-      if (!DEBUG_DisassembleInstruction(&last)) break;
-    DEBUG_LastDisassemble = last;
-    return;
-  }
-  last = start.addr;
-  if (!xend) {
-    for (i=0;i<offset;i++)
-      if (!DEBUG_DisassembleInstruction(&last)) break;
-    DEBUG_LastDisassemble = last;
-    return;
-  }
-  while (last.off <= end.addr.off)
-    if (!DEBUG_DisassembleInstruction(&last)) break;
-  DEBUG_LastDisassemble = last;
-  return;
+    il.SizeOfStruct = sizeof(il);
+    if (SymGetLineFromAddr(dbg_curr_process->handle, lin, NULL, &il))
+        source_list(&il, NULL, nlines);
 }

@@ -24,22 +24,46 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "wincon.h"
 #include "debugger.h"
 #include "y.tab.h"
 
 #undef YY_INPUT
 
-HANDLE DEBUG_hParserInput;
-HANDLE DEBUG_hParserOutput;
+static int read_input(const char* pfx, char* buf, int size)
+{
+    size_t      len;
+static char*  last_line = NULL;
+static size_t last_line_size = 0;
+static size_t last_line_idx = 0;
 
-static int DEBUG_FetchFromLine(const char* pfx, char* buf, int size);
+    /* first alloc of our current buffer */
+    if (!last_line)
+    {
+        last_line = HeapAlloc(GetProcessHeap(), 0, last_line_size = 2);
+        assert(last_line);
+        last_line[0] = '\n';
+        last_line[1] = '\0';
+    }
+
+    /* try first to fetch the remaining of an existing line */
+    if (last_line_idx == 0)
+    {
+        /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
+        lexeme_flush();
+        input_fetch_entire_line(pfx, &last_line, &last_line_size, TRUE);
+    }
+
+    len = min(strlen(last_line + last_line_idx), size - 1);
+    memcpy(buf, last_line + last_line_idx, len);
+    buf[len] = '\0';
+    if ((last_line_idx += len) >= strlen(last_line))
+        last_line_idx = 0;
+    return len;
+}
 
 #define YY_INPUT(buf,result,max_size) \
-	if ( (result = DEBUG_FetchFromLine("Wine-dbg>", buf, max_size)) < 0 ) \
-	    YY_FATAL_ERROR( "FetchFromLine() in flex scanner failed" );
+	if ((result = read_input("Wine-dbg>", buf, max_size)) < 0) \
+	    YY_FATAL_ERROR("read_input in flex scanner failed");
 
 #define YY_NO_UNPUT
 
@@ -59,7 +83,6 @@ STRING     \"[^\n"]+\"
 %s HELP_CMD
 %s BD_CMD
 %s LOCAL_CMD
-%s WALK_CMD
 %s SHOW_CMD
 %s MODE_CMD
 %s MAINT_CMD
@@ -69,7 +92,7 @@ STRING     \"[^\n"]+\"
 %x NOPROCESS
 %%
                                         /* set to special state when no process is loaded. */
-                                        if (!DEBUG_CurrProcess && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
+                                        if (!dbg_curr_process && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
 
 <<EOF>>                                 { return tEOF; }
 <*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
@@ -92,17 +115,17 @@ STRING     \"[^\n"]+\"
 {DIGIT}+             			{ sscanf(yytext, "%d", &yylval.integer); return tNUM; }
 
 <FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}	{ char* last;
-                                          yylval.integer = strtol( yytext+1, &last, 0 ) << 8;
+                                          yylval.integer = strtol(yytext+1, &last, 0) << 8;
                                           yylval.integer |= *last;
                                           return tFORMAT; }
 
 <FORMAT_EXPECTED>"/"{FORMAT}          	{ yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-{STRING} 				{ yylval.string = DEBUG_MakeSymbol(yytext); return tSTRING; }
+{STRING} 				{ yylval.string = lexeme_alloc(yytext); return tSTRING; }
 <ASTRING_EXPECTED>[^\n]+                { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
-                                          yylval.string = DEBUG_MakeSymbol(p); return tSTRING; }
+                                          yylval.string = lexeme_alloc(p); return tSTRING; }
 
-<INITIAL>info|inf|in			{ BEGIN(INFO_CMD); return tINFO; }
+<INITIAL,NOPROCESS>info|inf|in		{ BEGIN(INFO_CMD); return tINFO; }
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
 <INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
 <INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
@@ -117,9 +140,8 @@ STRING     \"[^\n"]+\"
 <INITIAL>delete|delet|dele|del		{ BEGIN(BD_CMD); return tDELETE; }
 <INITIAL,NOPROCESS>quit|qui|qu|q	{ BEGIN(NOCMD); return tQUIT; }
 <INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
-<INITIAL,NOPROCESS>walk|w		{ BEGIN(WALK_CMD); return tWALK; }
 <INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }
-<INITIAL,NOPROCESS>help|hel|he|"?"		{ BEGIN(HELP_CMD); return tHELP; }
+<INITIAL,NOPROCESS>help|hel|he|"?"	{ BEGIN(HELP_CMD); return tHELP; }
 
 <INITIAL>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
 <INITIAL>where|wher|whe                 { BEGIN(NOCMD); return tBACKTRACE; }
@@ -150,17 +172,16 @@ STRING     \"[^\n"]+\"
 <NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
-<INFO_CMD,WALK_CMD>class|clas|cla       { return tCLASS; }
-<INFO_CMD,WALK_CMD>module|modul|modu|mod { return tMODULE; }
-<INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
-<INFO_CMD,WALK_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
-<WALK_CMD>exception|except|exc|ex	{ return tEXCEPTION; }
+<INFO_CMD>class|clas|cla                { return tCLASS; }
+<INFO_CMD>process|proces|proce|proc   	{ return tPROCESS; }
+<INFO_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
+<INFO_CMD>exception|except|exc|ex	{ return tEXCEPTION; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }
 <INFO_CMD>symbol|symbo|symb|sym         { BEGIN(ASTRING_EXPECTED); return tSYMBOL; }
-<WALK_CMD>maps|map			{ return tMAPS; }
-<INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
+<INFO_CMD>maps|map			{ return tMAPS; }
+<INFO_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
 <MODE_CMD>vm86                          { return tVM86; }
 <MAINT_CMD>type                         { return tTYPE; }
@@ -180,167 +201,39 @@ struct					{ return tSTRUCT; }
 union					{ return tUNION; }
 enum					{ return tENUM; }
 
-{IDENTIFIER}				{ yylval.string = DEBUG_MakeSymbol(yytext); return tIDENTIFIER; }
-"$"{IDENTIFIER}				{ yylval.string = DEBUG_MakeSymbol(yytext+1); return tINTVAR; }
+{IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
+"$"{IDENTIFIER}				{ yylval.string = lexeme_alloc(yytext+1); return tINTVAR; }
 
-<PATH_EXPECTED>{PATHNAME}		{ yylval.string = DEBUG_MakeSymbol(yytext); return tPATH; }
+<PATH_EXPECTED>{PATHNAME}		{ yylval.string = lexeme_alloc(yytext); return tPATH; }
 
 <*>[ \t]+                               /* Eat up whitespace */
 
 <NOPROCESS>.                            { BEGIN(ASTRING_EXPECTED); yyless(0); return tNOPROCESS;}
-<*>.                                    { if (syntax_error == 0) {
-                                             syntax_error++;
-					     DEBUG_Printf("Syntax Error (%s)\n", yytext); }
-		                        }
+<*>.                                    { if (syntax_error == 0) { syntax_error++; dbg_printf("Syntax Error (%s)\n", yytext); } }
 %%
 
 #ifndef yywrap
 int yywrap(void) { return 1; }
 #endif
 
-#ifndef whitespace
-#define whitespace(c) (((c) == ' ') || ((c) == '\t'))
-#endif
+static char** local_lexemes /* = NULL */;
+static int next_lexeme /* = 0 */;
+static int alloc_lexeme /* = 0 */;
 
-
-/* Strip whitespace from the start and end of STRING. */
-static void stripwhite(char *string)
+char* lexeme_alloc(const char* lexeme)
 {
-    int         i, last;
-
-    for (i = 0; whitespace(string[i]); i++);
-    if (i) strcpy(string, string + i);
-
-    last = i = strlen(string) - 1;
-    if (string[last] == '\n') i--;
-
-    while (i > 0 && whitespace(string[i])) i--;
-    if (string[last] == '\n')
-        string[++i] = '\n';
-    string[++i] = '\0';
-}
-
-static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* alloc, BOOL check_nl)
-{
-    char 	buf_line[256];
-    DWORD	nread;
-    size_t      len;
-
-    /* as of today, console handles can be file handles... so better use file APIs rather than
-     * consoles
-     */
-    WriteFile(DEBUG_hParserOutput, pfx, strlen(pfx), NULL, NULL);
-
-    len = 0;
-    do
+    assert(0 <= next_lexeme && next_lexeme < alloc_lexeme + 1);
+    if (next_lexeme >= alloc_lexeme)
     {
-	if (!ReadFile(DEBUG_hParserInput, buf_line, sizeof(buf_line) - 1, &nread, NULL) || nread == 0)
-            break;
-	buf_line[nread] = '\0';
-
-        if (check_nl && len == 0 && nread == 1 && buf_line[0] == '\n')
-            return 0;
-
-        /* store stuff at the end of last_line */
-        if (len + nread + 1 > *alloc)
-        {
-            if (*line)
-                *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc += nread + 1);
-            else
-                *line = HeapAlloc(GetProcessHeap(), 0, *alloc += nread + 1);
-        }
-        strcpy(*line + len, buf_line);
-        len += nread;
-    } while (nread == 0 || buf_line[nread - 1] != '\n');
-
-    if (!len)
-    {
-        *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc = 1);
-        **line = '\0';
+        alloc_lexeme += 32;
+        local_lexemes = dbg_heap_realloc(local_lexemes, alloc_lexeme * sizeof(local_lexemes[0]));
+        assert(local_lexemes);
     }
-
-    /* Remove leading and trailing whitespace from the line */
-    stripwhite(*line);
-    return 1;
+    return local_lexemes[next_lexeme++] = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(lexeme) + 1), lexeme);
 }
 
-static int DEBUG_FetchFromLine(const char* pfx, char* buf, int size)
+void lexeme_flush(void)
 {
-    size_t      len;
-static char*  last_line = NULL;
-static size_t last_line_size = 0;
-static size_t last_line_idx = 0;
-
-    /* first alloc of our current buffer */
-    if (!last_line)
-    {
-        last_line = HeapAlloc(GetProcessHeap(), 0, last_line_size = 2);
-        assert(last_line);
-        last_line[0] = '\n';
-        last_line[1] = '\0';
-    }
-
-    /* try first to fetch the remaining of an existing line */
-    if (last_line_idx == 0)
-    {
-        /* no remaining chars to be read from last line, grab a brand new line up to '\n' */
-        DEBUG_FlushSymbols();
-
-        DEBUG_FetchEntireLine(pfx, &last_line, &last_line_size, TRUE);
-    }
-
-    len = min(strlen(last_line + last_line_idx), size - 1);
-    memcpy(buf, last_line + last_line_idx, len);
-    buf[len] = '\0';
-    if ((last_line_idx += len) >= strlen(last_line))
-        last_line_idx = 0;
-    return len;
-}
-
-int DEBUG_ReadLine(const char* pfx, char* buf, int size)
-{
-    char*       line = NULL;
-    size_t      len = 0;
-
-    /* first alloc of our current buffer */
-    line = HeapAlloc(GetProcessHeap(), 0, len = 2);
-    assert(line);
-    line[0] = '\n';
-    line[1] = '\0';		      
-	
-    DEBUG_FetchEntireLine(pfx, &line, &len, FALSE);
-    len = strlen(line);
-    /* remove trailing \n */
-    if (len > 0 && line[len - 1] == '\n') len--;
-    len = min(size - 1, len);
-    memcpy(buf, line, len);
-    buf[len] = '\0';
-    HeapFree(GetProcessHeap(), 0, line);
-    return 1;
-}
-
-static char** local_symbols /* = NULL */;
-static int next_symbol /* = 0 */;
-static int alloc_symbol /* = 0 */;
-
-char* DEBUG_MakeSymbol(const char* symbol)
-{
-    assert(0 <= next_symbol && next_symbol < alloc_symbol + 1);
-    if (next_symbol >= alloc_symbol)
-    {
-        if (!local_symbols)
-            local_symbols = HeapAlloc(GetProcessHeap(), 0,
-                                      (alloc_symbol += 32) * sizeof(local_symbols[0]));
-        else
-            local_symbols = HeapReAlloc(GetProcessHeap(), 0, local_symbols,
-                                        (alloc_symbol += 32) * sizeof(local_symbols[0]));
-        assert(local_symbols);
-    }
-    return local_symbols[next_symbol++] = DBG_strdup(symbol);
-}
-
-void DEBUG_FlushSymbols(void)
-{
-    while(--next_symbol >= 0) DBG_free(local_symbols[next_symbol]);
-    next_symbol = 0;
+    while (--next_lexeme >= 0) HeapFree(GetProcessHeap(), 0, local_lexemes[next_lexeme]);
+    next_lexeme = 0;
 }

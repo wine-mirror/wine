@@ -1,0 +1,370 @@
+.TH WINEDBG 1 "May 2004" "Wine Manpage" "Wine Developers Manual"
+.SH NAME
+winedbg \- Wine's debugger
+.SH SYNOPSIS
+.BR "winedbg " [ " --auto" " |"
+.BI "--gdb"
+.RI "[" " options " "] ] ["
+.BI "program name"
+.RI "["
+.BI "program arguments"
+.RI "] |"
+.BI "pid"
+.RI "]"
+.SH DESCRIPTION
+.B winedbg
+is a debugger for Wine. It allows:
+.RS 4
++ debugging native Win32 applications
+.nf
++ debugging Winelib applications.
+.nf
++ being a drop-in replacement for Dr Watson
+.RE
+.PP
+
+.SH MODES
+\fBwinedbg\fR can be used in three modes.  The first argument to the
+program determines the mode winedbg will run in.
+.IP \fBdefault\fR
+Without any explicit mode, this is standard \fBwinedbg\fR operating
+mode. \fBwinedbg\fR will act as the front end for the user.
+.IP \fB--auto\fR
+This mode is used when \fBwinedbg\fR is setup in \fIAeDebug\fR
+registry entry as the default debugger. \fBwinedbg will then will
+display basic information about a\fR crash. This is usefull for users
+who don't want to debug a crash, but rather gather relevant
+information about the crash to be sent to developers.
+.IP \fB--gdb\fR
+\fBwinedbg\fR will be used as a proxy for \fBgdb\fR. \fBgdb\fR will be
+the front end for command handling, and \fBwinedbg\fR will proxy all
+debugging requests from \fBgdb\fR to the Win32 APIs.
+
+.SH OPTIONS
+Only the \fBgdb\fR proxy mode allows some options:
+.PP
+.IP \fI--no-start\fR \fBgdb\fR will not be automatically
+started. Relevant information for starting \fBgdb\fR are printed on
+screen. This is somehow usefull when not directly using \fBgdb\fR but
+some graphical front-ends, like \fBddd\fR or \fBkgbd\fR. 
+.IP \fI--with-xterm\fR
+This will run \fBgdb\fR in its own xterm instead of using the current
+Unix console for textual display.
+.PP
+The rest of the command line, when passed, is used to identify which
+programs, if any, has to debugged:
+.IP \fBprogram\ name\fR
+This is the name of an executable to start for a debugging
+session.  \fBwinedbg\fR will actually create a process with this
+executable. If \fBprograms arguments\fR are also given, they will be
+used as arguments for creating the process to be debugged.
+.IP \fBpid\fR
+\fBgdb\fR will attach to the process which pid is \fBpid\fR (pids
+refer to Win32 pids, not Unix pids). Use the \fIinfo proc\fR
+\fBwinedbg\fR command to list running processes and their Win32 pids.
+.IP \fBdefaut\fR
+If nothing is specified, you will enter the debugger without any run
+nor attached process. You'll have to do the job yourself.
+
+.SH COMMANDS
+.SS Default mode:
+.PP
+Most of commands used in \fBwinedbg\fR are similar to the ones from
+\fBgdb\fR. Please refer to the \fBgdb\fR documentations for some more
+details. See the \fIgdb\ differences\fR section later on to get a list
+of variations from \fBgdb\fR commands.
+.PP
+\fIMisc. commands\fR
+.IP \fBabort\fR
+Aborts the debugger.
+.IP \fBquit\fR
+Exits the debugger.
+.IP \fBattach\ N\fR
+Attach to a Wine-process (\fBN\fR is its ID, numeric or hexadecimal).
+IDs can be obtained using the \fBinfo\ process\fR command.  Note the
+\fBinfo\ process\fR command returns hexadecimal values
+.IP 
+.IP \fBdetach\fR
+Detach from a Wine-process.
+.PP
+\fIHelp commands\fR
+.IP \fBhelp\fR
+Prints some help on the commands.
+.IP \fBhelp\ info\fR
+Prints some help on info commands
+.PP
+\fIFlow control commands\fR
+.IP \fBcont\fR
+Continue execution until next breakpoint or exception.
+.IP \fBpass\fR
+Pass the exception event up to the filter chain.
+.IP \fBstep\fR
+Continue execution until next C line of code (enters function call)
+.IP \fBnext\fR
+Continue execution until next C line of code (doesn't enter function
+call)
+.IP \fBstepi\fR
+Execute next assembly instruction (enters function call)
+.IP \fBnexti\fR
+Execute next assembly instruction (doesn't enter function call)
+.IP \fBfinish\fR
+Excute until return of current function is reached.
+.PP
+\fBcont\fR, \fBstep\fR, \fBnext\fR, \fBstepi\fR, \fBnexti\fR can be
+postfixed by a number (N), meaning that the command must be executed N
+times before control is returned to the user.
+.PP
+\fIBreakpoints, watchpoints
+.IP \fBenable\ N\fR
+Enables (break|watch)-point #\fBN\fR
+.IP \fBdisable\fR
+Disables (break|watch)-point \fB#N\fR
+.IP \fBdelete\fR
+Deletes (break|watch)-point #\fBN\fR
+.IP \fBcond\ N\fR
+Removes any existing condition to (break|watch)-point \fBN\fR
+.IP \fBcond\ N\ <expr>\fR
+Adds condition \fB<expr>\fR to (break|watch)-point
+#\fBN\fR. \fB<expr>\fR will be evaluated each time the
+(break|watch)-point is hit. If the result is a zero value, the
+breakpoint isn't triggered.
+.IP \fBbreak\ *\ N\fR
+Adds a breakpoint at address \fBN\fR
+.IP \fBbreak\ <id>\fR
+Adds a breakpoint at the address of symbol \fB<id>\fR
+.IP \fBbreak <id> N\fR
+Adds a breakpoint at the line \fBN\fR inside symbol \fB<id>\fR.
+.IP \fBbreak\ N\fR
+Adds a breakpoint at line \fBN\fR of current source file.
+.IP \fBbreak\fR
+Adds a breakpoint at current \f$PC\fR address.
+.IP \fBwatch\ *\ N\fR
+Adds a watch command (on write) at address \fBN\fR (on 4 bytes).
+.IP \fBwatch\ <id>\fR
+Adds a watch command (on write) at the address of symbol
+\fB<id>\fR. Size depends on size of \fB<id>\fR.
+.IP \fBinfo\ break\fR
+Lists all (break|watch)-points (with their state).
+.PP
+You can use the symbol \fBEntryPoint\fR to stand for the entry point of the Dll.
+.PP
+When setting a (break|watch)-point by \fB<id>\fR, if the symbol cannot
+be found (for example, the symbol is contained in a not yet loaded
+module), \fBwinedbg\fR will recall the name of the symbol and will try
+to set the breakpoint each time a new module is loaded (until it succeeds). 
+.PP
+\fIStack manipulation\fR
+.IP \fBbt\fR
+Print calling stack of current thread.
+.IP \fBbt\ N\fR
+Print calling stack of thread of ID \fBN\fR. Note: this doesn't change
+the position of the current frame as manipulated by the \fBup\fR &
+\fBdn\fR commands).
+.IP \fBup\fR
+Goes up one frame in current thread's stack
+.IP \fBup\ N\fR
+Goes up \fBN\fR frames in current thread's stack
+.IP \fBdn\fR
+Goes down one frame in current thread's stack
+.IP \fBdn\ N\fR
+Goes down \fBN\fR frames in current thread's stack
+.IP \fBframe N\fR
+Sets \fBN\fR as the current frame for current thread's stack.
+.IP \fBinfo\ locals\fR
+Prints information on local variables for current function frame.
+.PP
+\fIDirectory & source file manipulation\fR
+.IP \fBshow\ dir\fR
+Prints the list of dir:s where source files are looked for.
+.IP \fBdir\ <pathname>\fR
+Adds \fB<pathname>\fR to the list of dir:s where to look for source
+files
+.IP \fBdir\fR
+Deletes the list of dir:s where to look for source files
+.IP \fBsymbolfile\ <pathname>\fR
+Loads external symbol definition symbolfile \fB<pathname>\fR
+.IP \fBsymbolfile\ <pathname>\ N\fR
+Loads external symbol definition symbolfile \fB<pathname>\fR (applying
+an offset of \fBN\fR to addresses)
+.IP \fBlist\fR
+Lists 10 source lines forwards from current position.
+.IP \fBlist\ -\fR
+Lists 10 source lines backwards from current position
+.IP \fBlist\ N\fR
+Lists 10 source lines from line #\fBN\fR in current file
+.IP \fBlist\ <pathname>:N\fR
+Lists 10 source lines from line #\fBN\fR in file \fB<pathname>\fR
+.IP \fBlist\ <id>\fR
+Lists 10 source lines of function \fB<id>\fR
+.IP \fBlist\ *\ N\fR
+Lists 10 source lines from address \fBN\fR
+.PP
+You can specify the end target (to change the 10 lines value) using
+the ',' separator. For example:
+.nf
+.IP \fBlist\ 123,\ 234\fR
+lists source lines from line 123 up to line 234 in current file
+.nf
+.IP \fBlist\ foo.c:1,56\fR
+lists source lines from line 1 up to 56 in file foo.c 
+.PP
+\fIDisplaying\fR
+.PP
+A display is an expression that's evaluated and printed after the
+execution of any \fBwinedbg\fR's command.
+.IP \fBdisplay\fR
+.IP \fBinfo\ display\fR
+Lists the active displays
+.IP \fBdisplay\ <expr>\fR
+Adds a display for expression \f<expr>\fR
+.IP \fBdisplay\ /fmt\ <expr>\fR
+Adds a display for expression \fB<expr>\fR. Printing evaluated
+\fB<expr>\fR is done using the given format (see \fBprint\ command\fR
+for more on formats)
+.IP \fBdel\ display\ N\fR
+.IP \fBundisplay\ N\fR
+Deletes display #\fBN\fR
+.PP
+\fIDisassembly\fR
+.IP \fBdisas\fR
+Disassemble from current position
+.IP \fBdisas\ <expr>\fR
+Disassemble from address \fB<expr>\fR
+.IP \fBdisas\ <expr>,<expr>\fR
+Disassembles code between addresses specified by the two \fB<expr>\fR:s
+.PP
+\fIMemory\ (reading,\ writing,\ typing)\fR
+.IP \fBx\ <expr>\fR
+Examines memory at \fB<expr>\fR address
+.IP \fBx\ /fmt\ <expr>\fR
+Examines memory at \fB<expr>\fR address using format \fI/fmt\fR
+.IP \fBprint\ <expr>\fR
+Prints the value of \fB<expr>\fR (possibly using its type)
+.IP \fBprint\ /fmt\ <expr>\fR
+Prints the value of \fB<expr>\fR (possibly using its type)
+.IP \fBset\ <var>\ =\ <expr>\fR
+Writes the value of \fB<expr>\fR in \fB<var>\fR variable.
+.IP \fBwhatis\ <expr>\fR
+Prints the C type of expression \fB<expr>\fR
+.PP
+.IP \fI/fmt\fR
+is either \fI/<letter>\fR or \fI/<count><letter>\fR. \fI<letter>\fR
+can be:
+.RS 4
+.IP s
+an ASCII string
+.IP u
+an Unicode UTF16 string
+.IP i
+instructions (disassemble)
+.IP x
+32 bit unsigned hexadecimal integer
+.IP d
+32 bit signed decimal integer
+.IP w
+16 bit unsigned hexadecimal integer
+.IP c
+character (only printable 0x20-0x7f are actually printed)
+.IP b
+8 bit unsigned hexadecimal integer
+.IP g
+Win32 GUID
+.RE
+.PP
+\fIExpressions\fR
+.PP
+Expressions in Wine Debugger are mostly written in a C form. However,
+there are a few discrepancies:
+.PP
+.RS 4
+Identifiers can take a '!' in their names. This allows mainly to
+specify a module where to look the module from: \fIUSER32!CreateWindowExA\fR.
+.PP
+In cast operation, when specifying a structure or an union, you must
+use the struct or union key word (even if your program uses a typedef). 
+.RE
+.PP
+When specifying an identifier \fB<id>\fR, if several symbols with
+this name exist, the debugger will prompt for the symbol you want to
+use. Pick up the one you want from its number.
+.PP
+\fIInformation on Wine's internals\fR
+.IP \fBinfo\ class\fR
+Lists all Windows' class registered in Wine
+.IP \fBinfo\ class\ <id>\fR
+Prints information on Windows's class \fB<id>\fR
+.IP \fBinfo\ share\fR
+Lists all the dynamic libraries loaded in the debugged program
+(including .so files, NE and PE DLLs)
+.IP \fBinfo\ share\ N\fR
+Prints information on module at address \fBN\fR
+.IP \fBinfo\ regs\fR
+Prints the value of the CPU registers
+.IP \fBinfo\ segment\fR
+Lists all allocated segments (i386 only)
+.IP \fBinfo\ segment N\fR
+Prints information on segment \fBN\fR (i386 only)
+.IP \fBinfo\ stack\fR
+Prints the values on top of the stack
+.IP \fBinfo\ map\fR
+Lists all virtual mappings used by the debugged program
+.IP \fBinfo\ map\ N\fR
+Lists all virtual mappings used by the program of pid \fBN\fR
+.IP \fBinfo\ wnd\fR
+Lists all the window hierarchy starting from the desktop window
+.IP \fBinfo\ wnd\ N\fR
+Prints information of Window of handle \fBN\fR
+.IP \fBinfo\ process\fR
+Lists all w-processes in Wine session
+.IP \fBinfo\ thread\fR
+Lists all w-threads in Wine session
+.IP \fBinfo\ exception\fR
+Lists the exception frames (starting from current stack frame)
+.PP
+It is possible to turn on and off Wine's debug messages as you are
+debugging using the \fBset\fR command. 
+.IP \fBset\ +\ warn\ win\fR
+Turns on warn on \fB'win'\fR channel
+.IP \fBset\ +\ win\fR
+Turns on warn/fixme/err/trace on \fB'win'\fR channel
+.IP \fBset\ -\ win\fR
+Turns off warn/fixme/err/trace on \fB'win'\fR channel
+.IP \fBset\ -\ fixme\fR
+Turns off the 'fixme' class on all channels
+.PP
+.SS Gdb mode:
+.PP
+See the \fBgdb\fR documentation for all the \fBgdb\fR commands.
+.PP
+However, a few Wine's extension are available, through the
+\fBmonitor\fR command:
+.IP \fBmonitor\ wnd\fR
+Lists all window in the Wine session
+.IP \fBmonitor proc\fR
+Lists all processes in the Wine session
+.IP \fBmonitor mem \fR
+Displays memory mapping of debugged process
+.PP
+.SS Auto mode:
+.PP
+Since no user input is possible, no commands are available.
+
+.SH ENVIRONMENT
+.IP \fBWINE_GDB\fR
+When used in \fBgdb\fR proxy mode, \fBWINE_GDB\fR specifies the name
+(and the path) of the executable to be used for \fBgdb\fR. \fB"gdb"\fR
+is used by default.
+.SH FILES
+No specific files are used (yet).
+.SH BUGS
+A lot.
+.SH AUTHORS
+The first version was written by Eric Youngdale.
+.PP
+See Wine developer's list for the rest of contributors.
+.SH "SEE ALSO"
+.BR winedbg "'s README file"
+.nf
+The Winelib User Guide
+.nf
+The Wine Developers Guide

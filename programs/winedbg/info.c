@@ -22,485 +22,464 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 
-#include "windef.h"
-#include "winbase.h"
+#include "debugger.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "tlhelp32.h"
-#include "debugger.h"
-#include "expr.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /***********************************************************************
- *           DEBUG_PrintBasic
- *
- * Implementation of the 'print' command.
- */
-void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
-{
-    const char  * default_format;
-    long long int res;
-
-    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-    if (value->type == NULL)
-    {
-        DEBUG_Printf("Unable to evaluate expression\n");
-        return;
-    }
-
-    default_format = NULL;
-    res = DEBUG_GetExprValue(value, &default_format);
-
-    switch (format)
-    {
-    case 'x':
-        if (value->addr.seg)
-	{
-            DEBUG_nchar += DEBUG_Printf("0x%04lx", (long unsigned int)res);
-	}
-        else
-	{
-            DEBUG_nchar += DEBUG_Printf("0x%08lx", (long unsigned int)res);
-	}
-        break;
-
-    case 'd':
-        DEBUG_nchar += DEBUG_Printf("%ld\n", (long int)res);
-        break;
-
-    case 'c':
-        DEBUG_nchar += DEBUG_Printf("%d = '%c'",
-                                    (char)(res & 0xff), (char)(res & 0xff));
-        break;
-
-    case 'u':
-    {
-        WCHAR wch = (WCHAR)(res & 0xFFFF);
-        DEBUG_nchar += DEBUG_Printf("%d = '", (unsigned)(res & 0xffff));
-        DEBUG_OutputW(&wch, 1);
-        DEBUG_Printf("'");
-    }
-    break;
-
-    case 'i':
-    case 's':
-    case 'w':
-    case 'b':
-        DEBUG_Printf("Format specifier '%c' is meaningless in 'print' command\n", format);
-    case 0:
-        if (default_format == NULL) break;
-
-        if (strstr(default_format, "%S") != NULL)
-        {
-            const char* ptr;
-            int	state = 0;
-
-            /* FIXME: simplistic implementation for default_format being
-             * foo%Sbar => will print foo, then string then bar
-             */
-            for (ptr = default_format; *ptr; ptr++)
-            {
-                if (*ptr == '%')
-                {
-                    state++;
-                }
-                else if (state == 1)
-                {
-                    if (*ptr == 'S')
-                    {
-                        DBG_ADDR    addr;
-
-                        addr.seg = 0;
-                        addr.off = (long)res;
-                        DEBUG_nchar += DEBUG_PrintStringA(&addr, -1);
-                    }
-                    else
-                    {
-                        /* shouldn't happen */
-                        DEBUG_Printf("%%%c", *ptr);
-                        DEBUG_nchar += 2;
-                    }
-                    state = 0;
-                }
-                else
-                {
-                    DEBUG_OutputA(ptr, 1);
-                    DEBUG_nchar++;
-                }
-            }
-        }
-        else if (strcmp(default_format, "%B") == 0)
-        {
-            DEBUG_nchar += DEBUG_Printf("%s", res ? "true" : "false");
-        }
-        else if (strcmp(default_format, "%R") == 0)
-        {
-            if (value->cookie == DV_HOST)
-                DEBUG_InfoRegisters((CONTEXT*)value->addr.off);
-            else
-                DEBUG_Printf("NIY: info on register struct in debuggee address space\n");
-            DEBUG_nchar = 0;
-        }
-        else
-        {
-            DEBUG_nchar += DEBUG_Printf(default_format, res);
-        }
-        break;
-    }
-}
-
-
-/***********************************************************************
- *           DEBUG_PrintAddress
- *
- * Print an 16- or 32-bit address, with the nearest symbol if any.
- */
-struct symbol_info
-DEBUG_PrintAddress( const DBG_ADDR *addr, enum dbg_mode mode, int flag )
-{
-    struct symbol_info rtn;
-
-    const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, 0,
-						&rtn.list );
-
-    if (addr->seg) DEBUG_Printf("0x%04lx:", addr->seg & 0xFFFF);
-    if (mode != MODE_32) DEBUG_Printf("0x%04lx", addr->off);
-    else DEBUG_Printf("0x%08lx", addr->off);
-    if (name) DEBUG_Printf(" (%s)", name);
-    return rtn;
-}
-/***********************************************************************
- *           DEBUG_PrintAddressAndArgs
- *
- * Print an 16- or 32-bit address, with the nearest symbol if any.
- * Similar to DEBUG_PrintAddress, but we print the arguments to
- * each function (if known).  This is useful in a backtrace.
- */
-struct symbol_info
-DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, enum dbg_mode mode,
-			   unsigned int ebp, int flag )
-{
-    struct symbol_info rtn;
-
-    const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, ebp,
-						&rtn.list );
-
-    if (addr->seg) DEBUG_Printf("0x%04lx:", addr->seg);
-    if (mode != MODE_32) DEBUG_Printf("0x%04lx", addr->off);
-    else DEBUG_Printf("0x%08lx", addr->off);
-    if (name) DEBUG_Printf(" (%s)", name);
-
-    return rtn;
-}
-
-
-/***********************************************************************
- *           DEBUG_Help
+ *           print_help
  *
  * Implementation of the 'help' command.
  */
-void DEBUG_Help(void)
+void print_help(void)
 {
     int i = 0;
     static const char * const helptext[] =
-{
-"The commands accepted by the Wine debugger are a reasonable",
-"subset of the commands that gdb accepts.",
-"The commands currently are:",
-"  help                                   quit",
-"  break [*<addr>]                        watch *<addr>",
-"  delete break bpnum                     disable bpnum",
-"  enable bpnum                           condition <bpnum> [<expr>]",
-"  finish                                 cont [N]",
-"  step [N]                               next [N]",
-"  stepi [N]                              nexti [N]",
-"  x <addr>                               print <expr>",
-"  display <expr>                         undisplay <disnum>",
-"  local display <expr>                   delete display <disnum>",                  
-"  enable display <disnum>                disable display <disnum>",
-"  bt                                     frame <n>",
-"  up                                     down",
-"  list <lines>                           disassemble [<addr>][,<addr>]",
-"  show dir                               dir <path>",
-"  set <reg> = <expr>                     set *<addr> = <expr>",
-"  mode [16,32,vm86]                      pass",
-"  whatis                                 walk [wnd,class,module,maps,",
-"  info (see 'help info' for options)           process,thread,exception]",
+        {
+            "The commands accepted by the Wine debugger are a reasonable",
+            "subset of the commands that gdb accepts.",
+            "The commands currently are:",
+            "  help                                   quit",
+            "  break [*<addr>]                        watch *<addr>",
+            "  delete break bpnum                     disable bpnum",
+            "  enable bpnum                           condition <bpnum> [<expr>]",
+            "  finish                                 cont [N]",
+            "  step [N]                               next [N]",
+            "  stepi [N]                              nexti [N]",
+            "  x <addr>                               print <expr>",
+            "  display <expr>                         undisplay <disnum>",
+            "  local display <expr>                   delete display <disnum>",                  
+            "  enable display <disnum>                disable display <disnum>",
+            "  bt                                     frame <n>",
+            "  up                                     down",
+            "  list <lines>                           disassemble [<addr>][,<addr>]",
+            "  show dir                               dir <path>",
+            "  set <reg> = <expr>                     set *<addr> = <expr>",
+            "  mode [16,32,vm86]                      pass",
+            "  whatis                                 info (see 'help info' for options)",
 
-"The 'x' command accepts repeat counts and formats (including 'i') in the",
-"same way that gdb does.\n",
+            "The 'x' command accepts repeat counts and formats (including 'i') in the",
+            "same way that gdb does.\n",
 
-" The following are examples of legal expressions:",
-" $eax     $eax+0x3   0x1000   ($eip + 256)  *$eax   *($esp + 3)",
-" Also, a nm format symbol table can be read from a file using the",
-" symbolfile command.", /*  Symbols can also be defined individually with",
-" the define command.", */
-"",
-NULL
-};
+            "The following are examples of legal expressions:",
+            " $eax     $eax+0x3   0x1000   ($eip + 256)  *$eax   *($esp + 3)",
+            " Also, a nm format symbol table can be read from a file using the",
+            " symbolfile command.", /*  Symbols can also be defined individually with",
+                                        " the define command.", */
+            "",
+            NULL
+        };
 
-    while(helptext[i]) DEBUG_Printf("%s\n", helptext[i++]);
+    while (helptext[i]) dbg_printf("%s\n", helptext[i++]);
 }
 
 
 /***********************************************************************
- *           DEBUG_HelpInfo
+ *           info_help
  *
  * Implementation of the 'help info' command.
  */
-void DEBUG_HelpInfo(void)
+void info_help(void)
 {
     int i = 0;
     static const char * const infotext[] =
+        {
+            "The info commands allow you to get assorted bits of interesting stuff",
+            "to be displayed.  The options are:",
+            "  info break           Displays information about breakpoints",
+            "  info class <name>    Displays information about window class <name>",
+            "  info display         Shows auto-display expressions in use",
+            "  info except <pid>    Shows exception handler chain (in a given process)",
+            "  info locals          Displays values of all local vars for current frame",
+            "  info maps <pid>      Shows virtual mappings (in a given process)",
+            "  info process         Shows all running processes",
+            "  info reg             Displays values in all registers at top of stack",
+            "  info segments <pid>  Displays information about all known segments",
+            "  info share           Displays all loaded modules",
+            "  info share <addr>    Displays internal module state",
+            "  info stack           Dumps information about top of stack",
+            "  info symbol <sym>    Displays information about a given symbol",
+            "  info thread          Shows all running threads",
+            "  info wnd <handle>    Displays internal window state",
+            "",
+            NULL
+        };
+
+    while (infotext[i]) dbg_printf("%s\n", infotext[i++]);
+}
+
+static const char* get_symtype_str(SYM_TYPE st)
 {
-"The info commands allow you to get assorted bits of interesting stuff",
-"to be displayed.  The options are:",
-"  info break           Dumps information about breakpoints",
-"  info display         Shows auto-display expressions in use",
-"  info locals          Displays values of all local vars for current frame",
-"  info module <handle> Displays internal module state",
-"  info reg             Displays values in all registers at top of stack",
-"  info segments        Dumps information about all known segments",
-"  info share           Dumps information about shared libraries",
-"  info stack           Dumps information about top of stack",
-"  info wnd <handle>    Displays internal window state",
-"",
-NULL
+    switch (st)
+    {
+    default:
+    case SymNone:       return "--none--";
+    case SymCoff:       return "COFF";
+    case SymCv:         return "CodeView";
+    case SymPdb:        return "PDB";
+    case SymExport:     return "Export";
+    case SymDeferred:   return "Deferred";
+    case SymSym:        return "Sym";
+    case SymDia:        return "DIA";
+    }
+}
+
+struct info_module
+{
+    IMAGEHLP_MODULE*    mi;
+    unsigned            num_alloc;
+    unsigned            num_used;
 };
 
-    while(infotext[i]) DEBUG_Printf("%s\n", infotext[i++]);
+static void module_print_info(const IMAGEHLP_MODULE* mi)
+{
+    dbg_printf("0x%08lx-%08lx\t%-16s%s\n",
+               mi->BaseOfImage, mi->BaseOfImage + mi->ImageSize,
+               get_symtype_str(mi->SymType), mi->ModuleName);
 }
 
-/* FIXME: merge InfoClass and InfoClass2 */
-void DEBUG_InfoClass(const char* name)
+static int      module_compare(const void* p1, const void* p2)
 {
-   WNDCLASSEXA	wca;
-
-   if (!GetClassInfoEx(0, name, &wca)) {
-      DEBUG_Printf("Cannot find class '%s'\n", name);
-      return;
-   }
-
-   DEBUG_Printf("Class '%s':\n", name);
-   DEBUG_Printf("style=%08x  wndProc=%08lx\n"
-		"inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
-		"clsExtra=%d  winExtra=%d\n",
-		wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
-		wca.hIcon, wca.hCursor, wca.hbrBackground,
-		wca.cbClsExtra, wca.cbWndExtra);
-
-   /* FIXME:
-    * + print #windows (or even list of windows...)
-    * + print extra bytes => this requires a window handle on this very class...
-    */
+    return (char*)(((const IMAGEHLP_MODULE*)p1)->BaseOfImage) -
+        (char*)(((const IMAGEHLP_MODULE*)p2)->BaseOfImage);
 }
 
-static	void DEBUG_InfoClass2(HWND hWnd, const char* name)
+static inline BOOL module_is_container(const IMAGEHLP_MODULE* wmod_cntnr,
+                                     const IMAGEHLP_MODULE* wmod_child)
 {
-   WNDCLASSEXA	wca;
+    return wmod_cntnr->BaseOfImage <= wmod_child->BaseOfImage &&
+        (DWORD)wmod_cntnr->BaseOfImage + wmod_cntnr->ImageSize >=
+        (DWORD)wmod_child->BaseOfImage + wmod_child->ImageSize;
+}
 
-   if (!GetClassInfoEx((HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), name, &wca)) {
-      DEBUG_Printf("Cannot find class '%s'\n", name);
-      return;
-   }
+static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD base, void* ctx)
+{
+    struct info_module* im = (struct info_module*)ctx;
 
-   DEBUG_Printf("Class '%s':\n", name);
-   DEBUG_Printf("style=%08x  wndProc=%08lx\n"
-		"inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
-		"clsExtra=%d  winExtra=%d\n",
-		wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
-		wca.hIcon, wca.hCursor, wca.hbrBackground,
-		wca.cbClsExtra, wca.cbWndExtra);
-
-   if (wca.cbClsExtra) {
-      int		i;
-      WORD		w;
-
-      DEBUG_Printf("Extra bytes:");
-      for (i = 0; i < wca.cbClsExtra / 2; i++) {
-	 w = GetClassWord(hWnd, i * 2);
-	 /* FIXME: depends on i386 endian-ity */
-	 DEBUG_Printf(" %02x %02x", HIBYTE(w), LOBYTE(w));
-      }
-      DEBUG_Printf("\n");
+    if (im->num_used + 1 > im->num_alloc)
+    {
+        im->num_alloc += 16;
+        im->mi = dbg_heap_realloc(im->mi, im->num_alloc * sizeof(*im->mi));
     }
-    DEBUG_Printf("\n");
+    im->mi[im->num_used].SizeOfStruct = sizeof(im->mi[im->num_used]);
+    if (SymGetModuleInfo(dbg_curr_process->handle, base, &im->mi[im->num_used]))
+    {
+        module_print_info(&im->mi[im->num_used]);
+        im->num_used++;
+    }   
+    return TRUE;
 }
 
-struct class_walker {
-   ATOM*	table;
-   int		used;
-   int		alloc;
+/***********************************************************************
+ *           info_win32_module
+ *
+ * Display information about a given module (DLL or EXE), or about all modules
+ */
+void info_win32_module(DWORD base)
+{
+    if (!dbg_curr_process || !dbg_curr_thread)
+    {
+        dbg_printf("Cannot get info on module while no process is loaded\n");
+        return;
+    }
+
+    if (base)
+    {
+        IMAGEHLP_MODULE     mi;
+
+        mi.SizeOfStruct = sizeof(mi);
+
+        if (!SymGetModuleInfo(dbg_curr_process->handle, base, &mi))
+        {
+            dbg_printf("'0x%08lx' is not a valid module address\n", base);
+            return;
+        }
+        module_print_info(&mi);
+    }
+    else
+    {
+        struct info_module      im;
+        int			i, j;
+        DWORD                   opt;
+
+        im.mi = NULL;
+        im.num_alloc = im.num_used = 0;
+
+        /* this is a wine specific options to return also ELF modules in the
+         * enumeration
+         */
+        SymSetOptions((opt = SymGetOptions()) | 0x40000000);
+        SymEnumerateModules(dbg_curr_process->handle, info_mod_cb, (void*)&im);
+        SymSetOptions(opt);
+
+        qsort(im.mi, im.num_used, sizeof(im.mi[0]), module_compare);
+
+        dbg_printf("Module\tAddress\t\t\tDebug info\tName (%d modules)\n", im.num_used);
+
+        for (i = 0; i < im.num_used; i++)
+        {
+            if (strstr(im.mi[i].ModuleName, "<elf>"))
+            {
+                dbg_printf("ELF\t");
+                module_print_info(&im.mi[i]);
+                /* print all modules embedded in this one */
+                for (j = 0; j < im.num_used; j++)
+                {
+                    if (!strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[i], &im.mi[j]))
+                    {
+                        dbg_printf("  \\-PE\t");
+                        module_print_info(&im.mi[j]);
+                    }
+                }
+            }
+            else
+            {
+                /* check module is not embedded in another module */
+                for (j = 0; j < im.num_used; j++) 
+                {
+                    if (strstr(im.mi[j].ModuleName, "<elf>") && module_is_container(&im.mi[j], &im.mi[i]))
+                        break;
+                }
+                if (j < im.num_used) continue;
+                if (strstr(im.mi[i].ModuleName, ".so") || strchr(im.mi[i].ModuleName, '<'))
+                    dbg_printf("ELF\t");
+                else
+                    dbg_printf("PE\t");
+                module_print_info(&im.mi[i]);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, im.mi);
+    }
+}
+
+struct class_walker
+{
+    ATOM*	table;
+    int		used;
+    int		alloc;
 };
 
-static	void DEBUG_WalkClassesHelper(HWND hWnd, struct class_walker* cw)
+static void class_walker(HWND hWnd, struct class_walker* cw)
 {
-   char	clsName[128];
-   int	i;
-   ATOM	atom;
-   HWND	child;
+    char	clsName[128];
+    int	        i;
+    ATOM	atom;
+    HWND	child;
 
-   if (!GetClassName(hWnd, clsName, sizeof(clsName)))
-      return;
-   if ((atom = FindAtom(clsName)) == 0)
-      return;
+    if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+        return;
+    if ((atom = FindAtom(clsName)) == 0)
+        return;
 
-   for (i = 0; i < cw->used; i++) {
-      if (cw->table[i] == atom)
-	 break;
-   }
-   if (i == cw->used) {
-      if (cw->used >= cw->alloc) {
-	 cw->alloc += 16;
-	 cw->table = DBG_realloc(cw->table, cw->alloc * sizeof(ATOM));
-      }
-      cw->table[cw->used++] = atom;
-      DEBUG_InfoClass2(hWnd, clsName);
-   }
-   do {
-      if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
-	 DEBUG_WalkClassesHelper(child, cw);
-   } while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != 0);
-}
-
-void DEBUG_WalkClasses(void)
-{
-   struct class_walker cw;
-
-   cw.table = NULL;
-   cw.used = cw.alloc = 0;
-   DEBUG_WalkClassesHelper(GetDesktopWindow(), &cw);
-   DBG_free(cw.table);
-}
-
-void DEBUG_InfoWindow(HWND hWnd)
-{
-   char	clsName[128];
-   char	wndName[128];
-   RECT	clientRect;
-   RECT	windowRect;
-   int	i;
-   WORD	w;
-
-   if (!GetClassName(hWnd, clsName, sizeof(clsName)))
-       strcpy(clsName, "-- Unknown --");
-   if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
-      strcpy(wndName, "-- Empty --");
-   if (!GetClientRect(hWnd, &clientRect) || 
-           !MapWindowPoints( hWnd, 0, (LPPOINT) &clientRect, 2))
-      SetRectEmpty(&clientRect);
-   if (!GetWindowRect(hWnd, &windowRect))
-      SetRectEmpty(&windowRect);
-
-   /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
-   DEBUG_Printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
-		"inst=%p  active=%p  idmenu=%08lx\n"
-		"style=%08lx  exstyle=%08lx  wndproc=%08lx  text='%s'\n"
-		"client=%ld,%ld-%ld,%ld  window=%ld,%ld-%ld,%ld sysmenu=%p\n",
-		GetWindow(hWnd, GW_HWNDNEXT),
-		GetWindow(hWnd, GW_CHILD),
-		GetParent(hWnd),
-		GetWindow(hWnd, GW_OWNER),
-		clsName,
-		(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
-		GetLastActivePopup(hWnd),
-		GetWindowLong(hWnd, GWL_ID),
-		GetWindowLong(hWnd, GWL_STYLE),
-		GetWindowLong(hWnd, GWL_EXSTYLE),
-		GetWindowLong(hWnd, GWL_WNDPROC),
-		wndName,
-		clientRect.left, clientRect.top, clientRect.right, clientRect.bottom,
-		windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,
-		GetSystemMenu(hWnd, FALSE));
-
-    if (GetClassLong(hWnd, GCL_CBWNDEXTRA)) {
-        DEBUG_Printf("Extra bytes:" );
-        for (i = 0; i < GetClassLong(hWnd, GCL_CBWNDEXTRA) / 2; i++) {
-	   w = GetWindowWord(hWnd, i * 2);
-	   /* FIXME: depends on i386 endian-ity */
-	   DEBUG_Printf(" %02x %02x", HIBYTE(w), LOBYTE(w));
-	}
-        DEBUG_Printf("\n");
+    for (i = 0; i < cw->used; i++)
+    {
+        if (cw->table[i] == atom)
+            break;
     }
-    DEBUG_Printf("\n");
-}
-
-void DEBUG_WalkWindows(HWND hWnd, int indent)
-{
-   char	clsName[128];
-   char	wndName[128];
-   HWND	child;
-
-   if (!IsWindow(hWnd))
-      hWnd = GetDesktopWindow();
-
-    if (!indent)  /* first time around */
-       DEBUG_Printf("%-16.16s %-17.17s %-8.8s %s\n",
-		    "hwnd", "Class Name", " Style", " WndProc Text");
-
-    do {
-       if (!GetClassName(hWnd, clsName, sizeof(clsName)))
-	  strcpy(clsName, "-- Unknown --");
-       if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
-	  strcpy(wndName, "-- Empty --");
-
-       /* FIXME: missing hmemTaskQ */
-       DEBUG_Printf("%*s%04x%*s", indent, "", (UINT)hWnd, 13-indent,"");
-       DEBUG_Printf("%-17.17s %08lx %08lx %.14s\n",
-		    clsName, GetWindowLong(hWnd, GWL_STYLE),
-		    GetWindowLong(hWnd, GWL_WNDPROC), wndName);
-
-       if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
-	  DEBUG_WalkWindows(child, indent + 1 );
+    if (i == cw->used)
+    {
+        if (cw->used >= cw->alloc)
+        {
+            cw->alloc += 16;
+            cw->table = dbg_heap_realloc(cw->table, cw->alloc * sizeof(ATOM));
+        }
+        cw->table[cw->used++] = atom;
+        info_win32_class(hWnd, clsName);
+    }
+    do
+    {
+        if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
+            class_walker(child, cw);
     } while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != 0);
 }
 
-void DEBUG_WalkProcess(void)
+void info_win32_class(HWND hWnd, const char* name)
 {
-    HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+    WNDCLASSEXA	wca;
+    HINSTANCE   hInst = hWnd ? (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE) : 0;
+
+    if (!name)
+    {
+        struct class_walker cw;
+
+        cw.table = NULL;
+        cw.used = cw.alloc = 0;
+        class_walker(GetDesktopWindow(), &cw);
+        HeapFree(GetProcessHeap(), 0, cw.table);
+        return;
+    }
+
+    if (!GetClassInfoEx(hInst, name, &wca))
+    {
+        dbg_printf("Cannot find class '%s'\n", name);
+        return;
+    }
+
+    dbg_printf("Class '%s':\n", name);
+    dbg_printf("style=0x%08x  wndProc=0x%08lx\n"
+               "inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
+               "clsExtra=%d  winExtra=%d\n",
+               wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
+               wca.hIcon, wca.hCursor, wca.hbrBackground,
+               wca.cbClsExtra, wca.cbWndExtra);
+
+    if (hWnd && wca.cbClsExtra)
+    {
+        int		i;
+        WORD		w;
+
+        dbg_printf("Extra bytes:");
+        for (i = 0; i < wca.cbClsExtra / 2; i++)
+        {
+            w = GetClassWord(hWnd, i * 2);
+            /* FIXME: depends on i386 endian-ity */
+            dbg_printf(" %02x %02x", HIBYTE(w), LOBYTE(w));
+        }
+        dbg_printf("\n");
+    }
+    dbg_printf("\n");
+    /* FIXME:
+     * + print #windows (or even list of windows...)
+     * + print extra bytes => this requires a window handle on this very class...
+     */
+}
+
+static void info_window(HWND hWnd, int indent)
+{
+    char	clsName[128];
+    char	wndName[128];
+    HWND	child;
+
+    do
+    {
+        if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+            strcpy(clsName, "-- Unknown --");
+        if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
+            strcpy(wndName, "-- Empty --");
+
+        dbg_printf("%*s%08x%*s %-17.17s %08lx %08lx %.14s\n",
+                   indent, "", (UINT)hWnd, 12 - indent, "",
+                   clsName, GetWindowLong(hWnd, GWL_STYLE),
+                   GetWindowLong(hWnd, GWL_WNDPROC), wndName);
+
+        if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
+            info_window(child, indent + 1);
+    } while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != 0);
+}
+
+void info_win32_window(HWND hWnd, BOOL detailed)
+{
+    char	clsName[128];
+    char	wndName[128];
+    RECT	clientRect;
+    RECT	windowRect;
+    int         i;
+    WORD	w;
+
+    if (!IsWindow(hWnd)) hWnd = GetDesktopWindow();
+
+    if (!detailed)
+    {
+        dbg_printf("%-20.20s %-17.17s %-8.8s %-8.8s %s\n",
+                   "Window handle", "Class Name", "Style", "WndProc", "Text");
+        info_window(hWnd, 0);
+        return;
+    }
+
+    if (!GetClassName(hWnd, clsName, sizeof(clsName)))
+        strcpy(clsName, "-- Unknown --");
+    if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
+        strcpy(wndName, "-- Empty --");
+    if (!GetClientRect(hWnd, &clientRect) || 
+        !MapWindowPoints(hWnd, 0, (LPPOINT) &clientRect, 2))
+        SetRectEmpty(&clientRect);
+    if (!GetWindowRect(hWnd, &windowRect))
+        SetRectEmpty(&windowRect);
+
+    /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
+    dbg_printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
+               "inst=%p  active=%p  idmenu=%08lx\n"
+               "style=0x%08lx  exstyle=0x%08lx  wndproc=0x%08lx  text='%s'\n"
+               "client=%ld,%ld-%ld,%ld  window=%ld,%ld-%ld,%ld sysmenu=%p\n",
+               GetWindow(hWnd, GW_HWNDNEXT),
+               GetWindow(hWnd, GW_CHILD),
+               GetParent(hWnd),
+               GetWindow(hWnd, GW_OWNER),
+               clsName,
+               (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
+               GetLastActivePopup(hWnd),
+               GetWindowLong(hWnd, GWL_ID),
+               GetWindowLong(hWnd, GWL_STYLE),
+               GetWindowLong(hWnd, GWL_EXSTYLE),
+               GetWindowLong(hWnd, GWL_WNDPROC),
+               wndName,
+               clientRect.left, clientRect.top, clientRect.right, clientRect.bottom,
+               windowRect.left, windowRect.top, windowRect.right, windowRect.bottom,
+               GetSystemMenu(hWnd, FALSE));
+
+    if (GetClassLong(hWnd, GCL_CBWNDEXTRA))
+    {
+        dbg_printf("Extra bytes:");
+        for (i = 0; i < GetClassLong(hWnd, GCL_CBWNDEXTRA) / 2; i++)
+        {
+            w = GetWindowWord(hWnd, i * 2);
+            /* FIXME: depends on i386 endian-ity */
+            dbg_printf(" %02x %02x", HIBYTE(w), LOBYTE(w));
+	}
+        dbg_printf("\n");
+    }
+    dbg_printf("\n");
+}
+
+void info_win32_processes(void)
+{
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap != INVALID_HANDLE_VALUE)
     {
-        PROCESSENTRY32 entry;
-        DWORD current = DEBUG_CurrProcess ? DEBUG_CurrProcess->pid : 0;
-        BOOL ok;
+        PROCESSENTRY32  entry;
+        DWORD           current = dbg_curr_process ? dbg_curr_process->pid : 0;
+        BOOL            ok;
 
         entry.dwSize = sizeof(entry);
-        ok = Process32First( snap, &entry );
+        ok = Process32First(snap, &entry);
 
-        DEBUG_Printf(" %-8.8s %-8.8s %-8.8s %s\n",
-                     "pid", "threads", "parent", "executable" );
+        dbg_printf(" %-8.8s %-8.8s %-8.8s %s (all id:s are in hex)\n",
+                   "pid", "threads", "parent", "executable");
         while (ok)
         {
             if (entry.th32ProcessID != GetCurrentProcessId())
-                DEBUG_Printf("%c%08lx %-8ld %08lx '%s'\n",
-                             (entry.th32ProcessID == current) ? '>' : ' ',
-                             entry.th32ProcessID, entry.cntThreads,
-                             entry.th32ParentProcessID, entry.szExeFile);
-            ok = Process32Next( snap, &entry );
+                dbg_printf("%c%08lx %-8ld %08lx '%s'\n",
+                           (entry.th32ProcessID == current) ? '>' : ' ',
+                           entry.th32ProcessID, entry.cntThreads,
+                           entry.th32ParentProcessID, entry.szExeFile);
+            ok = Process32Next(snap, &entry);
         }
-        CloseHandle( snap );
+        CloseHandle(snap);
     }
 }
 
-void DEBUG_WalkThreads(void)
+void info_win32_threads(void)
 {
-    HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (snap != INVALID_HANDLE_VALUE)
     {
         THREADENTRY32	entry;
-        DWORD 		current = DEBUG_CurrThread ? DEBUG_CurrThread->tid : 0;
         BOOL 		ok;
 	DWORD		lastProcessId = 0;
 
 	entry.dwSize = sizeof(entry);
-	ok = Thread32First( snap, &entry );
+	ok = Thread32First(snap, &entry);
 
-        DEBUG_Printf("%-8.8s %-8.8s %s\n", "process", "tid", "prio" );
+        dbg_printf("%-8.8s %-8.8s %s (all id:s are in hex)\n",
+                   "process", "tid", "prio");
         while (ok)
         {
             if (entry.th32OwnerProcessID != GetCurrentProcessId())
@@ -511,84 +490,83 @@ void DEBUG_WalkThreads(void)
 		 */
 		if (entry.th32OwnerProcessID != lastProcessId)
 		{
-		    DBG_PROCESS*	p = DEBUG_GetProcess(entry.th32OwnerProcessID);
+		    struct dbg_process*	p = dbg_get_process(entry.th32OwnerProcessID);
 
-		    DEBUG_Printf("%08lx%s %s\n",
-				 entry.th32OwnerProcessID, p ? " (D)" : "", p ? p->imageName : "");
+		    dbg_printf("%08lx%s %s\n",
+                               entry.th32OwnerProcessID, p ? " (D)" : "", p ? p->imageName : "");
 		    lastProcessId = entry.th32OwnerProcessID;
 		}
-                DEBUG_Printf("\t%08lx %4ld%s\n",
-                             entry.th32ThreadID, entry.tpBasePri,
-			     (entry.th32ThreadID == current) ? " <==" : "");
+                dbg_printf("\t%08lx %4ld%s\n",
+                           entry.th32ThreadID, entry.tpBasePri,
+                           (entry.th32ThreadID == dbg_curr_tid) ? " <==" : "");
 
 	    }
-            ok = Thread32Next( snap, &entry );
+            ok = Thread32Next(snap, &entry);
         }
 
-        CloseHandle( snap );
+        CloseHandle(snap);
     }
 }
 
 /***********************************************************************
- *           DEBUG_WalkExceptions
+ *           info_win32_exceptions
  *
- * Walk the exception frames of a given thread.
+ * Get info on the exception frames of a given thread.
  */
-void DEBUG_WalkExceptions(DWORD tid)
+void info_win32_exceptions(DWORD tid)
 {
-    DBG_THREAD * thread;
-    void *next_frame;
+    struct dbg_thread*  thread;
+    void*               next_frame;
 
-    if (!DEBUG_CurrProcess || !DEBUG_CurrThread)
+    if (!dbg_curr_process || !dbg_curr_thread)
     {
-        DEBUG_Printf("Cannot walk exceptions while no process is loaded\n");
+        dbg_printf("Cannot get info on exceptions while no process is loaded\n");
         return;
     }
 
-    DEBUG_Printf("Exception frames:\n");
+    dbg_printf("Exception frames:\n");
 
-    if (tid == DEBUG_CurrTid) thread = DEBUG_CurrThread;
+    if (tid == dbg_curr_tid) thread = dbg_curr_thread;
     else
     {
-         thread = DEBUG_GetThread(DEBUG_CurrProcess, tid);
+        thread = dbg_get_thread(dbg_curr_process, tid);
 
-         if (!thread)
-         {
-              DEBUG_Printf("Unknown thread id (0x%08lx) in current process\n", tid);
-              return;
-         }
-         if (SuspendThread( thread->handle ) == -1)
-         {
-              DEBUG_Printf("Can't suspend thread id (0x%08lx)\n", tid);
-              return;
-         }
+        if (!thread)
+        {
+            dbg_printf("Unknown thread id (0x%08lx) in current process\n", tid);
+            return;
+        }
+        if (SuspendThread(thread->handle) == -1)
+        {
+            dbg_printf("Can't suspend thread id (0x%08lx)\n", tid);
+            return;
+        }
     }
 
-    if (!DEBUG_READ_MEM(thread->teb, &next_frame, sizeof(next_frame)))
+    if (!dbg_read_memory(thread->teb, &next_frame, sizeof(next_frame)))
     {
-        DEBUG_Printf("Can't read TEB:except_frame\n");
+        dbg_printf("Can't read TEB:except_frame\n");
         return;
     }
 
-    while (next_frame != (void *)-1)
+    while (next_frame != (void*)-1)
     {
         EXCEPTION_REGISTRATION_RECORD frame;
 
-        DEBUG_Printf("%p: ", next_frame);
-        if (!DEBUG_READ_MEM(next_frame, &frame, sizeof(frame)))
+        dbg_printf("%p: ", next_frame);
+        if (!dbg_read_memory(next_frame, &frame, sizeof(frame)))
         {
-            DEBUG_Printf("Invalid frame address\n");
+            dbg_printf("Invalid frame address\n");
             break;
         }
-        DEBUG_Printf("prev=%p handler=%p\n", frame.Prev, frame.Handler);
+        dbg_printf("prev=%p handler=%p\n", frame.Prev, frame.Handler);
         next_frame = frame.Prev;
     }
 
-    if (tid != DEBUG_CurrTid) ResumeThread( thread->handle );
+    if (tid != dbg_curr_tid) ResumeThread(thread->handle);
 }
 
-
-void DEBUG_InfoSegments(DWORD start, int length)
+void info_win32_segments(DWORD start, int length)
 {
     char 	flags[3];
     DWORD 	i;
@@ -598,7 +576,7 @@ void DEBUG_InfoSegments(DWORD start, int length)
 
     for (i = start; i < start + length; i++)
     {
-        if (!GetThreadSelectorEntry(DEBUG_CurrThread->handle, (i << 3) | 7, &le))
+        if (!GetThreadSelectorEntry(dbg_curr_thread->handle, (i << 3) | 7, &le))
             continue;
 
         if (le.HighWord.Bits.Type & 0x08)
@@ -613,18 +591,18 @@ void DEBUG_InfoSegments(DWORD start, int length)
             flags[1] = (le.HighWord.Bits.Type & 0x2) ? 'w' : '-';
             flags[2] = '-';
         }
-        DEBUG_Printf("%04lx: sel=%04lx base=%08x limit=%08x %d-bit %c%c%c\n",
-		     i, (i<<3)|7,
-		     (le.HighWord.Bits.BaseHi << 24) +
-		     (le.HighWord.Bits.BaseMid << 16) + le.BaseLow,
-		     ((le.HighWord.Bits.LimitHi << 8) + le.LimitLow) <<
-		     (le.HighWord.Bits.Granularity ? 12 : 0),
-		     le.HighWord.Bits.Default_Big ? 32 : 16,
-		     flags[0], flags[1], flags[2] );
+        dbg_printf("%04lx: sel=%04lx base=%08x limit=%08x %d-bit %c%c%c\n",
+                   i, (i << 3) | 7,
+                   (le.HighWord.Bits.BaseHi << 24) +
+                   (le.HighWord.Bits.BaseMid << 16) + le.BaseLow,
+                   ((le.HighWord.Bits.LimitHi << 8) + le.LimitLow) <<
+                   (le.HighWord.Bits.Granularity ? 12 : 0),
+                   le.HighWord.Bits.Default_Big ? 32 : 16,
+                   flags[0], flags[1], flags[2]);
     }
 }
 
-void DEBUG_InfoVirtual(DWORD pid)
+void info_win32_virtual(DWORD pid)
 {
     MEMORY_BASIC_INFORMATION    mbi;
     char*                       addr = 0;
@@ -633,26 +611,26 @@ void DEBUG_InfoVirtual(DWORD pid)
     char                        prot[3+1];
     HANDLE                      hProc;
 
-    if (pid == 0)
+    if (pid == dbg_curr_pid)
     {
-        if (DEBUG_CurrProcess == NULL)
+        if (dbg_curr_process == NULL)
         {
-            DEBUG_Printf("Cannot look at mapping of current process, while no process is loaded\n");
+            dbg_printf("Cannot look at mapping of current process, while no process is loaded\n");
             return;
         }
-        hProc = DEBUG_CurrProcess->handle;
+        hProc = dbg_curr_process->handle;
     }
     else
     {
         hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
         if (hProc == NULL)
         {
-            DEBUG_Printf("Cannot open process <%lu>\n", pid);
+            dbg_printf("Cannot open process <%lu>\n", pid);
             return;
         }
     }
 
-    DEBUG_Printf("Address  Size     State   Type    RWX\n");
+    dbg_printf("Address  Size     State   Type    RWX\n");
 
     while (VirtualQueryEx(hProc, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
     {
@@ -673,8 +651,8 @@ void DEBUG_InfoVirtual(DWORD pid)
             case 0:                 type = "       "; break;
             default:                type = "???    "; break;
             }
-            memset(prot, ' ' , sizeof(prot)-1);
-            prot[sizeof(prot)-1] = '\0';
+            memset(prot, ' ' , sizeof(prot) - 1);
+            prot[sizeof(prot) - 1] = '\0';
             if (mbi.AllocationProtect & (PAGE_READONLY|PAGE_READWRITE|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE))
                 prot[0] = 'R';
             if (mbi.AllocationProtect & (PAGE_READWRITE|PAGE_EXECUTE_READWRITE))
@@ -689,13 +667,13 @@ void DEBUG_InfoVirtual(DWORD pid)
             type = "";
             prot[0] = '\0';
         }
-        DEBUG_Printf("%08lx %08lx %s %s %s\n",
-                     (DWORD)addr, mbi.RegionSize, state, type, prot);
+        dbg_printf("%08lx %08lx %s %s %s\n",
+                   (DWORD)addr, (DWORD)addr + mbi.RegionSize - 1, state, type, prot);
         if (addr + mbi.RegionSize < addr) /* wrap around ? */
             break;
         addr += mbi.RegionSize;
     }
-    if (hProc != DEBUG_CurrProcess->handle) CloseHandle(hProc);
+    if (pid != dbg_curr_pid) CloseHandle(hProc);
 }
 
 struct dll_option_layout
@@ -706,9 +684,9 @@ struct dll_option_layout
     int                 nb_channels;
 };
 
-void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
+void info_wine_dbg_channel(BOOL turn_on, const char* chnl, const char* name)
 {
-    DBG_VALUE                   val;
+    struct dbg_lvalue           lvalue;
     struct dll_option_layout    dol;
     int                         i;
     char*                       str;
@@ -718,34 +696,40 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
     BOOL                        bAll;
     void*                       addr;
 
-    if (DEBUG_GetSymbolValue("first_dll", -1, &val, FALSE) != gsv_found)
+    if (!dbg_curr_process || !dbg_curr_thread)
     {
-        DEBUG_Printf("Can't get first_dll symbol\n");
+        dbg_printf("Cannot set/get debug channels while no process is loaded\n");
         return;
     }
-    addr = (void*)DEBUG_ToLinear(&val.addr);
+
+    if (symbol_get_lvalue("first_dll", -1, &lvalue, FALSE) != sglv_found)
+    {
+        dbg_printf("Can't get first_dll symbol\n");
+        return;
+    }
+    addr = memory_to_linear_addr(&lvalue.addr);
     if (!chnl)                          mask = 15;
     else if (!strcmp(chnl, "fixme"))    mask = 1;
     else if (!strcmp(chnl, "err"))      mask = 2;
     else if (!strcmp(chnl, "warn"))     mask = 4;
     else if (!strcmp(chnl, "trace"))    mask = 8;
-    else { DEBUG_Printf("Unknown channel %s\n", chnl); return; }
+    else { dbg_printf("Unknown channel %s\n", chnl); return; }
 
     bAll = !strcmp("all", name);
-    while (addr && DEBUG_READ_MEM(addr, &dol, sizeof(dol)))
+    while (addr && dbg_read_memory(addr, &dol, sizeof(dol)))
     {
         for (i = 0; i < dol.nb_channels; i++)
         {
-            if (DEBUG_READ_MEM((void*)(dol.channels + i), &str, sizeof(str)) &&
-                DEBUG_READ_MEM(str, buffer, sizeof(buffer)) &&
+            if (dbg_read_memory(dol.channels + i, &str, sizeof(str)) &&
+                dbg_read_memory(str, buffer, sizeof(buffer)) &&
                 (!strcmp(buffer + 1, name) || bAll))
             {
                 if (turn_on) buffer[0] |= mask; else buffer[0] &= ~mask;
-                if (DEBUG_WRITE_MEM(str, buffer, 1)) done++;
+                if (dbg_write_memory(str, buffer, 1)) done++;
             }
         }
         addr = dol.next;
     }
-    if (!done) DEBUG_Printf("Unable to find debug channel %s\n", name);
+    if (!done) dbg_printf("Unable to find debug channel %s\n", name);
     else WINE_TRACE("Changed %d channel instances\n", done);
 }

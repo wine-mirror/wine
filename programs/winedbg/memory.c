@@ -3,7 +3,7 @@
  *
  * Copyright 1993 Eric Youngdale
  * Copyright 1995 Alexandre Julliard
- * Copyright 2000 Eric Pouech
+ * Copyright 2000-2004 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,371 +25,581 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "debugger.h"
-#include "winbase.h"
+#include "wine/debug.h"
 
-#ifdef __i386__
-#define IS_VM86_MODE() (DEBUG_context.EFlags & V86_FLAG)
-#endif
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-static	void	DEBUG_Die(const char* msg)
+void* be_cpu_linearize(HANDLE hThread, const ADDRESS* addr)
 {
-   DEBUG_Printf(msg);
-   exit(1);
+    assert(addr->Mode == AddrModeFlat);
+    return (void*)addr->Offset;
 }
 
-void* DBG_alloc(size_t size)
+unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS* addr, 
+                           unsigned seg, unsigned long offset)
 {
-   void *res = malloc(size ? size : 1);
-   if (res == NULL)
-      DEBUG_Die("Memory exhausted.\n");
-   memset(res, 0, size);
-   return res;
+    addr->Mode    = AddrModeFlat;
+    addr->Segment = 0; /* don't need segment */
+    addr->Offset  = offset;
+    return TRUE;
 }
 
-void* DBG_realloc(void *ptr, size_t size)
+void* memory_to_linear_addr(const ADDRESS* addr)
 {
-   void* res = realloc(ptr, size);
-   if ((res == NULL) && size)
-      DEBUG_Die("Memory exhausted.\n");
-   return res;
+    return be_cpu->linearize(dbg_curr_thread->handle, addr);
 }
 
-char* DBG_strdup(const char *str)
+BOOL memory_get_current_pc(ADDRESS* addr)
 {
-   char *res = strdup(str);
-   if (!res)
-      DEBUG_Die("Memory exhausted.\n");
-   return res;
+    assert(be_cpu->get_addr);
+    return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
+                            be_cpu_addr_pc, addr);
 }
 
-void DBG_free(void *ptr)
+BOOL memory_get_current_stack(ADDRESS* addr)
 {
-    free(ptr);
+    assert(be_cpu->get_addr);
+    return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
+                            be_cpu_addr_stack, addr);
 }
 
-enum dbg_mode DEBUG_GetSelectorType( WORD sel )
+BOOL memory_get_current_frame(ADDRESS* addr)
 {
-#ifdef __i386__
-    LDT_ENTRY	le;
-
-    if (IS_VM86_MODE()) return MODE_VM86;
-    if (sel == 0) return MODE_32;
-    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, sel, &le))
-        return le.HighWord.Bits.Default_Big ? MODE_32 : MODE_16;
-    /* selector doesn't exist */
-    return MODE_INVALID;
-#else
-    return MODE_32;
-#endif
-}
-#ifdef __i386__
-void DEBUG_FixAddress( DBG_ADDR *addr, DWORD def)
-{
-   if (addr->seg == 0xffffffff) addr->seg = def;
-   if (DEBUG_IsSelectorSystem(addr->seg)) addr->seg = 0;
+    assert(be_cpu->get_addr);
+    return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
+                            be_cpu_addr_frame, addr);
 }
 
-/* Determine if sel is a system selector (i.e. not managed by Wine) */
-BOOL	DEBUG_IsSelectorSystem(WORD sel)
+void	memory_report_invalid_addr(const void* addr)
 {
-    if (IS_VM86_MODE()) return FALSE;  /* no system selectors in vm86 mode */
-    return !(sel & 4) || ((sel >> 3) < 17);
-}
-#endif /* __i386__ */
+    ADDRESS     address;
 
-DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
-{
-#ifdef __i386__
-   LDT_ENTRY	le;
-
-   if (IS_VM86_MODE()) return (DWORD)(LOWORD(addr->seg) << 4) + addr->off;
-
-   if (DEBUG_IsSelectorSystem(addr->seg))
-      return addr->off;
-
-   if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, addr->seg, &le)) {
-      return (le.HighWord.Bits.BaseHi << 24) + (le.HighWord.Bits.BaseMid << 16) + le.BaseLow + addr->off;
-   }
-   return 0;
-#else
-   return addr->off;
-#endif
-}
-
-void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
-{
-#ifdef __i386__
-    addr->seg  = DEBUG_context.SegCs;
-
-    if (DEBUG_IsSelectorSystem(addr->seg))
-       addr->seg = 0;
-    addr->off  = DEBUG_context.Eip;
-#elif defined(__sparc__)
-    addr->seg = 0;
-    addr->off = DEBUG_context.pc;
-#elif defined(__powerpc__)
-    addr->seg = 0;
-    addr->off = DEBUG_context.Iar;
-#else
-#	error You must define GET_IP for this CPU
-#endif
-}
-
-void	DEBUG_InvalAddr( const DBG_ADDR* addr )
-{
-   DEBUG_Printf("*** Invalid address ");
-   DEBUG_PrintAddress(addr, DEBUG_CurrThread ? DEBUG_CurrThread->dbg_mode : MODE_32, FALSE);
-   DEBUG_Printf("\n");
-   if (DBG_IVAR(ExtDbgOnInvalidAddress)) DEBUG_ExternalDebugger();
-}
-
-void	DEBUG_InvalLinAddr( void* addr )
-{
-   DBG_ADDR address;
-
-   address.seg = 0;
-   address.off = (unsigned long)addr;
-   DEBUG_InvalAddr( &address );
+    address.Mode    = AddrModeFlat;
+    address.Segment = 0;
+    address.Offset  = (unsigned long)addr;
+    dbg_printf("*** Invalid address ");
+    print_address(&address, FALSE);
+    dbg_printf("\n");
 }
 
 /***********************************************************************
- *           DEBUG_ReadMemory
+ *           memory_read_value
  *
  * Read a memory value.
  */
-/* FIXME: this function is now getting closer and closer to
- * DEBUG_ExprGetValue. They should be merged...
- */
-int DEBUG_ReadMemory( const DBG_VALUE* val )
+BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result)
 {
-    int		value = 0; /* to clear any unused byte */
-    int		os = DEBUG_GetObjectSize(val->type);
-
-    assert(sizeof(value) >= os);
-
-    /* FIXME: only works on little endian systems */
-
-    if (val->cookie == DV_TARGET) {
-       DBG_ADDR	addr = val->addr;
-       void*	lin;
-
-#ifdef __i386__
-       DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
-#endif
-       lin = (void*)DEBUG_ToLinear( &addr );
-
-       DEBUG_READ_MEM_VERBOSE(lin, &value, os);
-    } else {
-       if (val->addr.off)
-	  memcpy(&value, (void*)val->addr.off, os);
+    if (lvalue->cookie == DLV_TARGET)
+    {
+        if (!dbg_read_memory_verbose(memory_to_linear_addr(&lvalue->addr), result, size))
+            return FALSE;
     }
-    return value;
-}
-
-
-/***********************************************************************
- *           DEBUG_WriteMemory
- *
- * Store a value in memory.
- */
-void DEBUG_WriteMemory( const DBG_VALUE* val, int value )
-{
-    int		os = DEBUG_GetObjectSize(val->type);
-
-    assert(sizeof(value) >= os);
-
-    /* FIXME: only works on little endian systems */
-
-    if (val->cookie == DV_TARGET) {
-       DBG_ADDR addr = val->addr;
-       void*	lin;
-
-#ifdef __i386__
-       DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
-#endif
-       lin = (void*)DEBUG_ToLinear( &addr );
-       DEBUG_WRITE_MEM_VERBOSE(lin, &value, os);
-    } else {
-       memcpy((void*)val->addr.off, &value, os);
-    }
-}
-
-/***********************************************************************
- *           DEBUG_GrabAddress
- *
- * Get the address from a value
- */
-BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode )
-{
-    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-
-#ifdef __i386__
-    DEBUG_FixAddress( &value->addr,
-		      (fromCode) ? DEBUG_context.SegCs : DEBUG_context.SegDs);
-#endif
-
-    /*
-     * Dereference pointer to get actual memory address we need to be
-     * reading.  We will use the same segment as what we have already,
-     * and hope that this is a sensible thing to do.
-     */
-    if (value->type != NULL) {
-        if (value->type == DEBUG_GetBasicType(DT_BASIC_CONST_INT)) {
-	    /*
-	     * We know that we have the actual offset stored somewhere
-	     * else in 32-bit space.  Grab it, and we
-	     * should be all set.
-	     */
-	    unsigned int  seg2 = value->addr.seg;
-	    value->addr.seg = 0;
-	    value->addr.off = DEBUG_GetExprValue(value, NULL);
-	    value->addr.seg = seg2;
-	} else {
-	    struct datatype	* testtype;
-
-	    if (DEBUG_TypeDerefPointer(value, &testtype) == 0)
-	        return FALSE;
-	    if (testtype != NULL || value->type == DEBUG_GetBasicType(DT_BASIC_CONST_INT))
-	        value->addr.off = DEBUG_GetExprValue(value, NULL);
-	}
-    } else if (!value->addr.seg && !value->addr.off) {
-        DEBUG_Printf("Invalid expression\n");
-	return FALSE;
+    else
+    {
+        assert(lvalue->addr.Mode == AddrModeFlat);
+        if (!lvalue->addr.Offset) return FALSE;
+        memcpy(result, (void*)lvalue->addr.Offset, size);
     }
     return TRUE;
 }
 
 /***********************************************************************
- *           DEBUG_ExamineMemory
+ *           memory_write_value
+ *
+ * Store a value in memory.
+ */
+BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value)
+{
+    BOOL        ret = TRUE;
+    DWORD       os;
+    DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
+
+    os = ~size;
+    types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &os);
+    assert(size == os);
+
+    /* FIXME: only works on little endian systems */
+    if (lvalue->cookie == DLV_TARGET)
+    {
+        ret = dbg_write_memory_verbose((void*)linear, value, size);
+    }
+    else 
+    {
+        assert(lvalue->addr.Mode == AddrModeFlat);
+        memcpy((void*)lvalue->addr.Offset, value, size);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *           memory_examine
  *
  * Implementation of the 'x' command.
  */
-void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
+void memory_examine(const struct dbg_lvalue* lvalue, int count, char format)
 {
-    DBG_VALUE		  value = *_value;
-    int			  i;
-    unsigned char	* pnt;
+    int			i;
+    ADDRESS             x;
+    char                buffer[256];
 
-    if (!DEBUG_GrabAddress(&value, (format == 'i'))) return;
-
+    x.Mode = AddrModeFlat;
+    x.Offset = types_extract_as_integer(lvalue);
     if (format != 'i' && count > 1)
     {
-        DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
-        DEBUG_Printf(": ");
+        print_address(&x, FALSE);
+        dbg_printf(": ");
     }
 
-    pnt = (void*)DEBUG_ToLinear( &value.addr );
-
-    switch(format)
+    switch (format)
     {
-         case 'u':
-                if (count == 1) count = 256;
-                DEBUG_nchar += DEBUG_PrintStringW(&value.addr, count);
-		DEBUG_Printf("\n");
-		return;
-        case 's':
-		if (count == 1) count = 256;
-                DEBUG_nchar += DEBUG_PrintStringA(&value.addr, count);
-		DEBUG_Printf("\n");
-		return;
-	case 'i':
-		while (count-- && DEBUG_DisassembleInstruction( &value.addr ));
-		return;
-        case 'g':
-                while (count--)
-                {
-                    GUID guid;
-                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &guid, sizeof(guid))) break;
-                    DEBUG_Printf("{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-                                 guid.Data1, guid.Data2, guid.Data3,
-                                 guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-                                 guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
-                    pnt += sizeof(guid);
-                    value.addr.off += sizeof(guid);
-                    if (count)
-                    {
-                        DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
-                        DEBUG_Printf(": ");
-                    }
-                }
-                return;
+    case 'u':
+        if (count == 1) count = 256;
+        memory_get_string(dbg_curr_thread->handle, (void*)x.Offset, lvalue->cookie, 
+                          TRUE, buffer, min(count, sizeof(buffer)));
+        dbg_printf("%s\n", buffer);
+        return;
+    case 's':
+        if (count == 1) count = 256;
+        memory_get_string(dbg_curr_thread->handle, (void*)x.Offset, lvalue->cookie, 
+                          FALSE, buffer, min(count, sizeof(buffer)));
+        dbg_printf("%s\n", buffer);
+        return;
+    case 'i':
+        while (count-- && memory_disasm_one_insn(&x));
+        return;
+    case 'g':
+        while (count--)
+        {
+            GUID guid;
+            if (!dbg_read_memory_verbose((void*)x.Offset, &guid, sizeof(guid))) break;
+            dbg_printf("{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+                       guid.Data1, guid.Data2, guid.Data3,
+                       guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+                       guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+            x.Offset += sizeof(guid);
+            if (count)
+            {
+                print_address(&x, FALSE);
+                dbg_printf(": ");
+            }
+        }
+        return;
 
-#define DO_DUMP2(_t,_l,_f,_vv) { \
-	        _t _v; \
-		for(i=0; i<count; i++) { \
-                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &_v, sizeof(_t))) break; \
-                    DEBUG_Printf(_f,(_vv)); \
-                    pnt += sizeof(_t); value.addr.off += sizeof(_t); \
-                    if ((i % (_l)) == (_l)-1) { \
-                        DEBUG_Printf("\n"); \
-                        DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );\
-                        DEBUG_Printf(": ");\
-                    } \
-		} \
-		DEBUG_Printf("\n"); \
-        } \
+#define DO_DUMP2(_t,_l,_f,_vv) {                                        \
+            _t _v;                                                      \
+            for (i = 0; i < count; i++) {                               \
+                if (!dbg_read_memory_verbose((void*)x.Offset, &_v,      \
+                                             sizeof(_t))) break;        \
+                dbg_printf(_f, (_vv));                                  \
+                x.Offset += sizeof(_t);                                 \
+                if ((i % (_l)) == (_l) - 1) {                           \
+                    dbg_printf("\n");                                   \
+                    print_address(&x, FALSE);                           \
+                    dbg_printf(": ");                                   \
+                }                                                       \
+            }                                                           \
+            dbg_printf("\n");                                           \
+        }                                                               \
 	return
 #define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v)
 
-        case 'x': DO_DUMP(int, 4, " %8.8x");
-	case 'd': DO_DUMP(unsigned int, 4, " %10d");
-	case 'w': DO_DUMP(unsigned short, 8, " %04x");
-        case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v);
-	case 'b': DO_DUMP2(char, 16, " %02x", (_v) & 0xff);
-	}
+    case 'x': DO_DUMP(int, 4, " %8.8x");
+    case 'd': DO_DUMP(unsigned int, 4, " %10d");
+    case 'w': DO_DUMP(unsigned short, 8, " %04x");
+    case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v);
+    case 'b': DO_DUMP2(char, 16, " %02x", (_v) & 0xff);
+    }
 }
 
-#define CHARBUFSIZE 16
+BOOL memory_get_string(HANDLE hp, void* addr, unsigned cookie, BOOL unicode, 
+                       char* buffer, int size)
+{
+    DWORD       sz;
+    WCHAR*      buffW;
 
-/******************************************************************
- *		DEBUG_PrintStringA
+    buffer[0] = 0;
+    if (!addr) return FALSE;
+    switch (cookie)
+    {
+    case DLV_TARGET:
+        if (!unicode) return ReadProcessMemory(hp, addr, buffer, size, &sz);
+
+        buffW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        ReadProcessMemory(hp, addr, buffW, size * sizeof(WCHAR), &sz);
+        WideCharToMultiByte(CP_ACP, 0, buffW, sz / sizeof(WCHAR), buffer, size, 
+                            NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, buffW);
+        return TRUE;
+    case DLV_HOST:
+        strncpy(buffer, addr, size);
+        buffer[size - 1] = 0;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffer, int size)
+{
+    void*       ad;
+    DWORD	sz;
+
+    buffer[0] = 0;
+    if (addr && 
+        ReadProcessMemory(hp, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
+    {
+        return memory_get_string(hp, ad, DLV_TARGET, unicode, buffer, size);
+    }
+    return FALSE;
+}
+
+static void print_typed_basic(const struct dbg_lvalue* lvalue)
+{
+    long long int       val_int;
+    void*               val_ptr;
+    long double         val_real;
+    DWORD               tag, size, count, bt, rtype;
+    DWORD               linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
+
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
+
+    if (lvalue->typeid == dbg_itype_none ||
+        !types_get_info(linear, lvalue->typeid, TI_GET_SYMTAG, &tag))
+        return;
+
+    switch (tag)
+    {
+    case SymTagBaseType:
+        if (!types_get_info(linear, lvalue->typeid, TI_GET_LENGTH, &size) ||
+            !types_get_info(linear, lvalue->typeid, TI_GET_BASETYPE, &bt))
+        {
+            WINE_ERR("Couldn't get information\n");
+            RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+        }
+
+        switch (bt)
+        {
+        case btInt:
+            if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            dbg_printf("%lld", val_int);
+            break;
+        case btUInt:
+            if (!be_cpu->fetch_integer(lvalue, size, FALSE, &val_int)) return;
+            dbg_printf("%llu", val_int);
+            break;
+        case btFloat:
+            if (!be_cpu->fetch_float(lvalue, size, &val_real)) return;
+            dbg_printf("%Lf", val_real);
+            break;
+        case btChar:
+            if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            /* FIXME: should do the same for a Unicode character (size == 2) */
+            if (size == 1 && (val_int < 0x20 || val_int > 0x80))
+                dbg_printf("%d", (int)val_int);
+            else
+                dbg_printf("'%c'", (char)val_int);
+            break;
+        default:
+            WINE_FIXME("Unsupported basetype %lu\n", bt);
+            break;
+        }
+        break;
+    case SymTagPointerType:
+        if (!memory_read_value(lvalue, sizeof(void*), &val_ptr)) return;
+
+        if (!types_get_info(linear, lvalue->typeid, TI_GET_TYPE, &rtype) ||
+            rtype == dbg_itype_none)
+        {
+            dbg_printf("Internal symbol error: unable to access memory location %p", val_ptr);
+            break;
+        }
+
+        if (types_get_info(linear, rtype, TI_GET_SYMTAG, &tag) && tag == SymTagBaseType &&
+            types_get_info(linear, rtype, TI_GET_BASETYPE, &bt) && bt == btChar &&
+            types_get_info(linear, rtype, TI_GET_LENGTH, &size))
+        {
+            char    buffer[1024];
+
+            memory_get_string(dbg_curr_thread->handle, (void*)val_ptr, lvalue->cookie,
+                              size == 2, buffer, sizeof(buffer));
+            dbg_printf("\"%s\"", buffer);
+        }
+        else dbg_printf("%p", val_ptr);
+        break;
+    case SymTagArrayType:
+    case SymTagUDT:
+        assert(lvalue->cookie == DLV_TARGET);
+        if (!memory_read_value(lvalue, sizeof(val_ptr), &val_ptr)) return;
+        dbg_printf("%p", val_ptr);
+        break;
+    case SymTagEnum:
+        {
+            BOOL        ok = FALSE;
+
+            assert(lvalue->cookie == DLV_TARGET);
+            /* FIXME: it depends on underlying type for enums 
+             * (not supported yet in dbghelp)
+             * Assuming 4 as for an int
+             */
+            if (!be_cpu->fetch_integer(lvalue, 4, TRUE, &val_int)) return;
+
+            if (types_get_info(linear, lvalue->typeid, TI_GET_CHILDRENCOUNT, &count))
+            {
+                char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+                TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+                WCHAR*                      ptr;
+                char                        tmp[256];
+                VARIANT                     variant;
+                int                         i;
+
+                fcp->Start = 0;
+                while (count)
+                {
+                    fcp->Count = min(count, 256);
+                    if (types_get_info(linear, lvalue->typeid, TI_FINDCHILDREN, fcp))
+                    {
+                        for (i = 0; i < min(fcp->Count, count); i++)
+                        {
+                            if (!types_get_info(linear, fcp->ChildId[i], TI_GET_VALUE, &variant)) 
+                                continue;
+                            switch (variant.n1.n2.vt)
+                            {
+                            case VT_I4: ok = (val_int == variant.n1.n2.n3.lVal); break;
+                            default: WINE_FIXME("Unsupported variant type (%u)\n", variant.n1.n2.vt);
+                            }
+                            if (ok)
+                            {
+                                ptr = NULL;
+                                types_get_info(linear, fcp->ChildId[i], TI_GET_SYMNAME, &ptr);
+                                if (!ptr) continue;
+                                WideCharToMultiByte(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp), NULL, NULL);
+                                HeapFree(GetProcessHeap(), 0, ptr);
+                                dbg_printf("%s", tmp);
+                                count = 0; /* so that we'll get away from outter loop */
+                                break;
+                            }
+                        }
+                    }
+                }
+                count -= min(count, 256);
+                fcp->Start += 256;
+            }
+            if (!ok) dbg_printf("%lld", val_int);
+        }
+        break;
+    default:
+        WINE_FIXME("Unsupported tag %lu\n", tag);
+        break;
+    }
+}
+
+/***********************************************************************
+ *           print_basic
  *
- * Prints on channel chnl, the string starting at address in target
- * address space. The string stops when either len chars (if <> -1)
- * have been printed, or the '\0' char is printed
+ * Implementation of the 'print' command.
  */
-int  DEBUG_PrintStringA(const DBG_ADDR* address, int len)
+void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
 {
-    char*       lin = (void*)DEBUG_ToLinear(address);
-    char        ch[CHARBUFSIZE+1];
-    int         written = 0;
+    long int    res;
 
-    if (len == -1) len = 32767; /* should be big enough */
-
-    while (written < len)
+    assert(lvalue->cookie == DLV_TARGET || lvalue->cookie == DLV_HOST);
+    if (lvalue->typeid == dbg_itype_none)
     {
-        int to_write = min(CHARBUFSIZE, len - written );
-        if (!DEBUG_READ_MEM_VERBOSE(lin, ch, to_write)) break;
-        ch[to_write] = '\0';  /* protect from displaying junk */
-        to_write = lstrlenA(ch);
-        DEBUG_OutputA(ch, to_write);
-        lin += to_write;
-        written += to_write;
-        if (to_write < CHARBUFSIZE) break;
+        dbg_printf("Unable to evaluate expression\n");
+        return;
     }
-    return written; /* number of actually written chars */
+
+    res = types_extract_as_integer(lvalue);
+
+    /* FIXME: this implies i386 byte ordering */
+    switch (format)
+    {
+    case 'x':
+        if (lvalue->addr.Mode != AddrModeFlat)
+            dbg_printf("0x%04lx", res);
+        else
+            dbg_printf("0x%08lx", res);
+        break;
+
+    case 'd':
+        dbg_printf("%ld\n", res);
+        break;
+
+    case 'c':
+        dbg_printf("%d = '%c'", (char)(res & 0xff), (char)(res & 0xff));
+        break;
+
+    case 'u':
+        {
+            WCHAR wch = (WCHAR)(res & 0xFFFF);
+            dbg_printf("%d = '", wch);
+            dbg_outputW(&wch, 1);
+            dbg_printf("'");
+        }
+        break;
+
+    case 'i':
+    case 's':
+    case 'w':
+    case 'b':
+        dbg_printf("Format specifier '%c' is meaningless in 'print' command\n", format);
+    case 0:
+        print_typed_basic(lvalue);
+        break;
+    }
 }
 
-int  DEBUG_PrintStringW(const DBG_ADDR* address, int len)
+void print_bare_address(const ADDRESS* addr)
 {
-    WCHAR*      lin = (void*)DEBUG_ToLinear(address);
-    WCHAR       ch[CHARBUFSIZE+1];
-    int         written = 0;
-
-    if (len == -1) len = 32767; /* should be big enough */
-
-    while  (written < len)
+    switch (addr->Mode)
     {
-        int to_write = min(CHARBUFSIZE, len - written );
-        if (!DEBUG_READ_MEM_VERBOSE(lin, ch, to_write * sizeof(WCHAR))) break;
-        ch[to_write] = 0;  /* protect from displaying junk */
-        to_write = lstrlenW(ch);
-        DEBUG_OutputW(ch, to_write);
-        lin += to_write;
-        written += to_write;
-        if (to_write < CHARBUFSIZE) break;
+    case AddrModeFlat: 
+        dbg_printf("0x%08lx", addr->Offset); 
+        break;
+    case AddrModeReal:
+    case AddrMode1616:
+        dbg_printf("0x%04x:0x%04lx", addr->Segment, addr->Offset);
+        break;
+    case AddrMode1632:
+        dbg_printf("0x%04x:0x%08lx", addr->Segment, addr->Offset);
+        break;
     }
-    return written; /* number of actually written chars */
+}
+
+/***********************************************************************
+ *           print_address
+ *
+ * Print an 16- or 32-bit address, with the nearest symbol if any.
+ */
+void print_address(const ADDRESS* addr, BOOLEAN with_line)
+{
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
+    void*               lin = memory_to_linear_addr(addr);
+
+    print_bare_address(addr);
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen   = 256;
+    if (!SymFromAddr(dbg_curr_process->handle, (unsigned long)lin, NULL, si)) return;
+    dbg_printf(" %s", si->Name);
+    if (with_line)
+    {
+        IMAGEHLP_LINE               il;
+        IMAGEHLP_MODULE             im;
+
+        il.SizeOfStruct = sizeof(il);
+        if (SymGetLineFromAddr(dbg_curr_process->handle, (unsigned long)lin, NULL, &il))
+            dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
+        im.SizeOfStruct = sizeof(im);
+        if (SymGetModuleInfo(dbg_curr_process->handle, (unsigned long)lin, &im))
+            dbg_printf(" in %s", im.ModuleName);
+    }
+}
+
+struct foo
+{
+    char*       tmp;
+    DWORD       frame;
+};
+
+static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
+{
+    struct foo* foo = (struct foo*)user;
+    DWORD       addr;
+    unsigned    val;
+    long        offset;
+
+    if ((sym_info->Flags & (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL)) == (SYMFLAG_PARAMETER|SYMFLAG_FRAMEREL))
+    {
+        if (foo->tmp[0]) strcat(foo->tmp, ", ");
+        addr = foo->frame;
+        types_get_info(sym_info->ModBase, sym_info->TypeIndex, TI_GET_OFFSET, &offset);
+        addr += offset;
+        dbg_read_memory_verbose((char*)addr, &val, sizeof(val));
+        sprintf(foo->tmp + strlen(foo->tmp), "%s=0x%x", sym_info->Name, val);
+    }
+    return TRUE;
+}
+
+void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
+{
+    char                        buffer[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*                si = (SYMBOL_INFO*)buffer;
+    IMAGEHLP_STACK_FRAME        isf;
+    IMAGEHLP_LINE               il;
+    IMAGEHLP_MODULE             im;
+    struct foo                  foo;
+    char                        tmp[1024];
+    DWORD                       disp;
+
+    if (pc->Mode != AddrModeFlat) 
+        dbg_printf("0x%04x:0x%04lx", pc->Segment, pc->Offset);
+    else
+        dbg_printf("0x%08lx", pc->Offset);
+
+    isf.InstructionOffset = (unsigned long)memory_to_linear_addr(pc);
+    isf.FrameOffset       = (unsigned long)memory_to_linear_addr(frame);
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen   = 256;
+    if (!SymFromAddr(dbg_curr_process->handle, isf.InstructionOffset, &disp, si))
+        return;
+
+    dbg_printf(" %s", si->Name);
+    if (disp) dbg_printf("+0x%lx", disp);
+
+    SymSetContext(dbg_curr_process->handle, &isf, NULL);
+    foo.tmp = tmp;
+    foo.frame = isf.FrameOffset;
+    tmp[0] = '\0';
+    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &foo);
+    if (tmp[0]) dbg_printf("(%s)", tmp);
+
+    il.SizeOfStruct = sizeof(il);
+    if (SymGetLineFromAddr(dbg_curr_process->handle, isf.InstructionOffset,
+                           NULL, &il))
+        dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
+    im.SizeOfStruct = sizeof(im);
+    if (SymGetModuleInfo(dbg_curr_process->handle, isf.InstructionOffset, &im))
+        dbg_printf(" in %s", im.ModuleName);
+}
+
+BOOL memory_disasm_one_insn(ADDRESS* addr)
+{
+    char        ch;
+
+    print_address(addr, TRUE);
+    dbg_printf(": ");
+    if (!dbg_read_memory(memory_to_linear_addr(addr), &ch, sizeof(ch)))
+    {
+        dbg_printf("-- no code accessible --\n");
+        return FALSE;
+    }
+    be_cpu->disasm_one_insn(addr, TRUE);
+    dbg_printf("\n");
+    return TRUE;
+}
+
+void memory_disassemble(const struct dbg_lvalue* xstart, 
+                        const struct dbg_lvalue* xend, int offset)
+{
+    static ADDRESS last = {0,0,0};
+
+    if (!xstart && !xend) 
+    {
+        if (!last.Segment && !last.Offset) memory_get_current_pc(&last);
+    }
+    else
+    {
+        if (xstart)
+        {
+            last.Mode = AddrModeFlat;
+            last.Offset = types_extract_as_integer(xstart);
+        }
+        if (xend) offset = types_extract_as_integer(xend) - last.Offset + 1;
+    }
+    while (offset-- > 0 && memory_disasm_one_insn(&last));
 }
