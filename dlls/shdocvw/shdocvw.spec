@@ -1,14 +1,16 @@
 name	shdocvw
 type	win32
+init	COMIMPL_DllMain
 
 import	ole32.dll
+import	kernel32.dll
 import	ntdll.dll
 
-debug_channels (shdocvw)
+debug_channels (shdocvw comimpl)
 
 108 stub AddUrlToFavorites
-109 stdcall DllCanUnloadNow() SHDOCVW_DllCanUnloadNow
-312 stdcall DllGetClassObject(long long ptr) SHDOCVW_DllGetClassObject
+109 stdcall DllCanUnloadNow() COMIMPL_DllCanUnloadNow
+312 stdcall DllGetClassObject(long long ptr) COMIMPL_DllGetClassObject
 113 stdcall DllGetVersion(ptr) SHDOCVW_DllGetVersion
 114 stdcall DllInstall(long wstr) SHDOCVW_DllInstall
 124 stdcall DllRegisterServer() SHDOCVW_DllRegisterServer

@@ -64,6 +64,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 /* other GUIDs */
 
+#include "wine/obj_webbrowser.h"
+
 #include "vfw.h"
 
 /* for dshow */

@@ -1,5 +1,6 @@
 /*
- * Copyright 2001 John R. Sheets (for CodeWeavers)
+ *	The list of exported class.
+ *
  * Copyright 2002 Hidenori Takeshima
  *
  * This library is free software; you can redistribute it and/or
@@ -17,18 +18,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef WINE_SHDOCVW_H
-#define WINE_SHDOCVW_H
+#include "config.h"
 
-#include "comimpl.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
+#include "ole2.h"
+#include "oleauto.h"
 
-HRESULT CWebBrowserImpl_AllocObj(IUnknown* punkOuter,void** ppobj);
-HRESULT CConnectionPointImpl_AllocObj(IUnknown* punkOuter,void** ppobj);
+#include "wine/obj_webbrowser.h"
+
+#include "wine/debug.h"
+WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
+
+#include "shdocvw.h"
 
 
-/* FIXME - move to header... */
-DEFINE_GUID(IID_INotifyDBEvents,
-0xdb526cc0, 0xd188, 0x11cd, 0xad, 0x48, 0x0, 0xaa, 0x0, 0x3c, 0x9c, 0xb6);
+const COMIMPL_CLASSENTRY COMIMPL_ClassList[] =
+{
+  { &CLSID_WebBrowser, &CWebBrowserImpl_AllocObj },
+  { NULL, NULL } /* the last entry must be NULL */
+};
 
-
-#endif	/* WINE_SHDOCVW_H */
