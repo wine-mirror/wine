@@ -62,6 +62,15 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    /* one buggy program needs this
+     * ("Van Dale Groot woordenboek der Nederlandse taal")
+     */
+    if (sa && IsBadReadPtr(sa,sizeof(SECURITY_ATTRIBUTES)))
+    {
+        ERR("Bad security attributes pointer %p\n",sa);
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return 0;
+    }
     SERVER_START_REQ
     {
         struct create_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
