@@ -4607,13 +4607,40 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         }
     }
 
-    TRACE("XGetSubImage(%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
-     descr->drawable, descr->xSrc, descr->ySrc, descr->width,
-     lines, AllPlanes, ZPixmap, bmpImage, descr->xDest, descr->yDest);
-    XGetSubImage( gdi_display, descr->drawable, descr->xSrc, descr->ySrc,
-                  descr->width, lines, AllPlanes, ZPixmap,
-                  bmpImage, descr->xDest, descr->yDest );
+    if (descr->useShm)
+    {
+        int saveRed, saveGreen, saveBlue;
+ 
+        TRACE("XShmGetImage(%p, %ld, %p, %d, %d, %ld)\n",
+                            gdi_display, descr->drawable, bmpImage,
+                            descr->xSrc, descr->ySrc, AllPlanes);
 
+ 	/* We must save and restore the bmpImage's masks in order
+ 	 * to preserve them across the call to XShmGetImage, which
+ 	 * decides to eleminate them since it doesn't happen to know
+ 	 * what the format of the image is supposed to be, even though 
+ 	 * we do. */
+        saveRed = bmpImage->red_mask;
+        saveBlue= bmpImage->blue_mask;
+        saveGreen = bmpImage->green_mask;
+ 
+        XShmGetImage( gdi_display, descr->drawable, bmpImage,
+                      descr->xSrc, descr->ySrc, AllPlanes);
+
+        bmpImage->red_mask = saveRed;
+        bmpImage->blue_mask = saveBlue;
+        bmpImage->green_mask = saveGreen;
+    }
+    else
+    {
+        TRACE("XGetSubImage(%p,%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
+              gdi_display, descr->drawable, descr->xSrc, descr->ySrc, descr->width,
+              lines, AllPlanes, ZPixmap, bmpImage, descr->xDest, descr->yDest);
+        XGetSubImage( gdi_display, descr->drawable, descr->xSrc, descr->ySrc,
+                      descr->width, lines, AllPlanes, ZPixmap,
+                      bmpImage, descr->xDest, descr->yDest );
+    }
+ 
     TRACE("Dib: depth=%2d r=%lx g=%lx b=%lx\n",
           descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
     TRACE("Bmp: depth=%2d/%2d r=%lx g=%lx b=%lx\n",
