@@ -208,14 +208,15 @@ void write_name_str(FILE *fp, name_id_t *nid)
 
 	if(!win32 && nid->name.s_name->type == str_char)
 	{
-		res.size = strlen(nid->name.s_name->str.cstr) + 1;
+		res.size = strlen(nid->name.s_name->str.cstr);
 		if(res.size > 254)
 			error("Can't write strings larger than 254 bytes");
 		if(res.size == 0)
 			internal_error(__FILE__, __LINE__, "Attempt to write empty string");
 		res.dataidx = 0;
-		res.data = (char *)xmalloc(res.size);
+		res.data = (char *)xmalloc(res.size + 1);
 		res.data[0] = (char)res.size;
+		res.size++;	/* We need to write the lenth byte as well */
 		strcpy(res.data+1, nid->name.s_name->str.cstr);
 		write_s_res(fp, &res);
 		free(res.data);
@@ -246,16 +247,17 @@ void write_name_str(FILE *fp, name_id_t *nid)
 	}
 	else  if(win32 && nid->name.s_name->type == str_unicode)
 	{
-		res.size = wstrlen(nid->name.s_name->str.wstr) + 1;
+		res.size = wstrlen(nid->name.s_name->str.wstr);
 		if(res.size > 65534)
 			error("Can't write strings larger than 65534 bytes");
 		if(res.size == 0)
 			internal_error(__FILE__, __LINE__, "Attempt to write empty string");
 		res.dataidx = 0;
-		res.data = (char *)xmalloc(res.size * 2);
-		((short *)res.data)[0] = (char)res.size;
+		res.data = (char *)xmalloc((res.size + 1) * 2);
+		((short *)res.data)[0] = (short)res.size;
 		wstrcpy((short *)(res.data+2), nid->name.s_name->str.wstr);
 		res.size *= 2; /* Function writes bytes, not shorts... */
+		res.size += 2; /* We need to write the length word as well */
 		write_s_res(fp, &res);
 		free(res.data);
 	}

@@ -1,5 +1,11 @@
 
 ---------------------------------------------------------------------------
+Version 1.0.3 (02-Nov-1998)
+- Bugfix in write_name_str() [writeres.c] where the length byte/word was
+  wrongly counted in the length of the string.
+  Thanks to Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+---------------------------------------------------------------------------
 Version 1.0.2 (20-Jun-1998)
 - Started this file
 - Fixed a bug in filename scanning when they are double quoted. The code now
