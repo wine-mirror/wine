@@ -208,7 +208,7 @@ owner	setupapi
 408  stub     IPGETDRIVERDATE
 409  stub     IPGETDRIVERVERSION
 410  stub     IpGetVersionString #(str str ptr word str)
-411  stub     VcpExplain #(ptr long)
+411  pascal   VcpExplain(ptr long) VcpExplain16
 412  stub     DiBuildDriverIndex #(word)
 413  stub     DiAddSingleInfToDrvIdx #(str word word)
 414  stub     FCEGETFLAGS

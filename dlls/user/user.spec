@@ -529,7 +529,7 @@ rsrc	resources/version16.res
 663 stub GetMenuDefaultItem
 664 stub SetMenuDefaultItem
 665 pascal16 GetMenuItemRect(word word word ptr) GetMenuItemRect16
-666 stub CheckMenuRadioItem
+666 pascal16 CheckMenuRadioItem(word word word word word) CheckMenuRadioItem16
 667 stub TrackPopupMenuEx
 668 pascal16 SetWindowRgn(word word word) SetWindowRgn16
 669 stub GetWindowRgn

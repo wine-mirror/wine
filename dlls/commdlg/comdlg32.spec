@@ -21,8 +21,8 @@ debug_channels (commdlg)
 @ stdcall CommDlgExtendedError() CommDlgExtendedError
 @ stdcall FindTextA(ptr) FindTextA
 @ stdcall FindTextW(ptr) FindTextW
-@ stdcall GetFileTitleA(ptr ptr long) GetFileTitleA
-@ stdcall GetFileTitleW(ptr ptr long) GetFileTitleW
+@ stdcall GetFileTitleA(str ptr long) GetFileTitleA
+@ stdcall GetFileTitleW(wstr ptr long) GetFileTitleW
 @ stdcall GetOpenFileNameA(ptr) GetOpenFileNameA
 @ stdcall GetOpenFileNameW(ptr) GetOpenFileNameW
 @ stdcall GetSaveFileNameA(ptr) GetSaveFileNameA
@@ -31,9 +31,9 @@ debug_channels (commdlg)
 @ stdcall PageSetupDlgA(ptr) PageSetupDlgA
 @ stdcall PageSetupDlgW(ptr) PageSetupDlgW
 @ stdcall PrintDlgA(ptr) PrintDlgA
-@ stdcall PrintDlgW(ptr) PrintDlgW
 @ stdcall PrintDlgExA(ptr) PrintDlgExA
 @ stdcall PrintDlgExW(ptr) PrintDlgExW
+@ stdcall PrintDlgW(ptr) PrintDlgW
 @ stdcall ReplaceTextA(ptr) ReplaceTextA
 @ stdcall ReplaceTextW(ptr) ReplaceTextW
 @ stub WantArrows
