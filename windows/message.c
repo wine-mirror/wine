@@ -723,13 +723,15 @@ BOOL WINAPI TranslateMessage( const MSG *msg )
     {
     case 1:
         message = (msg->message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
-        TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
+        TRACE_(key)("1 -> PostMessageW(%p,%s,%04x,%08lx)\n",
+            msg->hwnd, SPY_GetMsgName(message, msg->hwnd), wp[0], msg->lParam);
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         break;
 
     case -1:
         message = (msg->message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
-        TRACE_(key)("-1 -> PostMessage(%s)\n", SPY_GetMsgName(message, msg->hwnd));
+        TRACE_(key)("-1 -> PostMessageW(%p,%s,%04x,%08lx)\n",
+            msg->hwnd, SPY_GetMsgName(message, msg->hwnd), wp[0], msg->lParam);
         PostMessageW( msg->hwnd, message, wp[0], msg->lParam );
         return TRUE;
     }
@@ -938,6 +940,29 @@ LONG WINAPI BroadcastSystemMessage(
         FIXME("(%08lx,%08lx,%08x,%08x,%08lx): semi-stub!\n",
               dwFlags,*recipients,uMessage,wParam,lParam);
         PostMessageA(HWND_BROADCAST,uMessage,wParam,lParam);
+        return 1;
+    }
+    else
+    {
+        FIXME("(%08lx,%08lx,%08x,%08x,%08lx): stub!\n",
+              dwFlags,*recipients,uMessage,wParam,lParam);
+        return -1;
+    }
+}
+
+/***********************************************************************
+ *		BroadcastSystemMessageW (USER32.@)
+ */
+LONG WINAPI BroadcastSystemMessageW(
+	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,
+	LPARAM lParam )
+{
+    if ((*recipients & BSM_APPLICATIONS)||
+        (*recipients == BSM_ALLCOMPONENTS))
+    {
+        FIXME("(%08lx,%08lx,%08x,%08x,%08lx): semi-stub!\n",
+              dwFlags,*recipients,uMessage,wParam,lParam);
+        PostMessageW(HWND_BROADCAST,uMessage,wParam,lParam);
         return 1;
     }
     else

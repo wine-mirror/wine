@@ -12,7 +12,7 @@
 @ stdcall BringWindowToTop(long)
 @ stdcall BroadcastSystemMessage(long ptr long long long)
 @ stdcall BroadcastSystemMessageA(long ptr long long long) BroadcastSystemMessage
-@ stub BroadcastSystemMessageW
+@ stdcall BroadcastSystemMessageW(long ptr long long long)
 @ stdcall CalcChildScroll(long long)
 @ stdcall CallMsgFilter(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterA(ptr long)
