@@ -21,8 +21,8 @@ BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     char *strbuf;
     SIZE32 sz;
 
-    TRACE(psdrv, "(x=%d, y=%d, flags=0x%08x, str='%s', count=%d)\n", x, y,
-	  flags, str, count);
+    TRACE(psdrv, "(x=%d, y=%d, flags=0x%08x, str='%.*s', count=%d)\n", x, y,
+	  flags, count, str, count);
 
     strbuf = (char *)HeapAlloc( PSDRV_Heap, 0, count + 1);
     if(!strbuf) {

@@ -41,6 +41,18 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 }
 
 /******************************************************************
+ *                  EndPage16  [GDI.380]
+ *
+ */
+INT16 WINAPI EndPage16( HDC16 hdc )
+{
+  INT16 retVal;
+  retVal =  Escape16(hdc, NEWFRAME, 0, 0, 0);
+  TRACE(print,"Escape16 returned %d\n",retVal);
+  return retVal;
+}
+
+/******************************************************************
  *                  StartDoc32A  [GDI32.347]
  *
  */

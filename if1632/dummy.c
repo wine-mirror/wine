@@ -5,8 +5,7 @@
 #include "wintypes.h"
 #include "debug.h"
 
-long WINAPI stub_GDI_379(void) { FIXME(relay, "STARTPAGE: stub\n"); return 1; }
-long WINAPI stub_GDI_380(void) { FIXME(relay, "ENDPAGE: stub\n"); return 1; }
+long WINAPI stub_GDI_379(HDC16 hdc) { FIXME(relay, "STARTPAGE: stub\n"); return 1; }
 long WINAPI stub_GDI_381(HDC16 hdc, SEGPTR proc) { FIXME(relay, "SETABORTPROC: stub\n"); return 1; }
 long WINAPI stub_GDI_382(void) { FIXME(relay, "ABORTPROC: stub\n"); return 1; }
 long WINAPI stub_GDI_530(void) { FIXME(relay, "stub\n"); return 0; }

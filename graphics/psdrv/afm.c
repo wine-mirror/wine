@@ -170,7 +170,7 @@ static AFM *PSDRV_AFMParse(char const *file)
 	
 	if(!strncmp("Weight", buf, 6)) {
 	    if(!strncmp("Roman", value, 5) || !strncmp("Medium", value, 6)
-	       || !strncmp("Book", value, 4))
+	       || !strncmp("Book", value, 4) || !strncmp("Regular", value, 7))
 	        afm->Weight = FW_NORMAL;
 	    else if(!strncmp("Demi", value, 4))
 	        afm->Weight = FW_DEMIBOLD;
