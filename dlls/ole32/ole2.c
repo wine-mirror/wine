@@ -1997,9 +1997,12 @@ static void OLEDD_TrackStateChange(
 	/*
 	 * If the source told us that we should cancel, fool the drop 
 	 * target by telling it that the mouse left it's window.
+	 * Also set the drop effect to "NONE" in case the application 
+	 * ignores the result of DoDragDrop.
 	 */
         case DRAGDROP_S_CANCEL:
 	  IDropTarget_DragLeave(trackerInfo->curDragTarget);
+	  *trackerInfo->pdwEffect = DROPEFFECT_NONE;
 	  break;
       }
     }
