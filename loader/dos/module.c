@@ -32,6 +32,7 @@
 #include "dosexe.h"
 #include "dosmod.h"
 #include "options.h"
+#include "server.h"
 
 #ifdef MZ_SUPPORTED
 
@@ -322,11 +323,7 @@ LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule )
 static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
 {
  if (ver<1) {
-#if 0
-  /* start simulated system 55Hz timer */
-  lpDosTask->system_timer = CreateSystemTimer( 55, MZ_Tick );
-  TRACE(module,"created 55Hz timer tick, handle=%d\n",lpDosTask->system_timer);
-#endif
+  /* can't make timer ticks */
  } else {
   int func;
   struct timeval tim;
@@ -341,18 +338,36 @@ static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
 
 BOOL MZ_InitTask( LPDOSTASK lpDosTask )
 {
- int read_fd[2],write_fd[2];
- pid_t child;
- char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
+  int write_fd[2],x_fd;
+  pid_t child;
+  char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
+  SECURITY_ATTRIBUTES attr={sizeof(attr),NULL,TRUE};
+  struct get_read_fd_request r_req;
+  struct get_write_fd_request w_req;
 
- if (!lpDosTask) return FALSE;
- /* create read pipe */
- if (pipe(read_fd)<0) return FALSE;
- if (pipe(write_fd)<0) {
-  close(read_fd[0]); close(read_fd[1]); return FALSE;
- }
- lpDosTask->read_pipe=read_fd[0];
- lpDosTask->write_pipe=write_fd[1];
+  if (!lpDosTask) return FALSE;
+  /* create pipes */
+  /* this happens in the wrong process context, so we have to let the new process
+     inherit it... (FIXME: call MZ_InitTask in the right process context) */
+  if (!CreatePipe(&(lpDosTask->hReadPipe),&(lpDosTask->hXPipe),&attr,0)) return FALSE;
+  if (pipe(write_fd)<0) {
+    CloseHandle(lpDosTask->hReadPipe);
+    CloseHandle(lpDosTask->hXPipe);
+    return FALSE;
+  }
+  r_req.handle = lpDosTask->hReadPipe;
+  CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &r_req, sizeof(r_req) );
+  CLIENT_WaitReply( NULL, &(lpDosTask->read_pipe), 0 );
+  w_req.handle = lpDosTask->hXPipe;
+  CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
+  CLIENT_WaitReply( NULL, &x_fd, 0 );
+
+  TRACE(module,"win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
+	       lpDosTask->hReadPipe,lpDosTask->hXPipe,lpDosTask->read_pipe,x_fd);
+  TRACE(module,"outbound unix pipe: read=%d, write=%d, pid=%d\n",write_fd[0],write_fd[1],getpid());
+
+  lpDosTask->write_pipe=write_fd[1];
+
  /* if we have a mapping file, use it */
  fname=lpDosTask->mm_name; farg=NULL;
  if (!fname[0]) {
@@ -362,16 +377,22 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   fname=fproc; farg=arg;
  }
 
- TRACE(module,"Loading DOS VM support module (hmodule=%04x)\n",lpDosTask->hModule);
- if ((child=fork())<0) {
-  close(write_fd[0]); close(write_fd[1]);
-  close(read_fd[0]); close(read_fd[1]); return FALSE;
- }
+  TRACE(module,"Loading DOS VM support module (hmodule=%04x)\n",lpDosTask->hModule);
+  if ((child=fork())<0) {
+    close(write_fd[0]);
+    close(lpDosTask->read_pipe);
+    close(lpDosTask->write_pipe);
+    close(x_fd);
+    CloseHandle(lpDosTask->hReadPipe);
+    CloseHandle(lpDosTask->hXPipe);
+    return FALSE;
+  }
  if (child!=0) {
   /* parent process */
   int ret;
 
-  close(read_fd[1]); close(write_fd[0]);
+  close(write_fd[0]);
+  close(x_fd);
   lpDosTask->task=child;
   /* wait for child process to signal readiness */
   do {
@@ -388,26 +409,36 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
   /* start simulated system timer */
   MZ_InitTimer(lpDosTask,ret);
+  if (ret<2) {
+    ERR(module,"dosmod version too old! Please install newer dosmod properly\n");
+    ERR(module,"If you don't, the new dosmod event handling system will not work\n");
+  }
   /* all systems are now go */
  } else {
   /* child process */
-  close(read_fd[0]); close(write_fd[1]);
+  close(lpDosTask->read_pipe);
+  close(lpDosTask->write_pipe);
   /* put our pipes somewhere dosmod can find them */
-  dup2(write_fd[0],0);      /* stdin */
-  dup2(read_fd[1],1);       /* stdout */
+  dup2(write_fd[0],0); /* stdin */
+  dup2(x_fd,1);        /* stdout */
   /* enable signals */
   SIGNAL_MaskAsyncEvents(FALSE);
   /* now load dosmod */
-  execlp("dosmod",fname,farg,NULL);
-  execl("dosmod",fname,farg,NULL);
-  /* hmm, they didn't install properly */
-  execl("loader/dos/dosmod",fname,farg,NULL);
-  /* last resort, try to find it through argv[0] */
+  /* check argv[0]-derived paths first, since the newest dosmod is most likely there
+   * (at least it was once for Andreas Mohr, so I decided to make it easier for him) */
   fpath=strrchr(strcpy(path,Options.argv0),'/');
   if (fpath) {
+   strcpy(fpath,"/dosmod");
+   execl(path,fname,farg,NULL);
    strcpy(fpath,"/loader/dos/dosmod");
    execl(path,fname,farg,NULL);
   }
+  /* okay, it wasn't there, try in the path */
+  execlp("dosmod",fname,farg,NULL);
+  /* last desperate attempts: current directory */
+  execl("dosmod",fname,farg,NULL);
+  /* and, just for completeness... */
+  execl("loader/dos/dosmod",fname,farg,NULL);
   /* if failure, exit */
   ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
@@ -464,6 +495,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
    SetLastError(ERROR_GEN_FAILURE);
    return FALSE;
   }
+  inherit = TRUE; /* bad hack for inheriting the CreatePipe... */
   if (!PROCESS_Create( pModule, cmdline, env, 0, 0, 
                        psa, tsa, inherit, startup, info ))
    return FALSE;
@@ -473,17 +505,33 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
 
 void MZ_KillModule( LPDOSTASK lpDosTask )
 {
- TRACE(module,"killing DOS task\n");
-#if 0
- SYSTEM_KillSystemTimer(lpDosTask->system_timer);
-#endif
- if (lpDosTask->mm_name[0]!=0) {
-  munmap(lpDosTask->img,0x110000-START_OFFSET);
-  close(lpDosTask->mm_fd);
- } else VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
- close(lpDosTask->read_pipe);
- close(lpDosTask->write_pipe);
- kill(lpDosTask->task,SIGTERM);
+  DOSEVENT *event,*p_event;
+  DOSSYSTEM *sys,*p_sys;
+
+  TRACE(module,"killing DOS task\n");
+  if (lpDosTask->mm_name[0]!=0) {
+    munmap(lpDosTask->img,0x110000-START_OFFSET);
+    close(lpDosTask->mm_fd);
+  } else VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
+  close(lpDosTask->read_pipe);
+  close(lpDosTask->write_pipe);
+  CloseHandle(lpDosTask->hReadPipe);
+  CloseHandle(lpDosTask->hXPipe);
+  kill(lpDosTask->task,SIGTERM);
+/* free memory allocated for events and systems */
+#define DFREE(var,pvar,svar) \
+  var = lpDosTask->svar; \
+  while (var) { \
+    if (var->data) free(var->data); \
+    pvar = var->next; free(var); var = pvar; \
+  }
+
+  DFREE(event,p_event,pending)
+  DFREE(event,p_event,current)
+  DFREE(sys,p_sys,sys)
+
+#undef DFREE
+
 #if 0
  /* FIXME: this seems to crash */
  if (lpDosTask->dpmi_sel)
