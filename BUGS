@@ -2,25 +2,22 @@ For information on how to post a useful bug report, please
 read documentation/bugs.sgml.
 
 This is intended to be a place where you should look first if
-you want to contribute to Wine development.
+you want to contribute to the development of Wine.
 
-Wine is still alpha software and is very incomplete.
+Wine is still considered alpha software and is still incomplete.
 
-If you want to help Wine project you can:
+If you want to help the Wine project you can:
 
  * visit Bugzilla (http://bugs.winehq.com/) for 
-   list of existing bugs. Metabug 406 lists bugs which are
-   reasonably simple to fix even for someone new to Wine.
-   Have a look at it and choose subject you are insterested in.
-   http://wine.codeweavers.com/bugzilla/showdependencytree.cgi?id=406
-   You are also welcome to help with Bugzilla - add new bugs, confirm,
+   a list of existing bugs. You are also welcome to 
+   help with Bugzilla - add new bugs, confirm,
    remove duplicates, test fixes, etc.
 
  * create unit tests for Windows API
 
  * contribute to the Wine documentation
 
- * subscribe wine-devel, wine-user mailing lists, participate
+ * subscribe to wine-devel, wine-user mailing lists, participate
    in the discussions
 
  * run Windows applications, port open-source Windows applications
@@ -29,4 +26,3 @@ If you want to help Wine project you can:
    Wine Application Database (http://appdb.codeweavers.com/).
 
  * grep for FIXME in the source files
-
