@@ -2279,6 +2279,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 
     /* align to 32 bit */
     DWORD linebytes = (srcwidth * 4);
+    DWORD copybytes = linebytes;
 
     if (lines < 0 )
     {
@@ -2296,7 +2297,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
             /* ==== 24/32 BGR bitmap to 32 BGR dib ==== */
             if ( bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff )
                 for (h = lines - 1; h >= 0; h--, dstbits+=linebytes)
-                    memcpy( dstbits, bmpImage->data + h*bmpImage->bytes_per_line, linebytes );
+                    memcpy( dstbits, bmpImage->data + h*bmpImage->bytes_per_line, copybytes );
 
 	    /* ==== 24/32 RGB bitmap to 32 BGR dib ==== */
             else if ( bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000 )
