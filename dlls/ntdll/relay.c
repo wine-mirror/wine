@@ -1100,7 +1100,7 @@ FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports,
     return origfun;
 }
 
-void RELAY_SetupDLL( const char *module )
+void RELAY_SetupDLL( HMODULE module )
 {
 }
 
