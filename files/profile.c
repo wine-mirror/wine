@@ -1026,9 +1026,8 @@ int  PROFILE_GetWineIniBool( LPCWSTR section, LPCWSTR key_name, int def )
 void PROFILE_UsageWineIni(void)
 {
     MESSAGE("Perhaps you have not properly edited or created "
-	"your Wine configuration file.\n");
-    MESSAGE("This is (supposed to be) '%s/config'\n", wine_get_config_dir());
-    /* RTFM, so to say */
+	"your Wine configuration file,\n");
+    MESSAGE("which is (supposed to be) '%s/config'.\n", wine_get_config_dir());
 }
 
 
