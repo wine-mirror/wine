@@ -26,6 +26,7 @@
 #include "debugtools.h"
 #include "gdi.h"
 #include "tweak.h"
+#include "winuser.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi)
 
@@ -234,6 +235,80 @@ static void  ReadFontInformation(
 
     return;
 }
+
+/***********************************************************************
+ * Because the stock fonts have their structure initialized with
+ * a height of 0 to keep them independent of mapping mode, simply
+ * returning the LOGFONT as is will not work correctly.
+ * These "FixStockFontSizeXXX()" methods will get the correct
+ * size for the fonts.
+ */
+static void GetFontMetrics(HFONT handle, LPTEXTMETRICA lptm)
+{
+  HDC         hdc = GetDC((HWND)0);
+  HFONT       hOldFont;
+
+  hOldFont = (HFONT)SelectObject(hdc, handle);
+
+  GetTextMetricsA(hdc, lptm);
+
+  SelectObject(hdc, hOldFont);
+
+  ReleaseDC((HWND)0, hdc);
+}
+
+static inline void FixStockFontSize16(
+  HFONT  handle, 
+  INT16  count, 
+  LPVOID buffer)
+{
+  TEXTMETRICA tm;
+  LOGFONT16*  pLogFont = (LOGFONT16*)buffer;
+
+  /*
+   * Was the lfHeight field copied (it's the first field)?
+   * If it was and it was null, replace the height.
+   */
+  if ( (count >= 2*sizeof(INT16)) &&
+       (pLogFont->lfHeight == 0) )
+  {
+    GetFontMetrics(handle, &tm);
+    
+    pLogFont->lfHeight = tm.tmHeight;
+    pLogFont->lfWidth  = tm.tmAveCharWidth;
+  }
+}
+
+static inline void FixStockFontSizeA(
+  HFONT  handle, 
+  INT    count, 
+  LPVOID buffer)
+{
+  TEXTMETRICA tm;
+  LOGFONTA*  pLogFont = (LOGFONTA*)buffer;
+
+  /*
+   * Was the lfHeight field copied (it's the first field)?
+   * If it was and it was null, replace the height.
+   */
+  if ( (count >= 2*sizeof(INT)) &&
+       (pLogFont->lfHeight == 0) )
+  {
+    GetFontMetrics(handle, &tm);
+
+    pLogFont->lfHeight = tm.tmHeight;
+    pLogFont->lfWidth  = tm.tmAveCharWidth;
+  }
+}
+
+/**
+ * Since the LOGFONTA and LOGFONTW structures are identical up to the 
+ * lfHeight member (the one of interest in this case) we simply define
+ * the W version as the A version. 
+ */
+#define FixStockFontSizeW FixStockFontSizeA
+
+
 
 /***********************************************************************
  *           GDI_Init
@@ -450,6 +525,13 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 	break;
       case FONT_MAGIC:
 	result = FONT_GetObject16( (FONTOBJ *)ptr, count, buffer );
+	
+	/*
+	 * Fix the LOGFONT structure for the stock fonts
+	 */
+	if ( (handle >= FIRST_STOCK_HANDLE) && 
+	     (handle <= LAST_STOCK_HANDLE) )
+	  FixStockFontSize16(handle, count, buffer);	
 	break;
       case PALETTE_MAGIC:
 	result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
@@ -489,6 +571,13 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
 	  break;
       case FONT_MAGIC:
 	  result = FONT_GetObjectA( (FONTOBJ *)ptr, count, buffer );
+	  
+	  /*
+	   * Fix the LOGFONT structure for the stock fonts
+	   */
+	  if ( (handle >= FIRST_STOCK_HANDLE) && 
+	       (handle <= LAST_STOCK_HANDLE) )
+	    FixStockFontSizeA(handle, count, buffer);
 	  break;
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
@@ -530,6 +619,13 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
 	  break;
       case FONT_MAGIC:
 	  result = FONT_GetObjectW( (FONTOBJ *)ptr, count, buffer );
+
+	  /*
+	   * Fix the LOGFONT structure for the stock fonts
+	   */
+	  if ( (handle >= FIRST_STOCK_HANDLE) && 
+	       (handle <= LAST_STOCK_HANDLE) )
+	    FixStockFontSizeW(handle, count, buffer);
 	  break;
       case PALETTE_MAGIC:
 	  result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
