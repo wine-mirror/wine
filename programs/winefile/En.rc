@@ -181,7 +181,6 @@ FONT 8, "MS Shell Dlg"
 STRINGTABLE
 {
 	IDS_FONT_SEL_DLG_NAME	"Applying font settings"
-	IDS_FONT_SEL_DLG_INFO	"Changed font settings apply only to newly started windows."
 	IDS_FONT_SEL_ERROR	"Error while selecting new font."
 	IDS_FILE_MOVE_ERROR	"Error while moving file or directory."
 }

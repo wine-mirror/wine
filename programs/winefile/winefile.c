@@ -1,7 +1,7 @@
 /*
  * Winefile
  *
- * Copyright 2000 Martin Fuchs
+ * Copyright 2000, 2003, 2004 Martin Fuchs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1490,7 +1490,7 @@ static HWND create_child_window(ChildWnd* child)
 	mcs.y       = child->pos.rcNormalPosition.top;
 	mcs.cx      = child->pos.rcNormalPosition.right-child->pos.rcNormalPosition.left;
 	mcs.cy      = child->pos.rcNormalPosition.bottom-child->pos.rcNormalPosition.top;
-	mcs.style   = 1;
+	mcs.style   = 0;
 	mcs.lParam  = 0;
 
 	hcbthook = SetWindowsHookEx(WH_CBT, CBTProc, 0, GetCurrentThreadId());
@@ -1817,12 +1817,13 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 				case ID_WINDOW_ARRANGE:
 					SendMessage(Globals.hmdiclient, WM_MDIICONARRANGE, 0, 0);
 					break;
-					
+
 				case ID_SELECT_FONT: {
+					TCHAR dlg_name[BUFFER_LEN], dlg_info[BUFFER_LEN];
 					CHOOSEFONT chFont;
-					LOGFONT    lFont;
+					LOGFONT lFont;
+
 					HDC hdc = GetDC(hwnd);
-					char dlg_name[255], dlg_info[255];
 					chFont.lStructSize = sizeof(CHOOSEFONT);
 					chFont.hwndOwner = hwnd;
 					chFont.hDC = NULL;
@@ -1837,20 +1838,32 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					chFont.nFontType = SIMULATED_FONTTYPE;
 					chFont.nSizeMin = 0;
 					chFont.nSizeMax = 24;
-					if(ChooseFont(&chFont)) {
-						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, MAX_LOAD_STRING);
-						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_INFO, dlg_info, MAX_LOAD_STRING);
-						MessageBox(hwnd,dlg_info,dlg_name,MB_OK|MB_ICONINFORMATION);
+
+					if (ChooseFont(&chFont)) {
+						HWND childWnd;
+
 						Globals.hfont = CreateFontIndirect(&lFont);
 						SelectFont(hdc, Globals.hfont);
 						GetTextExtentPoint32(hdc, TEXT(" "), 1, &Globals.spaceSize);
+
+						/* change font in all open child windows */
+						for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
+							ChildWnd* child = (ChildWnd*) GetWindowLong(childWnd, GWL_USERDATA);
+							SetWindowFont(child->left.hwnd, Globals.hfont, TRUE);
+							SetWindowFont(child->right.hwnd, Globals.hfont, TRUE);
+							ListBox_SetItemHeight(child->left.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+							ListBox_SetItemHeight(child->right.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+							InvalidateRect(child->left.hwnd, NULL, TRUE);
+							InvalidateRect(child->right.hwnd, NULL, TRUE);
+						}
 					}
-					else if(CommDlgExtendedError()) {
-						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, MAX_LOAD_STRING);
-						LoadString(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, MAX_LOAD_STRING);
-						MessageBox(hwnd,dlg_info,dlg_name,MB_OK);
+					else if (CommDlgExtendedError()) {
+						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, BUFFER_LEN);
+						LoadString(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, BUFFER_LEN);
+						MessageBox(hwnd, dlg_info, dlg_name, MB_OK);
 					}
-					ReleaseDC(hwnd,hdc);
+
+					ReleaseDC(hwnd, hdc);
 					break;
 				}
 

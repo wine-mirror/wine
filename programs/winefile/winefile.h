@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Martin Fuchs
+ * Copyright 2000, 2003, 2004 Martin Fuchs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -75,9 +75,7 @@ enum IMAGE {
 	IMG_FOLDER,		IMG_OPEN_FOLDER,	IMG_FOLDER_PLUS,IMG_OPEN_PLUS,	IMG_OPEN_MINUS,
 	IMG_FOLDER_UP,	IMG_FOLDER_CUR
 };
-#ifndef MAX_LOAD_STRING
-#define MAX_LOAD_STRING		256
-#endif
+
 #define	IMAGE_WIDTH			16
 #define	IMAGE_HEIGHT			13
 #define	SPLIT_WIDTH			5

@@ -182,7 +182,6 @@ FONT 8, "MS Shell Dlg"
 STRINGTABLE
 {
 	IDS_FONT_SEL_DLG_NAME	"Wprowadzanie ustawieñ czcionki"
-	IDS_FONT_SEL_DLG_INFO	"Nowe ustawienia czcionki zadzia³aj¹ jedynie dla nowo otwartych okien."
 	IDS_FONT_SEL_ERROR	"B³¹d przy wybieraniu czcionki"
 	IDS_FILE_MOVE_ERROR	"B³¹d przy przenoszeniu pliku."
 }

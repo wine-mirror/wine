@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Martin Fuchs
+ * Copyright 2000, 2003 Martin Fuchs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -72,7 +72,6 @@
 
 /* string table */
 #define IDS_FONT_SEL_DLG_NAME				1101
-#define IDS_FONT_SEL_DLG_INFO				1102
 #define IDS_FONT_SEL_ERROR				1103
 #define IDS_FILE_MOVE_ERROR				1104
 
