@@ -19,6 +19,7 @@
 #include "wine/unicode.h"
 #include "wine/obj_base.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "debugtools.h"
 
@@ -65,6 +66,53 @@ DWORD WINAPI SHLWAPI_1 (
 DWORD WINAPI SHLWAPI_2 (LPCWSTR x,LPVOID y)
 {
 	FIXME("(%s,%p)\n",debugstr_w(x),y);
+	return 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_15	[SHLWAPI.15]
+ *
+ * Function:
+ *    Retrieves IE "AcceptLanguage" value from registry
+ *  
+ */
+HRESULT WINAPI SHLWAPI_15 (
+	LPWSTR langbuf,
+	LPDWORD buflen)
+{
+	CHAR *mystr;
+	DWORD mystrlen, mytype;
+	HKEY mykey;
+	LCID mylcid;
+
+	mystrlen = *buflen;
+	mystr = (CHAR*)HeapAlloc(GetProcessHeap(), 
+				 HEAP_ZERO_MEMORY, mystrlen);
+	RegOpenKeyA(HKEY_CURRENT_USER, 
+		    "Software\\Microsoft\\Internet Explorer\\International", 
+		    &mykey);
+	if (RegQueryValueExA(mykey, "AcceptLanguage", 
+			      0, &mytype, mystr, &mystrlen)) {
+	    mylcid = GetUserDefaultLCID();
+	    /* somehow the mylcid translates into "en-us"
+	     *  this is similar to "LOCALE_SABBREVLANGNAME"
+	     *  which could be gotten via GetLocaleInfo.
+	     *  The only problem is LOCALE_SABBREVLANGUAGE" is
+	     *  a 3 char string (first 2 are country code and third is
+	     *  letter for "sublanguage", which does not come close to
+	     *  "en-us"
+	     */
+	    lstrcpynA(mystr, "en-us", mystrlen);
+	    mystrlen = lstrlenA(mystr);
+	}
+	else {
+	    /* handle returned string */
+	    FIXME("missing code\n");
+	}
+	RegCloseKey(mykey);
+	*buflen = MultiByteToWideChar(0, 0, mystr, -1, langbuf, (*buflen)-1);
+	HeapFree(GetProcessHeap(), 0, mystr);
+	TRACE("language is %s\n", debugstr_w(langbuf));
 	return 0;
 }
 
@@ -127,22 +175,43 @@ DWORD WINAPI SHLWAPI_24 (
 }
 
 /*************************************************************************
+ *      SHLWAPI_25	[SHLWAPI.25]
+ *
+ */
+BOOL WINAPI SHLWAPI_25(DWORD dw1)
+{
+    FIXME("(%08lx): stub\n", dw1);
+    return FALSE;
+}
+
+/*************************************************************************
+ *      SHLWAPI_29	[SHLWAPI.29]
+ *
+ * Seems to be iswspace
+ */
+BOOL WINAPI SHLWAPI_29(WCHAR wc)
+{
+    return (get_char_typeW(wc) & C1_SPACE) != 0;
+}
+
+/*************************************************************************
  *      SHLWAPI_30	[SHLWAPI.30]
  *
- * Seems to be an isspaceW.
+ * Seems to be iswblank
  */
-BOOL WINAPI SHLWAPI_30(LPWSTR lpcChar)
+BOOL WINAPI SHLWAPI_30(WCHAR wc)
 {
-  switch (*lpcChar)
-  {
-  case (WCHAR)'\t':
-  case (WCHAR)' ':
-  case 160:
-  case 12288:
-  case 65279:
-    return TRUE;
-  }
-  return FALSE;
+    return (get_char_typeW(wc) & C1_BLANK) != 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_31	[SHLWAPI.31]
+ *
+ * Seems to be iswpunct
+ */
+BOOL WINAPI SHLWAPI_31(WCHAR wc)
+{
+    return (get_char_typeW(wc) & C1_PUNCT) != 0;
 }
 
 /*************************************************************************
@@ -157,6 +226,27 @@ BOOL WINAPI SHLWAPI_32(LPCWSTR lpcChar)
  if (((DWORD)lpcChar & 0xffff) - 127 <= (WCHAR)' ')
    return TRUE;
  return FALSE;
+}
+
+/*************************************************************************
+ *      SHLWAPI_33	[SHLWAPI.33]
+ *
+ */
+BOOL WINAPI SHLWAPI_33(DWORD dw1)
+{
+    FIXME("(%08lx): stub\n", dw1);
+    if (HIWORD(dw1)) return TRUE;
+    return FALSE;
+}
+
+/*************************************************************************
+ *      SHLWAPI_35	[SHLWAPI.35]
+ *
+ */
+BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
+{
+    FIXME("(%p, 0x%08lx, %p): stub\n", p1, dw2, p3);
+    return TRUE;
 }
 
 /*************************************************************************
@@ -187,38 +277,44 @@ INT WINAPI SHLWAPI_74(HWND hWnd, INT nItem, LPWSTR lpsDest,INT nDestLen)
 
 /*************************************************************************
  *      @	[SHLWAPI.151]
- *
- *      pStr "HTTP/1.1", dw1 0x5
+ * Function:  Compare two ASCII strings for "len" bytes.
+ * Returns:   *str1-*str2  (case sensitive)
  */
-DWORD WINAPI SHLWAPI_151(LPSTR pStr, LPVOID ptr, DWORD dw1)
+DWORD WINAPI SHLWAPI_151(LPSTR str1, LPSTR str2, INT len)
 {
-  FIXME("('%s', %p, %08lx): stub\n", pStr, ptr, dw1);
-  return 0;
+    return strncmp( str1, str2, len );
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.152]
+ *
+ * Function:  Compare two WIDE strings for "len" bytes.
+ * Returns:   *str1-*str2  (case sensitive)
  */
 DWORD WINAPI SHLWAPI_152(LPWSTR str1, LPWSTR str2, INT len)
 {
-  if (!len)
-    return 0;
-
-  while (--len && *str1 && *str1 == *str2)
-  {
-    str1++;
-    str2++;
-  }
-  return *str1 - *str2;
+    return strncmpW( str1, str2, len );
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.153]
+ * Function:  Compare two ASCII strings for "len" bytes via caseless compare.
+ * Returns:   *str1-*str2  (case insensitive)
  */
-DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD dw3)
+DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD len)
 {
-    FIXME("'%s' '%s' %08lx - stub\n", str1, str2, dw3);
-    return 0;
+    return strncasecmp( str1, str2, len );
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.154]
+ *
+ * Function:  Compare two WIDE strings for "len" bytes via caseless compare.
+ * Returns:   *str1-*str2  (case insensitive)
+ */
+DWORD WINAPI SHLWAPI_154(LPWSTR str1, LPWSTR str2, DWORD len)
+{
+    return strncmpiW( str1, str2, len );
 }
 
 /*************************************************************************
@@ -228,8 +324,17 @@ DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD dw3)
  */
 DWORD WINAPI SHLWAPI_156 ( LPWSTR str1, LPWSTR str2)
 {
-  while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-  return (INT)(*str1 - *str2);
+    return strcmpW( str1, str2 );
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.158]
+ *
+ *	Case insensitive string compare. Does not SetLastError(). ??
+ */
+DWORD WINAPI SHLWAPI_158 ( LPWSTR str1, LPWSTR str2)
+{
+    return strcmpiW( str1, str2 );
 }
 
 /*************************************************************************

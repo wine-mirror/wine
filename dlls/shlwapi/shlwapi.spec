@@ -24,7 +24,7 @@ debug_channels (shell)
 12  stub @
 13  stub @
 14  stub @
-15  stub @
+15  stdcall @(ptr ptr) SHLWAPI_15
 16  stdcall @(long long long long) SHLWAPI_16
 17  stub @
 18  stub @
@@ -34,17 +34,17 @@ debug_channels (shell)
 22  stub @
 23  stdcall @(ptr ptr long) SHLWAPI_23
 24  stdcall @(ptr ptr long) SHLWAPI_24
-25  stub @
+25  stdcall @(long) SHLWAPI_25
 26  stub @
 27  stub @
 28  stub @
-29  stub @
-30  stub @
-31  stub @
-32  stdcall @(ptr) SHLWAPI_32
-33  stub @
+29  stdcall @(long) SHLWAPI_29
+30  stdcall @(long) SHLWAPI_30
+31  stdcall @(long) SHLWAPI_31
+32  stdcall @(ptr)  SHLWAPI_32
+33  stdcall @(long) SHLWAPI_33
 34  stub @
-35  stub @
+35  stdcall @(ptr long ptr) SHLWAPI_35
 36  stub @
 37  forward @ user32.CallWindowProcW
 38  forward @ user32.CharLowerW
@@ -163,11 +163,11 @@ debug_channels (shell)
 151 stdcall @(str ptr long) SHLWAPI_151
 152 stdcall @(wstr wstr long) SHLWAPI_152
 153 stdcall @(long long long) SHLWAPI_153
-154 stub @
+154 stdcall @(wstr wstr long) SHLWAPI_154
 155 stub @
 156 stdcall @(wstr wstr) SHLWAPI_156
 157 stub @
-158 stub @ #(wstr wstr) SHLWAPI_158
+158 stdcall @(wstr wstr) SHLWAPI_158
 159 forward @ kernel32.CompareStringW
 160 stub @
 161 stub @
@@ -585,7 +585,7 @@ debug_channels (shell)
 @ stub    SHQueryInfoKeyW
 @ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) SHQueryValueExA
 @ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr) SHQueryValueExW
-@ stub    SHRegCloseUSKey
+@ stdcall SHRegCloseUSKey(ptr) SHRegCloseUSKey
 @ stub    SHRegCreateUSKeyA
 @ stub    SHRegCreateUSKeyW
 @ stub    SHRegDeleteEmptyUSKeyA
@@ -598,12 +598,12 @@ debug_channels (shell)
 @ stub    SHRegEnumUSValueW
 @ stdcall SHRegGetBoolUSValueA(str str long long)SHRegGetBoolUSValueA
 @ stdcall SHRegGetBoolUSValueW(wstr wstr long long)SHRegGetBoolUSValueW
-@ stdcall SHRegGetUSValueA ( ptr str ptr ptr ptr long ptr long ) SHRegGetUSValueA
-@ stdcall SHRegGetUSValueW ( ptr wstr ptr ptr ptr long ptr long ) SHRegGetUSValueW
+@ stdcall SHRegGetUSValueA ( str str ptr ptr ptr long ptr long ) SHRegGetUSValueA
+@ stdcall SHRegGetUSValueW ( wstr wstr ptr ptr ptr long ptr long ) SHRegGetUSValueW
 @ stdcall SHRegOpenUSKeyA ( str long long long long ) SHRegOpenUSKeyA
 @ stdcall SHRegOpenUSKeyW ( wstr long long long long ) SHRegOpenUSKeyW
-@ stub    SHRegQueryInfoUSKeyA
-@ stub    SHRegQueryInfoUSKeyW
+@ stdcall SHRegQueryInfoUSKeyA ( long ptr ptr ptr ptr long ) SHRegQueryInfoUSKeyA
+@ stdcall SHRegQueryInfoUSKeyW ( long ptr ptr ptr ptr long ) SHRegQueryInfoUSKeyW
 @ stdcall SHRegQueryUSValueA ( long str ptr ptr ptr long ptr long ) SHRegQueryUSValueA
 @ stdcall SHRegQueryUSValueW ( long wstr ptr ptr ptr long ptr long ) SHRegQueryUSValueW
 @ stub    SHRegSetUSValueA
@@ -673,8 +673,8 @@ debug_channels (shell)
 @ stub    UrlCreateFromPathW
 @ stdcall UrlEscapeA(str ptr ptr long)UrlEscapeA
 @ stdcall UrlEscapeW(wstr ptr ptr long)UrlEscapeW
-@ stub    UrlGetLocationA
-@ stub    UrlGetLocationW
+@ stdcall UrlGetLocationA(str) UrlGetLocationA
+@ stdcall UrlGetLocationW(wstr) UrlGetLocationW
 @ stub    UrlGetPartA
 @ stub    UrlGetPartW
 @ stdcall UrlHashA(str ptr long) UrlHashA
@@ -711,6 +711,8 @@ debug_channels (shell)
 @ stdcall _SHGetInstanceExplorer@4(ptr) _SHGetInstanceExplorer
 @ stub    PathUndecorateA
 @ stub    PathUndecorateW
+@ stub    PathUnExpandEnvStringsA
+@ stub    PathUnExpandEnvStringsW
 @ stub    SHCopyKeyA
 @ stub    SHCopyKeyW
 @ stub    SHAutoComplete
@@ -720,6 +722,9 @@ debug_channels (shell)
 @ stub    SHCreateThread
 @ stub    SHGetThreadRef
 @ stub    SHRegDuplicateHKey
+@ stub    SHRegSetPathA
+@ stub    SHRegSetPathW
+@ stub    SHRegisterValidateTemplate
 @ stub    SHSetThreadRef
 @ stub    SHSkipJunction
 @ stub    SHStrDupA
