@@ -622,7 +622,7 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
  */
 BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
-    CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20],fileName[MAX_PATH];
+    CHAR szApplicationName[MAX_PATH + 2],szCommandline[MAX_PATH],szPidl[20],fileName[MAX_PATH];
     LPSTR pos;
     void *env;
     int gap, len;
@@ -658,7 +658,9 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
     /* process the IDList */
     if ( (sei->fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
     {
-        SHGetPathFromIDListA (sei->lpIDList,szApplicationName);
+        szApplicationName[0] = '"';
+        SHGetPathFromIDListA (sei->lpIDList,szApplicationName + 1);
+        strcat(szApplicationName, "\"");
         TRACE("-- idlist=%p (%s)\n", sei->lpIDList, szApplicationName);
     }
     else
