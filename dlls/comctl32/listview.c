@@ -6800,6 +6800,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    POINT old;
 
     TRACE("(nItem=%d, &pt=%s\n", nItem, debugpoint(&pt));
 
@@ -6817,10 +6818,19 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt
 	pt.y -= ICON_TOP_PADDING;
     }
 
+    /* save the old position */
+    old.x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+    old.y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+    
+    /* Is the position changing? */
+    if (pt.x == old.x && pt.y == old.y) return TRUE;
+   
+    /* FIXME: shouldn't we invalidate, as the item moved? */
+    
     /* Allocating a POINTER for every item is too resource intensive,
      * so we'll keep the (x,y) in different arrays */
-    if (DPA_InsertPtr(infoPtr->hdpaPosX, nItem, (void *)pt.x) == nItem &&
-        DPA_InsertPtr(infoPtr->hdpaPosY, nItem, (void *)pt.y) == nItem )
+    if (DPA_SetPtr(infoPtr->hdpaPosX, nItem, (void *)pt.x) &&
+        DPA_SetPtr(infoPtr->hdpaPosY, nItem, (void *)pt.y) )
 	return TRUE;
     
     ERR("We should never fail here (nItem=%d, pt=%s), please report.\n", 
