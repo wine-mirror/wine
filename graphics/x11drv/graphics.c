@@ -306,12 +306,17 @@ X11DRV_LineTo( DC *dc, INT x, INT y )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (X11DRV_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( dc )) {
+	/* Update the pixmap from the DIB section */
+	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
 	TSXDrawLine(display, physDev->drawable, physDev->gc, 
 		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
 		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
 		  dc->w.DCOrgX + XLPTODP( dc, x ),
 		  dc->w.DCOrgY + YLPTODP( dc, y ) );
+	/* Update the DIBSection from the pixmap */
+	X11DRV_DIB_UpdateDIBSection(dc, TRUE); 
+    }
     return TRUE;
 }
 
@@ -334,6 +339,7 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
     double start_angle, end_angle;
     XPoint points[4];
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    BOOL update = FALSE;
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -388,6 +394,9 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
     idiff_angle  = (INT)((end_angle - start_angle) * 180 * 64 / PI + 0.5);
     if (idiff_angle <= 0) idiff_angle += 360 * 64;
 
+    /* Update the pixmap from the DIB section */
+    X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+
       /* Fill arc with brush if Chord() or Pie() */
 
     if ((lines > 0) && X11DRV_SetupGCForBrush( dc )) {
@@ -396,14 +405,15 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
         TSXFillArc( display, physDev->drawable, physDev->gc,
                  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                  right-left-1, bottom-top-1, istart_angle, idiff_angle );
+	update = TRUE;
     }
 
       /* Draw arc and lines */
 
     if (X11DRV_SetupGCForPen( dc )){
-    TSXDrawArc( display, physDev->drawable, physDev->gc,
-	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
+    	TSXDrawArc( display, physDev->drawable, physDev->gc,
+	      	dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+	      	right-left-1, bottom-top-1, istart_angle, idiff_angle );
         if (lines) {
             /* use the truncated values */
             start_angle=(double)istart_angle*PI/64./180.;
@@ -429,8 +439,8 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
             if (lines == 2) {
                 INT dx1,dy1;
                 points[3] = points[1];
-	points[1].x = dc->w.DCOrgX + xcenter;
-	points[1].y = dc->w.DCOrgY + ycenter;
+                points[1].x = dc->w.DCOrgX + xcenter;
+                points[1].y = dc->w.DCOrgY + ycenter;
                 points[2] = points[1];
                 dx1=points[1].x-points[0].x;
                 dy1=points[1].y-points[0].y;
@@ -456,11 +466,16 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
                     if( dx1 * 64 < dy1 * -37 ) points[3].x--;
                 }
                 lines++;
-    }
-    TSXDrawLines( display, physDev->drawable, physDev->gc,
+	    }
+	    TSXDrawLines( display, physDev->drawable, physDev->gc,
 	        points, lines+1, CoordModeOrigin );
         }
+	update = TRUE;
     }
+
+    /* Update the DIBSection of the pixmap */
+    if (update) X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+
     physDev->pen.width = oldwidth;
     physDev->pen.endcap = oldendcap;
     return TRUE;
@@ -510,6 +525,7 @@ X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
 {
     INT width, oldwidth;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    BOOL update = FALSE;
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -536,14 +552,27 @@ X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     if(width == 0) width = 1; /* more accurate */
     physDev->pen.width = width;
 
+    /* Update the pixmap from the DIB section */
+    X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+
     if (X11DRV_SetupGCForBrush( dc ))
+    {
 	TSXFillArc( display, physDev->drawable, physDev->gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
+	update = TRUE;
+    }
     if (X11DRV_SetupGCForPen( dc ))
+    {
 	TSXDrawArc( display, physDev->drawable, physDev->gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
+	update = TRUE;
+    }
+
+    /* Update the DIBSection from the pixmap */
+    if (update) X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+    
     physDev->pen.width = oldwidth;
     return TRUE;
 }
@@ -557,6 +586,7 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 {
     INT width, oldwidth, oldjoinstyle;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    BOOL update = FALSE;
 
     TRACE("(%d %d %d %d)\n", 
     	left, top, right, bottom);
@@ -590,19 +620,29 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     if(physDev->pen.type != PS_GEOMETRIC)
         physDev->pen.linejoin = PS_JOIN_MITER;
 
+    /* Update the pixmap from the DIB section */
+    X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+    
     if ((right > left + width) && (bottom > top + width))
-    {
         if (X11DRV_SetupGCForBrush( dc ))
+	{
             TSXFillRectangle( display, physDev->drawable, physDev->gc,
                             dc->w.DCOrgX + left + (width + 1) / 2,
                             dc->w.DCOrgY + top + (width + 1) / 2,
                             right-left-width-1, bottom-top-width-1);
-    }
+	    update = TRUE;
+	}
     if (X11DRV_SetupGCForPen( dc ))
+    {
 	TSXDrawRectangle( display, physDev->drawable, physDev->gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
+	update = TRUE;
+    }
 
+    /* Update the DIBSection from the pixmap */
+    if (update) X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+   
     physDev->pen.width = oldwidth;
     physDev->pen.linejoin = oldjoinstyle;
     return TRUE;
@@ -617,6 +657,7 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
 {
     INT width, oldwidth, oldendcap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    BOOL update = FALSE;
 
     TRACE("(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
@@ -657,6 +698,9 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
     physDev->pen.width = width;
     physDev->pen.endcap = PS_ENDCAP_SQUARE;
 
+    /* Update the pixmap from the DIB section */
+    X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+ 
     if (X11DRV_SetupGCForBrush( dc ))
     {
         if (ell_width > (right-left) )
@@ -720,6 +764,7 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
                             right - left - 2,
                             bottom - top - ell_height - 1);
         }
+	update = TRUE;
     }
     /* FIXME: this could be done with on X call
      * more efficient and probably more correct
@@ -794,7 +839,12 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
 		       dc->w.DCOrgX + left,
                dc->w.DCOrgY + bottom - (ell_height+1) / 2);
 	}
+	update = TRUE;
     }
+    
+    /* Update the DIBSection from the pixmap */
+    if (update) X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+
     physDev->pen.width = oldwidth;
     physDev->pen.endcap = oldendcap;
     return TRUE;
@@ -820,6 +870,8 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
 
     /* inefficient but simple... */
 
+    /* FIXME: the DIBSection pixel should be updated too */
+    
     return X11DRV_PALETTE_ToLogical(pixel);
 }
 
@@ -894,9 +946,17 @@ X11DRV_PaintRgn( DC *dc, HRGN hrgn )
 
     GetRgnBox( dc->w.hGCClipRgn, &box );
     if (X11DRV_SetupGCForBrush( dc ))
+    {
+	/* Update the pixmap from the DIB section */
+    	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+
 	TSXFillRectangle( display, physDev->drawable, physDev->gc,
 		          box.left, box.top,
 		          box.right-box.left, box.bottom-box.top );
+    
+	/* Update the DIBSection from the pixmap */
+    	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+    }
 
       /* Restore the visible region */
 
@@ -925,8 +985,16 @@ X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
     }
 
     if (X11DRV_SetupGCForPen ( dc ))
-    TSXDrawLines( display, physDev->drawable, physDev->gc,
+    {
+	/* Update the pixmap from the DIB section */
+	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+ 
+    	TSXDrawLines( display, physDev->drawable, physDev->gc,
            points, count, CoordModeOrigin );
+
+	/* Update the DIBSection from the pixmap */
+    	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+    }
 
     free( points );
     physDev->pen.width = oldwidth;
@@ -943,6 +1011,7 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     register int i;
     XPoint *points;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    BOOL update = FALSE;
 
     points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
     for (i = 0; i < count; i++)
@@ -952,13 +1021,24 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     }
     points[count] = points[0];
 
+    /* Update the pixmap from the DIB section */
+    X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+ 
     if (X11DRV_SetupGCForBrush( dc ))
+    {
 	TSXFillPolygon( display, physDev->drawable, physDev->gc,
 		     points, count+1, Complex, CoordModeOrigin);
-
+	update = TRUE;
+    }
     if (X11DRV_SetupGCForPen ( dc ))
+    {
 	TSXDrawLines( display, physDev->drawable, physDev->gc,
 		   points, count+1, CoordModeOrigin );
+	update = TRUE;
+    }
+   
+    /* Update the DIBSection from the pixmap */
+    if (update) X11DRV_DIB_UpdateDIBSection(dc, TRUE);
 
     free( points );
     return TRUE;
@@ -988,6 +1068,9 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 	int i, j, max = 0;
 	XPoint *points;
 
+	/* Update the pixmap from the DIB section */
+	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+ 
 	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
 	points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
 
@@ -1003,6 +1086,10 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 	    TSXDrawLines( display, physDev->drawable, physDev->gc,
 		        points, j + 1, CoordModeOrigin );
 	}
+	
+	/* Update the DIBSection of the dc's bitmap */
+	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+
 	free( points );
     }
     return TRUE;
@@ -1016,11 +1103,15 @@ BOOL
 X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    
     if (X11DRV_SetupGCForPen ( dc ))
     {
         int i, j, max = 0;
         XPoint *points;
 
+	/* Update the pixmap from the DIB section */
+    	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+ 
         for (i = 0; i < polylines; i++) if (counts[i] > max) max = counts[i];
         points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
 
@@ -1036,6 +1127,10 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
             TSXDrawLines( display, physDev->drawable, physDev->gc,
                         points, j + 1, CoordModeOrigin );
         }
+	
+	/* Update the DIBSection of the dc's bitmap */
+    	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
+
         free( points );
     }
     return TRUE;
@@ -1147,6 +1242,9 @@ static BOOL X11DRV_DoFloodFill( const struct FloodFill_params *params )
 
     if (X11DRV_SetupGCForBrush( dc ))
     {
+	/* Update the pixmap from the DIB section */
+	X11DRV_DIB_UpdateDIBSection(dc, FALSE);
+ 
           /* ROP mode is always GXcopy for flood-fill */
         XSetFunction( display, physDev->gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
@@ -1156,6 +1254,9 @@ static BOOL X11DRV_DoFloodFill( const struct FloodFill_params *params )
                                  rect.top,
                                  X11DRV_PALETTE_ToPhysical( dc, params->color ),
                                  params->fillType );
+	
+    	/* Update the DIBSection of the dc's bitmap */
+    	X11DRV_DIB_UpdateDIBSection(dc, TRUE);
     }
 
     XDestroyImage( image );

@@ -42,6 +42,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     BOOL		rotated = FALSE;
     X11DRV_PDEVICE      *physDev = (X11DRV_PDEVICE *)dc->physDev;
     XChar2b *str2b;
+    BOOL		dibUpdateFlag = FALSE;
 
     if (!X11DRV_SetupGCForText( dc )) return TRUE;
 
@@ -109,12 +110,14 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (flags & ETO_OPAQUE)
     {
-        TSXSetForeground( display, physDev->gc, physDev->backgroundPixel );
-        TSXFillRectangle( display, physDev->drawable, physDev->gc,
+        X11DRV_DIB_UpdateDIBSection( dc, FALSE );
+        dibUpdateFlag = TRUE;
+	TSXSetForeground( display, physDev->gc, physDev->backgroundPixel );
+	TSXFillRectangle( display, physDev->drawable, physDev->gc,
                         dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
                         rect.right-rect.left, rect.bottom-rect.top );
     }
-    if (!count) return TRUE;  /* Nothing more to do */
+    if (!count) goto END;  /* Nothing more to do */
 
       /* Compute text starting position */
 
@@ -188,6 +191,12 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     }
 
       /* Draw the text background if necessary */
+
+    if (!dibUpdateFlag)
+    {
+        X11DRV_DIB_UpdateDIBSection( dc, FALSE );
+        dibUpdateFlag = TRUE;
+    }
 
     if (dc->w.backgroundMode != TRANSPARENT)
     {
@@ -357,6 +366,8 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     if (flags & ETO_CLIPPED) 
         RestoreVisRgn16( dc->hSelf );
 
+END:
+    if (dibUpdateFlag) X11DRV_DIB_UpdateDIBSection( dc, TRUE );
     return TRUE;
 }
 
