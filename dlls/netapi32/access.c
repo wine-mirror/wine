@@ -171,6 +171,51 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
     }
 
     case 1:
+      {
+        static const WCHAR homedirW[] = {'H','O','M','E',0};
+        PUSER_INFO_1 ui;
+        PUSER_INFO_0 ui0;
+        NET_API_STATUS status;
+        /* sizes of the field buffers in WCHARS */
+        int name_sz, password_sz, home_dir_sz, comment_sz, script_path_sz;
+
+        password_sz = 1; /* not filled out for security reasons for NetUserGetInfo*/
+        comment_sz = 1;
+        script_path_sz = 1;
+
+       /* get data */
+        status = NetUserGetInfo(servername, username, 0, (LPBYTE *) &ui0);
+        if (status != NERR_Success)
+        {
+            NetApiBufferFree(ui0);
+            return status;
+        }
+        name_sz = lstrlenW(ui0->usri0_name) + 1;
+        home_dir_sz = GetEnvironmentVariableW(homedirW, NULL,0);
+        /* set up buffer */
+        NetApiBufferAllocate(sizeof(USER_INFO_1) +
+                             (name_sz + password_sz + home_dir_sz +
+                              comment_sz + script_path_sz) * sizeof(WCHAR),
+                             (LPVOID *) bufptr);
+
+        ui = (PUSER_INFO_1) *bufptr;
+        ui->usri1_name = (LPWSTR) (ui + 1);
+        ui->usri1_password = ui->usri1_name + name_sz;
+        ui->usri1_home_dir = ui->usri1_password + password_sz;
+        ui->usri1_comment = ui->usri1_home_dir + home_dir_sz;
+        ui->usri1_script_path = ui->usri1_comment + comment_sz;
+        /* set data */
+        lstrcpyW(ui->usri1_name, ui0->usri0_name);
+        NetApiBufferFree(ui0);
+        ui->usri1_password[0] = 0;
+        ui->usri1_password_age = 0;
+        ui->usri1_priv = 0;
+        GetEnvironmentVariableW(homedirW, ui->usri1_home_dir,home_dir_sz);
+        ui->usri1_comment[0] = 0;
+        ui->usri1_flags = 0;
+        ui->usri1_script_path[0] = 0;
+        break;
+      }
     case 2:
     case 3:
     case 4:
