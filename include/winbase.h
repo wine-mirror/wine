@@ -130,7 +130,7 @@ typedef struct
     WORD nErrCode;
     BYTE reserved[4];
     BYTE szPathName[OFS_MAXPATHNAME];
-} OFSTRUCT, *LPOFSTRUCT;
+} OFSTRUCT, *POFSTRUCT, *LPOFSTRUCT;
 
 #define OF_READ               0x0000
 #define OF_WRITE              0x0001
@@ -188,7 +188,7 @@ typedef struct
 {
   DWORD  dwLowDateTime;
   DWORD  dwHighDateTime;
-} FILETIME, *LPFILETIME;
+} FILETIME, *PFILETIME, *LPFILETIME;
 #endif /* _FILETIME_ */
 
 /* Find* structures */
@@ -204,7 +204,7 @@ typedef struct
     DWORD     dwReserved1;
     CHAR      cFileName[260];
     CHAR      cAlternateFileName[14];
-} WIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
+} WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
 
 typedef struct
 {
@@ -218,9 +218,10 @@ typedef struct
     DWORD     dwReserved1;
     WCHAR     cFileName[260];
     WCHAR     cAlternateFileName[14];
-} WIN32_FIND_DATAW, *LPWIN32_FIND_DATAW;
+} WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW;
 
 DECL_WINELIB_TYPE_AW(WIN32_FIND_DATA)
+DECL_WINELIB_TYPE_AW(PWIN32_FIND_DATA)
 DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA)
 
 typedef enum _FINDEX_INFO_LEVELS
@@ -256,7 +257,7 @@ typedef struct
             LPVOID lpLastBlock;
         } Region;
     } DUMMYUNIONNAME;
-} PROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
+} PROCESS_HEAP_ENTRY, *PPROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
 
 #define PROCESS_HEAP_REGION                   0x0001
 #define PROCESS_HEAP_UNCOMMITTED_RANGE        0x0002
@@ -630,7 +631,7 @@ typedef struct {
         WORD wMinute;
         WORD wSecond;
         WORD wMilliseconds;
-} SYSTEMTIME, *LPSYSTEMTIME;
+} SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
 
 /* The 'overlapped' data structure used by async I/O functions.
  */
@@ -709,7 +710,7 @@ typedef struct {
 	HANDLE	hThread;
 	DWORD		dwProcessId;
 	DWORD		dwThreadId;
-} PROCESS_INFORMATION,*LPPROCESS_INFORMATION;
+} PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 
 typedef struct {
         LONG Bias;
@@ -719,7 +720,7 @@ typedef struct {
         WCHAR DaylightName[32];
         SYSTEMTIME DaylightDate;
         LONG DaylightBias;
-} TIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
+} TIME_ZONE_INFORMATION, *PTIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
 
 #define TIME_ZONE_ID_INVALID	((DWORD)0xFFFFFFFF)
 #define TIME_ZONE_ID_UNKNOWN    0
@@ -790,7 +791,7 @@ typedef struct
   int nNumberOfLinks;
   int nFileIndexHigh;
   int nFileIndexLow;
-} BY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION ;
+} BY_HANDLE_FILE_INFORMATION, *PBY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION ;
 
 
 typedef struct _SYSTEM_POWER_STATUS
@@ -981,7 +982,7 @@ typedef struct {
 	DWORD dwBuildNumber;
 	DWORD dwPlatformId;
 	CHAR szCSDVersion[128];
-} OSVERSIONINFOA;
+} OSVERSIONINFOA, *POSVERSIONINFOA, *LPOSVERSIONINFOA;
 
 typedef struct {
 	DWORD dwOSVersionInfoSize;
@@ -990,9 +991,11 @@ typedef struct {
 	DWORD dwBuildNumber;
 	DWORD dwPlatformId;
 	WCHAR szCSDVersion[128];
-} OSVERSIONINFOW;
+} OSVERSIONINFOW, *POSVERSIONINFOW, *LPOSVERSIONINFOW;
 
 DECL_WINELIB_TYPE_AW(OSVERSIONINFO)
+DECL_WINELIB_TYPE_AW(POSVERSIONINFO)
+DECL_WINELIB_TYPE_AW(LPOSVERSIONINFO)
 
 #define VER_PLATFORM_WIN32s             0
 #define VER_PLATFORM_WIN32_WINDOWS      1
