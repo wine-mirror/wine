@@ -255,7 +255,7 @@ HRESULT DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 	    = VirtualAlloc(NULL, This->surface_desc.u1.lPitch
 			   * This->surface_desc.dwHeight + 4, /* The + 4 here is for dumb games reading after the end of the surface
 								 when reading the last byte / half using word access */
-			   MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+			   MEM_COMMIT, PAGE_READWRITE);
 
 	if (This->surface_desc.lpSurface == NULL)
 	{
