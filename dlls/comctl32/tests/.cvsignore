@@ -1,6 +1,7 @@
 Makefile
 dpa.ok
 imagelist.ok
+mru.ok
 subclass.ok
 tab.ok
 testlist.c

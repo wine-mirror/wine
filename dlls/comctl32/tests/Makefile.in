@@ -3,11 +3,12 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = comctl32.dll
-IMPORTS   = comctl32 user32 gdi32
+IMPORTS   = comctl32 shlwapi user32 gdi32 advapi32
 
 CTESTS = \
 	dpa.c \
 	imagelist.c \
+	mru.c \
 	subclass.c \
 	tab.c
 
