@@ -136,8 +136,10 @@ static void test_module_base_name(void)
 START_TEST(module)
 {
     dll = LoadLibrary("psapi.dll");
-    ok(dll != 0, "LoadLibraryA failed\n");
-    if (!dll) return;
+    if (!dll) {
+	trace("LoadLibraryA(psapi.dll) failed: skipping tests with target module\n");
+	return;
+    }
 
     pGetModuleBaseNameA = (void*) GetProcAddress(dll, "GetModuleBaseNameA");
 
