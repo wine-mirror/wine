@@ -34,7 +34,7 @@ HRESULT WINAPI IDirect3DResource8Impl_QueryInterface(LPDIRECT3DRESOURCE8 iface,R
     ICOM_THIS(IDirect3DResource8Impl,iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        || IsEqualGUID(riid, &IID_IDirect3DResource8)) {
         IDirect3DResource8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;

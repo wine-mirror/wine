@@ -409,6 +409,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->lpVtbl = &Direct3DDevice8_Vtbl;
     object->ref = 1;
     object->direct3d8 = This;
+    /** The device AddRef the direct3d8 Interface else crash in propers clients codes */
+    IDirect3D8_AddRef((LPDIRECT3D8) object->direct3d8);
     object->UpdateStateBlock = &object->StateBlock;
 
     /* Save the creation parameters */

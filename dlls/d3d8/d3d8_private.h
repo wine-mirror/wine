@@ -559,7 +559,7 @@ struct IDirect3DSurface8Impl
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
-    void                   *Container;
+    IUnknown               *Container;
 
     D3DSURFACE_DESC         myDesc;
     BYTE                   *allocatedMemory;

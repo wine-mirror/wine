@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <math.h>
 
 #define NONAMELESSUNION
@@ -1079,7 +1081,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     TRACE("(%p) : W(%d) H(%d), Lvl(%d) Usage(%ld), Fmt(%d), Pool(%d)\n", This, Width, Height, Levels, Usage, Format, Pool);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTexture8Impl));
     object->lpVtbl = &Direct3DTexture8_Vtbl;
-    object->Device = This;
+    object->Device = This; /* FIXME: AddRef(This) */
     object->ResourceType = D3DRTYPE_TEXTURE;
     object->ref = 1;
     object->width = Width;
@@ -1108,12 +1110,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     for (i=0; i<object->levels; i++) 
     {
         IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpH, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[i]);
-        object->surfaces[i]->Container = object;
+        object->surfaces[i]->Container = (IUnknown*) object; /* FIXME: AddRef(object) */
         object->surfaces[i]->myDesc.Usage = Usage;
         object->surfaces[i]->myDesc.Pool = Pool ;
 
         TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[i], object->surfaces[i]->allocatedMemory);
-        tmpW = max(1,tmpW / 2);
+        tmpW = max(1, tmpW / 2);
         tmpH = max(1, tmpH / 2);
     }
 
@@ -1175,7 +1177,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         object->volumes[i] = (IDirect3DVolume8Impl *) volume;
 
         volume->lpVtbl = &Direct3DVolume8_Vtbl;
-        volume->Device = This;
+        volume->Device = This; /* FIXME: AddRef(This) */
         volume->ResourceType = D3DRTYPE_VOLUME;
         volume->Container = object;
         volume->ref = 1;
@@ -1214,7 +1216,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DCubeTexture8Impl));
     object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
     object->ref = 1;
-    object->Device = This;
+    object->Device = This; /* FIXME: AddRef(This) */
     object->ResourceType = D3DRTYPE_CUBETEXTURE;
 
     object->edgeLength = EdgeLength;
@@ -1241,7 +1243,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
         /* Create the 6 faces */
         for (j=0;j<6;j++) {
            IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpW, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[j][i]);
-           object->surfaces[j][i]->Container = object;
+           object->surfaces[j][i]->Container = (IUnknown*) object;
            object->surfaces[j][i]->myDesc.Usage = Usage;
            object->surfaces[j][i]->myDesc.Pool = Pool ;
 
@@ -1326,7 +1328,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->lpVtbl = &Direct3DSurface8_Vtbl;
     object->Device = This;
     object->ResourceType = D3DRTYPE_SURFACE;
-    object->Container = This;
+    object->Container = (IUnknown*) This;
 
     object->ref = 1;
     object->myDesc.Width = Width;
@@ -1346,7 +1348,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
                                                 IDirect3DSurface8* pDestinationSurface,CONST POINT* pDestPointsArray) {
 
     HRESULT rc      = D3D_OK;
-    void   *texture = NULL;
+    IDirect3DBaseTexture8* texture = NULL;
 
 
     IDirect3DSurface8Impl *src = (IDirect3DSurface8Impl*) pSourceSurface;
@@ -1367,7 +1369,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
         dst->myDesc.Format = src->myDesc.Format;
 
         /* Convert container as well */
-        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, NULL, &texture); /* FIXME: Which refid? */
+        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, &IID_IDirect3DBaseTexture8, (void**) &texture); /* FIXME: Which refid? */
         if (texture != NULL) {
 
             switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) texture)) {
@@ -1384,6 +1386,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
                 FIXME("Unhandled texture type\n");
             }
 
+	    /** Releasing texture after GetContainer */
+	    IDirect3DBaseTexture8_Release(texture);   
         }
     }
 
@@ -1428,7 +1432,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
 
     /* Set dirty */
     if (rc == D3D_OK) {
-        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, NULL, &texture); /* FIXME: Which refid? */
+        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, &IID_IDirect3DBaseTexture8, (void**) &texture); /* FIXME: Which refid? */
         if (texture != NULL) {
 
             switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) texture)) {
@@ -1453,6 +1457,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
             default:
                 FIXME("Unhandled texture type\n");
             }
+
+	    /** Releasing texture after GetContainer */
+	    IDirect3DBaseTexture8_Release(texture);
         }
     }
 

@@ -74,7 +74,12 @@ ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
 HRESULT  WINAPI        IDirect3DTexture8Impl_GetDevice(LPDIRECT3DTEXTURE8 iface, IDirect3DDevice8** ppDevice) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Device);
-    *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
+    *ppDevice = (LPDIRECT3DDEVICE8) This->Device; 
+    /**
+     * Note  Calling this method will increase the internal reference count 
+     * on the IDirect3DDevice8 interface. 
+     */
+    IDirect3DDevice8Impl_AddRef(*ppDevice);
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DTexture8Impl_SetPrivateData(LPDIRECT3DTEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {

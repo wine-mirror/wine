@@ -75,6 +75,11 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_GetDevice(LPDIRECT3DCUBETEXTURE
     ICOM_THIS(IDirect3DCubeTexture8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
+    /**
+     * Note  Calling this method will increase the internal reference count 
+     * on the IDirect3DDevice8 interface. 
+     */
+    IDirect3DDevice8Impl_AddRef(*ppDevice);
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DCubeTexture8Impl_SetPrivateData(LPDIRECT3DCUBETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {

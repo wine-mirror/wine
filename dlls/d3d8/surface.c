@@ -66,18 +66,18 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
-
-    /* Note  Calling this method will increase the internal reference count 
-       on the IDirect3DDevice8 interface. */
+    /**
+     * Note  Calling this method will increase the internal reference count 
+     * on the IDirect3DDevice8 interface. 
+     */
     IDirect3DDevice8Impl_AddRef(*ppDevice);
-
     return D3D_OK;
 }
-HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid,CONST void* pData,DWORD SizeOfData,DWORD Flags) {
+HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
-HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid,void* pData,DWORD* pSizeOfData) {
+HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
@@ -85,15 +85,25 @@ HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, R
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
-HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid,void** ppContainer) {
+HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void** ppContainer) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
-
-    /* If the surface is created using CreateImageSurface, CreateRenderTarget, 
-        or CreateDepthStencilSurface, the surface is considered stand alone. In this case, 
-        GetContainer will return the Direct3D device used to create the surface. */
+    HRESULT res;
+    /*
     TRACE("(%p) : returning %p\n", This, This->Container);
     *ppContainer = This->Container;
     return D3D_OK;
+    */
+    res = IUnknown_QueryInterface(This->Container, riid, ppContainer);
+    if (E_NOINTERFACE == res) { 
+      /**
+       * If the surface is created using CreateImageSurface, CreateRenderTarget, 
+       * or CreateDepthStencilSurface, the surface is considered stand alone. In this case, 
+       * GetContainer will return the Direct3D device used to create the surface. 
+       */
+      res = IUnknown_QueryInterface(This->Container, &IID_IDirect3DDevice8, ppContainer);
+    }
+    TRACE("(%p) : returning %p\n", This, *ppContainer);
+    return res;
 }
 HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
@@ -121,7 +131,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     TRACE("(%p) : stub\n", This);
     if (This->Container) {
-        IDirect3DBaseTexture8 *cont = This->Container;
+        IDirect3DBaseTexture8 *cont = (IDirect3DBaseTexture8*) This->Container;
 
         /* Now setup the texture appropraitly */
         int containerType = IDirect3DBaseTexture8Impl_GetType(cont);
