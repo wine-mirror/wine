@@ -4653,6 +4653,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         }
     }
 
+#ifdef HAVE_LIBXXSHM
     if (descr->useShm)
     {
         int saveRed, saveGreen, saveBlue;
@@ -4678,6 +4679,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         bmpImage->green_mask = saveGreen;
     }
     else
+#endif /* HAVE_LIBXXSHM */
     {
         TRACE("XGetSubImage(%p,%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
               gdi_display, descr->drawable, descr->xSrc, descr->ySrc, descr->width,
