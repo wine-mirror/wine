@@ -321,8 +321,8 @@
 @ stub DragQueryFileAorW
 @ stdcall DuplicateIcon(long long) DuplicateIcon
 @ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA
-@ stdcall ExtractAssociatedIconExA(long long long long)ExtractAssociatedIconExA
-@ stdcall ExtractAssociatedIconExW(long long long long)ExtractAssociatedIconExW
+@ stdcall ExtractAssociatedIconExA(long str long long) ExtractAssociatedIconExA
+@ stdcall ExtractAssociatedIconExW(long wstr long long) ExtractAssociatedIconExW
 @ stub ExtractAssociatedIconW
 @ stdcall ExtractIconA(long str long)ExtractIconA
 @ stdcall ExtractIconEx(ptr long ptr ptr long)ExtractIconExAW

@@ -270,6 +270,9 @@ HICON       WINAPI ExtractIconW(HINSTANCE,LPCWSTR,UINT);
 HICON       WINAPI ExtractAssociatedIconA(HINSTANCE,LPSTR,LPWORD);
 HICON       WINAPI ExtractAssociatedIconW(HINSTANCE,LPWSTR,LPWORD);
 #define     ExtractAssociatedIcon WINELIB_NAME_AW(ExtractAssociatedIcon)
+HICON       WINAPI ExtractAssociatedIconExA(HINSTANCE,LPSTR,LPWORD,LPWORD);
+HICON       WINAPI ExtractAssociatedIconExW(HINSTANCE,LPWSTR,LPWORD,LPWORD);
+#define     ExtractAssociatedIconEx WINELIB_NAME_AW(ExtractAssociatedIconEx)
 HICON       WINAPI ExtractIconExA( LPCSTR, INT, HICON *, HICON *, UINT );
 HICON       WINAPI ExtractIconExW( LPCWSTR, INT, HICON *, HICON *, UINT );
 #define     ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
