@@ -396,7 +396,7 @@
 @ stdcall RtlEqualDomainName(ptr ptr)
 @ stdcall RtlEqualLuid(ptr ptr)
 @ stdcall RtlEqualPrefixSid(ptr ptr)
-@ stdcall RtlEqualSid (long long)
+@ stdcall RtlEqualSid(long long)
 @ stdcall RtlEqualString(ptr ptr long)
 @ stdcall RtlEqualUnicodeString(ptr ptr long)
 @ stdcall RtlEraseUnicodeString(ptr)
@@ -752,7 +752,7 @@
 @ stdcall ZwQueryAttributesFile(ptr ptr) NtQueryAttributesFile
 @ stdcall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
 @ stdcall ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
-@ stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
+@ stdcall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
 @ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
@@ -856,118 +856,8 @@
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stub ZwWriteRequestData
 @ stdcall ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
+@ stdcall ZwYieldExecution() NtYieldExecution
 @ cdecl _CIpow() NTDLL__CIpow
-@ stub __eCommonExceptions
-@ stub __eEmulatorInit
-@ stub __eF2XM1
-@ stub __eFABS
-@ stub __eFADD32
-@ stub __eFADD64
-@ stub __eFADDPreg
-@ stub __eFADDreg
-@ stub __eFADDtop
-@ stub __eFCHS
-@ stub __eFCOM
-@ stub __eFCOM32
-@ stub __eFCOM64
-@ stub __eFCOMP
-@ stub __eFCOMP32
-@ stub __eFCOMP64
-@ stub __eFCOMPP
-@ stub __eFCOS
-@ stub __eFDECSTP
-@ stub __eFDIV32
-@ stub __eFDIV64
-@ stub __eFDIVPreg
-@ stub __eFDIVR32
-@ stub __eFDIVR64
-@ stub __eFDIVRPreg
-@ stub __eFDIVRreg
-@ stub __eFDIVRtop
-@ stub __eFDIVreg
-@ stub __eFDIVtop
-@ stub __eFFREE
-@ stub __eFIADD16
-@ stub __eFIADD32
-@ stub __eFICOM16
-@ stub __eFICOM32
-@ stub __eFICOMP16
-@ stub __eFICOMP32
-@ stub __eFIDIV16
-@ stub __eFIDIV32
-@ stub __eFIDIVR16
-@ stub __eFIDIVR32
-@ stub __eFILD16
-@ stub __eFILD32
-@ stub __eFILD64
-@ stub __eFIMUL16
-@ stub __eFIMUL32
-@ stub __eFINCSTP
-@ stub __eFINIT
-@ stub __eFIST16
-@ stub __eFIST32
-@ stub __eFISTP16
-@ stub __eFISTP32
-@ stub __eFISTP64
-@ stub __eFISUB16
-@ stub __eFISUB32
-@ stub __eFISUBR16
-@ stub __eFISUBR32
-@ stub __eFLD1
-@ stub __eFLD32
-@ stub __eFLD64
-@ stub __eFLD80
-@ stub __eFLDCW
-@ stub __eFLDENV
-@ stub __eFLDL2E
-@ stub __eFLDLN2
-@ stub __eFLDPI
-@ stub __eFLDZ
-@ stub __eFMUL32
-@ stub __eFMUL64
-@ stub __eFMULPreg
-@ stub __eFMULreg
-@ stub __eFMULtop
-@ stub __eFPATAN
-@ stub __eFPREM
-@ stub __eFPREM1
-@ stub __eFPTAN
-@ stub __eFRNDINT
-@ stub __eFRSTOR
-@ stub __eFSAVE
-@ stub __eFSCALE
-@ stub __eFSIN
-@ stub __eFSQRT
-@ stub __eFST
-@ stub __eFST32
-@ stub __eFST64
-@ stub __eFSTCW
-@ stub __eFSTENV
-@ stub __eFSTP
-@ stub __eFSTP32
-@ stub __eFSTP64
-@ stub __eFSTP80
-@ stub __eFSTSW
-@ stub __eFSUB32
-@ stub __eFSUB64
-@ stub __eFSUBPreg
-@ stub __eFSUBR32
-@ stub __eFSUBR64
-@ stub __eFSUBRPreg
-@ stub __eFSUBRreg
-@ stub __eFSUBRtop
-@ stub __eFSUBreg
-@ stub __eFSUBtop
-@ stub __eFTST
-@ stub __eFUCOM
-@ stub __eFUCOMP
-@ stub __eFUCOMPP
-@ stub __eFXAM
-@ stub __eFXCH
-@ stub __eFXTRACT
-@ stub __eFYL2X
-@ stub __eFYL2XP1
-@ stub __eGetStatusWord
 @ stdcall -ret64 _alldiv(long long long long)
 @ stdcall -ret64 _allmul(long long long long)
 @ stdcall -i386 _alloca_probe()
