@@ -138,7 +138,7 @@ HANDLE SERVICE_AddObject( HANDLE object,
     SERVICE 		*s;
     HANDLE 		handle;
 
-    if ( object == INVALID_HANDLE_VALUE || !callback ) 
+    if ( !object || object == INVALID_HANDLE_VALUE || !callback ) 
         return INVALID_HANDLE_VALUE;
 
     if (!service_thread && !SERVICE_CreateServiceTable()) return INVALID_HANDLE_VALUE;
