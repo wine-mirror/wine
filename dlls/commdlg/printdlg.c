@@ -951,17 +951,16 @@ static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, LPPRINTER_INFO_2A pi)
     LoadStringA(COMDLG32_hInstance, PD32_PRINTER_STATUS_READY,
 		ResourceString, 255);
     strcat(StatusMsg,ResourceString);
-
-    SendDlgItemMessageA(hDlg, stc12, WM_SETTEXT, 0, (LPARAM)StatusMsg);
+    SetDlgItemTextA(hDlg, stc12, StatusMsg);
 
     /* set all other printer info texts */
-    SendDlgItemMessageA(hDlg, stc11, WM_SETTEXT, 0, (LPARAM)pi->pDriverName);
+    SetDlgItemTextA(hDlg, stc11, pi->pDriverName);
+    
     if (pi->pLocation != NULL && pi->pLocation[0] != '\0')
-        SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)pi->pLocation);
+        SetDlgItemTextA(hDlg, stc14, pi->pLocation);
     else
-        SendDlgItemMessageA(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)pi->pPortName);
-    SendDlgItemMessageA(hDlg, stc13, WM_SETTEXT, 0, (LPARAM)(pi->pComment ?
-			pi->pComment : ""));
+        SetDlgItemTextA(hDlg, stc14, pi->pPortName);
+    SetDlgItemTextA(hDlg, stc13, pi->pComment ? pi->pComment : "");
     return;
 }
 
@@ -969,6 +968,7 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, LPPRINTER_INFO_2W pi)
 {
     WCHAR   StatusMsg[256];
     WCHAR   ResourceString[256];
+    static const WCHAR emptyW[] = {0};
     int    i;
 
     /* Status Message */
@@ -988,18 +988,15 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, LPPRINTER_INFO_2W pi)
     LoadStringW(COMDLG32_hInstance, PD32_PRINTER_STATUS_READY,
 		ResourceString, 255);
     lstrcatW(StatusMsg,ResourceString);
-
-    SendDlgItemMessageW(hDlg, stc12, WM_SETTEXT, 0, (LPARAM)StatusMsg);
+    SetDlgItemTextW(hDlg, stc12, StatusMsg);
 
     /* set all other printer info texts */
-    SendDlgItemMessageW(hDlg, stc11, WM_SETTEXT, 0, (LPARAM)pi->pDriverName);
+    SetDlgItemTextW(hDlg, stc11, pi->pDriverName);
     if (pi->pLocation != NULL && pi->pLocation[0] != '\0')
-        SendDlgItemMessageW(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)pi->pLocation);
+        SetDlgItemTextW(hDlg, stc14, pi->pLocation);
     else
-        SendDlgItemMessageW(hDlg, stc14, WM_SETTEXT, 0,(LPARAM)pi->pPortName);
-    SendDlgItemMessageW(hDlg, stc13, WM_SETTEXT, 0, (LPARAM)(pi->pComment ?
-			pi->pComment : (LPCWSTR)"\0\0"));
-    return;
+        SetDlgItemTextW(hDlg, stc14, pi->pPortName);
+    SetDlgItemTextW(hDlg, stc13, pi->pComment ? pi->pComment : emptyW);
 }
 
 
