@@ -91,8 +91,6 @@ then
 fi
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
-dnl Check for -lc_r for FreeBSD
-AC_CHECK_LIB(c_r,__error)
 dnl Check for -ldl
 AC_CHECK_LIB(dl,dlopen)
 AC_SUBST(XLIB)

@@ -246,9 +246,6 @@
 /* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H
 
-/* Define if you have the c_r library (-lc_r).  */
-#undef HAVE_LIBC_R
-
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES
 
