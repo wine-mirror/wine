@@ -518,8 +518,8 @@ void VGA_Set16Palette(char *Table)
 	int c;
 
     if (!lpddraw) return;         /* return if we're in text only mode */
-	bcopy((void *)&vga_16_palette,(void *)Table,17);
-		                    /* copy the entries into the table */
+    memcpy( Table, &vga_16_palette, 17 ); /* copy the entries into the table */
+
     for (c=0; c<17; c++) {                                /* 17 entries */
 	pal= &vga_def64_palette[(int)vga_16_palette[c]];  /* get color  */
         IDirectDrawPalette_SetEntries(lpddpal,0,c,1,pal); /* set entry  */
@@ -532,8 +532,7 @@ void VGA_Get16Palette(char *Table)
 {
 
     if (!lpddraw) return;         /* return if we're in text only mode */
-	bcopy((void *)Table,(void *)&vga_16_palette,17);
-		                    /* copy the entries into the table */
+    memcpy( &vga_16_palette, Table, 17 ); /* copy the entries into the table */
 }
 
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)

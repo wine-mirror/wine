@@ -24,7 +24,6 @@
 #include <string.h>
 #include "winbase.h"
 #include "winreg.h"
-#include "winternl.h"
 
 #include "gdi.h"
 #include "wine/debug.h"
@@ -235,13 +234,13 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
     HMODULE module;
     struct graphics_driver *driver;
 
-    RtlEnterCriticalSection( &driver_section );
+    EnterCriticalSection( &driver_section );
 
     /* display driver is a special case */
     if (!strcasecmp( name, "display" ))
     {
         driver = load_display_driver();
-        RtlLeaveCriticalSection( &driver_section );
+        LeaveCriticalSection( &driver_section );
         return &driver->funcs;
     }
 
@@ -252,7 +251,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
             if (driver->module == module)
             {
                 driver->count++;
-                RtlLeaveCriticalSection( &driver_section );
+                LeaveCriticalSection( &driver_section );
                 return &driver->funcs;
             }
         }
@@ -260,19 +259,19 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
 
     if (!(module = LoadLibraryA( name )))
     {
-        RtlLeaveCriticalSection( &driver_section );
+        LeaveCriticalSection( &driver_section );
         return NULL;
     }
 
     if (!(driver = create_driver( module )))
     {
         FreeLibrary( module );
-        RtlLeaveCriticalSection( &driver_section );
+        LeaveCriticalSection( &driver_section );
         return NULL;
     }
 
     TRACE( "loaded driver %p for %s\n", driver, name );
-    RtlLeaveCriticalSection( &driver_section );
+    LeaveCriticalSection( &driver_section );
     return &driver->funcs;
 }
 
@@ -286,12 +285,12 @@ const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs )
 {
     struct graphics_driver *driver;
 
-    RtlEnterCriticalSection( &driver_section );
+    EnterCriticalSection( &driver_section );
     for (driver = first_driver; driver; driver = driver->next)
         if (&driver->funcs == funcs) break;
     if (!driver) ERR( "driver not found, trouble ahead\n" );
     driver->count++;
-    RtlLeaveCriticalSection( &driver_section );
+    LeaveCriticalSection( &driver_section );
     return funcs;
 }
 
@@ -305,7 +304,7 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
 {
     struct graphics_driver *driver;
 
-    RtlEnterCriticalSection( &driver_section );
+    EnterCriticalSection( &driver_section );
 
     for (driver = first_driver; driver; driver = driver->next)
         if (&driver->funcs == funcs) break;
@@ -322,7 +321,7 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
     FreeLibrary( driver->module );
     HeapFree( GetProcessHeap(), 0, driver );
  done:
-    RtlLeaveCriticalSection( &driver_section );
+    LeaveCriticalSection( &driver_section );
 }
 
 

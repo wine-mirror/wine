@@ -121,7 +121,7 @@ command:
     | tNEXTI tEOL               { DEBUG_WaitNextException(DBG_CONTINUE, 1,  EXEC_STEPI_OVER); }
     | tNEXTI tNUM tEOL          { DEBUG_WaitNextException(DBG_CONTINUE, $2, EXEC_STEPI_OVER); }
     | tFINISH tEOL	       	{ DEBUG_WaitNextException(DBG_CONTINUE, 0,  EXEC_FINISH); }
-    | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
+    | tABORT tEOL              	{ abort(); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
     | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
     | tENABLE tNUM tEOL         { DEBUG_EnableBreakpoint( $2, TRUE ); }

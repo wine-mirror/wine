@@ -26,6 +26,7 @@
 # include <sys/time.h>
 #endif
 #include <stdlib.h>
+#include "winternl.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 
@@ -42,19 +43,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  */
 DWORD INT1A_GetTicksSinceMidnight(void)
 {
-    struct tm *bdtime;
-    struct timeval tvs;
-    time_t seconds;
+    LARGE_INTEGER time;
+    TIME_FIELDS tf;
 
-    /* This should give us the (approximately) correct
-     * 18.206 clock ticks per second since midnight.
-     */
-    gettimeofday( &tvs, NULL );
-    seconds = tvs.tv_sec;
-    bdtime = localtime( &seconds );
-    return (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
-              bdtime->tm_sec) * 18206) / 1000) +
-                  (tvs.tv_usec / 54927);
+    NtQuerySystemTime( &time );
+    RtlSystemTimeToLocalTime( &time, &time );
+    RtlTimeToTimeFields( &time, &tf );
+    return ((tf.Hour * 3600 + tf.Minute * 60 + tf.Second) * 18206 / 1000 +
+            tf.Milliseconds * 1000 / 54927);
 }
 
 
