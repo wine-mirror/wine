@@ -297,15 +297,18 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     
     if (dc->w.bitsPerPixel <= 8) {
 	palEntry = palette->logpalette.palPalEntry + startpos;
-	if (startpos + entries > (1 << dc->w.bitsPerPixel)) {
+	if (startpos + entries > (1 << dc->w.bitsPerPixel))
 	    entries = (1 << dc->w.bitsPerPixel) - startpos;
-	}
-	for (end = colors + entries; colors < end; palEntry++, colors++)
-	{
-	    palEntry->peRed   = colors->rgbRed;
-	    palEntry->peGreen = colors->rgbGreen;
-	    palEntry->peBlue  = colors->rgbBlue;
-	}
+
+        if (startpos + entries > palette->logpalette.palNumEntries)
+            entries = palette->logpalette.palNumEntries - startpos;
+
+        for (end = colors + entries; colors < end; palEntry++, colors++)
+        {
+            palEntry->peRed   = colors->rgbRed;
+            palEntry->peGreen = colors->rgbGreen;
+            palEntry->peBlue  = colors->rgbBlue;
+        }
     } else {
 	entries = 0;
     }
