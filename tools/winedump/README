@@ -307,7 +307,7 @@ BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName);
 .c:
 BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName)
 {
-  TRACE("stub");
+  TRACE("stub\n");
   return 0;
 }
 
@@ -379,7 +379,7 @@ BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName)
 {
   BOOL (__stdcall *pFunc)(LPCSTR) = (void*)GetProcAddress(hDLL,"_OpenZipFile");
   BOOL retVal;
-  TRACE("((LPCSTR)%s) stub", pszFileName);
+  TRACE("((LPCSTR)%s) stub\n", pszFileName);
   retVal = pFunc(pszFileName);
   TRACE("returned (%ld)\n",(LONG)retVal));
   return retVal;

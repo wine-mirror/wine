@@ -4464,7 +4464,7 @@ HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime
 
     struct tm r;
 
-    TRACE(" Variant = %f SYSTEMTIME ptr %p", vtime, lpSystemTime);
+    TRACE(" Variant = %f SYSTEMTIME ptr %p\n", vtime, lpSystemTime);
 
     if (vtime >= 0)
     {

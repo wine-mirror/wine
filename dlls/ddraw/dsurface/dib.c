@@ -615,7 +615,7 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	FIXME("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
 		This,dstx,dsty,src,rsrc,trans
 	);
-	FIXME("	trans:");
+	FIXME("\ttrans:");
 	if (FIXME_ON(ddraw))
 	  DDRAW_dump_DDBLTFAST(trans);
 	if (rsrc)

@@ -517,7 +517,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	/* This is where doing Direct3D on top on OpenGL is quite difficult.
 	   This method transforms a set of vertices using the CURRENT state
 	   (lighting, projection, ...) but does not rasterize them.
-	   They will oinly be put on screen later (with the POINT / LINE and
+	   They will only be put on screen later (with the POINT / LINE and
 	   TRIANGLE op-codes). The problem is that you can have a triangle
 	   with each point having been transformed using another state...
 

@@ -771,7 +771,7 @@ DWORD WINAPI SHRegSetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
 {
   char szBuff[MAX_PATH];
 
-  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub",hKey, debugstr_a(lpszSubKey),
+  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub\n",hKey, debugstr_a(lpszSubKey),
         debugstr_a(lpszValue), lpszPath, dwFlags);
 
   lstrcpyA(szBuff, lpszPath);
@@ -792,7 +792,7 @@ DWORD WINAPI SHRegSetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
 {
   WCHAR szBuff[MAX_PATH];
 
-  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub",hKey, debugstr_w(lpszSubKey),
+  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub\n",hKey, debugstr_w(lpszSubKey),
         debugstr_w(lpszValue), lpszPath, dwFlags);
 
   lstrcpyW(szBuff, lpszPath);
@@ -999,7 +999,7 @@ LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
 
       if (!pcbData && pData != pvData)
       {
-        WARN("Invalid pcbData would crash under Win32!");
+        WARN("Invalid pcbData would crash under Win32!\n");
         return ERROR_OUTOFMEMORY;
       }
 
@@ -1370,7 +1370,7 @@ DWORD WINAPI SHDeleteOrphanKeyA(HKEY hKey, LPCSTR lpszSubKey)
   HKEY hSubKey;
   DWORD dwKeyCount = 0, dwValueCount = 0, dwRet;
 
-  TRACE("(hkey=0x%08x,%s)", hKey, debugstr_a(lpszSubKey));
+  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_a(lpszSubKey));
 
   dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
 
@@ -1399,7 +1399,7 @@ DWORD WINAPI SHDeleteOrphanKeyW(HKEY hKey, LPCWSTR lpszSubKey)
   HKEY hSubKey;
   DWORD dwKeyCount = 0, dwValueCount = 0, dwRet;
 
-  TRACE("(hkey=0x%08x,%s)", hKey, debugstr_w(lpszSubKey));
+  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_w(lpszSubKey));
 
   dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
 
