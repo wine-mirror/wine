@@ -31,6 +31,7 @@ DLLs (under dlls/):
 	d3d8/			- Direct3D (3D graphics)
 	d3d9/			- Direct3D (3D graphics)
 	d3dim/			- Direct3D Immediate Mode
+	d3drm/			- Direct3D Retained Mode
 	d3dx8/			- Direct3D (3D graphics)
 	dbghelp/                - Engine for symbol and module enumeration
 	dciman32/		- DCI Manager (graphics)
