@@ -49,9 +49,9 @@ static void create_test_entrys(void)
 
 	if (hKey)
 	{
-           ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)), "RegSetValueExA failed");
-           ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)), "RegSetValueExA failed");
-           ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)), "RegSetValueExA failed");
+           ok(!RegSetValueExA(hKey,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed");
+           ok(!RegSetValueExA(hKey,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), "RegSetValueExA failed");
+           ok(!RegSetValueExA(hKey,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), "RegSetValueExA failed");
 	   RegCloseKey(hKey);
 	}
 
@@ -108,8 +108,8 @@ static void test_SHQUeryValueEx(void)
 	/****** SHQueryValueExA ******/
 
 	sTestedFunction = "SHQueryValueExA";
-	nUsedBuffer1 = max(strlen(sExpTestpath1)+1, strlen(sTestpath1));
-	nUsedBuffer2 = max(strlen(sExpTestpath2)+1, strlen(sTestpath2));
+	nUsedBuffer1 = max(strlen(sExpTestpath1)+1, strlen(sTestpath1)+1);
+	nUsedBuffer2 = max(strlen(sExpTestpath2)+1, strlen(sTestpath2)+1);
 	/*
 	 * Case 1.1 All arguments are NULL
 	 */
