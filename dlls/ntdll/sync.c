@@ -33,7 +33,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
+    if ((MaximumCount <= 0) || (InitialCount > MaximumCount))
         return STATUS_INVALID_PARAMETER;
 
     SERVER_START_VAR_REQ( create_semaphore, len )

@@ -399,7 +399,7 @@ static ICOM_VTABLE(IClassFactory) DDCF_Vtbl =
  */
 DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 {
-    int i;
+    unsigned int i;
     IClassFactoryImpl *factory;
 
     TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);

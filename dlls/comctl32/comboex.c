@@ -1440,7 +1440,7 @@ COMBOEX_WM_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE("CtlType=%08x, CtlID=%08x, itemID=%08x, hwnd=%x, data=%08lx\n",
 	  dis->CtlType, dis->CtlID, dis->itemID, dis->hwndItem, dis->itemData);
 
-    if ((dis->itemID >= infoPtr->nb_items) || (dis->itemID < 0)) return FALSE;
+    if (dis->itemID >= infoPtr->nb_items) return FALSE;
 
     olditem = infoPtr->items;
     i = infoPtr->nb_items - 1;

@@ -56,7 +56,8 @@ static void DISPDIB_Palette(LPBITMAPINFO lpbi)
 static void DISPDIB_Show(LPBITMAPINFOHEADER lpbi,LPSTR lpBits,WORD uFlags)
 {
     int Xofs,Yofs,Width=lpbi->biWidth,Height=lpbi->biHeight,Delta;
-    unsigned Pitch=(Width+3)&~3,sPitch,sWidth,sHeight;
+    int Pitch = (Width + 3) & ~3;
+    unsigned int sPitch,sWidth,sHeight;
     LPSTR surf = DOSMEM_MapDosToLinear(0xa0000);
 
     if (VGA_GetMode(&sHeight,&sWidth,NULL)) return;

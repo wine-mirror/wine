@@ -45,7 +45,7 @@ typedef struct
 static void DDRAW_dump_flags(DWORD flags, const flag_info* names,
 			     size_t num_names)
 {
-    int	i;
+    unsigned int	i;
 
     for (i=0; i < num_names; i++)
 	if (names[i].val & flags)
@@ -57,9 +57,9 @@ static void DDRAW_dump_flags(DWORD flags, const flag_info* names,
 static void DDRAW_dump_members(DWORD flags, const void* data,
 			       const member_info* mems, size_t num_mems)
 {
-    int i;
+    unsigned int i;
 
-    for (i=0; i < sizeof(mems)/sizeof(mems[0]); i++)
+    for (i=0; i < num_mems; i++)
     {
 	if (mems[i].val & flags)
 	{

@@ -207,7 +207,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
         }
 	return handle;
     }
-    if (pModule && (fd = NE_OpenFile( pModule )) >= 0)
+    if (pModule && (fd = NE_OpenFile( pModule )) != INVALID_HANDLE_VALUE)
     {
 	HGLOBAL16 handle;
 	WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
