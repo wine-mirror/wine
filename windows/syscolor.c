@@ -55,13 +55,13 @@ static const char * const DefSysColors[] =
     "AlternateButtonFace", "184 180 184",  /* COLOR_ALTERNATEBTNFACE */
     "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
     "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
-    "GradientInactiveTitle", "184 180 184" /* COLOR_GRADIENTINACTIVECAPTION */
+    "GradientInactiveTitle", "181 181 181" /* COLOR_GRADIENTINACTIVECAPTION */
 };
 
 static const char * const DefSysColors95[] =
 {
-    "Scrollbar", "223 223 223",      /* COLOR_SCROLLBAR           */
-    "Background", "192 192 192",     /* COLOR_BACKGROUND          */
+    "Scrollbar", "192 192 192",      /* COLOR_SCROLLBAR           */
+    "Background", "0 128 128",       /* COLOR_BACKGROUND          */
     "ActiveTitle", "0 0 128",        /* COLOR_ACTIVECAPTION       */
     "InactiveTitle", "128 128 128",  /* COLOR_INACTIVECAPTION     */
     "Menu", "192 192 192",           /* COLOR_MENU                */
@@ -79,16 +79,16 @@ static const char * const DefSysColors95[] =
     "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
     "GrayText", "128 128 128",       /* COLOR_GRAYTEXT            */
     "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
-    "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
+    "InactiveTitleText", "192 192 192",/* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
     "3DDarkShadow", "0 0 0",         /* COLOR_3DDKSHADOW          */
-    "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
+    "3DLight", "224 224 224",        /* COLOR_3DLIGHT             */
     "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
-    "InfoBackground", "255 255 192", /* COLOR_INFOBK              */
-    "AlternateButtonFace", "184 180 184",  /* COLOR_ALTERNATEBTNFACE */
+    "InfoBackground", "255 255 225", /* COLOR_INFOBK              */
+    "AlternateButtonFace", "180 180 180",  /* COLOR_ALTERNATEBTNFACE */
     "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
     "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
-    "GradientInactiveTitle", "184 180 184" /* COLOR_GRADIENTINACTIVECAPTION */
+    "GradientInactiveTitle", "181 181 181" /* COLOR_GRADIENTINACTIVECAPTION */
 };
 
 
