@@ -307,7 +307,7 @@ into a stub:
    BOOL WINAPI PolyBezierTo(HDC hdc, LPCVOID p, DWORD count) 
    {
        /* tell the user they've got a substandard implementation */
-       FIXME(gdi, ":(%x,%p,%d): stub\n", hdc, p, count);
+       FIXME("(%x,%p,%d): stub\n", hdc, p, count);
 
        /* some programs may be able to compensate, 
         * if they know what happened 
