@@ -107,8 +107,8 @@ static void test_module_base_name(void)
     ok(ERROR_SUCCESS == GetLastError(),
 	"last error wrong, got %ld expected ERROR_SUCCESS\n",
 	GetLastError());
-    ok(1 == strlen(buffer),
-	"buffer content length wrong, got %d(%s) expected 1\n",
+    ok((!strlen(buffer)) || (1 == strlen(buffer)), 
+	"buffer content length wrong, got %d(%s) expected 0 (XP)/1\n",
 	strlen(buffer), buffer);
 
     SetLastError(ERROR_SUCCESS);
