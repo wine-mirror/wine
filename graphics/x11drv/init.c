@@ -193,6 +193,12 @@ BOOL X11DRV_GDI_Initialize(void)
     X11DRV_DevCaps.horzRes   = screen_width;
     X11DRV_DevCaps.vertRes   = screen_height;
     X11DRV_DevCaps.bitsPixel = screen_depth;
+
+    /* MSDN: Number of entries in the device's color table, if the device has
+     * a color depth of no more than 8 bits per pixel.For devices with greater
+     * color depths, -1 is returned.
+     */
+    X11DRV_DevCaps.numColors = (screen_depth>8)?-1:(1<<screen_depth);
  
     /* Resolution will be adjusted during the font init */
 
