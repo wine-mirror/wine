@@ -20,8 +20,6 @@
 #include "win.h"
 #include "user.h"
 #include "message.h"
-#include "callback.h"
-#include "builtin16.h"
 #include "debugtools.h"
 #include "winerror.h"
 
@@ -38,32 +36,8 @@ typedef struct _KBINFO
 } KBINFO, *LPKBINFO;
 #include "poppack.h"
 
-/**********************************************************************/
-
-typedef VOID CALLBACK (*LPKEYBD_EVENT_PROC)(BYTE,BYTE,DWORD,DWORD);
-
-static LPKEYBD_EVENT_PROC DefKeybEventProc;
+static FARPROC16 DefKeybEventProc;
 static LPBYTE pKeyStateTable;
-
-/***********************************************************************
- *              KEYBOARD_CallKeybdEventProc
- */
-static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
-                                                BYTE bVk, BYTE bScan,
-                                                DWORD dwFlags, DWORD dwExtraInfo )
-{
-    CONTEXT86 context;
-
-    memset( &context, 0, sizeof(context) );
-    context.SegCs = SELECTOROF( proc );
-    context.Eip   = OFFSETOF( proc );
-    context.Eax   = bVk | ((dwFlags & KEYEVENTF_KEYUP)? 0x8000 : 0);
-    context.Ebx   = bScan | ((dwFlags & KEYEVENTF_EXTENDEDKEY) ? 0x100 : 0);
-    context.Esi   = LOWORD( dwExtraInfo );
-    context.Edi   = HIWORD( dwExtraInfo );
-
-    wine_call_to_16_regs_short( &context, 0 );
-}
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
@@ -84,8 +58,7 @@ WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
  */
 VOID WINAPI KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 {
-    if (DefKeybEventProc) THUNK_Free( (FARPROC)DefKeybEventProc );
-    DefKeybEventProc = (LPKEYBD_EVENT_PROC)THUNK_Alloc( proc, (RELAY)KEYBOARD_CallKeybdEventProc );
+    DefKeybEventProc = proc;
     pKeyStateTable = lpKeyState;
 
     memset( lpKeyState, 0, 256 ); /* all states to false */
@@ -96,10 +69,8 @@ VOID WINAPI KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
  */
 VOID WINAPI KEYBOARD_Disable(VOID)
 {
-  THUNK_Free( (FARPROC)DefKeybEventProc );
-  
-  DefKeybEventProc = NULL;
-  pKeyStateTable = NULL;
+    DefKeybEventProc = NULL;
+    pKeyStateTable = NULL;
 }
 
 

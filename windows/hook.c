@@ -20,7 +20,6 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
-#include "callback.h"
 #include "hook.h"
 #include "win.h"
 #include "queue.h"
@@ -43,7 +42,6 @@ typedef struct
     HQUEUE16   ownerQueue;         /* 08 Owner queue (0 for system hook) */
     HMODULE16  ownerModule;        /* 0a Owner module */
     WORD       flags;              /* 0c flags */
-    HOOKPROC   thunk;              /* 0e Hook procedure (CallTo16 thunk) */
 } HOOKDATA;
 
 #include "poppack.h"
@@ -894,20 +892,6 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
     data->ownerModule = hModule;
     data->flags       = type;
 
-    /* Create CallTo16 thunk for 16-bit hooks */
-
-    if ( (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 )
-        data->thunk = (HOOKPROC)THUNK_Alloc( (FARPROC16)data->proc, 
-                                             (RELAY)HOOK_CallTo16_long_wwl );
-    else
-        data->thunk = data->proc;
-
-    if ( !data->thunk && data->proc )
-    {
-        USER_HEAP_FREE( handle );
-        return 0;
-    }
-
     /* Insert it in the correct linked list */
 
     if (hQueue)
@@ -969,9 +953,6 @@ static BOOL HOOK_RemoveHook( HANDLE16 hook )
     if (!*prevHook) return FALSE;
     *prevHook = data->next;
 
-    if ( (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 )
-        THUNK_Free( (FARPROC)data->thunk );
-
     USER_HEAP_FREE( hook );
     return TRUE;
 }
@@ -1031,16 +1012,18 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     /* Suspend window structure locks before calling user code */
     iWndsLocks = WIN_SuspendWndsLock();
 
-    ret = data->thunk(code, wParam, lParam);
-
-    /* Grrr. While the hook procedure is supposed to have an LRESULT return
-       value even in Win16, it seems that for those hook types where the 
-       return value is interpreted as BOOL, Windows doesn't actually check
-       the HIWORD ...  Some buggy Win16 programs, notably WINFILE, rely on
-       that, because they neglect to clear DX ... */
-    if (    (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 
-         && data->id != WH_JOURNALPLAYBACK )
-        ret = LOWORD( ret );
+    if ((data->flags & HOOK_MAPTYPE) == HOOK_WIN16)
+    {
+        ret = HOOK_CallTo16_long_wwl( data->proc, code, wParam, lParam );
+        /* Grrr. While the hook procedure is supposed to have an LRESULT return
+           value even in Win16, it seems that for those hook types where the 
+           return value is interpreted as BOOL, Windows doesn't actually check
+           the HIWORD ...  Some buggy Win16 programs, notably WINFILE, rely on
+           that, because they neglect to clear DX ... */
+        if (data->id != WH_JOURNALPLAYBACK) ret = LOWORD( ret );
+    }
+    else
+        ret = data->proc(code, wParam, lParam);
 
     WIN_RestoreWndsLock(iWndsLocks);
 
