@@ -382,6 +382,12 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
   TRACE("(%p)->(%p)\n", This, ilpD3DTexture2);
   TRACE("Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
 
+  if ( This->surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
+    /* If the surface is not allocated and its location is not yet specified,
+       force it to video memory */ 
+    if ( !(This->surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_SYSTEMMEMORY|DDSCAPS_VIDEOMEMORY)) )
+      This->surface->surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+
   /* Suppress the ALLOCONLOAD flag */
   This->surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
