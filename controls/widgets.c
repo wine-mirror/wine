@@ -37,7 +37,7 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
     { CS_GLOBALCLASS, (LONG(*)())EditWndProc, 0, 4, 
       0, 0, 0, 0, NULL, "EDIT" },
     { CS_GLOBALCLASS | CS_SAVEBITS, (LONG(*)())PopupMenuWndProc, 0, 8,
-      0, 0, 0, 0, NULL, "POPUPMENU" },
+      0, 0, 0, 0, NULL, POPUPMENU_CLASS_NAME },
     { CS_GLOBALCLASS, (LONG(*)())DesktopWndProc, 0, sizeof(DESKTOPINFO),
       0, 0, 0, 0, NULL, DESKTOP_CLASS_NAME },
     { CS_GLOBALCLASS, (LONG(*)())DefDlgProc, 0, DLGWINDOWEXTRA,

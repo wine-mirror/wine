@@ -18,8 +18,10 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#ifdef linux
 #include <linux/soundcard.h>
 #include <linux/cdrom.h>
+#endif
 
 #define SOUND_DEV "/dev/dsp"
 #define CDAUDIO_DEV "/dev/sbpcd"
@@ -37,6 +39,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #define CDFRAMES_PERMIN 	4500
 #define SECONDS_PERMIN	 	60
 
+#ifdef linux
 typedef struct {
     int     nUseCount;          /* Incremented for each shared open */
     BOOL    fShareable;         /* TRUE if first open was shareable */
@@ -57,6 +60,7 @@ typedef struct {
 	} LINUX_CDAUDIO;
 
 static LINUX_CDAUDIO	CDADev[MAX_CDAUDIODRV];
+#endif
 
 UINT CDAUDIO_GetNumberOfTracks(UINT wDevID);
 BOOL CDAUDIO_GetTracksInfo(UINT wDevID);
@@ -72,6 +76,7 @@ DWORD CDAUDIO_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame);
 */
 DWORD CDAUDIO_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
+#ifdef linux
 	UINT	wDevID;
 	int		cdrom;
 #ifdef DEBUG_CDAUDIO
@@ -121,6 +126,9 @@ DWORD CDAUDIO_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 /**************************************************************************
@@ -128,12 +136,14 @@ DWORD CDAUDIO_mciOpen(DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 */
 DWORD CDAUDIO_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciClose(%u, %08X, %08X);\n", wDevID, dwParam, lpParms);
 #endif
 	if (CDADev[wDevID].lpdwTrackLen != NULL) free(CDADev[wDevID].lpdwTrackLen);
 	if (CDADev[wDevID].lpdwTrackPos != NULL) free(CDADev[wDevID].lpdwTrackPos);
 	close(CDADev[wDevID].unixdev);
+#endif
 }
 
 /**************************************************************************
@@ -142,6 +152,7 @@ DWORD CDAUDIO_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
 						LPMCI_GETDEVCAPS_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciGetDevCaps(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -183,6 +194,9 @@ DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 		}
 	printf("CDAUDIO_mciGetDevCaps // lpParms->dwReturn=%08X);\n", lpParms->dwReturn);
  	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 /**************************************************************************
@@ -190,6 +204,7 @@ DWORD CDAUDIO_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 */
 DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciInfo(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -207,6 +222,9 @@ DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 	else
 		lpParms->dwRetSize = 0;
  	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 /**************************************************************************
@@ -214,6 +232,7 @@ DWORD CDAUDIO_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 */
 DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciStatus(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -315,6 +334,9 @@ DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 		}
 	printf("CDAUDIO_mciStatus // not MCI_STATUS_ITEM !\n");
  	return 0;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -324,6 +346,7 @@ DWORD CDAUDIO_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 DWORD CDAUDIO_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
 {
 	DWORD	dwTime = 0;
+#ifdef linux
 	UINT	wTrack;
 	UINT	wMinutes;
 	UINT	wSeconds;
@@ -372,6 +395,7 @@ TryAGAIN:
 			dwFormatType = MCI_FORMAT_TMSF;
 			goto TryAGAIN;
 		}
+#endif
 	return dwTime;
 }
 
@@ -382,6 +406,7 @@ TryAGAIN:
 DWORD CDAUDIO_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
 {
 	DWORD	dwFrame = 0;
+#ifdef linux
 	UINT	wTrack;
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_CalcFrame(%u, %08X, %lu);\n", wDevID, dwFormatType, dwTime);
@@ -423,6 +448,7 @@ TryAGAIN:
 			dwFormatType = MCI_FORMAT_TMSF;
 			goto TryAGAIN;
 		}
+#endif
 	return dwFrame;
 }
 
@@ -432,6 +458,7 @@ TryAGAIN:
 */
 UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
 {
+#ifdef linux
 	struct cdrom_tochdr	hdr;
 	if (CDADev[wDevID].nTracks == 0) {
 		if (ioctl(CDADev[wDevID].unixdev, CDROMREADTOCHDR, &hdr)) {
@@ -441,6 +468,9 @@ UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
 		CDADev[wDevID].nTracks = hdr.cdth_trk1;
 		}
 	return CDADev[wDevID].nTracks;
+#else
+	return (WORD)-1;
+#endif
 }
 
 /**************************************************************************
@@ -448,6 +478,7 @@ UINT CDAUDIO_GetNumberOfTracks(UINT wDevID)
 */
 BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 {
+#ifdef linux
 	int		i, length;
 	int		start, last_start;
 	int		total_length = 0;
@@ -503,6 +534,9 @@ BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 	CDADev[wDevID].dwTotalLen = total_length;
 	printf("CDAUDIO_GetTracksInfo // total_len=%u\n", total_length);
 	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 
@@ -511,6 +545,7 @@ BOOL CDAUDIO_GetTracksInfo(UINT wDevID)
 */
 BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 {
+#ifdef linux
 	int		oldmode = CDADev[wDevID].mode;
 	CDADev[wDevID].sc.cdsc_format = CDROM_MSF;
 	if (ioctl(CDADev[wDevID].unixdev, CDROMSUBCHNL, &CDADev[wDevID].sc)) {
@@ -565,6 +600,9 @@ BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 			}
 		}
 	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 /**************************************************************************
@@ -572,6 +610,7 @@ BOOL CDAUDIO_GetCDStatus(UINT wDevID)
 */
 DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
+#ifdef linux
 	int 	start, end;
 	struct 	cdrom_msf	msf;
 #ifdef DEBUG_CDAUDIO
@@ -625,6 +664,9 @@ DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 /**************************************************************************
@@ -632,6 +674,7 @@ DWORD CDAUDIO_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 */
 DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciStop(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -644,6 +687,9 @@ DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 /**************************************************************************
@@ -651,6 +697,7 @@ DWORD CDAUDIO_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciPause(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -663,6 +710,9 @@ DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 /**************************************************************************
@@ -670,6 +720,7 @@ DWORD CDAUDIO_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciResume(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -682,6 +733,9 @@ DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 /**************************************************************************
@@ -689,6 +743,7 @@ DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
+#ifdef linux
 	DWORD	dwRet;
 	MCI_PLAY_PARMS PlayParms;
 #ifdef DEBUG_CDAUDIO
@@ -717,6 +772,9 @@ DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return dwRet;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 
@@ -725,6 +783,7 @@ DWORD CDAUDIO_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 */
 DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_CDAUDIO
 	printf("CDAUDIO_mciSet(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -775,6 +834,9 @@ DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 
@@ -784,6 +846,7 @@ DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 LRESULT CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 							DWORD dwParam1, DWORD dwParam2)
 {
+#ifdef linux
 	switch(wMsg) {
 		case DRV_LOAD:
 			return (LRESULT)1L;
@@ -852,6 +915,9 @@ LRESULT CDAUDIO_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 		default:
 			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 		}
+#else
+	return MCIERR_HARDWARE;
+#endif
 }
 
 

@@ -27,7 +27,8 @@ static HBITMAP hbitmapRestoreD = 0;
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
-extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth ); /* menu.c */
+extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
+				   int orgX, int orgY );         /* menu.c */
 
 
   /* Some useful macros */
@@ -127,7 +128,8 @@ LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params )
     if (HAS_MENU(wndPtr))
     {
 	params->rgrc[0].top += MENU_GetMenuBarHeight( hwnd,
-				params->rgrc[0].right - params->rgrc[0].left );
+				  params->rgrc[0].right - params->rgrc[0].left,
+				  -tmpRect.left, -tmpRect.top ) + 1;
     }
     return 0;
 }
@@ -178,43 +180,61 @@ static LONG NC_InternalNCHitTest( HWND hwnd, POINT pt )
 
     GetWindowRect( hwnd, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
-    ScreenToClient( hwnd, &pt );
-    GetClientRect( hwnd, &rect );
-    
-    if (PtInRect( &rect, pt )) return HTCLIENT;
 
-      /* Check vertical scroll bar */
-    if (wndPtr->dwStyle & WS_VSCROLL)
-    {
-	rect.right += SYSMETRICS_CXVSCROLL;
-	if (PtInRect( &rect, pt )) return HTVSCROLL;
-    }
+      /* Check borders */
 
-      /* Check horizontal scroll bar */
-    if (wndPtr->dwStyle & WS_HSCROLL)
+    if (HAS_THICKFRAME( wndPtr->dwStyle ))
     {
-	rect.bottom += SYSMETRICS_CYHSCROLL;
-	if (PtInRect( &rect, pt ))
+	InflateRect( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
+	if (wndPtr->dwStyle & WS_BORDER)
+	    InflateRect( &rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
+	if (!PtInRect( &rect, pt ))
 	{
-	      /* Check size box */
-	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
-		(pt.x >= rect.right - SYSMETRICS_CXVSCROLL)) return HTSIZE;
-	    return HTHSCROLL;
+	      /* Check top sizing border */
+	    if (pt.y < rect.top)
+	    {
+		if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTTOPLEFT;
+		if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTTOPRIGHT;
+		return HTTOP;
+	    }
+	      /* Check bottom sizing border */
+	    if (pt.y >= rect.bottom)
+	    {
+		if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTBOTTOMLEFT;
+		if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTBOTTOMRIGHT;
+		return HTBOTTOM;
+	    }
+	      /* Check left sizing border */
+	    if (pt.x < rect.left)
+	    {
+		if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPLEFT;
+		if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMLEFT;
+		return HTLEFT;
+	    }
+	      /* Check right sizing border */
+	    if (pt.x >= rect.right)
+	    {
+		if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPRIGHT;
+		if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMRIGHT;
+		return HTRIGHT;
+	    }
 	}
     }
-
-      /* Check menu */
-    if (HAS_MENU(wndPtr))
+    else  /* No thick frame */
     {
-	rect.top -= SYSMETRICS_CYMENU + 1;
-	if (PtInRect( &rect, pt )) return HTMENU;
+	if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+	    InflateRect(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
+	else if (wndPtr->dwStyle & WS_BORDER)
+	    InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+	if (!PtInRect( &rect, pt )) return HTBORDER;
     }
 
       /* Check caption */
+
     if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
     {
-	rect.top -= SYSMETRICS_CYCAPTION - 1;
-	if (PtInRect( &rect, pt ))
+	rect.top += SYSMETRICS_CYCAPTION - 1;
+	if (!PtInRect( &rect, pt ))
 	{
 	      /* Check system menu */
 	    if ((wndPtr->dwStyle & WS_SYSMENU) && (pt.x <= SYSMETRICS_CXSIZE))
@@ -230,40 +250,42 @@ static LONG NC_InternalNCHitTest( HWND hwnd, POINT pt )
 	    return HTCAPTION;
 	}
     }
-    
-      /* Check non-sizing border */
-    if (!HAS_THICKFRAME( wndPtr->dwStyle )) return HTBORDER;
 
-      /* Check top sizing border */
-    if (pt.y < rect.top)
+      /* Check client area */
+
+    ScreenToClient( hwnd, &pt );
+    GetClientRect( hwnd, &rect );
+    if (PtInRect( &rect, pt )) return HTCLIENT;
+
+      /* Check vertical scroll bar */
+
+    if (wndPtr->dwStyle & WS_VSCROLL)
     {
-	if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTTOPLEFT;
-	if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTTOPRIGHT;
-	return HTTOP;
+	rect.right += SYSMETRICS_CXVSCROLL;
+	if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
-      /* Check bottom sizing border */
-    if (pt.y >= rect.bottom)
+      /* Check horizontal scroll bar */
+
+    if (wndPtr->dwStyle & WS_HSCROLL)
     {
-	if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTBOTTOMLEFT;
-	if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTBOTTOMRIGHT;
-	return HTBOTTOM;
-    }
-    
-      /* Check left sizing border */
-    if (pt.x < rect.left)
-    {
-	if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPLEFT;
-	if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMLEFT;
-	return HTLEFT;
+	rect.bottom += SYSMETRICS_CYHSCROLL;
+	if (PtInRect( &rect, pt ))
+	{
+	      /* Check size box */
+	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
+		(pt.x >= rect.right - SYSMETRICS_CXVSCROLL))
+		return HTSIZE;
+	    return HTHSCROLL;
+	}
     }
 
-      /* Check right sizing border */
-    if (pt.x >= rect.right)
+      /* Check menu bar */
+
+    if (HAS_MENU(wndPtr))
     {
-	if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPRIGHT;
-	if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMRIGHT;
-	return HTRIGHT;
+	if ((pt.y < 0) && (pt.x >= 0) && (pt.x < rect.right))
+	    return HTMENU;
     }
 
       /* Should never get here */
@@ -537,9 +559,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 #ifdef DEBUG_NONCLIENT
     printf( "NC_DoNCPaint: %d %d\n", hwnd, hrgn );
 #endif
-    if (!IsWindowVisible(hwnd)) return;
     if (!wndPtr || !hrgn) return;
-    if (!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME)))
+    if ((!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME))) ||
+	(!(wndPtr->dwStyle & WS_VISIBLE)))
 	return;  /* Nothing to do! */
 
     if (hrgn == 1) hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
@@ -594,27 +616,15 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 	NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
     }
 
-    if (wndPtr->wIDmenu != 0 &&
-	(wndPtr->dwStyle & WS_CHILD) != WS_CHILD) {
-	LPPOPUPMENU	lpMenu = (LPPOPUPMENU) GlobalLock(wndPtr->wIDmenu);
-	if (lpMenu != NULL) {
-		int oldHeight;
-		CopyRect(&rect2, &rect);
-		/* Default MenuBar height */
-		if (lpMenu->Height == 0) lpMenu->Height = SYSMETRICS_CYMENU + 1;
-		oldHeight = lpMenu->Height;
-		rect2.bottom = rect2.top + oldHeight; 
-		StdDrawMenuBar(hdc, &rect2, lpMenu, suppress_menupaint);
-		if (oldHeight != lpMenu->Height) {
-			printf("NC_DoNCPaint // menubar changed oldHeight=%d != lpMenu->Height=%d\n",
-									oldHeight, lpMenu->Height);
-			/* Reduce ClientRect according to MenuBar height */
-			wndPtr->rectClient.top -= oldHeight;
-			wndPtr->rectClient.top += lpMenu->Height;
-			}
-		GlobalUnlock(wndPtr->wIDmenu);
-		}
-	}
+    if (HAS_MENU(wndPtr))
+    {
+	LPPOPUPMENU lpMenu = (LPPOPUPMENU) GlobalLock( wndPtr->wIDmenu );
+	RECT r = rect;
+	r.bottom = rect.top + lpMenu->Height;
+	rect.top += lpMenu->Height;
+	StdDrawMenuBar( hdc, &r, lpMenu, suppress_menupaint );
+	GlobalUnlock( wndPtr->wIDmenu );
+    }
 
     if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
  	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->VScroll != NULL) &&
@@ -624,9 +634,6 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 			bottom -= SYSMETRICS_CYHSCROLL;
 	    SetRect(&rect2, rect.right - SYSMETRICS_CXVSCROLL, 
 	    	rect.top, rect.right, bottom); 
-	    if (wndPtr->dwStyle & WS_CAPTION) rect.top += SYSMETRICS_CYSIZE;
-	    if (wndPtr->wIDmenu != 0 && (wndPtr->dwStyle & WS_CHILD) != WS_CHILD) 
-	    	rect2.top += SYSMETRICS_CYMENU + 1;
  	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, (LPHEADSCROLL)wndPtr->VScroll);
  	    }
  	if ((wndPtr->dwStyle & WS_HSCROLL) && wndPtr->HScroll != NULL &&

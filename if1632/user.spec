@@ -178,7 +178,7 @@ length	540
 173 pascal LoadCursor(word ptr) LoadCursor(1 2)
 174 pascal LoadIcon(word ptr) LoadIcon(1 2)
 175 pascal LoadBitmap(word ptr) LoadBitmap(1 2)
-176 pascal LoadString(word word ptr s_word) LoadString(1 2 3 4)
+176 pascal16 LoadString(word word ptr s_word) LoadString(1 2 3 4)
 177 pascal LoadAccelerators(word ptr) LoadAccelerators(1 2)
 178 pascal TranslateAccelerator(word word ptr) TranslateAccelerator(1 2 3)
 179 pascal GetSystemMetrics(word) GetSystemMetrics(1)
@@ -228,9 +228,9 @@ length	540
 220 pascal LoadMenuIndirect(ptr) LoadMenuIndirect(1)
 221 pascal ScrollDC(word s_word s_word ptr ptr word ptr) 
 	   ScrollDC(1 2 3 4 5 6 7)
-222 pascal GetKeyboardState(ptr) GetKeyboardState(1)
+222 pascal16 GetKeyboardState(ptr) GetKeyboardState(1)
 #223 SETKEYBOARDSTATE
-224 pascal GetWindowTask(word) GetWindowTask(1)
+224 pascal16 GetWindowTask(word) GetWindowTask(1)
 225 pascal EnumTaskWindows(word ptr long) EnumTaskWindows(1 2 3)
 #226 LOCKINPUT
 227 pascal GetNextDlgGroupItem(word word word) GetNextDlgGroupItem(1 2 3)
@@ -294,7 +294,7 @@ length	540
 281 pascal GetSysColorBrush(word) GetSysColorBrush(1)
 282 pascal SelectPalette(word word word) SelectPalette(1 2 3)
 283 pascal RealizePalette(word) RealizePalette(1)
-284 pascal GetFreeSystemResources(word) GetFreeSystemResources(1)
+284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources(1)
 #285 BEAR285
 286 pascal GetDesktopWindow() GetDesktopWindow()
 #287 GETLASTACTIVEPOPUP
@@ -366,15 +366,15 @@ length	540
 421 pascal wvsprintf(ptr ptr ptr) wvsprintf(1 2 3)
 #422 DLGDIRSELECTEX
 #423 DLGDIRSELECTCOMBOBOXEX
-430 pascal lstrcmp(ptr ptr) lstrcmp(1 2)
+430 pascal16 lstrcmp(ptr ptr) lstrcmp(1 2)
 431 pascal AnsiUpper(ptr) AnsiUpper(1)
 432 pascal AnsiLower(ptr) AnsiLower(1)
-433 pascal IsCharAlpha(byte) IsCharAlpha(1)
-434 pascal IsCharAlphanumeric(byte) IsCharAlphanumeric(1)
-435 pascal IsCharUpper(byte) IsCharUpper(1)
-436 pascal IsCharLower(byte) IsCharLower(1)
-437 pascal AnsiUpperBuff(ptr word) AnsiUpperBuff(1 2)
-438 pascal AnsiLowerBuff(ptr word) AnsiLowerBuff(1 2)
+433 pascal16 IsCharAlpha(byte) IsCharAlpha(1)
+434 pascal16 IsCharAlphanumeric(byte) IsCharAlphanumeric(1)
+435 pascal16 IsCharUpper(byte) IsCharUpper(1)
+436 pascal16 IsCharLower(byte) IsCharLower(1)
+437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff(1 2)
+438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff(1 2)
 445 pascal DefFrameProc(word word word word long) DefFrameProc(1 2 3 4 5)
 447 pascal DefMDIChildProc(word word word long) DefMDIChildProc(1 2 3 4)
 451 pascal TranslateMDISysAccel(word ptr) TranslateMDISysAccel(1 2)
@@ -395,7 +395,7 @@ length	540
 #465 DRAGDETECT
 466 pascal DrawFocusRect(word ptr) DrawFocusRect(1 2)
 #470 STRINGFUNC
-471 pascal lstrcmpi(ptr ptr) lstrcmpi(1 2)
+471 pascal16 lstrcmpi(ptr ptr) lstrcmpi(1 2)
 472 pascal AnsiNext(ptr) AnsiNext(1 )
 473 pascal AnsiPrev(ptr ptr) AnsiPrev(1 2)
 #480 GETUSERLOCALOBJTYPE
@@ -415,13 +415,13 @@ length	540
 #509 WNETUNWATCHQUEUE
 #510 WNETLOCKQUEUEDATA
 #511 WNETUNLOCKQUEUEDATA
-512 pascal WNetGetConnection(ptr ptr ptr) WNetGetConnection(1 2 3)
+512 pascal16 WNetGetConnection(ptr ptr ptr) WNetGetConnection(1 2 3)
 513 pascal WNetGetCaps(word) WNetGetCaps(1)
 #514 WNETDEVICEMODE
 #515 WNETBROWSEDIALOG
 516 pascal WNetGetUser(ptr ptr ptr) WNetGetUser(1 2 3)
-517 pascal WNetAddConnection(ptr ptr ptr) WNetAddConnection(1 2 3)
-518 pascal WNetCancelConnection(ptr word) WNetCancelConnection(1 2)
+517 pascal16 WNetAddConnection(ptr ptr ptr) WNetAddConnection(1 2 3)
+518 pascal16 WNetCancelConnection(ptr word) WNetCancelConnection(1 2)
 #519 WNETGETERROR
 #520 WNETGETERRORTEXT
 #521 WNETENABLE

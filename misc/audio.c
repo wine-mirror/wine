@@ -16,8 +16,11 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#ifdef linux
 #include <linux/soundcard.h>
+#endif
 
+#ifdef linux
 #define SOUND_DEV "/dev/dsp"
 
 #ifdef SOUND_VERSION
@@ -66,6 +69,7 @@ typedef struct {
 static LINUX_WAVEOUT	WOutDev[MAX_WAVOUTDRV];
 static LINUX_WAVEIN		WInDev[MAX_WAVOUTDRV];
 static LINUX_MCIWAVE	MCIWavDev[MAX_MCIWAVDRV];
+#endif
 
 DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms);
 DWORD WAVE_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms);
@@ -93,6 +97,7 @@ DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize);
 DWORD WAVE_NotifyClient(UINT wDevID, WORD wMsg, 
 				DWORD dwParam1, DWORD dwParam2)
 {
+#ifdef linux
 	if (WInDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
 		WInDev[wDevID].waveDesc.dwCallBack, WInDev[wDevID].wFlags, 
 		WInDev[wDevID].waveDesc.hWave, wMsg, 
@@ -100,6 +105,9 @@ DWORD WAVE_NotifyClient(UINT wDevID, WORD wMsg,
 		printf("WAVE_NotifyClient // can't notify client !\n");
 		return MMSYSERR_NOERROR;
 		}
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -109,6 +117,7 @@ DWORD WAVE_NotifyClient(UINT wDevID, WORD wMsg,
 LRESULT WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
+#ifdef linux
 	switch(wMsg) {
 		case DRV_LOAD:
 			return (LRESULT)1L;
@@ -159,12 +168,16 @@ LRESULT WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 		default:
 			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 		}
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
 * 				WAVE_mciOpen	*/
 DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 {
+#ifdef linux
 	int			hFile;
 	UINT 		wDevID;
 	OFSTRUCT	OFstruct;
@@ -223,6 +236,9 @@ DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 	dwRet = wodMessage(0, WODM_OPEN, 0, (DWORD)&WaveDesc, CALLBACK_NULL);
 	dwRet = widMessage(0, WIDM_OPEN, 0, (DWORD)&WaveDesc, CALLBACK_NULL);
 	return 0;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -230,6 +246,7 @@ DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 */
 DWORD WAVE_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 	DWORD		dwRet;
 #ifdef DEBUG_MCIWAVE
 	printf("WAVE_mciClose(%u, %08X, %08X);\n", wDevID, dwParam, lpParms);
@@ -246,6 +263,9 @@ DWORD WAVE_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 		if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
 		}
 	return 0;
+#else
+	return 0;
+#endif
 }
 
 
@@ -254,6 +274,7 @@ DWORD WAVE_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
+#ifdef linux
 	int			count;
 	int			start, end;
 	LPWAVEHDR		lpWaveHdr;
@@ -323,6 +344,9 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -331,6 +355,7 @@ DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 */
 DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 {
+#ifdef linux
 	int			count;
 	int			start, end;
 	LPWAVEHDR		lpWaveHdr;
@@ -382,6 +407,9 @@ DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
 	return 0;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -390,11 +418,15 @@ DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 */
 DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_MCIWAVE
 	printf("WAVE_mciStop(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 
@@ -403,11 +435,15 @@ DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD WAVE_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_MCIWAVE
 	printf("WAVE_mciPause(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 
@@ -416,11 +452,15 @@ DWORD WAVE_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_MCIWAVE
 	printf("WAVE_mciResume(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 
@@ -429,6 +469,7 @@ DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 */
 DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_MCIWAVE
 	printf("WAVE_mciSet(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -502,6 +543,9 @@ DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 		printf("WAVE_mciSet // MCI_WAVE_SET_SAMPLESPERSEC !\n");
 		}
  	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 
@@ -510,6 +554,7 @@ DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 */
 DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
+#ifdef linux
 #ifdef DEBUG_MCIWAVE
 	printf("WAVE_mciStatus(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 #endif
@@ -601,6 +646,9 @@ DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 			MCIWavDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
  	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 /**************************************************************************
@@ -609,6 +657,7 @@ DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
 					LPMCI_GETDEVCAPS_PARMS lpParms)
 {
+#ifdef linux
 	printf("WAVE_mciGetDevCaps(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_GETDEVCAPS_ITEM) {
@@ -651,6 +700,9 @@ DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 			}
 		}
  	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 /**************************************************************************
@@ -658,6 +710,7 @@ DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 */
 DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
+#ifdef linux
 	printf("WAVE_mciInfo(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	lpParms->lpstrReturn = NULL;
@@ -682,6 +735,9 @@ DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 	else
 		lpParms->dwRetSize = 0;
  	return 0;
+#else
+	return MCIERR_INTERNAL;
+#endif
 }
 
 
@@ -693,6 +749,7 @@ DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 */
 DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 {
+#ifdef linux
 	int 	audio;
 	int		smplrate;
 	int		samplesize = 16;
@@ -739,6 +796,9 @@ DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 	close(audio);
 	printf("wodGetDevCaps // dwFormats = %08X\n", lpCaps->dwFormats);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -747,6 +807,7 @@ DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 */
 DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
+#ifdef linux
 	int 		audio;
 	int			abuf_size;
 	int			smplrate;
@@ -826,6 +887,9 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		return MMSYSERR_INVALPARAM;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -833,6 +897,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 */
 DWORD wodClose(WORD wDevID)
 {
+#ifdef linux
 	printf("wodClose(%u);\n", wDevID);
 	if (WOutDev[wDevID].unixdev == 0) {
 		printf("Linux 'wodClose' // can't close !\n");
@@ -846,6 +911,9 @@ DWORD wodClose(WORD wDevID)
 		return MMSYSERR_INVALPARAM;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -853,6 +921,7 @@ DWORD wodClose(WORD wDevID)
 */
 DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+#ifdef linux
 	printf("wodWrite(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WOutDev[wDevID].unixdev == 0) {
 		printf("Linux 'wodWrite' // can't play !\n");
@@ -875,6 +944,9 @@ DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 		return MMSYSERR_INVALPARAM;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -882,6 +954,7 @@ DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+#ifdef linux
 	printf("wodPrepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WOutDev[wDevID].unixdev == 0) {
 		printf("Linux 'wodPrepare' // can't prepare !\n");
@@ -897,6 +970,9 @@ DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	lpWaveHdr->dwFlags |= WHDR_PREPARED;
 	lpWaveHdr->dwFlags &= ~WHDR_DONE;
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -904,12 +980,16 @@ DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+#ifdef linux
 	printf("wodUnprepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WOutDev[wDevID].unixdev == 0) {
 		printf("Linux 'wodUnprepare' // can't unprepare !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -917,12 +997,16 @@ DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 DWORD wodRestart(WORD wDevID)
 {
+#ifdef linux
 	printf("wodRestart(%u);\n", wDevID);
 	if (WOutDev[wDevID].unixdev == 0) {
 		printf("Linux 'wodRestart' // can't restart !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -930,12 +1014,16 @@ DWORD wodRestart(WORD wDevID)
 */
 DWORD wodReset(WORD wDevID)
 {
+#ifdef linux
 	printf("wodReset(%u);\n", wDevID);
 	if (WOutDev[wDevID].unixdev == 0) {
 		printf("Linux 'wodReset' // can't reset !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -944,6 +1032,7 @@ DWORD wodReset(WORD wDevID)
 */
 DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
+#ifdef linux
 	int		time;
 	printf("wodGetPosition(%u, %08X, %u);\n", wDevID, lpTime, uSize);
 	if (WOutDev[wDevID].unixdev == 0) {
@@ -988,6 +1077,9 @@ TryAGAIN:
 			goto TryAGAIN;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -995,6 +1087,7 @@ TryAGAIN:
 */
 DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
+#ifdef linux
 	int 	mixer;
 	int		volume = 50;
 	printf("wodSetVolume(%u, %08X);\n", wDevID, dwParam);
@@ -1012,6 +1105,9 @@ DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 		}
 	close(mixer);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -1072,6 +1168,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 */
 DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS lpCaps, DWORD dwSize)
 {
+#ifdef linux
 	int 	audio;
 	int		smplrate;
 	int		samplesize = 16;
@@ -1117,6 +1214,9 @@ DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS lpCaps, DWORD dwSize)
 	close(audio);
 	printf("widGetDevCaps // dwFormats = %08X\n", lpCaps->dwFormats);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -1125,6 +1225,7 @@ DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPS lpCaps, DWORD dwSize)
 */
 DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
+#ifdef linux
 	int 		audio;
 	int			abuf_size;
 	int			smplrate;
@@ -1209,6 +1310,9 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		return MMSYSERR_INVALPARAM;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1216,6 +1320,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 */
 DWORD widClose(WORD wDevID)
 {
+#ifdef linux
 	printf("widClose(%u);\n", wDevID);
 	if (WInDev[wDevID].unixdev == 0) {
 		printf("Linux 'widClose' // can't close !\n");
@@ -1229,6 +1334,9 @@ DWORD widClose(WORD wDevID)
 		return MMSYSERR_INVALPARAM;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1236,6 +1344,7 @@ DWORD widClose(WORD wDevID)
 */
 DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+#ifdef linux
 	int			count	= 1;
 	LPWAVEHDR 	lpWIHdr;
 	printf("widAddBuffer(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
@@ -1270,6 +1379,9 @@ DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 		}
 	printf("widAddBuffer // buffer added ! (now %u in queue)\n", count);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1277,6 +1389,7 @@ DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+#ifdef linux
 	printf("widPrepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WInDev[wDevID].unixdev == 0) {
 		printf("Linux 'widPrepare' // can't prepare !\n");
@@ -1295,6 +1408,9 @@ DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	lpWaveHdr->dwBytesRecorded = 0;
 	printf("Linux 'widPrepare' // header prepared !\n");
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1302,6 +1418,7 @@ DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+#ifdef linux
 	printf("widUnprepare(%u, %08X, %08X);\n", wDevID, lpWaveHdr, dwSize);
 	if (WInDev[wDevID].unixdev == 0) {
 		printf("Linux 'widUnprepare' // can't unprepare !\n");
@@ -1313,6 +1430,9 @@ DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	WInDev[wDevID].lpQueueHdr = NULL;
 	printf("Linux 'widUnprepare' // all headers unprepared !\n");
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1320,6 +1440,7 @@ DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 */
 DWORD widStart(WORD wDevID)
 {
+#ifdef linux
 	int			count	= 1;
 	LPWAVEHDR 	lpWIHdr;
 	printf("widStart(%u);\n", wDevID);
@@ -1355,6 +1476,9 @@ DWORD widStart(WORD wDevID)
 	printf("widStart // end of recording !\n");
 	fflush(stdout);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1362,12 +1486,16 @@ DWORD widStart(WORD wDevID)
 */
 DWORD widStop(WORD wDevID)
 {
+#ifdef linux
 	printf("widStop(%u);\n", wDevID);
 	if (WInDev[wDevID].unixdev == 0) {
 		printf("Linux 'widStop' // can't stop !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1375,12 +1503,16 @@ DWORD widStop(WORD wDevID)
 */
 DWORD widReset(WORD wDevID)
 {
+#ifdef linux
 	printf("widReset(%u);\n", wDevID);
 	if (WInDev[wDevID].unixdev == 0) {
 		printf("Linux 'widReset' // can't reset !\n");
 		return MMSYSERR_NOTENABLED;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1388,6 +1520,7 @@ DWORD widReset(WORD wDevID)
 */
 DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
+#ifdef linux
 	int		time;
 #ifdef DEBUG_MCIWAVE
 	printf("widGetPosition(%u, %08X, %u);\n", wDevID, lpTime, uSize);
@@ -1446,6 +1579,9 @@ TryAGAIN:
 			goto TryAGAIN;
 		}
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -1505,6 +1641,5 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 {
 	return MMSYSERR_NOTENABLED;
 }
-
 
 #endif /* !WINELIB */

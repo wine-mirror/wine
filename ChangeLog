@@ -1,4 +1,51 @@
 ----------------------------------------------------------------------
+Mon Jul 18 23:55:13 MET DST 1994
+
+	* [if1632/call.S]
+	CallTo16(): added `mov %eax,%edx' just before lcall,
+	to make sure that DX contain the DLL's hinstance when
+	initialised.
+
+	CallTo32_16() added, equal to CallTo32() except for
+	one thing: it saves DX and 
+
+	* [tools/build.c]
+	Added some code to support 16 and 32 bit return values.
+
+	* [1632/{kernel,user}.spec]
+	Changed most of the `pascal' style to pascal_16 when
+	function returned a 16bit value.
+
+Tue Jul 19 18:40:25 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/menu.c]
+	Reorganized sizing and drawing code to implement multi-line menus.
+	Implemented MENUBREAK style.
+	Use system colors to draw menus.
+
+	* [objects/color.c]
+	Bug fix in COLOR_IsSolid().
+
+	* [objects/font.c]
+	Bug fix in FONT_GetMetrics(): calculate average character width
+	only on existing chars (dialogs look much better).
+
+	* [objects/text.c]
+	Bug fix in DrawText(): use text color to underline mnemonic.
+
+	* [windows/nonclient.c]
+	Changed WM_NCHITTEST handling to cope with multi-line menu bars.
+
+	* [windows/syscolor.c]
+	Added system objects for menu colors.
+
+Mon Jul 18 19:32:08 PDT 1994  Andrew Lagodzinski  (andrew@netcom.com)
+
+        * [controls/menu.c]
+        Fixed bug in SelectPrevItem that caused seperators to not be
+	skipped when using the up arrow key.
+
+----------------------------------------------------------------------
 Thu Jul 14 17:50:45 1994  Bob Amstadt  (bob@pooh)
 
 	* [Configure]

@@ -15,7 +15,7 @@ struct SysColorObjects
                                    /* COLOR_BACKGROUND          */
     HBRUSH hbrushActiveCaption;    /* COLOR_ACTIVECAPTION       */
     HBRUSH hbrushInactiveCaption;  /* COLOR_INACTIVECAPTION     */
-                                   /* COLOR_MENU                */
+    HBRUSH hbrushMenu;             /* COLOR_MENU                */
     HBRUSH hbrushWindow;           /* COLOR_WINDOW              */
     HPEN hpenWindowFrame;          /* COLOR_WINDOWFRAME         */
                                    /* COLOR_MENUTEXT            */
@@ -24,7 +24,7 @@ struct SysColorObjects
     HBRUSH hbrushActiveBorder;     /* COLOR_ACTIVEBORDER        */
     HBRUSH hbrushInactiveBorder;   /* COLOR_INACTIVEBORDER      */
                                    /* COLOR_APPWORKSPACE        */
-                                   /* COLOR_HIGHLIGHT           */
+    HBRUSH hbrushHighlight;        /* COLOR_HIGHLIGHT           */
                                    /* COLOR_HIGHLIGHTTEXT       */
     HBRUSH hbrushBtnFace;          /* COLOR_BTNFACE             */
     HBRUSH hbrushBtnShadow;        /* COLOR_BTNSHADOW           */

@@ -260,8 +260,11 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 #endif
 	/* 'soundrec.exe' has negative position ! 
 	Why ? For now, here a patch : */
-	if (x < 0) x = 0;
-	if (y < 0) y = 0;
+        if (!strcmp(className, "SoundRec"))
+	{
+	    if (x < 0) x = 0;
+	    if (y < 0) y = 0;
+	}
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
     {

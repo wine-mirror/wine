@@ -20,9 +20,10 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #define VARTYPE_LONG	2
 #define VARTYPE_FARPTR	3
 
-#define FUNCTYPE_PASCAL	16
-#define FUNCTYPE_C	17
-#define FUNCTYPE_REG	19
+#define FUNCTYPE_PASCAL_16	15
+#define FUNCTYPE_PASCAL		16
+#define FUNCTYPE_C		17
+#define FUNCTYPE_REG		19
 
 #define EQUATETYPE_ABS	18
 #define TYPE_RETURN	20
@@ -372,7 +373,8 @@ ParseExportFunction(int ordinal, int type)
     }
     fdp->n_args_16 = i;
 
-    if (type == FUNCTYPE_PASCAL || type == FUNCTYPE_REG)
+    if (type == FUNCTYPE_PASCAL_16 || type == FUNCTYPE_PASCAL ||
+	type == FUNCTYPE_REG )
     {
 	current_offset = 0;
 	for (i--; i >= 0; i--)
@@ -521,6 +523,8 @@ ParseOrdinal(int ordinal)
 	return ParseExportFunction(ordinal, FUNCTYPE_PASCAL);
     else if (stricmp(token, "pascal") == 0)
 	return ParseExportFunction(ordinal, FUNCTYPE_PASCAL);
+    else if (stricmp(token, "pascal16") == 0)
+	return ParseExportFunction(ordinal, FUNCTYPE_PASCAL_16);
     else if (stricmp(token, "register") == 0)
 	return ParseExportFunction(ordinal, FUNCTYPE_REG);
     else if (stricmp(token, "equate") == 0)
@@ -755,6 +759,13 @@ main(int argc, char **argv)
     fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
     fprintf(fp, "\tjmp\t_CallTo32\n\n");
 
+    fprintf(fp, "\t.globl _%s_Dispatch_16\n", UpperDLLName);
+    fprintf(fp, "_%s_Dispatch_16:\n", UpperDLLName);
+    fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
+    fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
+    fprintf(fp, "\torl\t$0x%08x,%%eax\n", DLLId << 16);
+    fprintf(fp, "\tjmp\t_CallTo32_16\n\n");
+
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
@@ -829,6 +840,13 @@ main(int argc, char **argv)
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
 		break;
 		
+	      case FUNCTYPE_PASCAL_16:
+		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
+		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+		fprintf(fp, "\tpushw\t$%d\n", fdp->arg_16_size);
+		fprintf(fp, "\tjmp\t_%s_Dispatch_16\n\n", UpperDLLName);
+		break;
+		
 	      case FUNCTYPE_C:
 	      default:
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
@@ -862,8 +880,8 @@ main(int argc, char **argv)
     for (i = 0; i <= Limit; i++, odp++)
     {
 	if (odp->valid && 
-	    (odp->type == FUNCTYPE_PASCAL || odp->type == FUNCTYPE_C ||
-	     odp->type == FUNCTYPE_REG))
+	    (odp->type == FUNCTYPE_PASCAL || odp->type == FUNCTYPE_PASCAL_16 ||
+	     odp->type == FUNCTYPE_REG || odp->type == FUNCTYPE_C ))
 	{
 	    fdp = odp->additional_data;
 	    fprintf(fp, "extern int %s();\n", fdp->internal_name);
@@ -884,6 +902,7 @@ main(int argc, char **argv)
 	switch (odp->type)
 	{
 	  case FUNCTYPE_PASCAL:
+	  case FUNCTYPE_PASCAL_16:
 	  case FUNCTYPE_REG:
 	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, ", UTEXTSEL, UpperDLLName, i);
 	    fprintf(fp, "\042%s\042, ", odp->export_name);

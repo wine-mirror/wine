@@ -7,6 +7,7 @@
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/syscall.h>
+#include <sys/param.h>
 #else
 #include <syscall.h>
 #endif
@@ -20,13 +21,14 @@
 #include "prototypes.h"
 #include "win.h"
  
+#if !defined(BSD4_4) || defined(linux)
 char * cstack[4096];
+#endif
 struct sigaction segv_act;
 
 #ifdef linux
 extern void ___sig_restore();
 extern void ___masksig_restore();
-#endif
 
 /* Similar to the sigaction function in libc, except it leaves alone the
    restorer field */
@@ -41,6 +43,7 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 	errno = -sig;
 	return -1;
 }
+#endif
 
 int do_int(int intnum, struct sigcontext_struct *scp)
 {
@@ -111,7 +114,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 /*         set_es(0x27); set_ds(0x27); */
-    if(signal != SIGBUS) 
+    if(signal != SIGBUS && signal != SIGSEGV && signal != SIGTRAP) 
 	exit(1);
     if(scp->sc_cs == 0x1f)
     {
@@ -181,7 +184,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 	XUngrabServer(display);
 	XFlush(display);
     fprintf(stderr,"In win_fault %x:%x\n", scp->sc_cs, scp->sc_eip);
-#ifdef linux
+#if defined(linux) || defined(__NetBSD__)
     wine_debug(signal, scp);  /* Enter our debugger */
 #else
     fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
@@ -213,8 +216,23 @@ int init_wine_signals(void)
 	wine_sigaction(SIGTRAP, &segv_act, NULL); /* For breakpoints */
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-        struct sigstack ss;
         sigset_t sig_mask;
+#ifdef BSD4_4
+        struct sigaltstack ss;
+        
+        if ((ss.ss_base = malloc(MINSIGSTKSZ)) == NULL) {
+	        fprintf(stderr, "Unable to allocate signal stack (%d bytes)\n",
+		        MINSIGSTKSZ);
+		exit(1);
+	}
+	ss.ss_size = MINSIGSTKSZ;
+        ss.ss_flags = 0;
+        if (sigaltstack(&ss, NULL) < 0) {
+                perror("sigstack");
+                exit(1);
+        }
+#else
+        struct sigstack ss;
         
         ss.ss_sp = (char *) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
         ss.ss_onstack = 0;
@@ -222,12 +240,27 @@ int init_wine_signals(void)
                 perror("sigstack");
                 exit(1);
         }
+#endif
         sigemptyset(&sig_mask);
-        segv_act.sa_handler = (__sighandler_t) win_fault;
+        segv_act.sa_handler = (void (*)) win_fault;
 	segv_act.sa_flags = SA_ONSTACK;
         segv_act.sa_mask = sig_mask;
 	if (sigaction(SIGBUS, &segv_act, NULL) < 0) {
-                perror("sigaction");
+                perror("sigaction: SIGBUS");
+                exit(1);
+        }
+        segv_act.sa_handler = (void (*)) win_fault;
+	segv_act.sa_flags = SA_ONSTACK;
+        segv_act.sa_mask = sig_mask;
+	if (sigaction(SIGSEGV, &segv_act, NULL) < 0) {
+                perror("sigaction: SIGSEGV");
+                exit(1);
+        }
+        segv_act.sa_handler = (void (*)) win_fault; /* For breakpoints */
+	segv_act.sa_flags = SA_ONSTACK;
+        segv_act.sa_mask = sig_mask;
+	if (sigaction(SIGTRAP, &segv_act, NULL) < 0) {
+                perror("sigaction: SIGTRAP");
                 exit(1);
         }
 #endif

@@ -235,8 +235,12 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    if (!TextOut(hdc, x, y, line, len)) return 0;
 	if (prefix_offset != -1)
 	{
+	    HPEN hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
+	    HPEN oldPen = SelectObject( hdc, hpen );
 	    MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
 	    LineTo(hdc, x + prefix_end, y + tm.tmAscent + 1 );
+	    SelectObject( hdc, oldPen );
+	    DeleteObject( hpen );
 	}
 
 	if (strPtr)

@@ -647,16 +647,21 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
     
       /* Send WM_NCPAINT message if needed */
 
-    if ((flags & (SWP_FRAMECHANGED | SWP_SHOWWINDOW)) ||
-	(!(flags & SWP_NOSIZE)) || (!(flags & SWP_NOMOVE)) ||
-	(!(flags & SWP_NOACTIVATE)) || (!(flags & SWP_NOZORDER)))
-	    SendMessage( winpos->hwnd, WM_NCPAINT, 1, 0L );
-#if 0
-    if ((flags & (SWP_FRAMECHANGED | SWP_SHOWWINDOW)) &&
-	(!(flags & SWP_NOREDRAW)) && 
-	(wndPtr->dwStyle & WS_VISIBLE))
-	InvalidateRect(winpos->hwnd, NULL, TRUE);
-#endif
+    if (flags & SWP_SHOWWINDOW)
+    {
+	  /* Repaint the window frame and background */
+	RedrawWindow( winpos->hwnd, NULL, 0,
+		      RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW );
+    }
+    else
+    {
+	if ((flags & SWP_FRAMECHANGED) ||
+	    (!(flags & SWP_NOSIZE)) ||
+	    (!(flags & SWP_NOMOVE)) ||
+	    (!(flags & SWP_NOACTIVATE)) ||
+	    (!(flags & SWP_NOZORDER)))
+	        SendMessage( winpos->hwnd, WM_NCPAINT, 1, 0L );
+    }
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 

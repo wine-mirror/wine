@@ -233,7 +233,7 @@ WORD COLOR_ToPhysical( DC *dc, COLORREF color )
     WORD *mapping;
 
     if (!dc->u.x.pal.hMapping) return 0;
-    switch(color & 0xff000000)
+    switch(color >> 24)
     {
     case 0:  /* RGB */
 	index = GetNearestPaletteIndex( STOCK_DEFAULT_PALETTE, color );

@@ -16,6 +16,34 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #define MAX_FONTS	256
 static LPLOGFONT lpLogFontList[MAX_FONTS] = { NULL };
 
+
+#define CI_NONEXISTCHAR(cs) (((cs)->width == 0) && \
+			     (((cs)->rbearing|(cs)->lbearing| \
+			       (cs)->ascent|(cs)->descent) == 0))
+
+/* 
+ * CI_GET_CHAR_INFO - return the charinfo struct for the indicated 8bit
+ * character.  If the character is in the column and exists, then return the
+ * appropriate metrics (note that fonts with common per-character metrics will
+ * return min_bounds).  If none of these hold true, try again with the default
+ * char.
+ */
+#define CI_GET_CHAR_INFO(fs,col,def,cs) \
+{ \
+    cs = def; \
+    if (col >= fs->min_char_or_byte2 && col <= fs->max_char_or_byte2) { \
+	if (fs->per_char == NULL) { \
+	    cs = &fs->min_bounds; \
+	} else { \
+	    cs = &fs->per_char[(col - fs->min_char_or_byte2)]; \
+	    if (CI_NONEXISTCHAR(cs)) cs = def; \
+	} \
+    } \
+}
+
+#define CI_GET_DEFAULT_INFO(fs,cs) \
+  CI_GET_CHAR_INFO(fs, fs->default_char, NULL, cs)
+
 /***********************************************************************
  *           FONT_MatchFont
  *
@@ -86,7 +114,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font )
 void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
 		      TEXTMETRIC * metrics )
 {    
-    int average, i;
+    int average, i, count;
     unsigned long prop;
 	
     metrics->tmAscent  = xfont->ascent;
@@ -116,13 +144,17 @@ void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
     else
     {
 	XCharStruct * charPtr = xfont->per_char;
-	average = 0;
+	average = count = 0;
 	for (i = metrics->tmFirstChar; i <= metrics->tmLastChar; i++)
 	{
-	    average += charPtr->width;
+	    if (!CI_NONEXISTCHAR( charPtr ))
+	    {
+		average += charPtr->width;
+		count++;
+	    }
 	    charPtr++;
 	}
-	average /= metrics->tmLastChar - metrics->tmFirstChar + 1;
+	if (count) average = (average + count/2) / count;
     }
     metrics->tmAveCharWidth = average;
 }
@@ -372,33 +404,6 @@ DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
 
  
 /***********************************************************************/
-
-#define CI_NONEXISTCHAR(cs) (((cs)->width == 0) && \
-			     (((cs)->rbearing|(cs)->lbearing| \
-			       (cs)->ascent|(cs)->descent) == 0))
-
-/* 
- * CI_GET_CHAR_INFO - return the charinfo struct for the indicated 8bit
- * character.  If the character is in the column and exists, then return the
- * appropriate metrics (note that fonts with common per-character metrics will
- * return min_bounds).  If none of these hold true, try again with the default
- * char.
- */
-#define CI_GET_CHAR_INFO(fs,col,def,cs) \
-{ \
-    cs = def; \
-    if (col >= fs->min_char_or_byte2 && col <= fs->max_char_or_byte2) { \
-	if (fs->per_char == NULL) { \
-	    cs = &fs->min_bounds; \
-	} else { \
-	    cs = &fs->per_char[(col - fs->min_char_or_byte2)]; \
-	    if (CI_NONEXISTCHAR(cs)) cs = def; \
-	} \
-    } \
-}
-
-#define CI_GET_DEFAULT_INFO(fs,cs) \
-  CI_GET_CHAR_INFO(fs, fs->default_char, NULL, cs)
 
 
 /***********************************************************************

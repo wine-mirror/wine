@@ -14,7 +14,9 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#ifdef linux
 #include <linux/soundcard.h>
+#endif
 
 #define SOUND_DEV "/dev/dsp"
 #define MIXER_DEV "/dev/mixer"
@@ -34,6 +36,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 */
 DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 {
+#ifdef linux
 	int 	mixer;
 	int		volume;
 	printf("AUX_GetDevCaps(%u, %08X, %u);\n", wDevID, lpCaps, dwSize);
@@ -48,6 +51,9 @@ DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 		}
 	close(mixer);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 
@@ -56,6 +62,7 @@ DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 */
 DWORD AUX_GetVolume(WORD wDevID, DWORD dwParam)
 {
+#ifdef linux
 	int 	mixer;
 	int		volume;
 	printf("AUX_GetVolume(%u, %08X);\n", wDevID, dwParam);
@@ -69,6 +76,9 @@ DWORD AUX_GetVolume(WORD wDevID, DWORD dwParam)
 		}
 	close(mixer);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 /**************************************************************************
@@ -76,6 +86,7 @@ DWORD AUX_GetVolume(WORD wDevID, DWORD dwParam)
 */
 DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 {
+#ifdef linux
 	int 	mixer;
 	int		volume = 50;
 	printf("AUX_SetVolume(%u, %08X);\n", wDevID, dwParam);
@@ -89,6 +100,9 @@ DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 		}
 	close(mixer);
 	return MMSYSERR_NOERROR;
+#else
+	return MMSYSERR_NOTENABLED;
+#endif
 }
 
 

@@ -190,6 +190,7 @@ _CallTo16:
 	 * Call entry point
 	 */
 	movw	%ax,%ds
+	movw	%ax,%di
 	.byte	0x66
 	lcall	%fs:(%edx)
 
@@ -284,11 +285,16 @@ _CallTo32:
 	/*
 	 * Call entry point
 	 */
+	pushl	%edx
 	pushw	_IF1632_Saved16_ss
 	pushw	_IF1632_Saved16_esp
 	pushl	%eax
 	call	_DLLRelay
 
+	popl	%edx
+	popl	%edx
+	popl	%edx
+
 	/*
  	 * Restore registers, but do not destroy return value.
 	 */
@@ -327,10 +333,104 @@ noargs:
 	/*
 	 * Last, but not least we need to move the high word from eax to dx
 	 */
+
 	pushl	%eax
 	popw	%dx
 	popw	%dx
 
+	.byte	0x66
+	lret
+
+/**********************************************************************
+ *	CallTo32_16()
+ *
+ *	This function is same one as CallTo32() except that the high
+ *	word of EAX won't be moved to DX.
+ */
+	.align	4
+	.globl _CallTo32_16
+_CallTo32_16:
+	pushl	%ebp
+	movl	%esp,%ebp
+
+	/*
+ 	 * Save registers.  286 mode does not have fs or gs.
+	 */
+	pushw	%ds
+	pushw	%es
+
+	/*
+	 * Restore segment registers.
+	 */
+	pushl	%eax
+	movw	$UDATASEL,%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	popl	%eax
+
+	/*
+	 * Save old stack save variables, save stack registers, reload
+	 * stack registers.
+	 */
+	pushl	_IF1632_Saved16_esp
+	pushl	_IF1632_Saved16_ebp
+	pushw	_IF1632_Saved16_ss
+
+	movw	%ss,_IF1632_Saved16_ss
+	movl	%esp,_IF1632_Saved16_esp
+	movl	%ebp,_IF1632_Saved16_ebp
+
+	movw	_IF1632_Saved32_ss,%ss
+	movl	_IF1632_Saved32_esp,%esp
+	movl	_IF1632_Saved32_ebp,%ebp
+
+	/*
+	 * Call entry point
+	 */
+	pushl	%edx
+	pushw	_IF1632_Saved16_ss
+	pushw	_IF1632_Saved16_esp
+	pushl	%eax
+	call	_DLLRelay
+
+	popl	%edx
+	popl	%edx
+	popl	%edx
+
+	/*
+ 	 * Restore registers, but do not destroy return value.
+	 */
+	movw	_IF1632_Saved16_ss,%ss
+	movl	_IF1632_Saved16_esp,%esp
+	movl	_IF1632_Saved16_ebp,%ebp
+
+	popw	_IF1632_Saved16_ss
+	popl	_IF1632_Saved16_ebp
+	popl	_IF1632_Saved16_esp
+
+	popw	%es
+	popw	%ds
+
+	.align	2,0x90
+	leave
+	/*
+	 * Now we need to ditch the parameter bytes that were left on the
+	 * stack. We do this by effectively popping the number of bytes,
+	 * and the return address, removing the parameters and then putting
+	 * the return address back on the stack.
+	 * Normally this field is filled in by the relevant function in
+	 * the emulation library, since it should know how many bytes to
+	 * expect.
+	 */
+	popw	%gs:nbytes
+	cmpw	$0,%gs:nbytes
+	je	noargs2
+	popw	%gs:offset
+	popw	%gs:selector
+	addw	%gs:nbytes,%esp
+	pushw	%gs:selector
+	pushw	%gs:offset
+noargs2:
 	.byte	0x66
 	lret
 

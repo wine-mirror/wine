@@ -45,6 +45,8 @@ static char * DefSysColors[] =
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 
+#define MAKE_SOLID(color) \
+         (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
 
 /*************************************************************************
  *             SYSCOLOR_SetColor
@@ -69,6 +71,8 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	sysColorObjects.hbrushInactiveCaption = CreateSolidBrush( color );
 	break;
     case COLOR_MENU:
+	DeleteObject( sysColorObjects.hbrushMenu );
+	sysColorObjects.hbrushMenu = CreateSolidBrush( MAKE_SOLID(color) );
 	break;
     case COLOR_WINDOW:
 	DeleteObject( sysColorObjects.hbrushWindow );
@@ -95,7 +99,11 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	sysColorObjects.hbrushInactiveBorder = CreateSolidBrush( color );
 	break;
     case COLOR_APPWORKSPACE:
+	break;
     case COLOR_HIGHLIGHT:
+	DeleteObject( sysColorObjects.hbrushHighlight );
+	sysColorObjects.hbrushHighlight = CreateSolidBrush( MAKE_SOLID(color));
+	break;
     case COLOR_HIGHLIGHTTEXT:
 	break;
     case COLOR_BTNFACE:
