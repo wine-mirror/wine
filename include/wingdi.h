@@ -51,7 +51,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR {
     DWORD dwLayerMask;
     DWORD dwVisibleMask;
     DWORD dwDamageMask;
-} PIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
+} PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
 
 #define PFD_TYPE_RGBA        0
 #define PFD_TYPE_COLORINDEX  1
@@ -429,7 +429,7 @@ typedef struct
     LONG paXExt;
     LONG paYExt;
     BYTE paRGBs;
-} PELARRAY, *PPELARRAY;
+} PELARRAY, *PPELARRAY, *LPPELARRAY;
 
   /* Bitmaps */
 
@@ -442,7 +442,7 @@ typedef struct
     WORD   bmPlanes;
     WORD   bmBitsPixel;
     LPVOID bmBits;
-} BITMAP, *LPBITMAP;
+} BITMAP, *PBITMAP, *LPBITMAP;
 
 
   /* Brushes */
@@ -452,9 +452,9 @@ typedef struct
     UINT     lbStyle;
     COLORREF   lbColor;
     INT      lbHatch;
-} LOGBRUSH, *LPLOGBRUSH;
+} LOGBRUSH, *PLOGBRUSH, *LPLOGBRUSH;
 
-typedef LOGBRUSH PATTERN, *PPATTERN;
+typedef LOGBRUSH PATTERN, *PPATTERN, *LPPATTERN;
 
 
   /* Brush styles */
@@ -541,6 +541,9 @@ typedef struct
   WCHAR      elfStyle[LF_FACESIZE];
 } ENUMLOGFONTW, *LPENUMLOGFONTW;
 
+DECL_WINELIB_TYPE_AW(ENUMLOGFONT)
+DECL_WINELIB_TYPE_AW(LPENUMLOGFONT)
+
 typedef struct
 {
   LOGFONTA elfLogFont;
@@ -557,8 +560,7 @@ typedef struct
   WCHAR      elfScript[LF_FACESIZE];
 } ENUMLOGFONTEXW,*LPENUMLOGFONTEXW;
 
-DECL_WINELIB_TYPE_AW(ENUMLOGFONT)
-DECL_WINELIB_TYPE_AW(LPENUMLOGFONT)
+DECL_WINELIB_TYPE_AW(ENUMLOGFONTEX)
 DECL_WINELIB_TYPE_AW(LPENUMLOGFONTEX)
 
 /*
@@ -577,14 +579,14 @@ typedef struct
 {
   DWORD fsUsb[4];
   DWORD fsCsb[2];
-} FONTSIGNATURE,*LPFONTSIGNATURE;
+} FONTSIGNATURE, *PFONTSIGNATURE, *LPFONTSIGNATURE;
 
 typedef struct 
 {
   UINT	ciCharset; /* character set */
   UINT	ciACP; /* ANSI code page */
   FONTSIGNATURE	fs;
-} CHARSETINFO,*LPCHARSETINFO;
+} CHARSETINFO, *PCHARSETINFO, *LPCHARSETINFO;
 
 /* Flags for TranslateCharsetInfo */
 #define TCI_SRCCHARSET    1
@@ -596,7 +598,7 @@ typedef struct
     DWORD lsUsb[4];
     DWORD lsCsbDefault[2];
     DWORD lsCsbSupported[2];
-} LOCALESIGNATURE, *PLOCALESIGNATURE;
+} LOCALESIGNATURE, *PLOCALESIGNATUR, *LPLOCALESIGNATUREE;
 
 
 /* Flags for ModifyWorldTransform */
@@ -629,7 +631,7 @@ typedef struct
     FLOAT  eM22;
     FLOAT  eDx;
     FLOAT  eDy;
-} XFORM, *LPXFORM;
+} XFORM, *PXFORM, *LPXFORM;
 
   /* lfWeight values */
 #define FW_DONTCARE	    0
@@ -800,7 +802,7 @@ typedef struct tagPANOSE
     BYTE bLetterform;
     BYTE bMidline;
     BYTE bXHeight;
-} PANOSE;
+} PANOSE, *LPPANOSE;
 
 #define PANOSE_COUNT                   10
 
@@ -936,7 +938,7 @@ typedef struct
   BYTE        elfVendorId[ELF_VENDOR_SIZE];
   DWORD       elfCulture;
   PANOSE      elfPanose;
-} EXTLOGFONTA, *PEXTLOGFONTA;
+} EXTLOGFONTA, *PEXTLOGFONTA, *LPEXTLOGFONTA;
 
 typedef struct
 {
@@ -950,10 +952,11 @@ typedef struct
   BYTE        elfVendorId[ELF_VENDOR_SIZE];
   DWORD       elfCulture;
   PANOSE      elfPanose;
-} EXTLOGFONTW, *PEXTLOGFONTW;
+} EXTLOGFONTW, *PEXTLOGFONTW, *LPEXTLOGFONTW;
 
 DECL_WINELIB_TYPE_AW(EXTLOGFONT)
 DECL_WINELIB_TYPE_AW(PEXTLOGFONT)
+DECL_WINELIB_TYPE_AW(LPEXTLOGFONT)
 
 #define ELF_VERSION         0
 #define ELF_CULTURE_LATIN   0
@@ -992,7 +995,7 @@ typedef struct _OUTLINETEXTMETRICA
     LPSTR           otmpFaceName;
     LPSTR           otmpStyleName;
     LPSTR           otmpFullName;
-} OUTLINETEXTMETRICA, *LPOUTLINETEXTMETRICA;
+} OUTLINETEXTMETRICA, *POUTLINETEXTMETRICA, *LPOUTLINETEXTMETRICA;
 
 typedef struct _OUTLINETEXTMETRICW
 {
@@ -1028,9 +1031,10 @@ typedef struct _OUTLINETEXTMETRICW
     LPSTR           otmpFaceName;
     LPSTR           otmpStyleName;
     LPSTR           otmpFullName;
-} OUTLINETEXTMETRICW, *LPOUTLINETEXTMETRICW;
+} OUTLINETEXTMETRICW, *POUTLINETEXTMETRICW, *LPOUTLINETEXTMETRICW;
 
 DECL_WINELIB_TYPE_AW(OUTLINETEXTMETRIC)
+DECL_WINELIB_TYPE_AW(POUTLINETEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPOUTLINETEXTMETRIC)
 
 typedef struct
@@ -1042,7 +1046,7 @@ typedef struct
     UINT      uiFlags;
     RECT      rcl;
     INT       *pdx;
-} POLYTEXTA, *PPOLYTEXTA;
+} POLYTEXTA, *PPOLYTEXTA, *LPPOLYTEXTA;
 
 typedef struct
 {
@@ -1053,10 +1057,11 @@ typedef struct
     UINT      uiFlags;
     RECT      rcl;
     INT       *pdx;
-} POLYTEXTW, *PPOLYTEXTW;
+} POLYTEXTW, *PPOLYTEXTW, *LPPOLYTEXTW;
 
 DECL_WINELIB_TYPE_AW(POLYTEXT)
 DECL_WINELIB_TYPE_AW(PPOLYTEXT)
+DECL_WINELIB_TYPE_AW(LPPOLYTEXT)
 
 
 /* ntmFlags field flags */
@@ -1090,7 +1095,7 @@ typedef struct
     UINT    ntmSizeEM;
     UINT    ntmCellHeight;
     UINT    ntmAvgWidth;
-} NEWTEXTMETRICA, *LPNEWTEXTMETRICA;
+} NEWTEXTMETRICA, *PNEWTEXTMETRICA, *LPNEWTEXTMETRICA;
 
 typedef struct
 {
@@ -1118,9 +1123,10 @@ typedef struct
     UINT      ntmSizeEM;
     UINT      ntmCellHeight;
     UINT      ntmAvgWidth;
-} NEWTEXTMETRICW, *LPNEWTEXTMETRICW;
+} NEWTEXTMETRICW, *PNEWTEXTMETRICW, *LPNEWTEXTMETRICW;
 
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRIC)
+DECL_WINELIB_TYPE_AW(PNEWTEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPNEWTEXTMETRIC)
 
 typedef struct
@@ -1138,19 +1144,18 @@ typedef struct
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRICEX)
 DECL_WINELIB_TYPE_AW(LPNEWTEXTMETRICEX)
 
-typedef INT CALLBACK (*FONTENUMPROCA)(LPENUMLOGFONTA,LPNEWTEXTMETRICA,
-                                          UINT,LPARAM);
-typedef INT CALLBACK (*FONTENUMPROCW)(LPENUMLOGFONTW,LPNEWTEXTMETRICW,
-                                          UINT,LPARAM);
-DECL_WINELIB_TYPE_AW(FONTENUMPROC)
-
-typedef FONTENUMPROCA OLDFONTENUMPROCA;
-typedef FONTENUMPROCW OLDFONTENUMPROCW;
-
+typedef int CALLBACK (*OLDFONTENUMPROCA)(const LOGFONTA*,const TEXTMETRICA*,
+                                          DWORD,LPARAM);
+typedef int CALLBACK (*OLDFONTENUMPROCW)(const LOGFONTW*,const TEXTMETRICW*,
+                                          DWORD,LPARAM);
 DECL_WINELIB_TYPE_AW(OLDFONTENUMPROC)
 
-typedef INT CALLBACK (*FONTENUMPROCEXA)(LPENUMLOGFONTEXA,LPNEWTEXTMETRICEXA,UINT,LPARAM);
-typedef INT CALLBACK (*FONTENUMPROCEXW)(LPENUMLOGFONTEXW,LPNEWTEXTMETRICEXW,UINT,LPARAM);
+typedef OLDFONTENUMPROCA FONTENUMPROCA;
+typedef OLDFONTENUMPROCW FONTENUMPROCW;
+DECL_WINELIB_TYPE_AW(FONTENUMPROC)
+
+typedef int CALLBACK (*FONTENUMPROCEXA)(LPENUMLOGFONTEXA,LPNEWTEXTMETRICEXA,DWORD,LPARAM);
+typedef int CALLBACK (*FONTENUMPROCEXW)(LPENUMLOGFONTEXW,LPNEWTEXTMETRICEXW,DWORD,LPARAM);
 DECL_WINELIB_TYPE_AW(FONTENUMPROCEX)
 
 typedef INT     CALLBACK (*GOBJENUMPROC)(LPVOID,LPARAM);
@@ -1171,8 +1176,8 @@ typedef VOID    CALLBACK (*LINEDDAPROC)(INT,INT,LPARAM);
 #define TA_TOP              0x00
 #define TA_BOTTOM           0x08
 #define TA_BASELINE         0x18
-#define TA_RTLEADING        0x100
-#define TA_MASK             TA_BASELINE+TA_CENTER+TA_UPDATECP+TA_RTLEADING
+#define TA_RTLREADING        0x100
+#define TA_MASK             TA_BASELINE+TA_CENTER+TA_UPDATECP+TA_RTLREADING
 
 #define VTA_BASELINE        TA_BASELINE
 #define VTA_LEFT            TA_BOTTOM
@@ -1250,7 +1255,7 @@ typedef struct
     INT   abcA;
     UINT  abcB;
     INT   abcC;
-} ABC, *LPABC;
+} ABC, *PABC, *LPABC;
 
 
   /* for GetCharacterPlacement () */
@@ -1304,7 +1309,7 @@ typedef struct tagGCP_RESULTSA{
     LPWSTR lpGlyphs;
     UINT   nGlyphs;
     UINT   nMaxFit;
-} GCP_RESULTSA;
+} GCP_RESULTSA, *LPGCP_RESULTSA;
 
 typedef struct tagGCP_RESULTSW
 {
@@ -1317,9 +1322,10 @@ typedef struct tagGCP_RESULTSW
     LPWSTR lpGlyphs;
     UINT   nGlyphs;
     UINT   nMaxFit;
-} GCP_RESULTSW;
+} GCP_RESULTSW, *LPGCP_RESULTSW;
 
 DECL_WINELIB_TYPE_AW(GCP_RESULTS)
+DECL_WINELIB_TYPE_AW(LPGCP_RESULTS)
 
   /* Rasterizer status */
 typedef struct
@@ -1552,6 +1558,7 @@ typedef struct tagEXTLOGPEN
 #define PC_POLYGON        0x0001
 #define PC_RECTANGLE      0x0002
 #define PC_WINDPOLYGON    0x0004
+#define PC_TRAPEZOID      0x0004
 #define PC_SCANLINE       0x0008
 #define PC_WIDE           0x0010
 #define PC_STYLED         0x0020
@@ -1625,7 +1632,7 @@ typedef struct
     WORD    bfReserved1;
     WORD    bfReserved2;
     DWORD   bfOffBits;
-} BITMAPFILEHEADER;
+} BITMAPFILEHEADER, *PBITMAPFILEHEADER, *LPBITMAPFILEHEADER;
 
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
 
@@ -1708,10 +1715,7 @@ typedef struct {
 typedef struct {
 	BITMAPINFOHEADER bmiHeader;
 	RGBQUAD	bmiColors[1];
-} BITMAPINFO;
-typedef BITMAPINFO *LPBITMAPINFO;
-typedef BITMAPINFO *NPBITMAPINFO;
-typedef BITMAPINFO *PBITMAPINFO;
+} BITMAPINFO, *PBITMAPINFO, *LPBITMAPINFO;
 
 typedef struct
 {
@@ -1720,7 +1724,7 @@ typedef struct
     WORD    bcHeight;
     WORD    bcPlanes;
     WORD    bcBitCount;
-} BITMAPCOREHEADER, *LPBITMAPCOREHEADER;
+} BITMAPCOREHEADER, *PBITMAPCOREHEADER, *LPBITMAPCOREHEADER;
 
 typedef struct
 {
@@ -1739,7 +1743,7 @@ typedef struct
 	DWORD			dsBitfields[3];
 	HANDLE		dshSection;
 	DWORD			dsOffset;
-} DIBSECTION,*LPDIBSECTION;
+} DIBSECTION, *PDIBSECTION, *LPDIBSECTION;
 
   /* Stock GDI objects for GetStockObject() */
 
@@ -1775,7 +1779,7 @@ typedef struct
     WORD       mtNoObjects;
     DWORD      mtMaxRecord;
     WORD       mtNoParameters;
-} METAHEADER;
+} METAHEADER, *PMETAHEADER, *LPMETAHEADER;
 
 /* Metafile typical record structure */
 typedef struct
@@ -1783,16 +1787,14 @@ typedef struct
     DWORD      rdSize;
     WORD       rdFunction;
     WORD       rdParm[1];
-} METARECORD;
-typedef METARECORD *PMETARECORD;
-typedef METARECORD *LPMETARECORD;
+} METARECORD, *PMETARECORD, *LPMETARECORD;
 
 /* Handle table structure */
 
 typedef struct
 {
     HGDIOBJ objectHandle[1];
-} HANDLETABLE, *LPHANDLETABLE;
+} HANDLETABLE, *PHANDLETABLE, *LPHANDLETABLE;
 
 
 /* Clipboard metafile picture structure */
@@ -1918,7 +1920,7 @@ typedef struct {
     /* Fields for winver >= win98 */ 
     SIZEL szlMicrometers;
 
-} ENHMETAHEADER, *LPENHMETAHEADER; 
+} ENHMETAHEADER, *PENHMETAHEADER, *LPENHMETAHEADER; 
 
 typedef struct {
     DWORD iType; 
@@ -2149,7 +2151,7 @@ typedef struct {
     EMR   emr;
     DWORD cbData;
     BYTE  Data[1];
-} EMRGDICMMENT, *PEMRGDICOMMENT;
+} EMRGDICOMMENT, *PEMRGDICOMMENT;
 
 #if 0
 typedef struct {
@@ -2621,9 +2623,9 @@ typedef struct
 	SHORT  dmPaperSize;
 	SHORT  dmPaperLength;
 	SHORT  dmPaperWidth;
-      } s1;
+      } DUMMYSTRUCTNAME1;
       POINTL dmPosition;
-    } u1;
+    } DUMMYUNIONNAME1;
     SHORT  dmScale;
     SHORT  dmCopies;
     SHORT  dmDefaultSource;
@@ -2664,9 +2666,9 @@ typedef struct
 	SHORT  dmPaperSize;
 	SHORT  dmPaperLength;
 	SHORT  dmPaperWidth;
-      } s1;
+      } DUMMYSTRUCTNAME1;
       POINTL dmPosition;
-    } u1;
+    } DUMMYUNIONNAME1;
     SHORT  dmScale;
     SHORT  dmCopies;
     SHORT  dmDefaultSource;
@@ -2960,7 +2962,7 @@ typedef struct _RGNDATAHEADER {
     DWORD	nCount;
     DWORD	nRgnSize;
     RECT	rcBound;
-} RGNDATAHEADER,*LPRGNDATAHEADER;
+} RGNDATAHEADER,*PRGNDATAHEADER;
 
 typedef struct _RGNDATA {
     RGNDATAHEADER	rdh;
