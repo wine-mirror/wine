@@ -3227,7 +3227,7 @@ UINT WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
 
 		/* Refresh the frame to reflect the change*/
 		SetWindowPos(parentMenu->hWnd, 0, 0, 0, 0, 0,
-			     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+			     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 	    }
 	}
 	   
