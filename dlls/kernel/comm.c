@@ -94,7 +94,6 @@
 
 #include "wine/server.h"
 #include "async.h"
-#include "heap.h"
 #include "wine/unicode.h"
 
 #include "wine/debug.h"
@@ -2126,7 +2125,7 @@ BOOL WINAPI CommConfigDialogA(
 {
     FARPROC lpfnCommDialog;
     HMODULE hConfigModule;
-    BOOL r;
+    BOOL r = FALSE;
 
     TRACE("(%p %p %p)\n",lpszDevice, hWnd, lpCommConfig);
 
@@ -2134,12 +2133,10 @@ BOOL WINAPI CommConfigDialogA(
     if(!hConfigModule)
         return FALSE;
 
-    lpfnCommDialog = GetProcAddress(hConfigModule, (LPCSTR)3L);
+    lpfnCommDialog = GetProcAddress(hConfigModule, "drvCommConfigDialogA");
 
-    if(!lpfnCommDialog)
-        return FALSE;
-
-    r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
+    if(lpfnCommDialog)
+        r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
 
     FreeLibrary(hConfigModule);
 
@@ -2156,14 +2153,23 @@ BOOL WINAPI CommConfigDialogW(
     HANDLE hWnd,               /* [in] parent window for the dialog */
     LPCOMMCONFIG lpCommConfig) /* [out] pointer to struct to fill */
 {
-    BOOL r;
-    LPSTR lpDeviceA;
+    FARPROC lpfnCommDialog;
+    HMODULE hConfigModule;
+    BOOL r = FALSE;
 
-    lpDeviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszDevice );
-    if(lpDeviceA)
+    TRACE("(%p %p %p)\n",lpszDevice, hWnd, lpCommConfig);
+
+    hConfigModule = LoadLibraryW(lpszSerialUI);
+    if(!hConfigModule)
         return FALSE;
-    r = CommConfigDialogA(lpDeviceA,hWnd,lpCommConfig);
-    HeapFree( GetProcessHeap(), 0, lpDeviceA );
+
+    lpfnCommDialog = GetProcAddress(hConfigModule, "drvCommConfigDialogW");
+
+    if(lpfnCommDialog)
+        r = lpfnCommDialog(lpszDevice,hWnd,lpCommConfig);
+
+    FreeLibrary(hConfigModule);
+
     return r;
 }
 
