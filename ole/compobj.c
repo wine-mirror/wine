@@ -1586,13 +1586,20 @@ static void COM_ExternalLockAddRef(
 {
   COM_ExternalLock *externalLock = COM_ExternalLockFind(pUnk);
 
+  /*
+   * Add an external lock to the object. If it was already externally
+   * locked, just increase the reference count. If it was not.
+   * add the item to the list.
+   */
   if ( externalLock == EL_NOT_FOUND )
     COM_ExternalLockInsert(pUnk);
   else
-  {
-    externalLock->uRefCount++;  /* add an external lock     */
-    IUnknown_AddRef(pUnk);      /* add a local lock as well */
-  }
+    externalLock->uRefCount++;
+
+  /*
+   * Add an internal lock to the object
+   */
+  IUnknown_AddRef(pUnk); 
 }
 
 /****************************************************************************
