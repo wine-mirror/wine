@@ -342,15 +342,16 @@ static void CDROM_ClearCacheEntry(int dev)
 
 
 /******************************************************************
- *		CDROM_GetIdeInterface
+ *		CDROM_GetInterfaceInfo
  *
  * Determines the ide interface (the number after the ide), and the
- * number of the device on that interface for ide cdroms.
+ * number of the device on that interface for ide cdroms (*port == 0).
+ * Determines the scsi information for scsi cdroms (*port == 1).
  * Returns false if the info could not be get
  *
  * NOTE: this function is used in CDROM_InitRegistry and CDROM_GetAddress
  */
-static int CDROM_GetIdeInterface(int fd, int* iface, int* device)
+static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int* lun)
 {
 #if defined(linux)
     {
@@ -365,6 +366,8 @@ static int CDROM_GetIdeInterface(int fd, int* iface, int* device)
             FIXME("cdrom not a block device!!!\n");
             return 0;
         }
+        *port = 0;
+        *lun = 0;
         switch (major(st.st_rdev)) {
             case IDE0_MAJOR: *iface = 0; break;
             case IDE1_MAJOR: *iface = 1; break;
@@ -387,12 +390,15 @@ static int CDROM_GetIdeInterface(int fd, int* iface, int* device)
        struct scsi_addr addr;
        if (ioctl(fd, SCIOCIDENTIFY, &addr) != -1) {
             switch (addr.type) {
-                /* for SCSI copy linux case, i.e. start at *iface = 11 */
-                case TYPE_SCSI:  *iface = 11 + addr.addr.scsi.scbus;
+                case TYPE_SCSI:  *port = 1;
+                                 *iface = addr.addr.scsi.scbus;
                                  *device = addr.addr.scsi.target;
+                                 *lun = addr.addr.scsi.lun;
                                  break;
-                case TYPE_ATAPI: *iface = addr.addr.atapi.atbus;
+                case TYPE_ATAPI: *port = 0;
+                                 *iface = addr.addr.atapi.atbus;
                                  *device = addr.addr.atapi.drive;
+                                 *lun = 0;
                                  break;
             }
             return 1;
@@ -420,7 +426,7 @@ static int CDROM_GetIdeInterface(int fd, int* iface, int* device)
  */
 void CDROM_InitRegistry(int fd)
 {
-    int portnum, targetid;
+    int portnum, busid, targetid, lun;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR dataW[50];
@@ -441,7 +447,7 @@ void CDROM_InitRegistry(int fd)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if ( ! CDROM_GetIdeInterface(fd, &portnum, &targetid))
+    if ( ! CDROM_GetInterfaceInfo(fd, &portnum, &busid, &targetid, &lun))
         return;
 
     /* Ensure there is Scsi key */
@@ -454,7 +460,7 @@ void CDROM_InitRegistry(int fd)
     }
     RtlFreeUnicodeString( &nameW );
 
-    snprintf(buffer,40,"Scsi Port %d",portnum);
+    snprintf(buffer,sizeof(buffer),"Scsi Port %d",portnum);
     attr.RootDirectory = scsiKey;
     if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
         NtCreateKey( &portKey, KEY_ALL_ACCESS, &attr, 0,
@@ -488,8 +494,9 @@ void CDROM_InitRegistry(int fd)
     NtSetValueKey( portKey,&nameW, 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
     RtlFreeUnicodeString( &nameW );
 
+    snprintf(buffer,40,"Scsi Bus %d", busid);
     attr.RootDirectory = portKey;
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Scsi Bus 0" ) ||
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, buffer ) ||
         NtCreateKey( &busKey, KEY_ALL_ACCESS, &attr, 0,
                      NULL, REG_OPTION_VOLATILE, &disp ))
     {
@@ -1621,16 +1628,17 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
  */
 static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
 {
-    int portnum, targetid;
+    int portnum, busid, targetid, lun;
 
     address->Length = sizeof(SCSI_ADDRESS);
-    address->PathId = 0; /* bus number */
-    address->Lun = 0;
-    if ( ! CDROM_GetIdeInterface(cdrom_cache[dev].fd, &portnum, &targetid))
+    if ( ! CDROM_GetInterfaceInfo(cdrom_cache[dev].fd, &portnum,
+                                  &busid, &targetid, &lun))
         return STATUS_NOT_SUPPORTED;
 
     address->PortNumber = portnum;
+    address->PathId = busid; /* bus number */
     address->TargetId = targetid;
+    address->Lun = lun;
     return STATUS_SUCCESS;
 }
 
