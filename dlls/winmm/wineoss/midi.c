@@ -402,6 +402,7 @@ static int midiOpenSeq(void)
 	    midiSeqFD = -1;
 	    return -1;
 	}
+	fcntl(midiSeqFD, F_SETFD, 1); /* set close on exec flag */
 	ioctl(midiSeqFD, SNDCTL_SEQ_RESET);
     }
     numOpenMidiSeq++;

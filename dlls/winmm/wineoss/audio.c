@@ -712,7 +712,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN("can't open (%s)!\n", strerror(errno));
 	return MMSYSERR_ALLOCATED;
     }
-
+    fcntl(audio, F_SETFD, 1); /* set close on exec flag */
     wwo->unixdev = audio;
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     
@@ -1736,6 +1736,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN("can't open (%s)!\n", strerror(errno));
 	return MMSYSERR_ALLOCATED;
     }
+    fcntl(audio, F_SETFD, 1); /* set close on exec flag */
 
     wwi = &WInDev[wDevID];
     if (wwi->lpQueuePtr) {
