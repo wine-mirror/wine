@@ -698,8 +698,7 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
  */
 static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
 {
-    struct create_serial_request *req = get_req_buffer();
-    DWORD r;
+    HANDLE ret = INVALID_HANDLE_VALUE;
     char devname[40];
 
     TRACE("%s %lx\n", name, access);
@@ -710,14 +709,22 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
 
     TRACE("opening %s as %s\n", devname, name);
 
-    req->handle  = 0;
-    req->access  = access;
-    req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
-    lstrcpynA( req->name, devname, server_remaining(req->name) );
-    SetLastError(0);
-    r = server_call( REQ_CREATE_SERIAL );
-    TRACE("create_port_request return %08lX handle = %08X\n",r,req->handle);
-    return req->handle;
+    SERVER_START_REQ
+    {
+        size_t len = strlen(devname);
+        struct create_serial_request *req = server_alloc_req( sizeof(*req), len );
+
+        req->access  = access;
+        req->inherit = 0;  /*FIXME*/
+        req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
+        memcpy( server_data_ptr(req), devname, len );
+        SetLastError(0);
+        if (!(server_call( REQ_CREATE_SERIAL ))) ret = req->handle;
+    }
+    SERVER_END_REQ;
+
+    TRACE("return %08X\n", ret );
+    return ret;
 }
 
 /***********************************************************************

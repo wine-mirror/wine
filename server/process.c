@@ -888,8 +888,8 @@ DECL_HANDLER(read_process_memory)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_READ )))
     {
-        read_process_memory( process, req->addr, req->len,
-                             get_req_size( req, req->data, sizeof(int) ), req->data );
+        size_t maxlen = get_req_data_size(req) / sizeof(int);
+        read_process_memory( process, req->addr, req->len, maxlen, get_req_data(req) );
         release_object( process );
     }
 }
@@ -901,9 +901,9 @@ DECL_HANDLER(write_process_memory)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
     {
-        write_process_memory( process, req->addr, req->len,
-                              get_req_size( req, req->data, sizeof(int) ),
-                              req->first_mask, req->last_mask, req->data );
+        size_t maxlen = get_req_data_size(req) / sizeof(int);
+        write_process_memory( process, req->addr, req->len, maxlen,
+                              req->first_mask, req->last_mask, get_req_data(req) );
         release_object( process );
     }
 }

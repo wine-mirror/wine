@@ -37,7 +37,6 @@
 #include "request.h"
 
 static void serial_dump( struct object *obj, int verbose );
-static void serial_destroy( struct object *obj );
 static int serial_get_read_fd( struct object *obj );
 static int serial_get_write_fd( struct object *obj );
 static int serial_get_info( struct object *obj, struct get_file_info_request *req );
@@ -46,8 +45,7 @@ static int serial_get_poll_events( struct object *obj );
 struct serial
 {
     struct object       obj;
-    char                name[16]; /* eg. /dev/ttyS1 */
-    int                 access;
+    unsigned int        access;
 
     /* timeout values */
     unsigned int        readinterval;
@@ -78,24 +76,65 @@ static const struct object_ops serial_ops =
     serial_get_write_fd,          /* get_write_fd */
     no_flush,                     /* flush */
     serial_get_info,              /* get_file_info */
-    serial_destroy                /* destroy */
+    no_destroy                    /* destroy */
 };
 
 /* SERIAL PORT functions */
+
+static struct serial *create_serial( const char *nameptr, size_t len, unsigned int access )
+{
+    struct serial *serial;
+    struct termios tios;
+    int fd, flags = 0;
+    char *name;
+
+    if (!(name = mem_alloc( len + 1 ))) return NULL;
+    memcpy( name, nameptr, len );
+    name[len] = 0;
+
+    switch(access & (GENERIC_READ | GENERIC_WRITE))
+    {
+    case GENERIC_READ:  flags |= O_RDONLY; break;
+    case GENERIC_WRITE: flags |= O_WRONLY; break;
+    case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
+    default: break;
+    }
+
+    fd = open( name, flags );
+    free( name );
+    if (fd < 0)
+    {
+        file_set_error();
+        return NULL;
+    }
+
+    /* check its really a serial port */
+    if (tcgetattr(fd,&tios))
+    {
+        file_set_error();
+        close( fd );
+        return NULL;
+    }
+
+    if ((serial = alloc_object( &serial_ops, fd )))
+    {
+        serial->access       = access;
+        serial->readinterval = 0;
+        serial->readmult     = 0;
+        serial->readconst    = 0;
+        serial->writemult    = 0;
+        serial->writeconst   = 0;
+        serial->eventmask    = 0;
+        serial->commerror    = 0;
+    }
+    return serial;
+}
 
 static void serial_dump( struct object *obj, int verbose )
 {
     struct serial *serial = (struct serial *)obj;
     assert( obj->ops == &serial_ops );
-
-    fprintf( stderr, "Port fd=%d name='%s' mask=%x\n", 
-             serial->obj.fd, serial->name,serial->eventmask);
-}
-
-/* same as file_destroy, but don't delete comm ports */
-static void serial_destroy( struct object *obj )
-{
-    assert( obj->ops == &serial_ops );
+    fprintf( stderr, "Port fd=%d mask=%x\n", serial->obj.fd, serial->eventmask );
 }
 
 struct serial *get_serial_obj( struct process *process, int handle, unsigned int access )
@@ -147,50 +186,10 @@ static int serial_get_info( struct object *obj, struct get_file_info_request *re
 DECL_HANDLER(create_serial)
 {
     struct serial *serial;
-    int fd,flags;
-    struct termios tios;
 
     req->handle = -1;
-
-    flags = 0;
-    switch(req->access & (GENERIC_READ | GENERIC_WRITE))
+    if ((serial = create_serial( get_req_data(req), get_req_data_size(req), req->access )))
     {
-    case GENERIC_READ:  flags |= O_RDONLY; break;
-    case GENERIC_WRITE: flags |= O_WRONLY; break;
-    case GENERIC_READ|GENERIC_WRITE: flags |= O_RDWR; break;
-    default: break;
-    }
-
-    fd = open( req->name, flags );
-    if(fd < 0)
-    {
-        file_set_error();
-        return;
-    }
-
-    /* check its really a serial port */
-    if(0>tcgetattr(fd,&tios))
-    {
-        file_set_error();
-        close(fd);
-        return;
-    }
-
-    serial = alloc_object( &serial_ops, fd );
-    if (serial)
-    {
-        strncpy(serial->name,req->name,sizeof serial->name);
-        serial->name[sizeof(serial->name)-1] = 0;
-
-        serial->access       = req->access;
-        serial->readinterval = 0;
-        serial->readmult     = 0;
-        serial->readconst    = 0;
-        serial->writemult    = 0;
-        serial->writeconst   = 0;
-        serial->eventmask    = 0;
-        serial->commerror    = 0;
-
         req->handle = alloc_handle( current->process, serial, req->access, req->inherit );
         release_object( serial );
     }

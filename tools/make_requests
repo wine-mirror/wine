@@ -15,8 +15,6 @@
     "void*"         => "%p",
     "time_t"        => "%ld",
     "path_t"        => "&dump_path_t",
-    "char[1]"       => "&dump_string",
-    "WCHAR[1]"      => "&dump_unicode_string"
 );
 
 my @requests = ();

@@ -1437,8 +1437,8 @@ static void register_branch_for_saving( struct key *key, const char *path, size_
         set_error( STATUS_NO_MORE_ENTRIES );
         return;
     }
-    if (!(save_branch_info[save_branch_count].path = memdup( path, len+1 ))) return;
-    save_branch_info[save_branch_count].path[len] = 0;
+    if (!len || !(save_branch_info[save_branch_count].path = memdup( path, len ))) return;
+    save_branch_info[save_branch_count].path[len - 1] = 0;
     save_branch_info[save_branch_count].key = (struct key *)grab_object( key );
     save_branch_count++;
 }
@@ -1757,7 +1757,7 @@ DECL_HANDLER(save_registry_atexit)
 
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS )))
     {
-        register_branch_for_saving( key, req->file, get_req_strlen( req, req->file ) );
+        register_branch_for_saving( key, get_req_data(req), get_req_data_size(req) );
         release_object( key );
     }
 }

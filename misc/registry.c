@@ -380,11 +380,14 @@ static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
                 if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                                       FILE_ATTRIBUTE_NORMAL, -1, TRUE )) != INVALID_HANDLE_VALUE)
                 {
-                    struct load_registry_request *req = get_req_buffer();
-                    req->hkey    = hkey;
-                    req->file    = file;
-                    req->name[0] = 0;
-                    server_call( REQ_LOAD_REGISTRY );
+                    SERVER_START_REQ
+                    {
+                        struct load_registry_request *req = server_alloc_req( sizeof(*req), 0 );
+                        req->hkey    = hkey;
+                        req->file    = file;
+                        server_call( REQ_LOAD_REGISTRY );
+                    }
+                    SERVER_END_REQ;
                     CloseHandle( file );
                 }
                 free( buf );
@@ -1366,6 +1369,25 @@ void _w31_loadreg(void) {
 }
 
 
+static void save_at_exit( HKEY hkey, const char *path )
+{
+    const char *confdir = get_config_dir();
+    size_t len = strlen(confdir) + strlen(path) + 2;
+    if (len > REQUEST_MAX_VAR_SIZE)
+    {
+        ERR( "config dir '%s' too long\n", confdir );
+        return;
+    }
+    SERVER_START_REQ
+    {
+        struct save_registry_atexit_request *req = server_alloc_req( sizeof(*req), len );
+        sprintf( server_data_ptr(req), "%s/%s", confdir, path );
+        req->hkey = hkey;
+        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+    }
+    SERVER_END_REQ;
+}
+
 /* configure save files and start the periodic saving timer */
 static void SHELL_InitRegistrySaving( HKEY hkey_users_default )
 {
@@ -1385,35 +1407,9 @@ static void SHELL_InitRegistrySaving( HKEY hkey_users_default )
 
     if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1))
     {
-        struct save_registry_atexit_request *req = get_req_buffer();
-        const char *confdir = get_config_dir();
-        char *str = req->file + strlen(confdir);
-
-        if (str + 20 > req->file + server_remaining(req->file))
-        {
-            ERR("config dir '%s' too long\n", confdir );
-            return;
-        }
-
-        strcpy( req->file, confdir );
-        strcpy( str, "/" SAVE_CURRENT_USER );
-        req->hkey = HKEY_CURRENT_USER;
-        server_call( REQ_SAVE_REGISTRY_ATEXIT );
-
-        strcpy( req->file, confdir );
-        strcpy( str, "/" SAVE_LOCAL_MACHINE );
-        req->hkey = HKEY_LOCAL_MACHINE;
-        server_call( REQ_SAVE_REGISTRY_ATEXIT );
-
-        strcpy( req->file, confdir );
-        strcpy( str, "/" SAVE_DEFAULT_USER );
-        req->hkey = hkey_users_default;
-        server_call( REQ_SAVE_REGISTRY_ATEXIT );
-
-        strcpy( req->file, confdir );
-        strcpy( str, "/" SAVE_LOCAL_USERS_DEFAULT );
-        req->hkey = HKEY_USERS;
-        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+        save_at_exit( HKEY_CURRENT_USER, SAVE_CURRENT_USER );
+        save_at_exit( HKEY_LOCAL_MACHINE, SAVE_LOCAL_MACHINE );
+        save_at_exit( hkey_users_default, SAVE_DEFAULT_USER );
     }
 }
 

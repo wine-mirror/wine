@@ -51,23 +51,13 @@ static void dump_bytes( const unsigned char *ptr, int len )
     fputc( '}', stderr );
 }
 
-static void dump_string( const void *req, const char *str )
+static void dump_path_t( const void *req, const path_t *path )
 {
-    int len = get_req_strlen( req, str );
-    fprintf( stderr, "\"%.*s\"", len, str );
-}
-
-static void dump_unicode_string( const void *req, const WCHAR *str )
-{
+    const WCHAR *str = *path;
     size_t len = get_req_strlenW( req, str );
     fprintf( stderr, "L\"" );
     dump_strW( str, len, stderr, "\"\"" );
     fputc( '\"', stderr );
-}
-
-static void dump_path_t( const void *req, const path_t *path )
-{
-    dump_unicode_string( req, *path );
 }
 
 static void dump_context( const CONTEXT *context )
@@ -270,18 +260,6 @@ static size_t dump_varargs_input_records( const void *req )
 }
 
 /* dumping for functions for requests that have a variable part */
-
-static void dump_varargs_read_process_memory_reply( const struct read_process_memory_request *req )
-{
-    int count = min( req->len, get_req_size( req, req->data, sizeof(int) ));
-    dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
-}
-
-static void dump_varargs_write_process_memory_request( const struct write_process_memory_request *req )
-{
-    int count = min( req->len, get_req_size( req, req->data, sizeof(int) ));
-    dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
-}
 
 static void dump_varargs_enum_key_value_reply( const struct enum_key_value_request *req )
 {
@@ -1130,7 +1108,7 @@ static void dump_read_process_memory_request( const struct read_process_memory_r
 static void dump_read_process_memory_reply( const struct read_process_memory_request *req )
 {
     fprintf( stderr, " data=" );
-    dump_varargs_read_process_memory_reply( req );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_write_process_memory_request( const struct write_process_memory_request *req )
@@ -1141,7 +1119,7 @@ static void dump_write_process_memory_request( const struct write_process_memory
     fprintf( stderr, " first_mask=%08x,", req->first_mask );
     fprintf( stderr, " last_mask=%08x,", req->last_mask );
     fprintf( stderr, " data=" );
-    dump_varargs_write_process_memory_request( req );
+    cur_pos += dump_varargs_bytes( req );
 }
 
 static void dump_create_key_request( const struct create_key_request *req )
@@ -1263,7 +1241,7 @@ static void dump_load_registry_request( const struct load_registry_request *req 
     fprintf( stderr, " hkey=%d,", req->hkey );
     fprintf( stderr, " file=%d,", req->file );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_save_registry_request( const struct save_registry_request *req )
@@ -1276,7 +1254,7 @@ static void dump_save_registry_atexit_request( const struct save_registry_atexit
 {
     fprintf( stderr, " hkey=%d,", req->hkey );
     fprintf( stderr, " file=" );
-    dump_string( req, req->file );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_set_registry_levels_request( const struct set_registry_levels_request *req )
@@ -1440,7 +1418,7 @@ static void dump_create_serial_request( const struct create_serial_request *req 
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " name=" );
-    dump_string( req, req->name );
+    cur_pos += dump_varargs_string( req );
 }
 
 static void dump_create_serial_reply( const struct create_serial_request *req )

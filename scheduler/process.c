@@ -1230,45 +1230,44 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWORD size,
                                LPDWORD bytes_read )
 {
-    struct read_process_memory_request *req = get_req_buffer();
     unsigned int offset = (unsigned int)addr % sizeof(int);
-    unsigned int max = server_remaining( req->data );  /* max length in one request */
-    unsigned int pos;
+    unsigned int pos = 0, len, max;
+    int res;
 
     if (bytes_read) *bytes_read = size;
 
     /* first time, read total length to check for permissions */
-    req->handle = process;
-    req->addr   = (char *)addr - offset;
-    req->len    = (size + offset + sizeof(int) - 1) / sizeof(int);
-    if (server_call( REQ_READ_PROCESS_MEMORY )) goto error;
+    len = (size + offset + sizeof(int) - 1) / sizeof(int);
+    max = min( REQUEST_MAX_VAR_SIZE, len * sizeof(int) );
 
-    if (size <= max - offset)
+    for (;;)
     {
-        memcpy( buffer, (char *)req->data + offset, size );
-        return TRUE;
+        SERVER_START_REQ
+        {
+            struct read_process_memory_request *req = server_alloc_req( sizeof(*req), max );
+            req->handle = process;
+            req->addr   = (char *)addr + pos - offset;
+            req->len    = len;
+            if (!(res = server_call( REQ_READ_PROCESS_MEMORY )))
+            {
+                size_t result = server_data_size( req );
+                if (result > size + offset) result = size + offset;
+                memcpy( (char *)buffer + pos, server_data_ptr(req) + offset, result - offset );
+                size -= result - offset;
+                pos += result - offset;
+            }
+        }
+        SERVER_END_REQ;
+        if (res)
+        {
+            if (bytes_read) *bytes_read = 0;
+            return FALSE;
+        }
+        if (!size) return TRUE;
+        max = min( REQUEST_MAX_VAR_SIZE, size );
+        len = (max + sizeof(int) - 1) / sizeof(int);
+        offset = 0;
     }
-
-    /* now take care of the remaining data */
-    memcpy( buffer, (char *)req->data + offset, max - offset );
-    pos = max - offset;
-    size -= pos;
-    while (size)
-    {
-        if (max > size) max = size;
-        req->handle = process;
-        req->addr   = (char *)addr + pos;
-        req->len    = (max + sizeof(int) - 1) / sizeof(int);
-        if (server_call( REQ_READ_PROCESS_MEMORY )) goto error;
-        memcpy( (char *)buffer + pos, (char *)req->data, max );
-        size -= max;
-        pos += max;
-    }
-    return TRUE;
-
- error:
-    if (bytes_read) *bytes_read = 0;
-    return FALSE;
 }
 
 
@@ -1279,9 +1278,8 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWOR
                                 LPDWORD bytes_written )
 {
     unsigned int first_offset, last_offset;
-    struct write_process_memory_request *req = get_req_buffer();
-    unsigned int max = server_remaining( req->data );  /* max length in one request */
-    unsigned int pos, last_mask;
+    unsigned int pos = 0, len, max, first_mask, last_mask;
+    int res;
 
     if (!size)
     {
@@ -1291,57 +1289,54 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWOR
     if (bytes_written) *bytes_written = size;
 
     /* compute the mask for the first int */
-    req->first_mask = ~0;
+    first_mask = ~0;
     first_offset = (unsigned int)addr % sizeof(int);
-    memset( &req->first_mask, 0, first_offset );
+    memset( &first_mask, 0, first_offset );
 
     /* compute the mask for the last int */
     last_offset = (size + first_offset) % sizeof(int);
     last_mask = 0;
     memset( &last_mask, 0xff, last_offset ? last_offset : sizeof(int) );
 
-    req->handle = process;
-    req->addr = (char *)addr - first_offset;
     /* for the first request, use the total length */
-    req->len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+    max = min( REQUEST_MAX_VAR_SIZE, len * sizeof(int) );
 
-    if (size + first_offset < max)  /* we can do it in one round */
+    for (;;)
     {
-        memcpy( (char *)req->data + first_offset, buffer, size );
-        req->last_mask = last_mask;
-        if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
-        return TRUE;
-    }
-
-    /* needs multiple server calls */
-
-    memcpy( (char *)req->data + first_offset, buffer, max - first_offset );
-    req->last_mask = ~0;
-    if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
-    pos = max - first_offset;
-    size -= pos;
-    while (size)
-    {
-        if (size <= max)  /* last one */
+        SERVER_START_REQ
         {
-            req->last_mask = last_mask;
-            max = size;
+            struct write_process_memory_request *req = server_alloc_req( sizeof(*req), max );
+            req->handle = process;
+            req->addr = (char *)addr - first_offset + pos;
+            req->len = len;
+            req->first_mask = (!pos) ? first_mask : ~0;
+            if (size + first_offset <= max)  /* last round */
+            {
+                req->last_mask = last_mask;
+                max = size + first_offset;
+            }
+            else req->last_mask = ~0;
+
+            memcpy( (char *)server_data_ptr(req) + first_offset, (char *)buffer + pos,
+                    max - first_offset );
+            if (!(res = server_call( REQ_WRITE_PROCESS_MEMORY )))
+            {
+                pos += max - first_offset;
+                size -= max - first_offset;
+            }
         }
-        req->handle = process;
-        req->addr = (char *)addr + pos;
-        req->len = (max + sizeof(int) - 1) / sizeof(int);
-        req->first_mask = ~0;
-        memcpy( req->data, (char *) buffer + pos, max );
-        if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
-        pos += max;
-        size -= max;
+        SERVER_END_REQ;
+        if (res)
+        {
+            if (bytes_written) *bytes_written = 0;
+            return FALSE;
+        }
+        if (!size) return TRUE;
+        first_offset = 0;
+        len = min( size + sizeof(int) - 1, REQUEST_MAX_VAR_SIZE ) / sizeof(int);
+        max = len * sizeof(int);
     }
-    return TRUE;
-
- error:
-    if (bytes_written) *bytes_written = 0;
-    return FALSE;
-
 }
 
 

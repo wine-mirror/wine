@@ -991,7 +991,7 @@ struct read_process_memory_request
     IN  int          handle;       /* process handle */
     IN  void*        addr;         /* addr to read from (must be int-aligned) */
     IN  int          len;          /* number of ints to read */
-    OUT unsigned int data[1];      /* result data */
+    OUT VARARG(data,bytes);        /* result data */
 };
 
 
@@ -1004,7 +1004,7 @@ struct write_process_memory_request
     IN  int          len;          /* number of ints to write */
     IN  unsigned int first_mask;   /* mask for first word */
     IN  unsigned int last_mask;    /* mask for last word */
-    IN  unsigned int data[1];      /* data to write */
+    IN  VARARG(data,bytes);        /* result data */
 };
 
 
@@ -1115,7 +1115,7 @@ struct load_registry_request
     REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* root key to load to */
     IN  int          file;         /* file to load from */
-    IN  path_t       name;         /* subkey name */
+    IN  VARARG(name,unicode_str);  /* subkey name */
 };
 
 
@@ -1133,7 +1133,7 @@ struct save_registry_atexit_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* key to save */
-    IN  char         file[1];      /* file to save to */
+    IN  VARARG(file,string);       /* file to save to */
 };
 
 
@@ -1299,7 +1299,7 @@ struct create_serial_request
     IN  int          inherit;      /* inherit flag */
     IN  unsigned int sharing;      /* sharing flags */
     OUT int          handle;       /* handle to the port */
-    IN  char         name[1];      /* file name */
+    IN  VARARG(name,string);       /* file name */
 };
 
 struct get_serial_info_request
@@ -1562,7 +1562,7 @@ union generic_request
     struct set_serial_info_request set_serial_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 25
+#define SERVER_PROTOCOL_VERSION 26
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

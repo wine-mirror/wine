@@ -43,30 +43,6 @@ static inline int is_string( DWORD type )
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
-/* copy a key name into the request buffer */
-static inline DWORD copy_nameW( LPWSTR dest, LPCWSTR name )
-{
-    if (name)
-    {
-        if (strlenW(name) > MAX_PATH) return ERROR_MORE_DATA;
-        strcpyW( dest, name );
-    }
-    else dest[0] = 0;
-    return ERROR_SUCCESS;
-}
-
-/* copy a key name into the request buffer */
-static inline DWORD copy_nameAtoW( LPWSTR dest, LPCSTR name )
-{
-    if (name)
-    {
-        if (strlen(name) > MAX_PATH) return ERROR_MORE_DATA;
-        lstrcpyAtoW( dest, name );
-    }
-    else dest[0] = 0;
-    return ERROR_SUCCESS;
-}
-
 /* do a server call without setting the last error code */
 static inline int reg_server_call( enum request req )
 {
@@ -856,7 +832,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
  *           RegQueryValueExA   [ADVAPI32.157]
  *
  * NOTES:
- * the documentation is wrong: if the buffer is to small it remains untouched 
+ * the documentation is wrong: if the buffer is too small it remains untouched 
  */
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
                                LPBYTE data, LPDWORD count )
@@ -923,7 +899,11 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
                 }
                 total_size = len + info_size;
             }
-            else if (data) memcpy( data, buf_ptr + info_size, total_size - info_size );
+            else if (data)
+            {
+                if (total_size - info_size > *count) status = STATUS_BUFFER_OVERFLOW;
+                else memcpy( data, buf_ptr + info_size, total_size - info_size );
+            }
         }
         else if (status != STATUS_BUFFER_OVERFLOW) goto done;
     }
@@ -1164,14 +1144,16 @@ DWORD WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
  */
 LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 {
-    struct load_registry_request *req = get_req_buffer();
     HANDLE file;
-    DWORD ret, err = GetLastError();
+    DWORD ret, len, err = GetLastError();
 
     TRACE( "(%x,%s,%s)\n", hkey, debugstr_w(subkey), debugstr_w(filename) );
 
     if (!filename || !*filename) return ERROR_INVALID_PARAMETER;
     if (!subkey || !*subkey) return ERROR_INVALID_PARAMETER;
+
+    len = strlenW( subkey ) * sizeof(WCHAR);
+    if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
 
     if ((file = CreateFileW( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                              FILE_ATTRIBUTE_NORMAL, -1 )) == INVALID_HANDLE_VALUE)
@@ -1179,10 +1161,16 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
         ret = GetLastError();
         goto done;
     }
-    req->hkey  = hkey;
-    req->file  = file;
-    if ((ret = copy_nameW( req->name, subkey )) != ERROR_SUCCESS) goto done;
-    ret = reg_server_call( REQ_LOAD_REGISTRY );
+
+    SERVER_START_REQ
+    {
+        struct load_registry_request *req = server_alloc_req( sizeof(*req), len );
+        req->hkey  = hkey;
+        req->file  = file;
+        memcpy( server_data_ptr(req), subkey, len );
+        ret = reg_server_call( REQ_LOAD_REGISTRY );
+    }
+    SERVER_END_REQ;
     CloseHandle( file );
 
  done:
@@ -1196,14 +1184,16 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
  */
 LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
-    struct load_registry_request *req = get_req_buffer();
     HANDLE file;
-    DWORD ret, err = GetLastError();
+    DWORD ret, len, err = GetLastError();
 
     TRACE( "(%x,%s,%s)\n", hkey, debugstr_a(subkey), debugstr_a(filename) );
 
     if (!filename || !*filename) return ERROR_INVALID_PARAMETER;
     if (!subkey || !*subkey) return ERROR_INVALID_PARAMETER;
+
+    len = MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey), NULL, 0 ) * sizeof(WCHAR);
+    if (len > MAX_PATH*sizeof(WCHAR)) return ERROR_INVALID_PARAMETER;
 
     if ((file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                              FILE_ATTRIBUTE_NORMAL, -1 )) == INVALID_HANDLE_VALUE)
@@ -1211,10 +1201,17 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
         ret = GetLastError();
         goto done;
     }
-    req->hkey  = hkey;
-    req->file  = file;
-    if ((ret = copy_nameAtoW( req->name, subkey )) != ERROR_SUCCESS) goto done;
-    ret = reg_server_call( REQ_LOAD_REGISTRY );
+
+    SERVER_START_REQ
+    {
+        struct load_registry_request *req = server_alloc_req( sizeof(*req), len );
+        req->hkey  = hkey;
+        req->file  = file;
+        MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey),
+                             server_data_ptr(req), len/sizeof(WCHAR) );
+        ret = reg_server_call( REQ_LOAD_REGISTRY );
+    }
+    SERVER_END_REQ;
     CloseHandle( file );
 
  done:
@@ -1233,7 +1230,6 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
  */
 LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 {
-    struct save_registry_request *req = get_req_buffer();
     char buffer[1024];
     int count = 0;
     LPSTR name;
@@ -1259,9 +1255,15 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
             MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", buffer, count);
     }
 
-    req->hkey = hkey;
-    req->file = handle;
-    ret = reg_server_call( REQ_SAVE_REGISTRY );
+    SERVER_START_REQ
+    {
+        struct save_registry_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->hkey = hkey;
+        req->file = handle;
+        ret = reg_server_call( REQ_SAVE_REGISTRY );
+    }
+    SERVER_END_REQ;
+
     CloseHandle( handle );
     if (!ret)
     {
