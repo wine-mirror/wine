@@ -173,6 +173,7 @@ MSVCRT_INCLUDES = \
 	msvcrt/crtdbg.h \
 	msvcrt/ctype.h \
 	msvcrt/direct.h \
+	msvcrt/dirent.h \
 	msvcrt/dos.h \
 	msvcrt/eh.h \
 	msvcrt/errno.h \
