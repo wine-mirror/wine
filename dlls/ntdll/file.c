@@ -1302,7 +1302,6 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         else
         {
             FILE_FS_SIZE_INFORMATION *info = buffer;
-            struct statvfs stvfs;
 
             if (fstat( fd, &st ) < 0)
             {
@@ -1312,15 +1311,31 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
             if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
             {
                 io->u.Status = STATUS_INVALID_DEVICE_REQUEST;
-                break;
             }
-            if (fstatvfs( fd, &stvfs ) < 0) io->u.Status = FILE_GetNtStatus();
             else
             {
-                info->TotalAllocationUnits.QuadPart = stvfs.f_blocks;
-                info->AvailableAllocationUnits.QuadPart = stvfs.f_bavail;
+                /* Linux's fstatvfs is buggy */
+#if !defined(linux) || !defined(HAVE_FSTATFS)
+                struct statvfs stfs;
+
+                if (fstatvfs( fd, &stfs ) < 0)
+                {
+                    io->u.Status = FILE_GetNtStatus();
+                    break;
+                }
+                info->BytesPerSector = stfs.f_frsize;
+#else
+                struct statfs stfs;
+                if (fstatfs( fd, &stfs ) < 0)
+                {
+                    io->u.Status = FILE_GetNtStatus();
+                    break;
+                }
+                info->BytesPerSector = stfs.f_bsize;
+#endif
+                info->TotalAllocationUnits.QuadPart = stfs.f_blocks;
+                info->AvailableAllocationUnits.QuadPart = stfs.f_bavail;
                 info->SectorsPerAllocationUnit = 1;
-                info->BytesPerSector = stvfs.f_frsize;
                 io->Information = sizeof(*info);
                 io->u.Status = STATUS_SUCCESS;
             }
