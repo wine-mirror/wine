@@ -815,48 +815,22 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
 /***********************************************************************
  *           SetFilePointer   (KERNEL32.@)
  */
-DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
-                             DWORD method )
+DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword, DWORD method )
 {
-    static const int whence[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
-    DWORD ret = INVALID_SET_FILE_POINTER;
-    NTSTATUS status;
-    int fd;
+    LARGE_INTEGER dist, newpos;
 
-    TRACE("handle %p offset %ld high %ld origin %ld\n",
-          hFile, distance, highword?*highword:0, method );
-
-    if (method > FILE_END)
+    if (highword)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return ret;
+        dist.u.LowPart  = distance;
+        dist.u.HighPart = *highword;
     }
+    else dist.QuadPart = distance;
 
-    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
-    {
-        off_t pos, res;
+    if (!SetFilePointerEx( hFile, dist, &newpos, method )) return INVALID_SET_FILE_POINTER;
 
-        if (highword) pos = ((off_t)*highword << 32) | (ULONG)distance;
-        else pos = (off_t)distance;
-        if ((res = lseek( fd, pos, whence[method] )) == (off_t)-1)
-        {
-            /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
-            if (((errno == EINVAL) || (errno == EPERM)) && (method != FILE_BEGIN) && (pos < 0))
-                SetLastError( ERROR_NEGATIVE_SEEK );
-            else
-                FILE_SetDosError();
-        }
-        else
-        {
-            ret = (DWORD)res;
-            if (highword) *highword = (res >> 32);
-            if (ret == INVALID_SET_FILE_POINTER) SetLastError( 0 );
-        }
-        wine_server_release_fd( hFile, fd );
-    }
-    else SetLastError( RtlNtStatusToDosError(status) );
-
-    return ret;
+    if (highword) *highword = newpos.u.HighPart;
+    if (newpos.u.LowPart == INVALID_SET_FILE_POINTER) SetLastError( 0 );
+    return newpos.u.LowPart;
 }
 
 
