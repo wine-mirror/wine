@@ -5,11 +5,6 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
-#include <X11/Intrinsic.h>
-#include "ts_xlib.h"
-#include "ts_xutil.h"
-#include "x11drv.h"
-
 #include <stdlib.h>
 #include "dc.h"
 #include "bitmap.h"
@@ -20,6 +15,8 @@
 #include "path.h"
 #include "debug.h"
 #include "winerror.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 
 
 /***********************************************************************
@@ -654,10 +651,9 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
  */
 BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
 {
-    HPEN hOldPen, hnewPen;
+    HBRUSH hOldBrush;
+    HPEN hOldPen, hNewPen;
     INT oldDrawMode, oldBkMode;
-    INT left, top, right, bottom;
-    X11DRV_PDEVICE *physDev;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -665,36 +661,21 @@ BOOL WINAPI DrawFocusRect( HDC hdc, const RECT* rc )
        SetLastError( ERROR_INVALID_HANDLE );
        return FALSE;
     }
-    physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    left   = XLPTODP( dc, rc->left );
-    top    = YLPTODP( dc, rc->top );
-    right  = XLPTODP( dc, rc->right );
-    bottom = YLPTODP( dc, rc->bottom );
-
-    if(left == right || top == bottom) 
-    {
-       SetLastError( ERROR_INVALID_PARAMETER );
-       return FALSE;
-    }
-
-    hnewPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_WINDOWTEXT) );
-    hOldPen = SelectObject( hdc, hnewPen );
+    hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    hNewPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_WINDOWTEXT));
+    hOldPen = SelectObject(hdc, hNewPen);
     oldDrawMode = SetROP2(hdc, R2_XORPEN);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
 
-    /* Hack: make sure the XORPEN operation has an effect */
-    physDev->pen.pixel = (1 << MONITOR_GetDepth(&MONITOR_PrimaryMonitor)) - 1;
-
-    if (X11DRV_SetupGCForPen( dc ))
-	TSXDrawRectangle( display, physDev->drawable, physDev->gc,
-		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-		        right-left-1, bottom-top-1 );
+    Rectangle(hdc, rc->left, rc->top, rc->right, rc->bottom);
 
     SetBkMode(hdc, oldBkMode);
     SetROP2(hdc, oldDrawMode);
     SelectObject(hdc, hOldPen);
-    DeleteObject(hnewPen);
+    DeleteObject(hNewPen);
+    SelectObject(hdc, hOldBrush);
+
     return TRUE;
 }
 
