@@ -797,8 +797,10 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    0,\n" );                      /* CheckSum */
     fprintf( outfile, "    0x%04x,\n", subsystem );      /* Subsystem */
     fprintf( outfile, "    0,\n" );                      /* DllCharacteristics */
-    fprintf( outfile, "    %d, 0,\n", stack_size*1024 ); /* SizeOfStackReserve/Commit */
-    fprintf( outfile, "    %d, 0,\n", DLLHeapSize*1024 );/* SizeOfHeapReserve/Commit */
+    fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfStackReserve/Commit */
+             (stack_size ? stack_size : 1024) * 1024, page_size );
+    fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfHeapReserve/Commit */
+             (DLLHeapSize ? DLLHeapSize : 1024) * 1024, page_size );
     fprintf( outfile, "    0,\n" );                      /* LoaderFlags */
     fprintf( outfile, "    %d,\n", IMAGE_NUMBEROF_DIRECTORY_ENTRIES );  /* NumberOfRvaAndSizes */
     fprintf( outfile, "    {\n" );
