@@ -694,6 +694,7 @@ static Window create_whole_window( Display *display, WND *win )
         if (xim) data->xic = XCreateIC( xim,
                                         XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
                                         XNClientWindow, data->whole_window,
+                                        XNFocusWindow, data->whole_window,
                                         0 );
     }
 
