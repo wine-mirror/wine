@@ -588,37 +588,6 @@ int wine_dlclose( void *handle, char *error, int errorsize )
 #endif
 }
 
-/***********************************************************************
- *		wine_rewrite_s4tos2
- *
- * Convert 4 byte Unicode strings to 2 byte Unicode strings in-place.
- * This is only practical if literal strings are writable.
- */
-unsigned short* wine_rewrite_s4tos2(const wchar_t* str4 )
-{
-    unsigned short *str2,*s2;
-
-    if (str4==NULL)
-      return NULL;
-
-    if ((*str4 & 0xffff0000) != 0) {
-        /* This string has already been converted. Return it as is */
-        return (unsigned short*)str4;
-    }
-
-    /* Note that we can also end up here if the string has a single
-     * character. In such a case we will convert the string over and
-     * over again. But this is harmless.
-     */
-    str2=s2=(unsigned short*)str4;
-    do {
-        *s2=(unsigned short)*str4;
-	s2++;
-    } while (*str4++ != L'\0');
-
-    return str2;
-}
-
 #ifndef HAVE_ECVT
 /***********************************************************************
  *		ecvt
