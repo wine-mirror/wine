@@ -744,6 +744,8 @@ typedef struct _HD_ITEMA
     LPARAM    lParam;
     INT     iImage;
     INT     iOrder;
+    UINT    type;
+    LPVOID  pvFilter;
 } HDITEMA, *LPHDITEMA;
 
 typedef struct _HD_ITEMW
@@ -757,6 +759,8 @@ typedef struct _HD_ITEMW
     LPARAM    lParam;
     INT     iImage;
     INT     iOrder;
+    UINT    type;
+    LPVOID  pvFilter;
 } HDITEMW, *LPHDITEMW;
 
 #define HDITEM   WINELIB_NAME_AW(HDITEM)
@@ -1148,7 +1152,7 @@ typedef struct tagTBSAVEPARAMSW {
     HKEY   hkr;
     LPCWSTR pszSubKey;
     LPCWSTR pszValueName;
-} TBSAVEPARAMSAW, *LPTBSAVEPARAMSAW;
+} TBSAVEPARAMSW, *LPTBSAVEPARAMSW;
 
 #define TBSAVEPARAMS   WINELIB_NAME_AW(TBSAVEPARAMS)
 #define LPTBSAVEPARAMS WINELIB_NAME_AW(LPTBSAVEPARAMS)
@@ -2250,12 +2254,14 @@ typedef struct tagNMTVGETINFOTIPW
 #define NMTVGETINFOTIP WINELIB_NAME_AW(NMTVGETINFOTIP)
 #define LPNMTVGETINFOTIP WINELIB_NAME_AW(LPNMTVGETINFOTIP)
 
+#include "pshpack1.h"
 typedef struct tagTVKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTVKEYDOWN, *LPNMTVKEYDOWN;
+#include "poppack.h"
 
 #define TV_KEYDOWN      NMTVKEYDOWN
 
@@ -2870,12 +2876,14 @@ typedef struct tagLVDISPINFOW
 
 #define LV_DISPINFO     NMLVDISPINFO
 
+#include "pshpack1.h"
 typedef struct tagLVKEYDOWN
 {
   NMHDR hdr;
   WORD  wVKey;
   UINT flags;
 } NMLVKEYDOWN, *LPNMLVKEYDOWN;
+#include "poppack.h"
 
 #define LV_KEYDOWN     NMLVKEYDOWN
 
@@ -3307,12 +3315,14 @@ typedef struct tagTCITEMW
 #define TCN_SELCHANGING         (TCN_FIRST - 2)
 #define TCN_GETOBJECT      (TCN_FIRST - 3)
 
+#include "pshpack1.h"
 typedef struct tagTCKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTCKEYDOWN;
+#include "poppack.h"
 
 #define TC_KEYDOWN              NMTCKEYDOWN
 

@@ -4,8 +4,6 @@
 #include "basetsd.h"
 #include "windef.h"
 
-#include "pshpack1.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -94,7 +92,5 @@ typedef OBJECT_ATTRIBUTES *POBJECT_ATTRIBUTES;
 #ifdef __cplusplus
 }
 #endif
-
-#include "poppack.h"
 
 #endif

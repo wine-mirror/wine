@@ -549,13 +549,13 @@ typedef struct midihdr_tag {
     LPSTR	lpData;		/* pointer to locked data block */
     DWORD	dwBufferLength;	/* length of data in data block */
     DWORD	dwBytesRecorded;/* used for input only */
-    DWORD	dwUser;		/* for client's use */
+    DWORD_PTR	dwUser;		/* for client's use */
     DWORD	dwFlags;	/* assorted flags (see defines) */
     struct midihdr_tag *lpNext;	/* reserved for driver */
     DWORD	reserved;	/* reserved for driver */
     DWORD	dwOffset;	/* offset of playback in case of 
 				 * MIDISTRM buffer */
-    DWORD	dwReserved[4];	/* reserved for driver */
+    DWORD_PTR	dwReserved[8];	/* reserved for driver */
 } MIDIHDR, *LPMIDIHDR;
 
 #define MHDR_DONE       0x00000001       /* done bit */

@@ -6,9 +6,6 @@
 extern "C" {
 #endif
 
-
-#include "pshpack1.h"
-
 typedef struct _ABCFLOAT {
     FLOAT   abcfA;
     FLOAT   abcfB;
@@ -1076,7 +1073,6 @@ DECL_WINELIB_TYPE_AW(LPPOLYTEXT)
 #define NTM_BOLD        0x00000020L
 #define NTM_ITALIC      0x00000001L
 
-#include "pshpack4.h"
 typedef struct
 {
     LONG      tmHeight;
@@ -1132,7 +1128,6 @@ typedef struct
     UINT      ntmCellHeight;
     UINT      ntmAvgWidth;
 } NEWTEXTMETRICW, *PNEWTEXTMETRICW, *LPNEWTEXTMETRICW;
-#include "poppack.h"
 
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRIC)
 DECL_WINELIB_TYPE_AW(PNEWTEXTMETRIC)
@@ -1640,6 +1635,7 @@ typedef struct {
   BYTE rgbtRed;
 } RGBTRIPLE;
 
+#include "pshpack2.h"
 typedef struct
 {
     WORD    bfType;
@@ -1648,6 +1644,7 @@ typedef struct
     WORD    bfReserved2;
     DWORD   bfOffBits;
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER, *LPBITMAPFILEHEADER;
+#include "poppack.h"
 
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
 
@@ -1785,6 +1782,7 @@ typedef struct
 
 #define CLR_INVALID         0xffffffff
 /* Metafile header structure */
+#include "pshpack2.h"
 typedef struct
 {
     WORD       mtType;
@@ -1795,6 +1793,7 @@ typedef struct
     DWORD      mtMaxRecord;
     WORD       mtNoParameters;
 } METAHEADER, *PMETAHEADER, *LPMETAHEADER;
+#include "poppack.h"
 
 /* Metafile typical record structure */
 typedef struct
@@ -2959,9 +2958,11 @@ typedef BOOL CALLBACK (*ABORTPROC)(HDC, INT);
 
 typedef struct {
     DWORD	cb;
-    BYTE	DeviceName[32];
-    BYTE	DeviceString[128];
+    CHAR	DeviceName[32];
+    CHAR	DeviceString[128];
     DWORD	StateFlags;
+    CHAR	DeviceID[128];
+    CHAR	DeviceKey[128];
 } DISPLAY_DEVICEA,*PDISPLAY_DEVICEA,*LPDISPLAY_DEVICEA;      
 
 typedef struct {
@@ -2969,6 +2970,8 @@ typedef struct {
     WCHAR	DeviceName[32];
     WCHAR	DeviceString[128];
     DWORD	StateFlags;
+    WCHAR	DeviceID[128];
+    WCHAR	DeviceKey[128];
 } DISPLAY_DEVICEW,*PDISPLAY_DEVICEW,*LPDISPLAY_DEVICEW;      
 DECL_WINELIB_TYPE_AW(DISPLAY_DEVICE)
 DECL_WINELIB_TYPE_AW(PDISPLAY_DEVICE)
@@ -2983,8 +2986,6 @@ DECL_WINELIB_TYPE_AW(LPDISPLAY_DEVICE)
 
 #define GDI_ERROR                               (0xFFFFFFFFL)
 #define HGDI_ERROR                              ((HANDLE)0xFFFFFFFFL)
-
-#include "poppack.h"
 
 INT       WINAPI AbortDoc(HDC);
 BOOL      WINAPI AbortPath(HDC);

@@ -161,9 +161,9 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
     WCHAR *class_ptr = (WCHAR *)((char *)name_ptr + name_size);
     int class_size = server_data_size(req) - sizeof(WCHAR) - name_size;
     int fixed_size;
-    FILETIME modif;
+    LARGE_INTEGER modif;
 
-    RtlSecondsSince1970ToTime( req->modif, &modif );
+    RtlSecondsSince1970ToTime( req->modif, (FILETIME *)&modif );
 
     switch(info_class)
     {

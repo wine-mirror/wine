@@ -21,8 +21,6 @@ extern "C" {
 #define NCBASTAT       0x33
 #define NCBENUM        0x37
 
-#include "pshpack1.h"
-
 typedef struct _NCB
 {
 	UCHAR	ncb_command;
@@ -54,8 +52,8 @@ typedef struct _ADAPTER_STATUS
 	WORD	frmr_xmit;
 	WORD	iframe_recv_error;
 	WORD	xmit_aborts;
-	WORD	xmit_success;
-	WORD	recv_success;
+	DWORD	xmit_success;
+	DWORD	recv_success;
 	WORD	iframe_xmit_error;
 	WORD	recv_buffer_unavail;
 	WORD	t1_timeouts;

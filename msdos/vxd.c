@@ -788,15 +788,16 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             while (r && r->VirtualAddress)
             {
                 LPBYTE page  = module->baseAddr + r->VirtualAddress;
-                int    count = (r->SizeOfBlock - 8) / 2;
+                WORD *TypeOffset = (WORD *)(r + 1);
+                int count = (r->SizeOfBlock - sizeof(*r)) / sizeof(*TypeOffset);
 
                 TRACE("MapModule: %d relocations for page %08lx\n", 
                            count, (DWORD)page);
 
                 for(i = 0; i < count; i++)
                 {
-                    int offset = r->TypeOffset[i] & 0xFFF;
-                    int type   = r->TypeOffset[i] >> 12;
+                    int offset = TypeOffset[i] & 0xFFF;
+                    int type   = TypeOffset[i] >> 12;
                     switch(type)
                     {
                     case IMAGE_REL_BASED_ABSOLUTE: 

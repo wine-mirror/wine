@@ -11,8 +11,6 @@
 #include "winreg.h"
 #include "winbase.h"	/* fixme: should be taken out sometimes */
 
-#include "pshpack1.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +37,7 @@ typedef VOID NTAPI (*PIO_APC_ROUTINE) ( PVOID ApcContext, PIO_STATUS_BLOCK IoSta
 
  /* key information */
 typedef struct _KEY_BASIC_INFORMATION {
-	FILETIME	LastWriteTime;
+	LARGE_INTEGER	LastWriteTime;
 	ULONG		TitleIndex;
 	ULONG		NameLength;
 	WCHAR		Name[1];
@@ -47,7 +45,7 @@ typedef struct _KEY_BASIC_INFORMATION {
 
 typedef struct _KEY_NODE_INFORMATION 
 {
-	FILETIME	LastWriteTime;
+	LARGE_INTEGER	LastWriteTime;
 	ULONG		TitleIndex;
 	ULONG		ClassOffset;
 	ULONG		ClassLength;
@@ -58,7 +56,7 @@ typedef struct _KEY_NODE_INFORMATION
 
 typedef struct _KEY_FULL_INFORMATION 
 {
-	FILETIME	LastWriteTime;
+	LARGE_INTEGER	LastWriteTime;
 	ULONG		TitleIndex;
 	ULONG		ClassOffset;
 	ULONG		ClassLength;
@@ -950,7 +948,5 @@ NtAccessCheck(
 #ifdef __cplusplus
 }
 #endif
-
-#include "poppack.h"
 
 #endif

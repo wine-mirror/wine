@@ -7,7 +7,6 @@
 
 #include "basetsd.h"
 #include "windef.h"
-#include "pshpack1.h"
 
 #ifndef RC_INVOKED
 #include <stdarg.h>
@@ -975,9 +974,6 @@ typedef struct tagCOMMTIMEOUTS {
 	DWORD	WriteTotalTimeoutMultiplier;
 	DWORD	WriteTotalTimeoutConstant;
 } COMMTIMEOUTS,*LPCOMMTIMEOUTS;
-
-
-#include "poppack.h"
 
 typedef void CALLBACK (*PAPCFUNC)(ULONG_PTR);
 typedef void CALLBACK (*PTIMERAPCROUTINE)(LPVOID,DWORD,DWORD);

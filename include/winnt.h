@@ -396,8 +396,6 @@ typedef HANDLE         *PHANDLE,    *LPHANDLE;
     typedef a          *P##a,       *LP##a
 #endif /*STRICT*/
 
-
-#include "pshpack1.h"
 /* Defines */
 
 /* Argument 1 passed to the DllEntryProc. */
@@ -576,6 +574,8 @@ typedef struct _FLOATING_SAVE_AREA
     DWORD   Cr0NpxState;
 } FLOATING_SAVE_AREA, *PFLOATING_SAVE_AREA;
 
+#define MAXIMUM_SUPPORTED_EXTENSION     512
+
 typedef struct _CONTEXT86
 {
     DWORD   ContextFlags;
@@ -612,6 +612,8 @@ typedef struct _CONTEXT86
     DWORD   EFlags;
     DWORD   Esp;
     DWORD   SegSs;
+
+    BYTE    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];
 } CONTEXT86;
 
 #define CONTEXT_X86       0x00010000
@@ -2299,8 +2301,6 @@ typedef struct __EXCEPTION_FRAME
   PEXCEPTION_HANDLER       Handler;
 } EXCEPTION_FRAME, *PEXCEPTION_FRAME;
 
-#include "poppack.h"
-
 /*
  * function pointer to a exception filter
  */
@@ -2923,11 +2923,13 @@ typedef struct _IMAGE_BOUND_FORWARDER_REF
     WORD    Reserved;
 } IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
 
+#include "pshpack2.h"
+
 typedef struct _IMAGE_BASE_RELOCATION
 {
 	DWORD	VirtualAddress;
 	DWORD	SizeOfBlock;
-	WORD	TypeOffset[1];
+	/* WORD	TypeOffset[1]; */
 } IMAGE_BASE_RELOCATION,*PIMAGE_BASE_RELOCATION;
 
 typedef struct _IMAGE_RELOCATION
@@ -2940,6 +2942,8 @@ typedef struct _IMAGE_RELOCATION
     WORD    Type;
 } IMAGE_RELOCATION;
 typedef IMAGE_RELOCATION *PIMAGE_RELOCATION;
+
+#include "poppack.h"
 
 #define IMAGE_SIZEOF_RELOCATION 10
 
@@ -3389,7 +3393,6 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 #ifndef _SECURITY_DEFINED
 #define _SECURITY_DEFINED
 
-#include "pshpack1.h"
 
 typedef DWORD ACCESS_MASK, *PACCESS_MASK;
 
@@ -3481,11 +3484,7 @@ typedef struct {
 
 #define SECURITY_DESCRIPTOR_MIN_LENGTH   (sizeof(SECURITY_DESCRIPTOR)) 
 
-#include "poppack.h"
-
 #endif /* _SECURITY_DEFINED */
-
-#include "pshpack1.h"
 
 /* 
  * SID_AND_ATTRIBUTES
@@ -3596,10 +3595,12 @@ typedef struct _LUID {
     LONG HighPart;
 } LUID, *PLUID;
 
+#include "pshpack4.h"
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid;
   DWORD  Attributes;
 } LUID_AND_ATTRIBUTES;
+#include "poppack.h"
 
 /*
  * PRIVILEGE_SET
@@ -3685,7 +3686,7 @@ typedef struct _SECURITY_QUALITY_OF_SERVICE {
   DWORD				Length;
   SECURITY_IMPERSONATION_LEVEL	ImpersonationLevel;
   SECURITY_CONTEXT_TRACKING_MODE ContextTrackingMode;
-  BOOL				EffectiveOnly;
+  BOOLEAN			EffectiveOnly;
 } SECURITY_QUALITY_OF_SERVICE, *PSECURITY_QUALITY_OF_SERVICE;
 
 /*
@@ -4078,8 +4079,6 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 #define RtlZeroMemory(Destination, Length) memset((Destination),0,(Length))
 
 #include "guiddef.h"
-
-#include "poppack.h"
 
 typedef struct _RTL_CRITICAL_SECTION_DEBUG 
 {

@@ -405,7 +405,8 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
           rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock))
     {
         char *page = base + rel->VirtualAddress;
-        int i, count = (rel->SizeOfBlock - 8) / sizeof(rel->TypeOffset);
+        WORD *TypeOffset = (WORD *)(rel + 1);
+        int i, count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(*TypeOffset);
 
         if (!count) continue;
 
@@ -424,8 +425,8 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
         /* patching in reverse order */
         for (i = 0 ; i < count; i++)
         {
-            int offset = rel->TypeOffset[i] & 0xFFF;
-            int type = rel->TypeOffset[i] >> 12;
+            int offset = TypeOffset[i] & 0xFFF;
+            int type = TypeOffset[i] >> 12;
             switch(type)
             {
             case IMAGE_REL_BASED_ABSOLUTE:

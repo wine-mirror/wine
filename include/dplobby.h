@@ -7,8 +7,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "pshpack1.h"
-
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -347,8 +345,6 @@ typedef BOOL CALLBACK (*LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
     LPCDPLAPPINFO   lpAppInfo,
     LPVOID          lpContext,
     DWORD           dwFlags );
-
-#include "poppack.h"
 
 /*****************************************************************************
  * IDirectPlayLobby and IDirectPlayLobbyA interface

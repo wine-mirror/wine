@@ -287,7 +287,7 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
         DWORD len = info->NameLength / sizeof(WCHAR);
         DWORD cls_len = info->ClassLength / sizeof(WCHAR);
 
-        if (ft) *ft = info->LastWriteTime;
+        if (ft) *ft = *(FILETIME *)&info->LastWriteTime;
 
         if (len >= *name_len || (class_len && (cls_len >= *class_len)))
             status = STATUS_BUFFER_OVERFLOW;
@@ -351,7 +351,7 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
                                              info->ClassLength / sizeof(WCHAR),
                                              NULL, 0, NULL, NULL );
 
-        if (ft) *ft = info->LastWriteTime;
+        if (ft) *ft = *(FILETIME *)&info->LastWriteTime;
 
         if (len >= *name_len || (class_len && (cls_len >= *class_len)))
             status = STATUS_BUFFER_OVERFLOW;
@@ -472,7 +472,7 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
     if (values) *values = info->Values;
     if (max_value) *max_value = info->MaxValueNameLen;
     if (max_data) *max_data = info->MaxValueDataLen;
-    if (modif) *modif = info->LastWriteTime;
+    if (modif) *modif = *(FILETIME *)&info->LastWriteTime;
 
  done:
     if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
@@ -542,7 +542,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
     if (values) *values = info->Values;
     if (max_value) *max_value = info->MaxValueNameLen;
     if (max_data) *max_data = info->MaxValueDataLen;
-    if (modif) *modif = info->LastWriteTime;
+    if (modif) *modif = *(FILETIME *)&info->LastWriteTime;
 
  done:
     if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );

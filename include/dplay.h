@@ -8,8 +8,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include "pshpack1.h"
-
 typedef LPVOID (*LPRGLPVOID)[];
 typedef LPRGLPVOID PRGPVOID, LPRGPVOID, PRGLPVOID, PAPVOID, LPAPVOID, PALPVOID, LPALPVOID;
 
@@ -400,8 +398,6 @@ typedef BOOL CALLBACK (*LPDPENUMSESSIONSCALLBACK2)(
     LPVOID              lpContext );
 
 #define DPESC_TIMEDOUT          0x00000001
-
-#include "poppack.h"
 
 /*****************************************************************************
  * IDirectPlay interface

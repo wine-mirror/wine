@@ -9,9 +9,6 @@
 extern "C" {
 #endif
 
-#include "pshpack1.h"
-
-
 /* Define a bunch of callback types */
 
 #if defined(STRICT) || defined(__WINE__)
@@ -1442,14 +1439,14 @@ typedef struct {
 
 typedef struct
 {
-    WORD    mkSize;
+    DWORD   mkSize;
     CHAR    mkKeyList;
     CHAR    szKeyphrase[1];
 } MULTIKEYHELPA, *PMULTIKEYHELPA, *LPMULTIKEYHELPA;
 
 typedef struct
 {
-    WORD    mkSize;
+    DWORD   mkSize;
     WCHAR   mkKeyList;
     WCHAR   szKeyphrase[1];
 } MULTIKEYHELPW, *PMULTIKEYHELPW, *LPMULTIKEYHELPW;
@@ -1459,22 +1456,22 @@ DECL_WINELIB_TYPE_AW(PMULTIKEYHELP)
 DECL_WINELIB_TYPE_AW(LPMULTIKEYHELP)
 
 typedef struct {
-	WORD wStructSize;
-	WORD x;
-	WORD y;
-	WORD dx;
-	WORD dy;
-	WORD wMax;
+	int wStructSize;
+	int x;
+	int y;
+	int dx;
+	int dy;
+	int wMax;
 	CHAR rgchMember[2];
 } HELPWININFOA, *PHELPWININFOA, *LPHELPWININFOA;
 
 typedef struct {
-	WORD wStructSize;
-	WORD x;
-	WORD y;
-	WORD dx;
-	WORD dy;
-	WORD wMax;
+	int wStructSize;
+	int x;
+	int y;
+	int dx;
+	int dy;
+	int wMax;
 	WCHAR rgchMember[2];
 } HELPWININFOW, *PHELPWININFOW, *LPHELPWININFOW;
 
@@ -2138,6 +2135,8 @@ DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
 
 typedef BOOL  CALLBACK (*MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
 
+#include "pshpack2.h"
+
 /* FIXME: use this instead of LPCVOID for CreateDialogIndirectParam
    and DialogBoxIndirectParam */
 typedef struct tagDLGTEMPLATE
@@ -2176,6 +2175,7 @@ typedef DLGITEMTEMPLATE *LPDLGITEMTEMPLATEA;
 typedef DLGITEMTEMPLATE *LPDLGITEMTEMPLATEW;
 DECL_WINELIB_TYPE_AW(LPDLGITEMTEMPLATE)
 
+#include "poppack.h"
 
   /* CBT hook values */
 #define HCBT_MOVESIZE	    0
@@ -3272,8 +3272,6 @@ typedef  HDEVNOTIFY     *PHDEVNOTIFY;
 
 #define DEVICE_NOTIFY_WINDOW_HANDLE     0x00000000
 
-
-#include "poppack.h"
 #define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
 #define     OemToAnsiA OemToCharA
