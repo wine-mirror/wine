@@ -74,17 +74,27 @@ static WINE_EXCEPTION_FILTER(page_fault)
  *
  * Wrapper for CreateFile that takes OF_* mode flags.
  */
-static HANDLE create_file_OF( LPCSTR path, INT mode, DWORD creation )
+static HANDLE create_file_OF( LPCSTR path, INT mode )
 {
-    DWORD access, sharing;
+    DWORD access, sharing, creation;
 
-    switch(mode & 0x03)
+    if (mode & OF_CREATE)
     {
-    case OF_READ:      access = GENERIC_READ; break;
-    case OF_WRITE:     access = GENERIC_WRITE; break;
-    case OF_READWRITE: access = GENERIC_READ | GENERIC_WRITE; break;
-    default:           access = 0; break;
+        creation = CREATE_ALWAYS;
+        access = GENERIC_READ | GENERIC_WRITE;
     }
+    else
+    {
+        creation = OPEN_EXISTING;
+        switch(mode & 0x03)
+        {
+        case OF_READ:      access = GENERIC_READ; break;
+        case OF_WRITE:     access = GENERIC_WRITE; break;
+        case OF_READWRITE: access = GENERIC_READ | GENERIC_WRITE; break;
+        default:           access = 0; break;
+        }
+    }
+
     switch(mode & 0x70)
     {
     case OF_SHARE_EXCLUSIVE:  sharing = 0; break;
@@ -539,7 +549,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 HFILE WINAPI _lopen( LPCSTR path, INT mode )
 {
     TRACE("(%s,%04x)\n", debugstr_a(path), mode );
-    return (HFILE)create_file_OF( path, mode, OPEN_EXISTING );
+    return (HFILE)create_file_OF( path, mode & ~OF_CREATE );
 }
 
 
@@ -1944,7 +1954,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
     if (mode & OF_CREATE)
     {
-        if ((handle = create_file_OF( name, mode, CREATE_ALWAYS )) == INVALID_HANDLE_VALUE)
+        if ((handle = create_file_OF( name, mode )) == INVALID_HANDLE_VALUE)
             goto error;
     }
     else
