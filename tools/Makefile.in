@@ -1,4 +1,4 @@
-DEFS      = -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\"" -DBINDIR="\"$(bindir)\""
+DEFS      = -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
