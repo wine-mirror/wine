@@ -504,6 +504,23 @@ LISTVIEW_GetTextColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 static LRESULT
+LISTVIEW_HitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+//    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+    LPLVHITTESTINFO lpht = (LPLVHITTESTINFO)lParam;
+
+    FIXME (listview, "(%p): stub!\n", lpht);
+
+    /* FIXME: preliminary */
+    lpht->flags = LVHT_NOWHERE;
+    lpht->iItem = -1;
+    lpht->iSubItem = 0;
+
+    return -1;
+}
+
+
+static LRESULT
 LISTVIEW_InsertColumn32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
@@ -1368,7 +1385,9 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 //	case LVM_GETUNICODEFORMAT:
 //	case LVM_GETVIEWRECT:
 //	case LVM_GETWORKAREAS:
-//	case LVM_HITTEST:
+
+	case LVM_HITTEST:
+	    return LISTVIEW_HitTest (wndPtr, wParam, lParam);
 
 	case LVM_INSERTCOLUMN32A:
 	    return LISTVIEW_InsertColumn32A (wndPtr, wParam, lParam);
