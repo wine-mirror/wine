@@ -71,7 +71,9 @@ static WND *create_window_handle( HWND parent, HWND owner, ATOM atom,
     user_handle_t handle = 0;
     int extra_bytes = 0;
 
-    if (type == WIN_PROC_16) instance = HINSTANCE_32(GetExePtr(HINSTANCE_16(instance)));
+    /* if 16-bit instance, map to module handle */
+    if (instance && !HIWORD(instance))
+        instance = HINSTANCE_32(GetExePtr(HINSTANCE_16(instance)));
 
     SERVER_START_REQ( create_window )
     {
