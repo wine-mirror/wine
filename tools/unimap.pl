@@ -6,7 +6,7 @@
 
 use integer
 
-$INFILE	= "unidata2.txt";
+$INFILE	= "UnicodeData.txt";
 $OUT	= ">casemap.h";
 $TEST	= ">allcodes";
 
