@@ -110,6 +110,7 @@ typedef struct
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static BOOL clearAllSelections = FALSE;        /* Always lose all selections */
+static BOOL usePrimary = FALSE;                /* Use primary selection in additon to the clipboard selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 static Window PrimarySelectionOwner = None;    /* The window which owns the primary selection */
 static Window ClipboardSelectionOwner = None;  /* The window which owns the clipboard selection */
@@ -259,6 +260,8 @@ static UINT ClipDataCount = 0;
  */
 static UINT wSeqNo = 0;
 
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
 /**************************************************************************
  *                Internal Clipboard implementation methods
  **************************************************************************/
@@ -276,7 +279,10 @@ void X11DRV_InitClipboard(void)
 	char buffer[20];
 	DWORD type, count = sizeof(buffer);
 	if(!RegQueryValueExA(hkey, "ClearAllSelections", 0, &type, buffer, &count))
-	    clearAllSelections = atoi(buffer);
+            clearAllSelections = IS_OPTION_TRUE( buffer[0] );
+        count = sizeof(buffer);
+        if(!RegQueryValueExA(hkey, "UsePrimary", 0, &type, buffer, &count))
+            usePrimary = IS_OPTION_TRUE( buffer[0] );
         RegCloseKey(hkey);
     }
 
@@ -1083,7 +1089,7 @@ HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes)
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportClipboardData
+ 		X11DRV_CLIPBOARD_ExportClipboardData
  *
  *  Generic export clipboard data routine.
  */
@@ -1397,11 +1403,11 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
      * Query the selection owner for the TARGETS property
      */
     wine_tsx11_lock();
-    if (XGetSelectionOwner(display,XA_PRIMARY) ||
+    if ((usePrimary && XGetSelectionOwner(display,XA_PRIMARY)) ||
         XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
         wine_tsx11_unlock();
-        if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe))
+        if (usePrimary && (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe)))
             selectionCacheSrc = XA_PRIMARY;
         else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), &xe))
             selectionCacheSrc = x11drv_atom(CLIPBOARD);
@@ -1974,14 +1980,14 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 
         wine_tsx11_lock();
         /* Grab PRIMARY selection if not owned */
-        if (!(selectionAcquired & S_PRIMARY))
+        if (usePrimary && !(selectionAcquired & S_PRIMARY))
             XSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
 
         /* Grab CLIPBOARD selection if not owned */
         if (!(selectionAcquired & S_CLIPBOARD))
             XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
 
-        if (XGetSelectionOwner(display,XA_PRIMARY) == owner)
+        if (usePrimary && XGetSelectionOwner(display,XA_PRIMARY) == owner)
 	    selectionAcquired |= S_PRIMARY;
 
         if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)

@@ -236,6 +236,7 @@ WINE REGISTRY Version 2
 [Clipboard]
 "ClearAllSelections" = "0"
 "PersistentSelection" = "1"
+"UsePrimary" = "0"
 
 ; List of all directories directly contain .AFM files
 [afmdirs]
