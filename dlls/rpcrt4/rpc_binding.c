@@ -453,7 +453,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
     RPCRT4_DestroyConnection(Binding->FromConn);
     Binding->FromConn = NULL;
   } else {
-    /* we already have an connection with acceptable binding, so use it */
+    /* we already have a connection with acceptable binding, so use it */
     if (Binding->FromConn) {
       *Connection = Binding->FromConn;
       return RPC_S_OK;

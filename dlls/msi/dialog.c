@@ -393,7 +393,7 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
     return msi_dialog_edit_control( dialog, rec );
 }
 
-/* radio buttons are a bit different to a normal control */
+/* radio buttons are a bit different from normal controls */
 static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
 {
     radio_button_group_descr *group = (radio_button_group_descr *)param;

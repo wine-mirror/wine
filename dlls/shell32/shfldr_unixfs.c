@@ -160,10 +160,10 @@ static BOOL UNIXFS_pidl_to_path(LPCITEMIDLIST pidl, PSZ *path) {
 /******************************************************************************
  * UNIXFS_build_subfolder_pidls [Internal]
  *
- * Builds an array of subfolder PIDLs relativ to an unix directory
+ * Builds an array of subfolder PIDLs relative to a unix directory
  *
  * PARAMS
- *  path   [I] Name of an unix directory as an zero terminated ascii string
+ *  path   [I] Name of a unix directory as a zero terminated ascii string
  *  apidl  [O] The array of PIDLs
  *  pCount [O] Size of apidl
  *

@@ -2097,7 +2097,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	{
 	    LFD lfd1;
 	    char pxl_string[4], res_string[4];
-	    /* set scalable font height to get an basis for extrapolation */
+	    /* set scalable font height to get a basis for extrapolation */
 
 	    fi->lfd_height = DEF_SCALABLE_HEIGHT;
 	    fi->lfd_resolution = res;

@@ -1144,7 +1144,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid)
  *
  * We only search the registry, not ids registered with
  * CoRegisterPSClsid.
- * Also, native returns S_OK for interfaces with an key in HKCR\Interface, but
+ * Also, native returns S_OK for interfaces with a key in HKCR\Interface, but
  * without a ProxyStubClsid32 key and leaves garbage in pclsid. This should be
  * considered a bug in native unless an application depends on this (unlikely).
  */

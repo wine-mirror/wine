@@ -3329,7 +3329,7 @@ error:
    return err;
 }
 
-/* reads a unsigned char array, assumes the msb is stored first [big endian] */
+/* reads an unsigned char array, assumes the msb is stored first [big endian] */
 int
 mp_read_unsigned_bin (mp_int * a, unsigned char *b, int c)
 {

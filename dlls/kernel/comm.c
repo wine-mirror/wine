@@ -635,7 +635,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
  *
  * RETURNS
  *
- *  True on success, false on an malformed control string.
+ *  True on success, false on a malformed control string.
  */
 BOOL WINAPI BuildCommDCBW(
     LPCWSTR devid, /* [in] The unicode device control string. */

@@ -1343,7 +1343,7 @@ NTSTATUS WINAPI RtlAppendStringToString(
 /**************************************************************************
  *      RtlAppendUnicodeToString   (NTDLL.@)
  *
- * Concatenates an buffered unicode string and a '\0' terminated unicode 
+ * Concatenates a buffered unicode string and a '\0' terminated unicode 
  * string
  *
  * RETURNS

@@ -578,7 +578,7 @@ void closeKey()
 void doSetValue(LPSTR stdInput)
 {
     /*
-     * We encoutered the end of the file, make sure we
+     * We encountered the end of the file, make sure we
      * close the opened key and exit
      */
     if (stdInput == NULL) {
@@ -616,7 +616,7 @@ void doSetValue(LPSTR stdInput)
 void doQueryValue(LPSTR stdInput)
 {
     /*
-     * We encoutered the end of the file, make sure we
+     * We encountered the end of the file, make sure we
      * close the opened key and exit
      */
     if (stdInput == NULL) {

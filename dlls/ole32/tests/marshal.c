@@ -343,7 +343,7 @@ static void test_normal_marshal_and_unmarshal()
     ok_no_locks();
 }
 
-/* tests failure case of a unmarshaling an freed object */
+/* tests failure case of unmarshaling a freed object */
 static void test_marshal_and_unmarshal_invalid()
 {
     HRESULT hr;

@@ -3103,7 +3103,7 @@ BOOL WINAPI InternetAutodial(DWORD dwFlags, HWND hwndParent)
 /***********************************************************************
  *           InternetAutodialHangup
  *
- * Hangs up an connection made with InternetAutodial
+ * Hangs up a connection made with InternetAutodial
  *
  * PARAM
  *    dwReserved

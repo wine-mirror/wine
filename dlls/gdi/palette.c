@@ -186,7 +186,7 @@ HPALETTE WINAPI CreatePalette(
  *    Failure: 0
  *
  * FIXME: This simply creates the halftone palette derived from running
- *        tests on an windows NT machine. this is assuming a color depth
+ *        tests on a windows NT machine. This is assuming a color depth
  *        of greater that 256 color. On a 256 color device the halftone
  *        palette will be different and this function will be incorrect
  */

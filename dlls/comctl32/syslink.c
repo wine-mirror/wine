@@ -476,7 +476,7 @@ CheckParameter:
 
     if(linktext != NULL && linklen > 0)
     {
-        /* we got a unclosed link, just display the text */
+        /* we got an unclosed link, just display the text */
         Last = SYSLINK_AppendDocItem(infoPtr, linktext, linklen, slText, Last);
         if(Last == NULL)
         {
