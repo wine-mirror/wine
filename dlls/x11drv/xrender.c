@@ -415,7 +415,7 @@ static int GetCacheEntry(LFANDSIZE *plfsz)
         assert( !entry->format[format] );
     }
 
-    if(antialias)
+    if(antialias && plfsz->lf.lfQuality != NONANTIALIASED_QUALITY)
         entry->aa_default = AA_Grey;
     else
         entry->aa_default = AA_None;
