@@ -211,6 +211,7 @@ void test_copy(void)
     CHAR from[MAX_PATH];
     CHAR to[MAX_PATH];
     FILEOP_FLAGS tmp_flags;
+    DWORD retval;
 
     shfo.hwnd = NULL;
     shfo.wFunc = FO_COPY;
@@ -278,13 +279,23 @@ void test_copy(void)
     ok(file_exists(".\\testdir2\\test2.txt"), "The file is copied");
     clean_after_shfo_tests();
 
+    /* Copying multiple files with one not existing as source, fails the
+       entire operation in Win98/ME/2K/XP, but not in 95/NT */
     init_shfo_tests();
     tmp_flags = shfo.fFlags;
     set_curr_dir_path(from, "test1.txt\0test10.txt\0test2.txt\0");
     ok(!file_exists(".\\testdir2\\test1.txt"), "The file is not copied yet");
     ok(!file_exists(".\\testdir2\\test2.txt"), "The file is not copied yet");
-    ok(!SHFileOperationA(&shfo), "Files are copied to other directory ");
-    ok(file_exists(".\\testdir2\\test1.txt"), "The file is copied");
+    retval = SHFileOperationA(&shfo);
+    if (!retval)
+      /* Win 95/NT returns success but copies only the files up to the nonexisting source */
+      ok(file_exists(".\\testdir2\\test1.txt"), "The file is not copied");
+    else
+    {
+      /* Win 98/ME/2K/XP fail the entire operation with return code 1026 if one source file does not exist */
+      ok(retval == 1026, "Files are copied to other directory ");
+      ok(!file_exists(".\\testdir2\\test1.txt"), "The file is copied");
+    }
     ok(!file_exists(".\\testdir2\\test2.txt"), "The file is copied");
     shfo.fFlags = tmp_flags;
 }
