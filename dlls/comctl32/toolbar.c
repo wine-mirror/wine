@@ -2842,7 +2842,7 @@ TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
        checks that the return value is nonzero - mjm */
     if( infoPtr->nNumButtons != 0 )
     {
-        FIXME("Button size set after button in toolbar\n");
+        WARN("Button size set after button in toolbar\n");
         return TRUE;
     }
 
