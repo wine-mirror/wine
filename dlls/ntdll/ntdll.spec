@@ -348,9 +348,9 @@
 @ stub RtlDestroyProcessParameters
 @ stub RtlDestroyQueryDebugBuffer
 @ stdcall RtlDetermineDosPathNameType_U(wstr)
-@ stub RtlDoesFileExists_U
-@ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long)
-@ stub RtlDosSearchPath_U
+@ stub RtlDoesFileExists_U #(wstr)
+@ stdcall RtlDosPathNameToNtPathName_U(wstr ptr ptr ptr)
+@ stub RtlDosSearchPath_U #(wstr wstr wstr long ptr ptr)
 @ stdcall RtlDowncaseUnicodeChar(long)
 @ stdcall RtlDowncaseUnicodeString(ptr ptr long)
 @ stdcall RtlDumpResource(ptr)
@@ -408,10 +408,10 @@
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
-@ stub RtlGetCurrentDirectory_U
+@ stdcall RtlGetCurrentDirectory_U(long ptr)
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetElementGenericTable
-@ stub RtlGetFullPathName_U
+@ stdcall RtlGetFullPathName_U(wstr long ptr ptr)
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetLongestNtPathLength()
 @ stub RtlGetNtGlobalFlags
@@ -511,7 +511,7 @@
 @ stub RtlSelfRelativeToAbsoluteSD
 @ stdcall RtlSetAllBits(ptr)
 @ stdcall RtlSetBits(ptr long long)
-@ stub RtlSetCurrentDirectory_U
+@ stdcall RtlSetCurrentDirectory_U(ptr)
 @ stdcall RtlSetCurrentEnvironment(wstr ptr)
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)
 @ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)

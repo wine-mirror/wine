@@ -370,55 +370,6 @@ void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
     context->Esp -= context->Eax;
 }
 
-/**************************************************************************
- *                 RtlDosPathNameToNtPathName_U		[NTDLL.@]
- *
- * szwDosPath: a fully qualified DOS path name
- * ntpath:     pointer to a UNICODE_STRING to hold the converted
- *              path name
- *
- * FIXME: Should we not allocate the ntpath buffer under some
- *         circumstances?
- *        Are the conversions static? (always prepend '\??\' ?)
- *        Not really sure about the last two arguments.
- */
-BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
-	LPWSTR szwDosPath,PUNICODE_STRING ntpath,
-	DWORD x2,DWORD x3)
-{
-    ULONG length;
-    UNICODE_STRING pathprefix;
-    WCHAR szPrefix[] = { '\\', '?', '?', '\\', 0 };
-
-    FIXME("(%s,%p,%08lx,%08lx) partial stub\n",
-        debugstr_w(szwDosPath),ntpath,x2,x3);
-
-    if ( !szwDosPath )
-        return FALSE;
-
-    if ( !szwDosPath[0] )
-        return FALSE;
- 
-    if ( szwDosPath[1]!= ':' )
-        return FALSE;
-
-    length = strlenW(szwDosPath) * sizeof (WCHAR) + sizeof szPrefix;
- 
-    ntpath->Buffer = RtlAllocateHeap(ntdll_get_process_heap(), 0, length);
-    ntpath->Length = 0;
-    ntpath->MaximumLength = length;
-
-    if ( !ntpath->Buffer )
-        return FALSE;
-
-    RtlInitUnicodeString( &pathprefix, szPrefix );
-    RtlCopyUnicodeString( ntpath, &pathprefix );
-    RtlAppendUnicodeToString( ntpath, szwDosPath );
-
-    return TRUE;
-}
-
-
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
@@ -604,23 +555,6 @@ VOID WINAPI RtlFillMemoryUlong(ULONG* lpDest, ULONG ulCount, ULONG ulValue)
   ulCount /= sizeof(ULONG);
   while(ulCount--)
     *lpDest++ = ulValue;
-}
-
-/*************************************************************************
- * RtlGetLongestNtPathLength    [NTDLL.@]
- *
- * Get the longest allowed path length
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The longest allowed path length (277 characters under Win2k).
- */
-DWORD WINAPI RtlGetLongestNtPathLength(void)
-{
-    TRACE("()\n");
-    return 277;
 }
 
 /*********************************************************************

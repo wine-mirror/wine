@@ -471,6 +471,17 @@ static BOOL process_init( char *argv[] )
     /* Parse command line arguments */
     OPTIONS_ParseOptions( !info_size ? argv : NULL );
 
+    /* <hack: to be changed later on> */
+    build_initial_environment();
+    process_pmts.CurrentDirectoryName.Length = 3 * sizeof(WCHAR);
+    process_pmts.CurrentDirectoryName.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
+    process_pmts.CurrentDirectoryName.Buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, process_pmts.CurrentDirectoryName.MaximumLength);
+    process_pmts.CurrentDirectoryName.Buffer[0] = 'C';
+    process_pmts.CurrentDirectoryName.Buffer[1] = ':';
+    process_pmts.CurrentDirectoryName.Buffer[2] = '\\';
+    process_pmts.CurrentDirectoryName.Buffer[3] = '\0';
+    /* </hack: to be changed later on> */
+
     ret = MAIN_MainInit();
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
 

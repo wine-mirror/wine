@@ -95,6 +95,12 @@ typedef struct _CLIENT_ID
    HANDLE UniqueThread;
 } CLIENT_ID, *PCLIENT_ID;
 
+typedef struct _CURDIR
+{
+    UNICODE_STRING DosPath;
+    PVOID Handle;
+} CURDIR, *PCURDIR;
+
 /***********************************************************************
  * Enums
  */
@@ -965,7 +971,7 @@ DWORD     WINAPI RtlDeleteSecurityObject(DWORD);
 NTSTATUS  WINAPI RtlDestroyEnvironment(PWSTR);
 HANDLE    WINAPI RtlDestroyHeap(HANDLE);
 DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U(PCWSTR);
-BOOLEAN   WINAPI RtlDosPathNameToNtPathName_U(LPWSTR,PUNICODE_STRING,DWORD,DWORD);
+BOOLEAN   WINAPI RtlDosPathNameToNtPathName_U(LPWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
 WCHAR     WINAPI RtlDowncaseUnicodeChar(WCHAR);
 NTSTATUS  WINAPI RtlDowncaseUnicodeString(UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
 void      WINAPI RtlDumpResource(LPRTL_RWLOCK);
@@ -1014,9 +1020,11 @@ void      WINAPI RtlFreeUnicodeString(PUNICODE_STRING);
 
 DWORD     WINAPI RtlGetAce(PACL,DWORD,LPVOID *);
 NTSTATUS  WINAPI RtlGetControlSecurityDescriptor(PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR_CONTROL,LPDWORD);
+NTSTATUS  WINAPI RtlGetCurrentDirectory_U(ULONG, LPWSTR);
 NTSTATUS  WINAPI RtlGetDaclSecurityDescriptor(PSECURITY_DESCRIPTOR,PBOOLEAN,PACL *,PBOOLEAN);
 ULONG     WINAPI RtlGetFullPathName_U(PCWSTR,ULONG,PWSTR,PWSTR*);
 NTSTATUS  WINAPI RtlGetGroupSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID *,PBOOLEAN);
+DWORD     WINAPI RtlGetLongestNtPathLength(void);
 BOOLEAN   WINAPI RtlGetNtProductType(LPDWORD);
 NTSTATUS  WINAPI RtlGetOwnerSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID *,PBOOLEAN);
 ULONG     WINAPI RtlGetProcessHeaps(ULONG,HANDLE*);
@@ -1093,6 +1101,7 @@ void      WINAPI RtlSecondsSince1970ToTime(DWORD,LARGE_INTEGER *);
 void      WINAPI RtlSecondsSince1980ToTime(DWORD,LARGE_INTEGER *);
 void      WINAPI RtlSetAllBits(PRTL_BITMAP);
 void      WINAPI RtlSetBits(PRTL_BITMAP,ULONG,ULONG);
+NTSTATUS  WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING*);
 void      WINAPI RtlSetCurrentEnvironment(PWSTR, PWSTR*);
 NTSTATUS  WINAPI RtlSetDaclSecurityDescriptor(PSECURITY_DESCRIPTOR,BOOLEAN,PACL,BOOLEAN);
 NTSTATUS  WINAPI RtlSetEnvironmentVariable(PWSTR*,PUNICODE_STRING,PUNICODE_STRING);
