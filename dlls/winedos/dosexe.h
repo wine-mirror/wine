@@ -28,6 +28,10 @@
 #include "miscemu.h"
 
 struct _DOSEVENT;
+struct _STACK16FRAME;
+
+/* amount of space reserved for relay stack */
+#define DOSVM_RELAY_DATA_SIZE 4096
 
 /* various real-mode code stubs */
 struct DPMI_segments
@@ -37,6 +41,9 @@ struct DPMI_segments
     WORD dpmi_seg;
     WORD dpmi_sel;
     WORD int48_sel;
+    WORD int16_sel;
+    WORD relay_code_sel;
+    WORD relay_data_sel;
 };
 
 /* 48-bit segmented pointers for DOS DPMI32 */
@@ -66,6 +73,8 @@ extern struct DPMI_segments *DOSVM_dpmi_segments;
 #define V86_FLAG 0x00020000
 
 #define BIOS_DATA ((void *)0x400)
+
+#define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
 
 /* module.c */
 extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
@@ -181,6 +190,7 @@ extern void WINAPI DOSVM_Int2fHandler(CONTEXT86*);
 
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
+extern void WINAPI DOSVM_RawModeSwitchHandler(CONTEXT86*);
 extern BOOL DOSVM_IsDos32(void);
 extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
 extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
@@ -212,6 +222,12 @@ extern void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler );
 extern FARPROC48 DOSVM_GetPMHandler48( BYTE intnum );
 extern void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler );
 extern INTPROC DOSVM_GetBuiltinHandler( BYTE intnum );
+
+/* relay.c */
+void DOSVM_RelayHandler( CONTEXT86 * );
+void DOSVM_SaveCallFrame( CONTEXT86 *, struct _STACK16FRAME * );
+void DOSVM_RestoreCallFrame( CONTEXT86 *, struct _STACK16FRAME * );
+void DOSVM_BuildCallFrame( CONTEXT86 *, DOSRELAY, LPVOID );
 
 /* soundblaster.c */
 extern void SB_ioport_out( WORD port, BYTE val );

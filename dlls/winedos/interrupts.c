@@ -56,11 +56,9 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
   /* 64 */ 0,                  0,                  0,                  DOSVM_Int67Handler
 };
 
-/* Ordinal number for interrupt 0 handler in winedos16.dll */
-#define FIRST_INTERRUPT 100
 
 /**********************************************************************
- *         DOSVM_DefaultHandler (WINEDOS16.356)
+ *         DOSVM_DefaultHandler
  *
  * Default interrupt handler. This will be used to emulate all
  * interrupts that don't have their own interrupt handler.
@@ -68,6 +66,70 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
 void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
 {
 }
+
+
+/**********************************************************************
+ *          DOSVM_IntProcRelay
+ *
+ * Simple DOSRELAY that interprets its argument as INTPROC and calls it.
+ */
+static void DOSVM_IntProcRelay( CONTEXT86 *context, LPVOID data )
+{
+    INTPROC proc = (INTPROC)data;
+    proc(context);
+}
+
+
+/**********************************************************************
+ *          DOSVM_PushFlags
+ *
+ * This routine is used to make default int25 and int26 handlers leave the 
+ * original eflags into stack. In order to do this, stack is manipulated
+ * so that it actually contains two copies of eflags, one of which is
+ * popped during return from interrupt handler.
+ */
+static void DOSVM_PushFlags( CONTEXT86 *context, BOOL islong, BOOL isstub )
+{
+    if (islong)
+    {
+        DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                          context->SegSs, 
+                                          context->Esp);
+        context->Esp += -4; /* One item will be added to stack. */
+
+        if (isstub)
+        {
+            DWORD ip = stack[0];
+            DWORD cs = stack[1];
+            stack += 2; /* Pop ip and cs. */
+            *(--stack) = context->EFlags;
+            *(--stack) = cs;
+            *(--stack) = ip;
+        }
+        else
+            *(--stack) = context->EFlags;            
+    }
+    else
+    {
+        WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                         context->SegSs, 
+                                         context->Esp);
+        ADD_LOWORD( context->Esp, -2 ); /* One item will be added to stack. */
+
+        if (isstub)
+        {
+            WORD ip = stack[0];
+            WORD cs = stack[1];
+            stack += 2; /* Pop ip and cs. */
+            *(--stack) = LOWORD(context->EFlags);
+            *(--stack) = cs;
+            *(--stack) = ip;
+        }
+        else
+            *(--stack) = LOWORD(context->EFlags);
+    }
+}
+
 
 /**********************************************************************
  *         DOSVM_EmulateInterruptPM
@@ -80,49 +142,97 @@ void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
  */
 void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum ) 
 {
-  BOOL islong;
+    if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
+    {
+        DOSVM_BuildCallFrame( context, 
+                              DOSVM_IntProcRelay,
+                              DOSVM_RawModeSwitchHandler );
+    }
+    else if (context->SegCs == DOSVM_dpmi_segments->relay_code_sel)
+    {
+        /*
+         * This must not be called using DOSVM_BuildCallFrame.
+         */
+        DOSVM_RelayHandler( context );
+    }
+    else if (context->SegCs == DOSVM_dpmi_segments->int48_sel)
+    {
+        if (intnum == 0x25 || intnum == 0x26)
+            DOSVM_PushFlags( context, TRUE, TRUE );
 
-  if(context->SegCs == DOSVM_dpmi_segments->int48_sel) 
-    islong = FALSE;
-  else if(context->SegCs == DOSVM_dpmi_segments->dpmi_sel)
-    islong = FALSE;
-  else if(DOSVM_IsDos32())
-    islong = TRUE;
-  else if(IS_SELECTOR_32BIT(context->SegCs)) {
-    WARN("Interrupt in 32-bit code and mode is not DPMI32\n");
-    islong = TRUE;
-  } else
-    islong = FALSE;
+        DOSVM_BuildCallFrame( context, 
+                              DOSVM_IntProcRelay,
+                              DOSVM_GetBuiltinHandler(intnum) );
+    }
+    else if (context->SegCs == DOSVM_dpmi_segments->int16_sel)
+    {
+        if (intnum == 0x25 || intnum == 0x26)
+            DOSVM_PushFlags( context, FALSE, TRUE );
 
-  if(islong)
-  {
-    FARPROC48 addr = DOSVM_GetPMHandler48( intnum );
-    DWORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-    /* Push the flags and return address on the stack */
-    *(--stack) = context->EFlags;
-    *(--stack) = context->SegCs;
-    *(--stack) = context->Eip;
-    /* Jump to the interrupt handler */
-    context->SegCs  = addr.selector;
-    context->Eip = addr.offset;
-  }
-  else
-  {
-    FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
-    WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-    /* Push the flags and return address on the stack */
-    *(--stack) = LOWORD(context->EFlags);
-    *(--stack) = context->SegCs;
-    *(--stack) = LOWORD(context->Eip);
-    /* Jump to the interrupt handler */
-    context->SegCs  = HIWORD(addr);
-    context->Eip = LOWORD(addr);
-  }
+        DOSVM_BuildCallFrame( context, 
+                              DOSVM_IntProcRelay, 
+                              DOSVM_GetBuiltinHandler(intnum) );
+    }
+    else if(DOSVM_IsDos32())
+    {
+        FARPROC48 addr = DOSVM_GetPMHandler48( intnum );
+        
+        if (addr.selector == DOSVM_dpmi_segments->int48_sel)
+        {
+            if (intnum == 0x25 || intnum == 0x26)
+                DOSVM_PushFlags( context, TRUE, FALSE );
 
-  if (IS_SELECTOR_32BIT(context->SegSs))
-    context->Esp += islong ? -12 : -6;
-  else
-    context->Esp = (context->Esp & ~0xffff) | (WORD)((context->Esp & 0xffff) + (islong ? -12 : -6));
+             DOSVM_BuildCallFrame( context, 
+                                   DOSVM_IntProcRelay,
+                                   DOSVM_GetBuiltinHandler(intnum) );
+        }
+        else
+        {
+            DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                              context->SegSs, 
+                                              context->Esp);
+            
+            /* Push the flags and return address on the stack */
+            *(--stack) = context->EFlags;
+            *(--stack) = context->SegCs;
+            *(--stack) = context->Eip;
+            context->Esp += -12;
+
+            /* Jump to the interrupt handler */
+            context->SegCs  = addr.selector;
+            context->Eip = addr.offset;
+        }
+    }
+    else
+    {
+        FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
+
+        if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
+        {
+            if (intnum == 0x25 || intnum == 0x26)
+                DOSVM_PushFlags( context, FALSE, FALSE );
+
+            DOSVM_BuildCallFrame( context, 
+                                  DOSVM_IntProcRelay,
+                                  DOSVM_GetBuiltinHandler(intnum) );
+        }
+        else
+        {
+            WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
+                                             context->SegSs, 
+                                             context->Esp);
+            
+            /* Push the flags and return address on the stack */
+            *(--stack) = LOWORD(context->EFlags);
+            *(--stack) = context->SegCs;
+            *(--stack) = LOWORD(context->Eip);
+            ADD_LOWORD( context->Esp, -6 );
+
+            /* Jump to the interrupt handler */
+            context->SegCs  = HIWORD(addr);
+            context->Eip = LOWORD(addr);
+        }
+    }
 }
 
 /**********************************************************************
@@ -147,6 +257,7 @@ void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
   ((FARPROC16*)0)[intnum] = handler;
 }
 
+
 /**********************************************************************
  *          DOSVM_GetPMHandler16
  *
@@ -154,31 +265,13 @@ void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
  */
 FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
 {
-  static HMODULE16 procs;
-  FARPROC16 handler = DOSVM_Vectors16[intnum];
-
-  if (!handler)
-  {
-    if (!procs &&
-        (procs = GetModuleHandle16( "winedos16" )) < 32 &&
-        (procs = LoadLibrary16( "winedos16" )) < 32)
+    if (!DOSVM_Vectors16[intnum])
     {
-      ERR("could not load winedos16.dll\n");
-      procs = 0;
-      return 0;
+        FARPROC16 proc = (FARPROC16)MAKESEGPTR( DOSVM_dpmi_segments->int16_sel,
+                                                5 * intnum );
+        DOSVM_Vectors16[intnum] = proc;
     }
-
-    handler = GetProcAddress16( procs, (LPCSTR)(FIRST_INTERRUPT + intnum));
-    if (!handler) 
-    {
-      WARN("int%x not implemented, returning dummy handler\n", intnum );
-      handler = GetProcAddress16( procs, (LPCSTR)(FIRST_INTERRUPT + 256));
-    }
-
-    DOSVM_Vectors16[intnum] = handler;
-  }
-
-  return handler;
+    return DOSVM_Vectors16[intnum];
 }
 
 

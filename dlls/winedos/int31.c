@@ -722,52 +722,21 @@ void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
     }
 }
 
+
 /**********************************************************************
- *          DOSVM_RawModeSwitchWrapper
+ *          DOSVM_RawModeSwitchHandler
  *
- * DPMI Raw Mode Switch wrapper.
+ * DPMI Raw Mode Switch handler.
  * This routine does all the stack manipulation tricks needed
  * to return from protected mode interrupt using modified 
  * code and stack pointers.
  */
-static void DOSVM_RawModeSwitchWrapper( CONTEXT86 *context )
+void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
 {
-    /*
-     * FIXME: This routine will not work if it is called
-     *        from 32 bit DPMI program and the program returns
-     *        to protected mode while ESP or EIP is over 0xffff.
-     * FIXME: This routine will not work if it is not called
-     *        using 16-bit-to-Wine callback glue function.
-     */
-    STACK16FRAME frame = *CURRENT_STACK16;
-  
+    STACK16FRAME frame;
+    DOSVM_SaveCallFrame( context, &frame );
     DOSVM_RawModeSwitch( context );
-
-    /*
-     * After this function returns to relay code, protected mode
-     * 16 bit stack will contain STACK16FRAME and single WORD
-     * (EFlags, see next comment).
-     */
-    NtCurrentTeb()->cur_stack =
-        MAKESEGPTR( context->SegSs,
-                    context->Esp - sizeof(STACK16FRAME) - sizeof(WORD) );
-  
-    /*
-     * After relay code returns to glue function, protected
-     * mode 16 bit stack will contain interrupt return record:
-     * IP, CS and EFlags. Since EFlags is ignored, it won't
-     * need to be initialized.
-     */
-    context->Esp -= 3 * sizeof(WORD);
-
-    /*
-     * Restore stack frame so that relay code won't be confused.
-     * It should be noted that relay code overwrites IP and CS
-     * in STACK16FRAME with values taken from current CONTEXT86.
-     * These values are what is returned to glue function
-     * (see previous comment).
-     */
-    *CURRENT_STACK16 = frame;
+    DOSVM_RestoreCallFrame( context, &frame );
 }
 
 
@@ -781,15 +750,6 @@ static void DOSVM_RawModeSwitchWrapper( CONTEXT86 *context )
  */
 static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
 {
-    /* Handle protected mode interrupts. */
-    if (!ISV86(context)) {
-        if (context->SegCs == DOSVM_dpmi_segments->dpmi_sel) {
-            DOSVM_RawModeSwitchWrapper( context );
-            return TRUE;
-        }
-        return FALSE;
-    }
-
     /* check if it's our wrapper */
     TRACE("called from real mode\n");
     if (context->SegCs==DOSVM_dpmi_segments->dpmi_seg) {
@@ -828,7 +788,7 @@ static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
  */
 void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 {
-    if (DOSVM_CheckWrappers(context))
+    if (ISV86(context) && DOSVM_CheckWrappers(context))
         return;
 
     RESET_CFLAG(context);

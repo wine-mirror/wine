@@ -178,6 +178,12 @@ void DOSVM_InitSegments( void )
         0xCB                 /* lret */
     };
 
+    static const char relay[]=
+    {
+        0xca, 0x04, 0x00, /* 16-bit far return and pop 4 bytes (relay void* arg) */
+        0xcd, 0x31        /* int 31 */
+    };
+
     /*
      * Allocate pointer array.
      */
@@ -216,7 +222,7 @@ void DOSVM_InitSegments( void )
         /*
          * Each 32-bit interrupt handler is 6 bytes:
          * 0xCD,<i>            = int <i> (nested 16-bit interrupt)
-         * 0x66,0xCA,0x04,0x00 = ret 4   (32-bit far return and pop 4 bytes)
+         * 0x66,0xCA,0x04,0x00 = ret 4   (32-bit far return and pop 4 bytes / eflags)
          */
         ptr[i * 6 + 0] = 0xCD;
         ptr[i * 6 + 1] = i;
@@ -225,4 +231,37 @@ void DOSVM_InitSegments( void )
         ptr[i * 6 + 4] = 0x04;
         ptr[i * 6 + 5] = 0x00;
     }
+
+    /*
+     * PM / offset N*5: Interrupt N in 16-bit protected mode.
+     */
+    ptr = DOSVM_AllocCodeUMB( 5 * 256,
+                              0, &DOSVM_dpmi_segments->int16_sel );
+    for(i=0; i<256; i++) {
+        /*
+         * Each 16-bit interrupt handler is 5 bytes:
+         * 0xCD,<i>       = int <i> (interrupt)
+         * 0xCA,0x02,0x00 = ret 2   (16-bit far return and pop 2 bytes / eflags)
+         */
+        ptr[i * 5 + 0] = 0xCD;
+        ptr[i * 5 + 1] = i;
+        ptr[i * 5 + 2] = 0xCA;
+        ptr[i * 5 + 3] = 0x02;
+        ptr[i * 5 + 4] = 0x00;
+    }
+
+    /*
+     * PM / offset 0: Stub where __wine_call_from_16_regs returns.
+     * PM / offset 3: Stub which swaps back to 32-bit application code/stack.
+     */
+    ptr = DOSVM_AllocCodeUMB( sizeof(relay), 
+                              0,  &DOSVM_dpmi_segments->relay_code_sel);
+    memcpy( ptr, relay, sizeof(relay) );
+
+    /*
+     * Space for 16-bit stack used by relay code.
+     */
+    ptr = DOSVM_AllocDataUMB( DOSVM_RELAY_DATA_SIZE, 
+                              0, &DOSVM_dpmi_segments->relay_data_sel);
+    memset( ptr, 0, DOSVM_RELAY_DATA_SIZE );
 }
