@@ -1016,11 +1016,19 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
     if (prect != NULL) {
 	TRACE("	lprect: %ldx%ld-%ldx%ld\n",
 		prect->top,prect->left,prect->bottom,prect->right);
+	/* First do some sanity checkings on the rectangle we receive.
+	   DungeonSiege seems to gives us once a very bad rectangle for example */
 	if ((prect->top < 0) ||
 	    (prect->left < 0) ||
 	    (prect->bottom < 0) ||
-	    (prect->right < 0)) {
-	    ERR(" Negative values in LPRECT !!!\n");
+	    (prect->right < 0) ||
+	    (prect->left >= prect->right) ||
+	    (prect->top >= prect->bottom) ||
+	    (prect->left >= This->surface_desc.dwWidth) ||
+	    (prect->right > This->surface_desc.dwWidth) ||
+	    (prect->top >= This->surface_desc.dwHeight) ||
+	    (prect->bottom > This->surface_desc.dwHeight)) {
+	    ERR(" Invalid values in LPRECT !!!\n");
 	    return DDERR_INVALIDPARAMS;
 	}
 
