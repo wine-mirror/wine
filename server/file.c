@@ -495,6 +495,7 @@ DECL_HANDLER(get_handle_fd)
     struct object *obj;
 
     req->fd = -1;
+    req->type = FD_TYPE_INVALID;
     if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
     {
         int fd = get_handle_fd( current->process, req->handle, req->access );

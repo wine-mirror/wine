@@ -219,8 +219,8 @@ int FILE_GetUnixHandleType( HANDLE handle, DWORD access, DWORD *type )
             if (!(ret = SERVER_CALL_ERR()))
             {
                 fd = req->fd;
-                if (type) *type = req->type;
             }
+	    if (type) *type = req->type;
         }
         SERVER_END_REQ;
         if (ret) return -1;
@@ -1378,7 +1378,7 @@ static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
 
-    fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    fd = FILE_GetUnixHandle( hFile, GENERIC_READ );
     if(fd<0)
     {
         TRACE("Couldn't get FD\n");
