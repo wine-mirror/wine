@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wnaspi32
 ALTNAMES  = winaspi
-IMPORTS   = ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

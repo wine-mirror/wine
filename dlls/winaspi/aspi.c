@@ -36,7 +36,6 @@ HKEY_DYN_DATA
 #include "winreg.h"
 #include "winerror.h"
 #include "winescsi.h"
-#include "file.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi);
 
@@ -48,6 +47,59 @@ SCSI_GetProcinfo();
 static void
 SCSI_MapHCtoController();
 #endif
+
+static void set_last_error(void)
+{
+    int save_errno = errno; /* errno gets overwritten by printf */
+    switch (errno)
+    {
+    case EAGAIN:
+        SetLastError( ERROR_SHARING_VIOLATION );
+        break;
+    case EBADF:
+        SetLastError( ERROR_INVALID_HANDLE );
+        break;
+    case ENOSPC:
+        SetLastError( ERROR_HANDLE_DISK_FULL );
+        break;
+    case EACCES:
+    case EPERM:
+    case EROFS:
+        SetLastError( ERROR_ACCESS_DENIED );
+        break;
+    case EBUSY:
+        SetLastError( ERROR_LOCK_VIOLATION );
+        break;
+    case ENOENT:
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        break;
+    case EISDIR:
+        SetLastError( ERROR_CANNOT_MAKE );
+        break;
+    case ENFILE:
+    case EMFILE:
+        SetLastError( ERROR_NO_MORE_FILES );
+        break;
+    case EEXIST:
+        SetLastError( ERROR_FILE_EXISTS );
+        break;
+    case EINVAL:
+    case ESPIPE:
+        SetLastError( ERROR_SEEK );
+        break;
+    case ENOTEMPTY:
+        SetLastError( ERROR_DIR_NOT_EMPTY );
+        break;
+    case ENOEXEC:
+        SetLastError( ERROR_BAD_FORMAT );
+        break;
+    default:
+        WARN( "unknown file error: %s", strerror(save_errno) );
+        SetLastError( ERROR_GEN_FAILURE );
+        break;
+    }
+    errno = save_errno;
+}
 
 /* Exported functions */
 void
@@ -199,7 +251,7 @@ linux_hack:
 	if( fd < 0 )
 	{
 		int len = strlen(devstr);
-		FILE_SetDosError(); /* SetLastError() to errno */
+		set_last_error(); /* SetLastError() to errno */
 		TRACE("Open failed (%s)\n", strerror(errno));
 
 		/* in case of "/dev/sgX", convert from sga to sg0
@@ -255,7 +307,7 @@ SCSI_LinuxSetTimeout( int fd, int timeout )
 }
 
 /* This function takes care of the write/read to the linux sg device.
- * It returns TRUE or FALSE and uses FILE_SetDosError() to convert
+ * It returns TRUE or FALSE and uses set_last_error() to convert
  * UNIX errno to Windows GetLastError().  The reason for that is that
  * several programs will check that error and we might as well set
  * it here.  We also return the value of the read call in
@@ -274,9 +326,10 @@ SCSI_LinuxDeviceIo( int fd,
 	dwBytes = write( fd, lpInBuffer, cbInBuffer );
 	if( dwBytes != cbInBuffer )
 	{
-		FILE_SetDosError();
+		set_last_error();
 		save_error = GetLastError();
 		WARN("Not enough bytes written to scsi device. bytes=%ld .. %ld\n", cbInBuffer, dwBytes );
+                /* FIXME: set_last_error() never sets error to ERROR_NOT_ENOUGH_MEMORY... */
 		if( save_error == ERROR_NOT_ENOUGH_MEMORY )
 			MESSAGE("Your Linux kernel was not able to handle the amount of data sent to the scsi device. Try recompiling with a larger SG_BIG_BUFF value (kernel 2.0.x sg.h)");
 		WARN("error= %ld\n", save_error );
@@ -288,7 +341,7 @@ SCSI_LinuxDeviceIo( int fd,
 	*lpcbBytesReturned = read( fd, lpOutBuffer, cbOutBuffer );
 	if( *lpcbBytesReturned != cbOutBuffer )
 	{
-		FILE_SetDosError();
+		set_last_error();
 		save_error = GetLastError();
 		WARN("Not enough bytes read from scsi device. bytes=%ld .. %ld\n", cbOutBuffer, *lpcbBytesReturned);
 		WARN("error= %ld\n", save_error );

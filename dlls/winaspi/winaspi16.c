@@ -12,10 +12,10 @@
 
 #include "winbase.h"
 #include "wine/windef16.h"
+#include "winreg.h"
 #include "aspi.h"
 #include "winescsi.h"
 #include "wine/winaspi.h"
-#include "options.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "selectors.h"
@@ -45,8 +45,9 @@ static WORD HA_Count = 1; /* host adapter count; FIXME: detect it */
 static int
 ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
 {
+    HKEY hkey;
     int	fd;
-    char	idstr[20];
+    char	idstr[50];
     char	device_str[50];
     ASPI_DEVICE_INFO *curr;
 
@@ -64,9 +65,19 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     }
 
     /* device wasn't cached, go ahead and open it */
-    sprintf(idstr, "scsi c%1dt%1dd%1d", prb->SRB_HaId, prb->SRB_Target, prb->SRB_Lun);
+    sprintf( idstr, "Software\\Wine\\Wine\\Config\\scsi c%1dt%1dd%1d",
+             prb->SRB_HaId, prb->SRB_Target, prb->SRB_Lun);
 
-    if (!PROFILE_GetWineIniString(idstr, "Device", "", device_str, sizeof(device_str))) {
+    device_str[0] = 0;
+    if (!RegOpenKeyExA( HKEY_LOCAL_MACHINE, idstr, 0, KEY_ALL_ACCESS, &hkey ))
+    {
+        DWORD type, count = sizeof(device_str);
+        if (RegQueryValueExA( hkey, "Device", 0, &type, device_str, &count )) device_str[0] = 0;
+        RegCloseKey( hkey );
+    }
+
+    if (!device_str[0])
+    {
 	TRACE("Trying to open unlisted scsi device %s\n", idstr);
 	return -1;
     }
@@ -107,7 +118,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
       case ASPI_DOS:
 	/* translate real mode address */
 	if (prb->SRB_BufPointer)
-	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT)prb->SRB_BufPointer);
+	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(prb->SRB_BufPointer), OFFSETOF(prb->SRB_BufPointer));
 	break;
       case ASPI_WIN16:
 	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
@@ -196,7 +207,7 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
       case ASPI_DOS:
 	/* translate real mode address */
 	if (prb->SRB_BufPointer)
-	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT)prb->SRB_BufPointer);
+	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(prb->SRB_BufPointer), OFFSETOF(prb->SRB_BufPointer));
 	break;
       case ASPI_WIN16:
 	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
@@ -228,7 +239,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   {
       case ASPI_DOS:
 	if (ptrPRB)
-	    lpPRB = (SRB_ExecSCSICmd16 *)DOSMEM_MapRealToLinear(ptrPRB);
+	    lpPRB = PTR_REAL_TO_LIN( SELECTOROF(ptrPRB), OFFSETOF(ptrPRB));
 	break;
       case ASPI_WIN16:
 	lpPRB = PTR_SEG_TO_LIN(ptrPRB);
@@ -254,7 +265,8 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
       case ASPI_DOS:
 	/* translate real mode address */
 	if (ptrPRB)
-	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT)lpPRB->SRB_BufPointer);
+	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(lpPRB->SRB_BufPointer),
+                                     OFFSETOF(lpPRB->SRB_BufPointer));
 	break;
       case ASPI_WIN16:
 	lpBuf = PTR_SEG_TO_LIN(lpPRB->SRB_BufPointer);
@@ -413,7 +425,7 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
   {
       case ASPI_DOS:
 	if (ptrSRB)
-	    lpSRB = (LPSRB16)DOSMEM_MapRealToLinear(ptrSRB);
+	    lpSRB = PTR_REAL_TO_LIN( SELECTOROF(ptrSRB), OFFSETOF(ptrSRB));
 	break;
       case ASPI_WIN16:
 	lpSRB = PTR_SEG_TO_LIN(ptrSRB);
