@@ -25,20 +25,15 @@
 #define _WINE_PRINTDLG_H
 
 #include "cdlg.h"
-#include "cdlg16.h"
 
 /* This PRINTDLGA internal structure stores
  * pointers to several throughout useful structures.
- *
  */
 
 typedef struct
 {
   LPDEVMODEA        lpDevMode;
-  struct {
-      LPPRINTDLGA       lpPrintDlg;
-      LPPRINTDLG16	lpPrintDlg16;
-  } dlg;
+  LPPRINTDLGA       lpPrintDlg;
   LPPRINTER_INFO_2A lpPrinterInfo;
   LPDRIVER_INFO_3A  lpDriverInfo;
   UINT              HelpMessageID;
@@ -52,9 +47,7 @@ typedef struct
 typedef struct
 {
   LPDEVMODEW        lpDevMode;
-  struct {
-      LPPRINTDLGW       lpPrintDlg;
-  } dlg;
+  LPPRINTDLGW       lpPrintDlg;
   LPPRINTER_INFO_2W lpPrinterInfo;
   LPDRIVER_INFO_3W  lpDriverInfo;
   UINT              HelpMessageID;

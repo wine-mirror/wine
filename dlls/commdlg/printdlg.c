@@ -279,7 +279,7 @@ static BOOL PRINTDLG_CreateDevNamesW(HGLOBAL *hmem, LPCWSTR DeviceDriverName,
 static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 				    PRINT_PTRA* PrintStructures)
 {
-    LPPRINTDLGA       lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGA       lppd = PrintStructures->lpPrintDlg;
     PDEVMODEA         lpdm = PrintStructures->lpDevMode;
     LPPRINTER_INFO_2A pi = PrintStructures->lpPrinterInfo;
 
@@ -356,7 +356,7 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 				    PRINT_PTRW* PrintStructures)
 {
-    LPPRINTDLGW       lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGW       lppd = PrintStructures->lpPrintDlg;
     PDEVMODEW         lpdm = PrintStructures->lpDevMode;
     LPPRINTER_INFO_2W pi = PrintStructures->lpPrinterInfo;
 
@@ -856,7 +856,7 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, LPPRINTER_INFO_2W pi)
 BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 				   PRINT_PTRA *PrintStructures)
 {
-    LPPRINTDLGA lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
     LPDEVMODEA lpdm = NULL;
     LONG dmSize;
     DWORD needed;
@@ -1018,7 +1018,7 @@ BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
 static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 				   PRINT_PTRW *PrintStructures)
 {
-    LPPRINTDLGW lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
     LPDEVMODEW lpdm = NULL;
     LONG dmSize;
     DWORD needed;
@@ -1184,7 +1184,7 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 				     PRINT_PTRA* PrintStructures)
 {
-    LPPRINTDLGA lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
     DEVNAMES *pdn;
     DEVMODEA *pdm;
     char *name = NULL;
@@ -1288,7 +1288,7 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
 				     PRINT_PTRW* PrintStructures)
 {
-    LPPRINTDLGW lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
     DEVNAMES *pdn;
     DEVMODEW *pdm;
     WCHAR *name = NULL;
@@ -1396,7 +1396,7 @@ static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg, WPARAM wParam,
 LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 			LPARAM lParam, PRINT_PTRA* PrintStructures)
 {
-    LPPRINTDLGA lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGA lppd = PrintStructures->lpPrintDlg;
     UINT PrinterComboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
     LPDEVMODEA lpdm = PrintStructures->lpDevMode;
 
@@ -1573,7 +1573,7 @@ LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
 			LPARAM lParam, PRINT_PTRW* PrintStructures)
 {
-    LPPRINTDLGW lppd = PrintStructures->dlg.lpPrintDlg;
+    LPPRINTDLGW lppd = PrintStructures->lpPrintDlg;
     UINT PrinterComboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
     LPDEVMODEW lpdm = PrintStructures->lpDevMode;
 
@@ -1752,15 +1752,15 @@ INT_PTR CALLBACK PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 	SetPropA(hDlg,"__WINE_PRINTDLGDATA",PrintStructures);
 	res = PRINTDLG_WMInitDialog(hDlg, wParam, PrintStructures);
 
-	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
-	    res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(
-		hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg
+	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
+	    res = PrintStructures->lpPrintDlg->lpfnPrintHook(
+		hDlg, uMsg, wParam, (LPARAM)PrintStructures->lpPrintDlg
 	    );
 	return res;
     }
 
-    if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
-        res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam,
+    if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
+        res = PrintStructures->lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam,
 							 lParam);
 	if(res) return res;
     }
@@ -1797,13 +1797,13 @@ INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 	SetPropW(hDlg, propW, PrintStructures);
 	res = PRINTDLG_WMInitDialogW(hDlg, wParam, PrintStructures);
 
-	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
-	    res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg);
+	if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
+	    res = PrintStructures->lpPrintDlg->lpfnPrintHook(hDlg, uMsg, wParam, (LPARAM)PrintStructures->lpPrintDlg);
 	return res;
     }
 
-    if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
-        res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam, lParam);
+    if(PrintStructures->lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
+        res = PrintStructures->lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam, lParam);
 	if(res) return res;
     }
 
@@ -2056,7 +2056,7 @@ BOOL WINAPI PrintDlgA(
 
         PrintStructures = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				    sizeof(PRINT_PTRA));
-	PrintStructures->dlg.lpPrintDlg = lppd;
+	PrintStructures->lpPrintDlg = lppd;
 
 	/* and create & process the dialog .
 	 * -1 is failure, 0 is broken hwnd, everything else is ok.
@@ -2212,7 +2212,7 @@ BOOL WINAPI PrintDlgW(
 
         PrintStructures = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				    sizeof(PRINT_PTRW));
-	PrintStructures->dlg.lpPrintDlg = lppd;
+	PrintStructures->lpPrintDlg = lppd;
 
 	/* and create & process the dialog .
 	 * -1 is failure, 0 is broken hwnd, everything else is ok.
