@@ -95,8 +95,10 @@ DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
 #ifdef __i386__
    LDT_ENTRY	le;
    
+#if 0
    if (IS_SELECTOR_V86(addr->seg))
       return (DWORD) DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
+#endif
    if (DEBUG_IsSelectorSystem(addr->seg))
       return addr->off;
    
