@@ -1476,7 +1476,10 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
             fShowH = (wndPtr->dwStyle & WS_HSCROLL);
             wndPtr->dwStyle &= ~WS_HSCROLL;
         }
-        if( nBar == SB_HORZ ) break; 
+        if( nBar == SB_HORZ ) {
+            fShowV = FALSE;
+            break;
+        }
 	/* fall through */
 
     case SB_VERT:
@@ -1490,6 +1493,8 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
             fShowV = (wndPtr->dwStyle & WS_VSCROLL);
             wndPtr->dwStyle &= ~WS_VSCROLL;
         }
+        if ( nBar == SB_VERT )
+           fShowH = FALSE;
         break;
 
     default:
