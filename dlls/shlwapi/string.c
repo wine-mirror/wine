@@ -12,7 +12,6 @@
 #include "shlobj.h"
 #include "wine/unicode.h"
 #include "wine/winestring.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
@@ -164,14 +163,12 @@ int WINAPI StrToIntA(LPCSTR lpSrc)
  */
 int WINAPI StrToIntW(LPCWSTR lpSrc)
 {
-	int ret;
-	LPSTR lpStr =  HEAP_strdupWtoA(GetProcessHeap(),0,lpSrc);
+    char buffer[32];
 
-	TRACE("%s\n", debugstr_w(lpSrc));
-
-	ret = atol(lpStr);
-	HeapFree(GetProcessHeap(),0,lpStr);
-	return ret;
+    TRACE("%s\n", debugstr_w(lpSrc));
+    WideCharToMultiByte( CP_ACP, 0, lpSrc, -1, buffer, sizeof(buffer), NULL, NULL );
+    buffer[sizeof(buffer)-1] = 0;
+    return atol(buffer);
 }
 
 /*************************************************************************
@@ -385,13 +382,16 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, 
 	    break;
 
 	  case STRRET_CSTRA:
-	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
+              if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ) && len)
+                  dest[len-1] = 0;
 	    break;
 
 	  case STRRET_OFFSETA:
 	    if (pidl)
 	    {
-	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+              if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1,
+                                        dest, len ) && len)
+                  dest[len-1] = 0;
 	    }
 	    break;
 
@@ -445,7 +445,8 @@ LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
 	else
 	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
 	}
-	lstrcpynAtoW (pszBuf, buf, cchBuf);
+        if (!MultiByteToWideChar( CP_ACP, 0, buf, -1, pszBuf, cchBuf ) && cchBuf)
+            pszBuf[cchBuf-1] = 0;
 	return pszBuf;	
 }
 

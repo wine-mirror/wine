@@ -11,9 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "winbase.h"
+#include "winnls.h"
 #include "wine/unicode.h"
 
-#include "heap.h"
 #include "neexe.h"
 #include "module.h"
 #include "winver.h"
@@ -77,6 +78,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
 {
     const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
     LPWSTR nameW;
+    DWORD namelen;
 
     if (!HIWORD(name)) return find_entry_by_id( dir, LOWORD(name), root );
     if (name[0] == '#')
@@ -84,12 +86,15 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
         return find_entry_by_id( dir, atoi(name+1), root );
     }
 
-    if ((nameW = HEAP_strdupAtoW( GetProcessHeap(), 0, name )))
+    namelen = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    if ((nameW = HeapAlloc( GetProcessHeap(), 0, namelen * sizeof(WCHAR) )))
     {
         const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
         const IMAGE_RESOURCE_DIR_STRING_U *str;
-        int min, max, res, pos, namelen = strlenW(nameW);
+        int min, max, res, pos;
 
+        MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, namelen );
+        namelen--;  /* remove terminating null */
         entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
         min = 0;
         max = dir->NumberOfNamedEntries - 1;
@@ -154,6 +159,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     DWORD nehdoffset;
     LPBYTE resTab;
     DWORD resTabSize;
+    int count;
 
     /* Read in NE header */ 
     nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
@@ -179,21 +185,59 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 
     /* Find resource */
     typeInfo = (NE_TYPEINFO *)(resTab + 2);
-    typeInfo = NE_FindTypeSection( resTab, typeInfo, typeid );
-    if ( !typeInfo )
-    {
-        TRACE("No typeid entry found for %p\n", typeid );
-        HeapFree( GetProcessHeap(), 0, resTab );
-        return FALSE;
-    }
-    nameInfo = NE_FindResourceFromType( resTab, typeInfo, resid );
-    if ( !nameInfo )
-    {
-        TRACE("No resid entry found for %p\n", typeid );
-        HeapFree( GetProcessHeap(), 0, resTab );
-        return FALSE;
-    }
 
+    if (HIWORD(typeid) != 0)  /* named type */
+    {
+        BYTE len = strlen( typeid );
+        while (typeInfo->type_id)
+        {
+            if (!(typeInfo->type_id & 0x8000))
+            {
+                BYTE *p = resTab + typeInfo->type_id;
+                if ((*p == len) && !strncasecmp( p+1, typeid, len )) goto found_type;
+            }
+            typeInfo = (NE_TYPEINFO *)((char *)(typeInfo + 1) +
+                                       typeInfo->count * sizeof(NE_NAMEINFO));
+        }
+    }
+    else  /* numeric type id */
+    {
+        WORD id = LOWORD(typeid) | 0x8000;
+        while (typeInfo->type_id)
+        {
+            if (typeInfo->type_id == id) goto found_type;
+            typeInfo = (NE_TYPEINFO *)((char *)(typeInfo + 1) +
+                                       typeInfo->count * sizeof(NE_NAMEINFO));
+        }
+    }
+    TRACE("No typeid entry found for %p\n", typeid );
+    HeapFree( GetProcessHeap(), 0, resTab );
+    return FALSE;
+
+ found_type:
+    nameInfo = (NE_NAMEINFO *)(typeInfo + 1);
+
+    if (HIWORD(resid) != 0)  /* named resource */
+    {
+        BYTE len = strlen( resid );
+        for (count = typeInfo->count; count > 0; count--, nameInfo++)
+        {
+            BYTE *p = resTab + nameInfo->id;
+            if (nameInfo->id & 0x8000) continue;
+            if ((*p == len) && !strncasecmp( p+1, resid, len )) goto found_name;
+        }
+    }
+    else  /* numeric resource id */
+    {
+        WORD id = LOWORD(resid) | 0x8000;
+        for (count = typeInfo->count; count > 0; count--, nameInfo++)
+            if (nameInfo->id == id) goto found_name;
+    }
+    TRACE("No resid entry found for %p\n", typeid );
+    HeapFree( GetProcessHeap(), 0, resTab );
+    return FALSE;
+
+ found_name:
     /* Return resource data */
     if ( resLen ) *resLen = nameInfo->length << *(WORD *)resTab;
     if ( resOff ) *resOff = nameInfo->offset << *(WORD *)resTab;

@@ -623,12 +623,12 @@ debug_channels (shell)
 @ stub    StrChrIA
 @ stub    StrChrIW
 @ stdcall StrChrW (wstr long) StrChrW
-@ stdcall StrCmpIW (wstr wstr) lstrcmpiW
+@ forward StrCmpIW kernel32.lstrcmpiW
 @ stdcall StrCmpNA (str str long) StrCmpNA
 @ stdcall StrCmpNIA (str str long) StrCmpNIA
 @ stdcall StrCmpNIW (wstr wstr long) StrCmpNIW
 @ stdcall StrCmpNW (wstr wstr long) StrCmpNW
-@ stdcall StrCmpW (wstr wstr) lstrcmpW
+@ forward StrCmpW kernel32.lstrcmpW
 @ stdcall StrCpyNW (ptr wstr long) lstrcpynW
 @ stdcall StrCpyW (ptr wstr) StrCpyW
 @ stdcall StrDupA (str) StrDupA

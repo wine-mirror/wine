@@ -13,7 +13,6 @@
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "heap.h"
 #include "winsock.h"
 
 #include <sys/types.h>
@@ -62,6 +61,13 @@ INT HTTP_GetStdHeaderIndex(LPCSTR lpszField);
 INT HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr);
 INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQA lpwhr, LPCSTR lpszField);
 
+inline static LPSTR HTTP_strdup( LPCSTR str )
+{
+    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
+    if (ret) strcpy( ret, str );
+    return ret;
+}
+
 /***********************************************************************
  *           HttpAddRequestHeadersA (WININET.68)
  *
@@ -88,7 +94,7 @@ INTERNETAPI BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
         return FALSE;
     }
 
-    buffer = HEAP_strdupA(GetProcessHeap(), 0, lpszHeader);
+    buffer = HTTP_strdup(lpszHeader);
     lpszStart = buffer;
 
     do
@@ -153,10 +159,10 @@ INTERNETAPI HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 
 	workRequest.asyncall = HTTPOPENREQUESTA;
 	workRequest.HFTPSESSION = (DWORD)hHttpSession;
-	workRequest.LPSZVERB = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, lpszVerb);
-	workRequest.LPSZOBJECTNAME = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, lpszObjectName);
-	workRequest.LPSZVERSION = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, lpszVersion);
-	workRequest.LPSZREFERRER = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, lpszReferrer);
+	workRequest.LPSZVERB = (DWORD)HTTP_strdup(lpszVerb);
+	workRequest.LPSZOBJECTNAME = (DWORD)HTTP_strdup(lpszObjectName);
+	workRequest.LPSZVERSION = (DWORD)HTTP_strdup(lpszVersion);
+	workRequest.LPSZREFERRER = (DWORD)HTTP_strdup(lpszReferrer);
 	workRequest.LPSZACCEPTTYPES = (DWORD)lpszAcceptTypes;
 	workRequest.DWFLAGS = dwFlags;
 	workRequest.DWCONTEXT = dwContext;
@@ -214,7 +220,7 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     lpwhr->nSocketFD = INVALID_SOCKET;
 
     if (NULL != lpszObjectName && strlen(lpszObjectName))
-    	lpwhr->lpszPath = HEAP_strdupA(GetProcessHeap(), 0, lpszObjectName);
+    	lpwhr->lpszPath = HTTP_strdup(lpszObjectName);
 
     if (NULL != lpszReferrer && strlen(lpszReferrer))
         HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDHDR_FLAG_COALESCE);
@@ -224,9 +230,9 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         HTTP_ProcessHeader(lpwhr, HTTP_ACCEPT, *lpszAcceptTypes, HTTP_ADDHDR_FLAG_COALESCE);
 
     if (NULL == lpszVerb)
-        lpwhr->lpszVerb = HEAP_strdupA(GetProcessHeap(), 0, "GET");
+        lpwhr->lpszVerb = HTTP_strdup("GET");
     else if (strlen(lpszVerb))
-        lpwhr->lpszVerb = HEAP_strdupA(GetProcessHeap(), 0, lpszVerb);
+        lpwhr->lpszVerb = HTTP_strdup(lpszVerb);
 
     if (NULL != lpszReferrer)
     {
@@ -243,10 +249,9 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 
         InternetCrackUrlA(lpszReferrer, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName))
-            lpwhr->lpszHostName = HEAP_strdupA(GetProcessHeap(), 0, UrlComponents.lpszHostName);
+            lpwhr->lpszHostName = HTTP_strdup(UrlComponents.lpszHostName);
     } else {
-        lpwhr->lpszHostName = HEAP_strdupA(GetProcessHeap(), 0,
-					   lpwhs->lpszServerName);
+        lpwhr->lpszHostName = HTTP_strdup(lpwhs->lpszServerName);
     }
 
     if (hIC->lpfnStatusCB)
@@ -519,7 +524,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 
 	workRequest.asyncall = HTTPSENDREQUESTA;
 	workRequest.HFTPSESSION = (DWORD)hHttpRequest;
-	workRequest.LPSZHEADER = (DWORD)HEAP_strdupA(GetProcessHeap(), 0, lpszHeaders);
+	workRequest.LPSZHEADER = (DWORD)HTTP_strdup(lpszHeaders);
 	workRequest.DWHEADERLENGTH = dwHeaderLength;
 	workRequest.LPOPTIONAL = (DWORD)lpOptional;
 	workRequest.DWOPTIONALLENGTH = dwOptionalLength;
@@ -591,7 +596,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 
     /* If we don't have a path we set it to root */
     if (NULL == lpwhr->lpszPath)
-        lpwhr->lpszPath = HEAP_strdupA(GetProcessHeap(), 0, "/");
+        lpwhr->lpszPath = HTTP_strdup("/");
 
     /* Calculate length of request string */
     requestStringLen = 
@@ -765,9 +770,9 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     if (NULL != lpszServerName)
-        lpwhs->lpszServerName = HEAP_strdupA(GetProcessHeap(), 0, lpszServerName);
+        lpwhs->lpszServerName = HTTP_strdup(lpszServerName);
     if (NULL != lpszUserName)
-        lpwhs->lpszUserName = HEAP_strdupA(GetProcessHeap(), 0, lpszUserName);
+        lpwhs->lpszUserName = HTTP_strdup(lpszUserName);
     lpwhs->nServerPort = nServerPort;
 
     if (hIC->lpfnStatusCB)
@@ -1094,7 +1099,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
 
         if (!lpwhr->StdHeaders[index].lpszField)
         {
-            lphttpHdr->lpszField = HEAP_strdupA(GetProcessHeap(), 0, field);
+            lphttpHdr->lpszField = HTTP_strdup(field);
 
             if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
                 lphttpHdr->wFlags |= HDR_ISREQUEST;
@@ -1314,8 +1319,8 @@ INT HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr)
     if (NULL != lph)
     {
 	lpwhr->pCustHeaders = lph;
-        lpwhr->pCustHeaders[count-1].lpszField = HEAP_strdupA(GetProcessHeap(), 0, lpHdr->lpszField);
-        lpwhr->pCustHeaders[count-1].lpszValue = HEAP_strdupA(GetProcessHeap(), 0, lpHdr->lpszValue);
+        lpwhr->pCustHeaders[count-1].lpszField = HTTP_strdup(lpHdr->lpszField);
+        lpwhr->pCustHeaders[count-1].lpszValue = HTTP_strdup(lpHdr->lpszValue);
         lpwhr->pCustHeaders[count-1].wFlags = lpHdr->wFlags;
         lpwhr->pCustHeaders[count-1].wCount= lpHdr->wCount;
 	lpwhr->nCustHeaders++;

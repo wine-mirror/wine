@@ -24,7 +24,6 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "winsock.h"
-#include "heap.h"
 
 #include "internet.h"
 
@@ -160,11 +159,20 @@ INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
         lpwai->hdr.lpwhparent = NULL;
         lpwai->hdr.dwFlags = dwFlags;
         if (NULL != lpszAgent)
-            lpwai->lpszAgent = HEAP_strdupA(GetProcessHeap(),0,lpszAgent);
+        {
+            if ((lpwai->lpszAgent = HeapAlloc( GetProcessHeap(),0,strlen(lpszAgent)+1)))
+                strcpy( lpwai->lpszAgent, lpszAgent );
+        }
         if (NULL != lpszProxy)
-            lpwai->lpszProxy = HEAP_strdupA(GetProcessHeap(),0,lpszProxy);
+        {
+            if ((lpwai->lpszProxy = HeapAlloc( GetProcessHeap(), 0, strlen(lpszProxy)+1 )))
+                strcpy( lpwai->lpszProxy, lpszProxy );
+        }
         if (NULL != lpszProxyBypass)
-            lpwai->lpszProxyBypass = HEAP_strdupA(GetProcessHeap(),0,lpszProxyBypass);
+        {
+            if ((lpwai->lpszProxyBypass = HeapAlloc( GetProcessHeap(), 0, strlen(lpszProxyBypass)+1)))
+                strcpy( lpwai->lpszProxyBypass, lpszProxyBypass );
+        }
         lpwai->dwAccessType = dwAccessType;
     }
 

@@ -10,8 +10,8 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "dplay.h"
 #include "debugtools.h"
 
@@ -3510,7 +3510,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       GUID     serviceProviderGUID;
       DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
       char     returnBuffer[51];
-      LPWSTR   lpWGUIDString;
+      WCHAR    buff[51];
       DPNAME   dpName;
       HRESULT  hr;
 
@@ -3537,9 +3537,8 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       }
 
       /* FIXME: Check return types to ensure we're interpreting data right */
-      lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
-      CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
-      HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+      MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
+      CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
       /* Fill in the DPNAME struct for the service provider */
@@ -3616,7 +3615,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       GUID     serviceProviderGUID;
       DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
       char     returnBuffer[51];
-      LPWSTR   lpWGUIDString;
+      WCHAR    buff[51];
       DPNAME   dpName;
       HRESULT  hr;
 
@@ -3643,9 +3642,8 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       }
 
       /* FIXME: Check return types to ensure we're interpreting data right */
-      lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
-      CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
-      HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+      MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
+      CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
       /* Fill in the DPNAME struct for the service provider */
@@ -3862,8 +3860,8 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
       GUID     serviceProviderGUID;
       DWORD    returnType, sizeOfReturnBuffer = 255;
       char     returnBuffer[256];
-      LPWSTR   lpWGUIDString;
-      DWORD    dwTemp;
+      WCHAR    buff[51];
+      DWORD    dwTemp, len;
 
       TRACE(" this time through: %s\n", subKeyName );
 
@@ -3884,9 +3882,8 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
       }
 
       /* FIXME: Check return types to ensure we're interpreting data right */
-      lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
-      CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
-      HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+      MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
+      CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
       /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
       /* Determine if this is the Service Provider that the user asked for */
@@ -3896,7 +3893,9 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
       }
 
       /* Save the name of the SP or LP */
-      lpSpData->lpszName = HEAP_strdupAtoW( GetProcessHeap(), 0, subKeyName );
+      len = MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, NULL, 0 );
+      lpSpData->lpszName = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+      MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, lpSpData->lpszName, len );
 
       sizeOfReturnBuffer = 255;
 
@@ -4990,8 +4989,8 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     GUID     serviceProviderGUID;
     DWORD    returnTypeGUID, returnTypeReserved, sizeOfReturnBuffer = 50;
     char     returnBuffer[51];
+    WCHAR    buff[51];
     DWORD    majVersionNum , minVersionNum = 0;
-    LPWSTR   lpWGUIDString; 
 
     TRACE(" this time through: %s\n", subKeyName );
 
@@ -5015,9 +5014,8 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     }
 
     /* FIXME: Check return types to ensure we're interpreting data right */
-    lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
-    CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID ); 
-    HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+    MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
+    CLSIDFromString( (LPCOLESTR)buff, &serviceProviderGUID );
 
     /* FIXME: Need to know which of dwReserved1 and dwReserved2 are maj and min */
 

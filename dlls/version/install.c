@@ -10,10 +10,11 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winver.h"
-#include "wine/winestring.h"
+#include "winnls.h"
+#include "wine/unicode.h"
 #include "winerror.h"
-#include "heap.h"
 #include "lzexpand.h"
 #include "debugtools.h"
 
@@ -21,45 +22,7 @@ DEFAULT_DEBUG_CHANNEL(ver);
 
 
 /******************************************************************************
- *
- *   void  ver_dstring(
- *      char const * prologue,
- *      char const * teststring,
- *      char const * epilogue )
- *
- *   This function will print via dprintf[_]ver to stddeb the prologue string,
- *   followed by the address of teststring and the string it contains if
- *   teststring is non-null or "(null)" otherwise, and then the epilogue
- *   string followed by a new line.
- *
- *   Revision history
- *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *         Original implementation as dprintf[_]ver_string
- *      05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *         Fixed problem that caused bug with tools/make_debug -- renaming
- *         this function should fix the problem.
- *      15-Feb-1998 Dimitrie Paun (dimi@cs.toronto.edu)
- *         Modified it to make it print the message using only one
- *         dprintf[_]ver call.
- *
- *****************************************************************************/
-
-static void  ver_dstring(
-    char const * prologue,
-    char const * teststring,
-    char const * epilogue )
-{
-    TRACE("%s %p (\"%s\") %s\n", prologue,
-                (void const *) teststring,
-                teststring ? teststring : "(null)",
-                epilogue);
-}
-
-/******************************************************************************
- *
- *   int  testFileExistence(
- *      char const * path,
- *      char const * file )
+ *   testFileExistenceA
  *
  *   Tests whether a given path/file combination exists.  If the file does
  *   not exist, the return value is zero.  If it does exist, the return
@@ -69,16 +32,12 @@ static void  ver_dstring(
  *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
  *         Original implementation
  *
- *****************************************************************************/
-
-static int  testFileExistence(
-   char const * path,
-   char const * file )
+ */
+static int testFileExistenceA( char const * path, char const * file, BOOL excl )
 {
     char  filename[1024];
     int  filenamelen;
     OFSTRUCT  fileinfo;
-    int  retval;
 
     fileinfo.cBytes = sizeof(OFSTRUCT);
 
@@ -96,63 +55,41 @@ static int  testFileExistence(
     /* Create the full pathname */
     strcat(filename, file);
 
-    if(OpenFile(filename, &fileinfo, OF_EXIST) == HFILE_ERROR)
-	retval = 0;
-    else
-	retval = 1;
-
-    return  retval;
+    return (OpenFile(filename, &fileinfo,
+                     OF_EXIST | (excl ? OF_SHARE_EXCLUSIVE : 0)) != HFILE_ERROR);
 }
 
 /******************************************************************************
- *
- *   int  testFileExclusiveExistence(
- *      char const * path,
- *      char const * file )
- *
- *   Tests whether a given path/file combination exists and ensures that no
- *   other programs have handles to the given file.  If the file does not
- *   exist or is open, the return value is zero.  If it does exist, the
- *   return value is non-zero.
- *
- *   Revision history
- *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *         Original implementation
- *
- *****************************************************************************/
-
-static int  testFileExclusiveExistence(
-   char const * path,
-   char const * file )
+ *   testFileExistenceW
+ */
+static int testFileExistenceW( const WCHAR *path, const WCHAR *file, BOOL excl )
 {
-    char  filename[1024];
-    int  filenamelen;
-    OFSTRUCT  fileinfo;
-    int  retval;
+    char *filename;
+    DWORD pathlen, filelen;
+    int ret;
+    OFSTRUCT fileinfo;
 
     fileinfo.cBytes = sizeof(OFSTRUCT);
 
-    strcpy(filename, path);
-    filenamelen = strlen(filename);
+    pathlen = WideCharToMultiByte( CP_ACP, 0, path, -1, NULL, 0, NULL, NULL );
+    filelen = WideCharToMultiByte( CP_ACP, 0, file, -1, NULL, 0, NULL, NULL );
+    filename = HeapAlloc( GetProcessHeap(), 0, pathlen+filelen+2 );
 
+    WideCharToMultiByte( CP_ACP, 0, path, -1, filename, pathlen, NULL, NULL );
     /* Add a trailing \ if necessary */
-    if(filenamelen) {
-	if(filename[filenamelen - 1] != '\\')
-	    strcat(filename, "\\");
+    if (pathlen > 1)
+    {
+        if (filename[pathlen-2] != '\\') strcpy( &filename[pathlen-1], "\\" );
     }
     else /* specify the current directory */
-	strcpy(filename, ".\\");
+        strcpy(filename, ".\\");
 
-    /* Create the full pathname */
-    strcat(filename, file);
+    WideCharToMultiByte( CP_ACP, 0, file, -1, filename+strlen(filename), filelen, NULL, NULL );
 
-    if(OpenFile(filename, &fileinfo, OF_EXIST | OF_SHARE_EXCLUSIVE) ==
-       HFILE_ERROR)
-	retval = 0;
-    else
-	retval = 1;
-
-    return retval;
+    ret = (OpenFile(filename, &fileinfo,
+                    OF_EXIST | (excl ? OF_SHARE_EXCLUSIVE : 0)) != HFILE_ERROR);
+    HeapFree( GetProcessHeap(), 0, filename );
+    return ret;
 }
 
 /*****************************************************************************
@@ -165,10 +102,7 @@ static int  testFileExclusiveExistence(
  *   Revision history:
  *      30-May-1997   Dave Cuthbert (dacut@ece.cmu.edu)
  *         Reimplementation of VerFindFile from original stub.
- *
- ****************************************************************************/
-
-/* VerFindFile32A						[VERSION.5] */
+ */
 DWORD WINAPI VerFindFileA(
     UINT flags,
     LPCSTR lpszFilename,
@@ -179,141 +113,85 @@ DWORD WINAPI VerFindFileA(
     LPSTR lpszDestDir,
     UINT *lpuDestDirLen )
 {
-    DWORD  retval;
-    char  curDir[256];
-    char  destDir[256];
+    DWORD  retval = 0;
+    const char *curDir;
+    const char *destDir;
     unsigned int  curDirSizeReq;
     unsigned int  destDirSizeReq;
-
-    retval = 0;
+    char  systemDir[MAX_PATH];
 
     /* Print out debugging information */
-    TRACE("called with parameters:\n"
-		 "\tflags = %x", flags);
-    if(flags & VFFF_ISSHAREDFILE)
-	TRACE(" (VFFF_ISSHAREDFILE)\n");
-    else
-	TRACE("\n");
-
-    ver_dstring("\tlpszFilename = ", lpszFilename, "");
-    ver_dstring("\tlpszWinDir = ", lpszWinDir, "");
-    ver_dstring("\tlpszAppDir = ", lpszAppDir, "");
-
-    TRACE("\tlpszCurDir = %p\n", lpszCurDir);
-    if(lpuCurDirLen)
-	TRACE("\tlpuCurDirLen = %p (%u)\n",
-		    lpuCurDirLen, *lpuCurDirLen);
-    else
-	TRACE("\tlpuCurDirLen = (null)\n");
-
-    TRACE("\tlpszDestDir = %p\n", lpszDestDir);
-    if(lpuDestDirLen)
-	TRACE("\tlpuDestDirLen = %p (%u)\n",
-		    lpuDestDirLen, *lpuDestDirLen);
+    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)",
+          flags, debugstr_a(lpszFilename), debugstr_a(lpszWinDir), debugstr_a(lpszAppDir),
+          lpuCurDirLen, lpuCurDirLen ? *lpuCurDirLen : 0,
+          lpuDestDirLen, lpuDestDirLen ? *lpuDestDirLen : 0 );
 
     /* Figure out where the file should go; shared files default to the
        system directory */
 
-    strcpy(curDir, "");
-    strcpy(destDir, "");
+    GetSystemDirectoryA(systemDir, sizeof(systemDir));
+    curDir = "";
+    destDir = "";
 
-    if(flags & VFFF_ISSHAREDFILE) {
-	GetSystemDirectoryA(destDir, 256);
-
-	/* Were we given a filename?  If so, try to find the file. */
-	if(lpszFilename) {
-	    if(testFileExistence(destDir, lpszFilename)) {
-		strcpy(curDir, destDir);
-
-		if(!testFileExclusiveExistence(destDir, lpszFilename))
-		    retval |= VFF_FILEINUSE;
-	    }
-	    else if(lpszAppDir && testFileExistence(lpszAppDir,
-						    lpszFilename)) {
-		strcpy(curDir, lpszAppDir);
-		retval |= VFF_CURNEDEST;
-
-		if(!testFileExclusiveExistence(lpszAppDir, lpszFilename))
-		    retval |= VFF_FILEINUSE;
-	    }
-	}
+    if(flags & VFFF_ISSHAREDFILE)
+    {
+        destDir = systemDir;
+        /* Were we given a filename?  If so, try to find the file. */
+        if(lpszFilename)
+        {
+            if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
+            else if(lpszAppDir && testFileExistenceA(lpszAppDir, lpszFilename, FALSE))
+            {
+                curDir = lpszAppDir;
+                retval |= VFF_CURNEDEST;
+            }
+        }
     }
-    else if(!(flags & VFFF_ISSHAREDFILE)) { /* not a shared file */
-	if(lpszAppDir) {
-	    char  systemDir[256];
-	    GetSystemDirectoryA(systemDir, 256);
-
-	    strcpy(destDir, lpszAppDir);
-
-	    if(lpszFilename) {
-		if(testFileExistence(lpszAppDir, lpszFilename)) {
-		    strcpy(curDir, lpszAppDir);
-
-		    if(!testFileExclusiveExistence(lpszAppDir, lpszFilename))
-			retval |= VFF_FILEINUSE;
-		}
-		else if(testFileExistence(systemDir, lpszFilename)) {
-		    strcpy(curDir, systemDir);
-		    retval |= VFF_CURNEDEST;
-
-		    if(!testFileExclusiveExistence(systemDir, lpszFilename))
-			retval |= VFF_FILEINUSE;
-		}
-	    }
-	}
+    else /* not a shared file */
+    {
+        if(lpszAppDir)
+        {
+            destDir = lpszAppDir;
+            if(lpszFilename)
+            {
+                if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
+                else if(testFileExistenceA(systemDir, lpszFilename, FALSE))
+                {
+                    curDir = systemDir;
+                    retval |= VFF_CURNEDEST;
+                }
+            }
+        }
     }
+
+    if (lpszFilename && !testFileExistenceA(curDir, lpszFilename, TRUE))
+        retval |= VFF_FILEINUSE;
 
     curDirSizeReq = strlen(curDir) + 1;
     destDirSizeReq = strlen(destDir) + 1;
-
-
 
     /* Make sure that the pointers to the size of the buffers are
        valid; if not, do NOTHING with that buffer.  If that pointer
        is valid, then make sure that the buffer pointer is valid, too! */
 
-    if(lpuDestDirLen && lpszDestDir) {
-	if(*lpuDestDirLen < destDirSizeReq) {
-	    retval |= VFF_BUFFTOOSMALL;
-	    if (*lpuDestDirLen) {
-	    lstrcpynA(lpszDestDir, destDir, *lpuDestDirLen);
-	}
-	}
-	else
-	    strcpy(lpszDestDir, destDir);
-
-	*lpuDestDirLen = destDirSizeReq;
+    if(lpuDestDirLen && lpszDestDir)
+    {
+        if (*lpuDestDirLen < destDirSizeReq) retval |= VFF_BUFFTOOSMALL;
+        lstrcpynA(lpszDestDir, destDir, *lpuDestDirLen);
+        *lpuDestDirLen = destDirSizeReq;
     }
-    
-    if(lpuCurDirLen && lpszCurDir) {
-	if(*lpuCurDirLen < curDirSizeReq) {
-	    retval |= VFF_BUFFTOOSMALL;
-	    if (*lpuCurDirLen) {
-	    lstrcpynA(lpszCurDir, curDir, *lpuCurDirLen);
-	    }
-	}
-	else
-	    strcpy(lpszCurDir, curDir);
-
-	*lpuCurDirLen = curDirSizeReq;
+    if(lpuCurDirLen && lpszCurDir)
+    {
+        if(*lpuCurDirLen < curDirSizeReq) retval |= VFF_BUFFTOOSMALL;
+        lstrcpynA(lpszCurDir, curDir, *lpuCurDirLen);
+        *lpuCurDirLen = curDirSizeReq;
     }
 
-    TRACE("ret = %lu (%s%s%s)\n", retval,
-		 (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
-		 (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
-		 (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "");
-
-    ver_dstring("\t(Exit) lpszCurDir = ", lpszCurDir, "");
-    if(lpuCurDirLen)
-	TRACE("\t(Exit) lpuCurDirLen = %p (%u)\n",
-		    lpuCurDirLen, *lpuCurDirLen);
-    else
-	TRACE("\t(Exit) lpuCurDirLen = (null)\n");
-
-    ver_dstring("\t(Exit) lpszDestDir = ", lpszDestDir, "");
-    if(lpuDestDirLen)
-	TRACE("\t(Exit) lpuDestDirLen = %p (%u)\n",
-		    lpuDestDirLen, *lpuDestDirLen);
+    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
+          (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
+          (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
+          (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
+          debugstr_a(lpszCurDir), debugstr_a(lpszDestDir));
 
     return retval;
 }
@@ -321,30 +199,91 @@ DWORD WINAPI VerFindFileA(
 /*****************************************************************************
  * VerFindFileW						[VERSION.6]
  */
-DWORD WINAPI VerFindFileW(
-	UINT flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
-	LPWSTR curdir,UINT *pcurdirlen,LPWSTR destdir,UINT *pdestdirlen )
+DWORD WINAPI VerFindFileW( UINT flags,LPCWSTR lpszFilename,LPCWSTR lpszWinDir,
+                           LPCWSTR lpszAppDir, LPWSTR lpszCurDir,UINT *lpuCurDirLen,
+                           LPWSTR lpszDestDir,UINT *lpuDestDirLen )
 {
-    UINT curdirlen, destdirlen;
-    LPSTR wfn,wwd,wad,wdd,wcd;
-    DWORD ret;
+    static const WCHAR emptyW;
+    DWORD retval = 0;
+    const WCHAR *curDir;
+    const WCHAR *destDir;
+    unsigned int curDirSizeReq;
+    unsigned int destDirSizeReq;
+    WCHAR systemDir[MAX_PATH];
 
-    wfn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    wwd = HEAP_strdupWtoA( GetProcessHeap(), 0, windir );
-    wad = HEAP_strdupWtoA( GetProcessHeap(), 0, appdir );
-    wcd = HeapAlloc( GetProcessHeap(), 0, *pcurdirlen );
-    wdd = HeapAlloc( GetProcessHeap(), 0, *pdestdirlen );
-    ret = VerFindFileA(flags,wfn,wwd,wad,wcd,&curdirlen,wdd,&destdirlen);
-    lstrcpynAtoW(curdir,wcd,*pcurdirlen);
-    lstrcpynAtoW(destdir,wdd,*pdestdirlen);
-    *pcurdirlen = strlen(wcd);
-    *pdestdirlen = strlen(wdd);
-    HeapFree( GetProcessHeap(), 0, wfn );
-    HeapFree( GetProcessHeap(), 0, wwd );
-    HeapFree( GetProcessHeap(), 0, wad );
-    HeapFree( GetProcessHeap(), 0, wcd );
-    HeapFree( GetProcessHeap(), 0, wdd );
-    return ret;
+    /* Print out debugging information */
+    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)",
+          flags, debugstr_w(lpszFilename), debugstr_w(lpszWinDir), debugstr_w(lpszAppDir),
+          lpuCurDirLen, lpuCurDirLen ? *lpuCurDirLen : 0,
+          lpuDestDirLen, lpuDestDirLen ? *lpuDestDirLen : 0 );
+
+    /* Figure out where the file should go; shared files default to the
+       system directory */
+
+    GetSystemDirectoryW(systemDir, sizeof(systemDir)/sizeof(WCHAR));
+    curDir = &emptyW;
+    destDir = &emptyW;
+
+    if(flags & VFFF_ISSHAREDFILE)
+    {
+        destDir = systemDir;
+        /* Were we given a filename?  If so, try to find the file. */
+        if(lpszFilename)
+        {
+            if(testFileExistenceW(destDir, lpszFilename, FALSE)) curDir = destDir;
+            else if(lpszAppDir && testFileExistenceW(lpszAppDir, lpszFilename, FALSE))
+            {
+                curDir = lpszAppDir;
+                retval |= VFF_CURNEDEST;
+            }
+        }
+    }
+    else /* not a shared file */
+    {
+        if(lpszAppDir)
+        {
+            destDir = lpszAppDir;
+            if(lpszFilename)
+            {
+                if(testFileExistenceW(destDir, lpszFilename, FALSE)) curDir = destDir;
+                else if(testFileExistenceW(systemDir, lpszFilename, FALSE))
+                {
+                    curDir = systemDir;
+                    retval |= VFF_CURNEDEST;
+                }
+            }
+        }
+    }
+
+    if (lpszFilename && !testFileExistenceW(curDir, lpszFilename, TRUE))
+        retval |= VFF_FILEINUSE;
+
+    curDirSizeReq = strlenW(curDir) + 1;
+    destDirSizeReq = strlenW(destDir) + 1;
+
+    /* Make sure that the pointers to the size of the buffers are
+       valid; if not, do NOTHING with that buffer.  If that pointer
+       is valid, then make sure that the buffer pointer is valid, too! */
+
+    if(lpuDestDirLen && lpszDestDir)
+    {
+        if (*lpuDestDirLen < destDirSizeReq) retval |= VFF_BUFFTOOSMALL;
+        lstrcpynW(lpszDestDir, destDir, *lpuDestDirLen);
+        *lpuDestDirLen = destDirSizeReq;
+    }
+    if(lpuCurDirLen && lpszCurDir)
+    {
+        if(*lpuCurDirLen < curDirSizeReq) retval |= VFF_BUFFTOOSMALL;
+        lstrcpynW(lpszCurDir, curDir, *lpuCurDirLen);
+        *lpuCurDirLen = curDirSizeReq;
+    }
+
+    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
+          (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
+          (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
+          (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
+          debugstr_w(lpszCurDir), debugstr_w(lpszDestDir));
+    return retval;
 }
 
 static LPBYTE
@@ -571,25 +510,54 @@ DWORD WINAPI VerInstallFileW(
 	UINT flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
 	LPCWSTR destdir,LPCWSTR curdir,LPWSTR tmpfile,UINT *tmpfilelen )
 {
-    LPSTR wsrcf,wsrcd,wdestf,wdestd,wtmpf,wcurd;
+    LPSTR wsrcf = NULL, wsrcd = NULL, wdestf = NULL, wdestd = NULL, wtmpf = NULL, wcurd = NULL;
     DWORD ret;
+    UINT len;
 
-    wsrcf  = HEAP_strdupWtoA( GetProcessHeap(), 0, srcfilename );
-    wsrcd  = HEAP_strdupWtoA( GetProcessHeap(), 0, srcdir );
-    wdestf = HEAP_strdupWtoA( GetProcessHeap(), 0, destfilename );
-    wdestd = HEAP_strdupWtoA( GetProcessHeap(), 0, destdir );
-    wtmpf  = HEAP_strdupWtoA( GetProcessHeap(), 0, tmpfile );
-    wcurd  = HEAP_strdupWtoA( GetProcessHeap(), 0, curdir );
-    ret = VerInstallFileA(flags,wsrcf,wdestf,wsrcd,wdestd,wcurd,wtmpf,tmpfilelen);
+    if (srcfilename)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, srcfilename, -1, NULL, 0, NULL, NULL );
+        if ((wsrcf = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, srcfilename, -1, wsrcf, len, NULL, NULL );
+    }
+    if (srcdir)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, srcdir, -1, NULL, 0, NULL, NULL );
+        if ((wsrcd = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, srcdir, -1, wsrcd, len, NULL, NULL );
+    }
+    if (destfilename)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, destfilename, -1, NULL, 0, NULL, NULL );
+        if ((wdestf = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, destfilename, -1, wdestf, len, NULL, NULL );
+    }
+    if (destdir)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, destdir, -1, NULL, 0, NULL, NULL );
+        if ((wdestd = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, destdir, -1, wdestd, len, NULL, NULL );
+    }
+    if (curdir)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, curdir, -1, NULL, 0, NULL, NULL );
+        if ((wcurd = HeapAlloc( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, curdir, -1, wcurd, len, NULL, NULL );
+    }
+    len = *tmpfilelen * sizeof(WCHAR);
+    wtmpf = HeapAlloc( GetProcessHeap(), 0, len );
+    ret = VerInstallFileA(flags,wsrcf,wdestf,wsrcd,wdestd,wcurd,wtmpf,&len);
     if (!ret)
-    	lstrcpynAtoW(tmpfile,wtmpf,*tmpfilelen);
+        *tmpfilelen = MultiByteToWideChar( CP_ACP, 0, wtmpf, -1, tmpfile, *tmpfilelen );
+    else if (ret & VIF_BUFFTOOSMALL)
+        *tmpfilelen = len;  /* FIXME: not correct */
+
     HeapFree( GetProcessHeap(), 0, wsrcf );
     HeapFree( GetProcessHeap(), 0, wsrcd );
     HeapFree( GetProcessHeap(), 0, wdestf );
     HeapFree( GetProcessHeap(), 0, wdestd );
     HeapFree( GetProcessHeap(), 0, wtmpf );
-    if (wcurd) 
-    	HeapFree( GetProcessHeap(), 0, wcurd );
+    HeapFree( GetProcessHeap(), 0, wcurd );
     return ret;
 }
 

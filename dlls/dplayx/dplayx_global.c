@@ -1055,15 +1055,15 @@ BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
 
   if( lpSessionSrc->sess.lpszSessionNameA )
   {
-    lpSessionDest->sess.lpszSessionNameA =
-      HEAP_strdupA( GetProcessHeap(),
-                    HEAP_ZERO_MEMORY, lpSessionSrc->sess.lpszSessionNameA );
+      if ((lpSessionDest->sess.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0,
+                                                             strlen(lpSessionSrc->sess.lpszSessionNameA)+1 )))
+          strcpy( lpSessionDest->sess.lpszSessionNameA, lpSessionSrc->sess.lpszSessionNameA );
   }
   if( lpSessionSrc->pass.lpszPasswordA )
   {
-    lpSessionDest->pass.lpszPasswordA =
-      HEAP_strdupA( GetProcessHeap(),
-                    HEAP_ZERO_MEMORY, lpSessionSrc->pass.lpszPasswordA );
+      if ((lpSessionDest->pass.lpszPasswordA = HeapAlloc( GetProcessHeap(), 0,
+                                                          strlen(lpSessionSrc->pass.lpszPasswordA)+1 )))
+          strcpy( lpSessionDest->pass.lpszPasswordA, lpSessionSrc->pass.lpszPasswordA );
   }
 
   return TRUE;

@@ -15,7 +15,6 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver);
@@ -313,8 +312,10 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
  */
 DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
-    LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
-    DWORD ret = GetFileVersionInfoSizeA( fn, handle );
+    DWORD ret, len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+    LPSTR fn = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, filename, -1, fn, len, NULL, NULL );
+    ret = GetFileVersionInfoSizeA( fn, handle );
     HeapFree( GetProcessHeap(), 0, fn );
     return ret;
 }
@@ -351,11 +352,14 @@ DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
 DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
-    LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+    LPSTR fn = HeapAlloc( GetProcessHeap(), 0, len );
     DWORD retv = TRUE;
 
+    WideCharToMultiByte( CP_ACP, 0, filename, -1, fn, len, NULL, NULL );
+
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
-                debugstr_a(fn), handle, datasize, data );
+                debugstr_w(filename), handle, datasize, data );
 
     if ( !GetFileResource16( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
                                  MAKEINTRESOURCEA(VS_VERSION_INFO),
