@@ -4,7 +4,7 @@
  * Copyright 1997 Alexandre Julliard
  * Copyright 1997 Marcus Meissner
  * Copyright 1998 Patrik Stridvall
- * Copyright 1998 Andreas Mohr
+ * Copyright 1998,2003 Andreas Mohr
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -58,6 +58,7 @@ typedef enum
 
 typedef struct
 {
+    char             human_readable[32];
     LONG             getVersion16;
     LONG             getVersion32;
     OSVERSIONINFOEXA getVersionEx;
@@ -70,9 +71,13 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 {
     /* WIN20 FIXME: verify values */
     {
+	"Windows 2.0",
 	MAKELONG( 0x0002, 0x0303 ), /* assume DOS 3.3 */
 	MAKELONG( 0x0002, 0x8000 ),
 	{
+	    /* yes, sizeof(OSVERSIONINFOA) is correct here
+	     * (in case of OSVERSIONINFOEXA application request,
+	     * we adapt it dynamically). */
             sizeof(OSVERSIONINFOA), 2, 0, 0,
             VER_PLATFORM_WIN32s, "Win32s 1.3",
 	    0, 0, 0, 0, 0
@@ -80,6 +85,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN30 FIXME: verify values */
     {
+	"Windows 3.0",
 	MAKELONG( 0x0003, 0x0500 ), /* assume DOS 5.00 */
 	MAKELONG( 0x0003, 0x8000 ),
 	{
@@ -90,6 +96,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN31 */
     {
+	"Windows 3.1",
 	MAKELONG( 0x0a03, 0x0616 ), /* DOS 6.22 */
 	MAKELONG( 0x0a03, 0x8000 ),
 	{
@@ -100,6 +107,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN95 */
     {
+	"Windows 95",
         0x07005F03,
         0xC0000004,
         {
@@ -119,6 +127,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN98 (second edition) */
     {
+	"Windows 98 SE",
         0x070A5F03,
         0xC0000A04,
         {
@@ -132,6 +141,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WINME */
     {
+	"Windows ME",
         0x08005F03,
         0xC0005A04,
         {
@@ -142,6 +152,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* NT351 */
     {
+	"Windows NT 3.51",
         0x05000A03,
         0x04213303,
         {
@@ -152,6 +163,7 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* NT40 */
     {
+	"Windows NT 4.0",
         0x05000A03,
         0x05650004,
         {
@@ -162,16 +174,18 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* NT2K */
     {
+	"Windows 2000",
         0x05005F03,
         0x08930005,
         {
             sizeof(OSVERSIONINFOA), 5, 0, 0x893,
             VER_PLATFORM_WIN32_NT, "Service Pack 2",
-	    2, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
+	    2, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! Is this correct? */
         }
     },
     /* WINXP */
     {
+	"Windows XP",
         0x05005F03, /* Assuming DOS 5 like the other NT */
         0x0A280105,
         {
@@ -583,6 +597,7 @@ static WINDOWS_VERSION VERSION_GetVersion(void)
 LONG WINAPI GetVersion16(void)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
+    TRACE("<-- %s (%s)\n", VersionData[ver].human_readable, VersionData[ver].getVersionEx.szCSDVersion);
     return VersionData[ver].getVersion16;
 }
 
@@ -593,6 +608,7 @@ LONG WINAPI GetVersion16(void)
 LONG WINAPI GetVersion(void)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
+    TRACE("<-- %s (%s)\n", VersionData[ver].human_readable, VersionData[ver].getVersionEx.szCSDVersion);
     return VersionData[ver].getVersion32;
 }
 
@@ -614,6 +630,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
     v->dwBuildNumber  = VersionData[ver].getVersionEx.dwBuildNumber;
     v->dwPlatformId   = VersionData[ver].getVersionEx.dwPlatformId;
     strcpy( v->szCSDVersion, VersionData[ver].getVersionEx.szCSDVersion );
+    TRACE("<-- %s (%s)\n", VersionData[ver].human_readable, VersionData[ver].getVersionEx.szCSDVersion);
     return TRUE;
 }
 
@@ -647,6 +664,7 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
 	vex->wSuiteMask = VersionData[ver].getVersionEx.wSuiteMask;
 	vex->wProductType = VersionData[ver].getVersionEx.wProductType;
     }
+    TRACE("<-- %s (%s)\n", VersionData[ver].human_readable, VersionData[ver].getVersionEx.szCSDVersion);
     return TRUE;
 }
 
@@ -681,6 +699,7 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 	vex->wSuiteMask = VersionData[ver].getVersionEx.wSuiteMask;
 	vex->wProductType = VersionData[ver].getVersionEx.wProductType;
     }
+    TRACE("<-- %s (%s)\n", VersionData[ver].human_readable, VersionData[ver].getVersionEx.szCSDVersion);
     return TRUE;
 }
 
