@@ -160,10 +160,11 @@ static ULONG WINAPI ACMStream_fnAddRef(IAVIStream *iface)
 static ULONG WINAPI ACMStream_fnRelease(IAVIStream* iface)
 {
   IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) -> %ld\n", iface, This->ref - 1);
+  TRACE("(%p) -> %ld\n", iface, ref);
 
-  if (This->ref == 0) {
+  if (ref == 0) {
     /* destruct */
     if (This->has != NULL) {
       if (This->acmStreamHdr.fdwStatus & ACMSTREAMHEADER_STATUSF_PREPARED)
@@ -202,7 +203,7 @@ static ULONG WINAPI ACMStream_fnRelease(IAVIStream* iface)
   if (This->pStream != NULL)
     IAVIStream_Release(This->pStream);
 
-  return --This->ref;
+  return ref;
 }
 
 /* lParam1: PAVISTREAM
