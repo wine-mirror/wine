@@ -1162,12 +1162,16 @@ not_found:
 	    } else
 	        lf.lfCharSet = csi.ciCharset;
 	}
-        if(lf.lfPitchAndFamily & FIXED_PITCH ||
-	   lf.lfPitchAndFamily & FF_MODERN)
+
+		/* Face families are in the top 4 bits of lfPitchAndFamily,
+		   so mask with 0xF0 before testing */
+
+	if((lf.lfPitchAndFamily & FIXED_PITCH) ||
+	   (lf.lfPitchAndFamily & 0xF0) == FF_MODERN)
 	  strcpyW(lf.lfFaceName, defFixed);
-	else if(lf.lfPitchAndFamily & FF_ROMAN)
+	else if((lf.lfPitchAndFamily & 0xF0) == FF_ROMAN)
 	  strcpyW(lf.lfFaceName, defSerif);
-	else if(lf.lfPitchAndFamily & FF_SWISS)
+	else if((lf.lfPitchAndFamily & 0xF0) == FF_SWISS)
 	  strcpyW(lf.lfFaceName, defSans);
 	else
 	  strcpyW(lf.lfFaceName, defSans);
