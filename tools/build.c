@@ -944,25 +944,32 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
             break;
         }
 
-	if (!bundle)
+        if ( !selector )
+           continue;
+
+        if ( bundle && bundle->last+1 == i )
+            bundle->last++;
+        else
         {
-	    bundle = (ET_BUNDLE *)pstr;
-	    bundle->first = 0;
-	    pstr += sizeof(ET_BUNDLE);
+            if ( bundle )
+                bundle->next = (char *)pstr - (char *)pModule;
+
+            bundle = (ET_BUNDLE *)pstr;
+            bundle->first = i-1;
+            bundle->last = i;
+            bundle->next = 0;
+            pstr += sizeof(ET_BUNDLE);
         }
 
 	/* FIXME: is this really correct ?? */
 	entry = (ET_ENTRY *)pstr;
-	entry->type = selector;
+	entry->type = 0xff;  /* movable */
 	entry->flags = 3; /* exported & public data */
 	entry->segnum = selector;
 	entry->offs = odp->offset;
 	pstr += sizeof(ET_ENTRY);
-
     }
     *pstr++ = 0;
-    bundle->last = i;
-    bundle->next = 0;
 
       /* Dump the module content */
 
