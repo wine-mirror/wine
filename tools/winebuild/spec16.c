@@ -111,7 +111,7 @@ static int StoreVariableCode( unsigned char *buffer, int size, ORDDEF *odp )
  * as a byte stream into the assembly code.
  */
 static int BuildModule16( FILE *outfile, int max_code_offset,
-                          int max_data_offset )
+                          int max_data_offset, DLLSPEC *spec )
 {
     int i;
     char *buffer;
@@ -142,7 +142,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pModule->next = 0;
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
     pModule->dgroup = 2;
-    pModule->heap_size = DLLHeapSize;
+    pModule->heap_size = spec->heap_size;
     pModule->stack_size = 0;
     pModule->ip = 0;
     pModule->cs = 0;
@@ -172,8 +172,8 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pModule->fileinfo = (int)pFileInfo - (int)pModule;
     memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
     pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
-                        + strlen(dll_file_name);
-    strcpy( pFileInfo->szPathName, dll_file_name );
+                        + strlen(spec->file_name);
+    strcpy( pFileInfo->szPathName, spec->file_name );
     pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
 
       /* Segment table */
@@ -201,7 +201,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pstr = (char *)pSegment;
     pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->res_table = (int)pstr - (int)pModule;
-    pstr += output_res16_directory( pstr );
+    pstr += output_res16_directory( pstr, spec );
 
       /* Imported names table */
 
@@ -215,16 +215,16 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->name_table = (int)pstr - (int)pModule;
     /* First entry is module name */
-    *pstr = strlen( dll_name );
-    strcpy( pstr + 1, dll_name );
+    *pstr = strlen( spec->dll_name );
+    strcpy( pstr + 1, spec->dll_name );
     strupper( pstr + 1 );
     pstr += *pstr + 1;
     *pstr++ = 0;
     *pstr++ = 0;
     /* Store all ordinals */
-    for (i = 1; i <= Limit; i++)
+    for (i = 1; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         WORD ord = i;
         if (!odp || !odp->name[0]) continue;
         *pstr = strlen( odp->name );
@@ -240,10 +240,10 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 
     pstr = (char *)(((long)pstr + 3) & ~3);
     pModule->entry_table = (int)pstr - (int)pModule;
-    for (i = 1; i <= Limit; i++)
+    for (i = 1; i <= spec->limit; i++)
     {
         int selector = 0;
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp) continue;
 
 	switch (odp->type)
@@ -504,14 +504,14 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
  *
  * Output the functions for stub entry points
 */
-static void output_stub_funcs( FILE *outfile )
+static void output_stub_funcs( FILE *outfile, const DLLSPEC *spec )
 {
     int i;
     char *p;
 
-    for (i = 0; i <= Limit; i++)
+    for (i = 0; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp || odp->type != TYPE_STUB) continue;
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
@@ -528,7 +528,7 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
         fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = \"%s\";\n", dll_file_name );
+        fprintf( outfile, "  rec.info[0] = \"%s\";\n", spec->file_name );
         fprintf( outfile, "  rec.info[1] = func;\n" );
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
@@ -538,9 +538,9 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
         break;
     }
-    for (i = 0; i <= Limit; i++)
+    for (i = 0; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp || odp->type != TYPE_STUB) continue;
         odp->link_name = xrealloc( odp->link_name, strlen(odp->name) + 13 );
         strcpy( odp->link_name, "__wine_stub_" );
@@ -557,7 +557,7 @@ static void output_stub_funcs( FILE *outfile )
  *
  * Build a Win16 assembly file from a spec file.
  */
-void BuildSpec16File( FILE *outfile )
+void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
 {
     ORDDEF **type, **typelist;
     int i, nFuncs, nTypes;
@@ -580,22 +580,22 @@ void BuildSpec16File( FILE *outfile )
     memset( data, 0, 16 );
     data_offset = 16;
 
-    if (!dll_name)  /* set default name from file name */
+    if (!spec->dll_name)  /* set default name from file name */
     {
         char *p;
-        dll_name = xstrdup( dll_file_name );
-        if ((p = strrchr( dll_name, '.' ))) *p = 0;
+        spec->dll_name = xstrdup( spec->file_name );
+        if ((p = strrchr( spec->dll_name, '.' ))) *p = 0;
     }
 
-    output_stub_funcs( outfile );
+    output_stub_funcs( outfile, spec );
 
     /* Build sorted list of all argument types, without duplicates */
 
-    typelist = (ORDDEF **)calloc( Limit+1, sizeof(ORDDEF *) );
+    typelist = (ORDDEF **)calloc( spec->limit+1, sizeof(ORDDEF *) );
 
-    for (i = nFuncs = 0; i <= Limit; i++)
+    for (i = nFuncs = 0; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp) continue;
         switch (odp->type)
         {
@@ -627,15 +627,15 @@ void BuildSpec16File( FILE *outfile )
         char profile[101];
 
         strcpy( profile, get_function_name( typelist[i] ));
-        BuildCallFrom16Func( outfile, profile, dll_file_name );
+        BuildCallFrom16Func( outfile, profile, spec->file_name );
     }
 #endif
 
     /* Output the DLL functions prototypes */
 
-    for (i = 0; i <= Limit; i++)
+    for (i = 0; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp) continue;
         switch(odp->type)
         {
@@ -724,7 +724,7 @@ void BuildSpec16File( FILE *outfile )
 
 #ifdef __i386__
         fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
-                 make_c_identifier(dll_file_name), profile,
+                 make_c_identifier(spec->file_name), profile,
                  (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
                  (typelist[i]->flags & FLAG_RET16) ? "word" : "long" );
         if (argsize)
@@ -745,9 +745,9 @@ void BuildSpec16File( FILE *outfile )
     }
     fprintf( outfile, "  },\n  {\n" );
 
-    for (i = 0; i <= Limit; i++)
+    for (i = 0; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp) continue;
         switch (odp->type)
         {
@@ -767,7 +767,7 @@ void BuildSpec16File( FILE *outfile )
             type = bsearch( &odp, typelist, nTypes, sizeof(ORDDEF *), Spec16TypeCompare );
             assert( type );
 
-            fprintf( outfile, "    /* %s.%d */ ", dll_name, i );
+            fprintf( outfile, "    /* %s.%d */ ", spec->dll_name, i );
 #ifdef __i386__
             fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s */ },\n",
 #else
@@ -797,8 +797,8 @@ void BuildSpec16File( FILE *outfile )
 
     /* Build the module */
 
-    module_size = BuildModule16( outfile, code_offset, data_offset );
-    res_size = output_res16_data( outfile );
+    module_size = BuildModule16( outfile, code_offset, data_offset, spec );
+    res_size = output_res16_data( outfile, spec );
 
     /* Output the DLL descriptor */
 
@@ -816,14 +816,14 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    sizeof(Module),\n" );
     fprintf( outfile, "    &code_segment,\n" );
     fprintf( outfile, "    Data_Segment,\n" );
-    fprintf( outfile, "    \"%s\",\n", owner_name );
+    fprintf( outfile, "    \"%s\",\n", spec->owner_name );
     fprintf( outfile, "    %s\n", res_size ? "resource_data" : "0" );
     fprintf( outfile, "};\n" );
 
     /* Output the DLL constructor */
 
-    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(dll_file_name) );
-    sprintf( destructor, "__wine_spec_%s_fini", make_c_identifier(dll_file_name) );
+    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(spec->file_name) );
+    sprintf( destructor, "__wine_spec_%s_fini", make_c_identifier(spec->file_name) );
     output_dll_init( outfile, constructor, destructor );
 
     fprintf( outfile,

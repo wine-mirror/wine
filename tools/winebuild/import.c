@@ -525,16 +525,16 @@ static int remove_symbol_holes(void)
 }
 
 /* add a symbol to the extra list, but only if needed */
-static int add_extra_symbol( const char **extras, int *count, const char *name )
+static int add_extra_symbol( const char **extras, int *count, const char *name, const DLLSPEC *spec )
 {
     int i;
 
     if (!find_symbol( name, undef_symbols, nb_undef_symbols ))
     {
         /* check if the symbol is being exported by this dll */
-        for (i = 0; i < nb_entry_points; i++)
+        for (i = 0; i < spec->nb_entry_points; i++)
         {
-            ORDDEF *odp = EntryPoints[i];
+            ORDDEF *odp = &spec->entry_points[i];
             if (odp->type == TYPE_STDCALL ||
                 odp->type == TYPE_CDECL ||
                 odp->type == TYPE_VARARGS ||
@@ -550,7 +550,7 @@ static int add_extra_symbol( const char **extras, int *count, const char *name )
 }
 
 /* add the extra undefined symbols that will be contained in the generated spec file itself */
-static void add_extra_undef_symbols(void)
+static void add_extra_undef_symbols( const DLLSPEC *spec )
 {
     const char *extras[10];
     int i, count = 0, nb_stubs = 0, nb_regs = 0;
@@ -558,44 +558,44 @@ static void add_extra_undef_symbols(void)
 
     sort_symbols( undef_symbols, nb_undef_symbols );
 
-    for (i = 0; i < nb_entry_points; i++)
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
-        ORDDEF *odp = EntryPoints[i];
+        ORDDEF *odp = &spec->entry_points[i];
         if (odp->type == TYPE_STUB) nb_stubs++;
         if (odp->flags & FLAG_REGISTER) nb_regs++;
     }
 
     /* add symbols that will be contained in the spec file itself */
-    switch (SpecMode)
+    switch (spec->mode)
     {
     case SPEC_MODE_DLL:
         break;
     case SPEC_MODE_GUIEXE:
-        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA" );
-        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA" );
-        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
         /* fall through */
     case SPEC_MODE_CUIEXE:
-        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess" );
+        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
         break;
     case SPEC_MODE_GUIEXE_UNICODE:
-        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA" );
-        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA" );
-        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA" );
+        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
         /* fall through */
     case SPEC_MODE_CUIEXE_UNICODE:
-        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess" );
+        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
         break;
     }
     if (nb_delayed)
     {
-        kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA" );
-        kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress" );
+        kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
     }
     if (nb_regs)
-        ntdll_imports += add_extra_symbol( extras, &count, "__wine_call_from_32_regs" );
+        ntdll_imports += add_extra_symbol( extras, &count, "__wine_call_from_32_regs", spec );
     if (nb_delayed || nb_stubs)
-        ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException" );
+        ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException", spec );
 
     /* make sure we import the dlls that contain these functions */
     if (kernel_imports) add_import_dll( "kernel32", 0 );
@@ -609,16 +609,16 @@ static void add_extra_undef_symbols(void)
 }
 
 /* check if a given imported dll is not needed, taking forwards into account */
-static int check_unused( const struct import* imp )
+static int check_unused( const struct import* imp, const DLLSPEC *spec )
 {
     int i;
     size_t len = strlen(imp->dll);
     const char *p = strchr( imp->dll, '.' );
     if (p && !strcasecmp( p, ".dll" )) len = p - imp->dll;
 
-    for (i = Base; i <= Limit; i++)
+    for (i = spec->base; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp || !(odp->flags & FLAG_FORWARD)) continue;
         if (!strncasecmp( odp->link_name, imp->dll, len ) &&
             odp->link_name[len] == '.')
@@ -708,13 +708,13 @@ static void remove_ignored_symbols(void)
 }
 
 /* resolve the imports for a Win32 module */
-int resolve_imports( void )
+int resolve_imports( DLLSPEC *spec )
 {
     int i, j;
 
     if (nb_undef_symbols == -1) return 0; /* no symbol file specified */
 
-    add_extra_undef_symbols();
+    add_extra_undef_symbols( spec );
     remove_ignored_symbols();
 
     for (i = 0; i < nb_imports; i++)
@@ -732,7 +732,7 @@ int resolve_imports( void )
             }
         }
         /* remove all the holes in the undef symbols list */
-        if (!remove_symbol_holes() && check_unused( imp ))
+        if (!remove_symbol_holes() && check_unused( imp, spec ))
         {
             /* the dll is not used, get rid of it */
             warning( "%s imported but no symbols used\n", imp->dll );
@@ -873,7 +873,7 @@ static int output_immediate_imports( FILE *outfile )
 }
 
 /* output the delayed import table of a Win32 module */
-static int output_delayed_imports( FILE *outfile )
+static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 {
     int i, idx, j, pos;
 
@@ -941,9 +941,9 @@ static int output_delayed_imports( FILE *outfile )
     /* check if there's some stub defined. if so, exception struct
      *  is already defined, so don't emit it twice
      */
-    for (i = 0; i < nb_entry_points; i++) if (EntryPoints[i]->type == TYPE_STUB) break;
+    for (i = 0; i < spec->nb_entry_points; i++) if (spec->entry_points[i].type == TYPE_STUB) break;
 
-    if (i == nb_entry_points) {
+    if (i == spec->nb_entry_points) {
        fprintf( outfile, "struct exc_record {\n" );
        fprintf( outfile, "  unsigned int code, flags;\n" );
        fprintf( outfile, "  void *rec, *addr;\n" );
@@ -1153,8 +1153,8 @@ static int output_delayed_imports( FILE *outfile )
 /* output the import and delayed import tables of a Win32 module
  * returns number of DLLs exported in 'immediate' mode
  */
-int output_imports( FILE *outfile )
+int output_imports( FILE *outfile, DLLSPEC *spec )
 {
-   output_delayed_imports( outfile );
+   output_delayed_imports( outfile, spec );
    return output_immediate_imports( outfile );
 }

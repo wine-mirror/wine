@@ -36,20 +36,7 @@
 
 #include "build.h"
 
-ORDDEF *EntryPoints[MAX_ORDINALS];
-ORDDEF *Ordinals[MAX_ORDINALS];
-ORDDEF *Names[MAX_ORDINALS];
-
-SPEC_MODE SpecMode = SPEC_MODE_DLL;
-SPEC_TYPE SpecType = SPEC_WIN32;
-
-int Base = MAX_ORDINALS;
-int Limit = 0;
-int DLLHeapSize = 0;
 int UsePIC = 0;
-int stack_size = 0;
-int nb_entry_points = 0;
-int nb_names = 0;
 int nb_debug_channels = 0;
 int nb_lib_paths = 0;
 int nb_errors = 0;
@@ -63,10 +50,6 @@ int debugging = 1;
 int debugging = 0;
 #endif
 
-char *owner_name = NULL;
-char *dll_name = NULL;
-char *dll_file_name = NULL;
-const char *init_func = NULL;
 char **debug_channels = NULL;
 char **lib_path = NULL;
 
@@ -94,18 +77,18 @@ enum exec_mode_values
 static enum exec_mode_values exec_mode = MODE_NONE;
 
 /* set the dll file name from the input file name */
-static void set_dll_file_name( const char *name )
+static void set_dll_file_name( const char *name, DLLSPEC *spec )
 {
     char *p;
 
-    if (dll_file_name) return;
+    if (spec->file_name) return;
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     if ((p = strrchr( name, '/' ))) name = p + 1;
-    dll_file_name = xmalloc( strlen(name) + 5 );
-    strcpy( dll_file_name, name );
-    if ((p = strrchr( dll_file_name, '.' )) && !strcmp( p, ".spec" )) *p = 0;
-    if (!strchr( dll_file_name, '.' )) strcat( dll_file_name, ".dll" );
+    spec->file_name = xmalloc( strlen(name) + 5 );
+    strcpy( spec->file_name, name );
+    if ((p = strrchr( spec->file_name, '.' )) && !strcmp( p, ".spec" )) *p = 0;
+    if (!strchr( spec->file_name, '.' )) strcat( spec->file_name, ".dll" );
 }
 
 /* cleanup on program exit */
@@ -206,7 +189,7 @@ static void set_exec_mode( enum exec_mode_values mode )
 }
 
 /* parse options from the argv array and remove all the recognized ones */
-static char **parse_options( int argc, char **argv )
+static char **parse_options( int argc, char **argv, DLLSPEC *spec )
 {
     char *p;
     int optc;
@@ -222,14 +205,14 @@ static char **parse_options( int argc, char **argv )
             /* ignored */
             break;
         case 'F':
-            dll_file_name = xstrdup( optarg );
+            spec->file_name = xstrdup( optarg );
             break;
         case 'H':
             if (!isdigit(optarg[0]))
                 fatal_error( "Expected number argument with -H option instead of '%s'\n", optarg );
-            DLLHeapSize = atoi(optarg);
-            if (DLLHeapSize > 65535)
-                fatal_error( "Invalid heap size %d, maximum is 65535\n", DLLHeapSize );
+            spec->heap_size = atoi(optarg);
+            if (spec->heap_size > 65535)
+                fatal_error( "Invalid heap size %d, maximum is 65535\n", spec->heap_size );
             break;
         case 'I':
             /* ignored */
@@ -242,18 +225,18 @@ static char **parse_options( int argc, char **argv )
             lib_path[nb_lib_paths++] = xstrdup( optarg );
             break;
         case 'M':
-            owner_name = xstrdup( optarg );
-            SpecType = SPEC_WIN16;
+            spec->owner_name = xstrdup( optarg );
+            spec->type = SPEC_WIN16;
             break;
         case 'N':
-            dll_name = xstrdup( optarg );
+            spec->dll_name = xstrdup( optarg );
             break;
         case 'd':
             add_import_dll( optarg, 1 );
             break;
         case 'e':
-            init_func = xstrdup( optarg );
-            if ((p = strchr( init_func, '@' ))) *p = 0;  /* kill stdcall decoration */
+            spec->init_func = xstrdup( optarg );
+            if ((p = strchr( spec->init_func, '@' ))) *p = 0;  /* kill stdcall decoration */
             break;
         case 'f':
             if (!strcmp( optarg, "PIC") || !strcmp( optarg, "pic")) UsePIC = 1;
@@ -281,10 +264,10 @@ static char **parse_options( int argc, char **argv )
             add_import_dll( optarg, 0 );
             break;
         case 'm':
-            if (!strcmp( optarg, "gui" )) SpecMode = SPEC_MODE_GUIEXE;
-            else if (!strcmp( optarg, "cui" )) SpecMode = SPEC_MODE_CUIEXE;
-            else if (!strcmp( optarg, "guiw" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
-            else if (!strcmp( optarg, "cuiw" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
+            if (!strcmp( optarg, "gui" )) spec->mode = SPEC_MODE_GUIEXE;
+            else if (!strcmp( optarg, "cui" )) spec->mode = SPEC_MODE_CUIEXE;
+            else if (!strcmp( optarg, "guiw" )) spec->mode = SPEC_MODE_GUIEXE_UNICODE;
+            else if (!strcmp( optarg, "cuiw" )) spec->mode = SPEC_MODE_CUIEXE_UNICODE;
             else usage(1);
             break;
         case 'o':
@@ -305,21 +288,21 @@ static char **parse_options( int argc, char **argv )
         case LONG_OPT_SPEC:
             set_exec_mode( MODE_SPEC );
             input_file = open_input_file( NULL, optarg );
-            set_dll_file_name( optarg );
+            set_dll_file_name( optarg, spec );
             break;
         case LONG_OPT_DEF:
             set_exec_mode( MODE_DEF );
             input_file = open_input_file( NULL, optarg );
-            set_dll_file_name( optarg );
+            set_dll_file_name( optarg, spec );
             break;
         case LONG_OPT_EXE:
             set_exec_mode( MODE_EXE );
             if ((p = strrchr( optarg, '/' ))) p++;
             else p = optarg;
-            dll_file_name = xmalloc( strlen(p) + 5 );
-            strcpy( dll_file_name, p );
-            if (!strchr( dll_file_name, '.' )) strcat( dll_file_name, ".exe" );
-            if (SpecMode == SPEC_MODE_DLL) SpecMode = SPEC_MODE_GUIEXE;
+            spec->file_name = xmalloc( strlen(p) + 5 );
+            strcpy( spec->file_name, p );
+            if (!strchr( spec->file_name, '.' )) strcat( spec->file_name, ".exe" );
+            if (spec->mode == SPEC_MODE_DLL) spec->mode = SPEC_MODE_GUIEXE;
             break;
         case LONG_OPT_DEBUG:
             set_exec_mode( MODE_DEBUG );
@@ -343,28 +326,28 @@ static char **parse_options( int argc, char **argv )
 
 
 /* load all specified resource files */
-static void load_resources( char *argv[] )
+static void load_resources( char *argv[], DLLSPEC *spec )
 {
     int i;
     char **ptr, **last;
 
-    switch (SpecType)
+    switch (spec->type)
     {
     case SPEC_WIN16:
-        for (i = 0; i < nb_res_files; i++) load_res16_file( res_files[i] );
+        for (i = 0; i < nb_res_files; i++) load_res16_file( res_files[i], spec );
         break;
 
     case SPEC_WIN32:
         for (i = 0; i < nb_res_files; i++)
         {
-            if (!load_res32_file( res_files[i] ))
+            if (!load_res32_file( res_files[i], spec ))
                 fatal_error( "%s is not a valid Win32 resource file\n", res_files[i] );
         }
 
         /* load any resource file found in the remaining arguments */
         for (ptr = last = argv; *ptr; ptr++)
         {
-            if (!load_res32_file( *ptr ))
+            if (!load_res32_file( *ptr, spec ))
                 *last++ = *ptr; /* not a resource file, keep it in the list */
         }
         *last = NULL;
@@ -377,39 +360,60 @@ static void load_resources( char *argv[] )
  */
 int main(int argc, char **argv)
 {
+    DLLSPEC spec;
+
+    spec.file_name          = NULL;
+    spec.dll_name           = NULL;
+    spec.owner_name         = NULL;
+    spec.init_func          = NULL;
+    spec.type               = SPEC_WIN32;
+    spec.mode               = SPEC_MODE_DLL;
+    spec.base               = MAX_ORDINALS;
+    spec.limit              = 0;
+    spec.stack_size         = 0;
+    spec.heap_size          = 0;
+    spec.nb_entry_points    = 0;
+    spec.alloc_entry_points = 0;
+    spec.nb_names           = 0;
+    spec.nb_resources       = 0;
+    spec.entry_points       = NULL;
+    spec.names              = NULL;
+    spec.ordinals           = NULL;
+    spec.resources          = NULL;
+
     output_file = stdout;
-    argv = parse_options( argc, argv );
+    argv = parse_options( argc, argv, &spec );
 
     switch(exec_mode)
     {
     case MODE_SPEC:
-        load_resources( argv );
-        if (!ParseTopLevel( input_file )) break;
-        switch (SpecType)
+        load_resources( argv, &spec );
+        if (!ParseTopLevel( input_file, &spec )) break;
+        switch (spec.type)
         {
             case SPEC_WIN16:
                 if (argv[0])
                     fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-                BuildSpec16File( output_file );
+                BuildSpec16File( output_file, &spec );
                 break;
             case SPEC_WIN32:
                 read_undef_symbols( argv );
-                BuildSpec32File( output_file );
+                BuildSpec32File( output_file, &spec );
                 break;
             default: assert(0);
         }
         break;
     case MODE_EXE:
-        if (SpecType == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
-        load_resources( argv );
+        if (spec.type == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
+        load_resources( argv, &spec );
         read_undef_symbols( argv );
-        BuildSpec32File( output_file );
+        BuildSpec32File( output_file, &spec );
         break;
     case MODE_DEF:
         if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
-        if (SpecType == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
-        if (!ParseTopLevel( input_file )) break;
-        BuildDef32File( output_file );
+        if (spec.type == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
+        if (!ParseTopLevel( input_file, &spec )) break;
+        BuildDef32File( output_file, &spec );
         break;
     case MODE_DEBUG:
         BuildDebugFile( output_file, current_src_dir, argv );

@@ -55,50 +55,21 @@ static int string_compare( const void *ptr1, const void *ptr2 )
  *
  * Generate an internal name for an entry point. Used for stubs etc.
  */
-static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
+static const char *make_internal_name( const ORDDEF *odp, DLLSPEC *spec, const char *prefix )
 {
     static char buffer[256];
     if (odp->name || odp->export_name)
     {
         char *p;
-        sprintf( buffer, "__wine_%s_%s_%s", prefix, dll_file_name,
+        sprintf( buffer, "__wine_%s_%s_%s", prefix, spec->file_name,
                  odp->name ? odp->name : odp->export_name );
         /* make sure name is a legal C identifier */
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
     }
-    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(dll_file_name), odp->ordinal );
+    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(spec->file_name), odp->ordinal );
     return buffer;
 }
-
-/*******************************************************************
- *         AssignOrdinals
- *
- * Assign ordinals to all entry points.
- */
-static void AssignOrdinals(void)
-{
-    int i, ordinal;
-
-    if ( !nb_names ) return;
-
-    /* start assigning from Base, or from 1 if no ordinal defined yet */
-    if (Base == MAX_ORDINALS) Base = 1;
-    for (i = 0, ordinal = Base; i < nb_names; i++)
-    {
-        if (Names[i]->ordinal != -1) continue;  /* already has an ordinal */
-        while (Ordinals[ordinal]) ordinal++;
-        if (ordinal >= MAX_ORDINALS)
-        {
-            current_line = Names[i]->lineno;
-            fatal_error( "Too many functions defined (max %d)\n", MAX_ORDINALS );
-        }
-        Names[i]->ordinal = ordinal;
-        Ordinals[ordinal] = Names[i];
-    }
-    if (ordinal > Limit) Limit = ordinal;
-}
-
 
 /*******************************************************************
  *         output_debug
@@ -134,7 +105,7 @@ static int output_debug( FILE *outfile )
  *
  * Output the export table for a Win32 module.
  */
-static int output_exports( FILE *outfile, int nr_exports )
+static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
 {
     int i, fwd_size = 0, total_size = 0;
 
@@ -150,11 +121,11 @@ static int output_exports( FILE *outfile, int nr_exports )
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* TimeDateStamp */
     fprintf( outfile, "    \"\\t.long 0\\n\"\n" );                 /* MajorVersion/MinorVersion */
     fprintf( outfile, "    \"\\t.long __wine_spec_exp_names\\n\"\n" ); /* Name */
-    fprintf( outfile, "    \"\\t.long %d\\n\"\n", Base );          /* Base */
-    fprintf( outfile, "    \"\\t.long %d\\n\"\n", nr_exports );    /* NumberOfFunctions */
-    fprintf( outfile, "    \"\\t.long %d\\n\"\n", nb_names );      /* NumberOfNames */
+    fprintf( outfile, "    \"\\t.long %d\\n\"\n", spec->base );        /* Base */
+    fprintf( outfile, "    \"\\t.long %d\\n\"\n", nr_exports );        /* NumberOfFunctions */
+    fprintf( outfile, "    \"\\t.long %d\\n\"\n", spec->nb_names );    /* NumberOfNames */
     fprintf( outfile, "    \"\\t.long __wine_spec_exports_funcs\\n\"\n" ); /* AddressOfFunctions */
-    if (nb_names)
+    if (spec->nb_names)
     {
         fprintf( outfile, "    \"\\t.long __wine_spec_exp_name_ptrs\\n\"\n" );     /* AddressOfNames */
         fprintf( outfile, "    \"\\t.long __wine_spec_exp_ordinals\\n\"\n" );  /* AddressOfNameOrdinals */
@@ -169,9 +140,9 @@ static int output_exports( FILE *outfile, int nr_exports )
     /* output the function pointers */
 
     fprintf( outfile, "    \"__wine_spec_exports_funcs:\\n\"\n" );
-    for (i = Base; i <= Limit; i++)
+    for (i = spec->base; i <= spec->limit; i++)
     {
-        ORDDEF *odp = Ordinals[i];
+        ORDDEF *odp = spec->ordinals[i];
         if (!odp) fprintf( outfile, "    \"\\t.long 0\\n\"\n" );
         else switch(odp->type)
         {
@@ -182,7 +153,8 @@ static int output_exports( FILE *outfile, int nr_exports )
             if (!(odp->flags & FLAG_FORWARD))
             {
                 fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n",
-                         (odp->flags & FLAG_REGISTER) ? make_internal_name(odp,"regs") : odp->link_name );
+                         (odp->flags & FLAG_REGISTER) ? make_internal_name( odp, spec, "regs" )
+                         : odp->link_name );
             }
             else
             {
@@ -191,49 +163,51 @@ static int output_exports( FILE *outfile, int nr_exports )
             }
             break;
         case TYPE_STUB:
-            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "stub" ) );
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n",
+                     make_internal_name( odp, spec, "stub" ) );
             break;
         default:
             assert(0);
         }
     }
-    total_size += (Limit - Base + 1) * sizeof(int);
+    total_size += (spec->limit - spec->base + 1) * sizeof(int);
 
-    if (nb_names)
+    if (spec->nb_names)
     {
         /* output the function name pointers */
 
-        int namepos = strlen(dll_file_name) + 1;
+        int namepos = strlen(spec->file_name) + 1;
 
         fprintf( outfile, "    \"__wine_spec_exp_name_ptrs:\\n\"\n" );
-        for (i = 0; i < nb_names; i++)
+        for (i = 0; i < spec->nb_names; i++)
         {
             fprintf( outfile, "    \"\\t.long __wine_spec_exp_names+%d\\n\"\n", namepos );
-            namepos += strlen(Names[i]->name) + 1;
+            namepos += strlen(spec->names[i]->name) + 1;
         }
-        total_size += nb_names * sizeof(int);
+        total_size += spec->nb_names * sizeof(int);
     }
 
     /* output the function names */
 
     fprintf( outfile, "    \"\\t.text\\n\"\n" );
     fprintf( outfile, "    \"__wine_spec_exp_names:\\n\"\n" );
-    fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", dll_file_name );
-    for (i = 0; i < nb_names; i++)
-        fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", Names[i]->name );
+    fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", spec->file_name );
+    for (i = 0; i < spec->nb_names; i++)
+        fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", spec->names[i]->name );
     fprintf( outfile, "    \"\\t.data\\n\"\n" );
 
-    if (nb_names)
+    if (spec->nb_names)
     {
         /* output the function ordinals */
 
         fprintf( outfile, "    \"__wine_spec_exp_ordinals:\\n\"\n" );
-        for (i = 0; i < nb_names; i++)
+        for (i = 0; i < spec->nb_names; i++)
         {
-            fprintf( outfile, "    \"\\t" __ASM_SHORT " %d\\n\"\n", Names[i]->ordinal - Base );
+            fprintf( outfile, "    \"\\t" __ASM_SHORT " %d\\n\"\n",
+                     spec->names[i]->ordinal - spec->base );
         }
-        total_size += nb_names * sizeof(short);
-        if (nb_names % 2)
+        total_size += spec->nb_names * sizeof(short);
+        if (spec->nb_names % 2)
         {
             fprintf( outfile, "    \"\\t" __ASM_SHORT " 0\\n\"\n" );
             total_size += sizeof(short);
@@ -245,9 +219,9 @@ static int output_exports( FILE *outfile, int nr_exports )
     if (fwd_size)
     {
         fprintf( outfile, "    \"__wine_spec_forwards:\\n\"\n" );
-        for (i = Base; i <= Limit; i++)
+        for (i = spec->base; i <= spec->limit; i++)
         {
-            ORDDEF *odp = Ordinals[i];
+            ORDDEF *odp = spec->ordinals[i];
             if (odp && (odp->flags & FLAG_FORWARD))
                 fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
         }
@@ -259,9 +233,9 @@ static int output_exports( FILE *outfile, int nr_exports )
 
     if (debugging)
     {
-        for (i = Base; i <= Limit; i++)
+        for (i = spec->base; i <= spec->limit; i++)
         {
-            ORDDEF *odp = Ordinals[i];
+            ORDDEF *odp = spec->ordinals[i];
             unsigned int j, args, mask = 0;
             const char *name;
 
@@ -281,7 +255,7 @@ static int output_exports( FILE *outfile, int nr_exports )
 
             name = odp->link_name;
             args = strlen(odp->u.func.arg_types) * sizeof(int);
-            if (odp->flags & FLAG_REGISTER) name = make_internal_name( odp, "regs" );
+            if (odp->flags & FLAG_REGISTER) name = make_internal_name( odp, spec, "regs" );
 
             switch(odp->type)
             {
@@ -319,13 +293,13 @@ static int output_exports( FILE *outfile, int nr_exports )
  *
  * Output the functions for stub entry points
 */
-static void output_stub_funcs( FILE *outfile )
+static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
 {
     int i;
 
-    for (i = 0; i < nb_entry_points; i++)
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
-        ORDDEF *odp = EntryPoints[i];
+        ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
@@ -343,7 +317,7 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
         fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = \"%s\";\n", dll_file_name );
+        fprintf( outfile, "  rec.info[0] = \"%s\";\n", spec->file_name );
         fprintf( outfile, "  rec.info[1] = func;\n" );
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
@@ -354,11 +328,11 @@ static void output_stub_funcs( FILE *outfile )
         break;
     }
 
-    for (i = 0; i < nb_entry_points; i++)
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
-        ORDDEF *odp = EntryPoints[i];
+        const ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
-        fprintf( outfile, "void %s(void) ", make_internal_name( odp, "stub" ) );
+        fprintf( outfile, "void %s(void) ", make_internal_name( odp, spec, "stub" ) );
         if (odp->name)
             fprintf( outfile, "{ __wine_unimplemented(\"%s\"); }\n", odp->name );
         else if (odp->export_name)
@@ -374,18 +348,18 @@ static void output_stub_funcs( FILE *outfile )
  *
  * Output the functions for register entry points
  */
-static void output_register_funcs( FILE *outfile )
+static void output_register_funcs( FILE *outfile, DLLSPEC *spec )
 {
     const char *name;
     int i;
 
-    for (i = 0; i < nb_entry_points; i++)
+    for (i = 0; i < spec->nb_entry_points; i++)
     {
-        ORDDEF *odp = EntryPoints[i];
+        const ORDDEF *odp = &spec->entry_points[i];
         if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL) continue;
         if (!(odp->flags & FLAG_REGISTER)) continue;
         if (odp->flags & FLAG_FORWARD) continue;
-        name = make_internal_name( odp, "regs" );
+        name = make_internal_name( odp, spec, "regs" );
         fprintf( outfile,
                  "asm(\".align %d\\n\\t\"\n"
                  "    \"" __ASM_FUNC("%s") "\\n\\t\"\n"
@@ -485,12 +459,13 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
  *
  * Build a Win32 C file from a spec file.
  */
-void BuildSpec32File( FILE *outfile )
+void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 {
     int exports_size = 0;
-    int nr_exports, nr_imports, nr_resources;
+    int nr_exports, nr_imports;
     int characteristics, subsystem;
     DWORD page_size;
+    const char *init_func = spec->init_func;
 
 #ifdef HAVE_GETPAGESIZE
     page_size = getpagesize();
@@ -506,10 +481,8 @@ void BuildSpec32File( FILE *outfile )
 #   error Cannot get the page size on this platform
 #endif
 
-    AssignOrdinals();
-    nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
-
-    resolve_imports();
+    nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
+    resolve_imports( spec );
     output_standard_file_header( outfile );
 
     /* Reserve some space for the PE header */
@@ -541,7 +514,7 @@ void BuildSpec32File( FILE *outfile )
     {
         /* Output the stub functions */
 
-        output_stub_funcs( outfile );
+        output_stub_funcs( outfile, spec );
 
         fprintf( outfile, "#ifndef __GNUC__\n" );
         fprintf( outfile, "static void __asm__dummy(void) {\n" );
@@ -549,11 +522,11 @@ void BuildSpec32File( FILE *outfile )
 
         /* Output code for all register functions */
 
-        output_register_funcs( outfile );
+        output_register_funcs( outfile, spec );
 
         /* Output the exports and relay entry points */
 
-        exports_size = output_exports( outfile, nr_exports );
+        exports_size = output_exports( outfile, nr_exports, spec );
 
         fprintf( outfile, "#ifndef __GNUC__\n" );
         fprintf( outfile, "}\n" );
@@ -562,11 +535,11 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output the DLL imports */
 
-    nr_imports = output_imports( outfile );
+    nr_imports = output_imports( outfile, spec );
 
     /* Output the resources */
 
-    nr_resources = output_resources( outfile );
+    output_resources( outfile, spec );
 
     /* Output the entry point function */
 
@@ -579,7 +552,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "extern void _fini();\n" );
 
     characteristics = subsystem = 0;
-    switch(SpecMode)
+    switch(spec->mode)
     {
     case SPEC_MODE_DLL:
         if (init_func)
@@ -772,9 +745,9 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    0x%04x,\n", subsystem );      /* Subsystem */
     fprintf( outfile, "    0,\n" );                      /* DllCharacteristics */
     fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfStackReserve/Commit */
-             (stack_size ? stack_size : 1024) * 1024, page_size );
+             (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );
     fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfHeapReserve/Commit */
-             (DLLHeapSize ? DLLHeapSize : 1024) * 1024, page_size );
+             (spec->heap_size ? spec->heap_size : 1024) * 1024, page_size );
     fprintf( outfile, "    0,\n" );                      /* LoaderFlags */
     fprintf( outfile, "    %d,\n", IMAGE_NUMBEROF_DIRECTORY_ENTRIES );  /* NumberOfRvaAndSizes */
     fprintf( outfile, "    {\n" );
@@ -783,7 +756,8 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "      { %s, %s },\n",  /* IMAGE_DIRECTORY_ENTRY_IMPORT */
              nr_imports ? "&imports" : "0", nr_imports ? "sizeof(imports)" : "0" );
     fprintf( outfile, "      { %s, %s },\n",   /* IMAGE_DIRECTORY_ENTRY_RESOURCE */
-             nr_resources ? "&resources" : "0", nr_resources ? "sizeof(resources)" : "0" );
+             spec->nb_resources ? "&resources" : "0",
+             spec->nb_resources ? "sizeof(resources)" : "0" );
     fprintf( outfile, "    }\n  }\n};\n\n" );
 
     /* Output the DLL constructor */
@@ -795,7 +769,7 @@ void BuildSpec32File( FILE *outfile )
              "    __wine_spec_init_state = 1;\n"
              "    __wine_dll_register( &nt_header, \"%s\" );\n"
              "}\n\n",
-             dll_file_name );
+             spec->file_name );
 
     output_dll_init( outfile, "__wine_spec_init_ctor", NULL );
     fprintf( outfile,
@@ -813,25 +787,23 @@ void BuildSpec32File( FILE *outfile )
  *
  * Build a Win32 def file from a spec file.
  */
-void BuildDef32File(FILE *outfile)
+void BuildDef32File( FILE *outfile, DLLSPEC *spec )
 {
     const char *name;
     int i;
 
-    AssignOrdinals();
-
     fprintf(outfile, "; File generated automatically from %s; do not edit!\n\n",
             input_file_name );
 
-    fprintf(outfile, "LIBRARY %s\n\n", dll_file_name);
+    fprintf(outfile, "LIBRARY %s\n\n", spec->file_name);
 
     fprintf(outfile, "EXPORTS\n");
 
     /* Output the exports and relay entry points */
 
-    for(i = 0; i < nb_entry_points; i++)
+    for(i = 0; i < spec->nb_entry_points; i++)
     {
-        ORDDEF *odp = EntryPoints[i];
+        const ORDDEF *odp = &spec->entry_points[i];
         int is_data = 0;
 
         if (!odp) continue;

@@ -94,6 +94,28 @@ typedef struct
     } u;
 } ORDDEF;
 
+typedef struct
+{
+    char            *file_name;          /* file name of the dll */
+    char            *dll_name;           /* internal name of the dll */
+    char            *owner_name;         /* name of the 32-bit dll owning this one */
+    char            *init_func;          /* initialization routine */
+    SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
+    SPEC_MODE        mode;               /* dll mode (dll/exe/etc.) */
+    int              base;               /* ordinal base */
+    int              limit;              /* ordinal limit */
+    int              stack_size;         /* exe stack size */
+    int              heap_size;          /* exe heap size */
+    int              nb_entry_points;    /* number of used entry points */
+    int              alloc_entry_points; /* number of allocated entry points */
+    int              nb_names;           /* number of entry points with names */
+    int              nb_resources;       /* number of resources */
+    ORDDEF          *entry_points;       /* dll entry points */
+    ORDDEF         **names;              /* array of entry point names (points into entry_points) */
+    ORDDEF         **ordinals;           /* array of dll ordinals (points into entry_points) */
+    struct resource *resources;          /* array of dll resources (format differs between Win16/Win32) */
+} DLLSPEC;
+
 /* entry point flags */
 #define FLAG_NORELAY   0x01  /* don't use relay debugging for this function */
 #define FLAG_NONAME    0x02  /* don't import function by name */
@@ -153,54 +175,38 @@ extern int get_alignment(int alignBoundary);
 extern void add_import_dll( const char *name, int delay );
 extern void add_ignore_symbol( const char *name );
 extern void read_undef_symbols( char **argv );
-extern int resolve_imports( void );
-extern int output_imports( FILE *outfile );
-extern int load_res32_file( const char *name );
-extern int output_resources( FILE *outfile );
-extern void load_res16_file( const char *name );
-extern int output_res16_data( FILE *outfile );
-extern int output_res16_directory( unsigned char *buffer );
+extern int resolve_imports( DLLSPEC *spec );
+extern int output_imports( FILE *outfile, DLLSPEC *spec );
+extern int load_res32_file( const char *name, DLLSPEC *spec );
+extern void output_resources( FILE *outfile, DLLSPEC *spec );
+extern void load_res16_file( const char *name, DLLSPEC *spec );
+extern int output_res16_data( FILE *outfile, DLLSPEC *spec );
+extern int output_res16_directory( unsigned char *buffer, DLLSPEC *spec );
 extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
 extern int parse_debug_channels( const char *srcdir, const char *filename );
 
 extern void BuildRelays16( FILE *outfile );
 extern void BuildRelays32( FILE *outfile );
-extern void BuildSpec16File( FILE *outfile );
-extern void BuildSpec32File( FILE *outfile );
-extern void BuildDef32File( FILE *outfile );
+extern void BuildSpec16File( FILE *outfile, DLLSPEC *spec );
+extern void BuildSpec32File( FILE *outfile, DLLSPEC *spec );
+extern void BuildDef32File( FILE *outfile, DLLSPEC *spec );
 extern void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv );
-extern int ParseTopLevel( FILE *file );
+extern int ParseTopLevel( FILE *file, DLLSPEC *spec );
 
 /* global variables */
 
 extern int current_line;
-extern int nb_entry_points;
-extern int nb_names;
-extern int Base;
-extern int Limit;
-extern int DLLHeapSize;
 extern int UsePIC;
 extern int debugging;
-extern int stack_size;
 extern int nb_debug_channels;
 extern int nb_lib_paths;
 extern int nb_errors;
 extern int display_warnings;
 extern int kill_at;
 
-extern char *owner_name;
-extern char *dll_name;
-extern char *dll_file_name;
-extern const char *init_func;
 extern char *input_file_name;
 extern const char *output_file_name;
 extern char **debug_channels;
 extern char **lib_path;
-
-extern ORDDEF *EntryPoints[MAX_ORDINALS];
-extern ORDDEF *Ordinals[MAX_ORDINALS];
-extern ORDDEF *Names[MAX_ORDINALS];
-extern SPEC_MODE SpecMode;
-extern SPEC_TYPE SpecType;
 
 #endif  /* __WINE_BUILD_H */
