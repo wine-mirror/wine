@@ -1,9 +1,10 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
- * Sample CDAUDIO Wine Driver for Linux
+ * Main file for CD-ROM support
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1999 Eric Pouech
+ * Copyright 2000 Andreas Mohr
  */
 
 #include <errno.h>
@@ -14,17 +15,17 @@
 #include "drive.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(cdaudio)
+DEFAULT_DEBUG_CHANNEL(cdrom);
 
 #define MAX_CDAUDIO_TRACKS 	256
 
 /**************************************************************************
- * 				CDAUDIO_Open			[internal]
+ * 				CDROM_Open			[internal]
  *
  * drive = 0, 1, ...
  *      or -1 (figure it out)
  */
-int	CDAUDIO_Open(WINE_CDAUDIO* wcda, int drive)
+int	CDROM_Open(WINE_CDAUDIO* wcda, int drive)
 {
     int i;
     BOOL avail = FALSE;
@@ -72,9 +73,9 @@ int	CDAUDIO_Open(WINE_CDAUDIO* wcda, int drive)
 }
 
 /**************************************************************************
- * 				CDAUDIO_GetMediaType		[internal]
+ * 				CDROM_GetMediaType		[internal]
  */
-int	CDAUDIO_GetMediaType(WINE_CDAUDIO* wcda)
+int	CDROM_GetMediaType(WINE_CDAUDIO* wcda)
 {
 #ifdef linux
     return ioctl(wcda->unixdev, CDROM_DISC_STATUS);
@@ -84,9 +85,9 @@ int	CDAUDIO_GetMediaType(WINE_CDAUDIO* wcda)
 }
 
 /**************************************************************************
- * 				CDAUDIO_Close			[internal]
+ * 				CDROM_Close			[internal]
  */
-int	CDAUDIO_Close(WINE_CDAUDIO* wcda)
+int	CDROM_Close(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     if (wcda->lpdwTrackLen != NULL) free(wcda->lpdwTrackLen);
@@ -100,9 +101,31 @@ int	CDAUDIO_Close(WINE_CDAUDIO* wcda)
 }
 
 /**************************************************************************
- * 				CDAUDIO_GetNumberOfTracks	[internal]
+ *				CDROM_Get_UPC			[internal]
+ *
+ * upc has to be 14 bytes long
  */
-UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
+int CDROM_Get_UPC(WINE_CDAUDIO* wcda, LPSTR upc)
+{
+#ifdef linux
+    struct cdrom_mcn mcn;
+    int status = ioctl(wcda->unixdev, CDROM_GET_MCN, &mcn);
+    if (status)
+{
+	ERR("ioctl() failed with code %d\n",status);
+	return -1;
+    }
+    strcpy(upc, mcn.medium_catalog_number);
+    return 0;
+#else
+    return -1;
+#endif
+}
+
+/**************************************************************************
+ * 				CDROM_Audio_GetNumberOfTracks	[internal]
+ */
+UINT16 CDROM_Audio_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 #ifdef linux
@@ -118,7 +141,7 @@ UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 	if (ioctl(wcda->unixdev, CDIOREADTOCHEADER, &hdr))
 #endif
 	{
-	    WARN("(%p) -- Error occured (%d)!\n", wcda, errno);
+	    WARN("(%p) -- Error occurred (%d)!\n", wcda, errno);
 	    return (WORD)-1;
 	}
 #ifdef linux
@@ -137,9 +160,9 @@ UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 }
 
 /**************************************************************************
- * 			CDAUDIO_GetTracksInfo			[internal]
+ * 			CDROM_Audio_GetTracksInfo		[internal]
  */
-BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
+BOOL CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		i, length;
@@ -153,7 +176,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 #endif
     
     if (wcda->nTracks == 0) {
-	if (CDAUDIO_GetNumberOfTracks(wcda) == (WORD)-1) return FALSE;
+	if (CDROM_Audio_GetNumberOfTracks(wcda) == (WORD)-1) return FALSE;
     }
     TRACE("nTracks=%u\n", wcda->nTracks);
     
@@ -204,7 +227,7 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	{
 	    WARN("error read entry (%d)\n", errno);
 	    /* update status according to new status */
-	    CDAUDIO_GetCDStatus(wcda);
+	    CDROM_Audio_GetCDStatus(wcda);
 
 	    return FALSE;
 	}
@@ -248,9 +271,9 @@ BOOL CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 }
 
 /**************************************************************************
- * 				CDAUDIO_GetCDStatus		[internal]
+ * 				CDROM_Audio_GetCDStatus		[internal]
  */
-BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
+BOOL CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		oldmode = wcda->cdaMode;
@@ -350,7 +373,7 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
 #endif
     
     if (oldmode != wcda->cdaMode && oldmode == WINE_CDA_OPEN) {
-	if (!CDAUDIO_GetTracksInfo(wcda)) {
+	if (!CDROM_Audio_GetTracksInfo(wcda)) {
 	    WARN("error updating TracksInfo !\n");
 	    return FALSE;
 	}
@@ -362,9 +385,9 @@ BOOL CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda)
 }
 
 /**************************************************************************
- * 				CDAUDIO_Play			[internal]
+ * 				CDROM_Audio_Play		[internal]
  */
-int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD end)
+int	CDROM_Audio_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD end)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 #ifdef linux
@@ -422,9 +445,9 @@ int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD end)
 }
 
 /**************************************************************************
- * 				CDAUDIO_Stop			[internal]
+ * 				CDROM_Audio_Stop		[internal]
  */
-int	CDAUDIO_Stop(WINE_CDAUDIO* wcda)
+int	CDROM_Audio_Stop(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int	ret = 0;
@@ -440,9 +463,9 @@ int	CDAUDIO_Stop(WINE_CDAUDIO* wcda)
 }
 
 /**************************************************************************
- * 				CDAUDIO_Pause			[internal]
+ * 				CDROM_Audio_Pause		[internal]
  */
-int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn)
+int	CDROM_Audio_Pause(WINE_CDAUDIO* wcda, int pauseOn)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int	ret = 0;    
@@ -458,9 +481,9 @@ int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn)
 }
 
 /**************************************************************************
- * 				CDAUDIO_Seek			[internal]
+ * 				CDROM_Audio_Seek		[internal]
  */
-int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
+int	CDROM_Audio_Seek(WINE_CDAUDIO* wcda, DWORD at)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int				ret = 0;    
@@ -486,9 +509,9 @@ int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
 }
 
 /**************************************************************************
- * 				CDAUDIO_SetDoor			[internal]
+ * 				CDROM_SetDoor			[internal]
  */
-int	CDAUDIO_SetDoor(WINE_CDAUDIO* wcda, int open)
+int	CDROM_SetDoor(WINE_CDAUDIO* wcda, int open)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int	ret = 0;    
@@ -511,9 +534,9 @@ int	CDAUDIO_SetDoor(WINE_CDAUDIO* wcda, int open)
 }
 
 /**************************************************************************
- * 				CDAUDIO_Reset			[internal]
+ * 				CDROM_Reset			[internal]
  */
-int	CDAUDIO_Reset(WINE_CDAUDIO* wcda) 
+int	CDROM_Reset(WINE_CDAUDIO* wcda) 
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int	ret = 0;
@@ -526,5 +549,123 @@ int	CDAUDIO_Reset(WINE_CDAUDIO* wcda)
 #else
     return -1;
 #endif
+}
+
+unsigned int get_offs_best_voldesc(int fd)
+{
+    BYTE cur_vd_type, max_vd_type = 0;
+    unsigned int offs, best_offs = 0;
+
+    for (offs=0x8000; offs <= 0x9800; offs += 0x800)
+    {
+        lseek(fd, offs, SEEK_SET);
+        read(fd, &cur_vd_type, 1);
+        if (cur_vd_type == 0xff)
+            break;
+        if (cur_vd_type > max_vd_type)
+        {
+            max_vd_type = cur_vd_type;
+            best_offs = offs;
+        }
+    }
+    return best_offs;
+}
+
+/**************************************************************************
+ *				CDROM_Audio_GetSerial		[internal]
+ */
+DWORD CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda)
+{
+    unsigned long serial = 0;
+    int i;
+    DWORD dwFrame, msf;
+    WORD wMinutes, wSeconds, wFrames;
+
+    for (i = 0; i < wcda->nTracks; i++) {
+	dwFrame = wcda->lpdwTrackPos[i];
+	wMinutes = dwFrame / CDFRAMES_PERMIN;
+	wSeconds = (dwFrame - CDFRAMES_PERMIN * wMinutes) / CDFRAMES_PERSEC;
+	wFrames = dwFrame - CDFRAMES_PERMIN * wMinutes - CDFRAMES_PERSEC * wSeconds;
+	msf = CDROM_MAKE_MSF(wMinutes, wSeconds, wFrames);
+
+	serial += (CDROM_MSF_MINUTE(msf) << 16) +
+	(CDROM_MSF_SECOND(msf) << 8) +
+	(CDROM_MSF_FRAME(msf));
+    }
+    return serial;
+}
+
+/**************************************************************************
+ *				CDROM_Data_GetSerial		[internal]
+ */
+DWORD CDROM_Data_GetSerial(WINE_CDAUDIO* wcda)
+{
+    unsigned int offs = get_offs_best_voldesc(wcda->unixdev);
+    union {
+	unsigned long val;
+	unsigned char p[4];
+    } serial;
+
+    serial.val = 0;
+    if (offs)
+    {
+	BYTE buf[2048];
+	int i;
+
+	lseek(wcda->unixdev,offs,SEEK_SET);
+	read(wcda->unixdev,buf,2048);
+	for(i=0; i<2048; i+=4)
+	{
+	    /* DON'T optimize this into DWORD !! (breaks overflow) */
+	    serial.p[0] += buf[i+0];
+	    serial.p[1] += buf[i+1];
+	    serial.p[2] += buf[i+2];
+	    serial.p[3] += buf[i+3];
+	}
+    }
+    return serial.val;
+}
+
+/**************************************************************************
+ *				CDROM_GetSerial			[internal]
+ */
+DWORD CDROM_GetSerial(int drive)
+{
+    WINE_CDAUDIO wcda;
+    DWORD serial = 0;
+
+    /* EXPIRES 01.01.2001 */
+    FIXME("CD-ROM serial number calculation might fail.\n");
+    FIXME("Please test with as many exotic CDs as possible !\n");
+
+    if (!(CDROM_Open(&wcda, drive)))
+    {
+	int media = CDROM_GetMediaType(&wcda);
+	LPSTR p;
+
+	if (media == CDS_AUDIO)
+	{
+	    if (!(CDROM_Audio_GetCDStatus(&wcda))) {
+		ERR("couldn't get CD status !\n");
+		CDROM_Close(&wcda);
+		return 0;
+	    }
+	    serial = CDROM_Audio_GetSerial(&wcda);
+	}
+	else
+	if (media > CDS_AUDIO)
+	    /* hopefully a data CD */
+	    serial = CDROM_Data_GetSerial(&wcda);
+
+	p = (media == CDS_AUDIO) ? "Audio " :
+	    (media > CDS_AUDIO) ? "Data " : "";
+	if (serial)
+	    FIXME("%sCD serial number is %04x-%04x.\n",
+		p, HIWORD(serial), LOWORD(serial));
+	else
+	    ERR("couldn't get %sCD serial !\n", p);
+	CDROM_Close(&wcda);
+    }
+    return serial;
 }
 

@@ -499,9 +499,9 @@ const char * DRIVE_GetLabel( int drive )
     {
 	WINE_CDAUDIO wcda;
 
-	if (!(CDAUDIO_Open(&wcda, drive)))
+	if (!(CDROM_Open(&wcda, drive)))
 	{
-	    int media = CDAUDIO_GetMediaType(&wcda);
+	    int media = CDROM_GetMediaType(&wcda);
 
 	    if (media == CDS_AUDIO)
 	    {
@@ -515,7 +515,7 @@ const char * DRIVE_GetLabel( int drive )
 		read = 1;
 	    }
 
-	    CDAUDIO_Close(&wcda);
+	    CDROM_Close(&wcda);
 }
     }
     if ((!read) && (DOSDrives[drive].read_volinfo))
@@ -545,27 +545,36 @@ const char * DRIVE_GetLabel( int drive )
 
 /***********************************************************************
  *           DRIVE_GetSerialNumber
- *
- * FIXME: apparently Win 9x (not DOS !) gives serial numbers to CD-ROMs, too.
- * How to calculate them ?
  */
 DWORD DRIVE_GetSerialNumber( int drive )
 {
+    DWORD serial = 0;
 char buff[DRIVE_SUPER];
 
     if (!DRIVE_IsValid( drive )) return 0;
-    if ( (DOSDrives[drive].read_volinfo) &&
-        ((DOSDrives[drive].type == TYPE_FLOPPY) ||
-         (DOSDrives[drive].type == TYPE_HD)))
+    
+    if (DOSDrives[drive].read_volinfo)
     {
+	switch(DOSDrives[drive].type)
+	{
+	    case TYPE_FLOPPY:
+	    case TYPE_HD:
       if (DRIVE_ReadSuperblock(drive,(char *) buff))
-
         MESSAGE("Invalid or unreadable superblock on %s (%c:)."
-           " Maybe not FAT?\n" ,DOSDrives[drive].device,(char)(drive+'A'));
+			" Maybe not FAT?\n" ,
+			DOSDrives[drive].device, 'A'+drive);
       else
-        return *((DWORD*)(buff+0x27));
+		    serial = *((DWORD*)(buff+0x27));
+		break;
+	    case TYPE_CDROM:
+		serial = CDROM_GetSerial(drive);
+		break;
+	    default:
+	        FIXME("Serial number reading from file system on drive %c: not supported yet.\n", drive+'A');
+	}
     }
-    return DOSDrives[drive].serial_conf;
+		
+    return (serial) ? serial : DOSDrives[drive].serial_conf;
 }
 
 

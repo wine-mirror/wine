@@ -516,7 +516,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	     *       - the current implementation only supports a single CD ROM
 	     */
 	    if (wcda.unixdev <= 0) 
-		CDAUDIO_Open(&wcda, -1);
+		CDROM_Open(&wcda, -1);
 	    TRACE("CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
 	    for (drive = 0; 
@@ -534,7 +534,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    
 	    /* set status to 0 */
 	    PTR_AT(driver_request, 3, WORD) = 0;
-	    CDAUDIO_GetCDStatus(&wcda);
+	    CDROM_Audio_GetCDStatus(&wcda);
 	    
 	    switch (driver_request[2]) {
 	    case 3:
@@ -710,22 +710,22 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		TRACE(" --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {
 		case 0: /* eject */ 
-		    CDAUDIO_SetDoor(&wcda, 1);
+		    CDROM_SetDoor(&wcda, 1);
 		    TRACE(" ----> EJECT\n"); 
 		    break;
 		case 2: /* reset drive */
-		    CDAUDIO_Reset(&wcda);
+		    CDROM_Reset(&wcda);
 		    TRACE(" ----> RESET\n"); 
 		    break;
 		case 3: /* Audio Channel Control */
 		    FIXME(" ----> AUDIO CHANNEL CONTROL (NIY)\n");
 		    break;
 		case 5: /* close tray */
-		    CDAUDIO_SetDoor(&wcda, 0);
+		    CDROM_SetDoor(&wcda, 0);
 		    TRACE(" ----> CLOSE TRAY\n"); 
 		    break;
 		default:
-		    FIXME(" IOCTL OUPUT: Unimplemented <%d>!!\n", io_stru[0]); 
+		    FIXME(" IOCTL OUTPUT: Unimplemented <%d>!!\n", io_stru[0]); 
 		    Error = 0x0c;
 		    break;	
 		}	
@@ -750,7 +750,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			    LOBYTE(LOWORD(at));
 			/* fall thru */
 		    case 0: /* HSG addressing mode */
-			CDAUDIO_Seek(&wcda, at);
+			CDROM_Audio_Seek(&wcda, at);
 			break;
 		    default:
 			ERR("Unsupported address mode !!\n");
@@ -783,7 +783,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			    LOBYTE(LOWORD(end));
 			/* fall thru */
 		    case 0: /* HSG addressing mode */
-			CDAUDIO_Play(&wcda, beg, end);
+			CDROM_Audio_Play(&wcda, beg, end);
 			break;
 		    default:
 			ERR("Unsupported address mode !!\n");
@@ -795,17 +795,17 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		
 	    case 133:
 		if (wcda.cdaMode == WINE_CDA_PLAY) {
-		    CDAUDIO_Pause(&wcda, 1);
+		    CDROM_Audio_Pause(&wcda, 1);
 		    TRACE(" --> STOP AUDIO (Paused)\n");
 		} else {
-		    CDAUDIO_Stop(&wcda);
+		    CDROM_Audio_Stop(&wcda);
 		    TRACE(" --> STOP AUDIO (Stopped)\n");
 		}
 		break;
 		
 	    case 136:
 		TRACE(" --> RESUME AUDIO\n");
-		CDAUDIO_Pause(&wcda, 0);
+		CDROM_Audio_Pause(&wcda, 0);
 		break;
 		
 	    default:

@@ -1,9 +1,10 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
- * Sample MCI CDAUDIO Wine Driver for Linux
+ * Header file for CD-ROM support
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1999 Eric Pouech
+ * Copyright 2000 Andreas Mohr
  */
 
 #ifndef __WINE_CDROM_H__
@@ -54,18 +55,21 @@ typedef struct {
 #define	WINE_CDA_STOP			0x04
 #define	WINE_CDA_PAUSE			0x05
 
-int	CDAUDIO_Open(WINE_CDAUDIO* wcda, int drive);
-int	CDAUDIO_GetMediaType(WINE_CDAUDIO* wcda);
-int	CDAUDIO_Close(WINE_CDAUDIO* wcda);
-int	CDAUDIO_Reset(WINE_CDAUDIO* wcda);
-int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD stop);
-int	CDAUDIO_Stop(WINE_CDAUDIO* wcda);
-int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn);
-int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at);
-int	CDAUDIO_SetDoor(WINE_CDAUDIO* wcda, int open);
-UINT16 	CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda);
-BOOL 	CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda);
-BOOL	CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda);
+int	CDROM_Open(WINE_CDAUDIO* wcda, int drive);
+int	CDROM_GetMediaType(WINE_CDAUDIO* wcda);
+int	CDROM_Close(WINE_CDAUDIO* wcda);
+int	CDROM_Reset(WINE_CDAUDIO* wcda);
+int	CDROM_Audio_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD stop);
+int	CDROM_Audio_Stop(WINE_CDAUDIO* wcda);
+int	CDROM_Audio_Pause(WINE_CDAUDIO* wcda, int pauseOn);
+int	CDROM_Audio_Seek(WINE_CDAUDIO* wcda, DWORD at);
+int	CDROM_SetDoor(WINE_CDAUDIO* wcda, int open);
+UINT16 	CDROM_Audio_GetNumberOfTracks(WINE_CDAUDIO* wcda);
+BOOL 	CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda);
+BOOL	CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda);
+DWORD	CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda);
+DWORD	CDROM_Data_GetSerial(WINE_CDAUDIO* wcda);
+DWORD	CDROM_GetSerial(int drive);
 
 #define CDFRAMES_PERSEC 		75
 #define SECONDS_PERMIN	 		60
@@ -74,6 +78,14 @@ BOOL	CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda);
 #ifndef CDROM_DATA_TRACK
 #define CDROM_DATA_TRACK 0x04
 #endif
+
+#define CDROM_MSF_MINUTE(msf)           ((BYTE)(msf))
+#define CDROM_MSF_SECOND(msf)           ((BYTE)(((WORD)(msf)) >> 8))
+#define CDROM_MSF_FRAME(msf)            ((BYTE)((msf)>>16))
+
+#define CDROM_MAKE_MSF(m, s, f)         ((DWORD)(((BYTE)(m) | \
+                                                  ((WORD)(s)<<8)) | \
+                                                 (((DWORD)(BYTE)(f))<<16)))
 
 /* values borrowed from Linux 2.2.x cdrom.h */
 #define CDS_NO_INFO			0
