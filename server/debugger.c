@@ -102,21 +102,26 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
 /* free a debug event structure */
 static void free_event( struct thread *debugger, struct debug_event *event )
 {
-    switch(event->code)
+    /* If the event has been sent already, the handles are now under the */
+    /* responsibility of the debugger process, so we don't touch them    */
+    if (!event->sent)
     {
-    case CREATE_THREAD_DEBUG_EVENT:
-        close_handle( debugger->process, event->data.create_thread.handle );
-        break;
-    case CREATE_PROCESS_DEBUG_EVENT:
-        if (event->data.create_process.file != -1)
-            close_handle( debugger->process, event->data.create_process.file );
-        close_handle( debugger->process, event->data.create_process.thread );
-        close_handle( debugger->process, event->data.create_process.process );
-        break;
-    case LOAD_DLL_DEBUG_EVENT:
-        if (event->data.load_dll.handle != -1)
-            close_handle( debugger->process, event->data.load_dll.handle );
-        break;
+        switch(event->code)
+        {
+        case CREATE_THREAD_DEBUG_EVENT:
+            close_handle( debugger->process, event->data.create_thread.handle );
+            break;
+        case CREATE_PROCESS_DEBUG_EVENT:
+            if (event->data.create_process.file != -1)
+                close_handle( debugger->process, event->data.create_process.file );
+            close_handle( debugger->process, event->data.create_process.thread );
+            close_handle( debugger->process, event->data.create_process.process );
+            break;
+        case LOAD_DLL_DEBUG_EVENT:
+            if (event->data.load_dll.handle != -1)
+                close_handle( debugger->process, event->data.load_dll.handle );
+            break;
+        }
     }
     event->thread->debug_event = NULL;
     release_object( event->thread );
