@@ -80,45 +80,60 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD Level, LPBYTE pDriverInfo,
 				      DWORD cbBuf, LPDWORD pcbNeeded,
 				      BOOL unicode);
+static void 
+WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
+    char qbuf[200];
+
+    /* If forcing, or no profile string entry for device yet, set the entry
+     *
+     * The always change entry if not WINEPS yet is discussable.
+     */
+    if (force								||
+	!GetProfileStringA("windows","device","*",qbuf,sizeof(qbuf))	||
+	!strcmp(qbuf,"*")						||
+	!strstr(qbuf,"WINEPS")
+    ) {
+    	char *buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS,LPR:")+1);
+
+	sprintf(buf,"%s,WINEPS,LPR:%s",devname,name);
+	WriteProfileStringA("windows","device",buf);
+	HeapFree(GetProcessHeap(),0,buf);
+    }
+}
 
 #ifdef HAVE_CUPS
 BOOL
 CUPS_LoadPrinters(void) {
-    cups_dest_t		*dests;
+    char		**printers;
     int			i,nrofdests,hadprinter = FALSE;
     PRINTER_INFO_2A	pinfo2a;
     const char*		def = cupsGetDefault();
 
-    nrofdests = cupsGetDests(&dests);
+    nrofdests = cupsGetPrinters(&printers);
 
     for (i=0;i<nrofdests;i++) {
-	const char *ppd = cupsGetPPD(dests[i].name);
+	const char *ppd = cupsGetPPD(printers[i]);
 	char	*port,*devline;
 
 	if (!ppd) {
-	    WARN("No ppd file for %s.\n",dests[i].name);
+	    WARN("No ppd file for %s.\n",printers[i]);
 	    continue;
 	}
 	unlink(ppd);
 
 	hadprinter = TRUE;
 
-	if (!strcmp(def,dests[i].name)) {
-		char	*buf = HeapAlloc(GetProcessHeap(),0,2*strlen(dests[i].name)+strlen(",WINEPS,LPR:")+1);
-
-		sprintf(buf,"%s,WINEPS,LPR:%s",dests[i].name,dests[i].name);
-		WriteProfileStringA("windows","device",buf);
-		HeapFree(GetProcessHeap(),0,buf);
-	}
+	if (!strcmp(def,printers[i]))
+	        WINSPOOL_SetDefaultPrinter(printers[i],printers[i],FALSE);
 	memset(&pinfo2a,0,sizeof(pinfo2a));
-	pinfo2a.pPrinterName	= dests[i].name;
+	pinfo2a.pPrinterName	= printers[i];
 	pinfo2a.pDatatype	= "RAW";
 	pinfo2a.pPrintProcessor	= "WinPrint";
 	pinfo2a.pDriverName	= "PS Driver";
 	pinfo2a.pComment	= "WINEPS Printer using CUPS";
 	pinfo2a.pLocation	= "<physical location of printer>";
-	port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(dests[i].name)+1);
-	sprintf(port,"LPR:%s",dests[i].name);
+	port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(printers[i])+1);
+	sprintf(port,"LPR:%s",printers[i]);
 	pinfo2a.pPortName	= port;
 	pinfo2a.pParameters	= "<parameters?>";
 	pinfo2a.pShareName	= "<share name?>";
@@ -126,12 +141,12 @@ CUPS_LoadPrinters(void) {
 
 	devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
 	sprintf(devline,"WINEPS,%s",port);
-	WriteProfileStringA("devices",dests[i].name,devline);
+	WriteProfileStringA("devices",printers[i],devline);
 	HeapFree(GetProcessHeap(),0,devline);
 
 	if (!AddPrinterA(NULL,2,(LPBYTE)&pinfo2a)) {
 	    if (GetLastError()!=ERROR_PRINTER_ALREADY_EXISTS)
-	        ERR("%s not added by AddPrinterA (%ld)\n",dests[i].name,GetLastError());
+	        ERR("%s not added by AddPrinterA (%ld)\n",printers[i],GetLastError());
 	}
 	HeapFree(GetProcessHeap(),0,port);
     }
@@ -197,13 +212,10 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
 	 devname = name;
     if (strlen(devname)>=CCHDEVICENAME-1)
 	return FALSE;
-    if (isfirst) {
-	    char	*buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS,LPR:")+1);
 
-	    sprintf(buf,"%s,WINEPS,LPR:%s",devname,name);
-	    WriteProfileStringA("windows","device",buf);
-	    HeapFree(GetProcessHeap(),0,buf);
-    }
+    if (isfirst) /* set first entry as default */
+	    WINSPOOL_SetDefaultPrinter(devname,name,FALSE);
+
     memset(&pinfo2a,0,sizeof(pinfo2a));
     pinfo2a.pPrinterName	= devname;
     pinfo2a.pDatatype		= "RAW";
