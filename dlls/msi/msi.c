@@ -1635,8 +1635,20 @@ UINT WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
     return USERINFOSTATE_UNKNOWN; 
 }
 
-UINT WINAPI MsiCollectUserInfoW(LPWSTR szProduct)
+UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
 {
     FIXME("%s\n",debugstr_w(szProduct));
-    return ERROR_FUNCTION_FAILED;
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
+{
+    FIXME("%s\n",debugstr_a(szProduct));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiCreateAndVerifyInstallerDirectory(void)
+{
+    FIXME("\n");
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }

@@ -6,7 +6,7 @@
 6 stdcall MsiAdvertiseProductW(wstr wstr wstr long)
 7 stdcall MsiCloseAllHandles()
 8 stdcall MsiCloseHandle(long)
-9 stub MsiCollectUserInfoA
+9 stdcall MsiCollectUserInfoA(str)
 10 stdcall MsiCollectUserInfoW(wstr)
 11 stub MsiConfigureFeatureA
 12 stub MsiConfigureFeatureFromDescriptorA
@@ -186,8 +186,8 @@
 186 stub MsiCreateTransformSummaryInfoW
 187 stub MsiQueryFeatureStateFromDescriptorA
 188 stub MsiQueryFeatureStateFromDescriptorW
-189 stub MsiConfigureProductExA
-190 stdcall MsiConfigureProductExW (wstr long long wstr)
+189 stdcall MsiConfigureProductExA(str long long str)
+190 stdcall MsiConfigureProductExW(wstr long long wstr)
 191 stub MsiInvalidateFeatureCache
 192 stub MsiUseFeatureExA
 193 stdcall MsiUseFeatureExW(wstr wstr long long)
@@ -197,8 +197,8 @@
 197 stdcall MsiLoadStringW(long long long long long)
 198 stdcall MsiMessageBoxA(long long long long long long)
 199 stdcall MsiMessageBoxW(long long long long long long)
-200 stdcall MsiDecomposeDescriptorA(str str ptr ptr ptr)
-201 stdcall MsiDecomposeDescriptorW(wstr wstr ptr ptr ptr)
+200 stdcall MsiDecomposeDescriptorA(str ptr ptr ptr ptr)
+201 stdcall MsiDecomposeDescriptorW(wstr ptr ptr ptr ptr)
 202 stub MsiProvideQualifiedComponentExA
 203 stdcall MsiProvideQualifiedComponentExW(wstr wstr long wstr long long ptr ptr)
 204 stdcall MsiEnumRelatedProductsA(str long long ptr)
@@ -219,7 +219,7 @@
 219 stub MsiGetFileHashW
 220 stub MsiEnumComponentCostsA
 221 stub MsiEnumComponentCostsW
-222 stub MsiCreateAndVerifyInstallerDirectory
+222 stdcall MsiCreateAndVerifyInstallerDirectory()
 223 stdcall MsiGetFileSignatureInformationA(str long ptr ptr ptr)
 224 stdcall MsiGetFileSignatureInformationW(wstr long ptr ptr ptr)
 225 stdcall MsiProvideAssemblyA(str str long long str ptr)

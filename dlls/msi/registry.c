@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2005 Mike McCormak for CodeWeavers
+ * Copyright 2005 Mike McCormack for CodeWeavers
  * Copyright 2005 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or

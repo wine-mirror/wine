@@ -289,8 +289,9 @@ extern BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name );
 
 extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
+
+/* action internals */
 extern UINT ACTION_DoTopLevelINSTALL( MSIPACKAGE *, LPCWSTR, LPCWSTR );
-extern void ACTION_remove_tracked_tempfiles( MSIPACKAGE* );
 extern void ACTION_free_package_structures( MSIPACKAGE* );
 
 /* record internals */
