@@ -23,6 +23,7 @@
 #include "options.h"
 #include "user.h"
 #include "win.h"
+#include "wine_gl.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
@@ -153,26 +154,50 @@ static void create_desktop( const char *geometry )
     XSetWindowAttributes win_attr;
     XTextProperty window_name;
     Atom XA_WM_DELETE_WINDOW;
+    /* Used to create the desktop window with a good visual */
+    XVisualInfo *vi = NULL;
+#ifdef HAVE_OPENGL
+    BOOL dblbuf_visual;
+
+    /* Get in wine.ini if the desktop window should have a double-buffered visual or not */
+    dblbuf_visual = PROFILE_GetWineIniBool( "x11drv", "DesktopDoubleBuffered", 0 );
+    if (dblbuf_visual)  {
+      int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+      
+      ENTER_GL();
+      vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
+      win_attr.colormap = XCreateColormap(display, RootWindow(display,vi->screen),
+                                         vi->visual, AllocNone);
+      LEAVE_GL();
+    }
+#endif /* HAVE_OPENGL */    
 
     flags = TSXParseGeometry( geometry, &x, &y, &width, &height );
     MONITOR_PrimaryMonitor.rect.right  = width;
     MONITOR_PrimaryMonitor.rect.bottom = height;
 
     /* Create window */
-  
     win_attr.background_pixel = BlackPixel(display, 0);
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
                           PointerMotionMask | ButtonPressMask |
                           ButtonReleaseMask | EnterWindowMask;
     win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
 
-    root_window = TSXCreateWindow( display, DefaultRootWindow(display),
+    if (vi != NULL) {
+      visual       = vi->visual;
+      screen       = ScreenOfDisplay(display, vi->screen);
+      screen_depth = vi->depth;
+    }
+    root_window = TSXCreateWindow( display,
+                                   (vi == NULL ? DefaultRootWindow(display) : RootWindow(display, vi->screen)),
                                    x, y, width, height, 0,
-                                   CopyFromParent, InputOutput, CopyFromParent,
-                                   CWBackPixel | CWEventMask | CWCursor, &win_attr);
+                                   (vi == NULL ? CopyFromParent : vi->depth),
+                                   InputOutput,
+                                   (vi == NULL ? CopyFromParent : vi->visual),
+                                   CWBackPixel | CWEventMask | CWCursor | (vi == NULL ? 0 : CWColormap),
+                                   &win_attr );
   
     /* Set window manager properties */
-
     size_hints  = TSXAllocSizeHints();
     wm_hints    = TSXAllocWMHints();
     class_hints = TSXAllocClassHint();
@@ -204,7 +229,6 @@ static void create_desktop( const char *geometry )
     TSXFree( class_hints );
 
     /* Map window */
-
     TSXMapWindow( display, root_window );
 }
 

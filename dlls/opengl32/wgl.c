@@ -12,6 +12,7 @@
 #include "windef.h"
 #include "wine_gl.h"
 #include "x11drv.h"
+#include "x11font.h"
 
 #include "wgl.h"
 #include "opengl_ext.h"
@@ -77,9 +78,13 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
  *		wglDeleteContext
  */
 BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
-  FIXME("(%p): stub !\n", hglrc);
+  TRACE("(%p)\n", hglrc);
 
-  return FALSE;
+  ENTER_GL();
+  glXDestroyContext(display, (GLXContext) hglrc);
+  LEAVE_GL();
+  
+  return TRUE;
 }
 
 /***********************************************************************
@@ -284,26 +289,36 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 /***********************************************************************
  *		wglUseFontBitmaps
  */
-BOOL WINAPI wglUseFontBitmaps(HDC hdc,
-			      DWORD first,
-			      DWORD count,
-			      DWORD listBase) {
-  FIXME("(): stub !\n");
+BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
+			       DWORD first,
+			       DWORD count,
+			       DWORD listBase) {
+  DC * dc = DC_GetDCPtr( hdc );
+  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+  fontObject* pfo = XFONT_GetFontObject( physDev->font );
+  Font fid = pfo->fs->fid;
 
-  return FALSE;
+  TRACE("(%08x, %ld, %ld, %ld)\n", hdc, first, count, listBase);
+
+  ENTER_GL();
+  /* I assume that the glyphs are at the same position for X and for Windows */
+  glXUseXFont(fid, first, count, listBase);
+  LEAVE_GL();
+  
+  return TRUE;
 }
  
 /***********************************************************************
  *		wglUseFontOutlines
  */
-BOOL WINAPI wglUseFontOutlines(HDC hdc,
-			       DWORD first,
-			       DWORD count,
-			       DWORD listBase,
-			       FLOAT deviation,
-			       FLOAT extrusion,
-			       int format,
-			       LPGLYPHMETRICSFLOAT lpgmf) {
+BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
+				DWORD first,
+				DWORD count,
+				DWORD listBase,
+				FLOAT deviation,
+				FLOAT extrusion,
+				int format,
+				LPGLYPHMETRICSFLOAT lpgmf) {
   FIXME("(): stub !\n");
 
   return FALSE;

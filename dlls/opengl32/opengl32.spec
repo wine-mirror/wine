@@ -16,12 +16,12 @@ type win32
 @  stdcall wglSetLayerPaletteEntries(long long long long ptr) wglSetLayerPaletteEntries
 @  stdcall wglShareLists(long long) wglShareLists
 @  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
-@  stdcall wglUseFontBitmaps(long long long long) wglUseFontBitmaps
-@  stdcall wglUseFontOutlines(long long long long long long long) wglUseFontOutlines
+@  stdcall wglUseFontBitmapsA(long long long long) wglUseFontBitmapsA
+@  stdcall wglUseFontOutlinesA(long long long long long long long) wglUseFontOutlinesA
 @  stub    glGetLevelParameterfv
 @  stub    glGetLevelParameteriv
-@  stub    wglUseFontBitmapsA
-@  stub    wglUseFontOutlinesA
+@  stub    wglUseFontBitmapsW
+@  stub    wglUseFontOutlinesW
 @  forward wglChoosePixelFormat GDI32.ChoosePixelFormat
 @  forward wglDescribePixelFormat GDI32.DescribePixelFormat
 @  forward wglGetPixelFormat GDI32.GetPixelFormat
