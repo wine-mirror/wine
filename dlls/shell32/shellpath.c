@@ -1014,7 +1014,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 BOOL WINAPI SHGetSpecialFolderPathA (
 	HWND hwndOwner,
 	LPSTR szPath,
-	DWORD csidl,
+	int csidl,
 	BOOL bCreate)
 {
 	CHAR	szValueName[MAX_PATH], szDefaultPath[MAX_PATH], szBuildPath[MAX_PATH];
@@ -1024,7 +1024,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	DWORD	folder = csidl & CSIDL_FOLDER_MASK;
 	CHAR	*p;
 
-	TRACE("%p,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
+	TRACE("%p,%p,csidl=%d,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
 	if ((folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0])) ||
 	    (CSIDL_Data[folder].hRootKey == 0))
@@ -1163,7 +1163,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 BOOL WINAPI SHGetSpecialFolderPathW (
 	HWND hwndOwner,
 	LPWSTR szPath,
-	DWORD csidl,
+	int csidl,
 	BOOL bCreate)
 {
 	char szTemp[MAX_PATH];
@@ -1174,7 +1174,7 @@ BOOL WINAPI SHGetSpecialFolderPathW (
                 szPath[MAX_PATH-1] = 0;
         }
 
-	TRACE("%p,%p,csidl=%lu,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
+	TRACE("%p,%p,csidl=%d,0x%04x\n", hwndOwner,szPath,csidl,bCreate);
 
 	return TRUE;
 }
@@ -1185,7 +1185,7 @@ BOOL WINAPI SHGetSpecialFolderPathW (
 BOOL WINAPI SHGetSpecialFolderPathAW (
 	HWND hwndOwner,
 	LPVOID szPath,
-	DWORD csidl,
+	int csidl,
 	BOOL bCreate)
 
 {

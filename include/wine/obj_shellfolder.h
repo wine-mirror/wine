@@ -33,15 +33,6 @@ extern "C" {
 DEFINE_GUID(IID_IPersistFolder3, 0xcef04fdf, 0xfe72, 0x11d2, 0x87, 0xa5, 0x0, 0xc0, 0x4f, 0x68, 0x37, 0xcf);
 typedef struct IPersistFolder3 IPersistFolder3, *LPPERSISTFOLDER3;
 
-
-/************************************************************************
- * Desktopfolder
- */
-
-extern IShellFolder * pdesktopfolder;
-
-DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
-
 /* GetDetailsEx */
 #define PID_FINDDATA		0
 #define PID_NETRESOURCE		1

@@ -320,6 +320,7 @@ typedef struct tagBROWSEINFOW {
 #define BIF_RETURNFSANCESTORS  0x0008
 #define BIF_EDITBOX            0x0010
 #define BIF_VALIDATE           0x0020
+#define BIF_NEWDIALOGSTYLE     0x0040   
 
 #define BIF_BROWSEFORCOMPUTER  0x1000
 #define BIF_BROWSEFORPRINTER   0x2000
@@ -371,6 +372,9 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW(LPBROWSEINFOW lpbi);
 #define SHDID_NET_SHARE             15
 #define SHDID_NET_RESTOFNET         16
 #define SHDID_NET_OTHER             17
+#define SHDID_COMPUTER_IMAGING      18
+#define SHDID_COMPUTER_AUDIO        19
+#define SHDID_COMPUTER_SHAREDDOCS   20
 
 typedef struct _SHDESCRIPTIONID
 {   DWORD   dwDescriptionId;
@@ -381,11 +385,9 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID pv, int cb);
 #define  SHGetDataFromIDList WINELIB_NAME_AW(SHGetDataFromIDList)
 
-BOOL WINAPI SHGetSpecialFolderPathA (HWND hwndOwner,LPSTR szPath,DWORD csidl,BOOL bCreate);
-BOOL WINAPI SHGetSpecialFolderPathW (HWND hwndOwner,LPWSTR szPath,DWORD csidl,BOOL bCreate);
+BOOL WINAPI SHGetSpecialFolderPathA (HWND hwndOwner, LPSTR szPath, int nFolder, BOOL bCreate);
+BOOL WINAPI SHGetSpecialFolderPathW (HWND hwndOwner, LPWSTR szPath, int nFolder, BOOL bCreate);
 #define  SHGetSpecialFolderPath WINELIB_NAME_AW(SHGetSpecialFolderPath)
-
-HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDLIST * ppidl);
 
 /****************************************************************************
 * shlview structures
@@ -555,7 +557,8 @@ DWORD WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 /****************************************************************************
 * SHGetSpecialFolderLocation API
 */
-HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, int nFolder, LPITEMIDLIST * ppidl);
+HRESULT WINAPI SHGetFolderLocation(HWND hwndOwner, int nFolder, HANDLE hToken, DWORD dwReserved, LPITEMIDLIST *ppidl);
 
 #define CSIDL_DESKTOP		0x0000
 #define CSIDL_INTERNET		0x0001
@@ -622,6 +625,11 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);
 #define CSIDL_FLAG_CREATE	0x8000
 
 #define CSIDL_FLAG_MASK		0xff00
+
+/****************************************************************************
+ * SHGetDesktopFolder API
+ */
+DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
 
 /****************************************************************************
  * SHBindToParent API
