@@ -605,6 +605,21 @@ static IRegistrarVtbl RegistrarVtbl = {
     Registrar_ResourceUnregister,
 };
 
+static HRESULT Registrar_create(LPUNKNOWN pUnkOuter, REFIID riid, void **ppvObject)
+{
+    Registrar *ret;
+
+    if(!IsEqualGUID(&IID_IUnknown, riid) && !IsEqualGUID(&IID_IRegistrar, riid))
+        return E_NOINTERFACE;
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Registrar));
+    ret->lpVtbl = &RegistrarVtbl;
+    ret->ref = 1;
+    ret->rep = NULL;
+    *ppvObject = ret;
+
+    return S_OK;
+}
 
 /**************************************************************
  * ClassFactory implementation
@@ -632,21 +647,11 @@ static ULONG WINAPI RegistrarCF_Release(IClassFactory *iface)
     return 1;
 }
 
-static HRESULT WINAPI RegistrarCF_CreateInstance(IClassFactory *iface, LPUNKNOWN pUnkOuter, REFIID riid, void **ppvObject)
+static HRESULT WINAPI RegistrarCF_CreateInstance(IClassFactory *iface, LPUNKNOWN pUnkOuter,
+                                                REFIID riid, void **ppvObject)
 {
-    Registrar *ret;
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
-
-    if(!IsEqualGUID(&IID_IUnknown, riid) && !IsEqualGUID(&IID_IRegistrar, riid))
-        return E_NOINTERFACE;
-
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(Registrar));
-    ret->lpVtbl = &RegistrarVtbl;
-    ret->ref = 1;
-    ret->rep = NULL;
-    *ppvObject = ret;
-
-    return S_OK;
+    return Registrar_create(pUnkOuter, riid, ppvObject);
 }
 
 static HRESULT WINAPI RegistrarCF_LockServer(IClassFactory *iface, BOOL lock)
@@ -679,4 +684,51 @@ HRESULT WINAPI ATL_DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObj
 
     FIXME("Not supported class %s\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+extern HINSTANCE hInst;
+
+static HRESULT do_register_server(BOOL do_register)
+{
+    WCHAR buf[MAX_PATH];
+    HRESULT hres;
+    IRegistrar *pRegistrar;
+
+    static const WCHAR wszModule[] = {'M','O','D','U','L','E',0};
+    static const WCHAR wszDll[] = {'a','t','l','.','d','l','l',0};
+    static const WCHAR wszRegistry[] = {'R','E','G','I','S','T','R','Y',0};
+    static const WCHAR wszCLSID_ATLRegistrar[] =
+            {'C','L','S','I','D','_','A','T','L','R','e','g','i','s','t','r','a','r',0};
+
+    Registrar_create(NULL, &IID_IRegistrar, (void**)&pRegistrar);
+    IRegistrar_AddReplacement(pRegistrar, wszModule, wszDll);
+
+    StringFromGUID2(&CLSID_ATLRegistrar, buf, sizeof(buf)/sizeof(buf[0]));
+    IRegistrar_AddReplacement(pRegistrar, wszCLSID_ATLRegistrar, buf);
+
+    if(do_register)
+        hres = IRegistrar_ResourceRegister(pRegistrar, wszDll, 1, wszRegistry);
+    else
+        hres = IRegistrar_ResourceUnregister(pRegistrar, wszDll, 1, wszRegistry);
+
+    IRegistrar_Release(pRegistrar);
+    return hres;
+}
+
+/***********************************************************************
+ *              DllRegisterServer (ATL.@)
+ */
+HRESULT WINAPI ATL_DllRegisterServer(void)
+{
+    TRACE("\n");
+    return do_register_server(TRUE);
+}
+
+/***********************************************************************
+ *              DllRegisterServer (ATL.@)
+ */
+HRESULT WINAPI ATL_DllUnregisterServer(void)
+{
+    TRACE("\n");
+    return do_register_server(FALSE);
 }

@@ -35,11 +35,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
+HINSTANCE hInst;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %ld, %p)\n",hinstDLL,fdwReason,lpvReserved);
 
-    if (fdwReason == DLL_PROCESS_ATTACH) DisableThreadLibraryCalls(hinstDLL);
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(hinstDLL);
+        hInst = hinstDLL;
+    }
     return TRUE;
 }
 

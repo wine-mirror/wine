@@ -8,11 +8,14 @@ EXTRALIBS = $(LIBUNICODE) -luuid
 
 C_SRCS = \
 	atl_main.c \
-	registrar.c \
-	regsvr.c
+	registrar.c
+
+RC_SRCS = rsrc.rc
 
 IDL_SRCS = \
 	atliface.idl
+
+rsrc.res: atl.rgs
 
 @MAKE_DLL_RULES@
 
