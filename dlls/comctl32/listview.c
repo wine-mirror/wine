@@ -5235,7 +5235,7 @@ static LRESULT LISTVIEW_GetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal, B
     }
   }
 
-  if ((lpLVItem->mask & LVIF_IMAGE) && !(*piImage && *piImage!=I_IMAGECALLBACK))
+  if ((lpLVItem->mask & LVIF_IMAGE) && (*piImage==I_IMAGECALLBACK))
   {
     dispInfo.item.mask |= LVIF_IMAGE;
   }
@@ -5264,7 +5264,7 @@ static LRESULT LISTVIEW_GetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal, B
   if (dispInfo.item.mask & LVIF_IMAGE)
   {
     lpLVItem->iImage = dispInfo.item.iImage;
-    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && *piImage)
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && (*piImage==I_IMAGECALLBACK))
       *piImage = dispInfo.item.iImage;
   }
   else if (lpLVItem->mask & LVIF_IMAGE)
@@ -5275,7 +5275,7 @@ static LRESULT LISTVIEW_GetItemT(HWND hwnd, LPLVITEMW lpLVItem, BOOL internal, B
   if (dispInfo.item.mask & LVIF_PARAM)
   {
     lpLVItem->lParam = dispInfo.item.lParam;
-    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && *plParam)
+    if (dispInfo.item.mask & LVIF_DI_SETITEM)
       *plParam = dispInfo.item.lParam;
   }
   else if (lpLVItem->mask & LVIF_PARAM)
