@@ -1318,7 +1318,7 @@ UINT WINAPI GetOutlineTextMetricsA(
 
     HeapFree(GetProcessHeap(),HEAP_ZERO_MEMORY,lptxtMetr);
     
-    lpOTM->otmFilter = 0;
+    lpOTM->otmFiller = 0;
 
     lpOTM->otmPanoseNumber.bFamilyType  = 0;
     lpOTM->otmPanoseNumber.bSerifStyle  = 0;

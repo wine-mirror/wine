@@ -967,7 +967,7 @@ typedef struct _OUTLINETEXTMETRICA
 {
     UINT          otmSize;
     TEXTMETRICA   otmTextMetrics;
-    BYTE            otmFilter;
+    BYTE            otmFiller;
     PANOSE          otmPanoseNumber;
     UINT          otmfsSelection;
     UINT          otmfsType;
@@ -1003,7 +1003,7 @@ typedef struct _OUTLINETEXTMETRICW
 {
     UINT          otmSize;
     TEXTMETRICW   otmTextMetrics;
-    BYTE            otmFilter;
+    BYTE            otmFiller;
     PANOSE          otmPanoseNumber;
     UINT          otmfsSelection;
     UINT          otmfsType;
