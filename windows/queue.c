@@ -146,7 +146,7 @@ DWORD WINAPI GetQueueStatus( UINT flags )
 
     /* check for pending X events */
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
+        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
     SERVER_START_REQ( get_queue_status )
     {
@@ -168,7 +168,7 @@ BOOL WINAPI GetInputState(void)
 
     /* check for pending X events */
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
+        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_INPUT, 0 );
 
     SERVER_START_REQ( get_queue_status )
     {

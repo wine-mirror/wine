@@ -514,8 +514,8 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	    delta = GetTickCount() - tc;
 
             LeaveCriticalSection(&wma->cs);
-            ret = MsgWaitForMultipleObjects(2, events, FALSE,
-                (delta >= frameTime) ? 0 : frameTime - delta, MWMO_INPUTAVAILABLE);
+            ret = MsgWaitForMultipleObjectsEx(2, events,
+                (delta >= frameTime) ? 0 : frameTime - delta, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
             EnterCriticalSection(&wma->cs);
 
             if (ret == WAIT_OBJECT_0 || wma->dwStatus != MCI_MODE_PLAY) break;
@@ -527,7 +527,8 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
             DWORD ret;
 
             LeaveCriticalSection(&wma->cs);
-            ret = MsgWaitForMultipleObjects(1, &wma->hStopEvent, FALSE, frameTime - delta, MWMO_INPUTAVAILABLE);
+            ret = MsgWaitForMultipleObjectsEx(1, &wma->hStopEvent, frameTime - delta,
+                                              QS_ALLINPUT, MWMO_INPUTAVAILABLE);
             EnterCriticalSection(&wma->cs);
             if (ret == WAIT_OBJECT_0) break;
         }

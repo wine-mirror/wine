@@ -1777,7 +1777,7 @@ static void wait_message_reply( UINT flags )
 
         if (USER_Driver.pMsgWaitForMultipleObjectsEx)
             res = USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue,
-                                                            INFINITE, 0, 0 );
+                                                            INFINITE, QS_ALLINPUT, 0 );
         else
             res = WaitForSingleObject( queue->server_queue, INFINITE );
 
@@ -2338,7 +2338,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
 
     /* check for graphics events */
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
+        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
     hwnd = WIN_GetFullHandle( hwnd );
     locks = WIN_SuspendWndsLock();
@@ -2444,7 +2444,8 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
 
         ReleaseThunkLock( &dwlc );
         if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, INFINITE, 0, 0 );
+            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, INFINITE,
+                                                      QS_ALLINPUT, 0 );
         else
             WaitForSingleObject( queue->server_queue, INFINITE );
         if (dwlc) RestoreThunkLock( dwlc );
