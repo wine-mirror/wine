@@ -315,22 +315,7 @@ void WINAPI LongPtrAdd16( DWORD ptr, DWORD add )
 
 
 /***********************************************************************
- *           GetSelectorBase   (KERNEL.186)
- */
-DWORD WINAPI WIN16_GetSelectorBase( WORD sel )
-{
-    /*
-     * Note: For Win32s processes, the whole linear address space is
-     *       shifted by 0x10000 relative to the OS linear address space.
-     *       See the comment in msdos/vxd.c.
-     */
-
-    DWORD base = GetSelectorBase( sel );
-    return W32S_WINE2APP( base );
-}
-
-/***********************************************************************
- *		GetSelectorBase
+ *             GetSelectorBase   (KERNEL.186)
  */
 DWORD WINAPI GetSelectorBase( WORD sel )
 {
@@ -344,22 +329,7 @@ DWORD WINAPI GetSelectorBase( WORD sel )
 
 
 /***********************************************************************
- *           SetSelectorBase   (KERNEL.187)
- */
-DWORD WINAPI WIN16_SetSelectorBase( WORD sel, DWORD base )
-{
-    /*
-     * Note: For Win32s processes, the whole linear address space is
-     *       shifted by 0x10000 relative to the OS linear address space.
-     *       See the comment in msdos/vxd.c.
-     */
-
-    SetSelectorBase( sel, W32S_APP2WINE( base ) );
-    return sel;
-}
-
-/***********************************************************************
- *		SetSelectorBase
+ *             SetSelectorBase   (KERNEL.187)
  */
 WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
 {

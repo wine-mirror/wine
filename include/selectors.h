@@ -28,11 +28,6 @@ extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char fla
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_FreeBlock( WORD sel );
 
-extern UINT W32S_offset;
-
-#define W32S_APP2WINE(addr) ((addr)? (DWORD)(addr) + W32S_offset : 0)
-#define W32S_WINE2APP(addr) ((addr)? (DWORD)(addr) - W32S_offset : 0)
-
 #define FIRST_LDT_ENTRY_TO_ALLOC  17
 
 #define IS_SELECTOR_FREE(sel) (!(wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_ALLOCATED))

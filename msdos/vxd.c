@@ -45,6 +45,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
 
+#define W32S_APP2WINE(addr) ((addr)? (DWORD)(addr) + W32S_offset : 0)
+#define W32S_WINE2APP(addr) ((addr)? (DWORD)(addr) - W32S_offset : 0)
 
 #define VXD_BARF(context,name) \
     DPRINTF( "vxd %s: unknown/not implemented parameters:\n" \

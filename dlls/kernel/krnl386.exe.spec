@@ -186,8 +186,8 @@
 183 equate __0000H 0
 184 pascal GlobalDOSAlloc(long) GlobalDOSAlloc16
 185 pascal16 GlobalDOSFree(word) GlobalDOSFree16
-186 pascal GetSelectorBase(word) WIN16_GetSelectorBase
-187 pascal16 SetSelectorBase(word long) WIN16_SetSelectorBase
+186 pascal GetSelectorBase(word) GetSelectorBase
+187 pascal16 SetSelectorBase(word long) SetSelectorBase
 188 pascal GetSelectorLimit(word) GetSelectorLimit16
 189 pascal16 SetSelectorLimit(word long) SetSelectorLimit16
 190 equate __E000H 0
