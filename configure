@@ -4753,7 +4753,7 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 case "$INSTALL" in
-  \\/$* | ?:\\/* ) ;;
+  [\\/$]* | ?:[\\/]* ) ;;
   *)  INSTALL="\\\$(TOPSRCDIR)/$INSTALL" ;;
 esac
 

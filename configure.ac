@@ -90,7 +90,7 @@ AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
 AC_PROG_INSTALL
 dnl Prepend src dir to install path dir if it's a relative path
 case "$INSTALL" in
-  [\\/$]* | ?:[\\/]* ) ;;
+  [[\\/$]]* | ?:[[\\/]]* ) ;;
   *)  INSTALL="\\\$(TOPSRCDIR)/$INSTALL" ;;
 esac
 
