@@ -1183,6 +1183,7 @@ void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 #endif
 
 void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
+BOOL      WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWORD);
 void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
 BOOL      WINAPI GetProcessWorkingSetSize(HANDLE,LPDWORD,LPDWORD);
 DWORD     WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
