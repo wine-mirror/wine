@@ -41,6 +41,8 @@ static BOOL (WINAPI *pCryptEnumProvidersA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, 
 static BOOL (WINAPI *pCryptGetDefaultProviderA)(DWORD, DWORD*, DWORD, LPSTR, DWORD*);
 static BOOL (WINAPI *pCryptReleaseContext)(HCRYPTPROV, DWORD);
 static BOOL (WINAPI *pCryptSetProviderExA)(LPCSTR, DWORD, DWORD*, DWORD);
+static BOOL (WINAPI *pCryptCreateHash)(HCRYPTPROV, ALG_ID, HCRYPTKEY, DWORD, HCRYPTHASH*);
+static BOOL (WINAPI *pCryptDestroyHash)(HCRYPTHASH);
 
 static void init_function_pointers(void)
 {
@@ -54,6 +56,8 @@ static void init_function_pointers(void)
 	pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
 	pCryptReleaseContext = (void*)GetProcAddress(hadvapi32, "CryptReleaseContext");
 	pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
+	pCryptCreateHash = (void*)GetProcAddress(hadvapi32, "CryptCreateHash");
+	pCryptDestroyHash = (void*)GetProcAddress(hadvapi32, "CryptDestroyHash");
     }
 }
 
@@ -151,6 +155,51 @@ static void test_acquire_context(void)
 
 	if (hProv) 
 		pCryptReleaseContext(hProv, 0);
+}
+
+static void test_incorrect_api_usage(void)
+{
+    BOOL result;
+    HCRYPTPROV hProv, hProv2;
+    HCRYPTHASH hHash;
+
+    /* This is to document a crash in wine due to incorrect api usage in the 
+     * "Uru - Ages beyond Myst Demo" installer as reported by Paul Vriens.
+     *
+     * The installer destroys a hash object after having released the context 
+     * with which the hash was created. This is not allowed according to MSDN, 
+     * since CryptReleaseContext destroys all hash and key objects belonging to 
+     * the respective context. However, while wine crashes, Windows is more 
+     * robust here and returns an ERROR_INVALID_PARAMETER code.
+     */
+    
+    result = pCryptAcquireContextA(&hProv, szBadKeySet, szRsaBaseProv, 
+                                   PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    ok (result, "%08lx\n", GetLastError());
+    if (!result) return;
+
+    result = pCryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
+    ok (result, "%ld\n", GetLastError());
+    if (!result) return;
+
+    result = pCryptAcquireContextA(&hProv2, szBadKeySet, NULL, PROV_RSA_FULL, 
+                                   CRYPT_DELETEKEYSET);
+    ok (result, "%ld\n", GetLastError());
+    if (!result) return;
+    
+    result = pCryptReleaseContext(hProv, 0);
+    ok (result, "%ld\n", GetLastError());
+    if (!result) return;
+
+    /* We have to deactivate the next call for now, since it will crash wine. 
+     */
+#if 0
+    todo_wine {
+        result = pCryptDestroyHash(hHash);
+        ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", 
+            GetLastError());
+    }
+#endif
 }
 
 static BOOL FindProvRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszProvName, 
@@ -565,6 +614,7 @@ START_TEST(crypt)
 	if(pCryptAcquireContextA && pCryptReleaseContext) {
 	init_environment();
 	test_acquire_context();
+	test_incorrect_api_usage();
 	clean_up_environment();
 	}
 	
