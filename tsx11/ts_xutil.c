@@ -219,6 +219,17 @@ int  TSXSaveContext(Display* a0, XID a1, XContext a2, const  char* a3)
   return r;
 }
 
+int  TSXSetClassHint(Display* a0, Window a1, XClassHint* a2)
+{
+  int  r;
+  TRACE(x11, "Call XSetClassHint\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XSetClassHint(a0, a1, a2);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE(x11, "Ret XSetClassHint\n");
+  return r;
+}
+
 void  TSXSetWMProperties(Display* a0, Window a1, XTextProperty* a2, XTextProperty* a3, char** a4, int a5, XSizeHints* a6, XWMHints* a7, XClassHint* a8)
 {
   TRACE(x11, "Call XSetWMProperties\n");

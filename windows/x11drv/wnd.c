@@ -128,13 +128,20 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
       if(!wndPtr->window)
 	return FALSE;
 
-      if ((wndPtr->flags & WIN_MANAGED) &&
-	  (cs->dwExStyle & WS_EX_DLGMODALFRAME))
-        {
+      if (wndPtr->flags & WIN_MANAGED) {
+	XClassHint *class_hints = TSXAllocClassHint();
+
+	if (class_hints) {
+	  class_hints->res_name = "wineManaged";
+	  class_hints->res_class = "Wine";
+	  TSXSetClassHint( display, wndPtr->window, class_hints );
+	  TSXFree (class_hints);
+	}
+
+	if (cs->dwExStyle & WS_EX_DLGMODALFRAME) {
 	  XSizeHints* size_hints = TSXAllocSizeHints();
 	  
-	  if (size_hints)
-            {
+	  if (size_hints) {
 	      size_hints->min_width = size_hints->max_width = cs->cx;
 	      size_hints->min_height = size_hints->max_height = cs->cy;
                 size_hints->flags = (PSize | PMinSize | PMaxSize);
@@ -143,6 +150,7 @@ BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT32A *cs
                 TSXFree(size_hints);
             }
         }
+      }
       
       if (cs->hwndParent)  /* Get window owner */
 	{
