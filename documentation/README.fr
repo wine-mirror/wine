@@ -157,16 +157,6 @@ En cas d'erreur de chargement de librairie (par exemple
 "Error while loading shared libraries: libntdll.so"), assurez vous d'ajouter
 le chemin des librairies à /etc/ld.so.conf et exécuter ldconfig en tant que root.
 
-Pour pouvoir vérifier l'exactitude de l'environnement dont vous avez besoin pour
-que Wine s'exécute correctement, vous pouvez exécuter "./tools/winecheck | less".
-Vous aurez un score en pourcentage indiquant "l'exactitude de la configuration
-de Wine". Ce programme est encore en développement alpha, il n'effectue pas
-encore un véritable test en profondeur, il devrait cependant être utile dans
-une première vérification.
-
-Lisez les page man de wine.conf pour savoir comment basculer en un mode texte
-uniquement.
-
 6. EXÉCUTER DES PROGRAMMES
 
 Lorsque l'on invoque Wine, vous pouvez spécifier le chemin entier vers
@@ -182,7 +172,7 @@ Pour exécuter Solitaire par exemple :
 
 	wine /usr/windows/sol.exe  (en utilisant la syntaxe de fichiers Unix)
 
-	wine -- sol.exe /parametre1 -parametre2 parametre3
+	wine sol.exe /parametre1 -parametre2 parametre3
 			(en appelant le programme avec des paramètres)
 
 Note: le chemin du fichier sera également additionné au chemin par défaut

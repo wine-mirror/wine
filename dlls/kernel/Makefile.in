@@ -20,7 +20,6 @@ SPEC_SRCS16 = \
 C_SRCS = \
 	$(TOPOBJDIR)/files/directory.c \
 	$(TOPOBJDIR)/files/smb.c \
-	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
 	actctx.c \
 	atom.c \

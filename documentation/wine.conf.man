@@ -174,7 +174,7 @@ wine cannot use native versions for these libraries.
 Always make sure that you have some kind of strategy in mind when you start
 fiddling with the current defaults and needless to say that you must know
 what you are doing.
---debugmsg +loaddll might come in handy for experimenting with that stuff.
+WINEDEBUG=loaddll might come in handy for experimenting with that stuff.
 .PP
 .B [Debug]
 .br

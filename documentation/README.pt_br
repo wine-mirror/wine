@@ -150,15 +150,6 @@ No caso de erros de carga da biblioteca
 de adicionar o caminho da biblioteca a /etc/ld.so.conf e executar
 ldconfig como root.
 
-A fim verificar a exatidão do ambiente que você necessita para que o 
-Wine funcione com sucesso, você pode executar "./tools/winecheck | less".
-Você irá obter um percentual do resultado indicando "Wine configuration 
-correctness".
-Como este programa é alfa, não rodou um teste verdadeiramente completo ainda,
-embora, assim deve ser feito como uma primeira etapa da verificação somente. 
-
-Veja em "man wine.conf" como se muda para o suporte em modo texto se desejar.
-
 6.EXECUTAR PROGRAMAS
 
 Ao invocar o Wine, você pode especificar o caminho completo do executável,
@@ -172,7 +163,7 @@ Por exemplo:  para executar a Paciência:
 
 	wine /usr/windows/sol.exe	(usando um nome de arquivo Unix)
 
-        wine -- sol.exe /parameter1 -parameter2 parameter3
+        wine sol.exe /parameter1 -parameter2 parameter3
 				   (chamando o programa com parãmetros)
 
 Nota: o caminho do arquivo será também adicionado ao caminho 

@@ -146,14 +146,6 @@ In case of library loading errors
 (e.g. "Error while loading shared libraries: libntdll.so"), make sure
 to add the library path to /etc/ld.so.conf and run ldconfig as root.
 
-In order to verify the correctness of the environment you need for
-Wine to run successfully, you may run "./tools/winecheck | less".
-You'll get a percentage score indicating "Wine configuration correctness".
-As this program is alpha, it doesn't run a truly thorough test yet, though,
-so it should be taken as a first verification step only.
-
-See wine.conf man page on how to switch to text mode only support if desired.
-
 6. RUNNING PROGRAMS
 
 When invoking Wine, you may specify the entire path to the executable,
@@ -168,7 +160,7 @@ For example: to run Solitaire:
 
 	wine /usr/windows/sol.exe  (using Unix filename syntax)
 
-        wine -- sol.exe /parameter1 -parameter2 parameter3
+        wine sol.exe /parameter1 -parameter2 parameter3
 				   (calling program with parameters)
 
 Note: the path of the file will also be added to the path when

@@ -156,17 +156,6 @@ Im Falle von Library-Ladefehlern (z.B. "Error while loading shared libraries:
 libntdll.so") fügen Sie bitte den Library-Pfad zur Datei /etc/ld.so.conf hinzu 
 und führen Sie ldconfig als root aus.
 
-Um zu prüfen, ob Ihre Umgebung passend eingerichtet ist, um Wine erfolgreich
-laufen zu lassen, können Sie das Kommando "./tools/winecheck | less" ausführen.
-Es wird Ihnen eine Punktzahl in Prozent mitgeteilt, welche die "Korrektheit der
-Wine-Konfiguration" darstellt.
-Da dieses Programm immer noch im Alpha-Stadium ist, führt es aber keinen wirklich
-umfassenden Test durch, die Ergebnisse der Überprüfungsollten sollten also nur
-als erster Prüfschritt betrachtet werden.
-
-In der Man-Page zu wine.conf können Sie nachlesen, wie Sie zum reinen Text-Modus
-wechseln können, wenn gewünscht.
-
 6. AUSFÜHREN VON PROGRAMMEN
 
 Wenn Sie Wine aufrufen, können Sie den vollständigen Pfad zur ausführbaren
@@ -181,7 +170,7 @@ Beispiel: Um Solitaire auszuführen:
 
 	wine /usr/windows/sol.exe  (die Dateinamen-Syntax von Unix benutzend)
 
-        wine -- sol.exe /parameter1 -parameter2 parameter3
+        wine sol.exe /parameter1 -parameter2 parameter3
 				   (Programmaufruf mit Parametern)
 
 Hinweis: Der Pfad zur Datei wird auch zum Pfad hinzugefügt, wenn ein vollständiger

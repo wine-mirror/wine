@@ -119,18 +119,6 @@ static const char* app_loader_template =
     "    ;;\n"
     "esac\n"
     "\n"
-    "while true; do\n"
-    "  case \"$1\" in\n"
-    "    --debugmsg)\n"
-    "      debugmsg=\"$1 $2\"\n"
-    "      shift; shift;\n"
-    "      ;;\n"
-    "    *)\n"
-    "      break\n"
-    "      ;;\n"
-    "  esac\n"
-    "done\n"
-    "\n"
     "# figure out the full app path\n"
     "if [ -n \"$appdir\" ]; then\n"
     "    apppath=\"$appdir/$appname\"\n"
@@ -144,7 +132,7 @@ static const char* app_loader_template =
     "if [ ! -x \"$WINELOADER\" ]; then WINELOADER=\"wine\"; fi\n"
     "\n"
     "# and try to start the app\n"
-    "exec \"$WINELOADER\" $debugmsg -- \"$apppath\" \"$@\"\n"
+    "exec \"$WINELOADER\" \"$apppath\" \"$@\"\n"
 ;
 
 static int keep_generated = 0;

@@ -154,16 +154,6 @@ Nel caso di errori di caricamento delle librerie
 aggiungere il percorso della directory a /etc/ld.so.conf ed esegui ldconfig come
 root.
 
-Per verificare la correttezza dell'ambiente di cui hai bisogno per eseguire Wine
-con successo, puoi eseguire "./tools/winecheck | less".
-Otterrai un punteggio percentuale che indica la "Correttezza della
-configurazione di Wine".
-poiché questo programma è una alpha, anche se non esegue un vero test completo
-ancora, può essere utilizzato come un primo step di verifica.
-
-Controlla la pagina wine.conf man su come passare alla modalità solo testuale
-se lo desideri.
-
 6. ESEGUIRE I PROGRAMMI
 
 Quando si esegue Wine, si può specificare l'intero percorso dell'eseguibile o
@@ -176,7 +166,7 @@ Per esempio: per eseguire Solitario:
 
 	wine c:\\windows\\sol.exe (utilizzando la sintassi DOS)
 	wine /usr/windows/sol.exe (utilizzando la sintassi Unix)
-	wine - sol.exe /parameter1 -parameter2 parameter3
+	wine sol.exe /parameter1 -parameter2 parameter3
 				  (chiama il programma con dei parametri)
 
 Nota: il percorso del file può essere aggiunto al percorso quando è fornito un

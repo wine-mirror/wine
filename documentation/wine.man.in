@@ -1,9 +1,13 @@
 .\" -*- nroff -*-
-.TH WINE 1 "May 2002" "@PACKAGE_STRING@" "Windows On Unix"
+.TH WINE 1 "May 2004" "@PACKAGE_STRING@" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.BI "wine " "[wine_options] " "[--] " "program " "[arguments ... ]"
+.BI "wine " "program " "[arguments ... ]"
+.br
+.B wine --help
+.br
+.B wine --version
 .PP
 For instructions on passing arguments to Windows programs, please see the
 .B
@@ -28,27 +32,18 @@ run). Not using
 for CUI programs will only provide very limited console support, and your
 program might not function properly.
 .PP
-.B wine 
-currently runs a growing list of applications written for all kinds of
-Windows versions >= Win2.0, e.g. Win3.1, Win95/98, NT.
-Older, simpler applications work better than newer, more complex ones.
-Using Windows ME or Win2000 components with Wine is more problematic than
-using none at all or the ones from older Windows versions.
-A large percentage of the API has been implemented,
-although there are still several major pieces of work left to do.
+When invoked with
+.B --help
+or
+.B --version
+as the only argument,
+.B wine
+will simply print a small help message or its version respectively and exit.
 .SH REQUIREMENTS AND INSTALLATION
 Read the README file in the Wine source distribution and the
 .BR wine.conf (5)
 man page to know what Wine requires and how it is installed from
 source.
-.SH OPTIONS
-.TP
-.I --debugmsg [xxx]#name[,[xxx1]#name1]
-Turn debugging messages on or off.  This option is deprecated, you
-should use the
-.I WINEDEBUG
-environment variable instead (see below).
-.PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
 .I
@@ -64,45 +59,6 @@ a shell, e.g.
 .PP
 wine C:\(rs\(rsProgram\(rs Files\(rs\(rsMyPrg\(rs\(rstest.exe
 .PP
-Command line processing goes as
-follows: first 
-.B wine
-checks whether one or more of the above mentioned 
-.B wine 
-options have been specified. These
-are removed from the command line, which is passed to the windows program. You can use
-the parameter 
-.I -- 
-to indicate that 
-.B wine 
-should stop command line processing. This is needed in case a windows program understands 
-an option that is usually interpreted (and thus removed from the command line) 
-by 
-.B wine. 
-For example, if you want to execute 
-.B wine 
-with the options 
-.I --debugmsg +module
-and if 
-.B wine 
-should run the program 
-.I myapp.exe
-with the arguments
-.I --display 3d somefile
-, then you could use the following command line to invoke 
-.B wine:
-.PP
-.I wine --debugmsg +module -- myapp.exe --display 3d somefile
-.PP 
-Note that in contrast to previous versions of 
-.B wine, 
-you must not pass 
-program name and program option in one argument to 
-.B wine. 
-To run more
-than one windows program, just execute 
-.B wine 
-once with the name of each program as argument. 
 .SH ENVIRONMENT VARIABLES
 .B wine
 makes the environment variables of the shell from which
@@ -323,7 +279,7 @@ in the top-level directory of the source distribution.
 .SH BUGS
 .PP
 A status report on many applications is available from
-.I http://www.winehq.org/Apps.
+.I http://appdb.winehq.org.
 Please add entries to this list for applications you currently run.
 .PP
 Bug reports may be posted to Wine Bugzilla
@@ -350,17 +306,9 @@ http://www.winehq.org/cvs
 WineHQ, the
 .B wine
 development headquarters, is at
-.I http://www.winehq.org/.
+.I http://www.winehq.org.
 This website contains a great deal of information about
 .B wine.
-.PP
-The
-.B wine 
-newsgroup is 
-.I comp.emulators.ms-windows.wine.
-It is used for discussion of various 
-.B wine
-end user aspects/help.
 .PP
 For further information about 
 .B wine

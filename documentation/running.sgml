@@ -73,30 +73,20 @@
       <title>How to run Wine</title>
 
       <para>
-        You can invoke the <command>wine --help</command> command to
-        get a listing of all Wine's command-line parameters:
+        You can simply invoke the <command>wine</command> command to
+        get a small help message:
       </para>
       <para>
         <screen>
-Usage: ./wine [options] program_name [arguments]
-
-Options:
-   --debugmsg name  Turn debugging-messages on or off
-   --help,-h        Show this help message
-   --version,-v     Display the Wine version
+Wine 20040405
+Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program
+       wine --help                   Display this help and exit
+       wine --version                Output version information and exit
         </screen>
       </para>
 
       <para>
-        You can specify as many options as you want, if any.
-        Typically, you will want to have your configuration file set
-        up with a sensible set of defaults; in this case, you can run
-        <command>wine</command> without explicitly listing any
-        options.  In rare cases, you might want to override certain
-        parameters on the command line.
-      </para>
-      <para>
-        After the options, you should put the name of the file you
+        The first argument should be the name of the file you
         want <command>wine</command> to execute.  If the executable is
         in the <parameter>Path</parameter> parameter in the
         configuration file, you can simply give the executable file
@@ -148,8 +138,25 @@ Options:
     <sect1 id="command-line-options">
       <title>Wine Command Line Options</title>
 
-      <sect2 id="config-parameter">
-        <title>--debugmsg [channels]</title>
+      <sect2>
+        <title>--help</title>
+        <para>
+          Shows a small command line help page.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>--version</title>
+        <para>
+	  Shows the Wine version string. Useful to verify your installation.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Environment variables</title>
+      <sect2>
+        <title>WINEDEBUG=[channels]</title>
         <para>
           Wine isn't perfect, and many Windows applications still
           don't run without bugs under Wine (but then, a lot of programs
@@ -178,7 +185,7 @@ Options:
           section of configuring wine you can 
           modify what the <parameter>relay</parameter> trace reports).
           Logging does slow down Wine
-          quite a bit, so don't use <parameter>--debugmsg</parameter>
+          quite a bit, so don't use <parameter>WINEDEBUG</parameter>
           unless you really do want log files.
         </para>
         <para>
@@ -197,28 +204,28 @@ Options:
           To turn on a debug channel, use the form
           <parameter>class+channel</parameter>.  To turn it off, use
           <parameter>class-channel</parameter>.  To list more than one
-          channel in the same <parameter>--debugmsg</parameter>
+          channel in the same <parameter>WINEDEBUG</parameter>
           option, separate them with commas.  For example, to request
           <parameter>warn</parameter> class messages in the
           <parameter>heap</parameter> debug channel, you could invoke
           <command>wine</command> like this:
         </para>
         <screen>
-<prompt>$</prompt> <userinput>wine --debugmsg warn+heap <replaceable>program_name</replaceable></userinput>
+<prompt>$</prompt> <userinput>WINEDEBUG=warn+heap wine <replaceable>program_name</replaceable></userinput>
         </screen>
         <para>
           If you leave off the message class, <command>wine</command>
           will display messages from all four classes for that channel:
         </para>
         <screen>
-<prompt>$</prompt> <userinput>wine --debugmsg +heap <replaceable>program_name</replaceable></userinput>
+<prompt>$</prompt> <userinput>WINEDEBUG=heap wine <replaceable>program_name</replaceable></userinput>
         </screen>
         <para>
           If you wanted to see log messages for everything except the
           relay channel, you might do something like this:
         </para>
         <screen>
-<prompt>$</prompt> <userinput>wine --debugmsg +all,-relay <replaceable>program_name</replaceable></userinput>
+<prompt>$</prompt> <userinput>WINEDEBUG=+all,-relay wine <replaceable>program_name</replaceable></userinput>
         </screen>
         <para>
 	  Here is a list of the debug channels and classes in Wine.
@@ -286,20 +293,6 @@ Options:
             The Wine Developer's Guide</ulink>.
         </para>
       </sect2>
-
-      <sect2>
-        <title>--help</title>
-        <para>
-          Shows a small command line help page.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>--version</title>
-        <para>
-	  Shows the Wine version string. Useful to verify your installation.
-        </para>
-      </sect2>
     </sect1>
 
     <sect1 id="wineserver-command-line-options">
@@ -319,7 +312,7 @@ Options:
 	  Sets the debug level for debug output in the terminal that
 	  wineserver got started in at level &lt;n&gt;.
 	  In other words: everything greater than 0 will enable
-	  wineserver specific debugging output (not to confuse with Wine's wineserver logging channel, --debugmsg +server, though!).
+	  wineserver specific debugging output.
         </para>
       </sect2>
 

@@ -38,7 +38,6 @@
 #include "ntstatus.h"
 #include "thread.h"
 #include "module.h"
-#include "options.h"
 #include "kernel_private.h"
 #include "wine/exception.h"
 #include "wine/server.h"
@@ -636,6 +635,21 @@ static inline void fix_unicode_string( UNICODE_STRING *str, char *end_ptr )
     }
 }
 
+static void version(void)
+{
+    MESSAGE( "%s\n", PACKAGE_STRING );
+    ExitProcess(0);
+}
+
+static void usage(void)
+{
+    MESSAGE( "%s\n", PACKAGE_STRING );
+    MESSAGE( "Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program\n" );
+    MESSAGE( "       wine --help                   Display this help and exit\n");
+    MESSAGE( "       wine --version                Output version information and exit\n");
+    ExitProcess(0);
+}
+
 
 /***********************************************************************
  *           init_user_process_params
@@ -780,9 +794,6 @@ static BOOL process_init( char *argv[], char **environ )
     /* Copy the parent environment */
     if (!build_initial_environment( environ )) return FALSE;
 
-    /* Parse command line arguments */
-    if (!info_size) OPTIONS_ParseOptions( argv );
-
     /* Create device symlinks */
     VOLUME_CreateDevices();
 
@@ -867,7 +878,12 @@ void __wine_kernel_init(void)
         WCHAR buffer[MAX_PATH];
         WCHAR exe_nameW[MAX_PATH];
 
-        if (!__wine_main_argv[0]) OPTIONS_Usage();
+        if (!__wine_main_argv[0]) usage();
+        if (__wine_main_argc == 1)
+        {
+            if (strcmp(__wine_main_argv[0], "--help") == 0) usage();
+            if (strcmp(__wine_main_argv[0], "--version") == 0) version();
+        }
 
         MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[0], -1, exe_nameW, MAX_PATH );
         if (!find_exe_file( exe_nameW, buffer, MAX_PATH, &main_exe_file ))
