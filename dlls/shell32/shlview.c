@@ -1,11 +1,23 @@
 /*
  *	ShellView
  *
- *	Copyright 1998,1999	<juergen.schmied@metronet.de>
+ *	Copyright 1998,1999	<juergen.schmied@debitel.net>
  *
  *  FIXME: when the ShellView_WndProc gets a WM_NCDESTROY should we do a
  *  Release() ??? 
  *
+ *  FIXME: There is still a design problem in this implementation. 
+ *	This implementation is more or less ok for file system folders
+ *	but there are many more kinds of folders.
+ *	The shellview is not supposed to know much about the colums
+ *	appearing in the view. To fix this it should use the IShellFolder2
+ *	interface when possible to get the informations dynamically
+ *	this will take a lot of work to implemet and wont likely not
+ *	be done in near future
+ *	Please considder this when code new features. Mail me if you
+ *	are in doubt how to do things. (jsch 25/10/99)
+ *
+ * FIXME: Set the buttons in the filedialog according to the view state
  */
 
 #include <stdlib.h>
@@ -220,7 +232,6 @@ static void CheckToolbar(IShellViewImpl * This)
 /**********************************************************
  *	change the style of the listview control
  */
-
 static void SetStyle(IShellViewImpl * This, DWORD dwAdd, DWORD dwRemove)
 {
 	DWORD tmpstyle;
@@ -278,6 +289,11 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 }
 /**********************************************************
 * ShellView_InitList()
+*
+* NOTES
+*	FIXME: the headers should depend on the kind of shellfolder
+*	thats creating the shellview. this hack implements only the
+*	correct headers for a filesystem folder (jsch 25/10/99)
 */
 static BOOL ShellView_InitList(IShellViewImpl * This)
 {
@@ -297,11 +313,11 @@ static BOOL ShellView_InitList(IShellViewImpl * This)
 	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN1, szString, sizeof(szString));
 	ListView_InsertColumnA(This->hWndList, 0, &lvColumn);
 
-	lvColumn.cx = 80;
+	lvColumn.cx = 60;
 	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN2, szString, sizeof(szString));
 	ListView_InsertColumnA(This->hWndList, 1, &lvColumn);
 
-	lvColumn.cx = 170;
+	lvColumn.cx = 120;
 	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN3, szString, sizeof(szString));
 	ListView_InsertColumnA(This->hWndList, 2, &lvColumn);
 
@@ -332,7 +348,6 @@ static INT CALLBACK ShellView_CompareItems(LPVOID lParam1, LPVOID lParam2, LPARA
 	return ret;
 }
 
-
 /*************************************************************************
  * ShellView_ListViewCompareItems
  *
@@ -349,7 +364,13 @@ static INT CALLBACK ShellView_CompareItems(LPVOID lParam1, LPVOID lParam2, LPARA
  *     or zero if the two items are equivalent
  *
  * NOTES
- *     
+ *	FIXME: function does what ShellView_CompareItems is supposed to do.
+ *	unify it and figure out how to use the undocumented first parameter
+ *	of IShellFolder_CompareIDs to do the job this function does and
+ *	move this code to IShellFolder. 
+ *	make LISTVIEW_SORT_INFO obsolete
+ *	the way this function works is only usable if we had only 
+ *	filesystemfolders  (25/10/99 jsch)
  */
 static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam2, LPARAM lpData)
 {
@@ -961,7 +982,11 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	  case 0x31:
 	  case 0x32:
 	  case 0x33:
-	    ListView_SortItems(This->hWndList, ShellView_ListViewCompareItems, (LPARAM) (dwCmdID - 0x30));
+	    This->ListViewSortInfo.nHeaderID = (LPARAM) (dwCmdID - 0x30);
+	    This->ListViewSortInfo.bIsAscending = TRUE;
+	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
+	    ListView_SortItems(This->hWndList, ShellView_ListViewCompareItems, (LPARAM) (&(This->ListViewSortInfo)));
+	    CheckToolbar(This);
 	    break;
 	    
 	  default:
@@ -1014,23 +1039,20 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    break;
 
 	  case LVN_COLUMNCLICK:
-	  {
-            This->ListViewSortInfo.nHeaderID = lpnmlv->iSubItem;
-            if(This->ListViewSortInfo.nLastHeaderID == This->ListViewSortInfo.nHeaderID)
-            {
-                This->ListViewSortInfo.bIsAscending = !This->ListViewSortInfo.bIsAscending;
-            }
-            else
-            {
-                This->ListViewSortInfo.bIsAscending = TRUE;
-            }
-            This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
+	    This->ListViewSortInfo.nHeaderID = lpnmlv->iSubItem;
+	    if(This->ListViewSortInfo.nLastHeaderID == This->ListViewSortInfo.nHeaderID)
+	    {
+	      This->ListViewSortInfo.bIsAscending = !This->ListViewSortInfo.bIsAscending;
+	    }
+	    else
+	    {
+	      This->ListViewSortInfo.bIsAscending = TRUE;
+	    }
+	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
 
 	    ListView_SortItems(lpnmlv->hdr.hwndFrom, ShellView_ListViewCompareItems, (LPARAM) (&(This->ListViewSortInfo)));
-
 	    break;
-	  }
-
+	
 	  case LVN_GETDISPINFOA:
 	    TRACE("-- LVN_GETDISPINFOA %p\n",This);
 	    pidl = (LPITEMIDLIST)lpdi->item.lParam;
@@ -1319,13 +1341,15 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG
 {
 	ICOM_THIS(IShellViewImpl, iface);
 
+#if 0
 	FIXME("(%p)->(%p: hwnd=%x msg=%x lp=%lx wp=%x) stub\n",This,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
-
+#endif
 	
-	switch (lpmsg->message)
-	{ case WM_KEYDOWN: 	TRACE("-- key=0x04%x",lpmsg->wParam) ;
+	if ((lpmsg->message>=WM_KEYFIRST) && (lpmsg->message>=WM_KEYLAST))
+	{
+	  TRACE("-- key=0x04%x",lpmsg->wParam) ;
 	}
-	return NOERROR;
+	return S_FALSE; /* not handled */
 }
 
 static HRESULT WINAPI IShellView_fnEnableModeless(IShellView * iface,BOOL fEnable)
@@ -1341,7 +1365,9 @@ static HRESULT WINAPI IShellView_fnUIActivate(IShellView * iface,UINT uState)
 {
 	ICOM_THIS(IShellViewImpl, iface);
 
+/*
 	CHAR	szName[MAX_PATH];
+*/
 	LRESULT	lResult;
 	int	nPartArray[1] = {-1};
 
@@ -1360,15 +1386,19 @@ static HRESULT WINAPI IShellView_fnUIActivate(IShellView * iface,UINT uState)
 	if(uState != SVUIA_DEACTIVATE)
 	{
 
+/*
+	  GetFolderPath is not a method of IShellFolder
 	  IShellFolder_GetFolderPath( This->pSFParent, szName, sizeof(szName) );
-
+*/
 	  /* set the number of parts */
 	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_STATUS, SB_SETPARTS, 1,
 	  						(LPARAM)nPartArray, &lResult);
 
 	  /* set the text for the parts */
+/*
 	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_STATUS, SB_SETTEXTA,
 							0, (LPARAM)szName, &lResult);
+*/							
 	}
 
 	return S_OK;
