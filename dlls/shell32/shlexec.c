@@ -135,8 +135,16 @@ static UINT SHELL_ExecuteW(const WCHAR *lpCmd, void *env, BOOL shWait,
     STARTUPINFOW  startup;
     PROCESS_INFORMATION info;
     UINT retval = 31;
+    UINT gcdret = 0;
+    WCHAR curdir[MAX_PATH];
 
     TRACE("Execute %s from directory %s\n", debugstr_w(lpCmd), debugstr_w(psei->lpDirectory));
+    /* ShellExecute specifies the command from psei->lpDirectory
+     * if present. Not from the current dir as CreateProcess does */
+    if( psei->lpDirectory && psei->lpDirectory[0] )
+        if( ( gcdret = GetCurrentDirectoryW( MAX_PATH, curdir)))
+            if( !SetCurrentDirectoryW( psei->lpDirectory))
+                ERR("cannot set directory %s\n", debugstr_w(psei->lpDirectory));
     ZeroMemory(&startup,sizeof(STARTUPINFOW));
     startup.cb = sizeof(STARTUPINFOW);
     startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -165,6 +173,10 @@ static UINT SHELL_ExecuteW(const WCHAR *lpCmd, void *env, BOOL shWait,
     TRACE("returning %u\n", retval);
 
     psei_out->hInstApp = (HINSTANCE)retval;
+    if( gcdret ) 
+        if( !SetCurrentDirectoryW( curdir))
+            ERR("cannot return to directory %s\n", debugstr_w(curdir));
+
     return retval;
 }
 
