@@ -10007,17 +10007,12 @@ done
 
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
 then
-    echo "$as_me:$LINENO: checking whether we can statically link the ICU libraries" >&5
-echo $ECHO_N "checking whether we can statically link the ICU libraries... $ECHO_C" >&6
-if test "${ac_cv_lib_icu+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  saved_libs="$LIBS"
-         ICU_LIB_DIR="${ICU_LIB_DIR-/usr/lib}"
-         ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libicuuc.a}"
-         ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libicudata.a}"
-         LIBS="$LIBS $ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
-         cat >conftest.$ac_ext <<_ACEOF
+    saved_libs="$LIBS"
+    ICU_LIB_DIR="${ICU_LIB_DIR-/usr/lib}"
+    ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libicuuc.a}"
+    ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libicudata.a}"
+    LIBS="$LIBS $ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -10053,29 +10048,21 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_icu="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_icu="no"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-        LIBS="$saved_libs"
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_icu" >&5
-echo "${ECHO_T}$ac_cv_lib_icu" >&6
-    if test "$ac_cv_lib_icu" = "yes"
-    then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_ICU 1
 _ACEOF
 
-        ICULIBS="$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
+                 ICULIBS="$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
 
-    fi
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+    LIBS="$saved_libs"
 fi
 
 echo "$as_me:$LINENO: checking for FT_Init_FreeType in -lfreetype" >&5
@@ -11210,35 +11197,23 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-echo "$as_me:$LINENO: checking for aRts Sound server" >&5
-echo $ECHO_N "checking for aRts Sound server... $ECHO_C" >&6
-if test "${ac_cv_c_artsserver+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test x$ARTSCCONFIG = x -o x$ARTSCCONFIG = x'"$ARTSCCONFIG"';
-        then
-            ac_cv_c_artsserver=no
-        else
-            ARTSC_CFLAGS=`$ARTSCCONFIG --cflags`
-            ARTSC_LIBS=`$ARTSCCONFIG --libs`
-            ac_cv_c_artsserver=no
-            save_CFLAGS="$CFLAGS"
-            CFLAGS="$CFLAGS $ARTSC_CFLAGS"
-            cat >conftest.$ac_ext <<_ACEOF
+if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
+then
+    ARTSC_CFLAGS=`$ARTSCCONFIG --cflags`
+    ARTSC_LIBS=`$ARTSCCONFIG --libs`
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $ARTSC_CFLAGS"
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-             #include <artsc.h>
-
+#include <artsc.h>
 int
 main ()
 {
-
-             arts_stream_t stream;
-
+arts_stream_t stream;
   ;
   return 0;
 }
@@ -11264,8 +11239,14 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
+  ARTSLIBS=$ARTSC_LIBS
 
-            ac_cv_c_artsserver=yes
+         ARTSINCL=$ARTSC_CFLAGS
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ARTS 1
+_ACEOF
 
 else
   echo "$as_me: failed program was:" >&5
@@ -11273,24 +11254,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-            CFLAGS="$save_CFLAGS"
-        fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_artsserver" >&5
-echo "${ECHO_T}$ac_cv_c_artsserver" >&6
-
-if test "$ac_cv_c_artsserver" = "yes"
-then
-    ARTSLIBS=$ARTSC_LIBS
-
-    ARTSINCL=$ARTSC_CFLAGS
-
-
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_ARTS 1
-_ACEOF
-
+    CFLAGS="$save_CFLAGS"
 fi
 
 ALSALIBS=""

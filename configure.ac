@@ -416,20 +416,15 @@ dnl **** Check for the ICU library ****
 AC_CHECK_HEADERS(unicode/ubidi.h)
 if test "$ac_cv_header_unicode_ubidi_h" = "yes"
 then
-    AC_CACHE_CHECK([whether we can statically link the ICU libraries], ac_cv_lib_icu,
-        [saved_libs="$LIBS"
-         ICU_LIB_DIR="${ICU_LIB_DIR-/usr/lib}"
-         ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libicuuc.a}"
-         ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libicudata.a}"
-         LIBS="$LIBS $ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
-         AC_TRY_LINK([#include <unicode/ubidi.h>],[ubidi_open()],
-                     [ac_cv_lib_icu="yes"],[ac_cv_lib_icu="no"])
-        LIBS="$saved_libs"])
-    if test "$ac_cv_lib_icu" = "yes"
-    then
-        AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
-        AC_SUBST(ICULIBS,"$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s")
-    fi
+    saved_libs="$LIBS"
+    ICU_LIB_DIR="${ICU_LIB_DIR-/usr/lib}"
+    ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libicuuc.a}"
+    ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libicudata.a}"
+    LIBS="$LIBS $ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
+    AC_TRY_LINK([#include <unicode/ubidi.h>],[ubidi_open()],
+                [AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
+                 AC_SUBST(ICULIBS,"$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s")])
+    LIBS="$saved_libs"
 fi
 
 dnl **** Check for FreeType 2 ****
@@ -605,33 +600,17 @@ fi
 
 dnl **** Check for aRts Sound Server ****
 AC_PATH_PROG(ARTSCCONFIG, artsc-config)
-AC_CACHE_CHECK([for aRts Sound server],
-        ac_cv_c_artsserver,
-        if test x$ARTSCCONFIG = x -o x$ARTSCCONFIG = x'"$ARTSCCONFIG"';
-        then
-            ac_cv_c_artsserver=no
-        else
-            ARTSC_CFLAGS=`$ARTSCCONFIG --cflags`
-            ARTSC_LIBS=`$ARTSCCONFIG --libs`
-            ac_cv_c_artsserver=no
-            save_CFLAGS="$CFLAGS"
-            CFLAGS="$CFLAGS $ARTSC_CFLAGS"
-            AC_TRY_COMPILE([
-             #include <artsc.h>
-            ],[
-             arts_stream_t stream;
-            ],[
-            ac_cv_c_artsserver=yes
-            ])
-            CFLAGS="$save_CFLAGS"
-        fi)
-
-if test "$ac_cv_c_artsserver" = "yes"
+if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
 then
-    AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
-    AC_SUBST(ARTSINCL, $ARTSC_CFLAGS)
-
-    AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])
+    ARTSC_CFLAGS=`$ARTSCCONFIG --cflags`
+    ARTSC_LIBS=`$ARTSCCONFIG --libs`
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $ARTSC_CFLAGS"
+    AC_TRY_COMPILE([#include <artsc.h>],[arts_stream_t stream;],
+        [AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
+         AC_SUBST(ARTSINCL, $ARTSC_CFLAGS)
+         AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])])
+    CFLAGS="$save_CFLAGS"
 fi
 
 dnl **** Check for ALSA ****
