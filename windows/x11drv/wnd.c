@@ -97,6 +97,20 @@ static void X11DRV_WND_RegisterWindow(WND *wndPtr)
                   winContext, (char *) wndPtr->hwndSelf );
 }
 
+/***********************************************************************
+ *		X11DRV_WND_IsZeroSizeWnd
+ *
+ * Return TRUE if the window has a height or widht less or equal to 0
+ */
+static BOOL X11DRV_WND_IsZeroSizeWnd(WND *wndPtr)
+{
+    if ( (wndPtr->rectWindow.left >= wndPtr->rectWindow.right) ||
+         (wndPtr->rectWindow.top >= wndPtr->rectWindow.bottom) )
+        return TRUE;
+    else
+        return FALSE;
+}
+
 /**********************************************************************
  *		X11DRV_WND_Initialize
  */
@@ -307,10 +321,10 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 
       /* Zero-size X11 window hack.  X doesn't like them, and will crash */
       /* with a BadValue unless we do something ugly like this. */
-      /* FIXME:  there must be a better way.  */
+      /* Zero size window won't be mapped  */
         if (cs->cx <= 0) cs->cx = 1;
         if (cs->cy <= 0) cs->cy = 1;
-      /* EMXIF */
+
 
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
 	TSXCreateWindow( display, X11DRV_GetXRootWindow(), 
@@ -513,6 +527,12 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
 {
   XWindowChanges winChanges;
   WND *wndPrev,*pDesktop = WIN_GetDesktop();
+
+  if (X11DRV_WND_IsZeroSizeWnd(wndPtr))
+  {
+    WIN_ReleaseDesktop();
+    return;
+  }
   
   if( !wndPtr || !X11DRV_WND_GetXWindow(wndPtr) || (wndPtr->flags & WIN_MANAGED) )
   {
@@ -527,12 +547,14 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
   winChanges.stack_mode = Above;
   while (wndPtr)
     {
-      if (X11DRV_WND_GetXWindow(wndPtr)) 
-	TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(wndPtr), 0,
+      if ( !X11DRV_WND_IsZeroSizeWnd(wndPtr) && X11DRV_WND_GetXWindow(wndPtr) )         
+         TSXReconfigureWMWindow( display, X11DRV_WND_GetXWindow(wndPtr), 0,
 				CWStackMode, &winChanges );
+
       wndPrev = pDesktop->child;
       if (wndPrev == wndPtr) break;
       while (wndPrev && (wndPrev->next != wndPtr)) wndPrev = wndPrev->next;
+
       wndPtr = wndPrev;
     }
   WIN_ReleaseDesktop();
@@ -574,8 +596,28 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 {
     XWindowChanges winChanges;
     int changeMask = 0;
+    BOOL isZeroSizeWnd = FALSE;
+    BOOL forceMapWindow = FALSE;
     WND *winposPtr = WIN_FindWndPtr( winpos->hwnd );
     if ( !winposPtr ) return;
+
+    /* find out if after this function we will end out with a zero-size window */
+    if (X11DRV_WND_IsZeroSizeWnd(winposPtr))
+    {
+        /* if current size is 0, and no resizing */
+        if (winpos->flags & SWP_NOSIZE)
+            isZeroSizeWnd = TRUE;
+        else if ((winpos->cx > 0) && (winpos->cy > 0)) 
+        {
+            /* if this function is setting a new size > 0 for the window, we
+               should map the window if WS_VISIBLE is set */
+            if ((winposPtr->dwStyle & WS_VISIBLE) && !(winpos->flags & SWP_HIDEWINDOW))
+                forceMapWindow = TRUE;
+        }
+    }
+    /* if resizing to 0 */
+    if ( !(winpos->flags & SWP_NOSIZE) && ((winpos->cx <= 0) || (winpos->cy <= 0)) )
+            isZeroSizeWnd = TRUE;
 
     if(!wndPtr->hwndSelf) wndPtr = NULL; /* FIXME: WND destroyed, shouldn't happen!!! */
   
@@ -620,7 +662,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	  winChanges.y = winpos->y;
 	  changeMask |= CWX | CWY;
 	}
-	if (!(winpos->flags & SWP_NOZORDER))
+	if (!(winpos->flags & SWP_NOZORDER) && !isZeroSizeWnd)
 	{
 	  winChanges.stack_mode = Below;
 	  changeMask |= CWStackMode;
@@ -635,11 +677,13 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	      stack[1] = X11DRV_WND_FindDesktopXWindow( winposPtr );
 	      
 	      /* for stupid window managers (i.e. all of them) */
-	      
-	      TSXRestackWindows(display, stack, 2); 
-	      changeMask &= ~CWStackMode;
-              
-              WIN_ReleaseWndPtr(insertPtr);
+
+          if (!X11DRV_WND_IsZeroSizeWnd(insertPtr))
+          {
+	          TSXRestackWindows(display, stack, 2);
+	          changeMask &= ~CWStackMode;
+          }
+          WIN_ReleaseWndPtr(insertPtr);
 	    }
 	}
 	if (changeMask && X11DRV_WND_GetXWindow(winposPtr))
@@ -649,8 +693,9 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 		X11DRV_WND_SetHostAttr( winposPtr, HAK_BITGRAVITY, BGForget );
 	}
     }
-
-    if ( winpos->flags & SWP_SHOWWINDOW )
+    
+    /* don't map the window if it's a zero size window */
+    if ( ((winpos->flags & SWP_SHOWWINDOW) && !isZeroSizeWnd) || forceMapWindow )
     {
 	if(X11DRV_WND_GetXWindow(wndPtr)) 
 	   TSXMapWindow( display, X11DRV_WND_GetXWindow(wndPtr) );
@@ -702,6 +747,9 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   XWindowAttributes win_attr;
   Window win;
   WND *w = wndPtr;
+
+  if (X11DRV_WND_IsZeroSizeWnd(wndPtr))
+      return;
   
   /* Only mess with the X focus if there's */
   /* no desktop window and if the window is not managed by the WM. */
@@ -921,6 +969,10 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 	switch( ha )
 	{
 	case HAK_ICONICSTATE: /* called when a window is minimized/restored */
+
+            /* don't do anything if it'a zero size window */ 
+            if (X11DRV_WND_IsZeroSizeWnd(wnd))
+                return TRUE;
 
 		    if( (wnd->flags & WIN_MANAGED) )
 		    {
