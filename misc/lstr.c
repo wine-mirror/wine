@@ -486,8 +486,8 @@ DWORD WINAPI FormatMessage16(
 
     TRACE("(0x%lx,%lx,%d,0x%x,%p,%d,%p)\n",
 	  dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-    if (width) 
-        FIXME("line wrapping not supported.\n");
+    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK) 
+        FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
         from = HEAP_strdupA( GetProcessHeap(), 0, PTR_SEG_TO_LIN(lpSource));
@@ -523,7 +523,7 @@ DWORD WINAPI FormatMessage16(
 	while (*f && !eos) {
 	    if (*f=='%') {
 	        int	insertnr;
-		char	*fmtstr,*sprintfbuf,*x,*lastf;
+		char	*fmtstr,*x,*lastf;
 		DWORD	*argliststart;
 
 		fmtstr = NULL;
@@ -557,7 +557,7 @@ DWORD WINAPI FormatMessage16(
 			    sprintf(fmtstr,"%%%s",f);
 			    f=x+1;
 			} else {
-			    fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f));
+			    fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
 			    sprintf(fmtstr,"%%%s",f);
 			    f+=strlen(f); /*at \0*/
 			}
@@ -567,20 +567,16 @@ DWORD WINAPI FormatMessage16(
 			else
 			  fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
 		    if (args) {
-		        argliststart=args+insertnr-1;
-			if (fmtstr[strlen(fmtstr)-1]=='s')
-			    sprintfbuf=HeapAlloc(GetProcessHeap(),0,
-				 strlen(PTR_SEG_TO_LIN(argliststart[0]))+1);
-			else
-			    sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
+		        int	sz;
+			LPSTR	b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
 			
+			argliststart=args+insertnr-1;
+		       
 			/* CMF - This makes a BIG assumption about va_list */
-			wvsprintf16(sprintfbuf, fmtstr, (va_list) argliststart);
-			x=sprintfbuf;
-			while (*x) {
-			    ADD_TO_T(*x++);
+			while (wvsnprintf16(b, sz, fmtstr, (va_list) argliststart) < 0) {
+			    b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz += 100);
 			}
-			HeapFree(GetProcessHeap(),0,sprintfbuf);
+			for (x=b; *x; x++) ADD_TO_T(*x);
 		    } else {
 		        /* NULL args - copy formatstr 
 			 * (probably wrong)
@@ -602,10 +598,12 @@ DWORD WINAPI FormatMessage16(
 		}
 	    } else { /* '\n' or '\r' gets mapped to "\r\n" */
 	        if(*f == '\n' || *f == '\r') {
-		    ADD_TO_T('\r');
-		    ADD_TO_T('\n');
-		    if(*f++ == '\r' && *f == '\n')
-		        f++;
+		    if (width == 0) {
+		        ADD_TO_T('\r');
+		        ADD_TO_T('\n');
+			if(*f++ == '\r' && *f == '\n')
+			    f++;
+		    }
 		} else {
 		    ADD_TO_T(*f++);
 		}
@@ -659,8 +657,8 @@ DWORD WINAPI FormatMessageA(
 
 	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-	if (width) 
-		FIXME("line wrapping not supported.\n");
+	if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK) 
+		FIXME("line wrapping (%lu) not supported.\n", width);
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
 		from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
@@ -695,7 +693,7 @@ DWORD WINAPI FormatMessageA(
 		while (*f && !eos) {
 			if (*f=='%') {
 				int	insertnr;
-				char	*fmtstr,*sprintfbuf,*x,*lastf;
+				char	*fmtstr,*x,*lastf;
 				DWORD	*argliststart;
 
 				fmtstr = NULL;
@@ -729,7 +727,7 @@ DWORD WINAPI FormatMessageA(
 							sprintf(fmtstr,"%%%s",f);
 							f=x+1;
 						} else {
-							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f));
+							fmtstr=HeapAlloc(GetProcessHeap(),0,strlen(f)+2);
 							sprintf(fmtstr,"%%%s",f);
 							f+=strlen(f); /*at \0*/
 						}
@@ -739,23 +737,21 @@ DWORD WINAPI FormatMessageA(
 					else
 						fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
 					if (args) {
-						if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
-							argliststart=args+insertnr-1;
-						else
-                                                    argliststart=(*(DWORD**)args)+insertnr-1;
+						int	sz;
+					        LPSTR	b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
 
-						if (fmtstr[strlen(fmtstr)-1]=='s' && argliststart[0])
-							sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
+						if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
+						        argliststart=args+insertnr-1;
 						else
-							sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
+						        argliststart=(*(DWORD**)args)+insertnr-1;
 
 						/* CMF - This makes a BIG assumption about va_list */
-						wvsprintfA(sprintfbuf, fmtstr, (va_list) argliststart);
-						x=sprintfbuf;
-						while (*x) {
-							ADD_TO_T(*x++);
+						while (wvsnprintfA(b, sz, fmtstr, (va_list) argliststart) < 0) {
+						        b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz += 100);
 						}
-						HeapFree(GetProcessHeap(),0,sprintfbuf);
+						for (x=b; *x; x++) ADD_TO_T(*x);
+
+						HeapFree(GetProcessHeap(),0,b);
 					} else {
 						/* NULL args - copy formatstr 
 						 * (probably wrong)
@@ -781,10 +777,12 @@ DWORD WINAPI FormatMessageA(
 				}
 			} else { /* '\n' or '\r' gets mapped to "\r\n" */
 			    if(*f == '\n' || *f == '\r') {
-			        ADD_TO_T('\r');
-				ADD_TO_T('\n');
-				if(*f++ == '\r' && *f == '\n')
-				    f++;
+			        if (width == 0) {
+				    ADD_TO_T('\r');
+				    ADD_TO_T('\n');
+				    if(*f++ == '\r' && *f == '\n')
+				        f++;
+				}
 			    } else {
 			        ADD_TO_T(*f++);
 			    }
@@ -796,14 +794,13 @@ DWORD WINAPI FormatMessageA(
 	if (nSize && talloced<nSize) {
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	}
-    TRACE("-- %s\n",debugstr_a(target));
+	TRACE("-- %s\n",debugstr_a(target));
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
-		/* nSize is the MINIMUM size */
-		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced);
+		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,max(nSize, talloced));
 		memcpy(*(LPSTR*)lpBuffer,target,talloced);
-    } else {
+	} else {
 		lstrcpynA(lpBuffer,target,nSize);
-    }
+	}
 	HeapFree(GetProcessHeap(),0,target);
 	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
@@ -838,7 +835,7 @@ DWORD WINAPI FormatMessageW(
 
 	TRACE("(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
 		     dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
-	if (width) 
+	if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK) 
 		FIXME("line wrapping not supported.\n");
 	from = NULL;
 	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
@@ -963,10 +960,12 @@ DWORD WINAPI FormatMessageW(
 				}
 			} else { /* '\n' or '\r' gets mapped to "\r\n" */
 			    if(*f == '\n' || *f == '\r') {
-			        ADD_TO_T('\r');
-				ADD_TO_T('\n');
-				if(*f++ == '\r' && *f == '\n')
-				    f++;
+			        if (width == 0) {
+				    ADD_TO_T('\r');
+				    ADD_TO_T('\n');
+				    if(*f++ == '\r' && *f == '\n')
+				       f++;
+				}
 			    } else {
 				ADD_TO_T(*f++);
 			    }
