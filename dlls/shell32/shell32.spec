@@ -47,7 +47,6 @@
   51 stdcall -noname PathResolve(str long long) PathResolveAW
   52 stdcall -noname PathGetArgs(str) PathGetArgsAW
   53 stdcall DoEnvironmentSubst(long long) DoEnvironmentSubstAW
-  54 stdcall DragAcceptFiles(long long)
   55 stdcall -noname PathQuoteSpaces(ptr) PathQuoteSpacesAW
   56 stdcall -noname PathUnquoteSpaces(str) PathUnquoteSpacesAW
   57 stdcall -noname PathGetDriveNumber(str) PathGetDriveNumberAW
@@ -73,9 +72,6 @@
   77 stdcall -noname SHMapPIDLToSystemImageListIndex(ptr ptr ptr)
   78 stdcall -noname OleStrToStrN(str long wstr long) OleStrToStrNAW
   79 stdcall -noname StrToOleStrN(wstr long str long) StrToOleStrNAW
-  80 stdcall DragFinish(long)
-  81 stdcall DragQueryFile(long long ptr long) DragQueryFileA
-  82 stdcall DragQueryFileA(long long ptr long)
   83 stdcall -noname CIDLData_CreateFromIDArray(ptr long ptr ptr)
   84 stub SHIsBadInterfacePtr
   85 stdcall -noname OpenRegStream(long str str long) shlwapi.SHOpenRegStreamA
@@ -121,14 +117,11 @@
  125 stdcall -noname FileMenu_AddFilesForPidl(long long long ptr long long ptr)
  126 stdcall -noname SHOutOfMemoryMessageBox(long long long)
  127 stdcall -noname SHWinHelp(long long long long)
- 128 stdcall -private DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
  129 stdcall -noname DAD_AutoScroll(long ptr ptr)
  130 stdcall -noname DAD_DragEnter(long)
  131 stdcall -noname DAD_DragEnterEx(long long long)
  132 stdcall -noname DAD_DragLeave()
- 133 stdcall DragQueryFileW(long long ptr long)
  134 stdcall -noname DAD_DragMove(long long)
- 135 stdcall DragQueryPoint(long ptr)
  136 stdcall -noname DAD_SetDragImage(long long)
  137 stdcall -noname DAD_ShowDragImage(long)
  139 stub Desktop_UpdateBriefcaseOnEvent
@@ -209,69 +202,12 @@
  215 stdcall -noname SHStartNetConnectionDialog(long str long)
  243 stdcall @(long long) shell32_243
  244 stdcall -noname SHInitRestricted(ptr ptr)
- 247 stdcall SHGetDataFromIDListA(ptr ptr long ptr long)
- 248 stdcall SHGetDataFromIDListW(ptr ptr long ptr long)
  249 stdcall -noname PathParseIconLocation(ptr) PathParseIconLocationAW
  250 stdcall -noname PathRemoveExtension(ptr) PathRemoveExtensionAW
  251 stdcall -noname PathRemoveArgs(ptr) PathRemoveArgsAW
  256 stdcall @(ptr ptr) SHELL32_256
- 271 stdcall SheChangeDirA(str)
- 272 stub SheChangeDirExA
- 273 stub SheChangeDirExW
- 274 stdcall SheChangeDirW(wstr)
- 275 stub SheConvertPathW
- 276 stub SheFullPathA
- 277 stub SheFullPathW
- 278 stub SheGetCurDrive
- 279 stdcall SheGetDirA(long long)
- 280 stub SheGetDirExW
- 281 stdcall SheGetDirW (long long)
- 282 stub SheGetPathOffsetW
- 283 stub SheRemoveQuotesA
- 284 stub SheRemoveQuotesW
- 285 stub SheSetCurDrive
- 286 stub SheShortenPathA
- 287 stub SheShortenPathW
- 288 stdcall ShellAboutA(long str str long)
- 289 stdcall ShellAboutW(long wstr wstr long)
- 290 stdcall ShellExecuteA(long str str str str long)
- 291 stdcall ShellExecuteEx (long) ShellExecuteExA
- 292 stdcall ShellExecuteExA (long)
- 293 stdcall ShellExecuteExW (long)
- 294 stdcall ShellExecuteW (long wstr wstr wstr wstr long)
- 296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIconA
- 297 stdcall Shell_NotifyIconA(long ptr)
- 298 stdcall Shell_NotifyIconW(long ptr)
 #299 stub Shl1632_ThunkData32
 #300 stub Shl3216_ThunkData32
- 301 stdcall StrChrA(str long) shlwapi.StrChrA
- 302 stdcall StrChrIA(str long) shlwapi.StrChrIA
- 303 stdcall StrChrIW(wstr long) shlwapi.StrChrIW
- 304 stdcall StrChrW(wstr long) shlwapi.StrChrW
- 305 stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
- 306 stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
- 307 stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
- 308 stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
- 309 stdcall StrCpyNA (ptr str long) kernel32.lstrcpynA
- 310 stdcall StrCpyNW(wstr wstr long) shlwapi.StrCpyNW
- 311 stdcall StrNCmpA(str str long) shlwapi.StrCmpNA
- 312 stdcall StrNCmpIA(str str long) shlwapi.StrCmpNIA
- 313 stdcall StrNCmpIW(wstr wstr long) shlwapi.StrCmpNIW
- 314 stdcall StrNCmpW(wstr wstr long) shlwapi.StrCmpNW
- 315 stdcall StrNCpyA (ptr str long) kernel32.lstrcpynA
- 316 stdcall StrNCpyW(wstr wstr long) shlwapi.StrCpyNW
- 317 stdcall StrRChrA(str str long) shlwapi.StrRChrA
- 318 stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
- 319 stdcall StrRChrIW(str str long) shlwapi.StrRChrIW
- 320 stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
- 321 stub StrRStrA
- 322 stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
- 323 stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
- 324 stub StrRStrW
- 325 stdcall StrStrA(str str) shlwapi.StrStrA
- 326 stdcall StrStrIA(str str) shlwapi.StrStrIA
- 327 stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
- 328 stdcall StrStrW(wstr wstr) shlwapi.StrStrW
 
  505 stdcall SHRegCloseKey (long)
  506 stdcall SHRegOpenKeyA (long str long)
@@ -332,12 +268,19 @@
 @ stub Control_RunDLLAsUserW
 @ stdcall Control_RunDLLW(ptr ptr wstr long)
 @ stdcall -private DllCanUnloadNow() SHELL32_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
 @ stdcall DllInstall(long wstr)SHELL32_DllInstall
 @ stdcall -private DllRegisterServer() SHELL32_DllRegisterServer
 @ stdcall -private DllUnregisterServer() SHELL32_DllUnregisterServer
 @ stdcall DoEnvironmentSubstA(str str)
 @ stdcall DoEnvironmentSubstW(wstr wstr)
+@ stdcall DragAcceptFiles(long long)
+@ stdcall DragFinish(long)
+@ stdcall DragQueryFile(long long ptr long) DragQueryFileA
+@ stdcall DragQueryFileA(long long ptr long)
 @ stub DragQueryFileAorW
+@ stdcall DragQueryFileW(long long ptr long)
+@ stdcall DragQueryPoint(long ptr)
 @ stdcall DuplicateIcon(long long)
 @ stdcall ExtractAssociatedIconA(long str ptr)
 @ stdcall ExtractAssociatedIconExA(long str long long)
@@ -380,15 +323,44 @@
 @ stdcall SHCreateDirectoryExA(long str ptr)
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
 @ stub SHCreateProcessAsUserW
+@ stdcall SheChangeDirA(str)
+@ stub SheChangeDirExA
+@ stub SheChangeDirExW
+@ stdcall SheChangeDirW(wstr)
+@ stub SheConvertPathW
+@ stub SheFullPathA
+@ stub SheFullPathW
+@ stub SheGetCurDrive
+@ stdcall SheGetDirA(long long)
+@ stub SheGetDirExW
+@ stdcall SheGetDirW (long long)
+@ stub SheGetPathOffsetW
+@ stdcall ShellAboutA(long str str long)
+@ stdcall ShellAboutW(long wstr wstr long)
+@ stdcall ShellExecuteA(long str str str str long)
+@ stdcall ShellExecuteEx (long) ShellExecuteExA
+@ stdcall ShellExecuteExA (long)
+@ stdcall ShellExecuteExW (long)
+@ stdcall ShellExecuteW (long wstr wstr wstr wstr long)
 @ stub ShellHookProc
+@ stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIconA
+@ stdcall Shell_NotifyIconA(long ptr)
+@ stdcall Shell_NotifyIconW(long ptr)
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
+@ stub SheRemoveQuotesA
+@ stub SheRemoveQuotesW
+@ stub SheSetCurDrive
+@ stub SheShortenPathA
+@ stub SheShortenPathW
 @ stub SHExtractIconsW
 @ stdcall SHFileOperation(ptr) SHFileOperationA
 @ stdcall SHFileOperationA(ptr)
 @ stdcall SHFileOperationW(ptr)
 @ stdcall SHFormatDrive(long long long long)
 @ stdcall SHFreeNameMappings(ptr)
+@ stdcall SHGetDataFromIDListA(ptr ptr long ptr long)
+@ stdcall SHGetDataFromIDListW(ptr ptr long ptr long)
 @ stdcall SHGetDesktopFolder(ptr)
 @ stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoA
 @ stdcall SHGetFileInfoA(ptr long ptr long long)
@@ -414,6 +386,34 @@
 @ stdcall SHQueryRecycleBinA(str ptr)
 @ stdcall SHQueryRecycleBinW(wstr ptr)
 @ stub SHUpdateRecycleBinIcon
+@ stdcall StrChrA(str long) shlwapi.StrChrA
+@ stdcall StrChrIA(str long) shlwapi.StrChrIA
+@ stdcall StrChrIW(wstr long) shlwapi.StrChrIW
+@ stdcall StrChrW(wstr long) shlwapi.StrChrW
+@ stdcall StrCmpNA(str str long) shlwapi.StrCmpNA
+@ stdcall StrCmpNIA(str str long) shlwapi.StrCmpNIA
+@ stdcall StrCmpNIW(wstr wstr long) shlwapi.StrCmpNIW
+@ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
+@ stdcall StrCpyNA (ptr str long) kernel32.lstrcpynA
+@ stdcall StrCpyNW(wstr wstr long) shlwapi.StrCpyNW
+@ stdcall StrNCmpA(str str long) shlwapi.StrCmpNA
+@ stdcall StrNCmpIA(str str long) shlwapi.StrCmpNIA
+@ stdcall StrNCmpIW(wstr wstr long) shlwapi.StrCmpNIW
+@ stdcall StrNCmpW(wstr wstr long) shlwapi.StrCmpNW
+@ stdcall StrNCpyA (ptr str long) kernel32.lstrcpynA
+@ stdcall StrNCpyW(wstr wstr long) shlwapi.StrCpyNW
+@ stdcall StrRChrA(str str long) shlwapi.StrRChrA
+@ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
+@ stdcall StrRChrIW(str str long) shlwapi.StrRChrIW
+@ stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
+@ stub StrRStrA
+@ stdcall StrRStrIA(str str str) shlwapi.StrRStrIA
+@ stdcall StrRStrIW(wstr wstr wstr) shlwapi.StrRStrIW
+@ stub StrRStrW
+@ stdcall StrStrA(str str) shlwapi.StrStrA
+@ stdcall StrStrIA(str str) shlwapi.StrStrIA
+@ stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
+@ stdcall StrStrW(wstr wstr) shlwapi.StrStrW
 @ stub WOWShellExecute
 
 #
