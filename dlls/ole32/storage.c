@@ -281,13 +281,12 @@ STORAGE_get_next_small_blocknr(HANDLE hf,int blocknr) {
  */
 static int
 STORAGE_get_nth_next_small_blocknr(HANDLE hf,int blocknr,int nr) {
-	int	lastblocknr;
+	int	lastblocknr=-1;
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
 	struct storage_header sth;
 
 	READ_HEADER;
-	lastblocknr=-1;
 	assert(blocknr>=0);
 	while ((nr--) && (blocknr>=0)) {
 		if (lastblocknr/128!=blocknr/128) {
@@ -659,7 +658,7 @@ STORAGE_get_free_small_blocknr(HANDLE hf) {
  */
 static int
 STORAGE_get_free_pps_entry(HANDLE hf) {
-	int	blocknr,i,curblock,lastblocknr;
+	int	blocknr, i, curblock, lastblocknr=-1;
 	BYTE	block[BIGSIZE];
 	struct storage_pps_entry *stde = (struct storage_pps_entry*)block;
 	struct storage_header sth;
