@@ -56,7 +56,7 @@ static void test_Heap(void)
     UINT error,i;
     DWORD dwSize;
 
-/* Retreive the page size for this system */
+/* Retrieve the page size for this system */
     sysInfo.dwPageSize=0;
     GetSystemInfo(&sysInfo);
     ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size");
@@ -391,12 +391,12 @@ static void test_Virtual(void)
     UCHAR *mem1;
     UINT error,i;
 
-/* Retreive the page size for this system */
+/* Retrieve the page size for this system */
     sysInfo.dwPageSize=0;
     GetSystemInfo(&sysInfo);
     ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size");
 
-/* Chhose a reasonable allocation size */
+/* Choose a reasonable allocation size */
     memchunk=10*sysInfo.dwPageSize;
 
 /* Check that a normal alloc works */

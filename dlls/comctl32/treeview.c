@@ -3640,7 +3640,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 
 	if (iLength >= 1023)
 	{
-	    ERR("Insuficient space to retrieve new item label\n");
+	    ERR("Insufficient space to retrieve new item label\n");
 	}
 
 	tvdi.item.pszText = tmpText;

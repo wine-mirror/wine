@@ -623,7 +623,7 @@ LONG WINAPI SHRegEnumUSKeyA(
 	    return RegEnumKeyExA(dokey, dwIndex, pszName, pcchValueNameLen,
 				0, 0, 0, 0);
 	}
-	FIXME("no support for SHREGNUM_BOTH\n");
+	FIXME("no support for SHREGENUM_BOTH\n");
 	return ERROR_INVALID_FUNCTION;
 }
 
@@ -656,7 +656,7 @@ LONG WINAPI SHRegEnumUSKeyW(
 	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen,
 				0, 0, 0, 0);
 	}
-	FIXME("no support for SHREGNUM_BOTH\n");
+	FIXME("no support for SHREGENUM_BOTH\n");
 	return ERROR_INVALID_FUNCTION;
 }
 
@@ -1483,7 +1483,7 @@ LONG WINAPI SHEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpszSubKey,
  *
  * RETURNS
  *   Success: ERROR_SUCCESS. Output parameters are updated.
- *   Failure: An error code from RegEnumValueExA.
+ *   Failure: An error code from RegEnumValueA.
  */
 LONG WINAPI SHEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpszValue,
                          LPDWORD pwLen, LPDWORD pwType,

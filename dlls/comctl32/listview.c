@@ -343,7 +343,7 @@ typedef struct tagLISTVIEW_INFO
 #define LV_FL_DT_FLAGS  (DT_TOP | DT_NOPREFIX | DT_EDITCONTROL | DT_CENTER | DT_WORDBREAK | DT_NOCLIP)
 #define LV_SL_DT_FLAGS  (DT_TOP | DT_EDITCONTROL | DT_SINGLELINE | DT_WORD_ELLIPSIS | DT_END_ELLIPSIS)
 
-/* The time in milisecods to reset the search in the list */
+/* The time in milliseconds to reset the search in the list */
 #define KEY_DELAY       450
 
 /* Dump the LISTVIEW_INFO structure to the debug channel */

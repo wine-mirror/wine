@@ -481,7 +481,7 @@ LONG ALSA_WaveInit(void)
 #undef X
     }
 
-    if ( snd_pcm_hw_params_get_channels_min(hw_params) > 1) FIXME("-");
+    if ( snd_pcm_hw_params_get_channels_min(hw_params) > 1) FIXME("-\n");
     wwo->caps.wChannels = (snd_pcm_hw_params_get_channels_max(hw_params) >= 2) ? 2 : 1;
     if (snd_pcm_hw_params_get_channels_min(hw_params) <= 2 && 2 <= snd_pcm_hw_params_get_channels_max(hw_params))
         wwo->caps.dwSupport |= WAVECAPS_LRVOLUME;

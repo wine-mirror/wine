@@ -165,10 +165,10 @@ LRESULT WINAPI SHCoCreateInstance(
 	    dwSize = sizeof(sDllPath);
 	    SHQueryValueExW(hKey, NULL, 0,0, sDllPath, &dwSize );
 
-	    /* if a special registry key is set we loading a shell extension without help of OLE32 */
+	    /* if a special registry key is set, we load a shell extension without help of OLE32 */
 	    bLoadWithoutCOM = (ERROR_SUCCESS == SHQueryValueExW(hKey, sLoadWithoutCOM, 0, 0, 0, 0));
 
-	    /* if the com object is inside shell32 omit use of ole32 */
+	    /* if the com object is inside shell32, omit use of ole32 */
 	    bLoadFromShell32 = (0==lstrcmpiW( PathFindFileNameW(sDllPath), sShell32));
 
 	    RegCloseKey (hKey);

@@ -873,13 +873,13 @@ inline static void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
     /* Do something if internal table state != X state for keycode */
     if (((pKeyStateTable[vkey] & 0x80)!=0) != state)
     {
-        TRACE("Adjusting state for vkey %#.2x. State before %#.2x \n",
+        TRACE("Adjusting state for vkey %#.2x. State before %#.2x\n",
               vkey, pKeyStateTable[vkey]);
 
         /* Fake key being pressed inside wine */
         send_keyboard_input( vkey, 0, state? 0 : KEYEVENTF_KEYUP, time );
 
-        TRACE("State after %#.2x \n",pKeyStateTable[vkey]);
+        TRACE("State after %#.2x\n",pKeyStateTable[vkey]);
     }
 }
 
@@ -951,12 +951,12 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
 
     TRACE_(key)("state = %X\n", event->state);
 
-    /* If XKB extensions is used, the state mask for AltGr will used the group
+    /* If XKB extensions are used, the state mask for AltGr will use the group
        index instead of the modifier mask. The group index is set in bits
        13-14 of the state field in the XKeyEvent structure. So if AltGr is
-       pressed, look if the group index is diferent than 0. From XKB
-       extension documentation, the group index should for AltGr should
-       be 2 (event->state = 0x2000). It's probably better to not assume a
+       pressed, look if the group index is different than 0. From XKB
+       extension documentation, the group index for AltGr should be 2
+       (event->state = 0x2000). It's probably better to not assume a
        predefined group index and find it dynamically
 
        Ref: X Keyboard Extension: Library specification (section 14.1.1 and 17.1.1) */
@@ -997,7 +997,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
         /* Adjust the NUMLOCK state if it has been changed outside wine */
 	if (!(pKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  {
-	    TRACE("Adjusting NumLock state. \n");
+	    TRACE("Adjusting NumLock state.\n");
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_time );
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_time );
 	  }
@@ -1365,7 +1365,7 @@ WORD X11DRV_VkKeyScan(CHAR cChar)
 	  keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
 	}
 
-	TRACE("VkKeyScan '%c'(%#lx, %lu): got keycode %#.2x\n",
+	TRACE("'%c'(%#lx, %lu): got keycode %#.2x\n",
               cChar,keysym,keysym,keycode);
 
 	if (keycode)
@@ -1402,7 +1402,7 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 
 #define returnMVK(value) { TRACE("returning 0x%x.\n",value); return value; }
 
-	TRACE("MapVirtualKey wCode=0x%x wMapType=%d ... \n", wCode,wMapType);
+	TRACE("wCode=0x%x wMapType=%d ...\n", wCode,wMapType);
 	switch(wMapType) {
 		case 0:	{ /* vkey-code to scan-code */
 			/* let's do vkey -> keycode -> scan */
@@ -1799,7 +1799,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
         }
 
         /* more areas where X returns characters but Windows does not
-           CTRL + number or CTRL + symbol*/
+           CTRL + number or CTRL + symbol */
         if (e.state & ControlMask)
         {
             if (((keysym>=33) && (keysym < 'A')) ||
