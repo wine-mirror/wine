@@ -1,0 +1,4 @@
+Makefile
+rsrc.res
+start.exe.dbg.c
+start.exe.spec.c

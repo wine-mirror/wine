@@ -1520,6 +1520,7 @@ programs/regsvr32/Makefile
 programs/regtest/Makefile
 programs/rpcss/Makefile
 programs/rundll32/Makefile
+programs/start/Makefile
 programs/uninstaller/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile

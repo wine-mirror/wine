@@ -1,0 +1,15 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = start.exe
+APPMODE   = cui
+IMPORTS   = shell32 user32 kernel32
+
+C_SRCS = start.c
+
+RC_SRCS = rsrc.rc
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

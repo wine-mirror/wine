@@ -101,6 +101,7 @@ function conf_string_answer {
 
 function create_windows_directories {
   for tdir in "$CROOT/windows" "$CROOT/windows/system" \
+              "$CROOT/windows/command" \
               "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
               "$CROOT/Program Files" "$CROOT/Program Files/Common Files" \
               "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator" \
@@ -129,6 +130,7 @@ function link_app {
 #puts windows applications replacements to windows directories,
 #configures them
 function configure_wine_applications {
+  link_app start        "$CROOT/windows/command/start.exe"
   link_app notepad      "$CROOT/windows/notepad.exe"
   link_app regedit      "$CROOT/windows/regedit.exe"
   link_app rundll32     "$CROOT/windows/rundll32.exe"

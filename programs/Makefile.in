@@ -19,6 +19,7 @@ SUBDIRS = \
 	regtest \
 	rpcss \
 	rundll32 \
+	start \
 	uninstaller \
 	view \
 	wcmd \
@@ -43,6 +44,7 @@ INSTALLSUBDIRS = \
 	regsvr32 \
 	rpcss \
 	rundll32 \
+	start \
 	uninstaller \
 	wcmd \
 	wineboot \
