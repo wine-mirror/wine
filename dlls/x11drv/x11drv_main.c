@@ -43,12 +43,16 @@
 #define INT8 X_INT8
 #define INT16 X_INT16
 #define INT32 X_INT32
+#define INT64 X_INT64
+#define LONG64 X_LONG64
 #include <X11/Xproto.h>
 #undef BOOL
 #undef BYTE
 #undef INT8
 #undef INT16
 #undef INT32
+#undef INT64
+#undef LONG64
 
 #include "windef.h"
 #include "winbase.h"
