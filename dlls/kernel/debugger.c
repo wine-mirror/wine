@@ -213,7 +213,7 @@ void WINAPI OutputDebugStringW(
 
 
 /***********************************************************************
- *           OutputDebugString16   (KERNEL.115)
+ *           OutputDebugString   (KERNEL.115)
  *
  *  Output by a 16 bit application of an ascii string to a debugger (if attached)
  *  and program log.

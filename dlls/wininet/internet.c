@@ -927,7 +927,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
  *    FALSE on failure
  *
  */
-BOOLAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName, 
+BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName, 
 		LPSTR lpCookieData, LPDWORD lpdwSize)
 {
     FIXME("Stub\n");

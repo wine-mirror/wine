@@ -333,7 +333,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall HiliteMenuItem(long long long long) HiliteMenuItem
 @ stub ImpersonateDdeClientWindow
 @ stdcall InSendMessage() InSendMessage
-@ stub InSendMessageEx
+@ stdcall InSendMessageEx(ptr) InSendMessageEx
 @ stdcall InflateRect(ptr long long) InflateRect
 @ stdcall InsertMenuA(long long long long ptr) InsertMenuA
 @ stdcall InsertMenuItemA(long long long ptr) InsertMenuItemA

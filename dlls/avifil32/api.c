@@ -21,6 +21,7 @@ DEFAULT_DEBUG_CHANNEL(avifile);
 
 
 /***********************************************************************
+ *		AVIFileInit (AVIFILE.100)
  *		AVIFileInit (AVIFIL32.@)
  */
 void WINAPI AVIFileInit(void)
@@ -37,6 +38,7 @@ void WINAPI AVIFileInit(void)
 }
 
 /***********************************************************************
+ *		AVIFileExit (AVIFILE.101)
  *		AVIFileExit (AVIFIL32.@)
  */
 void WINAPI AVIFileExit(void)
@@ -68,6 +70,7 @@ ULONG WINAPI AVIFileAddRef(PAVIFILE pfile)
 }
 
 /***********************************************************************
+ *		AVIFileRelease (AVIFILE.141)
  *		AVIFileRelease (AVIFIL32.@)
  */
 ULONG WINAPI AVIFileRelease(PAVIFILE pfile)
@@ -76,6 +79,7 @@ ULONG WINAPI AVIFileRelease(PAVIFILE pfile)
 }
 
 /***********************************************************************
+ *		AVIFileOpenA (AVIFILE.102)
  *		AVIFileOpenA (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileOpenA(
@@ -175,6 +179,7 @@ HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile,AVIFILEINFOA* pfi,LONG lSize)
 }
 
 /***********************************************************************
+ *		AVIFileGetStream (AVIFILE.143)
  *		AVIFileGetStream (AVIFIL32.@)
  */
 HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile,PAVISTREAM* pas,DWORD fccType,LONG lParam)

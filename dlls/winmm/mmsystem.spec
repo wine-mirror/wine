@@ -135,7 +135,7 @@ owner	winmm
 900    pascal  mmTaskCreate(long ptr long) mmTaskCreate16
 902    pascal  mmTaskBlock(word) mmTaskBlock16
 903    pascal  mmTaskSignal(word) mmTaskSignal16
-904    pascal  mmGetCurrentTask() GetCurrentTask #just the same
+904    pascal16 mmGetCurrentTask() mmGetCurrentTask16
 905    pascal  mmTaskYield() mmTaskYield16
 1100   pascal  DrvOpen(str str long) DrvOpen16
 1101   pascal  DrvClose(word long long) DrvClose16

@@ -4956,6 +4956,14 @@ LRESULT	WINAPI mmTaskSignal16(HTASK16 ht)
 }
 
 /**************************************************************************
+ * 				mmGetCurrentTask	[MMSYSTEM.904]
+ */
+HTASK16 WINAPI mmGetCurrentTask16(void)
+{
+    return GetCurrentTask();
+}
+
+/**************************************************************************
  * 				mmTaskYield16		[MMSYSTEM.905]
  */
 void	WINAPI	mmTaskYield16(void)

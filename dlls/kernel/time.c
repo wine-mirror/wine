@@ -553,7 +553,7 @@ BOOL WINAPI GetProcessTimes(
 }
 
 /*********************************************************************
- *	GetCalendarInfoA				(KERNEL32)
+ *	GetCalendarInfoA				(KERNEL32.@)
  *
  */
 int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
@@ -565,7 +565,7 @@ int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
 }
 
 /*********************************************************************
- *	GetCalendarInfoW				(KERNEL32)
+ *	GetCalendarInfoW				(KERNEL32.@)
  *
  */
 int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
@@ -577,7 +577,7 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 }
 
 /*********************************************************************
- *	SetCalendarInfoA				(KERNEL32)
+ *	SetCalendarInfoA				(KERNEL32.@)
  *
  */
 int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR lpCalData)
@@ -588,7 +588,7 @@ int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR
 }
 
 /*********************************************************************
- *	SetCalendarInfoW				(KERNEL32)
+ *	SetCalendarInfoW				(KERNEL32.@)
  *
  */
 int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWSTR lpCalData)
