@@ -53,6 +53,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
+static BOOL DOSVM_isdosexe;
+
+/**********************************************************************
+ *          DOSVM_IsWin16
+ * 
+ * Return TRUE if we are in Windows process.
+ */
+BOOL DOSVM_IsWin16(void)
+{
+  return DOSVM_isdosexe ? FALSE : TRUE;
+}
+
 #ifdef MZ_SUPPORTED
 
 #ifdef HAVE_SYS_MMAN_H
@@ -332,9 +344,13 @@ load_error:
 
 /***********************************************************************
  *		LoadDosExe (WINEDOS.@)
+ *
+ * Called from Wine loader when a new real-mode DOS process is started.
+ * Loads DOS program into memory and executes the program.
  */
 void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 {
+  DOSVM_isdosexe = TRUE;
   if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch();
 }
 

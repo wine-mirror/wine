@@ -69,7 +69,7 @@ static WORD dpmi_flag;
  * 
  * Return TRUE if we are in 32-bit protected mode DOS process.
  */
-BOOL DOSVM_IsDos32()
+BOOL DOSVM_IsDos32(void)
 {
   return (dpmi_flag & 1) ? TRUE : FALSE;
 }

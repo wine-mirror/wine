@@ -20,8 +20,16 @@
 
 #include "dosexe.h"
 #include "wine/debug.h"
+#include "wine/winbase16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
+
+static FARPROC16 DOSVM_Vectors16[256];
+static FARPROC48 DOSVM_Vectors48[256];
+static INTPROC   DOSVM_VectorsBuiltin[256];
+
+/* Ordinal number for interrupt 0 handler in winedos.dll and winedos16.dll */
+#define FIRST_INTERRUPT 100
 
 /**********************************************************************
  *         DOSVM_EmulateInterruptPM
@@ -46,15 +54,9 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
   } else
     islong = FALSE;
 
-  /* FIXME: Remove this check when DPMI32 support has been added */
-  if(islong) {
-    ERR("Interrupts not supported in 32-bit DPMI\n");
-    islong = FALSE;
-  }
-
   if(islong)
   {
-    FARPROC48 addr = {0,0}; /* FIXME: INT_GetPMHandler48( intnum ); */
+    FARPROC48 addr = DOSVM_GetPMHandler48( intnum );
     DWORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
     /* Push the flags and return address on the stack */
     *(--stack) = context->EFlags;
@@ -66,7 +68,7 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
   }
   else
   {
-    FARPROC16 addr = INT_GetPMHandler( intnum );
+    FARPROC16 addr = INT_GetPMHandler( intnum ); /* FIXME: DOSVM_GetPMHandler16 */
     WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
     /* Push the flags and return address on the stack */
     *(--stack) = LOWORD(context->EFlags);
@@ -81,4 +83,148 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
     context->Esp += islong ? -12 : -6;
   else
     ADD_LOWORD( context->Esp, islong ? -12 : -6 );
+}
+
+/**********************************************************************
+ *          DOSVM_GetRMHandler
+ *
+ * Return the real mode interrupt vector for a given interrupt.
+ */
+FARPROC16 DOSVM_GetRMHandler( BYTE intnum )
+{
+  return ((FARPROC16*)0)[intnum];
+}
+
+/**********************************************************************
+ *          DOSVM_SetRMHandler
+ *
+ * Set the real mode interrupt handler for a given interrupt.
+ */
+void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
+{
+  TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
+       intnum, HIWORD(handler), LOWORD(handler) );
+  ((FARPROC16*)0)[intnum] = handler;
+}
+
+/**********************************************************************
+ *          DOSVM_GetPMHandler16
+ *
+ * Return the protected mode interrupt vector for a given interrupt.
+ */
+FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
+{
+  static HMODULE16 procs;
+  FARPROC16 handler = DOSVM_Vectors16[intnum];
+
+  if (!handler)
+  {
+    if (!procs &&
+        (procs = GetModuleHandle16( "winedos16" )) < 32 &&
+        (procs = LoadLibrary16( "winedos16" )) < 32)
+    {
+      ERR("could not load winedos16.dll\n");
+      procs = 0;
+      return 0;
+    }
+
+    handler = GetProcAddress16( procs, (LPCSTR)(FIRST_INTERRUPT + intnum));
+    if (!handler) 
+    {
+      WARN("int%x not implemented, returning dummy handler\n", intnum );
+      handler = GetProcAddress16( procs, (LPCSTR)(FIRST_INTERRUPT + 256));
+    }
+
+    DOSVM_Vectors16[intnum] = handler;
+  }
+
+  return handler;
+}
+
+
+/**********************************************************************
+ *          DOSVM_SetPMHandler
+ *
+ * Set the protected mode interrupt handler for a given interrupt.
+ */
+void DOSVM_SetPMHandler( BYTE intnum, FARPROC16 handler )
+{
+  TRACE("Set protected mode interrupt vector %02x <- %04x:%04x\n",
+       intnum, HIWORD(handler), LOWORD(handler) );
+  DOSVM_Vectors16[intnum] = handler;
+}
+
+/**********************************************************************
+ *         DOSVM_GetPMHandler48
+ *
+ * Return the protected mode interrupt vector for a given interrupt.
+ * Used to get 48-bit pointer for 32-bit interrupt handlers in DPMI32.
+ */
+FARPROC48 DOSVM_GetPMHandler48( BYTE intnum )
+{
+  if (!DOSVM_Vectors48[intnum].selector)
+  {
+    DOSVM_Vectors48[intnum].selector = DOSVM_dpmi_segments->int48_sel;
+    DOSVM_Vectors48[intnum].offset = 4 * intnum;
+  }
+  return DOSVM_Vectors48[intnum];
+}
+
+/**********************************************************************
+ *         DOSVM_SetPMHandler48
+ *
+ * Set the protected mode interrupt handler for a given interrupt.
+ * Used to set 48-bit pointer for 32-bit interrupt handlers in DPMI32.
+ */
+void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler )
+{
+  TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08lx\n",
+       intnum, handler.selector, handler.offset );
+  DOSVM_Vectors48[intnum] = handler;
+}
+
+/**********************************************************************
+ *         DOSVM_GetBuiltinHandler
+ *
+ * Return Wine interrupt handler procedure for a given interrupt.
+ */
+INTPROC DOSVM_GetBuiltinHandler( BYTE intnum )
+{
+  static HMODULE procs;
+  INTPROC handler = DOSVM_VectorsBuiltin[intnum];
+
+  if (!handler)
+  {
+    if (!procs)
+      procs = LoadLibraryA( "winedos.dll" );
+
+    if (!procs) 
+    {
+      ERR("could not load winedos.dll\n");
+      return 0;
+    }
+
+    handler = (INTPROC)GetProcAddress( procs, 
+                                      (LPCSTR)(FIRST_INTERRUPT + intnum));
+    if (!handler) 
+    {
+      WARN("int%x not implemented, returning dummy handler\n", intnum );
+      handler = (INTPROC)GetProcAddress( procs, 
+                                        (LPCSTR)(FIRST_INTERRUPT + 256));
+    }
+
+    DOSVM_VectorsBuiltin[intnum] = handler;
+  }
+
+  return handler;
+}
+
+/**********************************************************************
+ *         DOSVM_DefaultHandler
+ *
+ * Default interrupt handler. This will be used to emulate all
+ * interrupts that don't have their own interrupt handler.
+ */
+void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
+{
 }

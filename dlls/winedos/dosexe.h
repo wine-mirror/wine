@@ -64,9 +64,8 @@ extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVO
 extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void WINAPI DOSVM_SetTimer( UINT ticks );
 extern UINT WINAPI DOSVM_GetTimer( void );
-extern FARPROC16 DOSVM_GetRMHandler( BYTE intnum );
-extern void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler );
 extern void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context );
+extern BOOL DOSVM_IsWin16(void);
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
@@ -115,7 +114,7 @@ extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
 
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
-extern BOOL WINAPI DOSVM_IsDos32();
+extern BOOL DOSVM_IsDos32(void);
 
 /* int33.c */
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);
@@ -125,6 +124,15 @@ extern void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);
 extern void WINAPI EMS_Ioctl_Handler(CONTEXT86*);
+
+/* interrupts.c */
+extern FARPROC16 DOSVM_GetRMHandler( BYTE intnum );
+extern void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler );
+extern FARPROC16 DOSVM_GetPMHandler16( BYTE intnum );
+extern void DOSVM_SetPMHandler16( BYTE intnum, FARPROC16 handler );
+extern FARPROC48 DOSVM_GetPMHandler48( BYTE intnum );
+extern void DOSVM_SetPMHandler48( BYTE intnum, FARPROC48 handler );
+extern INTPROC DOSVM_GetBuiltinHandler( BYTE intnum );
 
 /* soundblaster.c */
 extern void SB_ioport_out( WORD port, BYTE val );

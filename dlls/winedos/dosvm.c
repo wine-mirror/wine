@@ -624,30 +624,6 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 
 #endif
 
-/**********************************************************************
- *	    DOSVM_GetRMHandler
- *
- * Return the real mode interrupt vector for a given interrupt.
- */
-FARPROC16 DOSVM_GetRMHandler( BYTE intnum )
-{
-    return ((FARPROC16*)0)[intnum];
-}
-
-
-/**********************************************************************
- *	    DOSVM_SetRMHandler
- *
- * Set the real mode interrupt handler for a given interrupt.
- */
-void DOSVM_SetRMHandler( BYTE intnum, FARPROC16 handler )
-{
-    TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
-                 intnum, HIWORD(handler), LOWORD(handler) );
-    ((FARPROC16*)0)[intnum] = handler;
-}
-
-
 static const INTPROC real_mode_handlers[] =
 {
     /* 00 */ 0, 0, 0, 0, 0, 0, 0, 0,
