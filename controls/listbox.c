@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "wine/winuser16.h"
+#include "wine/winbase16.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "drive.h"
@@ -2202,6 +2203,17 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
     descr->font          = 0;
     descr->locale        = 0;  /* FIXME */
     descr->lphc		 = lphc;
+
+    if( ( GetExpWinVer16( wnd->hInstance ) & 0xFF00 ) == 0x0300
+	&& ( descr->style & ( WS_VSCROLL | WS_HSCROLL ) ) )
+    {
+	/* Win95 document "List Box Differences" from MSDN:
+	   If a list box in a version 3.x application has either the
+	   WS_HSCROLL or WS_VSCROLL style, the list box receives both
+	   horizontal and vertical scroll bars.
+	*/
+	descr->style |= WS_VSCROLL | WS_HSCROLL;
+    }
 
     if( lphc )
     {
