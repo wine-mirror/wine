@@ -659,7 +659,7 @@ static HRESULT WINAPI IShellFolder_fnGetAttributesOf(IShellFolder * iface,UINT c
 
 	TRACE(shell,"(%p)->(%d,%p,%p)\n",This,cidl,apidl,rgfInOut);
 
-	if ((! cidl )| (!apidl) | (!rgfInOut))
+	if ( (!cidl) || (!apidl) || (!rgfInOut))
 	  return E_INVALIDARG;
 
 	pidltemp=apidl;
