@@ -229,9 +229,8 @@ static char *open_library( const char *name )
     {
         if ((fullname = try_library_path( lib_path[i], name ))) return fullname;
     }
-    if (!(fullname = try_library_path( ".", name )))
-        fatal_error( "could not open .def file for %s\n", name );
-    return fullname;
+    fatal_error( "could not open .def file for %s\n", name );
+    return NULL;
 }
 
 /* read in the list of exported symbols of an import library */
