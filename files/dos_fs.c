@@ -1238,6 +1238,8 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 
     if (!name[0]) return 0;
 
+    TRACE("passed '%s'\n", name);
+
     if (name[1]==':')
       /*drive letter given */
       {
@@ -1253,8 +1255,11 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
       {
 	if (driveletter)
 	  drivecur[0]=driveletter;
-	else
+        else if ((name[0]=='\\') || (name[0]=='/'))
+          strcpy(drivecur,"\\");
+        else
 	  strcpy(drivecur,".");
+
 	if (!DOSFS_GetFullName( drivecur, FALSE, &full_name ))
 	  {
 	    FIXME("internal: error getting drive/path\n");
