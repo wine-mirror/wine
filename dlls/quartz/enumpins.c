@@ -108,10 +108,10 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
     if (cFetched > 0)
     {
         ULONG i;
-
-        *ppPins = This->enumPinDetails.ppPins[This->uIndex];
-        for (i = This->uIndex; i < This->uIndex + cFetched; i++)
-            IPin_AddRef(This->enumPinDetails.ppPins[i]);
+        for (i = 0; i < cFetched; i++) {
+            IPin_AddRef(This->enumPinDetails.ppPins[This->uIndex + i]);
+            ppPins[i] = This->enumPinDetails.ppPins[This->uIndex + i];
+        }
     }
 
     if ((cPins != 1) || pcFetched)
