@@ -161,6 +161,7 @@ void test_structs()
     CHECK_FIELD(_heapinfo, _pentry);
     CHECK_FIELD(_heapinfo, _size);
     CHECK_FIELD(_heapinfo, _useflag);
+#ifdef __i386__
     CHECK_STRUCT(__JUMP_BUFFER);
     CHECK_FIELD(__JUMP_BUFFER, Ebp);
     CHECK_FIELD(__JUMP_BUFFER, Ebx);
@@ -173,6 +174,7 @@ void test_structs()
     CHECK_FIELD(__JUMP_BUFFER, Cookie);
     CHECK_FIELD(__JUMP_BUFFER, UnwindFunc);
     CHECK_FIELD(__JUMP_BUFFER, UnwindData[6]);
+#endif
     CHECK_STRUCT(_diskfree_t);
     CHECK_FIELD(_diskfree_t, total_clusters);
     CHECK_FIELD(_diskfree_t, avail_clusters);
@@ -432,6 +434,7 @@ void test_defines()
     CHECK_DEF("_FPCLASS_PD", _FPCLASS_PD, MSVCRT__FPCLASS_PD);
     CHECK_DEF("_FPCLASS_PN", _FPCLASS_PN, MSVCRT__FPCLASS_PN);
     CHECK_DEF("_FPCLASS_PINF", _FPCLASS_PINF, MSVCRT__FPCLASS_PINF);
+#ifdef __i386__
     CHECK_DEF("_EM_INVALID", _EM_INVALID, MSVCRT__EM_INVALID);
     CHECK_DEF("_EM_DENORMAL", _EM_DENORMAL, MSVCRT__EM_DENORMAL);
     CHECK_DEF("_EM_ZERODIVIDE", _EM_ZERODIVIDE, MSVCRT__EM_ZERODIVIDE);
@@ -447,6 +450,7 @@ void test_defines()
     CHECK_DEF("_PC_24", _PC_24, MSVCRT__PC_24);
     CHECK_DEF("_PC_53", _PC_53, MSVCRT__PC_53);
     CHECK_DEF("_PC_64", _PC_64, MSVCRT__PC_64);
+#endif
 }
 
 START_TEST(headers)
