@@ -425,8 +425,8 @@ static void write_method_proto(type_t *iface)
       fprintf(header, "void __RPC_STUB %s_", iface->name);
       write_name(header,def);
       fprintf(header, "_Stub(\n");
-      fprintf(header, "    IRpcStubBuffer* This,\n");
-      fprintf(header, "    IRpcChannelBuffer* pRpcChannelBuffer,\n");
+      fprintf(header, "    struct IRpcStubBuffer* This,\n");
+      fprintf(header, "    struct IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
     }
@@ -462,7 +462,12 @@ static void write_method_proto(type_t *iface)
 
 void write_forward(type_t *iface)
 {
-  if (is_object(iface->attrs) && !iface->written) {
+  /* C/C++ forwards should only be written for object interfaces, so if we
+   * have a full definition we only write one if we find [object] among the
+   * attributes - however, if we don't have a full definition at this point
+   * (i.e. this is an IDL forward), then we also assume that it is an object
+   * interface, since non-object interfaces shouldn't need forwards */
+  if ((!iface->defined || is_object(iface->attrs)) && !iface->written) {
     fprintf(header, "typedef struct %s %s;\n", iface->name, iface->name);
     iface->written = TRUE;
   }
@@ -500,7 +505,7 @@ void write_interface(type_t *iface)
   fprintf(header, "#define %s_IMETHODS \\\n", iface->name);
   if (iface->ref)
     fprintf(header, "    %s_IMETHODS \\\n", iface->ref->name);
-  fprintf(header, "    %s_METHODS \\\n", iface->name);
+  fprintf(header, "    %s_METHODS\n", iface->name);
   if (iface->ref)
     fprintf(header, "ICOM_DEFINE(%s,%s)\n", iface->name, iface->ref->name);
   else

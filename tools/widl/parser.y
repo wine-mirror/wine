@@ -109,6 +109,7 @@ static type_t std_int = { "int" };
 %token <num> aNUM
 %token <str> aSTRING
 %token <uuid> aUUID
+%token aEOF
 %token SHL SHR
 %token tAGGREGATABLE tALLOCATE tAPPOBJECT tARRAYS tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
@@ -154,7 +155,7 @@ static type_t std_int = { "int" };
 
 %type <attr> m_attributes attributes attrib_list attribute
 %type <expr> aexprs aexpr_list aexpr array
-%type <type> inherit interface interfacedef lib_statements
+%type <type> inherit interface interfacehdr interfacedef lib_statements
 %type <type> base_type int_std
 %type <type> enumdef structdef typedef uniondef
 %type <tref> type
@@ -180,18 +181,12 @@ input:	  lib_statements			{ /* FIXME */ }
 	;
 
 lib_statements:					{ $$ = NULL; }
-	| lib_statements import
-	| lib_statements interface ';'
+	| lib_statements interface ';'		{ if (!parse_only) write_forward($2); }
 	| lib_statements interfacedef		{ LINK($2, $1); $$ = $2; }
 /*	| lib_statements librarydef (when implemented) */
 	| lib_statements statement
 	;
 
-/* we can't import from inside interfaces yet
- * (it's not entirely clear how Microsoft manages that yet,
- *  but in MIDL you can derive a class from a base class and then
- *  import the base class definition from inside the interface,
- *  which I don't quite know how to pull off in yacc/bison yet) */
 int_statements:					{ $$ = NULL; }
 	| int_statements funcdef ';'		{ LINK($2, $1); $$ = $2; }
 	| int_statements statement
@@ -202,7 +197,7 @@ statement: ';'					{}
 	| cppquote				{}
 	| enumdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	| externdef ';'				{}
-/*	| import				{} */
+	| import				{}
 /*	| interface ';'				{} */
 /*	| interfacedef				{} */
 	| structdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
@@ -211,9 +206,11 @@ statement: ';'					{}
 	;
 
 cppquote:	tCPPQUOTE '(' aSTRING ')'	{ if (!parse_only) fprintf(header, "%s\n", $3); }
-;
-import:		tIMPORT aSTRING ';'		{ do_import($2); }
-;
+	;
+import_start:	tIMPORT aSTRING ';'		{ do_import($2); }
+	;
+import:		import_start input aEOF		{}
+	;
 
 m_args:						{ $$ = NULL; }
 	| args
@@ -429,17 +426,31 @@ inherit:					{ $$ = NULL; }
 	| ':' aKNOWNTYPE			{ $$ = find_type2($2, 0); }
 	;
 
-interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); if (!parse_only) write_forward($$); }
-	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); if (!parse_only) write_forward($$); }
+interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(RPC_FC_IP, $2, 0); }
+	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(RPC_FC_IP, $2, 0); }
 	;
 
-interfacedef: attributes interface inherit
-	  '{' int_statements '}'		{ $$ = $2;
+interfacehdr: attributes interface		{ $$ = $2;
 						  if ($$->defined) yyerror("multiple definition error\n");
-						  $$->ref = $3;
 						  $$->attrs = $1;
-						  $$->funcs = $5;
 						  $$->defined = TRUE;
+						  if (!parse_only) write_forward($$);
+						}
+	;
+
+interfacedef: interfacehdr inherit
+	  '{' int_statements '}'		{ $$ = $1;
+						  $$->ref = $2;
+						  $$->funcs = $4;
+						  if (!parse_only) write_interface($$);
+						}
+/* MIDL is able to import the definition of a base class from inside the
+ * definition of a derived class, I'll try to support it with this rule */
+	| interfacehdr ':' aIDENTIFIER
+	  '{' import int_statements '}'		{ $$ = $1;
+						  $$->ref = find_type2($3, 0);
+						  if (!$$->ref) yyerror("base class %s not found in import\n", $3);
+						  $$->funcs = $6;
 						  if (!parse_only) write_interface($$);
 						}
 	;

@@ -237,6 +237,8 @@ void write_proxy(type_t *iface)
     return;
   }
 
+  if (header_only) return;
+
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */

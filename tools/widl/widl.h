@@ -38,6 +38,7 @@ extern int debuglevel;
 
 extern int win32;
 extern int pedantic;
+extern int header_only;
 
 extern char *input_name;
 extern char *header_name;

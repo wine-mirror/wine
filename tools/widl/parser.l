@@ -130,7 +130,10 @@ static uuid_t* parse_uuid(const char*u)
 \>\>			return SHR;
 .			return yytext[0];
 <<EOF>>			{
-				if (import_stack_ptr) pop_import();
+				if (import_stack_ptr) {
+					pop_import();
+					return aEOF;
+				}
 				else yyterminate();
 			}
 %%

@@ -44,6 +44,7 @@ static char usage[] =
 "   -d n        Set debug level to 'n'\n"
 "   -D id[=val] Define preprocessor identifier id=val\n"
 "   -E          Preprocess only\n"
+"   -h          Generate headers only\n"
 "   -H file     Name of header file (default is infile.h)\n"
 "   -I path     Set include search dir to path (multiple -I allowed)\n"
 "   -N          Do not preprocess input\n"
@@ -66,6 +67,7 @@ int debuglevel = DEBUGLEVEL_NONE;
 
 int pedantic = 0;
 int preprocess_only = 0;
+int header_only = 0;
 int no_preprocess = 0;
 
 char *input_name;
@@ -114,7 +116,7 @@ int main(int argc,char *argv[])
 
   now = time(NULL);
 
-  while((optc = getopt(argc, argv, "d:D:EH:I:NVW")) != EOF) {
+  while((optc = getopt(argc, argv, "d:D:EhH:I:NVW")) != EOF) {
     switch(optc) {
     case 'd':
       debuglevel = strtol(optarg, NULL, 0);
@@ -124,6 +126,9 @@ int main(int argc,char *argv[])
       break;
     case 'E':
       preprocess_only = 1;
+      break;
+    case 'h':
+      header_only = 1;
       break;
     case 'H':
       header_name = strdup(optarg);
