@@ -1771,7 +1771,7 @@ static void TOOLBAR_Cust_InsertAvailButton(HWND hwnd, PCUSTOMBUTTON btnInfoNew)
     PCUSTOMBUTTON btnInfo;
     HWND hwndAvail = GetDlgItem(hwnd, IDC_AVAILBTN_LBOX);
 
-    ERR("button %s, idCommand %d\n", debugstr_w(btnInfoNew->text), btnInfoNew->btn.idCommand);
+    TRACE("button %s, idCommand %d\n", debugstr_w(btnInfoNew->text), btnInfoNew->btn.idCommand);
 
     count = SendMessageW(hwndAvail, LB_GETCOUNT, 0, 0);
 
@@ -1828,7 +1828,7 @@ static void TOOLBAR_Cust_MoveButton(PCUSTDLG_INFO custInfo, HWND hwnd, INT nInde
             EnableWindow(GetDlgItem(hwnd,IDC_MOVEDN_BTN), TRUE);
 
         SendMessageW(custInfo->tbHwnd, TB_DELETEBUTTON, nIndexFrom, 0);
-        SendMessageW(custInfo->tbHwnd, TB_INSERTBUTTONA, nIndexTo, (LPARAM)&(btnInfo->btn));
+        SendMessageW(custInfo->tbHwnd, TB_INSERTBUTTONW, nIndexTo, (LPARAM)&(btnInfo->btn));
 
         TOOLBAR_SendNotify(&hdr, custInfo->tbInfo, TBN_TOOLBARCHANGE);
     }
@@ -1975,13 +1975,13 @@ static LRESULT TOOLBAR_Cust_ToolbarDragListNotification(PCUSTDLG_INFO custInfo, 
         }
         break;
     }
-	case DL_CANCELDRAG:
+    case DL_CANCELDRAG:
         /* Clear drag arrow */
         DrawInsert(hwnd, hwndList, -1);
         break;
     }
 
-	return 0;
+    return 0;
 }
 
 /* drag list notification function for available buttons list box */
@@ -1991,19 +1991,13 @@ static LRESULT TOOLBAR_Cust_AvailDragListNotification(PCUSTDLG_INFO custInfo, HW
     switch (pDLI->uNotification)
     {
     case DL_BEGINDRAG:
-    {
-        INT nCurrentItem = LBItemFromPt(hwndList, pDLI->ptCursor, TRUE);
-        INT nCount = SendMessageW(hwndList, LB_GETCOUNT, 0, 0);
-        /* no dragging for last item (separator) */
-        if (nCurrentItem >= (nCount - 1)) return FALSE;
         return TRUE;
-    }
     case DL_DRAGGING:
     {
         INT nCurrentItem = LBItemFromPt(hwndList, pDLI->ptCursor, TRUE);
         INT nCount = SendMessageW(hwndList, LB_GETCOUNT, 0, 0);
         /* no dragging past last item (separator) */
-        if ((nCurrentItem >= 0) && (nCurrentItem < (nCount - 1)))
+        if ((nCurrentItem >= 0) && (nCurrentItem < nCount))
         {
             DrawInsert(hwnd, hwndList, nCurrentItem);
             /* FIXME: native uses "move button" cursor */
@@ -2030,7 +2024,7 @@ static LRESULT TOOLBAR_Cust_AvailDragListNotification(PCUSTDLG_INFO custInfo, HW
         INT nIndexTo = LBItemFromPt(hwndList, pDLI->ptCursor, TRUE);
         INT nCount = SendMessageW(hwndList, LB_GETCOUNT, 0, 0);
         INT nIndexFrom = SendDlgItemMessageW(hwnd, IDC_AVAILBTN_LBOX, LB_GETCURSEL, 0, 0);
-        if ((nIndexTo >= 0) && (nIndexTo < (nCount - 1)))
+        if ((nIndexTo >= 0) && (nIndexTo < nCount))
         {
             /* clear drag arrow */
             DrawInsert(hwnd, hwndList, -1);
@@ -2038,12 +2032,12 @@ static LRESULT TOOLBAR_Cust_AvailDragListNotification(PCUSTDLG_INFO custInfo, HW
             TOOLBAR_Cust_AddButton(custInfo, hwnd, nIndexFrom, nIndexTo);
         }
     }
-	case DL_CANCELDRAG:
+    case DL_CANCELDRAG:
         /* Clear drag arrow */
         DrawInsert(hwnd, hwndList, -1);
         break;
-	}
-	return 0;
+    }
+    return 0;
 }
 
 extern UINT uDragListMessage;
@@ -2102,11 +2096,11 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    /* send TBN_QUERYDELETE notification */
                     btnInfo->bRemovable = TOOLBAR_IsButtonRemovable(infoPtr, i, btnInfo);
 
-		    index = (int)SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_ADDSTRING, 0, 0);
-		    SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
+		    index = (int)SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_ADDSTRING, 0, 0);
+		    SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
 		}
 
-		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
+		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
 
 		/* insert separator button into 'available buttons' list */
 		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
@@ -2115,8 +2109,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		btnInfo->bVirtual = FALSE;
 		btnInfo->bRemovable = TRUE;
 		LoadStringW (COMCTL32_hModule, IDS_SEPARATOR, btnInfo->text, 64);
-		index = (int)SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)btnInfo);
-		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
+		index = (int)SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)btnInfo);
+		SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
 
 		/* insert all buttons into dsa */
 		for (i = 0;; i++)
@@ -2150,7 +2144,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    }
 		    else
 		    {
-                        btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, 
+                        btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, 
                             IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, index, 0);
                     }
 
@@ -2171,10 +2165,10 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			TOOLBAR_Cust_InsertAvailButton(hwnd, btnInfo);
 		}
 
-		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
+		SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMHEIGHT, 0, infoPtr->nBitmapHeight + 8);
 
 		/* select first item in the 'available' list */
-		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETCURSEL, 0, 0);
+		SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_SETCURSEL, 0, 0);
 
 		/* append 'virtual' separator button to the 'toolbar buttons' list */
 		btnInfo = (PCUSTOMBUTTON)Alloc(sizeof(CUSTOMBUTTON));
@@ -2183,12 +2177,12 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		btnInfo->bVirtual = TRUE;
 		btnInfo->bRemovable = FALSE;
 		LoadStringW (COMCTL32_hModule, IDS_SEPARATOR, btnInfo->text, 64);
-		index = (int)SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)btnInfo);
-		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
+		index = (int)SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)btnInfo);
+		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, index, (LPARAM)btnInfo);
 
 		/* select last item in the 'toolbar' list */
-		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETCURSEL, index, 0);
-		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETTOPINDEX, index, 0);
+		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETCURSEL, index, 0);
+		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETTOPINDEX, index, 0);
 
         MakeDragList(GetDlgItem(hwnd, IDC_TOOLBARBTN_LBOX));
         MakeDragList(GetDlgItem(hwnd, IDC_AVAILBTN_LBOX));
@@ -2220,8 +2214,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int count;
 			int index;
 
-			count = SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCOUNT, 0, 0);
-			index = SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
+			count = SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCOUNT, 0, 0);
+			index = SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
 
 			/* send TBN_QUERYINSERT notification */
 			nmtb.iItem = index;
@@ -2229,7 +2223,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					TBN_QUERYINSERT);
 
 			/* get list box item */
-			btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, index, 0);
+			btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, index, 0);
 
 			if (index == (count - 1))
 			{
@@ -2261,21 +2255,21 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		case IDC_MOVEUP_BTN:
 		    {
-			int index = SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
+			int index = SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
 			TOOLBAR_Cust_MoveButton(custInfo, hwnd, index, index-1);
 		    }
 		    break;
 
 		case IDC_MOVEDN_BTN: /* move down */
 		    {
-			int index = SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
+			int index = SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
 			TOOLBAR_Cust_MoveButton(custInfo, hwnd, index, index+1);
 		    }
 		    break;
 
 		case IDC_REMOVE_BTN: /* remove button */
 		    {
-			int index = SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
+			int index = SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
 
 			if (LB_ERR == index)
 				break;
@@ -2295,8 +2289,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int index;
 			int indexto;
 
-			index = SendDlgItemMessageA(hwnd, IDC_AVAILBTN_LBOX, LB_GETCURSEL, 0, 0);
-			indexto = SendDlgItemMessageA(hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
+			index = SendDlgItemMessageW(hwnd, IDC_AVAILBTN_LBOX, LB_GETCURSEL, 0, 0);
+			indexto = SendDlgItemMessageW(hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCURSEL, 0, 0);
 
 			TOOLBAR_Cust_AddButton(custInfo, hwnd, index, indexto);
 		    }
@@ -2314,25 +2308,25 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		int i;
 
 		/* delete items from 'toolbar buttons' listbox*/
-		count = SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCOUNT, 0, 0);
+		count = SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETCOUNT, 0, 0);
 		for (i = 0; i < count; i++)
 		{
-		    btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, i, 0);
+		    btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_GETITEMDATA, i, 0);
 		    Free(btnInfo);
-		    SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, 0, 0);
+		    SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_SETITEMDATA, 0, 0);
 		}
-		SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_RESETCONTENT, 0, 0);
+		SendDlgItemMessageW (hwnd, IDC_TOOLBARBTN_LBOX, LB_RESETCONTENT, 0, 0);
 
 
 		/* delete items from 'available buttons' listbox*/
-		count = SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_GETCOUNT, 0, 0);
+		count = SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_GETCOUNT, 0, 0);
 		for (i = 0; i < count; i++)
 		{
-		    btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_GETITEMDATA, i, 0);
+		    btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_GETITEMDATA, i, 0);
 		    Free(btnInfo);
-		    SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, i, 0);
+		    SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_SETITEMDATA, i, 0);
 		}
-		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_RESETCONTENT, 0, 0);
+		SendDlgItemMessageW (hwnd, IDC_AVAILBTN_LBOX, LB_RESETCONTENT, 0, 0);
             }
 	    return TRUE;
 
@@ -2348,7 +2342,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		COLORREF oldBk = 0;
 
 		/* get item data */
-		btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageA (hwnd, wParam, LB_GETITEMDATA, (WPARAM)lpdis->itemID, 0);
+		btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, wParam, LB_GETITEMDATA, (WPARAM)lpdis->itemID, 0);
 		if (btnInfo == NULL)
 		{
 		    FIXME("btnInfo invalid!\n");
@@ -3168,16 +3162,16 @@ TOOLBAR_Customize (HWND hwnd)
     TOOLBAR_SendNotify ((NMHDR *) &nmhdr, infoPtr,
 		    TBN_BEGINADJUST);
 
-    if (!(hRes = FindResourceA (COMCTL32_hModule,
-                                MAKEINTRESOURCEA(IDD_TBCUSTOMIZE),
-                                (LPSTR)RT_DIALOG)))
+    if (!(hRes = FindResourceW (COMCTL32_hModule,
+                                MAKEINTRESOURCEW(IDD_TBCUSTOMIZE),
+                                (LPWSTR)RT_DIALOG)))
 	return FALSE;
 
     if(!(template = (LPVOID)LoadResource (COMCTL32_hModule, hRes)))
 	return FALSE;
 
-    ret = DialogBoxIndirectParamA ((HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE),
-                                   (LPDLGTEMPLATEA)template,
+    ret = DialogBoxIndirectParamW ((HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE),
+                                   (LPDLGTEMPLATEW)template,
                                    hwnd,
                                    TOOLBAR_CustomizeDialogProc,
                                    (LPARAM)&custInfo);
@@ -3733,7 +3727,7 @@ TOOLBAR_GetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    TRACE("%s hwnd=%p stub!\n",
+    TRACE("%s hwnd=%p\n",
 	   infoPtr->bUnicode ? "TRUE" : "FALSE", hwnd);
 
     return infoPtr->bUnicode;
@@ -5104,7 +5098,7 @@ TOOLBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     BOOL bTemp;
 
-    TRACE("%s hwnd=%p stub!\n",
+    TRACE("%s hwnd=%p\n",
 	   ((BOOL)wParam) ? "TRUE" : "FALSE", hwnd);
 
     bTemp = infoPtr->bUnicode;
@@ -5361,12 +5355,12 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nNumStrings = 0;
 
     infoPtr->bCaptured = FALSE;
-    infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->nButtonDown = -1;
     infoPtr->nButtonDrag = -1;
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -1;
     infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
+    infoPtr->bUnicode = IsWindowUnicode (infoPtr->hwndNotify);
     infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
