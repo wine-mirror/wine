@@ -27,6 +27,8 @@
 #include "dsurface/dib.h"
 #include "dsurface/user.h"
 
+#include "win.h"
+
 DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static ICOM_VTABLE(IDirectDraw7) XVidMode_DirectDraw_VTable;
@@ -337,6 +339,8 @@ XVidMode_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     {
 	XVIDMODE_DDRAW_PRIV_VAR(priv, This);
 	XF86VidModeModeInfo* new_mode;
+        WND *tmpWnd = WIN_FindWndPtr(This->window);
+        Window x11Wnd = X11DRV_WND_GetXWindow(tmpWnd);
 
 	new_mode = choose_mode(dwWidth, dwHeight, dwRefreshRate, dwFlags);
 
@@ -345,6 +349,10 @@ XVidMode_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 	    priv->xvidmode.current_mode = new_mode;
 	    set_display_mode(priv->xvidmode.current_mode);
 	}
+        if (PROFILE_GetWineIniBool( "x11drv", "DXGrab", 0)) {
+           /* Confine cursor movement (risky, but the user asked for it) */
+           TSXGrabPointer(display, x11Wnd, True, 0, GrabModeAsync, GrabModeAsync, x11Wnd, None, CurrentTime);
+        }
     }
 
     return hr;
