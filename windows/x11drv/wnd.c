@@ -680,6 +680,8 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy,
 void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    INT dcOrgXCopy, dcOrgYCopy;
+    BOOL offsetClipRgn = FALSE;
 
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
@@ -690,6 +692,24 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
     }
     else
     {
+        /*
+         * This function change the coordinate system (DCOrgX,DCOrgY)
+         * values. When it moves the origin, other data like the current clipping
+         * region will not be moved to that new origin. In the case of DCs that are class
+         * or window DCs that clipping region might be a valid value from a previous use
+         * of the DC and changing the origin of the DC without moving the clip region
+         * results in a clip region that is not placed properly in the DC.
+         * This code will save the dc origin, let the SetDrawable
+         * modify the origin and reset the clipping. When the clipping is set,
+         * it is moved according to the new DC origin.
+         */
+         if ( (wndPtr->class->style & (CS_OWNDC | CS_CLASSDC)) && (dc->w.hClipRgn > 0))
+         {
+             dcOrgXCopy = dc->w.DCOrgX;
+             dcOrgYCopy = dc->w.DCOrgY;
+             offsetClipRgn = TRUE;
+         }
+
         if (flags & DCX_WINDOW)
         {
             dc->w.DCOrgX  = wndPtr->rectWindow.left;
@@ -708,6 +728,13 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
         }
         dc->w.DCOrgX -= wndPtr->rectWindow.left;
         dc->w.DCOrgY -= wndPtr->rectWindow.top;
+
+        /* reset the clip region, according to the new origin */
+        if ( offsetClipRgn )
+        {
+             OffsetRgn(dc->w.hClipRgn, dc->w.DCOrgX - dcOrgXCopy,dc->w.DCOrgY - dcOrgYCopy);
+        }
+        
         physDev->drawable = X11DRV_WND_GetXWindow(wndPtr);
 
 #if 0

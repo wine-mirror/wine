@@ -645,7 +645,7 @@ HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
  */
 HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
-    HRGN 	hCopyClipRgn=0,hrgnVisible = 0;
+    HRGN 	hrgnVisible = 0;
     HDC 	hdc = 0;
     DCE * 	dce;
     DC * 	dc;
@@ -796,31 +796,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     bUpdateVisRgn = bUpdateVisRgn || (dc->w.flags & DC_DIRTY);
 
-    /*
-     * The pSetDrawable function might change the coordinate system (DCOrgX,DCOrgY) 
-     * values. When it moves the origin, other data like the current clipping 
-     * region will not be moved to that new origin. In the case of DCs that are class
-     * or window DCs that clipping region might be a valid value from a previous use
-     * of the DC and changing the origin of the DC without moving the clip region 
-     * results in a clip region that is not placed properly in the DC.
-     * This code will retrieve the current clipping region, let the pSetDrawable
-     * modify the origin and reset the clipping. When the clipping is set, it is moved
-     * according to the new DC origin.
-     */
-    if ( (wndPtr->class->style & (CS_OWNDC | CS_CLASSDC)) && (dc->w.hClipRgn > 0)) 
-    {
-        hCopyClipRgn=CreateRectRgn( 0, 0, 0, 0 );
-        GetClipRgn(hdc,hCopyClipRgn);
-    }
-
     /* recompute visible region */
     wndPtr->pDriver->pSetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
-
-    if (hCopyClipRgn)
-    {    
-        SelectClipRgn(hdc,hCopyClipRgn);
-        DeleteObject(hCopyClipRgn);
-    }
 
     if( bUpdateVisRgn )
     {
