@@ -170,8 +170,6 @@ extern void PROCESS_WalkProcess( void );
 
 /* scheduler/debugger.c */
 extern DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEXT *ctx );
-extern DWORD DEBUG_SendCreateProcessEvent( HFILE file, HMODULE module, void *entry );
-extern DWORD DEBUG_SendCreateThreadEvent( void *entry );
 extern DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR *name );
 extern DWORD DEBUG_SendUnloadDLLEvent( HMODULE module );
 

@@ -584,6 +584,9 @@ DECL_HANDLER(init_process_done)
         fatal_protocol_error( current, "init_process_done: no event\n" );
         return;
     }
+    current->entry  = req->entry;
+    process->module = req->module;
+    generate_debug_event( current, CREATE_PROCESS_DEBUG_EVENT );
     set_event( process->init_event );
     release_object( process->init_event );
     process->init_event = NULL;

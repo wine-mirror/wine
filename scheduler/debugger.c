@@ -6,8 +6,8 @@
 
 #include <string.h>
 
+#include "winerror.h"
 #include "process.h"
-#include "thread.h"
 #include "server.h"
 #include "debugtools.h"
 
@@ -22,7 +22,6 @@ DEFAULT_DEBUG_CHANNEL(debugstr);
 DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEXT *context )
 {
     int i;
-    DWORD ret = 0;
     struct send_debug_event_request *req = get_req_buffer();
 
     req->event.code = EXCEPTION_DEBUG_EVENT;
@@ -35,58 +34,9 @@ DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEX
     req->event.info.exception.context      = *context;
     for (i = 0; i < req->event.info.exception.nb_params; i++)
         req->event.info.exception.params[i] = rec->ExceptionInformation[i];
-    if (!server_call( REQ_SEND_DEBUG_EVENT ))
-    {
-        ret = req->status;
+    if (!server_call_noerr( REQ_SEND_DEBUG_EVENT ))
         *context = req->event.info.exception.context;
-    }
-    return ret;
-}
-
-
-/**********************************************************************
- *           DEBUG_SendCreateProcessEvent
- *
- * Send an CREATE_PROCESS_DEBUG_EVENT event to the current process debugger.
- * Must be called from the context of the new process.
- */
-DWORD DEBUG_SendCreateProcessEvent( HFILE file, HMODULE module, void *entry )
-{
-    DWORD ret = 0;
-    struct send_debug_event_request *req = get_req_buffer();
-
-    req->event.code = CREATE_PROCESS_DEBUG_EVENT;
-    req->event.info.create_process.file       = file;
-    req->event.info.create_process.process    = 0; /* will be filled by server */
-    req->event.info.create_process.thread     = 0; /* will be filled by server */
-    req->event.info.create_process.base       = (void *)module;
-    req->event.info.create_process.dbg_offset = 0; /* FIXME */
-    req->event.info.create_process.dbg_size   = 0; /* FIXME */
-    req->event.info.create_process.teb        = NtCurrentTeb();
-    req->event.info.create_process.start      = entry;
-    req->event.info.create_process.name       = 0; /* FIXME */
-    req->event.info.create_process.unicode    = 0; /* FIXME */
-    if (!server_call( REQ_SEND_DEBUG_EVENT )) ret = req->status;
-    return ret;
-}
-
-/**********************************************************************
- *           DEBUG_SendCreateThreadEvent
- *
- * Send an CREATE_THREAD_DEBUG_EVENT event to the current process debugger.
- * Must be called from the context of the new thread.
- */
-DWORD DEBUG_SendCreateThreadEvent( void *entry )
-{
-    DWORD ret = 0;
-    struct send_debug_event_request *req = get_req_buffer();
-
-    req->event.code = CREATE_THREAD_DEBUG_EVENT;
-    req->event.info.create_thread.handle = 0; /* will be filled by server */
-    req->event.info.create_thread.teb    = NtCurrentTeb();
-    req->event.info.create_thread.start  = entry;
-    if (!server_call( REQ_SEND_DEBUG_EVENT )) ret = req->status;
-    return ret;
+    return req->status;
 }
 
 
@@ -97,7 +47,6 @@ DWORD DEBUG_SendCreateThreadEvent( void *entry )
  */
 DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR *name )
 {
-    DWORD ret = 0;
     struct send_debug_event_request *req = get_req_buffer();
 
     req->event.code = LOAD_DLL_DEBUG_EVENT;
@@ -107,8 +56,8 @@ DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR *name )
     req->event.info.load_dll.dbg_size   = 0;  /* FIXME */
     req->event.info.load_dll.name       = name;
     req->event.info.load_dll.unicode    = 0;
-    if (!server_call( REQ_SEND_DEBUG_EVENT )) ret = req->status;
-    return ret;
+    server_call_noerr( REQ_SEND_DEBUG_EVENT );
+    return req->status;
 }
 
 
@@ -119,13 +68,12 @@ DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR *name )
  */
 DWORD DEBUG_SendUnloadDLLEvent( HMODULE module )
 {
-    DWORD ret = 0;
     struct send_debug_event_request *req = get_req_buffer();
 
     req->event.code = UNLOAD_DLL_DEBUG_EVENT;
     req->event.info.unload_dll.base = (void *)module;
-    if (!server_call( REQ_SEND_DEBUG_EVENT )) ret = req->status;
-    return ret;
+    server_call_noerr( REQ_SEND_DEBUG_EVENT );
+    return req->status;
 }
 
 
@@ -155,6 +103,9 @@ BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
     event->dwThreadId       = (DWORD)req->tid;
     switch(req->event.code)
     {
+    case 0:  /* timeout */
+        SetLastError( ERROR_SEM_TIMEOUT );
+        return FALSE;
     case EXCEPTION_DEBUG_EVENT:
         event->u.Exception.ExceptionRecord.ExceptionCode    = req->event.info.exception.code;
         event->u.Exception.ExceptionRecord.ExceptionFlags   = req->event.info.exception.flags;

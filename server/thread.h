@@ -48,6 +48,7 @@ struct thread
     int                 exit_code; /* thread exit code */
     int                 unix_pid;  /* Unix pid of client */
     void               *teb;       /* TEB address (in client address space) */
+    void               *entry;     /* thread entry point (in client address space) */
     int                 priority;  /* priority level */
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */
@@ -91,5 +92,7 @@ extern int write_thread_int( struct thread *thread, int *addr, int data, unsigne
 static inline int get_error(void)       { return current->error; }
 static inline void set_error( int err ) { current->error = err; }
 static inline void clear_error(void)    { set_error(0); }
+
+static inline void *get_thread_id( struct thread *thread ) { return thread; }
 
 #endif  /* __WINE_SERVER_THREAD_H */

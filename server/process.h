@@ -37,6 +37,7 @@ struct process
     struct event        *init_event;      /* event for init done */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
     void                *ldt_flags;       /* pointer to LDT flags in client addr space */
+    void                *module;          /* main module base address */
     struct new_process_request *info;     /* startup info (freed after startup) */
 };
 
@@ -65,5 +66,7 @@ extern void resume_process( struct process *process );
 extern void kill_process( struct process *process, int exit_code );
 extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern struct process_snapshot *process_snap( int *count );
+
+static inline void *get_process_id( struct process *process ) { return process; }
 
 #endif  /* __WINE_SERVER_PROCESS_H */

@@ -453,6 +453,7 @@ int CLIENT_InitServer(void)
  */
 int CLIENT_InitThread(void)
 {
+    struct get_thread_buffer_request *first_req;
     struct init_thread_request *req;
     TEB *teb = NtCurrentTeb();
     int fd;
@@ -463,16 +464,17 @@ int CLIENT_InitThread(void)
     teb->buffer = mmap( 0, teb->buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
     close( fd );
     if (teb->buffer == (void*)-1) server_perror( "mmap" );
+    first_req = teb->buffer;
+    teb->process->server_pid = first_req->pid;
+    teb->tid = first_req->tid;
+    if (first_req->boot) boot_thread_id = teb->tid;
+    else if (boot_thread_id == teb->tid) boot_thread_id = 0;
 
-    req = get_req_buffer();
+    req = teb->buffer;
     req->unix_pid = getpid();
     req->teb      = teb;
-    if (server_call( REQ_INIT_THREAD )) return -1;
-    teb->process->server_pid = req->pid;
-    teb->tid = req->tid;
-    if (req->boot) boot_thread_id = req->tid;
-    else if (boot_thread_id == req->tid) boot_thread_id = 0;
-    return 0;
+    req->entry    = teb->entry_point;
+    return server_call_noerr( REQ_INIT_THREAD );
 }
 
 /***********************************************************************

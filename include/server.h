@@ -165,7 +165,8 @@ struct init_process_request
 /* Signal the end of the process initialization */
 struct init_process_done_request
 {
-    IN  int          dummy;
+    IN  void*        module;       /* main module base address */
+    IN  void*        entry;        /* process entry point */
 };
 
 
@@ -174,9 +175,7 @@ struct init_thread_request
 {
     IN  int          unix_pid;     /* Unix pid of new thread */
     IN  void*        teb;          /* TEB of new thread (in thread address space) */
-    OUT void*        pid;          /* process id of the new thread's process */
-    OUT void*        tid;          /* thread id of the new thread */
-    OUT int          boot;         /* is this the boot thread? */
+    IN  void*        entry;        /* thread entry point (in thread address space) */
 };
 
 
@@ -185,7 +184,9 @@ struct init_thread_request
 /* created thread gets (without having to request it) */
 struct get_thread_buffer_request
 {
-    IN  int          dummy;
+    OUT void*        pid;          /* process id of the new thread's process */
+    OUT void*        tid;          /* thread id of the new thread */
+    OUT int          boot;         /* is this the boot thread? */
 };
 
 

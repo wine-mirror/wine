@@ -26,7 +26,6 @@
 #include "server.h"
 #include "options.h"
 #include "callback.h"
-#include "debugger.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(process)
@@ -371,6 +370,7 @@ BOOL PROCESS_Init( BOOL win32 )
  */
 void PROCESS_Start(void)
 {
+    struct init_process_done_request *req = get_req_buffer();
     UINT cmdShow = SW_SHOWNORMAL;
     LPTHREAD_START_ROUTINE entry = NULL;
     PDB *pdb = PROCESS_Current();
@@ -452,16 +452,15 @@ void PROCESS_Start(void)
     PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );
 
     /* Signal the parent process to continue */
+    req->module = (void *)pModule->module32;
+    req->entry  = entry;
     server_call( REQ_INIT_PROCESS_DONE );
 
     /* Send all required start-up debugger events */
     if ( type == PROC_WIN32 && (pdb->flags & PDB32_DEBUGGED) )
     {
         EnterCriticalSection( &pdb->crit_section );
-
-        DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
         MODULE_SendLoadDLLEvents();
-
         LeaveCriticalSection( &pdb->crit_section );
     }
 
@@ -478,10 +477,6 @@ void PROCESS_Start(void)
 
         LeaveCriticalSection( &pdb->crit_section );
     }
-
-    /* If requested, add entry point breakpoint */
-    if ( Options.debug || (pdb->flags & PDB32_DEBUGGED) )
-        DEBUG_AddTaskEntryBreakpoint( pdb->task );
 
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
     if ( type != PROC_WIN16 && (pdb->flags & PDB32_CONSOLE_PROC))

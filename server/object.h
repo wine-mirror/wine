@@ -154,7 +154,8 @@ extern int free_console( struct process *process );
 /* debugger functions */
 
 extern int debugger_attach( struct process *process, struct thread *debugger );
-extern void debug_exit_thread( struct thread *thread, int exit_code );
+extern void generate_debug_event( struct thread *thread, int code );
+extern void debug_exit_thread( struct thread *thread );
 extern CONTEXT *get_debug_context( struct thread *thread );
 
 /* mapping functions */

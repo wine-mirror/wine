@@ -92,25 +92,32 @@ static struct thread *booting_thread;
 /* allocate the buffer for the communication with the client */
 static int alloc_client_buffer( struct thread *thread )
 {
+    struct get_thread_buffer_request *req;
     int fd;
 
     if ((fd = create_anonymous_file()) == -1) return -1;
     if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
     if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
-    return fd;
+    /* build the first request into the buffer and send it */
+    req = thread->buffer;
+    req->pid  = get_process_id( thread->process );
+    req->tid  = get_thread_id( thread );
+    req->boot = (thread == booting_thread);
+    set_reply_fd( thread, fd );
+    send_reply( thread );
+    return 1;
 
  error:
     file_set_error();
     if (fd != -1) close( fd );
-    return -1;
+    return 0;
 }
 
 /* create a new thread */
 struct thread *create_thread( int fd, struct process *process, int suspend )
 {
     struct thread *thread;
-    int buf_fd;
 
     int flags = fcntl( fd, F_GETFL, 0 );
     fcntl( fd, F_SETFL, flags | O_NONBLOCK );
@@ -150,11 +157,8 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     first_thread = thread;
     add_process_thread( process, thread );
 
-    if ((buf_fd = alloc_client_buffer( thread )) == -1) goto error;
-
     set_select_events( &thread->obj, POLLIN );  /* start listening to events */
-    set_reply_fd( thread, buf_fd );  /* send the fd to the client */
-    send_reply( thread );
+    if (!alloc_client_buffer( thread )) goto error;
     return thread;
 
  error:
@@ -560,7 +564,9 @@ void kill_thread( struct thread *thread, int exit_code )
     if (current == thread) current = NULL;
     if (debug_level) trace_kill( thread );
     if (thread->wait) end_wait( thread );
-    debug_exit_thread( thread, exit_code );
+    generate_debug_event( thread, (thread->process->running_threads == 1) ?
+                          EXIT_PROCESS_DEBUG_EVENT : EXIT_THREAD_DEBUG_EVENT );
+    debug_exit_thread( thread );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
@@ -623,10 +629,10 @@ DECL_HANDLER(init_thread)
     }
     current->unix_pid = req->unix_pid;
     current->teb      = req->teb;
+    current->entry    = req->entry;
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
-    req->pid  = current->process;
-    req->tid  = current;
-    req->boot = (current == booting_thread);
+    if (current->process->running_threads > 1)
+        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT );
 }
 
 /* terminate a thread */

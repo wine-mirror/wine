@@ -97,30 +97,43 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
                /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
                                                               THREAD_ALL_ACCESS, FALSE )) == -1)
             return 0;
+        event->data.info.create_thread.teb   = thread->teb;
+        event->data.info.create_thread.start = thread->entry;
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
-        if ((handle = event->data.info.create_process.file) != -1)
-        {
-            if ((handle = duplicate_handle( thread->process, handle, debugger->process,
-                                            GENERIC_READ, FALSE, 0 )) == -1)
-                return 0;
-            event->data.info.create_process.file = handle;
-        }
-        if ((event->data.info.create_process.process = alloc_handle( debugger->process, thread->process,
-                                           /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
-                                                                PROCESS_ALL_ACCESS, FALSE )) == -1)
-        {
-            if (handle != -1) close_handle( debugger->process, handle );
+        if ((handle = alloc_handle( debugger->process, thread->process,
+                                    /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
+                                    PROCESS_ALL_ACCESS, FALSE )) == -1)
             return 0;
-        }
-        if ((event->data.info.create_process.thread = alloc_handle( debugger->process, thread,
+        event->data.info.create_process.process = handle;
+
+        if ((handle = alloc_handle( debugger->process, thread,
                /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-                                                               THREAD_ALL_ACCESS, FALSE )) == -1)
+                                    THREAD_ALL_ACCESS, FALSE )) == -1)
         {
-            if (handle != -1) close_handle( debugger->process, handle );
             close_handle( debugger->process, event->data.info.create_process.process );
             return 0;
         }
+        event->data.info.create_process.thread = handle;
+
+        handle = -1;
+        if (thread->process->exe_file &&
+            ((handle = alloc_handle( debugger->process, thread->process->exe_file,
+                        /* the doc says write access too, but this doesn't seem a good idea */
+                                     GENERIC_READ, FALSE )) == -1))
+        {
+            close_handle( debugger->process, event->data.info.create_process.process );
+            close_handle( debugger->process, event->data.info.create_process.thread );
+            return 0;
+        }
+        event->data.info.create_process.file       = handle;
+        event->data.info.create_process.teb        = thread->teb;
+        event->data.info.create_process.base       = thread->process->module;
+        event->data.info.create_process.start      = thread->entry;
+        event->data.info.create_process.dbg_offset = 0;
+        event->data.info.create_process.dbg_size   = 0;
+        event->data.info.create_process.name       = 0;
+        event->data.info.create_process.unicode    = 0;
         break;
     case LOAD_DLL_DEBUG_EVENT:
         if ((handle = event->data.info.load_dll.handle) != -1)
@@ -130,6 +143,15 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
                 return 0;
             event->data.info.load_dll.handle = handle;
         }
+        break;
+    case EXIT_PROCESS_DEBUG_EVENT:
+    case EXIT_THREAD_DEBUG_EVENT:
+        event->data.info.exit.exit_code = thread->exit_code;
+        break;
+    case EXCEPTION_DEBUG_EVENT:
+    case UNLOAD_DLL_DEBUG_EVENT:
+    case OUTPUT_DEBUG_STRING_EVENT:
+    case RIP_EVENT:
         break;
     }
     return 1;
@@ -189,7 +211,6 @@ static void build_wait_debug_reply( struct thread *thread, struct object *obj, i
         req->event.code = 0;
         req->pid  = 0;
         req->tid  = 0;
-        thread->error = signaled;
     }
 }
 
@@ -330,9 +351,10 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 }
 
 /* queue a debug event for a debugger */
-static struct debug_event *queue_debug_event( struct thread *debugger, struct thread *thread,
+static struct debug_event *queue_debug_event( struct thread *thread, int code,
                                               debug_event_t *data )
 {
+    struct thread *debugger = thread->process->debugger;
     struct debug_ctx *debug_ctx = debugger->debug_ctx;
     struct debug_event *event;
 
@@ -347,7 +369,8 @@ static struct debug_event *queue_debug_event( struct thread *debugger, struct th
     event->state    = EVENT_QUEUED;
     event->sender   = (struct thread *)grab_object( thread );
     event->debugger = (struct thread *)grab_object( debugger );
-    memcpy( &event->data, data, sizeof(event->data) );
+    if (data) memcpy( &event->data, data, sizeof(event->data) );
+    event->data.code = code;
 
     if (!fill_debug_event( debugger, thread, event ))
     {
@@ -359,6 +382,16 @@ static struct debug_event *queue_debug_event( struct thread *debugger, struct th
     link_event( debug_ctx, event );
     suspend_process( thread->process );
     return event;
+}
+
+/* generate a debug event from inside the server and queue it */
+void generate_debug_event( struct thread *thread, int code )
+{
+    if (thread->process->debugger)
+    {
+        struct debug_event *event = queue_debug_event( thread, code, NULL );
+        if (event) release_object( event );
+    }
 }
 
 /* return a pointer to the context in case the thread is inside an exception event */
@@ -409,29 +442,14 @@ int debugger_attach( struct process *process, struct thread *debugger )
 }
 
 /* a thread is exiting */
-void debug_exit_thread( struct thread *thread, int exit_code )
+void debug_exit_thread( struct thread *thread )
 {
-    struct thread *debugger = thread->process->debugger;
-    struct debug_ctx *debug_ctx = thread->debug_ctx;
-
-    if (debugger)  /* being debugged -> send an event to the debugger */
-    {
-        struct debug_event *event;
-        debug_event_t exit;
-        exit.info.exit.exit_code = exit_code;
-        /* if this is the last thread, send an exit process event */
-        exit.code = ((thread->process->running_threads == 1) ?
-                     EXIT_PROCESS_DEBUG_EVENT : EXIT_THREAD_DEBUG_EVENT);
-        event = queue_debug_event( debugger, thread, &exit );
-        if (event) release_object( event );
-    }
-
-    if (debug_ctx)  /* this thread is a debugger */
+    if (thread->debug_ctx)  /* this thread is a debugger */
     {
         /* kill all debugged processes */
-        kill_debugged_processes( thread, exit_code );
+        kill_debugged_processes( thread, thread->exit_code );
+        release_object( thread->debug_ctx );
         thread->debug_ctx = NULL;
-        release_object( debug_ctx );
     }
 }
 
@@ -466,27 +484,30 @@ DECL_HANDLER(continue_debug_event)
 DECL_HANDLER(debug_process)
 {
     struct process *process = get_process_from_id( req->pid );
-    if (process)
+    if (!process) return;
+    if (debugger_attach( process, current ))
     {
-        debugger_attach( process, current );
-        /* FIXME: should notify the debugged process somehow */
-        release_object( process );
+        struct thread *thread = process->thread_list;
+        generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT );
+        while ((thread = thread->next)) generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT );
+        /* FIXME: load dll + breakpoint exception events */
     }
+    release_object( process );
 }
 
 /* Send a debug event */
 DECL_HANDLER(send_debug_event)
 {
-    struct thread *debugger = current->process->debugger;
     struct debug_event *event;
+    int code = req->event.code;
 
-    if ((req->event.code <= 0) || (req->event.code > RIP_EVENT))
+    if ((code <= 0) || (code > RIP_EVENT))
     {
-        fatal_protocol_error( current, "send_debug_event: bad code %d\n", req->event.code );
+        fatal_protocol_error( current, "send_debug_event: bad code %d\n", code );
         return;
     }
     req->status = 0;
-    if (debugger && ((event = queue_debug_event( debugger, current, &req->event ))))
+    if (current->process->debugger && ((event = queue_debug_event( current, code, &req->event ))))
     {
         /* wait for continue_debug_event */
         struct object *obj = &event->obj;

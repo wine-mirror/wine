@@ -276,9 +276,6 @@ static void THREAD_Start(void)
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, (DWORD)NtCurrentTeb()->tid, 0 );
     PE_InitTls();
     MODULE_DllThreadAttach( NULL );
-
-    if (NtCurrentTeb()->process->flags & PDB32_DEBUGGED) DEBUG_SendCreateThreadEvent( func );
-
     ExitThread( func( NtCurrentTeb()->entry_arg ) );
 }
 

@@ -258,25 +258,26 @@ static void dump_init_process_reply( const struct init_process_request *req )
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
-    fprintf( stderr, " dummy=%d", req->dummy );
+    fprintf( stderr, " module=%p,", req->module );
+    fprintf( stderr, " entry=%p", req->entry );
 }
 
 static void dump_init_thread_request( const struct init_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
-    fprintf( stderr, " teb=%p", req->teb );
-}
-
-static void dump_init_thread_reply( const struct init_thread_request *req )
-{
-    fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " tid=%p,", req->tid );
-    fprintf( stderr, " boot=%d", req->boot );
+    fprintf( stderr, " teb=%p,", req->teb );
+    fprintf( stderr, " entry=%p", req->entry );
 }
 
 static void dump_get_thread_buffer_request( const struct get_thread_buffer_request *req )
 {
-    fprintf( stderr, " dummy=%d", req->dummy );
+}
+
+static void dump_get_thread_buffer_reply( const struct get_thread_buffer_request *req )
+{
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " boot=%d", req->boot );
 }
 
 static void dump_terminate_process_request( const struct terminate_process_request *req )
@@ -1329,8 +1330,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_init_process_reply,
     (dump_func)0,
-    (dump_func)dump_init_thread_reply,
     (dump_func)0,
+    (dump_func)dump_get_thread_buffer_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_process_info_reply,
