@@ -6,11 +6,64 @@
  * This file contains routines to support MDI (Multiple Document
  * Interface) features .
  *
- * Notes: Fairly complete implementation. Any volunteers for 
- *	  "More windows..." stuff?
- *
+ * Notes: Fairly complete implementation.
  *        Also, Excel and WinWord do _not_ use MDI so if you're trying
  *	  to fix them look elsewhere. 
+ *
+ * Notes on how the "More Windows..." is implemented:
+ *
+ *      When we have more than 9 opened windows, a "More Windows..."
+ *      option appears in the "Windows" menu. Each child window has
+ *      a WND* associated with it, accesible via the children list of
+ *      the parent window. This WND* has a wIDmenu member, which reflects
+ *      the position of the child in the window list. For example, with
+ *      9 child windows, we could have the following pattern:
+ *
+ *
+ *
+ *                Name of the child window    pWndChild->wIDmenu
+ *                     Doc1                       5000
+ *                     Doc2                       5001
+ *                     Doc3                       5002
+ *                     Doc4                       5003
+ *                     Doc5                       5004
+ *                     Doc6                       5005
+ *                     Doc7                       5006
+ *                     Doc8                       5007
+ *                     Doc9                       5008
+ *
+ *
+ *       The "Windows" menu, as the "More windows..." dialog, are constructed
+ *       in this order. If we add a child, we would have the following list:
+ *
+ *
+ *               Name of the child window    pWndChild->wIDmenu
+ *                     Doc1                       5000
+ *                     Doc2                       5001
+ *                     Doc3                       5002
+ *                     Doc4                       5003
+ *                     Doc5                       5004
+ *                     Doc6                       5005
+ *                     Doc7                       5006
+ *                     Doc8                       5007
+ *                     Doc9                       5008
+ *                     Doc10                      5009
+ *
+ *       But only 5000 to 5008 would be displayed in the "Windows" menu. We want
+ *       the last created child to be in the menu, so we swap the last child with
+ *       the 9th... Doc9 will be accessible via the "More Windows..." option.
+ *
+ *                     Doc1                       5000
+ *                     Doc2                       5001
+ *                     Doc3                       5002
+ *                     Doc4                       5003
+ *                     Doc5                       5004
+ *                     Doc6                       5005
+ *                     Doc7                       5006
+ *                     Doc8                       5007
+ *                     Doc9                       5009
+ *                     Doc10                      5008
+ *
  */
 
 #include <stdlib.h>
@@ -30,6 +83,7 @@
 #include "struct32.h"
 #include "tweak.h"
 #include "debugtools.h"
+#include "dlgs.h"
 
 DEFAULT_DEBUG_CHANNEL(mdi);
 
@@ -45,6 +99,8 @@ static BOOL MDI_RestoreFrameMenu(WND *, HWND);
 
 static LONG MDI_ChildActivate( WND*, HWND );
 
+static HWND MDI_MoreWindowsDialog(WND*);
+static void MDI_SwapMenuItems(WND *, UINT, UINT);
 /* -------- Miscellaneous service functions ----------
  *
  *			MDI_GetChildByID
@@ -134,14 +190,27 @@ static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
 	/* set correct id */
 	tmpWnd->wIDmenu--;
 
-	n = sprintf(buffer, "%d ",index - clientInfo->idFirstChild);
+	n = sprintf(buffer, "&%d ",index - clientInfo->idFirstChild);
 	if (tmpWnd->text)
             lstrcpynA(buffer + n, tmpWnd->text, sizeof(buffer) - n );	
 
-	/* change menu */
+	/*  change menu if the current child is to be shown in the 
+         *  "Windows" menu
+         */
+        if (index <= clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT) 
 	ModifyMenuA(clientInfo->hWindowMenu ,index ,MF_BYCOMMAND | MF_STRING,
                       index - 1 , buffer ); 
         WIN_ReleaseWndPtr(tmpWnd);
+    }
+
+    /*  We must restore the "More Windows..." option if there is enough child 
+     */
+    if (clientInfo->nActiveChildren - 1 > MDI_MOREWINDOWSLIMIT)
+    {
+        char szTmp[50];
+        LoadStringA(GetModuleHandleA("USER32"), MDI_IDS_MOREWINDOWS, szTmp, 50);
+
+        AppendMenuA(clientInfo->hWindowMenu ,MF_STRING ,clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT, szTmp );
     }
     retvalue = TRUE;
 END:
@@ -248,9 +317,17 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 
         if( ci->nActiveChildren )
         {
-            INT j = i - ci->nActiveChildren + 1;
+            INT j;
             LPWSTR buffer = NULL;
 	    MENUITEMINFOW mii;
+            INT nbWindowsMenuItems; /* num of documents shown + "More Windows..." if present */
+
+            if (ci->nActiveChildren <= MDI_MOREWINDOWSLIMIT)
+                nbWindowsMenuItems = ci->nActiveChildren;
+            else
+                nbWindowsMenuItems = MDI_MOREWINDOWSLIMIT + 1;
+
+            j = i - nbWindowsMenuItems + 1;
 
             for( ; i >= j ; i-- )
             {
@@ -355,6 +432,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
 	    SendMessageA(w->hwndSelf, WM_SETREDRAW, TRUE, 0L );
     }
 
+    if (ci->nActiveChildren <= MDI_MOREWINDOWSLIMIT)
     /* this menu is needed to set a check mark in MDI_ChildActivate */
     if (ci->hWindowMenu != 0)
         AppendMenuA(ci->hWindowMenu ,MF_STRING ,wIDmenu, lpstrDef );
@@ -405,7 +483,29 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
 	/* All MDI child windows have the WS_EX_MDICHILD style */
 	wnd->dwExStyle |= WS_EX_MDICHILD;
 
+        /*  If we have more than 9 windows, we must insert the new one at the
+         *  9th position in order to see it in the "Windows" menu
+         */
+        if (ci->nActiveChildren > MDI_MOREWINDOWSLIMIT)
+            MDI_SwapMenuItems(wnd->parent, wnd->wIDmenu, ci->idFirstChild + MDI_MOREWINDOWSLIMIT - 1);
+
 	MDI_MenuModifyItem(w ,hwnd); 
+
+        /* Have we hit the "More Windows..." limit? If so, we must 
+         * add a "More Windows..." option 
+         */
+        if (ci->nActiveChildren == MDI_MOREWINDOWSLIMIT + 1)
+        {
+            char szTmp[50];
+            LoadStringA(GetModuleHandleA("USER32"), MDI_IDS_MOREWINDOWS, szTmp, 50);
+
+            ModifyMenuA(ci->hWindowMenu,
+                        ci->idFirstChild + MDI_MOREWINDOWSLIMIT, 
+                        MF_BYCOMMAND | MF_STRING, 
+                        ci->idFirstChild + MDI_MOREWINDOWSLIMIT, 
+                        szTmp);
+        }
+        
 	if( wnd->dwStyle & WS_MINIMIZE && ci->hwndActiveChild )
 	    ShowWindow( hwnd, SW_SHOWMINNOACTIVE );
 	else
@@ -540,6 +640,8 @@ static LRESULT MDIDestroyChild( WND *w_parent, MDICLIENTINFO *ci,
 
     if( childPtr )
     {
+        MDI_MenuDeleteItem(w_parent, child);
+
         if( child == ci->hwndActiveChild )
         {
 	    MDI_SwitchActiveChild(parent, child, TRUE);
@@ -557,7 +659,6 @@ static LRESULT MDIDestroyChild( WND *w_parent, MDICLIENTINFO *ci,
                 MDI_ChildActivate(w_parent, 0);
 	    }
 	}
-        MDI_MenuDeleteItem(w_parent, child);
 
         WIN_ReleaseWndPtr(childPtr);
 	
@@ -621,8 +722,16 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
                         (LPARAM)hWndChild);
         /* uncheck menu item */
        	if( clientInfo->hWindowMenu )
+        {
+            WORD wPrevID = wndPrev->wIDmenu - clientInfo->idFirstChild;
+
+            if (wPrevID < MDI_MOREWINDOWSLIMIT)
        	        CheckMenuItem( clientInfo->hWindowMenu,
                                  wndPrev->wIDmenu, 0);
+            else
+       	        CheckMenuItem( clientInfo->hWindowMenu,
+                               clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT - 1, 0);
+    }
     }
 
     /* set appearance */
@@ -650,9 +759,16 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
 	
     /* check menu item */
     if( clientInfo->hWindowMenu )
-              CheckMenuItem( clientInfo->hWindowMenu,
-                               wndPtr->wIDmenu, MF_CHECKED);
+    {
+          /* The window to be activated must be displayed in the "Windows" menu */
+          if (wndPtr->wIDmenu >= clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT)
+          {
+              MDI_SwapMenuItems(wndPtr->parent, wndPtr->wIDmenu, clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT - 1);    
+              MDI_MenuModifyItem(wndPtr->parent ,wndPtr->hwndSelf); 
+          }
 
+          CheckMenuItem(clientInfo->hWindowMenu, wndPtr->wIDmenu, MF_CHECKED);
+    }
     /* bring active child to the top */
     SetWindowPos( hWndChild, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
 
@@ -1349,9 +1465,16 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 	    else
 	      {
                 wndPtr = WIN_FindWndPtr(hwndMDIClient);
-                childHwnd = MDI_GetChildByID(wndPtr,wParam );
-                WIN_ReleaseWndPtr(wndPtr);
+                ci     = (MDICLIENTINFO*)wndPtr->wExtra;
 
+                if (wParam - ci->idFirstChild == MDI_MOREWINDOWSLIMIT)
+                    /* User chose "More Windows..." */
+                    childHwnd = MDI_MoreWindowsDialog(wndPtr);
+                else
+                    /* User chose one of the windows listed in the "Windows" menu */
+                childHwnd = MDI_GetChildByID(wndPtr,wParam );
+
+                WIN_ReleaseWndPtr(wndPtr);
  	    	if( childHwnd )
 	            SendMessage16(hwndMDIClient, WM_MDIACTIVATE,
                                   (WPARAM16)childHwnd , 0L);
@@ -2168,5 +2291,164 @@ TileWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
 	   hwndParent, wFlags, cKids);
 
     return 0;
+}
+
+/************************************************************************
+ *              "More Windows..." functionality
+ */
+
+/*              MDI_MoreWindowsDlgProc
+ *
+ *    This function will process the messages sent to the "More Windows..."
+ *    dialog.
+ *    Return values:  0    = cancel pressed
+ *                    HWND = ok pressed or double-click in the list...
+ *
+ */
+
+static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (iMsg)
+    {
+       case WM_INITDIALOG:
+       {
+           WND  *pWnd;
+           UINT widest       = 0;
+           UINT length;
+           UINT i;
+           WND  *pParentWnd  = (WND *)lParam;
+           MDICLIENTINFO *ci = (MDICLIENTINFO*)pParentWnd->wExtra;
+           HWND hListBox = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
+
+           /* Fill the list, sorted by id... */
+           for (i = 0; i < ci->nActiveChildren; i++)
+           {
+
+               /* Find the window with the current ID */
+               for (pWnd = WIN_LockWndPtr(pParentWnd->child); pWnd; WIN_UpdateWndPtr(&pWnd, pWnd->next))
+                   if (pWnd->wIDmenu == ci->idFirstChild + i)
+                       break;
+
+               SendMessageA(hListBox, LB_ADDSTRING, 0, (LPARAM) pWnd->text);
+               SendMessageA(hListBox, LB_SETITEMDATA, i, (LPARAM) pWnd);
+               length = strlen(pWnd->text);
+               WIN_ReleaseWndPtr(pWnd);
+
+               if (length > widest)
+                   widest = length;
+           }
+           /* Make sure the horizontal scrollbar scrolls ok */
+           SendMessageA(hListBox, LB_SETHORIZONTALEXTENT, widest * 6, 0);
+
+           /* Set the current selection */
+           SendMessageA(hListBox, LB_SETCURSEL, MDI_MOREWINDOWSLIMIT, 0);
+           return TRUE;
+       }
+
+       case WM_COMMAND:
+           switch (LOWORD(wParam))
+           {
+                case IDOK:
+                {
+                    /*  windows are sorted by menu ID, so we must return the
+                     *  window associated to the given id
+                     */
+                    HWND hListBox     = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
+                    UINT index        = SendMessageA(hListBox, LB_GETCURSEL, 0, 0);
+                    WND* pWnd         = (WND*) SendMessageA(hListBox, LB_GETITEMDATA, index, 0);
+
+                    EndDialog(hDlg, pWnd->hwndSelf);
+                    return TRUE;
+                }
+                case IDCANCEL:
+                    EndDialog(hDlg, 0);
+                    return TRUE;
+
+                default:
+                    switch (HIWORD(wParam))
+                    {
+                        case LBN_DBLCLK:
+                        {
+                            /*  windows are sorted by menu ID, so we must return the
+                             *  window associated to the given id
+                             */
+                            HWND hListBox     = GetDlgItem(hDlg, MDI_IDC_LISTBOX);
+                            UINT index        = SendMessageA(hListBox, LB_GETCURSEL, 0, 0);
+                            WND* pWnd         = (WND*) SendMessageA(hListBox, LB_GETITEMDATA, index, 0);
+
+                            EndDialog(hDlg, pWnd->hwndSelf);
+                            return TRUE;
+                        }
+                    }
+                    break;
+           }
+           break;
+    }
+    return FALSE;
+}
+
+/*
+ *
+ *                      MDI_MoreWindowsDialog
+ *
+ *     Prompts the user with a listbox containing the opened
+ *     documents. The user can then choose a windows and click
+ *     on OK to set the current window to the one selected, or
+ *     CANCEL to cancel. The function returns a handle to the
+ *     selected window.
+ */
+
+static HWND MDI_MoreWindowsDialog(WND* wndPtr)
+{
+    LPCVOID template;
+    HRSRC hRes;
+    HANDLE hDlgTmpl;
+
+    hRes = FindResourceA(GetModuleHandleA("USER32"), "MDI_MOREWINDOWS", RT_DIALOGA);
+
+    if (hRes == 0)
+        return 0;
+
+    hDlgTmpl = LoadResource(GetModuleHandleA("USER32"), hRes );
+
+    if (hDlgTmpl == 0)
+        return 0;
+
+    template = LockResource( hDlgTmpl );
+
+    if (template == 0)
+        return 0;
+
+    return (HWND) DialogBoxIndirectParamA(GetModuleHandleA("USER32"),
+                                          (LPDLGTEMPLATEA) template,
+                                          wndPtr->hwndSelf,
+                                          (DLGPROC) MDI_MoreWindowsDlgProc,
+                                          (LPARAM) wndPtr);
+}
+
+/*
+ *
+ *                      MDI_SwapMenuItems
+ *
+ *      Will swap the menu IDs for the given 2 positions.
+ *      pos1 and pos2 are menu IDs
+ *     
+ *    
+ */
+
+static void MDI_SwapMenuItems(WND *parentWnd, UINT pos1, UINT pos2)
+{
+    WND *pWnd;
+
+    for (pWnd = WIN_LockWndPtr(parentWnd->child); pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
+    {
+        if (pWnd->wIDmenu == pos1)
+            pWnd->wIDmenu = pos2;
+        else
+            if (pWnd->wIDmenu == pos2)
+                pWnd->wIDmenu = pos1;
+    }
+
+    WIN_ReleaseWndPtr(pWnd);
 }
 

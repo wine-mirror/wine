@@ -20,6 +20,12 @@
 
 #define WM_MDICALCCHILDSCROLL   0x10AC /* this is exactly what Windows uses */
 
+/* "More Windows..." definitions */
+#define MDI_MOREWINDOWSLIMIT    9       /* after this number of windows, a "More Windows..." 
+                                           option will appear under the Windows menu */
+#define MDI_IDC_LISTBOX         100
+#define MDI_IDS_MOREWINDOWS     13
+
 extern LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, 
                                         WPARAM wParam, LPARAM lParam );
 
