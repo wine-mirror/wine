@@ -2658,6 +2658,26 @@ UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
 	return (UINT16)CompareStringA(lcid,fdwStyle,s1,l1,s2,l2);
 }
 
+/***********************************************************************
+ *           OLE2NLS_EstimateMappingLength
+ *
+ * Estimates the number of characters required to hold the string
+ * computed by LCMapStringA.
+ *
+ * The size is always over-estimated, with a fixed limit on the
+ * amount of estimation error.
+ *
+ * Note that len == -1 is not permitted.
+ */
+static inline int OLE2NLS_EstimateMappingLength(LCID lcid, DWORD dwMapFlags,
+						LPCSTR str, DWORD len)
+{
+    /* Estimate only for small strings to keep the estimation error from
+     * becoming too large. */
+    if (len < 128) return len * 8 + 5;
+    else return LCMapStringA(lcid, dwMapFlags, str, len, NULL, 0);
+}
+
 /******************************************************************************
  *		CompareString32A	[KERNEL32.143]
  * Compares two strings using locale
@@ -2705,16 +2725,19 @@ UINT WINAPI CompareStringA(
 
   if(fdwStyle & NORM_IGNORESYMBOLS)
     FIXME("IGNORESYMBOLS not supported\n");
+
+  if (l1 == -1) l1 = lstrlenA(s1);
+  if (l2 == -1) l2 = lstrlenA(s2);
   	
   mapstring_flags = LCMAP_SORTKEY | fdwStyle ;
-  len1 = LCMapStringA(lcid,mapstring_flags,s1,l1,NULL,0);
-  len2 = LCMapStringA(lcid,mapstring_flags,s2,l2,NULL,0);
+  len1 = OLE2NLS_EstimateMappingLength(lcid, mapstring_flags, s1, l1);
+  len2 = OLE2NLS_EstimateMappingLength(lcid, mapstring_flags, s2, l2);
 
   if ((len1==0)||(len2==0))
     return 0;     /* something wrong happened */
 
-  sk1 = (LPSTR)HeapAlloc(GetProcessHeap(),0,len1);
-  sk2 = (LPSTR)HeapAlloc(GetProcessHeap(),0,len2);
+  sk1 = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len1 + len2);
+  sk2 = sk1 + len1;
   if ( (!LCMapStringA(lcid,mapstring_flags,s1,l1,sk1,len1))
 	 || (!LCMapStringA(lcid,mapstring_flags,s2,l2,sk2,len2)) )
   {
@@ -2727,7 +2750,6 @@ UINT WINAPI CompareStringA(
     result = strcmp(sk1,sk2);
   }
   HeapFree(GetProcessHeap(),0,sk1);
-  HeapFree(GetProcessHeap(),0,sk2);
 
   if (result < 0)
     return 1;
