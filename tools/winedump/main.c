@@ -261,6 +261,7 @@ int   main (int argc, char *argv[])
     int count = 0;
 
     globals.mode = NONE;
+    globals.forward_dll = NULL;
 
     parse_options (argv);
 

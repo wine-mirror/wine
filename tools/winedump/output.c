@@ -57,7 +57,7 @@ void  output_spec_symbol (const parsed_symbol *sym)
   assert (specfile);
   assert (sym && sym->symbol);
 
-  if (globals.do_ordinals)
+  if (sym->ordinal >= 0)
     snprintf(ord_spec, 8, "%d", sym->ordinal);
   else
   {
@@ -455,22 +455,22 @@ void  output_install_script (void)
            "\texit 1\nfi\n\necho Adding DLL %s to Wine build tree...\n"
            "echo\n\nmkdir $1/dlls/%s\ncp %s.spec $1/dlls/%s\n"
            "cp %s_main.c $1/dlls/%s\ncp %s_dll.h $1/dlls/%s\n"
-           "cp Makefile.in $1/dlls/%s\necho Copied DLL files\n\n"
+           "cp Makefile.in $1/dlls/%s/Makefile.in\necho Copied DLL files\n\n"
            "cd $1\n\nsed '/dlls\\/"
            "x11drv\\/Makefile/{G;s/$/dlls\\/%s\\/Makefile/;}' configure.in"
            " >t.tmp\nmv -f t.tmp configure.in\necho Patched configure.in\n\n"
-           "sed '/ws2_32/{G;s/$/\\^%s \\\\/;}' Make.rules.in | tr ^ \\\\t"
-           "  >t.tmp\nmv -f t.tmp Make.rules.in\necho Patched Make.rules.in"
-           "\n\nsed '/DLLFILES =/{G;s/$/\\^%s\\/lib%s.so \\\\/;}'"
+           "sed '/all:/{G;s/$/\\^lib%s.so \\\\/;}'"
            " dlls/Makefile.in| tr ^ \\\\t >t.tmp\n"
            "sed '/SUBDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2"
            "\nsed '/Map library name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
-           "(LN_S\\) %s\\/lib%s.\\@LIBEXT\\@ \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
-           " > t.tmp\nsed '/Map library name /{G;s/$/lib%s.\\@LIBEXT\\@: "
-           "%s\\/lib%s.\\@LIBEXT\\@/;}' t.tmp > t.tmp2\nsed '/dll "
-           "dependencies /{G;s/$/%s\\/lib%s.\\@LIBEXT\\@\\: libkernel32."
-           "\\@LIBEXT\\@ libntdll.\\@LIBEXT\\@/;}' t.tmp2 > t.tmp\n"
-           "mv -f t.tmp dlls/Makefile.in\nrm -f t.tmp2\necho Patched dlls/"
+           "(LN_S\\) %s\\/lib%s.\\$(LIBEXT) \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
+           " > t.tmp\nsed '/Map library name /{G;s/$/lib%s.\\$(LIBEXT): "
+           "%s\\/lib%s.\\$(LIBEXT)/;}' t.tmp > t.tmp2\nsed '/dll "
+           "dependencies/{G;s/$/^\\@cd %s \\&\\& \\$(MAKE) lib%s.\\$(LIBEXT)"
+           "/;}' t.tmp2 | tr ^ \\\\t > t.tmp\nsed '/dll "
+           "dependencies/{G;s/$/%s\\/lib%s.\\$(LIBEXT)\\: libkernel32."
+           "\\$(LIBEXT) libntdll.\\$(LIBEXT)/;}' t.tmp > t.tmp2\n"
+	   "mv -f t.tmp2 dlls/Makefile.in\nrm -f t.tmp\necho Patched dlls/"
            "Makefile.in\n\necho\necho ...done.\necho Run \\'autoconf\\', "
            "\\'./configure\\' then \\'make\\' to rebuild Wine\n\n",
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
@@ -520,7 +520,7 @@ void  output_c_banner (const parsed_symbol *sym)
   char ord_spec[16];
   size_t i;
 
-  if (globals.do_ordinals)
+  if (sym->ordinal >= 0)
     snprintf(ord_spec, sizeof (ord_spec), "%d", sym->ordinal);
   else
   {

@@ -653,13 +653,20 @@ static	enum FileSig	check_headers(void)
 int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 {
     int			fd;
+    int                 len;
     enum FileSig	effective_sig;
     int			ret = 1;
     struct stat		s;
+    char                *name_suffix;
 
     setbuf(stdout, NULL);
     
-    fd = open(name, O_RDONLY);
+    len = strlen(name) + 5;
+    name_suffix = malloc(len);
+    strcpy(name_suffix, name);
+    strcat(name_suffix, ".dll");
+
+    fd = open(name_suffix, O_RDONLY);
     if (fd == -1) fatal("Can't open file");
     
     if (fstat(fd, &s) < 0) fatal("Can't get size");
@@ -740,7 +747,10 @@ static int symbol_cmp(const void *left, const void *right)
 static void dll_close (void)
 {
     dll_symbol*	ds;
-    
+
+    if (!dll_symbols) {
+	fatal("No symbols");
+    }    
     for (ds = dll_symbols; ds->symbol; ds++)
 	free(ds->symbol);
     free (dll_symbols);
@@ -750,7 +760,7 @@ static void dll_close (void)
 static	void	do_grab_sym(void)
 {
     IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY);
-    unsigned			i;
+    unsigned			i, j;
     DWORD*			pName;
     DWORD*			pFunc;
     WORD*			pOrdl;
@@ -764,7 +774,7 @@ static	void	do_grab_sym(void)
     pOrdl = RVA(exportDir->AddressOfNameOrdinals, exportDir->NumberOfNames * sizeof(WORD));
     if (!pOrdl) {printf("Can't grab functions' ordinal table\n"); return;}
     
-    dll_close();
+    /* dll_close(); */
     
     if (!(dll_symbols = (dll_symbol *) malloc((exportDir->NumberOfFunctions + 1) * 
 					      sizeof (dll_symbol))))
@@ -776,19 +786,26 @@ static	void	do_grab_sym(void)
     map = calloc(((exportDir->NumberOfFunctions + 31) & ~31) / 32, sizeof(DWORD));
     if (!map) fatal("no memory");
     
-    for (i = 0; i < exportDir->NumberOfNames; i++)
+    for (j = 0; j < exportDir->NumberOfNames; j++, pOrdl++)
     {
 	map[*pOrdl / 32] |= 1 << (*pOrdl % 32);
 	ptr = RVA(*pName++, sizeof(DWORD));
 	if (!ptr) ptr = "cant_get_function";
-	dll_symbols[i].symbol = strdup(ptr);
-	assert(dll_symbols[i].symbol);
+	dll_symbols[j].symbol = strdup(ptr);
+	dll_symbols[j].ordinal = -1;  /* indicate non-ordinal symbol */
+	assert(dll_symbols[j].symbol);
     }
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
     if (!pFunc) {printf("Can't grab functions' address table\n"); return;}
+        
+    /* Set DLL output names */
+    if ((ptr = strrchr (globals.input_name, '/')))
+	globals.input_name = ptr + 1; /* Strip path */
+    OUTPUT_UC_DLL_NAME = str_toupper( strdup (OUTPUT_DLL_NAME));
+
     for (i = 0; i < exportDir->NumberOfFunctions; i++)
     {
-	if (!(map[i / 32] & (1 << (i % 32))))
+	if (pFunc[i] && !(map[i / 32] & (1 << (i % 32))))
 	{
 	    char ordinal_text[256];
 	    /* Ordinal only entry */
@@ -796,9 +813,11 @@ static	void	do_grab_sym(void)
 		      globals.forward_dll ? globals.forward_dll : OUTPUT_UC_DLL_NAME,
 		      exportDir->Base + i);
 	    str_toupper(ordinal_text);
-	    dll_symbols[i].symbol = strdup(ordinal_text);
-	    assert(dll_symbols[i].symbol);
-	    dll_symbols[i].ordinal = exportDir->Base + i;
+	    dll_symbols[j].symbol = strdup(ordinal_text);
+	    assert(dll_symbols[j].symbol);
+	    dll_symbols[j].ordinal = exportDir->Base + i;
+	    j++;
+	    assert(j <= exportDir->NumberOfFunctions);
 	}
     }
     free(map);
@@ -812,12 +831,6 @@ static	void	do_grab_sym(void)
     dll_symbols[exportDir->NumberOfFunctions].symbol = NULL;
     
     dll_current_symbol = dll_symbols;
-    
-    /* Set DLL output names */
-    if ((ptr = strrchr (globals.input_name, '/')))
-	globals.input_name = ptr + 1; /* Strip path */
-    
-    OUTPUT_UC_DLL_NAME = str_toupper( strdup (OUTPUT_DLL_NAME));
 }
 
 /*******************************************************************
@@ -837,7 +850,7 @@ void  dll_open (const char *dll_name)
  */
 int dll_next_symbol (parsed_symbol * sym)
 {
-    if (!dll_current_symbol)
+    if (!dll_current_symbol->symbol)
 	return 1;
     
     assert (dll_symbols);
