@@ -612,10 +612,10 @@ UINT load_string_table( MSIDATABASE *db )
         goto end;
 
     count = poolsize/4;
-    db->strings = msi_init_stringtable( count );
+    db->strings = msi_init_stringtable( count, pool[0] );
 
-    if( pool[0] || pool[1] )
-        ERR("The first string should be nul, but isn't\n");
+    if( pool[1] )
+        ERR("The first string should have zero refcount, but doesn't %04x\n", pool[1]);
     offset = 0;
     for( i=1; i<count; i++ )
     {

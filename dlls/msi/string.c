@@ -47,6 +47,7 @@ struct string_table
 {
     UINT count;         /* the number of strings */
     UINT freeslot;
+    UINT codepage;
     msistring *strings; /* an array of strings (in the tree) */
 };
 
@@ -63,7 +64,7 @@ static int msistring_makehash( const char *str )
     return hash;
 }
 
-string_table *msi_init_stringtable( int entries )
+string_table *msi_init_stringtable( int entries, UINT codepage )
 {
     string_table *st;
 
@@ -79,6 +80,7 @@ string_table *msi_init_stringtable( int entries )
     }
     st->count = entries;
     st->freeslot = 1;
+    st->codepage = codepage;
 
     return st;
 }
@@ -192,11 +194,11 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT 
     }
 
     /* allocate a new string */
-    sz = WideCharToMultiByte( CP_UTF8, 0, data, len, NULL, 0, NULL, NULL );
+    sz = WideCharToMultiByte( st->codepage, 0, data, len, NULL, 0, NULL, NULL );
     st->strings[n].str = HeapAlloc( GetProcessHeap(), 0, sz + 1 );
     if( !st->strings[n].str )
         return -1;
-    WideCharToMultiByte( CP_UTF8, 0, data, len, 
+    WideCharToMultiByte( st->codepage, 0, data, len, 
                          st->strings[n].str, sz, NULL, NULL );
     st->strings[n].str[sz] = 0;
     st->strings[n].refcount = 1;
@@ -245,7 +247,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
     if( !str )
         return ERROR_FUNCTION_FAILED;
 
-    len = MultiByteToWideChar(CP_UTF8,0,str,-1,NULL,0); 
+    len = MultiByteToWideChar(st->codepage,0,str,-1,NULL,0); 
 
     if( !buffer )
     {
@@ -253,7 +255,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
         return ERROR_SUCCESS;
     }
 
-    *sz = MultiByteToWideChar(CP_UTF8,0,str,-1,buffer,*sz); 
+    *sz = MultiByteToWideChar(st->codepage,0,str,-1,buffer,*sz); 
 
     return ERROR_SUCCESS;
 }
@@ -338,13 +340,13 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
         return ERROR_SUCCESS;
     }
 
-    sz = WideCharToMultiByte( CP_UTF8, 0, buffer, -1, NULL, 0, NULL, NULL );
+    sz = WideCharToMultiByte( st->codepage, 0, buffer, -1, NULL, 0, NULL, NULL );
     if( sz <= 0 )
         return r;
     str = HeapAlloc( GetProcessHeap(), 0, sz );
     if( !str )
         return ERROR_NOT_ENOUGH_MEMORY;
-    WideCharToMultiByte( CP_UTF8, 0, buffer, -1, str, sz, NULL, NULL );
+    WideCharToMultiByte( st->codepage, 0, buffer, -1, str, sz, NULL, NULL );
 
     r = msi_string2idA( st, str, id );
     if( str )
