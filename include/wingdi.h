@@ -1407,6 +1407,47 @@ typedef struct
 #define TT_PRIM_CSPLINE 3
 #define TT_POLYGON_TYPE 24
 
+  /* OpenGL defines */
+typedef struct {
+  FLOAT      x;
+  FLOAT      y;
+} POINTFLOAT, *PPOINTFLOAT;
+
+typedef struct {
+  FLOAT      gmfBlackBoxX;
+  FLOAT      gmfBlackBoxY;
+  POINTFLOAT gmfptGlyphOrigin;
+  FLOAT      gmfCellIncX;
+  FLOAT      gmfCellIncY;
+} GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
+
+typedef struct {
+  WORD  nSize;
+  WORD  nVersion;
+  DWORD dwFlags;
+  BYTE  iPixelType;
+  BYTE  cColorBits;
+  BYTE  cRedBits;
+  BYTE  cRedShift;
+  BYTE  cGreenBits;
+  BYTE  cGreenShift;
+  BYTE  cBlueBits;
+  BYTE  cBlueShift;
+  BYTE  cAlphaBits;
+  BYTE  cAlphaShift;
+  BYTE  cAccumBits;
+  BYTE  cAccumRedBits;
+  BYTE  cAccumGreenBits;
+  BYTE  cAccumBlueBits;
+  BYTE  cAccumAlphaBits;
+  BYTE  cDepthBits;
+  BYTE  cStencilBits;
+  BYTE  cAuxBuffers;
+  BYTE  iLayerPlane;
+  BYTE  bReserved;
+  COLORREF crTransparent;
+} LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
+
 /* Get/SetSystemPaletteUse() values */
 #define SYSPAL_ERROR        0
 #define SYSPAL_STATIC       1

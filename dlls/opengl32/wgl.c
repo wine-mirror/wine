@@ -258,7 +258,7 @@ HGLRC WINAPI wglGetCurrentContext(void) {
 
   TRACE(" returning %p (GL context %p)\n", ret, gl_ctx);
 
-  return ret;
+  return (HGLRC)ret;
 }
 
 /***********************************************************************

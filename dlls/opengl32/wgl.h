@@ -22,50 +22,6 @@
 
 #include "wingdi.h"
 
-typedef void *HGLRC;
-
-typedef struct {
-  WORD  nSize;
-  WORD  nVersion;
-  DWORD dwFlags;
-  BYTE  iPixelType;
-  BYTE  cColorBits;
-  BYTE  cRedBits;
-  BYTE  cRedShift;
-  BYTE  cGreenBits;
-  BYTE  cGreenShift;
-  BYTE  cBlueBits;
-  BYTE  cBlueShift;
-  BYTE  cAlphaBits;
-  BYTE  cAlphaShift;
-  BYTE  cAccumBits;
-  BYTE  cAccumRedBits;
-  BYTE  cAccumGreenBits;
-  BYTE  cAccumBlueBits;
-  BYTE  cAccumAlphaBits;
-  BYTE  cDepthBits;
-  BYTE  cStencilBits;
-  BYTE  cAuxBuffers;
-  BYTE  iLayerPlane;
-  BYTE  bReserved;
-  COLORREF crTransparent;
-} LAYERPLANEDESCRIPTOR;
-typedef LAYERPLANEDESCRIPTOR* LPLAYERPLANEDESCRIPTOR;
-
-typedef struct {
-  FLOAT      x;
-  FLOAT      y;
-} POINTFLOAT;
-
-typedef struct {
-  FLOAT      gmfBlackBoxX;
-  FLOAT      gmfBlackBoxY;
-  POINTFLOAT gmfptGlyphOrigin;
-  FLOAT      gmfCellIncX;
-  FLOAT      gmfCellIncY;
-} GLYPHMETRICSFLOAT;
-typedef GLYPHMETRICSFLOAT *LPGLYPHMETRICSFLOAT;
-
 HGLRC WINAPI wglCreateContext(HDC hdc) ;
 HGLRC WINAPI wglCreateLayerContext(HDC hdc,
 				   int iLayerPlane) ;
