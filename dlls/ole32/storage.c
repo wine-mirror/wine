@@ -1671,7 +1671,7 @@ HRESULT WINAPI StgOpenStorage16(
               pwcsName,pstgPriority,grfMode,snbExclude,reserved,ppstgOpen
 	);
 	_create_istorage16(ppstgOpen);
-	hf = CreateFileA(pwcsName,GENERIC_READ,0,NULL,0,0,0);
+	hf = CreateFileA(pwcsName,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,0);
 	if (hf==INVALID_HANDLE_VALUE) {
 		WARN("Couldn't open file for storage\n");
 		return E_FAIL;
