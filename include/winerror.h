@@ -246,6 +246,15 @@ extern int WIN32_LastError;
 #define ERROR_CANTOPEN              1011
 #define ERROR_CANTREAD              1012 /* Config reg key couldn't be read */
 #define ERROR_CANTWRITE             1013 /* Config reg key couldn't be written */
+#define ERROR_REGISTRY_RECOVERED    1014
+#define ERROR_REGISTRY_CORRUPT      1015
+#define ERROR_REGISTRY_IO_FAILED    1016
+#define ERROR_NOT_REGISTRY_FILE     1017
+#define ERROR_KEY_DELETED           1018
+#define ERROR_NO_LOG_SPACE          1019
+#define ERROR_KEY_HAS_CHILDREN      1020
+#define ERROR_CHILD_MUST_BE_VOLATILE 1021
+#define ERROR_NOTIFY_ENUM_DIR       1022
 #define ERROR_DLL_INIT_FAILED       1114
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
