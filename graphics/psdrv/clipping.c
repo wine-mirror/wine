@@ -42,7 +42,24 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
 
     GetRegionData(dc->w.hGCClipRgn, size, rgndata);
 
-    if (rgndata->rdh.nCount > 0)
+    PSDRV_WriteInitClip(dc);
+
+    /* check for NULL region */
+    if (rgndata->rdh.nCount == 0)
+    {
+        /* set an empty clip path. */
+        PSDRV_WriteRectClip(dc, 0, 0, 0, 0);
+    }
+    /* optimize when it is a simple region */
+    else if (rgndata->rdh.nCount == 1)
+    {
+        RECT *pRect = (RECT *)rgndata->Buffer;
+
+        PSDRV_WriteRectClip(dc, pRect->left, pRect->top, 
+                            pRect->right - pRect->left, 
+                            pRect->bottom - pRect->top);        
+    }
+    else
     {
         INT i;
         RECT *pRect = (RECT *)rgndata->Buffer;
@@ -60,9 +77,10 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
             PSDRV_WriteArrayPut(dc, szArrayName, i * 4 + 3, 
                                 pRect->bottom - pRect->top);
         }
+
+        PSDRV_WriteRectClip2(dc, szArrayName);
     }
     
-    PSDRV_WriteRectClip(dc, szArrayName);
     HeapFree( GetProcessHeap(), 0, rgndata );
     return;
 }

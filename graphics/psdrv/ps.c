@@ -161,10 +161,16 @@ static char psclosepath[] =
 static char psclip[] =
 "clip\n";
 
+static char psinitclip[] =
+"initclip\n";
+
 static char pseoclip[] =
 "eoclip\n";
 
 static char psrectclip[] =
+"%d %d %d %d rectclip\n"; 
+
+static char psrectclip2[] =
 "%s rectclip\n"; 
 
 static char pshatch[] =
@@ -702,6 +708,11 @@ BOOL PSDRV_WriteEOClip(DC *dc)
     return PSDRV_WriteSpool(dc, pseoclip, sizeof(pseoclip)-1);
 }
 
+BOOL PSDRV_WriteInitClip(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, psinitclip, sizeof(psinitclip)-1);
+}
+
 BOOL PSDRV_WriteHatch(DC *dc)
 {
     return PSDRV_WriteSpool(dc, pshatch, sizeof(pshatch)-1);
@@ -911,14 +922,21 @@ BOOL PSDRV_WriteArrayDef(DC *dc, CHAR *pszArrayName, INT nSize)
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteRectClip(DC *dc, CHAR *pszArrayName)
+BOOL PSDRV_WriteRectClip(DC *dc, INT x, INT y, INT w, INT h)
 {
     char buf[100];
 
-    sprintf(buf, psrectclip, pszArrayName);
+    sprintf(buf, psrectclip, x, y, w, h);
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
+BOOL PSDRV_WriteRectClip2(DC *dc, CHAR *pszArrayName)
+{
+    char buf[100];
+
+    sprintf(buf, psrectclip2, pszArrayName);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
 
 BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits)
 {

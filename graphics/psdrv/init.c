@@ -78,7 +78,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSelectPalette */
     PSDRV_SetBkColor,                /* pSetBkColor */
     NULL,                            /* pSetBkMode */
-    NULL,                            /* pSetDeviceClipping */
+    PSDRV_SetDeviceClipping,         /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
