@@ -432,8 +432,8 @@ debug_channels (msvcrt)
 @ stub _set_error_mode #(long)
 @ stub _set_sbh_threshold #(long)
 @ stub _seterrormode #(long)
-@ cdecl _setjmp(ptr) MSVCRT__setjmp
-@ cdecl _setjmp3(ptr long) MSVCRT__setjmp3
+@ cdecl -register -noimport -i386 _setjmp(ptr) _MSVCRT__setjmp
+@ cdecl -register -noimport -i386 _setjmp3(ptr long) _MSVCRT__setjmp3
 @ stub _setmaxstdio #(long)
 @ cdecl _setmbcp(long) _setmbcp
 @ cdecl _setmode(long long) _setmode
@@ -665,7 +665,7 @@ debug_channels (msvcrt)
 @ cdecl localtime(ptr) localtime
 @ forward -noimport log ntdll.log
 @ cdecl log10(double) log10
-@ cdecl longjmp(long long) MSVCRT_longjmp
+@ cdecl -register -noimport -i386 longjmp(ptr long) _MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ forward -noimport mbstowcs ntdll.mbstowcs

@@ -15,6 +15,9 @@
 #include "thread.h"
 #include "msvcrt.h"
 
+#include "msvcrt/setjmp.h"
+
+
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef void (*MSVCRT_sig_handler_func)(void);
@@ -227,32 +230,120 @@ int _abnormal_termination(void)
   return 0;
 }
 
+/*
+ * setjmp/longjmp implementation
+ */
+
+#ifdef __i386__
+#define MSVCRT_JMP_MAGIC 0x56433230 /* ID value for new jump structure */
+typedef void (*MSVCRT_unwind_function)(const void*);
+
+/*
+ * The signatures of the setjmp/longjmp functions do not match that 
+ * declared in the setjmp header so they don't follow the regular naming 
+ * convention to avoid conflicts.
+ */
+
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
-int MSVCRT__setjmp(LPDWORD* jmpbuf)
+void _MSVCRT__setjmp(_JUMP_BUFFER *jmp, CONTEXT86* context)
 {
-  FIXME(":(%p): stub\n",jmpbuf);
-  return 0;
+    TRACE("(%p)\n",jmp);
+    jmp->Ebp = context->Ebp;
+    jmp->Ebx = context->Ebx;
+    jmp->Edi = context->Edi;
+    jmp->Esi = context->Esi;
+    jmp->Esp = context->Esp;
+    jmp->Eip = context->Eip;
+    jmp->Registration = (unsigned long)NtCurrentTeb()->except;
+    if (jmp->Registration == TRYLEVEL_END)
+        jmp->TryLevel = TRYLEVEL_END;
+    else
+        jmp->TryLevel = ((MSVCRT_EXCEPTION_FRAME*)jmp->Registration)->trylevel;
+    TRACE("returning 0\n");
+    context->Eax=0;
 }
 
 /*******************************************************************
  *		_setjmp3 (MSVCRT.@)
  */
-int __cdecl MSVCRT__setjmp3(LPDWORD *jmpbuf, int x)
+void _MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
 {
-  FIXME(":(%p %x): stub\n",jmpbuf,x);
-  return 0;
+    TRACE("(%p,%d)\n",jmp,nb_args);
+    jmp->Ebp = context->Ebp;
+    jmp->Ebx = context->Ebx;
+    jmp->Edi = context->Edi;
+    jmp->Esi = context->Esi;
+    jmp->Esp = context->Esp;
+    jmp->Eip = context->Eip;
+    jmp->Cookie = MSVCRT_JMP_MAGIC;
+    jmp->UnwindFunc = 0;
+    jmp->Registration = (unsigned long)NtCurrentTeb()->except;
+    if (jmp->Registration == TRYLEVEL_END)
+    {
+        jmp->TryLevel = TRYLEVEL_END;
+    }
+    else
+    {
+        void **args = ((void**)context->Esp)+2;
+
+        if (nb_args > 0) jmp->UnwindFunc = (unsigned long)*args++;
+        if (nb_args > 1) jmp->TryLevel = (unsigned long)*args++;
+        else jmp->TryLevel = ((MSVCRT_EXCEPTION_FRAME*)jmp->Registration)->trylevel;
+        if (nb_args > 2)
+        {
+            size_t size = (nb_args - 2) * sizeof(DWORD);
+            memcpy( jmp->UnwindData, args, min( size, sizeof(jmp->UnwindData) ));
+        }
+    }
+    TRACE("returning 0\n");
+    context->Eax = 0;
 }
 
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-void MSVCRT_longjmp(jmp_buf env, int val)
+void _MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
 {
-  FIXME("MSVCRT_longjmp semistub, expect crash\n");
-  longjmp(env, val);
+    unsigned long cur_frame = 0;
+
+    TRACE("(%p,%d)\n", jmp, retval);
+
+    cur_frame=(unsigned long)NtCurrentTeb()->except;
+    TRACE("cur_frame=%lx\n",cur_frame);
+
+    if (cur_frame != jmp->Registration)
+        _global_unwind2((PEXCEPTION_FRAME)jmp->Registration);
+
+    if (jmp->Registration)
+    {
+        if (!IsBadReadPtr(&jmp->Cookie, sizeof(long)) &&
+            jmp->Cookie == MSVCRT_JMP_MAGIC && jmp->UnwindFunc)
+        {
+            MSVCRT_unwind_function unwind_func;
+
+            unwind_func=(MSVCRT_unwind_function)jmp->UnwindFunc;
+            unwind_func(jmp);
+        }
+        else
+            _local_unwind2((MSVCRT_EXCEPTION_FRAME*)jmp->Registration,
+                           jmp->TryLevel);
+    }
+
+    if (!retval)
+        retval = 1;
+
+    TRACE("Jump to %lx returning %d\n",jmp->Eip,retval);
+    context->Ebp = jmp->Ebp;
+    context->Ebx = jmp->Ebx;
+    context->Edi = jmp->Edi;
+    context->Esi = jmp->Esi;
+    context->Esp = jmp->Esp;
+    context->Eip = jmp->Eip;
+    context->Eax = retval;
 }
+#endif /* i386 */
 
 /*********************************************************************
  *		signal (MSVCRT.@)
