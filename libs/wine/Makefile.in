@@ -1,12 +1,10 @@
-DEFS      = @DLLFLAGS@ -D__WINESRC__ -DDLLDIR="\"$(dlldir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-LIBEXT    = @LIBEXT@
+LIBRARY   = wine
 SOVERSION = 1
-SONAME    = libwine.so.$(SOVERSION)
-MODULE    = libwine.$(LIBEXT)
+EXTRADEFS = -D__WINESRC__ -DDLLDIR="\"$(dlldir)\""
 EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@
 
 C_SRCS = \
@@ -16,47 +14,6 @@ C_SRCS = \
 	ldt.c \
 	loader.c
 
-all: $(MODULE) $(MODULE:.dll=.a)
-
-@MAKE_RULES@
-
-libwine.so.$(SOVERSION): $(OBJS) Makefile.in
-	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LIBS) -o $@
-
-libwine.so: libwine.so.$(SOVERSION)
-	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
-
-libwine.a: wine.def
-	$(DLLTOOL) -l $@ -d $(SRCDIR)/wine.def
-
-libwine.dll: $(OBJS) wine.def Makefile.in
-	$(DLLWRAP) --def $(SRCDIR)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
-
-.PHONY: install-lib-so install-lib-dll install-dev-so install-dev-dll
-
-install-lib-so: libwine.so.$(SOVERSION) dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_PROGRAM) libwine.so.$(SOVERSION) $(libdir)/libwine.so.$(SOVERSION)
-
-install-lib-dll: libwine.dll dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) libwine.dll $(libdir)/libwine.dll
-
-install-dev-so: dummy
-	$(MKINSTALLDIRS) $(libdir)
-	cd $(libdir) && $(RM) libwine.so && $(LN_S) libwine.so.$(SOVERSION) libwine.so
-
-install-dev-dll: libwine.a dummy
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
-
-install install-lib:: $(LIBEXT:%=install-lib-%)
-install install-dev:: $(LIBEXT:%=install-dev-%)
-
-uninstall::
-	$(RM) $(libdir)/libwine.a $(libdir)/libwine.dll $(libdir)/libwine.so $(libdir)/libwine.so.$(SOVERSION)
-
-clean::
-	$(RM) libwine.so.$(SOVERSION) libwine.dll
+@MAKE_LIB_RULES@
 
 ### Dependencies:

@@ -1,0 +1,58 @@
+# Global rules for building shared libraries     -*-Makefile-*-
+#
+# Each individual makefile should define the following variables:
+# LIBRARY      : name of the library being built (without the lib prefix)
+# SOVERSION    : the .so file version
+#
+# plus all variables required by the global Make.rules.in
+#
+
+DEFS      = @DLLFLAGS@ $(EXTRADEFS)
+LIBEXT    = @LIBEXT@
+LIBNAME   = lib$(LIBRARY)
+DEFNAME   = $(LIBRARY).def
+SONAME    = $(LIBNAME).so.$(SOVERSION)
+MODULE    = $(LIBNAME).$(LIBEXT)
+
+all: $(MODULE) $(MODULE:.dll=.a)
+
+@MAKE_RULES@
+
+$(LIBNAME).so.$(SOVERSION): $(OBJS) Makefile.in
+	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LIBS) -o $@
+
+$(LIBNAME).so: $(LIBNAME).so.$(SOVERSION)
+	$(RM) $@ && $(LN_S) $(LIBNAME).so.$(SOVERSION) $@
+
+$(LIBNAME).a: $(DEFNAME)
+	$(DLLTOOL) -l $@ -d $(SRCDIR)/$(DEFNAME)
+
+$(LIBNAME).dll: $(OBJS) $(DEFNAME) Makefile.in
+	$(DLLWRAP) --def $(SRCDIR)/$(DEFNAME) -o $@ $(OBJS) $(EXTRALIBS)
+
+.PHONY: install-lib-so install-lib-dll install-dev-so install-dev-dll
+
+install-lib-so: $(LIBNAME).so.$(SOVERSION) dummy
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_PROGRAM) $(LIBNAME).so.$(SOVERSION) $(libdir)/$(LIBNAME).so.$(SOVERSION)
+
+install-lib-dll: $(LIBNAME).dll dummy
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_DATA) $(LIBNAME).dll $(libdir)/$(LIBNAME).dll
+
+install-dev-so: dummy
+	$(MKINSTALLDIRS) $(libdir)
+	cd $(libdir) && $(RM) $(LIBNAME).so && $(LN_S) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).so
+
+install-dev-dll: $(LIBNAME).a dummy
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_DATA) $(LIBNAME).a $(libdir)/$(LIBNAME).a
+
+install install-lib:: $(LIBEXT:%=install-lib-%)
+install install-dev:: $(LIBEXT:%=install-dev-%)
+
+uninstall::
+	$(RM) $(libdir)/$(LIBNAME).a $(libdir)/$(LIBNAME).dll $(libdir)/$(LIBNAME).so $(libdir)/$(LIBNAME).so.$(SOVERSION)
+
+clean::
+	$(RM) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).dll
