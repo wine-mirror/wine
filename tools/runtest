@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# Wrapper script to run tests from inside the Wine tree
+#
+# Usage: runtest [options] input_file
+#
+# Copyright 2002 Alexandre Julliard
+# Copyright 2002 Dimitrie O. Paun
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+usage()
+{
+    cat >2 <<EOF
+
+Usage: $0 [options] input_file
+
+Options:
+    -q       quiet mode
+    -v       verbose mode (can be specified multiple times)
+    -s       announce successful tests
+    -p prog  name of the program to run for C tests
+    -P name  set the current platform name
+    -M names set the module names to be tested
+    -T dir   set Wine tree top directory (autodetected if not specified)
+
+EOF
+    exit 1
+}
+
+# Default values
+platform=$WINETEST_PLATFORM
+WINETEST_DEBUG=${WINETEST_DEBUG:-1}
+
+# parse command-line options
+while [ "$#" != 0 ]; do
+    case "$1" in
+    -h)
+	usage
+    ;;
+    -p)
+	shift; program="$1"
+    ;;
+    -q)
+	WINETEST_DEBUG=0
+    ;;
+    -v)
+	WINETEST_DEBUG=`expr $WINETEST_DEBUG + 1`
+    ;;
+    -s)
+	WINETEST_REPORT_SUCCESS=1
+	export WINETEST_REPORT_SUCCESS
+    ;;
+    -P)
+	shift; platform="$1"
+    ;;
+    -M)
+	shift; modules="$1"
+    ;;
+    -T)
+	shift; topobjdir="$1"
+	if [ -d "$topobjdir" ]; then :; else usage; fi
+    ;;
+    *)
+	infile="$1"
+    esac
+    shift
+done	    
+	
+# we must have found an input file
+if [ -f "$infile" ]; then :; else usage; fi
+
+# set program to the .c file base name if not specified otherwise
+if [ -z "$program" ]; then
+    program=`basename "$infile" .c`
+fi
+
+# check/detect topobjdir
+if [ -n "$topobjdir" ]; then
+    if [ -f "$topobjdir/server/wineserver" ]
+    then :
+    else
+	echo "Wrong -T argument, $topobjdir/server/wineserver does not exist" 2>&1
+	usage
+    fi
+else
+    if [ -f "./server/wineserver" ]; then topobjdir="."
+    elif [ -f "../server/wineserver" ]; then topobjdir=".."
+    elif [ -f "../../server/wineserver" ]; then topobjdir="../.."
+    elif [ -f "../../../server/wineserver" ]; then topobjdir="../../.."
+    fi
+fi
+
+# set environment variables needed for Wine
+
+if [ -n "$modules" ]; then 
+    WINEOPTIONS="$WINEOPTIONS --dll $modules=b"
+    export WINEOPTIONS
+fi
+WINETEST_PLATFORM=${platform:-wine}
+export WINETEST_PLATFORM WINETEST_DEBUG
+
+exec "$topobjdir/wine" "$program" "$infile" "$@"

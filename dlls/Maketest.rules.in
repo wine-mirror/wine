@@ -45,7 +45,7 @@ $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
 # Rules for building test list
 
 $(TESTLIST): Makefile.in
-	$(TOPSRCDIR)/programs/winetest/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
+	$(TOPSRCDIR)/tools/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
 
 # Rules for checking that no imports are missing
 

@@ -64,7 +64,7 @@ ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 WINEWRAPPER  = $(TOPSRCDIR)/tools/winewrapper
-RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
+RUNTEST      = $(TOPSRCDIR)/tools/runtest
 WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
 MAKEDEP      = $(TOOLSDIR)/tools/makedep
 WRC          = $(TOOLSDIR)/tools/wrc/wrc
@@ -105,7 +105,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .pl .ok .cross.o
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .ok .cross.o
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -135,9 +135,6 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
 
 .c.ok:
-	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
-
-.pl.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
 # 'all' target first in case the enclosing Makefile didn't define any target
