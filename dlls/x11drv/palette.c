@@ -1155,13 +1155,11 @@ static UINT X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNu
 		    X11DRV_PALETTE_freeList[index] = 0;
 
                     if( X11DRV_PALETTE_PaletteToXPixel ) index = X11DRV_PALETTE_PaletteToXPixel[index];
-                    break;
                 }
                 else if ( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
                 {
                     index = X11DRV_PALETTE_ToPhysical( NULL, 0x00ffffff &
                              *(COLORREF*)(palPtr->logpalette.palPalEntry + uStart));
-                    break;
                 }
 
                 /* we have to map to existing entry in the system palette */
