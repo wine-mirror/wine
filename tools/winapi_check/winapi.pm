@@ -84,10 +84,11 @@ sub read_spec_files {
     my $proto = shift;
     my $class = ref($proto) || $proto;
 
+    my $path = shift;
     my $win16api = shift;
     my $win32api = shift;
 
-    foreach my $file (split(/\n/, `find . -name \\*.spec`)) {
+    foreach my $file (split(/\n/, `find $path -name \\*.spec`)) {
 	my $type = 'winapi'->get_spec_file_type($file);
 	if($type eq "win16") {
 	    $win16api->parse_spec_file($file);

@@ -129,9 +129,20 @@ sub parse_c_file {
 	    my @arguments32 = ("HDC", "INT");
 	    &$function_found_callback("INT16", "WINAPI", $2 . "16", \@arguments16);
 	    &$function_found_callback("INT", "WINAPI", $2, \@arguments32);
+	} elsif(/WAVEIN_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    $_ = $'; $again = 1;
+	    my @arguments16 = ("HWAVEIN16");
+	    my @arguments32 = ("HWAVEIN");
+	    &$function_found_callback("UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
+	    &$function_found_callback("UINT", "WINAPI", "waveIn" . $1, \@arguments32);	    
+	} elsif(/WAVEOUT_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
+	    $_ = $'; $again = 1;
+	    my @arguments16 = ("HWAVEOUT16");
+	    my @arguments32 = ("HWAVEOUT");
+	    &$function_found_callback("UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
+	    &$function_found_callback("UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
 	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
-	    print "$_";
 	    if($1 eq "1") {
 		my @arguments16 = ("HWAVEOUT16", $4);
 		my @arguments32 = ("HWAVEOUT", $4);

@@ -4,13 +4,28 @@
 
 use strict;
 
+my $wine_dir;
+my $winapi_check_dir;
 BEGIN {
-    require "tools/winapi_check/winapi.pm";
-    require "tools/winapi_check/nativeapi.pm";
-    require "tools/winapi_check/winapi_local.pm";
-    require "tools/winapi_check/winapi_global.pm";
-    require "tools/winapi_check/winapi_options.pm";
-    require "tools/winapi_check/winapi_parser.pm";
+
+    if($0 =~ /^((.*?)\/?tools\/winapi_check)\/winapi_check$/)
+    {
+	$winapi_check_dir = $1;
+	if($2 ne "")
+	{
+	    $wine_dir = $2;
+	} else {
+	    $wine_dir = ".";
+	}
+    }
+    @INC = ($winapi_check_dir);
+
+    require "winapi.pm";
+    require "nativeapi.pm";
+    require "winapi_local.pm";
+    require "winapi_global.pm";
+    require "winapi_options.pm";
+    require "winapi_parser.pm";
 
     import winapi;
     import nativeapi;
@@ -26,11 +41,11 @@ if($options->help) {
     exit;
 }
 
-my $win16api = 'winapi'->new("win16", "tools/winapi_check/win16api.dat");
-my $win32api = 'winapi'->new("win32", "tools/winapi_check/win32api.dat");
-'winapi'->read_spec_files($win16api, $win32api);
+my $win16api = 'winapi'->new("win16", "$winapi_check_dir/win16api.dat");
+my $win32api = 'winapi'->new("win32", "$winapi_check_dir/win32api.dat");
+'winapi'->read_spec_files($wine_dir, $win16api, $win32api);
 
-my $nativeapi = 'nativeapi'->new("tools/winapi_check/nativeapi.dat");
+my $nativeapi = 'nativeapi'->new("$winapi_check_dir/nativeapi.dat");
 
 for my $name ($win32api->all_functions) {
     my $module16 = $win16api->function_module($name);

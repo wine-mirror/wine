@@ -2,7 +2,6 @@ package winapi_options;
 
 use strict;
 
-
 sub parser_comma_list {
     my $prefix = shift;
     my $value = shift;
@@ -89,6 +88,7 @@ sub new {
     my $module = \${$self->{MODULE}};
     my $global = \${$self->{GLOBAL}};
 
+    $$global = 0;
     while(defined($_ = shift @ARGV)) {
 	if(/^-([^=]*)(=(.*))?$/) {
 	    my $name;
@@ -157,15 +157,19 @@ sub new {
 	}
     }
 
+    my $paths;
     if($#$files == -1) {
-	@$files = map {
-	    s/^.\/(.*)$/$1/;
-	    $_; 
-	} split(/\n/, `find . -name \\*.c`);
+	$paths = ".";
+	$$global = 1;
     } else {
-	$$global = 0
+	$paths = join(" ",@$files);
     }
- 
+
+    @$files = map {
+	s/^.\/(.*)$/$1/;
+	$_; 
+    } split(/\n/, `find $paths -name \\*.c`);
+
     return $self;
 }
 
