@@ -3,6 +3,7 @@ init	RPCRT4_LibMain
 
 @ stub DceErrorInqTextA
 @ stub DceErrorInqTextW
+@ stdcall DllRegisterServer() RPCRT4_DllRegisterServer
 
 @ stub MesBufferHandleReset
 @ stub MesDecodeBufferHandleCreate

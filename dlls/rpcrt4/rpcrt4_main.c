@@ -575,3 +575,13 @@ HRESULT WINAPI NdrDllGetClassObject(
     return RPC_S_UNKNOWN_IF;
 }
 
+/***********************************************************************
+ *              DllRegisterServer (RPCRT4.@)
+ */
+
+HRESULT WINAPI RPCRT4_DllRegisterServer( void )
+{
+        FIXME( "(): stub\n" );
+        return S_OK;
+}
+
