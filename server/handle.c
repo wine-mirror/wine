@@ -397,6 +397,20 @@ int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned i
     return entry->fd;
 }
 
+/* remove the cached fd and return it */
+int flush_cached_fd( struct process *process, obj_handle_t handle )
+{
+    struct handle_entry *entry = get_handle( process, handle );
+    int fd = -1;
+
+    if (entry)
+    {
+        fd = entry->fd;
+        entry->fd = -1;
+    }
+    return fd;
+}
+
 /* find the first inherited handle of the given type */
 /* this is needed for window stations and desktops (don't ask...) */
 obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops )

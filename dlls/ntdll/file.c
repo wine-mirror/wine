@@ -498,11 +498,19 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock )
 {
     NTSTATUS ret;
+    HANDLE hEvent = NULL;
+
     SERVER_START_REQ( flush_file )
     {
         req->handle = hFile;
         ret = wine_server_call( req );
+        hEvent = reply->event;
     }
     SERVER_END_REQ;
+    if( !ret && hEvent )
+    {
+        ret = NtWaitForSingleObject( hEvent, FALSE, NULL );
+        NtClose( hEvent );
+    }
     return ret;
 }

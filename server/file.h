@@ -35,7 +35,7 @@ struct fd_ops
     /* a poll() event occured */
     void (*poll_event)(struct fd *,int event);
     /* flush the object buffers */
-    int  (*flush)(struct fd *);
+    int  (*flush)(struct fd *, struct event **);
     /* get file information */
     int  (*get_file_info)(struct fd *,struct get_file_info_reply *, int *flags);
     /* queue an async operation - see register_async handler in async.c*/
@@ -55,12 +55,13 @@ extern int check_fd_events( struct fd *fd, int events );
 extern void set_fd_events( struct fd *fd, int events );
 extern obj_handle_t lock_fd( struct fd *fd, file_pos_t offset, file_pos_t count, int shared, int wait );
 extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
+extern int flush_cached_fd( struct process *process, obj_handle_t handle );
 
 extern int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int default_fd_signaled( struct object *obj, struct thread *thread );
 extern void default_poll_event( struct fd *fd, int event );
-extern int no_flush( struct fd *fd );
+extern int no_flush( struct fd *fd, struct event **event );
 extern int no_get_file_info( struct fd *fd, struct get_file_info_reply *info, int *flags );
 extern void no_queue_async( struct fd *fd, void* ptr, unsigned int status, int type, int count );
 extern void main_loop(void);

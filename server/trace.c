@@ -877,6 +877,11 @@ static void dump_flush_file_request( const struct flush_file_request *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_flush_file_reply( const struct flush_file_reply *req )
+{
+    fprintf( stderr, " event=%p", req->event );
+}
+
 static void dump_get_file_info_request( const struct get_file_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -1993,6 +1998,11 @@ static void dump_disconnect_named_pipe_request( const struct disconnect_named_pi
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_disconnect_named_pipe_reply( const struct disconnect_named_pipe_reply *req )
+{
+    fprintf( stderr, " fd=%d", req->fd );
+}
+
 static void dump_get_named_pipe_info_request( const struct get_named_pipe_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -2660,7 +2670,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_file_pointer_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_flush_file_reply,
     (dump_func)dump_get_file_info_reply,
     (dump_func)dump_lock_file_reply,
     (dump_func)0,
@@ -2755,7 +2765,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_named_pipe_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_disconnect_named_pipe_reply,
     (dump_func)dump_get_named_pipe_info_reply,
     (dump_func)dump_create_smb_reply,
     (dump_func)dump_get_smb_info_reply,

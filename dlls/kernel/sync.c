@@ -754,6 +754,7 @@ BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
     {
         req->handle = hPipe;
         ret = !wine_server_call_err( req );
+        if (ret && reply->fd != -1) close( reply->fd );
     }
     SERVER_END_REQ;
 

@@ -963,7 +963,7 @@ void default_poll_event( struct fd *fd, int event )
 }
 
 /* default flush() routine */
-int no_flush( struct fd *fd )
+int no_flush( struct fd *fd, struct event **event )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -1002,10 +1002,15 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
 DECL_HANDLER(flush_file)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    struct event * event = NULL;
 
     if (fd)
     {
-        fd->fd_ops->flush( fd );
+        fd->fd_ops->flush( fd, &event );
+        if( event )
+        {
+            reply->event = alloc_handle( current->process, event, SYNCHRONIZE, 0 );
+        }
         release_object( fd );
     }
 }

@@ -72,7 +72,7 @@ static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
 static void file_poll_event( struct fd *fd, int event );
-static int file_flush( struct fd *fd );
+static int file_flush( struct fd *fd, struct event **event );
 static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
 static void file_queue_async( struct fd *fd, void *ptr, unsigned int status, int type, int count );
 
@@ -301,7 +301,7 @@ static void file_poll_event( struct fd *fd, int event )
 }
 
 
-static int file_flush( struct fd *fd )
+static int file_flush( struct fd *fd, struct event **event )
 {
     int ret = (fsync( get_unix_fd(fd) ) != -1);
     if (!ret) file_set_error();

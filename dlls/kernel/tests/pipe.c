@@ -90,10 +90,7 @@ void test_CreateNamedPipeA(void)
 
     hFile = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, 
             NULL, OPEN_EXISTING, 0, 0);
-    todo_wine
-    {
-        ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed");
-    }
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed");
 
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {

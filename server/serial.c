@@ -58,7 +58,7 @@ static void serial_destroy(struct object *obj);
 static int serial_get_poll_events( struct fd *fd );
 static void serial_poll_event( struct fd *fd, int event );
 static int serial_get_info( struct fd *fd, struct get_file_info_reply *reply, int *flags );
-static int serial_flush( struct fd *fd );
+static int serial_flush( struct fd *fd, struct event **event );
 static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, int type, int count);
 
 struct serial
@@ -329,7 +329,7 @@ static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, in
     set_fd_events ( fd, serial_get_poll_events( fd ));
 }
 
-static int serial_flush( struct fd *fd )
+static int serial_flush( struct fd *fd, struct event **event )
 {
     /* MSDN says: If hFile is a handle to a communications device,
      * the function only flushes the transmit buffer.

@@ -876,6 +876,7 @@ struct flush_file_request
 struct flush_file_reply
 {
     struct reply_header __header;
+    obj_handle_t event;
 };
 
 
@@ -2464,6 +2465,7 @@ struct disconnect_named_pipe_request
 struct disconnect_named_pipe_reply
 {
     struct reply_header __header;
+    int            fd;
 };
 
 
@@ -3581,6 +3583,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 105
+#define SERVER_PROTOCOL_VERSION 106
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
