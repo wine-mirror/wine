@@ -877,7 +877,7 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_PublishProduct(hPackage);
 
     /*
-     Called during itunes but unimplemented and seem important
+     Called during iTunes but unimplemented and seem important
 
      ResolveSource  (sets SourceDir)
      RegisterProduct
@@ -3114,8 +3114,8 @@ static void resolve_keypath(MSIHANDLE hPackage, MSIPACKAGE* package, INT
 /*
  * Ok further analysis makes me think that this work is
  * actually done in the PublishComponents and PublishFeatures
- * step. And not here.  It appears like the keypath and all that is
- * resolved in this step, however actaully written in the Publish steps.
+ * step, and not here.  It appears like the keypath and all that is
+ * resolved in this step, however actually written in the Publish steps.
  * But we will leave it here for now 
  */
 static UINT ACTION_ProcessComponents(MSIHANDLE hPackage)
@@ -3440,12 +3440,12 @@ static UINT register_appid(MSIHANDLE hPackage, LPCWSTR clsid, LPCWSTR app )
 static UINT ACTION_RegisterClassInfo(MSIHANDLE hPackage)
 {
     /* 
-     * again i am assuming the words, "Whose key file respesents" when refering
-     * to a Component as to meanin that Components KeyPath file
+     * Again I am assuming the words, "Whose key file respesents" when refering
+     * to a Component as to mean the Components KeyPath file
      *
      * Also there is a very strong connection between ClassInfo and ProgID
-     * that i am mostly glossing over.  
-     * What would be more proper is to load the ClassInfo and the ProgID info
+     * that I am mostly glossing over.  
+     * What would be more propper is to load the ClassInfo and the ProgID info
      * into memory data structures and then be able to enable and disable them
      * based on component. 
      */
@@ -3993,7 +3993,7 @@ static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
  * 99% of the work done here is only done for 
  * advertised installs. However this is where the
  * Icon table is processed and written out
- * so that is waht i am going to do here
+ * so that is waht I am going to do here.
  */
 static UINT ACTION_PublishProduct(MSIHANDLE hPackage)
 {
@@ -4082,7 +4082,7 @@ static UINT ACTION_PublishProduct(MSIHANDLE hPackage)
 
 }
 
-/* Msi functions that seem approperate here */
+/* Msi functions that seem appropriate here */
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 {
     LPWSTR szwAction;
@@ -4110,7 +4110,7 @@ UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 
 UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
 {
-    TRACE(" exteral attempt at action %s \n",debugstr_w(szAction));
+    TRACE(" external attempt at action %s \n",debugstr_w(szAction));
     return ACTION_PerformAction(hInstall,szAction);
 }
 
