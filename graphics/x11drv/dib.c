@@ -5793,16 +5793,8 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       InitializeCriticalSection(&(dib->lock));
       if (VIRTUAL_SetFaultHandler(bm.bmBits, X11DRV_DIB_FaultHandler, (LPVOID)res))
         {
-          if (section || offset)
-            {
-              X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-              if (dib) dib->status = DIB_Status_AppMod;
-            }
-          else
-            {
-	      X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-	      if (dib) dib->status = DIB_Status_InSync;
-	    }
+          X11DRV_DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
+          if (dib) dib->status = DIB_Status_AppMod;
         }
     }
 
