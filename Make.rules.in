@@ -48,6 +48,7 @@ AR        = @AR@ rc
 RANLIB    = @RANLIB@
 STRIP     = @STRIP@
 WINDRES   = @WINDRES@
+LN        = @LN@
 LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)

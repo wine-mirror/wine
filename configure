@@ -4323,6 +4323,22 @@ else
 echo "${ECHO_T}no, using $LN_S" >&6
 fi
 
+echo "$as_me:$LINENO: checking whether ln works" >&5
+echo $ECHO_N "checking whether ln works... $ECHO_C" >&6
+rm -f conf$$ conf$$.file
+echo >conf$$.file
+if ln conf$$.file conf$$ 2>/dev/null; then
+  LN=ln
+
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  LN="cp -p"
+
+  echo "$as_me:$LINENO: result: no, using $LN" >&5
+echo "${ECHO_T}no, using $LN" >&6
+fi
+rm -f conf$$ conf$$.file
 # Extract the first word of "c2man", so it can be a program name with args.
 set dummy c2man; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -13966,6 +13982,7 @@ s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@LN_S@,$LN_S,;t t
+s,@LN@,$LN,;t t
 s,@C2MAN@,$C2MAN,;t t
 s,@LDCONFIG@,$LDCONFIG,;t t
 s,@LDCOMBINE@,$LDCOMBINE,;t t

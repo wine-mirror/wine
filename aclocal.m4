@@ -96,6 +96,23 @@ CFLAGS="$CFLAGS $1"
 AC_TRY_LINK([],[],[$2],[$3])
 CFLAGS=$ac_wine_try_cflags_saved])
 
+dnl **** Check for ln ****
+dnl
+dnl Usage: WINE_PROG_LN
+dnl
+AC_DEFUN([WINE_PROG_LN],
+[AC_MSG_CHECKING([whether ln works])
+rm -f conf$$ conf$$.file
+echo >conf$$.file
+if ln conf$$.file conf$$ 2>/dev/null; then
+  AC_SUBST(LN,ln)
+  AC_MSG_RESULT([yes])
+else
+  AC_SUBST(LN,["cp -p"])
+  AC_MSG_RESULT([no, using $LN])
+fi
+rm -f conf$$ conf$$.file])
+
 dnl **** Create non-existent directories from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
