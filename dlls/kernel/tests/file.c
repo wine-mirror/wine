@@ -54,7 +54,7 @@ static void test__hread( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -64,7 +64,7 @@ static void test__hread( void )
 
     filehandle = _lopen( filename, OF_READ );
 
-    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%d)", filename, GetLastError(  ) );
+    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%ld)", filename, GetLastError(  ) );
 
     bytes_read = _hread( filehandle, buffer, 2 * strlen( sillytext ) );
 
@@ -82,7 +82,7 @@ static void test__hread( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 
@@ -101,7 +101,7 @@ static void test__hwrite( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -165,7 +165,7 @@ static void test__hwrite( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 
@@ -176,7 +176,7 @@ static void test__lclose( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -188,7 +188,7 @@ static void test__lclose( void )
 
     ok( HFILE_ERROR == _lclose(filehandle), "_lclose should whine about this" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 
@@ -201,7 +201,7 @@ static void test__lcreat( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -215,10 +215,10 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
 
-    ok( DeleteFileA(filename) != 0, "DeleteFile failed (%d)", GetLastError());
+    ok( DeleteFileA(filename) != 0, "DeleteFile failed (%ld)", GetLastError());
 
     filehandle = _lcreat( filename, 1 ); /* readonly */
-    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%ld)", filename, GetLastError(  ) );
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite shouldn't be able to write never the less" );
 
@@ -233,7 +233,7 @@ static void test__lcreat( void )
     ok( DeleteFileA( filename ) != 0, "now it should be possible to delete the file!" );
 
     filehandle = _lcreat( filename, 2 );
-    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%ld)", filename, GetLastError(  ) );
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
@@ -245,10 +245,10 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 
     filehandle = _lcreat( filename, 4 ); /* SYSTEM file */
-    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );
+    ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%ld)", filename, GetLastError(  ) );
 
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite complains" );
 
@@ -260,7 +260,7 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should STILL be able to find file" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 
@@ -274,7 +274,7 @@ void test__llseek( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -296,7 +296,7 @@ void test__llseek( void )
     ok( HFILE_ERROR != _llseek( filehandle, 1000000, FILE_END ), "should be able to seek past file; poor, poor Windows programmers" );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 
@@ -309,7 +309,7 @@ static void test__llopen( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -333,7 +333,7 @@ static void test__llopen( void )
     ok( HFILE_ERROR != _hwrite( filehandle, sillytext, strlen( sillytext ) ), "_hwrite should write just fine" );
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
     /* TODO - add tests for the SHARE modes  -  use two processes to pull this one off */
 }
 
@@ -349,7 +349,7 @@ static void test__lread( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -359,7 +359,7 @@ static void test__lread( void )
 
     filehandle = _lopen( filename, OF_READ );
 
-    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%d)", filename, GetLastError());
+    ok( HFILE_ERROR != filehandle, "couldn't open file \"%s\" again (err=%ld)", filename, GetLastError());
 
     bytes_read = _lread( filehandle, buffer, 2 * strlen( sillytext ) );
 
@@ -377,7 +377,7 @@ static void test__lread( void )
 
     ok( HFILE_ERROR != _lclose(filehandle), "_lclose complains" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 
@@ -396,7 +396,7 @@ static void test__lwrite( void )
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
-        ok(0,"couldn't create file \"%s\" (err=%d)",filename,GetLastError());
+        ok(0,"couldn't create file \"%s\" (err=%ld)",filename,GetLastError());
         return;
     }
 
@@ -460,7 +460,7 @@ static void test__lwrite( void )
 
     ok( HFILE_ERROR != _lclose( filehandle ), "_lclose complains" );
 
-    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%d)", GetLastError(  ) );
+    ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
 

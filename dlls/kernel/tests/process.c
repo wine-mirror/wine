@@ -331,8 +331,8 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
 
 #define okChildString(sect, key, expect) \
     do { \
-        char* result = getChildString(sect, key); \
-        ok(strCmp(result, expect, 1) == 0, "%s:%s expected %s, got %s", sect, key, expect, result); \
+        char* result = getChildString((sect), (key)); \
+        ok(strCmp(result, expect, 1) == 0, "%s:%s expected %s, got %s", (sect), (key), (expect)?(expect):"(null)", result); \
     } while (0)
 
 #define okChildIString(sect, key, expect) \
@@ -346,8 +346,8 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
  */
 #define okChildInt(sect, key, expect) \
     do { \
-        int result = GetPrivateProfileIntA(sect, key, !expect, resfile); \
-        ok(result == expect, "%s:%s expected %d, but got %d\n", sect, key, expect, result); \
+        int result = GetPrivateProfileIntA((sect), (key), !(expect), resfile); \
+        ok(result == expect, "%s:%s expected %d, but got %d\n", (sect), (key), (int)(expect), result); \
    } while (0)
 
 static void test_Startup(void)

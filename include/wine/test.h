@@ -30,11 +30,8 @@ extern int winetest_debug;
 /* current platform */
 extern const char *winetest_platform;
 
-typedef int (*winetest_ok_funcptr)( int condition, const char *msg, ...);
-typedef void (*winetest_trace_funcptr)( const char *msg, ...);
-
-extern winetest_ok_funcptr winetest_set_ok_location( const char* file, int line );
-extern winetest_trace_funcptr winetest_set_trace_location( const char* file, int line );
+extern void winetest_set_ok_location( const char* file, int line );
+extern void winetest_set_trace_location( const char* file, int line );
 extern void winetest_start_todo( const char* platform );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo( const char* platform );
@@ -42,8 +39,23 @@ extern int winetest_get_mainargs( char*** pargv );
 
 #define START_TEST(name) void func_##name(void)
 
-#define ok             (*winetest_set_ok_location(__FILE__, __LINE__))
-#define trace          (*winetest_set_trace_location(__FILE__, __LINE__))
+#ifdef __GNUC__
+
+extern int winetest_ok( int condition, const char *msg, ... ) __attribute__((format (printf,2,3) ));
+extern void winetest_trace( const char *msg, ... ) __attribute__((format (printf,1,2)));
+
+#define ok(cond,args...) (winetest_set_ok_location(__FILE__, __LINE__), winetest_ok((cond),args))
+#define trace(args...)   (winetest_set_trace_location(__FILE__, __LINE__), winetest_trace(args))
+
+#else /* __GNUC__ */
+
+extern int winetest_ok( int condition, const char *msg, ... );
+extern void winetest_trace( const char *msg, ... );
+
+#define ok     (winetest_set_ok_location(__FILE__, __LINE__), 0) ? 0 : winetest_ok
+#define trace  (winetest_set_trace_location(__FILE__, __LINE__), 0) ? (void)0 : winetest_trace
+
+#endif /* __GNUC__ */
 
 #define todo(platform) for (winetest_start_todo(platform); \
                             winetest_loop_todo(); \

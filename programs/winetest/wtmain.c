@@ -148,12 +148,11 @@ int winetest_ok( int condition, const char *msg, ... )
     return 1;
 }
 
-winetest_ok_funcptr winetest_set_ok_location( const char* file, int line )
+void winetest_set_ok_location( const char* file, int line )
 {
     tls_data* data=get_tls_data();
     data->current_file=file;
     data->current_line=line;
-    return &winetest_ok;
 }
 
 void winetest_trace( const char *msg, ... )
@@ -170,12 +169,11 @@ void winetest_trace( const char *msg, ... )
     }
 }
 
-winetest_trace_funcptr winetest_set_trace_location( const char* file, int line )
+void winetest_set_trace_location( const char* file, int line )
 {
     tls_data* data=get_tls_data();
     data->current_file=file;
     data->current_line=line;
-    return &winetest_trace;
 }
 
 void winetest_start_todo( const char* platform )

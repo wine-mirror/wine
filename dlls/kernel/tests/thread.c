@@ -182,13 +182,11 @@ VOID test_CreateThread_basic(DWORD version)
   for(i=0;i<NUM_THREADS;i++) {
     error=WaitForSingleObject(thread[i],5000);
     ok(error==WAIT_OBJECT_0, "Thread did not complete within timelimit");
-    if(ok!=WAIT_OBJECT_0) {
-      TerminateThread(thread[i],1);
+    if(error!=WAIT_OBJECT_0) {
+      TerminateThread(thread[i],i+NUM_THREADS);
     }
     ok(GetExitCodeThread(thread[i],&exitCode),"Could not retrieve ext code");
-    todo_wine {
-      ok(exitCode==i+NUM_THREADS,"Thread returned an incorrect exit code");
-    }
+    ok(exitCode==i+NUM_THREADS,"Thread returned an incorrect exit code");
   }
 /* Test that each thread executed in its parent's address space
    (it was able to change threadmem and pass that change back to its parent)

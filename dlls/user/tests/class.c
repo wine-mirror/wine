@@ -108,9 +108,9 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
     {
         SetLastError(0);
         ok(!SetClassLongW(hTestWnd,i*sizeof(DWORD),i+1),
-            "GetClassLongW(%d) initial value nonzero!");
+            "GetClassLongW(%ld) initial value nonzero!",i*sizeof(DWORD));
         ok(!GetLastError(),
-            "SetClassLongW(%d) failed!");
+            "SetClassLongW(%ld) failed!",i*sizeof(DWORD));
     }
 
     /* test values of valid classwords that we set */
@@ -153,15 +153,15 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
         if(GetClassInfoW(0, str, &wc))
         {
             ok(wc.cbClsExtra == cls.cbClsExtra,
-                "cbClsExtra did not match %x!=%x");
+                "cbClsExtra did not match %x!=%x",wc.cbClsExtra,cls.cbClsExtra);
             ok(wc.cbWndExtra == cls.cbWndExtra,
-                "cbWndExtra did not match %x!=%x");
+                "cbWndExtra did not match %x!=%x",wc.cbWndExtra,cls.cbWndExtra);
             ok(wc.hbrBackground == cls.hbrBackground,
-                "hbrBackground did not match %x!=%x");
+                "hbrBackground did not match %x!=%x",wc.hbrBackground,cls.hbrBackground);
             ok(wc.hCursor== cls.hCursor,
-                "hCursor did not match %x!=%x");
+                "hCursor did not match %x!=%x",wc.hCursor,cls.hCursor);
             ok(!wc.hInstance,
-                "hInstance not zero for global class %x");
+                "hInstance not zero for global class %x",wc.hInstance);
         }
         else
             ok(FALSE,"GetClassInfo (0) failed for global class!");
