@@ -512,7 +512,7 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
 static const char *ldcombine_files( char **argv )
 {
     int i, len = 0;
-    char *cmd;
+    char *cmd, *ldcmd;
     int fd, err;
 
     if (output_file_name && output_file_name[0])
@@ -527,9 +527,11 @@ static const char *ldcombine_files( char **argv )
     close( fd );
     atexit( remove_ld_tmp_file );
 
+    ldcmd = getenv("LD");
+    if (!ldcmd) ldcmd = "ld";
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
-    cmd = xmalloc( len + strlen(ld_tmp_file) + 10 );
-    sprintf( cmd, "ld -r -o %s", ld_tmp_file );
+    cmd = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ldcmd)  );
+    sprintf( cmd, "%s -r -o %s", ldcmd, ld_tmp_file );
     for (i = 0; argv[i]; i++) sprintf( cmd + strlen(cmd), " %s", argv[i] );
     err = system( cmd );
     if (err) fatal_error( "ld -r failed with status %d\n", err );
