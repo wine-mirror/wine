@@ -34,6 +34,7 @@ INSTALLED_INCLUDES = \
 	instance.h \
 	lmcons.h \
 	lzexpand.h \
+	mapi.h \
 	mapidefs.h \
 	mcx.h \
 	mmreg.h \

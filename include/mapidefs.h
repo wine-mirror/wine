@@ -3,6 +3,14 @@
 
 #include "windef.h"
 
+/* Some types */
+
+typedef unsigned char*          LPBYTE;
+#ifndef __LHANDLE
+#define __LHANDLE
+typedef unsigned long           LHANDLE, *LPLHANDLE;
+#endif
+
 #ifndef _tagCY_DEFINED
 #define _tagCY_DEFINED
 typedef union tagCY
