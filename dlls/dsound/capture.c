@@ -81,6 +81,13 @@ static ICOM_VTABLE(IDirectSoundFullDuplex) dsfdvt;
 
 static IDirectSoundCaptureImpl*       dsound_capture = NULL;
 
+static const char * captureStateString[] = {
+    "STATE_STOPPED",
+    "STATE_STARTING",
+    "STATE_CAPTURING",
+    "STATE_STOPPING"
+};
+
 /***************************************************************************
  * DirectSoundCaptureCreate [DSOUND.6]
  *
@@ -314,7 +321,8 @@ DSOUND_capture_callback(
 
     if (msg == MM_WIM_DATA) {
     	EnterCriticalSection( &(This->lock) );
-	TRACE("DirectSoundCapture msg=MM_WIM_DATA, old This->state=%ld, old This->index=%d\n",This->state,This->index);
+	TRACE("DirectSoundCapture msg=MM_WIM_DATA, old This->state=%s, old This->index=%d\n",
+	    captureStateString[This->state],This->index);
 	if (This->state != STATE_STOPPED) {
 	    int index = This->index;
 	    if (This->state == STATE_STARTING) { 
@@ -337,10 +345,14 @@ DSOUND_capture_callback(
 		if (This->state == STATE_CAPTURING) {
 		    waveInPrepareHeader(hwi,&(This->pwave[index]),sizeof(WAVEHDR));
 		    waveInAddBuffer(hwi, &(This->pwave[index]), sizeof(WAVEHDR));
-	        }
+	        } else if (This->state == STATE_STOPPING) {
+		    TRACE("stopping\n");
+		    This->state = STATE_STOPPED;
+		}
 	    }
 	}
-	TRACE("DirectSoundCapture new This->state=%ld, new This->index=%d\n",This->state,This->index);
+	TRACE("DirectSoundCapture new This->state=%s, new This->index=%d\n",
+	    captureStateString[This->state],This->index);
     	LeaveCriticalSection( &(This->lock) );
     }
 
@@ -408,14 +420,14 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
 
     if ( uRef == 0 ) {
         TRACE("deleting object\n");
-        if (This->capture_buffer)
-            IDirectSoundCaptureBufferImpl_Release(
-		(LPDIRECTSOUNDCAPTUREBUFFER8) This->capture_buffer);
-
         if (This->driver) { 
             IDsCaptureDriver_Close(This->driver);
             IDsCaptureDriver_Release(This->driver);
 	}
+
+        if (This->capture_buffer)
+            IDirectSoundCaptureBufferImpl_Release(
+		(LPDIRECTSOUNDCAPTUREBUFFER8) This->capture_buffer);
 
 	if (This->pwfx)
 	    HeapFree(GetProcessHeap(), 0, This->pwfx);
@@ -1094,7 +1106,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
 	}
     } else if (This->dsound->hwi) {
 	EnterCriticalSection(&(This->dsound->lock));
-	TRACE("old This->dsound->state=%ld\n",This->dsound->state);
+	TRACE("old This->dsound->state=%s\n",captureStateString[This->dsound->state]);
         if (lpdwCapturePosition) {
             MMTIME mtime;
             mtime.wType = TIME_BYTES;
@@ -1113,7 +1125,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
             } 
             *lpdwReadPosition = This->dsound->read_position;
         }
-	TRACE("new This->dsound->state=%ld\n",This->dsound->state);
+	TRACE("new This->dsound->state=%s\n",captureStateString[This->dsound->state]);
 	LeaveCriticalSection(&(This->dsound->lock));
 	if (lpdwCapturePosition) TRACE("*lpdwCapturePosition=%ld\n",*lpdwCapturePosition);
 	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%ld\n",*lpdwReadPosition);
@@ -1193,14 +1205,16 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     *lpdwStatus = 0;
     EnterCriticalSection(&(This->dsound->lock));
 
-    TRACE("old This->dsound->state=%ld, old lpdwStatus=%08lx\n",This->dsound->state,*lpdwStatus);
+    TRACE("old This->dsound->state=%s, old lpdwStatus=%08lx\n",
+	captureStateString[This->dsound->state],*lpdwStatus);
     if ((This->dsound->state == STATE_STARTING) || 
         (This->dsound->state == STATE_CAPTURING)) {
         *lpdwStatus |= DSCBSTATUS_CAPTURING;
         if (This->flags & DSCBSTART_LOOPING)
             *lpdwStatus |= DSCBSTATUS_LOOPING;
     }
-    TRACE("new This->dsound->state=%ld, new lpdwStatus=%08lx\n",This->dsound->state,*lpdwStatus);
+    TRACE("new This->dsound->state=%s, new lpdwStatus=%08lx\n",
+	captureStateString[This->dsound->state],*lpdwStatus);
     LeaveCriticalSection(&(This->dsound->lock));
 
     TRACE("status=%lx\n", *lpdwStatus);
@@ -1318,12 +1332,12 @@ IDirectSoundCaptureBufferImpl_Start(
     EnterCriticalSection(&(This->dsound->lock));
 
     This->flags = dwFlags;
-    TRACE("old This->dsound->state=%ld\n",This->dsound->state);
+    TRACE("old This->dsound->state=%s\n",captureStateString[This->dsound->state]);
     if (This->dsound->state == STATE_STOPPED)
         This->dsound->state = STATE_STARTING;
     else if (This->dsound->state == STATE_STOPPING)
         This->dsound->state = STATE_CAPTURING;
-    TRACE("new This->dsound->state=%ld\n",This->dsound->state);
+    TRACE("new This->dsound->state=%s\n",captureStateString[This->dsound->state]);
 
     LeaveCriticalSection(&(This->dsound->lock));
 
@@ -1455,12 +1469,12 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 
     EnterCriticalSection(&(This->dsound->lock));
 
-    TRACE("old This->dsound->state=%ld\n",This->dsound->state);
+    TRACE("old This->dsound->state=%s\n",captureStateString[This->dsound->state]);
     if (This->dsound->state == STATE_CAPTURING)
 	This->dsound->state = STATE_STOPPING;
     else if (This->dsound->state == STATE_STARTING)
 	This->dsound->state = STATE_STOPPED;
-    TRACE("new This->dsound->state=%ld\n",This->dsound->state);
+    TRACE("new This->dsound->state=%s\n",captureStateString[This->dsound->state]);
 
     LeaveCriticalSection(&(This->dsound->lock));
 

@@ -1011,7 +1011,9 @@ static int OSS_PeekRingMessage(OSS_MSG_RING* omr,
  */
 static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x (%s) dwParm1 = %04lX dwParam2 = %04lX\n", wMsg,
+        wMsg == WOM_OPEN ? "WOM_OPEN" : wMsg == WOM_CLOSE ? "WOM_CLOSE" :
+        wMsg == WOM_DONE ? "WOM_DONE" : "Unknown", dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -1178,7 +1180,7 @@ static BOOL wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     }
     *bytes -= written;
     wwo->dwWrittenTotal += written;
-
+    TRACE("dwWrittenTotal=%lu\n", wwo->dwWrittenTotal);
     return ret;
 }
 
@@ -2555,7 +2557,9 @@ static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
  */
 static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x (%s) dwParm1 = %04lX dwParam2 = %04lX\n", wMsg,
+        wMsg == WIM_OPEN ? "WIM_OPEN" : wMsg == WIM_CLOSE ? "WIM_CLOSE" :
+        wMsg == WIM_DATA ? "WIM_DATA" : "Unknown", dwParam1, dwParam2);
 
     switch (wMsg) {
     case WIM_OPEN:
@@ -2592,6 +2596,34 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
 
     memcpy(lpCaps, &WInDev[wDevID].ossdev->in_caps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ * 				widRecorder_ReadHeaders		[internal]
+ */
+static void widRecorder_ReadHeaders(WINE_WAVEIN * wwi)
+{
+    enum win_wm_message tmp_msg;
+    DWORD		tmp_param;
+    HANDLE		tmp_ev;
+    WAVEHDR*		lpWaveHdr;
+
+    while (OSS_RetrieveRingMessage(&wwi->msgRing, &tmp_msg, &tmp_param, &tmp_ev)) {
+        if (tmp_msg == WINE_WM_HEADER) {
+	    LPWAVEHDR*	wh;
+	    lpWaveHdr = (LPWAVEHDR)tmp_param;
+	    lpWaveHdr->lpNext = 0;
+
+	    if (wwi->lpQueuePtr == 0)
+		wwi->lpQueuePtr = lpWaveHdr;
+	    else {
+	        for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
+	        *wh = lpWaveHdr;
+	    }
+	} else {
+            ERR("should only have headers left\n");
+        }
+    }
 }
 
 /**************************************************************************
@@ -2677,8 +2709,9 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 			    lpWaveHdr->dwFlags |=  WHDR_DONE;
 
+			    wwi->lpQueuePtr = lpNext;
 			    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
-			    lpWaveHdr = wwi->lpQueuePtr = lpNext;
+			    lpWaveHdr = lpNext;
 			}
                     }
                 }
@@ -2816,6 +2849,10 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                             ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", wwi->ossdev->dev_name, strerror(errno));
 		        }
                     }
+
+		    /* read any headers in queue */
+		    widRecorder_ReadHeaders(wwi);
+
 		    /* return current buffer to app */
 		    lpWaveHdr = wwi->lpQueuePtr;
 		    if (lpWaveHdr)
@@ -2824,24 +2861,42 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		        TRACE("stop %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
 		        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		        lpWaveHdr->dwFlags |= WHDR_DONE;
-		        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
 		        wwi->lpQueuePtr = lpNext;
+		        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
 		    }
 		}
 		wwi->state = WINE_WS_STOPPED;
 		SetEvent(ev);
 		break;
 	    case WINE_WM_RESETTING:
+		if (wwi->state != WINE_WS_STOPPED)
+		{
+                    if (wwi->ossdev->bTriggerSupport)
+                    {
+                        /* stop the recording */
+		        wwi->ossdev->bInputEnabled = FALSE;
+                        enable = getEnables(wwi->ossdev);
+                        if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+		            wwi->ossdev->bInputEnabled = FALSE;
+                            ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", wwi->ossdev->dev_name, strerror(errno));
+		        }
+                    }
+		}
 		wwi->state = WINE_WS_STOPPED;
     		wwi->dwTotalRecorded = 0;
+
+		/* read any headers in queue */
+		widRecorder_ReadHeaders(wwi);
+
 		/* return all buffers to the app */
 		for (lpWaveHdr = wwi->lpQueuePtr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext) {
 		    TRACE("reset %p %p\n", lpWaveHdr, lpWaveHdr->lpNext);
 		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 		    lpWaveHdr->dwFlags |= WHDR_DONE;
-
+                    wwi->lpQueuePtr = lpWaveHdr->lpNext;
 		    widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
 		}
+
 		wwi->lpQueuePtr = NULL;
 		SetEvent(ev);
 		break;
@@ -2978,6 +3033,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwi->dwFragmentSize = fragment_size;
 
+    TRACE("dwFragmentSize=%lu\n", wwi->dwFragmentSize);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
 	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
 	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
