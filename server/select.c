@@ -225,7 +225,7 @@ static void sighup_handler()
 /* SIGTERM handler */
 static void sigterm_handler()
 {
-    close_registry();
+    flush_registry();
     exit(1);
 }
 

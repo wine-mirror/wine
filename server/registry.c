@@ -47,6 +47,7 @@
 #include "winreg.h"
 #include "winnt.h" /* registry definitions */
 #include "ntddk.h"
+#include "wine/library.h"
 
 /* a registry key */
 struct key
@@ -69,7 +70,8 @@ struct key
 /* key flags */
 #define KEY_VOLATILE 0x0001  /* key is volatile (not saved to disk) */
 #define KEY_DELETED  0x0002  /* key has been deleted */
-#define KEY_ROOT     0x0004  /* key is a root key */
+#define KEY_DIRTY    0x0004  /* key has been modified */
+#define KEY_ROOT     0x0008  /* key is a root key */
 
 /* a key value */
 struct key_value
@@ -180,7 +182,7 @@ static inline char to_hex( char ch )
 }
 
 /* dump the full path of a key */
-static void dump_path( struct key *key, struct key *base, FILE *f )
+static void dump_path( const struct key *key, const struct key *base, FILE *f )
 {
     if (key->parent && key->parent != base)
     {
@@ -191,7 +193,7 @@ static void dump_path( struct key *key, struct key *base, FILE *f )
 }
 
 /* dump a value to a text file */
-static void dump_value( struct key_value *value, FILE *f )
+static void dump_value( const struct key_value *value, FILE *f )
 {
     int i, count;
 
@@ -244,7 +246,7 @@ static void dump_value( struct key_value *value, FILE *f )
 }
 
 /* save a registry and all its subkeys to a text file */
-static void save_subkeys( struct key *key, struct key *base, FILE *f )
+static void save_subkeys( const struct key *key, const struct key *base, FILE *f )
 {
     int i;
 
@@ -261,7 +263,7 @@ static void save_subkeys( struct key *key, struct key *base, FILE *f )
     for (i = 0; i <= key->last_subkey; i++) save_subkeys( key->subkeys[i], base, f );
 }
 
-static void dump_operation( struct key *key, struct key_value *value, const char *op )
+static void dump_operation( const struct key *key, const struct key_value *value, const char *op )
 {
     fprintf( stderr, "%s key ", op );
     if (key) dump_path( key, NULL, stderr );
@@ -397,11 +399,34 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
     return key;
 }
 
+/* mark a key and all its parents as dirty (modified) */
+static void make_dirty( struct key *key )
+{
+    while (key)
+    {
+        if (key->flags & (KEY_DIRTY|KEY_VOLATILE)) return;  /* nothing to do */
+        key->flags |= KEY_DIRTY;
+        key = key->parent;
+    }
+}
+
+/* mark a key and all its subkeys as clean (not modified) */
+static void make_clean( struct key *key )
+{
+    int i;
+
+    if (key->flags & KEY_VOLATILE) return;
+    if (!(key->flags & KEY_DIRTY)) return;
+    key->flags &= ~KEY_DIRTY;
+    for (i = 0; i <= key->last_subkey; i++) make_clean( key->subkeys[i] );
+}
+
 /* update key modification time */
 static void touch_key( struct key *key )
 {
     key->modif = time(NULL);
     key->level = max( key->level, current_level );
+    make_dirty( key );
 }
 
 /* try to grow the array of subkeys; return 1 if OK, 0 on error */
@@ -467,20 +492,20 @@ static void free_subkey( struct key *parent, int index )
     release_object( key );
 
     /* try to shrink the array */
-    nb_subkeys = key->nb_subkeys;
-    if (nb_subkeys > MIN_SUBKEYS && key->last_subkey < nb_subkeys / 2)
+    nb_subkeys = parent->nb_subkeys;
+    if (nb_subkeys > MIN_SUBKEYS && parent->last_subkey < nb_subkeys / 2)
     {
         struct key **new_subkeys;
         nb_subkeys -= nb_subkeys / 3;  /* shrink by 33% */
         if (nb_subkeys < MIN_SUBKEYS) nb_subkeys = MIN_SUBKEYS;
-        if (!(new_subkeys = realloc( key->subkeys, nb_subkeys * sizeof(*new_subkeys) ))) return;
-        key->subkeys = new_subkeys;
-        key->nb_subkeys = nb_subkeys;
+        if (!(new_subkeys = realloc( parent->subkeys, nb_subkeys * sizeof(*new_subkeys) ))) return;
+        parent->subkeys = new_subkeys;
+        parent->nb_subkeys = nb_subkeys;
     }
 }
 
 /* find the named child of a given key and return its index */
-static struct key *find_subkey( struct key *key, const WCHAR *name, int *index )
+static struct key *find_subkey( const struct key *key, const WCHAR *name, int *index )
 {
     int i, min, max, res;
 
@@ -527,10 +552,10 @@ static struct key *open_key( struct key *key, WCHAR *name )
 /* create a subkey */
 /* warning: the key name must be writeable (use copy_path) */
 static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
-                               unsigned int options, time_t modif, int *created )
+                               int flags, time_t modif, int *created )
 {
     struct key *base;
-    int base_idx, index, flags = 0;
+    int base_idx, index;
     WCHAR *path;
 
     if (key->flags & KEY_DELETED) /* we cannot create a subkey under a deleted key */
@@ -538,8 +563,7 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
         set_error( STATUS_KEY_DELETED );
         return NULL;
     }
-    if (options & REG_OPTION_VOLATILE) flags |= KEY_VOLATILE;
-    else if (key->flags & KEY_VOLATILE)
+    if (!(flags & KEY_VOLATILE) && (key->flags & KEY_VOLATILE))
     {
         set_error( STATUS_CHILD_MUST_BE_VOLATILE );
         return NULL;
@@ -560,6 +584,7 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
 
     if (!*path) goto done;
     *created = 1;
+    if (flags & KEY_DIRTY) make_dirty( key );
     base = key;
     base_idx = index;
     key = alloc_subkey( key, path, index, modif );
@@ -582,7 +607,8 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
 }
 
 /* query information about a key or a subkey */
-static void enum_key( struct key *key, int index, int info_class, struct enum_key_reply *reply )
+static void enum_key( const struct key *key, int index, int info_class,
+                      struct enum_key_reply *reply )
 {
     int i;
     size_t len, namelen, classlen;
@@ -743,27 +769,23 @@ static struct key_value *find_value( const struct key *key, const WCHAR *name, i
     return NULL;
 }
 
-/* insert a new value or return a pointer to an existing one */
-static struct key_value *insert_value( struct key *key, const WCHAR *name )
+/* insert a new value; the index must have been returned by find_value */
+static struct key_value *insert_value( struct key *key, const WCHAR *name, int index )
 {
     struct key_value *value;
     WCHAR *new_name;
-    int i, index;
+    int i;
 
-    if (!(value = find_value( key, name, &index )))
+    if (key->last_value + 1 == key->nb_values)
     {
-        /* not found, add it */
-        if (key->last_value + 1 == key->nb_values)
-        {
-            if (!grow_values( key )) return NULL;
-        }
-        if (!(new_name = strdupW(name))) return NULL;
-        for (i = ++key->last_value; i > index; i--) key->values[i] = key->values[i - 1];
-        value = &key->values[index];
-        value->name = new_name;
-        value->len  = 0;
-        value->data = NULL;
+        if (!grow_values( key )) return NULL;
     }
+    if (!(new_name = strdupW(name))) return NULL;
+    for (i = ++key->last_value; i > index; i--) key->values[i] = key->values[i - 1];
+    value = &key->values[index];
+    value->name = new_name;
+    value->len  = 0;
+    value->data = NULL;
     return value;
 }
 
@@ -772,16 +794,31 @@ static void set_value( struct key *key, WCHAR *name, int type, const void *data,
 {
     struct key_value *value;
     void *ptr = NULL;
+    int index;
 
-    /* first copy the data */
+    if ((value = find_value( key, name, &index )))
+    {
+        /* check if the new value is identical to the existing one */
+        if (value->type == type && value->len == len &&
+            value->data && !memcmp( value->data, data, len ))
+        {
+            if (debug_level > 1) dump_operation( key, value, "Skip setting" );
+            return;
+        }
+    }
+
     if (len && !(ptr = memdup( data, len ))) return;
 
-    if (!(value = insert_value( key, name )))
+    if (!value)
     {
-        if (ptr) free( ptr );
-        return;
+        if (!(value = insert_value( key, name, index )))
+        {
+            if (ptr) free( ptr );
+            return;
+        }
     }
-    if (value->data) free( value->data ); /* already existing, free previous data */
+    else if (value->data) free( value->data ); /* already existing, free previous data */
+
     value->type  = type;
     value->len   = len;
     value->data  = ptr;
@@ -1091,7 +1128,7 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 }
 
 /* load and create a key from the input file */
-static struct key *load_key( struct key *base, const char *buffer, unsigned int options,
+static struct key *load_key( struct key *base, const char *buffer, int flags,
                              int prefix_len, struct file_load_info *info )
 {
     WCHAR *p, *name;
@@ -1125,7 +1162,7 @@ static struct key *load_key( struct key *base, const char *buffer, unsigned int 
         file_read_error( "Key is too long", info );
         return NULL;
     }
-    return create_key( base, name, NULL, options, modif, &res );
+    return create_key( base, name, NULL, flags, modif, &res );
 }
 
 /* parse a comma-separated list of hex digits */
@@ -1153,7 +1190,10 @@ static int parse_hex( unsigned char *dest, int *len, const char *buffer )
 static struct key_value *parse_value_name( struct key *key, const char *buffer, int *len,
                                            struct file_load_info *info )
 {
-    int maxlen = strlen(buffer) * sizeof(WCHAR);
+    struct key_value *value;
+    int index, maxlen;
+
+    maxlen = strlen(buffer) * sizeof(WCHAR);
     if (!get_file_tmp_space( info, maxlen )) return NULL;
     if (buffer[0] == '@')
     {
@@ -1169,7 +1209,9 @@ static struct key_value *parse_value_name( struct key *key, const char *buffer, 
     if (buffer[*len] != '=') goto error;
     (*len)++;
     while (isspace(buffer[*len])) (*len)++;
-    return insert_value( key, (WCHAR *)info->tmp );
+    if (!(value = find_value( key, (WCHAR *)info->tmp, &index )))
+        value = insert_value( key, (WCHAR *)info->tmp, index );
+    return value;
 
  error:
     file_read_error( "Malformed value name", info );
@@ -1235,6 +1277,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     value->type = type;
     /* update the key level but not the modification time */
     key->level = max( key->level, current_level );
+    make_dirty( key );
     return 1;
 
  error:
@@ -1273,10 +1316,8 @@ static void load_keys( struct key *key, FILE *f )
     struct key *subkey = NULL;
     struct file_load_info info;
     char *p;
-    unsigned int options = 0;
+    int flags = (key->flags & KEY_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
     int prefix_len = -1;  /* number of key name prefixes to skip */
-
-    if (key->flags & KEY_VOLATILE) options |= REG_OPTION_VOLATILE;
 
     info.file   = f;
     info.len    = 4;
@@ -1305,7 +1346,7 @@ static void load_keys( struct key *key, FILE *f )
         case '[':   /* new key */
             if (subkey) release_object( subkey );
             if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
-            if (!(subkey = load_key( key, p + 1, options, prefix_len, &info )))
+            if (!(subkey = load_key( key, p + 1, flags, prefix_len, &info )))
                 file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
@@ -1368,7 +1409,7 @@ void init_registry(void)
     root_key->flags |= KEY_ROOT;
 
     /* load the config file */
-    config = get_config_dir();
+    config = wine_get_config_dir();
     if (!(filename = malloc( strlen(config) + 8 ))) fatal_error( "out of memory\n" );
     strcpy( filename, config );
     strcat( filename, "/config" );
@@ -1470,6 +1511,12 @@ static int save_branch( struct key *key, const char *path )
     int fd, count = 0, ret = 0;
     FILE *f;
 
+    if (!(key->flags & KEY_DIRTY))
+    {
+        if (debug_level > 1) dump_operation( key, NULL, "Not saving clean" );
+        return 1;
+    }
+
     /* get the real path */
 
     if (!(real = malloc( PATH_MAX ))) return 0;
@@ -1538,6 +1585,7 @@ static int save_branch( struct key *key, const char *path )
 
 done:
     if (real) free( real );
+    if (ret) make_clean( key );
     return ret;
 }
 
@@ -1551,8 +1599,8 @@ static void periodic_save( void *arg )
     save_timeout_user = add_timeout_user( &next_save_time, periodic_save, 0 );
 }
 
-/* save the registry and close the top-level keys; used on server exit */
-void close_registry(void)
+/* save the modified registry branches to disk */
+void flush_registry(void)
 {
     int i;
 
@@ -1564,8 +1612,15 @@ void close_registry(void)
                      save_branch_info[i].path );
             perror( " " );
         }
-        release_object( save_branch_info[i].key );
     }
+}
+
+/* close the top-level keys; used on server exit */
+void close_registry(void)
+{
+    int i;
+
+    for (i = 0; i < save_branch_count; i++) release_object( save_branch_info[i].key );
     release_object( root_key );
 }
 
@@ -1582,9 +1637,11 @@ DECL_HANDLER(create_key)
     if (!(name = copy_req_path( req->namelen, !req->parent ))) return;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
+        int flags = (req->options & REG_OPTION_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
+
         if (req->namelen == get_req_data_size())  /* no class specified */
         {
-            key = create_key( parent, name, NULL, req->options, req->modif, &reply->created );
+            key = create_key( parent, name, NULL, flags, req->modif, &reply->created );
         }
         else
         {
@@ -1592,8 +1649,7 @@ DECL_HANDLER(create_key)
 
             if ((class = req_strdupW( req, class_ptr, get_req_data_size() - req->namelen )))
             {
-                key = create_key( parent, name, class, req->options,
-                                  req->modif, &reply->created );
+                key = create_key( parent, name, class, flags, req->modif, &reply->created );
                 free( class );
             }
         }

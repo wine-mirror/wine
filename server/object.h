@@ -186,6 +186,7 @@ extern int get_page_size(void);
 /* registry functions */
 
 extern void init_registry(void);
+extern void flush_registry(void);
 extern void close_registry(void);
 
 /* atom functions */
@@ -199,6 +200,7 @@ extern void release_global_atom( atom_t atom );
   /* command-line options */
 extern int debug_level;
 extern int master_socket_timeout;
+extern const char *server_argv0;
 
   /* server start time used for GetTickCount() */
 extern unsigned int server_start_ticks;
