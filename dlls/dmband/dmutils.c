@@ -237,13 +237,13 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
 const char *resolve_STREAM_SEEK (DWORD flag) {
 	switch (flag) {
 		case STREAM_SEEK_SET:
-			return wine_dbg_sprintf ("STREAM_SEEK_SET");
+			return "STREAM_SEEK_SET";
 		case STREAM_SEEK_CUR:
-			return wine_dbg_sprintf ("STREAM_SEEK_CUR");
+			return "STREAM_SEEK_CUR";
 		case STREAM_SEEK_END:
-			return wine_dbg_sprintf ("STREAM_SEEK_END");
+			return "STREAM_SEEK_END";
 		default:
-			return wine_dbg_sprintf ("()");			
+			return "()";			
 	}
 }
 
@@ -697,10 +697,9 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) ptr += sprintf(ptr, " - llMemLength = %lli\n  - pbMemData = %p\n", pDesc->llMemLength, pDesc->pbMemData);
 		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, " - pStream = %p\n", pDesc->pStream);
 		
-		ptr = &buffer[0];
-		return ptr;
+		return wine_dbg_sprintf("%s", buffer);
 	} else {
-		return wine_dbg_sprintf("(NULL)");
+		return "(NULL)";
 	}
 }
 
@@ -730,10 +729,9 @@ const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeade
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINER_HEADER (%p):\n", pHeader);
 		ptr += sprintf(ptr, " - dwFlags = %s\n", debugstr_DMUS_CONTAINER_FLAGS(pHeader->dwFlags));
 		
-		ptr = &buffer[0];
-		return ptr;
+		return wine_dbg_sprintf("%s", buffer);
 	} else {
-		return wine_dbg_sprintf("(NULL)");
+		return "(NULL)";
 	}
 }
 
@@ -747,9 +745,8 @@ const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT
 		ptr += sprintf(ptr, " - ckid = %s\n", debugstr_fourcc (pHeader->ckid));
 		ptr += sprintf(ptr, " - fccType = %s\n", debugstr_fourcc (pHeader->fccType));
 
-		ptr = &buffer[0];
-		return ptr;
+		return wine_dbg_sprintf("%s", buffer);
 	} else {
-		return wine_dbg_sprintf("(NULL)");
+		return "(NULL)";
 	}
 }
