@@ -377,8 +377,30 @@ static BOOL PRINTDLG_SetUpPaperComboBox(HWND hDlg,
     /* query the dialog box for the current selected value */
     Sel = SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETCURSEL, 0, 0);
     if(Sel != CB_ERR) {
-        oldWord = SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA, Sel,
-				      0);
+        /* we enter here only if a different printer is selected after
+         * the Print Setup dialog is opened. The current settings are
+         * stored into the newly selected printer.
+         */
+        oldWord = SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETITEMDATA,
+                                      Sel, 0);
+        if (dm) {
+            if (nIDComboBox == cmb2)
+                dm->u1.s1.dmPaperSize = oldWord;
+            else
+                dm->dmDefaultSource = oldWord;
+        }
+    }
+    else {
+        /* we enter here only when the Print setup dialog is initially
+         * opened. In this case the settings are restored from when
+         * the dialog was last closed.
+         */
+        if (dm) {
+            if (nIDComboBox == cmb2)
+                oldWord = dm->u1.s1.dmPaperSize;
+            else
+                oldWord = dm->dmDefaultSource;
+        }
     }
 
     if (nIDComboBox == cmb2) {
@@ -916,6 +938,16 @@ static LRESULT PRINTDLG_WMCommand(HWND hDlg, WPARAM wParam,
          break;
        }
 
+    case rad1: /* Paperorientation */
+        if (lppd->Flags & PD_PRINTSETUP)
+              lpdm->u1.s1.dmOrientation = DMORIENT_PORTRAIT;
+        break;
+            
+    case rad2: /* Paperorientation */
+        if (lppd->Flags & PD_PRINTSETUP)
+              lpdm->u1.s1.dmOrientation = DMORIENT_LANDSCAPE;
+        break;
+            
     case cmb1:
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
