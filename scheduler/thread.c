@@ -297,6 +297,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     int handle = -1;
     THDB *thread = THREAD_Create( PROCESS_Current(), flags, stack, TRUE, sa, &handle );
     if (!thread) return INVALID_HANDLE_VALUE;
+    thread->teb.flags  |= TEBF_WIN32;
     thread->entry_point = start;
     thread->entry_arg   = param;
     thread->startup     = THREAD_Start;
