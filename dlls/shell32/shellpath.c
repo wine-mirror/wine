@@ -122,7 +122,7 @@ static LPWSTR PathGetExtensionW(LPCWSTR lpszPath)
 /*************************************************************************
  * PathGetExtension		[SHELL32.158]
  */
-LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath) 
+LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath,DWORD void1, DWORD void2) 
 {
 	if (SHELL_OsIsUnicode())
 	  return PathGetExtensionW(lpszPath);

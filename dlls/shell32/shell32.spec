@@ -163,7 +163,7 @@ debug_channels (exec pidl shell shlctrl)
  155 stdcall ILFree (ptr) ILFree
  156 stdcall ILGlobalFree (ptr) ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPathAW
- 158 stdcall PathGetExtension(str) PathGetExtensionAW
+ 158 stdcall PathGetExtension(str long long) PathGetExtensionAW
  159 stdcall PathIsDirectory(ptr)PathIsDirectoryAW
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel

@@ -543,7 +543,7 @@ LPVOID WINAPI PathFindExtensionAW(LPCVOID path);
 
 LPVOID WINAPI PathFindFileNameAW(LPCVOID path); 
 
-LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath); 
+LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath,  DWORD void1, DWORD void2); 
 
 LPVOID WINAPI PathGetArgsAW(LPVOID lpszPath);
 
