@@ -504,7 +504,7 @@ static void debug_usage(void)
  *
  * Main Wine initialisation.
  */
-void wine_init( int argc, char *argv[], char *error, int error_size )
+void wine_init( int argc, char *argv[], char *envp[], char *error, int error_size )
 {
     char *wine_debug;
     int file_exists;
@@ -515,7 +515,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     wine_init_argv0_path( argv[0] );
     __wine_main_argc = argc;
     __wine_main_argv = argv;
-    __wine_main_environ = environ;
+    __wine_main_environ = envp;
     mmap_init();
 
     if ((wine_debug = getenv("WINEDEBUG")))
