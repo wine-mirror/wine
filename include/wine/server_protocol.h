@@ -570,7 +570,12 @@ struct get_handle_fd_request
     handle_t     handle;
     unsigned int access;
     int          fd;
+    int          type;
 };
+#define FD_TYPE_INVALID    0
+#define FD_TYPE_DEFAULT    1
+#define FD_TYPE_CONSOLE    2
+#define FD_TYPE_OVERLAPPED 3
 
 
 
@@ -1912,6 +1917,6 @@ union generic_request
     struct get_window_tree_request get_window_tree;
 };
 
-#define SERVER_PROTOCOL_VERSION 53
+#define SERVER_PROTOCOL_VERSION 54
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

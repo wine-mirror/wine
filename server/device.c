@@ -68,17 +68,21 @@ static int device_get_info( struct object *obj, struct get_file_info_request *re
 {
     struct device *dev = (struct device *)obj;
     assert( obj->ops == &device_ops );
-    req->type        = FILE_TYPE_UNKNOWN;
-    req->attr        = dev->id;  /* hack! */
-    req->access_time = 0;
-    req->write_time  = 0;
-    req->size_high   = 0;
-    req->size_low    = 0;
-    req->links       = 0;
-    req->index_high  = 0;
-    req->index_low   = 0;
-    req->serial      = 0;
-    return 1;
+
+    if (req)
+    {
+        req->type        = FILE_TYPE_UNKNOWN;
+        req->attr        = dev->id;  /* hack! */
+        req->access_time = 0;
+        req->write_time  = 0;
+        req->size_high   = 0;
+        req->size_low    = 0;
+        req->links       = 0;
+        req->index_high  = 0;
+        req->index_low   = 0;
+        req->serial      = 0;
+    }
+    return FD_TYPE_DEFAULT;
 }
 
 /* create a device */

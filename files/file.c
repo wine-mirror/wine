@@ -201,12 +201,12 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 
 
 /***********************************************************************
- *           FILE_GetUnixHandle
+ *           FILE_GetUnixHandleType
  *
  * Retrieve the Unix handle corresponding to a file handle.
  * Returns -1 on failure.
  */
-int FILE_GetUnixHandle( HANDLE handle, DWORD access )
+int FILE_GetUnixHandleType( HANDLE handle, DWORD access, DWORD *type )
 {
     int ret, fd = -1;
 
@@ -216,7 +216,11 @@ int FILE_GetUnixHandle( HANDLE handle, DWORD access )
         {
             req->handle = handle;
             req->access = access;
-            if (!(ret = SERVER_CALL_ERR())) fd = req->fd;
+            if (!(ret = SERVER_CALL_ERR()))
+            {
+                fd = req->fd;
+                if (type) *type = req->type;
+            }
         }
         SERVER_END_REQ;
         if (ret) return -1;
@@ -234,6 +238,16 @@ int FILE_GetUnixHandle( HANDLE handle, DWORD access )
     return fd;
 }
 
+/***********************************************************************
+ *           FILE_GetUnixHandle
+ *
+ * Retrieve the Unix handle corresponding to a file handle.
+ * Returns -1 on failure.
+ */
+int FILE_GetUnixHandle( HANDLE handle, DWORD access )
+{
+    return FILE_GetUnixHandleType(handle, access, NULL);
+}
 
 /*************************************************************************
  * 		FILE_OpenConsole

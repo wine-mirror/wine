@@ -266,7 +266,7 @@ int no_flush( struct object *obj )
 int no_get_file_info( struct object *obj, struct get_file_info_request *info )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
+    return FD_TYPE_INVALID;
 }
 
 void no_destroy( struct object *obj )

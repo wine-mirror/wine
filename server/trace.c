@@ -713,7 +713,8 @@ static void dump_get_handle_fd_request( const struct get_handle_fd_request *req 
 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_request *req )
 {
-    fprintf( stderr, " fd=%d", req->fd );
+    fprintf( stderr, " fd=%d,", req->fd );
+    fprintf( stderr, " type=%d", req->type );
 }
 
 static void dump_set_file_pointer_request( const struct set_file_pointer_request *req )

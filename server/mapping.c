@@ -33,6 +33,7 @@ struct mapping
 };
 
 static int mapping_get_fd( struct object *obj );
+static int mapping_get_info( struct object *obj, struct get_file_info_request *req );
 static void mapping_dump( struct object *obj, int verbose );
 static void mapping_destroy( struct object *obj );
 
@@ -48,7 +49,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* poll_event */
     mapping_get_fd,              /* get_fd */
     no_flush,                    /* flush */
-    no_get_file_info,            /* get_file_info */
+    mapping_get_info,            /* get_file_info */
     mapping_destroy              /* destroy */
 };
 
@@ -307,6 +308,16 @@ static int mapping_get_fd( struct object *obj )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     return get_mmap_fd( mapping->file );
+}
+
+static int mapping_get_info( struct object *obj, struct get_file_info_request *req )
+{
+    struct mapping *mapping = (struct mapping *)obj;
+    struct object *file = (struct object *)mapping->file;
+
+    assert( obj->ops == &mapping_ops );
+    assert( file );
+    return file->ops->get_file_info( file, req );
 }
 
 static void mapping_destroy( struct object *obj )

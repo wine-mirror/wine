@@ -268,34 +268,37 @@ static int file_get_info( struct object *obj, struct get_file_info_request *req 
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (fstat( file->obj.fd, &st ) == -1)
+    if (req)
     {
-        file_set_error();
-        return 0;
+        if (fstat( file->obj.fd, &st ) == -1)
+        {
+            file_set_error();
+            return FD_TYPE_INVALID;
+        }
+        if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
+            S_ISSOCK(st.st_mode) || isatty(file->obj.fd)) req->type = FILE_TYPE_CHAR;
+        else req->type = FILE_TYPE_DISK;
+        if (S_ISDIR(st.st_mode)) req->attr = FILE_ATTRIBUTE_DIRECTORY;
+        else req->attr = FILE_ATTRIBUTE_ARCHIVE;
+        if (!(st.st_mode & S_IWUSR)) req->attr |= FILE_ATTRIBUTE_READONLY;
+        req->access_time = st.st_atime;
+        req->write_time  = st.st_mtime;
+        if (S_ISDIR(st.st_mode))
+        {
+            req->size_high = 0;
+            req->size_low  = 0;
+        }
+        else
+        {
+            req->size_high = st.st_size >> 32;
+            req->size_low  = st.st_size & 0xffffffff;
+        }
+        req->links       = st.st_nlink;
+        req->index_high  = st.st_dev;
+        req->index_low   = st.st_ino;
+        req->serial      = 0; /* FIXME */
     }
-    if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-        S_ISSOCK(st.st_mode) || isatty(file->obj.fd)) req->type = FILE_TYPE_CHAR;
-    else req->type = FILE_TYPE_DISK;
-    if (S_ISDIR(st.st_mode)) req->attr = FILE_ATTRIBUTE_DIRECTORY;
-    else req->attr = FILE_ATTRIBUTE_ARCHIVE;
-    if (!(st.st_mode & S_IWUSR)) req->attr |= FILE_ATTRIBUTE_READONLY;
-    req->access_time = st.st_atime;
-    req->write_time  = st.st_mtime;
-    if (S_ISDIR(st.st_mode))
-    {
-        req->size_high = 0;
-        req->size_low  = 0;
-    }
-    else
-    {
-        req->size_high = st.st_size >> 32;
-        req->size_low  = st.st_size & 0xffffffff;
-    }
-    req->links       = st.st_nlink;
-    req->index_high  = st.st_dev;
-    req->index_low   = st.st_ino;
-    req->serial      = 0; /* FIXME */
-    return 1;
+    return FD_TYPE_DEFAULT;
 }
 
 static void file_destroy( struct object *obj )
@@ -501,6 +504,7 @@ DECL_HANDLER(get_handle_fd)
             if ((fd = obj->ops->get_fd( obj )) != -1)
                 send_client_fd( current->process, fd, req->handle );
         }
+        req->type = obj->ops->get_file_info( obj, NULL );
         release_object( obj );
     }
 }
