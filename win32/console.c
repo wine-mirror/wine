@@ -245,18 +245,36 @@ static void
 CONSOLE_get_input( HANDLE handle, BOOL blockwait )
 {
     char	*buf = HeapAlloc(GetProcessHeap(),0,1);
-    int		len = 0;
+    int		len = 0, escape_seen = 0;
 
     while (1)
     {
 	DWORD res;
 	char inchar;
-        if (WaitForSingleObject( handle, 0 )) break;
+
+	/* If we have at one time seen escape in this loop, we are 
+	 * within an Escape sequence, so wait for a bit more input for the
+	 * rest of the loop.
+	 */
+        if (WaitForSingleObject( handle, escape_seen*10 )) break;
         if (!ReadFile( handle, &inchar, 1, &res, NULL )) break;
 	if (!res) /* res 0 but readable means EOF? Hmm. */
 		break;
 	buf = HeapReAlloc(GetProcessHeap(),0,buf,len+1);
 	buf[len++]=inchar;
+	if (inchar == 27) {
+		if (len>1) {
+			/* If we spot an ESC, we flush all up to it
+			 * since we can be sure that we have a complete
+			 * sequence.
+			 */
+			CONSOLE_string_to_IR(handle,buf,len-1);
+			buf = HeapReAlloc(GetProcessHeap(),0,buf,1);
+			buf[0] = 27;
+			len = 1;
+		}
+		escape_seen = 1;
+	}
     }
     CONSOLE_string_to_IR(handle,buf,len);
     HeapFree(GetProcessHeap(),0,buf);
