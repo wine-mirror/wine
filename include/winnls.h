@@ -328,6 +328,11 @@ extern "C" {
 #define CAL_GREGORIAN_XLIT_ENGLISH     11
 #define CAL_GREGORIAN_XLIT_FRENCH      12
 
+/* CompareString defines */
+#define CSTR_LESS_THAN			1
+#define CSTR_EQUAL			2
+#define CSTR_GREATER_THAN		3
+
 /* Types
  */
 
