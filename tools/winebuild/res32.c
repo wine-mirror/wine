@@ -155,20 +155,18 @@ static void get_string( struct string_id *str )
 
 /* check the file header */
 /* all values must be zero except header size */
-static void check_header(void)
+static int check_header(void)
 {
-    if (get_dword()) goto error;        /* data size */
-    if (get_dword() != 32) goto error;  /* header size */
-    if (get_word() != 0xffff || get_word()) goto error;  /* type, must be id 0 */
-    if (get_word() != 0xffff || get_word()) goto error;  /* name, must be id 0 */
-    if (get_dword()) goto error;        /* data version */
-    if (get_word()) goto error;         /* mem options */
-    if (get_word()) goto error;         /* language */
-    if (get_dword()) goto error;        /* version */
-    if (get_dword()) goto error;        /* characteristics */
-    return;
- error:
-    fatal_error( "%s is not a valid Win32 resource file\n", file_name );
+    if (get_dword()) return 0;        /* data size */
+    if (get_dword() != 32) return 0;  /* header size */
+    if (get_word() != 0xffff || get_word()) return 0;  /* type, must be id 0 */
+    if (get_word() != 0xffff || get_word()) return 0;  /* name, must be id 0 */
+    if (get_dword()) return 0;        /* data version */
+    if (get_word()) return 0;         /* mem options */
+    if (get_word()) return 0;         /* language */
+    if (get_dword()) return 0;        /* version */
+    if (get_dword()) return 0;        /* characteristics */
+    return 1;
 }
 
 /* load the next resource from the current file */
@@ -196,9 +194,9 @@ static void load_next_resource(void)
 }
 
 /* load a Win32 .res file */
-void load_res32_file( const char *name )
+int load_res32_file( const char *name )
 {
-    int fd;
+    int fd, ret;
     void *base;
     struct stat st;
 
@@ -217,8 +215,12 @@ void load_res32_file( const char *name )
     file_name = name;
     file_pos  = base;
     file_end  = file_pos + st.st_size;
-    check_header();
-    while (file_pos < file_end) load_next_resource();
+    if ((ret = check_header()))
+    {
+        while (file_pos < file_end) load_next_resource();
+    }
+    close( fd );
+    return ret;
 }
 
 /* compare two unicode strings/ids */

@@ -350,7 +350,7 @@ static void parse_options( char *argv[] )
     char **ptr, **last;
     const char* arg=NULL;
 
-    for (ptr = last = argv + 1; *ptr; ptr++)
+    for (ptr = last = argv; *ptr; ptr++)
     {
         /* first check the exact option name */
         for (opt = option_table; opt->name; opt++)
@@ -394,17 +394,31 @@ static void parse_options( char *argv[] )
 
 
 /* load all specified resource files */
-static void load_resources(void)
+static void load_resources( char *argv[] )
 {
     int i;
+    char **ptr, **last;
 
     switch (SpecType)
     {
     case SPEC_WIN16:
         for (i = 0; i < nb_res_files; i++) load_res16_file( res_files[i] );
         break;
+
     case SPEC_WIN32:
-        for (i = 0; i < nb_res_files; i++) load_res32_file( res_files[i] );
+        for (i = 0; i < nb_res_files; i++)
+        {
+            if (!load_res32_file( res_files[i] ))
+                fatal_error( "%s is not a valid Win32 resource file\n", res_files[i] );
+        }
+
+        /* load any resource file found in the remaining arguments */
+        for (ptr = last = argv; *ptr; ptr++)
+        {
+            if (!load_res32_file( *ptr ))
+                *last++ = *ptr; /* not a resource file, keep it in the list */
+        }
+        *last = NULL;
         break;
     }
 }
@@ -415,12 +429,12 @@ static void load_resources(void)
 int main(int argc, char **argv)
 {
     output_file = stdout;
-    parse_options( argv );
+    parse_options( argv + 1 );
 
     switch(exec_mode)
     {
     case MODE_SPEC:
-        load_resources();
+        load_resources( argv + 1 );
         ParseTopLevel( input_file );
         switch (SpecType)
         {
@@ -438,14 +452,13 @@ int main(int argc, char **argv)
         break;
     case MODE_EXE:
         if (SpecType == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
-        load_resources();
+        load_resources( argv + 1 );
         read_undef_symbols( argv + 1 );
         BuildSpec32File( output_file );
         break;
     case MODE_DEF:
         if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
         if (SpecType == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
-        load_resources();
         ParseTopLevel( input_file );
         BuildDef32File( output_file );
         break;

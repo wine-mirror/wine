@@ -24,7 +24,7 @@ all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-r %.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 

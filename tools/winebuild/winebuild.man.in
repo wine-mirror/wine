@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEBUILD 1 "July 2002" "@PACKAGE_STRING@" "Wine dll builder"
+.TH WINEBUILD 1 "December 2002" "@PACKAGE_STRING@" "Wine dll builder"
 .SH NAME
 winebuild \- Wine dll builder
 .SH SYNOPSIS
@@ -159,6 +159,13 @@ Load resources from the specified binary resource file. The
 \fIrsrc.res\fR can be produced from a source resource file with
 .BR wrc(1)
 (or with a Windows resource compiler).
+.br
+This option is only necessary for Win16 resource files, the Win32 ones
+can simply listed as
+.I input files
+and will automatically be handled correctly (though the
+.B \-r
+option will also work for Win32 files).
 .TP
 .B \-w
 Turn on warnings.

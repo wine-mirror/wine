@@ -151,7 +151,7 @@ extern void add_ignore_symbol( const char *name );
 extern void read_undef_symbols( char **argv );
 extern int resolve_imports( void );
 extern int output_imports( FILE *outfile );
-extern void load_res32_file( const char *name );
+extern int load_res32_file( const char *name );
 extern int output_resources( FILE *outfile );
 extern void load_res16_file( const char *name );
 extern int output_res16_data( FILE *outfile );
