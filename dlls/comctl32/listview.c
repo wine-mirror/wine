@@ -270,6 +270,7 @@ typedef struct tagLISTVIEW_INFO
   WNDPROC EditWndProc;
   INT nEditLabelItem;
   DWORD dwHoverTime;
+  HWND hwndToolTip;
 
   DWORD lastKeyPressTimestamp;
   WPARAM charCode;
@@ -6989,7 +6990,24 @@ static BOOL LISTVIEW_SetTextColor (LISTVIEW_INFO *infoPtr, COLORREF clrText)
     return TRUE;
 }
 
-/* LISTVIEW_SetToolTips */
+/***
+ * DESCRIPTION:
+ * Determines which listview item is located at the specified position.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr        : valid pointer to the listview structure
+ * [I] hwndNewToolTip : handle to new ToolTip
+ *
+ * RETURN:
+ *   old tool tip
+ */
+static HWND LISTVIEW_SetToolTips( LISTVIEW_INFO *infoPtr, HWND hwndNewToolTip)
+{
+  HWND hwndOldToolTip = infoPtr->hwndToolTip;
+  infoPtr->hwndToolTip = hwndNewToolTip;
+  return hwndOldToolTip;
+}
+
 /* LISTVIEW_SetUnicodeFormat */
 /* LISTVIEW_SetWorkAreas */
 
@@ -8630,8 +8648,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVM_GETTILEVIEWINFO: */
 
   case LVM_GETTOOLTIPS:
-    FIXME("LVM_GETTOOLTIPS: unimplemented\n");
-    return FALSE;
+    return (LRESULT)infoPtr->hwndToolTip;
 
   case LVM_GETTOPINDEX:
     return LISTVIEW_GetTopIndex(infoPtr);
@@ -8788,7 +8805,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   /* case LVM_SETTILEWIDTH: */
 
-  /* case LVM_SETTOOLTIPS: */
+  case LVM_SETTOOLTIPS:
+    return (LRESULT)LISTVIEW_SetToolTips(infoPtr, (HWND)lParam);
 
   /* case LVM_SETUNICODEFORMAT: */
 
