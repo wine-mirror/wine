@@ -854,21 +854,24 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
     owner = WIN_GetTopParent( owner );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    EnableWindow32( owner, FALSE );
-    ShowWindow32( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, PM_REMOVE,
-                                  !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
+    if (!dlgInfo->flags & DF_END) /* was EndDialog called in WM_INITDIALOG ? */
     {
-	if (!IsDialogMessage32A( hwnd, &msg))
-	{
-	    TranslateMessage32( &msg );
-	    DispatchMessage32A( &msg );
-	}
-	if (dlgInfo->flags & DF_END) break;
+        EnableWindow32( owner, FALSE );
+        ShowWindow32( hwnd, SW_SHOW );
+        while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, 
+                                      PM_REMOVE, !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
+        {
+            if (!IsDialogMessage32A( hwnd, &msg))
+            {
+                TranslateMessage32( &msg );
+                DispatchMessage32A( &msg );
+            }
+            if (dlgInfo->flags & DF_END) break;
+        }
+        EnableWindow32( owner, TRUE );
     }
-    retval = dlgInfo->idResult;
-    EnableWindow32( owner, TRUE );
+    retval = dlgInfo->idResult; 
     DestroyWindow32( hwnd );
     return retval;
 }
