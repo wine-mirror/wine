@@ -67,21 +67,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-#define SAVE_GLOBAL_REGBRANCH_USER_DEFAULT  "/wine.userreg"
-#define SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE "/wine.systemreg"
-
-#define MAX_PATHNAME_LEN   1024
-
-#define IS_OPTION_FALSE(ch) \
-    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
-
-
 
 /******************************************************************************
- * _allocate_default_keys [Internal]
+ * allocate_default_keys [Internal]
  * Registry initialisation, allocates some default keys.
  */
-static void _allocate_default_keys(void)
+static ULONG allocate_default_keys(void)
 {
     static const WCHAR StatDataW[] = {'D','y','n','D','a','t','a','\\',
                                       'P','e','r','f','S','t','a','t','s','\\',
@@ -93,10 +84,9 @@ static void _allocate_default_keys(void)
                                   'S','y','s','t','e','m','\\',
                                   'C','l','o','n','e',0};
     HKEY hkey;
+    ULONG dispos;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-
-    TRACE("(void)\n");
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -106,7 +96,9 @@ static void _allocate_default_keys(void)
     attr.SecurityQualityOfService = NULL;
 
     RtlInitUnicodeString( &nameW, StatDataW );
-    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
+    if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &dispos )) NtClose( hkey );
+    if (dispos == REG_OPENED_EXISTING_KEY)
+        return dispos; /* someone else already loaded the registry */
 
     RtlInitUnicodeString( &nameW, ConfigManagerW );
     if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
@@ -114,45 +106,8 @@ static void _allocate_default_keys(void)
     /* this key is generated when the nt-core booted successfully */
     RtlInitUnicodeString( &nameW, Clone );
     if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
-}
 
-
-
-/* load the registry file in wine format [Internal] */
-static void load_wine_registry(HKEY hkey,LPCSTR fn)
-{
-    WCHAR *buffer;
-    HANDLE file;
-    DWORD len;
-    UNICODE_STRING name;
-    OBJECT_ATTRIBUTES attr;
-    IO_STATUS_BLOCK io;
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, fn, -1, NULL, 0 );
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
-    MultiByteToWideChar( CP_UNIXCP, 0, fn, -1, buffer, len );
-    RtlInitUnicodeString( &name, buffer );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = 0;
-    attr.ObjectName = &name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (!NtOpenFile( &file, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                     FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
-    {
-        SERVER_START_REQ( load_registry )
-        {
-            req->hkey    = hkey;
-            req->file    = file;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        CloseHandle( file );
-    }
-    HeapFree( GetProcessHeap(), 0, buffer );
+    return dispos;
 }
 
 
@@ -501,25 +456,10 @@ static void convert_environment( HKEY hkey_current_user )
 /* load all registry (native and global and home) */
 void SHELL_LoadRegistry( void )
 {
-    HKEY hkey_local_machine, hkey_users, hkey_users_default, hkey_current_user, hkey_config;
+    HKEY hkey_current_user;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    DWORD count;
     ULONG dispos;
-    BOOL res;
-    char tmp[1024];
-
-    static const WCHAR MachineW[] = {'M','a','c','h','i','n','e',0};
-    static const WCHAR UserW[] = {'U','s','e','r',0};
-    static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t',0};
-    static const WCHAR RegistryW[] = {'M','a','c','h','i','n','e','\\',
-                                      'S','o','f','t','w','a','r','e','\\',
-                                      'W','i','n','e','\\',
-                                      'W','i','n','e','\\',
-                                      'C','o','n','f','i','g','\\',
-                                      'R','e','g','i','s','t','r','y',0};
-    static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
-    static const WCHAR GlobalRegistryDirW[] = {'G','l','o','b','a','l','R','e','g','i','s','t','r','y','D','i','r',0};
 
     TRACE("(void)\n");
 
@@ -530,69 +470,11 @@ void SHELL_LoadRegistry( void )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    RtlInitUnicodeString( &nameW, UserW );
-    NtCreateKey( &hkey_users, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &dispos );
+    dispos = allocate_default_keys();
     if (dispos == REG_OPENED_EXISTING_KEY)
-    {
-        /* someone else already loaded the registry */
-        NtClose( hkey_users );
-        return;
-    }
+        return; /* someone else already loaded the registry */
 
-    RtlInitUnicodeString( &nameW, MachineW );
-    NtCreateKey( &hkey_local_machine, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL );
-
-    attr.RootDirectory = hkey_users;
-    RtlInitUnicodeString( &nameW, DefaultW );
-    if (NtCreateKey( &hkey_users_default, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
-    {
-        ERR("Cannot create HKEY_USERS/.Default\n" );
-        ExitProcess(1);
-    }
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey_current_user );
-
-    _allocate_default_keys();
-
-    attr.RootDirectory = 0;
-    RtlInitUnicodeString( &nameW, RegistryW );
-    if (NtOpenKey( &hkey_config, KEY_ALL_ACCESS, &attr )) hkey_config = 0;
-
-    /* load global registry if required */
-
-    res = TRUE;
-    RtlInitUnicodeString( &nameW, load_global_reg_filesW );
-    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-    {
-        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-        res = !IS_OPTION_FALSE(str[0]);
-    }
-    if (res)
-    {
-        /* load global registry files (stored in /etc/wine) */
-        char *p, configfile[MAX_PATHNAME_LEN];
-
-        /* Override ETCDIR? */
-        configfile[0] = 0;
-        RtlInitUnicodeString( &nameW, GlobalRegistryDirW );
-        if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-        {
-            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            RtlUnicodeToMultiByteN( configfile, sizeof(configfile), NULL, 
-                                    str, (strlenW(str) + 1) * sizeof(WCHAR));
-        }
-        if (configfile[0] != '/') strcpy(configfile, ETCDIR);
-
-        TRACE("GlobalRegistryDir is '%s'.\n", configfile);
-
-        /* Load the global HKU hive directly from sysconfdir */
-        p = configfile + strlen(configfile);
-        strcpy(p, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT);
-        load_wine_registry( hkey_users, configfile );
-
-        /* Load the global machine defaults directly from sysconfdir */
-        strcpy(p, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE);
-        load_wine_registry( hkey_local_machine, configfile );
-    }
 
     /* load home registries */
 
@@ -612,9 +494,5 @@ void SHELL_LoadRegistry( void )
     convert_drive_types();
     convert_environment( hkey_current_user );
 
-    NtClose(hkey_users_default);
     NtClose(hkey_current_user);
-    NtClose(hkey_users);
-    NtClose(hkey_local_machine);
-    NtClose(hkey_config);
 }

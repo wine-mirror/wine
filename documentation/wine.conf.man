@@ -40,17 +40,6 @@ are listed below.
 .PP
 .B [wine]
 .br
-.I format: """windows""=""<directory>"""
-.br
-default: "C:\\\\WINDOWS"
-.br
-Used to specify where Wine is supposed to have its Windows directory
-(which is an essential part of a Windows environment); make sure to double
-the backslashes.
-In case of e.g. C:\\WINDOWS, with drive C: being configured as
-/home/user/wine_c, the /home/user/wine_c/WINDOWS directory would be used for
-this.
-.PP
 .I format: """GraphicsDriver""=""<x11drv|ttydrv>"""
 .br
 default: "x11drv"
@@ -201,28 +190,6 @@ Used to specify which functions will be included in the snoop debug log.
 .PP
 For Relay and Snoop <dllname>.* includes or excludes the whole dll. Exclude
 entries have priority over Include entries.
-.PP
-.B [Registry]
-.br
-.I format: """LoadGlobalRegistryFiles""=""<boolean>"""
-.br
-Global registries (stored in /etc)
-.PP
-.I format: """LoadHomeRegistryFiles""=""<boolean>"""
-.br
-Home registries (stored in ~user/.wine/)
-.PP
-.I format: """WritetoHomeRegistryFiles""=""<boolean>"""
-.br
-TRY to write all changes to the home registry files
-.PP
-.I format: """LoadWindowsRegistryFiles""=""<boolean>"""
-.br
-Load Windows registry from the current Windows directory.
-.PP
-booleans: Y/y/T/t/1 are true, N/n/F/f/0 are false.
-.br
-Defaults are read all, write to home files.
 .PP
 .B [Network]
 .br

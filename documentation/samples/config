@@ -138,14 +138,6 @@ WINE REGISTRY Version 2
 ;"SnoopExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
 ;"SpyExclude" = "WM_SIZE;WM_TIMER;"
 
-[registry]
-;These are all booleans.  Y/y/T/t/1 are true, N/n/F/f/0 are false.
-;Defaults are read all, write to Home
-; Where to find the global registries
-;"GlobalRegistryDir" = "/etc";
-; Global registries (stored in /etc)
-"LoadGlobalRegistryFiles" = "Y"
-
 [Clipboard]
 "UsePrimary" = "0"
 
