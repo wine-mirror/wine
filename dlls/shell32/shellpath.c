@@ -1138,7 +1138,7 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
      (LPBYTE)path, &dwPathLen) && (dwType == REG_EXPAND_SZ || dwType == REG_SZ))
     {
         path[dwPathLen / sizeof(WCHAR)] = '\0';
-        if (dwType == REG_EXPAND_SZ)
+        if (dwType == REG_EXPAND_SZ && path[0] == '%')
         {
             WCHAR szTemp[MAX_PATH];
 
@@ -1437,20 +1437,17 @@ static HRESULT _SHGetProfilesValue(HKEY profilesKey, LPCWSTR szValueName,
     return hr;
 }
 
-/* Attempts to expand a subset of environment variables from szSrc into szDest,
- * which is assumed to be MAX_PATH characters in length.  Unlike the standard
- * ExpandEnvironmentStringsW, doesn't actually refer to the environment, for
- * two reasons:
- * - the environment variables may not be set when this is called (as during
- *   Wine's installation when default values are being written to the registry)
- * - the user perhaps shouldn't be able to override the location of certain
- *   directories through modifying the environment
- * The supported environment variables, and their source, are:
+/* Attempts to expand environment variables from szSrc into szDest, which is
+ * assumed to be MAX_PATH characters in length.  Before referring to the
+ * environment, handles a few variables directly, because the environment
+ * variables may not be set when this is called (as during Wine's installation
+ * when default values are being written to the registry).
+ * The directly handled environment variables, and their source, are:
  * - ALLUSERSPROFILE, USERPROFILE: reads from the registry
  * - SystemDrive: uses GetSystemDirectoryW and uses the drive portion of its
  *   path
- * Also unlike ExpandEnvironmentStringsW, only expands a single variable, and
- * only in the beginning of szSrc.
+ * If one of the directly handled environment variables is expanded, only
+ * expands a single variable, and only in the beginning of szSrc.
  */
 static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
 {
@@ -1462,6 +1459,13 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
 
     if (!szSrc || !szDest) return E_INVALIDARG;
 
+    /* short-circuit if there's nothing to expand */
+    if (szSrc[0] != '%')
+    {
+        strcpyW(szDest, szSrc);
+        hr = S_OK;
+        goto end;
+    }
     /* Get the profile prefix, we'll probably be needing it */
     hr = _SHOpenProfilesKey(&key);
     if (SUCCEEDED(hr))
@@ -1514,9 +1518,14 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
         }
         else
         {
-            WARN("asked for unsupported environment variable in path %s\n",
-             debugstr_w(szTemp));
-            hr = E_INVALIDARG;
+            DWORD ret = ExpandEnvironmentStringsW(szSrc, szDest, MAX_PATH);
+
+            if (ret > MAX_PATH)
+                hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            else if (ret == 0)
+                hr = HRESULT_FROM_WIN32(GetLastError());
+            else
+                hr = S_OK;
         }
         if (SUCCEEDED(hr) && szDest[0] == '%')
             strcpyW(szTemp, szDest);
@@ -1526,6 +1535,7 @@ static HRESULT _SHExpandEnvironmentStrings(LPCWSTR szSrc, LPWSTR szDest)
             szTemp[0] = '\0';
         }
     }
+end:
     if (key)
         RegCloseKey(key);
     TRACE("returning 0x%08lx (input was %s, output is %s)\n", hr,
