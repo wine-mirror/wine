@@ -1934,6 +1934,11 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
 
+    if (!path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     TRACE("'%s'\n", path );
 
     if (!*path)
