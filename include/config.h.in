@@ -143,6 +143,9 @@
 /* Define if the OpenGL library supports the glXGetProcAddressARB call */
 #undef HAVE_GLX_GETPROCADDRESS
 
+/* Define if the OpenGL headers define extension typedefs */
+#undef HAVE_GLEXT_PROTOTYPES
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 

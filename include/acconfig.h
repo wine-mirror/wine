@@ -107,3 +107,6 @@
 
 /* Define if the OpenGL library supports the glXGetProcAddressARB call */
 #undef HAVE_GLX_GETPROCADDRESS
+
+/* Define if the OpenGL headers define extension typedefs */
+#undef HAVE_GLEXT_PROTOTYPES

@@ -262,6 +262,16 @@ then
 
 			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"
 			then
+			       AC_CACHE_CHECK("for OpenGL extension functions prototypes", wine_cv_extension_prototypes,
+			          AC_TRY_COMPILE([#include <GL/gl.h>
+						  #include <GL/glext.h>],
+						 [PFNGLCOLORTABLEEXTPROC test_proc;],
+						 [AC_DEFINE(HAVE_GLEXT_PROTOTYPES)
+						  wine_cv_extension_prototypes="yes"],
+						 [wine_cv_extension_prototypes="no"]
+				  )
+				)
+
 				AC_DEFINE(HAVE_OPENGL)
 				OPENGL32_DLL=opengl32
 				OPENGLFILES='$(OPENGLFILES)'
