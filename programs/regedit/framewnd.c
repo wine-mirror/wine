@@ -435,17 +435,12 @@ BOOL RefreshView(HWND hWnd)
  */
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HKEY hKeyRoot = 0, hKey = 0;
+    HKEY hKeyRoot = 0;
     LPCTSTR keyPath;
     LPCTSTR valueName;
-    BOOL result = TRUE;
-    LONG lRet;
     DWORD valueType;
 
-    if ((keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot))) {
-        lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_ALL_ACCESS, &hKey);
-        if (lRet != ERROR_SUCCESS) hKey = 0;
-    }
+    keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
     valueName = GetValueName(g_pChildWnd->hListWnd);
 
     switch (LOWORD(wParam)) {
@@ -463,18 +458,18 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PrintRegistryHive(hWnd, _T(""));
         break;
     case ID_EDIT_DELETE:
-	if (DeleteValue(hWnd, hKey, valueName))
+	if (DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
 	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
         break;
     case ID_EDIT_MODIFY:
-        if (ModifyValue(hWnd, hKey, valueName))
+        if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
             RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
         break;
     case ID_EDIT_COPYKEYNAME:
         CopyKeyName(hWnd, _T(""));
         break;
     case ID_EDIT_NEW_KEY:
-	CreateKey(hKey);
+	CreateKey(hWnd, hKeyRoot, keyPath);
 	break;
     case ID_EDIT_NEW_STRINGVALUE:
 	valueType = REG_SZ;
@@ -486,7 +481,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	valueType = REG_DWORD;
 	/* fall through */
     create_value:
-	if (CreateValue(hWnd, hKey, valueType))
+	if (CreateValue(hWnd, hKeyRoot, keyPath, valueType))
 	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
     case ID_EDIT_RENAME:
 	StartValueRename(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
@@ -533,11 +528,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return TRUE;
     }
     default:
-        result = FALSE;
+        return FALSE;
     }
 
-    RegCloseKey(hKey);
-    return result;
+    return TRUE;
 }
 
 /********************************************************************************

@@ -98,10 +98,10 @@ extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
 extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 
 /* edit.c */
-extern BOOL CreateKey(HKEY hKey);
-extern BOOL CreateValue(HWND hwnd, HKEY hKey, DWORD valueType);
-extern BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
-extern BOOL DeleteValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
+extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
+extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType);
+extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
+extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
 
 #endif /* __MAIN_H__ */
