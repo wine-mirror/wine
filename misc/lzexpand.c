@@ -136,7 +136,10 @@ INT32 WINAPI LZStart32(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    return LZInit32( FILE_GetHandle32(hfSrc) );
+    HFILE32 ret = LZInit32( FILE_GetHandle32(hfSrc) );
+    if (IS_LZ_HANDLE(ret)) return ret;
+    if ((INT32)ret <= 0) return ret;
+    return hfSrc;
 }
 
 
@@ -449,19 +452,20 @@ LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
  */
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
-    HFILE32 oldsrc = src;
-    int usedlzinit = 0;
-    LONG ret;
+    /* already a LZ handle? */
+    if (IS_LZ_HANDLE(src)) return LZCopy32( src, FILE_GetHandle32(dest) );
 
-    if (!IS_LZ_HANDLE(src))
+    /* no, try to open one */
+    src = LZInit16(src);
+    if ((INT16)src <= 0) return 0;
+    if (IS_LZ_HANDLE(src))
     {
-        src = LZInit16(src);
-        if (src!=oldsrc) usedlzinit=1;
-        if (src>0xfff0) return 0;
+        LONG ret = LZCopy32( src, FILE_GetHandle32(dest) );
+        LZClose32( src );
+        return ret;
     }
-    ret = LZCopy32( src, FILE_GetHandle32(dest) );
-    if (usedlzinit) LZClose32(src);
-    return ret;
+    /* it was not a compressed file */
+    return LZCopy32( FILE_GetHandle32(src), FILE_GetHandle32(dest) );
 }
 
 
@@ -484,10 +488,8 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 	TRACE(file,"(%d,%d)\n",src,dest);
 	if (!IS_LZ_HANDLE(src)) {
 		src = LZInit32(src);
-		if (src!=oldsrc)
-			usedlzinit=1;
-		if (src>0xfff0)
-			return 0;
+                if ((INT32)src <= 0) return 0;
+		if (src != oldsrc) usedlzinit=1;
 	}
 
 	/* not compressed? just copy */
@@ -540,12 +542,10 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
  */
 HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
-    HFILE32	hfret;
-
-    hfret = LZOpenFile32A( fn, ofs, mode );
+    HFILE32 hfret = LZOpenFile32A( fn, ofs, mode );
     /* return errors and LZ handles unmodified */
-    if (IS_LZ_HANDLE(hfret) || (hfret>=0xfff0) || (hfret<=0))
-    	return hfret;
+    if ((INT32)hfret <= 0) return hfret;
+    if (IS_LZ_HANDLE(hfret)) return hfret;
     /* but allocate a dos handle for 'normal' files */
     return FILE_AllocDosHandle(hfret);
 }
@@ -574,8 +574,7 @@ HFILE32 WINAPI LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 	if (fd==HFILE_ERROR32)
 		return HFILE_ERROR32;
 	cfd=LZInit32(fd);
-	if (cfd<=0)
-		return fd;
+	if ((INT32)cfd <= 0) return fd;
 	return cfd;
 }
 
