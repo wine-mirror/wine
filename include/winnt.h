@@ -196,6 +196,30 @@ typedef double          DATE;
 
 /**** winnt.h proper *****/
 
+/* Microsoft's macros for declaring functions */
+
+#ifdef __cplusplus
+# define EXTERN_C    extern "C"
+#else
+# define EXTERN_C    extern
+#endif
+
+#ifndef __WINE__
+#define STDMETHODCALLTYPE       __stdcall
+#define STDMETHODVCALLTYPE      __cdecl
+#define STDAPICALLTYPE          __stdcall
+#define STDAPIVCALLTYPE         __cdecl
+
+#define STDAPI                  EXTERN_C HRESULT STDAPICALLTYPE
+#define STDAPI_(type)           EXTERN_C type STDAPICALLTYPE
+#define STDMETHODIMP            HRESULT STDMETHODCALLTYPE
+#define STDMETHODIMP_(type)     type STDMETHODCALLTYPE
+#define STDAPIV                 EXTERN_C HRESULT STDAPIVCALLTYPE
+#define STDAPIV_(type)          EXTERN_C type STDAPIVCALLTYPE
+#define STDMETHODIMPV           HRESULT STDMETHODVCALLTYPE
+#define STDMETHODIMPV_(type)    type STDMETHODVCALLTYPE
+#endif
+
 /* Define the basic types */
 #ifndef VOID
 #define VOID void

@@ -36,36 +36,12 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 }
 #endif
 
-
-/*    These macros are msdev's way of defining COM objects. They are provided 
- * here for use by winelib users.
+#ifndef __WINE__
+/* These macros are msdev's way of defining COM objects. 
+ * They are provided here for use by Winelib developpers.
  */
-
-#ifdef __cplusplus
-    #define EXTERN_C    extern "C"
-#else
-    #define EXTERN_C    extern
-#endif
-
-#define STDMETHODCALLTYPE       __stdcall
-#define STDMETHODVCALLTYPE      __cdecl
-#define STDAPICALLTYPE          __stdcall
-#define STDAPIVCALLTYPE         __cdecl
-
 #define FARSTRUCT
 #define HUGEP
-
-#define STDAPI                  EXTERN_C HRESULT STDAPICALLTYPE
-#define STDAPI_(type)           EXTERN_C type STDAPICALLTYPE
-
-#define STDMETHODIMP            HRESULT STDMETHODCALLTYPE
-#define STDMETHODIMP_(type)     type STDMETHODCALLTYPE
-
-#define STDAPIV                 EXTERN_C HRESULT STDAPIVCALLTYPE
-#define STDAPIV_(type)          EXTERN_C type STDAPIVCALLTYPE
-
-#define STDMETHODIMPV           HRESULT STDMETHODVCALLTYPE
-#define STDMETHODIMPV_(type)    type STDMETHODVCALLTYPE
 
 #define WINOLEAPI        STDAPI
 #define WINOLEAPI_(type) STDAPI_(type)
@@ -112,6 +88,8 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 #define BEGIN_INTERFACE
 #define END_INTERFACE
 
-#endif
+#endif /* __cplusplus && !CINTERFACE */
+
+#endif /* __WINE__ */
 
 #endif /* __WINE_OBJBASE_H */
