@@ -411,9 +411,12 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
 
     TRACE("fcc %4.4s\n", (LPSTR)&fcc);
 
-    /* check uncompressed AVI */
+    /* check for builtin DIB compressions */
     if ((fcc == mmioFOURCC('D','I','B',' ')) ||
-	(fcc == mmioFOURCC('R','L','E',' '))) {
+   (fcc == mmioFOURCC('R','L','E',' ')) ||
+        (fcc == BI_RGB) || (fcc == BI_RLE8) ||
+        (fcc == BI_RLE4) || (fcc == BI_BITFIELDS))
+    {
 	wma->hic = 0;
 	MCIAVI_DrawFrame(wma);
 	return TRUE;
