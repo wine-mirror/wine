@@ -1,0 +1,178 @@
+The Registry
+------------
+
+   After Win3.x, the registry became a fundamental part of Windows. It is
+   the place where both Windows itself, and all
+   Win95/98/NT/2000/whatever-compliant applications, store configuration
+   and state data. While most sane system administrators (and Wine
+   developers) curse badly at the twisted nature of the Windows registry,
+   it is still necessary for Wine to support it somehow.
+   
+  Registry structure
+  
+   The Windows registry is an elaborate tree structure, and not even most
+   Windows programmers are fully aware of how the registry is laid out,
+   with its different "hives" and numerous links between them; a full
+   coverage is out of the scope of this document. But here are the basic
+   registry keys you might need to know about for now.
+   
+   HKEY_LOCAL_MACHINE
+          This fundamental root key (in win9x, stored in the hidden file
+          system.dat) contains everything pertaining to the current
+          Windows installation.
+          
+   HKEY_USERS
+          This fundamental root key (in win9x, stored in the hidden file
+          user.dat) contains configuration data for every user of the
+          installation.
+          
+   HKEY_CLASSES_ROOT
+          This is a link to HKEY_LOCAL_MACHINE\Software\Classes. It
+          contains data describing things like file associations, OLE
+          document handlers, and COM classes.
+          
+   HKEY_CURRENT_USER
+          This is a link to HKEY_USERS\your_username, i.e., your personal
+          configuration.
+          
+  Using a Windows registry
+  
+   If you point Wine at an existing MS Windows installation (by setting
+   the appropriate directories in wine.conf/.winerc), then Wine is able
+   to load registry data from it. However, Wine will not save anything to
+   the real Windows registry, but rather to its own registry files (see
+   below). Of course, if a particular registry value exists in both the
+   Windows registry and in the Wine registry, then Wine will use the
+   latter.
+   
+   Occasionally, Wine may have trouble loading the Windows registry.
+   Usually, this is because the registry is inconsistent or damaged in
+   some way. If that becomes a problem, you may want to download the
+   regclean.exe from the MS website and use it to clean up the registry.
+   Alternatively, you can always use regedit.exe to export the registry
+   data you want into a text file, and then import it in Wine.
+   
+  Wine registry data files
+  
+   In the user's home directory, there is a subdirectory named .wine,
+   where Wine will try to save its registry by default. It saves into
+   four files, which are:
+   
+   system.reg
+          This file contains HKEY_LOCAL_MACHINE.
+          
+   user.reg
+          This file contains HKEY_CURRENT_USER.
+          
+   userdef.reg
+          This file contains HKEY_USERS\.Default (i.e. the default user
+          settings).
+          
+   wine.userreg
+          Wine saves HKEY_USERS to this file (both current and default
+          user), but does not load from it, unless userdef.reg is
+          missing.
+          
+   All of these files are human-readable text files, so unlike Windows,
+   you can actually use an ordinary text editor on them if you must.
+   
+   In addition to these files, Wine can also optionally load from global
+   registry files residing in the same directory as the global wine.conf
+   (i.e. /usr/local/etc if you compiled from source). These are:
+   
+   wine.systemreg
+          Contains HKEY_LOCAL_MACHINE.
+          
+   wine.userreg
+          Contains HKEY_USERS.
+          
+  System administration
+  
+   With the above file structure, it is possible for a system
+   administrator to configure the system so that a system Wine
+   installation (and applications) can be shared by all the users, and
+   still let the users all have their own personalized configuration. An
+   administrator can, after having installed Wine and any Windows
+   application software he wants the users to have access to, copy the
+   resulting system.reg and wine.userreg over to the global registry
+   files (which we assume will reside in /usr/local/etc here), with:
+   
+cd ~/.wine
+cp system.reg /usr/local/etc/wine.systemreg
+cp wine.userreg /usr/local/etc/wine.userreg
+
+   and perhaps even symlink these back to the administrator's account, to
+   make it easier to install apps system-wide later:
+   
+ln -sf /usr/local/etc/wine.systemreg system.reg
+ln -sf /usr/local/etc/wine.userreg wine.userreg
+
+   Note that the tools/wineinstall script already does all of this for
+   you, if you install Wine as root. If you then install Windows
+   applications while logged in as root, all your users will
+   automatically be able to use them. While the application setup will be
+   taken from the global registry, the users' personalized configurations
+   will be saved in their own home directories.
+   
+   But be careful with what you do with the administrator account - if
+   you do copy or link the administrator's registry to the global
+   registry, any user might be able to read the administrator's
+   preferences, which might not be good if sensitive information
+   (passwords, personal information, etc) is stored there. Only use the
+   administrator account to install software, not for daily work; use an
+   ordinary user account for that.
+   
+  The default registry
+  
+   A Windows registry contains many keys by default, and some of them are
+   necessary for even installers to operate correctly. The keys that the
+   Wine developers have found necessary to install applications are
+   distributed in a file called "winedefault.reg". It is automatically
+   installed for you if you use the tools/wineinstall script, but if you
+   want to install it manually, you can do so by using the regapi tool.
+   You can find more information about this in the
+   documentation/no-windows document in the Wine distribution.
+   
+  The [registry] section
+  
+   With the above information fresh in mind, let's look at the
+   wine.conf/.winerc options for handling the registry.
+   
+   LoadGlobalRegistryFiles
+          Controls whether to try to load the global registry files, if
+          they exist.
+          
+   LoadHomeRegistryFiles
+          Controls whether to try to load the user's registry files (in
+          the .wine subdirectory of the user's home directory).
+          
+   LoadWindowsRegistryFiles
+          Controls whether Wine will attempt to load registry data from a
+          real Windows registry in an existing MS Windows installation.
+          
+   WritetoHomeRegistryFiles
+          Controls whether registry data will be written to the user's
+          registry files. (Currently, there is no alternative, so if you
+          turn this off, Wine cannot save the registry on disk at all;
+          after you exit Wine, your changes will be lost.)
+          
+   UseNewFormat
+          This option is obsolete. Wine now always use the new format;
+          support for the old format was removed a while ago.
+          
+   PeriodicSave
+          If this option is set to a nonzero value, it specifies that you
+          want the registry to be saved to disk at the given interval. If
+          it is not set, the registry will only be saved to disk when the
+          wineserver terminates.
+          
+   SaveOnlyUpdatedKeys
+          Controls whether the entire registry is saved to the user's
+          registry files, or only subkeys the user have actually changed.
+          Considering that the user's registry will override any global
+          registry files and Windows registry files, it usually makes
+          sense to only save user-modified subkeys; that way, changes to
+          the rest of the global or Windows registries will still affect
+          the user.
+          
+                                                              - Ove Kåven
