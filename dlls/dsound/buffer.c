@@ -1107,6 +1107,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 			*pdsb = NULL;
 			return DSERR_OUTOFMEMORY;
 		}
+		dsb->buffer->ref = 1;
 	}
 
 	/* Allocate the hardware buffer */
