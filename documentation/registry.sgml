@@ -1,12 +1,9 @@
   <sect1 id="registry">
     <title>The Registry</title>
 
-      <para>
-        written by Ove Kåven
-      </para>
-      <para>
-      (Extracted from <filename>wine/documentation/registry</filename>)
-      </para>
+    <para>
+      Originally written by Ove Kåven
+    </para>
 
     <para>
       After Win3.x, the registry became a fundamental part of Windows.
@@ -17,6 +14,72 @@
       nature of the Windows registry, it is still necessary for Wine
       to support it somehow.
     </para>
+
+    <sect2>
+      <title>The default registry</title>
+
+      <para>
+        A Windows registry contains many keys by default, and some of
+        them are necessary for even installers to operate correctly.
+        The keys that the Wine developers have found necessary to
+        install applications are distributed in a file called
+        <filename>winedefault.reg</filename>. It is automatically
+        installed for you if you use the
+        <filename>tools/wineinstall</filename> script in the Wine source,
+	but if you want to install it manually, you can do so by using the
+        <command>regedit</command> tool to be found in the
+	<filename>programs/regedit/</filename>
+	directory in Wine source.
+	<filename>winedefault.reg</filename> should even be applied if
+	you plan to use a native Windows registry, since Wine needs some
+	specific registry settings in its registry (for special
+	workarounds for certain programs etc.).
+	In the main Wine source code directory in a <glossterm>terminal</glossterm>, run:
+      </para>
+<screen>
+<prompt>$ </><userinput>cd programs/regedit</>
+<prompt>$ </><userinput>./regedit ../../winedefault.reg</>
+</screen>
+    </sect2>
+
+    <sect2>
+      <title>Using a Windows registry</title>
+
+      <para>
+        If you point Wine at an existing Windows installation (by
+        setting the appropriate directories in
+        <filename>~/.wine/config</filename>, then Wine is able to load
+        registry data from it. However, Wine will not save anything to
+        the real Windows registry, but rather to its own registry
+        files (see below). Of course, if a particular registry value
+        exists in both the Windows registry and in the Wine registry,
+        then Wine will use the latter. In the Wine config file, there
+	are a number of configuration settings in the [registry] section
+	(see below) specific to the handling of Windows registry content by Wine.
+      </para>
+      <para>
+        Occasionally, Wine may have trouble loading the Windows
+        registry. Usually, this is because the registry is
+        inconsistent or damaged in some way. If that becomes a
+        problem, you may want to download the
+        <filename>regclean.exe</filename> from the MS website and use
+        it to clean up the registry. Alternatively, you can always use
+        <filename>regedit.exe</filename> to export the registry data
+        you want into a text file, and then import it in Wine.
+      </para>
+    </sect2>
+
+      <sect2>
+        <title>The Registry</title>
+        <para>
+          The initial default registry content to be used by the Wine
+	  registry files is in the file
+          <filename>winedefault.reg</filename>. It contains directory
+          paths, class IDs, and more; it must be installed before most
+          <filename>INSTALL.EXE</filename> or
+          <filename>SETUP.EXE</filename> applications will work.
+        </para>
+      </sect2>
 
     <sect2>
       <title>Registry structure</title>
@@ -76,31 +139,6 @@
     </sect2>
 
     <sect2>
-      <title>Using a Windows registry</title>
-
-      <para>
-        If you point Wine at an existing MS Windows installation (by
-        setting the appropriate directories in
-        <filename>~/.wine/config</filename>, then Wine is able to load
-        registry data from it. However, Wine will not save anything to
-        the real Windows registry, but rather to its own registry
-        files (see below). Of course, if a particular registry value
-        exists in both the Windows registry and in the Wine registry,
-        then Wine will use the latter.
-      </para>
-      <para>
-        Occasionally, Wine may have trouble loading the Windows
-        registry. Usually, this is because the registry is
-        inconsistent or damaged in some way. If that becomes a
-        problem, you may want to download the
-        <filename>regclean.exe</filename> from the MS website and use
-        it to clean up the registry. Alternatively, you can always use
-        <filename>regedit.exe</filename> to export the registry data
-        you want into a text file, and then import it in Wine.
-      </para>
-    </sect2>
-
-    <sect2>
       <title>Wine registry data files</title>
 
       <para>
@@ -153,7 +191,7 @@
 	them, otherwise your changes will be discarded).
       </para>
       <para>
-        FIXME: global config currently not implemented.
+        FIXME: global configuration currently not implemented.
 
         In addition to these files, Wine can also optionally load from
         global registry files residing in the same directory as the
@@ -229,30 +267,11 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
     </sect2>
 
     <sect2>
-      <title>The default registry</title>
-
-      <para>
-        A Windows registry contains many keys by default, and some of
-        them are necessary for even installers to operate correctly.
-        The keys that the Wine developers have found necessary to
-        install applications are distributed in a file called
-        <filename>winedefault.reg</filename>. It is automatically
-        installed for you if you use the
-        <filename>tools/wineinstall</filename> script in the Wine source,
-	but if you want to install it manually, you can do so by using the
-        <command>regedit</command> tool to be found in the
-	<filename>programs/regedit/</filename>
-	directory in Wine source.
-      </para>
-    </sect2>
-
-    <sect2>
       <title>The [registry] section</title>
 
       <para>
-        With the above information fresh in mind, let's look at the
-	<filename>wine.conf</filename> / <filename>~/.wine/config</filename>
-        options for handling the registry.
+        Now let's look at the <link linkend="config-file">Wine
+	configuration file</link> options for handling the registry.
       </para>
 
       <variablelist>

@@ -23,7 +23,7 @@
 
         <para>
           This is the way to do some initializing when a process or
-          thread is attached to the dll. The function name is taken
+          thread is attached to the DLL. The function name is taken
           from a <filename>*.spec</filename> file line:
         </para>
         <programlisting>

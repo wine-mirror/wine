@@ -1,7 +1,7 @@
-  <sect1 id="fonts">
+  <sect1 id="config-fonts-main">
     <title>Dealing with Fonts</title>
 
-    <sect2 id="windows-fonts">
+    <sect2 id="config-windows-fonts">
       <title>Fonts</title>
 
       <para>
@@ -64,7 +64,7 @@
               of the new fonts. You may also or instead have to restart
               the font server (using e.g.
               <command>/etc/init.d/xfs restart</command>
-              under RedHat 7.1)
+              under Red Hat 7.1)
             </para>
           </listitem>
           <listitem>

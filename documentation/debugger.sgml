@@ -900,7 +900,8 @@ wine -debug myprog.exe
             <para>
               These are the "normal" Win16 addresses, called SEGPTR.
               They have a segment:offset notation, e.g. 0x01d7:0x0012.
-              The segment part usually is a "selector", which *always*
+              The segment part usually is a "selector", which
+	      <emphasis>always</emphasis>
               has the lowest 3 bits set.  Some sample selectors are
               0x1f7, 0x16f, 0x8f.  If these bits are set except for
               the lowest bit, as e.g. with 0x1f6,xi then it might be a
@@ -1587,7 +1588,7 @@ monitor mem           displays memory mapping of debugged process
             Even if latest <command>gdb</command> implements the
             notion of threads, it won't work with Wine because the
             thread abstraction used for implementing Windows' thread
-            is not 100% mapped onto the linux posix threads
+            is not 100% mapped onto the Linux POSIX threads
             implementation. It means that you'll have to spawn a
             different <command>gdb</command> session for each Windows'
             thread you wish to debug.

@@ -12,9 +12,11 @@ EXTRASUBDIRS = samples status
 
 WINE_USER_SRCS = \
 	bugs.sgml \
+	compiling.sgml \
 	configuring.sgml \
 	fonts.sgml \
 	getting.sgml \
+	glossary.sgml \
 	installing.sgml \
 	introduction.sgml \
 	printing.sgml \
@@ -24,9 +26,9 @@ WINE_USER_SRCS = \
 WINE_DEVEL_SRCS = \
 	architecture.sgml \
 	build.sgml \
-	compiling.sgml \
 	consoles.sgml \
 	cvs-regression.sgml \
+	cvs.sgml \
 	debugger.sgml \
 	debugging.sgml \
 	dlls.sgml \

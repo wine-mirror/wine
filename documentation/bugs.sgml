@@ -2,7 +2,7 @@
     <title>Troubleshooting / Reporting bugs</title>
 
     <sect1 id="troubleshooting">
-      <title>What to do if some program still doesn't work ?</title>
+      <title>What to do if some program still doesn't work?</title>
 
       <para>
       There are times when you've been trying everything, you even killed a cat
@@ -17,21 +17,9 @@
         <title>Run "winecheck" to check your configuration</title>
 
 	<para>
-	Run a Perl script called <command>winecheck</command>, to be
-	found in Wine's tools/ directory.
-
-	The latest version can always be found at
-	<ulink
-	url="http://home.arcor.de/andi.mohr/download/winecheck">http://home.arcor.de/andi.mohr/download/winecheck</ulink>.
-
-	Make sure to run <command>chmod +x winecheck</command> first before
-	trying to execute it...
-	(or alternatively run it via <command>perl ./winecheck</command>)
-
-	The winecheck output will be a percentage score indicating Wine
-	configuration correctness.
-	Note that winecheck is only alpha, so it's not very complete or
-	100% accurate.
+	  Run a Perl script called <command>winecheck</command>.
+	  For details, please refer to the <link
+	  linkend="config-verify">Configuration section</link>.
 	</para>
       </sect2>
 
@@ -39,7 +27,7 @@
         <title>Use different windows version settings</title>
 
 	<para>
-	In several cases using <link linkend="windows-versions">different windows version settings</link> can help.
+	In several cases using <link linkend="config-windows-versions">different windows version settings</link> can help.
         </para>
       </sect2>
 
@@ -62,7 +50,7 @@
 	<para>
 	  Run with --debugmsg +loaddll to figure out which DLLs are
 	  being used, and whether they're being loaded as native or
-	  builtin.
+	  built-in.
 	  Then make sure you have proper native DLL files in your
 	  configured C:\windows\system directory and fiddle with DLL
 	  load order settings at command line or in config file.
@@ -224,7 +212,7 @@
             <listitem>
             <para>
               The name of the Operating system you're using, what distribution (if
-              any), and what version. (i.e., Linux RedHat 7.2)
+              any), and what version. (i.e., Linux Red Hat 7.2)
             </para>
             </listitem>
             <listitem>

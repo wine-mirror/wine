@@ -6,6 +6,7 @@
 
 <!entity introduction SYSTEM "introduction.sgml">
 <!entity getting SYSTEM "getting.sgml">
+<!entity compiling SYSTEM "compiling.sgml">
 <!entity installing SYSTEM "installing.sgml">
 <!entity configuring SYSTEM "configuring.sgml">
 <!entity registry SYSTEM "registry.sgml">
@@ -13,6 +14,7 @@
 <!entity printing SYSTEM "printing.sgml">
 <!entity running SYSTEM "running.sgml">
 <!entity bugs SYSTEM "bugs.sgml">
+<!entity glossary SYSTEM "glossary.sgml">
 ]>
 
 <book id="index">
@@ -22,10 +24,11 @@
 
   &introduction;
   &getting;
-
+  &compiling;
   &installing;
   &configuring;
   &running;
   &bugs;
+  &glossary;
 
 </book>

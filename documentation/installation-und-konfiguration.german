@@ -1613,21 +1613,20 @@ die folgenden Programme und Dateien installiert sein:
    
    Damit auch von 32bit Programmen aus gedruckt werden kann, ist es
    notwendig, einige Einträge in der Registratur vorzunehmen. Diese
-   Einträge sind in der Datei psdrv.reg im Unterverzeichnis
-   documentation des WINE-Quellcodeverzeichnisses vorhanden und lassen
-   sich mit dem Programm regapi, welches sich im Unterverzeichnis
-   programs/regapi des Quellcodeverzeichnisses befindet,
-   importieren. Falls noch nicht geschehen, ist regapi dazu zunächst zu
-   übersetzen. Zu diesem Zweck ist in das Verzeichnis programs/regapi
+   Einträge sind in der Datei winedefault.reg im Wine-Hauptverzeichnis
+   vorhanden und lassen sich mit dem Programm regedit, welches sich im
+   Unterverzeichnis programs/regedit des Quellcodeverzeichnisses befindet,
+   importieren. Falls noch nicht geschehen, ist regedit dazu zunächst zu
+   übersetzen. Zu diesem Zweck ist in das Verzeichnis programs/regedit
    zu wechseln und dort der Befehl make einzugeben (dies setzt
    voraus, dass WINE bereits erfolgreich übersetzt wurde). Danach
    können die erforderlichen Schlüssel durch die Eingabe des folgenden
    Befehls importiert werden:
    
-   ./regapi setValue < ../../documentation/psdrv.reg
+   ./regedit ../../winedefault.reg
    
    Achtung:
-   Bei dem Programm regapi handelt es sich um ein sogenanntes
+   Bei dem Programm regedit handelt es sich um ein sogenanntes
    WineLib-Programm. Solche Programme benutzen WINE, um
    Windows-spezifische Funktionen verwenden zu können. Damit sie
    ausgeführt werden können, muss bereits eine funktionsfähige

@@ -366,7 +366,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
       <para>
         don't use it,
         guide on how to replace it with normal C++ code (yes, how???):
-        extracting a .h and .lib from a COM dll
+        extracting a .h and .lib from a COM DLL
         Can '-fno-rtti' be of some use or even required?
       </para>
     </sect1>

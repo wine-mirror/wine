@@ -948,7 +948,7 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
         <para>
           (See also <filename>./DEVELOPER-HINTS</filename> or the
           <filename>dlls/</filename> subdirectory to see which DLLs
-          are currently being rewritten for wine)
+          are currently being rewritten for Wine)
         </para>
 
 <!-- FIXME: Should convert this table into a VariableList element -->
@@ -959,7 +959,7 @@ AVIFILE.DLL:	   32-bit application programming interfaces for the
                    Audio Video Interleave (AVI) Windows-specific
                    Microsoft audio-video standard
 COMMCTRL.DLL:	   16-bit common controls
-COMCTL32.DLL:	   32-bit common controls 
+COMCTL32.DLL:	   32-bit common controls
 COMDLG32.DLL:	   32-bit common dialogs
 COMMDLG.DLL:	   16-bit common dialogs
 COMPOBJ.DLL:	   OLE 16- and 32-bit compatibility libraries
@@ -980,8 +980,8 @@ IMM32.DLL:	   32-bit IMM API
 IMGUTIL.DLL:	   
 KERNEL32.DLL	   32-bit kernel DLL
 KEYBOARD.DLL:	   Keyboard drivers
-LZ32.DLL:	   32-bit Lempel-Ziv or LZ file compression 
-                   used by the installshields (???).
+LZ32.DLL:	   32-bit Lempel-Ziv or LZ file compression
+                   used by the installshield installers (???).
 LZEXPAND.DLL:	   LZ file expansion; needed for Windows Setup
 MMSYSTEM.DLL:	   Core of the Windows multimedia system
 MOUSE.DLL:	   Mouse drivers

@@ -59,18 +59,18 @@
           files. Let's start with the targets.
         </para>
         <para>
-          First are executables and dlls. Each time it finds one of these in 
+          First are executables and DLLs. Each time it finds one of these in 
           a directory, winemaker puts it in the list of things to build and 
           will later generate a <filename>Makefile.in</filename> file in this 
           directory. Note that Winemaker also knows about the commonly used 
           <filename>Release</filename> and <filename>Debug</filename> 
           directories, so it will attribute the executables and libraries 
           found in these to their parent directory. When it finds an 
-          executable or a dll winemaker is happy because these give it more 
+          executable or a DLL winemaker is happy because these give it more 
           information than the other cases described below.
         </para>
         <para>
-          If it does not find any executable or dll winemaker will look for 
+          If it does not find any executable or DLL winemaker will look for 
           files with a <filename>.mak</filename> extension. If they are not 
           disguised Visual C++ projects (and currently even if they are), 
           winemaker will assume that a target by that name should be built 
@@ -156,7 +156,7 @@
           <filename>configure.in</filename>, 
           <filename>Make.rules.in</filename>). From the above description 
           you can guess at the items that winemaker may get wrong in 
-          this phase: macro definitions, include path, dll path, dlls to
+          this phase: macro definitions, include path, DLL path, DLLs to
           import, library path, libraries to link with. You can deal with
           these issues by using winemaker's <option>-D</>, <option>-P</>,
           <option>-i</>, <option>-I</>, <option>-L</> and <option>-l</>
@@ -182,11 +182,11 @@
         <itemizedlist>
           <listitem>
             <para>
-              The target is not importing the right set of dlls, or is not
+              The target is not importing the right set of DLLs, or is not
               being linked with the right set of libraries. You can avoid
               this by using winemaker's <option>-P</>, <option>-i</>,
               <option>-L</option> and <option>-l</> options or adding these
-              dlls and libraries to the <filename>Makefile.in</> file.
+              DLLs and libraries to the <filename>Makefile.in</> file.
             </para>
           </listitem>
           <listitem>
@@ -330,7 +330,7 @@ hello_exe_DEPENDS         =
         </para>
         <para>
           The <varname>DLLS</> field is where you would enumerate the list of
-          dlls that executable imports. It should contain the full dll name
+          DLLs that executable imports. It should contain the full DLL name
           including the '.dll' extension, but not the '-l' option.
         </para>
         <para>
@@ -601,7 +601,7 @@ hello.spec.c: hello.res
             <term>@</term>
             <listitem>
               <note><para>
-                FIXME: You must now export functions from dlls.
+                FIXME: You must now export functions from DLLs.
               </para></note>
               <para>
                 This entry is not shown above because it is not always 
@@ -672,7 +672,7 @@ init    FUNCTION
         </programlisting>
         <para>
           This field is optional and specific to Win32 modules. It 
-          specifies a function which will be called when the dll is loaded 
+          specifies a function which will be called when the DLL is loaded 
           or the executable started.
         </para>
 

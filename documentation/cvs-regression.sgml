@@ -58,7 +58,7 @@ cvs -d $CVSROOT checkout wine
         <para>
           Note also that it is possible to do all this with a direct
           CVS connection, of course. The full CVS file method is less
-          painful for the winehq CVS server and probably a bit faster
+          painful for the Winehq CVS server and probably a bit faster
           if you don't have a very good net connection.
         </para>
         <note>

@@ -1,6 +1,6 @@
   <chapter id="dlls">
     <title>Wine Builtin DLLs Overview</title>
-    <para>A more detailed look at Wine's builtin DLLs...</para>
+    <para>A more detailed look at Wine's built-in DLLs...</para>
 
     <sect1 id="common-controls">
       <title>Common Controls</title>
@@ -22,7 +22,7 @@
         <title>1. Introduction</title>
 
         <para>
-          The information provided herein is based on the dll version
+          The information provided herein is based on the DLL version
           4.72 which is included in MS Internet Explorer 4.01.
         </para>
         <para>
@@ -681,7 +681,7 @@
               <listitem>
                 <para>
                   Development in progress. Basic functionality is
-                  almost done. (dll version 4.0)
+                  almost done. (DLL version 4.0)
                 </para>
               </listitem>
             </varlistentry>

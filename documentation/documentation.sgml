@@ -622,10 +622,10 @@ BOOL WINAPI PathRelativePathToA(
         <title>Writing Documentation with DocBook</title>
 
         <para>
-          DocBook is a flavor of <acronym>SGML</acronym>
+          DocBook is a flavour of <acronym>SGML</acronym>
           (<firstterm>Standard Generalized Markup
           Language</firstterm>), a syntax for marking up the contents
-          of documents.  HTML is another very common flavor of SGML;
+          of documents.  HTML is another very common flavour of SGML;
           DocBook markup looks very similar to HTML markup, although
           the names of the markup tags differ.
         </para>
@@ -636,16 +636,16 @@ BOOL WINAPI PathRelativePathToA(
               <para>
                The simple answer to that is that SGML allows you
                to create multiple formats of a given document from a single
-               source. Currently it is used to create html, pdf and PS (PostScript)
-               versions of the Wine books.
+	       source. Currently it is used to create HTML, PDF and PS
+	       (PostScript) versions of the Wine books.
               </para>
             </note>
 
             <note>
             <title>What do I need?</title>
               <para>
-               You need the sgml tools. There are various places where you
-               can get them. The most generic way of geting them is from their
+               You need the SGML tools. There are various places where you
+               can get them. The most generic way of getting them is from their
                source as discussed below.
               </para>
 	    </note>
@@ -653,7 +653,7 @@ BOOL WINAPI PathRelativePathToA(
             <note>
             <title>Quick instructions</title>
 	      <para>
-               These are the basic steps to create the Wine books from the sgml source.
+               These are the basic steps to create the Wine books from the SGML source.
 	      </para>
             </note>
 
@@ -693,7 +693,7 @@ BOOL WINAPI PathRelativePathToA(
 
           </orderedlist>
 
-	</sect3>
+        </sect3>
 
         <sect3>
           <title>Getting SGML for various distributions</title>
@@ -706,11 +706,11 @@ BOOL WINAPI PathRelativePathToA(
           </para>
 
           <sect4>
-          <title>SGML on Redhat</title>
+          <title>SGML on Red Hat</title>
           <para>
-            The following packages seems to be sufficient for RedHat 7.1.  You
+            The following packages seem to be sufficient for Red Hat 7.1.  You
             will want to be careful about the order in which you install the
-            rpms.
+            RPMs.
             <itemizedlist>
               <listitem><para>sgml-common-*.rpm</para></listitem>
               <listitem><para>openjade-*.rpm</para></listitem>
@@ -728,12 +728,23 @@ BOOL WINAPI PathRelativePathToA(
 
         <sect4>
           <title>SGML on Debian</title>
-          <note>
-	  <title>Fix me</title>
           <para>
-            List package names and install locations...
+           This is not a definitive listing yet, but it seems
+	   you might need the following packages:
+            <itemizedlist>
+              <listitem><para>docbook</para></listitem>
+              <listitem><para>docbook-dsssl</para></listitem>
+              <listitem><para>docbook-utils</para></listitem>
+              <listitem><para>docbook-xml</para></listitem>
+              <listitem><para>docbook-xsl</para></listitem>
+              <listitem><para>sgml-base</para></listitem>
+              <listitem><para>sgml-data</para></listitem>
+              <listitem><para>tetex-base</para></listitem>
+              <listitem><para>tetex-bin</para></listitem>
+              <listitem><para>jade</para></listitem>
+              <listitem><para>jadetex</para></listitem>
+            </itemizedlist>
           </para>
-          </note>
         </sect4>
 
         <sect4>
@@ -856,7 +867,7 @@ BOOL WINAPI PathRelativePathToA(
             The final term you'll need to know when writing simple
             DocBook documents is the <acronym>DTD</acronym>
             (<firstterm>Document Type Declaration</firstterm>).  The
-            DTD defines the flavor of SGML a given document is written
+            DTD defines the flavour of SGML a given document is written
             in.  It lists all the legal tag names, like <sgmltag
             class="starttag">book</sgmltag>, <sgmltag
             class="starttag">para</sgmltag>, and so on, and declares
@@ -1700,7 +1711,7 @@ BOOL WINAPI PathRelativePathToA(
         <sect3 id="docbook-infrastructure">
           <title>Basic Infrastructure</title>
           <para>
-            How the build/make system works (makefiles, db2html,
+            FIXME: How the build/make system works (makefiles, db2html,
             db2html-winehq, jade, stylesheets).
           </para>
         </sect3>
@@ -1708,7 +1719,7 @@ BOOL WINAPI PathRelativePathToA(
         <sect3 id="docbook-tweaking">
           <title>Tweaking the DSSSL stylesheets</title>
           <para>
-            Things you can tweak, and how to do it (examples from
+            FIXME: Things you can tweak, and how to do it (examples from
             default.dsl and winehq.dsl).
           </para>
         </sect3>
@@ -1716,7 +1727,7 @@ BOOL WINAPI PathRelativePathToA(
         <sect3 id="docbook-generating">
           <title>Generating docs for Wine web sites</title>
           <para>
-            Explain make_winehq, rsync, etc.
+            FIXME: Explain make_winehq, rsync, etc.
           </para>
         </sect3>
       </sect2>

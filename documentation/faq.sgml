@@ -1124,7 +1124,7 @@ wine
       <answer>
         <para>
           Make sure you have all the VB runtime libraries installed. You may
-          need to use the native dll vbrun60.dll
+          need to use the native DLL vbrun60.dll
         </para>
       </answer>
       </qandaentry>

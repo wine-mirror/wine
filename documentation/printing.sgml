@@ -1,8 +1,8 @@
-  <sect1 id="printing">
+  <sect1 id="config-printing">
     <title>Printing in Wine</title>
     <para>How to print documents in Wine...</para>
 
-    <sect2 id="wine-printing">
+    <sect2 id="config-printing-intro">
       <title>Printing</title>
 
       <para>
@@ -18,7 +18,7 @@
       <orderedlist>
         <listitem>
           <para>
-            Use the builtin Wine PostScript driver (+ ghostscript to produce
+            Use the built-in Wine PostScript driver (+ ghostscript to produce
             output for non-PostScript printers).
           </para>
         </listitem>
@@ -34,7 +34,7 @@
       </para>
 
       <sect3>
-        <title>Builtin Wine PostScript driver</title>
+        <title>Built-in Wine PostScript driver</title>
         <para>
           Enables printing of PostScript files via a driver built into Wine. See
           below for installation instructions. The code for the PostScript
@@ -49,6 +49,7 @@
 	</para>
       </sect3>
 
+<!--
       <sect3>
         <title>External printer drivers (non-working as of Jul 8, 01)</title>
         <para>
@@ -71,6 +72,7 @@ printer=on
           the driver interface is in <filename>graphics/win16drv</filename>.
         </para>
       </sect3>
+-->
 
       <sect3>
         <title>Spooling</title>
@@ -101,7 +103,7 @@ printer=on
       </sect3>
     </sect2>
 
-    <sect2 id="psdriver">
+    <sect2 id="config-printing-psdriver">
       <title>The Wine PostScript Driver</title>
 
       <para>
@@ -182,31 +184,31 @@ printer=on
 	  </para>
 	  <para>
 	    You also need to add certain entries to the registry.
-	    The easiest way to do this is to customise the contents of
-	    <filename>documentation/psdrv.reg</filename> (see below) and use the
-	    Winelib program <command>programs/regapi/regapi</command>.  For
+	    The easiest way to do this is to customise the PostScript
+	    driver contents of <filename>winedefault.reg</filename> (see below) and use the
+	    Winelib program <command>programs/regedit/regedit</command>.  For
 	    example, if you have installed the Wine source tree in
 	    <filename>/usr/src/wine</filename>, you could use the following
 	    series of commands:
 	    <itemizedlist>
 	      <listitem>
 		<para>
-		  <userinput>cp /usr/src/wine/documentation/psdrv.reg ~</userinput>
+		  <userinput>cp /usr/src/wine/winedefault.reg ~</userinput>
 		</para>
 	      </listitem>
 	      <listitem>
-		<para><userinput>vi ~/psdrv.reg</userinput></para>
+		<para><userinput>vi ~/winedefault.reg</userinput></para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  Edit the copy of <filename>psdrv.reg</filename> to suit your
-		  requirements.  At a minimum, you must specify a PPD file for
-		  each printer.
+		  Edit the copy of <filename>winedefault.reg</filename> to suit your
+		  PostScript printing requirements.
+		  At a minimum, you must specify a PPD file for each printer.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  <userinput>regapi setValue &lt; ~/psdrv.reg</userinput>
+		  <userinput>regedit ~/winedefault.reg</userinput>
 		</para>
 	      </listitem>
 	    </itemizedlist>
@@ -217,7 +219,7 @@ printer=on
 	  <para>
 	    You won't need Adobe Font Metric (AFM) files for the (type 1 PostScript)
 	    fonts that you wish to use any more.
-	    Wine now has this information builtin.
+	    Wine now has this information built-in.
 	  </para>
 	  <para>
 	    You'll need a PPD file for your printer.  This describes
@@ -239,7 +241,7 @@ printer=on
 	    Note that you need not set <literal>printer=on</literal> in
 	    the [wine] section of the wine config file, this
 	    enables printing via external printer drivers and does not
-	    affect the builtin PostScript driver.
+	    affect the built-in PostScript driver.
 	  </para>
 	  <para>
 	    If you're lucky you should now be able to produce PS files

@@ -7,6 +7,7 @@
 <!-- *** Entities for Wine User Guide *** -->
 <!entity introduction SYSTEM "introduction.sgml">
 <!entity getting SYSTEM "getting.sgml">
+<!entity compiling SYSTEM "compiling.sgml">
 <!entity installing SYSTEM "installing.sgml">
 <!entity configuring SYSTEM "configuring.sgml">
 <!entity registry SYSTEM "registry.sgml">
@@ -14,26 +15,27 @@
 <!entity printing SYSTEM "printing.sgml">
 <!entity running SYSTEM "running.sgml">
 <!entity bugs SYSTEM "bugs.sgml">
+<!entity glossary SYSTEM "glossary.sgml">
 
 <!-- *** Entities for Wine Developer Guide *** -->
-<!entity compiling SYSTEM "compiling.sgml">
-<!entity debugging SYSTEM "debugging.sgml">
-<!entity documentation SYSTEM "documentation.sgml">
-<!entity testing SYSTEM "testing.sgml">
-<!entity patches SYSTEM "patches.sgml">
-<!entity i18n SYSTEM "i18n.sgml">
-<!entity porting SYSTEM "porting.sgml">
-<!entity architecture SYSTEM "architecture.sgml">
-<!entity ole SYSTEM "ole.sgml">
 <!entity debugger SYSTEM "debugger.sgml">
-<!entity consoles SYSTEM "consoles.sgml">
-<!entity implementation SYSTEM "implementation.sgml">
-<!entity opengl SYSTEM "opengl.sgml">
-<!entity build SYSTEM "build.sgml">
+<!entity documentation SYSTEM "documentation.sgml">
+<!entity patches SYSTEM "patches.sgml">
+<!entity testing SYSTEM "testing.sgml">
+<!entity i18n SYSTEM "i18n.sgml">
 <!entity tools SYSTEM "tools.sgml">
+<!entity architecture SYSTEM "architecture.sgml">
 <!entity dlls SYSTEM "dlls.sgml">
-<!entity cvs-regression SYSTEM "cvs-regression.sgml">
+<!entity debugging SYSTEM "debugging.sgml">
+<!entity ole SYSTEM "ole.sgml">
+<!entity build SYSTEM "build.sgml">
+<!entity opengl SYSTEM "opengl.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
+<!entity cvs SYSTEM "cvs.sgml">
+<!entity implementation SYSTEM "implementation.sgml">
+<!entity porting SYSTEM "porting.sgml">
+<!entity consoles SYSTEM "consoles.sgml">
+<!entity cvs-regression SYSTEM "cvs-regression.sgml">
 
 <!-- *** Entities for Winelib User Guide *** -->
 <!entity winelib-intro SYSTEM "winelib-intro.sgml">
@@ -43,7 +45,7 @@
 <!entity winelib-bindlls SYSTEM "winelib-bindlls.sgml">
 <!entity winelib-packaging SYSTEM "winelib-pkg.sgml">
 
-<!-- *** Entities for Wine Packager Guide *** -->
+<!-- *** Entities for Wine Packagers Guide *** -->
 <!entity packaging SYSTEM "packaging.sgml">
 
 <!-- *** Entities for Wine FAQ *** -->
@@ -74,11 +76,12 @@
 
     &introduction;
     &getting;
-
+    &compiling;
     &installing;
     &configuring;
     &running;
     &bugs;
+    &glossary;
   </book>
 
   <!-- *** Wine Developer Guide *** -->
@@ -89,7 +92,6 @@
 
     <part id="part-one">
       <title>Developing Wine</title>
-      &compiling;
       &debugger;
       &documentation;
       &testing;
@@ -101,15 +103,20 @@
     <part id="part-two">
       <title>Wine Architecture</title>
       &architecture;
+      &dlls;
       &debugging;
       &ole;
-      &opengl;
       &build;
-      &dlls;
+      &opengl;
       &multimedia;
     </part>
 
-    <part>
+    <part id="part-three">
+      <title>Using CVS</title>
+      &cvs;
+    </part>
+ 
+    <part id="part-four">
       <title>Advanced Topics</title>
       &implementation;
       &porting;

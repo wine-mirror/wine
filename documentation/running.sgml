@@ -6,24 +6,36 @@
     </para>
     <para>
       Extended by &name-mike-hearn; <email>&email-mike-hearn;</email>, &name-eric-pouech; <email>&email-eric-pouech;</email>
+      Modified by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+    </para>
+
+    <para>
+      This chapter will describe all aspects of running Wine, like e.g.
+      basic Wine invocation, command line parameters of various Wine
+      support programs etc.
     </para>
 
     <sect1 id="basic-usage">
       <title>Basic usage: applications and control panel applets</title>
       <para>
-        Assuming you are using a fake windows installation, you install
-        applications into Wine in the same way you would in Windows:
-        by running the installer. You can just accept the defaults
-        for where to install, most installers will default to "C:\Program Files",
-        which is fine. If the application installer requests it, you may find that
-        Wine creates icons on your desktop and in your app menu. If that happens, you
-        can start the app by clicking on them.
+	Assuming you are using a fake Windows installation, you install
+	applications into Wine in the same way you would in Windows: by
+	running the installer. You can just accept the defaults for
+	where to install, most installers will default to "C:\Program
+	Files", which is fine. If the application installer requests it,
+	you may find that Wine creates icons on your desktop and in your
+	app menu. If that happens, you can start the app by clicking on
+	them.
       </para>
 
       <para>
-        The standard way to uninstall things is for the application to provide an
-        uninstaller, usually registered with the "Add/Remove Programs" control panel
-        applet. To access the Wine equivalent, run the "uninstaller" program:
+	The standard way to uninstall things is for the application to
+	provide an uninstaller, usually registered with the "Add/Remove
+	Programs" control panel applet.
+	To access the Wine equivalent, run the <command>uninstaller</command>
+	program (it is located in the
+	<filename>programs/uninstaller/</filename> directory in a Wine
+	source directory) in a <glossterm>terminal</glossterm>:
       </para>
 
       <screen>
@@ -31,8 +43,10 @@
       </screen>
 
       <para>
-        Some programs install associated control panel applets, examples of this would be
-        Internet Explorer and QuickTime. You can access the Wine control panel by running:
+	Some programs install associated control panel applets, examples
+	of this would be Internet Explorer and QuickTime. You can access
+	the Wine control panel by running in a
+	<glossterm>terminal</glossterm>:
       </para>
 
       <screen>
@@ -40,12 +54,14 @@
       </screen>
 
       <para>
-	which will open a window with the installed control panel applets in it, as in Windows.
+	which will open a window with the installed control panel
+	applets in it, as in Windows.
       </para>
 
       <para>
-	If the application doesn't install menu or desktop items, you'll need to run the app
-	from the command line. Remembering where you installed to, something like:
+	If the application doesn't install menu or desktop items, you'll
+	need to run the app from the command line. Remembering where you
+	installed to, something like:
       </para>
 
       <screen>
@@ -53,9 +69,11 @@
       </screen>
 
       <para>
-        will probably do the trick. The path isn't case sensitive, but remember to include the double quotes.
-	Some programs don't always use obvious naming for their directories and EXE files, so you might have
-	to look inside the program files directory to see what it put where
+	will probably do the trick. The path isn't case sensitive, but
+	remember to include the double quotes.  Some programs don't
+	always use obvious naming for their directories and EXE files,
+	so you might have to look inside the program files directory to
+	see what it put where
       </para>
     </sect1>
     
@@ -65,7 +83,7 @@
         Wine is a very complicated piece of software with many ways to
         adjust how it runs.  With very few exceptions, you can
         activate the same set of features through the <link
-        linkend="configuring">configuration file </link> as you can
+        linkend="config-file">configuration file</link> as you can
         with command-line parameters.  In this chapter, we'll briefly
         discuss these parameters, and match them up with their
         corresponding configuration variables.
@@ -132,8 +150,23 @@ Options:
       </para>
     </sect1>
 
+    <sect1>
+      <title>Explorer-like graphical Wine environments</title>
+    
+      <para>
+	If you don't feel like manually invoking Wine for every program
+	you want to run and instead want to have an integrated graphical
+	interface to run your Windows programs in, then installing e.g.
+	<ulink url="http://www.calmira.org">Calmira</ulink>, a
+	Win95-Explorer-like shell replacement, would probably be a great
+	idea. Calmira might still have a few problems running on Wine,
+	though. Other usable Explorer replacements should be listed here
+	in the future.
+      </para>
+    </sect1>
+	
     <sect1 id="command-line-options">
-      <title>Command-Line Options</title>
+      <title>Wine Command Line Options</title>
 
       <sect2 id="config-parameter">
         <title>--debugmsg [channels]</title>
@@ -208,9 +241,9 @@ Options:
 <prompt>$</prompt> <userinput>wine --debugmsg +all,-relay <replaceable>program_name</replaceable></userinput>
         </screen>
         <para>
-          Here is a master list of all the debug channels and classes
-          in Wine.  More channels will be added to (or subtracted
-          from) later versions.
+	  Here is a list of the debug channels and classes in Wine.
+	  More channels will be added to (or subtracted from) later
+	  versions.
         </para>
 
 		<table frame="none"><title>Debug Channels</title>
@@ -305,7 +338,7 @@ winspool</><entry>wnet</><entry>x11</>
 	  <screen>
 <prompt>$</prompt> <userinput>wine --dll setupx=n foo.exe</userinput>
           </screen>
-	  See the <link linkend="dll-config">DLL chapter</link> for more details.
+	  See the <link linkend="config-dll">DLL chapter</link> for more details.
         </para>
       </sect2>
 
@@ -320,6 +353,66 @@ winspool</><entry>wnet</><entry>x11</>
         <title>--version</title>
         <para>
 	  Shows the Wine version string. Useful to verify your installation.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="wineserver-command-line-options">
+      <title>wineserver Command Line Options</title>
+
+      <para>
+        wineserver usually gets started automatically by Wine whenever
+	the first wine process gets started.
+	However, wineserver has some useful command line options that
+	you can add if you start it up manually, e.g. via a user login
+	script or so.
+      </para>
+
+      <sect2 id="wineserver-config-parameter">
+        <title>-d&lt;n&gt;</title>
+        <para>
+	  Sets the debug level for debug output in the terminal that
+	  wineserver got started in at level &lt;n&gt;.
+	  In other words: everything greater than 0 will enable
+	  wineserver specific debugging output (not to confuse with Wine's wineserver logging channel, --debugmsg +server, though!).
+        </para>
+      </sect2>
+      
+      <sect2>
+        <title>-h</title>
+        <para>
+	  Display wineserver command line options help message.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>-k[n]</title>
+        <para>
+	  Kill the current wineserver, optionally with signal n.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>-p[n]</title>
+        <para>
+	  This parameter makes wineserver persistent, optionally for n
+	  seconds. It will prevent wineserver from shutting down immediately.
+	</para>
+	<para>
+	  Usually, wineserver quits almost immediately after the last
+	  wine process using this wineserver terminated.
+	  However, since wineserver loads a lot of things on startup
+	  (such as the whole Windows registry data), its startup might
+	  be so slow that it's very useful to keep it from exiting after
+	  the end of all Wine sessions, by making it persistent.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>-w</title>
+        <para>
+          This parameter makes a newly started wineserver wait until the
+	  currently active wineserver instance terminates.
         </para>
       </sect2>
     </sect1>

@@ -801,7 +801,7 @@
 
         <para>
 	  MCI drivers are seen as regular Wine modules, and can be loaded (with
-	  a correct load order between built-in, native, elfdll, so), as any
+	  a correct load order between builtin, native, so), as any
 	  other DLL. Please note, that MCI drivers module names must bear the
 	  .drv extension to be correctly understood.
         </para>
@@ -911,7 +911,7 @@
 	<title>MMIO</title>
 
 	<para>
-	  The API consists of the mmio* functions found in mdlls/winmm/mmio.c.
+	  The API consists of the mmio* functions found in dlls/winmm/mmio.c.
 	  Seems to work ok in most of the cases. There's some linear/segmented
 	  issues with 16 bit code. There are also some bugs when writting MMIO
           files.
