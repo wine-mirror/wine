@@ -512,6 +512,11 @@ void WINAPI CoUninitialize(void)
 
     RunningObjectTableImpl_UnInitialize();
 
+    /* disconnect proxies to release the corresponding stubs.
+     * FIXME: native version might not do this and we might just be working
+     * around bugs elsewhere. */
+    MARSHAL_Disconnect_Proxies();
+
     /* Release the references to the registered class objects */
     COM_RevokeAllClasses();
 

@@ -188,6 +188,18 @@ MARSHAL_Find_Proxy(wine_marshal_id *mid,LPUNKNOWN *punk) {
 }
 
 HRESULT
+MARSHAL_Disconnect_Proxies() {
+    int i;
+
+    TRACE("Disconnecting %d proxies\n", nrofproxies);
+
+    for (i = 0; i < nrofproxies; i++)
+        IRpcProxyBuffer_Disconnect((IRpcProxyBuffer*)proxies[i].pUnk);
+    
+    return S_OK;
+}
+
+HRESULT
 MARSHAL_Find_Proxy_Object(wine_marshal_id *mid,LPUNKNOWN *punk) {
     int i;
 
@@ -359,6 +371,9 @@ StdMarshalImpl_UnmarshalInterface(
     FIXME("Failed to create a proxy for %s\n",debugstr_guid(riid));
     return hres;
   }
+
+  MARSHAL_Register_Proxy(&mid, (LPUNKNOWN) rpcproxy);
+
   hres = PIPE_GetNewPipeBuf(&mid,&chanbuf);
   IPSFactoryBuffer_Release(psfacbuf);
   if (hres) {
