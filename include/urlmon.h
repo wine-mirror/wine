@@ -53,6 +53,10 @@ DEFINE_GUID(IID_IWinInetHttpInfo, 0x79EAC9D8, 0xBAFA, 0x11CE,
     0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0X0B);
 typedef struct IWinInetHttpInfo IWinInetHttpInfo,*LPWININETHTTPINFO;
 
+DEFINE_GUID(IID_IPersistMoniker, 0x79eac9c9, 0xbaf9, 0x11ce,
+    0x8c, 0x82, 0x00, 0xaa, 0x00, 0x4b, 0xa9, 0x0b);
+typedef struct IPersistMoniker IPersistMoniker;
+
 typedef enum {
 	BINDF_ASYNCHRONOUS = 0x00000001,
 	BINDF_ASYNCSTORAGE = 0x00000002,
@@ -306,6 +310,30 @@ ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
 #define IWinInetHttpInfo_Release(p)             (p)->lpVtbl->Release(p)
 /*** IWinInetHttpInfo methods ***/
 #define IWinInetHttpInfo_QueryInfo(p,a,b,c,d,e) (p)->lpVtbl->QueryInfo(p,a,b,c,d,e)
+#endif
+
+#define INTERFACE IPersistMoniker
+#define IPersistMoniker_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(GetClassID)(THIS_ CLSID *pClassID ) PURE; \
+    STDMETHOD(IsDirty)(THIS ) PURE; \
+    STDMETHOD(Load)(THIS_ BOOL fFullyAvailable, IMoniker *pimkName, LPBC pibc, DWORD grfMode ) PURE; \
+    STDMETHOD(Save)(THIS_ IMoniker *pinkName, LPBC pibc, BOOL fRemember ) PURE; \
+    STDMETHOD(SaveCompleted)(THIS_ IMoniker *pinkName, LPBC pibc ) PURE; \
+    STDMETHOD(GetCurMoniker)(THIS_ IMoniker *pinkName ) PURE;
+ICOM_DEFINE(IPersistMoniker,IUnknown)
+#undef INTERFACE
+
+#ifdef COBJMACROS
+#define IPersistMoniker_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPersistMoniker_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IPersistMoniker_Release(p)             (p)->lpVtbl->Release(p)
+#define IPersistMoniker_GetClassID(p,a)        (p)->lpVtbl->GetClassID(p,a)
+#define IPersistMoniker_IsDirty(p)             (p)->lpVtbl->IsDirty(p)
+#define IPersistMoniker_Load(p,a,b,c,d)        (p)->lpVtbl->Load(p,a,b,c,d)
+#define IPersistMoniker_Save(p,a,b,c)          (p)->lpVtbl->Save(p,a,b,c)
+#define IPersistMoniker_SaveCompleted(p,a,b)   (p)->lpVtbl->SaveCompleted(p,a,b)
+#define IPersistMoniker_GetCurMoniker(p,a)     (p)->lpVtbl->GetCurMoniker(p,a)
 #endif
 
 HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **ppmk);
