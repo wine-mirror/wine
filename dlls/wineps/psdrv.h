@@ -549,4 +549,13 @@ extern void T42_free(TYPE42 *t42);
 extern DWORD RLE_encode(BYTE *in_buf, DWORD len, BYTE *out_buf);
 extern DWORD ASCII85_encode(BYTE *in_buf, DWORD len, BYTE *out_buf);
 
+#define push_lc_numeric(x) do {					\
+	const char *tmplocale = setlocale(LC_NUMERIC,NULL);	\
+	setlocale(LC_NUMERIC,x);
+
+#define pop_lc_numeric()					\
+	setlocale(LC_NUMERIC,tmplocale);			\
+} while (0)
+
+
 #endif

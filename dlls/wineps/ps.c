@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <locale.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -469,7 +470,9 @@ BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h, double a
 
     /* Make angles -ve and swap order because we're working with an upside
        down y-axis */
+    push_lc_numeric("C");
     sprintf(buf, psarc, x, y, w, h, -ang2, -ang1);
+    pop_lc_numeric();
     return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 }
 
@@ -500,12 +503,16 @@ BOOL PSDRV_WriteSetColor(PSDRV_PDEVICE *physDev, PSCOLOR *color)
     PSDRV_CopyColor(&physDev->inkColor, color);
     switch(color->type) {
     case PSCOLOR_RGB:
+        push_lc_numeric("C");
         sprintf(buf, pssetrgbcolor, color->value.rgb.r, color->value.rgb.g,
 		color->value.rgb.b);
+        pop_lc_numeric();
 	return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     case PSCOLOR_GRAY:
+        push_lc_numeric("C");
         sprintf(buf, pssetgray, color->value.gray.i);
+        pop_lc_numeric();
 	return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     default:
@@ -604,7 +611,9 @@ BOOL PSDRV_WriteRotate(PSDRV_PDEVICE *physDev, float ang)
 {
     char buf[256];
 
+    push_lc_numeric("C");
     sprintf(buf, psrotate, ang);
+    pop_lc_numeric();
     return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 }
 
