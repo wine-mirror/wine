@@ -361,6 +361,7 @@ static DWORD get_app_version(void)
         OSVERSIONINFOW info;
         DWORD dwProcVersion = GetProcessVersion(0);
 
+	info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
         GetVersionExW( &info );
         dwEmulatedVersion = MAKELONG( info.dwMinorVersion, info.dwMajorVersion );
         /* fixme: this may not be 100% correct; see discussion on the

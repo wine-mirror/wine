@@ -172,6 +172,7 @@ LONG WINAPI ImmGetCompositionStringA(
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
   GetVersionExA( &version );
   switch(version.dwPlatformId)
   {
@@ -195,6 +196,7 @@ LONG WINAPI ImmGetCompositionStringW(
     hIMC, dwIndex, lpBuf, dwBufLen
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
   GetVersionExA( &version );
   switch(version.dwPlatformId)
   {
@@ -357,6 +359,7 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
   OSVERSIONINFOA version;
   FIXME("(0x%08x): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
   GetVersionExA( &version );
   switch(version.dwPlatformId)
   {
