@@ -944,29 +944,6 @@ BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 
 
 /***********************************************************************
- *		FillRect (USER.81)
- * NOTE
- *   The Win16 variant doesn't support special color brushes like
- *   the Win32 one, despite the fact that Win16, as well as Win32,
- *   supports special background brushes for a window class.
- */
-INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
-{
-    HBRUSH prevBrush;
-
-    /* coordinates are logical so we cannot fast-check 'rect',
-     * it will be done later in the PatBlt().
-     */
-
-    if (!(prevBrush = SelectObject( HDC_32(hdc), HBRUSH_32(hbrush) ))) return 0;
-    PatBlt( HDC_32(hdc), rect->left, rect->top,
-              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
-    SelectObject( HDC_32(hdc), prevBrush );
-    return 1;
-}
-
-
-/***********************************************************************
  *		FillRect (USER32.@)
  */
 INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
@@ -982,16 +959,6 @@ INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
               rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
     SelectObject( hdc, prevBrush );
     return 1;
-}
-
-
-/***********************************************************************
- *		InvertRect (USER.82)
- */
-void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
-{
-    PatBlt( HDC_32(hdc), rect->left, rect->top,
-              rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }
 
 
@@ -1028,28 +995,6 @@ INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 
     SelectObject( hdc, prevBrush );
     return TRUE;
-}
-
-
-/***********************************************************************
- *		FrameRect (USER.83)
- */
-INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
-{
-    RECT rect;
-    CONV_RECT16TO32( rect16, &rect );
-    return FrameRect( HDC_32(hdc), &rect, HBRUSH_32(hbrush) );
-}
-
-
-/***********************************************************************
- *		DrawFocusRect (USER.466)
- */
-void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
-{
-    RECT rect32;
-    CONV_RECT16TO32( rc, &rect32 );
-    DrawFocusRect( HDC_32(hdc), &rect32 );
 }
 
 
