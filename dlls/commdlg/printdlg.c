@@ -444,7 +444,7 @@ static BOOL PRINTDLG_SetUpPaperComboBox(HWND hDlg,
 					LPDEVMODEA dm)
 {
     int     i;
-    DWORD   NrOfEntries;
+    int     NrOfEntries;
     char*   Names;
     WORD*   Words;
     DWORD   Sel;
@@ -453,7 +453,7 @@ static BOOL PRINTDLG_SetUpPaperComboBox(HWND hDlg,
     int     fwCapability_Names;
     int     fwCapability_Words;
     
-    TRACE(" Printer: %s, ComboID: %d\n",PrinterName,nIDComboBox);
+    TRACE(" Printer: %s, Port: %s, ComboID: %d\n",PrinterName,PortName,nIDComboBox);
     
     /* query the dialog box for the current selected value */
     Sel = SendDlgItemMessageA(hDlg, nIDComboBox, CB_GETCURSEL, 0, 0);
@@ -503,6 +503,8 @@ static BOOL PRINTDLG_SetUpPaperComboBox(HWND hDlg,
                                       fwCapability_Names, NULL, dm);
     if (NrOfEntries == 0)
          WARN("no Name Entries found!\n");
+    else if (NrOfEntries < 0)
+         return FALSE;
 
     if(DeviceCapabilitiesA(PrinterName, PortName, fwCapability_Words, NULL, dm)
        != NrOfEntries) {
