@@ -1847,7 +1847,7 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
     return FALSE;
 }
 
-BOOL WineEngGetTextExtentPointI(GdiFont font, LPWORD indices, INT count,
+BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
 				LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
