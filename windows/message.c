@@ -426,6 +426,7 @@ static DWORD MSG_ProcessKbdMsg( MSG *msg, BOOL remove )
     /* Handle F1 key by sending out WM_HELP message */
     if ((msg->message == WM_KEYUP) && 
 	(msg->wParam == VK_F1) &&
+	remove &&
 	(msg->hwnd != GetDesktopWindow()) &&
 	!MENU_IsMenuActive())
     {   
