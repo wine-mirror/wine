@@ -1624,7 +1624,7 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
  */
 FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress( hModule, function, TRUE );
+    return MODULE_GetProcAddress( hModule, function, -1, TRUE );
 }
 
 /***********************************************************************
@@ -1632,7 +1632,7 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
  */
 FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress( hModule, function, FALSE );
+    return MODULE_GetProcAddress( hModule, function, -1, FALSE );
 }
 
 /***********************************************************************
@@ -1641,20 +1641,21 @@ FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 FARPROC MODULE_GetProcAddress(
 	HMODULE hModule, 	/* [in] current module handle */
 	LPCSTR function,	/* [in] function to be looked up */
+	int hint,
 	BOOL snoop )
 {
     WINE_MODREF	*wm;
     FARPROC	retproc = 0;
 
     if (HIWORD(function))
-	TRACE_(win32)("(%08lx,%s)\n",(DWORD)hModule,function);
+	TRACE_(win32)("(%08lx,%s (%d))\n",(DWORD)hModule,function,hint);
     else
 	TRACE_(win32)("(%08lx,%p)\n",(DWORD)hModule,function);
 
     RtlEnterCriticalSection( &loader_section );
     if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
-        retproc = wm->find_export( wm, function, snoop );
+        retproc = wm->find_export( wm, function, hint, snoop );
         if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
     }
     RtlLeaveCriticalSection( &loader_section );

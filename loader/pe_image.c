@@ -134,6 +134,7 @@ void dump_exports( HMODULE hModule )
 static FARPROC PE_FindExportedFunction(
 	WINE_MODREF *wm,	/* [in] WINE modreference */
 	LPCSTR funcName,	/* [in] function name */
+        int hint,
         BOOL snoop )
 {
 	WORD				* ordinals;
@@ -168,8 +169,20 @@ static FARPROC PE_FindExportedFunction(
 
 	if (HIWORD(funcName))
         {
-            /* first try a binary search */
             int min = 0, max = exports->NumberOfNames - 1;
+
+            /* first check the hint */
+            if (hint >= 0 && hint <= max)
+            {
+                ename = RVA(name[hint]);
+                if (!strcmp( ename, funcName ))
+                {
+                    ordinal = ordinals[hint];
+                    goto found;
+                }
+            }
+
+            /* then do a binary search */
             while (min <= max)
             {
                 int res, pos = (min + max) / 2;
@@ -181,17 +194,6 @@ static FARPROC PE_FindExportedFunction(
                 }
                 if (res > 0) max = pos - 1;
                 else min = pos + 1;
-            }
-            /* now try a linear search in case the names aren't sorted properly */
-            for (i = 0; i < exports->NumberOfNames; i++)
-            {
-                ename = RVA(name[i]);
-                if (!strcmp( ename, funcName ))
-                {
-                    ERR( "%s.%s required a linear search\n", wm->modname, funcName );
-                    ordinal = ordinals[i];
-                    goto found;
-                }
             }
             return NULL;
 	}
@@ -244,7 +246,7 @@ static FARPROC PE_FindExportedFunction(
                     ERR("module not found for forward '%s' used by '%s'\n", forward, wm->modname );
                     return NULL;
                 }
-		if (!(proc = MODULE_GetProcAddress( wm_fw->module, end + 1, snoop )))
+		if (!(proc = MODULE_GetProcAddress( wm_fw->module, end + 1, -1, snoop )))
                     ERR("function not found for forward '%s' used by '%s'. If you are using builtin '%s', try using the native one instead.\n", forward, wm->modname, wm->modname );
 		return proc;
 	}
@@ -317,7 +319,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 		    TRACE("--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, (LPCSTR)ordinal, TRUE
+                        wmImp->module, (LPCSTR)ordinal, -1, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
@@ -328,7 +330,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 		    pe_name = (PIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, pe_name->Name, TRUE
+                        wmImp->module, pe_name->Name, pe_name->Hint, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d(%s) imported from %s, setting to 0xdeadbeef\n",
@@ -349,7 +351,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 		    TRACE("--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, (LPCSTR) ordinal, TRUE
+                        wmImp->module, (LPCSTR) ordinal, -1, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 			ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
@@ -361,7 +363,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 		    TRACE("--- %s %s.%d\n",
 		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=(PDWORD)MODULE_GetProcAddress(
-                        wmImp->module, pe_name->Name, TRUE
+                        wmImp->module, pe_name->Name, pe_name->Hint, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
 		    	ERR("No implementation for %s.%d(%s) imported from %s, setting to 0xdeadbeef\n",

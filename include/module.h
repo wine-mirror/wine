@@ -134,7 +134,8 @@ typedef struct _wine_modref
 	void                *dlhandle;  /* handle returned by dlopen() */
 	int                  tlsindex;  /* TLS index or -1 if none */
 
-	FARPROC            (*find_export)( struct _wine_modref *wm, LPCSTR func, BOOL snoop );
+	FARPROC            (*find_export)( struct _wine_modref *wm, LPCSTR func,
+                                           int hint, BOOL snoop );
 
 	int			nDeps;
 	struct _wine_modref	**deps;
@@ -201,7 +202,7 @@ enum binary_type
 
 /* module.c */
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
-extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, BOOL snoop );
+extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );
 extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved );
 extern void MODULE_DllThreadAttach( LPVOID lpReserved );

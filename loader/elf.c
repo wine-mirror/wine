@@ -61,7 +61,7 @@ typedef struct {
                      sizeof(IMAGE_NT_HEADERS) + \
                      sizeof(IMAGE_SECTION_HEADER))
 
-static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL snoop );
+static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, int hint, BOOL snoop );
 
 static HMODULE ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 {
@@ -181,7 +181,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 	return wm;
 }
 
-static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL snoop )
+static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, int hint, BOOL snoop )
 {
 	LPVOID			fun;
 	int			i,nrofargs = 0;

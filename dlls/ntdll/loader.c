@@ -62,10 +62,9 @@ NTSTATUS WINAPI LdrGetProcedureAddress(PVOID base, PANSI_STRING name, ULONG ord,
     WARN("%p %s %ld %p\n",base, debugstr_an(name->Buffer,name->Length), ord, address);
 
     if(name)
-        *address = MODULE_GetProcAddress( (HMODULE) base, name->Buffer, FALSE);
+        *address = MODULE_GetProcAddress( (HMODULE) base, name->Buffer, -1, FALSE);
     else
-        *address = MODULE_GetProcAddress( (HMODULE) base, (LPSTR) ord, FALSE);
+        *address = MODULE_GetProcAddress( (HMODULE) base, (LPSTR) ord, -1, FALSE);
 
     return (*address) ? STATUS_SUCCESS : STATUS_DLL_NOT_FOUND;
 }
-
