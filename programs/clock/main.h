@@ -21,10 +21,6 @@
 #include "clock_res.h"
 
 #define MAX_STRING_LEN      255
-#define MAX_PATHNAME_LEN    1024
-#define MAX_LANGUAGE_NUMBER (CL_LAST_LANGUAGE - CL_FIRST_LANGUAGE)
-
-#define HELPFILE    "clock.hlp"
 #define DEFAULTICON OIC_WINLOGO
 
 /* hide the following from winerc */
@@ -44,7 +40,6 @@ typedef struct
   HMENU   hPopupMenu1;
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
-  UINT    wStringTableOffset;
 
   BOOL    bAnalog;
   BOOL    bAlwaysOnTop;

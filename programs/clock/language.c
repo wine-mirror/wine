@@ -25,8 +25,6 @@
 #include "language.h"
 #include "winnls.h"
 
-CHAR STRING_MENU_Xx[]      = "MENU_Xx";
-
 VOID LANGUAGE_UpdateMenuCheckmarks(VOID)
 {
     if(Globals.bAnalog == TRUE) {
@@ -67,14 +65,10 @@ VOID LANGUAGE_UpdateWindowCaption(VOID)
     CHAR szCaption[MAX_STRING_LEN];
     CHAR szDate[MAX_STRING_LEN];
 
-    LPSTR date = szDate;
-
     SYSTEMTIME st;
-    LPSYSTEMTIME lpst = &st;
 
     GetLocalTime(&st);
-    GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, lpst, NULL, date,
-                  MAX_STRING_LEN);
+    GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, &st, NULL, szDate, sizeof(szDate));
 
     /* Set frame caption */
     LoadString(Globals.hInstance, 0x10C, szCaption, sizeof(szCaption));
@@ -114,16 +108,6 @@ VOID LANGUAGE_LoadMenus(VOID)
     LoadString(Globals.hInstance, 0x10D, szItem, sizeof(szItem));
     AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, szItem);
 }
-
-/*
-VOID LANGUAGE_DefaultHandle(WPARAM wParam)
-{
-    if ((wParam >=CL_FIRST_LANGUAGE) && (wParam<=CL_LAST_LANGUAGE))
-        LANGUAGE_SelectByNumber(wParam - CL_FIRST_LANGUAGE);
-    else 
-        printf("Unimplemented menu command %i\n", wParam);
-}
-*/
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

@@ -117,11 +117,6 @@ int CLOCK_MenuCommand (WPARAM wParam)
             ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
             break;
         }
-            /* Handle languages */
-            /*
-        default:
-            LANGUAGE_DefaultHandle(wParam);
-            */
     }
     return 0;
 }

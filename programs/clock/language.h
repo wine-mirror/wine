@@ -22,7 +22,6 @@
 VOID LANGUAGE_UpdateWindowCaption(VOID);
 VOID LANGUAGE_UpdateMenuCheckmarks(VOID);
 VOID LANGUAGE_LoadMenus(VOID);
-VOID LANGUAGE_DefaultHandle(WPARAM wParam);
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */
