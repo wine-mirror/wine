@@ -137,15 +137,22 @@ enum VARENUM {
  * DISP_E_ARRAYISLOCKED : The variant contains an array that is locked.
  */
 
-typedef struct tagVARIANT VARIANT;
-typedef struct tagVARIANT VARIANTARG;
+#ifdef __cplusplus
+#define _wine_tagVARIANT_UNION_NAME 
+#else
+#define _wine_tagVARIANT_UNION_NAME u
+#endif
+/* end FIXME */
+
+typedef struct tagVARIANT VARIANT, *LPVARIANT;
+typedef struct tagVARIANT VARIANTARG, *LPVARIANTARG;
 
 struct tagVARIANT {
 	VARTYPE vt;
 	WORD wReserved1;
 	WORD wReserved2;
 	WORD wReserved3;
-	union
+  union _wine_tagVARIANT_UNION_NAME 
 	{
 		/* By value.
 		 */
@@ -196,7 +203,7 @@ struct tagVARIANT {
 		IDispatch** ppdispVal;
         SAFEARRAY** pparray;
         */
-	} u;
+  } _wine_tagVARIANT_UNION_NAME;
 };
 
 typedef LONG DISPID;
