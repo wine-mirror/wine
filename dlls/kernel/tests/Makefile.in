@@ -28,6 +28,7 @@ CTESTS = \
 	profile.c \
 	thread.c \
 	time.c \
+	timer.c \
 	virtual.c
 
 @MAKE_TEST_RULES@

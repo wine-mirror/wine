@@ -22,4 +22,5 @@ profile.ok
 testlist.c
 thread.ok
 time.ok
+timer.ok
 virtual.ok
