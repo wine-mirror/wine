@@ -629,7 +629,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParm
 	TRACE_(mcimidi)("MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	if (lpstrElementName && strlen(lpstrElementName) > 0) {
 	    wmm->hFile = mmioOpenA(lpstrElementName, NULL, 
-				     MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
+				     MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_DENYWRITE);
 	    if (wmm->hFile == 0) {
 		WARN_(mcimidi)("Can't find file='%s' !\n", lpstrElementName);
 		wmm->nUseCount--;

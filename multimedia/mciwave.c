@@ -235,7 +235,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA l
 	    TRACE(mciwave, "MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	    if (lpstrElementName && (strlen(lpstrElementName) > 0)) {
 		wmw->hFile = mmioOpenA((LPSTR)lpstrElementName, NULL, 
-				       MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
+				       MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_DENYWRITE);
 		if (wmw->hFile == 0) {
 		    WARN(mciwave, "can't find file='%s' !\n", lpstrElementName);
 		    dwRet = MCIERR_FILE_NOT_FOUND;
