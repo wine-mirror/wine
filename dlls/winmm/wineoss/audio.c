@@ -83,13 +83,24 @@ DEFAULT_DEBUG_CHANNEL(wave);
 #define WINE_WM_CLOSING		(WM_USER + 4)
 #define WINE_WM_HEADER		(WM_USER + 5)
 
-#define WINE_WM_FIRST WINE_WM_PAUSING
-#define WINE_WM_LAST WINE_WM_HEADER
-
 typedef struct {
-    int msg;
-    DWORD param;
-} WWO_MSG;
+    int 	msg;		/* message identifier */
+    DWORD	param;		/* parameter for this message */
+    HANDLE	hEvent;		/* if message is synchronous, handle of event for synchro */
+} OSS_MSG;
+
+/* implement a in process message ring for better performance 
+ * (compared to passing thru the server)
+ * this ring will be used by both the input & output plauback
+ */
+typedef struct {
+#define OSS_RING_BUFFER_SIZE	30
+    OSS_MSG			messages[OSS_RING_BUFFER_SIZE];
+    int				msg_tosave;
+    int				msg_toget;
+    HANDLE			msg_event;
+    CRITICAL_SECTION		msg_crst;
+} OSS_MSG_RING;
 
 typedef struct {
     int				unixdev;
@@ -122,15 +133,10 @@ typedef struct {
     DWORD                       dwWrittenTotal;         /* number of bytes written since opening */
 
     /* synchronization stuff */
+    HANDLE			hStartUpEvent;
     HANDLE			hThread;
     DWORD			dwThreadID;
-    HANDLE			hEvent;
-#define WWO_RING_BUFFER_SIZE	30
-    WWO_MSG			messages[WWO_RING_BUFFER_SIZE];
-    int				msg_tosave;
-    int				msg_toget;
-    HANDLE			msg_event;
-    CRITICAL_SECTION		msg_crst;
+    OSS_MSG_RING		msgRing;
     WAVEOUTCAPSA		caps;
 
     /* DirectSound stuff */
@@ -153,7 +159,8 @@ typedef struct {
     /* synchronization stuff */
     HANDLE			hThread;
     DWORD			dwThreadID;
-    HANDLE			hEvent;
+    HANDLE			hStartUpEvent;
+    OSS_MSG_RING		msgRing;
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
@@ -182,16 +189,16 @@ LONG OSS_WaveInit(void)
     int		bytespersmpl;
     int 	caps;
     int		mask;
-	int 	i;
+    int 	i;
 
     
-	/* start with output device */
+    /* start with output device */
 
-	/* initialize all device handles to -1 */
-	for (i = 0; i < MAX_WAVEOUTDRV; ++i)
-	{
-		WOutDev[i].unixdev = -1;
-	}
+    /* initialize all device handles to -1 */
+    for (i = 0; i < MAX_WAVEOUTDRV; ++i)
+    {
+	WOutDev[i].unixdev = -1;
+    }
 
     /* FIXME: only one device is supported */
     memset(&WOutDev[0].caps, 0, sizeof(WOutDev[0].caps));
@@ -421,6 +428,70 @@ static DWORD OSS_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, DWORD dwPa
     return 0;
 }
 
+static int OSS_InitRingMessage(OSS_MSG_RING* omr)
+{
+    omr->msg_toget = 0;
+    omr->msg_tosave = 0;
+    omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    memset(omr->messages, 0, sizeof(OSS_MSG) * OSS_RING_BUFFER_SIZE);
+    InitializeCriticalSection(&omr->msg_crst);
+    return 0;
+}
+
+static int OSS_AddRingMessage(OSS_MSG_RING* omr, int msg, DWORD param, BOOL wait)
+{
+    HANDLE	hEvent;
+
+    EnterCriticalSection(&omr->msg_crst);
+    if ((omr->msg_tosave == omr->msg_toget) /* buffer overflow ? */
+	&& (omr->messages[omr->msg_toget].msg))
+    {
+	ERR("buffer overflow !?\n");
+        LeaveCriticalSection(&omr->msg_crst);
+	return 0;
+    }
+
+    hEvent = wait ? CreateEventA(NULL, FALSE, FALSE, NULL) : INVALID_HANDLE_VALUE;
+
+    omr->messages[omr->msg_tosave].msg = msg;
+    omr->messages[omr->msg_tosave].param = param;
+    omr->messages[omr->msg_tosave].hEvent = hEvent;
+
+    omr->msg_tosave++;
+    if (omr->msg_tosave > OSS_RING_BUFFER_SIZE-1)
+	omr->msg_tosave = 0;
+    LeaveCriticalSection(&omr->msg_crst);
+    /* signal a new message */
+    SetEvent(omr->msg_event);
+    if (wait)
+    {
+	    WaitForSingleObject(hEvent, INFINITE);
+	    CloseHandle(hEvent);
+    }
+    return 1;
+}
+
+static int OSS_RetrieveRingMessage(OSS_MSG_RING* omr, int *msg, DWORD *param, HANDLE *hEvent)
+{
+    EnterCriticalSection(&omr->msg_crst);
+
+    if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
+    {
+        LeaveCriticalSection(&omr->msg_crst);
+	return 0;
+    }
+	
+    *msg = omr->messages[omr->msg_toget].msg;
+    omr->messages[omr->msg_toget].msg = 0;
+    *param = omr->messages[omr->msg_toget].param;
+    *hEvent = omr->messages[omr->msg_toget].hEvent;
+    omr->msg_toget++;
+    if (omr->msg_toget > OSS_RING_BUFFER_SIZE-1)
+	omr->msg_toget = 0;
+    LeaveCriticalSection(&omr->msg_crst);
+    return 1;
+}
+
 /*======================================================================*
  *                  Low level WAVE OUT implementation			*
  *======================================================================*/
@@ -546,6 +617,7 @@ static DWORD wodPlayer_NotifyWait( WINE_WAVEOUT *wwo, LPWAVEHDR lpWaveHdr )
     return dwMillis;
 }
 
+
 /**************************************************************************
  * 			     wodPlayer_WriteMaxFrags            [internal]
  * Writes the maximum number of bytes possible to the DSP and returns
@@ -573,48 +645,6 @@ static DWORD wodPlayer_WriteMaxFrags( WINE_WAVEOUT *wwo, LPSTR lpData,
     return written;
 }
 
-
-int wodPlayer_Message(WINE_WAVEOUT *wwo, int msg, DWORD param)
-{
-    EnterCriticalSection(&wwo->msg_crst);
-    if ((wwo->msg_tosave == wwo->msg_toget) /* buffer overflow ? */
-    &&  (wwo->messages[wwo->msg_toget].msg))
-    {
-	ERR("buffer overflow !?\n");
-        LeaveCriticalSection(&wwo->msg_crst);
-	return 0;
-    }
-
-    wwo->messages[wwo->msg_tosave].msg = msg;
-    wwo->messages[wwo->msg_tosave].param = param;
-    wwo->msg_tosave++;
-    if (wwo->msg_tosave > WWO_RING_BUFFER_SIZE-1)
-	wwo->msg_tosave = 0;
-    LeaveCriticalSection(&wwo->msg_crst);
-    /* signal a new message */
-    SetEvent(wwo->msg_event);
-    return 1;
-}
-
-int wodPlayer_RetrieveMessage(WINE_WAVEOUT *wwo, int *msg, DWORD *param)
-{
-    EnterCriticalSection(&wwo->msg_crst);
-
-    if (wwo->msg_toget == wwo->msg_tosave) /* buffer empty ? */
-    {
-        LeaveCriticalSection(&wwo->msg_crst);
-	return 0;
-    }
-	
-    *msg = wwo->messages[wwo->msg_toget].msg;
-    wwo->messages[wwo->msg_toget].msg = 0;
-    *param = wwo->messages[wwo->msg_toget].param;
-    wwo->msg_toget++;
-    if (wwo->msg_toget > WWO_RING_BUFFER_SIZE-1)
-	wwo->msg_toget = 0;
-    LeaveCriticalSection(&wwo->msg_crst);
-    return 1;
-}
 
 /**************************************************************************
  * 				wodPlayer_NotifyCompletions	[internal]
@@ -726,7 +756,7 @@ static void wodPlayer_AwaitEvent( WINE_WAVEOUT* wwo,
 	dwSleepTime=MIN_SLEEP_TIME;
     TRACE( "waiting %lu millis (%lu,%lu)\n", dwSleepTime,
 	   dwNextFeedTime,dwNextNotifyTime );
-    WaitForSingleObject(wwo->msg_event, dwSleepTime);
+    WaitForSingleObject(wwo->msgRing.msg_event, dwSleepTime);
     TRACE( "wait returned\n");
 
 }
@@ -739,19 +769,20 @@ static void wodPlayer_ProcessMessages( WINE_WAVEOUT* wwo, WORD uDevID )
     LPWAVEHDR           lpWaveHdr;
     int			msg;
     DWORD		param;
+    HANDLE		ev;
 
-    while (wodPlayer_RetrieveMessage(wwo, &msg, &param)) {
+    while (OSS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
 	TRACE( "Received %s %lx\n",
 	       wodPlayerCmdString[msg-WM_USER-1], param );
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, uDevID, FALSE);
 	    wwo->state = WINE_WS_PAUSED;
-	    SetEvent(wwo->hEvent);
+	    SetEvent(ev);
 	    break;
 	case WINE_WM_RESTARTING:
 	    wwo->state = WINE_WS_PLAYING;
-	    SetEvent(wwo->hEvent);
+	    SetEvent(ev);
 	    break;
 	case WINE_WM_HEADER:
 	    lpWaveHdr = (LPWAVEHDR)param;
@@ -768,14 +799,14 @@ static void wodPlayer_ProcessMessages( WINE_WAVEOUT* wwo, WORD uDevID )
 	    break;
 	case WINE_WM_RESETTING:
 	    wodPlayer_Reset(wwo, uDevID, TRUE);
-	    SetEvent(wwo->hEvent);
+	    SetEvent(ev);
 	    break;
 	case WINE_WM_CLOSING:
 	    /* sanity check: this should not happen since the device must have been reset before */
 	    if (wwo->lpQueuePtr || wwo->lpPlayPtr) ERR("out of sync\n");
 	    wwo->hThread = 0;
 	    wwo->state = WINE_WS_CLOSED;
-	    SetEvent(wwo->hEvent);
+	    SetEvent(ev);
 	    ExitThread(0);
 	    /* shouldn't go here */
 	default:
@@ -816,7 +847,7 @@ static DWORD wodPlayer_FeedDSP( WINE_WAVEOUT* wwo )
      */
     bytesToWrite=wwo->dwPartialBytes;
     if( bytesToWrite > 0 ) {
-	TRACE("partial write %d bytes at %p\n",
+	TRACE("partial write %lu bytes at %p\n",
 	      wwo->dwPartialBytes,
 	      wwo->lpPartialData );
 	written=wodPlayer_WriteMaxFrags( wwo, wwo->lpPartialData,
@@ -875,7 +906,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
     DWORD         dwNextNotifyTime=0; /* Time before next wave completion */
 
     wwo->state=WINE_WS_STOPPED;
-    SetEvent( wwo->hEvent );
+    SetEvent( wwo->hStartUpEvent );
 
     for(;;) {
 	wodPlayer_AwaitEvent(wwo,dwNextFeedTime,dwNextNotifyTime);
@@ -1041,21 +1072,19 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     TRACE( "wait for %d fragments at %lu millis/fragment\n",
 	   wwo->uWaitForFragments,
 	   wwo->dwMillisPerFragment );
-    wwo->msg_toget = 0;
-    wwo->msg_tosave = 0;
-    wwo->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    memset(wwo->messages, 0, sizeof(WWO_MSG)*WWO_RING_BUFFER_SIZE);
-    InitializeCriticalSection(&wwo->msg_crst);
+
+    OSS_InitRingMessage(&wwo->msgRing);
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
-	WaitForSingleObject(wwo->hEvent, INFINITE);
+	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
+	CloseHandle(wwo->hStartUpEvent);
     } else {
-	wwo->hEvent = INVALID_HANDLE_VALUE;
 	wwo->hThread = INVALID_HANDLE_VALUE;
 	wwo->dwThreadID = 0;
     }
+    wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     TRACE("fd=%d fragmentSize=%ld\n", 
 	  wwo->unixdev, wwo->dwFragmentSize);
@@ -1095,10 +1124,8 @@ static DWORD wodClose(WORD wDevID)
 	ret = WAVERR_STILLPLAYING;
     } else {
 	TRACE("imhere[3-close]\n");
-	if (wwo->hEvent != INVALID_HANDLE_VALUE) {
-	    wodPlayer_Message(wwo, WINE_WM_CLOSING, 0);
-	    WaitForSingleObject(wwo->hEvent, INFINITE);
-	    CloseHandle(wwo->hEvent);
+	if (wwo->hThread != INVALID_HANDLE_VALUE) {
+	    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_CLOSING, 0, TRUE);
 	}
 	if (wwo->mapping) {
 	    munmap(wwo->mapping, wwo->maplen);
@@ -1141,7 +1168,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->lpNext = 0;
 
     TRACE("imhere[3-HEADER]\n");
-    wodPlayer_Message(&WOutDev[wDevID], WINE_WM_HEADER, (DWORD)lpWaveHdr);
+    OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
 
     return MMSYSERR_NOERROR;
 }
@@ -1200,8 +1227,7 @@ static DWORD wodPause(WORD wDevID)
     }
     
     TRACE("imhere[3-PAUSING]\n");
-    wodPlayer_Message(&WOutDev[wDevID], WINE_WM_PAUSING, 0);
-    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+    OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_PAUSING, 0, TRUE);
     
     return MMSYSERR_NOERROR;
 }
@@ -1220,8 +1246,7 @@ static DWORD wodRestart(WORD wDevID)
     
     if (WOutDev[wDevID].state == WINE_WS_PAUSED) {
 	TRACE("imhere[3-RESTARTING]\n");
-	wodPlayer_Message(&WOutDev[wDevID], WINE_WM_RESTARTING, 0);
-	WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+	OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_RESTARTING, 0, TRUE);
     }
     
     /* FIXME: is NotifyClient with WOM_DONE right ? (Comet Busters 1.3.3 needs this notification) */
@@ -1248,8 +1273,7 @@ static DWORD wodReset(WORD wDevID)
     }
     
     TRACE("imhere[3-RESET]\n");
-    wodPlayer_Message(&WOutDev[wDevID], WINE_WM_RESETTING, 0);
-    WaitForSingleObject(WOutDev[wDevID].hEvent, INFINITE);
+    OSS_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
     
     return MMSYSERR_NOERROR;
 }
@@ -1909,23 +1933,22 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     WINE_WAVEIN*	wwi = (WINE_WAVEIN*)&WInDev[uDevID];
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
-    MSG			msg;
     DWORD		bytesRead;
-
-    audio_buf_info info;
-    int xs;
-	
-	LPVOID		buffer = HeapAlloc(GetProcessHeap(), 
+    LPVOID		buffer = HeapAlloc(GetProcessHeap(), 
 		                           HEAP_ZERO_MEMORY, 
-       		                       wwi->dwFragmentSize);
+					   wwi->dwFragmentSize);
 
     LPVOID		pOffset = buffer;
+    audio_buf_info 	info;
+    int 		xs;
+    int			msg;
+    DWORD		param;
+    HANDLE		ev;
 
-    PeekMessageA(&msg, 0, 0, 0, 0);
     wwi->state = WINE_WS_STOPPED;
     wwi->dwTotalRecorded = 0;
 
-    SetEvent(wwi->hEvent);
+    SetEvent(wwi->hStartUpEvent);
 
     /* the soundblaster live needs a micro wake to get its recording started
      * (or GETISPACE will have 0 frags all the time)
@@ -1936,7 +1959,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
     TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
-    for (; ; ) {
+    for (;;) {
 	/* wait for dwSleepTime or an event in thread's queue */
 	/* FIXME: could improve wait time depending on queue state,
 	 * ie, number of queued fragments
@@ -2044,16 +2067,17 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             }
 	}
 	
-	MsgWaitForMultipleObjects(0, NULL, FALSE, dwSleepTime, QS_POSTMESSAGE);
+	WaitForSingleObject(wwi->msgRing.msg_event, dwSleepTime);
 
-	while (PeekMessageA(&msg, 0, WINE_WM_FIRST, WINE_WM_LAST, PM_REMOVE)) {
+	while (OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
+	{
 
-            TRACE("msg=0x%x wParam=0x%x lParam=0x%lx\n", msg.message, msg.wParam, msg.lParam);
-	    switch (msg.message) {
+            TRACE("msg=0x%x param=0x%lx\n", msg, param);
+	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
                 /*FIXME("Device should stop recording\n");*/
-		SetEvent(wwi->hEvent);
+		SetEvent(ev);
 		break;
 	    case WINE_WM_RESTARTING:
             {
@@ -2075,11 +2099,11 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                     read(wwi->unixdev, data, 4);
                 }
                 
-		SetEvent(wwi->hEvent);
+		SetEvent(ev);
 		break;
             }
 	    case WINE_WM_HEADER:
-		lpWaveHdr = (LPWAVEHDR)msg.lParam;
+		lpWaveHdr = (LPWAVEHDR)param;
 		lpWaveHdr->lpNext = 0;
 
 		/* insert buffer at the end of queue */
@@ -2103,17 +2127,17 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    }
 		}
 		wwi->lpQueuePtr = NULL;
-		SetEvent(wwi->hEvent);
+		SetEvent(ev);
 		break;
 	    case WINE_WM_CLOSING:
 		wwi->hThread = 0;
 		wwi->state = WINE_WS_CLOSED;
-		SetEvent(wwi->hEvent);
+		SetEvent(ev);
 		HeapFree(GetProcessHeap(), 0, buffer); 
 		ExitThread(0);
 		/* shouldn't go here */
 	    default:
-		FIXME("unknown message %d\n", msg.message);
+		FIXME("unknown message %d\n", msg);
 		break;
 	    }
 	}
@@ -2233,11 +2257,13 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
 	  wwi->format.wf.nBlockAlign);
 
-    wwi->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wwi->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
-    WaitForSingleObject(wwi->hEvent, INFINITE);
+    WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
+    CloseHandle(wwi->hStartUpEvent);
+    wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-   if (OSS_NotifyClient(wDevID, WIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
+    if (OSS_NotifyClient(wDevID, WIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
 	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
@@ -2264,9 +2290,7 @@ static DWORD widClose(WORD wDevID)
 	return WAVERR_STILLPLAYING;
     }
 
-    PostThreadMessageA(wwi->dwThreadID, WINE_WM_CLOSING, 0, 0);
-    WaitForSingleObject(wwi->hEvent, INFINITE);
-    CloseHandle(wwi->hEvent);
+    OSS_AddRingMessage(&wwi->msgRing, WINE_WM_CLOSING, 0, TRUE);
     close(wwi->unixdev);
     wwi->unixdev = -1;
     wwi->dwFragmentSize = 0;
@@ -2300,9 +2324,9 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->dwFlags &= ~WHDR_DONE;
     lpWaveHdr->dwBytesRecorded = 0;
-	lpWaveHdr->lpNext = NULL;
+    lpWaveHdr->lpNext = NULL;
 	
-    PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_HEADER, 0, (DWORD)lpWaveHdr);
+    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_HEADER, (DWORD)lpWaveHdr, FALSE);
     return MMSYSERR_NOERROR;
 }
 
@@ -2353,8 +2377,7 @@ static DWORD widStart(WORD wDevID)
 	return MMSYSERR_INVALHANDLE;
     }
 
-    PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_RESTARTING, 0, 0);
-    WaitForSingleObject(WInDev[wDevID].hEvent, INFINITE);
+    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESTARTING, 0, TRUE);
     return MMSYSERR_NOERROR;
 }
 
@@ -2369,8 +2392,7 @@ static DWORD widStop(WORD wDevID)
 	return MMSYSERR_INVALHANDLE;
     }
     /* FIXME: reset aint stop */
-    PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_RESETTING, 0, 0);
-    WaitForSingleObject(WInDev[wDevID].hEvent, INFINITE);
+    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
     
     return MMSYSERR_NOERROR;
 }
@@ -2385,8 +2407,7 @@ static DWORD widReset(WORD wDevID)
 	WARN("can't reset !\n");
 	return MMSYSERR_INVALHANDLE;
     }
-    PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_RESETTING, 0, 0);
-    WaitForSingleObject(WInDev[wDevID].hEvent, INFINITE);
+    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
     return MMSYSERR_NOERROR;
 }
 
