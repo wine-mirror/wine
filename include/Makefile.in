@@ -12,6 +12,7 @@ IDL_SRCS = \
 	ddstream.idl \
 	docobj.idl \
 	exdisp.idl \
+	mlang.idl \
 	mmstream.idl \
 	oaidl.idl \
 	objidl.idl \
