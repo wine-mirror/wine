@@ -1108,7 +1108,6 @@ static LRESULT LISTVIEW_MouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   TRACKMOUSEEVENT trackinfo;
-  POINT pt;
  
   /* see if we are supposed to be tracking mouse hovering */
   if(infoPtr->dwExStyle & LVS_EX_TRACKSELECT) {
@@ -5554,7 +5553,6 @@ static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
 static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
-  LISTVIEW_ITEM *lpItem = NULL;
 
   FIXME("(%d %08lx)stub!\n", nItems, dwFlags);
 

@@ -30,7 +30,7 @@ DWORD  RICHED32_dwProcessesAttached = 0;
 /* LPSTR  RICHED32_aSubclass = (LPSTR)NULL; */
 HMODULE RICHED32_hModule = 0;
 
-/*
+/***********************************************************************
  * RICHED32_LibMain [Internal] Initializes the internal 'RICHED32.DLL'.
  *
  * PARAMS
@@ -164,7 +164,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 }
 
-/*
+/***********************************************************************
  * DllGetVersion [COMCTL32.25]
  *
  * Retrieves version information of the 'COMCTL32.DLL'
