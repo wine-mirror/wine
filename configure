@@ -12749,8 +12749,8 @@ _ACEOF
 fi
 
 
-echo "$as_me:$LINENO: checking whether assembler accepts .string" >&5
-echo $ECHO_N "checking whether assembler accepts .string... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for assembler keyword for ASCII strings" >&5
+echo $ECHO_N "checking for assembler keyword for ASCII strings... $ECHO_C" >&6
 if test "${ac_cv_c_asm_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -12760,7 +12760,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-void ac_asm(void) { asm(".data\n\t.string \"test\"\n\t.text"); }
+void ac_asm(void) { asm(".data\\n\\t.string \\"test\\"\\n\\t.text"); }
 
 int
 main ()
@@ -12791,97 +12791,120 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_asm_string="yes"
+  ac_cv_c_asm_string=".string"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_c_asm_string="no"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+void ac_asm(void) { asm(".data\\n\\t.asciz \\"test\\"\\n\\t.text"); }
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_asm_string=".asciz"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+void ac_asm(void) { asm(".data\\n\\t.ascii \\"test\\"\\n\\t.text"); }
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_asm_string=".ascii"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+{ { echo "$as_me:$LINENO: error: could not discover how to produce C strings with assembler." >&5
+echo "$as_me: error: could not discover how to produce C strings with assembler." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_asm_string" >&5
 echo "${ECHO_T}$ac_cv_c_asm_string" >&6
-if test "$ac_cv_c_asm_string" = "yes"
-then
 
-cat >>confdefs.h <<\_ACEOF
-#define __ASM_STRING ".string"
+
+cat >>confdefs.h <<_ACEOF
+#define __ASM_STRING "$ac_cv_c_asm_string"
 _ACEOF
 
-else
-    echo "$as_me:$LINENO: checking whether assembler accepts .asciz" >&5
-echo $ECHO_N "checking whether assembler accepts .asciz... $ECHO_C" >&6
-if test "${ac_cv_c_asm_asciz+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-void ac_asm(void) { asm(".data\n\t.asciz \"test\"\n\t.text"); }
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_asm_asciz="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_c_asm_asciz="no"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_asm_asciz" >&5
-echo "${ECHO_T}$ac_cv_c_asm_asciz" >&6
-    if test "$ac_cv_c_asm_asciz" = "yes"
-    then
-      cat >>confdefs.h <<\_ACEOF
-#define __ASM_STRING ".asciz"
-_ACEOF
-
-    else
-      cat >>confdefs.h <<\_ACEOF
-#define __ASM_STRING ".ascii"
-_ACEOF
-
-    fi
-fi
 
 
-echo "$as_me:$LINENO: checking whether assembler accepts .short" >&5
-echo $ECHO_N "checking whether assembler accepts .short... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for assembler keyword for word values" >&5
+echo $ECHO_N "checking for assembler keyword for word values... $ECHO_C" >&6
 if test "${ac_cv_c_asm_short+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -12891,7 +12914,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-void ac_asm(void) { asm(".data\n\t.short 1\n\t.text"); }
+void ac_asm(void) { asm(".data\\n\\t.short 1\\n\\t.text"); }
 
 int
 main ()
@@ -12922,31 +12945,71 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_c_asm_short="yes"
+  ac_cv_c_asm_short=".short"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_c_asm_short="no"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+void ac_asm(void) { asm(".data\\n\\t.half 1\\n\\t.text"); }
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_asm_short=".half"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+{ { echo "$as_me:$LINENO: error: could not discover how to specify word values with assembler." >&5
+echo "$as_me: error: could not discover how to specify word values with assembler." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_asm_short" >&5
 echo "${ECHO_T}$ac_cv_c_asm_short" >&6
-if test "$ac_cv_c_asm_short" = "yes"
-then
 
-cat >>confdefs.h <<\_ACEOF
-#define __ASM_SHORT ".short"
+
+cat >>confdefs.h <<_ACEOF
+#define __ASM_SHORT "$ac_cv_c_asm_short"
 _ACEOF
 
-else
-  cat >>confdefs.h <<\_ACEOF
-#define __ASM_SHORT ".half"
-_ACEOF
-
-fi
 
 
 DLLEXT=""

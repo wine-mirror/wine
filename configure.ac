@@ -811,35 +811,24 @@ fi
 
 dnl **** Check how to do strings in assembler ****
 
-AC_CACHE_CHECK([whether assembler accepts .string], ac_cv_c_asm_string,
-    WINE_TRY_ASM_LINK([".data\n\t.string \"test\"\n\t.text"],,,
-                      ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
-if test "$ac_cv_c_asm_string" = "yes"
-then
-  AC_DEFINE(__ASM_STRING, [".string"], [Define to the assembler keyword used to specify an ASCII string])
-else
-    AC_CACHE_CHECK([whether assembler accepts .asciz], ac_cv_c_asm_asciz,
-        WINE_TRY_ASM_LINK([".data\n\t.asciz \"test\"\n\t.text"],,,
-                      ac_cv_c_asm_asciz="yes",ac_cv_c_asm_asciz="no"))
-    if test "$ac_cv_c_asm_asciz" = "yes"
-    then
-      AC_DEFINE(__ASM_STRING, [".asciz"])
-    else
-      AC_DEFINE(__ASM_STRING, [".ascii"])
-    fi					
-fi
+AC_CACHE_CHECK([for assembler keyword for ASCII strings], ac_cv_c_asm_string,
+    WINE_TRY_ASM_LINK([".data\\n\\t.string \\"test\\"\\n\\t.text"],,,ac_cv_c_asm_string=".string",
+      WINE_TRY_ASM_LINK([".data\\n\\t.asciz \\"test\\"\\n\\t.text"],,,ac_cv_c_asm_string=".asciz",
+        WINE_TRY_ASM_LINK([".data\\n\\t.ascii \\"test\\"\\n\\t.text"],,,ac_cv_c_asm_string=".ascii",
+          AC_MSG_ERROR([could not discover how to produce C strings with assembler.])))))
+
+AC_DEFINE_UNQUOTED(__ASM_STRING, ["$ac_cv_c_asm_string"],
+                   [Define to the assembler keyword used to specify an ASCII string])
 
 dnl **** Check for .short in assembler ****
 
-AC_CACHE_CHECK([whether assembler accepts .short], ac_cv_c_asm_short,
-    WINE_TRY_ASM_LINK([".data\n\t.short 1\n\t.text"],,,
-                      ac_cv_c_asm_short="yes",ac_cv_c_asm_short="no"))
-if test "$ac_cv_c_asm_short" = "yes"
-then
-  AC_DEFINE(__ASM_SHORT, [".short"], [Define to the assembler keyword used to specify a word value])
-else
-  AC_DEFINE(__ASM_SHORT, [".half"])
-fi
+AC_CACHE_CHECK([for assembler keyword for word values], ac_cv_c_asm_short,
+    WINE_TRY_ASM_LINK([".data\\n\\t.short 1\\n\\t.text"],,,ac_cv_c_asm_short=".short",
+      WINE_TRY_ASM_LINK([".data\\n\\t.half 1\\n\\t.text"],,,ac_cv_c_asm_short=".half",
+        AC_MSG_ERROR([could not discover how to specify word values with assembler.]))))
+
+AC_DEFINE_UNQUOTED(__ASM_SHORT, ["$ac_cv_c_asm_short"],
+                   [Define to the assembler keyword used to specify a word value])
 
 dnl **** Check for working dll ****
 
