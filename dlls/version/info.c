@@ -263,7 +263,8 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
 /***********************************************************************
  *           VERSION_GetFileVersionInfo_PE             [internal]
  *
- *    NOTE: returns size of the PE VERSION resource.
+ *    NOTE: returns size of the PE VERSION resource or 0xFFFFFFFF
+ *    in the case if file exists, but VERSION_INFO not found.
  *    FIXME: handle is not used.
  */
 static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
@@ -297,7 +298,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD hand
     {
 	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
 	if(do_free_library) FreeLibrary(hModule);
-	return 0;
+	return 0xFFFFFFFF;
     }
     len = SizeofResource(hModule, hRsrc);
     hMem = LoadResource(hModule, hRsrc);
@@ -305,7 +306,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD hand
     {
 	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
 	if(do_free_library) FreeLibrary(hModule);
-	return 0;
+	return 0xFFFFFFFF;
     }
     buf = LockResource(hMem);
 
@@ -315,7 +316,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD hand
     {
         WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
                    vffi->dwSignature, VS_FFI_SIGNATURE );
-        len = 0;
+	len = 0xFFFFFFFF;
 	goto END;
     }
 
@@ -327,7 +328,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD hand
 	if(datasize >= len)
 	    memcpy(data, buf, len);
 	else
-	    len = 0;
+	    len = 0xFFFFFFFF;
     }
 END:
     FreeResource(hMem);
@@ -339,7 +340,8 @@ END:
 /***********************************************************************
  *           VERSION_GetFileVersionInfo_16             [internal]
  *
- *    NOTE: returns size of the 16-bit VERSION resource.
+ *    NOTE: returns size of the 16-bit VERSION resource or 0xFFFFFFFF
+ *    in the case if file exists, but VERSION_INFO not found.
  *    FIXME: handle is not used.
  */
 static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
@@ -373,7 +375,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD hand
     {
 	WARN("Could not find VS_VERSION_INFO in %s\n", debugstr_a(filename));
 	if(do_free_library) FreeLibrary16(hModule);
-	return 0;
+	return 0xFFFFFFFF;
     }
     len = SizeofResource16(hModule, hRsrc);
     hMem = LoadResource16(hModule, hRsrc);
@@ -381,7 +383,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD hand
     {
 	WARN("Could not load VS_VERSION_INFO from %s\n", debugstr_a(filename));
 	if(do_free_library) FreeLibrary16(hModule);
-	return 0;
+	return 0xFFFFFFFF;
     }
     buf = LockResource16(hMem);
 
@@ -394,7 +396,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD hand
     {
         WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
                    vffi->dwSignature, VS_FFI_SIGNATURE );
-        len = 0;
+	len = 0xFFFFFFFF;
 	goto END;
     }
 
@@ -406,7 +408,7 @@ static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD hand
 	if(datasize >= len)
 	    memcpy(data, buf, len);
 	else
-	    len = 0;
+	    len = 0xFFFFFFFF;
     }
 END:
     FreeResource16(hMem);
@@ -427,8 +429,12 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     TRACE("(%s,%p)\n", debugstr_a(filename), handle );
 
     len = VERSION_GetFileVersionInfo_PE(filename, handle, 0, NULL);
+    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    if(len == 0xFFFFFFFF) return 0;
     if(len) return len;
     len = VERSION_GetFileVersionInfo_16(filename, handle, 0, NULL);
+    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    if(len == 0xFFFFFFFF) return 0;
     if(len) return len;
 
     len = GetFileResourceSize16( filename,
@@ -485,12 +491,20 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
+    DWORD len;
+
     TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
-    if(VERSION_GetFileVersionInfo_PE(filename, &handle, datasize, data))
+    len = VERSION_GetFileVersionInfo_PE(filename, &handle, datasize, data);
+    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    if(len == 0xFFFFFFFF) return FALSE;
+    if(len)
 	goto DO_CONVERT;
-    if(VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data))
+    len = VERSION_GetFileVersionInfo_16(filename, &handle, datasize, data);
+    /* 0xFFFFFFFF means: file exists, but VERSION_INFO not found */
+    if(len == 0xFFFFFFFF) return FALSE;
+    if(len)
 	goto DO_CONVERT;
 
     if ( !GetFileResource16( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
