@@ -1714,7 +1714,13 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 		ptr = (DWORD*)&wndPtr->wIDmenu;
 		break;
 	case GWL_HINSTANCE:
-                retval = SetWindowWord( hwnd, offset, newval );
+                ptr = (DWORD*)&wndPtr->hInstance;
+                break;
+        case GWL_USERDATA:
+                ptr = &wndPtr->userdata;
+                break;
+        case GWL_HWNDPARENT:
+                retval = SetParent( hwnd, (HWND)newval );
                 goto end;
 	case GWL_WNDPROC:
 		retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
@@ -1729,10 +1735,6 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
                 retval = style.styleOld;
                 goto end;
-
-        case GWL_USERDATA:
-		ptr = &wndPtr->userdata;
-		break;
         case GWL_EXSTYLE:
 	        style.styleOld = wndPtr->dwExStyle;
 		style.styleNew = newval;
