@@ -930,8 +930,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 
     *ppobj = NULL;
 
-    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ||
-         IsEqualGUID( &IID_IDirectSoundNotify8, riid ) ) {
+    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) { 
 	if (!This->notify)
 	    hres = IDirectSoundCaptureNotifyImpl_Create(This, &This->notify);
 	if (This->notify) {
