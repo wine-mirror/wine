@@ -565,7 +565,9 @@ static void LISTBOX_RepaintItem( WND *wnd, LB_DESCR *descr, INT index,
     HFONT oldFont = 0;
     HBRUSH hbrush, oldBrush = 0;
 
-    if (descr->style & LBS_NOREDRAW) return;
+    /* Do not repaint the item if the item is not visible */
+    if ((descr->style & LBS_NOREDRAW) || !IsWindowVisible(wnd->hwndSelf)) return;
+
     if (LISTBOX_GetItemRect( wnd, descr, index, &rect ) != 1) return;
     if (!(hdc = GetDCEx( wnd->hwndSelf, 0, DCX_CACHE ))) return;
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
