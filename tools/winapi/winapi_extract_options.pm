@@ -25,8 +25,9 @@ my %options_long = (
     "local" =>  { default => 1, description => "local extraction" },
     "global" => { default => 1, description => "global extraction" },
 
-    "spec-files" => { default => 1, parent => "global", description => "spec files extraction" },
+    "spec-files" => { default => 0, parent => "global", description => "spec files extraction" },
     "stub-statistics" => { default => 1, parent => "global", description => "stub statistics" },
+    "winetest" => { default => 1, parent => "global", description => "winetest extraction" },
 );
 
 my %options_short = (

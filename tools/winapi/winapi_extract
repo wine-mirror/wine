@@ -28,30 +28,58 @@ use winapi_function;
 use winapi_parser;
 use winapi qw(@winapis);
 
+my %module2entries;
 my %module2spec_file;
 my %module2type;
-if($options->spec_files) {
+my %module2filename;
+if($options->spec_files || $options->winetest) {
     local $_;
 
     foreach my $spec_file (get_spec_files("winelib")) {
+	my $entries = [];
+
 	my $module;
 	my $type;
 
 	open(IN, "< $wine_dir/$spec_file");
-	while(<IN>) {
+
+	my $header = 1;
+	my $lookahead = 0;
+	while($lookahead || defined($_ = <IN>)) {
+	    $lookahead = 0;
+
 	    s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begining and end of line
 	    s/^(.*?)\s*#.*$/$1/;  # remove comments
 	    /^$/ && next;         # skip empty lines
 
-	    if(/^name\s+(.*?)$/) {
-		$module = $1;
-		$module2spec_file{$module} = $spec_file;
-	    } elsif(/^type\s+(.*?)$/) {
-		$type = $1;
-		$module2type{$module} = $type;
+	    if($header)  {
+		if(/^name\s+(.*?)$/) {
+		    $module = $1;
+		    $module2spec_file{$module} = $spec_file;
+		} elsif(/^file\s+(.*?)$/) {
+		    my $filename = $1;
+		    $module2filename{$module} = $filename;
+		} elsif(/^type\s+(.*?)$/) {
+		    $type = $1;
+		    $module2type{$module} = $type;
+		} elsif(/^\d+|@/) {
+		    $header = 0;
+		    $lookahead = 1; 
+		}
+		next;
+	    }
+
+	    if(/^(@|\d+)\s+stdcall\s+(\w+)\s*\(\s*([^\)]*)\s*\)/) {
+		my $ordinal = $1;
+		my $name = $2;
+		my @args = split(/\s+/, $3);
+
+		push @$entries, [$name, "undef", \@args];
 	    }
 	}
 	close(IN);
+
+	$module2entries{$module} = $entries;
     }
 }
 
@@ -177,7 +205,7 @@ foreach my $file (@c_files) {
 	my $calling_convention = $function->calling_convention;
 	my $statements = $function->statements;
 
-	if($options->spec_files) {
+	if($options->spec_files || $options->winetest) {
 	    documentation_specifications($function);
 	}
 
@@ -377,3 +405,106 @@ if($options->stub_statistics) {
     } 
 }
 
+if($options->winetest) {
+    foreach my $module (sort(keys(%specifications))) {
+	my $type = $module2type{$module};
+        my $filename = $module2filename{$module} || $module;
+        my $modulename = $filename;
+        $modulename =~ s/\./_/g;
+
+	next unless $type eq "win32";
+
+	my @entries;
+
+	foreach my $external_name (sort(keys(%{$specifications{$module}{unknown}}))) {
+	    my $entry = $specifications{$module}{unknown}{$external_name};
+	    push @entries, $entry;
+	}
+
+	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
+	    my $entry = $specifications{$module}{fixed}{$ordinal};
+	    push @entries, $entry;
+	}
+
+	foreach my $external_name (sort(keys(%{$specifications{$module}{unfixed}}))) {
+	    my $entry = $specifications{$module}{unfixed}{$external_name};
+	    push @entries, $entry;
+	}
+
+	my $n = 0;
+	foreach my $entry (@entries) {
+	    my $external_name = $entry->{external_name}; 
+	    my $ordinal = $entry->{ordinal}; 
+	    my $function = $entry->{function}; 
+
+	    my $return_kind;
+	    my $calling_convention;
+	    my $refargument_kinds;
+	    if($type eq "win16") {
+		$return_kind = $function->return_kind16 || "undef";
+		$calling_convention = $function->calling_convention16 || "undef";
+		$refargument_kinds = $function->argument_kinds16;
+	    } elsif($type eq "win32") {
+		$return_kind = $function->return_kind32 || "undef";
+		$calling_convention = $function->calling_convention32 || "undef";
+		$refargument_kinds = $function->argument_kinds32;
+	    }
+
+	    my @argument_kinds;
+	    if(defined($refargument_kinds)) {
+		@argument_kinds = map { $_ || "undef"; } @$refargument_kinds;
+	    }
+
+	    next if $calling_convention ne "stdcall";
+	    next if $external_name eq "\@";
+
+	    if($n == 0) {
+                open(OUT, "> $wine_dir/programs/winetest/include/${modulename}.pm");
+
+                print OUT "package ${modulename};\n";
+                print OUT "\n";
+
+                print OUT "use strict;\n";
+                print OUT "\n";
+
+                print OUT "require Exporter;\n";
+                print OUT "\n";
+
+                print OUT "use wine;\n";
+                print OUT "use vars qw(\@ISA \@EXPORT \@EXPORT_OK);\n";
+                print OUT "\n";
+
+                print OUT "\@ISA = qw(Exporter);\n";
+                print OUT "\@EXPORT = qw();\n";
+                print OUT "\@EXPORT_OK = qw();\n";
+                print OUT "\n";
+
+                print OUT "my \$module_declarations = {\n";
+	    } elsif($n > 0) {
+		print OUT ",\n";
+	    }
+
+	    print OUT "    \"\Q$external_name\E\" => [\"$return_kind\",  [";
+	    my $m = 0;
+	    foreach my $argument_kind (@argument_kinds) {
+		if($m > 0) {
+		    print OUT ", ";
+		}
+		print OUT "\"$argument_kind\"";
+		$m++;
+	    }
+	    print OUT "]]";
+	    $n++;
+	}
+
+	if($n > 0) {
+	    print OUT "\n";
+	    print OUT "};\n";
+	    print OUT "\n";
+            print OUT "&wine::declare(\"$filename\",\%\$module_declarations);\n";
+            print OUT "push \@EXPORT, map { \"&\" . \$_; } sort(keys(\%\$module_declarations));\n";
+	    print OUT "1;\n";
+            close(OUT);
+	}
+    }
+}
