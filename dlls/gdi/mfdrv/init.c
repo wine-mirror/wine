@@ -56,7 +56,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pEnumDeviceFonts */
     MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
-    NULL,                            /* pExtEscape */
+    MFDRV_ExtEscape,                 /* pExtEscape */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
     MFDRV_FillPath,                  /* pFillPath */
@@ -536,4 +536,26 @@ int MFDRV_AddHandleDC( PHYSDEV dev )
     return physDev->nextHandle++;
 }
 
+/**********************************************************************
+ *           MFDRV_ExtEscape
+ */
+INT MFDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
+                     INT cbOutput, LPVOID out_data )
+{
+    METARECORD *mr;
+    DWORD len;
 
+    if(nEscape == MFCOMMENT) {
+        len = sizeof(*mr) + sizeof(WORD) + ((cbInput + 1) & ~1);
+        mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+        mr->rdSize = len / 2;
+        mr->rdFunction = META_ESCAPE;
+        mr->rdParm[0] = nEscape;
+        mr->rdParm[1] = cbInput;
+        memcpy(&(mr->rdParm[2]), in_data, cbInput);
+        MFDRV_WriteRecord( dev, mr, len);
+        HeapFree(GetProcessHeap(), 0, mr);
+        return 1;
+    }
+    return 0;
+}
