@@ -21,7 +21,6 @@
 #include "task.h"
 
 extern FILE * yyin;
-int curr_frame = 0;
 
 static void issue_prompt(void);
 static void mode_command(int);
@@ -37,20 +36,19 @@ int yyerror(char *);
     int              integer;
     struct list_id   listing;
     struct expr *    expression;
-    struct datatype * type;
+    struct datatype* type;
 }
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
-%token tPROCESS tTHREAD tMODREF
-%token tEOL tSTRING tDEBUGSTR
+%token tPROCESS tTHREAD tMODREF tEOL
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS
 %token <string> tPATH
 %token <string> tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
 %token <integer> tNUM tFORMAT
-%token tSYMBOLFILE
+%token tSYMBOLFILE tRUN tATTACH tNOPROCESS
 
 %token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED 
 %token tSTRUCT tUNION tENUM
@@ -84,67 +82,67 @@ int yyerror(char *);
 
 %%
 
-input: line                    { issue_prompt(); }
-    | input line               { issue_prompt(); }
+input: line                   	{ issue_prompt(); }
+    | input line                { issue_prompt(); }
 
 line: command 
     | tEOL
-    | error tEOL               { yyerrok; }
+    | error tEOL               	{ yyerrok; }
 
 command:
-      tQUIT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_KILL; return 1; }
-    | tHELP tEOL               { DEBUG_Help(); }
-    | tHELP tINFO tEOL         { DEBUG_HelpInfo(); }
-    | tCONT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return 0; }
-    | tPASS tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_PASS; return 0; }
-    | tCONT tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return 0; }
-    | tSTEP tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-    | tNEXT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-    | tSTEP tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-    | tNEXT tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-    | tSTEPI tEOL              { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
-    | tNEXTI tEOL              { DEBUG_CurrThread->dbg_exec_count = 1; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
-    | tSTEPI tNUM tEOL         { DEBUG_CurrThread->dbg_exec_count = $2; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
-    | tNEXTI tNUM tEOL         { DEBUG_CurrThread->dbg_exec_count = $2; 
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
-    | tABORT tEOL              { kill(getpid(), SIGABRT); }
-    | tMODE tNUM tEOL          { mode_command($2); }
-    | tENABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, TRUE ); }
-    | tDISABLE tNUM tEOL       { DEBUG_EnableBreakpoint( $2, FALSE ); }
-    | tDELETE tBREAK tNUM tEOL { DEBUG_DelBreakpoint( $3 ); }
-    | tBACKTRACE tEOL	       { DEBUG_BackTrace(TRUE); }
-    | tUP tEOL		       { DEBUG_SetFrame( curr_frame + 1 );  }
-    | tUP tNUM tEOL	       { DEBUG_SetFrame( curr_frame + $2 ); }
-    | tDOWN tEOL	       { DEBUG_SetFrame( curr_frame - 1 );  }
-    | tDOWN tNUM tEOL	       { DEBUG_SetFrame( curr_frame - $2 ); }
-    | tFRAME tNUM tEOL         { DEBUG_SetFrame( $2 ); }
-    | tFINISH tEOL	       { DEBUG_CurrThread->dbg_exec_count = 0;
-				 DEBUG_CurrThread->dbg_exec_mode = EXEC_FINISH; return 0; }
-    | tSHOW tDIR tEOL	       { DEBUG_ShowDir(); }
-    | tDIR pathname tEOL       { DEBUG_AddPath( $2 ); }
-    | tDIR tEOL		       { DEBUG_NukePath(); }
-    | tDISPLAY tEOL	       { DEBUG_InfoDisplay(); }
-    | tDISPLAY expr tEOL       { DEBUG_AddDisplay($2, 1, 0); }
-    | tDISPLAY tFORMAT expr tEOL { DEBUG_AddDisplay($3, $2 >> 8, $2 & 0xff); }
-    | tDELETE tDISPLAY tNUM tEOL { DEBUG_DelDisplay( $3 ); }
-    | tDELETE tDISPLAY tEOL    { DEBUG_DelDisplay( -1 ); }
-    | tUNDISPLAY tNUM tEOL     { DEBUG_DelDisplay( $2 ); }
-    | tUNDISPLAY tEOL          { DEBUG_DelDisplay( -1 ); }
-    | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
-    | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
-    | tSYMBOLFILE pathname tEOL{ DEBUG_ReadSymbolTable($2); }
-    | tWHATIS expr_addr tEOL   { DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
+      tQUIT tEOL		{ return FALSE; }
+    | tHELP tEOL                { DEBUG_Help(); }
+    | tHELP tINFO tEOL          { DEBUG_HelpInfo(); }
+    | tCONT tEOL                { DEBUG_CurrThread->dbg_exec_count = 1; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return TRUE; }
+    | tPASS tEOL                { DEBUG_CurrThread->dbg_exec_count = 1; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_PASS; return TRUE; }
+    | tCONT tNUM tEOL         	{ DEBUG_CurrThread->dbg_exec_count = $2; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_CONT; return TRUE; }
+    | tSTEP tEOL               	{ DEBUG_CurrThread->dbg_exec_count = 1; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return TRUE; }
+    | tNEXT tEOL                { DEBUG_CurrThread->dbg_exec_count = 1; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return TRUE; }
+    | tSTEP tNUM tEOL           { DEBUG_CurrThread->dbg_exec_count = $2; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_INSTR; return TRUE; }
+    | tNEXT tNUM tEOL           { DEBUG_CurrThread->dbg_exec_count = $2; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEP_OVER; return TRUE; }
+    | tSTEPI tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return TRUE; }
+    | tNEXTI tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return TRUE; }
+    | tSTEPI tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
+			 	  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_INSTR; return TRUE; }
+    | tNEXTI tNUM tEOL          { DEBUG_CurrThread->dbg_exec_count = $2; 
+                                  DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return TRUE; }
+    | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
+    | tMODE tNUM tEOL          	{ mode_command($2); }
+    | tENABLE tNUM tEOL        	{ DEBUG_EnableBreakpoint( $2, TRUE ); }
+    | tDISABLE tNUM tEOL       	{ DEBUG_EnableBreakpoint( $2, FALSE ); }
+    | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
+    | tBACKTRACE tEOL	       	{ DEBUG_BackTrace(TRUE); }
+    | tUP tEOL		       	{ DEBUG_SetFrame( curr_frame + 1 );  }
+    | tUP tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame + $2 ); }
+    | tDOWN tEOL	       	{ DEBUG_SetFrame( curr_frame - 1 );  }
+    | tDOWN tNUM tEOL	       	{ DEBUG_SetFrame( curr_frame - $2 ); }
+    | tFRAME tNUM tEOL         	{ DEBUG_SetFrame( $2 ); }
+    | tFINISH tEOL	       	{ DEBUG_CurrThread->dbg_exec_count = 0;
+				  DEBUG_CurrThread->dbg_exec_mode = EXEC_FINISH; return TRUE; }
+    | tSHOW tDIR tEOL	       	{ DEBUG_ShowDir(); }
+    | tDIR pathname tEOL       	{ DEBUG_AddPath( $2 ); }
+    | tDIR tEOL		       	{ DEBUG_NukePath(); }
+    | tDISPLAY tEOL	       	{ DEBUG_InfoDisplay(); }
+    | tDISPLAY expr tEOL       	{ DEBUG_AddDisplay($2, 1, 0); }
+    | tDISPLAY tFORMAT expr tEOL{ DEBUG_AddDisplay($3, $2 >> 8, $2 & 0xff); }
+    | tDELETE tDISPLAY tNUM tEOL{ DEBUG_DelDisplay( $3 ); }
+    | tDELETE tDISPLAY tEOL    	{ DEBUG_DelDisplay( -1 ); }
+    | tUNDISPLAY tNUM tEOL     	{ DEBUG_DelDisplay( $2 ); }
+    | tUNDISPLAY tEOL          	{ DEBUG_DelDisplay( -1 ); }
+    | tCOND tNUM tEOL          	{ DEBUG_AddBPCondition($2, NULL); }
+    | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
+    | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2); }
+    | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
+    | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE); return TRUE; }
     | list_command
     | disassemble_command
     | set_command
@@ -154,6 +152,8 @@ command:
     | watch_command
     | info_command
     | walk_command
+    | run_command
+    | noprocess_state
 
 set_command:
       tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2, $4 );
@@ -180,83 +180,33 @@ list_arg:
     | pathname ':' tNUM	       { $$.sourcefile = $1; $$.line = $3; }
     | tIDENTIFIER	       { DEBUG_GetFuncInfo( & $$, NULL, $1); }
     | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
-    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 
-							0, & $$ ); 
- 					     DEBUG_FreeExprMem(); }
+    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ ); 
+                                 DEBUG_FreeExprMem(); }
 
 x_command:
-      tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); 
- 					     DEBUG_FreeExprMem(); }
+      tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); DEBUG_FreeExprMem(); }
     | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); 
- 					     DEBUG_FreeExprMem(); }
+ 				      DEBUG_FreeExprMem(); }
 
 print_command:
-      tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); 
- 					     DEBUG_FreeExprMem(); }
+      tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); DEBUG_FreeExprMem(); }
     | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); 
- 					     DEBUG_FreeExprMem(); }
+ 				      DEBUG_FreeExprMem(); }
 
 break_command:
-      tBREAK '*' expr_addr tEOL { DEBUG_AddBreakpoint( &$3, NULL ); 
- 					     DEBUG_FreeExprMem(); }
-    | tBREAK tIDENTIFIER tEOL  { DBG_VALUE value;
-				 if( DEBUG_GetSymbolValue($2, -1, &value, TRUE) )
-				   {
-				     DEBUG_AddBreakpoint( &value, NULL );
-				   }
-				 else
-				   {
-				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
-				   }
-				}
-    | tBREAK tIDENTIFIER ':' tNUM tEOL  { DBG_VALUE value;
-				 if( DEBUG_GetSymbolValue($2, $4, &value, TRUE) )
-				   {
-				     DEBUG_AddBreakpoint( &value, NULL );
-				   }
-				 else
-				   {
-				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
-				   }
-			       }
-    | tBREAK tNUM tEOL	       { struct name_hash *nh;
-				 DBG_VALUE value;
-				 DEBUG_GetCurrentAddress( &value.addr );
-				 DEBUG_FindNearestSymbol(&value.addr, TRUE,
-							 &nh, 0, NULL);
-				 if( nh != NULL )
-				   {
-				     DEBUG_GetLineNumberAddr(nh, $2, &value.addr, TRUE);
-				     value.type = NULL;
-				     value.cookie = DV_TARGET;
-				     DEBUG_AddBreakpoint( &value, NULL );
-				   }
-				 else
-				   {
-				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
-				   }
-                               }
-
-    | tBREAK tEOL              { DBG_VALUE value;
-				 DEBUG_GetCurrentAddress( &value.addr );
-				 value.type = NULL;
-				 value.cookie = DV_TARGET;
-                                 DEBUG_AddBreakpoint( &value, NULL );
-                               }
+      tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpoint( &$3, NULL ); DEBUG_FreeExprMem(); }
+    | tBREAK tIDENTIFIER tEOL  { DEBUG_AddBreakpointFromId($2, -1); }
+    | tBREAK tIDENTIFIER ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
+    | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }
+    | tBREAK tEOL              { DEBUG_AddBreakpointFromLineno(-1); }
 
 watch_command:
-      tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); 
- 					     DEBUG_FreeExprMem(); }
-    | tWATCH tIDENTIFIER tEOL  { DBG_VALUE value;
-				 if( DEBUG_GetSymbolValue($2, -1, &value, TRUE) )
-				     DEBUG_AddWatchpoint( &value, 1 );
-				 else
-				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
-				}
+      tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); DEBUG_FreeExprMem(); }
+    | tWATCH tIDENTIFIER tEOL   { DEBUG_AddWatchpointFromId($2, -1); }
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
-    | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); DEBUG_FreeExprMem(); }
+    | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
     | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); DEBUG_FreeExprMem(); }
     | tINFO tQUEUE expr_value tEOL    { DEBUG_DumpQueue( $3 ); DEBUG_FreeExprMem(); }
@@ -265,8 +215,7 @@ info_command:
     | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
     | tINFO tMAPS tEOL          { DEBUG_InfoVirtual(); }
-    | tINFO tWND expr_value tEOL      { DEBUG_InfoWindow( (HWND)$3 ); 
- 					     DEBUG_FreeExprMem(); }
+    | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
     | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
 
@@ -278,8 +227,15 @@ walk_command:
     | tWALK tWND tNUM tEOL      { DEBUG_WalkWindows( $3, 0 ); }
     | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
     | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
-    | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); }
+    | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); DEBUG_FreeExprMem(); }
 
+run_command:
+      tRUN tEOL                 { DEBUG_Run(NULL); }
+    | tRUN tSTRING tEOL         { DEBUG_Run($2); }
+
+noprocess_state:
+      tNOPROCESS tEOL		{} /* <CR> shall not barf anything */
+    | tNOPROCESS tSTRING tEOL	{ DEBUG_Printf(DBG_CHN_MESG, "No process loaded, cannot execute '%s'\n", $2); }
 
 type_cast: 
       '(' type_expr ')'		{ $$ = $2; }
@@ -292,7 +248,7 @@ type_expr:
     | tUNSIGNED tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "unsigned int"); }
     | tLONG tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(DT_BASIC, "long unsigned int"); }
     | tLONG tLONG tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "long long int"); }
-    | tLONG tLONG tUNSIGNED tINT { $$ = DEBUG_TypeCast(DT_BASIC, "long long unsigned int"); }
+    | tLONG tLONG tUNSIGNED tINT{ $$ = DEBUG_TypeCast(DT_BASIC, "long long unsigned int"); }
     | tSHORT tINT		{ $$ = DEBUG_TypeCast(DT_BASIC, "short int"); }
     | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(DT_BASIC, "short unsigned int"); }
     | tSIGNED tCHAR		{ $$ = DEBUG_TypeCast(DT_BASIC, "signed char"); }
@@ -424,136 +380,41 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
 }
 
 /***********************************************************************
- *           DEBUG_Main
+ *           DEBUG_Parser
  *
- * Debugger main loop.
+ * Debugger editline parser
  */
-BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
+BOOL	DEBUG_Parser(void)
 {
-    int newmode;
-    BOOL ret_ok;
-    char ch;
-
+    BOOL 	ret_ok;
+    BOOL	ret = TRUE;
 #ifdef YYDEBUG
     yydebug = 0;
 #endif
-
     yyin = stdin;
 
-    DEBUG_SuspendExecution();
-
-    if (!is_debug)
-    {
-#ifdef __i386__
-        if (DEBUG_IsSelectorSystem(DEBUG_context.SegCs))
-            DEBUG_Printf( DBG_CHN_MESG, " in 32-bit code (0x%08lx).\n", DEBUG_context.Eip );
-        else
-            DEBUG_Printf( DBG_CHN_MESG, " in 16-bit code (%04x:%04lx).\n",
-			  (WORD)DEBUG_context.SegCs, DEBUG_context.Eip );
-#else
-        DEBUG_Printf( DBG_CHN_MESG, " (0x%08lx).\n", GET_IP(&DEBUG_context) );
-#endif
-    }
-
-    DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
-
-    if (force || !(is_debug && DEBUG_ShouldContinue( code, 
-						     DEBUG_CurrThread->dbg_exec_mode, 
-						     &DEBUG_CurrThread->dbg_exec_count )))
-    {
-        DBG_ADDR addr;
-        DEBUG_GetCurrentAddress( &addr );
-
-#ifdef __i386__
-        switch (newmode = DEBUG_GetSelectorType(addr.seg)) {
-	case 16: case 32: break;
-	default: DEBUG_Printf(DBG_CHN_MESG, "Bad CS (%ld)\n", addr.seg); newmode = 32;
-	}
-#else
-        newmode = 32;
-#endif
-        if (newmode != DEBUG_CurrThread->dbg_mode)
-            DEBUG_Printf(DBG_CHN_MESG,"In %d bit mode.\n", DEBUG_CurrThread->dbg_mode = newmode);
-
-	DEBUG_DoDisplay();
-
-        if (is_debug || force)
-	{
-	  /*
-	   * Do a quiet backtrace so that we have an idea of what the situation
-	   * is WRT the source files.
-	   */
-	    DEBUG_BackTrace(FALSE);
-	}
-	else
-        {
-	    /* This is a real crash, dump some info */
-            DEBUG_InfoRegisters();
-            DEBUG_InfoStack();
-#ifdef __i386__
-            if (DEBUG_CurrThread->dbg_mode == 16)
-            {
-	        DEBUG_InfoSegments( DEBUG_context.SegDs >> 3, 1 );
-                if (DEBUG_context.SegEs != DEBUG_context.SegDs)
-                    DEBUG_InfoSegments( DEBUG_context.SegEs >> 3, 1 );
-            }
-            DEBUG_InfoSegments( DEBUG_context.SegFs >> 3, 1 );
-#endif
-            DEBUG_BackTrace(TRUE);
-        }
-
-	if (!is_debug ||
-            (DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_OVER) ||
-            (DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_INSTR))
-        {
-	    /* Show where we crashed */
-	    curr_frame = 0;
-	    DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
-	    DEBUG_Printf(DBG_CHN_MESG,":  ");
-	    DEBUG_Disasm( &addr, TRUE );
-	    DEBUG_Printf( DBG_CHN_MESG, "\n" );
-        }
-
-        ret_ok = 0;
-        do
-        {
-	    __TRY 
-	    {
-	       issue_prompt();
-	       if (yyparse()) {
-		  DEBUG_CurrThread->dbg_exec_mode = EXEC_KILL;
-		  ret_ok = TRUE;
-	       } else {
-		  flush_symbols();
-
-		  DEBUG_GetCurrentAddress( &addr );
-		  ret_ok = DEBUG_ValidateRegisters() && 
-		     DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(&addr), &ch, 1);
-	       }
-	    } 
-	    __EXCEPT(wine_dbg_cmd)
-	    {
-	       ret_ok = FALSE;
-	    }
-	    __ENDTRY;
-
-        } while (!ret_ok);
-    }
-
-    DEBUG_CurrThread->dbg_exec_mode = DEBUG_RestartExecution( DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count );
-    /*
-     * This will have gotten absorbed into the breakpoint info
-     * if it was used.  Otherwise it would have been ignored.
-     * In any case, we don't mess with it any more.
-     */
-    if (DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT || DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS)
-	DEBUG_CurrThread->dbg_exec_count = 0;
-    
-    return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE;
+    ret_ok = FALSE;
+    do {
+       __TRY {
+	  issue_prompt();
+	  if ((ret = yyparse())) {
+	     DEBUG_FlushSymbols();
+	     
+	     ret_ok = (DEBUG_CurrThread) ? DEBUG_ValidateRegisters() : TRUE;
+	  } else {
+	     ret_ok = TRUE;
+	  }
+       } __EXCEPT(wine_dbg_cmd) {
+	  ret_ok = FALSE;
+       }
+       __ENDTRY;
+       
+    } while (!ret_ok);
+    return ret;
 }
 
 int yyerror(char* s)
 {
-   DEBUG_Printf(DBG_CHN_MESG,"%s\n", s);
+   DEBUG_Printf(DBG_CHN_MESG, "%s\n", s);
    return 0;
 }

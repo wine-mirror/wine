@@ -112,7 +112,6 @@ enum exec_mode
 				 * and set breakpoint there - not at the
 				 * instr just after the call.
 				 */
-    EXEC_KILL			/* terminate debugging session */
 };
 
 #define	DBG_BREAK 	0
@@ -224,24 +223,16 @@ typedef struct {
 
 #define	OFFSET_OF(__c,__f)		((int)(((char*)&(((__c*)0)->__f))-((char*)0)))
 
-
-
-#ifdef __i386__
-# define GET_IP(context) ((DWORD)(context)->Eip)
-#endif
-#ifdef __sparc__
-# define GET_IP(context) ((DWORD)(context)->pc)
-#endif
-
-#if !defined(GET_IP)
-# error You must define GET_IP for this CPU
-#endif
-
+  /* from winelib.so */
+extern void DEBUG_ExternalDebugger(void);
 
   /* debugger/break.c */
 extern void DEBUG_SetBreakpoints( BOOL set );
 extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr, BOOL (*func)(void) );
+extern void DEBUG_AddBreakpointFromId( const char *name, int lineno );
+extern void DEBUG_AddBreakpointFromLineno( int lineno );
 extern void DEBUG_AddWatchpoint( const DBG_VALUE *addr, int is_write );
+extern void DEBUG_AddWatchpointFromId( const char *name, int lineno );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
@@ -250,17 +241,17 @@ extern BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
 extern void DEBUG_SuspendExecution( void );
 extern enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count );
 extern BOOL DEBUG_IsFctReturn(void);
-extern int DEBUG_AddBPCondition(int bpnum, struct expr * exp);
+extern int  DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 
   /* debugger/db_disasm.c */
 extern void DEBUG_Disasm( DBG_ADDR *addr, int display );
 
   /* debugger/dbg.y */
-extern BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code );
+extern BOOL DEBUG_Parser(void);
 extern void DEBUG_Exit( DWORD );
 
   /* debugger/debug.l */
-extern void flush_symbols(void);
+extern void DEBUG_FlushSymbols(void);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
@@ -293,9 +284,6 @@ extern int DEBUG_DelDisplay(int displaynum);
 extern struct expr * DEBUG_CloneExpr(const struct expr * exp);
 extern int DEBUG_FreeExpr(struct expr * exp);
 extern int DEBUG_DisplayExpr(const struct expr * exp);
-
-  /* debugger/external.c */
-extern void DEBUG_ExternalDebugger(void);
 
   /* debugger/hash.c */
 extern struct name_hash * DEBUG_AddSymbol( const char *name, 
@@ -378,6 +366,7 @@ extern DBG_MODULE* DEBUG_AddModule(const char* name, int type,
 				   void* mod_addr, HMODULE hmod);
 extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, int type);
 extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, int type);
+extern DBG_MODULE* DEBUG_GetProcessMainModule(DBG_PROCESS* process);
 extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, const char* name);
 extern DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, const char* name);
 extern void DEBUG_InfoShare(void);
@@ -456,8 +445,11 @@ extern int	DEBUG_Printf(int chn, const char* format, ...) __attribute__((format 
 extern int	DEBUG_Printf(int chn, const char* format, ...);
 #endif
 extern DBG_INTVAR*	DEBUG_GetIntVar(const char*);
+extern BOOL DEBUG_Attach(DWORD pid, BOOL cofe);
+extern void DEBUG_Run(const char* args);
+extern int curr_frame;
 
-  /* Choose your allocator! */
+/* Choose your allocator! */
 #if 1
 /* this one is libc's fast one */
 extern void*	DEBUG_XMalloc(size_t size);

@@ -10,9 +10,7 @@ point of view and processes/threads from a Windows point of view.
 
 Each Windows' thread is implemented as a Unix process (under Linux
 using the clone syscall), meaning that all threads of a same Windows'
-process share the same (unix) address space (currently, one of wine
-limitation is that several windows processes run in the same (unix)
-address space. it's being worked on).
+process share the same (unix) address space.
 
 In the following:
 + W-process means a process in Windows' terminology
@@ -69,22 +67,13 @@ winedbg "hl.exe -windowed"
 II.2 Attaching
 --------------
 WineDbg can also launched without any command line argument:
-- if a wineserver is running, WineDbg lists the running W-processes
-(and their wpid:s), and let you pick up the wpid of the W-process you
-want to debug.
+- WineDbg is started without any attached process. You can get a list
+of running W-processes (and their wpid:s) using 'walk process'
+command, and then, with the attach command, pick up the wpid of the
+W-process you want to debug.
 
 This is (for now) a neat feature for the following reasons: 
 * debug an already started application
-+ launching WineDbg this way let WineDbg and the debugged process run
-in a *separate address space* (launching with 'winedbg myprog.exe' 
-doesn't), and most of the deadlocks seen when running the debugger
-disappear (because there is no crit sect shared by both
-processes). That's the best (but far from being acceptable) current
-way to debug an application
-
-This last advantage shall disappear when address space separation is
-in place. At that time, only the ability to debug an already started
-process will remain.
 
 II.3 On exception
 -----------------
@@ -188,6 +177,9 @@ modifications to those options are automatically saved when WineDbg
 terminates).
 
 Here's the list of all options:
+
+III.2.1 Controling when the debugger is entered
+
 BreakAllThreadsStartup  set to TRUE if at all threads start-up the
 			debugger stops 
                         set to FALSE if only at the first thread
@@ -204,11 +196,30 @@ BreakOnAttach,		set to TRUE if when WineDbg attaches to an
 			context	of an exception event (the next event 
 			which is the exception event is of course
 			relevant), that option is likely to be FALSE.
+BreakOnFirstChance	an exception can generate two debug events.
+			The first one is passed to the debugger (known
+			as a first chance) just after the
+			exception. The debugger can then decides
+			either to resume execution (see winedbg's cont
+			command) or pass the exception up to the
+			exception handler chain in the program (if it
+			exists) (winedbg implements this thru the pass
+			command). If none of the exception handlers
+			takes care of the exception, the exception
+			event is sent again to the debugger (known as
+			last chance exception). You cannot pass on a
+			last exception. When the BreakOnFirstChance
+			exception is TRUE, then winedbg is entered for
+			both  first and last chance execptions (to
+			FALSE, it's only entered for last chance exceptions).
+
+III.2.1 Output handling
 
 ConChannelMask          mask of active debugger output channels on
 			console 
 StdChannelMask          mask of active debugger output channels on
 			stderr 
+
 UseXTerm                set to TRUE if the debugger uses its own xterm
 			window for console input/output 
                         set to FALSE is the debugger uses the current
@@ -241,6 +252,17 @@ example >& shell redirect command), you'll get in that file both
 outputs. It may be interesting to look in the relay trace for specific
 values which the process segv:ed on.
 
+III.2.3 Context information
+
+ThreadId		ID of the W-thread currently examined by the
+			debugger
+ProcessId		ID of the W-thread currently examined by the
+			debugger
+<registers>		All CPU registers are also available
+
+The ThreadId and ProcessId variables can be handy to set conditional
+breakpoints on a given thread or process.
+
 IV WineDbg commands
 ===================
 
@@ -248,6 +270,9 @@ IV.1 Misc
 ---------
 abort		aborts the debugger
 quit		exits the debugger
+
+attach N	attach to a W-process (N is its ID). IDs can be
+		obtained thru walk process command
 
 help		prints some help on the commands
 help info	prints some help on info commands
@@ -417,8 +442,7 @@ V.2 Using other Windows debuggers
 You can use any Windows' debugging API compliant debugger with
 Wine. Some reports have been made of success with VisualStudio
 debugger (in remote mode, only the hub runs in Wine).
-GoVest fully runs in Wine, but is plagued with the same address space
-issues as WineDbg as stated in II.2
+GoVest fully runs in Wine.
 
 V.3 Main differences between winedbg and regular Unix debuggers
 ---------------------------------------------------------------
@@ -444,6 +468,5 @@ VI Limitations
 
 16 bit processes are not supported (but calls to 16 bit code in 32 bit 
 applications is).
-Lack of address space separation exhibits some deadlocks.
 
-Last updated: 5/21/2000 by ericP
+Last updated: 6/14/2000 by ericP

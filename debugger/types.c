@@ -897,7 +897,11 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 	    }
 	}
       break;
+    case DT_FUNC:
+      DEBUG_Printf(DBG_CHN_MESG, "Function at ???\n");
+      break; 
     default:
+      DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%d)\n", value->type->type);
       assert(FALSE);
       break;
     }

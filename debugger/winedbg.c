@@ -28,6 +28,8 @@ DBG_THREAD*	DEBUG_CurrThread = NULL;
 DWORD		DEBUG_CurrTid;
 DWORD		DEBUG_CurrPid;
 CONTEXT		DEBUG_context;
+int 		curr_frame = 0;
+static char*	DEBUG_LastCmdLine = NULL;
 
 static DBG_PROCESS* proc = NULL;
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
@@ -164,6 +166,7 @@ static	void			DEBUG_DelProcess(DBG_PROCESS* p)
     if (p->prev) p->prev->next = p->next;
     if (p->next) p->next->prev = p->prev;
     if (p == proc) proc = p->next;
+    if (p == DEBUG_CurrProcess) DEBUG_CurrProcess = NULL;
     DBG_free(p);
 }
 
@@ -253,17 +256,120 @@ static	void			DEBUG_DelThread(DBG_THREAD* t)
     if (t->next) t->next->prev = t->prev;
     if (t == t->process->threads) t->process->threads = t->next;
     t->process->num_threads--;
+    if (t == DEBUG_CurrThread) DEBUG_CurrThread = NULL;
     DBG_free(t);
 }
 
-static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force )
+BOOL				DEBUG_Attach(DWORD pid, BOOL cofe)
+{
+    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) return FALSE;
+
+    if (!DebugActiveProcess(pid)) {
+	DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
+		     pid, GetLastError());
+	return FALSE;
+    }
+    DEBUG_CurrProcess->continue_on_first_exception = cofe;
+    return TRUE;
+}
+
+static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
+{
+    DBG_ADDR	addr;
+    int		newmode;
+
+    DEBUG_GetCurrentAddress(&addr);
+    DEBUG_SuspendExecution();
+
+    if (!is_debug) {
+#ifdef __i386__
+        if (DEBUG_IsSelectorSystem(DEBUG_context.SegCs))
+            DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (0x%08lx).\n", addr.off);
+        else
+            DEBUG_Printf(DBG_CHN_MESG, " in 16-bit code (%04x:%04lx).\n",
+			 LOWORD(addr.seg), addr.off);
+#else
+        DEBUG_Printf(DBG_CHN_MESG, " (0x%08lx).\n", addr.off);
+#endif
+    }
+
+    DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
+
+    if (!force && is_debug && 
+	DEBUG_ShouldContinue(code, 
+			     DEBUG_CurrThread->dbg_exec_mode, 
+			     &DEBUG_CurrThread->dbg_exec_count))
+	return FALSE;
+
+#ifdef __i386__
+    switch (newmode = DEBUG_GetSelectorType(addr.seg)) {
+    case 16: case 32: break;
+    default: DEBUG_Printf(DBG_CHN_MESG, "Bad CS (%ld)\n", addr.seg); newmode = 32;
+    }
+#else
+    newmode = 32;
+#endif
+    if (newmode != DEBUG_CurrThread->dbg_mode)
+	DEBUG_Printf(DBG_CHN_MESG,"In %d bit mode.\n", DEBUG_CurrThread->dbg_mode = newmode);
+
+    DEBUG_DoDisplay();
+
+    if (is_debug || force) {
+	/*
+	 * Do a quiet backtrace so that we have an idea of what the situation
+	 * is WRT the source files.
+	 */
+	DEBUG_BackTrace(FALSE);
+    } else {
+	/* This is a real crash, dump some info */
+	DEBUG_InfoRegisters();
+	DEBUG_InfoStack();
+#ifdef __i386__
+	if (DEBUG_CurrThread->dbg_mode == 16) {
+	    DEBUG_InfoSegments(DEBUG_context.SegDs >> 3, 1);
+	    if (DEBUG_context.SegEs != DEBUG_context.SegDs)
+		DEBUG_InfoSegments(DEBUG_context.SegEs >> 3, 1);
+	}
+	DEBUG_InfoSegments(DEBUG_context.SegFs >> 3, 1);
+#endif
+	DEBUG_BackTrace(TRUE);
+    }
+
+    if (!is_debug ||
+	(DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_OVER) ||
+	(DEBUG_CurrThread->dbg_exec_mode == EXEC_STEPI_INSTR)) {
+	/* Show where we crashed */
+	curr_frame = 0;
+	DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
+	DEBUG_Printf(DBG_CHN_MESG,":  ");
+	DEBUG_Disasm( &addr, TRUE );
+	DEBUG_Printf( DBG_CHN_MESG, "\n" );
+    }
+    return TRUE;
+}
+
+static  DWORD	DEBUG_ExceptionEpilog(void)
+{
+    DEBUG_CurrThread->dbg_exec_mode = DEBUG_RestartExecution(DEBUG_CurrThread->dbg_exec_mode, 
+							     DEBUG_CurrThread->dbg_exec_count);
+    /*
+     * This will have gotten absorbed into the breakpoint info
+     * if it was used.  Otherwise it would have been ignored.
+     * In any case, we don't mess with it any more.
+     */
+    if (DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT || DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS)
+	DEBUG_CurrThread->dbg_exec_count = 0;
+    
+    return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE;
+}
+
+static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force, LPDWORD cont)
 {
     BOOL	is_debug = FALSE;
-    BOOL	ret;
+    BOOL	ret = TRUE;
 
-    /* FIXME: need for a configuration var ? */
-    /* pass to app first ??? */
-    /* if (first_chance && !force) return 0; */
+    *cont = DBG_CONTINUE;
+    if (first_chance && !force && !DBG_IVAR(BreakOnFirstChance)) return TRUE;
 
     switch (rec->ExceptionCode)
     {
@@ -276,50 +382,50 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
     if (!is_debug)
     {
         /* print some infos */
-        DEBUG_Printf( DBG_CHN_MESG, "%s: ",
-		      first_chance ? "First chance exception" : "Unhandled exception" );
+        DEBUG_Printf(DBG_CHN_MESG, "%s: ",
+		      first_chance ? "First chance exception" : "Unhandled exception");
         switch (rec->ExceptionCode)
         {
         case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            DEBUG_Printf( DBG_CHN_MESG, "divide by zero" );
+            DEBUG_Printf(DBG_CHN_MESG, "divide by zero");
             break;
         case EXCEPTION_INT_OVERFLOW:
-            DEBUG_Printf( DBG_CHN_MESG, "overflow" );
+            DEBUG_Printf(DBG_CHN_MESG, "overflow");
             break;
         case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            DEBUG_Printf( DBG_CHN_MESG, "array bounds " );
+            DEBUG_Printf(DBG_CHN_MESG, "array bounds ");
             break;
         case EXCEPTION_ILLEGAL_INSTRUCTION:
-            DEBUG_Printf( DBG_CHN_MESG, "illegal instruction" );
+            DEBUG_Printf(DBG_CHN_MESG, "illegal instruction");
             break;
         case EXCEPTION_STACK_OVERFLOW:
-            DEBUG_Printf( DBG_CHN_MESG, "stack overflow" );
+            DEBUG_Printf(DBG_CHN_MESG, "stack overflow");
             break;
         case EXCEPTION_PRIV_INSTRUCTION:
-            DEBUG_Printf( DBG_CHN_MESG, "priviledged instruction" );
+            DEBUG_Printf(DBG_CHN_MESG, "priviledged instruction");
             break;
         case EXCEPTION_ACCESS_VIOLATION:
             if (rec->NumberParameters == 2)
-                DEBUG_Printf( DBG_CHN_MESG, "page fault on %s access to 0x%08lx", 
+                DEBUG_Printf(DBG_CHN_MESG, "page fault on %s access to 0x%08lx", 
 			      rec->ExceptionInformation[0] ? "write" : "read",
-			      rec->ExceptionInformation[1] );
+			      rec->ExceptionInformation[1]);
             else
-                DEBUG_Printf( DBG_CHN_MESG, "page fault" );
+                DEBUG_Printf(DBG_CHN_MESG, "page fault");
             break;
         case EXCEPTION_DATATYPE_MISALIGNMENT:
-            DEBUG_Printf( DBG_CHN_MESG, "Alignment" );
+            DEBUG_Printf(DBG_CHN_MESG, "Alignment");
             break;
         case CONTROL_C_EXIT:
-            DEBUG_Printf( DBG_CHN_MESG, "^C" );
+            DEBUG_Printf(DBG_CHN_MESG, "^C");
             break;
         case EXCEPTION_CRITICAL_SECTION_WAIT:
-            DEBUG_Printf( DBG_CHN_MESG, "critical section %08lx wait failed", 
-			  rec->ExceptionInformation[0] );
+            DEBUG_Printf(DBG_CHN_MESG, "critical section %08lx wait failed", 
+			  rec->ExceptionInformation[0]);
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
-		return DBG_CONTINUE;
+		return TRUE;
             break;
         default:
-            DEBUG_Printf( DBG_CHN_MESG, "%08lx", rec->ExceptionCode );
+            DEBUG_Printf(DBG_CHN_MESG, "%08lx", rec->ExceptionCode);
             break;
         }
 	DEBUG_Printf(DBG_CHN_MESG, "\n");
@@ -334,7 +440,15 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
 #endif
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 
-    ret = DEBUG_Main( is_debug, force, rec->ExceptionCode );
+    if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
+	for (;;) {
+	    ret = DEBUG_Parser();
+	    if (!ret || DEBUG_CurrThread->dbg_exec_mode != EXEC_PASS || first_chance)
+		break;
+	    DEBUG_Printf(DBG_CHN_MESG, "Cannot pass on last chance exception. You must use cont\n");
+	}
+    }
+    *cont = DEBUG_ExceptionEpilog();
 
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Exiting debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
@@ -352,7 +466,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 {
     char		buffer[256];
     BOOL		ret;
-    
+
     DEBUG_CurrPid = de->dwProcessId;
     DEBUG_CurrTid = de->dwThreadId;
 
@@ -400,12 +514,11 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 		break;
 	    }
 	    
-	    *cont = DEBUG_HandleException(&de->u.Exception.ExceptionRecord, 
-					  de->u.Exception.dwFirstChance, 
-					  DEBUG_CurrThread->wait_for_first_exception);
-	    if (DEBUG_CurrThread->dbg_exec_mode == EXEC_KILL) {
-		ret = FALSE;
-	    } else {
+	    ret = DEBUG_HandleException(&de->u.Exception.ExceptionRecord, 
+					de->u.Exception.dwFirstChance, 
+					DEBUG_CurrThread->wait_for_first_exception,
+					cont);
+	    if (DEBUG_CurrThread) {
 		DEBUG_CurrThread->wait_for_first_exception = 0;
 		SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
 	    }
@@ -533,7 +646,8 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    /* kill last thread */
 	    DEBUG_DelThread(DEBUG_CurrProcess->threads);
 	    DEBUG_DelProcess(DEBUG_CurrProcess);
-	    ret = FALSE;
+
+	    DEBUG_Printf(DBG_CHN_MESG, "Process of pid=%08lx has terminated\n", DEBUG_CurrPid);
 	    break;
 	    
 	case LOAD_DLL_DEBUG_EVENT:
@@ -591,31 +705,73 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	ret = TRUE;
     }
     __ENDTRY;
-
     return ret;
 }
 
-static	DWORD	DEBUG_MainLoop(DWORD pid)
+static	DWORD	DEBUG_MainLoop(void)
 {
     DEBUG_EVENT		de;
     DWORD		cont;
-    BOOL		ret = TRUE;
+    BOOL		ret;
 
-    DEBUG_Printf(DBG_CHN_MESG, " on pid %ld\n", pid);
+    DEBUG_Printf(DBG_CHN_MESG, " on pid %ld\n", DEBUG_CurrPid);
     
-    while (ret && WaitForDebugEvent(&de, INFINITE)) {
-	ret = DEBUG_HandleDebugEvent(&de, &cont);
-	ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
-    }
+    for (ret = TRUE; ret; ) {
+	/* wait until we get at least one loaded process */
+	while (!proc && (ret = DEBUG_Parser()));
+	if (!ret) break;
+
+	while (ret && WaitForDebugEvent(&de, INFINITE)) {
+	    ret = DEBUG_HandleDebugEvent(&de, &cont);
+	    ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
+	}
+    };
     
-    DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %ld\n", pid);
+    DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %ld\n", DEBUG_CurrPid);
 
     return 0;
 }
 
+static	BOOL	DEBUG_Start(LPSTR cmdLine)
+{
+    PROCESS_INFORMATION	info;
+    STARTUPINFOA	startup;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    
+    if (!CreateProcess(NULL, cmdLine, NULL, NULL, 
+		       FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info)) {
+	DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", cmdLine);
+	return FALSE;
+    }
+    DEBUG_CurrPid = info.dwProcessId;
+    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(DEBUG_CurrPid, 0))) return FALSE;
+
+    return TRUE;
+}
+
+void	DEBUG_Run(const char* args)
+{
+    DBG_MODULE*	wmod = DEBUG_GetProcessMainModule(DEBUG_CurrProcess);
+    const char* pgm = (wmod) ? wmod->module_name : "none";
+
+    if (args) {
+	DEBUG_Printf(DBG_CHN_MESG, "Run (%s) with '%s'\n", pgm, args);
+    } else {
+	if (!DEBUG_LastCmdLine) {
+	    DEBUG_Printf(DBG_CHN_MESG, "Cannot find previously used command line.\n");
+	    return;
+	}
+	DEBUG_Start(DEBUG_LastCmdLine);
+    }
+}
+
 int DEBUG_main(int argc, char** argv)
 {
-    DWORD	pid = 0, retv = 0;
+    DWORD	retv = 0;
 
 #ifdef DBG_need_heap
     /* Initialize the debugger heap. */
@@ -641,66 +797,55 @@ int DEBUG_main(int argc, char** argv)
     }
 
     DEBUG_Printf(DBG_CHN_MESG, "Starting WineDbg... ");
+
     if (argc == 3) {
 	HANDLE	hEvent;
+	DWORD	pid;
 
 	if ((pid = atoi(argv[1])) != 0 && (hEvent = atoi(argv[2])) != 0) {
-	    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) goto leave;
-	    DEBUG_CurrProcess->continue_on_first_exception = TRUE;
+	    BOOL	ret = DEBUG_Attach(pid, TRUE);
 
-	    if (!DebugActiveProcess(pid)) {
-		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
-			     pid, GetLastError());
-		SetEvent(hEvent);
-		goto leave;
-	    }
 	    SetEvent(hEvent);
-	} else {
-	    pid = 0;
-	}
-    }
-    if (argc == 1) {
-	LPSTR	org, ptr;
-
-	DEBUG_Printf(DBG_CHN_MESG, "\n");
-	DEBUG_WalkProcess();
-	pid = strtol(org = readline("Enter pid to debug: "), &ptr, 0);
-	if (pid && ptr && ptr != org && *ptr == '\0') {
-	    if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0))) goto leave;
-
-	    if (!DebugActiveProcess(pid)) {
+	    if (!ret) {
 		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
-			     pid, GetLastError());
+			     DEBUG_CurrPid, GetLastError());
 		goto leave;
 	    }
-	} else {
-	    pid = 0;
+	    DEBUG_CurrPid = pid;
 	}
     }
 	
-    if (pid == 0) {
-	PROCESS_INFORMATION	info;
-	STARTUPINFOA		startup;
+    if (DEBUG_CurrPid == 0 && argc > 1) {
+	int	i, len;
+	LPSTR	cmdLine;
+		
+	if (!(cmdLine = DBG_alloc(len = 1))) goto oom_leave;
+	cmdLine[0] = '\0';
 
-	memset(&startup, 0, sizeof(startup));
-	startup.cb = sizeof(startup);
-	startup.dwFlags = STARTF_USESHOWWINDOW;
-	startup.wShowWindow = SW_SHOWNORMAL;
+	for (i = 1; i < argc; i++) {
+	    len += strlen(argv[i]) + 1;
+	    if (!(cmdLine = DBG_realloc(cmdLine, len))) goto oom_leave;
+	    strcat(cmdLine, argv[i]);
+	    cmdLine[len - 2] = ' ';
+	    cmdLine[len - 1] = '\0';
+	}
 
-	if (!CreateProcess(NULL, argv[1], NULL, NULL, 
-			   FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info)) {
-	    DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", argv[1]);
+	if (!DEBUG_Start(cmdLine)) {
+	    DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", cmdLine);
 	    goto leave;
 	}
-	pid = info.dwProcessId;
+	DBG_free(DEBUG_LastCmdLine);
+	DEBUG_LastCmdLine = cmdLine;
     }
 
-    if (pid) retv = DEBUG_MainLoop(pid);
+    retv = DEBUG_MainLoop();
  leave:
     /* saves modified variables */
     DEBUG_IntVarsRW(FALSE);
 
     return retv;
+
+ oom_leave:
+    DEBUG_Printf(DBG_CHN_MESG, "Out of memory\n");
+    goto leave;
 }
-
-

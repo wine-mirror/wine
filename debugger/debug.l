@@ -2,6 +2,7 @@
  * Lexical scanner for command line parsing
  *
  * Copyright 1993 Eric Youngdale
+ *           2000 Eric Pouech
  */
 
 %{
@@ -10,12 +11,6 @@
 #include "debugger.h"
 #include "y.tab.h"
 
-#ifdef DBG_need_heap
-#define malloc(x) DBG_alloc(x)
-#define realloc(x,y) DBG_realloc(x,y)
-#define free(x) DBG_free(x)
-#endif
-
 #ifndef DONT_USE_READLINE
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
@@ -23,7 +18,7 @@
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
 
 static int dbg_read(char * buf, int size);
-static char * make_symbol(char *);
+static char * DEBUG_MakeSymbol(char *);
 
 #endif  /* DONT_USE_READLINE */
 
@@ -47,40 +42,42 @@ STRING     \"[^\n"]+\"
 %s WALK_CMD
 %s SHOW_CMD
 %s NOCMD
-%s DEBUGSTR
 
+%x ASTRING_EXPECTED
+%x NOPROCESS
 %%
+                                        /* set to special state when no process is loaded. */
+                                        if (!DEBUG_CurrProcess && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
 
-\n		{ BEGIN(0); syntax_error = 0; 
-		  return tEOL; } /*Indicates end of command.  Reset state. */
+<*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; } 
+                                        /* Indicates end of command. Reset state. */
 
-"||"		{ return OP_LOR; }
-"&&"		{ return OP_LAND; }
-"=="		{ return OP_EQ; }
-"!="		{ return OP_NE; }
-"<="		{ return OP_LE; }
-">="		{ return OP_GE; }
-"<<"		{ return OP_SHL; }
-">>"		{ return OP_SHR; }
-"->"		{ return OP_DRF; }
-[-+<=>|&^()*/%:!~,\.]	{ return *yytext; }
-"["		{ return *yytext; }
-"]"		{ return *yytext; }
+"||"					{ return OP_LOR; }
+"&&"					{ return OP_LAND; }
+"=="					{ return OP_EQ; }
+"!="					{ return OP_NE; }
+"<="					{ return OP_LE; }
+">="					{ return OP_GE; }
+"<<"					{ return OP_SHL; }
+">>"					{ return OP_SHR; }
+"->"					{ return OP_DRF; }
+[-+<=>|&^()*/%:!~,\.]			{ return *yytext; }
+"["					{ return *yytext; }
+"]"					{ return *yytext; }
 
-"0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval.integer); return tNUM; }
-{DIGIT}+             { sscanf(yytext, "%d", &yylval.integer); return tNUM; }
+"0x"{HEXDIGIT}+      			{ sscanf(yytext, "%x", &yylval.integer); return tNUM; }
+{DIGIT}+             			{ sscanf(yytext, "%d", &yylval.integer); return tNUM; }
 
+<FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}	{ char* last;
+                                          yylval.integer = strtol( yytext+1, &last, NULL ) << 8;
+                                          yylval.integer |= *last;
+                                          return tFORMAT; }
 
-<FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}  { char * last;
-                       yylval.integer = strtol( yytext+1, &last, NULL );
-                       yylval.integer = (yylval.integer << 8) | *last;
-                       return tFORMAT; }
+<FORMAT_EXPECTED>"/"{FORMAT}          	{ yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-
-<FORMAT_EXPECTED>"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
-
-{STRING} { yylval.string = make_symbol(yytext); return tSTRING; }
-<DEBUGSTR>[a-z+\-,]* { yylval.string = yytext; return tDEBUGSTR; }
+{STRING} 				{ yylval.string = DEBUG_MakeSymbol(yytext); return tSTRING; }
+<ASTRING_EXPECTED>[^\n]+                { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
+                                          yylval.string = DEBUG_MakeSymbol(p); return tSTRING; }
 
 <INITIAL>info|inf|in			{ BEGIN(INFO_CMD); return tINFO; }
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
@@ -93,9 +90,9 @@ STRING     \"[^\n"]+\"
 <INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }
 <INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
 <INITIAL>delete|delet|dele|del		{ BEGIN(DEL_CMD); return tDELETE; }
-<INITIAL>quit|qui|qu|q			{ BEGIN(NOCMD); return tQUIT; }
+<INITIAL,NOPROCESS>quit|qui|qu|q	{ BEGIN(NOCMD); return tQUIT; }
 <INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
-<INITIAL>walk|w				{ BEGIN(WALK_CMD); return tWALK; }
+<INITIAL,NOPROCESS>walk|w		{ BEGIN(WALK_CMD); return tWALK; }
 <INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }
 <INITIAL>help|hel|he|"?"		{ BEGIN(HELP_CMD); return tHELP; }
 
@@ -121,11 +118,12 @@ STRING     \"[^\n"]+\"
 <INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
 <INITIAL>watch|watc|wat			{ BEGIN(PATH_EXPECTED); return tWATCH; }
 <INITIAL>whatis|whati|what		{ BEGIN(PATH_EXPECTED); return tWHATIS; }
-
+<INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
+<NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
 <INFO_CMD,WALK_CMD>class|clas|cla       { return tCLASS; }
-<INFO_CMD,WALK_CMD>module|modul|modu|mod  { return tMODULE; }
+<INFO_CMD,WALK_CMD>module|modul|modu|mod { return tMODULE; }
 <INFO_CMD,WALK_CMD>queue|queu|que	{ return tQUEUE; }
 <INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
 <INFO_CMD,WALK_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
@@ -138,7 +136,7 @@ STRING     \"[^\n"]+\"
 <HELP_CMD>info|inf|in                   { return tINFO; }
 
 <INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir { 
-			BEGIN(PATH_EXPECTED); return tDIR; }
+			                  BEGIN(PATH_EXPECTED); return tDIR; }
 
 char					{ return tCHAR; }
 short					{ return tSHORT; }
@@ -152,20 +150,18 @@ struct					{ return tSTRUCT; }
 union					{ return tUNION; }
 enum					{ return tENUM; }
 
-{IDENTIFIER}	{ yylval.string = make_symbol(yytext); return tIDENTIFIER; }
-"$"{IDENTIFIER}	{ yylval.string = make_symbol(yytext+1); return tINTVAR; }
+{IDENTIFIER}				{ yylval.string = DEBUG_MakeSymbol(yytext); return tIDENTIFIER; }
+"$"{IDENTIFIER}				{ yylval.string = DEBUG_MakeSymbol(yytext+1); return tINTVAR; }
 
-<PATH_EXPECTED>{PATHNAME}	{ yylval.string = make_symbol(yytext); return tPATH; }
+<PATH_EXPECTED>{PATHNAME}		{ yylval.string = DEBUG_MakeSymbol(yytext); return tPATH; }
 
-[ \t]+        /* Eat up whitespace */
+<*>[ \t]+                               /* Eat up whitespace */	
 
-.		{ if (syntax_error == 0)
-                  {
-		    syntax_error ++; DEBUG_Printf(DBG_CHN_MESG, "Syntax Error\n");
-                  }
-		}
-
-
+<NOPROCESS>.                            { BEGIN(ASTRING_EXPECTED); yyless(0); return tNOPROCESS;}
+<*>.                                    { if (syntax_error == 0) {
+                                             syntax_error++; 
+					     DEBUG_Printf(DBG_CHN_MESG, "Syntax Error (%s)\n", yytext); }
+		                        }
 %%
 
 #ifndef yywrap
@@ -206,7 +202,7 @@ static int dbg_read(char * buf, int size)
     
     for (;;)
     {
-        flush_symbols();
+        DEBUG_FlushSymbols();
         line = readline ("Wine-dbg>");
         if (!line)
         {
@@ -226,7 +222,7 @@ static int dbg_read(char * buf, int size)
             add_history( line );
             strncpy( last_line, line, 255 );
             last_line[255] = '\0'; 
-       }
+        }
 
         free( line );
         line = last_line;
@@ -249,14 +245,15 @@ static int dbg_read(char * buf, int size)
 static char *local_symbols[30];
 static int next_symbol;
 
-static char * make_symbol(char * symbol)
+static char * DEBUG_MakeSymbol(char * symbol)
 {
-        return local_symbols[next_symbol++] = DBG_strdup(symbol);
+        assert(0 <= next_symbol && next_symbol < (sizeof(local_symbols) / sizeof(local_symbols[0])));
+	return local_symbols[next_symbol++] = DBG_strdup(symbol);
 }
 
-void flush_symbols(void)
+void DEBUG_FlushSymbols(void)
 {
-	while(--next_symbol>= 0) DBG_free(local_symbols[next_symbol]);
+	while(--next_symbol >= 0) DBG_free(local_symbols[next_symbol]);
 	next_symbol = 0;
 }
 

@@ -9,6 +9,7 @@
 INTERNAL_VAR(BreakAllThreadsStartup,	FALSE,		NULL,  			DEBUG_TypeIntConst)
 INTERNAL_VAR(BreakOnCritSectTimeOut,    FALSE,          NULL,  			DEBUG_TypeIntConst)
 INTERNAL_VAR(BreakOnAttach,		FALSE,		NULL,			DEBUG_TypeIntConst)
+INTERNAL_VAR(BreakOnFirstChance,	TRUE,		NULL,			DEBUG_TypeIntConst)
 
    /* output handling */
 INTERNAL_VAR(ConChannelMask,		DBG_CHN_MESG,	NULL,  			DEBUG_TypeIntConst)

@@ -369,6 +369,47 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
     DEBUG_Printf( DBG_CHN_MESG, "\n" );
 }
 
+/***********************************************************************
+ *           DEBUG_AddBreakpointFromId
+ *
+ * Add a breakpoint from a function name (and eventually a line #)
+ */
+void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
+{
+   DBG_VALUE value;
+   
+   if (DEBUG_GetSymbolValue(name, lineno, &value, TRUE))
+      DEBUG_AddBreakpoint(&value, NULL);
+   else
+      DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint\n");
+}
+
+/***********************************************************************
+ *           DEBUG_AddBreakpointFromLineno
+ *
+ * Add a breakpoint from a line number in current file
+ */
+void	DEBUG_AddBreakpointFromLineno(int lineno)
+{
+   DBG_VALUE 			value;
+   
+   DEBUG_GetCurrentAddress(&value.addr);
+   
+   if (lineno != -1) {
+      struct name_hash*	nh;
+      
+      DEBUG_FindNearestSymbol(&value.addr, TRUE, &nh, 0, NULL);
+      if (nh == NULL) {
+	 DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
+	 return;
+      }
+      DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE);
+   }
+   
+   value.type = NULL;
+   value.cookie = DV_TARGET;
+   DEBUG_AddBreakpoint( &value, NULL );
+}
 
  /***********************************************************************
  *           DEBUG_AddWatchpoint
@@ -436,6 +477,21 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
    DEBUG_Printf( DBG_CHN_MESG, "Watchpoint %d at ", num );
    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? 32:16, TRUE );
    DEBUG_Printf( DBG_CHN_MESG, "\n" );
+}
+
+/***********************************************************************
+ *           DEBUG_AddWathpointFromId
+ *
+ * Add a watchpoint from a symbol name (and eventually a line #)
+ */
+void	DEBUG_AddWatchpointFromId(const char *name, int lineno)
+{
+   DBG_VALUE value;
+   
+   if( DEBUG_GetSymbolValue(name, lineno, &value, TRUE) )
+      DEBUG_AddWatchpoint( &value, 1 );
+   else
+      DEBUG_Printf(DBG_CHN_MESG, "Unable to add watchpoint\n");
 }
 
 /***********************************************************************
@@ -920,8 +976,6 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
 #ifdef __i386__
         DEBUG_context.EFlags |= STEP_FLAG;
 #endif
-        break;
-    case EXEC_KILL:
         break;
     default:
         RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);

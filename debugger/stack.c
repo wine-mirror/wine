@@ -30,7 +30,6 @@ struct bt_info
 
 static int nframe;
 static struct bt_info * frames = NULL;
-int curr_frame;
 
 typedef struct
 {

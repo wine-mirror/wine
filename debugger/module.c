@@ -92,6 +92,21 @@ DBG_MODULE*	DEBUG_FindModuleByHandle(HANDLE handle, int type)
 }
 
 /***********************************************************************
+ *		DEBUG_GetProcessMainModule
+ */
+DBG_MODULE*	DEBUG_GetProcessMainModule(DBG_PROCESS* process)
+{
+    DBG_MODULE*	wmod;
+
+    if (!process) return NULL;
+
+    /* main module is the first to be loaded on a given process, so it's the last on
+     * the list */
+    for (wmod = process->modules; wmod && wmod->next; wmod = wmod->next);
+    return wmod;
+}
+
+/***********************************************************************
  *			DEBUG_RegisterELFModule
  *
  * ELF modules are also entered into the list - this is so that we
@@ -139,6 +154,7 @@ DBG_MODULE* DEBUG_RegisterNEModule(HMODULE hModule, void* load_addr, const char 
     return wmod;
 }
 
+#if 0
 /***********************************************************************
  *           DEBUG_GetEP16
  *
@@ -230,6 +246,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
     }
     GlobalUnlock16(module->nrname_handle);
 }
+#endif
 
 /***********************************************************************
  *			DEBUG_LoadModule32
@@ -355,10 +372,14 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
  */
 int DEBUG_LoadEntryPoints(const char* pfx)
 {
+    int		first = 0;
+    /* FIXME: with address space separation in space, this is plain wrong
+     *	      it requires the 16 bit WOW debugging interface...
+     */
+#if 0
     MODULEENTRY	entry;
     NE_MODULE	module;
     void*	moduleAddr;
-    int		first = 0;
     int		rowcount = 0;
     int		len;
 
@@ -390,6 +411,7 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	
 	DEBUG_LoadModule16(entry.hModule, &module, moduleAddr, entry.szModule);
     } while (ModuleNext16(&entry));
+#endif
     
     if (first) DEBUG_Printf(DBG_CHN_MESG, "\n"); 
     return first;

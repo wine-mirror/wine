@@ -117,9 +117,11 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
     if (!DEBUG_FixSegment( addr ) && DEBUG_IsSelectorSystem(addr->seg)) 
        addr->seg = 0;
     addr->off  = DEBUG_context.Eip;
+#elif defined(__sparc__)
+	 addr->seg = 0;
+    addr->off = DEBUG_context.pc;
 #else
-    addr->seg  = 0;
-    addr->off  = GET_IP( &DEBUG_context );
+#	error You must define GET_IP for this CPU
 #endif
 }
 

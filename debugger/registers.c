@@ -121,6 +121,9 @@ void DEBUG_InfoRegisters(void)
  */
 BOOL DEBUG_ValidateRegisters(void)
 {
+   DBG_ADDR	addr;
+   char		ch;
+
 #ifdef __i386__
     if (DEBUG_context.EFlags & V86_FLAG) return TRUE;
 
@@ -157,9 +160,13 @@ BOOL DEBUG_ValidateRegisters(void)
 		      (WORD)DEBUG_context.SegSs );
         return FALSE;
     }
-    return TRUE;
+
 #undef CHECK_SEG
 #else
-    return TRUE;
+    /* to be written */
 #endif
+
+    /* check if PC is correct */
+    DEBUG_GetCurrentAddress(&addr);
+    return DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(&addr), &ch, 1);
 }
