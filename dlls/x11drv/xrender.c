@@ -67,18 +67,23 @@ typedef struct
 
 #define INITIAL_REALIZED_BUF_SIZE 128
 
-typedef enum { AA_None, AA_Grey, AA_RGB, AA_BGR, AA_VRGB, AA_VBGR } AA_Type;
+typedef enum { AA_None = 0, AA_Grey, AA_RGB, AA_BGR, AA_VRGB, AA_VBGR, AA_MAXVALUE } AA_Type;
 
 typedef struct
 {
-    LFANDSIZE lfsz;
-    AA_Type aa;
     GlyphSet glyphset;
     XRenderPictFormat *font_format;
     int nrealized;
     BOOL *realized;
     void **bitmaps;
     XGlyphInfo *gis;
+} gsCacheEntryFormat;
+
+typedef struct
+{
+    LFANDSIZE lfsz;
+    AA_Type aa_default;
+    gsCacheEntryFormat * format[AA_MAXVALUE];
     UINT count;
     INT next;
 } gsCacheEntry;
@@ -292,26 +297,39 @@ static int LookupEntry(LFANDSIZE *plfsz)
 
 static void FreeEntry(int entry)
 {
-    int i;
+    int i, format;
+  
+    for(format = 0; format < AA_MAXVALUE; format++) {
+        gsCacheEntryFormat * formatEntry;
 
-    if(glyphsetCache[entry].glyphset) {
-	wine_tsx11_lock();
-	pXRenderFreeGlyphSet(gdi_display, glyphsetCache[entry].glyphset);
-	wine_tsx11_unlock();
-	glyphsetCache[entry].glyphset = 0;
-    }
-    if(glyphsetCache[entry].nrealized) {
-	HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].realized);
-	glyphsetCache[entry].realized = NULL;
-	if(glyphsetCache[entry].bitmaps) {
-	    for(i = 0; i < glyphsetCache[entry].nrealized; i++)
-                HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].bitmaps[i]);
-	    HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].bitmaps);
-	    glyphsetCache[entry].bitmaps = NULL;
-	    HeapFree(GetProcessHeap(), 0, glyphsetCache[entry].gis);
-	    glyphsetCache[entry].gis = NULL;
-	}
-	glyphsetCache[entry].nrealized = 0;
+        if( !glyphsetCache[entry].format[format] )
+            continue;
+
+        formatEntry = glyphsetCache[entry].format[format];
+
+        if(formatEntry->glyphset) {
+            wine_tsx11_lock();
+            pXRenderFreeGlyphSet(gdi_display, formatEntry->glyphset);
+            wine_tsx11_unlock();
+            formatEntry->glyphset = 0;
+        }
+        if(formatEntry->nrealized) {
+            HeapFree(GetProcessHeap(), 0, formatEntry->realized);
+            formatEntry->realized = NULL;
+            if(formatEntry->bitmaps) {
+                for(i = 0; i < formatEntry->nrealized; i++)
+                    if(formatEntry->bitmaps[i])
+                        HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps[i]);
+                HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps);
+                formatEntry->bitmaps = NULL;
+                HeapFree(GetProcessHeap(), 0, formatEntry->gis);
+                formatEntry->gis = NULL;
+            }
+            formatEntry->nrealized = 0;
+        }
+
+        HeapFree(GetProcessHeap(), 0, formatEntry);
+        glyphsetCache[entry].format[format] = NULL;
     }
 }
 
@@ -385,6 +403,7 @@ static int AllocEntry(void)
 static int GetCacheEntry(LFANDSIZE *plfsz)
 {
     int ret;
+    int format;
     gsCacheEntry *entry;
 
     if((ret = LookupEntry(plfsz)) != -1) return ret;
@@ -392,15 +411,15 @@ static int GetCacheEntry(LFANDSIZE *plfsz)
     ret = AllocEntry();
     entry = glyphsetCache + ret;
     entry->lfsz = *plfsz;
-    assert(entry->nrealized == 0);
+    for( format = 0; format < AA_MAXVALUE; format++ ) {
+        assert( !entry->format[format] );
+    }
 
     if(antialias)
-        entry->aa = AA_Grey;
+        entry->aa_default = AA_Grey;
     else
-        entry->aa = AA_None;
+        entry->aa_default = AA_None;
 
-    entry->font_format = NULL;
-    entry->glyphset = 0;
     return ret;
 }
 
@@ -527,7 +546,7 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
  *
  * Helper to ExtTextOut.  Must be called inside xrender_cs
  */
-static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
+static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 {
     unsigned int buflen;
     char *buf;
@@ -535,52 +554,61 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
     GLYPHMETRICS gm;
     XGlyphInfo gi;
     gsCacheEntry *entry = glyphsetCache + physDev->xrender->cache_index;
+    gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
     XRenderPictFormat pf;
 
-    if(entry->nrealized <= glyph) {
-        entry->nrealized = (glyph / 128 + 1) * 128;
+    /* If there is nothing for the current type, we create the entry. */
+    if( !entry->format[format] ) {
+        entry->format[format] = HeapAlloc(GetProcessHeap(),
+                                          HEAP_ZERO_MEMORY,
+                                          sizeof(gsCacheEntryFormat));
+    }
+    formatEntry = entry->format[format];
 
-	if (entry->realized)
-	    entry->realized = HeapReAlloc(GetProcessHeap(),
+    if(formatEntry->nrealized <= glyph) {
+        formatEntry->nrealized = (glyph / 128 + 1) * 128;
+
+	if (formatEntry->realized)
+	    formatEntry->realized = HeapReAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
-				      entry->realized,
-				      entry->nrealized * sizeof(BOOL));
+				      formatEntry->realized,
+				      formatEntry->nrealized * sizeof(BOOL));
 	else
-	    entry->realized = HeapAlloc(GetProcessHeap(),
+	    formatEntry->realized = HeapAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
-				      entry->nrealized * sizeof(BOOL));
+				      formatEntry->nrealized * sizeof(BOOL));
 
 	if(!X11DRV_XRender_Installed) {
-	  if (entry->bitmaps)
-	    entry->bitmaps = HeapReAlloc(GetProcessHeap(),
+	  if (formatEntry->bitmaps)
+	    formatEntry->bitmaps = HeapReAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
-				      entry->bitmaps,
-				      entry->nrealized * sizeof(entry->bitmaps[0]));
+				      formatEntry->bitmaps,
+				      formatEntry->nrealized * sizeof(formatEntry->bitmaps[0]));
 	  else
-	    entry->bitmaps = HeapAlloc(GetProcessHeap(),
+	    formatEntry->bitmaps = HeapAlloc(GetProcessHeap(),
 				      HEAP_ZERO_MEMORY,
-				      entry->nrealized * sizeof(entry->bitmaps[0]));
+				      formatEntry->nrealized * sizeof(formatEntry->bitmaps[0]));
 
-	  if (entry->gis)
-	    entry->gis = HeapReAlloc(GetProcessHeap(),
+	  if (formatEntry->gis)
+	    formatEntry->gis = HeapReAlloc(GetProcessHeap(),
 				   HEAP_ZERO_MEMORY,
-				   entry->gis,
-				   entry->nrealized * sizeof(entry->gis[0]));
+				   formatEntry->gis,
+				   formatEntry->nrealized * sizeof(formatEntry->gis[0]));
 	  else
-	    entry->gis = HeapAlloc(GetProcessHeap(),
+	    formatEntry->gis = HeapAlloc(GetProcessHeap(),
 				   HEAP_ZERO_MEMORY,
-				   entry->nrealized * sizeof(entry->gis[0]));
+				   formatEntry->nrealized * sizeof(formatEntry->gis[0]));
 	}
     }
 
-    switch(entry->aa) {
+    switch(format) {
     case AA_Grey:
 	ggo_format |= WINE_GGO_GRAY16_BITMAP;
 	break;
 
     default:
-        ERR("aa = %d - not implemented\n", entry->aa);
+        ERR("aa = %d - not implemented\n", format);
     case AA_None:
         ggo_format |= GGO_BITMAP;
 	break;
@@ -589,8 +617,9 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
     buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
 			      NULL);
     if(buflen == GDI_ERROR) {
-        if(entry->aa != AA_None) {
-            entry->aa = AA_None;
+        if(format != AA_None) {
+            format = AA_None;
+            entry->aa_default = AA_None;
             ggo_format &= ~WINE_GGO_GRAY16_BITMAP;
             ggo_format |= GGO_BITMAP;
             buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
@@ -603,15 +632,15 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
         TRACE("Turning off antialiasing for this monochrome font\n");
     }
 
-    if(entry->glyphset == 0 && X11DRV_XRender_Installed) {
-        switch(entry->aa) {
+    if(formatEntry->glyphset == 0 && X11DRV_XRender_Installed) {
+        switch(format) {
 	case AA_Grey:
 	    pf.depth = 8;
 	    pf.direct.alphaMask = 0xff;
 	    break;
 
 	default:
-	    ERR("aa = %d - not implemented\n", entry->aa);
+	    ERR("aa = %d - not implemented\n", format);
 	case AA_None:
 	    pf.depth = 1;
 	    pf.direct.alphaMask = 1;
@@ -622,21 +651,21 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 	pf.direct.alpha = 0;
 
 	wine_tsx11_lock();
-	entry->font_format = pXRenderFindFormat(gdi_display,
+	formatEntry->font_format = pXRenderFindFormat(gdi_display,
 						PictFormatType |
 						PictFormatDepth |
 						PictFormatAlpha |
 						PictFormatAlphaMask,
 						&pf, 0);
 
-	entry->glyphset = pXRenderCreateGlyphSet(gdi_display, entry->font_format);
+	formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format);
 	wine_tsx11_unlock();
     }
 
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
     GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, NULL);
-    entry->realized[glyph] = TRUE;
+    formatEntry->realized[glyph] = TRUE;
 
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%ld,%ld\n",
 	  buflen,
@@ -655,7 +684,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 	char output[300];
 	unsigned char *line;
 
-	if(entry->aa == AA_None) {
+	if(format == AA_None) {
 	    pitch = ((gi.width + 31) / 32) * 4;
 	    for(i = 0; i < gi.height; i++) {
 	        line = buf + i * pitch;
@@ -685,8 +714,8 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 	}
     }
 
-    if(entry->glyphset) {
-        if(entry->aa == AA_None && BitmapBitOrder(gdi_display) != MSBFirst) {
+    if(formatEntry->glyphset) {
+        if(format == AA_None && BitmapBitOrder(gdi_display) != MSBFirst) {
 	    unsigned char *byte = buf, c;
 	    int i = buflen;
 
@@ -703,13 +732,13 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 	}
 	gid = glyph;
         wine_tsx11_lock();
-	pXRenderAddGlyphs(gdi_display, entry->glyphset, &gid, &gi, 1,
+	pXRenderAddGlyphs(gdi_display, formatEntry->glyphset, &gid, &gi, 1,
 			  buf, buflen);
 	wine_tsx11_unlock();
 	HeapFree(GetProcessHeap(), 0, buf);
     } else {
-        entry->bitmaps[glyph] = buf;
-	memcpy(&entry->gis[glyph], &gi, sizeof(gi));
+        formatEntry->bitmaps[glyph] = buf;
+	memcpy(&formatEntry->gis[glyph], &gi, sizeof(gi));
     }
     return TRUE;
 }
@@ -977,6 +1006,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     const WORD *glyphs;
     POINT pt;
     gsCacheEntry *entry;
+    gsCacheEntryFormat *formatEntry;
     BOOL retv = FALSE;
     HDC hdc = physDev->hdc;
     int textPixel, backgroundPixel;
@@ -1277,13 +1307,17 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     EnterCriticalSection(&xrender_cs);
     entry = glyphsetCache + physDev->xrender->cache_index;
+    formatEntry = entry->format[entry->aa_default];
 
     for(idx = 0; idx < count; idx++) {
-        if(glyphs[idx] >= entry->nrealized || entry->realized[glyphs[idx]] == FALSE) {
-	    UploadGlyph(physDev, glyphs[idx]);
+        if( !formatEntry ) {
+	    UploadGlyph(physDev, glyphs[idx], entry->aa_default);
+            formatEntry = entry->format[entry->aa_default];
+        } else if( glyphs[idx] >= formatEntry->nrealized || formatEntry->realized[glyphs[idx]] == FALSE) {
+	    UploadGlyph(physDev, glyphs[idx], entry->aa_default);
 	}
     }
-
+    assert(formatEntry);
 
     TRACE("Writing %s at %ld,%ld\n", debugstr_wn(wstr,count),
           physDev->org.x + x, physDev->org.y + y);
@@ -1294,7 +1328,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    pXRenderCompositeString16(gdi_display, render_op,
 				      physDev->xrender->tile_pict,
 				      physDev->xrender->pict,
-				      entry->font_format, entry->glyphset,
+				      formatEntry->font_format, formatEntry->glyphset,
 				      0, 0, physDev->org.x + x, physDev->org.y + y,
 				      glyphs, count);
 
@@ -1304,7 +1338,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	        pXRenderCompositeString16(gdi_display, render_op,
 					  physDev->xrender->tile_pict,
 					  physDev->xrender->pict,
-					  entry->font_format, entry->glyphset,
+					  formatEntry->font_format, formatEntry->glyphset,
 					  0, 0, physDev->org.x + x + xoff,
 					  physDev->org.y + y + yoff,
 					  glyphs + idx, 1);
@@ -1320,36 +1354,36 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         wine_tsx11_lock();
 	XSetForeground( gdi_display, physDev->gc, textPixel );
 
-	if(entry->aa == AA_None) {
+	if(entry->aa_default == AA_None) {
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphMono(physDev, physDev->org.x + x + xoff,
 			       physDev->org.y + y + yoff,
-			       entry->bitmaps[glyphs[idx]],
-			       &entry->gis[glyphs[idx]]);
+			       formatEntry->bitmaps[glyphs[idx]],
+			       &formatEntry->gis[glyphs[idx]]);
 		if(deltas) {
 		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 
 		} else {
-		    xoff += entry->gis[glyphs[idx]].xOff;
-		    yoff += entry->gis[glyphs[idx]].yOff;
+		    xoff += formatEntry->gis[glyphs[idx]].xOff;
+		    yoff += formatEntry->gis[glyphs[idx]].yOff;
 		}
 	    }
 	} else if(physDev->depth == 1) {
 	    for(idx = 0; idx < count; idx++) {
 	        SharpGlyphGray(physDev, physDev->org.x + x + xoff,
 			       physDev->org.y + y + yoff,
-			       entry->bitmaps[glyphs[idx]],
-			       &entry->gis[glyphs[idx]]);
+			       formatEntry->bitmaps[glyphs[idx]],
+			       &formatEntry->gis[glyphs[idx]]);
 		if(deltas) {
 		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 
 		} else {
-		    xoff += entry->gis[glyphs[idx]].xOff;
-		    yoff += entry->gis[glyphs[idx]].yOff;
+		    xoff += formatEntry->gis[glyphs[idx]].xOff;
+		    yoff += formatEntry->gis[glyphs[idx]].yOff;
 		}
 		    
 	    }
@@ -1368,21 +1402,21 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    TRACE("drawable %dx%d\n", w, h);
 
 	    for(idx = 0; idx < count; idx++) {
-	        if(extents.left > cur.x - entry->gis[glyphs[idx]].x)
-		    extents.left = cur.x - entry->gis[glyphs[idx]].x;
-		if(extents.top > cur.y - entry->gis[glyphs[idx]].y)
-		    extents.top = cur.y - entry->gis[glyphs[idx]].y;
-		if(extents.right < cur.x - entry->gis[glyphs[idx]].x + entry->gis[glyphs[idx]].width)
-		    extents.right = cur.x - entry->gis[glyphs[idx]].x + entry->gis[glyphs[idx]].width;
-		if(extents.bottom < cur.y - entry->gis[glyphs[idx]].y + entry->gis[glyphs[idx]].height)
-		    extents.bottom = cur.y - entry->gis[glyphs[idx]].y + entry->gis[glyphs[idx]].height;
+	        if(extents.left > cur.x - formatEntry->gis[glyphs[idx]].x)
+		    extents.left = cur.x - formatEntry->gis[glyphs[idx]].x;
+		if(extents.top > cur.y - formatEntry->gis[glyphs[idx]].y)
+		    extents.top = cur.y - formatEntry->gis[glyphs[idx]].y;
+		if(extents.right < cur.x - formatEntry->gis[glyphs[idx]].x + formatEntry->gis[glyphs[idx]].width)
+		    extents.right = cur.x - formatEntry->gis[glyphs[idx]].x + formatEntry->gis[glyphs[idx]].width;
+		if(extents.bottom < cur.y - formatEntry->gis[glyphs[idx]].y + formatEntry->gis[glyphs[idx]].height)
+		    extents.bottom = cur.y - formatEntry->gis[glyphs[idx]].y + formatEntry->gis[glyphs[idx]].height;
 		if(deltas) {
 		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    cur.x = offset * cosEsc;
 		    cur.y = offset * -sinEsc;
 		} else {
-		    cur.x += entry->gis[glyphs[idx]].xOff;
-		    cur.y += entry->gis[glyphs[idx]].yOff;
+		    cur.x += formatEntry->gis[glyphs[idx]].xOff;
+		    cur.y += formatEntry->gis[glyphs[idx]].yOff;
 		}
 	    }
 	    TRACE("glyph extents %ld,%ld - %ld,%ld drawable x,y %ld,%ld\n", extents.left, extents.top,
@@ -1450,16 +1484,16 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    for(idx = 0; idx < count; idx++) {
 	        SmoothGlyphGray(image, xoff + image_off_x - extents.left,
 				yoff + image_off_y - extents.top,
-				entry->bitmaps[glyphs[idx]],
-				&entry->gis[glyphs[idx]],
+				formatEntry->bitmaps[glyphs[idx]],
+				&formatEntry->gis[glyphs[idx]],
 				physDev->textPixel);
 		if(deltas) {
 		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 		} else {
-		    xoff += entry->gis[glyphs[idx]].xOff;
-		    yoff += entry->gis[glyphs[idx]].yOff;
+		    xoff += formatEntry->gis[glyphs[idx]].xOff;
+		    yoff += formatEntry->gis[glyphs[idx]].yOff;
 		}
 		    
 	    }
