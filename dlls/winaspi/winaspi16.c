@@ -3,11 +3,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <ldt.h>
 #include <memory.h>
 #include <unistd.h>
-#include <callback.h>
 #include <string.h>
+
 #include "winbase.h"
 #include "aspi.h"
 #include "winaspi.h"
@@ -16,6 +15,8 @@
 #include "debugtools.h"
 #include "selectors.h"
 #include "miscemu.h"
+#include "ldt.h"
+#include "callback.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi)
 

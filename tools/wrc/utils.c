@@ -5,6 +5,8 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -12,7 +14,6 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include <config.h>
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"

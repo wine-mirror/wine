@@ -5,13 +5,14 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <time.h>
 
-#include <config.h>
 #include "wrc.h"
 #include "writeres.h"
 #include "genres.h"

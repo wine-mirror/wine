@@ -32,14 +32,16 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
 
-#include <config.h>
-#include <resource.h>	/* For HAVE_WINE_CONSTRUCTOR */
+#include "resource.h"	/* For HAVE_WINE_CONSTRUCTOR */
+
 #include "wrc.h"
 #include "utils.h"
 #include "writeres.h"

@@ -7,13 +7,14 @@
  *			  names in .s and .h files.  
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
 
-#include <config.h>
 #include "wrc.h"
 #include "genres.h"
 #include "utils.h"

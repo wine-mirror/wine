@@ -5,12 +5,13 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include <config.h>
 #include "wrc.h"
 #include "readres.h"
 #include "newstruc.h"

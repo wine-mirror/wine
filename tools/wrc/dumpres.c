@@ -5,10 +5,11 @@
  *
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <ctype.h>
 
-#include <config.h>
 #include "wrc.h"
 #include "dumpres.h"
 
