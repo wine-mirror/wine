@@ -100,7 +100,6 @@ typedef struct tagLISTVIEW_ITEM
   UINT state;
   LPARAM lParam;
   INT iIndent;
-  POINT ptPosition;
   BOOL valid;
 } LISTVIEW_ITEM;
 
@@ -153,8 +152,10 @@ typedef struct tagLISTVIEW_INFO
   RECT rcFocus;
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
-  HDPA hdpaItems;
   UINT nItemCount;
+  HDPA hdpaItems;
+  HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
+  HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
   HWND hwndEdit;
@@ -1297,11 +1298,8 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     /************************************************************/
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
-	/* FIXME: what about virtual listview? */
-	HDPA hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem);
-	LISTVIEW_ITEM * lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-	if (!lpItem) return FALSE;
-	TopLeft = lpItem->ptPosition;
+	TopLeft.x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+	TopLeft.y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
     }
     else if (uView == LVS_LIST)
     {
@@ -1347,6 +1345,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	        TopLeft.x -= scrollInfo.nPos;
         }
     }
+    TRACE("TopLeft=%s\n", debugpoint(&TopLeft));
 
     /************************************************************/
     /* compute position point (ala LVM_GETITEMPOSITION)         */
@@ -3901,6 +3900,8 @@ static LRESULT LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
     /* reinitialize listview memory */
     bResult = DPA_DeleteAllPtrs(infoPtr->hdpaItems);
     infoPtr->nItemCount = 0;
+    DPA_DeleteAllPtrs(infoPtr->hdpaPosX);
+    DPA_DeleteAllPtrs(infoPtr->hdpaPosY);
 
     /* align items (set position of each item) */
     if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
@@ -4105,6 +4106,8 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
       }
 
       bResult = DPA_Destroy(hdpaSubItems);
+      DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
+      DPA_DeletePtr(infoPtr->hdpaPosY, nItem);
     }
 
     LISTVIEW_ShiftIndices(infoPtr,nItem,-1);
@@ -6052,11 +6055,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     infoPtr->nItemCount++;
    
     if (!LISTVIEW_SetItemT(infoPtr, lpLVItem, isW))
-    {
-	DPA_DeletePtr(infoPtr->hdpaItems, nItem);
-	infoPtr->nItemCount--;
-	goto fail;
-    }
+	goto undo;
 
     /* if we're sorted, sort the list, and update the index */
     if (is_sorted)
@@ -6072,6 +6071,18 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	}
     }
 
+    /* make room for the position, if we are in the right mode */
+    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+    {
+        if (DPA_InsertPtr(infoPtr->hdpaPosX, nItem, 0) == -1)
+	    goto undo;
+        if (DPA_InsertPtr(infoPtr->hdpaPosY, nItem, 0) == -1)
+	{
+	    DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
+	    goto undo;
+	}
+    }
+    
     /* Add the subitem list to the items array. Do this last in case we go to
      * fail during the above.
      */
@@ -6099,6 +6110,9 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     TRACE("    <- %d\n", nItem);
     return nItem;
 
+undo:
+    DPA_DeletePtr(infoPtr->hdpaItems, nItem);
+    infoPtr->nItemCount--;
 fail:
     DPA_DeletePtr(hdpaSubItems, 0);
     DPA_Destroy (hdpaSubItems);
@@ -6785,68 +6799,33 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
  */
 static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt)
 {
-  UINT lStyle = infoPtr->dwStyle;
-  UINT uView = lStyle & LVS_TYPEMASK;
-  LISTVIEW_ITEM *lpItem;
-  HDPA hdpaSubItems;
-  BOOL bResult = FALSE;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 
-  TRACE("(nItem=%d, &pt=%s\n", nItem, debugpoint(&pt));
+    TRACE("(nItem=%d, &pt=%s\n", nItem, debugpoint(&pt));
 
-  if (lStyle & LVS_OWNERDATA)
-    return FALSE;
+    if (nItem < 0 || nItem >= infoPtr->nItemCount ||
+	!(uView == LVS_ICON || uView == LVS_SMALLICON)) return FALSE;
 
-  if ((nItem >= 0) || (nItem < infoPtr->nItemCount))
-  {
-    if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
+    /* This point value seems to be an undocumented feature.
+     * The best guess is that it means either at the origin, 
+     * or at true beginning of the list. I will assume the origin. */
+    if ((pt.x == -1) && (pt.y == -1))
+	LISTVIEW_GetOrigin(infoPtr, &pt);
+    else if (uView == LVS_ICON)
     {
-      if ( (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)) )
-      {
-        if ( (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)) )
-        {
-	  POINT orig = lpItem->ptPosition;
-          bResult = TRUE;
-          if ((pt.x == -1) && (pt.y == -1))
-          {
-            /* This point value seems to be an undocumented feature. The
-             * best guess is that it means either at the origin, or at
-             * the true beginning of the list. I will assume the origin.
-             */
-            if (!LISTVIEW_GetOrigin(infoPtr, &pt))
-              pt.x = pt.y = 0;
-            if (uView == LVS_ICON)
-            {
-              pt.x += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-              pt.y += ICON_TOP_PADDING;
-            }
-            TRACE("requested special (-1,-1), set to origin %s\n", debugpoint(&pt));
-          }
-
-          lpItem->ptPosition = *&pt;
-	  if (uView == LVS_ICON)
-	  {
-	    lpItem->ptPosition.y -= ICON_TOP_PADDING;
-              lpItem->ptPosition.x -= (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-              if ((lpItem->ptPosition.y < 0) || (lpItem->ptPosition.x < 0))
-              {
-                  FIXME("failed orig=%s, intent=%s, is %s, setting neg to 0\n", 
-			debugpoint(&orig), debugpoint(&pt), debugpoint(&lpItem->ptPosition));
-                  /*
-                  if (lpItem->ptPosition.x < 0) lpItem->ptPosition.x = 0;
-                  if (lpItem->ptPosition.y < 0) lpItem->ptPosition.y = 0;
-                  */
-              }
-              else
-              {
-                  TRACE("orig=%s, intent=%s, is %s\n", debugpoint(&orig), debugpoint(&pt), debugpoint(&lpItem->ptPosition));
-              }
-	  }
-        }
-      }
+	pt.x -= (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+	pt.y -= ICON_TOP_PADDING;
     }
-  }
 
-  return bResult;
+    /* Allocating a POINTER for every item is too resource intensive,
+     * so we'll keep the (x,y) in different arrays */
+    if (DPA_InsertPtr(infoPtr->hdpaPosX, nItem, (void *)pt.x) == nItem &&
+        DPA_InsertPtr(infoPtr->hdpaPosY, nItem, (void *)pt.y) == nItem )
+	return TRUE;
+    
+    ERR("We should never fail here (nItem=%d, pt=%s), please report.\n", 
+	nItem, debugpoint(&pt));
+    return FALSE;
 }
 
 /***
@@ -7224,6 +7203,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
 
   /* allocate memory for the data structure */
   infoPtr->hdpaItems = DPA_Create(10);
+  infoPtr->hdpaPosX  = DPA_Create(10);
+  infoPtr->hdpaPosY  = DPA_Create(10);
 
   /* allocate memory for the selection ranges */
   infoPtr->hdpaSelectionRanges = DPA_Create(10);
