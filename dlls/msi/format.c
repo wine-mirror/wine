@@ -451,9 +451,12 @@ UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
         }
         else
         {
-            memcpy(buffer,deformated,(*size)*sizeof(WCHAR));
+            if (*size > 0)
+            {
+                memcpy(buffer,deformated,(*size)*sizeof(WCHAR));
+                buffer[(*size)-1] = 0;
+            }
             rc = ERROR_MORE_DATA;
-            buffer[(*size)-1] = 0;    
         }
     }
     else

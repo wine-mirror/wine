@@ -518,10 +518,9 @@ DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data )
     {
         MSIRECORD *rec = MSI_CreateRecord(1);
         DWORD size = 0;
-        WCHAR size_buf[2] = {' ',0};
 
         MSI_RecordSetStringW(rec,0,ptr);
-        MSI_FormatRecordW(package,rec,size_buf,&size);
+        MSI_FormatRecordW(package,rec,NULL,&size);
         if (size >= 0)
         {
             size++;
