@@ -990,7 +990,8 @@ static void dump_save_registry_request( struct save_registry_request *req )
 static void dump_set_registry_levels_request( struct set_registry_levels_request *req )
 {
     fprintf( stderr, " current=%d,", req->current );
-    fprintf( stderr, " saving=%d", req->saving );
+    fprintf( stderr, " saving=%d,", req->saving );
+    fprintf( stderr, " version=%d", req->version );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {

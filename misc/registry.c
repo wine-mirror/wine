@@ -47,6 +47,7 @@
 #include "winreg.h"
 #include "winversion.h"
 #include "server.h"
+#include "services.h"
 
 DEFAULT_DEBUG_CHANNEL(reg)
 
@@ -333,6 +334,7 @@ void SHELL_SaveRegistry( void )
     /* set saving level (0 for saving everything, 1 for saving only modified keys) */
     req->current = 1;
     req->saving  = !all;
+    req->version = PROFILE_GetWineIniBool( "registry", "UseNewFormat", 0 ) ? 2 : 1;
     server_call( REQ_SET_REGISTRY_LEVELS );
 
     SHELL_SaveRegistryBranch(HKEY_CURRENT_USER);
@@ -340,6 +342,11 @@ void SHELL_SaveRegistry( void )
     SHELL_SaveRegistryBranch(HKEY_USERS);
 }
 
+/* Periodic save callback */
+static void CALLBACK periodic_save( ULONG_PTR dummy )
+{
+    SHELL_SaveRegistry();
+}
 
 /************************ LOAD Registry Function ****************************/
 
@@ -1275,6 +1282,7 @@ void _w31_loadreg(void) {
 void SHELL_LoadRegistry( void )
 {
   struct set_registry_levels_request *req = get_req_buffer();
+  int save_timeout;
   char	      *fn, *home;
   HKEY		    hkey;
 
@@ -1285,6 +1293,7 @@ void SHELL_LoadRegistry( void )
   /* set level to 0 for loading system files */
   req->current = 0;
   req->saving  = 0;
+  req->version = 1;
   server_call( REQ_SET_REGISTRY_LEVELS );
 
   if (PROFILE_GetWineIniBool ("registry", "LoadWindowsRegistryFiles", 1)) 
@@ -1313,6 +1322,7 @@ void SHELL_LoadRegistry( void )
   /* set level to 1 for loading user files */
   req->current = 1;
   req->saving  = 0;
+  req->version = 1;
   server_call( REQ_SET_REGISTRY_LEVELS );
 
   /*
@@ -1441,6 +1451,11 @@ void SHELL_LoadRegistry( void )
     }
 
     RegCloseKey(hkey);
+  }
+
+  if ((save_timeout = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 )))
+  {
+      SERVICE_AddTimer( save_timeout * 1000000, periodic_save, 0 );
   }
 }
 

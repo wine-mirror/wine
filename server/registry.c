@@ -1532,5 +1532,6 @@ DECL_HANDLER(set_registry_levels)
 {
     current_level  = req->current;
     saving_level   = req->saving;
+    saving_version = req->version;
 }
 

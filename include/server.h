@@ -963,6 +963,7 @@ struct set_registry_levels_request
 {
     IN  int          current;      /* new current level */
     IN  int          saving;       /* new saving level */
+    IN  int          version;      /* file format version for saving */
 };
 
 
