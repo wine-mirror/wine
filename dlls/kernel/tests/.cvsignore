@@ -11,6 +11,7 @@ generated.ok
 kernel32_test.exe.spec.c
 locale.ok
 path.ok
+pipe.ok
 process.ok
 testlist.c
 thread.ok
