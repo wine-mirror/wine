@@ -6,8 +6,9 @@
 #ifndef __WINE_ENHMETAFILE_H
 #define __WINE_ENHMETAFILE_H
 
-#include "wingdi.h"
 #include "gdi.h"
+#include "windef.h"
+#include "wingdi.h"
 
   /* GDI32 enhanced metafile object */
 typedef struct

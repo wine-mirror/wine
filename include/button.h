@@ -7,6 +7,7 @@
 #ifndef __WINE_BUTTON_H
 #define __WINE_BUTTON_H
 
+#include "windef.h"
 #include "wingdi.h"
 
   /* Extra info for BUTTON windows */

@@ -10,6 +10,7 @@
 #include "wine/obj_oleaut.h" /* for DISPID */
 #include "wine/obj_storage.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 
 #ifdef __cplusplus

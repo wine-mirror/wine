@@ -8,8 +8,6 @@
 #ifndef __WINE_DISPDIB_H
 #define __WINE_DISPDIB_H
 
-#include "wingdi.h" /* for LPBITMAPINFO */
-
 /* error codes */
 #define DISPLAYDIB_NOERROR        0x0000
 #define DISPLAYDIB_NOTSUPPORTED   0x0001

@@ -7,8 +7,9 @@
 #ifndef __WINE_REGION_H
 #define __WINE_REGION_H
 
-#include "wingdi.h"
 #include "gdi.h"
+#include "windef.h"
+#include "wingdi.h"
 
 typedef struct {
     INT size;

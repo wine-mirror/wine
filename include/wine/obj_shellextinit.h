@@ -7,6 +7,7 @@
 
 #include "shell.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/obj_base.h"
 #include "wine/obj_dataobject.h"

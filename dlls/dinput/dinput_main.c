@@ -306,7 +306,7 @@ static void _dump_DIPROPHEADER(DIPROPHEADER *diph) {
 	    ((diph->dwHow == DIPH_BYID)) ? "DIPH_BYID" : "unknown")));
 }
 
-static void _dump_OBJECTINSTANCE(DIDEVICEOBJECTINSTANCE *ddoi) {
+static void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) {
   if (TRACE_ON(dinput)) {
     DPRINTF("    - enumerating : 0x%08lx - %2ld - 0x%08lx - %s\n",
 	    ddoi->guidType.Data1, ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
@@ -1708,7 +1708,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
 	DWORD dwFlags)
 {
   ICOM_THIS(SysMouseAImpl,iface);
-  DIDEVICEOBJECTINSTANCE ddoi;
+  DIDEVICEOBJECTINSTANCEA ddoi;
   
   TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
   if (TRACE_ON(dinput)) {
@@ -1718,7 +1718,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
   }
 
   /* Only the fields till dwFFMaxForce are relevant */
-  ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCE, dwFFMaxForce);
+  ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
     
   /* In a mouse, we have : two relative axis and three buttons */
   if ((dwFlags == DIDFT_ALL) ||
@@ -1728,7 +1728,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
     ddoi.dwOfs = This->offset_array[WINE_MOUSE_X_POSITION];
     ddoi.dwType = DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS;
     strcpy(ddoi.tszName, "X-Axis");
-    _dump_OBJECTINSTANCE(&ddoi);
+    _dump_OBJECTINSTANCEA(&ddoi);
     if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
     
     /* Y axis */
@@ -1736,7 +1736,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
     ddoi.dwOfs = This->offset_array[WINE_MOUSE_Y_POSITION];
     ddoi.dwType = DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS;
     strcpy(ddoi.tszName, "Y-Axis");
-    _dump_OBJECTINSTANCE(&ddoi);
+    _dump_OBJECTINSTANCEA(&ddoi);
     if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
   }
 
@@ -1748,21 +1748,21 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
     ddoi.dwOfs = This->offset_array[WINE_MOUSE_L_POSITION];
     ddoi.dwType = DIDFT_MAKEINSTANCE(WINE_MOUSE_L_BUTTON_INSTANCE) | DIDFT_PSHBUTTON;
     strcpy(ddoi.tszName, "Left-Button");
-    _dump_OBJECTINSTANCE(&ddoi);
+    _dump_OBJECTINSTANCEA(&ddoi);
     if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
 
     /* Right button */
     ddoi.dwOfs = This->offset_array[WINE_MOUSE_R_POSITION];
     ddoi.dwType = DIDFT_MAKEINSTANCE(WINE_MOUSE_R_BUTTON_INSTANCE) | DIDFT_PSHBUTTON;
     strcpy(ddoi.tszName, "Right-Button");
-    _dump_OBJECTINSTANCE(&ddoi);
+    _dump_OBJECTINSTANCEA(&ddoi);
     if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
 
     /* Middle button */
     ddoi.dwOfs = This->offset_array[WINE_MOUSE_M_POSITION];
     ddoi.dwType = DIDFT_MAKEINSTANCE(WINE_MOUSE_M_BUTTON_INSTANCE) | DIDFT_PSHBUTTON;
     strcpy(ddoi.tszName, "Middle-Button");
-    _dump_OBJECTINSTANCE(&ddoi);
+    _dump_OBJECTINSTANCEA(&ddoi);
     if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
   }
 
@@ -2048,7 +2048,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	DWORD dwFlags)
 {
   ICOM_THIS(JoystickAImpl,iface);
-  DIDEVICEOBJECTINSTANCE ddoi;
+  DIDEVICEOBJECTINSTANCEA ddoi;
   int xfd = This->joyfd;
 
   TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
@@ -2059,7 +2059,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
   }
 
   /* Only the fields till dwFFMaxForce are relevant */
-  ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCE, dwFFMaxForce);
+  ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
     
   /* For the joystick, do as is done in the GetCapabilities function */
   if ((dwFlags == DIDFT_ALL) ||
@@ -2091,7 +2091,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       }
       ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << i) << WINE_JOYSTICK_AXIS_BASE) | DIDFT_ABSAXIS;
       sprintf(ddoi.tszName, "%d-Axis", i);
-      _dump_OBJECTINSTANCE(&ddoi);
+      _dump_OBJECTINSTANCEA(&ddoi);
       if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
     }
   }
@@ -2112,7 +2112,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       ddoi.dwOfs = DIJOFS_BUTTON(i);
       ddoi.dwType = DIDFT_MAKEINSTANCE((0x0001 << i) << WINE_JOYSTICK_BUTTON_BASE) | DIDFT_PSHBUTTON;
       sprintf(ddoi.tszName, "%d-Button", i);
-      _dump_OBJECTINSTANCE(&ddoi);
+      _dump_OBJECTINSTANCEA(&ddoi);
       if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
     }
   }

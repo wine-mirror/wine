@@ -10,6 +10,9 @@
 #ifndef __WINE_ICMPAPI_H
 #define __WINE_ICMPAPI_H
 
+#include "wine/ipexport.h"
+#include "windef.h"
+
 HANDLE WINAPI IcmpCreateFile(
     VOID
     );

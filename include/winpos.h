@@ -8,6 +8,8 @@
 #define __WINE_WINPOS_H
 
 #include "windef.h"
+#include "wingdi.h"
+#include "winuser.h"
 
 struct tagWND;
 

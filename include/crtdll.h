@@ -41,6 +41,18 @@ LPWSTR __cdecl CRTDLL__wcsnset( LPWSTR str, WCHAR c, INT n );
 LPWSTR __cdecl CRTDLL__wcsrev( LPWSTR str );
 LPWSTR __cdecl CRTDLL__wcsset( LPWSTR str, WCHAR c );
 LPWSTR __cdecl CRTDLL__wcsupr( LPWSTR str );
+INT    __cdecl CRTDLL_iswalnum( WCHAR wc );
+INT    __cdecl CRTDLL_iswalpha( WCHAR wc );
+INT    __cdecl CRTDLL_iswcntrl( WCHAR wc );
+INT    __cdecl CRTDLL_iswdigit( WCHAR wc );
+INT    __cdecl CRTDLL_iswgraph( WCHAR wc );
+INT    __cdecl CRTDLL_iswlower( WCHAR wc );
+INT    __cdecl CRTDLL_iswprint( WCHAR wc );
+INT    __cdecl CRTDLL_iswpunct( WCHAR wc );
+INT    __cdecl CRTDLL_iswspace( WCHAR wc );
+INT    __cdecl CRTDLL_iswupper( WCHAR wc );
+INT    __cdecl CRTDLL_iswxdigit( WCHAR wc );
+INT    __cdecl CRTDLL_iswctype( WCHAR wc, WCHAR wct );
 INT    __cdecl CRTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n );
 INT    __cdecl CRTDLL_mbtowc( WCHAR *dst, LPCSTR str, INT n );
 WCHAR  __cdecl CRTDLL_towlower( WCHAR ch );
@@ -76,6 +88,17 @@ INT    __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch );
 #define _wcsrev      CRTDLL__wcsrev
 #define _wcsset      CRTDLL__wcsset
 #define _wcsupr      CRTDLL__wcsupr
+#define iswalnum     CRTDLL_iswalnum
+#define iswalpha     CRTDLL_iswalpha
+#define iswcntrl     CRTDLL_iswcntrl
+#define iswdigit     CRTDLL_iswdigit
+#define iswgraph     CRTDLL_iswgraph
+#define iswlower     CRTDLL_iswlower
+#define iswprint     CRTDLL_iswprint
+#define iswpunct     CRTDLL_iswpunct
+#define iswspace     CRTDLL_iswspace
+#define iswupper     CRTDLL_iswupper
+#define iswxdigit    CRTDLL_iswxdigit
 #define mbstowcs     CRTDLL_mbstowcs
 #define mbtowc       CRTDLL_mbtowc
 #define towlower     CRTDLL_towlower

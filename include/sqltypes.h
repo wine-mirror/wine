@@ -12,26 +12,6 @@
 extern "C" {
 #endif
 
-#ifndef _WINDOWS
-#define FAR
-#define CALLBACK
-#define SQL_API
-#define	BOOL				int
-typedef void*				HWND;
-typedef char*				GUID;
-#define GUID_DEFINED
-typedef char				CHAR;
-typedef void				VOID;
-typedef unsigned short		WORD;
-typedef unsigned long		DWORD;
-typedef unsigned char		BYTE;
-typedef unsigned short 		WCHAR;
-typedef WCHAR* 		        LPWSTR;
-typedef const char*         LPCSTR;
-typedef char*               LPSTR;
-typedef DWORD*           	LPDWORD;
-#endif
-
 typedef unsigned char   SQLCHAR;
 
 #if (ODBCVER >= 0x0300)

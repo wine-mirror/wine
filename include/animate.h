@@ -8,6 +8,7 @@
 #define __WINE_ANIMATE_H
 
 #include "windef.h"
+#include "winbase.h"
 #include "vfw.h"
 
 typedef struct tagANIMATE_INFO

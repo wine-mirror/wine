@@ -7,7 +7,7 @@
 #ifndef __WINE_IMAGELIST_H
 #define __WINE_IMAGELIST_H
 
-
+#include "windef.h"
 #include "wingdi.h"
 
 #include "pshpack1.h"

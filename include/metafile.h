@@ -7,8 +7,9 @@
 #ifndef __WINE_METAFILE_H
 #define __WINE_METAFILE_H
 
-#include "wingdi.h"
 #include "gdi.h"
+#include "windef.h"
+#include "wingdi.h"
 
   /* GDI32 metafile object */
 typedef struct

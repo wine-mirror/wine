@@ -6,13 +6,15 @@
  */
 
 #include <string.h>
+#include "windef.h"
+#include "wingdi.h"
+#include "wine/wingdi16.h"
 #include "miscemu.h"
 #include "dispdib.h"
 #include "vga.h"
 #include "debugtools.h"
-#include "wine/wingdi16.h"
 
-DEFAULT_DEBUG_CHANNEL(ddraw)
+DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static int dispdib_multi = 0;
 

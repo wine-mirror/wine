@@ -10,6 +10,7 @@
 #define __WINE_WINE_OBJ_CONTEXTMENU_H
 
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/obj_base.h"
 

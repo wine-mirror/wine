@@ -1,6 +1,7 @@
 #ifndef __WINE_WINE_WINGDI16_H
 #define __WINE_WINE_WINGDI16_H
 
+#include "windef.h"
 #include "wingdi.h"
 
 #include "pshpack1.h"
