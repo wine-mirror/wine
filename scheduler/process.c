@@ -887,12 +887,13 @@ BOOL32 WINAPI GetExitCodeProcess(
     HANDLE32 hProcess,  /* [I] handle to the process */
     LPDWORD lpExitCode) /* [O] address to receive termination status */
 {
-    struct get_process_info_reply info;
+    struct get_process_info_reply reply;
     int handle = HANDLE_GetServerHandle( PROCESS_Current(), hProcess,
                                          K32OBJ_PROCESS, PROCESS_QUERY_INFORMATION );
 
-    if (CLIENT_GetProcessInfo( handle, &info )) return FALSE;
-    if (lpExitCode) *lpExitCode = info.exit_code;
+    CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &handle, sizeof(handle) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    if (lpExitCode) *lpExitCode = reply.exit_code;
     return TRUE;
 }
 
