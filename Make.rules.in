@@ -141,6 +141,7 @@ DLLS = \
 	olepro32 \
 	olesvr32 \
 	psapi \
+	quartz \
 	rasapi32 \
 	riched32 \
 	rpcrt4 \

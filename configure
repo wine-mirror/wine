@@ -7070,6 +7070,7 @@ dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/opengl32/Makefile
 dlls/psapi/Makefile
+dlls/quartz/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile
 dlls/rpcrt4/Makefile
@@ -7322,6 +7323,7 @@ dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/opengl32/Makefile
 dlls/psapi/Makefile
+dlls/quartz/Makefile
 dlls/rasapi32/Makefile
 dlls/richedit/Makefile
 dlls/rpcrt4/Makefile

@@ -47,6 +47,7 @@ DLLFILES = \
 	olepro32/libolepro32.@LIBEXT@ \
 	olesvr/libolesvr32.@LIBEXT@ \
 	psapi/libpsapi.@LIBEXT@ \
+	quartz/libquartz.@LIBEXT@ \
 	rasapi32/librasapi32.@LIBEXT@ \
 	richedit/libriched32.@LIBEXT@ \
 	rpcrt4/librpcrt4.@LIBEXT@ \
@@ -165,6 +166,7 @@ SUBDIRS = \
 	olesvr \
 	opengl32 \
 	psapi \
+	quartz \
 	rasapi32 \
 	richedit \
 	rpcrt4 \
@@ -334,6 +336,9 @@ libopengl32.@LIBEXT@: opengl32/libopengl32.@LIBEXT@
 libpsapi.@LIBEXT@: psapi/libpsapi.@LIBEXT@
 	$(RM) $@ && $(LN_S) psapi/libpsapi.@LIBEXT@ $@
 
+libquartz.@LIBEXT@: quartz/libquartz.@LIBEXT@
+	$(RM) $@ && $(LN_S) quartz/libquartz.@LIBEXT@ $@
+
 librasapi32.@LIBEXT@ librasapi16.@LIBEXT@: rasapi32/librasapi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) rasapi32/librasapi32.@LIBEXT@ $@
 
@@ -452,6 +457,7 @@ olepro32/libolepro32.@LIBEXT@: liboleaut32.@LIBEXT@ libntdll.@LIBEXT@
 olesvr/libolesvr32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 opengl32/libopengl32.@LIBEXT@: libx11drv.@LIBEXT@ libkernel32.@LIBEXT@
 psapi/libpsapi.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+quartz/libquartz.@LIBEXT@: libole2.@LIBEXT@ libntdll.@LIBEXT@
 rasapi32/librasapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 richedit/libriched32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 rpcrt4/librpcrt4.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
