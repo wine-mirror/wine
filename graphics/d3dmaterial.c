@@ -139,7 +139,7 @@ static ULONG WINAPI IDirect3DMaterial2Impl_Release(LPDIRECT3DMATERIAL2 iface)
 /*** IDirect3DMaterial2 methods ***/
 static void dump_material(LPD3DMATERIAL mat)
 {
-  fprintf(stderr, "  dwSize : %ld\n", mat->dwSize);
+  DPRINTF("  dwSize : %ld\n", mat->dwSize);
 }
 
 static HRESULT WINAPI IDirect3DMaterial2Impl_GetMaterial(LPDIRECT3DMATERIAL2 iface,

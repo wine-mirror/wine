@@ -26,6 +26,8 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 #undef TEXTURE_SNOOP
 
 #ifdef TEXTURE_SNOOP
+#include <stdio.h>
+     
 #define SNOOP_PALETTED() 									\
       {												\
 	FILE *f;										\
@@ -280,7 +282,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
     glGenTextures(1, &(This->tex_name));
   LEAVE_GL();
 
-  TRACE("OpenGL texture handle is : %d\n", This->tex_name);
+  TRACE("OpenGL texture handle is : %ld\n", This->tex_name);
   
   return D3D_OK;
 }
@@ -323,7 +325,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
   glGenTextures(1, &(This->tex_name));
   LEAVE_GL();
 
-  TRACE("OpenGL texture handle is : %d\n", This->tex_name);
+  TRACE("OpenGL texture handle is : %ld\n", This->tex_name);
   
   return D3D_OK;
 }

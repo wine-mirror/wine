@@ -178,7 +178,7 @@ static ULONG WINAPI IDirect3DLightImpl_Release(LPDIRECT3DLIGHT iface)
 /*** IDirect3DLight methods ***/
 static void dump_light(LPD3DLIGHT light)
 {
-  fprintf(stderr, "  dwSize : %ld\n", light->dwSize);
+  DPRINTF("  dwSize : %ld\n", light->dwSize);
 }
 
 static HRESULT WINAPI IDirect3DLightImpl_GetLight(LPDIRECT3DLIGHT iface,
