@@ -55,7 +55,7 @@ static TCHAR  *szTitle = "rundll32";
 static TCHAR  *szWindowClass = "class_rundll32";
 
 static ATOM MyRegisterClass(HINSTANCE hInstance)
-    {
+{
     WNDCLASSEX wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
@@ -73,10 +73,10 @@ static ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hIconSm        = NULL;
 
     return RegisterClassEx(&wcex);
-    }
+}
 
 static LPWSTR GetNextArg(LPCWSTR *cmdline)
-    {
+{
     LPCWSTR s;
     LPWSTR arg,d;
     int in_quotes,bcount,len=0;
@@ -141,7 +141,7 @@ static LPWSTR GetNextArg(LPCWSTR *cmdline)
             /* a regular character */
             *d++=*s++;
             bcount=0;
-    }
+        }
     }
     *d=0;
     *cmdline=s;
@@ -263,9 +263,9 @@ int main(int argc, char* argv[])
             pEntryPointA(hWnd,hDll,szArguments,SW_SHOWDEFAULT);
             if (szArguments)
                 HeapFree(GetProcessHeap(),0,szArguments);
-    }
-    else
-    {
+        }
+        else
+        {
             /* Windows has a MessageBox here... */
             WINE_WARN("Unable to find the entry point: %s\n",szProcName);
         }
