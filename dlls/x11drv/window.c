@@ -909,7 +909,6 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
  */
 BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
-    HWND hwndLinkAfter;
     Display *display = thread_display();
     WND *wndPtr;
     struct x11drv_win_data *data;
@@ -958,11 +957,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     SetPropA( hwnd, client_window_atom, (HANDLE)data->client_window );
 
     /* Call the WH_CBT hook */
-
-    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
-
     cbtc.lpcs = cs;
-    cbtc.hwndInsertAfter = hwndLinkAfter;
+    cbtc.hwndInsertAfter = HWND_TOP;
     if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ))
     {
         TRACE("CBT-hook returned !0\n");
