@@ -267,7 +267,7 @@ static void test_CList(void)
   LPCSHLWAPI_CLIST item = SHLWAPI_CLIST_items;
   HRESULT hRet;
   LPSHLWAPI_CLIST inserted;
-  char buff[64];
+  BYTE buff[64];
   unsigned int i;
 
   if (!pSHLWAPI_17 || !pSHLWAPI_18 || !pSHLWAPI_19 || !pSHLWAPI_20 ||
@@ -296,13 +296,13 @@ static void test_CList(void)
       inserted = pSHLWAPI_22(list, item->ulId);
       ok(inserted != NULL, "lost after adding");
 
-      ok(!inserted || inserted->ulId != -1u, "find returned a container");
+      ok(!inserted || inserted->ulId != -1, "find returned a container");
 
       /* Check size */
       if (inserted && inserted->ulSize & 0x3)
       {
         /* Contained */
-        ok(inserted[-1].ulId == -1u, "invalid size is not countained");
+        ok(inserted[-1].ulId == -1, "invalid size is not countained");
         ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
            "container too small");
       }
@@ -431,7 +431,7 @@ static void test_CList(void)
       if (inserted)
       {
         BOOL bDataOK = TRUE;
-        char *bufftest = (char*)inserted;
+        LPBYTE bufftest = (LPBYTE)inserted;
 
         for (i = 0; i < inserted->ulSize - sizeof(SHLWAPI_CLIST); i++)
           if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)

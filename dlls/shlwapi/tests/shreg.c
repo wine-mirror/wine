@@ -134,8 +134,7 @@ static void test_SHQUeryValueEx(void)
 	char buf[MAX_PATH];
 	DWORD dwRet;
 	char * sTestedFunction = "";
-	int nUsedBuffer1;
-	int nUsedBuffer2;
+	DWORD nUsedBuffer1,nUsedBuffer2;
 
 	ok(! RegOpenKeyExA(HKEY_CURRENT_USER, REG_TEST_KEY, 0,  KEY_QUERY_VALUE, &hKey), "test4 RegOpenKey");
 
@@ -162,14 +161,14 @@ static void test_SHQUeryValueEx(void)
 	 */
 	dwSize = 6;
 	ok(! SHQueryValueExA( hKey, "Test1", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed");
-	ok( dwSize == nUsedBuffer1, "(%lu,%u)", dwSize, nUsedBuffer1);
+	ok( dwSize == nUsedBuffer1, "(%lu,%lu)", dwSize, nUsedBuffer1);
 
 	/*
          * dwExpanded > dwUnExpanded
 	 */
 	dwSize = 6;
 	ok(! SHQueryValueExA( hKey, "Test3", NULL, NULL, NULL, &dwSize), "SHQueryValueExA failed");
-	ok( dwSize == nUsedBuffer2, "(%lu,%u)", dwSize, nUsedBuffer2);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)", dwSize, nUsedBuffer2);
 
 
 	/*
@@ -182,7 +181,7 @@ static void test_SHQUeryValueEx(void)
 	ok( dwRet == ERROR_MORE_DATA, "(%lu)", dwRet);
 	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)", buf);
 	ok( dwType == REG_SZ, "(%lu)" , dwType);
-	ok( dwSize == nUsedBuffer1, "(%lu,%u)" , dwSize, nUsedBuffer1);
+	ok( dwSize == nUsedBuffer1, "(%lu,%lu)" , dwSize, nUsedBuffer1);
 
 	/*
 	 * string grows during expanding
@@ -193,7 +192,7 @@ static void test_SHQUeryValueEx(void)
 	dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize);
 	ok( ERROR_MORE_DATA == dwRet, "ERROR_MORE_DATA");
 	ok( 0 == strcmp(sEmptyBuffer, buf), "(%s)", buf);
-	ok( dwSize == nUsedBuffer2, "(%lu,%u)" , dwSize, nUsedBuffer2);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)" , dwType);
 
 	/*
@@ -205,7 +204,7 @@ static void test_SHQUeryValueEx(void)
 	ok( ERROR_MORE_DATA == SHQueryValueExA( hKey, "Test3", NULL, &dwType, buf, &dwSize), "Expected ERROR_MORE_DATA");
 	ok( 0 == strncmp(sExpTestpath2, buf, sExpLen2 - 4 - 1), "(%s)", buf);
 	ok( sExpLen2 - 4 - 1 == strlen(buf), "(%s)", buf);
-	ok( dwSize == nUsedBuffer2, "(%lu,%u)" , dwSize, nUsedBuffer2);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)" , dwType);
 
 	/*
@@ -216,7 +215,7 @@ static void test_SHQUeryValueEx(void)
 	dwType = -1;
 	dwRet = SHQueryValueExA( hKey, "Test3", NULL, &dwType, NULL, &dwSize);
 	ok( ERROR_SUCCESS == dwRet, "(%lu)", dwRet);
-	ok( dwSize == nUsedBuffer2, "(%lu,%u)" , dwSize, nUsedBuffer2);
+	ok( dwSize == nUsedBuffer2, "(%lu,%lu)" , dwSize, nUsedBuffer2);
 	ok( dwType == REG_SZ, "(%lu)" , dwType);
 
 
