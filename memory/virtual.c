@@ -1191,7 +1191,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
     req.protect   = vprot;
     CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
                         &req, sizeof(req),
-                        name, name ? strlen(name) : 0 );
+                        name, name ? strlen(name) + 1 : 0 );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
         goto error;
 
