@@ -20,19 +20,7 @@
 
 use wine;
 use winerror;
-
-################################################################
-# Declarations for functions we use in this script
-
-wine::declare( "kernel32",
-               GlobalAddAtomA     => ["word", ["str"]],
-               GlobalAddAtomW     => ["word", ["wstr"]],
-               GlobalFindAtomA    => ["word", ["str"]],
-               GlobalFindAtomW    => ["word", ["wstr"]],
-               GlobalDeleteAtom   => ["word", ["word"]],
-               GlobalGetAtomNameA => ["int",  ["word","ptr","int"]],
-               GlobalGetAtomNameW => ["int",  ["word","ptr","int"]],
-);
+use kernel32;
 
 my $name = "foobar";
 
