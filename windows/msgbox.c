@@ -33,6 +33,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);
+WINE_DECLARE_DEBUG_CHANNEL(msgbox);
 
 #define MSGBOX_IDICON 1088
 #define MSGBOX_IDTEXT 100
@@ -82,6 +83,8 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
        if (!LoadStringW(lpmb->hInstance, LOWORD(lpmb->lpszText), buf, 256))
 	  *buf = 0;	/* FIXME ?? */
     }
+    
+    TRACE_(msgbox)("%s\n", debugstr_w(lpszText));
     SetWindowTextW(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);
 
     /* Hide not selected buttons */
