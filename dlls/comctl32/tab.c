@@ -178,14 +178,18 @@ TAB_SetCurFocus (HWND hwnd,WPARAM wParam)
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BUTTONS) {
     FIXME("Should set input focus\n");
   } else { 
+    int oldFocus = infoPtr->uFocus;
     if (infoPtr->iSelected != iItem || infoPtr->uFocus == -1 ) {
       infoPtr->uFocus = iItem;
-      if (TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING)!=TRUE)  {
-        infoPtr->iSelected = iItem;
-        TAB_SendSimpleNotify(hwnd, TCN_SELCHANGE);
-
-	TAB_EnsureSelectionVisible(hwnd, infoPtr);
-	TAB_InvalidateTabArea(hwnd, infoPtr);
+      if (oldFocus != -1) {
+        if (TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING)!=TRUE)  {
+          infoPtr->iSelected = iItem;
+          TAB_SendSimpleNotify(hwnd, TCN_SELCHANGE);
+        }
+        else
+          infoPtr->iSelected = iItem;
+        TAB_EnsureSelectionVisible(hwnd, infoPtr);
+        TAB_InvalidateTabArea(hwnd, infoPtr);
       }
     }
   }
