@@ -1,0 +1,59 @@
+/*
+ * Resources for Device Enumerator
+ *
+ * Copyright 2002 Robert Shearman
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "winnls.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+{
+	7  "Default DirectSound"
+	8  "DirectSound: %s"
+	9  "Default WaveOut Device"
+	10 "Default MidiOut Device"
+}
+
+1 VERSIONINFO
+ FILEVERSION 6,3,1,881
+ PRODUCTVERSION 6,3,1,881
+ FILEFLAGSMASK 0x30003fL
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "04090000"
+	BEGIN
+            VALUE "CompanyName", "Wine Developer Team\000"
+            VALUE "FileDescription", "Wine Device Enumerator Library\000"
+            VALUE "FileVersion", "6.3.1.881\000"
+            VALUE "InternalName", "DEVENUM\000"
+            VALUE "LegalCopyright", "Copyright \251 2002\000"
+            VALUE "OriginalFilename", "DEVENUM.DLL\000"
+            VALUE "ProductName", "Wine\000"
+            VALUE "ProductVersion", "6.3.1.881\000"
+	END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 0
+    END
+END
