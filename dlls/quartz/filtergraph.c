@@ -949,7 +949,8 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
     }
 
     /* Render all output pin of the splitter by calling IGraphBuilder_Render on each of them */
-    hr = GetInternalConnections(psplitter, ppinsplitter, &ppins, &nb);
+    if (SUCCEEDED(hr))
+        hr = GetInternalConnections(psplitter, ppinsplitter, &ppins, &nb);
     
     if (SUCCEEDED(hr)) {
         int i;
@@ -963,10 +964,10 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
                 break;
             }
         }
+        CoTaskMemFree(ppins);
     }
-    CoTaskMemFree(ppins);
     
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI Graphbuilder_AddSourceFilter(IGraphBuilder *iface,
