@@ -294,6 +294,13 @@ foreach my $file ($options->c_files) {
 	    my $module16 = $win16api->function_module($internal_name);
 	    my $module32 = $win32api->function_module($internal_name);
 
+	    if(defined($module16)) {
+		$modules->found_module_in_dir($module16, $file_dir);
+	    }
+	    if(defined($module32)) {
+		$modules->found_module_in_dir($module32, $file_dir);
+	    }
+
 	    my $function = 'winapi_function'->new;
 	    $functions{$internal_name} = $function;
 	   
@@ -693,4 +700,6 @@ if($options->global) {
 
     winapi_global::check $options, $output, $win16api, $nativeapi if $options->win16;
     winapi_global::check $options, $output, $win32api, $nativeapi if $options->win32;
+
+    $modules->global_report;
 }

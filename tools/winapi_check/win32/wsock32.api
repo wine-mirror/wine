@@ -24,10 +24,10 @@ LPDWORD
 LPVOID
 LPWSADATA
 ULONG *
+WIN_hostent *
+WIN_protoent *
+WIN_servent *
 char *
-struct WIN_hostent *
-struct WIN_protoent *
-struct WIN_servent *
 struct netent *
 struct sockaddr *
 struct timeval *

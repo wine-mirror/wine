@@ -85,7 +85,7 @@ sub new {
     open(IN, "< $config_h_in_file");
     local $/ = "\n";
     while(<IN>) {
-	if(/^\#undef\s+(\S+)$/) {
+	if(/^\#undef\s+(\S+)\s*$/) {
 	    $$conditionals{$1}++;
 	}
     }

@@ -47,6 +47,7 @@ DATE *
 FLOAT *
 ITypeLib *
 ITypeLib **
+IUnknown **
 LONG *
 LPBSTR
 LPCLSID
@@ -81,8 +82,8 @@ void **
 %str # ???
 
 LPCOLESTR
+LPCSTR
 LPOLESTR
-LPSTR
 
 %void
 

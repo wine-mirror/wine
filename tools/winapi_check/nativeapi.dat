@@ -241,6 +241,7 @@ unlink
 usleep
 utime
 vfprintf
+vsnprintf
 vsprintf
 wait4
 write

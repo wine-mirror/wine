@@ -30,10 +30,10 @@ LPWSAOVERLAPPED_COMPLETION_ROUTINE
 LPWSANETWORKEVENTS
 LPWSAPROTOCOL_INFOA
 ULONG *
+WIN_hostent *
+WIN_protoent *
+WIN_servent *
 char *
-struct WIN_hostent *
-struct WIN_protoent *
-struct WIN_servent *
 struct sockaddr *
 struct timeval *
 ws_fd_set32 *

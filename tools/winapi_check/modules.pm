@@ -11,13 +11,13 @@ sub new {
     my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
     my $spec_files = \%{$self->{SPEC_FILES}};
-    my $modules = \%{$self->{MODULES}};
+    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
     $$options = shift;
     $$output = shift;
     my $wine_dir = shift;
     my $current_dir = shift;
-    my $file_type = shift;
+    my $file_type = shift;    
     my $module_file = shift;
 
     $module_file =~ s/^\.\///;
@@ -37,7 +37,7 @@ sub new {
     }
 
     if($$options->progress) {
-	$$output->progress("$module_file");
+	$$output->progress("modules.dat");
     }
 
     my $allowed_dir;
@@ -54,7 +54,7 @@ sub new {
 	    $spec_file = $1;
 	   
 	    if(!-f "$wine_dir/$spec_file") {
-		$$output->write("$module_file: $spec_file: file ($spec_file) doesn't exist or is no file\n");
+		$$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
 	    } 
 
 	    if($wine_dir eq ".") {
@@ -70,14 +70,14 @@ sub new {
 	$$spec_files{$allowed_dir}{$spec_file}++;
 
 	if(!-d "$wine_dir/$allowed_dir") {
-	    $$output->write("$module_file: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
+	    $$output->write("modules.dat: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
 	} 
     }
     close(IN);
 
     foreach my $spec_file (sort(keys(%all_spec_files))) {
 	if($all_spec_files{$spec_file} > 0) {
-	    $$output->write("$module_file: $spec_file: exists but is not specified\n");
+	    $$output->write("modules.dat: $spec_file: exists but is not specified\n");
 	}
     }
 
@@ -87,21 +87,23 @@ sub new {
 sub spec_file_module {
     my $self = shift;
 
-    my $modules = \%{$self->{MODULES}};
+    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
+    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
 
     my $spec_file = shift;
     $spec_file =~ s/^\.\///;
 
     my $module = shift;
   
-    $$modules{$spec_file}{$module}++;
+    $$spec_file2module{$spec_file}{$module}++;
+    $$module2spec_file{$module}{$spec_file}++;
 }
 
 sub is_allowed_module_in_file {
     my $self = shift;
 
     my $spec_files = \%{$self->{SPEC_FILES}};
-    my $modules = \%{$self->{MODULES}};
+    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
     my $module = shift;
     my $file = shift;
@@ -111,7 +113,7 @@ sub is_allowed_module_in_file {
     $dir =~ s/\/[^\/]*$//;
 
     foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
-	if($$modules{$spec_file}{$module}) {
+	if($$spec_file2module{$spec_file}{$module}) {
 	    return 1;
 	}
     }
@@ -123,7 +125,7 @@ sub allowed_modules_in_file {
     my $self = shift;
 
     my $spec_files = \%{$self->{SPEC_FILES}};
-    my $modules = \%{$self->{MODULES}};
+    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
     my $file = shift;
     $file =~ s/^\.\///;
@@ -133,7 +135,7 @@ sub allowed_modules_in_file {
 
     my %allowed_modules = ();
     foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
-	foreach my $module (sort(keys(%{$$modules{$spec_file}}))) {
+	foreach my $module (sort(keys(%{$$spec_file2module{$spec_file}}))) {
 	    $allowed_modules{$module}++;
 	}
     }
@@ -174,6 +176,40 @@ sub allowed_spec_files {
     return sort(keys(%allowed_spec_files));
 }
 
+sub found_module_in_dir {
+    my $self = shift;
+
+    my $module = shift;
+    my $dir = shift;
+
+    my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
+
+    $$used_module_dirs{$module}{$dir}++;
+}
+
+sub global_report {
+    my $self = shift;
+
+    my $output = \${$self->{OUTPUT}};
+    my $spec_files = \%{$self->{SPEC_FILES}};
+    my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
+    my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
+
+    my @messages;
+    foreach my $dir (sort(keys(%$spec_files))) {
+	if($dir eq "") { next; }
+	foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
+	    foreach my $module (sort(keys(%{$$spec_file2module{$spec_file}}))) {
+		if(!$$used_module_dirs{$module}{$dir}) {
+		    push @messages, "modules.dat: $spec_file: directory ($dir) is not used\n";
+		}
+	    }
+	}
+    }
+
+    foreach my $message (sort(@messages)) {
+	$$output->write($message);
+    }
+}
+
 1;
-
-
