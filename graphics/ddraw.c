@@ -18,6 +18,7 @@
 #include <assert.h>
 #include "ts_xlib.h"
 #include <sys/signal.h>
+#include <fcntl.h>
 
 #include "windows.h"
 #include "winerror.h"
@@ -84,8 +85,15 @@ BOOL32
 DDRAW_DGA_Available()
 {
 #ifdef HAVE_LIBXXF86DGA
-	int evbase, evret;
-	return (getuid() == 0)&&TSXF86DGAQueryExtension(display,&evbase,&evret);
+	int evbase, evret, fd;
+	
+	/* You don't have to be root to use DGA extensions. Simply having access to /dev/mem will do the trick */
+        /* This can be achieved by adding the user to the "kmem" group on Debian 2.x systems, don't know about */
+        /* others. --stephenc */
+        if ((fd = open("/dev/mem", O_RDWR)) != -1)
+          close(fd);
+
+	return (fd != -1)&&TSXF86DGAQueryExtension(display,&evbase,&evret);
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return 0;
 #endif /* defined(HAVE_LIBXXF86DGA) */
@@ -2547,15 +2555,20 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #ifdef HAVE_LIBXXF86DGA
 	int	memsize,banksize,width,major,minor,flags,height;
 	char	*addr;
+	int     fd;
 
-	if (getuid() != 0) {
-		MSG("Must be root to use XF86DGA!\n");
-		MessageBox32A(0,"Using the XF86DGA extension requires the program to be run using UID 0.","WINE DirectDraw",MB_OK|MB_ICONSTOP);
-		return E_UNEXPECTED;
+        /* Must be able to access /dev/mem for DGA extensions to work, root is not neccessary. --stephenc */
+        if ((fd = open("/dev/mem", O_RDWR)) != -1)
+	  close(fd);
+	
+	if (fd  == -1) {
+	  MSG("Must be able to access /dev/mem to use XF86DGA!\n");
+	  MessageBox32A(0,"Using the XF86DGA extension requires access to /dev/mem.","WINE DirectDraw",MB_OK|MB_ICONSTOP);
+	  return E_UNEXPECTED;
 	}
 	if (!DDRAW_DGA_Available()) {
-		TRACE(ddraw,"No XF86DGA detected.\n");
-		return DDERR_GENERIC;
+	        TRACE(ddraw,"No XF86DGA detected.\n");
+	        return DDERR_GENERIC;
 	}
 	*lplpDD = (LPDIRECTDRAW)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDraw));
 	(*lplpDD)->lpvtbl = &dga_ddvt;
