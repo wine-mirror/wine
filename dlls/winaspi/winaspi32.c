@@ -450,7 +450,7 @@ error_exit:
  *    HIBYTE of LOWORD: status (SS_COMP or SS_FAILED_INIT)
  *    LOBYTE of LOWORD: # of host adapters.  
  */
-DWORD WINAPI GetASPI32SupportInfo()
+DWORD __cdecl GetASPI32SupportInfo(void)
 {
     return ((SS_COMP << 8) | ASPI_GetNumControllers());
 }
@@ -536,8 +536,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 /***********************************************************************
  *             GetASPI32DLLVersion   (WNASPI32.3)
  */
-
-DWORD WINAPI GetASPI32DLLVersion()
+DWORD __cdecl GetASPI32DLLVersion(void)
 {
 #ifdef linux
 	TRACE("Returning version 1\n");
@@ -548,18 +547,27 @@ DWORD WINAPI GetASPI32DLLVersion()
 #endif
 }
 
+/***********************************************************************
+ *             GetASPI32Buffer   (WNASPI32.@)
+ */
 BOOL __cdecl GetASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
 {
     FIXME("(%p), stub !\n", pab);
     return TRUE;
 }
 
+/***********************************************************************
+ *             FreeASPI32Buffer   (WNASPI32.@)
+ */
 BOOL __cdecl FreeASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
 {
     FIXME("(%p), stub !\n", pab);
     return TRUE;
 }
 
+/***********************************************************************
+ *             TranslateASPI32Address   (WNASPI32.@)
+ */
 BOOL __cdecl TranslateASPI32Address(LPDWORD pdwPath, LPDWORD pdwDEVNODE)
 {
     FIXME("(%p, %p), stub !\n", pdwPath, pdwDEVNODE);

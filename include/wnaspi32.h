@@ -203,12 +203,9 @@ typedef union tagSRB32 {
 #include "poppack.h"
 
 /* Prototypes */
-extern DWORD __cdecl
-SendASPI32Command (PSRB);
-extern DWORD WINAPI
-GetASPI32SupportInfo (void);
-extern DWORD WINAPI
-GetASPI32DLLVersion(void);
+extern DWORD __cdecl SendASPI32Command (PSRB);
+extern DWORD __cdecl GetASPI32SupportInfo (void);
+extern DWORD __cdecl GetASPI32DLLVersion(void);
 
 #ifdef __cplusplus
 }

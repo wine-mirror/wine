@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include "file.h"
+#include "ntddk.h"
 #include "winerror.h"
 #include "debugtools.h"
 
