@@ -36,6 +36,7 @@ int
 %long --extension
 
 BOOL16
+INT16
 HGLOBAL16
 HINSTANCE16
 HMODULE16

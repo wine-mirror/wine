@@ -1,23 +1,7 @@
-%long
-
-DWORD
-
 %ptr
 
 CONTEXT86 *
-LPVOID
-SEGPTR *
-UTGLUEPROC
-
-%segptr
-
-FARPROC16
 
 %void
 
 void
-
-%word
-
-HMODULE16
-WORD

@@ -132,8 +132,6 @@ windows
 
 % dlls/kernel/wprocs.spec
 
-dlls/kernel
-loader/ne
 msdos
 
 % dlls/kernel/win87em.spec
@@ -443,7 +441,6 @@ dlls/winsock
 
 % dlls/wsock32/wsock32.spec
 
-dlls/winsock
 dlls/wsock32
 
 % dlls/winspool/winspool.drv.spec
