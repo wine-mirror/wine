@@ -1240,6 +1240,93 @@ static NTSTATUS load_builtin_dll( LPCWSTR path, DWORD flags, WINE_MODREF** pwm )
 
 
 /***********************************************************************
+ *	find_dll_file
+ *
+ * Find the file (or already loaded module) for a given dll name.
+ */
+static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
+                               WCHAR *filename, ULONG *size, WINE_MODREF **pwm, HANDLE *handle )
+{
+    WCHAR *file_part, *ext;
+    ULONG len;
+
+    if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
+    {
+        /* we need to search for it */
+        /* but first append .dll because RtlDosSearchPath extension handling is broken */
+        if (!(ext = strrchrW( libname, '.')) || strchrW( ext, '/' ) || strchrW( ext, '\\'))
+        {
+            WCHAR *dllname;
+
+            if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
+                                             (strlenW(libname) * sizeof(WCHAR)) + sizeof(dllW) )))
+                return STATUS_NO_MEMORY;
+            strcpyW( dllname, libname );
+            strcatW( dllname, dllW );
+            len = RtlDosSearchPath_U( load_path, dllname, NULL, *size, filename, &file_part );
+            RtlFreeHeap( GetProcessHeap(), 0, dllname );
+        }
+        else len = RtlDosSearchPath_U( load_path, libname, NULL, *size, filename, &file_part );
+
+        if (len)
+        {
+            if (len >= *size)
+            {
+                *size = len + sizeof(WCHAR);
+                return STATUS_BUFFER_TOO_SMALL;
+            }
+            if ((*pwm = find_module( filename )) != NULL) return STATUS_SUCCESS;
+
+            /* check for already loaded module in a different path */
+            if (!contains_path( libname ))
+            {
+                if ((*pwm = find_module( file_part )) != NULL) return STATUS_SUCCESS;
+            }
+            *handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+            return STATUS_SUCCESS;
+        }
+
+        /* not found */
+
+        if (!contains_path( libname ))
+        {
+            /* if libname doesn't contain a path at all, we simply return the name as is,
+             * to be loaded as builtin */
+            len = strlenW(libname) * sizeof(WCHAR);
+            if (len >= *size) goto overflow;
+            strcpyW( filename, libname );
+            if (!strchrW( filename, '.' ))
+            {
+                len += sizeof(dllW) - sizeof(WCHAR);
+                if (len >= *size) goto overflow;
+                strcatW( filename, dllW );
+            }
+            *pwm = find_module( filename );
+            return STATUS_SUCCESS;
+        }
+    }
+
+    /* absolute path name, or relative path name but not found above */
+
+    len = RtlGetFullPathName_U( libname, *size, filename, &file_part );
+    if (len >= *size) goto overflow;
+    if (file_part && !strchrW( file_part, '.' ))
+    {
+        len += sizeof(dllW) - sizeof(WCHAR);
+        if (len >= *size) goto overflow;
+        strcatW( file_part, dllW );
+    }
+    if ((*pwm = find_module( filename )) != NULL) return STATUS_SUCCESS;
+    *handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    return STATUS_SUCCESS;
+
+overflow:
+    *size = len + sizeof(WCHAR);
+    return STATUS_BUFFER_TOO_SMALL;
+}
+
+
+/***********************************************************************
  *	load_dll  (internal)
  *
  * Load a PE style module according to the load order.
@@ -1249,47 +1336,47 @@ static NTSTATUS load_dll( LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
 {
     int i;
     enum loadorder_type loadorder[LOADORDER_NTYPES];
-    WCHAR *filename, *file_part;
+    WCHAR buffer[32];
+    WCHAR *filename;
+    ULONG size;
     const char *filetype = "";
     WINE_MODREF *main_exe;
     HANDLE handle = INVALID_HANDLE_VALUE;
-    NTSTATUS nts = STATUS_DLL_NOT_FOUND;
+    NTSTATUS nts;
     const WCHAR *load_path;
-
-    *pwm = NULL;
-    filename = RtlAllocateHeap ( GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR) );
-    if ( !filename ) return STATUS_NO_MEMORY;
 
     if (!(load_path = current_load_path))
         load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
 
     TRACE( "looking for %s in %s\n", debugstr_w(libname), debugstr_w(load_path) );
 
-    if (RtlDosSearchPath_U( load_path, libname, dllW, MAX_PATH * sizeof(WCHAR), filename, &file_part ))
+    filename = buffer;
+    size = sizeof(buffer);
+    for (;;)
     {
-        if ((*pwm = find_module( filename )) != NULL) goto found;
-
-        /* check for already loaded module in a different path */
-        if (!contains_path( libname ))
-        {
-            if ((*pwm = find_module( file_part )) != NULL) goto found;
-        }
-        handle = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+        nts = find_dll_file( load_path, libname, filename, &size, pwm, &handle );
+        if (nts == STATUS_SUCCESS) break;
+        if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
+        if (nts != STATUS_BUFFER_TOO_SMALL) return nts;
+        /* grow the buffer and retry */
+        if (!(filename = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return STATUS_NO_MEMORY;
     }
-    else  /* we didn't find the file */
+
+    if (*pwm)  /* found already loaded module */
     {
-        if (contains_path( libname ))
+        if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
+
+        if (((*pwm)->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
+            !(flags & DONT_RESOLVE_DLL_REFERENCES))
         {
-            RtlGetFullPathName_U( libname, MAX_PATH * sizeof(WCHAR), filename, &file_part );
-            if ((*pwm = find_module( filename )) != NULL) goto found;
+            (*pwm)->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
+            fixup_imports( *pwm );
         }
-        else
-        {
-            if ((*pwm = find_module( libname )) != NULL) goto found;
-            strcpyW( filename, libname );
-            file_part = filename;
-        }
-        if (!strchrW( file_part, '.' )) strcatW( file_part, dllW );
+        TRACE("Found loaded module %s for %s at %p, count=%d\n",
+              debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(libname),
+              (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
+        if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
+        return STATUS_SUCCESS;
     }
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
@@ -1303,8 +1390,8 @@ static NTSTATUS load_dll( LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
         {
         case LOADORDER_DLL:
             TRACE("Trying native dll %s\n", debugstr_w(filename));
-            if (handle != INVALID_HANDLE_VALUE)
-                nts = load_native_dll(filename, handle, flags, pwm);
+            if (handle == INVALID_HANDLE_VALUE) continue;  /* it cannot possibly be loaded */
+            nts = load_native_dll(filename, handle, flags, pwm);
             filetype = "native";
             break;
         case LOADORDER_BI:
@@ -1328,7 +1415,7 @@ static NTSTATUS load_dll( LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
             /* decrement the dependencies through the MODULE_FreeLibrary call. */
             (*pwm)->ldr.LoadCount = 1;
             if (handle != INVALID_HANDLE_VALUE) NtClose( handle );
-            RtlFreeHeap( GetProcessHeap(), 0, filename );
+            if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
             return nts;
         }
         if (nts != STATUS_DLL_NOT_FOUND) break;
@@ -1336,23 +1423,8 @@ static NTSTATUS load_dll( LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
 
     WARN("Failed to load module %s; status=%lx\n", debugstr_w(libname), nts);
     if (handle != INVALID_HANDLE_VALUE) NtClose( handle );
-    RtlFreeHeap( GetProcessHeap(), 0, filename );
+    if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
     return nts;
-
- found:
-    if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
-
-    if (((*pwm)->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
-        !(flags & DONT_RESOLVE_DLL_REFERENCES))
-    {
-        (*pwm)->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
-        fixup_imports( *pwm );
-    }
-    TRACE("Found loaded module %s for %s at %p, count=%d\n",
-          debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(libname),
-          (*pwm)->ldr.BaseAddress, (*pwm)->ldr.LoadCount);
-    RtlFreeHeap( GetProcessHeap(), 0, filename );
-    return STATUS_SUCCESS;
 }
 
 /******************************************************************
