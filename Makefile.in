@@ -153,7 +153,7 @@ emu: wine
 lib: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET)
 
 wine wine.sym: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
-	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
+	$(CC) -o wine $(EMUOBJS) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 	@echo "Wine build complete."
 
