@@ -86,8 +86,7 @@ typedef struct tagMSIFOLDER
 
     WCHAR ResolvedTarget[MAX_PATH];
     WCHAR ResolvedSource[MAX_PATH];
-
-    BOOL  Property;  /* initialy set property */
+    WCHAR Property[MAX_PATH];   /* initialy set property */
     INT   ParentIndex;
     INT   State;
         /* 0 = uninitialized */
@@ -207,20 +206,22 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
         
         while (*ptr)
         {
-            BOOL quote=FALSE;
             WCHAR prop[0x100];
             WCHAR val[0x100];
+
+            TRACE("Looking at %s\n",debugstr_w(ptr));
 
             ptr2 = strchrW(ptr,'=');
             if (ptr2)
             {
+                BOOL quote=FALSE;
                 DWORD len = 0;
                 strncpyW(prop,ptr,ptr2-ptr);
                 prop[ptr2-ptr]=0;
                 ptr2++;
             
                 ptr = ptr2; 
-                while (*ptr && (!quote && *ptr!=' '))
+                while (*ptr && (quote || (!quote && *ptr!=' ')))
                 {
                     if (*ptr == '"')
                         quote = !quote;
@@ -239,6 +240,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
                 if (*ptr)
                     ptr++;
             }            
+            TRACE("Found commandline property (%s) = (%s)\n", debugstr_w(prop),
+                  debugstr_w(val));
             MsiSetPropertyW(hPackage,prop,val);
         }
     }
@@ -1344,14 +1347,9 @@ static INT load_folder(MSIHANDLE hPackage, const WCHAR* dir)
         package->folders[index].ParentIndex = -2;
 
     sz = MAX_PATH;
-    rc = MsiGetPropertyW(hPackage, dir, package->folders[index].ResolvedTarget,
-                        &sz);
-    if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
-        package->folders[index].Property = TRUE;
-    else
-    {
-        package->folders[index].Property = FALSE;
-    }
+    rc = MsiGetPropertyW(hPackage, dir, package->folders[index].Property, &sz);
+    if (rc != ERROR_SUCCESS)
+        package->folders[index].Property[0]=0;
 
     MsiCloseHandle(row);
     MsiViewClose(view);
@@ -1433,20 +1431,15 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
         strcpyW(path,package->folders[i].ResolvedSource);
         return ERROR_SUCCESS;
     }
-
-    if (!source && package->folders[i].Property)
+    else if (!source && package->folders[i].Property[0])
     {
-        sz = MAX_PATH;
-        rc = MsiGetPropertyW(hPackage, name, package->folders[i].ResolvedTarget,
-                             &sz);
-        if (rc == ERROR_SUCCESS)
-        {
-            strcpyW(path,package->folders[i].ResolvedTarget);
-            TRACE("   found as property %s\n",debugstr_w(path));
-            return ERROR_SUCCESS;
-        }
+        strcpyW(path,package->folders[i].Property);
+        TRACE("   internally set to %s\n",debugstr_w(path));
+        if (set_prop)
+            MsiSetPropertyW(hPackage,name,path);
+        return ERROR_SUCCESS;
     }
-    
+
     if (package->folders[i].ParentIndex >= 0)
     {
         TRACE(" ! Parent is %s\n", debugstr_w(package->folders[
@@ -1551,6 +1544,7 @@ static UINT writeout_cabinet_stream(MSIHANDLE hPackage, WCHAR* stream_name,
     DWORD   write;
     HANDLE  the_file;
     MSIHANDLE db;
+    WCHAR tmp[MAX_PATH];
 
     db = MsiGetActiveDatabase(hPackage);
     rc = read_raw_stream_data(db,stream_name,&data,&size); 
@@ -1560,10 +1554,11 @@ static UINT writeout_cabinet_stream(MSIHANDLE hPackage, WCHAR* stream_name,
         return rc;
 
     write = MAX_PATH;
-    if (MsiGetPropertyW(hPackage, cszTempFolder, source, &write))
-        GetTempPathW(MAX_PATH,source);
+    if (MsiGetPropertyW(hPackage, cszTempFolder, tmp, &write))
+        GetTempPathW(MAX_PATH,tmp);
 
-    strcatW(source,stream_name);
+    GetTempFileNameW(tmp,stream_name,0,source);
+
     the_file = CreateFileW(source, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -1585,21 +1580,17 @@ end:
 /***********************************************************************
  *            extract_cabinet_file
  *
- * Extract a file from a .cab file.
+ * Extract  files from a cab file.
  */
 static void (WINAPI *pExtractFiles)( LPSTR, LPSTR, DWORD, DWORD, DWORD, DWORD );
 
 static BOOL extract_cabinet_file_advpack( const WCHAR *cabinet, 
                                           const WCHAR *root)
 {
-    static const WCHAR extW[] = {'.','c','a','b',0};
     static HMODULE advpack;
 
     char *cab_path, *cab_file;
-    int len = strlenW( cabinet );
 
-    /* make sure the cabinet file has a .cab extension */
-    if (len <= 4 || strcmpiW( cabinet + len - 4, extW )) return FALSE;
     if (!pExtractFiles)
     {
         if (!advpack && !(advpack = LoadLibraryA( "advpack.dll" )))
@@ -1629,8 +1620,6 @@ static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet,
                                           const WCHAR *root)
                                   
 {
-    static const WCHAR extW[] = {'.','c','a','b',0};
-
     /* from cabinet.h */
 
     struct ExtractFileList {
@@ -1652,12 +1641,8 @@ static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet,
     HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what);
 
     char *cab_path, *src_path;
-    int len = strlenW( cabinet );
     EXTRACTdest exd;
     struct ExtractFileList fl;
-
-    /* make sure the cabinet file has a .cab extension */
-    if (len <= 4 || strcmpiW( cabinet + len - 4, extW )) return FALSE;
 
     if (!(cab_path = strdupWtoA( cabinet ))) return FALSE;
     if (!(src_path = strdupWtoA( root ))) return FALSE;
@@ -1680,6 +1665,7 @@ static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet,
 
 static BOOL extract_cabinet_file(const WCHAR* source, const WCHAR* path)
 {
+    TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
     if (!extract_cabinet_file_advpack(source,path))
         return extract_cabinet_file_cabinet(source,path);
     return TRUE;
@@ -2541,10 +2527,14 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
     MSIPACKAGE *package;
     INT i;
     WCHAR path[MAX_PATH];
+    MSIFOLDER *folder;
 
     TRACE("(%s %s)\n",debugstr_w(szFolder),debugstr_w(szFolderPath));
 
     if (szFolderPath[0]==0)
+        return ERROR_FUNCTION_FAILED;
+
+    if (GetFileAttributesW(szFolderPath) == INVALID_FILE_ATTRIBUTES)
         return ERROR_FUNCTION_FAILED;
 
     package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
@@ -2552,21 +2542,19 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
     if (package==NULL)
         return ERROR_INVALID_HANDLE;
 
-    MsiSetPropertyW(hInstall,szFolder,szFolderPath);
+    resolve_folder(hInstall,szFolder,path,FALSE,FALSE,&folder);
+
+    if (!folder)
+        return ERROR_INVALID_PARAMETER;
+
+    strcpyW(folder->Property,szFolderPath);
 
     for (i = 0; i < package->loaded_folders; i++)
-    {
         package->folders[i].ResolvedTarget[0]=0;
 
-        if (strcmpW(package->folders[i].Directory,szFolder)==0)
-            package->folders[i].Property = TRUE;
-    }
-
     for (i = 0; i < package->loaded_folders; i++)
-    {
         resolve_folder(hInstall, package->folders[i].Directory, path, FALSE,
                        TRUE, NULL);
-    }
 
     return ERROR_SUCCESS;
 }
