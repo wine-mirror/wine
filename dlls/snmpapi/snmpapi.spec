@@ -2,8 +2,6 @@ name    snmpapi
 type    win32
 init    SNMPAPI_DllMain
 
-import ntdll.dll
-
 debug_channels (snmpapi)
 
 @ stub SnmpSvcAddrIsIpx

@@ -1,8 +1,6 @@
 name msdmo
 type win32
 
-import ntdll.dll
-
 debug_channels ()
 
 @ stub DMOEnum

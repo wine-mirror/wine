@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wcmd
+IMPORTS   = shell32.dll user32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
 	batch.c \

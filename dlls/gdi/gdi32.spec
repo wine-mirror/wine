@@ -3,10 +3,6 @@ type    win32
 init    MAIN_GdiInit
 rsrc    version.res
 
-import	advapi32.dll
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
                 metafile palette print region text win16drv wing)
 

@@ -3,8 +3,6 @@ type	win32
 init	MAIN_KernelInit
 rsrc	kernel.res
 
-import  ntdll.dll
-
 debug_channels (comm console debugstr dll int resource stress thunk toolhelp
                 win32)
 

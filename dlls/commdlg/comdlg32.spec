@@ -3,15 +3,6 @@ type	win32
 init	COMDLG32_DllEntryPoint
 rsrc	rsrc.res
 
-import shell32.dll
-import shlwapi.dll
-import comctl32.dll
-import winspool.drv
-import user32.dll
-import gdi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (commdlg)
 
 @ stdcall ChooseColorA(ptr) ChooseColorA

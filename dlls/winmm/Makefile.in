@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winmm.dll
+IMPORTS   = user32.dll advapi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = mmsystem.dll sound.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

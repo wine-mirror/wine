@@ -4,8 +4,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32.dll
+IMPORTS   = gdi32.dll advapi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = user.exe keyboard.dll ddeml.dll display.dll mouse.dll
-IMPORTS   = gdi32.dll kernel32.dll ntdll.dll
+LDIMPORTS = gdi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
 	bidi16.c \

@@ -2,7 +2,5 @@
 name dplay
 type win32
 
-import dplayx.dll
-
 @ forward DirectPlayCreate dplayx.DirectPlayCreate
 @ forward DirectPlayEnumerate dplayx.DirectPlayEnumerate

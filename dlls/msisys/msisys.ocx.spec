@@ -3,8 +3,6 @@ file	msisys.ocx
 type	win32
 init	MSISYS_DllMain
 
-import ntdll.dll
-
 debug_channels (msisys)
 
 @ stdcall DllCanUnloadNow() MSISYS_DllCanUnloadNow

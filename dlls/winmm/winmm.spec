@@ -3,11 +3,6 @@ type win32
 init WINMM_LibMain
 rsrc winmm_res.res
 
-import user32.dll
-import advapi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (driver mci mmio mmsys mmtime sound)
 
 # ordinal exports

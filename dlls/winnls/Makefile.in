@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winnls32.dll
+IMPORTS   = kernel32.dll ntdll.dll
 ALTNAMES  = winnls.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

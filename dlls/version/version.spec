@@ -1,10 +1,6 @@
 name version
 type win32
 
-import lz32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (ver)
 
 @ stdcall GetFileVersionInfoA(str long long ptr) GetFileVersionInfoA

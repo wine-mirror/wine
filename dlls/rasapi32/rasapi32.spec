@@ -1,9 +1,6 @@
 name	rasapi32
 type	win32
 
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (ras)
 
  1  stub RasAutodialAddressToNetwork

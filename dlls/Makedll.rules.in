@@ -3,18 +3,19 @@
 # Each individual makefile should define the following variables:
 # MODULE       : name of the main module being built
 # ALTNAMES     : alternate names for this dll (optional)
-# IMPORTS      : dlls to import (optional)
 # EXTRALIBS    : extra libraries to link in (optional)
 #
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS       = @DLLFLAGS@ -D__WINE__ $(EXTRADEFS)
-DLLEXT     = @DLLEXT@
-ALTSPECS   = $(ALTNAMES:%.dll=%)
-SPEC_SRCS  = $(ALTSPECS:%=%.spec)
-ALL_OBJS   = $(MODULE:%.dll=%).spec.o $(OBJS)
-ALL_LIBS   = $(LIBWINE) $(EXTRALIBS) $(LIBS)
+DEFS        = @DLLFLAGS@ -D__WINE__ $(EXTRADEFS)
+DLLEXT      = @DLLEXT@
+ALTSPECS    = $(ALTNAMES:%.dll=%)
+SPEC_SRCS   = $(ALTSPECS:%=%.spec)
+ALL_OBJS    = $(MODULE:%.dll=%).spec.o $(OBJS)
+ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
+SPEC_DEF    = $(MODULE:%.dll=%).spec.def
+TESTIMPORTS = $(MODULE) $(DELAYIMPORTS) $(IMPORTS)
 
 all: $(MODULE)$(DLLEXT)
 
@@ -23,17 +24,17 @@ all: $(MODULE)$(DLLEXT)
 # Rules for .so files
 
 $(MODULE).so: $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for .dll files
 
-$(MODULE): $(ALL_OBJS) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --implib $(MODULE:.dll=.a) -o $(MODULE) $(ALL_OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(ALL_OBJS) $(SPEC_DEF) Makefile.in
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib $(MODULE:.dll=.a) -o $(MODULE) $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for checking that no imports are missing
 
 checklink:: $(MODULE)$(DLLEXT)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE)$(DLLEXT) $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE)$(DLLEXT) && $(RM) checklink
 
 # Rules for testing
 

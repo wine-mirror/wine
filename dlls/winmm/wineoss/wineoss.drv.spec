@@ -2,11 +2,6 @@ name wineoss
 file wineoss.drv
 type win32
 
-import winmm.dll
-import user32.dll
-import kernel32.dll
-import	ntdll.dll
-
 debug_channels (midi mmaux wave)
 
   1 stdcall DriverProc(long long long long long) OSS_DriverProc

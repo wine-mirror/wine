@@ -1,10 +1,6 @@
 name	shdocvw
 type	win32
 
-import	ole32.dll
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (comimpl shdocvw)
 
 # ordinal exports

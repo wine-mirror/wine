@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winemine
+IMPORTS   = user32.dll gdi32.dll advapi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
         dialog.c \

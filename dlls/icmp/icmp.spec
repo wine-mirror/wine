@@ -1,9 +1,6 @@
 name icmp
 type win32
 
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (icmp)
 
 @ stdcall IcmpCloseHandle(ptr) IcmpCloseHandle

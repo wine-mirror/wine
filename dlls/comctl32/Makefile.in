@@ -4,6 +4,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comctl32.dll
+IMPORTS   = user32.dll gdi32.dll advapi32.dll kernel32.dll ntdll.dll
+DELAYIMPORTS = winmm.dll
 EXTRALIBS = $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@

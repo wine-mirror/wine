@@ -1,10 +1,6 @@
 name dinput
 type win32
 
-import user32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (dinput)
 
 @ stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreateA

@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regtest
+IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = regtest.c
 

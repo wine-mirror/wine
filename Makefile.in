@@ -21,7 +21,7 @@ VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 LDCONFIG  = @LDCONFIG@
 MODULE    = wine
-IMPORTS   = ntdll.dll
+LDIMPORTS = ntdll.dll
 
 # Stand-alone programs
 PROGRAMS = \
@@ -89,8 +89,8 @@ Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine: $(EMUOBJS) $(IMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT) unicode/libwine_unicode.$(LIBEXT)
-	$(CC) -o wine $(EMUOBJS) -L. $(IMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
+wine: $(EMUOBJS) $(LDIMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT) unicode/libwine_unicode.$(LIBEXT)
+	$(CC) -o wine $(EMUOBJS) -L. $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
 
 install_wine: dummy
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
@@ -146,7 +146,7 @@ server tools: $(LIBRARIES)
 dlls: tools $(LIBRARIES)
 
 checklink::
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(LIBWINE) $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c && $(RM) checklink
 
 checklink::
 	@cd dlls && $(MAKE) checklink

@@ -4,8 +4,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = x11drv.dll
+IMPORTS   = user32.dll gdi32.dll advapi32.dll kernel32.dll ntdll.dll
 EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
-IMPORTS   = user32.dll gdi32.dll kernel32.dll
+LDIMPORTS = user32.dll gdi32.dll kernel32.dll
 
 C_SRCS = \
 	desktop.c \

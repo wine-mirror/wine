@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winver
+IMPORTS   = shell32.dll kernel32.dll ntdll.dll
 
 C_SRCS = winver.c
 

@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = opengl32.dll
+IMPORTS   = user32.dll gdi32.dll kernel32.dll ntdll.dll
 EXTRALIBS = $(LIBTSX11) $(X_LIBS) $(XLIB)
 
 LDDLLFLAGS = @LDDLLFLAGS@

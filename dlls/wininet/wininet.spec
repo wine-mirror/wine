@@ -2,11 +2,6 @@ name    wininet
 type    win32
 init    WININET_LibMain
 
-import	shlwapi.dll
-import	user32.dll
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (wininet)
 
 @ stub InternetInitializeAutoProxyDll

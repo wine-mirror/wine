@@ -4,6 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = miscemu
+IMPORTS   = ntdll.dll
 
 SPEC_SRCS = wine.spec
 

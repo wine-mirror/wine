@@ -3,10 +3,6 @@ name    crtdll
 type    win32
 init    CRTDLL_Init
 
-import msvcrt.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (crtdll)
 
 @ forward ??2@YAPAXI@Z msvcrt.??2@YAPAXI@Z

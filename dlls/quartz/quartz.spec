@@ -1,8 +1,6 @@
 name	quartz
 type	win32
 
-import ntdll.dll
-
 debug_channels (quartz)
 
 @ stub AMGetErrorTextA

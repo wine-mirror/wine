@@ -4,8 +4,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdi32.dll
+IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = gdi.exe dispdib.dll wing.dll
-IMPORTS   = kernel32.dll ntdll.dll
+LDIMPORTS = kernel32.dll ntdll.dll
 EXTRAINCL = @FREETYPEINCL@
 
 C_SRCS = \

@@ -3,6 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winearts.drv
+IMPORTS   = winmm.dll user32.dll kernel32.dll ntdll.dll
 EXTRADEFS = @ARTSINCL@
 EXTRALIBS = @ARTSLIBS@
 

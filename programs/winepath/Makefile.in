@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winepath
+IMPORTS   = kernel32.dll ntdll.dll
 
 C_SRCS = winepath.c
 

@@ -2,10 +2,6 @@ name winedos
 type win32
 init DOSVM_Init
 
-import user32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (aspi console ddraw int int21 int31 module relay)
 
 @ stdcall LoadDosExe(str long) MZ_LoadImage

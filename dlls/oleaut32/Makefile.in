@@ -3,6 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oleaut32.dll
+IMPORTS   = ole32.dll user32.dll gdi32.dll advapi32.dll kernel32.dll ntdll.dll
+DELAYIMPORTS = comctl32.dll
 ALTNAMES  = ole2disp.dll typelib.dll
 EXTRALIBS = $(LIBUUID) @JPEGLIB@
 

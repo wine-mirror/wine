@@ -3,11 +3,6 @@ type	win32
 init	UserClientDllInitialize
 rsrc	resources/user32.res
 
-import	gdi32.dll
-import	advapi32.dll
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (accel caret class clipboard combo comm cursor dc ddeml dialog
                 driver edit event graphics hook icon key keyboard listbox local
                 mdi menu message msg nonclient relay resource scroll shell static

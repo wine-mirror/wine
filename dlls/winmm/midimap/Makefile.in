@@ -3,6 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = midimap.drv
+IMPORTS   = winmm.dll user32.dll advapi32.dll kernel32.dll ntdll.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

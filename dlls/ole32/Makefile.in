@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ole32.dll
+IMPORTS   = advapi32.dll user32.dll gdi32.dll rpcrt4.dll kernel32.dll ntdll.dll
 ALTNAMES  = ole2.dll ole2nls.dll ole2conv.dll ole2prox.dll ole2thk.dll storage.dll compobj.dll
 EXTRALIBS = $(LIBUUID)
 

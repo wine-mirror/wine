@@ -120,6 +120,8 @@ static void do_relay16(void);
 static void do_relay32(void);
 static void do_sym( const char *arg );
 static void do_lib( const char *arg );
+static void do_import( const char *arg );
+static void do_dimport( const char *arg );
 
 static const struct option_descr option_table[] =
 {
@@ -127,6 +129,8 @@ static const struct option_descr option_table[] =
     { "-h",       0, do_usage,   "-h               Display this help message" },
     { "-w",       0, do_warnings,"-w               Turn on warnings" },
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
+    { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
+    { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
     { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
     { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'" },
     { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
@@ -216,6 +220,16 @@ static void do_lib( const char *arg )
 {
     lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
     lib_path[nb_lib_paths++] = xstrdup( arg );
+}
+
+static void do_import( const char *arg )
+{
+    add_import_dll( arg, 0 );
+}
+
+static void do_dimport( const char *arg )
+{
+    add_import_dll( arg, 1 );
 }
 
 /* parse options from the argv array and remove all the recognized ones */

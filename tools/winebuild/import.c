@@ -161,7 +161,14 @@ static void read_exported_symbols( const char *name, struct import *imp )
 /* add a dll to the list of imports */
 void add_import_dll( const char *name, int delay )
 {
-    struct import *imp = xmalloc( sizeof(*imp) );
+    struct import *imp;
+    int i;
+
+    /* check if we already imported it */
+    for (i = 0; i < nb_imports; i++)
+        if (!strcmp( dll_imports[i]->dll, name )) return;
+
+    imp = xmalloc( sizeof(*imp) );
     imp->dll        = xstrdup( name );
     imp->delay      = delay;
     imp->imports    = NULL;

@@ -2,11 +2,6 @@ name opengl32
 type win32
 init OpenGL32_Init
 
-import user32.dll
-import gdi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (opengl)
 
 @  stdcall wglCreateContext(long) wglCreateContext

@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvfw32.dll
+IMPORTS   = winmm.dll comctl32.dll version.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = msvideo.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imm32.dll
+IMPORTS   = kernel32.dll ntdll.dll
 ALTNAMES  = imm.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

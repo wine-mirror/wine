@@ -18,13 +18,13 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 aviinfo.spec.c: aviinfo.spec aviinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviinfo.o -o aviinfo.spec.c -spec $(SRCDIR)/aviinfo.spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym aviinfo.o -o aviinfo.spec.c -spec $(SRCDIR)/aviinfo.spec -L$(DLLDIR) -lkernel32.dll -lntdll.dll
 
 aviplay.spec.c: aviplay.spec aviplay.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviplay.o -o aviplay.spec.c -spec $(SRCDIR)/aviplay.spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym aviplay.o -o aviplay.spec.c -spec $(SRCDIR)/aviplay.spec -L$(DLLDIR) -lddraw.dll -lkernel32.dll -lntdll.dll
 
 icinfo.spec.c: icinfo.spec icinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym icinfo.o -o icinfo.spec.c -spec $(SRCDIR)/icinfo.spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym icinfo.o -o icinfo.spec.c -spec $(SRCDIR)/icinfo.spec -L$(DLLDIR) -lmsvfw32.dll -lkernel32.dll -lntdll.dll
 
 aviinfo.so: aviinfo.o aviinfo.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.so aviinfo.o aviinfo.spec.o $(ALL_LIBS)
@@ -56,8 +56,8 @@ uninstall::
 	$(RM) $(bindir)/aviinfo $(bindir)/aviplay $(bindir)/icinfo
 
 checklink:: $(PROGRAMS:%=%.so)
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviinfo.so $(ALL_LIBS) && $(RM) checklink
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviplay.so $(ALL_LIBS) && $(RM) checklink
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c icinfo.so $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviinfo.so && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c aviplay.so && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c icinfo.so && $(RM) checklink
 
 ### Dependencies:

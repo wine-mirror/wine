@@ -3,10 +3,6 @@ type	win32
 file	winspool.drv
 init	WINSPOOL_EntryPoint
 
-import	advapi32.dll
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (winspool)
 
 100 stub @

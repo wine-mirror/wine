@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = progman
+IMPORTS   = shell32.dll comdlg32.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
 
 LICENSELANG = En
 

@@ -1,8 +1,6 @@
 name msnet32
 type win32
 
-import ntdll.dll
-
   1 stub @
   2 stub @
   3 stub @

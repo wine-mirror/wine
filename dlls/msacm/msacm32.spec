@@ -3,12 +3,6 @@ type win32
 init MSACM32_LibMain
 rsrc msacm.res
 
-import winmm.dll
-import user32.dll
-import advapi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (msacm)
 
 @ stdcall acmDriverAddA(ptr long long long long) acmDriverAddA

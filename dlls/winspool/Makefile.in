@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winspool.drv
+IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
 EXTRALIBS = @CUPSLIBS@
 
 LDDLLFLAGS = @LDDLLFLAGS@

@@ -2,11 +2,6 @@ name setupapi
 type win32
 rsrc setupapi.res
 
-import user32.dll
-import advapi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (setupapi)
 
 @ stub AddMiniIconToList

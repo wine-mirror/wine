@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.dll
+IMPORTS   = winmm.dll user32.dll advapi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = msacm.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

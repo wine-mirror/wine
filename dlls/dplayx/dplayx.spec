@@ -3,13 +3,6 @@ type win32
 init DPLAYX_LibMain
 rsrc version.res
 
-import winmm.dll
-import ole32.dll
-import user32.dll
-import advapi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (dplay)
 
   1 stdcall DirectPlayCreate(ptr ptr ptr) DirectPlayCreate

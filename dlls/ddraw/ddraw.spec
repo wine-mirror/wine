@@ -3,11 +3,6 @@ type win32
 init DDRAW_DllMain
 rsrc version.res
 
-import user32.dll
-import gdi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (ddraw)
 
 @ stub DDHAL32_VidMemAlloc

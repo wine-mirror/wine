@@ -3,6 +3,8 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mciwave.drv
+IMPORTS   = winmm.dll kernel32.dll ntdll.dll
+DELAYIMPORTS = user32.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

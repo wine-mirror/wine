@@ -1,9 +1,6 @@
 name olepro32
 type win32
 
-import oleaut32.dll
-import ntdll.dll
-
 debug_channels (ole)
 
 248 forward OleIconToCursor OLEAUT32.OleIconToCursor

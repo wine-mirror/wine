@@ -4,6 +4,8 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winedbg
+IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
+DELAYIMPORTS = user32.dll
 
 C_SRCS = \
 	break.c \

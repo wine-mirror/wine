@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regapi
+IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
 
 C_SRCS = \
 	regapi.c

@@ -2,9 +2,6 @@
 name    msvcrt20
 type    win32
 
-import msvcrt.dll
-import ntdll.dll
-
 debug_channels (msvcrt) 
 
 @ stub ??0Iostream_init@@QAE@AAVios@@H@Z  #

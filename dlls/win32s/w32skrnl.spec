@@ -1,9 +1,6 @@
 name	w32skrnl
 type	win32
 
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (dll)
 
 1 stub _kSetEnvironmentVariable@8

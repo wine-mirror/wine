@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lz32.dll
+IMPORTS   = kernel32.dll ntdll.dll
 ALTNAMES  = lzexpand.dll
 EXTRALIBS = $(LIBUNICODE)
 

@@ -1,10 +1,6 @@
 name	wsock32
 type	win32
 
-import	ws2_32.dll
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (winsock)
 
   1 forward accept ws2_32.accept

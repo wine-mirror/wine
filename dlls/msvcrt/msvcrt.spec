@@ -3,9 +3,6 @@ name    msvcrt
 type    win32
 init    MSVCRT_Init
 
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (msvcrt)
 
 @ cdecl $I10_OUTPUT() MSVCRT_I10_OUTPUT

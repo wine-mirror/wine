@@ -1,9 +1,6 @@
 name	tapi32
 type	win32
 
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (tapi)
 
 @ stdcall lineAccept(long str long) lineAccept

@@ -2,14 +2,6 @@ name oleaut32
 type win32
 rsrc version.res
 
-import -delay comctl32.dll
-import ole32.dll
-import user32.dll
-import gdi32.dll
-import advapi32.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (ole olerelay typelib)
 
 1 stdcall DllGetClassObject(ptr ptr ptr) OLEAUT32_DllGetClassObject

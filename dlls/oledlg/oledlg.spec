@@ -1,9 +1,6 @@
 name	oledlg
 type	win32
 
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (ole)
 
   1 stdcall OleUIAddVerbMenuA(ptr str long long long long long long ptr) OleUIAddVerbMenuA

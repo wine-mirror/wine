@@ -1,9 +1,6 @@
 name    psapi
 type    win32
 
-import	kernel32.dll
-import	ntdll.dll
-
 debug_channels (psapi)
 
 @ stdcall EmptyWorkingSet(long) EmptyWorkingSet

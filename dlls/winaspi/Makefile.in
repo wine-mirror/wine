@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wnaspi32.dll
+IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = winaspi.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@

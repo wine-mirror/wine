@@ -1,8 +1,6 @@
 name url
 type win32
 
-import ntdll.dll
-
 debug_channels()
 
 @ stub AddMIMEFileTypesPS

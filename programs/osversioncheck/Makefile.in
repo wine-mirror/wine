@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = osversioncheck
+IMPORTS   = kernel32.dll ntdll.dll
 
 C_SRCS = osversioncheck.c
 

@@ -16,6 +16,8 @@
 # GLUE         : C sources for which glue code needs to be generated
 # EXTRA_SRCS   : extra source files for make depend
 # EXTRA_OBJS   : extra object files
+# IMPORTS      : dlls to import
+# DELAYIMPORTS : dlls to import in delayed mode
 # SUBDIRS      : subdirectories that contain a Makefile
 # EXTRASUBDIRS : subdirectories that do not contain a Makefile
 # PLTESTS      : Perl test scripts
@@ -162,7 +164,7 @@ $(MODULE).tmp.o: $(OBJS) Makefile.in
 # Rule for main module spec file
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
 # Rule to rebuild the resource compiler
 
@@ -282,7 +284,7 @@ $(TESTPROGRAM).tmp.o: $(TESTOBJS)
 	-strip --strip-unneeded $@
 
 $(TESTPROGRAM).spec.c: $(TESTPROGRAM).spec $(TESTPROGRAM).tmp.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -sym $(TESTPROGRAM).tmp.o -o $@ -spec $(SRCDIR)/$(TESTPROGRAM).spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym $(TESTPROGRAM).tmp.o -o $@ -spec $(SRCDIR)/$(TESTPROGRAM).spec -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
 
 # Misc. rules
 

@@ -3,13 +3,6 @@ type	win32
 init	OLE32_DllEntryPoint
 rsrc	ole32res.res
 
-import advapi32.dll
-import user32.dll
-import gdi32.dll
-import rpcrt4.dll
-import kernel32.dll
-import ntdll.dll
-
 debug_channels (accel ole relay storage)
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED

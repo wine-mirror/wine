@@ -3,8 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw.dll
-EXTRALIBS = $(LIBUUID) $(LIBTSX11) $(X_LIBS) $(XLIB)
 IMPORTS   = user32.dll gdi32.dll kernel32.dll ntdll.dll
+EXTRALIBS = $(LIBUUID) $(LIBTSX11) $(X_LIBS) $(XLIB)
+LDIMPORTS = user32.dll gdi32.dll kernel32.dll ntdll.dll
 
 OPENGLFILES = \
 	d3dcommon.c \

@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = setupapi.dll
+IMPORTS   = user32.dll advapi32.dll kernel32.dll ntdll.dll
 ALTNAMES  = setupx.dll
 EXTRALIBS = $(LIBUNICODE)
 

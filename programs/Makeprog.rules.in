@@ -8,11 +8,12 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS       = @DLLFLAGS@ -DSTRICT -DNONAMELESSUNION -DNONAMELESSSTRUCT $(EXTRADEFS)
-LDDLLFLAGS = @LDDLLFLAGS@
-ALL_OBJS   = $(MODULE).spec.o $(OBJS)
-ALL_LIBS   = $(LIBWINE) $(EXTRALIBS) $(LIBS)
-SYMBOLFILE = $(MODULE).tmp.o
+DEFS        = @DLLFLAGS@ -DSTRICT -DNONAMELESSUNION -DNONAMELESSSTRUCT $(EXTRADEFS)
+LDDLLFLAGS  = @LDDLLFLAGS@
+ALL_OBJS    = $(MODULE).spec.o $(OBJS)
+ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
+SYMBOLFILE  = $(MODULE).tmp.o
+TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 
 all: $(MODULE)
 
@@ -29,7 +30,7 @@ $(MODULE): $(MODULE).so
 # Rules for checking that no imports are missing
 
 checklink:: $(MODULE).so
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE).so $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE).so && $(RM) checklink
 
 # Rules for testing
 

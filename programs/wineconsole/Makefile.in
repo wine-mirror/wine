@@ -4,6 +4,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineconsole
+IMPORTS   = gdi32.dll user32.dll advapi32.dll kernel32.dll ntdll.dll
+DELAYIMPORTS = comctl32
 
 C_SRCS = \
 	dialog.c \
