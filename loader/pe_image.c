@@ -246,14 +246,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     unsigned int load_addr	= wm->module;
     int				i,characteristics_detection=1;
-    char			*modname;
-    IMAGE_EXPORT_DIRECTORY *exports = get_exports(wm->module);
     IMAGE_IMPORT_DESCRIPTOR *imports = get_imports(wm->module);
-    
-    if (exports)
-    	modname = (char*) RVA(exports->Name);
-    else
-        modname = "<unknown>";
 
     /* first, count the number of imported non-internal modules */
     pe_imp = imports;
@@ -315,8 +308,8 @@ DWORD fixup_imports( WINE_MODREF *wm )
                         wmImp->module, (LPCSTR)ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
-				name, ordinal);
+			ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
+				name, ordinal, wm->filename );
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {		/* import by name */
@@ -326,8 +319,8 @@ DWORD fixup_imports( WINE_MODREF *wm )
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
-				name,pe_name->Hint,pe_name->Name);
+			ERR("No implementation for %s.%d(%s) imported from %s, setting to 0xdeadbeef\n",
+				name,pe_name->Hint,pe_name->Name,wm->filename);
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		}
@@ -347,8 +340,8 @@ DWORD fixup_imports( WINE_MODREF *wm )
                         wmImp->module, (LPCSTR) ordinal, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-			ERR("No implementation for %s.%d, setting to 0xdeadbeef\n",
-				name,ordinal);
+			ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
+				name,ordinal, wm->filename);
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		} else {
@@ -359,8 +352,8 @@ DWORD fixup_imports( WINE_MODREF *wm )
                         wmImp->module, pe_name->Name, TRUE
 		    );
 		    if (!thunk_list->u1.Function) {
-		    	ERR("No implementation for %s.%d(%s), setting to 0xdeadbeef\n",
-				name, pe_name->Hint, pe_name->Name);
+		    	ERR("No implementation for %s.%d(%s) imported from %s, setting to 0xdeadbeef\n",
+				name, pe_name->Hint, pe_name->Name, wm->filename);
                         thunk_list->u1.Function = (PDWORD)0xdeadbeef;
 		    }
 		}
