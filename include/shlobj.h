@@ -587,7 +587,7 @@ typedef struct _DROPFILES
   POINT pt;
   BOOL  fNC;
   BOOL  fWide;
-} DROPFILES;
+} DROPFILES, *LPDROPFILES;
 
 #include "poppack.h" 
 
