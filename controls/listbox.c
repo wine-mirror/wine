@@ -74,7 +74,7 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   lphl->bRedrawFlag    = TRUE;
   lphl->iNumStops      = 0;
   lphl->TabStops       = NULL;
-  lphl->hFont          = GetStockObject(SYSTEM_FONT);
+  lphl->hFont          = GetStockObject32(SYSTEM_FONT);
   lphl->hSelf          = hwnd;  
   if (CtlType==ODT_COMBOBOX)              /* use the "faked" style for COMBOLBOX */
                                           /* LBS_SORT instead CBS_SORT e.g.      */
@@ -227,7 +227,7 @@ void ListBoxDrawItem(HWND hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls,
 
       if (itemState != 0) {
 	dwOldTextColor = SetTextColor(hdc, 0x00FFFFFFL);
-	FillRect16(hdc, rect, GetStockObject(BLACK_BRUSH));
+	FillRect16(hdc, rect, GetStockObject32(BLACK_BRUSH));
       }
 
       if (lphl->dwStyle & LBS_USETABSTOPS) {
@@ -783,7 +783,8 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
 
     skip = ret = 0;
     attrib &= ~FA_LABEL;
-    while ((count = DOSFS_FindNext( path, mask, 0, attrib, skip, &entry )) > 0)
+    while ((count = DOSFS_FindNext( path, mask, NULL, 0,
+                                    attrib, skip, &entry )) > 0)
     {
         skip += count;
         if (entry.attr & FA_DIRECTORY)
@@ -1407,7 +1408,7 @@ static LONG LBSetFont(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
   HDC32 hdc;
 
   if (wParam == 0)
-    lphl->hFont = GetStockObject(SYSTEM_FONT);
+    lphl->hFont = GetStockObject32(SYSTEM_FONT);
   else
     lphl->hFont = (HFONT16)wParam;
 
@@ -1436,7 +1437,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   LPLISTSTRUCT lpls;
   PAINTSTRUCT16 ps;
   HBRUSH16 hBrush;
-  HFONT16 hOldFont;
+  HFONT32 hOldFont;
   HDC16 hdc    = BeginPaint16( hwnd, &ps );
   DC    *dc    = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
   RECT16  rect, paintRect, scratchRect;
@@ -1453,11 +1454,11 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   GetClientRect16(hwnd, &rect);
   IntersectRect16(&paintRect,&rect,&paintRect);
 
-  hOldFont = SelectObject(hdc, lphl->hFont);
+  hOldFont = SelectObject32(hdc, lphl->hFont);
 
   hBrush = (HBRUSH16)SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX,
                                      (WPARAM32)hdc, (LPARAM)hwnd);
-  if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
+  if (hBrush == 0) hBrush = GetStockObject32(WHITE_BRUSH);
 
   FillRect16(hdc, &rect, hBrush);
 
@@ -1520,7 +1521,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
     lpls = lpls->lpNext;
   }
   ListBoxUpdateWindow(hwnd,lphl,FALSE);
-  SelectObject(hdc,hOldFont);
+  SelectObject32(hdc,hOldFont);
   EndPaint16( hwnd, &ps );
   return 0;
 }
@@ -1537,14 +1538,14 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
        if( lphl->ItemsCount && lphl->ItemFocused != -1)
          {
            HDC32        hDC = GetDC32(hwnd);
-           HFONT16      hOldFont = SelectObject(hDC, lphl->hFont);
+           HFONT32 hOldFont = SelectObject32(hDC, lphl->hFont);
            LPLISTSTRUCT lpls;
 
            lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
            lpls->itemState |= ODS_FOCUS;
 
            ListBoxDrawItem(hwnd,lphl,hDC,lpls,&lpls->itemRect, ODA_FOCUS, lpls->itemState);
-           SelectObject(hDC, hOldFont);
+           SelectObject32(hDC, hOldFont);
            ReleaseDC32(hwnd,hDC);
          }
 
@@ -1567,14 +1568,14 @@ static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
            if( lphl->ItemFocused != -1 )
              {
               HDC32        hDC = GetDC32(hwnd);
-              HFONT16      hOldFont = SelectObject(hDC, lphl->hFont);
+              HFONT32 hOldFont = SelectObject32(hDC, lphl->hFont);
               LPLISTSTRUCT lpls;
 
               lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
               lpls->itemState &= ~ODS_FOCUS;
 
               ListBoxDrawItem(hwnd,lphl,hDC,lpls,&lpls->itemRect, ODA_FOCUS, lpls->itemState);
-              SelectObject(hDC, hOldFont);
+              SelectObject32(hDC, hOldFont);
               ReleaseDC32(hwnd,hDC);
              }
            else

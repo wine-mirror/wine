@@ -771,7 +771,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 
         hrgnOldPos = CreateRectRgnIndirect16( &wndPtr->rectWindow );
         hrgnNewPos = CreateRectRgnIndirect16( &newWindowRect );
-        CombineRgn( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
+        CombineRgn32( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
  
 	/* Set new size and position */
 	wndPtr->rectWindow = newWindowRect;
@@ -783,8 +783,8 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         PAINT_RedrawWindow( 0, NULL, hrgnOldPos, RDW_INVALIDATE |
                             RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW,
                             RDW_C_USEHRGN );
-        DeleteObject(hrgnOldPos);
-        DeleteObject(hrgnNewPos);
+        DeleteObject32(hrgnOldPos);
+        DeleteObject32(hrgnNewPos);
     }
 }
 

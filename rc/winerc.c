@@ -14,7 +14,6 @@
 #include <string.h>
 #include "windows.h"
 #include "parser.h"
-#include "y.tab.h"
 
 char usage[]="winerc -bdvc -p prefix -o outfile < infile \n"
 	"   -b            Create a C array from a binary .res file\n"

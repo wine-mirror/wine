@@ -1203,7 +1203,7 @@ void WINPROC_UnmapMsg32ATo16( UINT16 msg, WPARAM16 wParam, LPARAM lParam )
         {
             LPSTR str = (LPSTR)PTR_SEG_TO_LIN(lParam);
             lParam = *((LPARAM *)str - 1);
-            strcpy( (LPSTR)lParam, str );
+            lstrcpyn32A( (LPSTR)lParam, str, wParam );
             SEGPTR_FREE( (LPARAM *)str - 1 );
         }
         break;

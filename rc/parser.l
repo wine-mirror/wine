@@ -1,15 +1,17 @@
-%{
-/*
+/* -*-C-*-
  *
  * Copyright  Martin von Loewis, 1994
  *
  */
+%{
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
 #include "y.tab.h"
+
+#define YY_NO_UNPUT
 
 int line_number=1;
 %}

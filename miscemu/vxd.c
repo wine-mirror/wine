@@ -13,6 +13,14 @@
 #include "debug.h"
 
 
+#define VXD_BARF(context,name) \
+    fprintf( stderr, "vxd %s: unknown/not implemented parameters:\n" \
+                     "vxd %s: AX %04x, BX %04x, CX %04x, DX %04x, " \
+                     "SI %04x, DI %04x, DS %04x, ES %04x\n", \
+             (name), (name), AX_reg(context), BX_reg(context), \
+             CX_reg(context), DX_reg(context), SI_reg(context), \
+             DI_reg(context), DS_reg(context), ES_reg(context) )
+
 /***********************************************************************
  *           VXD_PageFile
  */
@@ -52,7 +60,7 @@ void VXD_PageFile( SIGCONTEXT *context )
     case 0x05: /* cancel?? INTERRUP.D */
     case 0x06: /* test I/O valid INTERRUP.D */
     default:
-	INT_BARF( context, 0x2f);
+	VXD_BARF( context, "pagefile" );
 	break;
     }
 }
@@ -79,7 +87,7 @@ void VXD_Shell( SIGCONTEXT *context )
     case 0x0004:
     case 0x0005:
 	dprintf_vxd(stddeb,"VxD Shell: EDX = %08lx\n",EDX_reg(context));
-	INT_BARF( context, 0x2f);
+	VXD_BARF( context, "shell" );
 	break;
 
     case 0x0006: /* SHELL_Get_VM_State */
@@ -110,7 +118,7 @@ void VXD_Shell( SIGCONTEXT *context )
     case 0x0016:
     default:
  	dprintf_vxd(stddeb,"VxD Shell: EDX = %08lx\n",EDX_reg(context)); 
-	INT_BARF( context, 0x2f);
+	VXD_BARF( context, "shell");
 	break;
     }
 }
@@ -135,6 +143,6 @@ void VXD_Comm( SIGCONTEXT *context )
     case 0x0002: /* get focus */
     case 0x0003: /* virtualise port */
     default:
-        INT_BARF( context, 0x2f);
+        VXD_BARF( context, "comm" );
     }
 }

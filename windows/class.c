@@ -182,7 +182,7 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
     /* Delete the class */
 
     if (classPtr->dce) DCE_FreeDCE( classPtr->dce );
-    if (classPtr->hbrBackground) DeleteObject( classPtr->hbrBackground );
+    if (classPtr->hbrBackground) DeleteObject32( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
     WINPROC_FreeProc( classPtr->winproc );

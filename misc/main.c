@@ -1030,7 +1030,7 @@ LPVOID GetEnvironmentStringsW(void)
 		wenvtable[count]=(WCHAR)envtable[count];
 	free(envtable);
 
-    return envtable;
+    return wenvtable;
 }
 
 void FreeEnvironmentStringsA(void *e)

@@ -252,38 +252,38 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 {
     RECT32 rc;
-    HPEN16 hOldPen;
-    HBRUSH16 hOldBrush;
+    HPEN32 hOldPen;
+    HBRUSH32 hOldBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     GetClientRect32( wndPtr->hwndSelf, &rc );
 
       /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
-    if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+    if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    hOldPen = (HPEN16)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
-    hOldBrush = (HBRUSH16)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
+    hOldPen = (HPEN32)SelectObject32(hDC, sysColorObjects.hpenWindowFrame);
+    hOldBrush = (HBRUSH32)SelectObject32(hDC, sysColorObjects.hbrushBtnFace);
     SetBkMode(hDC, TRANSPARENT);
-    Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
+    Rectangle32(hDC, rc.left, rc.top, rc.right, rc.bottom);
     if (action == ODA_DRAWENTIRE)
     {
-        SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.right-1, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
+        SetPixel32( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
+        SetPixel32( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
+        SetPixel32( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
+        SetPixel32( hDC, rc.right-1, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
     }
     InflateRect32( &rc, -1, -1 );
 
     if ((wndPtr->dwStyle & 0x000f) == BS_DEFPUSHBUTTON)
     {
-        Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
+        Rectangle32(hDC, rc.left, rc.top, rc.right, rc.bottom);
         InflateRect32( &rc, -1, -1 );
     }
 
     if (infoPtr->state & BUTTON_HIGHLIGHTED)
     {
         /* draw button shadow: */
-        SelectObject(hDC, sysColorObjects.hbrushBtnShadow );
+        SelectObject32(hDC, sysColorObjects.hbrushBtnShadow );
         PatBlt(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
         PatBlt(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
         rc.left += 2;  /* To position the text down and right */
@@ -324,8 +324,8 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
         }   
     }
 
-    SelectObject( hDC, hOldPen );
-    SelectObject( hDC, hOldBrush );
+    SelectObject32( hDC, hOldPen );
+    SelectObject32( hDC, hOldBrush );
 }
 
 
@@ -349,17 +349,17 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
     rect.left=(rc->right-rect.right)/2;       /* for centering text bitmap */
     rect.top=(rc->bottom-rect.bottom)/2;
     hbmMem = CreateCompatibleBitmap( hDC,rect.right,rect.bottom);
-    SelectObject( hdcMem, hbmMem);
-    hBr = SelectObject( hdcMem,CreatePatternBrush(hbm));
-    DeleteObject( hbm);
+    SelectObject32( hdcMem, hbmMem);
+    hBr = SelectObject32( hdcMem, CreatePatternBrush32(hbm) );
+    DeleteObject32( hbm );
     PatBlt( hdcMem,0,0,rect.right,rect.bottom,WHITENESS);
-    if (hFont) SelectObject( hdcMem, hFont);
+    if (hFont) SelectObject32( hdcMem, hFont);
     DrawText32A( hdcMem, text, -1, &rc2, DT_SINGLELINE);  
     PatBlt( hdcMem,0,0,rect.right,rect.bottom,0xFA0089);
-    DeleteObject( SelectObject( hdcMem,hBr));
+    DeleteObject32( SelectObject32( hdcMem,hBr) );
     BitBlt( hDC,rect.left,rect.top,rect.right,rect.bottom,hdcMem,0,0,0x990000);
     DeleteDC( hdcMem);
-    DeleteObject( hbmMem);
+    DeleteObject32( hbmMem );
 }
 
 
@@ -377,7 +377,7 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
     GetClientRect16(wndPtr->hwndSelf, &rc);
 
-    if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+    if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     if (action == ODA_DRAWENTIRE) FillRect16( hDC, &rc, hBrush );
 
@@ -427,7 +427,7 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 /**********************************************************************
  *       BUTTON_CheckAutoRadioButton
  *
- * wndPtr is checked, uncheck everything else in group
+ * wndPtr is checked, uncheck every other auto radio button in group
  */
 static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
 {
@@ -435,9 +435,10 @@ static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
     if (!(wndPtr->dwStyle & WS_CHILD)) return;
     parent = wndPtr->parent->hwndSelf;
     for(sibling = GetNextDlgGroupItem32( parent, wndPtr->hwndSelf, FALSE );
-        sibling != wndPtr->hwndSelf;
+        sibling != wndPtr->hwndSelf && sibling != 0;
         sibling = GetNextDlgGroupItem32( parent, sibling, FALSE ))
-	    SendMessage32A( sibling, BM_SETCHECK32, BUTTON_UNCHECKED, 0 );
+	    if((WIN_FindWndPtr(sibling)->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)
+		SendMessage32A( sibling, BM_SETCHECK32, BUTTON_UNCHECKED, 0 );
 }
 
 
@@ -452,17 +453,17 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
     if (action != ODA_DRAWENTIRE) return;
 
-    if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+    if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    SelectObject( hDC, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hDC, sysColorObjects.hpenWindowFrame );
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
 
     MoveTo( hDC, rc.left, rc.top+2 );
-    LineTo( hDC, rc.right-1, rc.top+2 );
-    LineTo( hDC, rc.right-1, rc.bottom-1 );
-    LineTo( hDC, rc.left, rc.bottom-1 );
-    LineTo( hDC, rc.left, rc.top+2 );
+    LineTo32( hDC, rc.right-1, rc.top+2 );
+    LineTo32( hDC, rc.right-1, rc.bottom-1 );
+    LineTo32( hDC, rc.left, rc.bottom-1 );
+    LineTo32( hDC, rc.left, rc.top+2 );
 
     if (!wndPtr->text) return;
     if (wndPtr->dwStyle & WS_DISABLED)
@@ -486,7 +487,7 @@ static void UB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
 
-    if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
+    if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     FillRect16( hDC, &rc, hBrush );
 

@@ -53,7 +53,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
           else hCaretWnd = 0;
  
 	  hdc = GetDCEx32(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
-          DeleteObject(hrgnClip);
+          DeleteObject32( hrgnClip );
        }
     else	/* clip children */
        {
@@ -71,7 +71,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     else
 	CopyRect16(&cliprc, clipRect);
 
-    hrgnUpdate = CreateRectRgn(0, 0, 0, 0);
+    hrgnUpdate = CreateRectRgn32( 0, 0, 0, 0 );
     ScrollDC(hdc, dx, dy, &rc, &cliprc, hrgnUpdate, NULL);
     ReleaseDC32(hwnd, hdc);
 
@@ -80,7 +80,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
       WND*	wndPtr;
 
       if( wndScroll->hrgnUpdate > 1 )
-	OffsetRgn( wndScroll->hrgnUpdate, dx, dy );
+	OffsetRgn32( wndScroll->hrgnUpdate, dx, dy );
 
       for (wndPtr = wndScroll->child; wndPtr; wndPtr = wndPtr->next)
         SetWindowPos(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
@@ -92,7 +92,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
 			    RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, RDW_C_USEHRGN );
 
-    DeleteObject(hrgnUpdate);
+    DeleteObject32( hrgnUpdate );
     if( hCaretWnd ) ShowCaret(hCaretWnd);
 }
 
@@ -135,13 +135,14 @@ BOOL ScrollDC(HDC16 hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
       {
         /* save a copy and change cliprgn directly */
 
-        CombineRgn( hrgnScrollClip, hrgnClip, 0, RGN_COPY );
-        SetRectRgn( hrgnClip, rectClip.left, rectClip.top, rectClip.right, rectClip.bottom );
+        CombineRgn32( hrgnScrollClip, hrgnClip, 0, RGN_COPY );
+        SetRectRgn( hrgnClip, rectClip.left, rectClip.top,
+                    rectClip.right, rectClip.bottom );
 
 	CLIPPING_UpdateGCRegion( dc );
       }
     else
-        SelectClipRgn( hdc, hrgnScrollClip );
+        SelectClipRgn16( hdc, hrgnScrollClip );
 
     /* translate coordinates */
 
@@ -179,15 +180,18 @@ BOOL ScrollDC(HDC16 hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 
     if (hrgnUpdate || rcUpdate)
     {
-	HRGN32 hrgn1 = (hrgnUpdate)?hrgnUpdate:CreateRectRgn( 0,0,0,0 );
+	HRGN32 hrgn1 = (hrgnUpdate) ? hrgnUpdate : CreateRectRgn32( 0,0,0,0 );
 
 	if( dc->w.hVisRgn )
 	{
-	  CombineRgn( hrgn1, dc->w.hVisRgn, 0, RGN_COPY);
-	  CombineRgn( hrgn1, hrgn1, (hrgnClip)?hrgnClip:hrgnScrollClip, RGN_AND);
-	  OffsetRgn( hrgn1, dx, dy );
-	  CombineRgn( hrgn1, dc->w.hVisRgn, hrgn1, RGN_DIFF);
-	  RgnType = CombineRgn( hrgn1, hrgn1, (hrgnClip)?hrgnClip:hrgnScrollClip, RGN_AND);
+	  CombineRgn32( hrgn1, dc->w.hVisRgn, 0, RGN_COPY );
+	  CombineRgn32( hrgn1, hrgn1, hrgnClip ? hrgnClip : hrgnScrollClip,
+                        RGN_AND );
+	  OffsetRgn32( hrgn1, dx, dy );
+	  CombineRgn32( hrgn1, dc->w.hVisRgn, hrgn1, RGN_DIFF );
+	  RgnType = CombineRgn32( hrgn1, hrgn1,
+                                  hrgnClip ? hrgnClip : hrgnScrollClip,
+                                  RGN_AND );
 	}
 	else
 	{
@@ -208,13 +212,13 @@ BOOL ScrollDC(HDC16 hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 	}
 
 	if (rcUpdate) GetRgnBox16( hrgn1, rcUpdate );
-	if (!hrgnUpdate) DeleteObject( hrgn1 );
+	if (!hrgnUpdate) DeleteObject32( hrgn1 );
     }
 
     /* restore clipping region */
 
-    SelectClipRgn( hdc, (hrgnClip)?hrgnScrollClip:0 );
-    DeleteObject( hrgnScrollClip );     
+    SelectClipRgn32( hdc, hrgnClip ? hrgnScrollClip : 0 );
+    DeleteObject32( hrgnScrollClip );     
 
     return TRUE;
 }

@@ -632,12 +632,12 @@ int StretchDIBits( HDC16 hdc,
     hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
                               bits, info, wUsage );
     hdcMem = CreateCompatibleDC( hdc );
-    hOldBitmap = SelectObject( hdcMem, hBitmap );
+    hOldBitmap = SelectObject32( hdcMem, hBitmap );
     StretchBlt( hdc, xDest, yDest, wDestWidth, wDestHeight,
                 hdcMem, xSrc, ySrc, wSrcWidth, wSrcHeight, dwRop );
-    SelectObject( hdcMem, hOldBitmap );
+    SelectObject32( hdcMem, hOldBitmap );
     DeleteDC( hdcMem );
-    DeleteObject( hBitmap );
+    DeleteObject32( hBitmap );
     return wSrcHeight;
 }
 

@@ -395,9 +395,9 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 hIcon)
     handle = SYSRES_LoadResource( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX );
     if (!handle) return FALSE;
     bRet = DialogBoxIndirectParam16( WIN_GetWindowInstance( hWnd ),
-                                   handle, hWnd,
-                                   MODULE_GetWndProcEntry16("AboutDlgProc"), 
-				   (LONG)hIcon );
+                                     handle, hWnd,
+                                     (DLGPROC16)MODULE_GetWndProcEntry16("AboutDlgProc"), 
+                                     (LPARAM)hIcon );
     SYSRES_FreeResource( handle );
     return bRet;
 }

@@ -80,7 +80,7 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
     RECT32 rect;
     WND*   Wnd = WIN_FindWndPtr( hwnd );
 
-    if( Wnd->hrgnUpdate > 1 ) DeleteObject( Wnd->hrgnUpdate );
+    if (Wnd->hrgnUpdate > 1) DeleteObject32( Wnd->hrgnUpdate );
     Wnd->hrgnUpdate = 0;
 
     GetClientRect32( hwnd, &rect );    
@@ -208,7 +208,7 @@ BOOL32 SetDeskWallPaper32( LPCSTR filename )
     hdc = GetDC32( 0 );
     hbitmap = DESKTOP_LoadBitmap( hdc, filename );
     ReleaseDC32( 0, hdc );
-    if (infoPtr->hbitmapWallPaper) DeleteObject( infoPtr->hbitmapWallPaper );
+    if (infoPtr->hbitmapWallPaper) DeleteObject32( infoPtr->hbitmapWallPaper );
     infoPtr->hbitmapWallPaper = hbitmap;
     infoPtr->fTileWallPaper = GetProfileInt( "desktop", "TileWallPaper", 0 );
     if (hbitmap)
@@ -233,7 +233,7 @@ BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
     DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
     int pat[8];
 
-    if (infoPtr->hbrushPattern) DeleteObject( infoPtr->hbrushPattern );
+    if (infoPtr->hbrushPattern) DeleteObject32( infoPtr->hbrushPattern );
     memset( pat, 0, sizeof(pat) );
     if (pattern && sscanf( pattern, " %d %d %d %d %d %d %d %d",
 			   &pat[0], &pat[1], &pat[2], &pat[3],
@@ -245,10 +245,10 @@ BOOL32 DESKTOP_SetPattern( LPCSTR pattern )
 
 	for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
 	hbitmap = CreateBitmap( 8, 8, 1, 1, (LPSTR)pattern );
-	infoPtr->hbrushPattern = CreatePatternBrush( hbitmap );
-	DeleteObject( hbitmap );
+	infoPtr->hbrushPattern = CreatePatternBrush32( hbitmap );
+	DeleteObject32( hbitmap );
     }
-    else infoPtr->hbrushPattern = CreateSolidBrush( GetSysColor(COLOR_BACKGROUND) );
+    else infoPtr->hbrushPattern = CreateSolidBrush32( GetSysColor(COLOR_BACKGROUND) );
     return TRUE;
 }
 

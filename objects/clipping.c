@@ -4,12 +4,12 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdio.h>
 #include "dc.h"
 #include "metafile.h"
 #include "region.h"
 #include "stddebug.h"
-/* #define DEBUG_CLIPPING */
 #include "debug.h"
 
 #define UPDATE_DIRTY_DC(dc) \
@@ -27,7 +27,7 @@
  */
 void CLIPPING_UpdateGCRegion( DC * dc )
 {
-    if (!dc->w.hGCClipRgn) dc->w.hGCClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+    if (!dc->w.hGCClipRgn) dc->w.hGCClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
 
     if (!dc->w.hVisRgn)
     {
@@ -42,19 +42,28 @@ void CLIPPING_UpdateGCRegion( DC * dc )
     }
 
     if (!dc->w.hClipRgn)
-        CombineRgn( dc->w.hGCClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
+        CombineRgn32( dc->w.hGCClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
     else
-        CombineRgn( dc->w.hGCClipRgn, dc->w.hClipRgn, dc->w.hVisRgn, RGN_AND );
+        CombineRgn32(dc->w.hGCClipRgn, dc->w.hClipRgn, dc->w.hVisRgn, RGN_AND);
     if (dc->funcs->pSetDeviceClipping) dc->funcs->pSetDeviceClipping( dc );
 }
 
 
 /***********************************************************************
- *           SelectClipRgn    (GDI.44)
+ *           SelectClipRgn16    (GDI.44)
  */
-int SelectClipRgn( HDC16 hdc, HRGN32 hrgn )
+INT16 SelectClipRgn16( HDC16 hdc, HRGN16 hrgn )
 {
-    int retval;
+    return (INT16)SelectClipRgn32( hdc, hrgn );
+}
+
+
+/***********************************************************************
+ *           SelectClipRgn32    (GDI32.297)
+ */
+INT32 SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
+{
+    INT32 retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;
 
@@ -62,12 +71,12 @@ int SelectClipRgn( HDC16 hdc, HRGN32 hrgn )
 
     if (hrgn)
     {
-	if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn(0,0,0,0);
-	retval = CombineRgn( dc->w.hClipRgn, hrgn, 0, RGN_COPY );
+	if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn32(0,0,0,0);
+	retval = CombineRgn32( dc->w.hClipRgn, hrgn, 0, RGN_COPY );
     }
     else
     {
-	if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
+	if (dc->w.hClipRgn) DeleteObject16( dc->w.hClipRgn );
 	dc->w.hClipRgn = 0;
 	retval = SIMPLEREGION; /* Clip region == whole DC */
     }
@@ -80,7 +89,7 @@ int SelectClipRgn( HDC16 hdc, HRGN32 hrgn )
 /***********************************************************************
  *           SelectVisRgn    (GDI.105)
  */
-int SelectVisRgn( HDC16 hdc, HRGN32 hrgn )
+INT16 SelectVisRgn( HDC16 hdc, HRGN16 hrgn )
 {
     int retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -90,16 +99,25 @@ int SelectVisRgn( HDC16 hdc, HRGN32 hrgn )
 
     dc->w.flags &= ~DC_DIRTY;
 
-    retval = CombineRgn( dc->w.hVisRgn, hrgn, 0, RGN_COPY );
+    retval = CombineRgn16( dc->w.hVisRgn, hrgn, 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
     return retval;
 }
 
 
 /***********************************************************************
- *           OffsetClipRgn    (GDI.32)
+ *           OffsetClipRgn16    (GDI.32)
  */
-int OffsetClipRgn( HDC16 hdc, short x, short y )
+INT16 OffsetClipRgn16( HDC16 hdc, INT16 x, INT16 y )
+{
+    return (INT16)OffsetClipRgn32( hdc, x, y );
+}
+
+
+/***********************************************************************
+ *           OffsetClipRgn32    (GDI32.255)
+ */
+INT32 OffsetClipRgn32( HDC32 hdc, INT32 x, INT32 y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -114,9 +132,9 @@ int OffsetClipRgn( HDC16 hdc, short x, short y )
 
     if (dc->w.hClipRgn)
     {
-	int retval = OffsetRgn( dc->w.hClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
+	INT32 ret = OffsetRgn32( dc->w.hClipRgn, XLPTODP(dc,x), YLPTODP(dc,y));
 	CLIPPING_UpdateGCRegion( dc );
-	return retval;
+	return ret;
     }
     else return SIMPLEREGION; /* Clip region == client area */
 }
@@ -125,13 +143,13 @@ int OffsetClipRgn( HDC16 hdc, short x, short y )
 /***********************************************************************
  *           OffsetVisRgn    (GDI.102)
  */
-int OffsetVisRgn( HDC16 hdc, short x, short y )
+INT16 OffsetVisRgn( HDC16 hdc, INT16 x, INT16 y )
 {
-    int retval;
+    INT16 retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
     dprintf_clipping(stddeb, "OffsetVisRgn: %04x %d,%d\n", hdc, x, y );
-    retval = OffsetRgn( dc->w.hVisRgn, x, y );
+    retval = OffsetRgn32( dc->w.hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
     return retval;
 }
@@ -144,14 +162,14 @@ int OffsetVisRgn( HDC16 hdc, short x, short y )
  * elsewhere (like ExtTextOut()) to skip redundant metafile update and
  * coordinate conversion.
  */
-int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
-                                         short right, short bottom, UINT16 flags)
+INT32 CLIPPING_IntersectClipRect( DC * dc, INT32 left, INT32 top,
+                                  INT32 right, INT32 bottom, UINT32 flags )
 {
     HRGN32 newRgn;
-    int 	ret;
+    INT32 ret;
 
-    if ( !(newRgn = CreateRectRgn( left, top, right, bottom )) ) return ERROR;
-    if ( !dc->w.hClipRgn )
+    if (!(newRgn = CreateRectRgn32( left, top, right, bottom ))) return ERROR;
+    if (!dc->w.hClipRgn)
     {
        if( flags & CLIP_INTERSECT )
        {
@@ -161,24 +179,34 @@ int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
        return SIMPLEREGION;
     }
 
-    ret = CombineRgn( newRgn, dc->w.hClipRgn, newRgn, 
-			     (flags & CLIP_EXCLUDE)? RGN_DIFF : RGN_AND);
+    ret = CombineRgn32( newRgn, dc->w.hClipRgn, newRgn, 
+                        (flags & CLIP_EXCLUDE) ? RGN_DIFF : RGN_AND );
     if (ret != ERROR)
     {
-        if ( !(flags & CLIP_KEEPRGN) ) DeleteObject( dc->w.hClipRgn );
+        if (!(flags & CLIP_KEEPRGN)) DeleteObject32( dc->w.hClipRgn );
         dc->w.hClipRgn = newRgn;    
         CLIPPING_UpdateGCRegion( dc );
     }
-    else DeleteObject( newRgn );
+    else DeleteObject32( newRgn );
     return ret;
 }
 
 
 /***********************************************************************
- *           ExcludeClipRect    (GDI.21)
+ *           ExcludeClipRect16    (GDI.21)
  */
-int ExcludeClipRect( HDC16 hdc, short left, short top,
-		     short right, short bottom )
+INT16 ExcludeClipRect16( HDC16 hdc, INT16 left, INT16 top,
+                         INT16 right, INT16 bottom )
+{
+    return (INT16)ExcludeClipRect32( hdc, left, top, right, bottom );
+}
+
+
+/***********************************************************************
+ *           ExcludeClipRect32    (GDI32.92)
+ */
+INT32 ExcludeClipRect32( HDC32 hdc, INT32 left, INT32 top,
+                         INT32 right, INT32 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -201,10 +229,20 @@ int ExcludeClipRect( HDC16 hdc, short left, short top,
 
 
 /***********************************************************************
- *           IntersectClipRect    (GDI.22)
+ *           IntersectClipRect16    (GDI.22)
  */
-int IntersectClipRect( HDC16 hdc, short left, short top,
-		       short right, short bottom )
+INT16 IntersectClipRect16( HDC16 hdc, INT16 left, INT16 top,
+                           INT16 right, INT16 bottom )
+{
+    return (INT16)IntersectClipRect32( hdc, left, top, right, bottom );
+}
+
+
+/***********************************************************************
+ *           IntersectClipRect32    (GDI32.245)
+ */
+INT32 IntersectClipRect32( HDC32 hdc, INT32 left, INT32 top,
+                           INT32 right, INT32 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -231,37 +269,38 @@ int IntersectClipRect( HDC16 hdc, short left, short top,
  *
  * Helper function for {Intersect,Exclude}VisRect
  */
-static int CLIPPING_IntersectVisRect( DC * dc, short left, short top,
-                                      short right, short bottom, BOOL exclude )
+static INT32 CLIPPING_IntersectVisRect( DC * dc, INT32 left, INT32 top,
+                                        INT32 right, INT32 bottom,
+                                        BOOL32 exclude )
 {
     HRGN32 tempRgn, newRgn;
-    int ret;
+    INT32 ret;
 
     left   = XLPTODP( dc, left );
     right  = XLPTODP( dc, right );
     top    = YLPTODP( dc, top );
     bottom = YLPTODP( dc, bottom );
 
-    if (!(newRgn = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
-    if (!(tempRgn = CreateRectRgn( left, top, right, bottom )))
+    if (!(newRgn = CreateRectRgn32( 0, 0, 0, 0 ))) return ERROR;
+    if (!(tempRgn = CreateRectRgn32( left, top, right, bottom )))
     {
-        DeleteObject( newRgn );
+        DeleteObject32( newRgn );
         return ERROR;
     }
-    ret = CombineRgn( newRgn, dc->w.hVisRgn, tempRgn,
-                      exclude ? RGN_DIFF : RGN_AND);
-    DeleteObject( tempRgn );
+    ret = CombineRgn32( newRgn, dc->w.hVisRgn, tempRgn,
+                        exclude ? RGN_DIFF : RGN_AND );
+    DeleteObject32( tempRgn );
 
     if (ret != ERROR)
     {
         RGNOBJ *newObj  = (RGNOBJ*)GDI_GetObjPtr( newRgn, REGION_MAGIC);
         RGNOBJ *prevObj = (RGNOBJ*)GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC);
         if (newObj && prevObj) newObj->header.hNext = prevObj->header.hNext;
-        DeleteObject( dc->w.hVisRgn );
+        DeleteObject32( dc->w.hVisRgn );
         dc->w.hVisRgn = newRgn;    
         CLIPPING_UpdateGCRegion( dc );
     }
-    else DeleteObject( newRgn );
+    else DeleteObject32( newRgn );
     return ret;
 }
 
@@ -269,8 +308,8 @@ static int CLIPPING_IntersectVisRect( DC * dc, short left, short top,
 /***********************************************************************
  *           ExcludeVisRect    (GDI.73)
  */
-int ExcludeVisRect( HDC16 hdc, short left, short top,
-                    short right, short bottom )
+INT16 ExcludeVisRect( HDC16 hdc, INT16 left, INT16 top,
+                      INT16 right, INT16 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
@@ -284,8 +323,8 @@ int ExcludeVisRect( HDC16 hdc, short left, short top,
 /***********************************************************************
  *           IntersectVisRect    (GDI.98)
  */
-int IntersectVisRect( HDC16 hdc, short left, short top,
-                      short right, short bottom )
+INT16 IntersectVisRect( HDC16 hdc, INT16 left, INT16 top,
+                        INT16 right, INT16 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
@@ -297,9 +336,18 @@ int IntersectVisRect( HDC16 hdc, short left, short top,
 
 
 /***********************************************************************
- *           PtVisible    (GDI.103)
+ *           PtVisible16    (GDI.103)
  */
-BOOL PtVisible( HDC16 hdc, short x, short y )
+BOOL16 PtVisible16( HDC16 hdc, INT16 x, INT16 y )
+{
+    return PtVisible32( hdc, x, y );
+}
+
+
+/***********************************************************************
+ *           PtVisible32    (GDI32.279)
+ */
+BOOL32 PtVisible32( HDC32 hdc, INT32 x, INT32 y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
@@ -310,7 +358,7 @@ BOOL PtVisible( HDC16 hdc, short x, short y )
     if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
     dc->w.flags &= ~DC_DIRTY;
 
-    return PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
+    return PtInRegion32( dc->w.hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
 }
 
 
@@ -374,7 +422,7 @@ INT32 GetClipBox32( HDC32 hdc, LPRECT32 rect )
 /***********************************************************************
  *           SaveVisRgn    (GDI.129)
  */
-HRGN32 SaveVisRgn( HDC16 hdc )
+HRGN16 SaveVisRgn( HDC16 hdc )
 {
     HRGN32 copy;
     RGNOBJ *obj, *copyObj;
@@ -391,8 +439,8 @@ HRGN32 SaveVisRgn( HDC16 hdc )
 
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
 	return 0;
-    if (!(copy = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
-    CombineRgn( copy, dc->w.hVisRgn, 0, RGN_COPY );
+    if (!(copy = CreateRectRgn32( 0, 0, 0, 0 ))) return 0;
+    CombineRgn32( copy, dc->w.hVisRgn, 0, RGN_COPY );
     if (!(copyObj = (RGNOBJ *) GDI_GetObjPtr( copy, REGION_MAGIC )))
 	return 0;
     copyObj->header.hNext = obj->header.hNext;
@@ -404,7 +452,7 @@ HRGN32 SaveVisRgn( HDC16 hdc )
 /***********************************************************************
  *           RestoreVisRgn    (GDI.130)
  */
-int RestoreVisRgn( HDC16 hdc )
+INT16 RestoreVisRgn( HDC16 hdc )
 {
     HRGN32 saved;
     RGNOBJ *obj, *savedObj;
@@ -416,7 +464,7 @@ int RestoreVisRgn( HDC16 hdc )
     if (!(saved = obj->header.hNext)) return ERROR;
     if (!(savedObj = (RGNOBJ *) GDI_GetObjPtr( saved, REGION_MAGIC )))
 	return ERROR;
-    DeleteObject( dc->w.hVisRgn );
+    DeleteObject32( dc->w.hVisRgn );
     dc->w.hVisRgn = saved;
     CLIPPING_UpdateGCRegion( dc );
     return savedObj->xrgn ? COMPLEXREGION : NULLREGION;

@@ -312,7 +312,7 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                                BOOL32 top_pressed, BOOL32 bottom_pressed )
 {
     HDC32 hdcMem = CreateCompatibleDC( hdc );
-    HBITMAP32 hbmpPrev = SelectObject( hdcMem, vertical ?
+    HBITMAP32 hbmpPrev = SelectObject32( hdcMem, vertical ?
                                     TOP_ARROW(infoPtr->flags, top_pressed)
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
     SetStretchBltMode( hdc, STRETCH_DELETESCANS );
@@ -323,9 +323,9 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                 SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
                 SRCCOPY );
 
-    SelectObject( hdcMem, vertical ?
-                  BOTTOM_ARROW( infoPtr->flags, bottom_pressed )
-                  : RIGHT_ARROW( infoPtr->flags, bottom_pressed ) );
+    SelectObject32( hdcMem, vertical ?
+                    BOTTOM_ARROW( infoPtr->flags, bottom_pressed )
+                    : RIGHT_ARROW( infoPtr->flags, bottom_pressed ) );
     if (vertical)
         StretchBlt( hdc, rect->left, rect->bottom - arrowSize - 1,
                    rect->right - rect->left, arrowSize + 1,
@@ -338,7 +338,7 @@ static void SCROLL_DrawArrows( HDC32 hdc, SCROLLBAR_INFO *infoPtr,
                    hdcMem, 0, 0,
                    SYSMETRICS_CXVSCROLL + 1, SYSMETRICS_CYHSCROLL + 1,
                    SRCCOPY );
-    SelectObject( hdcMem, hbmpPrev );
+    SelectObject32( hdcMem, hbmpPrev );
     DeleteDC( hdcMem );
 }
 
@@ -389,11 +389,11 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
       /* Select the correct brush and pen */
 
-    SelectObject( hdc, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
     if ((flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
     {
           /* This ought to be the color of the parent window */
-        SelectObject( hdc, sysColorObjects.hbrushWindow );
+        SelectObject32( hdc, sysColorObjects.hbrushWindow );
     }
     else
     {
@@ -401,9 +401,9 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
         {
             HBRUSH32 hbrush = SendMessage32A(GetParent32(hwnd),
                                              WM_CTLCOLORSCROLLBAR, hdc, hwnd );
-            SelectObject( hdc, hbrush );
+            SelectObject32( hdc, hbrush );
         }
-        else SelectObject( hdc, sysColorObjects.hbrushScrollbar );
+        else SelectObject32( hdc, sysColorObjects.hbrushScrollbar );
     }
 
       /* Calculate the scroll rectangle */
@@ -423,10 +423,10 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
       /* Draw the scroll bar frame */
 
     MoveTo( hdc, r.left, r.top );
-    LineTo( hdc, r.right-1, r.top );
-    LineTo( hdc, r.right-1, r.bottom-1 );
-    LineTo( hdc, r.left, r.bottom-1 );
-    LineTo( hdc, r.left, r.top );
+    LineTo32( hdc, r.right-1, r.top );
+    LineTo32( hdc, r.right-1, r.bottom-1 );
+    LineTo32( hdc, r.left, r.bottom-1 );
+    LineTo32( hdc, r.left, r.top );
 
       /* Draw the scroll rectangles and thumb */
 
@@ -466,8 +466,8 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
       /* Draw the thumb */
 
-    SelectObject( hdc, sysColorObjects.hbrushBtnFace );
-    Rectangle( hdc, r.left, r.top, r.right, r.bottom );
+    SelectObject32( hdc, sysColorObjects.hbrushBtnFace );
+    Rectangle32( hdc, r.left, r.top, r.right, r.bottom );
     InflateRect32( &r, -1, -1 );
     GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
     if (SCROLL_MovingThumb &&

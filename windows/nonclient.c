@@ -152,12 +152,11 @@ BOOL32 AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
  *
  * Get the minimized and maximized information for a window.
  */
-void NC_GetMinMaxInfo( HWND hwnd, POINT16 *maxSize, POINT16 *maxPos,
+void NC_GetMinMaxInfo( WND *wndPtr, POINT16 *maxSize, POINT16 *maxPos,
                        POINT16 *minTrack, POINT16 *maxTrack )
 {
     MINMAXINFO16 *MinMax;
     short xinc, yinc;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!(MinMax = SEGPTR_NEW(MINMAXINFO16))) return;
 
@@ -204,7 +203,8 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT16 *maxSize, POINT16 *maxPos,
         MinMax->ptMaxPosition.y = -yinc;
     }
 
-    SendMessage16( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)SEGPTR_GET(MinMax) );
+    SendMessage16( wndPtr->hwndSelf, WM_GETMINMAXINFO, 0,
+                   (LPARAM)SEGPTR_GET(MinMax) );
 
       /* Some sanity checks */
 
@@ -299,7 +299,7 @@ static void NC_GetInsideRect( HWND hwnd, RECT16 *rect )
  *
  * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
-LONG NC_HandleNCHitTest( HWND hwnd, POINT16 pt )
+LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 {
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -442,11 +442,11 @@ void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL down )
     {
       NC_GetInsideRect( hwnd, &rect );
       hdcMem = CreateCompatibleDC( hdc );
-      hbitmap = SelectObject( hdcMem, hbitmapClose );
+      hbitmap = SelectObject32( hdcMem, hbitmapClose );
       BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
               hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
               down ? NOTSRCCOPY : SRCCOPY );
-      SelectObject( hdcMem, hbitmap );
+      SelectObject32( hdcMem, hbitmap );
       DeleteDC( hdcMem );
     }
 }
@@ -505,15 +505,15 @@ static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
     {
 	width = SYSMETRICS_CXDLGFRAME - 1;
 	height = SYSMETRICS_CYDLGFRAME - 1;
-        SelectObject( hdc, active ? sysColorObjects.hbrushActiveCaption :
-                                    sysColorObjects.hbrushInactiveCaption );
+        SelectObject32( hdc, active ? sysColorObjects.hbrushActiveCaption :
+                                      sysColorObjects.hbrushInactiveCaption );
     }
     else
     {
 	width = SYSMETRICS_CXFRAME - 1;
 	height = SYSMETRICS_CYFRAME - 1;
-        SelectObject( hdc, active ? sysColorObjects.hbrushActiveBorder :
-                                    sysColorObjects.hbrushInactiveBorder );
+        SelectObject32( hdc, active ? sysColorObjects.hbrushActiveBorder :
+                                      sysColorObjects.hbrushInactiveBorder );
     }
 
       /* Draw frame */
@@ -534,35 +534,35 @@ static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
     
       /* Draw inner rectangle */
     MoveTo( hdc, rect->left+width, rect->top+height );
-    LineTo( hdc, rect->right-width-1, rect->top+height );
-    LineTo( hdc, rect->right-width-1, rect->bottom-height-1 );
-    LineTo( hdc, rect->left+width, rect->bottom-height-1 );
-    LineTo( hdc, rect->left+width, rect->top+height );
+    LineTo32( hdc, rect->right-width-1, rect->top+height );
+    LineTo32( hdc, rect->right-width-1, rect->bottom-height-1 );
+    LineTo32( hdc, rect->left+width, rect->bottom-height-1 );
+    LineTo32( hdc, rect->left+width, rect->top+height );
 
       /* Draw the decorations */
     tmp = rect->top + SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
     MoveTo( hdc, rect->left, tmp);
-    LineTo( hdc, rect->left+width, tmp );
+    LineTo32( hdc, rect->left+width, tmp );
     MoveTo( hdc, rect->right-width-1, tmp );
-    LineTo( hdc, rect->right-1, tmp );
+    LineTo32( hdc, rect->right-1, tmp );
 
     tmp = rect->bottom - 1 - SYSMETRICS_CYFRAME - SYSMETRICS_CYSIZE;
     MoveTo( hdc, rect->left, tmp );
-    LineTo( hdc, rect->left+width, tmp );
+    LineTo32( hdc, rect->left+width, tmp );
     MoveTo( hdc, rect->right-width-1, tmp );
-    LineTo( hdc, rect->right-1, tmp );
+    LineTo32( hdc, rect->right-1, tmp );
 
     tmp = rect->left + SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
     MoveTo( hdc, tmp, rect->top );
-    LineTo( hdc, tmp, rect->top+height );
+    LineTo32( hdc, tmp, rect->top+height );
     MoveTo( hdc, tmp, rect->bottom-height-1 );
-    LineTo( hdc, tmp, rect->bottom-1 );
+    LineTo32( hdc, tmp, rect->bottom-1 );
 
     tmp = rect->right - 1 - SYSMETRICS_CXFRAME - SYSMETRICS_CYSIZE;
     MoveTo( hdc, tmp, rect->top );
-    LineTo( hdc, tmp, rect->top+height );
+    LineTo32( hdc, tmp, rect->top+height );
     MoveTo( hdc, tmp, rect->bottom-height-1 );
-    LineTo( hdc, tmp, rect->bottom-1 );
+    LineTo32( hdc, tmp, rect->bottom-1 );
 
     InflateRect16( rect, -width-1, -height-1 );
 }
@@ -577,7 +577,7 @@ static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL thickframe )
 {
     if (thickframe)
     {
-	SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
+	SelectObject32( hdc, GetStockObject32( GRAY_BRUSH ) );
 	PatBlt( hdc, rect->left, rect->top,
 	        rect->right - rect->left - SYSMETRICS_CXFRAME,
 	        SYSMETRICS_CYFRAME, PATINVERT );
@@ -623,24 +623,24 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
     {
-	HBRUSH16 hbrushOld = SelectObject( hdc, sysColorObjects.hbrushWindow );
+	HBRUSH32 hbrushOld = SelectObject32(hdc, sysColorObjects.hbrushWindow);
 	PatBlt( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
 	PatBlt( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
 	PatBlt( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
 	r.left++;
 	r.right--;
-	SelectObject( hdc, hbrushOld );
+	SelectObject32( hdc, hbrushOld );
     }
 
     MoveTo( hdc, r.left, r.bottom );
-    LineTo( hdc, r.right-1, r.bottom );
+    LineTo32( hdc, r.right-1, r.bottom );
 
     if (style & WS_SYSMENU)
     {
 	NC_DrawSysButton( hwnd, hdc, FALSE );
 	r.left += SYSMETRICS_CXSIZE + 1;
 	MoveTo( hdc, r.left - 1, r.top );
-	LineTo( hdc, r.left - 1, r.bottom );
+	LineTo32( hdc, r.left - 1, r.bottom );
     }
     if (style & WS_MAXIMIZEBOX)
     {
@@ -672,11 +672,11 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
  *
  * Paint the non-client area. clip is currently unused.
  */
-void NC_DoNCPaint( HWND hwnd, HRGN32 clip, BOOL suppress_menupaint )
+void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
 {
     HDC32 hdc;
     RECT16 rect;
-    BOOL	active;
+    BOOL32 active;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -703,7 +703,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN32 clip, BOOL suppress_menupaint )
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    SelectObject( hdc, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
 
     if (!(wndPtr->flags & WIN_MANAGED))
     {
@@ -711,10 +711,10 @@ void NC_DoNCPaint( HWND hwnd, HRGN32 clip, BOOL suppress_menupaint )
             (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
         {
             MoveTo( hdc, 0, 0 );
-            LineTo( hdc, rect.right-1, 0 );
-            LineTo( hdc, rect.right-1, rect.bottom-1 );
-            LineTo( hdc, 0, rect.bottom-1 );
-            LineTo( hdc, 0, 0 );
+            LineTo32( hdc, rect.right-1, 0 );
+            LineTo32( hdc, rect.right-1, rect.bottom-1 );
+            LineTo32( hdc, 0, rect.bottom-1 );
+            LineTo32( hdc, 0, 0 );
             InflateRect16( &rect, -1, -1 );
         }
 
@@ -766,7 +766,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN32 clip, BOOL suppress_menupaint )
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND hwnd , HRGN32 clip)
+LONG NC_HandleNCPaint( HWND32 hwnd , HRGN32 clip)
 {
     NC_DoNCPaint( hwnd, clip, FALSE );
     return 0;
@@ -804,9 +804,9 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 {
-    if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
+    if (hwnd != (HWND32)wParam) return 0;  /* Don't set the cursor for child windows */
 
     switch(LOWORD(lParam))
     {
@@ -1029,7 +1029,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 
       /* Get min/max info */
 
-    NC_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
+    NC_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect16( wndPtr->parent->hwndSelf, &mouseRect );
@@ -1278,7 +1278,7 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 {
     HDC32 hdc;
 
@@ -1370,7 +1370,7 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
+LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     POINT32 pt32;

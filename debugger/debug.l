@@ -1,4 +1,4 @@
-/*
+/* -*-C-*-
  * Lexical scanner for command line parsing
  *
  * Copyright 1993 Eric Youngdale
@@ -25,6 +25,8 @@ static char * make_symbol(char *);
 void flush_symbols();
 
 #endif  /* DONT_USE_READLINE */
+
+#define YY_NO_UNPUT
 
 static int syntax_error;
 %}

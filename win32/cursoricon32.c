@@ -372,8 +372,8 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
     if (!(hRes = GlobalAlloc16( GMEM_MOVEABLE,
                                 sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
-        DeleteObject( hXorBits );
-        DeleteObject( hAndBits );
+        DeleteObject32( hXorBits );
+        DeleteObject32( hAndBits );
         return 0;
     }
 
@@ -393,8 +393,8 @@ static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
 
     GetBitmapBits( hAndBits, sizeAnd, (char *)(info + 1) );
     GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
-    DeleteObject( hXorBits );
-    DeleteObject( hAndBits );
+    DeleteObject32( hXorBits );
+    DeleteObject32( hAndBits );
     GlobalUnlock16( hRes );
     return hRes;
 }

@@ -1203,10 +1203,10 @@ INT EnumFonts(HDC16 hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lp
     dprintf_font(stddeb,"EnumFonts // %p !\n", lpLogFontList[i]);
     memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT16) + LF_FACESIZE);
     hFont = CreateFontIndirect16(lpLogFont);
-    hOldFont = SelectObject(hDC, hFont);
+    hOldFont = SelectObject32(hDC, hFont);
     GetTextMetrics16(hDC, lptm);
-    SelectObject(hDC, hOldFont);
-    DeleteObject(hFont);
+    SelectObject32(hDC, hOldFont);
+    DeleteObject32(hFont);
     dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
     nRet = lpEnumFunc( GDI_HEAP_SEG_ADDR(hLog), GDI_HEAP_SEG_ADDR(hMet),
                        0, (LONG)lpData );
@@ -1272,10 +1272,10 @@ INT EnumFontFamilies(HDC16 hDC, LPCSTR lpszFamily, FONTENUMPROC16 lpEnumFunc, LP
     strcpy(lpEnumLogFont->elfFullName,"");
     strcpy(lpEnumLogFont->elfStyle,"");
     hFont = CreateFontIndirect16((LPLOGFONT16)lpEnumLogFont);
-    hOldFont = SelectObject(hDC, hFont);
+    hOldFont = SelectObject32(hDC, hFont);
     GetTextMetrics16(hDC, lptm);
-    SelectObject(hDC, hOldFont);
-    DeleteObject(hFont);
+    SelectObject32(hDC, hOldFont);
+    DeleteObject32(hFont);
     dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpEnumLogFont, lptm);
     
     nRet = lpEnumFunc( GDI_HEAP_SEG_ADDR(hLog), GDI_HEAP_SEG_ADDR(hMet),

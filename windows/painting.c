@@ -41,29 +41,30 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
     {
 	ClientToScreen16(wnd->hwndSelf, &pt);
 
-        hClip = CreateRectRgn( 0, 0, 0, 0 );
-        if (!CombineRgn(hClip, wnd->hrgnUpdate, 0, RGN_COPY) )
+        hClip = CreateRectRgn32( 0, 0, 0, 0 );
+        if (!CombineRgn32( hClip, wnd->hrgnUpdate, 0, RGN_COPY ))
         {
-            DeleteObject(hClip);
+            DeleteObject32(hClip);
             hClip = 1;
         }
 	else
-	    OffsetRgn(hClip, pt.x, pt.y);
+	    OffsetRgn32( hClip, pt.x, pt.y );
 
         if (bUpdate)
         {
 	    /* exclude non-client area from update region */
-            HRGN32 hrgn = CreateRectRgn(0, 0, wnd->rectClient.right - wnd->rectClient.left,
-					    wnd->rectClient.bottom - wnd->rectClient.top);
+            HRGN32 hrgn = CreateRectRgn32( 0, 0,
+                                 wnd->rectClient.right - wnd->rectClient.left,
+                                 wnd->rectClient.bottom - wnd->rectClient.top);
 
-            if (hrgn && (CombineRgn(wnd->hrgnUpdate, wnd->hrgnUpdate,
-                                    hrgn, RGN_AND) == NULLREGION))
+            if (hrgn && (CombineRgn32( wnd->hrgnUpdate, wnd->hrgnUpdate,
+                                       hrgn, RGN_AND) == NULLREGION))
             {
-                DeleteObject(wnd->hrgnUpdate);
+                DeleteObject32( wnd->hrgnUpdate );
                 wnd->hrgnUpdate = 1;
             }
 
-            DeleteObject( hrgn );
+            DeleteObject32( hrgn );
         }
     }
 
@@ -73,13 +74,13 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
         !(wnd->flags & WIN_NCACTIVATED))
     {
         wnd->flags |= WIN_NCACTIVATED;
-        if( hClip > 1) DeleteObject(hClip);
+        if( hClip > 1) DeleteObject32( hClip );
         hClip = 1;
     }
 
     if (hClip) SendMessage16( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
 
-    if (hClip > 1) DeleteObject( hClip );
+    if (hClip > 1) DeleteObject32( hClip );
 }
 
 
@@ -280,8 +281,9 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
             if ((hrgn = hrgnUpdate) == 0)
                 hrgn = CreateRectRgnIndirect32( rectUpdate ? rectUpdate :
                                                 &rectClient );
-            rgnNotEmpty = CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hrgn, RGN_OR );
-            if (!hrgnUpdate) DeleteObject( hrgn );
+            rgnNotEmpty = CombineRgn32( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate,
+                                        hrgn, RGN_OR );
+            if (!hrgnUpdate) DeleteObject32( hrgn );
         }
         else  /* No update region yet */
         {
@@ -289,8 +291,9 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                 QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
             if (hrgnUpdate)
             {
-                wndPtr->hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
-                rgnNotEmpty = CombineRgn( wndPtr->hrgnUpdate, hrgnUpdate, 0, RGN_COPY );
+                wndPtr->hrgnUpdate = CreateRectRgn32( 0, 0, 0, 0 );
+                rgnNotEmpty = CombineRgn32( wndPtr->hrgnUpdate, hrgnUpdate,
+                                            0, RGN_COPY );
             }
             else wndPtr->hrgnUpdate = CreateRectRgnIndirect32( rectUpdate ?
                                                     rectUpdate : &rectClient );
@@ -302,7 +305,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 	if ( rgnNotEmpty == NULLREGION )
 	   {
 	     wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-	     DeleteObject(wndPtr->hrgnUpdate);
+	     DeleteObject32( wndPtr->hrgnUpdate );
 	     wndPtr->hrgnUpdate=0;
              if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
                    QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
@@ -319,20 +322,20 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
             if (!hrgnUpdate && !rectUpdate)
             {
                   /* Special case: validate everything */
-                DeleteObject( wndPtr->hrgnUpdate );
+                DeleteObject32( wndPtr->hrgnUpdate );
                 wndPtr->hrgnUpdate = 0;
             }
             else
             {
                 if ((hrgn = hrgnUpdate) == 0)
                     hrgn = CreateRectRgnIndirect32( rectUpdate );
-                if (CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate,
-                                hrgn, RGN_DIFF ) == NULLREGION)
+                if (CombineRgn32( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate,
+                                  hrgn, RGN_DIFF ) == NULLREGION)
                 {
-                    DeleteObject( wndPtr->hrgnUpdate );
+                    DeleteObject32( wndPtr->hrgnUpdate );
                     wndPtr->hrgnUpdate = 0;
                 }
-                if (!hrgnUpdate) DeleteObject( hrgn );
+                if (!hrgnUpdate) DeleteObject32( hrgn );
             }
             if (!wndPtr->hrgnUpdate)  /* No more update region */
 		if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
@@ -394,13 +397,13 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
     {
         if ( hrgnUpdate || rectUpdate )
 	{
-	   if( !(hrgn = CreateRectRgn( 0, 0, 0, 0 )) ) return TRUE;
+	   if (!(hrgn = CreateRectRgn32( 0, 0, 0, 0 ))) return TRUE;
 	   if( !hrgnUpdate )
 	     {
 	        control |= (RDW_C_DELETEHRGN | RDW_C_USEHRGN);
  	        if( !(hrgnUpdate = CreateRectRgnIndirect32( rectUpdate )) )
                 {
-                    DeleteObject( hrgn );
+                    DeleteObject32( hrgn );
                     return TRUE;
                 }
 	     }
@@ -409,7 +412,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 	       {
                    if (wndPtr->class->style & CS_PARENTDC)
                    {
-                       if (!CombineRgn( hrgn, hrgnUpdate, 0, RGN_COPY ))
+                       if (!CombineRgn32( hrgn, hrgnUpdate, 0, RGN_COPY ))
                            continue;
                    }
                    else
@@ -417,22 +420,16 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                        SetRectRgn( hrgn, wndPtr->rectWindow.left,
                                    wndPtr->rectWindow.top,
                                    wndPtr->rectWindow.right,
-                                   wndPtr->rectWindow.bottom);
-                       if (!CombineRgn( hrgn, hrgn, hrgnUpdate, RGN_AND ))
+                                   wndPtr->rectWindow.bottom );
+                       if (!CombineRgn32( hrgn, hrgn, hrgnUpdate, RGN_AND ))
                            continue;
                    }
-#if 0
-                   if( control & RDW_C_USEHRGN &&
-                       wndPtr->dwStyle & WS_CLIPSIBLINGS ) 
-                       CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_DIFF );
-#endif
-
-                   OffsetRgn( hrgn, -wndPtr->rectClient.left,
-                                 -wndPtr->rectClient.top );
+                   OffsetRgn32( hrgn, -wndPtr->rectClient.left,
+                                      -wndPtr->rectClient.top );
                    PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags, RDW_C_USEHRGN );
                }
-	   DeleteObject( hrgn );
-	   if( control & RDW_C_DELETEHRGN ) DeleteObject( hrgnUpdate );
+	   DeleteObject32( hrgn );
+	   if (control & RDW_C_DELETEHRGN) DeleteObject32( hrgnUpdate );
 	}
 	else for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
 		  PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
@@ -564,10 +561,10 @@ BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
     {
 	if (wndPtr->hrgnUpdate > 1)
 	{
-	    HRGN32 hrgn = CreateRectRgn( 0, 0, 0, 0 );
+	    HRGN32 hrgn = CreateRectRgn32( 0, 0, 0, 0 );
 	    if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR) return FALSE;
 	    GetRgnBox32( hrgn, rect );
-	    DeleteObject( hrgn );
+	    DeleteObject32( hrgn );
 	}
 	else SetRectEmpty32( rect );
     }
@@ -580,7 +577,7 @@ BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
  */
 INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
-    INT16 retval;
+    INT32 retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return ERROR;
 
@@ -589,7 +586,7 @@ INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
         SetRectRgn( hrgn, 0, 0, 0, 0 );
         return NULLREGION;
     }
-    retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
+    retval = CombineRgn32( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
     if (erase) RedrawWindow32( hwnd, NULL, 0, RDW_ERASENOW | RDW_NOCHILDREN );
     return retval;
 }
@@ -600,18 +597,18 @@ INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
  */
 INT16 ExcludeUpdateRgn( HDC32 hdc, HWND32 hwnd )
 {
-    INT16 retval = ERROR;
+    INT32 retval = ERROR;
     HRGN32 hrgn;
     WND * wndPtr;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return ERROR;
-    if ((hrgn = CreateRectRgn( 0, 0, 0, 0 )) != 0)
+    if ((hrgn = CreateRectRgn32( 0, 0, 0, 0 )) != 0)
     {
-	retval = CombineRgn( hrgn, InquireVisRgn(hdc),
-			     (wndPtr->hrgnUpdate>1)?wndPtr->hrgnUpdate:0,
-			     (wndPtr->hrgnUpdate>1)?RGN_DIFF:RGN_COPY);
+	retval = CombineRgn32( hrgn, InquireVisRgn(hdc),
+			       (wndPtr->hrgnUpdate>1) ? wndPtr->hrgnUpdate : 0,
+			       (wndPtr->hrgnUpdate>1) ? RGN_DIFF : RGN_COPY );
 	if (retval) SelectVisRgn( hdc, hrgn );
-	DeleteObject( hrgn );
+	DeleteObject32( hrgn );
     }
     return retval;
 }

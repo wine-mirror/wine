@@ -119,6 +119,7 @@ static char *  EDIT_GetPointer(WND *wndPtr);
 static char *  EDIT_GetPasswordPointer(WND *wndPtr);
 static LRESULT EDIT_GetRect(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static BOOL    EDIT_GetRedraw(WND *wndPtr);
+static LRESULT EDIT_GetSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static UINT    EDIT_GetTextWidth(WND *wndPtr);
 static UINT    EDIT_GetVisibleLineCount(WND *wndPtr);
 static UINT    EDIT_GetWndWidth(WND *wndPtr);
@@ -511,7 +512,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	int ww = EDIT_GetWndWidth(wndPtr);
 	HDC32 hdc;
 	HFONT16 hFont;
-	HFONT16 oldFont = 0;
+	HFONT32 oldFont = 0;
 	char *start, *cp;
 	int prev, next;
 	int width;
@@ -520,8 +521,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 
 	hdc = GetDC32(wndPtr->hwndSelf);
 	hFont = (HFONT16)EDIT_WM_GetFont(wndPtr, 0, 0L);
-	if (hFont)
-		oldFont = SelectObject(hdc, hFont);
+	if (hFont) oldFont = SelectObject32(hdc, hFont);
 
 	if (!IsMultiLine(wndPtr)) {
 		es->LineCount = 1;
@@ -602,8 +602,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 			}
 		} while (*start || (ending == END_SOFT) || (ending == END_HARD));
 	}
-	if (hFont)
-		SelectObject(hdc, oldFont);
+	if (hFont) SelectObject32(hdc, oldFont);
 	ReleaseDC32(wndPtr->hwndSelf, hdc);
 
 	free(text);
@@ -821,6 +820,22 @@ static BOOL EDIT_GetRedraw(WND *wndPtr)
 
 /*********************************************************************
  *
+ *	EDIT_GetSel
+ *
+ *	Beware: This is not the function called on EM_GETSEL.
+ *	It returns the start in the low word and the end in the high word.
+ *	NB s can be greater than e.
+ *
+ */
+static LRESULT EDIT_GetSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+
+	return MAKELONG(es->SelStart, es->SelEnd);
+}
+
+/*********************************************************************
+ *
  *	EDIT_GetTextWidth
  *
  */
@@ -999,8 +1014,8 @@ static BOOL EDIT_MakeFit(WND *wndPtr, UINT size)
  */
 static void EDIT_MoveBackward(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 
@@ -1024,8 +1039,8 @@ static void EDIT_MoveBackward(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveDownward(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
@@ -1050,8 +1065,8 @@ static void EDIT_MoveDownward(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveEnd(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
@@ -1070,8 +1085,8 @@ static void EDIT_MoveEnd(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveForward(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, e, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
@@ -1097,8 +1112,8 @@ static void EDIT_MoveForward(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveHome(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 
@@ -1116,8 +1131,8 @@ static void EDIT_MoveHome(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MovePageDown(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
@@ -1142,8 +1157,8 @@ static void EDIT_MovePageDown(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MovePageUp(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 	INT x;
@@ -1167,8 +1182,8 @@ static void EDIT_MovePageUp(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveUpward(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 	INT x;
@@ -1192,8 +1207,8 @@ static void EDIT_MoveUpward(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveWordBackward(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
@@ -1222,8 +1237,8 @@ static void EDIT_MoveWordBackward(WND *wndPtr, BOOL extend)
  */
 static void EDIT_MoveWordForward(WND *wndPtr, BOOL extend)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, e, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
@@ -1270,8 +1285,8 @@ static void EDIT_PaintLine(WND *wndPtr, HDC32 hdc, UINT line, BOOL rev)
 	y = EDIT_WndYFromLine(wndPtr, line);
 	li = (UINT)EDIT_EM_LineIndex(wndPtr, line, 0L);
 	ll = (UINT)EDIT_EM_LineLength(wndPtr, li, 0L);
-	s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	ORDER_UINT(s, e);
 	s = MIN(li + ll, MAX(li, s));
 	e = MIN(li + ll, MAX(li, e));
@@ -1357,8 +1372,8 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	const char *str = (char *)lParam;
 	int strl = strlen(str);
 	UINT tl = (UINT)EDIT_WM_GetTextLength(wndPtr, 0, 0L);
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	int i;
 	char *p;
 	char *text;
@@ -1373,7 +1388,7 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	EDIT_WM_SetRedraw(wndPtr, FALSE, 0L);
 	EDIT_WM_Clear(wndPtr, 0, 0L);
 	tl = EDIT_WM_GetTextLength(wndPtr, 0, 0L);
-	e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	text = EDIT_GetPointer(wndPtr);
 	for (p = text + tl ; p >= text + e ; p--)
 		p[strl] = p[0];
@@ -1406,7 +1421,7 @@ static LRESULT EDIT_ReplaceSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static void EDIT_ScrollIntoView(WND *wndPtr)
 {
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 	UINT fv = (UINT)EDIT_EM_GetFirstVisibleLine(wndPtr, 0, 0L);
@@ -1449,7 +1464,7 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 	INT ret;
 	HDC32 hdc;
 	HFONT16 hFont;
-	HFONT16 oldFont = 0;
+	HFONT32 oldFont = 0;
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, line, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, li, 0L);
@@ -1457,15 +1472,13 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 
 	hdc = GetDC32(wndPtr->hwndSelf);
 	hFont = (HFONT16)EDIT_WM_GetFont(wndPtr, 0, 0L);
-	if (hFont)
-		oldFont = SelectObject(hdc, hFont);
+	if (hFont) oldFont = SelectObject32(hdc, hFont);
 	line = MAX(0, MIN(line, lc - 1));
 	col = MIN(col, ll);
 	ret = LOWORD(GetTabbedTextExtent(hdc,
 			text + li, col,
 			es->NumTabStops, es->TabStops)) - xoff;
-	if (hFont)
-		SelectObject(hdc, oldFont);
+	if (hFont) SelectObject32(hdc, oldFont);
 	ReleaseDC32(wndPtr->hwndSelf, hdc);
 	free(text);
 	return ret;
@@ -1699,12 +1712,17 @@ static LRESULT EDIT_EM_GetRect(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  *
  *	EM_GETSEL
  *
+ *	Returns the ordered selection range so that
+ *	LOWORD(result) < HIWORD(result)
+ *
  */
 static LRESULT EDIT_EM_GetSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 
-	return MAKELONG(es->SelStart, es->SelEnd);
+	ORDER_UINT(s, e);
+	return MAKELONG(s, e);
 }
 
 
@@ -1771,7 +1789,7 @@ static LRESULT EDIT_EM_LineFromChar(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if (!IsMultiLine(wndPtr))
 		return 0L;
 	if ((INT)wParam == -1)
-		wParam = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		wParam = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	l = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L) - 1;
 	while ((UINT)EDIT_EM_LineIndex(wndPtr, l, 0L) > (UINT)wParam)
 		l--;
@@ -1792,7 +1810,7 @@ static LRESULT EDIT_EM_LineIndex(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 
 	if ((INT)wParam == -1) {
-		e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 		l = lc - 1;
 		while (es->LineDefs[l].offset > e)
 			l--;
@@ -1820,8 +1838,8 @@ static LRESULT EDIT_EM_LineLength(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if (!IsMultiLine(wndPtr))
 		return (LRESULT)es->LineDefs[0].length;
 	if ((INT)wParam == -1) {
-		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-		e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+		e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 		sl = (UINT)EDIT_EM_LineFromChar(wndPtr, s, 0L);
 		el = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 		return (LRESULT)(s - es->LineDefs[sl].offset +
@@ -2013,8 +2031,8 @@ static LRESULT EDIT_EM_SetSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	UINT ns = LOWORD(lParam);
 	UINT ne = HIWORD(lParam);
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT el;
 	UINT eli;
 	UINT tl = (UINT)EDIT_WM_GetTextLength(wndPtr, 0, 0L);
@@ -2148,8 +2166,8 @@ static LRESULT EDIT_WM_Char(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Clear(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	char *text;
 	BOOL redraw;
 	
@@ -2180,8 +2198,8 @@ static LRESULT EDIT_WM_Clear(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	HGLOBAL16 hdst;
 	char *text;
 	char *dst;
@@ -2317,15 +2335,15 @@ static LRESULT EDIT_WM_Enable(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_EraseBkGnd(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	HBRUSH16 hBrush;
+	HBRUSH32 hBrush;
 	RECT16 rc;
 
 	hBrush = (HBRUSH16)EDIT_SEND_CTLCOLOR(wndPtr, wParam);
-	if (!hBrush)
-		hBrush = (HBRUSH16)GetStockObject(WHITE_BRUSH);
+	if (!hBrush) hBrush = (HBRUSH32)GetStockObject32(WHITE_BRUSH);
 
 	GetClientRect16(wndPtr->hwndSelf, &rc);
-	IntersectClipRect((HDC16)wParam, rc.left, rc.top, rc.right, rc.bottom);
+	IntersectClipRect16( (HDC16)wParam, rc.left, rc.top,
+                             rc.right, rc.bottom);
 	GetClipBox16((HDC16)wParam, &rc);
 	/*
 	 *	FIXME:	specs say that we should UnrealizeObject() the brush,
@@ -2468,8 +2486,8 @@ static LRESULT EDIT_WM_HScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_KeyDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	BOOL shift;
 	BOOL control;
 
@@ -2560,8 +2578,8 @@ static LRESULT EDIT_WM_KillFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	DestroyCaret();
 	if(!(wndPtr->dwStyle & ES_NOHIDESEL)) {
-		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-		e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+		e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 		EDIT_InvalidateText(wndPtr, s, e);
 	}
 	EDIT_NOTIFY_PARENT(wndPtr, EN_KILLFOCUS);
@@ -2579,7 +2597,7 @@ static LRESULT EDIT_WM_KillFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT EDIT_WM_LButtonDblClk(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	UINT s;
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	UINT l = (UINT)EDIT_EM_LineFromChar(wndPtr, e, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
@@ -2617,7 +2635,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 	e = li + c;
 	if (GetKeyState(VK_SHIFT) & 0x8000)
-		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
 	else 
 		s = e;
 	EDIT_EM_SetSel(wndPtr, 0, MAKELPARAM(s, e));
@@ -2663,7 +2681,7 @@ static LRESULT EDIT_WM_MouseMove(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		l = MIN(fv + vlc - 1, MAX(fv, l));
 		x = MIN(EDIT_GetWndWidth(wndPtr), MAX(0, x));
 		c = EDIT_ColFromWndX(wndPtr, l, x);
-		s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+		s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
 		li = (UINT)EDIT_EM_LineIndex(wndPtr, l, 0L);
 		EDIT_EM_SetSel(wndPtr, 1, MAKELPARAM(s, li + c));
 	}
@@ -2685,7 +2703,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 	HDC16 hdc;
 	HFONT16 hFont;
-	HFONT16 oldFont = 0;
+	HFONT32 oldFont = 0;
 	RECT16 rc;
 	RECT16 rcLine;
 	RECT16 rcRgn;
@@ -2695,10 +2713,9 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	hdc = BeginPaint16(wndPtr->hwndSelf, &ps);
 	GetClientRect16(wndPtr->hwndSelf, &rc);
-	IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
+	IntersectClipRect16( hdc, rc.left, rc.top, rc.right, rc.bottom );
 	hFont = EDIT_WM_GetFont(wndPtr, 0, 0L);
-	if (hFont)
-		oldFont = SelectObject(hdc, hFont);
+	if (hFont) oldFont = SelectObject32(hdc, hFont);
 	EDIT_SEND_CTLCOLOR(wndPtr, hdc);
 	if (!IsWindowEnabled(wndPtr->hwndSelf))
 		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
@@ -2708,8 +2725,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		if (IntersectRect16(&rc, &rcRgn, &rcLine))
 			EDIT_PaintLine(wndPtr, hdc, i, rev);
 	}
-	if (hFont)
-		SelectObject(hdc, oldFont);
+	if (hFont) SelectObject32(hdc, oldFont);
 	EndPaint16(wndPtr->hwndSelf, &ps);
 	return 0L;
 }
@@ -2758,8 +2774,8 @@ static LRESULT EDIT_WM_SetCursor(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_SetFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	UINT s = LOWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
-	UINT e = HIWORD(EDIT_EM_GetSel(wndPtr, 0, 0L));
+	UINT s = LOWORD(EDIT_GetSel(wndPtr, 0, 0L));
+	UINT e = HIWORD(EDIT_GetSel(wndPtr, 0, 0L));
 
 	CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
 	EDIT_EM_SetSel(wndPtr, 1, MAKELPARAM(s, e));
@@ -2780,19 +2796,17 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	TEXTMETRIC16 tm;
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-	LPARAM sel = EDIT_EM_GetSel(wndPtr, 0, 0L);
+	LPARAM sel = EDIT_GetSel(wndPtr, 0, 0L);
 	HDC32 hdc;
-	HFONT16 oldFont = 0;
+	HFONT32 oldFont = 0;
 
 	es->hFont = (HFONT16)wParam;
 	hdc = GetDC32(wndPtr->hwndSelf);
-	if (es->hFont)
-		oldFont = SelectObject(hdc, es->hFont);
+	if (es->hFont) oldFont = SelectObject32(hdc, es->hFont);
 	GetTextMetrics16(hdc, &tm);
 	es->LineHeight = HIWORD(GetTextExtent(hdc, "X", 1));
 	es->AveCharWidth = tm.tmAveCharWidth;
-	if (es->hFont)
-		SelectObject(hdc, oldFont);
+	if (es->hFont) SelectObject32(hdc, oldFont);
 	ReleaseDC32(wndPtr->hwndSelf, hdc);
 	EDIT_BuildLineDefs(wndPtr);
 	if ((BOOL)lParam && EDIT_GetRedraw(wndPtr))

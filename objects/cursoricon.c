@@ -335,8 +335,8 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
-        DeleteObject( hXorBits );
-        DeleteObject( hAndBits );
+        DeleteObject32( hXorBits );
+        DeleteObject32( hAndBits );
         return 0;
     }
 
@@ -356,8 +356,8 @@ HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
 
     GetBitmapBits( hAndBits, sizeAnd, (char *)(info + 1) );
     GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
-    DeleteObject( hXorBits );
-    DeleteObject( hAndBits );
+    DeleteObject32( hXorBits );
+    DeleteObject32( hAndBits );
     GlobalUnlock16( handle );
     return handle;
 }
@@ -626,15 +626,15 @@ BOOL DrawIcon( HDC16 hdc, INT x, INT y, HICON16 hIcon )
 
     if (hXorBits && hAndBits)
     {
-        HBITMAP16 hBitTemp = SelectObject( hMemDC, hAndBits );
+        HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
         BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
-        SelectObject( hMemDC, hXorBits );
+        SelectObject32( hMemDC, hXorBits );
         BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCINVERT);
-        SelectObject( hMemDC, hBitTemp );
+        SelectObject32( hMemDC, hBitTemp );
     }
     DeleteDC( hMemDC );
-    if (hXorBits) DeleteObject( hXorBits );
-    if (hAndBits) DeleteObject( hAndBits );
+    if (hXorBits) DeleteObject32( hXorBits );
+    if (hAndBits) DeleteObject32( hAndBits );
     GlobalUnlock16( hIcon );
     SetTextColor( hdc, oldFg );
     SetBkColor( hdc, oldBg );

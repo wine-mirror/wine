@@ -284,7 +284,7 @@ heap	65520
 278 pascal16 GetDesktopHwnd() GetDesktopHwnd
 279 stub OldSetDeskPattern
 280 stub SetSystemMenu
-281 pascal16 GetSysColorBrush(word) GetSysColorBrush
+281 pascal16 GetSysColorBrush(word) GetSysColorBrush16
 282 pascal16 SelectPalette(word word word) SelectPalette
 283 pascal16 RealizePalette(word) RealizePalette
 284 pascal16 GetFreeSystemResources(word) GetFreeSystemResources

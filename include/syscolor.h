@@ -11,27 +11,27 @@
 
 struct SysColorObjects
 {
-    HBRUSH16 hbrushScrollbar;        /* COLOR_SCROLLBAR           */
+    HBRUSH32 hbrushScrollbar;        /* COLOR_SCROLLBAR           */
                                      /* COLOR_BACKGROUND          */
-    HBRUSH16 hbrushActiveCaption;    /* COLOR_ACTIVECAPTION       */
-    HBRUSH16 hbrushInactiveCaption;  /* COLOR_INACTIVECAPTION     */
-    HBRUSH16 hbrushMenu;             /* COLOR_MENU                */
-    HBRUSH16 hbrushWindow;           /* COLOR_WINDOW              */
-    HPEN16   hpenWindowFrame;        /* COLOR_WINDOWFRAME         */
+    HBRUSH32 hbrushActiveCaption;    /* COLOR_ACTIVECAPTION       */
+    HBRUSH32 hbrushInactiveCaption;  /* COLOR_INACTIVECAPTION     */
+    HBRUSH32 hbrushMenu;             /* COLOR_MENU                */
+    HBRUSH32 hbrushWindow;           /* COLOR_WINDOW              */
+    HPEN32   hpenWindowFrame;        /* COLOR_WINDOWFRAME         */
                                      /* COLOR_MENUTEXT            */
-    HPEN16   hpenWindowText;         /* COLOR_WINDOWTEXT          */
+    HPEN32   hpenWindowText;         /* COLOR_WINDOWTEXT          */
                                      /* COLOR_CAPTIONTEXT         */
-    HBRUSH16 hbrushActiveBorder;     /* COLOR_ACTIVEBORDER        */
-    HBRUSH16 hbrushInactiveBorder;   /* COLOR_INACTIVEBORDER      */
+    HBRUSH32 hbrushActiveBorder;     /* COLOR_ACTIVEBORDER        */
+    HBRUSH32 hbrushInactiveBorder;   /* COLOR_INACTIVEBORDER      */
                                      /* COLOR_APPWORKSPACE        */
-    HBRUSH16 hbrushHighlight;        /* COLOR_HIGHLIGHT           */
+    HBRUSH32 hbrushHighlight;        /* COLOR_HIGHLIGHT           */
                                      /* COLOR_HIGHLIGHTTEXT       */
-    HBRUSH16 hbrushBtnFace;          /* COLOR_BTNFACE             */
-    HBRUSH16 hbrushBtnShadow;        /* COLOR_BTNSHADOW           */
+    HBRUSH32 hbrushBtnFace;          /* COLOR_BTNFACE             */
+    HBRUSH32 hbrushBtnShadow;        /* COLOR_BTNSHADOW           */
                                      /* COLOR_GRAYTEXT            */
                                      /* COLOR_BTNTEXT             */
                                      /* COLOR_INACTIVECAPTIONTEXT */
-    HBRUSH16 hbrushBtnHighlight;     /* COLOR_BTNHIGHLIGHT        */
+    HBRUSH32 hbrushBtnHighlight;     /* COLOR_BTNHIGHLIGHT        */
 };
 
 extern void SYSCOLOR_Init(void);

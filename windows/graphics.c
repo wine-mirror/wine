@@ -4,6 +4,7 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <math.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -26,9 +27,18 @@
 #include "xmalloc.h"
 
 /***********************************************************************
- *           LineTo    (GDI.19)
+ *           LineTo16    (GDI.19)
  */
-BOOL LineTo( HDC16 hdc, short x, short y )
+BOOL16 LineTo16( HDC16 hdc, INT16 x, INT16 y )
+{
+    return LineTo32( hdc, x, y );
+}
+
+
+/***********************************************************************
+ *           LineTo32    (GDI32.249)
+ */
+BOOL32 LineTo32( HDC32 hdc, INT32 x, INT32 y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -54,9 +64,9 @@ BOOL LineTo( HDC16 hdc, short x, short y )
 /***********************************************************************
  *           MoveTo    (GDI.20)
  */
-DWORD MoveTo( HDC16 hdc, short x, short y )
+DWORD MoveTo( HDC16 hdc, INT16 x, INT16 y )
 {
-    short oldx, oldy;
+    DWORD ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -65,12 +75,10 @@ DWORD MoveTo( HDC16 hdc, short x, short y )
 	MF_MetaParam2(dc, META_MOVETO, x, y);
 	return 0;
     }
-
-    oldx = dc->w.CursPosX;
-    oldy = dc->w.CursPosY;
+    ret = MAKELONG( dc->w.CursPosX, dc->w.CursPosY );
     dc->w.CursPosX = x;
     dc->w.CursPosY = y;
-    return oldx | (oldy << 16);
+    return ret;
 }
 
 
@@ -110,10 +118,11 @@ BOOL32 MoveToEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
  * Helper functions for Arc(), Chord() and Pie().
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
  */
-static BOOL GRAPH_DrawArc( HDC16 hdc, int left, int top, int right, int bottom,
-		    int xstart, int ystart, int xend, int yend, int lines )
+static BOOL32 GRAPH_DrawArc( HDC32 hdc, INT32 left, INT32 top, INT32 right,
+                             INT32 bottom, INT32 xstart, INT32 ystart,
+                             INT32 xend, INT32 yend, INT32 lines )
 {
-    int xcenter, ycenter, istart_angle, idiff_angle, tmp;
+    INT32 xcenter, ycenter, istart_angle, idiff_angle, tmp;
     double start_angle, end_angle;
     XPoint points[3];
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -157,8 +166,8 @@ static BOOL GRAPH_DrawArc( HDC16 hdc, int left, int top, int right, int bottom,
 			 (double)(xstart-xcenter)*(bottom-top) );
     end_angle   = atan2( (double)(ycenter-yend)*(right-left),
 			 (double)(xend-xcenter)*(bottom-top) );
-    istart_angle = (int)(start_angle * 180 * 64 / PI);
-    idiff_angle  = (int)((end_angle - start_angle) * 180 * 64 / PI );
+    istart_angle = (INT32)(start_angle * 180 * 64 / PI);
+    idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI );
     if (idiff_angle <= 0) idiff_angle += 360 * 64;
     if (left > right) { tmp=left; left=right; right=tmp; }
     if (top > bottom) { tmp=top; top=bottom; bottom=tmp; }
@@ -198,10 +207,10 @@ static BOOL GRAPH_DrawArc( HDC16 hdc, int left, int top, int right, int bottom,
 
 
 /***********************************************************************
- *           Arc    (GDI.23)
+ *           Arc16    (GDI.23)
  */
-BOOL Arc( HDC16 hdc, INT left, INT top, INT right, INT bottom,
-	  INT xstart, INT ystart, INT xend, INT yend )
+BOOL16 Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
+              INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
 			  xstart, ystart, xend, yend, 0 );
@@ -209,10 +218,21 @@ BOOL Arc( HDC16 hdc, INT left, INT top, INT right, INT bottom,
 
 
 /***********************************************************************
- *           Pie    (GDI.26)
+ *           Arc32    (GDI32.7)
  */
-BOOL Pie( HDC16 hdc, INT left, INT top, INT right, INT bottom,
-	  INT xstart, INT ystart, INT xend, INT yend )
+BOOL32 Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
+              INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+{
+    return GRAPH_DrawArc( hdc, left, top, right, bottom,
+			  xstart, ystart, xend, yend, 0 );
+}
+
+
+/***********************************************************************
+ *           Pie16    (GDI.26)
+ */
+BOOL16 Pie16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
+              INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
 			  xstart, ystart, xend, yend, 2 );
@@ -220,10 +240,21 @@ BOOL Pie( HDC16 hdc, INT left, INT top, INT right, INT bottom,
 
 
 /***********************************************************************
- *           Chord    (GDI.348)
+ *           Pie32   (GDI32.262)
  */
-BOOL Chord( HDC16 hdc, INT left, INT top, INT right, INT bottom,
-	    INT xstart, INT ystart, INT xend, INT yend )
+BOOL32 Pie32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
+              INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+{
+    return GRAPH_DrawArc( hdc, left, top, right, bottom,
+			  xstart, ystart, xend, yend, 2 );
+}
+
+
+/***********************************************************************
+ *           Chord16    (GDI.348)
+ */
+BOOL16 Chord16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
+                INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
 			  xstart, ystart, xend, yend, 1 );
@@ -231,9 +262,29 @@ BOOL Chord( HDC16 hdc, INT left, INT top, INT right, INT bottom,
 
 
 /***********************************************************************
- *           Ellipse    (GDI.24)
+ *           Chord32    (GDI32.14)
  */
-BOOL Ellipse( HDC16 hdc, INT left, INT top, INT right, INT bottom )
+BOOL32 Chord32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
+                INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+{
+    return GRAPH_DrawArc( hdc, left, top, right, bottom,
+			  xstart, ystart, xend, yend, 1 );
+}
+
+
+/***********************************************************************
+ *           Ellipse16    (GDI.24)
+ */
+BOOL16 Ellipse16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom )
+{
+    return Ellipse32( hdc, left, top, right, bottom );
+}
+
+
+/***********************************************************************
+ *           Ellipse32    (GDI32.75)
+ */
+BOOL32 Ellipse32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -250,8 +301,8 @@ BOOL Ellipse( HDC16 hdc, INT left, INT top, INT right, INT bottom )
     bottom = YLPTODP( dc, bottom );
     if ((left == right) || (top == bottom)) return FALSE;
 
-    if (right < left) { INT tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
     
     if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
         (dc->u.x.pen.width < right-left-1) &&
@@ -276,9 +327,18 @@ BOOL Ellipse( HDC16 hdc, INT left, INT top, INT right, INT bottom )
 
 
 /***********************************************************************
- *           Rectangle    (GDI.27)
+ *           Rectangle16    (GDI.27)
  */
-BOOL Rectangle( HDC16 hdc, INT left, INT top, INT right, INT bottom )
+BOOL16 Rectangle16(HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom)
+{
+    return Rectangle32( hdc, left, top, right, bottom );
+}
+
+
+/***********************************************************************
+ *           Rectangle32    (GDI32.283)
+ */
+BOOL32 Rectangle32(HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 {
     INT32 width;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -294,8 +354,8 @@ BOOL Rectangle( HDC16 hdc, INT left, INT top, INT right, INT bottom )
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
 
-    if (right < left) { INT tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
 
     if ((left == right) || (top == bottom))
     {
@@ -334,15 +394,25 @@ BOOL Rectangle( HDC16 hdc, INT left, INT top, INT right, INT bottom )
 
 
 /***********************************************************************
- *           RoundRect    (GDI.28)
+ *           RoundRect16    (GDI.28)
  */
-BOOL RoundRect( HDC16 hDC, INT left, INT top, INT right, INT bottom,
-                INT ell_width, INT ell_height )
+BOOL16 RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
+                    INT16 bottom, INT16 ell_width, INT16 ell_height )
 {
-    DC * dc = (DC *) GDI_GetObjPtr(hDC, DC_MAGIC);
+    return RoundRect32( hdc, left, top, right, bottom, ell_width, ell_height );
+}
+
+
+/***********************************************************************
+ *           RoundRect32    (GDI32.291)
+ */
+BOOL32 RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
+                    INT32 bottom, INT32 ell_width, INT32 ell_height )
+{
+    DC * dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if (!dc) 
     {
-	dc = (DC *)GDI_GetObjPtr(hDC, METAFILE_DC_MAGIC);
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return FALSE;
 	MF_MetaParam6(dc, META_ROUNDRECT, left, top, right, bottom,
 		      ell_width, ell_height);
@@ -360,8 +430,8 @@ BOOL RoundRect( HDC16 hDC, INT left, INT top, INT right, INT bottom,
 
     /* Fix the coordinates */
 
-    if (right < left) { INT tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT tmp = bottom; bottom = top; top = tmp; }
+    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
     if (ell_width > right - left) ell_width = right - left;
     if (ell_height > bottom - top) ell_height = bottom - top;
 
@@ -462,10 +532,10 @@ INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
      * - do it in PatBlt() after LPtoDP().
      */
 
-    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    if (!(prevBrush = SelectObject16( hdc, hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
-    SelectObject( hdc, prevBrush );
+    SelectObject16( hdc, prevBrush );
     return 1;
 }
 
@@ -475,12 +545,12 @@ INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
  */
 INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
-    HBRUSH16 prevBrush;
+    HBRUSH32 prevBrush;
 
-    if (!(prevBrush = SelectObject( hdc, (HBRUSH16)hbrush ))) return 0;
+    if (!(prevBrush = SelectObject32( hdc, hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
-    SelectObject( hdc, prevBrush );
+    SelectObject32( hdc, prevBrush );
     return 1;
 }
 
@@ -522,7 +592,7 @@ INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
     bottom = YLPTODP( dc, rect->bottom );
 
     if ( (right <= left) || (bottom <= top) ) return 0;
-    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    if (!(prevBrush = SelectObject16( hdc, hbrush ))) return 0;
     
     if (DC_SetupGCForBrush( dc ))
     {
@@ -535,7 +605,7 @@ INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 	PatBlt( hdc, rect->left, rect->bottom - 1,
 	    rect->right - rect->left, 1, PATCOPY );
 	}    
-    SelectObject( hdc, prevBrush );
+    SelectObject16( hdc, prevBrush );
     return 1;
 }
 
@@ -552,9 +622,18 @@ INT32 FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 
 
 /***********************************************************************
- *           SetPixel    (GDI.31)
+ *           SetPixel16    (GDI.31)
  */
-COLORREF SetPixel( HDC16 hdc, short x, short y, COLORREF color )
+COLORREF SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
+{
+    return SetPixel32( hdc, x, y, color );
+}
+
+
+/***********************************************************************
+ *           SetPixel32    (GDI32.327)
+ */
+COLORREF SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 {
     Pixel pixel;
     
@@ -582,9 +661,18 @@ COLORREF SetPixel( HDC16 hdc, short x, short y, COLORREF color )
 
 
 /***********************************************************************
- *           GetPixel    (GDI.83)
+ *           GetPixel16    (GDI.83)
  */
-COLORREF GetPixel( HDC16 hdc, short x, short y )
+COLORREF GetPixel16( HDC16 hdc, INT16 x, INT16 y )
+{
+    return GetPixel32( hdc, x, y );
+}
+
+
+/***********************************************************************
+ *           GetPixel32    (GDI32.211)
+ */
+COLORREF GetPixel32( HDC32 hdc, INT32 x, INT32 y )
 {
     static Pixmap pixmap = 0;
     XImage * image;
@@ -597,7 +685,7 @@ COLORREF GetPixel( HDC16 hdc, short x, short y )
     return 0;
 #endif
 
-    if (!PtVisible( hdc, x, y )) return 0;
+    if (!PtVisible32( hdc, x, y )) return 0;
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
@@ -624,11 +712,20 @@ COLORREF GetPixel( HDC16 hdc, short x, short y )
 
 
 /***********************************************************************
- *           PaintRgn    (GDI.43)
+ *           PaintRgn16    (GDI.43)
  */
-BOOL PaintRgn( HDC16 hdc, HRGN32 hrgn )
+BOOL16 PaintRgn16( HDC16 hdc, HRGN16 hrgn )
 {
-    RECT16 box;
+    return PaintRgn32( hdc, hrgn );
+}
+
+
+/***********************************************************************
+ *           PaintRgn32    (GDI32.259)
+ */
+BOOL32 PaintRgn32( HDC32 hdc, HRGN32 hrgn )
+{
+    RECT32 box;
     HRGN32 tmpVisRgn, prevVisRgn;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -636,18 +733,18 @@ BOOL PaintRgn( HDC16 hdc, HRGN32 hrgn )
       /* Modify visible region */
 
     if (!(prevVisRgn = SaveVisRgn( hdc ))) return FALSE;
-    if (!(tmpVisRgn = CreateRectRgn( 0, 0, 0, 0 )))
+    if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 )))
     {
         RestoreVisRgn( hdc );
         return FALSE;
     }
-    CombineRgn( tmpVisRgn, prevVisRgn, hrgn, RGN_AND );
+    CombineRgn32( tmpVisRgn, prevVisRgn, hrgn, RGN_AND );
     SelectVisRgn( hdc, tmpVisRgn );
-    DeleteObject( tmpVisRgn );
+    DeleteObject32( tmpVisRgn );
 
       /* Fill the region */
 
-    GetRgnBox16( dc->w.hGCClipRgn, &box );
+    GetRgnBox32( dc->w.hGCClipRgn, &box );
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + box.left, dc->w.DCOrgY + box.top,
@@ -661,39 +758,70 @@ BOOL PaintRgn( HDC16 hdc, HRGN32 hrgn )
 
 
 /***********************************************************************
- *           FillRgn    (GDI.40)
+ *           FillRgn16    (GDI.40)
  */
-BOOL FillRgn( HDC16 hdc, HRGN32 hrgn, HBRUSH16 hbrush )
+BOOL16 FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
 {
-    BOOL retval;
-    HBRUSH16 prevBrush = SelectObject( hdc, hbrush );
+    return FillRgn32( hdc, hrgn, hbrush );
+}
+
+    
+/***********************************************************************
+ *           FillRgn32    (GDI32.101)
+ */
+BOOL32 FillRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush )
+{
+    BOOL32 retval;
+    HBRUSH32 prevBrush = SelectObject32( hdc, hbrush );
     if (!prevBrush) return FALSE;
-    retval = PaintRgn( hdc, hrgn );
-    SelectObject( hdc, prevBrush );
+    retval = PaintRgn32( hdc, hrgn );
+    SelectObject32( hdc, prevBrush );
     return retval;
 }
 
-/***********************************************************************
- *           FrameRgn     (GDI.41)
- */
-BOOL FrameRgn( HDC16 hdc, HRGN32 hrgn, HBRUSH16 hbrush, int nWidth, int nHeight )
-{
-    HRGN32 tmp = CreateRectRgn( 0, 0, 0, 0 );
-    if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return 0;
-    FillRgn( hdc, tmp, hbrush );
-    DeleteObject( tmp );
-    return 1;
-}
 
 /***********************************************************************
- *           InvertRgn    (GDI.42)
+ *           FrameRgn16     (GDI.41)
  */
-BOOL InvertRgn( HDC16 hdc, HRGN32 hrgn )
+BOOL16 FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
+                   INT16 nWidth, INT16 nHeight )
 {
-    HBRUSH16 prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
+    return FrameRgn32( hdc, hrgn, hbrush, nWidth, nHeight );
+}
+
+
+/***********************************************************************
+ *           FrameRgn32     (GDI32.105)
+ */
+BOOL32 FrameRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush,
+                   INT32 nWidth, INT32 nHeight )
+{
+    HRGN32 tmp = CreateRectRgn32( 0, 0, 0, 0 );
+    if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return FALSE;
+    FillRgn32( hdc, tmp, hbrush );
+    DeleteObject32( tmp );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           InvertRgn16    (GDI.42)
+ */
+BOOL16 InvertRgn16( HDC16 hdc, HRGN16 hrgn )
+{
+    return InvertRgn32( hdc, hrgn );
+}
+
+
+/***********************************************************************
+ *           InvertRgn32    (GDI32.246)
+ */
+BOOL32 InvertRgn32( HDC32 hdc, HRGN32 hrgn )
+{
+    HBRUSH32 prevBrush = SelectObject32( hdc, GetStockObject32(BLACK_BRUSH) );
     WORD prevROP = SetROP2( hdc, R2_NOT );
-    BOOL retval = PaintRgn( hdc, hrgn );
-    SelectObject( hdc, prevBrush );
+    BOOL32 retval = PaintRgn32( hdc, hrgn );
+    SelectObject32( hdc, prevBrush );
     SetROP2( hdc, prevROP );
     return retval;
 }
@@ -704,9 +832,21 @@ BOOL InvertRgn( HDC16 hdc, HRGN32 hrgn )
  */
 void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 {
-    HPEN16 hOldPen;
-    int oldDrawMode, oldBkMode;
-    int left, top, right, bottom;
+    RECT32 rect32;
+    CONV_RECT16TO32( rc, &rect32 );
+    return DrawFocusRect32( hdc, &rect32 );
+}
+
+
+/***********************************************************************
+ *           DrawFocusRect32    (USER32.155)
+ */
+void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
+{
+    HPEN32 hOldPen;
+    INT32 oldDrawMode, oldBkMode;
+    INT32 left, top, right, bottom;
+
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return;
 
@@ -715,7 +855,7 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
     right  = XLPTODP( dc, rc->right );
     bottom = YLPTODP( dc, rc->bottom );
     
-    hOldPen = (HPEN16)SelectObject(hdc, sysColorObjects.hpenWindowText );
+    hOldPen = SelectObject32( hdc, sysColorObjects.hpenWindowText );
     oldDrawMode = SetROP2(hdc, R2_XORPEN);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
 
@@ -729,18 +869,7 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 
     SetBkMode(hdc, oldBkMode);
     SetROP2(hdc, oldDrawMode);
-    SelectObject(hdc, hOldPen);
-}
-
-
-/***********************************************************************
- *           DrawFocusRect32    (USER32.155)
- */
-void DrawFocusRect32( HDC32 hdc, const RECT32* rect )
-{
-    RECT16 rect16;
-    CONV_RECT32TO16( rect, &rect16 );
-    return DrawFocusRect16( (HDC16)hdc, &rect16 );
+    SelectObject32(hdc, hOldPen);
 }
 
 
@@ -786,10 +915,10 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap, int xdest, int ydest,
 void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
                            INT32 shadow_size, BOOL32 pressed )
 {
-    HBRUSH16 hbrushOld;
-    int i;
+    HBRUSH32 hbrushOld;
+    INT32 i;
 
-    hbrushOld = SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnShadow :
+    hbrushOld = SelectObject32(hdc, pressed ? sysColorObjects.hbrushBtnShadow :
 			                  sysColorObjects.hbrushBtnHighlight );
     for (i = 0; i < highlight_size; i++)
     {
@@ -799,8 +928,8 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
 	        rect->right - rect->left - i, 1, PATCOPY );
     }
 
-    SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
-		                 sysColorObjects.hbrushBtnShadow );
+    SelectObject32( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
+		                   sysColorObjects.hbrushBtnShadow );
     for (i = 0; i < shadow_size; i++)
     {
 	PatBlt( hdc, rect->right - i - 1, rect->top + i,
@@ -809,7 +938,7 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
 	        rect->right - rect->left - i, 1, PATCOPY );
     }
 
-    SelectObject( hdc, hbrushOld );
+    SelectObject32( hdc, hbrushOld );
 }
 
 
@@ -896,8 +1025,8 @@ BOOL16 PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts, UINT16 polygons)
       /* really correct either, it doesn't matter much... */
       /* At least the outline will be correct :-) */
     hrgn = CreatePolyPolygonRgn16( pt, counts, polygons, dc->w.polyFillMode );
-    PaintRgn( hdc, hrgn );
-    DeleteObject( hrgn );
+    PaintRgn32( hdc, hrgn );
+    DeleteObject32( hrgn );
 
       /* Draw the outline of the polygons */
 
@@ -1001,7 +1130,7 @@ static void GRAPH_InternalFloodFill( XImage *image, DC *dc,
  *
  * Main flood-fill routine.
  */
-static BOOL16 GRAPH_DoFloodFill( DC *dc, RECT16 *rect, INT32 x, INT32 y,
+static BOOL32 GRAPH_DoFloodFill( DC *dc, RECT32 *rect, INT32 x, INT32 y,
                                  COLORREF color, UINT32 fillType )
 {
     XImage *image;
@@ -1031,12 +1160,22 @@ static BOOL16 GRAPH_DoFloodFill( DC *dc, RECT16 *rect, INT32 x, INT32 y,
 
 
 /**********************************************************************
- *          ExtFloodFill  (GDI.372) (GDI32.96)
+ *          ExtFloodFill16   (GDI.372)
  */
-BOOL16 ExtFloodFill( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
-                     UINT32 fillType )
+BOOL16 ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
+                       UINT16 fillType )
 {
-    RECT16 rect;
+    return ExtFloodFill32( hdc, x, y, color, fillType );
+}
+
+
+/**********************************************************************
+ *          ExtFloodFill32   (GDI32.96)
+ */
+BOOL32 ExtFloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
+                       UINT32 fillType )
+{
+    RECT32 rect;
     DC *dc;
 
     dprintf_graphics( stddeb, "ExtFloodFill %04x %d,%d %06lx %d\n",
@@ -1051,8 +1190,8 @@ BOOL16 ExtFloodFill( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
 	return TRUE;
     }
 
-    if (!PtVisible( hdc, x, y )) return FALSE;
-    if (GetRgnBox16( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
+    if (!PtVisible32( hdc, x, y )) return FALSE;
+    if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
     return CallTo32_LargeStack( (int(*)())GRAPH_DoFloodFill, 6,
                                 dc, &rect, x, y, color, fillType );
@@ -1060,11 +1199,20 @@ BOOL16 ExtFloodFill( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
 
 
 /**********************************************************************
- *          FloodFill  (GDI.25) (GDI32.104)
+ *          FloodFill16   (GDI.25)
  */
-BOOL16 FloodFill( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
+BOOL16 FloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 {
-    return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
+    return ExtFloodFill32( hdc, x, y, color, FLOODFILLBORDER );
+}
+
+
+/**********************************************************************
+ *          FloodFill32   (GDI32.104)
+ */
+BOOL32 FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
+{
+    return ExtFloodFill32( hdc, x, y, color, FLOODFILLBORDER );
 }
 
 
@@ -1088,7 +1236,7 @@ BOOL16 DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
  */
 BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 {
-    HBRUSH16 hbrushOld;
+    HBRUSH32 hbrushOld;
 
     if (flags >= BF_DIAGONAL)
         fprintf( stderr, "DrawEdge: unsupported flags %04x\n", flags );
@@ -1099,7 +1247,7 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 
     /* First do all the raised edges */
 
-    SelectObject( hdc, sysColorObjects.hbrushBtnHighlight );
+    hbrushOld = SelectObject32( hdc, sysColorObjects.hbrushBtnHighlight );
     if (edge & BDR_RAISEDOUTER)
     {
         if (flags & BF_LEFT) PatBlt( hdc, rc->left, rc->top,
@@ -1131,7 +1279,7 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 
     /* Then do all the sunken edges */
 
-    hbrushOld = SelectObject( hdc, sysColorObjects.hbrushBtnShadow );
+    SelectObject32( hdc, sysColorObjects.hbrushBtnShadow );
     if (edge & BDR_SUNKENOUTER)
     {
         if (flags & BF_LEFT) PatBlt( hdc, rc->left, rc->top,
@@ -1161,7 +1309,7 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
                                        rc->right - rc->left - 2, 1, PATCOPY );
     }
 
-    SelectObject( hdc, hbrushOld );
+    SelectObject32( hdc, hbrushOld );
     return TRUE;
 }
 

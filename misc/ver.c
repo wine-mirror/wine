@@ -408,31 +408,37 @@ VerFindFile16(
 DWORD
 VerFindFile32A(
 	UINT32 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
-	LPSTR curdir,UINT32 *curdirlen,LPSTR destdir,UINT32 *destdirlen
-) {
-	return VerFindFile16(flags,filename,windir,appdir,curdir,curdirlen,destdir,destdirlen);
+	LPSTR curdir,UINT32 *pcurdirlen,LPSTR destdir,UINT32 *pdestdirlen )
+{
+    UINT16 curdirlen, destdirlen;
+    DWORD ret = VerFindFile16(flags,filename,windir,appdir,
+                              curdir,&curdirlen,destdir,&destdirlen);
+    *pcurdirlen = curdirlen;
+    *pdestdirlen = destdirlen;
+    return ret;
 }
 
 /* VerFindFileW						[VERSION.6] */
 DWORD
 VerFindFile32W(
 	UINT32 flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
-	LPWSTR curdir,UINT32 *curdirlen,LPWSTR destdir,UINT32 *destdirlen
-) {
-	LPSTR	wfn,wwd,wad,wdd,wcd;
-	DWORD	ret;
+	LPWSTR curdir,UINT32 *pcurdirlen,LPWSTR destdir,UINT32 *pdestdirlen )
+{
+    UINT16 curdirlen, destdirlen;
+    LPSTR wfn,wwd,wad,wdd,wcd;
+    DWORD ret;
 
-	wfn = strdupW2A(filename);
-	wwd = strdupW2A(windir);
-	wad = strdupW2A(appdir);
-	wcd = (LPSTR)malloc(*curdirlen);
-	wdd = (LPSTR)malloc(*destdirlen);
-	ret=VerFindFile16(flags,wfn,wwd,wad,wcd,curdirlen,wdd,destdirlen);
-	STRING32_AnsiToUni(curdir,wcd);
-	STRING32_AnsiToUni(destdir,wdd);
-	*curdirlen	= strlen(wcd);
-	*destdirlen	= strlen(wdd);
-	return ret;
+    wfn = strdupW2A(filename);
+    wwd = strdupW2A(windir);
+    wad = strdupW2A(appdir);
+    wcd = (LPSTR)malloc(*pcurdirlen);
+    wdd = (LPSTR)malloc(*pdestdirlen);
+    ret=VerFindFile16(flags,wfn,wwd,wad,wcd,&curdirlen,wdd,&destdirlen);
+    STRING32_AnsiToUni(curdir,wcd);
+    STRING32_AnsiToUni(destdir,wdd);
+    *pcurdirlen = strlen(wcd);
+    *pdestdirlen = strlen(wdd);
+    return ret;
 }
 
 /* VerInstallFile					[VER.9] */
@@ -454,9 +460,13 @@ VerInstallFile16(
 DWORD
 VerInstallFile32A(
 	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT32 *tmpfilelen
-) {
-	return VerInstallFile16(flags,srcfilename,destfilename,srcdir,destdir,tmpfile,tmpfilelen);
+	LPCSTR destdir,LPSTR tmpfile,UINT32 *tmpfilelen )
+{
+    UINT16 filelen;
+    DWORD ret= VerInstallFile16(flags,srcfilename,destfilename,srcdir,
+                                destdir,tmpfile,&filelen);
+    *tmpfilelen = filelen;
+    return ret;
 }
 
 /* VerFindFileW					[VERSION.6] */

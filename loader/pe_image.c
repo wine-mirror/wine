@@ -153,8 +153,9 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 			name++;
 		}
 	} else {
-		if (funcName-exports->Base > exports->Number_Of_Functions) {
-			dprintf_win32(stddeb,"	ordinal %d out of range!\n",funcName);
+		if (LOWORD(funcName)-exports->Base > exports->Number_Of_Functions) {
+			dprintf_win32(stddeb,"	ordinal %d out of range!\n",
+                                      LOWORD(funcName));
 			return NULL;
 		}
 		return (FARPROC32)(load_addr+function[(int)funcName-exports->Base]);
@@ -224,7 +225,7 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 		if ((unsigned) *import_list & 0x80000000) {
 		    int ordinal = *import_list & (0x80000000 - 1);
 		    dprintf_win32 (stddeb, "--- Ordinal %s,%d\n", Module, ordinal);
-		    *thunk_list = GetProcAddress32(MODULE_FindModule (Module),
+		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule (Module),
 		    				   (LPCSTR) ordinal);
 		    if (!*thunk_list) {
 			fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
@@ -233,7 +234,7 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 		    }
 		} else {		/* import by name */
 		    dprintf_win32 (stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
-		    *thunk_list = GetProcAddress32(MODULE_FindModule (Module),
+		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule (Module),
 						   pe_name->Name);
 		    if (!*thunk_list) {
 			fprintf(stderr, "No implementation for %s.%d(%s), setting to NULL\n",
@@ -253,7 +254,7 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 		    /* not sure about this branch, but it seems to work */
 		    int ordinal = *thunk_list & ~0x80000000;
 		    dprintf_win32(stddeb,"--- Ordinal %s.%d\n",Module,ordinal);
-		    *thunk_list = GetProcAddress32(MODULE_FindModule (Module),
+		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule (Module),
 						   (LPCSTR) ordinal);
 		    if (!*thunk_list) {
 			fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
@@ -263,7 +264,7 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 		} else {
 		    dprintf_win32(stddeb,"--- %s %s.%d\n",
 		   		  pe_name->Name, Module, pe_name->Hint);
-		    *thunk_list = GetProcAddress32(MODULE_FindModule(Module),
+		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule(Module),
 						   pe_name->Name);
 		    if (!*thunk_list) {
 		    	fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
@@ -373,7 +374,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 {
     struct pe_data *pe;
     int i, result;
-    unsigned int load_addr;
+    int load_addr;
     struct Directory dir;
     char	buffer[200];
     DBG_ADDR	daddr;
@@ -405,7 +406,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 	   I don't know if mmap("/dev/null"); would do any better.
 	   What I'd really like to do is a Win32 style VirtualAlloc/MapViewOfFile
 	   sequence */
-	load_addr = pe->load_addr = malloc(pe->vma_size);
+	load_addr = pe->load_addr = (int)xmalloc(pe->vma_size);
 	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
 		pe->load_addr, pe->vma_size);
 
@@ -416,7 +417,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 		if(pe->pe_seg[i].Characteristics & 
 			~ IMAGE_SCN_TYPE_CNT_UNINITIALIZED_DATA)
 		if(lseek(fd,pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
-		|| read(fd,load_addr + pe->pe_seg[i].Virtual_Address,
+		|| read(fd,(char *)load_addr + pe->pe_seg[i].Virtual_Address,
 				pe->pe_seg[i].Size_Of_Raw_Data) 
 				!= pe->pe_seg[i].Size_Of_Raw_Data)
 		{
@@ -471,37 +472,37 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 	if(dir.Size)
 	{
 		if(pe->pe_export && 
-			pe->pe_export!=load_addr+dir.Virtual_address)
+			(int)pe->pe_export!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong export directory??\n");
 		/* always trust the directory */
-		pe->pe_export = load_addr+dir.Virtual_address;
+		pe->pe_export = (void *)(load_addr+dir.Virtual_address);
 	}
 
 	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
 	if(dir.Size)
 	{
 		if(pe->pe_import && 
-			pe->pe_import!=load_addr+dir.Virtual_address)
+			(int)pe->pe_import!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong import directory??\n");
-		pe->pe_import = load_addr+dir.Virtual_address;
+		pe->pe_import = (void *)(load_addr+dir.Virtual_address);
 	}
 
 	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
 	if(dir.Size)
 	{
 		if(pe->pe_resource && 
-			pe->pe_resource!=load_addr+dir.Virtual_address)
+			(int)pe->pe_resource!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong resource directory??\n");
-		pe->pe_resource = load_addr+dir.Virtual_address;
+		pe->pe_resource = (void *)(load_addr+dir.Virtual_address);
 	}
 
 	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_BASE_RELOCATION_TABLE];
 	if(dir.Size)
 	{
 		if(pe->pe_reloc && 
-			pe->pe_reloc!=load_addr+dir.Virtual_address)
+			(int)pe->pe_reloc!=load_addr+dir.Virtual_address)
 			fprintf(stderr,"wrong relocation list??\n");
-		pe->pe_reloc = load_addr+dir.Virtual_address;
+		pe->pe_reloc = (void *)(load_addr+dir.Virtual_address);
 	}
 
 	if(pe->pe_header->opt_coff.DataDirectory
@@ -566,8 +567,6 @@ HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegment;
-    FARPROC16 startup;
     struct mz_header_s mz_header;
 
     if ((hModule = MODULE_CreateDummyModule( ofs )) < 32) return hModule;
@@ -576,13 +575,6 @@ HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 
     lseek( fd, 0, SEEK_SET );
     read( fd, &mz_header, sizeof(mz_header) );
-
-    /* Set the startup address */
-
-    startup = MODULE_GetWndProcEntry16("Win32CallToStart");
-    pSegment = NE_SEG_TABLE(pModule) + pModule->cs - 1;
-    pSegment->selector = SELECTOROF(startup); /* FIXME */
-    pModule->ip = OFFSETOF(startup);
 
     pModule->pe_module = PE_LoadImage( fd, hModule, mz_header.ne_offset );
 
@@ -596,28 +588,6 @@ HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
                          *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
     }
     return hInstance;
-}
-
-void PE_InitTEB(int hTEB);
-
-void PE_InitializeDLLs(HMODULE16 hModule);
-void PE_Win32CallToStart( SIGCONTEXT *context )
-{
-    int fs;
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-
-    dprintf_win32(stddeb,"Going to start Win32 program\n");	
-    InitTask( context );
-    hModule = GetExePtr( GetCurrentTask() );
-    pModule = MODULE_GetPtr( hModule );
-    InitApp( hModule );
-    fs=(int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
-    PE_InitTEB(fs);
-    __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
-    PE_InitializeDLLs( hModule );
-    CallTaskStart32( (FARPROC32)(pModule->pe_module->load_addr + 
-                               pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
 }
 
 int PE_UnloadImage( HMODULE16 hModule )
@@ -647,7 +617,7 @@ static void PE_InitDLL(HMODULE16 hModule)
         printf("InitPEDLL() called!\n");
         CallDLLEntryProc32( (FARPROC32)(pe->load_addr + 
                                   pe->pe_header->opt_coff.AddressOfEntryPoint),
-                            hModule, DLL_PROCESS_ATTACH, (void *)-1 );
+                            hModule, DLL_PROCESS_ATTACH, -1 );
     }
 }
 
@@ -655,12 +625,12 @@ static void PE_InitDLL(HMODULE16 hModule)
 /* FIXME: This stuff is all on a "well it works" basis. An implementation
 based on some kind of documentation would be greatly appreciated :-) */
 
-typedef struct
+typedef struct _TEB
 {
     void        *Except;
     void        *stack;
     int	        dummy1[4];
-    struct TEB  *TEBDSAlias;
+    struct _TEB *TEBDSAlias;
     int	        dummy2[2];
     int	        taskid;
 } TEB;
@@ -672,7 +642,7 @@ void PE_InitTEB(int hTEB)
 
     pTask = (TDB *)(GlobalLock16(GetCurrentTask() & 0xffff));
     pTEB  = (TEB *)(GlobalLock16(hTEB));
-    pTEB->stack = pTask->esp;
+    pTEB->stack = (void *)pTask->esp;
     pTEB->Except = (void *)(-1); 
     pTEB->TEBDSAlias = pTEB;
     pTEB->taskid = getpid();

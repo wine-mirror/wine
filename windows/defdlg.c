@@ -17,7 +17,7 @@
  * Set the focus to a control of the dialog, selecting the text if
  * the control is an edit dialog.
  */
-static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
+static void DEFDLG_SetFocus( HWND32 hwndDlg, HWND32 hwndCtrl )
 {
     HWND32 hwndPrev = GetFocus32();
 
@@ -35,7 +35,7 @@ static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 /***********************************************************************
  *           DEFDLG_SaveFocus
  */
-static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
+static BOOL32 DEFDLG_SaveFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 {
     HWND32 hwndFocus = GetFocus32();
 
@@ -49,7 +49,7 @@ static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
 /***********************************************************************
  *           DEFDLG_RestoreFocus
  */
-static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
+static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 {
     if (!infoPtr->hwndFocus || IsIconic(hwnd)) return FALSE;
     if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
@@ -64,9 +64,9 @@ static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
  *
  * Find the current default push-button.
  */
-static HWND DEFDLG_FindDefButton( HWND hwndDlg )
+static HWND32 DEFDLG_FindDefButton( HWND32 hwndDlg )
 {
-    HWND hwndChild = GetWindow( hwndDlg, GW_CHILD );
+    HWND32 hwndChild = GetWindow( hwndDlg, GW_CHILD );
     while (hwndChild)
     {
         if (SendMessage16( hwndChild, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
@@ -82,8 +82,8 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
  *
  * Set the new default button to be hwndNew.
  */
-static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
-                                 HWND hwndNew )
+static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
+                                   HWND32 hwndNew )
 {
     if (hwndNew &&
         !(SendMessage16(hwndNew, WM_GETDLGCODE, 0, 0 ) & DLGC_UNDEFPUSHBUTTON))
@@ -91,7 +91,7 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
     
     if (dlgInfo->msgResult)  /* There's already a default pushbutton */
     {
-        HWND hwndOld = GetDlgItem( hwndDlg, dlgInfo->msgResult );
+        HWND32 hwndOld = GetDlgItem( hwndDlg, dlgInfo->msgResult );
         if (SendMessage32A( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
             SendMessage32A( hwndOld, BM_SETSTYLE32, BS_PUSHBUTTON, TRUE );
     }
@@ -114,7 +114,7 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
 static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                             LPARAM lParam, DIALOGINFO *dlgInfo )
 {
-    HWND hwndDefId;
+    HWND32 hwndDefId;
 
     switch(msg)
     {
@@ -138,7 +138,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	      /* Delete font */
 	    if (dlgInfo->hUserFont)
 	    {
-		DeleteObject( dlgInfo->hUserFont );
+		DeleteObject32( dlgInfo->hUserFont );
 		dlgInfo->hUserFont = 0;
 	    }
 
@@ -186,7 +186,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 	case WM_NEXTDLGCTL:
 	    {
-                HWND hwndDest = (HWND)wParam;
+                HWND32 hwndDest = (HWND32)wParam;
                 if (!lParam)
                     hwndDest = GetNextDlgTabItem32(hwnd, GetFocus32(), wParam);
                 if (hwndDest) DEFDLG_SetFocus( hwnd, hwndDest );

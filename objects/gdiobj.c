@@ -4,6 +4,7 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <stdio.h>
 #include "gdi.h"
@@ -242,14 +243,23 @@ GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
 
 
 /***********************************************************************
- *           DeleteObject    (GDI.69)
+ *           DeleteObject16    (GDI.69)
  */
-BOOL DeleteObject( HGDIOBJ16 obj )
+BOOL16 DeleteObject16( HGDIOBJ16 obj )
+{
+    return DeleteObject32( obj );
+}
+
+
+/***********************************************************************
+ *           DeleteObject32    (GDI32.70)
+ */
+BOOL32 DeleteObject32( HGDIOBJ32 obj )
 {
       /* Check if object is valid */
 
     GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( obj );
-    if (!header) return FALSE;
+    if (!header || HIWORD(obj)) return FALSE;
 
     dprintf_gdi(stddeb, "DeleteObject: %04x\n", obj );
 
@@ -269,9 +279,18 @@ BOOL DeleteObject( HGDIOBJ16 obj )
 
 
 /***********************************************************************
- *           GetStockObject    (GDI.87)
+ *           GetStockObject16    (GDI.87)
  */
-HGDIOBJ16 GetStockObject( INT16 obj )
+HGDIOBJ16 GetStockObject16( INT16 obj )
+{
+    return (HGDIOBJ16)GetStockObject32( obj );
+}
+
+
+/***********************************************************************
+ *           GetStockObject32    (GDI32.220)
+ */
+HGDIOBJ32 GetStockObject32( INT32 obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
@@ -299,9 +318,9 @@ INT16 GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
-	  return PEN_GetObject( (PENOBJ *)ptr, count, buffer );
+	  return PEN_GetObject16( (PENOBJ *)ptr, count, buffer );
       case BRUSH_MAGIC: 
-	  return BRUSH_GetObject( (BRUSHOBJ *)ptr, count, buffer );
+	  return BRUSH_GetObject16( (BRUSHOBJ *)ptr, count, buffer );
       case BITMAP_MAGIC: 
 	  return BITMAP_GetObject16( (BITMAPOBJ *)ptr, count, buffer );
       case FONT_MAGIC:
@@ -330,12 +349,14 @@ INT32 GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
     
     switch(ptr->wMagic)
     {
+      case PEN_MAGIC:
+	  return PEN_GetObject32( (PENOBJ *)ptr, count, buffer );
+      case BRUSH_MAGIC: 
+	  return BRUSH_GetObject32( (BRUSHOBJ *)ptr, count, buffer );
       case BITMAP_MAGIC: 
 	  return BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
       case FONT_MAGIC:
 	  return FONT_GetObject32A( (FONTOBJ *)ptr, count, buffer );
-      case PEN_MAGIC:
-      case BRUSH_MAGIC: 
       case PALETTE_MAGIC:
           fprintf( stderr, "GetObject32: magic %04x not implemented\n",
                    ptr->wMagic );
@@ -355,9 +376,18 @@ INT32 GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 
 
 /***********************************************************************
- *           SelectObject    (GDI.45)
+ *           SelectObject16    (GDI.45)
  */
-HGDIOBJ16 SelectObject( HDC16 hdc, HGDIOBJ16 handle )
+HGDIOBJ16 SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
+{
+    return (HGDIOBJ16)SelectObject32( hdc, handle );
+}
+
+
+/***********************************************************************
+ *           SelectObject32    (GDI32.299)
+ */
+HGDIOBJ32 SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
 {
     GDIOBJHDR * ptr = NULL;
     DC * dc;
@@ -387,16 +417,25 @@ HGDIOBJ16 SelectObject( HDC16 hdc, HGDIOBJ16 handle )
       case FONT_MAGIC:
 	  return FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
       case REGION_MAGIC:
-	  return (HGDIOBJ16)SelectClipRgn( hdc, handle );
+	  return (HGDIOBJ16)SelectClipRgn16( hdc, handle );
     }
     return 0;
 }
 
 
 /***********************************************************************
- *           UnrealizeObject    (GDI.150)
+ *           UnrealizeObject16    (GDI.150)
  */
-BOOL UnrealizeObject( HGDIOBJ16 obj )
+BOOL16 UnrealizeObject16( HGDIOBJ16 obj )
+{
+    return UnrealizeObject32( obj );
+}
+
+
+/***********************************************************************
+ *           UnrealizeObject    (GDI32.358)
+ */
+BOOL32 UnrealizeObject32( HGDIOBJ32 obj )
 {
       /* Check if object is valid */
 
@@ -421,10 +460,10 @@ BOOL UnrealizeObject( HGDIOBJ16 obj )
 
 
 /***********************************************************************
- *           EnumObjects    (GDI.71)
+ *           EnumObjects16    (GDI.71)
  */
-INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
-                 LPARAM lParam )
+INT16 EnumObjects16( HDC16 hdc, INT16 nObjType, GOBJENUMPROC16 lpEnumFunc,
+                     LPARAM lParam )
 {
     /* Solid colors to enumerate */
     static const COLORREF solid_colors[] =
@@ -438,11 +477,11 @@ INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
       RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
     };
     
-    int i, retval = 0;
+    INT16 i, retval = 0;
     LOGPEN16 *pen;
     LOGBRUSH16 *brush = NULL;
 
-    dprintf_gdi( stddeb, "EnumObjects: %04x %d %08lx %08lx\n",
+    dprintf_gdi( stddeb, "EnumObjects16: %04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
     switch(nObjType)
     {
@@ -456,7 +495,7 @@ INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
             pen->lopnWidth.y = 0;
             pen->lopnColor   = solid_colors[i];
             retval = lpEnumFunc( SEGPTR_GET(pen), lParam );
-            dprintf_gdi( stddeb, "EnumObject: solid pen %08lx, ret=%d\n",
+            dprintf_gdi( stddeb, "EnumObjects16: solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -472,7 +511,7 @@ INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
             brush->lbColor = solid_colors[i];
             brush->lbHatch = 0;
             retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
-            dprintf_gdi( stddeb, "EnumObject: solid brush %08lx, ret=%d\n",
+            dprintf_gdi( stddeb, "EnumObjects16: solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
         }
@@ -484,7 +523,7 @@ INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
             brush->lbColor = RGB(0,0,0);
             brush->lbHatch = i;
             retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
-            dprintf_gdi( stddeb, "EnumObject: hatched brush %d, ret=%d\n",
+            dprintf_gdi( stddeb, "EnumObjects16: hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;
         }
@@ -492,7 +531,83 @@ INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
         break;
 
     default:
-        fprintf( stderr, "EnumObjects: invalid type %d\n", nObjType );
+        fprintf( stderr, "EnumObjects16: invalid type %d\n", nObjType );
+        break;
+    }
+    return retval;
+}
+
+
+/***********************************************************************
+ *           EnumObjects32    (GDI32.89)
+ */
+INT32 EnumObjects32( HDC32 hdc, INT32 nObjType, GOBJENUMPROC32 lpEnumFunc,
+                     LPARAM lParam )
+{
+    /* Solid colors to enumerate */
+    static const COLORREF solid_colors[] =
+    { RGB(0x00,0x00,0x00), RGB(0xff,0xff,0xff),
+      RGB(0xff,0x00,0x00), RGB(0x00,0xff,0x00),
+      RGB(0x00,0x00,0xff), RGB(0xff,0xff,0x00),
+      RGB(0xff,0x00,0xff), RGB(0x00,0xff,0xff),
+      RGB(0x80,0x00,0x00), RGB(0x00,0x80,0x00),
+      RGB(0x80,0x80,0x00), RGB(0x00,0x00,0x80),
+      RGB(0x80,0x00,0x80), RGB(0x00,0x80,0x80),
+      RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
+    };
+    
+    INT32 i, retval = 0;
+    LOGPEN32 pen;
+    LOGBRUSH32 brush;
+
+    dprintf_gdi( stddeb, "EnumObjects32: %04x %d %08lx %08lx\n",
+                 hdc, nObjType, (DWORD)lpEnumFunc, lParam );
+    switch(nObjType)
+    {
+    case OBJ_PEN:
+        /* Enumerate solid pens */
+        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
+        {
+            pen.lopnStyle   = PS_SOLID;
+            pen.lopnWidth.x = 1;
+            pen.lopnWidth.y = 0;
+            pen.lopnColor   = solid_colors[i];
+            retval = lpEnumFunc( &pen, lParam );
+            dprintf_gdi( stddeb, "EnumObjects32: solid pen %08lx, ret=%d\n",
+                         solid_colors[i], retval);
+            if (!retval) break;
+        }
+        break;
+
+    case OBJ_BRUSH:
+        /* Enumerate solid brushes */
+        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
+        {
+            brush.lbStyle = BS_SOLID;
+            brush.lbColor = solid_colors[i];
+            brush.lbHatch = 0;
+            retval = lpEnumFunc( &brush, lParam );
+            dprintf_gdi( stddeb, "EnumObjects32: solid brush %08lx, ret=%d\n",
+                         solid_colors[i], retval);
+            if (!retval) break;
+        }
+
+        /* Now enumerate hatched brushes */
+        if (retval) for (i = HS_HORIZONTAL; i <= HS_DIAGCROSS; i++)
+        {
+            brush.lbStyle = BS_HATCHED;
+            brush.lbColor = RGB(0,0,0);
+            brush.lbHatch = i;
+            retval = lpEnumFunc( &brush, lParam );
+            dprintf_gdi( stddeb, "EnumObjects32: hatched brush %d, ret=%d\n",
+                         i, retval);
+            if (!retval) break;
+        }
+        break;
+
+    default:
+        /* FIXME: implement Win32 types */
+        fprintf( stderr, "EnumObjects32: invalid type %d\n", nObjType );
         break;
     }
     return retval;

@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include "parser.h"
 #include "windows.h"
+
+int yylex(void);
+int yyerror(const char *s);
+
 %}
 %union{
 	gen_res *res;
@@ -214,7 +218,7 @@ style_elm:      NUMBER {$$=new_style();$$->or=$1;}
 extern int line_number;
 extern char* yytext;
 
-int yyerror(char *s)
+int yyerror( const char *s )
 {
 	fprintf(stderr,"stdin:%d: %s before '%s'\n",line_number,s,yytext);
 	return 0;

@@ -5,6 +5,7 @@
  *
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -77,7 +78,7 @@
 static const struct
 {
     char** data;   /* Pointer to bitmap data */
-    BOOL   color;  /* Is it a color bitmap?  */
+    BOOL32 color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
     { obm_trtype, TRUE },	/* OBM_TRTYPE */    
     { obm_cdrom, TRUE },        /* OBM_CDROM    */
@@ -268,7 +269,7 @@ static XpmColorSymbol *OBM_Colors = NULL;
 /***********************************************************************
  *           OBM_InitColorSymbols
  */
-static BOOL OBM_InitColorSymbols()
+static BOOL32 OBM_InitColorSymbols()
 {
     int i;
 
@@ -328,8 +329,8 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
  *
  * Create the 2 bitmaps from XPM data.
  */
-static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP16 *hBitmap,
-                               HBITMAP16 *hBitmapMask, POINT16 *hotspot )
+static BOOL32 OBM_CreateBitmaps( char **data, BOOL32 color, HBITMAP16 *hBitmap,
+                                 HBITMAP16 *hBitmapMask, POINT32 *hotspot )
 {
     Pixmap pixmap, pixmask;
     XpmAttributes *attrs;
@@ -405,7 +406,7 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     CURSORICONINFO *pInfo;
     BITMAPOBJ *bmpXor, *bmpAnd;
     HBITMAP16 hXorBits, hAndBits;
-    POINT16 hotspot;
+    POINT32 hotspot;
     int sizeXor, sizeAnd;
 
     if (fCursor)
@@ -443,8 +444,8 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
     {
-        DeleteObject( hXorBits );
-        DeleteObject( hAndBits );
+        DeleteObject32( hXorBits );
+        DeleteObject32( hAndBits );
         return 0;
     }
 
@@ -485,8 +486,8 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
     GetBitmapBits( hXorBits, sizeXor, (char *)(pInfo + 1) + sizeAnd );
 
-    DeleteObject( hXorBits );
-    DeleteObject( hAndBits );
+    DeleteObject32( hXorBits );
+    DeleteObject32( hAndBits );
 
     if (fCursor) OBM_Cursors[id] = handle;
     return handle;

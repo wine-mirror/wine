@@ -95,7 +95,18 @@ INT16 THUNK_EnumObjects16( HDC16 hdc, INT16 nObjType,
                            GOBJENUMPROC16 func, LPARAM lParam )
 {
     DECL_THUNK( thunk, func, CallTo16_word_ll );
-    return EnumObjects( hdc, nObjType, (GOBJENUMPROC16)&thunk, lParam );
+    return EnumObjects16( hdc, nObjType, (GOBJENUMPROC16)&thunk, lParam );
+}
+
+
+/***********************************************************************
+ *           THUNK_EnumObjects32   (GDI32.89)
+ */
+INT32 THUNK_EnumObjects32( HDC32 hdc, INT32 nObjType,
+                           GOBJENUMPROC32 func, LPARAM lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumObjects32( hdc, nObjType, (GOBJENUMPROC32)&thunk, lParam );
 }
 
 
@@ -302,9 +313,11 @@ FARPROC16 THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 BOOL16 THUNK_UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    BOOL16 ret = FALSE;
+    BOOL16 ret;
     THUNK *thunk = THUNK_Find( (FARPROC16)proc );
-    if (thunk) ret = UnhookWindowsHook16( id, (HOOKPROC16)thunk );
+    if (!thunk) return FALSE;
+    ret = UnhookWindowsHook16( id, (HOOKPROC16)thunk );
+    THUNK_Free( thunk );
     return ret;
 }
 

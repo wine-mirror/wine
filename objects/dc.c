@@ -185,9 +185,9 @@ void DC_InitDC( DC* dc )
     RealizeDefaultPalette( dc->hSelf );
     SetTextColor( dc->hSelf, dc->w.textColor );
     SetBkColor( dc->hSelf, dc->w.backgroundColor );
-    SelectObject( dc->hSelf, dc->w.hPen );
-    SelectObject( dc->hSelf, dc->w.hBrush );
-    SelectObject( dc->hSelf, dc->w.hFont );
+    SelectObject32( dc->hSelf, dc->w.hPen );
+    SelectObject32( dc->hSelf, dc->w.hBrush );
+    SelectObject32( dc->hSelf, dc->w.hFont );
     CLIPPING_UpdateGCRegion( dc );
 }
 
@@ -379,19 +379,18 @@ HDC16 GetDCState( HDC16 hdc )
 
     memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
-    memcpy( &newdc->u.x.pen, &dc->u.x.pen, sizeof(dc->u.x.pen) );
 
     newdc->hSelf = (HDC32)handle;
     newdc->saveLevel = 0;
     newdc->w.flags |= DC_SAVED;
 
     newdc->w.hGCClipRgn = 0;
-    newdc->w.hVisRgn = CreateRectRgn( 0, 0, 0, 0 );
-    CombineRgn( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
+    newdc->w.hVisRgn = CreateRectRgn32( 0, 0, 0, 0 );
+    CombineRgn32( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
     if (dc->w.hClipRgn)
     {
-	newdc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
-	CombineRgn( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
+	newdc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
+	CombineRgn32( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
     }
     return handle;
 }
@@ -402,37 +401,56 @@ HDC16 GetDCState( HDC16 hdc )
  */
 void SetDCState( HDC16 hdc, HDC16 hdcs )
 {
-    DC * dc, * dcs;
-    HRGN32 hVisRgn, hClipRgn, hGCClipRgn;
-    HFONT16 hfont;
-    HBRUSH16 hbrush;
+    DC *dc, *dcs;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
     if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
     if (!dcs->w.flags & DC_SAVED) return;
     dprintf_dc(stddeb, "SetDCState: %04x %04x\n", hdc, hdcs );
 
-      /* Save the regions, font & brush before overwriting everything */
-    hVisRgn    = dc->w.hVisRgn;
-    hClipRgn   = dc->w.hClipRgn;
-    hGCClipRgn = dc->w.hGCClipRgn;
-    hfont      = dc->w.hFont;
-    hbrush     = dc->w.hBrush;
-    memcpy( &dc->w, &dcs->w, sizeof(dc->w) );
-    memcpy( &dc->u.x.pen, &dcs->u.x.pen, sizeof(dc->u.x.pen) );
-    dc->w.flags &= ~DC_SAVED;
+    dc->w.flags           = dcs->w.flags & ~DC_SAVED;
+    dc->w.devCaps         = dcs->w.devCaps;
+    dc->w.hFirstBitmap    = dcs->w.hFirstBitmap;
+    dc->w.hDevice         = dcs->w.hDevice;
+    dc->w.ROPmode         = dcs->w.ROPmode;
+    dc->w.polyFillMode    = dcs->w.polyFillMode;
+    dc->w.stretchBltMode  = dcs->w.stretchBltMode;
+    dc->w.relAbsMode      = dcs->w.relAbsMode;
+    dc->w.backgroundMode  = dcs->w.backgroundMode;
+    dc->w.backgroundColor = dcs->w.backgroundColor;
+    dc->w.textColor       = dcs->w.textColor;
+    dc->w.backgroundPixel = dcs->w.backgroundPixel;
+    dc->w.textPixel       = dcs->w.textPixel;
+    dc->w.brushOrgX       = dcs->w.brushOrgX;
+    dc->w.brushOrgY       = dcs->w.brushOrgY;
+    dc->w.textAlign       = dcs->w.textAlign;
+    dc->w.charExtra       = dcs->w.charExtra;
+    dc->w.breakTotalExtra = dcs->w.breakTotalExtra;
+    dc->w.breakCount      = dcs->w.breakCount;
+    dc->w.breakExtra      = dcs->w.breakExtra;
+    dc->w.breakRem        = dcs->w.breakRem;
+    dc->w.MapMode         = dcs->w.MapMode;
+    dc->w.DCOrgX          = dcs->w.DCOrgX;
+    dc->w.DCOrgY          = dcs->w.DCOrgY;
+    dc->w.CursPosX        = dcs->w.CursPosX;
+    dc->w.CursPosY        = dcs->w.CursPosY;
+    dc->w.WndOrgX         = dcs->w.WndOrgX;
+    dc->w.WndOrgY         = dcs->w.WndOrgY;
+    dc->w.WndExtX         = dcs->w.WndExtX;
+    dc->w.WndExtY         = dcs->w.WndExtY;
+    dc->w.VportOrgX       = dcs->w.VportOrgX;
+    dc->w.VportOrgY       = dcs->w.VportOrgY;
+    dc->w.VportExtX       = dcs->w.VportExtX;
+    dc->w.VportExtY       = dcs->w.VportExtY;
 
-      /* Restore the regions */
-    dc->w.hVisRgn    = hVisRgn;
-    dc->w.hClipRgn   = hClipRgn;
-    dc->w.hGCClipRgn = hGCClipRgn;
-    dc->w.hFont      = hfont;
-    dc->w.hBrush     = hbrush;
-    CombineRgn( dc->w.hVisRgn, dcs->w.hVisRgn, 0, RGN_COPY );
-    SelectClipRgn( hdc, dcs->w.hClipRgn );
-
-    SelectObject( hdc, dcs->w.hBrush );
-    SelectObject( hdc, dcs->w.hFont );
+    if (!(dc->w.flags & DC_MEMORY)) dc->w.bitsPerPixel = dcs->w.bitsPerPixel;
+    CombineRgn32( dc->w.hVisRgn, dcs->w.hVisRgn, 0, RGN_COPY );
+    SelectClipRgn32( hdc, dcs->w.hClipRgn );
+    SelectObject32( hdc, dcs->w.hBitmap );
+    SelectObject32( hdc, dcs->w.hBrush );
+    SelectObject32( hdc, dcs->w.hFont );
+    SelectObject32( hdc, dcs->w.hPen );
+    GDISelectPalette( hdc, dcs->w.hPalette, FALSE );
 }
 
 
@@ -564,7 +582,7 @@ HDC16 CreateCompatibleDC( HDC16 hdc )
         !dc->funcs->pCreateDC( dc, NULL, NULL, NULL, NULL ))
     {
         dprintf_dc( stddeb, "CreateDC: creation aborted by device\n" );
-        DeleteObject( hbitmap );
+        DeleteObject32( hbitmap );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
@@ -596,16 +614,16 @@ BOOL DeleteDC( HDC16 hdc )
     
     if (!(dc->w.flags & DC_SAVED))
     {
-	SelectObject( hdc, STOCK_BLACK_PEN );
-	SelectObject( hdc, STOCK_WHITE_BRUSH );
-	SelectObject( hdc, STOCK_SYSTEM_FONT );
-        if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
+	SelectObject32( hdc, STOCK_BLACK_PEN );
+	SelectObject32( hdc, STOCK_WHITE_BRUSH );
+	SelectObject32( hdc, STOCK_SYSTEM_FONT );
+        if (dc->w.flags & DC_MEMORY) DeleteObject32( dc->w.hFirstBitmap );
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }
 
-    if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
-    if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
-    if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
+    if (dc->w.hClipRgn) DeleteObject32( dc->w.hClipRgn );
+    if (dc->w.hVisRgn) DeleteObject32( dc->w.hVisRgn );
+    if (dc->w.hGCClipRgn) DeleteObject32( dc->w.hGCClipRgn );
     
     return GDI_FreeObject( hdc );
 }

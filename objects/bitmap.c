@@ -430,7 +430,7 @@ HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
        SetRectRgn(dc->w.hVisRgn, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
     else
     { 
-       hrgn = CreateRectRgn( 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
+       hrgn = CreateRectRgn32(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
        if (!hrgn) return 0;
        dc->w.hVisRgn    = hrgn;
     }

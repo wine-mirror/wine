@@ -326,7 +326,7 @@ FARPROC16 SetWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 BOOL16 UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id , 0 );
+    HANDLE16 hook = HOOK_GetHook( id, GetTaskQueue(0) );
 
     dprintf_hook( stddeb, "UnhookWindowsHook: %d %08lx\n", id, (DWORD)proc );
 
@@ -380,7 +380,7 @@ HHOOK SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
 
 
 /***********************************************************************
- *           UnhookWindowHookEx16   (USER.292)
+ *           UnhookWindowsHookEx16   (USER.292)
  */
 BOOL16 UnhookWindowsHookEx16( HHOOK hhook )
 {

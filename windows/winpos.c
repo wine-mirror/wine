@@ -621,7 +621,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
                 if (!(wndPtr->dwStyle & WS_MINIMIZE))
                     wndPtr->rectNormal = wndPtr->rectWindow; 
 
-                NC_GetMinMaxInfo( hwnd, &maxSize,
+                NC_GetMinMaxInfo( wndPtr, &maxSize,
                                   &wndPtr->ptMaxPos, NULL, NULL );
                 x  = wndPtr->ptMaxPos.x;
                 y  = wndPtr->ptMaxPos.y;
@@ -674,7 +674,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
                 if (wndPtr->flags & WIN_RESTORE_MAX)
                 {
                     /* Restore to maximized position */
-                    NC_GetMinMaxInfo( hwnd, &maxSize, &wndPtr->ptMaxPos,
+                    NC_GetMinMaxInfo( wndPtr, &maxSize, &wndPtr->ptMaxPos,
                                       NULL, NULL );
                     x  = wndPtr->ptMaxPos.x;
                     y  = wndPtr->ptMaxPos.y;
@@ -891,43 +891,34 @@ BOOL32 SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *wndpl )
     return TRUE;
 }
 
+
 /***********************************************************************
  *           WINPOS_ForceXWindowRaise
+ *
+ * Raise a window on top of the X stacking order, while preserving 
+ * the correct Windows Z order.
  */
-void WINPOS_ForceXWindowRaise( WND* pWnd )
+static void WINPOS_ForceXWindowRaise( WND* pWnd )
 {
     XWindowChanges winChanges;
-    WND *wndStop, *wndLast;
+    WND *wndPrev;
 
-    if (!pWnd->window) return;
-
-    wndLast = wndStop = pWnd;
-    winChanges.stack_mode = Above;
-    XReconfigureWMWindow( display, pWnd->window, 0, CWStackMode, &winChanges );
-
-    /* Recursively raise owned popups according to their z-order
+    /* Raise all windows up to pWnd according to their Z order.
      * (it would be easier with sibling-related Below but it doesn't
      * work very well with SGI mwm for instance)
      */
-    while (wndLast)
+    winChanges.stack_mode = Above;
+    while (pWnd)
     {
-        WND *wnd = WIN_GetDesktop()->child;
-        wndLast = NULL;
-        while (wnd != wndStop)
-        {
-            if (wnd->owner == pWnd &&
-                (wnd->dwStyle & WS_POPUP) &&
-                (wnd->dwStyle & WS_VISIBLE))
-                wndLast = wnd;
-            wnd = wnd->next;
-        }
-        if (wndLast)
-        {
-            WINPOS_ForceXWindowRaise( wndLast );
-            wndStop = wndLast;
-        }
+        if (pWnd->window) XReconfigureWMWindow( display, pWnd->window, 0,
+                                                CWStackMode, &winChanges );
+        wndPrev = WIN_GetDesktop()->child;
+        if (wndPrev == pWnd) break;
+        while (wndPrev && (wndPrev->next != pWnd)) wndPrev = wndPrev->next;
+        pWnd = wndPrev;
     }
 }
+
 
 /*******************************************************************
  *	   WINPOS_SetActiveWindow
@@ -1199,9 +1190,9 @@ LONG WINPOS_SendNCCalcSize( HWND32 hwnd, BOOL32 calcValidRect,
     }
     result = SendMessage16( hwnd, WM_NCCALCSIZE, calcValidRect,
                           (LPARAM)SEGPTR_GET( params ) );
-    dprintf_win(stddeb, "WINPOS_SendNCCalcSize: %d %d %d %d\n",
-		(int)params->rgrc[0].top,    (int)params->rgrc[0].left,
-		(int)params->rgrc[0].bottom, (int)params->rgrc[0].right);
+    dprintf_win( stddeb, "WINPOS_SendNCCalcSize: %d,%d-%d,%d\n",
+                 params->rgrc[0].left, params->rgrc[0].top,
+                 params->rgrc[0].right, params->rgrc[0].bottom );
     *newClientRect = params->rgrc[0];
     SEGPTR_FREE(params);
     return result;
@@ -1220,7 +1211,7 @@ LONG WINPOS_HandleWindowPosChanging16( WND *wndPtr, WINDOWPOS16 *winpos )
     if ((wndPtr->dwStyle & WS_THICKFRAME) ||
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
-	NC_GetMinMaxInfo( winpos->hwnd, &maxSize, NULL, NULL, NULL );
+	NC_GetMinMaxInfo( wndPtr, &maxSize, NULL, NULL, NULL );
 	winpos->cx = MIN( winpos->cx, maxSize.x );
 	winpos->cy = MIN( winpos->cy, maxSize.y );
     }
@@ -1240,7 +1231,7 @@ LONG WINPOS_HandleWindowPosChanging32( WND *wndPtr, WINDOWPOS32 *winpos )
     if ((wndPtr->dwStyle & WS_THICKFRAME) ||
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
-	NC_GetMinMaxInfo( winpos->hwnd, &maxSize, NULL, NULL, NULL );
+	NC_GetMinMaxInfo( wndPtr, &maxSize, NULL, NULL, NULL );
 	winpos->cx = MIN( winpos->cx, maxSize.x );
 	winpos->cy = MIN( winpos->cy, maxSize.y );
     }
@@ -1387,7 +1378,7 @@ HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
 static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRect, LPRECT16 lpOldClientRect, UINT uFlags )
 {
  HRGN32 newVisRgn = DCE_GetVisRgn(Wnd->hwndSelf,DCX_WINDOW | DCX_CLIPSIBLINGS);
- HRGN32 dirtyRgn = CreateRectRgn(0,0,0,0);
+ HRGN32 dirtyRgn = CreateRectRgn32(0,0,0,0);
  int  other, my;
 
  dprintf_win(stddeb,"cleaning up...new wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i)\n\
@@ -1401,29 +1392,30 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
      (lpOldWndRect->bottom - lpOldWndRect->top) != (Wnd->rectWindow.bottom - Wnd->rectWindow.top) )
      uFlags |= SMC_DRAWFRAME;
 
- CombineRgn( dirtyRgn, newVisRgn, 0, RGN_COPY);
+ CombineRgn32( dirtyRgn, newVisRgn, 0, RGN_COPY);
 
  if( !(uFlags & SMC_NOCOPY) )
-   CombineRgn( newVisRgn, newVisRgn, oldVisRgn, RGN_AND ); 
+   CombineRgn32( newVisRgn, newVisRgn, oldVisRgn, RGN_AND ); 
 
  /* map regions to the parent client area */
  
- OffsetRgn(dirtyRgn, Wnd->rectWindow.left, Wnd->rectWindow.top);
- OffsetRgn(oldVisRgn, lpOldWndRect->left, lpOldWndRect->top);
+ OffsetRgn32( dirtyRgn, Wnd->rectWindow.left, Wnd->rectWindow.top );
+ OffsetRgn32( oldVisRgn, lpOldWndRect->left, lpOldWndRect->top );
 
  /* compute invalidated region outside Wnd - (in client coordinates of the parent window) */
 
- other = CombineRgn(dirtyRgn, oldVisRgn, dirtyRgn, RGN_DIFF);
+ other = CombineRgn32(dirtyRgn, oldVisRgn, dirtyRgn, RGN_DIFF);
 
  /* map visible region to the Wnd client area */
 
- OffsetRgn( newVisRgn, Wnd->rectWindow.left - Wnd->rectClient.left,
-                       Wnd->rectWindow.top - Wnd->rectClient.top );
+ OffsetRgn32( newVisRgn, Wnd->rectWindow.left - Wnd->rectClient.left,
+                         Wnd->rectWindow.top - Wnd->rectClient.top );
 
  /* substract previously invalidated region from the Wnd visible region */
 
- my =  (Wnd->hrgnUpdate > 1)? CombineRgn( newVisRgn, newVisRgn, Wnd->hrgnUpdate, RGN_DIFF)
-                            : COMPLEXREGION;
+ my =  (Wnd->hrgnUpdate > 1) ? CombineRgn32( newVisRgn, newVisRgn,
+                                             Wnd->hrgnUpdate, RGN_DIFF)
+                             : COMPLEXREGION;
 
  if( uFlags & SMC_NOCOPY )	/* invalidate Wnd visible region */
    {
@@ -1444,8 +1436,8 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
          xfrom = lpOldClientRect->left; yfrom = lpOldClientRect->top;
          xto = Wnd->rectClient.left; yto = Wnd->rectClient.top;
          width = lpOldClientRect->right - xfrom; height = lpOldClientRect->bottom - yfrom;
-	 updateRgn = CreateRectRgn( 0, 0, width, height );
-	 CombineRgn( newVisRgn, newVisRgn, updateRgn, RGN_AND );
+	 updateRgn = CreateRectRgn32( 0, 0, width, height );
+	 CombineRgn32( newVisRgn, newVisRgn, updateRgn, RGN_AND );
 	 SetRectRgn( updateRgn, 0, 0, Wnd->rectClient.right - xto, Wnd->rectClient.bottom - yto );
        }
      else
@@ -1453,17 +1445,17 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
          xfrom = lpOldWndRect->left; yfrom = lpOldWndRect->top;
          xto = Wnd->rectWindow.left; yto = Wnd->rectWindow.top;
          width = lpOldWndRect->right - xfrom; height = lpOldWndRect->bottom - yfrom;
-	 updateRgn = CreateRectRgn( xto - Wnd->rectClient.left,
-				    yto - Wnd->rectClient.top,
-				    Wnd->rectWindow.right - Wnd->rectClient.left,
-				    Wnd->rectWindow.bottom - Wnd->rectClient.top );
+	 updateRgn = CreateRectRgn32( xto - Wnd->rectClient.left,
+				      yto - Wnd->rectClient.top,
+				Wnd->rectWindow.right - Wnd->rectClient.left,
+			        Wnd->rectWindow.bottom - Wnd->rectClient.top );
        }
 
-     CombineRgn( newVisRgn, newVisRgn, updateRgn, RGN_AND );
+     CombineRgn32( newVisRgn, newVisRgn, updateRgn, RGN_AND );
 
      /* substract new visRgn from target rect to get a region that won't be copied */
 
-     update = CombineRgn( updateRgn, updateRgn, newVisRgn, RGN_DIFF );
+     update = CombineRgn32( updateRgn, updateRgn, newVisRgn, RGN_DIFF );
 
      /* Blt valid bits using parent window DC */
 
@@ -1472,8 +1464,8 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
 	 
 	 /* compute clipping region in parent client coordinates */
 
-	 OffsetRgn( newVisRgn, Wnd->rectClient.left, Wnd->rectClient.top);
-	 CombineRgn( oldVisRgn, oldVisRgn, newVisRgn, RGN_OR );
+	 OffsetRgn32( newVisRgn, Wnd->rectClient.left, Wnd->rectClient.top );
+	 CombineRgn32( oldVisRgn, oldVisRgn, newVisRgn, RGN_OR );
 
          hDC = GetDCEx32( Wnd->parent->hwndSelf, oldVisRgn,
                           DCX_KEEPCLIPRGN | DCX_INTERSECTRGN |
@@ -1488,7 +1480,7 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
          PAINT_RedrawWindow( Wnd->hwndSelf, NULL, updateRgn, RDW_INVALIDATE |
                          RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
      else if( uFlags & SMC_DRAWFRAME ) Wnd->flags |= WIN_NEEDS_NCPAINT;
-     DeleteObject( updateRgn );
+     DeleteObject32( updateRgn );
    }
 
  /* erase uncovered areas */
@@ -1496,8 +1488,8 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
  if( !(uFlags & SMC_NOPARENTERASE) && (other != NULLREGION ) )
       PAINT_RedrawWindow( Wnd->parent->hwndSelf, NULL, dirtyRgn,
                         RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
- DeleteObject(dirtyRgn);
- DeleteObject(newVisRgn);
+ DeleteObject32(dirtyRgn);
+ DeleteObject32(newVisRgn);
  return uFlags;
 }
 
@@ -1835,7 +1827,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 		if( winpos->flags & SWP_NOZORDER ) uFlags |= SMC_NOPARENTERASE;
 	      }
 	  }
-        DeleteObject(visRgn);
+        DeleteObject32(visRgn);
     }
 
     if (flags & SWP_SHOWWINDOW)

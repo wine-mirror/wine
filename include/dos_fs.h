@@ -32,8 +32,9 @@ extern const char *DOSFS_IsDevice( const char *name );
 extern const char * DOSFS_GetUnixFileName( const char * name, int check_last );
 extern const char * DOSFS_GetDosTrueName( const char *name, int unix_format );
 extern int DOSFS_GetDosFileName( const char *name, char *buffer, int len );
-extern int DOSFS_FindNext( const char *path, const char *mask, int drive,
-                           BYTE attr, int skip, DOS_DIRENT *entry );
+extern int DOSFS_FindNext( const char *path, const char *short_mask,
+                           const char *long_mask, int drive, BYTE attr,
+                           int skip, DOS_DIRENT *entry );
 
 
 extern int DOS_GetFreeSpace(int drive, long *size, long *available);

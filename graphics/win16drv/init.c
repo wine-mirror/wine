@@ -658,7 +658,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* Add this to the DC */
     dc->w.devCaps = printerDevCaps;
-    dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
+    dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
     dc->w.bitsPerPixel = dc->w.devCaps->bitsPixel;
     
     printf("Got devcaps width %d height %d bits %d planes %d\n",

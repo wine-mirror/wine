@@ -256,12 +256,12 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
                               rect, line, len, NULL )) return 0;
             if (prefix_offset != -1)
             {
-                HPEN16 hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
-                HPEN16 oldPen = SelectObject( hdc, hpen );
+                HPEN32 hpen = CreatePen32( PS_SOLID, 1, GetTextColor(hdc) );
+                HPEN32 oldPen = SelectObject32( hdc, hpen );
                 MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
-                LineTo(hdc, x + prefix_end, y + tm.tmAscent + 1 );
-                SelectObject( hdc, oldPen );
-                DeleteObject( hpen );
+                LineTo32(hdc, x + prefix_end, y + tm.tmAscent + 1 );
+                SelectObject32( hdc, oldPen );
+                DeleteObject32( hpen );
             }
 	}
 	else if (size.cx > max_width)
@@ -567,8 +567,7 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 
     if (flags & ETO_CLIPPED) 
     {
-	if( dc->w.flags & DC_MEMORY )
-	     SelectClipRgn( hdc, hRgnClip );
+	if (dc->w.flags & DC_MEMORY) SelectClipRgn16( hdc, hRgnClip );
 	else RestoreVisRgn( hdc );
     }
     return TRUE;

@@ -114,15 +114,15 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         physDev->drawable  = bmp->pixmap;
         physDev->gc        = XCreateGC( display, physDev->drawable, 0, NULL );
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
-        dc->w.hVisRgn      = CreateRectRgn( 0, 0, bmp->bitmap.bmWidth,
-                                            bmp->bitmap.bmHeight );
+        dc->w.hVisRgn      = CreateRectRgn32( 0, 0, bmp->bitmap.bmWidth,
+                                              bmp->bitmap.bmHeight );
     }
     else
     {
         physDev->drawable  = rootWindow;
         physDev->gc        = XCreateGC( display, physDev->drawable, 0, NULL );
         dc->w.bitsPerPixel = screenDepth;
-        dc->w.hVisRgn      = CreateRectRgn( 0, 0, screenWidth, screenHeight );
+        dc->w.hVisRgn      = CreateRectRgn32( 0, 0, screenWidth, screenHeight);
     }
 
     if (!dc->w.hVisRgn)

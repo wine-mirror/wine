@@ -144,7 +144,7 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
 {
   if( lpFormat->wFormatID >= CF_GDIOBJFIRST &&
       lpFormat->wFormatID <= CF_GDIOBJLAST )
-      DeleteObject(lpFormat->hData);
+      DeleteObject32(lpFormat->hData);
   else if( lpFormat->hData )
            GlobalFree16(lpFormat->hData);
 

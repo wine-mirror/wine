@@ -13,10 +13,11 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGPEN16    logpen;
+    LOGPEN32    logpen;
 } PENOBJ;
 
-extern int PEN_GetObject( PENOBJ * pen, int count, LPSTR buffer );
-extern HPEN16 PEN_SelectObject( DC * dc, HPEN16 hpen, PENOBJ * pen );
+extern INT16 PEN_GetObject16( PENOBJ * pen, INT16 count, LPSTR buffer );
+extern INT32 PEN_GetObject32( PENOBJ * pen, INT32 count, LPSTR buffer );
+extern HPEN32 PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
 
 #endif  /* __WINE_PEN_H */

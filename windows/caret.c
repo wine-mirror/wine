@@ -59,9 +59,9 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
 
     Caret.on = !Caret.on;
     if (!(hdc = GetDCEx32( Caret.hwnd, 0, DCX_USESTYLE | DCX_CACHE ))) return;
-    hPrevBrush = SelectObject( hdc, Caret.hBrush );
+    hPrevBrush = SelectObject32( hdc, Caret.hBrush );
     PatBlt( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
-    SelectObject( hdc, hPrevBrush );
+    SelectObject32( hdc, hPrevBrush );
     ReleaseDC32( Caret.hwnd, hdc );
 }
 
@@ -134,14 +134,14 @@ BOOL16 CreateCaret( HWND32 hwnd, HBITMAP32 bitmap, INT32 width, INT32 height )
         Caret.width = bmp.bmWidth;
         Caret.height = bmp.bmHeight;
         /* FIXME: we should make a copy of the bitmap instead of a brush */
-        Caret.hBrush = CreatePatternBrush( bitmap );
+        Caret.hBrush = CreatePatternBrush32( bitmap );
     }
     else
     {
         Caret.width = width ? width : GetSystemMetrics(SM_CXBORDER);
         Caret.height = height ? height : GetSystemMetrics(SM_CYBORDER);
-        Caret.hBrush = CreateSolidBrush( bitmap ? GetSysColor(COLOR_GRAYTEXT) :
-                                         GetSysColor(COLOR_WINDOW) );
+        Caret.hBrush = CreateSolidBrush32(bitmap ? GetSysColor(COLOR_GRAYTEXT):
+                                          GetSysColor(COLOR_WINDOW) );
     }
 
     Caret.hwnd = hwnd;
@@ -165,7 +165,7 @@ BOOL16 DestroyCaret(void)
     dprintf_caret(stddeb,"DestroyCaret: hwnd=%04x, timerid=%d\n",
 		Caret.hwnd, Caret.timerid);
 
-    DeleteObject( Caret.hBrush );
+    DeleteObject32( Caret.hBrush );
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
     Caret.hwnd = 0;

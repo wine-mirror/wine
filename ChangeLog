@@ -1,4 +1,52 @@
 ----------------------------------------------------------------------
+Sat Nov  2 12:50:40 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [files/dos_fs.c]
+	Added long file name mask in DOSFS_FindNext().
+
+	* [loader/pe_image.c] [loader/task.c]
+	Moved Win32 task startup into TASK_CallToStart().
+
+	* [objects/dc.c]
+	Fixed SetDCState() for memory DC (thanks to Constantine
+	Sapuntzakis for spotting this one).
+
+	* [windows/winpos.c]
+	Fixed WINPOS_ForceXWindowRaise() to preserve correct Z-order.
+
+	* [*/*]
+	Added Win32 version for many graphics functions.
+
+Thu Oct 31 10:00:18 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [controls/button.c]
+	BUTTON_CheckAutoRadioButton() unchecks only auto radio buttons.
+
+	* [controls/edit.c]
+	EM_GETSEL result should have HIWORD(result) >= LOWORD(result); old
+	EDIT_EM_GetSel() renamed to EDIT_GetSel(). 
+
+	* [windows/dialog.c]
+	DS_LOCALEDIT is a dialog style not an edit style.
+
+	* [windows/winproc.c]
+	Stop stack trashing when wndPtr->text == NULL.
+
+Tue Oct 29 23:35:04 1996   Constantine P Sapuntzakis <csapuntz@mit.edu>
+
+	* [windows/dce.c]
+	GetDCEx32 - The determination of whether to use the DC cache or
+ 	not should be independent of DCX_USESTYLE.
+
+Sat Oct 26 17:31:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [files/directory.c]
+	Added errno.h to #includes
+
+	* [tools/makedep.c]
+	Close files once they have been processed.
+
+----------------------------------------------------------------------
 Tue Oct 22 20:09:52 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [*/Makefile.in] [tools/makedep.c]

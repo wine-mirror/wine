@@ -229,6 +229,7 @@ static void parse_file( INCL_FILE *pFile, int src )
         *p = 0;
         add_include( pFile, include );
     }
+    fclose(file);
 }
 
 
@@ -293,6 +294,7 @@ static void output_dependencies(void)
                                                  pFile, &column );
         fprintf( file, "\n" );
     }
+    fclose(file);
 }
 
 

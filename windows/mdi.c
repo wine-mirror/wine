@@ -668,17 +668,17 @@ HBITMAP16 CreateMDIMenuBitmap(void)
  HBITMAP16	hbClose = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CLOSE) );
  HBITMAP16	hbCopy,hb_src,hb_dest;
 
- hb_src = SelectObject(hDCSrc,hbClose);
+ hb_src = SelectObject32(hDCSrc,hbClose);
  hbCopy = CreateCompatibleBitmap(hDCSrc,SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE);
- hb_dest = SelectObject(hDCDest,hbCopy);
+ hb_dest = SelectObject32(hDCDest,hbCopy);
 
  BitBlt(hDCDest, 0, 0, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
 	hDCSrc, SYSMETRICS_CXSIZE, 0, SRCCOPY);
  
- SelectObject(hDCSrc,hb_src);
- SelectObject(hDCDest,hb_dest);
+ SelectObject32(hDCSrc,hb_src);
+ SelectObject32(hDCDest,hb_dest);
 
- DeleteObject(hbClose);
+ DeleteObject32(hbClose);
 
  DeleteDC(hDCDest);
  DeleteDC(hDCSrc);

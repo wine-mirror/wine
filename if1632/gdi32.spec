@@ -9,19 +9,19 @@ base	1
 0004 stub AddFontResourceW
 0005 stub AngleArc
 0006 stub AnimatePalette
-0007 stub Arc
+0007 stdcall Arc(long long long long long long long long long) Arc32
 0008 stub ArcTo
 0009 stub BeginPath
 0010 stdcall BitBlt(long long long long long long long long long) BitBlt
 0011 stub CancelDC
 0012 stub CheckColorsInGamut
 0013 stub ChoosePixelFormat
-0014 stub Chord
+0014 stdcall Chord(long long long long long long long long long) Chord32
 0015 stub CloseEnhMetaFile
 0016 stub CloseFigure
 0017 stub CloseMetaFile
 0018 stub ColorMatchToTarget
-0019 stdcall CombineRgn(long long long long) CombineRgn
+0019 stdcall CombineRgn(long long long long) CombineRgn32
 0020 stub CombineTransform
 0021 stub CopyEnhMetaFileA
 0022 stub CopyEnhMetaFileW
@@ -29,19 +29,19 @@ base	1
 0024 stub CopyMetaFileW
 0025 stdcall CreateBitmap(long long long long ptr) CreateBitmap
 0026 stdcall CreateBitmapIndirect(ptr) CreateBitmapIndirect32
-0027 stub CreateBrushIndirect
+0027 stdcall CreateBrushIndirect(ptr) CreateBrushIndirect32
 0028 stub CreateColorSpaceA
 0029 stub CreateColorSpaceW
 0030 stdcall CreateCompatibleBitmap(long long long) CreateCompatibleBitmap
 0031 stdcall CreateCompatibleDC(long) CreateCompatibleDC
 0032 stub CreateDCA
 0033 stub CreateDCW
-0034 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush
+0034 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
 0035 stub CreateDIBPatternBrushPt
 0036 stub CreateDIBSection
 0037 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap
 0038 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap
-0039 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn
+0039 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn32
 0040 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
 0041 stub CreateEnhMetaFileA
 0042 stub CreateEnhMetaFileW
@@ -52,34 +52,35 @@ base	1
 0046 stdcall CreateFontW(long long long long long long long long
                         long long long long long ptr) CreateFont32W
 0047 stub CreateHalftonePalette
-0048 stub CreateHatchBrush
+0048 stdcall CreateHatchBrush(long long) CreateHatchBrush32
 0049 stdcall CreateICA(ptr ptr ptr ptr) CreateIC
 0050 stub CreateICW
 0051 stub CreateMetaFileA
 0052 stub CreateMetaFileW
 0053 stdcall CreatePalette(ptr) CreatePalette
-0054 stdcall CreatePatternBrush(long) CreatePatternBrush
-0055 stdcall CreatePen(long long long) CreatePen
-0056 stub CreatePenIndirect
+0054 stdcall CreatePatternBrush(long) CreatePatternBrush32
+0055 stdcall CreatePen(long long long) CreatePen32
+0056 stdcall CreatePenIndirect(ptr) CreatePenIndirect32
 0057 stub CreatePolyPolygonRgn
 0058 stub CreatePolygonRgn
-0059 stdcall CreateRectRgn(long long long long) CreateRectRgn
+0059 stdcall CreateRectRgn(long long long long) CreateRectRgn32
 0060 stdcall CreateRectRgnIndirect(ptr) CreateRectRgnIndirect32
-0061 stdcall CreateRoundRectRgn(long long long long long long) CreateRoundRectRgn
+0061 stdcall CreateRoundRectRgn(long long long long long long)
+             CreateRoundRectRgn32
 0062 stub CreateScalableFontResourceA
 0063 stub CreateScalableFontResourceW
-0064 stdcall CreateSolidBrush(long) CreateSolidBrush
+0064 stdcall CreateSolidBrush(long) CreateSolidBrush32
 0065 stdcall DPtoLP(long ptr long) DPtoLP32
 0066 stub DeleteColorSpace
 0067 stdcall DeleteDC(long) DeleteDC
 0068 stub DeleteEnhMetaFile
 0069 stub DeleteMetaFile
-0070 stdcall DeleteObject(long)	DeleteObject
+0070 stdcall DeleteObject(long)	DeleteObject32
 0071 stub DescribePixelFormat
 0072 stub DeviceCapabilitiesExA
 0073 stub DeviceCapabilitiesExW
 0074 stub DrawEscape
-0075 stub Ellipse
+0075 stdcall Ellipse(long long long long long) Ellipse32
 0076 stub EndDoc
 0077 stub EndPage
 0078 stub EndPath
@@ -93,23 +94,23 @@ base	1
 0086 stub EnumICMProfilesA
 0087 stub EnumICMProfilesW
 0088 stub EnumMetaFile
-0089 stub EnumObjects
-0090 stdcall EqualRgn(long long) EqualRgn
+0089 stdcall EnumObjects(long long ptr long) EnumObjects32
+0090 stdcall EqualRgn(long long) EqualRgn32
 0091 stub Escape
-0092 stub ExcludeClipRect
+0092 stdcall ExcludeClipRect(long long long long long) ExcludeClipRect32
 0093 stub ExtCreatePen
 0094 stub ExtCreateRegion
 0095 stub ExtEscape
-0096 stdcall ExtFloodFill(long long long long long) ExtFloodFill
+0096 stdcall ExtFloodFill(long long long long long) ExtFloodFill32
 0097 stub ExtSelectClipRgn
 0098 stdcall ExtTextOutA(long long long long ptr ptr long ptr) ExtTextOut32A
 0099 stdcall ExtTextOutW(long long long long ptr ptr long ptr) ExtTextOut32W
 0100 stub FillPath
-0101 stub FillRgn
+0101 stdcall FillRgn(long long long) FillRgn32
 0102 stub FixBrushOrgEx
 0103 stub FlattenPath
-0104 stdcall FloodFill(long long long long) FloodFill
-0105 stub FrameRgn
+0104 stdcall FloodFill(long long long long) FloodFill32
+0105 stdcall FrameRgn(long long long long long) FrameRgn32
 0106 stub FreeImageColorMatcher
 0107 stub GdiAssociateObject
 0108 stub GdiCleanCacheDC
@@ -215,7 +216,7 @@ base	1
 0208 stub GetOutlineTextMetricsW
 0209 stdcall GetPaletteEntries(long long long ptr) GetPaletteEntries
 0210 stub GetPath
-0211 stdcall GetPixel(long long long)	GetPixel
+0211 stdcall GetPixel(long long long) GetPixel32
 0212 stub GetPixelFormat
 0213 stub GetPolyFillMode
 0214 stub GetROP2
@@ -224,7 +225,7 @@ base	1
 0217 stub GetRegionData
 0218 stub GetRelAbs
 0219 stdcall GetRgnBox(long ptr) GetRgnBox32
-0220 stdcall GetStockObject(long) GetStockObject
+0220 stdcall GetStockObject(long) GetStockObject32
 0221 stub GetStretchBltMode
 0222 stdcall GetSystemPaletteEntries(long long long ptr) GetSystemPaletteEntries
 0223 stub GetSystemPaletteUse
@@ -249,24 +250,24 @@ base	1
 0242 stub GetWindowExtEx
 0243 stub GetWindowOrgEx
 0244 stub GetWorldTransform
-0245 stub IntersectClipRect
-0246 stdcall InvertRgn(long long) InvertRgn
+0245 stdcall IntersectClipRect(long long long long long) IntersectClipRect32
+0246 stdcall InvertRgn(long long) InvertRgn32
 0247 stdcall LPtoDP(long ptr long) LPtoDP32
 0248 stdcall LineDDA(long long long long ptr long) THUNK_LineDDA32
-0249 stdcall LineTo(long long long) LineTo
+0249 stdcall LineTo(long long long) LineTo32
 0250 stub LoadImageColorMatcherA
 0251 stub LoadImageColorMatcherW
 0252 stub MaskBlt
 0253 stub ModifyWorldTransform
 0254 stdcall MoveToEx(long long long ptr) MoveToEx32
-0255 stub OffsetClipRgn
-0256 stdcall OffsetRgn(long long long) OffsetRgn
+0255 stdcall OffsetClipRgn(long long long) OffsetClipRgn32
+0256 stdcall OffsetRgn(long long long) OffsetRgn32
 0257 stdcall OffsetViewportOrgEx(long long long ptr) OffsetViewportOrgEx32
 0258 stdcall OffsetWindowOrgEx(long long long ptr) OffsetWindowOrgEx32
-0259 stub PaintRgn
+0259 stdcall PaintRgn(long long) PaintRgn32
 0260 stdcall PatBlt(long long long long long long) PatBlt
 0261 stub PathToRegion
-0262 stub Pie
+0262 stdcall Pie(long long long long long long long long long) Pie32
 0263 stub PlayEnhMetaFile
 0264 stub PlayEnhMetaFileRecord
 0265 stub PlayMetaFile
@@ -282,12 +283,12 @@ base	1
 0275 stub Polygon
 0276 stub Polyline
 0277 stub PolylineTo
-0278 stdcall PtInRegion(long long long) PtInRegion
-0279 stdcall PtVisible(long long long) PtVisible
+0278 stdcall PtInRegion(long long long) PtInRegion32
+0279 stdcall PtVisible(long long long) PtVisible32
 0280 stdcall RealizePalette(long) RealizePalette
 0281 stdcall RectInRegion(long ptr) RectInRegion32
 0282 stdcall RectVisible(long ptr) RectVisible32
-0283 stdcall Rectangle(long long long long long) Rectangle
+0283 stdcall Rectangle(long long long long long) Rectangle32
 0284 stub RemoveFontResourceA
 0285 stub RemoveFontResourceTracking
 0286 stub RemoveFontResourceW
@@ -295,15 +296,15 @@ base	1
 0288 stub ResetDCW
 0289 stub ResizePalette
 0290 stdcall RestoreDC(long long) RestoreDC
-0291 stub RoundRect
+0291 stdcall RoundRect(long long long long long long long) RoundRect32
 0292 stdcall SaveDC(long) SaveDC
 0293 stdcall ScaleViewportExtEx(long long long long long ptr) ScaleViewportExtEx32
 0294 stdcall ScaleWindowExtEx(long long long long long ptr) ScaleWindowExtEx32
 0295 stub SelectBrushLocal
 0296 stub SelectClipPath
-0297 stdcall SelectClipRgn(long long) SelectClipRgn
+0297 stdcall SelectClipRgn(long long) SelectClipRgn32
 0298 stub SelectFontLocal
-0299 stdcall SelectObject(long long) SelectObject
+0299 stdcall SelectObject(long long) SelectObject32
 0300 stdcall SelectPalette(long long long) SelectPalette
 0301 stub SetAbortProc
 0302 stub SetArcDirection
@@ -332,7 +333,7 @@ base	1
 0324 stub SetMetaRgn
 0325 stub SetMiterLimit
 0326 stub SetPaletteEntries
-0327 stdcall SetPixel(long long long long)	SetPixel
+0327 stdcall SetPixel(long long long long) SetPixel32
 0328 stub SetPixelFormat
 0329 stub SetPixelV
 0330 stub SetPolyFillMode
@@ -364,7 +365,7 @@ base	1
 0355 stdcall TextOutA(long long long ptr long) TextOut32A
 0356 stdcall TextOutW(long long long ptr long) TextOut32W
 0357 stub UnloadNetworkFonts
-0358 stdcall UnrealizeObject(long) UnrealizeObject
+0358 stdcall UnrealizeObject(long) UnrealizeObject32
 0359 stub UpdateColors
 0360 stub WidenPath
 0361 stub pstackConnect

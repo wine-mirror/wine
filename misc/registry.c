@@ -1204,7 +1204,8 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	}
 	free(data);
 
-	qsort(nr2da,nrofdkes,sizeof(nr2da[0]),_w95dkecomp);
+	qsort(nr2da,nrofdkes,sizeof(nr2da[0]),
+              (int(*)(const void *,const void*))_w95dkecomp);
 
 	/* STEP 2: keydata & values */
 	if (!GetFileInformationByHandle(hfd,&hfdinfo))

@@ -172,11 +172,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
 	    if (wndPtr->class->hbrBackground <= (HBRUSH16)(COLOR_MAX+1))
             {
-                HBRUSH16 hbrush = CreateSolidBrush( 
+                HBRUSH32 hbrush = CreateSolidBrush32( 
 			 GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
                  FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                              (HDC16)wParam, hbrush);
-                 DeleteObject (hbrush);
+                 DeleteObject32( hbrush );
             }
             else FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                              (HDC16)wParam, wndPtr->class->hbrBackground );
@@ -199,7 +199,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CTLCOLORSCROLLBAR:
         SetBkColor( (HDC32)wParam, RGB(255, 255, 255) );
         SetTextColor( (HDC32)wParam, RGB(0, 0, 0) );
-        UnrealizeObject( sysColorObjects.hbrushScrollbar );
+        UnrealizeObject32( sysColorObjects.hbrushScrollbar );
         return (LRESULT)sysColorObjects.hbrushScrollbar;
 
     case WM_CTLCOLOR:
@@ -208,7 +208,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	    {
 		SetBkColor( (HDC32)wParam, RGB(255, 255, 255) );
 		SetTextColor( (HDC32)wParam, RGB(0, 0, 0) );
-		UnrealizeObject( sysColorObjects.hbrushScrollbar );
+		UnrealizeObject32( sysColorObjects.hbrushScrollbar );
 		return (LRESULT)sysColorObjects.hbrushScrollbar;
 	    }
 	    else

@@ -592,7 +592,7 @@ static int INT21_FindNext( SIGCONTEXT *context )
     int count;
 
     if (!dta->unixPath) return 0;
-    if (!(count = DOSFS_FindNext( dta->unixPath, dta->mask, dta->drive,
+    if (!(count = DOSFS_FindNext( dta->unixPath, dta->mask, NULL, dta->drive,
                                   dta->search_attr, dta->count, &entry )))
     {
         free( dta->unixPath );
@@ -741,7 +741,7 @@ static int INT21_FindNextFCB( SIGCONTEXT *context )
     }
 
     if (!pFCB->unixPath) return 0;
-    if (!(count = DOSFS_FindNext( pFCB->unixPath, pFCB->filename,
+    if (!(count = DOSFS_FindNext( pFCB->unixPath, pFCB->filename, NULL,
                                   DOS_GET_DRIVE( pFCB->drive ), attr,
                                   pFCB->count, &entry )))
     {

@@ -1,4 +1,4 @@
-# Global rules shared by all makefiles
+# Global rules shared by all makefiles     -*-Makefile-*-
 #
 # Each individual makefile should define the following variables:
 # TOPSRCDIR  : top-level source directory
@@ -36,7 +36,7 @@ WINERC    = $(TOPOBJDIR)/rc/winerc
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
 
-OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
+OBJS = $(GEN_C_SRCS:.c=.o) $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
 
 # Implicit rules
 

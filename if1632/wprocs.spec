@@ -21,7 +21,6 @@ type	win16
 21 pascal AboutDlgProc(word word word long) AboutDlgProc
 22 pascal ComboLBoxWndProc(word word word long) ComboLBoxWndProc
 24 pascal16 TASK_Reschedule() TASK_Reschedule
-26 register Win32CallToStart() PE_Win32CallToStart
 27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc
@@ -288,9 +287,9 @@ type	win16
 
 # VxDs. The first Vxd is at 400
 #
-#400+VXD_ID register <VxD handler>(word) <VxD handler>
+#400+VXD_ID register <VxD handler>() <VxD handler>
 #
-414 register VXD_Comm(word) VXD_Comm
-#415 register VXD_Printer(word) VXD_Printer
-423 register VXD_Shell(word) VXD_Shell
-433 register VXD_PageFile(word) VXD_PageFile
+414 register VXD_Comm() VXD_Comm
+#415 register VXD_Printer() VXD_Printer
+423 register VXD_Shell() VXD_Shell
+433 register VXD_PageFile() VXD_PageFile

@@ -284,7 +284,7 @@ BOOL PlayMetaFile(HDC16 hdc, HMETAFILE16 hmf)
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)
       if(*(ht->objectHandle + i) != 0)
-        DeleteObject(*(ht->objectHandle + i));
+        DeleteObject32(*(ht->objectHandle + i));
     
     /* free handle table */
     GlobalFree16(hHT);
@@ -400,7 +400,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
       break;
 
     case META_DELETEOBJECT:
-      DeleteObject(*(ht->objectHandle + *(mr->rdParam)));
+      DeleteObject32(*(ht->objectHandle + *(mr->rdParam)));
       *(ht->objectHandle + *(mr->rdParam)) = 0;
       break;
 
@@ -471,7 +471,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_LINETO:
-	LineTo(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	LineTo32(hdc, *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_MOVETO:
@@ -479,46 +479,46 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_EXCLUDECLIPRECT:
-	ExcludeClipRect(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-			*(mr->rdParam + 1), *(mr->rdParam));
+	ExcludeClipRect16( hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+                           *(mr->rdParam + 1), *(mr->rdParam) );
 	break;
 
     case META_INTERSECTCLIPRECT:
-	IntersectClipRect(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-			*(mr->rdParam + 1), *(mr->rdParam));
+	IntersectClipRect16( hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+                             *(mr->rdParam + 1), *(mr->rdParam) );
 	break;
 
     case META_ARC:
-	Arc(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
-	    *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
-	    *(mr->rdParam + 1), *(mr->rdParam));
+	Arc32(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
+              *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
+              *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_ELLIPSE:
-	Ellipse(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-		*(mr->rdParam + 1), *(mr->rdParam));
+	Ellipse32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+                  *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_FLOODFILL:
-	FloodFill(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-		  MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
+	FloodFill32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+                    MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
 	break;
 
     case META_PIE:
-	Pie(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
-	    *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
-	    *(mr->rdParam + 1), *(mr->rdParam));
+	Pie32(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
+              *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
+              *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_RECTANGLE:
-	Rectangle(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-		*(mr->rdParam + 1), *(mr->rdParam));
+	Rectangle32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+                    *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_ROUNDRECT:
-	RoundRect(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
-		  *(mr->rdParam + 3), *(mr->rdParam + 2),
-		  *(mr->rdParam + 1), *(mr->rdParam));
+	RoundRect32(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
+                    *(mr->rdParam + 3), *(mr->rdParam + 2),
+                    *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_PATBLT:
@@ -532,12 +532,12 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SETPIXEL:
-	SetPixel(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-		 MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
+	SetPixel32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
+                   MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
 	break;
 
     case META_OFFSETCLIPRGN:
-	OffsetClipRgn(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	OffsetClipRgn16( hdc, *(mr->rdParam + 1), *(mr->rdParam) );
 	break;
 
     case META_TEXTOUT:
@@ -565,13 +565,13 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SELECTOBJECT:
-	SelectObject(hdc, *(ht->objectHandle + *(mr->rdParam)));
+	SelectObject32(hdc, *(ht->objectHandle + *(mr->rdParam)));
 	break;
 
     case META_CHORD:
-	Chord(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
-	      *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
-	      *(mr->rdParam + 1), *(mr->rdParam));
+	Chord32(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam+5),
+                *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
+                *(mr->rdParam + 1), *(mr->rdParam));
 	break;
 
     case META_CREATEPATTERNBRUSH:
@@ -580,7 +580,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	case BS_PATTERN:
 	    infohdr = (BITMAPINFOHEADER *)(mr->rdParam + 2);
 	    MF_AddHandle(ht, nHandles,
-			 CreatePatternBrush(CreateBitmap(infohdr->biWidth, 
+			 CreatePatternBrush32(CreateBitmap(infohdr->biWidth, 
 				      infohdr->biHeight, 
 				      infohdr->biPlanes, 
 				      infohdr->biBitCount,
@@ -595,14 +595,14 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	    memcpy(ptr, mr->rdParam + 2, s1);
 	    GlobalUnlock16(hndl);
 	    MF_AddHandle(ht, nHandles,
-			 CreateDIBPatternBrush(hndl, *(mr->rdParam + 1)));
+			 CreateDIBPatternBrush32(hndl, *(mr->rdParam + 1)));
 	    GlobalFree16(hndl);
 	}
 	break;
 	
     case META_CREATEPENINDIRECT:
 	MF_AddHandle(ht, nHandles, 
-		     CreatePenIndirect((LOGPEN16 *)(&(mr->rdParam))));
+		     CreatePenIndirect16((LOGPEN16 *)(&(mr->rdParam))));
 	break;
 
     case META_CREATEFONTINDIRECT:
@@ -612,7 +612,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 
     case META_CREATEBRUSHINDIRECT:
 	MF_AddHandle(ht, nHandles, 
-		     CreateBrushIndirect((LOGBRUSH16 *)(&(mr->rdParam))));
+		     CreateBrushIndirect16((LOGBRUSH16 *)(&(mr->rdParam))));
 	break;
 
     /* W. Magro: Some new metafile operations.  Not all debugged. */
@@ -704,7 +704,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
                                       mr->rdParam[13], /*Planes*/
                                       mr->rdParam[14], /*BitsPixel*/
                                       (LPSTR)&mr->rdParam[15]);  /*bits*/
-       SelectObject(hdcSrc,hbitmap);
+       SelectObject32(hdcSrc,hbitmap);
        StretchBlt(hdc,mr->rdParam[9],mr->rdParam[8],
                     mr->rdParam[7],mr->rdParam[6],
 		    hdcSrc,mr->rdParam[5],mr->rdParam[4],
@@ -720,7 +720,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
        HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[7]/*Width */,mr->rdParam[8]/*Height*/,
                             mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
                             (LPSTR)&mr->rdParam[12]/*bits*/);
-       SelectObject(hdcSrc,hbitmap);
+       SelectObject32(hdcSrc,hbitmap);
        BitBlt(hdc,mr->rdParam[6],mr->rdParam[5],
                     mr->rdParam[4],mr->rdParam[3],
 		    hdcSrc,
@@ -919,12 +919,12 @@ BOOL32 MF_MetaParam8(DC *dc, short func, short param1, short param2,
 BOOL32 MF_CreateBrushIndirect(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 {
     int index;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGBRUSH16)];
+    char buffer[sizeof(METARECORD) - 2 + sizeof(*logbrush)];
     METARECORD *mr = (METARECORD *)&buffer;
 
-    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGBRUSH16) - 2) / 2;
+    mr->rdSize = (sizeof(METARECORD) + sizeof(*logbrush) - 2) / 2;
     mr->rdFunction = META_CREATEBRUSHINDIRECT;
-    memcpy(&(mr->rdParam), logbrush, sizeof(LOGBRUSH16));
+    memcpy(&(mr->rdParam), logbrush, sizeof(*logbrush));
     if (!(MF_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;
@@ -1024,12 +1024,12 @@ BOOL32 MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 BOOL32 MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 {
     int index;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGPEN16)];
+    char buffer[sizeof(METARECORD) - 2 + sizeof(*logpen)];
     METARECORD *mr = (METARECORD *)&buffer;
 
-    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGPEN16) - 2) / 2;
+    mr->rdSize = (sizeof(METARECORD) + sizeof(*logpen) - 2) / 2;
     mr->rdFunction = META_CREATEPENINDIRECT;
-    memcpy(&(mr->rdParam), logpen, sizeof(LOGPEN16));
+    memcpy(&(mr->rdParam), logpen, sizeof(*logpen));
     if (!(MF_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;

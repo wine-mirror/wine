@@ -244,16 +244,50 @@ const char *DOSFS_ToDosDTAFormat( const char *name )
 
 
 /***********************************************************************
- *           DOSFS_Match
+ *           DOSFS_MatchShort
  *
  * Check a DOS file name against a mask (both in FCB format).
  */
-int DOSFS_Match( const char *mask, const char *name )
+static int DOSFS_MatchShort( const char *mask, const char *name )
 {
     int i;
     for (i = 11; i > 0; i--, mask++, name++)
         if ((*mask != '?') && (*mask != *name)) return 0;
     return 1;
+}
+
+
+/***********************************************************************
+ *           DOSFS_MatchLong
+ *
+ * Check a long file name against a mask.
+ */
+static int DOSFS_MatchLong( const char *mask, const char *name,
+                            int case_sensitive )
+{
+    while (*name && *mask)
+    {
+        if (*mask == '*')
+        {
+            mask++;
+            while (*mask == '*') mask++;  /* Skip consecutive '*' */
+            if (!*mask) return 1;
+            if (case_sensitive) while (*name && (*name != *mask)) name++;
+            else while (*name && (toupper(*name) != toupper(*mask))) name++;
+            if (!*name) return 0;
+        }
+        else if (*mask != '?')
+        {
+            if (case_sensitive)
+            {
+                if (*mask != *name) return 0;
+            }
+            else if (toupper(*mask) != toupper(*name)) return 0;
+        }
+        mask++;
+        name++;
+    }
+    return (!*name && !*mask);
 }
 
 
@@ -270,6 +304,31 @@ void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime )
     if (pDate)
         *pDate = ((tm->tm_year - 80) << 9) + ((tm->tm_mon + 1) << 5)
                  + tm->tm_mday;
+}
+
+
+/***********************************************************************
+ *           DOSFS_UnixTimeToFileTime
+ *
+ * Convert a Unix time to FILETIME format.
+ */
+void DOSFS_UnixTimeToFileTime( time_t unixtime, FILETIME *filetime )
+{
+    /* FIXME :-) */
+    filetime->dwLowDateTime  = unixtime;
+    filetime->dwHighDateTime = 0;
+}
+
+
+/***********************************************************************
+ *           DOSFS_FileTimeToUnixTime
+ *
+ * Convert a FILETIME format to Unix time.
+ */
+time_t DOSFS_FileTimeToUnixTime( FILETIME *filetime )
+{
+    /* FIXME :-) */
+    return filetime->dwLowDateTime;
 }
 
 
@@ -665,9 +724,12 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
  *
  * Find the next matching file. Return the number of entries read to find
  * the matching one, or 0 if no more entries.
+ * 'short_mask' is the 8.3 mask (in FCB format), 'long_mask' is the long
+ * file name mask. Either or both can be NULL.
  */
-int DOSFS_FindNext( const char *path, const char *mask, int drive,
-                    BYTE attr, int skip, DOS_DIRENT *entry )
+int DOSFS_FindNext( const char *path, const char *short_mask,
+                    const char *long_mask, int drive, BYTE attr,
+                    int skip, DOS_DIRENT *entry )
 {
     static DIR *dir = NULL;
     struct dirent *dirent;
@@ -714,20 +776,38 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     p = buffer + strlen(buffer);
     attr |= FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
     flags = DRIVE_GetFlags( drive );
+    hash_name = NULL;
 
     while ((dirent = readdir( dir )) != NULL)
     {
         if (skip-- > 0) continue;
         count++;
-        hash_name = DOSFS_Hash( dirent->d_name, TRUE,
-                                !(flags & DRIVE_CASE_SENSITIVE) );
-        if (!DOSFS_Match( mask, hash_name )) continue;
+
         /* Don't return '.' and '..' in the root of the drive */
         if (drive_root && (dirent->d_name[0] == '.') &&
             (!dirent->d_name[1] ||
              ((dirent->d_name[1] == '.') && !dirent->d_name[2]))) continue;
-        lstrcpyn32A( p, dirent->d_name, sizeof(buffer) - (int)(p - buffer) );
 
+        /* Check the long mask */
+
+        if (long_mask)
+        {
+            if (!DOSFS_MatchLong( long_mask, dirent->d_name,
+                                  flags & DRIVE_CASE_SENSITIVE )) continue;
+        }
+
+        /* Check the short mask */
+
+        if (short_mask)
+        {
+            hash_name = DOSFS_Hash( dirent->d_name, TRUE,
+                                    !(flags & DRIVE_CASE_SENSITIVE) );
+            if (!DOSFS_MatchShort( short_mask, hash_name )) continue;
+        }
+
+        /* Check the file attributes */
+
+        lstrcpyn32A( p, dirent->d_name, sizeof(buffer) - (int)(p - buffer) );
         if (!FILE_Stat( buffer, &entry->attr, &entry->size,
                         &entry->date, &entry->time ))
         {
@@ -735,6 +815,12 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
             continue;
         }
         if (entry->attr & ~attr) continue;
+
+        /* We now have a matching entry; fill the result and return */
+
+        if (!hash_name)
+            hash_name = DOSFS_Hash( dirent->d_name, TRUE,
+                                    !(flags & DRIVE_CASE_SENSITIVE) );
         strcpy( entry->name, hash_name );
         lstrcpyn32A( entry->unixname, dirent->d_name, sizeof(entry->unixname));
         if (!(flags & DRIVE_CASE_PRESERVING)) AnsiLower( entry->unixname );
@@ -777,6 +863,7 @@ DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
     lstrcpynAtoW( shortpath, dostruename, shortlen );
     return strlen(dostruename);
 }
+
 
 /***********************************************************************
  *           GetFullPathNameA   (KERNEL32.272)

@@ -342,7 +342,7 @@ static void WIN_DestroyWindow( WND* wndPtr )
 
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
     {
-        if (wndPtr->hrgnUpdate) DeleteObject( wndPtr->hrgnUpdate );
+        if (wndPtr->hrgnUpdate) DeleteObject32( wndPtr->hrgnUpdate );
         QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
     }
 
@@ -637,7 +637,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
     {
-        NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
+        NC_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
         if (maxSize.x < cs->cx) cs->cx = maxSize.x;
         if (maxSize.y < cs->cy) cs->cy = maxSize.y;
         if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
@@ -802,7 +802,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	/* MinMaximize(hwnd, SW_SHOWMAXIMIZED, 1) */
 
         POINT16 maxSize, maxPos, minTrack, maxTrack;
-        NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
+        NC_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
         SetWindowPos( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
             ((GetActiveWindow())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
     }

@@ -49,19 +49,19 @@ void DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style )
     if (style == 0 ||
 	style == SBT_POPOUT) {
 	InflateRect32(&r, -1, -1);
-	SelectObject(hdc, sysColorObjects.hbrushScrollbar);
-	Rectangle(hdc, r.left, r.top, r.right, r.bottom);
+	SelectObject32(hdc, sysColorObjects.hbrushScrollbar);
+	Rectangle32(hdc, r.left, r.top, r.right, r.bottom);
 
 	/* draw border */
-	SelectObject(hdc, sysColorObjects.hpenWindowFrame);
+	SelectObject32(hdc, sysColorObjects.hpenWindowFrame);
 	if (style == 0)
 	    DrawEdge32(hdc, &r, EDGE_SUNKEN, BF_RECT);
 	else
 	    DrawEdge32(hdc, &r, EDGE_RAISED, BF_RECT);
     }
     else if (style == SBT_NOBORDERS) {
-	SelectObject(hdc, sysColorObjects.hbrushScrollbar);
-	Rectangle(hdc, r.left, r.top, r.right, r.bottom);
+	SelectObject32(hdc, sysColorObjects.hbrushScrollbar);
+	Rectangle32(hdc, r.left, r.top, r.right, r.bottom);
     }
     else {	/* fixme for SBT_OWNERDRAW, SBT_RTLREADING */
 	
@@ -69,7 +69,7 @@ void DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style )
 
     /* now draw text */
     if ((style != SBT_OWNERDRAW) && text) {
-	SelectObject(hdc, sysColorObjects.hpenWindowText);
+	SelectObject32(hdc, sysColorObjects.hpenWindowText);
 	oldbkmode = SetBkMode(hdc, TRANSPARENT);
 	rt = r;
 	rt.left += 3;

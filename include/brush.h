@@ -13,12 +13,13 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGBRUSH16  logbrush;
+    LOGBRUSH32  logbrush;
 } BRUSHOBJ;
 
-extern BOOL BRUSH_Init(void);
-extern int BRUSH_GetObject( BRUSHOBJ * brush, int count, LPSTR buffer );
+extern BOOL32 BRUSH_Init(void);
+extern INT16 BRUSH_GetObject16( BRUSHOBJ * brush, INT16 count, LPSTR buffer );
+extern INT32 BRUSH_GetObject32( BRUSHOBJ * brush, INT32 count, LPSTR buffer );
 extern BOOL32 BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush );
-extern HBRUSH16 BRUSH_SelectObject(DC * dc, HBRUSH16 hbrush, BRUSHOBJ * brush);
+extern HBRUSH32 BRUSH_SelectObject(DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush);
 
 #endif  /* __WINE_BRUSH_H */

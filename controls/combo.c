@@ -224,8 +224,8 @@ static LRESULT CBPaint(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
   PAINTSTRUCT16  ps;
-  HBRUSH16 hBrush;
-  HFONT16  hOldFont;
+  HBRUSH32 hBrush;
+  HFONT32 hOldFont;
   HDC16 hdc;
   RECT16 rect;
   
@@ -238,8 +238,8 @@ static LRESULT CBPaint(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
 
   if (hComboBit != 0 && !IsRectEmpty16(&lphc->RectButton))
   {
-    Rectangle(hdc,lphc->RectButton.left-1,lphc->RectButton.top-1,
-	      lphc->RectButton.right+1,lphc->RectButton.bottom+1);
+    Rectangle32(hdc,lphc->RectButton.left-1,lphc->RectButton.top-1,
+                lphc->RectButton.right+1,lphc->RectButton.bottom+1);
     {
         RECT32 r;
         CONV_RECT16TO32( &lphc->RectButton, &r );
@@ -257,10 +257,10 @@ static LRESULT CBPaint(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
     return 0;
   }
 
-  hOldFont = SelectObject(hdc, lphl->hFont);
+  hOldFont = SelectObject32(hdc, lphl->hFont);
 
   hBrush = SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd );
-  if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
+  if (hBrush == 0) hBrush = GetStockObject32(WHITE_BRUSH);
 
   lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
   if (lpls != NULL) {  
@@ -270,7 +270,7 @@ static LRESULT CBPaint(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
     ListBoxDrawItem (hwnd,lphl, hdc, lpls, &rect, ODA_FOCUS, ODS_FOCUS);
   }
   else FillRect16(hdc, &rect, hBrush);
-  SelectObject(hdc,hOldFont);
+  SelectObject32(hdc,hOldFont);
   EndPaint16(hwnd, &ps);
   return 0;
 }
@@ -556,7 +556,7 @@ static LRESULT CBSetFont(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   
   if (wParam == 0)
-    lphl->hFont = GetStockObject(SYSTEM_FONT);
+    lphl->hFont = GetStockObject32(SYSTEM_FONT);
   else
     lphl->hFont = (HFONT16)wParam;
   if (lphc->hWndEdit)
@@ -914,8 +914,8 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
   LPHEADLIST   lphl = CLBoxGetListHeader(hwnd);
   LPLISTSTRUCT lpls;
   PAINTSTRUCT16  ps;
-  HBRUSH16 hBrush;
-  HFONT16 hOldFont;
+  HBRUSH32 hBrush;
+  HFONT32 hOldFont;
   WND * wndPtr = WIN_FindWndPtr(hwnd);
   HWND  combohwnd = CLBoxGetCombo(hwnd);
   HDC16 hdc;
@@ -930,9 +930,9 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
     return 0;
   }
 
-  hOldFont = SelectObject(hdc, lphl->hFont);
+  hOldFont = SelectObject32(hdc, lphl->hFont);
   /* listboxes should be white */
-  hBrush = GetStockObject(WHITE_BRUSH);
+  hBrush = GetStockObject32(WHITE_BRUSH);
 
   GetClientRect16(hwnd, &rect);
   FillRect16(hdc, &rect, hBrush);
@@ -977,7 +977,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
   if (wndPtr->dwStyle & WS_VSCROLL) 
       SetScrollRange32(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
 
-  SelectObject(hdc,hOldFont);
+  SelectObject32(hdc,hOldFont);
   EndPaint16( hwnd, &ps );
   return 0;
 

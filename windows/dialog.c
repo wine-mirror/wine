@@ -237,7 +237,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
             HINSTANCE16 instance;
             template = DIALOG_GetControl16( template, &info );
             if (HIWORD(info.className) && !strcmp( info.className, "EDIT") &&
-                ((info.style & DS_LOCALEDIT) != DS_LOCALEDIT))
+                ((pWnd->dwStyle & DS_LOCALEDIT) != DS_LOCALEDIT))
             {
                 if (!dlgInfo->hDialogHeap)
                 {
@@ -502,9 +502,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 	    HFONT16 oldFont;
 
 	    HDC32 hdc = GetDC32(0);
-	    oldFont = SelectObject( hdc, hFont );
+	    oldFont = SelectObject32( hdc, hFont );
 	    GetTextMetrics16( hdc, &tm );
-	    SelectObject( hdc, oldFont );
+	    SelectObject32( hdc, oldFont );
 	    ReleaseDC32( 0, hdc );
 	    xUnit = tm.tmAveCharWidth;
 	    yUnit = tm.tmHeight;
@@ -551,7 +551,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
                                 owner, hMenu, hInst, NULL );
     if (!hwnd)
     {
-	if (hFont) DeleteObject( hFont );
+	if (hFont) DeleteObject32( hFont );
 	if (hMenu) DestroyMenu( hMenu );
 	return 0;
     }

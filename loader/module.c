@@ -26,6 +26,7 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "callback.h"
+#include "xmalloc.h"
 
 extern HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
 
@@ -514,7 +515,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
         fastload_length=ne_header.fastload_length<<ne_header.align_shift_count;
         dprintf_module( stddeb, "Using fast-load area offset=%x len=%d\n",
                         fastload_offset, fastload_length );
-        if ((fastload = (char *)malloc( fastload_length )) != NULL)
+        if ((fastload = (char *)xmalloc( fastload_length )) != NULL)
         {
             _llseek( hFile, mz_header.ne_offset + fastload_offset, SEEK_SET );
             if (_lread32(hFile, fastload, fastload_length) != fastload_length)
@@ -536,7 +537,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
     /* Get the segment table */
 
     pModule->seg_table = (int)pData - (int)pModule;
-    buffer = malloc( ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s) );
+    buffer = xmalloc( ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s) );
     if (buffer)
     {
         int i;

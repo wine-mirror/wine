@@ -220,10 +220,10 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc )
     if (style & SS_NOPREFIX)
 	wFormat |= DT_NOPREFIX;
 
-    if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
+    if (infoPtr->hFont) SelectObject32( hdc, infoPtr->hFont );
     hBrush = SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
-    if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
+    if (!hBrush) hBrush = GetStockObject32(WHITE_BRUSH);
     FillRect16(hdc, &rc, hBrush);
     if (wndPtr->text) DrawText16( hdc, wndPtr->text, -1, &rc, wFormat );
 }
@@ -231,40 +231,40 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc )
 static void STATIC_PaintRectfn( WND *wndPtr, HDC32 hdc )
 {
     RECT16 rc;
-    HBRUSH16 hBrush;
+    HBRUSH32 hBrush;
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
     
     switch (wndPtr->dwStyle & 0x0f)
     {
     case SS_BLACKRECT:
-	hBrush = CreateSolidBrush(color_windowframe);
+	hBrush = CreateSolidBrush32(color_windowframe);
         FillRect16( hdc, &rc, hBrush );
 	break;
     case SS_GRAYRECT:
-	hBrush = CreateSolidBrush(color_background);
+	hBrush = CreateSolidBrush32(color_background);
         FillRect16( hdc, &rc, hBrush );
 	break;
     case SS_WHITERECT:
-	hBrush = CreateSolidBrush(color_window);
+	hBrush = CreateSolidBrush32(color_window);
         FillRect16( hdc, &rc, hBrush );
 	break;
     case SS_BLACKFRAME:
-	hBrush = CreateSolidBrush(color_windowframe);
+	hBrush = CreateSolidBrush32(color_windowframe);
         FrameRect16( hdc, &rc, hBrush );
 	break;
     case SS_GRAYFRAME:
-	hBrush = CreateSolidBrush(color_background);
+	hBrush = CreateSolidBrush32(color_background);
         FrameRect16( hdc, &rc, hBrush );
 	break;
     case SS_WHITEFRAME:
-	hBrush = CreateSolidBrush(color_window);
+	hBrush = CreateSolidBrush32(color_window);
         FrameRect16( hdc, &rc, hBrush );
 	break;
     default:
         return;
     }
-    DeleteObject( hBrush );
+    DeleteObject32( hBrush );
 }
 
 

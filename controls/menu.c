@@ -591,15 +591,15 @@ static void MENU_DrawMenuItem( HWND hwnd, HDC32 hdc, MENUITEM *lpitem,
 
     if (!menuBar && (lpitem->item_flags & MF_MENUBARBREAK))
     {
-	SelectObject( hdc, sysColorObjects.hpenWindowFrame );
+	SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
 	MoveTo( hdc, rect.left, 0 );
-	LineTo( hdc, rect.left, height );
+	LineTo32( hdc, rect.left, height );
     }
     if (lpitem->item_flags & MF_SEPARATOR)
     {
-	SelectObject( hdc, sysColorObjects.hpenWindowFrame );
+	SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
 	MoveTo( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
-	LineTo( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
+	LineTo32( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
 	return;
     }
 
@@ -741,9 +741,9 @@ UINT MENU_DrawMenuBar( HDC32 hDC, LPRECT16 lprect, HWND hwnd,
     if (suppress_draw) return lppop->Height;
     
     FillRect16(hDC, lprect, sysColorObjects.hbrushMenu );
-    SelectObject( hDC, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hDC, sysColorObjects.hpenWindowFrame );
     MoveTo( hDC, lprect->left, lprect->bottom );
-    LineTo( hDC, lprect->right, lprect->bottom );
+    LineTo32( hDC, lprect->right, lprect->bottom );
 
     if (lppop->nItems == 0) return SYSMETRICS_CYMENU;
     for (i = 0; i < lppop->nItems; i++)

@@ -349,38 +349,59 @@ static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 #ifndef WINELIB
 static void TASK_CallToStart(void)
 {
-    int cs_reg, ds_reg, ip_reg;
+    int cs_reg, ds_reg, fs_reg, ip_reg;
     TDB *pTask = (TDB *)GlobalLock16( hCurrentTask );
     NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
-    /* Registers at initialization must be:
-     * ax   zero
-     * bx   stack size in bytes
-     * cx   heap size in bytes
-     * si   previous app instance
-     * di   current app instance
-     * bp   zero
-     * es   selector to the PSP
-     * ds   dgroup of the application
-     * ss   stack selector
-     * sp   top of the stack
-     */
-
-    cs_reg = pSegTable[pModule->cs - 1].selector;
-    ip_reg = pModule->ip;
-    ds_reg = pSegTable[pModule->dgroup - 1].selector;
-
     IF1632_Saved16_ss = pTask->ss;
     IF1632_Saved16_sp = pTask->sp;
-    dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
-                 cs_reg, ip_reg, ds_reg,
-                 IF1632_Saved16_ss, IF1632_Saved16_sp);
 
-    CallTo16_regs_( (FARPROC16)(cs_reg << 16 | ip_reg), ds_reg,
-                   pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
-                   pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
-                   0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
+    if (pModule->flags & NE_FFLAGS_WIN32)
+    {
+        /* FIXME: all this is an ugly hack */
+
+        extern void PE_InitTEB( int hTEB );
+        extern void InitTask( SIGCONTEXT *context );
+        extern void PE_InitializeDLLs( HMODULE16 hModule );
+
+        InitTask( NULL );
+        InitApp( pTask->hModule );
+        fs_reg = (int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
+        PE_InitTEB( fs_reg );
+        __asm__ __volatile__("movw %w0,%%fs"::"r" (fs_reg));
+        PE_InitializeDLLs( pTask->hModule );
+        CallTaskStart32( (FARPROC32)(pModule->pe_module->load_addr + 
+                pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
+    }
+    else
+    {
+        /* Registers at initialization must be:
+         * ax   zero
+         * bx   stack size in bytes
+         * cx   heap size in bytes
+         * si   previous app instance
+         * di   current app instance
+         * bp   zero
+         * es   selector to the PSP
+         * ds   dgroup of the application
+         * ss   stack selector
+         * sp   top of the stack
+         */
+
+        cs_reg = pSegTable[pModule->cs - 1].selector;
+        ip_reg = pModule->ip;
+        ds_reg = pSegTable[pModule->dgroup - 1].selector;
+
+        dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
+                      cs_reg, ip_reg, ds_reg,
+                      IF1632_Saved16_ss, IF1632_Saved16_sp);
+
+        CallTo16_regs_( (FARPROC16)(cs_reg << 16 | ip_reg), ds_reg,
+                        pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
+                        pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
+                        0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
+    }
 
     /* This should never return */
     fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
@@ -814,7 +835,7 @@ void InitTask( SIGCONTEXT *context )
     LONG stacklow, stackhi;
 
 #ifndef WINELIB
-    EAX_reg(context) = 0;
+    if (context) EAX_reg(context) = 0;
 #endif
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
     if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
@@ -822,21 +843,24 @@ void InitTask( SIGCONTEXT *context )
 #ifndef WINELIB
     NE_InitializeDLLs( pTask->hModule );
 
-    /* Registers on return are:
-     * ax     1 if OK, 0 on error
-     * cx     stack limit in bytes
-     * dx     cmdShow parameter
-     * si     instance handle of the previous instance
-     * di     instance handle of the new task
-     * es:bx  pointer to command-line inside PSP
-     */
-    EAX_reg(context) = 1;
-    EBX_reg(context) = 0x81;
-    ECX_reg(context) = pModule->stack_size;
-    EDX_reg(context) = pTask->nCmdShow;
-    ESI_reg(context) = (DWORD)pTask->hPrevInstance;
-    EDI_reg(context) = (DWORD)pTask->hInstance;
-    ES_reg (context) = (WORD)pTask->hPDB;
+    if (context)
+    {
+        /* Registers on return are:
+         * ax     1 if OK, 0 on error
+         * cx     stack limit in bytes
+         * dx     cmdShow parameter
+         * si     instance handle of the previous instance
+         * di     instance handle of the new task
+         * es:bx  pointer to command-line inside PSP
+         */
+        EAX_reg(context) = 1;
+        EBX_reg(context) = 0x81;
+        ECX_reg(context) = pModule->stack_size;
+        EDX_reg(context) = pTask->nCmdShow;
+        ESI_reg(context) = (DWORD)pTask->hPrevInstance;
+        EDI_reg(context) = (DWORD)pTask->hInstance;
+        ES_reg (context) = (WORD)pTask->hPDB;
+    }
 
     /* Initialize the local heap */
     if ( pModule->heap_size )

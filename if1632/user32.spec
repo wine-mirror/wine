@@ -293,7 +293,7 @@ base	1
 0286 return GetShellWindow 0 0
 0287 stdcall GetSubMenu(long long) GetSubMenu
 0288 stdcall GetSysColor(long) GetSysColor
-0289 stdcall GetSysColorBrush(long) GetSysColorBrush
+0289 stdcall GetSysColorBrush(long) GetSysColorBrush32
 0290 stdcall GetSystemMenu(long long) GetSystemMenu
 0291 stdcall GetSystemMetrics(long) GetSystemMetrics
 0292 stub GetTabbedTextExtentA

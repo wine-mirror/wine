@@ -15,7 +15,7 @@
 /***********************************************************************
  *           REGION_DeleteObject
  */
-BOOL16 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj )
+BOOL32 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj )
 {
     dprintf_region(stddeb, "DeleteRegion: %04x\n", hrgn );
     if (obj->xrgn) XDestroyRegion( obj->xrgn );
@@ -24,9 +24,18 @@ BOOL16 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj )
 
 
 /***********************************************************************
- *           OffsetRgn    (GDI.101) (GDI32.256)
+ *           OffsetRgn16    (GDI.101)
  */
-INT16 OffsetRgn( HRGN32 hrgn, INT32 x, INT32 y )
+INT16 OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
+{
+    return OffsetRgn32( hrgn, x, y );
+}
+
+
+/***********************************************************************
+ *           OffsetRgn32   (GDI32.256)
+ */
+INT32 OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     if (!obj) return ERROR;
@@ -74,11 +83,20 @@ INT32 GetRgnBox32( HRGN32 hrgn, LPRECT32 rect )
 
 
 /***********************************************************************
- *           CreateRectRgn    (GDI.64) (GDI32.59)
+ *           CreateRectRgn16    (GDI.64)
  */
-HRGN16 CreateRectRgn( INT32 left, INT32 top, INT32 right, INT32 bottom )
+HRGN16 CreateRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom )
 {
-    HRGN16 hrgn;
+    return (HRGN16)CreateRectRgn32( left, top, right, bottom );
+}
+
+
+/***********************************************************************
+ *           CreateRectRgn32   (GDI32.59)
+ */
+HRGN32 CreateRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
+{
+    HRGN32 hrgn;
     RGNOBJ *obj;
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
@@ -105,7 +123,7 @@ HRGN16 CreateRectRgn( INT32 left, INT32 top, INT32 right, INT32 bottom )
  */
 HRGN16 CreateRectRgnIndirect16( const RECT16* rect )
 {
-    return CreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
+    return CreateRectRgn32( rect->left, rect->top, rect->right, rect->bottom );
 }
 
 
@@ -114,7 +132,7 @@ HRGN16 CreateRectRgnIndirect16( const RECT16* rect )
  */
 HRGN32 CreateRectRgnIndirect32( const RECT32* rect )
 {
-    return CreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
+    return CreateRectRgn32( rect->left, rect->top, rect->right, rect->bottom );
 }
 
 
@@ -141,13 +159,24 @@ VOID SetRectRgn( HRGN32 hrgn, INT32 left, INT32 top, INT32 right, INT32 bottom)
 
 
 /***********************************************************************
- *           CreateRoundRectRgn    (GDI.444) (GDI32.61)
+ *           CreateRoundRectRgn16    (GDI.444)
  */
-HRGN16 CreateRoundRectRgn( INT32 left, INT32 top, INT32 right, INT32 bottom,
-                           INT32 ellipse_width, INT32 ellipse_height )
+HRGN16 CreateRoundRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom,
+                             INT16 ellipse_width, INT16 ellipse_height )
+{
+    return (HRGN16)CreateRoundRectRgn32( left, top, right, bottom,
+                                         ellipse_width, ellipse_height );
+}
+
+
+/***********************************************************************
+ *           CreateRoundRectRgn32    (GDI32.61)
+ */
+HRGN32 CreateRoundRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom,
+                             INT32 ellipse_width, INT32 ellipse_height )
 {
     RGNOBJ * obj;
-    HRGN16 hrgn;
+    HRGN32 hrgn;
     XRectangle rect;
     int asq, bsq, d, xd, yd;
 
@@ -155,7 +184,7 @@ HRGN16 CreateRoundRectRgn( INT32 left, INT32 top, INT32 right, INT32 bottom,
 
     if ((right <= left) || (bottom <= top) ||
         (ellipse_width <= 0) || (ellipse_height <= 0))
-        return CreateRectRgn( left, top, right, bottom );
+        return CreateRectRgn32( left, top, right, bottom );
 
       /* Create region */
 
@@ -237,12 +266,22 @@ HRGN16 CreateRoundRectRgn( INT32 left, INT32 top, INT32 right, INT32 bottom,
 
 
 /***********************************************************************
- *           CreateEllipticRgn    (GDI.54) (GDI32.39)
+ *           CreateEllipticRgn16    (GDI.54)
  */
-HRGN16 CreateEllipticRgn( INT32 left, INT32 top, INT32 right, INT32 bottom )
+HRGN16 CreateEllipticRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom )
 {
-    return CreateRoundRectRgn( left, top, right, bottom,
-                               right-left, bottom-top );
+    return (HRGN16)CreateRoundRectRgn32( left, top, right, bottom,
+                                         right-left, bottom-top );
+}
+
+
+/***********************************************************************
+ *           CreateEllipticRgn32    (GDI32.39)
+ */
+HRGN32 CreateEllipticRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
+{
+    return CreateRoundRectRgn32( left, top, right, bottom,
+                                 right-left, bottom-top );
 }
 
 
@@ -251,8 +290,9 @@ HRGN16 CreateEllipticRgn( INT32 left, INT32 top, INT32 right, INT32 bottom )
  */
 HRGN16 CreateEllipticRgnIndirect16( const RECT16 *rect )
 {
-    return CreateRoundRectRgn(rect->left, rect->top, rect->right, rect->bottom,
-                              rect->right-rect->left, rect->bottom-rect->top );
+    return CreateRoundRectRgn32( rect->left, rect->top, rect->right,
+                                 rect->bottom, rect->right - rect->left,
+                                 rect->bottom - rect->top );
 }
 
 
@@ -261,8 +301,9 @@ HRGN16 CreateEllipticRgnIndirect16( const RECT16 *rect )
  */
 HRGN32 CreateEllipticRgnIndirect32( const RECT32 *rect )
 {
-    return CreateRoundRectRgn(rect->left, rect->top, rect->right, rect->bottom,
-                              rect->right-rect->left, rect->bottom-rect->top );
+    return CreateRoundRectRgn32( rect->left, rect->top, rect->right,
+                                 rect->bottom, rect->right - rect->left,
+                                 rect->bottom - rect->top );
 }
 
 
@@ -343,9 +384,18 @@ HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
 
 
 /***********************************************************************
- *           PtInRegion    (GDI.161) (GDI32.278)
+ *           PtInRegion16    (GDI.161)
  */
-BOOL16 PtInRegion( HRGN32 hrgn, INT32 x, INT32 y )
+BOOL16 PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
+{
+    return PtInRegion32( hrgn, x, y );
+}
+
+
+/***********************************************************************
+ *           PtInRegion32    (GDI32.278)
+ */
+BOOL32 PtInRegion32( HRGN32 hrgn, INT32 x, INT32 y )
 {
     RGNOBJ * obj;
     
@@ -386,9 +436,18 @@ BOOL32 RectInRegion32( HRGN32 hrgn, const RECT32 *rect )
 
 
 /***********************************************************************
- *           EqualRgn    (GDI.72) (GDI32.90)
+ *           EqualRgn16    (GDI.72)
  */
-BOOL16 EqualRgn( HRGN32 rgn1, HRGN32 rgn2 )
+BOOL16 EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
+{
+    return EqualRgn32( rgn1, rgn2 );
+}
+
+
+/***********************************************************************
+ *           EqualRgn32    (GDI32.90)
+ */
+BOOL32 EqualRgn32( HRGN32 rgn1, HRGN32 rgn2 )
 {
     RGNOBJ *obj1, *obj2;
     if (!(obj1 = (RGNOBJ *) GDI_GetObjPtr( rgn1, REGION_MAGIC ))) return FALSE;
@@ -403,7 +462,7 @@ BOOL16 EqualRgn( HRGN32 rgn1, HRGN32 rgn2 )
  *
  * Copy region src into dest.
  */
-static int REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
+static INT32 REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
 {
     Region tmprgn;
     if (src->xrgn)
@@ -428,11 +487,11 @@ static int REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
  *
  * Add rectangle to region
  */
-BOOL16 REGION_UnionRectWithRgn( HRGN32 hRgn, LPRECT16 rc )
+BOOL32 REGION_UnionRectWithRgn( HRGN32 hRgn, LPRECT16 rc )
 {
   RGNOBJ 	*rgnObj = (RGNOBJ*) GDI_GetObjPtr( hRgn, REGION_MAGIC );
   XRectangle     rect = { rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top };
-  BOOL16	 ret = 0; 
+  BOOL32 ret = FALSE;
 
   if( rgnObj )
   {
@@ -452,34 +511,45 @@ BOOL16 REGION_UnionRectWithRgn( HRGN32 hRgn, LPRECT16 rc )
   return ret;
 }
 
+
 /***********************************************************************
  *           REGION_CreateFrameRgn
  *
  * Create a region that is a frame around another region
  */
-BOOL16 REGION_FrameRgn( HRGN32 hDest, HRGN32 hSrc, INT32 x, INT32 y )
+BOOL32 REGION_FrameRgn( HRGN32 hDest, HRGN32 hSrc, INT32 x, INT32 y )
 {
     RGNOBJ *destObj,*srcObj;
     Region result;
 
     destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
     srcObj  = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
-    if (!srcObj->xrgn) return 0;
+    if (!srcObj->xrgn) return FALSE;
     REGION_CopyRegion( srcObj, destObj );
     XShrinkRegion( destObj->xrgn, -x, -y );
     result = XCreateRegion();
     XSubtractRegion( destObj->xrgn, srcObj->xrgn, result );
     XDestroyRegion( destObj->xrgn );
     destObj->xrgn = result;
-    return 1;
+    return TRUE;
 }
 
+
 /***********************************************************************
- *           CombineRgn    (GDI.451) (GDI32.19)
- *
- * The behavior is correct even if src and dest regions are the same.
+ *           CombineRgn16    (GDI.451)
  */
-INT16 CombineRgn( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
+INT16 CombineRgn16( HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode )
+{
+    return (INT16)CombineRgn32( hDest, hSrc1, hSrc2, mode );
+}
+
+
+/***********************************************************************
+ *           CombineRgn32   (GDI32.19)
+ *
+ * Note: The behavior is correct even if src and dest regions are the same.
+ */
+INT32 CombineRgn32( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
 {
     RGNOBJ *destObj, *src1Obj, *src2Obj;
     Region destrgn;
