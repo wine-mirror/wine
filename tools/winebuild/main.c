@@ -122,6 +122,7 @@ static void do_include( const char *arg );
 static void do_k_flags( const char *arg );
 static void do_exe_mode( const char *arg );
 static void do_module( const char *arg );
+static void do_name( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
 static void do_exe( const char *arg );
@@ -150,6 +151,7 @@ static const struct option_descr option_table[] =
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
     { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
     { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
+    { "-N",       1, do_name,    "-N dllname       Set the DLL name (default: set from input file name)" },
     { "-res",     1, do_rsrc,    "-res rsrc.res    Load resources from rsrc.res" },
     { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)\n" },
     { "-sym",     0, do_sym,     NULL },  /* ignored for backwards compatibility */
@@ -217,6 +219,12 @@ static void do_k_flags( const char *arg )
     /* Ignored, because cc generates correct code. */
     /* if (!strcmp( arg, "PIC" )) UsePIC = 1; */
     /* ignore all other flags */
+}
+
+static void do_name( const char *arg )
+{
+    strncpy( DLLName, arg, sizeof(DLLName) );
+    DLLName[sizeof(DLLName) - 1] = 0;
 }
 
 static void do_spec( const char *arg )
