@@ -86,6 +86,7 @@ static const char*	INIDefaultSansSerif = "DefaultSansSerif";
 
 
 /* FIXME - are there any more Latin charsets ? */
+/* FIXME - RUSSIAN, ARABIC, GREEK, HEBREW are NOT Latin */
 #define IS_LATIN_CHARSET(ch) \
   ((ch)==ANSI_CHARSET ||\
    (ch)==EE_CHARSET ||\
@@ -96,7 +97,9 @@ static const char*	INIDefaultSansSerif = "DefaultSansSerif";
    (ch)==GREEK_CHARSET ||\
    (ch)==HEBREW_CHARSET ||\
    (ch)==TURKISH_CHARSET ||\
-   (ch)==BALTIC_CHARSET)
+   (ch)==ISO10_CHARSET ||\
+   (ch)==BALTIC_CHARSET ||\
+   (ch)==CELTIC_CHARSET)
 
 /* suffix-charset mapping tables - must be less than 254 entries long */
 
@@ -126,12 +129,12 @@ static const SuffixCharset sufch_iso8859[] = {
     {  "7", GREEK_CHARSET, 28597, X11DRV_CPTABLE_SBCS },
     {  "8", HEBREW_CHARSET, 28598, X11DRV_CPTABLE_SBCS }, 
     {  "9", TURKISH_CHARSET, 28599, X11DRV_CPTABLE_SBCS },
-    { "10", BALTIC_CHARSET, 1257, X11DRV_CPTABLE_SBCS }, /* FIXME */
+    { "10", ISO10_CHARSET, 28600, X11DRV_CPTABLE_SBCS },
     { "11", THAI_CHARSET, 874, X11DRV_CPTABLE_SBCS }, /* FIXME */
     { "12", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
-    { "13", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
-    { "14", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
-    { "15", ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS },
+    { "13", BALTIC_CHARSET, 28603, X11DRV_CPTABLE_SBCS },
+    { "14", CELTIC_CHARSET, 28604, X11DRV_CPTABLE_SBCS },
+    { "15", ANSI_CHARSET, 28605, X11DRV_CPTABLE_SBCS },
     { NULL, ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
 static const SuffixCharset sufch_microsoft[] = {
@@ -172,6 +175,7 @@ static const SuffixCharset sufch_windows[] = {
 
 static const SuffixCharset sufch_koi8[] = {
     { "r", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
+    { "ru", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
     { "u", RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS },
     { NULL, RUSSIAN_CHARSET, 20866, X11DRV_CPTABLE_SBCS }};
 

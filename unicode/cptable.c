@@ -64,8 +64,12 @@ extern union cptable cptable_28596;
 extern union cptable cptable_28597;
 extern union cptable cptable_28598;
 extern union cptable cptable_28599;
+extern union cptable cptable_28600;
+extern union cptable cptable_28603;
+extern union cptable cptable_28604;
+extern union cptable cptable_28605;
 
-static const union cptable * const cptables[54] =
+static const union cptable * const cptables[58] =
 {
     &cptable_037,
     &cptable_042,
@@ -121,6 +125,10 @@ static const union cptable * const cptables[54] =
     &cptable_28597,
     &cptable_28598,
     &cptable_28599,
+    &cptable_28600,
+    &cptable_28603,
+    &cptable_28604,
+    &cptable_28605,
 };
 /* ### cpmap end ### */
 /* Everything above this line is generated automatically by cpmap.pl */

@@ -66,14 +66,18 @@ $DEF_CHAR = ord '?';
     [ 10081, "VENDORS/MICSFT/MAC/TURKISH.TXT",    "Mac Turkish" ],
     [ 20866, "VENDORS/MISC/KOI8-R.TXT",           "Russian KOI8" ],
     [ 28591, "ISO8859/8859-1.TXT",                "ISO 8859-1 Latin 1" ],
-    [ 28592, "ISO8859/8859-2.TXT",                "ISO 8859-2 Eastern Europe" ],
-    [ 28593, "ISO8859/8859-3.TXT",                "ISO 8859-3 Turkish" ],
-    [ 28594, "ISO8859/8859-4.TXT",                "ISO 8859-4 Baltic" ],
+    [ 28592, "ISO8859/8859-2.TXT",                "ISO 8859-2 Latin 2 (East European)" ],
+    [ 28593, "ISO8859/8859-3.TXT",                "ISO 8859-3 Latin 3 (South European)" ],
+    [ 28594, "ISO8859/8859-4.TXT",                "ISO 8859-4 Latin 4 (Baltic old)" ],
     [ 28595, "ISO8859/8859-5.TXT",                "ISO 8859-5 Cyrillic" ],
     [ 28596, "ISO8859/8859-6.TXT",                "ISO 8859-6 Arabic" ],
     [ 28597, "ISO8859/8859-7.TXT",                "ISO 8859-7 Greek" ],
     [ 28598, "ISO8859/8859-8.TXT",                "ISO 8859-8 Hebrew" ],
-    [ 28599, "ISO8859/8859-9.TXT",                "ISO 8859-9 Latin 5" ]
+    [ 28599, "ISO8859/8859-9.TXT",                "ISO 8859-9 Latin 5 (Turkish)" ],
+    [ 28600, "ISO8859/8859-10.TXT",               "ISO 8859-10 Latin 6 (Nordic)" ],
+    [ 28603, "ISO8859/8859-13.TXT",               "ISO 8859-13 Latin 7 (Baltic)" ],
+    [ 28604, "ISO8859/8859-14.TXT",               "ISO 8859-14 Latin 8 (Celtic)" ],
+    [ 28605, "ISO8859/8859-15.TXT",               "ISO 8859-15 Latin 9 (Euro)" ]
 );
 
 

@@ -1,4 +1,4 @@
-/* code page 28592 (ISO 8859-2 Eastern Europe) */
+/* code page 28592 (ISO 8859-2 Latin 2 (East European)) */
 /* generated from ftp.unicode.org/Public/MAPPINGS/ISO8859/8859-2.TXT */
 /* DO NOT EDIT!! */
 
@@ -643,7 +643,7 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table cptable_28592 =
 {
-    { 28592, 1, 0x003f, 0x003f, "ISO 8859-2 Eastern Europe" },
+    { 28592, 1, 0x003f, 0x003f, "ISO 8859-2 Latin 2 (East European)" },
     cp2uni,
     uni2cp_low,
     uni2cp_high

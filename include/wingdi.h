@@ -663,7 +663,7 @@ typedef struct
 #define TURKISH_CHARSET       (BYTE)162	/* CP1254, -iso8859-9 */
 #define HEBREW_CHARSET        (BYTE)177	/* CP1255, -iso8859-8 */
 #define ARABIC_CHARSET        (BYTE)178	/* CP1256, -iso8859-6 */
-#define BALTIC_CHARSET        (BYTE)186	/* CP1257, -iso8859-10 */
+#define BALTIC_CHARSET        (BYTE)186	/* CP1257, -iso8859-13 */
 #define RUSSIAN_CHARSET       (BYTE)204	/* CP1251, -iso8859-5 */
 #define EE_CHARSET	      (BYTE)238	/* CP1250, -iso8859-2 */
 #define EASTEUROPE_CHARSET    EE_CHARSET
@@ -679,6 +679,8 @@ typedef struct
 #define KOI8_CHARSET          (BYTE)242 /* koi8-{r,u,ru} */
 #define ISO3_CHARSET          (BYTE)243 /* iso8859-3 */
 #define ISO4_CHARSET          (BYTE)244 /* iso8859-4 */
+#define ISO10_CHARSET         (BYTE)245 /* iso8859-10 */
+#define CELTIC_CHARSET        (BYTE)246 /* iso8859-14 */
 
 #define FS_LATIN1              0x00000001L
 #define FS_LATIN2              0x00000002L

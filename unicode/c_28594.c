@@ -1,4 +1,4 @@
-/* code page 28594 (ISO 8859-4 Baltic) */
+/* code page 28594 (ISO 8859-4 Latin 4 (Baltic old)) */
 /* generated from ftp.unicode.org/Public/MAPPINGS/ISO8859/8859-4.TXT */
 /* DO NOT EDIT!! */
 
@@ -643,7 +643,7 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table cptable_28594 =
 {
-    { 28594, 1, 0x003f, 0x003f, "ISO 8859-4 Baltic" },
+    { 28594, 1, 0x003f, 0x003f, "ISO 8859-4 Latin 4 (Baltic old)" },
     cp2uni,
     uni2cp_low,
     uni2cp_high

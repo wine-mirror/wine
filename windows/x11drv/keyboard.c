@@ -406,6 +406,15 @@ static const char main_key_LA[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Lithuanian (Baltic) keyboard layout (contributed by Nerijus Baliûnas) */
+static const char main_key_LT_B[MAIN_LEN][4] =
+{
+ "`~","àÀ","èÈ","æÆ","ëË","áÁ","ðÐ","øØ","ûÛ","((","))","-_","þÞ",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
     const char *comment;
@@ -445,6 +454,7 @@ static const struct {
  {"Slovak and Czech keyboard layout without dead keys", 28592, &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };

@@ -1,4 +1,4 @@
-/* code page 28593 (ISO 8859-3 Turkish) */
+/* code page 28593 (ISO 8859-3 Latin 3 (South European)) */
 /* generated from ftp.unicode.org/Public/MAPPINGS/ISO8859/8859-3.TXT */
 /* DO NOT EDIT!! */
 
@@ -643,7 +643,7 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table cptable_28593 =
 {
-    { 28593, 1, 0x003f, 0x003f, "ISO 8859-3 Turkish" },
+    { 28593, 1, 0x003f, 0x003f, "ISO 8859-3 Latin 3 (South European)" },
     cp2uni,
     uni2cp_low,
     uni2cp_high
