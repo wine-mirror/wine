@@ -1051,7 +1051,7 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
         while (MSG_InternalGetMessage(QMSG_WIN32A, &msg, hwnd, ownerMsg, MSGF_DIALOGBOX, 
                                       PM_REMOVE, !(wndPtr->dwStyle & DS_NOIDLEMSG), NULL ))
         {
-            if (!IsDialogMessageA( hwnd, &msg))
+            if (!(dlgInfo->flags & DF_END) && (!IsDialogMessageA( hwnd, &msg)))
             {
                 TranslateMessage( &msg );
                 DispatchMessageA( &msg );
@@ -1257,7 +1257,8 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
                  | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
 
     WIN_ReleaseWndPtr(wndPtr);
- 
+    /* unblock dialog loop */
+    PostMessageA(hwnd, WM_NULL, 0, 0); 
     return TRUE;
 }
 
