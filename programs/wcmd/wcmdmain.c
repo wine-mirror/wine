@@ -97,6 +97,7 @@ int main (int argc, char *argv[])
           has_space=0;
           bcount=0;
           a=*arg;
+          if( !*a ) has_space=1;
           while (*a!='\0') {
               if (*a=='\\') {
                   bcount++;
@@ -131,6 +132,7 @@ int main (int argc, char *argv[])
           /* Check for quotes and spaces in this argument */
           has_space=has_quote=0;
           a=*arg;
+          if( !*a ) has_space=1;
           while (*a!='\0') {
               if (*a==' ' || *a=='\t') {
                   has_space=1;

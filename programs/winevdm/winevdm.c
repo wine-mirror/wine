@@ -48,6 +48,7 @@ static char *build_command_line( char **argv )
         has_space=0;
         bcount=0;
         a=*arg;
+        if( !*a ) has_space=1;
         while (*a!='\0') {
             if (*a=='\\') {
                 bcount++;
@@ -82,6 +83,7 @@ static char *build_command_line( char **argv )
         /* Check for quotes and spaces in this argument */
         has_space=has_quote=0;
         a=*arg;
+        if( !*a ) has_space=1;
         while (*a!='\0') {
             if (*a==' ' || *a=='\t') {
                 has_space=1;
