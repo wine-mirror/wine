@@ -668,7 +668,11 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 			 de->u.LoadDll.nDebugInfoSize);
 	    CharUpper(buffer);
 	    DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, (DWORD)de->u.LoadDll.lpBaseOfDll);
-	    if (DBG_IVAR(BreakOnDllLoad)) ret = DEBUG_Parser();
+	    if (DBG_IVAR(BreakOnDllLoad)) {
+		DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n", 
+			     buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
+		ret = DEBUG_Parser();
+	    }
 	    break;
 	    
 	case UNLOAD_DLL_DEBUG_EVENT:
