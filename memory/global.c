@@ -1141,7 +1141,14 @@ HGLOBAL WINAPI GlobalHandle(
                  LPCVOID pmem /* [in] Pointer to global memory block */
 ) {
     HGLOBAL handle;
-    HANDLE heap = GLOBAL_GetHeap( POINTER_TO_HANDLE(pmem) );
+    HANDLE heap;
+
+    if (!pmem)
+    {
+       SetLastError( ERROR_INVALID_PARAMETER );
+       return 0;
+    }
+    heap = GLOBAL_GetHeap( POINTER_TO_HANDLE(pmem) );
 
     if (!HEAP_IsInsideHeap( heap, 0, pmem )) goto error;
     handle = POINTER_TO_HANDLE(pmem);
