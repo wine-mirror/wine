@@ -227,7 +227,7 @@
 229 stdcall VarBstrFromI1(long long long ptr)
 230 stdcall VarBstrFromUI2(long long long ptr)
 231 stdcall VarBstrFromUI4(long long long ptr)
-232 stub VarBstrFromDec
+232 stdcall VarBstrFromDec(ptr long long ptr)
 233 stdcall VarBoolFromI1(long ptr)
 234 stdcall VarBoolFromUI2(long ptr)
 235 stdcall VarBoolFromUI4(long ptr)
