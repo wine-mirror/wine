@@ -2147,7 +2147,7 @@ BOOL WINAPI EnumEnhMetaFile(
     INT mapMode = MM_TEXT;
     COLORREF old_text_color = 0, old_bk_color = 0;
 
-    if(!lpRect)
+    if(!lpRect && hdc)
     {
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
@@ -2228,7 +2228,7 @@ BOOL WINAPI EnumEnhMetaFile(
         CombineTransform(&info->init_transform, &savedXform, &info->init_transform);
     }
 
-    if ( WIDTH(emh->rclFrame) && HEIGHT(emh->rclFrame) )
+    if ( lpRect && WIDTH(emh->rclFrame) && HEIGHT(emh->rclFrame) )
     {
         FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
         XFORM xform;
@@ -2256,7 +2256,7 @@ BOOL WINAPI EnumEnhMetaFile(
     }
 
     /* WinNT resets the current vp/win org/ext */
-    if ( !IS_WIN9X() )
+    if ( !IS_WIN9X() && hdc )
     {
         SetMapMode(hdc, MM_TEXT);
         SetWindowOrgEx(hdc, 0, 0, NULL);

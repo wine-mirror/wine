@@ -43,6 +43,8 @@ static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     trace("hdc %p, emr->iType %ld, emr->nSize %ld, param %p\n",
            hdc, emr->iType, emr->nSize, (void *)param);
 
+    if(!hdc) return 1;
+
     PlayEnhMetaFileRecord(hdc, handle_table, emr, n_objs);
 
     switch (emr->iType)
@@ -189,6 +191,9 @@ static void test_ExtTextOut(void)
 
     ok(!EnumEnhMetaFile(hdcDisplay, hMetafile, emf_enum_proc, dx, NULL),
        "A valid hdc has to require a valid rc\n");
+
+    ok(EnumEnhMetaFile(NULL, hMetafile, emf_enum_proc, dx, NULL),
+       "A null hdc does not require a valid rc\n");
 
     ret = DeleteEnhMetaFile(hMetafile);
     ok( ret, "DeleteEnhMetaFile error %ld\n", GetLastError());
