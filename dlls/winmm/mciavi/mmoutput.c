@@ -426,23 +426,20 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
 
     wma->dwCachedFrame = -1;
 
-    /* check for builtin DIB compressions */
-    if ((fcc == mmioFOURCC('D','I','B',' ')) ||
-        (fcc == mmioFOURCC('R','L','E',' ')) ||
-        (fcc == BI_RGB) || (fcc == BI_RLE8) ||
-        (fcc == BI_RLE4) || (fcc == BI_BITFIELDS))
-    {
-	wma->hic = 0;
-        goto paint_frame;
-    }
-
     /* get the right handle */
-    if (fcc == 0) fcc = wma->inbih->biCompression;
     if (fcc == mmioFOURCC('C','R','A','M')) fcc = mmioFOURCC('M','S','V','C');
 
     /* try to get a decompressor for that type */
     wma->hic = ICLocate(ICTYPE_VIDEO, fcc, wma->inbih, NULL, ICMODE_DECOMPRESS);
     if (!wma->hic) {
+        /* check for builtin DIB compressions */
+        fcc = wma->inbih->biCompression;
+        if ((fcc == mmioFOURCC('D','I','B',' ')) ||
+            (fcc == mmioFOURCC('R','L','E',' ')) ||
+            (fcc == BI_RGB) || (fcc == BI_RLE8) ||
+            (fcc == BI_RLE4) || (fcc == BI_BITFIELDS))
+            goto paint_frame;
+
 	WARN("Can't locate codec for the file\n");
 	return FALSE;
     }
