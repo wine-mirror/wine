@@ -24,7 +24,6 @@ extern "C" {
  */
 typedef struct IShellBrowser IShellBrowser, *LPSHELLBROWSER;
 
-DEFINE_SHLGUID(IID_IShellView,          0x000214E3L, 0, 0);
 typedef struct IShellView IShellView, *LPSHELLVIEW;
 
 /* shellview select item flags*/

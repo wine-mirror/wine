@@ -35,6 +35,7 @@
 #include "tweak.h"
 #include "winnls.h"
 #include "shellapi.h"
+#include "shlguid.h"
 #include "filedlgbrowser.h"
 #include "shlwapi.h"
 #include "wine/obj_contextmenu.h"

@@ -4,7 +4,6 @@
 #include "windef.h"
 #include "mmsystem.h"
 #include "wingdi.h"
-#include "wine/obj_base.h"
 #include "unknwn.h"
 
 #define VFWAPI	WINAPI

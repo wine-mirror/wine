@@ -9,6 +9,7 @@
 #include "debugtools.h"
 
 #include "pidl.h"
+#include "shlguid.h"
 #include "wine/obj_base.h"
 #include "wine/obj_contextmenu.h"
 #include "wine/obj_shellbrowser.h"

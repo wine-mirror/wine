@@ -46,10 +46,8 @@ typedef struct _STRRET
 /*****************************************************************************
  * Predeclare the interfaces
  */
-DEFINE_SHLGUID(IID_IShellFolder,        0x000214E6L, 0, 0);
 typedef struct IShellFolder IShellFolder, *LPSHELLFOLDER;
 
-DEFINE_SHLGUID(IID_IPersistFolder,      0x000214EAL, 0, 0);
 typedef struct IPersistFolder IPersistFolder, *LPPERSISTFOLDER;
 
 DEFINE_GUID(IID_IPersistFolder2, 0x1ac3d9f0L, 0x175C, 0x11D1, 0x95, 0xBE, 0x00, 0x60, 0x97, 0x97, 0xEA, 0x4F);

@@ -6,6 +6,7 @@
 #define __WINE_WTYPES_H
 
 #include "basetsd.h"
+#include "guiddef.h"
 #include "rpc.h"
 
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
@@ -39,23 +40,6 @@ typedef __uint64 ULONGLONG, *PULONGLONG;
 #define OLESTR16(x) x
 #define OLESTR(x) L##x
 
-#if defined(__cplusplus) && !defined(CINTERFACE)
-#define REFGUID             const GUID &
-#define REFCLSID            const CLSID &
-#define REFIID              const IID &
-#define REFFMTID            const FMTID &
-#else /* !defined(__cplusplus) && !defined(CINTERFACE) */
-#define REFGUID             const GUID* const
-#define REFCLSID            const CLSID* const
-#define REFIID              const IID* const
-#define REFFMTID            const FMTID* const
-#endif /* !defined(__cplusplus) && !defined(CINTERFACE) */
-
-extern const IID GUID_NULL;
-#define IID_NULL            GUID_NULL
-#define CLSID_NULL GUID_NULL
-#define FMTID_NULL          GUID_NULL
-   
 typedef enum tagDVASPECT
 { 
        DVASPECT_CONTENT   = 1,

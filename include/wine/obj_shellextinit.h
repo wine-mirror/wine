@@ -17,7 +17,6 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 typedef struct 	IShellExtInit IShellExtInit, *LPSHELLEXTINIT;
-DEFINE_SHLGUID(IID_IShellExtInit,       0x000214E8L, 0, 0);
 
 #define ICOM_INTERFACE IShellExtInit
 #define IShellExtInit_METHODS \

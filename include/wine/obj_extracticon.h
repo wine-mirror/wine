@@ -15,8 +15,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-DEFINE_SHLGUID(IID_IExtractIconA,	0x000214EBL, 0, 0);
-DEFINE_SHLGUID(IID_IExtractIconW,	0x000214FAL, 0, 0);
 #define IID_IExtractIcon WINELIB_NAME_AW(IID_IExtractIcon)
 
 typedef struct IExtractIconA IExtractIconA,*LPEXTRACTICONA;

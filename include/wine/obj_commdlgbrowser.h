@@ -15,7 +15,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-DEFINE_SHLGUID(IID_ICommDlgBrowser,     0x000214F1L, 0, 0);
 typedef struct 	ICommDlgBrowser ICommDlgBrowser, *LPCOMMDLGBROWSER;
 
 /* for OnStateChange*/

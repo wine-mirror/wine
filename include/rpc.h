@@ -28,11 +28,6 @@ typedef struct _GUID
 } GUID;
 #endif
 
-typedef GUID  *LPGUID;
-typedef GUID  CLSID,*LPCLSID;
-typedef GUID	IID,*LPIID;
-typedef GUID	FMTID,*LPFMTID;
-
 #ifndef UUID_DEFINED
 #define UUID_DEFINED
 typedef GUID UUID;

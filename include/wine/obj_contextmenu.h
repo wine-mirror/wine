@@ -18,8 +18,6 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0);
-DEFINE_SHLGUID(IID_IContextMenu2,       0x000214F4L, 0, 0);
 typedef struct IContextMenu IContextMenu, *LPCONTEXTMENU;
 
 /* QueryContextMenu uFlags */

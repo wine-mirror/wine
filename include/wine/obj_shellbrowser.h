@@ -22,7 +22,6 @@ extern "C" {
    typedef struct IShellBrowser IShellBrowser, *LPSHELLBROWSER;
 */
 
-DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0);
 #define SID_SShellBrowser IID_IShellBrowser
 
 /* targets for GetWindow/SendControlMsg */

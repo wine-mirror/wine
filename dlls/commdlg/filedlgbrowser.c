@@ -11,6 +11,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
+#include "shlguid.h"
 #include "wine/obj_dataobject.h"
 #include "debugtools.h"
 #include "cdlg.h"

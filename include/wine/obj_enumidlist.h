@@ -18,7 +18,6 @@ extern "C" {
 /*****************************************************************************
  * Predeclare the interfaces
  */
-DEFINE_SHLGUID(IID_IEnumIDList,         0x000214F2L, 0, 0);
 typedef struct IEnumIDList IEnumIDList, *LPENUMIDLIST;
 
 #define ICOM_INTERFACE IEnumIDList

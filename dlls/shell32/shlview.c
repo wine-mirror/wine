@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "servprov.h"
+#include "shlguid.h"
 #include "wine/obj_base.h"
 #include "wine/obj_shellfolder.h"
 #include "wine/obj_shellview.h"

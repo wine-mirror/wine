@@ -19,6 +19,7 @@
 #include "winversion.h"
 
 #include "shellapi.h"
+#include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "wine/undocshell.h"

@@ -15,6 +15,7 @@
 #include "heap.h"
 
 #include "shellapi.h"
+#include "shlguid.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "wine/undocshell.h"
