@@ -13,7 +13,9 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/keyboard16.h"
+#include "wine/exception.h"
 #include "winerror.h"
+#include "crtdll.h"
 #include "ldt.h"
 #include "debugtools.h"
 #include "winnls.h"
@@ -61,9 +63,15 @@ static const BYTE STRING_Ansi2Oem[256] =
 
 /* Internaly used by strchr family functions */
 static BOOL ChrCmpA( WORD word1, WORD word2);
-static BOOL ChrCmpW( WORD word1, WORD word2);
 
-extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 
 /***********************************************************************
@@ -80,35 +88,46 @@ void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
  */
 SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 {
-    lstrcatA( (LPSTR)PTR_SEG_TO_LIN(dst), src );
+    /* Windows does not check for NULL pointers here, so we don't either */
+    strcat( (LPSTR)PTR_SEG_TO_LIN(dst), src );
     return dst;
 }
 
 
 /***********************************************************************
- *           lstrcat32A   (KERNEL32.599)
+ *           lstrcatA   (KERNEL32.599)
  */
 LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
-    TRACE("Append %s to %s\n",
-		   debugstr_a (src), debugstr_a (dst));
-    /* Windows does not check for NULL pointers here, so we don't either */
-    strcat( dst, src );
+    __TRY
+    {
+        strcat( dst, src );
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
     return dst;
 }
 
 
 /***********************************************************************
- *           lstrcat32W   (KERNEL32.600)
+ *           lstrcatW   (KERNEL32.600)
  */
 LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
-    register LPWSTR p = dst;
-    TRACE("Append L%s to L%s\n",
-		   debugstr_w (src), debugstr_w (dst));
-    /* Windows does not check for NULL pointers here, so we don't either */
-    while (*p) p++;
-    while ((*p++ = *src++));
+    __TRY
+    {
+        CRTDLL_wcscat( dst, src );
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
     return dst;
 }
 
@@ -118,37 +137,11 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
  */
 SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcatnA( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
-    return dst;
-}
+    LPSTR p = (LPSTR)PTR_SEG_TO_LIN(dst);
 
-
-/***********************************************************************
- *           lstrcatn32A   (Not a Windows API)
- */
-LPSTR WINAPI lstrcatnA( LPSTR dst, LPCSTR src, INT n )
-{
-    register LPSTR p = dst;
-    TRACE("strcatn add %d chars from %s to %s\n",
-		   n, debugstr_an (src, n), debugstr_a (dst));
     while (*p) p++;
-    if ((n -= (INT)(p - dst)) <= 0) return dst;
+    if ((n -= (p - (LPSTR)PTR_SEG_TO_LIN(dst))) <= 0) return dst;
     lstrcpynA( p, src, n );
-    return dst;
-}
-
-
-/***********************************************************************
- *           lstrcatn32W   (Not a Windows API)
- */
-LPWSTR WINAPI lstrcatnW( LPWSTR dst, LPCWSTR src, INT n )
-{
-    register LPWSTR p = dst;
-    TRACE("strcatn add %d chars from L%s to L%s\n",
-		   n, debugstr_wn (src, n), debugstr_w (dst));
-    while (*p) p++;
-    if ((n -= (INT)(p - dst)) <= 0) return dst;
-    lstrcpynW( p, src, n );
     return dst;
 }
 
@@ -243,7 +236,8 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
  */
 SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 {
-    lstrcpyA( (LPSTR)PTR_SEG_TO_LIN(dst), src );
+    /* this is how Windows does it */
+    memmove( (LPSTR)PTR_SEG_TO_LIN(dst), src, strlen(src)+1 );
     return dst;
 }
 
@@ -253,37 +247,36 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
  */
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
-    TRACE("strcpy %s\n", debugstr_a (src));
-    /* In real windows the whole function is protected by an exception handler
-     * that returns ERROR_INVALID_PARAMETER on faulty parameters
-     * We currently just check for NULL.
-     */
-    if (!dst || !src) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
+    __TRY
+    {
+        /* this is how Windows does it */
+        memmove( dst, src, strlen(src)+1 );
     }
-    /* this is how Windows does it */
-    memmove( dst, src, strlen(src)+1 );
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
     return dst;
 }
 
 
 /***********************************************************************
- *           lstrcpy32W   (KERNEL32.609)
+ *           lstrcpyW   (KERNEL32.609)
  */
 LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
-    register LPWSTR p = dst;
-    TRACE("strcpy L%s\n", debugstr_w (src));
-    /* In real windows the whole function is protected by an exception handler
-     * that returns ERROR_INVALID_PARAMETER on faulty parameters
-     * We currently just check for NULL.
-     */
-    if (!dst || !src) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
+    __TRY
+    {
+        CRTDLL_wcscpy( dst, src );
     }
-    while ((*p++ = *src++));
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
     return dst;
 }
 
@@ -356,54 +349,42 @@ INT16 WINAPI lstrlen16( LPCSTR str )
 
 
 /***********************************************************************
- *           lstrlen32A   (KERNEL32.614)
+ *           lstrlenA   (KERNEL32.614)
  */
 INT WINAPI lstrlenA( LPCSTR str )
 {
-    /* looks weird, but win3.1 KERNEL got a GeneralProtection handler
-     * in lstrlen() ... we check only for NULL pointer reference.
-     * - Marcus Meissner
-     */
-    TRACE("strlen %s\n", debugstr_a (str));
-    if (!str) return 0;
-    return (INT)strlen(str);
+    INT ret;
+    __TRY
+    {
+        ret = strlen(str);
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
 }
 
 
 /***********************************************************************
- *           lstrlen32W   (KERNEL32.615)
+ *           lstrlenW   (KERNEL32.615)
  */
 INT WINAPI lstrlenW( LPCWSTR str )
 {
-    INT len = 0;
-    TRACE("strlen L%s\n", debugstr_w (str));
-    if (!str) return 0;
-    while (*str++) len++;
-    return len;
-}
-
-
-/***********************************************************************
- *           lstrncmp32A   (Not a Windows API)
- */
-INT WINAPI lstrncmpA( LPCSTR str1, LPCSTR str2, INT n )
-{
-    TRACE("strncmp %s and %s for %d chars\n",
-		   debugstr_an (str1, n), debugstr_an (str2, n), n);
-    return (INT)strncmp( str1, str2, n );
-}
-
-
-/***********************************************************************
- *           lstrncmp32W   (Not a Windows API)
- */
-INT WINAPI lstrncmpW( LPCWSTR str1, LPCWSTR str2, INT n )
-{
-    TRACE("strncmp L%s and L%s for %d chars\n",
-		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
-    if (!n) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return (INT)(*str1 - *str2);
+    INT ret;
+    __TRY
+    {
+        ret = CRTDLL_wcslen(str);
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    __ENDTRY
+    return ret;
 }
 
 
@@ -421,26 +402,6 @@ INT WINAPI lstrncmpiA( LPCSTR str1, LPCSTR str2, INT n )
       if ( (res = toupper(*str1++) - toupper(*str2++)) ) return res;
 
     return toupper(*str1) - toupper(*str2);
-}
-
-
-/***********************************************************************
- *           lstrncmpi32W   (Not a Windows API)
- */
-INT WINAPI lstrncmpiW( LPCWSTR str1, LPCWSTR str2, INT n )
-{
-    INT res;
-
-    TRACE("strncmpi L%s and L%s for %d chars\n",
-		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
-    if (!n) return 0;
-    while ((--n > 0) && *str1)
-    {
-        if ((res = towupper(*str1) - towupper(*str2)) != 0) return res;
-        str1++;
-        str2++;
-    }
-    return towupper(*str1) - towupper(*str2);
 }
 
 
@@ -496,12 +457,11 @@ LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT n )
  */
 LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT n )
 {
-    LPSTR p = dst;
-
-    TRACE("L%s %i\n",debugstr_w(src), n);
-
-    while ((n-- > 1) && *src) *p++ = (CHAR)*src++;
-    if (n >= 0) *p = 0;
+    if (--n >= 0)
+    {
+        CRTDLL_wcstombs( dst, src, n );
+        dst[n] = 0;
+    }
     return dst;
 }
 
@@ -768,29 +728,6 @@ LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
 }
 
 /***********************************************************************
- *           strstrw   (Not a Windows API)
- *
- * This is the implementation meant to be invoked form within
- * COMCTL32_StrStrW and shell32(TODO)...
- *
- */
-LPWSTR WINAPI strstrw( LPCWSTR lpFirst, LPCWSTR lpSrch) {
-  UINT uSrchLen  = (UINT)lstrlenW(lpSrch);
-  WORD wMatchBeg   = *(WORD*)lpSrch;
-
-  TRACE("(%p, %p)\n", lpFirst,  lpSrch);
-
-  for(; 
-    ((lpFirst=CRTDLL_wcschr(lpFirst, wMatchBeg))!=0) && 
-      lstrncmpW(lpFirst, lpSrch, uSrchLen); 
-    lpFirst++) {
-      continue;
-  }
-  return (LPWSTR)lpFirst;
-}
-
-
-/***********************************************************************
  *           ChrCmpA   
  * This fuction returns FALSE if both words match, TRUE otherwise...
  */
@@ -811,5 +748,3 @@ static BOOL ChrCmpA( WORD word1, WORD word2) {
 static BOOL ChrCmpW( WORD word1, WORD word2) {
   return (word1 != word2);
 }
-
-
