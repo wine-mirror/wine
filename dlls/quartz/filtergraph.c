@@ -28,6 +28,7 @@
 #include "dshow.h"
 #include "wine/debug.h"
 #include "strmif.h"
+#include "vfwmsgs.h"
 #include "wine/unicode.h"
 
 #include "quartz_private.h"
@@ -64,6 +65,7 @@ typedef struct _IFilterGraphImpl {
     LPWSTR * pFilterNames;
     int nFilters;
     int filterCapacity;
+    long nameIndex;
 } IFilterGraphImpl;
 
 
@@ -161,12 +163,62 @@ static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
 					     IBaseFilter *pFilter,
 					     LPCWSTR pName) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
-    int size;
     HRESULT hr;
-
+    int i,j;
+    WCHAR* wszFilterName = NULL;
+    int duplicate_name = FALSE;
+    
     TRACE("(%p/%p)->(%p, %s (%p))\n", This, iface, pFilter, debugstr_w(pName), pName);
 
-    /* FIXME: generate name of filter if NULL */
+    wszFilterName = (WCHAR*) CoTaskMemAlloc( (pName ? strlenW(pName) + 6 : 5) * sizeof(WCHAR) );
+    
+    if (pName)
+    {
+	/* Check if name already exists */
+        for(i = 0; i < This->nFilters; i++)
+	    if (!strcmpW(This->pFilterNames[i], pName))
+	    {
+		duplicate_name = TRUE;
+		break;
+	    }
+    }
+
+    /* If no name given or name already existing, generate one */
+    if (!pName || duplicate_name)
+    {
+	static const WCHAR wszFmt1[] = {'%','s',' ','%','0','4','d',0};
+	static const WCHAR wszFmt2[] = {'%','0','4','d',0};
+
+	for (j = 0; j < 10000 ; j++)
+	{
+	    /* Create name */
+	    if (pName)
+		sprintfW(wszFilterName, wszFmt1, pName, This->nameIndex);
+	    else
+		sprintfW(wszFilterName, wszFmt2, This->nameIndex);
+	    TRACE("Generated name %s\n", debugstr_w(wszFilterName));
+
+	    /* Check if the generated name already exists */
+	    for(i = 0; i < This->nFilters; i++)
+	    	if (!strcmpW(This->pFilterNames[i], pName))
+		    break;
+
+	    /* Compute next index and exit if generated name is suitable */
+	    if (This->nameIndex++ == 10000)
+		This->nameIndex = 1;
+	    if (i == This->nFilters)
+		break;
+	}
+	/* Unable to find a suitable name */
+	if (j == 10000)
+	{
+	    CoTaskMemFree(wszFilterName);
+	    return VFW_E_DUPLICATE_NAME;
+	}
+    }
+    else
+	memcpy(wszFilterName, pName, (strlenW(pName) + 1) * sizeof(WCHAR));
+
 
     if (This->nFilters + 1 > This->filterCapacity)
     {
@@ -182,18 +234,21 @@ static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
         This->filterCapacity = newCapacity;
     }
 
-    hr = IBaseFilter_JoinFilterGraph(pFilter, (IFilterGraph *)This, pName);
+    hr = IBaseFilter_JoinFilterGraph(pFilter, (IFilterGraph *)This, wszFilterName);
 
     if (SUCCEEDED(hr))
     {
-        size = (strlenW(pName) + 1) * sizeof(WCHAR);
         IBaseFilter_AddRef(pFilter);
         This->ppFiltersInGraph[This->nFilters] = pFilter;
-        This->pFilterNames[This->nFilters] = CoTaskMemAlloc(size);
-        memcpy(This->pFilterNames[This->nFilters], pName, size);
+        This->pFilterNames[This->nFilters] = wszFilterName;
         This->nFilters++;
     }
+    else
+	CoTaskMemFree(wszFilterName);
 
+    if (SUCCEEDED(hr) && duplicate_name)
+	return VFW_S_DUPLICATE_NAME;
+	
     return hr;
 }
 
@@ -229,7 +284,7 @@ static HRESULT WINAPI Graphbuilder_RemoveFilter(IGraphBuilder *iface,
     return hr; /* FIXME: check this error code */
 }
 
-static HRESULT WINAPI Graphbuilder_EnumFilter(IGraphBuilder *iface,
+static HRESULT WINAPI Graphbuilder_EnumFilters(IGraphBuilder *iface,
 					      IEnumFilters **ppEnum) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
 
@@ -389,7 +444,7 @@ static ICOM_VTABLE(IGraphBuilder) IGraphBuilder_VTable =
     Graphbuilder_Release,
     Graphbuilder_AddFilter,
     Graphbuilder_RemoveFilter,
-    Graphbuilder_EnumFilter,
+    Graphbuilder_EnumFilters,
     Graphbuilder_FindFilterByName,
     Graphbuilder_ConnectDirect,
     Graphbuilder_Reconnect,
@@ -2147,6 +2202,7 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     fimpl->pFilterNames = NULL;
     fimpl->nFilters = 0;
     fimpl->filterCapacity = 0;
+    fimpl->nameIndex = 1;
 
     *ppObj = fimpl;
     return S_OK;
