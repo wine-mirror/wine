@@ -106,6 +106,7 @@ C_SRCS = \
 	reg.c \
 	rtl.c \
 	rtlstr.c \
+	rtlbitmap.c \
 	string.c \
 	sec.c \
 	signal_i386.c \
@@ -119,6 +120,8 @@ GEN_ASM_SRCS = \
 	relay32.s
 
 EXTRA_OBJS = $(MODULE).glue.o
+
+SUBDIRS = tests
 
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/files \

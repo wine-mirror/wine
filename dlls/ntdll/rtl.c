@@ -380,46 +380,6 @@ DWORD WINAPI RtlInitializeGenericTable(void)
 }
 
 /******************************************************************************
- *  RtlInitializeBitMap			[NTDLL.@]
- *
- */
-NTSTATUS WINAPI RtlInitializeBitMap(DWORD x1,DWORD x2,DWORD x3)
-{
-	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
-	return 0;
-}
-
-/******************************************************************************
- *  RtlSetBits				[NTDLL.@]
- *
- */
-NTSTATUS WINAPI RtlSetBits(DWORD x1,DWORD x2,DWORD x3)
-{
-	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
-	return 0;
-}
-
-/******************************************************************************
- *  RtlFindClearBits			[NTDLL.@]
- *
- */
-NTSTATUS WINAPI RtlFindClearBits(DWORD x1,DWORD x2,DWORD x3)
-{
-	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
-	return 0;
-}
-
-/******************************************************************************
- *  RtlClearBits			[NTDLL.@]
- *
- */
-NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
-{
-	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3);
-	return 0;
-}
-
-/******************************************************************************
  *  RtlCopyMemory   [NTDLL]
  *
  */
@@ -502,4 +462,42 @@ void WINAPI RtlGetNtVersionNumbers(LPDWORD major, LPDWORD minor, LPDWORD build)
 		/* FIXME: Does anybody know the real formula? */
 		*build = (0xF0000000 | versionInfo.dwBuildNumber);
 	}
+}
+
+/*************************************************************************
+ * RtlFillMemoryUlong   [NTDLL.@]
+ *
+ * Fill memory with a 32 bit (dword) value.
+ *
+ * PARAMS
+ *  lpDest  [I] Bitmap pointer
+ *  ulCount [I] Number of dwords to write
+ *  ulValue [I] Value to fill with
+ *
+ * RETURNS
+ *  Nothing.
+ */
+VOID WINAPI RtlFillMemoryUlong(ULONG* lpDest, ULONG ulCount, ULONG ulValue)
+{
+  TRACE("(%p,%ld,%ld)\n", lpDest, ulCount, ulValue);
+
+  while(ulCount--)
+    *lpDest++ = ulValue;
+}
+
+/*************************************************************************
+ * RtlGetLongestNtPathLength    [NTDLL.@]
+ *
+ * Get the longest allowed path length
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The longest allowed path length (277 characters under Win2k).
+ */
+DWORD WINAPI RtlGetLongestNtPathLength(void)
+{
+  TRACE("()\n");
+  return 277;
 }

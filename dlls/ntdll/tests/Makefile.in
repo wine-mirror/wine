@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = ntdll.dll
+IMPORTS   = ntdll
+
+CTESTS = \
+	rtlbitmap.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

@@ -283,14 +283,14 @@
 @ stub RtlApplyRXactNoFlush
 @ stub RtlAreAllAccessesGranted
 @ stub RtlAreAnyAccessesGranted
-@ stub RtlAreBitsClear
-@ stub RtlAreBitsSet
+@ stdcall RtlAreBitsClear(ptr long long) RtlAreBitsClear
+@ stdcall RtlAreBitsSet(ptr long long) RtlAreBitsSet
 @ stdcall RtlAssert(ptr ptr long long) RtlAssert
 @ stub RtlCaptureStackBackTrace
 @ stub RtlCharToInteger
 @ stub RtlCheckRegistryKey
-@ stub RtlClearAllBits
-@ stdcall RtlClearBits(long long long) RtlClearBits
+@ stdcall RtlClearAllBits(ptr) RtlClearAllBits
+@ stdcall RtlClearBits(ptr long long) RtlClearBits
 @ stdcall RtlCompactHeap(long long) RtlCompactHeap
 @ stdcall RtlCompareMemory(ptr ptr long) RtlCompareMemory
 @ stub RtlCompareMemoryUlong
@@ -367,14 +367,22 @@
 @ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
 @ stub RtlExtendedMagicDivide
 @ stdcall RtlFillMemory(ptr long long) RtlFillMemory
-@ stub RtlFillMemoryUlong
-@ stdcall RtlFindClearBits(long long long) RtlFindClearBits
-@ stub RtlFindClearBitsAndSet
-@ stub RtlFindLongestRunClear
-@ stub RtlFindLongestRunSet
+@ stdcall RtlFillMemoryUlong(ptr long long) RtlFillMemoryUlong
+@ stdcall RtlFindClearBits(ptr long long) RtlFindClearBits
+@ stdcall RtlFindClearBitsAndSet(ptr long long) RtlFindClearBitsAndSet
+@ stdcall RtlFindClearRuns(ptr ptr long long) RtlFindClearRuns
+@ stdcall RtlFindLastBackwardRunClear(ptr long ptr) RtlFindLastBackwardRunClear
+@ stdcall RtlFindLastBackwardRunSet(ptr long ptr) RtlFindLastBackwardRunSet
+@ stdcall RtlFindLeastSignificantBit(ptr long long) RtlFindLeastSignificantBit
+@ stdcall RtlFindLongestRunClear(ptr long) RtlFindLongestRunClear
+@ stdcall RtlFindLongestRunSet(ptr long) RtlFindLongestRunSet
 @ stub RtlFindMessage
-@ stub RtlFindSetBits
-@ stub RtlFindSetBitsAndClear
+@ stdcall RtlFindMostSignificantBit(ptr long long) RtlFindMostSignificantBit
+@ stdcall RtlFindNextForwardRunClear(ptr long ptr) RtlFindNextForwardRunClear
+@ stdcall RtlFindNextForwardRunSet(ptr long ptr) RtlFindNextForwardRunSet
+@ stdcall RtlFindSetBits(ptr long long) RtlFindSetBits
+@ stdcall RtlFindSetBitsAndClear(ptr long long) RtlFindSetBitsAndClear
+@ stdcall RtlFindSetRuns(ptr ptr long long) RtlFindSetRuns
 @ stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
 @ stdcall RtlFormatCurrentUserKeyPath(ptr) RtlFormatCurrentUserKeyPath
 @ stub RtlFormatMessage
@@ -395,7 +403,7 @@
 @ stub RtlGetElementGenericTable
 @ stub RtlGetFullPathName_U
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr) RtlGetGroupSecurityDescriptor
-@ stub RtlGetLongestNtPathLength
+@ stdcall RtlGetLongestNtPathLength() RtlGetLongestNtPathLength
 @ stub RtlGetNtGlobalFlags
 @ stdcall RtlGetNtProductType(ptr) RtlGetNtProductType
 @ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr) RtlGetOwnerSecurityDescriptor
@@ -413,7 +421,7 @@
 @ stub RtlInitNlsTables
 @ stdcall RtlInitString(ptr str) RtlInitString
 @ stdcall RtlInitUnicodeString(ptr wstr) RtlInitUnicodeString
-@ stdcall RtlInitializeBitMap(long long long) RtlInitializeBitMap
+@ stdcall RtlInitializeBitMap(ptr long long) RtlInitializeBitMap
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr) RtlInitializeCriticalSection
 @ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long) RtlInitializeCriticalSectionAndSpinCount
@@ -454,8 +462,8 @@
 @ stdcall RtlNormalizeProcessParams(ptr) RtlNormalizeProcessParams
 @ stdcall RtlNtStatusToDosError(long) RtlNtStatusToDosError
 @ stub RtlNumberGenericTableElements
-@ stub RtlNumberOfClearBits
-@ stub RtlNumberOfSetBits
+@ stdcall RtlNumberOfClearBits(ptr) RtlNumberOfClearBits
+@ stdcall RtlNumberOfSetBits(ptr) RtlNumberOfSetBits
 @ stdcall RtlOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlOemStringToUnicodeString(ptr ptr long) RtlOemStringToUnicodeString
 @ stdcall RtlOemToUnicodeN(ptr long ptr ptr long) RtlOemToUnicodeN
@@ -489,8 +497,8 @@
 @ stdcall RtlSecondsSince1970ToTime(long ptr) RtlSecondsSince1970ToTime
 @ stdcall RtlSecondsSince1980ToTime(long ptr) RtlSecondsSince1980ToTime
 @ stub RtlSelfRelativeToAbsoluteSD
-@ stub RtlSetAllBits
-@ stdcall RtlSetBits(long long long) RtlSetBits
+@ stdcall RtlSetAllBits(ptr) RtlSetAllBits
+@ stdcall RtlSetBits(ptr long long) RtlSetBits
 @ stub RtlSetCurrentDirectory_U
 @ stub RtlSetCurrentEnvironment
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long) RtlSetDaclSecurityDescriptor

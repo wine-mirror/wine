@@ -1095,6 +1095,86 @@ NtAccessCheck(
 	OUT PULONG GrantedAccess,
 	OUT PBOOLEAN AccessStatus);
 
+/* bitmap functions */
+
+/* Bitmap data type */
+typedef struct tagRTL_BITMAP
+{
+  ULONG  SizeOfBitMap; /* Number of bits in the bitmap */
+  LPBYTE BitMapBuffer; /* Bitmap data, assumed sized to a DWORD boundary */
+} RTL_BITMAP, *PRTL_BITMAP;
+
+typedef const RTL_BITMAP* PCRTL_BITMAP;
+
+/* Bit run data type */
+typedef struct tagRTL_BITMAP_RUN
+{
+  ULONG StartOfRun; /* Bit position at which run starts - FIXME: Name? */
+  ULONG SizeOfRun;  /* Size of the run in bits - FIXME: Name? */
+} RTL_BITMAP_RUN, *PRTL_BITMAP_RUN;
+
+typedef const RTL_BITMAP_RUN* PCRTL_BITMAP_RUN;
+
+/* Bitmap functions */
+VOID    WINAPI RtlInitializeBitMap(PRTL_BITMAP,LPBYTE,ULONG);
+VOID    WINAPI RtlSetAllBits(PRTL_BITMAP);
+VOID    WINAPI RtlClearAllBits(PRTL_BITMAP);
+VOID    WINAPI RtlSetBits(PRTL_BITMAP,ULONG,ULONG);
+VOID    WINAPI RtlClearBits(PRTL_BITMAP,ULONG,ULONG);
+ULONG   WINAPI RtlFindSetBits(PCRTL_BITMAP,ULONG,ULONG);
+ULONG   WINAPI RtlFindClearBits(PCRTL_BITMAP,ULONG,ULONG);
+ULONG   WINAPI RtlFindSetBitsAndClear(PRTL_BITMAP,ULONG,ULONG);
+ULONG   WINAPI RtlFindClearBitsAndSet(PRTL_BITMAP,ULONG,ULONG);
+ULONG   WINAPI RtlNumberOfSetBits(PCRTL_BITMAP);
+ULONG   WINAPI RtlNumberOfClearBits(PCRTL_BITMAP);
+ULONG   WINAPI RtlFindSetRuns(PCRTL_BITMAP,PRTL_BITMAP_RUN,ULONG,BOOLEAN);
+ULONG   WINAPI RtlFindClearRuns(PCRTL_BITMAP,PRTL_BITMAP_RUN,ULONG,BOOLEAN);
+ULONG   WINAPI RtlFindLongestRunSet(PCRTL_BITMAP,PULONG);
+ULONG   WINAPI RtlFindLongestRunClear(PCRTL_BITMAP,PULONG);
+BOOLEAN WINAPI RtlAreBitsSet(PCRTL_BITMAP,ULONG,ULONG);
+BOOLEAN WINAPI RtlAreBitsClear(PCRTL_BITMAP,ULONG,ULONG);
+ULONG   WINAPI RtlFindLastBackwardRunSet(PCRTL_BITMAP,ULONG,PULONG);
+ULONG   WINAPI RtlFindLastBackwardRunClear(PCRTL_BITMAP,ULONG,PULONG);
+ULONG   WINAPI RtlFindNextForwardRunSet(PCRTL_BITMAP,ULONG,PULONG);
+ULONG   WINAPI RtlFindNextForwardRunClear(PCRTL_BITMAP,ULONG,PULONG);
+CCHAR   WINAPI RtlFindMostSignificantBit(ULONGLONG);
+CCHAR   WINAPI RtlFindLeastSignificantBit(ULONGLONG);
+
+/* Inline the trivial calls */
+#define RtlInitializeBitMap(p,b,s) \
+  do { \
+    PRTL_BITMAP _p = (p); \
+    _p->SizeOfBitMap = (s); \
+    _p->BitMapBuffer = (b); \
+  } while(0)
+
+#define RtlSetAllBits(p) \
+  do { \
+    PRTL_BITMAP _p = (p); \
+    memset(_p->BitMapBuffer,0xff,((_p->SizeOfBitMap + 31) & 0xffffffe0) >> 3); \
+  } while(0)
+
+#define RtlClearAllBits(p) \
+  do {\
+    PRTL_BITMAP _p = (p);\
+    memset(_p->BitMapBuffer,0,((_p->SizeOfBitMap + 31) & 0xffffffe0) >> 3); \
+  } while(0)
+
+inline static BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
+{
+  if (lpBits && ulBit < lpBits->SizeOfBitMap &&
+      lpBits->BitMapBuffer[ulBit >> 3] & (1 << (ulBit & 7)))
+    return TRUE;
+  return FALSE;
+}
+
+/* Endianness */
+#define RtlStoreUlong(p,v)  do { ULONG _v = (v); memcpy((p), &_v, sizeof(_v)); } while (0)
+#define RtlRetrieveUlong(p,s) memcpy((p), (s), sizeof(ULONG))
+
+#define RtlStoreUlonglong(p,v) do { ULONGLONG _v = (v); memcpy((p), &_v, sizeof(_v)); } while (0)
+#define RtlRetrieveUlonglong(p,s) memcpy((p), (s), sizeof(ULONGLONG))
+
 #ifdef __cplusplus
 }
 #endif
