@@ -204,7 +204,7 @@ static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 }
 
 /***********************************************************************
- *		X11DRV_Synchronize (X11DRV.@)
+ *		Synchronize (X11DRV.@)
  *
  * Synchronize with the X server. Should not be used too often.
  */
@@ -215,7 +215,7 @@ void X11DRV_Synchronize( void )
 }
 
 /***********************************************************************
- *		X11DRV_UserRepaintDisable (X11DRV.@)
+ *		UserRepaintDisable (X11DRV.@)
  */
 void X11DRV_UserRepaintDisable( BOOL bDisabled )
 {
@@ -867,7 +867,7 @@ static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 }
 
 /**********************************************************************
- *		X11DRV_CheckFocus (X11DRV.@)
+ *		CheckFocus (X11DRV.@)
  */
 BOOL X11DRV_CheckFocus(void)
 {
@@ -1582,7 +1582,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
       
       if( !aux_long && p_data)	/* don't bother if > 64K */
 	{
-	  char *p = (char*) p_data;
+	  signed char *p = (signed char*) p_data;
 	  char *p_drop;
 	  
 	  aux_long = 0; 
