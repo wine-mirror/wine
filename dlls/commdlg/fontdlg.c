@@ -590,7 +590,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     HCURSOR hcursor=SetCursor(LoadCursorW(0,(LPWSTR)IDC_WAIT));
     static const WCHAR strColorName[] = {'[','c','o','l','o','r',' ','n','a','m','e',']',0};
 
-    SetPropW(hDlg, strWineFontData, (HANDLE)lParam);
+    SetPropW(hDlg, strWineFontData, (HANDLE)lpcf);
     lpxx=lpcf->lpLogFont;
     TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
 
