@@ -944,7 +944,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
         }
         flags &= ~(O_CREAT | O_EXCL | O_TRUNC);
     }
-    if ((fd->unix_fd = open( name, flags, *mode )) == -1)
+    if ((fd->unix_fd = open( name, flags & ~O_TRUNC, *mode )) == -1)
     {
         file_set_error();
         release_object( fd );
@@ -990,6 +990,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
             return NULL;
         }
         strcpy( closed_fd->unlink, unlink_name );
+        if (flags & O_TRUNC) ftruncate( fd->unix_fd, 0 );
     }
     else
     {
