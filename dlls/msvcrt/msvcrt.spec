@@ -719,7 +719,7 @@
 @ cdecl strtoul(str ptr long) strtoul
 @ cdecl strxfrm(ptr str long) strxfrm
 @ forward -noimport swprintf ntdll.swprintf
-@ stub swscanf #(wstr wstr) varargs
+@ varargs swscanf(wstr wstr) MSVCRT_swscanf
 @ cdecl system(str) MSVCRT_system
 @ forward -noimport tan ntdll.tan
 @ cdecl tanh(double) tanh
