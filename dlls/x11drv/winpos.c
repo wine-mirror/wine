@@ -380,6 +380,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     WND *ptr, *top;
     X11DRV_WND_DATA *data = win->pDriverData;
     Drawable drawable;
+    BOOL visible;
     int org_x, org_y, mode = IncludeInferiors;
 
     /* don't clip siblings if using parent clip region */
@@ -387,10 +388,22 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 
     /* find the top parent in the hierarchy that isn't clipping siblings */
     top = NULL;
-    for (ptr = win->parent; ptr && ptr->parent; ptr = ptr->parent)
-        if (!(ptr->dwStyle & WS_CLIPSIBLINGS)) top = ptr;
+    visible = (win->dwStyle & WS_VISIBLE) != 0;
 
-    if (!top && !(flags & DCX_CLIPSIBLINGS)) top = win;
+    if (visible)
+    {
+        for (ptr = win->parent; ptr && ptr->parent; ptr = ptr->parent)
+        {
+            if (!(ptr->dwStyle & WS_VISIBLE))
+            {
+                visible = FALSE;
+                top = NULL;
+                break;
+            }
+            if (!(ptr->dwStyle & WS_CLIPSIBLINGS)) top = ptr;
+        }
+        if (!top && visible && !(flags & DCX_CLIPSIBLINGS)) top = win;
+    }
 
     if (top)
     {
@@ -438,13 +451,21 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         /* need to recompute the visible region */
-        HRGN visRgn = get_visible_region( win, top, flags, mode );
+        HRGN visRgn;
 
-        if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
-            CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+        if (visible)
+        {
+            visRgn = get_visible_region( win, top, flags, mode );
 
-        /* make it relative to the drawable origin */
-        OffsetRgn( visRgn, org_x, org_y );
+            if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
+                CombineRgn( visRgn, visRgn, hrgn,
+                            (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+
+            /* make it relative to the drawable origin */
+            OffsetRgn( visRgn, org_x, org_y );
+        }
+        else visRgn = CreateRectRgn( 0, 0, 0, 0 );
+
         SelectVisRgn16( hdc, visRgn );
         DeleteObject( visRgn );
     }
