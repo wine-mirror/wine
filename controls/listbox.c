@@ -1887,6 +1887,12 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
     {
         if (descr->style & LBS_EXTENDEDSEL)
         {
+	    /* we should perhaps make sure that all items are deselected
+	       FIXME: needed for !LBS_EXTENDEDSEL, too ?
+	    if (!(wParam & (MK_SHIFT|MK_CONTROL)))
+		LISTBOX_SetSelection( wnd, descr, -1, FALSE, FALSE);
+	    */
+
             if (!(wParam & MK_SHIFT)) descr->anchor_item = index;
             if (wParam & MK_CONTROL)
             {

@@ -7887,16 +7887,16 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
       }
       else
       {
-        if (ListView_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED
-            && infoPtr->nEditLabelItem == -1)
+	BOOL was_selected =
+	    (ListView_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED);
+
+	/* set selection (clears other pre-existing selections) */
+        LISTVIEW_SetSelection(hwnd, nItem);
+
+        if (was_selected && infoPtr->nEditLabelItem == -1)
         {
           infoPtr->nEditLabelItem = nItem;
         }
-        else
-        {
-          LISTVIEW_SetSelection(hwnd, nItem);
-        }
-
       }
     }
   }
