@@ -4884,6 +4884,9 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 {
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
 
+  if (dib->dibSection.dshSection)
+      X11DRV_DIB_Coerce(bmp, DIB_Status_InSync, FALSE);
+
   if (dib->image)
   {
       wine_tsx11_lock();

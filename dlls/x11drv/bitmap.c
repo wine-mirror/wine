@@ -419,11 +419,11 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (bmp)
     {
+        if (bmp->dib) X11DRV_DIB_DeleteDIBSection( bmp );
         wine_tsx11_lock();
         if (bmp->physBitmap) XFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
         bmp->physBitmap = NULL;
         wine_tsx11_unlock();
-        if (bmp->dib) X11DRV_DIB_DeleteDIBSection( bmp );
         GDI_ReleaseObj( hbitmap );
     }
     return TRUE;
