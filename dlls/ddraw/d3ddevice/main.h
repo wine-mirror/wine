@@ -175,22 +175,22 @@ Main_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided(LPDIRECT3DDEVICE7 ifac
                                                           DWORD dwFlags);
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
-                                           D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                           LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
-                                           DWORD dwStartVertex,
-                                           DWORD dwNumVertices,
-                                           DWORD dwFlags);
+Main_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
+					      D3DPRIMITIVETYPE d3dptPrimitiveType,
+					      LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
+					      DWORD dwStartVertex,
+					      DWORD dwNumVertices,
+					      DWORD dwFlags);
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
-                                                  D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                                  LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
-                                                  DWORD dwStartVertex,
-                                                  DWORD dwNumVertices,
-                                                  LPWORD lpwIndices,
-                                                  DWORD dwIndexCount,
-                                                  DWORD dwFlags);
+Main_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
+						     D3DPRIMITIVETYPE d3dptPrimitiveType,
+						     LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
+						     DWORD dwStartVertex,
+						     DWORD dwNumVertices,
+						     LPWORD lpwIndices,
+						     DWORD dwIndexCount,
+						     DWORD dwFlags);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility(LPDIRECT3DDEVICE7 iface,
@@ -343,22 +343,6 @@ HRESULT WINAPI
 Main_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
                                             D3DLIGHTSTATETYPE dwLightStateType,
                                             DWORD dwLightState);
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_DrawPrimitiveVB(LPDIRECT3DDEVICE3 iface,
-                                           D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                           LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
-                                           DWORD dwStartVertex,
-                                           DWORD dwNumVertices,
-                                           DWORD dwFlags);
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE3 iface,
-                                                  D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                                  LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
-                                                  LPWORD lpwIndices,
-                                                  DWORD dwIndexCount,
-                                                  DWORD dwFlags);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
@@ -757,3 +741,19 @@ HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
 				       DWORD dwStage,
 				       LPDIRECT3DTEXTURE2 lpTexture2);
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveVB(LPDIRECT3DDEVICE3 iface,
+					    D3DPRIMITIVETYPE d3dptPrimitiveType,
+					    LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
+					    DWORD dwStartVertex,
+					    DWORD dwNumVertices,
+					    DWORD dwFlags);
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE3 iface,
+						   D3DPRIMITIVETYPE d3dptPrimitiveType,
+						   LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
+						   LPWORD lpwIndices,
+						   DWORD dwIndexCount,
+						   DWORD dwFlags);

@@ -63,6 +63,7 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 				     D3DPRIMITIVETYPE d3dptPrimitiveType,
 				     DWORD d3dvtVertexType,
 				     LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+				     DWORD dwStartVertex,
 				     DWORD dwVertexCount,
 				     LPWORD dwIndices,
 				     DWORD dwIndexCount,
@@ -765,7 +766,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	    strided.normal.dwStride = sizeof(D3DVERTEX);
 	    strided.textureCoords[0].lpvData = &((D3DVERTEX *) lpvertex)->u7.tu;
 	    strided.textureCoords[0].dwStride = sizeof(D3DVERTEX);
-	    draw_primitive_strided_7(This, d3dpt, D3DFVF_VERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	    draw_primitive_strided_7(This, d3dpt, D3DFVF_VERTEX, &strided, 0, 0 /* Unused */, index, maxvert, 0 /* Unused */);
 	} break;
 
         case D3DVT_LVERTEX: {
@@ -777,7 +778,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	    strided.specular.dwStride = sizeof(D3DLVERTEX);
 	    strided.textureCoords[0].lpvData = &((D3DLVERTEX *) lpvertex)->u6.tu;
 	    strided.textureCoords[0].dwStride = sizeof(D3DLVERTEX);
-	    draw_primitive_strided_7(This, d3dpt, D3DFVF_LVERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	    draw_primitive_strided_7(This, d3dpt, D3DFVF_LVERTEX, &strided, 0, 0 /* Unused */, index, maxvert, 0 /* Unused */);
 	} break;
 
         case D3DVT_TLVERTEX: {
@@ -789,7 +790,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	    strided.specular.dwStride = sizeof(D3DTLVERTEX);
 	    strided.textureCoords[0].lpvData = &((D3DTLVERTEX *) lpvertex)->u7.tu;
 	    strided.textureCoords[0].dwStride = sizeof(D3DTLVERTEX);
-	    draw_primitive_strided_7(This, d3dpt, D3DFVF_TLVERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	    draw_primitive_strided_7(This, d3dpt, D3DFVF_TLVERTEX, &strided, 0, 0 /* Unused */, index, maxvert, 0 /* Unused */);
 	} break;
 
         default:
@@ -963,6 +964,7 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 				     D3DPRIMITIVETYPE d3dptPrimitiveType,
 				     DWORD d3dvtVertexType,
 				     LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+				     DWORD dwStartVertex,
 				     DWORD dwVertexCount,
 				     LPWORD dwIndices,
 				     DWORD dwIndexCount,
@@ -1153,6 +1155,7 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 			     D3DPRIMITIVETYPE d3dptPrimitiveType,
 			     DWORD d3dvtVertexType,
 			     LPVOID lpvVertices,
+			     DWORD dwStartVertex,
 			     DWORD dwVertexCount,
 			     LPWORD dwIndices,
 			     DWORD dwIndexCount,
@@ -1192,7 +1195,7 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
     for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++)
         strided.textureCoords[tex_index].dwStride  = current_offset;
     
-    draw_primitive_strided_7(This, d3dptPrimitiveType, d3dvtVertexType, &strided, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+    draw_primitive_strided_7(This, d3dptPrimitiveType, d3dvtVertexType, &strided, dwStartVertex, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
 }
 
 HRESULT WINAPI
@@ -1206,7 +1209,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitive(LPDIRECT3DDEVICE7 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwFlags);
 
-    draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, NULL, dwVertexCount, dwFlags);
+    draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, 0, dwVertexCount, NULL, dwVertexCount, dwFlags);
     
     return DD_OK;
 }
@@ -1224,7 +1227,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive(LPDIRECT3DDEVICE7 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
 
-    draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+    draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, 0, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
     
     return DD_OK;
 }
@@ -1239,7 +1242,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, dwFlags);
-    draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, NULL, dwVertexCount, dwFlags);
+    draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, 0, dwVertexCount, NULL, dwVertexCount, dwFlags);
     return DD_OK;
 }
 
@@ -1255,7 +1258,45 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
-    draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
+    draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, 0, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
+					    D3DPRIMITIVETYPE d3dptPrimitiveType,
+					    LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
+					    DWORD dwStartVertex,
+					    DWORD dwNumVertices,
+					    DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    IDirect3DVertexBufferImpl *vb_impl = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, lpD3DVertexBuf);
+
+    TRACE("(%p/%p)->(%08x,%p,%08lx,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, dwFlags);
+
+    draw_primitive_7(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, vb_impl->vertices, dwStartVertex, dwNumVertices, NULL, dwNumVertices, dwFlags);
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
+						   D3DPRIMITIVETYPE d3dptPrimitiveType,
+						   LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
+						   DWORD dwStartVertex,
+						   DWORD dwNumVertices,
+						   LPWORD lpwIndices,
+						   DWORD dwIndexCount,
+						   DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    IDirect3DVertexBufferImpl *vb_impl = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, lpD3DVertexBuf);
+    
+    TRACE("(%p/%p)->(%08x,%p,%08lx,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
+
+    draw_primitive_7(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, vb_impl->vertices, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
+
     return DD_OK;
 }
 
@@ -1459,8 +1500,8 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(GetClipStatus) Main_IDirect3DDeviceImpl_7_3T_2T_GetClipStatus,
     XCAST(DrawPrimitiveStrided) GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided,
     XCAST(DrawIndexedPrimitiveStrided) GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided,
-    XCAST(DrawPrimitiveVB) Main_IDirect3DDeviceImpl_7_DrawPrimitiveVB,
-    XCAST(DrawIndexedPrimitiveVB) Main_IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB,
+    XCAST(DrawPrimitiveVB) GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB,
+    XCAST(DrawIndexedPrimitiveVB) GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility,
     XCAST(GetTexture) Main_IDirect3DDeviceImpl_7_GetTexture,
     XCAST(SetTexture) GL_IDirect3DDeviceImpl_7_3T_SetTexture,
@@ -1527,8 +1568,8 @@ ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
     XCAST(GetClipStatus) Thunk_IDirect3DDeviceImpl_3_GetClipStatus,
     XCAST(DrawPrimitiveStrided) Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveStrided,
     XCAST(DrawIndexedPrimitiveStrided) Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveStrided,
-    XCAST(DrawPrimitiveVB) Main_IDirect3DDeviceImpl_3_DrawPrimitiveVB,
-    XCAST(DrawIndexedPrimitiveVB) Main_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
+    XCAST(DrawPrimitiveVB) Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveVB,
+    XCAST(DrawIndexedPrimitiveVB) Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility,
     XCAST(GetTexture) Main_IDirect3DDeviceImpl_3_GetTexture,
     XCAST(SetTexture) Thunk_IDirect3DDeviceImpl_3_SetTexture,

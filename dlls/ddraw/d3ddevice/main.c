@@ -427,12 +427,12 @@ Main_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided(LPDIRECT3DDEVICE7 ifac
 }
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
-                                           D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                           LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
-                                           DWORD dwStartVertex,
-                                           DWORD dwNumVertices,
-                                           DWORD dwFlags)
+Main_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
+					      D3DPRIMITIVETYPE d3dptPrimitiveType,
+					      LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
+					      DWORD dwStartVertex,
+					      DWORD dwNumVertices,
+					      DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     FIXME("(%p/%p)->(%08x,%p,%08lx,%08lx,%08lx): stub!\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, dwFlags);
@@ -440,14 +440,14 @@ Main_IDirect3DDeviceImpl_7_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
 }
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
-                                                  D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                                  LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
-                                                  DWORD dwStartVertex,
-                                                  DWORD dwNumVertices,
-                                                  LPWORD lpwIndices,
-                                                  DWORD dwIndexCount,
-                                                  DWORD dwFlags)
+Main_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
+						     D3DPRIMITIVETYPE d3dptPrimitiveType,
+						     LPDIRECT3DVERTEXBUFFER7 lpD3DVertexBuf,
+						     DWORD dwStartVertex,
+						     DWORD dwNumVertices,
+						     LPWORD lpwIndices,
+						     DWORD dwIndexCount,
+						     DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     FIXME("(%p/%p)->(%08x,%p,%08lx,%08lx,%p,%08lx,%08lx): stub!\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
@@ -829,32 +829,6 @@ Main_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     FIXME("(%p/%p)->(%08x,%08lx): stub!\n", This, iface, dwLightStateType, dwLightState);
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_DrawPrimitiveVB(LPDIRECT3DDEVICE3 iface,
-                                           D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                           LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
-                                           DWORD dwStartVertex,
-                                           DWORD dwNumVertices,
-                                           DWORD dwFlags)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08x,%p,%08lx,%08lx,%08lx): stub!\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, dwFlags);
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE3 iface,
-                                                  D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                                  LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
-                                                  LPWORD lpwIndices,
-                                                  DWORD dwIndexCount,
-                                                  DWORD dwFlags)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08x,%p,%p,%08lx,%08lx): stub!\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, lpwIndices, dwIndexCount, dwFlags);
     return DD_OK;
 }
 
@@ -1770,4 +1744,42 @@ Thunk_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
     return IDirect3DDevice7_SetTexture(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, iface),
 				       dwStage,
 				       COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirect3DTexture2, IDirectDrawSurface7, lpTexture2));
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveVB(LPDIRECT3DDEVICE3 iface,
+					    D3DPRIMITIVETYPE d3dptPrimitiveType,
+					    LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
+					    DWORD dwStartVertex,
+					    DWORD dwNumVertices,
+					    DWORD dwFlags)
+{
+    TRACE("(%p)->(%08x,%p,%08lx,%08lx,%08lx) thunking to IDirect3DDevice7 interface.\n", iface, 
+	  d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, dwFlags);
+    return IDirect3DDevice7_DrawPrimitiveVB(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, iface),
+					    d3dptPrimitiveType,
+					    COM_INTERFACE_CAST(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, IDirect3DVertexBuffer7, lpD3DVertexBuf),
+					    dwStartVertex,
+					    dwNumVertices,
+					    dwFlags);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE3 iface,
+						   D3DPRIMITIVETYPE d3dptPrimitiveType,
+						   LPDIRECT3DVERTEXBUFFER lpD3DVertexBuf,
+						   LPWORD lpwIndices,
+						   DWORD dwIndexCount,
+						   DWORD dwFlags)
+{
+    TRACE("(%p)->(%08x,%p,%p,%08lx,%08lx) thunking to IDirect3DDevice7 interface.\n", iface,
+	  d3dptPrimitiveType, lpD3DVertexBuf, lpwIndices, dwIndexCount, dwFlags);
+    return IDirect3DDevice7_DrawIndexedPrimitiveVB(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, iface),
+						   d3dptPrimitiveType,
+						   COM_INTERFACE_CAST(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer, IDirect3DVertexBuffer7, lpD3DVertexBuf),
+						   0,
+						   dwIndexCount,
+						   lpwIndices,
+						   dwIndexCount,
+						   dwFlags);
 }
