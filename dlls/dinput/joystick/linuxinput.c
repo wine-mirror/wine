@@ -183,6 +183,44 @@ static JoystickAImpl *alloc_device(REFGUID rguid, ICOM_VTABLE(IDirectInputDevice
 
 static HRESULT joydev_create_device(IDirectInputAImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
 {
+  int i, fd, havejoy = 0;
+
+  for (i=0;i<64;i++) {
+      char	buf[200];
+      BYTE	absbits[(ABS_MAX+7)/8],keybits[(KEY_MAX+7)/8];
+
+      sprintf(buf,EVDEVPREFIX"%d",i);
+      if (-1!=(fd=open(buf,O_RDONLY))) {
+	  if (-1==ioctl(fd,EVIOCGBIT(EV_ABS,sizeof(absbits)),absbits)) {
+	      perror("EVIOCGBIT EV_ABS");
+	      close(fd);
+	      continue;
+	  }
+	  if (-1==ioctl(fd,EVIOCGBIT(EV_KEY,sizeof(keybits)),keybits)) {
+	      perror("EVIOCGBIT EV_KEY");
+	      close(fd);
+	      continue;
+	  }
+	  /* A true joystick has at least axis X and Y, and at least 1
+	   * button. copied from linux/drivers/input/joydev.c */
+	  if (test_bit(absbits,ABS_X) && test_bit(absbits,ABS_Y) &&
+	      (   test_bit(keybits,BTN_TRIGGER)	||
+		  test_bit(keybits,BTN_A) 	||
+		  test_bit(keybits,BTN_1)
+	      )
+	  ) {
+	      FIXME("found a joystick at %s!\n",buf);
+	      havejoy = 1;
+	  }
+	  close(fd);
+      }
+      if (havejoy || (errno==ENODEV))
+	  break;
+  }
+
+  if (!havejoy)
+      return DIERR_DEVICENOTREG;
+
   if ((IsEqualGUID(&GUID_Joystick,rguid)) ||
       (IsEqualGUID(&DInput_Wine_Joystick_GUID,rguid))) {
     if ((riid == NULL) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid))) {
