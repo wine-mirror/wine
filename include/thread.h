@@ -120,7 +120,8 @@ typedef struct _TEB
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[624];                  /* --n 238 */
+    DWORD        pad6[623];                  /* --n 238 */
+    ULONG        LastStatusValue;            /* -2- bf4 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     WCHAR        StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     PVOID        DeallocationStack;          /* -2- e0c Base of the stack */

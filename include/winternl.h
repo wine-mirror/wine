@@ -225,7 +225,8 @@ typedef struct _TEB
     BYTE            __pad038[140];              /* 038 */
     ULONG           CurrentLocale;              /* 0c4 */
     BYTE            __pad0c8[1752];             /* 0c8 */
-    PVOID           Reserved2[278];             /* 7a0 */
+    PVOID           Reserved2[277];             /* 7a0 */
+    ULONG           LastStatusValue;            /* bf4 */
     UNICODE_STRING  StaticUnicodeString;        /* bf8 used by advapi32 */
     WCHAR           StaticUnicodeBuffer[261];   /* c00 used by advapi32 */
     PVOID           DeallocationStack;          /* e0c */
@@ -1573,6 +1574,7 @@ NTSTATUS  WINAPI RtlGetCurrentDirectory_U(ULONG, LPWSTR);
 NTSTATUS  WINAPI RtlGetDaclSecurityDescriptor(PSECURITY_DESCRIPTOR,PBOOLEAN,PACL *,PBOOLEAN);
 ULONG     WINAPI RtlGetFullPathName_U(PCWSTR,ULONG,PWSTR,PWSTR*);
 NTSTATUS  WINAPI RtlGetGroupSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID *,PBOOLEAN);
+NTSTATUS  WINAPI RtlGetLastNtStatus(void);
 DWORD     WINAPI RtlGetLastWin32Error(void);
 DWORD     WINAPI RtlGetLongestNtPathLength(void);
 BOOLEAN   WINAPI RtlGetNtProductType(LPDWORD);
@@ -1669,6 +1671,7 @@ NTSTATUS  WINAPI RtlSetEnvironmentVariable(PWSTR*,PUNICODE_STRING,PUNICODE_STRIN
 NTSTATUS  WINAPI RtlSetOwnerSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID,BOOLEAN);
 NTSTATUS  WINAPI RtlSetGroupSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID,BOOLEAN);
 void      WINAPI RtlSetLastWin32Error(DWORD);
+void      WINAPI RtlSetLastWin32ErrorAndNtStatusFromNtStatus(NTSTATUS);
 NTSTATUS  WINAPI RtlSetSaclSecurityDescriptor(PSECURITY_DESCRIPTOR,BOOLEAN,PACL,BOOLEAN);
 NTSTATUS  WINAPI RtlSetTimeZoneInformation(const TIME_ZONE_INFORMATION*);
 ULONG     WINAPI RtlSizeHeap(HANDLE,ULONG,PVOID);

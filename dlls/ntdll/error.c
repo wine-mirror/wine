@@ -97,8 +97,18 @@ ULONG WINAPI RtlNtStatusToDosErrorNoTeb( NTSTATUS status )
  */
 ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 {
-    /* FIXME: This function obviously does something with the Teb */
+    NtCurrentTeb()->LastStatusValue = status;
     return RtlNtStatusToDosErrorNoTeb( status );
+}
+
+/**********************************************************************
+ *      RtlGetLastNtStatus (NTDLL.@)
+ *
+ * Get the current per-thread status.
+ */
+NTSTATUS WINAPI RtlGetLastNtStatus(void)
+{
+    return NtCurrentTeb()->LastStatusValue;
 }
 
 /**********************************************************************
@@ -129,6 +139,19 @@ DWORD WINAPI RtlGetLastWin32Error(void)
 void WINAPI RtlSetLastWin32Error( DWORD err )
 {
     NtCurrentTeb()->LastErrorValue = err;
+}
+
+/***********************************************************************
+ *      RtlSetLastWin32ErrorAndNtStatusFromNtStatus (NTDLL.@)
+ *
+ * Set the per-thread status and error values.
+ *
+ * PARAMS
+ *  err [I] The new status value to set
+ */
+void WINAPI RtlSetLastWin32ErrorAndNtStatusFromNtStatus( NTSTATUS status )
+{
+    NtCurrentTeb()->LastErrorValue = RtlNtStatusToDosError( status );
 }
 
 /* conversion tables */

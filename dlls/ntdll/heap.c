@@ -132,12 +132,6 @@ static HEAP *firstHeap;     /* head of secondary heaps list */
 
 static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL quiet );
 
-/* SetLastError for ntdll */
-inline static void set_status( NTSTATUS status )
-{
-    NtCurrentTeb()->LastErrorValue = RtlNtStatusToDosError( status );
-}
-
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, size_t size )
 {
@@ -1179,7 +1173,7 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     if (!ptr) return TRUE;  /* freeing a NULL ptr isn't an error in Win2k */
     if (!heapPtr)
     {
-        set_status( STATUS_INVALID_HANDLE );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
         return FALSE;
     }
 
@@ -1189,7 +1183,7 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-        set_status( STATUS_INVALID_PARAMETER );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
         TRACE("(%p,%08lx,%08lx): returning FALSE\n",
                       heap, flags, (DWORD)ptr );
         return FALSE;
@@ -1234,7 +1228,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     if (!ptr) return NULL;
     if (!(heapPtr = HEAP_GetPtr( heap )))
     {
-        set_status( STATUS_INVALID_HANDLE );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
         return NULL;
     }
 
@@ -1250,7 +1244,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
-        set_status( STATUS_INVALID_PARAMETER );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
         TRACE("(%p,%08lx,%08lx,%08lx): returning NULL\n",
                       heap, flags, (DWORD)ptr, size );
         return NULL;
@@ -1278,7 +1272,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
             {
                 if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
                 if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-                set_status( STATUS_NO_MEMORY );
+                RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
                 return NULL;
             }
             HEAP_ShrinkBlock( subheap, pArena, size );
@@ -1294,7 +1288,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
             {
                 if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
                 if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-                set_status( STATUS_NO_MEMORY );
+                RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
                 return NULL;
             }
 
@@ -1429,7 +1423,7 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     if (!heapPtr)
     {
-        set_status( STATUS_INVALID_HANDLE );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
         return (ULONG)-1;
     }
     flags &= HEAP_NO_SERIALIZE;
@@ -1437,7 +1431,7 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
     if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
     {
-        set_status( STATUS_INVALID_PARAMETER );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
         ret = (ULONG)-1;
     }
     else

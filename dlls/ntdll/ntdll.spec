@@ -450,6 +450,7 @@
 @ stub RtlGetElementGenericTable
 @ stdcall RtlGetFullPathName_U(wstr long ptr ptr)
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
+@ stdcall RtlGetLastNtStatus()
 @ stdcall RtlGetLastWin32Error()
 @ stdcall RtlGetLongestNtPathLength()
 @ stub RtlGetNtGlobalFlags
@@ -579,6 +580,7 @@
 @ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 @ stub RtlSetInformationAcl
+@ stdcall RtlSetLastWin32ErrorAndNtStatusFromNtStatus(long)
 @ stdcall RtlSetLastWin32Error(long)
 @ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long)
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)
