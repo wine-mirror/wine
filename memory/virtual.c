@@ -110,6 +110,8 @@ static UINT page_size;
 #endif  /* __i386__ */
 #define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
 
+#define ADDRESS_SPACE_LIMIT  ((void *)0xc0000000)  /* top of the user address space */
+
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(mask)))
 
@@ -998,9 +1000,12 @@ LPVOID WINAPI VirtualAlloc(
         else
             base = ROUND_ADDR( addr, page_mask );
         size = (((UINT_PTR)addr + size + page_mask) & ~page_mask) - (UINT_PTR)base;
-        if ((base <= (char *)granularity_mask) || (base + size < base))
+
+        /* disallow low 64k, wrap-around and kernel space */
+        if ((base <= (char *)granularity_mask) ||
+            (base + size < base) ||
+            (base + size > (char *)ADDRESS_SPACE_LIMIT))
         {
-            /* disallow low 64k and wrap-around */
             SetLastError( ERROR_INVALID_PARAMETER );
             return NULL;
         }
@@ -1287,7 +1292,7 @@ DWORD WINAPI VirtualQuery(
     char *base, *alloc_base = 0;
     UINT size = 0;
 
-    if (addr >= (void*)0xc0000000) return 0;
+    if (addr >= ADDRESS_SPACE_LIMIT) return 0;
 
     base = ROUND_ADDR( addr, page_mask );
 
@@ -1299,7 +1304,7 @@ DWORD WINAPI VirtualQuery(
     {
         if (!view)
         {
-            size = (char *)0xffff0000 - alloc_base;
+            size = (char *)ADDRESS_SPACE_LIMIT - alloc_base;
             break;
         }
         if ((char *)view->base > base)
