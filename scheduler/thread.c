@@ -162,7 +162,7 @@ void CALLBACK THREAD_FreeTHDB( ULONG_PTR arg )
     TRACE("(%p) called\n", thdb );
     SERVICE_Delete( thdb->cleanup );
 
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );
     
     CloseHandle( thdb->event );
     while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
@@ -292,7 +292,7 @@ static void THREAD_Start(void)
 {
     THDB *thdb = THREAD_Current();
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
     PE_InitTls();
     MODULE_DllThreadAttach( NULL );
 

@@ -249,10 +249,10 @@ static void TASK_CallToStart(void)
     InitializeCriticalSection( &PROCESS_Current()->crit_section );
 
     /* Call USER signal proc */
-    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0, 0 );
-    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
 
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -575,9 +575,9 @@ void TASK_KillTask( HTASK16 hTask )
         pTask->userhandler( hTask, USIG16_TERMINATION, 0,
                             pTask->hInstance, pTask->hQueue );
 
-    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0, 0 );
-    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0, 0 );     /* FIXME */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );     /* FIXME */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
 
     if (nTaskCount <= 1)
     {
