@@ -646,9 +646,27 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
      */
     if (lpszcp != 0 && *lpszcp != '\0' && (!lpszParam || lpszcp < lpszParam))
     {
+        INT len;
+
+        /* Only truncate the parameter list if it's already been saved
+         * in lpUrlComponents->lpszExtraInfo.
+         */
+        if (lpszParam && lpUrlComponents->dwExtraInfoLength)
+            len = lpszParam - lpszcp;
+        else
+        {
+            /* Leave the parameter list in lpszUrlPath.  Strip off any trailing
+             * newlines if necessary.
+             */
+            LPSTR lpsznewline = strchr (lpszcp, '\n');
+            if (lpsznewline != NULL)
+                len = lpsznewline - lpszcp;
+            else
+                len = strlen(lpszcp);
+        }
+
         if (!SetUrlComponentValue(&lpUrlComponents->lpszUrlPath, 
-         &lpUrlComponents->dwUrlPathLength, lpszcp, 
-	 lpszParam ? lpszParam - lpszcp : strlen(lpszcp)))
+         &lpUrlComponents->dwUrlPathLength, lpszcp, len))
          return FALSE;
     }
     else
@@ -656,7 +674,8 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
         lpUrlComponents->dwUrlPathLength = 0;
     }
 
-    TRACE("%s: host(%s) path(%s)\n", lpszUrl, lpUrlComponents->lpszHostName, lpUrlComponents->lpszUrlPath);
+    TRACE("%s: host(%s) path(%s) extra(%s)\n", lpszUrl, lpUrlComponents->lpszHostName,
+          lpUrlComponents->lpszUrlPath, lpUrlComponents->lpszExtraInfo);
 
     return TRUE;
 }
