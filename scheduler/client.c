@@ -222,7 +222,6 @@ unsigned int wine_server_call( void *req_ptr )
     struct __server_request_info * const req = req_ptr;
     sigset_t old_set;
 
-    memset( (char *)&req->u.req + req->size, 0, sizeof(req->u.req) - req->size );
     sigprocmask( SIG_BLOCK, &block_set, &old_set );
     send_request( req );
     wait_reply( req );

@@ -42,7 +42,6 @@ struct __server_request_info
         union generic_request req;    /* request structure */
         union generic_reply   reply;  /* reply structure */
     } u;
-    size_t                size;       /* size of request structure */
     unsigned int          data_count; /* count of request data pointers */
     void                 *reply_data; /* reply data pointer */
     struct __server_iovec data[__SERVER_MAX_DATA];  /* request variable size data */
@@ -96,10 +95,8 @@ inline static void wine_server_set_reply( void *req_ptr, void *ptr, unsigned int
         struct __server_request_info __req; \
         struct type##_request * const req = &__req.u.req.type##_request; \
         const struct type##_reply * const reply = &__req.u.reply.type##_reply; \
+        memset( &__req.u.req, 0, sizeof(__req.u.req) ); \
         __req.u.req.request_header.req = REQ_##type; \
-        __req.u.req.request_header.request_size = 0; \
-        __req.u.req.request_header.reply_size = 0; \
-        __req.size = sizeof(*req); \
         __req.data_count = 0; \
         (void)reply; \
         do
