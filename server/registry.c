@@ -550,7 +550,7 @@ static void query_key( struct key *key, struct query_key_info_request *req )
     int max_subkey = 0, max_class = 0;
     int max_value = 0, max_data = 0;
 
-    for (i = 0; i < key->last_subkey; i++)
+    for (i = 0; i <= key->last_subkey; i++)
     {
         struct key *subkey = key->subkeys[i];
         len = strlenW( subkey->name );
@@ -559,7 +559,7 @@ static void query_key( struct key *key, struct query_key_info_request *req )
         len = strlenW( subkey->class );
         if (len > max_class) max_class = len;
     }
-    for (i = 0; i < key->last_value; i++)
+    for (i = 0; i <= key->last_value; i++)
     {
         len = strlenW( key->values[i].name );
         if (len > max_value) max_value = len;
