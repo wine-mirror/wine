@@ -78,7 +78,8 @@ static const DOS_DEVICE DOSFS_Devices[] =
     { "COM3",		0x80c0 },
     { "COM4",		0x80c0 },
     { "SCSIMGR$",	0xc0c0 },
-    { "HPSCAN",		0xc0c0 }
+    { "HPSCAN",         0xc0c0 },
+    { "EMMXXXX0",       0x0000 }
 };
 
 #define GET_DRIVE(path) \
@@ -786,7 +787,8 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSEC
 			return handle;
 		}
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
-                    !strcmp(DOSFS_Devices[i].name,"HPSCAN"))
+                    !strcmp(DOSFS_Devices[i].name,"HPSCAN") ||
+                    !strcmp(DOSFS_Devices[i].name,"EMMXXXX0"))
                 {
                     return FILE_CreateDevice( i, access, sa );
 		}

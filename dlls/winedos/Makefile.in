@@ -21,6 +21,7 @@ C_SRCS = \
 	int29.c \
 	int31.c \
 	int33.c \
+	int67.c \
 	ioports.c \
 	module.c \
 	vga.c \

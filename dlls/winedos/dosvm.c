@@ -603,7 +603,13 @@ static const INTPROC real_mode_handlers[] =
     /* 18 */ 0, 0, INT_Int1aHandler, 0, 0, 0, 0, 0,
     /* 20 */ DOSVM_Int20Handler, DOSVM_Int21Handler, 0, 0, 0, INT_Int25Handler, 0, 0,
     /* 28 */ 0, DOSVM_Int29Handler, INT_Int2aHandler, 0, 0, 0, 0, INT_Int2fHandler,
-    /* 30 */ 0, DOSVM_Int31Handler, 0, DOSVM_Int33Handler
+    /* 30 */ 0, DOSVM_Int31Handler, 0, DOSVM_Int33Handler, 0, 0, 0, 0,
+    /* 38 */ 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 40 */ 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 48 */ 0, 0, 0, 0, 0, 0, 0, 0, 
+    /* 50 */ 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 58 */ 0, 0, 0, 0, 0, 0, 0, 0,
+    /* 60 */ 0, 0, 0, 0, 0, 0, 0, DOSVM_Int67Handler
 };
 
 

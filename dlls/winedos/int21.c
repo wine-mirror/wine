@@ -12,10 +12,41 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "console.h"
+#include "file.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int21);
 
+void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
+{
+  const DOS_DEVICE *dev = DOSFS_GetDeviceByHandle(
+      DosFileHandleToWin32Handle(BX_reg(context)) );
+
+  if (dev && !strcasecmp( dev->name, "EMMXXXX0" )) {
+    EMS_Ioctl_Handler(context);
+    return;
+  }
+
+  switch (AL_reg(context))
+  {
+  case 0x0b: /* SET SHARING RETRY COUNT */
+      TRACE("IOCTL - SET SHARING RETRY COUNT pause %d retries %d\n",
+           CX_reg(context), DX_reg(context));
+      if (!CX_reg(context))
+      {
+         AX_reg(context) = 1;
+         SET_CFLAG(context);
+         break;
+      }
+      DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
+      if (!DX_reg(context))
+         DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
+      RESET_CFLAG(context);
+      break;
+  default:
+      DOS3Call( context );
+  }
+}
 
 /***********************************************************************
  *           DOSVM_Int21Handler
@@ -114,23 +145,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x44: /* IOCTL */
-        switch (AL_reg(context))
-        {
-        case 0x0b:   /* SET SHARING RETRY COUNT */
-            TRACE("IOCTL - SET SHARING RETRY COUNT pause %d retries %d\n",
-                  CX_reg(context), DX_reg(context));
-            if (!CX_reg(context))
-            {
-                AX_reg(context) = 1;
-                SET_CFLAG(context);
-                break;
-            }
-            DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
-            if (!DX_reg(context))
-                DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
-            RESET_CFLAG(context);
-            break;
-        }
+        DOSVM_Int21Handler_Ioctl( context );
         break;
 
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */

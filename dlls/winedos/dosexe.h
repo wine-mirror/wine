@@ -92,6 +92,10 @@ extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int33Message(UINT,WPARAM,LPARAM);
 
+/* int67.c */
+extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);
+extern void WINAPI EMS_Ioctl_Handler(CONTEXT86*);
+
 /* xms.c */
 extern void WINAPI XMS_Handler(CONTEXT86*);
 
