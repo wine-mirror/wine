@@ -185,6 +185,36 @@ static void OLEPictureImpl_SetBitmap(OLEPictureImpl*This) {
   DeleteDC(hdcRef);
 }
 
+static void OLEPictureImpl_SetIcon(OLEPictureImpl * This)
+{
+    ICONINFO infoIcon;
+
+    TRACE("icon handle %p\n", This->desc.u.icon.hicon);
+    if (GetIconInfo(This->desc.u.icon.hicon, &infoIcon)) {
+        HDC hdcRef;
+        BITMAP bm;
+
+        TRACE("bitmap handle for icon is %p\n", infoIcon.hbmColor);
+        if(GetObjectA(infoIcon.hbmColor ? infoIcon.hbmColor : infoIcon.hbmMask, sizeof(bm), &bm) != sizeof(bm)) {
+            ERR("GetObject fails on icon bitmap\n");
+            return;
+        }
+
+        This->origWidth = bm.bmWidth;
+        This->origHeight = infoIcon.hbmColor ? bm.bmHeight : bm.bmHeight / 2;
+        /* see comment on HIMETRIC on OLEPictureImpl_SetBitmap() */
+        hdcRef = GetDC(0);
+        This->himetricWidth = (This->origWidth *2540)/GetDeviceCaps(hdcRef, LOGPIXELSX);
+        This->himetricHeight= (This->origHeight *2540)/GetDeviceCaps(hdcRef, LOGPIXELSY);
+        ReleaseDC(0, hdcRef);
+
+        DeleteObject(infoIcon.hbmMask);
+        if (infoIcon.hbmColor) DeleteObject(infoIcon.hbmColor);
+    } else {
+        ERR("GetIconInfo() fails on icon %p\n", This->desc.u.icon.hicon);
+    }
+}
+
 /************************************************************************
  * OLEPictureImpl_Construct
  *
@@ -260,6 +290,8 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
 	break;
 
       case PICTYPE_ICON:
+        OLEPictureImpl_SetIcon(newObject);
+        break;
       case PICTYPE_ENHMETAFILE:
       default:
 	FIXME("Unsupported type %d\n", pictDesc->picType);
