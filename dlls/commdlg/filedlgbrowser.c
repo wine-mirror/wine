@@ -71,6 +71,14 @@ extern HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
  *   Helper functions
  */
 
+static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
+{
+    char lpstrPath[MAX_PATH];
+    COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
+    SetCurrentDirectoryA(lpstrPath);
+    TRACE("new current folder %s\n", lpstrPath);
+}
+
 /* copied from shell32 to avoid linking to it */
 static HRESULT COMDLG32_StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
@@ -363,6 +371,8 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     /* Release old pidlAbsCurrent and update its value */
     COMDLG32_SHFree((LPVOID)fodInfos->ShellInfos.pidlAbsCurrent);
     fodInfos->ShellInfos.pidlAbsCurrent = pidlTmp;
+
+    COMDLG32_UpdateCurrentDir(fodInfos);
 
     /* Create the window */
     TRACE("create view window\n");

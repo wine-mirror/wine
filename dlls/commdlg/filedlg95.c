@@ -26,7 +26,7 @@
  *
  * FIXME: flags not implemented: OFN_CREATEPROMPT, OFN_DONTADDTORECENT,
  * OFN_ENABLEINCLUDENOTIFY, OFN_ENABLESIZING, OFN_EXTENSIONDIFFERENT,
- * OFN_NOCHANGEDIR, OFN_NODEREFERENCELINKS, OFN_NOREADONLYRETURN,
+ * OFN_NODEREFERENCELINKS, OFN_NOREADONLYRETURN,
  * OFN_NOTESTFILECREATE, OFN_OVERWRITEPROMPT, OFN_USEMONIKERS
  *
  * FIXME: lCustData for lpfnHook (WM_INITDIALOG)
@@ -58,7 +58,7 @@ DEFAULT_DEBUG_CHANNEL(commdlg);
 #define UNIMPLEMENTED_FLAGS \
 (OFN_CREATEPROMPT | OFN_DONTADDTORECENT |\
 OFN_ENABLEINCLUDENOTIFY | OFN_ENABLESIZING | OFN_EXTENSIONDIFFERENT |\
-OFN_NOCHANGEDIR | OFN_NODEREFERENCELINKS | OFN_NOREADONLYRETURN |\
+OFN_NODEREFERENCELINKS | OFN_NOREADONLYRETURN |\
 OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT /*| OFN_USEMONIKERS*/)
 
 #define IsHooked(fodInfos) \
@@ -274,6 +274,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   FileOpenDlgInfos *fodInfos;
   HINSTANCE hInstance;
   LPCSTR lpstrInitialDir = (LPCSTR)-1;
+  LPSTR lpstrSavDir = NULL;
   DWORD dwFlags = 0;
   
   /* Initialise FileOpenDlgInfos structure*/  
@@ -286,6 +287,13 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   /* Save original hInstance value */
   hInstance = ofn->hInstance;
   fodInfos->ofnInfos->hInstance = MapHModuleLS(ofn->hInstance);
+
+  /* save current directory */
+  if (ofn->Flags & OFN_NOCHANGEDIR)
+  {
+     lpstrSavDir = MemAlloc(MAX_PATH);
+     GetCurrentDirectoryA(MAX_PATH, lpstrSavDir);
+  }
 
   dwFlags = ofn->Flags;
   ofn->Flags = ofn->Flags|OFN_WINE;
@@ -305,6 +313,12 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       break;
     default :
       ret = 0;
+  }
+
+  if (lpstrSavDir)
+  {
+      SetCurrentDirectoryA(lpstrSavDir);
+      MemFree(lpstrSavDir);
   }
 
   if (lpstrInitialDir != (LPCSTR)-1)
