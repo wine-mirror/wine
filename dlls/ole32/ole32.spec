@@ -1,4 +1,4 @@
-  1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
+  1 stdcall BindMoniker(ptr long ptr ptr) BindMoniker
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID
   3 stdcall CLSIDFromString(wstr ptr) CLSIDFromString
   4 stdcall CoBuildVersion() CoBuildVersion
