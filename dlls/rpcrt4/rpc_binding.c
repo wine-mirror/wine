@@ -516,10 +516,13 @@ static LPSTR RPCRT4_strconcatA(LPSTR dst, LPCSTR src)
 {
   DWORD len = strlen(dst), slen = strlen(src);
   LPSTR ndst = HeapReAlloc(GetProcessHeap(), 0, dst, (len+slen+2)*sizeof(CHAR));
-  if (!ndst) HeapFree(GetProcessHeap(), 0, dst);
+  if (!ndst)
+  {
+    HeapFree(GetProcessHeap(), 0, dst);
+    return NULL;
+  }
   ndst[len] = ',';
-  memcpy(ndst+len+1, src, slen*sizeof(CHAR));
-  ndst[len+slen+1] = 0;
+  memcpy(ndst+len+1, src, slen+1);
   return ndst;
 }
 
@@ -527,10 +530,13 @@ static LPWSTR RPCRT4_strconcatW(LPWSTR dst, LPCWSTR src)
 {
   DWORD len = strlenW(dst), slen = strlenW(src);
   LPWSTR ndst = HeapReAlloc(GetProcessHeap(), 0, dst, (len+slen+2)*sizeof(WCHAR));
-  if (!ndst) HeapFree(GetProcessHeap(), 0, dst);
+  if (!ndst) 
+  {
+    HeapFree(GetProcessHeap(), 0, dst);
+    return NULL;
+  }
   ndst[len] = ',';
-  memcpy(ndst+len+1, src, slen*sizeof(WCHAR));
-  ndst[len+slen+1] = 0;
+  memcpy(ndst+len+1, src, (slen+1)*sizeof(WCHAR));
   return ndst;
 }
 
