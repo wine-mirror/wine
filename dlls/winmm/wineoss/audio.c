@@ -724,9 +724,6 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, WORD uDevID, BOOL reset)
     }
 }
 
-#define MIN_SLEEP_TIME 100 /* millis. NB: <100 millis appears instant to a
-			    * human
-			    */
 /**************************************************************************
  * 			wodPlayer_AwaitEvent			[internal]
  * Wait for a command to be sent to the wodPlayer or for time to pass
@@ -752,8 +749,6 @@ static void wodPlayer_AwaitEvent( WINE_WAVEOUT* wwo,
 	else
 	    dwSleepTime=min( dwNextFeedTime, dwNextNotifyTime );
     }
-    if( dwSleepTime != INFINITE && dwSleepTime < MIN_SLEEP_TIME )
-	dwSleepTime=MIN_SLEEP_TIME;
     TRACE( "waiting %lu millis (%lu,%lu)\n", dwSleepTime,
 	   dwNextFeedTime,dwNextNotifyTime );
     WaitForSingleObject(wwo->msgRing.msg_event, dwSleepTime);
@@ -793,7 +788,7 @@ static void wodPlayer_ProcessMessages( WINE_WAVEOUT* wwo, WORD uDevID )
 		for (wh = &(wwo->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
 		*wh = lpWaveHdr;
 	    }
-	    if (!wwo->lpPlayPtr) wwo->lpPlayPtr = lpWaveHdr;
+	    wodPlayer_BeginWaveHdr(wwo,lpWaveHdr);
 	    if (wwo->state == WINE_WS_STOPPED)
 		wwo->state = WINE_WS_PLAYING;
 	    break;
