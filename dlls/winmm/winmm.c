@@ -2607,7 +2607,8 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
 
     TRACE("(%p, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
-    if (lpWaveOutHdr == NULL) return MMSYSERR_INVALPARAM;
+    if (lpWaveOutHdr == NULL || uSize < sizeof (WAVEHDR))
+	return MMSYSERR_INVALPARAM;
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -2625,6 +2626,9 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 
     TRACE("(%p, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
+    if (lpWaveOutHdr == NULL || uSize < sizeof (WAVEHDR))
+	return MMSYSERR_INVALPARAM;
+    
     if (!(lpWaveOutHdr->dwFlags & WHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
     }
