@@ -43,8 +43,11 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 	TRACE("\n");
 
 	/* to get writeable copy */
-	cmdline = HEAP_strdupW( GetProcessHeap(), 0, lpCmdline);
-	s=cmdline;i=0;
+        if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, (strlenW(lpCmdline)+1) * sizeof(WCHAR) )))
+            return NULL;
+        strcpyW( cmdline, lpCmdline );
+        s=cmdline;
+        i=0;
 	while (*s)
 	{ /* space */
 	  if (*s==0x0020) 
@@ -60,21 +63,19 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 	s=t=cmdline;
 	i=0;
 	while (*s)
-	{ if (*s==0x0020)
-	  { *s=0;
-	    argv[i++]=HEAP_strdupW( GetProcessHeap(), 0, t );
-	    *s=0x0020;
-	    while (*s && *s==0x0020)
-	      s++;
-	    t=s;
-	    continue;
-	  }
-	  s++;
+	{
+            if (*s==0x0020)
+            {
+                argv[i++]=t;
+                while (*s==0x0020) *s++ = 0;
+                t=s;
+                continue;
+            }
+            s++;
 	}
 	if (*t)
-	  argv[i++]=(LPWSTR)HEAP_strdupW( GetProcessHeap(), 0, t );
+	  argv[i++]=t;
 
-	HeapFree( GetProcessHeap(), 0, cmdline );
 	argv[i]=NULL;
 	*numargs=i;
 	return argv;

@@ -43,14 +43,6 @@ inline static LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
     return p;
 }
 
-inline static LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
-{
-    INT len = strlenW(str) + 1;
-    LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
-    if (p) memcpy( p, str, len * sizeof(WCHAR) );
-    return p;
-}
-
 inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
 {
     LPWSTR ret;

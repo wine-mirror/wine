@@ -25,7 +25,6 @@
 #include "wine/unicode.h"
 #include "wine/port.h"
 #include "win.h"
-#include "heap.h"
 #include "controls.h"
 #include "nonclient.h"
 #include "user.h"
@@ -1736,7 +1735,9 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
                 flags |= MF_HELP;
                 str++;
             }
-            if (!(text = HEAP_strdupW( GetProcessHeap(), 0, str ))) return FALSE;
+            if (!(text = HeapAlloc( GetProcessHeap(), 0, (strlenW(str)+1) * sizeof(WCHAR) )))
+                return FALSE;
+            strcpyW( text, str );
             item->text = text;
         }
     }
@@ -3531,13 +3532,18 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
 BOOL WINAPI InsertMenuA( HMENU hMenu, UINT pos, UINT flags,
                              UINT id, LPCSTR str )
 {
-    BOOL ret;
+    BOOL ret = FALSE;
 
     if (IS_STRING_ITEM(flags) && str)
     {
-        LPWSTR newstr = HEAP_strdupAtoW( GetProcessHeap(), 0, str );
-        ret = InsertMenuW( hMenu, pos, flags, id, newstr );
-        HeapFree( GetProcessHeap(), 0, newstr );
+        INT len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        LPWSTR newstr = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if (newstr)
+        {
+            MultiByteToWideChar( CP_ACP, 0, str, -1, newstr, len );
+            ret = InsertMenuW( hMenu, pos, flags, id, newstr );
+            HeapFree( GetProcessHeap(), 0, newstr );
+        }
         return ret;
     }
     else return InsertMenuW( hMenu, pos, flags, id, (LPCWSTR)str );
@@ -3684,13 +3690,18 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
 BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
                              UINT id, LPCSTR str )
 {
-    BOOL ret;
+    BOOL ret = FALSE;
 
     if (IS_STRING_ITEM(flags) && str)
     {
-        LPWSTR newstr = HEAP_strdupAtoW( GetProcessHeap(), 0, str );
-        ret = ModifyMenuW( hMenu, pos, flags, id, newstr );
-        HeapFree( GetProcessHeap(), 0, newstr );
+        INT len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        LPWSTR newstr = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if (newstr)
+        {
+            MultiByteToWideChar( CP_ACP, 0, str, -1, newstr, len );
+            ret = ModifyMenuW( hMenu, pos, flags, id, newstr );
+            HeapFree( GetProcessHeap(), 0, newstr );
+        }
         return ret;
     }
     else return ModifyMenuW( hMenu, pos, flags, id, (LPCWSTR)str );
@@ -4366,6 +4377,30 @@ BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
                                      lpmii, TRUE);
 }
 
+
+/* set a menu item text from a ASCII or Unicode string */
+inline static void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicode )
+{
+    if (!text)
+    {
+        menu->text = NULL;
+        menu->fType |= MF_SEPARATOR;
+    }
+    else if (unicode)
+    {
+        if ((menu->text = HeapAlloc( GetProcessHeap(), 0, (strlenW(text)+1) * sizeof(WCHAR) )))
+            strcpyW( menu->text, text );
+    }
+    else
+    {
+        LPCSTR str = (LPCSTR)text;
+        int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((menu->text = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, str, -1, menu->text, len );
+    }
+}
+
+
 /**********************************************************************
  *		SetMenuItemInfo_common
  */
@@ -4391,16 +4426,8 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
 	menu->text = lpmii->dwTypeData;
 
-       if (IS_STRING_ITEM(menu->fType)) {
-            if (menu->text) {
-                if (unicode)
-                   menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
-                else
-                   menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR)lpmii->dwTypeData);
-                }
-            else
-                menu->fType |= MF_SEPARATOR;
-	}
+       if (IS_STRING_ITEM(menu->fType))
+           set_menu_item_text( menu, lpmii->dwTypeData, unicode );
     }
 
     if (lpmii->fMask & MIIM_FTYPE ) {
@@ -4419,14 +4446,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	/* free the string when used */
 	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
 	    HeapFree(GetProcessHeap(), 0, menu->text);
-            if (lpmii->dwTypeData) {
-	        if (unicode)
-		    menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
-	        else
-		    menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR) lpmii->dwTypeData);
-            }
-            else
-                menu->fType |= MF_SEPARATOR;
+            set_menu_item_text( menu, lpmii->dwTypeData, unicode );
 	}
     }
 

@@ -1183,7 +1183,8 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
     if (lpTitle) 
     {
 	if (ci->frameTitle) HeapFree( GetProcessHeap(), 0, ci->frameTitle );
-	ci->frameTitle = HEAP_strdupW( GetProcessHeap(), 0, lpTitle );
+	if ((ci->frameTitle = HeapAlloc( GetProcessHeap(), 0, (strlenW(lpTitle)+1)*sizeof(WCHAR))))
+            strcpyW( ci->frameTitle, lpTitle );
     }
 
     if (ci->frameTitle)
