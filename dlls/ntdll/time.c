@@ -272,6 +272,9 @@ static const struct tagTZ_INFO TZ_INFO[] =
 #define DAYSPERNORMALYEAR  365
 #define DAYSPERLEAPYEAR    366
 #define MONSPERYEAR        12
+#define DAYSPERQUADRICENTENNIUM (365 * 400 + 97)
+#define DAYSPERNORMALCENTURY (365 * 100 + 24)
+#define DAYSPERNORMALQUADRENNIUM (365 * 4 + 1)
 
 /* 1601 to 1970 is 369 years plus 89 leap days */
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
@@ -350,7 +353,7 @@ VOID WINAPI RtlTimeToTimeFields(
 	PTIME_FIELDS TimeFields)
 {
 	const int *Months;
-	int SecondsInDay, CurYear;
+	int SecondsInDay, DeltaYear;
 	int LeapYear, CurMonth;
 	long int Days;
 	LONGLONG Time = liTime->QuadPart;
@@ -376,17 +379,22 @@ VOID WINAPI RtlTimeToTimeFields(
 	TimeFields->Weekday = (CSHORT) ((EPOCHWEEKDAY + Days) % DAYSPERWEEK);
 
 	/* compute year */
-	CurYear = EPOCHYEAR;
 	/* FIXME: handle calendar modifications */
-	while (1)
-	{ LeapYear = IsLeapYear(CurYear);
-	  if (Days < (long) YearLengths[LeapYear])
-	  { break;
-	  }
-	  CurYear++;
-	  Days = Days - (long) YearLengths[LeapYear];
-	}
-	TimeFields->Year = (CSHORT) CurYear;
+        TimeFields->Year = EPOCHYEAR;
+        DeltaYear = Days / DAYSPERQUADRICENTENNIUM;
+        TimeFields->Year += DeltaYear * 400;
+        Days -= DeltaYear * DAYSPERQUADRICENTENNIUM;
+        DeltaYear = Days / DAYSPERNORMALCENTURY;
+        TimeFields->Year += DeltaYear * 100;
+        Days -= DeltaYear * DAYSPERNORMALCENTURY;
+        DeltaYear = Days / DAYSPERNORMALQUADRENNIUM;
+        TimeFields->Year += DeltaYear * 4;
+        Days -= DeltaYear * DAYSPERNORMALQUADRENNIUM;
+        DeltaYear = Days / DAYSPERNORMALYEAR;
+        TimeFields->Year += DeltaYear;
+        Days -= DeltaYear * DAYSPERNORMALYEAR;
+
+        LeapYear = IsLeapYear(TimeFields->Year);
 
 	/* Compute month of year */
 	Months = MonthLengths[LeapYear];
