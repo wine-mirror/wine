@@ -279,7 +279,7 @@ static void test_interthread_marshal_and_unmarshal()
     
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
-    ok_ole_success(hr, CoReleaseMarshalData);
+    ok_ole_success(hr, CoUnmarshalInterface);
     IStream_Release(pStream);
 
     ok_more_than_one_lock();
@@ -397,7 +397,7 @@ static void test_tableweak_marshal_and_unmarshal_twice()
     /* this line is shows the difference between weak and strong table marshaling:
      *  weak has cLocks == 0
      *  strong has cLocks > 0 */
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 
     end_host_object(tid, thread);
 }
@@ -446,7 +446,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice()
     release_host_object(tid);
     IStream_Release(pStream);
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 
     end_host_object(tid, thread);
 }
@@ -534,10 +534,8 @@ static void test_normal_marshal_and_unmarshal_twice()
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
-    todo_wine {
     ok(hr == CO_E_OBJNOTCONNECTED,
         "CoUnmarshalInterface should have failed with error CO_E_OBJNOTCONNECTED for double unmarshal, instead of 0x%08lx\n", hr);
-    }
 
     IStream_Release(pStream);
 

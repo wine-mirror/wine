@@ -104,11 +104,12 @@ IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
 }
 
 /* creates a new stub manager and sets mid->oid when mid->oid == 0 */
-static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj, IRpcStubBuffer *stub, BOOL tablemarshal)
+static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj, IRpcStubBuffer *stub, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager = NULL;
     struct ifstub       *ifstub;
     APARTMENT           *apt;
+    BOOL                 tablemarshal;
 
     if (!(apt = COM_ApartmentFromOXID(mid->oxid, TRUE)))
     {
@@ -136,6 +137,8 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
         mid->oid = manager->oid;
     }
 
+    tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
+
     ifstub = stub_manager_new_ifstub(manager, stub, obj, riid, tablemarshal);
     if (!ifstub)
     {
@@ -146,7 +149,10 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
         return E_OUTOFMEMORY;
     }
 
-    if (!tablemarshal) stub_manager_ext_addref(manager, 1);
+    if (!tablemarshal)
+        stub_manager_ext_addref(manager, 1);
+    else if (mshlflags & MSHLFLAGS_TABLESTRONG)
+        stub_manager_ext_addref(manager, 1);
 
     mid->ipid = ifstub->ipid;
 
@@ -225,13 +231,48 @@ static const IInternalUnknownVtbl ClientIdentity_Vtbl =
 
 static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
 {
-    /* FIXME: call IRemUnknown::RemAddRef if necessary */
+    EnterCriticalSection(&This->parent->cs);
+    if (This->refs == 0)
+    {
+        APARTMENT * apt;
+
+        TRACE("getting public ref for ifproxy %p\n", This);
+
+        /* FIXME: call IRemUnknown::RemAddRef if necessary */
+
+        /* FIXME: this is a hack around not yet implemented IRemUnknown */
+        if ((apt = COM_ApartmentFromOXID(This->parent->oxid, TRUE)))
+        {
+            struct stub_manager * stubmgr;
+            if ((stubmgr = get_stub_manager(apt, This->parent->oid)))
+            {
+                stub_manager_ext_addref(stubmgr, 1);
+                This->refs += 1;
+
+                stub_manager_int_release(stubmgr);
+            }
+
+            COM_ApartmentRelease(apt);
+        }
+        else
+            FIXME("Need to implement IRemUnknown for inter-process table marshaling\n");
+    }
+    LeaveCriticalSection(&This->parent->cs);
+
     return S_OK;
 }
 
 static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
 {
-    /* FIXME: call IRemUnknown::RemRelease */
+    EnterCriticalSection(&This->parent->cs);
+    /*
+    if (This->refs > 0)
+    {
+        // FIXME: call IRemUnknown::RemRelease
+        This->refs = 0;
+    }
+    */
+    LeaveCriticalSection(&This->parent->cs);
     return S_OK;
 }
 
@@ -292,6 +333,7 @@ static HRESULT proxy_manager_create_ifproxy(struct proxy_manager * This, IPID ip
 
     list_init(&ifproxy->entry);
 
+    ifproxy->parent = This;
     ifproxy->ipid = ipid;
     ifproxy->iid = *riid;
     ifproxy->refs = cPublicRefs;
@@ -513,7 +555,6 @@ StdMarshalImpl_MarshalInterface(
   HRESULT               hres;
   IRpcStubBuffer       *stubbuffer;
   IPSFactoryBuffer     *psfacbuf;
-  BOOL                  tablemarshal;
   struct stub_manager  *manager;
   APARTMENT            *apt = COM_CurrentApt();
     
@@ -537,9 +578,6 @@ StdMarshalImpl_MarshalInterface(
     return hres;
   }
 
-  tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
-  if (tablemarshal) FIXME("table marshalling unimplemented\n");
-
   /* now fill out the MID */
   mid.oxid = apt->oxid;
  
@@ -555,7 +593,7 @@ StdMarshalImpl_MarshalInterface(
       mid.oid = 0;              /* will be set by register_ifstub */
   }
  
-  hres = register_ifstub(&mid, riid, pUnk, stubbuffer, tablemarshal);
+  hres = register_ifstub(&mid, riid, pUnk, stubbuffer, mshlflags);
   
   IUnknown_Release(pUnk);
   
@@ -581,6 +619,8 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
   IRpcChannelBuffer	*chanbuf;
   struct proxy_manager *proxy_manager;
   APARTMENT *apt = COM_CurrentApt();
+  APARTMENT *stub_apt;
+  ULONG cPublicRefs = 1;
 
   TRACE("(...,%s,....)\n",debugstr_guid(riid));
 
@@ -601,11 +641,45 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
       hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
       
       /* unref the ifstub. FIXME: only do this on success? */
-      stub_manager_ext_release(stubmgr, 1);
+      if (!stub_manager_is_table_marshaled(stubmgr, &mid.ipid))
+          stub_manager_ext_release(stubmgr, 1);
 
       stub_manager_int_release(stubmgr);
       return hres;
   }
+
+  /* notify stub manager about unmarshal if process-local object.
+   * note: if the oxid is not found then we and native will quite happily
+   * ignore table marshaling and normal marshaling rules regarding number of
+   * unmarshals, etc, but if you abuse these rules then your proxy could end
+   * up returning RPC_E_DISCONNECTED. */
+  if ((stub_apt = COM_ApartmentFromOXID(mid.oxid, TRUE)))
+  {
+      if ((stubmgr = get_stub_manager(stub_apt, mid.oid)))
+      {
+          if (!stub_manager_notify_unmarshal(stubmgr, &mid.ipid))
+              hres = CO_E_OBJNOTCONNECTED;
+
+          /* FIXME: hack around not using STDOBJREF yet */
+          if (stub_manager_is_table_marshaled(stubmgr, &mid.ipid))
+              cPublicRefs = 0;
+
+          stub_manager_int_release(stubmgr);
+      }
+      else
+      {
+          WARN("Couldn't find object for OXID %s, OID %s, assuming disconnected\n",
+              wine_dbgstr_longlong(mid.oxid),
+              wine_dbgstr_longlong(mid.oid));
+          hres = CO_E_OBJNOTCONNECTED;
+      }
+
+      COM_ApartmentRelease(stub_apt);
+  }
+  else
+      TRACE("Treating unmarshal from OXID %s as inter-process\n", wine_dbgstr_longlong(mid.oxid));
+
+  if (hres) return hres;
 
   if (!find_proxy_manager(apt, mid.oxid, mid.oid, &proxy_manager))
   {
@@ -621,7 +695,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
     if (hres == S_OK)
       IUnknown_AddRef((IUnknown *)ifproxy->iface);
     else if (hres == E_NOINTERFACE)
-      hres = proxy_manager_create_ifproxy(proxy_manager, mid.ipid, riid, 1, &ifproxy);
+      hres = proxy_manager_create_ifproxy(proxy_manager, mid.ipid, riid, cPublicRefs, &ifproxy);
 
     if (hres == S_OK)
       *ppv = ifproxy->iface; /* AddRef'd above */

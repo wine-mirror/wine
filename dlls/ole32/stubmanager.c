@@ -266,7 +266,12 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
 
     /* no need to ref this, same object as sb */
     stub->iface = iptr;
-    stub->table = tablemarshal;
+
+    if (tablemarshal)
+        stub->state = IFSTUB_STATE_TABLE_MARSHALED;
+    else
+        stub->state = IFSTUB_STATE_NORMAL_MARSHALED;
+
     stub->iid = *iid;
     stub->ipid = *iid; /* FIXME: should be globally unique */
 
@@ -287,4 +292,62 @@ static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *if
     IUnknown_Release(ifstub->iface);
 
     HeapFree(GetProcessHeap(), 0, ifstub);
+}
+
+/* returns TRUE if it is possible to unmarshal, FALSE otherwise. */
+BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid)
+{
+    struct ifstub *ifstub;
+    BOOL ret;
+
+    ifstub = stub_manager_ipid_to_ifstub(m, ipid);
+    if (!ifstub)
+    {
+        WARN("Can't find ifstub for OID %s, IPID %s\n",
+            wine_dbgstr_longlong(m->oid), wine_dbgstr_guid(ipid));
+        return FALSE;
+    }
+
+    EnterCriticalSection(&m->lock);
+
+    switch (ifstub->state)
+    {
+    case IFSTUB_STATE_TABLE_MARSHALED:
+        ret = TRUE;
+        break;
+    case IFSTUB_STATE_NORMAL_MARSHALED:
+        ifstub->state = IFSTUB_STATE_NORMAL_UNMARSHALED;
+        ret = TRUE;
+        break;
+    default:
+        WARN("object OID %s, IPID %s already unmarshaled\n",
+            wine_dbgstr_longlong(m->oid), wine_dbgstr_guid(ipid));
+        ret = FALSE;
+        break;
+    }
+
+    LeaveCriticalSection(&m->lock);
+
+    return ret;
+}
+
+/* is an ifstub table marshaled? */
+BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
+{
+    struct ifstub *ifstub;
+    BOOL ret;
+
+    ifstub = stub_manager_ipid_to_ifstub(m, ipid);
+    if (!ifstub)
+    {
+        WARN("Can't find ifstub for OID %s, IPID %s\n",
+            wine_dbgstr_longlong(m->oid), wine_dbgstr_guid(ipid));
+        return FALSE;
+    }
+
+    EnterCriticalSection(&m->lock);
+    ret = (ifstub->state == IFSTUB_STATE_TABLE_MARSHALED);
+    LeaveCriticalSection(&m->lock);
+
+    return ret;
 }

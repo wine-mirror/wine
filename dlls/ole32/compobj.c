@@ -48,10 +48,8 @@
  *
  *   - Implement IRemUnknown and marshalling for it, then use that for
  *     reffing/unreffing the stub manager from a proxy instead of our
- *     current hack of simply reffing the stub manager once when it's
- *     registered.
- *   - Implement table marshalling, then use it to let us do the final
- *     rework of the threading
+ *     current hack of simply reaching into local process memory to do it,
+ *     which obviously doesn't work inter-process.
  *
  *   - Make our custom marshalling use NDR to be wire compatible with
  *     native DCOM

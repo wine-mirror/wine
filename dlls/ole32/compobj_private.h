@@ -51,6 +51,13 @@ typedef struct apartment APARTMENT;
  *        must be used.
  */
 
+typedef enum ifstub_state
+{
+    IFSTUB_STATE_NORMAL_MARSHALED,
+    IFSTUB_STATE_NORMAL_UNMARSHALED,
+    IFSTUB_STATE_TABLE_MARSHALED
+} IFSTUB_STATE;
+
 /* an interface stub */
 struct ifstub   
 {
@@ -59,7 +66,7 @@ struct ifstub
     IID               iid;        /* RO */
     IPID              ipid;       /* RO */
     IUnknown         *iface;      /* RO */
-    BOOL              table;      /* CS stub_manager->lock */
+    IFSTUB_STATE      state;      /* CS stub_manager->lock */
 };
 
 
@@ -81,12 +88,13 @@ struct stub_manager
 /* imported interface proxy */
 struct ifproxy
 {
-  struct list entry;
+  struct list entry;       /* entry in proxy_manager list (CS parent->cs) */
+  struct proxy_manager *parent; /* owning proxy_manager (RO) */
   LPVOID iface;            /* interface pointer (RO) */
   IID iid;                 /* interface ID (RO) */
   IPID ipid;               /* imported interface ID (RO) */
   LPRPCPROXYBUFFER proxy;  /* interface proxy (RO) */
-  DWORD refs;              /* imported (public) references (CS ?) */
+  DWORD refs;              /* imported (public) references (CS parent->cs) */
 };
 
 /* imported object / proxy manager */
@@ -168,10 +176,12 @@ ULONG stub_manager_int_release(struct stub_manager *This);
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
 ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs);
 ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs);
-IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, const IPID *iid);
+IRpcStubBuffer *stub_manager_ipid_to_stubbuffer(struct stub_manager *m, const IPID *ipid);
 struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, BOOL tablemarshal);
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
 struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
+BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
+BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
 
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid);
 
