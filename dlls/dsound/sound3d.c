@@ -85,14 +85,14 @@ static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 }
 
 /* vector product (i believe it's called cross product in english */
-static inline LPD3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
+static inline D3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 {
-	LPD3DVECTOR c;
-	c->u1.x = (a->u2.y*b->u3.z) - (a->u3.z*b->u2.y);
-	c->u2.y = (a->u3.z*b->u1.x) - (a->u1.x*b->u3.z);
-	c->u3.z = (a->u1.x*b->u2.y) - (a->u2.y*b->u1.x);
+	D3DVECTOR c;
+	c.u1.x = (a->u2.y*b->u3.z) - (a->u3.z*b->u2.y);
+	c.u2.y = (a->u3.z*b->u1.x) - (a->u1.x*b->u3.z);
+	c.u3.z = (a->u1.x*b->u2.y) - (a->u2.y*b->u1.x);
 	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
-	      b->u3.z, c->u1.x, c->u2.y, c->u3.z);
+	      b->u3.z, c.u1.x, c.u2.y, c.u3.z);
 	return c;
 }
 
@@ -106,36 +106,51 @@ static inline D3DVALUE VectorMagnitude (LPD3DVECTOR a)
 }
 
 /* conversion between radians and degrees */
-static inline DWORD RadToDeg (DWORD angle)
+static inline D3DVALUE RadToDeg (D3DVALUE angle)
 {
-	DWORD newangle;
+	D3DVALUE newangle;
 	newangle = angle * (360/(2*M_PI));
-	TRACE("%ld rad = %ld deg\n", angle, newangle);
+	TRACE("%f rad = %f deg\n", angle, newangle);
 	return newangle;
 }
 
 /* conversion between degrees and radians */
-static inline DWORD DegToRad (DWORD angle)
+static inline D3DVALUE DegToRad (D3DVALUE angle)
 {
-	DWORD newangle;
+	D3DVALUE newangle;
 	newangle = angle * (2*M_PI/360);
-	TRACE("%ld deg = %ld rad\n", angle, newangle);
+	TRACE("%f deg = %f rad\n", angle, newangle);
 	return newangle;
 }
 
-/* angle between vectors */
-static inline DWORD AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
+/* angle between vectors - deg version */
+static inline D3DVALUE AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 {
-	DWORD angle, cos;
-	D3DVALUE la, lb, product;
+	D3DVALUE la, lb, product, angle, cos;
 	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
 	product = ScalarProduct (a,b);
 	la = VectorMagnitude (a);
 	lb = VectorMagnitude (b);
 	cos = product/(la*lb);
+	angle = acos(cos);
 	/* we now have angle in radians */
-	angle = RadToDeg(cos);
-	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %ld degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
+	angle = RadToDeg(angle);
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
+	      b->u2.y, b->u3.z, angle);
+	return angle;	
+}
+
+/* angle between vectors - rad version */
+static inline D3DVALUE AngleBetweenVectorsRad (LPD3DVECTOR a, LPD3DVECTOR b)
+{
+	D3DVALUE la, lb, product, angle, cos;
+	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
+	product = ScalarProduct (a,b);
+	la = VectorMagnitude (a);
+	lb = VectorMagnitude (b);
+	cos = product/(la*lb);
+	angle = acos(cos);
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
 	      b->u2.y, b->u3.z, angle);
 	return angle;	
 }
@@ -161,28 +176,29 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	IDirectSound3DListenerImpl *dsl;
 	
 	/* volume, at which the sound will be played after all calcs. */
-	LONG lVolume = 0;
+	D3DVALUE lVolume = 0;
 	/* intensity (used for distance related stuff) */
 	double flIntensity;
 	double flTemp;
 	/* stuff for distance related stuff calc. */
 	D3DVECTOR vDistance;
-	D3DVALUE flDistance;
-
-	if (ds3db->dsb->dsound->listener == NULL)
-		return;
+	D3DVALUE flDistance = 0;
+	/* panning related stuff */
+	D3DVALUE flAngle;
+	D3DVECTOR vLeft;
 	
+	if (ds3db->dsb->dsound->listener == NULL)
+		return;	
 	dsl = ds3db->dsb->dsound->listener;
 
-	/* FIXME: i guess initial volume should be that, but if it's set, sounds get too quiet.
-	          It makes sense, though: at min. distance we hear sound with practically no
-	          attuneation. If someone has idea, please do it.*/
-/*	lVolume = ds3db->lVolume; */
+	/* initial buffer volume */
+	 lVolume = ds3db->lVolume; 
 	
 	switch (ds3db->ds3db.dwMode)
 	{
 		case DS3DMODE_DISABLE:
-			TRACE("3D processing disabled\n");	
+			TRACE("3D processing disabled\n");
+			/* this one is here only to eliminate annoying warning message */
 			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
 			DSOUND_ForceRemix (ds3db->dsb);
 			break;
@@ -196,8 +212,8 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 			TRACE("Head-relative 3D processing mode\n");
 			/* distance between buffer and listener is same as buffer's position */
 			flDistance = VectorMagnitude (&ds3db->ds3db.vPosition);
-		break;
-	}	
+			break;
+	}
 	
 	if (flDistance > ds3db->ds3db.flMaxDistance)
 	{
@@ -213,24 +229,64 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 			flDistance = ds3db->ds3db.flMaxDistance;
 	}		
 	if (flDistance < ds3db->ds3db.flMinDistance)
-				flDistance = ds3db->ds3db.flMinDistance;
+		flDistance = ds3db->ds3db.flMinDistance;
 	
 	/* the following formula is taken from my physics book. I think it's ok for the *real* world...i hope m$ does it that way */
 	lVolume += 10000; /* ms likes working with negative volume...i don't */
 	lVolume /= 1000; /* convert hundreths of dB into B */
 	/* intensity level (loudness) = log10(Intensity/DefaultIntensity)...therefore */
-	flIntensity = pow(10,lVolume)/DEFAULT_INTENSITY;	
+	flIntensity = pow(10,lVolume)*DEFAULT_INTENSITY;	
 	flTemp = (flDistance/ds3db->ds3db.flMinDistance)*(flDistance/ds3db->ds3db.flMinDistance);
 	flIntensity /= flTemp;
-	lVolume = log10(flIntensity*DEFAULT_INTENSITY);
+	lVolume = log10(flIntensity/DEFAULT_INTENSITY);
 	lVolume *= 1000; /* convert back to hundreths of dB */
 	lVolume -= 10000; /* we need to do it in ms way */
-	TRACE("dist. att: Distance = %f, MinDistance = %f => adjusting volume %ld to %ld\n", flDistance, ds3db->ds3db.flMinDistance, ds3db->lVolume, lVolume);
-	/* add correct conning here */			
+	TRACE("dist. att: Distance = %f, MinDistance = %f => adjusting volume %ld to %f\n", flDistance, ds3db->ds3db.flMinDistance, ds3db->lVolume, lVolume);
+
+	/* conning */
+	/* sometimes it happens that vConeOrientation vector = (0,0,0); in this case angle is "nan" and it's useless*/
+	if (ds3db->ds3db.vConeOrientation.u1.x == 0 && ds3db->ds3db.vConeOrientation.u2.y == 0 && ds3db->ds3db.vConeOrientation.u3.z == 0)
+	{
+		TRACE("conning: cones not set\n");
+	}
+	else
+	{
+		/* calculate angle */
+		flAngle = AngleBetweenVectorsDeg(&ds3db->ds3db.vConeOrientation, &vDistance);
+		/* if by any chance it happens that OutsideConeAngle = InsideConeAngle (that means that conning has no effect) */
+		if (ds3db->ds3db.dwInsideConeAngle != ds3db->ds3db.dwOutsideConeAngle)
+		{
+			/* my test show that for my way of calc., we need only half of angles */
+			DWORD dwInsideConeAngle = ds3db->ds3db.dwInsideConeAngle/2;
+			DWORD dwOutsideConeAngle = ds3db->ds3db.dwOutsideConeAngle/2;
+			/* full volume */
+			if (flAngle < dwInsideConeAngle)
+				flAngle = dwInsideConeAngle;
+			/* min (app defined) volume */
+			if (flAngle > dwOutsideConeAngle)
+				flAngle = dwOutsideConeAngle;
+			/* this probably isn't the right thing, but it's ok for the time being */
+			lVolume += ((ds3db->ds3db.lConeOutsideVolume)/((dwOutsideConeAngle) - (dwInsideConeAngle))) * flAngle;
+			}
+		TRACE("conning: Angle = %f deg; InsideConeAngle(/2) = %ld deg; OutsideConeAngle(/2) = %ld deg; ConeOutsideVolume = %ld => adjusting volume to %f\n",
+		       flAngle, ds3db->ds3db.dwInsideConeAngle/2, ds3db->ds3db.dwOutsideConeAngle/2, ds3db->ds3db.lConeOutsideVolume, lVolume);
+	}
+	
+	/* panning */
+	vDistance = VectorBetweenTwoPoints(&dsl->ds3dl.vPosition, &ds3db->ds3db.vPosition);
+	vLeft = VectorProduct(&dsl->ds3dl.vOrientFront, &dsl->ds3dl.vOrientTop);
+	flAngle = AngleBetweenVectorsRad(&vLeft, &vDistance);
+	/* for now, we'll use "linear formula" (which is probably incorrect); if someone has it in book, correct it */
+	ds3db->dsb->volpan.lPan = 10000*2*flAngle/M_PI - 10000;
+	TRACE("panning: Angle = %f rad, lPan = %ld\n", flAngle, ds3db->dsb->volpan.lPan);
+	
+	/* doppler shift*/
+	
 	/* at last, we got the desired volume */
 	ds3db->dsb->volpan.lVolume = lVolume;
+	ds3db->dsb->dsound->volpan.lVolume = lVolume;
 	DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
-	DSOUND_ForceRemix (ds3db->dsb);
+	DSOUND_ForceRemix (ds3db->dsb);			
 }
 
 static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
