@@ -524,7 +524,9 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 	        success=FALSE;
 	}
         GDI_ReleaseObj( hdcs );
+        GDI_ReleaseObj( hdc );
 	DeleteDC( hdcs );
+        if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
     }
     GDI_ReleaseObj( hdc );
     return success;
