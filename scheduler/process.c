@@ -557,8 +557,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, req->pid, req->tid, fd, flags & CREATE_SUSPENDED,
-                               size, alloc_stack16 ))) goto error;
+    if (!(teb = THREAD_Create( pdb, req->pid, req->tid, fd, size, alloc_stack16 ))) goto error;
     teb->startup = PROCESS_Start;
     fd = -1;  /* don't close it */
 

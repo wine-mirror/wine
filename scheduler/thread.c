@@ -18,6 +18,7 @@
 #include "process.h"
 #include "task.h"
 #include "module.h"
+#include "global.h"
 #include "user.h"
 #include "winerror.h"
 #include "heap.h"
@@ -74,33 +75,105 @@ TEB *THREAD_IdToTEB( DWORD id )
  *
  * Initialization of a newly created TEB.
  */
-static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
+static BOOL THREAD_InitTEB( TEB *teb, PDB *pdb )
 {
-    DWORD old_prot;
+    teb->except    = (void *)~0UL;
+    teb->htask16   = pdb->task;
+    teb->self      = teb;
+    teb->tibflags  = (pdb->flags & PDB32_WIN16_PROC) ? 0 : TEBF_WIN32;
+    teb->tls_ptr   = teb->tls_array;
+    teb->process   = pdb;
+    teb->exit_code = STILL_ACTIVE;
+    teb->socket    = -1;
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
+    teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
+    return (teb->teb_sel != 0);
+}
+
+
+/***********************************************************************
+ *           THREAD_FreeTEB
+ *
+ * Free data structures associated with a thread.
+ * Must be called from the context of another thread.
+ */
+static void CALLBACK THREAD_FreeTEB( TEB *teb )
+{
+    TRACE("(%p) called\n", teb );
+    if (teb->cleanup) SERVICE_Delete( teb->cleanup );
+
+    /* Free the associated memory */
+
+    if (teb->socket != -1) close( teb->socket );
+    if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
+    SELECTOR_FreeBlock( teb->teb_sel, 1 );
+    if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
+    if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
+    VirtualFree( teb->stack_base, 0, MEM_RELEASE );
+}
+
+
+/***********************************************************************
+ *           THREAD_InitStack
+ *
+ * Allocate the stack of a thread.
+ */
+static TEB *THREAD_InitStack( TEB *teb, PDB *pdb, DWORD stack_size, BOOL alloc_stack16 )
+{
+    DWORD old_prot, total_size;
+    DWORD page_size = VIRTUAL_GetPageSize();
+    void *base;
 
     /* Allocate the stack */
 
-    /* FIXME:
-     * If stacksize smaller than 1 MB, allocate 1MB 
-     * (one program wanted only 10 kB, which is recommendable, but some WINE
-     *  functions, noteably in the files subdir, push HUGE structures and
-     *  arrays on the stack. They probably shouldn't.)
-     * If stacksize larger than 16 MB, warn the user. (We could shrink the stack
-     * but this could give more or less unexplainable crashes.)
-     */
-    if (stack_size<1024*1024)
-    	stack_size = 1024 * 1024;
     if (stack_size >= 16*1024*1024)
     	WARN("Thread stack size is %ld MB.\n",stack_size/1024/1024);
-    teb->stack_base = VirtualAlloc(NULL, stack_size + SIGNAL_STACK_SIZE +
-                                   (alloc_stack16 ? 0x10000 : 0),
-                                   MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-    if (!teb->stack_base) goto error;
-    /* Set a guard page at the bottom of the stack */
-    VirtualProtect( teb->stack_base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
-    teb->stack_top    = (char *)teb->stack_base + stack_size;
-    teb->stack_low    = teb->stack_base;
-    teb->signal_stack = teb->stack_top;  /* start of signal stack */
+
+    /* FIXME: some Wine functions use a lot of stack, so we add 64Kb here */
+    stack_size += 64 * 1024;
+
+    /* Memory layout in allocated block:
+     *
+     *   size                 contents
+     * 1 page              NOACCESS guard page
+     * SIGNAL_STACK_SIZE   signal stack
+     * 1 page              NOACCESS guard page
+     * 1 page              PAGE_GUARD guard page
+     * stack_size          normal stack
+     * 64Kb                16-bit stack (optional)
+     * 1 page              TEB (except for initial thread)
+     */
+
+    stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
+    total_size = stack_size + SIGNAL_STACK_SIZE + 3 * page_size;
+    if (alloc_stack16) total_size += 0x10000;
+    if (!teb) total_size += page_size;
+
+    if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
+        return NULL;
+
+    if (!teb)
+    {
+        teb = (TEB *)((char *)base + total_size - page_size);
+        if (!THREAD_InitTEB( teb, pdb ))
+        {
+            VirtualFree( base, 0, MEM_RELEASE );
+            return NULL;
+        }
+    }
+
+    teb->stack_low    = base;
+    teb->stack_base   = base;
+    teb->signal_stack = (char *)base + page_size;
+    teb->stack_top    = (char *)base + 3 * page_size + SIGNAL_STACK_SIZE + stack_size;
+
+    /* Setup guard pages */
+
+    VirtualProtect( base, 1, PAGE_NOACCESS, &old_prot );
+    VirtualProtect( (char *)teb->signal_stack + SIGNAL_STACK_SIZE, 1, PAGE_NOACCESS, &old_prot );
+    VirtualProtect( (char *)teb->signal_stack + SIGNAL_STACK_SIZE + page_size, 1,
+                    PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
 
     /* Allocate the 16-bit stack selector */
 
@@ -111,45 +184,12 @@ static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
         if (!teb->stack_sel) goto error;
         teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( teb->stack_sel, 
                                                 0x10000 - sizeof(STACK16FRAME) );
-        teb->signal_stack = (char *)teb->signal_stack + 0x10000;
     }
-
-    /* StaticUnicodeString */
-
-    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
-    teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
-    
-    return TRUE;
+    return teb;
 
 error:
-    if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
-    if (teb->stack_base) VirtualFree( teb->stack_base, 0, MEM_RELEASE );
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           THREAD_FreeTEB
- *
- * Free data structures associated with a thread.
- * Must be called from the context of another thread.
- */
-void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
-{
-    TEB *teb = (TEB *)arg;
-
-    TRACE("(%p) called\n", teb );
-    SERVICE_Delete( teb->cleanup );
-
-    /* Free the associated memory */
-
-    if (teb->socket != -1) close( teb->socket );
-    if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
-    SELECTOR_FreeBlock( teb->teb_sel, 1 );
-    if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
-    if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
-    VirtualFree( teb->stack_base, 0, MEM_RELEASE );
-    VirtualFree( teb, 0, MEM_RELEASE );
+    THREAD_FreeTEB( teb );
+    return NULL;
 }
 
 
@@ -157,77 +197,38 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
  *           THREAD_CreateInitialThread
  *
  * Create the initial thread.
+ *
+ * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
 TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 {
-    initial_teb.except      = (void *)-1;
-    initial_teb.self        = &initial_teb;
-    initial_teb.tibflags    = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
-    initial_teb.tls_ptr     = initial_teb.tls_array;
-    initial_teb.process     = pdb;
-    initial_teb.exit_code   = STILL_ACTIVE;
-    initial_teb.socket      = server_fd;
-
-    /* Allocate the TEB selector (%fs register) */
-
-    if (!(initial_teb.teb_sel = SELECTOR_AllocBlock( &initial_teb, 0x1000,
-                                                     SEGMENT_DATA, TRUE, FALSE )))
-    {
-        MESSAGE("Could not allocate fs register for initial thread\n" );
-        return NULL;
-    }
+    if (!THREAD_InitTEB( &initial_teb, pdb )) return NULL;
     SYSDEPS_SetCurThread( &initial_teb );
-
-    /* Now proceed with normal initialization */
+    initial_teb.socket = server_fd;
 
     if (CLIENT_InitThread()) return NULL;
-    if (!THREAD_InitTEB( &initial_teb, 0, TRUE )) return NULL;
-    return &initial_teb;
+    return THREAD_InitStack( &initial_teb, pdb, 0, TRUE );
 }
 
 
 /***********************************************************************
  *           THREAD_Create
  *
- * NOTES:
- * 	Native NT dlls are using the space left on the allocated page
- *	the first allocated TEB on NT is at 0x7ffde000, since we can't
- *	allocate in this area and don't support a granularity of 4kb
- *	yet we leave it to VirtualAlloc to choose an address.
  */
-TEB *THREAD_Create( PDB *pdb, void *pid, void *tid, int fd, DWORD flags,
+TEB *THREAD_Create( PDB *pdb, void *pid, void *tid, int fd,
                     DWORD stack_size, BOOL alloc_stack16 )
 {
-    TEB *teb = VirtualAlloc(0, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if (!teb) return NULL;
-    teb->except      = (void *)-1;
-    teb->htask16     = pdb->task;
-    teb->self        = teb;
-    teb->tibflags    = (pdb->flags & PDB32_WIN16_PROC)? 0 : TEBF_WIN32;
-    teb->tls_ptr     = teb->tls_array;
-    teb->process     = pdb;
-    teb->exit_code   = STILL_ACTIVE;
-    teb->socket      = fd;
-    teb->pid         = pid;
-    teb->tid         = tid;
-    fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
+    TEB *teb;
 
-    /* Allocate the TEB selector (%fs register) */
-
-    teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
-    if (!teb->teb_sel) goto error;
-
-    /* Do the rest of the initialization */
-
-    if (!THREAD_InitTEB( teb, stack_size, alloc_stack16 )) goto error;
-
-    TRACE("(%p) succeeded\n", teb);
+    if ((teb = THREAD_InitStack( NULL, pdb, stack_size, alloc_stack16 )))
+    {
+        teb->pid    = pid;
+        teb->tid    = tid;
+        teb->socket = fd;
+        fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
+        TRACE("(%p) succeeded\n", teb);
+    }
     return teb;
-
-error:
-    if (teb->teb_sel) SELECTOR_FreeBlock( teb->teb_sel, 1 );
-    VirtualFree( teb, 0, MEM_RELEASE );
-    return NULL;
 }
 
 
@@ -245,7 +246,7 @@ static void THREAD_Start(void)
     if (DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
                          GetCurrentProcess(), &cleanup_object, 
                          0, FALSE, DUPLICATE_SAME_ACCESS ))
-        NtCurrentTeb()->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTEB,
+        NtCurrentTeb()->cleanup = SERVICE_AddObject( cleanup_object, (PAPCFUNC)THREAD_FreeTEB,
                                                      (ULONG_PTR)NtCurrentTeb() );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
@@ -272,7 +273,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     handle = req->handle;
 
     if (!(teb = THREAD_Create( PROCESS_Current(), (void *)GetCurrentProcessId(),
-                               req->tid, socket, flags, stack, TRUE )))
+                               req->tid, socket, stack, TRUE )))
     {
         close( socket );
         return 0;
@@ -281,12 +282,12 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     teb->entry_point = start;
     teb->entry_arg   = param;
     teb->startup     = THREAD_Start;
+    if (id) *id = (DWORD)teb->tid;
     if (SYSDEPS_SpawnThread( teb ) == -1)
     {
         CloseHandle( handle );
         return 0;
     }
-    if (id) *id = (DWORD)teb->tid;
     return handle;
 }
 
