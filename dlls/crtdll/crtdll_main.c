@@ -17,9 +17,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 #include "config.h"
 #include "windef.h"
 #include "winbase.h"
+#define USE_MSVCRT_PREFIX
+#include "msvcrt/sys/stat.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crtdll);
@@ -37,6 +40,41 @@ unsigned int CRTDLL__osmajor_dll;
 unsigned int CRTDLL__osminor_dll;
 unsigned int CRTDLL__osmode_dll;
 unsigned int CRTDLL__osversion_dll;
+
+/* dev_t is a short in crtdll but an unsigned int in msvcrt */
+typedef short crtdll_dev_t;
+
+struct crtdll_stat
+{
+  crtdll_dev_t   st_dev;
+  _ino_t         st_ino;
+  unsigned short st_mode;
+  short          st_nlink;
+  short          st_uid;
+  short          st_gid;
+  crtdll_dev_t   st_rdev;
+  _off_t         st_size;
+  MSVCRT(time_t) st_atime;
+  MSVCRT(time_t) st_mtime;
+  MSVCRT(time_t) st_ctime;
+};
+
+/* convert struct _stat from crtdll format to msvcrt format */
+static void convert_struct_stat( struct crtdll_stat *dst, const struct _stat *src )
+{
+    dst->st_dev   = src->st_dev;
+    dst->st_ino   = src->st_ino;
+    dst->st_mode  = src->st_mode;
+    dst->st_nlink = src->st_nlink;
+    dst->st_uid   = src->st_uid;
+    dst->st_gid   = src->st_gid;
+    dst->st_rdev  = src->st_rdev;
+    dst->st_size  = src->st_size;
+    dst->st_atime = src->st_atime;
+    dst->st_mtime = src->st_mtime;
+    dst->st_ctime = src->st_ctime;
+}
+
 
 /*********************************************************************
  *                  CRTDLL_MainInit  (CRTDLL.init)
@@ -68,4 +106,30 @@ void __GetMainArgs( int *argc, char ***argv, char ***envp, int expand_wildcards 
 {
     int new_mode = 0;
     __getmainargs( argc, argv, envp, expand_wildcards, &new_mode );
+}
+
+
+/*********************************************************************
+ *		_fstat (CRTDLL.@)
+ */
+int CRTDLL__fstat(int fd, struct crtdll_stat* buf)
+{
+    struct _stat st;
+    int ret;
+
+    if (!(ret = _fstat( fd, &st ))) convert_struct_stat( buf, &st );
+    return ret;
+}
+
+
+/*********************************************************************
+ *		_stat (CRTDLL.@)
+ */
+int CRTDLL__stat(const char* path, struct crtdll_stat * buf)
+{
+    struct _stat st;
+    int ret;
+
+    if (!(ret = _stat( path, &st ))) convert_struct_stat( buf, &st );
+    return ret;
 }

@@ -112,7 +112,7 @@ init    CRTDLL_Init
 @ forward _fputchar msvcrt._fputchar
 @ forward _fputwchar msvcrt._fputwchar
 @ forward _fsopen msvcrt._fsopen
-@ forward _fstat msvcrt._fstat
+@ cdecl _fstat(long ptr) CRTDLL__fstat
 @ forward _ftime msvcrt._ftime
 @ forward _ftol msvcrt._ftol
 @ forward _fullpath msvcrt._fullpath
@@ -279,7 +279,7 @@ init    CRTDLL_Init
 @ forward _spawnvp msvcrt._spawnvp
 @ forward _spawnvpe msvcrt._spawnvpe
 @ forward _splitpath msvcrt._splitpath
-@ forward _stat msvcrt._stat
+@ cdecl _stat(str ptr) CRTDLL__stat
 @ forward _statusfp msvcrt._statusfp
 @ forward _strcmpi msvcrt._strcmpi
 @ forward _strdate msvcrt._strdate
