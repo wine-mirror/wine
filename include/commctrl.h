@@ -1678,6 +1678,9 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RBBS_VARIABLEHEIGHT     0x00000040
 #define RBBS_GRIPPERALWAYS      0x00000080
 #define RBBS_NOGRIPPER          0x00000100
+#define RBBS_USECHEVRON         0x00000200
+#define RBBS_HIDETITLE          0x00000400
+#define RBBS_TOPALIGN           0x00000800
 
 #define RBNM_ID                 0x00000001
 #define RBNM_STYLE              0x00000002
@@ -1687,6 +1690,7 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RBHT_CAPTION            0x0002
 #define RBHT_CLIENT             0x0003
 #define RBHT_GRABBER            0x0004
+#define RBHT_CHEVRON            0x0008
 
 #define RB_INSERTBANDA          (WM_USER+1)
 #define RB_INSERTBANDW          (WM_USER+10)
@@ -1726,6 +1730,8 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RB_SETPALETTE           (WM_USER+37)
 #define RB_GETPALETTE           (WM_USER+38)
 #define RB_MOVEBAND             (WM_USER+39)
+#define RB_GETBANDMARGINS       (WM_USER+40)
+#define RB_PUSHCHEVRON          (WM_USER+43)
 #define RB_GETDROPTARGET        CCM_GETDROPTARGET
 #define RB_SETCOLORSCHEME       CCM_SETCOLORSCHEME
 #define RB_GETCOLORSCHEME       CCM_GETCOLORSCHEME
@@ -1743,6 +1749,9 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RBN_DELETINGBAND        (RBN_FIRST-6)
 #define RBN_DELETEDBAND         (RBN_FIRST-7)
 #define RBN_CHILDSIZE           (RBN_FIRST-8)
+#define RBN_CHEVRONPUSHED       (RBN_FIRST-10)
+#define RBN_MINMAX              (RBN_FIRST-21)
+#define RBN_AUTOBREAK           (RBN_FIRST-22)
 
 typedef struct tagREBARINFO
 {
@@ -1837,6 +1846,16 @@ typedef struct tagNMRBAUTOSIZE
     RECT rcTarget;
     RECT rcActual;
 } NMRBAUTOSIZE, *LPNMRBAUTOSIZE;
+
+typedef struct tagNMREBARCHEVRON
+{
+    NMHDR hdr;
+    UINT uBand;
+    UINT wID;
+    LPARAM lParam;
+    RECT rc;
+    LPARAM lParamNM;
+} NMREBARCHEVRON, *LPNMREBARCHEVRON;
 
 typedef struct _RB_HITTESTINFO
 {
