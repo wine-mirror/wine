@@ -402,7 +402,7 @@ VOID WINAPI RtlTimeToTimeFields(
  *   Time [O] Converted time.
  *
  * RETURNS
- *   TRUE: Successfull
+ *   TRUE: Successful.
  *   FALSE: Failure.
  */
 BOOLEAN WINAPI RtlTimeFieldsToTime(
@@ -508,7 +508,7 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
  *   res [O] Pointer to a LONG to receive the seconds since 1970.
  *
  * RETURNS
- *   TRUE: Successfull.
+ *   TRUE: Successful.
  *   FALSE: Failure.
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *time, PULONG res )
@@ -531,7 +531,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *time, PULONG res 
  *   res [O] Pointer to a integer to receive the time since 1980.
  *
  * RETURNS
- *   TRUE: Successfull
+ *   TRUE: Successful.
  *   FALSE: Failure.
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *time, LPDWORD res )

@@ -2555,8 +2555,8 @@ BOOL WINAPI PathMakePrettyW(LPWSTR lpszPath)
  *
  * NOTES
  *  A common prefix of 2 is always returned as 3. It is thus possible for
- *  the length returned to be invalid (i.e. Longer than one or both of the
- *  strings given as parameters). This Win32 behaviour has been implimented
+ *  the length returned to be invalid (i.e. longer than one or both of the
+ *  strings given as parameters). This Win32 behaviour has been implemented
  *  here, and cannot be changed (fixed?) without breaking other SHLWAPI calls.
  *  To work around this when using this function, always check that the byte
  *  at [common_prefix_len-1] is not a NUL. If it is, deduct 1 from the prefix.

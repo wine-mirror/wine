@@ -596,7 +596,7 @@ DWORD WINAPI FormatMessage16(
     LPDWORD args         /* [in] NOTE: va_list *args */
 ) {
 #ifdef __i386__
-/* This implementation is completely dependant on the format of the va_list on x86 CPUs */
+/* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR	target,t;
     DWORD	talloced;
     LPSTR	from,f;

@@ -1554,7 +1554,7 @@ static DWORD modReset(WORD wDevID)
     if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
 
     /* stop all notes */
-    /* FIXME: check if 0x78B0 is channel dependant or not. I coded it so that
+    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
      * it's channel dependent...
      */
     for (chn = 0; chn < 16; chn++) {

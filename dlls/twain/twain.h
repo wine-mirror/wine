@@ -484,7 +484,7 @@ typedef struct {
    char       Reserved[512]; /**/
 } TW_FILESYSTEM, FAR * pTW_FILESYSTEM;
 
-/* DAT_PASSTHRU, device dependant data to pass through Data Source */
+/* DAT_PASSTHRU, device dependent data to pass through Data Source */
 typedef struct {
    TW_MEMREF  pCommand;        /* Pointer to Command buffer */
    TW_UINT32  CommandBytes;    /* Number of bytes in Command buffer */
@@ -1684,8 +1684,8 @@ typedef struct {
 #define TWCC_BUMMER             1 /* Failure due to unknown causes             */
 #define TWCC_LOWMEMORY          2 /* Not enough memory to perform operation    */
 #define TWCC_NODS               3 /* No Data Source                            */
-#define TWCC_MAXCONNECTIONS     4 /* DS is connected to max possible applications      */
-#define TWCC_OPERATIONERROR     5 /* DS or DSM reported error, application shouldn't   */
+#define TWCC_MAXCONNECTIONS     4 /* DS is connected to max possible applications */
+#define TWCC_OPERATIONERROR     5 /* DS or DSM reported error, application shouldn't */
 #define TWCC_BADCAP             6 /* Unknown capability                        */
 #define TWCC_BADPROTOCOL        9 /* Unrecognized MSG DG DAT combination       */
 #define TWCC_BADVALUE           10 /* Data parameter out of range              */
@@ -1693,7 +1693,7 @@ typedef struct {
 #define TWCC_BADDEST            12 /* Unknown destination Application/Source in DSM_Entry */
 #define TWCC_CAPUNSUPPORTED     13 /* Capability not supported by source            */
 #define TWCC_CAPBADOPERATION    14 /* Operation not supported by capability         */
-#define TWCC_CAPSEQERROR        15 /* Capability has dependancy on other capability */
+#define TWCC_CAPSEQERROR        15 /* Capability has dependency on other capability */
 /* Added 1.8 */
 #define TWCC_DENIED             16 /* File System operation is denied (file is protected) */
 #define TWCC_FILEEXISTS         17 /* Operation failed because file already exists. */

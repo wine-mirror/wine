@@ -2004,7 +2004,7 @@ BOOL __cdecl FDICopy(
 
       TRACE("Extracting file %s as requested by callee.\n", debugstr_a(file->filename));
 
-      /* set up decomp_state (unneccesary?); at least 
+      /* set up decomp_state (unnecessary?); at least
          ignore trailing three pointers in the struct */
       ZeroMemory(decomp_state, sizeof(fdi_decomp_state) - sizeof(void*) * 3);
       CAB(hfdi) = hfdi;

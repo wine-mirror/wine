@@ -658,7 +658,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         pclsidCategory = &CLSID_ActiveMovieCategories;
 
     /* sizeof... will include null terminator and
-     * the + 1 is for the seperator ('\\'). The -1 is
+     * the + 1 is for the separator ('\\'). The -1 is
      * because CHARS_IN_GUID includes the null terminator
      */
     nameLen = sizeof(wszDevice)/sizeof(wszDevice[0]) + CHARS_IN_GUID - 1 + 1;

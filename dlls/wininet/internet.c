@@ -2317,7 +2317,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
         break;
 
     default:
-        FIXME("unsuported file type\n");
+        FIXME("unsupported file type\n");
         break;
     }
 

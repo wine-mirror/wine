@@ -134,7 +134,7 @@ DWORD WINAPI FormatMessageA(
 {
     LPDWORD args=(LPDWORD)_args;
 #if defined(__i386__) || defined(__sparc__)
-/* This implementation is completely dependant on the format of the va_list on x86 CPUs */
+/* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR	target,t;
     DWORD	talloced;
     LPSTR	from,f;
@@ -361,7 +361,7 @@ DWORD WINAPI FormatMessageW(
 {
     LPDWORD args=(LPDWORD)_args;
 #if defined(__i386__) || defined(__sparc__)
-/* This implementation is completely dependant on the format of the va_list on x86 CPUs */
+/* This implementation is completely dependent on the format of the va_list on x86 CPUs */
     LPSTR target,t;
     DWORD talloced;
     LPSTR from,f;

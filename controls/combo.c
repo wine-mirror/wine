@@ -62,7 +62,7 @@ static HBITMAP 	hComboBmp = 0;
 static UINT	CBitHeight, CBitWidth;
 
 /*
- * Look and feel dependant "constants"
+ * Look and feel dependent "constants"
  */
 
 #define COMBO_YBORDERGAP         5

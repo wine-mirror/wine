@@ -1131,7 +1131,7 @@ Kernel space |                    Client applications
 	    </listitem>
 	    <listitem>
 	      <para>
-		all hardware (or most of it) dependant code reside in the kernel
+		all hardware (or most of it) dependent code reside in the kernel
 		space (which is not surprising)
 	      </para>
 	    </listitem>

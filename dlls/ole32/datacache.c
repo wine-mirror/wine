@@ -1832,7 +1832,7 @@ static HRESULT WINAPI DataCache_GetExtent(
     FIXME("Unimplemented flag lindex = %ld\n", lindex);
 
   /*
-   * Right now, we suport only the callback from
+   * Right now, we support only the callback from
    * the default handler.
    */
   if (ptd!=NULL)

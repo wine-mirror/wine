@@ -846,7 +846,7 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
  * for that DC.
  *
  * RETURNS
- *    TRUE if name copied succesfully OR lpszFilename is NULL
+ *    TRUE if name copied successfully OR lpszFilename is NULL
  *    FALSE if the buffer length pointed to by lpcbName is too small
  *
  * NOTE

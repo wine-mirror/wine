@@ -917,7 +917,7 @@ static void OLEMenu_UnInitialize()
  * OLEMenu_InstallHooks
  * Install thread scope message hooks for WH_GETMESSAGE and WH_CALLWNDPROC
  *
- * RETURNS: TRUE if message hooks were succesfully installed
+ * RETURNS: TRUE if message hooks were successfully installed
  *          FALSE on failure
  */
 BOOL OLEMenu_InstallHooks( DWORD tid )
@@ -966,7 +966,7 @@ CLEANUP:
  * OLEMenu_UnInstallHooks
  * UnInstall thread scope message hooks for WH_GETMESSAGE and WH_CALLWNDPROC
  *
- * RETURNS: TRUE if message hooks were succesfully installed
+ * RETURNS: TRUE if message hooks were successfully installed
  *          FALSE on failure
  */
 BOOL OLEMenu_UnInstallHooks( DWORD tid )

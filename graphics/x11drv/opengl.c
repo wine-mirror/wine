@@ -194,7 +194,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 
      NULL_TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, 8);
      ADD2(GLX_ACCUM_SIZE, ppfd->cAccumBits); */
-  ADD2(GLX_STENCIL_SIZE, ppfd->cStencilBits); /* now suported */
+  ADD2(GLX_STENCIL_SIZE, ppfd->cStencilBits); /* now supported */
   /*   ADD2(GLX_AUX_BUFFERS, ppfd->cAuxBuffers); */
   att_list[att_pos] = None;
 

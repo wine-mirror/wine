@@ -211,7 +211,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize()
     runningObjectTableInstance->lpVtbl = &VT_RunningObjectTableImpl;
 
     /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
-    /* the ROT refered many times  not in the same time (all the objects in the ROT will  */
+    /* the ROT referred many times not in the same time (all the objects in the ROT will  */
     /* be removed every time the ROT is removed ) */
     runningObjectTableInstance->ref = 1;
 

@@ -413,12 +413,12 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetAllParameters(
 	TRACE("(%p,%p)\n",This,lpDs3dBuffer);
 
 	if (lpDs3dBuffer == NULL) {
-		WARN("invalid paramater: lpDs3dBuffer == NULL\n");
+		WARN("invalid parameter: lpDs3dBuffer == NULL\n");
 		return DSERR_INVALIDPARAM;
 	}
 
 	if (lpDs3dBuffer->dwSize < sizeof(*lpDs3dBuffer)) {
-		WARN("invalid paramater: lpDs3dBuffer->dwSize = %ld < %d\n",lpDs3dBuffer->dwSize, sizeof(*lpDs3dBuffer));
+		WARN("invalid parameter: lpDs3dBuffer->dwSize = %ld < %d\n",lpDs3dBuffer->dwSize, sizeof(*lpDs3dBuffer));
 		return DSERR_INVALIDPARAM;
 	}
 	
@@ -881,12 +881,12 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetAllParameter(
 	TRACE("(%p,%p)\n",This,lpDS3DL);
 
 	if (lpDS3DL == NULL) {
-		WARN("invalid paramater: lpDS3DL == NULL\n");
+		WARN("invalid parameter: lpDS3DL == NULL\n");
 		return DSERR_INVALIDPARAM;
 	}
 
 	if (lpDS3DL->dwSize < sizeof(*lpDS3DL)) {
-		WARN("invalid paramater: lpDS3DL->dwSize = %ld < %d\n",lpDS3DL->dwSize, sizeof(*lpDS3DL));
+		WARN("invalid parameter: lpDS3DL->dwSize = %ld < %d\n",lpDS3DL->dwSize, sizeof(*lpDS3DL));
 		return DSERR_INVALIDPARAM;
 	}
 	

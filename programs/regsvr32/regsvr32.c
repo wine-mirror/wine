@@ -118,7 +118,7 @@ int RegisterDll(char* strDll)
         return -1;
     }
     if(!Silent)
-        printf("Succesfully registered dll %s\n", strDll);
+        printf("Successfully registered dll %s\n", strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -141,7 +141,7 @@ int UnregisterDll(char* strDll)
         return -1;
     }
     if(!Silent)
-        printf("Succesfully unregistered dll %s\n", strDll);
+        printf("Successfully unregistered dll %s\n", strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -164,7 +164,7 @@ int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
         return -1;
     }
     if(!Silent)
-        printf("Succesfully %s dll %s\n",  install ? "installed" : "uninstalled",
+        printf("Successfully %s dll %s\n",  install ? "installed" : "uninstalled",
                strDll);
 
     if(DllHandle)
