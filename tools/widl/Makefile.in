@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
 YACCOPT   = #-v
 EXEEXT    = @EXEEXT@
-EXTRAINCL = -I$(TOPSRCDIR)/tools/wpp
 EXTRALIBS = -L$(TOPOBJDIR)/tools/wpp -lwpp
 
 PROGRAMS = widl$(EXEEXT)

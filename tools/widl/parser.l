@@ -42,7 +42,7 @@ uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
-#include "wpp.h"
+#include "../wpp/wpp.h"
 
 #include "y.tab.h"
 

@@ -65,7 +65,7 @@
 #include "genres.h"
 #include "newstruc.h"
 #include "parser.h"
-#include "wpp.h"
+#include "../wpp/wpp.h"
 
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]]\n"

@@ -35,7 +35,7 @@
 #include "utils.h"
 #include "parser.h"
 #include "proxy.h"
-#include "wpp.h"
+#include "../wpp/wpp.h"
 
 static char usage[] =
 "Usage: widl [options...] infile.idl\n"
