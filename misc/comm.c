@@ -1429,8 +1429,6 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
 	} else
 		temp=(LPSTR)device;
 
-	memset(lpdcb, 0, sizeof(DCB)); /* initialize */
-
 	lpdcb->DCBlength	= sizeof(DCB);
 	if (strchr(temp,',')) {	/* old style */
 		DCB16	dcb16;
