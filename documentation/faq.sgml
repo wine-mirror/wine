@@ -910,10 +910,38 @@
       </question>
       <answer>
         <para>
-          Most of them, yes. However, some applications and applets that come
-          with MS Windows, such as File Manager and Calculator, can be 
-          considered by some to be redundant, since 32-bit UNIX programs that
-          duplicate these applets' functions already exist.
+          Wine's goal is to make it possible to run Windows applications on
+          Unix. To this end it will provide replacements for just those
+          DLLs and APIs that are needed by these Windows applications.
+          This means that Wine will not provide replacements for DLLs that
+          are not shipped with Windows or are always shipped with Windows
+          application (e.g. the Visual Basic runtime). This also
+          means that implementing an API that no application ever uses is not
+          a priority. Similarly, until there are applications out there that
+          use the Win64 API, it will not be a priority. That being said,
+          we will certainly try to keep our options open and to improve our API
+          coverage as we can.
+        </para>
+        <para>
+          Also Wine is not an operating system, so that writing device
+          drivers is not part of Wine's goals. However if you are interested
+          in device drivers, the <ulink url="http://www.kernel.org/">Linux</>,
+          <ulink url="http://www.freebsd.org/">FreeBSD</> and
+          <ulink url="http://www.reactos.com/">ReactOS</> kernel developpers
+          would certainly appreciate your contribution.
+        </para>
+        <para>
+          Similarly Wine does not try to be a desktop environment so
+          providing applets such as a calculator, a file manager or even
+          window manager that look like Windows, are low priority or would
+          even best be done as a separate project. Such projects would also
+          to a large extant be redundant with other open-source projects.
+          Again, there are projects that would certainly appreciate your
+          contributions in this areas, such as the
+          <ulink url="http://www.gnome.org/">Gnome</> or
+          <ulink url="http://www.kde.org/">KDE</> desktop environments. You
+          will get the added benefit that your contribution will then be
+          usable by everyone, not just by Wine users.
         </para>
       </answer>
       </qandaentry>
