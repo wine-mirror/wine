@@ -13,6 +13,8 @@
 #include "winuser.h"
 #include "debug.h"
 #include "tweak.h"
+#include "winreg.h"
+#include "winversion.h"
 
 static const char * const DefSysColors[] =
 {
@@ -114,9 +116,26 @@ void SYSCOLOR_Init(void)
     char buffer[100];
 
     p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
-    for (i = 0; i < NUM_SYS_COLORS; i++, p += 2)
-    {
-	GetProfileStringA( "colors", p[0], p[1], buffer, 100 );
+
+    /* first, try to read the values from the registry */
+    if (VERSION_GetVersion() != WIN31)
+    { HKEY  hKey;
+      DWORD dwDataSize = 100;
+
+      if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
+        return;
+	
+      for (i = 0; i < NUM_SYS_COLORS; i++)
+      { if (!(RegQueryValueExA(hKey, (LPSTR)(p[i*2]), 0, 0, (LPBYTE) &buffer[0], &dwDataSize)))
+        { if (sscanf( buffer, "%d %d %d", &r, &g, &b ) != 3) r = g = b = 0;
+          SYSCOLOR_SetColor( i, RGB(r,g,b) );
+        }
+      }
+      RegCloseKey(hKey);
+    }
+
+    for (i = 0; i < NUM_SYS_COLORS; i++)
+    {	GetProfileStringA( "colors", p[i*2], p[i*2+1], buffer, 100 );
 	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) != 3) r = g = b = 0;
 	SYSCOLOR_SetColor( i, RGB(r,g,b) );
     }
