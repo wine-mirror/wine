@@ -355,7 +355,7 @@
 355 stub @
 356 stdcall @(ptr ptr) SHLWAPI_356
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
-358 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_358
+358 stdcall @(wstr long long ptr ptr long) SHLWAPI_358
 359 forward @ kernel32.OpenEventW
 360 forward @ kernel32.RemoveDirectoryW
 361 forward @ kernel32.GetShortPathNameW
@@ -387,8 +387,8 @@
 387 stub ColorAdjustLuma
 388 stub @
 389 stdcall @(ptr) SHLWAPI_389
-390 stdcall @(ptr ptr) SHLWAPI_390
-391 stdcall @(ptr ptr ptr ptr ptr ) SHLWAPI_391
+390 stdcall @(long wstr) SHLWAPI_390
+391 stdcall @(ptr ptr long ptr long) SHLWAPI_391
 392 stub @
 393 forward @ user32.CreateDialogIndirectParamW
 394 forward @ user32.CreateDialogIndirectParamA

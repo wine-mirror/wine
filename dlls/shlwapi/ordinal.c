@@ -86,13 +86,13 @@ static UINT    (WINAPI *pDragQueryFileW)(HDROP, UINT, LPWSTR, UINT);
 static BOOL    (WINAPI *pSHGetPathFromIDListW)(LPCITEMIDLIST, LPWSTR);
 static BOOL    (WINAPI *pShellExecuteExW)(LPSHELLEXECUTEINFOW);
 static HICON   (WINAPI *pSHFileOperationW)(LPSHFILEOPSTRUCTW);
-static HICON   (WINAPI *pExtractIconExW)(LPCWSTR, INT,HICON *,HICON *, UINT);
+static UINT    (WINAPI *pExtractIconExW)(LPCWSTR, INT,HICON *,HICON *, UINT);
 static BOOL    (WINAPI *pSHGetNewLinkInfoW)(LPCWSTR, LPCWSTR, LPCWSTR, BOOL*, UINT);
-static DWORD   (WINAPI *pSHDefExtractIconW)(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID, LPVOID); /* FIXME: Correct args */
+static HRESULT (WINAPI *pSHDefExtractIconW)(LPCWSTR, int, UINT, HICON*, HICON*, UINT);
 static HICON   (WINAPI *pExtractIconW)(HINSTANCE, LPCWSTR, UINT);
 static BOOL    (WINAPI *pGetSaveFileNameW)(LPOPENFILENAMEW);
-static DWORD   (WINAPI *pWNetRestoreConnectionW)(LPVOID, LPVOID); /* FIXME: Correct args */
-static DWORD   (WINAPI *pWNetGetLastErrorW)(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID); /* FIXME: Correct args */
+static DWORD   (WINAPI *pWNetRestoreConnectionW)(HWND, LPWSTR);
+static DWORD   (WINAPI *pWNetGetLastErrorW)(LPDWORD, LPWSTR, DWORD, LPWSTR, DWORD);
 static BOOL    (WINAPI *pPageSetupDlgW)(LPPAGESETUPDLGW);
 static BOOL    (WINAPI *pPrintDlgW)(LPPRINTDLGW);
 static BOOL    (WINAPI *pGetOpenFileNameW)(LPOPENFILENAMEW);
@@ -2215,10 +2215,10 @@ HICON WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
  *
  * Late bound call to shell32.ExtractIconExW.
  */
-HICON WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
+UINT WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
                          HICON *phiconSmall, UINT nIcons)
 {
-  GET_FUNC(pExtractIconExW, shell32, "ExtractIconExW", NULL);
+  GET_FUNC(pExtractIconExW, shell32, "ExtractIconExW", 0);
   return pExtractIconExW(lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }
 
@@ -2308,11 +2308,11 @@ BOOL WINAPI SHLWAPI_357(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
  *
  * Late bound call to shell32.SHDefExtractIconW
  */
-DWORD WINAPI SHLWAPI_358(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
-                         LPVOID arg5, LPVOID arg6)
+UINT WINAPI SHLWAPI_358(LPCWSTR pszIconFile, int iIndex, UINT uFlags, HICON* phiconLarge,
+                         HICON* phiconSmall, UINT nIconSize)
 {
   GET_FUNC(pSHDefExtractIconW, shell32, "SHDefExtractIconW", 0);
-  return pSHDefExtractIconW(arg1, arg2, arg3, arg4, arg5, arg6);
+  return pSHDefExtractIconW(pszIconFile, iIndex, uFlags, phiconLarge, phiconSmall, nIconSize);
 }
 
 /*************************************************************************
@@ -2425,10 +2425,10 @@ BOOL WINAPI SHLWAPI_389(LPOPENFILENAMEW ofn)
  *
  * Late bound call to mpr.WNetRestoreConnectionW
  */
-DWORD WINAPI SHLWAPI_390(LPVOID arg1, LPVOID arg2)
+DWORD WINAPI SHLWAPI_390(HWND hwndOwner, LPWSTR lpszDevice)
 {
   GET_FUNC(pWNetRestoreConnectionW, mpr, "WNetRestoreConnectionW", 0);
-  return pWNetRestoreConnectionW(arg1, arg2);
+  return pWNetRestoreConnectionW(hwndOwner, lpszDevice);
 }
 
 /*************************************************************************
@@ -2436,11 +2436,11 @@ DWORD WINAPI SHLWAPI_390(LPVOID arg1, LPVOID arg2)
  *
  * Late bound call to mpr.WNetGetLastErrorW
  */
-DWORD WINAPI SHLWAPI_391(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
-                         LPVOID arg5)
+DWORD WINAPI SHLWAPI_391(LPDWORD lpError, LPWSTR lpErrorBuf, DWORD nErrorBufSize,
+                         LPWSTR lpNameBuf, DWORD nNameBufSize)
 {
   GET_FUNC(pWNetGetLastErrorW, mpr, "WNetGetLastErrorW", 0);
-  return pWNetGetLastErrorW(arg1, arg2, arg3, arg4, arg5);
+  return pWNetGetLastErrorW(lpError, lpErrorBuf, nErrorBufSize, lpNameBuf, nNameBufSize);
 }
 
 /*************************************************************************
