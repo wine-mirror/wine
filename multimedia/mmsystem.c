@@ -33,8 +33,6 @@
 
 DEFAULT_DEBUG_CHANNEL(mmsys)
 
-UINT16 WINAPI midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
-static UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 LONG   WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2);
 
@@ -83,6 +81,7 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	iData->dwThisProcess = GetCurrentProcessId();
 	iData->lpNextIData = lpFirstIData;
 	lpFirstIData = iData;
+	InitializeCriticalSection(&iData->cs);
 	break;
     case DLL_PROCESS_DETACH:
 	iData = MULTIMEDIA_GetIData();
@@ -162,7 +161,7 @@ int WINAPI MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
                         WORD cbHeapSize, LPSTR lpCmdLine)
 {
     FIXME("STUB: Unloading MMSystem DLL ... hInst=%04X \n", hInstance);
-    return(TRUE);
+    return TRUE;
 }
 
 static void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32) 
@@ -1391,282 +1390,17 @@ BOOL WINAPI mciGetErrorStringA(DWORD wError, LPSTR lpstrBuffer, UINT uLength)
  */
 BOOL16 WINAPI mciGetErrorString16(DWORD dwError, LPSTR lpstrBuffer, UINT16 uLength)
 {
-    LPSTR	msgptr = NULL;
+    BOOL16		ret = FALSE;
 
-    TRACE("(%08lX, %p, %d);\n", dwError, lpstrBuffer, uLength);
+    if (lpstrBuffer != NULL && uLength > 0 && 
+	dwError >= MCIERR_BASE && dwError <= MCIERR_CUSTOM_DRIVER_BASE) {
+	LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
 
-    if ((lpstrBuffer == NULL) || (uLength < 1)) 
-	return FALSE;
-
-    lpstrBuffer[0] = '\0';
-
-    switch (dwError) {
-    case 0:
-	msgptr = "The specified command has been executed.";
-	break;
-    case MCIERR_INVALID_DEVICE_ID:
-	msgptr = "Invalid MCI device ID. Use the ID returned when opening the MCI device.";
-	break;
-    case MCIERR_UNRECOGNIZED_KEYWORD:
-	msgptr = "The driver cannot recognize the specified command parameter.";
-	break;
-    case MCIERR_UNRECOGNIZED_COMMAND:
-	msgptr = "The driver cannot recognize the specified command.";
-	break;
-    case MCIERR_HARDWARE:
-	msgptr = "There is a problem with your media device. Make sure it is working correctly or contact the device manufacturer.";
-	break;
-    case MCIERR_INVALID_DEVICE_NAME:
-	msgptr = "The specified device is not open or is not recognized by MCI.";
-	break;
-    case MCIERR_OUT_OF_MEMORY:
-	msgptr = "Not enough memory available for this task. \nQuit one or more applications to increase available memory, and then try again.";
-	break;
-    case MCIERR_DEVICE_OPEN:
-	msgptr = "The device name is already being used as an alias by this application. Use a unique alias.";
-	break;
-    case MCIERR_CANNOT_LOAD_DRIVER:
-	msgptr = "There is an undetectable problem in loading the specified device driver.";
-	break;
-    case MCIERR_MISSING_COMMAND_STRING:
-	msgptr = "No command was specified.";
-	break;
-    case MCIERR_PARAM_OVERFLOW:
-	msgptr = "The output string was to large to fit in the return buffer. Increase the size of the buffer.";
-	break;
-    case MCIERR_MISSING_STRING_ARGUMENT:
-	msgptr = "The specified command requires a character-string parameter. Please provide one.";
-	break;
-    case MCIERR_BAD_INTEGER:
-	msgptr = "The specified integer is invalid for this command.";
-	break;
-    case MCIERR_PARSER_INTERNAL:
-	msgptr = "The device driver returned an invalid return type. Check with the device manufacturer about obtaining a new driver.";
-	break;
-    case MCIERR_DRIVER_INTERNAL:
-	msgptr = "There is a problem with the device driver. Check with the device manufacturer about obtaining a new driver.";
-	break;
-    case MCIERR_MISSING_PARAMETER:
-	msgptr = "The specified command requires a parameter. Please supply one.";
-	break;
-    case MCIERR_UNSUPPORTED_FUNCTION:
-	msgptr = "The MCI device you are using does not support the specified command.";
-	break;
-    case MCIERR_FILE_NOT_FOUND:
-	msgptr = "Cannot find the specified file. Make sure the path and filename are correct.";
-	break;
-    case MCIERR_DEVICE_NOT_READY:
-	msgptr = "The device driver is not ready.";
-	break;
-    case MCIERR_INTERNAL:
-	msgptr = "A problem occurred in initializing MCI. Try restarting Windows.";
-	break;
-    case MCIERR_DRIVER:
-	msgptr = "There is a problem with the device driver. The driver has closed. Cannot access error.";
-	break;
-    case MCIERR_CANNOT_USE_ALL:
-	msgptr = "Cannot use 'all' as the device name with the specified command.";
-	break;
-    case MCIERR_MULTIPLE:
-	msgptr = "Errors occurred in more than one device. Specify each command and device separately to determine which devices caused the error";
-	break;
-    case MCIERR_EXTENSION_NOT_FOUND:
-	msgptr = "Cannot determine the device type from the given filename extension.";
-	break;
-    case MCIERR_OUTOFRANGE:
-	msgptr = "The specified parameter is out of range for the specified command.";
-	break;
-    case MCIERR_FLAGS_NOT_COMPATIBLE:
-	msgptr = "The specified parameters cannot be used together.";
-	break;
-    case MCIERR_FILE_NOT_SAVED:
-	msgptr = "Cannot save the specified file. Make sure you have enough disk space or are still connected to the network.";
-	break;
-    case MCIERR_DEVICE_TYPE_REQUIRED:
-	msgptr = "Cannot find the specified device. Make sure it is installed or that the device name is spelled correctly.";
-	break;
-    case MCIERR_DEVICE_LOCKED:
-	msgptr = "The specified device is now being closed. Wait a few seconds, and then try again.";
-	break;
-    case MCIERR_DUPLICATE_ALIAS:
-	msgptr = "The specified alias is already being used in this application. Use a unique alias.";
-	break;
-    case MCIERR_BAD_CONSTANT:
-	msgptr = "The specified parameter is invalid for this command.";
-	break;
-    case MCIERR_MUST_USE_SHAREABLE:
-	msgptr = "The device driver is already in use. To share it, use the 'shareable' parameter with each 'open' command.";
-	break;
-    case MCIERR_MISSING_DEVICE_NAME:
-	msgptr = "The specified command requires an alias, file, driver, or device name. Please supply one.";
-	break;
-    case MCIERR_BAD_TIME_FORMAT:
-	msgptr = "The specified value for the time format is invalid. Refer to the MCI documentation for valid formats.";
-	break;
-    case MCIERR_NO_CLOSING_QUOTE:
-	msgptr = "A closing double-quotation mark is missing from the parameter value. Please supply one.";
-	break;
-    case MCIERR_DUPLICATE_FLAGS:
-	msgptr = "A parameter or value was specified twice. Only specify it once.";
-	break;
-    case MCIERR_INVALID_FILE:
-	msgptr = "The specified file cannot be played on the specified MCI device. The file may be corrupt, or not in the correct format.";
-	break;
-    case MCIERR_NULL_PARAMETER_BLOCK:
-	msgptr = "A null parameter block was passed to MCI.";
-	break;
-    case MCIERR_UNNAMED_RESOURCE:
-	msgptr = "Cannot save an unnamed file. Supply a filename.";
-	break;
-    case MCIERR_NEW_REQUIRES_ALIAS:
-	msgptr = "You must specify an alias when using the 'new' parameter.";
-	break;
-    case MCIERR_NOTIFY_ON_AUTO_OPEN:
-	msgptr = "Cannot use the 'notify' flag with auto-opened devices.";
-	break;
-    case MCIERR_NO_ELEMENT_ALLOWED:
-	msgptr = "Cannot use a filename with the specified device.";
-	break;
-    case MCIERR_NONAPPLICABLE_FUNCTION:
-	msgptr = "Cannot carry out the commands in the order specified. Correct the command sequence, and then try again.";
-	break;
-    case MCIERR_ILLEGAL_FOR_AUTO_OPEN:
-	msgptr = "Cannot carry out the specified command on an auto-opened device. Wait until the device is closed, and then try again.";
-	break;
-    case MCIERR_FILENAME_REQUIRED:
-	msgptr = "The filename is invalid. Make sure the filename is not longer than 8 characters, followed by a period and an extension.";
-	break;
-    case MCIERR_EXTRA_CHARACTERS:
-	msgptr = "Cannot specify extra characters after a string enclosed in quotation marks.";
-	break;
-    case MCIERR_DEVICE_NOT_INSTALLED:
-	msgptr = "The specified device is not installed on the system. Use the Drivers option in Control Panel to install the device.";
-	break;
-    case MCIERR_GET_CD:
-	msgptr = "Cannot access the specified file or MCI device. Try changing directories or restarting your computer.";
-	break;
-    case MCIERR_SET_CD:
-	msgptr = "Cannot access the specified file or MCI device because the application cannot change directories.";
-	break;
-    case MCIERR_SET_DRIVE:
-	msgptr = "Cannot access specified file or MCI device because the application cannot change drives.";
-	break;
-    case MCIERR_DEVICE_LENGTH:
-	msgptr = "Specify a device or driver name that is less than 79 characters.";
-	break;
-    case MCIERR_DEVICE_ORD_LENGTH:
-	msgptr = "Specify a device or driver name that is less than 69 characters.";
-	break;
-    case MCIERR_NO_INTEGER:
-	msgptr = "The specified command requires an integer parameter. Please provide one.";
-	break;
-    case MCIERR_WAVE_OUTPUTSINUSE:
-	msgptr = "All wave devices that can play files in the current format are in use. Wait until a wave device is free, and then try again.";
-	break;
-    case MCIERR_WAVE_SETOUTPUTINUSE:
-	msgptr = "Cannot set the current wave device for play back because it is in use. Wait until the device is free, and then try again.";
-	break;
-    case MCIERR_WAVE_INPUTSINUSE:
-	msgptr = "All wave devices that can record files in the current format are in use. Wait until a wave device is free, and then try again.";
-	break;
-    case MCIERR_WAVE_SETINPUTINUSE:
-	msgptr = "Cannot set the current wave device for recording because it is in use. Wait until the device is free, and then try again.";
-	break;
-    case MCIERR_WAVE_OUTPUTUNSPECIFIED:
-	msgptr = "Any compatible waveform playback device may be used.";
-	break;
-    case MCIERR_WAVE_INPUTUNSPECIFIED:
-	msgptr = "Any compatible waveform recording device may be used.";
-	break;
-    case MCIERR_WAVE_OUTPUTSUNSUITABLE:
-	msgptr = "No wave device that can play files in the current format is installed. Use the Drivers option to install the wave device.";
-	break;
-    case MCIERR_WAVE_SETOUTPUTUNSUITABLE:
-	msgptr = "The device you are trying to play to cannot recognize the current file format.";
-	break;
-    case MCIERR_WAVE_INPUTSUNSUITABLE:
-	msgptr = "No wave device that can record files in the current format is installed. Use the Drivers option to install the wave device.";
-	break;
-    case MCIERR_WAVE_SETINPUTUNSUITABLE:
-	msgptr = "The device you are trying to record from cannot recognize the current file format.";
-	break;
-    case MCIERR_NO_WINDOW:
-	msgptr = "There is no display window.";
-	break;
-    case MCIERR_CREATEWINDOW:
-	msgptr = "Could not create or use window.";
-	break;
-    case MCIERR_FILE_READ:
-	msgptr = "Cannot read the specified file. Make sure the file is still present, or check your disk or network connection.";
-	break;
-    case MCIERR_FILE_WRITE:
-	msgptr = "Cannot write to the specified file. Make sure you have enough disk space or are still connected to the network.";
-	break;
-    case MCIERR_SEQ_DIV_INCOMPATIBLE:
-	msgptr = "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. You can't use them together.";
-	break;
-    case MCIERR_SEQ_NOMIDIPRESENT:
-	msgptr = "The system has no installed MIDI devices. Use the Drivers option from the Control Panel to install a MIDI driver.";
-	break;
-    case MCIERR_SEQ_PORT_INUSE:
-	msgptr = "The specified MIDI port is already in use. Wait until it is free; the try again.";
-	break;
-    case MCIERR_SEQ_PORT_MAPNODEVICE:
-	msgptr = "The current MIDI Mapper setup refers to a MIDI device that is not installed on the system. Use the MIDI Mapper option from the Control Panel to edit the setup.";
-	break;
-    case MCIERR_SEQ_PORT_MISCERROR:
-	msgptr = "An error occurred with the specified port.";
-	break;
-    case MCIERR_SEQ_PORT_NONEXISTENT:
-	msgptr = "The specified MIDI device is not installed on the system. Use the Drivers option from the Control Panel to install a MIDI device.";
-	break;
-    case MCIERR_SEQ_PORTUNSPECIFIED:
-	msgptr = "The system doesnot have a current MIDI port specified.";
-	break;
-    case MCIERR_SEQ_TIMER:
-	msgptr = "All multimedia timers are being used by other applications. Quit one of these applications; then, try again.";
-	break;
-	
-	/* 
-	   msg# 513 : vcr
-	   msg# 514 : videodisc
-	   msg# 515 : overlay
-	   msg# 516 : cdaudio
-	   msg# 517 : dat
-	   msg# 518 : scanner
-	   msg# 519 : animation
-	   msg# 520 : digitalvideo
-	   msg# 521 : other
-	   msg# 522 : waveaudio
-	   msg# 523 : sequencer
-	   msg# 524 : not ready
-	   msg# 525 : stopped
-	   msg# 526 : playing
-	   msg# 527 : recording
-	   msg# 528 : seeking
-	   msg# 529 : paused
-	   msg# 530 : open
-	   msg# 531 : false
-	   msg# 532 : true
-	   msg# 533 : milliseconds
-	   msg# 534 : hms
-	   msg# 535 : msf
-	   msg# 536 : frames
-	   msg# 537 : smpte 24
-	   msg# 538 : smpte 25
-	   msg# 539 : smpte 30
-	   msg# 540 : smpte 30 drop
-	   msg# 541 : bytes
-	   msg# 542 : samples
-	   msg# 543 : tmsf
-	*/
-    default:
-	TRACE("Unknown MCI Error %ld!\n", dwError);
-	return FALSE;
+	if (iData && LoadStringA(iData->hWinMM32Instance, dwError, lpstrBuffer, uLength) > 0) {
+	    ret = TRUE;
+	}
     }
-    lstrcpynA(lpstrBuffer, msgptr, uLength);
-    TRACE("msg = \"%s\";\n", lpstrBuffer);
-    return TRUE;
+    return ret;
 }
 
 /**************************************************************************
@@ -1758,137 +1492,16 @@ BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data)
 }
 
 /**************************************************************************
- *                    	mciLoadCommandResource			[MMSYSTEM.705]
- */
-UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 type)
-{
-    char            buf[200];
-    OFSTRUCT        ofs;
-    HRSRC16         hrsrc = 0;
-    HGLOBAL16       hmem;
-    LPSTR           segstr;
-    
-    FIXME("(%04x, %s, %d): stub!\n", hinst, resname, type);
-    if (!lstrcmpiA(resname, "core")) {
-	FIXME("(...,\"core\",...), have to use internal tables... (not there yet)\n");
-	return 0;
-    }
-    /* if file exists "resname.mci", then load resource "resname" from it
-     * otherwise directly from driver
-     */
-    strcpy(buf, resname);
-    strcat(buf, ".mci");
-    segstr = SEGPTR_STRDUP(resname);
-
-    if (!type && OpenFile(buf, &ofs, OF_EXIST) != HFILE_ERROR) {
-	HANDLE16	xhinst = LoadLibrary16(buf);
-
-	if (xhinst > 32) {
-	    hrsrc = FindResource16(xhinst, SEGPTR_GET(segstr), 0x800a);
-	}
-    }
-    if (!hrsrc) {
-	hrsrc = FindResource16(hinst, SEGPTR_GET(segstr), 0x800a);
-    }
-    SEGPTR_FREE(segstr);
-    if (!hrsrc) {
-	WARN("no special commandlist found in resource (hinst=%04x)\n", hinst);
-	return MCI_NO_COMMAND_TABLE;
-    }
-    hmem = LoadResource16(hinst, hrsrc);
-    if (!hmem) {
-	WARN("couldn't load resource??\n");
-	return MCI_NO_COMMAND_TABLE;
-    }
-    if (TRACE_ON(mmsys)) {
-	SEGPTR          xmem;
-	LPBYTE          lmem, cmd;
-	
-	xmem = WIN16_LockResource16(hmem);
-	if (!xmem) {
-	    WARN("couldn't lock resource??\n");
-	} else {
-	    lmem = PTR_SEG_TO_LIN(xmem);
-	    TRACE("first resource entry is %s\n", (char*)lmem);
-	    /* parse resource, register stuff, return unique id */
-
-	    while (*lmem) {
-		while (*lmem) {
-		    cmd = lmem;
-		    lmem += strlen(lmem) + 1;
-		    TRACE("cmd='%s' %08lx %04x\n", cmd, *(LPDWORD)lmem, *(LPWORD)(lmem + sizeof(DWORD)));
-		    lmem += sizeof(DWORD) + sizeof(WORD);
-		}
-		lmem++;
-		TRACE("eoc %08lx %04x\n", *(LPDWORD)lmem, *(LPWORD)(lmem + sizeof(DWORD)));
-	    }
-	    TRACE("eot\n");
-	}
-    }
-    return hmem;
-}
-
-/**************************************************************************
- *                    	mciFreeCommandResource			[MMSYSTEM.713]
- */
-BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
-{
-    FIXME("(%04x) stub\n", uTable);
-
-    FreeResource16((HANDLE16)uTable);
-    return 0;
-}
- 
-/**************************************************************************
- *                    	mciFreeCommandResource			[WINMM.39]
- */
-BOOL WINAPI mciFreeCommandResource(UINT uTable)
-{
-    FIXME("(%08x) stub\n", uTable);
-    return 0;
-}
-
-/**************************************************************************
- *                    	mciLoadCommandResource  		[WINMM.48]
- */
-UINT WINAPI mciLoadCommandResource(HANDLE hinst, LPCWSTR resname, UINT type)
-{
-    FIXME("(%04x, %s, %d): stub!\n", hinst, debugstr_w(resname), type);
-    return 0;
-}
-
-/**************************************************************************
  * 				mciSendCommandA			[WINMM.49]
  */
 DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     DWORD	dwRet;
 
-    TRACE("(%08x, %s, %08lx, %08lx)\n", wDevID, MCI_CommandToString(wMsg), dwParam1, dwParam2);
+    TRACE("(%08x, %s, %08lx, %08lx)\n", 
+	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
-    switch (wMsg) {
-    case MCI_OPEN:
-	dwRet = MCI_Open(dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
-	break;
-    case MCI_CLOSE:
-	dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-	break;
-    case MCI_SYSINFO:
-	dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
-	break;
-    case MCI_BREAK:
-	dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
-	break;
-    /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
-    default:
-	if (wDevID == MCI_ALL_DEVICE_ID) {
-	    FIXME("unhandled MCI_ALL_DEVICE_ID\n");
-	    dwRet = MCIERR_CANNOT_USE_ALL;
-	} else {
-	    dwRet = MCI_SendCommandFrom32(wDevID, wMsg, dwParam1, dwParam2);
-	}
-	break;
-    }
+    dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2, TRUE);
     dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, TRUE);
     TRACE("=> %08lx\n", dwRet);
     return dwRet;
@@ -1899,7 +1512,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
  */
 DWORD WINAPI mciSendCommandW(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%08x, %s, %08lx, %08lx): stub\n", wDevID, MCI_CommandToString(wMsg), dwParam1, dwParam2);
+    FIXME("(%08x, %s, %08lx, %08lx): stub\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
     return MCIERR_UNSUPPORTED_FUNCTION;
 }
 
@@ -1908,71 +1521,12 @@ DWORD WINAPI mciSendCommandW(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
  */
 DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    DWORD		dwRet = MCIERR_UNRECOGNIZED_COMMAND;
-    LPWINE_MCIDRIVER	wmd;
+    DWORD		dwRet;
 
     TRACE("(%04X, %s, %08lX, %08lX)\n", 
-	  wDevID, MCI_CommandToString(wMsg), dwParam1, dwParam2);
+	  wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
-    switch (wMsg) {
-    case MCI_OPEN:
-	switch (MCI_MapMsg16To32A(0, wMsg, &dwParam2)) {
-	case MCI_MAP_OK:
-	case MCI_MAP_OKMEM:
-	    dwRet = MCI_Open(dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
-	    MCI_UnMapMsg16To32A(0, wMsg, dwParam2);
-	    break;
-	default: break; /* so that gcc does not bark */
-	}
-	break;
-    case MCI_CLOSE:
-	if (wDevID == MCI_ALL_DEVICE_ID) {
-	    FIXME("unhandled MCI_ALL_DEVICE_ID\n");
-	    dwRet = MCIERR_CANNOT_USE_ALL;
-	} else if (!(wmd = MCI_GetDriver(wDevID))) {
-	    dwRet = MCIERR_INVALID_DEVICE_ID;
-	} else {
-	    switch (MCI_MapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
-	    case MCI_MAP_OK:
-	    case MCI_MAP_OKMEM:
-		dwRet = MCI_Close(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-		MCI_UnMapMsg16To32A(wmd->wType, wMsg, dwParam2);
-		break;
-	    default: break; /* so that gcc does not bark */
-	    }
-	}
-	break;
-    case MCI_SYSINFO:
-	switch (MCI_MapMsg16To32A(0, wDevID, &dwParam2)) {
-	case MCI_MAP_OK:
-	case MCI_MAP_OKMEM:
-	    dwRet = MCI_SysInfo(wDevID, dwParam1, (LPMCI_SYSINFO_PARMSA)dwParam2);
-	    MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
-	    break;
-	default: break; /* so that gcc doesnot  bark */
-	}
-	break;
-    case MCI_BREAK:
-	switch (MCI_MapMsg16To32A(0, wDevID, &dwParam2)) {
-	case MCI_MAP_OK:
-	case MCI_MAP_OKMEM:
-	    dwRet = MCI_Break(wDevID, dwParam1, (LPMCI_BREAK_PARMS)dwParam2);
-	    MCI_UnMapMsg16To32A(0, wDevID, dwParam2);
-	    break;
-	default: break; /* so that gcc does not bark */
-	}
-	break;
-
-    /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
-    default:
-	if (wDevID == MCI_ALL_DEVICE_ID) {
-	    FIXME("unhandled MCI_ALL_DEVICE_ID\n");
-	    dwRet = MCIERR_CANNOT_USE_ALL;
-	} else {
-	    dwRet = MCI_SendCommandFrom16(wDevID, wMsg, dwParam1, dwParam2);
-	}
-	break;
-    }
+    dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2, FALSE);
     dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, FALSE);
     TRACE("=> %ld\n", dwRet);
     return dwRet;
@@ -2272,8 +1826,36 @@ UINT WINAPI midiOutGetDevCapsA(UINT uDeviceID, LPMIDIOUTCAPSA lpCaps, UINT uSize
  */
 UINT16 WINAPI midiOutGetDevCaps16(UINT16 uDeviceID, LPMIDIOUTCAPS16 lpCaps, UINT16 uSize)
 {
-    TRACE("midiOutGetDevCaps\n");
+    TRACE("(%u, %p, %u);\n", uDeviceID, lpCaps, uSize);
     return modMessage(uDeviceID, MODM_GETDEVCAPS, 0, (DWORD)lpCaps, uSize);
+}
+
+/**************************************************************************
+ * 				MIDI_GetErrorText       	[internal]
+ */
+static	UINT16	MIDI_GetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
+{
+    UINT16		ret = MMSYSERR_BADERRNUM;
+
+    if (lpText == NULL) {
+	ret = MMSYSERR_INVALPARAM;
+    } else if (uSize == 0) {
+	ret = MMSYSERR_NOERROR;
+    } else if (
+	       /* test has been removed 'coz MMSYSERR_BASE is 0, and gcc did emit
+		* a warning for the test was always true */
+	       (/*uError >= MMSYSERR_BASE && */ uError <= MMSYSERR_LASTERROR) ||
+	       (uError >= MIDIERR_BASE  && uError <= MIDIERR_LASTERROR)) {
+	
+	LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
+
+	if (!iData) {
+	    ret = MMSYSERR_ERROR;
+	} else if (LoadStringA(iData->hWinMM32Instance, uError, lpText, uSize) > 0) {
+	    ret = MMSYSERR_NOERROR;
+	}
+    }
+    return ret;
 }
 
 /**************************************************************************
@@ -2281,8 +1863,7 @@ UINT16 WINAPI midiOutGetDevCaps16(UINT16 uDeviceID, LPMIDIOUTCAPS16 lpCaps, UINT
  */
 UINT WINAPI midiOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
-    TRACE("midiOutGetErrorText\n");
-    return midiGetErrorText(uError, lpText, uSize);
+    return MIDI_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -2293,8 +1874,7 @@ UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
     LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret;
     
-    TRACE("midiOutGetErrorText\n");
-    ret = midiGetErrorText(uError, xstr, uSize);
+    ret = MIDI_GetErrorText(uError, xstr, uSize);
     lstrcpyAtoW(lpText, xstr);
     HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
@@ -2305,55 +1885,12 @@ UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
  */
 UINT16 WINAPI midiOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
-    TRACE("midiOutGetErrorText\n");
-    return midiGetErrorText(uError, lpText, uSize);
+    return MIDI_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
- * 				midiGetErrorText       	[internal]
+ * 				MIDI_OutAlloc    		[internal]
  */
-UINT16 WINAPI midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
-{
-    LPSTR	msgptr;
-    if ((lpText == NULL) || (uSize < 1)) return(FALSE);
-    lpText[0] = '\0';
-    switch (uError) {
-    case MIDIERR_UNPREPARED:
-	msgptr = "The MIDI header was not prepared. Use the Prepare function to prepare the header, and then try again.";
-	break;
-    case MIDIERR_STILLPLAYING:
-	msgptr = "Cannot perform this operation while media data is still playing. Reset the device, or wait until the data is finished playing.";
-	break;
-    case MIDIERR_NOMAP:
-	msgptr = "A MIDI map was not found. There may be a problem with the driver, or the MIDIMAP.CFG file may be corrupt or missing.";
-	break;
-    case MIDIERR_NOTREADY:
-	msgptr = "The port is transmitting data to the device. Wait until the data has been transmitted, and then try again.";
-	break;
-    case MIDIERR_NODEVICE:
-	msgptr = "The current MIDI Mapper setup refers to a MIDI device that is not installed on the system. Use MIDI Mapper to edit the setup.";
-	break;
-    case MIDIERR_INVALIDSETUP:
-	msgptr = "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the Windows SYSTEM directory, and then try again.";
-	break;
-	/*
-	  msg# 336 : Cannot use the song-pointer time format and the SMPTE time-format together.
-	  msg# 337 : The specified MIDI device is already in use. Wait until it is free, and then try again.
-	  msg# 338 : The specified MIDI device is not installed on the system. Use the Drivers option in Control Panel to install the driver.
-	  msg# 339 : The current MIDI Mapper setup refers to a MIDI device that is not installed on the system. Use MIDI Mapper to edit the setup.
-	  msg# 340 : An error occurred using the specified port.
-	  msg# 341 : All multimedia timers are being used by other applications. Quit one of these applications, and then try again.
-	  msg# 342 : There is no current MIDI port.
-	  msg# 343 : There are no MIDI devices installed on the system. Use the Drivers option in Control Panel to install the driver.
-	*/
-    default:
-	msgptr = "Unknown MIDI Error !\n";
-	break;
-    }
-    lstrcpynA(lpText, msgptr, uSize);
-    return TRUE;
-}
-
 static	LPMIDIOPENDESC	MIDI_OutAlloc(HMIDIOUT16* lphMidiOut, DWORD dwCallback, 
 				      DWORD dwInstance, DWORD cIDs, MIDIOPENSTRMID* lpIDs)
 {
@@ -2832,7 +2369,8 @@ UINT WINAPI midiInGetDevCapsA(UINT uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
 UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID,
 				 LPMIDIINCAPS16 lpCaps, UINT16 uSize)
 {
-    TRACE("midiInGetDevCaps\n");
+    TRACE("(%d, %p, %d);\n",uDeviceID, lpCaps, uSize);
+
     return midMessage(uDeviceID, MIDM_GETDEVCAPS, 0, (DWORD)lpCaps, uSize);
 }
 
@@ -2842,7 +2380,8 @@ UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID,
 UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
     LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
-    UINT	ret = midiInGetErrorText16(uError, xstr, uSize);
+    UINT	ret = MIDI_GetErrorText(uError, xstr, uSize);
+
     lstrcpyAtoW(lpText, xstr);
     HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
@@ -2853,7 +2392,7 @@ UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
  */
 UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
-    return midiInGetErrorText16(uError, lpText, uSize);
+    return MIDI_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -2861,8 +2400,7 @@ UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
  */
 UINT16 WINAPI midiInGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
-    TRACE("midiInGetErrorText\n");
-    return (midiGetErrorText(uError, lpText, uSize));
+    return MIDI_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -2872,8 +2410,8 @@ UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
 		       DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
     HMIDIIN16	xhmid16;
-    UINT 		ret = midiInOpen16(&xhmid16, uDeviceID, dwCallback, dwInstance,
-					   CALLBACK32CONV(dwFlags));
+    UINT 	ret = midiInOpen16(&xhmid16, uDeviceID, dwCallback, dwInstance,
+				   CALLBACK32CONV(dwFlags));
     if (lphMidiIn) 
 	*lphMidiIn = xhmid16;
     return ret;
@@ -3971,12 +3509,39 @@ UINT WINAPI waveOutGetDevCapsW(UINT uDeviceID, LPWAVEOUTCAPSW lpCaps,
 }
 
 /**************************************************************************
+ * 				WAVE_GetErrorText       	[internal]
+ */
+static	UINT16	WAVE_GetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
+{
+    UINT16		ret = MMSYSERR_BADERRNUM;
+
+    if (lpText == NULL) {
+	ret = MMSYSERR_INVALPARAM;
+    } else if (uSize == 0) {
+	ret = MMSYSERR_NOERROR;
+    } else if (
+	       /* test has been removed 'coz MMSYSERR_BASE is 0, and gcc did emit
+		* a warning for the test was always true */
+	       (/*uError >= MMSYSERR_BASE && */uError <= MMSYSERR_LASTERROR) ||
+	       (uError >= WAVERR_BASE  && uError <= WAVERR_LASTERROR)) {
+	
+	LPWINE_MM_IDATA		iData = MULTIMEDIA_GetIData();
+
+	if (!iData) {
+	    ret = MMSYSERR_ERROR;
+	} else if (LoadStringA(iData->hWinMM32Instance, uError, lpText, uSize) > 0) {
+	    ret = MMSYSERR_NOERROR;
+	}
+    }
+    return ret;
+}
+
+/**************************************************************************
  * 				waveOutGetErrorText 	[MMSYSTEM.403]
  */
 UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
-    TRACE("waveOutGetErrorText\n");
-    return waveGetErrorText(uError, lpText, uSize);
+    return WAVE_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -3984,7 +3549,7 @@ UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
  */
 UINT WINAPI waveOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
-    return waveOutGetErrorText16(uError, lpText, uSize);
+    return WAVE_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -3993,79 +3558,11 @@ UINT WINAPI waveOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
     LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
-    UINT	ret = waveOutGetErrorTextA(uError, xstr, uSize);
+    UINT	ret = WAVE_GetErrorText(uError, xstr, uSize);
     
     lstrcpyAtoW(lpText, xstr);
     HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
-}
-
-/**************************************************************************
- * 				waveGetErrorText 		[internal]
- */
-static UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
-{
-    LPSTR	msgptr;
-    TRACE("(%04X, %p, %d);\n", uError, lpText, uSize);
-
-    if ((lpText == NULL) || (uSize < 1)) return FALSE;
-    lpText[0] = '\0';
-
-    switch (uError) {
-    case MMSYSERR_NOERROR:
-	msgptr = "The specified command was carried out.";
-	break;
-    case MMSYSERR_ERROR:
-	msgptr = "Undefined external error.";
-	break;
-    case MMSYSERR_BADDEVICEID:
-	msgptr = "A device ID has been used that is out of range for your system.";
-	break;
-    case MMSYSERR_NOTENABLED:
-	msgptr = "The driver was not enabled.";
-	break;
-    case MMSYSERR_ALLOCATED:
-	msgptr = "The specified device is already in use. Wait until it is free, and then try again.";
-	break;
-    case MMSYSERR_INVALHANDLE:
-	msgptr = "The specified device handle is invalid.";
-	break;
-    case MMSYSERR_NODRIVER:
-	msgptr = "There is no driver installed on your system !\n";
-	break;
-    case MMSYSERR_NOMEM:
-	msgptr = "Not enough memory available for this task. Quit one or more applications to increase available memory, and then try again.";
-	break;
-    case MMSYSERR_NOTSUPPORTED:
-	msgptr = "This function is not supported. Use the Capabilities function to determine which functions and messages the driver supports.";
-	break;
-    case MMSYSERR_BADERRNUM:
-	msgptr = "An error number was specified that is not defined in the system.";
-	break;
-    case MMSYSERR_INVALFLAG:
-	msgptr = "An invalid flag was passed to a system function.";
-	break;
-    case MMSYSERR_INVALPARAM:
-	msgptr = "An invalid parameter was passed to a system function.";
-	break;
-    case WAVERR_BADFORMAT:
-	msgptr = "The specified format is not supported or cannot be translated. Use the Capabilities function to determine the supported formats";
-	break;
-    case WAVERR_STILLPLAYING:
-	msgptr = "Cannot perform this operation while media data is still playing. Reset the device, or wait until the data is finished playing.";
-	break;
-    case WAVERR_UNPREPARED:
-	msgptr = "The wave header was not prepared. Use the Prepare function to prepare the header, and then try again.";
-	break;
-    case WAVERR_SYNC:
-	msgptr = "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, and then try again.";
-	break;
-    default:
-	msgptr = "Unknown MMSYSTEM Error !\n";
-	break;
-    }
-    lstrcpynA(lpText, msgptr, uSize);
-    return TRUE;
 }
 
 /**************************************************************************
@@ -4574,9 +4071,8 @@ UINT16 WINAPI waveInGetNumDevs16(void)
 {
     UINT16	count = 0;
 
-    TRACE("waveInGetNumDevs\n");
     count += widMessage(0, WIDM_GETNUMDEVS, 0L, 0L, 0L);
-    TRACE("waveInGetNumDevs return %u \n", count);
+    TRACE("=> %u \n", count);
     return count;
 }
 
@@ -4620,8 +4116,6 @@ UINT WINAPI waveInGetDevCapsA(UINT uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
  */
 UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps, UINT16 uSize)
 {
-    TRACE("waveInGetDevCaps\n");
-
     return widMessage(uDeviceID, WIDM_GETDEVCAPS, 0L, (DWORD)lpCaps, uSize);
 }
 
@@ -4630,8 +4124,7 @@ UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps, UINT16
  */
 UINT WINAPI waveInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
-    TRACE("waveInGetErrorText\n");
-    return waveGetErrorText(uError, lpText, uSize);
+    return WAVE_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -4640,7 +4133,7 @@ UINT WINAPI waveInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
     LPSTR txt = HeapAlloc(GetProcessHeap(), 0, uSize);
-    UINT	ret = waveGetErrorText(uError, txt, uSize);
+    UINT	ret = WAVE_GetErrorText(uError, txt, uSize);
     
     lstrcpyAtoW(lpText, txt);
     HeapFree(GetProcessHeap(), 0, txt);
@@ -4652,8 +4145,7 @@ UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
  */
 UINT16 WINAPI waveInGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
-    TRACE("waveInGetErrorText\n");
-    return waveGetErrorText(uError, lpText, uSize);
+    return WAVE_GetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -4972,7 +4464,7 @@ UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
 {
     LPWAVEOPENDESC	lpDesc;
     
-    TRACE("waveInGetID\n");
+    TRACE("(%04x)\n", hWaveIn);
     if (lpuDeviceID == NULL) return MMSYSERR_INVALHANDLE;
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
@@ -4987,7 +4479,7 @@ UINT16 WINAPI waveInGetID16(HWAVEIN16 hWaveIn, UINT16* lpuDeviceID)
 {
     LPWAVEOPENDESC	lpDesc;
     
-    TRACE("waveInGetID\n");
+    TRACE("(%04x)\n", hWaveIn);
     if (lpuDeviceID == NULL) return MMSYSERR_INVALHANDLE;
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
@@ -5005,6 +4497,7 @@ DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
     
     FIXME("(%04X, %04X, %08lX, %08lX)\n", 
 	  hWaveIn, uMessage, dwParam1, dwParam2);
+
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     switch (uMessage) {
@@ -5472,7 +4965,7 @@ BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hndl)
     if (hndl && mmThreadIsValid16(hndl)) {
 	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
 	ret = (GetCurrentThreadId() == lpMMThd->dwThreadID);
-#if 0 /* EPP */
+#if 1 /* EPP */
 	/* FIXME: just a test */
 	SYSLEVEL_ReleaseWin16Lock();
 	SYSLEVEL_RestoreWin16Lock();
@@ -5547,6 +5040,9 @@ void	CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt)
     TRACE("[20-%08x]\n", lpMMThd->hThread);
     lpMMThd->dwStatus = 0x20;
     if (lpMMThd->fpThread) {
+	/* it's not a WOW call back proc, but since the proc signature is the
+	 * same, why bother creating a new entry in Callbacks table ?
+	 */
 	Callbacks->CallWOWCallbackProc(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
     }
     lpMMThd->dwStatus = 0x30;
