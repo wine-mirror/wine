@@ -731,7 +731,7 @@ UINT16 WINAPI midiOutGetDevCaps16(UINT16 uDeviceID, LPMIDIOUTCAPS16 lpCaps,
 
 /**************************************************************************
  * 				midiOutGetErrorText 	[MMSYSTEM.203]
- * 				midiInGetErrorText 	[MMSYSTEM.203]
+ * 				midiInGetErrorText 	[MMSYSTEM.303]
  */
 UINT16 WINAPI midiOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
@@ -1231,7 +1231,7 @@ UINT16 WINAPI waveOutGetDevCaps16(UINT16 uDeviceID,
 
 /**************************************************************************
  * 				waveOutGetErrorText 	[MMSYSTEM.403]
- * 				waveInGetErrorText 	[MMSYSTEM.403]
+ * 				waveInGetErrorText 	[MMSYSTEM.503]
  */
 UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {

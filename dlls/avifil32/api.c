@@ -190,6 +190,7 @@ void WINAPI AVIFileExit(void) {
 }
 
 /***********************************************************************
+ *		AVIFileOpen		(AVIFIL32.@)
  *		AVIFileOpenA		(AVIFIL32.@)
  *		AVIFileOpen		(AVIFILE.102)
  */
@@ -363,6 +364,7 @@ HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile, PAVISTREAM *avis,
 }
 
 /***********************************************************************
+ *		AVIFileCreateStream	(AVIFIL32.@)
  *		AVIFileCreateStreamA	(AVIFIL32.@)
  *              AVIFileCreateStream	(AVIFILE.144)
  */
@@ -782,8 +784,9 @@ HRESULT WINAPI AVIMakeFileFromStreams(PAVIFILE *ppfile, int nStreams,
 }
 
 /***********************************************************************
- *		AVIStreamOpenFromFile   (AVIFILE.103)
+ *		AVIStreamOpenFromFile	(AVIFIL32.@)
  *		AVIStreamOpenFromFileA	(AVIFIL32.@)
+ *		AVIStreamOpenFromFile   (AVIFILE.103)
  */
 HRESULT WINAPI AVIStreamOpenFromFileA(PAVISTREAM *ppavi, LPCSTR szFile,
 				      DWORD fccType, LONG lParam,
@@ -987,6 +990,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
 }
 
 /***********************************************************************
+ *		AVIBuildFilter		(AVIFIL32.@)
  *		AVIBuildFilterA		(AVIFIL32.@)
  *		AVIBuildFilter		(AVIFILE.123)
  */

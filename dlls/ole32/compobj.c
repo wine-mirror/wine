@@ -1036,10 +1036,21 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID)
   return ret;
 }
 
-HRESULT WINAPI CLSIDFromProgID16(
-	LPCOLESTR16 progid,	/* [in] program id as found in registry */
-	LPCLSID riid		/* [out] associated CLSID */
-) {
+/******************************************************************************
+ *		CLSIDFromProgID [COMPOBJ.61]
+ *
+ * Converts a program ID into the respective GUID.
+ *
+ * PARAMS
+ *  progid       [I] program id as found in registry
+ *  riid         [O] associated CLSID
+ *
+ * RETURNS
+ *	Success: S_OK
+ *  Failure: CO_E_CLASSSTRING - the given ProgID cannot be found.
+ */
+HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
+{
 	char	*buf,buf2[80];
 	DWORD	buf2len;
 	HRESULT	err;
@@ -1063,7 +1074,6 @@ HRESULT WINAPI CLSIDFromProgID16(
 
 /******************************************************************************
  *		CLSIDFromProgID	[OLE32.@]
- *		CLSIDFromProgID	[COMPOBJ.61]
  *
  * Converts a program id into the respective GUID.
  *

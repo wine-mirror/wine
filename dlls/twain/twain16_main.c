@@ -30,7 +30,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-/* Main entry point for the TWAIN library */
+/***********************************************************************
+ *		DSM_Entry (TWAIN.1)
+ *
+ * Main entry point for the TWAIN library
+ */
 TW_UINT16 WINAPI
 DSM_Entry16 (pTW_IDENTITY pOrigin,
            pTW_IDENTITY pDest,

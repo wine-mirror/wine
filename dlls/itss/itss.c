@@ -168,6 +168,9 @@ static IClassFactoryVtbl ITSSCF_Vtbl =
 };
 
 
+/***********************************************************************
+ *		DllGetClassObject	(ITSS.@)
+ */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     DWORD i;
