@@ -56,10 +56,6 @@ WINDOWPOS *
 WND *
 void *
 
-%ptr # --forbidden
-
-SEGPTR
-
 %str
 
 LPCSTR

@@ -143,6 +143,17 @@ sub argument_documentations {
     return $$argument_documentations;
 }
 
+sub statements_line {
+    my $self = shift;
+    my $statements_line = \${$self->{STATEMENTS_LINE}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$statements_line = $_; }
+    
+    return $$statements_line;
+}
+
 sub statements {
     my $self = shift;
     my $statements = \${$self->{STATEMENTS}};

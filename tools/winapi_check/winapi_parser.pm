@@ -30,6 +30,7 @@ sub parse_c_file {
 	my $argument_types;
 	my $argument_names;
 	my $argument_documentations;
+	my $statements_line;
 	my $statements;
 	
 	$function_begin = sub {
@@ -64,6 +65,7 @@ sub parse_c_file {
 	};
 
 	$function_end = sub {
+	    $statements_line = shift;
 	    $statements = shift;
 
 	    my $function = &$function_create_callback();
@@ -90,6 +92,7 @@ sub parse_c_file {
 	    if(defined($argument_documentations)) {
 		$function->argument_documentations([@$argument_documentations]);
 	    }
+	    $function->statements_line($statements_line);
 	    $function->statements($statements);
 	    
 	    &$function_found_callback($function);
@@ -127,6 +130,7 @@ sub parse_c_file {
     my %regs_entrypoints;
     my @comment_lines = ();
     my @comments = ();
+    my $statements_line;
     my $statements;
     my $level = 0;
     my $extern_c = 0;
@@ -163,9 +167,15 @@ sub parse_c_file {
 	}
       
 	# remove C comments
-	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) { 
+	if(/^(.*?)(\/\*(.*?)\*\/)(.*)$/s) { 
+	    my @lines = split(/\n/, $2);
 	    push @comment_lines, $.; 
-	    push @comments, $2; 
+	    push @comments, $2;
+	    if($#lines <= 0) {
+		$_ = "$1 $4";
+	    } else {
+		$_ = $1 . ("\n" x $#lines) . $4;
+	    }
 	    $again = 1; 
 	    next;
 	}
@@ -175,23 +185,25 @@ sub parse_c_file {
 	}
 
 	# remove C++ comments
-	while(s/^(.*?)\/\/.*?$/$1\n/s) { $again = 1 }
+	while(s/^(.*?)\/\/.*?$/$1/s) { $again = 1 }
 	if($again) { next; }
 
-	# remove empty rows
-	if(/^\s*$/) { next; }
-
 	# remove preprocessor directives
-	if(s/^\s*\#/\#/m) {
-	    if(/^\\#.*?\\$/m) {
+	if(s/^\s*\#/\#/s) {
+	    if(/^\#.*?\\$/s) {
 		$lookahead = 1;
 		next;
-	    } elsif(s/^\#\s*(.*?)(\s+(.*?))?\s*$//m) {
+	    } elsif(s/^\#\s*(\w+)((?:\s+(.*?))?\s*)$//s) {
+		my @lines = split(/\n/, $2);
+		if($#lines > 0) {
+		    $_ = "\n" x $#lines;
+		}
 		if(defined($3)) {
 		    &$preprocessor_found_callback($1, $3);
 		} else {
 		    &$preprocessor_found_callback($1, "");
 		}
+		$again = 1;
 		next;
 	    }
 	}
@@ -282,6 +294,7 @@ sub parse_c_file {
 		$line .= "{";
 		print "+1: \{$_\n" if $options->debug >= 2;
 		$level++;
+		$statements .= $line;
 	    } elsif(s/^\}//) {
 		$_ = $'; $again = 1;
 		$line .= "}" if $level > 1;
@@ -291,15 +304,14 @@ sub parse_c_file {
 		    $extern_c = 0;
 		    $level = 0;
 		}
-	    }
-
-	    if($line !~ /^\s*$/) {
+		$statements .= $line;
+	    } else {
 		$statements .= "$line\n";
 	    }
 
 	    if($level == 0) {
 		if($in_function) {
-		    &$function_end($statements);
+		    &$function_end($statements_line, $statements);
 		    $statements = undef;
 		} elsif($in_type) {
 		    if(/^\s*(?:WINE_PACKED\s+)?((?:\*\s*)?\w+\s*(?:\s*,\s*(?:\*+\s*)?\w+)*\s*);/s) {
@@ -404,8 +416,9 @@ sub parse_c_file {
 			     $function_line, $linkage, $return_type, $calling_convention, $name,
 			     \@argument_types,\@argument_names,\@argument_documentations);
 	    if($level == 0) {
-		&$function_end(undef);
+		&$function_end(undef, undef);
 	    }
+	    $statements_line = $.;
 	    $statements = "";
 	} elsif(/__ASM_GLOBAL_FUNC\(\s*(.*?)\s*,/s) {
 	    my @lines = split(/\n/, $&);
@@ -415,7 +428,7 @@ sub parse_c_file {
 
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "void", "__asm", $1);
-	    &$function_end("");
+	    &$function_end($., "");
 	} elsif(/WAVEIN_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
@@ -425,10 +438,10 @@ sub parse_c_file {
 	    my @arguments32 = ("HWAVEIN");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line,  "", "UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
-	    &$function_end("");
+	    &$function_end($., "");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT", "WINAPI", "waveIn" . $1, \@arguments32);
-	    &$function_end("");
+	    &$function_end($., "");
 	} elsif(/WAVEOUT_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
@@ -439,10 +452,10 @@ sub parse_c_file {
 	    my @arguments32 = ("HWAVEOUT");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
-	    &$function_end("");
+	    &$function_end($., "");
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
-	    &$function_end("");
+	    &$function_end($., "");
 	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
@@ -454,19 +467,19 @@ sub parse_c_file {
 		my @arguments32 = ("HWAVEOUT", $4);
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut" . $2 . "16", \@arguments16);
-		&$function_end("");
+		&$function_end($., "");
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
-		&$function_end("");
+		&$function_end($., "");
 	    } elsif($1 eq 2) {
 		my @arguments16 = ("UINT16", $4);
 		my @arguments32 = ("UINT", $4);
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
-		&$function_end("");
+		&$function_end($., "");
 		&$function_begin($documentation_line, $documentation, 
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
-		&$function_end("");
+		&$function_end($., "");
 	    }
         } elsif(/DEFINE_REGS_ENTRYPOINT_\d+\(\s*(\S*)\s*,\s*([^\s,\)]*).*?\)/s) {
 	    $_ = $'; $again = 1;

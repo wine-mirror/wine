@@ -131,7 +131,7 @@ sub line {
 	error("line");
     } elsif($tool eq "bison" && /^conflicts:\s+\d+\s+shift\/reduce$/) {
 	# Nothing
-    } elsif($tool eq "gcc" && /^In file included from (.+?):(\d+):$/) {
+    } elsif($tool eq "gcc" && /^(?:In file included |\s*)from (.+?):(\d+)[,:]$/) {
 	# Nothing
     } elsif($tool =~ /^gcc|ld$/ && s/^(.+?\.o(?:\(.*?\))?):\s*//) {
 	ld_output($1, $_)

@@ -28,6 +28,8 @@ my %options_long = (
     "documentation-name" => { default => 1, parent => "documentation", description => "documentation name fixup" },
     "documentation-ordinal" => { default => 1, parent => "documentation", description => "documentation ordinal fixup" },
     "documentation-wrong" => { default => 1, parent => "documentation", description => "documentation wrong fixup" },
+    "statements" => { default => 1, parent => "local", description => "statements fixup" },
+    "statements-windowsx" => { default => 1, parent => "local", description => "statements windowsx fixup" },
     "stub" => { default => 0, parent => "local", description => "stub fixup" },
 
     "global" => { default => 1, description => "global fixup" },

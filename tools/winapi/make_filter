@@ -38,13 +38,13 @@ while(<IN>) {
 
     if($message) {
 	if($file && $line) {
-	    if($directory && $directory ne ".") {
+	    if($directory && $directory ne "." && $file !~ m%^/%) {
 		$output->write(&file_normalize("$directory/$file") . ":$line: $message\n");
 	    } else {
 		$output->write("$file:$line: $message\n");
 	    }
 	} elsif($file) {
-	    if($directory && $directory ne ".") {
+	    if($directory && $directory ne "." && $file !~ m%^/%) {
 		$output->write(&file_normalize("$directory/$file") . ": $message\n");
 	    } else {
 		$output->write("$file: $message\n");
