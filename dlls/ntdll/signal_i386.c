@@ -305,39 +305,28 @@ typedef struct
 #define CS_sig(context)      ((context)->sc_cs)
 #define DS_sig(context)      ((context)->sc_ds)
 #define ES_sig(context)      ((context)->sc_es)
-#define SS_sig(context)      ((context)->sc_ss)
-
-/* FS and GS are now in the sigcontext struct of FreeBSD, but not
- * saved by the exception handling. duh.
- * Actually they are in -current (have been for a while), and that
- * patch now finally has been MFC'd to -stable too (Nov 15 1999).
- * If you're running a system from the -stable branch older than that,
- * like a 3.3-RELEASE, grab the patch from the ports tree:
- * ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/emulators/wine/files/patch-3.3-sys-fsgs
- * (If its not yet there when you look, go here:
- * http://www.jelal.kn-bremen.de/freebsd/ports/emulators/wine/files/ )
- */
-#ifdef __FreeBSD__
 #define FS_sig(context)      ((context)->sc_fs)
 #define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define TRAP_sig(context)    ((context)->sc_trapno)
+
+#ifdef __NetBSD__
+#define ERROR_sig(context)   ((context)->sc_err)
 #endif
 
 #ifdef linux
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
 #define CR2_sig(context)     ((context)->cr2)
-#define TRAP_sig(context)    ((context)->sc_trapno)
 #define ERROR_sig(context)   ((context)->sc_err)
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->i387))
 #endif
 
-#ifndef __FreeBSD__
-#define EFL_sig(context)     ((context)->sc_eflags)
-#else
+#ifdef __FreeBSD__
 #define EFL_sig(context)     ((context)->sc_efl)
 /* FreeBSD, see i386/i386/traps.c::trap_pfault va->err kludge  */
 #define CR2_sig(context)     ((context)->sc_err)
-#define TRAP_sig(context)    ((context)->sc_trapno)
+#else
+#define EFL_sig(context)     ((context)->sc_eflags)
 #endif
 
 #define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
