@@ -3249,7 +3249,7 @@ INT       WINAPI GetPixelFormat(HDC);
 INT       WINAPI GetPolyFillMode(HDC);
 BOOL      WINAPI GetRasterizerCaps(LPRASTERIZER_STATUS,UINT);
 DWORD     WINAPI GetRegionData(HRGN,DWORD,LPRGNDATA);
-INT       WINAPI GetRelAbs(HDC);
+INT       WINAPI GetRelAbs(HDC,DWORD);
 INT       WINAPI GetRgnBox(HRGN,LPRECT);
 INT       WINAPI GetROP2(HDC);
 HGDIOBJ   WINAPI GetStockObject(INT);

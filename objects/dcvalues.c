@@ -164,11 +164,6 @@ DC_GET_VAL_32( INT, GetROP2, w.ROPmode )
 DC_GET_VAL_16( INT16, GetRelAbs16, w.relAbsMode )
 
 /***********************************************************************
- *		GetRelAbs		(GDI32.218)
- */
-DC_GET_VAL_32( INT, GetRelAbs, w.relAbsMode )
-
-/***********************************************************************
  *		GetStretchBltMode16	(GDI.88)
  */
 DC_GET_VAL_16( INT16, GetStretchBltMode16, w.stretchBltMode )

@@ -250,7 +250,7 @@ init    MAIN_GdiInit
 @ stdcall GetRandomRgn(long long long) GetRandomRgn
 @ stdcall GetRasterizerCaps(ptr long) GetRasterizerCaps
 @ stdcall GetRegionData(long long ptr) GetRegionData
-@ stdcall GetRelAbs(long) GetRelAbs
+@ stdcall GetRelAbs(long long) GetRelAbs
 @ stdcall GetRgnBox(long ptr) GetRgnBox
 @ stdcall GetStockObject(long) GetStockObject
 @ stdcall GetStretchBltMode(long) GetStretchBltMode

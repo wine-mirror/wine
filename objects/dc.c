@@ -123,6 +123,7 @@ DC *DC_GetDCPtr( HDC hdc )
 	(ptr->wMagic == ENHMETAFILE_DC_MAGIC))
         return (DC *)ptr;
     GDI_HEAP_UNLOCK( hdc );
+    SetLastError( ERROR_INVALID_HANDLE );
     return NULL;
 }
 
@@ -1345,6 +1346,17 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {
     FIXME("(): stub\n");
     return DCB_DISABLE;   /* bounding rectangle always empty */
+}
+
+
+/***********************************************************************
+ *		GetRelAbs		(GDI32.218)
+ */
+INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return 0;
+    return dc->w.relAbsMode;
 }
 
 /***********************************************************************
