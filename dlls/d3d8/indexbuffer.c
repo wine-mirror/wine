@@ -104,11 +104,7 @@ D3DRESOURCETYPE WINAPI IDirect3DIndexBuffer8Impl_GetType(LPDIRECT3DINDEXBUFFER8 
 /* IDirect3DIndexBuffer8 */
 HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_Lock(LPDIRECT3DINDEXBUFFER8 iface, UINT OffsetToLock, UINT SizeToLock, BYTE** ppbData, DWORD Flags) {
     ICOM_THIS(IDirect3DIndexBuffer8Impl,iface);
-    if (OffsetToLock==0) {
-        TRACE("(%p) : no locking yet, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
-    } else {
-        FIXME("(%p) : stub, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
-    }
+    TRACE("(%p) : no locking yet, offset %d, size %d, Flags=%lx\n", This, OffsetToLock, SizeToLock, Flags);
     *ppbData = (BYTE *)This->allocatedMemory + OffsetToLock;
     return D3D_OK;
 }
