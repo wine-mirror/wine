@@ -28,7 +28,9 @@ struct User_DirectDrawSurfaceImpl_Part
 {
     HWND window;
     HDC cached_dc;
-    HANDLE update_thread, update_event;
+    HANDLE update_thread, update_event, refresh_event;
+    volatile int wait_count, in_refresh;
+    CRITICAL_SECTION crit;
 };
 
 typedef struct

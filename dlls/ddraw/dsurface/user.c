@@ -36,9 +36,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* if you use OWN_WINDOW, don't use SYNC_UPDATE, or you may get trouble */
 /* #define SYNC_UPDATE */
 /*
- * FIXME: This does not work any more because the created window has its own 
+ * FIXME: This does not work any more because the created window has its own
  *        thread queue that cannot be manipulated by application threads.
- * #define OWN_WINDOW 
+ * #define OWN_WINDOW
  */
 
 #ifdef OWN_WINDOW
@@ -96,12 +96,14 @@ User_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
 	DirectDrawSurface_RegisterClass();
 #endif
 #ifndef SYNC_UPDATE
+	InitializeCriticalSection(&priv->user.crit);
+	priv->user.refresh_event = CreateEventA(NULL, TRUE, FALSE, NULL);
 	priv->user.update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
 	priv->user.update_thread = CreateThread(NULL, 0, User_update_thread, This, 0, NULL);
 #ifdef OWN_WINDOW
 	if (This->ddraw_owner->cooperative_level & DDSCL_FULLSCREEN) {
 	    /* wait for window creation (or update thread destruction) */
-	    while (WaitForMultipleObjects(1, &priv->user.update_thread, FALSE, 10) == WAIT_TIMEOUT)
+	    while (WaitForMultipleObjects(1, &priv->user.update_thread, FALSE, 100) == WAIT_TIMEOUT)
 		if (This->more.lpDDRAWReserved) break;
 	    if (!This->more.lpDDRAWReserved) {
 		ERR("window creation failed\n");
@@ -174,7 +176,10 @@ void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
 	WaitForSingleObject(priv->user.update_thread,INFINITE);
 #endif
 	TRACE("update thread terminated\n");
+	CloseHandle(event);
 	CloseHandle(priv->user.update_thread);
+	CloseHandle(priv->user.refresh_event);
+	DeleteCriticalSection(&priv->user.crit);
 #else
 #ifdef OWN_WINDOW
 	User_destroy_own_window(This);
@@ -189,11 +194,44 @@ void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This)
     DIB_DirectDrawSurface_final_release(This);
 }
 
+static int User_DirectDrawSurface_init_wait(IDirectDrawSurfaceImpl* This)
+{
+    USER_PRIV_VAR(priv, This);
+    int need_wait;
+    EnterCriticalSection(&priv->user.crit);
+    priv->user.wait_count++;
+    need_wait = priv->user.in_refresh;
+    LeaveCriticalSection(&priv->user.crit);
+    return need_wait;
+}
+
+static void User_DirectDrawSurface_end_wait(IDirectDrawSurfaceImpl* This)
+{
+    USER_PRIV_VAR(priv, This);
+    EnterCriticalSection(&priv->user.crit);
+    if (!--priv->user.wait_count)
+	ResetEvent(priv->user.refresh_event);
+    LeaveCriticalSection(&priv->user.crit);
+}
+
+static void User_DirectDrawSurface_wait_update(IDirectDrawSurfaceImpl* This)
+{
+    USER_PRIV_VAR(priv, This);
+    if (priv->user.in_refresh) {
+	if (User_DirectDrawSurface_init_wait(This))
+	    WaitForSingleObject(priv->user.refresh_event, 2);
+	User_DirectDrawSurface_end_wait(This);
+    }
+}
+
 void User_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
 					LPCRECT pRect, DWORD dwFlags)
 {
+#if 0
     if (!(dwFlags & DDLOCK_WRITEONLY))
 	User_copy_from_screen(This, pRect);
+#endif
+    if (dwFlags & DDLOCK_WAIT) User_DirectDrawSurface_wait_update(This);
 
     if (pRect) {
 	This->lastlockrect = *pRect;
@@ -205,12 +243,15 @@ void User_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
 void User_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
 					  LPCRECT pRect)
 {
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
 #ifdef SYNC_UPDATE
-    User_copy_to_screen(This, pRect);
+	User_copy_to_screen(This, pRect);
 #else
-    USER_PRIV_VAR(priv, This);
-    SetEvent(priv->user.update_event);
+	USER_PRIV_VAR(priv, This);
+	SetEvent(priv->user.update_event);
 #endif
+    }
 }
 
 void User_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
@@ -236,7 +277,9 @@ void User_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 					   DWORD dwStart, DWORD dwCount,
 					   LPPALETTEENTRY palent)
 {
+#ifndef SYNC_UPDATE
     USER_PRIV_VAR(priv, This);
+#endif
 
     DIB_DirectDrawSurface_update_palette(This, pal, dwStart, dwCount, palent);
     /* FIXME: realize palette on display window */
@@ -279,8 +322,9 @@ void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This, DWORD dwFl
     User_copy_to_screen(This,NULL);
 #else
     USER_PRIV_VAR(priv, This);
-    This->lastlockrect.left = This->lastlockrect.right = 0;
     assert(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE);
+    if (dwFlags & DDFLIP_WAIT) User_DirectDrawSurface_wait_update(This);
+    This->lastlockrect.left = This->lastlockrect.right = 0;
     SetEvent(priv->user.update_event);
 #endif
 }
@@ -473,14 +517,21 @@ static DWORD CALLBACK User_update_thread(LPVOID arg)
 #endif
 	if (ret == WAIT_OBJECT_0)
 	{
-	    if (*pActive)
+	    if (*pActive) {
+		priv->user.in_refresh = TRUE;
 		User_copy_to_screen(This, NULL);
-	    else
+		EnterCriticalSection(&priv->user.crit);
+		priv->user.in_refresh = FALSE;
+		if (priv->user.wait_count)
+		    SetEvent(priv->user.refresh_event);
+		LeaveCriticalSection(&priv->user.crit);
+	    } else
 		break;
 	}
 	else if (ret != WAIT_OBJECT_0+1) break;
     } while (TRUE);
 
+    SetEvent(priv->user.refresh_event);
 #ifdef OWN_WINDOW
     User_destroy_own_window(This);
 #endif
@@ -522,13 +573,9 @@ static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 	if (This->clipper) {
 	    RECT xrc;
 	    HWND hwnd = This->clipper->hWnd;
-	    if (hwnd && GetWindowRect(hwnd,&xrc)) {
-		/* Do not forget to honor the offset within the clip window. */
-		/* translate the surface to 0.0 of the clip window */
-		OffsetRect(&drawrect,offset.x,offset.y);
+	    if (hwnd && GetClientRect(hwnd,&xrc)) {
+		OffsetRect(&xrc,offset.x,offset.y);
 		IntersectRect(&drawrect,&drawrect,&xrc);
-		/* translate it back to its original position */
-		OffsetRect(&drawrect,-offset.x,-offset.y);
 	    }
 	}
 	if (rc)
@@ -540,7 +587,7 @@ static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 		IntersectRect(&drawrect,&drawrect,&This->lastlockrect);
 	}
 	BitBlt(hDisplayDC,
-		drawrect.left+offset.x, drawrect.top+offset.y,
+		drawrect.left-offset.x, drawrect.top-offset.y,
 		drawrect.right-drawrect.left, drawrect.bottom-drawrect.top,
 		hSurfaceDC,
 		drawrect.left, drawrect.top,
