@@ -1931,12 +1931,18 @@ TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     DestroyWindow(infoPtr->hwndUpDown);
 
   COMCTL32_Free (infoPtr);
+  SetWindowLongA(hwnd, 0, 0);
   return 0;
 }
 
 static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+
+    TRACE("hwnd=%x msg=%x wParam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!TAB_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
+      return DefWindowProcA (hwnd, uMsg, wParam, lParam);
+
     switch (uMsg)
     {
     case TCM_GETIMAGELIST:

@@ -1118,6 +1118,7 @@ TRACKBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     	DestroyWindow (infoPtr->hwndToolTip);
 
     COMCTL32_Free (infoPtr);
+    SetWindowLongA (hwnd, 0, 0);
     return 0;
 }
 
@@ -1449,6 +1450,9 @@ TRACKBAR_KeyUp (HWND hwnd, WPARAM wParam)
 static LRESULT WINAPI
 TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!TRACKBAR_GetInfoPtr (hwnd) && (uMsg != WM_CREATE))
+        return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
     case TBM_CLEARSEL:

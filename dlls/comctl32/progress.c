@@ -198,7 +198,8 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 {
     PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(hwnd); 
   UINT temp;
-
+  if (!infoPtr && (message != WM_CREATE))
+      return DefWindowProcA( hwnd, message, wParam, lParam ); 
   switch(message)
     {
     case WM_NCCREATE:
@@ -229,6 +230,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case WM_DESTROY:
       TRACE("Progress Ctrl destruction, hwnd=%04x\n", hwnd);
       COMCTL32_Free (infoPtr);
+      SetWindowLongA(hwnd, 0, 0);
       break;
 
     case WM_ERASEBKGND:

@@ -230,7 +230,7 @@ PAGER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free pager info data */
     COMCTL32_Free (infoPtr);
-
+    SetWindowLongA (hwnd, 0, 0);
     return 0;
 }
 
@@ -290,6 +290,9 @@ PAGER_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!PAGER_GetInfoPtr (hwnd) && (uMsg != WM_CREATE))
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
 	case PGM_FORWARDMOUSE:

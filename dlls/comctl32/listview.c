@@ -6710,6 +6710,7 @@ static LRESULT LISTVIEW_NCDestroy(HWND hwnd)
   /* free listview info pointer*/
   COMCTL32_Free(infoPtr);
 
+  SetWindowLongA(hwnd, 0, 0);
   return 0;
 }
 
@@ -7300,6 +7301,9 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
 static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    LPARAM lParam)
 {
+  TRACE("hwnd=%x uMsg=%x wParam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+  if (!GetWindowLongA(hwnd, 0) && (uMsg != WM_NCCREATE))
+    return DefWindowProcA( hwnd, uMsg, wParam, lParam );
   switch (uMsg)
   {
   case LVM_APPROXIMATEVIEWRECT: 

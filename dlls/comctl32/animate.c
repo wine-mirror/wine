@@ -604,6 +604,7 @@ static LRESULT ANIMATE_Destroy(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     /* free animate info data */
     COMCTL32_Free(infoPtr);
+    SetWindowLongA(hWnd, 0, 0);
 
     FreeLibrary(hModWinmm);
     return 0;
@@ -643,6 +644,9 @@ static LRESULT WINAPI ANIMATE_Size(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 static LRESULT WINAPI ANIMATE_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hWnd, uMsg, wParam, lParam);
+    if (!ANIMATE_GetInfoPtr(hWnd) && (uMsg != WM_NCCREATE))
+	return DefWindowProcA(hWnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
     case ACM_OPENA:

@@ -1680,7 +1680,7 @@ REBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free rebar info data */
     COMCTL32_Free (infoPtr);
-
+    SetWindowLongA (hwnd, 0, 0);
     TRACE("destroyed!\n");
     return 0;
 }
@@ -1886,6 +1886,9 @@ REBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!REBAR_GetInfoPtr (hwnd) && (uMsg != WM_CREATE))
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
 /*	case RB_BEGINDRAG: */

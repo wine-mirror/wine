@@ -901,7 +901,7 @@ STATUSBAR_WMDestroy (HWND hwnd)
 	DestroyWindow (self->hwndToolTip);
 
     COMCTL32_Free (self);
-
+    SetWindowLongA(hwnd, 0, 0);
     return 0;
 }
 
@@ -1098,6 +1098,10 @@ STATUSBAR_SendNotify (HWND hwnd, UINT code)
 static LRESULT WINAPI
 StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, msg, wParam, lParam);
+    if (!(STATUSBAR_GetInfoPtr(hwnd)) && (msg != WM_CREATE))
+        return DefWindowProcA (hwnd, msg, wParam, lParam);
+
     switch (msg) {
 	case SB_GETBORDERS:
 	    return STATUSBAR_GetBorders (lParam);

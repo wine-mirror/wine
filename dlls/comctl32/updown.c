@@ -699,7 +699,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
   UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd);
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
   int temp;
-
+  if (!infoPtr && (message != WM_CREATE) && (message != WM_NCCREATE))
+      return DefWindowProcA (hwnd, message, wParam, lParam); 
   switch(message)
     {
     case WM_NCCREATE:
@@ -733,7 +734,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
         RemovePropA(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
 
       COMCTL32_Free (infoPtr);
-
+      SetWindowLongA (hwnd, 0, 0);
       TRACE("UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
       break;
 	

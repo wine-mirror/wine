@@ -66,7 +66,7 @@ HOTKEY_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free hotkey info data */
     COMCTL32_Free (infoPtr);
-
+    SetWindowLongA (hwnd, 0, 0);
     return 0;
 }
 
@@ -269,6 +269,9 @@ HOTKEY_SysKeyUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lparam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!HOTKEY_GetInfoPtr (hwnd) && (uMsg != WM_CREATE))
+        return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
 /*	case HKM_GETHOTKEY: */

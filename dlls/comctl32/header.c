@@ -1130,7 +1130,7 @@ HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	ImageList_Destroy (infoPtr->himl);
 
     COMCTL32_Free (infoPtr);
-
+    SetWindowLongA (hwnd, 0, 0);
     return 0;
 }
 
@@ -1454,6 +1454,9 @@ HEADER_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, msg, wParam, lParam);
+    if (!HEADER_GetInfoPtr (hwnd) && (msg != WM_CREATE))
+	return DefWindowProcA (hwnd, msg, wParam, lParam);
     switch (msg) {
 	case HDM_CREATEDRAGIMAGE:
 	    return HEADER_CreateDragImage (hwnd, wParam);

@@ -1961,7 +1961,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free tool tips info data */
     COMCTL32_Free (infoPtr);
-
+    SetWindowLongA(hwnd, 0, 0);
     return 0;
 }
 
@@ -2233,6 +2233,9 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static LRESULT CALLBACK
 TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!(TOOLTIPS_GetInfoPtr(hwnd) && (uMsg != WM_CREATE)))
+        return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
 	case TTM_ACTIVATE:

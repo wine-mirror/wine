@@ -201,7 +201,7 @@ COMBOEX_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free comboex info data */
     COMCTL32_Free (infoPtr);
-
+    SetWindowLongA (hwnd, 0, 0);
     return 0;
 }
 
@@ -224,6 +224,10 @@ COMBOEX_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
+    if (!COMBOEX_GetInfoPtr (hwnd) && (uMsg != WM_CREATE))
+        return DefWindowProcA (hwnd, uMsg, wParam, lParam);
+
     switch (uMsg)
     {
 /*	case CBEM_DELETEITEM: */
