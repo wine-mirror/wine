@@ -102,9 +102,9 @@ void server_protocol_error( const char *err, ... )
 
 
 /***********************************************************************
- *           server_perror
+ *           server_protocol_perror
  */
-static void server_perror( const char *err )
+void server_protocol_perror( const char *err )
 {
     fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
     perror( err );
@@ -141,7 +141,7 @@ void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
         server_protocol_error( "buffer overflow %d bytes\n",
                                (char *)req + size - (char *)NtCurrentTeb()->buffer_info );
     NtCurrentTeb()->buffer_info->cur_pos = pos + size;
-    req->header.fixed_size = fixed_size;
+    req->header.var_offset = pos + sizeof(*req);
     req->header.var_size = var_size;
     return req;
 }
@@ -152,15 +152,15 @@ void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
  *
  * Send a request to the server.
  */
-static void send_request( enum request req, struct request_header *header )
+static void send_request( enum request req, union generic_request *request )
 {
-    header->req = req;
-    NtCurrentTeb()->buffer_info->cur_req = (char *)header - (char *)NtCurrentTeb()->buffer;
+    request->header.req = req;
+    NtCurrentTeb()->buffer_info->cur_req = (char *)request - (char *)NtCurrentTeb()->buffer;
     /* write a single byte; the value is ignored anyway */
-    if (write( NtCurrentTeb()->request_fd, header, 1 ) == -1)
+    if (write( NtCurrentTeb()->request_fd, request, 1 ) == -1)
     {
         if (errno == EPIPE) SYSDEPS_ExitThread(0);
-        server_perror( "sendmsg" );
+        server_protocol_perror( "sendmsg" );
     }
 }
 
@@ -169,7 +169,7 @@ static void send_request( enum request req, struct request_header *header )
  *
  * Send a request to the server, passing a file descriptor.
  */
-static void send_request_fd( enum request req, struct request_header *header, int fd )
+static void send_request_fd( enum request req, union generic_request *request, int fd )
 {
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     struct cmsg_fd cmsg;
@@ -178,7 +178,7 @@ static void send_request_fd( enum request req, struct request_header *header, in
     struct iovec vec;
 
     /* write a single byte; the value is ignored anyway */
-    vec.iov_base = (void *)header;
+    vec.iov_base = (void *)request;
     vec.iov_len  = 1;
 
     msghdr.msg_name    = NULL;
@@ -199,12 +199,12 @@ static void send_request_fd( enum request req, struct request_header *header, in
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    header->req = req;
+    request->header.req = req;
 
     if (sendmsg( NtCurrentTeb()->socket, &msghdr, 0 ) == -1)
     {
         if (errno == EPIPE) SYSDEPS_ExitThread(0);
-        server_perror( "sendmsg" );
+        server_protocol_perror( "sendmsg" );
     }
 }
 
@@ -224,7 +224,7 @@ static void wait_reply(void)
         if (!ret) break;
         if (errno == EINTR) continue;
         if (errno == EPIPE) break;
-        server_perror("read");
+        server_protocol_perror("read");
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
@@ -238,10 +238,10 @@ static void wait_reply(void)
  */
 unsigned int wine_server_call( enum request req )
 {
-    void *req_ptr = NtCurrentTeb()->buffer;
+    union generic_request *req_ptr = NtCurrentTeb()->buffer;
     send_request( req, req_ptr );
     wait_reply();
-    return ((struct request_header *)req_ptr)->error;
+    return req_ptr->header.error;
 }
 
 
@@ -253,13 +253,12 @@ unsigned int wine_server_call( enum request req )
 unsigned int server_call_fd( enum request req, int fd_out )
 {
     unsigned int res;
-    void *req_ptr = NtCurrentTeb()->buffer;
+    union generic_request *req_ptr = NtCurrentTeb()->buffer;
 
     send_request_fd( req, req_ptr, fd_out );
     wait_reply();
 
-    if ((res = ((struct request_header *)req_ptr)->error))
-        SetLastError( RtlNtStatusToDosError(res) );
+    if ((res = req_ptr->header.error)) SetLastError( RtlNtStatusToDosError(res) );
     return res;  /* error code */
 }
 
@@ -356,7 +355,7 @@ int wine_server_recv_fd( int handle, int cache )
         if (!ret) break;
         if (errno == EINTR) continue;
         if (errno == EPIPE) break;
-        server_perror("recvmsg");
+        server_protocol_perror("recvmsg");
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
@@ -613,10 +612,10 @@ int CLIENT_InitThread(void)
     fd = wine_server_recv_fd( 0, 0 );
     if (fd == -1) server_protocol_error( "no fd received for thread buffer\n" );
 
-    if ((size = lseek( fd, 0, SEEK_END )) == -1) server_perror( "lseek" );
+    if ((size = lseek( fd, 0, SEEK_END )) == -1) server_protocol_perror( "lseek" );
     teb->buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
     close( fd );
-    if (teb->buffer == (void*)-1) server_perror( "mmap" );
+    if (teb->buffer == (void*)-1) server_protocol_perror( "mmap" );
     teb->buffer_info = (struct server_buffer_info *)((char *)teb->buffer + size) - 1;
 
     wait_reply();

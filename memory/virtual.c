@@ -1494,7 +1494,7 @@ LPVOID WINAPI MapViewOfFileEx(
     UINT ptr = (UINT)-1, size = 0;
     int flags = MAP_PRIVATE;
     int unix_handle = -1;
-    int prot, anonymous, res;
+    int prot, res;
     void *base;
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE shared_file;
@@ -1520,15 +1520,11 @@ LPVOID WINAPI MapViewOfFileEx(
         header_size = req->header_size;
         shared_file = req->shared_file;
         shared_size = req->shared_size;
-        anonymous   = req->anonymous;
     }
     SERVER_END_REQ;
     if (res) goto error;
 
-    if (!anonymous)
-    {
-        if ((unix_handle = FILE_GetUnixHandle( handle, 0 )) == -1) goto error;
-    }
+    if ((unix_handle = FILE_GetUnixHandle( handle, 0 )) == -1) goto error;
 
     if (prot & VPROT_IMAGE)
         return map_image( handle, unix_handle, base, size_low, header_size,

@@ -27,7 +27,7 @@
 struct request_header
 {
     IN  int            req;          /* request code */
-    IN  unsigned short fixed_size;   /* size of the fixed part of the request */
+    IN  unsigned short var_offset;   /* offset of the variable part of the request */
     IN  unsigned short var_size;     /* size of the variable part of the request */
     OUT unsigned int   error;        /* error result */
 };
@@ -864,7 +864,6 @@ struct get_mapping_info_request
     OUT void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
     OUT handle_t     shared_file;   /* shared mapping file handle */
     OUT int          shared_size;   /* shared mapping size */
-    OUT int          anonymous;     /* anonymous mapping? */
 };
 
 
@@ -1594,7 +1593,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 37
+#define SERVER_PROTOCOL_VERSION 38
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1622,6 +1621,7 @@ struct server_buffer_info
 extern unsigned int wine_server_call( enum request req );
 extern unsigned int server_call_fd( enum request req, int fd_out );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
+extern void server_protocol_perror( const char *err ) WINE_NORETURN;
 extern void *wine_server_alloc_req( size_t fixed_size, size_t var_size );
 extern int wine_server_recv_fd( int handle, int cache );
 extern const char *get_config_dir(void);

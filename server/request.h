@@ -52,7 +52,7 @@ static inline void *get_req_ptr( struct thread *thread )
 /* get the request vararg data */
 inline static void *get_req_data( const void *req )
 {
-    return ((union generic_request *)req + 1);
+    return (char *)current->buffer + ((struct request_header *)req)->var_offset;
 }
 
 /* get the request vararg size */
