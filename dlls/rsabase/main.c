@@ -298,6 +298,10 @@ static const WCHAR szRSAKey[] = { 'S','o','f','t','w','a','r','e','\\',
  'i','d','e','r','\\','M','i','c','r','o','s','o','f','t',' ','B','a','s',
  'e',' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r',
  'o','v','i','d','e','r',' ','v','1','.','0',0 };
+static const WCHAR szRSAKey2[] = { 'S','o','f','t','w','a','r','e','\\',
+ 'M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r',
+ 'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
+ 'i','d','e','r',' ','T','y','p','e','s','\\','T','y','p','e',' ','0','0','1',0};
 
 /***********************************************************************
  *		DllRegisterServer (RSABASE.@)
@@ -327,7 +331,25 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
         }
         RegCloseKey(key);
     }
-    return S_OK;
+    if (apiRet == ERROR_SUCCESS)
+        apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szRSAKey2, 0, NULL,
+         REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dp);
+    if (apiRet == ERROR_SUCCESS)
+    {
+        if (dp == REG_CREATED_NEW_KEY)
+        {
+            static const WCHAR szName[] = { 'N','a','m','e',0 };
+            static const WCHAR szRSAName[] = {
+              'M','i','c','r','o','s','o','f','t',' ','B','a','s','e',' ','C',
+              'r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r',
+              'o','v','i','d','e','r',' ','v','1','.','0',0 };
+
+            RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName,
+                sizeof(szRSAName));
+        }
+        RegCloseKey(key);
+    }
+    return HRESULT_FROM_WIN32(apiRet);
 }
 
 /***********************************************************************
@@ -336,5 +358,6 @@ HRESULT WINAPI RSABASE_DllRegisterServer()
 HRESULT WINAPI RSABASE_DllUnregisterServer()
 {
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szRSAKey);
+    RegDeleteKeyW(HKEY_LOCAL_MACHINE, szRSAKey2);
     return S_OK;
 }
