@@ -174,12 +174,12 @@ init	RPCRT4_LibMain
 @ stub UuidCompare
 @ stdcall UuidCreate(ptr) UuidCreate
 @ stdcall UuidCreateSequential(ptr) UuidCreateSequential # win 2000
-@ stub UuidCreateNil
-@ stub UuidEqual
-@ stdcall UuidFromStringA(ptr ptr) UuidFromStringA
-@ stdcall UuidFromStringW(ptr ptr) UuidFromStringW
+@ stdcall UuidCreateNil(ptr) UuidCreateNil
+@ stdcall UuidEqual(ptr ptr ptr) UuidEqual
+@ stdcall UuidFromStringA(str ptr) UuidFromStringA
+@ stdcall UuidFromStringW(wstr ptr) UuidFromStringW
 @ stdcall UuidHash(ptr ptr) UuidHash
-@ stub UuidIsNil
+@ stdcall UuidIsNil(ptr ptr) UuidIsNil
 @ stdcall UuidToStringA(ptr ptr) UuidToStringA
 @ stub UuidToStringW
 

@@ -35,6 +35,7 @@
 #include "wine/windef16.h"
 #include "winerror.h"
 #include "winbase.h"
+#include "wine/unicode.h"
 #include "rpc.h"
 
 #include "ole2.h"
@@ -64,6 +65,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+static UUID uuid_nil;
+
 /***********************************************************************
  * RPCRT4_LibMain
  *
@@ -92,6 +95,60 @@ RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /*************************************************************************
+ * UuidEqual [RPCRT4.@]
+ *
+ * PARAMS
+ *     UUID *Uuid1        [I] Uuid to compare
+ *     UUID *Uuid2        [I] Uuid to compare
+ *     RPC_STATUS *Status [O] returns RPC_S_OK
+ *
+ * RETURNS
+ *     TRUE/FALSE
+ */
+int WINAPI UuidEqual(UUID *uuid1, UUID *uuid2, RPC_STATUS *Status)
+{
+  TRACE("(%s,%s)\n", debugstr_guid(uuid1), debugstr_guid(uuid2));
+  *Status = RPC_S_OK;
+  if (!uuid1) uuid1 = &uuid_nil;
+  if (!uuid2) uuid2 = &uuid_nil;
+  if (uuid1 == uuid2) return TRUE;
+  return !memcmp(uuid1, uuid2, sizeof(UUID));
+}
+
+/*************************************************************************
+ * UuidIsNil [RPCRT4.@]
+ *
+ * PARAMS
+ *     UUID *Uuid         [I] Uuid to compare
+ *     RPC_STATUS *Status [O] retuns RPC_S_OK
+ *
+ * RETURNS
+ *     TRUE/FALSE
+ */
+int WINAPI UuidIsNil(UUID *uuid, RPC_STATUS *Status)
+{
+  TRACE("(%s)\n", debugstr_guid(uuid));
+  *Status = RPC_S_OK;
+  if (!uuid) return TRUE;
+  return !memcmp(uuid, &uuid_nil, sizeof(UUID));
+}
+
+ /*************************************************************************
+ * UuidCreateNil [RPCRT4.@]
+ *
+ * PARAMS
+ *     UUID *Uuid [O] returns a nil UUID
+ *
+ * RETURNS
+ *     RPC_S_OK
+ */
+RPC_STATUS WINAPI UuidCreateNil(UUID *Uuid)
+{
+  *Uuid = uuid_nil;
+  return RPC_S_OK;
+}
+
+/*************************************************************************
  *           UuidCreate   [RPCRT4.@]
  *
  * Creates a 128bit UUID.
@@ -109,11 +166,11 @@ RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
    static unsigned char a[6];
    static int                      adjustment = 0;
    static struct timeval           last = {0, 0};
-   static UINT16                   clock_seq;
+   static WORD                     clock_seq;
    struct timeval                  tv;
    unsigned long long              clock_reg;
-   UINT clock_high, clock_low;
-   UINT16 temp_clock_seq, temp_clock_mid, temp_clock_hi_and_version;
+   DWORD clock_high, clock_low;
+   WORD temp_clock_seq, temp_clock_mid, temp_clock_hi_and_version;
 #ifdef HAVE_NET_IF_H
    int             sd;
    struct ifreq    ifr, *ifrp;
@@ -252,7 +309,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    clock_high = clock_reg >> 32;
    clock_low = clock_reg;
    temp_clock_seq = clock_seq | 0x8000;
-   temp_clock_mid = (UINT16)clock_high;
+   temp_clock_mid = (WORD)clock_high;
    temp_clock_hi_and_version = (clock_high >> 16) | 0x1000;
 
    /* pack the information into the GUID structure */
