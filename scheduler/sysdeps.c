@@ -216,7 +216,7 @@ int SYSDEPS_CallOnStack( LPVOID stackTop, LPVOID stackLow,
 void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
 {
     DWORD page_size = getpagesize();
-    DWORD cur_stack = (((DWORD)&func) + (page_size-1)) & ~(page_size-1);
+    void *cur_stack = (void *)(((ULONG_PTR)&func + (page_size-1)) & ~(page_size-1));
 
     TEB *teb = NtCurrentTeb();
     LPVOID stackTop = teb->stack_top;
@@ -230,8 +230,8 @@ void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
         rl.rlim_cur = 8*1024*1024;
     }
 
-    teb->stack_top = (LPVOID) cur_stack;
-    teb->stack_low = (LPVOID)(cur_stack - rl.rlim_cur);
+    teb->stack_top = cur_stack;
+    teb->stack_low = (char *)cur_stack - rl.rlim_cur;
 
     SYSDEPS_CallOnStack( stackTop, stackLow, 
                          (int (*)(void *))func, NULL );
