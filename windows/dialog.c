@@ -1193,16 +1193,16 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
 /***********************************************************************
  *           IsDialogMessage16   (USER.90)
  */
-BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
+BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 {
+    LPMSG16 msg = PTR_SEG_TO_LIN(msg16);
     BOOL32 ret, translate, dispatch;
     INT32 dlgCode;
 
     if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd ))
         return FALSE;
 
-
-    dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
+    dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg16);
     ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
                                   msg->wParam, msg->lParam,
                                   &translate, &dispatch, dlgCode );
@@ -1211,6 +1211,17 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
     return ret;
 }
 
+
+BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, LPMSG16 msg )
+{
+    LPMSG16 msg16 = SEGPTR_NEW(MSG16);
+    BOOL32 ret;
+
+    *msg16 = *msg;
+    ret = WIN16_IsDialogMessage16( hwndDlg, SEGPTR_GET(msg16) );
+    SEGPTR_FREE(msg16);
+    return ret;
+}
 
 /***********************************************************************
  *           IsDialogMessage32A   (USER32.342)

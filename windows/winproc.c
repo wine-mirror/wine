@@ -800,6 +800,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         }
         return 1;
     case WM_GETTEXT:
+    case WM_SETTEXT:
         *plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
         return 0;
     case WM_MDICREATE:
@@ -883,9 +884,6 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
             *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
         }
         return 0;
-    case WM_SETTEXT:
-        *plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);
-        return 0;
     case WM_WINDOWPOSCHANGING:
     case WM_WINDOWPOSCHANGED:
         {
@@ -896,6 +894,26 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
                                       wp );
             *(LPARAM *)(wp + 1) = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)wp;
+        }
+        return 1;
+    case WM_GETDLGCODE:
+        {
+            LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(*plparam);
+            LPMSG32 msg32 = (LPMSG32)HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
+
+            if (!msg32) return -1;
+            msg32->hwnd = msg16->hwnd;
+            msg32->lParam = msg16->lParam;
+            msg32->time = msg16->time;
+            CONV_POINT16TO32(&msg16->pt,&msg32->pt);
+            /* this is right, right? */
+            if (WINPROC_MapMsg16To32A(msg16->message,msg16->wParam,
+                                     &msg32->message,&msg32->wParam,
+                                     &msg32->lParam)<0) {
+                HeapFree( SystemHeap, 0, msg32 );
+                return -1;
+            }
+            *plparam = (LPARAM)msg32;
         }
         return 1;
     case WM_NOTIFY:
@@ -1003,6 +1021,15 @@ LRESULT WINPROC_UnmapMsg16To32A( UINT32 msg, WPARAM32 wParam, LPARAM lParam,
             HeapFree( SystemHeap, 0, wp );
         }
         break;
+    case WM_GETDLGCODE:
+        {
+            LPMSG32 msg32 = (LPMSG32)lParam;
+
+            WINPROC_UnmapMsg16To32A( msg32->message, msg32->wParam, msg32->lParam,
+                                     result);
+            HeapFree( SystemHeap, 0, msg32 );
+        }
+        break;
     }
     return result;
 }
@@ -1064,6 +1091,26 @@ INT32 WINPROC_MapMsg16To32W( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
             *plparam = (LPARAM)cs;
         }
         return 1;
+    case WM_GETDLGCODE:
+        {
+            LPMSG16 msg16 = (LPMSG16)PTR_SEG_TO_LIN(*plparam);
+            LPMSG32 msg32 = (LPMSG32)HeapAlloc( SystemHeap, 0, sizeof(MSG32) );
+
+            if (!msg32) return -1;
+            msg32->hwnd = msg16->hwnd;
+            msg32->lParam = msg16->lParam;
+            msg32->time = msg16->time;
+            CONV_POINT16TO32(&msg16->pt,&msg32->pt);
+            /* this is right, right? */
+            if (WINPROC_MapMsg16To32W(msg16->message,msg16->wParam,
+                                     &msg32->message,&msg32->wParam,
+                                     &msg32->lParam)<0) {
+                HeapFree( SystemHeap, 0, msg32 );
+                return -1;
+            }
+            *plparam = (LPARAM)msg32;
+        }
+        return 1;
     default:  /* No Unicode translation needed */
         return WINPROC_MapMsg16To32A( msg16, wParam16, pmsg32,
                                       pwparam32, plparam );
@@ -1110,6 +1157,15 @@ LRESULT WINPROC_UnmapMsg16To32W( UINT32 msg, WPARAM32 wParam, LPARAM lParam,
             if (HIWORD(cs->szClass))
                 HeapFree( SystemHeap, 0, (LPVOID)cs->szClass );
             HeapFree( SystemHeap, 0, cs );
+        }
+        break;
+    case WM_GETDLGCODE:
+        {
+            LPMSG32 msg32 = (LPMSG32)lParam;
+
+            WINPROC_UnmapMsg16To32W( msg32->message, msg32->wParam, msg32->lParam,
+                                     result);
+            HeapFree( SystemHeap, 0, msg32 );
         }
         break;
     default:
@@ -1526,7 +1582,8 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        WARN( msg, "message %04x needs translation\n", msg32 );
+    case WM_GETDLGCODE:
+        FIXME( msg, "message %04x needs translation\n", msg32 );
         return -1;
 
     default:  /* No translation needed */
