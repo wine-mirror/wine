@@ -1015,7 +1015,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
         ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	FIXME("(%p, %p, %p, %p, %lx, %lu, %lx, %p): to check\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
 
-        if (This->dmusic || This->dsound)
+	if (This->dmusic || This->dsound)
 	  return DMUS_E_ALREADY_INITED;
 
 	if (NULL != ppDirectSound && NULL != *ppDirectSound) {
@@ -1029,8 +1029,8 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 	IDirectMusicPerformance8Impl_Init(iface, ppDirectMusic, This->dsound, hWnd);
 
 	/* Init increases the ref count of the dsound object. Decremente it if the app don't want a pointer to the object. */
-        if (!ppDirectSound)
-	  IDirectSound_Release(*ppDirectSound);
+	/*if (!ppDirectSound)
+	  IDirectSound_Release(*ppDirectSound);*/
 	
 	/* as seen in msdn we need params init before audio path creation */
 	if (NULL != pParams) {

@@ -312,18 +312,48 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 							   WCHAR* pwzFilePath, 
 							   void** ppObject)
 {
+	HANDLE fd;
+
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 
 	FIXME("(%p, %s, %s, %s, %p): stub\n", This, debugstr_guid(rguidClassID), debugstr_guid(iidInterfaceID), debugstr_w(pwzFilePath), ppObject);
-
-	if (IsEqualGUID(iidInterfaceID, &CLSID_DirectSoundWave)) {
-	  FIXME("wanted 'wav'\n");
-	} else if (IsEqualGUID(iidInterfaceID, &CLSID_DirectMusicScript)) {
-	  FIXME("wanted 'spt'\n");
-	} else if (IsEqualGUID(iidInterfaceID, &CLSID_DirectMusicContainer)) {
-	  FIXME("wanted 'con'\n");
+	
+	fd = CreateFileW (pwzFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (!fd) {
+		WARN ("could not load file\n");
+		return DMUS_E_LOADER_FAILEDOPEN;
+	}
+	
+	if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicAudioPathConfig)) {
+		FIXME("wanted 'aud'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicBand)) {
+		FIXME("wanted 'bnd'\n");
+		DMUSIC_FillBandFromFileHandle (NULL, fd);
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicContainer)) {
+		FIXME("wanted 'con'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicCollection)) {
+		FIXME("wanted 'dls'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicChordMap)) {
+		FIXME("wanted 'cdm'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicSegment)) {
+		FIXME("wanted 'sgt'\n");
+		DMUSIC_FillSegmentFromFileHandle (NULL, fd);
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicScript)) {
+		FIXME("wanted 'spt'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicSong)) {
+		FIXME("wanted 'sng'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicStyle)) {
+		FIXME("wanted 'sty'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicSegment)) {
+		FIXME("wanted 'tpl'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectMusicGraph)) {
+		FIXME("wanted 'tgr'\n");
+	} else if (IsEqualGUID(rguidClassID, &CLSID_DirectSoundWave)) {
+		FIXME("wanted 'wav'\n");
 	}
 
+	CloseHandle (fd);
+	
 	if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicSegment) || 
 	    IsEqualGUID(iidInterfaceID, &IID_IDirectMusicSegment8)) {
 	  IDirectMusicSegment8Impl* segment;
@@ -331,6 +361,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 	  segment->lpVtbl = &DirectMusicSegment8_Vtbl;
 	  segment->ref = 1;
 	  *ppObject = segment;
+	  return S_OK;
 	} else if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicContainer)) {
 	  IDirectMusicContainerImpl* container;
 	  container = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicContainerImpl));

@@ -20,7 +20,8 @@ C_SRCS = \
 	dmusic_port.c \
 	dmusic_segment.c \
 	dmusic_style.c \
-	dmusic_synth.c
+	dmusic_synth.c \
+	helper.c
 
 RC_SRCS = version.rc
 

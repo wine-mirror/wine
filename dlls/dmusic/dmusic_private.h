@@ -152,6 +152,56 @@ typedef struct DMUSIC_PRIVATE_CHANNEL_GROUP_
 	DMUSIC_PRIVATE_MCHANNEL channel[16]; /* 16 channels in a group */
 } DMUSIC_PRIVATE_CHANNEL_GROUP, *LPDMUSIC_PRIVATE_CHANNEL_GROUP;
 
+/* used for loading chunks of data from files */
+typedef struct _rawChunk
+{
+	FOURCC id; /* FOURCC */
+	DWORD size; /* size of chunk_riff */
+	/* BYTE* data; */ /* chunk_riff data */
+} rawChunk;
+
+/* struct in which UNFO data is stored */
+typedef struct _UNFO_List
+{
+	WCHAR* name;
+	WCHAR* artist;
+	WCHAR* copyright;
+	WCHAR* version;
+	WCHAR* subject;
+	WCHAR* comment;
+} UNFO_List;
+
+typedef struct _ChordData
+{
+	DMUS_IO_CHORD chord;
+	DWORD nrofsubchords;
+	DMUS_IO_SUBCHORD *subchord;	
+} ChordData;
+
+typedef struct _Reference
+{
+	DMUS_IO_REFERENCE header;
+	GUID guid;
+	FILETIME date;
+	WCHAR* name;
+	WCHAR* file;
+	WCHAR* category;
+	DMUS_IO_VERSION version;
+} Reference;
+
+typedef struct _BandTrack
+{
+	DMUS_IO_BAND_TRACK_HEADER header;
+	GUID guid;
+	DMUS_IO_VERSION version;
+	UNFO_List UNFO;
+	
+	DMUS_IO_BAND_ITEM_HEADER header1;
+	DMUS_IO_BAND_ITEM_HEADER2 header2;
+	
+	/* IDirectMusicBandImpl **band; */
+	
+} BandTrack;
 
 /*****************************************************************************
  * IDirectMusicImpl implementation structure
@@ -783,7 +833,7 @@ struct IDirectMusicSegmentImpl
   ICOM_VFIELD(IDirectMusicSegment);
   DWORD          ref;
 
-  /* IDirectMusicSegmentImpl fields */
+  /* IDirectMusicSegmentImpl fields */  
 };
 
 /* IUnknown: */
@@ -1323,5 +1373,11 @@ extern HRESULT WINAPI IDirectMusicSongImpl_EnumSegment (LPDIRECTMUSICSONG iface,
  * Helper Functions
  */
 void register_waveport (LPGUID lpGUID, LPCSTR lpszDesc, LPCSTR lpszDrvName, LPVOID lpContext);
+/* Loader Helper Functions */
+HRESULT WINAPI DMUSIC_FillSegmentFromFileHandle (IDirectMusicSegmentImpl *segment, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillTrackFromFileHandle (IDirectMusicTrackImpl *segment, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillReferenceFromFileHandle (Reference reference, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillUNFOFromFileHandle (UNFO_List UNFO, HANDLE fd);
+HRESULT WINAPI DMUSIC_FillBandFromFileHandle (IDirectMusicBandImpl *band, HANDLE fd);
 
 #endif	/* __WINE_DMUSIC_PRIVATE_H */
