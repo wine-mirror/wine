@@ -100,12 +100,15 @@ START_TEST(safearray)
 	HMODULE hdll;
 	SAFEARRAY 	*a, b, *c;
 	unsigned int 	i;
+	long		indices[2];
 	HRESULT 	hres;
-	SAFEARRAYBOUND	bound;
+	SAFEARRAYBOUND	bound, bounds[2];
 	VARIANT		v;
 	LPVOID		data;
 	IID		iid;
 	VARTYPE		vt;
+	LONG		l;
+	unsigned char	*ptr1, *ptr2;
 
     hdll=LoadLibraryA("oleaut32.dll");
     pSafeArrayAllocDescriptorEx=(void*)GetProcAddress(hdll,"SafeArrayAllocDescriptorEx");
@@ -145,7 +148,87 @@ START_TEST(safearray)
 	bound.lLbound	= 0;
 	a = SafeArrayCreate(-1, 1, &bound);
 	ok(NULL == a,"SAC(-1,1,[1,0]) not failed?");
-	
+
+
+	bounds[0].cElements = 42;	bounds[0].lLbound =  1;
+	bounds[1].cElements =  2;	bounds[1].lLbound = 23;
+    a = SafeArrayCreate(VT_I4,2,bounds);
+    ok(a != NULL,"SAC(VT_INT32,2,...) failed.");
+
+	hres = SafeArrayGetLBound (a, 0, &l);
+	ok (hres == DISP_E_BADINDEX, "SAGLB 0 failed with %lx", hres);
+	hres = SafeArrayGetLBound (a, 1, &l);
+	ok (hres == S_OK, "SAGLB 1 failed with %lx", hres);
+	ok (l == 1, "SAGLB 1 returned %ld instead of 1", l);
+	hres = SafeArrayGetLBound (a, 2, &l);
+	ok (hres == S_OK, "SAGLB 2 failed with %lx", hres);
+	ok (l == 23, "SAGLB 2 returned %ld instead of 1", l);
+	hres = SafeArrayGetLBound (a, 3, &l);
+	ok (hres == DISP_E_BADINDEX, "SAGLB 3 failed with %lx", hres);
+
+	hres = SafeArrayGetUBound (a, 0, &l);
+	ok (hres == DISP_E_BADINDEX, "SAGUB 0 failed with %lx", hres);
+	hres = SafeArrayGetUBound (a, 1, &l);
+	ok (hres == S_OK, "SAGUB 1 failed with %lx", hres);
+	ok (l == 42, "SAGUB 1 returned %ld instead of 1", l);
+	hres = SafeArrayGetUBound (a, 2, &l);
+	ok (hres == S_OK, "SAGUB 2 failed with %lx", hres);
+	ok (l == 24, "SAGUB 2 returned %ld instead of 24", l);
+	hres = SafeArrayGetUBound (a, 3, &l);
+	ok (hres == DISP_E_BADINDEX, "SAGUB 3 failed with %lx", hres);
+
+	i = SafeArrayGetDim(a);
+	ok(i == 2, "getdims of 2 din array returned %d",i);
+
+	indices[0] = 0;
+	indices[1] = 23;
+	hres = SafeArrayGetElement(a, indices, &i);
+	ok(DISP_E_BADINDEX == hres,"SAGE failed [0,23], hres 0x%lx",hres);
+
+	indices[0] = 1;
+	indices[1] = 22;
+	hres = SafeArrayGetElement(a, indices, &i);
+	ok(DISP_E_BADINDEX == hres,"SAGE failed [1,22], hres 0x%lx",hres);
+
+	indices[0] = 1;
+	indices[1] = 23;
+	hres = SafeArrayGetElement(a, indices, &i);
+	ok(S_OK == hres,"SAGE failed [1,23], hres 0x%lx",hres);
+
+	indices[0] = 1;
+	indices[1] = 25;
+	hres = SafeArrayGetElement(a, indices, &i);
+	ok(DISP_E_BADINDEX == hres,"SAGE failed [1,24], hres 0x%lx",hres);
+
+	indices[0] = 3;
+	indices[1] = 23;
+	hres = SafeArrayGetElement(a, indices, &i);
+	ok(S_OK == hres,"SAGE failed [42,23], hres 0x%lx",hres);
+
+	hres = SafeArrayAccessData(a, (void**)&ptr1);
+	ok(S_OK == hres, "SAAD failed with 0x%lx", hres);
+
+	indices[0] = 3;
+	indices[1] = 23;
+	hres = SafeArrayPtrOfIndex(a, indices, (void**)&ptr2);
+	ok(S_OK == hres,"SAPOI failed [1,23], hres 0x%lx",hres);
+	ok(ptr2 - ptr1 == 8,"ptr difference is not 8, but %d (%p vs %p)", ptr2-ptr1, ptr2, ptr1);
+
+	indices[0] = 3;
+	indices[1] = 24;
+	hres = SafeArrayPtrOfIndex(a, indices, (void**)&ptr2);
+	ok(S_OK == hres,"SAPOI failed [5,24], hres 0x%lx",hres);
+	ok(ptr2 - ptr1 == 176,"ptr difference is not 176, but %d (%p vs %p)", ptr2-ptr1, ptr2, ptr1);
+
+	indices[0] = 20;
+	indices[1] = 23;
+	hres = SafeArrayPtrOfIndex(a, indices, (void**)&ptr2);
+	ok(S_OK == hres,"SAPOI failed [20,23], hres 0x%lx",hres);
+	ok(ptr2 - ptr1 == 76,"ptr difference is not 176, but %d (%p vs %p)", ptr2-ptr1, ptr2, ptr1);
+
+	hres = SafeArrayUnaccessData(a);
+	ok(S_OK == hres, "SAUAD failed with 0x%lx", hres);
+
 	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
 		a = SafeArrayCreate(vttypes[i].vt, 1, &bound);
 		ok(	((a == NULL) && (vttypes[i].elemsize == 0)) ||

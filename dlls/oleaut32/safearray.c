@@ -43,9 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define SYSDUPSTRING(str) SysAllocStringLen((str), SysStringLen(str))
 
 /* Locally used methods */
-static INT
-endOfDim(LONG *coor, SAFEARRAYBOUND *mat, LONG dim, LONG realDim);
-
 static ULONG
 calcDisplacement(LONG *coor, SAFEARRAYBOUND *mat, LONG dim);
 
@@ -485,6 +482,7 @@ HRESULT WINAPI SafeArrayGetElement(
 /*************************************************************************
  *		SafeArrayGetUBound (OLEAUT32.19)
  * return the UP bound for a given array dimension
+ * Note: [0] is the right most (least significant) array index!
  */
 HRESULT WINAPI SafeArrayGetUBound(
   SAFEARRAY *psa,
@@ -500,8 +498,8 @@ HRESULT WINAPI SafeArrayGetUBound(
   if(0 == nDim)
     return DISP_E_BADINDEX;
 
-  *plUbound = psa->rgsabound[nDim-1].lLbound +
-              psa->rgsabound[nDim-1].cElements - 1;
+  *plUbound = psa->rgsabound[psa->cDims - nDim].lLbound +
+              psa->rgsabound[psa->cDims - nDim].cElements - 1;
 
   return S_OK;
 }
@@ -509,6 +507,7 @@ HRESULT WINAPI SafeArrayGetUBound(
 /*************************************************************************
  *		SafeArrayGetLBound (OLEAUT32.20)
  * Return the LO bound for a given array dimension
+ * Note: [0] is the right most (least significant) array index!
  */
 HRESULT WINAPI SafeArrayGetLBound(
   SAFEARRAY *psa,
@@ -524,7 +523,7 @@ HRESULT WINAPI SafeArrayGetLBound(
   if(0 == nDim)
     return DISP_E_BADINDEX;
 
-  *plLbound = psa->rgsabound[nDim-1].lLbound;
+  *plLbound = psa->rgsabound[psa->cDims - nDim].lLbound;
   return S_OK;
 }
 
@@ -1088,31 +1087,19 @@ static ULONG calcDisplacement(
   ULONG res = 0;
   LONG  iterDim;
 
-  for(iterDim=0; iterDim<dim; iterDim++)
-    /* the -mat[dim] bring coor[dim] relative to 0 for calculation */
-    res += ((coor[iterDim]-mat[iterDim].lLbound) *
-            endOfDim(coor, mat, iterDim+1, dim));
+  TRACE("dims is %ld\n", dim);
+
+  for (iterDim = dim-1; iterDim >= 0; iterDim--) {
+	TRACE("%ld: lbound is %ld, adding %ld\n", iterDim, mat[dim-iterDim-1].lLbound,(coor[iterDim] - mat[dim-iterDim-1].lLbound));
+	res += (coor[iterDim] - mat[dim-iterDim-1].lLbound);
+
+	if (iterDim > 0)
+		res *= mat[dim-iterDim].cElements;
+  }
 
   TRACE("SafeArray: calculated displacement is %lu.\n", res);
   return(res);
 }
-
-/************************************************************************
- * Recursivity agent for calcDisplacement method.  Used within Put and
- * Get methods.
- */
-static INT endOfDim(
-  LONG           *coor,
-  SAFEARRAYBOUND *mat,
-  LONG           dim,
-  LONG           realDim)
-{
-  if(dim==realDim)
-    return 1;
-  else
-    return (endOfDim(coor, mat, dim+1, realDim) * mat[dim].cElements);
-}
-
 
 /************************************************************************
  * Method used to validate the coordinate received in Put and Get
