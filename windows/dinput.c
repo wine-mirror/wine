@@ -418,7 +418,174 @@ static HRESULT WINAPI IDirectInputDeviceA_QueryInterface(
 		*ppobj = this;
 		return 0;
 	}
+	if (!memcmp(&IID_IDirectInputDevice2A,riid,sizeof(*riid))) {
+		this->lpvtbl->fnAddRef(this);
+		*ppobj = this;
+		return 0;
+	}
 	return E_FAIL;
+}
+
+static ULONG WINAPI IDirectInputDeviceA_AddRef(
+	LPDIRECTINPUTDEVICE32A this)
+{
+	return ++this->ref;
+}
+
+static HRESULT WINAPI IDirectInputDeviceA_GetCapabilities(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIDEVCAPS lpDIDevCaps)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDeviceA_EnumObjects(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIENUMDEVICEOBJECTSCALLBACK32A lpCallback,
+	LPVOID lpvRef,
+	DWORD dwFlags)
+{
+	FIXME(dinput, "stub!\n");
+	if (lpCallback)
+		lpCallback(NULL, lpvRef);
+	return DI_OK;
+}
+	
+static HRESULT WINAPI IDirectInputDeviceA_GetProperty(
+	LPDIRECTINPUTDEVICE32A this,
+	REFGUID rguid,
+	LPDIPROPHEADER pdiph)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDeviceA_GetObjectInfo(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIDEVICEOBJECTINSTANCE32A pdidoi,
+	DWORD dwObj,
+	DWORD dwHow)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+	
+static HRESULT WINAPI IDirectInputDeviceA_GetDeviceInfo(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIDEVICEINSTANCE32A pdidi)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+	
+static HRESULT WINAPI IDirectInputDeviceA_RunControlPanel(
+	LPDIRECTINPUTDEVICE32A this,
+	HWND32 hwndOwner,
+	DWORD dwFlags)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+	
+static HRESULT WINAPI IDirectInputDeviceA_Initialize(
+	LPDIRECTINPUTDEVICE32A this,
+	HINSTANCE32 hinst,
+	DWORD dwVersion,
+	REFGUID rguid)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+	
+/******************************************************************************
+ *	IDirectInputDevice2A
+ */
+
+static HRESULT WINAPI IDirectInputDevice2A_CreateEffect(
+	LPDIRECTINPUTDEVICE32A this,
+	REFGUID rguid,
+	LPCDIEFFECT lpeff,
+	LPDIRECTINPUTEFFECT *ppdef,
+	LPUNKNOWN pUnkOuter)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_EnumEffects(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIENUMEFFECTSCALLBACKA lpCallback,
+	LPVOID lpvRef,
+	DWORD dwFlags)
+{
+	FIXME(dinput, "stub!\n");
+	if (lpCallback)
+		lpCallback(NULL, lpvRef);
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_GetEffectInfo(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIEFFECTINFOA lpdei,
+	REFGUID rguid)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_GetForceFeedbackState(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDWORD pdwOut)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_SendForceFeedbackCommand(
+	LPDIRECTINPUTDEVICE32A this,
+	DWORD dwFlags)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_EnumCreatedEffectObjects(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback,
+	LPVOID lpvRef,
+	DWORD dwFlags)
+{
+	FIXME(dinput, "stub!\n");
+	if (lpCallback)
+		lpCallback(NULL, lpvRef);
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_Escape(
+	LPDIRECTINPUTDEVICE32A this,
+	LPDIEFFESCAPE lpDIEEsc)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_Poll(
+	LPDIRECTINPUTDEVICE32A this)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
+}
+
+static HRESULT WINAPI IDirectInputDevice2A_SendDeviceData(
+	LPDIRECTINPUTDEVICE32A this,
+	DWORD cbObjectData,
+	LPDIDEVICEOBJECTDATA rgdod,
+	LPDWORD pdwInOut,
+	DWORD dwFlags)
+{
+	FIXME(dinput, "stub!\n");
+	return DI_OK;
 }
 
 /******************************************************************************
@@ -537,11 +704,11 @@ static HRESULT WINAPI SysMouseA_GetDeviceState(
 
 static IDirectInputDeviceA_VTable SysKeyboardAvt={
 	IDirectInputDeviceA_QueryInterface,
-	(void*)2,
+	IDirectInputDeviceA_AddRef,
 	IDirectInputDeviceA_Release,
-	(void*)4,
-	(void*)5,
-	(void*)6,
+	IDirectInputDeviceA_GetCapabilities,
+	IDirectInputDeviceA_EnumObjects,
+	IDirectInputDeviceA_GetProperty,
 	SysKeyboardA_SetProperty,
 	SysKeyboardA_Acquire,
 	SysKeyboardA_Unacquire,
@@ -550,19 +717,28 @@ static IDirectInputDeviceA_VTable SysKeyboardAvt={
 	IDirectInputDeviceA_SetDataFormat,
 	IDirectInputDeviceA_SetEventNotification,
 	IDirectInputDeviceA_SetCooperativeLevel,
-	(void*)15,
-	(void*)16,
-	(void*)17,
-	(void*)18,
+	IDirectInputDeviceA_GetObjectInfo,
+	IDirectInputDeviceA_GetDeviceInfo,
+	IDirectInputDeviceA_RunControlPanel,
+	IDirectInputDeviceA_Initialize,
+	IDirectInputDevice2A_CreateEffect,
+	IDirectInputDevice2A_EnumEffects,
+	IDirectInputDevice2A_GetEffectInfo,
+	IDirectInputDevice2A_GetForceFeedbackState,
+	IDirectInputDevice2A_SendForceFeedbackCommand,
+	IDirectInputDevice2A_EnumCreatedEffectObjects,
+	IDirectInputDevice2A_Escape,
+	IDirectInputDevice2A_Poll,
+	IDirectInputDevice2A_SendDeviceData,
 };
 
 static IDirectInputDeviceA_VTable SysMouseAvt={
 	IDirectInputDeviceA_QueryInterface,
-	(void*)2,
+	IDirectInputDeviceA_AddRef,
 	IDirectInputDeviceA_Release,
-	(void*)4,
-	(void*)5,
-	(void*)6,
+	IDirectInputDeviceA_GetCapabilities,
+	IDirectInputDeviceA_EnumObjects,
+	IDirectInputDeviceA_GetProperty,
 	IDirectInputDeviceA_SetProperty,
 	IDirectInputDeviceA_Acquire,
 	IDirectInputDeviceA_Unacquire,
@@ -571,8 +747,17 @@ static IDirectInputDeviceA_VTable SysMouseAvt={
 	SysMouseA_SetDataFormat,
 	IDirectInputDeviceA_SetEventNotification,
 	IDirectInputDeviceA_SetCooperativeLevel,
-	(void*)15,
-	(void*)16,
-	(void*)17,
-	(void*)18,
+	IDirectInputDeviceA_GetObjectInfo,
+	IDirectInputDeviceA_GetDeviceInfo,
+	IDirectInputDeviceA_RunControlPanel,
+	IDirectInputDeviceA_Initialize,
+	IDirectInputDevice2A_CreateEffect,
+	IDirectInputDevice2A_EnumEffects,
+	IDirectInputDevice2A_GetEffectInfo,
+	IDirectInputDevice2A_GetForceFeedbackState,
+	IDirectInputDevice2A_SendForceFeedbackCommand,
+	IDirectInputDevice2A_EnumCreatedEffectObjects,
+	IDirectInputDevice2A_Escape,
+	IDirectInputDevice2A_Poll,
+	IDirectInputDevice2A_SendDeviceData,
 };

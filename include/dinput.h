@@ -58,6 +58,7 @@ DEFINE_GUID(GUID_CustomForce,	0x13541C2B,0x8E33,0x11D0,0x9A,0xD0,0x00,0xA0,0xC9,
 
 typedef struct IDirectInput32A IDirectInput32A,*LPDIRECTINPUT32A;
 typedef struct IDirectInputDevice32A IDirectInputDevice32A,*LPDIRECTINPUTDEVICE32A;
+typedef struct IDirectInputEffect IDirectInputEffect,*LPDIRECTINPUTEFFECT;
 typedef struct SysKeyboard32A SysKeyboard32A,*LPSYSKEYBOARD32A;
 typedef struct SysMouse32A SysMouse32A,*LPSYSMOUSE32A;
 
@@ -235,6 +236,8 @@ DECL_WINELIB_TYPE_AW(LPDIENUMDEVICESCALLBACK)
 typedef BOOL32 (CALLBACK * LPDIENUMDEVICEOBJECTSCALLBACK32A)(LPCDIDEVICEOBJECTINSTANCE32A, LPVOID);
 typedef BOOL32 (CALLBACK * LPDIENUMDEVICEOBJECTSCALLBACK32W)(LPCDIDEVICEOBJECTINSTANCE32W,LPVOID);
 DECL_WINELIB_TYPE_AW(LPDIENUMDEVICEOBJECTSCALLBACK)
+
+typedef BOOL32 (CALLBACK * LPDIENUMCREATEDEFFECTOBJECTSCALLBACK)(LPDIRECTINPUTEFFECT, LPVOID);
 
 #define DIK_ESCAPE          0x01
 #define DIK_1               0x02
@@ -529,6 +532,144 @@ typedef struct DIDEVCAPS {
 #define DISCL_FOREGROUND	0x00000004
 #define DISCL_BACKGROUND	0x00000008
 
+typedef struct DICONSTANTFORCE {
+	LONG			lMagnitude;
+} DICONSTANTFORCE, *LPDICONSTANTFORCE;
+
+typedef const DICONSTANTFORCE *LPCDICONSTANTFORCE;
+
+typedef struct DIRAMPFORCE {
+	LONG			lStart;
+	LONG			lEnd;
+} DIRAMPFORCE, *LPDIRAMPFORCE;
+
+typedef const DIRAMPFORCE *LPCDIRAMPFORCE;
+
+typedef struct DIPERIODIC {
+	DWORD			dwMagnitude;
+	LONG			lOffset;
+	DWORD			dwPhase;
+	DWORD			dwPeriod;
+} DIPERIODIC, *LPDIPERIODIC;
+
+typedef const DIPERIODIC *LPCDIPERIODIC;
+
+typedef struct DICONDITION {
+	LONG			lOffset;
+	LONG			lPositiveCoefficient;
+	LONG			lNegativeCoefficient;
+	DWORD			dwPositiveSaturation;
+	DWORD			dwNegativeSaturation;
+	LONG			lDeadBand;
+} DICONDITION, *LPDICONDITION;
+
+typedef const DICONDITION *LPCDICONDITION;
+
+typedef struct DICUSTOMFORCE {
+	DWORD			cChannels;
+	DWORD			dwSamplePeriod;
+	DWORD			cSamples;
+	LPLONG			rglForceData;
+} DICUSTOMFORCE, *LPDICUSTOMFORCE;
+
+typedef const DICUSTOMFORCE *LPCDICUSTOMFORCE;
+
+typedef struct DIENVELOPE {
+	DWORD			dwSize;
+	DWORD			dwAttackLevel;
+	DWORD			dwAttackTime;
+	DWORD			dwFadeLevel;
+	DWORD			dwFadeTime;
+} DIENVELOPE, *LPDIENVELOPE;
+
+typedef const DIENVELOPE *LPCDIENVELOPE;
+
+typedef struct DIEFFECT {
+	DWORD			dwSize;
+	DWORD			dwFlags;
+	DWORD			dwDuration;
+	DWORD			dwSamplePeriod;
+	DWORD			dwGain;
+	DWORD			dwTriggerButton;
+	DWORD			dwTriggerRepeatInterval;
+	DWORD			cAxes;
+	LPDWORD			rgdwAxes;
+	LPLONG			rglDirection;
+	LPDIENVELOPE		lpEnvelope;
+	DWORD			cbTypeSpecificParams;
+	LPVOID			lpvTypeSpecificParams;
+} DIEFFECT, *LPDIEFFECT;
+
+typedef const DIEFFECT *LPCDIEFFECT;
+
+typedef struct DIEFFECTINFOA {
+	DWORD			dwSize;
+	GUID			guid;
+	DWORD			dwEffType;
+	DWORD			dwStaticParams;
+	DWORD			dwDynamicParams;
+	CHAR			tszName[MAX_PATH];
+} DIEFFECTINFOA, *LPDIEFFECTINFOA;
+
+typedef struct DIEFFECTINFOW {
+	DWORD			dwSize;
+	GUID			guid;
+	DWORD			dwEffType;
+	DWORD			dwStaticParams;
+	DWORD			dwDynamicParams;
+	WCHAR			tszName[MAX_PATH];
+} DIEFFECTINFOW, *LPDIEFFECTINFOW;
+
+#ifdef UNICODE
+typedef DIEFFECTINFOW DIEFFECTINFO;
+typedef LPDIEFFECTINFOW LPDIEFFECTINFO;
+#else
+typedef DIEFFECTINFOA DIEFFECTINFO;
+typedef LPDIEFFECTINFOA LPDIEFFECTINFO;
+#endif
+
+typedef const DIEFFECTINFOA *LPCDIEFFECTINFOA;
+typedef const DIEFFECTINFOW *LPCDIEFFECTINFOW;
+typedef const DIEFFECTINFO  *LPCDIEFFECTINFO;
+
+typedef BOOL32 (CALLBACK * LPDIENUMEFFECTSCALLBACKA)(LPCDIEFFECTINFOA, LPVOID);
+typedef BOOL32 (CALLBACK * LPDIENUMEFFECTSCALLBACKW)(LPCDIEFFECTINFOW, LPVOID);
+
+typedef struct DIEFFESCAPE {
+	DWORD			dwSize;
+	DWORD			dwCommand;
+	LPVOID			lpvInBuffer;
+	DWORD			cbInBuffer;
+	LPVOID			lpvOutBuffer;
+	DWORD			cbOutBuffer;
+} DIEFFESCAPE, *LPDIEFFESCAPE;
+
+#define THIS LPDIRECTINPUTEFFECT this
+typedef struct IDirectInputEffect_VTable {
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectInputEffect methods ***/
+    STDMETHOD(Initialize)(THIS_ HINSTANCE32,DWORD,REFGUID) PURE;
+    STDMETHOD(GetEffectGuid)(THIS_ LPGUID) PURE;
+    STDMETHOD(GetParameters)(THIS_ LPDIEFFECT,DWORD) PURE;
+    STDMETHOD(SetParameters)(THIS_ LPCDIEFFECT,DWORD) PURE;
+    STDMETHOD(Start)(THIS_ DWORD,DWORD) PURE;
+    STDMETHOD(Stop)(THIS) PURE;
+    STDMETHOD(GetEffectStatus)(THIS_ LPDWORD) PURE;
+    STDMETHOD(Download)(THIS) PURE;
+    STDMETHOD(Unload)(THIS) PURE;
+    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
+} IDirectInputEffect_VTable,*LPDIRECTINPUTEFFECT_VTABLE;
+#undef THIS
+
+struct IDirectInputEffect {
+	LPDIRECTINPUTEFFECT_VTABLE	lpvtbl;
+	DWORD				ref;
+	GUID				guid;
+};
+
 #define THIS LPDIRECTINPUTDEVICE32A this
 typedef struct IDirectInputDeviceA_VTable {
     /*** IUnknown methods ***/
@@ -552,7 +693,19 @@ typedef struct IDirectInputDeviceA_VTable {
     STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCE32A) PURE;
     STDMETHOD(RunControlPanel)(THIS_ HWND32,DWORD) PURE;
     STDMETHOD(Initialize)(THIS_ HINSTANCE32,DWORD,REFGUID) PURE;
-} IDirectInputDeviceA_VTable,*LPDIRECTINPUTDEVICEA_VTABLE;
+    /*** IDirectInputDevice2A methods ***/
+    STDMETHOD(CreateEffect)(THIS_ REFGUID,LPCDIEFFECT,LPDIRECTINPUTEFFECT *,LPUNKNOWN) PURE;
+    STDMETHOD(EnumEffects)(THIS_ LPDIENUMEFFECTSCALLBACKA,LPVOID,DWORD) PURE;
+    STDMETHOD(GetEffectInfo)(THIS_ LPDIEFFECTINFOA,REFGUID) PURE;
+    STDMETHOD(GetForceFeedbackState)(THIS_ LPDWORD) PURE;
+    STDMETHOD(SendForceFeedbackCommand)(THIS_ DWORD) PURE;
+    STDMETHOD(EnumCreatedEffectObjects)(THIS_ LPDIENUMCREATEDEFFECTOBJECTSCALLBACK,LPVOID,DWORD) PURE;
+    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
+    STDMETHOD(Poll)(THIS) PURE;
+    STDMETHOD(SendDeviceData)(THIS_ DWORD,LPDIDEVICEOBJECTDATA,LPDWORD,DWORD) PURE;
+
+} IDirectInputDeviceA_VTable,*LPDIRECTINPUTDEVICEA_VTABLE,
+  IDirectInputDevice2A_VTable,*LPDIRECTINPUTDEVICE2A_VTABLE;
 
 struct IDirectInputDevice32A {
 	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
