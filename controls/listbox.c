@@ -1732,7 +1732,8 @@ static LRESULT LISTBOX_Directory( HWND hwnd, LB_DESCR *descr, UINT attrib,
         /* scan directory */
         if ((handle = FindFirstFileW(filespec, &entry)) == INVALID_HANDLE_VALUE)
         {
-            if (GetLastError() != ERROR_NO_MORE_FILES) return LB_ERR;
+	     int le = GetLastError();
+            if ((le != ERROR_NO_MORE_FILES) && (le != ERROR_FILE_NOT_FOUND)) return LB_ERR;
         }
         else
         {
