@@ -918,6 +918,24 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 
 
 /***********************************************************************
+ *           InternetGetCookieA
+ *
+ * Retrieve cookie from the specified url
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOLAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName, 
+		LPSTR lpCookieData, LPDWORD lpdwSize)
+{
+    FIXME("Stub\n");
+	return FALSE;
+}
+
+
+/***********************************************************************
  *           GetInternetScheme (internal)
  *
  * Get scheme of url
