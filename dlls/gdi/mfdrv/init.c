@@ -263,6 +263,8 @@ HDC WINAPI CreateMetaFileW(LPCWSTR filename)
     DWORD len;
     HDC hReturnDC;
 
+    if (!filename) return CreateMetaFileA(NULL);
+
     len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
     filenameA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
