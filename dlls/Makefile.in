@@ -19,6 +19,7 @@ BASEDIRS = \
 	avicap32 \
 	avifil32 \
 	cabinet \
+	cfgmgr32 \
 	comcat \
 	comctl32 \
 	commdlg \
@@ -204,6 +205,7 @@ SYMLINKS = \
 	avicap32.dll$(DLLEXT) \
 	avifil32.dll$(DLLEXT) \
 	cabinet.dll$(DLLEXT) \
+	cfgmgr32.dll$(DLLEXT) \
 	comcat.dll$(DLLEXT) \
 	comctl32.dll$(DLLEXT) \
 	comdlg32.dll$(DLLEXT) \
@@ -331,6 +333,9 @@ avifil32.dll$(DLLEXT) avifile.dll$(DLLEXT): avifil32/avifil32.dll$(DLLEXT)
 
 cabinet.dll$(DLLEXT): cabinet/cabinet.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) cabinet/cabinet.dll$(DLLEXT) $@
+
+cfgmgr32.dll$(DLLEXT): cfgmgr32/cfgmgr32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) cfgmgr32/cfgmgr32.dll$(DLLEXT) $@
 
 comcat.dll$(DLLEXT): comcat/comcat.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) comcat/comcat.dll$(DLLEXT) $@
@@ -694,6 +699,7 @@ IMPORT_LIBS = \
 	libavicap32 \
 	libavifil32 \
 	libcabinet \
+	libcfgmgr32 \
 	libcomcat \
 	libcomctl32 \
 	libcomdlg32 \
@@ -811,6 +817,11 @@ libcabinet.def: cabinet/cabinet.spec.def
 	$(RM) $@ && $(LN_S) cabinet/cabinet.spec.def $@
 libcabinet.a: cabinet/cabinet.spec.def
 	$(DLLTOOL) -k -l $@ -d cabinet/cabinet.spec.def
+
+libcfgmgr32.def: cfgmgr32/cfgmgr32.spec.def
+	$(RM) $@ && $(LN_S) cfgmgr32/cfgmgr32.spec.def $@
+libcfgmgr32.a: cfgmgr32/cfgmgr32.spec.def
+	$(DLLTOOL) -k -l $@ -d cfgmgr32/cfgmgr32.spec.def
 
 libcomcat.def: comcat/comcat.spec.def
 	$(RM) $@ && $(LN_S) comcat/comcat.spec.def $@
@@ -1301,6 +1312,7 @@ advapi32/advapi32.spec.def: $(WINEBUILD)
 avicap32/avicap32.spec.def: $(WINEBUILD)
 avifil32/avifil32.spec.def: $(WINEBUILD)
 cabinet/cabinet.spec.def: $(WINEBUILD)
+cfgmgr32/cfgmgr32.spec.def: $(WINEBUILD)
 comcat/comcat.spec.def: $(WINEBUILD)
 comctl32/comctl32.spec.def: $(WINEBUILD)
 commdlg/comdlg32.spec.def: $(WINEBUILD)
@@ -1409,6 +1421,7 @@ advapi32/advapi32.dll$(DLLEXT): advapi32
 avicap32/avicap32.dll$(DLLEXT): avicap32
 avifil32/avifil32.dll$(DLLEXT): avifil32
 cabinet/cabinet.dll$(DLLEXT): cabinet
+cfgmgr32/cfgmgr32.dll$(DLLEXT): cfgmgr32
 comcat/comcat.dll$(DLLEXT): comcat
 comctl32/comctl32.dll$(DLLEXT): comctl32
 commdlg/comdlg32.dll$(DLLEXT): commdlg
