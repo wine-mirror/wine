@@ -1225,19 +1225,12 @@ DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {
     HMODULE16 hModule = hFirstModule;
-    LPCSTR filename, dotptr;
+    LPCSTR dotptr;
     BYTE len, *name_table;
 
-    if (!(filename = strrchr( name, '\\' ))) 
-	filename = name;
-    else 
-      {
-	FIXME(module,"illegal usage of GetModuleHandle16\n");
-	filename++;
-      }
-    if ((dotptr = strrchr( filename, '.' )) != NULL)
-        len = (BYTE)(dotptr - filename);
-    else len = strlen( filename );
+    if ((dotptr = strrchr( name, '.' )) != NULL)
+        len = (BYTE)(dotptr - name);
+    else len = strlen( name );
 
     while (hModule)
     {
@@ -1250,11 +1243,11 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
         if (!(modulename = strrchr( modulepath, '\\' )))
             modulename = modulepath;
         else modulename++;
-        if (!lstrcmpiA( modulename, filename )) return hModule;
+        if (!lstrcmpiA( modulename, name )) return hModule;
 	  */
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !lstrncmpiA(filename, name_table+1, len))
+        if ((*name_table == len) && !lstrncmpiA(name, name_table+1, len))
             return hModule;
         hModule = pModule->next;
     }
