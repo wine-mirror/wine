@@ -1,0 +1,204 @@
+/*
+ * WineCfg (Russian resources)
+ *
+ * Copyright 2003 Igor Stepin
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
+/*
+
+Программа находится в стадии предварительной разработки,
+в файле ресурсов ожидаются значительные изменения,
+поэтому я не настраивал размеры элементов.
+
+Как только будет объявлено о выходе функциональной версии
+это будет сделано.
+
+*/
+
+IDD_GENERALCFG DIALOGEX 0, 0, 260, 250
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    COMBOBOX        IDC_WINVER,83,153,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_DOSVER,83,172,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_WINELOOK,83,190,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Версия Wine:",IDC_STATIC,119,17,45,8
+    LTEXT           "CVS",IDC_WINEVER,169,17,56,8
+    LTEXT           "Версия Windows:",IDC_STATIC,17,155,58,8
+    LTEXT           "Вид Windows:",IDC_STATIC,17,193,58,8
+    LTEXT           "Версия DOS:",IDC_STATIC,17,173,57,8
+    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
+    LTEXT           "http://www.winehq.com/",IDC_STATIC,119,31,106,8
+    GROUPBOX        "Поведение по умолчанию",IDC_STATIC,8,115,244,97
+    LTEXT           "Wine предоставляет возможность для Windows-приложений имитировать различные версии и внешний вид Windows.",
+                    IDC_STATIC,15,128,227,20
+    GROUPBOX        "Информация",IDC_STATIC,8,4,244,106
+/*
+    CTEXT           "Эта библиотека является свободным программным обеспечением; вы можете распространять её и/или модифицировать по условиям лицензии GNU Lesser General Public License, опубликованной Free Software Foundation; версии 2.1 лицензии или (на ваше усмотрение) любой более поздней.",
+*/
+    CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+                    IDC_STATIC,119,44,124,59
+END
+
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
+                    LVS_NOLABELWRAP | WS_BORDER | WS_TABSTOP,16,39,226,108
+    GROUPBOX        "Специфичные настройки под приложение",IDC_STATIC,8,4,244,151
+    LTEXT           "Эти настройки позволяют переопределять настройки Wine по умолчанию (определённые в других вкладках) для каждого конкретного приложения.",
+                    IDC_STATIC,15,17,228,20
+END
+
+IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Использовать расширение XFree DGA",IDC_XDGA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,44,97,10
+    CONTROL         "Включить рабочий стол Wine",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,17,110,84,10
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,125,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    GROUPBOX        "Настройки отрисовки",IDC_STATIC,8,4,244,60
+    LTEXT           "Драйвер цвета и настройки отрисовки используются для оптимизации отображения цветов и приложений.",
+                    IDC_STATIC,15,17,228,22
+		    
+    LTEXT           "Размещено системных цветов:",IDC_STATIC,15,43,76,8
+    EDITTEXT        IDC_SYSCOLORS,90,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    
+    GROUPBOX        "Рабочий стол Wine",IDC_STATIC,8,65,244,83
+    LTEXT           "Wine может имитировать рабочий стол Windows или работать в режиме ""Managed"" (по умолчанию), когда за размещение окон отвечает текущий менеджер окон X11.",
+                    IDC_STATIC,15,77,228,28
+    LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,17,125,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,125,8,8,WS_DISABLED
+END
+
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Статичные",IDC_STATIC,8,4,244,157
+    CONTROL         "Встроенная (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,59,144,57,10
+    CONTROL         "Внешняя (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,121,144,72,10
+    LTEXT           "Можно индивидульно выбрать использовать внутренние или внешние библиотеки. Запись ""*"" действует на все библиотеки не перечисленные напрямую.",
+                    IDC_STATIC,15,17,228,27
+    CONTROL         "List3",IDC_LIST_DLLS,"SysListView32",LVS_LIST | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
+                    WS_TABSTOP,15,47,227,90
+    LTEXT           "Порядок загрузки:",IDC_STATIC,16,144,37,8
+END
+
+IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Диски",IDC_STATIC,8,4,244,120
+    LISTBOX         IDC_LIST_DRIVES,15,23,179,90,WS_VSCROLL
+    PUSHBUTTON      "&Добавить",IDC_DRIVE_ADD,197,22,50,22
+    PUSHBUTTON      "&Удалить",IDC_DRIVE_REMOVE,197,51,50,22
+    PUSHBUTTON      "&Править",IDC_DRIVE_EDIT,197,80,50,22
+END
+
+IDD_DRIVE_EDIT DIALOG DISCARDABLE  0, 0, 207, 110
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Настройка диска"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",ID_DRIVE_OK,150,7,50,14
+    PUSHBUTTON      "Отмена",ID_DRIVE_CANCEL,150,24,50,14
+    EDITTEXT        IDC_DRIVE_EDIT_NAME,42,8,78,13,ES_AUTOHSCROLL
+    LTEXT           "Диск:",-1,11,10,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_LABEL,42,23,78,13,ES_AUTOHSCROLL
+    LTEXT           "Метка:",-1,11,25,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_TYPE,42,38,78,13,ES_AUTOHSCROLL
+    LTEXT           "Тип:",-1,11,40,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_PATH,42,53,78,13,ES_AUTOHSCROLL
+    LTEXT           "Путь:",-1,11,55,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_FS,42,68,78,13,ES_AUTOHSCROLL
+    LTEXT           "Файловая система:",-1,11,70,29,12
+    EDITTEXT        IDC_DRIVE_EDIT_DEVICE,42,83,78,13,ES_AUTOHSCROLL
+    LTEXT           "Устройство:",-1,11,85,29,12
+END
+
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Диск Windows",IDC_STATIC,7,7,246,99
+    CONTROL         "Создать виртуальный диск Windows",IDC_RADIO_VIRTUAL,
+                    "Button",BS_AUTORADIOBUTTON,14,18,150,10
+    EDITTEXT        IDC_EDIT_VIRTUAL,25,30,169,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Обзор...",IDC_BUTTON_VIRTUAL,202,30,44,14
+    CONTROL         "Использовать реальный диск Windows",IDC_RADIO_REAL,"Button",
+                    BS_AUTORADIOBUTTON,14,48,170,10
+    EDITTEXT        IDC_EDIT_REAL,25,60,169,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Обзор...",IDC_BUTTON_REAL,202,60,44,14
+    PUSHBUTTON      "Важные папки...",IDC_BUTTON_FOLDERS,173,85,73,14
+    GROUPBOX        "Другие диски",IDC_STATIC,7,107,246,112
+    LISTBOX         IDC_LIST_DRIVES,14,118,232,76,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+                    LBS_MULTICOLUMN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Добавить...",IDC_BUTTON_ADD,14,199,37,14
+    PUSHBUTTON      "Удалить",IDC_BUTTON_REMOVE,55,199,37,14
+    PUSHBUTTON      "Правка...",IDC_BUTTON_EDIT,97,199,37,14
+    PUSHBUTTON      "Автоопределение...",IDC_BUTTON_AUTODETECT,197,199,49,14
+END
+
+IDD_DRIVE_EDIT2 DIALOG DISCARDABLE  0, 0, 272, 153
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Настройка диска"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",ID_BUTTON_OK,217,5,50,14
+    PUSHBUTTON      "Отменить",ID_BUTTON_CANCEL,217,22,50,14
+    LTEXT           "Буква:",IDC_STATIC,5,23,26,9
+    EDITTEXT        IDC_EDIT_LABEL,63,114,78,13,ES_AUTOHSCROLL
+    LTEXT           "Метка:",IDC_STATIC_LABEL,33,117,29,12
+    LTEXT           "Тип:",IDC_STATIC,5,54,21,10
+    EDITTEXT        IDC_EDIT_PATH,31,5,117,13,ES_AUTOHSCROLL
+    LTEXT           "Путь:",IDC_STATIC,5,9,20,9
+    LTEXT           "Имена:",IDC_STATIC,5,39,25,9
+    EDITTEXT        IDC_EDIT_SERIAL,63,129,78,13,ES_AUTOHSCROLL
+    LTEXT           "Серийный номер:",IDC_STATIC_SERIAL,33,133,29,12
+    COMBOBOX        IDC_COMBO_LETTER,31,20,78,60,CBS_DROPDOWNLIST  | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Обзор...",IDC_BUTTON_BROWSE_PATH,154,5,40,13
+    COMBOBOX        IDC_COMBO_NAMES,31,36,78,60,CBS_DROPDOWNLIST  | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_TYPE,31,52,78,60,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Автоопределить с устройсва:",IDC_RADIO_AUTODETECT,"Button",
+                    BS_AUTORADIOBUTTON,21,79,93,10
+    EDITTEXT        IDC_EDIT_DEVICE,33,89,108,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Обзор...",IDC_BUTTON_BROWSE_DEVICE,148,89,40,13
+    CONTROL         "Задать вручную:",IDC_RADIO_ASSIGN,"Button",
+                    BS_AUTORADIOBUTTON,21,104,69,10
+    GROUPBOX        "Метка и серийный номер",IDC_BOX_LABELSERIAL,15,68,180,79
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_WINE_VERSION        "CVS"
+    IDS_TAB_GENERAL         "Общие"
+    IDS_TAB_DLLS            "Библиотеки"
+    IDS_TAB_DRIVES          "Диски"
+END

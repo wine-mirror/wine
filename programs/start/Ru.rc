@@ -22,27 +22,29 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 {
-STRING_USAGE,                                   "Start a program, or open a document in the program normally used for files with that suffix. \n\
-Usage: \n\
-start [options] program_filename [...] \n\
-start [options] document_filename \n\
+STRING_USAGE,                                   "Запускает программы или открывает документы приложением, \n\
+обычно используемым для файлов с данным расширением. \n\n\
+Использование: \n\
+start [options] имя_файла_программы [...] \n\
+start [options] имя_файла_документа \n\
  \n\
-Options: \n\
-/M[inimized] Start the program minimized. \n\
-/MAX[imized] Start the program maximized. \n\
-/R[estored]  Start the program normally (neither minimized nor maximized). \n\
-/W[ait]      Wait for started program to finish, then exit with its exit code. \n\
-/L           Show end-user license. \n\
+Опции: \n\
+/M[inimized] Запустить программу минимизированной. \n\
+/MAX[imized] Запустить программу максимизированной. \n\
+/R[estored]  Запустить программу нормально (не максимизированно и не минимизированно). \n\
+/W[ait]      Ожидать завершения запущенной программы и выйти с кодом её выхода. \n\
+/L           Показать лицензию конечного пользователя. \n\
  \n\
-start.exe version 0.2 Copyright (C) 2003, Dan Kegel \n\
-Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option. \n\
-This is free software, and you are welcome to redistribute it \n\
-under certain conditions; run 'start /L' for details. \n\
+start.exe версия 0.2 Copyright (C) 2003, Dan Kegel \n\
+Start идет БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; подробности при запуске с опцией /L. \n\
+Это свободная программа, и вы можете её распространять на определённых \n\
+условиях; подробности при запуске с опцией /L. \n\
 "
 
 STRING_LICENSE, "start.exe версия 0.2 Copyright (C) 2003, Dan Kegel \n\
 Это программа распространяется по лицензии GNU Lesser Public License \n\
-и является бесплатным программным продуктом. \n\
+и является свободным программным продуктом. \n\
+\n\
 This program is free software; you can redistribute it and/or \n\
 modify it under the terms of the GNU Lesser Public License \n\
 as published by the Free Software Foundation; either version 2.1 \n\
@@ -60,5 +62,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. \n\
 See the COPYING.LIB file for license information. \n\
 "
 
-STRING_EXECFAIL "Application could not be started, or no application associated with the specified file.\nShellExecuteEx failed"
+STRING_EXECFAIL "Приложение не может быть запущено или не ассоциировано приложений с типом данного документа.\nВызов ShellExecuteEx провалился"
 }

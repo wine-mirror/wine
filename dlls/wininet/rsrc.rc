@@ -43,4 +43,5 @@
 #include "wininet_En.rc"
 #include "wininet_Es.rc"
 #include "wininet_Pt.rc"
+#include "wininet_Ru.rc"
 #include "wininet_Si.rc"
