@@ -1240,7 +1240,7 @@ sub _generate_config_h {
     print OUT "#define __WINE_CONFIG_H\n";
     print OUT "\n";
 
-    my @headers = qw(direct.h io.h);
+    my @headers = qw(direct.h fcntl.h io.h string.h process.h);
     foreach my $header (@headers) {
 	$header =~ y/\.\//__/;
 	print OUT "#define HAVE_\U$header\E\n";
@@ -1250,9 +1250,11 @@ sub _generate_config_h {
     my @functions = qw(
         _alldiv _allmul _allrem _aulldiv _aullrem
         _access _chdir _close _lseek _mkdir _open _pclose _popen _read _rmdir _write _stat
-        _snprintf _stricmp _strnicmp _vsnprintf _wcsicmp wcslen
+        _snprintf _spawnvp _stricmp _strnicmp _vsnprintf _wcsicmp
         ecvt fcvt gcvt
+        memmove
         strerror
+        wcslen
     );
     foreach my $function (@functions) {
 	print OUT "#define HAVE_\U$function\E 1\n";
@@ -1273,6 +1275,14 @@ sub _generate_config_h {
 
     print OUT "/* Define to a macro to generate an assembly name from a C symbol */\n";
     print OUT "#define __ASM_NAME(name) name\n";
+    print OUT "\n";
+
+    print OUT "/* Define to the assembler keyword used to specify a word value */";
+    print OUT "define __ASM_SHORT \".short\"";
+    print OUT "\n";
+
+    print OUT "/* Define to the assembler keyword used to specify an ASCII string */";
+    print OUT "#define __ASM_STRING \".string\"";
     print OUT "\n";
 
     print OUT "/* Define to the address where bug reports for this package should be sent. */\n";
