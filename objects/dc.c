@@ -630,6 +630,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
                       const DEVMODEA *initData )
 {
     UNICODE_STRING driverW, deviceW, outputW;
+    DEVMODEW *initDataW;
     HDC ret;
 
     if (driver) RtlCreateUnicodeStringFromAsciiz(&driverW, driver);
@@ -641,13 +642,15 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (output) RtlCreateUnicodeStringFromAsciiz(&outputW, output);
     else outputW.Buffer = NULL;
 
+    if (initData) initDataW = GdiConvertToDevmodeW(initData);
+    else initDataW = NULL;
 
-    ret = CreateDCW( driverW.Buffer, deviceW.Buffer, outputW.Buffer,
-                     (const DEVMODEW *)initData /*FIXME*/ );
+    ret = CreateDCW( driverW.Buffer, deviceW.Buffer, outputW.Buffer, initDataW );
 
     RtlFreeUnicodeString(&driverW);
     RtlFreeUnicodeString(&deviceW);
     RtlFreeUnicodeString(&outputW);
+    if (initDataW) HeapFree(GetProcessHeap(), 0, initDataW);
     return ret;
 }
 
