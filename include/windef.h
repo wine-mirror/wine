@@ -113,8 +113,6 @@ typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
 typedef int             BOOL;
 typedef double          DATE;
-typedef long            LONG_PTR;
-typedef unsigned long   ULONG_PTR;
 typedef double          DOUBLE;
 typedef double          LONGLONG;
 typedef double          ULONGLONG;
@@ -152,7 +150,6 @@ typedef DWORD           LCID;
 typedef WORD            LANGID;
 typedef DWORD           LCTYPE;
 typedef float           FLOAT;
-typedef long long       __int64;
 
 /* Pointers types. These are the same for emulator and library. */
 /* winnt types */

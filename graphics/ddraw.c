@@ -33,10 +33,6 @@
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
 #ifdef HAVE_LIBXXF86VM
-/* X is retarted and insists on declaring INT32, INT16 etc in Xmd.h,
-   this is a crude hack to get around it */
-#define XMD_H
-typedef int INT32;
 #include "ts_xf86vmode.h"
 #endif /* defined(HAVE_LIBXXF86VM) */
 

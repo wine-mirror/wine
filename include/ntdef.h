@@ -1,7 +1,7 @@
 #ifndef __WINE_NTDEF_H
 #define __WINE_NTDEF_H
 
-/* fixme: include basestd.h instead */
+#include "basetsd.h"
 #include "windef.h"
 
 #ifdef __cplusplus

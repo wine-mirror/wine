@@ -16,7 +16,7 @@
 #include "windef.h"
 #ifdef HAVE_LIBXXF86VM
 #define XMD_H
-#define INT32 INT
+#include "basetsd.h"
 
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86vmode.h>

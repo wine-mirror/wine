@@ -1,6 +1,7 @@
 #ifndef __WINE_WINBASE_H
 #define __WINE_WINBASE_H
 
+#include "basetsd.h"
 #include "winnt.h"
 #include "wine/winestring.h"
 
