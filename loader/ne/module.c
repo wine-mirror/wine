@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
+#include "winerror.h"
 #include "module.h"
 #include "neexe.h"
 #include "peexe.h"
@@ -708,7 +709,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
             /* its handle in the list of DLLs to initialize.   */
             HMODULE16 hDLL;
 
-            if ((hDLL = NE_LoadModule( buffer, NULL, TRUE, TRUE )) == 2)
+            if ((hDLL = NE_LoadModule( buffer, TRUE )) == 2)
             {
                 /* file not found */
                 char *p;
@@ -718,7 +719,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
                 if (!(p = strrchr( buffer, '\\' ))) p = buffer;
                 memcpy( p + 1, pstr + 1, *pstr );
                 strcpy( p + 1 + *pstr, ".dll" );
-                hDLL = NE_LoadModule( buffer, NULL, TRUE, TRUE );
+                hDLL = NE_LoadModule( buffer, TRUE );
             }
             if (hDLL < 32)
             {
@@ -743,63 +744,29 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
 
 
 /**********************************************************************
- *	    NE_LoadModule
+ *	    NE_LoadFileModule
  *
- * Implementation of LoadModule16().
+ * Load first instance of NE module from file.
+ * (Note: caller is responsible for ensuring the module isn't
+ *        already loaded!)
  */
-HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
-                           BOOL implicit, BOOL lib_only )
+static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs, 
+                                      BOOL implicit )
 {
-    HMODULE16 hModule;
     HINSTANCE16 hInstance;
+    HMODULE16 hModule;
     NE_MODULE *pModule;
-    HFILE16 hFile;
-    OFSTRUCT ofs;
-
-    /* Check if the module is already loaded */
-
-    if ((hModule = GetModuleHandle16( name )) != 0)
-    {
-        HINSTANCE16 prev;
-        pModule = NE_GetPtr( hModule );
-        if ( pModule->module32 ) return (HINSTANCE16)21;
-
-        hInstance = NE_CreateInstance( pModule, &prev, lib_only );
-        if (hInstance != prev)  /* not a library */
-            NE_LoadSegment( pModule, pModule->dgroup );
-        pModule->count++;
-        if (hPrevInstance) *hPrevInstance = prev;
-        return hInstance;
-    }
-    if (hPrevInstance) *hPrevInstance = 0;
-
-    /* Try to load the built-in first if not disabled */
-
-    if ((hModule = fnBUILTIN_LoadModule( name, FALSE ))) return hModule;
-
-    if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
-    {
-        /* Now try the built-in even if disabled */
-        if ((hModule = fnBUILTIN_LoadModule( name, TRUE )))
-        {
-            MSG( "Could not load Windows DLL '%s', using built-in module.\n",
-                 name );
-            return hModule;
-        }
-        return 2;  /* File not found */
-    }
 
     /* Create the module structure */
 
-    hModule = NE_LoadExeHeader( hFile, &ofs );
-    _lclose16( hFile );
+    hModule = NE_LoadExeHeader( hFile, ofs );
     if (hModule < 32) return hModule;
     pModule = NE_GetPtr( hModule );
 
     /* Allocate the segments for this module */
 
     if (!NE_CreateSegments( pModule ) ||
-        !(hInstance = NE_CreateInstance( pModule, NULL, lib_only )))
+        !(hInstance = NE_CreateInstance( pModule, NULL, FALSE )))
     {
         GlobalFreeAll16( hModule );
         return 8;  /* Insufficient memory */
@@ -833,35 +800,233 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
     return hInstance;
 }
 
+/**********************************************************************
+ *	    NE_LoadModule
+ *
+ * Load first instance of NE module, deciding whether to use
+ * built-in module or load module from file.
+ * (Note: caller is responsible for ensuring the module isn't
+ *        already loaded!)
+ */
+HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit )
+{
+    HINSTANCE16 hInstance;
+    HMODULE16 hModule;
+    HFILE16 hFile;
+    OFSTRUCT ofs;
+
+    /* Try to load the built-in first if not disabled */
+
+    if ((hModule = fnBUILTIN_LoadModule( name, FALSE ))) return hModule;
+
+    if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
+    {
+        /* Now try the built-in even if disabled */
+        if ((hModule = fnBUILTIN_LoadModule( name, TRUE )))
+        {
+            MSG( "Could not load Windows DLL '%s', using built-in module.\n",
+                 name );
+            return hModule;
+        }
+        return 2;  /* File not found */
+    }
+
+    hInstance = NE_LoadFileModule( hFile, &ofs, implicit );
+    _lclose16( hFile );
+
+    return hInstance;
+}
+
+/**********************************************************************
+ *          LoadModule16    (KERNEL.45)
+ */
+HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
+{
+    BOOL lib_only = !paramBlock || (paramBlock == (LPVOID)-1);
+    LOADPARAMS16 *params;
+    LPSTR cmd_line, new_cmd_line;
+    LPCVOID env = NULL;
+    STARTUPINFOA startup;
+    PROCESS_INFORMATION info;
+    HINSTANCE16 hInstance, hPrevInstance = 0;
+    HMODULE16 hModule;
+    NE_MODULE *pModule;
+    PDB *pdb;
+
+
+    /* Load module */
+
+    if ( ( hModule = GetModuleHandle16( name ) ) != 0 )
+    {
+        /* Special case: second instance of an already loaded NE module */
+
+        if ( !( pModule = NE_GetPtr( hModule ) ) ) return (HINSTANCE16)11;
+        if ( pModule->module32 ) return (HINSTANCE16)21;
+
+        hInstance = NE_CreateInstance( pModule, &hPrevInstance, lib_only );
+        if ( hInstance != hPrevInstance )  /* not a library */
+            NE_LoadSegment( pModule, pModule->dgroup );
+
+        pModule->count++;
+    }
+    else
+    {
+        /* Main case: load first instance of NE module */
+
+        if ( (hInstance = NE_LoadModule( name, FALSE )) < 32 );
+            return hInstance;
+
+        if ( !(pModule = NE_GetPtr( hInstance )) )
+            return (HINSTANCE16)11;
+    }
+
+    /* If library module, we're finished */
+
+    if ( ( pModule->flags & NE_FFLAGS_LIBMODULE ) || lib_only )
+        return hInstance;
+
+    /* Create a task for this instance */
+
+    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
+
+    params = (LOADPARAMS16 *)paramBlock;
+    cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
+    if (!cmd_line) cmd_line = "";
+    else if (*cmd_line) cmd_line++;  /* skip the length byte */
+
+    if (!(new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
+                                    strlen(cmd_line)+strlen(name)+2 )))
+        return 0;
+    strcpy( new_cmd_line, name );
+    strcat( new_cmd_line, " " );
+    strcat( new_cmd_line, cmd_line );
+
+    if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
+
+    memset( &info, '\0', sizeof(info) );
+    memset( &startup, '\0', sizeof(startup) );
+    startup.cb = sizeof(startup);
+    if (params->showCmd)
+    {
+        startup.dwFlags = STARTF_USESHOWWINDOW;
+        startup.wShowWindow = ((UINT16 *)PTR_SEG_TO_LIN(params->showCmd))[1];
+    }
+
+    pdb = PROCESS_Create( pModule, new_cmd_line, env,
+                          hInstance, hPrevInstance, TRUE, &startup, &info );
+
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+
+    if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
+    HeapFree( GetProcessHeap(), 0, new_cmd_line );
+
+    /* Start task */
+
+    if (pdb) TASK_StartTask( pdb->task );
+
+    return hInstance;
+}
+
+/**********************************************************************
+ *          NE_CreateProcess
+ */
+BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
+                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
+                       LPPROCESS_INFORMATION info )
+{
+    HINSTANCE16 hInstance, hPrevInstance = 0;
+    HMODULE16 hModule;
+    NE_MODULE *pModule;
+    HFILE16 hFile16;
+
+    /* Special case: second instance of an already loaded NE module */
+
+    if ( ( hModule = GetModuleHandle16( ofs->szPathName ) ) != 0 )
+    {
+        if (   !( pModule = NE_GetPtr( hModule) )
+            ||  ( pModule->flags & NE_FFLAGS_LIBMODULE )
+            ||  pModule->module32 )
+        {
+            SetLastError( ERROR_BAD_FORMAT );
+            return FALSE;
+        }
+
+        hInstance = NE_CreateInstance( pModule, &hPrevInstance, FALSE );
+        if ( hInstance != hPrevInstance )  /* not a library */
+            NE_LoadSegment( pModule, pModule->dgroup );
+
+        pModule->count++;
+    }
+
+    /* Main case: load first instance of NE module */
+    else
+    {
+        /* If we didn't get a file handle, return */
+
+        if ( hFile == HFILE_ERROR )
+            return FALSE;
+
+        /* Allocate temporary HFILE16 for NE_LoadFileModule */
+
+        if (!DuplicateHandle( GetCurrentProcess(), hFile,
+                              GetCurrentProcess(), &hFile,
+                              0, FALSE, DUPLICATE_SAME_ACCESS ))
+        {
+            SetLastError( ERROR_INVALID_HANDLE );
+            return FALSE;
+        }
+        hFile16 = FILE_AllocDosHandle( hFile );
+
+        /* Load module */
+
+        hInstance = NE_LoadFileModule( hFile16, ofs, TRUE );
+        _lclose16( hFile16 );
+
+        if ( hInstance < 32 )
+        {
+            SetLastError( hInstance );
+            return FALSE;
+        }
+
+        if (   !( pModule = NE_GetPtr( hInstance ) )
+            ||  ( pModule->flags & NE_FFLAGS_LIBMODULE) )
+        {
+            /* FIXME: cleanup */
+            SetLastError( ERROR_BAD_FORMAT );
+            return FALSE;
+        }
+    }
+
+    /* Create a task for this instance */
+
+    pModule->flags |= NE_FFLAGS_GUI;  /* FIXME: is this necessary? */
+
+    if ( !PROCESS_Create( pModule, cmd_line, env,
+                          hInstance, hPrevInstance, inherit, startup, info ) )
+        return FALSE;
+
+    return TRUE;
+}
 
 /***********************************************************************
- *           LoadLibrary   (KERNEL.95)
+ *           LoadLibrary16   (KERNEL.95)
  */
 HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
 {
-    HINSTANCE16 handle;
-    LPCSTR p;
-    char *new_name;
+    char dllname[256], *p;
 
-    TRACE(module, "(%08x) %s\n", (int)libname, libname);
+    TRACE( module, "(%08x) %s\n", (int)libname, libname );
 
-    /* Check for an extension */
+    /* Append .DLL to name if no extension present */
 
-    if ((p = strrchr( libname, '.')) && !strchr( p, '/' ) && !strchr( p, '\\'))
-    {
-        /* An extension is present -> use the name as is */
-        return NE_LoadModule( libname, NULL, FALSE, TRUE );
-    }
+    strcpy( dllname, libname );
+    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+        strcat( dllname, ".DLL" );
 
-    /* Now append .dll before loading */
+    /* Load library module */
 
-    if (!(new_name = HeapAlloc( GetProcessHeap(), 0, strlen(libname) + 4 )))
-        return 0;
-    strcpy( new_name, libname );
-    strcat( new_name, ".dll" );
-    handle = NE_LoadModule( new_name, NULL, FALSE, TRUE );
-    HeapFree( GetProcessHeap(), 0, new_name );
-    return handle;
+    return LoadModule16( dllname, (LPVOID)-1 );
 }
 
 
@@ -1163,7 +1328,7 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod) {
 	if (!hmod) {
 		TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
 
-		hmod = pTask->hInstance;
+		hmod = pTask->hModule;
 	}
 	pModule = (NE_MODULE*)GlobalLock16(hmod);
 	if (	(pModule->magic!=IMAGE_OS2_SIGNATURE)	||
