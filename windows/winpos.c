@@ -2023,7 +2023,11 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
     TRACE("%d,%d-%d,%d\n",
                  params.rgrc[0].left, params.rgrc[0].top,
                  params.rgrc[0].right, params.rgrc[0].bottom );
-    *newClientRect = params.rgrc[0];
+
+    /* If the application send back garbage, ignore it */
+    if (params.rgrc[0].left <= params.rgrc[0].right && params.rgrc[0].top <= params.rgrc[0].bottom)
+        *newClientRect = params.rgrc[0];
+
     return result;
 }
 
