@@ -45,8 +45,9 @@ versions of this manual under the conditions stated in
 the section entitled ``License, Warranty, and Authors of Wine''.
 
 @sp 4
-FIXME: X11 and POSIX trademarks. @*
 UNIX is a registered trademark of the Open Group.
+POSIX is a registered trademark of the IEEE Inc.
+X Window System is a trademark of X Consortium, Inc. 
 Microsoft, Windows, MS-Windows, Windows-NT, Windows 95, and MS-DOS are
 registered trademarks of Microsoft Corporation.
 NT is a trademark of Northern Telecom Limited.
@@ -82,8 +83,9 @@ versions of this manual under the conditions stated in
 the section entitled ``License, Warranty, and Authors of Wine''.
 
 @sp 4
-FIXME: UNIX and POSIX trademarks. @*
-X11 @*
+UNIX is a registered trademark of the Open Group.
+POSIX is a registered trademark of the IEEE Inc.
+X Window System is a trademark of X Consortium, Inc. 
 Microsoft, Windows, MS-Windows, Windows-NT, Windows 95, and MS-DOS are
 registered trademarks of Microsoft Corporation.
 NT is a trademark of Northern Telecom Limited.
