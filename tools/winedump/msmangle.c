@@ -529,7 +529,6 @@ static char *demangle_datatype (char **str, compound_type *ct,
 	      } else while (*iter == '@') iter++;
 	      iter++;
 	      ct->expression = str_create(2, ct->expression, ")");
-	      FREE_CT (sub_ct);
 	  }
 	  else
 	      return NULL;
