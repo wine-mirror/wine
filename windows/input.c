@@ -52,12 +52,10 @@ WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(win);
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 
-static BOOL SwappedButtons;
-
 BYTE InputKeyStateTable[256];
-BYTE AsyncKeyStateTable[256];
-BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
-                         or a WM_KEYUP message */
+static BYTE AsyncKeyStateTable[256];
+static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
+                                or a WM_KEYUP message */
 
 /* Storage for the USER-maintained mouse positions */
 static DWORD PosX, PosY;
@@ -91,7 +89,7 @@ static WORD get_key_state(void)
 {
     WORD ret = 0;
 
-    if (SwappedButtons)
+    if (GetSystemMetrics( SM_SWAPBUTTON ))
     {
         if (InputKeyStateTable[VK_RBUTTON] & 0x80) ret |= MK_LBUTTON;
         if (InputKeyStateTable[VK_LBUTTON] & 0x80) ret |= MK_RBUTTON;
@@ -292,26 +290,26 @@ static void queue_mouse_event( const MOUSEINPUT *mi, UINT flags )
     {
         InputKeyStateTable[VK_LBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_LBUTTON] |= 0x80;
-        queue_raw_mouse_message( SwappedButtons ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
+        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
                                  flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_LEFTUP)
     {
         InputKeyStateTable[VK_LBUTTON] &= ~0x80;
-        queue_raw_mouse_message( SwappedButtons ? WM_RBUTTONUP : WM_LBUTTONUP,
+        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONUP : WM_LBUTTONUP,
                                  flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_RIGHTDOWN)
     {
         InputKeyStateTable[VK_RBUTTON] |= 0x80;
         AsyncKeyStateTable[VK_RBUTTON] |= 0x80;
-        queue_raw_mouse_message( SwappedButtons ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
+        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
                                  flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_RIGHTUP)
     {
         InputKeyStateTable[VK_RBUTTON] &= ~0x80;
-        queue_raw_mouse_message( SwappedButtons ? WM_LBUTTONUP : WM_RBUTTONUP,
+        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONUP : WM_RBUTTONUP,
                                  flags, PosX, PosY, mi );
     }
     if (mi->dwFlags & MOUSEEVENTF_MIDDLEDOWN)
@@ -398,17 +396,6 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     input.u.mi.time = GetCurrentTime();
     input.u.mi.dwExtraInfo = dwExtraInfo;
     SendInput( 1, &input, sizeof(input) );
-}
-
-
-/***********************************************************************
- *		SwapMouseButton (USER32.@)
- */
-BOOL WINAPI SwapMouseButton( BOOL fSwap )
-{
-    BOOL ret = SwappedButtons;
-    SwappedButtons = fSwap;
-    return ret;
 }
 
 

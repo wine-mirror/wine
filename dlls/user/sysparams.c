@@ -2683,6 +2683,15 @@ INT WINAPI GetSystemMetrics( INT index )
 }
 
 
+/***********************************************************************
+ *		SwapMouseButton (USER32.@)
+ */
+BOOL WINAPI SwapMouseButton( BOOL fSwap )
+{
+    return SystemParametersInfoW(SPI_SETMOUSEBUTTONSWAP, fSwap, 0, 0);
+}
+
+
 /**********************************************************************
  *		SetDoubleClickTime (USER32.@)
  */
