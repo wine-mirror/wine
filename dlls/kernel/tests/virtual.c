@@ -107,7 +107,162 @@ static void test_VirtualAlloc(void)
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 }
 
+static void test_MapViewOfFile(void)
+{
+    static const char testfile[] = "testfile.xxx";
+    HANDLE file, mapping;
+    void *ptr;
+
+    file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to create test file\n" );
+    SetFilePointer( file, 4096, NULL, FILE_BEGIN );
+    SetEndOfFile( file );
+
+    /* read/write mapping */
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAPE_READ failed\n" );
+    UnmapViewOfFile( ptr );
+
+    /* this fails on win9x but succeeds on NT */
+    ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
+    if (ptr) UnmapViewOfFile( ptr );
+    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %lx\n", GetLastError() );
+
+    ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
+    UnmapViewOfFile( ptr );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_WRITE failed\n" );
+    UnmapViewOfFile( ptr );
+    CloseHandle( mapping );
+
+    /* read-only mapping */
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ failed\n" );
+    UnmapViewOfFile( ptr );
+
+    /* this fails on win9x but succeeds on NT */
+    ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
+    if (ptr) UnmapViewOfFile( ptr );
+    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %lx\n", GetLastError() );
+
+    ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
+    UnmapViewOfFile( ptr );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
+    ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %lx\n", GetLastError() );
+    CloseHandle( mapping );
+
+    /* copy-on-write mapping */
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_WRITECOPY, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ failed\n" );
+    UnmapViewOfFile( ptr );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_COPY failed\n" );
+    UnmapViewOfFile( ptr );
+
+    ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
+    UnmapViewOfFile( ptr );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
+    ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %lx\n", GetLastError() );
+    CloseHandle( mapping );
+
+    /* no access mapping */
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_NOACCESS, 0, 4096, NULL );
+    /* fails on NT but succeeds on win9x */
+    if (!mapping) ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %lx\n", GetLastError() );
+    else
+    {
+        ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
+        ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ failed\n" );
+        UnmapViewOfFile( ptr );
+
+        ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
+        ok( !ptr, "MapViewOfFile FILE_MAP_COPY succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %lx\n", GetLastError() );
+
+        ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
+        ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
+        UnmapViewOfFile( ptr );
+
+        ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
+        ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %lx\n", GetLastError() );
+
+        CloseHandle( mapping );
+    }
+
+    CloseHandle( file );
+
+    /* now try read-only file */
+
+    file = CreateFileA( testfile, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to create test file\n" );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
+    ok( !mapping, "CreateFileMapping PAGE_READWRITE succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %lx\n", GetLastError() );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_WRITECOPY, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping PAGE_WRITECOPY failed\n" );
+    CloseHandle( mapping );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping PAGE_READONLY failed\n" );
+    CloseHandle( mapping );
+    CloseHandle( file );
+
+    /* now try no access file */
+
+    file = CreateFileA( testfile, 0, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to create test file\n" );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
+    ok( !mapping, "CreateFileMapping PAGE_READWRITE succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %lx\n", GetLastError() );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_WRITECOPY, 0, 4096, NULL );
+    ok( !mapping, "CreateFileMapping PAGE_WRITECOPY succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %lx\n", GetLastError() );
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 4096, NULL );
+    ok( !mapping, "CreateFileMapping PAGE_READONLY succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %lx\n", GetLastError() );
+
+    CloseHandle( file );
+
+    CloseHandle( file );
+    DeleteFileA( testfile );
+}
+
 START_TEST(virtual)
 {
     test_VirtualAlloc();
+    test_MapViewOfFile();
 }

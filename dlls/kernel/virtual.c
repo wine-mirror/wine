@@ -321,6 +321,8 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     switch(protect)
     {
     case 0:
+        protect = PAGE_READONLY;  /* Win9x compatibility */
+        /* fall through */
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
         access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ;

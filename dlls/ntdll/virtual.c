@@ -46,6 +46,7 @@
 #include "winioctl.h"
 #include "wine/library.h"
 #include "wine/server.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
@@ -57,22 +58,21 @@ WINE_DECLARE_DEBUG_CHANNEL(module);
 #endif
 
 /* File view */
-typedef struct _FV
+typedef struct file_view
 {
-    struct _FV   *next;        /* Next view */
-    struct _FV   *prev;        /* Prev view */
+    struct list   entry;       /* Entry in global view list */
     void         *base;        /* Base address */
     UINT          size;        /* Size in bytes */
-    UINT          flags;       /* Allocation flags */
     HANDLE        mapping;     /* Handle to the file mapping */
     HANDLERPROC   handlerProc; /* Fault handler */
     LPVOID        handlerArg;  /* Fault handler argument */
+    BYTE          flags;       /* Allocation flags (VFLAG_*) */
     BYTE          protect;     /* Protection for all pages at allocation time */
     BYTE          prot[1];     /* Protection byte for each page */
 } FILE_VIEW;
 
 /* Per-view flags */
-#define VFLAG_SYSTEM     0x01
+#define VFLAG_SYSTEM     0x01  /* system view (underlying mmap not under our control) */
 #define VFLAG_VALLOC     0x02  /* allocated by VirtualAlloc */
 
 /* Conversion from VPROT_* to Win32 flags */
@@ -96,8 +96,7 @@ static const BYTE VIRTUAL_Win32Flags[16] =
     PAGE_EXECUTE_WRITECOPY      /* READ | WRITE | EXEC | WRITECOPY */
 };
 
-
-static FILE_VIEW *VIRTUAL_FirstView;
+static struct list views_list = LIST_INIT(views_list);
 
 static CRITICAL_SECTION csVirtual;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -135,9 +134,6 @@ static UINT page_size;
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
 
-static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size, DWORD offset_low,
-                            DWORD offset_high, int prot, int flags, BOOL *removable );
-
 
 /***********************************************************************
  *           VIRTUAL_GetProtStr
@@ -148,8 +144,7 @@ static const char *VIRTUAL_GetProtStr( BYTE prot )
     buffer[0] = (prot & VPROT_COMMITTED) ? 'c' : '-';
     buffer[1] = (prot & VPROT_GUARD) ? 'g' : '-';
     buffer[2] = (prot & VPROT_READ) ? 'r' : '-';
-    buffer[3] = (prot & VPROT_WRITE) ?
-                    ((prot & VPROT_WRITECOPY) ? 'w' : 'W') : '-';
+    buffer[3] = (prot & VPROT_WRITECOPY) ? 'W' : ((prot & VPROT_WRITE) ? 'w' : '-');
     buffer[4] = (prot & VPROT_EXEC) ? 'x' : '-';
     buffer[5] = 0;
     return buffer;
@@ -195,14 +190,13 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
  */
 void VIRTUAL_Dump(void)
 {
-    FILE_VIEW *view;
+    struct list *ptr;
+
     DPRINTF( "\nDump of all virtual memory views:\n\n" );
     RtlEnterCriticalSection(&csVirtual);
-    view = VIRTUAL_FirstView;
-    while (view)
+    LIST_FOR_EACH( ptr, &views_list )
     {
-        VIRTUAL_DumpView( view );
-        view = view->next;
+        VIRTUAL_DumpView( LIST_ENTRY( ptr, struct file_view, entry ) );
     }
     RtlLeaveCriticalSection(&csVirtual);
 }
@@ -217,21 +211,17 @@ void VIRTUAL_Dump(void)
  *	View: Success
  *	NULL: Failure
  */
-static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
+static struct file_view *VIRTUAL_FindView( const void *addr ) /* [in] Address */
 {
-    FILE_VIEW *view = VIRTUAL_FirstView;
+    struct list *ptr;
 
-    while (view)
+    LIST_FOR_EACH( ptr, &views_list )
     {
-        if (view->base > addr)
-        {
-            view = NULL;
-            break;
-        }
-        if ((char*)view->base + view->size > (char*)addr) break;
-        view = view->next;
+        struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
+        if (view->base > addr) break;
+        if ((char*)view->base + view->size > (char*)addr) return view;
     }
-    return view;
+    return NULL;
 }
 
 
@@ -243,96 +233,82 @@ static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
  * RETURNS
  *	None
  */
-static void VIRTUAL_DeleteView( FILE_VIEW *view ) /* [in] View */
+static void VIRTUAL_DeleteView( struct file_view *view ) /* [in] View */
 {
     if (!(view->flags & VFLAG_SYSTEM))
         munmap( (void *)view->base, view->size );
-    if (view->next) view->next->prev = view->prev;
-    if (view->prev) view->prev->next = view->next;
-    else VIRTUAL_FirstView = view->next;
+    list_remove( &view->entry );
     if (view->mapping) NtClose( view->mapping );
     free( view );
 }
 
 
 /***********************************************************************
- *           VIRTUAL_CreateView
+ *           create_view
  *
- * Create a new view and add it in the linked list.
+ * Create a view. The csVirtual section must be held by caller.
  */
-static FILE_VIEW *VIRTUAL_CreateView( void *base, UINT size, UINT flags,
-                                      BYTE vprot, HANDLE mapping )
+static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t size, BYTE vprot )
 {
-    FILE_VIEW *view, *prev;
-
-    /* Create the view structure */
+    struct file_view *view;
+    struct list *ptr;
 
     assert( !((unsigned int)base & page_mask) );
     assert( !(size & page_mask) );
-    size >>= page_shift;
-    if (!(view = (FILE_VIEW *)malloc( sizeof(*view) + size - 1 ))) return NULL;
+
+    /* Create the view structure */
+
+    if (!(view = malloc( sizeof(*view) + (size >> page_shift) - 1 ))) return STATUS_NO_MEMORY;
+
     view->base    = base;
-    view->size    = size << page_shift;
-    view->flags   = flags;
-    view->mapping = mapping;
+    view->size    = size;
+    view->flags   = 0;
+    view->mapping = 0;
     view->protect = vprot;
     view->handlerProc = NULL;
-    memset( view->prot, vprot, size );
-
-    /* Duplicate the mapping handle */
-
-    if (view->mapping &&
-        NtDuplicateObject( GetCurrentProcess(), view->mapping,
-                           GetCurrentProcess(), &view->mapping,
-                           0, 0, DUPLICATE_SAME_ACCESS ))
-    {
-        free( view );
-        return NULL;
-    }
+    memset( view->prot, vprot, size >> page_shift );
 
     /* Insert it in the linked list */
 
-    RtlEnterCriticalSection(&csVirtual);
-    if (!VIRTUAL_FirstView || (VIRTUAL_FirstView->base > base))
+    LIST_FOR_EACH( ptr, &views_list )
     {
-        view->next = VIRTUAL_FirstView;
-        view->prev = NULL;
-        if (view->next) view->next->prev = view;
-        VIRTUAL_FirstView = view;
+        struct file_view *next = LIST_ENTRY( ptr, struct file_view, entry );
+        if (next->base > base) break;
     }
-    else
-    {
-        prev = VIRTUAL_FirstView;
-        while (prev->next && (prev->next->base < base)) prev = prev->next;
-        view->next = prev->next;
-        view->prev = prev;
-        if (view->next) view->next->prev = view;
-        prev->next  = view;
+    list_add_before( ptr, &view->entry );
 
-        /* Check for overlapping views. This can happen if the previous view
-         * was a system view that got unmapped behind our back. In that case
-         * we recover by simply deleting it. */
+    /* Check for overlapping views. This can happen if the previous view
+     * was a system view that got unmapped behind our back. In that case
+     * we recover by simply deleting it. */
+
+    if ((ptr = list_prev( &views_list, &view->entry )) != NULL)
+    {
+        struct file_view *prev = LIST_ENTRY( ptr, struct file_view, entry );
         if ((char *)prev->base + prev->size > (char *)base)
         {
             TRACE( "overlapping prev view %p-%p for %p-%p\n",
                    prev->base, (char *)prev->base + prev->size,
                    base, (char *)base + view->size );
-            assert( view->prev->flags & VFLAG_SYSTEM );
-            VIRTUAL_DeleteView( view->prev );
+            assert( prev->flags & VFLAG_SYSTEM );
+            VIRTUAL_DeleteView( prev );
         }
     }
-    /* check for overlap with next too */
-    if (view->next && (char *)base + view->size > (char *)view->next->base)
+    if ((ptr = list_next( &views_list, &view->entry )) != NULL)
     {
-        TRACE( "overlapping next view %p-%p for %p-%p\n",
-               view->next->base, (char *)view->next->base + view->next->size,
-               base, (char *)base + view->size );
-        assert( view->next->flags & VFLAG_SYSTEM );
-        VIRTUAL_DeleteView( view->next );
+        struct file_view *next = LIST_ENTRY( ptr, struct file_view, entry );
+        if ((char *)base + view->size > (char *)next->base)
+        {
+            TRACE( "overlapping next view %p-%p for %p-%p\n",
+                   next->base, (char *)next->base + next->size,
+                   base, (char *)base + view->size );
+            assert( next->flags & VFLAG_SYSTEM );
+            VIRTUAL_DeleteView( next );
+        }
     }
-    RtlLeaveCriticalSection(&csVirtual);
+
+    *view_ret = view;
     VIRTUAL_DEBUG_DUMP_VIEW( view );
-    return view;
+    return STATUS_SUCCESS;
 }
 
 
@@ -462,23 +438,40 @@ static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
 
 
 /***********************************************************************
- *           anon_mmap_aligned
+ *           map_view
  *
- * Create an anonymous mapping aligned to the allocation granularity.
+ * Create a view and mmap the corresponding memory area.
+ * The csVirtual section must be held by caller.
  */
-static NTSTATUS anon_mmap_aligned( void **addr, unsigned int size, int prot, int flags )
+static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, BYTE vprot )
 {
-    void *ptr, *base = *addr;
-    unsigned int view_size = size + (base ? 0 : granularity_mask + 1);
+    void *ptr;
+    NTSTATUS status;
 
-    if ((ptr = wine_anon_mmap( base, view_size, prot, flags )) == (void *)-1)
+    if (base)
     {
-        if (errno == ENOMEM) return STATUS_NO_MEMORY;
-        return STATUS_INVALID_PARAMETER;
+        if ((ptr = wine_anon_mmap( base, size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        {
+            if (errno == ENOMEM) return STATUS_NO_MEMORY;
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (ptr != base)
+        {
+            /* We couldn't get the address we wanted */
+            munmap( ptr, size );
+            return STATUS_CONFLICTING_ADDRESSES;
+        }
     }
-
-    if (!base)
+    else
     {
+        size_t view_size = size + granularity_mask + 1;
+
+        if ((ptr = wine_anon_mmap( NULL, view_size, VIRTUAL_GetUnixProt(vprot), 0 )) == (void *)-1)
+        {
+            if (errno == ENOMEM) return STATUS_NO_MEMORY;
+            return STATUS_INVALID_PARAMETER;
+        }
+
         /* Release the extra memory while keeping the range
          * starting on the granularity boundary. */
         if ((unsigned int)ptr & granularity_mask)
@@ -491,14 +484,129 @@ static NTSTATUS anon_mmap_aligned( void **addr, unsigned int size, int prot, int
         if (view_size > size)
             munmap( (char *)ptr + size, view_size - size );
     }
-    else if (ptr != base)
+
+    status = create_view( view_ret, ptr, size, vprot );
+    if (status != STATUS_SUCCESS) munmap( ptr, size );
+    return status;
+}
+
+
+/***********************************************************************
+ *           unaligned_mmap
+ *
+ * Linux kernels before 2.4.x can support non page-aligned offsets, as
+ * long as the offset is aligned to the filesystem block size. This is
+ * a big performance gain so we want to take advantage of it.
+ *
+ * However, when we use 64-bit file support this doesn't work because
+ * glibc rejects unaligned offsets. Also glibc 2.1.3 mmap64 is broken
+ * in that it rounds unaligned offsets down to a page boundary. For
+ * these reasons we do a direct system call here.
+ */
+static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
+                             unsigned int flags, int fd, off_t offset )
+{
+#if defined(linux) && defined(__i386__) && defined(__GNUC__)
+    if (!(offset >> 32) && (offset & page_mask))
     {
-        /* We couldn't get the address we wanted */
-        munmap( ptr, view_size );
-        return STATUS_CONFLICTING_ADDRESSES;
+        int ret;
+
+        struct
+        {
+            void        *addr;
+            unsigned int length;
+            unsigned int prot;
+            unsigned int flags;
+            unsigned int fd;
+            unsigned int offset;
+        } args;
+
+        args.addr   = addr;
+        args.length = length;
+        args.prot   = prot;
+        args.flags  = flags;
+        args.fd     = fd;
+        args.offset = offset;
+
+        __asm__ __volatile__("push %%ebx\n\t"
+                             "movl %2,%%ebx\n\t"
+                             "int $0x80\n\t"
+                             "popl %%ebx"
+                             : "=a" (ret)
+                             : "0" (90), /* SYS_mmap */
+                               "g" (&args)
+                             : "memory" );
+        if (ret < 0 && ret > -4096)
+        {
+            errno = -ret;
+            ret = -1;
+        }
+        return (void *)ret;
     }
-    *addr = ptr;
+#endif
+    return mmap( addr, length, prot, flags, fd, offset );
+}
+
+
+/***********************************************************************
+ *           map_file_into_view
+ *
+ * Wrapper for mmap() to map a file into a view, falling back to read if mmap fails.
+ * The csVirtual section must be held by caller.
+ */
+static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start, size_t size,
+                                    off_t offset, BYTE vprot, BOOL removable )
+{
+    void *ptr;
+    int prot = VIRTUAL_GetUnixProt( vprot );
+    BOOL shared_write = (vprot & VPROT_WRITE) != 0;
+
+    assert( start < view->size );
+    assert( start + size <= view->size );
+
+    /* only try mmap if media is not removable (or if we require write access) */
+    if (!removable || shared_write)
+    {
+        int flags = MAP_FIXED | (shared_write ? MAP_SHARED : MAP_PRIVATE);
+
+        if (unaligned_mmap( (char *)view->base + start, size, prot, flags, fd, offset ) != (void *)-1)
+            goto done;
+
+        /* mmap() failed; if this is because the file offset is not    */
+        /* page-aligned (EINVAL), or because the underlying filesystem */
+        /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
+        if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return FILE_GetNtStatus();
+        if (shared_write) return FILE_GetNtStatus();  /* we cannot fake shared write mappings */
+    }
+
+    /* Reserve the memory with an anonymous mmap */
+    ptr = wine_anon_mmap( (char *)view->base + start, size, PROT_READ | PROT_WRITE, MAP_FIXED );
+    if (ptr == (void *)-1) return FILE_GetNtStatus();
+    /* Now read in the file */
+    pread( fd, ptr, size, offset );
+    if (prot != (PROT_READ|PROT_WRITE)) mprotect( ptr, size, prot );  /* Set the right protection */
+done:
+    memset( view->prot + (start >> page_shift), vprot, size >> page_shift );
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           decommit_view
+ *
+ * Decommit some pages of a given view.
+ * The csVirtual section must be held by caller.
+ */
+static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t size )
+{
+    if (wine_anon_mmap( (char *)view->base + start, size, PROT_NONE, MAP_FIXED ) != (void *)-1)
+    {
+        BYTE *p = view->prot + (start >> page_shift);
+        size >>= page_shift;
+        while (size--) *p++ &= ~VPROT_COMMITTED;
+        return STATUS_SUCCESS;
+    }
+    return FILE_GetNtStatus();
 }
 
 
@@ -578,31 +686,34 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
     IMAGE_DATA_DIRECTORY *imports;
-    NTSTATUS status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error (FIXME) */
-    int i, pos;
-    FILE_VIEW *view;
+    NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
+    int i;
+    off_t pos;
+    struct file_view *view = NULL;
     char *ptr;
 
     /* zero-map the whole range */
 
-    if (base < (char *)0x110000 ||  /* make sure the DOS area remains free */
-        (ptr = wine_anon_mmap( base, total_size,
-                               PROT_READ | PROT_WRITE | PROT_EXEC, 0 )) == (char *)-1)
-    {
-        ptr = wine_anon_mmap( NULL, total_size,
-                            PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
-        if (ptr == (char *)-1)
-        {
-            ERR_(module)("Not enough memory for module (%ld bytes)\n", total_size);
-            goto error;
-        }
-    }
+    RtlEnterCriticalSection( &csVirtual );
+
+    if (base >= (char *)0x110000)  /* make sure the DOS area remains free */
+        status = map_view( &view, base, total_size,
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
+
+    if (status == STATUS_CONFLICTING_ADDRESSES)
+        status = map_view( &view, NULL, total_size,
+                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
+
+    if (status != STATUS_SUCCESS) goto error;
+
+    ptr = view->base;
     TRACE_(module)( "mapped PE file at %p-%p\n", ptr, ptr + total_size );
 
     /* map the header */
 
-    if (VIRTUAL_mmap( fd, ptr, header_size, 0, 0, PROT_READ,
-                      MAP_PRIVATE | MAP_FIXED, &removable ) == (char *)-1) goto error;
+    status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
+    if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ,
+                            removable ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     if ((char *)(nt + 1) > ptr + header_size) goto error;
@@ -654,11 +765,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
             size = ROUND_SIZE( 0, sec->Misc.VirtualSize );
             TRACE_(module)( "mapping shared section %.8s at %p off %lx (%x) size %lx (%lx) flags %lx\n",
                           sec->Name, ptr + sec->VirtualAddress,
-                          sec->PointerToRawData, pos, sec->SizeOfRawData,
+                          sec->PointerToRawData, (int)pos, sec->SizeOfRawData,
                           size, sec->Characteristics );
-            if (VIRTUAL_mmap( shared_fd, ptr + sec->VirtualAddress, size,
-                              pos, 0, PROT_READ | PROT_WRITE,
-                              MAP_SHARED|MAP_FIXED, NULL ) == (void *)-1)
+            if (map_file_into_view( view, shared_fd, sec->VirtualAddress, size, pos,
+                                    VPROT_COMMITTED | VPROT_READ | PROT_WRITE,
+                                    FALSE ) != STATUS_SUCCESS)
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
                 goto error;
@@ -671,9 +782,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
                 UINT_PTR base = imports->VirtualAddress & ~page_mask;
                 UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size );
                 if (end > sec->VirtualAddress + size) end = sec->VirtualAddress + size;
-                if (end > base) VIRTUAL_mmap( shared_fd, ptr + base, end - base,
-                                              pos + (base - sec->VirtualAddress), 0,
-                                              PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, NULL );
+                if (end > base)
+                    map_file_into_view( view, shared_fd, base, end - base,
+                                        pos + (base - sec->VirtualAddress),
+                                        VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
+                                        FALSE );
             }
             pos += size;
             continue;
@@ -688,12 +801,12 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
             !(sec->Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)) continue;
         if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
 
-        /* Note: if the section is not aligned properly VIRTUAL_mmap will magically
+        /* Note: if the section is not aligned properly map_file_into_view will magically
          *       fall back to read(), so we don't need to check anything here.
          */
-        if (VIRTUAL_mmap( fd, ptr + sec->VirtualAddress, sec->SizeOfRawData,
-                          sec->PointerToRawData, 0, PROT_READ | PROT_WRITE,
-                          MAP_PRIVATE | MAP_FIXED, &removable ) == (void *)-1)
+        if (map_file_into_view( view, fd, sec->VirtualAddress, sec->SizeOfRawData, sec->PointerToRawData,
+                                VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
+                                removable ) != STATUS_SUCCESS)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
             goto error;
@@ -743,33 +856,26 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         }
     }
 
-    if (removable) hmapping = 0;  /* don't keep handle open on removable media */
-    RtlEnterCriticalSection( &csVirtual );
-    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
-                                     VPROT_COMMITTED | VPROT_READ | VPROT_WRITE |
-                                     VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE, hmapping )))
-    {
-        RtlLeaveCriticalSection( &csVirtual );
-        status = STATUS_NO_MEMORY;
-        goto error;
-    }
+    if (!removable)  /* don't keep handle open on removable media */
+        NtDuplicateObject( GetCurrentProcess(), hmapping,
+                           GetCurrentProcess(), &view->mapping,
+                           0, 0, DUPLICATE_SAME_ACCESS );
 
     /* set the image protections */
 
-    VIRTUAL_SetProt( view, ptr, header_size, VPROT_COMMITTED | VPROT_READ );
     sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
     {
         DWORD size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
         BYTE vprot = VPROT_COMMITTED;
         if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
-        if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY;
+        if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITECOPY;
         if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
 
         /* make sure the import directory is writable */
         if (imports && imports->VirtualAddress >= sec->VirtualAddress &&
             imports->VirtualAddress < sec->VirtualAddress + size)
-            vprot |= VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY;
+            vprot |= VPROT_READ|VPROT_WRITECOPY;
 
         VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
@@ -779,7 +885,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
     return STATUS_SUCCESS;
 
  error:
-    if (ptr != (char *)-1) munmap( ptr, total_size );
+    if (view) VIRTUAL_DeleteView( view );
+    RtlLeaveCriticalSection( &csVirtual );
     return status;
 }
 
@@ -895,120 +1002,6 @@ BOOL VIRTUAL_HasMapping( LPCVOID addr )
 }
 
 
-
-/***********************************************************************
- *           unaligned_mmap
- *
- * Linux kernels before 2.4.x can support non page-aligned offsets, as
- * long as the offset is aligned to the filesystem block size. This is
- * a big performance gain so we want to take advantage of it.
- *
- * However, when we use 64-bit file support this doesn't work because
- * glibc rejects unaligned offsets. Also glibc 2.1.3 mmap64 is broken
- * in that it rounds unaligned offsets down to a page boundary. For
- * these reasons we do a direct system call here.
- */
-static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
-                             unsigned int flags, int fd, unsigned int offset_low,
-                             unsigned int offset_high )
-{
-#if defined(linux) && defined(__i386__) && defined(__GNUC__)
-    if (!offset_high && (offset_low & page_mask))
-    {
-        int ret;
-
-        struct
-        {
-            void        *addr;
-            unsigned int length;
-            unsigned int prot;
-            unsigned int flags;
-            unsigned int fd;
-            unsigned int offset;
-        } args;
-
-        args.addr   = addr;
-        args.length = length;
-        args.prot   = prot;
-        args.flags  = flags;
-        args.fd     = fd;
-        args.offset = offset_low;
-
-        __asm__ __volatile__("push %%ebx\n\t"
-                             "movl %2,%%ebx\n\t"
-                             "int $0x80\n\t"
-                             "popl %%ebx"
-                             : "=a" (ret)
-                             : "0" (90), /* SYS_mmap */
-                               "g" (&args)
-                             : "memory" );
-        if (ret < 0 && ret > -4096)
-        {
-            errno = -ret;
-            ret = -1;
-        }
-        return (void *)ret;
-    }
-#endif
-    return mmap( addr, length, prot, flags, fd, ((off_t)offset_high << 32) | offset_low );
-}
-
-
-/***********************************************************************
- *           VIRTUAL_mmap
- *
- * Wrapper for mmap() that handles anonymous mappings portably,
- * and falls back to read if mmap of a file fails.
- */
-static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
-                            DWORD offset_low, DWORD offset_high,
-                            int prot, int flags, BOOL *removable )
-{
-    LPVOID ret;
-    off_t offset;
-    BOOL is_shared_write = FALSE;
-
-    if (fd == -1) return wine_anon_mmap( start, size, prot, flags );
-
-    if (prot & PROT_WRITE)
-    {
-#ifdef MAP_SHARED
-        if (flags & MAP_SHARED) is_shared_write = TRUE;
-#endif
-#ifdef MAP_PRIVATE
-        if (!(flags & MAP_PRIVATE)) is_shared_write = TRUE;
-#endif
-    }
-
-    if (removable && *removable)
-    {
-        /* if on removable media, try using read instead of mmap */
-        if (!is_shared_write) goto fake_mmap;
-        *removable = FALSE;
-    }
-
-    if ((ret = unaligned_mmap( start, size, prot, flags, fd,
-                               offset_low, offset_high )) != (LPVOID)-1) return ret;
-
-    /* mmap() failed; if this is because the file offset is not    */
-    /* page-aligned (EINVAL), or because the underlying filesystem */
-    /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
-
-    if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return ret;
-    if (is_shared_write) return ret;  /* we cannot fake shared write mappings */
-
- fake_mmap:
-    /* Reserve the memory with an anonymous mmap */
-    ret = wine_anon_mmap( start, size, PROT_READ | PROT_WRITE, flags );
-    if (ret == (LPVOID)-1) return ret;
-    /* Now read in the file */
-    offset = ((off_t)offset_high << 32) | offset_low;
-    pread( fd, ret, size, offset );
-    mprotect( ret, size, prot );  /* Set the right protection */
-    return ret;
-}
-
-
 /***********************************************************************
  *             NtAllocateVirtualMemory   (NTDLL.@)
  *             ZwAllocateVirtualMemory   (NTDLL.@)
@@ -1019,6 +1012,8 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
     void *base;
     BYTE vprot;
     DWORD size = *size_ptr;
+    NTSTATUS status = STATUS_SUCCESS;
+    struct file_view *view;
 
     if (!is_current_process( process ))
     {
@@ -1055,69 +1050,62 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, PVOID addr,
     }
 
     if (type & MEM_TOP_DOWN) {
-        /* FIXME: MEM_TOP_DOWN allocates the largest possible address.
-         *  	  Is there _ANY_ way to do it with UNIX mmap()?
-         */
+        /* FIXME: MEM_TOP_DOWN allocates the largest possible address. */
         WARN("MEM_TOP_DOWN ignored\n");
         type &= ~MEM_TOP_DOWN;
     }
 
     /* Compute the alloc type flags */
 
-    if (type & MEM_SYSTEM)
-    {
-        vprot = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
-        if (type & MEM_IMAGE) vprot |= VPROT_IMAGE;
-    }
-    else
+    if (!(type & MEM_SYSTEM))
     {
         if (!(type & (MEM_COMMIT | MEM_RESERVE)) || (type & ~(MEM_COMMIT | MEM_RESERVE)))
         {
             WARN("called with wrong alloc type flags (%08lx) !\n", type);
             return STATUS_INVALID_PARAMETER;
         }
-        if (type & MEM_COMMIT)
-            vprot = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
-        else
-            vprot = 0;
     }
+    vprot = VIRTUAL_GetProt( protect );
+    if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
 
     /* Reserve the memory */
 
+    RtlEnterCriticalSection( &csVirtual );
+
     if (type & MEM_SYSTEM)
     {
-        if (!VIRTUAL_CreateView( base, size, VFLAG_VALLOC | VFLAG_SYSTEM, vprot, 0 ))
-            return STATUS_NO_MEMORY;
+        if (type & MEM_IMAGE) vprot |= VPROT_IMAGE;
+        status = create_view( &view, base, size, vprot | VPROT_COMMITTED );
+        if (status == STATUS_SUCCESS)
+        {
+            view->flags |= VFLAG_VALLOC | VFLAG_SYSTEM;
+            base = view->base;
+        }
     }
     else if ((type & MEM_RESERVE) || !base)
     {
-        NTSTATUS res = anon_mmap_aligned( &base, size, VIRTUAL_GetUnixProt( vprot ), 0 );
-        if (res) return res;
-
-        if (!VIRTUAL_CreateView( base, size, VFLAG_VALLOC, vprot, 0 ))
+        status = map_view( &view, base, size, vprot );
+        if (status == STATUS_SUCCESS)
         {
-            munmap( base, size );
-            return STATUS_NO_MEMORY;
+            view->flags |= VFLAG_VALLOC;
+            base = view->base;
         }
     }
-    else
+    else  /* commit the pages */
     {
-        FILE_VIEW *view;
-        NTSTATUS status = STATUS_SUCCESS;
-
-        /* Commit the pages */
-
-        RtlEnterCriticalSection( &csVirtual );
         if (!(view = VIRTUAL_FindView( base )) ||
             ((char *)base + size > (char *)view->base + view->size)) status = STATUS_NOT_MAPPED_VIEW;
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
-        RtlLeaveCriticalSection( &csVirtual );
-        if (status != STATUS_SUCCESS) return status;
     }
 
-    *ret = base;
-    *size_ptr = size;
-    return STATUS_SUCCESS;
+    RtlLeaveCriticalSection( &csVirtual );
+
+    if (status == STATUS_SUCCESS)
+    {
+        *ret = base;
+        *size_ptr = size;
+    }
+    return status;
 }
 
 
@@ -1176,12 +1164,8 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
     }
     else if (type == MEM_DECOMMIT)
     {
-        /* Decommit the pages by remapping zero-pages instead */
-
-        if (wine_anon_mmap( (LPVOID)base, size, VIRTUAL_GetUnixProt(0), MAP_FIXED ) != (LPVOID)base)
-            ERR( "Could not remap pages, expect trouble\n" );
-        if (!VIRTUAL_SetProt( view, base, size, 0 )) status = STATUS_ACCESS_DENIED;  /* FIXME */
-        else
+        status = decommit_pages( view, base - (char *)view->base, size );
+        if (status == STATUS_SUCCESS)
         {
             *addr_ptr = base;
             *size_ptr = size;
@@ -1274,6 +1258,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 {
     FILE_VIEW *view;
     char *base, *alloc_base = 0;
+    struct list *ptr;
     UINT size = 0;
     MEMORY_BASIC_INFORMATION *info = buffer;
 
@@ -1292,14 +1277,16 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     /* Find the view containing the address */
 
     RtlEnterCriticalSection(&csVirtual);
-    view = VIRTUAL_FirstView;
+    ptr = list_head( &views_list );
     for (;;)
     {
-        if (!view)
+        if (!ptr)
         {
             size = (char *)ADDRESS_SPACE_LIMIT - alloc_base;
+            view = NULL;
             break;
         }
+        view = LIST_ENTRY( ptr, struct file_view, entry );
         if ((char *)view->base > base)
         {
             size = (char *)view->base - alloc_base;
@@ -1313,7 +1300,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
             break;
         }
         alloc_base = (char *)view->base + view->size;
-        view = view->next;
+        ptr = list_next( &views_list, ptr );
     }
 
     /* Fill the info structure */
@@ -1455,10 +1442,10 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     FILE_FS_DEVICE_INFORMATION device_info;
     NTSTATUS res;
     UINT size = 0;
-    int flags = MAP_PRIVATE;
     int unix_handle = -1;
     int prot;
-    void *base, *ptr = (void *)-1, *ret;
+    void *base;
+    struct file_view *view;
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE shared_file;
     BOOL removable = FALSE;
@@ -1506,7 +1493,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             int shared_fd;
 
             if ((res = wine_server_handle_to_fd( shared_file, GENERIC_READ, &shared_fd,
-                                                 NULL, NULL ))) goto error;
+                                                 NULL, NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size_low, header_size,
                              shared_fd, removable, addr_ptr );
             wine_server_release_fd( shared_file, shared_fd );
@@ -1529,7 +1516,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         (*size_ptr > size_low - offset->u.LowPart))
     {
         res = STATUS_INVALID_PARAMETER;
-        goto error;
+        goto done;
     }
     if (*size_ptr) size = ROUND_SIZE( offset->u.LowPart, *size_ptr );
     else size = size_low - offset->u.LowPart;
@@ -1543,9 +1530,9 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         if (!(prot & VPROT_WRITE))
         {
             res = STATUS_INVALID_PARAMETER;
-            goto error;
+            goto done;
         }
-        flags = MAP_SHARED;
+        removable = FALSE;
         /* fall through */
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
@@ -1556,7 +1543,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         /* fall through */
     default:
         res = STATUS_INVALID_PARAMETER;
-        goto error;
+        goto done;
     }
 
     /* FIXME: If a mapping is created with SEC_RESERVE and a process,
@@ -1569,36 +1556,42 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Reserve a properly aligned area */
 
-    if ((res = anon_mmap_aligned( addr_ptr, size, PROT_NONE, 0 ))) goto error;
-    ptr = *addr_ptr;
+    RtlEnterCriticalSection( &csVirtual );
+
+    res = map_view( &view, *addr_ptr, size, prot );
+    if (res)
+    {
+        RtlLeaveCriticalSection( &csVirtual );
+        goto done;
+    }
 
     /* Map the file */
 
-    TRACE("handle=%p size=%x offset=%lx\n", handle, size, offset->u.LowPart );
+    TRACE("handle=%p size=%x offset=%lx%08lx\n",
+          handle, size, offset->u.HighPart, offset->u.LowPart );
 
-    ret = VIRTUAL_mmap( unix_handle, ptr, size, offset->u.LowPart, offset->u.HighPart,
-                        VIRTUAL_GetUnixProt( prot ), flags | MAP_FIXED, &removable );
-    if (ret != ptr)
+    res = map_file_into_view( view, unix_handle, 0, size, offset->QuadPart, prot, removable );
+    if (res == STATUS_SUCCESS)
     {
-        ERR( "VIRTUAL_mmap %p %x %lx%08lx failed\n",
-             ptr, size, offset->u.HighPart, offset->u.LowPart );
-        res = STATUS_NO_MEMORY;  /* FIXME */
-        goto error;
-    }
-    if (removable) handle = 0;  /* don't keep handle open on removable media */
+        if (!removable)  /* don't keep handle open on removable media */
+            NtDuplicateObject( GetCurrentProcess(), handle,
+                               GetCurrentProcess(), &view->mapping,
+                               0, 0, DUPLICATE_SAME_ACCESS );
 
-    if (!VIRTUAL_CreateView( ptr, size, 0, prot, handle ))
+        *addr_ptr = view->base;
+        *size_ptr = size;
+    }
+    else
     {
-        res = STATUS_NO_MEMORY;
-        goto error;
+        ERR( "map_file_into_view %p %x %lx%08lx failed\n",
+             view->base, size, offset->u.HighPart, offset->u.LowPart );
+        VIRTUAL_DeleteView( view );
     }
-    wine_server_release_fd( handle, unix_handle );
-    *size_ptr = size;
-    return STATUS_SUCCESS;
 
-error:
+    RtlLeaveCriticalSection( &csVirtual );
+
+done:
     wine_server_release_fd( handle, unix_handle );
-    if (ptr != (void *)-1) munmap( ptr, size );
     return res;
 }
 

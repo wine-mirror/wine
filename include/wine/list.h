@@ -27,22 +27,34 @@ struct list
     struct list *prev;
 };
 
+/* add an element after the specified one */
+inline static void list_add_after( struct list *elem, struct list *to_add )
+{
+    to_add->next = elem->next;
+    to_add->prev = elem;
+    elem->next->prev = to_add;
+    elem->next = to_add;
+}
+
+/* add an element before the specified one */
+inline static void list_add_before( struct list *elem, struct list *to_add )
+{
+    to_add->next = elem;
+    to_add->prev = elem->prev;
+    elem->prev->next = to_add;
+    elem->prev = to_add;
+}
+
 /* add element at the head of the list */
 inline static void list_add_head( struct list *list, struct list *elem )
 {
-    elem->next = list->next;
-    elem->prev = list;
-    list->next->prev = elem;
-    list->next = elem;
+    list_add_after( list, elem );
 }
 
 /* add element at the tail of the list */
 inline static void list_add_tail( struct list *list, struct list *elem )
 {
-    elem->next = list;
-    elem->prev = list->prev;
-    list->prev->next = elem;
-    list->prev = elem;
+    list_add_before( list, elem );
 }
 
 /* remove an element from its list */
