@@ -2635,7 +2635,7 @@ BOOL WINAPI GetDefaultCommConfigW( LPCWSTR lpszName,LPCOMMCONFIG lpCC,
 	LPSTR	lpszNameA;
 	BOOL	ret;
 
-	TRACE("(%p,%p,%d)\n",lpszName,lpCC,*lpdwSize);
+	TRACE("(%p,%p,%ld)\n",lpszName,lpCC,*lpdwSize);
 	lpszNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszName );
 	ret=GetDefaultCommConfigA(lpszNameA,lpCC,lpdwSize);
         HeapFree( GetProcessHeap(), 0, lpszNameA );
