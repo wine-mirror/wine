@@ -1171,6 +1171,7 @@ LPVOID WINAPI HeapReAlloc(
  */
 DWORD WINAPI HeapCompact( HANDLE heap, DWORD flags )
 {
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
 
