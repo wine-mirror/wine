@@ -22,6 +22,7 @@
 #include "crtdll.h"
 #include "tchar.h"
 #include "debug.h"
+#include "windef.h"
 
 #include "storage32.h"
 
@@ -4953,11 +4954,12 @@ HRESULT WINAPI StgCreateDocfile(
   DWORD          accessMode;
   DWORD          creationMode;
   DWORD          fileAttributes;
+  WCHAR          tempFileName[MAX_PATH];
 
   /*
    * Validate the parameters
    */
-  if ((ppstgOpen == 0) || (pwcsName == 0))
+  if (ppstgOpen == 0)
     return STG_E_INVALIDPOINTER;
 
   /*
@@ -4965,6 +4967,26 @@ HRESULT WINAPI StgCreateDocfile(
    */
   if ( FAILED( validateSTGM(grfMode) ))
     return STG_E_INVALIDFLAG;
+
+  /*
+   * Generate a unique name.
+   */
+  if (pwcsName == 0)
+  {
+    WCHAR tempPath[MAX_PATH];
+    WCHAR prefix[] = { 'S', 'T', 'O', 0 };
+
+    memset(tempPath, 0, sizeof(tempPath));
+    memset(tempFileName, 0, sizeof(tempFileName));
+
+    if ((GetTempPathW(MAX_PATH, tempPath)) == 0 )
+      tempPath[0] = '.';
+
+    if (GetTempFileNameW(tempPath, prefix, 0, tempFileName) != 0)
+      pwcsName = tempFileName;
+    else
+      return STG_E_INSUFFICIENTMEMORY;
+  }
 
   /*
    * Interpret the STGM value grfMode 
