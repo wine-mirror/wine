@@ -671,7 +671,12 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	    * means that we have to recompute the visible region.
 	    */
            if( dce->DCXflags & DCX_DCEBUSY )
+           {
+               /* Dirty bit has been cleared by caller, set it again so that
+                * pGetDC recomputes the visible region. */
+               SetHookFlags16( dce->hDC, DCHF_INVALIDATEVISRGN );
                USER_Driver.pGetDC( dce->hwndCurrent, dce->hDC, dce->hClipRgn, dce->DCXflags );
+           }
            else /* non-fatal but shouldn't happen */
 	     WARN("DC is not in use!\n");
 	   break;
