@@ -305,7 +305,7 @@
           </varlistentry>
  
 	  <varlistentry>
-          <term><ulink url="http://www.transgaming.com">Transgaming's WineX</ulink></term>
+          <term><ulink url="http://www.transgaming.com">TransGaming's WineX</ulink></term>
           <listitem>
             <para>
               This is TransGaming's Wine version specially suited for
@@ -315,7 +315,7 @@
               and can be downloaded for free.
             </para>
             <para>
-              However Transgaming also distributes binaries that contain
+              However TransGaming also distributes binaries that contain
               improved copy protection support (needed for many
               games), support, and other enhancements. These packages are
               only available in binary form to subscribed customers
@@ -621,7 +621,7 @@
         <para>
           Part of the rationale for these projects is to find out areas where
           Wine portability is lacking. This is especially true of the
-          ReactOS project which is a re implementation of the Windows kernel
+          ReactOS project which is a reimplementation of the Windows kernel
           and should thus be able to reuse most of Wine dlls.
         </para>
         <para>
@@ -831,7 +831,7 @@
           compressed partitions (read and write access works fine, but write 
           access is slow). It can be found at 
           <ulink url="ftp://metalab.unc.edu/pub/Linux/system/filesystems/dosfs/">
-          ftp://metalab.unc.edu/pub/Linux/system/file systems/dosfs/</ulink>
+          ftp://metalab.unc.edu/pub/Linux/system/filesystems/dosfs/</ulink>
         </para>
       </answer>
       </qandaentry>
@@ -1480,7 +1480,7 @@ rm -fR \[/path/\]Wine*
         <para>
           Remember too that unless your version of UNIX can see through it, or
           you are running a utility that can see through it, your DOS
-          partition must not be located on a Drive spaced, Double spaced or
+          partition must not be located on a Drivespaced, Doublespaced or
           Stackered partition, as neither Linux, FreeBSD, NetBSD or Wine can
           natively 'see' files located in these compressed DOS partitions.
         </para>
@@ -1535,7 +1535,7 @@ rm -fR \[/path/\]Wine*
 	    If you are a programmer and know C, then start debugging
 	    Wine and help us make it better! If you can't, then you will
 	    have to either convince a Wine developer to try and make your
-	    program work (there must be a download able version or demo for
+	    program work (there must be a downloadable version or demo for
 	    that), or hire somebody to do it for you. If this application
 	    is an internal corporate application, you may be able to hire a
 	    Wine developer to do consulting work for you on the matter.
@@ -1591,7 +1591,7 @@ rm -fR \[/path/\]Wine*
       <question id="Error-with-installshield-6">
         <para>
           I get <quote>Error installing iKernel.exe: (0x1400)</quote>
-          when running an Install shield 6 installer.
+          when running an InstallShield 6 installer.
         </para>
       </question>
       <answer>
@@ -1756,7 +1756,7 @@ rm -fR \[/path/\]Wine*
           </listitem>
           <listitem>
           <para>
-            A screen shot of the visual problem, if applicable
+            A screenshot of the visual problem, if applicable
           </para>
           </listitem>
         </itemizedlist>
@@ -1952,7 +1952,7 @@ rm -fR \[/path/\]Wine*
       <qandaentry>
       <question id="Why-are-the-maillists-set-to-reply-to-author">
         <para>
-          Why are the mail lists set to reply to author, not to mailing list?
+          Why are the mailing lists set to reply to author, not to mailing list?
         </para>
       </question>
       <answer>
