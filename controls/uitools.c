@@ -6,6 +6,7 @@
  */
 
 #include "windows.h"
+#include "wine/winuser16.h"
 #include "debug.h"
 
 static const WORD wPattern_AA55[8] = { 0xaaaa, 0x5555, 0xaaaa, 0x5555,

@@ -269,6 +269,16 @@ BOOL32 WINAPI InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
     return TRUE;
 }
 
+/***********************************************************************
+ *           GetSecurityDescriptorLength  (ADVAPI.55)
+ */
+DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
+{
+    FIXME(security, "(%p), stub\n", pDescr);
+    return 0;
+}
+
+
 
 /***********************************************************************
  *           InitializeSid  (ADVAPI.74)

@@ -2339,11 +2339,15 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		    break;
 		
 		case WM_MOUSEMOVE:
-		    if ((msg.wParam & MK_LBUTTON) || ((wFlags & TPM_RIGHTBUTTON) 
-						  && (msg.wParam & MK_RBUTTON)))
-		    {
+                    /* In win95 winelook, the selected menu item must be changed every time the
+                       mouse moves. In Win31 winelook, the mouse button has to be held down */
+                     
+                    if ( (TWEAK_WineLook > WIN31_LOOK) ||
+                         ( (msg.wParam & MK_LBUTTON) ||
+                           ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON))) )
+
 			fEndMenu |= !MENU_MouseMove( &mt, hmenu );
-		    }
+
 	    } /* switch(msg.message) - mouse */
 	}
 	else if ((msg.message >= WM_KEYFIRST) && (msg.message <= WM_KEYLAST))

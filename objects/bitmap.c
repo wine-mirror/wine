@@ -527,6 +527,16 @@ HBITMAP32 BITMAP_CopyBitmap(HBITMAP32 hbitmap)
     return res;
 }
 
+/******************************************************************************
+ * CopyImage16 [USER.390]  Creates new image and copies attributes to it
+ *
+ */
+HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
+                             INT16 desiredy, UINT16 flags )
+{
+    return (HICON16)CopyImage32((HANDLE32)hnd, (UINT32)type, (INT32)desiredx,
+                                (INT32)desiredy, (UINT32)flags);
+}
 
 /******************************************************************************
  * CopyImage32 [USER32.61]  Creates new image and copies attributes to it

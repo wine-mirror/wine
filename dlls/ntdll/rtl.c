@@ -588,11 +588,16 @@ BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
 
 /**************************************************************************
  *                 NTDLL_chkstk				[NTDLL.862]
+ *                 NTDLL_alloca_probe				[NTDLL.861]
+ * Glorified "enter xxxx".
  */
 REGS_ENTRYPOINT(NTDLL_chkstk)
 {
-	/* FIXME: should subtract %eax bytes from stack pointer */
-	FIXME(ntdll, "(eax=%ld): stub\n",EAX_reg(context));
+    ESP_reg(context) -= EAX_reg(context);
+}
+REGS_ENTRYPOINT(NTDLL_alloca_probe)
+{
+    ESP_reg(context) -= EAX_reg(context);
 }
 
 /******************************************************************************

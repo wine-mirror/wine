@@ -443,8 +443,10 @@ static HRESULT WINAPI IDirectInputDeviceA_EnumObjects(
 	DWORD dwFlags)
 {
 	FIXME(dinput, "stub!\n");
+#if 0
 	if (lpCallback)
 		lpCallback(NULL, lpvRef);
+#endif
 	return DI_OK;
 }
 	

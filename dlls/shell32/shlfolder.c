@@ -107,27 +107,31 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	sf->mpSFParent=pParent;	/* parrent shellfolder */
 
 	TRACE(shell,"(%p)->(parent=%p, pidl=%p)\n",sf,pParent, pidl);
-	
+	pdump(pidl);
+		
 	/* keep a copy of the pidl in the instance*/
 	sf->mpidl = ILClone(pidl);
 	
-	if(sf->mpidl)        /* do we have a pidl? */
+	if(sf->mpidl)        				/* do we have a pidl? */
 	{ dwSize = 0;
-	  if(sf->mpSFParent->sMyPath)		/* get the size of the parents path */
+	  if(sf->mpSFParent->sMyPath)			/* get the size of the parents path */
 	  { dwSize += strlen(sf->mpSFParent->sMyPath) ;
 	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(sf->mpSFParent->sMyPath));
 	  }   
 	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0); /* add the size of the foldername*/
-	  sf->sMyPath = SHAlloc(dwSize+1);
+	  sf->sMyPath = SHAlloc(dwSize+2);		/* '\0' and backslash */
 	  if(sf->sMyPath)
-	  { *(sf->sMyPath)=0x00;
-	    if(sf->mpSFParent->sMyPath)		/* if the parent has a path, get it*/
+	  { int len;
+	    *(sf->sMyPath)=0x00;
+	    if(sf->mpSFParent->sMyPath)			/* if the parent has a path, get it*/
 	    {  strcpy(sf->sMyPath, sf->mpSFParent->sMyPath);
 	       PathAddBackslash32A (sf->sMyPath);
 	    }
-	    sf->pMyPidl = ILCombine(sf->pMyPidl, pidl);
-	    _ILGetFolderText(sf->mpidl, sf->sMyPath+strlen(sf->sMyPath), dwSize-strlen(sf->sMyPath));
-	    TRACE(shell,"-- (%p)->(my path=%s)\n",sf, debugstr_a(sf->sMyPath));
+	    sf->pMyPidl = ILCombine(sf->mpSFParent->pMyPidl, pidl);
+	    len = strlen(sf->sMyPath);
+	    _ILGetFolderText(sf->mpidl, sf->sMyPath+len, dwSize-len);
+	    TRACE(shell,"-- (%p)->(my pidl=%p, my path=%s)\n",sf, sf->pMyPidl,debugstr_a(sf->sMyPath));
+	    pdump (sf->pMyPidl);
 	  }
 	}
 	return sf;
@@ -343,8 +347,6 @@ static HRESULT WINAPI IShellFolder_BindToObject( LPSHELLFOLDER this, LPCITEMIDLI
 
 	if(!pShellFolder)
 	  return E_OUTOFMEMORY;
-
-	IShellFolder_Initialize(pShellFolder, this->pMyPidl);
 
 	hr = pShellFolder->lpvtbl->fnQueryInterface(pShellFolder, riid, ppvOut);
  	pShellFolder->lpvtbl->fnRelease(pShellFolder);
@@ -614,7 +616,8 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	BOOL32	bSimplePidl=FALSE;
 		
 	TRACE(shell,"(%p)->(pidl=%p,0x%08lx,%p)\n",this,pidl,dwFlags,lpName);
-
+	pdump(pidl);
+	
 	szSpecial[0]=0x00; 
 	szDrive[0]=0x00;
 	szText[0]=0x00;
@@ -624,7 +627,6 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	if (pidlTemp && pidlTemp->mkid.cb==0x00)
 	{ bSimplePidl = TRUE;
 	  TRACE(shell,"-- simple pidl\n");
-
 	}
 
 	if (_ILIsDesktop( pidl))

@@ -108,6 +108,7 @@ typedef struct _PDB32
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
     /* The following are Wine-specific fields */
     void            *server_pid;       /*    Server id for this process */
+    HANDLE32        *dos_handles;      /*    Handles mapping DOS -> Win32 */
     struct _PDB32   *list_next;        /*    List reference - list of PDB's */
     struct _PDB32   *list_prev;        /*    List reference - list of PDB's */
 } PDB32;

@@ -138,7 +138,7 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
 }
 
 /******************************************************************************
- *		ExtEscape32	[GDI32.95]
+ *		ExtEscape	[GDI32.95]
  *
  * PARAMS
  *    hdc         [I] Handle to device context
@@ -153,8 +153,8 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
  *    Not implemented: 0
  *    Failure: <0
  */
-INT32 WINAPI ExtEscape32( HDC32 hdc, INT32 nEscape, INT32 cbInput, 
-                          LPCSTR lpszInData, INT32 cbOutput, LPSTR lpszOutData )
+INT32 WINAPI ExtEscape( HDC32 hdc, INT32 nEscape, INT32 cbInput, 
+                        LPCSTR lpszInData, INT32 cbOutput, LPSTR lpszOutData )
 {
     FIXME(driver,"(0x%04x,0x%x,%d,%s,%d,%p):stub\n",
           hdc,nEscape,cbInput,debugstr_a(lpszInData),cbOutput,lpszOutData);
@@ -166,7 +166,7 @@ INT32 WINAPI ExtEscape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
  *
  *
  */
-INT32 WINAPI DrawEscape32(HDC32 hdc, INT32 nEscape, INT32 cbInput, LPCSTR lpszInData)
+INT32 WINAPI DrawEscape(HDC32 hdc, INT32 nEscape, INT32 cbInput, LPCSTR lpszInData)
 {
     FIXME(gdi, "DrawEscape, stub\n");
     return 0;

@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__ -DLIBDIR=\"$(libdir)\"
+DEFS      = -D__WINE__ -DLIBDIR="\"$(libdir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@

@@ -1,3 +1,175 @@
+Sun Jan 17 17:48:48 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* ChangeLog:
+	Recovered log entries from CVS mailing list.
+
+	* relay32/ntdll.spec, dlls/ntdll/rtl.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Implemented _alloca_probe and _chkstk (mostly done by Ulrich Weigand).
+
+	* files/file.c
+	Marcus Meissner <marcus@jet.franken.de>
+	Handle ERROR_WRITE_PROTECT too in readonly fallback open.
+
+	* dlls/advapi32/security.c, relay32/advapi32.spec:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added GetSecurityDescriptorLength stub for regedt32.exe.
+
+	* debugger/Makefile.in, files/Makefile.in:
+	Marcus Meissner <marcus@jet.franken.de>
+	Add "" around -D defines for paths with spaces in them.
+
+	* graphics/d3dtexture.c, graphics/ddraw.c, include/ddraw.h:
+	Lionel Ulmer <ulmer@directprovider.net>
+	Cleaned up ColorKey handling.
+
+	* objects/metafile.c:
+	Paul Quinn <paulq@COREL.CA>
+	METARECORD member rdParam should be rdParm (in win32 sdk)
+	lots of changes in this source file to reflect this change.
+
+	* graphics/escape.c, graphics/painting.c, graphics/metafiledrv/init.c, include/commctrl.h, include/commdlg.h, include/gdi.h, include/tchar.h, include/windows.h, include/wingdi.h, include/wintypes.h, include/winuser.h, misc/spooler.c, objects/gdiobj.c,
+	relay32/gdi32.spec:
+	Paul Quinn <paulq@COREL.CA>
+	Fixed bad defines, added a few types 'n defines.
+
+	* windows/dinput.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Disable broken callbacks which lead to crashes.
+
+	* multimedia/mcistring.c:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed ID usage (and rely less heavily on multimedia/mmsystem.c
+	internal structures).
+
+	* misc/toolhelp.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	debug.h needs to be included last since it #undefs ERR for Solaris.
+
+	* debugger/debug.l, debugger/memory.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added /u format to debugger display for UNICODE strings.
+
+	* loader/pe_image.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Remove irritating FIXME line no longer needed.
+
+	* msdos/int2f.c:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added missing '\n' in FIXME message.
+
+	* graphics/ddraw.c:
+	Robert Riggs <rriggs@tesser.com>
+	objbase.h needed for WINE_StringFromCLSID(), fix C function
+	declarations, install a colormap if we are not managed, release
+	backbuffers in DGA mode, fix video mode switching logic to avoid
+	possible NULL pointer dereference.
+
+	* msdos/dpmi.c:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Small fix.
+
+	* files/file.c, include/file.h, include/process.h, loader/resource.c, loader/dos/module.c, loader/ne/segment.c, misc/lzexpand.c, msdos/int21.c vxd.c, multimedia/mmio.c, win32/kernel32.c:
+	Better DOS file handle management.
+
+	* documentation/common_controls:
+	Francis Beaudet <francis@macadamian.com>
+	This should help prevent duplicate work.
+
+	* if1632/gdi.spec, include/wingdi.h, objects/dc.c:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Implemented Death() and Resurrection(), two functions needed by some
+	TPWin (?) command line tool.
+
+	* windows/winproc.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	Added 32->16 translation for WM_ACTIVATEAPP.
+
+	* dlls/shell32/pidl.c, dlls/shell32/shellord.c, dlls/shell32/shellpath.c, dlls/shell32/shlfolder.c, relay32/shell32.spec:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	New stubs: ShellMessageBoxW, RunDLL_CallEntry16.
+	Implementation for SHGetSpecialFolderPath32[A|W].
+	Many bugfixes.
+
+	* console/xterm.c, misc/port.c, win32/console.c:
+	Joseph Pranevich <jpranevich@lycos.com>
+	Change all Wine openpty() implementations to match the "standard" and
+	then make them both call the same code leaving the option to change
+	that code to call the "standard" openpty() at a later date.
+
+	* relay32/kernel32.spec, scheduler/process.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added SetProcessAffinityMask stub.
+
+	* graphics/ddraw.c, include/ddraw.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	Fixed the other union misuse too (one less mem corruption)
+	Re-added XInstallColormap (or non managed does not change palette)
+
+	* if1632/kernel.spec, scheduler/synchro.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added an implementation for KERNEL.495.
+
+	* documentation/status, documentation/direct3D, graphics/d3d_private.h, graphics/d3dcommon.c, graphics/d3ddevices.c, graphics/d3dexecutebuffer.c, graphics/d3dtexture.c, graphics/d3dviewport.c, graphics/ddraw.c, include/d3d.h, include/ddraw.h:
+	Lionel Ulmer <ulmer@directprovider.net>
+	- added bitmask to store which ColorKey structures are valid
+	- handle many new rendering states, some optimizations in state changes
+	- 8bit palettized textures now support ColorKeying
+	- some miscellaneous bug fixes and code rewrite
+
+	* controls/menu.c:
+	Noomen Hamza <noomen@macadamian.com>
+	Fixed the look of the menu so it would be compliant with Win95: modified
+	the mouse tracking code so it would change the selection every time the
+	mouse moved over a menu item.
+
+	* documentation/how-to-port:
+	Mike Castle <dalgoda@shell.rt66.com>
+	Small fix.
+
+	* dlls/comctl32/updown.c:
+	Noel Borthwick <noel@macadamian.com>
+	Fixed bugs:
+	- When an edit control buddy was used single digit values were not
+	being displayed.
+	- Comma values were not displayed correctly when thousands separation
+	was requested.
+
+	* win32/newfns.c:
+	Tom Bech <tomb@ii.uib.no>
+	While the debug event messages are not implemented, WaitForDebugEvent
+	should return FALSE.
+
+	* if1632/user.spec, objects/bitmap.c:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Implemented CopyImage16.
+
+	* documentation/bugreports 
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Small fix.
+
+	* console/generic.c, msdos/int21.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Changed 0x01 to use generic console, fixed 0x0b.
+	Fixed CONSOLE_GetCharacter (two args swapped).
+
+	* include/module.h, loader/main.c, loader/module.c, loader/dos/module.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Allow specifying module name for NE dummy module.
+
+	* loader/pe_image.c 
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Set module name of dummy module equal to module name of PE module.
+
+	* controls/scroll.c, controls/uitools.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Missing include wine/winuser16.h added.
+
+	* graphics/vga.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Create an actual primary surface for screenbuffer.
+
+----------------------------------------------------------------
 Sun Jan 10 14:40:34 1999  Alexandre Julliard  <julliard@winehq.com>
 
 	* include/miscemu.h, include/msdos.h, loader/main.c, msdos/Makefile.in, msdos/dosconf.c, msdos/int21.c:

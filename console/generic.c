@@ -129,7 +129,7 @@ char GENERIC_GetCharacter()
    
    while (!ch)
    {
-      CONSOLE_GetKeystroke(&ch, &scan);
+      CONSOLE_GetKeystroke(&scan, &ch);
    }
    return ch;
 }

@@ -903,6 +903,7 @@ struct _common_directdrawdata {
     HWND32		window;
     Window		drawable;
     PAINTSTRUCT32	ps;
+    int			paintable;
 };
 
 struct _dga_directdrawdata {
@@ -912,8 +913,6 @@ struct _dga_directdrawdata {
 };
 
 struct _xlib_directdrawdata {
-    int			paintable;
-
 #ifdef HAVE_LIBXXSHM
     int xshm_active;
 #endif
@@ -999,9 +998,6 @@ struct _common_directdrawsurface {
     LPDIRECTDRAWSURFACE3	backbuffer;
 
     DDSURFACEDESC               surface_desc;
-
-    DDCOLORKEY                  ckDestOverlay, ckSrcOverlay;
-    DDCOLORKEY                  ckDestBlt, ckSrcBlt;
 };
 
 struct _dga_directdrawsurface {

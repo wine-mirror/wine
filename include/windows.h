@@ -3172,6 +3172,11 @@ typedef struct {
 #define DM_PROMPT	4
 #define DM_MODIFY	8
 
+#define DM_IN_BUFFER      DM_MODIFY
+#define DM_IN_PROMPT      DM_PROMPT
+#define DM_OUT_BUFFER     DM_COPY
+#define DM_OUT_DEFAULT    DM_UPDATE
+
 #define DM_ORIENTATION		0x00000001L
 #define DM_PAPERSIZE		0x00000002L
 #define DM_PAPERLENGTH		0x00000004L

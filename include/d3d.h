@@ -111,7 +111,7 @@ typedef enum {
   D3DLIGHT_SPOT           = 2,
   D3DLIGHT_DIRECTIONAL    = 3,
   D3DLIGHT_PARALLELPOINT  = 4,
-  D3DLIGHT_FORCE_DWORD    = 0x7fffffff, /* force 32-bit size enum */
+  D3DLIGHT_FORCE_DWORD    = 0x7fffffff
 } D3DLIGHTTYPE;
 
 typedef enum {
@@ -121,8 +121,68 @@ typedef enum {
   D3DPT_TRIANGLELIST  = 4,
   D3DPT_TRIANGLESTRIP = 5,
   D3DPT_TRIANGLEFAN   = 6,
-  D3DPT_FORCE_DWORD   = 0x7fffffff, /* force 32-bit size enum */
+  D3DPT_FORCE_DWORD   = 0x7fffffff
 } D3DPRIMITIVETYPE;
+
+typedef enum { 
+  D3DFILL_POINT         = 1, 
+  D3DFILL_WIREFRAME     = 2, 
+  D3DFILL_SOLID         = 3,
+  D3DFILL_FORCE_DWORD   = 0x7fffffff
+} D3DFILLMODE; 
+
+typedef enum { 
+  D3DSHADE_FLAT         = 1, 
+  D3DSHADE_GOURAUD      = 2, 
+  D3DSHADE_PHONG        = 3, 
+  D3DSHADE_FORCE_DWORD  = 0x7fffffff
+} D3DSHADEMODE;
+
+typedef enum { 
+  D3DCULL_NONE        = 1, 
+  D3DCULL_CW          = 2, 
+  D3DCULL_CCW         = 3, 
+  D3DCULL_FORCE_DWORD = 0x7fffffff 
+} D3DCULL; 
+
+typedef enum { 
+  D3DBLEND_ZERO            = 1, 
+  D3DBLEND_ONE             = 2, 
+  D3DBLEND_SRCCOLOR        = 3, 
+  D3DBLEND_INVSRCCOLOR     = 4, 
+  D3DBLEND_SRCALPHA        = 5, 
+  D3DBLEND_INVSRCALPHA     = 6, 
+  D3DBLEND_DESTALPHA       = 7, 
+  D3DBLEND_INVDESTALPHA    = 8, 
+  D3DBLEND_DESTCOLOR       = 9, 
+  D3DBLEND_INVDESTCOLOR    = 10, 
+  D3DBLEND_SRCALPHASAT     = 11, 
+  D3DBLEND_BOTHSRCALPHA    = 12, 
+  D3DBLEND_BOTHINVSRCALPHA = 13, 
+  D3DBLEND_FORCE_DWORD     = 0x7fffffff
+} D3DBLEND; 
+
+typedef enum { 
+  D3DTBLEND_DECAL         = 1, 
+  D3DTBLEND_MODULATE      = 2, 
+  D3DTBLEND_DECALALPHA    = 3, 
+  D3DTBLEND_MODULATEALPHA = 4, 
+  D3DTBLEND_DECALMASK     = 5, 
+  D3DTBLEND_MODULATEMASK  = 6, 
+  D3DTBLEND_COPY          = 7, 
+  D3DTBLEND_ADD           = 8, 
+  D3DTBLEND_FORCE_DWORD   = 0x7fffffff
+} D3DTEXTUREBLEND;
+
+typedef enum { 
+  D3DFILTER_NEAREST          = 1, 
+  D3DFILTER_LINEAR           = 2, 
+  D3DFILTER_MIPNEAREST       = 3, 
+  D3DFILTER_MIPLINEAR        = 4, 
+  D3DFILTER_LINEARMIPNEAREST = 5, 
+  D3DFILTER_LINEARMIPLINEAR  = 6, 
+  D3DFILTER_FORCE_DWORD      = 0x7fffffff
+} D3DTEXTUREFILTER;
 
 typedef enum {
   D3DRENDERSTATE_TEXTUREHANDLE      = 1,    /* Texture handle */

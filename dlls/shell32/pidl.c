@@ -631,23 +631,27 @@ BOOL32 WINAPI _ILIsDesktop(LPCITEMIDLIST pidl)
 }
 
 BOOL32 WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
-{	TRACE(pidl,"(%p)\n",pidl);
-	return (pidl && PT_MYCOMP == _ILGetDataPointer(pidl)->type);
+{	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
+	TRACE(pidl,"(%p)\n",pidl);
+	return (pidl && lpPData && PT_MYCOMP == lpPData->type);
 }
 
 BOOL32 WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
-{	TRACE(pidl,"(%p)\n",pidl);
-	return (pidl && PT_DRIVE == _ILGetDataPointer(pidl)->type);
+{	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
+	TRACE(pidl,"(%p)\n",pidl);
+	return (pidl && lpPData && PT_DRIVE == lpPData->type);
 }
 
 BOOL32 WINAPI _ILIsFolder(LPCITEMIDLIST pidl)
-{	TRACE(pidl,"(%p)\n",pidl);
-	return (pidl && PT_FOLDER == _ILGetDataPointer(pidl)->type);
+{	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
+	TRACE(pidl,"(%p)\n",pidl);
+	return (pidl && lpPData && PT_FOLDER == lpPData->type);
 }
 
 BOOL32 WINAPI _ILIsValue(LPCITEMIDLIST pidl)
-{	TRACE(pidl,"(%p)\n",pidl);
-	return (pidl && PT_VALUE == _ILGetDataPointer(pidl)->type);
+{	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
+	TRACE(pidl,"(%p)\n",pidl);
+	return (pidl && lpPData && PT_VALUE == lpPData->type);
 }
 
 /**************************************************************************
@@ -661,6 +665,7 @@ BOOL32 WINAPI _ILIsValue(LPCITEMIDLIST pidl)
  */
 DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 {	LPITEMIDLIST	pidlTemp;
+	LPPIDLDATA	pData;
 	DWORD		dwCopied = 0;
 	LPSTR		pText;
  
@@ -680,29 +685,34 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	if(lpszPath)
 	  *lpszPath = 0;
 
-	while(pidlTemp->mkid.cb)
-	{ LPPIDLDATA  pData = _ILGetDataPointer(pidlTemp);
+	pData = _ILGetDataPointer(pidlTemp);
 
-	  /*if this item is a value, then skip it and finish */
-	  if(PT_VALUE == pData->type)
-	  { break;
-	  }
-
-	  pText = _ILGetTextPointer(pData->type,pData);
-	  pidlTemp = ILGetNext(pidlTemp);
+	while(pidlTemp->mkid.cb && !(PT_VALUE == pData->type))
+	{ 
+	  if (!(pText = _ILGetTextPointer(pData->type,pData)))
+	    return 0;				/* foreign pidl */
+	    	  
 	  dwCopied += strlen(pText);
+
+	  pidlTemp = ILGetNext(pidlTemp);
+	  pData = _ILGetDataPointer(pidlTemp);
 
 	  if (lpszPath)
 	  { strcat(lpszPath, pText);
-	    if (pidlTemp && lpszPath[dwCopied-1]!='\\')
+
+	    if (pidlTemp->mkid.cb 		/* last element ? */
+	    	&& (pText[2] != '\\')	 	/* drive has own '\' */
+		&& (PT_VALUE != pData->type))	/* next element is value */
 	    { lpszPath[dwCopied] = '\\';
 	      lpszPath[dwCopied+1] = '\0';
 	      dwCopied++;
 	    }
 	  }
 	  else						/* only length */
-	  { if (pidlTemp && !_ILIsDrive (pidlTemp))	/* backslash between elements */
-	      dwCopied++;
+	  { if (pidlTemp->mkid.cb 
+	        && (pText[2] != '\\')
+		&& (PT_VALUE != pData->type))
+	      dwCopied++;				/* backslash between elements */
 	  }
 	}
 
@@ -754,8 +764,9 @@ DWORD WINAPI _ILGetValueText(LPCITEMIDLIST pidl, LPSTR lpszValue, DWORD dwSize)
  *  strlen(lpszOut)
  */
 DWORD WINAPI _ILGetPidlPath( LPCITEMIDLIST pidl, LPSTR lpszOut, DWORD dwOutSize)
-{	WORD  len = 0;
-
+{	int	len = 0;
+	LPSTR	lpszTemp = lpszOut;
+	
 	TRACE(pidl,"(%p,%lu)\n",lpszOut,dwOutSize);
 
 	if(!lpszOut)
@@ -768,19 +779,17 @@ DWORD WINAPI _ILGetPidlPath( LPCITEMIDLIST pidl, LPSTR lpszOut, DWORD dwOutSize)
 
 	lpszOut += len;
 	strcpy (lpszOut,"\\");
-	lpszOut++;
-
-	dwOutSize -= len+1;;
+	len++; lpszOut++; dwOutSize -= len;
 
 	len += _ILGetValueText(pidl, lpszOut, dwOutSize );
 
 	/*remove the last backslash if necessary */
-	if( lpszOut[len-1]=='\\')
-	{ lpszOut[len-1] = 0;
+	if( lpszTemp[len-1]=='\\')
+	{ lpszTemp[len-1] = 0;
 	  len--;
 	}
 
-	TRACE(pidl,"-- (%p=%s,%lu)\n",lpszOut,lpszOut,dwOutSize);
+	TRACE(pidl,"-- (%p=%s,%u)\n",lpszTemp,lpszTemp,len);
 
 	return len;
 }
@@ -800,7 +809,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPVOID pIn, UINT16 uInSize)
 	LPPIDLDATA     pData;
 	LPSTR	pszDest;
 	
-	TRACE(pidl,"(%x %p %x)\n",type,pIn,uInSize);
+	TRACE(pidl,"(0x%02x %p %i)\n",type,pIn,uInSize);
 
 	if ( type == PT_DESKTOP)
 	{ pidlOut = SHAlloc(2);
@@ -812,7 +821,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPVOID pIn, UINT16 uInSize)
 	{ return NULL;
 	}	
 
-	/* the sizes of: cb(2), pidldata-1, szText+1, next cb(2) */
+	/* the sizes of: cb(2), pidldata-1(26), szText+1, next cb(2) */
 	switch (type)
 	{ case PT_DRIVE:
 	    uSize = 4 + 9;
@@ -911,11 +920,9 @@ DWORD WINAPI _ILGetData(PIDLTYPE type, LPCITEMIDLIST pidl, LPVOID pOut, UINT32 u
  *  _ILGetDataPointer()
  */
 LPPIDLDATA WINAPI _ILGetDataPointer(LPITEMIDLIST pidl)
-{	if(!pidl)
-	{ return NULL;
-	}
-/*	TRACE(pidl,"(%p)\n",  pidl);*/
-	return (LPPIDLDATA)(&pidl->mkid.abID);
+{	if(pidl && pidl->mkid.cb != 0x00)
+	  return (LPPIDLDATA)(&pidl->mkid.abID);
+	return NULL;
 }
 /**************************************************************************
  *  _ILGetTextPointer()

@@ -7,17 +7,17 @@ init	MAIN_GdiInit
   2 stdcall AddFontResourceA(str) AddFontResource32A
   3 stub AddFontResourceTracking
   4 stdcall AddFontResourceW(wstr) AddFontResource32W
-  5 stdcall AngleArc(long long long long long long) AngleArc32
+  5 stdcall AngleArc(long long long long long long) AngleArc
   6 stdcall AnimatePalette(long long long ptr) AnimatePalette32
   7 stdcall Arc(long long long long long long long long long) Arc32
-  8 stdcall ArcTo(long long long long long long long long long) ArcTo32
+  8 stdcall ArcTo(long long long long long long long long long) ArcTo
   9 stdcall BeginPath(long) BeginPath32
  10 stdcall BitBlt(long long long long long long long long long) BitBlt32
  11 stub CancelDC
  12 stub CheckColorsInGamut
  13 stdcall ChoosePixelFormat(long ptr) ChoosePixelFormat
  14 stdcall Chord(long long long long long long long long long) Chord32
- 15 stdcall CloseEnhMetaFile(long) CloseEnhMetaFile32
+ 15 stdcall CloseEnhMetaFile(long) CloseEnhMetaFile
  16 stdcall CloseFigure(long) CloseFigure32
  17 stdcall CloseMetaFile(long) CloseMetaFile32
  18 stub ColorMatchToTarget
@@ -76,7 +76,7 @@ init	MAIN_GdiInit
  71 stdcall DescribePixelFormat(long long long ptr) DescribePixelFormat
  72 stub DeviceCapabilitiesExA
  73 stub DeviceCapabilitiesExW
- 74 stdcall DrawEscape(long long long ptr) DrawEscape32
+ 74 stdcall DrawEscape(long long long ptr) DrawEscape
  75 stdcall Ellipse(long long long long long) Ellipse32
  76 stdcall EndDoc(long) EndDoc32
  77 stdcall EndPage(long) EndPage32
@@ -97,7 +97,7 @@ init	MAIN_GdiInit
  92 stdcall ExcludeClipRect(long long long long long) ExcludeClipRect32
  93 stdcall ExtCreatePen(long long ptr long ptr) ExtCreatePen32
  94 stdcall ExtCreateRegion(ptr long ptr) ExtCreateRegion
- 95 stdcall ExtEscape(long long long ptr long ptr) ExtEscape32
+ 95 stdcall ExtEscape(long long long ptr long ptr) ExtEscape
  96 stdcall ExtFloodFill(long long long long long) ExtFloodFill32
  97 stdcall ExtSelectClipRgn(long long long) ExtSelectClipRgn
  98 stdcall ExtTextOutA(long long long long ptr str long ptr) ExtTextOut32A
@@ -111,7 +111,7 @@ init	MAIN_GdiInit
 106 stub FreeImageColorMatcher
 107 stub GdiAssociateObject
 108 stub GdiCleanCacheDC
-109 stdcall GdiComment(long long ptr) GdiComment32
+109 stdcall GdiComment(long long ptr) GdiComment
 110 stub GdiConvertAndCheckDC
 111 stub GdiConvertBitmap
 112 stub GdiConvertBrush
@@ -166,7 +166,7 @@ init	MAIN_GdiInit
 161 stdcall GetCharacterPlacementW(long wstr long long ptr long) GetCharacterPlacement32W
 162 stdcall GetClipBox(long ptr) GetClipBox32
 163 stdcall GetClipRgn(long long) GetClipRgn32
-164 stdcall GetColorAdjustment(long ptr) GetColorAdjustment32
+164 stdcall GetColorAdjustment(long ptr) GetColorAdjustment
 165 stdcall GetColorSpace(long) GetColorSpace
 166 stdcall GetCurrentObject(long long) GetCurrentObject
 167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
@@ -274,7 +274,7 @@ init	MAIN_GdiInit
 269 stdcall PolyBezierTo(long ptr long) PolyBezierTo32
 270 stdcall PolyDraw(long ptr ptr long) PolyDraw
 271 stdcall PolyPolygon(long ptr ptr long) PolyPolygon32
-272 stdcall PolyPolyline(long ptr ptr long) PolyPolyline32
+272 stdcall PolyPolyline(long ptr ptr long) PolyPolyline
 273 stub PolyTextOutA
 274 stub PolyTextOutW
 275 stdcall Polygon(long ptr long) Polygon32

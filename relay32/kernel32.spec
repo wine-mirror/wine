@@ -906,7 +906,7 @@ init	MAIN_KernelInit
 887 stub SetConsoleIcon
 888 stub SetConsoleInputExeNameA
 889 stub SetConsoleInputExeNameW
-890 stub SetProcessAffinityMask
+890 stdcall SetProcessAffinityMask(long long) SetProcessAffinityMask
 891 stdcall SetProcessPriorityBoost(long long) SetProcessPriorityBoost
 892 stub SetThreadIdealProcessor
 893 stub SetThreadPriorityBoost

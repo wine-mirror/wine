@@ -210,6 +210,7 @@ static HRESULT WINAPI IDirect3DViewport2_Clear(LPDIRECT3DVIEWPORT2 this,
 					       LPD3DRECT lpRects,
 					       DWORD dwFlags)
 {
+  GLboolean ztest;
   FIXME(ddraw, "(%p)->(%8ld,%p,%08lx): stub\n", this, dwCount, lpRects, dwFlags);
 
   /* For the moment, ignore the rectangles */
@@ -221,8 +222,10 @@ static HRESULT WINAPI IDirect3DViewport2_Clear(LPDIRECT3DVIEWPORT2 this,
       this->device.active_device1->set_context(this->device.active_device1);
 
     /* Clears the screen */
+    glGetBooleanv(GL_DEPTH_TEST, &ztest);
     glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDepthMask(ztest);
   }
   
   return DD_OK;

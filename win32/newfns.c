@@ -300,7 +300,7 @@ BOOL32 WINAPI WaitForDebugEvent( LPDEBUG_EVENT lpDebugEvent,
                                  DWORD dwMilliseconds )
 {
     FIXME(win32, "(%p,%ld): stub\n", lpDebugEvent, dwMilliseconds);
-    return TRUE;
+    return FALSE;
 }
 
 

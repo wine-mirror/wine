@@ -117,8 +117,8 @@ file	gdi.exe
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits16
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg
 119 pascal16 AddFontResource(str) AddFontResource16
-121 stub Death
-122 stub ReSurRection
+121 pascal16 Death(word) Death
+122 pascal16 Resurrection(word word word word word word word) Resurrection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile16
 124 pascal16 GetMetaFile(str) GetMetaFile16
 125 pascal16 CreateMetaFile(str) CreateMetaFile16

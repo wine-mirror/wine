@@ -275,7 +275,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	LPD3DSTATE ci = (LPD3DSTATE) instr;
 	
 	/* Handle the state transform */
-	set_render_state(ci->t.drstRenderStateType, ci->v.dwArg[0]);
+	set_render_state(ci->t.drstRenderStateType, ci->v.dwArg[0], &(odev->rs));
 
 	instr += size;
       }

@@ -72,7 +72,7 @@ to
   #ifdef HAVE_FOO_H
   #include <foo.h>
   #elif defined (HAVE_BAR_H)
-  #include <bat.h>
+  #include <bar.h>
   #endif
 
 If your system doesn't have a corresponding header file even

@@ -291,8 +291,8 @@ callrmproc_again:
         CurrRMCB = CurrRMCB->next;
 
 #ifdef MZ_SUPPORTED
-    FIXME(int31,"DPMI real-mode call using DOS VM task system, not fully tested!\n");
     if (!(CurrRMCB || pModule->lpDosTask)) {
+        FIXME(int31,"DPMI real-mode call using DOS VM task system, not fully tested!\n");
         TRACE(int31,"creating VM86 task\n");
         if (MZ_InitTask( MZ_AllocDPMITask( pModule->self ) ) < 32) {
             ERR(int31,"could not setup VM86 task\n");

@@ -30,8 +30,7 @@ struct lzfileheader {
 };
 static BYTE LZMagic[8]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
 
-static struct lzstate {
-	HFILE32	lzfd;		/* the handle used by the program */
+struct lzstate {
 	HFILE32	realfd;		/* the real filedescriptor */
 	CHAR	lastchar;	/* the last char of the filename */
 
@@ -51,8 +50,13 @@ static struct lzstate {
 	BYTE	*get;		/* GETLEN bytes */
 	DWORD	getcur;		/* current read */
 	DWORD	getlen;		/* length last got */
-} *lzstates=NULL;
-static int nroflzstates=0;
+};
+
+#define MAX_LZSTATES 16
+static struct lzstate *lzstates[MAX_LZSTATES];
+
+#define IS_LZ_HANDLE(h) (((h) >= 0x400) && ((h) < 0x400+MAX_LZSTATES))
+#define GET_LZ_STATE(h) (IS_LZ_HANDLE(h) ? lzstates[(h)] : NULL)
 
 /* reads one compressed byte, including buffering */
 #define GET(lzs,b)	_lzget(lzs,&b)
@@ -132,7 +136,7 @@ INT32 WINAPI LZStart32(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    return HFILE32_TO_HFILE16( LZInit32( HFILE16_TO_HFILE32(hfSrc) ) );
+    return LZInit32( FILE_GetHandle32(hfSrc) );
 }
 
 
@@ -143,7 +147,6 @@ HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
  * (return value the same as hfSrc, if hfSrc is not compressed)
  * on failure, returns error code <0
  * lzfiledescriptors range from 0x400 to 0x410 (only 16 open files per process)
- * we use as much as we need, we just OR 0x400 to the passed HFILE.
  *
  * since _llseek uses the same types as libc.lseek, we just use the macros of 
  *  libc
@@ -154,6 +157,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 	struct	lzfileheader	head;
 	struct	lzstate		*lzs;
 	DWORD	ret;
+        int i;
 
 	TRACE(file,"(%d)\n",hfSrc);
 	ret=read_header(hfSrc,&head);
@@ -161,13 +165,12 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 		_llseek32(hfSrc,0,SEEK_SET);
 		return ret?ret:hfSrc;
 	}
-	lzstates = HeapReAlloc( SystemHeap, 0, lzstates,
-                                (++nroflzstates)*sizeof(struct lzstate) );
-	lzs		= lzstates+(nroflzstates-1);
+        for (i = 0; i < MAX_LZSTATES; i++) if (!lzstates[i]) break;
+        if (i == MAX_LZSTATES) return LZERROR_GLOBALLOC;
+	lzstates[i] = lzs = HeapAlloc( SystemHeap, 0, sizeof(struct lzstate) );
 
 	memset(lzs,'\0',sizeof(*lzs));
 	lzs->realfd	= hfSrc;
-	lzs->lzfd	= hfSrc | 0x400;
 	lzs->lastchar	= head.lastchar;
 	lzs->reallength = head.reallength;
 
@@ -179,7 +182,7 @@ HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 	memset(lzs->table,' ',0x1000);
 	/* Yes, start 16 byte from the END of the table */
 	lzs->curtabent	= 0xff0; 
-	return lzs->lzfd;
+	return 0x400 + i;
 }
 
 
@@ -302,7 +305,8 @@ INT32 WINAPI GetExpandedName32W( LPCWSTR in, LPWSTR out )
  */
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
-    return LZRead32(HFILE16_TO_HFILE32(fd),buf,toread);
+    if (IS_LZ_HANDLE(fd)) return LZRead32( fd, buf, toread );
+    return _lread16( fd, buf, toread );
 }
 
 
@@ -311,19 +315,14 @@ INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
  */
 INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
 {
-	int	i,howmuch;
+	int	howmuch;
 	BYTE	b,*buf;
 	struct	lzstate	*lzs;
 
 	buf=(LPBYTE)vbuf;
 	TRACE(file,"(%d,%p,%d)\n",fd,buf,toread);
 	howmuch=toread;
-	for (i=0;i<nroflzstates;i++)
-		if (lzstates[i].lzfd==fd)
-			break;
-	if (i==nroflzstates)
-		return _lread32(fd,buf,toread);
-	lzs=lzstates+i;
+	if (!(lzs = GET_LZ_STATE(fd))) return _lread32(fd,buf,toread);
 
 /* The decompressor itself is in a define, cause we need it twice
  * in this function. (the decompressed byte will be in b)
@@ -407,7 +406,8 @@ INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
  */
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
-    return LZSeek32( HFILE16_TO_HFILE32(fd), off, type );
+    if (IS_LZ_HANDLE(fd)) return LZSeek32( fd, off, type );
+    return _llseek16( fd, off, type );
 }
 
 
@@ -416,19 +416,13 @@ LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
  */
 LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
 {
-	int	i;
 	struct	lzstate	*lzs;
 	LONG	newwanted;
 
 	TRACE(file,"(%d,%ld,%d)\n",fd,off,type);
-	for (i=0;i<nroflzstates;i++)
-		if (lzstates[i].lzfd==fd)
-			break;
 	/* not compressed? just use normal _llseek() */
-	if (i==nroflzstates)
-		return _llseek32(fd,off,type);
-	lzs		= lzstates+i;
-	newwanted	= lzs->realwanted;
+        if (!(lzs = GET_LZ_STATE(fd))) return _llseek32(fd,off,type);
+	newwanted = lzs->realwanted;
 	switch (type) {
 	case 1:	/* SEEK_CUR */
 		newwanted      += off;
@@ -455,7 +449,19 @@ LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
  */
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
-    return LZCopy32( HFILE16_TO_HFILE32(src), HFILE16_TO_HFILE32(dest) );
+    HFILE32 oldsrc = src;
+    int usedlzinit = 0;
+    LONG ret;
+
+    if (!IS_LZ_HANDLE(src))
+    {
+        src = LZInit16(src);
+        if (src!=oldsrc) usedlzinit=1;
+        if (src>0xfff0) return 0;
+    }
+    ret = LZCopy32( src, FILE_GetHandle32(dest) );
+    if (usedlzinit) LZClose32(src);
+    return ret;
 }
 
 
@@ -468,7 +474,7 @@ LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
  */
 LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 {
-	int	usedlzinit=0,i,ret,wret;
+	int	usedlzinit=0,ret,wret;
 	LONG	len;
 	HFILE32	oldsrc = src;
 #define BUFLEN	1000
@@ -476,7 +482,7 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 	INT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
 
 	TRACE(file,"(%d,%d)\n",src,dest);
-	if (src<0x400) {
+	if (!IS_LZ_HANDLE(src)) {
 		src = LZInit32(src);
 		if (src!=oldsrc)
 			usedlzinit=1;
@@ -484,11 +490,8 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 			return 0;
 	}
 
-	for (i=0;i<nroflzstates;i++)
-		if (src==lzstates[i].lzfd)
-			break;
 	/* not compressed? just copy */
-	if (i==nroflzstates)
+        if (!IS_LZ_HANDLE(src))
 		xread=(INT32(*)(HFILE32,LPVOID,UINT32))_lread32;
 	else
 		xread=LZRead32;
@@ -537,7 +540,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
  */
 HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
-    return HFILE32_TO_HFILE16 ( LZOpenFile32A( fn, ofs, mode ) );
+    return LZOpenFile32A( fn, ofs, mode );
 }
 
 
@@ -597,7 +600,8 @@ HFILE32 WINAPI LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
  */
 void WINAPI LZClose16( HFILE16 fd )
 {
-    return LZClose32( HFILE16_TO_HFILE32 (fd) );
+    if (IS_LZ_HANDLE(fd)) LZClose32( fd );
+    else _lclose16( fd );
 }
 
 
@@ -606,24 +610,17 @@ void WINAPI LZClose16( HFILE16 fd )
  */
 void WINAPI LZClose32( HFILE32 fd )
 {
-	int	i;
+	struct lzstate *lzs;
 
 	TRACE(file,"(%d)\n",fd);
-	for (i=0;i<nroflzstates;i++)
-		if (lzstates[i].lzfd==fd)
-			break;
-	if (i==nroflzstates) {
-		_lclose32(fd);
-		return;
-	}
-	if (lzstates[i].get)
-		HeapFree( GetProcessHeap(), 0, lzstates[i].get );
-	_lclose32(lzstates[i].realfd);
-	memmove(lzstates+i,lzstates+i+1,
-                sizeof(struct lzstate)*(nroflzstates-i-1));
-	nroflzstates--;
-	lzstates = HeapReAlloc( SystemHeap, 0, lzstates,
-                                sizeof(struct lzstate)*nroflzstates );
+        if (!(lzs = GET_LZ_STATE(fd))) _lclose32(fd);
+        else
+        {
+            if (lzs->get) HeapFree( GetProcessHeap(), 0, lzs->get );
+            CloseHandle(lzs->realfd);
+            lzstates[fd - 0x400] = NULL;
+            HeapFree( SystemHeap, 0, lzs );
+        }
 }
 
 /***********************************************************************
@@ -632,7 +629,7 @@ void WINAPI LZClose32( HFILE32 fd )
 LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 {
     TRACE(file,"(%d,%d)\n",src,dest);
-    return LZCopy32(HFILE16_TO_HFILE32(src),HFILE16_TO_HFILE32(dest));
+    return LZCopy16(src,dest);
 }
 
 

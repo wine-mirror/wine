@@ -93,6 +93,8 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         DWORD oldstack;
  	WORD old_hSeg, new_hSeg;
         THDB *thdb = THREAD_Current();
+        HFILE32 hFile32;
+        HFILE16 hFile16;
 
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg),0);
@@ -111,12 +113,14 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         stack16Top->cs = 0;
 	TRACE(dll,"CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
 		pModule->self,hf,segnum );
+        DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
+                         0, FALSE, DUPLICATE_SAME_ACCESS );
+        hFile16 = FILE_AllocDosHandle( hFile32 );
  	new_hSeg = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
-                                                    pModule->self,
-                                                    HFILE32_TO_HFILE16(hf),
+                                                    pModule->self, hFile16,
                                                     segnum );
 	TRACE(dll,"Ret CallLoadAppSegProc: hSeg = 0x%04x\n",new_hSeg);
-        _lclose32( hf );
+        _lclose16( hFile16 );
  	if (SEL(new_hSeg) != SEL(old_hSeg)) {
  	  /* Self loaders like creating their own selectors; 
  	   * they love asking for trouble to Wine developers
@@ -390,6 +394,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
     if (pModule->flags & NE_FFLAGS_SELFLOAD)
     {
         HFILE32 hf;
+        HFILE16 hFile16;
         /* Handle self loading modules */
         SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
@@ -422,13 +427,14 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         stack16Top->ip = 0;
         stack16Top->cs = 0;
 
-        hf = NE_OpenFile( pModule );
-        TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",pModule->self,
-              HFILE32_TO_HFILE16(hf));
-        Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,
-                                   HFILE32_TO_HFILE16(hf));
+        DuplicateHandle( GetCurrentProcess(), NE_OpenFile(pModule),
+                         GetCurrentProcess(), &hf, 0, FALSE, DUPLICATE_SAME_ACCESS );
+        hFile16 = FILE_AllocDosHandle( hf );
+        TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
+              pModule->self,hFile16);
+        Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,hFile16);
 	TRACE(dll,"Return from CallBootAppProc\n");
-        _lclose32(hf);
+        _lclose16(hf);
         /* some BootApp procs overwrite the segment handle of dgroup */
         pSegTable[pModule->dgroup - 1].hSeg = saved_hSeg;
         thdb->cur_stack = oldstack;

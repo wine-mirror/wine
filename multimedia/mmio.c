@@ -46,7 +46,7 @@ static LRESULT mmioDosIOProc(LPMMIOINFO16 lpmmioinfo, UINT16 uMessage, LPARAM lP
 			/* if filename NULL, assume open file handle in adwInfo[0] */
 			if (!szFileName) {
 				if (lParam2) lpmmioinfo->adwInfo[0] =
-					HFILE16_TO_HFILE32(lpmmioinfo->adwInfo[0]);
+					FILE_GetHandle32(lpmmioinfo->adwInfo[0]);
 				return 0;
 			}
 

@@ -1269,3 +1269,25 @@ UINT32 WINAPI SetBoundsRect32(HDC32 hdc, const RECT32* rect, UINT32 flags)
     return DCB_DISABLE;   /* bounding rectangle always empty */
 }
 
+/***********************************************************************
+ *           Death    (GDI.121)
+ *
+ * Disables GDI, switches back to text mode.
+ * We don't have to do anything here,
+ * just let console support handle everything
+ */
+void WINAPI Death(HDC16 hDC)
+{
+    MSG("Death(%04x) called. Application enters text mode...\n", hDC);
+}
+
+/***********************************************************************
+ *           Resurrection    (GDI.122)
+ *
+ * Restores GDI functionality
+ */
+void WINAPI Resurrection(HDC16 hDC,
+                           WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6)
+{
+    MSG("Resurrection(%04x, %04x, %04x, %04x, %04x, %04x, %04x) called. Application left text mode.\n", hDC, w1, w2, w3, w4, w5, w6);
+}

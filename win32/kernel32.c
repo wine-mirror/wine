@@ -969,7 +969,7 @@ BOOL16 WINAPI IsPeFormat(
 	HFILE16 hf16	/* [in] open file, if filename is NULL */
 ) {
 	IMAGE_DOS_HEADER	mzh;
-        HFILE32                 hf=HFILE16_TO_HFILE32(hf16);
+        HFILE32                 hf=FILE_GetHandle32(hf16);
 	OFSTRUCT		ofs;
 	DWORD			xmagic;
 

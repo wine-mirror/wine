@@ -39,6 +39,8 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
         lpddraw->lpvtbl->fnCreatePalette(lpddraw,0,NULL,&lpddpal,NULL);
         memset(&sdesc,0,sizeof(sdesc));
         sdesc.dwSize=sizeof(sdesc);
+	sdesc.dwFlags = DDSD_CAPS;
+	sdesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
         if (lpddraw->lpvtbl->fnCreateSurface(lpddraw,&sdesc,&lpddsurf,NULL)||(!lpddsurf)) {
             ERR(ddraw,"DirectDraw surface is not available\n");
             lpddraw->lpvtbl->fnRelease(lpddraw);
@@ -119,6 +121,9 @@ void VGA_Unlock(void)
     lpddsurf->lpvtbl->fnUnlock(lpddsurf,sdesc.y.lpSurface);
 }
 
+/* We are called from SIGALRM, aren't we? We should _NOT_ do synchronization
+ * stuff!
+ */
 void VGA_Poll( WORD timer )
 {
     char *dat;
@@ -138,7 +143,7 @@ void VGA_Poll( WORD timer )
         /* copy from virtual VGA frame buffer to DirectDraw surface */
         for (Y=0; Y<Height; Y++,surf+=Pitch,dat+=Width) {
             memcpy(surf,dat,Width);
-            for (X=0; X<Width; X++) if (dat[X]) TRACE(ddraw,"data(%d) at (%d,%d)\n",dat[X],X,Y);
+            /*for (X=0; X<Width; X++) if (dat[X]) TRACE(ddraw,"data(%d) at (%d,%d)\n",dat[X],X,Y);*/
         }
         VGA_Unlock();
         vga_refresh=1;

@@ -46,6 +46,7 @@
 #include "message.h"
 #include "x11drv.h"
 #include "options.h"
+#include "objbase.h"
 
 #ifdef HAVE_LIBXXF86DGA
 #include "ts_xf86dga.h"
@@ -100,7 +101,7 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 #endif
 
 BOOL32
-DDRAW_DGA_Available()
+DDRAW_DGA_Available(void)
 {
 #ifdef HAVE_LIBXXF86DGA
 	int evbase, evret, fd;
@@ -415,7 +416,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 {
 	TRACE(ddraw,"(%p)->Unlock(%p)\n",this,surface);
 
-	if (!this->s.ddraw->e.xlib.paintable)
+	if (!this->s.ddraw->d.paintable)
 		return DD_OK;
 
   /* Only redraw the screen when unlocking the buffer that is on screen */
@@ -488,7 +489,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWSURFACE3 flipto,DWORD dwFlags
 ) {
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",this,flipto,dwFlags);
-	if (!this->s.ddraw->e.xlib.paintable)
+	if (!this->s.ddraw->d.paintable)
 		return DD_OK;
 
 	if (!flipto) {
@@ -557,6 +558,9 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	{
 		pal->cm = TSXCreateColormap(display,this->s.ddraw->d.drawable,DefaultVisualOfScreen(screen),AllocAll);
 
+    	    	if (!Options.managed)
+			TSXInstallColormap(display,pal->cm);
+
 		for (i=0;i<256;i++) {
 			XColor xc;
 
@@ -567,6 +571,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 			xc.pixel = i;
 			TSXStoreColor(display,pal->cm,&xc);
 		}
+		TSXInstallColormap(display,pal->cm);
         }
 
         /* According to spec, we are only supposed to 
@@ -863,6 +868,11 @@ static ULONG WINAPI DGA_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) {
 		} else {
 			this->s.ddraw->e.dga.vpmask &= ~(1<<(this->t.dga.fb_height/this->s.ddraw->e.dga.fb_height));
 		}
+
+		/* Free the backbuffer */
+		if (this->s.backbuffer)
+			this->s.backbuffer->lpvtbl->fnRelease(this->s.backbuffer);
+
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
 	}
@@ -1074,24 +1084,29 @@ static HRESULT WINAPI IDirectDrawSurface3_SetColorKey(
         if( dwFlags & DDCKEY_SRCBLT )
         {
            dwFlags &= ~DDCKEY_SRCBLT;
-           memcpy( &(this->s.ckSrcBlt), ckey, sizeof( *ckey ) );
+	   this->s.surface_desc.dwFlags |= DDSD_CKSRCBLT;
+           memcpy( &(this->s.surface_desc.ddckCKSrcBlt), ckey, sizeof( *ckey ) );
         }
 
         if( dwFlags & DDCKEY_DESTBLT )
         {
            dwFlags &= ~DDCKEY_DESTBLT;
-           memcpy( &(this->s.ckDestBlt), ckey, sizeof( *ckey ) );
+	   this->s.surface_desc.dwFlags |= DDSD_CKDESTBLT;
+           memcpy( &(this->s.surface_desc.ddckCKDestBlt), ckey, sizeof( *ckey ) );
         }
 
         if( dwFlags & DDCKEY_SRCOVERLAY )
         {
            dwFlags &= ~DDCKEY_SRCOVERLAY;
-           memcpy( &(this->s.ckSrcOverlay), ckey, sizeof( *ckey ) );
+	   this->s.surface_desc.dwFlags |= DDSD_CKSRCOVERLAY;
+           memcpy( &(this->s.surface_desc.ddckCKSrcOverlay), ckey, sizeof( *ckey ) );	   
         }
+	
         if( dwFlags & DDCKEY_DESTOVERLAY )
         {
            dwFlags &= ~DDCKEY_DESTOVERLAY;
-           memcpy( &(this->s.ckDestOverlay), ckey, sizeof( *ckey ) );
+	   this->s.surface_desc.dwFlags |= DDSD_CKDESTOVERLAY;
+           memcpy( &(this->s.surface_desc.ddckCKDestOverlay), ckey, sizeof( *ckey ) );	   
         }
 
         if( dwFlags )
@@ -1152,25 +1167,25 @@ static HRESULT WINAPI IDirectDrawSurface3_GetColorKey(
 
   if( dwFlags & DDCKEY_SRCBLT )  {
      dwFlags &= ~DDCKEY_SRCBLT;
-     memcpy( lpDDColorKey, &(this->s.ckSrcBlt), sizeof( *lpDDColorKey ) );
+     memcpy( lpDDColorKey, &(this->s.surface_desc.ddckCKSrcBlt), sizeof( *lpDDColorKey ) );
   }
 
   if( dwFlags & DDCKEY_DESTBLT )
   {
     dwFlags &= ~DDCKEY_DESTBLT;
-    memcpy( lpDDColorKey, &(this->s.ckDestBlt), sizeof( *lpDDColorKey ) );
+    memcpy( lpDDColorKey, &(this->s.surface_desc.ddckCKDestBlt), sizeof( *lpDDColorKey ) );
   }
 
   if( dwFlags & DDCKEY_SRCOVERLAY )
   {
     dwFlags &= ~DDCKEY_SRCOVERLAY;
-    memcpy( lpDDColorKey, &(this->s.ckSrcOverlay), sizeof( *lpDDColorKey ) );
+    memcpy( lpDDColorKey, &(this->s.surface_desc.ddckCKSrcOverlay), sizeof( *lpDDColorKey ) );
   }
 
   if( dwFlags & DDCKEY_DESTOVERLAY )
   {
     dwFlags &= ~DDCKEY_DESTOVERLAY;
-    memcpy( lpDDColorKey, &(this->s.ckDestOverlay), sizeof( *lpDDColorKey ) );
+    memcpy( lpDDColorKey, &(this->s.surface_desc.ddckCKDestOverlay), sizeof( *lpDDColorKey ) );
   }
 
   if( dwFlags )
@@ -2427,7 +2442,7 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 
 	_common_IDirectDraw_SetDisplayMode(this);
 
-	this->e.xlib.paintable = 1;
+	this->d.paintable = 1;
         this->d.drawable  = ((X11DRV_WND_DATA *) WIN_FindWndPtr(this->d.window)->pDriverData)->window;  
         /* We don't have a context for this window. Host off the desktop */
         if( !this->d.drawable )
@@ -2633,12 +2648,16 @@ static ULONG WINAPI DGA_IDirectDraw2_Release(LPDIRECTDRAW2 this) {
 		TSXF86DGADirectVideo(display,DefaultScreen(display),0);
 
 #ifdef HAVE_LIBXXF86VM
-		if (orig_mode)
-		  TSXF86VidModeSwitchToMode(display, DefaultScreen(display), orig_mode);
-		if (orig_mode->privsize)
-		  TSXFree(orig_mode->private);		
-		free(orig_mode);
-		orig_mode = NULL;
+		if (orig_mode) {
+			TSXF86VidModeSwitchToMode(
+				display,
+				DefaultScreen(display),
+				orig_mode);
+			if (orig_mode->privsize)
+				TSXFree(orig_mode->private);		
+			free(orig_mode);
+			orig_mode = NULL;
+		}
 #endif
 		
 #ifdef RESTORE_SIGNALS
@@ -3135,7 +3154,7 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
    {
       /* Perform any special direct draw functions */
       if (msg==WM_PAINT)
-        ddraw->e.xlib.paintable = 1;
+        ddraw->d.paintable = 1;
 
       /* Now let the application deal with the rest of this */
       if( ddraw->d.mainWindow )
@@ -3232,7 +3251,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 }
 
 BOOL32
-DDRAW_XSHM_Available()
+DDRAW_XSHM_Available(void)
    {
 #ifdef HAVE_LIBXXSHM
   if (TSXShmQueryExtension(display))

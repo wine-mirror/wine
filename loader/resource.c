@@ -331,7 +331,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
     {
         HANDLE32 hRsrc32 = MapHRsrc16To32( pModule, hRsrc );
         HFILE32 hFile32 = AccessResource32( pModule->module32, hRsrc32 );
-        return HFILE32_TO_HFILE16( hFile32 );
+        return FILE_AllocDosHandle( hFile32 );
     }
 
     return NE_AccessResource( pModule, hRsrc );

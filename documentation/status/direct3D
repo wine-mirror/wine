@@ -28,18 +28,24 @@ TODO (well, once the code will be put in the dll/ddraw directory)
 Status
 ------
 
-I tested this code with two programs (all using Direct3D 5.0) :
+Some programs with which I tested the code :
 
- * BOIDS.EXE that comes with the 5.2 DirectX SDK : works great. Only
-   thing missing is the texturing and transparency on the spinning
-   gobes. Lighting seems to be a bit different than the Real One.
+ * BOIDS.EXE (DX5.0) that comes with the 5.2 DirectX SDK : works
+   great. Only thing missing is the texturing and transparency on the
+   spinning gobes. Lighting seems to be a bit different than the Real
+   One.
 
- * Tomb Raider II : works quite well (without texturing).
+ * Tomb Raider II (DX5.0) : works perfectly (but slowly). All the
+   calls needed to make TR2 work have been written.
+
+ * Jedi Knight (DX3.0) : does not start
+
+ * Shadow of the Empire demo (DX3.0) : runs but does not display
+   anything
 
 TODO
 ----
  * finish working on Execute Buffers (i.e. Direct3D 3.0)
- * texture mapping / blending effects
  * real GLX implementation (will need a complete rewrite of DirectDraw
    also) to have 3DFx support
  * restructuration of all the DDRAW.DLL (put that in the dll
@@ -52,4 +58,4 @@ TODO
 
 -- 
 Lionel Ulmer - ulmer@directprovider.net
-Last updated : Sun Jan 03 1999
+Last updated : Sun Jan 10 1999

@@ -183,12 +183,14 @@
   Author:
       Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
       Ben Williams <biwillia@shrug.isdn.uiuc.edu>
+      Luc Tourangeau <luc@macadamian.com>
 
   Status:
       Under construction.
 
   Notes:
-      Author needed!! Any volunteers??
+      Basic data structure with related messages are supported.
+      No painting supported yet.
 
 
 3.11 Month Calendar Control

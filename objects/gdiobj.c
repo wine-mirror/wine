@@ -996,7 +996,7 @@ INT32 WINAPI MulDiv32(
  *
  *
  */
-BOOL32 WINAPI GetColorAdjustment32(HDC32 hdc, LPCOLORADJUSTMENT lpca)
+BOOL32 WINAPI GetColorAdjustment(HDC32 hdc, LPCOLORADJUSTMENT lpca)
 {
         FIXME(gdi, "GetColorAdjustment, stub\n");
         return 0;
@@ -1029,7 +1029,7 @@ BOOL32 WINAPI SetMiterLimit(HDC32 hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
  *
  *
  */
-BOOL32 WINAPI GdiComment32(HDC32 hdc, UINT32 cbSize, const BYTE *lpData)
+BOOL32 WINAPI GdiComment(HDC32 hdc, UINT32 cbSize, const BYTE *lpData)
 {
         FIXME(gdi, "GdiComment, stub\n");
         return 0;

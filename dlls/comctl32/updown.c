@@ -18,7 +18,10 @@
  *     - acceleration
  *     - base 16
  *     - UDS_ALIGNLEFT, ~UDS_WRAP
+ *       (tested - they work)
  *     - integers with thousand separators.
+ *       (fixed bugs. <noel@macadamian.com>)
+ *
  *   Even though the above list seems rather large, the control seems to
  *   behave very well so I am confident it does work in most (all) of the
  *   untested cases.
@@ -243,14 +246,15 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
 
     sep = UPDOWN_GetThousandSep(); 
 
-    if (!(wndPtr->dwStyle & UDS_NOTHOUSANDS)) {
+    /* Do thousands seperation if necessary */
+    if (!(wndPtr->dwStyle & UDS_NOTHOUSANDS) && (len > 3)) {
       char txt2[20], *src = txt1, *dst = txt2;
       if(len%3 > 0){
-	lstrcpyn32A (dst, src, len%3);
+	lstrcpyn32A (dst, src, len%3 + 1);      /* need to include the null */ 
 	dst += len%3;
 	src += len%3;
       }
-      for(len=0; *src; len++,src++){
+      for(len=0; *src; len++){
 	if(len%3==0)
 	  *dst++ = sep;
 	*dst++ = *src++;

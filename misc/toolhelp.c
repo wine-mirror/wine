@@ -14,10 +14,10 @@
 #include "winerror.h"
 #include "tlhelp32.h"
 #include "toolhelp.h"
-#include "debug.h"
 #include "heap.h"
 #include "process.h"
 #include "k32obj.h"
+#include "debug.h"
 
 /*
  * Support for toolhelp's snapshots.  They

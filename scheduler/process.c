@@ -721,6 +721,15 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 }
 
 /***********************************************************************
+ *		SetProcessAffinityMask	[KERNEL32.662]
+ */
+BOOL32 WINAPI SetProcessAffinityMask(HANDLE32 hProcess,DWORD affmask)
+{
+    FIXME(process,"(0x%08x,%ld), stub - harmless\n",hProcess,affmask);
+    return TRUE;
+}
+
+/***********************************************************************
  *		SetProcessWorkingSetSize	[KERNEL32.662]
  * Sets the min/max working set sizes for a specified process.
  *

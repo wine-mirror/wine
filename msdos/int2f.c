@@ -382,7 +382,7 @@ void do_mscdex( CONTEXT *context )
         /* FIXME: why a new linux-only CDROM drive access, for crying out loud?
          * There are pretty complete routines in multimedia/mcicda.c already! */
 	case 0x10: /* direct driver acces */
-            FIXME(cdaudio,"mscdex should use multimedia/mcicda.c");
+            FIXME(cdaudio,"mscdex should use multimedia/mcicda.c\n");
 	    do_mscdex_dd(context,ISV86(context));
 	    break;
 

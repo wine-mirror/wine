@@ -400,6 +400,8 @@ file	krnl386.exe
 493 stub UTInit
 494 stub KERNEL_494
 
+# 495 is present only in Win98
+495 pascal WaitForMultipleObjectsEx(long ptr long long long) WIN16_WaitForMultipleObjectsEx
 
 # 500-544 are WinNT extensions; some are also available in Win95
 

@@ -228,7 +228,7 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
 #endif
   old_com=1; /* assume .COM file */
   image_start=0;
-  image_size=GetFileSize(HFILE16_TO_HFILE32(hFile),NULL);
+  image_size=GetFileSize(FILE_GetHandle32(hFile),NULL);
   min_size=0x10000; max_size=0x100000;
   mz_header.e_crlc=0;
   mz_header.e_ss=0; mz_header.e_sp=0xFFFE;
@@ -432,7 +432,7 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL32 in
 
  if ((!env)&&pdb) env = pdb->env_db->environ;
  if (alloc) {
-  if ((hModule = MODULE_CreateDummyModule(&ofs)) < 32)
+  if ((hModule = MODULE_CreateDummyModule(&ofs, NULL)) < 32)
    return hModule;
 
   lpDosTask->hModule = hModule;

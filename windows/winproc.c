@@ -1777,6 +1777,10 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         return 0;
 
     case WM_ACTIVATEAPP:
+	if (*plparam) {
+	*plparam = (LPARAM) THREAD_ID_TO_THDB((DWORD) *plparam)->teb.htask16;
+	}
+	return 1;
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:

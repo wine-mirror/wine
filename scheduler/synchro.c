@@ -186,3 +186,22 @@ DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
 
     return retval;
 }
+
+/***********************************************************************
+ *           WIN16_WaitForMultipleObjectsEx   (KERNEL.495)
+ */
+DWORD WINAPI WIN16_WaitForMultipleObjectsEx( DWORD count, 
+                                             const HANDLE32 *handles,
+                                             BOOL32 wait_all, DWORD timeout,
+                                             BOOL32 alertable )
+{
+    DWORD retval;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    retval = WaitForMultipleObjectsEx( count, handles, 
+                                       wait_all, timeout, alertable );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return retval;
+}
+

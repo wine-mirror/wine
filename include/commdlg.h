@@ -671,7 +671,7 @@ LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPAR
 LRESULT WINAPI FormatCharDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT WINAPI FormatCharDlgProc32A(HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT WINAPI FormatCharDlgProc32W(HWND32,UINT32,WPARAM32,LPARAM);
-#define FormatCharDlgProc LIBWINE_NAME_AW(FormatCharDlgProc)
+#define FormatCharDlgProc WINELIB_NAME_AW(FormatCharDlgProc)
 #ifdef __cplusplus
 }
 #endif

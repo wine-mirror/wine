@@ -1009,7 +1009,7 @@ void VXD_Win32s( CONTEXT *context )
         LARGE_INTEGER *size = (LARGE_INTEGER *)W32S_APP2WINE(stack[3], W32S_OFFSET);
         DWORD  protect  = stack[4];
         DWORD  flags2   = stack[5];
-        HFILE32 hFile   = HFILE16_TO_HFILE32(stack[6]);
+        HFILE32 hFile   = FILE_GetHandle32(stack[6]);
         DWORD  psp      = stack[7];
 
         HANDLE32 result = INVALID_HANDLE_VALUE32;

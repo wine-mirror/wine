@@ -223,6 +223,19 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 
     switch(format)
     {
+	case 'u': {
+		WCHAR *ptr = (WCHAR*)pnt;
+		if (count == 1) count = 256;
+                while (count--)
+                {
+                    if (!DBG_CHECK_READ_PTR( &addr, sizeof(WCHAR) )) return;
+                    if (!*ptr) break;
+                    addr.off++;
+                    fputc( (char)*ptr++, stderr );
+                }
+		fprintf(stderr,"\n");
+		return;
+	    }
 	case 's':
 		if (count == 1) count = 256;
                 while (count--)

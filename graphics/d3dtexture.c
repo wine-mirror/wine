@@ -84,6 +84,12 @@ static ULONG WINAPI IDirect3DTexture2_Release(LPDIRECT3DTEXTURE2 this)
   FIXME( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
   
   if (!--(this->ref)) {
+    /* Delete texture from OpenGL */
+    glDeleteTextures(1, &(this->tex_name));
+    
+    /* Release surface */
+    this->surface->lpvtbl->fnRelease(this->surface);
+    
     HeapFree(GetProcessHeap(),0,this);
     return 0;
   }
@@ -168,17 +174,19 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
     ERR(ddraw, "Error in surface sizes\n");
     return D3DERR_TEXTURE_LOAD_FAILED;
   } else {
-    LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) this->D3Ddevice;
+    /* LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) this->D3Ddevice; */
     /* I should put a macro for the calculus of bpp */
     int bpp = (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
 	       1 /* 8 bit of palette index */:
 	       src_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
+    GLuint current_texture;
 
     /* Not sure if this is usefull ! */
     memcpy(dst_d->y.lpSurface, src_d->y.lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
 
     /* Now, load the texture */
-    d3dd->set_context(d3dd);
+    /* d3dd->set_context(d3dd); We need to set the context somehow.... */
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
     glBindTexture(GL_TEXTURE_2D, this->tex_name);
 
     if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
@@ -186,14 +194,45 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
       BYTE table[256][4];
       int i;
       
+      if (pal == NULL) {
+	ERR(ddraw, "Palettized texture Loading with a NULL palette !\n");
+	return D3DERR_TEXTURE_LOAD_FAILED;
+      }
+
       /* Get the surface's palette */
       for (i = 0; i < 256; i++) {
 	table[i][0] = pal->palents[i].peRed;
 	table[i][1] = pal->palents[i].peGreen;
 	table[i][2] = pal->palents[i].peBlue;
+	if ((this->surface->s.surface_desc.dwFlags & DDSD_CKSRCBLT) &&
+	    (i >= this->surface->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) &&
+	    (i <= this->surface->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
+	  table[i][3] = 0x00;
+	else
 	table[i][3] = 0xFF;
       }
       
+#if 0
+      /* If you want to see how the game manages its textures :-) */
+      {
+	FILE *f;
+	char buf[32];
+	int x, y;
+	
+	sprintf(buf, "%d.pnm", this->tex_name);
+	f = fopen(buf, "wb");
+	fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
+	for (y = 0; y < src_d->dwHeight; y++) {
+	  for (x = 0; x < src_d->dwWidth; x++) {
+	    unsigned char c = ((unsigned char *) src_d->y.lpSurface)[y * src_d->dwWidth + x];
+	    fputc(table[c][0], f);
+	    fputc(table[c][1], f);
+	    fputc(table[c][2], f);
+	  }
+	}
+	fclose(f);
+      }
+#endif 
       /* Use Paletted Texture Extension */
       glColorTableEXT(GL_TEXTURE_2D,    /* target */
 		      GL_RGBA,          /* internal format */
@@ -213,9 +252,11 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
     } else {
       ERR(ddraw, "Unhandled texture format\n");
     }
+
+    glBindTexture(GL_TEXTURE_2D, current_texture);
   }
   
-  return DD_OK;
+  return D3D_OK;
 }
 
 

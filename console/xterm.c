@@ -2,11 +2,11 @@
 
 /* This "driver" is designed to go on top of an existing driver
    to provide support for features only present if using an
-   xterm or compatible program for your console output. It should
-   inlcude such features as resizing, separation of output from the
-   standard wine console, and a configurable title bar for
-   Win32 console. */
-/* Right now, it doesn't have any "special" features */
+   xterm or compatible program for your console output. 
+   Currently, it supports resizing and separating debug messages from
+   program output.
+   It does not currently support changing the title bar.
+*/
 
 #include <signal.h>
 #include <sys/ioctl.h>
@@ -99,67 +99,26 @@ void XTERM_ResizeScreen(int x, int y)
    CONSOLE_NotifyResizeScreen(x, y);
 }
 
-/**
- *  It looks like the openpty that comes with glibc in RedHat 5.0
- *  is buggy (second call returns what looks like a dup of 0 and 1
- *  instead of a new pty), this is a generic replacement.
- */
-/** Can't we determine this using autoconf?
- */
-
-static FILE *wine_openpty(FILE **master, FILE **slave, char *name,
-                        struct termios *term, struct winsize *winsize)
-{
-        FILE *fdm, *fds;
-        char *ptr1, *ptr2;
-        char pts_name[512];
-
-        strcpy (pts_name, "/dev/ptyXY");
-        for (ptr1 = "pqrstuvwxyzPQRST"; *ptr1 != 0; ptr1++) {
-                pts_name[8] = *ptr1;
-                for (ptr2 = "0123456789abcdef"; *ptr2 != 0; ptr2++) {
-                        pts_name[9] = *ptr2;
-
-                        if ((fdm = fopen(pts_name, "r+")) == NULL) {
-                                if (errno == ENOENT)
-                                        return (FILE *) -1;
-                                else
-                                        continue;
-                        }
-                        pts_name[5] = 't';
-                        if ((fds = fopen(pts_name, "r+")) == NULL) {
-                                pts_name[5] = 'p';
-                                continue;
-                        }
-                        *master = fdm;
-                        *slave = fds;
-
-                        if (term != NULL)
-                                tcsetattr(fileno(*slave), TCSANOW, term);
-                        if (winsize != NULL)
-                                ioctl(fileno(*slave), TIOCSWINSZ, winsize);
-
-                        if (name != NULL)
-                                strcpy(name, pts_name);
-                        return fds;
-                }
-        }
-        return (FILE *) -1;
-}
 
 static BOOL32 wine_create_console(FILE **master, FILE **slave, int *pid)
 {
+        /* There is definately a bug in this routine that causes a lot
+           of garbage to be written to the screen, but I can't find it...
+        */
         struct termios term;
         char buf[1024];
         char c = '\0';
         int status = 0;
         int i;
+        int tmaster, tslave;
 
         if (tcgetattr(0, &term) < 0) return FALSE;
         term.c_lflag |= ICANON;
         term.c_lflag &= ~ECHO;
-        if (wine_openpty(master, slave, NULL, &term, NULL) < 0)
+        if (wine_openpty(&tmaster, &tslave, NULL, &term, NULL) < 0)
            return FALSE;
+        *master = fdopen(tmaster, "r+");
+        *slave = fdopen(tslave, "r+");
 
         if ((*pid=fork()) == 0) {
                 tcsetattr(fileno(*slave), TCSADRAIN, &term);

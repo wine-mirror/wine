@@ -237,4 +237,15 @@
 #define _vstprintf    WINE_tchar_routine(vsprintf,        vsprintf,    vswprintf)
 #define _vtprintf     WINE_tchar_routine(vprintf,         vprintf,     vwprintf)
 
+#define _T(x) __T(x)
+#define _TEXT(x) __T(x)
+#define __T(x) x
+
+typedef CHAR  _TCHAR32A;
+typedef WCHAR _TCHAR32W;
+DECL_WINELIB_TYPE_AW (_TCHAR)
+typedef UCHAR  _TUCHAR32A;
+typedef WCHAR _TUCHAR32W;
+DECL_WINELIB_TYPE_AW (_TUCHAR)
+				 
 #endif /* __WINE_TCHAR_H */

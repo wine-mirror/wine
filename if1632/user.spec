@@ -360,7 +360,7 @@ file	user.exe
 384 pascal16 SetMenuContextHelpId(word word) SetMenuContextHelpId16
 385 pascal16 GetMenuContextHelpId(word) GetMenuContextHelpId16
 389 pascal LoadImage(word segstr word word word word) LoadImage16
-390 stub CopyImage
+390 pascal16 CopyImage(word word word word word) CopyImage16
 391 stub SignalProc32
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
 395 stub GetIconInfo

@@ -413,6 +413,9 @@ DECL_WINELIB_TYPE(HWND)
 #define max(a,b)   MAX(a,b)
 #define min(a,b)   MIN(a,b)
 
+#define _MAX_PATH  260
+#define _MAX_FNAME 255
+
 /* Winelib run-time flag */
 
 #ifdef __WINE__

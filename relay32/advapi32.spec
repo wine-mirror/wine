@@ -56,7 +56,7 @@ type	win32
 0052 stub GetSecurityDescriptorControl
 0053 stub GetSecurityDescriptorDacl
 0054 stub GetSecurityDescriptorGroup
-0055 stub GetSecurityDescriptorLength
+0055 stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength
 0056 stub GetSecurityDescriptorOwner
 0057 stub GetSecurityDescriptorSacl
 0058 stub GetServiceDisplayNameA

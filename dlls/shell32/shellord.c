@@ -188,19 +188,6 @@ StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
     return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
 }
 
-
-/*************************************************************************
- * SHGetSpecialFolderPath [SHELL32.175]
- * 
- * NOTES
- *     exported by ordinal
- */
-void WINAPI SHGetSpecialFolderPath(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-    FIXME(shell,"(0x%04lx,0x%04lx,csidl=0x%04lx,0x%04lx):stub.\n",
-      x1,x2,x3,x4
-    );
-}
-
 /*************************************************************************
  * RegisterShellHook [SHELL32.181]
  *
@@ -213,6 +200,24 @@ void WINAPI SHGetSpecialFolderPath(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
  */
 void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
     FIXME(shell,"(0x%08x,0x%08lx):stub.\n",hwnd,y);
+}
+/*************************************************************************
+ * ShellMessageBoxW [SHELL32.182]
+ *
+ * Format and output errormessage.
+ *
+ * NOTES
+ *     exported by ordinal
+ */
+void __cdecl
+ShellMessageBoxW(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID arglist) {
+	WCHAR	buf[100];
+
+	if (!LoadString32W(hmod,x,buf,100))
+		lstrcpyAtoW (buf,"Desktop");
+
+	FIXME(shell,"(%08lx,%08lx,%08lx,%08lx(%s),%08lx,%p):stub.\n",
+		(DWORD)hmod,(DWORD)hwnd,id,x,debugstr_w(buf),type,arglist);
 }
 
 /*************************************************************************
@@ -1241,5 +1246,13 @@ HRESULT WINAPI SHWaitForFileToOpen(DWORD u, DWORD v, DWORD w)
  */
 HRESULT WINAPI Control_FillCache_RunDLL(HWND32 hWnd, HANDLE32 hModule, DWORD w, DWORD x)
 {	FIXME(shell,"0x%04x 0x%04x 0x%04lx 0x%04lx stub\n",hWnd, hModule,w,x);
+	return 0;
+}
+/*************************************************************************
+ * RunDLL_CallEntry16 [SHELL32.122]
+ * the name is propably wrong
+ */
+HRESULT WINAPI RunDLL_CallEntry16(DWORD v, DWORD w, DWORD x, DWORD y, DWORD z)
+{	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",v,w,x,y,z);
 	return 0;
 }

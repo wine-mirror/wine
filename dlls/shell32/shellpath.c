@@ -724,3 +724,35 @@ HRESULT WINAPI PathProcessCommand (DWORD u, DWORD v, DWORD w, DWORD x)
 {	FIXME(shell,"0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
 	return 0;
 }
+
+/*************************************************************************
+ * SHGetSpecialFolderPath [SHELL32.175]
+ * 
+ * converts csidl to path
+ * 
+ */
+BOOL32 WINAPI SHGetSpecialFolderPath32A (DWORD x1,LPSTR szPath,DWORD csidl,DWORD x4) 
+{	LPITEMIDLIST pidl;
+
+	WARN(shell,"(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
+
+	SHGetSpecialFolderLocation(0, csidl, &pidl);
+	SHGetPathFromIDList32A (pidl, szPath);
+	SHFree (pidl);
+	return TRUE;
+}
+BOOL32 WINAPI SHGetSpecialFolderPath32W (DWORD x1,LPWSTR szPath, DWORD csidl,DWORD x4) 
+{	LPITEMIDLIST pidl;
+
+	WARN(shell,"(0x%04lx,%p,csidl=%lu,0x%04lx) semi-stub\n", x1,szPath,csidl,x4);
+
+	SHGetSpecialFolderLocation(0, csidl, &pidl);
+	SHGetPathFromIDList32W (pidl, szPath);
+	SHFree (pidl);
+	return TRUE;
+}
+BOOL32 WINAPI SHGetSpecialFolderPath32 (DWORD x1,LPVOID szPath,DWORD csidl,DWORD x4) 
+{	if (VERSION_OsIsUnicode())
+	  return SHGetSpecialFolderPath32W ( x1, szPath, csidl, x4);
+	return SHGetSpecialFolderPath32A ( x1, szPath, csidl, x4);
+}

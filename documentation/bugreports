@@ -39,7 +39,7 @@ likely to get answered and fixed):
 
 	bash and other sh-like shells:
 
-	    wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out
+	    wine -debugmsg +relay,+snoop [other_options] program_name 2>&1 | tee filename.out
 	    tail -100 filename.out > report_file
 
 	'report_file' will now contain the last hundred lines of the debugging

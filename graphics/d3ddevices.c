@@ -96,7 +96,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
   d1->dlcLightingCaps.dwSize = sizeof(D3DLIGHTINGCAPS);
   d1->dlcLightingCaps.dwCaps = D3DLIGHTCAPS_DIRECTIONAL | D3DLIGHTCAPS_PARALLELPOINT | D3DLIGHTCAPS_POINT | D3DLIGHTCAPS_SPOT;
   d1->dlcLightingCaps.dwLightingModel = D3DLIGHTINGMODEL_RGB;
-  glGetIntegerv(GL_MAX_LIGHTS, &maxlight); d1->dlcLightingCaps.dwNumLights = maxlight;
+  d1->dlcLightingCaps.dwNumLights = 16; /* glGetIntegerv(GL_MAX_LIGHTS, &maxlight); d1->dlcLightingCaps.dwNumLights = maxlight; */
   fill_opengl_primcaps(&(d1->dpcLineCaps));
   fill_opengl_primcaps(&(d1->dpcTriCaps));  
   d1->dwDeviceRenderBitDepth  = DDBD_16;
@@ -160,6 +160,11 @@ int is_OpenGL(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE2 *de
     odev->ctx = OSMesaCreateContext(OSMESA_RGBA, NULL);
     odev->buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
+    odev->rs.src = GL_ONE;
+    odev->rs.dst = GL_ZERO;
+    odev->rs.mag = GL_NEAREST;
+    odev->rs.min = GL_NEAREST;
+    odev->vt     = 0;
     
     memcpy(odev->world_mat, id_mat, 16 * sizeof(float));
     memcpy(odev->view_mat , id_mat, 16 * sizeof(float));
@@ -594,10 +599,12 @@ static HRESULT WINAPI IDirect3DDevice2_SetRenderState(LPDIRECT3DDEVICE2 this,
 						      D3DRENDERSTATETYPE dwRenderStateType,
 						      DWORD dwRenderState)
 {
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+
   TRACE(ddraw, "(%p)->(%d,%ld)\n", this, dwRenderStateType, dwRenderState);
   
   /* Call the render state functions */
-  set_render_state(dwRenderStateType, dwRenderState);
+  set_render_state(dwRenderStateType, dwRenderState, &(odev->rs));
   
   return DD_OK;
 }
@@ -756,6 +763,165 @@ static HRESULT WINAPI IDirect3DDevice2_MultiplyTransform(LPDIRECT3DDEVICE2 this,
   return DD_OK;
 }
 
+#define DRAW_PRIMITIVE(MAXVERT,INDEX)						\
+  /* Puts GL in the correct lighting mode */					\
+  if (odev->vt != d3dv) {							\
+    if (odev->vt == D3DVT_TLVERTEX) {						\
+      /* Need to put the correct transformation again */			\
+      glMatrixMode(GL_MODELVIEW);						\
+      glLoadMatrixf((float *) &(odev->world_mat));				\
+      glMatrixMode(GL_PROJECTION);						\
+      glLoadMatrixf((float *) &(odev->proj_mat));				\
+      glMultMatrixf((float *) &(odev->view_mat));				\
+    }										\
+										\
+    switch (d3dv) {								\
+    case D3DVT_VERTEX:								\
+      TRACE(ddraw, "Standard Vertex\n");					\
+      glEnable(GL_LIGHTING);							\
+      break;									\
+										\
+    case D3DVT_LVERTEX:								\
+      TRACE(ddraw, "Lighted Vertex\n");						\
+      glDisable(GL_LIGHTING);							\
+      break;									\
+										\
+    case D3DVT_TLVERTEX: {							\
+      GLdouble height, width, minZ, maxZ;					\
+										\
+      TRACE(ddraw, "Transformed - Lighted Vertex\n");				\
+      /* First, disable lighting */						\
+      glDisable(GL_LIGHTING);							\
+										\
+      /* Then do not put any transformation matrixes */				\
+      glMatrixMode(GL_MODELVIEW);						\
+      glLoadIdentity();								\
+      glMatrixMode(GL_PROJECTION);						\
+      glLoadIdentity();								\
+										\
+      if (this->current_viewport == NULL) {					\
+	ERR(ddraw, "No current viewport !\n");					\
+	/* Using standard values */						\
+	height = 640.0;								\
+	width = 480.0;								\
+	minZ = -10.0;								\
+	maxZ = 10.0;								\
+      } else {									\
+	if (this->current_viewport->use_vp2) {					\
+	  height = (GLdouble) this->current_viewport->viewport.vp2.dwHeight;	\
+	  width  = (GLdouble) this->current_viewport->viewport.vp2.dwWidth;	\
+	  minZ   = (GLdouble) this->current_viewport->viewport.vp2.dvMinZ;	\
+	  maxZ   = (GLdouble) this->current_viewport->viewport.vp2.dvMaxZ;	\
+	} else {								\
+	  height = (GLdouble) this->current_viewport->viewport.vp1.dwHeight;	\
+	  width  = (GLdouble) this->current_viewport->viewport.vp1.dwWidth;	\
+	  minZ   = (GLdouble) this->current_viewport->viewport.vp1.dvMinZ;	\
+	  maxZ   = (GLdouble) this->current_viewport->viewport.vp1.dvMaxZ;	\
+	}									\
+      }										\
+										\
+      glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);				\
+    } break;									\
+										\
+    default:									\
+      ERR(ddraw, "Unhandled vertex type\n");					\
+      break;									\
+    }										\
+										\
+    odev->vt = d3dv;								\
+  }										\
+										\
+  switch (d3dp) {								\
+  case D3DPT_POINTLIST:								\
+    TRACE(ddraw, "Start POINTS\n");						\
+    glBegin(GL_POINTS);								\
+    break;									\
+										\
+  case D3DPT_LINELIST:								\
+    TRACE(ddraw, "Start LINES\n");						\
+    glBegin(GL_LINES);								\
+    break;									\
+										\
+  case D3DPT_LINESTRIP:								\
+    TRACE(ddraw, "Start LINE_STRIP\n");						\
+    glBegin(GL_LINE_STRIP);							\
+    break;									\
+										\
+  case D3DPT_TRIANGLELIST:							\
+    TRACE(ddraw, "Start TRIANGLES\n");						\
+    glBegin(GL_TRIANGLES);							\
+    break;									\
+										\
+  case D3DPT_TRIANGLESTRIP:							\
+    TRACE(ddraw, "Start TRIANGLE_STRIP\n");					\
+    glBegin(GL_TRIANGLE_STRIP);							\
+    break;									\
+										\
+  case D3DPT_TRIANGLEFAN:							\
+    TRACE(ddraw, "Start TRIANGLE_FAN\n");					\
+    glBegin(GL_TRIANGLE_FAN);							\
+    break;									\
+										\
+  default:									\
+    TRACE(ddraw, "Unhandled primitive\n");					\
+    break;									\
+  }										\
+										\
+  /* Draw the primitives */							\
+  for (vx_index = 0; vx_index < MAXVERT; vx_index++) {				\
+    switch (d3dv) {								\
+    case D3DVT_VERTEX: {							\
+      D3DVERTEX *vx = ((D3DVERTEX *) lpvertex) + INDEX;				\
+										\
+      glNormal3f(vx->nx.nx, vx->ny.ny, vx->nz.nz);				\
+      glVertex3f(vx->x.x, vx->y.y, vx->z.z);					\
+      TRACE(ddraw, "   V: %f %f %f\n", vx->x.x, vx->y.y, vx->z.z);		\
+    } break;									\
+										\
+    case D3DVT_LVERTEX: {							\
+      D3DLVERTEX *vx = ((D3DLVERTEX *) lpvertex) + INDEX;			\
+      DWORD col = vx->c.color;							\
+										\
+      glColor3f(((col >> 16) & 0xFF) / 255.0,					\
+		((col >>  8) & 0xFF) / 255.0,					\
+		((col >>  0) & 0xFF) / 255.0);					\
+      glVertex3f(vx->x.x, vx->y.y, vx->z.z);					\
+      TRACE(ddraw, "  LV: %f %f %f (%02lx %02lx %02lx)\n",			\
+	    vx->x.x, vx->y.y, vx->z.z,						\
+	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF));	\
+    } break;									\
+										\
+    case D3DVT_TLVERTEX: {							\
+      D3DTLVERTEX *vx = ((D3DTLVERTEX *) lpvertex) + INDEX;			\
+      DWORD col = vx->c.color;							\
+										\
+      glColor3f(((col >> 16) & 0xFF) / 255.0,					\
+		((col >>  8) & 0xFF) / 255.0,					\
+		((col >>  0) & 0xFF) / 255.0);					\
+      glTexCoord2f(vx->u.tu, vx->v.tv);						\
+      if (vx->r.rhw < 0.01)							\
+	glVertex3f(vx->x.sx,							\
+		   vx->y.sy,							\
+		   vx->z.sz);							\
+      else									\
+	glVertex4f(vx->x.sx / vx->r.rhw,					\
+		   vx->y.sy / vx->r.rhw,					\
+		   vx->z.sz / vx->r.rhw,					\
+		   1.0 / vx->r.rhw);						\
+      TRACE(ddraw, " TLV: %f %f %f (%02lx %02lx %02lx) (%f %f) (%f)\n",		\
+	    vx->x.sx, vx->y.sy, vx->z.sz,					\
+	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),	\
+	    vx->u.tu, vx->v.tv, vx->r.rhw);					\
+    } break;									\
+										\
+    default:									\
+      TRACE(ddraw, "Unhandled vertex type\n");					\
+      break;									\
+    }										\
+  }										\
+										\
+  glEnd();									\
+  TRACE(ddraw, "End\n");
 
 
 static HRESULT WINAPI IDirect3DDevice2_DrawPrimitive(LPDIRECT3DDEVICE2 this,
@@ -765,147 +931,18 @@ static HRESULT WINAPI IDirect3DDevice2_DrawPrimitive(LPDIRECT3DDEVICE2 this,
 						     DWORD vertcount,
 						     DWORD dwFlags)
 {
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
   int vx_index;
   
   TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%08lx): stub\n", this, d3dp, d3dv, lpvertex, vertcount, dwFlags);
 
-  /* Puts GL in the correct lighting mode */
-  switch (d3dv) {
-  case D3DVT_VERTEX:
-    TRACE(ddraw, "Standard Vertex\n");
-    glEnable(GL_LIGHTING);
-    break;
+  DRAW_PRIMITIVE(vertcount, vx_index);
     
-  case D3DVT_LVERTEX:
-    TRACE(ddraw, "Lighted Vertex\n");
-    glDisable(GL_LIGHTING);
-    break;
-    
-  case D3DVT_TLVERTEX: {
-    GLdouble height, width;
-    
-    TRACE(ddraw, "Transformed - Lighted Vertex\n");
-    /* First, disable lighting */
-    glDisable(GL_LIGHTING);
-
-    /* Then do not put any transformation matrixes */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    if (this->current_viewport == NULL) {
-      ERR(ddraw, "No current viewport !\n");
-      /* Using standard values */
-      height = 640.0;
-      width = 480.0;
-    } else {
-      if (this->current_viewport->use_vp2) {
-	height = (GLdouble) this->current_viewport->viewport.vp2.dwHeight;
-	width  = (GLdouble) this->current_viewport->viewport.vp2.dwWidth;
-      } else {
-	height = (GLdouble) this->current_viewport->viewport.vp1.dwHeight;
-	width  = (GLdouble) this->current_viewport->viewport.vp1.dwWidth;
+  return D3D_OK;
       }
-    }
-
-    glOrtho(0.0, width, height, 0.0, 1.5, -1.5);
-  } break;
     
-  default:
-    TRACE(ddraw, "Unhandled vertex type\n");
-    break;
-  }
 
-  switch (d3dp) {
-  case D3DPT_POINTLIST:
-    TRACE(ddraw, "Start POINTS\n");
-    glBegin(GL_POINTS);
-    break;
-
-  case D3DPT_LINELIST:
-    TRACE(ddraw, "Start LINES\n");
-    glBegin(GL_LINES);
-    break;
-    
-  case D3DPT_LINESTRIP:
-    TRACE(ddraw, "Start LINE_STRIP\n");
-    glBegin(GL_LINE_STRIP);
-    break;
-    
-  case D3DPT_TRIANGLELIST:
-    TRACE(ddraw, "Start TRIANGLES\n");
-    glBegin(GL_TRIANGLES);
-    break;
-
-  case D3DPT_TRIANGLESTRIP:
-    TRACE(ddraw, "Start TRIANGLE_STRIP\n");
-    glBegin(GL_TRIANGLE_STRIP);
-    break;
-
-  case D3DPT_TRIANGLEFAN:
-    TRACE(ddraw, "Start TRIANGLE_FAN\n");
-    glBegin(GL_TRIANGLE_FAN);
-    break;
-    
-  default:
-    TRACE(ddraw, "Unhandled primitive\n");
-    break;
-  }
-  
-  /* Draw the primitives */
-  for (vx_index = 0; vx_index < vertcount; vx_index++) {
-    switch (d3dv) {
-    case D3DVT_VERTEX: {
-      D3DVERTEX *vx = ((D3DVERTEX *) lpvertex) + vx_index;
       
-      glNormal3f(vx->nx.nx, vx->ny.ny, vx->nz.nz);
-      glVertex3f(vx->x.x, vx->y.y, vx->z.z);
-      TRACE(ddraw, "   V: %f %f %f\n", vx->x.x, vx->y.y, vx->z.z);
-    } break;
-      
-    case D3DVT_LVERTEX: {
-      D3DLVERTEX *vx = ((D3DLVERTEX *) lpvertex) + vx_index;
-      DWORD col = vx->c.color;
-      
-      glColor3f(((col >> 16) & 0xFF) / 255.0,
-		((col >>  8) & 0xFF) / 255.0,
-		((col >>  0) & 0xFF) / 255.0);
-      glVertex3f(vx->x.x, vx->y.y, vx->z.z);
-      TRACE(ddraw, "  LV: %f %f %f (%02lx %02lx %02lx)\n",
-	    vx->x.x, vx->y.y, vx->z.z,
-	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF));
-    } break;
-
-    case D3DVT_TLVERTEX: {
-      D3DTLVERTEX *vx = ((D3DTLVERTEX *) lpvertex) + vx_index;
-      DWORD col = vx->c.color;
-      
-      glColor3f(((col >> 16) & 0xFF) / 255.0,
-		((col >>  8) & 0xFF) / 255.0,
-		((col >>  0) & 0xFF) / 255.0);
-      glTexCoord2f(vx->u.tu, vx->v.tv);
-      glVertex3f(vx->x.sx, vx->y.sy, vx->z.sz);
-      TRACE(ddraw, " TLV: %f %f %f (%02lx %02lx %02lx) (%f %f)\n",
-	    vx->x.sx, vx->y.sy, vx->z.sz,
-	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF),
-	    vx->u.tu, vx->v.tv);
-    } break;
-      
-    default:
-      TRACE(ddraw, "Unhandled vertex type\n");
-      break;
-    }
-  }
-  
-  glEnd();
-  TRACE(ddraw, "End\n");
-   
-  return DD_OK;
-}
-
-
-
 static HRESULT WINAPI IDirect3DDevice2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 this,
 							    D3DPRIMITIVETYPE d3dp,
 							    D3DVERTEXTYPE d3dv,
@@ -915,73 +952,14 @@ static HRESULT WINAPI IDirect3DDevice2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 th
 							    DWORD indexcount,
 							    DWORD dwFlags)
 {
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
   int vx_index;
   
   TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", this, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
   
-  /* Puts GL in the correct lighting mode */
-  switch (d3dv) {
-  case D3DVT_VERTEX:
-    glEnable(GL_LIGHTING);
-    break;
-    
-  case D3DVT_LVERTEX:
-  case D3DVT_TLVERTEX:
-    glDisable(GL_LIGHTING);
-    break;
-    
-  default:
-    break;
-  }
+  DRAW_PRIMITIVE(indexcount, lpindexes[vx_index]);
   
-  switch (d3dp) {
-  case D3DPT_LINESTRIP:
-    TRACE(ddraw, "Start LINE_STRIP\n");
-    glBegin(GL_LINE_STRIP);
-    break;
-    
-  case D3DPT_TRIANGLELIST:
-    TRACE(ddraw, "Start TRIANGLES\n");
-    glBegin(GL_TRIANGLES);
-    break;
-    
-  default:
-    break;
-  }
-  
-  /* Draw the primitives */
-  for (vx_index = 0; vx_index < indexcount; vx_index++) {
-    switch (d3dv) {
-    case D3DVT_VERTEX: {
-      D3DVERTEX *vx = ((D3DVERTEX *) lpvertex) + lpindexes[vx_index];
-      
-      glNormal3f(vx->nx.nx, vx->ny.ny, vx->nz.nz);
-      glVertex3f(vx->x.x, vx->y.y, vx->z.z);
-      TRACE(ddraw, "   V: %f %f %f\n", vx->x.x, vx->y.y, vx->z.z);
-    } break;
-      
-    case D3DVT_LVERTEX: {
-      D3DLVERTEX *vx = ((D3DLVERTEX *) lpvertex) + lpindexes[vx_index];
-      DWORD col = vx->c.color;
-      
-      glColor3f(((col >> 16) & 0xFF) / 255.0,
-		((col >>  8) & 0xFF) / 255.0,
-		((col >>  0) & 0xFF) / 255.0);
-      glVertex3f(vx->x.x, vx->y.y, vx->z.z);
-      TRACE(ddraw, "  LV: %f %f %f (%02lx %02lx %02lx)\n",
-	    vx->x.x, vx->y.y, vx->z.z,
-	    ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF));
-    } break;
-      
-    default:
-      break;
-    }
-  }
-  
-  glEnd();
-  TRACE(ddraw, "End\n");
-  
-  return DD_OK;
+  return D3D_OK;
 }
 
 
@@ -1101,6 +1079,10 @@ int is_OpenGL_dx3(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE 
     odev->ctx = OSMesaCreateContext(OSMESA_RGBA, NULL);
     odev->buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
+    odev->rs.src = GL_ONE;
+    odev->rs.dst = GL_ZERO;
+    odev->rs.mag = GL_NEAREST;
+    odev->rs.min = GL_NEAREST;
 
     odev->world_mat = (LPD3DMATRIX) &id_mat;
     odev->view_mat  = (LPD3DMATRIX) &id_mat;

@@ -67,6 +67,8 @@ typedef struct DOS_FILE_LOCK DOS_FILE_LOCK;
 static DOS_FILE_LOCK *locks = NULL;
 static void DOS_RemoveFileLocks(FILE_OBJECT *file);
 
+/* Size of per-process table of DOS handles */
+#define DOS_TABLE_SIZE 256
 
 
 /***********************************************************************
@@ -421,13 +423,18 @@ HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     /* If write access failed, retry without GENERIC_WRITE */
 
     if ((reply.handle == -1) && !Options.failReadOnly &&
-        (access & GENERIC_WRITE) && (GetLastError() == ERROR_ACCESS_DENIED))
+        (access & GENERIC_WRITE)) 
     {
-        req.access &= ~GENERIC_WRITE;
-        CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
-                            &req, sizeof(req),
-                            filename, strlen(filename) + 1 );
-        CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    	DWORD lasterror = GetLastError();
+	if ((lasterror == ERROR_ACCESS_DENIED) || 
+	    (lasterror == ERROR_WRITE_PROTECT))
+        {
+	    req.access &= ~GENERIC_WRITE;
+	    CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
+				&req, sizeof(req),
+				filename, strlen(filename) + 1 );
+	    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+	}
     }
     if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
 
@@ -730,25 +737,6 @@ INT32 WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 
 
 /***********************************************************************
- *           FILE_Dup2
- *
- * dup2() function for DOS handles.
- */
-HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 )
-{
-    FILE_OBJECT *file;
-
-    TRACE(file, "FILE_Dup2 for handle %d\n", hFile1 );
-    /* FIXME: should use DuplicateHandle */
-    if (!(file = FILE_GetFile( hFile1, 0, NULL ))) return HFILE_ERROR32;
-    if (!HANDLE_SetObjPtr( PROCESS_Current(), hFile2, &file->header, 0 ))
-        hFile2 = HFILE_ERROR32;
-    FILE_ReleaseFile( file );
-    return hFile2;
-}
-
-
-/***********************************************************************
  *           GetTempFileName16   (KERNEL.97)
  */
 UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
@@ -1014,7 +1002,7 @@ error:  /* We get here if there was an error opening the file */
 HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 {
     TRACE(file,"OpenFile16(%s,%i)\n", name, mode);
-    return HFILE32_TO_HFILE16(FILE_DoOpenFile( name, ofs, mode, FALSE ));
+    return FILE_AllocDosHandle( FILE_DoOpenFile( name, ofs, mode, FALSE ) );
 }
 
 
@@ -1028,12 +1016,117 @@ HFILE32 WINAPI OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
 
 
 /***********************************************************************
+ *           FILE_AllocDosHandle
+ *
+ * Allocate a DOS handle for a Win32 handle. The Win32 handle is no
+ * longer valid after this function (even on failure).
+ */
+HFILE16 FILE_AllocDosHandle( HANDLE32 handle )
+{
+    int i;
+    HANDLE32 *ptr = PROCESS_Current()->dos_handles;
+
+    if (!handle || (handle == INVALID_HANDLE_VALUE32))
+        return INVALID_HANDLE_VALUE16;
+
+    if (!ptr)
+    {
+        if (!(ptr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
+                               sizeof(*ptr) * DOS_TABLE_SIZE )))
+            goto error;
+        PROCESS_Current()->dos_handles = ptr;
+        ptr[0] = GetStdHandle(STD_INPUT_HANDLE);
+        ptr[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+        ptr[2] = GetStdHandle(STD_ERROR_HANDLE);
+        ptr[3] = GetStdHandle(STD_ERROR_HANDLE);
+        ptr[4] = GetStdHandle(STD_ERROR_HANDLE);
+    }
+
+    for (i = 0; i < DOS_TABLE_SIZE; i++, ptr++)
+        if (!*ptr)
+        {
+            *ptr = handle;
+            TRACE( file, "Got %d for h32 %d\n", i, handle );
+            return i;
+        }
+error:
+    DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
+    CloseHandle( handle );
+    return INVALID_HANDLE_VALUE16;
+}
+
+
+/***********************************************************************
+ *           FILE_GetHandle32
+ *
+ * Return the Win32 handle for a DOS handle.
+ */
+HANDLE32 FILE_GetHandle32( HFILE16 hfile )
+{
+    HANDLE32 *table = PROCESS_Current()->dos_handles;
+    if ((hfile >= DOS_TABLE_SIZE) || !table || !table[hfile])
+    {
+        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        return INVALID_HANDLE_VALUE32;
+    }
+    return table[hfile];
+}
+
+
+/***********************************************************************
+ *           FILE_Dup2
+ *
+ * dup2() function for DOS handles.
+ */
+HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
+{
+    HANDLE32 *table = PROCESS_Current()->dos_handles;
+    HANDLE32 new_handle;
+
+    if ((hFile1 >= DOS_TABLE_SIZE) || (hFile2 >= DOS_TABLE_SIZE) ||
+        !table || !table[hFile1])
+    {
+        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        return HFILE_ERROR16;
+    }
+    if (hFile2 < 5)
+    {
+        FIXME( file, "stdio handle closed, need proper conversion\n" );
+        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        return HFILE_ERROR16;
+    }
+    if (!DuplicateHandle( GetCurrentProcess(), table[hFile1],
+                          GetCurrentProcess(), &new_handle,
+                          0, FALSE, DUPLICATE_SAME_ACCESS ))
+        return HFILE_ERROR16;
+    if (table[hFile2]) CloseHandle( table[hFile2] );
+    table[hFile2] = new_handle;
+    return hFile2;
+}
+
+
+/***********************************************************************
  *           _lclose16   (KERNEL.81)
  */
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
-    TRACE(file, "handle %d\n", hFile );
-    return CloseHandle( HFILE16_TO_HFILE32( hFile )  ) ? 0 : HFILE_ERROR16;
+    HANDLE32 *table = PROCESS_Current()->dos_handles;
+
+    if (hFile < 5)
+    {
+        FIXME( file, "stdio handle closed, need proper conversion\n" );
+        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        return HFILE_ERROR16;
+    }
+    if ((hFile >= DOS_TABLE_SIZE) || !table || !table[hFile])
+    {
+        DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
+        return HFILE_ERROR16;
+    }
+    TRACE( file, "%d (handle32=%d)\n", hFile, table[hFile] );
+    CloseHandle( table[hFile] );
+    table[hFile] = 0;
+    return 0;
 }
 
 
@@ -1126,7 +1219,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
     /* Some programs pass a count larger than the allocated buffer */
     maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
     if (count > maxlen) count = maxlen;
-    return _lread32(HFILE16_TO_HFILE32(hFile), PTR_SEG_TO_LIN(buffer), count );
+    return _lread32(FILE_GetHandle32(hFile), PTR_SEG_TO_LIN(buffer), count );
 }
 
 
@@ -1155,7 +1248,7 @@ UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
  */
 UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 {
-    return (UINT16)_lread32(HFILE16_TO_HFILE32(hFile), buffer, (LONG)count );
+    return (UINT16)_lread32(FILE_GetHandle32(hFile), buffer, (LONG)count );
 }
 
 
@@ -1165,7 +1258,7 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
     TRACE(file, "%s %02x\n", path, attr );
-    return (HFILE16) HFILE32_TO_HFILE16(_lcreat32( path, attr ));
+    return FILE_AllocDosHandle( _lcreat32( path, attr ) );
 }
 
 
@@ -1182,14 +1275,14 @@ HFILE32 WINAPI _lcreat32( LPCSTR path, INT32 attr )
 
 
 /***********************************************************************
- *           _lcreat_uniq   (Not a Windows API)
+ *           _lcreat16_uniq   (Not a Windows API)
  */
-HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
+HFILE16 _lcreat16_uniq( LPCSTR path, INT32 attr )
 {
     TRACE(file, "%s %02x\n", path, attr );
-    return CreateFile32A( path, GENERIC_READ | GENERIC_WRITE,
-                          FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                          CREATE_NEW, attr, -1 );
+    return FILE_AllocDosHandle( CreateFile32A( path, GENERIC_READ | GENERIC_WRITE,
+                                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                               CREATE_NEW, attr, -1 ));
 }
 
 
@@ -1236,7 +1329,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
  */
 LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 {
-    return SetFilePointer( HFILE16_TO_HFILE32(hFile), lOffset, NULL, nOrigin );
+    return SetFilePointer( FILE_GetHandle32(hFile), lOffset, NULL, nOrigin );
 }
 
 
@@ -1254,7 +1347,7 @@ LONG WINAPI _llseek32( HFILE32 hFile, LONG lOffset, INT32 nOrigin )
  */
 HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 {
-    return HFILE32_TO_HFILE16(_lopen32( path, mode ));
+    return FILE_AllocDosHandle( _lopen32( path, mode ) );
 }
 
 
@@ -1276,7 +1369,7 @@ HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
  */
 UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 {
-    return (UINT16)_hwrite32( HFILE16_TO_HFILE32(hFile), buffer, (LONG)count );
+    return (UINT16)_hwrite32( FILE_GetHandle32(hFile), buffer, (LONG)count );
 }
 
 /***********************************************************************
@@ -1293,7 +1386,7 @@ UINT32 WINAPI _lwrite32( HFILE32 hFile, LPCSTR buffer, UINT32 count )
  */
 LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
 {
-    return _lread32( HFILE16_TO_HFILE32(hFile), buffer, count );
+    return _lread32( FILE_GetHandle32(hFile), buffer, count );
 }
 
 
@@ -1311,7 +1404,7 @@ LONG WINAPI _hread32( HFILE32 hFile, LPVOID buffer, LONG count)
  */
 LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 {
-    return _hwrite32( HFILE16_TO_HFILE32(hFile), buffer, count );
+    return _hwrite32( FILE_GetHandle32(hFile), buffer, count );
 }
 
 

@@ -506,48 +506,23 @@ BOOL32 WINAPI FreeConsole(VOID)
 static int CONSOLE_openpty(CONSOLE *console, char *name, 
 			struct termios *term, struct winsize *winsize)
 {
-        int fdm, fds;
-        char *ptr1, *ptr2;
-        char pts_name[512];
+        int temp, slave;
         struct set_console_fd_request req;
 
-        strcpy (pts_name, "/dev/ptyXY");
+        temp = wine_openpty(&console->master, &slave, name, term,
+           winsize);
+        console->infd = console->outfd = slave;
 
-        for (ptr1 = "pqrstuvwxyzPQRST"; *ptr1 != 0; ptr1++) {
-                pts_name[8] = *ptr1;
-                for (ptr2 = "0123456789abcdef"; *ptr2 != 0; ptr2++) {
-                        pts_name[9] = *ptr2;
+        req.handle = console->hread;
+        CLIENT_SendRequest(REQ_SET_CONSOLE_FD, dup(slave), 1,
+           &req, sizeof(req));
+        CLIENT_WaitReply( NULL, NULL, 0);
+        req.handle = console->hwrite;
+        CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(slave), 1,
+           &req, sizeof(req));
+        CLIENT_WaitReply( NULL, NULL, 0);
 
-                        if ((fdm = open(pts_name, O_RDWR)) < 0) {
-                                if (errno == ENOENT)
-                                        return -1;
-                                else
-                                        continue;
-                        }
-                        pts_name[5] = 't';
-                        if ((fds = open(pts_name, O_RDWR)) < 0) {
-                                pts_name[5] = 'p';
-                                continue;
-                        }
-                        console->master = fdm;
-                        console->infd = console->outfd = fds;
-                        req.handle = console->hread;
-			CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(fds), 1, &req, sizeof(req) );
-                        CLIENT_WaitReply( NULL, NULL, 0 );
-                        req.handle = console->hwrite;
-			CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(fds), 1, &req, sizeof(req) );
-                        CLIENT_WaitReply( NULL, NULL, 0 );
-
-			if (term != NULL)
-				tcsetattr(console->infd, TCSANOW, term);
-			if (winsize != NULL)
-				ioctl(console->outfd, TIOCSWINSZ, winsize);
-			if (name != NULL)
-				strcpy(name, pts_name);
-                        return fds;
-                }
-        }
-	return -1;
+        return temp;  /* The same result as the openpty call */
 }
 
 /*************************************************************************

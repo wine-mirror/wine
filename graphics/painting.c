@@ -127,13 +127,13 @@ BOOL32 WINAPI Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
 }
 
 /***********************************************************************
- *           ArcTo32    (GDI32.8)
+ *           ArcTo    (GDI32.8)
  */
-BOOL32 WINAPI ArcTo32( HDC32 hdc, 
-                       INT32 left,   INT32 top, 
-                       INT32 right,  INT32 bottom,
-                       INT32 xstart, INT32 ystart,
-                       INT32 xend,   INT32 yend )
+BOOL32 WINAPI ArcTo( HDC32 hdc, 
+                     INT32 left,   INT32 top, 
+                     INT32 right,  INT32 bottom,
+                     INT32 xstart, INT32 ystart,
+                     INT32 xend,   INT32 yend )
 {
     BOOL32 result;
 
@@ -819,10 +819,10 @@ BOOL32 WINAPI PolyPolygon32( HDC32 hdc, const POINT32* pt, const INT32* counts,
 }
 
 /**********************************************************************
- *          PolyPolyline32  (GDI32.272)
+ *          PolyPolyline  (GDI32.272)
  */
-BOOL32 WINAPI PolyPolyline32( HDC32 hdc, const POINT32* pt, const DWORD* counts,
-                             DWORD polylines )
+BOOL32 WINAPI PolyPolyline( HDC32 hdc, const POINT32* pt, const DWORD* counts,
+                            DWORD polylines )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -1206,11 +1206,11 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
 }
 
 /***************************************************************
- *      AngleArc32 (GDI32.5)
+ *      AngleArc (GDI32.5)
  *
  */
-BOOL32 WINAPI AngleArc32(HDC32 hdc, INT32 x, INT32 y, DWORD dwRadius,
-                         FLOAT eStartAngle, FLOAT eSweepAngle)
+BOOL32 WINAPI AngleArc(HDC32 hdc, INT32 x, INT32 y, DWORD dwRadius,
+                       FLOAT eStartAngle, FLOAT eSweepAngle)
 {
         FIXME(gdi,"AngleArc, stub\n");
         return 0;

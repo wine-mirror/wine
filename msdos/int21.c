@@ -225,7 +225,7 @@ static void ioctlGetDeviceInfo( CONTEXT *context )
     RESET_CFLAG(context);
 
     /* DOS device ? */
-    if ((file = FILE_GetFile( HFILE16_TO_HFILE32(BX_reg(context)), 0, NULL )))
+    if ((file = FILE_GetFile( FILE_GetHandle32(BX_reg(context)), 0, NULL )))
     {
         const DOS_DEVICE *dev = DOSFS_GetDevice( file->unix_name );
         FILE_ReleaseFile( file );
@@ -725,7 +725,7 @@ static BOOL32 INT21_CreateTempFile( CONTEXT *context )
         sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
         counter = (counter + 1) % 1000;
 
-        if ((AX_reg(context) = HFILE32_TO_HFILE16(_lcreat_uniq( name, 0 ))) != (WORD)HFILE_ERROR16)
+        if ((AX_reg(context) = _lcreat16_uniq( name, 0 )) != (WORD)HFILE_ERROR16)
         {
             TRACE(int21, "created %s\n", name );
             return TRUE;
@@ -919,7 +919,7 @@ static void fLock( CONTEXT * context )
 		BX_reg(context),
 		MAKELONG(DX_reg(context),CX_reg(context)),
 		MAKELONG(DI_reg(context),SI_reg(context))) ;
-          if (!LockFile(HFILE16_TO_HFILE32(BX_reg(context)),
+          if (!LockFile(FILE_GetHandle32(BX_reg(context)),
                         MAKELONG(DX_reg(context),CX_reg(context)), 0,
                         MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
 	    AX_reg(context) = DOS_ExtendedError;
@@ -932,7 +932,7 @@ static void fLock( CONTEXT * context )
 		BX_reg(context),
 		MAKELONG(DX_reg(context),CX_reg(context)),
 		MAKELONG(DI_reg(context),SI_reg(context))) ;
-          if (!UnlockFile(HFILE16_TO_HFILE32(BX_reg(context)),
+          if (!UnlockFile(FILE_GetHandle32(BX_reg(context)),
                           MAKELONG(DX_reg(context),CX_reg(context)), 0,
                           MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
 	    AX_reg(context) = DOS_ExtendedError;
@@ -1127,8 +1127,10 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
-                _lread16(1, (BYTE *)&context->Eax, 1);
-                break;
+        TRACE(int21,"DIRECT CHARACTER INPUT WITH ECHO\n");
+	AL_reg(context) = CONSOLE_GetCharacter();
+	/* FIXME: no echo */
+	break;
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
         TRACE(int21, "Write Character to Standard Output\n");
@@ -1177,13 +1179,15 @@ void WINAPI DOS3Call( CONTEXT *context )
 	break;
       }
 
-    case 0x0b: /* GET STDIN STATUS */
-	{
-	    CHAR dummy;
+    case 0x0b: {/* GET STDIN STATUS */
+    		char x1,x2;
 
-	    AL_reg(context) = CONSOLE_CheckForKeystroke(&dummy, &dummy);
+		if (CONSOLE_CheckForKeystroke(&x1,&x2))
+		    AL_reg(context) = 0xff; 
+		else
+		    AL_reg(context) = 0; 
+		break;
 	}
-        break;
     case 0x2e: /* SET VERIFY FLAG */
         TRACE(int21,"SET VERIFY FLAG ignored\n");
     	/* we cannot change the behaviour anyway, so just ignore it */
@@ -1457,16 +1461,6 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     case 0x3e: /* "CLOSE" - CLOSE FILE */
         TRACE(int21,"CLOSE handle %d\n",BX_reg(context));
-	if ((BX_reg(context)<5)||
-	    /* FIXME: need to improve on those handle conversion macros */
-	    (BX_reg(context)==HFILE32_TO_HFILE16(GetStdHandle(STD_INPUT_HANDLE)))||
-	    (BX_reg(context)==HFILE32_TO_HFILE16(GetStdHandle(STD_OUTPUT_HANDLE)))||
-	    (BX_reg(context)==HFILE32_TO_HFILE16(GetStdHandle(STD_ERROR_HANDLE)))) {
-	    /* hack to make sure stdio isn't closed */
-	    FIXME(int21, "stdio handle closed, need proper conversion\n");
-	    DOS_ExtendedError = 0x06;
-	    bSetDOSExtendedError = TRUE;
-	} else
         bSetDOSExtendedError = ((AX_reg(context) = _lclose16( BX_reg(context) )) != 0);
         break;
 
@@ -1566,7 +1560,7 @@ void WINAPI DOS3Call( CONTEXT *context )
             break;
         case 0x02:{
            FILE_OBJECT *file;
-           file = FILE_GetFile(HFILE16_TO_HFILE32(BX_reg(context)),0,NULL);
+           file = FILE_GetFile(FILE_GetHandle32(BX_reg(context)),0,NULL);
            if (!strcasecmp(file->unix_name, "SCSIMGR$"))
                         ASPI_DOS_HandleInt(context);
            FILE_ReleaseFile( file );
@@ -1685,19 +1679,19 @@ void WINAPI DOS3Call( CONTEXT *context )
             HANDLE32 handle;
             TRACE(int21,"DUP - DUPLICATE FILE HANDLE %d\n",BX_reg(context));
             if ((bSetDOSExtendedError = !DuplicateHandle( GetCurrentProcess(),
-                                                          HFILE16_TO_HFILE32(BX_reg(context)),
+                                                          FILE_GetHandle32(BX_reg(context)),
                                                           GetCurrentProcess(), &handle,
                                                           0, TRUE, DUPLICATE_SAME_ACCESS )))
                 AX_reg(context) = HFILE_ERROR16;
             else
-                AX_reg(context) = HFILE32_TO_HFILE16(handle);
+                AX_reg(context) = FILE_AllocDosHandle(handle);
             break;
         }
 
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
         TRACE(int21,"FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",
 	      BX_reg(context),CX_reg(context));
-        bSetDOSExtendedError = (FILE_Dup2( HFILE16_TO_HFILE32(BX_reg(context)), HFILE16_TO_HFILE32(CX_reg(context)) ) == HFILE_ERROR32);
+        bSetDOSExtendedError = (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR16);
         break;
 
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
@@ -1848,7 +1842,7 @@ void WINAPI DOS3Call( CONTEXT *context )
                 FILETIME filetime;
                 TRACE(int21,"GET FILE DATE AND TIME for handle %d\n",
 		      BX_reg(context));
-                if (!GetFileTime( HFILE16_TO_HFILE32(BX_reg(context)), NULL, NULL, &filetime ))
+                if (!GetFileTime( FILE_GetHandle32(BX_reg(context)), NULL, NULL, &filetime ))
 		     bSetDOSExtendedError = TRUE;
                 else FileTimeToDosDateTime( &filetime, &DX_reg(context),
                                             &CX_reg(context) );
@@ -1863,7 +1857,7 @@ void WINAPI DOS3Call( CONTEXT *context )
                 DosDateTimeToFileTime( DX_reg(context), CX_reg(context),
                                        &filetime );
                 bSetDOSExtendedError = 
-			(!SetFileTime( HFILE16_TO_HFILE32(BX_reg(context)),
+			(!SetFileTime( FILE_GetHandle32(BX_reg(context)),
                                       NULL, NULL, &filetime ));
             }
             break;
@@ -1897,7 +1891,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         TRACE(int21,"CREATE NEW FILE 0x%02x for %s\n", CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)));
         bSetDOSExtendedError = ((AX_reg(context) = 
-               HFILE32_TO_HFILE16(_lcreat_uniq( CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context)), 0 )))
+               _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context)), 0 ))
 								== (WORD)HFILE_ERROR16);
         break;
 
@@ -2022,7 +2016,7 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x68: /* "FFLUSH" - COMMIT FILE */
     case 0x6a: /* COMMIT FILE */
         TRACE(int21,"FFLUSH/COMMIT handle %d\n",BX_reg(context));
-        bSetDOSExtendedError = (!FlushFileBuffers( HFILE16_TO_HFILE32(BX_reg(context)) ));
+        bSetDOSExtendedError = (!FlushFileBuffers( FILE_GetHandle32(BX_reg(context)) ));
         break;		
 	
     case 0x69: /* DISK SERIAL NUMBER */

@@ -6,6 +6,7 @@
  */
 
 #include "windows.h"
+#include "wine/winuser16.h"
 #include "sysmetrics.h"
 #include "scroll.h"
 #include "heap.h"

@@ -429,6 +429,22 @@ typedef struct
 #define MWT_LEFTMULTIPLY  2
 #define MWT_RIGHTMULTIPLY 3
 
+/* Object Definitions for EnumObjects() */
+#define OBJ_PEN             1
+#define OBJ_BRUSH           2
+#define OBJ_DC              3
+#define OBJ_METADC          4
+#define OBJ_PAL             5
+#define OBJ_FONT            6
+#define OBJ_BITMAP          7
+#define OBJ_REGION          8
+#define OBJ_METAFILE        9
+#define OBJ_MEMDC           10
+#define OBJ_EXTPEN          11
+#define OBJ_ENHMETADC       12
+#define OBJ_ENHMETAFILE     13
+
+ 
 typedef struct
 {
     FLOAT  eM11;
@@ -1453,6 +1469,8 @@ typedef struct
 #define SYSTEM_FIXED_FONT   16
 #define DEFAULT_GUI_FONT    17
 
+#define STOCK_LAST          17
+
 /* Metafile header structure */
 typedef struct
 {
@@ -1470,7 +1488,7 @@ typedef struct
 {
     DWORD      rdSize;
     WORD       rdFunction;
-    WORD       rdParam[1];
+    WORD       rdParm[1];
 } METARECORD;
 typedef METARECORD *PMETARECORD;
 typedef METARECORD *LPMETARECORD;
@@ -1951,24 +1969,26 @@ DECL_WINELIB_TYPE(ABORTPROC)
 
 #pragma pack(4)
 
+/* Declarations for functions that exist only in Win16 */
+
+VOID        WINAPI Death(HDC16);
+VOID        WINAPI Resurrection(HDC16,WORD,WORD,WORD,WORD,WORD,WORD);
+
 /* Declarations for functions that exist only in Win32 */
 
-BOOL32      WINAPI AngleArc32(HDC32, INT32, INT32, DWORD, FLOAT, FLOAT);
-#define     AngleArc WINELIB_NAME(AngleArc)
-BOOL32      WINAPI ArcTo32(HDC32, INT32, INT32, INT32, INT32, INT32, INT32, INT32, INT32); 
-HENHMETAFILE32 WINAPI CloseEnhMetaFile32(HDC32);
-#define     CloseEnhMetaFile WINELIB_NAME(CloseEnhMetaFile)
+BOOL32      WINAPI AngleArc(HDC32, INT32, INT32, DWORD, FLOAT, FLOAT);
+BOOL32      WINAPI ArcTo(HDC32, INT32, INT32, INT32, INT32, INT32, INT32, INT32, INT32); 
+HENHMETAFILE32 WINAPI CloseEnhMetaFile(HDC32);
 HBRUSH32    WINAPI CreateDIBPatternBrushPt(const void*,UINT32);
 HDC32       WINAPI CreateEnhMetaFile32A(HDC32,LPCSTR,const RECT32*,LPCSTR);
 HDC32       WINAPI CreateEnhMetaFile32W(HDC32,LPCWSTR,const RECT32*,LPCWSTR);
 #define     CreateEnhMetaFile WINELIB_NAME_AW(CreateEnhMetaFile)
-INT32       WINAPI DrawEscape32(HDC32,INT32,INT32,LPCSTR);
+INT32       WINAPI DrawEscape(HDC32,INT32,INT32,LPCSTR);
 INT16       WINAPI ExcludeVisRect(HDC16,INT16,INT16,INT16,INT16);
 BOOL16      WINAPI FastWindowFrame(HDC16,const RECT16*,INT16,INT16,DWORD);
 UINT16      WINAPI GDIRealizePalette(HDC16);
 HPALETTE16  WINAPI GDISelectPalette(HDC16,HPALETTE16,WORD);
-BOOL32      WINAPI GdiComment32(HDC32,UINT32,const BYTE *);
-#define     GdiComment WINELIB_NAME(GdiComment)
+BOOL32      WINAPI GdiComment(HDC32,UINT32,const BYTE *);
 DWORD       WINAPI GetBitmapDimension(HBITMAP16);
 DWORD       WINAPI GetBrushOrg(HDC16);
 BOOL32      WINAPI GetCharABCWidthsFloat32A(HDC32,UINT32,UINT32,LPABCFLOAT);
@@ -1977,8 +1997,7 @@ BOOL32      WINAPI GetCharABCWidthsFloat32W(HDC32,UINT32,UINT32,LPABCFLOAT);
 BOOL32      WINAPI GetCharWidthFloat32A(HDC32,UINT32,UINT32,PFLOAT);
 BOOL32      WINAPI GetCharWidthFloat32W(HDC32,UINT32,UINT32,PFLOAT);
 #define     GetCharWidthFloat WINELIB_NAME_AW(GetCharWidthFloat)
-BOOL32      WINAPI GetColorAdjustment32(HDC32, LPCOLORADJUSTMENT);
-#define     GetColorAdjustment WINELIB_NAME(GetColorAdjustment)
+BOOL32      WINAPI GetColorAdjustment(HDC32, LPCOLORADJUSTMENT);
 HFONT16     WINAPI GetCurLogFont(HDC16);
 DWORD       WINAPI GetCurrentPosition(HDC16);
 DWORD       WINAPI GetDCHook(HDC16,FARPROC16*);
@@ -2032,7 +2051,7 @@ HPALETTE32  WINAPI CreateHalftonePalette(HDC32);
 BOOL32      WINAPI DeleteEnhMetaFile(HENHMETAFILE32);
 INT32       WINAPI ExtSelectClipRgn(HDC32,HRGN32,INT32);
 HRGN32      WINAPI ExtCreateRegion(const XFORM*,DWORD,const RGNDATA*);
-INT32       WINAPI ExtEscape32(HDC32,INT32,INT32,LPCSTR,INT32,LPSTR);
+INT32       WINAPI ExtEscape(HDC32,INT32,INT32,LPCSTR,INT32,LPSTR);
 BOOL32      WINAPI FixBrushOrgEx(HDC32,INT32,INT32,LPPOINT32);
 HANDLE32    WINAPI GetCurrentObject(HDC32,UINT32);
 BOOL32      WINAPI GetDCOrgEx(HDC32,LPPOINT32);
@@ -2055,7 +2074,7 @@ BOOL32      WINAPI GetWorldTransform(HDC32,LPXFORM);
 BOOL32      WINAPI ModifyWorldTransform(HDC32,const XFORM *, DWORD);
 BOOL32      WINAPI PlayEnhMetaFile(HDC32,HENHMETAFILE32,const RECT32*);
 BOOL32      WINAPI PlayEnhMetaFileRecord(HDC32,LPHANDLETABLE32,const ENHMETARECORD*,UINT32);
-BOOL32      WINAPI PolyPolyline32(HDC32,const POINT32*,const DWORD*,DWORD);
+BOOL32      WINAPI PolyPolyline(HDC32,const POINT32*,const DWORD*,DWORD);
 BOOL32      WINAPI SetBrushOrgEx(HDC32,INT32,INT32,LPPOINT32);
 HENHMETAFILE32 WINAPI SetEnhMetaFileBits(UINT32,const BYTE *);
 INT32       WINAPI SetGraphicsMode(HDC32,INT32);
@@ -2580,7 +2599,7 @@ HPALETTE16  WINAPI SelectPalette16(HDC16,HPALETTE16,BOOL16);
 HPALETTE32  WINAPI SelectPalette32(HDC32,HPALETTE32,BOOL32);
 #define     SelectPalette WINELIB_NAME(SelectPalette)
 INT16       WINAPI SetAbortProc16(HDC16,SEGPTR);
-INT32       WINAPI SetAbortProc32(HDC32,FARPROC32);
+INT32       WINAPI SetAbortProc32(HDC32,ABORTPROC32);
 #define     SetAbortProc WINELIB_NAME(SetAbortProc)
 INT16       WINAPI SetArcDirection16(HDC16,INT16);
 INT32       WINAPI SetArcDirection32(HDC32,INT32);

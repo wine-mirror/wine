@@ -177,7 +177,7 @@ void MODULE_InitializeDLLs( PDB32 *process, HMODULE32 root,
  *
  * Create a dummy NE module for Win32 or Winelib.
  */
-HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
+HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs, LPCSTR modName )
 {
     HMODULE32 hModule;
     NE_MODULE *pModule;
@@ -240,9 +240,14 @@ HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
     /* Module name */
     pStr = (char *)pSegment;
     pModule->name_table = (int)pStr - (int)pModule;
-    basename = strrchr(ofs->szPathName,'\\');
-    if (!basename) basename = ofs->szPathName;
-    else basename++;
+    if ( modName )
+        basename = modName;
+    else
+    {
+        basename = strrchr(ofs->szPathName,'\\');
+        if (!basename) basename = ofs->szPathName;
+        else basename++;
+    }
     len = strlen(basename);
     if ((s = strchr(basename,'.'))) len = s - basename;
     if (len > 8) len = 8;

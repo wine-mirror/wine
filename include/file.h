@@ -37,22 +37,6 @@ typedef struct
     int flags;
 } DOS_DEVICE;
 
-/* Macros to convert 16 bit to 32 bit file handles and back */
-/* LZW handles are exempt as if not, could go below 0x400 */
-#define HFILE16_TO_HFILE32(handle) \
-(((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
- ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
- ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
- ((handle)==3) ? GetStdHandle(STD_ERROR_HANDLE) : \
- ((handle)==4) ? GetStdHandle(STD_ERROR_HANDLE) : \
- ((handle)>=0x400) ? handle : \
- (handle)-5)
-
-#define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
-      ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
-      ((hnd)>=0x400) ? hnd : \
-       (HFILE16)hnd+5); })
-
 
 /* files/file.c */
 extern FILE_OBJECT *FILE_GetFile( HFILE32 handle, DWORD access,
@@ -61,7 +45,7 @@ extern void FILE_ReleaseFile( FILE_OBJECT *file );
 extern void FILE_SetDosError(void);
 extern HFILE32 FILE_DupUnixHandle( int fd, DWORD access );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
-extern HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 );
+extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
 extern HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                 LPSECURITY_ATTRIBUTES sa, DWORD creation,
                                 DWORD attributes, HANDLE32 template );
@@ -70,7 +54,9 @@ extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
                            DWORD offset_high, DWORD offset_low,
                            int prot, int flags );
 extern int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low );
-extern HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr );
+extern HFILE16 FILE_AllocDosHandle( HANDLE32 handle );
+extern HANDLE32 FILE_GetHandle32( HFILE16 hfile );
+extern HFILE16 _lcreat16_uniq( LPCSTR path, INT32 attr );
 
 /* files/directory.c */
 extern int DIR_Init(void);

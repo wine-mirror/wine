@@ -866,7 +866,7 @@ type	win32
 858 stub __eFYL2X
 859 stub __eFYL2XP1
 860 stub __eGetStatusWord
-861 stub _alloca_probe
+861 register _alloca_probe() NTDLL_alloca_probe
 862 register _chkstk() NTDLL_chkstk
 863 stub _fltused
 864 cdecl _ftol(double) CRTDLL__ftol

@@ -53,12 +53,25 @@
   TRACE(ddraw, "%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
   TRACE(ddraw, "%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44);
 
+typedef struct render_state {
+  /* This is used for the device mode */
+  GLenum src, dst;
+  /* This is used for textures */
+  GLenum mag, min;
+} RenderState;
+
 typedef struct OpenGL_IDirect3DDevice2 {
   IDirect3DDevice2 common;
   
   /* These are the OpenGL-specific variables */
   OSMesaContext ctx;
   unsigned char *buffer;
+  
+  /* The current render state */
+  RenderState rs;
+
+  /* The last type of vertex drawn */
+  D3DVERTEXTYPE vt;
   
   float world_mat[16];
   float view_mat[16];
@@ -72,6 +85,9 @@ typedef struct OpenGL_IDirect3DDevice {
   OSMesaContext ctx;
   unsigned char *buffer;
   
+  /* The current render state */
+  RenderState rs;
+  
   D3DMATRIX *world_mat;
   D3DMATRIX *view_mat;
   D3DMATRIX *proj_mat;
@@ -81,11 +97,11 @@ typedef struct OpenGL_IDirect3DDevice {
   TRACE(ddraw, " " s " : %f %f %f %f\n",           \
 	(v).r.r, (v).g.g, (v).b.b, (v).a.a);
 
-#endif /* HAVE_MESAGL */
-
 /* Common functions defined in d3dcommon.c */
 void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
-		      DWORD dwRenderState) ;
+		      DWORD dwRenderState, RenderState *rs) ;
+
+#endif /* HAVE_MESAGL */
 
 /* All non-static functions 'exported' by various sub-objects */
 extern LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE3 surf) ;

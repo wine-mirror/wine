@@ -456,7 +456,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs )
+static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
 {
     HMODULE32	hModule;
     HFILE32	hFile;
@@ -464,6 +464,7 @@ static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs )
 
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *pe_sec;
+    IMAGE_DATA_DIRECTORY *dir;
     BY_HANDLE_FILE_INFORMATION bhfi;
     int	i, rawsize, lowest_va, lowest_fa, vma_size, file_size = 0;
     DWORD load_addr, aoep, reloc = 0;
@@ -574,7 +575,6 @@ static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs )
     if (load_addr == 0) 
     {
         /* We need to perform base relocations */
-        IMAGE_DATA_DIRECTORY *dir;
 	dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_BASERELOC;
         if (dir->Size)
             reloc = dir->VirtualAddress;
@@ -634,6 +634,11 @@ static HMODULE32 PE_LoadImage( LPCSTR name, OFSTRUCT *ofs )
     /* Perform base relocation, if necessary */
     if ( reloc )
         do_relocations( load_addr, (IMAGE_BASE_RELOCATION *)RVA(reloc) );
+
+    /* Get module name */
+    dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXPORT;
+    if (dir->Size)
+        *modName = (LPCSTR)RVA(((PIMAGE_EXPORT_DIRECTORY)RVA(dir->VirtualAddress))->Name);
 
     /* We don't need the orignal mapping any more */
     UnmapViewOfFile( (LPVOID)hModule );
@@ -799,6 +804,7 @@ static WINE_MODREF *PE_CreateModule( PDB32 *process, HMODULE32 hModule,
 HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
                                HFILE32 hFile, DWORD flags)
 {
+    LPCSTR	modName = NULL;
     OFSTRUCT	ofs;
     HMODULE32	hModule32;
     HMODULE16	hModule16;
@@ -814,7 +820,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
     if ((hModule32 = BUILTIN32_LoadImage( name, &ofs, FALSE )))
         builtin = TRUE;
     /* try to load the specified dll/exe */
-    else if ((hModule32 = PE_LoadImage( name, &ofs )) >= 32)
+    else if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) >= 32)
         builtin = FALSE;
     /* Now try the built-in even if disabled */
     else if ((hModule32 = BUILTIN32_LoadImage( name, &ofs, TRUE ))) 
@@ -826,7 +832,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
         return 0;
 
     /* Create 16-bit dummy module */
-    if ((hModule16 = MODULE_CreateDummyModule( &ofs )) < 32) return hModule16;
+    if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32) return hModule16;
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags    = NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA |
                         NE_FFLAGS_WIN32 | (builtin? NE_FFLAGS_BUILTIN : 0);
@@ -855,6 +861,7 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
                               LPCSTR env, BOOL32 inherit, LPSTARTUPINFO32A startup,
                               LPPROCESS_INFORMATION info )
 {
+    LPCSTR modName = NULL;
     HMODULE16 hModule16;
     HMODULE32 hModule32;
     HINSTANCE16 hInstance;
@@ -865,13 +872,13 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
     WINE_MODREF	*wm;
 
     /* Load file */
-    if ((hModule32 = PE_LoadImage( name, &ofs )) < 32)
+    if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) < 32)
         return hModule32;
     if (PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
         return 20;  /* FIXME: not the right error code */
 
     /* Create 16-bit dummy module */
-    if ((hModule16 = MODULE_CreateDummyModule( &ofs )) < 32) return hModule16;
+    if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32) return hModule16;
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags    = NE_FFLAGS_WIN32;
     pModule->module32 = hModule32;
@@ -969,7 +976,6 @@ void PE_InitTls(THDB *thdb)
 		delta = wm->module - peh->OptionalHeader.ImageBase;
 		if (!peh->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
 			continue;
-		FIXME(win32,"%s has TLS directory.\n",wm->longname);
 		pdir = (LPVOID)(wm->module + peh->OptionalHeader.
 			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
 		

@@ -127,7 +127,7 @@ init	Shell32LibMain
  119 stdcall IsLFNDrive(str) IsLFNDrive32A
  120 stub FileMenu_AbortInitMenu
  121 stdcall SHFlushClipboard () SHFlushClipboard
- 122 stub RunDLL_CallEntry16
+ 122 stdcall RunDLL_CallEntry16 (long long long long long) RunDLL_CallEntry16 #name wrong?
  123 stdcall SHFreeUnusedLibraries () SHFreeUnusedLibraries
  124 stub FileMenu_AppendFilesForPidl
  125 stub FileMenu_AddFilesForPidl
@@ -180,14 +180,14 @@ init	Shell32LibMain
  172 stub SHCreateLinks
  173 stub SHValidateUNC
  174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx32
- 175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath
+ 175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath32
  176 stdcall SHSetInstanceExplorer (long) SHSetInstanceExplorer
  177 stub DAD_SetDragImageFromListView
  178 stub SHObjectProperties
  179 stub SHGetNewLinkInfoA
  180 stub SHGetNewLinkInfoW
  181 stdcall RegisterShellHook(long long) RegisterShellHook32
- 182 stub ShellMessageBoxW
+ 182 cdecl ShellMessageBoxW(long long long str long long) ShellMessageBoxW
  183 cdecl ShellMessageBoxA(long long long str long long) ShellMessageBoxA
  184 stdcall ArrangeWindows(long long long long long) ArrangeWindows
  185 stub SHHandleDiskFull
@@ -375,5 +375,5 @@ init	Shell32LibMain
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 
 # later additions ... FIXME: incorrect ordinals
-1218 stdcall SHGetSpecialFolderPathA(long long long long) SHGetSpecialFolderPath
+1218 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPath32A
 1219 stub DoEnvironmentSubstW

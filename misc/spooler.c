@@ -52,7 +52,7 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
  *           SetAbortProc32   (GDI32.301)
  *
  */
-INT32 WINAPI SetAbortProc32(HDC32 hdc, FARPROC32 abrtprc)
+INT32 WINAPI SetAbortProc32(HDC32 hdc, ABORTPROC32 abrtprc)
 {
     FIXME(print, "stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
