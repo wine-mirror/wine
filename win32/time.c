@@ -106,8 +106,8 @@ DWORD WINAPI GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
     memset(tzinfo, 0, sizeof(TIME_ZONE_INFORMATION));
 
     gmt = time(NULL);
-    lt = mktime(localtime(&gmt));
-    tzinfo->Bias = (gmt - lt) / 60;
+    lt = mktime(gmtime(&gmt));
+    tzinfo->Bias = (lt - gmt) / 60;
     tzinfo->StandardBias = 0;
     tzinfo->DaylightBias = -60;
 
