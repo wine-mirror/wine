@@ -211,7 +211,7 @@ static const WCHAR ACMHELPMSGCONTEXTHELPW[] = { 'a','c','m',
 DECLARE_HANDLE(HACMDRIVERID);
 DECLARE_HANDLE(HACMDRIVER);
 DECLARE_HANDLE(HACMSTREAM);
-DECLARE_OLD_HANDLE(HACMOBJ);
+DECLARE_HANDLE(HACMOBJ);
 
 /***********************************************************************
  * Callbacks

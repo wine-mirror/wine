@@ -509,7 +509,7 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
     if (had) {
 	HACMDRIVERID	hadid;
 
-	if (acmDriverID(had, &hadid, 0) != MMSYSERR_NOERROR)
+	if (acmDriverID((HACMOBJ)had, &hadid, 0) != MMSYSERR_NOERROR)
 	    return MMSYSERR_INVALHANDLE;
 	MSACM_FormatEnumHelper(MSACM_GetDriverID(hadid), had, pafd, &wfxRef, 
 			       fnCallback, dwInstance, fdwEnum);

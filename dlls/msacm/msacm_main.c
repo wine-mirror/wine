@@ -76,7 +76,9 @@ MMRESULT16 WINAPI acmMetrics16(
 {
   FIXME("(0x%04x, %d, %p): semi-stub\n", hao, uMetric, pMetric);
 
-  return acmMetrics(hao, uMetric, pMetric);
+  if(!hao) return acmMetrics(0, uMetric, pMetric);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return MMSYSERR_ERROR;
 }
 
 /***********************************************************************

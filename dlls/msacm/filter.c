@@ -235,7 +235,7 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     if (had) {
 	HACMDRIVERID	hadid;
 
-	if (acmDriverID(had, &hadid, 0) != MMSYSERR_NOERROR)
+	if (acmDriverID((HACMOBJ)had, &hadid, 0) != MMSYSERR_NOERROR)
 	    return MMSYSERR_INVALHANDLE;
 	MSACM_FilterEnumHelper(MSACM_GetDriverID(hadid), had, pafd,
 			       fnCallback, dwInstance, fdwEnum);
