@@ -79,19 +79,19 @@ VARTYPE_NOT_SUPPORTED,  /* VT_NULL     [V]   [P]    SQL style Nul	*/
 sizeof(BSTR),           /* VT_BSTR     [V][T][P][S] OLE Automation string*/
 sizeof(LPDISPATCH),     /* VT_DISPATCH [V][T][P][S] IDispatch *	*/
 4,                      /* VT_ERROR    [V][T]   [S] SCODE	*/
-4,                      /* VT_BOOL     [V][T][P][S] True=-1, False=0*/
+2,                      /* VT_BOOL     [V][T][P][S] True=-1, False=0*/
 sizeof(VARIANT),        /* VT_VARIANT  [V][T][P][S] VARIANT *	*/
 sizeof(LPUNKNOWN),      /* VT_UNKNOWN  [V][T]   [S] IUnknown * */
 sizeof(DECIMAL),        /* VT_DECIMAL  [V][T]   [S] 16 byte fixed point	*/
-VARTYPE_NOT_SUPPORTED,                         /* no VARTYPE here..... */
-VARTYPE_NOT_SUPPORTED,	/* VT_I1          [T]       signed char	*/
-1,                      /* VT_UI1      [V][T][P][S] unsigned char			*/
-VARTYPE_NOT_SUPPORTED,	/* VT_UI2         [T][P]    unsigned short	*/
-VARTYPE_NOT_SUPPORTED,	/* VT_UI4         [T][P]    unsigned short	*/
+VARTYPE_NOT_SUPPORTED,                         /* no VARTYPE here.....	*/
+1,			/* VT_I1          [T]   [S] signed char		*/
+1,                      /* VT_UI1      [V][T][P][S] unsigned char	*/
+2,			/* VT_UI2         [T][P][S] unsigned short	*/
+4,			/* VT_UI4         [T][P][S] unsigned int	*/
 VARTYPE_NOT_SUPPORTED,	/* VT_I8          [T][P]    signed 64-bit int			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_UI8         [T][P]    unsigned 64-bit int		*/
-VARTYPE_NOT_SUPPORTED,	/* VT_INT         [T]       signed machine int		*/
-VARTYPE_NOT_SUPPORTED,	/* VT_UINT        [T]       unsigned machine int	*/
+sizeof(INT),		/* VT_INT         [T]       signed machine int		*/
+sizeof(UINT),		/* VT_UINT        [T]       unsigned machine int	*/
 VARTYPE_NOT_SUPPORTED,	/* VT_VOID        [T]       C style void			*/
 VARTYPE_NOT_SUPPORTED,	/* VT_HRESULT     [T]       Standard return type	*/
 VARTYPE_NOT_SUPPORTED,	/* VT_PTR         [T]       pointer type			*/
@@ -128,6 +128,12 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
   SAFEARRAYBOUND *sab;
   LONG allocSize = 0;
 
+  if (!cDims || cDims >= 0x10000) /* 65536 appears to be the limit */
+    return E_INVALIDARG;
+  if (!ppsaOut)
+    return E_POINTER;
+
+
   /* SAFEARRAY + SAFEARRAYBOUND * (cDims -1) ( -1 because there is already one
                                              ( in SAFEARRAY struct */
   allocSize = sizeof(**ppsaOut) + (sizeof(*sab) * (cDims-1));
@@ -137,7 +143,8 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
         GetProcessHeap(), HEAP_ZERO_MEMORY, allocSize)) == NULL){
     return(E_UNEXPECTED);
   }
-  TRACE("SafeArray: %lu bytes allocated for descriptor.\n", allocSize);
+  (*ppsaOut)->cDims = cDims;
+  TRACE("(%d): %lu bytes allocated for descriptor.\n", cDims, allocSize);
 
   return(S_OK);
 }
@@ -1036,19 +1043,26 @@ static BOOL validCoordinate(
   LONG    lLBound;
   HRESULT hRes;
 
-  if (!psa->cDims) return FALSE;
+  if (!psa->cDims) { FIXME("no dims?\n");return FALSE; }
   for(; iter<psa->cDims; iter++) {
     TRACE("coor[%d]=%ld\n", iter, coor[iter]);
-    if((hRes = SafeArrayGetLBound(psa, (iter+1), &lLBound)) != S_OK)
+    if((hRes = SafeArrayGetLBound(psa, (iter+1), &lLBound)) != S_OK) {
+      FIXME("No lbound?\n");
       return FALSE;
-    if((hRes = SafeArrayGetUBound(psa, (iter+1), &lUBound)) != S_OK)
+    }
+    if((hRes = SafeArrayGetUBound(psa, (iter+1), &lUBound)) != S_OK) {
+      FIXME("No ubound?\n");
       return FALSE;
+    }
+    if(lLBound > lUBound) {
+      FIXME("lbound larger than ubound?\n");
+      return FALSE;
+    }
 
-    if(lLBound > lUBound)
+    if((coor[iter] < lLBound) || (coor[iter] > lUBound)) {
+      FIXME("coordinate %ld not within %ld - %ld\n",coor[iter], lLBound, lUBound);
       return FALSE;
-
-    if((coor[iter] < lLBound) || (coor[iter] > lUBound))
-      return FALSE;
+    }
   }
   return TRUE;
 }

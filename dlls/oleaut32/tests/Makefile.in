@@ -6,6 +6,7 @@ TESTDLL   = oleaut32.dll
 IMPORTS   = oleaut32
 
 CTESTS = \
+	safearray.c \
 	vartest.c
 
 @MAKE_TEST_RULES@

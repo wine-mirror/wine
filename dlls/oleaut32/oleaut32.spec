@@ -305,8 +305,8 @@
 310 stub VarCyRound
 311 stub VarCyCmp
 312 stub VarCyCmpR8
-313 stdcall VarBstrCat(ptr ptr ptr) VarBstrCat
-314 stdcall VarBstrCmp(ptr ptr long long) VarBstrCmp
+313 stdcall VarBstrCat(wstr wstr ptr) VarBstrCat
+314 stdcall VarBstrCmp(wstr wstr long long) VarBstrCmp
 315 stub VarR8Pow # stdcall (double double ptr)
 316 stub VarR4CmpR8
 317 stub VarR8Round # stdcall (double long ptr)

@@ -1,4 +1,5 @@
 Makefile
 oleaut32_test.exe.spec.c
+safearray.ok
 testlist.c
 vartest.ok
