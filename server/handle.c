@@ -51,6 +51,19 @@ static struct handle_table *global_table;
 #define MIN_HANDLE_ENTRIES  32
 
 
+/* handle to table index conversion */
+
+/* handles are a multiple of 4 under NT; handle  0 is not used */
+static int inline index_to_handle( int index )
+{
+    return (index + 1) << 2;
+}
+static int inline handle_to_index( int handle )
+{
+    return (handle >> 2) - 1;
+}
+
+
 static void handle_table_dump( struct object *obj, int verbose );
 static void handle_table_destroy( struct object *obj );
 
@@ -85,7 +98,7 @@ static void handle_table_dump( struct object *obj, int verbose )
     for (i = 0; i <= table->last; i++, entry++)
     {
         if (!entry->ptr) continue;
-        fprintf( stderr, "%9d: %p %08x ", i + 1, entry->ptr, entry->access );
+        fprintf( stderr, "%9d: %p %08x ", index_to_handle(i), entry->ptr, entry->access );
         entry->ptr->ops->dump( entry->ptr, 0 );
     }
 }
@@ -143,23 +156,24 @@ static int grow_handle_table( struct handle_table *table )
     return 1;
 }
 
-/* find the first free entry in the handle table */
-static struct handle_entry *get_free_entry( struct handle_table *table, int *phandle )
+/* allocate the first free entry in the handle table */
+static int alloc_entry( struct handle_table *table, void *obj, unsigned int access )
 {
     struct handle_entry *entry = table->entries + table->free;
-    int handle;
+    int i;
 
-    for (handle = table->free; handle <= table->last; handle++, entry++)
-        if (!entry->ptr) goto found;
-    if (handle >= table->count)
+    for (i = table->free; i <= table->last; i++, entry++) if (!entry->ptr) goto found;
+    if (i >= table->count)
     {
-        if (!grow_handle_table( table )) return NULL;
-        entry = table->entries + handle;  /* the entries may have moved */
+        if (!grow_handle_table( table )) return -1;
+        entry = table->entries + i;  /* the entries may have moved */
     }
-    table->last = handle;
+    table->last = i;
  found:
-    table->free = *phandle = handle + 1;  /* avoid handle 0 */
-    return entry;
+    table->free = i + 1;
+    entry->ptr    = grab_object( obj );
+    entry->access = access;
+    return index_to_handle(i);
 }
 
 /* allocate a handle for an object, incrementing its refcount */
@@ -167,37 +181,29 @@ static struct handle_entry *get_free_entry( struct handle_table *table, int *pha
 int alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
 {
     struct handle_table *table = (struct handle_table *)process->handles;
-    struct handle_entry *entry;
-    int handle;
 
     assert( table );
     assert( !(access & RESERVED_ALL) );
     if (inherit) access |= RESERVED_INHERIT;
-
-    if (!(entry = get_free_entry( table, &handle ))) return -1;
-    entry->ptr    = grab_object( obj );
-    entry->access = access;
-    return handle;
+    return alloc_entry( table, obj, access );
 }
 
 /* allocate a global handle for an object, incrementing its refcount */
 /* return the handle, or -1 on error */
 static int alloc_global_handle( void *obj, unsigned int access )
 {
-    struct handle_entry *entry;
     int handle;
 
     if (!global_table)
     {
         if (!(global_table = (struct handle_table *)alloc_handle_table( NULL, 0 ))) return -1;
     }
-    if (!(entry = get_free_entry( global_table, &handle ))) return -1;
-    entry->ptr    = grab_object( obj );
-    entry->access = access;
-    return HANDLE_LOCAL_TO_GLOBAL(handle);
+    if ((handle = alloc_entry( global_table, obj, access )) != -1)
+        handle = HANDLE_LOCAL_TO_GLOBAL(handle);
+    return handle;
 }
 
-/* return an handle entry, or NULL if the handle is invalid */
+/* return a handle entry, or NULL if the handle is invalid */
 static struct handle_entry *get_handle( struct process *process, int handle )
 {
     struct handle_table *table = (struct handle_table *)process->handles;
@@ -209,7 +215,7 @@ static struct handle_entry *get_handle( struct process *process, int handle )
         table = global_table;
     }
     if (!table) goto error;
-    handle--;  /* handles start at 1 */
+    handle = handle_to_index( handle );
     if (handle < 0) goto error;
     if (handle > table->last) goto error;
     entry = table->entries + handle;
@@ -281,7 +287,11 @@ int close_handle( struct process *process, int handle )
     struct object *obj;
 
     if (!(entry = get_handle( process, handle ))) return 0;
-    if (entry->access & RESERVED_CLOSE_PROTECT) return 0;  /* FIXME: error code */
+    if (entry->access & RESERVED_CLOSE_PROTECT)
+    {
+        set_error( ERROR_INVALID_HANDLE );
+        return 0;
+    }
     obj = entry->ptr;
     entry->ptr = NULL;
     table = HANDLE_IS_GLOBAL(handle) ? global_table : (struct handle_table *)process->handles;
@@ -301,6 +311,21 @@ void close_global_handles(void)
     }
 }
 
+/* retrieve the object corresponding to one of the magic pseudo-handles */
+static inline struct object *get_magic_handle( int handle )
+{
+    switch(handle)
+    {
+        case 0xfffffffe:  /* current thread pseudo-handle */
+            return &current->obj;
+        case 0x7fffffff:  /* current process pseudo-handle */
+        case 0xffffffff:  /* current process pseudo-handle */
+            return (struct object *)current->process;
+        default:
+            return NULL;
+    }
+}
+
 /* retrieve the object corresponding to a handle, incrementing its refcount */
 struct object *get_handle_obj( struct process *process, int handle,
                                unsigned int access, const struct object_ops *ops )
@@ -308,15 +333,8 @@ struct object *get_handle_obj( struct process *process, int handle,
     struct handle_entry *entry;
     struct object *obj;
 
-    switch( handle )
+    if (!(obj = get_magic_handle( handle )))
     {
-    case 0xfffffffe:  /* current thread pseudo-handle */
-        obj = &current->obj;
-        break;
-    case 0x7fffffff:  /* current process pseudo-handle */
-        obj = (struct object *)current->process;
-        break;
-    default:
         if (!(entry = get_handle( process, handle ))) return NULL;
         if ((entry->access & access) != access)
         {
@@ -324,7 +342,6 @@ struct object *get_handle_obj( struct process *process, int handle,
             return NULL;
         }
         obj = entry->ptr;
-        break;
     }
     if (ops && (obj->ops != ops))
     {
@@ -340,6 +357,12 @@ static int set_handle_info( struct process *process, int handle, int mask, int f
 {
     struct handle_entry *entry;
 
+    if (get_magic_handle( handle ))
+    {
+        /* we can retrieve but not set info for magic handles */
+        if (mask) set_error( ERROR_ACCESS_DENIED );
+        return 0;
+    }
     if (!(entry = get_handle( process, handle ))) return -1;
     mask  = (mask << RESERVED_SHIFT) & RESERVED_ALL;
     flags = (flags << RESERVED_SHIFT) & mask;
