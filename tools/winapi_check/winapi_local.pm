@@ -119,7 +119,7 @@ sub _check_function {
 	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
 	    $implemented_calling_convention = "varargs";
 	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
-	    if($implemented_return_kind =~ /^s_word|word|void$/) {
+	    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^s_word|word|void$/) {
 		$implemented_calling_convention = "pascal16";
 	    } else {
 		$implemented_calling_convention = "pascal";
