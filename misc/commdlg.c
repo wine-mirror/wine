@@ -2231,13 +2231,15 @@ static BOOL CFn_HookCallChk(LPCHOOSEFONT lpcf)
 /***********************************************************************
  *                FontFamilyEnumProc                       (COMMDLG.19)
  */
-int FontFamilyEnumProc(LPLOGFONT16 lplf, LPTEXTMETRIC16 lptm, int nFontType, LPARAM lParam)
+INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
+                          UINT16 nFontType, LPARAM lParam )
 {
   int i;
   WORD w;
   HWND hwnd=LOWORD(lParam);
   HWND hDlg=GetParent(hwnd);
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
+  LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
 
   dprintf_commdlg(stddeb,"FontFamilyEnumProc: font=%s (nFontType=%d)\n",
      			lplf->lfFaceName,nFontType);
@@ -2268,7 +2270,8 @@ int FontFamilyEnumProc(LPLOGFONT16 lplf, LPTEXTMETRIC16 lptm, int nFontType, LPA
  *
  * Fill font style information into combobox  (without using font.c directly)
  */
-static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT16 lplf ,LPTEXTMETRIC16 lptm)
+static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT16 lplf,
+                                 LPTEXTMETRIC16 lptm)
 {
    #define FSTYLES 4
    struct FONTSTYLE
@@ -2338,12 +2341,15 @@ static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf)
 /***********************************************************************
  *                 FontStyleEnumProc                     (COMMDLG.18)
  */
-int FontStyleEnumProc(LPLOGFONT16 lplf ,LPTEXTMETRIC16 lptm, int nFontType, LPARAM lParam)
+INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
+                         UINT16 nFontType, LPARAM lParam )
 {
   HWND hcmb2=LOWORD(lParam);
   HWND hcmb3=HIWORD(lParam);
   HWND hDlg=GetParent(hcmb3);
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
+  LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN(logfont);
+  TEXTMETRIC16 *lptm = (TEXTMETRIC16 *)PTR_SEG_TO_LIN(metrics);
   int i;
   
   dprintf_commdlg(stddeb,"FontStyleEnumProc: (nFontType=%d)\n",nFontType);
@@ -2376,7 +2382,6 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   HDC hdc;
   int i,j,res,init=0;
   long l;
-  FARPROC16 enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
   LPLOGFONT16 lpxx;
   HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
   LPCHOOSEFONT lpcf;
@@ -2422,7 +2427,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
   if (hdc)
   {
-    if (!EnumFontFamilies (hdc, NULL,enumCallback,(LPARAM)GetDlgItem(hDlg,cmb1)))
+    if (!EnumFontFamilies (hdc, NULL,FontFamilyEnumProc,(LPARAM)GetDlgItem(hDlg,cmb1)))
       dprintf_commdlg(stddeb,"WM_INITDIALOG: EnumFontFamilies returns 0\n");
     if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
     {
@@ -2610,7 +2615,6 @@ LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
 LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
   char buffer[200];
-  FARPROC16 enumCallback;
   HFONT hFont/*,hFontOld*/;
   int i,j;
   long l;
@@ -2634,8 +2638,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		        HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
                         SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT,i,(LPARAM)MAKE_SEGPTR(buffer));
 	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",buffer);
-		        enumCallback = MODULE_GetWndProcEntry16("FontStyleEnumProc");
-       		        EnumFontFamilies(hdc,buffer,enumCallback,
+       		        EnumFontFamilies(hdc,buffer,FontStyleEnumProc,
 		             MAKELONG(GetDlgItem(hDlg,cmb2),GetDlgItem(hDlg,cmb3)));
 		        SetCursor(hcursor);        
 		      }

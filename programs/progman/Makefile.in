@@ -3,7 +3,7 @@ MODULE   = none
 PROGRAMS = progman
 ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
-LANGUAGES   = En De Fr
+LANGUAGES   = En De Fr Fi
 LICENSELANG = En
 
 # Installation infos

@@ -72,9 +72,8 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
  *          guess current implementation via SetTimer has to be improved upon.		
  */
 
-		CallTo16_word_wwlll(lpTimer->lpFunc,
-			lpTimer->hInstance, lpTimer->wTimerID, 
-			0, lpTimer->dwUser, 0, 0);
+		CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID, 
+                                    0, lpTimer->dwUser, 0, 0);
 
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
 		fflush(stdout);

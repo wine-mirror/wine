@@ -15,10 +15,10 @@
 
 #include "windows.h"
 #include "sysmetrics.h"
+#include "win.h"
 #include "combo.h"
 #include "stackframe.h"
 #include "user.h"
-#include "win.h"
 #include "graphics.h"
 #include "heap.h"
 #include "listbox.h"
@@ -469,6 +469,15 @@ static LRESULT CBFindString(HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 /***********************************************************************
+ *           CBFindStringExact
+ */
+static LRESULT CBFindStringExact(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  LPHEADLIST lphl = ComboGetListHeader(hwnd);
+  return ListBoxFindStringExact(lphl, wParam, (SEGPTR)lParam);
+}
+
+/***********************************************************************
  *           CBGetCount
  */
 static LRESULT CBGetCount(HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -621,7 +630,7 @@ static BOOL CBCheckSize(HWND hwnd)
   LPHEADCOMBO  lphc = ComboGetStorageHeader(hwnd);
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
   LONG         cstyle = GetWindowLong32A(hwnd,GWL_STYLE);
-  RECT16       cRect,wRect;
+  RECT16       cRect, wRect;
 
   if (lphc->hWndLBox == 0) return FALSE;
 
@@ -632,9 +641,9 @@ static BOOL CBCheckSize(HWND hwnd)
 	 "CBCheckSize: hwnd %04x Rect %d,%d-%d,%d  wRect %d,%d-%d,%d\n", 
 		hwnd,cRect.left,cRect.top,cRect.right,cRect.bottom,
 		wRect.left,wRect.top,wRect.right,wRect.bottom);
-  if ((cstyle & 3) == CBS_SIMPLE  ) return TRUE ;
+  if ((cstyle & 3) == CBS_SIMPLE) return TRUE;
 
-  if ((cRect.bottom - cRect.top) > 
+  if ((cRect.bottom - cRect.top) >
       (lphl->StdItemHeight + 2*SYSMETRICS_CYBORDER)) {
     SetWindowPos(hwnd, 0, 0, 0, 
 		 cRect.right-cRect.left,
@@ -651,7 +660,7 @@ static BOOL CBCheckSize(HWND hwnd)
   }
 
   if (cRect.right < lphc->RectButton.left) {
-    /* if the button is outside the window, move it in */
+    /* if the button is outside the window move it in */
     if ((wRect.right - wRect.left - 2*SYSMETRICS_CXBORDER) == (cRect.right - cRect.left)) {
       lphc->RectButton.right = cRect.right;
       lphc->RectButton.left = cRect.right - 2*SYSMETRICS_CXBORDER - 4 
@@ -662,8 +671,13 @@ static BOOL CBCheckSize(HWND hwnd)
     /* otherwise we need to make the client include the button */
     else
       SetWindowPos(hwnd, 0, 0, 0, lphc->RectButton.right,
-		   lphl->StdItemHeight+2*SYSMETRICS_CYBORDER, 
-		   SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE );
+		   lphl->StdItemHeight+2*SYSMETRICS_CYBORDER,
+		   SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE);
+
+      if ((lphc->dwStyle & 3) != CBS_DROPDOWNLIST)
+        SetWindowPos(lphc->hWndEdit, 0, 0, 0, lphc->RectButton.left,
+		     lphl->StdItemHeight,
+		     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
   }
 
   CBLCheckSize(hwnd);
@@ -728,6 +742,34 @@ static LRESULT CBCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 /***********************************************************************
+ *           CBGetEditSel
+ * Look out! Under Win32, the parameter packing is very different.
+ */
+static LRESULT CBGetEditSel(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
+
+    if ((lphc->dwStyle & 3) == CBS_DROPDOWNLIST)
+      return CB_ERR;	/* err, documented for CBSetEditSel */
+    return SendMessage16(lphc->hWndEdit, EM_GETSEL, 0, 0);
+}
+
+
+/***********************************************************************
+ *           CBSetEditSel
+ * Look out! Under Win32, the parameter packing is very different.
+ */
+static LRESULT CBSetEditSel(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
+
+    if ((lphc->dwStyle & 3) == CBS_DROPDOWNLIST)
+      return CB_ERR;
+    return SendMessage16(lphc->hWndEdit, EM_SETSEL, 0, lParam);
+}
+
+
+/***********************************************************************
  *           ComboWndProc
  */
 LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -764,6 +806,9 @@ LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case CB_SETCURSEL: return CBSetCurSel(hwnd, wParam, lParam);
      case CB_SETITEMHEIGHT: return CBSetItemHeight(hwnd, wParam, lParam);
      case CB_SHOWDROPDOWN: return CBShowDropDown(hwnd, wParam, lParam);
+     case CB_GETEDITSEL: return CBGetEditSel(hwnd, wParam, lParam);
+     case CB_SETEDITSEL: return CBSetEditSel(hwnd, wParam, lParam);
+     case CB_FINDSTRINGEXACT: return CBFindStringExact(hwnd, wParam, lParam);
     }
     return DefWindowProc16(hwnd, message, wParam, lParam);
 }

@@ -40,7 +40,6 @@ static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
     HWND hwndFocus = GetFocus();
 
     if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return FALSE;
-    if (!infoPtr->hwndFocus) return FALSE;  /* Already saved */
     infoPtr->hwndFocus = hwndFocus;
       /* Remove default button */
     return TRUE;
@@ -60,7 +59,6 @@ static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
 }
 
 
-#ifdef SUPERFLUOUS_FUNCTIONS
 /***********************************************************************
  *           DEFDLG_FindDefButton
  *
@@ -77,7 +75,6 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
     }
     return hwndChild;
 }
-#endif
 
 
 /***********************************************************************
@@ -117,6 +114,8 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
 static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                             LPARAM lParam, DIALOGINFO *dlgInfo )
 {
+    HWND hwndDefId;
+
     switch(msg)
     {
 	case WM_INITDIALOG:
@@ -177,8 +176,13 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
             return 1;
 
         case DM_GETDEFID:
-            if (dlgInfo->fEnd || !dlgInfo->msgResult) return 0;
-            return MAKELONG( dlgInfo->msgResult, DC_HASDEFID );
+            if (dlgInfo->fEnd) return 0;
+	    if (dlgInfo->msgResult)
+	      return MAKELONG( dlgInfo->msgResult, DC_HASDEFID );
+	    hwndDefId = DEFDLG_FindDefButton( hwnd );
+	    if (hwndDefId)
+	      return MAKELONG( GetDlgCtrlID( hwndDefId ), DC_HASDEFID);
+	    return 0;
 
 	case WM_NEXTDLGCTL:
 	    {

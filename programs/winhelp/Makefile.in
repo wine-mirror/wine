@@ -3,7 +3,7 @@ MODULE   = none
 PROGRAMS = winhelp hlp2sgml
 ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
-LANGUAGES   = En De Fr
+LANGUAGES   = En De Fr Fi
 
 # Installation infos
 

@@ -148,6 +148,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
 static void EVENT_SelectionNotify( XSelectionEvent *event);
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
+static void EVENT_MapNotify( HWND hwnd, XMapEvent *event );
 
 /* Usable only with OLVWM - compile option perhaps?
 static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
@@ -238,7 +239,20 @@ void EVENT_ProcessEvent( XEvent *event )
  *       break;
  */
     case NoExpose:
-	break;   
+	break;
+
+    /* We get all these because of StructureNotifyMask. */
+    case UnmapNotify:
+    case CirculateNotify:
+    case CreateNotify:
+    case DestroyNotify:
+    case GravityNotify:
+    case ReparentNotify:
+	break;
+
+    case MapNotify:
+	EVENT_MapNotify( pWnd->hwndSelf, (XMapEvent *)event );
+	break;
 
     default:    
 	dprintf_event(stddeb, "Unprocessed event %s for hwnd %04x\n",
@@ -842,6 +856,19 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
       XInstallColormap( display, COLOR_GetColormap() );
   }
  */ 
+
+/**********************************************************************
+ *		EVENT_MapNotify
+ */
+void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
+{
+    HWND hwndFocus = GetFocus();
+
+    if (hwndFocus && IsChild( hWnd, hwndFocus ))
+      FOCUS_SetXFocus(hwndFocus);
+
+    return;
+}
 
 /**********************************************************************
  *		SetCapture 	(USER.18)

@@ -1100,7 +1100,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
 	if (pModule->flags & NE_FFLAGS_SELFLOAD)
 	{
-                int fd;
+                HFILE hf;
 		/* Handle self loading modules */
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
@@ -1166,9 +1166,9 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
 		}
                 /* FIXME: we probably need a DOS handle here */
-                fd = MODULE_OpenFile( hModule );
-		CallTo16_word_ww (selfloadheader->BootApp,
-			pModule->self_loading_sel, hModule, fd);
+                hf = FILE_DupUnixHandle( MODULE_OpenFile( hModule ) );
+		CallTo16_word_ww( selfloadheader->BootApp, hModule, hf );
+                _lclose(hf);
 		/* some BootApp procs overwrite the selector of dgroup */
 		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
 		IF1632_Saved16_ss = oldss;
@@ -1533,6 +1533,18 @@ WORD GetExpWinVer( HMODULE16 hModule )
 {
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     return pModule ? pModule->expected_version : 0;
+}
+
+
+/**********************************************************************
+ *	    IsSharedSelector    (KERNEL.345)
+ */
+BOOL16 IsSharedSelector( HANDLE16 selector )
+{
+    /* Check whether the selector belongs to a DLL */
+    NE_MODULE *pModule = MODULE_GetPtr( GetExePtr( selector ));
+    if (!pModule) return FALSE;
+    return (pModule->flags & NE_FFLAGS_LIBMODULE) != 0;
 }
 
 

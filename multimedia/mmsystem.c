@@ -17,7 +17,6 @@
 #include <sys/ioctl.h>
 #include "windows.h"
 #include "ldt.h"
-#include "callback.h"
 #include "user.h"
 #include "driver.h"
 #include "file.h"

@@ -562,13 +562,17 @@ static void DIB_SetImageBits_24( WORD lines, BYTE *bits, WORD width,
  * Helper function for SetDIBits() and SetDIBitsToDevice().
  */
 static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
-                             DWORD infoWidth, WORD infoBpp, DWORD compression,
+                             DWORD infoWidth, WORD infoBpp,
                              BITMAPINFO *info, WORD coloruse,
 			     Drawable drawable, GC gc, int xSrc, int ySrc,
 			     int xDest, int yDest, int width, int height )
 {
     int *colorMapping;
     XImage *bmpImage;
+    DWORD compression = 0;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+        compression = info->bmiHeader.biCompression;
 
       /* Build the color mapping table */
 
@@ -647,24 +651,27 @@ INT16 SetDIBits( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan, UINT32 lines,
 {
     DC * dc;
     BITMAPOBJ * bmp;
-    DWORD width, height, compression = 0;
+    DWORD width, height;
     WORD bpp;
 
       /* Check parameters */
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+    }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &bpp ) == -1)
         return 0;
-    if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-        compression = info->bmiHeader.biCompression;
     if (!lines || (startscan >= (WORD)height)) return 0;
     if (startscan + lines > height) lines = height - startscan;
 
-    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 17,
+    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 16,
                                 dc, lines, bmp->bitmap.bmBitsPixel,
-                                bits, width, bpp, compression, info,
+                                bits, width, bpp, info,
                                 coloruse, bmp->pixmap, BITMAP_GC(bmp), 0, 0, 0,
                                 startscan, bmp->bitmap.bmWidth, lines );
 }
@@ -679,16 +686,19 @@ INT16 SetDIBitsToDevice( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
                          UINT32 coloruse )
 {
     DC * dc;
-    DWORD width, height, compression = 0;
+    DWORD width, height;
     WORD bpp;
 
       /* Check parameters */
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+    }
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &bpp ) == -1)
         return 0;
-    if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-        compression = info->bmiHeader.biCompression;
     if (!lines || (startscan >= height)) return 0;
     if (startscan + lines > height) lines = height - startscan;
     if (ySrc < startscan) ySrc = startscan;
@@ -700,9 +710,9 @@ INT16 SetDIBitsToDevice( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 
     DC_SetupGCForText( dc );  /* To have the correct colors */
     XSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
-    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 17,
+    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 16,
                                 dc, lines, dc->w.bitsPerPixel, bits, width,
-                                bpp, compression, info, coloruse,
+                                bpp, info, coloruse,
                                 dc->u.x.drawable, dc->u.x.gc,
                                 xSrc, ySrc - startscan,
                                 dc->w.DCOrgX + XLPTODP( dc, xDest ),
@@ -726,7 +736,12 @@ int GetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
     int i, x, y;
         
     if (!lines) return 0;
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+    }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
     if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))

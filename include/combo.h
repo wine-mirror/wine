@@ -4,6 +4,7 @@
 
 
 typedef struct {
+  WND*	  wndSelf;
   DWORD   dwStyle;
   DWORD   dwState;
   HWND    hWndEdit;

@@ -252,7 +252,7 @@ base	1
 0245 stub IntersectClipRect
 0246 stub InvertRgn
 0247 stdcall LPtoDP(long ptr long) LPtoDP32
-0248 stub LineDDA
+0248 stdcall LineDDA(long long long long ptr long) THUNK_LineDDA32
 0249 stdcall LineTo(long long long) LineTo
 0250 stub LoadImageColorMatcherA
 0251 stub LoadImageColorMatcherW
@@ -326,7 +326,7 @@ base	1
 0318 stub SetICMMode
 0319 stub SetICMProfileA
 0320 stub SetICMProfileW
-0321 stub SetMapMode
+0321 stdcall SetMapMode(long long) SetMapMode
 0322 stub SetMapperFlags
 0323 stub SetMetaFileBitsEx
 0324 stub SetMetaRgn

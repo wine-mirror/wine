@@ -34,10 +34,6 @@
  * http://198.105.232.5/MSDN/LIBRARY/TECHNOTE/CH3.HTM 
  */
 
-extern void BITBLT_SetAccelMode( int ); /* speed up INVERT raster ops whenever possible 
-					 * parameter is a speedup level (see bitblt.c)
-					 */
-
 typedef struct
 { 
     Colormap    colorMap;
@@ -375,9 +371,6 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
 
         cs->size = c_min + NB_RESERVED_COLORS;
 
-	COLOR_gapStart = cs->size/2;
-	COLOR_gapEnd = 256 - cs->size/2;
-
 	XUngrabServer(display);
 
 	dprintf_palette(stddeb,"adjusted size %i colorcells\n", cs->size);
@@ -690,7 +683,7 @@ int COLOR_PaletteLookupExactIndex( PALETTEENTRY* palPalEntry, int size,
     BYTE r = GetRValue(col), g = GetGValue(col), b = GetBValue(col);
     for( i = 0; i < size; i++ )
     {
-        if( palPalEntry[i].peFlags & PC_SYS_USED ) 	/* skip gap */
+        if( palPalEntry[i].peFlags & PC_SYS_USED ) 	/* skips gap */
             if( palPalEntry[i].peRed == r &&
                 palPalEntry[i].peGreen == g &&
                 palPalEntry[i].peBlue == b )
@@ -964,17 +957,15 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
 
                     COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[i];
                     COLOR_sysPal[index].peFlags = flag;
-                    if( COLOR_PaletteToPixel ) index = COLOR_PaletteToPixel[index];
-
 		    COLOR_freeList[index] = 0;
-		    palPtr->logpalette.palPalEntry[i].peFlags = PC_SYS_USED | PC_SYS_MAPPED;
+
+                    if( COLOR_PaletteToPixel ) index = COLOR_PaletteToPixel[index];
                     break;
                 }
                 else if ( cSpace.flags & COLOR_VIRTUAL ) 
                 {
                     index = COLOR_ToPhysical( NULL, 0x00ffffff &
                              *(COLORREF*)(palPtr->logpalette.palPalEntry + i));
-		    palPtr->logpalette.palPalEntry[i].peFlags = PC_SYS_USED;
                     break;     
                 }
 
@@ -983,7 +974,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
                 index = COLOR_PaletteLookupPixel(COLOR_sysPal, 256, NULL, 
                        *(COLORREF*)(palPtr->logpalette.palPalEntry + i), TRUE);
             }
-	    palPtr->logpalette.palPalEntry[i].peFlags = PC_SYS_USED;
+	    palPtr->logpalette.palPalEntry[i].peFlags |= PC_SYS_USED;
 
             if( COLOR_PaletteToPixel ) index = COLOR_PaletteToPixel[index];
             break;

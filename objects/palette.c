@@ -15,8 +15,6 @@
 /* #define DEBUG_PALETTE */
 #include "debug.h"
 
-extern HWND 		DCE_hDC2hWnd( HDC );			/* get associated window by 
-								 * walking DCE list */
 extern int              COLOR_LookupSystemPixel(COLORREF);      /* lookup pixel among static entries 
                                                                  * of the system palette */
 extern COLORREF		COLOR_GetSystemPaletteEntry(BYTE);
@@ -389,7 +387,7 @@ HPALETTE16 SelectPalette( HDC hDC, HPALETTE16 hPal, BOOL bForceBackground )
 
     if( hPal != STOCK_DEFAULT_PALETTE )
     {
-	HWND hWnd = DCE_hDC2hWnd( hDC );
+	HWND hWnd = WindowFromDC( hDC );
 	HWND hActive = GetActiveWindow();
 	
 	/* set primary palette if it's related to current active */
@@ -417,7 +415,7 @@ UINT16 RealizePalette( HDC32 hDC )
 	/* Send palette change notification */
 
 	HWND hWnd;
- 	if( (hWnd = DCE_hDC2hWnd( hDC )) )
+ 	if( (hWnd = WindowFromDC( hDC )) )
             SendMessage16( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
     }
     return realized;
@@ -430,7 +428,7 @@ UINT16 RealizePalette( HDC32 hDC )
  */
 int UpdateColors( HDC hDC )
 {
-    HWND hWnd = DCE_hDC2hWnd( hDC );
+    HWND hWnd = WindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.

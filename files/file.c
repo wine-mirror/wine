@@ -283,6 +283,29 @@ void FILE_SetDosError(void)
 
 
 /***********************************************************************
+ *           FILE_DupUnixHandle
+ *
+ * Duplicate a Unix handle into a task handle.
+ */
+HFILE FILE_DupUnixHandle( int fd )
+{
+    HFILE handle;
+    DOS_FILE *file;
+
+    if (!(file = FILE_Alloc())) return HFILE_ERROR;
+    if ((file->unix_handle = dup(fd)) == -1)
+    {
+        FILE_SetDosError();
+        FILE_Close( file );
+        return HFILE_ERROR;
+    }
+    if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
+        FILE_Close( file );
+    return handle;
+}
+
+
+/***********************************************************************
  *           FILE_OpenUnixFile
  */
 static DOS_FILE *FILE_OpenUnixFile( const char *name, int mode )

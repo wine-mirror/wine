@@ -797,12 +797,23 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
         }
         break;
 
-    case 0x400: /* SB_SETSCROLLPOS */
-    case 0x401: /* SB_GETSCROLLPOS */
-    case 0x402: /* SB_GETSCROLLRANGE */
-    case 0x403: /* SB_ENABLE */
-    case 0x404: /* SB_REDRAW */
+    case SBM_SETSCROLLPOS:
+        return SetScrollPos( hwnd, SB_CTL, wParam, (BOOL)lParam );
+
+    case SBM_GETSCROLLPOS:
+        return GetScrollPos( hwnd, SB_CTL );
+
+    case SBM_SETSCROLLRANGE:
+        SetScrollRange( hwnd, SB_CTL, LOWORD(lParam), HIWORD(lParam),
+                        wParam  /* FIXME: Is this correct? */ );
+        return 0;
+
+    case SBM_ENABLE:
+        return EnableScrollBar( hwnd, SB_CTL, wParam ); /* FIXME: lParam? */
+
+    case 0x403: /* SBM_REDRAW */
         fprintf(stdnimp,"ScrollBarWndProc: undocumented message %04x, please report\n", message );
+        break;
 
     default:
         return DefWindowProc16( hwnd, message, wParam, lParam );

@@ -1652,17 +1652,16 @@ static void BuildCallFrom16Func( char *profile )
  *
  * Stack frame of the callback function:
  *  ...      ...
- * (ebp+24) arg2
- * (ebp+20) arg1
- * (ebp+16) 16-bit ds
+ * (ebp+20) arg2
+ * (ebp+16) arg1
  * (ebp+12) func to call
  * (ebp+8)  code selector
  * (ebp+4)  return address
  * (ebp)    previous ebp
  *
  * Prototypes for the CallTo16 functions:
- *   extern WORD CallTo16_word_xxx( FARPROC16 func, WORD ds, args... );
- *   extern LONG CallTo16_long_xxx( FARPROC16 func, WORD ds, args... );
+ *   extern WORD CallTo16_word_xxx( FARPROC16 func, args... );
+ *   extern LONG CallTo16_long_xxx( FARPROC16 func, args... );
  *   extern void CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp,
  *                               WORD ax, WORD bx, WORD cx, WORD dx,
  *                               WORD si, WORD di );
@@ -1753,10 +1752,10 @@ static void BuildCallTo16Func( char *profile )
     }
     else  /* not a register function */
     {
-        int pos = 20;  /* first argument position */
+        int pos = 16;  /* first argument position */
 
         /* Make %bp point to the previous stackframe (built by CallFrom16) */
-        printf( "\tmovw %%sp,%%bp\n" );
+        printf( "\tmovzwl %%sp,%%ebp\n" );
         printf( "\taddw $16,%%bp\n" );
 
         while (*args)
@@ -1793,8 +1792,9 @@ static void BuildCallTo16Func( char *profile )
     }
     else
     {
-        /* Set ax equal to ds for window procedures */
-        printf( "\tmovw 16(%%ebx),%%ax\n" );
+        /* Get previous ds from the 16-bit stack and */
+        /* set ax equal to ds for window procedures. */
+        printf( "\tmovw -10(%%ebp),%%ax\n" );
 #ifdef __svr4__
         printf( "\tdata16\n");
 #endif

@@ -453,7 +453,10 @@ INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
     HBRUSH prevBrush;
 
-    if ((rect->right <= rect->left) || (rect->bottom <= rect->top)) return 0;
+    /* coordinates are logical so we cannot fast-check rectangle
+     * - do it in PatBlt() after LPtoDP().
+     */
+
     if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
@@ -469,7 +472,6 @@ INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
     HBRUSH prevBrush;
 
-    if ((rect->right <= rect->left) || (rect->bottom <= rect->top)) return 0;
     if (!(prevBrush = SelectObject( hdc, (HBRUSH16)hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
@@ -483,7 +485,6 @@ INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
  */
 void InvertRect16( HDC16 hdc, const RECT16 *rect )
 {
-    if ((rect->right <= rect->left) || (rect->bottom <= rect->top)) return;
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }
@@ -494,7 +495,6 @@ void InvertRect16( HDC16 hdc, const RECT16 *rect )
  */
 void InvertRect32( HDC32 hdc, const RECT32 *rect )
 {
-    if ((rect->right <= rect->left) || (rect->bottom <= rect->top)) return;
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }
@@ -511,13 +511,13 @@ INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-    if ((rect->right <= rect->left) || (rect->bottom <= rect->top)) return 0;
-    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
-    
     left   = XLPTODP( dc, rect->left );
     top    = YLPTODP( dc, rect->top );
     right  = XLPTODP( dc, rect->right );
     bottom = YLPTODP( dc, rect->bottom );
+
+    if ( (right <= left) || (bottom <= top) ) return 0;
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
     
     if (DC_SetupGCForBrush( dc ))
     {

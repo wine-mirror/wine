@@ -11,6 +11,7 @@ C_SRCS = \
 	error.c \
 	except.c \
 	file.c \
+	findfile.c \
 	init.c \
 	memory.c \
 	newfns.c \

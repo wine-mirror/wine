@@ -247,7 +247,7 @@ const char *DOSFS_ToDosDTAFormat( const char *name )
  *
  * Check a DOS file name against a mask (both in FCB format).
  */
-static int DOSFS_Match( const char *mask, const char *name )
+int DOSFS_Match( const char *mask, const char *name )
 {
     int i;
     for (i = 11; i > 0; i--, mask++, name++)
@@ -280,7 +280,7 @@ void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime )
  * hashed version that fits in 8.3 format.
  * File name can be terminated by '\0', '\\' or '/'.
  */
-static const char *DOSFS_Hash( const char *name, int dir_format )
+const char *DOSFS_Hash( const char *name, int dir_format )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS "~.";
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";

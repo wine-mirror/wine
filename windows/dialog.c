@@ -550,7 +550,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     {
         rect.left += template.x * xUnit / 4;
         rect.top += template.y * yUnit / 8;
-        if (!(template.style & DS_ABSALIGN))
+        if ( !(template.style & DS_ABSALIGN) && !(template.style & WS_CHILD) )
             ClientToScreen16( owner, (POINT16 *)&rect );
     }
 
@@ -1160,7 +1160,7 @@ BOOL16 CheckDlgButton( HWND32 hwnd, INT32 id, UINT32 check )
  */
 WORD IsDlgButtonChecked( HWND hwnd, WORD id )
 {
-    return (WORD)SendDlgItemMessage16( hwnd, id, BM_GETCHECK16, 0, 0 );
+    return (WORD)SendDlgItemMessage32A( hwnd, id, BM_GETCHECK32, 0, 0 );
 }
 
 

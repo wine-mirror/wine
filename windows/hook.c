@@ -15,6 +15,7 @@
 
 #define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "hook.h"
+#include "callback.h"
 #include "queue.h"
 #include "user.h"
 #include "stddebug.h"

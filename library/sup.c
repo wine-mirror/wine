@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "windows.h"
-#include "callback.h"
 #include "arch.h"
 #include "neexe.h"
 

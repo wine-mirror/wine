@@ -12,7 +12,7 @@ base	1
 0007 stub AttachThreadInput
 0008 stub BeginDeferWindowPos
 0009 stdcall BeginPaint(long ptr) BeginPaint32
-0010 stub BringWindowToTop
+0010 stdcall BringWindowToTop(long) BringWindowToTop
 0011 stub BroadcastSystemMessage
 0012 stub CalcChildScroll
 0013 stub CallMsgFilter
@@ -83,7 +83,7 @@ base	1
 0078 stub CreateMDIWindowA
 0079 stub CreateMDIWindowW
 0080 stub CreateMenu
-0081 stub CreatePopupMenu
+0081 stdcall CreatePopupMenu() CreatePopupMenu
 0082 stdcall CreateWindowExA(long ptr ptr long long long long long 
 				long long long ptr) CreateWindowEx32A
 0083 stdcall CreateWindowExW(long ptr ptr long long long long long 
@@ -181,7 +181,7 @@ base	1
 0174 stub EndMenu
 0175 stdcall EndPaint(long ptr) EndPaint32
 0176 stub EndTask
-0177 stdcall EnumChildWindows(long ptr long) EnumChildWindows32
+0177 stdcall EnumChildWindows(long ptr long) THUNK_EnumChildWindows32
 0178 stub EnumClipboardFormats
 0179 stub EnumDesktopsA
 0180 stub EnumDesktopsW
@@ -189,14 +189,14 @@ base	1
 0182 stub EnumDisplayDeviceModesW
 0183 stub EnumDisplayDevicesA
 0184 stub EnumDisplayDevicesW
-0185 stdcall EnumPropsA(long ptr) EnumProps32A
-0186 stdcall EnumPropsExA(long ptr long) EnumPropsEx32A
-0187 stdcall EnumPropsExW(long ptr long) EnumPropsEx32W
-0188 stdcall EnumPropsW(long ptr) EnumProps32W
-0189 stdcall EnumThreadWindows(long ptr long) EnumThreadWindows
+0185 stdcall EnumPropsA(long ptr) THUNK_EnumProps32A
+0186 stdcall EnumPropsExA(long ptr long) THUNK_EnumPropsEx32A
+0187 stdcall EnumPropsExW(long ptr long) THUNK_EnumPropsEx32W
+0188 stdcall EnumPropsW(long ptr) THUNK_EnumProps32W
+0189 stdcall EnumThreadWindows(long ptr long) THUNK_EnumThreadWindows
 0190 stub EnumWindowStationsA
 0191 stub EnumWindowStationsW
-0192 stdcall EnumWindows(ptr long) EnumWindows32
+0192 stdcall EnumWindows(ptr long) THUNK_EnumWindows32
 0193 stdcall EqualRect(ptr ptr) EqualRect32
 0194 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn
 0195 stub ExitWindowsEx
@@ -252,7 +252,7 @@ base	1
 0245 stub GetKBCodePage
 0246 stub GetKeyNameTextA
 0247 stub GetKeyNameTextW
-0248 stub GetKeyState
+0248 stdcall GetKeyState(long) GetKeyState
 0249 stub GetKeyboardLayout
 0250 stub GetKeyboardLayoutList
 0251 stub GetKeyboardLayoutNameA
@@ -281,7 +281,7 @@ base	1
 0274 stub GetNextDlgGroupItem
 0275 stub GetNextDlgTabItem
 0276 stub GetOpenClipboardWindow
-0277 stub GetParent
+0277 stdcall GetParent(long) GetParent
 0278 stub GetPriorityClipboardFormat
 0279 stub GetProcessWindowStation
 0280 stdcall GetPropA(long ptr) GetProp32A
@@ -345,9 +345,9 @@ base	1
 0338 stub IsChild
 0339 stdcall IsClipboardFormatAvailable(long) IsClipboardFormatAvailable
 0340 stub IsDialogMessage
-0341 stub IsDialogMessageA
+0341 stdcall IsDialogMessageA(long ptr) IsDialogMessage32A
 0342 stub IsDialogMessageW
-0343 stub IsDlgButtonChecked
+0343 stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked
 0344 stdcall IsIconic(long) IsIconic
 0345 stub IsMenu
 0346 stdcall IsRectEmpty(ptr) IsRectEmpty32
@@ -561,7 +561,7 @@ base	1
 0554 stub TranslateMDISysAccel
 0555 stdcall TranslateMessage(ptr) USER32_TranslateMessage
 0556 stub UnhookWindowsHook
-0557 stub UnhookWindowsHookEx
+0557 stdcall UnhookWindowsHookEx(long) UnhookWindowsHookEx32
 0558 stdcall UnionRect(ptr ptr ptr) UnionRect32
 0559 stub UnloadKeyboardLayout
 0560 stub UnlockWindowStation
@@ -584,7 +584,7 @@ base	1
 0577 stub WaitMessage
 0578 stdcall WinHelpA(long ptr long long)	WIN32_WinHelpA
 0579 stub WinHelpW
-0580 stub WindowFromDC
+0580 stdcall WindowFromDC(long) WindowFromDC
 0581 stdcall WindowFromPoint(long long) WindowFromPoint32
 0582 stub keybd_event
 0583 stub mouse_event

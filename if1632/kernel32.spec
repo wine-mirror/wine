@@ -125,7 +125,7 @@ base	1
 0120 stub FindCloseChangeNotification
 0121 stub FindFirstChangeNotificationA
 0122 stub FindFirstChangeNotificationW
-0123 stub FindFirstFileA
+0123 stdcall FindFirstFileA(ptr ptr) FindFirstFile32A
 0124 stub FindFirstFileW
 0125 stub FindNextChangeNotification
 0126 stub FindNextFileA
@@ -492,7 +492,7 @@ base	1
 0487 	stdcall	SetEvent(long) SetEvent
 0488 stub SetFileApisToANSI
 0489 stub SetFileApisToOEM
-0490 stub SetFileAttributesA
+0490 stdcall SetFileAttributesA(ptr long) SetFileAttributes32A
 0491 stub SetFileAttributesW
 0492    stdcall SetFilePointer(long long ptr long) SetFilePointer
 0493 stub SetFileTime

@@ -15,6 +15,7 @@
 #include "sysmetrics.h"
 #include "hook.h"
 #include "spy.h"
+#include "stackframe.h"
 #include "winpos.h"
 #include "atom.h"
 #include "dde.h"

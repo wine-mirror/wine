@@ -1859,7 +1859,7 @@ UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth, int orgX, int orgY )
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     if (!(lppop = (LPPOPUPMENU)USER_HEAP_LIN_ADDR((HMENU)wndPtr->wIDmenu)))
       return 0;
-    hdc = GetDC( hwnd );
+    hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
     SetRect16(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+SYSMETRICS_CYMENU);
     MENU_MenuBarCalcSize( hdc, &rectBar, lppop, hwnd );
     ReleaseDC( hwnd, hdc );
@@ -2353,7 +2353,7 @@ BOOL DestroyMenu(HMENU hMenu)
     lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu);
     if (!lppop || (lppop->wMagic != MENU_MAGIC)) return FALSE;
     lppop->wMagic = 0;  /* Mark it as destroyed */
-    if ((lppop->wFlags & MF_POPUP) && lppop->hWnd && lppop->hWnd != pTopPWnd->hwndSelf )
+    if ((lppop->wFlags & MF_POPUP) && lppop->hWnd && (!pTopPWnd || (lppop->hWnd != pTopPWnd->hwndSelf)))
         DestroyWindow( lppop->hWnd );
 
     if (lppop->items)

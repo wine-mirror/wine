@@ -9,7 +9,6 @@
 
 #include "windows.h"
 #include "ldt.h"
-#include "callback.h"
 
 #pragma pack(1)
 

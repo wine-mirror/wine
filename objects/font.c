@@ -15,7 +15,6 @@
 #include <X11/Xatom.h>
 #include "font.h"
 #include "metafile.h"
-#include "callback.h"
 #include "options.h"
 #include "string32.h"
 #include "xmalloc.h"
@@ -1124,7 +1123,7 @@ void InitFontsList(void)
 /*************************************************************************
  *				EnumFonts			[GDI.70]
  */
-INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData)
+INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
 {
   HANDLE       hLog;
   HANDLE       hMet;
@@ -1178,8 +1177,8 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
     SelectObject(hDC, hOldFont);
     DeleteObject(hFont);
     dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
-    nRet = CallEnumFontsProc((FARPROC16)lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),
-			     GDI_HEAP_SEG_ADDR(hMet), 0, (LONG)lpData );
+    nRet = lpEnumFunc( GDI_HEAP_SEG_ADDR(hLog), GDI_HEAP_SEG_ADDR(hMet),
+                       0, (LONG)lpData );
     if (nRet == 0) {
       dprintf_font(stddeb,"EnumFonts // EnumEnd requested by application !\n");
       break;
@@ -1194,7 +1193,7 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
 /*************************************************************************
  *				EnumFontFamilies	[GDI.330]
  */
-INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM lpData)
+INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
 {
   HANDLE       	hLog;
   HANDLE       	hMet;
@@ -1248,10 +1247,8 @@ INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM
     DeleteObject(hFont);
     dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpEnumLogFont, lptm);
     
-    nRet = CallEnumFontFamProc( (FARPROC16)lpEnumFunc,
-			       GDI_HEAP_SEG_ADDR(hLog),
-			       GDI_HEAP_SEG_ADDR(hMet),
-			       0, lpData );
+    nRet = lpEnumFunc( GDI_HEAP_SEG_ADDR(hLog), GDI_HEAP_SEG_ADDR(hMet),
+                       0, lpData );
     if (nRet == 0) {
       dprintf_font(stddeb,"EnumFontFamilies // EnumEnd requested by application !\n");
       break;

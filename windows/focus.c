@@ -11,6 +11,7 @@
 #include "winpos.h"
 #include "hook.h"
 #include "color.h"
+#include "message.h"
 #include "options.h"
 
 static HWND hwndFocus = 0;
@@ -21,7 +22,7 @@ static HWND hwndFocus = 0;
  * Set the X focus.
  * Explicit colormap management seems to work only with OLVWM.
  */
-static void FOCUS_SetXFocus( HWND hwnd )
+void FOCUS_SetXFocus( HWND hwnd )
 {
     XWindowAttributes win_attr;
     Window win;
@@ -47,6 +48,8 @@ static void FOCUS_SetXFocus( HWND hwnd )
     XSetInputFocus( display, win, RevertToParent, CurrentTime );
     if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
         XInstallColormap( display, COLOR_GetColormap() );
+
+    EVENT_Synchronize();
 }
 
 /*****************************************************************

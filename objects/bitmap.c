@@ -129,8 +129,12 @@ HBITMAP16 CreateCompatibleBitmap( HDC32 hdc, INT32 width, INT32 height )
 
     dprintf_gdi( stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
                  hdc, width, height );
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+    }
     hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
     dprintf_gdi(stddeb,"\t\t%04x\n", hbmpRet);
     return hbmpRet;

@@ -51,7 +51,8 @@ SPEC_FILES = $(DLLS:.spec=.S)
 
 C_SRCS = \
 	dummy.c \
-	relay.c
+	relay.c \
+	thunk.c
 
 ASM_SRCS = \
 	$(SPEC_FILES) \

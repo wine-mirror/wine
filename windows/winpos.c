@@ -683,7 +683,8 @@ BOOL ShowWindow( HWND hwnd, int cmd )
     else
     {
         /* We can't activate a child window */
-        if (wndPtr->dwStyle & WS_CHILD) swpflags |= SWP_NOACTIVATE;
+        if (wndPtr->dwStyle & WS_CHILD)
+            swpflags |= SWP_NOACTIVATE | SWP_NOZORDER;
         SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
         if (!IsWindow( hwnd )) return wasVisible;
     }

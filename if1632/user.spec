@@ -26,7 +26,7 @@ heap	65520
 24  pascal16 RemoveProp(word ptr) RemoveProp16
 25  pascal16 GetProp(word ptr) GetProp16
 26  pascal16 SetProp(word ptr word) SetProp16
-27  pascal16 EnumProps(word segptr) EnumProps16
+27  pascal16 EnumProps(word segptr) THUNK_EnumProps16
 28  pascal16 ClientToScreen(word ptr) ClientToScreen16
 29  pascal16 ScreenToClient(word ptr) ScreenToClient16
 30  pascal16 WindowFromPoint(long) WindowFromPoint16
@@ -54,8 +54,8 @@ heap	65520
 #51 BEAR51
 52  pascal16 AnyPopup() AnyPopup
 53  pascal16 DestroyWindow(word) DestroyWindow
-54  pascal16 EnumWindows(segptr long) EnumWindows16
-55  pascal16 EnumChildWindows(word segptr long) EnumChildWindows16
+54  pascal16 EnumWindows(segptr long) THUNK_EnumWindows16
+55  pascal16 EnumChildWindows(word segptr long) THUNK_EnumChildWindows16
 56  pascal16 MoveWindow(word word word word word word) MoveWindow
 57  pascal16 RegisterClass(ptr) RegisterClass16
 58  pascal16 GetClassName(word ptr word) GetClassName16
@@ -117,7 +117,7 @@ heap	65520
 115 pascal16 ReplyMessage(long) ReplyMessage
 116 pascal16 PostAppMessage(word word word long) PostAppMessage
 118 pascal16 RegisterWindowMessage(segptr) RegisterWindowMessage16
-117 stub WindowFromDC
+117 pascal16 WindowFromDC(word) WindowFromDC
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook
@@ -184,7 +184,7 @@ heap	65520
 182 pascal16 KillSystemTimer(word word) KillSystemTimer16
 183 pascal16 GetCaretPos(ptr) GetCaretPos16
 184 stub QuerySendMessage
-185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) GrayString
+185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) THUNK_GrayString16
 186 pascal16 SwapMouseButton(word) SwapMouseButton
 187 pascal16 EndMenu() EndMenu
 188 pascal16 SetSysModalWindow(word) SetSysModalWindow16
@@ -225,7 +225,7 @@ heap	65520
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask16
-225 pascal16 EnumTaskWindows(word segptr long) EnumTaskWindows16
+225 pascal16 EnumTaskWindows(word segptr long) THUNK_EnumTaskWindows16
 226 stub LockInput
 227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem

@@ -11,6 +11,7 @@
 
 extern void FILE_SetDosError(void);
 extern void FILE_CloseAllFiles( HANDLE hPDB );
+extern HFILE FILE_DupUnixHandle( int fd );
 extern int FILE_Stat( LPCSTR unixName, BYTE *pattr, DWORD *psize,
                       WORD *pdate, WORD *ptime );
 extern int FILE_GetDateTime( HFILE hFile, WORD *pdate, WORD *ptime,

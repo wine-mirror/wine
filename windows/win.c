@@ -28,7 +28,6 @@
 #include "color.h"
 #include "shm_main_blk.h"
 #include "dde_proc.h"
-#include "callback.h"
 #include "clipboard.h"
 #include "winproc.h"
 #include "stddebug.h"
@@ -602,7 +601,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	    win_attr.event_mask = ExposureMask | KeyPressMask |
 	                          KeyReleaseMask | PointerMotionMask |
 	                          ButtonPressMask | ButtonReleaseMask |
-	                          FocusChangeMask;
+	                          FocusChangeMask | StructureNotifyMask;
             win_attr.override_redirect = TRUE;
 	}
         win_attr.colormap      = COLOR_GetColormap();
@@ -1687,9 +1686,7 @@ BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
     {
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if (!CallEnumWindowsProc16( (FARPROC16)lpEnumFunc,
-                                    (*ppWnd)->hwndSelf, lParam ))
-            break;
+        if (!lpEnumFunc( (*ppWnd)->hwndSelf, lParam )) break;
     }
     HeapFree( SystemHeap, 0, list );
     return TRUE;
@@ -1701,25 +1698,7 @@ BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
  */
 BOOL32 EnumWindows32( WNDENUMPROC32 lpEnumFunc, LPARAM lParam )
 {
-    WND **list, **ppWnd;
-
-    /* We have to build a list of all windows first, to avoid */
-    /* unpleasant side-effects, for instance if the callback  */
-    /* function changes the Z-order of the windows.           */
-
-    if (!(list = WIN_BuildWinArray( pWndDesktop ))) return FALSE;
-
-    /* Now call the callback function for every window */
-
-    for (ppWnd = list; *ppWnd; ppWnd++)
-    {
-        /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if (!CallEnumWindowsProc32( lpEnumFunc, (*ppWnd)->hwndSelf, lParam ))
-            break;
-    }
-    HeapFree( SystemHeap, 0, list );
-    return TRUE;
+    return (BOOL32)EnumWindows16( (WNDENUMPROC16)lpEnumFunc, lParam );
 }
 
 
@@ -1743,9 +1722,7 @@ BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
         /* Make sure that the window still exists */
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
-        if (!CallEnumWindowsProc16( (FARPROC16)func,
-                                    (*ppWnd)->hwndSelf, lParam ))
-            break;
+        if (!func( (*ppWnd)->hwndSelf, lParam )) break;
     }
     HeapFree( SystemHeap, 0, list );
     return TRUE;
@@ -1757,33 +1734,17 @@ BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
  */
 BOOL32 EnumThreadWindows( DWORD id, WNDENUMPROC32 func, LPARAM lParam )
 {
-    WND **list, **ppWnd;
-    HANDLE hQueue = GetTaskQueue( (DWORD)id );
-
-    if (!(list = WIN_BuildWinArray( pWndDesktop ))) return FALSE;
-
-    /* Now call the callback function for every window */
-
-    for (ppWnd = list; *ppWnd; ppWnd++)
-    {
-        /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        if ((*ppWnd)->hmemTaskQ != hQueue) continue;  /* Check the queue */
-        if (!CallEnumWindowsProc32( func, (*ppWnd)->hwndSelf, lParam ))
-            break;
-    }
-    HeapFree( SystemHeap, 0, list );
-    return TRUE;
+    return (BOOL16)EnumTaskWindows16((HTASK16)id, (WNDENUMPROC16)func, lParam);
 }
 
 
 /**********************************************************************
- *           WIN_EnumChildWindows16
+ *           WIN_EnumChildWindows
  *
- * Helper function for EnumChildWindows16().
+ * Helper function for EnumChildWindows().
  */
-static BOOL16 WIN_EnumChildWindows16( WND **ppWnd, WNDENUMPROC16 func,
-                                      LPARAM lParam )
+static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
+                                    LPARAM lParam )
 {
     WND **childList;
     BOOL16 ret = FALSE;
@@ -1794,37 +1755,8 @@ static BOOL16 WIN_EnumChildWindows16( WND **ppWnd, WNDENUMPROC16 func,
         if (!IsWindow((*ppWnd)->hwndSelf)) continue;
         /* Build children list first */
         if (!(childList = WIN_BuildWinArray( *ppWnd ))) return FALSE;
-        if (!CallEnumWindowsProc16((FARPROC16)func,(*ppWnd)->hwndSelf,lParam))
-            return FALSE;
-        ret = WIN_EnumChildWindows16( childList, func, lParam );
-        HeapFree( SystemHeap, 0, childList );
-        if (!ret) return FALSE;
-        ppWnd++;
-    }
-    return TRUE;
-}
-
-
-/**********************************************************************
- *           WIN_EnumChildWindows32
- *
- * Helper function for EnumChildWindows32().
- */
-static BOOL32 WIN_EnumChildWindows32( WND **ppWnd, WNDENUMPROC32 func,
-                                      LPARAM lParam )
-{
-    WND **childList;
-    BOOL32 ret = FALSE;
-
-    while (*ppWnd)
-    {
-        /* Make sure that the window still exists */
-        if (!IsWindow((*ppWnd)->hwndSelf)) continue;
-        /* Build children list first */
-        if (!(childList = WIN_BuildWinArray( *ppWnd ))) return FALSE;
-        if (!CallEnumWindowsProc32( func, (*ppWnd)->hwndSelf, lParam ))
-            return FALSE;
-        ret = WIN_EnumChildWindows32( childList, func, lParam );
+        if (!func( (*ppWnd)->hwndSelf, lParam )) return FALSE;
+        ret = WIN_EnumChildWindows( childList, func, lParam );
         HeapFree( SystemHeap, 0, childList );
         if (!ret) return FALSE;
         ppWnd++;
@@ -1842,7 +1774,7 @@ BOOL16 EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
 
     if (!(pParent = WIN_FindWndPtr( parent ))) return FALSE;
     if (!(list = WIN_BuildWinArray( pParent ))) return FALSE;
-    WIN_EnumChildWindows16( list, func, lParam );
+    WIN_EnumChildWindows( list, func, lParam );
     HeapFree( SystemHeap, 0, list );
     return TRUE;
 }
@@ -1853,13 +1785,8 @@ BOOL16 EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
  */
 BOOL32 EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func, LPARAM lParam )
 {
-    WND **list, *pParent;
-
-    if (!(pParent = WIN_FindWndPtr( parent ))) return FALSE;
-    if (!(list = WIN_BuildWinArray( pParent ))) return FALSE;
-    WIN_EnumChildWindows32( list, func, lParam );
-    HeapFree( SystemHeap, 0, list );
-    return TRUE;
+    return (BOOL32)EnumChildWindows16( (HWND16)parent, (WNDENUMPROC16)func,
+                                       lParam );
 }
 
 

@@ -500,3 +500,18 @@ DWORD GetFileAttributesA(LPCSTR lpFileName)
 		res |= FILE_ATTRIBUTE_READONLY;
 	return res;
 }
+
+/**************************************************************************
+ *              SetFileAttributes
+ */
+BOOL SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
+
+{
+	struct stat buf;
+	DWORD	res=0;
+	char	*fn;
+
+	fprintf(stdnimp,"Call to stub function SetFileAttributesA(%s, %08x)\n",lpFileName, attributes);
+	return TRUE;
+}
+

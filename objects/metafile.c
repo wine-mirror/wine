@@ -2,7 +2,7 @@
  * Metafile functions
  *
  * Copyright  David W. Metcalfe, 1994
- *            Niels de Carpentier, 1996
+ *            Niels de Carpentier, Albrecht Kleine 1996
  *
  */
 
@@ -12,8 +12,8 @@
 #include "bitmap.h"
 #include "file.h"
 #include "metafile.h"
+#include "stackframe.h"
 #include "stddebug.h"
-#include "callback.h"
 #include "debug.h"
 
 #define HTINCR  10      /* handle table allocation size increment */
@@ -107,7 +107,7 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
         GDI_FreeObject(handle);
 	return 0;
     }
-    
+    dc->w.bitsPerPixel    = screenDepth;
     mh = (METAHEADER *)GlobalLock16(dc->w.hMetaFile);
 
     mh->mtHeaderSize = MFHEADERSIZE / 2;
@@ -135,13 +135,12 @@ HANDLE CreateMetaFile(LPCSTR lpFilename)
     /* create the handle table */
     HTLen = HTINCR;
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT, 
-		      sizeof(HANDLETABLE) * HTLen);
+		      sizeof(HANDLETABLE16) * HTLen);
     
     GlobalUnlock16(dc->w.hMetaFile);
     dprintf_metafile(stddeb,"CreateMetaFile: returning %04x\n", handle);
     return handle;
 }
-
 
 /******************************************************************
  *         CopyMetafile         GDI.151 Niels de Carpentier, April 1996
@@ -163,8 +162,13 @@ HMETAFILE CopyMetaFile(HMETAFILE hSrcMetaFile, LPCSTR lpFilename)
     
     if (lpFilename)          /* disk based metafile */
         {
+        int i,j;
 	hFile = _lcreat(lpFilename, 0);
-	if (_lwrite(hFile, (char *)mh, mh->mtSize * 2) == -1)
+	j=mh->mtType;
+	mh->mtType=1;        /* disk file version stores 1 here */
+	i=_lwrite(hFile, (char *)mh, mh->mtSize * 2) ;
+	mh->mtType=j;        /* restore old value  [0 or 1] */	
+	if (i == -1)
 	    {
 	    _lclose(hFile);
 	    return 0;
@@ -264,7 +268,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
-    HANDLETABLE *ht;
+    HANDLETABLE16 *ht;
     int offset = 0;
     WORD i;
 
@@ -272,8 +276,8 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
     
     /* create the handle table */
     hHT = GlobalAlloc16(GMEM_MOVEABLE|GMEM_ZEROINIT,
-		      sizeof(HANDLETABLE) * mh->mtNoObjects);
-    ht = (HANDLETABLE *)GlobalLock16(hHT);
+		      sizeof(HANDLETABLE16) * mh->mtNoObjects);
+    ht = (HANDLETABLE16 *)GlobalLock16(hHT);
 
     /* loop through metafile playing records */
     offset = mh->mtHeaderSize * 2;
@@ -303,7 +307,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
  *                                    Niels de carpentier, april 1996
  */
 
-BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
+BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpData)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -316,7 +320,7 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
     /* create the handle table */
     
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
-		     sizeof(HANDLETABLE) * mh->mtNoObjects);
+		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
     ht = WIN16_GlobalLock16(hHT);
    
     offset = mh->mtHeaderSize * 2;
@@ -326,9 +330,8 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-        if (!CallEnumMetafileProc( (FARPROC16)lpEnumFunc, hdc, ht,
-                                   MAKE_SEGPTR(mr),  /* FIXME!! */
-                                   mh->mtNoObjects, (LONG)lpData))
+        if (!lpEnumFunc( hdc, ht, MAKE_SEGPTR(mr),  /* FIXME!! */
+                         mh->mtNoObjects, (LONG)lpData))
 	    break;
 
 	offset += (mr->rdSize * 2);
@@ -340,12 +343,53 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc,LPARAM lpData)
     return TRUE;
 }
 
+/*******************************************************************
+ *   MF_GetDIBitsPointer    [internal helper for e.g. PlayMetaFileRecord]
+ *
+ * Returns offset to DIB bits or 0 if error
+ * (perhaps should be moved to (objects/dib.c ?)
+ */
+static LPSTR MF_GetDIBitsPointer(LPBITMAPINFO info)
+{
+      int offset;
+      if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+	{
+        if (info->bmiHeader.biClrUsed)
+	  {
+	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
+	    offset = info->bmiHeader.biClrUsed * 4;
+          else
+	    offset = (1 << info->bmiHeader.biBitCount) * 4;
+          }
+        else
+	  offset = (1 << info->bmiHeader.biBitCount) * 4;
+	}
+      else if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+	{
+	if (info->bmiHeader.biClrUsed)
+	  {
+	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
+	    offset = info->bmiHeader.biClrUsed * 3;
+          else
+	    offset = (1 << info->bmiHeader.biBitCount) * 3;
+          }
+        else
+	  offset = (1 << info->bmiHeader.biBitCount) * 3;
+	}
+      else
+	{
+	fprintf(stderr,"Unknown size for BITMAPHEADER in MetaFile!\n");
+	return NULL;
+	}
+      return (LPSTR)info + info->bmiHeader.biSize + offset; 
+}
+
 
 /******************************************************************
  *         PlayMetaFileRecord      GDI.176
  */
 
-void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
+void PlayMetaFileRecord(HDC hdc, HANDLETABLE16 *ht, METARECORD *mr,
 			                           WORD nHandles)
 {
     short s1;
@@ -603,75 +647,92 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 	dprintf_metafile(stddeb,"PlayMetaFileRecord: META_ESCAPE unimplemented.\n");
         break;
 
-    case META_EXTTEXTOUT: /* FIXME: don't know the exact parameters here */
-        {
-        short x,y,options,x5,x6,x7,x8;
-        y=mr->rdParam[0];  /* X position */
-        x=mr->rdParam[1];  /* Y position */
-        s1=mr->rdParam[2]; /* String length */
-        options=mr->rdParam[3];
-        x5=mr->rdParam[(s1+1)/2+4]; /* unknown meaning */
-        x6=mr->rdParam[(s1+1)/2+5]; /* unknown meaning */
-        x7=mr->rdParam[(s1+1)/2+6]; /* unknown meaning */
-        x8=mr->rdParam[(s1+1)/2+7]; /* unknown meaning */
-	ExtTextOut16( hdc, x, y, options, (LPRECT16) &mr->rdParam[(s1+1)/2+4],
-                      (char *)(mr->rdParam + 4), s1, NULL );
-	/* fprintf(stderr,"EXTTEXTOUT (len: %d) %hd : %hd %hd %hd %hd [%s].\n",
-            (mr->rdSize-s1),options,x5,x6,x7,x8,(char*) &(mr->rdParam[4]) );*/
-        }
-        break;
-        /* End new metafile operations. */
+        /* --- Begin of fixed or new metafile operations. July 1996 ----*/
+    case META_EXTTEXTOUT:
+      {
+        LPINT16 dxx;
+        s1=mr->rdParam[2];                              /* String length */
+        if (mr->rdSize-(s1+1))
+         dxx=&mr->rdParam[8+(s1+1)/2];                  /* start of array */
+        else
+         dxx=NULL;                                      /* NO array present */
+          
+	ExtTextOut16( hdc, mr->rdParam[1],              /* X position */
+	                   mr->rdParam[0],              /* Y position */
+	                   mr->rdParam[3],              /* options */
+	                   (LPRECT16) &mr->rdParam[4],  /* rectangle */
+                           (char *)(mr->rdParam + 8),   /* string */
+                           s1, dxx);                    /* length, dx array */
+        if (dxx)                      
+          dprintf_metafile(stddeb,"EXTTEXTOUT len: %ld  (%hd %hd)  [%s].\n",
+            mr->rdSize,dxx[0],dxx[1],(char*) &(mr->rdParam[8]) );
+       }
+       break;
     
     case META_STRETCHDIB:
       {
-      LPSTR bits;
-      LPBITMAPINFO info;
-      int offset;
-      info = (LPBITMAPINFO) &(mr->rdParam[11]);
-      if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-	{
-        if (info->bmiHeader.biClrUsed)
-	  {
-	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
-	    offset = info->bmiHeader.biClrUsed * 4;
-          else
-	    offset = (1 << info->bmiHeader.biBitCount) * 4;
-          }
-        else
-	  offset = (1 << info->bmiHeader.biBitCount) * 4;
-	}
-      else if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
-	{
-	if (info->bmiHeader.biClrUsed)
-	  {
-	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
-	    offset = info->bmiHeader.biClrUsed * 3;
-          else
-	    offset = (1 << info->bmiHeader.biBitCount) * 3;
-          }
-        else
-	  offset = (1 << info->bmiHeader.biBitCount) * 3;
-	}
-      else
-	{
-	fprintf(stderr,"Unknown size for BITMAPHEADER in PlayMetaRecord!\n");
-	break;
-	}
-	
-      offset += info->bmiHeader.biSize; 
-      bits = (LPSTR) info + offset;
-      StretchDIBits(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
+       LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[11]);
+       LPSTR bits = MF_GetDIBitsPointer(info);
+       if (bits)
+        StretchDIBits(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
 		    mr->rdParam[7],mr->rdParam[6],mr->rdParam[5],
 		    mr->rdParam[4],mr->rdParam[3],bits,info,
-		    mr->rdParam[2],(DWORD)mr->rdParam[0]);
+		    mr->rdParam[2],MAKELONG(mr->rdParam[0],mr->rdParam[1]));
       }
       break;
-		    
+
+    case META_DIBSTRETCHBLT:
+      {
+       LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[10]); 
+       LPSTR bits = MF_GetDIBitsPointer(info);
+       if (bits)
+         StretchDIBits(hdc,mr->rdParam[9],mr->rdParam[8],mr->rdParam[7],
+		    mr->rdParam[6],mr->rdParam[5],mr->rdParam[4],
+		    mr->rdParam[3],mr->rdParam[2],bits,info,
+		    DIB_RGB_COLORS,MAKELONG(mr->rdParam[0],mr->rdParam[1]));
+      }
+      break;		  
+
+    case META_STRETCHBLT:
+      {
+       HDC hdcSrc=CreateCompatibleDC(hdc);
+       HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[10], /*Width */
+                                      mr->rdParam[11], /*Height*/
+                                      mr->rdParam[13], /*Planes*/
+                                      mr->rdParam[14], /*BitsPixel*/
+                                      (LPSTR)&mr->rdParam[15]);  /*bits*/
+       SelectObject(hdcSrc,hbitmap);
+       StretchBlt(hdc,mr->rdParam[9],mr->rdParam[8],
+                    mr->rdParam[7],mr->rdParam[6],
+		    hdcSrc,mr->rdParam[5],mr->rdParam[4],
+		    mr->rdParam[3],mr->rdParam[2],
+		    MAKELONG(mr->rdParam[0],mr->rdParam[1]));
+       DeleteDC(hdcSrc);		    
+      }
+      break;
+
+    case META_BITBLT:            /* <-- not yet debugged */
+      {
+       HDC hdcSrc=CreateCompatibleDC(hdc);
+       HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[7]/*Width */,mr->rdParam[8]/*Height*/,
+                            mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
+                            (LPSTR)&mr->rdParam[12]/*bits*/);
+       SelectObject(hdcSrc,hbitmap);
+       BitBlt(hdc,mr->rdParam[6],mr->rdParam[5],
+                    mr->rdParam[4],mr->rdParam[3],
+		    hdcSrc,
+		    mr->rdParam[2],mr->rdParam[1],
+		    MAKELONG(0,mr->rdParam[0]));
+       DeleteDC(hdcSrc);		    
+      }
+      break;
+
     default:
 	fprintf(stddeb,"PlayMetaFileRecord: Unknown record type %x\n",
 	                                      mr->rdFunction);
     }
 }
+
 
 /******************************************************************
  *         GetMetaFileBits		by William Magro, 19 Sep 1995
@@ -744,7 +805,7 @@ HMETAFILE MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
  *    Add a handle to an external handle table and return the index
  */
 
-int MF_AddHandle(HANDLETABLE *ht, WORD htlen, HANDLE hobj)
+int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HANDLE hobj)
 {
     int i;
 
@@ -769,7 +830,7 @@ int MF_AddHandle(HANDLETABLE *ht, WORD htlen, HANDLE hobj)
 int MF_AddHandleInternal(HANDLE hobj)
 {
     int i;
-    HANDLETABLE *ht = (HANDLETABLE *)GlobalLock16(hHT);
+    HANDLETABLE16 *ht = (HANDLETABLE16 *)GlobalLock16(hHT);
 
     for (i = 0; i < HTLen; i++)
     {
@@ -784,7 +845,7 @@ int MF_AddHandleInternal(HANDLE hobj)
     if (!(hHT = GlobalReAlloc16(hHT, HTINCR, GMEM_MOVEABLE | GMEM_ZEROINIT)))
 	return -1;
     HTLen += HTINCR;
-    ht = (HANDLETABLE *)GlobalLock16(hHT);
+    ht = (HANDLETABLE16 *)GlobalLock16(hHT);
     *(ht->objectHandle + i) = hobj;
     GlobalUnlock16(hHT);
     return i;
@@ -1158,6 +1219,40 @@ BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count)
     return handle;
 }
 
+/******************************************************************
+ *         MF_ExtTextOut
+ */
+BOOL MF_ExtTextOut(DC *dc, short x, short y, UINT16 flags, const RECT16 *rect,
+                   LPCSTR str, short count, const INT16 *lpDx)
+{
+    HMETAFILE handle;
+    DWORD len;
+    HANDLE hmr;
+    METARECORD *mr;
+
+    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 4 + sizeof(RECT16);
+    if (lpDx)
+     len+=count*sizeof(INT16);
+    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
+	return FALSE;
+    mr = (METARECORD *)GlobalLock16(hmr);
+    memset(mr, 0, len);
+
+    mr->rdSize = len / 2;
+    mr->rdFunction = META_EXTTEXTOUT;
+    *(mr->rdParam) = y;
+    *(mr->rdParam + 1) = x;
+    *(mr->rdParam + 2) = count;
+    *(mr->rdParam + 3) = flags;
+    memcpy(mr->rdParam + 4, rect, sizeof(RECT16));
+    memcpy(mr->rdParam + 8, str, count);
+    if (lpDx)
+     memcpy(mr->rdParam + 8+ ((count + 1) >> 1),lpDx,count*sizeof(INT16));
+    handle = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    dc->w.hMetaFile = handle;
+    GlobalFree16(hmr);
+    return handle;
+}
 
 /******************************************************************
  *         MF_MetaPoly - implements Polygon and Polyline
@@ -1192,18 +1287,130 @@ BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
 BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 	       short height, HDC hdcSrc, short xSrc, short ySrc, DWORD rop)
 {
-    fprintf(stdnimp,"MF_BitBlt: not implemented yet\n");
-    return FALSE;
+    HMETAFILE handle;
+    DWORD len;
+    HANDLE hmr;
+    METARECORD *mr;
+    DC *dcSrc;
+    BITMAP16  BM;
+
+    if (!(dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC ))) return 0;
+    GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
+    len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
+    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
+	return FALSE;
+    mr = (METARECORD *)GlobalLock16(hmr);
+    mr->rdFunction = META_BITBLT;
+    *(mr->rdParam + 7) = BM.bmWidth;
+    *(mr->rdParam + 8) = BM.bmHeight;
+    *(mr->rdParam + 9) = BM.bmWidthBytes;
+    *(mr->rdParam +10) = BM.bmPlanes;
+    *(mr->rdParam +11) = BM.bmBitsPixel;
+    dprintf_metafile(stddeb,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
+    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,mr->rdParam +12))
+    {
+      mr->rdSize = len / sizeof(INT16);
+      *(mr->rdParam) = HIWORD(rop);
+      *(mr->rdParam + 1) = ySrc;
+      *(mr->rdParam + 2) = xSrc;
+      *(mr->rdParam + 3) = height;
+      *(mr->rdParam + 4) = width;
+      *(mr->rdParam + 5) = yDest;
+      *(mr->rdParam + 6) = xDest;
+      handle = MF_WriteRecord(dcDest->w.hMetaFile, mr, mr->rdSize * 2);
+    }  
+    else
+      handle = 0;  
+    dcDest->w.hMetaFile = handle;
+    GlobalFree16(hmr);
+    return handle;
 }
 
 
-/******************************************************************
- *         MF_StretchBlt
+/**********************************************************************
+ *         MF_StretchBlt         
+ * this function contains TWO ways for procesing StretchBlt in metafiles,
+ * decide between rdFunction values  META_STRETCHBLT or META_DIBSTRETCHBLT
+ * via #define STRETCH_VIA_DIB
  */
+#define STRETCH_VIA_DIB
+#undef  STRETCH_VIA_DIB
 BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short heightDest, HDC hdcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop)
 {
-    fprintf(stdnimp,"MF_StretchBlt: not implemented yet\n");
-    return FALSE;
+    HMETAFILE handle;
+    DWORD len;
+    HANDLE hmr;
+    METARECORD *mr;
+    DC *dcSrc;
+    BITMAP16  BM;
+#ifdef STRETCH_VIA_DIB    
+    LPBITMAPINFOHEADER lpBMI;
+    WORD nBPP;
+#endif  
+    if (!(dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC ))) return 0;
+    GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
+#ifdef STRETCH_VIA_DIB
+    nBPP = BM.bmPlanes * BM.bmBitsPixel;
+    len = sizeof(METARECORD) + 10 * sizeof(INT16) 
+            + sizeof(BITMAPINFOHEADER) + (nBPP != 24 ? 1 << nBPP: 0) * sizeof(RGBQUAD) 
+              + ((BM.bmWidth * nBPP + 31) / 32) * 4 * BM.bmHeight;
+    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
+	return FALSE;
+    mr = (METARECORD *)GlobalLock16(hmr);
+    mr->rdFunction = META_DIBSTRETCHBLT;
+    lpBMI=(LPBITMAPINFOHEADER)(mr->rdParam+10);
+    lpBMI->biSize      = sizeof(BITMAPINFOHEADER);
+    lpBMI->biWidth     = BM.bmWidth;
+    lpBMI->biHeight    = BM.bmHeight;
+    lpBMI->biPlanes    = 1;
+    lpBMI->biBitCount  = nBPP;                              /* 1,4,8 or 24 */
+    lpBMI->biClrUsed   = nBPP != 24 ? 1 << nBPP : 0;
+    lpBMI->biSizeImage = ((lpBMI->biWidth * nBPP + 31) / 32) * 4 * lpBMI->biHeight;
+    lpBMI->biCompression = BI_RGB;
+    lpBMI->biXPelsPerMeter = MulDiv32(GetDeviceCaps(hdcSrc,LOGPIXELSX),3937,100);
+    lpBMI->biYPelsPerMeter = MulDiv32(GetDeviceCaps(hdcSrc,LOGPIXELSY),3937,100);
+    lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
+
+    dprintf_metafile(stddeb,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
+               len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
+    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
+              MF_GetDIBitsPointer((LPBITMAPINFO)lpBMI),    /* DIB bits */
+              (LPBITMAPINFO)lpBMI,DIB_RGB_COLORS))         /* DIB info structure */ 
+#else
+    len = sizeof(METARECORD) + 15 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
+    if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
+	return FALSE;
+    mr = (METARECORD *)GlobalLock16(hmr);
+    mr->rdFunction = META_STRETCHBLT;
+    *(mr->rdParam +10) = BM.bmWidth;
+    *(mr->rdParam +11) = BM.bmHeight;
+    *(mr->rdParam +12) = BM.bmWidthBytes;
+    *(mr->rdParam +13) = BM.bmPlanes;
+    *(mr->rdParam +14) = BM.bmBitsPixel;
+    dprintf_metafile(stddeb,"MF_StretchBlt->len = %ld  rop=%lx  \n",len,rop);
+    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,mr->rdParam +15))
+#endif    
+    {
+      mr->rdSize = len / sizeof(INT16);
+      *(mr->rdParam) = LOWORD(rop);
+      *(mr->rdParam + 1) = HIWORD(rop);
+      *(mr->rdParam + 2) = heightSrc;
+      *(mr->rdParam + 3) = widthSrc;
+      *(mr->rdParam + 4) = ySrc;
+      *(mr->rdParam + 5) = xSrc;
+      *(mr->rdParam + 6) = heightDest;
+      *(mr->rdParam + 7) = widthDest;
+      *(mr->rdParam + 8) = yDest;
+      *(mr->rdParam + 9) = xDest;
+      handle = MF_WriteRecord(dcDest->w.hMetaFile, mr, mr->rdSize * 2);
+    }  
+    else
+      handle = 0;  
+    dcDest->w.hMetaFile = handle;
+    GlobalFree16(hmr);
+    return handle;
 }
+
+

@@ -38,7 +38,7 @@ type	win16
 35  pascal16 GetTaskQueue(word) GetTaskQueue
 36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB
-38  stub SetTaskSignalProc
+38  pascal   SetTaskSignalProc(word segptr) SetTaskSignalProc
 41  return EnableDos 0 0
 42  return DisableDos 0 0
 45  pascal16 LoadModule(ptr ptr) LoadModule
@@ -94,14 +94,14 @@ type	win16
 95  pascal16 LoadLibrary(ptr) LoadLibrary
 96  pascal16 FreeLibrary(word) FreeLibrary
 97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName16
-98  stub GetLastDiskChange
+98  return GetLastDiskChange 0 0
 99  stub GetLPErrMode
 100 stub ValidateCodeSegments
 101 stub NoHookDosCall
 102 register DOS3Call() DOS3Call
 103 register NetBIOSCall() NetBIOSCall
 104 stub GetCodeInfo
-105 stub GetExeVersion
+105 pascal16 GetExeVersion() GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
 107 pascal16 SetErrorMode(word) SetErrorMode
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
@@ -162,7 +162,7 @@ type	win16
 162 pascal16 LocalHeapSize() LocalHeapSize
 163 pascal16 GlobalLRUOldest(word) GlobalLRUOldest
 164 pascal16 GlobalLRUNewest(word) GlobalLRUNewest
-165 stub A20Proc
+165 return A20Proc 2 0
 166 pascal16 WinExec(ptr word) WinExec
 167 pascal16 GetExpWinVer(word) GetExpWinVer
 168 pascal16 DirectResAlloc(word word word) DirectResAlloc
@@ -252,7 +252,7 @@ type	win16
 342 stub __GP
 343 stub RegisterWinOldApHook
 344 stub GetWinOldApHooks
-345 stub IsSharedSelector
+345 pascal16 IsSharedSelector(word) IsSharedSelector
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy

@@ -1,4 +1,126 @@
 ----------------------------------------------------------------------
+Sun Aug  4 18:18:48 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/scroll.c]
+	Attempted to implement undocumented scroll-bar messages.
+
+	* [tools/build.c] [include/callback.h] [windows/winproc.c]
+	CallTo16_* functions now get DS from the previous 16-bit stackframe.
+
+	* [if1632/thunk.c] [include/callback.h]
+	Added thunks to implement callbacks for the emulator. Now all the
+	Enum* functions always take a real function pointer even in the
+	emulator.
+	
+	* [loader/builtin.c]
+	Removed binary search in BUILTIN_GetEntryPoint32(), as it didn't
+ 	work with NULL entry points. Using linear search now.
+
+	* [loader/module.c]
+	Implemented IsSharedSelector().
+
+	* [loader/task.c]
+	Changed SwitchStackTo/Back to use the instance data to store the
+	previous stack instead of the TDB. Also copy the local variables
+	onto the new stack.
+	Added GetExeVersion() and SetTackSignalProc().
+	Implemented SetSigHandler().
+
+Sat Aug  3 22:19:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [controls/menu.c]
+	"Fixed" problem in deleting menus where win32 could get into an
+	endless loop when it crashed. I think I've fixed the symptoms, not
+	the original problem so it might be worth further investigation.
+
+	* [debugger/registers.c]
+	Added missing #ifdefs on FS_REG and GS_REG, needed for FreeBSD to
+	compile wine properly.
+
+	* [files/dos_fs.c]
+	Made DOSFS_Hash and DOSFS_Match non-static so they can be called
+	from win32/findfile.c (q.v.).
+
+	* [if1632/gdi32.spec]
+	Added SetMapMode (call existing function)
+
+	* [if1632/kernel32.spec]
+	Added FindFirstFileA and SetFileAttributesA.
+
+	* [if1632/user32.spec]
+	Added BringWindowToTop, CreatePopupMenu, GetKeyState, GetParent,
+	IsDlgButtonChecked (call existing functions) and IsDialogMessageA,
+	UnhookWindowsHookEx.
+
+	* [win32/file.c]
+	Added stub function SetFileAttributes32A. It's a stub because I
+	can't really work out what this function should do with most
+	attributes in a Unix environment. Anyone care to expand it?
+
+	* [win32/findfile.c]
+	New file. Initial stab at FindFirstFile. This doesn't work as
+	specified yet, though a lot of the groundwork is there. I haven't
+	time to work on this for the next month, so if anyone wants to pick
+	it up and run with it please do.
+
+	* [win32/memory.c]
+	Removed malloc.h from includes (covered by stdlib.h include, and
+	gets rid of a warning in FreeBSD).
+
+	* [win32/newfns.c]
+	UnhookWindowsHookEx32A stub added.
+
+	* [win32/user32.c]
+	Added implementation of IsDialogMessage32A.
+
+	* [windows/dialog.c]
+	IsDlgButtonChecked now calls SendDlgItemMessage32A instead of
+	SendDlgItemMessage16.
+
+Sat Aug  3 18:00:00 1996 Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/graphics.c]
+	Removed rectangle checking (conflicted with nonstandard
+	mapping modes). 
+
+	* [windows/dialog.c]
+	Added check for child-style dialogs to DS_ABSALIGN
+	coordinate conversion.
+
+	* [objects/color.c]
+	Cleaned up misc. bits
+
+Thu Aug  1 10:51:45 1996  Andrew Lewycky <plewycky@oise.utoronto.ca>
+
+	* [windows/focus.c] [windows/event.c] [windows/win.c]
+	  [windows/defdlg.c]
+	Fixes to focusing and activation.
+
+	* [windows/defdlg.c]
+	Properly(?) handle DM_GETDEFID.
+
+	* [controls/combo.c]
+	Handle CB_FINDSTRINGEXACT, CB_SETEDITSEL, CB_GETEDITSEL.
+	CBCheckSize: Adjust edit position.
+
+Tue Jul 30 09:46:36 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/file.c] [include/file.h] [loader/module.c] [loader/ne_image.c]
+	Pass HFILEs instead of unix-fds to self-loader code.
+
+Mon Jul 29 21:48:25 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [include/metafile.h] [objects/metafile.c] [objects/text.c]
+	Implemented handling of some new metafile records (META_...)
+	in PlayMetaFileRecord(), rewrite of 'case META_EXTTEXTOUT'.
+	Added functions like MF_StretchBlt() for usage in metafiles.
+	Minor bugfix in CopyMetafile().
+
+	* [objects/bitmap.c][objects/dib.c]
+	Added check for metafile-DC in Bitmap and DIB functions:
+	CreateCompatibleBitmap() etc.
+
+----------------------------------------------------------------------
 Sun Jul 28 17:57:19 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [loader/task.c] [include/task.h]

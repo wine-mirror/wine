@@ -77,8 +77,8 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 67  pascal16 DPtoLP(word ptr s_word) DPtoLP16
 68  pascal16 DeleteDC(word) DeleteDC
 69  pascal16 DeleteObject(word) DeleteObject
-70  pascal16 EnumFonts(word ptr segptr long) EnumFonts
-71  pascal16 EnumObjects(word word segptr long) EnumObjects
+70  pascal16 EnumFonts(word ptr segptr long) THUNK_EnumFonts16
+71  pascal16 EnumObjects(word word segptr long) THUNK_EnumObjects16
 72  pascal16 EqualRgn(word word) EqualRgn
 73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect
 74  pascal GetBitmapBits(word long ptr) GetBitmapBits
@@ -108,7 +108,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 98  pascal16 IntersectVisRect(word s_word s_word s_word s_word)
              IntersectVisRect
 99  pascal16 LPtoDP(word ptr s_word) LPtoDP16
-100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) LineDDA
+100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) THUNK_LineDDA16
 101 pascal16 OffsetRgn(word s_word s_word) OffsetRgn
 102 pascal16 OffsetVisRgn(word s_word s_word) OffsetVisRgn
 103 pascal16 PtVisible(word s_word s_word) PtVisible
@@ -150,7 +150,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 170 stub SetDCStatus
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn
 173 pascal16 GetClipRgn(word) GetClipRgn
-175 pascal16 EnumMetaFile(word word segptr long) EnumMetaFile
+175 pascal16 EnumMetaFile(word word segptr long) THUNK_EnumMetaFile16
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord
 179 pascal16 GetDCState(word) GetDCState
 180 pascal16 SetDCState(word word) SetDCState
@@ -227,7 +227,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 315 stub EngineRealizeFontExt
 316 stub EngineGetCharWidthStr
 317 stub EngineGetGlyphBmpExt
-330 pascal16 EnumFontFamilies(word ptr segptr long) EnumFontFamilies
+330 pascal16 EnumFontFamilies(word ptr segptr long) THUNK_EnumFontFamilies16
 332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs
 345 pascal16 GetTextAlign(word) GetTextAlign
 346 pascal16 SetTextAlign(word word) SetTextAlign

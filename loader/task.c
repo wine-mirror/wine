@@ -25,6 +25,7 @@
 #include "peexe.h"
 #include "pe_image.h"
 #include "queue.h"
+#include "stackframe.h"
 #include "toolhelp.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -61,9 +62,9 @@ static HANDLE hDOSEnvironment = 0;
 static FARPROC16 TASK_RescheduleProc;
 
 #ifdef WINELIB
-#define TASK_SCHEDULE()  TASK_Reschedule();
+#define TASK_SCHEDULE()  TASK_Reschedule()
 #else
-#define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc,0)
+#define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc)
 #endif
 
 static HANDLE TASK_CreateDOSEnvironment(void);
@@ -1066,20 +1067,33 @@ void SwitchStackTo( WORD seg, WORD ptr, WORD top )
 {
     TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
+    INSTANCEDATA *pData;
+    UINT16 copySize;
 
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
+    if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
     dprintf_task( stddeb, "SwitchStackTo: old=%04x:%04x new=%04x:%04x\n",
                   IF1632_Saved16_ss, IF1632_Saved16_sp, seg, ptr );
+
     /* Save the old stack */
-    oldFrame = CURRENT_STACK16;
-    pTask->switchStackSS = IF1632_Saved16_ss;
-    pTask->switchStackSP = IF1632_Saved16_sp;
+
+    oldFrame           = CURRENT_STACK16;
+    pData->old_sp      = IF1632_Saved16_sp;
+    pData->old_ss      = IF1632_Saved16_ss;
+    pData->stacktop    = top;
+    pData->stackmin    = ptr;
+    pData->stackbottom = ptr;
+
     /* Switch to the new stack */
-    IF1632_Saved16_ss = seg;
-    IF1632_Saved16_sp = ptr - sizeof(STACK16FRAME);
+
+    IF1632_Saved16_ss = pTask->ss = seg;
+    IF1632_Saved16_sp = pTask->sp = ptr - sizeof(STACK16FRAME);
     newFrame = CURRENT_STACK16;
-    /* Build the stack frame on the new stack */
-    *newFrame = *oldFrame;
+
+    /* Copy the stack frame and the local variables to the new stack */
+
+    copySize = oldFrame->bp - pData->old_sp;
+    memcpy( newFrame, oldFrame, MAX( copySize, sizeof(STACK16FRAME) ));
 }
 
 
@@ -1094,22 +1108,28 @@ void SwitchStackBack(void)
 {
     TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
+    INSTANCEDATA *pData;
 
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
-    if (!pTask->switchStackSS)
+    if (!(pData = (INSTANCEDATA *)GlobalLock16( IF1632_Saved16_ss ))) return;
+    if (!pData->old_ss)
     {
         fprintf( stderr, "SwitchStackBack: no previous SwitchStackTo\n" );
         return;
     }
     dprintf_task( stddeb, "SwitchStackBack: restoring stack %04x:%04x\n",
-                  pTask->switchStackSS, pTask->switchStackSP );
+                  pData->old_ss, pData->old_sp );
 
     oldFrame = CURRENT_STACK16;
+
     /* Switch back to the old stack */
-    IF1632_Saved16_ss = pTask->switchStackSS;
-    IF1632_Saved16_sp = pTask->switchStackSP;
-    pTask->switchStackSS = 0;
+
+    IF1632_Saved16_ss = pTask->ss = pData->old_ss;
+    IF1632_Saved16_sp = pTask->sp = pData->old_sp;
+    pData->old_ss = pData->old_sp = 0;
+
     /* Build a stack frame for the return */
+
     newFrame = CURRENT_STACK16;
     newFrame->saved_ss = oldFrame->saved_ss;
     newFrame->saved_sp = oldFrame->saved_sp;
@@ -1185,6 +1205,18 @@ int GetInstanceData( HANDLE instance, WORD buffer, int len )
 
 
 /***********************************************************************
+ *           GetExeVersion   (KERNEL.105)
+ */
+WORD GetExeVersion(void)
+{
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
+    return pTask->version;
+}
+
+
+/***********************************************************************
  *           SetErrorMode   (KERNEL.107)
  */
 UINT SetErrorMode( UINT mode )
@@ -1222,6 +1254,9 @@ WORD GetNumTasks(void)
 
 /***********************************************************************
  *           GetTaskDS   (KERNEL.155)
+ *
+ * Note: this function apparently returns a DWORD with LOWORD == HIWORD.
+ * I don't think we need to bother with this.
  */
 HINSTANCE16 GetTaskDS(void)
 {
@@ -1242,6 +1277,47 @@ BOOL IsTask( HTASK hTask )
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return FALSE;
     if (GlobalSize16( hTask ) < sizeof(TDB)) return FALSE;
     return (pTask->magic == TDB_MAGIC);
+}
+
+
+/***********************************************************************
+ *           SetTaskSignalProc   (KERNEL.38)
+ */
+FARPROC16 SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
+{
+    TDB *pTask;
+    FARPROC16 oldProc;
+
+    if (!hTask) hTask = hCurrentTask;
+    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return NULL;
+    oldProc = pTask->userhandler;
+    pTask->userhandler = proc;
+    return oldProc;
+}
+
+
+/***********************************************************************
+ *           SetSigHandler   (KERNEL.140)
+ */
+WORD SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
+                    UINT16 *oldmode, UINT16 newmode, UINT16 flag )
+{
+    fprintf(stdnimp,"SetSigHandler(%p,%p,%p,%d,%d), unimplemented.\n",
+            newhandler,oldhandler,oldmode,newmode,flag );
+
+    if (flag != 1) return 0;
+    if (!newmode) newhandler = NULL;  /* Default handler */
+    if (newmode != 4)
+    {
+        TDB *pTask;
+
+        if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
+        if (oldmode) *oldmode = pTask->signal_flags;
+        pTask->signal_flags = newmode;
+        if (oldhandler) *oldhandler = pTask->sighandler;
+        pTask->sighandler = newhandler;
+    }
+    return 0;
 }
 
 
@@ -1348,16 +1424,4 @@ DWORD GetAppCompatFlags( HTASK32 hTask )
     if (!(pTask=(TDB *)GlobalLock16( (HTASK16)hTask ))) return 0;
     if (GlobalSize16(hTask) < sizeof(TDB)) return 0;
     return pTask->compat_flags;
-}
-
-
-/***********************************************************************
- *           SetSigHandler   (KERNEL.140)
- */
-WORD SetSigHandler( SEGPTR newhandler,SEGPTR* oldhandler,
-                    LPUINT16 *oldmode,UINT16 newmode,UINT16 flag )
-{
-    fprintf(stdnimp,"SetSigHandler(%lx,%p,%p,%d,%d), unimplemented.\n",
-            newhandler,oldhandler,oldmode,newmode,flag );
-    return 0;
 }

@@ -1053,6 +1053,11 @@ typedef struct
 DECL_WINELIB_TYPE_AW(TEXTMETRIC);
 DECL_WINELIB_TYPE_AW(LPTEXTMETRIC);
 
+typedef INT16 (*FONTENUMPROC16)(SEGPTR,SEGPTR,UINT16,LPARAM);
+typedef INT32 (*FONTENUMPROC32A)(const LOGFONT32A*,const TEXTMETRIC32A*,UINT32,LPARAM);
+typedef INT32 (*FONTENUMPROC32W)(const LOGFONT32W*,const TEXTMETRIC32W*,UINT32,LPARAM);
+DECL_WINELIB_TYPE_AW(FONTENUMPROC);
+
   /* tmPitchAndFamily values */
 #define TMPF_FIXED_PITCH    1
 #define TMPF_VECTOR	    2
@@ -2508,6 +2513,13 @@ typedef struct
 #define ESB_DISABLE_LTUP    ESB_DISABLE_LEFT
 #define ESB_DISABLE_RTDN    ESB_DISABLE_RIGHT
 
+/* Scrollbar messages (undocumented) */
+#define SBM_SETSCROLLPOS      (WM_USER+0)
+#define SBM_GETSCROLLPOS      (WM_USER+1)
+#define SBM_SETSCROLLRANGE    (WM_USER+2)
+#define SBM_REDRAW            (WM_USER+3)
+#define SBM_ENABLE            (WM_USER+4)
+
 /* Listbox styles */
 #define LBS_NOTIFY            0x0001L
 #define LBS_SORT              0x0002L
@@ -3000,12 +3012,19 @@ typedef METARECORD *PMETARECORD;
 typedef METARECORD *LPMETARECORD;
 
 /* Handle table structure */
+
 typedef struct
 {
-    HANDLE16   objectHandle[1];
-} HANDLETABLE;
-typedef HANDLETABLE *PHANDLETABLE;
-typedef HANDLETABLE *LPHANDLETABLE;
+    HGDIOBJ16 objectHandle[1];
+} HANDLETABLE16, *LPHANDLETABLE16;
+
+typedef struct
+{
+    HGDIOBJ32 objectHandle[1];
+} HANDLETABLE32, *LPHANDLETABLE32;
+
+DECL_WINELIB_TYPE(HANDLETABLE);
+DECL_WINELIB_TYPE(LPHANDLETABLE);
 
 /* Clipboard metafile picture structure */
 typedef struct
@@ -3095,6 +3114,10 @@ typedef struct
 #define META_CREATEBITMAPINDIRECT    0x02FD
 #define META_CREATEBITMAP            0x06FE
 #define META_CREATEREGION            0x06FF
+
+typedef INT16 (*MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,INT16,LPARAM);
+typedef INT32 (*MFENUMPROC32)(HDC32,HANDLETABLE32*,METARECORD*,INT32,LPARAM);
+DECL_WINELIB_TYPE(MFENUMPROC);
 
 /* Debugging support (DEBUG SYSTEM ONLY) */
 typedef struct
@@ -3281,8 +3304,10 @@ INT16      GetCommError(INT16,LPCOMSTAT);
 UINT16     GetCommEventMask(INT16,UINT16);
 HTASK16    GetCurrentTask(void);
 HMODULE16  GetExePtr(HANDLE16);
+WORD       GetExeVersion(void);
 HINSTANCE16 GetTaskDS(void);
 HQUEUE16   GetTaskQueue(HTASK16);
+BOOL16     IsSharedSelector(HANDLE16);
 BOOL16     LocalInit(HANDLE16,WORD,WORD);
 DWORD      OffsetViewportOrg(HDC16,INT16,INT16);
 DWORD      OffsetWindowOrg(HDC16,INT16,INT16);
@@ -3294,6 +3319,7 @@ DWORD      ScaleWindowExt(HDC16,INT16,INT16,INT16,INT16);
 DWORD      SetBitmapDimension(HBITMAP16,INT16,INT16);
 DWORD      SetBrushOrg(HDC16,INT16,INT16);
 UINT16*    SetCommEventMask(INT16,UINT16);
+FARPROC16  SetTaskSignalProc(HTASK16,FARPROC16);
 DWORD      SetViewportExt(HDC16,INT16,INT16);
 DWORD      SetViewportOrg(HDC16,INT16,INT16);
 DWORD      SetWindowExt(HDC16,INT16,INT16);
@@ -3403,6 +3429,7 @@ INT16      SetDIBitsToDevice(HDC32,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UI
 VOID       SetRectRgn(HRGN32,INT32,INT32,INT32,INT32);
 WORD       SetWindowWord(HWND32,INT32,WORD);
 BOOL16     ShowCaret(HWND32);
+HWND16     WindowFromDC(HDC32);
 HFILE      _lclose(HFILE);
 HFILE      _lcreat(LPCSTR,INT32);
 HFILE      _lopen(LPCSTR,INT32);
@@ -3914,6 +3941,9 @@ HFILE      LZOpenFile32W(LPCWSTR,LPOFSTRUCT,UINT32);
 INT16      LZRead16(HFILE,SEGPTR,UINT16); 
 INT32      LZRead32(HFILE,LPVOID,UINT32); 
 #define    LZRead WINELIB_NAME(LZRead)
+VOID       LineDDA16(INT16,INT16,INT16,INT16,LINEDDAPROC16,LPARAM);
+BOOL32     LineDDA32(INT32,INT32,INT32,INT32,LINEDDAPROC32,LPARAM);
+#define    LineDDA WINELIB_NAME(LineDDA)
 HACCEL16   LoadAccelerators16(HINSTANCE16,SEGPTR);
 HACCEL32   LoadAccelerators32A(HINSTANCE32,LPCSTR);
 HACCEL32   LoadAccelerators32W(HINSTANCE32,LPCWSTR);
@@ -4359,17 +4389,9 @@ typedef HANDLE16 HWND;
 #ifdef WINELIB
 typedef LONG (*DRIVERPROC)(DWORD, HDRVR, UINT, LPARAM, LPARAM);
 typedef int (*EDITWORDBREAKPROC)(LPSTR lpch, int ichCurrent, int cch,int code);
-/*typedef int (*FONTENUMPROC)(const LOGFONT*,const TEXTMETRIC*,DWORD,LPARAM);*/
-typedef int (*FONTENUMPROC)(const void*,const void*,DWORD,LPARAM);
-typedef int (*GOBJENUMPROC)(LPVOID,LPARAM);
-/*typedef int (*MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,int,LPARAM);*/
-typedef int (*MFENUMPROC)(HDC,void*,void*,int,LPARAM);
 #else
 typedef SEGPTR DRIVERPROC;
 typedef SEGPTR EDITWORDBREAKPROC;
-typedef SEGPTR FONTENUMPROC;
-typedef SEGPTR GOBJENUMPROC;
-typedef SEGPTR MFENUMPROC;
 #endif
 
 ATOM       AddAtom(SEGPTR);
@@ -4455,10 +4477,10 @@ BOOL       EnableScrollBar(HWND,UINT,UINT);
 BOOL       EnableWindow(HWND,BOOL);
 BOOL       EndDeferWindowPos(HDWP16);
 UINT       EnumClipboardFormats(UINT);
-INT        EnumFontFamilies(HDC,LPCSTR,FONTENUMPROC,LPARAM);
-INT        EnumFonts(HDC,LPCSTR,FONTENUMPROC,LPARAM);
-BOOL       EnumMetaFile(HDC,HMETAFILE,MFENUMPROC,LPARAM);
-INT        EnumObjects(HDC,INT,GOBJENUMPROC,LPARAM);
+INT        EnumFontFamilies(HDC,LPCSTR,FONTENUMPROC16,LPARAM);
+INT        EnumFonts(HDC,LPCSTR,FONTENUMPROC16,LPARAM);
+BOOL       EnumMetaFile(HDC,HMETAFILE,MFENUMPROC16,LPARAM);
+INT        EnumObjects(HDC,INT,GOBJENUMPROC16,LPARAM);
 INT        Escape(HDC,INT,INT,LPCSTR,LPVOID);
 int        ExcludeClipRect(HDC,short,short,short,short);
 int        ExcludeVisRect(HDC,short,short,short,short);
@@ -4610,7 +4632,7 @@ WORD       GlobalPageUnlock(HGLOBAL16);
 BOOL16     GlobalUnWire(HGLOBAL16);
 void       GlobalUnfix(HGLOBAL16);
 SEGPTR     GlobalWire(HGLOBAL16);
-BOOL       GrayString(HDC,HBRUSH,FARPROC16,LPARAM,INT,INT,INT,INT,INT);
+BOOL       GrayString(HDC,HBRUSH,GRAYSTRINGPROC16,LPARAM,INT,INT,INT,INT,INT);
 BOOL       HiliteMenuItem(HWND,HMENU,UINT,UINT);
 BOOL       InSendMessage(void);
 WORD       InitAtomTable(WORD);
@@ -4638,7 +4660,6 @@ BOOL       IsWindowEnabled(HWND);
 BOOL       IsWindowVisible(HWND);
 BOOL       IsZoomed(HWND);
 void       LimitEmsPages(DWORD);
-void       LineDDA(short,short,short,short,FARPROC16,long);
 BOOL       LineTo(HDC,short,short);
 HANDLE     LoadLibrary(LPCSTR);
 HANDLE     LoadModule(LPCSTR,LPVOID);
@@ -4661,7 +4682,7 @@ BOOL       PaintRgn(HDC,HRGN);
 BOOL       PatBlt(HDC,short,short,short,short,DWORD);
 BOOL       Pie(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
 BOOL       PlayMetaFile(HDC,HANDLE);
-void       PlayMetaFileRecord(HDC,LPHANDLETABLE,LPMETARECORD,WORD);
+void       PlayMetaFileRecord(HDC,LPHANDLETABLE16,LPMETARECORD,WORD);
 BOOL       PostAppMessage(HANDLE,WORD,WORD,LONG);
 void       PostEvent(HTASK);
 BOOL       PostMessage(HWND,WORD,WORD,LONG);

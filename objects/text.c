@@ -331,7 +331,7 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
     {
 	dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC );
 	if (!dc) return FALSE;
-	MF_TextOut( dc, x, y, str, count );
+	MF_ExtTextOut( dc, x, y, flags, lprect, str, count, lpDx );
 	return TRUE;
     }
 
@@ -616,16 +616,16 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 
 
 /***********************************************************************
- *		GrayString (USER.185)
+ *           GrayString   (USER.185)
  */
-BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC16 gsprc, LPARAM lParam, 
+BOOL GrayString(HDC hdc, HBRUSH hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam, 
 		INT cch, INT x, INT y, INT cx, INT cy)
 {
     BOOL ret;
     COLORREF current_color;
 
     if (!cch) cch = lstrlen16( (LPCSTR)PTR_SEG_TO_LIN(lParam) );
-    if (gsprc) return CallGrayStringProc( gsprc, hdc, lParam, cch );
+    if (gsprc) return gsprc( hdc, lParam, cch );
     current_color = GetTextColor( hdc );
     SetTextColor( hdc, GetSysColor(COLOR_GRAYTEXT) );
     ret = TextOut16( hdc, x, y, (LPCSTR)PTR_SEG_TO_LIN(lParam), cch );

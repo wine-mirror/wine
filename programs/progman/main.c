@@ -15,6 +15,7 @@
 void LIBWINE_Register_accel();
 void LIBWINE_Register_De();
 void LIBWINE_Register_En();
+void LIBWINE_Register_Fi();
 void LIBWINE_Register_Fr();
 #endif
 
@@ -43,6 +44,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   LIBWINE_Register_accel();
   LIBWINE_Register_De();
   LIBWINE_Register_En();
+  LIBWINE_Register_Fi();
   LIBWINE_Register_Fr();
 #endif
 

@@ -16,7 +16,6 @@
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
-#include "callback.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -435,7 +434,8 @@ BOOL UnrealizeObject( HANDLE obj )
 /***********************************************************************
  *           EnumObjects    (GDI.71)
  */
-INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
+INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
+                 LPARAM lParam )
 {
     /* Solid colors to enumerate */
     static const COLORREF solid_colors[] =
@@ -466,8 +466,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
             pen->lopnWidth.x = 1;
             pen->lopnWidth.y = 0;
             pen->lopnColor   = solid_colors[i];
-            retval = CallEnumObjectsProc( (FARPROC16)lpEnumFunc,
-                                          SEGPTR_GET(pen), lParam );
+            retval = lpEnumFunc( SEGPTR_GET(pen), lParam );
             dprintf_gdi( stddeb, "EnumObject: solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
@@ -483,8 +482,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
             brush->lbStyle = BS_SOLID;
             brush->lbColor = solid_colors[i];
             brush->lbHatch = 0;
-            retval = CallEnumObjectsProc( (FARPROC16)lpEnumFunc,
-                                          SEGPTR_GET(brush), lParam );
+            retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
             dprintf_gdi( stddeb, "EnumObject: solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
@@ -496,8 +494,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
             brush->lbStyle = BS_HATCHED;
             brush->lbColor = RGB(0,0,0);
             brush->lbHatch = i;
-            retval = CallEnumObjectsProc( (FARPROC16)lpEnumFunc,
-                                          SEGPTR_GET(brush), lParam );
+            retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
             dprintf_gdi( stddeb, "EnumObject: hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;

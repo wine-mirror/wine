@@ -8,7 +8,6 @@
 #include <string.h>
 #include "win.h"
 #include "heap.h"
-#include "callback.h"
 #include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -235,8 +234,7 @@ INT16 EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 
         dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
-        ret = CallEnumPropProc16( (FARPROC16)func, hwnd,
-                                  SEGPTR_GET(prop->string), prop->handle );
+        ret = func( hwnd, SEGPTR_GET(prop->string), prop->handle );
         if (!ret) break;
     }
     return ret;
@@ -248,24 +246,7 @@ INT16 EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
  */
 INT32 EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
 {
-    PROPERTY *prop, *next;
-    WND *pWnd;
-    INT32 ret = -1;
-
-    dprintf_prop( stddeb, "EnumProps32A: %04x %08x\n", hwnd, (UINT32)func );
-    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
-    for (prop = pWnd->pProp; (prop); prop = next)
-    {
-        /* Already get the next in case the callback */
-        /* function removes the current property.    */
-        next = prop->next;
-
-        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
-                      prop->handle, prop->string );
-        ret = CallEnumPropProc32( func, hwnd, prop->string, prop->handle );
-        if (!ret) break;
-    }
-    return ret;
+    return EnumPropsEx32A( hwnd, (PROPENUMPROCEX32A)func, 0 );
 }
 
 
@@ -274,33 +255,7 @@ INT32 EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
  */
 INT32 EnumProps32W( HWND32 hwnd, PROPENUMPROC32W func )
 {
-    PROPERTY *prop, *next;
-    WND *pWnd;
-    INT32 ret = -1;
-
-    dprintf_prop( stddeb, "EnumProps32W: %04x %08x\n", hwnd, (UINT32)func );
-    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
-    for (prop = pWnd->pProp; (prop); prop = next)
-    {
-        /* Already get the next in case the callback */
-        /* function removes the current property.    */
-        next = prop->next;
-
-        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
-                      prop->handle, prop->string );
-        if (HIWORD(prop->string))
-        {
-            LPWSTR str = STRING32_DupAnsiToUni( prop->string );
-            ret = CallEnumPropProc32( func, hwnd, str, prop->handle );
-            free( str );
-        }
-        else
-            ret = CallEnumPropProc32( func, hwnd,
-                                      (LPCWSTR)(UINT32)LOWORD(prop->string),
-                                      prop->handle );
-        if (!ret) break;
-    }
-    return ret;
+    return EnumPropsEx32W( hwnd, (PROPENUMPROCEX32W)func, 0 );
 }
 
 
@@ -324,8 +279,7 @@ INT32 EnumPropsEx32A( HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam )
 
         dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
-        ret = CallEnumPropProcEx32( func, hwnd, prop->string,
-                                    prop->handle, lParam );
+        ret = func( hwnd, prop->string, prop->handle, lParam );
         if (!ret) break;
     }
     return ret;
@@ -355,13 +309,12 @@ INT32 EnumPropsEx32W( HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam )
         if (HIWORD(prop->string))
         {
             LPWSTR str = STRING32_DupAnsiToUni( prop->string );
-            ret = CallEnumPropProcEx32( func, hwnd, str, prop->handle, lParam);
+            ret = func( hwnd, str, prop->handle, lParam );
             free( str );
         }
         else
-            ret = CallEnumPropProcEx32( func, hwnd,
-                                        (LPCWSTR)(UINT32)LOWORD(prop->string),
-                                        prop->handle, lParam );
+            ret = func( hwnd, (LPCWSTR)(UINT32)LOWORD( prop->string ),
+                        prop->handle, lParam );
         if (!ret) break;
     }
     return ret;

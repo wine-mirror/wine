@@ -67,6 +67,8 @@ BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
  	SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
  	WORD oldss, oldsp, oldselector, newselector;
+        HFILE hf = FILE_DupUnixHandle( fd );
+
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
  	oldss = IF1632_Saved16_ss;
@@ -84,9 +86,9 @@ BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
         stack16Top->bp = 0;
         stack16Top->ip = 0;
         stack16Top->cs = 0;
-        /* FIXME: we probably need to pass a DOS file handle here */
- 	newselector =  CallTo16_word_www(selfloadheader->LoadAppSeg,
- 		pModule->self_loading_sel, hModule, fd, segnum);
+ 	newselector =  CallTo16_word_www( selfloadheader->LoadAppSeg,
+                                          hModule, hf, segnum );
+        _lclose( hf );
  	if (newselector != oldselector) {
  	  /* Self loaders like creating their own selectors; 
  	   * they love asking for trouble to Wine developers

@@ -16,6 +16,7 @@ extern const char people[];
 
 VOID LIBWINE_Register_De(void);
 VOID LIBWINE_Register_En(void);
+VOID LIBWINE_Register_Fi(void);
 VOID LIBWINE_Register_Fr(void);
 
 static BOOL    WINHELP_RegisterWinClasses();
@@ -53,6 +54,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   /* Register resources */
   LIBWINE_Register_De();
   LIBWINE_Register_En();
+  LIBWINE_Register_Fi();
   LIBWINE_Register_Fr();
 #endif
 

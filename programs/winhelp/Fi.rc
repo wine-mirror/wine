@@ -1,0 +1,49 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1996 Ulrich Schmid
+ * Finnish language by Jussi Tirkkonen <jt@modeemi.cs.tut.fi>
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Fi
+#define LANGUAGE_NUMBER              5
+
+/* Menu */
+
+#define MENU_FILE                    "&Tiedosto"
+#define MENU_FILE_OPEN               "&Avaa..."
+#define MENU_FILE_PRINT              "&Tulosta"
+#define MENU_FILE_PRINTER_SETUP      "&Kirjoittimen asetukset..."
+#define MENU_FILE_EXIT               "&Lopeta"
+
+#define MENU_EDIT                    "&Muokkaa"
+#define MENU_EDIT_COPY_DIALOG        "&Kopioi..."
+#define MENU_EDIT_ANNOTATE           "&Huomautus..."
+
+#define MENU_BOOKMARK                "&Kirjanmerkki"
+#define MENU_BOOKMARK_DEFINE         "&Aseta..."
+
+#define MENU_HELP                    "&Ohje"
+#define MENU_HELP_ON_HELP            "&Ohjeen käyttö"
+#define MENU_HELP_ON_TOP             "&Aina päällimmäisenä"
+#define MENU_HELP_INFO               "T&ietoja..."
+#define MENU_HELP_ABOUT_WINE         "&Tietoja WINEstä"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "WINE Ohje"
+#define STRING_ERROR                 "VIRHE"
+#define STRING_WARNING               "VAROITUS"
+#define STRING_INFO                  "Tietoja"
+#define STRING_NOT_IMPLEMENTED       "Ei käytettävissä"
+#define STRING_HLPFILE_ERROR_s       "Virhe luettaessa ohjetiedostoa `%s'" 
+#define STRING_CONTENTS              "&Sisällys"
+#define STRING_SEARCH                "&Etsi"
+#define STRING_BACK                  "&Takaisin"
+#define STRING_HISTORY               "&Luetut"
+#define STRING_ALL_FILES             "Kaikki tiedostot (*.*)"
+#define STRING_HELP_FILES_HLP        "Ohjetiedostot (*.hlp)"
+
+#include "Xx.rc"

@@ -350,7 +350,7 @@ LPCSTR BUILTIN_GetEntryPoint32( void *relay )
     static char buffer[80];
     BUILTIN_DLL *dll;
     const void **funcs;
-    int first, i, size;
+    int i;
 
     /* First find the module */
 
@@ -365,19 +365,11 @@ LPCSTR BUILTIN_GetEntryPoint32( void *relay )
         return buffer;
     }
 
-    /* Do a binary search for the function */
+    /* Now find the function */
 
     relay = (BYTE *)relay - 11;  /* The relay entry point is 11 bytes long */
     funcs = dll->descr->u.win32.functions;
-    first = i = 0;
-    size = dll->descr->u.win32.size;
-    while (first < size)
-    {
-        i = (first + size) / 2;
-        if (funcs[i] == relay) break;
-        if (funcs[i] > relay) size = i;
-        else first = i + 1;
-    }
+    for (i = 0; i < dll->descr->u.win32.size;i++) if (*funcs++ == relay) break;
     sprintf( buffer, "%s.%d: %s",
              dll->descr->name, i, dll->descr->u.win32.names[i] );
     return buffer;

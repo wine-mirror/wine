@@ -118,11 +118,11 @@ HANDLE DCE_FindDCE(HDC hDC)
 }
 
 /**********************************************************************
- *	    DCE_hDC2hWnd
+ *          WindowFromDC   (USER.117) (USER32.580)
  */
-HWND DCE_hDC2hWnd(HDC hDC)
+HWND16 WindowFromDC( HDC32 hDC )
 {
- HANDLE hdce = DCE_FindDCE(hDC); 
+ HANDLE16 hdce = DCE_FindDCE(hDC); 
 
  if( hdce )
    {

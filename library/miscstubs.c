@@ -33,15 +33,13 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
                 a[7],a[8],a[9],a[10]);
   case 14: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
                 a[7],a[8],a[9],a[10],a[11],a[12],a[13]);
-  case 17: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
-                a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15],a[16]);
+  case 16: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
+                a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15]);
   default: fprintf(stderr,"JBP: CallTo32_LargeStack called with unsupported "
                           "number of arguments (%d).  Ignored.\n",nbargs);
            return 0;
   }
 }
-
-WORD CallTo16_word_ ( FARPROC16 func, WORD arg ) { return func(arg); }
 
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ColorDlgProc(HWND,UINT,WPARAM,LPARAM);
