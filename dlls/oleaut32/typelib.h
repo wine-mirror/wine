@@ -303,7 +303,7 @@ typedef struct {
 #define SLTG_DIR_MAGIC "dir"
 
 /* Next we have SLTG_Header.nrOfFileBlks - 2 of Index strings.  These
-are persumbably unique to within the file and look something like
+are presumably unique to within the file and look something like
 "AAAAAAAAAA" with the first character incremented from 'A' to ensure
 uniqueness.  I guess successive chars increment when we need to wrap
 the first one. */

@@ -2920,11 +2920,25 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     /* Skip this WORD and get the next DWORD */
     len = *(DWORD*)(pAfterOTIBlks + 2);
 
-    /* Now add this to pLibBLk and then add 0x216, sprinkle a bit a
-       magic dust and we should be pointing at the beginning of the name
+    /* Now add this to pLibBLk look at what we're pointing at and
+       possibly add 0x20, then add 0x216, sprinkle a bit a magic
+       dust and we should be pointing at the beginning of the name
        table */
+ 
+    pNameTable = (char*)pLibBlk + len;
 
-    pNameTable = (char*)pLibBlk + len + 0x216;
+   switch(*(WORD*)pNameTable) {
+   case 0xffff:
+       break;
+   case 0x0200:
+       pNameTable += 0x20;
+       break;
+   default:
+       FIXME("pNameTable jump = %x\n", *(WORD*)pNameTable);
+       break;
+   }
+
+    pNameTable += 0x216;
 
     pNameTable += 2;
 
