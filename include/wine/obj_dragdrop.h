@@ -26,19 +26,21 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
 #define	DROPEFFECT_COPY		1
 #define	DROPEFFECT_MOVE		2
 #define	DROPEFFECT_LINK		4
-#define	DROPEFFECT_SCROLL       0x80000000
+#define	DROPEFFECT_SCROLL	0x80000000
 
 /*****************************************************************************
  * IDropSource interface
  */
 #define ICOM_INTERFACE IDropSource
-ICOM_BEGIN(IDropSource,IUnknown)
-    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL32, fEscapePressed, DWORD, grfKeyState);
+#define IDropSource_METHODS \
+    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL32, fEscapePressed, DWORD, grfKeyState); \
     ICOM_METHOD1(HRESULT, GiveFeedback, DWORD, dwEffect);
-ICOM_END(IDropSource)
+#define IDropSource_IMETHODS \
+  ICOM_INHERITS(IDropSource,IUnknown)
+ICOM_DEFINE(IDropSource,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDropSource_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
 #define IDropSource_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
@@ -52,15 +54,17 @@ ICOM_END(IDropSource)
  * IDropTarget interface
  */
 #define ICOM_INTERFACE IDropTarget
-ICOM_BEGIN(IDropTarget,IUnknown)
-    ICOM_METHOD4(HRESULT, DragEnter, IDataObject*, pDataObjhect, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect);
-    ICOM_METHOD3(HRESULT, DragOver, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect);
-    ICOM_METHOD(HRESULT, DragLeave);
-    ICOM_METHOD4(HRESULT, Drop, IDataObject*, pDataObjhect, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect);
-ICOM_END(IDropTarget)
+#define IDropTarget_METHODS \
+    ICOM_METHOD4(HRESULT, DragEnter, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect); \
+    ICOM_METHOD3(HRESULT, DragOver, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect); \
+    ICOM_METHOD(HRESULT, DragLeave); \
+    ICOM_METHOD4(HRESULT, Drop, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect);
+#define IDropTarget_IMETHODS \
+  ICOM_INHERITS(IDropTarget,IUnknown)
+ICOM_DEFINE(IDropTarget,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
 #define IDropTarget_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
 #define IDropTarget_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
