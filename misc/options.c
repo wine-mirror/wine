@@ -16,7 +16,7 @@
 #include "version.h"
 #include "debugtools.h"
 
-struct option
+struct option_descr
 {
     const char *longname;
     char        shortname;
@@ -33,8 +33,7 @@ struct options Options =
     NULL,           /* display */
     NULL,           /* dllFlags */
     FALSE,          /* synchronous */
-    FALSE,          /* Managed windows */
-    NULL            /* Alternate config file name */
+    FALSE           /* Managed windows */
 };
 
 const char *argv0;       /* the original argv[0] */
@@ -60,7 +59,6 @@ static char *xstrdup( const char *str )
     return ret;
 }
 
-static void do_config( const char *arg );
 static void do_debugmsg( const char *arg );
 static void do_desktop( const char *arg );
 static void do_display( const char *arg );
@@ -71,10 +69,8 @@ static void do_managed( const char *arg );
 static void do_synchronous( const char *arg );
 static void do_version( const char *arg );
 
-static const struct option option_table[] =
+static const struct option_descr option_table[] =
 {
-    { "config",       0, 1, 0, do_config,
-      "--config name    Specify config file to use" },
     { "debugmsg",     0, 1, 1, do_debugmsg,
       "--debugmsg name  Turn debugging-messages on or off" },
     { "desktop",      0, 1, 1, do_desktop,
@@ -153,11 +149,6 @@ static void do_language( const char *arg )
 static void do_managed( const char *arg )
 {
     Options.managed = TRUE;
-}
-
-static void do_config( const char *arg )
-{
-    Options.configFileName = xstrdup( arg );
 }
 
 static void do_debugmsg( const char *arg )
@@ -292,7 +283,7 @@ static void remove_options( char *argv[], int pos, int count, int inherit )
 /* parse options from the argv array and remove all the recognized ones */
 static void parse_options( char *argv[] )
 {
-    const struct option *opt;
+    const struct option_descr *opt;
     int i;
 
     for (i = 0; argv[i]; i++)
@@ -371,7 +362,7 @@ static void inherit_options( char *buffer )
  */
 void OPTIONS_Usage(void)
 {
-    const struct option *opt;
+    const struct option_descr *opt;
     MESSAGE( "Usage: %s [options] [--] program_name [arguments]\n", argv0 );
     MESSAGE("The -- has to be used if you specify arguments (of the program)\n\n");
     MESSAGE( "Options:\n" );

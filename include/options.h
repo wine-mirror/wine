@@ -16,7 +16,6 @@ struct options
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    synchronous;     /* X synchronous mode */
     int    managed;	    /* Managed windows */
-    char * configFileName;  /* Command line config file */
 };
 
 extern struct options Options;
