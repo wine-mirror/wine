@@ -432,6 +432,7 @@ LONG ALSA_WaveInit(void)
 
     ALSA_WodNumDevs = 0;
     EXIT_ON_ERROR( snd_pcm_open(&h, wwo->device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) , "open pcm" );
+    if (!h) return -1;
     ALSA_WodNumDevs++;
 
     EXIT_ON_ERROR( snd_pcm_info(h, info) , "pcm info" );
