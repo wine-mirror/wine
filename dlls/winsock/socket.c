@@ -202,6 +202,14 @@ static int _px_tcp_ops[] = {
 	0
 };
 
+/* Holds value of SO_OPENTYPE socket option.  This is essentially a global
+ * variable that Windows uses to affect how new sockets are created.  See
+ * <http://support.microsoft.com/default.aspx?scid=kb;EN-US;q181611>.  Right
+ * now, Wine does not do anything with this value other than get and set it on
+ * request.
+ */
+static int opentype = 0;
+
 /* Permutation of 0..FD_MAX_EVENTS - 1 representing the order in which we post
  * messages if there are multiple events.  Used in WINSOCK_DoAsyncEvent.  The
  * problem is if there is both a FD_CONNECT event and, say, an FD_READ event
@@ -1254,9 +1262,25 @@ INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct WS_sockaddr *name,
 INT WINAPI WS_getsockopt(SOCKET s, INT level, 
                                   INT optname, char *optval, INT *optlen)
 {
-    int fd = _get_sock_fd(s);
+    int fd;
 
-    TRACE("socket: %04x, opt 0x%x, ptr %8x, len %d\n", s, level, (int) optval, (int) *optlen);
+    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %8x, len %d\n", s, level,
+          (int) optname, (int) optval, (int) *optlen);
+    /* SO_OPENTYPE does not require a valid socket handle. */
+    if (level == WS_SOL_SOCKET && optname == WS_SO_OPENTYPE)
+    {
+        if (!optlen || *optlen < sizeof(int) || !optval)
+        {
+            SetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+        *(int *)optval = opentype;
+        *optlen = sizeof(int);
+        TRACE("getting global SO_OPENTYPE = 0x%x\n", opentype);
+        return 0;
+    }
+
+    fd = _get_sock_fd(s);
     if (fd != -1)
     {
 	if (!convert_sockopt(&level, &optname)) {
@@ -2146,10 +2170,24 @@ INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 int WINAPI WS_setsockopt(SOCKET s, int level, int optname, 
                                   const char *optval, int optlen)
 {
-    int fd = _get_sock_fd(s);
+    int fd;
 
-    TRACE("socket %04x, lev %d, opt 0x%x, ptr %08x, len %d\n",
-          s, level, optname, (int) optval, optlen);
+    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %8x, len %d\n", s, level,
+          (int) optname, (int) optval, optlen);
+    /* SO_OPENTYPE does not require a valid socket handle. */
+    if (level == WS_SOL_SOCKET && optname == WS_SO_OPENTYPE)
+    {
+        if (optlen < sizeof(int) || !optval)
+        {
+            SetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+        opentype = *(int *)optval;
+        TRACE("setting global SO_OPENTYPE to 0x%x\n", opentype);
+        return 0;
+    }
+
+    fd = _get_sock_fd(s);
     if (fd != -1)
     {
 	struct	linger linger;

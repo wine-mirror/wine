@@ -591,6 +591,10 @@ typedef struct WS(WSAData)
 #define SO_ERROR                   0x1007
 #define SO_TYPE                    0x1008
 
+#define SO_OPENTYPE                0x7008
+#define SO_SYNCHRONOUS_ALERT       0x10
+#define SO_SYNCHRONOUS_NONALERT    0x20
+
 #define IOCPARM_MASK               0x7f
 #define IOC_VOID                   0x20000000
 #define IOC_OUT                    0x40000000
@@ -622,6 +626,10 @@ typedef struct WS(WSAData)
 #define WS_SO_RCVTIMEO             0x1006
 #define WS_SO_ERROR                0x1007
 #define WS_SO_TYPE                 0x1008
+
+#define WS_SO_OPENTYPE             0x7008
+#define WS_SO_SYNCHRONOUS_ALERT    0x10
+#define WS_SO_SYNCHRONOUS_NONALERT 0x20
 
 #define WS_IOCPARM_MASK            0x7f
 #define WS_IOC_VOID                0x20000000
