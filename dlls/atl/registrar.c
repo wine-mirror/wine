@@ -169,12 +169,14 @@ static HRESULT do_preprocess(Registrar *This, LPCOLESTR data, strbuf *buf)
             strbuf_write(wstr, buf, 1);
         }else {
             for(rep_iter = This->rep; rep_iter; rep_iter = rep_iter->next) {
-                if(rep_iter->key_len == iter-iter2 
-                        && !memcmp(iter2, rep_iter->key, rep_iter->key_len*sizeof(OLECHAR)))
+                if(rep_iter->key_len == iter-iter2
+                        && !memicmpW(iter2, rep_iter->key, rep_iter->key_len))
                     break;
             }
-            if(!rep_iter)
+            if(!rep_iter) {
+                WARN("Could not find replacement: %s\n", debugstr_wn(iter2, iter-iter2));
                 return DISP_E_EXCEPTION;
+            }
 
             strbuf_write(rep_iter->item, buf, -1);
         }
@@ -218,13 +220,13 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
 
     while(buf->str[1] || buf->str[0] != '}') {
         key_type = NORMAL;
-        if(!lstrcmpW(buf->str, wstrNoRemove))
+        if(!lstrcmpiW(buf->str, wstrNoRemove))
             key_type = NO_REMOVE;
-        else if(!lstrcmpW(buf->str, wstrForceRemove))
+        else if(!lstrcmpiW(buf->str, wstrForceRemove))
             key_type = FORCE_REMOVE;
-        else if(!lstrcmpW(buf->str, wstrval))
+        else if(!lstrcmpiW(buf->str, wstrval))
             key_type = IS_VAL;
-        else if(!lstrcmpW(buf->str, wstrDelete))
+        else if(!lstrcmpiW(buf->str, wstrDelete))
             key_type = DO_DELETE;
 
         if(key_type != NORMAL) {
@@ -369,7 +371,7 @@ static HRESULT do_process_root_key(LPCOLESTR data, BOOL do_register)
             break;
         }
         for(i=0; i<sizeof(root_keys)/sizeof(root_keys[0]); i++) {
-            if(!lstrcmpW(buf.str, root_keys[i].name))
+            if(!lstrcmpiW(buf.str, root_keys[i].name))
                 break;
         }
         if(i == sizeof(root_keys)/sizeof(root_keys[0])) {
