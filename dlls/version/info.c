@@ -172,10 +172,12 @@ typedef struct
 #define VersionInfoIs16( ver ) \
     ( ((VS_VERSION_INFO_STRUCT16 *)ver)->szKey[0] >= ' ' )
 
+#define DWORD_ALIGN( ptr ) ((LPBYTE)( (((DWORD)(ptr)) + 3) & ~3 ))
+
 #define VersionInfo16_Value( ver )  \
-    (LPBYTE)( (DWORD)((ver)->szKey) + (((lstrlenA((ver)->szKey)+1) + 3) & ~3 ))
+    DWORD_ALIGN( (ver)->szKey + lstrlenA((ver)->szKey) + 1 )
 #define VersionInfo32_Value( ver )  \
-    (LPBYTE)( (DWORD)((ver)->szKey) + ((2*(lstrlenW((ver)->szKey)+1) + 3) & ~3 ))
+    DWORD_ALIGN( (ver)->szKey + lstrlenW((ver)->szKey) + 1 )
 
 #define VersionInfo16_Children( ver )  \
     (VS_VERSION_INFO_STRUCT16 *)( VersionInfo16_Value( ver ) + \
