@@ -67,7 +67,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
  * signal context platform-specific definitions
  */
 #ifdef linux
-# warning Please define registers for your platform linux ppc some are missing
 
 typedef struct ucontext SIGCONTEXT;
 
@@ -79,25 +78,25 @@ typedef struct ucontext SIGCONTEXT;
 
 
 /* Gpr Registers access  */
-# define GPR_sig(reg_num, context)		REG_sig(r##reg_num, context)
+# define GPR_sig(reg_num, context)		REG_sig(gpr[reg_num], context)
 
 # define IAR_sig(context)			REG_sig(nip, context)	/* Program counter */
 # define MSR_sig(context)			REG_sig(msr, context)   /* Machine State Register (Supervisor) */
 # define CTR_sig(context)			REG_sig(ctr, context)   /* Count register */
 
-# define XER_sig(context)			XER_sig not defined on your platform /* Link register */
-# define LR_sig(context)			LR_sig not defined on your platform  /* User's integer exception register */
-# define CR_sig(context)			CR_sig not defined on your platform  /* Condition register */
+# define XER_sig(context)			REG_sig(xer, context) /* User's integer exception register */
+# define LR_sig(context)			REG_sig(link, context) /* Link register */
+# define CR_sig(context)			REG_sig(ccr, context) /* Condition register */
 
 /* Float Registers access  */
-# define FLOAT_sig(reg_num, context)		FLOAT_sig not defined on your platform /* Float registers */
+# define FLOAT_sig(reg_num, context)		(((double*)((char*)((context)->uc_mcontext.regs+48*4)))[reg_num])
 
-# define FPSCR_sig(reg_num, context)		FPSCR_sig not defined on your platform /* Float registers */
+# define FPSCR_sig(context)			(*(int*)((char*)((context)->uc_mcontext.regs+(48+32*2)*4)))
 
 /* Exception Registers access */
-# define DAR_sig(context)			DAR_sig not defined on your platform
-# define DSISR_sig(context)			DSISR_sig not defined on your platform
-# define TRAP_sig(context)			TRAP_sig not defined on your platform
+# define DAR_sig(context)			REG_sig(dar, context)
+# define DSISR_sig(context)			REG_sig(dsisr, context)
+# define TRAP_sig(context)			REG_sig(trap, context)
 
 #endif /* linux */
 
