@@ -532,6 +532,24 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
+static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
+
+    trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    if (message == WM_PARENTNOTIFY)
+    {
+        msg.message = message;
+        msg.flags = sent|parent|wparam|lparam;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(&msg);
+    }
+
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
 static BOOL RegisterWindowClasses(void)
 {
     WNDCLASSA cls;
@@ -550,7 +568,7 @@ static BOOL RegisterWindowClasses(void)
     if(!RegisterClassA(&cls)) return FALSE;
 
     cls.style = 0;
-    cls.lpfnWndProc = DefWindowProcA;
+    cls.lpfnWndProc = ParentMsgCheckProcA;
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(0);
