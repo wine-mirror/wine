@@ -185,35 +185,50 @@ static void test_file_write_read( void )
   char btext[LLEN];
 
   tempf=_tempnam(".","wne");
-  ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,_S_IREAD | _S_IWRITE)) != -1,"Can't open"); /* open in TEXT mode */
-  ok(_write(tempfd,mytext,strlen(mytext)) == lstrlenA(mytext), "_write _O_TEXT bad return value");
+  ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_TEXT|_O_RDWR,
+                     _S_IREAD | _S_IWRITE)) != -1,
+     "Can't open '%s': %d", tempf, errno); /* open in TEXT mode */
+  ok(_write(tempfd,mytext,strlen(mytext)) == lstrlenA(mytext),
+     "_write _O_TEXT bad return value");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
-  ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext), "_read _O_BINARY got bad length");
-  ok( memcmp(dostext,btext,strlen(dostext)) == 0,"problems with _O_TEXT _write and _O_BINARY _write");
-  ok( btext[strlen(dostext)-2] == '\r', "CR not written");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext),
+     "_read _O_BINARY got bad length");
+  ok( memcmp(dostext,btext,strlen(dostext)) == 0,
+      "problems with _O_TEXT _write / _O_BINARY _read");
+  ok( btext[strlen(dostext)-2] == '\r', "CR not written or read");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
-  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext), "_read _O_TEXT got bad length");
-  ok( memcmp(mytext,btext,strlen(mytext)) == 0,"problems with _O_TEXT _write / _write");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext),
+     "_read _O_TEXT got bad length");
+  ok( memcmp(mytext,btext,strlen(mytext)) == 0,
+      "problems with _O_TEXT _write / _read");
   _close(tempfd);
-  ok(unlink(tempf) !=-1 ,"Can't unlink");
+  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d", tempf, errno);
 
   tempf=_tempnam(".","wne");
-  ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0)) != -1,"Can't open %s",tempf); /* open in BINARY mode */
-  ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext), "_write _O_TEXT bad return value");
+  ok((tempfd = _open(tempf,_O_CREAT|_O_TRUNC|_O_BINARY|_O_RDWR,0)) != -1,
+     "Can't open '%s': %d", tempf, errno); /* open in BINARY mode */
+  ok(_write(tempfd,dostext,strlen(dostext)) == lstrlenA(dostext),
+     "_write _O_BINARY bad return value");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_BINARY,0); /* open in BINARY mode */
-  ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext), "_read _O_BINARY got bad length");
-  ok( memcmp(dostext,btext,strlen(dostext)) == 0,"problems with _O_TEXT _write and _O_BINARY _write");
-  ok( btext[strlen(dostext)-2] == '\r', "CR not written");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(dostext),
+     "_read _O_BINARY got bad length");
+  ok( memcmp(dostext,btext,strlen(dostext)) == 0,
+      "problems with _O_BINARY _write / _read");
+  ok( btext[strlen(dostext)-2] == '\r', "CR not written or read");
   _close(tempfd);
   tempfd = _open(tempf,_O_RDONLY|_O_TEXT); /* open in TEXT mode */
-  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext), "_read _O_TEXT got bad length");
-  ok( memcmp(mytext,btext,strlen(mytext)) == 0,"problems with _O_TEXT _write / _write");
+  ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext),
+     "_read _O_TEXT got bad length");
+  ok( memcmp(mytext,btext,strlen(mytext)) == 0,
+      "problems with _O_BINARY _write / _O_TEXT _read");
   _close(tempfd);
 
-  unlink(tempf);
+  ok(_chmod (tempf, _S_IREAD | _S_IWRITE) == 0,
+     "Can't chmod '%s' to read-write: %d", tempf, errno);
+  ok(unlink(tempf) !=-1 ,"Can't unlink '%s': %d", tempf, errno);
 }
 
 static void test_tmpnam( void )
