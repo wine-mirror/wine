@@ -105,7 +105,7 @@ static WORD init_cs,init_ip,init_ss,init_sp;
 static HANDLE dosvm_thread, loop_thread;
 static DWORD dosvm_tid, loop_tid;
 
-static void MZ_Launch(void);
+static void MZ_Launch( LPCSTR cmdline );
 static BOOL MZ_InitTask(void);
 
 static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
@@ -124,7 +124,7 @@ static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
   /* FIXME: more PSP stuff */
 }
 
-static void MZ_FillPSP( LPVOID lpPSP, LPBYTE cmdline, int length )
+static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdline, int length )
 {
   PDB16      *psp = lpPSP;
 
@@ -346,15 +346,18 @@ load_error:
 }
 
 /***********************************************************************
- *		LoadDosExe (WINEDOS.@)
+ *		wine_load_dos_exe (WINEDOS.@)
  *
- * Called from Wine loader when a new real-mode DOS process is started.
+ * Called from WineVDM when a new real-mode DOS process is started.
  * Loads DOS program into memory and executes the program.
  */
-void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
+void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
+  HANDLE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+  if (hFile == INVALID_HANDLE_VALUE) return;
   DOSVM_isdosexe = TRUE;
-  if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch();
+  if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch( cmdline );
+
 }
 
 /***********************************************************************
@@ -557,11 +560,10 @@ static BOOL MZ_InitTask(void)
   return TRUE;
 }
 
-static void MZ_Launch(void)
+static void MZ_Launch( LPCSTR cmdline )
 {
   TDB *pTask = GlobalLock16( GetCurrentTask() );
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
-  LPSTR cmdline = GetCommandLineA();
   DWORD rv;
   SYSLEVEL *lock;
 

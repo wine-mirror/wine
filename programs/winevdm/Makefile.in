@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winevdm.exe
+APPMODE   = cui
+IMPORTS   = winedos kernel32
+
+C_SRCS = \
+	winevdm.c
+
+@MAKE_PROG_RULES@
+
+### Dependencies:

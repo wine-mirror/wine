@@ -30,6 +30,7 @@ SUBDIRS = \
 	winefile \
 	winemine \
 	winepath \
+	winevdm \
 	winhelp \
 	winver
 
@@ -82,6 +83,7 @@ SYMLINKS = \
 	wcmd.exe \
 	wineconsole.exe \
 	winedbg.exe \
+	winevdm.exe \
 	winhelp.exe
 
 @MAKE_RULES@
@@ -139,12 +141,16 @@ wineconsole.exe$(DLLEXT): wineconsole/wineconsole.exe$(DLLEXT)
 winedbg.exe$(DLLEXT): winedbg/winedbg.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedbg/winedbg.exe$(DLLEXT) $@
 
+winevdm.exe$(DLLEXT): winevdm/winevdm.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) winevdm/winevdm.exe$(DLLEXT) $@
+
 winhelp.exe$(DLLEXT): winhelp/winhelp.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winhelp/winhelp.exe$(DLLEXT) $@
 
 wcmd/wcmd.exe$(DLLEXT): wcmd
 wineconsole/wineconsole.exe$(DLLEXT): wineconsole
 winedbg/winedbg.exe$(DLLEXT): winedbg
+winevdm/winevdm.exe$(DLLEXT): winevdm
 winhelp/winhelp.exe$(DLLEXT): winhelp
 
 ### Dependencies:

@@ -1108,44 +1108,6 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
 
 /**********************************************************************
- *          NE_StartMain
- *
- * Start the main NE task.
- */
-HINSTANCE16 NE_StartMain( LPCSTR name, HANDLE file )
-{
-    STARTUPINFOA info;
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-    INT len;
-    LPSTR pCmdLine, cmdline = GetCommandLineA();
-
-    if ((hModule = NE_LoadExeHeader( file, name )) < 32) return hModule;
-
-    if (!(pModule = NE_GetPtr( hModule ))) return (HINSTANCE16)11;
-    if (pModule->flags & NE_FFLAGS_LIBMODULE)
-    {
-        MESSAGE( "%s is not a valid Win16 executable\n", name );
-        ExitProcess( ERROR_BAD_EXE_FORMAT );
-    }
-
-    while (*cmdline && *cmdline != ' ') cmdline++;
-    if (*cmdline) cmdline++;
-    len = strlen(cmdline);
-    pCmdLine = HeapAlloc(GetProcessHeap(), 0, len+2);
-    if (pCmdLine)
-    {
-        strcpy(pCmdLine+1, cmdline);
-        *pCmdLine = len;
-    }
-    GetStartupInfoA( &info );
-    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = 1;
-
-    return NE_CreateThread( pModule, info.wShowWindow, pCmdLine );
-}
-
-
-/**********************************************************************
  *          NE_StartTask
  *
  * Startup code for a new 16-bit task.

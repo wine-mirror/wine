@@ -720,15 +720,9 @@ void WINAPI DirectedYield16( HTASK16 hTask )
 {
     TDB *pCurTask = TASK_GetCurrent();
 
-    if (!pCurTask) OldYield16();
+    if (!pCurTask || (pCurTask->flags & TDBF_WIN32)) OldYield16();
     else
     {
-        if (pCurTask->flags & TDBF_WIN32)
-        {
-            FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
-            return;
-        }
-
         TRACE("%04x: DirectedYield(%04x)\n", pCurTask->hSelf, hTask );
         pCurTask->hYieldTo = hTask;
         OldYield16();

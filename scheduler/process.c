@@ -572,11 +572,11 @@ static void start_process(void)
 
 
 /***********************************************************************
- *           PROCESS_InitWine
+ *           __wine_process_init
  *
  * Wine initialisation: load and start the main exe file.
  */
-void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win16_exe_file )
+void __wine_process_init( int argc, char *argv[] )
 {
     char error[1024], *p;
     DWORD stack_size = 0;
@@ -636,14 +636,15 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting Win16/DOS binary %s\n", debugstr_a(main_exe_name) );
-        NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
-        current_process.flags |= PDB32_WIN16_PROC;
-        strcpy( win16_exe_name, main_exe_name );
-        main_exe_name[0] = 0;
-        *win16_exe_file = main_exe_file;
+        CloseHandle( main_exe_file );
         main_exe_file = 0;
-        _EnterWin16Lock();
-        goto found;
+        argv--;
+        argv[0] = "winevdm.exe";
+        if (open_builtin_exe_file( "winevdm.exe", error, sizeof(error), 0 ))
+            goto found;
+        MESSAGE( "%s: trying to run '%s', cannot open builtin library for 'winevdm.exe': %s\n",
+                 argv0, main_exe_name, error );
+        ExitProcess(1);
     case BINARY_OS216:
         MESSAGE( "%s: '%s' is an OS/2 binary, not supported\n", argv0, main_exe_name );
         ExitProcess(1);
@@ -1132,6 +1133,32 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
 }
 
 
+/***********************************************************************
+ *           create_vdm_process
+ *
+ * Create a new VDM process for a 16-bit or DOS application.
+ */
+static BOOL create_vdm_process( LPCSTR filename, LPSTR cmd_line, LPCSTR env,
+                                LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                                BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
+                                LPPROCESS_INFORMATION info, LPCSTR unixdir )
+{
+    BOOL ret;
+    LPSTR new_cmd_line = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + strlen(cmd_line) + 30 );
+
+    if (!new_cmd_line)
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+    sprintf( new_cmd_line, "winevdm.exe --app-name \"%s\" %s", filename, cmd_line );
+    ret = create_process( 0, "winevdm.exe", new_cmd_line, env, psa, tsa, inherit,
+                          flags, startup, info, unixdir );
+    HeapFree( GetProcessHeap(), 0, new_cmd_line );
+    return ret;
+}
+
+
 /*************************************************************************
  *               get_file_name
  *
@@ -1310,11 +1337,15 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
     switch( MODULE_GetBinaryType( hFile ))
     {
     case BINARY_PE_EXE:
-    case BINARY_WIN16:
-    case BINARY_DOS:
-        TRACE( "starting %s as Windows binary\n", debugstr_a(name) );
+        TRACE( "starting %s as Win32 binary\n", debugstr_a(name) );
         retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir );
+        break;
+    case BINARY_WIN16:
+    case BINARY_DOS:
+        TRACE( "starting %s as Win16/DOS binary\n", debugstr_a(name) );
+        retv = create_vdm_process( name, tidy_cmdline, env, process_attr, thread_attr,
+                                   inherit, flags, startup_info, info, unixdir );
         break;
     case BINARY_OS216:
         FIXME( "%s is OS/2 binary, not supported\n", debugstr_a(name) );
@@ -1336,8 +1367,8 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
             if (!FILE_strcasecmp( p, ".com" ))
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_a(name) );
-                retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
-                                       inherit, flags, startup_info, info, unixdir );
+                retv = create_vdm_process( name, tidy_cmdline, env, process_attr, thread_attr,
+                                           inherit, flags, startup_info, info, unixdir );
                 break;
             }
             if (!FILE_strcasecmp( p, ".bat" ))

@@ -1,4 +1,5 @@
-@ stdcall LoadDosExe(str long) MZ_LoadImage
+@ stdcall wine_load_dos_exe(str str)
+
 @ stdcall EmulateInterruptPM(ptr long) DOSVM_EmulateInterruptPM
 @ stdcall CallBuiltinHandler(ptr long) DOSVM_CallBuiltinHandler
 
