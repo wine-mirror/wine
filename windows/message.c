@@ -403,7 +403,7 @@ static int MSG_JournalPlayBackMsg(void)
 static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
                                  BOOL remove )
 {
-    SYSQ_STATUS status;
+    SYSQ_STATUS status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     int i, pos = sysMsgQueue->nextMessage;
 
@@ -885,9 +885,10 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 }
 
 /***********************************************************************
- *           PostAppMessage   (USER.116)
+ *           PostAppMessage16   (USER.116)
  */
-BOOL PostAppMessage( HTASK hTask, WORD message, WORD wParam, LONG lParam )
+BOOL16 PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
+                         LPARAM lParam )
 {
     MSG16 msg;
 

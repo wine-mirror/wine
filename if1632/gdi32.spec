@@ -213,7 +213,7 @@ base	1
 0206 stdcall GetObjectW(long long ptr) GetObject32W
 0207 stub GetOutlineTextMetricsA
 0208 stub GetOutlineTextMetricsW
-0209 stub GetPaletteEntries
+0209 stdcall GetPaletteEntries(long long long ptr) GetPaletteEntries
 0210 stub GetPath
 0211 stdcall GetPixel(long long long)	GetPixel
 0212 stub GetPixelFormat

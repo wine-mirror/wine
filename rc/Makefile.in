@@ -1,10 +1,13 @@
-DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
-TOPSRC = @top_srcdir@
+DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+PROGRAM   = winerc
+MODULE    = none
 
-PROGRAM = winerc
-MODULE = none
-
-C_SRCS = y.tab.c lex.yy.c winerc.c 
+C_SRCS     = winerc.c
+GEN_C_SRCS = y.tab.c lex.yy.c
 
 all: $(PROGRAM)
 
@@ -14,12 +17,12 @@ $(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) -o winerc $(OBJS) $(LEXLIB)
 
 y.tab.c y.tab.h: parser.y
-	$(YACC) -d -t parser.y
+	$(YACC) -d -t $(SRCDIR)/parser.y
 
 lex.yy.c: parser.l
-	$(LEX) -8 -I parser.l
+	$(LEX) -8 -I $(SRCDIR)/parser.l
 
 clean::
-	$(RM) y.tab.c y.tab.h lex.yy.c $(PROGRAM)
+	$(RM) y.tab.h $(PROGRAM)
 
 ### Dependencies:

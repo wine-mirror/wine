@@ -232,10 +232,10 @@ static BOOL CURSORICON_LoadDirEntry(HINSTANCE32 hInstance, SEGPTR name,
  *
  * Create a cursor or icon from a resource.
  */
-HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
-                                      BOOL fCursor )
+HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16 handle, HINSTANCE16 hInstance,
+                                  BOOL fCursor )
 {
-    HANDLE hAndBits, hXorBits;
+    HBITMAP16 hAndBits, hXorBits;
     HDC32 hdc;
     int size, sizeAnd, sizeXor;
     POINT16 hotspot = { 0 ,0 };
@@ -367,10 +367,11 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
  *
  * Load a cursor or icon.
  */
-static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
-                               int height, int colors, BOOL fCursor )
+static HGLOBAL16 CURSORICON_Load( HINSTANCE16 hInstance, SEGPTR name,
+                                  int width, int height, int colors,
+                                  BOOL fCursor )
 {
-    HANDLE handle,hRet;
+    HGLOBAL16 handle, hRet;
     HRSRC16 hRsrc;
     CURSORICONDIRENTRY dirEntry;
 
@@ -408,11 +409,11 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
  *
  * Make a copy of a cursor or icon.
  */
-static HANDLE CURSORICON_Copy( HANDLE hInstance, HANDLE handle )
+static HGLOBAL16 CURSORICON_Copy( HINSTANCE16 hInstance, HGLOBAL16 handle )
 {
     char *ptrOld, *ptrNew;
     int size;
-    HANDLE hNew;
+    HGLOBAL16 hNew;
 
     if (!(ptrOld = (char *)GlobalLock16( handle ))) return 0;
     if (!(hInstance = GetExePtr( hInstance ))) return 0;
@@ -446,9 +447,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon)
        else 
 	  {
 	   /* kludge */
-
-	   HTASK hTask = GetCurrentTask();
-	   TDB*  pTask = (TDB *)GlobalLock16(hTask);
+	   TDB* pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
 	   if(!pTask) return 0;
 
@@ -499,7 +498,7 @@ HICON16 LoadIcon16(HINSTANCE16 hInstance,SEGPTR name)
 /***********************************************************************
  *           CreateCursor    (USER.406)
  */
-HCURSOR16 CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
+HCURSOR16 CreateCursor( HINSTANCE16 hInstance, INT xHotSpot, INT yHotSpot,
                         INT nWidth, INT nHeight,
                         const BYTE *lpANDbits, const BYTE *lpXORbits )
 {
@@ -514,7 +513,7 @@ HCURSOR16 CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
 /***********************************************************************
  *           CreateIcon    (USER.407)
  */
-HICON16 CreateIcon( HINSTANCE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
+HICON16 CreateIcon( HINSTANCE16 hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
                   BYTE bBitsPixel, const BYTE* lpANDbits, const BYTE* lpXORbits)
 {
     CURSORICONINFO info = { { 0, 0 }, nWidth, nHeight, 0, bPlanes, bBitsPixel };
@@ -528,10 +527,12 @@ HICON16 CreateIcon( HINSTANCE hInstance, INT nWidth, INT nHeight, BYTE bPlanes,
 /***********************************************************************
  *           CreateCursorIconIndirect    (USER.408)
  */
-HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
-                                 const BYTE *lpANDbits, const BYTE *lpXORbits )
+HGLOBAL16 CreateCursorIconIndirect( HINSTANCE16 hInstance,
+                                    CURSORICONINFO *info,
+                                    const BYTE *lpANDbits,
+                                    const BYTE *lpXORbits )
 {
-    HANDLE handle;
+    HGLOBAL16 handle;
     char *ptr;
     int sizeAnd, sizeXor;
 
@@ -611,7 +612,7 @@ BOOL DrawIcon( HDC hdc, INT x, INT y, HICON16 hIcon )
 {
     CURSORICONINFO *ptr;
     HDC hMemDC;
-    HBITMAP hXorBits, hAndBits;
+    HBITMAP16 hXorBits, hAndBits;
     COLORREF oldFg, oldBg;
 
     if (!(ptr = (CURSORICONINFO *)GlobalLock16( hIcon ))) return FALSE;
@@ -625,7 +626,7 @@ BOOL DrawIcon( HDC hdc, INT x, INT y, HICON16 hIcon )
 
     if (hXorBits && hAndBits)
     {
-        HBITMAP hBitTemp = SelectObject( hMemDC, hAndBits );
+        HBITMAP16 hBitTemp = SelectObject( hMemDC, hAndBits );
         BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
         SelectObject( hMemDC, hXorBits );
         BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCINVERT);
@@ -934,7 +935,7 @@ void GetClipCursor32( RECT32 *rect )
 /**********************************************************************
  *	    GetIconID    (USER.455)
  */
-WORD GetIconID( HANDLE hResource, DWORD resType )
+WORD GetIconID( HGLOBAL16 hResource, DWORD resType )
 {
     CURSORICONDIR *lpDir = (CURSORICONDIR *)GlobalLock16(hResource);
 /* LockResource16(hResource); */
@@ -973,7 +974,7 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
 /**********************************************************************
  *	    LoadIconHandler    (USER.456)
  */
-HICON16 LoadIconHandler( HANDLE hResource, BOOL bNew )
+HICON16 LoadIconHandler( HGLOBAL16 hResource, BOOL bNew )
 {
     dprintf_cursor(stddeb,"LoadIconHandler: hRes=%04x\n",hResource);
 

@@ -32,7 +32,7 @@ void LIBRES_RegisterResources(const struct resource* const * Res)
 /**********************************************************************
  *	    LIBRES_FindResource    
  */
-HRSRC32 LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
+HRSRC32 LIBRES_FindResource( HINSTANCE32 hModule, LPCSTR name, LPCSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
@@ -81,7 +81,7 @@ HRSRC32 LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
 /**********************************************************************
  *	    LIBRES_LoadResource    
  */
-HGLOBAL32 LIBRES_LoadResource( HINSTANCE hModule, HRSRC32 hRsrc )
+HGLOBAL32 LIBRES_LoadResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
   return (HGLOBAL32)(((struct resource*)hRsrc)->bytes);
 }
@@ -108,7 +108,7 @@ BOOL LIBRES_FreeResource( HGLOBAL32 handle )
 /**********************************************************************
  *	    LIBRES_AccessResource    
  */
-INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC32 hRsrc )
+INT32 LIBRES_AccessResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
   WINELIB_UNIMP("LIBRES_AccessResource()");
   return -1; /* Obsolete in Win32 */
@@ -118,7 +118,7 @@ INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC32 hRsrc )
 /**********************************************************************
  *	    LIBRES_SizeofResource    
  */
-DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC32 hRsrc )
+DWORD LIBRES_SizeofResource( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
   return (DWORD)(((struct resource*)hRsrc)->size);
 }
@@ -127,7 +127,7 @@ DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC32 hRsrc )
 /**********************************************************************
  *	    LIBRES_AllocResource    
  */
-HGLOBAL32 LIBRES_AllocResource( HINSTANCE hModule, HRSRC32 hRsrc, DWORD size )
+HGLOBAL32 LIBRES_AllocResource( HINSTANCE32 hModule, HRSRC32 hRsrc, DWORD size)
 {
   WINELIB_UNIMP("LIBRES_AllocResource()");
   return 0; /* Obsolete in Win32 */

@@ -1,6 +1,9 @@
-DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
-TOPSRC = @top_srcdir@
-MODULE = debugger
+DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = debugger
 
 C_SRCS = \
 	break.c \
@@ -10,7 +13,9 @@ C_SRCS = \
 	info.c \
 	memory.c \
 	registers.c \
-	stack.c \
+	stack.c
+
+GEN_C_SRCS = \
 	y.tab.c \
 	lex.yy.c
 
@@ -19,12 +24,12 @@ all: $(MODULE).o
 @MAKE_RULES@
 
 y.tab.c y.tab.h: dbg.y
-	$(YACC) -d -t dbg.y
+	$(YACC) -d -t $(SRCDIR)/dbg.y
 
 lex.yy.c: debug.l
-	$(LEX) -8 -I debug.l
+	$(LEX) -8 -I $(SRCDIR)/debug.l
 
 clean::
-	$(RM) y.tab.c y.tab.h lex.yy.c
+	$(RM) y.tab.h
 
 ### Dependencies:

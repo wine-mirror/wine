@@ -121,9 +121,9 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 #122 pascal ReSurRection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile
 124 pascal16 GetMetaFile(ptr) GetMetaFile
-125 pascal16 CreateMetaFile(ptr) CreateMetaFile
-126 pascal16 CloseMetaFile(word) CloseMetaFile
-127 pascal16 DeleteMetaFile(word) DeleteMetaFile
+125 pascal16 CreateMetaFile(ptr) CreateMetaFile16
+126 pascal16 CloseMetaFile(word) CloseMetaFile16
+127 pascal16 DeleteMetaFile(word) DeleteMetaFile16
 128 pascal16 MulDiv(s_word s_word s_word) MulDiv16
 129 pascal16 SaveVisRgn(word) SaveVisRgn
 130 pascal16 RestoreVisRgn(word) RestoreVisRgn
@@ -157,8 +157,8 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 180 pascal16 SetDCState(word word) SetDCState
 181 pascal16 RectInRegionOld(word ptr) RectInRegion16
 188 stub GetTextExtentEx
-190 pascal16 SetDCHook(word segptr long) SetDCHook
-191 pascal   GetDCHook(word ptr) GetDCHook
+190 pascal16 SetDCHook(word segptr long) THUNK_SetDCHook
+191 pascal   GetDCHook(word ptr) THUNK_GetDCHook
 192 pascal16 SetHookFlags(word word) SetHookFlags
 193 stub SetBoundsRect
 194 stub GetBoundsRect
@@ -352,6 +352,26 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 527 stub SetMiterLimit
 528 stub GDIParametersInfo
 529 stub CreateHalftonePalette
+# Stubs for Hebrew version
+530 pascal16 GDI_530() stub_GDI_530
+531 pascal16 GDI_531() stub_GDI_531
+532 pascal16 GDI_532() stub_GDI_532
+536 pascal16 GDI_536() stub_GDI_536
+538 pascal16 GDI_538() stub_GDI_538
+540 pascal16 GDI_540() stub_GDI_540
+543 pascal16 GDI_543() stub_GDI_543
+555 pascal16 GDI_555() stub_GDI_555
+560 pascal16 GDI_560() stub_GDI_560
+561 pascal16 GDI_561() stub_GDI_561
+564 pascal16 GDI_564() stub_GDI_564
+565 pascal16 GDI_565() stub_GDI_565
+566 pascal16 GDI_566() stub_GDI_566
+571 pascal16 GDI_571() stub_GDI_571
+572 pascal16 GDI_572() stub_GDI_572
+573 pascal16 GDI_573() stub_GDI_573
+556 pascal16 GDI_556() stub_GDI_556
+558 pascal16 GDI_558() stub_GDI_558
+569 pascal16 GDI_569() stub_GDI_569
 602 stub SetDIBColorTable
 603 stub GetDIBColorTable
 604 stub SetSolidBrush
@@ -377,23 +397,3 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 822 stub ICMTranslateRGB
 823 stub ICMTranslateRGBs
 824 stub ICMCheckCOlorsInGamut
-# Stubs for Hebrew version
-530 pascal16 GDI_530() stub_GDI_530
-531 pascal16 GDI_531() stub_GDI_531
-532 pascal16 GDI_532() stub_GDI_532
-536 pascal16 GDI_536() stub_GDI_536
-538 pascal16 GDI_538() stub_GDI_538
-540 pascal16 GDI_540() stub_GDI_540
-543 pascal16 GDI_543() stub_GDI_543
-555 pascal16 GDI_555() stub_GDI_555
-560 pascal16 GDI_560() stub_GDI_560
-561 pascal16 GDI_561() stub_GDI_561
-564 pascal16 GDI_564() stub_GDI_564
-565 pascal16 GDI_565() stub_GDI_565
-566 pascal16 GDI_566() stub_GDI_566
-571 pascal16 GDI_571() stub_GDI_571
-572 pascal16 GDI_572() stub_GDI_572
-573 pascal16 GDI_573() stub_GDI_573
-556 pascal16 GDI_556() stub_GDI_556
-558 pascal16 GDI_558() stub_GDI_558
-569 pascal16 GDI_569() stub_GDI_569

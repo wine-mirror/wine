@@ -19,7 +19,6 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "module.h"
-#include "callback.h"
 #include "xmalloc.h"
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
@@ -109,8 +108,7 @@ DWORD CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 	dprintf_crtdll(stddeb,"_initterm(%p,%p)\n",start,end);
 	current=start;
 	while (current<end) {
-		if (*current)
-			_InitTermProc(*current);
+		if (*current) (*current)();
 		current++;
 	}
 	return 0;

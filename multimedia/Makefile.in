@@ -1,6 +1,9 @@
-DEFS   = -D__WINE__
-TOPSRC = @top_srcdir@
-MODULE = multimedia
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = multimedia
 
 C_SRCS = \
 	audio.c \

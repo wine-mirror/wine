@@ -12,7 +12,11 @@
 /* #define DEBUG_CLIPPING */
 #include "debug.h"
 
-#define UpdateDirtyDC(dc) DC_CallHookProc( dc, DCHC_INVALIDVISRGN, 0 )
+#define UPDATE_DIRTY_DC(dc) \
+ do { \
+   if ((dc)->hookProc && !((dc)->w.flags & (DC_SAVED | DC_MEMORY))) \
+     (dc)->hookProc( (dc)->hSelf, DCHC_INVALIDVISRGN, (dc)->dwHookData, 0 ); \
+ } while(0)
 
 /***********************************************************************
  *           CLIPPING_SetDeviceClipping
@@ -56,7 +60,7 @@ void CLIPPING_UpdateGCRegion( DC * dc )
 
     if (dc->w.flags & DC_DIRTY)
     {
-        UpdateDirtyDC(dc);
+        UPDATE_DIRTY_DC(dc);
         dc->w.flags &= ~DC_DIRTY;
     }
 
@@ -71,7 +75,7 @@ void CLIPPING_UpdateGCRegion( DC * dc )
 /***********************************************************************
  *           SelectClipRgn    (GDI.44)
  */
-int SelectClipRgn( HDC hdc, HRGN hrgn )
+int SelectClipRgn( HDC hdc, HRGN32 hrgn )
 {
     int retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -99,7 +103,7 @@ int SelectClipRgn( HDC hdc, HRGN hrgn )
 /***********************************************************************
  *           SelectVisRgn    (GDI.105)
  */
-int SelectVisRgn( HDC hdc, HRGN hrgn )
+int SelectVisRgn( HDC hdc, HRGN32 hrgn )
 {
     int retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -166,7 +170,7 @@ int OffsetVisRgn( HDC hdc, short x, short y )
 int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
                                          short right, short bottom, UINT16 flags)
 {
-    HRGN	newRgn;
+    HRGN32 newRgn;
     int 	ret;
 
     if ( !(newRgn = CreateRectRgn( left, top, right, bottom )) ) return ERROR;
@@ -253,7 +257,7 @@ int IntersectClipRect( HDC hdc, short left, short top,
 static int CLIPPING_IntersectVisRect( DC * dc, short left, short top,
                                       short right, short bottom, BOOL exclude )
 {
-    HRGN tempRgn, newRgn;
+    HRGN32 tempRgn, newRgn;
     int ret;
 
     left   = XLPTODP( dc, left );
@@ -325,7 +329,7 @@ BOOL PtVisible( HDC hdc, short x, short y )
     dprintf_clipping(stddeb, "PtVisible: %04x %d,%d\n", hdc, x, y );
     if (!dc->w.hGCClipRgn) return FALSE;
 
-    if( dc->w.flags & DC_DIRTY ) UpdateDirtyDC(dc);
+    if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
     dc->w.flags &= ~DC_DIRTY;
 
     return PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x), YLPTODP(dc,y) );
@@ -392,9 +396,9 @@ INT32 GetClipBox32( HDC32 hdc, LPRECT32 rect )
 /***********************************************************************
  *           SaveVisRgn    (GDI.129)
  */
-HRGN SaveVisRgn( HDC hdc )
+HRGN32 SaveVisRgn( HDC hdc )
 {
-    HRGN copy;
+    HRGN32 copy;
     RGNOBJ *obj, *copyObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -404,7 +408,7 @@ HRGN SaveVisRgn( HDC hdc )
         fprintf( stderr, "SaveVisRgn: hVisRgn is zero. Please report this.\n" );
         exit(1);
     }
-    if( dc->w.flags & DC_DIRTY ) UpdateDirtyDC(dc);
+    if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
     dc->w.flags &= ~DC_DIRTY;
 
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
@@ -424,7 +428,7 @@ HRGN SaveVisRgn( HDC hdc )
  */
 int RestoreVisRgn( HDC hdc )
 {
-    HRGN saved;
+    HRGN32 saved;
     RGNOBJ *obj, *savedObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc || !dc->w.hVisRgn) return ERROR;    

@@ -456,7 +456,7 @@ BOOL RoundRect( HDC hDC, INT left, INT top, INT right, INT bottom,
  */
 INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
-    HBRUSH prevBrush;
+    HBRUSH16 prevBrush;
 
     /* coordinates are logical so we cannot fast-check rectangle
      * - do it in PatBlt() after LPtoDP().
@@ -475,7 +475,7 @@ INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
  */
 INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
-    HBRUSH prevBrush;
+    HBRUSH16 prevBrush;
 
     if (!(prevBrush = SelectObject( hdc, (HBRUSH16)hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
@@ -510,7 +510,7 @@ void InvertRect32( HDC32 hdc, const RECT32 *rect )
  */
 INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
-    HBRUSH prevBrush;
+    HBRUSH16 prevBrush;
     int left, top, right, bottom;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -626,10 +626,10 @@ COLORREF GetPixel( HDC hdc, short x, short y )
 /***********************************************************************
  *           PaintRgn    (GDI.43)
  */
-BOOL PaintRgn( HDC hdc, HRGN hrgn )
+BOOL PaintRgn( HDC hdc, HRGN32 hrgn )
 {
     RECT16 box;
-    HRGN tmpVisRgn, prevVisRgn;
+    HRGN32 tmpVisRgn, prevVisRgn;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
@@ -663,10 +663,10 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
 /***********************************************************************
  *           FillRgn    (GDI.40)
  */
-BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
+BOOL FillRgn( HDC hdc, HRGN32 hrgn, HBRUSH16 hbrush )
 {
     BOOL retval;
-    HBRUSH prevBrush = SelectObject( hdc, hbrush );
+    HBRUSH16 prevBrush = SelectObject( hdc, hbrush );
     if (!prevBrush) return FALSE;
     retval = PaintRgn( hdc, hrgn );
     SelectObject( hdc, prevBrush );
@@ -676,9 +676,9 @@ BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 /***********************************************************************
  *           FrameRgn     (GDI.41)
  */
-BOOL FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, int nWidth, int nHeight )
+BOOL FrameRgn( HDC hdc, HRGN32 hrgn, HBRUSH16 hbrush, int nWidth, int nHeight )
 {
-    HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN32 tmp = CreateRectRgn( 0, 0, 0, 0 );
     if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return 0;
     FillRgn( hdc, tmp, hbrush );
     DeleteObject( tmp );
@@ -688,9 +688,9 @@ BOOL FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, int nWidth, int nHeight )
 /***********************************************************************
  *           InvertRgn    (GDI.42)
  */
-BOOL InvertRgn( HDC hdc, HRGN hrgn )
+BOOL InvertRgn( HDC hdc, HRGN32 hrgn )
 {
-    HBRUSH prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
+    HBRUSH16 prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
     WORD prevROP = SetROP2( hdc, R2_NOT );
     BOOL retval = PaintRgn( hdc, hrgn );
     SelectObject( hdc, prevBrush );
@@ -729,7 +729,7 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 
     SetBkMode(hdc, oldBkMode);
     SetROP2(hdc, oldDrawMode);
-    SelectObject(hdc, (HANDLE)hOldPen);
+    SelectObject(hdc, hOldPen);
 }
 
 
@@ -786,7 +786,7 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap, int xdest, int ydest,
 void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
                            INT32 shadow_size, BOOL32 pressed )
 {
-    HBRUSH hbrushOld;
+    HBRUSH16 hbrushOld;
     int i;
 
     hbrushOld = SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnShadow :
@@ -881,7 +881,7 @@ BOOL16 Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
  */
 BOOL16 PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts, UINT16 polygons)
 {
-    HRGN hrgn;
+    HRGN32 hrgn;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
 
     if (!dc) 
@@ -1088,7 +1088,7 @@ BOOL16 DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
  */
 BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 {
-    HBRUSH hbrushOld;
+    HBRUSH16 hbrushOld;
 
     if (flags >= BF_DIAGONAL)
         fprintf( stderr, "DrawEdge: unsupported flags %04x\n", flags );

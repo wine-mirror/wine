@@ -430,7 +430,7 @@ int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exa
 int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
 {
   LPLISTSTRUCT *lppls, lplsnew, lpls;
-  HANDLE       hStr;
+  HANDLE16 hStr;
   LPSTR	str;
   UINT	Count;
     
@@ -1408,7 +1408,7 @@ static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
   else
-    lphl->hFont = (HFONT) wParam;
+    lphl->hFont = (HFONT16)wParam;
 
   /* a new font means possible new text height */
   /* does this mean the height of each entry must be separately changed? */
@@ -1434,8 +1434,8 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
   PAINTSTRUCT16 ps;
-  HBRUSH       hBrush;
-  HFONT        hOldFont;
+  HBRUSH16 hBrush;
+  HFONT16 hOldFont;
   HDC16 hdc    = BeginPaint16( hwnd, &ps );
   DC    *dc    = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
   RECT16  rect, paintRect, scratchRect;
@@ -1454,8 +1454,8 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 
-  hBrush = (HBRUSH)SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX,
-                                   (WPARAM)hdc, (LPARAM)hwnd);
+  hBrush = (HBRUSH16)SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX,
+                                     (WPARAM)hdc, (LPARAM)hwnd);
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
   FillRect16(hdc, &rect, hBrush);
@@ -1536,7 +1536,7 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
        if( lphl->ItemsCount && lphl->ItemFocused != -1)
          {
            HDC32        hDC = GetDC32(hwnd);
-           HFONT        hOldFont = SelectObject(hDC, lphl->hFont);
+           HFONT16      hOldFont = SelectObject(hDC, lphl->hFont);
            LPLISTSTRUCT lpls;
 
            lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
@@ -1566,7 +1566,7 @@ static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
            if( lphl->ItemFocused != -1 )
              {
               HDC32        hDC = GetDC32(hwnd);
-              HFONT        hOldFont = SelectObject(hDC, lphl->hFont);
+              HFONT16      hOldFont = SelectObject(hDC, lphl->hFont);
               LPLISTSTRUCT lpls;
 
               lpls = ListBoxGetItem(lphl,lphl->ItemFocused);

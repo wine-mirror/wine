@@ -46,8 +46,8 @@ typedef struct
 
 #pragma pack(4)
 
-extern HANDLE 	CURSORICON_LoadHandler( HANDLE, HINSTANCE, BOOL);
-extern WORD 	GetIconID( HANDLE hResource, DWORD resType );
+extern HGLOBAL16 CURSORICON_LoadHandler( HGLOBAL16, HINSTANCE16, BOOL);
+extern WORD 	GetIconID( HGLOBAL16 hResource, DWORD resType );
 
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
@@ -136,10 +136,10 @@ BOOL DragQueryPoint(HDROP16 hDrop, POINT16 *p)
  *				SHELL_FindExecutable
  * Utility for code sharing between FindExecutable and ShellExecute
  */
-static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile, 
-				      LPCSTR lpDirectory,
-				      LPCSTR lpOperation,
-				      LPSTR lpResult)
+static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile, 
+                                         LPCSTR lpDirectory,
+                                         LPCSTR lpOperation,
+                                         LPSTR lpResult)
 {
     char *extension = NULL; /* pointer to file extension */
     char tmpext[5];         /* local copy to mung as we please */
@@ -148,7 +148,7 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     char command[256];      /* command from registry */
     LONG commandlen=256;    /* This is the most DOS can handle :) */
     char buffer[256];       /* Used to GetProfileString */
-    HINSTANCE retval=31;    /* default - 'No association was found' */
+    HINSTANCE16 retval=31;  /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
     char xlpFile[256];      /* result of SearchPath */
@@ -286,11 +286,11 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
 /*************************************************************************
  *				ShellExecute		[SHELL.20]
  */
-HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
-		       LPSTR lpParameters, LPCSTR lpDirectory,
-		       INT iShowCmd)
+HINSTANCE16 ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+                         LPSTR lpParameters, LPCSTR lpDirectory,
+                         INT iShowCmd)
 {
-    HINSTANCE retval=31;
+    HINSTANCE16 retval=31;
     char cmd[256];
 
     dprintf_exec(stddeb, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
@@ -322,9 +322,9 @@ HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
 /*************************************************************************
  *				FindExecutable		[SHELL.21]
  */
-HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
+HINSTANCE16 FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 {
-    HINSTANCE retval=31;    /* default - 'No association was found' */
+    HINSTANCE16 retval=31;    /* default - 'No association was found' */
 
     dprintf_exec(stddeb, "FindExecutable: File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
@@ -380,7 +380,7 @@ LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  */
 INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 hIcon)
 {
-    HANDLE handle;
+    HGLOBAL16 handle;
     BOOL bRet;
 
     if (szApp) strncpy(AppName, szApp, sizeof(AppName));
@@ -448,10 +448,10 @@ static BYTE* SHELL_GetResourceTable(HFILE hFile)
 /*************************************************************************
  *			SHELL_LoadResource
  */
-static HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
+static HGLOBAL16 SHELL_LoadResource(HINSTANCE16 hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
 {
  BYTE*	ptr;
- HANDLE handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
+ HGLOBAL16 handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
 
  if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
@@ -459,16 +459,16 @@ static HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNIn
      _lread32( hFile, (char*)ptr, pNInfo->length << sizeShift);
      return handle;
    }
- return (HANDLE)0;
+ return 0;
 }
 
 /*************************************************************************
  *                      ICO_LoadIcon
  */
-static HANDLE   ICO_LoadIcon(HINSTANCE hInst, HFILE hFile, LPicoICONDIRENTRY lpiIDE)
+static HGLOBAL16 ICO_LoadIcon(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIRENTRY lpiIDE)
 {
  BYTE*  ptr;
- HANDLE handle = DirectResAlloc( hInst, 0x10, lpiIDE->dwBytesInRes);
+ HGLOBAL16 handle = DirectResAlloc( hInst, 0x10, lpiIDE->dwBytesInRes);
 
  if( (ptr = (BYTE*)GlobalLock16( handle )) )
    {
@@ -476,7 +476,7 @@ static HANDLE   ICO_LoadIcon(HINSTANCE hInst, HFILE hFile, LPicoICONDIRENTRY lpi
      _lread32( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
      return handle;
    }
- return (HANDLE)0;
+ return 0;
 }
 
 /*************************************************************************
@@ -484,7 +484,7 @@ static HANDLE   ICO_LoadIcon(HINSTANCE hInst, HFILE hFile, LPicoICONDIRENTRY lpi
  *
  *  Read .ico file and build phony ICONDIR struct for GetIconID
  */
-static HANDLE ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR* lplpiID ) 
+static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE hFile, LPicoICONDIR* lplpiID ) 
 {
   WORD		id[3];	/* idReserved, idType, idCount */
   LPicoICONDIR	lpiID;
@@ -506,8 +506,8 @@ static HANDLE ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR* l
 
   if( _lread32(hFile,(char*)lpiID->idEntries,i) == i )
   {  
-     HANDLE	handle = DirectResAlloc( hInst, 0x10,
-					 id[2]*sizeof(ICONDIRENTRY) + sizeof(id) );
+     HGLOBAL16 handle = DirectResAlloc( hInst, 0x10,
+                                     id[2]*sizeof(ICONDIRENTRY) + sizeof(id) );
      if( handle ) 
      {
        CURSORICONDIR*     lpID = (CURSORICONDIR*)GlobalLock16( handle );
@@ -535,10 +535,10 @@ static HANDLE ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR* l
  *
  * This abortion is called directly by Progman
  */
-HICON16 InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIconIndex, WORD n )
+HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UINT nIconIndex, WORD n )
 {
-  HANDLE 	hRet = 0;
-  HICON16*	RetPtr = NULL;
+  HGLOBAL16 	hRet = 0;
+  HGLOBAL16*	RetPtr = NULL;
   BYTE*  	pData;
   OFSTRUCT 	ofs;
   HFILE 	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
@@ -639,9 +639,9 @@ HICON16 InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nI
 /*************************************************************************
  *				ExtractIcon 		[SHELL.34]
  */
-HICON16 ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
+HICON16 ExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
 {
-  HANDLE handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
+  HGLOBAL16 handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
 
   if( handle )
     {
@@ -828,7 +828,7 @@ DWORD
 SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,SHFILEINFO32A *psfi,
 	UINT32 sizeofpsfi,UINT32 flags
 ) {
-	fprintf(stdnimp,"SHGetFileInfo32A(%s,0x%08lx,%p,%ld,0x%08lx)\n",
+	fprintf(stdnimp,"SHGetFileInfo32A(%s,0x%08lx,%p,%d,0x%08x)\n",
 		path,dwFileAttributes,psfi,sizeofpsfi,flags
 	);
 	return TRUE;

@@ -18,7 +18,7 @@ typedef struct
 
 extern BOOL BRUSH_Init(void);
 extern int BRUSH_GetObject( BRUSHOBJ * brush, int count, LPSTR buffer );
-extern BOOL BRUSH_DeleteObject( HBRUSH hbrush, BRUSHOBJ * brush );
-extern HBRUSH BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush );
+extern BOOL32 BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush );
+extern HBRUSH16 BRUSH_SelectObject(DC * dc, HBRUSH16 hbrush, BRUSHOBJ * brush);
 
 #endif  /* __WINE_BRUSH_H */

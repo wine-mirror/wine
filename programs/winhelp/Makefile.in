@@ -1,7 +1,10 @@
-TOPSRC   = @top_srcdir@
-MODULE   = none
-PROGRAMS = winhelp hlp2sgml
-ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = winhelp hlp2sgml
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
 LANGUAGES   = En De Fr Fi
 
@@ -18,18 +21,24 @@ sysconfdir      = @sysconfdir@
 mandir          = @mandir@/man1
 manext          = .1
 
-MOSTOBJS = \
-	winhelp.o \
-	hlpfile.o \
-	macro.o \
-	y.tab.o \
-	lex.yy.o
+MOSTSRCS = \
+	winhelp.c \
+	hlpfile.c \
+	macro.c
 
-STRINGOBJS = \
-	string.o \
-	$(LANGUAGES:%=%.o)
+# Some strings need addresses >= 0x10000
+STRINGSRCS = \
+	string.c
 
-C_SRCS = $(MOSTOBJS:.o=.c) $(STRINGOBJS:.o=.c) hlp2sgml.c
+GEN_C_SRCS = \
+	y.tab.c \
+	lex.yy.c \
+	$(LANGUAGES:%=%.c)
+
+C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
+
+MOSTOBJS = $(MOSTSRCS:.c=.o)
+STRINGOBJS = $(STRINGSRCS:.c=.o) $(GEN_C_SRCS:.c=.o)
 
 all: check_winerc $(PROGRAMS)
 
@@ -51,10 +60,10 @@ clean::
 	$(RM) $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h)
 
 y.tab.c y.tab.h: macro.yacc.y
-	$(YACC) -d -t macro.yacc.y
+	$(YACC) -d -t $(SRCDIR)/macro.yacc.y
 
 lex.yy.c: macro.lex.l
-	$(LEX) -8 -i macro.lex.l
+	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
 
 $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
 

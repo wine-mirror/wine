@@ -26,14 +26,14 @@ int GetCurrentThreadId(void)
 /***********************************************************************
  *           GetThreadContext         (KERNEL32.294)
  */
-BOOL GetThreadContext(HANDLE hThread, void *lpContext)
+BOOL GetThreadContext(HANDLE32 hThread, void *lpContext)
 {
         return FALSE;
 }
 /***********************************************************************
  *           GetCurrentThread    (KERNEL32.200)
  */
-HANDLE GetCurrentThread(void)
+HANDLE32 GetCurrentThread(void)
 {
 	return 0;
 }

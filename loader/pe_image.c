@@ -558,10 +558,10 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
         return pe;
 }
 
-HINSTANCE MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
+HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
 void InitTask( SIGCONTEXT *context );
 
-HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
+HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
@@ -598,7 +598,6 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
     return hInstance;
 }
 
-int USER_InitApp(HINSTANCE hInstance);
 void PE_InitTEB(int hTEB);
 
 void PE_InitializeDLLs(HMODULE16 hModule);
@@ -612,7 +611,7 @@ void PE_Win32CallToStart( SIGCONTEXT *context )
     InitTask( context );
     hModule = GetExePtr( GetCurrentTask() );
     pModule = MODULE_GetPtr( hModule );
-    USER_InitApp( hModule );
+    InitApp( hModule );
     fs=(int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
     PE_InitTEB(fs);
     __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
@@ -686,7 +685,7 @@ void PE_InitializeDLLs(HMODULE16 hModule)
 	pModule = MODULE_GetPtr( GetExePtr(hModule) );
 	if (pModule->dlls_to_init)
 	{
-		HANDLE to_init = pModule->dlls_to_init;
+		HGLOBAL16 to_init = pModule->dlls_to_init;
 		pModule->dlls_to_init = 0;
 		for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
 		{

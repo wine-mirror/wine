@@ -1,6 +1,9 @@
-DEFS   = -D__WINE__
-TOPSRC = @top_srcdir@
-MODULE = loader
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = loader
 
 C_SRCS = \
 	builtin.c \

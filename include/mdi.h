@@ -34,7 +34,7 @@ typedef struct
     WORD   	nActiveChildren;
     HWND   	hwndChildMaximized;
     HWND   	hwndActiveChild;
-    HMENU  	hWindowMenu;
+    HMENU16  	hWindowMenu;
     WORD   	idFirstChild;
     WORD	nTotalCreated;
     LPSTR 	frameTitle;

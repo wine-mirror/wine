@@ -7,14 +7,13 @@
 extern int MAIN_Init(void);
 extern BOOL WIDGETS_Init(void);
 extern BOOL WIN_CreateDesktopWindow(void);
-extern int WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
+extern int WinMain(HINSTANCE16,HINSTANCE16,LPSTR,int);
 extern void TASK_Reschedule(void);
-extern int USER_InitApp(HINSTANCE);
 
 
 int _WinMain (int argc, char *argv [])
 {
-  HINSTANCE hInstance;
+  HINSTANCE16 hInstance;
   LPSTR lpszCmdParam;
   int i, len = 0;
 
@@ -29,7 +28,7 @@ int _WinMain (int argc, char *argv [])
   if(!MAIN_Init()) return 0; /* JBP: Needed for DosDrives[] structure, etc. */
   hInstance = WinExec( *argv, SW_SHOWNORMAL );
   TASK_Reschedule();
-  USER_InitApp( hInstance );
+  InitApp( hInstance );
 
 #ifdef WINELIBDLL
   return (int)hInstance;

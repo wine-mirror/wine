@@ -529,7 +529,7 @@ HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font )
     static X_PHYSFONT stockFonts[LAST_STOCK_FONT-FIRST_STOCK_FONT+1];
 
     static struct {
-		HFONT		id;
+		HFONT16		id;
 		LOGFONT16	logfont;
 		int		access;
 		int		used;
@@ -537,7 +537,7 @@ HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font )
     int 	i;
 
     X_PHYSFONT * stockPtr;
-    HFONT prevHandle = dc->w.hFont;
+    HFONT16 prevHandle = dc->w.hFont;
     XFontStruct * fontStruct;
     dprintf_font(stddeb,"FONT_SelectObject(%p, %04x, %p)\n", dc, hfont, font);
 
@@ -545,7 +545,7 @@ HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font )
       /* Load font if necessary */
     if (!font)
     {
-	HFONT hnewfont;
+	HFONT16 hnewfont;
 
 	hnewfont = CreateFont16(10, 7, 0, 0, FW_DONTCARE,
 			      FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
@@ -1155,10 +1155,10 @@ void InitFontsList(void)
  */
 INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
 {
-  HANDLE       hLog;
-  HANDLE       hMet;
-  HFONT	       hFont;
-  HFONT	       hOldFont;
+  HLOCAL16     hLog;
+  HLOCAL16     hMet;
+  HFONT16 hFont;
+  HFONT16 hOldFont;
   LPLOGFONT16  lpLogFont;
   LPTEXTMETRIC16 lptm;
   LPSTR	       lpOldName;
@@ -1225,10 +1225,10 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lpDa
  */
 INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
 {
-  HANDLE       	hLog;
-  HANDLE       	hMet;
-  HFONT	       	hFont;
-  HFONT	       	hOldFont;
+  HLOCAL16     	hLog;
+  HLOCAL16     	hMet;
+  HFONT16 hFont;
+  HFONT16 hOldFont;
   LPENUMLOGFONT16 lpEnumLogFont;
   LPTEXTMETRIC16 lptm;
   LPSTR	       	lpOldName;

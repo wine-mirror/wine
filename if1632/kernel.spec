@@ -151,9 +151,9 @@ type	win16
 150 pascal16 DirectedYield(word) DirectedYield
 151 stub WinOldApCall
 152 pascal16 GetNumTasks() GetNumTasks
-154 return GlobalNotify 4 0
+154 pascal16 GlobalNotify(segptr) GlobalNotify
 155 pascal16 GetTaskDS() GetTaskDS
-156 stub LimitEMSPages
+156 return LimitEMSPages 4 0
 157 return GetCurPID 4 0
 158 return IsWinOldApTask 2 0
 159 stub GlobalHandleNoRIP
@@ -200,7 +200,7 @@ type	win16
 200 stub ValidateFreeSpaces
 201 stub ReplaceInst
 202 stub RegisterPtrace
-203 stub DebugBreak
+203 register DebugBreak() DebugBreak16
 204 stub SwapRecording
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray

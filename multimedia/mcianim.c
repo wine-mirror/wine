@@ -34,7 +34,7 @@ typedef struct {
     int     nUseCount;          /* Incremented for each shared open */
     BOOL    fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
-    HANDLE  hCallback;          /* Callback handle for pending notification */
+    HANDLE16 hCallback;          /* Callback handle for pending notification */
 	MCI_OPEN_PARMS openParms;
 	DWORD	dwTimeFormat;
 	int		mode;

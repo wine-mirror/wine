@@ -1,6 +1,9 @@
-DEFS   = -D__WINE__
-TOPSRC = @top_srcdir@
-MODULE = objects
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = objects
 
 C_SRCS = \
 	bitblt.c \

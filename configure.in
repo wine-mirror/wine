@@ -104,6 +104,7 @@ controls/Makefile
 debugger/Makefile
 files/Makefile
 graphics/Makefile
+graphics/metafiledrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
 if1632/Makefile

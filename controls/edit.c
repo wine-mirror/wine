@@ -49,7 +49,7 @@ typedef struct
 	UINT TextWidth;		/* width of the widest line in pixels */
 	HLOCAL16 hBuf;
 	char *text;
-	HFONT hFont;
+	HFONT16 hFont;
 	LINEDEF *LineDefs;
 	UINT XOffset;		/* offset of the viewport in pixels */
 	UINT FirstVisibleLine;
@@ -239,6 +239,9 @@ LRESULT EditWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lResult = 0L;
 	WND *wndPtr = WIN_FindWndPtr(hwnd);
+
+	if ((!EDITSTATEPTR(wndPtr)) && (msg != WM_CREATE))
+		return DefWindowProc16(hwnd, msg, wParam, lParam);
 
 	switch (msg) {
 	case EM_CANUNDO:
@@ -504,8 +507,8 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	char *text = EDIT_GetPasswordPointer(wndPtr);
 	int ww = EDIT_GetWndWidth(wndPtr);
 	HDC32 hdc;
-	HFONT hFont;
-	HFONT oldFont = 0;
+	HFONT16 hFont;
+	HFONT16 oldFont = 0;
 	char *start, *cp;
 	int prev, next;
 	int width;
@@ -513,7 +516,7 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
 	LINE_END ending;
 
 	hdc = GetDC32(wndPtr->hwndSelf);
-	hFont = (HFONT)EDIT_WM_GetFont(wndPtr, 0, 0L);
+	hFont = (HFONT16)EDIT_WM_GetFont(wndPtr, 0, 0L);
 	if (hFont)
 		oldFont = SelectObject(hdc, hFont);
 
@@ -1442,15 +1445,15 @@ static INT EDIT_WndXFromCol(WND *wndPtr, UINT line, UINT col)
 	char *text = EDIT_GetPasswordPointer(wndPtr);
 	INT ret;
 	HDC32 hdc;
-	HFONT hFont;
-	HFONT oldFont = 0;
+	HFONT16 hFont;
+	HFONT16 oldFont = 0;
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 	UINT li = (UINT)EDIT_EM_LineIndex(wndPtr, line, 0L);
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, li, 0L);
 	UINT xoff = EDIT_GetXOffset(wndPtr);
 
 	hdc = GetDC32(wndPtr->hwndSelf);
-	hFont = (HFONT)EDIT_WM_GetFont(wndPtr, 0, 0L);
+	hFont = (HFONT16)EDIT_WM_GetFont(wndPtr, 0, 0L);
 	if (hFont)
 		oldFont = SelectObject(hdc, hFont);
 	line = MAX(0, MIN(line, lc - 1));
@@ -2311,12 +2314,12 @@ static LRESULT EDIT_WM_Enable(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_EraseBkGnd(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	HBRUSH hBrush;
+	HBRUSH16 hBrush;
 	RECT16 rc;
 
-	hBrush = (HBRUSH)EDIT_SEND_CTLCOLOR(wndPtr, wParam);
+	hBrush = (HBRUSH16)EDIT_SEND_CTLCOLOR(wndPtr, wParam);
 	if (!hBrush)
-		hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+		hBrush = (HBRUSH16)GetStockObject(WHITE_BRUSH);
 
 	GetClientRect16(wndPtr->hwndSelf, &rc);
 	IntersectClipRect((HDC)wParam, rc.left, rc.top, rc.right, rc.bottom);
@@ -2678,8 +2681,8 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT vlc = EDIT_GetVisibleLineCount(wndPtr);
 	UINT lc = (UINT)EDIT_EM_GetLineCount(wndPtr, 0, 0L);
 	HDC16 hdc;
-	HFONT hFont;
-	HFONT oldFont = 0;
+	HFONT16 hFont;
+	HFONT16 oldFont = 0;
 	RECT16 rc;
 	RECT16 rcLine;
 	RECT16 rcRgn;
@@ -2776,9 +2779,9 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	LPARAM sel = EDIT_EM_GetSel(wndPtr, 0, 0L);
 	HDC32 hdc;
-	HFONT oldFont = 0;
+	HFONT16 oldFont = 0;
 
-	es->hFont = (HFONT)wParam;
+	es->hFont = (HFONT16)wParam;
 	hdc = GetDC32(wndPtr->hwndSelf);
 	if (es->hFont)
 		oldFont = SelectObject(hdc, es->hFont);

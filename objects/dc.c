@@ -14,20 +14,15 @@
 #include "color.h"
 #include "debug.h"
 #include "font.h"
-#include "callback.h"
 #include "xmalloc.h"
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
-extern BOOL DCHook( HDC, WORD, DWORD, DWORD );      /* windows/dce.c */
 
   /* Default DC values */
 static const WIN_DC_INFO DC_defaultValues =
 {
     0,                      /* flags */
     NULL,                   /* devCaps */
-    0,                      /* hMetaFile */
-    0,			    /* hHT */
-    0,			    /* HTLen */
     0,                      /* hClipRgn */
     0,                      /* hVisRgn */
     0,                      /* hGCClipRgn */
@@ -146,6 +141,41 @@ void DC_FillDevCaps( DeviceCaps * caps )
 
 
 /***********************************************************************
+ *           DC_AllocDC
+ */
+DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
+{
+    HDC16 hdc;
+    DC *dc;
+
+    if (!(hdc = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return NULL;
+    dc = (DC *) GDI_HEAP_LIN_ADDR( hdc );
+
+    dc->hSelf      = hdc;
+    dc->funcs      = funcs;
+    dc->physDev    = NULL;
+    dc->saveLevel  = 0;
+    dc->dwHookData = 0L;
+    dc->hookProc   = NULL;
+
+    memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
+    return dc;
+}
+
+
+/***********************************************************************
+ *           DC_GetDCPtr
+ */
+DC *DC_GetDCPtr( HDC32 hdc )
+{
+    GDIOBJHDR *ptr = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hdc );
+    if ((ptr->wMagic == DC_MAGIC) || (ptr->wMagic == METAFILE_DC_MAGIC))
+        return (DC *)ptr;
+    return NULL;
+}
+
+
+/***********************************************************************
  *           DC_InitDC
  *
  * Setup device-specific DC values for a newly created DC.
@@ -169,7 +199,7 @@ void DC_InitDC( DC* dc )
  * If fMapColors is TRUE, X pixels are mapped to Windows colors.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-BOOL DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
+BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
 {
     XGCValues val;
     unsigned long mask;
@@ -251,7 +281,7 @@ BOOL DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
  * Setup dc->u.x.gc for drawing operations using current brush.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-BOOL DC_SetupGCForBrush( DC * dc )
+BOOL32 DC_SetupGCForBrush( DC * dc )
 {
     return DC_SetupGCForPatBlt( dc, dc->u.x.gc, FALSE );
 }
@@ -263,7 +293,7 @@ BOOL DC_SetupGCForBrush( DC * dc )
  * Setup dc->u.x.gc for drawing operations using current pen.
  * Return FALSE if pen is PS_NULL, TRUE otherwise.
  */
-BOOL DC_SetupGCForPen( DC * dc )
+BOOL32 DC_SetupGCForPen( DC * dc )
 {
     XGCValues val;
 
@@ -309,7 +339,7 @@ BOOL DC_SetupGCForPen( DC * dc )
  * Setup dc->u.x.gc for text drawing operations.
  * Return FALSE if the font is null, TRUE otherwise.
  */
-BOOL DC_SetupGCForText( DC * dc )
+BOOL32 DC_SetupGCForText( DC * dc )
 {
     XGCValues val;
 
@@ -334,32 +364,12 @@ BOOL DC_SetupGCForText( DC * dc )
 
 
 /***********************************************************************
- *           DC_CallHookProc
- */
-BOOL DC_CallHookProc(DC* dc, WORD code, LPARAM lParam)
-{
-  BOOL bRet = FALSE;
-  FARPROC16 ptr = GDI_GetDefDCHook();
-
-  dprintf_dc(stddeb,"CallDCHook: code %04x\n", code);
-
-  /* if 16-bit callback is, in fact, a thunk to DCHook simply call DCHook */
-
-  if( dc->hookProc && !(dc->w.flags & (DC_SAVED | DC_MEMORY)) )
-    bRet = (dc->hookProc == ptr) ?
-          DCHook(dc->hSelf, code, dc->dwHookData, lParam):
-          CallDCHookProc(dc->hookProc, dc->hSelf, code, dc->dwHookData, lParam);
-
-  return bRet;
-}
-
-/***********************************************************************
  *           GetDCState    (GDI.179)
  */
 HDC GetDCState( HDC hdc )
 {
     DC * newdc, * dc;
-    HANDLE handle;
+    HGDIOBJ16 handle;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     if (!(handle = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return 0;
@@ -393,9 +403,9 @@ HDC GetDCState( HDC hdc )
 void SetDCState( HDC hdc, HDC hdcs )
 {
     DC * dc, * dcs;
-    HRGN hVisRgn, hClipRgn, hGCClipRgn;
-    HFONT hfont;
-    HBRUSH hbrush;
+    HRGN32 hVisRgn, hClipRgn, hGCClipRgn;
+    HFONT16 hfont;
+    HBRUSH16 hbrush;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
     if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
@@ -489,39 +499,25 @@ BOOL RestoreDC( HDC hdc, short level )
 HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
 {
     DC * dc;
-    HDC16 handle;
     const DC_FUNCTIONS *funcs;
 
     if (!(funcs = DRIVER_FindDriver( driver ))) return 0;
-
-    handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
-    if (!handle) return 0;
-    dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
+    if (!(dc = DC_AllocDC( funcs ))) return 0;
+    dc->w.flags = 0;
 
     dprintf_dc(stddeb, "CreateDC(%s %s %s): returning %04x\n",
-	    driver, device, output, handle );
-
-    dc->hSelf      = handle;
-    dc->funcs      = funcs;
-    dc->physDev    = NULL;
-    dc->saveLevel  = 0;
-    dc->dwHookData = 0L;
-    dc->hookProc   = (SEGPTR)0;
-
-    memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
-    dc->w.flags = 0;
+               driver, device, output, dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, driver, device, output, initData ))
     {
         dprintf_dc( stddeb, "CreateDC: creation aborted by device\n" );
-        GDI_HEAP_FREE( handle );
+        GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
 
     DC_InitDC( dc );
-
-    return handle;
+    return dc->hSelf;
 }
 
 
@@ -541,35 +537,24 @@ HDC CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
 HDC CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
-    HDC16 handle;
-    HBITMAP hbitmap;
+    HBITMAP16 hbitmap;
     const DC_FUNCTIONS *funcs;
 
     if ((origDC = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
     else funcs = DRIVER_FindDriver( "DISPLAY" );
     if (!funcs) return 0;
 
-    handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
-    if (!handle) return 0;
-    dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
+    if (!(dc = DC_AllocDC( funcs ))) return 0;
 
-    dprintf_dc(stddeb, "CreateCompatibleDC(%04x): returning %04x\n", hdc, handle );
+    dprintf_dc(stddeb, "CreateCompatibleDC(%04x): returning %04x\n",
+               hdc, dc->hSelf );
 
       /* Create default bitmap */
     if (!(hbitmap = CreateBitmap( 1, 1, 1, 1, NULL )))
     {
-	GDI_HEAP_FREE( handle );
+	GDI_HEAP_FREE( dc->hSelf );
 	return 0;
     }
-
-    memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
-
-    dc->hSelf          = handle;
-    dc->funcs          = funcs;
-    dc->physDev        = NULL;
-    dc->saveLevel      = 0;
-    dc->dwHookData     = 0L;
-    dc->hookProc       = (SEGPTR)0;
     dc->w.flags        = DC_MEMORY;
     dc->w.bitsPerPixel = 1;
     dc->w.hBitmap      = hbitmap;
@@ -580,13 +565,12 @@ HDC CreateCompatibleDC( HDC hdc )
     {
         dprintf_dc( stddeb, "CreateDC: creation aborted by device\n" );
         DeleteObject( hbitmap );
-        GDI_HEAP_FREE( handle );
+        GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
 
     DC_InitDC( dc );
-
-    return handle;
+    return dc->hSelf;
 }
 
 
@@ -751,12 +735,12 @@ DWORD SetDCOrg( HDC hdc, short x, short y )
 /***********************************************************************
  *           SetDCHook   (GDI.190)
  */
-BOOL SetDCHook( HDC hDC, FARPROC16 hookProc, DWORD dwHookData )
+BOOL16 SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
-    DC *dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
+    DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
 
     dprintf_dc( stddeb, "SetDCHook: hookProc %08x, default is %08x\n",
-                (unsigned)hookProc,(unsigned)GDI_GetDefDCHook() );
+                (UINT32)hookProc, (UINT32)DCHook );
 
     if (!dc) return FALSE;
     dc->hookProc = hookProc;
@@ -768,9 +752,9 @@ BOOL SetDCHook( HDC hDC, FARPROC16 hookProc, DWORD dwHookData )
 /***********************************************************************
  *           GetDCHook   (GDI.191)
  */
-DWORD GetDCHook( HDC hDC, FARPROC16 *phookProc )
+DWORD GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 {
-    DC *dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
+    DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
     *phookProc = dc->hookProc;
     return dc->dwHookData;

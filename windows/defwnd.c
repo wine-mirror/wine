@@ -78,7 +78,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     switch(msg)
     {
     case WM_NCPAINT:
-	return NC_HandleNCPaint( wndPtr->hwndSelf, (HRGN)wParam );
+	return NC_HandleNCPaint( wndPtr->hwndSelf, (HRGN32)wParam );
 
     case WM_NCHITTEST:
         return NC_HandleNCHitTest( wndPtr->hwndSelf, MAKEPOINT16(lParam) );
@@ -170,10 +170,10 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 			     (e.g for textured desktop) ? */
 	    }
 
-	    if (wndPtr->class->hbrBackground <= (HBRUSH)(COLOR_MAX+1))
+	    if (wndPtr->class->hbrBackground <= (HBRUSH16)(COLOR_MAX+1))
             {
-                HBRUSH hbrush = CreateSolidBrush( 
-			        GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
+                HBRUSH16 hbrush = CreateSolidBrush( 
+			 GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
                  FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                              (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
@@ -382,7 +382,7 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
     case WM_SETTEXT:
 	DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
-	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+	NC_HandleNCPaint( hwnd , (HRGN32)1 );  /* Repaint caption */
         break;
 
     default:
@@ -448,7 +448,7 @@ LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     case WM_SETTEXT:
 	DEFWND_SetText( wndPtr, (LPSTR)lParam );
-	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+	NC_HandleNCPaint( hwnd , (HRGN32)1 );  /* Repaint caption */
         break;
 
     default:

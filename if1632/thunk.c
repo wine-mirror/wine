@@ -6,26 +6,35 @@
 
 #include "windows.h"
 #include "callback.h"
+#include "heap.h"
+#include "hook.h"
+#include "module.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "heap.h"
 
 typedef void (*RELAY)();
 
-typedef struct
+#pragma pack(1)
+
+typedef struct tagTHUNK
 {
-    BYTE       popl_eax;           /* 0x58  popl  %eax (return address) */
-    BYTE       pushl_func;         /* 0x68  pushl $proc */
-    FARPROC32  proc WINE_PACKED;
-    BYTE       pushl_eax;          /* 0x50  pushl %eax */
-    BYTE       jmp;                /* 0xe9  jmp   relay (relative jump)*/
-    RELAY      relay WINE_PACKED;
+    BYTE             popl_eax;           /* 0x58  popl  %eax (return address)*/
+    BYTE             pushl_func;         /* 0x68  pushl $proc */
+    FARPROC32        proc WINE_PACKED;
+    BYTE             pushl_eax;          /* 0x50  pushl %eax */
+    BYTE             jmp;                /* 0xe9  jmp   relay (relative jump)*/
+    RELAY            relay WINE_PACKED;
+    struct tagTHUNK *next WINE_PACKED;
 } THUNK;
+
+#pragma pack(4)
 
 #define DECL_THUNK(name,proc,relay) \
     THUNK name = { 0x58, 0x68, (FARPROC32)(proc), 0x50, 0xe9, \
-                    (RELAY)((char *)(relay) - (char *)(&(name) + 1)) }
+                   (RELAY)((char *)(relay) - (char *)(&(name).next)), NULL }
 
+
+static THUNK *firstThunk = NULL;
 
 /***********************************************************************
  *           THUNK_Alloc
@@ -40,8 +49,21 @@ static THUNK *THUNK_Alloc( FARPROC32 func, RELAY relay )
         thunk->proc       = func;
         thunk->pushl_eax  = 0x50;
         thunk->jmp        = 0xe9;
-        thunk->relay      = relay;
+        thunk->relay      = (RELAY)((char *)relay - (char *)(&thunk->next));
+        thunk->next       = firstThunk;
+        firstThunk = thunk;
     }
+    return thunk;
+}
+
+
+/***********************************************************************
+ *           THUNK_Find
+ */
+static THUNK *THUNK_Find( FARPROC32 func )
+{
+    THUNK *thunk = firstThunk;
+    while (thunk && (thunk->proc != func)) thunk = thunk->next;
     return thunk;
 }
 
@@ -49,9 +71,20 @@ static THUNK *THUNK_Alloc( FARPROC32 func, RELAY relay )
 /***********************************************************************
  *           THUNK_Free
  */
-static void THUNK_Free( THUNK *thunk )
+void THUNK_Free( THUNK *thunk )
 {
-    HeapFree( SystemHeap, 0, thunk );
+    if (HEAP_IsInsideHeap( SystemHeap, 0, thunk ))
+    {
+        THUNK **prev = &firstThunk;
+        while (*prev && (*prev != thunk)) prev = &(*prev)->next;
+        if (*prev)
+        {
+            *prev = thunk->next;
+            HeapFree( SystemHeap, 0, thunk );
+            return;
+        }
+    }
+    fprintf( stderr, "THUNK_Free: invalid thunk addr %p\n", thunk );
 }
 
 
@@ -248,6 +281,104 @@ BOOL16 THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 func,
     else
         return GrayString( hdc, hbr, (GRAYSTRINGPROC16)&thunk, lParam, cch,
                            x, y, cx, cy );
+}
+
+
+/***********************************************************************
+ *           THUNK_SetWindowsHook16   (USER.121)
+ */
+FARPROC16 THUNK_SetWindowsHook16( INT16 id, HOOKPROC16 proc )
+{
+    HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
+    HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
+    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)CallTo16_long_wwl );
+    if (!thunk) return 0;
+    return (FARPROC16)SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask);
+}
+
+
+/***********************************************************************
+ *           THUNK_UnhookWindowsHook16   (USER.234)
+ */
+BOOL16 THUNK_UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
+{
+    BOOL16 ret = FALSE;
+    THUNK *thunk = THUNK_Find( (FARPROC16)proc );
+    if (thunk) ret = UnhookWindowsHook16( id, (HOOKPROC16)thunk );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           THUNK_SetWindowsHookEx16   (USER.291)
+ */
+HHOOK THUNK_SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
+                                HTASK16 hTask )
+{
+    THUNK *thunk = THUNK_Alloc( (FARPROC16)proc, (RELAY)CallTo16_long_wwl );
+    if (!thunk) return 0;
+    return SetWindowsHookEx16( id, (HOOKPROC16)thunk, hInst, hTask );
+}
+
+
+/***********************************************************************
+ *           THUNK_UnhookWindowHookEx16   (USER.292)
+ */
+BOOL16 THUNK_UnhookWindowsHookEx16( HHOOK hhook )
+{
+    THUNK *thunk = (THUNK *)HOOK_GetProc16( hhook );
+    BOOL16 ret = UnhookWindowsHookEx16( hhook );
+    THUNK_Free( thunk );
+    return ret;
+}
+
+
+static FARPROC16 defDCHookProc = NULL;
+
+/***********************************************************************
+ *           THUNK_SetDCHook   (GDI.190)
+ */
+BOOL16 THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
+{
+    THUNK *thunk, *oldThunk;
+
+    if (!defDCHookProc)  /* Get DCHook Win16 entry point */
+        defDCHookProc = MODULE_GetEntryPoint( GetModuleHandle("USER"), 362 );
+
+    if (proc != defDCHookProc)
+    {
+        thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwll );
+        if (!thunk) return FALSE;
+    }
+    else thunk = (THUNK *)DCHook;
+
+    /* Free the previous thunk */
+    GetDCHook( hdc, (FARPROC16 *)&oldThunk );
+    if (oldThunk && (oldThunk != (THUNK *)DCHook)) THUNK_Free( oldThunk );
+
+    return SetDCHook( hdc, (FARPROC16)thunk, dwHookData );
+}
+
+
+/***********************************************************************
+ *           THUNK_GetDCHook   (GDI.191)
+ */
+DWORD THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
+{
+    THUNK *thunk = NULL;
+    DWORD ret = GetDCHook( hdc, (FARPROC16 *)&thunk );
+    if (thunk)
+    {
+        if (thunk == (THUNK *)DCHook)
+        {
+            if (!defDCHookProc)  /* Get DCHook Win16 entry point */
+                defDCHookProc = MODULE_GetEntryPoint( GetModuleHandle("USER"),
+                                                      362 );
+            *phookProc = defDCHookProc;
+        }
+        else *phookProc = thunk->proc;
+    }
+    return ret;
 }
 
 

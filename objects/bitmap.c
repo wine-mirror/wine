@@ -124,7 +124,7 @@ HBITMAP16 CreateBitmap( INT32 width, INT32 height, UINT32 planes,
  */
 HBITMAP16 CreateCompatibleBitmap( HDC32 hdc, INT32 width, INT32 height )
 {
-    HBITMAP hbmpRet = 0;
+    HBITMAP16 hbmpRet = 0;
     DC *dc;
 
     dprintf_gdi( stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
@@ -421,8 +421,8 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
                                BITMAPOBJ * bmp )
 {
-    HRGN hrgn;
-    HBITMAP prevHandle = dc->w.hBitmap;
+    HRGN32 hrgn;
+    HBITMAP16 prevHandle = dc->w.hBitmap;
     
     if (!(dc->w.flags & DC_MEMORY)) return 0;
 

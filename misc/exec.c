@@ -98,7 +98,7 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 	static WORD WM_WINHELP=0;
 	HWND hDest;
 	LPWINHELP lpwh;
-	HANDLE hwh;
+	HGLOBAL16 hwh;
 	void *data=0;
 	int size,dsize,nlen;
         if (wCommand != HELP_QUIT)  /* FIXME */

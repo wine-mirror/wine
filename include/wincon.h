@@ -1,5 +1,5 @@
-#ifndef _WINECON_H_
-#define _WINECON_H_
+#ifndef __WINE_WINCON_H
+#define __WINE_WINCON_H
 
 #define CTRL_C_EVENT 0
 #define CTRL_BREAK_EVENT 1
@@ -46,7 +46,7 @@ typedef struct tagCONSOLE_SCREEN_BUFFER_INFO
 } CONSOLE_SCREEN_BUFFER_INFO,*LPCONSOLE_SCREEN_BUFFER_INFO;
 
 
-#endif
+#endif  /* __WINE_WINCON_H */
 
 #if 0
 #ifndef _WINCON_H_
@@ -85,26 +85,6 @@ typedef struct tagCONSOLE_SCREEN_BUFFER_INFO
 
 
 #if 0
-
-typedef struct
-  {
-    int bKeyDown;
-    WORD wRepeatCount;
-    WORD wVirtualKeyCode;
-    WORD wVirtualScanCode;
-
-    char AsciiChar;
-char pad;
-#if 0
-    union
-      {
-	WCHAR UnicodeChar;
-	CHAR AsciiChar;
-      }
-    uChar;
-#endif
-    DWORD dwControlKeyState;
-  } __attribute__ ((packed)) KEY_EVENT_RECORD;
 
 
 

@@ -1,16 +1,12 @@
-DEFS      = -D__WINE__
+DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = library
+MODULE    = metafiledrv
 
 C_SRCS = \
-	arch.c \
-	libres.c \
-	miscstubs.c \
-	sup.c \
-	winmain.c
+	init.c
 
 all: $(MODULE).o
 

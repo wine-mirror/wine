@@ -15,11 +15,27 @@
 
 #define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "hook.h"
-#include "callback.h"
 #include "queue.h"
 #include "user.h"
 #include "stddebug.h"
 #include "debug.h"
+
+#pragma pack(1)
+
+  /* Hook data (pointed to by a HHOOK) */
+typedef struct
+{
+    HANDLE16   next;               /* 00 Next hook in chain */
+    HOOKPROC16 proc WINE_PACKED;   /* 02 Hook procedure */
+    INT16      id;                 /* 06 Hook id (WH_xxx) */
+    HQUEUE16   ownerQueue;         /* 08 Owner queue (0 for system hook) */
+    HMODULE16  ownerModule;        /* 0a Owner module */
+    WORD       inHookProc;         /* 0c TRUE if in this->proc */
+} HOOKDATA;
+
+#pragma pack(4)
+
+#define HOOK_MAGIC  ((int)'H' | (int)'K' << 8)  /* 'HK' */
 
   /* This should probably reside in USER heap */
 static HANDLE16 HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
@@ -55,6 +71,16 @@ HANDLE16 HOOK_GetHook( INT16 id , HQUEUE16 hQueue )
         hook = queue->hooks[id - WH_MINHOOK];
     if (!hook) hook = HOOK_systemHooks[id - WH_MINHOOK];
     return hook;
+}
+
+
+/***********************************************************************
+ *           HOOK_GetProc16
+ */
+HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
+{
+    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hhook );
+    return data ? data->proc : NULL;
 }
 
 
@@ -197,9 +223,9 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT16 code,
     queue->hCurHook = hook;
     data->inHookProc = 1;
 
-    dprintf_hook( stddeb, "Calling hook %04x: %d %04lx %08lx\n",
-                  hook, code, (DWORD)wParam, lParam );
-    ret = CallHookProc( data->proc, code, wParam, lParam );
+    dprintf_hook( stddeb, "Calling hook %04x: proc=%p %d %04lx %08lx\n",
+                  hook, data->proc, code, (DWORD)wParam, lParam );
+    ret = data->proc( code, wParam, lParam );
     dprintf_hook( stddeb, "Ret hook %04x = %08lx\n", hook, ret );
 
     data->inHookProc = 0;
@@ -280,23 +306,23 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
     }
 }
 
+
 /***********************************************************************
- *           SetWindowsHook   (USER.121)
+ *           SetWindowsHook16   (USER.121)
  */
-FARPROC16 SetWindowsHook( INT16 id, HOOKPROC16 proc )
+FARPROC16 SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
     HTASK16 	hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
-    HANDLE16 	handle = HOOK_SetHook( id, proc, hInst, hTask );
+    HANDLE16 	handle = HOOK_SetHook( id, proc, 0, hTask );
 
     return (handle) ? (FARPROC16)MAKELONG( handle, HOOK_MAGIC ) : NULL;
 }
 
 
 /***********************************************************************
- *           UnhookWindowsHook   (USER.234)
+ *           UnhookWindowsHook16   (USER.234)
  */
-BOOL16 UnhookWindowsHook( INT16 id, HOOKPROC16 proc )
+BOOL16 UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HANDLE16 hook = HOOK_GetHook( id , 0 );
 
@@ -341,10 +367,10 @@ BOOL16 CallMsgFilter( SEGPTR msg, INT16 code )
 
 
 /***********************************************************************
- *           SetWindowsHookEx   (USER.291)
+ *           SetWindowsHookEx16   (USER.291)
  */
-HHOOK SetWindowsHookEx( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
-                        HTASK16 hTask )
+HHOOK SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
+                          HTASK16 hTask )
 {
     HANDLE16 handle = HOOK_SetHook( id, proc, hInst, hTask );
     return (handle) ? MAKELONG( handle, HOOK_MAGIC ) : NULL;
@@ -352,9 +378,9 @@ HHOOK SetWindowsHookEx( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
 
 
 /***********************************************************************
- *           UnhookWindowHookEx   (USER.292)
+ *           UnhookWindowHookEx16   (USER.292)
  */
-BOOL16 UnhookWindowsHookEx( HHOOK hhook )
+BOOL16 UnhookWindowsHookEx16( HHOOK hhook )
 {
     if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
     return HOOK_RemoveHook( LOWORD(hhook) );

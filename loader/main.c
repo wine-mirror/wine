@@ -166,7 +166,7 @@ int MAIN_Init(void)
 int _WinMain(int argc, char **argv)
 {
     int i;
-    HANDLE handle;
+    HINSTANCE16 handle;
 
     if (!MAIN_Init()) return 0;
 

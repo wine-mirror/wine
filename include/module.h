@@ -85,10 +85,10 @@ typedef struct
   /* Parameters for LoadModule() */
 typedef struct
 {
-    HANDLE16 hEnvironment;         /* Environment segment */
-    SEGPTR   cmdLine WINE_PACKED;  /* Command-line */
-    SEGPTR   showCmd WINE_PACKED;  /* Code for ShowWindow() */
-    SEGPTR   reserved WINE_PACKED;
+    HGLOBAL16 hEnvironment;         /* Environment segment */
+    SEGPTR    cmdLine WINE_PACKED;  /* Command-line */
+    SEGPTR    showCmd WINE_PACKED;  /* Code for ShowWindow() */
+    SEGPTR    reserved WINE_PACKED;
 } LOADPARAMS;
 
 #pragma pack(4)

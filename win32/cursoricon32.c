@@ -233,7 +233,7 @@ static CURSORDIRENTRY32 *CURSORICON32_FindBestCursor( CURSORICONDIR32 *dir,
  * Load the icon/cursor directory for a given resource name and find the
  * best matching entry.
  */
-static BOOL CURSORICON32_LoadDirEntry(HANDLE hInstance, LPCWSTR name,
+static BOOL CURSORICON32_LoadDirEntry(HINSTANCE32 hInstance, LPCWSTR name,
                                     int width, int height, int colors,
                                     BOOL fCursor, CURSORICONDIRENTRY32 *dirEntry)
 {
@@ -266,10 +266,12 @@ static BOOL CURSORICON32_LoadDirEntry(HANDLE hInstance, LPCWSTR name,
  *
  * Create a cursor or icon from a resource.
  */
-static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
-                                      BOOL fCursor )
+static HGLOBAL32 CURSORICON32_LoadHandler( HANDLE32 handle,
+                                           HINSTANCE32 hInstance,
+                                           BOOL32 fCursor )
 {
-    HANDLE hAndBits, hXorBits, hRes;
+    HBITMAP32 hAndBits, hXorBits;
+    HGLOBAL32 hRes;
     HDC32 hdc;
     int size, sizeAnd, sizeXor;
     POINT16 hotspot = { 0 ,0 };
@@ -402,12 +404,13 @@ static HANDLE CURSORICON32_LoadHandler( HANDLE32 handle, HINSTANCE hInstance,
  *
  * Load a cursor or icon.
  */
-static HANDLE CURSORICON32_Load( HANDLE hInstance, LPCWSTR name, int width,
-                               int height, int colors, BOOL fCursor )
+static HGLOBAL32 CURSORICON32_Load( HINSTANCE32 hInstance, LPCWSTR name,
+                                    int width, int height, int colors,
+                                    BOOL fCursor )
 {
     HANDLE32 handle;
-	HANDLE hRet;
-    HANDLE32  hRsrc;
+    HANDLE32 hRet;
+    HANDLE32 hRsrc;
     CURSORICONDIRENTRY32 dirEntry;
 
 	if(!hInstance)	/* OEM cursor/icon */

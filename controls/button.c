@@ -11,7 +11,7 @@
 #include "button.h"
 
 static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action );
-static void PB_PaintGrayOnGray(HDC32 hDC,HFONT hFont,RECT32 *rc,char *text);
+static void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text);
 static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action );
 static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action );
 static void UB_Paint( WND *wndPtr, HDC32 hDC, WORD action );
@@ -64,7 +64,7 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
     SendMessage32A( GetParent32((wndPtr)->hwndSelf), WM_CTLCOLORBTN, \
                     (hdc), (wndPtr)->hwndSelf )
 
-static HBITMAP hbitmapCheckBoxes = 0;
+static HBITMAP16 hbitmapCheckBoxes = 0;
 static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 
 
@@ -173,7 +173,7 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
         return 0;
 
     case WM_SETFONT:
-        infoPtr->hFont = (HFONT) wParam;
+        infoPtr->hFont = (HFONT16)wParam;
         if (lParam) PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         break;
 
@@ -253,7 +253,7 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 {
     RECT32 rc;
     HPEN16 hOldPen;
-    HBRUSH hOldBrush;
+    HBRUSH16 hOldBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     GetClientRect32( wndPtr->hwndSelf, &rc );
@@ -262,7 +262,7 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     if (infoPtr->hFont) SelectObject( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
     hOldPen = (HPEN16)SelectObject(hDC, sysColorObjects.hpenWindowFrame);
-    hOldBrush = (HBRUSH)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
+    hOldBrush = (HBRUSH16)SelectObject(hDC, sysColorObjects.hbrushBtnFace);
     SetBkMode(hDC, TRANSPARENT);
     Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
     if (action == ODA_DRAWENTIRE)
@@ -334,13 +334,13 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
  *   using a raster brush to avoid gray text on gray background
  */
 
-void PB_PaintGrayOnGray(HDC32 hDC,HFONT hFont,RECT32 *rc,char *text)
+void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
 {
     static int Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55};
-    HBITMAP hbm  = CreateBitmap(8, 8, 1, 1, Pattern);
+    HBITMAP16 hbm  = CreateBitmap(8, 8, 1, 1, Pattern);
     HDC hdcMem   = CreateCompatibleDC(hDC);
-    HBITMAP hbmMem;
-    HBRUSH hBr;
+    HBITMAP16 hbmMem;
+    HBRUSH16 hBr;
     RECT32 rect,rc2;
 
     rect=*rc;
@@ -370,7 +370,7 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT hFont,RECT32 *rc,char *text)
 static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 {
     RECT16 rc;
-    HBRUSH hBrush;
+    HBRUSH16 hBrush;
     int textlen, delta, x, y;
     TEXTMETRIC16 tm;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
@@ -431,12 +431,12 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
  */
 static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
 {
-    HWND parent, sibling;
+    HWND32 parent, sibling;
     if (!(wndPtr->dwStyle & WS_CHILD)) return;
     parent = wndPtr->parent->hwndSelf;
-    for(sibling = GetNextDlgGroupItem(parent,wndPtr->hwndSelf,FALSE);
+    for(sibling = GetNextDlgGroupItem32( parent, wndPtr->hwndSelf, FALSE );
         sibling != wndPtr->hwndSelf;
-        sibling = GetNextDlgGroupItem(parent,sibling,FALSE))
+        sibling = GetNextDlgGroupItem32( parent, sibling, FALSE ))
 	    SendMessage32A( sibling, BM_SETCHECK32, BUTTON_UNCHECKED, 0 );
 }
 
@@ -479,7 +479,7 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 static void UB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 {
     RECT16 rc;
-    HBRUSH hBrush;
+    HBRUSH16 hBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     if (action == ODA_SELECT) return;

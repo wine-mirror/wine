@@ -4,7 +4,7 @@
  * Copyright (c) 1996 Onno Hovers, (onno@stack.urc.tue.nl)
  *
  */
-#include "../include/config.h"
+#include "config.h"
 
 #ifdef NEED_UNDERSCORE_PREFIX
 

@@ -359,7 +359,7 @@ static void WIN_DestroyWindow( WND* wndPtr )
     }
 
     if (!(wndPtr->dwStyle & WS_CHILD))
-       if (wndPtr->wIDmenu) DestroyMenu( (HMENU)wndPtr->wIDmenu );
+       if (wndPtr->wIDmenu) DestroyMenu( (HMENU16)wndPtr->wIDmenu );
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
     if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->dce );
@@ -1906,7 +1906,7 @@ BOOL32 EnumWindows32( WNDENUMPROC32 lpEnumFunc, LPARAM lParam )
 BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
 {
     WND **list, **ppWnd;
-    HANDLE hQueue = GetTaskQueue( hTask );
+    HQUEUE16 hQueue = GetTaskQueue( hTask );
 
     /* This function is the same as EnumWindows(),    */
     /* except for an added check on the window queue. */
@@ -2178,14 +2178,14 @@ BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
  *                              DragObject ( USER.464 )
  *
  */
-DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
+DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
                 WORD szList , HCURSOR16 hCursor)
 {
  MSG16	 	msg;
  LPDRAGINFO	lpDragInfo;
  SEGPTR		spDragInfo;
  HCURSOR16 	hDragCursor=0, hOldCursor=0, hBummer=0;
- HANDLE		hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
+ HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO));
  WND           *wndPtr = WIN_FindWndPtr(hWnd);
  DWORD		dwRet = 0;
  short	 	dragDone = 0;

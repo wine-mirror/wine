@@ -26,13 +26,13 @@
 #include "options.h"
 
 
-static HBITMAP hbitmapClose = 0;
-static HBITMAP hbitmapMinimize = 0;
-static HBITMAP hbitmapMinimizeD = 0;
-static HBITMAP hbitmapMaximize = 0;
-static HBITMAP hbitmapMaximizeD = 0;
-static HBITMAP hbitmapRestore = 0;
-static HBITMAP hbitmapRestoreD = 0;
+static HBITMAP16 hbitmapClose = 0;
+static HBITMAP16 hbitmapMinimize = 0;
+static HBITMAP16 hbitmapMinimizeD = 0;
+static HBITMAP16 hbitmapMaximize = 0;
+static HBITMAP16 hbitmapMaximizeD = 0;
+static HBITMAP16 hbitmapRestore = 0;
+static HBITMAP16 hbitmapRestoreD = 0;
 
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
 
@@ -64,6 +64,7 @@ static HBITMAP hbitmapRestoreD = 0;
  */
 static void NC_AdjustRect(LPRECT16 rect, DWORD style, BOOL menu, DWORD exStyle)
 {
+    if(style & WS_ICONIC) return;
     /* Decide if the window will be managed (see CreateWindowEx) */
     if (!(Options.managed && !(style & WS_CHILD) &&
           ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
@@ -117,6 +118,8 @@ BOOL16 AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 
     if (!(style & (WS_POPUP | WS_CHILD)))  /* Overlapped window */
 	style |= WS_CAPTION;
+    style &= (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME);
+    exStyle &= WS_EX_DLGMODALFRAME;
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
     dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08lx %d %08lx\n",
@@ -432,7 +435,7 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT16 rect;
     HDC hdcMem;
-    HBITMAP hbitmap;
+    HBITMAP16 hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
@@ -620,7 +623,7 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
     {
-	HBRUSH hbrushOld = SelectObject( hdc, sysColorObjects.hbrushWindow );
+	HBRUSH16 hbrushOld = SelectObject( hdc, sysColorObjects.hbrushWindow );
 	PatBlt( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
 	PatBlt( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
 	PatBlt( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
@@ -669,7 +672,7 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
  *
  * Paint the non-client area. clip is currently unused.
  */
-void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
+void NC_DoNCPaint( HWND hwnd, HRGN32 clip, BOOL suppress_menupaint )
 {
     HDC32 hdc;
     RECT16 rect;
@@ -763,7 +766,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
+LONG NC_HandleNCPaint( HWND hwnd , HRGN32 clip)
 {
     NC_DoNCPaint( hwnd, clip, FALSE );
     return 0;
@@ -790,7 +793,7 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM wParam )
       if( wndPtr->dwStyle & WS_MINIMIZE )
 	PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, 0 );
       else
-	NC_DoNCPaint( wndPtr->hwndSelf, (HRGN)1, FALSE );
+	NC_DoNCPaint( wndPtr->hwndSelf, (HRGN32)1, FALSE );
     }
     return TRUE;
 }
@@ -875,7 +878,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT16 pt )
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     int iconic = wndPtr->dwStyle & WS_MINIMIZE;
-    HMENU hmenu;
+    HMENU16 hmenu;
     
     if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
 

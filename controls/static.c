@@ -145,7 +145,7 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_SETFONT:
             if (style == SS_ICON) return 0;
-            infoPtr->hFont = (HFONT)wParam;
+            infoPtr->hFont = (HFONT16)wParam;
             if (LOWORD(lParam))
             {
                 InvalidateRect32( hWnd, NULL, FALSE );
@@ -183,7 +183,7 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 {
     RECT16 rc;
-    HBRUSH hBrush;
+    HBRUSH16 hBrush;
     WORD wFormat;
 
     LONG style = wndPtr->dwStyle;
@@ -231,7 +231,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 {
     RECT16 rc;
-    HBRUSH hBrush;
+    HBRUSH16 hBrush;
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
     
@@ -271,7 +271,7 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
 {
     RECT16 rc;
-    HBRUSH      hbrush;
+    HBRUSH16 hbrush;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect16( wndPtr->hwndSelf, &rc);

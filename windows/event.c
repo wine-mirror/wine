@@ -728,7 +728,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         WND *wndPtr;
 	WINDOWPOS16 *winpos;
 	RECT16 newWindowRect, newClientRect;
-	HRGN hrgnOldPos, hrgnNewPos;
+	HRGN32 hrgnOldPos, hrgnNewPos;
 
 	if (!(wndPtr = WIN_FindWndPtr( hwnd )) ||
 	    !(wndPtr->flags & WIN_MANAGED) )
@@ -800,7 +800,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 
     if(event->target == XA_STRING)
     {
-	HANDLE hText;
+	HANDLE16 hText;
 	LPSTR  text;
 	int    size,i,j;
 

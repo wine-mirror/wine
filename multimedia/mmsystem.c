@@ -52,7 +52,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /**************************************************************************
 * 				MMSYSTEM_WEP		[MMSYSTEM.1]
 */
-int MMSYSTEM_WEP(HANDLE hInstance, WORD wDataSeg,
+int MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
 		 WORD cbHeapSize, LPSTR lpCmdLine)
 {
 	/* isn't WEP the Windows Exit Procedure ? */
@@ -68,16 +68,16 @@ BOOL sndPlaySound(LPCSTR lpszSoundName, UINT uFlags)
 	HMMIO16			hmmio;
 	MMCKINFO		mmckInfo;
 	MMCKINFO		ckMainRIFF;
-	HANDLE			hFormat;
+	HLOCAL16		hFormat;
 	PCMWAVEFORMAT 	pcmWaveFormat;
 	int				count;
 	int				bufsize;
-	HANDLE			hDesc;
+	HLOCAL16		hDesc;
 	LPWAVEOPENDESC 	lpWaveDesc;
-	HANDLE			hWaveHdr;
+	HLOCAL16		hWaveHdr;
 	LPWAVEHDR		lpWaveHdr;
 	LPWAVEHDR		lp16WaveHdr;
-	HANDLE			hData;
+	HLOCAL16		hData;
 	DWORD			dwRet;
 	char			str[128];
 	LPSTR			ptr;
@@ -201,7 +201,7 @@ LRESULT DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /**************************************************************************
 * 				DriverCallback	[MMSYSTEM.31]
 */
-BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
+BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE16 hDev, 
 		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
 {
 	dprintf_mmsys(stddeb, "DriverCallback(%08lX, %04X, %04X, %04X, %08lX, %08lX, %08lX); !\n",
@@ -552,7 +552,7 @@ BOOL mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
 */
 
 #define	_MCI_STRDUP_TO_SEG(dest,source) {\
-	HANDLE	x;\
+	HLOCAL16 x;\
 	x=USER_HEAP_ALLOC(strlen(source)+1);\
 	dest=(LPSTR)MAKELONG(x,USER_HeapSel);\
 	strcpy(PTR_SEG_TO_LIN(dest),source);\
@@ -865,7 +865,7 @@ YIELDPROC mciGetYieldProc(UINT uDeviceID, DWORD * lpdwYieldData)
 /**************************************************************************
 * 				mciGetCreatorTask	[MMSYSTEM.717]
 */
-HTASK mciGetCreatorTask(UINT uDeviceID)
+HTASK16 mciGetCreatorTask(UINT uDeviceID)
 {
     return 0;
 }
@@ -2219,7 +2219,7 @@ LRESULT DrvSendMessage(HDRVR16 hDriver, WORD msg, LPARAM lParam1, LPARAM lParam2
 /**************************************************************************
 * 				DrvGetModuleHandle	[MMSYSTEM.1103]
 */
-HANDLE DrvGetModuleHandle(HDRVR16 hDrvr)
+HANDLE16 DrvGetModuleHandle(HDRVR16 hDrvr)
 {
 	dprintf_mmsys(stddeb, "DrvGetModuleHandle(%04X);\n", hDrvr);
         return 0;

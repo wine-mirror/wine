@@ -12,7 +12,6 @@
 extern
 int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 
-
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto16.S */
 
@@ -51,12 +50,8 @@ extern LONG CallTo16_long_lwwllwlllllw( FARPROC16, LONG, WORD, WORD, LONG,
 extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
                             WORD bx, WORD cx, WORD dx, WORD si, WORD di );
 
-#define CallDCHookProc( func, hdc, code, data, lparam) \
-    CallTo16_word_wwll( func, hdc, code, data, lparam )
 #define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
     CallTo16_long_lwwll( func, dwId, msg, hdrvr, lparam1, lparam2 )
-#define CallHookProc( func, code, wParam, lParam ) \
-    CallTo16_long_wwl( func, code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     CallTo16_word_wwlll( func, id, msg, dwUser, dw1, dw2 )
 #define CallWindowsExitProc( func, nExitType ) \
@@ -72,7 +67,6 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
                                  style, MAKELONG(y,x), MAKELONG(cy,cx), \
                                  MAKELONG(hmenu,hparent), instance, params, \
                                  hwnd, msg, wParam, lParam )
-#define _InitTermProc( func ) CallTo32_0( (FARPROC32)func )
 
 
 /* List of the 32-bit callback functions. This list is used  */
@@ -93,12 +87,8 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
 
 #else  /* WINELIB */
 
-#define CallDCHookProc( func, hdc, code, data, lparam ) \
-    (*func)( hdc, code, data, lparam )
 #define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
     (*func)( dwId, msg, hdrvr, lparam1, lparam2 )
-#define CallHookProc( func, code, wParam, lParam ) \
-    (*func)( code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     (*func)( id, msg, dwUser, dw1, dw2 )
 #define CallWindowsExitProc( func, nExitType ) \
@@ -109,8 +99,6 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     (*func)( hwnd, msg, wParam, lParam )
 #define CallWordBreakProc( func, lpch, ichCurrent, cch, code ) \
     (*func)( lpch, ichCurrent, cch, code )
-#define _InitTermProc( func ) (*func)()
-
 
 #endif  /* WINELIB */
 

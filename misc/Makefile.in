@@ -1,6 +1,9 @@
-DEFS   = -D__WINE__
-TOPSRC = @top_srcdir@
-MODULE = misc
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = misc
 
 C_SRCS = \
 	clipboard.c \

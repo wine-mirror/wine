@@ -1154,7 +1154,7 @@ LONG _hwrite( HFILE hFile, LPCSTR buffer, LONG count )
  */
 UINT16 SetHandleCount16( UINT16 count )
 {
-    HANDLE hPDB = GetCurrentPDB();
+    HGLOBAL16 hPDB = GetCurrentPDB();
     PDB *pdb = (PDB *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
     WORD i;
@@ -1198,7 +1198,7 @@ UINT16 SetHandleCount16( UINT16 count )
 #ifdef WINELIB
         newfiles = (BYTE *)GlobalAlloc32( GMEM_FIXED, count );
 #else
-        HANDLE newhandle = GlobalAlloc16( GMEM_MOVEABLE, count );
+        HGLOBAL16 newhandle = GlobalAlloc16( GMEM_MOVEABLE, count );
         if (!newhandle)
         {
             DOS_ERROR( ER_OutOfMemory, EC_OutOfResource, SA_Abort, EL_Memory );

@@ -94,9 +94,9 @@ VOID GetStartupInfoA(LPSTARTUPINFO lpStartupInfo)
 
     lpStartupInfo->cbReserved2 = 0;
     lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
-    lpStartupInfo->hStdInput  = (HANDLE)0;
-    lpStartupInfo->hStdOutput = (HANDLE)1;
-    lpStartupInfo->hStdError  = (HANDLE)2;
+    lpStartupInfo->hStdInput  = (HANDLE32)0;
+    lpStartupInfo->hStdOutput = (HANDLE32)1;
+    lpStartupInfo->hStdError  = (HANDLE32)2;
 }
 
 /* Initialize whatever internal data structures we need.

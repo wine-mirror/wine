@@ -122,7 +122,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    return 0;
 
         case WM_ERASEBKGND:
-	    FillWindow( hwnd, hwnd, (HDC)wParam, (HBRUSH)CTLCOLOR_DLG );
+	    FillWindow( hwnd, hwnd, (HDC)wParam, (HBRUSH16)CTLCOLOR_DLG );
 	    return 1;
 
 	case WM_NCDESTROY:
@@ -188,13 +188,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    {
                 HWND hwndDest = (HWND)wParam;
                 if (!lParam)
-                {
-                    HWND32 hwndPrev = GetFocus32();
-                    if (!hwndPrev)  /* Set focus to the first item */
-                        hwndDest = DIALOG_GetFirstTabItem( hwnd );
-                    else
-                        hwndDest = GetNextDlgTabItem( hwnd, hwndPrev, wParam );
-                }
+                    hwndDest = GetNextDlgTabItem32(hwnd, GetFocus32(), wParam);
                 if (hwndDest) DEFDLG_SetFocus( hwnd, hwndDest );
                 DEFDLG_SetDefButton( hwnd, dlgInfo, hwndDest );
             }

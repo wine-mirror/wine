@@ -626,7 +626,7 @@ int StretchDIBits( HDC hdc,
 	WORD xSrc, WORD ySrc, WORD wSrcWidth, WORD wSrcHeight,
 	LPSTR bits, LPBITMAPINFO info, WORD wUsage, DWORD dwRop )
 {
-    HBITMAP hBitmap, hOldBitmap;
+    HBITMAP16 hBitmap, hOldBitmap;
     HDC hdcMem;
 
     hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
@@ -724,7 +724,7 @@ INT16 SetDIBitsToDevice( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 /***********************************************************************
  *           GetDIBits    (GDI.441)
  */
-int GetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
+int GetDIBits( HDC hdc, HBITMAP16 hbitmap, WORD startscan, WORD lines,
 	       LPSTR bits, BITMAPINFO * info, WORD coloruse )
 {
     DC * dc;
@@ -792,10 +792,10 @@ int GetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
 /***********************************************************************
  *           CreateDIBitmap    (GDI.442)
  */
-HBITMAP CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
-		        LPVOID bits, BITMAPINFO * data, UINT coloruse )
+HBITMAP16 CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
+                          LPVOID bits, BITMAPINFO * data, UINT coloruse )
 {
-    HBITMAP handle;
+    HBITMAP16 handle;
     BOOL fColor;
     DWORD width, height;
     WORD bpp;

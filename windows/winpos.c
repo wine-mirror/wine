@@ -39,7 +39,7 @@
 /* ----- external functions ----- */
 
 extern void 	FOCUS_SwitchFocus( HWND , HWND );
-extern HRGN 	DCE_GetVisRgn( HWND, WORD );
+extern HRGN32 	DCE_GetVisRgn( HWND, WORD );
 extern HWND	CARET_GetHwnd();
 extern BOOL     DCE_InvalidateDCE(WND*, RECT16* );
 
@@ -940,8 +940,8 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
     CBTACTIVATESTRUCT16   *cbtStruct;
     WORD                   wIconized=0;
-    HANDLE		   hOldActiveQueue = (pActiveQueue)?pActiveQueue->self:0;
-    HANDLE 		   hNewActiveQueue;
+    HQUEUE16 hOldActiveQueue = (pActiveQueue)?pActiveQueue->self:0;
+    HQUEUE16 hNewActiveQueue;
 
     /* paranoid checks */
     if( hWnd == GetDesktopWindow32() || hWnd == hwndActive )
@@ -1384,10 +1384,10 @@ HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
  * update regions are in window client coordinates
  * client and window rectangles are in parent client coordinates
  */
-static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect, LPRECT16 lpOldClientRect, UINT uFlags )
+static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRect, LPRECT16 lpOldClientRect, UINT uFlags )
 {
- HRGN newVisRgn    = DCE_GetVisRgn(Wnd->hwndSelf, DCX_WINDOW | DCX_CLIPSIBLINGS );
- HRGN dirtyRgn     = CreateRectRgn(0,0,0,0);
+ HRGN32 newVisRgn = DCE_GetVisRgn(Wnd->hwndSelf,DCX_WINDOW | DCX_CLIPSIBLINGS);
+ HRGN32 dirtyRgn = CreateRectRgn(0,0,0,0);
  int  other, my;
 
  dprintf_win(stddeb,"cleaning up...new wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i)\n\
@@ -1434,7 +1434,7 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
    { 
      HDC32 hDC;
      int   update;
-     HRGN  updateRgn;
+     HRGN32 updateRgn;
      int   xfrom,yfrom,xto,yto,width,height;
 
      if( uFlags & SMC_DRAWFRAME )
@@ -1581,7 +1581,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
     WINDOWPOS16 *winpos;
     WND *	wndPtr;
     RECT16 	newWindowRect, newClientRect, oldWindowRect;
-    HRGN	visRgn = 0;
+    HRGN32	visRgn = 0;
     HWND	tempInsertAfter= 0;
     int 	result = 0;
     UINT 	uFlags = 0;

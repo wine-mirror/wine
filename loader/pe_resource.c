@@ -116,7 +116,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY resdirptr,
  *	    PE_FindResourceEx32W
  */
 HANDLE32 PE_FindResourceEx32W( 
-	HINSTANCE hModule, LPCWSTR name, LPCWSTR type, WORD lang
+	HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type, WORD lang
 )
 {
     PE_MODULE *pe;
@@ -152,7 +152,7 @@ HANDLE32 PE_FindResourceEx32W(
 /**********************************************************************
  *	    PE_LoadResource32
  */
-HANDLE32 PE_LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc )
+HANDLE32 PE_LoadResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
 {
     NE_MODULE *pModule;
     PE_MODULE *pe;

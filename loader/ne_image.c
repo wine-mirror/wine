@@ -529,7 +529,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
     }
     if (pModule->dlls_to_init)
     {
-	HANDLE to_init = pModule->dlls_to_init;
+	HGLOBAL16 to_init = pModule->dlls_to_init;
 	pModule->dlls_to_init = 0;
         for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
         {
@@ -549,7 +549,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
  */
 
 /* It does nothing */
-void PatchCodeHandle(HANDLE hSel)
+void PatchCodeHandle(HANDLE16 hSel)
 {
 }
 #endif /* WINELIB */

@@ -71,7 +71,7 @@ typedef struct {
     int     nUseCount;          /* Incremented for each shared open */
     BOOL    fShareable;         /* TRUE if first open was shareable */
     WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
-    HANDLE  hCallback;          /* Callback handle for pending notification */
+    HANDLE16 hCallback;          /* Callback handle for pending notification */
 	HMMIO16	hFile;				/* mmio file handle open as Element		*/
 	MCI_WAVE_OPEN_PARMS openParms;
 	PCMWAVEFORMAT	WaveFormat;
@@ -104,9 +104,9 @@ static DWORD WAVE_NotifyClient(UINT wDevID, WORD wMsg,
 * 				WAVE_mciOpen	*/
 static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 {
-	HANDLE		hFormat;
+	HLOCAL16	hFormat;
 	LPPCMWAVEFORMAT	lpWaveFormat;
-	HANDLE		hDesc;
+	HLOCAL16	hDesc;
 	LPWAVEOPENDESC 	lpDesc;
 	LPSTR		lpstrElementName;
 	DWORD		dwRet;
@@ -246,8 +246,8 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
 	int				start, end;
 	LONG			bufsize, count;
-	HANDLE			hData;
-	HANDLE			hWaveHdr;
+	HGLOBAL16		hData;
+	HLOCAL16		hWaveHdr;
 	LPWAVEHDR		lpWaveHdr;
 	LPWAVEHDR		lp16WaveHdr;
 	DWORD			dwRet;
@@ -331,8 +331,8 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 {
 	int				start, end;
 	LONG			bufsize;
-	HANDLE			hData;
-	HANDLE			hWaveHdr;
+	HGLOBAL16		hData;
+	HLOCAL16		hWaveHdr;
 	LPWAVEHDR		lpWaveHdr;
 	LPWAVEHDR		lp16WaveHdr;
 	DWORD			dwRet;

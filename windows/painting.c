@@ -25,7 +25,7 @@
 void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 {
     POINT16 pt = {0, 0}; 
-    HRGN hClip = 1;
+    HRGN32 hClip = 1;
 
     dprintf_nonclient(stddeb,"NCUpdate: hwnd %04x, hrgnUpdate %04x\n", 
                       wnd->hwndSelf, wnd->hrgnUpdate );
@@ -53,7 +53,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
         if (bUpdate)
         {
 	    /* exclude non-client area from update region */
-            HRGN hrgn = CreateRectRgn(0, 0, wnd->rectClient.right - wnd->rectClient.left,
+            HRGN32 hrgn = CreateRectRgn(0, 0, wnd->rectClient.right - wnd->rectClient.left,
 					    wnd->rectClient.bottom - wnd->rectClient.top);
 
             if (hrgn && (CombineRgn(wnd->hrgnUpdate, wnd->hrgnUpdate,
@@ -89,7 +89,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
 {
     BOOL32 bIcon;
-    HRGN hrgnUpdate;
+    HRGN32 hrgnUpdate;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
@@ -206,9 +206,9 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
     if ((UINT32)hbrush <= CTLCOLOR_MAX)
     {
 	if (!hwndParent) return;
-	hbrush = (HBRUSH)SendMessage32A( hwndParent, 
-                                         WM_CTLCOLORMSGBOX + (UINT32)hbrush,
-                                         (WPARAM)hdc, (LPARAM)hwnd );
+	hbrush = (HBRUSH16)SendMessage32A( hwndParent, 
+                                           WM_CTLCOLORMSGBOX + (UINT32)hbrush,
+                                           (WPARAM)hdc, (LPARAM)hwnd );
     }
     if (hbrush) FillRect16( hdc, rect, hbrush );
 }
@@ -217,10 +217,10 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 /***********************************************************************
  *           GetControlBrush    (USER.326)
  */
-HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
+HBRUSH16 GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 {
-    return (HBRUSH)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
-                                   (WPARAM)hdc, (LPARAM)hwnd );
+    return (HBRUSH16)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
+                                     (WPARAM)hdc, (LPARAM)hwnd );
 }
 
 
@@ -238,10 +238,10 @@ HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
  * HIWORD(lParam) = hwndSkip  (not used; always NULL)
  */
 BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
-                         HRGN32 hrgnUpdate, UINT32 flags, UINT32 control )
+                           HRGN32 hrgnUpdate, UINT32 flags, UINT32 control )
 {
     BOOL32 bIcon;
-    HRGN hrgn;
+    HRGN32 hrgn;
     RECT32 rectClient;
     WND* wndPtr;
 
@@ -564,7 +564,7 @@ BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
     {
 	if (wndPtr->hrgnUpdate > 1)
 	{
-	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+	    HRGN32 hrgn = CreateRectRgn( 0, 0, 0, 0 );
 	    if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR) return FALSE;
 	    GetRgnBox32( hrgn, rect );
 	    DeleteObject( hrgn );
@@ -601,7 +601,7 @@ INT16 GetUpdateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 INT16 ExcludeUpdateRgn( HDC32 hdc, HWND32 hwnd )
 {
     INT16 retval = ERROR;
-    HRGN hrgn;
+    HRGN32 hrgn;
     WND * wndPtr;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return ERROR;

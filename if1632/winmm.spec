@@ -133,7 +133,7 @@ type win32
 0132 stub mmioStringToFOURCCW
 0133 stub mmioWrite
 0134 stub mmsystemGetVersion
-0135 stub sndPlaySoundA
+0135 stdcall sndPlaySoundA(ptr long) sndPlaySound
 0136 stub sndPlaySoundW
 0137 stub timeBeginPeriod
 0138 stub timeEndPeriod

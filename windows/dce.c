@@ -30,8 +30,6 @@
 static DCE *firstDCE = 0;
 static HDC defaultDCstate = 0;
 
-BOOL   DCHook(HDC, WORD, DWORD, DWORD);
-
 /***********************************************************************
  *           DCE_AllocDCE
 *
@@ -49,7 +47,7 @@ DCE *DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type )
 
     /* store DCE handle in DC hook data field */
 
-    SetDCHook(dce->hDC, GDI_GetDefDCHook(), (DWORD)dce);
+    SetDCHook( dce->hDC, (FARPROC16)DCHook, (DWORD)dce );
 
     dce->hwndCurrent = hWnd;
     dce->hClipRgn    = 0;
@@ -85,7 +83,7 @@ void DCE_FreeDCE( DCE *dce )
     while (*ppDCE && (*ppDCE != dce)) ppDCE = &(*ppDCE)->next;
     if (*ppDCE == dce) *ppDCE = dce->next;
 
-    SetDCHook(dce->hDC,(SEGPTR)NULL,0L);
+    SetDCHook(dce->hDC, NULL, 0L);
 
     DeleteDC( dce->hDC );
     if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
@@ -238,10 +236,10 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT16 *lprect )
  * is destroyed.  Used to implement DCX_CLIPSIBLINGS and
  * DCX_CLIPCHILDREN styles.
  */
-static HRGN DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
-                             HRGN hrgn, int xoffset, int yoffset )
+static HRGN32 DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
+                               HRGN32 hrgn, int xoffset, int yoffset )
 {
-    HRGN hrgnNew;
+    HRGN32 hrgnNew;
 
     if (!pWndStart) return hrgn;
     if (!(hrgnNew = CreateRectRgn( 0, 0, 0, 0 )))
@@ -275,10 +273,10 @@ static HRGN DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
  * clipped by the client area of all ancestors, and then optionally
  * by siblings and children.
  */
-HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
+HRGN32 DCE_GetVisRgn( HWND hwnd, WORD flags )
 {
     RECT16 rect;
-    HRGN hrgn;
+    HRGN32 hrgn;
     int xoffset, yoffset;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -397,7 +395,7 @@ HDC16 GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
  */
 HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 {
-    HRGN 	hrgnVisible;
+    HRGN32 	hrgnVisible;
     HDC 	hdc = 0;
     DCE * 	dce;
     DC * 	dc;
@@ -644,7 +642,7 @@ INT32 ReleaseDC32( HWND32 hwnd, HDC32 hdc )
  *
  * See "Undoc. Windows" for hints (DC, SetDCHook, SetHookFlags)..  
  */
-BOOL DCHook(HDC hDC, WORD code, DWORD data, DWORD lParam)
+BOOL16 DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
     HRGN32 hVisRgn;
     DCE *dce = firstDCE;;

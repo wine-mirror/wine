@@ -533,7 +533,7 @@ typedef struct {
         FOURCC          fccIOProc;      /* pointer to I/O procedure */
         LPMMIOPROC      pIOProc;        /* pointer to I/O procedure */
         UINT            wErrorRet;      /* place for error to be returned */
-        HTASK           htask;          /* alternate local task */
+        HTASK16         htask;          /* alternate local task */
         /* fields maintained by MMIO functions during buffered I/O */
         LONG            cchBuffer;      /* size of I/O buffer (or 0L) */
         HPSTR           pchBuffer;      /* start of I/O buffer (or NULL) */
@@ -661,7 +661,7 @@ BOOL mciGetErrorString (DWORD wError, LPSTR lpstrBuffer,
 BOOL mciSetYieldProc (UINT uDeviceID, YIELDPROC fpYieldProc,
     DWORD dwYieldData);
 
-HTASK mciGetCreatorTask(UINT uDeviceID);
+HTASK16 mciGetCreatorTask(UINT uDeviceID);
 YIELDPROC mciGetYieldProc (UINT uDeviceID, DWORD * lpdwYieldData);
 
 #define MCIERR_INVALID_DEVICE_ID        (MCIERR_BASE + 1)
@@ -1515,7 +1515,7 @@ BOOL  mciSetDriverData(UINT uDeviceID, DWORD dwData);
 UINT  mciDriverYield(UINT uDeviceID);
 BOOL  mciDriverNotify(HWND hwndCallback, UINT uDeviceID,
     UINT uStatus);
-UINT  mciLoadCommandResource(HINSTANCE hInstance,
+UINT  mciLoadCommandResource(HINSTANCE16 hInstance,
     LPCSTR lpResName, UINT uType);
 BOOL  mciFreeCommandResource(UINT uTable);
 
@@ -1526,7 +1526,7 @@ BOOL  mciFreeCommandResource(UINT uTable);
 #define DCB_TYPEMASK	0x0007
 #define DCB_NOSWITCH	0x0008			/* don't switch stacks for callback */
 
-BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
+BOOL DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE16 hDev, 
 		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 DWORD auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);

@@ -100,12 +100,12 @@ HANDLE32 GetProcessHeap(void)
  * copied from LoadLibrary
  * This does not currently support built-in libraries
  */
-HANDLE32 LoadLibraryA(char *libname)
+HINSTANCE32 LoadLibraryA(char *libname)
 {
-	HANDLE handle;
+	HINSTANCE32 handle;
 	dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
 	handle = LoadModule( libname, (LPVOID)-1 );
-	if (handle == (HANDLE) -1)
+	if (handle == (HINSTANCE32) -1)
 	{
 		char buffer[256];
 		strcpy( buffer, libname );
@@ -114,7 +114,7 @@ HANDLE32 LoadLibraryA(char *libname)
 	}
 	/* Obtain module handle and call initialization function */
 #ifndef WINELIB
-	if (handle >= (HANDLE)32) PE_InitializeDLLs( GetExePtr(handle));
+	if (handle >= (HINSTANCE32)32) PE_InitializeDLLs( GetExePtr(handle));
 #endif
 	return handle;
 }
@@ -122,7 +122,7 @@ HANDLE32 LoadLibraryA(char *libname)
 /***********************************************************************
  *           FreeLibrary
  */
-BOOL FreeLibrary32(HINSTANCE hLibModule)
+BOOL FreeLibrary32(HINSTANCE32 hLibModule)
 {
 	fprintf(stderr,"FreeLibrary: empty stub\n");
 	return TRUE;

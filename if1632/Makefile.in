@@ -1,8 +1,11 @@
-DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
-TOPSRC = @top_srcdir@
-MODULE = if1632
+DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = if1632
 
-DLLS	= \
+DLLS = \
 	advapi32.spec \
 	comctl32.spec \
 	comdlg32.spec \
@@ -75,7 +78,7 @@ all: checkbuild $(MODULE).o
 $(SPEC_FILES): $(BUILD)
 
 $(BUILD) checkbuild:
-	cd $(TOPSRC)/tools; $(SUBMAKE) build
+	cd $(TOPOBJDIR)/tools; $(SUBMAKE) build
 
 callfrom16.S: $(SPEC_FILES)
 	$(BUILD) -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq` > callfrom16.S
@@ -83,13 +86,16 @@ callfrom16.S: $(SPEC_FILES)
 callfrom32.S: $(SPEC_FILES)
 	$(BUILD) -callfrom32 `cat $(SPEC_FILES) | grep CallFrom32_ | sed 's/.*CallFrom32_\(.*\)/\1/' | sort | uniq` > callfrom32.S
 
-callto16.S: $(TOPSRC)/include/callback.h $(BUILD)
-	$(BUILD) -callto16 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > callto16.S
+callto16.S: $(TOPSRCDIR)/include/callback.h $(BUILD)
+	$(BUILD) -callto16 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > callto16.S
 
-callto32.S: $(TOPSRC)/include/callback.h $(BUILD)
-	$(BUILD) -callto32 `cat $(TOPSRC)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq` > callto32.S
+callto32.S: $(TOPSRCDIR)/include/callback.h $(BUILD)
+	$(BUILD) -callto32 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq` > callto32.S
+
+except.o: except.S $(TOPOBJDIR)/include/config.h
+	$(CC) -c $(DIVINCL) -o $*.o $(SRCDIR)/except.S
 
 clean::
-	rm -f $(SPEC_FILES) callfrom16.S callfrom32.S callto16.S callto32.S
+	$(RM) $(SPEC_FILES) callfrom16.S callfrom32.S callto16.S callto32.S
 
 ### Dependencies:

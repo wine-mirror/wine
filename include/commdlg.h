@@ -50,7 +50,7 @@ extern "C" {
 typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
-	HINSTANCE	hInstance;
+	HINSTANCE16	hInstance;
 	SEGPTR	        lpstrFilter;
 	SEGPTR          lpstrCustomFilter;
 	DWORD		nMaxCustFilter;
@@ -96,7 +96,7 @@ typedef CHOOSECOLOR *LPCHOOSECOLOR;
 typedef struct {
 	DWORD		lStructSize; 			/* size of this struct 0x20 */
 	HWND		hwndOwner; 				/* handle to owner's window */
-	HINSTANCE	hInstance; 				/* instance handle of.EXE that  */
+	HINSTANCE16	hInstance; 				/* instance handle of.EXE that  */
 										/*	contains cust. dlg. template */
 	DWORD		Flags;                  /* one or more of the FR_?? */
 	SEGPTR		lpstrFindWhat;          /* ptr. to search string    */
@@ -141,7 +141,7 @@ typedef struct {
 	LPARAM	                lCustData;          /* data passed to hook fn.  */
         WNDPROC16               lpfnHook;
 	SEGPTR			lpTemplateName;     /* custom template name     */
-	HINSTANCE		hInstance;          /* instance handle of.EXE that   */
+	HINSTANCE16		hInstance;          /* instance handle of.EXE that   */
 							/* contains cust. dlg. template  */
 	SEGPTR			lpszStyle WINE_PACKED;  /* return the style field here   */
 							/* must be LF_FACESIZE or bigger */
@@ -215,7 +215,7 @@ typedef struct {
 	UINT		nMinPage;
 	UINT		nMaxPage;
 	UINT		nCopies;
-	HINSTANCE 	hInstance;
+	HINSTANCE16 	hInstance;
 	LPARAM 		lCustData;
         WNDPROC16       lpfnPrintHook;
         WNDPROC16       lpfnSetupHook;

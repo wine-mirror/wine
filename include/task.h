@@ -72,7 +72,7 @@ typedef struct
     WORD      signal_flags;               /* 24 Flags for signal handler */
     FARPROC16 sighandler WINE_PACKED;     /* 26 Signal handler */
     FARPROC16 userhandler WINE_PACKED;    /* 2a USER signal handler */
-    DWORD     discardhandler WINE_PACKED; /* 2e Handler for GlobalDiscard() */
+    FARPROC16 discardhandler WINE_PACKED; /* 2e Handler for GlobalNotify() */
     DWORD     int0 WINE_PACKED;           /* 32 int 0 (divide by 0) handler */
     DWORD     int2 WINE_PACKED;           /* 36 int 2 (NMI) handler */
     DWORD     int4 WINE_PACKED;           /* 3a int 4 (INTO) handler */

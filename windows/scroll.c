@@ -30,7 +30,7 @@ static int RgnType;
 void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect)
 {
     HDC32  	hdc;
-    HRGN 	hrgnUpdate,hrgnClip;
+    HRGN32 	hrgnUpdate,hrgnClip;
     RECT16 	rc, cliprc;
     HWND 	hCaretWnd = CARET_GetHwnd();
     WND*	wndScroll = WIN_FindWndPtr( hwnd );
@@ -102,10 +102,10 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
  *
  */
 BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
-	      HRGN hrgnUpdate, LPRECT16 rcUpdate)
+	      HRGN32 hrgnUpdate, LPRECT16 rcUpdate)
 {
-    HRGN        hrgnClip 	= 0;
-    HRGN 	hrgnScrollClip  = 0;
+    HRGN32 hrgnClip = 0;
+    HRGN32 hrgnScrollClip = 0;
     RECT16	rectClip;
     POINT16 	src, dest;
     short width, height;
@@ -179,7 +179,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 
     if (hrgnUpdate || rcUpdate)
     {
-	HRGN   hrgn1 = (hrgnUpdate)?hrgnUpdate:CreateRectRgn( 0,0,0,0 );
+	HRGN32 hrgn1 = (hrgnUpdate)?hrgnUpdate:CreateRectRgn( 0,0,0,0 );
 
 	if( dc->w.hVisRgn )
 	{
@@ -228,7 +228,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
  */
 
 int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect,
-		   HRGN hrgnUpdate, LPRECT16 rcUpdate, WORD flags)
+		   HRGN32 hrgnUpdate, LPRECT16 rcUpdate, WORD flags)
 {
     HDC32 hdc;
     RECT16 rc, cliprc;

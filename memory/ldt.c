@@ -15,8 +15,18 @@
 
 #ifdef linux
 #include <syscall.h>
-#include <linux/head.h>
-#include <linux/ldt.h>
+
+struct modify_ldt_s 
+{
+    unsigned int  entry_number;
+    unsigned long base_addr;
+    unsigned int  limit;
+    unsigned int  seg_32bit : 1;
+    unsigned int  contents : 2;
+    unsigned int  read_exec_only : 1;
+    unsigned int  limit_in_pages : 1;
+    unsigned int  seg_not_present : 1;
+};
 
 static __inline__ _syscall3(int, modify_ldt, int, func, void *, ptr,
                             unsigned long, bytecount);
@@ -122,17 +132,16 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 #ifdef linux
     if (!__winelib)
     {
-        struct modify_ldt_ldt_s ldt_info;
+        struct modify_ldt_s ldt_info;
 
-        /* Clear all unused bits (like seg_not_present) */
-        memset( &ldt_info, 0, sizeof(ldt_info) );
-        ldt_info.entry_number   = entry;
-        ldt_info.base_addr      = content->base;
-        ldt_info.limit          = content->limit;
-        ldt_info.seg_32bit      = content->seg_32bit != 0;
-        ldt_info.contents       = content->type;
-        ldt_info.read_exec_only = content->read_only != 0;
-        ldt_info.limit_in_pages = content->limit_in_pages != 0;
+        ldt_info.entry_number    = entry;
+        ldt_info.base_addr       = content->base;
+        ldt_info.limit           = content->limit;
+        ldt_info.seg_32bit       = content->seg_32bit != 0;
+        ldt_info.contents        = content->type;
+        ldt_info.read_exec_only  = content->read_only != 0;
+        ldt_info.limit_in_pages  = content->limit_in_pages != 0;
+        ldt_info.seg_not_present = 0;
         /* Make sure the info will be accepted by the kernel */
         /* This is ugly, but what can I do? */
         if (content->type == SEGMENT_STACK)

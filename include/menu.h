@@ -6,8 +6,8 @@
 #define __WINE_MENU_H
 
 extern BOOL MENU_Init(void);
-extern HMENU MENU_GetDefSysMenu(void);
-extern void MENU_InitSysMenuPopup(HMENU hmenu, DWORD style, DWORD clsStyle);
+extern HMENU16 MENU_GetDefSysMenu(void);
+extern void MENU_InitSysMenuPopup(HMENU16 hmenu, DWORD style, DWORD clsStyle);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 				   int orgX, int orgY );
 extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT16 pt );

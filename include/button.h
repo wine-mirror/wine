@@ -15,8 +15,8 @@
   /* broken enough to rely on this :-) */
 typedef struct
 {
-    WORD   state;   /* Current state */
-    HFONT  hFont;   /* Button font (or 0 for system font) */
+    WORD     state;   /* Current state */
+    HFONT16  hFont;   /* Button font (or 0 for system font) */
 } BUTTONINFO;
 
   /* Button state values */

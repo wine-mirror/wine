@@ -67,7 +67,7 @@ typedef struct {
 	int     nUseCount;          /* Incremented for each shared open */
 	BOOL    fShareable;         /* TRUE if first open was shareable */
 	WORD    wNotifyDeviceID;    /* MCI device ID with a pending notification */
-	HANDLE  hCallback;          /* Callback handle for pending notification */
+	HANDLE16 hCallback;         /* Callback handle for pending notification */
 	HMMIO16	hFile;				/* mmio file handle open as Element		*/
 	DWORD	dwBeginData;
 	DWORD	dwTotalLen;

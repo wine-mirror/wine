@@ -1,7 +1,11 @@
-TOPSRC   = @top_srcdir@
-MODULE   = none
-PROGRAMS = progman
-ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = progman
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+DEFS      = -I$(SRCDIR)
 
 LANGUAGES   = En De Fr Fi
 LICENSELANG = En
@@ -19,27 +23,32 @@ sysconfdir      = @sysconfdir@
 mandir          = @mandir@/man1
 manext          = .1
 
-MOSTOBJS = \
-	dialog.o \
-	group.o \
-	grpfile.o \
-	license.o \
-	main.o \
-	program.o
+MOSTSRCS = \
+	dialog.c \
+	group.c \
+	grpfile.c \
+	license.c \
+	main.c \
+	program.c
 
-STRINGOBJS = \
-	accel.o \
-	string.o \
-	$(LANGUAGES:%=%.o) \
-	$(LICENSELANG:%=License_%.o)
+# Some strings need addresses >= 0x10000
+STRINGSRCS = \
+	string.c \
+	$(LICENSELANG:%=License_%.c)
 
-C_SRCS = $(MOSTOBJS:.o=.c) $(STRINGOBJS:.o=.c)
+GEN_C_SRCS = \
+	accel.c \
+	$(LANGUAGES:%=%.c) \
+
+C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
+
+MOSTOBJS = $(MOSTSRCS:.c=.o)
+STRINGOBJS = $(STRINGSRCS:.c=.o) $(GEN_C_SRCS:.c=.o)
 
 all: check_winerc $(PROGRAMS)
 
 @MAKE_RULES@
 
-# Some strings need addresses >= 0x10000
 progman: $(MOSTOBJS) $(STRINGOBJS)
 	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
@@ -50,6 +59,7 @@ clean::
 	$(RM) accel.c accel.h $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h) progman
 
 accel.c accel.h: $(WINERC) Xx.rc
+
 $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
 
 dummy:

@@ -325,7 +325,7 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
                      const RECT16 *lprect, LPCSTR str, UINT16 count,
                      const INT16 *lpDx )
 {
-    HRGN	hRgnClip = 0;
+    HRGN32	hRgnClip = 0;
     int 	dir, ascent, descent, i;
     XCharStruct info;
     XFontStruct *font;
@@ -638,7 +638,7 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 /***********************************************************************
  *           GrayString   (USER.185)
  */
-BOOL GrayString(HDC hdc, HBRUSH hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam, 
+BOOL GrayString(HDC hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam, 
 		INT cch, INT x, INT y, INT cx, INT cy)
 {
     BOOL ret;

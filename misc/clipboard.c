@@ -299,7 +299,7 @@ HWND GetClipboardOwner()
 /**************************************************************************
  *			SetClipboardData	[USER.141]
  */
-HANDLE SetClipboardData(WORD wFormat, HANDLE hData)
+HANDLE16 SetClipboardData(WORD wFormat, HANDLE16 hData)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     Window       owner;
@@ -403,7 +403,7 @@ BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 /**************************************************************************
  *			GetClipboardData	[USER.142]
  */
-HANDLE GetClipboardData(WORD wFormat)
+HANDLE16 GetClipboardData(WORD wFormat)
 {
     LPCLIPFORMAT lpRender = ClipFormats; 
     LPCLIPFORMAT lpUpdate = NULL;

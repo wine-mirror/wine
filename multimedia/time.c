@@ -28,7 +28,7 @@ typedef struct tagTIMERENTRY {
     WORD wDelay;
     WORD wResol;
     FARPROC16 lpFunc;
-    HINSTANCE hInstance;
+    HINSTANCE16 hInstance;
     DWORD dwUser;
     WORD wFlags;
     WORD wTimerID;

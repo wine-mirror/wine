@@ -47,6 +47,7 @@ COMMONSUBDIRS = \
 	controls \
 	files \
 	graphics \
+	graphics/metafiledrv \
 	graphics/x11drv \
 	ipc \
 	loader \
@@ -75,6 +76,7 @@ COMMONOBJS = \
 	controls/controls.o \
 	files/files.o \
 	graphics/graphics.o \
+	graphics/metafiledrv/metafiledrv.o \
 	graphics/x11drv/x11drv.o \
 	ipc/ipc.o \
 	loader/loader.o \

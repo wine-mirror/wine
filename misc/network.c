@@ -270,7 +270,7 @@ int WNetRestoreConnection(HWND hwndOwner,LPSTR lpszDevice)
 /**************************************************************************
  *              WNetWriteJob       [USER.524]
  */
-int WNetWriteJob(HANDLE hJob,void *lpData,LPWORD lpcbData)
+int WNetWriteJob(HANDLE16 hJob,void *lpData,LPWORD lpcbData)
 {
 	printf("EMPTY STUB !!! WNetWriteJob(%04x,%p,%p)\n",
 		hJob,lpData,lpcbData);
@@ -372,7 +372,7 @@ UINT WNetAddConnection2(LPSTR lpNetPath, LPSTR lpPassWord,
 /**************************************************************************
  *				WNetCloseEnum		[USER.???]
  */
-UINT WNetCloseEnum(HANDLE hEnum)
+UINT WNetCloseEnum(HANDLE16 hEnum)
 {
 	printf("EMPTY STUB !!! WNetCloseEnum(%04x);\n", hEnum);
 	return WN_NET_ERROR;
@@ -381,7 +381,7 @@ UINT WNetCloseEnum(HANDLE hEnum)
 /**************************************************************************
  *				WNetEnumResource	[USER.???]
  */
-UINT WNetEnumResource(HANDLE hEnum, DWORD cRequ, 
+UINT WNetEnumResource(HANDLE16 hEnum, DWORD cRequ, 
 				DWORD *lpCount, LPVOID lpBuf)
 {
 	printf("EMPTY STUB !!! WNetEnumResource(%04x, %08lX, %p, %p);\n", 
@@ -393,7 +393,7 @@ UINT WNetEnumResource(HANDLE hEnum, DWORD cRequ,
  *				WNetOpenEnum		[USER.???]
  */
 UINT WNetOpenEnum(DWORD dwScope, DWORD dwType, 
-	LPNETRESOURCE lpNet, HANDLE *lphEnum)
+	LPNETRESOURCE lpNet, HANDLE16 *lphEnum)
 {
 	printf("EMPTY STUB !!! WNetOpenEnum(%08lX, %08lX, %p, %p);\n",
                dwScope, dwType, lpNet, lphEnum);

@@ -198,20 +198,20 @@ BOOL WSAIsBlocking(void);
 INT WSAUnhookBlockingHook(void);
 FARPROC16 WSASetBlockingHook(FARPROC16 lpBlockFunc);
 INT WSACancelBlockingCall(void);
-HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg,
-                             LPCSTR name, LPCSTR proto,
-                             LPSTR buf, INT buflen);
-HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port,
-                             LPCSTR proto, LPSTR buf, INT buflen);
-HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg,
-                              LPCSTR name, LPSTR buf, INT buflen);
-HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg,
-                                INT number, LPSTR buf, INT buflen);
-HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg,
-                             LPCSTR name, LPSTR buf, INT buflen);
-HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr, INT len,
-                             INT type, LPSTR buf, INT buflen);
-INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle);
+HANDLE16 WSAAsyncGetServByName(HWND hWnd, u_int wMsg,
+                               LPCSTR name, LPCSTR proto,
+                               LPSTR buf, INT buflen);
+HANDLE16 WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port,
+                               LPCSTR proto, LPSTR buf, INT buflen);
+HANDLE16 WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg,
+                                LPCSTR name, LPSTR buf, INT buflen);
+HANDLE16 WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg,
+                                  INT number, LPSTR buf, INT buflen);
+HANDLE16 WSAAsyncGetHostByName(HWND hWnd, u_int wMsg,
+                               LPCSTR name, LPSTR buf, INT buflen);
+HANDLE16 WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr, INT len,
+                               INT type, LPSTR buf, INT buflen);
+INT WSACancelAsyncRequest(HANDLE16 hAsyncTaskHandle);
 INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent);
 
 #ifdef __cplusplus

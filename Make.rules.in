@@ -1,5 +1,14 @@
 # Global rules shared by all makefiles
-# The makefile must define at least TOPSRC and MODULE
+#
+# Each individual makefile should define the following variables:
+# TOPSRCDIR  : top-level source directory
+# TOPOBJDIR  : top-level object directory
+# SRCDIR     : source directory for this module
+# MODULE     : name of the module being built
+# C_SRCS     : C sources for the module
+# GEN_C_SRCS : generated C sources (optional)
+# ASM_SRCS   : assembly sources (optional)
+# EXTRA_OBJS : extra object files (optional)
 
 # First some useful definitions
 
@@ -10,24 +19,24 @@ CFLAGS    = @CFLAGS@
 OPTIONS   = @OPTIONS@
 X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
-XPM_LIB	  = -lXpm
-XLIB	  = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
-WINELIB   = -L$(TOPSRC) -lwine
-LDLIBS	  = @LDLIBS@
+XPM_LIB   = -lXpm
+XLIB      = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
+WINELIB   = -L$(TOPOBJDIR) -lwine
+LDLIBS    = @LDLIBS@
 YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
-DIVINCL   = -I$(TOPSRC)/include
+DIVINCL   = -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include -I.
 ALLCFLAGS = $(CFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL) $(X_CFLAGS)
 LDCOMBINE = ld -r
 RM        = rm -f
-BUILD     = $(TOPSRC)/tools/build
-WINERC    = $(TOPSRC)/rc/winerc
+BUILD     = $(TOPOBJDIR)/tools/build
+WINERC    = $(TOPOBJDIR)/rc/winerc
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
 
-OBJS = $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
-
+OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
+DEPEND_SRCS = $(C_SRCS:%=$(SRCDIR)/%) $(GEN_C_SRCS:%=./%)
 
 # Implicit rules
 
@@ -43,21 +52,21 @@ OBJS = $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
 	echo "#include \"windows.h\"" >winerctmp.c
 	echo WINDOWS_H_ENDS_HERE >>winerctmp.c
 	cat $< >>winerctmp.c
-	$(CPP) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
 	$(RM) winerctmp.c
 
 .rc.h:
 	echo "#include \"windows.h\"" >winerctmp.c
 	echo WINDOWS_H_ENDS_HERE >>winerctmp.c
 	cat $< >>winerctmp.c
-	$(CPP) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
+	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P winerctmp.c | sed -e '1,/^WINDOWS_H_ENDS_HERE/d' | $(WINERC) -c -o $* -p $*
 	$(RM) winerctmp.c
 
 
 # Rule to rebuild resource compiler
 
 $(WINERC) check_winerc:
-	cd $(TOPSRC)/rc; $(SUBMAKE) winerc
+	cd $(TOPOBJDIR)/rc; $(SUBMAKE) winerc
 
 
 # Rule for main module
@@ -68,13 +77,13 @@ $(MODULE).o: $(OBJS)
 
 # Misc. rules
 
-depend:: $(C_SRCS)
+depend:: $(C_SRCS) $(GEN_C_SRCS)
 	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(ALLCFLAGS) -MM $(C_SRCS) >> tmp_make
+	$(CC) $(ALLCFLAGS) -MM $(DEPEND_SRCS) >> tmp_make
 	mv tmp_make Makefile
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc tmp_make winerctmp.c
+	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc tmp_make winerctmp.c $(GEN_C_SRCS)
 
 dummy:
 

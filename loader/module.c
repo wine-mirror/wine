@@ -27,13 +27,13 @@
 #include "debug.h"
 #include "callback.h"
 
-extern HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
+extern HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params );
 
 static HMODULE16 hFirstModule = 0;
 static HMODULE16 hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 
 #ifndef WINELIB
-static HANDLE hInitialStack32 = 0;
+static HGLOBAL16 hInitialStack32 = 0;
 #endif
 
 
@@ -335,7 +335,7 @@ HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS *params )
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
     int minsize;
-    HINSTANCE hNewInstance, hPrevInstance;
+    HINSTANCE16 hNewInstance, hPrevInstance;
 
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->dgroup == 0) return hModule;
@@ -997,10 +997,10 @@ static void MODULE_FreeModule( HMODULE16 hModule )
 /**********************************************************************
  *	    LoadModule    (KERNEL.45)
  */
-HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
+HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
 {
     HMODULE16 hModule;
-    HANDLE hInstance, hPrevInstance;
+    HINSTANCE16 hInstance, hPrevInstance;
     NE_MODULE *pModule;
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
     OFSTRUCT ofs;
@@ -1257,7 +1257,7 @@ BOOL16 FreeModule16( HMODULE16 hModule )
  */
 HMODULE16 WIN16_GetModuleHandle( SEGPTR name )
 {
-    if (HIWORD(name) == 0) return GetExePtr( (HANDLE)name );
+    if (HIWORD(name) == 0) return GetExePtr( (HINSTANCE16)name );
     return MODULE_FindModule( PTR_SEG_TO_LIN(name) );
 }
 
@@ -1270,7 +1270,7 @@ HMODULE16 GetModuleHandle( LPCSTR name )
 /**********************************************************************
  *	    GetModuleUsage    (KERNEL.48)
  */
-int GetModuleUsage( HANDLE hModule )
+INT16 GetModuleUsage( HINSTANCE16 hModule )
 {
     NE_MODULE *pModule;
 
@@ -1285,7 +1285,7 @@ int GetModuleUsage( HANDLE hModule )
 /**********************************************************************
  *	    GetModuleFileName    (KERNEL.49)
  */
-int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
+INT16 GetModuleFileName( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
 {
     NE_MODULE *pModule;
 
@@ -1312,14 +1312,14 @@ BOOL16 GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
 /***********************************************************************
  *           LoadLibrary   (KERNEL.95)
  */
-HANDLE LoadLibrary( LPCSTR libname )
+HINSTANCE16 LoadLibrary( LPCSTR libname )
 {
-    HANDLE handle;
+    HINSTANCE16 handle;
 
     if (__winelib)
     {
         fprintf( stderr, "LoadLibrary not supported in Winelib\n" );
-        return (HANDLE)0;
+        return 0;
     }
     dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
 
@@ -1328,7 +1328,7 @@ HANDLE LoadLibrary( LPCSTR libname )
     if ((handle = MODULE_FindModule( libname )) != 0) return handle;
      */
     handle = LoadModule( libname, (LPVOID)-1 );
-    if (handle == (HANDLE)2)  /* file not found */
+    if (handle == (HINSTANCE16)2)  /* file not found */
     {
         char buffer[256];
         lstrcpyn32A( buffer, libname, 252 );
@@ -1336,7 +1336,7 @@ HANDLE LoadLibrary( LPCSTR libname )
         handle = LoadModule( buffer, (LPVOID)-1 );
     }
 #ifndef WINELIB
-    if (handle >= (HANDLE)32) NE_InitializeDLLs( GetExePtr(handle) );
+    if (handle >= (HINSTANCE16)32) NE_InitializeDLLs( GetExePtr(handle) );
 #endif
     return handle;
 }
@@ -1345,7 +1345,7 @@ HANDLE LoadLibrary( LPCSTR libname )
 /***********************************************************************
  *           FreeLibrary   (KERNEL.96)
  */
-void FreeLibrary( HANDLE handle )
+void FreeLibrary( HINSTANCE16 handle )
 {
     dprintf_module( stddeb,"FreeLibrary: %04x\n", handle );
     FreeModule16( handle );
@@ -1355,11 +1355,11 @@ void FreeLibrary( HANDLE handle )
 /***********************************************************************
  *           WinExec   (KERNEL.166)
  */
-HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
+HINSTANCE16 WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 {
     LOADPARAMS params;
     HGLOBAL16 cmdShowHandle, cmdLineHandle;
-    HANDLE handle;
+    HINSTANCE16 handle;
     WORD *cmdShowPtr;
     char *p, *cmdline, filename[256];
     static int use_load_module = 1;
@@ -1394,9 +1394,9 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 #ifdef WINELIB
         /* WINELIB: Use LoadModule() only for the program itself */
         use_load_module = 0;
-	params.hEnvironment = (HANDLE)GetDOSEnvironment();
+	params.hEnvironment = (HGLOBAL16)GetDOSEnvironment();
 #else
-	params.hEnvironment = (HANDLE)SELECTOROF( GetDOSEnvironment() );
+	params.hEnvironment = (HGLOBAL16)SELECTOROF( GetDOSEnvironment() );
 #endif  /* WINELIB */
 	params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
 	params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
@@ -1478,12 +1478,6 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
 
     GlobalFree16( cmdShowHandle );
     GlobalFree16( cmdLineHandle );
-
-#if 0
-    if (handle < (HANDLE)32)	/* Error? */
-	return handle;
-#endif
-
     return handle;
 }
 

@@ -21,8 +21,8 @@
 WORD USER_HeapSel = 0;
 
 
-extern HTASK	TASK_GetNextTask(HTASK);
-extern BOOL32   MENU_SwitchTPWndTo(HTASK);
+extern HTASK16 TASK_GetNextTask(HTASK16);
+extern BOOL32 MENU_SwitchTPWndTo(HTASK16);
 
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
@@ -94,9 +94,9 @@ BOOL16 TimerCount( TIMERINFO *pTimerInfo )
 
 
 /**********************************************************************
- *					USER_InitApp
+ *           InitApp   (USER.5)
  */
-int USER_InitApp(HINSTANCE hInstance)
+INT16 InitApp( HINSTANCE16 hInstance )
 {
     int queueSize;
 

@@ -39,8 +39,8 @@ typedef struct
     UINT	item_id;       /* Item or popup id */
     RECT16      rect;          /* Item area (relative to menu window) */
     WORD        xTab;          /* X position of text after Tab */
-    HBITMAP	hCheckBit;     /* Bitmap for checked item */
-    HBITMAP	hUnCheckBit;   /* Bitmap for unchecked item */
+    HBITMAP16	hCheckBit;     /* Bitmap for checked item */
+    HBITMAP16	hUnCheckBit;   /* Bitmap for unchecked item */
     LPSTR       text;          /* Item text or bitmap handle */
 } MENUITEM;
 
@@ -49,7 +49,7 @@ typedef struct
 {
     WORD        wFlags;       /* Menu flags (MF_POPUP, MF_SYSMENU) */
     WORD        wMagic;       /* Magic number */
-    HANDLE      hTaskQ;       /* Task queue for this menu */
+    HQUEUE16    hTaskQ;       /* Task queue for this menu */
     WORD	Width;        /* Width of the whole menu */
     WORD	Height;       /* Height of the whole menu */
     WORD	nItems;       /* Number of items in the menu */
@@ -89,11 +89,11 @@ static BOOL fEndMenuCalled = FALSE;
 
 extern void  NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down); /* nonclient.c */
 extern BOOL  NC_GetSysPopupPos(WND* wndPtr, RECT16* rect);
-extern HTASK TASK_GetNextTask(HTASK);
+extern HTASK16 TASK_GetNextTask(HTASK16);
 
-static HBITMAP hStdCheck = 0;
-static HBITMAP hStdMnArrow = 0;
-static HMENU MENU_DefSysMenu = 0;  /* Default system menu */
+static HBITMAP16 hStdCheck = 0;
+static HBITMAP16 hStdMnArrow = 0;
+static HMENU16 MENU_DefSysMenu = 0;  /* Default system menu */
 
 
 /* we _can_ use global popup window because there's no way 2 menues can
@@ -109,9 +109,9 @@ static UINT uSubPWndLevel = 0;
  *
  * Load a copy of the system menu.
  */
-static HMENU MENU_CopySysMenu(void)
+static HMENU16 MENU_CopySysMenu(void)
 {
-    HMENU hMenu;
+    HMENU16 hMenu;
     HGLOBAL16 handle;
     POPUPMENU *menu;
 
@@ -166,7 +166,7 @@ BOOL MENU_Init()
  *
  * Return the default system menu.
  */
-HMENU MENU_GetDefSysMenu(void)
+HMENU16 MENU_GetDefSysMenu(void)
 {
     return MENU_DefSysMenu;
 }
@@ -215,7 +215,7 @@ static BOOL MENU_IsInSysMenu( POPUPMENU *menu, POINT16 pt )
  *
  * Grey the appropriate items in System menu.
  */
-void MENU_InitSysMenuPopup(HMENU hmenu, DWORD style, DWORD clsStyle)
+void MENU_InitSysMenuPopup(HMENU16 hmenu, DWORD style, DWORD clsStyle)
 {
     BOOL gray;
 
@@ -240,7 +240,7 @@ void MENU_InitSysMenuPopup(HMENU hmenu, DWORD style, DWORD clsStyle)
  * Find a menu item. Return a pointer on the item, and modifies *hmenu
  * in case the item was in a sub-menu.
  */
-static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
+static MENUITEM *MENU_FindItem( HMENU16 *hmenu, UINT *nPos, UINT wFlags )
 {
     POPUPMENU *menu;
     int i;
@@ -263,7 +263,7 @@ static MENUITEM *MENU_FindItem( HMENU *hmenu, UINT *nPos, UINT wFlags )
 	    }
 	    else if (item->item_flags & MF_POPUP)
 	    {
-		HMENU hsubmenu = (HMENU)item->item_id;
+		HMENU16 hsubmenu = (HMENU16)item->item_id;
 		MENUITEM *subitem = MENU_FindItem( &hsubmenu, nPos, wFlags );
 		if (subitem)
 		{
@@ -311,7 +311,7 @@ static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu, int x, int y, UINT *pos
  * Find the menu item selected by a key press.
  * Return item id, -1 if none, -2 if we should close the menu.
  */
-static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
+static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU16 hmenu, UINT key )
 {
     POPUPMENU *menu;
     MENUITEM *item;
@@ -704,7 +704,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HDC hdc, MENUITEM *lpitem,
  *
  * Paint a popup menu.
  */
-static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
+static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU16 hmenu )
 {
     POPUPMENU *menu;
     MENUITEM *item;
@@ -731,7 +731,7 @@ UINT MENU_DrawMenuBar(HDC hDC, LPRECT16 lprect, HWND hwnd, BOOL suppress_draw)
     int i;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     
-    lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR( (HMENU)wndPtr->wIDmenu );
+    lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR( (HMENU16)wndPtr->wIDmenu );
     if (lppop == NULL || lprect == NULL) return SYSMETRICS_CYMENU;
     dprintf_menu(stddeb,"MENU_DrawMenuBar(%04x, %p, %p); !\n", 
 		 hDC, lprect, lppop);
@@ -756,7 +756,7 @@ UINT MENU_DrawMenuBar(HDC hDC, LPRECT16 lprect, HWND hwnd, BOOL suppress_draw)
 /***********************************************************************
  *	     MENU_SwitchTPWndTo
  */
-BOOL32 MENU_SwitchTPWndTo( HTASK hTask)
+BOOL32 MENU_SwitchTPWndTo( HTASK16 hTask )
 {
   /* This is supposed to be called when popup is hidden. 
    * AppExit() calls with hTask == 0, so we get the next to current.
@@ -789,7 +789,7 @@ BOOL32 MENU_SwitchTPWndTo( HTASK hTask)
  *
  * Display a popup menu.
  */
-static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y, 
+static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU16 hmenu, UINT id, int x, int y, 
 						        int xanchor, int yanchor)
 {
     POPUPMENU 	*menu;
@@ -885,7 +885,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, UINT id, int x, int y,
 /***********************************************************************
  *           MENU_SelectItem
  */
-static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
+static void MENU_SelectItem( HWND hwndOwner, HMENU16 hmenu, UINT wIndex,
                              BOOL sendMenuSelect )
 {
     LPPOPUPMENU lppop;
@@ -949,7 +949,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
  *           MENU_SelectItemRel
  *
  */
-static void MENU_SelectItemRel( HWND hwndOwner, HMENU hmenu, int offset )
+static void MENU_SelectItemRel( HWND hwndOwner, HMENU16 hmenu, int offset )
 {
     int i, min = 0;
     POPUPMENU *menu;
@@ -1038,7 +1038,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id, LPCSTR str )
  *
  * Insert a new item into a menu.
  */
-static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
+static MENUITEM *MENU_InsertItem( HMENU16 hMenu, UINT pos, UINT flags )
 {
     MENUITEM *newItems;
     POPUPMENU *menu;
@@ -1104,7 +1104,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
  * Parse a standard menu resource and add items to the menu.
  * Return a pointer to the end of the resource.
  */
-static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
+static LPCSTR MENU_ParseResource( LPCSTR res, HMENU16 hMenu, BOOL unicode )
 {
     WORD flags, id = 0;
     LPCSTR str;
@@ -1126,7 +1126,7 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
         else res += (lstrlen32W((LPCWSTR)str) + 1) * sizeof(WCHAR);
         if (flags & MF_POPUP)
         {
-            HMENU hSubMenu = CreatePopupMenu();
+            HMENU16 hSubMenu = CreatePopupMenu();
             if (!hSubMenu) return NULL;
             if (!(res = MENU_ParseResource( res, hSubMenu, unicode )))
                 return NULL;
@@ -1149,7 +1149,7 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
  *
  * Return the handle of the selected sub-popup menu (if any).
  */
-static HMENU MENU_GetSubPopup( HMENU hmenu )
+static HMENU16 MENU_GetSubPopup( HMENU16 hmenu )
 {
     POPUPMENU *menu;
     MENUITEM *item;
@@ -1162,7 +1162,7 @@ static HMENU MENU_GetSubPopup( HMENU hmenu )
     item = &menu->items[menu->FocusedItem];
     if (!(item->item_flags & MF_POPUP) || !(item->item_flags & MF_MOUSESELECT))
 	return 0;
-    return (HMENU)item->item_id;
+    return (HMENU16)item->item_id;
 }
 
 
@@ -1171,12 +1171,12 @@ static HMENU MENU_GetSubPopup( HMENU hmenu )
  *
  * Hide the sub-popup menus of this menu.
  */
-static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
+static void MENU_HideSubPopups( HWND hwndOwner, HMENU16 hmenu,
                                 BOOL sendMenuSelect )
 {
     MENUITEM *item;
     POPUPMENU *menu, *submenu;
-    HMENU hsubmenu;
+    HMENU16 hsubmenu;
 
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return;
     if (menu->FocusedItem == NO_SELECTED_ITEM) return;
@@ -1190,7 +1190,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
 	if (!(item->item_flags & MF_POPUP) ||
 	    !(item->item_flags & MF_MOUSESELECT)) return;
 	item->item_flags &= ~MF_MOUSESELECT;
-	hsubmenu = (HMENU)item->item_id;
+	hsubmenu = (HMENU16)item->item_id;
     }
     submenu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hsubmenu );
     MENU_HideSubPopups( hwndOwner, hsubmenu, FALSE );
@@ -1214,7 +1214,8 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
  * Display the sub-menu of the selected item of this menu.
  * Return the handle of the submenu, or hmenu if no submenu to display.
  */
-static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
+static HMENU16 MENU_ShowSubPopup( HWND hwndOwner, HMENU16 hmenu,
+                                  BOOL selectFirst )
 {
     POPUPMENU *menu;
     MENUITEM *item;
@@ -1239,7 +1240,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
     item->item_flags |= MF_MOUSESELECT;
     if (menu->wFlags & MF_POPUP)
     {
-	MENU_ShowPopup( hwndOwner, (HMENU)item->item_id, menu->FocusedItem,
+	MENU_ShowPopup( hwndOwner, (HMENU16)item->item_id, menu->FocusedItem,
 		 wndPtr->rectWindow.left + item->rect.right-arrow_bitmap_width,
 		 wndPtr->rectWindow.top + item->rect.top,
 		 item->rect.left - item->rect.right + 2*arrow_bitmap_width, 
@@ -1247,13 +1248,13 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
     }
     else
     {
-	MENU_ShowPopup( hwndOwner, (HMENU)item->item_id, menu->FocusedItem,
+	MENU_ShowPopup( hwndOwner, (HMENU16)item->item_id, menu->FocusedItem,
 		        wndPtr->rectWindow.left + item->rect.left,
 		        wndPtr->rectWindow.top + item->rect.bottom,
 			item->rect.right - item->rect.left, item->rect.bottom - item->rect.top );
     }
-    if (selectFirst) MENU_SelectItemRel( hwndOwner, (HMENU)item->item_id, ITEM_NEXT );
-    return (HMENU)item->item_id;
+    if (selectFirst) MENU_SelectItemRel( hwndOwner, (HMENU16)item->item_id, ITEM_NEXT );
+    return (HMENU16)item->item_id;
 }
 
 
@@ -1262,7 +1263,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
  *
  * Find the menu containing a given point (in screen coords).
  */
-static HMENU MENU_FindMenuByCoords( HMENU hmenu, POINT16 pt )
+static HMENU16 MENU_FindMenuByCoords( HMENU16 hmenu, POINT16 pt )
 {
     POPUPMENU *menu;
     HWND hwnd;
@@ -1300,8 +1301,8 @@ static HMENU MENU_FindMenuByCoords( HMENU hmenu, POINT16 pt )
  * Execute a menu item (for instance when user pressed Enter).
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_ExecFocusedItem( HWND hwndOwner, HMENU hmenu,
-				  HMENU *hmenuCurrent )
+static BOOL MENU_ExecFocusedItem( HWND hwndOwner, HMENU16 hmenu,
+				  HMENU16 *hmenuCurrent )
 {
     MENUITEM *item;
     POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
@@ -1333,8 +1334,8 @@ static BOOL MENU_ExecFocusedItem( HWND hwndOwner, HMENU hmenu,
  * hmenuCurrent is the top-most visible popup.
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_ButtonDown( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
-			     POINT16 pt )
+static BOOL MENU_ButtonDown( HWND hwndOwner, HMENU16 hmenu,
+                             HMENU16 *hmenuCurrent, POINT16 pt )
 {
     POPUPMENU *menu;
     MENUITEM *item;
@@ -1383,12 +1384,12 @@ static BOOL MENU_ButtonDown( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
  * hmenuCurrent is the top-most visible popup.
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
-			   POINT16 pt )
+static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU16 hmenu,
+                           HMENU16 *hmenuCurrent, POINT16 pt )
 {
     POPUPMENU *menu;
     MENUITEM *item;
-    HMENU hsubmenu = 0;
+    HMENU16 hsubmenu = 0;
     UINT id;
 
     if (!hmenu) return FALSE;  /* Outside all menus */
@@ -1409,7 +1410,7 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 	{
 	    return MENU_ExecFocusedItem( hwndOwner, hmenu, hmenuCurrent );
 	}
-	hsubmenu = (HMENU)item->item_id;
+	hsubmenu = (HMENU16)item->item_id;
     }
       /* Select first item of sub-popup */
     MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, FALSE );
@@ -1425,8 +1426,8 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
  * hmenuCurrent is the top-most visible popup.
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_MouseMove( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
-			    POINT16 pt )
+static BOOL MENU_MouseMove( HWND hwndOwner, HMENU16 hmenu,
+                            HMENU16 *hmenuCurrent, POINT16 pt )
 {
     MENUITEM *item;
     POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
@@ -1458,7 +1459,8 @@ static BOOL MENU_MouseMove( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 /***********************************************************************
  *           MENU_DoNextMenu
  */
-static LRESULT MENU_DoNextMenu( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurrent, UINT vk)
+static LRESULT MENU_DoNextMenu( HWND* hwndOwner, HMENU16* hmenu,
+                                HMENU16 *hmenuCurrent, UINT vk)
 {
   POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( *hmenu );
   UINT	     id = 0;
@@ -1541,10 +1543,11 @@ static LRESULT MENU_DoNextMenu( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurre
  * Handle a VK_LEFT key event in a menu.
  * hmenuCurrent is the top-most visible popup.
  */
-static void MENU_KeyLeft( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurrent )
+static void MENU_KeyLeft( HWND* hwndOwner, HMENU16* hmenu,
+                          HMENU16 *hmenuCurrent )
 {
     POPUPMENU *menu;
-    HMENU hmenutmp, hmenuprev;
+    HMENU16 hmenutmp, hmenuprev;
 
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( *hmenu );
     hmenuprev = hmenutmp = *hmenu;
@@ -1581,10 +1584,11 @@ static void MENU_KeyLeft( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurrent )
  * Handle a VK_RIGHT key event in a menu.
  * hmenuCurrent is the top-most visible popup.
  */
-static void MENU_KeyRight( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurrent )
+static void MENU_KeyRight( HWND* hwndOwner, HMENU16* hmenu,
+                           HMENU16 *hmenuCurrent )
 {
     POPUPMENU *menu;
-    HMENU hmenutmp;
+    HMENU16 hmenutmp;
 
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( *hmenu );
 
@@ -1620,7 +1624,7 @@ static void MENU_KeyRight( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurrent )
     }
     else if (*hmenuCurrent != *hmenu)  /* Hide last level popup */
     {
-	HMENU hmenuprev;
+	HMENU16 hmenuprev;
 	hmenuprev = hmenutmp = *hmenu;
 	while (hmenutmp != *hmenuCurrent)
 	{
@@ -1640,12 +1644,12 @@ static void MENU_KeyRight( HWND* hwndOwner, HMENU* hmenu, HMENU *hmenuCurrent )
  * If 'x' and 'y' are not 0, we simulate a button-down event at (x,y)
  * before beginning tracking. This is to help menu-bar tracking.
  */
-static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
+static BOOL MENU_TrackMenu( HMENU16 hmenu, UINT wFlags, int x, int y,
 			    HWND hwnd, const RECT16 *lprect )
 {
     MSG16 msg;
     POPUPMENU *menu;
-    HMENU hmenuCurrent = hmenu;
+    HMENU16 hmenuCurrent = hmenu;
     BOOL fClosed = FALSE, fRemove;
     UINT pos;
 
@@ -1668,7 +1672,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
 	if ((msg.message >= WM_MOUSEFIRST) && (msg.message <= WM_MOUSELAST))
 	{
 	      /* Find the sub-popup for this mouse event (if any) */
-	    HMENU hsubmenu = MENU_FindMenuByCoords( hmenu, msg.pt );
+	    HMENU16 hsubmenu = MENU_FindMenuByCoords( hmenu, msg.pt );
 
 	    switch(msg.message)
 	    {
@@ -1822,7 +1826,7 @@ void MENU_TrackMouseMenuBar( HWND hwnd, POINT16 pt )
     HideCaret(0);
     SendMessage16( hwnd, WM_ENTERMENULOOP, 0, 0 );
     SendMessage16( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
-    MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+    MENU_TrackMenu( (HMENU16)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		    pt.x, pt.y, hwnd, NULL );
     SendMessage16( hwnd, WM_EXITMENULOOP, 0, 0 );
     ShowCaret(0);
@@ -1837,7 +1841,7 @@ void MENU_TrackMouseMenuBar( HWND hwnd, POINT16 pt )
 void MENU_TrackKbdMenuBar( WND* wndPtr, UINT wParam, INT vkey)
 {
     UINT uItem = NO_SELECTED_ITEM;
-   HMENU hTrackMenu; 
+   HMENU16 hTrackMenu; 
 
     /* find window that has a menu 
      */
@@ -1945,7 +1949,7 @@ LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 	    PAINTSTRUCT16 ps;
 	    BeginPaint16( hwnd, &ps );
 	    MENU_DrawPopupMenu( hwnd, ps.hdc,
-                                (HMENU)GetWindowLong32A( hwnd, 0 ) );
+                                (HMENU16)GetWindowLong32A( hwnd, 0 ) );
 	    EndPaint16( hwnd, &ps );
 	    return 0;
 	}
@@ -1962,7 +1966,7 @@ LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 	    break;
 
     case WM_USER:
-	if (wParam) SetWindowLong32A( hwnd, 0, (HMENU)wParam );
+	if (wParam) SetWindowLong32A( hwnd, 0, (HMENU16)wParam );
         break;
     default:
 	return DefWindowProc16(hwnd, message, wParam, lParam);
@@ -1984,7 +1988,7 @@ UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth, int orgX, int orgY )
     LPPOPUPMENU lppop;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if (!(lppop = (LPPOPUPMENU)USER_HEAP_LIN_ADDR((HMENU)wndPtr->wIDmenu)))
+    if (!(lppop = (LPPOPUPMENU)USER_HEAP_LIN_ADDR((HMENU16)wndPtr->wIDmenu)))
       return 0;
     hdc = GetDCEx32( hwnd, 0, DCX_CACHE | DCX_WINDOW );
     SetRect16(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+SYSMETRICS_CYMENU);
@@ -2063,7 +2067,7 @@ BOOL32 ChangeMenu32W( HMENU32 hMenu, UINT32 pos, LPCWSTR data,
 /*******************************************************************
  *         CheckMenuItem    (USER.154)
  */
-INT CheckMenuItem( HMENU hMenu, UINT id, UINT flags )
+INT CheckMenuItem( HMENU16 hMenu, UINT id, UINT flags )
 {
     MENUITEM *item;
     INT ret;
@@ -2080,7 +2084,7 @@ INT CheckMenuItem( HMENU hMenu, UINT id, UINT flags )
 /**********************************************************************
  *			EnableMenuItem		[USER.155]
  */
-BOOL EnableMenuItem(HMENU hMenu, UINT wItemID, UINT wFlags)
+BOOL EnableMenuItem(HMENU16 hMenu, UINT wItemID, UINT wFlags)
 {
     MENUITEM *item;
     dprintf_menu(stddeb,"EnableMenuItem (%04x, %04X, %04X) !\n", 
@@ -2107,7 +2111,7 @@ BOOL EnableMenuItem(HMENU hMenu, UINT wItemID, UINT wFlags)
 /*******************************************************************
  *         GetMenuString    (USER.161)
  */
-int GetMenuString( HMENU hMenu, UINT wItemID,
+int GetMenuString( HMENU16 hMenu, UINT wItemID,
                    LPSTR str, short nMaxSiz, UINT wFlags )
 {
     MENUITEM *item;
@@ -2127,7 +2131,7 @@ int GetMenuString( HMENU hMenu, UINT wItemID,
 /**********************************************************************
  *			HiliteMenuItem		[USER.162]
  */
-BOOL HiliteMenuItem(HWND hWnd, HMENU hMenu, UINT wItemID, UINT wHilite)
+BOOL HiliteMenuItem(HWND hWnd, HMENU16 hMenu, UINT wItemID, UINT wHilite)
 {
     LPPOPUPMENU menu;
     dprintf_menu(stddeb,"HiliteMenuItem(%04x, %04x, %04x, %04x);\n", 
@@ -2144,7 +2148,7 @@ BOOL HiliteMenuItem(HWND hWnd, HMENU hMenu, UINT wItemID, UINT wHilite)
 /**********************************************************************
  *			GetMenuState		[USER.250]
  */
-UINT GetMenuState(HMENU hMenu, UINT wItemID, UINT wFlags)
+UINT GetMenuState(HMENU16 hMenu, UINT wItemID, UINT wFlags)
 {
     MENUITEM *item;
     dprintf_menu(stddeb,"GetMenuState(%04x, %04x, %04x);\n", 
@@ -2152,7 +2156,7 @@ UINT GetMenuState(HMENU hMenu, UINT wItemID, UINT wFlags)
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return -1;
     if (item->item_flags & MF_POPUP)
     {
-	POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( (HMENU)item->item_id );
+	POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( (HMENU16)item->item_id );
 	if (!menu) return -1;
 	else return (menu->nItems << 8) | (menu->wFlags & 0xff);
     }
@@ -2163,7 +2167,7 @@ UINT GetMenuState(HMENU hMenu, UINT wItemID, UINT wFlags)
 /**********************************************************************
  *			GetMenuItemCount		[USER.263]
  */
-INT GetMenuItemCount(HMENU hMenu)
+INT GetMenuItemCount(HMENU16 hMenu)
 {
 	LPPOPUPMENU	menu;
 	dprintf_menu(stddeb,"GetMenuItemCount(%04x);\n", hMenu);
@@ -2178,7 +2182,7 @@ INT GetMenuItemCount(HMENU hMenu)
 /**********************************************************************
  *			GetMenuItemID			[USER.264]
  */
-UINT GetMenuItemID(HMENU hMenu, int nPos)
+UINT GetMenuItemID(HMENU16 hMenu, int nPos)
 {
     LPPOPUPMENU	menu;
 
@@ -2226,7 +2230,7 @@ BOOL32 InsertMenu32A( HMENU32 hMenu, UINT32 pos, UINT32 flags,
     }
 
     if (flags & MF_POPUP)  /* Set the MF_POPUP flag on the popup-menu */
-	((POPUPMENU *)USER_HEAP_LIN_ADDR((HMENU)id))->wFlags |= MF_POPUP;
+	((POPUPMENU *)USER_HEAP_LIN_ADDR((HMENU16)id))->wFlags |= MF_POPUP;
 
     item->hCheckBit   = hStdCheck;
     item->hUnCheckBit = 0;
@@ -2283,7 +2287,7 @@ BOOL32 AppendMenu32W( HMENU32 hMenu, UINT32 flags, UINT32 id, LPCWSTR data )
 /**********************************************************************
  *			RemoveMenu		[USER.412]
  */
-BOOL RemoveMenu(HMENU hMenu, UINT nPos, UINT wFlags)
+BOOL RemoveMenu(HMENU16 hMenu, UINT nPos, UINT wFlags)
 {
     LPPOPUPMENU	menu;
     MENUITEM *item;
@@ -2319,11 +2323,11 @@ BOOL RemoveMenu(HMENU hMenu, UINT nPos, UINT wFlags)
 /**********************************************************************
  *			DeleteMenu		[USER.413]
  */
-BOOL DeleteMenu(HMENU hMenu, UINT nPos, UINT wFlags)
+BOOL DeleteMenu(HMENU16 hMenu, UINT nPos, UINT wFlags)
 {
     MENUITEM *item = MENU_FindItem( &hMenu, &nPos, wFlags );
     if (!item) return FALSE;
-    if (item->item_flags & MF_POPUP) DestroyMenu( (HMENU)item->item_id );
+    if (item->item_flags & MF_POPUP) DestroyMenu( (HMENU16)item->item_id );
       /* nPos is now the position of the item */
     RemoveMenu( hMenu, nPos, wFlags | MF_BYPOSITION );
     return TRUE;
@@ -2350,7 +2354,7 @@ BOOL32 ModifyMenu32A( HMENU32 hMenu, UINT32 pos, UINT32 flags,
                       UINT32 id, LPCSTR str )
 {
     MENUITEM *item;
-    HMENU hMenu16 = hMenu;
+    HMENU16 hMenu16 = hMenu;
     UINT16 pos16 = pos;
 
     if (IS_STRING_ITEM(flags))
@@ -2392,9 +2396,9 @@ BOOL32 ModifyMenu32W( HMENU32 hMenu, UINT32 pos, UINT32 flags,
 /**********************************************************************
  *			CreatePopupMenu		[USER.415]
  */
-HMENU CreatePopupMenu()
+HMENU16 CreatePopupMenu()
 {
-    HMENU hmenu;
+    HMENU16 hmenu;
     POPUPMENU *menu;
 
     if (!(hmenu = CreateMenu())) return 0;
@@ -2416,8 +2420,8 @@ DWORD GetMenuCheckMarkDimensions()
 /**********************************************************************
  *			SetMenuItemBitmaps	[USER.418]
  */
-BOOL SetMenuItemBitmaps(HMENU hMenu, UINT nPos, UINT wFlags,
-                        HBITMAP hNewUnCheck, HBITMAP hNewCheck)
+BOOL SetMenuItemBitmaps(HMENU16 hMenu, UINT nPos, UINT wFlags,
+                        HBITMAP16 hNewUnCheck, HBITMAP16 hNewCheck)
 {
     MENUITEM *item;
     dprintf_menu(stddeb,"SetMenuItemBitmaps(%04x, %04x, %04x, %04x, %04x)\n",
@@ -2444,9 +2448,9 @@ BOOL SetMenuItemBitmaps(HMENU hMenu, UINT nPos, UINT wFlags,
 /**********************************************************************
  *			CreateMenu		[USER.151]
  */
-HMENU CreateMenu()
+HMENU16 CreateMenu()
 {
-    HMENU hMenu;
+    HMENU16 hMenu;
     LPPOPUPMENU menu;
     dprintf_menu(stddeb,"CreateMenu !\n");
     if (!(hMenu = USER_HEAP_ALLOC( sizeof(POPUPMENU) )))
@@ -2469,7 +2473,7 @@ HMENU CreateMenu()
 /**********************************************************************
  *			DestroyMenu		[USER.152]
  */
-BOOL DestroyMenu(HMENU hMenu)
+BOOL DestroyMenu(HMENU16 hMenu)
 {
     LPPOPUPMENU lppop;
     dprintf_menu(stddeb,"DestroyMenu (%04x) !\n", hMenu);
@@ -2490,7 +2494,7 @@ BOOL DestroyMenu(HMENU hMenu)
         for (i = lppop->nItems; i > 0; i--, item++)
         {
             if (item->item_flags & MF_POPUP)
-                DestroyMenu( (HMENU)item->item_id );
+                DestroyMenu( (HMENU16)item->item_id );
 	    if (IS_STRING_ITEM(item->item_flags) && item->text)
                 HeapFree( SystemHeap, 0, item->text );
         }
@@ -2504,7 +2508,7 @@ BOOL DestroyMenu(HMENU hMenu)
 /**********************************************************************
  *			GetSystemMenu		[USER.156]
  */
-HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
+HMENU16 GetSystemMenu(HWND hWnd, BOOL bRevert)
 {
     WND *wndPtr = WIN_FindWndPtr( hWnd );
     if (!wndPtr) return 0;
@@ -2524,7 +2528,7 @@ HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
 /*******************************************************************
  *         SetSystemMenu    (USER.280)
  */
-BOOL SetSystemMenu( HWND hwnd, HMENU hMenu )
+BOOL SetSystemMenu( HWND hwnd, HMENU16 hMenu )
 {
     WND *wndPtr;
 
@@ -2539,18 +2543,18 @@ BOOL SetSystemMenu( HWND hwnd, HMENU hMenu )
 /**********************************************************************
  *			GetMenu		[USER.157]
  */
-HMENU GetMenu(HWND hWnd) 
+HMENU16 GetMenu(HWND hWnd) 
 { 
 	WND * wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) return 0;
-	return (HMENU)wndPtr->wIDmenu;
+	return (HMENU16)wndPtr->wIDmenu;
 }
 
 
 /**********************************************************************
  * 			SetMenu 	[USER.158]
  */
-BOOL SetMenu(HWND hWnd, HMENU hMenu)
+BOOL SetMenu(HWND hWnd, HMENU16 hMenu)
 {
 	LPPOPUPMENU lpmenu;
 	WND * wndPtr = WIN_FindWndPtr(hWnd);
@@ -2585,7 +2589,7 @@ BOOL SetMenu(HWND hWnd, HMENU hMenu)
 /**********************************************************************
  *			GetSubMenu		[USER.159]
  */
-HMENU GetSubMenu(HMENU hMenu, short nPos)
+HMENU16 GetSubMenu(HMENU16 hMenu, short nPos)
 {
     LPPOPUPMENU lppop;
 
@@ -2593,7 +2597,7 @@ HMENU GetSubMenu(HMENU hMenu, short nPos)
     if (!(lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return 0;
     if ((UINT)nPos >= lppop->nItems) return 0;
     if (!(lppop->items[nPos].item_flags & MF_POPUP)) return 0;
-    return (HMENU)lppop->items[nPos].item_id;
+    return (HMENU16)lppop->items[nPos].item_id;
 }
 
 
@@ -2610,7 +2614,7 @@ void DrawMenuBar(HWND hWnd)
 		wndPtr->wIDmenu != 0) {
 		dprintf_menu(stddeb,"DrawMenuBar wIDmenu=%04X \n", 
 			     wndPtr->wIDmenu);
-		lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR((HMENU)wndPtr->wIDmenu);
+		lppop = (LPPOPUPMENU) USER_HEAP_LIN_ADDR((HMENU16)wndPtr->wIDmenu);
 		if (lppop == NULL) return;
 
 		lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
@@ -2633,7 +2637,7 @@ void EndMenu(void)
 /***********************************************************************
  *           LookupMenuHandle   (USER.217)
  */
-HMENU LookupMenuHandle( HMENU hmenu, INT id )
+HMENU16 LookupMenuHandle( HMENU16 hmenu, INT id )
 {
     if (!MENU_FindItem( &hmenu, &id, MF_BYCOMMAND )) return 0;
     else return hmenu;
@@ -2700,7 +2704,7 @@ HMENU32 LoadMenu32W( HINSTANCE32 instance, LPCWSTR name )
  */
 HMENU16 LoadMenuIndirect16( LPCVOID template )
 {
-    HMENU hMenu;
+    HMENU16 hMenu;
     WORD version, offset;
     LPCSTR p = (LPCSTR)template;
 
@@ -2729,7 +2733,7 @@ HMENU16 LoadMenuIndirect16( LPCVOID template )
  */
 HMENU32 LoadMenuIndirect32A( LPCVOID template )
 {
-    HMENU hMenu;
+    HMENU16 hMenu;
     WORD version, offset;
     LPCSTR p = (LPCSTR)template;
 
@@ -2767,7 +2771,7 @@ HMENU32 LoadMenuIndirect32W( LPCVOID template )
 /**********************************************************************
  *		IsMenu    (USER.358)
  */
-BOOL IsMenu( HMENU hmenu )
+BOOL IsMenu( HMENU16 hmenu )
 {
     LPPOPUPMENU menu;
     if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR( hmenu ))) return FALSE;

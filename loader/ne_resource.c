@@ -53,7 +53,7 @@ static DWORD NE_FindNameTableId( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId 
             dprintf_resource( stddeb, "NameTable entry: type=%04x id=%04x\n",
                               pTypeInfo->type_id, pNameInfo->id );
             handle = LoadResource16( hModule, 
-				   (HANDLE)((int)pNameInfo - (int)pModule) );
+				   (HRSRC16)((int)pNameInfo - (int)pModule) );
             for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
                 dprintf_resource( stddeb,"  type=%04x '%s' id=%04x '%s'\n",

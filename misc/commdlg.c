@@ -22,12 +22,12 @@
 
 static	DWORD 		CommDlgLastError = 0;
 
-static	HBITMAP		hFolder = 0;
-static	HBITMAP		hFolder2 = 0;
-static	HBITMAP		hFloppy = 0;
-static	HBITMAP		hHDisk = 0;
-static	HBITMAP		hCDRom = 0;
-static  HBITMAP 	hBitmapTT = 0;
+static HBITMAP16 hFolder = 0;
+static HBITMAP16 hFolder2 = 0;
+static HBITMAP16 hFloppy = 0;
+static HBITMAP16 hHDisk = 0;
+static HBITMAP16 hCDRom = 0;
+static HBITMAP16 hBitmapTT = 0;
 
 /***********************************************************************
  * 				FileDlg_Init			[internal]
@@ -58,8 +58,8 @@ static BOOL FileDlg_Init()
  */
 BOOL GetOpenFileName( SEGPTR ofn )
 {
-    HINSTANCE hInst;
-    HANDLE hDlgTmpl, hResInfo;
+    HINSTANCE16 hInst;
+    HANDLE16 hDlgTmpl, hResInfo;
     BOOL bRet;
     LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
 
@@ -105,8 +105,8 @@ BOOL GetOpenFileName( SEGPTR ofn )
  */
 BOOL GetSaveFileName( SEGPTR ofn)
 {
-    HINSTANCE hInst;
-    HANDLE hDlgTmpl, hResInfo;
+    HINSTANCE16 hInst;
+    HANDLE16 hDlgTmpl, hResInfo;
     BOOL bRet;
     LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
   
@@ -218,8 +218,8 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,int saved
 {
     LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char *str;
-    HBRUSH hBrush;
-    HBITMAP hBitmap, hPrevBitmap;
+    HBRUSH16 hBrush;
+    HBITMAP16 hBitmap, hPrevBitmap;
     BITMAP16 bm;
     HDC hMemDC;
 
@@ -706,7 +706,7 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  */
 BOOL FindText( SEGPTR find )
 {
-    HANDLE hInst, hDlgTmpl;
+    HANDLE16 hInst, hDlgTmpl;
     BOOL bRet;
     LPCVOID ptr;
     LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
@@ -736,7 +736,7 @@ BOOL FindText( SEGPTR find )
  */
 BOOL ReplaceText( SEGPTR find )
 {
-    HANDLE hInst, hDlgTmpl;
+    HANDLE16 hInst, hDlgTmpl;
     BOOL bRet;
     LPCVOID ptr;
     LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
@@ -989,7 +989,7 @@ LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  */
 BOOL PrintDlg( SEGPTR printdlg )
 {
-    HANDLE hInst, hDlgTmpl;
+    HANDLE16 hInst, hDlgTmpl;
     BOOL bRet;
     LPPRINTDLG lpPrint = (LPPRINTDLG)PTR_SEG_TO_LIN(printdlg);
 
@@ -1118,8 +1118,8 @@ short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
  */
 BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
 {
-    HINSTANCE hInst;
-    HANDLE hDlgTmpl, hResInfo;
+    HINSTANCE16 hInst;
+    HANDLE16 hDlgTmpl, hResInfo;
     BOOL bRet;
 
     dprintf_commdlg(stddeb,"ChooseColor\n");
@@ -1177,7 +1177,7 @@ struct CCPRIVATE
  LPCHOOSECOLOR lpcc;  /* points to public known data structure */
  int nextuserdef;     /* next free place in user defined color array */
  HDC hdcMem;          /* color graph used for BitBlt() */
- HBITMAP hbmMem;      /* color graph bitmap */    
+ HBITMAP16 hbmMem;    /* color graph bitmap */    
  RECT16 fullsize;     /* original dialog window size */
  UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
  RECT16 old3angle;    /* last position of l-marker */
@@ -1476,7 +1476,7 @@ static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
 {
  RECT16 rect;
  HDC32  hdc;
- HBRUSH hBrush;
+ HBRUSH16 hBrush;
  HWND hwnd=GetDlgItem(hDlg,0x2c5);
  if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
  {
@@ -1599,7 +1599,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
  int sdif,hdif,xdif,ydif,r,g,b,hue,sat;
  HWND hwnd=GetDlgItem(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER);  
- HBRUSH hbrush;
+ HBRUSH16 hbrush;
  HDC32 hdc ;
  RECT16 rect,client;
  HCURSOR16 hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
@@ -1666,7 +1666,7 @@ static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
  HWND hwnd=GetDlgItem(hDlg,0x2be);
  RECT16 rect,client;
  int lum,ldif,ydif,r,g,b;
- HBRUSH hbrush;
+ HBRUSH16 hbrush;
  HDC32 hDC;
 
  if (IsWindowVisible(hwnd))
@@ -1776,7 +1776,7 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
  HWND hwnd=GetDlgItem(hDlg,0x2d0);
  RECT16 rect;
  HDC32  hdc;
- HBRUSH hBrush;
+ HBRUSH16 hBrush;
  int dx,dy,i,j,k;
 
  GetClientRect16(hwnd,&rect);
@@ -1815,7 +1815,7 @@ static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
  HWND hwnd=GetDlgItem(hDlg,0x2d1);
  RECT16 rect;
  HDC32  hdc;
- HBRUSH hBrush;
+ HBRUSH16 hBrush;
  int dx,dy,i,j,k;
 
  GetClientRect16(hwnd,&rect);
@@ -2199,8 +2199,8 @@ LRESULT ColorDlgProc(HWND hDlg, UINT message,
  */
 BOOL ChooseFont(LPCHOOSEFONT lpChFont)
 {
-    HINSTANCE hInst;
-    HANDLE hDlgTmpl, hResInfo;
+    HINSTANCE16 hInst;
+    HANDLE16 hDlgTmpl, hResInfo;
     BOOL bRet;
 
     dprintf_commdlg(stddeb,"ChooseFont\n");
@@ -2313,7 +2313,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT16 lplf,
    static struct FONTSTYLE fontstyles[FSTYLES]={ 
           { 0,FW_NORMAL,"Regular"},{0,FW_BOLD,"Bold"},
           { 1,FW_NORMAL,"Italic"}, {1,FW_BOLD,"Bold Italic"}};
-   HFONT hf;                      
+   HFONT16 hf;                      
    int i,j;
 
    for (i=0;i<FSTYLES;i++)
@@ -2550,7 +2550,7 @@ LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  HBRUSH hBrush;
+  HBRUSH16 hBrush;
   char *buffer;
   BITMAP16 bm;
   COLORREF cr;
@@ -2558,7 +2558,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 #if 0  
   HDC hMemDC;
   int nFontType;
-  HBITMAP hBitmap; /* for later TT usage */
+  HBITMAP16 hBitmap; /* for later TT usage */
 #endif  
   LPDRAWITEMSTRUCT16 lpdi = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
 
@@ -2658,7 +2658,7 @@ LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  HFONT hFont/*,hFontOld*/;
+  HFONT16 hFont;
   int i,j;
   long l;
   HDC hdc;

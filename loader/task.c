@@ -54,8 +54,8 @@ static HTASK16 hFirstTask = 0;
 static HTASK16 hCurrentTask = 0;
 static HTASK16 hTaskToKill = 0;
 static HTASK16 hLockedTask = 0;
-static WORD nTaskCount = 0;
-static HANDLE hDOSEnvironment = 0;
+static UINT16 nTaskCount = 0;
+static HGLOBAL16 hDOSEnvironment = 0;
 
   /* TASK_Reschedule() 16-bit entry point */
 static FARPROC16 TASK_RescheduleProc;
@@ -66,7 +66,7 @@ static FARPROC16 TASK_RescheduleProc;
 #define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc)
 #endif
 
-static HANDLE TASK_CreateDOSEnvironment(void);
+static HGLOBAL16 TASK_CreateDOSEnvironment(void);
 
 /***********************************************************************
  *           TASK_Init
@@ -83,7 +83,7 @@ BOOL32 TASK_Init(void)
 /***********************************************************************
  *	     TASK_GetNextTask
  */
-HTASK TASK_GetNextTask( HTASK hTask )
+HTASK16 TASK_GetNextTask( HTASK16 hTask )
 {
     TDB* pTask = (TDB*)GlobalLock16(hTask);
 
@@ -97,12 +97,12 @@ HTASK TASK_GetNextTask( HTASK hTask )
  *
  * Create the original DOS environment.
  */
-static HANDLE TASK_CreateDOSEnvironment(void)
+static HGLOBAL16 TASK_CreateDOSEnvironment(void)
 {
     static const char program_name[] = "KRNL386.EXE";
     char **e, *p;
     int initial_size, size, i, winpathlen, sysdirlen;
-    HANDLE handle;
+    HGLOBAL16 handle;
 
     extern char **environ;
 
@@ -279,7 +279,7 @@ static void TASK_CreateThunks( HGLOBAL16 handle, WORD offset, WORD count )
  * Allocate a thunk for MakeProcInstance().
  */
 #ifndef WINELIB32
-static SEGPTR TASK_AllocThunk( HTASK hTask )
+static SEGPTR TASK_AllocThunk( HTASK16 hTask )
 {
     TDB *pTask;
     THUNKS *pThunk;
@@ -316,7 +316,7 @@ static SEGPTR TASK_AllocThunk( HTASK hTask )
  * Free a MakeProcInstance() thunk.
  */
 #ifndef WINELIB32
-static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
+static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
 {
     TDB *pTask;
     THUNKS *pThunk;
@@ -396,9 +396,9 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
                          HINSTANCE16 hPrevInstance, HANDLE16 hEnvironment,
                          LPCSTR cmdLine, UINT16 cmdShow )
 {
-    HTASK hTask;
+    HTASK16 hTask;
     TDB *pTask;
-    HANDLE hParentEnv;
+    HGLOBAL16 hParentEnv;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
@@ -598,10 +598,10 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 /***********************************************************************
  *           TASK_DeleteTask
  */
-static void TASK_DeleteTask( HTASK hTask )
+static void TASK_DeleteTask( HTASK16 hTask )
 {
     TDB *pTask;
-    HANDLE hPDB;
+    HGLOBAL16 hPDB;
 
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
     hPDB = pTask->hPDB;
@@ -711,7 +711,7 @@ void TASK_YieldToSystem(TDB* pTask)
 void TASK_Reschedule(void)
 {
     TDB *pOldTask = NULL, *pNewTask;
-    HTASK hTask = 0;
+    HTASK16 hTask = 0;
 
 #ifdef CONFIG_IPC
     dde_reschedule();
@@ -862,7 +862,7 @@ void InitTask( SIGCONTEXT *context )
 /***********************************************************************
  *           WaitEvent  (KERNEL.30)
  */
-BOOL WaitEvent( HTASK hTask )
+BOOL16 WaitEvent( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -885,7 +885,7 @@ BOOL WaitEvent( HTASK hTask )
 /***********************************************************************
  *           PostEvent  (KERNEL.31)
  */
-void PostEvent( HTASK hTask )
+void PostEvent( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -898,10 +898,10 @@ void PostEvent( HTASK hTask )
 /***********************************************************************
  *           SetPriority  (KERNEL.32)
  */
-void SetPriority( HTASK hTask, int delta )
+void SetPriority( HTASK16 hTask, INT16 delta )
 {
     TDB *pTask;
-    int newpriority;
+    INT16 newpriority;
 
     if (!hTask) hTask = hCurrentTask;
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
@@ -919,7 +919,7 @@ void SetPriority( HTASK hTask, int delta )
 /***********************************************************************
  *           LockCurrentTask  (KERNEL.33)
  */
-HTASK LockCurrentTask( BOOL bLock )
+HTASK16 LockCurrentTask( BOOL16 bLock )
 {
     if (bLock) hLockedTask = hCurrentTask;
     else hLockedTask = 0;
@@ -930,7 +930,7 @@ HTASK LockCurrentTask( BOOL bLock )
 /***********************************************************************
  *           IsTaskLocked  (KERNEL.122)
  */
-HTASK IsTaskLocked(void)
+HTASK16 IsTaskLocked(void)
 {
     return hLockedTask;
 }
@@ -953,7 +953,7 @@ void OldYield(void)
 /***********************************************************************
  *           DirectedYield  (KERNEL.150)
  */
-void DirectedYield( HTASK hTask )
+void DirectedYield( HTASK16 hTask )
 {
     TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     pCurTask->hYieldTo = hTask;
@@ -1035,10 +1035,10 @@ void FreeProcInstance16( FARPROC16 func )
 /**********************************************************************
  *	    GetCodeHandle    (KERNEL.93)
  */
-HANDLE GetCodeHandle( FARPROC16 proc )
+HANDLE16 GetCodeHandle( FARPROC16 proc )
 {
 #ifndef WINELIB32
-    HANDLE handle;
+    HANDLE16 handle;
     BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
 
     /* Return the code segment containing 'proc'. */
@@ -1052,7 +1052,7 @@ HANDLE GetCodeHandle( FARPROC16 proc )
 
     return handle;
 #else
-    return (HANDLE)proc;
+    return (HANDLE16)proc;
 #endif
 }
 
@@ -1224,7 +1224,7 @@ HANDLE16 GetCurrentPDB(void)
 /***********************************************************************
  *           GetInstanceData   (KERNEL.54)
  */
-int GetInstanceData( HANDLE instance, WORD buffer, int len )
+INT16 GetInstanceData( HINSTANCE16 instance, WORD buffer, INT16 len )
 {
     char *ptr = (char *)GlobalLock16( instance );
     if (!ptr || !len) return 0;
@@ -1276,7 +1276,7 @@ SEGPTR GetDOSEnvironment(void)
 /***********************************************************************
  *           GetNumTasks   (KERNEL.152)
  */
-WORD GetNumTasks(void)
+UINT16 GetNumTasks(void)
 {
     return nTaskCount;
 }
@@ -1300,7 +1300,7 @@ HINSTANCE16 GetTaskDS(void)
 /***********************************************************************
  *           IsTask   (KERNEL.320)
  */
-BOOL IsTask( HTASK hTask )
+BOOL16 IsTask( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -1348,6 +1348,18 @@ WORD SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
         pTask->sighandler = newhandler;
     }
     return 0;
+}
+
+
+/***********************************************************************
+ *           GlobalNotify   (KERNEL.154)
+ */
+VOID GlobalNotify( FARPROC16 proc )
+{
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
+    pTask->discardhandler = proc;
 }
 
 

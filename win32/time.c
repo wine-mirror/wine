@@ -63,7 +63,7 @@ VOID GetSystemTime(LPSYSTEMTIME systime)
 /***********************************************************************
  *              SetSystemTime            (KERNEL32.507)
  */
-BOOL SetSystemTime(const SYSTEMTIME *systime)
+BOOL32 SetSystemTime(const SYSTEMTIME *systime)
 {
     struct timeval tv;
     struct timezone tz;

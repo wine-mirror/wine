@@ -44,7 +44,6 @@ BOOL32 RELAY_Init(void)
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
                                     codesel );
-
     return TRUE;
 }
 

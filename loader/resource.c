@@ -376,7 +376,7 @@ HGLOBAL16 AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size )
  *
  * Check Schulman, p. 232 for details
  */
-HANDLE DirectResAlloc(HANDLE hInstance, WORD wType, WORD wSize)
+HGLOBAL16 DirectResAlloc( HINSTANCE16 hInstance, WORD wType, UINT16 wSize )
 {
     dprintf_resource(stddeb,"DirectResAlloc(%04x,%04x,%04x)\n",
                      hInstance, wType, wSize );
@@ -507,7 +507,7 @@ HACCEL32 LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
 /**********************************************************************
  *			TranslateAccelerator 	[USER.178]
  */
-int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG16 msg)
+INT16 TranslateAccelerator(HWND hWnd, HACCEL16 hAccel, LPMSG16 msg)
 {
     ACCELHEADER	*lpAccelTbl;
     int 	i;

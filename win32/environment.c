@@ -51,7 +51,7 @@ LPCWSTR GetCommandLine32W(void)
 /***********************************************************************
  *           GetSystemPowerStatus      (KERNEL32.621)
  */
-BOOL GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
+BOOL32 GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 {
     return FALSE;   /* no power management support */
 }
@@ -60,7 +60,7 @@ BOOL GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 /***********************************************************************
  *           SetSystemPowerState      (KERNEL32.630)
  */
-BOOL SetSystemPowerState(BOOL suspend_or_hibernate, BOOL force_flag)
+BOOL32 SetSystemPowerState(BOOL32 suspend_or_hibernate, BOOL32 force_flag)
 {
     /* suspend_or_hibernate flag: w95 does not support
        this feature anyway */

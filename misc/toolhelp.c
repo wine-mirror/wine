@@ -22,7 +22,7 @@
  */
 static struct notify
 {
-    HTASK    htask;
+    HTASK16   htask;
     FARPROC16 lpfnCallback;
     WORD     wFlags;
 } *notifys = NULL;
@@ -51,8 +51,7 @@ BOOL16 NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback, WORD wFlags )
     return TRUE;
 }
 
-BOOL
-NotifyUnregister(HTASK htask)
+BOOL16 NotifyUnregister( HTASK16 htask )
 {
     int	i;
     

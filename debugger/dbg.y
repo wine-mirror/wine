@@ -229,6 +229,17 @@ void DEBUG_EnterDebugger(void)
 }
 
 
+/***********************************************************************
+ *           DebugBreak16   (KERNEL.203)
+ */
+void DebugBreak16( SIGCONTEXT *regs )
+{
+    const char *module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
+    fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
+    wine_debug( SIGTRAP, regs );
+}
+
+
 void wine_debug( int signal, SIGCONTEXT *regs )
 {
     static int loaded_symbols = 0;

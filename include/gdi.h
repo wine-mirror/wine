@@ -75,9 +75,6 @@ typedef struct
     int           flags;
     const DeviceCaps *devCaps;
 
-    HMETAFILE16   hMetaFile;
-    HGLOBAL16     hHT;          /* Handle table for metafile */
-    WORD          HTLen;        /* Handle table length (in entries) */
     HRGN16        hClipRgn;     /* Clip region (may be 0) */
     HRGN16        hVisRgn;      /* Visible region (must never be 0) */
     HRGN16        hGCClipRgn;   /* GC clip region (ClipRgn AND VisRgn) */
@@ -130,7 +127,7 @@ typedef X11DRV_PDEVICE X_DC_INFO;  /* Temporary */
 typedef struct tagDC
 {
     GDIOBJHDR      header;
-    HDC16          hSelf;            /* Handle to this DC */
+    HDC32          hSelf;            /* Handle to this DC */
     const struct tagDC_FUNCS *funcs; /* DC function table */
     void          *physDev;          /* Physical device (driver-specific) */
     WORD           saveLevel;
@@ -235,28 +232,28 @@ typedef struct tagDC_FUNCS
 
 #define NB_STOCK_OBJECTS          (SYSTEM_FIXED_FONT + 1)
 
-#define STOCK_WHITE_BRUSH         ((HBRUSH)(FIRST_STOCK_HANDLE+WHITE_BRUSH))
-#define STOCK_LTGRAY_BRUSH        ((HBRUSH)(FIRST_STOCK_HANDLE+LTGRAY_BRUSH))
-#define STOCK_GRAY_BRUSH          ((HBRUSH)(FIRST_STOCK_HANDLE+GRAY_BRUSH))
-#define STOCK_DKGRAY_BRUSH        ((HBRUSH)(FIRST_STOCK_HANDLE+DKGRAY_BRUSH))
-#define STOCK_BLACK_BRUSH         ((HBRUSH)(FIRST_STOCK_HANDLE+BLACK_BRUSH))
-#define STOCK_NULL_BRUSH          ((HBRUSH)(FIRST_STOCK_HANDLE+NULL_BRUSH))
-#define STOCK_HOLLOW_BRUSH        ((HBRUSH)(FIRST_STOCK_HANDLE+HOLLOW_BRUSH))
-#define STOCK_WHITE_PEN	          ((HPEN16)(FIRST_STOCK_HANDLE+WHITE_PEN))
-#define STOCK_BLACK_PEN	          ((HPEN16)(FIRST_STOCK_HANDLE+BLACK_PEN))
-#define STOCK_NULL_PEN	          ((HPEN16)(FIRST_STOCK_HANDLE+NULL_PEN))
-#define STOCK_OEM_FIXED_FONT      ((HFONT)(FIRST_STOCK_HANDLE+OEM_FIXED_FONT))
-#define STOCK_ANSI_FIXED_FONT     ((HFONT)(FIRST_STOCK_HANDLE+ANSI_FIXED_FONT))
-#define STOCK_ANSI_VAR_FONT       ((HFONT)(FIRST_STOCK_HANDLE+ANSI_VAR_FONT))
-#define STOCK_SYSTEM_FONT         ((HFONT)(FIRST_STOCK_HANDLE+SYSTEM_FONT))
-#define STOCK_DEVICE_DEFAULT_FONT ((HFONT)(FIRST_STOCK_HANDLE+DEVICE_DEFAULT_FONT))
-#define STOCK_DEFAULT_PALETTE     ((HPALETTE16)(FIRST_STOCK_HANDLE+DEFAULT_PALETTE))
-#define STOCK_SYSTEM_FIXED_FONT   ((HFONT)(FIRST_STOCK_HANDLE+SYSTEM_FIXED_FONT))
+#define STOCK_WHITE_BRUSH       ((HBRUSH16)(FIRST_STOCK_HANDLE+WHITE_BRUSH))
+#define STOCK_LTGRAY_BRUSH      ((HBRUSH16)(FIRST_STOCK_HANDLE+LTGRAY_BRUSH))
+#define STOCK_GRAY_BRUSH        ((HBRUSH16)(FIRST_STOCK_HANDLE+GRAY_BRUSH))
+#define STOCK_DKGRAY_BRUSH      ((HBRUSH16)(FIRST_STOCK_HANDLE+DKGRAY_BRUSH))
+#define STOCK_BLACK_BRUSH       ((HBRUSH16)(FIRST_STOCK_HANDLE+BLACK_BRUSH))
+#define STOCK_NULL_BRUSH        ((HBRUSH16)(FIRST_STOCK_HANDLE+NULL_BRUSH))
+#define STOCK_HOLLOW_BRUSH      ((HBRUSH16)(FIRST_STOCK_HANDLE+HOLLOW_BRUSH))
+#define STOCK_WHITE_PEN	        ((HPEN16)(FIRST_STOCK_HANDLE+WHITE_PEN))
+#define STOCK_BLACK_PEN	        ((HPEN16)(FIRST_STOCK_HANDLE+BLACK_PEN))
+#define STOCK_NULL_PEN	        ((HPEN16)(FIRST_STOCK_HANDLE+NULL_PEN))
+#define STOCK_OEM_FIXED_FONT    ((HFONT16)(FIRST_STOCK_HANDLE+OEM_FIXED_FONT))
+#define STOCK_ANSI_FIXED_FONT   ((HFONT16)(FIRST_STOCK_HANDLE+ANSI_FIXED_FONT))
+#define STOCK_ANSI_VAR_FONT     ((HFONT16)(FIRST_STOCK_HANDLE+ANSI_VAR_FONT))
+#define STOCK_SYSTEM_FONT       ((HFONT16)(FIRST_STOCK_HANDLE+SYSTEM_FONT))
+#define STOCK_DEVICE_DEFAULT_FONT ((HFONT16)(FIRST_STOCK_HANDLE+DEVICE_DEFAULT_FONT))
+#define STOCK_DEFAULT_PALETTE   ((HPALETTE16)(FIRST_STOCK_HANDLE+DEFAULT_PALETTE))
+#define STOCK_SYSTEM_FIXED_FONT ((HFONT16)(FIRST_STOCK_HANDLE+SYSTEM_FIXED_FONT))
 
-#define FIRST_STOCK_FONT          STOCK_OEM_FIXED_FONT
-#define LAST_STOCK_FONT           STOCK_SYSTEM_FIXED_FONT
+#define FIRST_STOCK_FONT        STOCK_OEM_FIXED_FONT
+#define LAST_STOCK_FONT         STOCK_SYSTEM_FIXED_FONT
 
-#define LAST_STOCK_HANDLE         ((DWORD)STOCK_SYSTEM_FIXED_FONT)
+#define LAST_STOCK_HANDLE       ((DWORD)STOCK_SYSTEM_FIXED_FONT)
 
   /* Device <-> logical coords conversion */
 
@@ -286,10 +283,9 @@ extern WORD GDI_HeapSel;
          ((handle) ? PTR_SEG_OFF_TO_SEGPTR(GDI_HeapSel, (handle)) : (SEGPTR)0)
 
 extern BOOL32 GDI_Init(void);
-extern HANDLE16 GDI_AllocObject( WORD, WORD );
-extern BOOL32 GDI_FreeObject( HANDLE16 );
-extern GDIOBJHDR * GDI_GetObjPtr( HANDLE16, WORD );
-extern FARPROC16 GDI_GetDefDCHook(void);
+extern HGDIOBJ16 GDI_AllocObject( WORD, WORD );
+extern BOOL32 GDI_FreeObject( HGDIOBJ16 );
+extern GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16, WORD );
 
 extern BOOL32 DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );

@@ -6,7 +6,7 @@ heap	65520
 2   stub OldExitWindows
 3   stub EnableOEMLayer
 4   stub DisableOEMLayer
-5   pascal16 InitApp(word) USER_InitApp
+5   pascal16 InitApp(word) InitApp
 6   pascal16 PostQuitMessage(word) PostQuitMessage
 7   pascal16 ExitWindows(long word) ExitWindows
 10  pascal16 SetTimer(word word word segptr) SetTimer16
@@ -115,12 +115,12 @@ heap	65520
 113 pascal16 TranslateMessage(ptr) TranslateMessage
 114 pascal   DispatchMessage(ptr) DispatchMessage
 115 pascal16 ReplyMessage(long) ReplyMessage
-116 pascal16 PostAppMessage(word word word long) PostAppMessage
+116 pascal16 PostAppMessage(word word word long) PostAppMessage16
 118 pascal16 RegisterWindowMessage(segptr) RegisterWindowMessage16
 117 pascal16 WindowFromDC(word) WindowFromDC16
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
-121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook
+121 pascal   SetWindowsHook(s_word segptr) THUNK_SetWindowsHook16
 122 pascal   CallWindowProc(segptr word word word long) CallWindowProc16
 123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter
 124 pascal16 UpdateWindow(word) UpdateWindow
@@ -227,14 +227,14 @@ heap	65520
 224 pascal16 GetWindowTask(word) GetWindowTask16
 225 pascal16 EnumTaskWindows(word segptr long) THUNK_EnumTaskWindows16
 226 stub LockInput
-227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem
-228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem
+227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem16
+228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem16
 229 pascal16 GetTopWindow(word) GetTopWindow
 230 pascal16 GetNextWindow(word word) GetNextWindow
 231 stub GetSystemDebugState
 232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos
 233 pascal16 SetParent(word word) SetParent
-234 pascal16 UnhookWindowsHook(s_word segptr) UnhookWindowsHook
+234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16
 235 pascal   DefHookProc(s_word word long ptr) DefHookProc
 236 pascal16 GetCapture() GetCapture16
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn
@@ -294,8 +294,8 @@ heap	65520
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
 #289 KEYB_EVENT
 290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
-291 pascal   SetWindowsHookEx(s_word segptr word word) SetWindowsHookEx
-292 pascal16 UnhookWindowsHookEx(segptr) UnhookWindowsHookEx
+291 pascal   SetWindowsHookEx(s_word segptr word word) THUNK_SetWindowsHookEx16
+292 pascal16 UnhookWindowsHookEx(segptr) THUNK_UnhookWindowsHookEx16
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx
 294 stub LockWindowUpdate
 299 register Mouse_Event() Mouse_Event

@@ -18,7 +18,7 @@ LONG	OLE_current_handle;
  *           OleRegisterServer
  */
 OLESTATUS OleRegisterServer( LPCSTR name, LPOLESERVER serverStruct,
-                             LHSERVER *hRet, HINSTANCE hServer,
+                             LHSERVER *hRet, HINSTANCE16 hServer,
                              OLE_SERVER_USE use )
 {
     dprintf_ole(stdnimp,"OleRegisterServer:%s\n",name);

@@ -132,7 +132,7 @@ base	1
 0125 stdcall DefWindowProcA(long long long long) DefWindowProc32A
 0126 stdcall DefWindowProcW(long long long long) DefWindowProc32W
 0127 stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos
-0128 stdcall DeleteMenu(long) DeleteMenu
+0128 stdcall DeleteMenu(long long long) DeleteMenu
 0129 stub DestroyAcceleratorTable
 0130 stdcall DestroyCaret() DestroyCaret
 0131 stub DestroyCursor
@@ -278,8 +278,8 @@ base	1
 0271 stub GetMessagePos
 0272 stub GetMessageTime
 0273 stdcall GetMessageW(ptr long long long) USER32_GetMessageA
-0274 stub GetNextDlgGroupItem
-0275 stub GetNextDlgTabItem
+0274 stdcall GetNextDlgGroupItem(long long long) GetNextDlgGroupItem32
+0275 stdcall GetNextDlgTabItem(long long long) GetNextDlgTabItem32
 0276 stub GetOpenClipboardWindow
 0277 stdcall GetParent(long) GetParent32
 0278 stub GetPriorityClipboardFormat
@@ -498,7 +498,7 @@ base	1
 0491 stub SetMenuItemInfoW
 0492 stub SetMessageExtraInfo
 0493 stdcall  SetMessageQueue(long) SetMessageQueue
-0494 stub SetParent
+0494 stdcall SetParent(long long) SetParent
 0495 stub SetProcessWindowStation
 0496 stdcall SetPropA(long ptr long) SetProp32A
 0497 stdcall SetPropW(long ptr long) SetProp32W

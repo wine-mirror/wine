@@ -1249,7 +1249,7 @@ BOOL32 ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
         else  /* hide it */
         {
             if (!(wndPtr->dwStyle & WS_HSCROLL)
-                && !(wndPtr->dwStyle & WS_HSCROLL)) return TRUE;
+                && !(wndPtr->dwStyle & WS_VSCROLL)) return TRUE;
             wndPtr->dwStyle &= ~(WS_HSCROLL | WS_VSCROLL);
         }
         break;

@@ -6,7 +6,7 @@ typedef struct tagLISTSTRUCT {
         MEASUREITEMSTRUCT16 mis;
         UINT            itemState;
         RECT16          itemRect;
-	HANDLE		hData;
+	HLOCAL16	hData;
 	char            *itemText;
 	struct tagLISTSTRUCT *lpNext;
 } LISTSTRUCT, *LPLISTSTRUCT;
@@ -27,14 +27,14 @@ typedef struct {
 	HWND	hSelf;
 	DWORD   dwStyle;      /* added for COMBOLBOX style faking */
 	HWND    hParent;
-	HFONT   hFont;
+	HFONT16 hFont;
 	BOOL    bRedrawFlag;
         BOOL    HasStrings;
         BOOL    OwnerDrawn;
 	WORD    iNumStops;
 	LPINT16 TabStops;
         BOOL    needMeasure;
-	HANDLE	HeapSel;
+	HGLOBAL16 HeapSel;
 /*	MDESC   *Heap; */
 } HEADLIST,*LPHEADLIST;
 

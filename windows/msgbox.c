@@ -176,7 +176,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 
 int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
 {
-    HANDLE handle;
+    HANDLE16 handle;
     MSGBOX mbox;
     int ret;
 

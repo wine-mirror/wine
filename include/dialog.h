@@ -19,16 +19,15 @@ typedef struct
     INT32       msgResult;   /* Result of EndDialog() / Default button id */
     HWINDOWPROC dlgProc;     /* Dialog procedure */
     LONG        userInfo;    /* User information (for DWL_USER) */
-    HWND        hwndFocus;   /* Current control with focus */
-    HFONT       hUserFont;   /* Dialog font */
-    HMENU       hMenu;       /* Dialog menu */
+    HWND16      hwndFocus;   /* Current control with focus */
+    HFONT16     hUserFont;   /* Dialog font */
+    HMENU16     hMenu;       /* Dialog menu */
     WORD        xBaseUnit;   /* Dialog units (depends on the font) */
     WORD        yBaseUnit;
     WORD        fEnd;        /* EndDialog() called for this dialog */
-    HANDLE      hDialogHeap;
+    HGLOBAL16   hDialogHeap;
 } DIALOGINFO;
 
-extern BOOL DIALOG_Init(void);
-extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
+extern BOOL32 DIALOG_Init(void);
 
 #endif  /* DIALOG_H */

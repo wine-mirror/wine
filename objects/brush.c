@@ -141,10 +141,10 @@ Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 /***********************************************************************
  *           CreateBrushIndirect    (GDI.50)
  */
-HBRUSH CreateBrushIndirect( const LOGBRUSH16 * brush )
+HBRUSH16 CreateBrushIndirect( const LOGBRUSH16 * brush )
 {
     BRUSHOBJ * brushPtr;
-    HBRUSH hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
+    HBRUSH16 hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
     if (!hbrush) return 0;
     brushPtr = (BRUSHOBJ *) GDI_HEAP_LIN_ADDR( hbrush );
     memcpy( &brushPtr->logbrush, brush, sizeof(*brush) );
@@ -155,7 +155,7 @@ HBRUSH CreateBrushIndirect( const LOGBRUSH16 * brush )
 /***********************************************************************
  *           CreateHatchBrush    (GDI.58)
  */
-HBRUSH CreateHatchBrush( INT style, COLORREF color )
+HBRUSH16 CreateHatchBrush( INT style, COLORREF color )
 {
     LOGBRUSH16 logbrush = { BS_HATCHED, color, style };
     dprintf_gdi(stddeb, "CreateHatchBrush: %d %06lx\n", style, color );
@@ -167,7 +167,7 @@ HBRUSH CreateHatchBrush( INT style, COLORREF color )
 /***********************************************************************
  *           CreatePatternBrush    (GDI.60)
  */
-HBRUSH CreatePatternBrush( HBITMAP hbitmap )
+HBRUSH16 CreatePatternBrush( HBITMAP16 hbitmap )
 {
     LOGBRUSH16 logbrush = { BS_PATTERN, 0, 0 };
     BITMAPOBJ *bmp, *newbmp;
@@ -179,7 +179,7 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
     if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
     logbrush.lbHatch = (INT16)CreateBitmapIndirect16( &bmp->bitmap );
-    newbmp = (BITMAPOBJ *) GDI_GetObjPtr( (HANDLE)logbrush.lbHatch, BITMAP_MAGIC );
+    newbmp = (BITMAPOBJ *) GDI_GetObjPtr( (HGDIOBJ16)logbrush.lbHatch, BITMAP_MAGIC );
     if (!newbmp) return 0;
     XCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
 	       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
@@ -190,7 +190,7 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
 /***********************************************************************
  *           CreateDIBPatternBrush    (GDI.445)
  */
-HBRUSH CreateDIBPatternBrush( HGLOBAL16 hbitmap, UINT coloruse )
+HBRUSH16 CreateDIBPatternBrush( HGLOBAL16 hbitmap, UINT coloruse )
 {
     LOGBRUSH16 logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;
@@ -214,9 +214,9 @@ HBRUSH CreateDIBPatternBrush( HGLOBAL16 hbitmap, UINT coloruse )
 	GlobalUnlock16( hbitmap );
 	return 0;
     }
-    newInfo = (BITMAPINFO *) GlobalLock16( (HANDLE)logbrush.lbHatch );
+    newInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch );
     memcpy( newInfo, info, size );
-    GlobalUnlock16( (HANDLE)logbrush.lbHatch );
+    GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
     GlobalUnlock16( hbitmap );
     return CreateBrushIndirect( &logbrush );
 }
@@ -225,7 +225,7 @@ HBRUSH CreateDIBPatternBrush( HGLOBAL16 hbitmap, UINT coloruse )
 /***********************************************************************
  *           CreateSolidBrush    (GDI.66)
  */
-HBRUSH CreateSolidBrush( COLORREF color )
+HBRUSH16 CreateSolidBrush( COLORREF color )
 {
     LOGBRUSH16 logbrush = { BS_SOLID, color, 0 };
     dprintf_gdi(stddeb, "CreateSolidBrush: %06lx\n", color );
@@ -270,7 +270,7 @@ BOOL32 SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
 /***********************************************************************
  *           GetSysColorBrush    (USER.281)
  */
-HBRUSH GetSysColorBrush(WORD x)
+HBRUSH16 GetSysColorBrush(WORD x)
 {
     fprintf( stderr, "Unimplemented stub: GetSysColorBrush(%d)\n", x );
     return GetStockObject(LTGRAY_BRUSH);
@@ -280,15 +280,15 @@ HBRUSH GetSysColorBrush(WORD x)
 /***********************************************************************
  *           BRUSH_DeleteObject
  */
-BOOL BRUSH_DeleteObject( HBRUSH hbrush, BRUSHOBJ * brush )
+BOOL32 BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush )
 {
     switch(brush->logbrush.lbStyle)
     {
       case BS_PATTERN:
-	  DeleteObject( (HANDLE)brush->logbrush.lbHatch );
+	  DeleteObject( (HGDIOBJ16)brush->logbrush.lbHatch );
 	  break;
       case BS_DIBPATTERN:
-	  GlobalFree16( (HANDLE)brush->logbrush.lbHatch );
+	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
 	  break;
     }
     return GDI_FreeObject( hbrush );
@@ -330,7 +330,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 /***********************************************************************
  *           BRUSH_SelectPatternBrush
  */
-static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
+static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP16 hbitmap )
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
@@ -357,11 +357,11 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 /***********************************************************************
  *           BRUSH_SelectObject
  */
-HBRUSH BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
+HBRUSH16 BRUSH_SelectObject( DC * dc, HBRUSH16 hbrush, BRUSHOBJ * brush )
 {
-    HBITMAP hBitmap;
+    HBITMAP16 hBitmap;
     BITMAPINFO * bmpInfo;
-    HBRUSH prevHandle = dc->w.hBrush;
+    HBRUSH16 prevHandle = dc->w.hBrush;
 
     dprintf_gdi(stddeb, "Brush_SelectObject: hdc=%04x hbrush=%04x\n",
                 dc->hSelf,hbrush);
@@ -373,16 +373,16 @@ HBRUSH BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	case BS_HATCHED:
 	case BS_HOLLOW:
 	    if (!MF_CreateBrushIndirect(dc, hbrush, &(brush->logbrush)))
-		return (HBRUSH)0;
+		return (HBRUSH16)0;
 	    break;
 
 	case BS_PATTERN:
 	case BS_DIBPATTERN:
 	    if (!MF_CreatePatternBrush(dc, hbrush, &(brush->logbrush)))
-		return (HBRUSH)0;
+		return (HBRUSH16)0;
 	    break;
 	}
-	return (HBRUSH)1;
+	return (HBRUSH16)1;
     }
     
     dc->w.hBrush = hbrush;
@@ -415,12 +415,12 @@ HBRUSH BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	
       case BS_PATTERN:
 	dprintf_gdi( stddeb, "BS_PATTERN\n");
-	BRUSH_SelectPatternBrush( dc, (HBRUSH)brush->logbrush.lbHatch );
+	BRUSH_SelectPatternBrush( dc, (HBRUSH16)brush->logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
 	dprintf_gdi( stddeb, "BS_DIBPATTERN\n");
-	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HANDLE)brush->logbrush.lbHatch )))
+	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)brush->logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, brush->logbrush.lbColor );
 	    hBitmap = CreateDIBitmap( dc->hSelf, &bmpInfo->bmiHeader, CBM_INIT,
@@ -428,7 +428,7 @@ HBRUSH BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 				      (WORD) brush->logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( dc, hBitmap );
 	    DeleteObject( hBitmap );
-	    GlobalUnlock16( (HANDLE)brush->logbrush.lbHatch );	    
+	    GlobalUnlock16( (HGLOBAL16)brush->logbrush.lbHatch );	    
 	}
 	
 	break;

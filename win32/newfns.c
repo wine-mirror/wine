@@ -23,17 +23,17 @@ BOOL WIN32_WinHelpA(HWND hWnd,LPCSTR lpszHelp,UINT uCommand, DWORD dwData)
 	return WinHelp(hWnd,lpszHelp,uCommand,dwData);
 }
 
-HHOOK SetWindowsHookEx32A(int HookId, HOOKPROC32 hookfn, HINSTANCE hModule,
+HHOOK SetWindowsHookEx32A(INT32 id, HOOKPROC32 hookfn, HINSTANCE32 hModule,
 				DWORD ThreadId)
 
 {
 	/* Stub for now */
-	fprintf(stdnimp, "SetWindowsHookEx32A Stub called! (hook Id %d)\n", HookId);
+	fprintf(stdnimp, "SetWindowsHookEx32A Stub called! (hook Id %d)\n",id);
 	
 	return (HHOOK) NULL;
 }
 
-HHOOK SetWindowsHook32A(int HookId, HOOKPROC32 hookfn)
+HHOOK SetWindowsHook32A(INT32 HookId, HOOKPROC32 hookfn)
 {
 	/* Stub for now */
 	fprintf(stdnimp, "SetWindowsHook32A Stub called! (hook Id %d)\n", HookId);
@@ -41,7 +41,7 @@ HHOOK SetWindowsHook32A(int HookId, HOOKPROC32 hookfn)
 	return (HHOOK) NULL;
 }
 
-BOOL UnhookWindowsHookEx32(HHOOK hHook)
+BOOL32 UnhookWindowsHookEx32(HHOOK hHook)
 
 {
 	/* Stub for now */

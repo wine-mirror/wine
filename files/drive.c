@@ -80,7 +80,7 @@ static const FS_DESCR DRIVE_Filesystems[] =
 static DOSDRIVE DOSDrives[MAX_DOS_DRIVES];
 static int DRIVE_CurDrive = -1;
 
-static HTASK DRIVE_LastTask = 0;
+static HTASK16 DRIVE_LastTask = 0;
 
 
 /***********************************************************************

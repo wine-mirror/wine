@@ -12,7 +12,8 @@
 #endif
 
 #if !defined(__WINE__) && !defined(WINELIB)
-/* If we are not compiling Wine, then we are using Winelib */
+/* If we are not compiling Wine, then we should be using Winelib */
+#error You must use 'configure --with-library' to build Winelib programs
 #define WINELIB
 #endif
 

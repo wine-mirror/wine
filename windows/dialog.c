@@ -61,7 +61,7 @@ static WORD xBaseUnit = 0, yBaseUnit = 0;
  *
  * Initialisation of the dialog manager.
  */
-BOOL DIALOG_Init()
+BOOL32 DIALOG_Init()
 {
     TEXTMETRIC16 tm;
     HDC hdc;
@@ -81,20 +81,6 @@ BOOL DIALOG_Init()
     dprintf_dialog( stddeb, "DIALOG_Init: base units = %d,%d\n",
                     xBaseUnit, yBaseUnit );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           DIALOG_GetFirstTabItem
- *
- * Return the first item of the dialog that has the WS_TABSTOP style.
- */
-HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
-{
-    WND *pWnd = WIN_FindWndPtr( hwndDlg );
-    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        if (pWnd->dwStyle & WS_TABSTOP) return pWnd->hwndSelf;
-    return 0;
 }
 
 
@@ -274,7 +260,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
                                          info.y * dlgInfo->yBaseUnit / 8,
                                          info.cx * dlgInfo->xBaseUnit / 4,
                                          info.cy * dlgInfo->yBaseUnit / 8,
-                                         pWnd->hwndSelf, (HMENU)info.id,
+                                         pWnd->hwndSelf, (HMENU16)info.id,
                                          instance, info.data );
         }
         else
@@ -288,7 +274,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
                                           info.y * dlgInfo->yBaseUnit / 8,
                                           info.cx * dlgInfo->xBaseUnit / 4,
                                           info.cy * dlgInfo->yBaseUnit / 8,
-                                          pWnd->hwndSelf, (HMENU)info.id,
+                                          pWnd->hwndSelf, (HMENU32)info.id,
                                           hInst, info.data );
         }
         if (!hwndCtrl) return FALSE;
@@ -469,12 +455,12 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 /***********************************************************************
  *           DIALOG_CreateIndirect
  */
-static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
+static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
                                    HWND owner, DLGPROC16 dlgProc,
                                    LPARAM param, WINDOWPROCTYPE procType )
 {
-    HMENU hMenu = 0;
-    HFONT hFont = 0;
+    HMENU16 hMenu = 0;
+    HFONT16 hFont = 0;
     HWND hwnd;
     RECT16 rect;
     WND * wndPtr;
@@ -513,7 +499,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	if (hFont)
 	{
 	    TEXTMETRIC16 tm;
-	    HFONT oldFont;
+	    HFONT16 oldFont;
 
 	    HDC32 hdc = GetDC32(0);
 	    oldFont = SelectObject( hdc, hFont );
@@ -594,7 +580,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     /* Send initialisation messages and set focus */
 
-    dlgInfo->hwndFocus = DIALOG_GetFirstTabItem( hwnd );
+    dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
     if (dlgInfo->hUserFont)
 	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
     if (SendMessage32A(hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param))
@@ -905,7 +891,8 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
         case VK_DOWN:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                SetFocus32( GetNextDlgGroupItem(hwndDlg,GetFocus32(),FALSE) );
+                SetFocus32( GetNextDlgGroupItem32( hwndDlg, GetFocus32(),
+                                                   FALSE ) );
                 return TRUE;
             }
             break;
@@ -914,7 +901,8 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
         case VK_UP:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                SetFocus32( GetNextDlgGroupItem(hwndDlg,GetFocus32(),TRUE) );
+                SetFocus32( GetNextDlgGroupItem32( hwndDlg, GetFocus32(),
+                                                   TRUE ) );
                 return TRUE;
             }
             break;
@@ -1225,56 +1213,95 @@ void MapDialogRect32( HWND32 hwnd, LPRECT32 rect )
 
 
 /***********************************************************************
- *           GetNextDlgGroupItem   (USER.227)
+ *           GetNextDlgGroupItem16   (USER.227)
  */
-HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
+HWND16 GetNextDlgGroupItem16(HWND16 hwndDlg, HWND16 hwndCtrl, BOOL16 fPrevious)
 {
-    WND *pWnd, *pWndStart, *pWndCtrl, *pWndDlg;
-
-    if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
-    if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
-    if (pWndCtrl->parent != pWndDlg) return 0;
-
-    if (!fPrevious && pWndCtrl->next)  /* Check if next control is in group */
-    {
-        if (!(pWndCtrl->next->dwStyle & WS_GROUP))
-            return pWndCtrl->next->hwndSelf;
-    }
-
-      /* Now we will have to find the start of the group */
-
-    for (pWnd = pWndStart = pWndDlg->child; pWnd; pWnd = pWnd->next)
-    {
-        if (pWnd->dwStyle & WS_GROUP) pWndStart = pWnd;  /* Start of a group */
-	if (pWnd == pWndCtrl) break;
-    }
-
-    if (!pWnd) fprintf(stderr, "GetNextDlgGroupItem: hwnd not in dialog!\n");
-
-      /* only case left for forward search: wraparound */
-    if (!fPrevious) return pWndStart->hwndSelf;
-
-    pWnd = pWndStart->next;
-    while (pWnd && (pWnd != pWndCtrl))
-    {
-        if (pWnd->dwStyle & WS_GROUP) break;
-        pWndStart = pWnd;
-        pWnd = pWnd->next;
-    }
-    return pWndStart->hwndSelf;
+    return (HWND16)GetNextDlgGroupItem32( hwndDlg, hwndCtrl, fPrevious );
 }
 
 
 /***********************************************************************
- *           GetNextDlgTabItem   (USER.228)
+ *           GetNextDlgGroupItem32   (USER32.274)
  */
-HWND GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
+HWND32 GetNextDlgGroupItem32(HWND32 hwndDlg, HWND32 hwndCtrl, BOOL32 fPrevious)
 {
     WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
 
     if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
-    if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
-    if (pWndCtrl->parent != pWndDlg) return 0;
+    if (hwndCtrl)
+    {
+        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
+        /* Make sure hwndCtrl is a top-level child */
+        while ((pWndCtrl->dwStyle & WS_CHILD) && (pWndCtrl->parent != pWndDlg))
+            pWndCtrl = pWndCtrl->parent;
+        if (pWndCtrl->parent != pWndDlg) return 0;
+    }
+    else
+    {
+        /* No ctrl specified -> start from the beginning */
+        if (!(pWndCtrl = pWndDlg->child)) return 0;
+        if (fPrevious) while (pWndCtrl->next) pWndCtrl = pWndCtrl->next;
+    }
+
+    pWndLast = pWndCtrl;
+    pWnd = pWndCtrl->next;
+    while (1)
+    {
+        if (!pWnd || (pWnd->dwStyle & WS_GROUP))
+        {
+            /* Wrap-around to the beginning of the group */
+            WND *pWndStart = pWndDlg->child;
+            for (pWnd = pWndStart; pWnd; pWnd = pWnd->next)
+            {
+                if (pWnd->dwStyle & WS_GROUP) pWndStart = pWnd;
+                if (pWnd == pWndCtrl) break;
+            }
+            pWnd = pWndStart;
+        }
+        if (pWnd == pWndCtrl) break;
+	if ((pWnd->dwStyle & WS_VISIBLE) && !(pWnd->dwStyle & WS_DISABLED))
+	{
+            pWndLast = pWnd;
+	    if (!fPrevious) break;
+	}
+        pWnd = pWnd->next;
+    }
+    return pWndLast->hwndSelf;
+}
+
+
+/***********************************************************************
+ *           GetNextDlgTabItem16   (USER.228)
+ */
+HWND16 GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl, BOOL16 fPrevious )
+{
+    return (HWND16)GetNextDlgTabItem32( hwndDlg, hwndCtrl, fPrevious );
+}
+
+
+/***********************************************************************
+ *           GetNextDlgTabItem32   (USER32.275)
+ */
+HWND32 GetNextDlgTabItem32( HWND32 hwndDlg, HWND32 hwndCtrl, BOOL32 fPrevious )
+{
+    WND *pWnd, *pWndLast, *pWndCtrl, *pWndDlg;
+
+    if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
+    if (hwndCtrl)
+    {
+        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl ))) return 0;
+        /* Make sure hwndCtrl is a top-level child */
+        while ((pWndCtrl->dwStyle & WS_CHILD) && (pWndCtrl->parent != pWndDlg))
+            pWndCtrl = pWndCtrl->parent;
+        if (pWndCtrl->parent != pWndDlg) return 0;
+    }
+    else
+    {
+        /* No ctrl specified -> start from the beginning */
+        if (!(pWndCtrl = pWndDlg->child)) return 0;
+        if (fPrevious) while (pWndCtrl->next) pWndCtrl = pWndCtrl->next;
+    }
 
     pWndLast = pWndCtrl;
     pWnd = pWndCtrl->next;
@@ -1282,7 +1309,8 @@ HWND GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
     {
         if (!pWnd) pWnd = pWndDlg->child;
         if (pWnd == pWndCtrl) break;
-	if ((pWnd->dwStyle & WS_TABSTOP) && (pWnd->dwStyle & WS_VISIBLE))
+	if ((pWnd->dwStyle & WS_TABSTOP) && (pWnd->dwStyle & WS_VISIBLE) &&
+            !(pWnd->dwStyle & WS_DISABLED))
 	{
             pWndLast = pWnd;
 	    if (!fPrevious) break;

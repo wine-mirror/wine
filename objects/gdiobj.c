@@ -12,7 +12,6 @@
 #include "brush.h"
 #include "font.h"
 #include "heap.h"
-#include "module.h"
 #include "palette.h"
 #include "pen.h"
 #include "region.h"
@@ -148,8 +147,6 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &SystemFixedFont
 };
 
-static FARPROC16 defDCHookCallback;
-
 
 /***********************************************************************
  *           GDI_Init
@@ -164,13 +161,6 @@ BOOL32 GDI_Init(void)
     /* Initialize drivers */
 
     if (!X11DRV_Init()) return FALSE;
-
-    /* Get default hook */
-
-    defDCHookCallback = (FARPROC16)MODULE_GetEntryPoint(GetModuleHandle("USER"),
-                                                        362  /* DCHook */ );
-    dprintf_gdi( stddeb, "DCHook: 16-bit callback is %08x\n",
-                 (unsigned)defDCHookCallback );
 
       /* Create default palette */
 
@@ -194,22 +184,13 @@ BOOL32 GDI_Init(void)
 
 
 /***********************************************************************
- *           GDI_GetDefDCHook
- */
-FARPROC16 GDI_GetDefDCHook(void)
-{
-    return defDCHookCallback;
-}
-
-
-/***********************************************************************
  *           GDI_AllocObject
  */
-HANDLE16 GDI_AllocObject( WORD size, WORD magic )
+HGDIOBJ16 GDI_AllocObject( WORD size, WORD magic )
 {
     static DWORD count = 0;
     GDIOBJHDR * obj;
-    HANDLE handle = GDI_HEAP_ALLOC( size );
+    HGDIOBJ16 handle = GDI_HEAP_ALLOC( size );
     if (!handle) return 0;
     obj = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     obj->hNext   = 0;
@@ -222,7 +203,7 @@ HANDLE16 GDI_AllocObject( WORD size, WORD magic )
 /***********************************************************************
  *           GDI_FreeObject
  */
-BOOL32 GDI_FreeObject( HANDLE16 handle )
+BOOL32 GDI_FreeObject( HGDIOBJ16 handle )
 {
     GDIOBJHDR * object;
 
@@ -246,7 +227,7 @@ BOOL32 GDI_FreeObject( HANDLE16 handle )
  * Return a pointer to the GDI object associated to the handle.
  * Return NULL if the object has the wrong magic number.
  */
-GDIOBJHDR * GDI_GetObjPtr( HANDLE16 handle, WORD magic )
+GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
 {
     GDIOBJHDR * ptr = NULL;
 
@@ -290,13 +271,13 @@ BOOL DeleteObject( HGDIOBJ16 obj )
 /***********************************************************************
  *           GetStockObject    (GDI.87)
  */
-HANDLE GetStockObject( int obj )
+HGDIOBJ16 GetStockObject( INT16 obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
     dprintf_gdi(stddeb, "GetStockObject: returning %d\n",
                 FIRST_STOCK_HANDLE + obj );
-    return (HANDLE)(FIRST_STOCK_HANDLE + obj);
+    return (HGDIOBJ16)(FIRST_STOCK_HANDLE + obj);
 }
 
 
@@ -376,7 +357,7 @@ INT32 GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 /***********************************************************************
  *           SelectObject    (GDI.45)
  */
-HANDLE SelectObject( HDC hdc, HANDLE handle )
+HGDIOBJ16 SelectObject( HDC hdc, HGDIOBJ16 handle )
 {
     GDIOBJHDR * ptr = NULL;
     DC * dc;
@@ -406,7 +387,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
       case FONT_MAGIC:
 	  return FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
       case REGION_MAGIC:
-	  return (HANDLE)SelectClipRgn( hdc, handle );
+	  return (HGDIOBJ16)SelectClipRgn( hdc, handle );
     }
     return 0;
 }
@@ -415,7 +396,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
 /***********************************************************************
  *           UnrealizeObject    (GDI.150)
  */
-BOOL UnrealizeObject( HANDLE obj )
+BOOL UnrealizeObject( HGDIOBJ16 obj )
 {
       /* Check if object is valid */
 
@@ -521,7 +502,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
 /***********************************************************************
  *           IsGDIObject    (GDI.462)
  */
-BOOL IsGDIObject(HANDLE handle)
+BOOL16 IsGDIObject( HGDIOBJ16 handle )
 {
     GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (object)

@@ -42,7 +42,7 @@
 static BOOL CBCheckSize(HWND hwnd);
 static BOOL CBLCheckSize(HWND hwnd);
 
-static HBITMAP hComboBit = 0;
+static HBITMAP16 hComboBit = 0;
 static WORD CBitHeight, CBitWidth;
 
 static int COMBO_Init()
@@ -175,7 +175,7 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 				  WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | ES_LEFT,
 				  0, 0, rect.right-6-CBitWidth,
 				  lphl->StdItemHeight+2*SYSMETRICS_CYBORDER,
-				  hwnd, (HMENU)ID_EDIT, WIN_GetWindowInstance(hwnd), NULL );
+				  hwnd, (HMENU16)ID_EDIT, WIN_GetWindowInstance(hwnd), NULL );
 				  
   lboxrect.top+=lphc->LBoxTop;
   lphc->hWndLBox = CreateWindow16( className, NULL, style |
@@ -184,7 +184,7 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 				lboxrect.left, lboxrect.top,
 				lboxrect.right - lboxrect.left, 
 				lboxrect.bottom - lboxrect.top,
-				hwndp,(HMENU)ID_CLB, WIN_GetWindowInstance(hwnd),
+				hwndp,(HMENU16)ID_CLB, WIN_GetWindowInstance(hwnd),
 				(LPVOID)(HWND32)hwnd );
 
    wndPtr->dwStyle &= ~(WS_VSCROLL | WS_HSCROLL);
@@ -224,8 +224,8 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
   PAINTSTRUCT16  ps;
-  HBRUSH hBrush;
-  HFONT  hOldFont;
+  HBRUSH16 hBrush;
+  HFONT16  hOldFont;
   HDC16 hdc;
   RECT16 rect;
   
@@ -558,7 +558,7 @@ static LRESULT CBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (wParam == 0)
     lphl->hFont = GetStockObject(SYSTEM_FONT);
   else
-    lphl->hFont = (HFONT)wParam;
+    lphl->hFont = (HFONT16)wParam;
   if (lphc->hWndEdit)
      SendMessage16(lphc->hWndEdit,WM_SETFONT,lphl->hFont,0); 
   return 0;
@@ -914,8 +914,8 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
   LPHEADLIST   lphl = CLBoxGetListHeader(hwnd);
   LPLISTSTRUCT lpls;
   PAINTSTRUCT16  ps;
-  HBRUSH       hBrush;
-  HFONT        hOldFont;
+  HBRUSH16 hBrush;
+  HFONT16 hOldFont;
   WND * wndPtr = WIN_FindWndPtr(hwnd);
   HWND  combohwnd = CLBoxGetCombo(hwnd);
   HDC16 hdc;

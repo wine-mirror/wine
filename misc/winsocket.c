@@ -44,7 +44,7 @@ extern int h_errno;
 
 struct ipc_packet {
 	long	mtype;
-	HANDLE	handle;
+	HANDLE16 handle;
 	HWND	hWnd;
 	WORD	wMsg;
 	LONG	lParam;
@@ -114,7 +114,7 @@ struct WinSockHeap {
 	char scratch[8192];
 };
 static struct WinSockHeap *Heap;
-static HANDLE HeapHandle;
+static HGLOBAL16 HeapHandle;
 #ifndef WINELIB32
 static int ScratchPtr;
 #endif
@@ -1156,9 +1156,9 @@ SEGPTR WINSOCK_getservbyport(INT port, const char *proto)
 /******************** winsock specific functions ************************
  *
  */
-static HANDLE new_handle = 1;
+static HANDLE16 new_handle = 1;
 
-static HANDLE AllocWSAHandle(void)
+static HANDLE16 AllocWSAHandle(void)
 {
 	return new_handle++;
 }
@@ -1198,7 +1198,7 @@ static void recv_message(int sig)
 }
 
 
-static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
+static void send_message( HWND hWnd, u_int wMsg, HANDLE16 handle, long lParam)
 {
 	struct ipc_packet message;
 	
@@ -1216,10 +1216,10 @@ static void send_message( HWND hWnd, u_int wMsg, HANDLE handle, long lParam)
 }
 
 
-HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr,
+HANDLE16 WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr,
                              INT len, INT type, LPSTR buf, INT buflen)
 {
-	HANDLE handle;
+	HANDLE16 handle;
 	struct hostent *host;
 	int newpid;
 
@@ -1251,10 +1251,10 @@ HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, LPCSTR addr,
 }
 
 
-HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, LPCSTR name, 
+HANDLE16 WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, LPCSTR name, 
                              LPSTR buf, INT buflen)
 {
-	HANDLE handle;
+	HANDLE16 handle;
 	struct hostent *host;
 	int newpid;
 
@@ -1286,10 +1286,10 @@ HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, LPCSTR name,
 }                     
 
 
-HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, LPCSTR name, 
+HANDLE16 WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, LPCSTR name, 
                               LPSTR buf, INT buflen)
 {
-	HANDLE handle;
+	HANDLE16 handle;
 	struct protoent *proto;
 	int newpid;
 
@@ -1321,10 +1321,10 @@ HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, LPCSTR name,
 }
 
 
-HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number, 
+HANDLE16 WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number, 
                                 LPSTR buf, INT buflen)
 {
-	HANDLE handle;
+	HANDLE16 handle;
 	struct protoent *proto;
 	int newpid;
 
@@ -1356,10 +1356,10 @@ HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number,
 }
 
 
-HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, LPCSTR name, 
+HANDLE16 WSAAsyncGetServByName(HWND hWnd, u_int wMsg, LPCSTR name, 
                              LPCSTR proto, LPSTR buf, INT buflen)
 {
-	HANDLE handle;
+	HANDLE16 handle;
 	struct servent *service;
 	int newpid;
 
@@ -1391,10 +1391,10 @@ HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, LPCSTR name,
 }
 
 
-HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, LPCSTR proto,
+HANDLE16 WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, LPCSTR proto,
                              LPSTR buf, INT buflen)
 {
-	HANDLE handle;
+	HANDLE16 handle;
 	struct servent *service;
 	int newpid;
 
@@ -1493,7 +1493,7 @@ INT WSAFDIsSet(SOCKET fd, WinSock_fd_set *set)
   return 0;
 }                                                            
 
-INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
+INT WSACancelAsyncRequest(HANDLE16 hAsyncTaskHandle)
 {
 	dprintf_winsock(stddeb, "WSA_AsyncRequest: handle %04x\n", hAsyncTaskHandle);
 

@@ -1,6 +1,9 @@
-DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
-TOPSRC = @top_srcdir@
-MODULE = x11drv
+DEFS      = -D__WINE__ -DNO_TRANSITION_TYPES
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = x11drv
 
 C_SRCS = \
 	font.c \

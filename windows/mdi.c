@@ -31,8 +31,8 @@
 #include "debug.h"
 
 
-static HBITMAP hBmpClose   = 0;
-static HBITMAP hBmpRestore = 0;
+static HBITMAP16 hBmpClose   = 0;
+static HBITMAP16 hBmpRestore = 0;
 
 DWORD SCROLL_SetNCSbState(WND*,int,int,int,int,int,int);
 
@@ -215,7 +215,8 @@ void MDI_CalcDefaultChildPos(WND* w, WORD n, LPPOINT16 lpPos, INT delta)
 /**********************************************************************
  *					MDISetMenu
  */
-HMENU MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU hmenuFrame, HMENU hmenuWindow)
+HMENU16 MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU16 hmenuFrame,
+                   HMENU16 hmenuWindow)
 {
     WND           *w         = WIN_FindWndPtr(hwnd);
     MDICLIENTINFO *ci;
@@ -228,7 +229,7 @@ HMENU MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU hmenuFrame, HMENU hmenuWindow)
     if (!fRefresh) 
        {
 	HWND hwndFrame = GetParent16(hwnd);
-	HMENU oldFrameMenu = GetMenu(hwndFrame);
+	HMENU16 oldFrameMenu = GetMenu(hwndFrame);
         
 	if( ci->hwndChildMaximized && hmenuFrame && hmenuFrame!=oldFrameMenu )
 	    MDI_RestoreFrameMenu(w->parent, ci->hwndChildMaximized );
@@ -356,7 +357,7 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
     hwnd = CreateWindow16( (LPCSTR)PTR_SEG_TO_LIN(cs->szClass),
                            (LPCSTR)PTR_SEG_TO_LIN(cs->szTitle), style, 
 			  cs->x, cs->y, cs->cx, cs->cy, parent, 
-                         (HMENU)(DWORD)(WORD)wIDmenu, w->hInstance, 
+                         (HMENU16)wIDmenu, w->hInstance, 
 			 (LPVOID)lParam);
 
     /* MDI windows are WS_CHILD so they won't be activated by CreateWindow */
@@ -406,8 +407,7 @@ void MDI_ChildGetMinMaxInfo(WND* clientWnd, HWND hwnd, MINMAXINFO16* lpMinMax )
 
  MapWindowPoints16(clientWnd->parent->hwndSelf, 
 	       ((MDICLIENTINFO*)clientWnd->wExtra)->self, (LPPOINT16)&rect, 2);
- AdjustWindowRectEx16( &rect, childWnd->dwStyle & ~(WS_VSCROLL | WS_HSCROLL),
-		      0, childWnd->dwExStyle );
+ AdjustWindowRectEx16( &rect, childWnd->dwStyle, 0, childWnd->dwExStyle );
 
  lpMinMax->ptMaxSize.x = rect.right -= rect.left;
  lpMinMax->ptMaxSize.y = rect.bottom -= rect.top;
@@ -664,7 +664,7 @@ MDIWCL* MDI_BuildWCL(WND* clientWnd, INT16* iTotal)
 /**********************************************************************
  *				CreateMDIMenuBitmap
  */
-HBITMAP CreateMDIMenuBitmap(void)
+HBITMAP16 CreateMDIMenuBitmap(void)
 {
  HDC 		hDCSrc  = CreateCompatibleDC(0);
  HDC		hDCDest	= CreateCompatibleDC(hDCSrc);
@@ -842,7 +842,7 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
 {
  WND*		child = WIN_FindWndPtr(hChild);
  HGLOBAL16      handle;
- HMENU  	hSysPopup = 0;
+ HMENU16  	hSysPopup = 0;
 
  dprintf_mdi(stddeb,"MDI_AugmentFrameMenu: frame %p,child %04x\n",frame,hChild);
 
@@ -1070,7 +1070,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
       case WM_MDISETMENU:
 #ifdef WINELIB32
-	return (LRESULT)MDISetMenu(hwnd, FALSE, (HMENU)wParam, (HMENU)lParam);
+	return (LRESULT)MDISetMenu(hwnd, FALSE, (HMENU16)wParam, (HMENU16)lParam);
 #else
 	return (LRESULT)MDISetMenu(hwnd, wParam, LOWORD(lParam), HIWORD(lParam));
 #endif

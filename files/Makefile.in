@@ -1,7 +1,10 @@
 prefix     = @prefix@
 sysconfdir = @sysconfdir@
 DEFS       = -D__WINE__  -DETCDIR=\"$(sysconfdir)\"
-TOPSRC     = @top_srcdir@
+TOPSRCDIR  = @top_srcdir@
+TOPOBJDIR  = ..
+SRCDIR     = @srcdir@
+VPATH      = @srcdir@
 MODULE     = files
 
 C_SRCS = \
