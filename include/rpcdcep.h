@@ -93,8 +93,6 @@ typedef struct _RPC_CLIENT_INTERFACE
 #define TRANSPORT_TYPE_LPC  0x04
 #define TRANSPORT_TYPE_WMSG 0x08
 
-typedef RPC_STATUS (*RPC_BLOCKING_FN)(void* hWnd, void* Context, HANDLE hSyncEvent);
-
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcGetBuffer( RPC_MESSAGE* Message );
 RPCRTAPI RPC_STATUS RPC_ENTRY
@@ -116,8 +114,23 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI RPC_BINDING_HANDLE RPC_ENTRY
   I_RpcGetCurrentCallHandle( void );
 
+/*
+ * The platform SDK headers don't define these functions at all if WINNT is defined
+ * The MSVC6 headers define two different sets of functions :
+ *  If WINNT and MSWMSG are defined, the NT versions are defined
+ *  If WINNT is not defined, the windows 9x versions are defined.
+ * Note that the prototypes for I_RpcBindingSetAsync are different for each case.
+ *
+ * Wine defaults to the WinNT case and only defines these function is MSWMSG is
+ *  defined. Defining the NT functions by default causes MIDL generated proxys
+ *  to not compile.
+ */
+
+#if 1  /* WINNT */
+#ifdef MSWMSG
+
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  I_RpcServerStartListening( void* hWnd );
+  I_RpcServerStartListening( HWND hWnd );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcServerStopListening( void );
 /* WINNT */
@@ -126,21 +139,42 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcAsyncSendReceive( RPC_MESSAGE* Message, void* Context, HWND hWnd );
 
+typedef RPC_STATUS (*RPC_BLOCKING_FN)(void* hWnd, void* Context, HANDLE hSyncEvent);
+
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING_FN BlockingFn );
-
-/* WIN9x */
-RPCRTAPI RPC_STATUS RPC_ENTRY
-  I_RpcSetThreadParams( int fClientFree, void* Context, void* hWndClient );
 
 RPCRTAPI UINT RPC_ENTRY
   I_RpcWindowProc( void* hWnd, UINT Message, UINT wParam, ULONG lParam );
 
-/* WINNT */
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcSetWMsgEndpoint( WCHAR* Endpoint );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcBindingInqTransportType( RPC_BINDING_HANDLE Binding, unsigned int* Type );
+
+#endif
+
+#else
+
+/* WIN9x */
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  I_RpcServerStartListening( void* hWnd );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  I_RpcServerStopListening( void );
+
+typedef RPC_STATUS (*RPC_BLOCKING_FN)(void* hWnd, void* Context, void* hSyncEvent);
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  I_RpcBindingSetAsync( RPC_BINDING_HANDLE Binding, RPC_BLOCKING_FN BlockingFn, unsigned long ServerTid );
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  I_RpcSetThreadParams( int fClientFree, void* Context, void* hWndClient );
+
+RPCRTAPI UINT RPC_ENTRY
+  I_RpcWindowProc( void* hWnd, unsigned int Message, unsigned int wParam, unsigned long lParam );
+
+#endif
 
 #endif /*__WINE_RPCDCEP_H */
