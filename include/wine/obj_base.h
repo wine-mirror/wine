@@ -423,14 +423,14 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 #ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
 
 #define ICOM_DEFINE(iface,ibase) \
-    typedef struct iface: public ibase { \
+    struct iface: public ibase { \
         iface##_METHODS \
             } __attribute__ ((com_interface));
 
 #else
 
 #define ICOM_DEFINE(iface,ibase) \
-    typedef struct iface: public ibase { \
+    struct iface: public ibase { \
         iface##_METHODS \
     };
 
