@@ -77,8 +77,14 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 	hDest = FindWindowA( "MS_WINHELP", NULL );
 	if(!hDest) {
 	  if(wCommand == HELP_QUIT) return TRUE;
-          if (WinExec ( "winhlp32.exe -x", SW_SHOWNORMAL ) < 32) return FALSE;
-	  if ( ! ( hDest = FindWindowA ( "MS_WINHELP", NULL ) )) return FALSE;
+          if (WinExec ( "winhlp32.exe -x", SW_SHOWNORMAL ) < 32) {
+	      FIXME("cant start winhlp32.exe -x?\n");
+	      return FALSE;
+	  }
+	  if ( ! ( hDest = FindWindowA ( "MS_WINHELP", NULL ) )) {
+	      FIXME("did not find MS_WINHELP\n");
+	      return FALSE;
+	  }
         }
 
 
@@ -106,7 +112,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 			dsize = ((LPHELPWININFOA)dwData)->wStructSize;
 			break;
 		default:
-			WARN("Unknown help command %d\n",wCommand);
+			FIXME("Unknown help command %d\n",wCommand);
 			return FALSE;
 	}
 	if(lpHelpFile)
