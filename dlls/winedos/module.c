@@ -584,6 +584,15 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
   ExitThread( retval );
 }
 
+
+/***********************************************************************
+ *		MZ_Current
+ */
+BOOL WINAPI MZ_Current( void )
+{
+    return (write_pipe != -1); /* FIXME: do a better check */
+}
+
 #else /* !MZ_SUPPORTED */
 
 /***********************************************************************
@@ -611,7 +620,6 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
 void WINAPI MZ_AllocDPMITask( void )
 {
     ERR("Actual real-mode calls not supported on this platform!\n");
-    return NULL;
 }
 
 /***********************************************************************
@@ -622,12 +630,12 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
   ExitThread( retval );
 }
 
-#endif /* !MZ_SUPPORTED */
-
 /***********************************************************************
  *		MZ_Current
  */
 BOOL WINAPI MZ_Current( void )
 {
-    return (write_pipe != -1); /* FIXME: do a better check */
+    return FALSE;
 }
+
+#endif /* !MZ_SUPPORTED */
