@@ -51,7 +51,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
 {
-    BYTE ascii, scan;
+   BIOSDATA *data = NULL;
+   BYTE ascii, scan;
+
    switch AH_reg(context) {
 
    case 0x00: /* Get Keystroke */
@@ -84,24 +86,11 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       break;
 
    case 0x02: /* Get Shift Flags */
-      SET_AL( context, 0 );
 
-      if (GetAsyncKeyState(VK_RSHIFT))
-          context->Eax |= 0x01;
-      if (GetAsyncKeyState(VK_LSHIFT))
-          context->Eax |= 0x02;
-      if (GetAsyncKeyState(VK_LCONTROL) || GetAsyncKeyState(VK_RCONTROL))
-          context->Eax |= 0x04;
-      if (GetAsyncKeyState(VK_LMENU) || GetAsyncKeyState(VK_RMENU))
-          context->Eax |= 0x08;
-      if (GetAsyncKeyState(VK_SCROLL))
-          context->Eax |= 0x10;
-      if (GetAsyncKeyState(VK_NUMLOCK))
-          context->Eax |= 0x20;
-      if (GetAsyncKeyState(VK_CAPITAL))
-          context->Eax |= 0x40;
-      if (GetAsyncKeyState(VK_INSERT))
-          context->Eax |= 0x80;
+      /* read value from BIOS data segment's keyboard status flags field */
+      data = BIOS_DATA;
+      SET_AL( context, data->KbdFlags1 );
+
       TRACE("Get Shift Flags: returning 0x%02x\n", AL_reg(context));
       break;
 

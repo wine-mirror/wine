@@ -240,12 +240,16 @@ static void DOSVM_ProcessConsole(void)
 {
   INPUT_RECORD msg;
   DWORD res;
-  BYTE scan;
+  BYTE scan, ascii;
 
   if (ReadConsoleInputA(GetStdHandle(STD_INPUT_HANDLE),&msg,1,&res)) {
     switch (msg.EventType) {
     case KEY_EVENT:
       scan = msg.Event.KeyEvent.wVirtualScanCode;
+      ascii = msg.Event.KeyEvent.uChar.AsciiChar;
+      TRACE("scan %02x, ascii %02x\n", scan, ascii);
+
+      /* set the "break" (release) flag if key released */
       if (!msg.Event.KeyEvent.bKeyDown) scan |= 0x80;
 
       /* check whether extended bit is set,
@@ -253,7 +257,7 @@ static void DOSVM_ProcessConsole(void)
       if (msg.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) {
         DOSVM_Int09SendScan(0xE0,0);
       }
-      DOSVM_Int09SendScan(scan,msg.Event.KeyEvent.uChar.AsciiChar);
+      DOSVM_Int09SendScan(scan, ascii);
       break;
     case MOUSE_EVENT:
       DOSVM_Int33Console(&msg.Event.MouseEvent);

@@ -874,7 +874,7 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
 }
 
 /******************************************************************
- *		CUSER_GetCtrlKeyState
+ *		WCUSER_GetCtrlKeyState
  *
  * Get the console bit mask equivalent to the VK_ status in keyState
  */
@@ -884,7 +884,6 @@ static DWORD    WCUSER_GetCtrlKeyState(BYTE* keyState)
 
     GetKeyboardState(keyState);
     if (keyState[VK_SHIFT]    & 0x80)	ret |= SHIFT_PRESSED;
-    if (keyState[VK_CONTROL]  & 0x80)	ret |= LEFT_CTRL_PRESSED; /* FIXME: gotta choose one */
     if (keyState[VK_LCONTROL] & 0x80)	ret |= LEFT_CTRL_PRESSED;
     if (keyState[VK_RCONTROL] & 0x80)	ret |= RIGHT_CTRL_PRESSED;
     if (keyState[VK_LMENU]    & 0x80)	ret |= LEFT_ALT_PRESSED;

@@ -134,9 +134,10 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
 /***********************************************************************
  *           update_queue_key_state
  */
-static void update_queue_key_state( UINT msg, WPARAM wp )
+static void update_queue_key_state( UINT msg, WPARAM wp, LPARAM lp )
 {
-    BOOL down = FALSE;
+    BOOL down = FALSE, iskey = FALSE;
+    WPARAM dualkey = 0;
 
     switch (msg)
     {
@@ -165,7 +166,24 @@ static void update_queue_key_state( UINT msg, WPARAM wp )
     case WM_KEYUP:
     case WM_SYSKEYUP:
         wp = wp & 0xff;
+	iskey = TRUE;
         break;
+    }
+    if (iskey)
+    {
+        switch(wp)
+        {
+            case VK_SHIFT:
+		dualkey = (HIWORD(lp) & KF_EXTENDED) ? VK_RSHIFT : VK_LSHIFT;
+                break;
+            case VK_CONTROL:
+		dualkey = (HIWORD(lp) & KF_EXTENDED) ? VK_RCONTROL : VK_LCONTROL;
+                break;
+            case VK_MENU:
+		dualkey = (HIWORD(lp) & KF_EXTENDED) ? VK_RMENU : VK_LMENU;
+                break;
+            
+        }
     }
     if (down)
     {
@@ -174,6 +192,16 @@ static void update_queue_key_state( UINT msg, WPARAM wp )
         *p |= 0x80;
     }
     else QueueKeyStateTable[wp] &= ~0x80;
+    if (dualkey)
+    { /* also update the "dual" keys properly */
+        if (down)
+        {
+            BYTE *p = &QueueKeyStateTable[dualkey];
+            if (!(*p & 0x80)) *p ^= 0x01;
+            *p |= 0x80;
+        }
+        else QueueKeyStateTable[dualkey] &= ~0x80;
+    }
 }
 
 
@@ -328,7 +356,7 @@ static BOOL process_raw_keyboard_message( MSG *msg, ULONG_PTR extra_info )
     }
 
     /* if we are going to throw away the message, update the queue state now */
-    if (!msg->hwnd) update_queue_key_state( msg->message, msg->wParam );
+    if (!msg->hwnd) update_queue_key_state( msg->message, msg->wParam, msg->lParam );
 
     return (msg->hwnd != 0);
 }
@@ -343,7 +371,7 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
 {
     if (remove)
     {
-        update_queue_key_state( msg->message, msg->wParam );
+        update_queue_key_state( msg->message, msg->wParam, msg->lParam );
 
         /* Handle F1 key by sending out WM_HELP message */
         if ((msg->message == WM_KEYUP) &&
@@ -483,7 +511,7 @@ static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL r
         raw_message += WM_LBUTTONDOWN - WM_LBUTTONDBLCLK;
     }
 
-    if (remove) update_queue_key_state( raw_message, 0 );
+    if (remove) update_queue_key_state( raw_message, 0, 0 );
 
     if (HOOK_IsHooked( WH_MOUSE ))
     {
@@ -662,7 +690,7 @@ SHORT WINAPI GetKeyState(INT vkey)
  *		GetKeyboardState (USER32.@)
  *
  * An application calls the GetKeyboardState function in response to a
- * keyboard-input message.  This function retrieves the state of the keyboard
+ * keyboard input message.  This function retrieves the state of the keyboard
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
  */
 BOOL WINAPI GetKeyboardState(LPBYTE lpKeyState)
