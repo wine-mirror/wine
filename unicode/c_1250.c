@@ -643,7 +643,7 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table cptable_1250 =
 {
-    { 1250, 1, { 0x3f, 0x00 }, 0x003f, "ANSI Eastern Europe" },
+    { 1250, 1, 0x003f, 0x003f, "ANSI Eastern Europe" },
     cp2uni,
     uni2cp_low,
     uni2cp_high

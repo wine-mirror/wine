@@ -676,7 +676,7 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table cptable_28598 =
 {
-    { 28598, 1, { 0x3f, 0x00 }, 0x003f, "ISO 8859-8 Hebrew" },
+    { 28598, 1, 0x003f, 0x003f, "ISO 8859-8 Hebrew" },
     cp2uni,
     uni2cp_low,
     uni2cp_high

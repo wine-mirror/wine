@@ -55,6 +55,44 @@ static inline int wcstombs_sbcs( const struct sbcs_table *table,
     }
 }
 
+/* slow version of wcstombs_sbcs that handles the various flags */
+static int wcstombs_sbcs_slow( const struct sbcs_table *table, int flags,
+                               const unsigned short *src, unsigned int srclen,
+                               char *dst, unsigned int dstlen,
+                               const char *defchar, int *used )
+{
+    const unsigned short * const cp2uni = table->cp2uni;
+    const unsigned char  * const uni2cp_low = table->uni2cp_low;
+    const unsigned short * const uni2cp_high = table->uni2cp_high;
+    const unsigned char table_default = table->info.def_char & 0xff;
+    int ret = srclen, tmp;
+
+    if (dstlen < srclen)
+    {
+        /* buffer too small: fill it up to dstlen and return error */
+        srclen = dstlen;
+        ret = -1;
+    }
+
+    if (!defchar) defchar = &table_default;
+    if (!used) used = &tmp;  /* avoid checking on every char */
+
+    while (srclen)
+    {
+        unsigned char ch = uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)];
+        if (((flags & WC_NO_BEST_FIT_CHARS) && (cp2uni[ch] != *src)) ||
+            (ch == table_default && *src != table->info.def_unicode_char))
+        {
+            ch = *defchar;
+            *used = 1;
+        }
+        *dst++ = ch;
+        src++;
+        srclen--;
+    }
+    return ret;
+}
+
 /* query necessary dst length for src string */
 static inline int get_length_dbcs( const struct dbcs_table *table,
                                    const unsigned short *src, unsigned int srclen )
@@ -94,20 +132,82 @@ static inline int wcstombs_dbcs( const struct dbcs_table *table,
     return dstlen - len;
 }
 
+/* slow version of wcstombs_dbcs that handles the various flags */
+static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
+                               const unsigned short *src, unsigned int srclen,
+                               char *dst, unsigned int dstlen,
+                               const char *defchar, int *used )
+{
+    const unsigned short * const uni2cp_low = table->uni2cp_low;
+    const unsigned short * const uni2cp_high = table->uni2cp_high;
+    const unsigned short * const cp2uni = table->cp2uni;
+    const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
+    unsigned short defchar_value = table->info.def_char;
+    int len, tmp;
+
+    if (defchar) defchar_value = defchar[1] ? ((defchar[0] << 8) | defchar[1]) : defchar[0];
+    if (!used) used = &tmp;  /* avoid checking on every char */
+
+    for (len = dstlen; srclen && len; len--, srclen--, src++)
+    {
+        unsigned short res = uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)];
+
+        if (res == table->info.def_char && *src != table->info.def_unicode_char)
+        {
+            res = defchar_value;
+            *used = 1;
+        }
+        else if (flags & WC_NO_BEST_FIT_CHARS)
+        {
+            /* check if char maps back to the same Unicode value */
+            if (res & 0xff00)
+            {
+                unsigned char off = cp2uni_lb[res >> 8];
+                if (cp2uni[(off << 8) + (res & 0xff)] != *src)
+                {
+                    res = defchar_value;
+                    *used = 1;
+                }
+            }
+            else if (cp2uni[res & 0xff] != *src)
+            {
+                res = defchar_value;
+                *used = 1;
+            }
+        }
+
+        if (res & 0xff00)
+        {
+            if (len == 1) break;  /* do not output a partial char */
+            len--;
+            *dst++ = res >> 8;
+        }
+        *dst++ = (char)res;
+    }
+    if (srclen) return -1;  /* overflow */
+    return dstlen - len;
+}
+
 /* wide char to multi byte string conversion */
 /* return -1 on dst buffer overflow */
 int cp_wcstombs( const union cptable *table, int flags,
                  const unsigned short *src, int srclen,
-                 char *dst, int dstlen )
+                 char *dst, int dstlen, const char *defchar, int *used )
 {
     if (table->info.char_size == 1)
     {
         if (!dstlen) return srclen;
+        if (flags || defchar || used)
+            return wcstombs_sbcs_slow( &table->sbcs, flags, src, srclen,
+                                       dst, dstlen, defchar, used );
         return wcstombs_sbcs( &table->sbcs, src, srclen, dst, dstlen );
     }
     else /* mbcs */
     {
         if (!dstlen) return get_length_dbcs( &table->dbcs, src, srclen );
+        if (flags || defchar || used)
+            return wcstombs_dbcs_slow( &table->dbcs, flags, src, srclen,
+                                       dst, dstlen, defchar, used );
         return wcstombs_sbcs( &table->sbcs, src, srclen, dst, dstlen );
     }
 }

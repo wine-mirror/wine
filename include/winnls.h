@@ -153,11 +153,11 @@
 #define CP_UTF7					65000
 #define CP_UTF8					65001
 
-#define WC_DEFAULTCHECK				0x00000100
-#define WC_COMPOSITECHECK			0x00000200
-#define WC_DISCARDNS				0x00000010
-#define WC_SEPCHARS				0x00000020
-#define WC_DEFAULTCHAR				0x00000040
+#define WC_DISCARDNS                0x00000010
+#define WC_SEPCHARS                 0x00000020
+#define WC_DEFAULTCHAR              0x00000040
+#define WC_COMPOSITECHECK           0x00000200
+#define WC_NO_BEST_FIT_CHARS        0x00000400
 
 #define MAKELCID(l, s)		(MAKELONG(l, s))
 

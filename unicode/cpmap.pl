@@ -328,7 +328,7 @@ sub DUMP_SBCS_TABLE
     # output the code page descriptor
 
     printf OUTPUT "const struct sbcs_table cptable_%03d =\n{\n", $codepage;
-    printf OUTPUT "    { %d, 1, { 0x%02x, 0x00 }, 0x%04x, \"%s\" },\n",
+    printf OUTPUT "    { %d, 1, 0x%04x, 0x%04x, \"%s\" },\n",
                   $codepage, $DEF_CHAR, $DEF_CHAR, $name;
     printf OUTPUT "    cp2uni,\n";
     printf OUTPUT "    uni2cp_low,\n";
@@ -471,7 +471,7 @@ sub DUMP_DBCS_TABLE
     # output the code page descriptor
 
     printf OUTPUT "const struct dbcs_table cptable_%03d =\n{\n", $codepage;
-    printf OUTPUT "    { %d, 2, { 0x%02x, 0x00 }, 0x%04x, \"%s\" },\n",
+    printf OUTPUT "    { %d, 2, 0x%04x, 0x%04x, \"%s\" },\n",
                   $codepage, $DEF_CHAR, $DEF_CHAR, $name;
     printf OUTPUT "    cp2uni,\n";
     printf OUTPUT "    cp2uni_leadbytes,\n";
@@ -503,7 +503,7 @@ sub DUMP_LB_RANGES
         }
     }
     if ($on) { printf OUTPUT "0xff, "; }
-    printf OUTPUT "}\n";
+    printf OUTPUT "0x00, 0x00 }\n";
 }
 
 

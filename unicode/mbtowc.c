@@ -16,7 +16,7 @@ static inline int check_invalid_chars_sbcs( const struct sbcs_table *table,
     const unsigned short * const cp2uni = table->cp2uni;
     while (srclen)
     {
-        if (cp2uni[*src] == table->info.def_unicode_char && *src != table->info.def_char[0])
+        if (cp2uni[*src] == table->info.def_unicode_char && *src != table->info.def_char)
             break;
         src++;
         srclen--;
@@ -102,13 +102,12 @@ static inline int check_invalid_chars_dbcs( const struct dbcs_table *table,
         {
             if (srclen == 1) break;  /* partial char, error */
             if (cp2uni[(off << 8) + src[1]] == table->info.def_unicode_char &&
-                (src[0] != table->info.def_char[0] || src[1] != table->info.def_char[1]))
-                break;
+                ((src[0] << 8) | src[1]) != table->info.def_char) break;
             src++;
             srclen--;
         }
         else if (cp2uni[*src] == table->info.def_unicode_char &&
-                 (*src != table->info.def_char[0] || table->info.def_char[1])) break;
+                 *src != table->info.def_char) break;
         src++;
         srclen--;
     }

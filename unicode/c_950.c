@@ -6553,10 +6553,10 @@ static const unsigned short uni2cp_high[256] =
 
 const struct dbcs_table cptable_950 =
 {
-    { 950, 2, { 0x3f, 0x00 }, 0x003f, "ANSI/OEM Traditional Chinese Big5" },
+    { 950, 2, 0x003f, 0x003f, "ANSI/OEM Traditional Chinese Big5" },
     cp2uni,
     cp2uni_leadbytes,
     uni2cp_low,
     uni2cp_high,
-    { 0x81, 0xfe, }
+    { 0x81, 0xfe, 0x00, 0x00 }
 };

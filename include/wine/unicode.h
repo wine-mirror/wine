@@ -12,7 +12,7 @@ struct cp_info
 {
     unsigned int          codepage;          /* codepage id */
     unsigned int          char_size;         /* char size (1 or 2 bytes) */
-    char                  def_char[2];       /* default char value */
+    unsigned short        def_char;          /* default char value (can be double-byte) */
     unsigned short        def_unicode_char;  /* default Unicode char value */
     const char           *name;              /* code page name */
 };
@@ -50,11 +50,30 @@ extern int cp_mbstowcs( const union cptable *table, int flags,
                         unsigned short *dst, int dstlen );
 extern int cp_wcstombs( const union cptable *table, int flags,
                         const unsigned short *src, int srclen,
-                        char *dst, int dstlen );
+                        char *dst, int dstlen, const char *defchar, int *used );
+
 
 static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
     return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
+}
+
+static inline unsigned int strlenW( const unsigned short *str )
+{
+#if defined(__i386__) && defined(__GNUC__)
+    int dummy, res;
+    __asm__( "cld\n\t"
+             "repne\n\t"
+             "scasw\n\t"
+             "notl %0"
+             : "=c" (res), "=&D" (dummy)
+             : "0" (0xffffffff), "1" (str), "a" (0) );
+    return res - 1;
+#else
+    const unsigned short *s = str;
+    while (*s) s++;
+    return s - str;
+#endif
 }
 
 #endif  /* __WINE_UNICODE_H */

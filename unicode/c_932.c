@@ -5200,10 +5200,10 @@ static const unsigned short uni2cp_high[256] =
 
 const struct dbcs_table cptable_932 =
 {
-    { 932, 2, { 0x3f, 0x00 }, 0x003f, "ANSI/OEM Japanese Shift-JIS" },
+    { 932, 2, 0x003f, 0x003f, "ANSI/OEM Japanese Shift-JIS" },
     cp2uni,
     cp2uni_leadbytes,
     uni2cp_low,
     uni2cp_high,
-    { 0x81, 0x9f, 0xe0, 0xfc, }
+    { 0x81, 0x9f, 0xe0, 0xfc, 0x00, 0x00 }
 };

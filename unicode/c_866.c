@@ -676,7 +676,7 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table cptable_866 =
 {
-    { 866, 1, { 0x3f, 0x00 }, 0x003f, "OEM Russian" },
+    { 866, 1, 0x003f, 0x003f, "OEM Russian" },
     cp2uni,
     uni2cp_low,
     uni2cp_high
