@@ -196,7 +196,7 @@ static void wave_out_test_deviceOut(int device, int format, DWORD flags)
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveOutOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)",device,
+       "waveOutOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)\n",device,
        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
        wave_open_flags(CALLBACK_EVENT|flags),rc,wave_out_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
@@ -260,7 +260,7 @@ static void wave_out_tests()
 
     rc=waveOutGetDevCapsA(ndev+1,&caps,sizeof(caps));
     ok(rc==MMSYSERR_BADDEVICEID,
-       "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d",rc);
+       "waveOutGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
@@ -271,12 +271,12 @@ static void wave_out_tests()
     format.cbSize=0;
     rc=waveOutOpen(&wout,ndev+1,&format,0,0,CALLBACK_NULL);
     ok(rc==MMSYSERR_BADDEVICEID,
-       "waveOutOpen: MMSYSERR_BADDEVICEID expected, got %d",rc);
+       "waveOutOpen: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     for (d=0;d<ndev;d++) {
         rc=waveOutGetDevCapsA(d,&caps,sizeof(caps));
         ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
-           "waveOutGetDevCapsA: failed to get capabilities of device %d: rc=%d",d,rc);
+           "waveOutGetDevCapsA: failed to get capabilities of device %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
@@ -305,7 +305,7 @@ static void wave_out_tests()
 	oformat=format;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT,
-           "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d",d,rc);
+           "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
@@ -324,7 +324,7 @@ static void wave_out_tests()
         format.cbSize=0;
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
-           "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d",d,rc);
+           "waveOutOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %dx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
@@ -373,7 +373,7 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveInOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)",device,
+       "waveInOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)\n",device,
        wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
        wave_open_flags(CALLBACK_EVENT|flags),rc,wave_in_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
@@ -431,7 +431,7 @@ static void wave_in_tests()
 
     rc=waveInGetDevCapsA(ndev+1,&caps,sizeof(caps));
     ok(rc==MMSYSERR_BADDEVICEID,
-       "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d",rc);
+       "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
@@ -442,12 +442,12 @@ static void wave_in_tests()
     format.cbSize=0;
     rc=waveInOpen(&win,ndev+1,&format,0,0,CALLBACK_NULL);
     ok(rc==MMSYSERR_BADDEVICEID,
-       "waveInOpen: MMSYSERR_BADDEVICEID expected, got %d",rc);
+       "waveInOpen: MMSYSERR_BADDEVICEID expected, got %d\n",rc);
 
     for (d=0;d<ndev;d++) {
         rc=waveInGetDevCapsA(d,&caps,sizeof(caps));
         ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
-           "waveInGetDevCapsA: failed to get capabilities of device %d: rc=%d",d,rc);
+           "waveInGetDevCapsA: failed to get capabilities of device %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_BADDEVICEID)
             continue;
 
@@ -476,7 +476,7 @@ static void wave_in_tests()
 	oformat=format;
         rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT,
-           "waveInOpen: opening the device at 2MHz should fail %d: rc=%d",d,rc);
+           "waveInOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
@@ -495,7 +495,7 @@ static void wave_in_tests()
         format.cbSize=0;
         rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
-           "waveInOpen: opening the device at 2MHz should fail %d: rc=%d",d,rc);
+           "waveInOpen: opening the device at 2MHz should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %dx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
