@@ -2883,6 +2883,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, const char *full_filename )
     int header_size = 0;
     char *modimage, *file;
 
+    DEBUG_Printf(DBG_CHN_TRACE, "Processing PDB file %s\n", full_filename);
 
     /*
      * Open and map() .PDB file
@@ -2945,11 +2946,13 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, const char *full_filename )
      * Check .PDB time stamp
      */
 
-    if (      root->TimeDateStamp 
+    if ( root->TimeDateStamp 
          != ((struct CodeViewDebug *)MSC_INFO(module)->dbg_info)->cv_timestamp ) 
     {
-        DEBUG_Printf(DBG_CHN_ERR, "-Wrong time stamp of .PDB file %s\n", full_filename);
-        goto leave;
+        /* the timestamp seems to be wrong often (we may read the file wrong)*/
+        DEBUG_Printf(DBG_CHN_MESG, "-Wrong time stamp of .PDB file %s (0x%08lx, 0x%08x)\n",
+		full_filename, root->TimeDateStamp,
+		((struct CodeViewDebug *)MSC_INFO(module)->dbg_info)->cv_timestamp);
     }
 
     /* 
@@ -3057,14 +3060,10 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, const char* filename)
 {
   HANDLE			hFile, hMap;
   char			      * addr;
-  char			      * codeview;
-  struct CV4_DirHead	      * codeview_dir;
-  struct CV4_DirEnt	      * codeview_dent;
   PIMAGE_DEBUG_DIRECTORY	dbghdr;
   DBG_MODULE			module2;
   int				i;
   int				j;
-  struct codeview_linetab_hdr * linetab;
   int				nsect;
   PIMAGE_SEPARATE_DEBUG_HEADER pdbg = NULL;
   IMAGE_SECTION_HEADER        * sectp;
@@ -3115,47 +3114,62 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, const char* filename)
 		  DEBUG_ProcessCoff(&module2);
 		  break;
 		case IMAGE_DEBUG_TYPE_CODEVIEW:
-		  /*
-		   * This is the older format by which codeview stuff is 
-		   * stored, known as the 'NB09' format.  Newer executables
-		   * and dlls created by VC++ use PDB files instead, which
-		   * have lots of internal similarities, but the overall
-		   * format and structure is quite different.
-		   */
-		  codeview = (addr + dbghdr->PointerToRawData);
+		  {
+		    char * codeview;
+		    struct CV4_DirHead * codeview_dir;
+		    struct CV4_DirEnt * codeview_dent;
+		    struct codeview_linetab_hdr * linetab;
+		    struct CodeViewDebug * cvd;
 
-		  /*
-		   * The first thing in the codeview section should be
-		   * an 'NB09' identifier.  As a sanity check, make sure
-		   * it is there.
-		   */
-		  if( *((unsigned int*) codeview) != 0x3930424e )
+		    cvd = (struct CodeViewDebug *) (addr + dbghdr->PointerToRawData);
+
+		    /*
+		     * see msdn.microsoft.com/library/specs/S66EA.HTM
+		     * for desriptions of more NBxx formats
+		     */
+		    if( strcmp(cvd->cv_nbtype, "NB10") == 0 )
 		    {
-		      break;
+		      /*
+		       * The debug information resides in a seperate pdb file.
+		       * This section contains only a filename.
+		       */
+		      DEBUG_ProcessPDBFile(module, cvd->cv_name);
 		    }
+		    else if (strcmp(cvd->cv_nbtype, "NB09") == 0 )
+		    {
+		      /*
+		       * CodeView 4.10
+		       * This is the older format by which codeview stuff is 
+		       * stored, known as the 'NB09' format.  Newer executables
+		       * and dlls created by VC++ use PDB files instead, which
+		       * have lots of internal similarities, but the overall
+		       * format and structure is quite different.
+		       */
+		      codeview = (addr + dbghdr->PointerToRawData);
+
 		  
-		  /*
-		   * Next we need to find the directory.  This is easy too.
-		   */
-		  codeview_dir = (struct CV4_DirHead *) 
-		    (codeview + ((unsigned int*) codeview)[1]);
+		      /*
+		       * We need to find the directory.  This is easy too.
+		       */
+		      codeview_dir = (struct CV4_DirHead *) 
+		        (codeview + ((unsigned int*) codeview)[1]);
 
-		  /*
-		   * Some more sanity checks.  Make sure that everything
-		   * is as we expect it.
-		   */
-		  if( codeview_dir->next_offset != 0 
-		      || codeview_dir->dhsize != sizeof(*codeview_dir)
-		      || codeview_dir->desize != sizeof(*codeview_dent) )
-		    {
-		      break;
-		    }
-		  codeview_dent = (struct CV4_DirEnt *) (codeview_dir + 1);
+		      /*
+		       * Some more sanity checks.  Make sure that everything
+		       * is as we expect it.
+		       */
+		      if( codeview_dir->next_offset != 0 
+		        || codeview_dir->dhsize != sizeof(*codeview_dir)
+		        || codeview_dir->desize != sizeof(*codeview_dent) )
+		      {
+		        break;
+		      }
+		      codeview_dent = (struct CV4_DirEnt *) (codeview_dir + 1);
 
-		  for(j=0; j < codeview_dir->ndir; j++, codeview_dent++)
-		    {
-		      if( codeview_dent->subsect_number == sstAlignSym )
-			{
+		      for(j=0; j < codeview_dir->ndir; j++, codeview_dent++)
+		      {
+		        if( codeview_dent->subsect_number == sstAlignSym )
+		        {
 			  /*
 			   * Check the previous entry.  If it is a
 			   * sstSrcModule, it contains the line number
@@ -3163,30 +3177,36 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, const char* filename)
 			   */
 			  linetab = NULL;
 			  if( codeview_dent[1].module_number == codeview_dent[0].module_number
-			      && codeview_dent[1].subsect_number == sstSrcModule )
-			    {
-			      linetab = DEBUG_SnarfLinetab(
-					   codeview + codeview_dent[1].offset,
-					   codeview_dent[1].size);
-			    }
+				&& codeview_dent[1].subsect_number == sstSrcModule )
+			  {
+			    linetab = DEBUG_SnarfLinetab(
+				codeview + codeview_dent[1].offset,
+				codeview_dent[1].size);
+			  }
 
 			  if( codeview_dent[-1].module_number == codeview_dent[0].module_number
-			      && codeview_dent[-1].subsect_number == sstSrcModule )
-			    {
-			      linetab = DEBUG_SnarfLinetab(
-					   codeview + codeview_dent[-1].offset,
-					   codeview_dent[-1].size);
-			    }
+				&& codeview_dent[-1].subsect_number == sstSrcModule )
+			  {
+			    linetab = DEBUG_SnarfLinetab(
+				codeview + codeview_dent[-1].offset,
+				codeview_dent[-1].size);
+			  }
 			  /*
 			   * Now process the CV stuff.
 			   */
 			  DEBUG_SnarfCodeView(module, 
-					      codeview + codeview_dent->offset + sizeof(DWORD),
-					      codeview_dent->size - sizeof(DWORD),
-					      linetab);
-			}
+			      codeview + codeview_dent->offset + sizeof(DWORD),
+			      codeview_dent->size - sizeof(DWORD),
+			      linetab);
+		        }
+		      }
 		    }
-
+		    else
+		    {
+		      DEBUG_Printf(DBG_CHN_ERR, "Unknown CODEVIEW type %s in module %s\n", 
+			cvd->cv_nbtype, module->module_name);
+		    }
+		  }
 		  break;
 		default:
 		  break;
@@ -3230,10 +3250,11 @@ DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module)
 	       * it yet.
 	       */
 	      sts = FALSE;
+	      DEBUG_Printf(DBG_CHN_ERR, "Unknown CODEVIEW type %s in module %s\n", 
+	          cvd->cv_nbtype, module->module_name);
 	      break;
 	   }
 	sts = DEBUG_ProcessPDBFile(module, cvd->cv_name);
-	DEBUG_Printf(DBG_CHN_TRACE, "Processing PDB file %s\n", cvd->cv_name);
 	break;
      case IMAGE_DEBUG_TYPE_MISC:
 	/*
