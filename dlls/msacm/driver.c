@@ -289,7 +289,7 @@ static	MMRESULT	MSACM_DriverOpenHelper(PWINE_ACMDRIVER* ppad, PWINE_ACMDRIVERID 
 MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpen)
 {
     PWINE_ACMDRIVERID	padid;
-    PWINE_ACMDRIVER	pad, first_pad = NULL;
+    PWINE_ACMDRIVER	pad = NULL, first_pad = NULL;
     MMRESULT		ret;
 
     TRACE("(%p, %x, %08lu)\n", phad, hadid, fdwOpen);
@@ -332,7 +332,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
     return MMSYSERR_NOERROR;
  gotError:
-    if (!pad->hDrvr)
+    if (pad && !pad->hDrvr)
 	HeapFree(MSACM_hHeap, 0, pad);
     return ret;
 }
