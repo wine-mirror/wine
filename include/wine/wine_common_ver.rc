@@ -74,6 +74,9 @@ FILESUBTYPE    VFT2_UNKNOWN
 	    VALUE "OriginalFilename", WINE_FILENAME_STR
 	    VALUE "ProductName", WINE_PRODUCTNAME_STR
 	    VALUE "ProductVersion", WINE_PRODUCTVERSION_STR
+#ifdef WINE_OLESELFREGISTER
+	    VALUE "OLESelfRegister", ""
+#endif
 	}
     }
     BLOCK "VarFileInfo"

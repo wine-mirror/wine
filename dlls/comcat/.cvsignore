@@ -3,3 +3,4 @@ comcat.dll
 comcat.dll.dbg.c
 comcat.spec.c
 comcat.spec.def
+version.res
