@@ -100,6 +100,10 @@ void X11DRV_WND_Finalize(WND *wndPtr)
   X11DRV_WND_DATA *pWndDriverData =
     (X11DRV_WND_DATA *) wndPtr->pDriverData;
 
+  if (!wndPtr->pDriverData) {
+     ERR(win,"Trying to destroy window again. Not good.\n");
+     return;
+  }
   if(pWndDriverData->window)
     {
       ERR(win, 
@@ -108,6 +112,7 @@ void X11DRV_WND_Finalize(WND *wndPtr)
 	  pWndDriverData->window
       );
     }
+  wndPtr->pDriverData = NULL;
   HeapFree(SystemHeap, 0, wndPtr->pDriverData);
 }
 
