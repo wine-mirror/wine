@@ -50,13 +50,13 @@
         Winelib. But the converse is not true. You can also build Winelib
         and Winelib applications on platforms not supported by Wine,
         typically platforms with a non i386 processor. But this is still
-        pretty much an uncharted territory. It would be more reasonable to
-        first target one of the more mundane i386-based platforms first.
+        pretty much uncharted territory. It would be more reasonable to
+        target one of the more mundane i386-based platforms first.
       </para>
       <para>
         The main difference is that the compiler becomes much more important.
-        It is highly recommended that you use gcc, g++,
-        and the GNU binutils. The more recent your gcc compiler the better.
+        It is highly recommended that you use gcc, g++, and the GNU binutils. 
+        The more recent your gcc compiler the better.
         For any serious amount of code you should not consider anything older
         than gcc 2.95.2. The latest gcc snapshots contain some useful bug
         fixes and much better support for anonymous structs and unions. This
