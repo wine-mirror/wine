@@ -19,6 +19,9 @@
  */
 
 #include "config.h"
+#include "miscemu.h"
+#include "wine/debug.h"
+#include "drive.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -26,45 +29,146 @@
 # include <unistd.h>
 #endif
 
-#include "winbase.h"
-#include "winioctl.h"
-#include "miscemu.h"
-#include "wine/debug.h"
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+#include <fcntl.h>
+#ifdef linux
+# include <linux/fd.h>
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
+
+/*
+ * Status of last int13 operation.
+ */
+static BYTE INT13_last_status;
+
+
+/**********************************************************************
+ *         INT13_SetStatus
+ *
+ * Write status to AH register and set carry flag on error (AH != 0).
+ *
+ * Despite what Ralf Brown says, at least functions 0x06 and 0x07 
+ * seem to set carry, too.
+ */
+static void INT13_SetStatus( CONTEXT86 *context, BYTE status )
 {
-    memset( pCxt, 0, sizeof(*pCxt) );
-    /* Note: segment registers == 0 means that CTX_SEG_OFF_TO_LIN
-             will interpret 32-bit register contents as linear pointers */
+    INT13_last_status = status;
 
-    pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
-    pCxt->Eax = pIn->reg_EAX;
-    pCxt->Ebx = pIn->reg_EBX;
-    pCxt->Ecx = pIn->reg_ECX;
-    pCxt->Edx = pIn->reg_EDX;
-    pCxt->Esi = pIn->reg_ESI;
-    pCxt->Edi = pIn->reg_EDI;
+    SET_AH( context, status );
 
-    /* FIXME: Only partial CONTEXT86_CONTROL */
-    pCxt->EFlags = pIn->reg_Flags;
+    if (status)
+        SET_CFLAG( context );
+    else
+        RESET_CFLAG( context );        
 }
 
-static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
+
+/**********************************************************************
+ *	    INT13_ReadFloppyParams
+ *
+ * Read floppy disk parameters.
+ */
+static void INT13_ReadFloppyParams( CONTEXT86 *context )
 {
-    memset( pOut, 0, sizeof(DIOC_REGISTERS) );
+#ifdef linux
+    static const BYTE floppy_params[2][13] =
+    {
+        { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 },
+        { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 }
+    };
 
-    pOut->reg_EAX = pCxt->Eax;
-    pOut->reg_EBX = pCxt->Ebx;
-    pOut->reg_ECX = pCxt->Ecx;
-    pOut->reg_EDX = pCxt->Edx;
-    pOut->reg_ESI = pCxt->Esi;
-    pOut->reg_EDI = pCxt->Edi;
+    static const DWORD drive_type_info[7]={
+        0x0000, /* none */
+        0x2709, /* 360 K */
+        0x4f0f, /* 1.2 M */
+        0x4f09, /* 720 K */
+        0x4f12, /* 1.44 M */
+        0x4f24, /* 2.88 M */
+        0x4f24  /* 2.88 M */
+    };
 
-    /* FIXME: Only partial CONTEXT86_CONTROL */
-    pOut->reg_Flags = pCxt->EFlags;
+    unsigned int i;
+    unsigned int nr_of_drives = 0;
+    BYTE drive_nr = DL_reg( context );
+    int floppy_fd;
+    int r;
+    struct floppy_drive_params floppy_parm;
+    char root[] = "A:\\";
+
+    TRACE("in  [ EDX=%08lx ]\n", context->Edx );
+
+    SET_AL( context, 0 );
+    SET_BX( context, 0 );
+    SET_CX( context, 0 );
+    SET_DH( context, 0 );
+
+    for (i = 0; i < MAX_DOS_DRIVES; i++, root[0]++)
+        if (GetDriveTypeA(root) == DRIVE_REMOVABLE) nr_of_drives++;
+    SET_DL( context, nr_of_drives );
+
+    if (drive_nr > 1) { 
+        /* invalid drive ? */
+        INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
+        return;
+    }
+
+    if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_NONBLOCK)) == -1)
+    {
+        WARN("Can't determine floppy geometry !\n");
+        INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
+        return;
+    }
+    r = ioctl(floppy_fd, FDGETDRVPRM, &floppy_parm);
+ 
+    close(floppy_fd);
+
+    if(r<0)
+    {
+        INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
+        return;
+    }
+
+    SET_BL( context, floppy_parm.cmos );
+
+    /*
+     * CH = low eight bits of max cyl
+     * CL = max sec nr (bits 5-0),
+     *      hi two bits of max cyl (bits 7-6)
+     * DH = max head nr 
+     */
+    if(BL_reg( context ) && BL_reg( context ) < 7)
+    {
+        SET_DH( context, 0x01 );
+        SET_CX( context, drive_type_info[BL_reg( context )] );
+    }
+
+    context->Edi = (DWORD)floppy_params[drive_nr];
+
+    if(!context->Edi)
+    {
+        ERR("Get floppy params failed for drive %d\n", drive_nr);
+        INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
+        return;
+    }
+
+    TRACE("out [ EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx EDI=%08lx ]\n",
+          context->Eax, context->Ebx, context->Ecx, context->Edx, context->Edi);
+
+    INT13_SetStatus( context, 0x00 ); /* success */
+
+    /* FIXME: Word exits quietly if we return with no error. Why? */
+    FIXME("Returned ERROR!\n");
+    SET_CFLAG( context );
+
+#else
+    INT13_SetStatus( context, 0x01 ); /* invalid function */
+#endif
 }
+
 
 /**********************************************************************
  *         DOSVM_Int13Handler (WINEDOS16.119)
@@ -73,28 +177,120 @@ static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
  */
 void WINAPI DOSVM_Int13Handler( CONTEXT86 *context )
 {
-    HANDLE hVWin32;
-    DIOC_REGISTERS regs;
-    DWORD dwRet;
+    TRACE( "AH=%02x\n", AH_reg( context ) );
 
-    hVWin32 = CreateFileA("\\\\.\\VWIN32", GENERIC_READ|GENERIC_WRITE,
-               0, NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, 0);
-
-    if(hVWin32!=INVALID_HANDLE_VALUE)
+    switch( AH_reg( context ) )
     {
-        CONTEXT_2_DIOCRegs( context, &regs);
+    case 0x00: /* RESET DISK SYSTEM */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
 
-        if(!DeviceIoControl(hVWin32, VWIN32_DIOC_DOS_INT13,
-                &regs, sizeof regs, &regs, sizeof regs, &dwRet, NULL))
-            DIOCRegs_2_CONTEXT(&regs, context);
+    case 0x01: /* STATUS OF DISK SYSTEM */
+        INT13_SetStatus( context, INT13_last_status );
+        break;
+
+    case 0x02: /* READ SECTORS INTO MEMORY */
+        SET_AL( context, 0 ); /* number of sectors transferred */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x03: /* WRITE SECTORS FROM MEMORY */
+        SET_AL( context, 0 ); /* number of sectors transferred */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x04: /* VERIFY DISK SECTOR(S) */
+        SET_AL( context, 0 ); /* number of sectors verified */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x05: /* FORMAT TRACK */
+    case 0x06: /* FORMAT TRACK AND SET BAD SECTOR FLAGS */
+    case 0x07: /* FORMAT DRIVE STARTING AT GIVEN TRACK  */
+        INT13_SetStatus( context, 0x0c ); /* unsupported track or invalid media */
+        break;
+
+    case 0x08: /* GET DRIVE PARAMETERS  */
+        if (DL_reg( context ) & 0x80) 
+        {
+            /* hard disk ? */
+            INT13_SetStatus( context, 0x07 ); /* drive parameter activity failed */
+        }
         else
-            SET_CFLAG(context);
+        { 
+            /* floppy disk */
+            INT13_ReadFloppyParams( context );
+        }
+        break;
 
-        CloseHandle(hVWin32);
-    }
-    else
-    {
-        ERR("Failed to open device VWIN32\n");
-        SET_CFLAG(context);
-    }
+    case 0x09: /* INITIALIZE CONTROLLER WITH DRIVE PARAMETERS */
+    case 0x0a: /* FIXED DISK - READ LONG */
+    case 0x0b: /* FIXED DISK - WRITE LONG */
+    case 0x0c: /* SEEK TO CYLINDER */
+    case 0x0d: /* ALTERNATE RESET HARD DISK */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x0e: /* READ SECTOR BUFFER */
+    case 0x0f: /* WRITE SECTOR BUFFER */
+        INT13_SetStatus( context, 0x01 ); /* invalid function */
+        break;
+
+    case 0x10: /* CHECK IF DRIVE READY */
+    case 0x11: /* RECALIBRATE DRIVE */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x12: /* CONTROLLER RAM DIAGNOSTIC */
+    case 0x13: /* DRIVE DIAGNOSTIC */
+        INT13_SetStatus( context, 0x01 ); /* invalid function */
+        break;
+
+    case 0x14: /* CONTROLLER INTERNAL DIAGNOSTIC */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x15: /* GET DISK TYPE */
+        if (DL_reg( context ) & 0x80) 
+        {
+            /* hard disk ? */
+            INT13_SetStatus( context, 0x00 ); /* success */
+            /* type is fixed disk, overwrites status */
+            SET_AH( context, 0x03 );
+        }
+        else
+        { 
+            /* floppy disk */
+            INT13_SetStatus( context, 0x00 ); /* success */
+            /* type is floppy with change detection, overwrites status */
+            SET_AH( context, 0x02 );
+        }
+        break;
+
+    case 0x16: /* FLOPPY - CHANGE OF DISK STATUS */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    case 0x17: /* SET DISK TYPE FOR FORMAT */
+        if (DL_reg( context ) < 4)
+            INT13_SetStatus( context, 0x00 ); /* successful completion */
+        else
+            INT13_SetStatus( context, 0x01 ); /* error */
+        break;
+
+    case 0x18: /* SET MEDIA TYPE FOR FORMAT */
+        if (DL_reg( context ) < 4)
+            INT13_SetStatus( context, 0x00 ); /* success */
+        else
+            INT13_SetStatus( context, 0x01 ); /* error */
+        break;
+
+    case 0x19: /* FIXED DISK - PARK HEADS */
+        INT13_SetStatus( context, 0x00 ); /* success */
+        break;
+
+    default:
+        INT_BARF( context, 0x13 );
+        INT13_SetStatus( context, 0x01 ); /* invalid function */
+    } 
 }

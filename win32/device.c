@@ -46,16 +46,6 @@
 #include "wine/debug.h"
 #include "callback.h"
 
-/* int 13 stuff */
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#include <fcntl.h>
-#ifdef linux
-# include <linux/fd.h>
-#endif
-#include "drive.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 
@@ -1750,215 +1740,6 @@ static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
 
 #define DIOC_SET_CARRY(regs) (((regs)->reg_Flags)|=0x00000001)
 
-static const DWORD VWIN32_DriveTypeInfo[7]={
-    0x0000, /* none */
-    0x2709, /* 360 K */
-    0x4f0f, /* 1.2 M */
-    0x4f09, /* 720 K */
-    0x4f12, /* 1.44 M */
-    0x4f24, /* 2.88 M */
-    0x4f24  /* 2.88 M */
-};
-
-/**********************************************************************
- *	    VWIN32_ReadFloppyParams
- *
- * Handler for int 13h (disk I/O).
- */
-static VOID VWIN32_ReadFloppyParams(DIOC_REGISTERS *regs)
-{
-#ifdef linux
-    static BYTE floppy_params[2][13] =
-    {
-        { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 },
-        { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 }
-    };
-
-    unsigned int i, nr_of_drives = 0;
-    BYTE drive_nr = DIOC_DL(regs);
-    int floppy_fd,r;
-    struct floppy_drive_params floppy_parm;
-    char root[] = "A:\\";
-
-    TRACE("in  [ EDX=%08lx ]\n", regs->reg_EDX );
-
-    DIOC_AH(regs) = 0x00; /* success */
-
-    for (i = 0; i < MAX_DOS_DRIVES; i++, root[0]++)
-        if (GetDriveTypeA(root) == DRIVE_REMOVABLE) nr_of_drives++;
-    DIOC_DL(regs) = nr_of_drives;
-
-    if (drive_nr > 1) { /* invalid drive ? */
-        DIOC_BX(regs) = 0;
-        DIOC_CX(regs) = 0;
-        DIOC_DH(regs) = 0;
-        DIOC_SET_CARRY(regs);
-        return;
-    }
-
-    if ( (floppy_fd = DRIVE_OpenDevice( drive_nr, O_NONBLOCK)) == -1)
-    {
-        WARN("Can't determine floppy geometry !\n");
-        DIOC_BX(regs) = 0;
-        DIOC_CX(regs) = 0;
-        DIOC_DH(regs) = 0;
-        DIOC_SET_CARRY(regs);
-        return;
-    }
-    r = ioctl(floppy_fd, FDGETDRVPRM, &floppy_parm);
-
-    close(floppy_fd);
-
-    if(r<0)
-    {
-        DIOC_SET_CARRY(regs);
-        return;
-    }
-
-    regs->reg_ECX = 0;
-    DIOC_AL(regs) = 0;
-    DIOC_BL(regs) = floppy_parm.cmos;
-
-    /* CH = low eight bits of max cyl
-       CL = max sec nr (bits 5-0),
-       hi two bits of max cyl (bits 7-6)
-       DH = max head nr */
-    if(DIOC_BL(regs) && (DIOC_BL(regs)<7))
-    {
-        DIOC_DH(regs) = 0x01;
-        DIOC_CX(regs) = VWIN32_DriveTypeInfo[DIOC_BL(regs)];
-    }
-    else
-    {
-        DIOC_CX(regs) = 0x0;
-        DIOC_DX(regs) = 0x0;
-    }
-
-    regs->reg_EDI = (DWORD)floppy_params[drive_nr];
-
-    if(!regs->reg_EDI)
-    {
-        ERR("Get floppy params failed for drive %d\n",drive_nr);
-        DIOC_SET_CARRY(regs);
-    }
-
-    TRACE("out [ EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx EDI=%08lx ]\n",
-          regs->reg_EAX, regs->reg_EBX, regs->reg_ECX, regs->reg_EDX, regs->reg_EDI);
-
-    /* FIXME: Word exits quietly if we return with no error. Why? */
-    FIXME("Returned ERROR!\n");
-    DIOC_SET_CARRY(regs);
-
-#else
-    DIOC_AH(regs) = 0x01;
-    DIOC_SET_CARRY(regs);
-#endif
-}
-
-/**********************************************************************
- *	    VWIN32_Int13Handler
- *
- * Handler for VWIN32_DIOC_DOS_INT13 (disk I/O).
- */
-static VOID VWIN32_Int13Handler( DIOC_REGISTERS *regs)
-{
-    TRACE("AH=%02x\n",DIOC_AH(regs));
-    switch(DIOC_AH(regs)) /* AH */
-    {
-    case 0x00:             /* RESET DISK SYSTEM     */
-        break; /* no return ? */
-
-    case 0x01:             /* STATUS OF DISK SYSTEM */
-        DIOC_AL(regs) = 0; /* successful completion */
-        break;
-
-    case 0x02:             /* READ SECTORS INTO MEMORY */
-        DIOC_AL(regs) = 0; /* number of sectors read */
-        DIOC_AH(regs) = 0; /* status */
-        break;
-
-    case 0x03:             /* WRITE SECTORS FROM MEMORY */
-        break; /* no return ? */
-
-    case 0x04:             /* VERIFY DISK SECTOR(S) */
-        DIOC_AL(regs) = 0; /* number of sectors verified */
-        DIOC_AH(regs) = 0;
-        break;
-
-    case 0x05:             /* FORMAT TRACK */
-    case 0x06:             /* FORMAT TRACK AND SET BAD SECTOR FLAGS */
-    case 0x07:             /* FORMAT DRIVE STARTING AT GIVEN TRACK  */
-        /* despite what Ralf Brown says, 0x06 and 0x07 seem to
-         * set CFLAG, too (at least my BIOS does that) */
-        DIOC_AH(regs) = 0x0c;
-        DIOC_SET_CARRY(regs);
-        break;
-
-    case 0x08:             /* GET DRIVE PARAMETERS  */
-        if (DIOC_DL(regs) & 0x80) { /* hard disk ? */
-            DIOC_AH(regs) = 0x07;
-            DIOC_SET_CARRY(regs);
-        }
-        else  /* floppy disk */
-            VWIN32_ReadFloppyParams(regs);
-        break;
-
-    case 0x09:         /* INITIALIZE CONTROLLER WITH DRIVE PARAMETERS */
-    case 0x0a:         /* FIXED DISK - READ LONG (XT,AT,XT286,PS)     */
-    case 0x0b:         /* FIXED DISK - WRITE LONG (XT,AT,XT286,PS)    */
-    case 0x0c:         /* SEEK TO CYLINDER                            */
-    case 0x0d:         /* ALTERNATE RESET HARD DISKS                  */
-    case 0x10:         /* CHECK IF DRIVE READY                        */
-    case 0x11:         /* RECALIBRATE DRIVE                           */
-    case 0x14:         /* CONTROLLER INTERNAL DIAGNOSTIC              */
-        DIOC_AH(regs) = 0;
-        break;
-
-    case 0x15:         /* GET DISK TYPE (AT,XT2,XT286,CONV,PS) */
-        if (DIOC_DL(regs) & 0x80) { /* hard disk ? */
-            DIOC_AH(regs) = 3; /* fixed disk */
-            DIOC_SET_CARRY(regs);
-        }
-        else { /* floppy disk ? */
-            DIOC_AH(regs) = 2; /* floppy with change detection */
-            DIOC_SET_CARRY(regs);
-        }
-        break;
-
-    case 0x0e:         /* READ SECTOR BUFFER (XT only)      */
-    case 0x0f:         /* WRITE SECTOR BUFFER (XT only)     */
-    case 0x12:         /* CONTROLLER RAM DIAGNOSTIC (XT,PS) */
-    case 0x13:         /* DRIVE DIAGNOSTIC (XT,PS)          */
-        DIOC_AH(regs) = 0x01;
-        DIOC_SET_CARRY(regs);
-        break;
-
-    case 0x16:         /* FLOPPY - CHANGE OF DISK STATUS */
-        DIOC_AH(regs) = 0; /* FIXME - no change */
-        break;
-
-    case 0x17:         /* SET DISK TYPE FOR FORMAT */
-        if (DIOC_DL(regs) < 4)
-            DIOC_AH(regs) = 0x00; /* successful completion */
-        else
-            DIOC_AH(regs) = 0x01; /* error */
-        break;
-
-    case 0x18:         /* SET MEDIA TYPE FOR FORMAT */
-        if (DIOC_DL(regs) < 4)
-            DIOC_AH(regs) = 0x00; /* successful completion */
-        else
-            DIOC_AH(regs) = 0x01; /* error */
-        break;
-
-    case 0x19:       /* FIXED DISK - PARK HEADS */
-        break;
-
-    default:
-        FIXME("Unknown VWIN32 INT13 call AX=%04X\n",DIOC_AX(regs));
-    }
-}
-
 static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
@@ -1969,18 +1750,9 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 
     switch (dwIoControlCode)
     {
-    case VWIN32_DIOC_DOS_INT13:
-    {
-        DIOC_REGISTERS *pIn  = (DIOC_REGISTERS *)lpvInBuffer;
-        DIOC_REGISTERS *pOut = (DIOC_REGISTERS *)lpvOutBuffer;
-
-        memcpy(pOut, pIn, sizeof (DIOC_REGISTERS));
-        VWIN32_Int13Handler(pOut);
-        break;
-    }
-
     case VWIN32_DIOC_DOS_IOCTL:
     case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
+    case VWIN32_DIOC_DOS_INT13:
     case VWIN32_DIOC_DOS_INT25:
     case VWIN32_DIOC_DOS_INT26:
     case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
@@ -2009,6 +1781,9 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
         case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
         case VWIN32_DIOC_DOS_DRIVEINFO:        /* Call int 21h 730x */
             intnum = 0x21;
+            break;
+        case VWIN32_DIOC_DOS_INT13:
+            intnum = 0x13;
             break;
         case VWIN32_DIOC_DOS_INT25: 
             intnum = 0x25;
