@@ -20,16 +20,39 @@
 
 #include "wine/debug.h"
 
+#include "winbase.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 int _crtAssertBusy = -1;
 int _crtBreakAlloc = -1;
 int _crtDbgFlag = 0;
 
+extern int _callnewh(unsigned long);
+
+/*********************************************************************
+ *		??2@YAPAXIHPBDH@Z (MSVCRTD.@)
+ */
+void *MSVCRTD_operator_new_dbg(
+	unsigned long nSize,
+	int nBlockUse,
+	const char *szFileName,
+	int nLine)
+{
+    void *retval = HeapAlloc(GetProcessHeap(), 0, nSize);
+
+    TRACE("(%lu, %d, '%s', %d) returning %p\n", nSize, nBlockUse, szFileName, nLine, retval);
+
+    if (!retval)
+        _callnewh(nSize);
+
+    return retval;
+}
+
 /*********************************************************************
  *		_CrtSetDumpClient (MSVCRTD.@)
  */
-void *_CrtSetDumpClient()
+void *_CrtSetDumpClient(void *dumpClient)
 {
     return NULL;
 }
@@ -38,7 +61,7 @@ void *_CrtSetDumpClient()
 /*********************************************************************
  *		_CrtSetReportHook (MSVCRTD.@)
  */
-void *_CrtSetReportHook()
+void *_CrtSetReportHook(void *reportHook)
 {
     return NULL;
 }
@@ -47,7 +70,7 @@ void *_CrtSetReportHook()
 /*********************************************************************
  *		_CrtSetReportMode (MSVCRTD.@)
  */
-int _CrtSetReportMode()
+int _CrtSetReportMode(int reportType, int reportMode)
 {
     return 0;
 }
@@ -77,7 +100,8 @@ int _CrtSetDbgFlag(int new)
 /*********************************************************************
  *		_CrtDbgReport (MSVCRTD.@)
  */
-int _CrtDbgReport()
+int _CrtDbgReport(int reportType, const char *filename, int linenumber,
+		  const char *moduleName, const char *format, ...)
 {
     return 0;
 }

@@ -16,7 +16,7 @@
 @ cdecl -i386 ??1exception@@UAE@XZ() msvcrt.??1exception@@UAE@XZ
 @ cdecl -i386 ??1type_info@@UAE@XZ() msvcrt.??1type_info@@UAE@XZ
 @ cdecl ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
-@ cdecl ??2@YAPAXIHPBDH@Z(long) msvcrt.??2@YAPAXIHPBDH@Z
+@ cdecl ??2@YAPAXIHPBDH@Z(long long str long) MSVCRTD_operator_new_dbg
 @ cdecl ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
 @ cdecl -i386 ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
 @ cdecl -i386 ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
@@ -68,7 +68,7 @@
 @ cdecl _CItanh() msvcrt._CItanh
 @ stub _CrtCheckMemory
 @ stub _CrtDbgBreak
-@ cdecl _CrtDbgReport(long ptr long ptr ptr)
+@ varargs _CrtDbgReport(long ptr long ptr ptr)
 @ stub _CrtDoForAllClientObjects
 @ cdecl _CrtDumpMemoryLeaks()
 @ stub _CrtIsMemoryBlock
@@ -85,7 +85,7 @@
 @ cdecl _CrtSetDumpClient(ptr)
 @ stub _CrtSetReportFile
 @ cdecl _CrtSetReportHook(ptr)
-@ cdecl _CrtSetReportMode(long)
+@ cdecl _CrtSetReportMode(long long)
 @ cdecl _CxxThrowException(long long) msvcrt._CxxThrowException
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ cdecl _Getdays() msvcrt._Getdays

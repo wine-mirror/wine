@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = msvcrtd.dll
+IMPORTS   = msvcrtd
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+
+CTESTS = \
+	debug.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
