@@ -44,6 +44,7 @@ WINDOWS_INCLUDES = \
 	control.h \
 	cpl.h \
 	custcntl.h \
+	cvconst.h \
 	d3d.h \
 	d3d8.h \
 	d3d8caps.h \

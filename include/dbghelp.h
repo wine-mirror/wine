@@ -205,6 +205,12 @@ typedef struct _IMAGEHLP_DUPLICATE_SYMBOL
 #define SYMOPT_WILD_UNDERSCORE          0x00000800
 #define SYMOPT_USE_DEFAULTS             0x00001000
 #define SYMOPT_INCLUDE_32BIT_MODULES    0x00002000
+#define SYMOPT_PUBLICS_ONLY             0x00004000
+#define SYMOPT_NO_PUBLICS               0x00008000
+#define SYMOPT_AUTO_PUBLICS             0x00010000
+#define SYMOPT_NO_IMAGE_SEARCH          0x00020000
+#define SYMOPT_SECURE                   0x00040000
+#define SYMOPT_NO_PROMPTS               0x00080000
 
 #define SYMOPT_DEBUG                    0x80000000
 
@@ -235,7 +241,7 @@ typedef struct _DBGHELP_MODLOAD_DATA
 } MODLOAD_DATA, *PMODLOAD_DATA;
 
 /*************************
- *     now DBGHELP       *
+ *       MiniDUMP        *
  *************************/
 
 /* DebugHelp */
@@ -523,7 +529,6 @@ typedef struct _MINIDUMP_THREAD_LIST
     MINIDUMP_THREAD             Threads[1]; /* FIXME: no support of 0 sized array */
 } MINIDUMP_THREAD_LIST, *PMINIDUMP_THREAD_LIST;
 
-
 /*************************
  *    MODULE handling    *
  *************************/
@@ -535,7 +540,7 @@ extern BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
 typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(PSTR ModuleName, DWORD BaseOfDll,
                                                    PVOID UserContext);
 extern BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
-                                        PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,  
+                                        PSYM_ENUMMODULES_CALLBACK EnumModulesCallback,
                                         PVOID UserContext);
 extern BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr, 
                                      PIMAGEHLP_MODULE ModuleInfo);
@@ -562,12 +567,26 @@ extern BOOL  WINAPI SymUnloadModule(HANDLE hProcess, DWORD BaseOfDll);
 #define IMAGEHLP_SYMBOL_INFO_CONSTANT              SYMF_CONSTANT        /* 0x100 */
 #define IMAGEHLP_SYMBOL_FUNCTION                   SYMF_FUNCTION        /* 0x800 */
 
+#define SYMFLAG_VALUEPRESENT     0x00000001
+#define SYMFLAG_REGISTER         0x00000008
+#define SYMFLAG_REGREL           0x00000010
+#define SYMFLAG_FRAMEREL         0x00000020
+#define SYMFLAG_PARAMETER        0x00000040
+#define SYMFLAG_LOCAL            0x00000080
+#define SYMFLAG_CONSTANT         0x00000100
+#define SYMFLAG_EXPORT           0x00000200
+#define SYMFLAG_FORWARDER        0x00000400
+#define SYMFLAG_FUNCTION         0x00000800
+#define SYMFLAG_VIRTUAL          0x00001000
+#define SYMFLAG_THUNK            0x00002000
+#define SYMFLAG_TLSREL           0x00004000
+
 typedef struct _SYMBOL_INFO
 {
     ULONG       SizeOfStruct;
     ULONG       TypeIndex;
     ULONG       Reserved[2];
-    ULONG       Reserved2;
+    ULONG       info;
     ULONG       Size;
     ULONG       ModBase;
     ULONG       Flags;
@@ -607,6 +626,9 @@ typedef enum _IMAGEHLP_SYMBOL_TYPE_INFO
     TI_GET_LEXICALPARENT,
     TI_GET_ADDRESS,
     TI_GET_THISADJUST,
+    TI_GET_UDTKIND,
+    TI_IS_EQUIV_TO,
+    TI_GET_CALLING_CONVENTION,
 } IMAGEHLP_SYMBOL_TYPE_INFO;
 
 typedef struct _TI_FINDCHILDREN_PARAMS 
@@ -616,6 +638,24 @@ typedef struct _TI_FINDCHILDREN_PARAMS
     ULONG ChildId[1];
 } TI_FINDCHILDREN_PARAMS;
 
+#define UNDNAME_COMPLETE                 (0x0000)
+#define UNDNAME_NO_LEADING_UNDERSCORES   (0x0001)
+#define UNDNAME_NO_MS_KEYWORDS           (0x0002)
+#define UNDNAME_NO_FUNCTION_RETURNS      (0x0004)
+#define UNDNAME_NO_ALLOCATION_MODEL      (0x0008)
+#define UNDNAME_NO_ALLOCATION_LANGUAGE   (0x0010)
+#define UNDNAME_NO_MS_THISTYPE           (0x0020)
+#define UNDNAME_NO_CV_THISTYPE           (0x0040)
+#define UNDNAME_NO_THISTYPE              (0x0060)
+#define UNDNAME_NO_ACCESS_SPECIFIERS     (0x0080)
+#define UNDNAME_NO_THROW_SIGNATURES      (0x0100)
+#define UNDNAME_NO_MEMBER_TYPE           (0x0200)
+#define UNDNAME_NO_RETURN_UDT_MODEL      (0x0400)
+#define UNDNAME_32_BIT_DECODE            (0x0800)
+#define UNDNAME_NAME_ONLY                (0x1000)
+#define UNDNAME_NO_ARGUMENTS             (0x2000)
+#define UNDNAME_NO_SPECIAL_SYMS          (0x4000)
+
 BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD ModBase, ULONG TypeId,
                            IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID);
 typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO pSymInfo,
@@ -623,11 +663,26 @@ typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO pSymInfo,
 BOOL WINAPI SymEnumTypes(HANDLE hProcess, DWORD BaseOfDll,
                          PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                          PVOID UserContext);
+BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD addr, DWORD* displacement, 
+                        SYMBOL_INFO* sym_info);
+BOOL WINAPI SymFromName(HANDLE hProcess, LPSTR Name, PSYMBOL_INFO Symbol);
 BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, DWORD BaseOfDll, LPSTR Name,
                                PSYMBOL_INFO Symbol);
 BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
                            PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
                            PVOID UserContext);
+typedef BOOL (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK)(PSTR SymbolName, DWORD SymbolAddress,
+                                                   ULONG SymbolSize, PVOID UserContext);
+BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
+                                PSYM_ENUMSYMBOLS_CALLBACK EnumSymbolsCallback,
+                                PVOID UserContext);
+typedef BOOL (CALLBACK *PSYMBOL_REGISTERED_CALLBACK)(HANDLE hProcess, ULONG ActionCode,
+                                                     PVOID CallbackData, PVOID UserContext);
+BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
+                                PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
+                                PVOID UserContext);
+DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
+                                  DWORD UndecoratedLength, DWORD Flags);
 
 /*************************
  *      Source Files     *
@@ -638,6 +693,10 @@ typedef BOOL (CALLBACK *PSYM_ENUMSOURCFILES_CALLBACK)(PSOURCEFILE pSourceFile,
 BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG ModBase, LPSTR Mask,
                                PSYM_ENUMSOURCFILES_CALLBACK cbSrcFiles,
                                PVOID UserContext);
+BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, 
+                               PDWORD pdwDisplacement, PIMAGEHLP_LINE Line);
+BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line);
+BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line);
 
 /*************************
  * File & image handling *
@@ -679,6 +738,116 @@ PVOID WINAPI ImageRvaToVa(PIMAGE_NT_HEADERS NtHeaders, PVOID Base,
 BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
                           PIMAGEHLP_CONTEXT Context);
 
+
+/*************************
+ *    Stack management   *
+ *************************/
+
+typedef struct _KDHELP
+{
+    DWORD       Thread;
+    DWORD       ThCallbackStack;
+    DWORD       NextCallback;
+    DWORD       FramePointer;
+    DWORD       KiCallUserMode;
+    DWORD       KeUserCallbackDispatcher;
+    DWORD       SystemRangeStart;
+} KDHELP, *PKDHELP;
+
+typedef struct _STACKFRAME
+{
+    ADDRESS     AddrPC;
+    ADDRESS     AddrReturn;
+    ADDRESS     AddrFrame;
+    ADDRESS     AddrStack;
+    PVOID       FuncTableEntry;
+    DWORD       Params[4];
+    BOOL        Far;
+    BOOL        Virtual;
+    DWORD       Reserved[3];
+    KDHELP      KdHelp;
+} STACKFRAME, *LPSTACKFRAME;
+
+typedef BOOL (CALLBACK *PREAD_PROCESS_MEMORY_ROUTINE)
+    (HANDLE  hProcess, LPCVOID lpBaseAddress, PVOID lpBuffer,
+     DWORD nSize, PDWORD lpNumberOfBytesRead);
+
+typedef PVOID (CALLBACK *PFUNCTION_TABLE_ACCESS_ROUTINE)
+    (HANDLE hProcess, DWORD AddrBase);
+
+typedef DWORD (CALLBACK *PGET_MODULE_BASE_ROUTINE)
+    (HANDLE hProcess, DWORD ReturnAddress);
+
+typedef DWORD (CALLBACK *PTRANSLATE_ADDRESS_ROUTINE)
+    (HANDLE hProcess, HANDLE hThread, LPADDRESS lpaddr);
+
+BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
+                      LPSTACKFRAME StackFrame, PVOID ContextRecord,
+                      PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,
+                      PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
+                      PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
+                      PTRANSLATE_ADDRESS_ROUTINE TranslateAddress);
+
+PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase);
+
+/*************************
+ * Version, global stuff *
+ *************************/
+
+typedef struct API_VERSION
+{
+    USHORT  MajorVersion;
+    USHORT  MinorVersion;
+    USHORT  Revision;
+    USHORT  Reserved;
+} API_VERSION, *LPAPI_VERSION;
+
+LPAPI_VERSION WINAPI ImagehlpApiVersion(void);
+LPAPI_VERSION WINAPI ImagehlpApiVersionEx(LPAPI_VERSION AppVersion);
+
+typedef struct _IMAGE_DEBUG_INFORMATION
+{
+    LIST_ENTRY                  List;
+    DWORD                       ReservedSize;
+    PVOID                       ReservedMappedBase;
+    USHORT                      ReservedMachine;
+    USHORT                      ReservedCharacteristics;
+    DWORD                       ReservedCheckSum;
+    DWORD                       ImageBase;
+    DWORD                       SizeOfImage;
+    DWORD                       ReservedNumberOfSections;
+    PIMAGE_SECTION_HEADER       ReservedSections;
+    DWORD                       ReservedExportedNamesSize;
+    PSTR                        ReservedExportedNames;
+    DWORD                       ReservedNumberOfFunctionTableEntries;
+    PIMAGE_FUNCTION_ENTRY       ReservedFunctionTableEntries;
+    DWORD                       ReservedLowestFunctionStartingAddress;
+    DWORD                       ReservedHighestFunctionEndingAddress;
+    DWORD                       ReservedNumberOfFpoTableEntries;
+    PFPO_DATA                   ReservedFpoTableEntries;
+    DWORD                       SizeOfCoffSymbols;
+    PIMAGE_COFF_SYMBOLS_HEADER  CoffSymbols;
+    DWORD                       ReservedSizeOfCodeViewSymbols;
+    PVOID                       ReservedCodeViewSymbols;
+    PSTR                        ImageFilePath;
+    PSTR                        ImageFileName;
+    PSTR                        ReservedDebugFilePath;
+    DWORD                       ReservedTimeDateStamp;
+    BOOL                        ReservedRomImage;
+    PIMAGE_DEBUG_DIRECTORY      ReservedDebugDirectory;
+    DWORD                       ReservedNumberOfDebugDirectories;
+    DWORD                       ReservedOriginalFunctionTableBaseAddress;
+    DWORD                       Reserved[ 2 ];
+} IMAGE_DEBUG_INFORMATION, *PIMAGE_DEBUG_INFORMATION;
+
+
+PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(HANDLE FileHandle, PSTR FileName,
+                                                    PSTR SymbolPath, DWORD ImageBase);
+
+BOOL WINAPI UnmapDebugInformation(PIMAGE_DEBUG_INFORMATION DebugInfo);
+
+DWORD   WINAPI  SymGetOptions(void);
+DWORD   WINAPI  SymSetOptions(DWORD);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -1510,6 +1510,7 @@ dlls/d3d8/Makefile
 dlls/d3d9/Makefile
 dlls/d3dim/Makefile
 dlls/d3dx8/Makefile
+dlls/dbghelp/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/ddraw/tests/Makefile
