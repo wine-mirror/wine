@@ -270,10 +270,9 @@ void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD *record)
     mask |= 0x20;
   else if(!newMiddleButton && oldMiddleButton)
     mask |= 0x40;
-
-  VGA_GetAlphaMode(&Width, &Height);
-
-  QueueMouseRelay(640 / Width * record->dwMousePosition.X,
-                 200 / Height * record->dwMousePosition.Y,
-                 mask);
+  
+  if (VGA_GetAlphaMode(&Width, &Height))
+    QueueMouseRelay( 640 / Width * record->dwMousePosition.X,
+                     200 / Height * record->dwMousePosition.Y,
+                     mask );
 }

@@ -48,6 +48,41 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
   data->VideoCursorPos[page*2+1] = Y;
 }
 
+
+/**********************************************************************
+ *         DOSVM_InitializeVideoMode
+ *
+ * The first time this function is called VGA emulation is set to the
+ * default text mode.
+ */
+static void DOSVM_InitializeVideoMode( BIOSDATA *data )
+{
+  static BOOL already_initialized = FALSE;
+  unsigned    width;
+  unsigned    height;
+
+  if(already_initialized)
+    return;
+  already_initialized = TRUE;
+
+  VGA_InitAlphaMode(&width, &height);
+
+  /*
+   * FIXME: Add more mappings between initial size and
+   *        text modes.
+   */
+  if (width >= 80 && height >= 25) {
+    VGA_SetAlphaMode(80, 25);
+    data->VideoColumns = 80;
+    data->VideoMode = 0x02;
+  } else {
+    VGA_SetAlphaMode(40, 25);
+    data->VideoColumns = 40;
+    data->VideoMode = 0x01;
+  }
+}
+
+
 /**********************************************************************
  *	    DOSVM_Int10Handler (WPROCS.116)
  *	    DOSVM_Int10Handler (WINEDOS16.116)
@@ -340,6 +375,8 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {
     BIOSDATA *data = BIOS_DATA;
 
+    DOSVM_InitializeVideoMode( data );
+
     switch(AH_reg(context)) {
 
     case 0x00: /* SET VIDEO MODE */
@@ -365,7 +402,6 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         switch (AL_reg(context)) {
             case 0x00: /* 40x25 */
             case 0x01:
-                VGA_Exit();
                 TRACE("Set Video Mode - Set to Text - 0x0%x\n",
                    AL_reg(context));
                 VGA_SetAlphaMode(40, 25);
@@ -374,7 +410,6 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             case 0x02:
             case 0x03:
             case 0x07:
-                VGA_Exit();
                 TRACE("Set Video Mode - Set to Text - 0x0%x\n",
                    AL_reg(context));
                 VGA_SetAlphaMode(80, 25);
@@ -492,10 +527,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
            {
                 BYTE ascii, attr;
                 TRACE("Read Character and Attribute at Cursor Position\n");
-                if(!VGA_GetCharacterAtCursor(&ascii, &attr)) {
-                    ascii = 0;
-                    attr = 0;
-                }
+                VGA_GetCharacterAtCursor(&ascii, &attr);
                 SET_AL( context, ascii );
                 SET_AH( context, attr );
             }
@@ -824,8 +856,7 @@ static void scroll_window(int direction, char lines, char row1,
 {
    if (!lines) /* Actually, clear the window */
    {
-       if(!VGA_ClearText(row1, col1, row2, col2, attribute))
-            ERR("VGA_ClearText failed!\n");
+       VGA_ClearText(row1, col1, row2, col2, attribute);
    }
    else if (direction == SCROLL_UP)
    {
@@ -837,20 +868,22 @@ static void scroll_window(int direction, char lines, char row1,
    }
 }
 
-
 /**********************************************************************
  *         DOSVM_PutChar
  *
+ * Write single character to VGA console at the current 
+ * cursor position and updates the BIOS cursor position.
  */
-
-void WINAPI DOSVM_PutChar(BYTE ascii)
+void WINAPI DOSVM_PutChar( BYTE ascii )
 {
   BIOSDATA *data = BIOS_DATA;
   unsigned  xpos, ypos;
 
   TRACE("char: 0x%02x(%c)\n", ascii, ascii);
 
-  VGA_PutChar(ascii);
-  if(VGA_GetCursorPos(&xpos, &ypos))
-      BIOS_SetCursorPos(data, 0, xpos, ypos);
+  DOSVM_InitializeVideoMode( data );
+
+  VGA_PutChar( ascii );
+  VGA_GetCursorPos( &xpos, &ypos );
+  BIOS_SetCursorPos( data, 0, xpos, ypos );
 }

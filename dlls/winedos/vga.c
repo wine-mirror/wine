@@ -36,7 +36,6 @@ static IDirectDrawSurface *lpddsurf;
 static IDirectDrawPalette *lpddpal;
 static DDSURFACEDESC sdesc;
 static LONG vga_refresh;
-static HANDLE poll_timer;
 
 /*
  * VGA controller memory is emulated using linear framebuffer.
@@ -77,8 +76,26 @@ static int   vga_fb_size = 0;
 static void *vga_fb_data = 0;
 static int   vga_fb_window = 0;
 
-static BYTE vga_text_attr;
-static char *textbuf_old = NULL;
+/*
+ * VGA text mode data.
+ *
+ * vga_text_attr: Current active attribute.
+ * vga_text_old: Last data sent to console. 
+ *               This is used to optimize console updates.
+ * vga_text_width:  Width of the text display in characters.
+ * vga_text_height: Height of the text display in characters.
+ * vga_text_x: Current cursor X-position. Starts from zero.
+ * vga_text_y: Current cursor Y-position. Starts from zero.
+ * vga_text_console: TRUE if stdout is console, 
+ *                   FALSE if it is regular file.
+ */
+static BYTE  vga_text_attr;
+static char *vga_text_old = NULL;
+static BYTE  vga_text_width;
+static BYTE  vga_text_height;
+static BYTE  vga_text_x;
+static BYTE  vga_text_y;
+static BOOL  vga_text_console;
 
 /*
  * VGA controller ports 0x3c0, 0x3c4, 0x3ce and 0x3d4 are
@@ -97,8 +114,6 @@ static BYTE vga_index_3c4;
 static BYTE vga_index_3ce;
 static BYTE vga_index_3d4;
 static BOOL vga_address_3c0 = TRUE;
-
-static BOOL vga_mode_initialized = FALSE;
 
 static CRITICAL_SECTION vga_lock = CRITICAL_SECTION_INIT("VGA");
 
@@ -270,6 +285,11 @@ static void VGA_InstallTimer(unsigned Rate)
     QueueUserAPC( set_timer_rate, VGA_timer_thread, (ULONG_PTR)Rate );
 }
 
+static BOOL VGA_IsTimerRunning(void)
+{
+    return VGA_timer_thread ? TRUE : FALSE;
+}
+
 HANDLE VGA_AlphaConsole(void)
 {
     /* this assumes that no Win32 redirection has taken place, but then again,
@@ -409,8 +429,6 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
     VGA_SetWindowStart((Depth < 8) ? -1 : 0);
 
     par.Depth = (Depth < 8) ? 8 : Depth;
-
-    vga_mode_initialized = TRUE;
 
     MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
     return par.ret;
@@ -557,10 +575,14 @@ void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
     char *p, *p2;
     int i;
 
-    textbuf_old = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textbuf_old, Xres * Yres * 2); /* char + attr */
+    /*
+     * Allocate space for char + attr.
+     */
+    vga_text_old = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                vga_text_old, Xres * Yres * 2 );
 
     p = VGA_AlphaBuffer();
-    p2 = textbuf_old;
+    p2 = vga_text_old;
 
     /* make sure the video mem copy contains the exact opposite of our
      * actual text mode memory area to make sure the screen
@@ -569,37 +591,78 @@ void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
 	*p2++ ^= *p++; /* XOR it */
 }
 
-int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
+/**********************************************************************
+ *         VGA_SetAlphaMode
+ *
+ * Set VGA emulation to text mode.
+ */
+void VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
 {
-    COORD siz;
-
-    if (lpddraw) VGA_Exit();
-
-    /* FIXME: Where to initialize text attributes? */
-    VGA_SetTextAttribute(0xf);
-
+    VGA_Exit();
+    VGA_DeinstallTimer();
+    
     VGA_PrepareVideoMemCopy(Xres, Yres);
+    vga_text_width = Xres;
+    vga_text_height = Yres;
 
-    /* poll every 30ms (33fps should provide adequate responsiveness) */
-    VGA_InstallTimer(30);
+    if (vga_text_x >= vga_text_width || vga_text_y >= vga_text_height)
+        VGA_SetCursorPos(0,0);
 
-    siz.X = Xres;
-    siz.Y = Yres;
-    SetConsoleScreenBufferSize(VGA_AlphaConsole(),siz);
-    return 0;
+    if(vga_text_console) {
+        COORD size;
+        size.X = Xres;
+        size.Y = Yres;
+        SetConsoleScreenBufferSize( VGA_AlphaConsole(), size );
+
+        /* poll every 30ms (33fps should provide adequate responsiveness) */
+        VGA_InstallTimer(30);
+    }
 }
 
-BOOL VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
+/**********************************************************************
+ *         VGA_InitAlphaMode
+ *
+ * Initialize VGA text mode handling and return default text mode.
+ * This function does not set VGA emulation to text mode.
+ */
+void VGA_InitAlphaMode(unsigned*Xres,unsigned*Yres)
 {
     CONSOLE_SCREEN_BUFFER_INFO info;
-    if(!GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info))
+
+    if(GetConsoleScreenBufferInfo( VGA_AlphaConsole(), &info ))
     {
-        return FALSE;
-    } else {
-        if (Xres) *Xres=info.dwSize.X;
-        if (Yres) *Yres=info.dwSize.Y;
-        return TRUE;
+        vga_text_console = TRUE;
+        vga_text_x = info.dwCursorPosition.X;
+        vga_text_y = info.dwCursorPosition.Y;
+        vga_text_attr = info.wAttributes;
+        *Xres = info.dwSize.X;
+        *Yres = info.dwSize.Y;
+    } 
+    else
+    {
+        vga_text_console = FALSE;
+        vga_text_x = 0;
+        vga_text_y = 0;
+        vga_text_attr = 0x0f;
+        *Xres = 80;
+        *Yres = 25;
     }
+}
+
+/**********************************************************************
+ *         VGA_GetAlphaMode
+ *
+ * Get current text mode. Returns TRUE and sets resolution if
+ * any VGA text mode has been initialized.
+ */
+BOOL VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
+{
+    if (vga_text_width != 0 && vga_text_height != 0) {
+        *Xres = vga_text_width;
+        *Yres = vga_text_height;
+        return TRUE;
+    } else
+        return FALSE;
 }
 
 void VGA_SetCursorShape(unsigned char start_options, unsigned char end)
@@ -619,25 +682,34 @@ void VGA_SetCursorShape(unsigned char start_options, unsigned char end)
 
 void VGA_SetCursorPos(unsigned X,unsigned Y)
 {
-    COORD pos;
+    vga_text_x = X;
+    vga_text_y = Y;
 
-    if (!poll_timer) VGA_SetAlphaMode(80, 25);
-    pos.X = X;
-    pos.Y = Y;
-    SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
+    if (vga_text_console) {
+        COORD pos;
+        pos.X = X;
+        pos.Y = Y;
+        SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
+    }
 }
 
-BOOL VGA_GetCursorPos(unsigned*X,unsigned*Y)
+void VGA_GetCursorPos(unsigned*X,unsigned*Y)
 {
-    CONSOLE_SCREEN_BUFFER_INFO info;
-    if(!GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info))
-    {
-        return FALSE;
-    } else {
-        if (X) *X=info.dwCursorPosition.X;
-        if (Y) *Y=info.dwCursorPosition.Y;
-        return TRUE;
-    }
+    if (X) *X = vga_text_x;
+    if (Y) *Y = vga_text_y;
+}
+
+static void VGA_PutCharAt(unsigned x, unsigned y, BYTE ascii, BYTE attr)
+{
+    char *dat;
+
+    dat = VGA_AlphaBuffer() + ((vga_text_width * y + x) * 2);
+    dat[0] = ascii;
+    dat[1] = attr;
+    
+    dat = vga_text_old + ((vga_text_width * y + x) * 2);
+    dat[0] = ascii;
+    dat[1] = attr;
 }
 
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
@@ -645,11 +717,6 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
     CHAR_INFO info;
     COORD siz, off;
     SMALL_RECT dest;
-    unsigned XR, YR;
-    char *dat;
-
-    if(!VGA_GetAlphaMode(&XR, &YR))
-        return;
 
     EnterCriticalSection(&vga_lock);
 
@@ -662,73 +729,57 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
     dest.Top=Y;
     dest.Bottom=Y;
 
-    dat = VGA_AlphaBuffer() + ((XR*Y + X) * 2);
     while (count--) {
-        dest.Left = X + count;
-       dest.Right = X + count;
+        BYTE realattr;
 
-        *dat++ = ch;
-        if (attr>=0)
-         *dat = attr;
-       else
-         info.Attributes = *dat;
-        dat++;
+        if (attr < 0) {
+            char *dat = VGA_AlphaBuffer() + ((vga_text_width * Y + X + count) * 2);
+            realattr = dat[1];
+        } else
+            realattr = attr;
 
-       WriteConsoleOutputA(VGA_AlphaConsole(), &info, siz, off, &dest);
+        VGA_PutCharAt(X + count, Y, ch, realattr);
+
+        if (vga_text_console) {
+            dest.Left = X + count;
+            dest.Right = X + count;
+            info.Attributes= realattr;
+            WriteConsoleOutputA(VGA_AlphaConsole(), &info, siz, off, &dest);
+        }
     }
 
     LeaveCriticalSection(&vga_lock);
 }
 
-static void VGA_PutCharAt(BYTE ascii, unsigned x, unsigned y)
-{
-    unsigned width, height;
-    char *dat;
-
-    VGA_GetAlphaMode(&width, &height);
-    dat = VGA_AlphaBuffer() + ((width*y + x) * 2);
-    dat[0] = ascii;
-    dat[1] = vga_text_attr;
-}
-
 void VGA_PutChar(BYTE ascii)
 {
-    unsigned width, height, x, y, nx, ny;
-
-    if(!VGA_GetAlphaMode(&width, &height)) {
-        WriteFile(VGA_AlphaConsole(), &ascii, 1, NULL, NULL);
-        return;
-    }
-
     EnterCriticalSection(&vga_lock);
-
-    VGA_GetCursorPos(&x, &y);
 
     switch(ascii) {
     case '\b':
-        VGA_PutCharAt(' ', x, y);
-       x--;
+       VGA_PutCharAt(vga_text_x, vga_text_y, ' ', vga_text_attr);
+       vga_text_x--;
        break;
 
     case '\t':
-       x += ((x + 8) & ~7) - x;
+       vga_text_x += ((vga_text_x + 8) & ~7) - vga_text_x;
        break;
 
     case '\n':
-        y++;
-       x = 0;
+       vga_text_y++;
+       vga_text_x = 0;
        break;
 
     case '\a':
         break;
 
     case '\r':
-        x = 0;
-       break;
+        vga_text_x = 0;
+        break;
 
     default:
-        VGA_PutCharAt(ascii, x, y);
-       x++;
+        VGA_PutCharAt(vga_text_x, vga_text_y, ascii, vga_text_attr);
+        vga_text_x++;
     }
 
     /*
@@ -740,9 +791,14 @@ void VGA_PutChar(BYTE ascii)
     /*
      * The following is just a sanity check.
      */
-    VGA_GetCursorPos(&nx, &ny);
-    if(nx != x || ny != y)
-      WARN("VGA emulator and text console have become unsynchronized.\n");
+    if(vga_text_console) {
+        CONSOLE_SCREEN_BUFFER_INFO info;
+        GetConsoleScreenBufferInfo( VGA_AlphaConsole(), &info );
+
+        if( info.dwCursorPosition.X != vga_text_x || 
+            info.dwCursorPosition.Y != vga_text_y)
+            WARN("VGA emulator and text console have become unsynchronized.\n");
+    }
 
     LeaveCriticalSection(&vga_lock);
 }
@@ -750,42 +806,34 @@ void VGA_PutChar(BYTE ascii)
 void VGA_SetTextAttribute(BYTE attr)
 {
     vga_text_attr = attr;
-    SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
+    if(vga_text_console)
+        SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
 }
 
-BOOL VGA_ClearText(unsigned row1, unsigned col1,
+void VGA_ClearText(unsigned row1, unsigned col1,
                   unsigned row2, unsigned col2,
                   BYTE attr)
 {
-    unsigned width, height, x, y;
-    COORD off;
-    char *dat = VGA_AlphaBuffer();
-    HANDLE con = VGA_AlphaConsole();
-
-    /* return if we fail to get the height and width of the window */
-    if(!VGA_GetAlphaMode(&width, &height))
-        return FALSE;
-
-    TRACE("dat = %p, width = %d, height = %d\n", dat, width, height);
+    unsigned x, y;
 
     EnterCriticalSection(&vga_lock);
 
     for(y=row1; y<=row2; y++) {
-        off.X = col1;
-       off.Y = y;
-       FillConsoleOutputCharacterA(con, ' ', col2-col1+1, off, NULL);
-       FillConsoleOutputAttribute(con, attr, col2-col1+1, off, NULL);
+        if(vga_text_console) {
+            HANDLE con = VGA_AlphaConsole();
+            COORD off;
 
-       for(x=col1; x<=col2; x++) {
-           char *ptr = dat + ((width*y + x) * 2);
-           ptr[0] = ' ';
-           ptr[1] = attr;
-       }
+            off.X = col1;
+            off.Y = y;        
+            FillConsoleOutputCharacterA(con, ' ', col2-col1+1, off, NULL);
+            FillConsoleOutputAttribute(con, attr, col2-col1+1, off, NULL);
+        }
+
+        for(x=col1; x<=col2; x++)
+            VGA_PutCharAt(x, y, ' ', attr);
     }
 
     LeaveCriticalSection(&vga_lock);
-
-    return TRUE;
 }
 
 void VGA_ScrollUpText(unsigned row1, unsigned col1,
@@ -802,20 +850,14 @@ void VGA_ScrollDownText(unsigned row1, unsigned col1,
     FIXME("not implemented\n");
 }
 
-BOOL VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
+void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
 {
-    unsigned width, height, x, y;
     char *dat;
 
-    if(!VGA_GetAlphaMode(&width, &height) || !VGA_GetCursorPos(&x, &y))
-        return FALSE;
-
-    dat = VGA_AlphaBuffer() + ((width*y + x) * 2);
+    dat = VGA_AlphaBuffer() + ((vga_text_width * vga_text_y + vga_text_x) * 2);
 
     *ascii = dat[0];
     *attr = dat[1];
-
-    return TRUE;
 }
 
 
@@ -861,26 +903,25 @@ static void VGA_Poll_Graphics(void)
 static void VGA_Poll_Text(void)
 {
     char *dat, *old, *p_line;
-    unsigned int Height,Width,Y,X;
+    unsigned int X, Y;
     CHAR_INFO ch[256]; /* that should suffice for the largest text width */
     COORD siz, off;
     SMALL_RECT dest;
     HANDLE con = VGA_AlphaConsole();
     BOOL linechanged = FALSE; /* video memory area differs from stored copy ? */
 
-    VGA_GetAlphaMode(&Width,&Height);
     dat = VGA_AlphaBuffer();
-    old = textbuf_old; /* pointer to stored video mem copy */
-    siz.X = Width; siz.Y = 1;
+    old = vga_text_old; /* pointer to stored video mem copy */
+    siz.X = vga_text_width; siz.Y = 1;
     off.X = 0; off.Y = 0;
     /* copy from virtual VGA frame buffer to console */
-    for (Y=0; Y<Height; Y++) {
-	linechanged = memcmp(dat, old, Width*2);
+    for (Y=0; Y<vga_text_height; Y++) {
+	linechanged = memcmp(dat, old, vga_text_width*2);
 	if (linechanged)
 	{
 	    /*TRACE("line %d changed\n", Y);*/
 	    p_line = dat;
-            for (X=0; X<Width; X++) {
+            for (X=0; X<vga_text_width; X++) {
                 ch[X].Char.AsciiChar = *p_line++;
                 /* WriteConsoleOutputA doesn't like "dead" chars */
                 if (ch[X].Char.AsciiChar == '\0')
@@ -888,13 +929,13 @@ static void VGA_Poll_Text(void)
                 ch[X].Attributes = *p_line++;
             }
             dest.Top=Y; dest.Bottom=Y;
-            dest.Left=0; dest.Right=Width+1;
+            dest.Left=0; dest.Right=vga_text_width+1;
             WriteConsoleOutputA(con, ch, siz, off, &dest);
-	    memcpy(old, dat, Width*2);
+	    memcpy(old, dat, vga_text_width*2);
 	}
 	/* advance to next text line */
-	dat += Width*2;
-	old += Width*2;
+	dat += vga_text_width*2;
+	old += vga_text_width*2;
     }
 }
 
@@ -1009,7 +1050,7 @@ BYTE VGA_ioport_in( WORD port )
             /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
                we need to fake the occurrence of the vertical refresh */
             ret=vga_refresh?0x00:0x0b; /* toggle video RAM and lightpen and VGA refresh bits ! */
-            if (vga_mode_initialized)
+            if (VGA_IsTimerRunning())
                 vga_refresh=0;
             else
                 /* Also fake the occurence of the vertical refresh when no graphic
