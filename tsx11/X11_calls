@@ -109,6 +109,7 @@ XPolygonRegion
 XPutBackEvent
 XPutImage
 XQueryColor
+XQueryColors
 XQueryKeymap
 XQueryPointer
 XQueryTree

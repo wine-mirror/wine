@@ -312,14 +312,28 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
    int			i, j, warn = 0;
    int			diff, r, g, b, max = 256, bp = 0, wp = 1;
    int			step = 1;
+   int			defaultCM_max_copy;
+   Colormap		defaultCM;
+   XColor		defaultColors[256];
 
+   /* Copy the first bunch of colors out of the default colormap to prevent 
+    * colormap flashing as much as possible.  We're likely to get the most
+    * important Window Manager colors, etc in the first 128 colors */
+   defaultCM = DefaultColormapOfScreen( X11DRV_GetXScreen() );
+   defaultCM_max_copy = PROFILE_GetWineIniInt( "x11drv", "CopyDefaultColors", 128);
+   for (i = 0; i < defaultCM_max_copy; i++)
+       defaultColors[i].pixel = (long) i;
+   TSXQueryColors(display, defaultCM, &defaultColors[0], defaultCM_max_copy);
+   for (i = 0; i < defaultCM_max_copy; i++)
+       TSXAllocColor( display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
+              
    /* read "AllocSystemColors" from wine.conf */
 
    COLOR_max = PROFILE_GetWineIniInt( "x11drv", "AllocSystemColors", 256);
    if (COLOR_max > 256) COLOR_max = 256;
    else if (COLOR_max < 20) COLOR_max = 20;
    TRACE("%d colors configured.\n", COLOR_max);
-   
+
    TRACE("Building shared map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
 
    /* Be nice and allocate system colors as read-only */

@@ -811,6 +811,15 @@ int  TSXQueryColor(Display* a0, Colormap a1, XColor* a2)
   return r;
 }
 
+int  TSXQueryColors(Display* a0, Colormap a1, XColor* a2, int a3)
+{
+  int  r;
+  wine_tsx11_lock();
+  r = XQueryColors(a0, a1, a2, a3);
+  wine_tsx11_unlock();
+  return r;
+}
+
 int  TSXQueryKeymap(Display* a0, char* a1)
 {
   int  r;

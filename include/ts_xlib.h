@@ -106,6 +106,7 @@ extern int  TSXPending(Display*);
 extern int  TSXPutBackEvent(Display*, XEvent*);
 extern int  TSXPutImage(Display*, Drawable, GC, XImage*, int, int, int, int, unsigned int, unsigned int);
 extern int  TSXQueryColor(Display*, Colormap, XColor*);
+extern int  TSXQueryColors(Display*, Colormap, XColor*, int);
 extern int  TSXQueryKeymap(Display*, char*);
 extern int   TSXQueryPointer(Display*, Window, Window*, Window*, int*, int*, int*, int*, unsigned int*);
 extern int   TSXQueryTree(Display*, Window, Window*, Window*, Window**, unsigned int*);
