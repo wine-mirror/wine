@@ -1522,6 +1522,7 @@ static BOOL mdi_RegisterWindowClasses(void)
 
 static void test_mdi_messages(void)
 {
+    MDICREATESTRUCTA mdi_cs;
     CLIENTCREATESTRUCT client_cs;
     HWND mdi_frame, mdi_child, mdi_child2, active_child;
     BOOL zoomed;
@@ -1806,6 +1807,29 @@ static void test_mdi_messages(void)
        "wrong active MDI child %p\n", active_child);
     flush_sequence();
     /* end of test for maximized MDI children */
+
+    mdi_cs.szClass = "MDI_child_Class";
+    mdi_cs.szTitle = "MDI child";
+    mdi_cs.hOwner = GetModuleHandleA(0);
+    mdi_cs.x = CW_USEDEFAULT;
+    mdi_cs.y = CW_USEDEFAULT;
+    mdi_cs.cx = CW_USEDEFAULT;
+    mdi_cs.cy = CW_USEDEFAULT;
+    mdi_cs.style = WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX;
+    mdi_cs.lParam = 0;
+    mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(active_child == mdi_child, "wrong active MDI child %p\n", active_child);
+
+    SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok(!IsWindow(mdi_child), "MDI child should be destroyed\n");
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(!active_child, "wrong active MDI child %p\n", active_child);
+
+    SetFocus(0);
+    flush_sequence();
 
     DestroyWindow(mdi_client);
     ok_sequence(WmDestroyMDIclientSeq, "Destroy MDI client window", FALSE);

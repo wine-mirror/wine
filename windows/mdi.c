@@ -525,7 +525,10 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
     if( child == ci->hwndActiveChild )
     {
         HWND next = MDI_GetWindow(ci, child, TRUE, 0);
-        MDI_SwitchActiveChild(ci, next);
+        if (next)
+            MDI_SwitchActiveChild(ci, next);
+        else
+            ci->hwndActiveChild = 0; /* nothing to activate */
     }
 
     for (i = 0; i < ci->nActiveChildren; i++)
