@@ -1179,9 +1179,6 @@ DWORD NE_StartTask(void)
         pTask->hInstance = hInstance;
         pTask->hPrevInstance = hPrevInstance;
 
-        /* Free the previous stack selector */
-        FreeSelector16( SELECTOROF(pTask->teb->cur_stack) );
-
         /* Use DGROUP for 16-bit stack */
 
         if (!(sp = pModule->sp))
@@ -1777,4 +1774,3 @@ void WINAPI MapHInstSL_PN( CONTEXT86 *context )
 {
     if (context->Eax) context->Eax = MapHModuleSL(context->Eax);
 }
-
