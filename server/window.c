@@ -53,7 +53,7 @@ enum property_type
 struct window
 {
     struct window   *parent;          /* parent window */
-    struct window   *owner;           /* owner of this window */
+    user_handle_t    owner;           /* owner of this window */
     struct window   *first_child;     /* first child in Z-order */
     struct window   *last_child;      /* last child in Z-order */
     struct window   *first_unlinked;  /* first child not linked in the Z-order list */
@@ -110,11 +110,7 @@ static void link_window( struct window *win, struct window *parent, struct windo
 
     if (parent)
     {
-        if (win->parent != parent)
-        {
-            win->owner = NULL;  /* reset owner if changing parent */
-            win->parent = parent;
-        }
+        win->parent = parent;
         if ((win->prev = previous))
         {
             if ((win->next = previous->next)) win->next->prev = win;
@@ -241,16 +237,6 @@ static void destroy_window( struct window *win )
     while (win->first_child) destroy_window( win->first_child );
     while (win->first_unlinked) destroy_window( win->first_unlinked );
 
-    /* reset siblings owner */
-    if (win->parent)
-    {
-        struct window *ptr;
-        for (ptr = win->parent->first_child; ptr; ptr = ptr->next)
-            if (ptr->owner == win) ptr->owner = NULL;
-        for (ptr = win->parent->first_unlinked; ptr; ptr = ptr->next)
-            if (ptr->owner == win) ptr->owner = NULL;
-    }
-
     if (win->thread->queue)
     {
         if (win->paint_count) inc_queue_paint_count( win->thread, -win->paint_count );
@@ -276,7 +262,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         return NULL;
     }
     win->parent         = parent;
-    win->owner          = owner;
+    win->owner          = owner ? owner->handle : 0;
     win->first_child    = NULL;
     win->last_child     = NULL;
     win->first_unlinked = NULL;
@@ -390,6 +376,7 @@ DECL_HANDLER(create_window)
         {
             if (!(top_window = create_window( NULL, NULL, req->atom ))) return;
             top_window->thread = NULL;  /* no thread owns the desktop */
+            top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
         }
         reply->handle = top_window->handle;
     }
@@ -400,9 +387,9 @@ DECL_HANDLER(create_window)
         if (!(parent = get_window( req->parent ))) return;
         if (req->owner && !(owner = get_window( req->owner ))) return;
         if (owner == top_window) owner = NULL;
-        else if (owner && owner->parent != parent)
+        else if (owner && parent != top_window)
         {
-            /* owner must be a sibling of the new window */
+            /* an owned window must be created as top-level */
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
@@ -464,17 +451,17 @@ DECL_HANDLER(destroy_window)
 DECL_HANDLER(set_window_owner)
 {
     struct window *win = get_window( req->handle );
-    struct window *owner = get_window( req->owner );
+    struct window *owner = NULL;
 
-    if (!win || !owner) return;
-    if (owner->parent != win->parent)
+    if (!win) return;
+    if (req->owner && !(owner = get_window( req->owner ))) return;
+    if (win == top_window)
     {
-        /* owner has to be a sibling of window */
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    win->owner = owner;
-    reply->full_owner = owner->handle;
+    reply->prev_owner = win->owner;
+    reply->full_owner = win->owner = owner ? owner->handle : 0;
 }
 
 
@@ -502,7 +489,13 @@ DECL_HANDLER(get_window_info)
 DECL_HANDLER(set_window_info)
 {
     struct window *win = get_window( req->handle );
+
     if (!win) return;
+    if (req->flags && win == top_window)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
     reply->old_style     = win->style;
     reply->old_ex_style  = win->ex_style;
     reply->old_id        = win->id;
@@ -578,7 +571,7 @@ DECL_HANDLER(get_window_tree)
     {
         struct window *parent = win->parent;
         reply->parent        = parent->handle;
-        reply->owner         = win->owner ? win->owner->handle : 0;
+        reply->owner         = win->owner;
         reply->next_sibling  = win->next ? win->next->handle : 0;
         reply->prev_sibling  = win->prev ? win->prev->handle : 0;
         reply->first_sibling = parent->first_child ? parent->first_child->handle : 0;

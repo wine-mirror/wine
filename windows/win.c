@@ -422,11 +422,7 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
         req->previous = hwndInsertAfter;
         if (!wine_server_call( req ))
         {
-            if (reply->full_parent && reply->full_parent != wndPtr->parent)
-            {
-                wndPtr->owner = 0;  /* reset owner when changing parent */
-                wndPtr->parent = reply->full_parent;
-            }
+            if (reply->full_parent) wndPtr->parent = reply->full_parent;
         }
 
     }
@@ -440,24 +436,30 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
  *
  * Change the owner of a window.
  */
-void WIN_SetOwner( HWND hwnd, HWND owner )
+HWND WIN_SetOwner( HWND hwnd, HWND owner )
 {
     WND *win = WIN_GetPtr( hwnd );
+    HWND ret = 0;
 
-    if (!win) return;
+    if (!win) return 0;
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd)) ERR( "cannot set owner %x on other process window %x\n", owner, hwnd );
-        return;
+        return 0;
     }
     SERVER_START_REQ( set_window_owner )
     {
         req->handle = hwnd;
         req->owner  = owner;
-        if (!wine_server_call( req )) win->owner = reply->full_owner;
+        if (!wine_server_call( req ))
+        {
+            win->owner = reply->full_owner;
+            ret = reply->prev_owner;
+        }
     }
     SERVER_END_REQ;
     WIN_ReleasePtr( win );
+    return ret;
 }
 
 
@@ -758,22 +760,17 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->parent            = 0;
     pWndDesktop->owner             = 0;
     pWndDesktop->class             = class;
-    pWndDesktop->hInstance         = 0;
     pWndDesktop->text              = NULL;
     pWndDesktop->hmemTaskQ         = 0;
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->hwndLastActive    = hwndDesktop;
-    pWndDesktop->dwStyle           = 0;
-    pWndDesktop->dwExStyle         = 0;
     pWndDesktop->clsStyle          = clsStyle;
     pWndDesktop->dce               = NULL;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
-    pWndDesktop->wIDmenu           = 0;
     pWndDesktop->helpContext       = 0;
     pWndDesktop->flags             = 0;
     pWndDesktop->hSysMenu          = 0;
-    pWndDesktop->userdata          = 0;
     pWndDesktop->winproc           = winproc;
     pWndDesktop->cbWndExtra        = wndExtra;
 
@@ -792,7 +789,19 @@ BOOL WIN_CreateDesktopWindow(void)
 
     SetRect( &rect, 0, 0, cs.cx, cs.cy );
     WIN_SetRectangles( hwndDesktop, &rect, &rect );
-    WIN_SetStyle( hwndDesktop, WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
+
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle = hwndDesktop;
+        req->flags  = 0;  /* don't set anything, just retrieve */
+        wine_server_call( req );
+        pWndDesktop->dwStyle   = reply->old_style;
+        pWndDesktop->dwExStyle = reply->old_ex_style;
+        pWndDesktop->hInstance = (ULONG_PTR)reply->old_instance;
+        pWndDesktop->userdata  = (ULONG_PTR)reply->old_user_data;
+        pWndDesktop->wIDmenu   = reply->old_id;
+    }
+    SERVER_END_REQ;
 
     if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE ))
     {
@@ -1033,10 +1042,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             WARN("Bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
-        if (cs->style & WS_CHILD) parent = WIN_GetFullHandle(cs->hwndParent);
-        else owner = GetAncestor( cs->hwndParent, GA_ROOT );
+        if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
+            parent = WIN_GetFullHandle(cs->hwndParent);
+        else
+            owner = GetAncestor( cs->hwndParent, GA_ROOT );
     }
-    else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP))
+    else if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
     {
         WARN("No parent for child window\n" );
         return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
@@ -1864,7 +1875,12 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     LONG retvalue = 0;
     WND *wndPtr;
 
-    if (offset == GWL_HWNDPARENT) return (LONG)GetParent( hwnd );
+    if (offset == GWL_HWNDPARENT)
+    {
+        HWND parent = GetAncestor( hwnd, GA_PARENT );
+        if (parent == GetDesktopWindow()) parent = GetWindow( hwnd, GW_OWNER );
+        return (LONG)parent;
+    }
 
     if (!(wndPtr = WIN_GetPtr( hwnd )))
     {
@@ -1991,6 +2007,12 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     }
 
     wndPtr = WIN_GetPtr( hwnd );
+    if (wndPtr->hwndSelf == GetDesktopWindow())
+    {
+        /* can't change anything on the desktop window */
+        SetLastError( ERROR_ACCESS_DENIED );
+        return 0;
+    }
 
     if (offset >= 0)
     {
@@ -2033,8 +2055,16 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
             newval = style.styleNew;
             break;
         case GWL_HWNDPARENT:
-            WIN_ReleasePtr( wndPtr );
-            return (LONG)SetParent( hwnd, (HWND)newval );
+            if (wndPtr->parent == GetDesktopWindow())
+            {
+                WIN_ReleasePtr( wndPtr );
+                return (LONG)WIN_SetOwner( hwnd, (HWND)newval );
+            }
+            else
+            {
+                WIN_ReleasePtr( wndPtr );
+                return (LONG)SetParent( hwnd, (HWND)newval );
+            }
         case GWL_WNDPROC:
             retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
             WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval,
@@ -2436,8 +2466,8 @@ HWND WINAPI GetParent( HWND hwnd )
                 req->handle = hwnd;
                 if (!wine_server_call_err( req ))
                 {
-                    if (style & WS_CHILD) retvalue = reply->parent;
-                    else retvalue = reply->owner;
+                    if (style & WS_POPUP) retvalue = reply->owner;
+                    else if (style & WS_CHILD) retvalue = reply->parent;
                 }
             }
             SERVER_END_REQ;
@@ -2445,8 +2475,8 @@ HWND WINAPI GetParent( HWND hwnd )
     }
     else
     {
-        if (wndPtr->dwStyle & WS_CHILD) retvalue = wndPtr->parent;
-        else if (wndPtr->dwStyle & WS_POPUP) retvalue = wndPtr->owner;
+        if (wndPtr->dwStyle & WS_POPUP) retvalue = wndPtr->owner;
+        else if (wndPtr->dwStyle & WS_CHILD) retvalue = wndPtr->parent;
         WIN_ReleasePtr( wndPtr );
     }
     return retvalue;
@@ -2461,8 +2491,9 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
     WND *win;
     HWND *list, ret = 0;
 
-    if (type == GA_PARENT)
+    switch(type)
     {
+    case GA_PARENT:
         if (!(win = WIN_GetPtr( hwnd )))
         {
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
@@ -2482,28 +2513,30 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
             }
             SERVER_END_REQ;
         }
-        return ret;
-    }
+        break;
 
-    if (!(list = WIN_ListParents( hwnd ))) return 0;
+    case GA_ROOT:
+        if (!(list = WIN_ListParents( hwnd ))) return 0;
 
-    if (!list[0] || !list[1]) ret = WIN_GetFullHandle( hwnd );  /* top-level window */
-    else
-    {
-        int count = 2;
-        while (list[count]) count++;
-        ret = list[count - 2];  /* get the one before the desktop */
-    }
-    HeapFree( GetProcessHeap(), 0, list );
+        if (!list[0] || !list[1]) ret = WIN_GetFullHandle( hwnd );  /* top-level window */
+        else
+        {
+            int count = 2;
+            while (list[count]) count++;
+            ret = list[count - 2];  /* get the one before the desktop */
+        }
+        HeapFree( GetProcessHeap(), 0, list );
+        break;
 
-    if (ret && type == GA_ROOTOWNER)
-    {
+    case GA_ROOTOWNER:
+        if ((ret = WIN_GetFullHandle( hwnd )) == GetDesktopWindow()) return 0;
         for (;;)
         {
-            HWND owner = GetWindow( ret, GW_OWNER );
-            if (!owner) break;
-            ret = owner;
+            HWND parent = GetParent( ret );
+            if (!parent) break;
+            ret = parent;
         }
+        break;
     }
     return ret;
 }

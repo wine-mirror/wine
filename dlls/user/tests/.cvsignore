@@ -3,4 +3,5 @@ class.ok
 sysparams.ok
 testlist.c
 user32_test.exe.spec.c
+win.ok
 wsprintf.ok

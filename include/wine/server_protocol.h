@@ -2491,6 +2491,7 @@ struct set_window_owner_reply
 {
     struct reply_header __header;
     user_handle_t  full_owner;
+    user_handle_t  prev_owner;
 };
 
 
@@ -3210,6 +3211,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 82
+#define SERVER_PROTOCOL_VERSION 83
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

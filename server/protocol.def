@@ -1751,6 +1751,7 @@ enum message_type
     user_handle_t  owner;       /* new owner */
 @REPLY
     user_handle_t  full_owner;  /* full handle of new owner */
+    user_handle_t  prev_owner;  /* full handle of previous owner */
 @END
 
 

@@ -8,6 +8,7 @@ IMPORTS   = user32 gdi32 advapi32
 CTESTS = \
 	class.c \
 	sysparams.c \
+	win.c \
 	wsprintf.c
 
 @MAKE_TEST_RULES@

@@ -1993,7 +1993,8 @@ static void dump_set_window_owner_request( const struct set_window_owner_request
 
 static void dump_set_window_owner_reply( const struct set_window_owner_reply *req )
 {
-    fprintf( stderr, " full_owner=%08x", req->full_owner );
+    fprintf( stderr, " full_owner=%08x,", req->full_owner );
+    fprintf( stderr, " prev_owner=%08x", req->prev_owner );
 }
 
 static void dump_get_window_info_request( const struct get_window_info_request *req )
