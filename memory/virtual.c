@@ -85,9 +85,11 @@ static CRITICAL_SECTION csVirtual = CRITICAL_SECTION_INIT;
 /* These are always the same on an i386, and it will be faster this way */
 # define page_mask  0xfff
 # define page_shift 12
+# define page_size  0x1000
 #else
 static UINT page_shift;
 static UINT page_mask;
+static UINT page_size;
 #endif  /* __i386__ */
 #define granularity_mask 0xffff  /* Allocation granularity (usually 64k) */
 
@@ -578,8 +580,6 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 #ifndef page_mask
 DECL_GLOBAL_CONSTRUCTOR(VIRTUAL_Init)
 {
-    DWORD page_size;
-
 # ifdef HAVE_GETPAGESIZE
     page_size = getpagesize();
 # else
@@ -1163,18 +1163,21 @@ BOOL WINAPI IsBadReadPtr(
               LPCVOID ptr, /* Address of memory block */
               UINT size )  /* Size of block */
 {
+    if (!size) return FALSE;  /* handle 0 size case w/o reference */
     __TRY
     {
         volatile const char *p = ptr;
-        volatile const char *end = p + size - 1;
         char dummy;
+        UINT count = size;
 
-        while (p < end)
+        while (count > page_size)
         {
             dummy = *p;
-            p += page_mask + 1;
+            p += page_size;
+            count -= page_size;
         }
-        dummy = *end;
+        dummy = p[0];
+        dummy = p[count - 1];
     }
     __EXCEPT(page_fault) { return TRUE; }
     __ENDTRY
@@ -1193,17 +1196,20 @@ BOOL WINAPI IsBadWritePtr(
               LPVOID ptr, /* [in] Address of memory block */
               UINT size ) /* [in] Size of block in bytes */
 {
+    if (!size) return FALSE;  /* handle 0 size case w/o reference */
     __TRY
     {
         volatile char *p = ptr;
-        volatile char *end = p + size - 1;
+        UINT count = size;
 
-        while (p < end)
+        while (count > page_size)
         {
             *p |= 0;
-            p += page_mask + 1;
+            p += page_size;
+            count -= page_size;
         }
-        *end |= 0;
+        p[0] |= 0;
+        p[count - 1] |= 0;
     }
     __EXCEPT(page_fault) { return TRUE; }
     __ENDTRY
@@ -1266,7 +1272,7 @@ BOOL WINAPI IsBadStringPtrA(
     __TRY
     {
         volatile const char *p = str;
-        while (p < str + max) if (!*p++) break;
+        while (p != str + max) if (!*p++) break;
     }
     __EXCEPT(page_fault) { return TRUE; }
     __ENDTRY
@@ -1283,7 +1289,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
     __TRY
     {
         volatile const WCHAR *p = str;
-        while (p < str + max) if (!*p++) break;
+        while (p != str + max) if (!*p++) break;
     }
     __EXCEPT(page_fault) { return TRUE; }
     __ENDTRY
@@ -1301,7 +1307,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
  *	NULL: Failure
  */
 HANDLE WINAPI CreateFileMappingA(
-                HFILE hFile,   /* [in] Handle of file to map */
+                HANDLE hFile,   /* [in] Handle of file to map */
                 SECURITY_ATTRIBUTES *sa, /* [in] Optional security attributes*/
                 DWORD protect,   /* [in] Protection for mapping object */
                 DWORD size_high, /* [in] High-order 32 bits of object size */
@@ -1361,7 +1367,7 @@ HANDLE WINAPI CreateFileMappingA(
  *             CreateFileMappingW   (KERNEL32.47)
  * See CreateFileMappingA
  */
-HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa, 
+HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa, 
                                   DWORD protect, DWORD size_high,  
                                   DWORD size_low, LPCWSTR name )
 {
