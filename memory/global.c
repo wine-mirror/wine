@@ -277,7 +277,6 @@ HGLOBAL16 WINAPI GlobalAlloc16(
 
 /***********************************************************************
  *           GlobalReAlloc     (KERNEL.16)
- *           GlobalReAlloc16   (KERNEL32.@)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -578,7 +577,7 @@ DWORD WINAPI GlobalHandleNoRIP16( WORD sel )
 
 /***********************************************************************
  *           GlobalFlags     (KERNEL.22)
- *           GlobalFlags16   (KERNEL32.@)
+ *
  * NOTES
  *	Should this return GMEM_INVALID_HANDLE instead of 0 on invalid
  *	handle?

@@ -18,15 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <winbase.h>
-#include <nb30.h>
-#include <lmcons.h>
-#include <lmapibuf.h>
-#include <lmerr.h>
-#include <lmwksta.h>
-#include <winerror.h>
-#include <winternl.h>
-#include <ntsecapi.h>
+#include "winbase.h"
+#include "nb30.h"
+#include "lmcons.h"
+#include "lmapibuf.h"
+#include "lmerr.h"
+#include "lmwksta.h"
+#include "winerror.h"
+#include "winternl.h"
+#include "ntsecapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);

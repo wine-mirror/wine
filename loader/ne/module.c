@@ -1051,7 +1051,6 @@ static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmd
 
 /**********************************************************************
  *          LoadModule      (KERNEL.45)
- *          LoadModule16    (KERNEL32.@)
  */
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
@@ -1420,7 +1419,6 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
 
 /**********************************************************************
  *	    GetModuleFileName      (KERNEL.49)
- *	    GetModuleFileName16    (KERNEL32.@)
  *
  * Comment: see GetModuleFileNameA
  *

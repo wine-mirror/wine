@@ -18,12 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <winbase.h>
-#include <winerror.h>
-#include <lmcons.h>
-#include <lmaccess.h>
-#include <lmapibuf.h>
-#include <lmerr.h>
+#include "winbase.h"
+#include "winerror.h"
+#include "lmcons.h"
+#include "lmaccess.h"
+#include "lmapibuf.h"
+#include "lmerr.h"
 #include "netapi32_misc.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"

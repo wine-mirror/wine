@@ -1235,7 +1235,6 @@ HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 
 /**********************************************************************
  *		DestroyIcon32 (USER.610)
- *		DestroyIcon32 (USER32.@)
  *
  * This routine is actually exported from Win95 USER under the name
  * DestroyIcon32 ...  The behaviour implemented here should mimic

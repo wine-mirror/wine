@@ -328,6 +328,10 @@ DWORD WINAPI WIN16_GetSelectorBase( WORD sel )
     DWORD base = GetSelectorBase( sel );
     return W32S_WINE2APP( base );
 }
+
+/***********************************************************************
+ *		GetSelectorBase
+ */
 DWORD WINAPI GetSelectorBase( WORD sel )
 {
     void *base = wine_ldt_copy.base[sel >> __AHSHIFT];
@@ -353,6 +357,10 @@ DWORD WINAPI WIN16_SetSelectorBase( WORD sel, DWORD base )
     SetSelectorBase( sel, W32S_APP2WINE( base ) );
     return sel;
 }
+
+/***********************************************************************
+ *		SetSelectorBase
+ */
 WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
 {
     LDT_ENTRY entry;

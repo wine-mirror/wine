@@ -732,7 +732,6 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 
 /***********************************************************************
  *           IsDCCurrentPalette   (GDI.412)
- *           IsDCCurrentPalette16 (GDI32.@)
  */
 BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {

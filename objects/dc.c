@@ -268,7 +268,6 @@ void DC_UpdateXforms( DC *dc )
 
 /***********************************************************************
  *           GetDCState   (GDI.179)
- *           GetDCState16 (GDI32.@)
  */
 HDC16 WINAPI GetDCState16( HDC16 hdc )
 {
@@ -358,7 +357,6 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
 
 /***********************************************************************
  *           SetDCState   (GDI.180)
- *           SetDCState16 (GDI32.@)
  */
 void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 {
@@ -901,7 +899,6 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 
 /***********************************************************************
  *           SetDCOrg   (GDI.117)
- *           SetDCOrg16 (GDI32.@)
  */
 DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
 {
@@ -1169,7 +1166,6 @@ DWORD WINAPI GetDCHook16( HDC16 hdc, FARPROC16 *phookProc )
 
 /***********************************************************************
  *           SetHookFlags   (GDI.192)
- *           SetHookFlags16 (GDI32.@)
  */
 WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
 {

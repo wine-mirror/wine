@@ -808,7 +808,6 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 
 /***********************************************************************
  *           WinExec     (KERNEL.166)
- *           WinExec16   (KERNEL32.@)
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {

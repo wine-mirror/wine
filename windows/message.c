@@ -798,7 +798,6 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
 
 /***********************************************************************
  *		UserYield (USER.332)
- *		UserYield16 (USER32.@)
  */
 void WINAPI UserYield16(void)
 {

@@ -457,7 +457,6 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 
 /***********************************************************************
  *		InitThreadInput   (USER.409)
- *              InitThreadInput16 (USER32.@)
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 {

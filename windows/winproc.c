@@ -2707,7 +2707,6 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
 
 /**********************************************************************
  *		CallWindowProc (USER.122)
- *		CallWindowProc16 (USER32.@)
  */
 LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
                                  WPARAM16 wParam, LPARAM lParam )

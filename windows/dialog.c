@@ -966,7 +966,6 @@ HWND16 WINAPI CreateDialogIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
 
 /***********************************************************************
  *		CreateDialogIndirectParam (USER.242)
- *		CreateDialogIndirectParam16 (USER32.@)
  */
 HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst,
                                            LPCVOID dlgTemplate,
@@ -1137,7 +1136,6 @@ INT16 WINAPI DialogBoxIndirect16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
 
 /***********************************************************************
  *		DialogBoxIndirectParam (USER.240)
- *		DialogBoxIndirectParam16 (USER32.@)
  */
 INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
                                        HWND16 owner16, DLGPROC16 dlgProc,

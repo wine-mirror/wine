@@ -112,7 +112,6 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM 
 
 /***********************************************************************
  *		PostAppMessage (USER.116)
- *		PostAppMessage16 (USER32.@)
  */
 BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 msg, WPARAM16 wparam, LPARAM lparam )
 {

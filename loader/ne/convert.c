@@ -30,7 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 /**********************************************************************
  *	    ConvertDialog32To16   (KERNEL.615)
- *	    ConvertDialog32To16   (KERNEL32.@)
  */
 VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
 {
@@ -454,4 +453,3 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 
     return handle;
 }
-

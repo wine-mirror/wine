@@ -317,7 +317,6 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
 /******************************************************************
  *	     CloseMetaFile     (GDI.126)
- *	     CloseMetaFile16   (GDI32.@)
  */
 HMETAFILE16 WINAPI CloseMetaFile16(
 				   HDC16 hdc /* [in] Metafile DC to close */
