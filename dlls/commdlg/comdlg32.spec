@@ -14,30 +14,28 @@ import ntdll.dll
 
 debug_channels (commdlg)
 
- 0 stub ArrowBtnWndProc
- 1 stdcall ChooseColorA(ptr) ChooseColorA
- 2 stdcall ChooseColorW(ptr) ChooseColorW
- 3 stdcall ChooseFontA(ptr) ChooseFontA
- 4 stdcall ChooseFontW(ptr) ChooseFontW
- 5 stdcall CommDlgExtendedError() CommDlgExtendedError
- 6 stdcall FindTextA(ptr) FindTextA
- 7 stdcall FindTextW(ptr) FindTextW
- 8 stdcall GetFileTitleA(ptr ptr long) GetFileTitleA
- 9 stdcall GetFileTitleW(ptr ptr long) GetFileTitleW
-10 stdcall GetOpenFileNameA(ptr) GetOpenFileNameA
-11 stdcall GetOpenFileNameW(ptr) GetOpenFileNameW
-12 stdcall GetSaveFileNameA(ptr) GetSaveFileNameA
-13 stdcall GetSaveFileNameW(ptr) GetSaveFileNameW
-14 stub LoadAlterBitmap
-15 stdcall PageSetupDlgA(ptr) PageSetupDlgA
-16 stdcall PageSetupDlgW(ptr) PageSetupDlgW
-17 stdcall PrintDlgA(ptr) PrintDlgA
-18 stdcall PrintDlgW(ptr) PrintDlgW
-19 stdcall ReplaceTextA(ptr) ReplaceTextA
-20 stdcall ReplaceTextW(ptr) ReplaceTextW
-21 stub WantArrows
-22 stub dwLBSubclass
-23 stub dwOKSubclass
-
-@ stdcall PrintDlgExA(ptr)PrintDlgExA
-@ stdcall PrintDlgExW(ptr)PrintDlgExW
+@ stdcall ChooseColorA(ptr) ChooseColorA
+@ stdcall ChooseColorW(ptr) ChooseColorW
+@ stdcall ChooseFontA(ptr) ChooseFontA
+@ stdcall ChooseFontW(ptr) ChooseFontW
+@ stdcall CommDlgExtendedError() CommDlgExtendedError
+@ stdcall FindTextA(ptr) FindTextA
+@ stdcall FindTextW(ptr) FindTextW
+@ stdcall GetFileTitleA(ptr ptr long) GetFileTitleA
+@ stdcall GetFileTitleW(ptr ptr long) GetFileTitleW
+@ stdcall GetOpenFileNameA(ptr) GetOpenFileNameA
+@ stdcall GetOpenFileNameW(ptr) GetOpenFileNameW
+@ stdcall GetSaveFileNameA(ptr) GetSaveFileNameA
+@ stdcall GetSaveFileNameW(ptr) GetSaveFileNameW
+@ stub LoadAlterBitmap
+@ stdcall PageSetupDlgA(ptr) PageSetupDlgA
+@ stdcall PageSetupDlgW(ptr) PageSetupDlgW
+@ stdcall PrintDlgA(ptr) PrintDlgA
+@ stdcall PrintDlgW(ptr) PrintDlgW
+@ stdcall PrintDlgExA(ptr) PrintDlgExA
+@ stdcall PrintDlgExW(ptr) PrintDlgExW
+@ stdcall ReplaceTextA(ptr) ReplaceTextA
+@ stdcall ReplaceTextW(ptr) ReplaceTextW
+@ stub WantArrows
+@ stub dwLBSubclass
+@ stub dwOKSubclass
