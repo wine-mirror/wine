@@ -133,7 +133,7 @@ then
   copy_icon "$HOME/.kde2/share/applnk/Wine"
   if [ $mode = "menu" ]
   then
-    gnome_entry > "$HOME/.kde/share/applnk/Wine/$link.desktop"
+    gnome_entry > "$HOME/.kde2/share/applnk/Wine/$link.desktop"
   elif [ -d "$HOME/Desktop2" ]
   then
     gnome_entry > "$HOME/Desktop2/$link.desktop"
