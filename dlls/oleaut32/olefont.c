@@ -104,7 +104,6 @@ struct OLEFontImpl
  * There is a version to accomodate all of the VTables implemented
  * by this object.
  */
-#define class *this = (class *)name class* this = (class*)name
 #define _ICOM_THIS_From_IDispatch(class, name) class* this = (class*)(((char*)name)-sizeof(void*))
 #define _ICOM_THIS_From_IPersistStream(class, name) class* this = (class*)(((char*)name)-2*sizeof(void*))
 #define _ICOM_THIS_From_IConnectionPointContainer(class, name) class* this = (class*)(((char*)name)-3*sizeof(void*))
