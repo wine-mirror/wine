@@ -7,14 +7,10 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "debug.h"
-
-#include "ldt.h"
-#include "drive.h"
-#include "msdos.h"
-#include "miscemu.h"
 #include "module.h"
 #include "console.h"
+#include "wincon.h"
+#include "debug.h"
 
 /**********************************************************************
  *	    INT_Int16Handler

@@ -50,7 +50,6 @@
 #include "winerror.h"
 #include "gdi.h"
 #include "heap.h"
-#include "ldt.h"
 #include "dc.h"
 #include "win.h"
 #include "miscemu.h"
@@ -60,7 +59,6 @@
 #include "spy.h"
 #include "message.h"
 #include "options.h"
-#include "objbase.h"
 #include "monitor.h"
 
 /* This for all the enumeration and creation of D3D-related objects */

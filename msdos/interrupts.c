@@ -5,13 +5,9 @@
  */
 
 #include <sys/types.h>
-
-#include "windows.h"
-#include "drive.h"
+#include "wintypes.h"
 #include "miscemu.h"
 #include "msdos.h"
-#include "module.h"
-#include "stackframe.h"
 #include "debug.h"
 
 static FARPROC16 INT_Vectors[256];

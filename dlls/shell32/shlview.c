@@ -17,7 +17,7 @@
 #include "shlguid.h"
 #include "shlobj.h"
 #include "servprov.h"
-#include "objbase.h"
+#include "wine/obj_base.h"
 #include "if_macros.h"
 #include "shell32_main.h"
 #include "shresdef.h"

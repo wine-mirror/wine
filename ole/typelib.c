@@ -8,8 +8,8 @@
 #include <string.h>
 #include <assert.h>
 #include "wintypes.h"
+#include "wine/winbase16.h"
 #include "heap.h"
-#include "windows.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "oleauto.h"

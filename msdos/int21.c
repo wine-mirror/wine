@@ -16,7 +16,10 @@
 #include <unistd.h>
 #include <utime.h>
 #include <ctype.h>
-#include "windows.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h" /* SW_NORMAL */
+#include "wine/winbase16.h"
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"

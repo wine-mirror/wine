@@ -10,8 +10,10 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
-#include "windows.h"
+#include "windef.h"
 #include "winerror.h"
+#include "wine/winestring.h"
+#include "wine/winbase16.h"
 #include "file.h"
 #include "ole.h"
 #include "wine/obj_base.h"

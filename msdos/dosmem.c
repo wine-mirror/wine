@@ -8,8 +8,8 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include "windows.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "global.h"
 #include "ldt.h"
 #include "miscemu.h"

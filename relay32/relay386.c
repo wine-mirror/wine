@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include "winnt.h"
-#include "windows.h"
 #include "builtin32.h"
 #include "selectors.h"
 #include "debugstr.h"
@@ -136,6 +135,9 @@ int RELAY_CallFrom32( int ret_addr, ... )
         case 15: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
                              args[6],args[7],args[8],args[9],args[10],args[11],
                              args[12],args[13],args[14]); break;
+        case 16: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9],args[10],args[11],
+                             args[12],args[13],args[14],args[15]); break;
         default:
             ERR(relay, "Unsupported nb args %d\n",
                      nb_args );
@@ -176,6 +178,9 @@ int RELAY_CallFrom32( int ret_addr, ... )
         case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
                             args[6],args[7],args[8],args[9],args[10],args[11],
                             args[12],args[13],args[14]); break;
+        case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9],args[10],args[11],
+                            args[12],args[13],args[14],args[15]); break;
         default:
             ERR(relay, "Unsupported nb args %d\n",nb_args );
             assert(FALSE);

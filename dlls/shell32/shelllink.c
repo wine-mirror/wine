@@ -9,7 +9,6 @@
 #include "debug.h"
 #include "winerror.h"
 
-#include "objbase.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 

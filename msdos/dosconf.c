@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "windows.h"
+#include "winbase.h"
 #include "msdos.h"
 #include "debug.h"
 #include "options.h"

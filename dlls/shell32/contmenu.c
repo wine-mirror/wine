@@ -9,7 +9,7 @@
 #include "debug.h"
 
 #include "pidl.h"
-#include "objbase.h"
+#include "wine/obj_base.h"
 #include "if_macros.h"
 #include "shlguid.h"
 #include "shell32_main.h"

@@ -16,7 +16,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "vga.h"
 #include "dosexe.h"
 #include "options.h"

@@ -14,7 +14,6 @@
 #include "bitmap.h"
 #include "comm.h"
 #include "neexe.h"
-#include "win.h"
 #include "main.h"
 #include "menu.h"
 #include "message.h"

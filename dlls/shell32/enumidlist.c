@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
-#include "objbase.h"
+#include "wine/obj_base.h"
 #include "winerror.h"
 
 #include "pidl.h"

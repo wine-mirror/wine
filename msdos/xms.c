@@ -8,7 +8,7 @@
 
 #include <unistd.h>
 #include <string.h>
-#include "windows.h"
+#include "winbase.h"
 #include "global.h"
 #include "module.h"
 #include "miscemu.h"

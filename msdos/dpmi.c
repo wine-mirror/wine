@@ -6,23 +6,19 @@
 
 #include <unistd.h>
 #include <string.h>
-#include "windows.h"
-#include "heap.h"
-#include "global.h"
+#include "wintypes.h"
+#include "wine/winbase16.h"
 #include "ldt.h"
+#include "global.h"
 #include "module.h"
 #include "miscemu.h"
-#include "drive.h"
 #include "msdos.h"
 #include "task.h"
-#include "dosexe.h"
 #include "toolhelp.h"
-#include "debug.h"
 #include "selectors.h"
-#include "thread.h"
 #include "process.h"
-#include "stackframe.h"
 #include "callback.h"
+#include "debug.h"
 
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 

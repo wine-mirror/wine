@@ -12,7 +12,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
-#include "windows.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "module.h"
 #include "neexe.h"

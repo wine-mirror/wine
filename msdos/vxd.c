@@ -6,12 +6,13 @@
 
 #include <fcntl.h>
 #include <memory.h>
-#include "windows.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "msdos.h"
 #include "miscemu.h"
 #include "selectors.h"
-#include "module.h"
 #include "neexe.h"
 #include "task.h"
 #include "process.h"

@@ -10,7 +10,7 @@
 #include <string.h>
 #include "winreg.h"
 #include "winerror.h"
-#include "objbase.h"
+#include "wine/obj_base.h"
 #include "winversion.h"
 
 #include "shlguid.h"

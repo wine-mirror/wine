@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "winuser.h"
+#include "wine/winuser16.h"
 #include "heap.h"
 #include "task.h"
 #include "message.h"
