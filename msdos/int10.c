@@ -292,6 +292,12 @@ void WINAPI INT_Int10Handler( CONTEXT86 *context )
 	case 0x09: /* SET PALETTE ENTRIES */
 		FIXME("VESA Set palette entries - not implemented\n");
 		break;
+        case 0xef:  /* get video mode for hercules-compatables   */
+                    /* There's no reason to really support this  */
+                    /* is there?....................(A.C.)       */
+                TRACE("Just report the video not hercules compatable\n");
+                DX_reg(context) = 0xffff;
+                break; 
 	case 0xff: /* Turn VESA ON/OFF */
 		/* i dont know what to do */
 		break;
@@ -731,6 +737,12 @@ else {
           *(DWORD *)(p+0x0a) = 0xfffffffd; /* capabilities flags :-) */
         }
         break;
+        case 0xef:  /* get video mode for hercules-compatables   */
+                    /* There's no reason to really support this  */
+                    /* is there?....................(A.C.)       */
+                TRACE("Just report the video not hercules compatable\n");
+                DX_reg(context) = 0xffff;
+                break; 
     default:
         FIXME("Unknown - 0x%x\n", AH_reg(context));
         INT_BARF( context, 0x10 );

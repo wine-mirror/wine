@@ -142,6 +142,9 @@ int INT_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
         case 0x29:
             INT_Int29Handler(context);
             break;
+        case 0x2a:
+            INT_Int2aHandler(context);
+            break; 
         case 0x2f:
             INT_Int2fHandler(context);
             break;

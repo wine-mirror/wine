@@ -167,6 +167,9 @@ extern void WINAPI INT_Int26Handler(CONTEXT86*);
 /* msdos/int29.c */
 extern void WINAPI INT_Int29Handler(CONTEXT86*);
 
+/* msdos/int2a.c */
+extern void WINAPI INT_Int2aHandler(CONTEXT86*);
+
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
