@@ -1,14 +1,15 @@
-/* -*-C-*- --------------------------------------------------------------------
-| Module:      wine.xs                                                         |
-| ---------------------------------------------------------------------------- |
-| Purpose:     Perl gateway to wine API calls                                  |
-|                                                                              |
-------------------------------------------------------------------------------*/
+/* -*-C-*- -------------------------------------------------------------
+| Module:      wine.xs                                                 |
+| -------------------------------------------------------------------- |
+| Purpose:     Perl gateway to wine API calls                          |
+|                                                                      |
+----------------------------------------------------------------------*/
+
+#include "config.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
 #include "windef.h"
 
 #include <EXTERN.h>
@@ -124,11 +125,9 @@ static SV *convert_value( enum ret_type type, unsigned long val )
         case RET_WORD: return sv_2mortal( newSViv ((int) val & 0xffff ));
         case RET_PTR:  return sv_2mortal( newSViv ((int) val ));
         case RET_STR:  return sv_2mortal( newSVpv ((char *) val, 0 ));
-
-        default:
-            croak ("Bad return type %d", type);
-            break;
     }
+    croak ("Bad return type %d", type);
+    return &PL_sv_undef;
 }
 
 
