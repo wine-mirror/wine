@@ -21,6 +21,10 @@
 #define _S_IFREG  0x8000
 #define _S_IFMT   0xF000
 
+/* for FreeBSD */
+#undef st_atime
+#undef st_ctime
+#undef st_mtime
 
 struct _stat {
   _dev_t         st_dev;
