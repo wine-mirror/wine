@@ -134,7 +134,7 @@ params:
  - system parameter id
  - supposed value of the registry key
 */
-static void test_change_message( UINT action, char *reg_section )
+static void test_change_message( int action, char *reg_section )
 {
     ok( 1 == change_counter,
         "Missed a message: change_counter=%d", change_counter );
@@ -347,7 +347,7 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     UINT old_border;
     UINT curr_val;
     UINT border;
-    UINT frame;
+    INT frame;
     char buf[10];
 
     /* tests one configuration of border settings */
@@ -432,9 +432,9 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
 
 static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
 {
-    UINT old_spacing;
-    UINT spacing;
-    UINT curr_val;
+    INT old_spacing;
+    INT spacing;
+    INT curr_val;
     char buf[10];
 
     trace("testing SPI_ICONHORIZONTALSPACING\n");
@@ -582,9 +582,9 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
 
 static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
 {
-    UINT old_spacing;
-    UINT spacing;
-    UINT curr_val;
+    INT old_spacing;
+    INT spacing;
+    INT curr_val;
     char buf[10];
 
     trace("testing SPI_ICONVERTICALSPACING\n");
@@ -700,8 +700,8 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
 
 static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
 {
-    UINT old_width;
-    UINT curr_val;
+    INT old_width;
+    INT curr_val;
     char buf[10];
 
     trace("testing SPI_SETDOUBLECLKWIDTH\n");
@@ -731,8 +731,8 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
 
 static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
 {
-    UINT old_height;
-    UINT curr_val;
+    INT old_height;
+    INT curr_val;
     char buf[10];
 
     trace("testing SPI_SETDOUBLECLKHEIGHT\n");
