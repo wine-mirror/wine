@@ -598,7 +598,7 @@ ICOM_DEFINE(IDirectSoundBuffer8,IUnknown)
     /*** IDirectSoundBuffer8 methods ***/
 #define IDirectSoundBuffer8_SetFX(p,a,b,c)              (p)->lpVtbl->SetFX(p,a,b,c)
 #define IDirectSoundBuffer8_AcquireResources(p,a,b,c)   (p)->lpVtbl->AcquireResources(p,a,b,c)
-#define IDirectSoundBuffer8_GetObjectInPath(p,a,b,c)    (p)->lpVtbl->GetObjectInPath(p,a,b,c)
+#define IDirectSoundBuffer8_GetObjectInPath(p,a,b,c,d)  (p)->lpVtbl->GetObjectInPath(p,a,b,c,d)
 #endif
 
 
