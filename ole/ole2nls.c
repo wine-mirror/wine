@@ -447,8 +447,8 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
     found=0; i=0;
 
     do {
-	if (i=0) lang=Languages[Options.language].langid;
-	if (i=1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
+	if (i==0) lang=Languages[Options.language].langid;
+	if (i==1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
 	i++;
 
 	switch(lang) {
