@@ -49,10 +49,15 @@ typedef struct _EditStreamTable {
 } EditStreamTable;
 
 #define INTERFACE IEditStreamInternal
-#define IEditStreamInternal_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IEditStreamInternal,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IEditStreamInternal methods ***/
     STDMETHOD(GetEditStreamImpl)(THIS_ LPVOID*) PURE;
-DECLARE_INTERFACE_(IEditStreamInternal, IUnknown) { IEditStreamInternal_METHODS };
+};
 #undef INTERFACE
 
 #define EditStreamEnd(This,streamNr) ((This)->pStreams[streamNr].dwStart + \

@@ -57,21 +57,26 @@ typedef BOOL (CALLBACK *LPENUMMRUCALLBACK)( LPCVOID lpData,
 
 /* Define the COM interface */
 #define INTERFACE IDirectPlaySP
-#define IDirectPlaySP_METHODS \
-   IUnknown_METHODS \
-   STDMETHOD(AddMRUEntry)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPCVOID lpData, DWORD dwDataSize, DWORD dwMaxEntries ) PURE; \
-   STDMETHOD(CreateAddress)(THIS_ REFGUID guidSP, REFGUID guidDataType, LPCVOID lpData, DWORD dwDataSize, LPVOID lpAddress,LPDWORD lpdwAddressSize) PURE; \
-   STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress, DWORD dwAddressSize, LPVOID lpContext ) PURE; \
-   STDMETHOD(EnumMRUEntries)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPENUMMRUCALLBACK lpEnumMRUCallback, LPVOID lpContext ) PURE; \
-   STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwPlayerFlags ) PURE; \
-   STDMETHOD(GetSPPlayerData)(THIS_ DPID idPlayer, LPVOID *lplpData, LPDWORD lpdwDataSize, DWORD dwFlags ) PURE; \
-   STDMETHOD(HandleMessage)(THIS_ LPVOID lpMessageBody, DWORD dwMessageBodySize, LPVOID lpMessageHeader ) PURE; \
-   STDMETHOD(SetSPPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE; \
-   STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount, LPVOID lpAddress, LPDWORD lpdwAddressSize ) PURE; \
-   STDMETHOD(GetSPData)(THIS_ LPVOID *lplpData, LPDWORD dwDataSize, DWORD dwFlags ) PURE; \
-   STDMETHOD(SetSPData)(THIS_ LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE; \
-   STDMETHOD_(VOID,SendComplete)(THIS_ LPVOID , DWORD  ) PURE;
-DECLARE_INTERFACE_(IDirectPlaySP,IUnknown) { IDirectPlaySP_METHODS };
+DECLARE_INTERFACE_(IDirectPlaySP,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlaySP methods ***/
+    STDMETHOD(AddMRUEntry)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPCVOID lpData, DWORD dwDataSize, DWORD dwMaxEntries ) PURE;
+    STDMETHOD(CreateAddress)(THIS_ REFGUID guidSP, REFGUID guidDataType, LPCVOID lpData, DWORD dwDataSize, LPVOID lpAddress,LPDWORD lpdwAddressSize) PURE;
+    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress, DWORD dwAddressSize, LPVOID lpContext ) PURE;
+    STDMETHOD(EnumMRUEntries)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPENUMMRUCALLBACK lpEnumMRUCallback, LPVOID lpContext ) PURE;
+    STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwPlayerFlags ) PURE;
+    STDMETHOD(GetSPPlayerData)(THIS_ DPID idPlayer, LPVOID *lplpData, LPDWORD lpdwDataSize, DWORD dwFlags ) PURE;
+    STDMETHOD(HandleMessage)(THIS_ LPVOID lpMessageBody, DWORD dwMessageBodySize, LPVOID lpMessageHeader ) PURE;
+    STDMETHOD(SetSPPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE;
+    STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount, LPVOID lpAddress, LPDWORD lpdwAddressSize ) PURE;
+    STDMETHOD(GetSPData)(THIS_ LPVOID *lplpData, LPDWORD dwDataSize, DWORD dwFlags ) PURE;
+    STDMETHOD(SetSPData)(THIS_ LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE;
+    STDMETHOD_(VOID,SendComplete)(THIS_ LPVOID , DWORD  ) PURE;
+};
 #undef INTERFACE
 
 
