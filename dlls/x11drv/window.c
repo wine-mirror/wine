@@ -161,7 +161,7 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
     if (IsRectEmpty( rect )) return FALSE;
 
     /* don't map if rect is off-screen */
-    if (rect->left >= screen_width || rect->top >= screen_height) return FALSE;
+    if (rect->left >= (int)screen_width || rect->top >= (int)screen_height) return FALSE;
     if (rect->right < 0 || rect->bottom < 0) return FALSE;
 
     return TRUE;
