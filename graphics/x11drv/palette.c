@@ -631,9 +631,9 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
          color.red = (pixel >> X11DRV_PALETTE_Redshift) & X11DRV_PALETTE_Redmax;
          color.green = (pixel >> X11DRV_PALETTE_Greenshift) & X11DRV_PALETTE_Greenmax;
          color.blue = (pixel >> X11DRV_PALETTE_Blueshift) & X11DRV_PALETTE_Bluemax;
-         return RGB((color.red * 255)/X11DRV_PALETTE_Redmax,
-                    (color.green * 255)/X11DRV_PALETTE_Greenmax,
-                    (color.blue * 255)/X11DRV_PALETTE_Bluemax);
+         return RGB(MulDiv(color.red, 255, X11DRV_PALETTE_Redmax),
+		    MulDiv(color.green, 255, X11DRV_PALETTE_Greenmax),
+		    MulDiv(color.blue, 255, X11DRV_PALETTE_Bluemax));
     }
 
     /* check if we can bypass X */
@@ -716,9 +716,12 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	else
         {
 	    /* scale each individually and construct the TrueColor pixel value */
-	    if (X11DRV_PALETTE_Redmax != 255) red = (red * X11DRV_PALETTE_Redmax) / 255;
-            if (X11DRV_PALETTE_Greenmax != 255) green = (green * X11DRV_PALETTE_Greenmax) / 255;
-	    if (X11DRV_PALETTE_Bluemax != 255) blue = (blue * X11DRV_PALETTE_Bluemax) / 255;
+	    if (X11DRV_PALETTE_Redmax != 255)
+		red = MulDiv(red, X11DRV_PALETTE_Redmax, 255);
+	    if (X11DRV_PALETTE_Greenmax != 255)
+		green = MulDiv(green, X11DRV_PALETTE_Greenmax, 255);
+	    if (X11DRV_PALETTE_Bluemax != 255)
+		blue = MulDiv(blue, X11DRV_PALETTE_Bluemax, 255);
 
 	    GDI_HEAP_UNLOCK( hPal );
 	    return (red << X11DRV_PALETTE_Redshift) | (green << X11DRV_PALETTE_Greenshift) | (blue << X11DRV_PALETTE_Blueshift);
