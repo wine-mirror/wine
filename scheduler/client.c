@@ -407,6 +407,13 @@ static void start_server( const char *oldcwd )
             /* if server is explicitly specified, use this */
             if ((p = getenv("WINESERVER")))
             {
+                if (p[0] != '/' && oldcwd[0] == '/')  /* make it an absolute path */
+                {
+                    if (!(path = malloc( strlen(oldcwd) + strlen(p) + 1 )))
+                        fatal_error( "out of memory\n" );
+                    sprintf( path, "%s/%s", oldcwd, p );
+                    p = path;
+                }
                 execl( p, "wineserver", NULL );
                 fatal_perror( "could not exec the server '%s'\n"
                               "    specified in the WINESERVER environment variable", p );
