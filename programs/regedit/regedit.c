@@ -24,36 +24,36 @@
 #include "regproc.h"
 
 static char *usage =
-"Usage:
-    regedit filename
-    regedit /E filename [regpath]
-    regedit /D regpath
-
-filename - registry file name
-regpath - name of the registry key
-
-When is called without any switches adds contents of the specified
-registry file to the registry
-
-Switches:
-    /E - exports contents of the specified registry key to the specified
-	file. Exports the whole registry if no key is specified.
-    /D - deletes specified registry key
-    /S - silent execution, can be used with any other switch.
-	The only existing mode, exists for compatibility with Windows regedit.
-    /V - advanced mode, can be used with any other switch.
-	Ignored, exists for compatibility with Windows regedit.
-    /L - location of system.dat file. Can be used with any other switch.
-	Ignored. Exists for compatibility with Windows regedit.
-    /R - location of user.dat file. Can be used with any other switch.
-	Ignored. Exists for compatibility with Windows regedit.
-    /? - print this help. Any other switches are ignored.
-    /C - create registry from. Not implemented.
-
-The switches are case-insensitive, can be prefixed either by '-' or '/'.
-This program is command-line compatible with Microsoft Windows
-regedit. The difference with Windows regedit - this application has
-command-line interface only.\n";
+"Usage:\n"
+"    regedit filename\n"
+"    regedit /E filename [regpath]\n"
+"    regedit /D regpath\n"
+"\n"
+"filename - registry file name\n"
+"regpath - name of the registry key\n"
+"\n"
+"When is called without any switches adds contents of the specified\n"
+"registry file to the registry\n"
+"\n"
+"Switches:\n"
+"    /E - exports contents of the specified registry key to the specified\n"
+"	file. Exports the whole registry if no key is specified.\n"
+"    /D - deletes specified registry key\n"
+"    /S - silent execution, can be used with any other switch.\n"
+"	The only existing mode, exists for compatibility with Windows regedit.\n"
+"    /V - advanced mode, can be used with any other switch.\n"
+"	Ignored, exists for compatibility with Windows regedit.\n"
+"    /L - location of system.dat file. Can be used with any other switch.\n"
+"	Ignored. Exists for compatibility with Windows regedit.\n"
+"    /R - location of user.dat file. Can be used with any other switch.\n"
+"	Ignored. Exists for compatibility with Windows regedit.\n"
+"    /? - print this help. Any other switches are ignored.\n"
+"    /C - create registry from. Not implemented.\n"
+"\n"
+"The switches are case-insensitive, can be prefixed either by '-' or '/'.\n"
+"This program is command-line compatible with Microsoft Windows\n"
+"regedit. The difference with Windows regedit - this application has\n"
+"command-line interface only.\n";
 
 typedef enum {
     ACTION_UNDEF, ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
