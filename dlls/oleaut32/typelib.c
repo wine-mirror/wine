@@ -4087,6 +4087,8 @@ _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
     return res;
 }
 
+extern int const _argsize(DWORD vt);
+
 static HRESULT WINAPI ITypeInfo_fnInvoke(
     ITypeInfo2 *iface,
     VOID  *pIUnk,
@@ -4114,35 +4116,62 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	}
     if (pFDesc) {
 	dump_TLBFuncDescOne(pFDesc);
+	/* dump_FUNCDESC(&pFDesc->funcdesc);*/
 	switch (pFDesc->funcdesc.funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
 	    DWORD res;
-	    DWORD *args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*(pFDesc->funcdesc.cParams+1));
-	    DWORD *args2 = (DWORD*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD)*(pFDesc->funcdesc.cParams));
-	    args[0] = (DWORD)pIUnk;
+	    int   numargs, numargs2, argspos, args2pos;
+	    DWORD *args , *args2;
 
+
+	    numargs = 1; numargs2 = 0;
 	    for (i=0;i<pFDesc->funcdesc.cParams;i++) {
+		if (i<pDispParams->cArgs)
+		    numargs += _argsize(pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt);
+		else {
+		    numargs	+= 1; /* sizeof(lpvoid) */
+		    numargs2	+= _argsize(pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt);
+		}
+	    }
+
+	    args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
+	    args2 = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs2);
+
+	    args[0] = (DWORD)pIUnk;
+	    argspos = 1; args2pos = 0;
+	    for (i=0;i<pFDesc->funcdesc.cParams;i++) {
+		int arglen = _argsize(pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt);
 		if (i<pDispParams->cArgs) {
-		    TRACE("set %d to disparg type %d vs %d\n",i,
-			    V_VT(&pDispParams->rgvarg[pDispParams->cArgs-i-1]),
-			    pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt
-		    );
-		    args[i+1] = V_UNION(&pDispParams->rgvarg[pDispParams->cArgs-i-1],lVal);
+		    VARIANT *arg = &pDispParams->rgvarg[pDispParams->cArgs-i-1];
+		    TYPEDESC *tdesc = &pFDesc->funcdesc.lprgelemdescParam[i].tdesc;
+
+		    if (V_VT(arg) == tdesc->vt) {
+			memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
+		    } else {
+			if (tdesc->vt == VT_VARIANT) {
+			    memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
+			} else {
+			    ERR("Set arg %d to disparg type %d vs %d\n",i,
+				    V_VT(arg),tdesc->vt
+			    );
+			}
+		    }
+		    argspos += arglen;
 		} else {
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
-		    TRACE("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
+		    FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
 		    /*FIXME: give pointers for the rest, so propertyget works*/
-		    args[i+1] = (DWORD)&args2[i];
+		    args[argspos] = (DWORD)&args2[args2pos];
 
-		    /* If pointer to variant, pass reference to variant
-		     * in result variant array.
-		     */
+		    /* If pointer to variant, pass reference it. */
 		    if ((tdesc->vt == VT_PTR) &&
 			(tdesc->u.lptdesc->vt == VT_VARIANT) &&
 			pVarResult
 		    )
-			args[i+1] = (DWORD)(pVarResult+(i-pDispParams->cArgs));
+			args[argspos]= (DWORD)pVarResult;
+		    argspos	+= 1;
+		    args2pos	+= arglen;
 		}
 	    }
 	    if (pFDesc->funcdesc.cParamsOpt)
@@ -4152,22 +4181,24 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
 	    res = _invoke((*(DWORD***)pIUnk)[pFDesc->funcdesc.oVft/4],
 		    pFDesc->funcdesc.callconv,
-		    pFDesc->funcdesc.cParams+1,
+		    numargs,
 		    args
 	    );
 	    if (pVarResult && (dwFlags & (DISPATCH_PROPERTYGET))) {
+		args2pos = 0;
 		for (i=0;i<pFDesc->funcdesc.cParams-pDispParams->cArgs;i++) {
+		    int arglen = _argsize(pFDesc->funcdesc.lprgelemdescParam[i].tdesc.vt);
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i+pDispParams->cArgs].tdesc);
 		    /* If we are a pointer to a variant, we are done already */
 		    if ((tdesc->vt==VT_PTR)&&(tdesc->u.lptdesc->vt==VT_VARIANT))
 			continue;
 
-		    VariantInit(&pVarResult[i]);
-		    V_UNION(pVarResult+i,intVal) = args2[i+pDispParams->cArgs];
+		    VariantInit(pVarResult);
+		    memcpy(&V_UNION(pVarResult,intVal),&args2[args2pos],arglen*sizeof(DWORD));
 
 		    if (tdesc->vt == VT_PTR)
 			tdesc = tdesc->u.lptdesc;
-		    V_VT(pVarResult+i) = tdesc->vt;
+		    V_VT(pVarResult) = tdesc->vt;
 
 		    /* HACK: VB5 likes this.
 		     * I do not know why. There is 1 example in MSDN which uses
@@ -4175,9 +4206,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		     * IDispatch*.).
 		     */
 		    if ((tdesc->vt == VT_PTR) && (dwFlags & DISPATCH_METHOD))
-			V_VT(pVarResult+i) = VT_DISPATCH;
-		    TRACE("storing into variant: [%d]\n", i);
-		    dump_Variant(pVarResult+i);
+			V_VT(pVarResult) = VT_DISPATCH;
+		    TRACE("storing into variant:\n");
+		    dump_Variant(pVarResult);
+		    args2pos += arglen;
 		}
 	    }
 	    HeapFree(GetProcessHeap(),0,args2);

@@ -360,7 +360,7 @@ static ICOM_VTABLE(IRpcProxyBuffer) tmproxyvtable = {
 };
 
 /* how much space do we use on stack in DWORD steps. */
-static int const
+int const
 _argsize(DWORD vt) {
     switch (vt) {
     case VT_DATE:
