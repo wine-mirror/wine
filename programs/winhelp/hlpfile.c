@@ -1321,7 +1321,7 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
  */
 static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
 {
-    UINT num, dec_size;
+    UINT num, dec_size, cpr_size;
     BYTE *buf_idx, *end_idx;
     BYTE *buf_phs, *end_phs;
     short i, n;
@@ -1347,11 +1347,14 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
                GET_USHORT(buf_idx, 9 + 26));
 
     dec_size = GET_UINT(buf_idx, 9 + 12);
-    if (dec_size != HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs))
+    cpr_size = GET_UINT(buf_idx, 9 + 16);
+
+    if (dec_size != cpr_size &&
+        dec_size != HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs))
     {
         WINE_WARN("size mismatch %u %u\n",
-                  dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs, end_phs));
-        dec_size = max(dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs, end_phs));
+                  dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs));
+        dec_size = max(dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs));
     }
 
     phrases.offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
@@ -1373,7 +1376,10 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     }
 #undef getbit
 
-    HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, phrases.buffer);
+    if (dec_size == cpr_size)
+        memcpy(phrases.buffer, buf_phs + 9, dec_size);
+    else
+        HLPFILE_UncompressLZ77(buf_phs + 9, end_phs, phrases.buffer);
 
     hlpfile->hasPhrases = FALSE;
     return TRUE;
