@@ -8,22 +8,58 @@ SUBDIRS = \
 	port \
 	unicode \
 	uuid \
-	wine
+	wine \
+	wpp
 
 INSTALLSUBDIRS = \
 	unicode \
 	uuid \
 	wine
 
+SYMLINKS = \
+	libwine.$(LIBEXT) \
+	libwine_port.a \
+	libwine_unicode.$(LIBEXT) \
+	libwine_uuid.a \
+	libwpp.a
+
 @MAKE_RULES@
 
-all: $(SUBDIRS)
+ALL_SYMLINKS =  $(SYMLINKS) $(SYMLINKS:.so=.so.1) $(SYMLINKS:.dll=.a)
+
+all: $(SUBDIRS) $(ALL_SYMLINKS)
 
 install-lib:: $(INSTALLSUBDIRS:%=%/__install-lib__)
 install-dev:: $(INSTALLSUBDIRS:%=%/__install-dev__)
 
-# Inter-dll dependencies
+clean::
+	$(RM) $(ALL_SYMLINKS)
 
-wine wine/__install__ wine/__install-lib__: port
+# Symlinks
+
+libwine.so libwine.so.1 libwine.dll libwine.a: wine/libwine.$(LIBEXT)
+	$(RM) $@ && $(LN_S) wine/$@ $@
+
+libwine_unicode.so libwine_unicode.so.1 libwine_unicode.dll libwine_unicode.a: unicode/libwine_unicode.$(LIBEXT)
+	$(RM) $@ && $(LN_S) unicode/$@ $@
+
+libwine_port.a: port/libwine_port.a
+	$(RM) $@ && $(LN_S) port/$@ $@
+
+libwine_uuid.a: uuid/libwine_uuid.a
+	$(RM) $@ && $(LN_S) uuid/$@ $@
+
+libwpp.a: wpp/libwpp.a
+	$(RM) $@ && $(LN_S) wpp/$@ $@
+
+# Directory dependencies
+
+wine/libwine.$(LIBEXT): wine
+unicode/libwine_unicode.$(LIBEXT): unicode
+port/libwine_port.a: port
+uuid/libwine_uuid.a: uuid
+wpp/libwpp.a: wpp
+
+wine wine/__install__ wine/__install-lib__: libwine_port.a
 
 ### Dependencies:

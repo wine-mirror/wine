@@ -136,7 +136,7 @@
 #include "utils.h"
 #include "newstruc.h"
 #include "dumpres.h"
-#include "../wpp/wpp.h"
+#include "wine/wpp.h"
 #include "parser.h"
 #include "windef.h"
 #include "winbase.h"

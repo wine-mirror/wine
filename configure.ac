@@ -1500,6 +1500,7 @@ libs/port/Makefile
 libs/unicode/Makefile
 libs/uuid/Makefile
 libs/wine/Makefile
+libs/wpp/Makefile
 miscemu/Makefile
 programs/Makefile
 programs/avitools/Makefile
@@ -1537,7 +1538,6 @@ tools/winapi/Makefile
 tools/winebuild/Makefile
 tools/winedump/Makefile
 tools/wmc/Makefile
-tools/wpp/Makefile
 tools/wrc/Makefile])
 
 AC_OUTPUT

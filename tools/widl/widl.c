@@ -37,7 +37,7 @@
 #include "utils.h"
 #include "parser.h"
 #include "proxy.h"
-#include "../wpp/wpp.h"
+#include "wine/wpp.h"
 
 /* future options to reserve characters for: */
 /* a = alignment of structures */

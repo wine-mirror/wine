@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
 YACCOPT   = #-v
-MODULE    = none
+MODULE    = libwpp.a
 
 C_SRCS = \
 	preproc.c \
@@ -13,11 +13,11 @@ C_SRCS = \
 EXTRA_SRCS = ppy.y ppl.l
 EXTRA_OBJS = y.tab.o @LEX_OUTPUT_ROOT@.o
 
-all: libwpp.a
+all: $(MODULE)
 
 @MAKE_RULES@
 
-libwpp.a: $(OBJS)
+$(MODULE): $(OBJS)
 	$(RM) $@
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@

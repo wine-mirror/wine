@@ -24,7 +24,6 @@ SUBDIRS = \
 	winebuild \
 	winedump \
 	wmc \
-	wpp \
 	wrc
 
 INSTALLSUBDIRS = $(SUBDIRS)
@@ -36,8 +35,6 @@ EXTRASUBDIRS = \
 all: $(PROGRAMS) $(SUBDIRS)
 
 @MAKE_RULES@
-
-widl wrc: wpp
 
 makedep: makedep.o
 	$(CC) $(CFLAGS) -o makedep makedep.o

@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 #include "wpp_private.h"
-#include "wpp.h"
+#include "wine/wpp.h"
 
 int ppdebug;
 

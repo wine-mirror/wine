@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 LEXOPT    = -Cf #-w -b
 YACCOPT   = #-v
 EXEEXT    = @EXEEXT@
-EXTRALIBS = -L$(TOPOBJDIR)/tools/wpp -lwpp
 
 PROGRAMS = widl$(EXEEXT)
 MODULE   = none
@@ -23,8 +22,8 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-widl$(EXEEXT): $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(EXTRALIBS) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
+widl$(EXEEXT): $(OBJS) $(LIBDIR)/wpp/libwpp.a
+	$(CC) $(CFLAGS) -o $@ $(OBJS) -L$(LIBDIR) -lwpp -lwine_port $(LEXLIB) $(LDFLAGS)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y

@@ -48,7 +48,7 @@ uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"
-#include "../wpp/wpp.h"
+#include "wine/wpp.h"
 
 #include "y.tab.h"
 

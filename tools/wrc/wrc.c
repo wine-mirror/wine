@@ -42,7 +42,7 @@
 #include "genres.h"
 #include "newstruc.h"
 #include "parser.h"
-#include "../wpp/wpp.h"
+#include "wine/wpp.h"
 
 #ifndef INCLUDEDIR
 #define INCLUDEDIR "/usr/local/include/wine"
