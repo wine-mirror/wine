@@ -21,16 +21,17 @@
  *   state MUST be correct since this function can be called with the SAME image
  *   AGAIN. (Thats recursion for you.) That means MODREF.module and
  *   NE_MODULE.module32.
- * - No, you (usually) cannot use Linux mmap() to mmap() the images directly.
+ * - Sometimes, we can't use Linux mmap() to mmap() the images directly.
  *
  *   The problem is, that there is not direct 1:1 mapping from a diskimage and
  *   a memoryimage. The headers at the start are mapped linear, but the sections
- *   are not. For x86 the sections are 512 byte aligned in file and 4096 byte
+ *   are not. Older x86 pe binaries are 512 byte aligned in file and 4096 byte
  *   aligned in memory. Linux likes them 4096 byte aligned in memory (due to
  *   x86 pagesize, this cannot be fixed without a rather large kernel rewrite)
  *   and 'blocksize' file-aligned (offsets). Since we have 512/1024/2048 (CDROM)
- *   and other byte blocksizes, we can't do this. However, this could be less
- *   difficult to support... (See mm/filemap.c).
+ *   and other byte blocksizes, we can't always do this.  We *can* do this for
+ *   newer pe binaries produced by MSVC 5 and later, since they are also aligned
+ *   to 4096 byte boundaries on disk.
  */
 
 #include "config.h"
@@ -476,8 +477,10 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     IMAGE_SECTION_HEADER *pe_sec;
     IMAGE_DATA_DIRECTORY *dir;
     BY_HANDLE_FILE_INFORMATION bhfi;
-    int	i, rawsize, lowest_va, lowest_fa, vma_size, file_size = 0;
-    DWORD load_addr, aoep, reloc = 0;
+    int	i, rawsize, lowest_va, vma_size, file_size = 0;
+    DWORD load_addr = 0, aoep, reloc = 0;
+    struct get_read_fd_request *req = get_req_buffer();
+    int unix_handle = -1;
 
     /* Retrieve file size */
     if ( GetFileInformationByHandle( hFile, &bhfi ) ) 
@@ -534,15 +537,13 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
 
     /* Find out how large this executeable should be */
     pe_sec = PE_SECTIONS( hModule );
-    rawsize = 0; lowest_va = 0x10000; lowest_fa = 0x10000;
+    rawsize = 0; lowest_va = 0x10000;
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++) 
     {
         if (lowest_va > pe_sec[i].VirtualAddress)
            lowest_va = pe_sec[i].VirtualAddress;
     	if (pe_sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
 	    continue;
-    	if (pe_sec[i].PointerToRawData < lowest_fa)
-            lowest_fa = pe_sec[i].PointerToRawData;
 	if (pe_sec[i].PointerToRawData+pe_sec[i].SizeOfRawData > rawsize)
 	    rawsize = pe_sec[i].PointerToRawData+pe_sec[i].SizeOfRawData;
     }
@@ -604,13 +605,13 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     if (load_addr == 0) 
     {
         /* We need to perform base relocations */
+        FIXME("We need to perform base relocations for %s\n", filename);
 	dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_BASERELOC;
         if (dir->Size)
             reloc = dir->VirtualAddress;
         else 
         {
-            FIXME(
-                   "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
+            FIXME( "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
                    filename,
                    (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
                    "stripped during link" : "unknown reason" );
@@ -639,37 +640,47 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     TRACE_(segment)("Loading %s at %lx, range %x\n",
                     filename, load_addr, vma_size );
 
+#if 0
     /* Store the NT header at the load addr */
     *(PIMAGE_DOS_HEADER)load_addr = *(PIMAGE_DOS_HEADER)hModule;
     *PE_HEADER( load_addr ) = *nt;
     memcpy( PE_SECTIONS(load_addr), PE_SECTIONS(hModule),
             sizeof(IMAGE_SECTION_HEADER) * nt->FileHeader.NumberOfSections );
-#if 0
+
     /* Copies all stuff up to the first section. Including win32 viruses. */
     memcpy( load_addr, hModule, lowest_fa );
 #endif
+
+    req->handle = hFile;
+    server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
+    if (unix_handle == -1) goto error;
+
+    /* Map the header */
+    if (FILE_dommap( unix_handle, (void *)load_addr, 0, nt->OptionalHeader.SizeOfHeaders,
+                     0, 0, PROT_EXEC | PROT_WRITE | PROT_READ,
+                     MAP_PRIVATE | MAP_FIXED ) != load_addr)
+    {
+        ERR_(win32)( "Critical Error: failed to map PE header to necessary address.\n");	
+        goto error;
+    }
 
     /* Copy sections into module image */
     pe_sec = PE_SECTIONS( hModule );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, pe_sec++)
     {
-        /* memcpy only non-BSS segments */
-        /* FIXME: this should be done by mmap(..MAP_PRIVATE|MAP_FIXED..)
-         * but it is not possible for (at least) Linux needs
-         * a page-aligned offset.
-         */
-        if(!(pe_sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA))
-            memcpy((char*)RVA(pe_sec->VirtualAddress),
-                   (char*)(hModule + pe_sec->PointerToRawData),
-                   pe_sec->SizeOfRawData);
-#if 0
-        /* not needed, memory is zero */
-        if(strcmp(pe_sec->Name, ".bss") == 0)
-            memset((void *)RVA(pe_sec->VirtualAddress), 0, 
-                   pe_sec->Misc.VirtualSize ?
-                   pe_sec->Misc.VirtualSize :
-                   pe_sec->SizeOfRawData);
-#endif
+        if (!pe_sec->SizeOfRawData) continue;
+        TRACE("%s: mmaping section %s at %p off %lx\n",
+              filename, pe_sec->Name, (void*)RVA(pe_sec->VirtualAddress),
+              pe_sec->PointerToRawData);
+        if (FILE_dommap( unix_handle, (void*)RVA(pe_sec->VirtualAddress),
+                         0, min(pe_sec->Misc.VirtualSize, pe_sec->SizeOfRawData), 
+                         0, pe_sec->PointerToRawData, PROT_EXEC | PROT_WRITE | PROT_READ,
+                         MAP_PRIVATE | MAP_FIXED ) != (void*)RVA(pe_sec->VirtualAddress))
+        {
+            /* We failed to map to the right place (huh?) */
+            ERR_(win32)( "Critical Error: failed to map PE section to necessary address.\n");
+            goto error;
+        }
     }
 
     /* Perform base relocation, if necessary */
@@ -685,6 +696,8 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     return (HMODULE)load_addr;
 
 error:
+    if (unix_handle != -1) close( unix_handle );
+    if (load_addr) VirtualFree( (LPVOID)load_addr, 0, MEM_RELEASE );
     UnmapViewOfFile( (LPVOID)hModule );
     return 0;
 }
@@ -951,9 +964,8 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
  */
 void PE_UnloadLibrary(WINE_MODREF *wm)
 {
-    DWORD vma_size = calc_vma_size( wm->module );
-    VirtualFree( (LPVOID)wm->module, vma_size, MEM_RELEASE );
-
+    TRACE(" unloading %s\n", wm->filename);
+    VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE );
     HeapFree( GetProcessHeap(), 0, wm->filename );
     HeapFree( GetProcessHeap(), 0, wm->short_filename );
     HeapFree( GetProcessHeap(), 0, wm );
@@ -1007,15 +1019,6 @@ BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR en
     return TRUE;
 }
 
-/*********************************************************************
- * PE_UnloadImage [internal]
- */
-int PE_UnloadImage( HMODULE hModule )
-{
-	FIXME("stub.\n");
-	/* free resources, image, unmap */
-	return 1;
-}
 
 /* Called if the library is loaded or freed.
  * NOTE: if a thread attaches a DLL, the current thread will only do

@@ -277,6 +277,7 @@ static int VIRTUAL_GetUnixProt( BYTE vprot )
     {
         if (vprot & VPROT_READ) prot |= PROT_READ;
         if (vprot & VPROT_WRITE) prot |= PROT_WRITE;
+        if (vprot & VPROT_WRITECOPY) prot |= PROT_WRITE;
         if (vprot & VPROT_EXEC) prot |= PROT_EXEC;
     }
     return prot;
@@ -339,10 +340,10 @@ static BYTE VIRTUAL_GetProt(
         vprot = VPROT_EXEC | VPROT_READ;
         break;
     case PAGE_EXECUTE_READWRITE:
-        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE | VPROT_WRITECOPY;
+        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_EXECUTE_WRITECOPY:
-        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
+        vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE | VPROT_WRITECOPY;
         break;
     case PAGE_NOACCESS:
     default:

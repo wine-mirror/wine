@@ -124,8 +124,7 @@ typedef struct
 typedef enum {
 	MODULE32_PE = 1,
 	MODULE32_ELF,
-	MODULE32_ELFDLL,
-	MODULE32_BI
+	MODULE32_ELFDLL
 } MODULE32_TYPE;
 
 typedef struct _wine_modref

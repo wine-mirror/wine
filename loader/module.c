@@ -109,8 +109,7 @@ static BOOL MODULE_InitDll( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
         return TRUE;
 
 
-    TRACE("(%s,%s,%p) - CALL\n", 
-          wm->modname, typeName[type], lpReserved );
+    TRACE("(%s,%s,%p) - CALL\n", wm->modname, typeName[type], lpReserved );
 
     /* Call the initialization routine */
     switch ( wm->type )
@@ -129,8 +128,10 @@ static BOOL MODULE_InitDll( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
         break;
     }
 
-    TRACE("(%s,%s,%p) - RETURN %d\n", 
-          wm->modname, typeName[type], lpReserved, retv );
+    /* The state of the module list may have changed due to the call
+       to PE_InitDLL. We cannot assume that this module has not been
+       deleted.  */
+    TRACE("(%p,%s,%p) - RETURN %d\n", wm, typeName[type], lpReserved, retv );
 
     return retv;
 }
@@ -1378,10 +1379,13 @@ static void MODULE_FlushModrefs(void)
 		 */
 		switch(wm->type)
 		{
-		case MODULE32_PE:	PE_UnloadLibrary(wm);		break;
+                case MODULE32_PE:       if ( !(wm->flags & WINE_MODREF_INTERNAL) )
+                                               PE_UnloadLibrary(wm);
+                                        else
+                                               BUILTIN32_UnloadLibrary(wm);
+					break;
 		case MODULE32_ELF:	ELF_UnloadLibrary(wm);		break;
 		case MODULE32_ELFDLL:	ELFDLL_UnloadLibrary(wm);	break;
-		case MODULE32_BI:	BUILTIN32_UnloadLibrary(wm);	break;
 
 		default:
 			ERR("Invalid or unhandled MODREF type %d encountered (wm=%p)\n", wm->type, wm);
@@ -1462,11 +1466,11 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
         MODULE_DllProcessDetach( FALSE, NULL );
         req->base = (void *)wm->module;
         server_call_noerr( REQ_UNLOAD_DLL );
+    
+        MODULE_FlushModrefs();
     }
 
     TRACE("END\n");
-
-    MODULE_FlushModrefs();
 
     return TRUE;
 }
