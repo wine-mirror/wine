@@ -107,6 +107,7 @@ extern "C" {
                                        SERVICE_INTERROGATE          | \
                                        SERVICE_USER_DEFINED_CONTROL )
 
+#define SERVICE_NO_CHANGE 0xffffffff
 
 
 /* Handle types */
@@ -242,6 +243,7 @@ DECL_WINELIB_TYPE_AW(LPSERVICE_FAILURE_ACTIONS)
 /* Service control handler function prototype */
 
 typedef VOID (WINAPI *LPHANDLER_FUNCTION)(DWORD);
+typedef DWORD (WINAPI *LPHANDLER_FUNCTION_EX)(DWORD,DWORD,LPVOID,LPVOID);
 
 /* API function prototypes */
 
@@ -273,6 +275,9 @@ SC_HANDLE   WINAPI OpenServiceW(SC_HANDLE,LPCWSTR,DWORD);
 SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerA(LPCSTR,LPHANDLER_FUNCTION);
 SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW(LPCWSTR,LPHANDLER_FUNCTION);
 #define     RegisterServiceCtrlHandler WINELIB_NAME_AW(RegisterServiceCtrlHandler)
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA(LPCSTR,LPHANDLER_FUNCTION_EX,LPVOID);
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW(LPCWSTR,LPHANDLER_FUNCTION_EX,LPVOID);
+#define     RegisterServiceCtrlHandlerEx WINELIB_NAME_AW(RegisterServiceCtrlHandlerEx)
 BOOL        WINAPI SetServiceStatus(SERVICE_STATUS_HANDLE,LPSERVICE_STATUS);
 BOOL        WINAPI StartServiceA(SC_HANDLE,DWORD,LPCSTR*);
 BOOL        WINAPI StartServiceW(SC_HANDLE,DWORD,LPCWSTR*);
