@@ -7187,6 +7187,9 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
     hl.prc = &rcList;
     hl.pwpos = &wp;
     Header_Layout(infoPtr->hwndHeader, &hl);
+
+    SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+
     if (!(LVS_NOCOLUMNHEADER & lStyle))
     {
       infoPtr->rcList.top = max(wp.cy, 0);
