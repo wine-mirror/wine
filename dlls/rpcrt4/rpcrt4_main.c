@@ -591,19 +591,6 @@ RPC_STATUS WINAPI UuidFromStringW(LPWSTR s, UUID *uuid)
 }
 
 /***********************************************************************
- *		NdrDllRegisterProxy (RPCRT4.@)
- */
-HRESULT WINAPI NdrDllRegisterProxy(
-  HMODULE hDll,          /* [in] */
-  const ProxyFileInfo **pProxyFileList, /* [in] */
-  const CLSID *pclsid    /* [in] */
-)
-{
-  FIXME("(%x,%p,%s), stub!\n",hDll,pProxyFileList,debugstr_guid(pclsid));
-  return S_OK;
-}
-
-/***********************************************************************
  *		RpcServerUseProtseqEpA (RPCRT4.@)
  */
 
@@ -729,29 +716,6 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
   FIXME( "(%u,%u,%u): stub\n", MinimumCallThreads, MaxCalls, DontWait );
 
   return RPC_S_NO_PROTSEQS_REGISTERED; /* Since we don't allow registration this seems reasonable */
-}
-
-/***********************************************************************
- *		NdrDllCanUnloadNow (RPCRT4.@)
- */
-HRESULT WINAPI NdrDllCanUnloadNow(CStdPSFactoryBuffer *pPSFactoryBuffer)
-{
-    FIXME("%p\n",pPSFactoryBuffer);
-    return FALSE;
-}
-
-/***********************************************************************
- *		NdrDllGetClassObject (RPCRT4.@)
- */
-HRESULT WINAPI NdrDllGetClassObject(
-    REFCLSID rclsid, REFIID riid , LPVOID *ppv,
-    const ProxyFileInfo **   pProxyFileList,
-    const CLSID *            pclsid,
-    CStdPSFactoryBuffer *    pPSFactoryBuffer)
-{
-    if(ppv)
-        *ppv = NULL;
-    return RPC_S_UNKNOWN_IF;
 }
 
 /***********************************************************************

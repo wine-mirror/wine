@@ -17,11 +17,6 @@ init	RPCRT4_LibMain
 @ stub MqGetContext # win9x
 @ stub MqRegisterQueue # win9x
 
-@ stdcall NdrDllCanUnloadNow(ptr) NdrDllCanUnloadNow
-@ stdcall NdrDllGetClassObject(ptr ptr ptr ptr ptr ptr) NdrDllGetClassObject
-@ stdcall NdrDllRegisterProxy(long ptr ptr) NdrDllRegisterProxy
-@ stub NdrDllUnregisterProxy
-
 @ stub RpcAbortAsyncCall
 @ stub RpcAsyncAbortCall
 @ stub RpcAsyncCancelCall
@@ -198,6 +193,11 @@ init	RPCRT4_LibMain
 @ stdcall IUnknown_QueryInterface_Proxy(ptr ptr ptr) IUnknown_QueryInterface_Proxy
 @ stdcall IUnknown_AddRef_Proxy(ptr) IUnknown_AddRef_Proxy
 @ stdcall IUnknown_Release_Proxy(ptr) IUnknown_Release_Proxy
+
+@ stdcall NdrDllCanUnloadNow(ptr) NdrDllCanUnloadNow
+@ stdcall NdrDllGetClassObject(ptr ptr ptr ptr ptr ptr) NdrDllGetClassObject
+@ stdcall NdrDllRegisterProxy(long ptr ptr) NdrDllRegisterProxy
+@ stdcall NdrDllUnregisterProxy(long ptr ptr) NdrDllUnregisterProxy
 
 @ stub NdrAllocate
 @ stub NdrAsyncClientCall

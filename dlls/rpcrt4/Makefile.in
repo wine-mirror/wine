@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rpcrt4.dll
-IMPORTS   = kernel32
+IMPORTS   = advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
@@ -12,6 +12,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	cproxy.c \
+	cpsf.c \
 	cstub.c \
 	ndr_midl.c \
 	ndr_stubless.c \
