@@ -21,13 +21,26 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * NOTE
+ * 
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Oct. 20, 2004, by Dimitrie O. Paun.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ * 
  * TODO:
- *   - Notifications.
- *
- *
- *  FIXME: handle resources better (doesn't work now); also take care
-           of internationalization.
- *  FIXME: keyboard handling.
+ *    -- MCM_[GS]ETUNICODEFORMAT
+ *    -- MONTHCAL_GetMonthRange
+ *    -- Unicodification
+ *    -- handle resources better (doesn't work now); 
+ *    -- take care of internationalization.
+ *    -- keyboard handling.
+ *    -- GetRange: At the moment, we copy ranges anyway, regardless of
+ *                 infoPtr->rangeValid; a invalid range is simply filled 
+ *                 with zeros in SetRange.  Is this the right behavior?
+ *    -- search for FIXME
  */
 
 #include <math.h>
@@ -391,7 +404,6 @@ static void MONTHCAL_DrawDay(HDC hdc, MONTHCAL_INFO *infoPtr, int day, int month
 }
 
 
-/* CHECKME: For `todays date', do we need to check the locale?*/
 static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 {
   MONTHCAL_INFO *infoPtr=MONTHCAL_GetInfoPtr(hwnd);
@@ -916,7 +928,6 @@ MONTHCAL_SetFirstDayOfWeek(HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* FIXME: fill this in */
 static LRESULT
 MONTHCAL_GetMonthRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -983,11 +994,6 @@ MONTHCAL_SetRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
   return 1;
 }
 
-
-/* CHECKME: At the moment, we copy ranges anyway,regardless of
- * infoPtr->rangeValid; a invalid range is simply filled with zeros in
- * SetRange.  Is this the right behavior?
-*/
 
 static LRESULT
 MONTHCAL_GetRange(HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2035,7 +2041,7 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return MONTHCAL_SetFocus(hwnd, wParam, lParam);
 
   case WM_SIZE:
-    return MONTHCAL_Size(hwnd, (short)LOWORD(lParam), (short)HIWORD(lParam));
+    return MONTHCAL_Size(hwnd, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
   case WM_CREATE:
     return MONTHCAL_Create(hwnd, wParam, lParam);
