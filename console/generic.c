@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(console)
 static void GENERIC_MoveLine(char row1, char row2, char col1, char col2);
 static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,
    int attribute);
-void GENERIC_Start()
+void GENERIC_Start(void)
 {
    /* Here, we only want to add a driver if there is not one already
       defined. */

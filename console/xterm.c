@@ -44,7 +44,7 @@ static XTERM_CONSOLE xterm_console;
 CONSOLE_device chain;
 FILE *old_in, *old_out;
 
-void XTERM_Start()
+void XTERM_Start(void)
 {
    /* Here, this is a supplementary driver so we should remember to call
       the chain. */

@@ -174,7 +174,7 @@ void NCURSES_GetCharacterAtCursor(char *ch, int *fg_color, int
       *bg_color = WINE_BLACK;
    if (attribute)
       *attribute = 0;
-};
+}
 
 void NCURSES_Refresh()
 {
