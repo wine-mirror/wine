@@ -10,13 +10,22 @@
 #include <stdlib.h>
 #include "winerror.h"
 #include "wine/winestring.h"
+#include "wine/exception.h"
 #include "heap.h"
 #include "task.h"
 #include "debugtools.h"
 #include "process.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
+DEFAULT_DEBUG_CHANNEL(win32);
   
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
  */
@@ -76,10 +85,22 @@ VOID WINAPI GetStartupInfoW(LPSTARTUPINFOW lpStartupInfo)
  */
 BOOL WINAPI GetComputerNameA(LPSTR name,LPDWORD size)
 {
-	if (-1==gethostname(name,*size))
-		return FALSE;
+    /* At least Win95OSR2 survives if size is not a pointer (NT crashes though) */
+    BOOL ret;
+    __TRY
+    {
+      ret = (-1!=gethostname(name,*size));
+      if (ret)
 	*size = lstrlenA(name);
-	return TRUE;
+    }
+    __EXCEPT(page_fault)
+    {
+      SetLastError( ERROR_INVALID_PARAMETER );
+      return FALSE;
+    }
+    __ENDTRY
+     
+    return ret;
 }
 
 /***********************************************************************
