@@ -1551,8 +1551,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         }
 
         /* allocate space for an array of all the string pointers to be added */
-        len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 8;
-        req = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(LPCWSTR) );
+        len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 9;
+        req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
 
         /* add the verb, path and HTTP/1.0 */
         n = 0;
@@ -1604,7 +1604,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             req[n++] = lpwhr->lpszHostName;
         }
 
-        if( n > len )
+        if( n >= len )
             ERR("oops. buffer overrun\n");
 
         req[n] = NULL;
