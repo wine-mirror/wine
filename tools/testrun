@@ -203,7 +203,11 @@ $SIG{'ALRM'} = "alarmhandler";
 # mounted that's not on campus or add relevant ! -fstype nfs or similar.
 #
 
-open(FIND,"find / -type f  \\( -name \"*.EXE\" -o -name \"*.exe\" -o -name \"*.scr\" -o -name \"*.SCR\" \\) -print|");
+$startdir = '/';
+
+$startdir = $ARGV[0] if ($ARGV[0] && (-d $ARGV[0]));
+
+open(FIND,"find $startdir -type f  \\( -name \"*.EXE\" -o -name \"*.exe\" -o -name \"*.scr\" -o -name \"*.SCR\" \\) -print|");
 while ($exe=<FIND>) {
 	chop($exe);
 
