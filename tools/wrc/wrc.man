@@ -79,6 +79,9 @@ generate.
 Add symbols to the global C namespace. This makes all symbols available
 for linking by other modules.
 .TP
+.I \-h
+Prints a summary message and exits.
+.TP
 .I \-I path
 Add \fIpath\fR to include search directories. \fIPath\fR may contain
 multiple directories, separated with ':'. It is allowed to specify
@@ -138,6 +141,9 @@ Obsolete; generate indirect loadable resource tables.
 .TP
 .I \-T
 Obsolete; generate only indirect loadable resources tables.
+.TP
+.I \-v
+Turns on verbose mode (equivalent to -d 1).
 .TP
 .I \-V
 Print version end exit.

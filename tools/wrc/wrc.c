@@ -77,19 +77,19 @@
 #define INCLUDEDIR "/usr/local/include/wine"
 #endif
 
+#ifdef WORDS_BIGENDIAN
+#define ENDIAN	"big"
+#else
+#define ENDIAN	"little"
+#endif
+
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
 	"   -A          Auto register resources (only with gcc 2.7 and better)\n"
 	"   -b          Create an assembly array from a binary .res file\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
-	"               (win32 only; default is n[ative] which equals "
-#ifdef WORDS_BIGENDIAN
-	"big"
-#else
-	"little"
-#endif
-	"-endian)\n"
+	"               (win32 only; default is " ENDIAN "-endian)\n"
 	"   -c          Add 'const' prefix to C constants\n"
 	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
 	"   -d n        Set debug level to 'n'\n"
@@ -98,6 +98,7 @@ static char usage[] =
 	"   -E          Preprocess only\n"
 	"   -F target	Ignored for compatibility with windres\n"
 	"   -g          Add symbols to the global c namespace\n"
+	"   -h		Prints this summary.\n"
 	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -J		Do not search the standard include path\n"
@@ -110,6 +111,7 @@ static char usage[] =
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
 	"   -t          Generate indirect loadable resource tables\n"
 	"   -T          Generate only indirect loadable resources tables\n"
+	"   -v          Enable verbose mode.\n"
 	"   -V          Print version and exit\n"
 	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
 	"   -W          Enable pedantic warnings\n"
@@ -123,8 +125,10 @@ static char usage[] =
 	"   --nostdinc		Synonym for -J.\n"
 	"   --define		Synonym for -D.\n"
 	"   --language		Synonym for -l.\n"
+	"   --use-temp-file	Ignored for compatibility with windres.\n"
+	"   --no-use-temp-file	Ignored for compatibility with windres.\n"
 	"   --preprocessor	Specify the preprocessor to use, including arguments.\n"
-	"   --help		Prints a usage summary.\n"
+	"   --help		Synonym for -h.\n"
 	"   --version		Synonym for -V.\n"
 #endif
 	"Input is taken from stdin if no sourcefile specified.\n"
@@ -135,11 +139,8 @@ static char usage[] =
 	"    * 0x08 Preprocessor messages\n"
 	"    * 0x10 Preprocessor lex messages\n"
 	"    * 0x20 Preprocessor yacc trace\n"
-	"The -o option only applies to the final destination file, which is\n"
-	"in case of normal compile a .s file. You must use the '-H header.h'\n"
-	"option to override the header-filename.\n"
 	"If no input filename is given and the output name is not overridden\n"
-	"with -o and/or -H, then the output is written to \"wrc.tab.[sh]\"\n"
+	"with -o, then the output is written to \"wrc.tab.[sh]\"\n"
 	;
 
 char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
@@ -272,6 +273,8 @@ int getopt (int argc, char *const *argv, const char *optstring);
 static void rm_tempfile(void);
 static void segvhandler(int sig);
 
+static const char* short_options = 
+	"a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:rstTvVw:W";
 #ifdef HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
@@ -282,9 +285,11 @@ static struct option long_options[] = {
 	{ "nostdinc", 0, 0, 'J' },
 	{ "define", 1, 0, 'D' },
 	{ "language", 1, 0, 'l' },
-	{ "preprocessor", 1, 0, 1 },
-	{ "help", 0, 0, 2 },
 	{ "version", 0, 0, 'V' },
+	{ "help", 0, 0, 'h' },
+	{ "preprocessor", 1, 0, 1 },
+	{ "use-temp-file", 0, 0, 2 },
+	{ "no-use-temp-file", 0, 0, 3 },
 	{ 0, 0, 0, 0 }
 };
 #endif
@@ -320,9 +325,9 @@ int main(int argc,char *argv[])
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while((optc = getopt_long(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:rstTVw:W", long_options, &opti)) != EOF)
+	while((optc = getopt_long(argc, argv, short_options, long_options, &opti)) != EOF)
 #else
-	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, short_options)) != EOF)
 #endif
 	{
 		switch(optc)
@@ -331,8 +336,10 @@ int main(int argc,char *argv[])
 			fprintf(stderr, "--preprocessor option not yet supported, ignored.\n");
 			break;
 		case 2:
-			printf(usage);
-			exit(0);
+			fprintf(stderr, "--use-temp-file option not yet supported, ignored.\n");
+			break;
+		case 3:
+			fprintf(stderr, "--no-use-temp-file option not yet supported, ignored.\n");
 			break;
 		case 'a':
 			alignment = atoi(optarg);
@@ -387,6 +394,9 @@ int main(int argc,char *argv[])
 		case 'g':
 			global = 1;
 			break;
+		case 'h':
+			printf(usage);
+			exit(0);
 		case 'i':
 			if (!input_name) input_name = strdup(optarg);
 			else error("Too many input files.\n");
@@ -433,6 +443,9 @@ int main(int argc,char *argv[])
 			/* Fall through */
 		case 't':
 			indirect = 1;
+			break;
+		case 'v':
+			debuglevel = DEBUGLEVEL_CHAT;
 			break;
 		case 'V':
 			printf(version_string);
