@@ -883,7 +883,72 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 }
 
 /*************************************************************************
- *		get_executable_name
+ *               get_makename_token
+ * 
+ * Get next blank delimited token from input string. If quoted then 
+ * process till matching quote and then till blank.
+ *
+ * Returns number of characters in token (not including \0). On 
+ * end of string (EOS), returns a 0.
+ *
+ *    from  (IO)  address of start of input string to scan, updated to 
+ *                next non-processed character.
+ *    to    (IO)  address of start of output string (previous token \0 
+ *                char), updated to end of new output string (the \0
+ *                char).
+ */
+static int get_makename_token(LPCSTR *from, LPSTR *to )
+{
+    int len = 0;
+    LPCSTR to_old = *to;   /* only used for tracing */
+
+    while ( **from == ' ') {
+      /* Copy leading blanks (separators between previous    */
+      /* token and this token).                              */
+      **to = **from;
+      (*from)++;
+      (*to)++;
+      len++;
+    }
+    do {
+      while ( (**from != 0) && (**from != ' ') && (**from != '"') ) {
+          **to = **from; (*from)++; (*to)++; len++;
+      }
+      if ( **from == '"' ) {
+	/* Handle quoted string. */
+        (*from)++;
+        if ( !strchr(*from, '"') ) {
+	  /* fail - no closing quote. Return entire string */
+          while ( **from != 0 ) {
+             **to = **from; (*from)++; (*to)++; len++;
+	  }
+          break;
+        }
+        while( **from != '"') { 
+            **to = **from;
+            len++;
+            (*to)++;
+            (*from)++;
+        }
+        (*from)++;
+        continue;
+      }
+
+      /* either EOS or ' ' */
+      break;
+
+    } while (1);
+
+    **to = 0;   /* terminate output string */
+
+    TRACE_(module)("returning token len=%d, string=%s\n",
+              len, to_old);
+
+    return len;     
+}
+
+/*************************************************************************
+ *		make_lpCommandLine_name
  * 
  * Try longer and longer strings from "line" to find an existing
  * file name. Each attempt is delimited by a blank outside of quotes.
@@ -893,93 +958,64 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
  *
  */
 
-static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
-                                 LPCSTR *after, BOOL extension )
+static BOOL make_lpCommandLine_name( LPCSTR line, LPSTR name, int namelen,
+                                 LPCSTR *after )
 {
-    LPCSTR pcmd = NULL;
+    BOOL  found = TRUE;
     LPCSTR from;
-    LPSTR to, to_end, to_old;
-    HFILE hFile;
-    OFSTRUCT ofs;
-
-    to = name;
-    to_end = to + namelen - 1;
-    to_old = to;
+    char  buffer[260];
+    DWORD  retlen;
+    LPSTR to, lastpart;
     
-    while ( *line == ' ' ) line++;  /* point to beginning of string */
     from = line;
-    pcmd = from;
+    to = name;
+
+    /* scan over initial blanks if any */
+    while ( *from == ' ') from++;
+
+    /* get a token and append to previous data the check for existance */
     do {
-        /* Copy all input till end, blank, or quote */
-        while((*from != 0) && (*from != ' ') && (*from != '"') && (to < to_end)) 
-           *to++ = *from++;
-        if (to >= to_end) { *to = 0; pcmd = from; break; }
-
-        if (*from == '"')
-	  {
-	    /* Handle quoted string. If there is a closing quote, copy all */
-	    /* that is inside.                                             */
-            from++;
-            if (!strchr(from, '"'))
-	      {
-	        /* fail - no closing quote */
-		to = to_old; /* restore to previous attempt */
-                *to = 0;     /* end string  */
-                break;       /* exit with  previous attempt */
-	      }
-            while((*from != '"') && (to < to_end)) *to++ = *from++;
-	    if (to >= to_end) { *to = 0; pcmd = from; break; }
-            from++;
-            continue;  /* past quoted string, so restart from top */
-	  }
-
-        *to = 0;   /* terminate output string */
-        to_old = to;   /* save for possible use in unmatched quote case */
-        pcmd = from;
-
-	/* Input termination is a blank. Try this file name */
-
-	/* Append ".exe" if necessary and space permits */
-        if ( (to-name) < namelen-4)
-	{
-            if(extension && (strrchr(name, '.') <= strrchr(name, '\\')) )
-        	strcat(name, ".exe");
+        if ( !get_makename_token( &from, &to ) ) {
+	  /* EOS has occured and not found - exit */
+          retlen = 0;
+          found = FALSE;
+          break;
 	}
-
         TRACE_(module)("checking if file exists '%s'\n", name);
-
-        if ((hFile = OpenFile( name, &ofs, OF_READ )) != HFILE_ERROR)
-        {
-            CloseHandle( hFile );
-            break;      /* if file exists then all done */
-        }
-	
-	/* loop around keeping the blank as part of file name */
-        if (!*from)
-	  break;    /* exit if out of input string */
-
-        *to++ = *from++;      /* move in blank and restart */
+        retlen = SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, &lastpart);
+        if ( retlen && (retlen < sizeof(buffer)) )  break;
     } while (1);
 
-    if (after) *after = pcmd;
-    TRACE_(module)("selected as file name '%s'\n    and cmdline as %s\n",
-            name, debugstr_a(pcmd));
+    /* if we have a non-null full path name in buffer then move to output */
+    if ( retlen )
+       if ( strlen(buffer) <= namelen )  
+          strcpy( name, buffer );
+       else {
+          /* not enough space to return full path string */
+          FIXME_(module)("internal string not long enough, need %d\n",
+             strlen(buffer) );
+        }
+
+    /* all done, indicate end of module name and then trace and exit */
+    if (after) *after = from;
+    TRACE_(module)("%i, selected file name '%s'\n    and cmdline as %s\n",
+            found, name, debugstr_a(from));
+    return found;
     }
 
 /*************************************************************************
- *		make_executable_name
+ *		make_lpApplicationName_name
  * 
  * Scan input string (the lpApplicationName) and remove any quotes
- * if they are balanced. Also will attempt to append ".exe" if requested 
- * and not already present.
+ * if they are balanced. 
  *
  */
 
-static void make_executable_name( LPCSTR line, LPSTR name, int namelen,
-                                  BOOL extension )
+static BOOL make_lpApplicationName_name( LPCSTR line, LPSTR name, int namelen)
 {
     LPCSTR from;
     LPSTR to, to_end, to_old;
+    DOS_FULL_NAME  full_name;
 
     to = name;
     to_end = to + namelen - 1;
@@ -988,7 +1024,7 @@ static void make_executable_name( LPCSTR line, LPSTR name, int namelen,
     while ( *line == ' ' ) line++;  /* point to beginning of string */
     from = line;
     do {
-        /* Copy all input till end, blank, or quote */
+        /* Copy all input till end, or quote */
         while((*from != 0) && (*from != '"') && (to < to_end)) 
            *to++ = *from++;
         if (to >= to_end) { *to = 0; break; }
@@ -1017,18 +1053,22 @@ static void make_executable_name( LPCSTR line, LPSTR name, int namelen,
 	/* loop around keeping the blank as part of file name */
         if (!*from)
 	  break;    /* exit if out of input string */
-
-        *to++ = *from++;      /* move in blank and restart */
     } while (1);
 
-    /* Append ".exe" if necessary and space permits */
-    if ( (to-name) < namelen-4)
-      {
-    if(extension && (strrchr(name, '.') <= strrchr(name, '\\')) )
-        	strcat(name, ".exe");
+    if (!DOSFS_GetFullName(name, TRUE, &full_name)) {
+        TRACE_(module)("file not found '%s'\n", name );
+        return FALSE;
       }
 
+    if (strlen(full_name.long_name) >= namelen ) {
+       FIXME_(module)("name longer than buffer (len=%d), file=%s\n",
+           namelen, full_name.long_name);
+       return FALSE;
+    }
+    strcpy(name, full_name.long_name); 
+
     TRACE_(module)("selected as file name '%s'\n", name );
+    return TRUE;
 }
 
 /**********************************************************************
@@ -1043,6 +1083,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
                             LPPROCESS_INFORMATION lpProcessInfo )
 {
     BOOL retv = FALSE;
+    BOOL found_file = FALSE;
     HFILE hFile;
     OFSTRUCT ofs;
     DWORD type;
@@ -1055,16 +1096,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
-    }
-
-    name[0] = '\0';
-
-    if (lpApplicationName) {
-       make_executable_name( lpApplicationName, name, sizeof(name), TRUE );
-       cmdline = (lpCommandLine) ? lpCommandLine : lpApplicationName ;
-    }
-    else {
-       get_executable_name( lpCommandLine, name, sizeof ( name ), &cmdline, TRUE );
     }
 
     /* Warn if unsupported features are used */
@@ -1124,6 +1155,23 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME_(module)("(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
     if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
         FIXME_(module)("(%s,...): STARTF_USEHOTKEY ignored\n", name);
+
+    /* Process the AppName or CmdLine to get module name and path */
+
+    name[0] = '\0';
+
+    if (lpApplicationName) {
+       found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
+       cmdline = (lpCommandLine) ? lpCommandLine : lpApplicationName ;
+    }
+    else 
+       found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
+
+    if ( !found_file ) {
+        /* make an early exit if file not found - save second pass */
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return FALSE;
+    }
 
 
     /* When in WineLib, always fork new Unix process */
