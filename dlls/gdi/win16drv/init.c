@@ -120,6 +120,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     WIN16DRV_Rectangle,              /* pRectangle */
+    NULL,                            /* pResetDC */
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */

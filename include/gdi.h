@@ -202,6 +202,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
     UINT     (*pRealizePalette)(PHYSDEV);
     BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
+    HDC      (*pResetDC)(PHYSDEV,const DEVMODEA*);
     BOOL     (*pRestoreDC)(PHYSDEV,INT);
     BOOL     (*pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
     INT      (*pSaveDC)(PHYSDEV);

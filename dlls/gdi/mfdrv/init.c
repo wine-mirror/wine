@@ -93,6 +93,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */
+    NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
     MFDRV_RoundRect,                 /* pRoundRect */
     MFDRV_SaveDC,                    /* pSaveDC */

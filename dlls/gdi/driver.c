@@ -124,6 +124,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(PolylineTo);
     GET_FUNC(RealizePalette);
     GET_FUNC(Rectangle);
+    GET_FUNC(ResetDC);
     GET_FUNC(RestoreDC);
     GET_FUNC(RoundRect);
     GET_FUNC(SaveDC);

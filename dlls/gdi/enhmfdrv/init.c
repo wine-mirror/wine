@@ -92,6 +92,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pPolylineTo */
     NULL,                            /* pRealizePalette */
     EMFDRV_Rectangle,                /* pRectangle */
+    NULL,                            /* pResetDC */
     EMFDRV_RestoreDC,                /* pRestoreDC */
     EMFDRV_RoundRect,                /* pRoundRect */
     EMFDRV_SaveDC,                   /* pSaveDC */

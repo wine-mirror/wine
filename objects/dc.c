@@ -803,8 +803,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
  */
 HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
 {
-    FIXME("stub\n" );
-    return hdc;
+    return ResetDCA(hdc, devmode);
 }
 
 
@@ -813,8 +812,15 @@ HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
  */
 HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 {
-    FIXME("stub\n" );
-    return hdc;
+    DC *dc;
+    HDC ret = hdc;
+
+    if ((dc = DC_GetDCPtr( hdc )))
+    {
+        if (dc->funcs->pResetDC) ret = dc->funcs->pResetDC( dc->physDev, devmode );
+        GDI_ReleaseObj( hdc );
+    }
+    return ret;
 }
 
 
@@ -823,8 +829,7 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
  */
 HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
-    FIXME("stub\n" );
-    return hdc;
+    return ResetDCA(hdc, (const DEVMODEA*)devmode); /* FIXME */
 }
 
 
