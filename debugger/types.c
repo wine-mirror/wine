@@ -380,6 +380,14 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
 	  && ((rtn >> (value.type->un.basic.basic_size * 8 - 1)) != 0)) {
 	 rtn = rtn | ((-1) << (value.type->un.basic.basic_size * 8));
       }
+      /* float type has to be promoted as a double */
+      if (value.type->un.basic.basic_type == BASIC_FLT) {
+	 float f;
+	 double d;
+	 memcpy(&f, &rtn, sizeof(f));
+	 d = (double)f;
+	 memcpy(&rtn, &d, sizeof(rtn));
+      }
       if (value.type->un.basic.output_format != NULL) {
 	 def_format = value.type->un.basic.output_format;
       }
