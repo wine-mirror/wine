@@ -2059,8 +2059,6 @@ REBAR_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (REBARCLASSNAMEA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc   = (WNDPROC)REBAR_WindowProc;
@@ -2077,7 +2075,6 @@ REBAR_Register (void)
 VOID
 REBAR_Unregister (void)
 {
-    if (GlobalFindAtomA (REBARCLASSNAMEA))
-	UnregisterClassA (REBARCLASSNAMEA, (HINSTANCE)NULL);
+    UnregisterClassA (REBARCLASSNAMEA, (HINSTANCE)NULL);
 }
 

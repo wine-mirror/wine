@@ -1742,8 +1742,6 @@ MONTHCAL_Register(void)
 {
   WNDCLASSA wndClass;
 
-  if(GlobalFindAtomA(MONTHCAL_CLASSA)) return;
-
   ZeroMemory(&wndClass, sizeof(WNDCLASSA));
   wndClass.style         = CS_GLOBALCLASS;
   wndClass.lpfnWndProc   = (WNDPROC)MONTHCAL_WindowProc;
@@ -1760,6 +1758,5 @@ MONTHCAL_Register(void)
 void
 MONTHCAL_Unregister(void)
 {
-  if(GlobalFindAtomA(MONTHCAL_CLASSA))
     UnregisterClassA(MONTHCAL_CLASSA, (HINSTANCE)NULL);
 }

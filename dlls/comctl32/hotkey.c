@@ -334,8 +334,6 @@ HOTKEY_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (HOTKEY_CLASSA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)HOTKEY_WindowProc;
@@ -352,7 +350,6 @@ HOTKEY_Register (void)
 VOID
 HOTKEY_Unregister (void)
 {
-    if (GlobalFindAtomA (HOTKEY_CLASSA))
-	UnregisterClassA (HOTKEY_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (HOTKEY_CLASSA, (HINSTANCE)NULL);
 }
 

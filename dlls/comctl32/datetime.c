@@ -1104,8 +1104,6 @@ DATETIME_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (DATETIMEPICK_CLASSA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)DATETIME_WindowProc;
@@ -1122,7 +1120,6 @@ DATETIME_Register (void)
 VOID
 DATETIME_Unregister (void)
 {
-    if (GlobalFindAtomA (DATETIMEPICK_CLASSA))
-	UnregisterClassA (DATETIMEPICK_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (DATETIMEPICK_CLASSA, (HINSTANCE)NULL);
 }
 

@@ -2393,8 +2393,6 @@ TOOLTIPS_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (TOOLTIPS_CLASSA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
     wndClass.lpfnWndProc   = (WNDPROC)TOOLTIPS_WindowProc;
@@ -2411,7 +2409,6 @@ TOOLTIPS_Register (void)
 VOID
 TOOLTIPS_Unregister (void)
 {
-    if (GlobalFindAtomA (TOOLTIPS_CLASSA))
-	UnregisterClassA (TOOLTIPS_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (TOOLTIPS_CLASSA, (HINSTANCE)NULL);
 }
 

@@ -1634,8 +1634,6 @@ TRACKBAR_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (TRACKBAR_CLASSA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)TRACKBAR_WindowProc;
@@ -1652,7 +1650,6 @@ TRACKBAR_Register (void)
 VOID
 TRACKBAR_Unregister (void)
 {
-    if (GlobalFindAtomA (TRACKBAR_CLASSA))
-	UnregisterClassA (TRACKBAR_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (TRACKBAR_CLASSA, (HINSTANCE)NULL);
 }
 

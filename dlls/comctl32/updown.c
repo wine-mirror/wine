@@ -1010,8 +1010,6 @@ UPDOWN_Register(void)
 {
     WNDCLASSA wndClass;
 
-    if( GlobalFindAtomA( UPDOWN_CLASSA ) ) return;
-
     ZeroMemory( &wndClass, sizeof( WNDCLASSA ) );
     wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC)UpDownWindowProc;
@@ -1034,7 +1032,6 @@ UPDOWN_Register(void)
 VOID
 UPDOWN_Unregister (void)
 {
-    if (GlobalFindAtomA (UPDOWN_CLASSA))
-	UnregisterClassA (UPDOWN_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (UPDOWN_CLASSA, (HINSTANCE)NULL);
 }
 

@@ -1555,8 +1555,6 @@ HEADER_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (WC_HEADERA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc   = (WNDPROC)HEADER_WindowProc;
@@ -1572,7 +1570,6 @@ HEADER_Register (void)
 VOID
 HEADER_Unregister (void)
 {
-    if (GlobalFindAtomA (WC_HEADERA))
-	UnregisterClassA (WC_HEADERA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_HEADERA, (HINSTANCE)NULL);
 }
 

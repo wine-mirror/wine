@@ -3759,8 +3759,6 @@ TOOLBAR_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (TOOLBARCLASSNAMEA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc   = (WNDPROC)ToolbarWindowProc;
@@ -3777,7 +3775,6 @@ TOOLBAR_Register (void)
 VOID
 TOOLBAR_Unregister (void)
 {
-    if (GlobalFindAtomA (TOOLBARCLASSNAMEA))
-	UnregisterClassA (TOOLBARCLASSNAMEA, (HINSTANCE)NULL);
+    UnregisterClassA (TOOLBARCLASSNAMEA, (HINSTANCE)NULL);
 }
 

@@ -367,8 +367,6 @@ PAGER_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (WC_PAGESCROLLERA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
     wndClass.lpfnWndProc   = (WNDPROC)PAGER_WindowProc;
@@ -385,7 +383,6 @@ PAGER_Register (void)
 VOID
 PAGER_Unregister (void)
 {
-    if (GlobalFindAtomA (WC_PAGESCROLLERA))
-	UnregisterClassA (WC_PAGESCROLLERA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_PAGESCROLLERA, (HINSTANCE)NULL);
 }
 

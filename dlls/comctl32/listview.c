@@ -7320,8 +7320,6 @@ VOID LISTVIEW_Register(void)
 {
   WNDCLASSA wndClass;
 
-  if (!GlobalFindAtomA(WC_LISTVIEWA)) 
-  {
     ZeroMemory(&wndClass, sizeof(WNDCLASSA));
     wndClass.style = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc = (WNDPROC)LISTVIEW_WindowProc;
@@ -7331,7 +7329,6 @@ VOID LISTVIEW_Register(void)
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = WC_LISTVIEWA;
     RegisterClassA(&wndClass);
-  }
 }
 
 /***
@@ -7346,10 +7343,7 @@ VOID LISTVIEW_Register(void)
  */
 VOID LISTVIEW_Unregister(void)
 {
-  if (GlobalFindAtomA(WC_LISTVIEWA))
-  {
     UnregisterClassA(WC_LISTVIEWA, (HINSTANCE)NULL);
-  }
 }
 
 /***

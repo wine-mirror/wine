@@ -155,8 +155,6 @@ FLATSB_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (FLATSB_CLASSA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)FlatSB_WindowProc;
@@ -173,7 +171,6 @@ FLATSB_Register (void)
 VOID
 FLATSB_Unregister (void)
 {
-    if (GlobalFindAtomA (FLATSB_CLASSA))
-	UnregisterClassA (FLATSB_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (FLATSB_CLASSA, (HINSTANCE)NULL);
 }
 

@@ -1254,8 +1254,6 @@ STATUS_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (STATUSCLASSNAMEA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC)StatusWindowProc;
@@ -1278,7 +1276,6 @@ STATUS_Register (void)
 VOID
 STATUS_Unregister (void)
 {
-    if (GlobalFindAtomA (STATUSCLASSNAMEA))
-	UnregisterClassA (STATUSCLASSNAMEA, (HINSTANCE)NULL);
+    UnregisterClassA (STATUSCLASSNAMEA, (HINSTANCE)NULL);
 }
 

@@ -361,8 +361,6 @@ PROGRESS_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (PROGRESS_CLASSA)) return;
-
     ZeroMemory (&wndClass, sizeof( WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
     wndClass.lpfnWndProc   = (WNDPROC)ProgressWindowProc;
@@ -384,7 +382,6 @@ PROGRESS_Register (void)
 VOID
 PROGRESS_Unregister (void)
 {
-    if (GlobalFindAtomA (PROGRESS_CLASSA))
-	UnregisterClassA (PROGRESS_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (PROGRESS_CLASSA, (HINSTANCE)NULL);
 }
 

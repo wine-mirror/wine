@@ -1895,10 +1895,8 @@ TAB_Register (void)
 {
   WNDCLASSA wndClass;
 
-  if (GlobalFindAtomA (WC_TABCONTROLA)) return;
-
   ZeroMemory (&wndClass, sizeof(WNDCLASSA));
-  wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
+  wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
   wndClass.lpfnWndProc   = (WNDPROC)TAB_WindowProc;
   wndClass.cbClsExtra    = 0;
   wndClass.cbWndExtra    = sizeof(TAB_INFO *);
@@ -1913,7 +1911,6 @@ TAB_Register (void)
 VOID
 TAB_Unregister (void)
 {
-  if (GlobalFindAtomA (WC_TABCONTROLA))
     UnregisterClassA (WC_TABCONTROLA, (HINSTANCE)NULL);
 }
 

@@ -652,8 +652,6 @@ void IPADDRESS_Register (void)
 {
   WNDCLASSA wndClass;
 
-  if (GlobalFindAtomA (WC_IPADDRESSA)) return;
-
   ZeroMemory (&wndClass, sizeof(WNDCLASSA));
   wndClass.style         = CS_GLOBALCLASS;
   wndClass.lpfnWndProc   = (WNDPROC)IPADDRESS_WindowProc;
@@ -669,6 +667,5 @@ void IPADDRESS_Register (void)
 
 VOID IPADDRESS_Unregister (void)
 {
-  if (GlobalFindAtomA (WC_IPADDRESSA))
   UnregisterClassA (WC_IPADDRESSA, (HINSTANCE)NULL);
 }

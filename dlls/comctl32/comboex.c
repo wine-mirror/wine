@@ -311,8 +311,6 @@ COMBOEX_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (WC_COMBOBOXEXA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)COMBOEX_WindowProc;
@@ -329,7 +327,6 @@ COMBOEX_Register (void)
 VOID
 COMBOEX_Unregister (void)
 {
-    if (GlobalFindAtomA (WC_COMBOBOXEXA))
-	UnregisterClassA (WC_COMBOBOXEXA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_COMBOBOXEXA, (HINSTANCE)NULL);
 }
 

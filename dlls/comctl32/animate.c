@@ -698,8 +698,6 @@ void ANIMATE_Register(void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA(ANIMATE_CLASSA)) return;
-
     ZeroMemory(&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS;
     wndClass.lpfnWndProc   = (WNDPROC)ANIMATE_WindowProc;
@@ -715,7 +713,6 @@ void ANIMATE_Register(void)
 
 void ANIMATE_Unregister(void)
 {
-    if (GlobalFindAtomA(ANIMATE_CLASSA))
-	UnregisterClassA(ANIMATE_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA(ANIMATE_CLASSA, (HINSTANCE)NULL);
 }
 

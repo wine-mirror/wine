@@ -85,8 +85,6 @@ NATIVEFONT_Register (void)
 {
     WNDCLASSA wndClass;
 
-    if (GlobalFindAtomA (WC_NATIVEFONTCTLA)) return;
-
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
     wndClass.lpfnWndProc   = (WNDPROC)NATIVEFONT_WindowProc;
@@ -103,7 +101,6 @@ NATIVEFONT_Register (void)
 VOID
 NATIVEFONT_Unregister (void)
 {
-    if (GlobalFindAtomA (WC_NATIVEFONTCTLA))
-	UnregisterClassA (WC_NATIVEFONTCTLA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_NATIVEFONTCTLA, (HINSTANCE)NULL);
 }
 
