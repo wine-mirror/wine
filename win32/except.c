@@ -110,14 +110,17 @@ DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *
 {
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
 
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
         return ExceptionContinueSearch;
     if (wine_frame->u.e.filter)
     {
         EXCEPTION_POINTERS ptrs;
+        __WINE_DUMMY_FRAME dummy;
+
         ptrs.ExceptionRecord = record;
         ptrs.ContextRecord = context;
-        switch(wine_frame->u.e.filter( &ptrs, wine_frame->u.e.param ))
+        dummy.u.e.code = record->ExceptionCode;
+        switch(wine_frame->u.e.filter( &ptrs, dummy, wine_frame->u.e.param ))
         {
         case EXCEPTION_CONTINUE_SEARCH:
             return ExceptionContinueSearch;
@@ -126,8 +129,8 @@ DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *
         case EXCEPTION_EXECUTE_HANDLER:
             break;
         default:
-            /* FIXME: should probably raise a nested exception here */
-            return ExceptionContinueSearch;
+            MESSAGE( "Invalid return value from exception filter\n" );
+            assert( FALSE );
         }
     }
     RtlUnwind( frame, 0, record, 0 );
@@ -147,6 +150,6 @@ DWORD WINAPI WINE_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *fr
 
     if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
         return ExceptionContinueSearch;
-    wine_frame->u.f.finally_func( wine_frame->u.f.param );
+    wine_frame->u.f.finally_func( FALSE, wine_frame->u.f.param );
     return ExceptionContinueSearch;
 }
