@@ -1,6 +1,8 @@
 name	oledlg
 type	win32
 
+import	ntdll.dll
+
   1 stdcall OleUIAddVerbMenuA(ptr str long long long long long long ptr) OleUIAddVerbMenuA
   2 stdcall OleUICanConvertOrActivateAs(ptr long long) OleUICanConvertOrActivateAs
   3 stdcall OleUIInsertObjectA(ptr) OleUIInsertObjectA

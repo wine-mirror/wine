@@ -1,6 +1,8 @@
 name	rasapi32
 type	win32
 
+import	ntdll.dll
+
 500 stub	RnaEngineRequest
 501 stub	DialEngineRequest
 502 stub	SuprvRequest

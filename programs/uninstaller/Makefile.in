@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = uninstaller
-IMPORTS   = user32 gdi32 kernel32
+IMPORTS   = user32 gdi32 kernel32 ntdll
 
 LICENSELANG = En
 

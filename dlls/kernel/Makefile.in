@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = kernel32
 SOVERSION = 1.0
 ALTNAMES  = comm kernel stress system toolhelp windebug win87em wprocs
+IMPORTS   = ntdll
 
 C_SRCS = \
 	comm.c \

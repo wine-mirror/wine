@@ -9,8 +9,8 @@ SUBDIRS = \
 	clock \
 	cmdlgtst \
 	control \
-	osversioncheck \
 	notepad \
+	osversioncheck \
 	progman \
 	regapi \
 	regtest \

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = odbc32
 SOVERSION = 1.0
+IMPORTS   = ntdll
 
 C_SRCS = \
 	proxyodbc.c 

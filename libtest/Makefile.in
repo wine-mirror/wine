@@ -26,35 +26,35 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 expand: expand.o expand.spec.o
-	$(CC) -o expand $+ -L$(DLLDIR) -llz32 $(DLL_LINK) $(LIBS)
+	$(CC) -o expand $+ -L$(DLLDIR) -llz32 -lntdll $(DLL_LINK) $(LIBS)
 
 hello: hello.o hello.spec.o
-	$(CC) -o hello $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)
+	$(CC) -o hello $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
 
 hello2: hello2.o hello2.spec.o
-	$(CC) -o hello2 $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)
+	$(CC) -o hello2 $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
 
 hello3: hello3.o hello3.spec.o
-	$(CC) -o hello3 $+  -L$(DLLDIR) -ladvapi32 -lcomctl32 -lcomdlg32 -lgdi32 -lkernel32 -lole32 -lrpcrt4 -lshell32 -lshlwapi -luser32 -lwinspool.drv $(DLL_LINK) $(LIBS)
+	$(CC) -o hello3 $+  -L$(DLLDIR) -ladvapi32 -lcomctl32 -lcomdlg32 -lgdi32 -lkernel32 -lole32 -lrpcrt4 -lshell32 -lshlwapi -luser32 -lwinspool.drv -lntdll $(DLL_LINK) $(LIBS)
 
 hello3.spec.c: hello3res.res
 
 hello4: hello4.o hello4.spec.o
-	$(CC) -o hello4 $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)
+	$(CC) -o hello4 $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
 
 hello5: hello5.o hello5.spec.o
-	$(CC) -o hello5 $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o hello5 $+ -L$(DLLDIR) -lntdll $(DLL_LINK) $(LIBS)
 
 new: new.o new.spec.o
-	$(CC) -o new $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)
+	$(CC) -o new $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
 
 rolex: rolex.o rolex.spec.o
-	$(CC) -o rolex $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)
+	$(CC) -o rolex $+ -L$(DLLDIR) -luser32 -lgdi32 -lkernel32 -lntdll $(DLL_LINK) $(LIBS)
 
 vartest: vartest.o vartest.spec.o
-	$(CC) -o vartest $+ -L$(DLLDIR) -ladvapi32 -lcomctl32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lrpcrt4 -luser32 $(DLL_LINK) $(LIBS)
+	$(CC) -o vartest $+ -L$(DLLDIR) -ladvapi32 -lcomctl32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lrpcrt4 -luser32 -lntdll $(DLL_LINK) $(LIBS)
 
 volinfo: volinfo.o volinfo.spec.o
-	$(CC) -o volinfo $+ $(DLL_LINK) $(LIBS)
+	$(CC) -o volinfo $+ -L$(DLLDIR) -lntdll $(DLL_LINK) $(LIBS)
 
 ### Dependencies:

@@ -1,6 +1,8 @@
 name	dciman32
 type	win32
 
+import	ntdll.dll
+
 @ stub    DCIBeginAccess
 @ stub    DCICloseProvider
 @ stub    DCICreateOffscreen

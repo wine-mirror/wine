@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = user32
 SOVERSION = 1.0
 ALTNAMES  = user keyboard ddeml display mouse
-IMPORTS   = gdi32 advapi32 kernel32
+IMPORTS   = gdi32 advapi32 kernel32 ntdll
 
 C_SRCS = \
 	bidi16.c \
@@ -42,7 +42,7 @@ EXTRASUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+$(EXTRA_OBJS): dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 # Special rules for 16-bit resource files

@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = olesvr32
 SOVERSION = 1.0
 ALTNAMES  = olesvr
+IMPORTS   = ntdll
 
 C_SRCS = \
 	olesvr_main.c

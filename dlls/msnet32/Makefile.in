@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msnet32
 SOVERSION = 1.0
+IMPORTS   = ntdll
 
 C_SRCS = msnet_main.c
 

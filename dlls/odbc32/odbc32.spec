@@ -2,6 +2,8 @@ name	odbc32
 type	win32
 init    MAIN_OdbcInit
 
+import	ntdll.dll
+
 001 stdcall SQLAllocConnect(long ptr) SQLAllocConnect
 002 stdcall SQLAllocEnv(ptr)  SQLAllocEnv
 003 stdcall SQLAllocStmt(long ptr) SQLAllocStmt
