@@ -91,6 +91,11 @@ Veuillez utiliser un autre éditeur."
 #define STRING_NOTEXT           "Vous n'avez pas entré de texte. \
 \nVeuillez taper quelque chose et recommencer"
 
+/* FIXME */
+
+#define STRING_NOTSAVED         "Le fichier '%s'\n\n a change\n
+Would you like to save your changes ?"
+
 #define STRING_NOTFOUND         "'%s' introuvable."
 
 #define STRING_OUT_OF_MEMORY    "Pas assez de mémoire pour finir cette tâche. \

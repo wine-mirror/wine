@@ -91,6 +91,9 @@ Please use a different editor."
 #define STRING_NOTEXT           "You didn't enter any text. \
 \nPlease type something and try again"
 
+#define STRING_NOTSAVED         "File '%s'\nhas been modified\n\n \
+Would you like to save the changes ?"
+
 #define STRING_NOTFOUND         "'%s' can not be found."
 
 #define STRING_OUT_OF_MEMORY    "Not enough memory to complete this \

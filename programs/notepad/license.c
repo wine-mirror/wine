@@ -38,7 +38,7 @@ VOID WineLicense(HWND Wnd, LPCSTR Language)
   LICENSE *License = SelectLanguage(Language);
 
   MessageBox(Wnd, License->License, License->LicenseCaption,
-	     MB_ICONINFORMATION | MB_OK);
+             MB_ICONINFORMATION | MB_OK);
 }
 
 
@@ -47,6 +47,6 @@ VOID WineWarranty(HWND Wnd, LPCSTR Language)
   LICENSE *License = SelectLanguage(Language);
 
   MessageBox(Wnd, License->Warranty, License->WarrantyCaption,
-	     MB_ICONEXCLAMATION | MB_OK);
+             MB_ICONEXCLAMATION | MB_OK);
 }
 

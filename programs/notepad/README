@@ -2,6 +2,10 @@
 NOTEPAD for WINE
 ================
 
+There is now a web page dedicated to Notepad for Wine I am maintaing.
+Please see http://www.vis.inf.ethz.ch/students/mbaur/notepad for 
+latest info about Notepad. This page also includes screenshots.
+
 This is an early release of notepad and most of the code is still 
 broken. It will probably compile but the application will not make
 much sense yet.
@@ -9,11 +13,5 @@ much sense yet.
 Please see file TODO for things to do and keep the file ChangeLog
 up to date.
 
-Code is currently under heavy construction. Nearly all files will 
-change until next release. You can speed up development of notepad
-if you send patches and additions directly to my personal email 
-address <mbaur@g26.ethz.ch>.
-
-I also try to read news:comp.emulators.ms-windows.wine frequently, 
-so I can also integrate patches posted via usenet.
-
+I also try to read wine-devel@winehq.com frequently.
+

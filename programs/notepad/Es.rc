@@ -91,6 +91,11 @@ Use otro editor."
 #define STRING_NOTEXT           "Vd. no escribió nada. \
 \nPor favor escriba algo y pruebe de vuelta"
 
+/* FIXME */
+
+#define STRING_NOTSAVED         "El archivo '%s'\n has been changed\n\n \
+Would you like to save your changes ?"
+
 #define STRING_NOTFOUND         "no se encontró '%s'."
 
 #define STRING_OUT_OF_MEMORY    "No hay suficiente memoria para terminar \

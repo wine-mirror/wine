@@ -9,16 +9,20 @@
 #define MAX_PATHNAME_LEN    1024
 #define MAX_LANGUAGE_NUMBER (NP_LAST_LANGUAGE - NP_FIRST_LANGUAGE)
 
-#define HELPFILE "notepad.hlp"
+#define HELPFILE  "notepad.hlp"
+#define LOGPREFIX ".LOG"
 #define DEFAULTICON OIC_WINEICON
 
 /* hide the following from winerc */
 #ifndef RC_INVOKED
 
+#include "commdlg.h"
+
 typedef struct
 {
   HANDLE  hInstance;
   HWND    hMainWnd;
+  HWND    hFindReplaceDlg;
   HICON   hMainIcon;
   HICON   hDefaultIcon;
   HMENU   hMainMenu;
@@ -33,6 +37,7 @@ typedef struct
   UINT    wStringTableOffset;
   BOOL    bWrapLongLines;
   CHAR    szFindText[MAX_PATHNAME_LEN];
+  CHAR    szReplaceText[MAX_PATHNAME_LEN];
   CHAR    szFileName[MAX_PATHNAME_LEN];
   CHAR    szMarginTop[MAX_PATHNAME_LEN];
   CHAR    szMarginBottom[MAX_PATHNAME_LEN];
@@ -40,6 +45,10 @@ typedef struct
   CHAR    szMarginRight[MAX_PATHNAME_LEN];
   CHAR    szHeader[MAX_PATHNAME_LEN];
   CHAR    szFooter[MAX_PATHNAME_LEN];
+
+  FINDREPLACE find;
+  WORD    nCommdlgFindReplaceMsg;
+  CHAR    Buffer[12000];
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;
@@ -71,9 +80,10 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #define IDS_INFO                        STRINGID(07)
 #define IDS_TOOLARGE                    STRINGID(08)
 #define IDS_NOTEXT                      STRINGID(09)
-#define IDS_NOTFOUND                    STRINGID(0A)
-#define IDS_OUT_OF_MEMORY               STRINGID(0B)
-#define IDS_UNTITLED                    STRINGID(0C)
+#define IDS_NOTSAVED                    STRINGID(0A)
+#define IDS_NOTFOUND                    STRINGID(0B)
+#define IDS_OUT_OF_MEMORY               STRINGID(0C)
+#define IDS_UNTITLED                    STRINGID(0D)
 
 #define IDS_PAGESETUP_HEADERVALUE       STRINGID(0D)
 #define IDS_PAGESETUP_FOOTERVALUE       STRINGID(0E)

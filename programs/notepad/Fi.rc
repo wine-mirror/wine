@@ -90,6 +90,11 @@ Please use a different editor."
 #define STRING_NOTEXT           "Et syöttänyt lainkaan tekstiä. \
 \nKirjoita jotain ja yritä uudelleen"
 
+/* FIXME */
+
+#define STRING_NOTSAVED         "File '%s'\nhas been modified\n\n \
+Would you like to save your changes ?"
+
 #define STRING_NOTFOUND         "'%s' ei löydy."
 
 #define STRING_OUT_OF_MEMORY    "Muistia ei ole riittävästi tämän \

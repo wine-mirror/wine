@@ -89,6 +89,11 @@
 #define STRING_NOTEXT           "Du har ikke skrevet noget tekst. \
 \nSkriv noget tekst, og prøv så igen"
 
+/* FIXME: */
+
+#define STRING_NOTSAVED         "Filen '%s'\n has been modified.\n\n \
+Would you like to save the changes ?"
+
 #define STRING_NOTFOUND         "Kan ikke finde '%s'."
 
 #define STRING_OUT_OF_MEMORY    "Der er ikke nok hukommelse til at udføre \

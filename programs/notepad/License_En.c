@@ -44,5 +44,5 @@ EXCEPT AS OTHERWISE RESTRICTED BY LAW, THIS WORK IS PROVIDED\
  ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.";
 
 LICENSE WineLicense_En = {License_En, LicenseCaption_En,
-			  NoWarranty_En, NoWarrantyCaption_En};
+                          NoWarranty_En, NoWarrantyCaption_En};
 

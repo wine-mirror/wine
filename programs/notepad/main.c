@@ -7,7 +7,13 @@
 
 #include <stdio.h>
 #include "windows.h"
+
+#ifdef LCC
+#include "lcc.h"
+#else
 #include "shell.h"
+#endif
+
 #include "main.h"
 #include "license.h"
 #include "dialog.h"
@@ -20,8 +26,10 @@
 void LIBWINE_Register_Da();
 void LIBWINE_Register_De();
 void LIBWINE_Register_En();
-void LIBWINE_Register_Sw();
+void LIBWINE_Register_Es();
 void LIBWINE_Register_Fi();
+void LIBWINE_Register_Fr();
+void LIBWINE_Register_Sw();
 #endif
 
 NOTEPAD_GLOBALS Globals;
@@ -81,7 +89,10 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
 LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
+    HDC hContext;
+    HANDLE hDrop;                      /* drag & drop */
     CHAR szFileName[MAX_STRING_LEN];
+    RECT Windowsize;
 
     lstrcpy(szFileName, "");
 
@@ -91,7 +102,8 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
        case WM_PAINT:
-          BeginPaint(hWnd, &ps);
+          hContext = BeginPaint(hWnd, &ps);
+          TextOut(hContext, 1, 1, Globals.Buffer, strlen(Globals.Buffer));
           EndPaint(hWnd, &ps);
         break;
 
@@ -99,16 +111,31 @@ LRESULT NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
           NOTEPAD_MenuCommand(wParam);
           break;
 
+       case WM_DESTROYCLIPBOARD:
+          MessageBox(Globals.hMainWnd, "Empty clipboard", "Debug", MB_ICONEXCLAMATION);
+          break;
+
+       case WM_CLOSE:
+          if (DoCloseFile()) {
+             PostQuitMessage(0);
+          }
+          break;
+
        case WM_DESTROY:
-          PostQuitMessage (0);
+             PostQuitMessage (0);
+          break;
+
+       case WM_SIZE:
+          GetClientRect(Globals.hMainWnd, &Windowsize);
           break;
 
        case WM_DROPFILES:
-          DragQueryFile(wParam, 0, szFileName, sizeof(szFileName));
-          printf("file %s to be opened by drag and drop !\n", szFileName);
-          DragFinish(wParam);
-          break;
-          
+          /* User has dropped a file into main window */
+          hDrop = (HANDLE) wParam;
+          DragQueryFile(hDrop, 0, (CHAR *) &szFileName, sizeof(szFileName));
+          DragFinish(hDrop);
+          DoOpenFile(szFileName);
+          break;        
 
        default:
           return DefWindowProc (hWnd, msg, wParam, lParam);
@@ -135,8 +162,10 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
       LIBWINE_Register_Da();
       LIBWINE_Register_De();
       LIBWINE_Register_En();
-      LIBWINE_Register_Sw();
+      LIBWINE_Register_Es();
       LIBWINE_Register_Fi();
+      LIBWINE_Register_Fr();
+      LIBWINE_Register_Sw();
     #endif
 
     /* Select Language */
@@ -145,14 +174,18 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 
     /* Setup Globals */
 
-    Globals.lpszIniFile     = "notepad.ini";
-    Globals.lpszIcoFile     = "notepad.ico";
+    lstrcpy(Globals.lpszIniFile, "notepad.ini");
+    lstrcpy(Globals.lpszIcoFile, "notepad.ico");
 
     Globals.hInstance       = hInstance;
+
+#ifndef LCC
     Globals.hMainIcon       = ExtractIcon(Globals.hInstance, 
                                         Globals.lpszIcoFile, 0);
-    if (!Globals.hMainIcon) Globals.hMainIcon = 
-                                  LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
+#endif
+    if (!Globals.hMainIcon) {
+        Globals.hMainIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
+    }
 
     lstrcpy(Globals.szFindText,     "");
     lstrcpy(Globals.szFileName,     "");
@@ -162,6 +195,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     lstrcpy(Globals.szMarginRight,  "20 mm");
     lstrcpy(Globals.szHeader,       "&n");
     lstrcpy(Globals.szFooter,       "Page &s");
+    lstrcpy(Globals.Buffer, "Hello World");
 
     if (!prev){
         class.style         = CS_HREDRAW | CS_VREDRAW;
@@ -176,13 +210,18 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
         class.lpszClassName = className;
     }
 
-    if (!RegisterClass (&class))
-        return FALSE;
+    if (!RegisterClass (&class)) return FALSE;
 
-    Globals.hMainWnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
-                        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
-                        LoadMenu(Globals.hInstance, STRING_MENU_Xx),
-                        Globals.hInstance, 0);
+    /* Setup windows */
+
+
+    Globals.hMainWnd = CreateWindow (className, winName, 
+       WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
+       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
+       LoadMenu(Globals.hInstance, STRING_MENU_Xx),
+       Globals.hInstance, 0);
+
+    Globals.hFindReplaceDlg = 0;
 
     LANGUAGE_SelectByName(Globals.lpszLanguage);
 
@@ -190,6 +229,16 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
                         
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
+
+    /* Set up dialogs */
+
+    /* Identify Messages originating from FindReplace */
+
+    Globals.nCommdlgFindReplaceMsg = RegisterWindowMessage("commdlg_FindReplace");
+    if (Globals.nCommdlgFindReplaceMsg==0) {
+       MessageBox(Globals.hMainWnd, "Could not register commdlg_FindReplace window message", 
+                  "Error", MB_ICONEXCLAMATION);
+    }
 
     /* now handle command line */
     
@@ -214,17 +263,26 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
         }
     }
 
+    /* Set up Drag&Drop */
+
     DragAcceptFiles(Globals.hMainWnd, TRUE);
+
+    MessageBox(Globals.hMainWnd, "BEWARE!\nThis is ALPHA software that may destroy your file system.\nPlease take care.", 
+    "A note from the developer...", MB_ICONEXCLAMATION);
 
     /* now enter mesage loop     */
     
     while (GetMessage (&msg, 0, 0, 0)) {
-        TranslateMessage (&msg);
-        DispatchMessage (&msg);
+        if (IsDialogMessage(Globals.hFindReplaceDlg, &msg)!=0) {
+          /* Message belongs to FindReplace dialog */
+          /* We just let IsDialogMessage handle it */
+        } 
+          else
+        { 
+          /* Message belongs to the Notepad Main Window */
+          TranslateMessage (&msg);
+          DispatchMessage (&msg);
+        }
     }
     return 0;
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

@@ -2,7 +2,7 @@
  *  Notepad
  *
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
- *  Copyright 1998 Karl Backstr÷m <karl_b@geocities.com>
+ *  Copyright 1998 Karl Backstr”m <karl_b@geocities.com>
  */
 
 #include <stdio.h>
@@ -48,10 +48,15 @@ void LANGUAGE_UpdateWindowCaption(void) {
 
 static BOOL LANGUAGE_LoadStringOther(UINT num, UINT ids, LPSTR str, UINT len)
 {
+  BOOL bOk;
+
   ids -= Globals.wStringTableOffset;
   ids += num * 0x100;
-  return(LoadString(Globals.hInstance, ids, str, len));
-};
+
+  bOk = LoadString(Globals.hInstance, ids, str, len);
+
+  return(bOk);
+}
 
 
 
@@ -145,15 +150,13 @@ VOID LANGUAGE_Init(VOID)
   #else
   CHAR buffer[MAX_PATHNAME_LEN], *p;
 
+#ifndef LCC
     PROFILE_GetWineIniString("programs", "language", "language", 
                              buffer, sizeof(buffer));
+#endif
   Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)+1));
   strcpy(p, buffer);
   /* hmemcpy(p, buffer, 1 + lstrlen(buffer)); */
   #endif
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */
 
