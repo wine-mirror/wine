@@ -314,7 +314,9 @@ DWORD IO_inport( int port, int size )
 #endif
 
     /* first give the DOS VM a chance to handle it */
-    if (Dosvm.inport && Dosvm.inport( port, size, &res )) return res;
+    if (Dosvm.inport || DPMI_LoadDosSystem())
+        if (Dosvm.inport( port, size, &res )) 
+            return res;
 
     switch (port)
     {
@@ -436,7 +438,9 @@ void IO_outport( int port, int size, DWORD value )
 #endif
 
     /* first give the DOS VM a chance to handle it */
-    if (Dosvm.outport && Dosvm.outport( port, size, value )) return;
+    if (Dosvm.outport || DPMI_LoadDosSystem())
+        if (Dosvm.outport( port, size, value )) 
+            return;
 
     switch (port)
     {
