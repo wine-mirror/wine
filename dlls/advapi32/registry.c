@@ -698,7 +698,7 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
     }
-    else if (!(ret = RegOpenKeyExW( hkey, name, 0, 0, &tmp )))
+    else if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
     {
         if (!is_version_nt()) /* win95 does recursive key deletes */
         {
@@ -730,7 +730,7 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
     }
-    else if (!(ret = RegOpenKeyExA( hkey, name, 0, KEY_ALL_ACCESS, &tmp )))
+    else if (!(ret = RegOpenKeyExA( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
     {
         if (!is_version_nt()) /* win95 does recursive key deletes */
         {
