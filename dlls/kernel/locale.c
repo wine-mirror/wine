@@ -55,6 +55,15 @@ static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
 
+static HKEY NLS_RegOpenKey(HKEY hRootKey, LPCWSTR szKeyName);
+static HKEY NLS_RegOpenSubKey(HKEY hRootKey, LPCWSTR szKeyName);
+
+static const WCHAR szNlsKeyName[] = {
+    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+    'C','o','n','t','r','o','l','\\','N','l','s','\0'
+};
+
 /* Charset to codepage map, sorted by name. */
 static const struct charset_entry
 {
@@ -244,6 +253,19 @@ inline static HKEY create_registry_key(void)
  */
 void LOCALE_InitRegistry(void)
 {
+    static const WCHAR CodepageW[] = {'C','o','d','e','p','a','g','e',0};
+    static const WCHAR acpW[] = {'A','C','P',0};
+    static const WCHAR oemcpW[] = {'O','E','M','C','P',0};
+    static const WCHAR maccpW[] = {'M','A','C','C','P',0};
+    static const struct
+    {
+        LPCWSTR name;
+        USHORT value;
+    } update_cp_values[] = {
+        { acpW, LOCALE_IDEFAULTANSICODEPAGE },
+        { oemcpW, LOCALE_IDEFAULTCODEPAGE },
+        { maccpW, LOCALE_IDEFAULTMACCODEPAGE }
+    };
     static const USHORT updateValues[] = {
       LOCALE_SLANGUAGE,
       LOCALE_SCOUNTRY, LOCALE_ICOUNTRY,
@@ -306,6 +328,18 @@ void LOCALE_InitRegistry(void)
                         sizeof(bufferW)/sizeof(WCHAR) );
         SetLocaleInfoW( lcid, updateValues[i], bufferW );
     }
+
+    hkey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), CodepageW );
+
+    for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
+    {
+        count = GetLocaleInfoW( lcid, update_cp_values[i].value | LOCALE_NOUSEROVERRIDE,
+                                bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+        RtlInitUnicodeString( &nameW, update_cp_values[i].name );
+        NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, count * sizeof(WCHAR) );
+    }
+
+    NtClose( hkey );
 }
 
 
@@ -2620,12 +2654,6 @@ static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSiz
 }
 
 /* Registry keys for NLS related information */
-static const WCHAR szNlsKeyName[] = {
-    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
-    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-    'C','o','n','t','r','o','l','\\','N','l','s','\0'
-};
-
 static const WCHAR szLangGroupsKeyName[] = {
     'L','a','n','g','u','a','g','e',' ','G','r','o','u','p','s','\0'
 };
@@ -2679,7 +2707,7 @@ static BOOL NLS_EnumSystemLanguageGroups(ENUMLANGUAGEGROUP_CALLBACKS *lpProcs)
     hKey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), szLangGroupsKeyName );
 
     if (!hKey)
-      WARN("NLS registry key not found. Please apply the default registry file 'winedefault.reg'\n");
+        FIXME("NLS registry key not found. Please apply the default registry file 'wine.inf'\n");
 
     while (bContinue)
     {
