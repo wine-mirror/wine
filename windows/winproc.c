@@ -1281,7 +1281,7 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
         else return 0;
     case WM_NOTIFY:
     	*plparam = (LPARAM)MapSL(*plparam);
-    	return 1;
+        return 0;
     case WM_ACTIVATEAPP:
     	if (*plparam)
 	{ /* We need this when SetActiveWindow sends a Sendmessage16() to
@@ -1292,7 +1292,7 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
 	  DWORD idThread = (DWORD)TASK_GetPtr(htask)->teb->tid;
 	  *plparam = (LPARAM) idThread;
 	}
-	return 1;
+        return 0;
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
@@ -2007,10 +2007,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         return 0;
 
     case WM_ACTIVATEAPP:
-	if (*plparam) {
-	*plparam = (LPARAM)THREAD_IdToTEB((DWORD) *plparam)->htask16;
-	}
-	return 1;
+        if (*plparam) *plparam = (LPARAM)THREAD_IdToTEB((DWORD) *plparam)->htask16;
+        return 0;
     case WM_ASKCBFORMATNAME:
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
