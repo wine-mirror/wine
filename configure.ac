@@ -1322,6 +1322,7 @@ dlls/lzexpand/Makefile
 dlls/mapi32/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
+dlls/msacm/msg711/Makefile
 dlls/msdmo/Makefile
 dlls/msimg32/Makefile
 dlls/msnet32/Makefile
