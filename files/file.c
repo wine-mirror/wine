@@ -204,6 +204,8 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     options = 0;
     if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
         options |= FILE_OPEN_FOR_BACKUP_INTENT;
+    else
+        options |= FILE_NON_DIRECTORY_FILE;
     if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
         options |= FILE_DELETE_ON_CLOSE;
     if (!(attributes & FILE_FLAG_OVERLAPPED))

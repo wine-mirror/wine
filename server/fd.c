@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -42,6 +43,10 @@
 #include "handle.h"
 #include "process.h"
 #include "request.h"
+
+#include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 
 /* Because of the stupid Posix locking semantics, we need to keep
  * track of all file descriptors referencing a given file, and not
@@ -415,7 +420,10 @@ static void inode_destroy( struct object *obj )
             /* make sure it is still the same file */
             struct stat st;
             if (!stat( fd->unlink, &st ) && st.st_dev == inode->dev && st.st_ino == inode->ino)
-                unlink( fd->unlink );
+            {
+                if (S_ISDIR(st.st_mode)) rmdir( fd->unlink );
+                else unlink( fd->unlink );
+            }
         }
         free( fd );
     }
@@ -907,13 +915,15 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
 /* the fd must have been created with alloc_fd */
 /* on error the fd object is released */
 struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
-                    unsigned int access, unsigned int sharing, const char *unlink_name )
+                    unsigned int access, unsigned int sharing, unsigned int options )
 {
     struct stat st;
     struct closed_fd *closed_fd;
+    const char *unlink_name = "";
 
     assert( fd->unix_fd == -1 );
 
+    if (options & FILE_DELETE_ON_CLOSE) unlink_name = name;
     if (!(closed_fd = mem_alloc( sizeof(*closed_fd) + strlen(unlink_name) )))
     {
         release_object( fd );
@@ -931,7 +941,20 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
     fstat( fd->unix_fd, &st );
     *mode = st.st_mode;
 
-    if (S_ISREG(st.st_mode))  /* only bother with an inode for normal files */
+    /* check directory options */
+    if ((options & FILE_DIRECTORY_FILE) && !S_ISDIR(st.st_mode))
+    {
+        set_error( STATUS_NOT_A_DIRECTORY );
+        goto error;
+    }
+    if ((options & FILE_NON_DIRECTORY_FILE) && S_ISDIR(st.st_mode))
+    {
+        set_error( STATUS_FILE_IS_A_DIRECTORY );
+        goto error;
+    }
+
+    /* only bother with an inode for normal files and directories */
+    if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))
     {
         struct inode *inode = get_inode( st.st_dev, st.st_ino );
 
@@ -940,9 +963,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
             /* we can close the fd because there are no others open on the same file,
              * otherwise we wouldn't have failed to allocate a new inode
              */
-            release_object( fd );
-            free( closed_fd );
-            return NULL;
+            goto error;
         }
         fd->inode = inode;
         fd->closed = closed_fd;
@@ -957,15 +978,19 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
     }
     else
     {
-        free( closed_fd );
         if (unlink_name[0])  /* we can't unlink special files */
         {
-            release_object( fd );
             set_error( STATUS_INVALID_PARAMETER );
-            return NULL;
+            goto error;
         }
+        free( closed_fd );
     }
     return fd;
+
+error:
+    release_object( fd );
+    free( closed_fd );
+    return NULL;
 }
 
 /* create an fd for an anonymous file */

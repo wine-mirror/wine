@@ -167,8 +167,7 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
         !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE,
-                              &mode, access, sharing,
-                              (options & FILE_DELETE_ON_CLOSE) ? name : "" )))
+                              &mode, access, sharing, options )))
     {
         free( name );
         release_object( file );
@@ -176,13 +175,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     }
     free( name );
 
-    /* refuse to open a directory */
-    if (S_ISDIR(mode) && !(options & FILE_OPEN_FOR_BACKUP_INTENT))
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        release_object( file );
-        return NULL;
-    }
     /* check for serial port */
     if (S_ISCHR(mode) && is_serial_fd( file->fd ))
     {
