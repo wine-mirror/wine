@@ -1513,10 +1513,6 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     horzInfo.cbSize = sizeof(SCROLLINFO);
     horzInfo.nPage = infoPtr->rcList.right - infoPtr->rcList.left;
 
-    ZeroMemory(&vertInfo, sizeof(SCROLLINFO));
-    vertInfo.cbSize = sizeof(SCROLLINFO);
-    vertInfo.nPage = infoPtr->rcList.bottom - infoPtr->rcList.top;
-
     /* for now, we'll set info.nMax to the _count_, and adjust it later */
     if (uView == LVS_LIST)
     {
@@ -1527,24 +1523,39 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
     else if (uView == LVS_REPORT)
     {
 	horzInfo.nMax = infoPtr->nItemWidth;
-	vertInfo.nMax = infoPtr->nItemCount;
-	vertInfo.nPage /= infoPtr->nItemHeight;
     }
     else /* LVS_ICON, or LVS_SMALLICON */
     {
 	RECT rcView;
 
-	if (LISTVIEW_GetViewRect(infoPtr, &rcView))
-	{
-	    horzInfo.nMax = rcView.right - rcView.left;
-	    vertInfo.nMax = rcView.bottom - rcView.top;
-	}
+	if (LISTVIEW_GetViewRect(infoPtr, &rcView)) horzInfo.nMax = rcView.right - rcView.left;
     }
   
     horzInfo.fMask = SIF_RANGE | SIF_PAGE;
     horzInfo.nMax = max(horzInfo.nMax - 1, 0);
     SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo, TRUE);
     TRACE("horzInfo=%s\n", debugscrollinfo(&horzInfo));
+
+    /* Setting the horizontal scroll can change the listview size
+     * (and potentially everything else) so we need to recompute
+     * everything again for the vertical scroll
+     */
+
+    ZeroMemory(&vertInfo, sizeof(SCROLLINFO));
+    vertInfo.cbSize = sizeof(SCROLLINFO);
+    vertInfo.nPage = infoPtr->rcList.bottom - infoPtr->rcList.top;
+
+    if (uView == LVS_REPORT)
+    {
+	vertInfo.nMax = infoPtr->nItemCount;
+	vertInfo.nPage /= infoPtr->nItemHeight;
+    }
+    else if (uView != LVS_LIST) /* LVS_ICON, or LVS_SMALLICON */
+    {
+	RECT rcView;
+
+	if (LISTVIEW_GetViewRect(infoPtr, &rcView)) vertInfo.nMax = rcView.bottom - rcView.top;
+    }
 
     vertInfo.fMask = SIF_RANGE | SIF_PAGE;
     vertInfo.nMax = max(vertInfo.nMax - 1, 0);
