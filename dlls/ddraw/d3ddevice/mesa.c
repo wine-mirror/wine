@@ -363,7 +363,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 		    ((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)) != (DDSCAPS_ZBUFFER))) {
 		    /* Override the Lock / Unlock function for all these surfaces */
 		    surf2->lock_update = surf2->lock_update_prev;
-		    surf2->unlock_update = surf2->unlock_update_prev;;
+		    surf2->unlock_update = surf2->unlock_update_prev;
 		    /* And install also the blt / bltfast overrides */
 		    surf2->aux_blt = NULL;
 		    surf2->aux_bltfast = NULL;
@@ -2605,6 +2605,7 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	((is_front == FALSE) && (gl_d3d_dev->state       != SURFACE_MEMORY))) {
         /* If the surface is already in memory, no need to do anything here... */
         GLenum buffer_type;
+	GLenum buffer_color;
 	GLenum prev_read;
 	RECT loc_rect;
 	int y;
@@ -2628,8 +2629,21 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	    /* Application wants to lock the back buffer */
 	    glReadBuffer(GL_BACK);
 
-	if (This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+	if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
+	    (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
+	    (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
+	    (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+	    (This->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
 	    buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+	    buffer_color = GL_RGB;
+	} else if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) &&
+		   (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+		   (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+		   (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+		   (This->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
+	    buffer_type = GL_UNSIGNED_BYTE;
+	    buffer_color = GL_BGRA;
+	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
 	} else {
 	    ERR(" unsupported pixel format at device locking.\n");
 	    LEAVE_GL();
@@ -2654,16 +2668,32 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	     y--) {
 	    glReadPixels(loc_rect.left, y,
 			 loc_rect.right - loc_rect.left, 1,
-			 GL_RGB, buffer_type, dst);
+			 buffer_color, buffer_type, dst);
 	    dst += This->surface_desc.u1.lPitch;
 	}
 
 	glReadBuffer(prev_read);
-
+	glPixelStorei(GL_PACK_SWAP_BYTES, FALSE);
+	
 	if (is_front)
 	    gl_d3d_dev->front_state = SURFACE_MEMORY;
 	else
 	    gl_d3d_dev->state = SURFACE_MEMORY;
+	
+#if 0
+	/* I keep this code here as it's very useful to debug :-) */
+	{
+	    static int flush_count = 0;
+	    char buf[128];
+	    FILE *f;
+	    
+	    if ((++flush_count % 50) == 0) {
+	        sprintf(buf, "lock_%06d.pnm", flush_count);
+		f = fopen(buf, "wb");
+		DDRAW_dump_surface_to_disk(This, f);
+	    }
+	}
+#endif
 	
 	LEAVE_GL();
     }
@@ -2672,26 +2702,28 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 #define UNLOCK_TEX_SIZE 256
 
 static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCRECT pRect) {
-    GLenum buffer_type;
+    GLenum buffer_type, buffer_color;
     RECT loc_rect;
     IDirectDrawSurfaceImpl *surf = d3d_dev->surface;
     IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
-    GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env;
+    GLint depth_test, alpha_test, cull_face, lighting, min_tex, max_tex, tex_env, blend, stencil_test;
     GLuint initial_texture;
     GLint tex_state;
     int x, y;
-	
+
     loc_rect.top = 0;
     loc_rect.left = 0;
     loc_rect.bottom = surf->surface_desc.dwHeight;
     loc_rect.right = surf->surface_desc.dwWidth;
 
-    TRACE(" flushing memory back to the frame-buffer.\n");
+    TRACE(" flushing memory back to the frame-buffer (%ld,%ld) x (%ld,%ld).\n", loc_rect.top, loc_rect.left, loc_rect.right, loc_rect.bottom);
 	
     glGetIntegerv(GL_DEPTH_TEST, &depth_test);
     glGetIntegerv(GL_ALPHA_TEST, &alpha_test);
+    glGetIntegerv(GL_STENCIL_TEST, &stencil_test);
     glGetIntegerv(GL_CULL_FACE, &cull_face);
     glGetIntegerv(GL_LIGHTING, &lighting);
+    glGetIntegerv(GL_BLEND, &blend);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &initial_texture);
     glGetIntegerv(GL_TEXTURE_2D, &tex_state);
     glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &max_tex);
@@ -2699,10 +2731,23 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &tex_env);
     /* TODO: scissor test if ever we use it ! */
     
-    if (surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) {
+    if ((surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
+	(surf->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
+	(surf->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
+	(surf->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+	(surf->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
         buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+	buffer_color = GL_RGB;
+    } else if ((surf->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) &&
+	       (surf->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+	       (surf->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+	       (surf->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+	       (surf->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
+        buffer_type = GL_UNSIGNED_BYTE;
+	buffer_color = GL_BGRA;
+	glPixelStorei(GL_UNPACK_SWAP_BYTES, TRUE);
     } else {
-        WARN(" unsupported pixel format.\n");
+        ERR(" unsupported pixel format at frame buffer flush.\n");
 	return;
     }
 
@@ -2730,9 +2775,11 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
     glDisable(GL_ALPHA_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_BLEND);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    
+
     for (x = loc_rect.left; x < loc_rect.right; x += UNLOCK_TEX_SIZE) {
         for (y = loc_rect.top; y < loc_rect.bottom; y += UNLOCK_TEX_SIZE) {
 	    /* First, upload the texture... */
@@ -2742,7 +2789,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 			    0,
 			    0, 0,
 			    w, h,
-			    GL_RGB,
+			    buffer_color,
 			    buffer_type,
 			    ((char *) surf->surface_desc.lpSurface) + (x * GET_BPP(surf->surface_desc)) + (y * surf->surface_desc.u1.lPitch));
 	    glBegin(GL_QUADS);
@@ -2764,14 +2811,32 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     if (depth_test != 0) glEnable(GL_DEPTH_TEST);
     if (lighting != 0) glEnable(GL_LIGHTING);
     if (alpha_test != 0) glEnable(GL_ALPHA_TEST);
+    if (stencil_test != 0) glEnable(GL_STENCIL_TEST);
     if (cull_face != 0) glEnable(GL_CULL_FACE);
+    if (blend != 0) glEnable(GL_BLEND);
     glBindTexture(GL_TEXTURE_2D, initial_texture);
     if (tex_state == 0) glDisable(GL_TEXTURE_2D);
     glDisable(GL_SCISSOR_TEST);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SWAP_BYTES, FALSE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_tex);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, tex_env);
+
+#if 0
+    /* I keep this code here as it's very useful to debug :-) */
+    {
+        static int flush_count = 0;
+	char buf[128];
+	FILE *f;
+
+	if ((++flush_count % 50) == 0) {
+	    sprintf(buf, "flush_%06d.pnm", flush_count);
+	    f = fopen(buf, "wb");
+	    DDRAW_dump_surface_to_disk(surf, f);
+	}
+    }
+#endif
 }
 
 static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
