@@ -11,11 +11,11 @@
 #include <sys/types.h>
 
 #ifndef __WINE__
-#ifdef __svr4__
+#if defined(__svr4__) || defined(__NetBSD__) || defined(__FreeBSD__)
 #ifndef HAVE_SYS_SOCKET_H
 #define HAVE_SYS_SOCKET_H
 #endif /* HAVE_SYS_SOCKET_H */
-#endif /* __svr4__ */
+#endif /* __svr4__ || __NetBSD__ || __FreeBSD__ */
 #endif /* __WINE__ */
 
 /* Solaris uses these macro names */
