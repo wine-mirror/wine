@@ -906,15 +906,11 @@ static	DBG_LoadedModuleRef* 	lmr = NULL;
     int				cmp;
 
     for (p = lmr; p; p = p->next) {
-        cmp = strcmp(p->module_name, mod_name);
-	if (cmp < 0)
-	   continue;
-	if (cmp == 0) {
-	   if (p->is16 == is16)
-	      return FALSE;
-	   continue;
-	}
-	break;
+        cmp = strcasecmp(p->module_name, mod_name);
+	if (cmp == 0 && p->is16 == is16)
+	   return FALSE;
+	if (cmp >= 0)
+	   break;
     }
 
     if (!lep->first) {
@@ -938,7 +934,7 @@ static	DBG_LoadedModuleRef* 	lmr = NULL;
     
     p2 = NULL;
     for (pp1 = &lmr; *pp1; pp1 = &(*pp1)->next) {
-        if (strcmp((*pp1)->module_name, mod_name) > 0)
+        if (strcasecmp((*pp1)->module_name, mod_name) > 0)
 	    break;
        p2 = *pp1;
     }
