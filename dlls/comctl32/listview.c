@@ -998,7 +998,408 @@ static INT LISTVIEW_GetItemHeight(HWND hwnd)
   return nItemHeight;
 }
 
+
+static void LISTVIEW_PrintSelectionRanges(hwnd)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_SELECTION *selection;
+  INT topSelection = infoPtr->hdpaSelectionRanges->nItemCount;
+  INT i;
+
+  TRACE("Selections are:\n");
+  for (i = 0; i < topSelection; i++)
+  {
+    selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,i);
+    TRACE("     %lu - %lu\n",selection->lower,selection->upper);
+  }
+}
+
 /***
+ * DESCRIPTION:
+ * A compare function for selection ranges
+ *
+ *PARAMETER(S)
+ * [I] LPVOID : Item 1;
+ * [I] LPVOID : Item 2;
+ * [I] LPARAM : flags
+ *
+ *RETURNS:
+ * >0 : if Item 1 > Item 2
+ * <0 : if Item 2 > Item 1
+ * 0 : if Item 1 == Item 2
+ */
+static INT LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2, 
+                                          LPARAM flags)
+{
+  int l1 = ((LISTVIEW_SELECTION*)(range1))->lower;
+  int l2 = ((LISTVIEW_SELECTION*)(range2))->lower;
+  int u1 = ((LISTVIEW_SELECTION*)(range1))->upper;
+  int u2 = ((LISTVIEW_SELECTION*)(range2))->upper; 
+  int rc=0;
+
+  if (u1 < l2)
+    rc= -1;
+ 
+  if (u2 < l1)
+     rc= 1;
+
+  return rc;
+}
+
+/**
+* DESCRIPTION:
+* Adds a selection range.
+* 
+* PARAMETER(S):
+* [I] HWND : window handle
+* [I] INT : lower item index
+* [I] INT : upper item index 
+*
+* RETURN:
+* None
+*/
+static VOID LISTVIEW_AddSelectionRange(HWND hwnd, INT lItem, INT uItem)
+{
+ LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+ LISTVIEW_SELECTION *selection;
+ INT topSelection = infoPtr->hdpaSelectionRanges->nItemCount;
+ BOOL lowerzero=FALSE;
+
+ selection = (LISTVIEW_SELECTION *)COMCTL32_Alloc(sizeof(LISTVIEW_SELECTION));
+ selection->lower = lItem;
+ selection->upper = uItem;
+
+ TRACE("Add range %i - %i\n",lItem,uItem);
+ if (topSelection)
+ {
+   LISTVIEW_SELECTION *checkselection,*checkselection2;
+   INT index,mergeindex;
+
+   /* find overlapping selections */
+   /* we want to catch adjacent ranges so expand our range by 1 */
+
+   selection->upper++;
+   if (selection->lower == 0)
+     lowerzero = TRUE;
+   else
+     selection->lower--;
+
+   index = DPA_Search(infoPtr->hdpaSelectionRanges, selection, 0,
+                      LISTVIEW_CompareSelectionRanges,
+                      0,0);
+   selection->upper --; 
+   if (lowerzero)
+     lowerzero=FALSE;
+   else
+     selection->lower ++;
+
+   if (index >=0)
+   {
+     checkselection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,index);
+     TRACE("Merge with index %i (%lu - %lu)\n",index,checkselection->lower,
+           checkselection->upper);
+     
+     checkselection->lower = min(selection->lower,checkselection->lower);
+     checkselection->upper = max(selection->upper,checkselection->upper);
+    
+     TRACE("New range (%lu - %lu)\n", checkselection->lower, 
+           checkselection->upper);
+
+     COMCTL32_Free(selection);    
+ 
+     /* merge now common selection ranges in the lower group*/
+     do
+     {
+        checkselection->upper ++; 
+        if (checkselection->lower == 0)
+          lowerzero = TRUE;
+        else
+          checkselection->lower --;
+
+        TRACE("search lower range (%lu - %lu)\n", checkselection->lower, 
+              checkselection->upper);
+
+        /* not sorted yet */
+        mergeindex = DPA_Search(infoPtr->hdpaSelectionRanges, checkselection, 0,
+                                LISTVIEW_CompareSelectionRanges, 0,
+                                0);
+
+        checkselection->upper --; 
+        if (lowerzero)
+          lowerzero = FALSE;
+        else
+	  checkselection->lower ++;
+
+	if (mergeindex >=0  && mergeindex != index)
+        {
+	  TRACE("Merge with index %i\n",mergeindex);
+          checkselection2 = DPA_GetPtr(infoPtr->hdpaSelectionRanges,
+                                       mergeindex);
+          checkselection->lower = min(checkselection->lower, 
+                                      checkselection2->lower);
+          checkselection->upper = max(checkselection->upper,
+                                      checkselection2->upper);
+          COMCTL32_Free(checkselection2);
+          DPA_DeletePtr(infoPtr->hdpaSelectionRanges,mergeindex);
+          index --;
+        }
+     }
+     while (mergeindex > -1 && mergeindex <index);
+
+     /* merge now common selection ranges in the upper group*/
+    do
+    {
+       checkselection->upper ++;
+       if (checkselection->lower == 0)
+         lowerzero = TRUE;
+       else 
+         checkselection->lower --;
+
+       TRACE("search upper range %i (%lu - %lu)\n",index, 
+             checkselection->lower, checkselection->upper);
+
+       /* not sorted yet */
+       mergeindex = DPA_Search(infoPtr->hdpaSelectionRanges, checkselection,
+                               index+1,
+			       LISTVIEW_CompareSelectionRanges, 0,
+			       0);
+
+       checkselection->upper --; 
+       if (lowerzero)
+         lowerzero = FALSE;
+       else
+         checkselection->lower ++;
+
+       if (mergeindex >=0 && mergeindex !=index)
+       {
+	 TRACE("Merge with index %i\n",mergeindex);
+	 checkselection2 = DPA_GetPtr(infoPtr->hdpaSelectionRanges,
+				      mergeindex);
+	 checkselection->lower = min(checkselection->lower, 
+				     checkselection2->lower);
+	 checkselection->upper = max(checkselection->upper,
+				     checkselection2->upper);
+	 COMCTL32_Free(checkselection2);
+	 DPA_DeletePtr(infoPtr->hdpaSelectionRanges,mergeindex);
+       }
+    }
+    while (mergeindex > -1);
+   }
+   else
+   {
+
+     index = DPA_Search(infoPtr->hdpaSelectionRanges, selection, 0,
+                       LISTVIEW_CompareSelectionRanges, 0, 
+                       DPAS_INSERTAFTER);
+
+     TRACE("Insert before index %i\n",index);
+     if (index == -1)
+       index = 0;
+     DPA_InsertPtr(infoPtr->hdpaSelectionRanges,index,selection); 
+   }
+ } 
+ else
+ {
+   DPA_InsertPtr(infoPtr->hdpaSelectionRanges,0,selection);
+ }
+ /*
+  * Incase of error 
+  */
+ DPA_Sort(infoPtr->hdpaSelectionRanges,LISTVIEW_CompareSelectionRanges,0);
+ LISTVIEW_PrintSelectionRanges(hwnd);
+}
+
+/**
+* DESCRIPTION:
+* check if a specified index is selected.
+* 
+* PARAMETER(S):
+* [I] HWND : window handle
+* [I] INT : item index 
+*
+* RETURN:
+* None
+*/
+static BOOL LISTVIEW_IsSelected(HWND hwnd, INT nItem)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_SELECTION selection;
+  INT index;
+
+  selection.upper = nItem;
+  selection.lower = nItem;
+
+  index = DPA_Search(infoPtr->hdpaSelectionRanges, &selection, 0,
+                      LISTVIEW_CompareSelectionRanges,
+                      0,DPAS_SORTED);
+  if (index != -1)
+    return TRUE;
+  else
+    return FALSE;
+}
+
+/***
+* DESCRIPTION:
+* Removes all selection ranges
+*
+* Parameters(s):
+*   HWND: window handle
+*
+* RETURNS:
+*   SUCCESS : TRUE
+*   FAILURE : TRUE
+*/
+static LRESULT LISTVIEW_RemoveAllSelections(HWND hwnd)
+{
+ LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+ LISTVIEW_SELECTION *selection;
+ INT i;
+
+ for (i = 0; i < infoPtr->hdpaSelectionRanges->nItemCount; i++)
+ {
+   selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,i);
+   if (selection)
+     COMCTL32_Free(selection); 
+ }
+ return  DPA_DeleteAllPtrs(infoPtr->hdpaSelectionRanges);
+}
+
+/**
+* DESCRIPTION:
+* Removes a range selections.
+* 
+* PARAMETER(S):
+* [I] HWND : window handle
+* [I] INT : lower item index
+* [I] INT : upper item index 
+*
+* RETURN:
+* None
+*/
+static VOID LISTVIEW_RemoveSelectionRange(HWND hwnd, INT lItem, INT uItem)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_SELECTION removeselection,*checkselection;
+  INT index;
+
+  removeselection.lower = lItem;
+  removeselection.upper = uItem;
+
+  TRACE("Remove range %lu - %lu\n",removeselection.lower,removeselection.upper);
+  LISTVIEW_PrintSelectionRanges(hwnd);
+
+  index = DPA_Search(infoPtr->hdpaSelectionRanges, &removeselection, 0,
+                     LISTVIEW_CompareSelectionRanges,
+                     0,0);
+  
+  if (index == -1)
+    return;
+
+ 
+  checkselection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,
+                              index);
+
+  TRACE("Matches range index %i (%lu-%lu)\n",index,checkselection->lower,
+        checkselection->upper);
+
+  /* case 1: Same */
+  if ((checkselection->upper == removeselection.upper) && 
+     (checkselection->lower == removeselection.lower))
+  {
+    DPA_DeletePtr(infoPtr->hdpaSelectionRanges,index);
+    TRACE("Case 1\n");
+  }
+  /* case 2: engulf */
+  else if (((checkselection->upper < removeselection.upper) && 
+      (checkselection->lower > removeselection.lower))||
+     ((checkselection->upper <= removeselection.upper) &&
+      (checkselection->lower > removeselection.lower)) ||
+     ((checkselection->upper < removeselection.upper) &&
+      (checkselection->lower >= removeselection.lower)))
+
+  {
+    DPA_DeletePtr(infoPtr->hdpaSelectionRanges,index);
+    /* do it again because others may also get caught */
+    TRACE("Case 2\n");
+    LISTVIEW_RemoveSelectionRange(hwnd,lItem,uItem);
+  }
+  /* case 3: overlap upper */
+  else if ((checkselection->upper < removeselection.upper) &&
+      (checkselection->lower < removeselection.lower))
+  {
+    checkselection->upper = removeselection.lower - 1;
+    TRACE("Case 3\n");
+    LISTVIEW_RemoveSelectionRange(hwnd,lItem,uItem);
+  }
+  /* case 4: overlap lower */
+  else if ((checkselection->upper > removeselection.upper) &&
+      (checkselection->lower > removeselection.lower))
+  {
+    checkselection->lower = removeselection.upper + 1;
+    TRACE("Case 4\n");
+    LISTVIEW_RemoveSelectionRange(hwnd,lItem,uItem);
+  }
+  /* case 5: fully internal */
+  else if (checkselection->upper == removeselection.upper)
+    checkselection->upper = removeselection.lower - 1;
+  else if (checkselection->lower == removeselection.lower)
+    checkselection->lower = removeselection.upper + 1;
+  else
+  {
+    /* bisect the range */
+    LISTVIEW_SELECTION *newselection;
+    
+    newselection = (LISTVIEW_SELECTION *)
+                          COMCTL32_Alloc(sizeof(LISTVIEW_SELECTION));
+    newselection -> lower = checkselection->lower;
+    newselection -> upper = removeselection.lower - 1;
+    checkselection -> lower = removeselection.upper + 1;
+    DPA_InsertPtr(infoPtr->hdpaSelectionRanges,index,newselection);
+    TRACE("Case 5\n");
+    DPA_Sort(infoPtr->hdpaSelectionRanges,LISTVIEW_CompareSelectionRanges,0);
+  }
+  LISTVIEW_PrintSelectionRanges(hwnd);
+}
+
+/**
+* DESCRIPTION:
+* shifts all selection indexs starting with the indesx specified
+* in the direction specified.
+* 
+* PARAMETER(S):
+* [I] HWND : window handle
+* [I] INT : item index 
+* [I] INT : amount and direction of shift
+*
+* RETURN:
+* None
+*/
+static VOID LISTVIEW_ShiftSelections(HWND hwnd, INT nItem, INT direction)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  LISTVIEW_SELECTION selection,*checkselection;
+  INT index;
+
+  selection.upper = nItem;
+  selection.lower = nItem;
+
+  index = DPA_Search(infoPtr->hdpaSelectionRanges, &selection, 0,
+                     LISTVIEW_CompareSelectionRanges,
+                     0,DPAS_SORTED|DPAS_INSERTAFTER);
+
+  while ((index < infoPtr->hdpaSelectionRanges->nItemCount)&&(index != -1)) 
+  {
+    checkselection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,index);
+    if (checkselection->lower >= nItem)
+        checkselection->lower += direction;
+    if (checkselection->upper >= nItem)
+        checkselection->upper += direction;
+    index ++;
+  }
+}
+
+
+/**
  * DESCRIPTION:
  * Adds a block of selections.
  * 
@@ -1014,20 +1415,13 @@ static VOID LISTVIEW_AddGroupSelection(HWND hwnd, INT nItem)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   INT nFirst = min(infoPtr->nSelectionMark, nItem);
   INT nLast = max(infoPtr->nSelectionMark, nItem);
-  LVITEMA lvItem;
-  INT i;
 
-  lvItem.state = LVIS_SELECTED;
-  lvItem.stateMask= LVIS_SELECTED;
-  
-  for (i = nFirst; i <= nLast; i++)
-  {
-    ListView_SetItemState(hwnd, i, &lvItem);
-  }
-  
+  LISTVIEW_AddSelectionRange(hwnd,nFirst,nLast);
+
   LISTVIEW_SetItemFocus(hwnd, nItem);
   infoPtr->nSelectionMark = nItem;
 }
+
 
 /***
  * DESCRIPTION:
@@ -1043,12 +1437,8 @@ static VOID LISTVIEW_AddGroupSelection(HWND hwnd, INT nItem)
 static VOID LISTVIEW_AddSelection(HWND hwnd, INT nItem)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LVITEMA lvItem;
 
-  lvItem.state = LVIS_SELECTED;
-  lvItem.stateMask= LVIS_SELECTED;
-
-  ListView_SetItemState(hwnd, nItem, &lvItem);
+  LISTVIEW_AddSelectionRange(hwnd,nItem,nItem);
 
   LISTVIEW_SetItemFocus(hwnd, nItem);
   infoPtr->nSelectionMark = nItem;
@@ -1070,20 +1460,15 @@ static BOOL LISTVIEW_ToggleSelection(HWND hwnd, INT nItem)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   BOOL bResult;
-  LVITEMA lvItem;
 
-  lvItem.stateMask= LVIS_SELECTED;
-
-  if (ListView_GetItemState(hwnd, nItem, LVIS_SELECTED) & LVIS_SELECTED)
+  if (LISTVIEW_IsSelected(hwnd,nItem))
   {
-    lvItem.state = 0;
-    ListView_SetItemState(hwnd, nItem, &lvItem);
+    LISTVIEW_RemoveSelections(hwnd,nItem,nItem);
     bResult = FALSE;
   }
   else
   {
-    lvItem.state = LVIS_SELECTED;
-    ListView_SetItemState(hwnd, nItem, &lvItem);
+    LISTVIEW_AddSelectionRange(hwnd,nItem,nItem);
     bResult = TRUE;
   }
 
@@ -1107,25 +1492,20 @@ static BOOL LISTVIEW_ToggleSelection(HWND hwnd, INT nItem)
 static VOID LISTVIEW_SetSelectionRect(HWND hwnd, RECT rcSelRect)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  LVITEMA lvItem;
   POINT ptItem;
   INT i;
-
-  lvItem.stateMask = LVIS_SELECTED;
 
   for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
   {
     LISTVIEW_GetItemPosition(hwnd, i, &ptItem);
     if (PtInRect(&rcSelRect, ptItem) != FALSE)
     {
-      lvItem.state = LVIS_SELECTED;
+      LISTVIEW_AddSelectionRange(hwnd,i,i);
     }
     else
     {
-      lvItem.state = 0;
+      LISTVIEW_RemoveSelections(hwnd,i,i);
     }
-
-    ListView_SetItemState(hwnd, i, &lvItem);
   }
 }
 
@@ -1144,27 +1524,23 @@ static VOID LISTVIEW_SetGroupSelection(HWND hwnd, INT nItem)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
-  LVITEMA lvItem;
 
   if ((uView == LVS_LIST) || (uView == LVS_REPORT))
   {
     INT i;
     INT nFirst = min(infoPtr->nSelectionMark, nItem);
     INT nLast = max(infoPtr->nSelectionMark, nItem);
-    lvItem.stateMask = LVIS_SELECTED;
-   
+
     for (i = 0; i <= GETITEMCOUNT(infoPtr); i++)
     {
       if ((i < nFirst) || (i > nLast))
       {
-        lvItem.state = 0;
+        LISTVIEW_RemoveSelections(hwnd,i,i);
       }
       else
       {
-        lvItem.state = LVIS_SELECTED;
+        LISTVIEW_AddSelectionRange(hwnd,i,i);
       }
-
-      ListView_SetItemState(hwnd, i, &lvItem);
     }
   }
   else
@@ -1242,23 +1618,16 @@ static VOID LISTVIEW_SetSelection(HWND hwnd, INT nItem)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   LVITEMA lvItem;
 
-  if (nItem > 0)
-  {
-    LISTVIEW_RemoveSelections(hwnd, 0, nItem - 1);
-  }
-
-  if (nItem < GETITEMCOUNT(infoPtr))
-  {
-    LISTVIEW_RemoveSelections(hwnd, nItem + 1, GETITEMCOUNT(infoPtr));
-  }
-
   ZeroMemory(&lvItem, sizeof(LVITEMA));
   lvItem.stateMask = LVIS_FOCUSED;
   ListView_SetItemState(hwnd, infoPtr->nFocusedItem, &lvItem); 
-  
-  lvItem.state =  LVIS_SELECTED | LVIS_FOCUSED;
-  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+
+  lvItem.state =   LVIS_FOCUSED;
+  lvItem.stateMask = LVIS_FOCUSED;
   ListView_SetItemState(hwnd, nItem, &lvItem);
+
+  LISTVIEW_RemoveAllSelections(hwnd);
+  LISTVIEW_AddSelectionRange(hwnd,nItem,nItem);
 
   infoPtr->nFocusedItem = nItem;
   infoPtr->nSelectionMark = nItem;
@@ -1404,9 +1773,22 @@ static LRESULT LISTVIEW_MouseSelection(HWND hwnd, POINT pt)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   RECT rcItem;
-  INT i;
-  
-  for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
+  INT i,topindex,bottomindex;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  UINT uView = lStyle & LVS_TYPEMASK;
+
+  topindex = ListView_GetTopIndex(hwnd);
+  if (uView == LVS_REPORT)
+  {
+    bottomindex = topindex + LISTVIEW_GetCountPerColumn(hwnd) + 1;  
+    bottomindex = min(bottomindex,GETITEMCOUNT(infoPtr));
+  }
+  else
+  {
+    bottomindex = GETITEMCOUNT(infoPtr);
+  }
+
+  for (i = topindex; i < bottomindex; i++) 
   {
     rcItem.left = LVIR_SELECTBOUNDS;
     if (LISTVIEW_GetItemRect(hwnd, i, &rcItem) == TRUE)
@@ -1435,16 +1817,7 @@ static LRESULT LISTVIEW_MouseSelection(HWND hwnd, POINT pt)
  */
 static VOID LISTVIEW_RemoveSelections(HWND hwnd, INT nFirst, INT nLast)
 {
-  LVITEMA lvItem;
-  INT i;
-
-  lvItem.state = 0;
-  lvItem.stateMask = LVIS_SELECTED;
-
-  for (i = nFirst; i <= nLast; i++)
-  {
-    ListView_SetItemState(hwnd, i, &lvItem);
-  }
+  LISTVIEW_RemoveSelectionRange(hwnd,nFirst,nLast);
 }
 
 /***
@@ -1789,6 +2162,10 @@ static BOOL LISTVIEW_AddSubItem(HWND hwnd, LPLVITEMA lpLVItem)
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   INT nPosition, nItem;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+
+  if (lStyle & LVS_OWNERDATA)
+    return FALSE;
 
   if (lpLVItem != NULL)
   {
@@ -1918,18 +2295,23 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
   if (lStyle & LVS_OWNERDATA)
   {
     if ((lpLVItem->iSubItem == 0)&&(lpLVItem->mask == LVIF_STATE))
+    {
+      if (lpLVItem->stateMask & LVIS_FOCUSED)
       {
-        hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-        if (hdpaSubItems != NULL)
-        {
-         lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-         if (lpItem != NULL)
-         {
-          lpItem->state = lpLVItem->state & lpLVItem->stateMask;
-          return TRUE;
-         }
-        }
+        if (lpLVItem->state & LVIS_FOCUSED)
+          infoPtr->nFocusedItem = lpLVItem->iItem;
+        else if (infoPtr->nFocusedItem == lpLVItem->iItem)
+          infoPtr->nFocusedItem = -1;
       }
+      if (lpLVItem->stateMask & LVIS_SELECTED)
+      {
+        if (lpLVItem->state & LVIS_SELECTED)
+          LISTVIEW_AddSelectionRange(hwnd,lpLVItem->iItem,lpLVItem->iItem);
+        else
+          LISTVIEW_RemoveSelections(hwnd,lpLVItem->iItem,lpLVItem->iItem);
+      }
+     return TRUE;
+    }
     return FALSE;
   }
 
@@ -1966,9 +2348,11 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
                  */
                 if (lStyle & LVS_SINGLESEL)
                 {
-                  LISTVIEW_RemoveSelections(hwnd, 0, lpLVItem->iItem-1);
-                  LISTVIEW_RemoveSelections(hwnd, lpLVItem->iItem + 1, 
-                                            GETITEMCOUNT(infoPtr));
+		  LISTVIEW_SetSelection(hwnd,lpLVItem->iItem);
+                }
+                else
+                {
+                  LISTVIEW_AddSelection(hwnd,lpLVItem->iItem);
                 }
 	      }
 	      else if (nmlv.uNewState & LVIS_FOCUSED)
@@ -2039,6 +2423,10 @@ static BOOL LISTVIEW_SetSubItem(HWND hwnd, LPLVITEMA lpLVItem)
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   LISTVIEW_SUBITEM *lpSubItem;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+
+  if (lStyle & LVS_OWNERDATA)
+    return FALSE;
 
   if (lpLVItem != NULL)
   {
@@ -2901,6 +3289,7 @@ static LRESULT LISTVIEW_Arrange(HWND hwnd, INT nAlignCode)
 
 /* << LISTVIEW_CreateDragImage >> */
 
+
 /***
  * DESCRIPTION:
  * Removes all listview items and subitems.
@@ -2928,6 +3317,14 @@ static LRESULT LISTVIEW_DeleteAllItems(HWND hwnd)
   HDPA hdpaSubItems;
 
   TRACE("(hwnd=%x,)\n", hwnd);
+  LISTVIEW_RemoveAllSelections(hwnd);
+
+  if (lStyle & LVS_OWNERDATA)
+  {
+    infoPtr->hdpaItems->nItemCount = 0;
+    InvalidateRect(hwnd, NULL, TRUE);
+    return TRUE;
+  }
 
   if (GETITEMCOUNT(infoPtr) > 0)
   {
@@ -3035,7 +3432,7 @@ static LRESULT LISTVIEW_DeleteColumn(HWND hwnd, INT nColumn)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
   BOOL bResult = FALSE;
-  
+
   if (Header_DeleteItem(infoPtr->hwndHeader, nColumn) != FALSE)
   {
     bResult = LISTVIEW_RemoveColumn(infoPtr->hdpaItems, nColumn);
@@ -3083,6 +3480,15 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
   INT i;
 
   TRACE("(hwnd=%x,nItem=%d)\n", hwnd, nItem);
+
+  LISTVIEW_ShiftSelections(hwnd,nItem,-1);
+
+  if (lStyle & LVS_OWNERDATA)
+  {
+    infoPtr->hdpaItems->nItemCount --;
+    InvalidateRect(hwnd, NULL, TRUE);
+    return TRUE;
+  }
 
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
   {
@@ -3209,14 +3615,32 @@ static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem)
   LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   HDPA hdpaSubItems;
   BOOL bUpdateItemText;
-  
-  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+  LISTVIEW_ITEM lvItemRef;
+  LVITEMA item;
 
-  if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+ 
+  if (!(lStyle & LVS_OWNERDATA))
+  {
+    if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
 	  return FALSE;
 
-  if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+    if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
   	  return FALSE;
+  }
+  else
+  {
+    ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
+    ZeroMemory(&item,sizeof(LVITEMA));
+    item.iItem = nItem;
+    item.iSubItem = 0;
+    item.mask = LVIF_PARAM | LVIF_STATE;
+    ListView_GetItemA(hwnd,&item);
+    lvItemRef.state = item.state;
+    lvItemRef.iImage = item.iImage;
+    lvItemRef.lParam = item.lParam;
+    lpItem = &lvItemRef;
+  }
 
   dispInfo.hdr.hwndFrom = hwnd;
   dispInfo.hdr.idFrom = nCtrlId;
@@ -3269,7 +3693,9 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   HDPA hdpaSubItems;
   CHAR szDispText[DISP_TEXT_SIZE];
-  LVITEMA lvItem;
+  LVITEMA lvItem,item;
+  LISTVIEW_ITEM lvItemRef;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
  
   if (~GetWindowLongA(hwnd, GWL_STYLE) & LVS_EDITLABELS)
       return FALSE;
@@ -3284,12 +3710,27 @@ static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
   LISTVIEW_SetItemFocus(hwnd, nItem);
 
   ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
-  if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
-	  return 0;
-
-  if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+  if (!(lStyle & LVS_OWNERDATA))
+  {
+    if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
   	  return 0;
 
+    if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+  	  return 0;
+  } 
+  else
+  {
+    ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
+    ZeroMemory(&item,sizeof(LVITEMA));
+    item.iItem = nItem;
+    item.iSubItem = 0;
+    item.mask = LVIF_PARAM | LVIF_STATE;
+    ListView_GetItemA(hwnd,&item);
+    lvItemRef.iImage = item.iImage;
+    lvItemRef.state = item.state;
+    lvItemRef.lParam = item.lParam;
+    lpItem = &lvItemRef;
+  }
 
   /* get information needed for drawing the item */
   ZeroMemory(&lvItem, sizeof(LVITEMA));
@@ -4076,20 +4517,16 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
 
     if ((lpLVItem->mask & LVIF_STATE)&&(lpLVItem->iSubItem == 0))
     {
-      hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-      if (hdpaSubItems == NULL)
-          return FALSE;
-
-      lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-      if (lpItem == NULL)
-          return FALSE;
-
-      lpLVItem->state = lpItem->state & lpLVItem->stateMask;
+      lpLVItem->state = 0; 
+      if (infoPtr->nFocusedItem == lpLVItem->iItem)
+        lpLVItem->state |= LVIS_FOCUSED;
+      if (LISTVIEW_IsSelected(hwnd,lpLVItem->iItem))
+        lpLVItem->state |= LVIS_SELECTED;
     }
 
     return TRUE;
   }
-   
+
 
   hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
   if (hdpaSubItems == NULL)
@@ -4194,10 +4631,20 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
       lpLVItem->state = lpItem->state;
       lpLVItem->state &= ~dispInfo.item.stateMask;
       lpLVItem->state |= (dispInfo.item.state & dispInfo.item.stateMask);
+
+      lpLVItem->state &= ~LVIS_SELECTED;
+      if ((dispInfo.item.stateMask & LVIS_SELECTED) && 
+         (LISTVIEW_IsSelected(hwnd,dispInfo.item.iItem)))
+        lpLVItem->state |= LVIS_SELECTED;
     }
     else if (lpLVItem->mask & LVIF_STATE)
     {
       lpLVItem->state = lpItem->state & lpLVItem->stateMask;
+
+      lpLVItem->state &= ~LVIS_SELECTED;
+      if ((lpLVItem->stateMask & LVIS_SELECTED) && 
+          (LISTVIEW_IsSelected(hwnd,lpLVItem->iItem)))
+         lpLVItem->state |= LVIS_SELECTED;
     }
 
     if (lpLVItem->mask & LVIF_PARAM)
@@ -4284,7 +4731,7 @@ static BOOL LISTVIEW_GetItemPosition(HWND hwnd, INT nItem,
 
   TRACE("(hwnd=%x,nItem=%d,lpptPosition=%p)\n", hwnd, nItem, 
         lpptPosition);
-
+  
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) && 
       (lpptPosition != NULL))
   {
@@ -5037,6 +5484,7 @@ static LRESULT LISTVIEW_GetOrigin(HWND hwnd, LPPOINT lpptOrigin)
  */
 static LRESULT LISTVIEW_GetSelectedCount(HWND hwnd)
 {
+/* REDO THIS */
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   INT nSelectedCount = 0;
   INT i;
@@ -5151,12 +5599,26 @@ static INT LISTVIEW_HitTestItem(HWND hwnd, LPLVHITTESTINFO lpHitTestInfo)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   RECT rcItem;
-  INT i;
-  
+  INT i,topindex,bottomindex;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  UINT uView = lStyle & LVS_TYPEMASK;
+
+
   TRACE("(hwnd=%x, x=%ld, y=%ld)\n", hwnd, lpHitTestInfo->pt.x,
         lpHitTestInfo->pt.y);
 
-  for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
+  topindex = ListView_GetTopIndex(hwnd);
+  if (uView == LVS_REPORT)
+  {
+    bottomindex = topindex + LISTVIEW_GetCountPerColumn(hwnd) + 1;  
+    bottomindex = min(bottomindex,GETITEMCOUNT(infoPtr));
+  }
+  else
+  {
+    bottomindex = GETITEMCOUNT(infoPtr);
+  }
+
+  for (i = topindex; i < bottomindex; i++)
   {
     rcItem.left = LVIR_BOUNDS;
     if (LISTVIEW_GetItemRect(hwnd, i, &rcItem) != FALSE)
@@ -5427,42 +5889,9 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
 
   if (lStyle & LVS_OWNERDATA)
   {
-      lpItem = (LISTVIEW_ITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_ITEM));
-      if (lpItem != NULL)
-      {
-        ZeroMemory(lpItem, sizeof(LISTVIEW_ITEM));
-        /* insert item in listview control data structure */
-        hdpaSubItems = DPA_Create(8);
-        if (hdpaSubItems != NULL)
-        {
-          nItem = DPA_InsertPtr(hdpaSubItems, 0, lpItem);
-          if (nItem != -1)
-          {
-               nItem = DPA_InsertPtr(infoPtr->hdpaItems, 1, 
-                                     hdpaSubItems);
-            /* manage item focus */
-            if ((lpLVItem)&&(lpLVItem->mask & LVIF_STATE))
-            {
-              lpItem->state &= ~(LVIS_FOCUSED|LVIS_SELECTED);
-              if (lpLVItem->stateMask & LVIS_SELECTED)
-              {
-                LISTVIEW_SetSelection(hwnd, nItem);
-              }
-              else if (lpLVItem->stateMask & LVIS_FOCUSED)
-              {
-                LISTVIEW_SetItemFocus(hwnd, nItem);
-              }           
-            }
-          }
-        }
-      }
-   /* free memory if unsuccessful */
-   if ((nItem == -1) && (lpItem != NULL))
-   {
-     COMCTL32_Free(lpItem);
-   }
-   
-   return nItem;
+    nItem = infoPtr->hdpaItems->nItemCount;
+    infoPtr->hdpaItems->nItemCount ++;
+    return nItem;
   }
 
   if (lpLVItem != NULL)
@@ -5501,6 +5930,8 @@ static LRESULT LISTVIEW_InsertItemA(HWND hwnd, LPLVITEMA lpLVItem)
 	      }
               if (nItem != -1)
               {
+                LISTVIEW_ShiftSelections(hwnd,nItem,1);
+
                 /* manage item focus */
                 if (lpLVItem->mask & LVIF_STATE)
                 {
@@ -6118,19 +6549,19 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 
   if (GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA)
   {
-      int i;
+      int precount,topvisible;
       TRACE("LVS_OWNERDATA is set!\n");
-      if (nItems > infoPtr->hdpaItems->nItemCount)
-      {
-        for (i = infoPtr->hdpaItems->nItemCount; i<nItems; i++)
-          ListView_InsertItemA(hwnd,NULL);
-      }
-      else
-      {
-        for (i = nItems; i < infoPtr->hdpaItems->nItemCount; i++)
-          ListView_DeleteItem(hwnd,1);
-      }
-      RedrawWindow(hwnd,0,0,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+
+      precount = infoPtr->hdpaItems->nItemCount;
+      topvisible = ListView_GetTopIndex(hwnd) +
+                   LISTVIEW_GetCountPerColumn(hwnd) + 1;
+
+      infoPtr->hdpaItems->nItemCount = nItems;
+
+      LISTVIEW_UpdateSize(hwnd);
+      LISTVIEW_UpdateScroll(hwnd);
+      if (min(precount,infoPtr->hdpaItems->nItemCount)<topvisible) 
+        InvalidateRect(hwnd, NULL, TRUE);
   }
   else
   {
@@ -6410,12 +6841,12 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDPA sortList;
     UINT lStyle = GetWindowLongA(hwnd, GWL_STYLE);
     
+    if (lStyle & LVS_OWNERDATA)
+      return FALSE;
+
     if (!infoPtr || !infoPtr->hdpaItems)
 	return FALSE;
    
-    if (lStyle & LVS_OWNERDATA)
-        return FALSE;
-    
     nCount = GETITEMCOUNT(infoPtr);
     /* if there are 0 or 1 items, there is no need to sort */
     if (nCount > 1)
@@ -6592,6 +7023,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* allocate memory for the data structure */
   infoPtr->hdpaItems = DPA_Create(10);
+
+  /* allocate memory for the selection ranges */
+  infoPtr->hdpaSelectionRanges = DPA_Create(10);
 
   /* initialize size of items */
   infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
@@ -7169,7 +7603,7 @@ static LRESULT LISTVIEW_LButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
   else
   {
     /* remove all selections */
-    LISTVIEW_RemoveSelections(hwnd, 0, GETITEMCOUNT(infoPtr));
+    LISTVIEW_RemoveAllSelections(hwnd);
   }
 
   InvalidateRect(hwnd, NULL, TRUE);
@@ -7286,6 +7720,7 @@ static LRESULT LISTVIEW_NCDestroy(HWND hwnd)
 
   /* destroy data structure */
   DPA_Destroy(infoPtr->hdpaItems);
+  DPA_Destroy(infoPtr->hdpaSelectionRanges);
 
   /* destroy font */
   infoPtr->hFont = (HFONT)0;
@@ -7507,7 +7942,7 @@ static LRESULT LISTVIEW_RButtonDown(HWND hwnd, WORD wKey, WORD wPosX,
   }
   else
   {
-    LISTVIEW_RemoveSelections(hwnd, 0, GETITEMCOUNT(infoPtr));
+    LISTVIEW_RemoveAllSelections(hwnd);
   }
   
   return 0;

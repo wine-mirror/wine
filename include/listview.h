@@ -40,6 +40,11 @@ typedef struct tagLISTVIEW_ITEM
 
 } LISTVIEW_ITEM;
 
+typedef struct tagLISTVIEW_SELECTION
+{
+  DWORD lower;
+  DWORD upper;
+} LISTVIEW_SELECTION;
 
 typedef struct tagLISTVIEW_INFO
 {
@@ -52,6 +57,7 @@ typedef struct tagLISTVIEW_INFO
     BOOL bLButtonDown;
     BOOL bRButtonDown;
     INT nFocusedItem;
+    HDPA hdpaSelectionRanges;
     INT nItemHeight;
     INT nItemWidth;
     INT nSelectionMark;
