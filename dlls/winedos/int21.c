@@ -33,6 +33,7 @@
 #include "msdos.h"
 #include "file.h"
 #include "winerror.h"
+#include "winuser.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -706,18 +707,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
     case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
-    case 0x13: /* DELETE FILE USING FCB */
         INT_Int21Handler( context );
         break;
 
+    case 0x13: /* DELETE FILE USING FCB */
     case 0x14: /* SEQUENTIAL READ FROM FCB FILE */
     case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
     case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
-        INT_BARF( context, 0x21 );
-        break;
-
     case 0x17: /* RENAME FILE USING FCB */
-        INT_Int21Handler( context );
+        INT_BARF( context, 0x21 );
         break;
 
     case 0x18: /* NULL FUNCTION FOR CP/M COMPATIBILITY */
@@ -814,9 +812,24 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         /* we cannot change the behaviour anyway, so just ignore it */
         break;
 
-    case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
-    case 0x30: /* GET DOS VERSION */
+    case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */ 
         INT_Int21Handler( context );
+        break;
+
+    case 0x30: /* GET DOS VERSION */
+        TRACE( "GET DOS VERSION - %s requested\n",
+               (AL_reg(context) == 0x00) ? "OEM number" : "version flag" );
+
+        SET_AL( context, HIBYTE(HIWORD(GetVersion16())) ); /* major version */
+        SET_AH( context, LOBYTE(HIWORD(GetVersion16())) ); /* minor version */
+
+        if (AL_reg(context) == 0x00)
+            SET_BH( context, 0xff ); /* OEM number => undefined */
+        else
+            SET_BH( context, 0x08 ); /* version flag => DOS is in ROM */
+
+        SET_BL( context, 0x12 );     /* 0x123456 is Wine's serial # */
+        SET_CX( context, 0x3456 );
         break;
 
     case 0x31: /* TERMINATE AND STAY RESIDENT */
@@ -880,17 +893,29 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x40:  /* "WRITE" - WRITE TO FILE OR DEVICE */
-        /* Writes to stdout are handled here. */
-        if (!DOSVM_IsWin16() && BX_reg(context) == 1) {
-          BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
-                                         context->SegDs,
-                                         context->Edx);
-          int i;
+        TRACE( "WRITE from %04lX:%04X to handle %d for %d byte\n",
+               context->SegDs, DX_reg(context),
+               BX_reg(context), CX_reg(context) );
+        {
+            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
 
-          for(i=0; i<CX_reg(context); i++)
-            DOSVM_PutChar(ptr[i]);
-        } else
-          INT_Int21Handler( context );
+            if (!DOSVM_IsWin16() && BX_reg(context) == 1)
+            {
+                int i;
+                for(i=0; i<CX_reg(context); i++)
+                    DOSVM_PutChar(ptr[i]);
+                SET_AX(context, CX_reg(context));
+            }
+            else
+            {
+                HFILE handle = (HFILE)DosFileHandleToWin32Handle(BX_reg(context));
+                LONG result = _hwrite( handle, ptr, CX_reg(context) );
+                if (result == HFILE_ERROR)
+                    bSetDOSExtendedError = TRUE;
+                else
+                    SET_AX( context, (WORD)result );
+            }
+        }
         break;
 
     case 0x41: /* "UNLINK" - DELETE FILE */
@@ -904,6 +929,25 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
+        TRACE( "DUPLICATE FILE HANDLE %d\n", BX_reg(context) );
+        {
+            HANDLE handle32;
+            HFILE  handle16 = HFILE_ERROR;
+
+            if (DuplicateHandle( GetCurrentProcess(),
+                                 DosFileHandleToWin32Handle(BX_reg(context)),
+                                 GetCurrentProcess(), 
+                                 &handle32,
+                                 0, TRUE, DUPLICATE_SAME_ACCESS ))
+                handle16 = Win32HandleToDosFileHandle(handle32);
+
+            if (handle16 == HFILE_ERROR)
+                bSetDOSExtendedError = TRUE;
+            else
+                SET_AX( context, handle16 );
+        }
+        break;
+
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
         INT_Int21Handler( context );
@@ -964,17 +1008,26 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
-        if(DOSVM_IsWin16()) {
-            INT_Int21Handler( context );
-            break;
-        }
-
-        TRACE("EXEC %s\n", (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx ));
-        if (!MZ_Exec( context, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx),
-                      AL_reg(context), CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx) ))
         {
-            SET_AX( context, GetLastError() );
-            SET_CFLAG(context);
+            BYTE *program = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
+            BYTE *paramblk = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
+
+            TRACE( "EXEC %s\n", program );
+
+            if (DOSVM_IsWin16())
+            {
+                HINSTANCE16 instance = WinExec16( program, SW_NORMAL );
+                if (instance < 32)
+                {
+                    SET_CFLAG( context );
+                    SET_AX( context, instance );
+                }
+            }
+            else
+            {
+                if (!MZ_Exec( context, program, AL_reg(context), paramblk))
+                    bSetDOSExtendedError = TRUE;
+            }
         }
         break;
 
@@ -1115,9 +1168,19 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */
+        TRACE( "FFLUSH - handle %d\n", BX_reg(context) );
+        if (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ))
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x69: /* DISK SERIAL NUMBER */
-    case 0x6a: /* COMMIT FILE */
         INT_Int21Handler( context );
+        break;
+
+    case 0x6a: /* COMMIT FILE */
+        TRACE( "COMMIT FILE - handle %d\n", BX_reg(context) );
+        if (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0x6b: /* NULL FUNCTION FOR CP/M COMPATIBILITY */
@@ -1125,13 +1188,29 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x6c: /* EXTENDED OPEN/CREATE */
-    case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
-    case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
-    case 0x72: /* MS-DOS 7 (Windows95) - ??? */
-    case 0x73: /* MULTIPLEXED: Win95 OSR2/Win98 FAT32 calls */
-    case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
-    case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
         INT_Int21Handler( context );
+        break;
+
+    case 0x70: /* MSDOS 7 - GET/SET INTERNATIONALIZATION INFORMATION */
+        FIXME( "MS-DOS 7 - GET/SET INTERNATIONALIZATION INFORMATION\n" );
+        SET_CFLAG( context );
+        SET_AL( context, 0 );
+        break;
+
+    case 0x71: /* MSDOS 7 - LONG FILENAME FUNCTIONS */
+        INT_Int21Handler( context );
+        break;
+
+    case 0x73: /* MSDOS7 - FAT32 */
+        INT_Int21Handler( context );
+        break;
+
+    case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
+        TRACE( "CONNECTION SERVICES - GET CONNECTION NUMBER - ignored\n" );
+        break;
+
+    case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
+        TRACE( "NOVELL NETWARE - RETURN SHELL VERSION - ignored\n" );
         break;
 
     default:

@@ -877,18 +877,6 @@ static int INT21_FindNextFCB( CONTEXT86 *context )
 }
 
 
-static void DeleteFileFCB( CONTEXT86 *context )
-{
-    FIXME("(%p): stub\n", context);
-}
-
-static void RenameFileFCB( CONTEXT86 *context )
-{
-    FIXME("(%p): stub\n", context);
-}
-
-
-
 static void fLock( CONTEXT86 * context )
 {
 
@@ -1033,14 +1021,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         SET_AL( context, INT21_FindNextFCB(context) ? 0x00 : 0xff );
         break;
 
-    case 0x13: /* DELETE FILE USING FCB */
-        DeleteFileFCB(context);
-        break;
-
-    case 0x17: /* RENAME FILE USING FCB */
-        RenameFileFCB(context);
-        break;
-
     case 0x19: /* GET CURRENT DEFAULT DRIVE */
         SET_AL( context, DRIVE_GetCurrentDrive() );
         break;
@@ -1077,19 +1057,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             context->SegEs = SELECTOROF( pTask->dta );
             SET_BX( context, OFFSETOF( pTask->dta ) );
         }
-        break;
-
-    case 0x30: /* GET DOS VERSION */
-        TRACE("GET DOS VERSION %s requested\n",
-	      (AL_reg(context) == 0x00)?"OEM number":"version flag");
-        SET_AX( context, (HIWORD(GetVersion16()) >> 8) | (HIWORD(GetVersion16()) << 8) );
-#if 0
-        SET_AH( context, 0x7 );
-        SET_AL( context, 0xA );
-#endif
-
-        SET_BX( context, 0x00FF );     /* 0x123456 is Wine's serial # */
-        SET_CX( context, 0x0000 );
         break;
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
@@ -1242,19 +1209,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
                 result = WIN16_hread( BX_reg(context),
                                       MAKESEGPTR( context->SegDs, context->Edx ),
                                       CX_reg(context) );
-            if (result == -1) bSetDOSExtendedError = TRUE;
-            else SET_AX( context, (WORD)result );
-        }
-        break;
-
-    case 0x40: /* "WRITE" - WRITE TO FILE OR DEVICE */
-        TRACE("WRITE from %04lX:%04X to handle %d for %d byte\n",
-	      context->SegDs,DX_reg(context),BX_reg(context),CX_reg(context) );
-        {
-            LONG result = _hwrite16( BX_reg(context),
-                                     CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                         context->Edx ),
-                                     CX_reg(context) );
             if (result == -1) bSetDOSExtendedError = TRUE;
             else SET_AX( context, (WORD)result );
         }
@@ -1433,20 +1387,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         }
         break;
 
-    case 0x45: /* "DUP" - DUPLICATE FILE HANDLE */
-        {
-            HANDLE handle;
-            TRACE("DUP - DUPLICATE FILE HANDLE %d\n",BX_reg(context));
-            if ((bSetDOSExtendedError = !DuplicateHandle( GetCurrentProcess(),
-                                                          DosFileHandleToWin32Handle(BX_reg(context)),
-                                                          GetCurrentProcess(), &handle,
-                                                          0, TRUE, DUPLICATE_SAME_ACCESS )))
-                SET_AX( context, HFILE_ERROR16 );
-            else
-                SET_AX( context, Win32HandleToDosFileHandle(handle) );
-            break;
-        }
-
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
         TRACE("FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",
 	      BX_reg(context),CX_reg(context));
@@ -1474,13 +1414,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 		SET_BX( context, DOSMEM_Available()>>4 ); /* not quite right */
 	    }
 	}
-        break;
-
-    case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
-        TRACE("EXEC %s\n", (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx ));
-        SET_AX( context, WinExec16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx ),
-                                    SW_NORMAL ));
-        if (AX_reg(context) < 32) SET_CFLAG(context);
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
@@ -1610,12 +1543,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 		bSetDOSExtendedError = TRUE;
             else SET_AX( context, 0 );
         }
-        break;
-
-    case 0x68: /* "FFLUSH" - COMMIT FILE */
-    case 0x6a: /* COMMIT FILE */
-        TRACE("FFLUSH/COMMIT handle %d\n",BX_reg(context));
-        bSetDOSExtendedError = (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ));
         break;
 
     case 0x69: /* DISK SERIAL NUMBER */
@@ -1837,14 +1764,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         }
         break;
 
-    case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
-    case 0x72: /* MS-DOS 7 (Windows95) - ??? */
-        TRACE("windows95 function AX %04x\n",
-                    AX_reg(context));
-        WARN("        returning unimplemented\n");
-        SET_CFLAG(context);
-        SET_AL( context, 0 );
-        break;
 
     case 0x73: /* MULTIPLEXED: Win95 OSR2/Win98 FAT32 calls */
         TRACE("windows95 function AX %04x\n",
@@ -1924,10 +1843,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 		}
 
 		break;
-
-    case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */
-    case 0xea: /* NOVELL NETWARE - RETURN SHELL VERSION */
-        break;
 
     default:
         INT_BARF( context, 0x21 );
