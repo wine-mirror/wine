@@ -191,6 +191,12 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
+/* Define if you have libaudioIO */
+#undef HAVE_LIBAUDIOIO
+
+/* Define to 1 if you have the <libaudioio.h> header file. */
+#undef HAVE_LIBAUDIOIO_H
+
 /* Define if you have the curses library (-lcurses) */
 #undef HAVE_LIBCURSES
 

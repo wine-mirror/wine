@@ -9483,6 +9483,187 @@ done
 
 
 
+AUDIOIOLIBS=""
+
+
+for ac_header in libaudioio.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_header_compiler=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  egrep -v '^ *\+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc in
+  yes:no )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;};;
+  no:yes )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;};;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ echo "$as_me:$LINENO: checking for AudioIOGetVersion in -laudioio" >&5
+echo $ECHO_N "checking for AudioIOGetVersion in -laudioio... $ECHO_C" >&6
+if test "${ac_cv_lib_audioio_AudioIOGetVersion+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-laudioio  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char AudioIOGetVersion ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+AudioIOGetVersion ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_audioio_AudioIOGetVersion=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_audioio_AudioIOGetVersion=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_audioio_AudioIOGetVersion" >&5
+echo "${ECHO_T}$ac_cv_lib_audioio_AudioIOGetVersion" >&6
+if test $ac_cv_lib_audioio_AudioIOGetVersion = yes; then
+  AUDIOIOLIBS="-laudioio"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBAUDIOIO 1
+_ACEOF
+
+fi
+
+fi
+
+done
+
+
+
 echo "$as_me:$LINENO: checking whether mmap64 works defined as mmap" >&5
 echo $ECHO_N "checking whether mmap64 works defined as mmap... $ECHO_C" >&6
 if test "${ac_cv_mmap64_works+set}" = set; then
@@ -11617,6 +11798,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -11625,6 +11807,7 @@ for ac_header in \
 	float.h \
 	ieeefp.h \
 	io.h \
+	libaudioio.h \
 	libio.h \
 	libutil.h \
 	link.h \
@@ -13810,7 +13993,7 @@ MAKE_DLL_RULES=dlls/Makedll.rules
 MAKE_PROG_RULES=programs/Makeprog.rules
 
 
-ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules programs/Makeprog.rules Makefile debugger/Makefile dlls/Makefile dlls/advapi32/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/comcat/Makefile dlls/comctl32/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/d3d8/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput8/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dsound/Makefile dlls/gdi/Makefile dlls/glu32/Makefile dlls/icmp/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/kernel/Makefile dlls/lzexpand/Makefile dlls/mapi32/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msadp32/Makefile dlls/msacm/msg711/Makefile dlls/msacm/winemp3/Makefile dlls/msdmo/Makefile dlls/msimg32/Makefile dlls/msisys/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt20/Makefile dlls/msvideo/Makefile dlls/netapi32/Makefile dlls/ntdll/Makefile dlls/odbc32/Makefile dlls/ole32/Makefile dlls/oleaut32/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/psapi/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/rasapi32/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/snmpapi/Makefile dlls/sti/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/user/Makefile dlls/version/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/winmm/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/midimap/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winealsa/Makefile dlls/winmm/winenas/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winspool/Makefile dlls/wintrust/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/x11drv/Makefile documentation/Makefile include/Makefile library/Makefile miscemu/Makefile ole/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/expand/Makefile programs/notepad/Makefile programs/osversioncheck/Makefile programs/progman/Makefile programs/regapi/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/regtest/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineconsole/Makefile programs/winefile/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winhelp/Makefile programs/winver/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/wmc/Makefile tools/wpp/Makefile tools/wrc/Makefile tsx11/Makefile unicode/Makefile"
+ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules programs/Makeprog.rules Makefile debugger/Makefile dlls/Makefile dlls/advapi32/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/comcat/Makefile dlls/comctl32/Makefile dlls/commdlg/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/d3d8/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput8/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dsound/Makefile dlls/gdi/Makefile dlls/glu32/Makefile dlls/icmp/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/kernel/Makefile dlls/lzexpand/Makefile dlls/mapi32/Makefile dlls/mpr/Makefile dlls/msacm/Makefile dlls/msacm/imaadp32/Makefile dlls/msacm/msadp32/Makefile dlls/msacm/msg711/Makefile dlls/msacm/winemp3/Makefile dlls/msdmo/Makefile dlls/msimg32/Makefile dlls/msisys/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt20/Makefile dlls/msvideo/Makefile dlls/netapi32/Makefile dlls/ntdll/Makefile dlls/odbc32/Makefile dlls/ole32/Makefile dlls/oleaut32/Makefile dlls/olecli/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr/Makefile dlls/opengl32/Makefile dlls/psapi/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/rasapi32/Makefile dlls/richedit/Makefile dlls/rpcrt4/Makefile dlls/serialui/Makefile dlls/setupapi/Makefile dlls/shdocvw/Makefile dlls/shell32/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/snmpapi/Makefile dlls/sti/Makefile dlls/tapi32/Makefile dlls/ttydrv/Makefile dlls/twain/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/user/Makefile dlls/version/Makefile dlls/win32s/Makefile dlls/winaspi/Makefile dlls/winedos/Makefile dlls/wineps/Makefile dlls/wininet/Makefile dlls/winmm/Makefile dlls/winmm/joystick/Makefile dlls/winmm/mcianim/Makefile dlls/winmm/mciavi/Makefile dlls/winmm/mcicda/Makefile dlls/winmm/mciseq/Makefile dlls/winmm/mciwave/Makefile dlls/winmm/midimap/Makefile dlls/winmm/wavemap/Makefile dlls/winmm/winealsa/Makefile dlls/winmm/winearts/Makefile dlls/winmm/wineaudioio/Makefile dlls/winmm/winenas/Makefile dlls/winmm/wineoss/Makefile dlls/winnls/Makefile dlls/winsock/Makefile dlls/winspool/Makefile dlls/wintrust/Makefile dlls/wow32/Makefile dlls/wsock32/Makefile dlls/x11drv/Makefile documentation/Makefile include/Makefile library/Makefile miscemu/Makefile ole/Makefile programs/Makefile programs/avitools/Makefile programs/clock/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/expand/Makefile programs/notepad/Makefile programs/osversioncheck/Makefile programs/progman/Makefile programs/regapi/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/regtest/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wcmd/Makefile programs/wineconsole/Makefile programs/winefile/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winhelp/Makefile programs/winver/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winapi/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/wmc/Makefile tools/wpp/Makefile tools/wrc/Makefile tsx11/Makefile unicode/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -14378,8 +14561,9 @@ do
   "dlls/winmm/midimap/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/midimap/Makefile" ;;
   "dlls/winmm/wavemap/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wavemap/Makefile" ;;
   "dlls/winmm/winealsa/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winealsa/Makefile" ;;
-  "dlls/winmm/winenas/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winenas/Makefile" ;;
   "dlls/winmm/winearts/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winearts/Makefile" ;;
+  "dlls/winmm/wineaudioio/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wineaudioio/Makefile" ;;
+  "dlls/winmm/winenas/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/winenas/Makefile" ;;
   "dlls/winmm/wineoss/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winmm/wineoss/Makefile" ;;
   "dlls/winnls/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winnls/Makefile" ;;
   "dlls/winsock/Makefile" ) CONFIG_FILES="$CONFIG_FILES dlls/winsock/Makefile" ;;
@@ -14618,6 +14802,7 @@ s,@ARTSLIBS@,$ARTSLIBS,;t t
 s,@ARTSINCL@,$ARTSINCL,;t t
 s,@ALSALIBS@,$ALSALIBS,;t t
 s,@NASLIBS@,$NASLIBS,;t t
+s,@AUDIOIOLIBS@,$AUDIOIOLIBS,;t t
 s,@DLLWRAP@,$DLLWRAP,;t t
 s,@ac_ct_DLLWRAP@,$ac_ct_DLLWRAP,;t t
 s,@DLLIBS@,$DLLIBS,;t t

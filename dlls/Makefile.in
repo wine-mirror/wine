@@ -98,6 +98,7 @@ BASEDIRS = \
 	winmm/wavemap \
 	winmm/winealsa \
 	winmm/winearts \
+	winmm/wineaudioio \
 	winmm/winenas \
 	winmm/wineoss \
 	winnls \
@@ -241,6 +242,7 @@ all: \
 	windebug.dll$(DLLEXT) \
 	winealsa.drv$(DLLEXT) \
 	winearts.drv$(DLLEXT) \
+	wineaudioio.drv$(DLLEXT) \
 	winedos.dll$(DLLEXT) \
 	winemp3.acm$(DLLEXT) \
 	winenas.drv$(DLLEXT) \
@@ -509,6 +511,9 @@ winealsa.drv$(DLLEXT): winmm/winealsa/winealsa.drv$(DLLEXT)
 winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/winearts/winearts.drv$(DLLEXT) $@
 
+wineaudioio.drv$(DLLEXT): winmm/wineaudioio/wineaudioio.drv$(DLLEXT)
+	$(RM) $@ && $(LN_S) winmm/wineaudioio/wineaudioio.drv$(DLLEXT) $@
+
 winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
@@ -636,6 +641,7 @@ version/version.dll$(DLLEXT): version
 win32s/w32skrnl.dll$(DLLEXT): win32s
 winmm/winealsa/winealsa.drv$(DLLEXT): winmm/winealsa
 winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts
+winmm/wineaudioio/wineaudioio.drv$(DLLEXT): winmm/wineaudioio
 winedos/winedos.dll$(DLLEXT): winedos
 msacm/winemp3/winemp3.acm$(DLLEXT): msacm/winemp3
 winmm/winenas/winenas.drv$(DLLEXT): winmm/winenas
@@ -734,6 +740,7 @@ version/__install__: version.dll$(DLLEXT)
 win32s/__install__: w32skrnl.dll$(DLLEXT)
 winmm/winealsa/__install__: winealsa.drv$(DLLEXT)
 winmm/winearts/__install__: winearts.drv$(DLLEXT)
+winmm/wineaudioio/__install__: wineaudioio.drv$(DLLEXT)
 winedos/__install__: winedos.dll$(DLLEXT)
 msacm/winemp3/__install__: winemp3.acm$(DLLEXT)
 winmm/winenas/__install__: winenas.drv$(DLLEXT)
@@ -849,6 +856,7 @@ winmm/midimap: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kern
 winmm/wavemap: msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm/winealsa: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 winmm/winearts: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
+winmm/wineaudioio: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 winmm/winenas: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm/wineoss: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 winmm:    user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
