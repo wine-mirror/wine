@@ -186,7 +186,7 @@ DirectSoundCaptureEnumerateA(
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
     	    for (wid = 0; wid < devs; ++wid) {
-                if (IsEqualGUID( &guid, &capture_guids[wid] ) ) {
+                if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
                     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
@@ -203,8 +203,8 @@ DirectSoundCaptureEnumerateA(
 	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
-            if (lpDSEnumCallback(&capture_guids[wid], desc.szDesc, desc.szDrvname, lpContext) == FALSE)
+                  debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
+            if (lpDSEnumCallback(&DSOUND_capture_guids[wid], desc.szDesc, desc.szDrvname, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -248,7 +248,7 @@ DirectSoundCaptureEnumerateW(
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
     	    for (wid = 0; wid < devs; ++wid) {
-                if (IsEqualGUID( &guid, &capture_guids[wid] ) ) {
+                if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
                     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
@@ -269,12 +269,12 @@ DirectSoundCaptureEnumerateW(
 	err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
+                  debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
             MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
-            if (lpDSEnumCallback((LPGUID)&capture_guids[wid], wDesc, wName, lpContext) == FALSE)
+            if (lpDSEnumCallback((LPGUID)&DSOUND_capture_guids[wid], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -509,7 +509,7 @@ IDirectSoundCaptureImpl_Initialize(
 
     /* enumerate WINMM audio devices and find the one we want */
     for (wid=0; wid<widn; wid++) {
-    	if (IsEqualGUID( lpcGUID, &capture_guids[wid]) ) {
+    	if (IsEqualGUID( lpcGUID, &DSOUND_capture_guids[wid]) ) {
 	    err = DS_OK;
 	    break;
 	}

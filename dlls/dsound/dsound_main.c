@@ -68,9 +68,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 #define DS_SND_QUEUE_MAX 28 /* max number of fragments to prebuffer */
 #define DS_SND_QUEUE_MIN 12 /* min number of fragments to prebuffer */
 
-IDirectSoundImpl*	dsound = NULL;
-GUID                    renderer_guids[MAXWAVEDRIVERS];
-GUID                    capture_guids[MAXWAVEDRIVERS];
+IDirectSoundImpl*	DSOUND_renderer = NULL;
+GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
+GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 HRESULT mmErr(UINT err)
 {
@@ -268,14 +268,14 @@ HRESULT WINAPI GetDeviceID(LPCGUID pGuidSrc, LPGUID pGuidDest)
 
     if ( IsEqualGUID( &DSDEVID_DefaultPlayback, pGuidSrc ) ||
     	 IsEqualGUID( &DSDEVID_DefaultVoicePlayback, pGuidSrc ) ) {
-	CopyMemory(pGuidDest, &renderer_guids[ds_default_playback], sizeof(GUID));
+	CopyMemory(pGuidDest, &DSOUND_renderer_guids[ds_default_playback], sizeof(GUID));
         TRACE("returns %s\n", get_device_id(pGuidDest));
 	return DS_OK;
     }
 
     if ( IsEqualGUID( &DSDEVID_DefaultCapture, pGuidSrc ) ||
     	 IsEqualGUID( &DSDEVID_DefaultVoiceCapture, pGuidSrc ) ) {
-	CopyMemory(pGuidDest, &capture_guids[ds_default_capture], sizeof(GUID));
+	CopyMemory(pGuidDest, &DSOUND_capture_guids[ds_default_capture], sizeof(GUID));
         TRACE("returns %s\n", get_device_id(pGuidDest));
 	return DS_OK;
     }
@@ -321,7 +321,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
 	    for (wod = 0; wod < devs; ++wod) {
-                if (IsEqualGUID( &guid, &renderer_guids[wod]) ) {
+                if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod]) ) {
                     err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
@@ -338,8 +338,8 @@ HRESULT WINAPI DirectSoundEnumerateA(
 	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
-            if (lpDSEnumCallback(&renderer_guids[wod], desc.szDesc, desc.szDrvname, lpContext) == FALSE)
+                  debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
+            if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], desc.szDesc, desc.szDrvname, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -382,7 +382,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
     if (devs > 0) {
 	if (GetDeviceID(&DSDEVID_DefaultPlayback, &guid) == DS_OK) {
 	    for (wod = 0; wod < devs; ++wod) {
-                if (IsEqualGUID( &guid, &renderer_guids[wod] ) ) {
+                if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod] ) ) {
                     err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
@@ -403,12 +403,12 @@ HRESULT WINAPI DirectSoundEnumerateW(
 	err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
+                  debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
             MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
                                  wDesc, sizeof(wDesc)/sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
                                  wName, sizeof(wName)/sizeof(WCHAR) );
-            if (lpDSEnumCallback(&renderer_guids[wod], wDesc, wName, lpContext) == FALSE)
+            if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], wDesc, wName, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -665,8 +665,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_ATTACH:
         TRACE("DLL_PROCESS_ATTACH\n");
         for (i = 0; i < MAXWAVEDRIVERS; i++) {
-            INIT_GUID(renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
-            INIT_GUID(capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
+            INIT_GUID(DSOUND_renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
+            INIT_GUID(DSOUND_capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
         }
         break;
     case DLL_PROCESS_DETACH:

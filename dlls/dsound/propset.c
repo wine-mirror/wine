@@ -377,7 +377,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &dev_guid, &renderer_guids[wod] ) ) {
+            if (IsEqualGUID( &dev_guid, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wod;
                 ppd->Devnode = wod;
@@ -438,7 +438,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
 	/* given specific device so try the render devices first */
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &ppd->DeviceId, &renderer_guids[wod] ) ) {
+            if (IsEqualGUID( &ppd->DeviceId, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
                 ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
@@ -471,7 +471,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
             /* given specific device so try the capture devices next */
             widn = waveInGetNumDevs();
             for (wid = 0; wid < widn; wid++) {
-                if (IsEqualGUID( &ppd->DeviceId, &capture_guids[wid] ) ) {
+                if (IsEqualGUID( &ppd->DeviceId, &DSOUND_capture_guids[wid] ) ) {
                     DSDRIVERDESC desc;
                     TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
                     ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
@@ -551,7 +551,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &dev_guid, &renderer_guids[wod] ) ) {
+            if (IsEqualGUID( &dev_guid, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wod;
                 err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
@@ -597,7 +597,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 	widn = waveInGetNumDevs();
 	for (wid = 0; wid < widn; wid++) {
-            if (IsEqualGUID( &dev_guid, &capture_guids[wid] ) ) {
+            if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wid;
                 err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
@@ -642,7 +642,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
 	/* given specific device so try the render devices first */
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &ppd->DeviceId, &renderer_guids[wod] ) ) {
+            if (IsEqualGUID( &ppd->DeviceId, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
                 ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
@@ -691,7 +691,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
             ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
             widn = waveInGetNumDevs();
             for (wid = 0; wid < widn; wid++) {
-                if (IsEqualGUID( &ppd->DeviceId, &capture_guids[wod] ) ) {
+                if (IsEqualGUID( &ppd->DeviceId, &DSOUND_capture_guids[wod] ) ) {
                     DSDRIVERDESC desc;
                     ppd->WaveDeviceId = wid;
                     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
@@ -784,7 +784,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &dev_guid, &renderer_guids[wod] ) ) {
+            if (IsEqualGUID( &dev_guid, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wod;
                 err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
@@ -830,7 +830,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 	widn = waveInGetNumDevs();
 	for (wid = 0; wid < widn; wid++) {
-            if (IsEqualGUID( &dev_guid, &capture_guids[wid] ) ) {
+            if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wid;
                 err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
@@ -875,7 +875,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
 	/* given specific device so try the render devices first */
 	wodn = waveOutGetNumDevs();
 	for (wod = 0; wod < wodn; wod++) {
-            if (IsEqualGUID( &ppd->DeviceId, &renderer_guids[wod] ) ) {
+            if (IsEqualGUID( &ppd->DeviceId, &DSOUND_renderer_guids[wod] ) ) {
                 DSDRIVERDESC desc;
                 TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
                 ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
@@ -924,7 +924,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
             ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
             widn = waveInGetNumDevs();
             for (wid = 0; wid < widn; wid++) {
-                if (IsEqualGUID( &dev_guid, &capture_guids[wid] ) ) {
+                if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
                     DSDRIVERDESC desc;
                     ppd->WaveDeviceId = wid;
                     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
@@ -1004,7 +1004,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
                         ZeroMemory(&data, sizeof(data));
                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                         data.WaveDeviceId = wod;
-                        data.DeviceId = renderer_guids[wod];
+                        data.DeviceId = DSOUND_renderer_guids[wod];
                         strncpy(data.DescriptionA, desc.szDesc, sizeof(data.DescriptionA));
                         strncpy(data.ModuleA, desc.szDrvname, sizeof(data.ModuleA));
 
@@ -1023,7 +1023,7 @@ static HRESULT WINAPI DSPROPERTY_Enumerate1(
                         ZeroMemory(&data, sizeof(data));
                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                         data.WaveDeviceId = wod;
-                        data.DeviceId = renderer_guids[wod];
+                        data.DeviceId = DSOUND_renderer_guids[wod];
                         strncpy(data.DescriptionA, desc.szDesc, sizeof(data.DescriptionA));
                         strncpy(data.ModuleA, desc.szDrvname, sizeof(data.ModuleA));
 
@@ -1084,7 +1084,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
                                         ZeroMemory(&data, sizeof(data));
                                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                                         data.WaveDeviceId = wod;
-                                        data.DeviceId = renderer_guids[wod];
+                                        data.DeviceId = DSOUND_renderer_guids[wod];
                                         data.Description = desc.szDesc;
                                         data.Module = desc.szDrvname;
                                         WideCharToMultiByte( CP_ACP, 0, nameW, size/sizeof(WCHAR), szInterface, size/sizeof(WCHAR), NULL, NULL );
@@ -1118,7 +1118,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
                                         ZeroMemory(&data, sizeof(data));
                                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
                                         data.WaveDeviceId = wid;
-                                        data.DeviceId = capture_guids[wid];
+                                        data.DeviceId = DSOUND_capture_guids[wid];
                                         data.Description = desc.szDesc;
                                         data.Module = desc.szDrvname;
                                         WideCharToMultiByte( CP_ACP, 0, nameW, size/sizeof(WCHAR), szInterface, size/sizeof(WCHAR), NULL, NULL );
@@ -1186,7 +1186,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
                                         ZeroMemory(&data, sizeof(data));
                                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
                                         data.WaveDeviceId = wod;
-                                        data.DeviceId = renderer_guids[wod];
+                                        data.DeviceId = DSOUND_renderer_guids[wod];
 
                                         MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100 );
                                         MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, wModule, 0x100 );
@@ -1224,7 +1224,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
                                         ZeroMemory(&data, sizeof(data));
                                         data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
                                         data.WaveDeviceId = wid;
-                                        data.DeviceId = capture_guids[wid];
+                                        data.DeviceId = DSOUND_capture_guids[wid];
 
                                         MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, wDescription, 0x100 );
                                         MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1, wModule, 0x100 );

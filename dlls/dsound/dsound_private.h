@@ -494,10 +494,9 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
 #define DSOUND_FREQSHIFT (14)
 
-extern IDirectSoundImpl* dsound;
-
-extern GUID renderer_guids[MAXWAVEDRIVERS];
-extern GUID capture_guids[MAXWAVEDRIVERS];
+extern IDirectSoundImpl* DSOUND_renderer;
+extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
+extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 extern HRESULT mmErr(UINT err);
 extern void setup_dsound_options(void);

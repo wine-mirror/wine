@@ -288,7 +288,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
         This->mixlock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection(&This->mixlock);
         HeapFree(GetProcessHeap(),0,This);
-        dsound = NULL;
+        DSOUND_renderer = NULL;
         TRACE("(%p) released\n", This);
     }
     return ref;
@@ -748,7 +748,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     TRACE(" expecting GUID %s.\n", debugstr_guid(lpcGUID));
 
     for (wod=0; wod<wodn; wod++) {
-        if (IsEqualGUID( lpcGUID, &renderer_guids[wod])) {
+        if (IsEqualGUID( lpcGUID, &DSOUND_renderer_guids[wod])) {
             found = TRUE;
             break;
         }
@@ -1633,9 +1633,9 @@ HRESULT WINAPI DSOUND_Create(
         return DSERR_INVALIDPARAM;
     }
 
-    if (dsound) {
-        if (IsEqualGUID(&devGuid, &dsound->guid)) {
-            hr = IDirectSound_IDirectSound_Create((LPDIRECTSOUND8)dsound, ppDS);
+    if (DSOUND_renderer) {
+        if (IsEqualGUID(&devGuid, &DSOUND_renderer->guid)) {
+            hr = IDirectSound_IDirectSound_Create((LPDIRECTSOUND8)DSOUND_renderer, ppDS);
             if (*ppDS)
                 IDirectSound_IDirectSound_AddRef(*ppDS);
             else
@@ -1655,10 +1655,10 @@ HRESULT WINAPI DSOUND_Create(
                 if (*ppDS) {
                     IDirectSound_IDirectSound_AddRef(*ppDS);
 
-                    dsound = (IDirectSoundImpl*)pDS;
+                    DSOUND_renderer = (IDirectSoundImpl*)pDS;
                     timeBeginPeriod(DS_TIME_RES);
-                    dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-                                       (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+                    DSOUND_renderer->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
+                        (DWORD)DSOUND_renderer, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
                 } else {
                     WARN("IDirectSound_IDirectSound_Create failed\n");
                     IDirectSound8_Release(pDS);
@@ -1700,7 +1700,7 @@ HRESULT WINAPI DirectSoundCreate(
 
     hr = DSOUND_Create(lpcGUID, ppDS, pUnkOuter);
     if (hr == DS_OK)
-        IDirectSoundImpl_Initialize((LPDIRECTSOUND8)dsound, lpcGUID);
+        IDirectSound_Initialize(*ppDS, lpcGUID);
 
     return hr;
 }
@@ -1738,9 +1738,9 @@ HRESULT WINAPI DSOUND_Create8(
         return DSERR_INVALIDPARAM;
     }
 
-    if (dsound) {
-        if (IsEqualGUID(&devGuid, &dsound->guid)) {
-            hr = IDirectSound8_IDirectSound8_Create((LPDIRECTSOUND8)dsound, ppDS);
+    if (DSOUND_renderer) {
+        if (IsEqualGUID(&devGuid, &DSOUND_renderer->guid)) {
+            hr = IDirectSound8_IDirectSound8_Create((LPDIRECTSOUND8)DSOUND_renderer, ppDS);
             if (*ppDS)
                 IDirectSound8_IDirectSound8_AddRef(*ppDS);
             else
@@ -1760,10 +1760,10 @@ HRESULT WINAPI DSOUND_Create8(
                 if (*ppDS) {
                     IDirectSound8_IDirectSound8_AddRef(*ppDS);
 
-                    dsound = (IDirectSoundImpl*)pDS;
+                    DSOUND_renderer = (IDirectSoundImpl*)pDS;
                     timeBeginPeriod(DS_TIME_RES);
-                    dsound->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
-                                       (DWORD)dsound, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
+                    DSOUND_renderer->timerID = timeSetEvent(DS_TIME_DEL, DS_TIME_RES, DSOUND_timer,
+                        (DWORD)DSOUND_renderer, TIME_PERIODIC | TIME_CALLBACK_FUNCTION);
                 } else {
                     WARN("IDirectSound8_IDirectSound8_Create failed\n");
                     IDirectSound8_Release(pDS);
@@ -1805,7 +1805,7 @@ HRESULT WINAPI DirectSoundCreate8(
 
     hr = DSOUND_Create8(lpcGUID, ppDS, pUnkOuter);
     if (hr == DS_OK)
-        IDirectSoundImpl_Initialize((LPDIRECTSOUND8)dsound, lpcGUID);
+        IDirectSound8_Initialize(*ppDS, lpcGUID);
 
     return hr;
 }

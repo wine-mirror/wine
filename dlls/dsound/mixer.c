@@ -1115,7 +1115,7 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWOR
 	TRACE("(%d,%d,0x%lx,0x%lx,0x%lx)\n",timerID,msg,dwUser,dw1,dw2);
         TRACE("entering at %ld\n", start_time);
 
-	if (dsound != This) {
+	if (DSOUND_renderer != This) {
 		ERR("dsound died without killing us?\n");
 		timeKillEvent(timerID);
 		timeEndPeriod(DS_TIME_RES);
