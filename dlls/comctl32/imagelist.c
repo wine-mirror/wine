@@ -599,9 +599,10 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     else
         himl->uBitsPixel = (UINT)GetDeviceCaps (himl->hdcImage, BITSPIXEL);
 
-    if (himl->cMaxImage > 0)
+    if (himl->cMaxImage > 0) {
         himl->hbmImage = ImageList_CreateImage(himl->hdcImage, himl, cx * himl->cMaxImage, cy);
-    else
+	SelectObject(himl->hdcImage, himl->hbmImage);
+    } else
         himl->hbmImage = 0;
 
     if ((himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
