@@ -10,6 +10,7 @@
 #include <ctype.h>
 
 #include "debugtools.h"
+#include "wine/exception.h"
 #include "thread.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -28,6 +29,14 @@ struct debug_info
 };
 
 static struct debug_info tmp;
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /* get the debug info pointer for the current thread */
 static inline struct debug_info *get_info(void)
@@ -69,20 +78,11 @@ static inline void release( void *ptr )
     info->str_pos = ptr;
 }
 
-/***********************************************************************
- *		wine_dbgstr_an (NTDLL.@)
- */
-const char *wine_dbgstr_an( const char *src, int n )
+/* put an ASCII string into the debug buffer */
+inline static char *put_string_a( const char *src, int n )
 {
     char *dst, *res;
 
-    if (!HIWORD(src))
-    {
-        if (!src) return "(null)";
-        res = gimme1(6);
-        sprintf(res, "#%04x", LOWORD(src) );
-        return res;
-    }
     if (n < 0) n = 0;
     else if (n > 200) n = 200;
     dst = res = gimme1 (n * 4 + 6);
@@ -121,20 +121,11 @@ const char *wine_dbgstr_an( const char *src, int n )
     return res;
 }
 
-/***********************************************************************
- *		wine_dbgstr_wn (NTDLL.@)
- */
-const char *wine_dbgstr_wn( const WCHAR *src, int n )
+/* put a Unicode string into the debug buffer */
+inline static char *put_string_w( const WCHAR *src, int n )
 {
     char *dst, *res;
 
-    if (!HIWORD(src))
-    {
-        if (!src) return "(null)";
-        res = gimme1(6);
-        sprintf(res, "#%04x", LOWORD(src) );
-        return res;
-    }
     if (n < 0) n = 0;
     else if (n > 200) n = 200;
     dst = res = gimme1 (n * 5 + 7);
@@ -171,6 +162,69 @@ const char *wine_dbgstr_wn( const WCHAR *src, int n )
     *dst++ = '\0';
     release( dst );
     return res;
+}
+
+/***********************************************************************
+ *		wine_dbgstr_an (NTDLL.@)
+ */
+const char *wine_dbgstr_an( const char *src, int n )
+{
+    char *res, *old_pos;
+    struct debug_info *info;
+
+    if (!HIWORD(src))
+    {
+        if (!src) return "(null)";
+        res = gimme1(6);
+        sprintf(res, "#%04x", LOWORD(src) );
+        return res;
+    }
+    /* save current position to restore it on exception */
+    info = NtCurrentTeb()->debug_info;
+    old_pos = info->str_pos;
+    __TRY
+    {
+        res = put_string_a( src, n );
+    }
+    __EXCEPT(page_fault)
+    {
+        release( old_pos );
+        return "(invalid)";
+    }
+    __ENDTRY
+    return res;
+}
+
+/***********************************************************************
+ *		wine_dbgstr_wn (NTDLL.@)
+ */
+const char *wine_dbgstr_wn( const WCHAR *src, int n )
+{
+    char *res, *old_pos;
+    struct debug_info *info;
+
+    if (!HIWORD(src))
+    {
+        if (!src) return "(null)";
+        res = gimme1(6);
+        sprintf(res, "#%04x", LOWORD(src) );
+        return res;
+    }
+
+    /* save current position to restore it on exception */
+    info = NtCurrentTeb()->debug_info;
+    old_pos = info->str_pos;
+    __TRY
+    {
+        res = put_string_w( src, n );
+    }
+    __EXCEPT(page_fault)
+    {
+        release( old_pos );
+        return "(invalid)";
+    }
+    __ENDTRY
+     return res;
 }
 
 /***********************************************************************
