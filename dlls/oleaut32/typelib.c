@@ -687,7 +687,7 @@ typedef struct tagTLBVarDesc
     VARDESC vardesc;        /* lots of info on the variable and its attributes. */
     BSTR Name;             /* the name of this variable */
     int HelpContext;
-    int HelpStringContext;  /* fixme: where? */
+    int HelpStringContext;  /* FIXME: where? */
     BSTR HelpString;
     int ctCustData;
     TLBCustData * pCustData;/* linked list to cust data; */
@@ -1635,7 +1635,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
         (*pptvd)->vardesc.wVarFlags = pVarRec->Flags;
         MSFT_GetTdesc(pcx, pVarRec->DataType,    
             &(*pptvd)->vardesc.elemdescVar.tdesc, pTI);
-/*   (*pptvd)->vardesc.lpstrSchema; is reserved (SDK) fixme?? */
+/*   (*pptvd)->vardesc.lpstrSchema; is reserved (SDK) FIXME?? */
         if(pVarRec->VarKind == VAR_CONST ){
             (*pptvd)->vardesc.u.lpvarValue=TLB_Alloc(sizeof(VARIANT));
             MSFT_ReadValue((*pptvd)->vardesc.u.lpvarValue,
@@ -2995,7 +2995,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
     if (!This->ref)
     {
-      /* fixme destroy child objects */
+      /* FIXME destroy child objects */
 
       TRACE(" destroying ITypeLib(%p)\n",This);
 

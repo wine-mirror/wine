@@ -1,7 +1,7 @@
 /* 
  * Copyright 2000 Bradley Baetz
  *
- * Fixme: Some flags are ignored
+ * FIXME: Some flags are ignored
  *
  * Handle palettes
  */

@@ -960,7 +960,7 @@ int _stat(const char* path, struct _stat * buf)
   memset(buf,0,sizeof(struct _stat));
 
   /* FIXME: rdev isnt drive num,despite what the docs say-what is it? 
-     Bon 011120: This fixme seems incorrect 
+     Bon 011120: This FIXME seems incorrect 
                  Also a letter as first char isn't enough to be classify 
 		 as drive letter
   */

@@ -365,7 +365,7 @@ static DWORD get_app_version(void)
 	info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
         GetVersionExW( &info );
         dwEmulatedVersion = MAKELONG( info.dwMinorVersion, info.dwMajorVersion );
-        /* fixme: this may not be 100% correct; see discussion on the
+        /* FIXME: this may not be 100% correct; see discussion on the
          * wine developer list in Nov 1999 */
         version = dwProcVersion < dwEmulatedVersion ? dwProcVersion : dwEmulatedVersion; 
     }

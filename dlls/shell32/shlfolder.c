@@ -1718,7 +1718,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName(
 	*ppidl = 0;
 	if (pchEaten) *pchEaten = 0;	/* strange but like the original */
 	
-	/* fixme no real parsing implemented */
+	/* FIXME no real parsing implemented */
 	pidlTemp = _ILCreateMyComputer();
 	szNext = lpszDisplayName;
 
@@ -2467,7 +2467,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsEx(
 	return E_NOTIMPL;
 }	
 
-/* fixme: drive size >4GB is rolling over */
+/* FIXME: drive size >4GB is rolling over */
 static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf(
 	IShellFolder2 * iface,
 	LPCITEMIDLIST pidl,

@@ -617,7 +617,7 @@ static void BUTTON_DrawLabel(HWND hwnd, HDC hdc, UINT dtFlags, RECT *rc)
    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
    WCHAR *text = NULL;
 
-   /* Fixme: To draw disabled label in Win31 look-and-feel, we probably
+   /* FIXME: To draw disabled label in Win31 look-and-feel, we probably
     * must use DSS_MONO flag and COLOR_GRAYTEXT brush (or maybe DSS_UNION).
     * I don't have Win31 on hand to verify that, so I leave it as is.
     */

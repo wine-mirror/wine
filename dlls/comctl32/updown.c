@@ -815,7 +815,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	case VK_UP:  
 	case VK_DOWN:
 	  UPDOWN_GetBuddyInt (hwnd);
-	  /* Fixme: Paint the according button pressed for some time, like win95 does*/
+	  /* FIXME: Paint the according button pressed for some time, like win95 does*/
 	  UPDOWN_DoAction (hwnd, 1, wParam==VK_UP);
 	  break;
 	}

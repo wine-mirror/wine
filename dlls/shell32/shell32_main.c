@@ -358,7 +358,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  if (SUCCEEDED(hr))
 	  {
 	    hr = IExtractIconA_GetIconLocation(pei, (flags & SHGFI_OPENICON)? GIL_OPENICON : 0,szLoaction, MAX_PATH, &iIndex, &uFlags);
-	    /* fixme what to do with the index? */
+	    /* FIXME what to do with the index? */
 
 	    if(uFlags != GIL_NOTFILENAME)
 	      strcpy (psfi->szDisplayName, szLoaction);
@@ -530,8 +530,7 @@ HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 /*************************************************************************
  * ExtractIconW				[SHELL32.@]
  *
- * fixme
- *  is the filename is not a file return 1
+ * FIXME: if the filename is not a file return 1
  */
 HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
 	UINT nIconIndex )

@@ -1001,7 +1001,7 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	  /* FIXME: szCommandline should not be of a fixed size. Plus MAX_PATH is way too short! */
 	  /* the commandline contains 'c:\Path\wordpad.exe "%1"' */
 	  HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
-	  /* fixme: get the extension of lpFile, check if it fits to the lpClass */
+	  /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
 	  TRACE("SEE_MASK_CLASSNAME->'%s'\n", szCommandline);
 	}
 

@@ -404,7 +404,7 @@ static void DOSMEM_InitErrorTable()
 
         memset(call, 0, SIZE_TO_ALLOCATE);
 #endif
-        /* Fixme - Copy assembly into buffer here */        
+        /* FIXME - Copy assembly into buffer here */        
 }
 
 /***********************************************************************

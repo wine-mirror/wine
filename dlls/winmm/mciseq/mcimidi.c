@@ -1602,7 +1602,7 @@ static DWORD MIDI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	if (dwFlags & MCI_SEEK_TO_START) {
 	    wmm->dwPositionMS = 0;
 	} else if (dwFlags & MCI_SEEK_TO_END) {
-	    wmm->dwPositionMS = 0xFFFFFFFF; /* fixme */
+	    wmm->dwPositionMS = 0xFFFFFFFF; /* FIXME */
 	} else if (dwFlags & MCI_TO) {
 	    wmm->dwPositionMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
 	} else {

@@ -330,7 +330,7 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
 
-    TRACE("(some params - fixme)\n");
+    TRACE("(some params - FIXME)\n");
 
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -510,7 +510,7 @@ DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     
-    TRACE("(lots of params - fixme)\n");
+    TRACE("(lots of params - FIXME)\n");
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -557,7 +557,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
     DWORD dwRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     
-    TRACE("(lots of params - fixme)\n");
+    TRACE("(lots of params - FIXME)\n");
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -703,7 +703,7 @@ WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT lpBuffer,
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     
-    TRACE("(lots of params - fixme)\n");
+    TRACE("(lots of params - FIXME)\n");
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {

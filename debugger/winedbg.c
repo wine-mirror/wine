@@ -780,7 +780,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 				   DEBUG_CurrThread->process->handle, 
 				   de->u.DebugString.lpDebugStringData);
 	    
-	    /* fixme unicode de->u.DebugString.fUnicode ? */
+	    /* FIXME unicode de->u.DebugString.fUnicode ? */
 	    DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: output debug string (%s)\n", 
 			 de->dwProcessId, de->dwThreadId, buffer);
 	    break;

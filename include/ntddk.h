@@ -9,7 +9,7 @@
 #include "ntdef.h"
 #include "winnt.h"
 #include "winreg.h"
-#include "winbase.h"	/* fixme: should be taken out sometimes */
+#include "winbase.h"	/* FIXME: should be taken out sometimes */
 
 #ifdef __cplusplus
 extern "C" {

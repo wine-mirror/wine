@@ -460,7 +460,7 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
             len += (strlen(&lpDependencies[len])+1);
         } while (lpDependencies[len++]); 
         
-        /* fixme: this should be unicode */
+        /* FIXME: this should be unicode */
         r = RegSetValueExA(hKey, "Dependencies", 0, REG_MULTI_SZ, 
                            lpDependencies, len );
         if (r!=ERROR_SUCCESS)

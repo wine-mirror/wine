@@ -235,7 +235,7 @@ static BOOL DoPaste(
 	      if (psfhlpdst && psfhlpsrc)
 	      {
 	        ISFHelper_CopyItems(psfhlpdst, psfFrom, lpcida->cidl, apidl);
-		/* fixme handle move 
+		/* FIXME handle move 
 		ISFHelper_DeleteItems(psfhlpsrc, lpcida->cidl, apidl);
 		*/
 	      }

@@ -4382,7 +4382,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
     if (lpmii->fMask & MIIM_STATE)
     {
-	/* fixme: MFS_DEFAULT do we have to reset the other menu items? */
+	/* FIXME: MFS_DEFAULT do we have to reset the other menu items? */
 	menu->fState = lpmii->fState;
     }
 

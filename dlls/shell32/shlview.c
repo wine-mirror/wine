@@ -531,7 +531,7 @@ static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCIT
 	  lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidlNew));	/* set the item's data */
 	  ListView_SetItemA(This->hWndList, &lvItem);
 	  ListView_Update(This->hWndList, nItem);
-	  return TRUE;					/* fixme: better handling */
+	  return TRUE;					/* FIXME: better handling */
 	}
 	return FALSE;
 }

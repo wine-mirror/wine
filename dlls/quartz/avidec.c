@@ -247,7 +247,7 @@ static HRESULT AVIDec_GetOutputTypes( CTransformBaseImpl* pImpl, const AM_MEDIA_
 			TRACE("(%p) - use the input palette\n",This);
 			if ( pbiIn->bmiHeader.biBitCount != pbiOut->bmiHeader.biBitCount )
 			{
-				FIXME( "no palette...fixme?\n" );
+				FIXME( "no palette...FIXME?\n" );
 				return E_FAIL;
 			}
 			if ( pbiOut->bmiHeader.biClrUsed == 0 )

@@ -4921,7 +4921,7 @@ void	mmTaskEntryPoint16(LPSTR cmdLine, WORD di, WORD si)
 	DWORD	dwPmt  = *((DWORD*)(cmdLine + 5));
 
 #if 0
-	InitTask16(); /* fixme: pmts / from context ? */
+	InitTask16(); /* FIXME: pmts / from context ? */
 	InitApp(di);
 #endif
 	if (SetMessageQueue16(0x40)) {

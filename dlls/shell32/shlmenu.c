@@ -770,7 +770,7 @@ DWORD WINAPI FileMenu_GetItemExtent (HMENU hMenu, UINT uPos)
 	  rect.right, rect.left, rect.top, rect.bottom);
 	  return ((rect.right-rect.left)<<16) + (rect.top-rect.bottom);
 	}
-	return 0x00100010; /*fixme*/
+	return 0x00100010; /*FIXME*/
 }
 
 /*************************************************************************
