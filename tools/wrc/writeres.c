@@ -840,15 +840,15 @@ static void write_rsc_names(FILE *fp, resource_t *top)
 		{
 			res_count_t *rcp = &rcarray[i];
 
+			if(rcp->type.type == name_str)
+			{
+				fprintf(fp, "%s_%s_typename:\n",
+					prefix,
+					rcp->type.name.s_name->str.cstr);
+				write_name_str(fp, &(rcp->type));
+			}
 			for(j = 0; j < rcp->count; j++)
 			{
-				if(rcp->type.type == name_str)
-				{
-					fprintf(fp, "%s_%s_typename:\n",
-						prefix,
-						rcp->type.name.s_name->str.cstr);
-					write_name_str(fp, &(rcp->type));
-				}
 				if(rcp->rscarray[j]->name->type == name_str)
 				{
 					fprintf(fp, "%s%s_name:\n",
