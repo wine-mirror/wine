@@ -26,13 +26,18 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
   BYTE scan = INT_Int09ReadScan();
   UINT vkey = MapVirtualKeyA(scan&0x7f, 1);
   BYTE ch[2];
-  int cnt;
+  int cnt, c2;
 
   if (!(scan & 0x80)) {
     /* as in TranslateMessage, windows/input.c */
-    cnt = ToAscii(vkey, scan&0x7f, QueueKeyStateTable, (LPWORD)ch, 0);
-    if (cnt==1) {
-      FIXME("enter character %c into console input, not implemented\n",ch[0]);
+    cnt = ToAscii(vkey, scan, QueueKeyStateTable, (LPWORD)ch, 0);
+    if (cnt>0) {
+      for (c2=0; c2<cnt; c2++)
+        INT_Int16AddChar(ch[c2], scan);
+    } else
+    if (cnt==0) {
+      /* need to handle things like shift-F-keys etc */
+      FIXME("DOS special key translation not implemented\n");
     }
   }
   DOSVM_PIC_ioport_out(0x20, 0x20); /* send EOI */
