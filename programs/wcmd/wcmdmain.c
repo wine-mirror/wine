@@ -384,12 +384,7 @@ void WCMD_process_command (char *command)
         WCMD_directory ();
         break;
       case WCMD_ECHO:
-        /* Use the unstripped version of the following data - step over the space */
-        /* but only if a parameter follows                                        */
-        if (strlen(&whichcmd[count]) > 0)
-          WCMD_echo(&whichcmd[count+1]);
-        else
-          WCMD_echo(&whichcmd[count]);
+        WCMD_echo(&whichcmd[count]);
         break;
       case WCMD_FOR:
         WCMD_for (p);

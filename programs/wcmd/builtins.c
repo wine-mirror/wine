@@ -212,14 +212,16 @@ void WCMD_echo (const char *command) {
 static const char *eon = "Echo is ON\n", *eoff = "Echo is OFF\n";
 int count;
 
+  if ((command[0] == '.') && (command[1] == 0)) {
+    WCMD_output (newline);
+    return;
+  }
+  if (command[0]==' ')
+    command++;
   count = strlen(command);
   if (count == 0) {
     if (echo_mode) WCMD_output (eon);
     else WCMD_output (eoff);
-    return;
-  }
-  if ((count == 1) && (command[0] == '.')) {
-    WCMD_output (newline);
     return;
   }
   if (lstrcmpi(command, "ON") == 0) {
