@@ -103,11 +103,12 @@ static LPOPENEDPRINTERA WINSPOOL_GetOpenedPrinterA(int printerHandle)
 {
     LPOPENEDPRINTERA pOpenedPrinter;
 
+    if(!pOpenedPrinterDPA) return NULL;
     if((printerHandle <=0) || 
        (printerHandle > (pOpenedPrinterDPA->nItemCount - 1)))
         return NULL;
 
-    pOpenedPrinter = WINSPOOL_DPA_GetPtr(pOpenedPrinterDPA, printerHandle);
+    pOpenedPrinter = WINSPOOL_DPA_GetPtr(pOpenedPrinterDPA, printerHandle-1);
 
     return pOpenedPrinter;
 }
