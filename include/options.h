@@ -74,6 +74,7 @@ struct options
     int    managed;	    /* Managed windows */
     int    perfectGraphics; /* Favor correctness over speed for graphics */
     int    noDGA;           /* Disable XFree86 DGA extensions */
+    int    noXSHM;          /* Disable use of XSHM extension */
     char * configFileName;  /* Command line config file */
     int screenDepth;
 };

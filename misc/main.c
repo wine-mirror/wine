@@ -102,6 +102,7 @@ struct options Options =
     FALSE,          /* Managed windows */
     FALSE,          /* Perfect graphics */
     FALSE,          /* No DGA */
+    FALSE,          /* No XSHM */
     NULL,           /* Alternate config file name */
     0               /* screenDepth */
 };
@@ -130,6 +131,7 @@ static char szUsage[] =
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n"
   "    -name name      Set the application name\n"
   "    -nodga          Disable XFree86 DGA extensions\n"
+  "    -noxshm         Disable XSHM extension\n"
   "    -perfect        Favor correctness over speed for graphical operations\n"
   "    -privatemap     Use a private color map\n"
   "    -synchronous    Turn on synchronous display mode\n"

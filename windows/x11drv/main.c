@@ -70,6 +70,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
     { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL },
     { "-nodga",         ".nodga",           XrmoptionNoArg,  (caddr_t)"off"},
+    { "-noxshm",        ".noxshm",          XrmoptionNoArg,  (caddr_t)"off"},
     { "-console",       ".console",         XrmoptionSepArg, (caddr_t)NULL },
     { "-dosver",        ".dosver",          XrmoptionSepArg, (caddr_t)NULL }
 };
@@ -288,6 +289,8 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
     Options.configFileName = xstrdup((char *)value.addr);
   if (X11DRV_USER_GetResource( db, ".nodga", &value))
     Options.noDGA = TRUE;
+  if (X11DRV_USER_GetResource( db, ".noxshm", &value))
+    Options.noXSHM = TRUE;
   if (X11DRV_USER_GetResource( db, ".console", &value))
       driver.driver_list = xstrdup((char *)value.addr);
   else

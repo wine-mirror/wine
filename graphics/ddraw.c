@@ -114,6 +114,42 @@ static struct ICOM_VTABLE(IDirectDrawClipper)	ddclipvt;
 static struct ICOM_VTABLE(IDirect3D)		d3dvt;
 static struct ICOM_VTABLE(IDirect3D2)		d3d2vt;
 
+/* This is for mode-emulation */
+
+static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) ;
+static void palette_convert_16_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) ;
+static void palette_convert_15_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) ;
+static void pixel_convert_24_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) ;
+static void pixel_convert_32_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) ;
+static void palette_convert_24_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) ;
+static void pixel_convert_32_to_16(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) ;
+
+typedef struct {
+  unsigned short bpp;
+  unsigned short depth;
+  unsigned int rmask;
+  unsigned int gmask;
+  unsigned int bmask;
+} ConvertMode;
+
+typedef struct {
+  void (*pixel_convert)(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette);
+  void (*palette_convert)(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count);
+} ConvertFuncs;
+
+typedef struct {
+  ConvertMode screen, dest;
+  ConvertFuncs funcs;
+} Convert;
+
+static Convert ModeEmulations[] = {
+  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_32_to_8,  palette_convert_24_to_8 } },
+  { { 32, 24, 0x00FF0000, 0x0000FF00, 0x000000FF }, {  16, 16, 0xF800, 0x07E0, 0x001F }, { pixel_convert_32_to_16, NULL } },
+  { { 24, 24,   0xFF0000,   0x00FF00,   0x0000FF }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_24_to_8,  palette_convert_24_to_8 } },
+  { { 16, 16,     0xF800,     0x07E0,     0x001F }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_16_to_8,  palette_convert_16_to_8 } },
+  { { 16, 15,     0x7C00,     0x03E0,     0x001F }, {  8,  8, 0x00, 0x00, 0x00 }, { pixel_convert_16_to_8,  palette_convert_15_to_8 } },
+};
+
 #ifdef HAVE_LIBXXF86VM
 static XF86VidModeModeInfo *orig_mode = NULL;
 #endif
@@ -3271,18 +3307,22 @@ static void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
 	SetFocus(This->d.window);
 }
 
-static int _common_depth_to_pixelformat(DWORD depth, DDPIXELFORMAT *pixelformat, DDPIXELFORMAT *screen_pixelformat, int *pix_depth) {
+static int _common_depth_to_pixelformat(DWORD depth, 
+					DDPIXELFORMAT *pixelformat, 
+					DDPIXELFORMAT *screen_pixelformat, 
+					int *pix_depth) {
   XVisualInfo *vi;
   XPixmapFormatValues *pf;
   XVisualInfo vt;
   int nvisuals, npixmap, i;
   int match = 0;
+  int index = -2;
 
   vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
   pf = XListPixmapFormats(display, &npixmap);
   
   for (i = 0; i < npixmap; i++) {
-    if (pf[i].bits_per_pixel == depth) {
+    if (pf[i].depth == depth) {
       int j;
       
       for (j = 0; j < nvisuals; j++) {
@@ -3309,29 +3349,26 @@ static int _common_depth_to_pixelformat(DWORD depth, DDPIXELFORMAT *pixelformat,
 	    *pix_depth = vi[j].depth;
 	  
 	  match = 1;
+	  index = -1;
 	  
-	  break;
+	  goto clean_up_and_exit;
 	}
       }
 
-      if (j == nvisuals)
 	ERR("No visual corresponding to pixmap format !\n");
     }
   }
 
-  if ((match == 0) && (depth == 8)) {
-    pixelformat->dwSize = sizeof(*pixelformat);
-    pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
-    pixelformat->dwFourCC = 0;
-    pixelformat->x.dwRGBBitCount = 8;
-    pixelformat->y.dwRBitMask = 0;
-    pixelformat->z.dwGBitMask = 0;
-    pixelformat->xx.dwBBitMask = 0;
-    pixelformat->xy.dwRGBAlphaBitMask= 0;    
-    
-    /* In that case, find a visual to emulate the 8 bpp format */
+  if (match == 0) {
+    /* We try now to find an emulated mode */
+    int c;
+
+    for (c = 0; c < sizeof(ModeEmulations) / sizeof(Convert); c++) {
+      if (ModeEmulations[c].dest.depth == depth) {
+	/* Found an emulation function, now tries to find a matching visual / pixel format pair */
     for (i = 0; i < npixmap; i++) {
-      if (pf[i].bits_per_pixel >= depth) {
+	  if ((pf[i].depth == ModeEmulations[c].screen.depth) &&
+	      (pf[i].bits_per_pixel == ModeEmulations[c].screen.bpp)) {
 	int j;
 	
 	for (j = 0; j < nvisuals; j++) {
@@ -3345,25 +3382,45 @@ static int _common_depth_to_pixelformat(DWORD depth, DDPIXELFORMAT *pixelformat,
 	    screen_pixelformat->xx.dwBBitMask = vi[j].blue_mask;
 	    screen_pixelformat->xy.dwRGBAlphaBitMask= 0;
 
+		pixelformat->dwSize = sizeof(*pixelformat);
+		pixelformat->dwFourCC = 0;
+		if (depth == 8) {
+		  pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
+		  pixelformat->x.dwRGBBitCount = 8;
+		  pixelformat->y.dwRBitMask = 0;
+		  pixelformat->z.dwGBitMask = 0;
+		  pixelformat->xx.dwBBitMask = 0;
+		} else {
+		  pixelformat->dwFlags = DDPF_RGB;
+		  pixelformat->x.dwRGBBitCount = ModeEmulations[c].dest.bpp;
+		  pixelformat->y.dwRBitMask = ModeEmulations[c].dest.rmask;
+		  pixelformat->z.dwGBitMask = ModeEmulations[c].dest.gmask;
+		  pixelformat->xx.dwBBitMask = ModeEmulations[c].dest.bmask;
+		}
+		pixelformat->xy.dwRGBAlphaBitMask= 0;    
+
 	    if (pix_depth != NULL)
 	      *pix_depth = vi[j].depth;
 	    
 	    match = 2;
+		index = c;
 	    
-	    break;
-	  }
+		goto clean_up_and_exit;
 	}
 	
-	if (j == nvisuals)
 	  ERR("No visual corresponding to pixmap format !\n");
       }
     }
   }
+      }
+    }
+  }
   
+ clean_up_and_exit:
   TSXFree(vi);
   TSXFree(pf);
 
-  return match;
+  return index;
 }
 
 #ifdef HAVE_LIBXXF86DGA
@@ -3376,7 +3433,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	TRACE("(%p)->(%ld,%ld,%ld)\n", This, width, height, depth);
 
 	/* We hope getting the asked for depth */
-	if (_common_depth_to_pixelformat(depth, &(This->d.directdraw_pixelformat), &(This->d.screen_pixelformat), NULL) != 1) {
+	if (_common_depth_to_pixelformat(depth, &(This->d.directdraw_pixelformat), &(This->d.screen_pixelformat), NULL) != -1) {
 	  /* I.e. no visual found or emulated */
 		ERR("(w=%ld,h=%ld,d=%ld), unsupported depth!\n",width,height,depth);
 		return DDERR_UNSUPPORTEDMODE;
@@ -3596,90 +3653,61 @@ static void palette_convert_24_to_8(LPPALETTEENTRY palent, void *screen_palette,
 		      ((unsigned int) palent[i].peBlue));
 }
 
+/* *************************************
+      32 bpp to 16 bpp
+   ************************************* */
+static void pixel_convert_32_to_16(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) {
+  unsigned short *c_src = (unsigned short *) src;
+  unsigned int *c_dst = (unsigned int *) dst;
+  int y;
+
+  for (y = height; y--; ) {
+    unsigned short * srclineend = c_src+width;
+    while (c_src < srclineend ) {
+      *c_dst++ = (((*c_src & 0xF800) << 8) |
+		  ((*c_src & 0x07E0) << 5) |
+		  ((*c_src & 0x001F) << 3));
+      c_src++;
+    }
+    c_src+=((pitch/2)-width);
+  }
+}
+
+
 static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
 	LPDIRECTDRAW iface,DWORD width,DWORD height,DWORD depth
 ) {
         ICOM_THIS(IDirectDrawImpl,iface);
 	char	buf[200];
         WND *tmpWnd;
+	int c;
 
 	TRACE("(%p)->SetDisplayMode(%ld,%ld,%ld)\n",
 		      This, width, height, depth);
 
-	switch (_common_depth_to_pixelformat(depth,
+	switch ((c = _common_depth_to_pixelformat(depth,
 					     &(This->d.directdraw_pixelformat),
 					     &(This->d.screen_pixelformat),
-					     &(This->d.pixmap_depth))) {
-	case 0:
+						  &(This->d.pixmap_depth)))) {
+	case -2:
 	  sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
 	  MessageBoxA(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
 	  return DDERR_UNSUPPORTEDMODE;
 
-	case 1:
+	case -1:
 	  /* No convertion */
 	  This->d.pixel_convert = NULL;
 	  This->d.palette_convert = NULL;
 	  break;
 
-	case 2: {
-	  int found = 0;
-
+	default:
 	  WARN("Warning : running in depth-convertion mode. Should run using a %ld depth for optimal performances.\n", depth);
 	  
 	  /* Set the depth convertion routines */
-	  switch (This->d.screen_pixelformat.x.dwRGBBitCount) {
-	  case 16:
-	    if ((This->d.screen_pixelformat.y.dwRBitMask == 0xF800) &&
-		(This->d.screen_pixelformat.z.dwGBitMask == 0x07E0) &&
-		(This->d.screen_pixelformat.xx.dwBBitMask == 0x001F)) {
-	      /* 16 bpp */
-	      found = 1;
-	      
-	      This->d.pixel_convert = pixel_convert_16_to_8;
-	      This->d.palette_convert = palette_convert_16_to_8;
-	    } else if ((This->d.screen_pixelformat.y.dwRBitMask == 0x7C00) &&
-		       (This->d.screen_pixelformat.z.dwGBitMask == 0x03E0) &&
-		       (This->d.screen_pixelformat.xx.dwBBitMask == 0x001F)) {
-	      /* 15 bpp */
-	      found = 1;
-
-	      This->d.pixel_convert = pixel_convert_16_to_8;
-	      This->d.palette_convert = palette_convert_15_to_8;
+	  This->d.pixel_convert = ModeEmulations[c].funcs.pixel_convert;
+	  This->d.palette_convert = ModeEmulations[c].funcs.palette_convert;
 	    }
-	    break;
 	    
-	  case 24:
-	    if ((This->d.screen_pixelformat.y.dwRBitMask ==  0xFF0000) &&
-		(This->d.screen_pixelformat.z.dwGBitMask ==  0x00FF00) &&
-		(This->d.screen_pixelformat.xx.dwBBitMask == 0x0000FF)) {
-	      /* 24 bpp */
-	      found = 1;
-	      This->d.pixel_convert = pixel_convert_24_to_8;
-	      This->d.palette_convert = palette_convert_24_to_8;
-	    }
-	    break;
-	    
-	  case 32:
-	    if ((This->d.screen_pixelformat.y.dwRBitMask ==  0xFF0000) &&
-		(This->d.screen_pixelformat.z.dwGBitMask ==  0x00FF00) &&
-		(This->d.screen_pixelformat.xx.dwBBitMask == 0x0000FF)) {
-	      /* 24 bpp */
-	      found = 1;
-
-	      This->d.pixel_convert = pixel_convert_32_to_8;
-	      This->d.palette_convert = palette_convert_24_to_8;
-	    }
-	    break;
-	  }
-
-	  if (!found) {
-		sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
-		MessageBoxA(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
-		return DDERR_UNSUPPORTEDMODE;
-	  }
-	} break;
-	}
-
 	This->d.width	= width;
 	This->d.height	= height;
 
@@ -4210,9 +4238,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   XVisualInfo *vi;
   XPixmapFormatValues *pf;
   XVisualInfo vt;
-  int nvisuals, npixmap, i;
-  int send_mode;
-  int has_8bpp = 0;
+  int nvisuals, npixmap, i, emu;
+  int has_mode[]  = { 0,  0,  0,  0 };
+  int has_depth[] = { 8, 15, 16, 24 };
   DDSURFACEDESC	ddsfd;
   static struct {
     int w,h;
@@ -4240,11 +4268,28 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   pf = XListPixmapFormats(display, &npixmap);
 
   i = 0;
-  send_mode = 0;
-  while (i < npixmap) {
-    if ((has_8bpp == 0) && (pf[i].depth == 8)) {
-      /* Special case of a 8bpp depth */
-      has_8bpp = 1;
+  emu = 0;
+  while ((i < npixmap) ||
+	 (emu != 4)) {
+    int mode_index;
+    int send_mode = 0;
+    int j;
+
+    if (i < npixmap) {
+      for (j = 0; j < 4; j++) {
+	if (has_depth[j] == pf[i].depth) {
+	  mode_index = j;
+	  break;
+	}
+      }
+      if (j == 4) {
+	i++;
+	continue;
+      }
+      
+
+      if (has_mode[mode_index] == 0) {
+	if (mode_index == 0) {
       send_mode = 1;
 
       ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
@@ -4256,9 +4301,9 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
       ddsfd.ddpfPixelFormat.z.dwGBitMask = 0;
       ddsfd.ddpfPixelFormat.xx.dwBBitMask = 0;
       ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
-    } else if (pf[i].depth > 8) {
-      int j;
       
+	  has_mode[mode_index] = 1;
+	} else {
       /* All the 'true color' depths (15, 16 and 24)
 	 First, find the corresponding visual to extract the bit masks */
       for (j = 0; j < nvisuals; j++) {
@@ -4274,14 +4319,65 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	  ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
 
 	  send_mode = 1;
+	      has_mode[mode_index] = 1;
 	  break;
 	}
       }
       
       if (j == nvisuals)
 	ERR("Did not find visual corresponding the the pixmap format !\n");
+	}
+      }
+
+      i++;
     } else {
-      send_mode = 0;
+      /* Now to emulated modes */
+      if (has_mode[emu] == 0) {
+	int c;
+	int l;
+	int depth = has_depth[emu];
+      
+	for (c = 0; (c < sizeof(ModeEmulations) / sizeof(Convert)) && (send_mode == 0); c++) {
+	  if (ModeEmulations[c].dest.depth == depth) {
+	    /* Found an emulation function, now tries to find a matching visual / pixel format pair */
+	    for (l = 0; (l < npixmap) && (send_mode == 0); l++) {
+	      if ((pf[l].depth == ModeEmulations[c].screen.depth) &&
+		  (pf[l].bits_per_pixel == ModeEmulations[c].screen.bpp)) {
+		int j;
+		for (j = 0; (j < nvisuals) && (send_mode == 0); j++) {
+		  if ((vi[j].depth == pf[l].depth) &&
+		      (vi[j].red_mask == ModeEmulations[c].screen.rmask) &&
+		      (vi[j].green_mask == ModeEmulations[c].screen.gmask) &&
+		      (vi[j].blue_mask == ModeEmulations[c].screen.bmask)) {
+		    ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
+		    ddsfd.ddpfPixelFormat.dwFourCC = 0;
+		    if (depth == 8) {
+		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+		      ddsfd.ddpfPixelFormat.x.dwRGBBitCount = 8;
+		      ddsfd.ddpfPixelFormat.y.dwRBitMask = 0;
+		      ddsfd.ddpfPixelFormat.z.dwGBitMask = 0;
+		      ddsfd.ddpfPixelFormat.xx.dwBBitMask = 0;
+    } else {
+		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+		      ddsfd.ddpfPixelFormat.x.dwRGBBitCount = ModeEmulations[c].dest.bpp;
+		      ddsfd.ddpfPixelFormat.y.dwRBitMask = ModeEmulations[c].dest.rmask;
+		      ddsfd.ddpfPixelFormat.z.dwGBitMask = ModeEmulations[c].dest.gmask;
+		      ddsfd.ddpfPixelFormat.xx.dwBBitMask = ModeEmulations[c].dest.bmask;
+		    }
+		    ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+		    send_mode = 1;
+		  }
+		  
+		  if (send_mode == 0)
+		    ERR("No visual corresponding to pixmap format !\n");
+		}
+	      }
+	    }
+    }
+	}
+      }
+
+      emu++;
     }
 
     if (send_mode) {
@@ -4314,13 +4410,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	if (!modescb(&ddsfd, context))
 	  goto exit_enum;
       }
-    }
-
-    /* Hack to always enumerate a 8bpp depth */
-    i++;
-    if ((i == npixmap) && (has_8bpp == 0)) {
-      i--;
-      pf[i].depth = 8;
     }
   }
   
@@ -4878,7 +4967,8 @@ DDRAW_XSHM_Available(void)
       int major, minor;
       Bool shpix;
 
-      if (TSXShmQueryVersion(display, &major, &minor, &shpix))
+      if ((TSXShmQueryVersion(display, &major, &minor, &shpix)) &&
+	  (Options.noXSHM != 1))
 	return 1;
       else
 	return 0;
