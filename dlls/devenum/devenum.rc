@@ -51,3 +51,12 @@ LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
 	9  "Dispositivo WaveOut di Default"
 	10 "Dispositivo MidiOut di Default"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+{
+	7  "DirectSound padrão"
+	8  "DirectSound: %s"
+	9  "Dispositivo padrão WaveOut"
+	10 "Dispositivo padrão MidiOut"
+}

@@ -38,7 +38,7 @@ MAIN_MENU MENU
    MENUITEM "Sai&r do Windows...",             PM_EXIT
  }
  POPUP "&Opções" {
-   MENUITEM "&Autoorganizar",  PM_AUTO_ARRANGE
+   MENUITEM "&Auto organizar",  PM_AUTO_ARRANGE
    MENUITEM "&Minimizar na execução",    PM_MIN_ON_RUN
    MENUITEM "&Salvar alterações ao sair", PM_SAVE_SETTINGS
  }
