@@ -1666,7 +1666,7 @@ BOOL WINAPI SetupGetBinaryField( const INFCONTEXT *context, DWORD index, BYTE *b
         DWORD value = 0;
         for (p = field->text; *p && isxdigitW(*p); p++)
         {
-            if ((value <<= 8) > 255)
+            if ((value <<= 4) > 255)
             {
                 SetLastError( ERROR_INVALID_DATA );
                 return FALSE;
