@@ -23,7 +23,8 @@ C_SRCS = \
 	wowthunk.c
 
 RC_SRCS = \
-	kernel.rc
+	kernel.rc \
+	version16.rc
 
 MC_SRCS = \
 	messages/winerr_enu.mc
