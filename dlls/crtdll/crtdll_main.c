@@ -10,6 +10,10 @@
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
+/* from msvcrt */
+extern void __cdecl __getmainargs( int *argc, char ***argv, char **environ,
+                                   int expand_wildcards, void *_startupinfo );
+
 /* The following data items are not exported from msvcrt */
 unsigned int CRTDLL__basemajor_dll;
 unsigned int CRTDLL__baseminor_dll;
@@ -40,4 +44,13 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
     CRTDLL__osversion_dll   = (version & 0xFFFF);
   }
   return TRUE;
+}
+
+
+/*********************************************************************
+ *                  __GetMainArgs  (CRTDLL.@)
+ */
+void __cdecl __GetMainArgs( int *argc, char ***argv, char **environ, int expand_wildcards )
+{
+    __getmainargs( argc, argv, environ, expand_wildcards, NULL );
 }

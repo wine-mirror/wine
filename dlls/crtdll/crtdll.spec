@@ -30,7 +30,7 @@ debug_channels (crtdll)
 @ forward _CItanh msvcrt._CItanh
 @ forward _HUGE_dll msvcrt._HUGE
 @ forward _XcptFilter msvcrt._XcptFilter
-@ forward __GetMainArgs msvcrt.__getmainargs
+@ cdecl __GetMainArgs(ptr ptr ptr long) __GetMainArgs
 @ forward __argc_dll msvcrt.__argc
 @ forward __argv_dll msvcrt.__argv
 @ forward __dllonexit msvcrt.__dllonexit
