@@ -40,7 +40,6 @@
 #include "x11drv.h"
 #include "wine/debug.h"
 #include "gdi.h"
-#include "palette.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 WINE_DECLARE_DEBUG_CHANNEL(x11drv);
@@ -3731,18 +3730,15 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
 {
   X11DRV_DIBSECTION *dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
-  PALETTEOBJ * palette;
+  PALETTEENTRY palette[256];
   BITMAPOBJ *bmp;
   int height;
   DC *dc = physDev->dc;
 
-  if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
-      return 0;
-  if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
-  {
-      GDI_ReleaseObj( dc->hPalette );
-      return 0;
-  }
+  GetPaletteEntries( dc->hPalette, 0, 256, palette );
+
+  if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
+
   dib = (X11DRV_DIBSECTION *) bmp->dib;
 
   TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
@@ -3798,7 +3794,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   }
 
   descr.physDev   = physDev;
-  descr.palentry  = palette->logpalette.palPalEntry;
+  descr.palentry  = palette;
   descr.bits      = bits;
   descr.image     = NULL;
   descr.lines     = lines;
@@ -3852,7 +3848,6 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   }
 
 done:
-  GDI_ReleaseObj( dc->hPalette );
   GDI_ReleaseObj( hbitmap );
   return lines;
 }
