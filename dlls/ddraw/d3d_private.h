@@ -1,5 +1,6 @@
 /* Direct3D private include file
- * Copyright (c) 1998 Lionel ULMER
+ * Copyright (c) 1998-2004 Lionel ULMER
+ * Copyright (c) 2002-2004 Christian Costa
  *
  * This file contains all the structure that are not exported
  * through d3d.h and all common macros.
@@ -195,6 +196,7 @@ struct IDirect3DDeviceImpl
     ICOM_VFIELD_MULTI(IDirect3DDevice2);
     ICOM_VFIELD_MULTI(IDirect3DDevice);
     DWORD  ref;
+
     /* IDirect3DDevice fields */
     IDirectDrawImpl *d3d;
     IDirectDrawSurfaceImpl *surface;
@@ -215,6 +217,9 @@ struct IDirect3DDeviceImpl
     
     /* Current material used in D3D7 mode */
     D3DMATERIAL7 current_material;
+
+    /* Light state */
+    DWORD material;
 
     /* Light parameters */
     DWORD active_lights, set_lights;

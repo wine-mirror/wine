@@ -331,8 +331,8 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 			    dump_D3DMATRIX(lpDevice->proj_mat);
 			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
 			    dump_D3DMATRIX(lpDevice->view_mat);
-			    TRACE("  World Matrix : (%p)\n", &mat);
-			    dump_D3DMATRIX(&mat);
+			    TRACE("  World Matrix : (%p)\n", lpDevice->world_mat);
+			    dump_D3DMATRIX(lpDevice->world_mat);
 			}
 
 			multiply_matrix(&mat,lpDevice->view_mat,lpDevice->world_mat);

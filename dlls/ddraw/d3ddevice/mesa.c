@@ -1,5 +1,6 @@
 /* Direct3D Device
- * Copyright (c) 1998 Lionel ULMER
+ * Copyright (c) 1998-2004 Lionel ULMER
+ * Copyright (c) 2002-2004 Christian Costa
  *
  * This file contains the MESA implementation of all the D3D devices that
  * Wine supports.
@@ -724,6 +725,57 @@ GL_IDirect3DDeviceImpl_7_3T_2T_GetRenderState(LPDIRECT3DDEVICE7 iface,
 }
 
 HRESULT WINAPI
+GL_IDirect3DDeviceImpl_3_2T_GetLightState(LPDIRECT3DDEVICE3 iface,
+					  D3DLIGHTSTATETYPE dwLightStateType,
+					  LPDWORD lpdwLightState)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
+    
+    TRACE("(%p/%p)->(%08x,%p)\n", This, iface, dwLightStateType, lpdwLightState);
+
+    if (!dwLightStateType && (dwLightStateType > D3DLIGHTSTATE_COLORVERTEX)) {
+	TRACE("Unexpected Light State Type\n");
+	return DDERR_INVALIDPARAMS;
+    }
+	
+    if (dwLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
+	*lpdwLightState = This->material;
+    } else if (dwLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
+	*lpdwLightState = D3DCOLOR_RGB;
+    } else {
+        D3DRENDERSTATETYPE rs;
+	switch (dwLightStateType) {
+	    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
+		rs = D3DRENDERSTATE_AMBIENT;
+		break;		
+	    case D3DLIGHTSTATE_FOGMODE:       /* 4 */
+		rs = D3DRENDERSTATE_FOGVERTEXMODE;
+		break;
+	    case D3DLIGHTSTATE_FOGSTART:      /* 5 */
+		rs = D3DRENDERSTATE_FOGSTART;
+		break;
+	    case D3DLIGHTSTATE_FOGEND:        /* 6 */
+		rs = D3DRENDERSTATE_FOGEND;
+		break;
+	    case D3DLIGHTSTATE_FOGDENSITY:    /* 7 */
+		rs = D3DRENDERSTATE_FOGDENSITY;
+		break;
+	    case D3DLIGHTSTATE_COLORVERTEX:   /* 8 */
+		rs = D3DRENDERSTATE_COLORVERTEX;
+		break;
+	    default:
+		ERR("Unknown D3DLIGHTSTATETYPE %d.\n", dwLightStateType);
+		return DDERR_INVALIDPARAMS;
+	}
+
+	IDirect3DDevice7_GetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+	                   		rs,lpdwLightState);
+    }
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
 GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 					  D3DLIGHTSTATETYPE dwLightStateType,
 					  DWORD dwLightState)
@@ -746,6 +798,7 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 	} else {
 	    FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
 	}
+	This->material = dwLightState;
     } else if (dwLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
 	switch (dwLightState) {
 	    case D3DCOLOR_MONO:
@@ -1119,7 +1172,7 @@ inline static void handle_xyz(D3DVALUE *coords) {
     glVertex3fv(coords);
 }
 inline static void handle_xyzrhw(D3DVALUE *coords) {
-    if (coords[3] < 1e-8)
+    if ((coords[3] < 1e-8) && (coords[3] > -1e-8))
         glVertex3fv(coords);
     else {
         GLfloat w = 1.0 / coords[3];
@@ -2608,7 +2661,7 @@ ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
     XCAST(End) Main_IDirect3DDeviceImpl_3_2T_End,
     XCAST(GetRenderState) Thunk_IDirect3DDeviceImpl_3_GetRenderState,
     XCAST(SetRenderState) Thunk_IDirect3DDeviceImpl_3_SetRenderState,
-    XCAST(GetLightState) Main_IDirect3DDeviceImpl_3_2T_GetLightState,
+    XCAST(GetLightState) GL_IDirect3DDeviceImpl_3_2T_GetLightState,
     XCAST(SetLightState) GL_IDirect3DDeviceImpl_3_2T_SetLightState,
     XCAST(SetTransform) Thunk_IDirect3DDeviceImpl_3_SetTransform,
     XCAST(GetTransform) Thunk_IDirect3DDeviceImpl_3_GetTransform,

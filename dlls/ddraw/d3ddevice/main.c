@@ -1,5 +1,6 @@
 /* Direct3D Device
- * Copyright (c) 1998 Lionel ULMER
+ * Copyright (c) 1998-2004 Lionel ULMER
+ * Copyright (c) 2002-2004 Christian Costa
  *
  * This file contains all the common stuff for D3D devices.
  *
