@@ -501,16 +501,17 @@ static HMODULE32 PE_LoadImage( HFILE32 hFile )
         MSG("Trying to load PE image for unsupported architecture (");
         switch (PE_HEADER(hModule)->FileHeader.Machine)
         {
-        case IMAGE_FILE_MACHINE_UNKNOWN: MSG("Unknown\n"); break;
-        case IMAGE_FILE_MACHINE_I860:    MSG("I860\n"); break;
-        case IMAGE_FILE_MACHINE_R3000:   MSG("R3000\n"); break;
-        case IMAGE_FILE_MACHINE_R4000:   MSG("R4000\n"); break;
-        case IMAGE_FILE_MACHINE_R10000:  MSG("R10000\n"); break;
-        case IMAGE_FILE_MACHINE_ALPHA:   MSG("Alpha\n"); break;
-        case IMAGE_FILE_MACHINE_POWERPC: MSG("PowerPC\n"); break;
-        default: MSG("Unknown-%04x\n",
+        case IMAGE_FILE_MACHINE_UNKNOWN: MSG("Unknown"); break;
+        case IMAGE_FILE_MACHINE_I860:    MSG("I860"); break;
+        case IMAGE_FILE_MACHINE_R3000:   MSG("R3000"); break;
+        case IMAGE_FILE_MACHINE_R4000:   MSG("R4000"); break;
+        case IMAGE_FILE_MACHINE_R10000:  MSG("R10000"); break;
+        case IMAGE_FILE_MACHINE_ALPHA:   MSG("Alpha"); break;
+        case IMAGE_FILE_MACHINE_POWERPC: MSG("PowerPC"); break;
+        default: MSG("Unknown-%04x",
                          PE_HEADER(hModule)->FileHeader.Machine); break;
         }
+        MSG(")\n");
         goto error;
     }
     /* find out how large this executeable should be */
