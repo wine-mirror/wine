@@ -43,7 +43,7 @@
             <para>
               Convert <filename>.bdf</filename> files produced by Step
               1 into <filename>.pcf</filename> files with
-              <command>bdftopcf</command>.
+              <command>bdftopcf -o &lt;target file&gt; &lt;original bdf-file&gt;</command>.
             </para>
           </listitem>
           <listitem>
