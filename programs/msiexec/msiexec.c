@@ -230,6 +230,7 @@ int main(int argc, char *argv[])
 				if(i >= argc)
 					ShowUsage(1);
 				WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
+				argvi = argv[i];
 			}
 			GotProductCode = GetProductCode(argvi, &PackageName, &ProductCode);
 		}
