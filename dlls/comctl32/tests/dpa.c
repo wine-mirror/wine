@@ -30,6 +30,9 @@
 #include "wine/test.h"
 
 static HDPA (WINAPI *pDPA_Create)(int);
+static BOOL (WINAPI *pDPA_Grow)(const HDPA hdpa, INT nGrow);
+static BOOL (WINAPI *pDPA_Destroy)(const HDPA hdpa);
+static BOOL (WINAPI *pDPA_SetPtr)(const HDPA hdpa, INT i, LPVOID p);
 
 static INT CALLBACK dpa_strcmp(LPVOID pvstr1, LPVOID pvstr2, LPARAM flags)
 {
@@ -56,6 +59,12 @@ void DPA_test()
   ok((int_ret == 0), "DPA_Search proposed bad item\n");
   int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTAFTER);
   ok((int_ret == 0), "DPA_Search proposed bad item\n");
+  int_ret = pDPA_Grow(dpa_ret,0);
+  ok(int_ret != 0, "DPA_Grow failed\n");
+  int_ret = pDPA_SetPtr(dpa_ret, 0, (void*)0xdeadbeef);
+  ok(int_ret != 0, "DPA_SetPtr failed\n");
+  int_ret = pDPA_Destroy(dpa_ret);
+  ok(int_ret != 0, "DPA_Destory failed\n");
 }
 
 START_TEST(dpa)
@@ -64,6 +73,9 @@ START_TEST(dpa)
 
     hdll=GetModuleHandleA("comctl32.dll");
     pDPA_Create=(void*)GetProcAddress(hdll,(LPCSTR)328);
+    pDPA_Destroy=(void*)GetProcAddress(hdll,(LPCSTR)329);
+    pDPA_Grow=(void*)GetProcAddress(hdll,(LPCSTR)330);
+    pDPA_SetPtr=(void*)GetProcAddress(hdll,(LPCSTR)335);
 
     DPA_test();
 }
