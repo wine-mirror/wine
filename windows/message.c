@@ -1374,11 +1374,12 @@ BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
 /***********************************************************************
  *         PeekMessage32_16   (USER.819)
  */
-BOOL16 WINAPI PeekMessage32_16( LPMSG16_32 lpmsg16_32, HWND16 hwnd,
+BOOL16 WINAPI PeekMessage32_16( SEGPTR msg16_32, HWND16 hwnd,
                                 UINT16 first, UINT16 last, UINT16 flags, 
                                 BOOL16 wHaveParamHigh )
 {
     BOOL ret;
+    MSG32_16 *lpmsg16_32 = (MSG32_16 *)PTR_SEG_TO_LIN(msg16_32);
     MSG msg;
 
     ret = MSG_PeekMessage( QMSG_WIN16, &msg, hwnd, first, last, flags, TRUE );
@@ -1394,16 +1395,17 @@ BOOL16 WINAPI PeekMessage32_16( LPMSG16_32 lpmsg16_32, HWND16 hwnd,
     if ( wHaveParamHigh )
         lpmsg16_32->wParamHigh = HIWORD(msg.wParam);
 
+    HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg16_32 );
     return ret;
 }
 
 /***********************************************************************
  *           PeekMessage16   (USER.109)
  */
-BOOL16 WINAPI PeekMessage16( LPMSG16 lpmsg, HWND16 hwnd, 
+BOOL16 WINAPI PeekMessage16( SEGPTR msg, HWND16 hwnd,
                              UINT16 first, UINT16 last, UINT16 flags )
 {
-    return PeekMessage32_16( (LPMSG16_32)lpmsg, hwnd, first, last, flags, FALSE );
+    return PeekMessage32_16( msg, hwnd, first, last, flags, FALSE );
 }
 
 /***********************************************************************
@@ -1412,7 +1414,14 @@ BOOL16 WINAPI PeekMessage16( LPMSG16 lpmsg, HWND16 hwnd,
 BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd,
                           UINT min, UINT max, UINT wRemoveMsg)
 {
-    return MSG_PeekMessage( QMSG_WIN32A, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
+    BOOL ret = MSG_PeekMessage( QMSG_WIN32A, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
+
+    TRACE( "peekmessage %04x, hwnd %04x, filter(%04x - %04x)\n", 
+           lpmsg->message, hwnd, min, max );
+
+    if (ret) HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION,
+                              wRemoveMsg & PM_REMOVE, (LPARAM)lpmsg );
+    return ret;
 }
 
 /***********************************************************************
@@ -1450,7 +1459,10 @@ BOOL WINAPI PeekMessageW(
   UINT wRemoveMsg /* removal flags */ 
 ) 
 {
-    return MSG_PeekMessage( QMSG_WIN32W, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
+    BOOL ret = MSG_PeekMessage( QMSG_WIN32W, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
+    if (ret) HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION,
+                              wRemoveMsg & PM_REMOVE, (LPARAM)lpmsg );
+    return ret;
 }
 
 
@@ -1479,7 +1491,7 @@ BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
     TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n",
            lpmsg16_32->msg.message, hWnd, first, last );
 
-    HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg16_32 );
+    HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, PM_REMOVE, (LPARAM)msg16_32 );
     return lpmsg16_32->msg.message != WM_QUIT;
 }
 
@@ -1501,7 +1513,7 @@ BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
     TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n", 
            lpmsg->message, hwnd, min, max );
     
-    HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)lpmsg );
+    HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION, PM_REMOVE, (LPARAM)lpmsg );
     return lpmsg->message != WM_QUIT;
 }
 
@@ -1544,7 +1556,7 @@ BOOL WINAPI GetMessageW(
     TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n", 
            lpmsg->message, hwnd, min, max );
     
-    HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)lpmsg );
+    HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION, PM_REMOVE, (LPARAM)lpmsg );
     return lpmsg->message != WM_QUIT;
 }
 

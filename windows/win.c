@@ -3223,8 +3223,8 @@ BOOL16 WINAPI DragDetect16( HWND16 hWnd, POINT16 pt )
  */
 BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 {
-    MSG16 msg;
-    RECT16  rect;
+    MSG msg;
+    RECT rect;
 
     rect.left = pt.x - wDragWidth;
     rect.right = pt.x + wDragWidth;
@@ -3236,7 +3236,7 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 
     while(1)
     {
-	while(PeekMessage16(&msg ,0 ,WM_MOUSEFIRST ,WM_MOUSELAST ,PM_REMOVE))
+	while(PeekMessageA(&msg ,0 ,WM_MOUSEFIRST ,WM_MOUSELAST ,PM_REMOVE))
         {
             if( msg.message == WM_LBUTTONUP )
 	    {
@@ -3245,7 +3245,10 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
             }
             if( msg.message == WM_MOUSEMOVE )
 	    {
-		if( !PtInRect16( &rect, MAKEPOINT16(msg.lParam) ) )
+                POINT tmp;
+                tmp.x = LOWORD(msg.lParam);
+                tmp.y = HIWORD(msg.lParam);
+		if( !PtInRect( &rect, tmp ))
                 {
 		    ReleaseCapture();
 		    return 1;
@@ -3263,7 +3266,7 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
                            HANDLE16 hOfStruct, WORD szList, HCURSOR16 hCursor )
 {
-    MSG16	msg;
+    MSG	msg;
     LPDRAGINFO	lpDragInfo;
     SEGPTR	spDragInfo;
     HCURSOR16 	hDragCursor=0, hOldCursor=0, hBummer=0;
@@ -3318,11 +3321,12 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     do
     {
 	do{  WaitMessage(); }
-	while( !PeekMessage16(&msg,0,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE) );
+	while( !PeekMessageA(&msg,0,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE) );
 
        *(lpDragInfo+1) = *lpDragInfo;
 
-	lpDragInfo->pt = msg.pt;
+	lpDragInfo->pt.x = msg.pt.x;
+	lpDragInfo->pt.y = msg.pt.y;
 
 	/* update DRAGINFO struct */
 	TRACE_(msg)("lpDI->hScope = %04x\n",lpDragInfo->hScope);
