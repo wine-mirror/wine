@@ -9,6 +9,7 @@ ddstream.h
 dispex.h
 docobj.h
 exdisp.h
+mediaobj.h
 mlang.h
 mmstream.h
 oaidl.h

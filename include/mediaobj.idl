@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2002 Alexandre Julliard
+ * Copyright (C) 2004 Vincent Béron
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,25 +17,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <rpc.h>
-#include <rpcndr.h>
-#ifndef COM_NO_WINDOWS_H
-#include <windows.h>
-#include <ole2.h>
-#endif
+cpp_quote("#ifndef COM_NO_WINDOWS_H")
+cpp_quote("#include <windows.h>")
+cpp_quote("#include <ole2.h>")
+cpp_quote("#endif")
 
-#ifndef __mediaobj_h__
-#define __mediaobj_h__
+import "unknwn.idl";
+import "objidl.idl";
 
-typedef struct IDMOQualityControl IDMOQualityControl;
-typedef struct IDMOVideoOutputOptimizations IDMOVideoOutputOptimizations;
-typedef struct IEnumDMO IEnumDMO;
-typedef struct IMediaBuffer IMediaBuffer;
-typedef struct IMediaObject IMediaObject;
-typedef struct IMediaObjectInPlace IMediaObjectInPlace;
-
-#include <unknwn.h>
-#include <objidl.h>
+interface IDMOQualityControl;
+interface IDMOVideoOutputOptimizations;
+interface IMediaBuffer;
+interface IMediaObject;
+interface IMediaObjectInPlace;
 
 typedef struct _DMOMediaType
 {
@@ -49,15 +44,31 @@ typedef struct _DMOMediaType
     BYTE *pbFormat;
 } DMO_MEDIA_TYPE;
 
-#define INTERFACE IEnumDMO
-#define IEnumDMO_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Next)(THIS_ DWORD  cItemsToFetch, CLSID * pCLSID, \
-        WCHAR ** Names, DWORD *  pcItemsFectched) PURE; \
-    STDMETHOD(Skip)(THIS_ DWORD  cItemsToSkip) PURE; \
-    STDMETHOD(Reset)(THIS) PURE; \
-    STDMETHOD(Clone)(THIS_ IEnumDMO ** ppEnum) PURE;
-DECLARE_INTERFACE_(IEnumDMO,IUnknown) { IEnumDMO_METHODS };
-#undef INTERFACE
+/*****************************************************************************
+ * IEnumDMO interface
+ */
+[
+    object,
+    uuid(2C3CD98A-2BFA-4A53-9C27-5249BA64BA0F),
+    pointer_default(unique)
+]
+interface IEnumDMO : IUnknown
+{
+    [local]
+    HRESULT Next(
+        [in] DWORD cItemsToFetch,
+        [out] CLSID *pCLSID,
+        [out] WCHAR **Names,
+        [out] DWORD *pcItemsFetched
+    );
 
-#endif /* __mediaobj_h__ */
+    HRESULT Skip(
+        [in] DWORD cItemsToSkip
+    );
+
+    HRESULT Reset();
+
+    HRESULT Clone(
+        [out] IEnumDMO **ppEnum
+    );
+}

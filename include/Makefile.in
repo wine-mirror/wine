@@ -14,6 +14,7 @@ IDL_SRCS = \
 	dispex.idl \
 	docobj.idl \
 	exdisp.idl \
+	mediaobj.idl \
 	mlang.idl \
 	mmstream.idl \
 	oaidl.idl \
