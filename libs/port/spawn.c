@@ -22,6 +22,7 @@
 #include "wine/port.h"
 
 #include <errno.h>
+#include <signal.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -34,19 +35,39 @@ int spawnvp(int mode, const char *cmdname, char *const argv[])
 {
 #ifndef HAVE__SPAWNVP
     int pid = 0, status, wret;
+    struct sigaction dfl_act, old_act;
 
-    if (mode != _P_OVERLAY) pid = fork();
-    if (pid == 0) pid = execvp(argv[0], argv);
-    if (pid < 0) return -1;
+    if (mode == _P_OVERLAY)
+    {
+        execvp(cmdname, argv);
+        return -1;  /* if we get here it failed */
+    }
 
-    if (mode != _P_WAIT) return pid;
+    dfl_act.sa_handler = SIG_DFL;
+    dfl_act.sa_flags = 0;
+    sigemptyset( &dfl_act.sa_mask );
 
-    while (pid != (wret = waitpid(pid, &status, 0)))
-        if (wret == -1 && errno != EINTR) break;
+    if (mode == _P_WAIT) sigaction( SIGCHLD, &dfl_act, &old_act );
 
-    if (pid == wret && WIFEXITED(status)) return WEXITSTATUS(status);
+    pid = fork();
+    if (pid == 0)
+    {
+        sigaction( SIGPIPE, &dfl_act, NULL );
+        execvp(cmdname, argv);
+        _exit(1);
+    }
 
-    return 255; /* abnormal exit with an abort or an interrupt */
+    if (pid != -1 && mode == _P_WAIT)
+    {
+        while (pid != (wret = waitpid(pid, &status, 0)))
+            if (wret == -1 && errno != EINTR) break;
+
+        if (pid == wret && WIFEXITED(status)) pid = WEXITSTATUS(status);
+        else pid = 255; /* abnormal exit with an abort or an interrupt */
+    }
+
+    if (mode == _P_WAIT) sigaction( SIGCHLD, &old_act, NULL );
+    return pid;
 #else   /* HAVE__SPAWNVP */
     return _spawnvp(mode, cmdname, argv);
 #endif  /* HAVE__SPAWNVP */
