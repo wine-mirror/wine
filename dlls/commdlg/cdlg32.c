@@ -92,11 +92,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 			}
 		}
 
-		if((COMDLG32_TlsIndex = TlsAlloc()) == 0xffffffff)
-		{
-			ERR("No space for COMDLG32 TLS\n");
-			return FALSE;
-		}
+		COMDLG32_TlsIndex = 0xffffffff;
 
 		COMCTL32_hInstance = LoadLibraryA("COMCTL32.DLL");	
 		SHELL32_hInstance = LoadLibraryA("SHELL32.DLL");
@@ -146,7 +142,9 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 	case DLL_PROCESS_DETACH:
 		if(!--COMDLG32_Attach)
 		{
-			TlsFree(COMDLG32_TlsIndex);
+		        if (COMDLG32_TlsIndex != 0xffffffff)
+			  TlsFree(COMDLG32_TlsIndex);
+			COMDLG32_TlsIndex = 0xffffffff;
 			COMDLG32_hInstance = 0;
 			if(COMDLG32_hInstance16)
 				FreeLibrary16(COMDLG32_hInstance16);
@@ -189,7 +187,12 @@ LPVOID COMDLG32_AllocMem(
 void COMDLG32_SetCommDlgExtendedError(DWORD err)
 {
 	TRACE("(%08lx)\n", err);
-	TlsSetValue(COMDLG32_TlsIndex, (void *)err);
+        if (COMDLG32_TlsIndex == 0xffffffff)
+	  COMDLG32_TlsIndex = TlsAlloc();
+	if (COMDLG32_TlsIndex != 0xffffffff)
+	  TlsSetValue(COMDLG32_TlsIndex, (void *)err);
+	else
+	  FIXME("No Tls Space\n");
 }
 
 
@@ -203,5 +206,11 @@ void COMDLG32_SetCommDlgExtendedError(DWORD err)
  */
 DWORD WINAPI CommDlgExtendedError(void)
 {
-	return (DWORD)TlsGetValue(COMDLG32_TlsIndex);
+        if (COMDLG32_TlsIndex != 0xffffffff) 
+	  return (DWORD)TlsGetValue(COMDLG32_TlsIndex);
+	else
+	  {
+	    FIXME("No Tls Space\n");
+	    return 0;
+	  }
 }
