@@ -311,11 +311,11 @@ static POPUPMENU *MENU_GetMenu(HMENU hMenu)
 static HMENU get_win_sys_menu( HWND hwnd )
 {
     HMENU ret = 0;
-    WND *win = WIN_FindWndPtr( hwnd );
-    if (win)
+    WND *win = WIN_GetPtr( hwnd );
+    if (win && win != WND_OTHER_PROCESS)
     {
         ret = win->hSysMenu;
-        WIN_ReleaseWndPtr( win );
+        WIN_ReleasePtr( win );
     }
     return ret;
 }
@@ -3584,10 +3584,14 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
  */
 HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 {
-    WND *wndPtr = WIN_FindWndPtr( hWnd );
+    WND *wndPtr = WIN_GetPtr( hWnd );
     HMENU retvalue = 0;
 
-    if (wndPtr)
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hWnd )) FIXME( "not supported on other process window %p\n", hWnd );
+    }
+    else if (wndPtr)
     {
 	if( wndPtr->hSysMenu )
 	{
@@ -3627,7 +3631,7 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 	    if ( menu )
 	       menu->hSysMenuOwner = wndPtr->hSysMenu;
         }
-        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleasePtr( wndPtr );
     }
     return bRevert ? 0 : retvalue;
 }
@@ -3638,13 +3642,13 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
  */
 BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (wndPtr)
+    if (wndPtr && wndPtr != WND_OTHER_PROCESS)
     {
 	if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
 	wndPtr->hSysMenu = MENU_GetSysMenu( hwnd, hMenu );
-        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleasePtr( wndPtr );
 	return TRUE;
     }
     return FALSE;

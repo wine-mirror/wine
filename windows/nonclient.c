@@ -428,7 +428,9 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
  */
 static void NC_GetInsideRect( HWND hwnd, RECT *rect )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
 
     rect->top    = rect->left = 0;
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
@@ -462,8 +464,7 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect )
     }
 
 END:
-    WIN_ReleaseWndPtr(wndPtr);
-    return;
+    WIN_ReleasePtr( wndPtr );
 }
 
 
@@ -628,13 +629,12 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 LONG NC_HandleNCHitTest (HWND hwnd , POINT pt)
 {
     LONG retvalue;
-    WND *wndPtr = WIN_FindWndPtr (hwnd);
+    WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr)
-	return HTERROR;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return HTERROR;
 
     retvalue = NC_DoNCHitTest (wndPtr, pt);
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr( wndPtr );
     return retvalue;
 }
 
@@ -1092,24 +1092,24 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  */
 LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
-    WND* wndPtr = WIN_FindWndPtr( hwnd );
+    WND* wndPtr = WIN_GetPtr( hwnd );
+
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
 
     /* Lotus Notes draws menu descriptions in the caption of its main
      * window. When it wants to restore original "system" view, it just
      * sends WM_NCACTIVATE message to itself. Any optimizations here in
      * attempt to minimize redrawings lead to a not restored caption.
      */
-    if (wndPtr)
-    {
-	if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
-	else wndPtr->flags &= ~WIN_NCACTIVATED;
-        WIN_ReleaseWndPtr(wndPtr);
+    if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
+    else wndPtr->flags &= ~WIN_NCACTIVATED;
+    WIN_ReleasePtr( wndPtr );
 
-	if (IsIconic(hwnd)) 
-	    WINPOS_RedrawIconTitle( hwnd );
-	else
-	    NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
-    }
+    if (IsIconic(hwnd))
+        WINPOS_RedrawIconTitle( hwnd );
+    else
+        NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
+
     return TRUE;
 }
 
@@ -1173,8 +1173,8 @@ void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
     if (IsIconic(hwnd)) GetWindowRect( hwnd, rect );
     else
     {
-        WND *wndPtr = WIN_FindWndPtr( hwnd );
-        if (!wndPtr) return;
+        WND *wndPtr = WIN_GetPtr( hwnd );
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return;
 
         NC_GetInsideRect( hwnd, rect );
         OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
@@ -1182,7 +1182,7 @@ void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
             ClientToScreen( GetParent(hwnd), (POINT *)rect );
         rect->right = rect->left + GetSystemMetrics(SM_CYCAPTION) - 1;
         rect->bottom = rect->top + GetSystemMetrics(SM_CYCAPTION) - 1;
-        WIN_ReleaseWndPtr( wndPtr );
+        WIN_ReleasePtr( wndPtr );
     }
 }
 

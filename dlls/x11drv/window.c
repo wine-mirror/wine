@@ -1133,22 +1133,20 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* Send the size messages */
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
+    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return FALSE;
     if (!(wndPtr->flags & WIN_NEED_SIZE))
     {
+        RECT rect = wndPtr->rectClient;
+        WIN_ReleasePtr( wndPtr );
         /* send it anyway */
-        if (((wndPtr->rectClient.right-wndPtr->rectClient.left) <0)
-            ||((wndPtr->rectClient.bottom-wndPtr->rectClient.top)<0))
+        if (((rect.right-rect.left) <0) ||((rect.bottom-rect.top)<0))
             WARN("sending bogus WM_SIZE message 0x%08lx\n",
-                 MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-                          wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+                 MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
         SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
-                      MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-                               wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-        SendMessageW( hwnd, WM_MOVE, 0,
-                      MAKELONG( wndPtr->rectClient.left, wndPtr->rectClient.top ) );
+                      MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
+        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );
     }
-    WIN_ReleaseWndPtr( wndPtr );
+    else WIN_ReleasePtr( wndPtr );
 
     /* Show the window, maximizing or minimizing if needed */
 

@@ -926,16 +926,17 @@ static POINT WINPOS_FindIconPos( WND* wndPtr, POINT pt )
                 {
                     if (list[i] == wndPtr->hwndSelf) continue;
                     if (!IsIconic( list[i] )) continue;
-                    if (!(childPtr = WIN_FindWndPtr( list[i] ))) continue;
+                    if (!(childPtr = WIN_GetPtr( list[i] )) || childPtr == WND_OTHER_PROCESS)
+                        continue;
                     if ((childPtr->rectWindow.left < x + xspacing) &&
                         (childPtr->rectWindow.right >= x) &&
                         (childPtr->rectWindow.top <= y) &&
                         (childPtr->rectWindow.bottom > y - yspacing))
                     {
-                        WIN_ReleaseWndPtr( childPtr );
+                        WIN_ReleasePtr( childPtr );
                         break;  /* There's a window in there */
                     }
-                    WIN_ReleaseWndPtr( childPtr );
+                    WIN_ReleasePtr( childPtr );
                 }
                 if (list[i])
                 {

@@ -630,10 +630,9 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
 /***********************************************************************
  *           WINPOS_InitInternalPos
  */
-static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd, POINT pt, const RECT *restoreRect )
+static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd )
 {
-    LPINTERNALPOS lpPos = (LPINTERNALPOS) GetPropA( wnd->hwndSelf,
-                                                      atomInternalPos );
+    LPINTERNALPOS lpPos = GetPropA( wnd->hwndSelf, atomInternalPos );
     if( !lpPos )
     {
 	/* this happens when the window is minimized/maximized
@@ -654,20 +653,20 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd, POINT pt, const RECT *res
 
     if( wnd->dwStyle & WS_MINIMIZE )
     {
-        lpPos->ptIconPos.x = pt.x;
-        lpPos->ptIconPos.y = pt.y;
+        lpPos->ptIconPos.x = wnd->rectWindow.left;
+        lpPos->ptIconPos.y = wnd->rectWindow.top;
     }
     else if( wnd->dwStyle & WS_MAXIMIZE )
     {
-        lpPos->ptMaxPos.x = pt.x;
-        lpPos->ptMaxPos.y = pt.y;
+        lpPos->ptMaxPos.x = wnd->rectWindow.left;
+        lpPos->ptMaxPos.y = wnd->rectWindow.top;
     }
-    else if( restoreRect )
+    else
     {
-        lpPos->rectNormal.left   = restoreRect->left;
-        lpPos->rectNormal.top    = restoreRect->top;
-        lpPos->rectNormal.right  = restoreRect->right;
-        lpPos->rectNormal.bottom = restoreRect->bottom;
+        lpPos->rectNormal.left   = wnd->rectWindow.left;
+        lpPos->rectNormal.top    = wnd->rectWindow.top;
+        lpPos->rectNormal.right  = wnd->rectWindow.right;
+        lpPos->rectNormal.bottom = wnd->rectWindow.bottom;
     }
     return lpPos;
 }
@@ -891,12 +890,17 @@ UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
  */
 BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
 {
-    WND *pWnd = WIN_FindWndPtr( hwnd );
+    WND *pWnd = WIN_GetPtr( hwnd );
     LPINTERNALPOS lpPos;
 
-    if(!pWnd ) return FALSE;
+    if (!pWnd) return FALSE;
+    if (pWnd == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return FALSE;
+    }
 
-    lpPos = WINPOS_InitInternalPos( pWnd, *(LPPOINT)&pWnd->rectWindow.left, &pWnd->rectWindow );
+    lpPos = WINPOS_InitInternalPos( pWnd );
     wndpl->length  = sizeof(*wndpl);
     if( pWnd->dwStyle & WS_MINIMIZE )
         wndpl->showCmd = SW_SHOWMINIMIZED;
@@ -914,7 +918,7 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
     wndpl->rcNormalPosition.top    = lpPos->rectNormal.top;
     wndpl->rcNormalPosition.right  = lpPos->rectNormal.right;
     wndpl->rcNormalPosition.bottom = lpPos->rectNormal.bottom;
-    WIN_ReleaseWndPtr(pWnd);
+    WIN_ReleasePtr( pWnd );
     return TRUE;
 }
 
@@ -927,8 +931,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
     WND *pWnd = WIN_FindWndPtr( hwnd );
     if( pWnd )
     {
-	LPINTERNALPOS lpPos = (LPINTERNALPOS)WINPOS_InitInternalPos( pWnd,
-			     *(LPPOINT)&pWnd->rectWindow.left, &pWnd->rectWindow );
+	LPINTERNALPOS lpPos = WINPOS_InitInternalPos( pWnd );
 
         if( flags & PLACE_MIN )
         {

@@ -1062,7 +1062,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
                    (unsigned int*)&aux_long);
     wine_tsx11_unlock();
 
-    pWnd = WIN_FindWndPtr(hWnd);
+    pWnd = WIN_GetPtr(hWnd);
 
     /* find out drop point and drop window */
     if( x < 0 || y < 0 ||
@@ -1089,7 +1089,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 	    bAccept = FALSE;
 	}
     }
-    WIN_ReleaseWndPtr(pWnd);
+    WIN_ReleasePtr(pWnd);
 
     if (!bAccept) return;
 
@@ -1128,7 +1128,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
             if( lpDrop )
             {
-                WND *pDropWnd = WIN_FindWndPtr( hScope );
+                WND *pDropWnd = WIN_GetPtr( hScope );
                 lpDrop->pFiles = sizeof(DROPFILES);
                 lpDrop->pt.x = x;
                 lpDrop->pt.y = y;
@@ -1138,7 +1138,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
                       x > (pDropWnd->rectClient.right - pDropWnd->rectWindow.left) ||
                       y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
                 lpDrop->fWide = FALSE;
-                WIN_ReleaseWndPtr(pDropWnd);
+                WIN_ReleasePtr(pDropWnd);
                 p_drop = (char *)(lpDrop + 1);
                 p = p_data;
                 while(*p)
@@ -1226,7 +1226,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       lpDrop = (DROPFILES *) GlobalLock( hDrop );
 
       if( lpDrop ) {
-          WND *pDropWnd = WIN_FindWndPtr( hWnd );
+          WND *pDropWnd = WIN_GetPtr( hWnd );
 	  lpDrop->pFiles = sizeof(DROPFILES);
 	  lpDrop->pt.x = (INT)x;
 	  lpDrop->pt.y = (INT)y;
@@ -1237,7 +1237,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	      y > (pDropWnd->rectClient.bottom - pDropWnd->rectWindow.top) );
 	  lpDrop->fWide = FALSE;
 	  p_drop = (char*)(lpDrop + 1);
-          WIN_ReleaseWndPtr(pDropWnd);
+          WIN_ReleasePtr(pDropWnd);
       }
 
       /* create message content */

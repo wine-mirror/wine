@@ -996,15 +996,15 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
 	HWND hParent = GetParent(hwndDlg);
 	if (!hParent) break;
 
-	pParent = WIN_FindWndPtr(hParent);
-	if (!pParent) break;
+	pParent = WIN_GetPtr(hParent);
+	if (!pParent || pParent == WND_OTHER_PROCESS) break;
 
 	if (!(pParent->flags & WIN_ISDIALOG))
 	{
-	    WIN_ReleaseWndPtr(pParent);
+	    WIN_ReleasePtr(pParent);
 	    break;
 	}
-	WIN_ReleaseWndPtr(pParent);
+	WIN_ReleasePtr(pParent);
 
 	hwndDlg = hParent;
     }

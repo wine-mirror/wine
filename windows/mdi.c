@@ -1655,13 +1655,14 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
             }
             if (style & WS_VISIBLE)
             {
-                WND *pWnd = WIN_FindWndPtr( list[i] );
-                UnionRect( &childRect, &pWnd->rectWindow, &childRect );
-                WIN_ReleaseWndPtr( pWnd );
+                RECT rect;
+                GetWindowRect( list[i], &rect );
+                UnionRect( &childRect, &rect, &childRect );
             }
         }
         HeapFree( GetProcessHeap(), 0, list );
     }
+    MapWindowPoints( 0, hwnd, (POINT *)&childRect, 2 );
     UnionRect( &childRect, &clientRect, &childRect );
 
     /* set common info values */

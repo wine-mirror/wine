@@ -1751,9 +1751,9 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
     WND * wndPtr;
     BOOL retvalue;
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
+    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return FALSE;
     retvalue = (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr( wndPtr );
     return retvalue;
 }
 
@@ -3104,10 +3104,15 @@ BOOL WINAPI FlashWindowEx( PFLASHWINFO pfwi )
 DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
 {
     DWORD retval;
-    WND *wnd = WIN_FindWndPtr( hwnd );
+    WND *wnd = WIN_GetPtr( hwnd );
     if (!wnd) return 0;
+    if (wnd == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return 0;
+    }
     retval = wnd->helpContext;
-    WIN_ReleaseWndPtr(wnd);
+    WIN_ReleasePtr( wnd );
     return retval;
 }
 
@@ -3117,10 +3122,15 @@ DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
  */
 BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 {
-    WND *wnd = WIN_FindWndPtr( hwnd );
+    WND *wnd = WIN_GetPtr( hwnd );
     if (!wnd) return FALSE;
+    if (wnd == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return 0;
+    }
     wnd->helpContext = id;
-    WIN_ReleaseWndPtr(wnd);
+    WIN_ReleasePtr( wnd );
     return TRUE;
 }
 

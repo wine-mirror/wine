@@ -151,9 +151,9 @@ LPSCROLLINFO info /* [in] The SCROLLINFO struct to be tested */)
 static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
 {
     SCROLLBAR_INFO *infoPtr;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
 
-    if (!wndPtr) return NULL;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return NULL;
     switch(nBar)
     {
         case SB_HORZ: infoPtr = (SCROLLBAR_INFO *)wndPtr->pHScroll; break;
@@ -175,7 +175,7 @@ static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
             else wndPtr->pVScroll = infoPtr;
         }
     }
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
     return infoPtr;
 }
 
@@ -197,7 +197,9 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 {
     INT pixels;
     BOOL vertical;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
 
     switch(nBar)
     {
@@ -236,7 +238,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 	break;
 
     default:
-        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleasePtr( wndPtr );
         return FALSE;
     }
 
@@ -281,7 +283,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 		  + MulDiv(pixels, (info->curVal-info->minVal),(max - info->minVal));
         }
     }
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr( wndPtr );
     return vertical;
 }
 
@@ -660,22 +662,22 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     INT arrowSize, thumbSize, thumbPos;
     RECT rect;
     BOOL vertical;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
     SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollBarInfo( hwnd, nBar );
     BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
+    DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    if (!wndPtr || !infoPtr ||
-        ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
-        ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) goto END;
-    if (!WIN_IsWindowDrawable( hwnd, FALSE )) goto END;
-    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
+    if (!(hwnd = WIN_GetFullHandle( hwnd ))) return;
+
+    if (!infoPtr ||
+        ((nBar == SB_VERT) && !(style & WS_VSCROLL)) ||
+        ((nBar == SB_HORZ) && !(style & WS_HSCROLL))) return;
+    if (!WIN_IsWindowDrawable( hwnd, FALSE )) return;
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
 
     /* do not draw if the scrollbar rectangle is empty */
-    if(IsRectEmpty(&rect))
-      goto END;
+    if(IsRectEmpty(&rect)) return;
 
     if (Save_SCROLL_MovingThumb &&
         (SCROLL_TrackingWin == hwnd) &&
@@ -715,9 +717,6 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
             SetCaretPos(rect.top+1, thumbPos+1);
         }
     }
-
-END:
-    WIN_ReleaseWndPtr(wndPtr);
 }
 
 /***********************************************************************
