@@ -536,6 +536,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
 BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
                            LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage )
 {
+#ifdef FIONREAD
     int avail=0,fd;
 
     fd = FILE_GetUnixHandle(hPipe, GENERIC_READ);
@@ -555,6 +556,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 	*lpcbAvail= avail;
 	return TRUE;
       }
+#endif /* defined(FIONREAD) */
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     FIXME("function not implemented\n");

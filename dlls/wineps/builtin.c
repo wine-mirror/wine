@@ -49,7 +49,7 @@ inline static BOOL is_stock_font( HFONT font )
  *  Scale builtin font to requested lfHeight
  *
  */
-inline static float round(float f)
+inline static float Round(float f)
 {
     return (f > 0) ? (f + 0.5) : (f - 0.5);
 }
@@ -73,15 +73,15 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
 	    	(float)(wm->usWinAscent + wm->usWinDescent);
     }
 
-    font->size = (INT)round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
+    font->size = (INT)Round(font->fontinfo.Builtin.scale * (float)wm->usUnitsPerEm);
 
-    usUnitsPerEm = (USHORT)round((float)(wm->usUnitsPerEm) * font->fontinfo.Builtin.scale);
-    sAscender = (SHORT)round((float)(wm->sAscender) * font->fontinfo.Builtin.scale);
-    sDescender = (SHORT)round((float)(wm->sDescender) * font->fontinfo.Builtin.scale);
-    sLineGap = (SHORT)round((float)(wm->sLineGap) * font->fontinfo.Builtin.scale);
-    usWinAscent = (USHORT)round((float)(wm->usWinAscent) * font->fontinfo.Builtin.scale);
-    usWinDescent = (USHORT)round((float)(wm->usWinDescent) * font->fontinfo.Builtin.scale);
-    sAvgCharWidth = (SHORT)round((float)(wm->sAvgCharWidth) * font->fontinfo.Builtin.scale);
+    usUnitsPerEm = (USHORT)Round((float)(wm->usUnitsPerEm) * font->fontinfo.Builtin.scale);
+    sAscender = (SHORT)Round((float)(wm->sAscender) * font->fontinfo.Builtin.scale);
+    sDescender = (SHORT)Round((float)(wm->sDescender) * font->fontinfo.Builtin.scale);
+    sLineGap = (SHORT)Round((float)(wm->sLineGap) * font->fontinfo.Builtin.scale);
+    usWinAscent = (USHORT)Round((float)(wm->usWinAscent) * font->fontinfo.Builtin.scale);
+    usWinDescent = (USHORT)Round((float)(wm->usWinDescent) * font->fontinfo.Builtin.scale);
+    sAvgCharWidth = (SHORT)Round((float)(wm->sAvgCharWidth) * font->fontinfo.Builtin.scale);
 
     tm->tmAscent = (LONG)usWinAscent;
     tm->tmDescent = (LONG)usWinDescent;
@@ -125,7 +125,7 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
 
     font->fontinfo.Builtin.scale *= (float)wm->usUnitsPerEm / 1000.0;
 
-    tm->tmMaxCharWidth = (LONG)round(
+    tm->tmMaxCharWidth = (LONG)Round(
     	    (afm->FontBBox.urx - afm->FontBBox.llx) * font->fontinfo.Builtin.scale);
 
     font->underlinePosition = afm->UnderlinePosition * font->fontinfo.Builtin.scale;

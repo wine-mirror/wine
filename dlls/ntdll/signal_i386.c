@@ -249,8 +249,44 @@ typedef struct
 
 #endif  /* __EMX__ */
 
+#ifdef __CYGWIN__
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMX__)
+/* FIXME: This section is just here so it can compile, it's most likely
+ * completely wrong. */
+
+typedef struct
+{
+    unsigned short sc_gs, __gsh;
+    unsigned short sc_fs, __fsh;
+    unsigned short sc_es, __esh;
+    unsigned short sc_ds, __dsh;
+    unsigned long sc_edi;
+    unsigned long sc_esi;
+    unsigned long sc_ebp;
+    unsigned long sc_esp;
+    unsigned long sc_ebx;
+    unsigned long sc_edx;
+    unsigned long sc_ecx;
+    unsigned long sc_eax;
+    unsigned long sc_trapno;
+    unsigned long sc_err;
+    unsigned long sc_eip;
+    unsigned short sc_cs, __csh;
+    unsigned long sc_eflags;
+    unsigned long esp_at_signal;
+    unsigned short sc_ss, __ssh;
+    unsigned long i387;
+    unsigned long oldmask;
+    unsigned long cr2;
+} SIGCONTEXT;
+
+#define HANDLER_DEF(name) void name( int __signal, SIGCONTEXT __context )
+#define HANDLER_CONTEXT (&__context)
+
+#endif /* __CYGWIN__ */
+
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) ||\
+    defined(__OpenBSD__) || defined(__EMX__) || defined(__CYGWIN__)
 
 #define EAX_sig(context)     ((context)->sc_eax)
 #define EBX_sig(context)     ((context)->sc_ebx)

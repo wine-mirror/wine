@@ -34,7 +34,7 @@ struct _stat {
   short          st_uid;
   short          st_gid;
   _dev_t         st_rdev;
-  _off_t         st_size;
+  MSVCRT(_off_t) st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
   MSVCRT(time_t) st_ctime;
@@ -59,9 +59,9 @@ struct _stati64 {
 extern "C" {
 #endif
 
-int _fstat(int,struct _stat*);
+int MSVCRT(_fstat)(int,struct _stat*);
+int MSVCRT(_stat)(const char*,struct _stat*);
 int _fstati64(int,struct _stati64*);
-int _stat(const char*,struct _stat*);
 int _stati64(const char*,struct _stati64*);
 
 int _wstat(const WCHAR*,struct _stat*);

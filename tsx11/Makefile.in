@@ -37,7 +37,7 @@ libwine_tsx11.a: $(OBJS)
 	$(RANLIB) $@
 
 libwine_tsx11.dll: $(OBJS)
-	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine_tsx11.a -o libwine_tsx11.dll $(OBJS)
+	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine_tsx11.a -o libwine_tsx11.dll $(OBJS) $(EXTRALIBS)
 
 .PHONY: install_so install_a
 
