@@ -598,9 +598,11 @@ static void wave_in_tests()
            "MMSYSERR_NOTSUPPORTED expected, got %s\n",
            dev_name(ndev+1),wave_in_error(rc));
     else
-        ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
-           "waveInGetDevCapsW(%s): MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER "
-           "expected, got %s\n",dev_name(ndev+1),wave_in_error(rc));
+        ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER ||
+          rc==MMSYSERR_NOTSUPPORTED,
+           "waveInGetDevCapsW(%s): MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER or"
+           "MMSYSERR_NOTSUPPORTED expected, got %s\n",
+           dev_name(ndev+1),wave_in_error(rc));
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
