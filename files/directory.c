@@ -193,10 +193,18 @@ UINT32 DIR_GetSystemUnixDir( LPSTR path, UINT32 count )
  */
 BYTE WINAPI GetTempDrive( BYTE ignored )
 {
-    char buffer[2];
+    char *buffer;
+    BYTE ret;
+    UINT32 len = GetTempPath32A( 0, NULL );
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len + 1 )) )
+      return DRIVE_GetCurrentDrive() + 'A';
+
     /* FIXME: apparently Windows does something with the ignored byte */
-    if (!GetTempPath32A( sizeof(buffer), buffer )) buffer[0] = 'C';
-    return toupper(buffer[0]);
+    if (!GetTempPath32A( len, buffer )) buffer[0] = 'C';
+    ret = buffer[0];
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return toupper(ret);
 }
 
 
