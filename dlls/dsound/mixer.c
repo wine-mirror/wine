@@ -388,8 +388,8 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 	if (len % dsb->dsound->pwfx->nBlockAlign) {
 		INT nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
-		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
 		ERR("length not a multiple of block size, len = %d, block size = %d\n", len, nBlockAlign);
+		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
 	}
 
 	if (len == 0) {
@@ -505,8 +505,8 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 
 	if (len % dsb->dsound->pwfx->nBlockAlign) {
 		INT nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
-		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
 		ERR("length not a multiple of block size, len = %ld, block size = %d\n", len, nBlockAlign);
+		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
 	}
 
 	if ((buf = ibuf = DSOUND_tmpbuffer(dsb->dsound, len)) == NULL)
