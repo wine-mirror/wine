@@ -509,7 +509,7 @@ static void create_dir( const char *name, struct stat *st )
     if (lstat( name, st ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "lstat %s", name );
-        if (mkdir( name, 0700 ) == -1) fatal_perror( "mkdir %s", name );
+        if (mkdir( name, 0700 ) == -1 && errno != EEXIST) fatal_perror( "mkdir %s", name );
         if (lstat( name, st ) == -1) fatal_perror( "lstat %s", name );
     }
     if (!S_ISDIR(st->st_mode)) fatal_error( "%s is not a directory\n", name );
