@@ -15,7 +15,6 @@
 #include "thread.h"
 #include "unicode.h"
 
-int debug_level = 0;
 
 struct object_name
 {

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #include "winbase.h"
@@ -50,14 +51,89 @@ static const struct object_ops process_ops =
     process_destroy              /* destroy */
 };
 
+/* set the process creation info */
+static int set_creation_info( struct process *process, struct new_process_request *req,
+                              const char *cmd_line, size_t len )
+{
+    if (!(process->info = mem_alloc( sizeof(*process->info) + len ))) return 0;
+    if (req)
+    {
+        /* copy the request structure */
+        memcpy( process->info, req, sizeof(*req) );
+    }
+    else  /* no request, use defaults */
+    {
+        req = process->info;
+        req->inherit      = 0;
+        req->inherit_all  = 0;
+        req->create_flags = CREATE_NEW_CONSOLE;
+        req->start_flags  = STARTF_USESTDHANDLES;
+        req->hstdin       = -1;
+        req->hstdout      = -1;
+        req->hstderr      = -1;
+        req->event        = -1;
+        req->cmd_show     = 0;
+        req->env_ptr      = NULL;
+    }
+    memcpy( process->info->cmdline, cmd_line, len );
+    process->info->cmdline[len] = 0;
+    process->create_flags = process->info->create_flags;
+    return 1;
+}
 
-/* create a new process */
-static struct process *create_process( struct process *parent, struct new_process_request *req,
-                                       const char *cmd_line, size_t len )
+/* set the console and stdio handles for a newly created process */
+static int set_process_console( struct process *process, struct process *parent )
+{
+    struct new_process_request *info = process->info;
+
+    if (process->create_flags & CREATE_NEW_CONSOLE)
+    {
+        if (!alloc_console( process )) return 0;
+    }
+    else if (!(process->create_flags & DETACHED_PROCESS))
+    {
+        if (parent->console_in) process->console_in = grab_object( parent->console_in );
+        if (parent->console_out) process->console_out = grab_object( parent->console_out );
+    }
+    if (parent)
+    {
+        if (!info->inherit_all && !(info->start_flags & STARTF_USESTDHANDLES))
+        {
+            /* duplicate the handle from the parent into this process */
+            info->hstdin  = duplicate_handle( parent, info->hstdin, process,
+                                              0, TRUE, DUPLICATE_SAME_ACCESS );
+            info->hstdout = duplicate_handle( parent, info->hstdout, process,
+                                              0, TRUE, DUPLICATE_SAME_ACCESS );
+            info->hstderr = duplicate_handle( parent, info->hstderr, process,
+                                              0, TRUE, DUPLICATE_SAME_ACCESS );
+        }
+    }
+    else
+    {
+        /* no parent, use handles to the console for stdio */
+        info->hstdin  = alloc_handle( process, process->console_in,
+                                      GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+        info->hstdout = alloc_handle( process, process->console_out,
+                                      GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+        info->hstderr = alloc_handle( process, process->console_out,
+                                      GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+    }
+    return 1;
+}
+
+/* create a new process and its main thread */
+struct thread *create_process( int fd, struct process *parent,
+                               struct new_process_request *req,
+                               const char *cmd_line, size_t len )
 {
     struct process *process;
+    struct thread *thread = NULL;
 
-    if (!(process = alloc_object( &process_ops, -1 ))) return NULL;
+    if (!(process = alloc_object( &process_ops, -1 )))
+    {
+        close( fd );
+        return NULL;
+    }
     process->next            = NULL;
     process->prev            = NULL;
     process->thread_list     = NULL;
@@ -74,16 +150,13 @@ static struct process *create_process( struct process *parent, struct new_proces
     process->init_event      = NULL;
     process->info            = NULL;
     gettimeofday( &process->start_time, NULL );
+    if ((process->next = first_process) != NULL) process->next->prev = process;
+    first_process = process;
 
     /* copy the request structure */
-    if (!(process->info = mem_alloc( sizeof(*process->info) + len ))) goto error;
-    memcpy( process->info, req, sizeof(*req) );
-    memcpy( process->info->cmdline, cmd_line, len );
-    process->info->cmdline[len] = 0;
-    req = process->info;  /* use the copy now */
-    process->create_flags = req->create_flags;
+    if (!set_creation_info( process, req, cmd_line, len )) goto error;
 
-    if (req->inherit_all)
+    if (process->info->inherit_all)
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
@@ -93,32 +166,18 @@ static struct process *create_process( struct process *parent, struct new_proces
     alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
 
     /* get the init done event */
-    if (req->event != -1)
+    if (process->info->event != -1)
     {
-        if (!(process->init_event = get_event_obj( parent, req->event, EVENT_MODIFY_STATE )))
-            goto error;
+        if (!(process->init_event = get_event_obj( parent, process->info->event,
+                                                   EVENT_MODIFY_STATE ))) goto error;
     }
 
     /* set the process console */
-    if (process->create_flags & CREATE_NEW_CONSOLE)
-    {
-        if (!alloc_console( process )) goto error;
-    }
-    else if (!(process->create_flags & DETACHED_PROCESS))
-    {
-        if (parent->console_in) process->console_in = grab_object( parent->console_in );
-        if (parent->console_out) process->console_out = grab_object( parent->console_out );
-    }
+    if (!set_process_console( process, parent )) goto error;
 
-    if (!req->inherit_all && !(req->start_flags & STARTF_USESTDHANDLES))
-    {
-        process->info->hstdin  = duplicate_handle( parent, req->hstdin, process,
-                                                   0, TRUE, DUPLICATE_SAME_ACCESS );
-        process->info->hstdout = duplicate_handle( parent, req->hstdout, process,
-                                                   0, TRUE, DUPLICATE_SAME_ACCESS );
-        process->info->hstderr = duplicate_handle( parent, req->hstderr, process,
-                                                   0, TRUE, DUPLICATE_SAME_ACCESS );
-    }
+    /* create the main thread */
+    if (!(thread = create_thread( fd, process, (process->create_flags & CREATE_SUSPENDED) != 0)))
+        goto error;
 
     /* attach to the debugger if requested */
     if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
@@ -126,43 +185,15 @@ static struct process *create_process( struct process *parent, struct new_proces
     else if (parent && parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
         debugger_attach( process, parent->debugger );
 
-    if ((process->next = first_process) != NULL) process->next->prev = process;
-    first_process = process;
-    return process;
+    release_object( process );
+    return thread;
 
  error:
+    close( fd );
     free_console( process );
     if (process->handles) release_object( process->handles );
     release_object( process );
     return NULL;
-}
-
-/* create the initial process */
-struct process *create_initial_process(void)
-{
-    struct process *process;
-    struct new_process_request req;
-
-    req.inherit      = 0;
-    req.inherit_all  = 0;
-    req.create_flags = CREATE_NEW_CONSOLE;
-    req.start_flags  = STARTF_USESTDHANDLES;
-    req.hstdin       = -1;
-    req.hstdout      = -1;
-    req.hstderr      = -1;
-    req.event        = -1;
-    req.cmd_show     = 0;
-    req.env_ptr      = NULL;
-    if ((process = create_process( NULL, &req, "", 1 )))
-    {
-        process->info->hstdin  = alloc_handle( process, process->console_in,
-                                               GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-        process->info->hstdout = alloc_handle( process, process->console_out,
-                                               GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-        process->info->hstderr = alloc_handle( process, process->console_out,
-                                               GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-    }
-    return process;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -229,6 +260,8 @@ static void process_killed( struct process *process, int exit_code )
     {
         /* last process died, close global handles */
         close_global_handles();
+        /* this will cause the select loop to terminate */
+        if (!persistent_server) close_master_socket();
     }
 }
 
@@ -455,16 +488,40 @@ struct process_snapshot *process_snap( int *count )
 DECL_HANDLER(new_process)
 {
     size_t len = get_req_strlen( req->cmdline );
-    struct process *process;
+    struct thread *thread;
+    int sock[2];
 
-    req->handle = -1;
-    req->pid    = NULL;
-    if ((process = create_process( current->process, req, req->cmdline, len )))
+    req->phandle = -1;
+    req->thandle = -1;
+    req->pid     = NULL;
+    req->tid     = NULL;
+
+    if (socketpair( AF_UNIX, SOCK_STREAM, 0, sock ) == -1)
     {
-        req->handle = alloc_handle( current->process, process, PROCESS_ALL_ACCESS, req->inherit );
-        req->pid    = process;
-        release_object( process );
+        file_set_error();
+        return;
     }
+
+    if ((thread = create_process( sock[0], current->process, req, req->cmdline, len )))
+    {
+        int phandle = alloc_handle( current->process, thread->process,
+                                    PROCESS_ALL_ACCESS, req->inherit );
+        if ((req->phandle = phandle) != -1)
+        {
+            if ((req->thandle = alloc_handle( current->process, thread,
+                                              THREAD_ALL_ACCESS, req->inherit )) != -1)
+            {
+                /* thread object will be released when the thread gets killed */
+                set_reply_fd( current, sock[1] );
+                req->pid = thread->process;
+                req->tid = thread;
+                return;
+            }
+            close_handle( current->process, phandle );
+        }
+        release_object( thread );
+    }
+    close( sock[1] );
 }
 
 /* initialize a new process */

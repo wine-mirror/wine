@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -241,13 +242,13 @@ static BOOL PROCESS_CreateEnvDB(void)
 
     /* Allocate the env DB */
 
-    if (!(env_db = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB) )))
+    if (!(env_db = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ENVDB) )))
         return FALSE;
     pdb->env_db = env_db;
     InitializeCriticalSection( &env_db->section );
 
     /* Allocate and fill the startup info */
-    if (!(startup = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
+    if (!(startup = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
         return FALSE;
     env_db->startup_info = startup;
 
@@ -263,11 +264,11 @@ static BOOL PROCESS_CreateEnvDB(void)
 
     /* Copy the parent environment */
 
-    if (!ENV_InheritEnvironment( pdb, req->env_ptr )) return FALSE;
+    if (!ENV_InheritEnvironment( req->env_ptr )) return FALSE;
 
     /* Copy the command line */
 
-    if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
+    if (!(pdb->env_db->cmd_line = HEAP_strdupA( GetProcessHeap(), 0, cmd_line )))
         return FALSE;
 
     return TRUE;
@@ -286,7 +287,6 @@ void PROCESS_FreePDB( PDB *pdb )
     ENV_FreeEnvironment( pdb );
     while (*pptr && (*pptr != pdb)) pptr = &(*pptr)->next;
     if (*pptr) *pptr = pdb->next;
-    if (pdb->heap && (pdb->heap != pdb->system_heap)) HeapDestroy( pdb->heap );
     HeapFree( SystemHeap, 0, pdb );
 }
 
@@ -306,11 +306,9 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     pdb->threads         = 1;
     pdb->running_threads = 1;
     pdb->ring0_threads   = 1;
-    pdb->system_heap     = SystemHeap;
     pdb->parent          = parent;
     pdb->group           = pdb;
     pdb->priority        = 8;  /* Normal */
-    pdb->heap            = pdb->system_heap;  /* will be changed later on */
     pdb->next            = PROCESS_First;
     pdb->winver          = 0xffff; /* to be determined */
     pdb->main_queue      = INVALID_HANDLE_VALUE16;
@@ -350,9 +348,9 @@ BOOL PROCESS_Init(void)
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = teb->teb_sel;
 
-    /* Create the system heap */
-    if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
-    initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
+    /* Create the system and process heaps */
+    if (!HEAP_CreateSystemHeap()) return FALSE;
+    initial_pdb.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
 
     /* Create the idle event for the initial process
        FIXME 1: Shouldn't we call UserSignalProc for the initial process too?
@@ -406,11 +404,13 @@ void PROCESS_Start(void)
     InitializeCriticalSection( &pdb->crit_section );
 
     /* Create the heap */
-    if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, 
-                                  header? header->SizeOfHeapReserve : 0x10000,
-                                  header? header->SizeOfHeapCommit  : 0 ))) 
-        goto error;
-    pdb->heap_list = pdb->heap;
+    if (!(pdb->heap = GetProcessHeap()))
+    {
+        if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, 
+                                      header? header->SizeOfHeapReserve : 0x10000,
+                                      header? header->SizeOfHeapCommit  : 0 ))) 
+            goto error;
+    }
 
     /* Create the environment db */
     if (!PROCESS_CreateEnvDB()) goto error;
@@ -492,7 +492,8 @@ void PROCESS_Start(void)
     }
 
     /* If requested, add entry point breakpoint */
-    if ( Options.debug && TASK_AddTaskEntryBreakpoint )
+    if ( (Options.debug && TASK_AddTaskEntryBreakpoint) ||
+         (pdb->flags & PDB32_DEBUGGED))
         TASK_AddTaskEntryBreakpoint( pdb->task );
 
     /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
@@ -515,6 +516,7 @@ void PROCESS_Start(void)
 
     case PROC_WIN32:
         TRACE_(relay)( "Starting Win32 process (entryproc=%p)\n", entry );
+        if (pdb->flags & PDB32_DEBUGGED) DebugBreak();
         ExitProcess( entry(NULL) );
     }
 
@@ -536,7 +538,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     HANDLE handles[2], load_done_evt = 0;
     DWORD exitcode, size;
     BOOL alloc_stack16;
-    int server_thandle;
+    int server_thandle, fd = -1;
     struct new_process_request *req = get_req_buffer();
     TEB *teb = NULL;
     PDB *parent = PROCESS_Current();
@@ -568,12 +570,15 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     req->cmd_show = startup->wShowWindow;
     req->env_ptr = (void*)env;  /* FIXME: hack */
     lstrcpynA( req->cmdline, cmd_line, server_remaining(req->cmdline) );
-    if (server_call( REQ_NEW_PROCESS )) goto error;
+    if (server_call_fd( REQ_NEW_PROCESS, -1, &fd )) goto error;
+    fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
     pdb->server_pid   = req->pid;
-    info->hProcess    = req->handle;
-    info->dwProcessId = (DWORD)pdb->server_pid;
+    info->hProcess    = req->phandle;
+    info->dwProcessId = (DWORD)req->pid;
+    info->hThread     = req->thandle;
+    info->dwThreadId  = (DWORD)req->tid;
 
-    if ((flags & DEBUG_PROCESS) ||
+    if ((flags & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)) ||
         ((parent->flags & PDB32_DEBUGGED) && !(flags & DEBUG_ONLY_THIS_PROCESS)))
         pdb->flags |= PDB32_DEBUGGED;
 
@@ -600,11 +605,11 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Create the main thread */
 
-    if (!(teb = THREAD_Create( pdb, flags & CREATE_SUSPENDED, size,
+    if (!(teb = THREAD_Create( pdb, fd, flags & CREATE_SUSPENDED, size,
                                alloc_stack16, tsa, &server_thandle ))) goto error;
-    info->hThread     = server_thandle;
-    info->dwThreadId  = (DWORD)teb->tid;
+    teb->tid = (void *)info->dwThreadId;
     teb->startup = PROCESS_Start;
+    fd = -1;  /* don't close it */
 
     /* Pass module to new process (FIXME: hack) */
     pdb->module = pModule->self;
@@ -650,6 +655,7 @@ error:
     if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
     if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
     PROCESS_FreePDB( pdb );
+    if (fd != -1) close( fd );
     return NULL;
 }
 
@@ -849,16 +855,6 @@ DWORD WINAPI MapProcessHandle( HANDLE handle )
 DWORD WINAPI GetCurrentProcessId(void)
 {
     return (DWORD)PROCESS_Current()->server_pid;
-}
-
-
-/***********************************************************************
- *           GetProcessHeap    (KERNEL32.259)
- */
-HANDLE WINAPI GetProcessHeap(void)
-{
-    PDB *pdb = PROCESS_Current();
-    return pdb->heap ? pdb->heap : SystemHeap;
 }
 
 
@@ -1233,22 +1229,6 @@ BOOL WINAPI GetExitCodeProcess(
         ret = TRUE;
     }
     return ret;
-}
-
-
-/***********************************************************************
- * GetProcessHeaps [KERNEL32.376]
- */
-DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE *heaps) {
-	FIXME_(win32)("(%ld,%p), incomplete implementation.\n",nrofheaps,heaps);
-
-	if (nrofheaps) {
-		heaps[0] = GetProcessHeap();
-		/* ... probably SystemHeap too ? */
-		return 1;
-	}
-	/* number of available heaps */
-	return 1;
 }
 
 

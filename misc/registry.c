@@ -1486,6 +1486,8 @@ void SHELL_LoadRegistry( void )
 
   TRACE("(void)\n");
 
+  if (!CLIENT_IsBootThread()) return;  /* already loaded */
+
   REGISTRY_Init();
   SetLoadLevel(0);
 

@@ -165,6 +165,9 @@ extern int get_page_size(void);
 
 extern void close_registry(void);
 
+/* global variables (command-line options) */
+
 extern int debug_level;
+extern int persistent_server;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

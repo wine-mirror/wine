@@ -62,7 +62,7 @@ extern struct thread *current;
 
 /* thread functions */
 
-extern void create_initial_thread( int fd );
+extern struct thread *create_thread( int fd, struct process *process, int suspend );
 extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
 extern struct thread *get_thread_from_pid( int pid );

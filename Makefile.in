@@ -100,7 +100,6 @@ LIBSUBDIRS = \
 	relay32 \
 	resources \
 	scheduler \
-	server \
 	win32 \
 	windows \
 	windows/ttydrv
@@ -112,7 +111,8 @@ X11SUBDIRS = \
 
 EMUSUBDIRS = \
 	debugger \
-	miscemu
+	miscemu \
+	server
 
 PROGSUBDIRS = libtest programs
 
@@ -213,7 +213,6 @@ LIBOBJS = \
 	relay32/relay32.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
-	server/server.o \
 	win32/win32.o \
 	windows/windows.o \
 	windows/ttydrv/ttydrv.o
@@ -231,7 +230,7 @@ LIB_TARGET  = @LIB_TARGET@
 
 ALT_LINK    = @ALT_LINK@
 
-all: Makefile Make.rules $(MAIN_TARGET)
+all: Makefile Make.rules server $(MAIN_TARGET)
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 

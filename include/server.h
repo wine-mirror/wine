@@ -121,7 +121,9 @@ struct new_process_request
     IN  int          cmd_show;     /* main window show mode */
     IN  void*        env_ptr;      /* pointer to environment (FIXME: hack) */
     OUT void*        pid;          /* process id */
-    OUT int          handle;       /* process handle (in the current process) */
+    OUT int          phandle;      /* process handle (in the current process) */
+    OUT void*        tid;          /* thread id */
+    OUT int          thandle;      /* thread handle (in the current process) */
     IN  char         cmdline[1];   /* command line */
 };
 
@@ -129,7 +131,6 @@ struct new_process_request
 /* Create a new thread from the context of the parent */
 struct new_thread_request
 {
-    IN  void*        pid;          /* process id for the new thread */
     IN  int          suspend;      /* new thread should be suspended on creation */ 
     IN  int          inherit;      /* inherit flag */
     OUT void*        tid;          /* thread id */
@@ -137,10 +138,10 @@ struct new_thread_request
 };
 
 
-/* Set the server debug level */
-struct set_debug_request
+/* Signal that we are finished booting on the client side */
+struct boot_done_request
 {
-    IN  int          level;        /* New debug level */
+    IN  int          debug_level;  /* new debug level */
 };
 
 
@@ -171,6 +172,7 @@ struct init_thread_request
     IN  void*        teb;          /* TEB of new thread (in thread address space) */
     OUT void*        pid;          /* process id of the new thread's process */
     OUT void*        tid;          /* thread id of the new thread */
+    OUT int          boot;         /* is this the boot thread? */
 };
 
 
@@ -1036,7 +1038,7 @@ enum request
 {
     REQ_NEW_PROCESS,
     REQ_NEW_THREAD,
-    REQ_SET_DEBUG,
+    REQ_BOOT_DONE,
     REQ_INIT_PROCESS,
     REQ_INIT_PROCESS_DONE,
     REQ_INIT_THREAD,
@@ -1189,7 +1191,8 @@ static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
 }
 
 extern int CLIENT_InitServer(void);
-extern int CLIENT_SetDebug( int level );
+extern int CLIENT_BootDone( int debug_level );
+extern int CLIENT_IsBootThread(void);
 extern int CLIENT_DebuggerRequest( int op );
 extern int CLIENT_InitThread(void);
 #endif  /* __WINE_SERVER__ */

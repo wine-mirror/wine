@@ -87,6 +87,7 @@ static const struct object_ops thread_ops =
 };
 
 static struct thread *first_thread;
+static struct thread *booting_thread;
 
 /* allocate the buffer for the communication with the client */
 static int alloc_client_buffer( struct thread *thread )
@@ -106,7 +107,7 @@ static int alloc_client_buffer( struct thread *thread )
 }
 
 /* create a new thread */
-static struct thread *create_thread( int fd, struct process *process, int suspend )
+struct thread *create_thread( int fd, struct process *process, int suspend )
 {
     struct thread *thread;
     int buf_fd;
@@ -135,14 +136,15 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     thread->suspend     = (suspend != 0);
     thread->buffer      = (void *)-1;
     thread->last_req    = REQ_GET_THREAD_BUFFER;
+    thread->process     = (struct process *)grab_object( process );
 
-    if (!first_thread)  /* creating the first thread */
+    if (!current) current = thread;
+
+    if (!booting_thread)  /* first thread ever */
     {
-        current = thread;
-        thread->process = process = create_initial_process(); 
-        assert( process );
+        booting_thread = thread;
+        lock_master_socket(1);
     }
-    else thread->process = (struct process *)grab_object( process );
 
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
@@ -159,13 +161,6 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     remove_process_thread( process, thread );
     release_object( thread );
     return NULL;
-}
-
-/* create the initial thread and start the main server loop */
-void create_initial_thread( int fd )
-{
-    create_thread( fd, NULL, 0 );
-    select_loop();
 }
 
 /* handle a client event */
@@ -543,25 +538,34 @@ void kill_thread( struct thread *thread, int exit_code )
     release_object( thread );
 }
 
+/* signal that we are finished booting on the client side */
+DECL_HANDLER(boot_done)
+{
+    debug_level = req->debug_level;
+    /* Make sure last_req is initialized */
+    current->last_req = REQ_BOOT_DONE;
+    if (current == booting_thread)
+    {
+        booting_thread = (struct thread *)~0UL;  /* make sure it doesn't match other threads */
+        lock_master_socket(0);  /* allow other clients now */
+    }
+}
+
 /* create a new thread */
 DECL_HANDLER(new_thread)
 {
     struct thread *thread;
-    struct process *process;
     int sock[2];
-
-    if (!(process = get_process_from_id( req->pid ))) return;
 
     if (socketpair( AF_UNIX, SOCK_STREAM, 0, sock ) != -1)
     {
-        if ((thread = create_thread( sock[0], process, req->suspend )))
+        if ((thread = create_thread( sock[0], current->process, req->suspend )))
         {
             req->tid = thread;
             if ((req->handle = alloc_handle( current->process, thread,
                                              THREAD_ALL_ACCESS, req->inherit )) != -1)
             {
                 set_reply_fd( current, sock[1] );
-                release_object( process );
                 /* thread object will be released when the thread gets killed */
                 return;
             }
@@ -570,7 +574,6 @@ DECL_HANDLER(new_thread)
         close( sock[1] );
     }
     else file_set_error();
-    release_object( process );
 }
 
 /* retrieve the thread buffer file descriptor */
@@ -590,8 +593,9 @@ DECL_HANDLER(init_thread)
     current->unix_pid = req->unix_pid;
     current->teb      = req->teb;
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
-    req->pid = current->process;
-    req->tid = current;
+    req->pid  = current->process;
+    req->tid  = current;
+    req->boot = (current == booting_thread);
 }
 
 /* terminate a thread */

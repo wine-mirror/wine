@@ -9,22 +9,27 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
 #include <sys/uio.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include "winnt.h"
 #include "winbase.h"
 #include "wincon.h"
 #include "thread.h"
+#include "process.h"
 #include "server.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
@@ -34,9 +39,41 @@
 #define SCM_RIGHTS 1
 #endif
 
- 
+ /* path names for server master Unix socket */
+#define CONFDIR    "/.wine"        /* directory for Wine config relative to $HOME */
+#define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
+#define SOCKETNAME "socket"        /* name of the socket file */
+
+struct master_socket
+{
+    struct object       obj;         /* object header */
+};
+
+static void master_socket_dump( struct object *obj, int verbose );
+static void master_socket_poll_event( struct object *obj, int event );
+static void master_socket_destroy( struct object *obj );
+
+static const struct object_ops master_socket_ops =
+{
+    sizeof(struct master_socket),  /* size */
+    master_socket_dump,            /* dump */
+    no_add_queue,                  /* add_queue */
+    NULL,                          /* remove_queue */
+    NULL,                          /* signaled */
+    NULL,                          /* satisfied */
+    NULL,                          /* get_poll_events */
+    master_socket_poll_event,      /* poll_event */
+    no_read_fd,                    /* get_read_fd */
+    no_write_fd,                   /* get_write_fd */
+    no_flush,                      /* flush */
+    no_get_file_info,              /* get_file_info */
+    master_socket_destroy          /* destroy */
+};
+
+
 struct thread *current = NULL;  /* thread handling the current request */
 
+static struct master_socket *master_socket;  /* the master socket object */
 
 /* socket communication static structures */
 static struct iovec myiovec;
@@ -62,6 +99,31 @@ void fatal_protocol_error( struct thread *thread, const char *err, ... )
     vfprintf( stderr, err, args );
     va_end( args );
     kill_thread( thread, PROTOCOL_ERROR );
+}
+
+/* die on a fatal error */
+static void fatal_error( const char *err, ... )
+{
+    va_list args;
+
+    va_start( args, err );
+    fprintf( stderr, "wineserver: " );
+    vfprintf( stderr, err, args );
+    va_end( args );
+    exit(1);
+}
+
+/* die on a fatal error */
+static void fatal_perror( const char *err, ... )
+{
+    va_list args;
+
+    va_start( args, err );
+    fprintf( stderr, "wineserver: " );
+    vfprintf( stderr, err, args );
+    perror( " " );
+    va_end( args );
+    exit(1);
 }
 
 /* call a request handler */
@@ -187,12 +249,135 @@ int write_request( struct thread *thread )
     return 1;
 }
 
-/* set the debug level */
-DECL_HANDLER(set_debug)
+static void master_socket_dump( struct object *obj, int verbose )
 {
-    debug_level = req->level;
-    /* Make sure last_req is initialized */
-    current->last_req = REQ_SET_DEBUG;
+    struct master_socket *sock = (struct master_socket *)obj;
+    assert( obj->ops == &master_socket_ops );
+    fprintf( stderr, "Master socket fd=%d\n", sock->obj.fd );
+}
+
+/* handle a socket event */
+static void master_socket_poll_event( struct object *obj, int event )
+{
+    struct master_socket *sock = (struct master_socket *)obj;
+    assert( obj->ops == &master_socket_ops );
+
+    assert( sock == master_socket );  /* there is only one master socket */
+
+    if (event & (POLLERR | POLLHUP))
+    {
+        /* this is not supposed to happen */
+        fprintf( stderr, "wineserver: Error on master socket\n" );
+        release_object( obj );
+    }
+    else if (event & POLLIN)
+    {
+        struct sockaddr_un dummy;
+        int len = sizeof(dummy);
+        int client = accept( master_socket->obj.fd, &dummy, &len );
+        if (client != -1) create_process( client, NULL, NULL, "", 1 );
+    }
+}
+
+/* remove the socket upon exit */
+static void socket_cleanup(void)
+{
+    unlink( SOCKETNAME );
+}
+
+static void master_socket_destroy( struct object *obj )
+{
+    socket_cleanup();
+}
+
+/* return the configuration directory ($HOME/.wine) */
+static const char *get_config_dir(void)
+{
+    static char *confdir;
+    if (!confdir)
+    {
+        const char *home = getenv( "HOME" );
+        if (!home)
+        {
+            struct passwd *pwd = getpwuid( getuid() );
+            if (!pwd) fatal_error( "could not find your home directory\n" );
+            home = pwd->pw_dir;
+        }
+        if (!(confdir = malloc( strlen(home) + strlen(CONFDIR) + 1 )))
+            fatal_error( "out of memory\n" );
+        strcpy( confdir, home );
+        strcat( confdir, CONFDIR );
+        mkdir( confdir, 0755 );  /* just in case */
+    }
+    return confdir;
+}
+
+/* create the server directory and chdir to it */
+static void create_server_dir(void)
+{
+    char hostname[64];
+    char *serverdir;
+    const char *confdir = get_config_dir();
+    struct stat st;
+
+    if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
+
+    if (!(serverdir = malloc( strlen(confdir) + strlen(SERVERDIR) + strlen(hostname) + 1 )))
+        fatal_error( "out of memory\n" );
+
+    strcpy( serverdir, confdir );
+    strcat( serverdir, SERVERDIR );
+    strcat( serverdir, hostname );
+
+    if (chdir( serverdir ) == -1)
+    {
+        if (errno != ENOENT) fatal_perror( "chdir %s", serverdir );
+        if (mkdir( serverdir, 0700 ) == -1) fatal_perror( "mkdir %s", serverdir );
+        if (chdir( serverdir ) == -1) fatal_perror( "chdir %s", serverdir );
+    }
+    if (stat( ".", &st ) == -1) fatal_perror( "stat %s", serverdir );
+    if (!S_ISDIR(st.st_mode)) fatal_error( "%s is not a directory\n", serverdir );
+    if (st.st_uid != getuid()) fatal_error( "%s is not owned by you\n", serverdir );
+    if (st.st_mode & 077) fatal_error( "%s must not be accessible by other users\n", serverdir );
+}
+
+/* open the master server socket and start waiting for new clients */
+void open_master_socket(void)
+{
+    struct sockaddr_un addr;
+    int fd;
+
+    create_server_dir();
+    if ((fd = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
+    addr.sun_family = AF_UNIX;
+    strcpy( addr.sun_path, "socket" );
+    if (bind( fd, &addr, sizeof(addr.sun_family) + strlen(addr.sun_path) ) == -1)
+    {
+        if ((errno == EEXIST) || (errno == EADDRINUSE))
+            fatal_error( "another server is already running\n" );
+        else
+            fatal_perror( "bind" );
+    }
+    atexit( socket_cleanup );
+
+    chmod( "socket", 0600 );  /* make sure no other user can connect */
+    if (listen( fd, 5 ) == -1) fatal_perror( "listen" );
+
+    if (!(master_socket = alloc_object( &master_socket_ops, fd )))
+        fatal_error( "out of memory\n" );
+    set_select_events( &master_socket->obj, POLLIN );
+}
+
+/* close the master socket and stop waiting for new clients */
+void close_master_socket(void)
+{
+    release_object( master_socket );
+}
+
+/* lock/unlock the master socket to stop accepting new clients */
+void lock_master_socket( int locked )
+{
+    set_select_events( &master_socket->obj, locked ? 0 : POLLIN );
 }
 
 /* debugger support operations */

@@ -212,8 +212,8 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
  *	allocate in this area and don't support a granularity of 4kb
  *	yet we leave it to VirtualAlloc to choose an address.
  */
-TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
-                     LPSECURITY_ATTRIBUTES sa, int *server_handle )
+TEB *THREAD_Create( PDB *pdb, int fd, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
+                    LPSECURITY_ATTRIBUTES sa, int *server_handle )
 {
     struct new_thread_request *req = get_req_buffer();
     HANDLE cleanup_object;
@@ -227,7 +227,7 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
     teb->tls_ptr     = teb->tls_array;
     teb->process     = pdb;
     teb->exit_code   = 0x103; /* STILL_ACTIVE */
-    teb->socket      = -1;
+    teb->socket      = fd;
 
     /* Allocate the TEB selector (%fs register) */
 
@@ -237,13 +237,15 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
 
     /* Create the thread on the server side */
 
-    req->pid     = teb->process->server_pid;
-    req->suspend = ((flags & CREATE_SUSPENDED) != 0);
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    if (server_call_fd( REQ_NEW_THREAD, -1, &teb->socket )) goto error;
-    teb->tid = req->tid;
-    *server_handle = req->handle;
-    fcntl( teb->socket, F_SETFD, 1 ); /* set close on exec flag */
+    if (teb->socket == -1)
+    {
+        req->suspend = ((flags & CREATE_SUSPENDED) != 0);
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        if (server_call_fd( REQ_NEW_THREAD, -1, &teb->socket )) goto error;
+        teb->tid = req->tid;
+        *server_handle = req->handle;
+        fcntl( teb->socket, F_SETFD, 1 ); /* set close on exec flag */
+    }
 
     /* Do the rest of the initialization */
 
@@ -295,7 +297,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             DWORD flags, LPDWORD id )
 {
     int handle = -1;
-    TEB *teb = THREAD_Create( PROCESS_Current(), flags, stack, TRUE, sa, &handle );
+    TEB *teb = THREAD_Create( PROCESS_Current(), -1, flags, stack, TRUE, sa, &handle );
     if (!teb) return 0;
     teb->flags      |= TEBF_WIN32;
     teb->entry_point = start;

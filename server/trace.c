@@ -215,12 +215,13 @@ static void dump_new_process_request( const struct new_process_request *req )
 static void dump_new_process_reply( const struct new_process_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " handle=%d", req->handle );
+    fprintf( stderr, " phandle=%d,", req->phandle );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " thandle=%d", req->thandle );
 }
 
 static void dump_new_thread_request( const struct new_thread_request *req )
 {
-    fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " suspend=%d,", req->suspend );
     fprintf( stderr, " inherit=%d", req->inherit );
 }
@@ -231,9 +232,9 @@ static void dump_new_thread_reply( const struct new_thread_request *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_set_debug_request( const struct set_debug_request *req )
+static void dump_boot_done_request( const struct boot_done_request *req )
 {
-    fprintf( stderr, " level=%d", req->level );
+    fprintf( stderr, " debug_level=%d", req->debug_level );
 }
 
 static void dump_init_process_request( const struct init_process_request *req )
@@ -265,7 +266,8 @@ static void dump_init_thread_request( const struct init_thread_request *req )
 static void dump_init_thread_reply( const struct init_thread_request *req )
 {
     fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " tid=%p", req->tid );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " boot=%d", req->boot );
 }
 
 static void dump_get_thread_buffer_request( const struct get_thread_buffer_request *req )
@@ -1168,7 +1170,7 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_new_thread_request,
-    (dump_func)dump_set_debug_request,
+    (dump_func)dump_boot_done_request,
     (dump_func)dump_init_process_request,
     (dump_func)dump_init_process_done_request,
     (dump_func)dump_init_thread_request,
@@ -1358,7 +1360,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
 static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
     "new_thread",
-    "set_debug",
+    "boot_done",
     "init_process",
     "init_process_done",
     "init_thread",

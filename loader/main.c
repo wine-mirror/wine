@@ -67,23 +67,26 @@ BOOL MAIN_MainInit( int *argc, char *argv[] )
     /* Parse command line arguments */
     MAIN_WineInit( argc, argv );
 
-    /* Set server debug level */
-    CLIENT_SetDebug( TRACE_ON(server) );
-
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
-
-    /* Initialize module loadorder */
-    if (!MODULE_InitLoadOrder()) return FALSE;
-
-      /* Initialize DOS memory */
-    if (!DOSMEM_Init(0)) return FALSE;
 
     /* Initialise DOS drives */
     if (!DRIVE_Init()) return FALSE;
 
     /* Initialise DOS directories */
     if (!DIR_Init()) return FALSE;
+
+    /* Registry initialisation */
+    SHELL_LoadRegistry();
+    
+    /* Global boot finished, the rest is process-local */
+    CLIENT_BootDone( TRACE_ON(server) );
+
+    /* Initialize module loadorder */
+    if (!MODULE_InitLoadOrder()) return FALSE;
+
+    /* Initialize DOS memory */
+    if (!DOSMEM_Init(0)) return FALSE;
 
     /* Initialize event handling */
     if (!EVENT_Init()) return FALSE;
@@ -94,9 +97,6 @@ BOOL MAIN_MainInit( int *argc, char *argv[] )
     /* Initialize IO-port permissions */
     IO_port_init();
 
-    /* registry initialisation */
-    SHELL_LoadRegistry();
-    
     /* Read DOS config.sys */
     if (!DOSCONF_ReadConfig()) return FALSE;
 

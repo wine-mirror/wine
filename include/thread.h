@@ -121,7 +121,7 @@ typedef struct _TEB
 
 /* scheduler/thread.c */
 extern TEB *THREAD_CreateInitialThread( struct _PDB *pdb, int server_fd );
-extern TEB *THREAD_Create( struct _PDB *pdb, DWORD flags, 
+extern TEB *THREAD_Create( struct _PDB *pdb, int fd, DWORD flags, 
                            DWORD stack_size, BOOL alloc_stack16,
                            LPSECURITY_ATTRIBUTES sa, int *server_handle );
 extern BOOL THREAD_IsWin16( TEB *thdb );

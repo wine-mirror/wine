@@ -31,6 +31,9 @@ extern int write_request( struct thread *thread );
 extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
 extern void set_reply_fd( struct thread *thread, int pass_fd );
 extern void send_reply( struct thread *thread );
+extern void open_master_socket(void);
+extern void close_master_socket(void);
+extern void lock_master_socket( int locked );
 
 extern void trace_request( enum request req, int fd );
 extern void trace_kill( struct thread *thread );
@@ -69,7 +72,7 @@ static inline size_t get_req_strlenW( const WCHAR *str )
 
 DECL_HANDLER(new_process);
 DECL_HANDLER(new_thread);
-DECL_HANDLER(set_debug);
+DECL_HANDLER(boot_done);
 DECL_HANDLER(init_process);
 DECL_HANDLER(init_process_done);
 DECL_HANDLER(init_thread);
@@ -168,7 +171,7 @@ static const struct handler {
 } req_handlers[REQ_NB_REQUESTS] = {
     { (void(*)())req_new_process, sizeof(struct new_process_request) },
     { (void(*)())req_new_thread, sizeof(struct new_thread_request) },
-    { (void(*)())req_set_debug, sizeof(struct set_debug_request) },
+    { (void(*)())req_boot_done, sizeof(struct boot_done_request) },
     { (void(*)())req_init_process, sizeof(struct init_process_request) },
     { (void(*)())req_init_process_done, sizeof(struct init_process_done_request) },
     { (void(*)())req_init_thread, sizeof(struct init_thread_request) },

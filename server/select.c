@@ -210,9 +210,6 @@ void select_loop(void)
     sigset_t sigset;
     struct sigaction action;
 
-    setsid();
-    signal( SIGPIPE, SIG_IGN );
-
     /* block the signals we use */
     sigemptyset( &sigset );
     sigaddset( &sigset, SIGCHLD );
