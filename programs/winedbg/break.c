@@ -351,7 +351,7 @@ void break_check_delayed_bp(void)
  *
  * Add a watchpoint.
  */
-void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
+static void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
 {
     int		num;
     DWORD	l = 4;
@@ -387,10 +387,26 @@ void break_add_watch(const struct dbg_lvalue* lvalue, BOOL is_write)
     dbg_printf("\n");
 }
 
+/******************************************************************
+ *		break_add_watch_from_lvalue
+ *
+ * Adds a watch point from an address (stored in a lvalue)
+ */
+void break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue)
+{
+    struct dbg_lvalue   lval;
+
+    lval.addr.Mode = AddrModeFlat;
+    lval.addr.Offset = types_extract_as_integer(lvalue);
+    lval.type.id = dbg_itype_none;
+
+    break_add_watch(&lval, TRUE);
+}
+
 /***********************************************************************
  *           break_add_watch_from_id
  *
- * Add a watchpoint from a symbol name (and eventually a line #)
+ * Add a watchpoint from a symbol name
  */
 void	break_add_watch_from_id(const char *name)
 {

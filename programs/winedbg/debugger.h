@@ -244,7 +244,7 @@ extern BOOL             break_add_break(const ADDRESS* addr, BOOL verbose);
 extern BOOL             break_add_break_from_lvalue(const struct dbg_lvalue* value);
 extern void             break_add_break_from_id(const char* name, int lineno);
 extern void             break_add_break_from_lineno(int lineno);
-extern void             break_add_watch(const struct dbg_lvalue* lvalue, int is_write);
+extern void             break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue);
 extern void             break_add_watch_from_id(const char* name);
 extern void             break_check_delayed_bp(void);
 extern void             break_delete_xpoint(int num);

@@ -226,7 +226,7 @@ break_command:
     ;
 
 watch_command:
-      tWATCH '*' expr_lvalue    { break_add_watch(&$3, 1); }
+      tWATCH '*' expr_lvalue    { break_add_watch_from_lvalue(&$3); }
     | tWATCH identifier         { break_add_watch_from_id($2); }
     ;
 

@@ -1180,7 +1180,7 @@ int main(int argc, char** argv)
         char*   ptr;
 
         dbg_curr_pid = strtol(argv[1], &ptr, 10);
-        if (dbg_curr_pid == 0 || ptr == NULL ||
+        if (dbg_curr_pid == 0 || ptr != argv[1] + strlen(argv[1]) ||
             !dbg_attach_debuggee(dbg_curr_pid, dbg_action_mode != gdb_mode, FALSE))
             dbg_curr_pid = 0;
     }

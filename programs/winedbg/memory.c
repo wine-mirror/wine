@@ -542,40 +542,43 @@ void print_addr_and_args(const ADDRESS* pc, const ADDRESS* frame)
     IMAGEHLP_STACK_FRAME        isf;
     IMAGEHLP_LINE               il;
     IMAGEHLP_MODULE             im;
-    struct sym_enum             se;
-    char                        tmp[1024];
     DWORD64                     disp;
 
-    if (pc->Mode != AddrModeFlat) 
-        dbg_printf("0x%04x:0x%04lx", pc->Segment, pc->Offset);
-    else
-        dbg_printf("0x%08lx", pc->Offset);
+    print_bare_address(pc);
 
     isf.InstructionOffset = (DWORD_PTR)memory_to_linear_addr(pc);
     isf.FrameOffset       = (DWORD_PTR)memory_to_linear_addr(frame);
 
-    si->SizeOfStruct = sizeof(*si);
-    si->MaxNameLen   = 256;
-    if (!SymFromAddr(dbg_curr_process->handle, isf.InstructionOffset, &disp, si))
+    /* grab module where symbol is. If we don't have a module, we cannot print more */
+    im.SizeOfStruct = sizeof(im);
+    if (!SymGetModuleInfo(dbg_curr_process->handle, isf.InstructionOffset, &im))
         return;
 
-    dbg_printf(" %s", si->Name);
-    if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp);
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen   = 256;
+    if (SymFromAddr(dbg_curr_process->handle, isf.InstructionOffset, &disp, si))
+    {
+        struct sym_enum se;
+        char            tmp[1024];
 
-    SymSetContext(dbg_curr_process->handle, &isf, NULL);
-    se.tmp = tmp;
-    se.frame = isf.FrameOffset;
-    tmp[0] = '\0';
-    SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &se);
-    if (tmp[0]) dbg_printf("(%s)", tmp);
+        dbg_printf(" %s", si->Name);
+        if (disp) dbg_printf("+0x%lx", (DWORD_PTR)disp);
 
-    il.SizeOfStruct = sizeof(il);
-    if (SymGetLineFromAddr(dbg_curr_process->handle, isf.InstructionOffset,
-                           NULL, &il))
-        dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
-    im.SizeOfStruct = sizeof(im);
-    if (SymGetModuleInfo(dbg_curr_process->handle, isf.InstructionOffset, &im))
+        SymSetContext(dbg_curr_process->handle, &isf, NULL);
+        se.tmp = tmp;
+        se.frame = isf.FrameOffset;
+        tmp[0] = '\0';
+        SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &se);
+        if (tmp[0]) dbg_printf("(%s)", tmp);
+
+        il.SizeOfStruct = sizeof(il);
+        if (SymGetLineFromAddr(dbg_curr_process->handle, isf.InstructionOffset,
+                               NULL, &il))
+            dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
+    }
+    else dbg_printf(" in %s (+0x%lx)", 
+                    im.ModuleName, (DWORD_PTR)(isf.InstructionOffset - im.BaseOfImage));
 }
 
 BOOL memory_disasm_one_insn(ADDRESS* addr)
