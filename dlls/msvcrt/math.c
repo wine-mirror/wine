@@ -486,10 +486,15 @@ double _chgsign(double num)
 unsigned int _control87(unsigned int newval, unsigned int mask)
 {
 #if defined(__GNUC__) && defined(__i386__)
-   unsigned int fpword, flags = 0;
+  unsigned int fpword = 0;
+  unsigned int flags = 0;
+
+  TRACE("(%08x, %08x): Called\n", newval, mask);
 
   /* Get fp control word */
-  __asm__ __volatile__( "fstsw %0" : "=m" (fpword) : );
+  __asm__ __volatile__( "fstcw %0" : "=m" (fpword) : );
+
+  TRACE("Control word before : %08x\n", fpword);
 
   /* Convert into mask constants */
   if (fpword & 0x1)  flags |= _EM_INVALID;
@@ -531,13 +536,17 @@ unsigned int _control87(unsigned int newval, unsigned int mask)
   case _PC_53: fpword |= 0x200; break;
   case _PC_24: fpword |= 0x0; break;
   }
-  if (!(flags & _IC_AFFINE)) fpword |= 0x1000;
+  if (flags & _IC_AFFINE) fpword |= 0x1000;
+
+  TRACE("Control word after  : %08x\n", fpword);
 
   /* Put fp control word */
   __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
-  return fpword;
+
+  return flags;
 #else
-  return  _controlfp( newval, mask );
+  FIXME(":Not Implemented!\n");
+  return 0;
 #endif
 }
 
@@ -546,12 +555,7 @@ unsigned int _control87(unsigned int newval, unsigned int mask)
  */
 unsigned int _controlfp(unsigned int newval, unsigned int mask)
 {
-#if defined(__GNUC__) && defined(__i386__)
-  return _control87( newval, mask );
-#else
-  FIXME(":Not Implemented!\n");
-  return 0;
-#endif
+  return _control87( newval, mask & ~_EM_DENORMAL );
 }
 
 /*********************************************************************
