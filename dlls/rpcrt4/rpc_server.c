@@ -178,11 +178,18 @@ static RpcPacket* RPCRT4_pop_packet(void)
   return packet;
 }
 
+typedef struct {
+  PRPC_MESSAGE msg;
+  void* buf;
+} packet_state;
+
 static WINE_EXCEPTION_FILTER(rpc_filter)
 {
+  packet_state* state;
   PRPC_MESSAGE msg;
-  msg = TlsGetValue(worker_tls);
-  I_RpcFreeBuffer(msg);
+  state = TlsGetValue(worker_tls);
+  msg = state->msg;
+  if (msg->Buffer != state->buf) I_RpcFreeBuffer(msg);
   msg->RpcFlags |= WINE_RPCFLAG_EXCEPTION;
   msg->BufferLength = sizeof(DWORD);
   I_RpcGetBuffer(msg);
@@ -196,8 +203,11 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
   RPC_MESSAGE msg;
   RpcServerInterface* sif;
   RPC_DISPATCH_FUNCTION func;
+  packet_state state;
 
-  TlsSetValue(worker_tls, &msg);
+  state.msg = &msg;
+  state.buf = buf;
+  TlsSetValue(worker_tls, &state);
   memset(&msg, 0, sizeof(msg));
   msg.BufferLength = hdr->len;
   msg.Buffer = buf;
