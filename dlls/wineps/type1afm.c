@@ -511,16 +511,6 @@ static BOOL ReadFontMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM **p_afm)
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
 	
-    retval = ReadFloat(file, buffer, bufsize, "CapHeight",   	/* optional */
-    	    &(afm->CapHeight), &found);
-    if (retval == FALSE)
-    	goto cleanup_afm;
-	
-    retval = ReadFloat(file, buffer, bufsize, "XHeight",     	/* optional */
-    	    &(afm->XHeight), &found);
-    if (retval == FALSE)
-    	goto cleanup_afm;
-	
     retval = ReadFloat(file, buffer, bufsize, "Ascender",    	/* optional */
     	    &(afm->Ascender), &found);
     if (retval == FALSE)
@@ -562,7 +552,7 @@ static BOOL ReadFontMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM **p_afm)
  *  Non-fatal error:	leave metrics->C set to INT_MAX
  *
  */
-static BOOL ParseC(LPSTR sz, AFMMETRICS *metrics)
+static BOOL ParseC(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     int     base = 10;
     long    l;
@@ -596,7 +586,7 @@ static BOOL ParseC(LPSTR sz, AFMMETRICS *metrics)
  *  Non-fatal error:	leave metrics->WX set to FLT_MAX
  *
  */
-static BOOL ParseW(LPSTR sz, AFMMETRICS *metrics)
+static BOOL ParseW(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     CHAR    *cp, *end_ptr;
     BOOL    vector = TRUE;
@@ -650,7 +640,7 @@ static BOOL ParseW(LPSTR sz, AFMMETRICS *metrics)
  *  Non-fatal error:	leave metrics->B.ury set to FLT_MAX
  *
  */
-static BOOL ParseB(LPSTR sz, AFMMETRICS *metrics)
+static BOOL ParseB(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     CHAR    *cp, *end_ptr;
     double  d;
@@ -696,7 +686,7 @@ static BOOL ParseB(LPSTR sz, AFMMETRICS *metrics)
  *  Non-fatal error:	leave metrics-> set to NULL
  *
  */
-static BOOL ParseN(LPSTR sz, AFMMETRICS *metrics)
+static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     CHAR    save, *cp, *end_ptr;
     
@@ -734,7 +724,7 @@ static BOOL ParseN(LPSTR sz, AFMMETRICS *metrics)
  *  fatal error; sets *metrics to 'badmetrics' on non-fatal error.
  *
  */
-static const AFMMETRICS badmetrics =
+static const OLD_AFMMETRICS badmetrics =
 {
     INT_MAX,	    	    	    	    	    /* C */
     LONG_MAX,	    	    	    	    	    /* UV */
@@ -744,7 +734,7 @@ static const AFMMETRICS badmetrics =
     NULL    	    	    	    	    	    /* L */
 };
  
-static BOOL ParseCharMetrics(LPSTR buffer, INT len, AFMMETRICS *metrics)
+static BOOL ParseCharMetrics(LPSTR buffer, INT len, OLD_AFMMETRICS *metrics)
 {
     CHAR    *cp = buffer;
 
@@ -844,7 +834,7 @@ static int UnicodeGlyphByNameIndex(const void *a, const void *b)
     	    ((const UNICODEGLYPH *)b)->name->index;
 }
  
-static VOID Unicodify(AFM *afm, AFMMETRICS *metrics)
+static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 {
     INT     i;
     
@@ -924,17 +914,18 @@ static VOID Unicodify(AFM *afm, AFMMETRICS *metrics)
  *  Reads metrics for all glyphs.  *p_metrics will be NULL on non-fatal error.
  *
  */
-static int AFMMetricsByUV(const void *a, const void *b)
+static int OldAFMMetricsByUV(const void *a, const void *b)
 {
-    return ((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV;
+    return ((const OLD_AFMMETRICS *)a)->UV - ((const OLD_AFMMETRICS *)b)->UV;
 } 
  
 static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     	AFMMETRICS **p_metrics)
 {
-    BOOL    	retval, found;
-    AFMMETRICS	*metrics;
-    INT     	i, len;
+    BOOL    	    retval, found;
+    OLD_AFMMETRICS  *old_metrics, *encoded_metrics;
+    AFMMETRICS	    *metrics;
+    INT     	    i, len;
     
     retval = ReadInt(file, buffer, bufsize, "StartCharMetrics",
     	    &(afm->NumofMetrics), &found);
@@ -944,22 +935,22 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	return retval;
     }
     
-    afm->Metrics = *p_metrics = metrics = HeapAlloc(PSDRV_Heap, 0,
-    	    afm->NumofMetrics * sizeof(*metrics));
-    if (metrics == NULL)
+    old_metrics = HeapAlloc(PSDRV_Heap, 0,
+    	    afm->NumofMetrics * sizeof(*old_metrics));
+    if (old_metrics == NULL)
     	return FALSE;
 	
     for (i = 0; i < afm->NumofMetrics; ++i)
     {
     	retval = ReadLine(file, buffer, bufsize, &len);
     	if (retval == FALSE)
-	    goto cleanup_metrics;
+	    goto cleanup_old_metrics;
 	
 	if(len > 0)
 	{
-	    retval = ParseCharMetrics(buffer, len, metrics + i);
-	    if (retval == FALSE || metrics[i].C == INT_MAX)
-	    	goto cleanup_metrics;
+	    retval = ParseCharMetrics(buffer, len, old_metrics + i);
+	    if (retval == FALSE || old_metrics[i].C == INT_MAX)
+	    	goto cleanup_old_metrics;
 		
 	    continue;
 	}
@@ -970,45 +961,44 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 		    	    continue;
 				
 	    case INT_MIN:   WARN("Ignoring long line '%32s...'\n", buffer);
-			    goto cleanup_metrics;	    /* retval == TRUE */
+			    goto cleanup_old_metrics;	    /* retval == TRUE */
 				
 	    case EOF:	    WARN("Unexpected EOF\n");
-	    	    	    goto cleanup_metrics;   	    /* retval == TRUE */
+	    	    	    goto cleanup_old_metrics;  	    /* retval == TRUE */
 	}
     }
     
-    Unicodify(afm, metrics);	/* wait until all glyph names have been read */
+    Unicodify(afm, old_metrics);    /* wait until glyph names have been read */
 	    
-    qsort(metrics, afm->NumofMetrics, sizeof(*metrics), AFMMetricsByUV);
+    qsort(old_metrics, afm->NumofMetrics, sizeof(*old_metrics),
+    	    OldAFMMetricsByUV);
     
-    for (i = 0; metrics[i].UV == -1; ++i);  	/* count unencoded glyphs */
+    for (i = 0; old_metrics[i].UV == -1; ++i);      /* count unencoded glyphs */
     
-    if (i != 0)
+    afm->NumofMetrics -= i;
+    encoded_metrics = old_metrics + i;
+    
+    afm->Metrics = *p_metrics = metrics = HeapAlloc(PSDRV_Heap, 0,
+    	    afm->NumofMetrics * sizeof(*metrics));
+    if (afm->Metrics == NULL)
+    	goto cleanup_old_metrics;   	    	    	    /* retval == TRUE */
+	
+    for (i = 0; i < afm->NumofMetrics; ++i, ++metrics, ++encoded_metrics)
     {
-    	AFMMETRICS  *new_metrics;
-    
-    	TRACE("Ignoring %i unencoded glyphs\n", i);
-	
-	afm->NumofMetrics -= i;
-	memmove(metrics, metrics + i, afm->NumofMetrics * sizeof(*metrics));
-	
-	new_metrics = HeapReAlloc(PSDRV_Heap, 0, metrics,
-	    	afm->NumofMetrics * sizeof(*metrics));
-	if (new_metrics == NULL)
-	{
-	    retval = FALSE;
-	    goto cleanup_metrics;
-	}
-	
-	afm->Metrics = *p_metrics = new_metrics;
+    	metrics->C = encoded_metrics->C;
+	metrics->UV = encoded_metrics->UV;
+	metrics->WX = encoded_metrics->WX;
+	metrics->N = encoded_metrics->N;
     }
+    
+    HeapFree(PSDRV_Heap, 0, old_metrics);
     
     afm->WinMetrics.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
     
     return TRUE;
     
-    cleanup_metrics:	    	    	/* handle fatal or non-fatal errors */
-    	HeapFree(PSDRV_Heap, 0, metrics);
+    cleanup_old_metrics:    	    	/* handle fatal or non-fatal errors */
+    	HeapFree(PSDRV_Heap, 0, old_metrics);
 	*p_metrics = NULL;
 	return retval;
 }

@@ -305,9 +305,6 @@ static BOOL StartAFM(FT_Face face, AFM **p_afm)
     
     afm->Ascender = PSUnits(os2->sTypoAscender, em_size);
     afm->Descender = PSUnits(os2->sTypoDescender, em_size);
-    afm->FullAscender = afm->FontBBox.ury;  	    	/* get rid of this */
-    
-    /* CapHeight & XHeight set by ReadCharMetrics */
     
     return TRUE;
 }
@@ -339,8 +336,6 @@ static BOOL ReadCharMetrics(FT_Face face, AFM *afm, AFMMETRICS **p_metrics)
     {
     	FT_UInt     glyph_index = FT_Get_Char_Index(face, charcode);
 	FT_Error    error;
-	FT_Glyph    glyph;
-	FT_BBox     bbox;
 	CHAR	    buffer[128];  	    	/* for glyph names */
 	
 	if (glyph_index == 0)
@@ -352,15 +347,6 @@ static BOOL ReadCharMetrics(FT_Face face, AFM *afm, AFMMETRICS **p_metrics)
 	    ERR("%s returned %i\n", "FT_Load_Glyph", error);
 	    goto cleanup;
 	}
-	
-	error = FT_Get_Glyph(face->glyph, &glyph);
-	if (error != FT_Err_Ok)
-	{
-	    ERR("%s returned %i\n", "FT_Get_Glyph", error);
-	    goto cleanup;
-	}
-	
-	FT_Glyph_Get_CBox(glyph, ft_glyph_bbox_unscaled, &bbox);
 	
 	error = FT_Get_Glyph_Name(face, glyph_index, buffer, sizeof(buffer));
 	if (error != FT_Err_Ok)
@@ -375,17 +361,7 @@ static BOOL ReadCharMetrics(FT_Face face, AFM *afm, AFMMETRICS **p_metrics)
 	    
 	metrics[index].C = metrics[index].UV = charcode;
 	metrics[index].WX = PSUnits(face->glyph->metrics.horiAdvance, em_size);
-	metrics[index].B.llx = PSUnits(bbox.xMin, em_size);
-	metrics[index].B.lly = PSUnits(bbox.yMin, em_size);
-	metrics[index].B.urx = PSUnits(bbox.xMax, em_size);
-	metrics[index].B.ury = PSUnits(bbox.yMax, em_size);
-	metrics[index].L = NULL;
 	
-	if (charcode == 0x0048)     	    	    /* 'H' */
-	    afm->CapHeight = metrics[index].B.ury;
-	if (charcode == 0x0078)     	    	    /* 'x' */
-	    afm->XHeight = metrics[index].B.ury;
-	    
 	++index;
     }
     

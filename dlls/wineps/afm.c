@@ -156,6 +156,10 @@ static void PSDRV_DumpFontList(void)
 	    	    afmle->afm->FontName, afmle->afm->NumofMetrics,
 		    afmle->afm->EncodingScheme);
 	    
+	    /* Uncomment to regenerate font data; see afm2c.c */
+		    
+	    /* PSDRV_AFM2C(afmle->afm); */
+	    
 	    for (i = 0; i < afmle->afm->NumofMetrics; ++i)
 	    {
 	    	TRACE("\t\tU+%.4lX; C %i; N '%s'\n", afmle->afm->Metrics[i].UV,

@@ -32,13 +32,20 @@ typedef struct _tagAFMLIGS {
     struct _tagAFMLIGS	*next;
 } AFMLIGS;
 
-typedef struct _tagAFMMETRICS {
+typedef struct {
     int			C;		/* character */  
     LONG     	    	UV;
     float		WX;
     const GLYPHNAME	*N;		/* name */
     AFMBBOX		B;
     const AFMLIGS	*L;		/* Ligatures */
+} OLD_AFMMETRICS;
+
+typedef struct {
+    INT     	    	C;  	    	    	/* AFM encoding (or -1) */
+    LONG    	    	UV; 	    	    	/* Unicode value */
+    FLOAT   	    	WX; 	    	    	/* Advance width */
+    const GLYPHNAME 	*N; 	    	    	/* Glyph name */
 } AFMMETRICS;
 
 typedef struct {
@@ -65,11 +72,8 @@ typedef struct _tagAFM {
     float		UnderlinePosition;
     float		UnderlineThickness;
     AFMBBOX		FontBBox;
-    float		CapHeight;
-    float		XHeight;
     float		Ascender;
     float		Descender;
-    float		FullAscender;		/* Ascent of Aring character */
     WINMETRICS	    	WinMetrics;
     int			NumofMetrics;
     const AFMMETRICS	*Metrics;
