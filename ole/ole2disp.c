@@ -315,15 +315,81 @@ HRESULT WINAPI RegisterActiveObject16(
 
 /******************************************************************************
  *		OleTranslateColor	[OLEAUT32.421]
+ *
+ * Converts an OLE_COLOR to a COLORREF.
+ * See the documentation for conversion rules.
+ * pColorRef can be NULL. In that case the user only wants to test the 
+ * conversion.
  */
 INT WINAPI OleTranslateColor(
   LONG clr,
   HPALETTE  hpal,
   COLORREF* pColorRef)
 {
-  FIXME(ole,"():stub\n");
+  COLORREF colorref;
+  BYTE b = HIBYTE(HIWORD(clr));
 
-  *pColorRef = clr;
+  TRACE(ole,"(%08lx, %d, %p):stub\n", clr, hpal, pColorRef);
+
+  /*
+   * In case pColorRef is NULL, provide our own to simplify the code.
+   */
+  if (pColorRef == NULL)
+    pColorRef = &colorref;
+
+  switch (b)
+  {
+    case 0x00:
+    {
+      if (hpal != 0)
+        *pColorRef =  PALETTERGB(GetRValue(clr),
+                                 GetGValue(clr),
+                                 GetBValue(clr));
+      else
+        *pColorRef = clr;
+
+      break;
+    }
+
+    case 0x01:
+    {
+      if (hpal != 0)
+      {
+        PALETTEENTRY pe;
+        /*
+         * Validate the palette index.
+         */
+        if (GetPaletteEntries(hpal, LOWORD(clr), 1, &pe) == 0)
+          return E_INVALIDARG;
+      }
+
+      *pColorRef = clr;
+
+      break;
+    }
+
+    case 0x02:
+      *pColorRef = clr;
+      break;
+
+    case 0x80:
+    {
+      int index = LOBYTE(LOWORD(clr));
+
+      /*
+       * Validate GetSysColor index.
+       */
+      if ((index < COLOR_SCROLLBAR) || (index > COLOR_GRADIENTINACTIVECAPTION))
+        return E_INVALIDARG;
+
+      *pColorRef =  GetSysColor(index);
+
+      break;
+    }
+
+    default:
+      return E_INVALIDARG;
+  }
 
   return S_OK;
 }
