@@ -3422,10 +3422,11 @@ static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
  *		INT21_GetDriveAllocInfo
  *
  */
-static int INT21_GetDriveAllocInfo( CONTEXT86 *context, int drive )
+static int INT21_GetDriveAllocInfo( CONTEXT86 *context, BYTE drive )
 {
     INT21_DPB  *dpb;
 
+    drive = INT21_MapDrive( drive );
     if (!INT21_FillDrivePB( drive )) return 0;
     dpb = &(INT21_GetHeapPointer()->misc_dpb_list[drive]);
     SET_AL( context, dpb->cluster_sectors + 1 );
