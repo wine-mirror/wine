@@ -488,7 +488,8 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 
   if( lphc->owner || !(lpcs->style & WS_VISIBLE) )
   {
-      UINT	lbeStyle;
+      UINT lbeStyle   = 0;
+      UINT lbeExStyle = 0;
 
       /*
        * Initialize the dropped rect to the size of the client area of the
@@ -535,14 +536,26 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 	lbeStyle |= LBS_DISABLENOSCROLL;
   
       if( CB_GETTYPE(lphc) == CBS_SIMPLE ) 	/* child listbox */
+      {
 	lbeStyle |= WS_CHILD | WS_VISIBLE;
+
+	/*
+	 * In win 95 look n feel, the listbox in the simple combobox has
+	 * the WS_EXCLIENTEDGE style instead of the WS_BORDER style.
+	 */
+	if (TWEAK_WineLook > WIN31_LOOK)
+	{
+	  lbeStyle   &= ~WS_BORDER;
+	  lbeExStyle |= WS_EX_CLIENTEDGE;
+	}
+      }
       else					/* popup listbox */
 	lbeStyle |= WS_POPUP;
 
      /* Dropdown ComboLBox is not a child window and we cannot pass 
       * ID_CB_LISTBOX directly because it will be treated as a menu handle.
       */
-      lphc->hWndLBox = CreateWindowExA(0,
+      lphc->hWndLBox = CreateWindowExA(lbeExStyle,
 				       clbName,
 				       NULL, 
 				       lbeStyle, 
