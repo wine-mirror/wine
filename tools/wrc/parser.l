@@ -75,6 +75,7 @@
 /* Set when handling a false #if case */
 %x pp_false
 /* Set when stripping c-junk */
+%x pp_stripe
 %x pp_strips
 %x pp_stripp
 %x pp_stripp_final
@@ -134,7 +135,7 @@ static int wbufidx;
 static int wbufalloc = 0;
 static int want_nl = 0;		/* Set when newline needs to go to parser */
 static int want_ident = 0;	/* Set is #ifdef, #ifndef or defined is seen */
-static int stripslevel = 0;	/* Count {} during pp_strips mode */
+static int stripslevel = 0;	/* Count {} during pp_strips/pp_stripe mode */
 static int stripplevel = 0;	/* Count () during pp_strips mode */
 static char *substtext = NULL;	/* Holds the substition text while getting a define */
 static int cjunk_tagline;	/* Where did we start stripping (helps error tracking) */
@@ -454,7 +455,7 @@ void add_to_substtext(char *text, int len)
 			}
 
 	/* Conditional handling */
-<INITIAL,pp_strips,pp_stripp,pp_false>^{ws}*#{ws}*if{ws}*	{
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*if{ws}*	{
 			if(YY_START == pp_false)
 			{
 				if(yydebug)
@@ -469,7 +470,7 @@ void add_to_substtext(char *text, int len)
 				return tIF;
 			}
 		}
-<INITIAL,pp_strips,pp_stripp,pp_false>^{ws}*#{ws}*ifdef{ws}*	{
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*ifdef{ws}*	{
 			if(YY_START == pp_false)
 			{
 				if(yydebug)
@@ -485,7 +486,7 @@ void add_to_substtext(char *text, int len)
 				return tIFDEF;
 			}
 		}
-<INITIAL,pp_strips,pp_stripp,pp_false>^{ws}*#{ws}*ifndef{ws}*	{
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*ifndef{ws}*	{
 			if(YY_START == pp_false)
 			{
 				if(yydebug)
@@ -501,7 +502,7 @@ void add_to_substtext(char *text, int len)
 				return tIFNDEF;
 			}
 		}
-<INITIAL,pp_strips,pp_stripp,pp_false>^{ws}*#{ws}*elif{ws}*	{
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*elif{ws}*	{
 			if(!isnevertrue_if())
 			{
 				push_to(INITIAL);
@@ -513,7 +514,7 @@ void add_to_substtext(char *text, int len)
 			if(yydebug)
 				printf("(%d)#elif ignored\n", line_number);
 		}
-<INITIAL,pp_strips,pp_stripp,pp_false>^{ws}*#{ws}*else{ws}*	{
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*else{ws}*	{
 			if(!isnevertrue_if())
 			{
 				push_to(INITIAL);
@@ -523,7 +524,7 @@ void add_to_substtext(char *text, int len)
 			if(yydebug)
 				printf("(%d)#else ignored\n", line_number);
 		}
-<INITIAL,pp_strips,pp_stripp,pp_false>^{ws}*#{ws}*endif{ws}*	{
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*endif{ws}*	{
 			if(!isnevertrue_if())
 			{
 				want_nl = 1;
@@ -538,12 +539,16 @@ void add_to_substtext(char *text, int len)
 		}
 
 	/* The error directive */
-^{ws}*#{ws}*error{ws}*	push_to(pp_error);
-<pp_error>[^\n]*	yyerror("Error directive: %s", yytext);
+<INITIAL,pp_strips,pp_stripe,pp_stripp>^{ws}*#{ws}*error{ws}*	push_to(pp_error);
+<pp_error>[^\n]* 	yyerror("Error directive: %s", yytext);
+<pp_false>^{ws}*#{ws}*error[^\n]* {
+			if(yydebug)
+				printf("(%d)#error ignored\n", line_number);
+		}
 
 	/* preprocessor junk */
-^{ws}*#{ws}*pragma[^\n]*	;	/* Ignore #pragma */
-^{ws}*#{ws}*line[^\n]*		;	/* Ignore #line */
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*pragma[^\n]*	;	/* Ignore #pragma */
+<INITIAL,pp_strips,pp_stripe,pp_stripp,pp_false>^{ws}*#{ws}*line[^\n]*		;	/* Ignore #line */
  /* We'll get an error on malformed #xxx statements
   * by not recognising '#' at all. This helps tracking
   * preprocessor errors.
@@ -555,6 +560,15 @@ void add_to_substtext(char *text, int len)
 <pp_strips>;		if(!stripslevel) pop_start();
 <pp_strips>\/[^*\n]		; /* To catch comments */
 <pp_strips>[^\{\};\n#/]*	; /* Ignore rest */
+
+<pp_stripe>\{		stripslevel++;
+<pp_stripe>\}	{
+			stripslevel--;
+			if(!stripslevel) pop_start();
+		}
+<pp_stripe>;		if(!stripslevel) pop_start();
+<pp_stripe>\/[^*\n]		; /* To catch comments */
+<pp_stripe>[^\{\};\n#/]*	; /* Ignore rest */
 
 <pp_stripp>\(		stripplevel++;
 <pp_stripp>\)		{
@@ -781,7 +795,7 @@ L\"			{
 <yyrcd>\n		line_number++; char_number = 1;
 <yyrcd>.		yyerror("Malformed data-line");
 
-<INITIAL,pp_ignore,pp_def_s,pp_strips,pp_stripp>"/*"	push_to(comment);	/* Eat comment */
+<INITIAL,pp_ignore,pp_def_s,pp_strips,pp_stripe,pp_stripp>"/*"	push_to(comment);	/* Eat comment */
 <comment>[^*\n]*	;
 <comment>"*"+[^*/\n]*	;
 <comment>\n		line_number++; char_number = 1;
@@ -790,7 +804,7 @@ L\"			{
 ;[^\n]*			; /* Eat comment */
 <INITIAL,pp_ignore,pp_def_s>"//"[^\n]*		; /* Eat comment */
 
-<INITIAL,yywf,pp_false,pp_strips,pp_stripp>\n	{
+<INITIAL,yywf,pp_false,pp_strips,pp_stripe,pp_stripp>\n	{
 				if(YY_START == yywf)
 					pop_start();
 				line_number++;
@@ -808,7 +822,7 @@ L\"			{
 				YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
 				if(!pop_buffer())
                                 {
-					if(YY_START == pp_strips || YY_START == pp_stripp || YY_START == pp_stripp_final)
+					if(YY_START == pp_strips || YY_START == pp_stripe || YY_START == pp_stripp || YY_START == pp_stripp_final)
 						yyerror("Unexpected end of file during c-junk scanning (started at %d)", cjunk_tagline);
 					else
 						yyterminate();
@@ -823,8 +837,8 @@ L\"			{
 					line_number++;
 					char_number = 1;
 				}
-				yywarning("Unmatched text '%c' (0x%02x) YY_START=%d",
-					isprint(*yytext) ? *yytext : '.', *yytext, YY_START);
+				yywarning("Unmatched text '%c' (0x%02x) YY_START=%d stripslevel=%d",
+					isprint(*yytext) ? *yytext : '.', *yytext, YY_START,stripslevel);
 			}
 
 %%
@@ -958,6 +972,12 @@ void set_pp_ignore(int state)
 }
 
 /* Called from the parser to kill c-junk */
+void strip_extern(void)
+{
+	cjunk_tagline = line_number;
+	push_to(pp_stripe);
+}
+
 void strip_til_semicolon(void)
 {
 	cjunk_tagline = line_number;
@@ -970,5 +990,4 @@ void strip_til_parenthesis(void)
 	stripplevel = 1;	/* One scanned already */
 	push_to(pp_stripp);
 }
-
 

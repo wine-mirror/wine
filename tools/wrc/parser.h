@@ -27,6 +27,7 @@ void set_yywf(void);
 void set_pp_ignore(int state);
 void push_to(int start);
 void pop_start(void);
+void strip_extern(void);
 void strip_til_semicolon(void);
 void strip_til_parenthesis(void);
 
