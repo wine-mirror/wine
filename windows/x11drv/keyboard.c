@@ -217,10 +217,11 @@ static const char main_key_PT[MAIN_LEN][4] =
 /*** Italian keyboard layout */
 static const char main_key_IT[MAIN_LEN][4] =
 {
- "\\|","1!1","2\"2","3?3","4$","5%½","6&¾","7/{","8([","9)]","0=}","'?`","i^~",
- "qQ@","wW","eE","rR?","tT","yY","uU","iI","oOo","pP?","ee[","+*]",
- "aAae","sS?","dD?","fF","gG","hH","jJ","kK","lL","oc@","a?#","u?",
- "zZ<","xX>","cC","vV","bB","nN","mM?",",;",".:*","-_","<>|"
+ "\\|","1!¹","2\"²","3£³","4$¼","5%½","6&¾","7/{","8([","9)]","0=}","'?`","ì^~",
+ "qQ@","wW","eE","rR","tT","yY","uU","iI","oOø","pPþ","èé[","+*]",
+ "aA","sSß","dDð","fF","gG","hH","jJ","kK","lL","òç@","à°#","ù§",
+ "zZ","xX","cC","vV","bB","nN","mMµ",",;",".:·","-_",
+ "<>|"
 };
 
 /*** Finnish keyboard layout */
