@@ -650,6 +650,7 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
 {
     STATUSWINDOWPART *part=NULL;
     BOOL changed = FALSE;
+    INT  oldStyle;
 
     if (style & SBT_OWNERDRAW) {
          TRACE("part %d, text %p\n",nPart,text);
@@ -671,11 +672,15 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
     if (part->style != style)
 	changed = TRUE;
 
+    oldStyle = part->style;
     part->style = style;
     if (style & SBT_OWNERDRAW) {
-	if (part->text == text)
-	    return TRUE;
-	part->text = (LPWSTR)text;
+        if (!(oldStyle & SBT_OWNERDRAW)) {
+            if (part->text)
+                Free (part->text);
+        } else if (part->text == text)
+            return TRUE;
+        part->text = (LPWSTR)text;
     } else {
 	LPWSTR ntext;
 
@@ -694,7 +699,7 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
 	/* check if text is unchanged -> no need to redraw */
 	if (text) {
 	    if (!changed && part->text && !lstrcmpW(ntext, part->text)) {
-		if (!isW) Free(ntext);
+		Free(ntext);
 		return TRUE;
 	    }
 	} else {
@@ -702,7 +707,7 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
 		return TRUE;
 	}
 
-	if (part->text)
+	if (part->text && !(oldStyle & SBT_OWNERDRAW))
 	    Free (part->text);
 	part->text = ntext;
     }
