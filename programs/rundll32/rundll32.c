@@ -35,11 +35,16 @@
 
 /* Exclude rarely-used stuff from Windows headers */
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <wine/debug.h>
+#include "windows.h"
+#include "wine/winbase16.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rundll32);
 
+
+extern void WINAPI RunDLL_CallEntry16( FARPROC proc, HWND hwnd, HINSTANCE inst,
+                                       LPCSTR cmdline, INT cmdshow );
 
 /*
  * Control_RunDLL has these parameters
@@ -75,9 +80,57 @@ static ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
-static LPWSTR GetNextArg(LPCWSTR *cmdline)
+static HINSTANCE16 load_dll16( LPCWSTR dll )
 {
-    LPCWSTR s;
+    HINSTANCE16 ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, dll, -1, NULL, 0, NULL, NULL );
+    char *dllA = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, dll, -1, dllA, len, NULL, NULL );
+    ret = LoadLibrary16( dllA );
+    HeapFree( GetProcessHeap(), 0, dllA );
+    return ret;
+}
+
+static FARPROC16 get_entry_point16( HINSTANCE16 inst, LPCWSTR entry )
+{
+    FARPROC16 ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
+    char *entryA = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
+    ret = GetProcAddress16( inst, entryA );
+    HeapFree( GetProcessHeap(), 0, entryA );
+    return ret;
+}
+
+static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
+{
+    void *ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
+    char *entryA = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+    WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
+
+    /* first try the W version */
+    *unicode = TRUE;
+    strcat( entryA, "W" );
+    if (!(ret = GetProcAddress( module, entryA )))
+    {
+        /* now the A version */
+        *unicode = FALSE;
+        entryA[strlen(entryA)-1] = 'A';
+        if (!(ret = GetProcAddress( module, entryA )))
+        {
+            /* now the version without suffix */
+            entryA[strlen(entryA)-1] = 0;
+            ret = GetProcAddress( module, entryA );
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, entryA );
+    return ret;
+}
+
+static LPWSTR GetNextArg(LPWSTR *cmdline)
+{
+    LPWSTR s;
     LPWSTR arg,d;
     int in_quotes,bcount,len=0;
 
@@ -157,18 +210,16 @@ static LPWSTR GetNextArg(LPCWSTR *cmdline)
 int main(int argc, char* argv[])
 {
     HWND hWnd;
-    LPCWSTR szCmdLine;
+    LPWSTR szCmdLine;
     LPWSTR szDllName,szEntryPoint;
-    char* szProcName;
-    HMODULE hDll;
-    EntryPointW pEntryPointW;
-    EntryPointA pEntryPointA;
-    int len;
+    void *entry_point;
+    BOOL unicode, win16;
+    STARTUPINFOW info;
+    HMODULE hDll, instance;
 
     hWnd=NULL;
     hDll=NULL;
     szDllName=NULL;
-    szProcName=NULL;
 
     /* Initialize the rundll32 class */
     MyRegisterClass( NULL );
@@ -189,86 +240,68 @@ int main(int argc, char* argv[])
     if (!szDllName || *szDllName==0)
         goto CLEANUP;
     WINE_TRACE("DllName=%s\n",wine_dbgstr_w(szDllName));
-    szEntryPoint=szDllName;
-    while (*szEntryPoint!=0 && *szEntryPoint!=0x002c /* ',' */)
-        szEntryPoint++;
-    if (*szEntryPoint==0)
-        goto CLEANUP;
+    if (!(szEntryPoint = strchrW( szDllName, ',' ))) goto CLEANUP;
     *szEntryPoint++=0;
     WINE_TRACE("EntryPoint=%s\n",wine_dbgstr_w(szEntryPoint));
 
     /* Load the library */
     hDll=LoadLibraryW(szDllName);
-    if (!hDll)
+    if (hDll)
     {
-        /* Windows has a MessageBox here... */
-        WINE_WARN("Unable to load %s\n",wine_dbgstr_w(szDllName));
-        goto CLEANUP;
-    }
-
-    /* Try the Unicode entrypoint. Note that GetProcAddress only takes ascii
-     * names.
-     */
-    len=WideCharToMultiByte(CP_ACP,0,szEntryPoint,-1,NULL,0,NULL,NULL);
-    szProcName=HeapAlloc(GetProcessHeap(),0,len);
-    if (!szProcName)
-        goto CLEANUP;
-    WideCharToMultiByte(CP_ACP,0,szEntryPoint,-1,szProcName,len,NULL,NULL);
-    szProcName[len-1]=0x0057;
-    szProcName[len]=0;
-    pEntryPointW=(void*)GetProcAddress(hDll,szProcName);
-    if (pEntryPointW)
-    {
-        WCHAR* szArguments=NULL;
-
-        /* Make a copy of the arguments so they are writable */
-        len=lstrlenW(szCmdLine);
-        if (len>0)
-        {
-            szArguments=HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
-            if (!szArguments)
-                goto CLEANUP;
-            lstrcpyW(szArguments,szCmdLine);
-        }
-        WINE_TRACE("Calling %s, arguments=%s\n",
-                   szProcName,wine_dbgstr_w(szArguments));
-        pEntryPointW(hWnd,hDll,szArguments,SW_SHOWDEFAULT);
-        if (szArguments)
-            HeapFree(GetProcessHeap(),0,szArguments);
+        win16 = FALSE;
+        entry_point = get_entry_point32( hDll, szEntryPoint, &unicode );
     }
     else
     {
-        /* Then try to append 'A' and finally nothing */
-        szProcName[len-1]=0x0041;
-        pEntryPointA=(void*)GetProcAddress(hDll,szProcName);
-        if (!pEntryPointA)
-        {
-            szProcName[len-1]=0;
-            pEntryPointA=(void*)GetProcAddress(hDll,szProcName);
-        }
-        if (pEntryPointA)
-        {
-            char* szArguments=NULL;
-            /* Convert the command line to ascii */
-            WINE_TRACE("Calling %s, arguments=%s\n",
-                       szProcName,wine_dbgstr_a(szArguments));
-            len=WideCharToMultiByte(CP_ACP,0,szCmdLine,-1,NULL,0,NULL,NULL);
-            if (len>1)
-            {
-                szArguments=HeapAlloc(GetProcessHeap(),0,len);
-                if (!szArguments)
-                    goto CLEANUP;
-                WideCharToMultiByte(CP_ACP,0,szCmdLine,-1,szArguments,len,NULL,NULL);
-            }
-            pEntryPointA(hWnd,hDll,szArguments,SW_SHOWDEFAULT);
-            if (szArguments)
-                HeapFree(GetProcessHeap(),0,szArguments);
-        }
-        else
+        HINSTANCE16 dll = load_dll16( szDllName );
+        if (dll <= 32)
         {
             /* Windows has a MessageBox here... */
-            WINE_WARN("Unable to find the entry point: %s\n",szProcName);
+            WINE_ERR("Unable to load %s\n",wine_dbgstr_w(szDllName));
+            goto CLEANUP;
         }
+        win16 = TRUE;
+        unicode = FALSE;
+        entry_point = get_entry_point16( dll, szEntryPoint );
+    }
+
+    if (!entry_point)
+    {
+        /* Windows has a MessageBox here... */
+        WINE_ERR( "Unable to find the entry point %s in %s\n",
+                  wine_dbgstr_w(szEntryPoint), wine_dbgstr_w(szDllName) );
+        goto CLEANUP;
+    }
+
+    GetStartupInfoW( &info );
+    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWDEFAULT;
+    instance = GetModuleHandleW(NULL);  /* Windows always uses that, not hDll */
+
+    if (unicode)
+    {
+        EntryPointW pEntryPointW = entry_point;
+
+        WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
+                    hWnd, instance, wine_dbgstr_w(szCmdLine), info.wShowWindow );
+
+        pEntryPointW( hWnd, instance, szCmdLine, info.wShowWindow );
+    }
+    else
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, NULL, 0, NULL, NULL );
+        char *cmdline = HeapAlloc( GetProcessHeap(), 0, len );
+        WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, cmdline, len, NULL, NULL );
+
+        WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
+                    hWnd, instance, wine_dbgstr_a(cmdline), info.wShowWindow );
+
+        if (win16) RunDLL_CallEntry16( entry_point, hWnd, instance, cmdline, info.wShowWindow );
+        else
+        {
+            EntryPointA pEntryPointA = entry_point;
+            pEntryPointA( hWnd, instance, cmdline, info.wShowWindow );
+        }
+        HeapFree( GetProcessHeap(), 0, cmdline );
     }
 
 CLEANUP:
@@ -278,7 +311,5 @@ CLEANUP:
         FreeLibrary(hDll);
     if (szDllName)
         HeapFree(GetProcessHeap(),0,szDllName);
-    if (szProcName)
-        HeapFree(GetProcessHeap(),0,szProcName);
     return 0; /* rundll32 always returns 0! */
 }
