@@ -1,0 +1,49 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1996 Ulrich Schmid
+ * Portuguese translation by Gustavo Junior Alves <alves@correionet.com.br>
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Pt
+#define LANGUAGE_NUMBER              0
+
+/* Menu */
+
+#define MENU_FILE                    "&Arquivo"
+#define MENU_FILE_OPEN               "A&brir..."
+#define MENU_FILE_PRINT              "&Imprimir"
+#define MENU_FILE_PRINTER_SETUP      "&Configurar Impressora..."
+#define MENU_FILE_EXIT               "&Sair"
+
+#define MENU_EDIT                    "&Editar"
+#define MENU_EDIT_COPY_DIALOG        "&Copiar..."
+#define MENU_EDIT_ANNOTATE           "&Anotar..."
+
+#define MENU_BOOKMARK                "&Marcador"
+#define MENU_BOOKMARK_DEFINE         "&Definir..."
+
+#define MENU_HELP                    "&Ajuda"
+#define MENU_HELP_ON_HELP            "Ajuda &na ajuda"
+#define MENU_HELP_ON_TOP             "Sempre &visível"
+#define MENU_HELP_INFO               "&Info..."
+#define MENU_HELP_ABOUT_WINE         "&Sobre WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "Ajuda WINE"
+#define STRING_ERROR                 "ERRO"
+#define STRING_WARNING               "AVISO"
+#define STRING_INFO                  "Informaçãi"
+#define STRING_NOT_IMPLEMENTED       "Não implementado"
+#define STRING_HLPFILE_ERROR_s       "Foi encontrado um erro enquanto lia `%s'"
+#define STRING_CONTENTS              "&Conteúdo"
+#define STRING_SEARCH                "&Procurar"
+#define STRING_BACK                  "&Voltar"
+#define STRING_HISTORY               "&Histórico"
+#define STRING_ALL_FILES             "Todos os arquivo (*.*)"
+#define STRING_HELP_FILES_HLP        "Arquivos de ajuda (*.hlp)"
+
+#include "Xx.rc"
