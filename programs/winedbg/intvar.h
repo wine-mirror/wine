@@ -33,6 +33,7 @@ INTERNAL_VAR(StdChannelMask,		0,		NULL,  			DT_BASIC_CONST_INT)
 
    /* debugging debugger */
 INTERNAL_VAR(ExtDbgOnInvalidAddress,	FALSE,		NULL,  			DT_BASIC_CONST_INT)
+INTERNAL_VAR(ExtDbgOnInternalException, FALSE,          NULL,                   DT_BASIC_CONST_INT)
 
    /* current process/thread */
 INTERNAL_VAR(ThreadId,			FALSE,		&DEBUG_CurrTid,		DT_BASIC_CONST_INT)

@@ -543,6 +543,7 @@ extern void             DEBUG_DelThread(DBG_THREAD* t);
 extern BOOL             DEBUG_ProcessGetString(char* buffer, int size, HANDLE hp, LPSTR addr);
 extern BOOL             DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr);
 extern void             DEBUG_WaitNextException(DWORD cont, int count, int mode);
+extern BOOL             DEBUG_InterruptDebuggee(void);
 extern int curr_frame;
 
 /* gdbproxy.c */

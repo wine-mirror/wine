@@ -988,15 +988,20 @@ void	DEBUG_Run(const char* args)
     }
 }
 
+BOOL DEBUG_InterruptDebuggee(void)
+{
+    DEBUG_Printf(DBG_CHN_MESG, "Ctrl-C: stopping debuggee\n");
+    /* FIXME: since we likely have a single process, signal the first process
+     * in list
+     */
+    return DEBUG_ProcessList && DebugBreakProcess(DEBUG_ProcessList->handle);
+}
+
 static BOOL WINAPI DEBUG_CtrlCHandler(DWORD dwCtrlType)
 {
     if (dwCtrlType == CTRL_C_EVENT)
     {
-        DEBUG_Printf(DBG_CHN_MESG, "Ctrl-C: stopping debuggee\n");
-        /* FIXME: since we likely have a single process, signal the first process
-         * in list
-         */
-        return DEBUG_ProcessList && DebugBreakProcess(DEBUG_ProcessList->handle);
+        return DEBUG_InterruptDebuggee();
     }
     return FALSE;
 }
