@@ -2385,10 +2385,6 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     if(format == GGO_METRICS)
         return 1; /* FIXME */
 
-    if (buf && !buflen){
-        return GDI_ERROR;
-    }
-
     if(ft_face->glyph->format != ft_glyph_format_outline && format != GGO_BITMAP) {
         TRACE("loaded a bitmap\n");
 	return GDI_ERROR;
@@ -2467,14 +2463,16 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
 	pFT_Outline_Translate(&ft_face->glyph->outline, -left, -bottom );
 
+	memset(ft_bitmap.buffer, 0, buflen);
+
 	pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
 
 	if(format == GGO_GRAY2_BITMAP)
-	    mult = 5;
+	    mult = 4;
 	else if(format == GGO_GRAY4_BITMAP)
-	    mult = 17;
+	    mult = 16;
 	else if(format == GGO_GRAY8_BITMAP)
-	    mult = 65;
+	    mult = 64;
 	else if(format == WINE_GGO_GRAY16_BITMAP)
 	    break;
 	else {
@@ -2486,7 +2484,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 	for(row = 0; row < height; row++) {
 	    ptr = start;
 	    for(col = 0; col < width; col++, ptr++) {
-	        *ptr = (*(unsigned int*)ptr * mult + 128) / 256;
+	        *ptr = (((int)*ptr) * mult + 128) / 256;
 	    }
 	    start += pitch;
 	}
@@ -2903,7 +2901,9 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     TM.tmStruckOut = font->strikeout;
 
     /* Yes TPMF_FIXED_PITCH is correct; braindead api */
-    if(!FT_IS_FIXED_WIDTH(ft_face))
+    if(!FT_IS_FIXED_WIDTH(ft_face) &&
+       (pOS2->version == 0xFFFFU || 
+        pOS2->panose[PAN_PROPORTION_INDEX] != PAN_PROP_MONOSPACED))
         TM.tmPitchAndFamily = TMPF_FIXED_PITCH;
     else
         TM.tmPitchAndFamily = 0;
