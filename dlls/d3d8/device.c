@@ -177,7 +177,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
         } else {
             glMatrixMode(GL_PROJECTION);
-	    checkGLcall("glMatrixMode");
+            checkGLcall("glMatrixMode");
             glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_PROJECTION].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
 
@@ -301,6 +301,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
                 float s,t,r,q;
 
+                if (!(This->isMultiTexture) && textureNo>0) {
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                    continue;
+                }
+
                 /* Query tex coords */
                 if (This->StateBlock.textures[textureNo] != NULL) {
                     switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
@@ -310,7 +315,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                         t = *(float *)curPos;
                         curPos = curPos + sizeof(float);
                         TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
-                        glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+                        if (This->isMultiTexture) {
+                            glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+                        } else {
+                            glTexCoord2f(s, t);
+                        }
                         break;
 
                     case D3DRTYPE_VOLUMETEXTURE:
@@ -321,7 +330,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                         r = *(float *)curPos;
                         curPos = curPos + sizeof(float);
                         TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
-                        glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+                        if (This->isMultiTexture) {
+                            glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+                        } else {
+                            glTexCoord3f(s, t, r);
+                        }
                         break;
 
                     default:
@@ -535,8 +548,12 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     float col[4];
 
     /* Make appropriate texture active */
-    glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-    checkGLcall("glActiveTextureARB");
+    if (This->isMultiTexture) {
+        glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+        checkGLcall("glActiveTextureARB");
+    } else if (Stage>0) {
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+    }
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
     for (i=1; i<HIGHEST_TEXTURE_STATE; i++) {
@@ -1901,12 +1918,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             checkGLcall("glBlendColor");
 
             /* And now the default texture color as well */
-            for (i=0; i<8; i++) {
+            for (i=0; i<This->TextureUnits; i++) {
 
                 /* Note the D3DRS value applies to all textures, but GL has one
                    per texture, so apply it now ready to be used!               */
-                checkGLcall("Activate texture.. to update const color");
-                glActiveTextureARB(GL_TEXTURE0_ARB + i);
+                if (This->isMultiTexture) {
+                    glActiveTextureARB(GL_TEXTURE0_ARB + i);
+                    checkGLcall("Activate texture.. to update const color");
+                } else if (i>0) {
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                }
 
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
                 checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
@@ -2283,7 +2304,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         }
 
         /* Texture */
-        for (j=0; j<8; j++) {
+        for (j=0; j<This->TextureUnits; j++) {
             for (i=0; i<HIGHEST_TEXTURE_STATE; i++) {
 
                 if (pSB->Set.texture_state[j][i] && pSB->Changed.texture_state[j][i])
@@ -2304,7 +2325,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
 
         }
 
-        for (j=0; j<8; i++) {
+        for (j=0; j<This->TextureUnits; i++) {
             for (i=0; i<NUM_SAVEDPIXELSTATES_T; i++) {
 
                 if (pSB->Set.texture_state[j][SavedPixelStates_T[i]] &&
@@ -2321,7 +2342,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
 
         }
 
-        for (j=0; j<8; i++) {
+        for (j=0; j<This->TextureUnits; i++) {
             for (i=0; i<NUM_SAVEDVERTEXSTATES_T; i++) {
 
                 if (pSB->Set.texture_state[j][SavedVertexStates_T[i]] &&
@@ -2457,7 +2478,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
        }
 
        /* Texture */
-       for (j=0; j<8; j++) {
+       for (j=0; j<This->TextureUnits; j++) {
            for (i=0; i<HIGHEST_TEXTURE_STATE; i++) {
 
                if (updateBlock->Set.texture_state[j][i] && (updateBlock->texture_state[j][i] != 
@@ -2522,7 +2543,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, 
         for (i=0; i<NUM_SAVEDPIXELSTATES_R; i++) {
             s->Changed.renderstate[SavedPixelStates_R[i]] = TRUE;
         }
-        for (j=0; j<8; i++) {
+        for (j=0; j<This->TextureUnits; i++) {
             for (i=0; i<NUM_SAVEDPIXELSTATES_T; i++) {
                 s->Changed.texture_state[j][SavedPixelStates_T[i]] = TRUE;
             }
@@ -2538,7 +2559,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateStateBlock(LPDIRECT3DDEVICE8 iface, 
         for (i=0; i<NUM_SAVEDVERTEXSTATES_R; i++) {
             s->Changed.renderstate[SavedVertexStates_R[i]] = TRUE;
         }
-        for (j=0; j<8; i++) {
+        for (j=0; j<This->TextureUnits; i++) {
             for (i=0; i<NUM_SAVEDVERTEXSTATES_T; i++) {
                 s->Changed.texture_state[j][SavedVertexStates_T[i]] = TRUE;
             }
@@ -2592,8 +2613,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     }
 
     /* Make appropriate texture active */
-    glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-    checkGLcall("glActiveTextureARB");
+    if (This->isMultiTexture) {
+        glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+        checkGLcall("glActiveTextureARB");
+    } else if (Stage>0) {
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+    }
 
     /* Decrement the count of the previous texture */
     /* FIXME PERF: If old == new and not dirty then skip all this */
@@ -2765,8 +2790,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
     /* Make appropriate texture active */
     TRACE("Activating appropriate texture state %ld\n", Stage);
-    glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-    checkGLcall("glActiveTextureARB");
+    if (This->isMultiTexture) {
+        glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+        checkGLcall("glActiveTextureARB");
+    } else if (Stage>0) {
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+    }
 
     switch (Type) {
 
@@ -3687,7 +3716,7 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_NORMALORDER, D3DORDER_LINEAR);
 
     /* Texture Stage States - Put directly into state block, we will call function below */
-    for (i=0; i<8;i++) {
+    for (i=0; i<This->TextureUnits;i++) {
         This->StateBlock.texture_state[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
         This->StateBlock.texture_state[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
         This->StateBlock.texture_state[i][D3DTSS_COLORARG2             ] = D3DTA_CURRENT;
@@ -3719,11 +3748,11 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
 
     /* Under DirectX you can have texture stage operations even if no texture is
        bound, whereas opengl will only do texture operations when a valid texture is
-       bound. We emulate this by creating 8 dummy textures and binding them to each
+       bound. We emulate this by creating dummy textures and binding them to each
        texture stage, but disable all stages by default. Hence if a stage is enabled
        then the default texture will kick in until replaced by a SetTexture call     */
 
-    for (i=0; i<8; i++) {
+    for (i=0; i<This->TextureUnits; i++) {
         GLubyte white = 255;
 
         /* Note this avoids calling settexture, so pretend it has been called */
@@ -3732,8 +3761,12 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
         This->StateBlock.textures[i] = NULL;
 
         /* Make appropriate texture active */
-        glActiveTextureARB(GL_TEXTURE0_ARB + i);
-        checkGLcall("glActiveTextureARB");
+        if (This->isMultiTexture) {
+            glActiveTextureARB(GL_TEXTURE0_ARB + i);
+            checkGLcall("glActiveTextureARB");
+        } else if (i>0) {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+        }
 
         /* Generate an opengl texture name */
         glGenTextures(1, &This->dummyTextureName[i]);

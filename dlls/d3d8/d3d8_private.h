@@ -314,6 +314,10 @@ struct IDirect3DDevice8Impl
     Display                      *display;
     Window                        win;
 
+    /* OpenGL Extension related */
+    BOOL                          isMultiTexture;
+    UINT                          TextureUnits;
+
     UINT                          dummyTextureName[8];
 };
 

@@ -343,8 +343,14 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
     pCaps->TextureOpCaps = 0xFFFFFFFF;
-    pCaps->MaxTextureBlendStages = 256;
-    pCaps->MaxSimultaneousTextures = 256;
+
+    {
+        GLint gl_max_texture_units_arb;
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
+        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
+        pCaps->MaxTextureBlendStages = min(8, gl_max_texture_units_arb);
+        pCaps->MaxSimultaneousTextures = min(8, gl_max_texture_units_arb);
+    }
 
     pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_TEXGEN;
 
@@ -538,8 +544,9 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
     checkGLcall("glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
-    /* Setup all the devices defaults */
-    CreateStateBlock((LPDIRECT3DDEVICE8) object);
+    /* Initialize openGL extension related variables */
+    object->isMultiTexture = FALSE;
+    object->TextureUnits   = 1;
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
@@ -551,13 +558,22 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
       while (*GL_Extensions!=0x00) {
         const char *Start = GL_Extensions;
         char ThisExtn[256];
-	
+
         memset(ThisExtn, 0x00, sizeof(ThisExtn));
         while (*GL_Extensions!=' ' && *GL_Extensions!=0x00) {
-	  GL_Extensions++;
+            GL_Extensions++;
         }
         memcpy(ThisExtn, Start, (GL_Extensions-Start));
         TRACE ("   %s\n", ThisExtn);
+
+        if (strcmp(ThisExtn, "GL_ARB_multitexture")==0) {
+            GLint gl_max_texture_units_arb;
+            glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
+            object->isMultiTexture = TRUE;
+            object->TextureUnits   = min(8, gl_max_texture_units_arb);
+            TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
+        }
+
         if (*GL_Extensions==' ') GL_Extensions++;
       }
     }
@@ -571,10 +587,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
       while (*GLX_Extensions!=0x00) {
         const char *Start = GLX_Extensions;
         char ThisExtn[256];
-	
+
         memset(ThisExtn, 0x00, sizeof(ThisExtn));
         while (*GLX_Extensions!=' ' && *GLX_Extensions!=0x00) {
-	  GLX_Extensions++;
+            GLX_Extensions++;
         }
         memcpy(ThisExtn, Start, (GLX_Extensions-Start));
         TRACE ("   %s\n", ThisExtn);
@@ -582,13 +598,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
       }
     }
 
-    LEAVE_GL();
+    /* Setup all the devices defaults */
+    CreateStateBlock((LPDIRECT3DDEVICE8) object);
 
-    {
-        GLint gl_max_texture_units_arb;
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
-        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
-    }
+    LEAVE_GL();
 
     { /* Set a default viewport */
        D3DVIEWPORT8 vp;
