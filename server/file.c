@@ -492,7 +492,7 @@ static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, 
         /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
         if (((errno == EINVAL) || (errno == EPERM))
             && (whence != SEEK_SET) && (*high < 0))
-            set_error( 0xc0010000 | ERROR_NEGATIVE_SEEK /* FIXME */ );
+            set_win32_error( ERROR_NEGATIVE_SEEK );
         else
             file_set_error();
         release_object( file );

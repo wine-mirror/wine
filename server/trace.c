@@ -3100,7 +3100,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
 
 static const char *get_status_name( unsigned int status )
 {
-#define NAME(status)  { #status, STATUS_##status }
+#define NAME(status)       { #status, STATUS_##status }
+#define NAME_WIN32(error)  { #error, 0xc0010000 | error }
     static const struct
     {
         const char  *name;
@@ -3109,10 +3110,12 @@ static const char *get_status_name( unsigned int status )
     {
         NAME(ACCESS_DENIED),
         NAME(ACCESS_VIOLATION),
+        NAME(ALIAS_EXISTS),
         NAME(BUFFER_OVERFLOW),
         NAME(CHILD_MUST_BE_VOLATILE),
         NAME(DIRECTORY_NOT_EMPTY),
         NAME(DISK_FULL),
+        NAME(DLL_NOT_FOUND),
         NAME(FILE_LOCK_CONFLICT),
         NAME(INVALID_FILE_FOR_SECTION),
         NAME(INVALID_HANDLE),
@@ -3120,7 +3123,9 @@ static const char *get_status_name( unsigned int status )
         NAME(KEY_DELETED),
         NAME(MEDIA_WRITE_PROTECTED),
         NAME(MUTANT_NOT_OWNED),
+        NAME(NOT_IMPLEMENTED),
         NAME(NOT_REGISTRY_FILE),
+        NAME(NO_DATA_DETECTED),
         NAME(NO_MEMORY),
         NAME(NO_MORE_ENTRIES),
         NAME(NO_MORE_FILES),
@@ -3131,14 +3136,22 @@ static const char *get_status_name( unsigned int status )
         NAME(OBJECT_PATH_INVALID),
         NAME(OBJECT_TYPE_MISMATCH),
         NAME(PENDING),
-        NAME(PIPE_BROKEN),
+        NAME(PIPE_BUSY),
+        NAME(PIPE_CONNECTED),
+        NAME(PIPE_DISCONNECTED),
+        NAME(PIPE_LISTENING),
+        NAME(PIPE_NOT_AVAILABLE),
         NAME(SEMAPHORE_LIMIT_EXCEEDED),
         NAME(SHARING_VIOLATION),
         NAME(SUSPEND_COUNT_EXCEEDED),
         NAME(TIMEOUT),
-        NAME(TOO_MANY_OPENED_FILES),
-        NAME(UNSUCCESSFUL),
         NAME(USER_APC),
+        NAME(WAS_LOCKED),
+        NAME_WIN32(ERROR_CANNOT_MAKE),
+        NAME_WIN32(ERROR_INVALID_INDEX),
+        NAME_WIN32(ERROR_NEGATIVE_SEEK),
+        NAME_WIN32(ERROR_SEEK),
+        NAME_WIN32(ERROR_UNKNOWN),
         { NULL, 0 }  /* terminator */
     };
 #undef NAME
