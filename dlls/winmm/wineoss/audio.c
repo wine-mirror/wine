@@ -2099,6 +2099,9 @@ struct IDsDriverImpl
     /* IDsDriverImpl fields */
     UINT                        wDevID;
     IDsDriverBufferImpl*        primary;
+
+    int                         nrofsecondaries;
+    IDsDriverBufferImpl**       secondaries;
 };
 
 struct IDsDriverBufferImpl
@@ -2437,25 +2440,47 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
 static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
 {
     ICOM_THIS(IDsDriverBufferImpl,iface);
-    TRACE("(%p)\n",This);
-    This->ref++;
-    TRACE("ref=%ld\n",This->ref);
-    return This->ref;
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedIncrement(&(This->ref));
+    return ref;
 }
 
 static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
 {
     ICOM_THIS(IDsDriverBufferImpl,iface);
-    TRACE("(%p)\n",This);
-    if (--This->ref) {
-	TRACE("ref=%ld\n",This->ref);
-	return This->ref;
-    }
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedDecrement(&(This->ref));
+    if (ref)
+        return ref;
+
     if (This == This->drv->primary)
 	This->drv->primary = NULL;
+    else {
+        int i;
+        for (i = 0; i < This->drv->nrofsecondaries; i++)
+            if (This->drv->secondaries[i] == This)
+                break;
+        if (i < This->drv->nrofsecondaries) {
+            /* Put the last buffer of the list in the (now empty) position */
+            This->drv->secondaries[i] = This->drv->secondaries[This->drv->nrofsecondaries - 1];
+            This->drv->nrofsecondaries--;
+            This->drv->secondaries = HeapReAlloc(GetProcessHeap(),0,
+                This->drv->secondaries,
+                sizeof(PIDSDRIVERBUFFER)*This->drv->nrofsecondaries);
+            TRACE("(%p) buffer count is now %d\n", This, This->drv->nrofsecondaries);
+        }
+
+        WOutDev[This->drv->wDevID].ossdev->ds_caps.dwFreeHwMixingAllBuffers++;
+        WOutDev[This->drv->wDevID].ossdev->ds_caps.dwFreeHwMixingStreamingBuffers++;
+    }
+
     DSDB_UnmapBuffer(This);
     HeapFree(GetProcessHeap(),0,This);
-    TRACE("ref=0\n");
+    TRACE("(%p) released\n",This);
     return 0;
 }
 
@@ -2656,23 +2681,25 @@ static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid
 static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
 {
     ICOM_THIS(IDsDriverImpl,iface);
-    TRACE("(%p)\n",This);
-    This->ref++;
-    TRACE("ref=%ld\n",This->ref);
-    return This->ref;
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedIncrement(&(This->ref));
+    return ref;
 }
 
 static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
 {
     ICOM_THIS(IDsDriverImpl,iface);
-    TRACE("(%p)\n",This);
-    if (--This->ref) {
-	TRACE("ref=%ld\n",This->ref);
-	return This->ref;
+    DWORD ref;
+    TRACE("(%p) ref was %ld\n", This, This->ref);
+
+    ref = InterlockedDecrement(&(This->ref));
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(),0,This);
+        TRACE("(%p) released\n",This);
     }
-    HeapFree(GetProcessHeap(),0,This);
-    TRACE("ref=0\n");
-    return 0;
+    return ref;
 }
 
 static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDESC pDesc)
@@ -2918,11 +2945,13 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     *idrv = (IDsDriverImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsDriverImpl));
     if (!*idrv)
 	return MMSYSERR_NOMEM;
-    (*idrv)->lpVtbl	= &dsdvt;
-    (*idrv)->ref	= 1;
+    (*idrv)->lpVtbl          = &dsdvt;
+    (*idrv)->ref             = 1;
+    (*idrv)->wDevID          = wDevID;
+    (*idrv)->primary         = NULL;
+    (*idrv)->nrofsecondaries = 0;
+    (*idrv)->secondaries     = NULL;
 
-    (*idrv)->wDevID	= wDevID;
-    (*idrv)->primary	= NULL;
     return MMSYSERR_NOERROR;
 }
 
