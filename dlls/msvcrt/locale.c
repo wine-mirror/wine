@@ -515,8 +515,13 @@ const char* _Strftime(char *out, unsigned int len, const char *fmt,
 /*********************************************************************
  *		_setmbcp (MSVCRT.@)
  */
-void _setmbcp(int cp)
+int _setmbcp(int cp)
 {
+  if (cp < 0)
+  {
+      FIXME ("Unreal codepages (e.g. %d) not implemented\n", cp);
+      return 0; /* Let's not confuse the caller by returning -1 */
+  }
   LOCK_LOCALE;
   if (msvcrt_current_lc_all_cp != cp)
   {
@@ -524,6 +529,7 @@ void _setmbcp(int cp)
     msvcrt_current_lc_all_cp = cp;
   }
   UNLOCK_LOCALE;
+  return 0;
 }
 
 /*********************************************************************
