@@ -3338,12 +3338,13 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 
     /* get information needed for drawing the item */
     lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
-    if (nSubItem == 0) lvItem.mask |= LVIF_STATE;
+    if (nSubItem == 0) lvItem.mask |= LVIF_STATE | LVIF_PARAM;
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
     lvItem.iItem = nItem;
-    lvItem.state = 0;
     lvItem.iSubItem = nSubItem;
+    lvItem.state = 0;
+    lvItem.lParam = 0;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
