@@ -2220,11 +2220,17 @@ int MSVCRT__flsbuf(int c, MSVCRT_FILE* file);
 int MSVCRT_fputc(int c, MSVCRT_FILE* file)
 {
   if(file->_cnt>0) {
-	*file->_ptr++=c;
-	file->_cnt--;
-	return c;
+    *file->_ptr++=c;
+    file->_cnt--;
+    if (c == '\n')
+    {
+      int res = msvcrt_flush_buffer(file);
+      return res ? res : c;
+    }
+    else
+      return c;
   } else {
-	return MSVCRT__flsbuf(c, file);
+    return MSVCRT__flsbuf(c, file);
   }
 }
 
