@@ -39,6 +39,7 @@ typedef struct
       LPPRINTDLG16	lpPrintDlg16;
   } dlg;
   LPPRINTER_INFO_2A lpPrinterInfo;
+  LPDRIVER_INFO_3A  lpDriverInfo;
   UINT              HelpMessageID;
   HICON             hCollateIcon;    /* PrintDlg only */
   HICON             hNoCollateIcon;  /* PrintDlg only */
@@ -521,6 +522,8 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
 
     if(PrintStructures->lpPrinterInfo)
         HeapFree(GetProcessHeap(),0, PrintStructures->lpPrinterInfo);
+    if(PrintStructures->lpDriverInfo)
+        HeapFree(GetProcessHeap(),0, PrintStructures->lpDriverInfo);
     if(!OpenPrinterA(name, &hprn, NULL)) {
         ERR("Can't open printer %s\n", name);
 	return FALSE;
@@ -529,6 +532,13 @@ static BOOL PRINTDLG_ChangePrinter(HWND hDlg, char *name,
     PrintStructures->lpPrinterInfo = HeapAlloc(GetProcessHeap(),0,needed);
     GetPrinterA(hprn, 2, (LPBYTE)PrintStructures->lpPrinterInfo, needed,
 		&needed);
+    GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
+    PrintStructures->lpDriverInfo = HeapAlloc(GetProcessHeap(),0,needed);
+    if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)PrintStructures->lpDriverInfo,
+	    needed, &needed)) {
+	ERR("GetPrinterDriverA failed for %s, fix your config!\n",PrintStructures->lpPrinterInfo->pPrinterName);
+	return FALSE;
+    }
     ClosePrinter(hprn);
 
     PRINTDLG_UpdatePrinterInfoTexts(hDlg, PrintStructures->lpPrinterInfo);
@@ -1267,6 +1277,7 @@ BOOL WINAPI PrintDlgA(
 
     if(lppd->Flags & PD_RETURNDEFAULT) {
         PRINTER_INFO_2A *pbuf;
+	DRIVER_INFO_3A	*dbuf;
 	HANDLE hprn;
 	DWORD needed;
 
@@ -1284,9 +1295,19 @@ BOOL WINAPI PrintDlgA(
 	GetPrinterA(hprn, 2, NULL, 0, &needed);
 	pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
 	GetPrinterA(hprn, 2, (LPBYTE)pbuf, needed, &needed);
+
+	GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
+	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
+	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
+	    ERR("GetPrinterDriverA failed, le %ld, fix your config for printer %s!\n",GetLastError(),pbuf->pPrinterName);
+	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE); 
+	    return FALSE;
+	}
 	ClosePrinter(hprn);
-	PRINTDLG_CreateDevNames(&(lppd->hDevNames), "winspool",
-				  pbuf->pDevMode->dmDeviceName,
+
+	PRINTDLG_CreateDevNames(&(lppd->hDevNames),
+				  dbuf->pDriverPath,
+				  pbuf->pPrinterName,
 				  pbuf->pPortName);
 	lppd->hDevMode = GlobalAlloc(GMEM_MOVEABLE, pbuf->pDevMode->dmSize +
 				     pbuf->pDevMode->dmDriverExtra);
@@ -1295,6 +1316,7 @@ BOOL WINAPI PrintDlgA(
 	       pbuf->pDevMode->dmDriverExtra);
 	GlobalUnlock(lppd->hDevMode);
 	HeapFree(GetProcessHeap(), 0, pbuf);
+	HeapFree(GetProcessHeap(), 0, dbuf);
 	bRet = TRUE;
     } else {
 	HGLOBAL hDlgTmpl;
@@ -1328,6 +1350,7 @@ BOOL WINAPI PrintDlgA(
 	if(bRet) {
 	    DEVMODEA *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
 	    PRINTER_INFO_2A *pi = PrintStructures->lpPrinterInfo;
+	    DRIVER_INFO_3A *di = PrintStructures->lpDriverInfo;
 
 	    if (lppd->hDevMode == 0) {
 	        TRACE(" No hDevMode yet... Need to create my own\n");
@@ -1357,12 +1380,16 @@ BOOL WINAPI PrintDlgA(
 		        GlobalUnlock(lppd->hDevNames);
 		}
 	    }
-	    PRINTDLG_CreateDevNames(&(lppd->hDevNames), "winspool",
-				    lpdmReturn->dmDeviceName, pi->pPortName);
+	    PRINTDLG_CreateDevNames(&(lppd->hDevNames),
+		    di->pDriverPath,
+		    pi->pPrinterName,
+		    pi->pPortName
+	    );
 	    GlobalUnlock(lppd->hDevMode);
 	}
 	HeapFree(GetProcessHeap(), 0, PrintStructures->lpDevMode);
 	HeapFree(GetProcessHeap(), 0, PrintStructures->lpPrinterInfo);
+	HeapFree(GetProcessHeap(), 0, PrintStructures->lpDriverInfo);
 	HeapFree(GetProcessHeap(), 0, PrintStructures);
     }
     if(bRet && (lppd->Flags & PD_RETURNDC || lppd->Flags & PD_RETURNIC))
@@ -1417,6 +1444,7 @@ BOOL16 WINAPI PrintDlg16(
 
     if(lppd->Flags & PD_RETURNDEFAULT) {
         PRINTER_INFO_2A *pbuf;
+	DRIVER_INFO_3A	*dbuf;
 	HANDLE hprn;
 	DWORD needed;
 
@@ -1434,10 +1462,19 @@ BOOL16 WINAPI PrintDlg16(
 	GetPrinterA(hprn, 2, NULL, 0, &needed);
 	pbuf = HeapAlloc(GetProcessHeap(), 0, needed);
 	GetPrinterA(hprn, 2, (LPBYTE)pbuf, needed, &needed);
+	GetPrinterDriverA(hprn, NULL, 3, NULL, 0, &needed);
+	dbuf = HeapAlloc(GetProcessHeap(),0,needed);
+	if (!GetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, needed, &needed)) {
+	    ERR("GetPrinterDriverA failed for %s, le %ld, fix your config!\n",
+		    pbuf->pPrinterName,GetLastError());
+	    COMDLG32_SetCommDlgExtendedError(PDERR_RETDEFFAILURE); 
+	    return FALSE;
+	}
 	ClosePrinter(hprn);
-	PRINTDLG_CreateDevNames16(&(lppd->hDevNames), "winspool",
-				    pbuf->pDevMode->dmDeviceName,
-				    pbuf->pPortName);
+	PRINTDLG_CreateDevNames16(&(lppd->hDevNames),
+				dbuf->pDriverPath,
+				pbuf->pPrinterName,
+				pbuf->pPortName);
 	lppd->hDevMode = GlobalAlloc16(GMEM_MOVEABLE,pbuf->pDevMode->dmSize+
 				     pbuf->pDevMode->dmDriverExtra);
 	ptr = GlobalLock16(lppd->hDevMode);
@@ -1445,6 +1482,7 @@ BOOL16 WINAPI PrintDlg16(
 	       pbuf->pDevMode->dmDriverExtra);
 	GlobalUnlock16(lppd->hDevMode);
 	HeapFree(GetProcessHeap(), 0, pbuf);
+	HeapFree(GetProcessHeap(), 0, dbuf);
 	bRet = TRUE;
     } else {
 	HGLOBAL hDlgTmpl;
@@ -1487,6 +1525,7 @@ BOOL16 WINAPI PrintDlg16(
 	if(bRet) {
 	    DEVMODEA *lpdm = PrintStructures->lpDevMode, *lpdmReturn;
 	    PRINTER_INFO_2A *pi = PrintStructures->lpPrinterInfo;
+	    DRIVER_INFO_3A *di = PrintStructures->lpDriverInfo;
 
 	    if (lppd->hDevMode == 0) {
 	        TRACE(" No hDevMode yet... Need to create my own\n");
@@ -1516,14 +1555,18 @@ BOOL16 WINAPI PrintDlg16(
 		        GlobalUnlock16(lppd->hDevNames);
 		}
 	    }
-	    PRINTDLG_CreateDevNames16(&(lppd->hDevNames), "winspool",
-				    lpdmReturn->dmDeviceName, pi->pPortName);
+	    PRINTDLG_CreateDevNames16(&(lppd->hDevNames),
+		    di->pDriverPath,
+		    pi->pPrinterName,
+		    pi->pPortName
+	    );
 	    GlobalUnlock16(lppd->hDevMode);
 	}
 	if (!(lppd->Flags & (PD_ENABLESETUPTEMPLATEHANDLE | PD_ENABLESETUPTEMPLATE)))
             GlobalFree16(hDlgTmpl); /* created from the 32 bits resource */
 	HeapFree(GetProcessHeap(), 0, PrintStructures->lpDevMode);
 	HeapFree(GetProcessHeap(), 0, PrintStructures->lpPrinterInfo);
+	HeapFree(GetProcessHeap(), 0, PrintStructures->lpDriverInfo);
 	HeapFree(GetProcessHeap(), 0, PrintStructures);
     }
     if(bRet && (lppd->Flags & PD_RETURNDC || lppd->Flags & PD_RETURNIC))
