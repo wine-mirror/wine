@@ -262,10 +262,13 @@ void DC_UpdateXforms( DC *dc )
     dc->vport2WorldValid = DC_InvertXform( &dc->xformWorld2Vport,
         &dc->xformVport2World );
 
-    /* Reselect the font back into the dc so that the font size
+    /* Reselect the font and pen back into the dc so that the size
        gets updated. */
     if(memcmp(&oldworld2vport, &dc->xformWorld2Vport, sizeof(oldworld2vport)))
+    {
         SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
+        SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_PEN));
+    }
 }
 
 
