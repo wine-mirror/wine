@@ -1,4 +1,4 @@
-/*		
+/*
  * Scrollbar control
  *
  * Copyright 1993 Martin Ayotte
@@ -49,7 +49,7 @@ static HBITMAP hRgArrowI;
 
 
   /* Minimum size of the rectangle between the arrows */
-#define SCROLL_MIN_RECT  4  
+#define SCROLL_MIN_RECT  4
 
   /* Minimum size of the thumb in pixels */
 #define SCROLL_MIN_THUMB 6
@@ -100,7 +100,7 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
 				    BOOL fShowH, BOOL fShowV );
 static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, 
 				   const SCROLLINFO *info, INT *action );
-static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar, 
+static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
 				    RECT *rect, INT arrowSize,
 				    INT thumbSize, INT thumbPos,
 				    UINT flags, BOOL vertical,
@@ -994,10 +994,10 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             {
                 SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_PAGEUP, hwndCtl );
-                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                                  SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                                  (TIMERPROC)0 );
             }
+            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                              (TIMERPROC)0 );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
@@ -1049,7 +1049,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             }
         }
         break;
-        
+
     case SCROLL_BOTTOM_RECT:
         SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
                              thumbPos, infoPtr->flags, vertical,
@@ -1060,14 +1060,14 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             {
                 SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_PAGEDOWN, hwndCtl );
-                SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                                  SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
-                                  (TIMERPROC)0 );
             }
+            SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
+                              SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                              (TIMERPROC)0 );
         }
         else KillSystemTimer( hwnd, SCROLL_TIMER );
         break;
-        
+
     case SCROLL_BOTTOM_ARROW:
         SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
                            FALSE, (hittest == SCROLL_trackHitTest) );
