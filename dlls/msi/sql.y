@@ -342,7 +342,11 @@ unorderedsel:
             if( !$3 )
                 YYABORT;
             if( $2 )
+            {
                 $$ = do_one_select( sql->db, $3, $2 );
+                if( !$$ )
+                    YYABORT;
+            }
             else
                 $$ = $3;
         }
@@ -354,7 +358,11 @@ unorderedsel:
             if( !view )
                 YYABORT;
             if( $3 )
+            {
                 view = do_one_select( sql->db, view, $3 );
+                if( !view )
+                    YYABORT;
+            }
             DISTINCT_CreateView( sql->db, & $$, view );
         }
     ;
@@ -396,10 +404,13 @@ from:
     TK_FROM table
         { 
             SQL_input* sql = (SQL_input*) info;
+            UINT r;
 
             $$ = NULL;
             TRACE("From table: %s\n",debugstr_w($2));
-            TABLE_CreateView( sql->db, $2, & $$ );
+            r = TABLE_CreateView( sql->db, $2, & $$ );
+            if( r != ERROR_SUCCESS )
+                YYABORT;
         }
   | TK_FROM table TK_WHERE expr
         { 

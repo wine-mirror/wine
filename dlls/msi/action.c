@@ -3107,7 +3107,7 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
 {
     UINT rc;
-    MSIQUERY * view;
+    MSIQUERY * view = NULL;
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = {
         'S','E','L','E','C','T',' ','*',' ',

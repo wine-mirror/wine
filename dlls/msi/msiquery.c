@@ -152,7 +152,7 @@ UINT MSI_DatabaseOpenViewW(MSIDATABASE *db,
     }
 
     msiobj_release( &query->hdr );
-    return ERROR_SUCCESS;
+    return r;
 }
 
 UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
