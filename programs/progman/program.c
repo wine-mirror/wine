@@ -22,7 +22,7 @@ static LRESULT PROGRAM_ProgramWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARA
       {
 	HLOCAL  hProgram = (HLOCAL) GetWindowLong(hWnd, 0);
 	PROGRAM *program = LocalLock(hProgram);
-	GROUP   *group   = LocalLock(program->hGroup);
+	PROGGROUP   *group   = LocalLock(program->hGroup);
 	group->hActiveProgram = hProgram;
 	EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_ENABLED);
 	EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_ENABLED);
@@ -152,7 +152,7 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 			  LPCSTR lpszIconFile, INT nIconIndex,
 			  LPCSTR lpszWorkDir, INT nHotKey, INT nCmdShow)
 {
-  GROUP *group = LocalLock(hGroup);
+  PROGGROUP *group = LocalLock(hGroup);
   PROGRAM *program;
   HLOCAL hPrior, *p;
   HLOCAL hProgram  = LocalAlloc(LMEM_FIXED, sizeof(PROGRAM));
@@ -222,13 +222,13 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 VOID PROGRAM_CopyMoveProgram(HLOCAL hProgram, BOOL bMove)
 {
   PROGRAM *program = LocalLock(hProgram);
-  GROUP   *fromgroup = LocalLock(program->hGroup);
+  PROGGROUP   *fromgroup = LocalLock(program->hGroup);
   HLOCAL hGroup = DIALOG_CopyMove(LocalLock(program->hName),
 				  LocalLock(fromgroup->hName), bMove);
   if (!hGroup) return;
 
   /* FIXME shouldn't be necessary */
-  OpenIcon(((GROUP*)LocalLock(hGroup))->hWnd);
+  OpenIcon(((PROGGROUP*)LocalLock(hGroup))->hWnd);
 
   if (!PROGRAM_AddProgram(hGroup,
 #if 0
@@ -274,14 +274,14 @@ VOID PROGRAM_ExecuteProgram(HLOCAL hProgram)
 VOID PROGRAM_DeleteProgram(HLOCAL hProgram, BOOL bUpdateGrpFile)
 {
   PROGRAM *program = LocalLock(hProgram);
-  GROUP   *group   = LocalLock(program->hGroup);
+  PROGGROUP   *group   = LocalLock(program->hGroup);
 
   group->hActiveProgram = 0;
 
   if (program->hPrior)
     ((PROGRAM*)LocalLock(program->hPrior))->hNext = program->hNext;
   else
-    ((GROUP*)LocalLock(program->hGroup))->hPrograms = program->hNext;
+    ((PROGGROUP*)LocalLock(program->hGroup))->hPrograms = program->hNext;
 	
   if (program->hNext)
     ((PROGRAM*)LocalLock(program->hNext))->hPrior = program->hPrior;
@@ -308,7 +308,7 @@ VOID PROGRAM_DeleteProgram(HLOCAL hProgram, BOOL bUpdateGrpFile)
 
 HLOCAL PROGRAM_FirstProgram(HLOCAL hGroup)
 {
-  GROUP *group;
+  PROGGROUP *group;
   if (!hGroup) return(0);
   group = LocalLock(hGroup);
   return(group->hPrograms);
@@ -334,7 +334,7 @@ HLOCAL PROGRAM_NextProgram(HLOCAL hProgram)
 
 HLOCAL PROGRAM_ActiveProgram(HLOCAL hGroup)
 {
-  GROUP *group;
+  PROGGROUP *group;
   if (!hGroup) return(0);
   group = LocalLock(hGroup);
   if (IsIconic(group->hWnd)) return(0);

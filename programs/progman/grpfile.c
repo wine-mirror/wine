@@ -23,7 +23,7 @@ static BOOL   GRPFILE_ReadFileToBuffer(LPCSTR, HLOCAL*, INT*);
 static HLOCAL GRPFILE_ScanGroup(LPCSTR, INT, LPCSTR, BOOL);
 static HLOCAL GRPFILE_ScanProgram(LPCSTR, INT, LPCSTR, INT,
 				  LPCSTR, HLOCAL,LPCSTR);
-static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group);
+static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group);
 
 /***********************************************************************
  *
@@ -340,7 +340,7 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, INT size,
 BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
 {
   CHAR szPath[MAX_PATHNAME_LEN];
-  GROUP *group = LocalLock(hGroup);
+  PROGGROUP *group = LocalLock(hGroup);
   OFSTRUCT dummy;
   HFILE file;
   BOOL ret;
@@ -499,7 +499,7 @@ static UINT GRPFILE_WriteWithChecksum(HFILE file, LPCSTR str, UINT size)
  *           GRPFILE_DoWriteGroupFile
  */
 
-static BOOL GRPFILE_DoWriteGroupFile(HFILE file, GROUP *group)
+static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
 {
   BYTE buffer[34];
   HLOCAL hProgram;

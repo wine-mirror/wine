@@ -100,7 +100,7 @@ typedef struct
 
   /* magic `PMCC' */           /* Extension 0x8000 */
   /* End of Extensions */      /* Extension 0xffff */
-} GROUP;
+} PROGGROUP;
 
 typedef struct
 {

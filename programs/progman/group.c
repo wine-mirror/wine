@@ -102,11 +102,11 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
 		      /* FIXME shouldn't be necessary */
 		      BOOL bSuppressShowWindow)
 {
-  GROUP *group, *prior;
+  PROGGROUP *group, *prior;
   MDICREATESTRUCT cs;
   INT    seqnum;
   HLOCAL hPrior, *p;
-  HLOCAL hGroup   = LocalAlloc(LMEM_FIXED, sizeof(GROUP));
+  HLOCAL hGroup   = LocalAlloc(LMEM_FIXED, sizeof(PROGGROUP));
   HLOCAL hName    = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszName));
   HLOCAL hGrpFile = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszGrpFile));
   if (!hGroup || !hName || !hGrpFile)
@@ -185,7 +185,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
 
 VOID GROUP_ModifyGroup(HLOCAL hGroup)
 {
-  GROUP *group = LocalLock(hGroup);
+  PROGGROUP *group = LocalLock(hGroup);
   CHAR szName[MAX_PATHNAME_LEN];
   CHAR szFile[MAX_PATHNAME_LEN];
   lstrcpyn(szName, LocalLock(group->hName), MAX_PATHNAME_LEN);
@@ -216,7 +216,7 @@ VOID GROUP_ModifyGroup(HLOCAL hGroup)
 /* FIXME shouldn't be necessary */
 VOID GROUP_ShowGroupWindow(HLOCAL hGroup)
 {
-  GROUP *group = LocalLock(hGroup);
+  PROGGROUP *group = LocalLock(hGroup);
   ShowWindow (group->hWnd, group->nCmdShow);
   UpdateWindow (group->hWnd);
 }
@@ -228,16 +228,16 @@ VOID GROUP_ShowGroupWindow(HLOCAL hGroup)
 
 VOID GROUP_DeleteGroup(HLOCAL hGroup)
 {
-  GROUP *group = LocalLock(hGroup);
+  PROGGROUP *group = LocalLock(hGroup);
 
   Globals.hActiveGroup = 0;
 
   if (group->hPrior)
-    ((GROUP*)LocalLock(group->hPrior))->hNext = group->hNext;
+    ((PROGGROUP*)LocalLock(group->hPrior))->hNext = group->hNext;
   else Globals.hGroups = group->hNext;
 
   if (group->hNext)
-    ((GROUP*)LocalLock(group->hNext))->hPrior = group->hPrior;
+    ((PROGGROUP*)LocalLock(group->hNext))->hPrior = group->hPrior;
 
   while (group->hPrograms)
     PROGRAM_DeleteProgram(group->hPrograms, FALSE);
@@ -268,7 +268,7 @@ HLOCAL GROUP_FirstGroup()
 
 HLOCAL GROUP_NextGroup(HLOCAL hGroup)
 {
-  GROUP *group;
+  PROGGROUP *group;
   if (!hGroup) return(0);
   group = LocalLock(hGroup);
   return(group->hNext);
@@ -291,7 +291,7 @@ HLOCAL GROUP_ActiveGroup()
 
 HWND GROUP_GroupWnd(HLOCAL hGroup)
 {
-  GROUP *group;
+  PROGGROUP *group;
   if (!hGroup) return(0);
   group = LocalLock(hGroup);
   return(group->hWnd);
@@ -304,7 +304,7 @@ HWND GROUP_GroupWnd(HLOCAL hGroup)
 
 LPCSTR GROUP_GroupName(HLOCAL hGroup)
 {
-  GROUP *group;
+  PROGGROUP *group;
   if (!hGroup) return(0);
   group = LocalLock(hGroup);
   return(LocalLock(group->hName));
