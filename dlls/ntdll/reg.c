@@ -22,26 +22,8 @@
 
 DEFAULT_DEBUG_CHANNEL(reg);
 
-static const WCHAR root_name[] = { '\\','R','e','g','i','s','t','r','y','\\',0 };
-static const UNICODE_STRING root_path =
-{
-    sizeof(root_name)-sizeof(WCHAR),  /* Length */
-    sizeof(root_name),                /* MaximumLength */
-    (LPWSTR)root_name                 /* Buffer */
-};
-
 /* maximum length of a key/value name in bytes (without terminating null) */
 #define MAX_NAME_LENGTH ((MAX_PATH-1) * sizeof(WCHAR))
-
-
-/* copy a key name into the request buffer */
-static inline NTSTATUS copy_nameU( LPWSTR Dest, const UNICODE_STRING *name, UINT max )
-{
-    if (name->Length >= max) return STATUS_BUFFER_OVERFLOW;
-    if (name->Length) memcpy( Dest, name->Buffer, name->Length );
-    Dest[name->Length / sizeof(WCHAR)] = 0;
-    return STATUS_SUCCESS;
-}
 
 
 /******************************************************************************

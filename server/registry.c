@@ -287,9 +287,10 @@ static void key_destroy( struct object *obj )
 
 /* duplicate a key path from the request buffer */
 /* returns a pointer to a static buffer, so only useable once per request */
-static WCHAR *copy_path( const WCHAR *path, size_t len )
+static WCHAR *copy_path( const WCHAR *path, size_t len, int skip_root )
 {
     static WCHAR buffer[MAX_PATH+1];
+    static const WCHAR root_name[] = { '\\','R','e','g','i','s','t','r','y','\\',0 };
 
     if (len > sizeof(buffer)-sizeof(buffer[0]))
     {
@@ -298,11 +299,12 @@ static WCHAR *copy_path( const WCHAR *path, size_t len )
     }
     memcpy( buffer, path, len );
     buffer[len / sizeof(WCHAR)] = 0;
+    if (skip_root && !strncmpiW( buffer, root_name, 10 )) return buffer + 10;
     return buffer;
 }
 
 /* copy a path from the request buffer, in cases where the length is stored in front of the path */
-static WCHAR *copy_req_path( void *req, size_t *len )
+static WCHAR *copy_req_path( void *req, size_t *len, int skip_root )
 {
     const WCHAR *name_ptr = get_req_data(req);
     if ((*len = sizeof(WCHAR) + *name_ptr++) > get_req_data_size(req))
@@ -311,7 +313,7 @@ static WCHAR *copy_req_path( void *req, size_t *len )
                               *len, get_req_data_size(req) );
         return NULL;
     }
-    return copy_path( name_ptr, *len - sizeof(WCHAR) );
+    return copy_path( name_ptr, *len - sizeof(WCHAR), skip_root );
 }
 
 /* return the next token in a given path */
@@ -1127,7 +1129,7 @@ static struct key *load_key( struct key *base, const char *buffer, unsigned int 
         /* empty key name, return base key */
         return (struct key *)grab_object( base );
     }
-    if (!(name = copy_path( p, len - ((char *)p - info->tmp) )))
+    if (!(name = copy_path( p, len - ((char *)p - info->tmp), 0 )))
     {
         file_read_error( "Key is too long", info );
         return NULL;
@@ -1385,7 +1387,7 @@ void init_registry(void)
         int dummy;
 
         /* create the config key */
-        if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name) ),
+        if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name), 0 ),
                                 NULL, 0, time(NULL), &dummy )))
             fatal_error( "could not create config key\n" );
         key->flags |= KEY_VOLATILE;
@@ -1587,7 +1589,7 @@ DECL_HANDLER(create_key)
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     req->hkey = 0;
-    if (!(name = copy_req_path( req, &len ))) return;
+    if (!(name = copy_req_path( req, &len, !req->parent ))) return;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
         if (len == get_req_data_size(req))  /* no class specified */
@@ -1624,7 +1626,7 @@ DECL_HANDLER(open_key)
     req->hkey = 0;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
-        WCHAR *name = copy_path( get_req_data(req), get_req_data_size(req) );
+        WCHAR *name = copy_path( get_req_data(req), get_req_data_size(req), !req->parent );
         if (name && (key = open_key( parent, name )))
         {
             req->hkey = alloc_handle( current->process, key, access, 0 );
@@ -1668,7 +1670,7 @@ DECL_HANDLER(set_key_value)
     WCHAR *name;
     size_t len;
 
-    if (!(name = copy_req_path( req, &len ))) return;
+    if (!(name = copy_req_path( req, &len, 0 ))) return;
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
         size_t datalen = get_req_data_size(req) - len;
@@ -1687,7 +1689,7 @@ DECL_HANDLER(get_key_value)
     size_t len = 0, tmp;
 
     req->len = 0;
-    if (!(name = copy_req_path( req, &tmp ))) return;
+    if (!(name = copy_req_path( req, &tmp, 0 ))) return;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
         len = get_value( key, name, req->offset, get_req_data_size(req),
