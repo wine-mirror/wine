@@ -880,6 +880,9 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE("tool %d\n", nTool);
 
+    /* make sure the tooltip has disappeared before deleting it */
+    TOOLTIPS_Hide(hwnd, infoPtr);
+    
     /* delete text string */
     toolPtr = &infoPtr->tools[nTool]; 
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
@@ -941,8 +944,15 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	COMCTL32_Free (oldTools);
     }
 
+    /* destroying tool that mouse was on on last relayed mouse move */
+    if (infoPtr->nTool == nTool)
+    {
+        /* no current tool (0 means first tool) */
+        infoPtr->nTool = -1;    
+    }
+    
     infoPtr->uNumTools--;
-
+    
     return 0;
 }
 
@@ -967,6 +977,9 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE("tool %d\n", nTool);
 
+    /* make sure the tooltip has disappeared before deleting it */
+    TOOLTIPS_Hide(hwnd, infoPtr);    
+    
     /* delete text string */
     toolPtr = &infoPtr->tools[nTool]; 
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
@@ -1028,8 +1041,15 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	COMCTL32_Free (oldTools);
     }
 
+    /* destroying tool that mouse was on on last relayed mouse move */
+    if (infoPtr->nTool == nTool)
+    {
+        /* no current tool (0 means first tool) */
+        infoPtr->nTool = -1;    
+    }
+    
     infoPtr->uNumTools--;
-
+    
     return 0;
 }
 
