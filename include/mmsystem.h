@@ -298,46 +298,75 @@ typedef LPDRVCALLBACK LPWAVECALLBACK;
 #define  WAVE_FORMAT_DIRECT_QUERY  	(WAVE_FORMAT_QUERY | WAVE_FORMAT_DIRECT)
 
 typedef struct wavehdr_tag {
-    LPSTR       lpData;		/* pointer to locked data buffer */
-    DWORD       dwBufferLength;	/* length of data buffer */
-    DWORD       dwBytesRecorded;/* used for input only */
-    DWORD       dwUser;		/* for client's use */
-    DWORD       dwFlags;	/* assorted flags (see defines) */
-    DWORD       dwLoops;	/* loop control counter */
-
-    struct wavehdr_tag *lpNext;	/* reserved for driver */
-    DWORD       reserved;	/* reserved for driver */
+    LPSTR       lpData;
+    DWORD       dwBufferLength;
+    DWORD       dwBytesRecorded;
+    DWORD       dwUser;
+    DWORD       dwFlags;
+    DWORD       dwLoops;
+    struct wavehdr_tag *lpNext;
+    DWORD       reserved;
 } WAVEHDR, *PWAVEHDR, *NPWAVEHDR, *LPWAVEHDR;
 
-#define WHDR_DONE       0x00000001  /* done bit */
-#define WHDR_PREPARED   0x00000002  /* set if this header has been prepared */
-#define WHDR_BEGINLOOP  0x00000004  /* loop start block */
-#define WHDR_ENDLOOP    0x00000008  /* loop end block */
-#define WHDR_INQUEUE    0x00000010  /* reserved for driver */
+#define WHDR_DONE       0x00000001
+#define WHDR_PREPARED   0x00000002
+#define WHDR_BEGINLOOP  0x00000004
+#define WHDR_ENDLOOP    0x00000008
+#define WHDR_INQUEUE    0x00000010
 
-typedef struct {
-    WORD	wMid;			/* manufacturer ID */
-    WORD	wPid;			/* product ID */
-    MMVERSION	vDriverVersion;		/* version of the driver */
-    CHAR	szPname[MAXPNAMELEN];	/* product name (0 terminated string) */
-    DWORD	dwFormats;		/* formats supported */
-    WORD	wChannels;		/* number of sources supported */
-    WORD	wReserved1;		/* padding */
-    DWORD	dwSupport;		/* functionality supported by driver */
+typedef struct tagWAVEOUTCAPSA {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
+    WORD	wReserved1;
+    DWORD	dwSupport;
 } WAVEOUTCAPSA, *LPWAVEOUTCAPSA;
 
-typedef struct {
-    WORD	wMid;			/* manufacturer ID */
-    WORD	wPid;			/* product ID */
-    MMVERSION	vDriverVersion;		/* version of the driver */
-    WCHAR	szPname[MAXPNAMELEN];	/* product name (0 terminated string) */
-    DWORD	dwFormats;		/* formats supported */
-    WORD	wChannels;		/* number of sources supported */
-    WORD	wReserved1;		/* padding */
-    DWORD	dwSupport;		/* functionality supported by driver */
+typedef struct tagWAVEOUTCAPSW {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
+    WORD	wReserved1;
+    DWORD	dwSupport;
 } WAVEOUTCAPSW, *LPWAVEOUTCAPSW;
 DECL_WINELIB_TYPE_AW(WAVEOUTCAPS)
 DECL_WINELIB_TYPE_AW(LPWAVEOUTCAPS)
+
+typedef struct tagWAVEOUTCAPS2A {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
+    WORD	wReserved1;
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} WAVEOUTCAPS2A, *LPWAVEOUTCAPS2A;
+
+typedef struct tagWAVEOUTCAPS2W {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
+    WORD	wReserved1;
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} WAVEOUTCAPS2W, *LPWAVEOUTCAPS2W;
+DECL_WINELIB_TYPE_AW(WAVEOUTCAPS2)
+DECL_WINELIB_TYPE_AW(LPWAVEOUTCAPS2)
 
 #define WAVECAPS_PITCH          0x0001   /* supports pitch control */
 #define WAVECAPS_PLAYBACKRATE   0x0002   /* supports playback rate control */
@@ -347,26 +376,53 @@ DECL_WINELIB_TYPE_AW(LPWAVEOUTCAPS)
 #define WAVECAPS_SAMPLEACCURATE 0x0020	 /* position is sample accurate */
 #define WAVECAPS_DIRECTSOUND	0x0040   /* ? */
 
-typedef struct {
-    WORD	wMid;			/* manufacturer ID */
-    WORD	wPid;			/* product ID */
-    MMVERSION	vDriverVersion;		/* version of the driver */
-    CHAR	szPname[MAXPNAMELEN];	/* product name (0 terminated string) */
-    DWORD	dwFormats;		/* formats supported */
-    WORD	wChannels;		/* number of channels supported */
+typedef struct tagWAVEINCAPSA {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
     WORD	wReserved1;
 } WAVEINCAPSA, *LPWAVEINCAPSA;
-typedef struct {
-    WORD	wMid;			/* manufacturer ID */
-    WORD	wPid;			/* product ID */
-    MMVERSION	vDriverVersion;		/* version of the driver */
-    WCHAR	szPname[MAXPNAMELEN];	/* product name (0 terminated string) */
-    DWORD	dwFormats;		/* formats supported */
-    WORD	wChannels;		/* number of channels supported */
+typedef struct tagWAVEINCAPSW {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
     WORD	wReserved1;
 } WAVEINCAPSW, *LPWAVEINCAPSW;
 DECL_WINELIB_TYPE_AW(WAVEINCAPS)
 DECL_WINELIB_TYPE_AW(LPWAVEINCAPS)
+
+typedef struct tagWAVEINCAPS2A {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
+    WORD	wReserved1;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} WAVEINCAPS2A, *LPWAVEINCAPS2A;
+typedef struct tagWAVEINCAPS2W {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    DWORD	dwFormats;
+    WORD	wChannels;
+    WORD	wReserved1;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} WAVEINCAPS2W, *LPWAVEINCAPS2W;
+DECL_WINELIB_TYPE_AW(WAVEINCAPS2)
+DECL_WINELIB_TYPE_AW(LPWAVEINCAPS2)
 
 #define WAVE_INVALIDFORMAT     0x00000000    /* invalid format */
 #define WAVE_FORMAT_1M08       0x00000001    /* 11.025 kHz, Mono,   8-bit  */
@@ -392,11 +448,11 @@ DECL_WINELIB_TYPE_AW(LPWAVEINCAPS)
 
 /* General format structure common to all formats, same for Win16 and Win32 */
 typedef struct {
-    WORD	wFormatTag;	/* format type */
-    WORD	nChannels;	/* number of channels */
-    DWORD	nSamplesPerSec;	/* sample rate */
-    DWORD	nAvgBytesPerSec;/* for buffer estimation */
-    WORD	nBlockAlign; 	/* block size of data */
+    WORD	wFormatTag;
+    WORD	nChannels;
+    DWORD	nSamplesPerSec;
+    DWORD	nAvgBytesPerSec;
+    WORD	nBlockAlign;
 } WAVEFORMAT, *LPWAVEFORMAT;
 
 #define WAVE_FORMAT_PCM     1
@@ -410,14 +466,13 @@ typedef struct {
 #define _WAVEFORMATEX_
 /* dito same for Win16 / Win32 */
 typedef struct {
-    WORD	wFormatTag;	/* format type */
-    WORD	nChannels;	/* number of channels (i.e. mono, stereo...) */
-    DWORD	nSamplesPerSec;	/* sample rate */
-    DWORD	nAvgBytesPerSec;/* for buffer estimation */
-    WORD	nBlockAlign;	/* block size of data */
-    WORD	wBitsPerSample;	/* number of bits per sample of mono data */
-    WORD	cbSize;		/* the count in bytes of the size of */
-				/* extra information (after cbSize) */
+    WORD	wFormatTag;
+    WORD	nChannels;
+    DWORD	nSamplesPerSec;
+    DWORD	nAvgBytesPerSec;
+    WORD	nBlockAlign;
+    WORD	wBitsPerSample;
+    WORD	cbSize;
 } WAVEFORMATEX, *LPWAVEFORMATEX, *NPWAVEFORMATEX, *PWAVEFORMATEX;
 #endif
 
@@ -509,32 +564,65 @@ typedef WORD *LPKEYARRAY;
 #define MIDI_CACHE_QUERY    3
 #define MIDI_UNCACHE        4
 
-typedef struct {
-    WORD	wMid;		/* manufacturer ID */
-    WORD	wPid;		/* product ID */
-    MMVERSION	vDriverVersion;	/* version of the driver */
-    CHAR	szPname[MAXPNAMELEN];/* product name (NULL terminated string) */
-    WORD	wTechnology;	/* type of device */
-    WORD	wVoices;	/* # of voices (internal synth only) */
-    WORD	wNotes;		/* max # of notes (internal synth only) */
-    WORD	wChannelMask;	/* channels used (internal synth only) */
-    DWORD	dwSupport;	/* functionality supported by driver */
+typedef struct tagMIDIOUTCAPSA {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wVoices;
+    WORD	wNotes;
+    WORD	wChannelMask;
+    DWORD	dwSupport;
 } MIDIOUTCAPSA, *LPMIDIOUTCAPSA;
 
-typedef struct {
-    WORD	wMid;		/* manufacturer ID */
-    WORD	wPid;		/* product ID */
-    MMVERSION	vDriverVersion;	/* version of the driver */
-    WCHAR	szPname[MAXPNAMELEN];/* product name (NULL terminated string) */
-    WORD	wTechnology;	/* type of device */
-    WORD	wVoices;	/* # of voices (internal synth only) */
-    WORD	wNotes;		/* max # of notes (internal synth only) */
-    WORD	wChannelMask;	/* channels used (internal synth only) */
-    DWORD	dwSupport;	/* functionality supported by driver */
+typedef struct tagMIDIOUTCAPSW {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wVoices;
+    WORD	wNotes;
+    WORD	wChannelMask;
+    DWORD	dwSupport;
 } MIDIOUTCAPSW, *LPMIDIOUTCAPSW;
 
 DECL_WINELIB_TYPE_AW(MIDIOUTCAPS)
 DECL_WINELIB_TYPE_AW(LPMIDIOUTCAPS)
+
+typedef struct tagMIDIOUTCAPS2A {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wVoices;
+    WORD	wNotes;
+    WORD	wChannelMask;
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} MIDIOUTCAPS2A, *LPMIDIOUTCAPS2A;
+
+typedef struct tagMIDIOUTCAPS2W {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wVoices;
+    WORD	wNotes;
+    WORD	wChannelMask;
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} MIDIOUTCAPS2W, *LPMIDIOUTCAPS2W;
+
+DECL_WINELIB_TYPE_AW(MIDIOUTCAPS2)
+DECL_WINELIB_TYPE_AW(LPMIDIOUTCAPS2)
 
 #define MOD_MIDIPORT    1  /* output port */
 #define MOD_SYNTH       2  /* generic internal synth */
@@ -547,39 +635,63 @@ DECL_WINELIB_TYPE_AW(LPMIDIOUTCAPS)
 #define MIDICAPS_CACHE		0x0004
 #define MIDICAPS_STREAM		0x0008  /* capable of supporting stream buffer */
 
-typedef struct {
-    WORD	wMid;		/* manufacturer ID */
-    WORD	wPid;		/* product ID */
-    MMVERSION	vDriverVersion;	/* version of the driver */
-    CHAR	szPname[MAXPNAMELEN];/* product name (NULL terminated string) */
-    DWORD	dwSupport;	/* included in win95 and higher */
+typedef struct tagMIDIINCAPSA {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    DWORD	dwSupport;
 } MIDIINCAPSA, *LPMIDIINCAPSA;
 
-typedef struct {
-    WORD	wMid;		/* manufacturer ID */
-    WORD	wPid;		/* product ID */
-    MMVERSION	vDriverVersion;	/* version of the driver */
-    WCHAR	szPname[MAXPNAMELEN];/* product name (NULL terminated string) */
-    DWORD	dwSupport;	/* included in win95 and higher */
+typedef struct tagMIDIINCAPSW {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    DWORD	dwSupport;
 } MIDIINCAPSW, *LPMIDIINCAPSW;
 
 DECL_WINELIB_TYPE_AW(MIDIINCAPS)
 DECL_WINELIB_TYPE_AW(LPMIDIINCAPS)
 
+typedef struct tagMIDIINCAPS2A {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} MIDIINCAPS2A, *LPMIDIINCAPS2A;
+
+typedef struct tagMIDIINCAPS2W {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} MIDIINCAPS2W, *LPMIDIINCAPS2W;
+
+DECL_WINELIB_TYPE_AW(MIDIINCAPS2)
+DECL_WINELIB_TYPE_AW(LPMIDIINCAPS2)
+
 /* It seems that Win32 has a slightly different structure than Win 16.
  * sigh....
  */
 typedef struct midihdr_tag {
-    LPSTR	lpData;		/* pointer to locked data block */
-    DWORD	dwBufferLength;	/* length of data in data block */
-    DWORD	dwBytesRecorded;/* used for input only */
-    DWORD_PTR	dwUser;		/* for client's use */
-    DWORD	dwFlags;	/* assorted flags (see defines) */
-    struct midihdr_tag *lpNext;	/* reserved for driver */
-    DWORD	reserved;	/* reserved for driver */
-    DWORD	dwOffset;	/* offset of playback in case of
-				 * MIDISTRM buffer */
-    DWORD_PTR	dwReserved[8];	/* reserved for driver */
+    LPSTR	lpData;
+    DWORD	dwBufferLength;
+    DWORD	dwBytesRecorded;
+    DWORD_PTR	dwUser;
+    DWORD	dwFlags;
+    struct midihdr_tag *lpNext;
+    DWORD	reserved;
+    DWORD	dwOffset;
+    DWORD_PTR	dwReserved[8];
 } MIDIHDR, *LPMIDIHDR;
 
 #define MHDR_DONE       0x00000001       /* done bit */
@@ -672,28 +784,57 @@ MMRESULT	WINAPI	midiStreamStop(HMIDISTRM hms);
 
 #define AUX_MAPPER     (-1)
 
-typedef struct {
-    WORD	wMid;			/* manufacturer ID */
-    WORD	wPid;			/* product ID */
-    MMVERSION	vDriverVersion;		/* version of the driver */
-    CHAR	szPname[MAXPNAMELEN];	/* product name (NULL terminated string) */
-    WORD	wTechnology;		/* type of device */
-    WORD	wReserved1;		/* padding */
-    DWORD	dwSupport;		/* functionality supported by driver */
+typedef struct tagAUXCAPSA {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wReserved1;
+    DWORD	dwSupport;
 } AUXCAPSA, *LPAUXCAPSA;
 
-typedef struct {
-    WORD	wMid;			/* manufacturer ID */
-    WORD	wPid;			/* product ID */
-    MMVERSION	vDriverVersion;		/* version of the driver */
-    WCHAR	szPname[MAXPNAMELEN];	/* product name (NULL terminated string) */
-    WORD	wTechnology;		/* type of device */
-    WORD	wReserved1;		/* padding */
-    DWORD	dwSupport;		/* functionality supported by driver */
+typedef struct tagAUXCAPSW {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wReserved1;
+    DWORD	dwSupport;
 } AUXCAPSW, *LPAUXCAPSW;
 
 DECL_WINELIB_TYPE_AW(AUXCAPS)
 DECL_WINELIB_TYPE_AW(LPAUXCAPS)
+
+typedef struct tagAUXCAPS2A {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    CHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wReserved1;
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} AUXCAPS2A, *LPAUXCAPS2A;
+
+typedef struct tagAUXCAPS2W {
+    WORD	wMid;
+    WORD	wPid;
+    MMVERSION	vDriverVersion;
+    WCHAR	szPname[MAXPNAMELEN];
+    WORD	wTechnology;
+    WORD	wReserved1;
+    DWORD	dwSupport;
+    GUID	ManufacturerGuid;
+    GUID	ProductGuid;
+    GUID	NameGuid;
+} AUXCAPS2W, *LPAUXCAPS2W;
+
+DECL_WINELIB_TYPE_AW(AUXCAPS2)
+DECL_WINELIB_TYPE_AW(LPAUXCAPS2)
 
 #define AUXCAPS_CDAUDIO    1       /* audio from internal CD-ROM drive */
 #define AUXCAPS_AUXIN      2       /* audio from auxiliary input jacks */
@@ -722,7 +863,7 @@ typedef void (CALLBACK *LPTIMECALLBACK)(UINT,UINT,DWORD_PTR,DWORD_PTR,DWORD_PTR)
 #define TIME_CALLBACK_EVENT_PULSE 	0x0020	/* callback is event - use PulseEvent */
 #define TIME_KILL_SYNCHRONOUS           0x0100
 
-typedef struct {
+typedef struct timecaps_tag {
     UINT	wPeriodMin;
     UINT	wPeriodMax;
 } TIMECAPS, *LPTIMECAPS;
@@ -798,7 +939,7 @@ MMRESULT	WINAPI	timeEndPeriod(UINT);
 #define JOY_CAL_READUONLY	0x04000000
 #define JOY_CAL_READVONLY	0x08000000
 
-typedef struct {
+typedef struct tagJOYCAPSA {
     WORD wMid;
     WORD wPid;
     CHAR szPname[MAXPNAMELEN];
@@ -825,7 +966,7 @@ typedef struct {
     CHAR szOEMVxD[MAX_JOYSTICKOEMVXDNAME];
 } JOYCAPSA, *LPJOYCAPSA;
 
-typedef struct {
+typedef struct tagJOYCAPSW {
     WORD wMid;
     WORD wPid;
     WCHAR szPname[MAXPNAMELEN];
@@ -854,27 +995,89 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(JOYCAPS)
 DECL_WINELIB_TYPE_AW(LPJOYCAPS)
 
-typedef struct {
+typedef struct tagJOYCAPS2A {
+    WORD wMid;
+    WORD wPid;
+    CHAR szPname[MAXPNAMELEN];
+    UINT wXmin;
+    UINT wXmax;
+    UINT wYmin;
+    UINT wYmax;
+    UINT wZmin;
+    UINT wZmax;
+    UINT wNumButtons;
+    UINT wPeriodMin;
+    UINT wPeriodMax;
+    UINT wRmin;
+    UINT wRmax;
+    UINT wUmin;
+    UINT wUmax;
+    UINT wVmin;
+    UINT wVmax;
+    UINT wCaps;
+    UINT wMaxAxes;
+    UINT wNumAxes;
+    UINT wMaxButtons;
+    CHAR szRegKey[MAXPNAMELEN];
+    CHAR szOEMVxD[MAX_JOYSTICKOEMVXDNAME];
+    GUID ManufacturerGuid;
+    GUID ProductGuid;
+    GUID NameGuid;
+} JOYCAPS2A, *LPJOYCAPS2A;
+
+typedef struct tagJOYCAPS2W {
+    WORD wMid;
+    WORD wPid;
+    WCHAR szPname[MAXPNAMELEN];
+    UINT wXmin;
+    UINT wXmax;
+    UINT wYmin;
+    UINT wYmax;
+    UINT wZmin;
+    UINT wZmax;
+    UINT wNumButtons;
+    UINT wPeriodMin;
+    UINT wPeriodMax;
+    UINT wRmin;
+    UINT wRmax;
+    UINT wUmin;
+    UINT wUmax;
+    UINT wVmin;
+    UINT wVmax;
+    UINT wCaps;
+    UINT wMaxAxes;
+    UINT wNumAxes;
+    UINT wMaxButtons;
+    WCHAR szRegKey[MAXPNAMELEN];
+    WCHAR szOEMVxD[MAX_JOYSTICKOEMVXDNAME];
+    GUID ManufacturerGuid;
+    GUID ProductGuid;
+    GUID NameGuid;
+} JOYCAPS2W, *LPJOYCAPS2W;
+DECL_WINELIB_TYPE_AW(JOYCAPS2)
+DECL_WINELIB_TYPE_AW(LPJOYCAPS2)
+
+typedef struct joyinfo_tag {
     UINT wXpos;
     UINT wYpos;
     UINT wZpos;
     UINT wButtons;
 } JOYINFO, *LPJOYINFO;
 
-typedef struct {
-    DWORD	dwSize;		/* size of structure */
-    DWORD	dwFlags;	/* flags to indicate what to return */
-    DWORD	dwXpos;		/* x position */
-    DWORD	dwYpos;		/* y position */
-    DWORD	dwZpos;		/* z position */
-    DWORD	dwRpos;		/* rudder/4th axis position */
-    DWORD	dwUpos;		/* 5th axis position */
-    DWORD	dwVpos;		/* 6th axis position */
-    DWORD	dwButtons;	/* button states */
-    DWORD	dwButtonNumber;	/* current button number pressed */
-    DWORD	dwPOV;		/* point of view state */
-    DWORD	dwReserved1;	/* reserved for communication between winmm & driver */
-    DWORD	dwReserved2;	/* reserved for future expansion */
+typedef struct joyinfoex_tag {
+    DWORD	dwSize;
+    DWORD	dwFlags;
+    DWORD	dwXpos;
+    DWORD	dwYpos;
+    DWORD	dwZpos;
+    DWORD	dwRpos;
+    DWORD	dwUpos;
+    DWORD	dwVpos;
+    DWORD	dwButtons;
+    DWORD	dwButtonNumber;
+    DWORD	dwPOV;
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
 } JOYINFOEX,*LPJOYINFOEX;
 
 
@@ -895,7 +1098,7 @@ MMRESULT	WINAPI	joySetThreshold(UINT,UINT);
 #define MIXERR_INVALVALUE	(MIXERR_BASE + 2)
 #define MIXERR_LASTERROR	(MIXERR_BASE + 2)
 
-typedef struct {
+typedef struct tagMIXERCAPSA {
 	WORD		wMid;
 	WORD		wPid;
 	MMVERSION	vDriverVersion;
@@ -904,7 +1107,7 @@ typedef struct {
 	DWORD		cDestinations;
 } MIXERCAPSA,*LPMIXERCAPSA;
 
-typedef struct {
+typedef struct tagMIXERCAPSW {
 	WORD		wMid;
 	WORD		wPid;
 	MMVERSION	vDriverVersion;
@@ -915,6 +1118,33 @@ typedef struct {
 
 DECL_WINELIB_TYPE_AW(MIXERCAPS)
 DECL_WINELIB_TYPE_AW(LPMIXERCAPS)
+
+typedef struct tagMIXERCAPS2A {
+	WORD		wMid;
+	WORD		wPid;
+	MMVERSION	vDriverVersion;
+	CHAR		szPname[MAXPNAMELEN];
+	DWORD		fdwSupport;
+	DWORD		cDestinations;
+	GUID		ManufacturerGuid;
+	GUID		ProductGuid;
+	GUID		NameGuid;
+} MIXERCAPS2A,*LPMIXERCAPS2A;
+
+typedef struct tagMIXERCAPS2W {
+	WORD		wMid;
+	WORD		wPid;
+	MMVERSION	vDriverVersion;
+	WCHAR		szPname[MAXPNAMELEN];
+	DWORD		fdwSupport;
+	DWORD		cDestinations;
+	GUID		ManufacturerGuid;
+	GUID		ProductGuid;
+	GUID		NameGuid;
+} MIXERCAPS2W,*LPMIXERCAPS2W;
+
+DECL_WINELIB_TYPE_AW(MIXERCAPS2)
+DECL_WINELIB_TYPE_AW(LPMIXERCAPS2)
 
 #define MIXER_SHORT_NAME_CHARS		16
 #define MIXER_LONG_NAME_CHARS		64
