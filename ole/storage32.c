@@ -1915,7 +1915,14 @@ HRESULT StorageImpl_Construct(
     /*
      * Load the header for the file.
      */
-    StorageImpl_LoadFileHeader(This);
+    hr = StorageImpl_LoadFileHeader(This);
+
+    if (FAILED(hr))
+    {
+      BIGBLOCKFILE_Destructor(This->bigBlockFile);
+
+      return hr;
+    }
   }
 
   /*
@@ -2599,6 +2606,8 @@ HRESULT StorageImpl_LoadFileHeader(
      * Release the block.
      */
     StorageImpl_ReleaseBigBlock(This, headerBigBlock);
+
+    hr = S_OK;
   }
   
   return hr;
@@ -4939,7 +4948,6 @@ ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This)
 
 /******************************************************************************
  *    StgCreateDocfile32  [OLE32.144]
- *    TODO Validate grfMode (STGM)
  */
 HRESULT WINAPI StgCreateDocfile(
   LPCOLESTR pwcsName,
@@ -5035,7 +5043,10 @@ HRESULT WINAPI StgCreateDocfile(
          grfMode);
  
   if (FAILED(hr))
+  {
+    HeapFree(GetProcessHeap(), 0, newStorage);
     return hr;
+  }
 
   /*
    * Get an "out" pointer for the caller.
@@ -5116,7 +5127,10 @@ HRESULT WINAPI StgOpenStorage(
          grfMode);
   
   if (FAILED(hr))
+  {
+    HeapFree(GetProcessHeap(), 0, newStorage);
     return hr;
+  }
   
   /*
    * Get an "out" pointer for the caller.
