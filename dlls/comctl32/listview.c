@@ -2375,7 +2375,8 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr, INT nSkipIte
 {
     LVITEMW lvItem;
     RANGE *sel;
-    INT i;
+    INT i, pos;
+    HDPA clone;
 
     if (infoPtr->bRemovingAllSelections) return TRUE;
 
@@ -2386,16 +2387,17 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr, INT nSkipIte
     lvItem.state = 0;
     lvItem.stateMask = LVIS_SELECTED;
     
-    do
+    /* need to clone the DPA because callbacks can change it */
+    clone = DPA_Clone(infoPtr->hdpaSelectionRanges, NULL);
+    for ( pos = 0; (sel = DPA_GetPtr(clone, pos)); pos++ )
     {
-	sel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, 0);
-	if (!sel) continue;
-	if (infoPtr->hdpaSelectionRanges->nItemCount == 1 &&
-	    sel->lower == nSkipItem && sel->upper == nSkipItem) break;
 	for(i = sel->lower; i <= sel->upper; i++)
-	    if (i != nSkipItem) LISTVIEW_SetItemState(infoPtr, i, &lvItem);
+        {
+	    if (i != nSkipItem)
+                LISTVIEW_SetItemState(infoPtr, i, &lvItem);
+        }
     }
-    while (infoPtr->hdpaSelectionRanges->nItemCount > 0);
+    DPA_Destroy(clone);
 
     infoPtr->bRemovingAllSelections = FALSE;
 
