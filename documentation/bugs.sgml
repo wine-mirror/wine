@@ -189,8 +189,15 @@
 	  </listitem>
 	  <listitem>
 	    <para>
-		If you know you are missing a DLL, such as Visual Basic
-		Runtime, you may be able to find it at
+		If you have a program that needs the Visual Basic Runtime Enviroment,
+		you can download it from
+		<ulink url="http://www.microsoft.com/downloads/details.aspx?FamilyID=bf9a24f9-b5c5-48f4-8edd-cdf2d29a79d5&amp;DisplayLang=en/">this Microsoft site</ulink>
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+		If you know you are missing a DLL, such as mfc42,
+		you may be able to find it at
 		<ulink url="http://www.dll-files.com/">www.dll-files.com</ulink>
 	    </para>
 	  </listitem>
