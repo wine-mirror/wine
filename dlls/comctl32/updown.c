@@ -944,6 +944,24 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 		     infoPtr->MinVal, infoPtr->MaxVal, hwnd);
       break;
 
+    case UDM_GETPOS32:
+      if ((LPBOOL)lParam != NULL)
+	*((LPBOOL)lParam) = TRUE;
+      return infoPtr->CurVal;
+
+    case UDM_SETPOS32:
+      if(!UPDOWN_InBounds(hwnd, (int)lParam)){
+	if((int)lParam < infoPtr->MinVal)
+	  lParam = infoPtr->MinVal;
+	if((int)lParam > infoPtr->MaxVal)
+	  lParam = infoPtr->MaxVal;
+      }
+      temp = infoPtr->CurVal; /* save prev value   */
+      infoPtr->CurVal = (int)lParam;   /* set the new value */
+      if(dwStyle & UDS_SETBUDDYINT)
+	UPDOWN_SetBuddyInt (hwnd);
+      return temp;            /* return prev value */
+
     default: 
       if (message >= WM_USER) 
       	ERR("unknown msg %04x wp=%04x lp=%08lx\n", 
