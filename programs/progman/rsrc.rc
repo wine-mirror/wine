@@ -30,7 +30,7 @@
 /* #include "It.rc" */
 /* #include "Ko.rc" */
 /* #include "Pt.rc" */
-/* #include "Si.rc" */
+#include "Si.rc"
 /* #include "Sk.rc" */
 /* #include "Sw.rc" */
 /* #include "Va.rc" */

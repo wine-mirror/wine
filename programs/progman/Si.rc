@@ -18,116 +18,204 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define LANGUAGE_ID                  Si
-#define LANGUAGE_NUMBER              1c
-#define LANGUAGE_MENU_ITEM           "Slove&nšèina"
-
 /* Menu */
 
-#define MENU_FILE                    "&Datoteka"
-#define MENU_FILE_NEW                "&Nova ..."
-#define MENU_FILE_OPEN               "&Odpri\tEnter"
-#define MENU_FILE_MOVE               "Pre&makni\tF7"
-#define MENU_FILE_COPY               "&Kopiraj\tF8"
-#define MENU_FILE_DELETE             "Izbri&ši\tDel"
-#define MENU_FILE_ATTRIBUTES         "&Lastnosti ...\tAlt+Enter"
-#define MENU_FILE_EXECUTE            "&Zaženi ..."
-#define MENU_FILE_EXIT               "Iz&hod iz programa Windows ..."
+MAIN_MENU MENU LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+{
+ POPUP "&Datoteka" {
+   MENUITEM "&Nova ...",              PM_NEW
+   MENUITEM "&Odpri\tEnter",             PM_OPEN
+   MENUITEM "Pre&makni\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Kopiraj\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&Izbriši\tEntf",           PM_DELETE
+   MENUITEM "&Lastnosti ...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "&Zaženi ...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "Iz&hod iz programa Windows ...",             PM_EXIT
+ }
+ POPUP "&Možnosti" {
+   MENUITEM "&Samodejno razporedi",  PM_AUTO_ARRANGE
+   MENUITEM "&Ob rabi minimiraj",    PM_MIN_ON_RUN
+   MENUITEM "Shrani &nastavitve ob izhodu", PM_SAVE_SETTINGS
+ }
+ POPUP "&Okno" {
+   MENUITEM "&V kaskado\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Razpostavi\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "Razporedi &ikone",       PM_ARRANGE
+ }
 
-#define MENU_OPTIONS                 "&Možnosti"
-#define MENU_OPTIONS_AUTO_ARRANGE    "&Samodejno razporedi"
-#define MENU_OPTIONS_MIN_ON_RUN      "&Ob rabi minimiraj"
-#define MENU_OPTIONS_SAVE_SETTINGS   "Shrani &nastavitve ob izhodu"
+POPUP "&Pomoè" {
+   MENUITEM "&Teme pomoèi",         PM_CONTENTS
+   MENUITEM "&Najdi ...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&O pomoèi",     PM_HELPONHELP
+   MENUITEM "&Vadnica",         PM_TUTORIAL
+   MENUITEM SEPARATOR
 
-#define MENU_WINDOWS                 "&Okno"
-#define MENU_WINDOWS_OVERLAP         "&V kaskado\tShift+F5"
-#define MENU_WINDOWS_SIDE_BY_SIDE    "&Razpostavi\tShift+F4"
-#define MENU_WINDOWS_ARRANGE         "Razporedi &ikone"
+   POPUP "Inf&ormacije ..." {
+     MENUITEM "&Licenèna pogodba",        PM_LICENSE
+     MENUITEM "&BREZ GARANCIJE",    PM_NO_WARRANTY
+     MENUITEM "&O WINE",     PM_ABOUT_WINE
+   }
+ }
+}
 
-#define MENU_LANGUAGE                "&Jezik"
+/* Dialog `New' */
 
-#define MENU_HELP                    "&Pomoè"
-#define MENU_HELP_CONTENTS           "&Teme pomoèi"
-#define MENU_HELP_SEARCH             "&Najdi ..."
-#define MENU_HELP_HELP_ON_HELP       "&O pomoèi"
-#define MENU_HELP_TUTORIAL           "&Vadnica"
+DIALOG_NEW_ DIALOG 0, 0, 170, 65
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Nov programski predmet"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "Programska &skupina",   PM_NEW_GROUP,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Program", PM_NEW_PROGRAM,  20, 38,  80, 15
+DEFPUSHBUTTON "V redu",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
 
-#define MENU_INFO                    "Inf&ormacije ..."
-#define MENU_INFO_LICENSE            "&Licenèna pogodba"
-#define MENU_INFO_NO_WARRANTY        "&BREZ GARANCIJE"
-#define MENU_INFO_ABOUT_WINE         "&O WINE"
+/* Dialog `Move' */
 
-/* Dialogs */
+DIALOG_MOVE_ DIALOG 0, 0, 250, 65
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Premik programa"
+{
+LTEXT         "Premakni program:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "Iz programske skupine:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&V skupino:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "V redu",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_OK                    "V redu"
-#define DIALOG_CANCEL                "Preklièi"
-#define DIALOG_BROWSE                "Pre&brskaj ..."
-#define DIALOG_HELP                  "&Pomoè"
+/* Dialog `Copy' */
 
-#define DIALOG_NEW_CAPTION           "Nov programski predmet"
-#define DIALOG_NEW_NEW               "Nov(a)"
-#define DIALOG_NEW_GROUP             "Programska &skupina"
-#define DIALOG_NEW_PROGRAM           "P&rogram"
+DIALOG_COPY_ DIALOG 0, 0, 250, 65
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Kopiranje programa"
+{
+LTEXT         "Kopiraj program:",    IDIGNORE,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "Iz programske skupine:", IDIGNORE,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&V skupino:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "V redu",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_MOVE_CAPTION          "Premik programa"
-#define DIALOG_MOVE_PROGRAM          "Premakni program:"
-#define DIALOG_MOVE_FROM_GROUP       "Iz programske skupine:"
-#define DIALOG_MOVE_TO_GROUP         "&V skupino:"
+/* Dialog `Group attributes' */
 
-#define DIALOG_COPY_CAPTION          "Kopiranje programa"
-#define DIALOG_COPY_PROGRAM          "Kopiraj program:"
-#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
-#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+DIALOG_GROUP_ DIALOG 0, 0, 230, 65
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Lastnosti programske skupine"
+{
+LTEXT     "&Opis:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Datoteka skupine:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "V redu",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_GROUP_CAPTION         "Lastnosti programske skupine"
-#define DIALOG_GROUP_DESCRIPTION     "&Opis:"
-#define DIALOG_GROUP_FILE            "&Datoteka skupine:"
+/* Dialog `Program attributes' */
 
-#define DIALOG_PROGRAM_CAPTION       "Lastnosti programa"
-#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
-#define DIALOG_PROGRAM_COMMAND_LINE  "&Ukazna vrstica:"
-#define DIALOG_PROGRAM_DIRECTORY     "&Delovna mapa:"
-#define DIALOG_PROGRAM_HOT_KEY       "&Tipke za bližnjico:"
-#define DIALOG_PROGRAM_SYMBOL        "&Minimiran zagon"
-#define DIALOG_PROGRAM_OTHER_SYMBOL  "Zamenjaj &ikono ..."
+DIALOG_PROGRAM_ DIALOG 0, 0, 250, 105
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Lastnosti programa"
+{
+LTEXT         "&Opis:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
+LTEXT         "&Ukazna vrstica:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
+LTEXT         "&Delovna mapa:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Tipke za bližnjico:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
+LTEXT         "&Minimiran zagon",       IDIGNORE,             95, 75,  75, 10
+DEFPUSHBUTTON "V redu",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pre&brskaj ...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Zamenjaj &ikono ...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+}
 
-#define DIALOG_SYMBOL_CAPTION        "Zamenjava ikone"
-#define DIALOG_SYMBOL_FILE           "Ime &datoteke:"
-#define DIALOG_SYMBOL_CURRENT        "&Trenutna ikona:"
+/* Dialog `Symbol' */
 
-#define DIALOG_EXECUTE_CAPTION       "Zagon programa"
-#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
-#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+DIALOG_SYMBOL_ DIALOG 0, 0, 200, 85
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Zamenjava ikone"
+{
+LTEXT     "Ime &datoteke:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "&Trenutna ikona:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "V redu",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pre&brskaj ...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE_ DIALOG 0, 0, 200, 85
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STYLE DS_MODALFRAME
+CAPTION "Zagon programa"
+{
+LTEXT     "&Ukazna vrstica:", IDIGNORE,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "&Minimiran zagon",   IDIGNORE,   20, 45, 120, 10
+DEFPUSHBUTTON "V redu",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Preklièi",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Pre&brskaj ...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Pomoè",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}
 
 /* Strings */
 
-#define STRING_PROGRAM_MANAGER            "Upravitelj programov"
-#define STRING_ERROR                      "NAPAKA"
-#define STRING_WARNING                    "OPOZORILO"
-#define STRING_INFO                       "Informaticija"
-#define STRING_DELETE                     "Brisanje"
-#define STRING_DELETE_GROUP_s             "Ali ste preprièani, da želite izbrisati skupino »%s«?"
-#define STRING_DELETE_PROGRAM_s           "Ali ste preprièani, da želite izbrisati element »%s«?"
-#define STRING_NOT_IMPLEMENTED            "Ni (še) na voljo"
-#define STRING_FILE_READ_ERROR_s          "Napaka pri branju iz »%s«"
-#define STRING_FILE_WRITE_ERROR_s         "Napaka pri pisanju v »%s«"
-
-#define STRING_GRPFILE_READ_ERROR_s       "\
-Datoteke programske skupine »%s« ni mogoèe odpreti.\n\
-Ali želite, da jo upravitelj programov poskuša naložiti tudi v prihodnje?"
-
-#define STRING_OUT_OF_MEMORY              "Zmanjkalo je pomnilnika"
-#define STRING_WINHELP_ERROR              "Pomoè ni na voljo"
-#define STRING_UNKNOWN_FEATURE_s          "Neznana možnost v %s"
-#define STRING_FILE_NOT_OVERWRITTEN_s     "Datoteka `%s' že obstaja in ni bila prepisana."
-#define STRING_SAVE_GROUP_AS_s            "Shranjujem datoteko skupine kot `%s', da bi prepreèil prepisanje originalne datoteke"
-
-#define STRING_NO_HOT_KEY                 "Noben"
-
-#define STRING_ALL_FILES                  "Vse datoteke (*.*)"
-#define STRING_PROGRAMS                   "Programi"
-#define STRING_LIBRARIES_DLL              "Knjižnice (*.dll)"
-#define STRING_SYMBOL_FILES               "Ikonske datoteke"
-#define STRING_SYMBOLS_ICO                "Ikone (*.ico)"
-
-#include "Xx.rc"
+STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+{
+IDS_PROGRAM_MANAGER,		"Upravitelj programov"
+IDS_ERROR,			"NAPAKA"
+IDS_WARNING,			"OPOZORILO"
+IDS_INFO,			"Informacija"
+IDS_DELETE,			"Brisanje"
+IDS_DELETE_GROUP_s,		"Ali ste preprièani, da želite izbrisati skupino '%s'?"
+IDS_DELETE_PROGRAM_s,		"Ali ste preprièani, da želite izbrisati program '%s'?"
+IDS_NOT_IMPLEMENTED,		"Ni (še) na voljo"
+IDS_FILE_READ_ERROR_s,		"Napaka pri branju iz '%s'."
+IDS_FILE_WRITE_ERROR_s,		"Napaka pri pisanju v '%s'."
+IDS_GRPFILE_READ_ERROR_s,	"\
+Datoteke programske skupine '%s' ni mogoèe odpreti.\n\
+Ali želite, da jo Upravitelj programov\n\
+poskuša naložiti tudi v prihodnje?"
+IDS_OUT_OF_MEMORY,		"Zmanjkalo je pomnilnika."
+IDS_WINHELP_ERROR,		"Pomoè ni na voljo."
+IDS_UNKNOWN_FEATURE_s,		"Neznana možnost v %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Datoteka `%s' že obstaja in ni bila prepisana."
+IDS_SAVE_GROUP_AS_s,		"Shranjujem datoteko skupine kot `%s', da bi prepreèil prepisanje originalne datoteke."
+IDS_NO_HOT_KEY,			"Noben"
+IDS_ALL_FILES,			"Vse datoteke (*.*)"
+IDS_PROGRAMS,			"Programi"
+IDS_LIBRARIES_DLL,		"Knjižnice (*.dll)"
+IDS_SYMBOL_FILES,		"Ikonske datoteke"
+IDS_SYMBOLS_ICO,		"Ikone (*.ico)"
+}
