@@ -250,7 +250,6 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
   if (ret) return 0;
   ret=0;
  }
- (void*)V86BASE(&context)=lpDosTask->img;
 #ifdef TRY_PICRETURN
  if (VM86->vm86plus.force_return_for_pic) {
    SET_PEND(&context);

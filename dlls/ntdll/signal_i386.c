@@ -378,7 +378,6 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #else
     context->SegGs  = __get_gs();
 #endif
-    if (ISV86(context)) V86BASE(context) = (DWORD)DOSMEM_MemoryBase(0);
 }
 
 

@@ -157,7 +157,6 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
     FS_reg(context)  = call->fs;
     GS_reg(context)  = call->gs;
     SS_reg(context)  = call->ss;
-    V86BASE(context) = (DWORD) DOSMEM_MemoryBase(0);
 }
 
 
