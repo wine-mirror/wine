@@ -861,11 +861,13 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
     /* no "else" here ! */
     if (section && section[0])
     {
-        PROFILE_GetSection(CurProfile->section, section, buffer, len,
-				FALSE, FALSE);
-	if (!buffer[0]) /* no luck -> def_val */
-	    PROFILE_CopyEntry(buffer, def_val, len, FALSE);
-	return strlen(buffer);
+        INT ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, FALSE, FALSE);
+        if (!buffer[0]) /* no luck -> def_val */
+        {
+            PROFILE_CopyEntry(buffer, def_val, len, FALSE);
+            ret = strlen(buffer);
+        }
+        return ret;
     }
     buffer[0] = '\0';
     return 0;
