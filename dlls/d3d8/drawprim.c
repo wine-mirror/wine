@@ -660,7 +660,12 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                 sd->u.s.position.dwStride, 
                 sd->u.s.position.dwType + 1, 
                 sd->u.s.position.lpData));
-        glVertexPointer(sd->u.s.position.dwType + 1, GL_FLOAT, 
+
+        /* Disable RHW mode as 'w' coord handling for rhw mode should
+           not impact screen position whereas in GL it does. This may 
+           result in very slightly distored textures in rhw mode, but
+           a very minimal different                                   */
+        glVertexPointer(3, GL_FLOAT,  /* RHW: Was 'sd->u.s.position.dwType + 1' */
                         sd->u.s.position.dwStride, 
                         sd->u.s.position.lpData);
         checkGLcall("glVertexPointer(...)");
@@ -1196,7 +1201,12 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                 glVertex3f(x, y, z);
             } else {
                 VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
-                glVertex4f(x,y,z,rhw);
+                /* Disable RHW mode as 'w' coord handling for rhw mode should
+                   not impact screen position whereas in GL it does. This may 
+                   result in very slightly distored textures in rhw mode, but
+                   a very minimal different. In slow mode a possible 'fix' is
+                   glVertex4f(x*rhw,y*rhw,z*rhw,rhw) but not sure this is right */
+                glVertex3f(x,y,z);
             }
         }
 
