@@ -778,8 +778,8 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
         if (HAS_SIZEFRAME( wndPtr->dwStyle ))
         {
             InflateRect16( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
-//            if (wndPtr->dwStyle & WS_BORDER)
-//                InflateRect16(&rect,-SYSMETRICS_CXBORDER,-SYSMETRICS_CYBORDER);
+/*            if (wndPtr->dwStyle & WS_BORDER) */
+/*                InflateRect16(&rect,-SYSMETRICS_CXBORDER,-SYSMETRICS_CYBORDER); */
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check top sizing border */
@@ -816,8 +816,8 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
         {
             if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
                 InflateRect16(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
-//            else if (wndPtr->dwStyle & WS_BORDER)
-//                InflateRect16(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+/*            else if (wndPtr->dwStyle & WS_BORDER) */
+/*                InflateRect16(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER); */
             if (!PtInRect16( &rect, pt )) return HTBORDER;
         }
 

@@ -280,7 +280,7 @@ typedef float D3DVALUE,*LPD3DVALUE;
 #define D3DMultiply(a, b)	((a) * (b))
 
 #if 0
-// This causes lots o' problems
+/* This causes lots o' problems */
 typedef struct {
 	union {
 		D3DVALUE x;

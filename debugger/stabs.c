@@ -164,7 +164,7 @@ DEBUG_FileSubNr2StabEnum(int filenr,int subnr) {
 	);
         memset( stab_types + curtypenum, 0, sizeof(struct datatype *) * (num_stab_types - curtypenum) );
     }
-    //fprintf(stderr,"(%d,%d) is %d\n",filenr,subnr,typenums[filenr][subnr]);
+    /*fprintf(stderr,"(%d,%d) is %d\n",filenr,subnr,typenums[filenr][subnr]); */
     return typenums[filenr][subnr];
 }
 

@@ -59,7 +59,7 @@ REBAR_DrawBand (HDC32 hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	pt.x = (lpBand->rcCapImage.right + lpBand->rcCapImage.left - infoPtr->imageSize.cx)/2;
 
 	ImageList_Draw (infoPtr->himl, lpBand->iImage, hdc,
-//			lpBand->rcCapImage.left, lpBand->rcCapImage.top,
+/*			lpBand->rcCapImage.left, lpBand->rcCapImage.top, */
 			pt.x, pt.y,
 			ILD_TRANSPARENT);
     }
@@ -214,7 +214,7 @@ REBAR_CalcVertBand (WND *wndPtr, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	lpBand->fDraw |= DRAW_TEXT;
 	GetTextExtentPoint32W (hdc, lpBand->lpText,
 			       lstrlen32W (lpBand->lpText), &size);
-//	lpBand->rcCapText.right += size.cx;
+/*	lpBand->rcCapText.right += size.cx; */
 	lpBand->rcCapText.bottom += size.cy;
 
 	SelectObject32 (hdc, hOldFont);
@@ -516,7 +516,7 @@ REBAR_InternalHitTest (WND *wndPtr, LPPOINT32 lpPt, UINT32 *pFlags, INT32 *pBand
 
 
 
-// << REBAR_BeginDrag >>
+/* << REBAR_BeginDrag >> */
 
 
 static LRESULT
@@ -563,8 +563,8 @@ REBAR_DeleteBand (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << REBAR_DragMove >>
-// << REBAR_EndDrag >>
+/* << REBAR_DragMove >> */
+/* << REBAR_EndDrag >> */
 
 
 static LRESULT
@@ -781,8 +781,8 @@ REBAR_GetBkColor (WND *wndPtr)
 }
 
 
-// << REBAR_GetColorScheme >>
-// << REBAR_GetDropTarget >>
+/* << REBAR_GetColorScheme >> */
+/* << REBAR_GetDropTarget >> */
 
 
 static LRESULT
@@ -836,7 +836,7 @@ REBAR_GetRowCount (WND *wndPtr)
 static LRESULT
 REBAR_GetRowHeight (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-//    REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr);
+/*    REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr); */
 
     FIXME (rebar, "-- height = 20: semi stub!\n");
 
@@ -1171,9 +1171,9 @@ REBAR_InsertBand32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << REBAR_MaximizeBand >>
-// << REBAR_MinimizeBand >>
-// << REBAR_MoveBand >>
+/* << REBAR_MaximizeBand >> */
+/* << REBAR_MinimizeBand >> */
+/* << REBAR_MoveBand >> */
 
 
 static LRESULT
@@ -1227,7 +1227,7 @@ REBAR_SetBandInfo32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	else {
 	    FIXME (rebar, "child: 0x%x  prev parent: 0x%x\n",
 		   lpBand->hwndChild, lpBand->hwndPrevParent);
-//	    SetParent32 (lpBand->hwndChild, lpBand->hwndPrevParent);
+/*	    SetParent32 (lpBand->hwndChild, lpBand->hwndPrevParent); */
 	    lpBand->hwndChild = 0;
 	    lpBand->hwndPrevParent = 0;
 	}
@@ -1322,7 +1322,7 @@ REBAR_SetBandInfo32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	else {
 	    FIXME (rebar, "child: 0x%x  prev parent: 0x%x\n",
 		   lpBand->hwndChild, lpBand->hwndPrevParent);
-//		SetParent32 (lpBand->hwndChild, lpBand->hwndPrevParent);
+/*		SetParent32 (lpBand->hwndChild, lpBand->hwndPrevParent); */
 	    lpBand->hwndChild = 0;
 	    lpBand->hwndPrevParent = 0;
 	}
@@ -1411,8 +1411,8 @@ REBAR_SetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << REBAR_SetColorScheme >>
-// << REBAR_SetPalette >>
+/* << REBAR_SetColorScheme >> */
+/* << REBAR_SetPalette >> */
 
 
 static LRESULT
@@ -1442,7 +1442,7 @@ REBAR_SetTextColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << REBAR_SetTooltips >>
+/* << REBAR_SetTooltips >> */
 
 
 __inline__ static LRESULT
@@ -1811,19 +1811,19 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     switch (uMsg)
     {
-//	case RB_BEGINDRAG:
+/*	case RB_BEGINDRAG: */
 
 	case RB_DELETEBAND:
 	    return REBAR_DeleteBand (wndPtr, wParam, lParam);
 
-//	case RB_DRAGMOVE:
-//	case RB_ENDDRAG:
-//	case RB_GETBANDBORDERS:
+/*	case RB_DRAGMOVE: */
+/*	case RB_ENDDRAG: */
+/*	case RB_GETBANDBORDERS: */
 
 	case RB_GETBANDCOUNT:
 	    return REBAR_GetBandCount (wndPtr);
 
-//	case RB_GETBANDINFO32:  /* outdated, just for compatibility */
+/*	case RB_GETBANDINFO32:  */ /* outdated, just for compatibility */
 
 	case RB_GETBANDINFO32A:
 	    return REBAR_GetBandInfo32A (wndPtr, wParam, lParam);
@@ -1840,8 +1840,8 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case RB_GETBKCOLOR:
 	    return REBAR_GetBkColor (wndPtr);
 
-//	case RB_GETCOLORSCHEME:
-//	case RB_GETDROPTARGET:
+/*	case RB_GETCOLORSCHEME: */
+/*	case RB_GETDROPTARGET: */
 
 	case RB_GETPALETTE:
 	    return REBAR_GetPalette (wndPtr, wParam, lParam);
@@ -1876,9 +1876,9 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case RB_INSERTBAND32W:
 	    return REBAR_InsertBand32W (wndPtr, wParam, lParam);
 
-//	case RB_MAXIMIZEBAND:
-//	case RB_MINIMIZEBAND:
-//	case RB_MOVEBAND:
+/*	case RB_MAXIMIZEBAND: */
+/*	case RB_MINIMIZEBAND: */
+/*	case RB_MOVEBAND: */
 
 	case RB_SETBANDINFO32A:
 	    return REBAR_SetBandInfo32A (wndPtr, wParam, lParam);
@@ -1892,8 +1892,8 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case RB_SETBKCOLOR:
 	    return REBAR_SetBkColor (wndPtr, wParam, lParam);
 
-//	case RB_SETCOLORSCHEME:
-//	case RB_SETPALETTE:
+/*	case RB_SETCOLORSCHEME: */
+/*	case RB_SETPALETTE: */
 
 	case RB_SETPARENT:
 	    return REBAR_SetParent (wndPtr, wParam, lParam);
@@ -1901,7 +1901,7 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case RB_SETTEXTCOLOR:
 	    return REBAR_SetTextColor (wndPtr, wParam, lParam);
 
-//	case RB_SETTOOLTIPS:
+/*	case RB_SETTOOLTIPS: */
 
 	case RB_SETUNICODEFORMAT:
 	    return REBAR_SetUnicodeFormat (wndPtr, wParam);
@@ -1922,8 +1922,8 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_GETFONT:
 	    return REBAR_GetFont (wndPtr, wParam, lParam);
 
-//	case WM_MOUSEMOVE:
-//	    return REBAR_MouseMove (wndPtr, wParam, lParam);
+/*	case WM_MOUSEMOVE: */
+/*	    return REBAR_MouseMove (wndPtr, wParam, lParam); */
 
 	case WM_NCCALCSIZE:
 	    return REBAR_NCCalcSize (wndPtr, wParam, lParam);
@@ -1947,9 +1947,9 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_SIZE:
 	    return REBAR_Size (wndPtr, wParam, lParam);
 
-//	case WM_TIMER:
+/*	case WM_TIMER: */
 
-//	case WM_WININICHANGE:
+/*	case WM_WININICHANGE: */
 
 	default:
 	    if (uMsg >= WM_USER)

@@ -63,7 +63,7 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
      case NP_HELP_NO_WARRANTY:  DIALOG_HelpNoWarranty(); break;
      case NP_HELP_ABOUT_WINE:   DIALOG_HelpAboutWine(); break;
      
-     // Handle languages
+     /* Handle languages */
      default:
       LANGUAGE_DefaultHandle(wParam);
    }
@@ -189,13 +189,13 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
 
-    // now handle command line
+    /* now handle command line */
     
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-')) 
     
     {
         CHAR   option;
-//      LPCSTR topic_id;
+/*      LPCSTR topic_id; */
 
         if (*cmdline++ == ' ') continue;
 
@@ -207,14 +207,14 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
         {
             case 'p':
             case 'P': printf("Print file: ");
-                      // Not yet able to print a file
+                      /* Not yet able to print a file */
                       break;
         }
     }
 
     DragAcceptFiles(Globals.hMainWnd, TRUE);
 
-    // now enter mesage loop    
+    /* now enter mesage loop     */
     
     while (GetMessage (&msg, 0, 0, 0)) {
         TranslateMessage (&msg);

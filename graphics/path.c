@@ -676,8 +676,8 @@ BOOL32 PATH_Rectangle(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
  */
 BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
 {
-   // TODO: This should probably be revised to call PATH_AngleArc
-   // (once it exists)
+   /* TODO: This should probably be revised to call PATH_AngleArc */
+   /* (once it exists) */
    return PATH_Arc(hdc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2);
 }
 

@@ -2282,10 +2282,10 @@ typedef INT32 (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 #define WC_TABCONTROL		WINELIB_NAME_AW(WC_TABCONTROL)
 
 /* tab control styles */
-#define TCS_SCROLLOPPOSITE      0x0001   // assumes multiline tab
+#define TCS_SCROLLOPPOSITE      0x0001   /* assumes multiline tab */
 #define TCS_BOTTOM              0x0002
 #define TCS_RIGHT               0x0002
-#define TCS_MULTISELECT         0x0004  // allow multi-select in button mode
+#define TCS_MULTISELECT         0x0004  /* allow multi-select in button mode */
 #define TCS_FORCEICONLEFT       0x0010
 #define TCS_FORCELABELLEFT      0x0020
 #define TCS_HOTTRACK            0x0040
@@ -2851,10 +2851,10 @@ DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK)
 
 #define PSN_SETACTIVE           (PSN_FIRST-0)
 #define PSN_KILLACTIVE          (PSN_FIRST-1)
-// #define PSN_VALIDATE            (PSN_FIRST-1)
+/* #define PSN_VALIDATE            (PSN_FIRST-1) */
 #define PSN_APPLY               (PSN_FIRST-2)
 #define PSN_RESET               (PSN_FIRST-3)
-// #define PSN_CANCEL              (PSN_FIRST-3)
+/* #define PSN_CANCEL              (PSN_FIRST-3) */
 #define PSN_HELP                (PSN_FIRST-5)
 #define PSN_WIZBACK             (PSN_FIRST-6)
 #define PSN_WIZNEXT             (PSN_FIRST-7)

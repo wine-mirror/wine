@@ -480,7 +480,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
 	time -= lpTime->u.smpte.sec * 30;
 	lpTime->u.smpte.frame = time;
 	lpTime->u.smpte.fps = 30;
-	TRACE(wave, "wodGetPosition // TIME_SMPTE=%02u:%02u:%02u:%02u\n",
+	TRACE(wave, "wodGetPosition , TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
 	      lpTime->u.smpte.sec, lpTime->u.smpte.frame);
 	break;
@@ -490,7 +490,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME16 lpTime, DWORD uSize)
     case TIME_MS:
 	lpTime->u.ms = WOutDev[wDevID].dwTotalPlayed /
 	    (WOutDev[wDevID].Format.wf.nAvgBytesPerSec / 1000);
-	TRACE(wave,"wodGetPosition // TIME_MS=%lu\n", lpTime->u.ms);
+	TRACE(wave,"wodGetPosition , TIME_MS=%lu\n", lpTime->u.ms);
 	break;
     }
     return MMSYSERR_NOERROR;

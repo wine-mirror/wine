@@ -75,7 +75,7 @@ DEFINE_GUID(IID_IDirectPlay2A,0x9d460580, 0xa822, 0x11cf, 0x96, 0xc, 0x0, 0x80, 
 DEFINE_GUID(IID_IDirectPlay3, 0x133efe40, 0x32dc, 0x11d0, 0x9c, 0xfb, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
 DEFINE_GUID(IID_IDirectPlay3A,0x133efe41, 0x32dc, 0x11d0, 0x9c, 0xfb, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
 
-// {D1EB6D20-8923-11d0-9D97-00A0C90A43CB}
+/* {D1EB6D20-8923-11d0-9D97-00A0C90A43CB} */
 DEFINE_GUID(CLSID_DirectPlay,0xd1eb6d20, 0x8923, 0x11d0, 0x9d, 0x97, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
 
 
@@ -281,50 +281,50 @@ typedef struct tagDPCHAT
     DWORD               dwSize;
     DWORD               dwFlags;
     union
-    {                          // Message string
-        LPWSTR  lpszMessage;   // Unicode
-        LPSTR   lpszMessageA;  // ANSI
+    {                          /* Message string */
+        LPWSTR  lpszMessage;   /* Unicode */
+        LPSTR   lpszMessageA;  /* ANSI */
     }msgstr;
 } DPCHAT, *LPDPCHAT;
 
 typedef struct tagDPSECURITYDESC
 {
-    DWORD dwSize;                   // Size of structure
-    DWORD dwFlags;                  // Not used. Must be zero.
+    DWORD dwSize;                   /* Size of structure */
+    DWORD dwFlags;                  /* Not used. Must be zero. */
     union
-    {                               // SSPI provider name
-        LPWSTR  lpszSSPIProvider;   // Unicode
-        LPSTR   lpszSSPIProviderA;  // ANSI
+    {                               /* SSPI provider name */
+        LPWSTR  lpszSSPIProvider;   /* Unicode */
+        LPSTR   lpszSSPIProviderA;  /* ANSI */
     }sspi;
     union
-    {                               // CAPI provider name
-        LPWSTR lpszCAPIProvider;    // Unicode
-        LPSTR  lpszCAPIProviderA;   // ANSI
+    {                               /* CAPI provider name */
+        LPWSTR lpszCAPIProvider;    /* Unicode */
+        LPSTR  lpszCAPIProviderA;   /* ANSI */
     }capi;
-    DWORD dwCAPIProviderType;       // Crypto Service Provider type
-    DWORD dwEncryptionAlgorithm;    // Encryption Algorithm type
+    DWORD dwCAPIProviderType;       /* Crypto Service Provider type */
+    DWORD dwEncryptionAlgorithm;    /* Encryption Algorithm type */
 } DPSECURITYDESC, *LPDPSECURITYDESC;
 
 typedef const DPSECURITYDESC *LPCDPSECURITYDESC;
 
 typedef struct tagDPCREDENTIALS
 {
-    DWORD dwSize;               // Size of structure
-    DWORD dwFlags;              // Not used. Must be zero.
+    DWORD dwSize;               /* Size of structure */
+    DWORD dwFlags;              /* Not used. Must be zero. */
     union
-    {                           // User name of the account
-        LPWSTR  lpszUsername;   // Unicode
-        LPSTR   lpszUsernameA;  // ANSI
+    {                           /* User name of the account */
+        LPWSTR  lpszUsername;   /* Unicode */
+        LPSTR   lpszUsernameA;  /* ANSI */
     }name;
     union
-    {                           // Password of the account
-        LPWSTR  lpszPassword;   // Unicode
-        LPSTR   lpszPasswordA;  // ANSI
+    {                           /* Password of the account */
+        LPWSTR  lpszPassword;   /* Unicode */
+        LPSTR   lpszPasswordA;  /* ANSI */
     }pass;
     union
-    {                           // Domain name of the account
-        LPWSTR  lpszDomain;     // Unicode
-        LPSTR   lpszDomainA;    // ANSI
+    {                           /* Domain name of the account */
+        LPWSTR  lpszDomain;     /* Unicode */
+        LPSTR   lpszDomainA;    /* ANSI */
     }domain;
 } DPCREDENTIALS, *LPDPCREDENTIALS;
 

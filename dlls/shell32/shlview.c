@@ -67,7 +67,7 @@ static struct IShellView_VTable svvt =
   IShellView_GetItemObject
 };
 
-//menu items
+/*menu items */
 #define IDM_VIEW_FILES  (FCIDM_SHVIEWFIRST + 0x500)
 #define IDM_VIEW_IDW    (FCIDM_SHVIEWFIRST + 0x501)
 #define IDM_MYFILEITEM  (FCIDM_SHVIEWFIRST + 0x502)
@@ -78,11 +78,11 @@ static struct IShellView_VTable svvt =
 #define MENU_MAX     100
 
 #define TOOLBAR_ID   (L"SHELLDLL_DefView")
-//windowsx.h
+/*windowsx.h */
 #define GET_WM_COMMAND_ID(wp, lp)               LOWORD(wp)
 #define GET_WM_COMMAND_HWND(wp, lp)             (HWND32)(lp)
 #define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
-// winuser.h
+/* winuser.h */
 #define WM_SETTINGCHANGE                WM_WININICHANGE
 extern void WINAPI _InsertMenuItem (HMENU32 hmenu, UINT32 indexMenu, BOOL32 fByPosition, 
 			UINT32 wID, UINT32 fType, LPSTR dwTypeData, UINT32 fState);
@@ -204,14 +204,14 @@ static void MergeToolBar(LPSHELLVIEW this)
 
 	TRACE(shell,"\n");
 
-	ab.hInst = HINST_COMMCTRL;		// hinstCommctrl
-	ab.nID   = IDB_STD_SMALL_COLOR;	// std bitmaps
+	ab.hInst = HINST_COMMCTRL;		/* hinstCommctrl */
+	ab.nID   = IDB_STD_SMALL_COLOR;	/* std bitmaps */
 	IShellBrowser_SendControlMsg(this->pShellBrowser,FCW_TOOLBAR,
 				 TB_ADDBITMAP, 8, (LPARAM)&ab, &iStdBMOffset);
 
 	TRACE(shell,"TB_ADDBITMAP returns %lx\n", iStdBMOffset);
 
-	ab.nID   = IDB_VIEW_SMALL_COLOR;	// std view bitmaps
+	ab.nID   = IDB_VIEW_SMALL_COLOR;	/* std view bitmaps */
 	IShellBrowser_SendControlMsg(this->pShellBrowser,FCW_TOOLBAR,
 				 TB_ADDBITMAP, 8, (LPARAM)&ab, &iViewBMOffset);
 
@@ -272,7 +272,7 @@ BOOL32 ShellView_CreateList (LPSHELLVIEW this)
 	if(!this->hWndList)
 	  return FALSE;
 
-	//  UpdateShellSettings();
+	/*  UpdateShellSettings(); */
 	return TRUE;
 }
 /**************************************************************************
@@ -294,7 +294,7 @@ BOOL32 ShellView_InitList(LPSHELLVIEW this)
 
 	ListView_DeleteAllItems(this->hWndList);
 
-	//initialize the columns
+	/*initialize the columns */
 	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;	/*  |  LVCF_SUBITEM;*/
 	lvColumn.fmt = LVCFMT_LEFT;
 	lvColumn.pszText = szString;
@@ -565,16 +565,16 @@ LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
 
 	TRACE(shell,"%p uState=%x\n",this,uState);    
 
-	//don't do anything if the state isn't really changing
+	/*don't do anything if the state isn't really changing */
 	if(this->uState == uState)
 	{ return S_OK;
 	}
 
 	ShellView_OnDeactivate(this);
 
-	//only do this if we are active
+	/*only do this if we are active */
 	if(uState != SVUIA_DEACTIVATE)
-	{ //merge the menus
+	{ /*merge the menus */
 	  this->hMenu = CreateMenu32();
    
 	  if(this->hMenu)
@@ -607,7 +607,7 @@ LRESULT ShellView_OnActivate(LPSHELLVIEW this, UINT32 uState)
 
 	    /*add the items that should only be added if we have the focus*/
 	    if(SVUIA_ACTIVATE_FOCUS == uState)
-	    { //get the file menu so we can merge with it
+	    { /*get the file menu so we can merge with it */
 	      ZeroMemory(&mii, sizeof(mii));
 	      mii.cbSize = sizeof(mii);
 	      mii.fMask = MIIM_SUBMENU;
@@ -671,34 +671,38 @@ BOOL32 ShellView_AddRemoveDockingWindow(LPSHELLVIEW this, BOOL32 bAdd)
 	  { if(bAdd)
 	    { hr = S_OK;
 	      FIXME(shell,"no docking implemented\n");
-	      /*if(!this->pDockingWindow)
-	      { //create the toolbar object
+#if 0
+	      if(!this->pDockingWindow)
+	      { /* create the toolbar object */
 	        this->pDockingWindow = DockingWindow_Constructor(this, this->hWnd);
 	      }
 
 	      if(this->pDockingWindow)
-	      { //add the toolbar object
+	      { /*add the toolbar object */
 	        hr = pFrame->lpvtbl->fnAddToolbar(pFrame, (IDockingWindow*)this->pDockingWindow, TOOLBAR_ID, 0);
 
 	        if(SUCCEEDED(hr))
 	        { bReturn = TRUE;
 	        }
-	      }*/
+	      }
+#endif
 	    }
 	    else
 	    { FIXME(shell,"no docking implemented\n");
-/*	      if(this->pDockingWindow)
+#if 0
+	      if(this->pDockingWindow)
 	      { hr = pFrame->lpvtbl->fnRemoveToolbar(pFrame, (IDockingWindow*)this->pDockingWindow, DWFRF_NORMAL);
 
 	        if(SUCCEEDED(hr))
-	        { // RemoveToolbar should release the toolbar object which will cause 
-	          //it to destroy itself. Our toolbar object is no longer valid at 
-	          //this point.
+	        { /* RemoveToolbar should release the toolbar object which will cause  */
+	          /*it to destroy itself. Our toolbar object is no longer valid at  */
+	          /*this point. */
             
 	          this->pDockingWindow = NULL;
 	          bReturn = TRUE;
 	        }
-	      }*/
+	      }
+#endif
 	    }
 	    pFrame->lpvtbl->fnRelease(pFrame);
 	  }
@@ -777,7 +781,7 @@ void ShellView_UpdateShellSettings(LPSHELLVIEW this)
 */   
 LRESULT ShellView_OnSettingChange(LPSHELLVIEW this, LPCSTR lpszSection)
 {	TRACE(shell,"(%p) stub\n",this);
-	//if(0 == lstrcmpi(lpszSection, "ShellState"))
+/*if(0 == lstrcmpi(lpszSection, "ShellState"))*/
 	{ ShellView_UpdateShellSettings(this);
 	  return 0;
 	}
@@ -1382,7 +1386,7 @@ static HRESULT WINAPI IShellView_UIActivate(LPSHELLVIEW this,UINT32 uState)
 
 	/*only do this if we are active*/
 	if(uState != SVUIA_DEACTIVATE)
-	{ //update the status bar
+	{ /*update the status bar */
 	   strcpy(szName, "dummy32");
    
 	  this->pSFParent->lpvtbl->fnGetFolderPath( this->pSFParent,
@@ -1397,7 +1401,7 @@ static HRESULT WINAPI IShellView_UIActivate(LPSHELLVIEW this,UINT32 uState)
 	  IShellBrowser_SendControlMsg(this->pShellBrowser, FCW_STATUS, SB_SETTEXT32A,
 							0, (LPARAM)szName, &lResult);
 
-	  //add the docking window if necessary
+	  /*add the docking window if necessary */
 	  if(g_bShowIDW)
 	  { ShellView_AddRemoveDockingWindow(this, TRUE);
 	  }

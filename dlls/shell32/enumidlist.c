@@ -230,7 +230,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	  so we need to fake an enumeration of those.*/
 	  if(!lpszPath)
 	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_FOLDERS (special) items\n",this);
-  		//create the pidl for this item
+  		/*create the pidl for this item */
 	    pidl = _ILCreateMyComputer();
 	    if(pidl)
 	    { pData = _ILGetDataPointer(pidl);
@@ -290,7 +290,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	    }
 	  }   
 	}   
-	//enumerate the non-folder items (values)
+	/*enumerate the non-folder items (values) */
 	if(dwFlags & SHCONTF_NONFOLDERS)
 	{ if(lpszPath)
 	  { TRACE (shell,"-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",this,debugstr_a(szPath));
@@ -336,22 +336,22 @@ static BOOL32 WINAPI IEnumIDList_AddToEnumList(LPENUMIDLIST this,LPITEMIDLIST pi
   TRACE(shell,"(%p)->(pidl=%p)\n",this,pidl);
   pNew = (LPENUMLIST)SHAlloc(sizeof(ENUMLIST));
   if(pNew)
-  { //set the next pointer
+  { /*set the next pointer */
     pNew->pNext = NULL;
     pNew->pidl = pidl;
 
-    //is this the first item in the list?
+    /*is this the first item in the list? */
     if(!this->mpFirst)
     { this->mpFirst = pNew;
       this->mpCurrent = pNew;
     }
    
     if(this->mpLast)
-    { //add the new item to the end of the list
+    { /*add the new item to the end of the list */
       this->mpLast->pNext = pNew;
     }
    
-    //update the last item pointer
+    /*update the last item pointer */
     this->mpLast = pNew;
     TRACE(shell,"-- (%p)->(first=%p, last=%p)\n",this,this->mpFirst,this->mpLast);
     return TRUE;

@@ -23,13 +23,13 @@
 #define HOTKEY_GetInfoPtr(wndPtr) ((HOTKEY_INFO *)wndPtr->wExtra[0])
 
 
-// << HOTHEY_GetHotKey >>
-// << HOTHEY_SetHotKey >>
-// << HOTHEY_SetRules >>
+/* << HOTHEY_GetHotKey >> */
+/* << HOTHEY_SetHotKey >> */
+/* << HOTHEY_SetRules >> */
 
 
 
-// << HOTKEY_Char >>
+/* << HOTKEY_Char >> */
 
 
 static LRESULT
@@ -164,7 +164,7 @@ HOTKEY_KillFocus (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_LButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-//    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr);
+/*    HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
 
     SetFocus32 (wndPtr->hwndSelf);
 
@@ -282,11 +282,11 @@ HOTKEY_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     switch (uMsg)
     {
-//	case HKM_GETHOTKEY:
-//	case HKM_SETHOTKEY:
-//	case HKM_SETRULES:
+/*	case HKM_GETHOTKEY: */
+/*	case HKM_SETHOTKEY: */
+/*	case HKM_SETRULES: */
 
-//	case WM_CHAR:
+/*	case WM_CHAR: */
 
 	case WM_CREATE:
 	    return HOTKEY_Create (wndPtr, wParam, lParam);
@@ -320,7 +320,7 @@ HOTKEY_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_NCCREATE:
 	    return HOTKEY_NCCreate (wndPtr, wParam, lParam);
 
-//	case WM_PAINT:
+/*	case WM_PAINT: */
 
 	case WM_SETFOCUS:
 	    return HOTKEY_SetFocus (wndPtr, wParam, lParam);
@@ -328,7 +328,7 @@ HOTKEY_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_SETFONT:
 	    return HOTKEY_SetFont (wndPtr, wParam, lParam);
 
-//	case WM_SYSCHAR:
+/*	case WM_SYSCHAR: */
 
 	default:
 	    if (uMsg >= WM_USER)

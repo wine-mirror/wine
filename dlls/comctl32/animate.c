@@ -152,7 +152,7 @@ ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << ANIMATE_Open32W >>
+/* << ANIMATE_Open32W >> */
 
 
 static LRESULT
@@ -274,8 +274,8 @@ ANIMATE_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case ACM_OPEN32A:
 	    return ANIMATE_Open32A (wndPtr, wParam, lParam);
 
-//	case ACM_OPEN32W:
-//	    return ANIMATE_Open32W (wndPtr, wParam, lParam);
+/*	case ACM_OPEN32W: */
+/*	    return ANIMATE_Open32W (wndPtr, wParam, lParam); */
 
         case ACM_PLAY:
             return ANIMATE_Play (wndPtr, wParam, lParam);
@@ -290,15 +290,15 @@ ANIMATE_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_DESTROY:
 	    return ANIMATE_Destroy (wndPtr, wParam, lParam);
 
-//	case WM_ERASEBKGND:
-//	    return ANIMATE_EraseBackground (wndPtr, wParam, lParam);
+/*	case WM_ERASEBKGND: */
+/*	    return ANIMATE_EraseBackground (wndPtr, wParam, lParam); */
 
-//	case WM_NCCREATE:
-//	case WM_NCHITTEST:
-//	case WM_PAINT:
-//	case WM_SIZE:
-//	case WM_STYLECHANGED:
-//	case WM_TIMER:
+/*	case WM_NCCREATE: */
+/*	case WM_NCHITTEST: */
+/*	case WM_PAINT: */
+/*	case WM_SIZE: */
+/*	case WM_STYLECHANGED: */
+/*	case WM_TIMER: */
 
 	default:
 	    if (uMsg >= WM_USER)

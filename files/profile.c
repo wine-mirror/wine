@@ -708,10 +708,10 @@ int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
 /******************************************************************************
  *
  *   int  PROFILE_EnumerateWineIniSection(
- *     char const  *section,  // Name of the section to enumerate
+ *     char const  *section,  #Name of the section to enumerate
  *     void  (*cbfn)(char const *key, char const *value, void *user),
-                              // Address of the callback function
- *     void  *user )          // User-specified pointer.
+ *                            # Address of the callback function 
+ *     void  *user )          # User-specified pointer.
  *
  *   For each entry in a section in the wine.conf file, this function will
  *   call the specified callback function, informing it of each key and

@@ -174,7 +174,7 @@ HEADER_DrawItem (WND *wndPtr, HDC32 hdc, INT32 iItem, BOOL32 bHotTrack)
 	if (phdi->fmt & HDF_IMAGE) {
 
 
-//	    ImageList_Draw (infoPtr->himl, phdi->iImage,...);
+/*	    ImageList_Draw (infoPtr->himl, phdi->iImage,...); */
 	}
 
         if ((phdi->fmt & HDF_STRING) && (phdi->pszText)) {
@@ -459,8 +459,8 @@ HEADER_SendHeaderNotify (WND *wndPtr, UINT32 code, INT32 iItem)
     nmitem.hbm = infoPtr->items[iItem].hbm;
     nmitem.pszText = NULL;
     nmitem.cchTextMax = 0;
-//    nmitem.pszText = infoPtr->items[iItem].pszText;
-//    nmitem.cchTextMax = infoPtr->items[iItem].cchTextMax;
+/*    nmitem.pszText = infoPtr->items[iItem].pszText; */
+/*    nmitem.cchTextMax = infoPtr->items[iItem].cchTextMax; */
     nmitem.fmt = infoPtr->items[iItem].fmt;
     nmitem.lParam = infoPtr->items[iItem].lParam;
     nmitem.iOrder = infoPtr->items[iItem].iOrder;
@@ -682,7 +682,7 @@ HEADER_GetItemRect (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << HEADER_GetOrderArray >>
+/* << HEADER_GetOrderArray >> */
 
 
 __inline__ static LRESULT
@@ -1050,7 +1050,7 @@ HEADER_SetItem32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << HEADER_SetOrderArray >>
+/* << HEADER_SetOrderArray >> */
 
 
 __inline__ static LRESULT
@@ -1450,7 +1450,7 @@ HEADER_WindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 	case HDM_GETITEMRECT:
 	    return HEADER_GetItemRect (wndPtr, wParam, lParam);
 
-//	case HDM_GETORDERARRAY:
+/*	case HDM_GETORDERARRAY: */
 
 	case HDM_GETUNICODEFORMAT:
 	    return HEADER_GetUnicodeFormat (wndPtr);
@@ -1476,7 +1476,7 @@ HEADER_WindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 	case HDM_SETITEM32W:
 	    return HEADER_SetItem32W (wndPtr, wParam, lParam);
 
-//	case HDM_SETORDERARRAY:
+/*	case HDM_SETORDERARRAY: */
 
 	case HDM_SETUNICODEFORMAT:
 	    return HEADER_SetUnicodeFormat (wndPtr, wParam);
@@ -1509,7 +1509,7 @@ HEADER_WindowProc (HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         case WM_MOUSEMOVE:
             return HEADER_MouseMove (wndPtr, wParam, lParam);
 
-//	case WM_NOTIFYFORMAT:
+/*	case WM_NOTIFYFORMAT: */
 
         case WM_PAINT:
             return HEADER_Paint (wndPtr, wParam);

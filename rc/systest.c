@@ -18,7 +18,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     hInst=hInstance;
 
-    // Define the window class for this application.
+    /* Define the window class for this application. */
     wcHdumpClass.lpszClassName = "WrcTestClass";
     wcHdumpClass.hInstance     = hInstance;
     wcHdumpClass.lpfnWndProc   = WndProc;
@@ -33,14 +33,14 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     hWndMain = CreateWindow("WrcTestClass","WrcTest",
                   WS_OVERLAPPEDWINDOW,
-                  CW_USEDEFAULT,           // x  window location
-                  CW_USEDEFAULT,           // y
-                  CW_USEDEFAULT,           // cx and size
-                  CW_USEDEFAULT,           // cy
-                  NULL,                    // no parent for this window
-                  NULL,                    // use the class menu
-                  hInstance,               // who created this window
-                  NULL                     // no parms to pass on
+                  CW_USEDEFAULT,           /* x  window location */
+                  CW_USEDEFAULT,           /* y */
+                  CW_USEDEFAULT,           /* cx and size */
+                  CW_USEDEFAULT,           /* cy */
+                  NULL,                    /* no parent for this window */
+                  NULL,                    /* use the class menu */
+                  hInstance,               /* who created this window */
+                  NULL                     /* no parms to pass on */
                   );
     ShowWindow(hWndMain,SW_SHOW);
     UpdateWindow(hWndMain);

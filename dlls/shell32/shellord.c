@@ -242,9 +242,9 @@ ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID a
 
 	if (!LoadString32A(hmod,x,buf,100))
 		strcpy(buf,"Desktop");
-//	LoadString32A(hmod,id,buf2,100);
+/*	LoadString32A(hmod,id,buf2,100); */
 	/* FIXME: the varargs handling doesn't. */
-//	FormatMessage32A(0x500,buf2,0,0,(LPSTR)&buf3,256,(LPDWORD)&args);
+/*	FormatMessage32A(0x500,buf2,0,0,(LPSTR)&buf3,256,(LPDWORD)&args); */
 
 	FIXME(shell,"(%08lx,%08lx,%08lx(%s),%08lx(%s),%08lx,%p):stub.\n",
 		(DWORD)hmod,(DWORD)hwnd,id,buf2,x,buf,type,arglist

@@ -26,7 +26,7 @@
 static VOID
 LISTVIEW_Refresh (WND *wndPtr, HDC32 hdc)
 {
-//    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+/*    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
 
 
 
@@ -34,9 +34,9 @@ LISTVIEW_Refresh (WND *wndPtr, HDC32 hdc)
 
 
 
-// << LISTVIEW_ApproximateViewRect >>
-// << LISTVIEW_Arrange >>
-// << LISTVIEW_CreateDragImage >>
+/* << LISTVIEW_ApproximateViewRect >> */
+/* << LISTVIEW_Arrange >> */
+/* << LISTVIEW_CreateDragImage >> */
 
 
 static LRESULT
@@ -151,9 +151,9 @@ LISTVIEW_DeleteItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_EditLabel >>
-// << LISTVIEW_EnsureVisible >>
-// << LISTVIEW_FindItem >>
+/* << LISTVIEW_EditLabel >> */
+/* << LISTVIEW_EnsureVisible >> */
+/* << LISTVIEW_FindItem >> */
 
 
 static LRESULT
@@ -165,8 +165,8 @@ LISTVIEW_GetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetBkImage >>
-// << LISTVIEW_GetCallbackMask >>
+/* << LISTVIEW_GetBkImage >> */
+/* << LISTVIEW_GetCallbackMask >> */
 
 
 static LRESULT
@@ -233,8 +233,8 @@ LISTVIEW_GetColumn32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetColumn32W >>
-// << LISTVIEW_GetColumnOrderArray >>
+/* << LISTVIEW_GetColumn32W >> */
+/* << LISTVIEW_GetColumnOrderArray >> */
 
 
 __inline__ static LRESULT
@@ -252,9 +252,9 @@ LISTVIEW_GetColumnWidth (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetCountPerPage >>
-// << LISTVIEW_GetEditControl >>
-// << LISTVIEW_GetExtendedListviewStyle >>
+/* << LISTVIEW_GetCountPerPage >> */
+/* << LISTVIEW_GetEditControl >> */
+/* << LISTVIEW_GetExtendedListviewStyle >> */
 
 
 __inline__ static LRESULT
@@ -266,9 +266,9 @@ LISTVIEW_GetHeader (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetHotCursor >>
-// << LISTVIEW_GetHotItem >>
-// << LISTVIEW_GetHoverTime >>
+/* << LISTVIEW_GetHotCursor >> */
+/* << LISTVIEW_GetHotItem >> */
+/* << LISTVIEW_GetHoverTime >> */
 
 
 static LRESULT
@@ -293,7 +293,7 @@ LISTVIEW_GetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetISearchString >>
+/* << LISTVIEW_GetISearchString >> */
 
 
 static LRESULT
@@ -347,7 +347,7 @@ LISTVIEW_GetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetItem32W >>
+/* << LISTVIEW_GetItem32W >> */
 
 
 __inline__ static LRESULT
@@ -378,9 +378,9 @@ LISTVIEW_GetItemPosition (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetItemRect >>
-// << LISTVIEW_GetItemSpacing >>
-// << LISTVIEW_GetItemState >>
+/* << LISTVIEW_GetItemRect >> */
+/* << LISTVIEW_GetItemSpacing >> */
+/* << LISTVIEW_GetItemState >> */
 
 
 static LRESULT
@@ -411,7 +411,7 @@ LISTVIEW_GetItemText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetItemText32A >>
+/* << LISTVIEW_GetItemText32A >> */
 
 
 static LRESULT
@@ -438,8 +438,8 @@ LISTVIEW_GetNextItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetNumberOfWorkAreas >>
-// << LISTVIEW_GetOrigin >>
+/* << LISTVIEW_GetNumberOfWorkAreas >> */
+/* << LISTVIEW_GetOrigin >> */
 
 
 static LRESULT
@@ -453,7 +453,7 @@ LISTVIEW_GetSelectedCount (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_GetSelectionMark >>
+/* << LISTVIEW_GetSelectionMark >> */
 
 
 static LRESULT
@@ -506,7 +506,7 @@ LISTVIEW_GetTextColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 LISTVIEW_HitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-//    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+/*    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
     LPLVHITTESTINFO lpht = (LPLVHITTESTINFO)lParam;
 
     FIXME (listview, "(%p): stub!\n", lpht);
@@ -584,7 +584,7 @@ LISTVIEW_InsertColumn32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_InsertColumn32W >>
+/* << LISTVIEW_InsertColumn32W >> */
 
 
 static LRESULT
@@ -644,13 +644,13 @@ LISTVIEW_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_InsertItem32W >>
+/* << LISTVIEW_InsertItem32W >> */
 
 
 static LRESULT
 LISTVIEW_RedrawItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-//    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+/*    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
 
     FIXME (listview, "(%d - %d): empty stub!\n",
 	   (INT32)wParam, (INT32)lParam);
@@ -841,8 +841,8 @@ LISTVIEW_SetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_SetItem32W >>
-// << LISTVIEW_SetItemCount >>
+/* << LISTVIEW_SetItem32W >> */
+/* << LISTVIEW_SetItemCount >> */
 
 
 static LRESULT
@@ -899,7 +899,7 @@ LISTVIEW_SetTextColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT
 LISTVIEW_SortItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-//    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+/*    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr); */
 
     FIXME (listview, "empty stub!\n");
 
@@ -1008,8 +1008,8 @@ LISTVIEW_GetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << LISTVIEW_HScroll >>
-// << LISTVIEW_KeyDown >>
+/* << LISTVIEW_HScroll >> */
+/* << LISTVIEW_KeyDown >> */
 
 
 static LRESULT
@@ -1289,9 +1289,9 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
     switch (uMsg)
     {
-//	case LVM_APPROXIMATEVIEWRECT:
-//	case LVM_ARRANGE:
-//	case LVM_CREATEDRAGIMAGE:
+/*	case LVM_APPROXIMATEVIEWRECT: */
+/*	case LVM_ARRANGE: */
+/*	case LVM_CREATEDRAGIMAGE: */
 
 	case LVM_DELETEALLITEMS:
 	    return LISTVIEW_DeleteAllItems (wndPtr);
@@ -1302,45 +1302,45 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case LVM_DELETEITEM:
 	    return LISTVIEW_DeleteItem (wndPtr, wParam, lParam);
 
-//	case LVM_EDITLABEL:
-//	case LVM_ENSUREVISIBLE:
-//	case LVM_FINDITEM:
+/*	case LVM_EDITLABEL: */
+/*	case LVM_ENSUREVISIBLE: */
+/*	case LVM_FINDITEM: */
 
 	case LVM_GETBKCOLOR:
 	    return LISTVIEW_GetBkColor (wndPtr, wParam, lParam);
 
-//	case LVM_GETBKIMAGE:
-//	case LVM_GETCALLBACKMASK:
+/*	case LVM_GETBKIMAGE: */
+/*	case LVM_GETCALLBACKMASK: */
 
 	case LVM_GETCOLUMN32A:
 	    return LISTVIEW_GetColumn32A (wndPtr, wParam, lParam);
 
-//	case LVM_GETCOLUMN32W:
-//	case LVM_GETCOLUMNORDERARRAY:
+/*	case LVM_GETCOLUMN32W: */
+/*	case LVM_GETCOLUMNORDERARRAY: */
 
 	case LVM_GETCOLUMNWIDTH:
 	    return LISTVIEW_GetColumnWidth (wndPtr, wParam, lParam);
 
-//	case LVM_GETCOUNTPERPAGE:
-//	case LVM_GETEDITCONTROL:
-//	case LVM_GETEXTENDEDLISTVIEWSTYLE:
+/*	case LVM_GETCOUNTPERPAGE: */
+/*	case LVM_GETEDITCONTROL: */
+/*	case LVM_GETEXTENDEDLISTVIEWSTYLE: */
 
 	case LVM_GETHEADER:
 	    return LISTVIEW_GetHeader (wndPtr, wParam, lParam);
 
-//	case LVM_GETHOTCURSOR:
-//	case LVM_GETHOTITEM:
-//	case LVM_GETHOVERTIME:
+/*	case LVM_GETHOTCURSOR: */
+/*	case LVM_GETHOTITEM: */
+/*	case LVM_GETHOVERTIME: */
 
 	case LVM_GETIMAGELIST:
 	    return LISTVIEW_GetImageList (wndPtr, wParam, lParam);
 
-//	case LVM_GETISEARCHSTRING:
+/*	case LVM_GETISEARCHSTRING: */
 
 	case LVM_GETITEM32A:
 	    return LISTVIEW_GetItem32A (wndPtr, wParam, lParam);
 
-//	case LVM_GETITEM32W:
+/*	case LVM_GETITEM32W: */
 
 	case LVM_GETITEMCOUNT:
 	    return LISTVIEW_GetItemCount (wndPtr, wParam, lParam);
@@ -1348,31 +1348,31 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case LVM_GETITEMPOSITION:
 	    return LISTVIEW_GetItemPosition (wndPtr, wParam, lParam);
 
-//	case LVM_GETITEMRECT:
-//	case LVM_GETITEMSPACING:
-//	case LVM_GETITEMSTATE:
+/*	case LVM_GETITEMRECT: */
+/*	case LVM_GETITEMSPACING: */
+/*	case LVM_GETITEMSTATE: */
 
 	case LVM_GETITEMTEXT32A:
 	    return LISTVIEW_GetItemText32A (wndPtr, wParam, lParam);
 
-//	case LVM_GETITEMTEXT32W:
+/*	case LVM_GETITEMTEXT32W: */
 
 	case LVM_GETNEXTITEM:
 	    return LISTVIEW_GetNextItem (wndPtr, wParam, lParam);
 
-//	case LVM_GETNUMBEROFWORKAREAS:
-//	case LVM_GETORIGIN:
+/*	case LVM_GETNUMBEROFWORKAREAS: */
+/*	case LVM_GETORIGIN: */
 
 	case LVM_GETSELECTEDCOUNT:
 	    return LISTVIEW_GetSelectedCount (wndPtr, wParam, lParam);
 
-//	case LVM_GETSELECTIONMARK:
+/*	case LVM_GETSELECTIONMARK: */
 
 	case LVM_GETSTRINGWIDTH32A:
 	    return LISTVIEW_GetStringWidth32A (wndPtr, wParam, lParam);
 
-//	case LVM_GETSTRINGWIDTH32W:
-//	case LVM_GETSUBITEMRECT:
+/*	case LVM_GETSTRINGWIDTH32W: */
+/*	case LVM_GETSUBITEMRECT: */
 
 	case LVM_GETTEXTBKCOLOR:
 	    return LISTVIEW_GetTextBkColor (wndPtr, wParam, lParam);
@@ -1380,11 +1380,11 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case LVM_GETTEXTCOLOR:
 	    return LISTVIEW_GetTextColor (wndPtr, wParam, lParam);
 
-//	case LVM_GETTOOLTIPS:
-//	case LVM_GETTOPINDEX:
-//	case LVM_GETUNICODEFORMAT:
-//	case LVM_GETVIEWRECT:
-//	case LVM_GETWORKAREAS:
+/*	case LVM_GETTOOLTIPS: */
+/*	case LVM_GETTOPINDEX: */
+/*	case LVM_GETUNICODEFORMAT: */
+/*	case LVM_GETVIEWRECT: */
+/*	case LVM_GETWORKAREAS: */
 
 	case LVM_HITTEST:
 	    return LISTVIEW_HitTest (wndPtr, wParam, lParam);
@@ -1392,35 +1392,35 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case LVM_INSERTCOLUMN32A:
 	    return LISTVIEW_InsertColumn32A (wndPtr, wParam, lParam);
 
-//	case LVM_INSERTCOLUMN32W:
+/*	case LVM_INSERTCOLUMN32W: */
 
 	case LVM_INSERTITEM32A:
 	    return LISTVIEW_InsertItem32A (wndPtr, wParam, lParam);
 
-//	case LVM_INSERTITEM32W:
+/*	case LVM_INSERTITEM32W: */
 
 	case LVM_REDRAWITEMS:
 	    return LISTVIEW_RedrawItems (wndPtr, wParam, lParam);
 
-//	case LVM_SCROLL:
+/*	case LVM_SCROLL: */
 
 	case LVM_SETBKCOLOR:
 	    return LISTVIEW_SetBkColor (wndPtr, wParam, lParam);
 
-//	case LVM_SETBKIMAGE:
-//	case LVM_SETCALLBACKMASK:
+/*	case LVM_SETBKIMAGE: */
+/*	case LVM_SETCALLBACKMASK: */
 
 	case LVM_SETCOLUMN32A:
 	    return LISTVIEW_SetColumn32A (wndPtr, wParam, lParam);
 
-//	case LVM_SETCOLUMN32W:
-//	case LVM_SETCOLUMNORDERARRAY:
-//	case LVM_SETCOLUMNWIDTH:
-//	case LVM_SETEXTENDEDLISTVIEWSTYLE:
-//	case LVM_SETHOTCURSOR:
-//	case LVM_SETHOTITEM:
-//	case LVM_SETHOVERTIME:
-//	case LVM_SETICONSPACING:
+/*	case LVM_SETCOLUMN32W: */
+/*	case LVM_SETCOLUMNORDERARRAY: */
+/*	case LVM_SETCOLUMNWIDTH: */
+/*	case LVM_SETEXTENDEDLISTVIEWSTYLE: */
+/*	case LVM_SETHOTCURSOR: */
+/*	case LVM_SETHOTITEM: */
+/*	case LVM_SETHOVERTIME: */
+/*	case LVM_SETICONSPACING: */
 	
 	case LVM_SETIMAGELIST:
 	    return LISTVIEW_SetImageList (wndPtr, wParam, lParam);
@@ -1428,16 +1428,16 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case LVM_SETITEM32A:
 	    return LISTVIEW_SetItem32A (wndPtr, wParam, lParam);
 
-//	case LVM_SETITEM32W:
-//	case LVM_SETITEMCOUNT:
+/*	case LVM_SETITEM32W: */
+/*	case LVM_SETITEMCOUNT: */
 
 	case LVM_SETITEMPOSITION:
 	    return LISTVIEW_SetItemPosition (wndPtr, wParam, lParam);
 
-//	case LVM_SETITEMPOSITION32:
-//	case LVM_SETITEMSTATE:
-//	case LVM_SETITEMTEXT:
-//	case LVM_SETSELECTIONMARK:
+/*	case LVM_SETITEMPOSITION32: */
+/*	case LVM_SETITEMSTATE: */
+/*	case LVM_SETITEMTEXT: */
+/*	case LVM_SETSELECTIONMARK: */
 
 	case LVM_SETTEXTBKCOLOR:
 	    return LISTVIEW_SetTextBkColor (wndPtr, wParam, lParam);
@@ -1445,20 +1445,20 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case LVM_SETTEXTCOLOR:
 	    return LISTVIEW_SetTextColor (wndPtr, wParam, lParam);
 
-//	case LVM_SETTOOLTIPS:
-//	case LVM_SETUNICODEFORMAT:
-//	case LVM_SETWORKAREAS:
+/*	case LVM_SETTOOLTIPS: */
+/*	case LVM_SETUNICODEFORMAT: */
+/*	case LVM_SETWORKAREAS: */
 
 	case LVM_SORTITEMS:
 	    return LISTVIEW_SortItems (wndPtr, wParam, lParam);
 
-//	case LVM_SUBITEMHITTEST:
-//	case LVM_UPDATE:
+/*	case LVM_SUBITEMHITTEST: */
+/*	case LVM_UPDATE: */
 
 
 
-//	case WM_CHAR:
-//	case WM_COMMAND:
+/*	case WM_CHAR: */
+/*	case WM_COMMAND: */
 
 	case WM_CREATE:
 	    return LISTVIEW_Create (wndPtr, wParam, lParam);
@@ -1475,8 +1475,8 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_GETFONT:
 	    return LISTVIEW_GetFont (wndPtr, wParam, lParam);
 
-//	case WM_HSCROLL:
-//	case WM_KEYDOWN:
+/*	case WM_HSCROLL: */
+/*	case WM_KEYDOWN: */
 
 	case WM_KILLFOCUS:
 	    return LISTVIEW_KillFocus (wndPtr, wParam, lParam);
@@ -1487,8 +1487,8 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 	    return LISTVIEW_LButtonDown (wndPtr, wParam, lParam);
 
-//	case WM_MOUSEMOVE:
-//	    return LISTVIEW_MouseMove (wndPtr, wParam, lParam);
+/*	case WM_MOUSEMOVE: */
+/*	    return LISTVIEW_MouseMove (wndPtr, wParam, lParam); */
 
 	case WM_NCCREATE:
 	    return LISTVIEW_NCCreate (wndPtr, wParam, lParam);
@@ -1514,15 +1514,15 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_SETFONT:
 	    return LISTVIEW_SetFont (wndPtr, wParam, lParam);
 
-//	case WM_SETREDRAW:
+/*	case WM_SETREDRAW: */
 
 	case WM_SIZE:
 	    return LISTVIEW_Size (wndPtr, wParam, lParam);
 
-//	case WM_TIMER:
-//	case WM_VSCROLL:
-//	case WM_WINDOWPOSCHANGED:
-//	case WM_WININICHANGE:
+/*	case WM_TIMER: */
+/*	case WM_VSCROLL: */
+/*	case WM_WINDOWPOSCHANGED: */
+/*	case WM_WININICHANGE: */
 
 	default:
 	    if (uMsg >= WM_USER)

@@ -73,15 +73,15 @@ BOOL ExistFile(LPCSTR szFilename) {
 }
 
 VOID DoSaveFile(VOID) {
-   // Really Save the file 
+   /* Really Save the file  */
    
-   // ... (Globals.szFileName);
+   /* ... (Globals.szFileName); */
 }
 
 
 BOOL DoCloseFile(void) {
-// Return value: TRUE  - User agreed to close (both save/don't save)
-//               FALSE - User cancelled close by selecting "Cancel"
+/* Return value: TRUE  - User agreed to close (both save/don't save) */
+/*               FALSE - User cancelled close by selecting "Cancel" */
 
    CHAR szMessage[MAX_STRING_LEN];
    CHAR szCaption[MAX_STRING_LEN];
@@ -90,16 +90,16 @@ BOOL DoCloseFile(void) {
    
    if (strlen(Globals.szFileName)>0) {
 
-   // prompt user to save changes
+   /* prompt user to save changes */
    
-   // FIXME: The following resources are not yet in the .rc files
-   // szMessage, szCaption show up random values. Please keep these lines!
+   /* FIXME: The following resources are not yet in the .rc files */
+   /* szMessage, szCaption show up random values. Please keep these lines! */
 
    strcpy(szMessage, "Save changes ?");
    strcpy(szCaption, "Save changes");
    
-//  LoadString(Globals.hInstance, ids_savechanges, szMessage, sizeof(szMessage));
-//  LoadString(Globals.hInstance, ids_savetitle, szCaption, sizeof(szCaption));
+/*  LoadString(Globals.hInstance, ids_savechanges, szMessage, sizeof(szMessage)); */
+/*  LoadString(Globals.hInstance, ids_savetitle, szCaption, sizeof(szCaption)); */
    
    nResult = MessageBox(Globals.hMainWnd, szMessage, szCaption, MB_YESNOCANCEL);
 
@@ -119,7 +119,7 @@ BOOL DoCloseFile(void) {
     
   }
   
-  // Forget file name 
+  /* Forget file name  */
   lstrcpy(Globals.szFileName, "");
   LANGUAGE_UpdateWindowCaption();
 
@@ -130,10 +130,10 @@ BOOL DoCloseFile(void) {
 
 void DoOpenFile(LPCSTR szFileName) {
 
-    // Close any files and prompt to save changes
+    /* Close any files and prompt to save changes */
     if (DoCloseFile) {
 
-        // Open file
+        /* Open file */
         lstrcpy(Globals.szFileName, szFileName); 
         LANGUAGE_UpdateWindowCaption();
     
@@ -143,10 +143,10 @@ void DoOpenFile(LPCSTR szFileName) {
 
 VOID DIALOG_FileNew(VOID)
 {
-    // Close any files and promt to save changes
+    /* Close any files and promt to save changes */
     if (DoCloseFile()) {
     
-        // do nothing yet
+        /* do nothing yet */
     
     }
 }
@@ -291,7 +291,7 @@ VOID DIALOG_FilePrint(VOID)
         printer.hSetupTemplate        = 0;
         
         if (PrintDlg(&printer)) {
-            // do nothing
+            /* do nothing */
         };
 }
 
@@ -324,7 +324,7 @@ VOID DIALOG_FilePrinterSetup(VOID)
         printer.hSetupTemplate        = 0;
         
         if (PrintDlg(&printer)) {
-            // do nothing
+            /* do nothing */
         };
 
 }
@@ -408,7 +408,7 @@ VOID DIALOG_Search(VOID)
         } 
              else 
         { 
-             // do nothing yet
+             /* do nothing yet */
         };
 
 }
@@ -469,7 +469,7 @@ VOID DIALOG_PageSetup(VOID)
 
 VOID DIALOG_TimeDate(VOID)
 {
-  // uses [KERNEL32.310] (ole2nls.c)
+  /* uses [KERNEL32.310] (ole2nls.c) */
   
   SYSTEMTIME   st;
   LPSYSTEMTIME lpst = &st;

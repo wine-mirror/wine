@@ -28,7 +28,7 @@
 extern LPSTR COMCTL32_aSubclass; /* global subclassing atom */
 
 /* property name of tooltip window handle */
-//#define TT_SUBCLASS_PROP "CC32SubclassInfo"
+/*#define TT_SUBCLASS_PROP "CC32SubclassInfo" */
 
 #define TOOLTIPS_GetInfoPtr(wndPtr) ((TOOLTIPS_INFO *)wndPtr->wExtra[0])
 
@@ -934,7 +934,7 @@ TOOLTIPS_EnumTools32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     lpToolInfo->uId      = toolPtr->uId;
     lpToolInfo->rect     = toolPtr->rect;
     lpToolInfo->hinst    = toolPtr->hinst;
-//    lpToolInfo->lpszText = toolPtr->lpszText;
+/*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
     if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32A))
@@ -969,7 +969,7 @@ TOOLTIPS_EnumTools32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     lpToolInfo->uId      = toolPtr->uId;
     lpToolInfo->rect     = toolPtr->rect;
     lpToolInfo->hinst    = toolPtr->hinst;
-//    lpToolInfo->lpszText = toolPtr->lpszText;
+/*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
     if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32W))
@@ -999,7 +999,7 @@ TOOLTIPS_GetCurrentTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    lpToolInfo->uFlags   = toolPtr->uFlags;
 	    lpToolInfo->rect     = toolPtr->rect;
 	    lpToolInfo->hinst    = toolPtr->hinst;
-//	    lpToolInfo->lpszText = toolPtr->lpszText;
+/*	    lpToolInfo->lpszText = toolPtr->lpszText; */
 	    lpToolInfo->lpszText = NULL;  /* FIXME */
 
 	    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32A))
@@ -1037,7 +1037,7 @@ TOOLTIPS_GetCurrentTool32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    lpToolInfo->uFlags   = toolPtr->uFlags;
 	    lpToolInfo->rect     = toolPtr->rect;
 	    lpToolInfo->hinst    = toolPtr->hinst;
-//	    lpToolInfo->lpszText = toolPtr->lpszText;
+/*	    lpToolInfo->lpszText = toolPtr->lpszText; */
 	    lpToolInfo->lpszText = NULL;  /* FIXME */
 
 	    if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32W))
@@ -1195,7 +1195,7 @@ TOOLTIPS_GetToolInfo32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     lpToolInfo->uFlags   = toolPtr->uFlags;
     lpToolInfo->rect     = toolPtr->rect;
     lpToolInfo->hinst    = toolPtr->hinst;
-//    lpToolInfo->lpszText = toolPtr->lpszText;
+/*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
     if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32A))
@@ -1232,7 +1232,7 @@ TOOLTIPS_GetToolInfo32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     lpToolInfo->uFlags   = toolPtr->uFlags;
     lpToolInfo->rect     = toolPtr->rect;
     lpToolInfo->hinst    = toolPtr->hinst;
-//    lpToolInfo->lpszText = toolPtr->lpszText;
+/*    lpToolInfo->lpszText = toolPtr->lpszText; */
     lpToolInfo->lpszText = NULL;  /* FIXME */
 
     if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32W))
@@ -1268,7 +1268,7 @@ TOOLTIPS_HitTest32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	lptthit->ti.uId      = toolPtr->uId;
 	lptthit->ti.rect     = toolPtr->rect;
 	lptthit->ti.hinst    = toolPtr->hinst;
-//	lptthit->ti.lpszText = toolPtr->lpszText;
+/*	lptthit->ti.lpszText = toolPtr->lpszText; */
 	lptthit->ti.lpszText = NULL;  /* FIXME */
 	lptthit->ti.lParam   = toolPtr->lParam;
     }
@@ -1303,7 +1303,7 @@ TOOLTIPS_HitTest32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	lptthit->ti.uId      = toolPtr->uId;
 	lptthit->ti.rect     = toolPtr->rect;
 	lptthit->ti.hinst    = toolPtr->hinst;
-//	lptthit->ti.lpszText = toolPtr->lpszText;
+/*	lptthit->ti.lpszText = toolPtr->lpszText; */
 	lptthit->ti.lpszText = NULL;  /* FIXME */
 	lptthit->ti.lParam   = toolPtr->lParam;
     }
@@ -2245,8 +2245,8 @@ TOOLTIPS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_NCHITTEST:
 	    return TOOLTIPS_NCHitTest (wndPtr, wParam, lParam);
 
-//	case WM_NOTIFYFORMAT:
-//	    return TOOLTIPS_NotifyFormat (wndPtr, wParam, lParam);
+/*	case WM_NOTIFYFORMAT: */
+/*	    return TOOLTIPS_NotifyFormat (wndPtr, wParam, lParam); */
 
 	case WM_PAINT:
 	    return TOOLTIPS_Paint (wndPtr, wParam, lParam);

@@ -242,9 +242,9 @@ typedef struct {
     INT32		dySrc;
 } ICDECOMPRESSEX;
 
-#define ICDRAW_QUERY        0x00000001L   // test for support
-#define ICDRAW_FULLSCREEN   0x00000002L   // draw to full screen
-#define ICDRAW_HDC          0x00000004L   // draw to a HDC/HWND
+#define ICDRAW_QUERY        0x00000001L   /* test for support */
+#define ICDRAW_FULLSCREEN   0x00000002L   /* draw to full screen */
+#define ICDRAW_HDC          0x00000004L   /* draw to a HDC/HWND */
 
 
 BOOL32	VFWAPI	ICInfo32(DWORD fccType, DWORD fccHandler, ICINFO32 * lpicinfo);

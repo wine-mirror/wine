@@ -93,7 +93,7 @@ int CLOCK_MenuCommand (WPARAM wParam)
          ShellAbout(Globals.hMainWnd, "Clock", "Clock\n" WINE_RELEASE_INFO, 0);
          break;
        }
-     // Handle languages
+     /* Handle languages */
      default:
          LANGUAGE_DefaultHandle(wParam); 
    }
@@ -115,7 +115,7 @@ VOID MAIN_FileChooseFont(VOID) {
         font.lpfnHook        = 0;
         font.lpTemplateName  = 0;
         font.hInstance       = Globals.hInstance;
-//        font.lpszStyle       = LF_FACESIZE;
+/*        font.lpszStyle       = LF_FACESIZE; */
         font.nFontType       = 0;
         font.nSizeMin        = 0;
         font.nSizeMax        = 144;
@@ -273,7 +273,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
           else Idle(NULL);
     }
 
-    // We will never reach the following statement !  
+    /* We will never reach the following statement !   */
     return 0;    
 }
 

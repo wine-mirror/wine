@@ -321,7 +321,7 @@ static HRESULT WINAPI IContextMenu_HandleMenuMsg(LPCONTEXTMENU this, UINT32 uMsg
 *  IContextMenu_AllocPidlTable()
 */
 BOOL32 IContextMenu_AllocPidlTable(LPCONTEXTMENU this, DWORD dwEntries)
-{	//add one for NULL terminator
+{	/*add one for NULL terminator */
 	TRACE(shell,"(%p)->(entrys=%lu)\n",this, dwEntries);
 	dwEntries++;
 

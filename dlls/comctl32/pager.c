@@ -72,7 +72,7 @@ PAGER_GetButtonState (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << PAGER_GetDropTarget >>
+/* << PAGER_GetDropTarget >> */
 
 
 static __inline__ LRESULT
@@ -251,7 +251,7 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     FillRect32 ((HDC32)wParam, &rect, hBrush);
     DeleteObject32 (hBrush);
 
-//    return TRUE;
+/*    return TRUE; */
     return FALSE;
 }
 
@@ -267,7 +267,7 @@ PAGER_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << PAGER_Paint >>
+/* << PAGER_Paint >> */
 
 
 static LRESULT
@@ -281,12 +281,12 @@ PAGER_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	SetWindowPos32 (infoPtr->hwndChild, HWND_TOP, rect.left, rect.top,
 			rect.right - rect.left, rect.bottom - rect.top,
 			SWP_SHOWWINDOW);
-//	MoveWindow32 (infoPtr->hwndChild, 1, 1, rect.right - 2, rect.bottom-2, TRUE);
-//	UpdateWindow32 (infoPtr->hwndChild);
+/*	MoveWindow32 (infoPtr->hwndChild, 1, 1, rect.right - 2, rect.bottom-2, TRUE); */
+/*	UpdateWindow32 (infoPtr->hwndChild); */
 
     }
-//    FillRect32 ((HDC32)wParam, &rect, hBrush);
-//    DeleteObject32 (hBrush);
+/*    FillRect32 ((HDC32)wParam, &rect, hBrush); */
+/*    DeleteObject32 (hBrush); */
     return TRUE;
 }
 
@@ -314,7 +314,7 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case PGM_GETBUTTONSTATE:
 	    return PAGER_GetButtonState (wndPtr, wParam, lParam);
 
-//	case PGM_GETDROPTARGET:
+/*	case PGM_GETDROPTARGET: */
 
 	case PGM_GETPOS:
 	    return PAGER_SetPos (wndPtr, wParam, lParam);
@@ -349,8 +349,8 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 	    return PAGER_MouseMove (wndPtr, wParam, lParam);
 
-//	case WM_PAINT:
-//	    return PAGER_Paint (wndPtr, wParam);
+/*	case WM_PAINT: */
+/*	    return PAGER_Paint (wndPtr, wParam); */
 
 	case WM_SIZE:
 	    return PAGER_Size (wndPtr, wParam, lParam);

@@ -199,21 +199,21 @@
 
 
 /* Return Codes... should these be the same as something somewhere? */
-#define PARTITION_ENTRY_UNUSED          0x00      // Entry unused
-#define PARTITION_FAT_12                0x01      // 12-bit FAT entries
-#define PARTITION_XENIX_1               0x02      // Xenix
-#define PARTITION_XENIX_2               0x03      // Xenix
-#define PARTITION_FAT_16                0x04      // 16-bit FAT entries
-#define PARTITION_EXTENDED              0x05      // Extended partition entry
-#define PARTITION_HUGE                  0x06      // Huge partition MS-DOS V4
-#define PARTITION_IFS                   0x07      // IFS Partition
-#define PARTITION_FAT32                 0x0B      // FAT32
-#define PARTITION_FAT32_XINT13          0x0C      // FAT32 using extended int13 services
-#define PARTITION_XINT13                0x0E      // Win95 partition using extended int13 services
-#define PARTITION_XINT13_EXTENDED       0x0F      // Same as type 5 but uses extended int13 services
-#define PARTITION_PREP                  0x41      // PowerPC Reference Platform (PReP) Boot Partition
-#define PARTITION_LDM                   0x42      // Logical Disk Manager partition
-#define PARTITION_UNIX                  0x63      // Unix
+#define PARTITION_ENTRY_UNUSED          0x00      /* Entry unused */
+#define PARTITION_FAT_12                0x01      /* 12-bit FAT entries */
+#define PARTITION_XENIX_1               0x02      /* Xenix */
+#define PARTITION_XENIX_2               0x03      /* Xenix */
+#define PARTITION_FAT_16                0x04      /* 16-bit FAT entries */
+#define PARTITION_EXTENDED              0x05      /* Extended partition entry */
+#define PARTITION_HUGE                  0x06      /* Huge partition MS-DOS V4 */
+#define PARTITION_IFS                   0x07      /* IFS Partition */
+#define PARTITION_FAT32                 0x0B      /* FAT32 */
+#define PARTITION_FAT32_XINT13          0x0C      /* FAT32 using extended int13 services */
+#define PARTITION_XINT13                0x0E      /* Win95 partition using extended int13 services */
+#define PARTITION_XINT13_EXTENDED       0x0F      /* Same as type 5 but uses extended int13 services */
+#define PARTITION_PREP                  0x41      /* PowerPC Reference Platform (PReP) Boot Partition */
+#define PARTITION_LDM                   0x42      /* Logical Disk Manager partition */
+#define PARTITION_UNIX                  0x63      /* Unix */
 
 
 /* Device Io Stuff - Most VxD support.

@@ -436,7 +436,7 @@ TREEVIEW_DrawItem (WND *wndPtr, HDC32 hdc, TREEVIEW_ITEM *wineItem,
         	DrawText32A (hdc, wineItem->pszText, lstrlen32A(wineItem->pszText),
                   &r, uTextJustify|DT_VCENTER|DT_SINGLELINE);
 		else {
-			// send TVN_GETDISPINFO notification
+			/* send TVN_GETDISPINFO notification */
 			TRACE (treeview,"LPSTR_TEXTCALLBACK\n");
 		}
         if (oldBkMode != TRANSPARENT)
@@ -1171,7 +1171,7 @@ TREEVIEW_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
         ti.uFlags   = TTF_IDISHWND | TTF_TRACK | TTF_TRANSPARENT ;
         ti.hwnd     = wndPtr->hwndSelf;
         ti.uId      = 0;
-        ti.lpszText = "Test"; // LPSTR_TEXTCALLBACK;
+        ti.lpszText = "Test"; /* LPSTR_TEXTCALLBACK; */
         SetRectEmpty32 (&ti.rect);
 
         SendMessage32A (infoPtr->hwndToolTip, TTM_ADDTOOL32A, 0, (LPARAM)&ti);
@@ -1860,7 +1860,7 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
       		FIXME (treeview, "Unimplemented msg TVM_GETUNICODEFORMAT\n");
       		return 0;
   
-//		case WM_COMMAND:
+/*		case WM_COMMAND: */
   
 		case WM_CREATE:
 			return TREEVIEW_Create (wndPtr, wParam, lParam);
@@ -1868,7 +1868,7 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 		case WM_DESTROY:
 			return TREEVIEW_Destroy (wndPtr);
   
-//		case WM_ENABLE:
+/*		case WM_ENABLE: */
   
 		case WM_ERASEBKGND:
 	    	return TREEVIEW_EraseBackground (wndPtr, wParam, lParam);
@@ -1889,8 +1889,8 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 			return TREEVIEW_KeyDown (wndPtr, wParam, lParam);
   
   
-//		case WM_KILLFOCUS:
-//		case WM_SETFOCUS:
+/*		case WM_KILLFOCUS: */
+/*		case WM_SETFOCUS: */
   
   
 		case WM_LBUTTONDOWN:
@@ -1903,14 +1903,14 @@ TREEVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 			return TREEVIEW_RButtonDown (wndPtr, wParam, lParam);
   
   
-//		case WM_SYSCOLORCHANGE:
-//		case WM_STYLECHANGED:
-//		case WM_SETREDRAW:
+/*		case WM_SYSCOLORCHANGE: */
+/*		case WM_STYLECHANGED: */
+/*		case WM_SETREDRAW: */
   
 		case WM_TIMER:
 			return TREEVIEW_HandleTimer (wndPtr, wParam, lParam);
   
-//		case WM_SIZE:
+/*		case WM_SIZE: */
 		case WM_HSCROLL: 
 			return TREEVIEW_HScroll (wndPtr, wParam, lParam);
 		case WM_VSCROLL: 

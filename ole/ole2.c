@@ -164,6 +164,6 @@ HRESULT WINAPI CreateBindCtx32 (DWORD reserved,	LPVOID *ppbc)
 {
     FIXME(ole,"(0x%08lx %p): stub!\n", reserved, ppbc);
     *ppbc = 0;
-//    return S_OK;
+/*    return S_OK; */
     return E_OUTOFMEMORY;
 }

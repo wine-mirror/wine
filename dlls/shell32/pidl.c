@@ -665,7 +665,7 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	{ pidlTemp = (LPITEMIDLIST)pidl;
 	}
 
-	//if this is NULL, return the required size of the buffer
+	/*if this is NULL, return the required size of the buffer */
 	if(!lpszPath)
 	{ while(pidlTemp->mkid.cb)
 	  { LPPIDLDATA  pData = _ILGetDataPointer(pidlTemp);
@@ -677,7 +677,7 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	    pidlTemp = ILGetNext(pidlTemp);
 	  }
 
-	  //add one for the NULL terminator
+	  /*add one for the NULL terminator */
 	  TRACE(pidl,"-- (size=%lu)\n",dwCopied);
 	  return dwCopied + 1;
 	}
@@ -687,7 +687,7 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	while(pidlTemp->mkid.cb && (dwCopied < dwSize))
 	{ LPPIDLDATA  pData = _ILGetDataPointer(pidlTemp);
 
-	  //if this item is a value, then skip it and finish
+	  /*if this item is a value, then skip it and finish */
 	  if(PT_VALUE == pData->type)
 	  { break;
 	  }
@@ -700,7 +700,7 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	  TRACE(pidl,"-- (size=%lu,%s)\n",dwCopied,lpszPath);
 	}
 
-	//remove the last backslash if necessary
+	/*remove the last backslash if necessary */
 	if(dwCopied)
 	{ if(*(lpszPath + strlen(lpszPath) - 1) == '\\')
 	  { *(lpszPath + strlen(lpszPath) - 1) = 0;
@@ -762,7 +762,7 @@ DWORD WINAPI _ILGetDataText( LPCITEMIDLIST pidlPath, LPCITEMIDLIST pidlValue, LP
 
   /* fixme: get the driveletter*/
 
-  //assemble the Folder string
+  /*assemble the Folder string */
   dwNameSize = _ILGetFolderText(pidlPath, NULL, 0);
   lpszFolder = (LPSTR)HeapAlloc(GetProcessHeap(),0,dwNameSize);
   if(!lpszFolder)
@@ -770,7 +770,7 @@ DWORD WINAPI _ILGetDataText( LPCITEMIDLIST pidlPath, LPCITEMIDLIST pidlValue, LP
 	}
   _ILGetFolderText(pidlPath, lpszFolder, dwNameSize);
 
-  //assemble the value name
+  /*assemble the value name */
   dwNameSize = _ILGetValueText(pidlValue, NULL, 0);
   lpszValueName = (LPSTR)HeapAlloc(GetProcessHeap(),0,dwNameSize);
   if(!lpszValueName)
@@ -809,7 +809,7 @@ DWORD WINAPI _ILGetPidlPath( LPCITEMIDLIST pidl, LPSTR lpszOut, DWORD dwOutSize)
 
   dwOutSize -= _ILGetFolderText(pidl, lpszTemp, dwOutSize);
 
-  //add a backslash if necessary
+  /*add a backslash if necessary */
   len = strlen(lpszTemp);
   if (len && lpszTemp[len-1]!='\\')
 	{ lpszTemp[len+0]='\\';
@@ -819,10 +819,10 @@ DWORD WINAPI _ILGetPidlPath( LPCITEMIDLIST pidl, LPSTR lpszOut, DWORD dwOutSize)
 
   lpszTemp = lpszOut + strlen(lpszOut);
 
-  //add the value string
+  /*add the value string */
   _ILGetValueText(pidl, lpszTemp, dwOutSize);
 
-  //remove the last backslash if necessary
+  /*remove the last backslash if necessary */
   if(*(lpszOut + strlen(lpszOut) - 1) == '\\')
   { *(lpszOut + strlen(lpszOut) - 1) = 0;
   }

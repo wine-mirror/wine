@@ -149,7 +149,7 @@ VOID LANGUAGE_Init(VOID)
                              buffer, sizeof(buffer));
   Globals.lpszLanguage = p = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(buffer)));
   strcpy(p, buffer);
-  // hmemcpy(p, buffer, 1 + lstrlen(buffer));
+  /* hmemcpy(p, buffer, 1 + lstrlen(buffer)); */
   #endif
 }
 

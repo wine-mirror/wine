@@ -475,7 +475,7 @@ TRACKBAR_Refresh (WND *wndPtr, HDC32 hdc)
 		Polygon32 (hdc, points, 6);
 
 		if (wndPtr->dwStyle & TBS_VERT) {
-		//   draw edge 
+                    /*   draw edge  */
 		} else {
 			RECT32 triangle;	/* for correct shadows of thumb */
 			DrawEdge32 (hdc, &thumb, EDGE_RAISED, BF_TOPLEFT);
@@ -788,7 +788,7 @@ TRACKBAR_GetToolTips (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-//	case TBM_GETUNICODEFORMAT:
+/*	case TBM_GETUNICODEFORMAT: */
 
 
 static LRESULT
@@ -1101,7 +1101,7 @@ TRACKBAR_SetToolTips (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-//	case TBM_SETUNICODEFORMAT:
+/*	case TBM_SETUNICODEFORMAT: */
 
 
 static LRESULT
@@ -1171,7 +1171,7 @@ TRACKBAR_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
      	ti.uFlags   = TTF_IDISHWND | TTF_TRACK;
      	ti.hwnd     = wndPtr->hwndSelf;
         ti.uId      = 0;
-        ti.lpszText = "Test"; // LPSTR_TEXTCALLBACK;
+        ti.lpszText = "Test"; /* LPSTR_TEXTCALLBACK */
         SetRectEmpty32 (&ti.rect);
 
         SendMessage32A (infoPtr->hwndToolTip, TTM_ADDTOOL32A, 0, (LPARAM)&ti);
@@ -1538,7 +1538,7 @@ TRACKBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
      WND *wndPtr = WIN_FindWndPtr(hwnd);
 
-//	TRACE (trackbar, "msg %04x wp=%08x lp=%08lx\n", uMsg, wParam, lParam);
+/*	TRACE (trackbar, "msg %04x wp=%08x lp=%08lx\n", uMsg, wParam, lParam); */
 
     switch (uMsg)
     {
@@ -1596,7 +1596,7 @@ TRACKBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TBM_GETTOOLTIPS:
 	    return TRACKBAR_GetToolTips (wndPtr, wParam, lParam);
 
-//	case TBM_GETUNICODEFORMAT:
+/*	case TBM_GETUNICODEFORMAT: */
 
 	case TBM_SETBUDDY:
 	    return TRACKBAR_SetBuddy (wndPtr, wParam, lParam);
@@ -1644,7 +1644,7 @@ TRACKBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TBM_SETTOOLTIPS:
 	    return TRACKBAR_SetToolTips (wndPtr, wParam, lParam);
 
-//	case TBM_SETUNICODEFORMAT:
+/*	case TBM_SETUNICODEFORMAT: */
 
 
 	case WM_CAPTURECHANGED:
@@ -1656,10 +1656,10 @@ TRACKBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_DESTROY:
 	    return TRACKBAR_Destroy (wndPtr, wParam, lParam);
 
-//	case WM_ENABLE:
+/*	case WM_ENABLE: */
 
-//	case WM_ERASEBKGND:
-//	    return 0;
+/*	case WM_ERASEBKGND: */
+/*	    return 0; */
 
 	case WM_GETDLGCODE:
 	    return DLGC_WANTARROWS;

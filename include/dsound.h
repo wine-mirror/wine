@@ -5,7 +5,7 @@
 #include "winbase.h"
 #include "compobj.h"
 #include "mmsystem.h"
-#include "d3d.h"			//FIXME: Need to break out d3dtypes.h
+#include "d3d.h"			/*FIXME: Need to break out d3dtypes.h */
 
 DEFINE_GUID(CLSID_DirectSound,		0x47d4d946, 0x62e8, 0x11cf, 0x93, 0xbc, 0x44, 0x45, 0x53, 0x54, 0x0, 0x0);
 
@@ -162,10 +162,10 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DSSPEAKER_STEREO        4
 #define DSSPEAKER_SURROUND      5
 
-#define DSSPEAKER_GEOMETRY_MIN      0x00000005  // 5 degrees
-#define DSSPEAKER_GEOMETRY_NARROW   0x0000000A  // 10 degrees
-#define DSSPEAKER_GEOMETRY_WIDE     0x00000014  // 20 degrees
-#define DSSPEAKER_GEOMETRY_MAX      0x000000B4  // 180 degrees
+#define DSSPEAKER_GEOMETRY_MIN      0x00000005  /* 5 degrees */
+#define DSSPEAKER_GEOMETRY_NARROW   0x0000000A  /* 10 degrees */
+#define DSSPEAKER_GEOMETRY_WIDE     0x00000014  /* 20 degrees */
+#define DSSPEAKER_GEOMETRY_MAX      0x000000B4  /* 180 degrees */
 
 
 typedef LPVOID* LPLPVOID;
@@ -328,12 +328,12 @@ typedef const DS3DLISTENER *LPCDS3DLISTENER;
 #define THIS LPDIRECTSOUND3DLISTENER this
 typedef struct IDirectSound3DListener_VTable
 {
-	// IUnknown methods
+	/* IUnknown methods */
 	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID FAR *) PURE;
 	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
 	STDMETHOD_(ULONG,Release)           (THIS) PURE;
 
-	// IDirectSound3DListener methods
+	/* IDirectSound3DListener methods */
 	STDMETHOD(GetAllParameters)         (THIS_ LPDS3DLISTENER) PURE;
 	STDMETHOD(GetDistanceFactor)        (THIS_ LPD3DVALUE) PURE;
 	STDMETHOD(GetDopplerFactor)         (THIS_ LPD3DVALUE) PURE;
@@ -378,12 +378,12 @@ typedef const DS3DBUFFER *LPCDS3DBUFFER;
 #define THIS LPDIRECTSOUND3DBUFFER this
 typedef struct IDirectSound3DBuffer_VTable
 {
-	// IUnknown methods
+	/* IUnknown methods */
 	STDMETHOD(QueryInterface)           (THIS_ REFIID, LPVOID FAR *) PURE;
 	STDMETHOD_(ULONG,AddRef)            (THIS) PURE;
 	STDMETHOD_(ULONG,Release)           (THIS) PURE;
 
-	// IDirectSound3DBuffer methods
+	/* IDirectSound3DBuffer methods */
 	STDMETHOD(GetAllParameters)         (THIS_ LPDS3DBUFFER) PURE;
 	STDMETHOD(GetConeAngles)            (THIS_ LPDWORD, LPDWORD) PURE;
 	STDMETHOD(GetConeOrientation)       (THIS_ LPD3DVECTOR) PURE;

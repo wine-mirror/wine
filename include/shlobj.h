@@ -131,7 +131,7 @@ typedef struct _STRRET
  */
 #define THIS LPPERSISTFILE this
 typedef struct IPersistFile_VTable
-{   // *** IUnknown methods ***
+{   /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
@@ -171,16 +171,16 @@ struct tagPERSISTFILE
 #define CMF_CANRENAME           0x00000010
 #define CMF_NODEFAULT           0x00000020
 #define CMF_INCLUDESTATIC       0x00000040
-#define CMF_RESERVED            0xffff0000      // View specific
+#define CMF_RESERVED            0xffff0000      /* View specific */
 
 /* GetCommandString uFlags */
-#define GCS_VERBA        0x00000000     // canonical verb
-#define GCS_HELPTEXTA    0x00000001     // help text (for status bar)
-#define GCS_VALIDATEA    0x00000002     // validate command exists
-#define GCS_VERBW        0x00000004     // canonical verb (unicode)
-#define GCS_HELPTEXTW    0x00000005     // help text (unicode version)
-#define GCS_VALIDATEW    0x00000006     // validate command exists (unicode)
-#define GCS_UNICODE      0x00000004     // for bit testing - Unicode string
+#define GCS_VERBA        0x00000000     /* canonical verb */
+#define GCS_HELPTEXTA    0x00000001     /* help text (for status bar) */
+#define GCS_VALIDATEA    0x00000002     /* validate command exists */
+#define GCS_VERBW        0x00000004     /* canonical verb (unicode) */
+#define GCS_HELPTEXTW    0x00000005     /* help text (unicode version) */
+#define GCS_VALIDATEW    0x00000006     /* validate command exists (unicode) */
+#define GCS_UNICODE      0x00000004     /* for bit testing - Unicode string */
 
 #define GCS_VERB        GCS_VERBA
 #define GCS_HELPTEXT    GCS_HELPTEXTA
@@ -211,42 +211,42 @@ struct tagPERSISTFILE
 
 /*NOTE: When SEE_MASK_HMONITOR is set, hIcon is treated as hMonitor */
 typedef struct tagCMINVOKECOMMANDINFO 
-{   DWORD cbSize;        // sizeof(CMINVOKECOMMANDINFO)
-    DWORD fMask;         // any combination of CMIC_MASK_*
-    HWND32 hwnd;         // might be NULL (indicating no owner window)
-    LPCSTR lpVerb;       // either a string or MAKEINTRESOURCE(idOffset)
-    LPCSTR lpParameters; // might be NULL (indicating no parameter)
-    LPCSTR lpDirectory;  // might be NULL (indicating no specific directory)
-   INT32 nShow;           // one of SW_ values for ShowWindow() API
+{   DWORD cbSize;        /* sizeof(CMINVOKECOMMANDINFO) */
+    DWORD fMask;         /* any combination of CMIC_MASK_* */
+    HWND32 hwnd;         /* might be NULL (indicating no owner window) */
+    LPCSTR lpVerb;       /* either a string or MAKEINTRESOURCE(idOffset) */
+    LPCSTR lpParameters; /* might be NULL (indicating no parameter) */
+    LPCSTR lpDirectory;  /* might be NULL (indicating no specific directory) */
+   INT32 nShow;           /* one of SW_ values for ShowWindow() API */
 
     DWORD dwHotKey;
     HANDLE32 hIcon;
 } CMINVOKECOMMANDINFO32,  *LPCMINVOKECOMMANDINFO32;
 
 typedef struct tagCMInvokeCommandInfoEx 
-{   DWORD cbSize;        // must be sizeof(CMINVOKECOMMANDINFOEX)
-    DWORD fMask;         // any combination of CMIC_MASK_*
-    HWND32 hwnd;         // might be NULL (indicating no owner window)
-    LPCSTR lpVerb;       // either a string or MAKEINTRESOURCE(idOffset)
-    LPCSTR lpParameters; // might be NULL (indicating no parameter)
-    LPCSTR lpDirectory;  // might be NULL (indicating no specific directory)
-	INT32 nShow;           // one of SW_ values for ShowWindow() API
+{   DWORD cbSize;        /* must be sizeof(CMINVOKECOMMANDINFOEX) */
+    DWORD fMask;         /* any combination of CMIC_MASK_* */
+    HWND32 hwnd;         /* might be NULL (indicating no owner window) */
+    LPCSTR lpVerb;       /* either a string or MAKEINTRESOURCE(idOffset) */
+    LPCSTR lpParameters; /* might be NULL (indicating no parameter) */
+    LPCSTR lpDirectory;  /* might be NULL (indicating no specific directory) */
+	INT32 nShow;           /* one of SW_ values for ShowWindow() API */
 
     DWORD dwHotKey;
     
     HANDLE32 hIcon;
-    LPCSTR lpTitle;        // For CreateProcess-StartupInfo.lpTitle
-    LPCWSTR lpVerbW;       // Unicode verb (for those who can use it)
-    LPCWSTR lpParametersW; // Unicode parameters (for those who can use it)
-    LPCWSTR lpDirectoryW;  // Unicode directory (for those who can use it)
-    LPCWSTR lpTitleW;      // Unicode title (for those who can use it)
-    POINT32 ptInvoke;      // Point where it's invoked
+    LPCSTR lpTitle;        /* For CreateProcess-StartupInfo.lpTitle */
+    LPCWSTR lpVerbW;       /* Unicode verb (for those who can use it) */
+    LPCWSTR lpParametersW; /* Unicode parameters (for those who can use it) */
+    LPCWSTR lpDirectoryW;  /* Unicode directory (for those who can use it) */
+    LPCWSTR lpTitleW;      /* Unicode title (for those who can use it) */
+    POINT32 ptInvoke;      /* Point where it's invoked */
 
 } CMINVOKECOMMANDINFOEX32,  *LPCMINVOKECOMMANDINFOEX32;
 
 
 typedef struct IContextMenu_VTable
-{   // *** IUnknown methods ***
+{   /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
@@ -465,12 +465,12 @@ struct tagDATAOBJECT
 #define THIS LPSHELLEXTINIT this
 
 typedef struct IShellExtInit_VTable 
-{   // *** IUnknown methods ***
+{   /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
 
-    // *** IShellExtInit methods ***
+    /* *** IShellExtInit methods *** */
     STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidlFolder, LPDATAOBJECT lpdobj, HKEY hkeyProgID) PURE;
 } IShellExtInit_VTable,*LPSHELLEXTINIT_VTABLE;
 
@@ -521,23 +521,23 @@ struct tagENUMIDLIST
 };
 
 #undef THIS
-//--------------------------------------------------------------------------
-//
-// FOLDERSETTINGS
-//
-//  FOLDERSETTINGS is a data structure that explorer passes from one folder
-// view to another, when the user is browsing. It calls ISV::GetCurrentInfo
-// member to get the current settings and pass it to ISV::CreateViewWindow
-// to allow the next folder view "inherit" it. These settings assumes a
-// particular UI (which the shell's folder view has), and shell extensions
-// may or may not use those settings.
-//
-//--------------------------------------------------------------------------
+/*-------------------------------------------------------------------------- */
+/* */
+/* FOLDERSETTINGS */
+/* */
+/*  FOLDERSETTINGS is a data structure that explorer passes from one folder */
+/* view to another, when the user is browsing. It calls ISV::GetCurrentInfo */
+/* member to get the current settings and pass it to ISV::CreateViewWindow */
+/* to allow the next folder view "inherit" it. These settings assumes a */
+/* particular UI (which the shell's folder view has), and shell extensions */
+/* may or may not use those settings. */
+/* */
+/*-------------------------------------------------------------------------- */
 
 typedef LPBYTE LPVIEWSETTINGS;
 
-// NB Bitfields.
-// FWF_DESKTOP implies FWF_TRANSPARENT/NOCLIENTEDGE/NOSCROLL
+/* NB Bitfields. */
+/* FWF_DESKTOP implies FWF_TRANSPARENT/NOCLIENTEDGE/NOSCROLL */
 typedef enum
 { FWF_AUTOARRANGE =       0x0001,
   FWF_ABBREVIATEDNAMES =  0x0002,
@@ -551,7 +551,7 @@ typedef enum
   FWF_NOCLIENTEDGE =      0x0200,
   FWF_NOSCROLL     =      0x0400,
   FWF_ALIGNLEFT    =      0x0800,
-  FWF_SINGLECLICKACTIVATE=0x8000  // TEMPORARY -- NO UI FOR THIS
+  FWF_SINGLECLICKACTIVATE=0x8000  /* TEMPORARY -- NO UI FOR THIS */
 } FOLDERFLAGS;
 
 typedef enum
@@ -562,8 +562,8 @@ typedef enum
 } FOLDERVIEWMODE;
 
 typedef struct
-{ UINT32 ViewMode;       // View mode (FOLDERVIEWMODE values)
-  UINT32 fFlags;         // View options (FOLDERFLAGS bits)
+{ UINT32 ViewMode;       /* View mode (FOLDERVIEWMODE values) */
+  UINT32 fFlags;         /* View options (FOLDERFLAGS bits) */
 } FOLDERSETTINGS, *LPFOLDERSETTINGS;
 
 typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
@@ -703,16 +703,16 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *);
 #define CWM_GETISHELLBROWSER (WM_USER+7)
 
 typedef struct IShellBrowser_VTable 
-{    // *** IUnknown methods ***
+{    /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
 
-    // *** IOleWindow methods ***
+    /* *** IOleWindow methods *** */
     STDMETHOD(GetWindow) (THIS_ HWND32 * lphwnd) PURE;
     STDMETHOD(ContextSensitiveHelp) (THIS_ BOOL32 fEnterMode) PURE;
 
-    // *** IShellBrowser methods *** (same as IOleInPlaceFrame)
+    /* *** IShellBrowser methods *** (same as IOleInPlaceFrame) */
     STDMETHOD(InsertMenusSB) (THIS_ HMENU32 hmenuShared, LPOLEMENUGROUPWIDTHS32 lpMenuWidths) PURE;
     STDMETHOD(SetMenuSB) (THIS_ HMENU32 hmenuShared, HOLEMENU32 holemenuReserved, HWND32 hwndActiveObject) PURE;
     STDMETHOD(RemoveMenusSB) (THIS_ HMENU32 hmenuShared) PURE;
@@ -720,7 +720,7 @@ typedef struct IShellBrowser_VTable
     STDMETHOD(EnableModelessSB) (THIS_ BOOL32 fEnable) PURE;
     STDMETHOD(TranslateAcceleratorSB) (THIS_ LPMSG32 lpmsg, WORD wID) PURE;
 
-    // *** IShellBrowser methods ***
+    /* *** IShellBrowser methods *** */
     STDMETHOD(BrowseObject)(THIS_ LPCITEMIDLIST pidl, UINT32 wFlags) PURE;
     STDMETHOD(GetViewStateStream)(THIS_ DWORD grfMode, LPSTREAM32  *ppStrm) PURE;
     STDMETHOD(GetControlWindow)(THIS_ UINT32 id, HWND32 * lphwnd) PURE;
@@ -745,7 +745,7 @@ struct tagSHELLBROWSER
 /* shellview select item flags*/
 #define SVSI_DESELECT   0x0000
 #define SVSI_SELECT     0x0001
-#define SVSI_EDIT       0x0003  // includes select
+#define SVSI_EDIT       0x0003  /* includes select */
 #define SVSI_DESELECTOTHERS 0x0004
 #define SVSI_ENSUREVISIBLE  0x0008
 #define SVSI_FOCUSED        0x0010
@@ -819,22 +819,22 @@ typedef enum
 { SVUIA_DEACTIVATE       = 0,
   SVUIA_ACTIVATE_NOFOCUS = 1,
   SVUIA_ACTIVATE_FOCUS   = 2,
-  SVUIA_INPLACEACTIVATE  = 3          // new flag for IShellView2
+  SVUIA_INPLACEACTIVATE  = 3          /* new flag for IShellView2 */
 } SVUIA_STATUS;
 
 
 
 typedef struct IShellView_VTable
-{   // *** IUnknown methods ***
+{   /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
 
-    // *** IOleWindow methods ***
+    /* *** IOleWindow methods *** */
     STDMETHOD(GetWindow) (THIS_ HWND32 * lphwnd) PURE;
     STDMETHOD(ContextSensitiveHelp) (THIS_ BOOL32 fEnterMode) PURE;
 
-    // *** IShellView methods ***
+    /* *** IShellView methods *** */
     STDMETHOD(TranslateAccelerator) (THIS_ LPMSG32 lpmsg) PURE;
     STDMETHOD(EnableModeless) (THIS_ BOOL32 fEnable) PURE;
     STDMETHOD(UIActivate) (THIS_ UINT32 uState) PURE;
@@ -1022,16 +1022,16 @@ struct IShellLinkW {
 #define THIS LPEXTRACTICON this
 
 /* GetIconLocation() input flags*/
-#define GIL_OPENICON     0x0001      // allows containers to specify an "open" look
-#define GIL_FORSHELL     0x0002      // icon is to be displayed in a ShellFolder
-#define GIL_ASYNC        0x0020      // this is an async extract, return E_ASYNC
+#define GIL_OPENICON     0x0001      /* allows containers to specify an "open" look */
+#define GIL_FORSHELL     0x0002      /* icon is to be displayed in a ShellFolder */
+#define GIL_ASYNC        0x0020      /* this is an async extract, return E_ASYNC */
 
 /* GetIconLocation() return flags */
-#define GIL_SIMULATEDOC  0x0001      // simulate this document icon for this
-#define GIL_PERINSTANCE  0x0002      // icons from this class are per instance (each file has its own)
-#define GIL_PERCLASS     0x0004      // icons from this class per class (shared for all files of this type)
-#define GIL_NOTFILENAME  0x0008      // location is not a filename, must call ::ExtractIcon
-#define GIL_DONTCACHE    0x0010      // this icon should not be cached
+#define GIL_SIMULATEDOC  0x0001      /* simulate this document icon for this */
+#define GIL_PERINSTANCE  0x0002      /* icons from this class are per instance (each file has its own) */
+#define GIL_PERCLASS     0x0004      /* icons from this class per class (shared for all files of this type) */
+#define GIL_NOTFILENAME  0x0008      /* location is not a filename, must call ::ExtractIcon */
+#define GIL_DONTCACHE    0x0010      /* this icon should not be cached */
 
 typedef struct IExtractIcon IExtractIcon,*LPEXTRACTICON;
 typedef struct IExtractIcon_VTable
@@ -1127,10 +1127,10 @@ struct tagSERVICEPROVIDER
 /****************************************************************************
  * Shell Execute API
  */
-#define SE_ERR_FNF              2       // file not found
-#define SE_ERR_PNF              3       // path not found
-#define SE_ERR_ACCESSDENIED     5       // access denied
-#define SE_ERR_OOM              8       // out of memory
+#define SE_ERR_FNF              2       /* file not found */
+#define SE_ERR_PNF              3       /* path not found */
+#define SE_ERR_ACCESSDENIED     5       /* access denied */
+#define SE_ERR_OOM              8       /* out of memory */
 #define SE_ERR_DLLNOTFOUND      32
 #define SE_ERR_SHARE                    26
 #define SE_ERR_ASSOCINCOMPLETE          27
@@ -1243,7 +1243,7 @@ typedef struct tagBROWSEINFO32W {
 #define PBROWSEINFO  WINELIB_NAME_AW(PBROWSEINFO)
 #define LPBROWSEINFO WINELIB_NAME_AW(LPBROWSEINFO)
 
-// Browsing for directory.
+/* Browsing for directory. */
 #define BIF_RETURNONLYFSDIRS   0x0001
 #define BIF_DONTGOBELOWDOMAIN  0x0002
 #define BIF_STATUSTEXT         0x0004
@@ -1255,13 +1255,13 @@ typedef struct tagBROWSEINFO32W {
 #define BIF_BROWSEFORPRINTER   0x2000
 #define BIF_BROWSEINCLUDEFILES 0x4000
 
-// message from browser
+/* message from browser */
 #define BFFM_INITIALIZED        1
 #define BFFM_SELCHANGED         2
-#define BFFM_VALIDATEFAILEDA    3   // lParam:szPath ret:1(cont),0(EndDialog)
-#define BFFM_VALIDATEFAILEDW    4   // lParam:wzPath ret:1(cont),0(EndDialog)
+#define BFFM_VALIDATEFAILEDA    3   /* lParam:szPath ret:1(cont),0(EndDialog) */
+#define BFFM_VALIDATEFAILEDW    4   /* lParam:wzPath ret:1(cont),0(EndDialog) */
 
-// messages to browser
+/* messages to browser */
 #define BFFM_SETSTATUSTEXTA     (WM_USER+100)
 #define BFFM_ENABLEOK           (WM_USER+101)
 #define BFFM_SETSELECTIONA      (WM_USER+102)
@@ -1314,14 +1314,14 @@ typedef HRESULT(CALLBACK *SHELLVIEWPROC)(DWORD dwUserParam,LPSHELLFOLDER psf,
 #define NF_INHERITVIEW    0x0000
 #define NF_LOCALVIEW        0x0001
 
-typedef struct _SHELLVIEWDATA   // idl
+typedef struct _SHELLVIEWDATA   /* idl */
 { DWORD           dwSize;
   LPSHELLFOLDER   pShellFolder;
   DWORD           dwUserParam;
   LPCITEMIDLIST   pidl;
-  DWORD           v3;        // always 0
+  DWORD           v3;        /* always 0 */
   SHELLVIEWPROC   pCallBack;
-  DWORD           viewmode;  // NF_* enum
+  DWORD           viewmode;  /* NF_* enum */
 } SHELLVIEWDATA, * LPSHELLVIEWDATA;
 
 /*

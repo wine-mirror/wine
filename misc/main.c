@@ -623,17 +623,17 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 /*x3c*/ LANG_ENTRY_BEGIN( "gd", GAELIC )
 	LANG_DIALECT_ENTRY( GAELIC, GAELIC_SCOTTISH )
 	LANG_ENTRY_END( GAELIC )
-// 0x3d
+/* 0x3d */
 /*x3e*/ LANG_ENTRY_BEGIN( "ms", MALAY )
 	LANG_SUB_ENTRY( "MY", MALAY, MALAY )
 	LANG_SUB_ENTRY( "BN", MALAY, MALAY_BRUNEI_DARUSSALAM )
 	LANG_ENTRY_END( MALAY )
 /*x3f*/ LANG_ENTRY_BEGIN( "kk", KAZAKH )
 	LANG_ENTRY_END( KAZAKH )
-// 0x40
+/* 0x40 */
 /*x41*/ LANG_ENTRY_BEGIN( "sw", SWAHILI )
 	LANG_ENTRY_END( SWAHILI )
-// 0x42
+/* 0x42 */
 /*x43*/ LANG_ENTRY_BEGIN( "uz", UZBEK )
         /* Cyrillic */
 	if (strstr(charset,"KOI8") || !strcmp(charset,"ISO-8859-5"))
@@ -665,10 +665,10 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 	LANG_ENTRY_END( MARATHI )
 /*x4f*/ LANG_ENTRY_BEGIN( "sa", SANSKRIT )
 	LANG_ENTRY_END( SANSKRIT )
-// 0x50 -> 0x56
+/* 0x50 -> 0x56 */
 /*x57*/ /*LANG_ENTRY_BEGIN( "??", KONKANI )
 	LANG_ENTRY_END( KONKANI ) */
-// 0x58 -> ...
+/* 0x58 -> ... */
 	LANG_ENTRY_BEGIN( "eo", ESPERANTO ) /* not official */
 	LANG_ENTRY_END( ESPERANTO )
 
