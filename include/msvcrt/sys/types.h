@@ -15,7 +15,7 @@
 #endif
 
 
-typedef unsigned short _dev_t;
+typedef unsigned int   _dev_t;
 typedef unsigned short _ino_t;
 typedef int            _off_t;
 typedef long           MSVCRT(time_t);
