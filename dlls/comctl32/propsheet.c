@@ -209,6 +209,20 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
 #undef add_flag
 
 /******************************************************************************
+ *            PROPSHEET_GetPageRect
+ *
+ * Retrieve rect from tab control and map into the dialog for SetWindowPos
+ */
+static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg, RECT *rc)
+{
+    HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+
+    GetClientRect(hwndTabCtrl, rc);
+    SendMessageW(hwndTabCtrl, TCM_ADJUSTRECT, FALSE, (LPARAM)rc);
+    MapWindowPoints(hwndTabCtrl, hwndDlg, (LPPOINT)rc, 2);
+}
+
+/******************************************************************************
  *            PROPSHEET_FindPageByResId
  *
  * Find page index corresponding to page resource id.
@@ -715,6 +729,8 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 
   rc.right -= rc.left;
   rc.bottom -= rc.top;
+  TRACE("setting tab %08lx, rc (0,0)-(%d,%d)\n",
+        (DWORD)hwndTabCtrl, rc.right, rc.bottom);
   SetWindowPos(hwndTabCtrl, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
@@ -729,6 +745,8 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Resize the property sheet.
    */
+  TRACE("setting dialog %08lx, rc (0,0)-(%d,%d)\n",
+        (DWORD)hwndDlg, rc.right, rc.bottom);
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   return TRUE;
@@ -786,6 +804,8 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   }
 
   TRACE("Biggest page %d %d %d %d\n", rc.left, rc.top, rc.right, rc.bottom);
+  TRACE("   constants padx=%d, pady=%d, butH=%d, lH=%d\n",
+	padding.x, padding.y, buttonHeight, lineHeight);
 
   /* Make room */
   rc.right += (padding.x * 2);
@@ -794,6 +814,8 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Resize the property sheet.
    */
+  TRACE("setting dialog %08lx, rc (0,0)-(%d,%d)\n",
+        (DWORD)hwndDlg, rc.right, rc.bottom);
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   return TRUE;
@@ -1233,33 +1255,44 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   ppInfo[index].hwndPage = hwndPage;
 
-  rc.left = psInfo->x;
-  rc.top = psInfo->y;
-  rc.right = psInfo->width;
-  rc.bottom = psInfo->height;
+  if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) {
+      /* FIXME: This code may no longer be correct.
+       *        It was not for the non-wizard path.  (GLA 6/02)
+       */
+      rc.left = psInfo->x;
+      rc.top = psInfo->y;
+      rc.right = psInfo->width;
+      rc.bottom = psInfo->height;
 
-  MapDialogRect(hwndParent, &rc);
+      MapDialogRect(hwndParent, &rc);
 
-  pageWidth = rc.right - rc.left;
-  pageHeight = rc.bottom - rc.top;
+      pageWidth = rc.right - rc.left;
+      pageHeight = rc.bottom - rc.top;
 
-  if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
-    padding = PROPSHEET_GetPaddingInfoWizard(hwndParent, psInfo);
-  else
-  {
-    /*
-     * Ask the Tab control to fit this page in.
-     */
-
-    HWND hwndTabCtrl = GetDlgItem(hwndParent, IDC_TABCONTROL);
-    SendMessageW(hwndTabCtrl, TCM_ADJUSTRECT, FALSE, (LPARAM)&rc);
-    padding = PROPSHEET_GetPaddingInfo(hwndParent);
+      padding = PROPSHEET_GetPaddingInfoWizard(hwndParent, psInfo);
+      TRACE("setting page %08lx, rc (%d,%d)-(%d,%d) w=%d, h=%d, padx=%d, pady=%d\n",
+	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
+	    pageWidth, pageHeight, padding.x, padding.y);
+      SetWindowPos(hwndPage, HWND_TOP,
+		   rc.left + padding.x/2,
+		   rc.top + padding.y/2,
+		   pageWidth, pageHeight, 0);
   }
-
-  SetWindowPos(hwndPage, HWND_TOP,
-               rc.left + padding.x/2,
-               rc.top + padding.y/2,
-               pageWidth, pageHeight, 0);
+  else {
+      /*
+       * Ask the Tab control to reduce the client rectangle to that
+       * it has available.
+       */
+      PROPSHEET_GetPageRect(psInfo, hwndParent, &rc);
+      pageWidth = rc.right - rc.left;
+      pageHeight = rc.bottom - rc.top;
+      TRACE("setting page %08lx, rc (%d,%d)-(%d,%d) w=%d, h=%d\n",
+	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
+	    pageWidth, pageHeight);
+      SetWindowPos(hwndPage, HWND_TOP,
+		   rc.left, rc.top,
+		   pageWidth, pageHeight, 0);
+  }
 
   return TRUE;
 }
