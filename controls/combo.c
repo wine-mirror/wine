@@ -38,6 +38,8 @@ DEFAULT_DEBUG_CHANNEL(combo)
 #define CB_GETEDITTEXTLENGTH( lphc ) \
 	(SendMessageA( (lphc)->hWndEdit, WM_GETTEXTLENGTH, 0, 0 ))
 
+#define ISWIN31 (LOWORD(GetVersion()) == 0x0a03)
+
 /*
  * Drawing globals
  */
@@ -1902,13 +1904,20 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	case WM_CUT:
         case WM_PASTE:
 	case WM_COPY:
-		if( lphc->wState & CBF_EDIT )
+                if ((message == WM_GETTEXTLENGTH) && !ISWIN31 && !(lphc->wState & CBF_EDIT))
+                {
+                int j = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0 );
+                if (j == -1) return 0;
+                return SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, j, 0);
+                }
+		else if( lphc->wState & CBF_EDIT ) 
 		{
 		    lphc->wState |= CBF_NOEDITNOTIFY;
 
 		    return SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		}
-		return  CB_ERR;
+		else return  CB_ERR;
+
 	case WM_DRAWITEM:
 	case WM_DELETEITEM:
 	case WM_COMPAREITEM:
