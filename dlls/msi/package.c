@@ -53,18 +53,8 @@ void MSI_FreePackage( MSIOBJECTHDR *arg)
     MSIPACKAGE *package= (MSIPACKAGE*) arg;
 
     ACTION_remove_tracked_tempfiles(package);
+    ACTION_free_package_structures(package);
 
-    if (package->features && package->loaded_features > 0)
-        HeapFree(GetProcessHeap(),0,package->features);
-
-    if (package->folders && package->loaded_folders > 0)
-        HeapFree(GetProcessHeap(),0,package->folders);
-    
-    if (package->components && package->loaded_components > 0)
-        HeapFree(GetProcessHeap(),0,package->components);
-
-    if (package->files && package->loaded_files > 0)
-        HeapFree(GetProcessHeap(),0,package->files);
     msiobj_release( &package->db->hdr );
 }
 

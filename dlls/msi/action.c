@@ -423,6 +423,47 @@ void ACTION_remove_tracked_tempfiles(MSIPACKAGE* package)
     }
 }
 
+/* Called when the package is being closed */
+extern void ACTION_free_package_structures( MSIPACKAGE* package)
+{
+    INT i;
+    
+    TRACE("Freeing package action data\n");
+
+    /* No dynamic buffers in features */
+    if (package->features && package->loaded_features > 0)
+        HeapFree(GetProcessHeap(),0,package->features);
+
+    for (i = 0; i < package->loaded_folders; i++)
+    {
+        HeapFree(GetProcessHeap(),0,package->folders[i].Directory);
+        HeapFree(GetProcessHeap(),0,package->folders[i].TargetDefault);
+        HeapFree(GetProcessHeap(),0,package->folders[i].SourceDefault);
+        HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedTarget);
+        HeapFree(GetProcessHeap(),0,package->folders[i].ResolvedSource);
+        HeapFree(GetProcessHeap(),0,package->folders[i].Property);
+    }
+    if (package->folders && package->loaded_folders > 0)
+        HeapFree(GetProcessHeap(),0,package->folders);
+
+    /* no dynamic buffers in components */ 
+    if (package->components && package->loaded_components > 0)
+        HeapFree(GetProcessHeap(),0,package->components);
+
+    for (i = 0; i < package->loaded_files; i++)
+    {
+        HeapFree(GetProcessHeap(),0,package->files[i].File);
+        HeapFree(GetProcessHeap(),0,package->files[i].FileName);
+        HeapFree(GetProcessHeap(),0,package->files[i].Version);
+        HeapFree(GetProcessHeap(),0,package->files[i].Language);
+        HeapFree(GetProcessHeap(),0,package->files[i].SourcePath);
+        HeapFree(GetProcessHeap(),0,package->files[i].TargetPath);
+    }
+
+    if (package->files && package->loaded_files > 0)
+        HeapFree(GetProcessHeap(),0,package->files);
+}
+
 static UINT ACTION_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
 {
     LPWSTR szQuery;

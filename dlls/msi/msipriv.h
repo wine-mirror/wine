@@ -273,6 +273,7 @@ extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
                               USHORT **pdata, UINT *psz );
 extern UINT ACTION_DoTopLevelINSTALL( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern void ACTION_remove_tracked_tempfiles( MSIPACKAGE* );
+extern void ACTION_free_package_structures( MSIPACKAGE* );
 
 /* record internals */
 extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);
