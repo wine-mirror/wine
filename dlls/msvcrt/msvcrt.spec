@@ -648,7 +648,7 @@ debug_channels (msvcrt)
 @ forward -noimport iswalpha ntdll._iswalpha
 @ cdecl iswascii(long) MSVCRT_iswascii
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
-@ forward -noimport iswctype ntdll._iswctype
+@ forward -noimport iswctype ntdll.iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit
 @ cdecl iswgraph(long) MSVCRT_iswgraph
 @ cdecl iswlower(long) MSVCRT_iswlower
