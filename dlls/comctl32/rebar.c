@@ -2453,6 +2453,8 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 	    return REBAR_Size (hwnd, wParam, lParam);
+	case WM_DRAWITEM:
+	    return SendMessageA(GetParent(hwnd),uMsg,wParam,lParam);
 
 /*	case WM_TIMER: */
 
