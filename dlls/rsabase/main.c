@@ -98,7 +98,6 @@ BOOL WINAPI RSA_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
                    DWORD dwFlags, PVTableProvStruc pVTable)
 {
     BOOL ret = FALSE;
-    RSA_CryptProv *cp;
 
     TRACE("%p %s %08lx %p\n", phProv, debugstr_a(pszContainer),
            dwFlags, pVTable);
@@ -107,19 +106,20 @@ BOOL WINAPI RSA_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
 
     if( !load_libcrypto() )
         return FALSE;
-
-    cp = HeapAlloc( GetProcessHeap(), 0, sizeof (RSA_CryptProv) );
-    if( !cp )
+    else
     {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
+        RSA_CryptProv *cp = HeapAlloc( GetProcessHeap(), 0, sizeof (RSA_CryptProv) );
+        if( !cp )
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+
+        cp->dwMagic = RSABASE_MAGIC;
+
+        *phProv = (HCRYPTPROV) cp;
+        ret = TRUE;
     }
-
-    cp->dwMagic = RSABASE_MAGIC;
-
-    *phProv = (HCRYPTPROV) cp;
-    ret = TRUE;
-
 #endif
 
     return ret;
