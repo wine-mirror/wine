@@ -148,7 +148,7 @@ typedef struct {
       int dummy;
     }				dmDocPrivate;
     struct _tagdrvprivate {
-      char	ppdFileName[100]; /* Hack */
+      char	ppdFileName[256]; /* Hack */
       UINT	numInstalledOptions; /* Options at end of struct */
     }				dmDrvPrivate;
 

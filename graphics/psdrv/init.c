@@ -362,6 +362,8 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 			  (LPBYTE)pi->Devmode, needed, &needed);
     }
 
+    PROFILE_GetWineIniString("psdrv", "ppdfile", "default.ppd",
+                             pi->Devmode->dmDrvPrivate.ppdFileName, 256);
     pi->ppd = PSDRV_ParsePPD(pi->Devmode->dmDrvPrivate.ppdFileName);
     if(!pi->ppd) {
         HeapFree(PSDRV_Heap, 0, pi->FriendlyName);

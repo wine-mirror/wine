@@ -43,8 +43,13 @@ You also require a PPD file for your printer. This describes certain
 characteristics of the printer such as which fonts are installed, how to select
 manual feed etc. Adobe also has many of these on its website, have a look in
 ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/
-Put the PPD in the directory from which you start wine and call it default.ppd
-[this will definitely change soon].
+Create a [psdrv] section in your wine.conf (or ~/.winerc) and add the 
+following entry:
+
+ppdfile=/somewhere/file.ppd
+
+By default, the driver will look for a file named default.ppd in the directory
+from which you started wine.
 
 To enable colour printing you need to have the *ColorDevice entry in the PPD
 set to true, otherwise the driver will generate greyscale.
