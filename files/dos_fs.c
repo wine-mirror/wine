@@ -1177,7 +1177,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     while ((p = strstr(full_name.short_name,"\\.\\")))
       {
 	*(p+1) = 0;
-	memmove(p+1,p+3,strlen(p+3));
+	memmove(p+1,p+3,strlen(p+3)+1);
       }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
       CharUpperA( full_name.short_name );
