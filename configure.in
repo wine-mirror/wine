@@ -1140,6 +1140,7 @@ dlls/dinput/keyboard \
 dlls/dinput/mouse \
 dlls/kernel/messages \
 dlls/user/resources \
+dlls/wineps/data \
 "
 for i in $extra_subdirs; do [ -d $i ] || (echo "creating $i" && mkdir $i); done ])
 

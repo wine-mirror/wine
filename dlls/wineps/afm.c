@@ -593,6 +593,17 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 	family->afmlist = newafmle;
 	return TRUE;
     }
+    else {
+    	tmpafmle = family->afmlist;
+	while (tmpafmle) {
+	    if (!strcmp(tmpafmle->afm->FontName, afm->FontName)) {
+	    	WARN("Ignoring duplicate FontName '%s'\n", afm->FontName);
+		HeapFree(PSDRV_Heap, 0, newafmle);
+		return TRUE;	    	    	    /* not a fatal error */
+	    }
+	    tmpafmle = tmpafmle->next;
+	}
+    }
     
     tmpafmle = family->afmlist;
     while(tmpafmle->next)
@@ -870,11 +881,35 @@ static VOID CalcWindowsMetrics()
 	    
 	    afm->WinMetrics = wm;
 	    
+	    /* See afm2c.c and mkagl.c for an explanation of this */
+	    /*	PSDRV_AFM2C(afm);   */
+	    
 	    afmle = afmle->next;
 	}
 	
 	family = family ->next;
     }
+}
+
+
+/*******************************************************************************
+ *  AddBuiltinAFMs
+ *
+ */
+ 
+static BOOL AddBuiltinAFMs()
+{
+    int i = 0;
+    
+    while (PSDRV_BuiltinAFMs[i] != NULL)
+    {
+    	if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, PSDRV_BuiltinAFMs[i])
+	    	== FALSE)
+	    return FALSE;
+	++i;
+    }
+    
+    return TRUE;
 }
 
 
@@ -973,6 +1008,8 @@ BOOL PSDRV_GetFontMetrics(void)
     if (SortFontMetrics() == FALSE)
     	return FALSE;
     CalcWindowsMetrics();
+    if (AddBuiltinAFMs() == FALSE)
+    	return FALSE;
 
 #ifdef HAVE_FREETYPE   
     if (PSDRV_GetTrueTypeMetrics() == FALSE)

@@ -2361,3 +2361,91 @@ static const UNICODEGLYPH encoding[1051] =
 };
 
 UNICODEVECTOR PSDRV_AdobeGlyphList = { 1051, encoding };
+
+
+/*
+ *  Built-in font metrics
+ */
+extern AFM PSDRV_AvantGarde_Book;
+extern AFM PSDRV_AvantGarde_BookOblique;
+extern AFM PSDRV_AvantGarde_Demi;
+extern AFM PSDRV_AvantGarde_DemiOblique;
+extern AFM PSDRV_Bookman_Demi;
+extern AFM PSDRV_Bookman_DemiItalic;
+extern AFM PSDRV_Bookman_Light;
+extern AFM PSDRV_Bookman_LightItalic;
+extern AFM PSDRV_Courier;
+extern AFM PSDRV_Courier_Bold;
+extern AFM PSDRV_Courier_BoldOblique;
+extern AFM PSDRV_Courier_Oblique;
+extern AFM PSDRV_Helvetica;
+extern AFM PSDRV_Helvetica_Bold;
+extern AFM PSDRV_Helvetica_BoldOblique;
+extern AFM PSDRV_Helvetica_Condensed;
+extern AFM PSDRV_Helvetica_Condensed_Bold;
+extern AFM PSDRV_Helvetica_Condensed_BoldObl;
+extern AFM PSDRV_Helvetica_Condensed_Oblique;
+extern AFM PSDRV_Helvetica_Narrow;
+extern AFM PSDRV_Helvetica_Narrow_Bold;
+extern AFM PSDRV_Helvetica_Narrow_BoldOblique;
+extern AFM PSDRV_Helvetica_Narrow_Oblique;
+extern AFM PSDRV_Helvetica_Oblique;
+extern AFM PSDRV_NewCenturySchlbk_Bold;
+extern AFM PSDRV_NewCenturySchlbk_BoldItalic;
+extern AFM PSDRV_NewCenturySchlbk_Italic;
+extern AFM PSDRV_NewCenturySchlbk_Roman;
+extern AFM PSDRV_Palatino_Bold;
+extern AFM PSDRV_Palatino_BoldItalic;
+extern AFM PSDRV_Palatino_Italic;
+extern AFM PSDRV_Palatino_Roman;
+extern AFM PSDRV_Symbol;
+extern AFM PSDRV_Times_Bold;
+extern AFM PSDRV_Times_BoldItalic;
+extern AFM PSDRV_Times_Italic;
+extern AFM PSDRV_Times_Roman;
+extern AFM PSDRV_ZapfChancery_MediumItalic;
+extern AFM PSDRV_ZapfDingbats;
+
+AFM *const PSDRV_BuiltinAFMs[40] =
+{
+    &PSDRV_AvantGarde_Book,
+    &PSDRV_AvantGarde_BookOblique,
+    &PSDRV_AvantGarde_Demi,
+    &PSDRV_AvantGarde_DemiOblique,
+    &PSDRV_Bookman_Demi,
+    &PSDRV_Bookman_DemiItalic,
+    &PSDRV_Bookman_Light,
+    &PSDRV_Bookman_LightItalic,
+    &PSDRV_Courier,
+    &PSDRV_Courier_Bold,
+    &PSDRV_Courier_BoldOblique,
+    &PSDRV_Courier_Oblique,
+    &PSDRV_Helvetica,
+    &PSDRV_Helvetica_Bold,
+    &PSDRV_Helvetica_BoldOblique,
+    &PSDRV_Helvetica_Condensed,
+    &PSDRV_Helvetica_Condensed_Bold,
+    &PSDRV_Helvetica_Condensed_BoldObl,
+    &PSDRV_Helvetica_Condensed_Oblique,
+    &PSDRV_Helvetica_Narrow,
+    &PSDRV_Helvetica_Narrow_Bold,
+    &PSDRV_Helvetica_Narrow_BoldOblique,
+    &PSDRV_Helvetica_Narrow_Oblique,
+    &PSDRV_Helvetica_Oblique,
+    &PSDRV_NewCenturySchlbk_Bold,
+    &PSDRV_NewCenturySchlbk_BoldItalic,
+    &PSDRV_NewCenturySchlbk_Italic,
+    &PSDRV_NewCenturySchlbk_Roman,
+    &PSDRV_Palatino_Bold,
+    &PSDRV_Palatino_BoldItalic,
+    &PSDRV_Palatino_Italic,
+    &PSDRV_Palatino_Roman,
+    &PSDRV_Symbol,
+    &PSDRV_Times_Bold,
+    &PSDRV_Times_BoldItalic,
+    &PSDRV_Times_Italic,
+    &PSDRV_Times_Roman,
+    &PSDRV_ZapfChancery_MediumItalic,
+    &PSDRV_ZapfDingbats,
+    NULL
+};

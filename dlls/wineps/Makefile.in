@@ -9,9 +9,53 @@ IMPORTS   = user32 gdi32 winspool.drv kernel32 ntdll
 EXTRALIBS = @CUPSLIBS@ @FREETYPELIBS@
 EXTRAINCL = @FREETYPEINCL@
 
+FONTMETRICS = \
+	AvantGarde_Book \
+	AvantGarde_BookOblique \
+	AvantGarde_Demi \
+	AvantGarde_DemiOblique \
+	Bookman_Demi \
+	Bookman_DemiItalic \
+	Bookman_Light \
+	Bookman_LightItalic \
+	Courier \
+	Courier_Bold \
+	Courier_BoldOblique \
+	Courier_Oblique \
+	Helvetica \
+	Helvetica_Bold \
+	Helvetica_BoldOblique \
+	Helvetica_Condensed \
+	Helvetica_Condensed_Bold \
+	Helvetica_Condensed_BoldObl \
+	Helvetica_Condensed_Oblique \
+	Helvetica_Narrow \
+	Helvetica_Narrow_Bold \
+	Helvetica_Narrow_BoldOblique \
+	Helvetica_Narrow_Oblique \
+	Helvetica_Oblique \
+	NewCenturySchlbk_Bold \
+	NewCenturySchlbk_BoldItalic \
+	NewCenturySchlbk_Italic \
+	NewCenturySchlbk_Roman \
+	Palatino_Bold \
+	Palatino_BoldItalic \
+	Palatino_Italic \
+	Palatino_Roman \
+	Symbol \
+	Times_Bold \
+	Times_BoldItalic \
+	Times_Italic \
+	Times_Roman \
+	ZapfChancery_MediumItalic \
+	ZapfDingbats \
+
+DATA_C_SRCS = \
+	data/agl.c \
+	$(FONTMETRICS:%=data/%.c)
+
 C_SRCS = \
 	afm.c \
-	agl.c \
 	bitblt.c \
 	bitmap.c \
 	brush.c \
@@ -28,10 +72,13 @@ C_SRCS = \
 	ppd.c \
 	ps.c \
 	text.c \
-	truetype.c
+	truetype.c \
+	$(DATA_C_SRCS)
 
 RC_SRCS= \
 	rsrc.rc
+
+EXTRASUBDIRS = data
 
 @MAKE_DLL_RULES@
 

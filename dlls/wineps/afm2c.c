@@ -1,0 +1,314 @@
+/*******************************************************************************
+ *
+ *  Function to write WINEPS AFM data structures as C
+ *
+ *  Copyright 2001 Ian Pilcher
+ *
+ *
+ *  PSDRV_AFM2C(AFM *afm) writes the AFM data structure addressed by afm (and
+ *  its subsidiary objects) as a C file which can which can then be built in to
+ *  the driver.  It creates the file in the current directory with a name of
+ *  the form {FontName}.c, where {FontName} is the PostScript font name with
+ *  hyphens replaced by underscores.
+ *
+ *  To use this function, do the following:
+ *
+ *  	*  Move this file to the dlls/wineps directory.
+ *
+ *  	*  Edit dlls/wineps/Makefile (or dlls/wineps/Makefile.in) and add
+ *  	   afm2c.c as a source file.
+ *
+ *  	*  Edit dlls/wineps/afm.c and uncomment the call to PSDRV_AFM2C in
+ *  	   CalcWindowsMetrics() (or wherever it gets moved).  The resulting
+ *  	   compiler warning can be safely ignored.
+ *
+ *  IMPORTANT:  For this to work, all glyph names in the AFM data being
+ *  	written *MUST* already be present in PSDRV_AGLGlyphNames in agl.c.
+ *  	See mkagl.c in this directory for information on how to generate
+ *  	updated glyph name information.  Note, however, that if the glyph
+ *  	name information in agl.c is regenerated, *ALL* AFM data must also
+ *  	be recreated.
+ *
+ */
+
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
+
+#include "debugtools.h"
+#include "psdrv.h"
+
+DEFAULT_DEBUG_CHANNEL(psdrv);
+
+inline static void cursorto(FILE *of, int np, int cp)
+{
+    int ntp = np & 0xfffffff8;
+    int ctp = cp & 0xfffffff8;
+    
+    while (ctp < ntp)
+    {
+    	fputc('\t', of);
+	ctp += 8;
+	cp = ctp;
+    }
+    
+    while (cp < np)
+    {
+    	fputc(' ', of);
+	++cp;
+    }
+}
+
+static void writeCharWidths(FILE *of, AFM * afm)
+{
+    int i, cp, w, row_start = 0;
+    
+    fputc('\t', of);  cp = 8;
+    
+    for (i = 0; i < 255; ++i)
+    {
+	if (afm->CharWidths[i] == 0.0)
+	    w = 3;
+	else
+	    w = (int)log10(afm->CharWidths[i]) + 3;
+	    
+	if (cp + w < 40)
+	{
+	    cp += fprintf(of, "%g, ", (double)(afm->CharWidths[i]));
+	}
+	else
+	{
+	    cursorto(of, 40, cp);
+	    fprintf(of, "/* CharWidths[%i] - CharWidths[%i] */\n\t",
+	    	    row_start, i - 1);
+	    cp = 8;
+	    row_start = i;
+	    --i;
+	}
+    }
+    
+    if (afm->CharWidths[255] == 0.0)
+    	w = 3;
+    else
+    	w = (int)pow(afm->CharWidths[i], 0.1) + 3;
+	
+    if (cp + w < 40)
+    {
+    	cp += fprintf(of, "%g", (double)(afm->CharWidths[255]));
+	cursorto(of, 40, cp);
+	fprintf(of, "/* CharWidths[%i] - CharWidths[255] */\n    },\n",
+	    	row_start);
+    }
+    else
+    {
+    	cursorto(of, 40, cp);
+	fprintf(of, "/* CharWidths[%i] - CharWidths[254] */\n\t", row_start);
+	cp = 8 + fprintf(of, "%g", (double)(afm->CharWidths[255]));
+	cursorto(of, 40, cp);
+	fputs("/* CharWidths[255] */\n    },\n", of);
+    }
+}
+
+static void writeHeader(FILE *of, AFM *afm, const char *buffer)
+{
+    int i;
+    
+    fputc('/', of);
+    for (i = 1; i < 80; ++i)
+    	fputc('*', of);
+    fprintf(of, "\n"
+    	    	" *\n"
+		" *\tFont metric data for %s\n"
+		" *\n"
+		" *\tCopyright 2001 Ian Pilcher\n"
+		" *\n"
+		" *\n"
+		" *\tThis data is derived from the Adobe Font Metrics files at"
+		    	"\n"
+		" *\n"
+		" *\t    ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles/"
+		    	"base35/\n"
+		" *\n"
+		" *\twhich are Copyright 1985-1992 Adobe Systems Incorporated."
+		    	"\n"
+		" *\n"
+		" */\n"
+		"\n"
+		"#include \"psdrv.h\"\n", afm->FullName);
+}
+
+static void writeEncoding(FILE *of, AFM *afm, const char *buffer)
+{
+    int i;
+    
+    fprintf(of, "\n\n/*\n *  %s encoding vector\n */\n", afm->EncodingScheme);
+    
+    fprintf(of, "\nstatic const UNICODEGLYPH ug_%s[%i] =\n{\n", buffer,
+    	    afm->Encoding->size);
+	    
+    for (i = 0; i < afm->Encoding->size - 1; ++i)
+    {
+    	cursorto(of, 48,
+	    	fprintf(of, "    { 0x%.4lx, PSDRV_AGLGlyphNames + %4i },",
+		afm->Encoding->glyphs[i].UV,
+		afm->Encoding->glyphs[i].name - PSDRV_AGLGlyphNames));
+	fprintf(of, "/* %s */\n", afm->Encoding->glyphs[i].name->sz);
+    }
+    
+    cursorto(of, 48, fprintf(of, "    { 0x%.4lx, PSDRV_AGLGlyphNames + %4i }",
+    	    afm->Encoding->glyphs[i].UV,
+	    afm->Encoding->glyphs[i].name - PSDRV_AGLGlyphNames));
+    fprintf(of, "/* %s */\n};\n\n", afm->Encoding->glyphs[i].name->sz);
+    
+    fprintf(of, "static UNICODEVECTOR enc_%s = { %i, ug_%s };\n", buffer,
+    	    afm->Encoding->size, buffer);
+}
+
+static void writeMetrics(FILE *of, AFM *afm, const char *buffer)
+{
+    int i;
+    
+    fputs("\n\n/*\n *  Glyph metrics\n */\n\n", of);
+    
+    fprintf(of, "static AFMMETRICS met_%s[%i] = \n{\n", buffer,
+    	    afm->NumofMetrics);
+	    
+    for (i = 0; i < afm->NumofMetrics - 1; ++i)
+    {
+	fputs("    {\n\t", of);
+	fprintf(of, "%3i, 0x%.4lx, %4g, PSDRV_AGLGlyphNames + %4i,\n\t\t",
+	    	afm->Metrics[i].C, afm->Metrics[i].UV, afm->Metrics[i].WX,
+		afm->Metrics[i].N - PSDRV_AGLGlyphNames);
+	fprintf(of, "{ %4g, %4g, %4g, %4g }, NULL\t/* %s */\n    },\n",
+	    	afm->Metrics[i].B.llx, afm->Metrics[i].B.lly,
+		afm->Metrics[i].B.urx, afm->Metrics[i].B.ury,
+		afm->Metrics[i].N->sz);
+    }
+    
+    fputs("    {\n\t", of);
+    fprintf(of, "%3i, 0x%.4lx, %4g, PSDRV_AGLGlyphNames + %4i,\n\t\t",
+	    afm->Metrics[i].C, afm->Metrics[i].UV, afm->Metrics[i].WX,
+	    afm->Metrics[i].N - PSDRV_AGLGlyphNames);
+    fprintf(of, "{ %4g, %4g, %4g, %4g }, NULL\t/* %s */\n    }\n};\n",
+	    afm->Metrics[i].B.llx, afm->Metrics[i].B.lly,
+	    afm->Metrics[i].B.urx, afm->Metrics[i].B.ury,
+	    afm->Metrics[i].N->sz);
+}
+
+static void writeAFM(FILE *of, AFM *afm, const char *buffer)
+{
+    fputs("\n\n/*\n *  Font metrics\n */\n\n", of);
+
+    fprintf(of, "AFM PSDRV_%s =\n{\n", buffer);
+    cursorto(of, 48, fprintf(of, "    \"%s\",", afm->FontName));
+    fputs("/* FontName */\n", of);
+    cursorto(of, 48, fprintf(of, "    \"%s\",", afm->FullName));
+    fputs("/* FullName */\n", of);
+    cursorto(of, 48, fprintf(of, "    \"%s\",", afm->FamilyName));
+    fputs("/* FamilyName */\n", of);
+    cursorto(of, 48, fprintf(of, "    \"%s\",", afm->EncodingScheme));
+    fputs("/* EncodingScheme */\n", of);
+    cursorto(of, 48, fprintf(of, "    %li,", afm->Weight));
+    fputs("/* Weight */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->ItalicAngle));
+    fputs("/* ItalicAngle */\n", of);
+    cursorto(of, 48, fprintf(of, "    %s,",
+    	    afm->IsFixedPitch ? "TRUE" : "FALSE"));
+    fputs("/* IsFixedPitch */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->UnderlinePosition));
+    fputs("/* UnderlinePosition */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->UnderlineThickness));
+    fputs("/* UnderlineThickness */\n", of);
+    cursorto(of, 48, fprintf(of, "    { %g, %g, %g, %g },", afm->FontBBox.llx,
+    	    afm->FontBBox.lly, afm->FontBBox.urx, afm->FontBBox.ury));
+    fputs("/* FontBBox */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->CapHeight));
+    fputs("/* CapHeight */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->XHeight));
+    fputs("/* XHeight */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->Ascender));
+    fputs("/* Ascender */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->Descender));
+    fputs("/* Descender */\n", of);
+    cursorto(of, 48, fprintf(of, "    %g,", afm->FullAscender));
+    fputs("/* FullAscender */\n", of);
+    fputs("    {\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%u,",
+    	    (unsigned int)(afm->WinMetrics.usUnitsPerEm)));
+    fputs("/* WinMetrics.usUnitsPerEm */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sAscender)));
+    fputs("/* WinMetrics.sAscender */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sDescender)));
+    fputs("/* WinMetrics.sDescender */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sLineGap)));
+    fputs("/* WinMetrics.sLineGap */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sAvgCharWidth)));
+    fputs("/* WinMetrics.sAvgCharWidth */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sTypoAscender)));
+    fputs("/* WinMetrics.sTypoAscender */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sTypoDescender)));
+    fputs("/* WinMetrics.sTypoDescender */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%i,",
+    	    (int)(afm->WinMetrics.sTypoLineGap)));
+    fputs("/* WinMetrics.sTypoLineGap */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%u,",
+    	    (unsigned int)(afm->WinMetrics.usWinAscent)));
+    fputs("/* WinMetrics.usWinAscent */\n", of);
+    cursorto(of, 40, 7 + fprintf(of, "\t%u",
+    	    (unsigned int)(afm->WinMetrics.usWinDescent)));
+    fputs("/* WinMetrics.usWinDescent */\n",of);
+    fputs("    },\n    {\n", of);
+    writeCharWidths(of, afm);
+    cursorto(of, 48, fprintf(of, "    %i,", afm->NumofMetrics));
+    fputs("/* NumofMetrics */\n", of);
+    cursorto(of, 48, fprintf(of, "    met_%s,", buffer));
+    fputs("/* Metrics */\n", of);
+    if (afm->Encoding == &PSDRV_AdobeGlyphList)
+    	cursorto(of, 48, fprintf(of, "    &PSDRV_AdobeGlyphList"));
+    else
+        cursorto(of, 48, fprintf(of, "    &enc_%s", buffer));
+    fputs("/* Encoding */\n};\n", of);
+}
+
+void PSDRV_AFM2C(AFM *afm)
+{
+    char    buffer[256];
+    FILE    *of;
+    int     i;
+    
+    strncpy(buffer, afm->FontName, sizeof(buffer) - 3);
+    buffer[sizeof(buffer) - 3] = '\0';
+    
+    for (i = 0; i < strlen(buffer); ++i)
+    	if (buffer[i] == '-')
+	    buffer[i] = '_';
+	    
+    buffer[i] = '.';  buffer[i + 1] = 'c';  buffer[i + 2] = '\0';
+
+    MESSAGE("writing '%s'\n", buffer);
+    
+    of = fopen(buffer, "w");
+    if (of == NULL)
+    {
+    	ERR("error opening '%s' for writing\n", buffer);
+	return;
+    }
+    
+    buffer[i] = '\0';
+    
+    writeHeader(of, afm, buffer);
+    
+    if (afm->Encoding != &PSDRV_AdobeGlyphList)
+    	writeEncoding(of, afm, buffer);
+	
+    writeMetrics(of, afm, buffer);
+    writeAFM(of, afm, buffer);
+    
+    fclose(of);
+}
