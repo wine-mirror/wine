@@ -22,172 +22,135 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnls.h"
+#include "winreg.h"
 #include "ole2.h"
 
 #include "uuids.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-extern HRESULT HTMLDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+#include "initguid.h"
 
-/* For the moment, do nothing here. */
+DEFINE_GUID( CLSID_MozillaBrowser, 0x1339B54C,0x3453,0x11D2,0x93,0xB9,0x00,0x00,0x00,0x00,0x00,0x00);
+
+typedef HRESULT (WINAPI *fnGetClassObject)(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
+typedef BOOL (WINAPI *fnCanUnloadNow)();
+
+HMODULE hMozCtl;
+
+
+/* convert a guid to a wide character string */
+static void MSHTML_guid2wstr( const GUID *guid, LPWSTR wstr )
+{
+    char str[40];
+
+    sprintf(str, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+           guid->Data1, guid->Data2, guid->Data3,
+           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, 40 );
+}
+
+static BOOL MSHTML_GetMozctlPath( LPWSTR szPath, DWORD sz )
+{
+    DWORD r, type;
+    BOOL ret = FALSE;
+    HKEY hkey;
+    const WCHAR szPre[] = {
+        'S','o','f','t','w','a','r','e','\\',
+        'C','l','a','s','s','e','s','\\',
+        'C','L','S','I','D','\\',0 };
+    const WCHAR szPost[] = {
+        '\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2',0 };
+    WCHAR szRegPath[(sizeof(szPre)+sizeof(szPost))/sizeof(WCHAR)+40];
+
+    strcpyW( szRegPath, szPre );
+    MSHTML_guid2wstr( &CLSID_MozillaBrowser, &szRegPath[strlenW(szRegPath)] );
+    strcatW( szRegPath, szPost );
+
+    TRACE("key = %s\n", debugstr_w( szRegPath ) );
+
+    r = RegOpenKeyW( HKEY_LOCAL_MACHINE, szRegPath, &hkey );
+    if( r != ERROR_SUCCESS )
+        return FALSE;
+
+    r = RegQueryValueExW( hkey, NULL, NULL, &type, (LPBYTE)szPath, &sz );
+    ret = ( r == ERROR_SUCCESS ) && ( type == REG_SZ );
+    RegCloseKey( hkey );
+
+    return ret;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
+    WCHAR szPath[MAX_PATH];
+
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
+            if( !MSHTML_GetMozctlPath( szPath, sizeof szPath ) )
+            {
+                MESSAGE("You need to install the Mozilla ActiveX control to\n");
+                MESSAGE("use Wine's builtin MSHTML dll.\n");
+                return FALSE;
+            }
+            hMozCtl = LoadLibraryExW(szPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+            if( !hMozCtl )
+            {
+                ERR("Can't load the Mozilla ActiveX control\n");
+                return FALSE;
+            }
 	    break;
 	case DLL_PROCESS_DETACH:
+            FreeLibrary( hMozCtl );
 	    break;
     }
     return TRUE;
 }
 
-/******************************************************************************
- * MSHTML ClassFactory
- */
-typedef struct {
-    IClassFactory ITF_IClassFactory;
-
-    DWORD ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
-} IClassFactoryImpl;
-
-struct object_creation_info
-{
-    const CLSID *clsid;
-    LPCSTR szClassName;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
-};
-
-static const struct object_creation_info object_creation[] =
-{
-    { &CLSID_HTMLDocument, "HTMLDocument", HTMLDocument_create },
-};
-
-static HRESULT WINAPI
-HTMLCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
-{
-    ICOM_THIS(IClassFactoryImpl,iface);
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-	|| IsEqualGUID(riid, &IID_IClassFactory))
-    {
-	IClassFactory_AddRef(iface);
-	*ppobj = This;
-	return S_OK;
-    }
-
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI HTMLCF_AddRef(LPCLASSFACTORY iface) {
-    ICOM_THIS(IClassFactoryImpl,iface);
-    return ++(This->ref);
-}
-
-static ULONG WINAPI HTMLCF_Release(LPCLASSFACTORY iface) {
-    ICOM_THIS(IClassFactoryImpl,iface);
-
-    ULONG ref = --This->ref;
-
-    if (ref == 0)
-	HeapFree(GetProcessHeap(), 0, This);
-
-    return ref;
-}
-
-
-static HRESULT WINAPI HTMLCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
-					  REFIID riid, LPVOID *ppobj) {
-    ICOM_THIS(IClassFactoryImpl,iface);
-    HRESULT hres;
-    LPUNKNOWN punk;
-    
-    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-
-    hres = This->pfnCreateInstance(pOuter, (LPVOID *) &punk);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-        return hres;
-    }
-    hres = IUnknown_QueryInterface(punk, riid, ppobj);
-    if (FAILED(hres)) {
-        *ppobj = NULL;
-	return hres;
-    }
-    IUnknown_Release(punk);
-    return hres;
-}
-
-static HRESULT WINAPI HTMLCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-    ICOM_THIS(IClassFactoryImpl,iface);
-    FIXME("(%p)->(%d),stub!\n",This,dolock);
-    return S_OK;
-}
-
-static ICOM_VTABLE(IClassFactory) HTMLCF_Vtbl =
-{
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    HTMLCF_QueryInterface,
-    HTMLCF_AddRef,
-    HTMLCF_Release,
-    HTMLCF_CreateInstance,
-    HTMLCF_LockServer
-};
-
-
 HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
-    int i;
-    IClassFactoryImpl *factory;
+    HRESULT r;
+    fnGetClassObject pGetClassObject;
 
-    TRACE("%s %s %p\n",debugstr_guid(rclsid), debugstr_guid(iid), ppv);
-    
-    if ( !IsEqualGUID( &IID_IClassFactory, iid )
-	 && ! IsEqualGUID( &IID_IUnknown, iid) )
-	return E_NOINTERFACE;
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv );
 
-    for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
-    {
-	if (IsEqualGUID(object_creation[i].clsid, rclsid))
-	    break;
-    }
+    if( !IsEqualGUID( &CLSID_HTMLDocument, rclsid ) )
+        WARN("Unknown class %s\n", debugstr_guid(rclsid) );
 
-    if (i == sizeof(object_creation)/sizeof(object_creation[0]))
-    {
-	FIXME("%s: no class found.\n", debugstr_guid(rclsid));
-	return CLASS_E_CLASSNOTAVAILABLE;
-    }
+    pGetClassObject = (fnGetClassObject) GetProcAddress( hMozCtl, "DllGetClassObject" );
+    if( !pGetClassObject )
+        return CLASS_E_CLASSNOTAVAILABLE;
+    r = pGetClassObject( &CLSID_MozillaBrowser, iid, ppv );
 
-    TRACE("Creating a class factory for %s\n",object_creation[i].szClassName);
-
-    factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
-    if (factory == NULL) return E_OUTOFMEMORY;
-
-    factory->ITF_IClassFactory.lpVtbl = &HTMLCF_Vtbl;
-    factory->ref = 1;
-
-    factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
-
-    *ppv = &(factory->ITF_IClassFactory);
-
-    TRACE("(%p) <- %p\n", ppv, &(factory->ITF_IClassFactory) );
+    TRACE("r = %08lx  *ppv = %p\n", r, *ppv );
 
     return S_OK;
 }
 
-HRESULT WINAPI MSHTML_DllCanUnloadNow(void)
+BOOL WINAPI MSHTML_DllCanUnloadNow(void)
 {
-    FIXME("\n");
-    return S_FALSE;
+    fnCanUnloadNow pCanUnloadNow;
+    BOOL r;
+
+    TRACE("\n");
+
+    pCanUnloadNow = (fnCanUnloadNow) GetProcAddress( hMozCtl, "DllCanUnloadNow" );
+    if( !pCanUnloadNow )
+        return FALSE;
+    r = pCanUnloadNow();
+
+    TRACE("r = %d\n", r);
+
+    return r;
 }
 
 /* appears to have the same prototype as WinMain */
