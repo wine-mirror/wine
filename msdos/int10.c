@@ -12,8 +12,6 @@ DEFAULT_DEBUG_CHANNEL(int10)
 
 static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
        int *wattribute);
-static void write_char_attribute_at_cursor(char output, char page_num, 
-       char attribute, short times);
 static void scroll_window(int direction, char lines, char row1, 
    char col1, char row2, char col2, char attribute);
 
@@ -21,6 +19,19 @@ static int color_palette[16];
 
 #define SCROLL_UP 1
 #define SCROLL_DOWN 2
+
+/* FIXME: is row or column first? */
+static void BIOS_GetCursorPos(BIOSDATA*data,unsigned page,unsigned*X,unsigned*Y)
+{
+  *X = data->VideoCursorPos[page*2];
+  *Y = data->VideoCursorPos[page*2+1];
+}
+
+static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
+{
+  data->VideoCursorPos[page*2] = X;
+  data->VideoCursorPos[page*2+1] = Y;
+}
 
 /**********************************************************************
  *	    INT_Int10Handler
@@ -59,6 +70,7 @@ static int color_palette[16];
 void WINAPI INT_Int10Handler( CONTEXT86 *context )
 {
     static int registered_colors = FALSE;
+    BIOSDATA *data = DOSMEM_BiosData();
 
     if (!registered_colors)
     {
@@ -115,22 +127,18 @@ void WINAPI INT_Int10Handler( CONTEXT86 *context )
 	 	/* OEM Video Modes */
 		case 0x00: /* 40x25 */
             	case 0x01:
-                	VGA_Exit();
                 	TRACE("Set VESA Text Mode - 0x0%x\n",
                 	   BX_reg(context));
-                	CONSOLE_ResizeScreen(40, 25);
-                	CONSOLE_ClearScreen();
-                    DOSMEM_BiosData()->VideoColumns = 40;
+                	VGA_SetAlphaMode(40, 25);
+                        data->VideoColumns = 40;
                 	break;                
             	case 0x02:
             	case 0x03:
             	case 0x07:
-            	    VGA_Exit();
             	    TRACE("Set VESA Text Mode - 0x0%x\n",
             	       BX_reg(context));
-            	    CONSOLE_ResizeScreen(80, 25);
-            	    CONSOLE_ClearScreen();
-                    DOSMEM_BiosData()->VideoColumns = 80;
+            	    VGA_SetAlphaMode(80, 25);
+                    data->VideoColumns = 80;
             	    break;
 	        case 0x0D:
                     TRACE("Setting VESA 320x200 16-color mode\n");
@@ -250,14 +258,14 @@ void WINAPI INT_Int10Handler( CONTEXT86 *context )
 		default:
 		    FIXME("VESA Set Video Mode (0x%x) - Not Supported\n", BX_reg(context));
 	    }
-            DOSMEM_BiosData()->VideoMode = BX_reg(context);
+            data->VideoMode = BX_reg(context);
             AL_reg(context) = 0x4f;
 	    AH_reg(context) = 0x00;
 	    break;	
 	case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
 		AL_reg(context) = 0x4f;
 		AH_reg(context) = 0x00; /* should probly check if a vesa mode has ben set */
-		BX_reg(context) = DOSMEM_BiosData()->VideoMode;
+		BX_reg(context) = data->VideoMode;
 		break;
 	case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
 		ERR("VESA SAVE/RESTORE Video State - Not Implemented\n");
@@ -326,9 +334,8 @@ else {
                 VGA_Exit();
                 TRACE("Set Video Mode - Set to Text - 0x0%x\n",
                    AL_reg(context));
-                CONSOLE_ResizeScreen(40, 25);
-                CONSOLE_ClearScreen();
-                DOSMEM_BiosData()->VideoColumns = 40;
+                VGA_SetAlphaMode(40, 25);
+                data->VideoColumns = 40;
                 break;                
             case 0x02:
             case 0x03:
@@ -336,9 +343,8 @@ else {
                 VGA_Exit();
                 TRACE("Set Video Mode - Set to Text - 0x0%x\n",
                    AL_reg(context));
-                CONSOLE_ResizeScreen(80, 25);
-                CONSOLE_ClearScreen();
-                DOSMEM_BiosData()->VideoColumns = 80;
+                VGA_SetAlphaMode(80, 25);
+                data->VideoColumns = 80;
                 break;
 	    case 0x0D:
                 TRACE("Setting VGA 320x200 16-color mode\n");
@@ -364,7 +370,7 @@ else {
                 FIXME("Set Video Mode (0x%x) - Not Supported\n", 
                    AL_reg(context));
         }
-        DOSMEM_BiosData()->VideoMode = AL_reg(context);
+        data->VideoMode = AL_reg(context);
         break;
 
     case 0x01: /* SET CURSOR SHAPE */
@@ -375,6 +381,7 @@ else {
         /* BH = Page Number */ /* Not supported */
         /* DH = Row */ /* 0 is left */
         /* DL = Column */ /* 0 is top */
+        BIOS_SetCursorPos(data,BH_reg(context),DL_reg(context),DH_reg(context));
         if (BH_reg(context))
         {
            FIXME("Set Cursor Position: Cannot set to page %d\n",
@@ -382,7 +389,7 @@ else {
         }
         else
         {
-           CONSOLE_MoveCursor(DH_reg(context), DL_reg(context));
+           VGA_SetCursorPos(DL_reg(context), DH_reg(context));
            TRACE("Set Cursor Position: %d %d\n", DH_reg(context), 
               DL_reg(context));
         }
@@ -390,13 +397,14 @@ else {
 
     case 0x03: /* GET CURSOR POSITION AND SIZE */
         {
-          CHAR row, col;
+          unsigned row, col;
 
-          FIXME("Get cursor position and size - partially supported\n");
-          CX_reg(context) = 0x0a0b; /* Bogus cursor data */
-          CONSOLE_GetCursorPosition(&row, &col);
+          TRACE("Get cursor position and size (page %d)\n", BH_reg(context));
+          CX_reg(context) = data->VideoCursorType;
+          BIOS_GetCursorPos(data,BH_reg(context),&col,&row);
           DH_reg(context) = row;
           DL_reg(context) = col;
+          TRACE("Cursor Position: %d %d\n", DH_reg(context), DL_reg(context));
         }
         break;
 
@@ -407,6 +415,7 @@ else {
 
     case 0x05: /* SELECT ACTIVE DISPLAY PAGE */
         FIXME("Select Active Display Page - Not Supported\n");
+        data->VideoCurPage = AL_reg(context);
         break;
 
     case 0x06: /* SCROLL UP WINDOW */
@@ -455,28 +464,29 @@ else {
         break;
 
     case 0x09: /* WRITE CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
+    case 0x0a: /* WRITE CHARACTER ONLY AT CURSOR POSITION */ 
        /* AL = Character to display. */
        /* BH = Page Number */ /* We can't write to non-0 pages, yet. */
        /* BL = Attribute / Color */
        /* CX = Times to Write Char */
        /* Note here that the cursor is not advanced. */
-       write_char_attribute_at_cursor(AL_reg(context), BH_reg(context), 
-          BL_reg(context), CX_reg(context));
-       if (CX_reg(context) > 1)
-          TRACE("Write Character and Attribute at Cursor Position "
-             "(Rep. %d) %c\n", CX_reg(context), AL_reg(context));
-       else
-          TRACE("Write Character and Attribute at Cursor"
-             "Position: %c\n", AL_reg(context));
-       break;
+       {
+           unsigned row, col;
 
-    case 0x0a: /* WRITE CHARACTER ONLY AT CURSOR POSITION */ 
-       /* AL = Character to display. */
-       /* BH = Page Number */ /* We can't write to non-0 pages, yet. */
-       /* CX = Times to Write Char */
-       TRACE("Write Character at Cursor\n");
-       write_char_attribute_at_cursor(AL_reg(context), BH_reg(context), 
-          0, CX_reg(context));
+           BIOS_GetCursorPos(data,BH_reg(context),&col,&row);
+           VGA_WriteChars(col, row,
+                          AL_reg(context),
+                          (AH_reg(context) == 0x09) ? BL_reg(context) : -1,
+                          CX_reg(context));
+           if (CX_reg(context) > 1)
+              TRACE("Write Character%s at Cursor Position "
+                 "(Rep. %d): %c\n", (AH_reg(context) == 0x09) ? " and Attribute" : "",
+                 CX_reg(context), AL_reg(context));
+           else
+              TRACE("Write Character%s at Cursor "
+                "Position: %c\n", (AH_reg(context) == 0x09) ? " and Attribute" : "",
+                AL_reg(context));
+       }
        break;
 
     case 0x0b: 
@@ -524,8 +534,8 @@ else {
     case 0x0f: /* GET CURRENT VIDEO MODE */
         TRACE("Get current video mode\n");
         /* Note: This should not be a constant value. */
-        AL_reg(context) = DOSMEM_BiosData()->VideoMode;
-        AH_reg(context) = DOSMEM_BiosData()->VideoColumns;
+        AL_reg(context) = data->VideoMode;
+        AH_reg(context) = data->VideoColumns;
         BH_reg(context) = 0; /* Display page 0 */
         break;
 
@@ -646,9 +656,9 @@ else {
             TRACE("EGA info requested\n");
             BH_reg(context) = 0x00;   /* Color screen */
             BL_reg(context) =
-                DOSMEM_BiosData()->ModeOptions >> 5; /* EGA memory size */
+                data->ModeOptions >> 5; /* EGA memory size */
             CX_reg(context) =
-                DOSMEM_BiosData()->FeatureBitsSwitches;
+                data->FeatureBitsSwitches;
             break;
         case 0x20: /* ALTERNATE PRTSC */
             FIXME("Install Alternate Print Screen - Not Supported\n");
@@ -658,8 +668,8 @@ else {
             break;
         case 0x31: /* ENABLE/DISABLE DEFAULT PALETTE LOADING */
             FIXME("Default palette loading - not supported\n");
-            DOSMEM_BiosData()->VGASettings =
-                (DOSMEM_BiosData()->VGASettings & 0xf7) |
+            data->VGASettings =
+                (data->VGASettings & 0xf7) |
                 ((AL_reg(context) == 1) << 3);
             break;
         case 0x32: /* ENABLE/DISABLE VIDEO ADDRERSSING */
@@ -670,8 +680,8 @@ else {
             break;
         case 0x34: /* ENABLE/DISABLE CURSOR EMULATION */
             TRACE("Set cursor emulation to %d\n", AL_reg(context));
-            DOSMEM_BiosData()->ModeOptions =
-                (DOSMEM_BiosData()->ModeOptions & 0xfe)|(AL_reg(context) == 1);
+            data->ModeOptions =
+                (data->ModeOptions & 0xfe)|(AL_reg(context) == 1);
             break;
         case 0x36: /* VIDEO ADDRESS CONTROL */
             FIXME("Video Address Control - Not Supported\n");
@@ -748,39 +758,6 @@ else {
         INT_BARF( context, 0x10 );
     }
 }
-}
-
-static void write_char_attribute_at_cursor(char output, char page_num, 
-       char attribute, short times)
-{
-    /* Contrary to the interrupt list, this routine should not advance
-       the cursor. To keep this logic simple, we won't use the
-       CONSOLE_Put() routine. 
-    */
-
-    int wattribute, fg_color, bg_color;
-    char x, y;
-
-    if (page_num) /* Only support one text page right now */
-    {
-       FIXME("Cannot write to alternate page %d", page_num);
-       return;
-    }  
-
-    conv_text_mode_attributes(attribute, &fg_color, &bg_color,
-        &wattribute);
-
-    TRACE("Fore: %d Back: %d\n", fg_color, bg_color);
-
-    CONSOLE_GetCursorPosition(&x, &y);
-
-    while (times)
-    {
-       CONSOLE_Write(output, fg_color, bg_color, attribute);           
-       times--;
-    }
-  
-    CONSOLE_MoveCursor(x, y);
 }
 
 static void conv_text_mode_attributes(char attribute, int *fg, int *bg,
