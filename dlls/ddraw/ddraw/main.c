@@ -355,6 +355,14 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 						  GET_BPP(ddsd)*8);
     }
 
+    /* Check also for the MIPMAP / MIPMAPCOUNT flags.
+       TODO: check if Windows 'auto-builds' somehow the mip-map levels */
+    if (((ddsd.dwFlags & DDSD_MIPMAPCOUNT) == 0) &&
+	((ddsd.ddsCaps.dwCaps & DDSCAPS_MIPMAP) != 0)) {
+        ddsd.dwFlags |= DDSD_MIPMAPCOUNT;
+	ddsd.u2.dwMipMapCount = 1;
+    }
+    
     ddsd.dwFlags |= DDSD_PITCH | DDSD_PIXELFORMAT;
 
     hr = This->create_texture(This, &ddsd, ppSurf, pUnkOuter, mipmap_level);
