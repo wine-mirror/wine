@@ -845,6 +845,7 @@ struct process_snapshot *process_snap( int *count )
         ptr->threads  = process->running_threads;
         ptr->count    = process->obj.refcount;
         ptr->priority = process->priority;
+        ptr->handles  = get_handle_table_count(process);
         grab_object( process );
         ptr++;
     }

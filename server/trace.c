@@ -1372,6 +1372,7 @@ static void dump_next_process_reply( const struct next_process_reply *req )
     fprintf( stderr, " module=%p,", req->module );
     fprintf( stderr, " threads=%d,", req->threads );
     fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " handles=%d,", req->handles );
     fprintf( stderr, " filename=" );
     dump_varargs_string( cur_size );
 }

@@ -47,6 +47,8 @@ extern obj_handle_t open_object( const struct namespace *namespace, const WCHAR 
 extern obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops );
 extern struct handle_table *alloc_handle_table( struct process *process, int count );
 extern struct handle_table *copy_handle_table( struct process *process, struct process *parent );
+extern unsigned int get_handle_table_count( struct process *process);
+
 extern void close_global_handles(void);
 
 #endif  /* __WINE_SERVER_HANDLE_H */

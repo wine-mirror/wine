@@ -128,6 +128,7 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     reply->module   = 0;  /* FIXME */
     reply->threads  = ptr->threads;
     reply->priority = ptr->priority;
+    reply->handles  = ptr->handles;
     if (ptr->process->exe.filename)
     {
         size_t len = min( ptr->process->exe.namelen, get_reply_max_size() );

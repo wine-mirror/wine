@@ -503,6 +503,12 @@ obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, 
     return handle;
 }
 
+/* return the size of the handle table of a given process */
+unsigned int get_handle_table_count( struct process *process )
+{
+    return process->handles->count;
+}
+
 /* close a handle */
 DECL_HANDLER(close_handle)
 {

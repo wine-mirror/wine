@@ -139,6 +139,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 			ProcessInformation,ProcessInformationLength,
 			ReturnLength
 		);
+                ret = STATUS_NOT_IMPLEMENTED;
 		break;
 	}
 
@@ -316,7 +317,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
     *retlen = len;
 
     if (tokeninfolength < len)
-        return STATUS_BUFFER_TOO_SMALL;
+        return STATUS_INFO_LENGTH_MISMATCH;
 
     switch (tokeninfoclass)
     {
@@ -542,28 +543,226 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-    switch(SystemInformationClass)
+    NTSTATUS    ret = STATUS_SUCCESS;
+    ULONG       len = 0;
+
+    TRACE("(0x%08x,%p,0x%08lx,%p)\n",
+          SystemInformationClass,SystemInformation,Length,ResultLength);
+
+    switch (SystemInformationClass)
     {
-    case 0x25:
+    case SystemBasicInformation:
+        {
+            SYSTEM_BASIC_INFORMATION* sbi = (SYSTEM_BASIC_INFORMATION*)SystemInformation;
+            if (Length >= sizeof(*sbi))
+            {
+                sbi->dwUnknown1 = 0;
+                sbi->uKeMaximumIncrement = 0;
+                sbi->uPageSize = 1024; /* FIXME */
+                sbi->uMmNumberOfPhysicalPages = 12345; /* FIXME */
+                sbi->uMmLowestPhysicalPage = 0; /* FIXME */
+                sbi->uMmHighestPhysicalPage = 12345; /* FIXME */
+                sbi->uAllocationGranularity = 65536; /* FIXME */
+                sbi->pLowestUserAddress = 0; /* FIXME */
+                sbi->pMmHighestUserAddress = (void*)~0; /* FIXME */
+                sbi->uKeActiveProcessors = 1; /* FIXME */
+                sbi->bKeNumberProcessors = 1; /* FIXME */
+                len = sizeof(*sbi);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemPerformanceInformation:
+        {
+            SYSTEM_PERFORMANCE_INFORMATION* spi = (SYSTEM_PERFORMANCE_INFORMATION*)SystemInformation;
+            if (Length >= sizeof(*spi))
+            {
+                memset(spi, 0, sizeof(*spi)); /* FIXME */
+                len = sizeof(*spi);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemTimeOfDayInformation:
+        {
+            SYSTEM_TIMEOFDAY_INFORMATION* sti = (SYSTEM_TIMEOFDAY_INFORMATION*)SystemInformation;
+            if (Length >= sizeof(*sti))
+            {
+                sti->liKeBootTime.QuadPart = 0; /* FIXME */
+                sti->liKeSystemTime.QuadPart = 0; /* FIXME */
+                sti->liExpTimeZoneBias.QuadPart  = 0; /* FIXME */
+                sti->uCurrentTimeZoneId = 0; /* FIXME */
+                sti->dwReserved = 0;
+                len = sizeof(*sti);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemProcessInformation:
+        {
+            SYSTEM_PROCESS_INFORMATION* spi = (SYSTEM_PROCESS_INFORMATION*)SystemInformation;
+            SYSTEM_PROCESS_INFORMATION* last = NULL;
+            HANDLE hSnap = 0;
+            char procname[1024];
+            DWORD wlen;
+
+            SERVER_START_REQ( create_snapshot )
+            {
+                req->flags   = SNAP_PROCESS | SNAP_THREAD;
+                req->inherit = FALSE;
+                req->pid     = 0;
+                if (!(ret = wine_server_call( req ))) hSnap = reply->handle;
+            }
+            SERVER_END_REQ;
+            len = 0;
+            while (ret == STATUS_SUCCESS)
+            {
+                SERVER_START_REQ( next_process )
+                {
+                    req->handle = hSnap;
+                    req->reset = (len == 0);
+                    wine_server_set_reply( req, procname, sizeof(procname)-1 );
+                    if (!(ret = wine_server_call( req )))
+                    {
+                        procname[wine_server_reply_size(reply)] = 0;
+                        if (Length >= len + sizeof(*spi))
+                        {
+                            memset(spi, 0, sizeof(*spi));
+                            spi->dwOffset = sizeof(*spi);
+                            spi->dwThreadCount = reply->threads;
+                            memset(&spi->ftCreationTime, 0, sizeof(spi->ftCreationTime));
+                            /* spi->pszProcessName will be set later on */
+                            spi->dwBasePriority = reply->priority;
+                            spi->dwProcessID = (DWORD)reply->pid;
+                            spi->dwParentProcessID = (DWORD)reply->ppid;
+                            spi->dwHandleCount = reply->handles;
+                            spi->dwVirtualBytesPeak = 0; /* FIXME */
+                            spi->dwVirtualBytes = 0; /* FIXME */
+                            spi->dwPageFaults = 0; /* FIXME */
+                            spi->dwWorkingSetPeak = 0; /* FIXME */
+                            spi->dwWorkingSet = 0; /* FIXME */
+                            spi->dwUnknown5 = 0; /* FIXME */
+                            spi->dwPagedPool = 0; /* FIXME */
+                            spi->dwUnknown6 = 0; /* FIXME */
+                            spi->dwNonPagedPool = 0; /* FIXME */
+                            spi->dwPageFileBytesPeak = 0; /* FIXME */
+                            spi->dwPrivateBytes = 0; /* FIXME */
+                            spi->dwPageFileBytes = 0; /* FIXME */
+                            /* spi->ti will be set later on */
+                            len += sizeof(*spi) - sizeof(spi->ti);
+                        }
+                        else ret = STATUS_INFO_LENGTH_MISMATCH;
+                    }
+                }
+                SERVER_END_REQ;
+                if (ret != STATUS_SUCCESS)
+                {
+                    if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
+                    break;
+                }
+                RtlMultiByteToUnicodeN(NULL, 0, &wlen, procname, strlen(procname) + 1);
+                if (Length >= len + wlen + spi->dwThreadCount * sizeof(THREAD_INFO))
+                {
+                    int     i, j;
+
+                    /* set thread info */
+                    spi->dwOffset += spi->dwThreadCount * sizeof(THREAD_INFO);
+                    len += spi->dwThreadCount * sizeof(THREAD_INFO);
+                    i = j = 0;
+                    while (ret == STATUS_SUCCESS)
+                    {
+                        SERVER_START_REQ( next_thread )
+                        {
+                            req->handle = hSnap;
+                            req->reset = (j == 0);
+                            if (!(ret = wine_server_call( req )))
+                            {
+                                j++;
+                                if (reply->pid == spi->dwProcessID)
+                                {
+                                    /* ftKernelTime, ftUserTime, ftCreateTime;
+                                     * dwTickCount, dwStartAddress
+                                     */
+                                    spi->ti[i].dwOwningPID = reply->pid;
+                                    spi->ti[i].dwThreadID  = reply->tid;
+                                    spi->ti[i].dwCurrentPriority = reply->base_pri + reply->delta_pri;
+                                    spi->ti[i].dwBasePriority = reply->base_pri;
+                                    i++;
+                                }
+                            }
+                        }
+                        SERVER_END_REQ;
+                    }
+                    if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
+
+                    /* now append process name */
+                    spi->pszProcessName = (WCHAR*)((char*)spi + spi->dwOffset);
+                    RtlMultiByteToUnicodeN( spi->pszProcessName, wlen, NULL, procname, strlen(procname) + 1);
+                    len += wlen;
+                    spi->dwOffset += wlen;
+
+                    last = spi;
+                    spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->dwOffset);
+                }
+                else ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+            if (ret == STATUS_SUCCESS && last) last->dwOffset = 0;
+            if (hSnap) NtClose(hSnap);
+        }
+        break;
+    case SystemProcessorPerformanceInformation:
+        {
+            SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)SystemInformation;
+            if (Length >= sizeof(*sppi))
+            {
+                memset(sppi, 0, sizeof(*sppi)); /* FIXME */
+                len = sizeof(*sppi);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+
+    case SystemCacheInformation:
+        {
+            SYSTEM_CACHE_INFORMATION* sci = (SYSTEM_CACHE_INFORMATION*)SystemInformation;
+            if (Length >= sizeof(*sci))
+            {
+                memset(sci, 0, sizeof(*sci)); /* FIXME */
+                len = sizeof(*sci);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemRegistryQuotaInformation:
 	/* Something to do with the size of the registry             *
 	 * Since we don't have a size limitation, fake it            *
 	 * This is almost certainly wrong.                           *
 	 * This sets each of the three words in the struct to 32 MB, *
 	 * which is enough to make the IE 5 installer happy.         */
-	FIXME("(0x%08x,%p,0x%08lx,%p) faking max registry size of 32 MB\n",
-	      SystemInformationClass,SystemInformation,Length,ResultLength);
-	*(DWORD *)SystemInformation = 0x2000000;
-	*(((DWORD *)SystemInformation)+1) = 0x200000;
-	*(((DWORD *)SystemInformation)+2) = 0x200000;
+        {
+            SYSTEM_REGISTRY_QUOTA_INFORMATION* srqi = (SYSTEM_REGISTRY_QUOTA_INFORMATION*)SystemInformation;
+            if (Length >= sizeof(*srqi))
+            {
+                FIXME("(0x%08x,%p,0x%08lx,%p) faking max registry size of 32 MB\n",
+                      SystemInformationClass,SystemInformation,Length,ResultLength);
+                srqi->RegistryQuotaAllowed = 0x2000000;
+                srqi->RegistryQuotaUsed = 0x200000;
+                srqi->Reserved1 = (void*)0x200000;
+                if (ResultLength) *ResultLength = sizeof(*srqi);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
 	break;
 
     default:
 	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
-	ZeroMemory (SystemInformation, Length);
+	memset(SystemInformation, 0, Length);
+        ret = STATUS_NOT_IMPLEMENTED;
     }
+    if (ResultLength) *ResultLength = len;
 
-    return STATUS_SUCCESS;
+    return ret;
 }
 
 

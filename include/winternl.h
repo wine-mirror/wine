@@ -482,17 +482,18 @@ typedef struct _UNWIND_HISTORY_TABLE {
 /* This is used by NtQuerySystemInformation */
 /* FIXME: Isn't THREAD_INFO and THREADINFO the same structure? */
 typedef struct {
-    FILETIME ftCreationTime;
-    DWORD dwUnknown1;
-    DWORD dwStartAddress;
-    DWORD dwOwningPID;
-    DWORD dwThreadID;
-    DWORD dwCurrentPriority;
-    DWORD dwBasePriority;
-    DWORD dwContextSwitches;
-    DWORD dwThreadState;
-    DWORD dwWaitReason;
-    DWORD dwUnknown2[5];
+    FILETIME    ftKernelTime;
+    FILETIME    ftUserTime;
+    FILETIME    ftCreateTime;
+    DWORD       dwTickCount;
+    DWORD       dwStartAddress;
+    DWORD       dwOwningPID;
+    DWORD       dwThreadID;
+    DWORD       dwCurrentPriority;
+    DWORD       dwBasePriority;
+    DWORD       dwContextSwitches;
+    DWORD       dwThreadState;
+    DWORD       dwWaitReason;
 } THREADINFO, *PTHREADINFO;
 
 /* FIXME: Isn't THREAD_INFO and THREADINFO the same structure? */
@@ -771,7 +772,7 @@ typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
 typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 #ifdef __WINESRC__
     LARGE_INTEGER liIdleTime;
-    DWORD dwSpare[76];
+    DWORD dwSpare[10];
 #else
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;

@@ -86,6 +86,7 @@ struct process_snapshot
     int             count;    /* process refcount */
     int             threads;  /* number of threads */
     int             priority; /* priority class */
+    int             handles;  /* number of handles */
 };
 
 struct module_snapshot

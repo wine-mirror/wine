@@ -1175,6 +1175,7 @@ enum char_info_mode
     void*        module;        /* main module */
     int          threads;       /* number of threads */
     int          priority;      /* process priority */
+    int          handles;       /* number of handles */
     VARARG(filename,string);    /* file name of main exe */
 @END
 

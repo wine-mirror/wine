@@ -1592,6 +1592,7 @@ struct next_process_reply
     void*        module;
     int          threads;
     int          priority;
+    int          handles;
     /* VARARG(filename,string); */
 };
 
@@ -3664,6 +3665,6 @@ union generic_reply
     struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 120
+#define SERVER_PROTOCOL_VERSION 121
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
