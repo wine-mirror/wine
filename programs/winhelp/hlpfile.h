@@ -92,10 +92,13 @@ typedef struct tagHlpFileFile
 {
     LPSTR                       lpszPath;
     LPSTR                       lpszTitle;
+    LPSTR                       lpszCopyright;
     HLPFILE_PAGE*               first_page;
     HLPFILE_MACRO*              first_macro;
     unsigned                    wContextLen;
     HLPFILE_CONTEXT*            Context;
+    unsigned long               contents_start;
+
     struct tagHlpFileFile*      prev;
     struct tagHlpFileFile*      next;
 
@@ -105,13 +108,16 @@ typedef struct tagHlpFileFile
     unsigned short              flags;
     unsigned                    hasPhrases; /* Phrases or PhrIndex/PhrImage */
 
+    unsigned                    numBmps;
+    HBITMAP*                    bmps;
+
     unsigned                    numFonts;
     HLPFILE_FONT*               fonts;
 } HLPFILE;
 
 HLPFILE      *HLPFILE_ReadHlpFile(LPCSTR lpszPath);
-HLPFILE_PAGE *HLPFILE_Contents(LPCSTR lpszPath);
-HLPFILE_PAGE *HLPFILE_PageByHash(LPCSTR lpszPath, LONG wNum);
+HLPFILE_PAGE *HLPFILE_Contents(HLPFILE* hlpfile);
+HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG wNum);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
 VOID          HLPFILE_FreeHlpFilePage(HLPFILE_PAGE*);
 VOID          HLPFILE_FreeHlpFile(HLPFILE*);

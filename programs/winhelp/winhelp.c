@@ -24,9 +24,10 @@
 #include <string.h>
 #include "winbase.h"
 #include "wingdi.h"
-#include "windowsx.h"
+#include "winuser.h"
 #include "winhelp.h"
 #include "winhelp_res.h"
+#include "shellapi.h"
 
 #include "wine/debug.h"
 
@@ -372,15 +373,17 @@ BOOL WINHELP_CreateHelpWindowByPage(HLPFILE_PAGE* page, LPCSTR lpszWindow,
 BOOL WINHELP_CreateHelpWindowByHash(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
                                     BOOL bPopup, HWND hParentWnd, LPPOINT mouse, INT nCmdShow)
 {
-    HLPFILE_PAGE*       page;
+    HLPFILE_PAGE*       page = NULL;
 
     /* Read help file */
     if (lpszFile[0])
     {
-        page = lHash ? HLPFILE_PageByHash(lpszFile, lHash) : HLPFILE_Contents(lpszFile);
+        HLPFILE*        hlpfile;
+
+        hlpfile = HLPFILE_ReadHlpFile(lpszFile);
 
         /* Add Suffix `.hlp' */
-        if (!page && lstrcmpi(lpszFile + strlen(lpszFile) - 4, ".hlp"))
+        if (!hlpfile && lstrcmpi(lpszFile + strlen(lpszFile) - 4, ".hlp") != 0)
 	{
             CHAR      szFile_hlp[MAX_PATHNAME_LEN];
 
@@ -388,13 +391,16 @@ BOOL WINHELP_CreateHelpWindowByHash(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWind
             szFile_hlp[sizeof(szFile_hlp) - 5] = '\0';
             lstrcat(szFile_hlp, ".hlp");
 
-            page = lHash ? HLPFILE_PageByHash(szFile_hlp, lHash) : HLPFILE_Contents(szFile_hlp);
-            if (!page)
-	    {
-                WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile, STID_WHERROR, MB_OK);
-                if (Globals.win_list) return FALSE;
-	    }
+            hlpfile = HLPFILE_ReadHlpFile(szFile_hlp);
 	}
+        if (!hlpfile)
+        {
+            WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile, STID_WHERROR, MB_OK);
+            if (Globals.win_list) return FALSE;
+        }
+        else 
+            page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) : 
+                HLPFILE_Contents(hlpfile);
     }
     else page = NULL;
     return WINHELP_CreateHelpWindowByPage(page, lpszWindow, bPopup, hParentWnd, mouse, nCmdShow);

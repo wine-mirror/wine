@@ -23,6 +23,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winhelp.h"
 
 #include "wine/debug.h"
@@ -74,12 +75,11 @@ static INT   HLPFILE_UncompressedLZ77_Size(BYTE *ptr, BYTE *end);
 static BYTE* HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr);
 static BOOL  HLPFILE_UncompressLZ77_Phrases(HLPFILE*);
 static BOOL  HLPFILE_Uncompress_Phrases40(HLPFILE*);
-static BOOL  HLPFILE_UncompressLZ77_Topic(HLPFILE*);
+static BOOL  HLPFILE_Uncompress_Topic(HLPFILE*);
 static BOOL  HLPFILE_GetContext(HLPFILE*);
 static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
 static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
-static UINT  HLPFILE_Uncompressed2_Size(BYTE*, BYTE*);
-static void  HLPFILE_Uncompress2(BYTE**, BYTE*, BYTE*);
+static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
 static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, unsigned sz, BYTE** dst);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
@@ -88,13 +88,17 @@ static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
  *
  *           HLPFILE_Contents
  */
-HLPFILE_PAGE *HLPFILE_Contents(LPCSTR lpszPath)
+HLPFILE_PAGE *HLPFILE_Contents(HLPFILE *hlpfile)
 {
-    HLPFILE *hlpfile = HLPFILE_ReadHlpFile(lpszPath);
-
     if (!hlpfile) return 0;
-
+#if 1
     return hlpfile->first_page;
+#else
+    if (hlpfile->contents_start) 
+        return HLPFILE_PageByHash(hlpfile, hlpfile->contents_start);
+    else
+        return hlpfile->first_page;
+#endif
 }
 
 /***********************************************************************
@@ -119,14 +123,13 @@ HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
  *
  *           HLPFILE_HlpFilePageByHash
  */
-HLPFILE_PAGE *HLPFILE_PageByHash(LPCSTR lpszPath, LONG lHash)
+HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 {
     HLPFILE_PAGE*       page;
     HLPFILE_PAGE*       found;
-    HLPFILE*            hlpfile = HLPFILE_ReadHlpFile(lpszPath);
     int                 i;
 
-    WINE_TRACE("path<%s>[%lx]\n", lpszPath, lHash);
+    WINE_TRACE("path<%s>[%lx]\n", hlpfile->lpszPath, lHash);
 
     if (!hlpfile) return 0;
 
@@ -156,10 +159,10 @@ HLPFILE_PAGE *HLPFILE_PageByHash(LPCSTR lpszPath, LONG lHash)
         if (found) return found;
 
         WINE_ERR("Page of offset %lu not found in file %s\n",
-                  hlpfile->Context[i].offset, lpszPath);
+                  hlpfile->Context[i].offset, hlpfile->lpszPath);
         return NULL;
     }
-    WINE_ERR("Page of hash %lx not found in file %s\n", lHash, lpszPath);
+    WINE_ERR("Page of hash %lx not found in file %s\n", lHash, hlpfile->lpszPath);
     return NULL;
 }
 
@@ -206,18 +209,23 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     hlpfile = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
     if (!hlpfile) return 0;
 
-    hlpfile->wRefCount   = 1;
-    hlpfile->Context     = NULL;
-    hlpfile->wContextLen = 0;
-    hlpfile->first_page  = NULL;
-    hlpfile->first_macro = NULL;
-    hlpfile->prev        = NULL;
-    hlpfile->next        = first_hlpfile;
-    hlpfile->lpszPath    = (char*)hlpfile + sizeof(HLPFILE);
-    hlpfile->lpszTitle   = NULL;
+    hlpfile->lpszPath           = (char*)hlpfile + sizeof(HLPFILE);
+    hlpfile->lpszTitle          = NULL;
+    hlpfile->lpszCopyright      = NULL;
+    hlpfile->first_page         = NULL;
+    hlpfile->first_macro        = NULL;
+    hlpfile->wContextLen        = 0;
+    hlpfile->Context            = NULL;
+    hlpfile->contents_start     = 0;
+    hlpfile->prev               = NULL;
+    hlpfile->next               = first_hlpfile;
+    hlpfile->wRefCount          = 1;
 
-    hlpfile->numFonts    = 0;
-    hlpfile->fonts       = NULL;
+    hlpfile->numBmps            = 0;
+    hlpfile->bmps               = NULL;
+
+    hlpfile->numFonts           = 0;
+    hlpfile->fonts              = NULL;
 
     strcpy(hlpfile->lpszPath, lpszPath);
 
@@ -265,10 +273,12 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     if (!ret) return FALSE;
 
     if (!HLPFILE_SystemCommands(hlpfile)) return FALSE;
-    if (!HLPFILE_UncompressLZ77_Phrases(hlpfile) &&
-        !HLPFILE_Uncompress_Phrases40(hlpfile))
-        return FALSE;
-    if (!HLPFILE_UncompressLZ77_Topic(hlpfile)) return FALSE;
+
+    /* load phrases support */
+    if (!HLPFILE_UncompressLZ77_Phrases(hlpfile))
+        HLPFILE_Uncompress_Phrases40(hlpfile);
+
+    if (!HLPFILE_Uncompress_Topic(hlpfile)) return FALSE;
     if (!HLPFILE_ReadFont(hlpfile)) return FALSE;
 
     buf = topic.map[0];
@@ -330,36 +340,30 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     title = buf + GET_UINT(buf, 0x10);
     if (title > end) {WINE_WARN("page2\n"); return FALSE;};
 
-    if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
+    titlesize = GET_UINT(buf, 4) + 1;
+    page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize);
+    if (!page) return FALSE;
+    page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
+
+    if (hlpfile->hasPhrases)
     {
-        if (hlpfile->hasPhrases)
-        {
-            titlesize = HLPFILE_Uncompressed2_Size(title, end);
-            page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize);
-            if (!page) return FALSE;
-
-            page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
-            HLPFILE_Uncompress2(&title, end, page->lpszTitle);
-        }
-        else
-        {
-            titlesize = GET_UINT(buf, 4) + 1;
-            page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize);
-            if (!page) return FALSE;
-            page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
-
-            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize, title, end);
-        }
+        HLPFILE_Uncompress2(title, end, page->lpszTitle, page->lpszTitle + titlesize - 1);
     }
     else
     {
-        titlesize = GET_UINT(buf, 0x4);
-        page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize);
-        if (!page) return FALSE;
-
-        page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
-        memcpy(page->lpszTitle, title, titlesize);
+        if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
+        {
+            /* need to decompress */
+            HLPFILE_Uncompress3(page->lpszTitle, page->lpszTitle + titlesize - 1, 
+                                title, end);
+        }
+        else
+        {
+            memcpy(page->lpszTitle, title, titlesize - 1);
+        }
     }
+
+    page->lpszTitle[titlesize - 1] = 0;
 
     if (hlpfile->first_page)
     {
@@ -469,6 +473,8 @@ static  BOOL    HLPFILE_LoadPictureByAddr(HLPFILE *hlpfile, char* ref,
     unsigned    i, numpict;
 
     numpict = *(unsigned short*)(ref + 2);
+    WINE_TRACE("Got picture magic=%04x #=%d\n", 
+               *(unsigned short*)ref, numpict);
 
     for (i = 0; i < numpict; i++)
     {
@@ -477,12 +483,20 @@ static  BOOL    HLPFILE_LoadPictureByAddr(HLPFILE *hlpfile, char* ref,
         BYTE                    type, pack;
         BITMAPINFO*             bi;
         unsigned long           off, sz;
-        unsigned                shift;
 
-        ptr = beg = ref + *((unsigned long*)ref + 1 + i);
+        WINE_TRACE("Offset[%d] = %lx\n", i, ((unsigned long*)ref)[1 + i]);
+        ptr = beg = ref + ((unsigned long*)ref)[1 + i];
 
         type = *ptr++;
         pack = *ptr++;
+        
+        switch (type)
+        {
+        case 5: /* device dependent bmp */ break;
+        case 6: /* device independent bmp */ break;
+        case 8: WINE_FIXME("Unsupported metafile\n"); return FALSE;
+        default: WINE_FIXME("Unknown type %u\n", type); return FALSE;
+        }
 
         bi = HeapAlloc(GetProcessHeap(), 0, sizeof(*bi));
         if (!bi) return FALSE;
@@ -499,8 +513,7 @@ static  BOOL    HLPFILE_LoadPictureByAddr(HLPFILE *hlpfile, char* ref,
         bi->bmiHeader.biCompression   = BI_RGB;
         if (bi->bmiHeader.biBitCount > 32) WINE_FIXME("Unknown bit count %u\n", bi->bmiHeader.biBitCount);
         if (bi->bmiHeader.biPlanes != 1) WINE_FIXME("Unsupported planes %u\n", bi->bmiHeader.biPlanes);
-        shift = 32 / bi->bmiHeader.biBitCount;
-        bi->bmiHeader.biSizeImage = ((bi->bmiHeader.biWidth + shift - 1) / shift) * 4 * bi->bmiHeader.biHeight;
+        bi->bmiHeader.biSizeImage = (((bi->bmiHeader.biWidth * bi->bmiHeader.biBitCount + 31) & ~31) / 8) * bi->bmiHeader.biHeight;
 
         sz = fetch_ulong(&ptr);
         fetch_ulong(&ptr); /* hotspot size */
@@ -548,7 +561,7 @@ static  BOOL    HLPFILE_LoadPictureByAddr(HLPFILE *hlpfile, char* ref,
                 if (!pict_beg) return FALSE;
                 HLPFILE_UncompressRLE(beg + off, sz, &dst);
                 if (dst - pict_beg != bi->bmiHeader.biSizeImage)
-                    WINE_FIXME("buffer XXX-flow\n");
+                    WINE_FIXME("buffer XXX-flow (%u/%lu)\n", dst - pict_beg, bi->bmiHeader.biSizeImage);
             }
             break;
         case 2: /* LZ77 */
@@ -616,15 +629,36 @@ static  BOOL    HLPFILE_LoadPictureByIndex(HLPFILE *hlpfile, unsigned index, uns
 {
     char        tmp[16];
     BYTE        *ref, *end;
-
+    BOOL        ret;
     WINE_TRACE("Loading picture #%d\n", index);
+
+    if (index < hlpfile->numBmps && hlpfile->bmps[index] != NULL)
+    {
+        attributes.hBitmap = hlpfile->bmps[index];
+        attributes.bmpPos  = pos;
+        return TRUE;
+    }
+
     sprintf(tmp, "|bm%u", index);
 
     if (!HLPFILE_FindSubFile(tmp, &ref, &end)) {WINE_WARN("no sub file\n"); return FALSE;}
 
     ref += 9;
 
-    return HLPFILE_LoadPictureByAddr(hlpfile, ref, end - ref, pos);
+    ret = HLPFILE_LoadPictureByAddr(hlpfile, ref, end - ref, pos);
+
+    /* cache bitmap */
+    if (ret)
+    {
+        if (index >= hlpfile->numBmps)
+        {
+            hlpfile->numBmps = index + 1;
+            hlpfile->bmps = HeapReAlloc(GetProcessHeap(), 0, hlpfile->bmps, 
+                                        hlpfile->numBmps * sizeof(hlpfile->bmps[0]));
+        }
+        hlpfile->bmps[index] = attributes.hBitmap;
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -650,32 +684,23 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
     if (buf + 0x19 > end) {WINE_WARN("header too small\n"); return FALSE;};
 
     size = GET_UINT(buf, 0x4);
-
-    if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
+    text = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!text) return FALSE;
+    if (hlpfile->hasPhrases)
     {
-        if (hlpfile->hasPhrases)
-        {
-            BYTE* lptr = buf + GET_UINT(buf, 0x10);
-            unsigned size2;
-
-            size2 = HLPFILE_Uncompressed2_Size(lptr, end);
-            if (size2 != size + 1)
-                WINE_FIXME("Mismatch in sizes: decomp2=%u header=%lu\n", size2, size);
-            text = HeapAlloc(GetProcessHeap(), 0, size + 1);
-            if (!text) return FALSE;
-            HLPFILE_Uncompress2(&lptr, end, text);
-        }
-        else
-        {
-            /* block is compressed */
-            text = HeapAlloc(GetProcessHeap(), 0, size);
-            if (!text) return FALSE;
-            HLPFILE_Uncompress3(text, text + size, buf + GET_UINT(buf, 0x10), end);
-        }
+        HLPFILE_Uncompress2(buf + GET_UINT(buf, 0x10), end, text, text + size);
     }
     else
     {
-        text = buf + GET_UINT(buf, 0x10);
+        if (GET_UINT(buf, 0x4) > GET_UINT(buf, 0) - GET_UINT(buf, 0x10))
+        {
+            /* block is compressed */
+            HLPFILE_Uncompress3(text, text + size, buf + GET_UINT(buf, 0x10), end);
+        }
+        else
+        {
+            text = buf + GET_UINT(buf, 0x10);
+        }
     }
     text_end = text + size;
 
@@ -684,6 +709,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 
     fetch_long(&format);
     *len = fetch_ushort(&format);
+
     if (buf[0x14] == 0x23)
     {
         char    type;
@@ -723,6 +749,9 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                 if (ts & 0x4000) fetch_ushort(&format);
             }
         }
+        /* 0x0400, 0x0800 and 0x1000 don't need space */
+        if ((bits & 0xE080) != 0) 
+            WINE_FIXME("Unsupported bits %04x, potential trouble ahead\n", bits);
 
         while (text < text_end && format < format_end)
         {
@@ -772,7 +801,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     paragraph->link->lHash      = attributes.link.lHash;
                     paragraph->link->bClrChange = attributes.link.bClrChange;
 
-                    WINE_TRACE("Link[%d] to %s/%08lx\n",
+                    WINE_TRACE("Link[%d] to %s@%08lx\n",
                                paragraph->link->cookie, paragraph->link->lpszString, paragraph->link->lHash);
                 }
 #if 0
@@ -800,12 +829,12 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
             switch (*format)
             {
             case 0x20:
-                WINE_FIXME("NIY\n");
+                WINE_FIXME("NIY20\n");
                 format += 5;
                 break;
 
             case 0x21:
-                WINE_FIXME("NIY\n");
+                WINE_FIXME("NIY21\n");
                 format += 3;
                 break;
 
@@ -848,21 +877,28 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 
                     format += 2;
                     size = fetch_long(&format);
+
                     switch (type)
                     {
                     case 0x22:
                         fetch_ushort(&format); /* hot spot */
                         /* fall thru */
                     case 0x03:
-                        if (*(short*)format == 0)
-                            HLPFILE_LoadPictureByIndex(hlpfile,
-                                                       *(short*)(format + 2),
-                                                       pos);
-                        else
+                        switch (*(short*)format)
                         {
-                            WINE_FIXME("does it work ???\n");
+                        case 0:
+                            HLPFILE_LoadPictureByIndex(hlpfile,
+                                                       *(short*)(format + 2), pos);
+                            break;
+                        case 1:
+                            WINE_FIXME("does it work ??? %x<%lu>#%u\n", 
+                                       *(short*)format, size, *(short*)(format+2));
                             HLPFILE_LoadPictureByAddr(hlpfile, format + 2,
                                                       size - 4, pos);
+                            break;
+                        default:
+                            WINE_FIXME("??? %u\n", *(short*)format);
+                            break;
                         }
                         break;
                     case 0x05:
@@ -1052,16 +1088,6 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
                    hlpfile->fonts[i].LogFont.lfFaceName, idx,
                    *(unsigned long*)(ref + dscr_offset + i * 11 + 5) & 0x00FFFFFF);
     }
-/*
----				      only if FacenamesOffset >= 12
-unsigned short NumStyles	      number of style descriptors
-unsigned short StyleOffset	      start of array of style descriptors
-				      relative to &NumFacenames
----				      only if FacenamesOffset >= 16
-unsigned short NumCharMapTables       number of character mapping tables
-unsigned short CharMapTableOffset     start of array of character mapping
-table names relative to &NumFacenames
-*/
     return TRUE;
 }
 
@@ -1187,6 +1213,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
     if (magic != 0x036C || major != 1)
     {WINE_WARN("Wrong system header\n"); return FALSE;}
     if (minor <= 16) {WINE_WARN("too old file format (NIY)\n"); return FALSE;}
+    if (flags & 8) {WINE_WARN("Unsupported yet page size\n"); return FALSE;}
 
     hlpfile->version = minor;
     hlpfile->flags = flags;
@@ -1204,12 +1231,17 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             break;
 
 	case 2:
-            if (GET_USHORT(ptr, 2) != 1 || ptr[4] != 0) WINE_WARN("system2\n");
+            if (hlpfile->lpszCopyright) {WINE_WARN("copyright\n"); break;}
+            hlpfile->lpszCopyright = HeapAlloc(GetProcessHeap(), 0, strlen(ptr + 4) + 1);
+            if (!hlpfile->lpszCopyright) return FALSE;
+            lstrcpy(hlpfile->lpszCopyright, ptr + 4);
+            WINE_TRACE("Copyright: %s\n", hlpfile->lpszCopyright);
             break;
 
 	case 3:
-            if (GET_USHORT(ptr, 2) != 4 || GET_UINT(ptr, 4) != 0)
-                WINE_WARN("system3\n");
+            if (GET_USHORT(ptr, 2) != 4) {WINE_WARN("system3\n");break;}
+            hlpfile->contents_start = GET_UINT(ptr, 4);
+            WINE_TRACE("Setting contents start at %08lx\n", hlpfile->contents_start);
             break;
 
 	case 4:
@@ -1223,8 +1255,15 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             *m = macro;
             break;
 
+        case 6:
+            if (GET_USHORT(ptr, 2) != 90) {WINE_WARN("system6\n");break;}
+            WINE_FIXME("System-Window: flags=%4x type=%s name=%s caption=%s (%d,%d)x(%d,%d)\n",
+                       GET_USHORT(ptr, 4), ptr + 6, ptr + 16, ptr + 25, 
+                       GET_SHORT(ptr, 76), GET_USHORT(ptr, 78),
+                       GET_SHORT(ptr, 80), GET_USHORT(ptr, 82));
+            break;
 	default:
-            WINE_WARN("Unsupport SystemRecord[%d]\n", GET_USHORT(ptr, 0));
+            WINE_WARN("Unsupported SystemRecord[%d]\n", GET_USHORT(ptr, 0));
 	}
     }
     return TRUE;
@@ -1387,9 +1426,9 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
 
 /***********************************************************************
  *
- *           HLPFILE_UncompressLZ77_Topic
+ *           HLPFILE_Uncompress_Topic
  */
-static BOOL HLPFILE_UncompressLZ77_Topic(HLPFILE* hlpfile)
+static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
 {
     BYTE *buf, *ptr, *end, *newptr;
     int  i, newsize = 0;
@@ -1397,74 +1436,64 @@ static BOOL HLPFILE_UncompressLZ77_Topic(HLPFILE* hlpfile)
     if (!HLPFILE_FindSubFile("|TOPIC", &buf, &end))
     {WINE_WARN("topic0\n"); return FALSE;}
 
-    if (!(hlpfile->flags & 4)) WINE_FIXME("Unsupported format\n");
-
-    buf += 9;
-    topic.wMapLen = (end - buf - 1) / 0x1000 + 1;
-
-    for (i = 0; i < topic.wMapLen; i++)
+    switch (hlpfile->flags & (8|4))
     {
-        ptr = buf + i * 0x1000;
+    case 8:
+        WINE_FIXME("Unsupported format\n");
+        return FALSE;
+    case 4:
+        buf += 9;
+        topic.wMapLen = (end - buf - 1) / 0x1000 + 1;
+        
+        for (i = 0; i < topic.wMapLen; i++)
+        {
+            ptr = buf + i * 0x1000;
+            
+            /* I don't know why, it's necessary for printman.hlp */
+            if (ptr + 0x44 > end) ptr = end - 0x44;
 
-        /* I don't know why, it's necessary for printman.hlp */
-        if (ptr + 0x44 > end) ptr = end - 0x44;
+            newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + 0x1000));
+        }
+        
+        topic.map = HeapAlloc(GetProcessHeap(), 0,
+                              topic.wMapLen * sizeof(topic.map[0]) + newsize);
+        if (!topic.map) return FALSE;
+        newptr = (char*)(topic.map + topic.wMapLen);
+        topic.end = newptr + newsize;
 
-        newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + 0x1000));
+        for (i = 0; i < topic.wMapLen; i++)
+        {
+            ptr = buf + i * 0x1000;
+            if (ptr + 0x44 > end) ptr = end - 0x44;
+
+            topic.map[i] = newptr;
+            newptr = HLPFILE_UncompressLZ77(ptr + 0xc, min(end, ptr + 0x1000), newptr);
+        }
+        break;
+    case 0:
+        /* basically, we need to copy the 0x1000 byte pages (removing the first 0x0C) in
+         * one single are in memory
+         */
+#define DST_LEN (0x1000 - 0x0C)
+        buf += 9;
+        newsize = end - buf;
+        /* number of destination pages */
+        topic.wMapLen = (newsize - 1) / DST_LEN + 1;
+        topic.map = HeapAlloc(GetProcessHeap(), 0,
+                              topic.wMapLen * (sizeof(topic.map[0]) + DST_LEN));
+        if (!topic.map) return FALSE;
+        newptr = (char*)(topic.map + topic.wMapLen);
+        topic.end = newptr + newsize;
+
+        for (i = 0; i < topic.wMapLen; i++)
+        {
+            topic.map[i] = newptr + i * DST_LEN;
+            memcpy(topic.map[i], buf + i * 0x1000 + 0x0C, DST_LEN);
+        }
+#undef DST_LEN
+        break;
     }
-
-    topic.map = HeapAlloc(GetProcessHeap(), 0,
-                          topic.wMapLen * sizeof(topic.map[0]) + newsize);
-    if (!topic.map) return FALSE;
-    newptr = (char*)topic.map + topic.wMapLen * sizeof(topic.map[0]);
-    topic.end = newptr + newsize;
-
-    for (i = 0; i < topic.wMapLen; i++)
-    {
-        ptr = buf + i * 0x1000;
-        if (ptr + 0x44 > end) ptr = end - 0x44;
-
-        topic.map[i] = newptr;
-        newptr = HLPFILE_UncompressLZ77(ptr + 0xc, min(end, ptr + 0x1000), newptr);
-    }
-
     return TRUE;
-}
-
-/***********************************************************************
- *
- *           HLPFILE_Uncompressed2_Size
- */
-static UINT HLPFILE_Uncompressed2_Size(BYTE *ptr, BYTE *end)
-{
-    UINT wSize = 0;
-
-    while (ptr < end)
-    {
-        if (!*ptr || *ptr >= 0x10)
-            wSize++, ptr++;
-        else
-	{
-            BYTE *phptr, *phend;
-            UINT code  = 0x100 * ptr[0] + ptr[1];
-            UINT index = (code - 0x100) / 2;
-
-            if (index < phrases.num)
-	    {
-                phptr = phrases.buffer + phrases.offsets[index];
-                phend = phrases.buffer + phrases.offsets[index + 1];
-
-                if (phend < phptr) WINE_WARN("uncompress2a\n");
-
-                wSize += phend - phptr;
-                if (code & 1) wSize++;
-	    }
-            else WINE_WARN("uncompress2b %d|%d\n", index, phrases.num);
-
-            ptr += 2;
-	}
-    }
-
-    return wSize + 1;
 }
 
 /***********************************************************************
@@ -1472,23 +1501,30 @@ static UINT HLPFILE_Uncompressed2_Size(BYTE *ptr, BYTE *end)
  *           HLPFILE_Uncompress2
  */
 
-static void HLPFILE_Uncompress2(BYTE **pptr, BYTE *end, BYTE *newptr)
+static void HLPFILE_Uncompress2(const BYTE *ptr, const BYTE *end, BYTE *newptr, const BYTE *newend)
 {
-    BYTE *ptr = *pptr;
+    BYTE *phptr, *phend;
+    UINT code;
+    UINT index;
 
-    while (ptr < end)
+    while (ptr < end && newptr < newend)
     {
         if (!*ptr || *ptr >= 0x10)
             *newptr++ = *ptr++;
         else
 	{
-            BYTE *phptr, *phend;
-            UINT code  = 0x100 * ptr[0] + ptr[1];
-            UINT index = (code - 0x100) / 2;
+            code  = 0x100 * ptr[0] + ptr[1];
+            index = (code - 0x100) / 2;
 
             phptr = phrases.buffer + phrases.offsets[index];
             phend = phrases.buffer + phrases.offsets[index + 1];
 
+            if (newptr + (phend - phptr) > newend)
+            {
+                WINE_FIXME("buffer overflow %p > %p for %d bytes\n", 
+                           newptr, newend, phend - phptr);
+                return;
+            }
             memcpy(newptr, phptr, phend - phptr);
             newptr += phend - phptr;
             if (code & 1) *newptr++ = ' ';
@@ -1496,8 +1532,7 @@ static void HLPFILE_Uncompress2(BYTE **pptr, BYTE *end, BYTE *newptr)
             ptr += 2;
 	}
     }
-    *newptr = '\0';
-    *pptr = ptr;
+    if (newptr > newend) WINE_FIXME("buffer overflow %p > %p\n", newptr, newend);
 }
 
 /******************************************************************
@@ -1515,16 +1550,31 @@ static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
         if ((*src & 1) == 0)
         {
             idx = *src / 2;
-            if (idx > phrases.num) WINE_ERR("index in phrases\n");
-            len = phrases.offsets[idx + 1] - phrases.offsets[idx];
-            memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+            if (idx > phrases.num) 
+            {
+                WINE_ERR("index in phrases %d/%d\n", idx, phrases.num);
+                len = 0;
+            }
+            else 
+            {
+                len = phrases.offsets[idx + 1] - phrases.offsets[idx];
+                memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+            }
         }
         else if ((*src & 0x03) == 0x01)
         {
-            idx = (*src + 1) * 64 + *++src;
-            if (idx > phrases.num) WINE_ERR("index in phrases\n");
-            len = phrases.offsets[idx + 1] - phrases.offsets[idx];
-            memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+            idx = (*src + 1) * 64;
+            idx += *++src;
+            if (idx > phrases.num) 
+            {
+                WINE_ERR("index in phrases %d/%d\n", idx, phrases.num);
+                len = 0;
+            }
+            else
+            {
+                len = phrases.offsets[idx + 1] - phrases.offsets[idx];
+                memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+            }
         }
         else if ((*src & 0x07) == 0x03)
         {
@@ -1586,7 +1636,7 @@ static void HLPFILE_EnumBTreeLeaves(const BYTE* buf, const BYTE* end, unsigned (
     num    = GET_UINT(buf, 9 + 34);
     psize  = GET_USHORT(buf, 9 + 4);
     nlvl   = GET_USHORT(buf, 9 + 32);
-    pnext  = GET_USHORT(buf, 26);
+    pnext  = GET_USHORT(buf, 9 + 26);
 
     WINE_TRACE("BTree: #entries=%u pagSize=%u #levels=%u #pages=%u root=%u struct%16s\n",
                num, psize, nlvl, GET_USHORT(buf, 9 + 30), pnext, buf + 9 + 6);
@@ -1597,7 +1647,7 @@ static void HLPFILE_EnumBTreeLeaves(const BYTE* buf, const BYTE* end, unsigned (
         ptr = (buf + 9 + 38) + pnext * psize;
         WINE_TRACE("BTree: (index[%u]) unused=%u #entries=%u <%u\n",
                    pnext, GET_USHORT(ptr, 0), GET_USHORT(ptr, 2), GET_USHORT(ptr, 4));
-        pnext = GET_USHORT(ptr, 6);
+        pnext = GET_USHORT(ptr, 4);
     }
     while (pnext != 0xFFFF)
     {
@@ -1711,6 +1761,8 @@ static void HLPFILE_DeleteMacro(HLPFILE_MACRO* macro)
  */
 void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
 {
+    unsigned i;
+
     if (!hlpfile || --hlpfile->wRefCount > 0) return;
 
     if (hlpfile->next) hlpfile->next->prev = hlpfile->prev;
@@ -1719,7 +1771,6 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
 
     if (hlpfile->numFonts)
     {
-        unsigned i;
         for (i = 0; i < hlpfile->numFonts; i++)
         {
             DeleteObject(hlpfile->fonts[i].hFont);
@@ -1727,11 +1778,21 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
         HeapFree(GetProcessHeap(), 0, hlpfile->fonts);
     }
 
+    if (hlpfile->numBmps)
+    {
+        for (i = 0; i < hlpfile->numBmps; i++)
+        {
+            DeleteObject(hlpfile->bmps[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, hlpfile->bmps);
+    }
+
     HLPFILE_DeletePage(hlpfile->first_page);
     HLPFILE_DeleteMacro(hlpfile->first_macro);
 
     if (hlpfile->Context)       HeapFree(GetProcessHeap(), 0, hlpfile->Context);
     if (hlpfile->lpszTitle)     HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
+    if (hlpfile->lpszCopyright) HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
     HeapFree(GetProcessHeap(), 0, hlpfile);
 }
 
