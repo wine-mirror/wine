@@ -95,7 +95,7 @@
 387 stdcall -noname DSA_EnumCallback(ptr ptr long)
 388 stdcall -noname DSA_DestroyCallback(ptr ptr long)
 389 stub -noname SHGetProcessDword
-390 stub -noname ImageList_SetColorTable
+390 stdcall -noname ImageList_SetColorTable(ptr long long ptr)
 400 stdcall -noname CreateMRUListW(ptr)
 401 stdcall -noname AddMRUStringW(long wstr)
 402 stdcall -noname FindMRUStringW(long wstr ptr)

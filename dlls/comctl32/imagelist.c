@@ -2856,3 +2856,28 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT width, UINT 
     TRACE("returning %p\n", hbmNewBitmap);
     return hbmNewBitmap;
 }
+
+/*************************************************************************
+ * ImageList_SetColorTable [COMCTL32.@]
+ *
+ * Sets the color table of an image list.
+ *
+ * PARAMS
+ *     himl        [I] Handle to the image list.
+ *     uStartIndex [I] The first index to set.
+ *     cEntries    [I] Number of entries to set.
+ *     prgb        [I] New color information for color table for the image list.
+ *
+ * RETURNS
+ *     Success: Number of entries in the table that were set.
+ *     Failure: Zero.
+ *
+ * SEE
+ *     ImageList_Create(), SetDIBColorTable()
+ */
+
+UINT WINAPI
+ImageList_SetColorTable (HIMAGELIST himl, UINT uStartIndex, UINT cEntries, CONST RGBQUAD * prgb)
+{
+    return SetDIBColorTable(himl->hdcImage, uStartIndex, cEntries, prgb);
+}
