@@ -24,9 +24,6 @@
 #include "winuser.h"
 #include "winerror.h"
 
-#define WIN2K_PLUS(version) (version.dwMajorVersion==5)
-#define WIN98_PLUS(version) (version.dwMajorVersion==4 && \
-                             version.dwMinorVersion>0)
 #define HAS_TRAIL_SLASH_A(string) (string[lstrlenA(string)-1]=='\\')
 
 #define LONGFILE "Long File test.path"
@@ -40,7 +37,6 @@
 
 #define NOT_A_VALID_DRIVE '@'
 
-static OSVERSIONINFOA version;
 /* the following characters don't work well with GetFullPathNameA
    in Win98.  I don't know if this is a FAT thing, or if it is an OS thing
    but I don't test these characters now.
@@ -354,13 +350,7 @@ static void test_InitPathA(CHAR *newdir, CHAR *curDrive, CHAR *otherDrive)
   len1=GetTempPathA(len,tmpstr);
   ok(len1==len+1,
      "GetTempPathA should return string length %ld instead of %ld",len+1,len1);
-  if(WIN2K_PLUS(version)) {
-/* in Win2k, the path won't be modified, but in win98, wine  it is */
-    todo_wine {
-      ok(lstrcmpiA(tmpstr,"aaaaaaaa")==0,
-         "GetTempPathA should not have modified the buffer");
-    }
-  }
+
 /* Test GetTmpFileNameA
    The only test we do here is whether GetTempFileNameA passes or not.
    We do not thoroughly test this function yet (specifically, whether
@@ -961,8 +951,6 @@ static void test_GetTempPath(void)
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
-    version.dwOSVersionInfoSize=sizeof(OSVERSIONINFOA);
-    ok(GetVersionExA(&version),"GetVersionEx failed: %ld",GetLastError());
     pGetLongPathNameA = (void*)GetProcAddress( GetModuleHandleA("kernel32.dll"),
                                                "GetLongPathNameA" );
     test_InitPathA(curdir, &curDrive, &otherDrive);
