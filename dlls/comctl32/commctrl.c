@@ -64,6 +64,15 @@ DWORD    COMCTL32_dwProcessesAttached = 0;
 LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
 HMODULE COMCTL32_hModule = 0;
 LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+HBRUSH  COMCTL32_hPattern55AABrush = (HANDLE)NULL;
+
+static HBITMAP COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
+
+static const WORD wPattern55AA[] =
+{
+    0x5555, 0xaaaa, 0x5555, 0xaaaa,
+    0x5555, 0xaaaa, 0x5555, 0xaaaa
+};
 
 
 /***********************************************************************
@@ -99,6 +108,10 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtomA ("CC32SubclassInfo");
 		TRACE("Subclassing atom added: %p\n",
 		       COMCTL32_aSubclass);
+
+		/* create local pattern brush */
+		COMCTL32_hPattern55AABitmap = CreateBitmap (8, 8, 1, 1, wPattern55AA);
+		COMCTL32_hPattern55AABrush = CreatePatternBrush (COMCTL32_hPattern55AABitmap);
 
 		/* register all Win95 common control classes */
 		ANIMATE_Register ();
@@ -142,6 +155,12 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		TRACKBAR_Unregister ();
 		TREEVIEW_Unregister ();
 		UPDOWN_Unregister ();
+
+		/* delete local pattern brush */
+		DeleteObject (COMCTL32_hPattern55AABrush);
+		COMCTL32_hPattern55AABrush = (HANDLE)NULL;
+		DeleteObject (COMCTL32_hPattern55AABitmap);
+		COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
 
 		/* delete global subclassing atom */
 		GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));

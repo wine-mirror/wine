@@ -19,7 +19,6 @@
 #include "commctrl.h"
 #include "comctl32.h"
 #include "debugtools.h"
-#include "cache.h"
 #include <math.h>
 
 DEFAULT_DEBUG_CHANNEL(tab);
@@ -59,6 +58,7 @@ typedef struct
   BOOL       needsScrolling;  /* TRUE if the size of the tabs is greater than 
 			       * the size of the control */
   BOOL	     fSizeSet;	      /* was the size of the tabs explicitly set? */
+  BOOL       bUnicode;        /* Unicode control? */
   HWND       hwndUpDown;      /* Updown control used for scrolling */
 } TAB_INFO;
 
@@ -1642,7 +1642,7 @@ static void TAB_DrawItem(
                * look different from the window background.
                */
                if (bk == GetSysColor(COLOR_WINDOW))
-                  hbr = CACHE_GetPattern55AABrush();
+                  hbr = COMCTL32_hPattern55AABrush;
 
               deleteBrush = FALSE;
 	}
@@ -2588,6 +2588,23 @@ TAB_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (LRESULT)himlPrev;
 }
 
+static LRESULT
+TAB_GetUnicodeFormat (HWND hwnd)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr (hwnd);
+    return infoPtr->bUnicode;
+}
+
+static LRESULT
+TAB_SetUnicodeFormat (HWND hwnd, WPARAM wParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr (hwnd);
+    BOOL bTemp = infoPtr->bUnicode;
+
+    infoPtr->bUnicode = (BOOL)wParam;
+
+    return bTemp;
+}
 
 static LRESULT
 TAB_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2654,6 +2671,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->hwndUpDown      = 0;
   infoPtr->leftmostVisible = 0;
   infoPtr->fSizeSet	   = FALSE;
+  infoPtr->bUnicode	   = IsWindowUnicode (hwnd);
   
   TRACE("Created tab control, hwnd [%04x]\n", hwnd); 
 
@@ -2819,12 +2837,10 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_GetRowCount(hwnd);
 
     case TCM_GETUNICODEFORMAT:
-      FIXME("Unimplemented msg TCM_GETUNICODEFORMAT\n");
-      return 0;
+      return TAB_GetUnicodeFormat (hwnd);
 
     case TCM_SETUNICODEFORMAT:
-      FIXME("Unimplemented msg TCM_SETUNICODEFORMAT\n");
-      return 0;
+      return TAB_SetUnicodeFormat (hwnd, wParam);
 
     case TCM_HIGHLIGHTITEM:
       FIXME("Unimplemented msg TCM_HIGHLIGHTITEM\n");

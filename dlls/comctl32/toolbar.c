@@ -45,7 +45,6 @@
 #include "wine/winestring.h"
 #include "commctrl.h"
 #include "imagelist.h"
-#include "cache.h"
 #include "comctl32.h"
 #include "debugtools.h"
 
@@ -262,7 +261,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 static void
 TOOLBAR_DrawPattern (HDC hdc, LPRECT lpRect)
 {
-    HBRUSH hbr = SelectObject (hdc, CACHE_GetPattern55AABrush ());
+    HBRUSH hbr = SelectObject (hdc, COMCTL32_hPattern55AABrush);
     INT cx = lpRect->right - lpRect->left;
     INT cy = lpRect->bottom - lpRect->top;
     PatBlt (hdc, lpRect->left, lpRect->top, cx, cy, 0x00FA0089);

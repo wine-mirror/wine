@@ -11,6 +11,7 @@
 #define __WINE_COMCTL32_H
 
 extern HMODULE COMCTL32_hModule;
+extern HBRUSH  COMCTL32_hPattern55AABrush;
 
 /* Property sheet / Wizard */
 #define IDD_PROPSHEET 1006
