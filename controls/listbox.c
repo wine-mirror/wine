@@ -41,6 +41,9 @@ DECLARE_DEBUG_CHANNEL(combo);
 /* Listbox system timer id */
 #define LB_TIMER_ID  2
 
+/* flag listbox changed while setredraw false - internal style */
+#define LBS_DISPLAYCHANGED 0x80000000 
+
 /* Item structure */
 typedef struct
 {
@@ -569,6 +572,16 @@ static void LISTBOX_SetRedraw( WND *wnd, LB_DESCR *descr, BOOL on )
     {
         if (!(descr->style & LBS_NOREDRAW)) return;
         descr->style &= ~LBS_NOREDRAW;
+        if (descr->style & LBS_DISPLAYCHANGED)
+        {     /* page was changed while setredraw false, refresh automatically */
+            InvalidateRect(wnd->hwndSelf, NULL, TRUE);
+            if ((descr->top_item + descr->page_size) > descr->nb_items)
+            {      /* reset top of page if less than number of items/page */ 
+                descr->top_item = descr->nb_items - descr->page_size;
+                if (descr->top_item < 0) descr->top_item = 0;
+            }
+            descr->style &= ~LBS_DISPLAYCHANGED;
+        }
         LISTBOX_UpdateScroll( wnd, descr );
     }
     else descr->style |= LBS_NOREDRAW;
@@ -589,8 +602,12 @@ static void LISTBOX_RepaintItem( WND *wnd, LB_DESCR *descr, INT index,
     HBRUSH hbrush, oldBrush = 0;
 
     /* Do not repaint the item if the item is not visible */
-    if ((descr->style & LBS_NOREDRAW) || !IsWindowVisible(wnd->hwndSelf)) return;
-
+    if (!IsWindowVisible(wnd->hwndSelf)) return;
+    if (descr->style & LBS_NOREDRAW)
+       {
+       descr->style |= LBS_DISPLAYCHANGED;
+       return;
+       }
     if (LISTBOX_GetItemRect( wnd, descr, index, &rect ) != 1) return;
     if (!(hdc = GetDCEx( wnd->hwndSelf, 0, DCX_CACHE ))) return;
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
@@ -1017,6 +1034,11 @@ static void LISTBOX_InvalidateItems( WND *wnd, LB_DESCR *descr, INT index )
 
     if (LISTBOX_GetItemRect( wnd, descr, index, &rect ) == 1)
     {
+        if (descr->style & LBS_NOREDRAW)
+        {
+            descr->style |= LBS_DISPLAYCHANGED;
+            return;
+        }
         rect.bottom = descr->height;
         InvalidateRect( wnd->hwndSelf, &rect, TRUE );
         if (descr->style & LBS_MULTICOLUMN)
@@ -2765,7 +2787,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     case WM_SYSTIMER:
         return LISTBOX_HandleSystemTimer( wnd, descr );
     case WM_ERASEBKGND:
-        if (IS_OWNERDRAW(descr))
+        if ((IS_OWNERDRAW(descr)) && !(descr->style & LBS_DISPLAYCHANGED))
         {
             RECT rect;
             HBRUSH hbrush = SendMessageA( descr->owner, WM_CTLCOLORLISTBOX,
