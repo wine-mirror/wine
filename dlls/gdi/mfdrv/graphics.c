@@ -190,23 +190,53 @@ MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 BOOL
 MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons)
 {
-    int		i,j;
-    LPPOINT16	pt16;
-    const POINT* curpt=pt;
-    BOOL	ret;
+    BOOL ret;
+    DWORD len;
+    METARECORD *mr;
+    int       i,j;
+    LPPOINT16 pt16;
+    INT16 totalpoint16 = 0;
+    INT16 * pointcounts;
 
     for (i=0;i<polygons;i++) {
-    	pt16=(LPPOINT16)HeapAlloc( GetProcessHeap(), 0,
-				   sizeof(POINT16) * counts[i] );
-	if(!pt16) return FALSE;
-	for (j=counts[i];j--;) CONV_POINT32TO16(&(curpt[j]),&(pt16[j]));
-	ret = MFDRV_MetaPoly(dev, META_POLYGON, pt16, counts[i]);
-	HeapFree( GetProcessHeap(), 0, pt16 );
-	if (!ret)
-	    return FALSE;
-	curpt+=counts[i];
+         totalpoint16 += counts[i];
     }
-    return TRUE;
+
+    /* allocate space for all points */
+    pt16=(LPPOINT16)HeapAlloc( GetProcessHeap(), 0,
+                                     sizeof(POINT16) * totalpoint16 );
+    pointcounts = (INT16*)HeapAlloc( GetProcessHeap(), 0,
+                                     sizeof(INT16) * totalpoint16 );
+
+    /* copy point counts */
+    for (i=0;i<polygons;i++) {
+          pointcounts[i] = counts[i];
+    }
+
+    /* convert all points */
+    for (j = totalpoint16; j--;){
+         CONV_POINT32TO16(&(pt[j]),&(pt16[j]));
+    }
+
+    len = sizeof(METARECORD) + sizeof(WORD) + polygons*sizeof(INT16) + totalpoint16*sizeof(POINT16);
+
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len ))) {
+         HeapFree( GetProcessHeap(), 0, pt16 );
+         HeapFree( GetProcessHeap(), 0, pointcounts );
+         return FALSE;
+    }
+
+    mr->rdSize = len /2;
+    mr->rdFunction = META_POLYPOLYGON;
+    *(mr->rdParm) = polygons;
+    memcpy(mr->rdParm + 1, pointcounts, polygons*sizeof(INT16));
+    memcpy(mr->rdParm + 1+polygons, pt16 , totalpoint16*sizeof(POINT16));
+    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+
+    HeapFree( GetProcessHeap(), 0, pt16 );
+    HeapFree( GetProcessHeap(), 0, pointcounts );
+    HeapFree( GetProcessHeap(), 0, mr);
+    return ret;
 }
 
 
