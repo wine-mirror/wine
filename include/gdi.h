@@ -589,4 +589,7 @@ INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
                                INT right, INT bottom, BOOL exclude );
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
+/* objects/enhmetafile.c */
+extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
+
 #endif  /* __WINE_GDI_H */

@@ -22,27 +22,31 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
-#include "enhmetafile.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "metafile.h"
 
 DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
+typedef struct
+{
+    GDIOBJHDR      header;
+    ENHMETAHEADER  *emh;
+    BOOL           on_disk;   /* true if metafile is on disk */
+} ENHMETAFILEOBJ;
+
+
 /****************************************************************************
  *          EMF_Create_HENHMETAFILE
  */
-HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, HFILE hFile, HANDLE
-				     hMapping )
+HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
 {
     HENHMETAFILE hmf = 0;
     ENHMETAFILEOBJ *metaObj = GDI_AllocObject( sizeof(ENHMETAFILEOBJ),
                                                ENHMETAFILE_MAGIC, &hmf );
     if (metaObj)
     {
-    metaObj->emh = emh;
-    metaObj->hFile = hFile;
-    metaObj->hMapping = hMapping;
+        metaObj->emh = emh;
+        metaObj->on_disk = on_disk;
         GDI_ReleaseObj( hmf );
     }
     return hmf;
@@ -56,11 +60,10 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
     ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf,
 							   ENHMETAFILE_MAGIC );
     if(!metaObj) return FALSE;
-    if(metaObj->hMapping) {
+
+    if(metaObj->on_disk)
         UnmapViewOfFile( metaObj->emh );
-	CloseHandle( metaObj->hMapping );
-	CloseHandle( metaObj->hFile );
-    } else
+    else
         HeapFree( GetProcessHeap(), 0, metaObj->emh );
     return GDI_FreeObject( hmf, metaObj );
 }
@@ -100,15 +103,17 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
     
     hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
     emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( hMapping );
+
+    if (!emh) return 0;
 
     if (emh->iType != EMR_HEADER || emh->dSignature != ENHMETA_SIGNATURE) {
         WARN("Invalid emf header type 0x%08lx sig 0x%08lx.\n",
 	     emh->iType, emh->dSignature);
 	UnmapViewOfFile( emh );
-	CloseHandle( hMapping );
 	return 0;
     }
-    return EMF_Create_HENHMETAFILE( emh, hFile, hMapping );
+    return EMF_Create_HENHMETAFILE( emh, TRUE );
 }
 
 
@@ -131,8 +136,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
 	return 0;
     }
     hmf = EMF_GetEnhMetaFile( hFile );
-    if(!hmf)
-        CloseHandle( hFile );
+    CloseHandle( hFile );
     return hmf;
 }
 
@@ -152,8 +156,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
 	return 0;
     }
     hmf = EMF_GetEnhMetaFile( hFile );
-    if(!hmf)
-        CloseHandle( hFile );
+    CloseHandle( hFile );
     return hmf;
 }
 
@@ -261,7 +264,7 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
 {
     ENHMETAHEADER *emh = HeapAlloc( GetProcessHeap(), 0, bufsize );
     memmove(emh, buf, bufsize);
-    return EMF_Create_HENHMETAFILE( emh, 0, 0 );
+    return EMF_Create_HENHMETAFILE( emh, FALSE );
 }
 
 /*****************************************************************************
@@ -1701,13 +1704,14 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
     if (!file) {
         emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
-	hmfDst = EMF_Create_HENHMETAFILE( emrDst, 0, 0 );
+	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
     } else {
         HANDLE hFile;
         hFile = CreateFileA( file, GENERIC_WRITE | GENERIC_READ, 0, NULL,
 			     CREATE_ALWAYS, 0, 0);
 	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
 	hmfDst = EMF_GetEnhMetaFile( hFile );
+        CloseHandle( hFile );
     }
     EMF_ReleaseEnhMetaHeader( hmfSrc );
     return hmfDst;

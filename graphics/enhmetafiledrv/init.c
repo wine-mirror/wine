@@ -10,7 +10,6 @@
 #include "wingdi.h"
 #include "gdi.h"
 #include "heap.h"
-#include "enhmetafile.h"
 #include "enhmetafiledrv.h"
 #include "debugtools.h"
 
@@ -378,13 +377,17 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 
     if (physDev->hFile)  /* disk based metafile */
     {
-        if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0) {
+        if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0)
+        {
+            CloseHandle( physDev->hFile );
             EMFDRV_DeleteDC( dc );
             return 0;
         }
 
         if (!WriteFile(physDev->hFile, (LPSTR)physDev->emh,
-                       sizeof(*physDev->emh), NULL, NULL)) {
+                       sizeof(*physDev->emh), NULL, NULL))
+        {
+            CloseHandle( physDev->hFile );
             EMFDRV_DeleteDC( dc );
             return 0;
         }
@@ -394,13 +397,12 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 	TRACE("hMapping = %08x\n", hMapping );
 	physDev->emh = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
 	TRACE("view = %p\n", physDev->emh );
+        CloseHandle( hMapping );
+        CloseHandle( physDev->hFile );
     }
 
-
-    hmf = EMF_Create_HENHMETAFILE( physDev->emh, physDev->hFile, hMapping );
+    hmf = EMF_Create_HENHMETAFILE( physDev->emh, (physDev->hFile != 0) );
     physDev->emh = NULL;  /* So it won't be deleted */
     EMFDRV_DeleteDC( dc );
     return hmf;
 }
-
-
