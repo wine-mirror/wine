@@ -336,7 +336,6 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
 	DWORD dwFlags, DWORD dwContext)
 {
     LPWININETHTTPSESSIONW lpwhs;
-    LPWININETAPPINFOW hIC = NULL;
     HINTERNET handle = NULL;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08lx, %08lx)\n", hHttpSession,
@@ -356,7 +355,6 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
 	goto lend;
     }
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
 
     /*
      * My tests seem to show that the windows version does not
@@ -1997,7 +1995,6 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     BOOL bSuccess = FALSE;
     INT  rc = 0;
     WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
-    static const WCHAR szHttp[] = { 'H','T','T','P',0 };
     static const WCHAR szCrLf[] = {'\r','\n',0};
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code, status_text;
@@ -2026,9 +2023,6 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     if (!NETCON_getNextLine(&lpwhr->netConnection, bufferA, &buflen))
         goto lend;
     MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
-
-    if (strncmpW(buffer, szHttp, 4) != 0)
-        goto lend;
 
     /* regenerate raw headers */
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
@@ -2093,7 +2087,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 	}
     }while(1);
 
-    if (lpwhr->lpszRawHeaders) HeapFree(GetProcessHeap(), 0, lpszRawHeaders);
+    if (lpwhr->lpszRawHeaders) HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
     lpwhr->lpszRawHeaders = lpszRawHeaders;
     TRACE("raw headers: %s\n", debugstr_w(lpszRawHeaders));
     bSuccess = TRUE;
