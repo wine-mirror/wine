@@ -38,9 +38,9 @@
 /* Defines, since they do not need to return previous state, and nr
  * has no side effects in this file.
  */
-#define tv_test_bit(nr,bf)	(((LPBYTE)bf)[nr>>8]&(1<<(nr&7)))
-#define tv_set_bit(nr,bf)	((LPBYTE)bf)[nr>>8]|=(1<<(nr&7))
-#define tv_clear_bit(nr,bf)	((LPBYTE)bf)[nr>>8]&=~(1<<(nr&7))
+#define tv_test_bit(nr,bf)	(((LPBYTE)bf)[nr>>3]&(1<<(nr&7)))
+#define tv_set_bit(nr,bf)	((LPBYTE)bf)[nr>>3]|=(1<<(nr&7))
+#define tv_clear_bit(nr,bf)	((LPBYTE)bf)[nr>>3]&=~(1<<(nr&7))
 
 
 #define TREEVIEW_GetInfoPtr(wndPtr) ((TREEVIEW_INFO *)wndPtr->wExtra[0])
