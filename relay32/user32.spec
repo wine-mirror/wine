@@ -584,8 +584,8 @@ init	MAIN_UserInit
 580 stdcall WinHelpW(long wstr long long) WinHelp32W
 581 stdcall WindowFromDC(long) WindowFromDC32
 582 stdcall WindowFromPoint(long long) WindowFromPoint32
-583 stub keybd_event
-584 stub mouse_event
+583 stdcall keybd_event(long long long long) keybd_event
+584 stdcall mouse_event(long long long long long) mouse_event
 585 varargs wsprintfA() wsprintf32A
 586 varargs wsprintfW() wsprintf32W
 587 stdcall wvsprintfA(ptr str ptr) wvsprintf32A

@@ -14,14 +14,17 @@ C_SRCS = \
 	defwnd.c \
 	dialog.c \
 	dinput.c \
+	display.c \
 	driver.c \
 	event.c \
 	focus.c \
 	graphics.c \
 	hook.c \
+	input.c \
 	keyboard.c \
 	mdi.c \
 	message.c \
+	mouse.c \
 	msgbox.c \
 	multimon.c \
 	nonclient.c \

@@ -20,6 +20,8 @@
 #include "except.h"
 #include "win.h"
 #include "flatthunk.h"
+#include "mouse.h"
+#include "keyboard.h"
 #include "debug.h"
 
 
@@ -689,6 +691,125 @@ static BOOL32 WINAPI THUNK_WOWCallback16Ex(
     	*pdwret = ret;
     return TRUE;
 }
+
+/***********************************************************************
+ *           THUNK_MOUSE_Enable   (MOUSE.2)
+ */
+static VOID WINAPI THUNK_CallMouseEventProc( FARPROC16 proc, 
+                                             DWORD dwFlags, DWORD dx, DWORD dy,
+                                             DWORD cButtons, DWORD dwExtraInfo )
+{
+    CONTEXT context;
+
+    memset( &context, 0, sizeof(context) );
+    CS_reg(&context)  = SELECTOROF( proc );
+    EIP_reg(&context) = OFFSETOF( proc );
+    AX_reg(&context)  = (WORD)dwFlags;
+    BX_reg(&context)  = (WORD)dx;
+    CX_reg(&context)  = (WORD)dy;
+    DX_reg(&context)  = (WORD)cButtons;
+    SI_reg(&context)  = LOWORD( dwExtraInfo );
+    DI_reg(&context)  = HIWORD( dwExtraInfo );
+
+    CallTo16_sreg_( &context, 0 );
+}
+VOID WINAPI THUNK_MOUSE_Enable( FARPROC16 proc )
+{
+    static THUNK *lastThunk = NULL;
+    static FARPROC16 lastProc = NULL;
+
+    if ( lastProc != proc )
+    {
+        if ( lastThunk ) 
+            THUNK_Free( lastThunk );
+
+        if ( !proc )
+            lastThunk = NULL;
+        else
+            lastThunk = THUNK_Alloc( proc, (RELAY)THUNK_CallMouseEventProc );
+
+        lastProc = proc;
+    }
+
+    return MOUSE_Enable( (LPMOUSE_EVENT_PROC)lastThunk );
+}
+
+/***********************************************************************
+ *           GetMouseEventProc   (USER.337)
+ */
+FARPROC16 WINAPI GetMouseEventProc(void)
+{
+    HMODULE16 hmodule = GetModuleHandle16("USER");
+    return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "mouse_event" ));
+}
+
+
+/***********************************************************************
+ *           WIN16_mouse_event   (USER.299)
+ */
+void WINAPI WIN16_mouse_event( CONTEXT *context )
+{
+    mouse_event( AX_reg(context), BX_reg(context), CX_reg(context),
+                 DX_reg(context), MAKELONG(SI_reg(context), DI_reg(context)) );
+}
+
+
+/***********************************************************************
+ *           THUNK_KEYBD_Enable   (KEYBOARD.2)
+ */
+static VOID WINAPI THUNK_CallKeybdEventProc( FARPROC16 proc, 
+                                             BYTE bVk, BYTE bScan,
+                                             DWORD dwFlags, DWORD dwExtraInfo )
+{
+    CONTEXT context;
+
+    memset( &context, 0, sizeof(context) );
+    CS_reg(&context)  = SELECTOROF( proc );
+    EIP_reg(&context) = OFFSETOF( proc );
+    AH_reg(&context)  = (dwFlags & KEYEVENTF_KEYUP)? 0x80 : 0;
+    AL_reg(&context)  = bVk;
+    BH_reg(&context)  = (dwFlags & KEYEVENTF_EXTENDEDKEY)? 1 : 0;
+    BL_reg(&context)  = bScan;
+    SI_reg(&context)  = LOWORD( dwExtraInfo );
+    DI_reg(&context)  = HIWORD( dwExtraInfo );
+
+    CallTo16_sreg_( &context, 0 );
+}
+VOID WINAPI THUNK_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
+{
+    static THUNK *lastThunk = NULL;
+    static FARPROC16 lastProc = NULL;
+
+    if ( lastProc != proc )
+    {
+        if ( lastThunk ) 
+            THUNK_Free( lastThunk );
+
+        if ( !proc )
+            lastThunk = NULL;
+        else
+            lastThunk = THUNK_Alloc( proc, (RELAY)THUNK_CallKeybdEventProc );
+
+        lastProc = proc;
+    }
+
+    return KEYBOARD_Enable( (LPKEYBD_EVENT_PROC)lastThunk, lpKeyState );
+}
+
+/***********************************************************************
+ *           WIN16_keybd_event   (USER.289)
+ */
+void WINAPI WIN16_keybd_event( CONTEXT *context )
+{
+    DWORD dwFlags = 0;
+    
+    if (AH_reg(context) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
+    if (BH_reg(context) & 1   ) dwFlags |= KEYEVENTF_EXTENDEDKEY;
+
+    keybd_event( AL_reg(context), BL_reg(context), 
+                 dwFlags, MAKELONG(SI_reg(context), DI_reg(context)) );
+}
+
 
 
 /***********************************************************************

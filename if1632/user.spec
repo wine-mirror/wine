@@ -294,13 +294,13 @@ file	user.exe
 286 pascal16 GetDesktopWindow() GetDesktopWindow16
 287 pascal16 GetLastActivePopup(word) GetLastActivePopup16
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
-#289 KEYB_EVENT
+289 register keybd_event() WIN16_keybd_event
 290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
 291 pascal   SetWindowsHookEx(s_word segptr word word) THUNK_SetWindowsHookEx16
 292 pascal16 UnhookWindowsHookEx(segptr) THUNK_UnhookWindowsHookEx16
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
 294 pascal16 LockWindowUpdate(word) LockWindowUpdate16
-299 register Mouse_Event() Mouse_Event
+299 register mouse_event() WIN16_mouse_event
 300 stub UnloadInstalledDrivers
 #301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc
 #306 BEAR306

@@ -3417,12 +3417,20 @@ typedef struct
 #define MK_CONTROL	    0x0008
 #define MK_MBUTTON	    0x0010
 
-  /* Mouse_Event flags */
-#define ME_MOVE             0x01
-#define ME_LDOWN            0x02
-#define ME_LUP              0x04
-#define ME_RDOWN            0x08
-#define ME_RUP              0x10
+  /* keybd_event flags */
+#define KEYEVENTF_EXTENDEDKEY        0x0001
+#define KEYEVENTF_KEYUP              0x0002
+#define KEYEVENTF_WINE_FORCEEXTENDED 0x8000
+
+  /* mouse_event flags */
+#define MOUSEEVENTF_MOVE        0x0001
+#define MOUSEEVENTF_LEFTDOWN    0x0002
+#define MOUSEEVENTF_LEFTUP      0x0004
+#define MOUSEEVENTF_RIGHTDOWN   0x0008
+#define MOUSEEVENTF_RIGHTUP     0x0010
+#define MOUSEEVENTF_MIDDLEDOWN  0x0020
+#define MOUSEEVENTF_MIDDLEUP    0x0040
+#define MOUSEEVENTF_ABSOLUTE    0x8000
 
   /* Queue status flags */
 #define QS_KEY		0x0001
@@ -7121,6 +7129,8 @@ BOOL32      WINAPI WriteConsole32W(HANDLE32,LPCVOID,DWORD,LPDWORD,LPVOID);
 BOOL32      WINAPI WriteFile(HANDLE32,LPCVOID,DWORD,LPDWORD,LPOVERLAPPED);
 VOID        WINAPI ZeroMemory(LPVOID,UINT32);
 #define     ZeroMemory RtlZeroMemory
+VOID        WINAPI keybd_event(BYTE,BYTE,DWORD,DWORD);
+VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,DWORD);
 
 /* Declarations for functions that are the same in Win16 and Win32 */
 
