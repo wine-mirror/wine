@@ -22,12 +22,19 @@
 # TODO
 #  SGML gurus - feel free to smarten up the SGML.
 #  Add any other relevant information for the dll - imports etc
-#  Read .spec flags such as -i386,-noname and add to docs appropriately
-#  Generate an alpabetical listing of every API call, with links
 #  Should we have a special output mode for WineHQ?
 
 use strict;
 use bytes;
+
+# Function flags. most of these come from the spec flags
+my $FLAG_DOCUMENTED = 1;
+my $FLAG_NONAME     = 2;
+my $FLAG_I386       = 4;
+my $FLAG_REGISTER   = 8;
+my $FLAG_APAIR      = 16; # The A version of a matching W function
+my $FLAG_WPAIR      = 32; # The W version of a matching A function
+
 
 # Options
 my $opt_output_directory = "man3w"; # All default options are for nroff (man pages)
@@ -45,13 +52,15 @@ my @opt_source_file_list = ();
 my %spec_files;
 # All the collected details about all the source files being processed
 my %source_files;
+# All documented functions that are to be placed in the index
+my @index_entries_list = ();
 
 # useful globals
 my $pwd = `pwd`."/";
 $pwd =~ s/\n//;
 my @datetime = localtime;
 my @months = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
 my $year = $datetime[5] + 1900;
 my $date = "$months[$datetime[4]] $year";
 
@@ -94,10 +103,12 @@ while(defined($_ = shift @ARGV))
       /^e$/  && do { $opt_output_empty = 1;               last; };
       /^L$/  && do { last; };
       /^w$/  && do { @opt_spec_file_list = (@opt_spec_file_list, shift @ARGV); last; };
-      s/^I// && do { my $include = $_."/*.h";
-                     $include =~ s/\/\//\//g;
-                     my $have_headers = `ls $include >/dev/null 2>&1`;
-                     if ($? >> 8 == 0) { @opt_header_file_list = (@opt_header_file_list, $include); }
+      s/^I// && do { if ($_ ne ".") {
+                       my $include = $_."/*.h";
+                       $include =~ s/\/\//\//g;
+                       my $have_headers = `ls $include >/dev/null 2>&1`;
+                       if ($? >> 8 == 0) { @opt_header_file_list = (@opt_header_file_list, $include); }
+                     }
                      last;
                    };
       s/^R// && do { if ($_ =~ /^\//) { $opt_wine_root_dir = $_; }
@@ -216,9 +227,23 @@ sub process_spec_file
     s/\s+/ /g;           # Strip multiple tabs & spaces to a single space
     s/\s*#.*//;          # Strip comments
     s/\(.*\)/ /;         # Strip arguments
-    s/ \-[a-z0-9]+//g;   # Strip modifiers
     s/\s+/ /g;           # Strip multiple tabs & spaces to a single space (again)
     s/\n$//;             # Strip newline
+
+    my $flags = 0;
+    if( /\-noname/ )
+    {
+      $flags |= $FLAG_NONAME;
+    }
+    if( /\-i386/ )
+    {
+      $flags |= $FLAG_I386;
+    }
+    if( /\-register/ )
+    {
+      $flags |= $FLAG_REGISTER;
+    }
+    s/ \-[a-z0-9]+//g;   # Strip flags
 
     if( /^(([0-9]+)|@) / )
     {
@@ -254,6 +279,14 @@ sub process_spec_file
       {
         $implementation_name = $exported_name;
       }
+
+      if ($implementation_name =~ /(.*?)\./)
+      {
+        $call_convention = "forward"; # Referencing a function from another dll
+        $spec_details->{NUM_FUNCS}--;
+        $spec_details->{NUM_FORWARDS}++;
+      }
+
       # Add indices for the exported and implementation names
       $spec_details->{EXPORTED_NAMES}{$exported_name} = $spec_details->{NUM_EXPORTS};
       if ($implementation_name ne $exported_name)
@@ -263,8 +296,7 @@ sub process_spec_file
 
       # Add the exported entry
       $spec_details->{NUM_EXPORTS}++;
-      my $documented = 0;
-      my @export = ($ordinal, $call_convention, $exported_name, $implementation_name, $documented);
+      my @export = ($ordinal, $call_convention, $exported_name, $implementation_name, $flags);
       push (@{$spec_details->{EXPORTS}},[@export]);
     }
   }
@@ -515,6 +547,7 @@ sub process_source_file
 sub process_comment_text
 {
   my $comment = shift(@_);
+  my $i = 0;
 
   for (@{$comment->{TEXT}})
   {
@@ -522,7 +555,7 @@ sub process_comment_text
     {
       # Map I/O values. These come in too many formats to standardise now....
       s/\[I\]|\[i\]|\[in\]|\[IN\]/\[In\] /g;
-      s/\[O\]|\[o\]|\[out\]\[OUT\]/\[Out\]/g;
+      s/\[O\]|\[o\]|\[out\]|\[OUT\]/\[Out\]/g;
       s/\[I\/O\]|\[I\,O\]|\[i\/o\]|\[in\/out\]|\[IN\/OUT\]/\[In\/Out\]/g;
       # TRUE/FALSE/NULL are defines, capitilise them
       s/True|true/TRUE/g;
@@ -531,7 +564,7 @@ sub process_comment_text
       # Preferred capitalisations
       s/ wine| WINE/ Wine/g;
       s/ API | api / Api /g;
-      s/DLL| Dll /dll /g;
+      s/DLL|Dll/dll /g;
       s/ URL | url / Url /g;
       s/WIN16|win16/Win16/g;
       s/WIN32|win32/Win32/g;
@@ -551,11 +584,34 @@ sub process_comment_text
       s/( |\.)(DOS|dos|msdos)( |\.)/$1MS-DOS\(tm\)$3/g;
       s/( |\.)(UNIX|Unix|unix)( |\.)/$1Unix\(tm\)$3/g;
       # Abbreviations
-      s/( chars)/characters/g;
+      s/( char )/ character /g;
+      s/( chars )/ characters /g;
       s/( info )/ information /g;
       s/( app )/ application /g;
       s/( apps )/ applications /g;
+      s/( exe )/ executable /g;
+      s/( ptr )/ pointer /g;
+      s/( obj )/ object /g;
+      s/( err )/ error /g;
+      s/( bool )/ boolean /g;
+      # Punctuation
+      if ( /\[I|\[O/ && ! /\.$/ )
+      {
+        $_ = $_."."; # Always have a full stop at the end of parameter desc.
+      }
+      elsif ($i > 0 && /^[A-Z]*$/  &&
+               !(@{$comment->{TEXT}}[$i-1] =~ /\.$/) &&
+               !(@{$comment->{TEXT}}[$i-1] =~ /\:$/))
+      {
+
+        if (!(@{$comment->{TEXT}}[$i-1] =~ /^[A-Z]*$/))
+        {
+          # Paragraphs always end with a full stop
+          @{$comment->{TEXT}}[$i-1] = @{$comment->{TEXT}}[$i-1].".";
+        }
+      }
     }
+    $i++;
   }
 }
 
@@ -585,11 +641,11 @@ sub process_comment
 
   my $exported_names = $spec_details->{EXPORTED_NAMES};
   my $export_index = $exported_names->{$comment->{COMMENT_NAME}};
+  my $implementation_names = $spec_details->{IMPLEMENTATION_NAMES};
 
   if (!defined($export_index))
   {
     # Perhaps the comment uses the implementation name?
-    my $implementation_names = $spec_details->{IMPLEMENTATION_NAMES};
     $export_index = $implementation_names->{$comment->{COMMENT_NAME}};
   }
   if (!defined($export_index))
@@ -618,7 +674,7 @@ sub process_comment
         print "Info: Found alternate name '",$1,"\n";
       }
       my $alt_export = @{$spec_details->{EXPORTS}}[$alt_index];
-      @$alt_export[4] |= 1;
+      @$alt_export[4] |= $FLAG_DOCUMENTED;
       $spec_details->{NUM_DOCS}++;
       ${@{$comment->{TEXT}}}[1] = "";
     }
@@ -647,7 +703,7 @@ sub process_comment
 
   # Mark the function as documented
   $spec_details->{NUM_DOCS}++;
-  @$export[4] |= 1;
+  @$export[4] |= $FLAG_DOCUMENTED;
 
   # This file is used by the DLL - Make sure we get our contributors right
   push (@{$spec_details->{SOURCES}},$comment->{FILE});
@@ -722,9 +778,45 @@ sub process_comment
       {
         if ( !/^[A-Z]+$/ )
         {
-          if ( /^See ([A-Za-z0-9_]+)\.$/ || /^Unicode version of ([A-Za-z0-9_]+)\.$/)
+          # Dont reject comments that refer to another doc (e.g. A/W)
+          if ( /^See ([A-Za-z0-9_]+)\.$/ )
           {
-            # Dont reject comments that refer to their A/W couterpart
+            if ($comment->{COMMENT_NAME} =~ /W$/ )
+            {
+              # This is probably a Unicode version of an Ascii function.
+              # Create the Ascii name and see if its been documented
+              my $ascii_name = $comment->{COMMENT_NAME};
+              $ascii_name =~ s/W$/A/;
+
+              my $ascii_export_index = $exported_names->{$ascii_name};
+
+              if (!defined($ascii_export_index))
+              {
+                $ascii_export_index = $implementation_names->{$ascii_name};
+              }
+              if (!defined($ascii_export_index))
+              {
+                if ($opt_verbose > 2)
+                {
+                  print "Warning: Function '".$comment->{COMMENT_NAME}."' is not an A/W pair.\n";
+                }
+              }
+              else
+              {
+                my $ascii_export = @{$spec_details->{EXPORTS}}[$ascii_export_index];
+                if (@$ascii_export[4] & $FLAG_DOCUMENTED)
+                {
+                  # Flag these functions as an A/W pair
+                  @$ascii_export[4] |= $FLAG_APAIR;
+                  @$export[4] |= $FLAG_WPAIR;
+                }
+              }
+            }
+            $found_returns = 1;
+          }
+          elsif ( /^Unicode version of ([A-Za-z0-9_]+)\.$/ )
+          {
+            @$export[4] |= $FLAG_WPAIR; # Explicitly marked as W version
             $found_returns = 1;
           }
           $found_description_text = 1;
@@ -743,7 +835,7 @@ sub process_comment
               "description and/or RETURNS section, skipping\n";
       }
       $spec_details->{NUM_DOCS}--;
-      @$export[4] &= ~1;
+      @$export[4] &= ~$FLAG_DOCUMENTED;
       return;
     }
   }
@@ -767,43 +859,50 @@ sub process_comment
 
   # Find header file
   my $h_file = "";
-  if ($comment->{COMMENT_NAME} ne "")
+  if (@$export[4] & $FLAG_NONAME)
   {
-    my $tmp = "grep -s -l $comment->{COMMENT_NAME} @opt_header_file_list 2>/dev/null";
-    $tmp = `$tmp`;
-    my $exit_value  = $? >> 8;
-    if ($exit_value == 0)
-    {
-      $tmp =~ s/\n.*//g;
-      if ($tmp ne "")
-      {
-        $h_file = `basename $tmp`;
-      }
-    }
-  }
-  elsif ($comment->{ALT_NAME} ne "")
-  {
-    my $tmp = "grep -s -l $comment->{ALT_NAME} @opt_header_file_list"." 2>/dev/null";
-    $tmp = `$tmp`;
-    my $exit_value  = $? >> 8;
-    if ($exit_value == 0)
-    {
-      $tmp =~ s/\n.*//g;
-      if ($tmp ne "")
-      {
-        $h_file = `basename $tmp`;
-      }
-    }
-  }
-  $h_file =~ s/^ *//;
-  $h_file =~ s/\n//;
-  if ($h_file eq "")
-  {
-    $h_file = "Not defined in a Wine header";
+    $h_file = "Exported by ordinal only. Use GetProcAddress() to obtain a pointer to the function.";
   }
   else
   {
-    $h_file = "Defined in \"".$h_file."\"";
+    if ($comment->{COMMENT_NAME} ne "")
+    {
+      my $tmp = "grep -s -l $comment->{COMMENT_NAME} @opt_header_file_list 2>/dev/null";
+      $tmp = `$tmp`;
+      my $exit_value  = $? >> 8;
+      if ($exit_value == 0)
+      {
+        $tmp =~ s/\n.*//g;
+        if ($tmp ne "")
+        {
+          $h_file = `basename $tmp`;
+        }
+      }
+    }
+    elsif ($comment->{ALT_NAME} ne "")
+    {
+      my $tmp = "grep -s -l $comment->{ALT_NAME} @opt_header_file_list"." 2>/dev/null";
+      $tmp = `$tmp`;
+      my $exit_value  = $? >> 8;
+      if ($exit_value == 0)
+      {
+        $tmp =~ s/\n.*//g;
+        if ($tmp ne "")
+        {
+          $h_file = `basename $tmp`;
+        }
+      }
+    }
+    $h_file =~ s/^ *//;
+    $h_file =~ s/\n//;
+    if ($h_file eq "")
+    {
+      $h_file = "Not defined in a Wine header. The function is either undocumented, or missing from Wine."
+    }
+    else
+    {
+      $h_file = "Defined in \"".$h_file."\".";
+    }
   }
 
   # Find source file
@@ -822,15 +921,24 @@ sub process_comment
     $cfile =~ s/^\/+//;               # Strip initial directory slash
     $c_file = $cfile;
   }
-  $c_file = "Implemented in \"".$c_file."\"";
+  $c_file = "Implemented in \"".$c_file."\".";
 
   # Add the implementation details
   push (@{$comment->{TEXT}}, "IMPLEMENTATION","",$h_file,"",$c_file);
 
+  if (@$export[4] & $FLAG_I386)
+  {
+    push (@{$comment->{TEXT}}, "", "Available on x86 platforms only.");
+  }
+  if (@$export[4] & $FLAG_REGISTER)
+  {
+    push (@{$comment->{TEXT}}, "", "This function passes one or more arguments in registers. ",
+          "For more details, please read the source code.");
+  }
   my $source_details = $source_files{$comment->{FILE}}[0];
   if ($source_details->{DEBUG_CHANNEL} ne "")
   {
-    push (@{$comment->{TEXT}}, "", "Debug channel \"".$source_details->{DEBUG_CHANNEL}."\"");
+    push (@{$comment->{TEXT}}, "", "Debug channel \"".$source_details->{DEBUG_CHANNEL}."\".");
   }
 
   # Write out the documentation for the API
@@ -1113,7 +1221,7 @@ sub output_spec
     {
       my $line = "";
 
-      # @$_ => ordinal, call convention, exported name, implementation name, documented;
+      # @$_ => ordinal, call convention, exported name, implementation name, flags;
       if (@$_[1] eq "forward")
       {
         my $forward_dll = @$_[3];
@@ -1131,6 +1239,11 @@ sub output_spec
       elsif (@$_[1] eq "fake")
       {
         # Don't add this function here, it gets listed with the extra documentation
+        if (!(@$_[4] & $FLAG_WPAIR))
+        {
+          # This function should be indexed
+          push (@index_entries_list, @$_[3].",".@$_[3]);
+        }
       }
       elsif (@$_[1] eq "equate" || @$_[1] eq "variable")
       {
@@ -1139,7 +1252,7 @@ sub output_spec
       else
       {
         # A function
-        if (@$_[4] & 1)
+        if (@$_[4] & $FLAG_DOCUMENTED)
         {
           # Documented
           $line = @$_[2]." (implemented as ".@$_[3]."())";
@@ -1150,6 +1263,11 @@ sub output_spec
           else
           {
             $line = @$_[2]."()";
+          }
+          if (!(@$_[4] & $FLAG_WPAIR))
+          {
+            # This function should be indexed
+            push (@index_entries_list, @$_[2].",".@$_[3]);
           }
         }
         else
@@ -1175,6 +1293,9 @@ sub output_spec
       }
     }
   }
+  # The dll entry should also be indexed
+  push (@index_entries_list, $spec_details->{DLL_NAME}.",".$spec_details->{DLL_NAME});
+
   # Write out the document
   output_open_api_file($spec_details->{DLL_NAME});
   output_api_header($comment);
@@ -1265,8 +1386,9 @@ sub output_api_footer
   if ($opt_output_format eq "h")
   {
       print OUTPUT "<hr><p><i class=\"copy\">Copyright &copy ".$year." The Wine Project.".
-                   "Visit <a HREF=http://www.winehq.org>WineHQ</a> for license details.".
-                   "Generated $date</i></p>\n</body>\n</html>\n";
+                   " All trademarks are the property of their respective owners.".
+                   " Visit <a HREF=http://www.winehq.org>WineHQ</a> for license details.".
+                   " Generated $date.</i></p>\n</body>\n</html>\n";
   }
   elsif ($opt_output_format eq "s")
   {
@@ -1511,6 +1633,9 @@ sub output_api_comment
       {
         # Html uses links for API calls
         s/([A-Za-z_]+[A-Za-z_0-9]+)(\(\))/<a href\=\"$1\.html\">$1<\/a>/g;
+        # Index references
+        s/\{\{(.*?)\}\}\{\{(.*?)\}\}/<a href\=\"$2\.html\">$1<\/a>/g;
+        s/ ([A-Z_])(\(\))/<a href\=\"$1\.html\">$1<\/a>/g;
         # And references to COM objects (hey, they'll get documented one day)
         s/ (I[A-Z]{1}[A-Za-z0-9_]+) (Object|object|Interface|interface)/ <a href\=\"$1\.html\">$1<\/a> $2/g;
         # Convert any web addresses to real links
@@ -1589,7 +1714,7 @@ sub output_api_comment
             print OUTPUT $fmt[17];
             $open_paragraph = 0;
           }
-          s/(\[.+\])( *)/$fmt[19]$fmt[10]$1$fmt[11]$fmt[19]/; # Format In/Out
+          s/(\[.+\])( *)/$fmt[19]$fmt[10]$1$fmt[11]$fmt[19] /; # Format In/Out
         }
         else
         {
@@ -1600,8 +1725,11 @@ sub output_api_comment
         # Format parameter names where they appear in the comment
         for my $parameter_name (@parameter_names)
         {
-          s/(^|[ \.\,\(\-])($parameter_name)($|[ \.\)\,\-])/$1$fmt[8]$2$fmt[9]$3/g;
+          s/(^|[ \.\,\(\-\*])($parameter_name)($|[ \.\)\,\-\=\/])/$1$fmt[8]$2$fmt[9]$3/g;
         }
+        # Structure dereferences include the dereferenced member
+        s/(\-\>[A-Za-z_]+)/$fmt[8]$1$fmt[9]/g;
+        s/(\-\&gt\;[A-Za-z_]+)/$fmt[8]$1$fmt[9]/g;
 
         if ($open_paragraph == 0)
         {
@@ -1638,6 +1766,19 @@ sub output_master_index_files
   if ($opt_output_format eq "")
   {
     return; # No master index for man pages
+  }
+
+  if ($opt_output_format eq "h")
+  {
+    # Append the index entries to the output db of index entries
+    my $output_file = $opt_output_directory."/index.db";
+    open(INDEXDB,">>$output_file") || die "Couldn't create $output_file\n";
+    for (@index_entries_list)
+    {
+      $_ =~ s/A\,/\,/;
+      print INDEXDB $_."\n";
+    }
+    close(INDEXDB);
   }
 
   # Use the comment output functions for consistency
@@ -1690,10 +1831,16 @@ sub output_master_index_files
 
   if ($opt_output_format eq "h")
   {
-    # HTML gets a list of all the dlls. For docbook the index creates this for us
+    # HTML gets a list of all the dlls and an index. For docbook the index creates this for us
     push (@{$comment->{TEXT}},
+      "INDEX",
+      "For an alphabetical listing of the functions available, please click the ",
+      "first letter of the functions name below:","",
+      "[ _(), A(), B(), C(), D(), E(), F(), G(), H(), ".
+      "I(), J(), K(), L(), M(), N(), O(), P(), Q() ".
+      "R(), S(), T(), U(), V(), W(), X(), Y(), Z() ]", "",
       "DLLS",
-      "The following dlls are provided by Wine:",
+      "Each dll provided by Wine is documented individually. The following dlls are provided :",
       ""
     );
     # Add the dlls to the comment
@@ -1728,8 +1875,8 @@ sub output_master_index_files
   }
   if ($opt_output_format eq "h")
   {
+    output_html_index_files();
     output_html_stylesheet();
-    # FIXME: Create an alphabetical index
     return;
   }
 }
@@ -1807,6 +1954,69 @@ sub output_sgml_dll_file
   `mv $tmp_name $opt_output_directory/$spec_details->{DLL_NAME}.sgml`;
 }
 
+# Write the html index files containing the function names
+sub output_html_index_files
+{
+  if ($opt_output_format ne "h")
+  {
+    return;
+  }
+
+  my @letters = ('_', 'A' .. 'Z');
+
+  # Read in all functions
+  my $input_file = $opt_output_directory."/index.db";
+  my @funcs = `cat $input_file|sort|uniq`;
+
+  for (@letters)
+  {
+    my $letter = $_;
+    my $comment =
+    {
+      FILE => "",
+      COMMENT_NAME => "",
+      ALT_NAME => "",
+      DLL_NAME => "",
+      ORDINAL => "",
+      RETURNS => "",
+      PROTOTYPE => [],
+      TEXT => [],
+    };
+
+    $comment->{COMMENT_NAME} = $letter." Functions";
+    $comment->{ALT_NAME} = $letter." Functions";
+
+    push (@{$comment->{TEXT}},
+      "NAME",
+      $comment->{COMMENT_NAME},
+      "FUNCTIONS"
+    );
+
+    # Add the functions to the comment
+    for (@funcs)
+    {
+      my $first_char = substr ($_, 0, 1);
+      $first_char = uc $first_char;
+
+      if ($first_char eq $letter)
+      {
+        my $name = $_;
+        my $file;
+        $name =~ s/(^.*?)\,(.*?)\n/$1/;
+        $file = $2;
+        push (@{$comment->{TEXT}}, "{{".$name."}}{{".$file."}}","");
+      }
+    }
+
+    # Write out the document
+    output_open_api_file($letter);
+    output_api_header($comment);
+    output_api_comment($comment);
+    output_api_footer($comment);
+    output_close_api_file();
+  }
+}
+
 # Output the stylesheet for HTML output
 sub output_html_stylesheet
 {
@@ -1825,7 +2035,7 @@ sub output_html_stylesheet
 BODY { /* Page body */
 background-color: white;
 color: black;
-font-family: Tahomsans-serif;
+font-family: Tahoma,sans-serif;
 font-style: normal;
 font-size: 10pt;
 }
@@ -1867,6 +2077,11 @@ font-size: 10pt;
 vertical-align: top;
 margin-left: 0.5in;
 margin-right: 1.0in;
+}
+pre.raw { /* Raw text output */
+margin-left: 0.6in;
+margin-right: 1.1in;
+background-color: #8080DC;
 }
 tt.param { /* Parameter name */
 font-style: italic;
