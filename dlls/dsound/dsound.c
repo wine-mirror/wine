@@ -614,8 +614,8 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
     TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
 
     if (level==DSSCL_PRIORITY || level==DSSCL_EXCLUSIVE) {
-        FIXME("level=%s not fully supported\n",
-              level==DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
+        WARN("level=%s not fully supported\n",
+             level==DSSCL_PRIORITY ? "DSSCL_PRIORITY" : "DSSCL_EXCLUSIVE");
     }
     This->priolevel = level;
     return DS_OK;
