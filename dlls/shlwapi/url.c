@@ -514,8 +514,8 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 		wk2 += strlenW(wk2);
 		break;
 	    case 4:
-		if (!isalnumW(*wk1) && (*wk1 != L'-')) {state = 3; break;}
-		while(isalnumW(*wk1) || (*wk1 == L'-')) *wk2++ = *wk1++;
+		if (!isalnumW(*wk1) && (*wk1 != L'-') && (*wk1 != L'.')) {state = 3; break;}
+		while(isalnumW(*wk1) || (*wk1 == L'-') || (*wk1 == L'.')) *wk2++ = *wk1++;
 		state = 5;
 		break;
 	    case 5:
@@ -549,7 +549,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 			else if (*(wk1+1) == L'.') {
 			    /* found /..  look for next / */
 			    TRACE("found '/..'\n");
-			    if (*(wk1+2) == L'/') {
+			    if (*(wk1+2) == L'/' || *(wk1+2) == L'?' || *(wk1+2) == L'#' || *(wk1+2) == 0) {
 				/* case /../ -> need to backup wk2 */
 				TRACE("found '/../'\n");
 				*(wk2-1) = L'\0';  /* set end of string */
@@ -557,7 +557,10 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 				if (mp && (mp >= root)) {
 				    /* found valid backup point */
 				    wk2 = mp + 1;
-				    wk1 += 3;
+				    if(*(wk1+2) != L'/')
+				        wk1 += 2;
+				    else
+				        wk1 += 3;
 				}
 				else {
 				    /* did not find point, restore '/' */

@@ -34,6 +34,27 @@ const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
 const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
 
+typedef struct _TEST_URL_CANONICALIZE {
+    char *url;
+    DWORD flags;
+    HRESULT expectret;
+    char *expecturl;
+} TEST_URL_CANONICALIZE;
+
+const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
+    {"http://www.winehq.org/tests/../tests", 0, S_OK, "http://www.winehq.org/tests"},
+    {"http://www.winehq.org/tests/../tests/", 0, S_OK, "http://www.winehq.org/tests/"},
+    {"http://www.winehq.org/tests/../tests/..", 0, S_OK, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/../tests/../", 0, S_OK, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/..", 0, S_OK, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/../", 0, S_OK, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/..?query=x&return=y", 0, S_OK, "http://www.winehq.org/?query=x&return=y"},
+    {"http://www.winehq.org/tests/../?query=x&return=y", 0, S_OK, "http://www.winehq.org/?query=x&return=y"},
+    {"http://www.winehq.org/tests/..#example", 0, S_OK, "http://www.winehq.org/#example"},
+    {"http://www.winehq.org/tests/../#example", 0, S_OK, "http://www.winehq.org/#example"},
+    {"http://www.winehq.org/tests/../#example", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests/../#example"},
+};
+
 static LPWSTR GetWideString(const char* szString)
 {
   LPWSTR wszString = (LPWSTR) HeapAlloc(GetProcessHeap(), 0,
@@ -108,8 +129,44 @@ static void test_UrlGetPart(void)
   test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "?query=x&return=y");
 }
 
+static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl)
+{
+    CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
+    WCHAR wszReturnUrl[INTERNET_MAX_URL_LENGTH];
+    LPWSTR wszUrl = GetWideString(szUrl);
+    LPWSTR wszExpectUrl = GetWideString(szExpectUrl);
+    LPWSTR wszConvertedUrl;
+    
+    DWORD dwSize;
+    
+    dwSize = INTERNET_MAX_URL_LENGTH;
+    ok(UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeA didn't return 0x%08lx\n", dwExpectReturn);
+    dwSize = INTERNET_MAX_URL_LENGTH;
+    ok(UrlCanonicalizeW(wszUrl, wszReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeW didn't return 0x%08lx\n", dwExpectReturn);
+
+    wszConvertedUrl = GetWideString(szReturnUrl);
+    ok(strcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCanonicalize!\n");
+    FreeWideString(wszConvertedUrl);
+    
+    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected %s, but got %s\n", szExpectUrl, szReturnUrl);
+            
+    FreeWideString(wszUrl);
+    FreeWideString(wszExpectUrl);
+}
+
+
+static void test_UrlCanonicalize(void)
+{
+    int i;
+    for(i=0; i<sizeof(TEST_CANONICALIZE)/sizeof(TEST_CANONICALIZE[0]); i++) {
+        test_url_canonicalize(TEST_CANONICALIZE[i].url, TEST_CANONICALIZE[i].flags,
+                              TEST_CANONICALIZE[i].expectret, TEST_CANONICALIZE[i].expecturl);
+    }
+}
+
 START_TEST(path)
 {
   test_UrlHash();
   test_UrlGetPart();
+  test_UrlCanonicalize();
 }
