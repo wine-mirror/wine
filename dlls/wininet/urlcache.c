@@ -2129,9 +2129,18 @@ BOOL WINAPI GetUrlCacheConfigInfoA(LPDWORD CacheInfo, LPDWORD size, DWORD bitmas
 /***********************************************************************
  *           DeleteIE3Cache (WININET.@)
  *
+ * Deletes the files used by the IE3 URL caching system.
+ *
+ * PARAMS
+ *   hWnd        [I] A dummy window.
+ *   hInst       [I] Instance of process calling the function.
+ *   lpszCmdLine [I] Options used by function.
+ *   nCmdShow    [I] The nCmdShow value to use when showing windows created, if any.
+ *
+ * RETURNS
+ *   nothing
  */
-DWORD WINAPI DeleteIE3Cache(DWORD long1, DWORD long2, LPSTR strbufA, DWORD long3)
+void WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int nCmdShow)
 {
-    FIXME("(%ld, %ld, %s, %ld)\n", long1, long2, debugstr_a(strbufA), long3);
-    return 0;
+    FIXME("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_a(lpszCmdLine), nCmdShow);
 }
