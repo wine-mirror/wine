@@ -124,19 +124,24 @@ typedef void (WINAPI CALLERRELEASE)(ULONG,LPTABLEDATA,LPMAPITABLE);
  * The underlying table data structure for IMAPITable.
  */
 #define INTERFACE ITableData
-#define ITableData_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(HrGetView)(THIS_ LPSSortOrderSet lpSort, CALLERRELEASE *lpRel, \
-                         ULONG ulData, LPMAPITABLE *lppTable) PURE; \
-    STDMETHOD(HrModifyRow)(THIS_ LPSRow lpRow) PURE; \
-    STDMETHOD(HrDeleteRow)(THIS_ LPSPropValue lpKey) PURE; \
-    STDMETHOD(HrQueryRow)(THIS_ LPSPropValue lpKey, LPSRow *lppRow, ULONG *lpRowNum) PURE; \
-    STDMETHOD(HrEnumRow)(THIS_ ULONG ulRowNum, LPSRow *lppRow) PURE; \
-    STDMETHOD(HrNotify)(THIS_ ULONG ulFlags, ULONG cValues, LPSPropValue lpValues) PURE; \
-    STDMETHOD(HrInsertRow)(THIS_ ULONG ulRow, LPSRow lpRow) PURE; \
-    STDMETHOD(HrModifyRows)(THIS_ ULONG ulFlags, LPSRowSet lpRows) PURE; \
+DECLARE_INTERFACE_(ITableData,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** ITableData methods ***/
+    STDMETHOD(HrGetView)(THIS_ LPSSortOrderSet lpSort, CALLERRELEASE *lpRel,
+                         ULONG ulData, LPMAPITABLE *lppTable) PURE;
+    STDMETHOD(HrModifyRow)(THIS_ LPSRow lpRow) PURE;
+    STDMETHOD(HrDeleteRow)(THIS_ LPSPropValue lpKey) PURE;
+    STDMETHOD(HrQueryRow)(THIS_ LPSPropValue lpKey, LPSRow *lppRow, ULONG *lpRowNum) PURE;
+    STDMETHOD(HrEnumRow)(THIS_ ULONG ulRowNum, LPSRow *lppRow) PURE;
+    STDMETHOD(HrNotify)(THIS_ ULONG ulFlags, ULONG cValues, LPSPropValue lpValues) PURE;
+    STDMETHOD(HrInsertRow)(THIS_ ULONG ulRow, LPSRow lpRow) PURE;
+    STDMETHOD(HrModifyRows)(THIS_ ULONG ulFlags, LPSRowSet lpRows) PURE;
     STDMETHOD(HrDeleteRows)(THIS_ ULONG ulFlags, LPSRowSet lpRows, ULONG *lpCount) PURE;
-DECLARE_INTERFACE_(ITableData,IUnknown) { ITableData_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -214,13 +219,34 @@ static inline FILETIME FtMulDwDw(DWORD dwLeft, DWORD dwRight)
  *
  */
 #define INTERFACE IPropData
-#define IPropData_METHODS \
-    IMAPIProp_METHODS \
-    STDMETHOD(HrSetObjAccess)(THIS_ ULONG ulAccess) PURE; \
-    STDMETHOD(HrSetPropAccess)(THIS_ LPSPropTagArray lpPropTags, ULONG *lpAccess) PURE; \
-    STDMETHOD(HrGetPropAccess)(THIS_ LPSPropTagArray *lppPropTags, ULONG **lppAccess) PURE; \
+DECLARE_INTERFACE_(IPropData,IMAPIProp)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPIProp methods ***/
+    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppErr) PURE;
+    STDMETHOD(SaveChanges)(THIS_ ULONG ulFlags) PURE;
+    STDMETHOD(GetProps)(THIS_ LPSPropTagArray lpPropTags, ULONG ulFlags, ULONG *lpValues, LPSPropValue *lppProps) PURE;
+    STDMETHOD(GetPropList)(THIS_ ULONG  ulFlags, LPSPropTagArray *lppPropTagArray) PURE;
+    STDMETHOD(OpenProperty)(THIS_ ULONG ulPropTag, LPCIID lpIid, ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lppUnk) PURE;
+    STDMETHOD(SetProps)(THIS_ ULONG cValues, LPSPropValue lpProps, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(DeleteProps)(THIS_ LPSPropTagArray lpPropTags, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyTo)(THIS_ ULONG ciidExclude, LPCIID lpIid, LPSPropTagArray lpProps, ULONG ulParam,
+                      LPMAPIPROGRESS lpProgress, LPCIID lpIface,LPVOID lpDest, ULONG ulFlags,
+                      LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyProps)(THIS_ LPSPropTagArray lpIncludeProps, ULONG ulParam, LPMAPIPROGRESS lpProgress,
+                         LPCIID lpIid, LPVOID lpDestObj, ULONG ulFlags, LPSPropProblemArray *lppProblems) PURE;
+    STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount,
+                               LPMAPINAMEID **lpppNames) PURE;
+    STDMETHOD(GetIDsFromNames)(THIS_ ULONG cPropNames, LPMAPINAMEID *lppNames, ULONG ulFlags, LPSPropTagArray *lppPropTags) PURE;
+    /*** IPropData methods ***/
+    STDMETHOD(HrSetObjAccess)(THIS_ ULONG ulAccess) PURE;
+    STDMETHOD(HrSetPropAccess)(THIS_ LPSPropTagArray lpPropTags, ULONG *lpAccess) PURE;
+    STDMETHOD(HrGetPropAccess)(THIS_ LPSPropTagArray *lppPropTags, ULONG **lppAccess) PURE;
     STDMETHOD(HrAddObjProps)(THIS_ LPSPropTagArray lppPropTags, LPSPropProblemArray *lppProbs) PURE;
-DECLARE_INTERFACE_(IPropData,IMAPIProp) { IPropData_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

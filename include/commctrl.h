@@ -590,9 +590,6 @@ HIMAGELIST WINAPI ImageList_LoadImageW(HINSTANCE,LPCWSTR,INT,INT,
                                          COLORREF,UINT,UINT);
 #define    ImageList_LoadImage WINELIB_NAME_AW(ImageList_LoadImage)
 HIMAGELIST WINAPI ImageList_Merge(HIMAGELIST,INT,HIMAGELIST,INT,INT,INT);
-#ifdef IStream_METHODS
-HIMAGELIST WINAPI ImageList_Read(LPSTREAM);
-#endif
 BOOL     WINAPI ImageList_Remove(HIMAGELIST,INT);
 BOOL     WINAPI ImageList_Replace(HIMAGELIST,INT,HBITMAP,HBITMAP);
 INT      WINAPI ImageList_ReplaceIcon(HIMAGELIST,INT,HICON);
@@ -602,7 +599,9 @@ BOOL     WINAPI ImageList_SetDragCursorImage(HIMAGELIST,INT,INT,INT);
 BOOL     WINAPI ImageList_SetIconSize(HIMAGELIST,INT,INT);
 BOOL     WINAPI ImageList_SetImageCount(HIMAGELIST,UINT);
 BOOL     WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT,INT);
-#ifdef IStream_METHODS
+
+#ifdef __IStream_INTERFACE_DEFINED__
+HIMAGELIST WINAPI ImageList_Read(LPSTREAM);
 BOOL     WINAPI ImageList_Write(HIMAGELIST, LPSTREAM);
 #endif
 

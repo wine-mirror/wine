@@ -68,11 +68,16 @@ typedef struct IDxDiagContainer     IDxDiagContainer,  *LPDXDIAGCONTAINER,  *PDX
  * IDxDiagProvider interface
  */
 #define INTERFACE IDxDiagProvider
-#define IDxDiagProvider_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Initialize)(THIS_ DXDIAG_INIT_PARAMS* pParams) PURE;  \
-    STDMETHOD(GetRootContainer)(THIS_ IDxDiagContainer** ppInstance) PURE; 
-DECLARE_INTERFACE_(IDxDiagProvider,IUnknown) { IDxDiagProvider_METHODS };
+DECLARE_INTERFACE_(IDxDiagProvider,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDxDiagProvider methods ***/
+    STDMETHOD(Initialize)(THIS_ DXDIAG_INIT_PARAMS* pParams) PURE;
+    STDMETHOD(GetRootContainer)(THIS_ IDxDiagContainer** ppInstance) PURE;
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -101,15 +106,20 @@ DECLARE_INTERFACE_(IDxDiagProvider,IUnknown) { IDxDiagProvider_METHODS };
 #endif
 
 #define INTERFACE IDxDiagContainer
-#define IDxDiagContainer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetNumberOfChildContainers)(THIS_  DWORD* pdwCount) PURE; \
-    STDMETHOD(EnumChildContainerNames)(THIS_ DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) PURE; \
-    STDMETHOD(GetChildContainer)(THIS_ LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) PURE; \
-    STDMETHOD(GetNumberOfProps)(THIS_ DWORD* pdwCount) PURE; \
-    STDMETHOD(EnumPropNames)(THIS_ DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) PURE; \
-    STDMETHOD(GetProp)(THIS_ LPCWSTR pwszPropName, VARIANT* pvarProp) PURE; 
-DECLARE_INTERFACE_(IDxDiagContainer,IUnknown) { IDxDiagContainer_METHODS };
+DECLARE_INTERFACE_(IDxDiagContainer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDxDiagContainer methods ***/
+    STDMETHOD(GetNumberOfChildContainers)(THIS_  DWORD* pdwCount) PURE;
+    STDMETHOD(EnumChildContainerNames)(THIS_ DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer) PURE;
+    STDMETHOD(GetChildContainer)(THIS_ LPCWSTR pwszContainer, IDxDiagContainer** ppInstance) PURE;
+    STDMETHOD(GetNumberOfProps)(THIS_ DWORD* pdwCount) PURE;
+    STDMETHOD(EnumPropNames)(THIS_ DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) PURE;
+    STDMETHOD(GetProp)(THIS_ LPCWSTR pwszPropName, VARIANT* pvarProp) PURE;
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

@@ -768,35 +768,40 @@ typedef NOTIFCALLBACK *LPNOTIFCALLBACK;
  * This is the read-only 'view' over an I(MAPI)TableData object.
  */
 #define INTERFACE IMAPITable
-#define IMAPITable_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppError) PURE; \
-    STDMETHOD(Advise)(THIS_ ULONG ulMask, LPMAPIADVISESINK lpSink, ULONG *lpCxn) PURE; \
-    STDMETHOD(Unadvise)(THIS_ ULONG ulCxn) PURE; \
-    STDMETHOD(GetStatus)(THIS_ ULONG *lpStatus, ULONG *lpType) PURE; \
-    STDMETHOD(SetColumns)(THIS_ LPSPropTagArray lpProps, ULONG ulFlags) PURE; \
-    STDMETHOD(QueryColumns)(THIS_ ULONG ulFlags, LPSPropTagArray *lpCols) PURE; \
-    STDMETHOD(GetRowCount)(THIS_ ULONG ulFlags, ULONG *lpCount) PURE; \
-    STDMETHOD(SeekRow)(THIS_ BOOKMARK lpStart, LONG lRows, LONG *lpSeeked) PURE; \
-    STDMETHOD(SeekRowApprox)(THIS_ ULONG ulNum, ULONG ulDenom) PURE; \
-    STDMETHOD(QueryPosition)(THIS_ ULONG *lpRow, ULONG *lpNum, ULONG *lpDenom) PURE; \
-    STDMETHOD(FindRow)(THIS_ LPSRestriction lpRestrict, BOOKMARK lpOrigin, ULONG ulFlags) PURE; \
-    STDMETHOD(Restrict)(THIS_ LPSRestriction lpRestrict, ULONG ulFlags) PURE; \
-    STDMETHOD(CreateBookmark)(THIS_ BOOKMARK *lppPos) PURE; \
-    STDMETHOD(FreeBookmark)(THIS_ BOOKMARK lpPos) PURE; \
-    STDMETHOD(SortTable)(THIS_ LPSSortOrderSet lpSortOpts, ULONG ulFlags) PURE; \
-    STDMETHOD(QuerySortOrder)(THIS_ LPSSortOrderSet *lppSortOpts) PURE; \
-    STDMETHOD(QueryRows)(THIS_ LONG lRows, ULONG ulFlags, LPSRowSet *lppRows) PURE; \
-    STDMETHOD(Abort) (THIS) PURE; \
-    STDMETHOD(ExpandRow)(THIS_ ULONG cbKey, LPBYTE lpKey, ULONG ulRows, \
-                         ULONG ulFlags, LPSRowSet *lppRows, ULONG *lpMore) PURE; \
-    STDMETHOD(CollapseRow)(THIS_ ULONG cbKey, LPBYTE lpKey, ULONG ulFlags, ULONG *lpRows) PURE; \
-    STDMETHOD(WaitForCompletion)(THIS_ ULONG ulFlags, ULONG ulTime, ULONG *lpState) PURE; \
-    STDMETHOD(GetCollapseState)(THIS_ ULONG ulFlags, ULONG cbKey, LPBYTE lpKey, \
-                                ULONG *lpStateLen, LPBYTE *lpState) PURE; \
-    STDMETHOD(SetCollapseState)(THIS_ ULONG ulFlags, ULONG ulLen, \
+DECLARE_INTERFACE_(IMAPITable,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPITable methods ***/
+    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppError) PURE;
+    STDMETHOD(Advise)(THIS_ ULONG ulMask, LPMAPIADVISESINK lpSink, ULONG *lpCxn) PURE;
+    STDMETHOD(Unadvise)(THIS_ ULONG ulCxn) PURE;
+    STDMETHOD(GetStatus)(THIS_ ULONG *lpStatus, ULONG *lpType) PURE;
+    STDMETHOD(SetColumns)(THIS_ LPSPropTagArray lpProps, ULONG ulFlags) PURE;
+    STDMETHOD(QueryColumns)(THIS_ ULONG ulFlags, LPSPropTagArray *lpCols) PURE;
+    STDMETHOD(GetRowCount)(THIS_ ULONG ulFlags, ULONG *lpCount) PURE;
+    STDMETHOD(SeekRow)(THIS_ BOOKMARK lpStart, LONG lRows, LONG *lpSeeked) PURE;
+    STDMETHOD(SeekRowApprox)(THIS_ ULONG ulNum, ULONG ulDenom) PURE;
+    STDMETHOD(QueryPosition)(THIS_ ULONG *lpRow, ULONG *lpNum, ULONG *lpDenom) PURE;
+    STDMETHOD(FindRow)(THIS_ LPSRestriction lpRestrict, BOOKMARK lpOrigin, ULONG ulFlags) PURE;
+    STDMETHOD(Restrict)(THIS_ LPSRestriction lpRestrict, ULONG ulFlags) PURE;
+    STDMETHOD(CreateBookmark)(THIS_ BOOKMARK *lppPos) PURE;
+    STDMETHOD(FreeBookmark)(THIS_ BOOKMARK lpPos) PURE;
+    STDMETHOD(SortTable)(THIS_ LPSSortOrderSet lpSortOpts, ULONG ulFlags) PURE;
+    STDMETHOD(QuerySortOrder)(THIS_ LPSSortOrderSet *lppSortOpts) PURE;
+    STDMETHOD(QueryRows)(THIS_ LONG lRows, ULONG ulFlags, LPSRowSet *lppRows) PURE;
+    STDMETHOD(Abort) (THIS) PURE;
+    STDMETHOD(ExpandRow)(THIS_ ULONG cbKey, LPBYTE lpKey, ULONG ulRows,
+                         ULONG ulFlags, LPSRowSet *lppRows, ULONG *lpMore) PURE;
+    STDMETHOD(CollapseRow)(THIS_ ULONG cbKey, LPBYTE lpKey, ULONG ulFlags, ULONG *lpRows) PURE;
+    STDMETHOD(WaitForCompletion)(THIS_ ULONG ulFlags, ULONG ulTime, ULONG *lpState) PURE;
+    STDMETHOD(GetCollapseState)(THIS_ ULONG ulFlags, ULONG cbKey, LPBYTE lpKey,
+                                ULONG *lpStateLen, LPBYTE *lpState) PURE;
+    STDMETHOD(SetCollapseState)(THIS_ ULONG ulFlags, ULONG ulLen,
                                 LPBYTE lpStart, BOOKMARK *lppWhere) PURE;
-DECLARE_INTERFACE_(IMAPITable,IUnknown) { IMAPITable_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -834,10 +839,15 @@ DECLARE_INTERFACE_(IMAPITable,IUnknown) { IMAPITable_METHODS };
  * IMAPIAdviseSink interface
  */
 #define INTERFACE IMAPIAdviseSink
-#define IMAPIAdviseSink_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IMAPIAdviseSink,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPIAdviseSink methods ***/
     STDMETHOD(OnNotify)(THIS_ ULONG NumNotif, LPNOTIFICATION lpNotif) PURE;
-DECLARE_INTERFACE_(IMAPIAdviseSink,IUnknown) { IMAPIAdviseSink_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -853,24 +863,29 @@ DECLARE_INTERFACE_(IMAPIAdviseSink,IUnknown) { IMAPIAdviseSink_METHODS };
  * IMAPIProp interface
  */
 #define INTERFACE IMAPIProp
-#define IMAPIProp_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppErr) PURE; \
-    STDMETHOD(SaveChanges)(THIS_ ULONG ulFlags) PURE; \
-    STDMETHOD(GetProps)(THIS_ LPSPropTagArray lpPropTags, ULONG ulFlags, ULONG *lpValues, LPSPropValue *lppProps) PURE; \
-    STDMETHOD(GetPropList)(THIS_ ULONG  ulFlags, LPSPropTagArray *lppPropTagArray) PURE; \
-    STDMETHOD(OpenProperty)(THIS_ ULONG ulPropTag, LPCIID lpIid, ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lppUnk) PURE; \
-    STDMETHOD(SetProps)(THIS_ ULONG cValues, LPSPropValue lpProps, LPSPropProblemArray *lppProbs) PURE; \
-    STDMETHOD(DeleteProps)(THIS_ LPSPropTagArray lpPropTags, LPSPropProblemArray *lppProbs) PURE; \
-    STDMETHOD(CopyTo)(THIS_ ULONG ciidExclude, LPCIID lpIid, LPSPropTagArray lpProps, ULONG ulParam, \
-                      LPMAPIPROGRESS lpProgress, LPCIID lpIface,LPVOID lpDest, ULONG ulFlags, \
-                      LPSPropProblemArray *lppProbs) PURE; \
-    STDMETHOD(CopyProps)(THIS_ LPSPropTagArray lpIncludeProps, ULONG ulParam, LPMAPIPROGRESS lpProgress, \
-                         LPCIID lpIid, LPVOID lpDestObj, ULONG ulFlags, LPSPropProblemArray *lppProblems) PURE; \
-    STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount, \
-                               LPMAPINAMEID **lpppNames) PURE; \
+DECLARE_INTERFACE_(IMAPIProp,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPIProp methods ***/
+    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppErr) PURE;
+    STDMETHOD(SaveChanges)(THIS_ ULONG ulFlags) PURE;
+    STDMETHOD(GetProps)(THIS_ LPSPropTagArray lpPropTags, ULONG ulFlags, ULONG *lpValues, LPSPropValue *lppProps) PURE;
+    STDMETHOD(GetPropList)(THIS_ ULONG  ulFlags, LPSPropTagArray *lppPropTagArray) PURE;
+    STDMETHOD(OpenProperty)(THIS_ ULONG ulPropTag, LPCIID lpIid, ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lppUnk) PURE;
+    STDMETHOD(SetProps)(THIS_ ULONG cValues, LPSPropValue lpProps, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(DeleteProps)(THIS_ LPSPropTagArray lpPropTags, LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyTo)(THIS_ ULONG ciidExclude, LPCIID lpIid, LPSPropTagArray lpProps, ULONG ulParam,
+                      LPMAPIPROGRESS lpProgress, LPCIID lpIface,LPVOID lpDest, ULONG ulFlags,
+                      LPSPropProblemArray *lppProbs) PURE;
+    STDMETHOD(CopyProps)(THIS_ LPSPropTagArray lpIncludeProps, ULONG ulParam, LPMAPIPROGRESS lpProgress,
+                         LPCIID lpIid, LPVOID lpDestObj, ULONG ulFlags, LPSPropProblemArray *lppProblems) PURE;
+    STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount,
+                               LPMAPINAMEID **lpppNames) PURE;
     STDMETHOD(GetIDsFromNames)(THIS_ ULONG cPropNames, LPMAPINAMEID *lppNames, ULONG ulFlags, LPSPropTagArray *lppPropTags) PURE;
-DECLARE_INTERFACE_(IMAPIProp,IUnknown) { IMAPIProp_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

@@ -133,15 +133,20 @@ typedef struct _DSCDRIVERCAPS
  * IDsDriver interface
  */
 #define INTERFACE IDsDriver
-#define IDsDriver_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetDriverDesc)(THIS_ PDSDRIVERDESC pDsDriverDesc) PURE; \
-    STDMETHOD(Open)(THIS) PURE; \
-    STDMETHOD(Close)(THIS) PURE; \
-    STDMETHOD(GetCaps)(THIS_ PDSDRIVERCAPS pDsDrvCaps) PURE; \
-    STDMETHOD(CreateSoundBuffer)(THIS_ LPWAVEFORMATEX pwfx,DWORD dwFlags,DWORD dwCardAddress,LPDWORD pdwcbBufferSize,LPBYTE *ppbBuffer,LPVOID *ppvObj) PURE; \
+DECLARE_INTERFACE_(IDsDriver,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDsDriver methods ***/
+    STDMETHOD(GetDriverDesc)(THIS_ PDSDRIVERDESC pDsDriverDesc) PURE;
+    STDMETHOD(Open)(THIS) PURE;
+    STDMETHOD(Close)(THIS) PURE;
+    STDMETHOD(GetCaps)(THIS_ PDSDRIVERCAPS pDsDrvCaps) PURE;
+    STDMETHOD(CreateSoundBuffer)(THIS_ LPWAVEFORMATEX pwfx,DWORD dwFlags,DWORD dwCardAddress,LPDWORD pdwcbBufferSize,LPBYTE *ppbBuffer,LPVOID *ppvObj) PURE;
     STDMETHOD(DuplicateSoundBuffer)(THIS_ PIDSDRIVERBUFFER pIDsDriverBuffer,LPVOID *ppvObj) PURE;
-DECLARE_INTERFACE_(IDsDriver,IUnknown) { IDsDriver_METHODS };
+};
 #undef INTERFACE
 
 #if !defined (__cplusplus) || defined(CINTERFACE)
@@ -162,18 +167,23 @@ DECLARE_INTERFACE_(IDsDriver,IUnknown) { IDsDriver_METHODS };
  * IDsDriverBuffer interface
  */
 #define INTERFACE IDsDriverBuffer
-#define IDsDriverBuffer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Lock)(THIS_ LPVOID *ppvAudio1,LPDWORD pdwLen1,LPVOID *pdwAudio2,LPDWORD pdwLen2,DWORD dwWritePosition,DWORD dwWriteLen,DWORD dwFlags) PURE; \
-    STDMETHOD(Unlock)(THIS_ LPVOID pvAudio1,DWORD dwLen1,LPVOID pvAudio2,DWORD dwLen2) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX pwfxToSet) PURE; \
-    STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE; \
-    STDMETHOD(SetVolumePan)(THIS_ PDSVOLUMEPAN pDsVolumePan) PURE; \
-    STDMETHOD(SetPosition)(THIS_ DWORD dwNewPosition) PURE; \
-    STDMETHOD(GetPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor,LPDWORD lpdwCurrentWriteCursor) PURE; \
-    STDMETHOD(Play)(THIS_ DWORD dwReserved1,DWORD dwReserved2,DWORD dwFlags) PURE; \
+DECLARE_INTERFACE_(IDsDriverBuffer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDsDriverBuffer methods ***/
+    STDMETHOD(Lock)(THIS_ LPVOID *ppvAudio1,LPDWORD pdwLen1,LPVOID *pdwAudio2,LPDWORD pdwLen2,DWORD dwWritePosition,DWORD dwWriteLen,DWORD dwFlags) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID pvAudio1,DWORD dwLen1,LPVOID pvAudio2,DWORD dwLen2) PURE;
+    STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX pwfxToSet) PURE;
+    STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE;
+    STDMETHOD(SetVolumePan)(THIS_ PDSVOLUMEPAN pDsVolumePan) PURE;
+    STDMETHOD(SetPosition)(THIS_ DWORD dwNewPosition) PURE;
+    STDMETHOD(GetPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor,LPDWORD lpdwCurrentWriteCursor) PURE;
+    STDMETHOD(Play)(THIS_ DWORD dwReserved1,DWORD dwReserved2,DWORD dwFlags) PURE;
     STDMETHOD(Stop)(THIS) PURE;
-DECLARE_INTERFACE_(IDsDriverBuffer,IUnknown) { IDsDriverBuffer_METHODS };
+};
 #undef INTERFACE
 
 #if !defined (__cplusplus) || defined(CINTERFACE)
@@ -197,12 +207,17 @@ DECLARE_INTERFACE_(IDsDriverBuffer,IUnknown) { IDsDriverBuffer_METHODS };
  * IDsDriverPropertySet interface
  */
 #define INTERFACE IDsDriverPropertySet
-#define IDsDriverPropertySet_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Get)(THIS_ PDSPROPERTY pDsProperty,LPVOID pPropertyParams,ULONG cbPropertyParams,LPVOID pPropertyData,ULONG cbPropertyData,PULONG pcbReturnedData) PURE; \
-    STDMETHOD(Set)(THIS_ PDSPROPERTY pDsProperty,LPVOID pPropertyParams,ULONG cbPropertyParams,LPVOID pPropertyData,ULONG cbPropertyData) PURE; \
+DECLARE_INTERFACE_(IDsDriverPropertySet,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDsDriverPropertySet methods ***/
+    STDMETHOD(Get)(THIS_ PDSPROPERTY pDsProperty,LPVOID pPropertyParams,ULONG cbPropertyParams,LPVOID pPropertyData,ULONG cbPropertyData,PULONG pcbReturnedData) PURE;
+    STDMETHOD(Set)(THIS_ PDSPROPERTY pDsProperty,LPVOID pPropertyParams,ULONG cbPropertyParams,LPVOID pPropertyData,ULONG cbPropertyData) PURE;
     STDMETHOD(QuerySupport)(THIS_ REFGUID PropertySetId,ULONG PropertyId,PULONG pSupport) PURE;
-DECLARE_INTERFACE_(IDsDriverPropertySet,IUnknown) { IDsDriverPropertySet_METHODS };
+};
 #undef INTERFACE
 
 #if !defined (__cplusplus) || defined(CINTERFACE)
@@ -255,10 +270,15 @@ typedef enum
  * IDsDriverNotify interface
  */
 #define INTERFACE IDsDriverNotify
-#define IDsDriverNotify_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IDsDriverNotify,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDsDriverNotify methods ***/
     STDMETHOD(SetNotificationPositions)(THIS_ DWORD dwPositionNotifies,LPCDSBPOSITIONNOTIFY pcPositionNotifies) PURE;
-DECLARE_INTERFACE_(IDsDriverNotify,IUnknown) { IDsDriverNotify_METHODS };
+};
 #undef INTERFACE
 
 #if !defined (__cplusplus) || defined(CINTERFACE)
@@ -274,14 +294,19 @@ DECLARE_INTERFACE_(IDsDriverNotify,IUnknown) { IDsDriverNotify_METHODS };
  * IDsCaptureDriver interface
  */
 #define INTERFACE IDsCaptureDriver
-#define IDsCaptureDriver_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetDriverDesc)(THIS_ PDSDRIVERDESC pDsDriverDesc) PURE; \
-    STDMETHOD(Open)(THIS) PURE; \
-    STDMETHOD(Close)(THIS) PURE; \
-    STDMETHOD(GetCaps)(THIS_ PDSCDRIVERCAPS pDsDrvCaps) PURE; \
+DECLARE_INTERFACE_(IDsCaptureDriver,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDsCaptureDriver methods ***/
+    STDMETHOD(GetDriverDesc)(THIS_ PDSDRIVERDESC pDsDriverDesc) PURE;
+    STDMETHOD(Open)(THIS) PURE;
+    STDMETHOD(Close)(THIS) PURE;
+    STDMETHOD(GetCaps)(THIS_ PDSCDRIVERCAPS pDsDrvCaps) PURE;
     STDMETHOD(CreateCaptureBuffer)(THIS_ LPWAVEFORMATEX pwfx,DWORD dwFlags,DWORD dwCardAddress,LPDWORD pdwcbBufferSize,LPBYTE *ppbBuffer,LPVOID *ppvObj) PURE;
-DECLARE_INTERFACE_(IDsCaptureDriver,IUnknown) { IDsCaptureDriver_METHODS };
+};
 #undef INTERFACE
 
 #if !defined (__cplusplus) || defined(CINTERFACE)
@@ -301,16 +326,21 @@ DECLARE_INTERFACE_(IDsCaptureDriver,IUnknown) { IDsCaptureDriver_METHODS };
  * IDsCaptureDriverBuffer interface
  */
 #define INTERFACE IDsCaptureDriverBuffer
-#define IDsCaptureDriverBuffer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Lock)(THIS_ LPVOID *ppvAudio1,LPDWORD pdwLen1,LPVOID *ppvAudio2,LPDWORD pdwLen2,DWORD dwWritePosition,DWORD dwWriteLen,DWORD dwFlags) PURE; \
-    STDMETHOD(Unlock)(THIS_ LPVOID pvAudio1,DWORD dwLen1,LPVOID pvAudio2,DWORD dwLen2) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX pwfxToSet) PURE; \
-    STDMETHOD(GetPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor,LPDWORD lpdwCurrentWriteCursor) PURE; \
-    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE; \
+DECLARE_INTERFACE_(IDsCaptureDriverBuffer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDsCaptureDriverBuffer methods ***/
+    STDMETHOD(Lock)(THIS_ LPVOID *ppvAudio1,LPDWORD pdwLen1,LPVOID *ppvAudio2,LPDWORD pdwLen2,DWORD dwWritePosition,DWORD dwWriteLen,DWORD dwFlags) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID pvAudio1,DWORD dwLen1,LPVOID pvAudio2,DWORD dwLen2) PURE;
+    STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX pwfxToSet) PURE;
+    STDMETHOD(GetPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor,LPDWORD lpdwCurrentWriteCursor) PURE;
+    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
+    STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE;
     STDMETHOD(Stop)(THIS) PURE;
-DECLARE_INTERFACE_(IDsCaptureDriverBuffer,IUnknown) { IDsCaptureDriverBuffer_METHODS };
+};
 #undef INTERFACE
 
 #if !defined (__cplusplus) || defined(CINTERFACE)

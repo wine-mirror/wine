@@ -659,37 +659,47 @@ DECL_WINELIB_TYPE_AW(LPOLEUICHANGESOURCE)
  * IOleUILinkContainer interface
  */
 #define INTERFACE   IOleUILinkContainerA
-#define IOleUILinkContainerA_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE; \
-    STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD dwUpdateOpt) PURE; \
-    STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD *lpdwUpdateOpt) PURE; \
-    STDMETHOD(SetLinkSource)(THIS_ DWORD dwLink, LPSTR lpszDisplayName, \
-                ULONG lenFileName, ULONG *pchEaten, BOOL fValidateSource) PURE; \
-    STDMETHOD(GetLinkSource)(THIS_ DWORD dwLink, LPSTR *lplpszDisplayName, ULONG *lplenFileName, \
-                LPSTR *lplpszFullLinkType,  LPSTR *lplpszShortLinkType, \
-                BOOL *lpfSourceAvailable,  BOOL *lpfIsSelected) PURE; \
-    STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE; \
-    STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE; \
+DECLARE_INTERFACE_(IOleUILinkContainerA,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IOleUILinkContainerA methods ***/
+    STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD dwUpdateOpt) PURE;
+    STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD *lpdwUpdateOpt) PURE;
+    STDMETHOD(SetLinkSource)(THIS_ DWORD dwLink, LPSTR lpszDisplayName,
+                ULONG lenFileName, ULONG *pchEaten, BOOL fValidateSource) PURE;
+    STDMETHOD(GetLinkSource)(THIS_ DWORD dwLink, LPSTR *lplpszDisplayName, ULONG *lplenFileName,
+                LPSTR *lplpszFullLinkType,  LPSTR *lplpszShortLinkType,
+                BOOL *lpfSourceAvailable,  BOOL *lpfIsSelected) PURE;
+    STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE;
     STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
-DECLARE_INTERFACE_(IOleUILinkContainerA, IUnknown) { IOleUILinkContainerA_METHODS };
+};
 #undef INTERFACE
 
 #define INTERFACE   IOleUILinkContainerW
-#define IOleUILinkContainerW_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE; \
-    STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD dwUpdateOpt) PURE; \
-    STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD *lpdwUpdateOpt) PURE; \
-    STDMETHOD(SetLinkSource)(THIS_ DWORD dwLink,  LPWSTR lpszDisplayName, \
-                ULONG lenFileName,  ULONG *pchEaten,  BOOL fValidateSource) PURE; \
-    STDMETHOD(GetLinkSource)(THIS_ DWORD dwLink, LPWSTR *lplpszDisplayName, ULONG *lplenFileName, \
-                LPWSTR *lplpszFullLinkType,  LPWSTR *lplpszShortLinkType, \
-                BOOL *lpfSourceAvailable,  BOOL *lpfIsSelected) PURE; \
-    STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE; \
-    STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE; \
+DECLARE_INTERFACE_(IOleUILinkContainerW,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IOleUILinkContainerW methods ***/
+    STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD dwUpdateOpt) PURE;
+    STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD *lpdwUpdateOpt) PURE;
+    STDMETHOD(SetLinkSource)(THIS_ DWORD dwLink,  LPWSTR lpszDisplayName,
+                ULONG lenFileName,  ULONG *pchEaten,  BOOL fValidateSource) PURE;
+    STDMETHOD(GetLinkSource)(THIS_ DWORD dwLink, LPWSTR *lplpszDisplayName, ULONG *lplenFileName,
+                LPWSTR *lplpszFullLinkType,  LPWSTR *lplpszShortLinkType,
+                BOOL *lpfSourceAvailable,  BOOL *lpfIsSelected) PURE;
+    STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE;
     STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
-DECLARE_INTERFACE_(IOleUILinkContainerW, IUnknown) { IOleUILinkContainerW_METHODS };
+};
 #undef INTERFACE
 
 DECL_WINELIB_TYPE_AW(IOleUILinkContainer)
@@ -717,17 +727,51 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKCONTAINER)
  * IOleUILinkInfo interface
  */
 #define INTERFACE   IOleUILinkInfoA
-#define IOleUILinkInfoA_METHODS \
-    IOleUILinkContainerA_METHODS \
+DECLARE_INTERFACE_(IOleUILinkInfoA,IOleUILinkContainerA)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IOleUILinkContainerA methods ***/
+    STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD dwUpdateOpt) PURE;
+    STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD *lpdwUpdateOpt) PURE;
+    STDMETHOD(SetLinkSource)(THIS_ DWORD dwLink, LPSTR lpszDisplayName,
+                ULONG lenFileName, ULONG *pchEaten, BOOL fValidateSource) PURE;
+    STDMETHOD(GetLinkSource)(THIS_ DWORD dwLink, LPSTR *lplpszDisplayName, ULONG *lplenFileName,
+                LPSTR *lplpszFullLinkType,  LPSTR *lplpszShortLinkType,
+                BOOL *lpfSourceAvailable,  BOOL *lpfIsSelected) PURE;
+    STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE;
+    STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
+    /*** IOleUILinkInfoA methods ***/
     STDMETHOD(GetLastUpdate)(THIS_ DWORD dwLink,  FILETIME *lpLastUpdate) PURE;
-DECLARE_INTERFACE_(IOleUILinkInfoA, IOleUILinkContainerA) { IOleUILinkInfoA_METHODS };
+};
 #undef INTERFACE
 
 #define INTERFACE   IOleUILinkInfoW
-#define IOleUILinkInfoW_METHODS \
-    IOleUILinkContainerW_METHODS \
+DECLARE_INTERFACE_(IOleUILinkInfoW,IOleUILinkContainerW)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IOleUILinkContainerW methods ***/
+    STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD dwUpdateOpt) PURE;
+    STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD *lpdwUpdateOpt) PURE;
+    STDMETHOD(SetLinkSource)(THIS_ DWORD dwLink,  LPWSTR lpszDisplayName,
+                ULONG lenFileName,  ULONG *pchEaten,  BOOL fValidateSource) PURE;
+    STDMETHOD(GetLinkSource)(THIS_ DWORD dwLink, LPWSTR *lplpszDisplayName, ULONG *lplenFileName,
+                LPWSTR *lplpszFullLinkType,  LPWSTR *lplpszShortLinkType,
+                BOOL *lpfSourceAvailable,  BOOL *lpfIsSelected) PURE;
+    STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE;
+    STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE;
+    STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
+    /*** IOleUILinkInfoW methods ***/
     STDMETHOD(GetLastUpdate)(THIS_ DWORD dwLink,  FILETIME *lpLastUpdate) PURE;
-DECLARE_INTERFACE_(IOleUILinkInfoW, IOleUILinkContainerW) { IOleUILinkInfoW_METHODS };
+};
 #undef  INTERFACE
 
 DECL_WINELIB_TYPE_AW(IOleUILinkInfo)
@@ -757,31 +801,41 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
  * IOleUIObjInfo interface
  */
 #define INTERFACE   IOleUIObjInfoA
-#define IOleUIObjInfoA_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetObjectInfo)(THIS_ DWORD dwObject, DWORD *lpdwObjSize, LPSTR *lplpszLabel, \
-                LPSTR *lplpszType, LPSTR *lplpszShortType, LPSTR *lplpszLocation) PURE; \
-    STDMETHOD(GetConvertInfo)(THIS_ DWORD dwObject, CLSID *lpClassID, WORD *lpwFormat, \
-                CLSID *lpConvertDefaultClassID, LPCLSID *lplpClsidExclude, UINT *lpcClsidExclude) PURE; \
-    STDMETHOD(ConvertObject)(THIS_ DWORD dwObject,  REFCLSID clsidNew) PURE; \
-    STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE; \
-    STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect, \
+DECLARE_INTERFACE_(IOleUIObjInfoA,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IOleUIObjInfoA methods ***/
+    STDMETHOD(GetObjectInfo)(THIS_ DWORD dwObject, DWORD *lpdwObjSize, LPSTR *lplpszLabel,
+                LPSTR *lplpszType, LPSTR *lplpszShortType, LPSTR *lplpszLocation) PURE;
+    STDMETHOD(GetConvertInfo)(THIS_ DWORD dwObject, CLSID *lpClassID, WORD *lpwFormat,
+                CLSID *lpConvertDefaultClassID, LPCLSID *lplpClsidExclude, UINT *lpcClsidExclude) PURE;
+    STDMETHOD(ConvertObject)(THIS_ DWORD dwObject,  REFCLSID clsidNew) PURE;
+    STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE;
+    STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect,
                 INT nCurrentScale, BOOL bRelativeToOrig) PURE;
-DECLARE_INTERFACE_(IOleUIObjInfoA, IUnknown) { IOleUIObjInfoA_METHODS };
+};
 #undef INTERFACE
 
 #define INTERFACE   IOleUIObjInfoW
-#define IOleUIObjInfoW_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetObjectInfo)(THIS_ DWORD dwObject, DWORD *lpdwObjSize, LPWSTR *lplpszLabel, \
-                LPWSTR *lplpszType,  LPWSTR *lplpszShortType,  LPWSTR *lplpszLocation) PURE; \
-    STDMETHOD(GetConvertInfo)(THIS_ DWORD dwObject, CLSID *lpClassID, WORD *lpwFormat, \
-                CLSID *lpConvertDefaultClassID, LPCLSID *lplpClsidExclude, UINT *lpcClsidExclude) PURE; \
-    STDMETHOD(ConvertObject)(THIS_ DWORD dwObject,  REFCLSID clsidNew) PURE; \
-    STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE; \
-    STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect, \
+DECLARE_INTERFACE_(IOleUIObjInfoW,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IOleUIObjInfoW methods ***/
+    STDMETHOD(GetObjectInfo)(THIS_ DWORD dwObject, DWORD *lpdwObjSize, LPWSTR *lplpszLabel,
+                LPWSTR *lplpszType,  LPWSTR *lplpszShortType,  LPWSTR *lplpszLocation) PURE;
+    STDMETHOD(GetConvertInfo)(THIS_ DWORD dwObject, CLSID *lpClassID, WORD *lpwFormat,
+                CLSID *lpConvertDefaultClassID, LPCLSID *lplpClsidExclude, UINT *lpcClsidExclude) PURE;
+    STDMETHOD(ConvertObject)(THIS_ DWORD dwObject,  REFCLSID clsidNew) PURE;
+    STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE;
+    STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect,
                 INT nCurrentScale, BOOL bRelativeToOrig) PURE;
-DECLARE_INTERFACE_(IOleUIObjInfoW, IUnknown) { IOleUIObjInfoW_METHODS };
+};
 #undef INTERFACE
 
 DECL_WINELIB_TYPE_AW(IOleUIObjInfo)

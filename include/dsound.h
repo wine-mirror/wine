@@ -420,17 +420,22 @@ extern HRESULT WINAPI GetDeviceID(LPCGUID lpGuidSrc, LPGUID lpGuidDest);
  * IDirectSound interface
  */
 #define INTERFACE IDirectSound
-#define IDirectSound_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
-    STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE; \
-    STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER lpDsbOriginal, LPLPDIRECTSOUNDBUFFER lplpDsbDuplicate) PURE; \
-    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE; \
-    STDMETHOD(Compact)(THIS) PURE; \
-    STDMETHOD(GetSpeakerConfig)(THIS_ LPDWORD lpdwSpeakerConfig) PURE; \
-    STDMETHOD(SetSpeakerConfig)(THIS_ DWORD dwSpeakerConfig) PURE; \
+DECLARE_INTERFACE_(IDirectSound,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSound methods ***/
+    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE;
+    STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER lpDsbOriginal, LPLPDIRECTSOUNDBUFFER lplpDsbDuplicate) PURE;
+    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE;
+    STDMETHOD(Compact)(THIS) PURE;
+    STDMETHOD(GetSpeakerConfig)(THIS_ LPDWORD lpdwSpeakerConfig) PURE;
+    STDMETHOD(SetSpeakerConfig)(THIS_ DWORD dwSpeakerConfig) PURE;
     STDMETHOD(Initialize)(THIS_ LPCGUID lpcGuid) PURE;
-DECLARE_INTERFACE_(IDirectSound,IUnknown) { IDirectSound_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -468,18 +473,23 @@ DECLARE_INTERFACE_(IDirectSound,IUnknown) { IDirectSound_METHODS };
  * IDirectSound8 interface
  */
 #define INTERFACE IDirectSound8
-#define IDirectSound8_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
-    STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE; \
-    STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER lpDsbOriginal, LPLPDIRECTSOUNDBUFFER lplpDsbDuplicate) PURE; \
-    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE; \
-    STDMETHOD(Compact)(THIS) PURE; \
-    STDMETHOD(GetSpeakerConfig)(THIS_ LPDWORD lpdwSpeakerConfig) PURE; \
-    STDMETHOD(SetSpeakerConfig)(THIS_ DWORD dwSpeakerConfig) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPCGUID lpcGuid) PURE; \
+DECLARE_INTERFACE_(IDirectSound8,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSound8 methods ***/
+    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE;
+    STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER lpDsbOriginal, LPLPDIRECTSOUNDBUFFER lplpDsbDuplicate) PURE;
+    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE;
+    STDMETHOD(Compact)(THIS) PURE;
+    STDMETHOD(GetSpeakerConfig)(THIS_ LPDWORD lpdwSpeakerConfig) PURE;
+    STDMETHOD(SetSpeakerConfig)(THIS_ DWORD dwSpeakerConfig) PURE;
+    STDMETHOD(Initialize)(THIS_ LPCGUID lpcGuid) PURE;
     STDMETHOD(VerifyCertification)(THIS_ LPDWORD pdwCertified) PURE;
-DECLARE_INTERFACE_(IDirectSound8,IUnknown) { IDirectSound8_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -521,27 +531,32 @@ DECLARE_INTERFACE_(IDirectSound8,IUnknown) { IDirectSound8_METHODS };
  * IDirectSoundBuffer interface
  */
 #define INTERFACE IDirectSoundBuffer
-#define IDirectSoundBuffer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetCaps)(THIS_ LPDSBCAPS lpDSBufferCaps) PURE; \
-    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor, LPDWORD lpdwCurrentWriteCursor) PURE; \
-    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE; \
-    STDMETHOD(GetVolume)(THIS_ LPLONG lplVolume) PURE; \
-    STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE; \
-    STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE; \
-    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE; \
-    STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE; \
-    STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE; \
-    STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE; \
-    STDMETHOD(SetVolume)(THIS_ LONG lVolume) PURE; \
-    STDMETHOD(SetPan)(THIS_ LONG lPan) PURE; \
-    STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE; \
-    STDMETHOD(Stop)(THIS) PURE; \
-    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE; \
+DECLARE_INTERFACE_(IDirectSoundBuffer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundBuffer methods ***/
+    STDMETHOD(GetCaps)(THIS_ LPDSBCAPS lpDSBufferCaps) PURE;
+    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor, LPDWORD lpdwCurrentWriteCursor) PURE;
+    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE;
+    STDMETHOD(GetVolume)(THIS_ LPLONG lplVolume) PURE;
+    STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE;
+    STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
+    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE;
+    STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE;
+    STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE;
+    STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE;
+    STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE;
+    STDMETHOD(SetVolume)(THIS_ LONG lVolume) PURE;
+    STDMETHOD(SetPan)(THIS_ LONG lPan) PURE;
+    STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE;
+    STDMETHOD(Stop)(THIS) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE;
     STDMETHOD(Restore)(THIS) PURE;
-DECLARE_INTERFACE_(IDirectSoundBuffer,IUnknown) { IDirectSoundBuffer_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -599,30 +614,35 @@ DECLARE_INTERFACE_(IDirectSoundBuffer,IUnknown) { IDirectSoundBuffer_METHODS };
  * IDirectSoundBuffer8 interface
  */
 #define INTERFACE IDirectSoundBuffer8
-#define IDirectSoundBuffer8_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetCaps)(THIS_ LPDSBCAPS lpDSBufferCaps) PURE; \
-    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor, LPDWORD lpdwCurrentWriteCursor) PURE; \
-    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE; \
-    STDMETHOD(GetVolume)(THIS_ LPLONG lplVolume) PURE; \
-    STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE; \
-    STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE; \
-    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE; \
-    STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE; \
-    STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE; \
-    STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE; \
-    STDMETHOD(SetVolume)(THIS_ LONG lVolume) PURE; \
-    STDMETHOD(SetPan)(THIS_ LONG lPan) PURE; \
-    STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE; \
-    STDMETHOD(Stop)(THIS) PURE; \
-    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE; \
-    STDMETHOD(Restore)(THIS) PURE; \
-    STDMETHOD(SetFX)(THIS_ DWORD dwEffectsCount, LPDSEFFECTDESC pDSFXDesc, LPDWORD pdwResultCodes) PURE; \
-    STDMETHOD(AcquireResources)(THIS_ DWORD dwFlags, DWORD dwEffectsCount, LPDWORD pdwResultCodes) PURE; \
+DECLARE_INTERFACE_(IDirectSoundBuffer8,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundBuffer8 methods ***/
+    STDMETHOD(GetCaps)(THIS_ LPDSBCAPS lpDSBufferCaps) PURE;
+    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor, LPDWORD lpdwCurrentWriteCursor) PURE;
+    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE;
+    STDMETHOD(GetVolume)(THIS_ LPLONG lplVolume) PURE;
+    STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE;
+    STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
+    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE;
+    STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE;
+    STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE;
+    STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE;
+    STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE;
+    STDMETHOD(SetVolume)(THIS_ LONG lVolume) PURE;
+    STDMETHOD(SetPan)(THIS_ LONG lPan) PURE;
+    STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE;
+    STDMETHOD(Stop)(THIS) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioPtr2) PURE;
+    STDMETHOD(Restore)(THIS) PURE;
+    STDMETHOD(SetFX)(THIS_ DWORD dwEffectsCount, LPDSEFFECTDESC pDSFXDesc, LPDWORD pdwResultCodes) PURE;
+    STDMETHOD(AcquireResources)(THIS_ DWORD dwFlags, DWORD dwEffectsCount, LPDWORD pdwResultCodes) PURE;
     STDMETHOD(GetObjectInPath)(THIS_ REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, LPVOID *ppObject) PURE;
-DECLARE_INTERFACE_(IDirectSoundBuffer8,IUnknown) { IDirectSoundBuffer8_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -688,12 +708,17 @@ DECLARE_INTERFACE_(IDirectSoundBuffer8,IUnknown) { IDirectSoundBuffer8_METHODS }
  * IDirectSoundCapture interface
  */
 #define INTERFACE IDirectSoundCapture
-#define IDirectSoundCapture_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(CreateCaptureBuffer)(THIS_ LPCDSCBUFFERDESC lpcDSCBufferDesc,LPDIRECTSOUNDCAPTUREBUFFER *lplpDSCaptureBuffer, LPUNKNOWN pUnk) PURE; \
-    STDMETHOD(GetCaps)(THIS_ LPDSCCAPS lpDSCCaps) PURE; \
+DECLARE_INTERFACE_(IDirectSoundCapture,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundCapture methods ***/
+    STDMETHOD(CreateCaptureBuffer)(THIS_ LPCDSCBUFFERDESC lpcDSCBufferDesc,LPDIRECTSOUNDCAPTUREBUFFER *lplpDSCaptureBuffer, LPUNKNOWN pUnk) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDSCCAPS lpDSCCaps) PURE;
     STDMETHOD(Initialize)(THIS_ LPCGUID lpcGUID) PURE;
-DECLARE_INTERFACE_(IDirectSoundCapture,IUnknown) { IDirectSoundCapture_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -720,18 +745,23 @@ DECLARE_INTERFACE_(IDirectSoundCapture,IUnknown) { IDirectSoundCapture_METHODS }
  * IDirectSoundCaptureBuffer interface
  */
 #define INTERFACE IDirectSoundCaptureBuffer
-#define IDirectSoundCaptureBuffer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetCaps)(THIS_ LPDSCBCAPS lpDSCBCaps) PURE; \
-    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCapturePosition,LPDWORD lpdwReadPosition) PURE; \
-    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE; \
-    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUNDCAPTURE lpDSC, LPCDSCBUFFERDESC lpcDSCBDesc) PURE; \
-    STDMETHOD(Lock)(THIS_ DWORD dwReadCusor, DWORD dwReadBytes, LPVOID *lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID *lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE; \
-    STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE; \
-    STDMETHOD(Stop)(THIS) PURE; \
+DECLARE_INTERFACE_(IDirectSoundCaptureBuffer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundCaptureBuffer methods ***/
+    STDMETHOD(GetCaps)(THIS_ LPDSCBCAPS lpDSCBCaps) PURE;
+    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCapturePosition,LPDWORD lpdwReadPosition) PURE;
+    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE;
+    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUNDCAPTURE lpDSC, LPCDSCBUFFERDESC lpcDSCBDesc) PURE;
+    STDMETHOD(Lock)(THIS_ DWORD dwReadCusor, DWORD dwReadBytes, LPVOID *lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID *lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE;
+    STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(Stop)(THIS) PURE;
     STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioBytes2) PURE;
-DECLARE_INTERFACE_(IDirectSoundCaptureBuffer,IUnknown) { IDirectSoundCaptureBuffer_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -770,11 +800,26 @@ DECLARE_INTERFACE_(IDirectSoundCaptureBuffer,IUnknown) { IDirectSoundCaptureBuff
  * IDirectSoundCaptureBuffer8 interface
  */
 #define INTERFACE IDirectSoundCaptureBuffer8
-#define IDirectSoundCaptureBuffer8_METHODS \
-    IDirectSoundCaptureBuffer_METHODS \
-    STDMETHOD(GetObjectInPath)(THIS_ REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, LPVOID *ppObject) PURE; \
+DECLARE_INTERFACE_(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundCaptureBuffer methods ***/
+    STDMETHOD(GetCaps)(THIS_ LPDSCBCAPS lpDSCBCaps) PURE;
+    STDMETHOD(GetCurrentPosition)(THIS_ LPDWORD lpdwCapturePosition,LPDWORD lpdwReadPosition) PURE;
+    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX lpwfxFormat, DWORD dwSizeAllocated, LPDWORD lpdwSizeWritten) PURE;
+    STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE;
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUNDCAPTURE lpDSC, LPCDSCBUFFERDESC lpcDSCBDesc) PURE;
+    STDMETHOD(Lock)(THIS_ DWORD dwReadCusor, DWORD dwReadBytes, LPVOID *lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID *lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE;
+    STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE;
+    STDMETHOD(Stop)(THIS) PURE;
+    STDMETHOD(Unlock)(THIS_ LPVOID lpvAudioPtr1, DWORD dwAudioBytes1, LPVOID lpvAudioPtr2, DWORD dwAudioBytes2) PURE;
+    /*** IDirectSoundCaptureBuffer8 methods ***/
+    STDMETHOD(GetObjectInPath)(THIS_ REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, LPVOID *ppObject) PURE;
     STDMETHOD(GetFXStatus)(THIS_ DWORD dwFXCount, LPDWORD pdwFXStatus) PURE;
-DECLARE_INTERFACE_(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer) { IDirectSoundCaptureBuffer8_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -823,10 +868,15 @@ DECLARE_INTERFACE_(IDirectSoundCaptureBuffer8,IDirectSoundCaptureBuffer) { IDire
 #define DSBPN_OFFSETSTOP		-1
 
 #define INTERFACE IDirectSoundNotify
-#define IDirectSoundNotify_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IDirectSoundNotify,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundNotify methods ***/
     STDMETHOD(SetNotificationPositions)(THIS_ DWORD cPositionNotifies, LPCDSBPOSITIONNOTIFY lpcPositionNotifies) PURE;
-DECLARE_INTERFACE_(IDirectSoundNotify,IUnknown) { IDirectSoundNotify_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -891,24 +941,29 @@ typedef struct _DS3DLISTENER {
 typedef const DS3DLISTENER *LPCDS3DLISTENER;
 
 #define INTERFACE IDirectSound3DListener
-#define IDirectSound3DListener_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetAllParameters)(THIS_ LPDS3DLISTENER lpListener) PURE; \
-    STDMETHOD(GetDistanceFactor)(THIS_ LPD3DVALUE lpflDistanceFactor) PURE; \
-    STDMETHOD(GetDopplerFactor)(THIS_ LPD3DVALUE lpflDopplerFactor) PURE; \
-    STDMETHOD(GetOrientation)(THIS_ LPD3DVECTOR lpvOrientFront, LPD3DVECTOR lpvOrientTop) PURE; \
-    STDMETHOD(GetPosition)(THIS_ LPD3DVECTOR lpvPosition) PURE; \
-    STDMETHOD(GetRolloffFactor)(THIS_ LPD3DVALUE lpflRolloffFactor) PURE; \
-    STDMETHOD(GetVelocity)(THIS_ LPD3DVECTOR lpvVelocity) PURE; \
-    STDMETHOD(SetAllParameters)(THIS_ LPCDS3DLISTENER lpcListener, DWORD dwApply) PURE; \
-    STDMETHOD(SetDistanceFactor)(THIS_ D3DVALUE flDistanceFactor, DWORD dwApply) PURE; \
-    STDMETHOD(SetDopplerFactor)(THIS_ D3DVALUE flDopplerFactor, DWORD dwApply) PURE; \
-    STDMETHOD(SetOrientation)(THIS_ D3DVALUE xFront, D3DVALUE yFront, D3DVALUE zFront, D3DVALUE xTop, D3DVALUE yTop, D3DVALUE zTop, DWORD dwApply) PURE; \
-    STDMETHOD(SetPosition)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE; \
-    STDMETHOD(SetRolloffFactor)(THIS_ D3DVALUE flRolloffFactor, DWORD dwApply) PURE; \
-    STDMETHOD(SetVelocity)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE; \
+DECLARE_INTERFACE_(IDirectSound3DListener,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSound3DListener methods ***/
+    STDMETHOD(GetAllParameters)(THIS_ LPDS3DLISTENER lpListener) PURE;
+    STDMETHOD(GetDistanceFactor)(THIS_ LPD3DVALUE lpflDistanceFactor) PURE;
+    STDMETHOD(GetDopplerFactor)(THIS_ LPD3DVALUE lpflDopplerFactor) PURE;
+    STDMETHOD(GetOrientation)(THIS_ LPD3DVECTOR lpvOrientFront, LPD3DVECTOR lpvOrientTop) PURE;
+    STDMETHOD(GetPosition)(THIS_ LPD3DVECTOR lpvPosition) PURE;
+    STDMETHOD(GetRolloffFactor)(THIS_ LPD3DVALUE lpflRolloffFactor) PURE;
+    STDMETHOD(GetVelocity)(THIS_ LPD3DVECTOR lpvVelocity) PURE;
+    STDMETHOD(SetAllParameters)(THIS_ LPCDS3DLISTENER lpcListener, DWORD dwApply) PURE;
+    STDMETHOD(SetDistanceFactor)(THIS_ D3DVALUE flDistanceFactor, DWORD dwApply) PURE;
+    STDMETHOD(SetDopplerFactor)(THIS_ D3DVALUE flDopplerFactor, DWORD dwApply) PURE;
+    STDMETHOD(SetOrientation)(THIS_ D3DVALUE xFront, D3DVALUE yFront, D3DVALUE zFront, D3DVALUE xTop, D3DVALUE yTop, D3DVALUE zTop, DWORD dwApply) PURE;
+    STDMETHOD(SetPosition)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
+    STDMETHOD(SetRolloffFactor)(THIS_ D3DVALUE flRolloffFactor, DWORD dwApply) PURE;
+    STDMETHOD(SetVelocity)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
     STDMETHOD(CommitDeferredSettings)(THIS) PURE;
-DECLARE_INTERFACE_(IDirectSound3DListener,IUnknown) { IDirectSound3DListener_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -975,27 +1030,32 @@ typedef struct  _DS3DBUFFER {
 typedef const DS3DBUFFER *LPCDS3DBUFFER;
 
 #define INTERFACE IDirectSound3DBuffer
-#define IDirectSound3DBuffer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetAllParameters)(THIS_ LPDS3DBUFFER lpDs3dBuffer) PURE; \
-    STDMETHOD(GetConeAngles)(THIS_ LPDWORD lpdwInsideConeAngle, LPDWORD lpdwOutsideConeAngle) PURE; \
-    STDMETHOD(GetConeOrientation)(THIS_ LPD3DVECTOR lpvOrientation) PURE; \
-    STDMETHOD(GetConeOutsideVolume)(THIS_ LPLONG lplConeOutsideVolume) PURE; \
-    STDMETHOD(GetMaxDistance)(THIS_ LPD3DVALUE lpflMaxDistance) PURE; \
-    STDMETHOD(GetMinDistance)(THIS_ LPD3DVALUE lpflMinDistance) PURE; \
-    STDMETHOD(GetMode)(THIS_ LPDWORD lpwdMode) PURE; \
-    STDMETHOD(GetPosition)(THIS_ LPD3DVECTOR lpvPosition) PURE; \
-    STDMETHOD(GetVelocity)(THIS_ LPD3DVECTOR lpvVelocity) PURE; \
-    STDMETHOD(SetAllParameters)(THIS_ LPCDS3DBUFFER lpcDs3dBuffer, DWORD dwApply) PURE; \
-    STDMETHOD(SetConeAngles)(THIS_ DWORD dwInsideConeAngle, DWORD dwOutsideConeAngle, DWORD dwApply) PURE; \
-    STDMETHOD(SetConeOrientation)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE; \
-    STDMETHOD(SetConeOutsideVolume)(THIS_ LONG lConeOutsideVolume, DWORD dwApply) PURE; \
-    STDMETHOD(SetMaxDistance)(THIS_ D3DVALUE flMaxDistance, DWORD dwApply) PURE; \
-    STDMETHOD(SetMinDistance)(THIS_ D3DVALUE flMinDistance, DWORD dwApply) PURE; \
-    STDMETHOD(SetMode)(THIS_ DWORD dwMode, DWORD dwApply) PURE; \
-    STDMETHOD(SetPosition)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE; \
+DECLARE_INTERFACE_(IDirectSound3DBuffer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSound3DBuffer methods ***/
+    STDMETHOD(GetAllParameters)(THIS_ LPDS3DBUFFER lpDs3dBuffer) PURE;
+    STDMETHOD(GetConeAngles)(THIS_ LPDWORD lpdwInsideConeAngle, LPDWORD lpdwOutsideConeAngle) PURE;
+    STDMETHOD(GetConeOrientation)(THIS_ LPD3DVECTOR lpvOrientation) PURE;
+    STDMETHOD(GetConeOutsideVolume)(THIS_ LPLONG lplConeOutsideVolume) PURE;
+    STDMETHOD(GetMaxDistance)(THIS_ LPD3DVALUE lpflMaxDistance) PURE;
+    STDMETHOD(GetMinDistance)(THIS_ LPD3DVALUE lpflMinDistance) PURE;
+    STDMETHOD(GetMode)(THIS_ LPDWORD lpwdMode) PURE;
+    STDMETHOD(GetPosition)(THIS_ LPD3DVECTOR lpvPosition) PURE;
+    STDMETHOD(GetVelocity)(THIS_ LPD3DVECTOR lpvVelocity) PURE;
+    STDMETHOD(SetAllParameters)(THIS_ LPCDS3DBUFFER lpcDs3dBuffer, DWORD dwApply) PURE;
+    STDMETHOD(SetConeAngles)(THIS_ DWORD dwInsideConeAngle, DWORD dwOutsideConeAngle, DWORD dwApply) PURE;
+    STDMETHOD(SetConeOrientation)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
+    STDMETHOD(SetConeOutsideVolume)(THIS_ LONG lConeOutsideVolume, DWORD dwApply) PURE;
+    STDMETHOD(SetMaxDistance)(THIS_ D3DVALUE flMaxDistance, DWORD dwApply) PURE;
+    STDMETHOD(SetMinDistance)(THIS_ D3DVALUE flMinDistance, DWORD dwApply) PURE;
+    STDMETHOD(SetMode)(THIS_ DWORD dwMode, DWORD dwApply) PURE;
+    STDMETHOD(SetPosition)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
     STDMETHOD(SetVelocity)(THIS_ D3DVALUE x, D3DVALUE y, D3DVALUE z, DWORD dwApply) PURE;
-DECLARE_INTERFACE_(IDirectSound3DBuffer,IUnknown) { IDirectSound3DBuffer_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1062,12 +1122,17 @@ DEFINE_GUID(IID_IKsPropertySet,0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00
 #define KSPROPERTY_SUPPORT_SET	2
 
 #define INTERFACE IKsPropertySet
-#define IKsPropertySet_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Get)(THIS_ REFGUID rgid,ULONG x1,LPVOID p1,ULONG x2,LPVOID p2,ULONG x3,ULONG *px4) PURE;\
-    STDMETHOD(Set)(THIS_ REFGUID rgid,ULONG x1,LPVOID p1,ULONG x2,LPVOID p2,ULONG x3) PURE;\
+DECLARE_INTERFACE_(IKsPropertySet,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IKsPropertySet methods ***/
+    STDMETHOD(Get)(THIS_ REFGUID rgid,ULONG x1,LPVOID p1,ULONG x2,LPVOID p2,ULONG x3,ULONG *px4) PURE;
+    STDMETHOD(Set)(THIS_ REFGUID rgid,ULONG x1,LPVOID p1,ULONG x2,LPVOID p2,ULONG x3) PURE;
     STDMETHOD(QuerySupport)(THIS_ REFGUID rgid,ULONG x1,ULONG *px2) PURE;
-DECLARE_INTERFACE_(IKsPropertySet,IUnknown) { IKsPropertySet_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1096,10 +1161,15 @@ DECLARE_INTERFACE_(IKsPropertySet,IUnknown) { IKsPropertySet_METHODS };
  * IDirectSoundFullDuplex interface
  */
 #define INTERFACE IDirectSoundFullDuplex
-#define IDirectSoundFullDuplex_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IDirectSoundFullDuplex,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectSoundFullDuplex methods ***/
     STDMETHOD(Initialize)(THIS_ LPCGUID pCaptureGuid,LPCGUID pRendererGuid,LPCDSCBUFFERDESC lpDscBufferDesc,LPCDSBUFFERDESC lpDsBufferDesc,HWND hWnd,DWORD dwLevel,LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8) PURE;
-DECLARE_INTERFACE_(IDirectSoundFullDuplex,IUnknown) { IDirectSoundFullDuplex_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

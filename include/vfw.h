@@ -991,20 +991,25 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
  * IAVIStream interface
  */
 #define INTERFACE IAVIStream
-#define IAVIStream_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Create)(THIS_ LPARAM lParam1, LPARAM lParam2) PURE; \
-    STDMETHOD(Info)(THIS_ AVISTREAMINFOW *psi, LONG lSize) PURE; \
-    STDMETHOD_(LONG,FindSample)(THIS_ LONG lPos, LONG lFlags) PURE; \
-    STDMETHOD(ReadFormat)(THIS_ LONG lPos, LPVOID lpFormat, LONG *lpcbFormat) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LONG lPos, LPVOID lpFormat, LONG cbFormat) PURE; \
-    STDMETHOD(Read)(THIS_ LONG lStart, LONG lSamples, LPVOID lpBuffer, LONG cbBuffer, LONG *plBytes, LONG *plSamples) PURE; \
-    STDMETHOD(Write)(THIS_ LONG lStart, LONG lSamples, LPVOID lpBuffer, LONG cbBuffer, DWORD dwFlags, LONG *plSampWritten, LONG *plBytesWritten) PURE; \
-    STDMETHOD(Delete)(THIS_ LONG lStart, LONG lSamples) PURE; \
-    STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
-    STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE; \
+DECLARE_INTERFACE_(IAVIStream,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IAVIStream methods ***/
+    STDMETHOD(Create)(THIS_ LPARAM lParam1, LPARAM lParam2) PURE;
+    STDMETHOD(Info)(THIS_ AVISTREAMINFOW *psi, LONG lSize) PURE;
+    STDMETHOD_(LONG,FindSample)(THIS_ LONG lPos, LONG lFlags) PURE;
+    STDMETHOD(ReadFormat)(THIS_ LONG lPos, LPVOID lpFormat, LONG *lpcbFormat) PURE;
+    STDMETHOD(SetFormat)(THIS_ LONG lPos, LPVOID lpFormat, LONG cbFormat) PURE;
+    STDMETHOD(Read)(THIS_ LONG lStart, LONG lSamples, LPVOID lpBuffer, LONG cbBuffer, LONG *plBytes, LONG *plSamples) PURE;
+    STDMETHOD(Write)(THIS_ LONG lStart, LONG lSamples, LPVOID lpBuffer, LONG cbBuffer, DWORD dwFlags, LONG *plSampWritten, LONG *plBytesWritten) PURE;
+    STDMETHOD(Delete)(THIS_ LONG lStart, LONG lSamples) PURE;
+    STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE;
+    STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE;
     STDMETHOD(SetInfo)(THIS_ AVISTREAMINFOW *plInfo, LONG cbInfo) PURE;
-DECLARE_INTERFACE_(IAVIStream, IUnknown) { IAVIStream_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1114,11 +1119,16 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
  * IAVIStreaming interface
  */
 #define INTERFACE IAVIStreaming
-#define IAVIStreaming_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Begin)(IAVIStreaming*iface,LONG lStart,LONG lEnd,LONG lRate) PURE; \
+DECLARE_INTERFACE_(IAVIStreaming,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IAVIStreaming methods ***/
+    STDMETHOD(Begin)(IAVIStreaming*iface,LONG lStart,LONG lEnd,LONG lRate) PURE;
     STDMETHOD(End)(IAVIStreaming*iface) PURE;
-DECLARE_INTERFACE_(IAVIStreaming, IUnknown) { IAVIStreaming_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1135,14 +1145,19 @@ DECLARE_INTERFACE_(IAVIStreaming, IUnknown) { IAVIStreaming_METHODS };
  * IAVIEditStream interface
  */
 #define INTERFACE IAVIEditStream
-#define IAVIEditStream_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Cut)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE; \
-    STDMETHOD(Copy)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE; \
-    STDMETHOD(Paste)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM pSource,LONG lStart,LONG lEnd) PURE; \
-    STDMETHOD(Clone)(IAVIEditStream*iface,PAVISTREAM*ppResult) PURE; \
+DECLARE_INTERFACE_(IAVIEditStream,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IAVIEditStream methods ***/
+    STDMETHOD(Cut)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE;
+    STDMETHOD(Copy)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE;
+    STDMETHOD(Paste)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM pSource,LONG lStart,LONG lEnd) PURE;
+    STDMETHOD(Clone)(IAVIEditStream*iface,PAVISTREAM*ppResult) PURE;
     STDMETHOD(SetInfo)(IAVIEditStream*iface,LPAVISTREAMINFOW asi, LONG size) PURE;
-DECLARE_INTERFACE_(IAVIEditStream,IUnknown) { IAVIEditStream_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1182,16 +1197,21 @@ HRESULT WINAPI EditStreamSetNameW(PAVISTREAM pstream, LPCWSTR szName);
  */
 /* In Win32 this interface uses UNICODE only */
 #define INTERFACE IAVIFile
-#define IAVIFile_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Info)(THIS_ AVIFILEINFOW *pfi, LONG lSize) PURE; \
-    STDMETHOD(GetStream)(THIS_ PAVISTREAM *ppStream, DWORD fccType, LONG lParam) PURE; \
-    STDMETHOD(CreateStream)(THIS_ PAVISTREAM *ppStream, AVISTREAMINFOW *psi) PURE; \
-    STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE; \
-    STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
-    STDMETHOD(EndRecord)(THIS) PURE; \
+DECLARE_INTERFACE_(IAVIFile,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IAVIFile methods ***/
+    STDMETHOD(Info)(THIS_ AVIFILEINFOW *pfi, LONG lSize) PURE;
+    STDMETHOD(GetStream)(THIS_ PAVISTREAM *ppStream, DWORD fccType, LONG lParam) PURE;
+    STDMETHOD(CreateStream)(THIS_ PAVISTREAM *ppStream, AVISTREAMINFOW *psi) PURE;
+    STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE;
+    STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE;
+    STDMETHOD(EndRecord)(THIS) PURE;
     STDMETHOD(DeleteStream)(THIS_ DWORD fccType, LONG lParam) PURE;
-DECLARE_INTERFACE_(IAVIFile,IUnknown) { IAVIFile_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1233,13 +1253,18 @@ HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
  * IGetFrame interface
  */
 #define INTERFACE IGetFrame
-#define IGetFrame_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD_(LPVOID,GetFrame)(THIS_ LONG lPos) PURE; \
-    STDMETHOD(Begin)(THIS_ LONG lStart, LONG lEnd, LONG lRate) PURE; \
-    STDMETHOD(End)(THIS) PURE; \
+DECLARE_INTERFACE_(IGetFrame,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IGetFrame methods ***/
+    STDMETHOD_(LPVOID,GetFrame)(THIS_ LONG lPos) PURE;
+    STDMETHOD(Begin)(THIS_ LONG lStart, LONG lEnd, LONG lRate) PURE;
+    STDMETHOD(End)(THIS) PURE;
     STDMETHOD(SetFormat)(THIS_ LPBITMAPINFOHEADER lpbi, LPVOID lpBits, INT x, INT y, INT dx, INT dy) PURE;
-DECLARE_INTERFACE_(IGetFrame,IUnknown) { IGetFrame_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

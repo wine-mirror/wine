@@ -186,10 +186,15 @@ typedef GUID SHELLVIEWID;
  */
 
 #define INTERFACE IShellIcon
-#define IShellIcon_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IShellIcon,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IShellIcon methods ***/
     STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT flags, LPINT lpIconIndex) PURE;
-DECLARE_INTERFACE_(IShellIcon, IUnknown) { IShellIcon_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -802,11 +807,15 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
 typedef struct IShellChangeNotify IShellChangeNotify, *LPSHELLCHANGENOTIFY;
 
 #define INTERFACE IShellChangeNotify
-#define IShellChangeNotify_METHODS \
-    IUnknown_METHODS \
+DECLARE_INTERFACE_(IShellChangeNotify,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IShellChangeNotify methods ***/
     STDMETHOD(OnChange)(THIS_ LONG lEvent, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) PURE;
-
-DECLARE_INTERFACE_(IShellChangeNotify, IUnknown) { IShellChangeNotify_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -1126,15 +1135,6 @@ struct IFileSystemBindDataVtbl {
 #define IFileSystemBindData_SetFindData(p,a) (p)->lpVtbl->SetFindData(p,a)
 
 #endif
-
-#define IFileSystemBindData_METHODS \
-    /*** IUnknown methods ***/ \
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
-    STDMETHOD_(ULONG,Release)(THIS) PURE; \
-    /*** IFileSystemBindData methods ***/ \
-    STDMETHOD_(HRESULT,GetFindData)(THIS_ WIN32_FIND_DATAW* pfd) PURE; \
-    STDMETHOD_(HRESULT,SetFindData)(THIS_ const WIN32_FIND_DATAW* pfd) PURE;
 
 #endif  /* __IFileSystemBindData_INTERFACE_DEFINED__ */
 

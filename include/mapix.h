@@ -103,36 +103,41 @@ MAPIFREEBUFFER MAPIFreeBuffer;
  * IMAPISession interface
  */
 #define INTERFACE IMAPISession
-#define IMAPISession_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetLastError)(THIS_ HRESULT hResult, ULONG ulFlags, LPMAPIERROR *lppMAPIError) PURE; \
-    STDMETHOD(GetMsgStoresTable)(THIS_ ULONG ulFlags, LPMAPITABLE *lppTable) PURE; \
-    STDMETHOD(OpenMsgStore)(THIS_ ULONG_PTR ulUIParam, ULONG cbId, \
-                            LPENTRYID lpId, LPCIID lpIFace, ULONG ulFlags, LPMDB *lppMDB) PURE; \
-    STDMETHOD(OpenAddressBook)(THIS_ ULONG_PTR ulUIParam, LPCIID iid, ULONG ulFlags, LPADRBOOK *lppAdrBook) PURE; \
-    STDMETHOD(OpenProfileSection)(THIS_ LPMAPIUID lpUID, LPCIID iid, ULONG ulFlags, LPPROFSECT *lppProf) PURE; \
-    STDMETHOD(GetStatusTable)(THIS_ ULONG ulFlags, LPMAPITABLE *lppTable) PURE; \
-    STDMETHOD(OpenEntry)(THIS_ ULONG cbId, LPENTRYID lpId, LPCIID iid, \
-                         ULONG ulFlags, ULONG *lpType, LPUNKNOWN *lppUnk) PURE; \
-    STDMETHOD(CompareEntryIDs)(THIS_ ULONG cbLID, LPENTRYID lpLID, ULONG cbRID, \
-                               LPENTRYID lpRID, ULONG ulFlags, ULONG *lpRes) PURE; \
-    STDMETHOD(Advise)(THIS_ ULONG cbId, LPENTRYID lpId, ULONG ulMask, \
-                      LPMAPIADVISESINK lpSink, ULONG *lpCxn) PURE;\
-    STDMETHOD(Unadvise)(THIS_ ULONG ulConnection) PURE;\
-    STDMETHOD(MessageOptions)(THIS_ ULONG_PTR ulUIParam, ULONG ulFlags, LPSTR lpszAddr, LPMESSAGE lpMsg) PURE; \
-    STDMETHOD(QueryDefaultMessageOpt)(THIS_ LPSTR lpszAddr, ULONG ulFlags, \
-                                      ULONG *lpcVals, LPSPropValue *lppOpts) PURE; \
-    STDMETHOD(EnumAdrTypes)(THIS_ ULONG ulFlags, ULONG *lpcTypes, LPSTR **lpppszTypes) PURE; \
-    STDMETHOD(QueryIdentity)(THIS_ ULONG *lpcbId, LPENTRYID *lppEntryID) PURE; \
-    STDMETHOD(Logoff)(THIS_ ULONG_PTR ulUIParam, ULONG ulFlags, ULONG ulReserved) PURE; \
-    STDMETHOD(SetDefaultStore)(THIS_ ULONG ulFlags, ULONG cbId, LPENTRYID lpId) PURE; \
-    STDMETHOD(AdminServices)(THIS_ ULONG ulFlags, LPSERVICEADMIN *lppAdmin) PURE; \
-    STDMETHOD(ShowForm)(THIS_ ULONG_PTR ulUIParam, LPMDB lpStore, \
-                        LPMAPIFOLDER lpParent, LPCIID iid, ULONG ulToken, \
-                        LPMESSAGE lpSent, ULONG ulFlags, ULONG ulStatus, \
-                        ULONG ulMsgFlags, ULONG ulAccess, LPSTR lpszClass) PURE; \
+DECLARE_INTERFACE_(IMAPISession,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IMAPISession methods ***/
+    STDMETHOD(GetLastError)(THIS_ HRESULT hResult, ULONG ulFlags, LPMAPIERROR *lppMAPIError) PURE;
+    STDMETHOD(GetMsgStoresTable)(THIS_ ULONG ulFlags, LPMAPITABLE *lppTable) PURE;
+    STDMETHOD(OpenMsgStore)(THIS_ ULONG_PTR ulUIParam, ULONG cbId,
+                            LPENTRYID lpId, LPCIID lpIFace, ULONG ulFlags, LPMDB *lppMDB) PURE;
+    STDMETHOD(OpenAddressBook)(THIS_ ULONG_PTR ulUIParam, LPCIID iid, ULONG ulFlags, LPADRBOOK *lppAdrBook) PURE;
+    STDMETHOD(OpenProfileSection)(THIS_ LPMAPIUID lpUID, LPCIID iid, ULONG ulFlags, LPPROFSECT *lppProf) PURE;
+    STDMETHOD(GetStatusTable)(THIS_ ULONG ulFlags, LPMAPITABLE *lppTable) PURE;
+    STDMETHOD(OpenEntry)(THIS_ ULONG cbId, LPENTRYID lpId, LPCIID iid,
+                         ULONG ulFlags, ULONG *lpType, LPUNKNOWN *lppUnk) PURE;
+    STDMETHOD(CompareEntryIDs)(THIS_ ULONG cbLID, LPENTRYID lpLID, ULONG cbRID,
+                               LPENTRYID lpRID, ULONG ulFlags, ULONG *lpRes) PURE;
+    STDMETHOD(Advise)(THIS_ ULONG cbId, LPENTRYID lpId, ULONG ulMask,
+                      LPMAPIADVISESINK lpSink, ULONG *lpCxn) PURE;
+    STDMETHOD(Unadvise)(THIS_ ULONG ulConnection) PURE;
+    STDMETHOD(MessageOptions)(THIS_ ULONG_PTR ulUIParam, ULONG ulFlags, LPSTR lpszAddr, LPMESSAGE lpMsg) PURE;
+    STDMETHOD(QueryDefaultMessageOpt)(THIS_ LPSTR lpszAddr, ULONG ulFlags,
+                                      ULONG *lpcVals, LPSPropValue *lppOpts) PURE;
+    STDMETHOD(EnumAdrTypes)(THIS_ ULONG ulFlags, ULONG *lpcTypes, LPSTR **lpppszTypes) PURE;
+    STDMETHOD(QueryIdentity)(THIS_ ULONG *lpcbId, LPENTRYID *lppEntryID) PURE;
+    STDMETHOD(Logoff)(THIS_ ULONG_PTR ulUIParam, ULONG ulFlags, ULONG ulReserved) PURE;
+    STDMETHOD(SetDefaultStore)(THIS_ ULONG ulFlags, ULONG cbId, LPENTRYID lpId) PURE;
+    STDMETHOD(AdminServices)(THIS_ ULONG ulFlags, LPSERVICEADMIN *lppAdmin) PURE;
+    STDMETHOD(ShowForm)(THIS_ ULONG_PTR ulUIParam, LPMDB lpStore,
+                        LPMAPIFOLDER lpParent, LPCIID iid, ULONG ulToken,
+                        LPMESSAGE lpSent, ULONG ulFlags, ULONG ulStatus,
+                        ULONG ulMsgFlags, ULONG ulAccess, LPSTR lpszClass) PURE;
     STDMETHOD(PrepareForm)(THIS_ LPCIID lpIFace, LPMESSAGE lpMsg, ULONG *lpToken) PURE;
-DECLARE_INTERFACE_(IMAPISession,IUnknown) { IMAPISession_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

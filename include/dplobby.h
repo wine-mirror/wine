@@ -369,43 +369,84 @@ typedef BOOL (CALLBACK *LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
  * IDirectPlayLobby and IDirectPlayLobbyA interface
  */
 #define INTERFACE IDirectPlayLobby
-#define IDirectPlayLobby_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Connect)(THIS_ DWORD, LPDIRECTPLAY2*, IUnknown*) PURE; \
-    STDMETHOD(CreateAddress)(THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE; \
-    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE; \
-    STDMETHOD(EnumAddressTypes)(THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE; \
-    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE; \
-    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE; \
-    STDMETHOD(ReceiveLobbyMessage)(THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE; \
-    STDMETHOD(RunApplication)(THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE; \
-    STDMETHOD(SendLobbyMessage)(THIS_ DWORD, DWORD, LPVOID, DWORD) PURE; \
-    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE; \
+DECLARE_INTERFACE_(IDirectPlayLobby,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlayLobby methods ***/
+    STDMETHOD(Connect)(THIS_ DWORD, LPDIRECTPLAY2*, IUnknown*) PURE;
+    STDMETHOD(CreateAddress)(THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;
+    STDMETHOD(EnumAddressTypes)(THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(ReceiveLobbyMessage)(THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(RunApplication)(THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE;
+    STDMETHOD(SendLobbyMessage)(THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;
     STDMETHOD(SetLobbyMessageEvent)(THIS_ DWORD, DWORD, HANDLE) PURE;
-DECLARE_INTERFACE_(IDirectPlayLobby,IUnknown) { IDirectPlayLobby_METHODS };
+};
 #undef INTERFACE
 
 /*****************************************************************************
  * IDirectPlayLobby2 and IDirectPlayLobby2A interface
  */
 #define INTERFACE IDirectPlayLobby2
-#define IDirectPlayLobby2_METHODS \
-    IDirectPlayLobby_METHODS \
+DECLARE_INTERFACE_(IDirectPlayLobby2,IDirectPlayLobby)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlayLobby methods ***/
+    STDMETHOD(Connect)(THIS_ DWORD, LPDIRECTPLAY2*, IUnknown*) PURE;
+    STDMETHOD(CreateAddress)(THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;
+    STDMETHOD(EnumAddressTypes)(THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(ReceiveLobbyMessage)(THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(RunApplication)(THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE;
+    STDMETHOD(SendLobbyMessage)(THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;
+    STDMETHOD(SetLobbyMessageEvent)(THIS_ DWORD, DWORD, HANDLE) PURE;
+    /*** IDirectPlayLobby2 methods ***/
     STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;
-DECLARE_INTERFACE_(IDirectPlayLobby2,IDirectPlayLobby) { IDirectPlayLobby2_METHODS };
+};
 #undef INTERFACE
 
 /*****************************************************************************
  * IDirectPlayLobby3 and IDirectPlayLobby3A interface
  */
 #define INTERFACE IDirectPlayLobby3
-#define IDirectPlayLobby3_METHODS \
-    IDirectPlayLobby2_METHODS \
-    STDMETHOD(ConnectEx)(THIS_ DWORD, REFIID, LPVOID *, IUnknown *) PURE; \
-    STDMETHOD(RegisterApplication)(THIS_ DWORD, LPDPAPPLICATIONDESC) PURE; \
-    STDMETHOD(UnregisterApplication)(THIS_ DWORD, REFGUID) PURE; \
+DECLARE_INTERFACE_(IDirectPlayLobby3,IDirectPlayLobby2)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlayLobby methods ***/
+    STDMETHOD(Connect)(THIS_ DWORD, LPDIRECTPLAY2*, IUnknown*) PURE;
+    STDMETHOD(CreateAddress)(THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;
+    STDMETHOD(EnumAddressTypes)(THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(ReceiveLobbyMessage)(THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(RunApplication)(THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE;
+    STDMETHOD(SendLobbyMessage)(THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;
+    STDMETHOD(SetLobbyMessageEvent)(THIS_ DWORD, DWORD, HANDLE) PURE;
+    /*** IDirectPlayLobby2 methods ***/
+    STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;
+    /*** IDirectPlayLobby3 methods ***/
+    STDMETHOD(ConnectEx)(THIS_ DWORD, REFIID, LPVOID *, IUnknown *) PURE;
+    STDMETHOD(RegisterApplication)(THIS_ DWORD, LPDPAPPLICATIONDESC) PURE;
+    STDMETHOD(UnregisterApplication)(THIS_ DWORD, REFGUID) PURE;
     STDMETHOD(WaitForConnectionSettings)(THIS_ DWORD) PURE;
-DECLARE_INTERFACE_(IDirectPlayLobby3,IDirectPlayLobby2) { IDirectPlayLobby3_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

@@ -420,31 +420,36 @@ typedef BOOL (CALLBACK *LPDPENUMSESSIONSCALLBACK2)(
  * IDirectPlay interface
  */
 #define INTERFACE IDirectPlay
-#define IDirectPlay_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE; \
-    STDMETHOD(Close)(THIS) PURE; \
-    STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPSTR lpPlayerName, LPSTR, LPHANDLE) PURE; \
-    STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPSTR lpGroupName, LPSTR) PURE; \
-    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE; \
-    STDMETHOD(DestroyPlayer)(THIS_ DPID idPlayer) PURE; \
-    STDMETHOD(DestroyGroup)(THIS_ DPID idGroup) PURE; \
-    STDMETHOD(EnableNewPlayers)(THIS_ BOOL) PURE; \
-    STDMETHOD(EnumGroupPlayers)(THIS_ DPID idGroup, LPDPENUMPLAYERSCALLBACK lpEnumPlayersCallback, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumGroups)(THIS_ DWORD, LPDPENUMPLAYERSCALLBACK lpEnumPlayersCallback, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumPlayers)(THIS_ DWORD, LPDPENUMPLAYERSCALLBACK lpEnumPlayersCallback, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumSessions)(THIS_ LPDPSESSIONDESC lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK lpEnumSessionsCallback, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(GetCaps)(THIS_ LPDPCAPS lpDPCaps) PURE; \
-    STDMETHOD(GetMessageCount)(THIS_ DPID idPlayer, LPDWORD lpdwCount) PURE; \
-    STDMETHOD(GetPlayerCaps)(THIS_ DPID idPlayer, LPDPCAPS lpPlayerCaps) PURE; \
-    STDMETHOD(GetPlayerName)(THIS_ DPID idPlayer, LPSTR, LPDWORD, LPSTR, LPDWORD) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPGUID lpGUID) PURE; \
-    STDMETHOD(Open)(THIS_ LPDPSESSIONDESC lpsd) PURE; \
-    STDMETHOD(Receive)(THIS_ LPDPID lpidFrom, LPDPID lpidTo, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(SaveSession)(THIS_ LPSTR) PURE; \
-    STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE; \
+DECLARE_INTERFACE_(IDirectPlay,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay methods ***/
+    STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(Close)(THIS) PURE;
+    STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPSTR lpPlayerName, LPSTR, LPHANDLE) PURE;
+    STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPSTR lpGroupName, LPSTR) PURE;
+    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(DestroyPlayer)(THIS_ DPID idPlayer) PURE;
+    STDMETHOD(DestroyGroup)(THIS_ DPID idGroup) PURE;
+    STDMETHOD(EnableNewPlayers)(THIS_ BOOL) PURE;
+    STDMETHOD(EnumGroupPlayers)(THIS_ DPID idGroup, LPDPENUMPLAYERSCALLBACK lpEnumPlayersCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroups)(THIS_ DWORD, LPDPENUMPLAYERSCALLBACK lpEnumPlayersCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumPlayers)(THIS_ DWORD, LPDPENUMPLAYERSCALLBACK lpEnumPlayersCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumSessions)(THIS_ LPDPSESSIONDESC lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK lpEnumSessionsCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDPCAPS lpDPCaps) PURE;
+    STDMETHOD(GetMessageCount)(THIS_ DPID idPlayer, LPDWORD lpdwCount) PURE;
+    STDMETHOD(GetPlayerCaps)(THIS_ DPID idPlayer, LPDPCAPS lpPlayerCaps) PURE;
+    STDMETHOD(GetPlayerName)(THIS_ DPID idPlayer, LPSTR, LPDWORD, LPSTR, LPDWORD) PURE;
+    STDMETHOD(Initialize)(THIS_ LPGUID lpGUID) PURE;
+    STDMETHOD(Open)(THIS_ LPDPSESSIONDESC lpsd) PURE;
+    STDMETHOD(Receive)(THIS_ LPDPID lpidFrom, LPDPID lpidTo, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(SaveSession)(THIS_ LPSTR) PURE;
+    STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE;
     STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPSTR lpPlayerName, LPSTR) PURE;
-DECLARE_INTERFACE_(IDirectPlay,IUnknown) { IDirectPlay_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -510,38 +515,43 @@ DECLARE_INTERFACE_(IDirectPlay,IUnknown) { IDirectPlay_METHODS };
  * IDirectPlay2 and IDirectPlay2A interface
  */
 #define INTERFACE IDirectPlay2
-#define IDirectPlay2_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE; \
-    STDMETHOD(Close)(THIS) PURE; \
-    STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE; \
-    STDMETHOD(DestroyGroup)(THIS_ DPID idGroup) PURE; \
-    STDMETHOD(DestroyPlayer)(THIS_ DPID idPlayer) PURE; \
-    STDMETHOD(EnumGroupPlayers)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumGroups)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumPlayers)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumSessions)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(GetCaps)(THIS_ LPDPCAPS lpDPCaps, DWORD dwFlags) PURE; \
-    STDMETHOD(GetGroupData)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(GetGroupName)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(GetMessageCount)(THIS_ DPID idPlayer, LPDWORD lpdwCount) PURE; \
-    STDMETHOD(GetPlayerAddress)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(GetPlayerCaps)(THIS_ DPID idPlayer, LPDPCAPS lpPlayerCaps, DWORD dwFlags) PURE; \
-    STDMETHOD(GetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(GetPlayerName)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(GetSessionDesc)(THIS_ LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPGUID lpGUID) PURE; \
-    STDMETHOD(Open)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwFlags) PURE; \
-    STDMETHOD(Receive)(THIS_ LPDPID lpidFrom, LPDPID lpidTo, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE; \
-    STDMETHOD(SetGroupData)(THIS_ DPID idGroup, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(SetGroupName)(THIS_ DPID idGroup, LPDPNAME lpGroupName, DWORD dwFlags) PURE; \
-    STDMETHOD(SetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags) PURE; \
+DECLARE_INTERFACE_(IDirectPlay2,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay2 methods ***/
+    STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(Close)(THIS) PURE;
+    STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(DestroyGroup)(THIS_ DPID idGroup) PURE;
+    STDMETHOD(DestroyPlayer)(THIS_ DPID idPlayer) PURE;
+    STDMETHOD(EnumGroupPlayers)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroups)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumPlayers)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumSessions)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDPCAPS lpDPCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupData)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupName)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetMessageCount)(THIS_ DPID idPlayer, LPDWORD lpdwCount) PURE;
+    STDMETHOD(GetPlayerAddress)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetPlayerCaps)(THIS_ DPID idPlayer, LPDPCAPS lpPlayerCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerName)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetSessionDesc)(THIS_ LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(Initialize)(THIS_ LPGUID lpGUID) PURE;
+    STDMETHOD(Open)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwFlags) PURE;
+    STDMETHOD(Receive)(THIS_ LPDPID lpidFrom, LPDPID lpidTo, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE;
+    STDMETHOD(SetGroupData)(THIS_ DPID idGroup, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetGroupName)(THIS_ DPID idGroup, LPDPNAME lpGroupName, DWORD dwFlags) PURE;
+    STDMETHOD(SetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags) PURE;
     STDMETHOD(SetSessionDesc)(THIS_ LPDPSESSIONDESC2 lpSessDesc, DWORD dwFlags) PURE;
-DECLARE_INTERFACE_(IDirectPlay2,IUnknown) { IDirectPlay2_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -621,24 +631,59 @@ DECLARE_INTERFACE_(IDirectPlay2,IUnknown) { IDirectPlay2_METHODS };
  * IDirectPlay3 and IDirectPlay3A interface
  */
 #define INTERFACE IDirectPlay3
-#define IDirectPlay3_METHODS \
-    IDirectPlay2_METHODS \
-    STDMETHOD(AddGroupToGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE; \
-    STDMETHOD(CreateGroupInGroup)(THIS_ DPID idParentGroup, LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
-    STDMETHOD(DeleteGroupFromGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE; \
-    STDMETHOD(EnumConnections)(THIS_ LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(EnumGroupsInGroup)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumCallback, LPVOID lpContext, DWORD dwFlags) PURE; \
-    STDMETHOD(GetGroupConnectionSettings)(THIS_ DWORD dwFlags, DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
-    STDMETHOD(InitializeConnection)(THIS_ LPVOID lpConnection, DWORD dwFlags) PURE; \
-    STDMETHOD(SecureOpen)(THIS_ LPCDPSESSIONDESC2 lpsd, DWORD dwFlags, LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials) PURE; \
-    STDMETHOD(SendChatMessage)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPDPCHAT lpChatMessage) PURE; \
-    STDMETHOD(SetGroupConnectionSettings)(THIS_ DWORD dwFlags, DPID idGroup, LPDPLCONNECTION lpConnection) PURE; \
-    STDMETHOD(StartSession)(THIS_ DWORD dwFlags, DPID idGroup) PURE; \
-    STDMETHOD(GetGroupFlags)(THIS_ DPID idGroup, LPDWORD lpdwFlags) PURE; \
-    STDMETHOD(GetGroupParent)(THIS_ DPID idGroup, LPDPID lpidParent) PURE; \
-    STDMETHOD(GetPlayerAccount)(THIS_ DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
+DECLARE_INTERFACE_(IDirectPlay3,IDirectPlay2)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay2 methods ***/
+    STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(Close)(THIS) PURE;
+    STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(DestroyGroup)(THIS_ DPID idGroup) PURE;
+    STDMETHOD(DestroyPlayer)(THIS_ DPID idPlayer) PURE;
+    STDMETHOD(EnumGroupPlayers)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroups)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumPlayers)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumSessions)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDPCAPS lpDPCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupData)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupName)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetMessageCount)(THIS_ DPID idPlayer, LPDWORD lpdwCount) PURE;
+    STDMETHOD(GetPlayerAddress)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetPlayerCaps)(THIS_ DPID idPlayer, LPDPCAPS lpPlayerCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerName)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetSessionDesc)(THIS_ LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(Initialize)(THIS_ LPGUID lpGUID) PURE;
+    STDMETHOD(Open)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwFlags) PURE;
+    STDMETHOD(Receive)(THIS_ LPDPID lpidFrom, LPDPID lpidTo, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE;
+    STDMETHOD(SetGroupData)(THIS_ DPID idGroup, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetGroupName)(THIS_ DPID idGroup, LPDPNAME lpGroupName, DWORD dwFlags) PURE;
+    STDMETHOD(SetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags) PURE;
+    STDMETHOD(SetSessionDesc)(THIS_ LPDPSESSIONDESC2 lpSessDesc, DWORD dwFlags) PURE;
+    /*** IDirectPlay3 methods ***/
+    STDMETHOD(AddGroupToGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE;
+    STDMETHOD(CreateGroupInGroup)(THIS_ DPID idParentGroup, LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(DeleteGroupFromGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE;
+    STDMETHOD(EnumConnections)(THIS_ LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroupsInGroup)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupConnectionSettings)(THIS_ DWORD dwFlags, DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(InitializeConnection)(THIS_ LPVOID lpConnection, DWORD dwFlags) PURE;
+    STDMETHOD(SecureOpen)(THIS_ LPCDPSESSIONDESC2 lpsd, DWORD dwFlags, LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials) PURE;
+    STDMETHOD(SendChatMessage)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPDPCHAT lpChatMessage) PURE;
+    STDMETHOD(SetGroupConnectionSettings)(THIS_ DWORD dwFlags, DPID idGroup, LPDPLCONNECTION lpConnection) PURE;
+    STDMETHOD(StartSession)(THIS_ DWORD dwFlags, DPID idGroup) PURE;
+    STDMETHOD(GetGroupFlags)(THIS_ DPID idGroup, LPDWORD lpdwFlags) PURE;
+    STDMETHOD(GetGroupParent)(THIS_ DPID idGroup, LPDPID lpidParent) PURE;
+    STDMETHOD(GetPlayerAccount)(THIS_ DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
     STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwFlags) PURE;
-DECLARE_INTERFACE_(IDirectPlay3,IDirectPlay2) { IDirectPlay3_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -749,15 +794,66 @@ DECLARE_INTERFACE_(IDirectPlay3,IDirectPlay2) { IDirectPlay3_METHODS };
  * IDirectPlay4 and IDirectPlay4A interface
  */
 #define INTERFACE IDirectPlay4
-#define IDirectPlay4_METHODS \
-    IDirectPlay3_METHODS \
-    STDMETHOD(GetGroupOwner)(THIS_ DPID , LPDPID  ) PURE; \
-    STDMETHOD(SetGroupOwner)(THIS_ DPID , DPID  ) PURE; \
-    STDMETHOD(SendEx)(THIS_ DPID , DPID , DWORD , LPVOID , DWORD , DWORD , DWORD , LPVOID , LPDWORD  ) PURE; \
-    STDMETHOD(GetMessageQueue)(THIS_ DPID , DPID , DWORD , LPDWORD , LPDWORD  ) PURE; \
-    STDMETHOD(CancelMessage)(THIS_ DWORD , DWORD  ) PURE; \
+DECLARE_INTERFACE_(IDirectPlay4,IDirectPlay3)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay2 methods ***/
+    STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(Close)(THIS) PURE;
+    STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE;
+    STDMETHOD(DestroyGroup)(THIS_ DPID idGroup) PURE;
+    STDMETHOD(DestroyPlayer)(THIS_ DPID idPlayer) PURE;
+    STDMETHOD(EnumGroupPlayers)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroups)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumPlayers)(THIS_ LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumSessions)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetCaps)(THIS_ LPDPCAPS lpDPCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupData)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupName)(THIS_ DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetMessageCount)(THIS_ DPID idPlayer, LPDWORD lpdwCount) PURE;
+    STDMETHOD(GetPlayerAddress)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetPlayerCaps)(THIS_ DPID idPlayer, LPDPCAPS lpPlayerCaps, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(GetPlayerName)(THIS_ DPID idPlayer, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetSessionDesc)(THIS_ LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(Initialize)(THIS_ LPGUID lpGUID) PURE;
+    STDMETHOD(Open)(THIS_ LPDPSESSIONDESC2 lpsd, DWORD dwFlags) PURE;
+    STDMETHOD(Receive)(THIS_ LPDPID lpidFrom, LPDPID lpidTo, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE;
+    STDMETHOD(SetGroupData)(THIS_ DPID idGroup, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetGroupName)(THIS_ DPID idGroup, LPDPNAME lpGroupName, DWORD dwFlags) PURE;
+    STDMETHOD(SetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags) PURE;
+    STDMETHOD(SetSessionDesc)(THIS_ LPDPSESSIONDESC2 lpSessDesc, DWORD dwFlags) PURE;
+    /*** IDirectPlay3 methods ***/
+    STDMETHOD(AddGroupToGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE;
+    STDMETHOD(CreateGroupInGroup)(THIS_ DPID idParentGroup, LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE;
+    STDMETHOD(DeleteGroupFromGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE;
+    STDMETHOD(EnumConnections)(THIS_ LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(EnumGroupsInGroup)(THIS_ DPID idGroup, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumCallback, LPVOID lpContext, DWORD dwFlags) PURE;
+    STDMETHOD(GetGroupConnectionSettings)(THIS_ DWORD dwFlags, DPID idGroup, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(InitializeConnection)(THIS_ LPVOID lpConnection, DWORD dwFlags) PURE;
+    STDMETHOD(SecureOpen)(THIS_ LPCDPSESSIONDESC2 lpsd, DWORD dwFlags, LPCDPSECURITYDESC lpSecurity, LPCDPCREDENTIALS lpCredentials) PURE;
+    STDMETHOD(SendChatMessage)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPDPCHAT lpChatMessage) PURE;
+    STDMETHOD(SetGroupConnectionSettings)(THIS_ DWORD dwFlags, DPID idGroup, LPDPLCONNECTION lpConnection) PURE;
+    STDMETHOD(StartSession)(THIS_ DWORD dwFlags, DPID idGroup) PURE;
+    STDMETHOD(GetGroupFlags)(THIS_ DPID idGroup, LPDWORD lpdwFlags) PURE;
+    STDMETHOD(GetGroupParent)(THIS_ DPID idGroup, LPDPID lpidParent) PURE;
+    STDMETHOD(GetPlayerAccount)(THIS_ DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE;
+    STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwFlags) PURE;
+    /*** IDirectPlay4 methods ***/
+    STDMETHOD(GetGroupOwner)(THIS_ DPID , LPDPID  ) PURE;
+    STDMETHOD(SetGroupOwner)(THIS_ DPID , DPID  ) PURE;
+    STDMETHOD(SendEx)(THIS_ DPID , DPID , DWORD , LPVOID , DWORD , DWORD , DWORD , LPVOID , LPDWORD  ) PURE;
+    STDMETHOD(GetMessageQueue)(THIS_ DPID , DPID , DWORD , LPDWORD , LPDWORD  ) PURE;
+    STDMETHOD(CancelMessage)(THIS_ DWORD , DWORD  ) PURE;
     STDMETHOD(CancelPriority)(THIS_ DWORD , DWORD , DWORD  ) PURE;
-DECLARE_INTERFACE_(IDirectPlay4,IDirectPlay3) { IDirectPlay4_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

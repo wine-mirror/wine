@@ -62,12 +62,17 @@ typedef struct IDirectXFileBinary IDirectXFileBinary, *LPDIRECTXFILEBINARY;
 STDAPI DirectXFileCreate(LPDIRECTXFILE *lplpDirectXFile);
 
 #define INTERFACE IDirectXFile
-#define IDirectXFile_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(CreateEnumObject) (THIS_ LPVOID, DXFILELOADOPTIONS, LPDIRECTXFILEENUMOBJECT *) PURE; \
-    STDMETHOD(CreateSaveObject) (THIS_ LPCSTR, DXFILEFORMAT, LPDIRECTXFILESAVEOBJECT *) PURE; \
+DECLARE_INTERFACE_(IDirectXFile,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectXFile methods ***/
+    STDMETHOD(CreateEnumObject) (THIS_ LPVOID, DXFILELOADOPTIONS, LPDIRECTXFILEENUMOBJECT *) PURE;
+    STDMETHOD(CreateSaveObject) (THIS_ LPCSTR, DXFILEFORMAT, LPDIRECTXFILESAVEOBJECT *) PURE;
     STDMETHOD(RegisterTemplates) (THIS_ LPVOID, DWORD) PURE;
-DECLARE_INTERFACE_(IDirectXFile,IUnknown) { IDirectXFile_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -82,12 +87,17 @@ DECLARE_INTERFACE_(IDirectXFile,IUnknown) { IDirectXFile_METHODS };
 #endif
 
 #define INTERFACE IDirectXFileEnumObject
-#define IDirectXFileEnumObject_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(GetNextDataObject)    (THIS_ LPDIRECTXFILEDATA *) PURE; \
-    STDMETHOD(GetDataObjectById)    (THIS_ REFGUID, LPDIRECTXFILEDATA *) PURE; \
+DECLARE_INTERFACE_(IDirectXFileEnumObject,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectXFileEnumObject methods ***/
+    STDMETHOD(GetNextDataObject)    (THIS_ LPDIRECTXFILEDATA *) PURE;
+    STDMETHOD(GetDataObjectById)    (THIS_ REFGUID, LPDIRECTXFILEDATA *) PURE;
     STDMETHOD(GetDataObjectByName)  (THIS_ LPCSTR, LPDIRECTXFILEDATA *) PURE;
-DECLARE_INTERFACE_(IDirectXFileEnumObject,IUnknown) { IDirectXFileEnumObject_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -102,12 +112,17 @@ DECLARE_INTERFACE_(IDirectXFileEnumObject,IUnknown) { IDirectXFileEnumObject_MET
 #endif
 
 #define INTERFACE IDirectXFileSaveObject
-#define IDirectXFileSaveObject_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(SaveTemplates) (THIS_ DWORD, const GUID **) PURE; \
-    STDMETHOD(CreateDataObject) (THIS_ REFGUID, LPCSTR, const GUID *, DWORD, LPVOID, LPDIRECTXFILEDATA *) PURE; \
+DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectXFileSaveObject methods ***/
+    STDMETHOD(SaveTemplates) (THIS_ DWORD, const GUID **) PURE;
+    STDMETHOD(CreateDataObject) (THIS_ REFGUID, LPCSTR, const GUID *, DWORD, LPVOID, LPDIRECTXFILEDATA *) PURE;
     STDMETHOD(SaveData) (THIS_ LPDIRECTXFILEDATA) PURE;
-DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown) { IDirectXFileSaveObject_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -131,10 +146,11 @@ DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown) { IDirectXFileSaveObject_MET
     STDMETHOD(GetId) (THIS_ LPGUID) kind
 
 #define INTERFACE IDirectXFileObject
-#define IDirectXFileObject_METHODS \
-    IUNKNOWN_METHODS(PURE); \
+DECLARE_INTERFACE_(IDirectXFileObject,IUnknown)
+{
+    IUNKNOWN_METHODS(PURE);
     IDIRECTXFILEOBJECT_METHODS(PURE);
-DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -148,16 +164,18 @@ DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
 #endif
 
 #define INTERFACE IDirectXFileData
-#define IDirectXFileData_METHODS \
-    IUNKNOWN_METHODS(PURE); \
-    IDIRECTXFILEOBJECT_METHODS(PURE); \
-    STDMETHOD(GetData) (THIS_ LPCSTR, DWORD *, void **) PURE; \
-    STDMETHOD(GetType) (THIS_ const GUID **) PURE; \
-    STDMETHOD(GetNextObject) (THIS_ LPDIRECTXFILEOBJECT *) PURE; \
-    STDMETHOD(AddDataObject) (THIS_ LPDIRECTXFILEDATA) PURE; \
-    STDMETHOD(AddDataReference) (THIS_ LPCSTR, const GUID *) PURE; \
+DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject)
+{
+    IUNKNOWN_METHODS(PURE);
+    IDIRECTXFILEOBJECT_METHODS(PURE);
+    /*** IDirectXFileData methods ***/
+    STDMETHOD(GetData) (THIS_ LPCSTR, DWORD *, void **) PURE;
+    STDMETHOD(GetType) (THIS_ const GUID **) PURE;
+    STDMETHOD(GetNextObject) (THIS_ LPDIRECTXFILEOBJECT *) PURE;
+    STDMETHOD(AddDataObject) (THIS_ LPDIRECTXFILEDATA) PURE;
+    STDMETHOD(AddDataReference) (THIS_ LPCSTR, const GUID *) PURE;
     STDMETHOD(AddBinaryObject) (THIS_ LPCSTR, const GUID *, LPCSTR, LPVOID, DWORD) PURE;
-DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject) { IDirectXFileData_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -178,11 +196,13 @@ DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject) { IDirectXFileData_METHO
 #endif
 
 #define INTERFACE IDirectXFileDataReference
-#define IDirectXFileDataReference_METHODS \
-    IUNKNOWN_METHODS(PURE); \
-    IDIRECTXFILEOBJECT_METHODS(PURE); \
+DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject)
+{
+    IUNKNOWN_METHODS(PURE);
+    IDIRECTXFILEOBJECT_METHODS(PURE);
+    /*** IDirectXFileDataReference methods ***/
     STDMETHOD(Resolve) (THIS_ LPDIRECTXFILEDATA *) PURE;
-DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileDataReference_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -198,13 +218,15 @@ DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileD
 #endif
 
 #define INTERFACE IDirectXFileBinary
-#define IDirectXFileBinary_METHODS \
-    IUNKNOWN_METHODS(PURE); \
-    IDIRECTXFILEOBJECT_METHODS(PURE); \
-    STDMETHOD(GetSize)      (THIS_ DWORD *) PURE; \
-    STDMETHOD(GetMimeType)  (THIS_ LPCSTR *) PURE; \
+DECLARE_INTERFACE_(IDirectXFileBinary,IDirectXFileObject)
+{
+    IUNKNOWN_METHODS(PURE);
+    IDIRECTXFILEOBJECT_METHODS(PURE);
+    /*** IDirectXFileBinary methods ***/
+    STDMETHOD(GetSize)      (THIS_ DWORD *) PURE;
+    STDMETHOD(GetMimeType)  (THIS_ LPCSTR *) PURE;
     STDMETHOD(Read)         (THIS_ LPVOID, DWORD, LPDWORD) PURE;
-DECLARE_INTERFACE_(IDirectXFileBinary,IDirectXFileObject) { IDirectXFileBinary_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

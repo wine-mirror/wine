@@ -55,13 +55,17 @@ typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
 /*****************************************************************************
  * ID3DXBuffer interface
  */
-#undef INTERFACE
 #define INTERFACE ID3DXBuffer
-#define ID3DXBuffer_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD_(LPVOID,GetBufferPointer)(THIS) PURE; \
+DECLARE_INTERFACE_(ID3DXBuffer,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** ID3DXBuffer methods ***/
+    STDMETHOD_(LPVOID,GetBufferPointer)(THIS) PURE;
     STDMETHOD_(DWORD,GetBufferSize)(THIS) PURE;
-DECLARE_INTERFACE_(ID3DXBuffer,IUnknown) { ID3DXBuffer_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
@@ -77,14 +81,18 @@ DECLARE_INTERFACE_(ID3DXBuffer,IUnknown) { ID3DXBuffer_METHODS };
 /*****************************************************************************
  * ID3DXFont interface
  */
-#undef INTERFACE
 #define INTERFACE ID3DXFont
-#define ID3DXFont_METHODS \
-    IUnknown_METHODS \
-    STDMETHOD(Begin)(THIS) PURE; \
-    STDMETHOD(DrawTextA)(THIS) PURE; \
+DECLARE_INTERFACE_(ID3DXFont,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** ID3DXFont methods ***/
+    STDMETHOD(Begin)(THIS) PURE;
+    STDMETHOD(DrawTextA)(THIS) PURE;
     STDMETHOD(End)(THIS) PURE;
-DECLARE_INTERFACE_(ID3DXFont,IUnknown) { ID3DXFont_METHODS };
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)

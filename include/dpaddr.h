@@ -202,28 +202,33 @@ typedef struct IDirectPlay8AddressIP       IDirectPlay8AddressIP, *PDIRECTPLAY8A
  * IDirectPlay8Address interface
  */
 #define INTERFACE IDirectPlay8Address
-#define IDirectPlay8Address_METHODS \
-  IUnknown_METHODS \
-  STDMETHOD(BuildFromURLW)(THIS_ WCHAR* pwszSourceURL) PURE; \
-  STDMETHOD(BuildFromURLA)(THIS_ CHAR* pszSourceURL) PURE; \
-  STDMETHOD(Duplicate)(THIS_ PDIRECTPLAY8ADDRESS* ppdpaNewAddress) PURE; \
-  STDMETHOD(SetEqual)(THIS_ PDIRECTPLAY8ADDRESS pdpaAddress) PURE; \
-  STDMETHOD(IsEqual)(THIS_  PDIRECTPLAY8ADDRESS pdpaAddress) PURE; \
-  STDMETHOD(Clear)(THIS) PURE; \
-  STDMETHOD(GetURLW)(THIS_ WCHAR* pwszURL, PDWORD pdwNumChars) PURE; \
-  STDMETHOD(GetURLA)(THIS_ CHAR* pszURL, PDWORD pdwNumChars) PURE; \
-  STDMETHOD(GetSP)(THIS_ GUID* pguidSP) PURE; \
-  STDMETHOD(GetUserData)(THIS_ LPVOID pvUserData, PDWORD pdwBufferSize) PURE; \
-  STDMETHOD(SetSP)(THIS_ CONST GUID* CONST pguidSP) PURE; \
-  STDMETHOD(SetUserData)(THIS_ CONST void* CONST pvUserData, CONST DWORD dwDataSize) PURE; \
-  STDMETHOD(GetNumComponents)(THIS_ PDWORD pdwNumComponents) PURE; \
-  STDMETHOD(GetComponentByName)(THIS_ CONST WCHAR* CONST pwszName, LPVOID pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) PURE; \
-  STDMETHOD(GetComponentByIndex)(THIS_ CONST DWORD dwComponentID, WCHAR* pwszName, PDWORD pdwNameLen, void* pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) PURE; \
-  STDMETHOD(AddComponent)(THIS_ CONST WCHAR* CONST pwszName, CONST void* CONST lpvData, CONST DWORD dwDataSize, CONST DWORD dwDataType) PURE; \
-  STDMETHOD(GetDevice)(THIS_ GUID* pDevGuid) PURE; \
-  STDMETHOD(SetDevice)(THIS_ CONST GUID* CONST devGuid) PURE; \
-  STDMETHOD(BuildFromDirectPlay4Address)(THIS_ LPVOID pvAddress, DWORD dwDataSize) PURE;
-DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown) { IDirectPlay8Address_METHODS };
+DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay8Address methods ***/
+    STDMETHOD(BuildFromURLW)(THIS_ WCHAR* pwszSourceURL) PURE;
+    STDMETHOD(BuildFromURLA)(THIS_ CHAR* pszSourceURL) PURE;
+    STDMETHOD(Duplicate)(THIS_ PDIRECTPLAY8ADDRESS* ppdpaNewAddress) PURE;
+    STDMETHOD(SetEqual)(THIS_ PDIRECTPLAY8ADDRESS pdpaAddress) PURE;
+    STDMETHOD(IsEqual)(THIS_  PDIRECTPLAY8ADDRESS pdpaAddress) PURE;
+    STDMETHOD(Clear)(THIS) PURE;
+    STDMETHOD(GetURLW)(THIS_ WCHAR* pwszURL, PDWORD pdwNumChars) PURE;
+    STDMETHOD(GetURLA)(THIS_ CHAR* pszURL, PDWORD pdwNumChars) PURE;
+    STDMETHOD(GetSP)(THIS_ GUID* pguidSP) PURE;
+    STDMETHOD(GetUserData)(THIS_ LPVOID pvUserData, PDWORD pdwBufferSize) PURE;
+    STDMETHOD(SetSP)(THIS_ CONST GUID* CONST pguidSP) PURE;
+    STDMETHOD(SetUserData)(THIS_ CONST void* CONST pvUserData, CONST DWORD dwDataSize) PURE;
+    STDMETHOD(GetNumComponents)(THIS_ PDWORD pdwNumComponents) PURE;
+    STDMETHOD(GetComponentByName)(THIS_ CONST WCHAR* CONST pwszName, LPVOID pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) PURE;
+    STDMETHOD(GetComponentByIndex)(THIS_ CONST DWORD dwComponentID, WCHAR* pwszName, PDWORD pdwNameLen, void* pvBuffer, PDWORD pdwBufferSize, PDWORD pdwDataType) PURE;
+    STDMETHOD(AddComponent)(THIS_ CONST WCHAR* CONST pwszName, CONST void* CONST lpvData, CONST DWORD dwDataSize, CONST DWORD dwDataType) PURE;
+    STDMETHOD(GetDevice)(THIS_ GUID* pDevGuid) PURE;
+    STDMETHOD(SetDevice)(THIS_ CONST GUID* CONST devGuid) PURE;
+    STDMETHOD(BuildFromDirectPlay4Address)(THIS_ LPVOID pvAddress, DWORD dwDataSize) PURE;
+};
 #undef INTERFACE
 
 
@@ -283,15 +288,20 @@ DECLARE_INTERFACE_(IDirectPlay8Address,IUnknown) { IDirectPlay8Address_METHODS }
  * IDirectPlay8AddressIP interface
  */
 #define INTERFACE IDirectPlay8AddressIP
-#define IDirectPlay8AddressIP_METHODS \
-  IUnknown_METHODS \
-  STDMETHOD(BuildFromSockAddr)(THIS_ CONST SOCKADDR* CONST pSockAddr) PURE; \
-  STDMETHOD(BuildAddress)(THIS_ CONST WCHAR* CONST wszAddress, CONST USHORT usPort) PURE; \
-  STDMETHOD(BuildLocalAddress)(THIS_ CONST GUID* CONST pguidAdapter, CONST USHORT usPort) PURE; \
-  STDMETHOD(GetSockAddress)(THIS_ SOCKADDR* pSockAddr, PDWORD) PURE; \
-  STDMETHOD(GetLocalAddress)(THIS_ GUID* pguidAdapter, USHORT* pusPort) PURE; \
-  STDMETHOD(GetAddress)(THIS_ WCHAR* wszAddress, PDWORD pdwAddressLength, USHORT* psPort) PURE;
-DECLARE_INTERFACE_(IDirectPlay8AddressIP,IUnknown) { IDirectPlay8AddressIP_METHODS };
+DECLARE_INTERFACE_(IDirectPlay8AddressIP,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IDirectPlay8AddressIP methods ***/
+    STDMETHOD(BuildFromSockAddr)(THIS_ CONST SOCKADDR* CONST pSockAddr) PURE;
+    STDMETHOD(BuildAddress)(THIS_ CONST WCHAR* CONST wszAddress, CONST USHORT usPort) PURE;
+    STDMETHOD(BuildLocalAddress)(THIS_ CONST GUID* CONST pguidAdapter, CONST USHORT usPort) PURE;
+    STDMETHOD(GetSockAddress)(THIS_ SOCKADDR* pSockAddr, PDWORD) PURE;
+    STDMETHOD(GetLocalAddress)(THIS_ GUID* pguidAdapter, USHORT* pusPort) PURE;
+    STDMETHOD(GetAddress)(THIS_ WCHAR* wszAddress, PDWORD pdwAddressLength, USHORT* psPort) PURE;
+};
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
