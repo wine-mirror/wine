@@ -1134,8 +1134,6 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 
 	dsl->dsound->ds3dl_need_recalc = TRUE;
 
-	InitializeCriticalSection(&dsl->dsound->ds3dl_lock);
-
 	IDirectSound8_AddRef((LPDIRECTSOUND8)This->dsound);
 
 	*pdsl = dsl;

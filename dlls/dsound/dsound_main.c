@@ -793,7 +793,6 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND8 iface) {
 
 		RtlDeleteResource(&This->lock);
 		DeleteCriticalSection(&This->mixlock);
-		DeleteCriticalSection(&This->ds3dl_lock);
 		HeapFree(GetProcessHeap(),0,This);
 		dsound = NULL;
 		TRACE("(%p) released\n",This);
@@ -1049,8 +1048,6 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	(*ippDS)->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
 	(*ippDS)->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
 	(*ippDS)->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
-
-	InitializeCriticalSection(&(*ippDS)->ds3dl_lock);
 
 	(*ippDS)->prebuf	= ds_snd_queue_max;
 	(*ippDS)->guid		= devGuid;

@@ -94,7 +94,6 @@ struct IDirectSoundImpl
     /* DirectSound3DListener fields */
     IDirectSound3DListenerImpl*	listener;
     DS3DLISTENER                ds3dl;
-    CRITICAL_SECTION            ds3dl_lock;
     BOOL                        ds3dl_need_recalc;
 };
 
