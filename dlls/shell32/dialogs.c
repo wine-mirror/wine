@@ -22,9 +22,14 @@
 #include "wine/port.h"
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include "winerror.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "commdlg.h"
 #include "wine/debug.h"
 

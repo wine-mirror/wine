@@ -20,8 +20,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"

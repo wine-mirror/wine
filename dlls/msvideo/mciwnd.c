@@ -18,11 +18,12 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"

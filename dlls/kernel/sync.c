@@ -32,8 +32,11 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"

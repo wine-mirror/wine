@@ -27,8 +27,10 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wine/exception.h"
 #include "build.h"

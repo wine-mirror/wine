@@ -23,14 +23,18 @@
  *   - Unicode property sheets
  */
 
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "prsht.h"
-#include "winnls.h"
 #include "comctl32.h"
 
 #include "wine/debug.h"

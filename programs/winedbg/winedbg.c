@@ -25,11 +25,11 @@
 #include <string.h>
 #include "debugger.h"
 
-#include "winternl.h"
 #include "wincon.h"
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winternl.h"
 #include "excpt.h"
 #include "wine/library.h"
 #include "winnls.h"

@@ -21,7 +21,9 @@
 #ifndef __WRC_WRCTYPES_H
 #define __WRC_WRCTYPES_H
 
+#include <stdarg.h>
 #include "windef.h"
+#include "winbase.h"
 
 #ifndef MAKELANGID
 #include "winnls.h"

@@ -20,13 +20,14 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
@@ -36,6 +37,7 @@
 #include "wine/debug.h"
 
 #include "shellapi.h"
+#include "objbase.h"
 #include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"

@@ -40,6 +40,7 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
 #include "thread.h"
 #include "winternl.h"
 #include "global.h"

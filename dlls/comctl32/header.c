@@ -32,10 +32,15 @@
  *   - Little flaw when drawing a bitmap on the right side of the text.
  */
 
+#include <stdarg.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wine/unicode.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
 #include "imagelist.h"

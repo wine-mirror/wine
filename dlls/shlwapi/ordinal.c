@@ -24,6 +24,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -37,13 +38,13 @@
 #include "docobj.h"
 #include "exdisp.h"
 #include "shlguid.h"
+#include "wingdi.h"
 #include "shlobj.h"
 #include "olectl.h"
 #include "shellapi.h"
 #include "commdlg.h"
 #include "wine/unicode.h"
 #include "servprov.h"
-#include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "wine/debug.h"

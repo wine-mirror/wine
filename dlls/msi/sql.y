@@ -22,9 +22,13 @@
 
 
 #include "config.h"
-#include "winbase.h"
+
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "query.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"

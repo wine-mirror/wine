@@ -21,8 +21,10 @@
 
 /* MAY NOT CONTAIN X11 or DGA specific includes/defines/structs! */
 
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
 #include "wingdi.h"

@@ -30,14 +30,15 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "commctrl.h"
 #include "winnls.h"
+#include "commctrl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

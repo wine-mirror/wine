@@ -22,6 +22,9 @@
 %{
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
 #include "debugger.h"

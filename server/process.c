@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -33,6 +34,7 @@
 #endif
 #include <unistd.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
 

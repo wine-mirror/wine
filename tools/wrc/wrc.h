@@ -21,11 +21,9 @@
 #ifndef __WRC_WRC_H
 #define __WRC_WRC_H
 
-#ifndef __WRC_WRCTYPES_H
-#include "wrctypes.h"
-#endif
-
 #include <time.h>	/* For time_t */
+
+#include "wrctypes.h"
 
 #define WRC_MAJOR_VERSION	1
 #define WRC_MINOR_VERSION	1

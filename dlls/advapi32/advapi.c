@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winerror.h"
 
 #include "wine/library.h"
@@ -139,7 +140,7 @@ BOOL WINAPI AbortSystemShutdownA( LPSTR lpMachineName )
  *
  * See AbortSystemShutdownA.
  */
-BOOL WINAPI AbortSystemShutdownW( LPCWSTR lpMachineName )
+BOOL WINAPI AbortSystemShutdownW( LPWSTR lpMachineName )
 {
     TRACE("stub %s (harmless)\n", debugstr_w(lpMachineName));
     return TRUE;

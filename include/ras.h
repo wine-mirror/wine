@@ -19,7 +19,6 @@
 #ifndef __WINE_RAS_H
 #define __WINE_RAS_H
 
-#include <windef.h>
 #include <lmcons.h>
 
 #ifdef __cplusplus

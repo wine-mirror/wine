@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -51,6 +52,8 @@
 #endif
 
 #include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"

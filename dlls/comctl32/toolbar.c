@@ -58,13 +58,15 @@
  *   - Charles Petzold's 'Programming Windows': gadgets.exe
  */
 
+#include <stdarg.h>
 #include <string.h>
 
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "comctl32.h"

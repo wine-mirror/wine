@@ -21,7 +21,10 @@
 #ifndef __WINE_WINPROC_H
 #define __WINE_WINPROC_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wine/winbase16.h"
 #include "winnls.h"
 

@@ -34,6 +34,11 @@
 #ifndef __WINE_PIDL_H
 #define __WINE_PIDL_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "shlobj.h"
 
 /*

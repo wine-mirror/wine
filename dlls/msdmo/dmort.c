@@ -17,6 +17,9 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
 #include "mediaobj.h"

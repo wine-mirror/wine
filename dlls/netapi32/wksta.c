@@ -18,7 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
+#include "windef.h"
 #include "winbase.h"
 #include "nb30.h"
 #include "lmcons.h"
@@ -27,6 +29,8 @@
 #include "lmwksta.h"
 #include "iphlpapi.h"
 #include "winerror.h"
+#include "ntstatus.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "ntsecapi.h"
 #include "wine/debug.h"

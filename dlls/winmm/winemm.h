@@ -22,6 +22,10 @@
  *****************************************************************************
  */
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "mmddk.h"
 #include "wine/mmsystem16.h"
 #include "wownt32.h"

@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -37,6 +38,7 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "wine/library.h"
 
 /* argc/argv for the Windows application */

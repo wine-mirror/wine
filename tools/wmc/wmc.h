@@ -21,11 +21,9 @@
 #ifndef __WMC_WMC_H
 #define __WMC_WMC_H
 
-#ifndef __WMC_WMCTYPES_H
-#include "wmctypes.h"
-#endif
-
 #include <time.h>	/* For time_t */
+
+#include "wmctypes.h"
 
 #define WMC_MAJOR_VERSION	1
 #define WMC_MINOR_VERSION	0

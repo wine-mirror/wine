@@ -29,6 +29,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

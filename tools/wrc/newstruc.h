@@ -21,9 +21,7 @@
 #ifndef __WRC_NEWSTRUC_H
 #define __WRC_NEWSTRUC_H
 
-#ifndef __WRC_WRCTYPES_H
 #include "wrctypes.h"
-#endif
 
 #define __NEW_STRUCT_FUNC(p)	\
 	p##_t *new_##p(void)\

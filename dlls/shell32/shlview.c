@@ -39,6 +39,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -48,6 +49,8 @@
 #include "winnls.h"
 #include "servprov.h"
 #include "shlguid.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "undocshell.h"
 #include "shresdef.h"

@@ -28,13 +28,16 @@
  *      99/9	added support for loadable low level drivers
  */
 
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "mmsystem.h"
+#include "windef.h"
 #include "winbase.h"
+#include "mmsystem.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "heap.h"
 #include "winternl.h"
 #include "winemm.h"

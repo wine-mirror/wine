@@ -20,6 +20,7 @@
 
 #define COM_NO_WINDOWS_H
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "windef.h"

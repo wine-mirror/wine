@@ -19,7 +19,10 @@
 #ifndef __WINE_EXTRACHUNK_H
 #define __WINE_EXTRACHUNK_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "mmsystem.h"
 
 #ifdef __cplusplus

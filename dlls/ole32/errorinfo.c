@@ -23,6 +23,7 @@
  * TEB at offset 0xf80
  */
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "windef.h"

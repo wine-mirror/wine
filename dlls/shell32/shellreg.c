@@ -21,9 +21,14 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
+#include "winbase.h"
 #include "shellapi.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "winerror.h"
 #include "winreg.h"

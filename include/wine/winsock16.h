@@ -19,7 +19,9 @@
 #ifndef __WINE_WINE_WINSOCK16_H
 #define __WINE_WINE_WINSOCK16_H
 
+#include <stdarg.h>
 #include <windef.h>
+#include <winbase.h>
 #include <pshpack1.h>
 
 typedef UINT16 SOCKET16;

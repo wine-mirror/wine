@@ -21,9 +21,9 @@
 #ifndef __WMC_WMCTYPES_H
 #define __WMC_WMCTYPES_H
 
-#ifndef __WINE_WINDEF_H
+#include <stdarg.h>
 #include "windef.h"
-#endif
+#include "winbase.h"
 
 /* Byteordering defines */
 #define WMC_BO_NATIVE	0x00

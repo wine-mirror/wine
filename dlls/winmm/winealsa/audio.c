@@ -25,6 +25,7 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -39,8 +40,8 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
 #include "winuser.h"

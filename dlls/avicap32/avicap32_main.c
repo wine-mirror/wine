@@ -17,7 +17,13 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "vfw.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 

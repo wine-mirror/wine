@@ -21,9 +21,12 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
 #include "wine/winbase16.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "winver.h"
 #include "wownt32.h"

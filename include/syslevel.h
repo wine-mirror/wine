@@ -21,6 +21,7 @@
 #ifndef __WINE_SYSLEVEL_H
 #define __WINE_SYSLEVEL_H
 
+#include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
 

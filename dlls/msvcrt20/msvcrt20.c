@@ -18,7 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 
 extern void __getmainargs(int *argc, char** *argv, char** *envp,
                           int expand_wildcards, int *new_mode);

@@ -31,9 +31,11 @@
 # endif
 #endif /* defined(HAVE_LIBXXSHM) */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
+#include "winbase.h"
 #include "bitmap.h"
 #include "x11drv.h"
 #include "wine/debug.h"

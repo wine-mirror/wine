@@ -33,8 +33,10 @@
 # include <curses.h>
 #endif
 #endif
+#include <stdarg.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 

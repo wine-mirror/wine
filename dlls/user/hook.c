@@ -61,6 +61,8 @@
  *     WH_MOUSE_LL                  Implemented but should use SendMessage instead
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"

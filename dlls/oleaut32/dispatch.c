@@ -24,14 +24,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 #include "oleauto.h"
 #include "winerror.h"
-#include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
+#include "winreg.h"
 #include "winnls.h"         /* for PRIMARYLANGID */
 
 #include "wine/debug.h"

@@ -28,6 +28,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
@@ -46,6 +47,7 @@
 #include <ctype.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h" /* SW_NORMAL */

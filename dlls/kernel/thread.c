@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
@@ -31,6 +32,8 @@
 # include <unistd.h>
 #endif
 
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"

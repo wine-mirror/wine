@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <sys/types.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -32,6 +33,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wownt32.h"
 #include "wine/winbase16.h"

@@ -22,6 +22,7 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -41,6 +42,7 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "winedump.h"
 #include "pe.h"
 

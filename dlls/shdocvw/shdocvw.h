@@ -23,8 +23,11 @@
 
 #define COM_NO_WINDOWS_H
 /* FIXME: Is there a better way to deal with all these includes? */
-#include "wingdi.h"
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 
 #include "ole2.h"

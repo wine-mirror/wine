@@ -23,9 +23,11 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wine/winbase16.h"
 #include "module.h"
 #include "stackframe.h"

@@ -28,11 +28,13 @@
 #ifdef HAVE_SYS_REG_H
 # include <sys/reg.h>
 #endif
+#include <stdarg.h>
 #include <unistd.h>
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 
 #include "file.h"

@@ -23,6 +23,7 @@
 cat <<EOF
 /* Automatically generated file; DO NOT EDIT!! */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "windef.h"

@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -29,6 +30,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ntstatus.h"
 #include "wownt32.h"
 #include "mmddk.h"
 #include "winioctl.h"

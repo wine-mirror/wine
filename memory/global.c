@@ -39,6 +39,7 @@
 
 #include "wine/winbase16.h"
 #include "wine/exception.h"
+#include "ntstatus.h"
 #include "global.h"
 #include "toolhelp.h"
 #include "selectors.h"

@@ -26,11 +26,15 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wincon.h"
 #include "kernel_private.h"

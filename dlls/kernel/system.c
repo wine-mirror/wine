@@ -20,7 +20,10 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"

@@ -23,9 +23,10 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"

@@ -20,9 +20,10 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "tapi.h"

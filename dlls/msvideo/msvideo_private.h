@@ -20,8 +20,11 @@
 #define __WINE_MSVIDEO_PRIVATE_H
 
 #define COM_NO_WINDOWS_H
-#include "winbase.h"
+#include <stdarg.h>
 #include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "commdlg.h"
 #include "vfw.h"
 

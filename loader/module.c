@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -32,6 +33,10 @@
 #endif
 #include "wine/winbase16.h"
 #include "winerror.h"
+#include "ntstatus.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "heap.h"
 #include "thread.h"

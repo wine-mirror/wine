@@ -17,6 +17,10 @@
 #endif
 
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 #include "rpcproxy.h"
 #ifndef __RPCPROXY_H_VERSION__

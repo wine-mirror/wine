@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -56,7 +57,10 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"   /* for GetCurrentTask */
 #include "winerror.h"

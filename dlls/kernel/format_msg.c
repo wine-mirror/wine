@@ -20,12 +20,15 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winuser.h"
 #include "winnls.h"

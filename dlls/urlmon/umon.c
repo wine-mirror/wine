@@ -20,12 +20,14 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
 #include <stdio.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winuser.h"
 #include "objbase.h"

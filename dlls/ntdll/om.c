@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_IO_H
@@ -30,6 +31,9 @@
 #endif
 #include "wine/debug.h"
 
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"

@@ -18,6 +18,7 @@
  */
 
 #include "windef.h"
+#include "winbase.h"
 #include "winuser.h"
 #include "main.h"
 #include "winnls.h"

@@ -34,10 +34,15 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

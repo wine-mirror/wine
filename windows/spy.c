@@ -21,8 +21,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
 #include "wownt32.h"
@@ -30,6 +32,7 @@
 #include "win.h"
 #include "wine/debug.h"
 #include "message.h"
+#include "winnls.h"
 #include "commctrl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(message);

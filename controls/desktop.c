@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -27,6 +28,7 @@
 #endif
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "user.h"
 #include "controls.h"

@@ -21,6 +21,10 @@
 #ifndef __WINE_MSI_PRIVATE__
 #define __WINE_MSI_PRIVATE__
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objidl.h"

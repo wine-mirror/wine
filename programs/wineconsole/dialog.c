@@ -19,9 +19,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "prsht.h"
 #include "winecon_user.h"

@@ -24,6 +24,13 @@
 #ifndef WINE_CFG_PROPERTIES_H
 #define WINE_CFG_PROPERTIES_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 
 #define MAX_NAME_LENGTH         64

@@ -18,12 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
+#include <stdarg.h>
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "config.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "wingdi.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "wine/debug.h"

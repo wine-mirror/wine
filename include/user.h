@@ -21,6 +21,8 @@
 #ifndef __WINE_USER_H
 #define __WINE_USER_H
 
+#include <stdarg.h>
+#include <windef.h>
 #include <winbase.h>
 #include <wingdi.h>
 #include <winuser.h>

@@ -23,6 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -31,9 +32,9 @@
 # include <unistd.h>
 #endif
 
-#include "mmsystem.h"
 #include "windef.h"
 #include "winbase.h"
+#include "mmsystem.h"
 
 #include "winemm.h"
 

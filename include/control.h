@@ -19,11 +19,6 @@
 #ifndef __CONTROL_INCLUDED__
 #define __CONTROL_INCLUDED__
 
-#include <windef.h>
-#include <wingdi.h>
-#include <objbase.h>
-#include <oleauto.h>
-
 typedef struct IMediaControl IMediaControl;
 typedef struct IBasicAudio IBasicAudio;
 typedef struct IBasicVideo IBasicVideo;

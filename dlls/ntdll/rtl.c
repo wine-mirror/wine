@@ -27,12 +27,14 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
-#include "winternl.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"

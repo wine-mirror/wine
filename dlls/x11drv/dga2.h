@@ -25,6 +25,10 @@
 #endif
 
 #ifdef HAVE_LIBXXF86DGA2
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "ddrawi.h"
 
 extern LPDDHALMODEINFO xf86dga2_modes;

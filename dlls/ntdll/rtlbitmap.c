@@ -28,9 +28,13 @@
  *  Note that to avoid unexpected behaviour, the size of a bitmap should be set
  *  to a multiple of 32.
  */
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ntstatus.h"
 #include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 

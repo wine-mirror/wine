@@ -11,7 +11,10 @@
 
 #define WINE_NOWINSOCK
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "urlmon.h"
 
 #include "wine/test.h"

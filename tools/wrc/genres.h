@@ -21,9 +21,7 @@
 #ifndef __WRC_GENRES_H
 #define __WRC_GENRES_H
 
-#ifndef __WRC_WRCTYPES_H
 #include "wrctypes.h"
-#endif
 
 res_t *new_res(void);
 res_t *grow_res(res_t *r, int add);

@@ -20,8 +20,6 @@
 #ifndef __WINE_WINVER_H
 #define __WINE_WINVER_H
 
-#include <windef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

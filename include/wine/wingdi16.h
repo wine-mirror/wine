@@ -19,7 +19,9 @@
 #ifndef __WINE_WINE_WINGDI16_H
 #define __WINE_WINE_WINGDI16_H
 
+#include <stdarg.h>
 #include <windef.h>
+#include <winbase.h>
 #include <wingdi.h>
 #include <wine/winbase16.h>
 

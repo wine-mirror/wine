@@ -21,8 +21,9 @@
 #ifndef __WINE_STRUCT32_H
 #define __WINE_STRUCT32_H
 
-#include "winbase.h"
+#include <stdarg.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 

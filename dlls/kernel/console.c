@@ -31,6 +31,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -38,6 +39,7 @@
 #endif
 #include <assert.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"

@@ -19,6 +19,10 @@
 #ifndef __WINE_DPINIT_H
 #define __WINE_DPINIT_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "wtypes.h"
 #include "dplay_global.h"
 

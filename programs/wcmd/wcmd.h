@@ -28,6 +28,7 @@
 #include <ctype.h>
 
 #ifdef WINELIB
+#include <windef.h>
 #include <winbase.h>
 #include <wincon.h>
 #endif /* !WINELIB */

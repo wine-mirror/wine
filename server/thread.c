@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <time.h>
 
+#include "windef.h"
 #include "winbase.h"
 
 #include "file.h"

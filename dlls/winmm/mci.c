@@ -24,13 +24,15 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "mmsystem.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
+#include "mmsystem.h"
 #include "winuser.h"
 #include "winnls.h"
 

@@ -27,6 +27,7 @@
 #define _WINE_COLORDLG_H
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +36,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "winuser.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "wine/debug.h"

@@ -34,12 +34,14 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "rpc.h"

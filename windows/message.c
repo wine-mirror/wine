@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -28,11 +29,13 @@
 #endif
 #include <sys/types.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "message.h"
 #include "winerror.h"
+#include "ntstatus.h"
 #include "wine/server.h"
 #include "controls.h"
 #include "dde.h"

@@ -19,13 +19,17 @@
 
 #include "config.h"
 
+#include <assert.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
 #include "wine/debug.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "ddraw.h"
 #include "ddrawi.h"
 #include "d3dhal.h"
-
-#include <assert.h>
-#include <stdlib.h>
 
 #include "ddraw_private.h"
 #include "ddraw/main.h"

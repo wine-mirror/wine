@@ -19,7 +19,9 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include "wine/test.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"

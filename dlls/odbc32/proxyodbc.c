@@ -25,11 +25,13 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
 #include "wine/library.h"

@@ -21,9 +21,6 @@
 #ifndef __WINE_WINREG_H
 #define __WINE_WINREG_H
 
-#include <winbase.h>
-#include <winnt.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

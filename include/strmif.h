@@ -8,7 +8,6 @@
 extern "C" {
 #endif
 #include <objidl.h>
-#include <guiddef.h>
 #include <oaidl.h>
 #define CDEF_CLASS_DEFAULT 0x0001
 #define CDEF_BYPASS_CLASS_MANAGER 0x0002

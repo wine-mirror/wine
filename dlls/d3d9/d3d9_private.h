@@ -55,6 +55,10 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define ENTER_GL() wine_tsx11_lock_ptr()
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "d3d9.h"
 
 /* Device caps */

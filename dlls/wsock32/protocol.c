@@ -25,6 +25,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -42,6 +43,7 @@
 #include <netdb.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "wtypes.h"

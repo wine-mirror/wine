@@ -21,8 +21,13 @@
 #ifndef __WINE_MSACMDRV_H
 #define __WINE_MSACMDRV_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wine/windef16.h"
+#include "mmsystem.h"
+#include "mmreg.h"
 #include "msacm.h"
 
 /***********************************************************************

@@ -25,6 +25,7 @@
 
 #include <assert.h>
 #include <time.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -34,6 +35,8 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/winbase16.h"

@@ -30,6 +30,7 @@
 #define MAXHOSTNAME 100 /* from http.c */
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -44,6 +45,7 @@
 # include <unistd.h>
 #endif
 
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

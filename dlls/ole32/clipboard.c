@@ -59,6 +59,7 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION

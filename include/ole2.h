@@ -21,7 +21,6 @@
 #ifndef __WINE_OLE2_H
 #define __WINE_OLE2_H
 
-#include <windef.h>
 #include <winerror.h>
 #include <objbase.h>
 #include <oleauto.h>

@@ -21,7 +21,10 @@
 #ifndef __WINE_ENHMETAFILEDRV_H
 #define __WINE_ENHMETAFILEDRV_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "gdi.h"
 

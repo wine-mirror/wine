@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -42,6 +43,7 @@
 #include "winerror.h"
 #include "mmsystem.h"
 #include "mmddk.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "wine/debug.h"

@@ -24,11 +24,13 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdarg.h>
 #include <string.h>
 #if defined(HAVE_FLOAT_H)
 #include <float.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"

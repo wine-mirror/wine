@@ -33,14 +33,18 @@
 #endif
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 #include "wine/winuser16.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
 #include "shlobj.h"  /* DROPFILES */
 
 #include "clipboard.h"
 #include "win.h"
 #include "winpos.h"
-#include "windef.h"
 #include "winreg.h"
 #include "x11drv.h"
 #include "shellapi.h"

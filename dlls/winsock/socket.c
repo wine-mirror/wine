@@ -26,6 +26,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -113,6 +114,8 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "wine/winbase16.h"
+#include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"

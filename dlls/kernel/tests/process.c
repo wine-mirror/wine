@@ -19,10 +19,13 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "wine/test.h"
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wincon.h"

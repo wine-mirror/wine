@@ -56,15 +56,20 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "wine/unicode.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "cdlg.h"

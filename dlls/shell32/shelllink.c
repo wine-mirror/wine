@@ -22,6 +22,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -34,10 +35,13 @@
 #include "wine/debug.h"
 #include "wine/port.h"
 #include "winerror.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
 
+#include "winuser.h"
+#include "wingdi.h"
 #include "shlobj.h"
 #include "undocshell.h"
 

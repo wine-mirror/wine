@@ -23,11 +23,13 @@
  *       dplayx.dll data which is accessible from all processes.
  */
 
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "wine/debug.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/unicode.h"

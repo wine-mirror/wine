@@ -21,9 +21,7 @@
 #ifndef __WRC_DUMPRES_H
 #define __WRC_DUMPRES_H
 
-#ifndef __WRC_WRCTYPES_H
 #include "wrctypes.h"
-#endif
 
 char *get_typename(resource_t* r);
 void dump_resources(resource_t *top);

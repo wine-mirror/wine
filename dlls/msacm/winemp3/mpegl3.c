@@ -20,13 +20,16 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "msacm.h"
+#include "mmsystem.h"
 #include "mmreg.h"
+#include "msacm.h"
 #include "../msacmdrv.h"
 #include "mpg123.h"
 #include "mpglib.h"

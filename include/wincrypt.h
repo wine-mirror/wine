@@ -19,8 +19,6 @@
 #ifndef __WINE_WINCRYPT_H
 #define __WINE_WINCRYPT_H
 
-#include <windef.h>
-
 /* some typedefs for function parameters */
 typedef unsigned int ALG_ID;
 typedef unsigned long HCRYPTPROV;

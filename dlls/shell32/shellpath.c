@@ -26,6 +26,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 #include "wine/debug.h"
@@ -33,6 +34,8 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "wingdi.h"
+#include "winuser.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"

@@ -19,10 +19,7 @@
 #ifndef __WINE_SHLOBJ_H
 #define __WINE_SHLOBJ_H
 
-#include <windef.h>
-#include <winbase.h>	/* WIN32_FIND_* */
 #include <ole2.h>
-#include <oleauto.h>
 #include <commctrl.h>
 #include <prsht.h>
 #include <shlguid.h>

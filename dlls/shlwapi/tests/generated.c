@@ -11,8 +11,12 @@
 
 #define WINE_NOWINSOCK
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wtypes.h"
+#include "winreg.h"
 #include "shlwapi.h"
 
 #include "wine/test.h"

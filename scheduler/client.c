@@ -50,6 +50,7 @@
 #endif
 #include <stdarg.h>
 
+#include "ntstatus.h"
 #include "thread.h"
 #include "wine/library.h"
 #include "wine/server.h"

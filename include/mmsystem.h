@@ -21,8 +21,6 @@
 #ifndef __WINE_MMSYSTEM_H
 #define __WINE_MMSYSTEM_H
 
-#include <windef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

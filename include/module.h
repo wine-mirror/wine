@@ -21,8 +21,10 @@
 #ifndef __WINE_MODULE_H
 #define __WINE_MODULE_H
 
+#include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
+#include <winreg.h>
 #include <wine/windef16.h>
 #include <wine/winbase16.h>
 #include <winternl.h>

@@ -41,11 +41,15 @@
  *	offset of the mouse messages sent to the application...
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "winerror.h"
+#include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "wine/debug.h"

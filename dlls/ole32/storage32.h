@@ -29,6 +29,10 @@
 #ifndef __STORAGE32_H__
 #define __STORAGE32_H__
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "objbase.h"
 

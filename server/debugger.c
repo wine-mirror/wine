@@ -24,8 +24,10 @@
 #include <assert.h>
 #include <signal.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
 
 #include "handle.h"

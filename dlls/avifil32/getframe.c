@@ -18,10 +18,13 @@
 
 #define COM_NO_WINDOWS_H
 #include <assert.h>
+#include <stdarg.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "windowsx.h"
+#include "wingdi.h"
 #include "vfw.h"
 
 #include "avifile_private.h"

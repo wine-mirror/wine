@@ -26,10 +26,13 @@
 #include "wine/port.h"
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "objbase.h"
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"

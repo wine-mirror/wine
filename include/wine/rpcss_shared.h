@@ -21,9 +21,10 @@
 #ifndef __WINE_RPCSS_SHARED_H
 #define __WINE_RPCSS_SHARED_H
 
-#include <basetsd.h>
+#include <stdarg.h>
 #include <windef.h>
-
+#include <winbase.h>
+#include <rpc.h>
 #include <rpcdcep.h>
 
 #define RPCSS_NP_PROTOCOL_VERSION 0x0000

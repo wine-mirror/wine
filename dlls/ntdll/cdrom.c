@@ -25,6 +25,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_IO_H
 # include <io.h>
@@ -66,6 +67,10 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "ntddstor.h"

@@ -23,6 +23,7 @@
 #include "ts_xlib.h"
 
 #include <math.h>
+#include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"

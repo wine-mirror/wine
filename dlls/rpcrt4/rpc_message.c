@@ -23,6 +23,7 @@
  *  - decide if OVERLAPPED_WORKS
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 

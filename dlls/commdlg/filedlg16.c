@@ -20,6 +20,7 @@
  */
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "windef.h"
@@ -29,9 +30,11 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "winuser.h"
 #include "commdlg.h"
 #include "wine/debug.h"
 #include "cderr.h"
+#include "winreg.h"
 #include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);

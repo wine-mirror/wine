@@ -30,6 +30,7 @@
  *  0x10: SAFEARRAYBOUNDS[0...]
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "windef.h"

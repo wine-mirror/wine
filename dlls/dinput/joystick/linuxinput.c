@@ -25,6 +25,7 @@
 #ifdef HAVE_LINUX_INPUT_H
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -54,9 +55,9 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "windef.h"
 #include "dinput.h"
 
 #include "dinput_private.h"

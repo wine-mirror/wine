@@ -24,6 +24,8 @@
 #define NONAMELESSSTRUCT
 #include "wine/debug.h"
 
+#include "windef.h"
+#include "wingdi.h"
 #include "pidl.h"
 #include "shlguid.h"
 #include "shlobj.h"

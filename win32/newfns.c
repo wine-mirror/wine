@@ -24,6 +24,7 @@ at a later date. */
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H

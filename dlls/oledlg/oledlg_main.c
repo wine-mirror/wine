@@ -19,9 +19,13 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "oledlg.h"
 #include "wine/debug.h"
 #include "ole2.h"

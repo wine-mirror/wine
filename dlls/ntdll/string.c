@@ -23,9 +23,13 @@
 #include "config.h"
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <string.h>
 
+#include "ntstatus.h"
 #include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 
 

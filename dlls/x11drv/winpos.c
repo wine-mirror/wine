@@ -26,7 +26,9 @@
 #include <X11/IntrinsicP.h>
 #include <X11/extensions/shape.h>
 #endif /* HAVE_LIBXSHAPE */
+#include <stdarg.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"

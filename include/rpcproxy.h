@@ -26,7 +26,6 @@
 
 #include <basetsd.h>
 #include <guiddef.h>
-#include <winnt.h>
 #include <rpc.h>
 #include <rpcndr.h>
 

@@ -21,7 +21,10 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"
 #include "controls.h"

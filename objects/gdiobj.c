@@ -22,9 +22,11 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
 #include "winerror.h"

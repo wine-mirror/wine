@@ -24,6 +24,7 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"
+#include "ntstatus.h"
 #include "stackframe.h"
 #include "wine/debug.h"
 

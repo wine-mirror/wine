@@ -26,6 +26,7 @@
 # error You must include config.h to use this header
 #endif
 
+#include <stdarg.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>

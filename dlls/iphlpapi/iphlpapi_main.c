@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
@@ -32,6 +33,7 @@
 # include <resolv.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "iphlpapi.h"
 #include "ifenum.h"

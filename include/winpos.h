@@ -21,6 +21,7 @@
 #ifndef __WINE_WINPOS_H
 #define __WINE_WINPOS_H
 
+#include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
 #include <wingdi.h>

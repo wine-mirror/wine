@@ -24,11 +24,16 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "shellapi.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "shresdef.h"
 #define NO_SHLWAPI_STREAM

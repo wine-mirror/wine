@@ -18,10 +18,12 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 #include "undocshell.h"
 #include "shlguid.h"

@@ -19,12 +19,13 @@
 
 #include "config.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "wine/debug.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "windef.h"
 #include "dinput.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);

@@ -20,13 +20,14 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "wine/windef16.h"
-#include "ole2.h"
-#include "oleauto.h"
 #include "windef.h"
 #include "winbase.h"
+#include "ole2.h"
+#include "oleauto.h"
 #include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"

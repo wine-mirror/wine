@@ -35,9 +35,13 @@
  *
  */
 
+#include <stdarg.h>
 #include <string.h>
 
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
+#include "wingdi.h"
 #include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"

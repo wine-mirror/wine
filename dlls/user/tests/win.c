@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #include "windef.h"

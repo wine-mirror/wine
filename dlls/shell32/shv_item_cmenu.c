@@ -25,6 +25,8 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
+#include "windef.h"
+#include "wingdi.h"
 #include "pidl.h"
 #include "shlguid.h"
 #include "undocshell.h"

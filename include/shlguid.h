@@ -19,8 +19,6 @@
 #ifndef __WINE_SHLGUID_H
 #define __WINE_SHLGUID_H
 
-#include <objbase.h>
-
 #define DEFINE_SHLGUID(name, l, w1, w2) DEFINE_OLEGUID(name,l,w1,w2)
 
 DEFINE_SHLGUID(CLSID_ShellDesktop,      0x00021400L, 0, 0);

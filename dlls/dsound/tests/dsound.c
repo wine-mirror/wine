@@ -26,6 +26,8 @@
 #include <stdlib.h>
 
 #include "wine/test.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "dsound.h"
 
 #ifndef DSBCAPS_CTRLDEFAULT
@@ -455,35 +457,35 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 	    rc=IDirectSound3DListener_GetAllParameters(listener,&listener_param);
 	    ok(rc==DS_OK,"IDirectSound3dListener_GetAllParameters failed 0x%lx\n",rc);
 	    if (move_listener)
-		listener_param.vPosition.u1.x = -5.0;
+		listener_param.vPosition.x = -5.0;
 	    else
-		listener_param.vPosition.u1.x = 0.0;
-	    listener_param.vPosition.u2.y = 0.0;
-	    listener_param.vPosition.u3.z = 0.0;
-	    rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.u1.x,listener_param.vPosition.u2.y,listener_param.vPosition.u3.z,DS3D_IMMEDIATE);
+		listener_param.vPosition.x = 0.0;
+	    listener_param.vPosition.y = 0.0;
+	    listener_param.vPosition.z = 0.0;
+	    rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.x,listener_param.vPosition.y,listener_param.vPosition.z,DS3D_IMMEDIATE);
 	    ok(rc==DS_OK,"IDirectSound3dListener_SetPosition failed 0x%lx\n",rc);
 	}
 	if (buffer3d) {
 	    if (move_sound)
-		buffer_param.vPosition.u1.x = 5.0;
+		buffer_param.vPosition.x = 5.0;
 	    else
-		buffer_param.vPosition.u1.x = 0.0;
-	    buffer_param.vPosition.u2.y = 0.0;
-	    buffer_param.vPosition.u3.z = 0.0;
-	    rc=IDirectSound3DBuffer_SetPosition(buffer,buffer_param.vPosition.u1.x,buffer_param.vPosition.u2.y,buffer_param.vPosition.u3.z,DS3D_IMMEDIATE);
+		buffer_param.vPosition.x = 0.0;
+	    buffer_param.vPosition.y = 0.0;
+	    buffer_param.vPosition.z = 0.0;
+	    rc=IDirectSound3DBuffer_SetPosition(buffer,buffer_param.vPosition.x,buffer_param.vPosition.y,buffer_param.vPosition.z,DS3D_IMMEDIATE);
 	    ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition failed 0x%lx\n",rc);
 	}
 
 	while (buffer_service(&state)) {
 	    WaitForSingleObject(GetCurrentProcess(),TIME_SLICE/2);
 	    if (listener&&move_listener) {
-		listener_param.vPosition.u1.x += 0.5;
-		rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.u1.x,listener_param.vPosition.u2.y,listener_param.vPosition.u3.z,DS3D_IMMEDIATE);
+		listener_param.vPosition.x += 0.5;
+		rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.x,listener_param.vPosition.y,listener_param.vPosition.z,DS3D_IMMEDIATE);
 		ok(rc==DS_OK,"IDirectSound3dListener_SetPosition failed 0x%lx\n",rc);
 	    }
 	    if (buffer3d&&move_sound) {
-		buffer_param.vPosition.u1.x -= 0.5;
-		rc=IDirectSound3DBuffer_SetPosition(buffer,buffer_param.vPosition.u1.x,buffer_param.vPosition.u2.y,buffer_param.vPosition.u3.z,DS3D_IMMEDIATE);
+		buffer_param.vPosition.x -= 0.5;
+		rc=IDirectSound3DBuffer_SetPosition(buffer,buffer_param.vPosition.x,buffer_param.vPosition.y,buffer_param.vPosition.z,DS3D_IMMEDIATE);
 		ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition failed 0x%lx\n",rc);
 	    }
 	}

@@ -33,7 +33,11 @@
 
 #ifndef RC_INVOKED
 
+#include <stdarg.h>
+
 #include "hlpfile.h"
+#include "windef.h"
+#include "winbase.h"
 #include "macro.h"
 #include "winhelp_res.h"
 

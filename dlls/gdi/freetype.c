@@ -23,7 +23,16 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <assert.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "wingdi.h"
@@ -31,13 +40,6 @@
 #include "wine/port.h"
 #include "wine/debug.h"
 #include "gdi.h"
-
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <dirent.h>
-#include <stdio.h>
-#include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 

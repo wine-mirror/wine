@@ -19,7 +19,13 @@
 #ifndef __WINE_NTDLL_MISC_H
 #define __WINE_NTDLL_MISC_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "winnt.h"
+#include "winreg.h"
+#include "ntstatus.h"
 #include "winternl.h"
 #include "module.h"
 #include "thread.h"

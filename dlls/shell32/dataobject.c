@@ -23,6 +23,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "wingdi.h"
 #include "pidl.h"
 #include "winerror.h"
 #include "shell32_main.h"

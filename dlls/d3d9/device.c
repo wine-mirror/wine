@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <math.h>
+#include <stdarg.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT

@@ -20,6 +20,8 @@
  *
  * FIXME: Not all locales are supported yet.
  */
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

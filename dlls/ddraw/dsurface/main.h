@@ -19,6 +19,10 @@
 #ifndef DDRAW_DSURFACE_MAIN_H_INCLUDED
 #define DDRAW_DSURFACE_MAIN_H_INCLUDED
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "ddraw_private.h"
 
 /* Support for IDirectDrawSurface7::Set/Get/FreePrivateData. I don't think

@@ -21,11 +21,9 @@
 #ifndef __WRC_UTILS_H
 #define __WRC_UTILS_H
 
-#ifndef __WRC_WRCTYPES_H
-#include "wrctypes.h"
-#endif
-
 #include <stddef.h>	/* size_t */
+
+#include "wrctypes.h"
 
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);

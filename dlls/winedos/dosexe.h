@@ -21,8 +21,11 @@
 #ifndef __WINE_DOSEXE_H
 #define __WINE_DOSEXE_H
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "wine/windef16.h"
-#include "winbase.h"   /* for LPSTARTUPINFO32A */
+#include "winbase.h"
 #include "winnt.h"     /* for PCONTEXT */
 #include "wincon.h"    /* for MOUSE_EVENT_RECORD */
 #include "miscemu.h"

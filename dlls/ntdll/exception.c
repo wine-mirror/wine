@@ -24,8 +24,11 @@
 
 #include <assert.h>
 #include <signal.h>
+#include <stdarg.h>
 
+#include "ntstatus.h"
 #include "windef.h"
+#include "winbase.h"
 #include "thread.h"
 #include "winternl.h"
 #include "wine/exception.h"

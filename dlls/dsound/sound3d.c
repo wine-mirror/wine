@@ -39,6 +39,7 @@
 
 #include "config.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -57,6 +58,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "mmddk.h"
 #include "wine/windef16.h"
@@ -80,9 +82,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound3d);
 static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 {
 	D3DVALUE c;
-	c = (a->u1.x*b->u1.x) + (a->u2.y*b->u2.y) + (a->u3.z*b->u3.z);
-	TRACE("(%f,%f,%f) * (%f,%f,%f) = %f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
-	      b->u3.z, c);
+	c = (a->x*b->x) + (a->y*b->y) + (a->z*b->z);
+	TRACE("(%f,%f,%f) * (%f,%f,%f) = %f)\n", a->x, a->y, a->z, b->x, b->y, \
+	      b->z, c);
 	return c;
 }
 
@@ -90,11 +92,11 @@ static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 static inline D3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 {
 	D3DVECTOR c;
-	c.u1.x = (a->u2.y*b->u3.z) - (a->u3.z*b->u2.y);
-	c.u2.y = (a->u3.z*b->u1.x) - (a->u1.x*b->u3.z);
-	c.u3.z = (a->u1.x*b->u2.y) - (a->u2.y*b->u1.x);
-	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
-	      b->u3.z, c.u1.x, c.u2.y, c.u3.z);
+	c.x = (a->y*b->z) - (a->z*b->y);
+	c.y = (a->z*b->x) - (a->x*b->z);
+	c.z = (a->x*b->y) - (a->y*b->x);
+	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->x, a->y, a->z, b->x, b->y, \
+	      b->z, c.x, c.y, c.z);
 	return c;
 }
 
@@ -103,7 +105,7 @@ static inline D3DVALUE VectorMagnitude (LPD3DVECTOR a)
 {
 	D3DVALUE l;
 	l = sqrt (ScalarProduct (a, a));
-	TRACE("|(%f,%f,%f)| = %f\n", a->u1.x, a->u2.y, a->u3.z, l);
+	TRACE("|(%f,%f,%f)| = %f\n", a->x, a->y, a->z, l);
 	return l;
 }
 
@@ -137,8 +139,8 @@ static inline D3DVALUE AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 	angle = acos(cos);
 	/* we now have angle in radians */
 	angle = RadToDeg(angle);
-	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x,
-	      b->u2.y, b->u3.z, angle);
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f degrees\n",  a->x, a->y, a->z, b->x,
+	      b->y, b->z, angle);
 	return angle;	
 }
 
@@ -152,8 +154,8 @@ static inline D3DVALUE AngleBetweenVectorsRad (LPD3DVECTOR a, LPD3DVECTOR b)
 	lb = VectorMagnitude (b);
 	cos = product/(la*lb);
 	angle = acos(cos);
-	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x,
-	      b->u2.y, b->u3.z, angle);
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %f radians\n",  a->x, a->y, a->z, b->x,
+	      b->y, b->z, angle);
 	return angle;	
 }
 
@@ -161,11 +163,11 @@ static inline D3DVALUE AngleBetweenVectorsRad (LPD3DVECTOR a, LPD3DVECTOR b)
 static inline D3DVECTOR VectorBetweenTwoPoints (LPD3DVECTOR a, LPD3DVECTOR b)
 {
 	D3DVECTOR c;
-	c.u1.x = b->u1.x - a->u1.x;
-	c.u2.y = b->u2.y - a->u2.y;
-	c.u3.z = b->u3.z - a->u3.z;
-	TRACE("A (%f,%f,%f), B (%f,%f,%f), AB = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y,
-	      b->u3.z, c.u1.x, c.u2.y, c.u3.z);
+	c.x = b->x - a->x;
+	c.y = b->y - a->y;
+	c.z = b->z - a->z;
+	TRACE("A (%f,%f,%f), B (%f,%f,%f), AB = (%f,%f,%f)\n", a->x, a->y, a->z, b->x, b->y,
+	      b->z, c.x, c.y, c.z);
 	return c;
 }
 
@@ -175,8 +177,8 @@ static inline D3DVALUE ProjectVector (LPD3DVECTOR a, LPD3DVECTOR p)
 	D3DVALUE prod, result;
 	prod = ScalarProduct(a, p);
 	result = prod/VectorMagnitude(p);
-	TRACE("length projection of (%f,%f,%f) on (%f,%f,%f) = %f\n", a->u1.x, a->u2.y, a->u3.z, p->u1.x,
-              p->u2.y, p->u3.z, result);
+	TRACE("length projection of (%f,%f,%f) on (%f,%f,%f) = %f\n", a->x, a->y, a->z, p->x,
+              p->y, p->z, result);
 	return result;
 }
 
@@ -259,7 +261,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 
 	/* conning */
 	/* sometimes it happens that vConeOrientation vector = (0,0,0); in this case angle is "nan" and it's useless*/
-	if (dsb->ds3db_ds3db.vConeOrientation.u1.x == 0 && dsb->ds3db_ds3db.vConeOrientation.u2.y == 0 && dsb->ds3db_ds3db.vConeOrientation.u3.z == 0)
+	if (dsb->ds3db_ds3db.vConeOrientation.x == 0 && dsb->ds3db_ds3db.vConeOrientation.y == 0 && dsb->ds3db_ds3db.vConeOrientation.z == 0)
 	{
 		TRACE("conning: cones not set\n");
 	}
@@ -288,9 +290,9 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	dsb->volpan.lVolume = lVolume;
 	
 	/* panning */
-	if (dsb->dsound->ds3dl.vPosition.u1.x == dsb->ds3db_ds3db.vPosition.u1.x &&
-	    dsb->dsound->ds3dl.vPosition.u2.y == dsb->ds3db_ds3db.vPosition.u2.y &&
-	    dsb->dsound->ds3dl.vPosition.u3.z == dsb->ds3db_ds3db.vPosition.u3.z) {
+	if (dsb->dsound->ds3dl.vPosition.x == dsb->ds3db_ds3db.vPosition.x &&
+	    dsb->dsound->ds3dl.vPosition.y == dsb->ds3db_ds3db.vPosition.y &&
+	    dsb->dsound->ds3dl.vPosition.z == dsb->ds3db_ds3db.vPosition.z) {
 		dsb->volpan.lPan = 0;
 		flAngle = 0.0;
 	}
@@ -446,9 +448,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOrientation(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("returning: Cone Orientation vector = (%f,%f,%f)\n",
-		This->dsb->ds3db_ds3db.vConeOrientation.u1.x, 
-		This->dsb->ds3db_ds3db.vConeOrientation.u2.y, 
-		This->dsb->ds3db_ds3db.vConeOrientation.u3.z);
+		This->dsb->ds3db_ds3db.vConeOrientation.x, 
+		This->dsb->ds3db_ds3db.vConeOrientation.y, 
+		This->dsb->ds3db_ds3db.vConeOrientation.z);
 	*lpvConeOrientation = This->dsb->ds3db_ds3db.vConeOrientation;
 	return DS_OK;
 }
@@ -499,9 +501,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetPosition(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("returning: Position vector = (%f,%f,%f)\n",
-		This->dsb->ds3db_ds3db.vPosition.u1.x,
-		This->dsb->ds3db_ds3db.vPosition.u2.y,
-		This->dsb->ds3db_ds3db.vPosition.u3.z);
+		This->dsb->ds3db_ds3db.vPosition.x,
+		This->dsb->ds3db_ds3db.vPosition.y,
+		This->dsb->ds3db_ds3db.vPosition.z);
 	*lpvPosition = This->dsb->ds3db_ds3db.vPosition;
 	return DS_OK;
 }
@@ -512,9 +514,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetVelocity(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("returning: Velocity vector = (%f,%f,%f)\n",
-		This->dsb->ds3db_ds3db.vVelocity.u1.x,
-		This->dsb->ds3db_ds3db.vVelocity.u2.y,
-		This->dsb->ds3db_ds3db.vVelocity.u3.z);
+		This->dsb->ds3db_ds3db.vVelocity.x,
+		This->dsb->ds3db_ds3db.vVelocity.y,
+		This->dsb->ds3db_ds3db.vVelocity.z);
 	*lpvVelocity = This->dsb->ds3db_ds3db.vVelocity;
 	return DS_OK;
 }
@@ -578,9 +580,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("setting: Cone Orientation vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
-	This->dsb->ds3db_ds3db.vConeOrientation.u1.x = x;
-	This->dsb->ds3db_ds3db.vConeOrientation.u2.y = y;
-	This->dsb->ds3db_ds3db.vConeOrientation.u3.z = z;
+	This->dsb->ds3db_ds3db.vConeOrientation.x = x;
+	This->dsb->ds3db_ds3db.vConeOrientation.y = y;
+	This->dsb->ds3db_ds3db.vConeOrientation.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->dsb->ds3db_need_recalc = FALSE;
@@ -665,9 +667,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("setting: Position vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
-	This->dsb->ds3db_ds3db.vPosition.u1.x = x;
-	This->dsb->ds3db_ds3db.vPosition.u2.y = y;
-	This->dsb->ds3db_ds3db.vPosition.u3.z = z;
+	This->dsb->ds3db_ds3db.vPosition.x = x;
+	This->dsb->ds3db_ds3db.vPosition.y = y;
+	This->dsb->ds3db_ds3db.vPosition.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->dsb->ds3db_need_recalc = FALSE;
@@ -684,9 +686,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("setting: Velocity vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
-	This->dsb->ds3db_ds3db.vVelocity.u1.x = x;
-	This->dsb->ds3db_ds3db.vVelocity.u2.y = y;
-	This->dsb->ds3db_ds3db.vVelocity.u3.z = z;
+	This->dsb->ds3db_ds3db.vVelocity.x = x;
+	This->dsb->ds3db_ds3db.vVelocity.y = y;
+	This->dsb->ds3db_ds3db.vVelocity.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->dsb->ds3db_need_recalc = FALSE;
@@ -744,17 +746,17 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	ds3db->lpVtbl = &ds3dbvt;
 
 	ds3db->dsb->ds3db_ds3db.dwSize = sizeof(DS3DBUFFER);
-	ds3db->dsb->ds3db_ds3db.vPosition.u1.x = 0.0;
-	ds3db->dsb->ds3db_ds3db.vPosition.u2.y = 0.0;
-	ds3db->dsb->ds3db_ds3db.vPosition.u3.z = 0.0;
-	ds3db->dsb->ds3db_ds3db.vVelocity.u1.x = 0.0;
-	ds3db->dsb->ds3db_ds3db.vVelocity.u2.y = 0.0;
-	ds3db->dsb->ds3db_ds3db.vVelocity.u3.z = 0.0;
+	ds3db->dsb->ds3db_ds3db.vPosition.x = 0.0;
+	ds3db->dsb->ds3db_ds3db.vPosition.y = 0.0;
+	ds3db->dsb->ds3db_ds3db.vPosition.z = 0.0;
+	ds3db->dsb->ds3db_ds3db.vVelocity.x = 0.0;
+	ds3db->dsb->ds3db_ds3db.vVelocity.y = 0.0;
+	ds3db->dsb->ds3db_ds3db.vVelocity.z = 0.0;
 	ds3db->dsb->ds3db_ds3db.dwInsideConeAngle = DS3D_DEFAULTCONEANGLE;
 	ds3db->dsb->ds3db_ds3db.dwOutsideConeAngle = DS3D_DEFAULTCONEANGLE;
-	ds3db->dsb->ds3db_ds3db.vConeOrientation.u1.x = 0.0;
-	ds3db->dsb->ds3db_ds3db.vConeOrientation.u2.y = 0.0;
-	ds3db->dsb->ds3db_ds3db.vConeOrientation.u3.z = 0.0;
+	ds3db->dsb->ds3db_ds3db.vConeOrientation.x = 0.0;
+	ds3db->dsb->ds3db_ds3db.vConeOrientation.y = 0.0;
+	ds3db->dsb->ds3db_ds3db.vConeOrientation.z = 0.0;
 	ds3db->dsb->ds3db_ds3db.lConeOutsideVolume = DS3D_DEFAULTCONEOUTSIDEVOLUME;
 	ds3db->dsb->ds3db_ds3db.flMinDistance = DS3D_DEFAULTMINDISTANCE;
 	ds3db->dsb->ds3db_ds3db.flMaxDistance = DS3D_DEFAULTMAXDISTANCE;
@@ -891,9 +893,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetOrientation(
 	LPD3DVECTOR lpvOrientTop)
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
-	TRACE("returning: OrientFront vector = (%f,%f,%f); OrientTop vector = (%f,%f,%f)\n", This->dsound->ds3dl.vOrientFront.u1.x, \
-	This->dsound->ds3dl.vOrientFront.u2.y, This->dsound->ds3dl.vOrientFront.u3.z, This->dsound->ds3dl.vOrientTop.u1.x, This->dsound->ds3dl.vOrientTop.u2.y, \
-	This->dsound->ds3dl.vOrientTop.u3.z);
+	TRACE("returning: OrientFront vector = (%f,%f,%f); OrientTop vector = (%f,%f,%f)\n", This->dsound->ds3dl.vOrientFront.x, \
+	This->dsound->ds3dl.vOrientFront.y, This->dsound->ds3dl.vOrientFront.z, This->dsound->ds3dl.vOrientTop.x, This->dsound->ds3dl.vOrientTop.y, \
+	This->dsound->ds3dl.vOrientTop.z);
 	*lpvOrientFront = This->dsound->ds3dl.vOrientFront;
 	*lpvOrientTop = This->dsound->ds3dl.vOrientTop;
 	return DS_OK;
@@ -904,7 +906,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetPosition(
 	LPD3DVECTOR lpvPosition)
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
-	TRACE("returning: Position vector = (%f,%f,%f)\n", This->dsound->ds3dl.vPosition.u1.x, This->dsound->ds3dl.vPosition.u2.y, This->dsound->ds3dl.vPosition.u3.z);
+	TRACE("returning: Position vector = (%f,%f,%f)\n", This->dsound->ds3dl.vPosition.x, This->dsound->ds3dl.vPosition.y, This->dsound->ds3dl.vPosition.z);
 	*lpvPosition = This->dsound->ds3dl.vPosition;
 	return DS_OK;
 }
@@ -924,7 +926,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetVelocity(
 	LPD3DVECTOR lpvVelocity)
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
-	TRACE("returning: Velocity vector = (%f,%f,%f)\n", This->dsound->ds3dl.vVelocity.u1.x, This->dsound->ds3dl.vVelocity.u2.y, This->dsound->ds3dl.vVelocity.u3.z);
+	TRACE("returning: Velocity vector = (%f,%f,%f)\n", This->dsound->ds3dl.vVelocity.x, This->dsound->ds3dl.vVelocity.y, This->dsound->ds3dl.vVelocity.z);
 	*lpvVelocity = This->dsound->ds3dl.vVelocity;
 	return DS_OK;
 }
@@ -989,12 +991,12 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetOrientation(
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
 	TRACE("setting: Front vector = (%f,%f,%f); Top vector = (%f,%f,%f); dwApply = %ld\n", \
 	xFront, yFront, zFront, xTop, yTop, zTop, dwApply);
-	This->dsound->ds3dl.vOrientFront.u1.x = xFront;
-	This->dsound->ds3dl.vOrientFront.u2.y = yFront;
-	This->dsound->ds3dl.vOrientFront.u3.z = zFront;
-	This->dsound->ds3dl.vOrientTop.u1.x = xTop;
-	This->dsound->ds3dl.vOrientTop.u2.y = yTop;
-	This->dsound->ds3dl.vOrientTop.u3.z = zTop;
+	This->dsound->ds3dl.vOrientFront.x = xFront;
+	This->dsound->ds3dl.vOrientFront.y = yFront;
+	This->dsound->ds3dl.vOrientFront.z = zFront;
+	This->dsound->ds3dl.vOrientTop.x = xTop;
+	This->dsound->ds3dl.vOrientTop.y = yTop;
+	This->dsound->ds3dl.vOrientTop.z = zTop;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->dsound->ds3dl_need_recalc = FALSE;
@@ -1011,9 +1013,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetPosition(
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
 	TRACE("setting: Position vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
-	This->dsound->ds3dl.vPosition.u1.x = x;
-	This->dsound->ds3dl.vPosition.u2.y = y;
-	This->dsound->ds3dl.vPosition.u3.z = z;
+	This->dsound->ds3dl.vPosition.x = x;
+	This->dsound->ds3dl.vPosition.y = y;
+	This->dsound->ds3dl.vPosition.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->dsound->ds3dl_need_recalc = FALSE;
@@ -1047,9 +1049,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetVelocity(
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
 	TRACE("setting: Velocity vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
-	This->dsound->ds3dl.vVelocity.u1.x = x;
-	This->dsound->ds3dl.vVelocity.u2.y = y;
-	This->dsound->ds3dl.vVelocity.u3.z = z;
+	This->dsound->ds3dl.vVelocity.x = x;
+	This->dsound->ds3dl.vVelocity.y = y;
+	This->dsound->ds3dl.vVelocity.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->dsound->ds3dl_need_recalc = FALSE;
@@ -1114,18 +1116,18 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	dsl->dsound = This->dsound;
 
 	dsl->dsound->ds3dl.dwSize = sizeof(DS3DLISTENER);
-	dsl->dsound->ds3dl.vPosition.u1.x = 0.0;
-	dsl->dsound->ds3dl.vPosition.u2.y = 0.0;
-	dsl->dsound->ds3dl.vPosition.u3.z = 0.0;
-	dsl->dsound->ds3dl.vVelocity.u1.x = 0.0;
-	dsl->dsound->ds3dl.vVelocity.u2.y = 0.0;
-	dsl->dsound->ds3dl.vVelocity.u3.z = 0.0;
-	dsl->dsound->ds3dl.vOrientFront.u1.x = 0.0;
-	dsl->dsound->ds3dl.vOrientFront.u2.y = 0.0;
-	dsl->dsound->ds3dl.vOrientFront.u3.z = 1.0;
-	dsl->dsound->ds3dl.vOrientTop.u1.x = 0.0;
-	dsl->dsound->ds3dl.vOrientTop.u2.y = 1.0;
-	dsl->dsound->ds3dl.vOrientTop.u3.z = 0.0;
+	dsl->dsound->ds3dl.vPosition.x = 0.0;
+	dsl->dsound->ds3dl.vPosition.y = 0.0;
+	dsl->dsound->ds3dl.vPosition.z = 0.0;
+	dsl->dsound->ds3dl.vVelocity.x = 0.0;
+	dsl->dsound->ds3dl.vVelocity.y = 0.0;
+	dsl->dsound->ds3dl.vVelocity.z = 0.0;
+	dsl->dsound->ds3dl.vOrientFront.x = 0.0;
+	dsl->dsound->ds3dl.vOrientFront.y = 0.0;
+	dsl->dsound->ds3dl.vOrientFront.z = 1.0;
+	dsl->dsound->ds3dl.vOrientTop.x = 0.0;
+	dsl->dsound->ds3dl.vOrientTop.y = 1.0;
+	dsl->dsound->ds3dl.vOrientTop.z = 0.0;
 	dsl->dsound->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
 	dsl->dsound->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
 	dsl->dsound->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;

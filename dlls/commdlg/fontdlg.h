@@ -27,6 +27,12 @@
 #ifndef _WINE_FONTDLG_H
 #define _WINE_FONTDLG_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "commdlg.h"
 
 typedef struct

@@ -20,13 +20,14 @@
 
 #include "config.h"
 
+#include <math.h>
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-
-#include <math.h>
 
 #include "d3d8_private.h"
 

@@ -22,14 +22,17 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "wingdi.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "wine/debug.h"

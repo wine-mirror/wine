@@ -43,12 +43,17 @@
  * FIXME: what are we going to do with animation and color (bpp > 1) cursors ?!
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wownt32.h"
+#include "winerror.h"
+#include "ntstatus.h"
+#include "excpt.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
@@ -58,8 +63,6 @@
 #include "wine/debug.h"
 #include "user.h"
 #include "message.h"
-#include "winerror.h"
-#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);

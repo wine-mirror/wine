@@ -22,6 +22,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -32,9 +33,12 @@
 #include <netdb.h>
 #endif
 
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/exception.h"

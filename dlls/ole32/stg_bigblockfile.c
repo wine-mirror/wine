@@ -33,12 +33,14 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"

@@ -19,7 +19,6 @@
 #ifndef __WINE_OLECTL_H
 #define __WINE_OLECTL_H
 
-#include <windef.h>
 #include <ocidl.h>
 
 #ifdef __cplusplus

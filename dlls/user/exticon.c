@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>	/* abs() */
 #include <sys/types.h>
@@ -33,8 +34,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"

@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_SYS_ERRNO_H
@@ -58,8 +59,10 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"

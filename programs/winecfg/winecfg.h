@@ -23,6 +23,13 @@
 #ifndef WINE_CFG_H
 #define WINE_CFG_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "properties.h"
 
 #define IS_OPTION_TRUE(ch) \

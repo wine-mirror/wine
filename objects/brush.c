@@ -20,8 +20,10 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"

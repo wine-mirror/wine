@@ -23,12 +23,15 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <signal.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
+#include "winreg.h"
 #include "winternl.h"
 
 #include "wine/winbase16.h"

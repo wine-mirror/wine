@@ -58,10 +58,12 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "psdrv.h"

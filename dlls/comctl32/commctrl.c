@@ -54,10 +54,15 @@
  *   -- ICC_WIN95_CLASSES
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "winerror.h"
 #include "winreg.h"

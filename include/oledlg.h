@@ -23,7 +23,6 @@
 
 #include <commdlg.h>
 #include <prsht.h>
-#include <windef.h>
 #include <ole2.h>
 
 #ifdef __cplusplus

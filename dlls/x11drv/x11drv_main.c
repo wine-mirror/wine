@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +38,7 @@
 #include <X11/XKBlib.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winreg.h"

@@ -94,9 +94,11 @@ SOFTWARE.
  * the y-x-banding that's so nice to have...
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "gdi.h"
 #include "wine/debug.h"

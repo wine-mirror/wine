@@ -19,6 +19,10 @@
 #ifndef __WINE_DPLAYX_GLOBAL
 #define __WINE_DPLAYX_GLOBAL
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "dplay.h"
 
 BOOL DPLAYX_ConstructData(void);

@@ -24,10 +24,12 @@
 #ifdef HAVE_LIBXXF86DGA2
 #include <X11/extensions/xf86dga.h>
 #endif
+#include <stdarg.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "wine/winuser16.h"
 
 #include "x11drv.h"

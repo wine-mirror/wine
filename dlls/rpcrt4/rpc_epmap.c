@@ -22,6 +22,7 @@
  *  - actually do things right
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 

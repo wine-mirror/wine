@@ -20,10 +20,14 @@
  *
  */
 
-#include <winreg.h>
-#include <wine/debug.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <winreg.h>
+#include <wine/debug.h>
 
 #include "resource.h"
 #include "winecfg.h"

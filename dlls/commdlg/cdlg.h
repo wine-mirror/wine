@@ -146,6 +146,11 @@ typedef struct {
 #define IDS_COLOR_AQUA                  1054
 #define IDS_COLOR_WHITE                 1055
 
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "shlobj.h"
 #include "shellapi.h"

@@ -25,10 +25,14 @@
 #endif
 #include <fcntl.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "d3d.h"
 #include "ddraw.h"
 #include "winerror.h"

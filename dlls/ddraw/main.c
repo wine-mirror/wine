@@ -27,12 +27,15 @@
 #include "config.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "wingdi.h"
 
 #include "ddraw.h"
 #include "d3d.h"

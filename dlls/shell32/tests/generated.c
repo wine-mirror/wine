@@ -14,8 +14,11 @@
 #include <stdarg.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wtypes.h"
 #include "shellapi.h"
+#include "winuser.h"
+#include "wingdi.h"
 #include "shlobj.h"
 
 #include "wine/test.h"

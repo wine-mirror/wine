@@ -32,10 +32,14 @@
 #include "config.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
-#include "msacm.h"
+#include "windef.h"
 #include "winbase.h"
+#include "mmsystem.h"
+#include "mmreg.h"
+#include "msacm.h"
 #include "wingdi.h"
 #include "winnls.h"
 #include "winuser.h"

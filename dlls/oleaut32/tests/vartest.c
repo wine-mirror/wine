@@ -55,17 +55,17 @@
  *
  */
 
-
-#include <winsock.h>
-
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
 #include <time.h>
 
-#include "wine/test.h"
+#include "windef.h"
 #include "winbase.h"
+#include "winsock.h"
+#include "wine/test.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "winnls.h"

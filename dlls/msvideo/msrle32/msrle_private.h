@@ -19,9 +19,15 @@
 #ifndef __MSRLE32_PRIVATE_H
 #define __MSRLE32_PRIVATE_H
 
+#ifndef RC_INVOKED
+#include <stdarg.h>
+#endif
+
 #define COM_NO_WINDOWS_H
+#include "windef.h"
 #include "winbase.h"
 #include "mmsystem.h"
+#include "wingdi.h"
 #include "vfw.h"
 
 #define IDS_NAME        100

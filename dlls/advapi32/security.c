@@ -18,12 +18,16 @@
  *  FIXME: for all functions thunking down to Rtl* functions:  implement SetLastError()
  */
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "rpcnterr.h"
+#include "winreg.h"
 #include "winternl.h"
+#include "ntstatus.h"
 #include "ntsecapi.h"
 #include "accctrl.h"
 

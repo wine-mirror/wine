@@ -21,7 +21,9 @@
 #ifndef __WINE_CALLBACK_H
 #define __WINE_CALLBACK_H
 
+#include <stdarg.h>
 #include <windef.h>
+#include <winbase.h>
 #include <winnt.h>
 
 typedef struct {

@@ -20,7 +20,10 @@
 #ifndef __WINE_ASPI_H
 #define __WINE_ASPI_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 
 #include "pshpack1.h"
 #ifdef __cplusplus

@@ -44,6 +44,7 @@
  *     was stored and the aspect, but that's about it.
  */
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION

@@ -19,6 +19,10 @@
 #ifndef __WINE_DPLAYX_NAMESERVER
 #define __WINE_DPLAYX_NAMESERVER
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "dplay.h"
 #include "dplaysp.h"
 #include "dplayx_messages.h"

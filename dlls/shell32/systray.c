@@ -27,11 +27,15 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "shellapi.h"
 #include "shell32_main.h"

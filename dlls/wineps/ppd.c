@@ -20,9 +20,11 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "windef.h" /* HEAP_ZERO_MEMORY */
+#include "windef.h"
+#include "winbase.h"
 #include "wine/debug.h"
 #include "psdrv.h"
 #include "winspool.h"

@@ -19,10 +19,12 @@
  *
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
 
 #include "wine/test.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 

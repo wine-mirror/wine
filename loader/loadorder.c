@@ -21,12 +21,15 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "file.h"
 #include "module.h"

@@ -36,6 +36,7 @@
 # include <unistd.h>
 #endif
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -43,6 +44,9 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "async.h"
 #include "thread.h"

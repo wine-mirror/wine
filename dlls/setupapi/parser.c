@@ -23,14 +23,19 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "windef.h"
-#include "winternl.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wine/unicode.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "setupapi.h"
 #include "setupx16.h"
 #include "wine/debug.h"

@@ -21,6 +21,9 @@
 #ifndef __WINE_MSI_QUERY_H
 #define __WINE_MSI_QUERY_H
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "objidl.h"
 #include "msi.h"

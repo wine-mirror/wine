@@ -20,6 +20,10 @@
  *
  */
 
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winnls.h"
 #include "winresrc.h"
 #include "resource.h"
 

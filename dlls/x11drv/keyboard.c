@@ -36,11 +36,13 @@
 #endif
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winnls.h"

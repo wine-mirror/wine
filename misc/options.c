@@ -19,11 +19,14 @@
  */
 
 #include "config.h"
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/library.h"
 #include "options.h"

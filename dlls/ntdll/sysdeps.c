@@ -45,6 +45,7 @@
 #include <sched.h>
 #endif
 
+#include "ntstatus.h"
 #include "thread.h"
 #include "wine/pthread.h"
 #include "wine/server.h"

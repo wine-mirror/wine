@@ -19,6 +19,10 @@
 #ifndef __WINE_OLE_IFS_H
 #define __WINE_OLE_IFS_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 
 /***********************************************************************

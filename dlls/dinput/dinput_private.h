@@ -19,6 +19,9 @@
 #ifndef __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H
 #define __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "dinput.h"
 

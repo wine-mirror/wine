@@ -23,11 +23,12 @@
  * Information in the "Undocumented Windows" is incorrect.
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"

@@ -18,12 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <winsock.h>
-
+#include <assert.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <assert.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <winsock.h>
 
 #ifndef STANDALONE
 #include "wine/test.h"
@@ -43,8 +46,6 @@
 #endif
 
 #include <wtypes.h>
-#include <windef.h>
-#include <winbase.h>
 #include <winerror.h>
 
 #define PIPENAME "\\\\.\\PiPe\\tests_" __FILE__

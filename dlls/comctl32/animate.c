@@ -29,8 +29,13 @@
  */
 
 #define COM_NO_WINDOWS_H
+#include <stdarg.h>
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "commctrl.h"
 #include "vfw.h"
 #include "mmsystem.h"

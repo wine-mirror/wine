@@ -19,7 +19,8 @@
 #ifndef __WINE_D3D_H
 #define __WINE_D3D_H
 
-#include <ddraw.h>
+#include <stdlib.h>
+#include <objbase.h>
 #include <d3dtypes.h> /* must precede d3dcaps.h */
 #include <d3dcaps.h>
 

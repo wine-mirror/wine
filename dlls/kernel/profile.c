@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -37,6 +38,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "drive.h"

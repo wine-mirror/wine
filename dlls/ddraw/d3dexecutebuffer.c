@@ -20,13 +20,16 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "wingdi.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "wine/debug.h"

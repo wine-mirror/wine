@@ -21,6 +21,8 @@
 #include <string.h>
 
 #include "wine/debug.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "undocshell.h"

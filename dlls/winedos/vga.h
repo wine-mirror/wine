@@ -21,6 +21,9 @@
 #ifndef __WINE_VGA_H
 #define __WINE_VGA_H
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 

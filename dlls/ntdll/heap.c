@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_VALGRIND_MEMCHECK_H
@@ -31,9 +32,12 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
-#include "winbase.h"
 #include "winerror.h"
 #include "winnt.h"
 #include "thread.h"

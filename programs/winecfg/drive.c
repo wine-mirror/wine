@@ -20,16 +20,21 @@
  *
  */
 
-#include <winreg.h>
-#include <wine/debug.h>
+#include <assert.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <winreg.h>
+#include <wine/debug.h>
 #include <shellapi.h>
+#include <objbase.h>
 #include <shlguid.h>
 #include <shlwapi.h>
 #include <shlobj.h>
-#include <string.h>
-#include <assert.h>
 
 #include "winecfg.h"
 #include "resource.h"

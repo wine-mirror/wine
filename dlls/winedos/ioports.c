@@ -21,7 +21,10 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "dosexe.h"
 #include "vga.h"
 #include "wine/debug.h"

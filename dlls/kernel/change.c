@@ -20,9 +20,11 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/windef16.h"

@@ -57,12 +57,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"

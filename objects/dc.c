@@ -20,10 +20,13 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wownt32.h"

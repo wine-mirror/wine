@@ -19,8 +19,6 @@
 #ifndef __WINE_SHELLAPI_H
 #define __WINE_SHELLAPI_H
 
-#include <windef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -34,6 +34,7 @@
 # include <unistd.h>
 #endif
 #include "wine/winbase16.h"
+#include "ntstatus.h"
 #include "thread.h"
 #include "module.h"
 #include "winerror.h"

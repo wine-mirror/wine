@@ -26,11 +26,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "lzexpand.h"
 

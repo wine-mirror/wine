@@ -21,6 +21,9 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
@@ -28,7 +31,6 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-#include <stdio.h>
 
 #include "d3d8_private.h"
 

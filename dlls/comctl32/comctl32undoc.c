@@ -32,6 +32,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h> /* atoi */
 #include <ctype.h>
@@ -39,11 +40,15 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
+#include "winreg.h"
 #include "commctrl.h"
 #include "objbase.h"
-#include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 
 #include "wine/unicode.h"
 #include "comctl32.h"

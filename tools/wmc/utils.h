@@ -21,11 +21,9 @@
 #ifndef __WMC_UTILS_H
 #define __WMC_UTILS_H
 
-#ifndef __WMC_WMCTYPES_H
-#include "wmctypes.h"
-#endif
-
 #include <stddef.h>	/* size_t */
+
+#include "wmctypes.h"
 
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);

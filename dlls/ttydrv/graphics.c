@@ -20,6 +20,9 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "gdi.h"

@@ -58,6 +58,10 @@ extern int num_lock;
 #define LEAVE_GL() wine_tsx11_unlock_ptr()
 #endif
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "d3d8.h"
 
 /* Device caps */

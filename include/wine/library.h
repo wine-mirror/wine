@@ -21,7 +21,10 @@
 #ifndef __WINE_WINE_LIBRARY_H
 #define __WINE_WINE_LIBRARY_H
 
+#include <stdarg.h>
 #include <sys/types.h>
+
+#include <windef.h>
 #include <winbase.h>
 
 /* configuration */

@@ -21,13 +21,14 @@
 #include "config.h"
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "ole2.h"
 #include "windef.h"
 #include "winbase.h"
+#include "ole2.h"
 #include "winerror.h"
 
 #include "wine/debug.h"

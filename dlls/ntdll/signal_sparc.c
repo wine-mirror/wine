@@ -27,11 +27,14 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/ucontext.h>
 
-#include "winternl.h"
+#include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "winnt.h"
 
 #include "wine/exception.h"

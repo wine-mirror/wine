@@ -21,8 +21,11 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "winver.h"
 #include "winemm.h"

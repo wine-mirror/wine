@@ -22,14 +22,20 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include "winerror.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "wine/debug.h"
 #include "winnls.h"
 
 #include "shellapi.h"
+#include "objbase.h"
 #include "shlguid.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "undocshell.h"

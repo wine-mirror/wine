@@ -25,11 +25,15 @@
 #include "wine/port.h"
 
 #include <time.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "msvcrt.h"
 #include "msvcrt/errno.h"

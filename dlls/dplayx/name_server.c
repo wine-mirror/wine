@@ -21,10 +21,12 @@
 
 /* NOTE: Methods with the NS_ prefix are name server methods */
 
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"

@@ -24,6 +24,7 @@
 
 #include "ts_xlib.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
 

@@ -23,12 +23,34 @@
 #define DIRECTSOUND_VERSION 0x0800
 #endif
 
-#include <mmsystem.h>
-#include <d3dtypes.h>
+#define COM_NO_WINDOWS_H
+#include <objbase.h>
+#include <float.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
+
+#ifndef DX_SHARED_DEFINES
+
+typedef float D3DVALUE, *LPD3DVALUE;
+
+#ifndef D3DCOLOR_DEFINED
+typedef DWORD D3DCOLOR, *LPD3DCOLOR;
+#define D3DCOLOR_DEFINED
+#endif
+
+#ifndef D3DVECTOR_DEFINED
+typedef struct _D3DVECTOR {
+    float x;
+    float y;
+    float z;
+} D3DVECTOR, *LPD3DVECTOR;
+#define D3DVECTOR_DEFINED
+#endif
+
+#define DX_SHARED_DEFINES
+#endif /* DX_SHARED_DEFINES */
 
 /*****************************************************************************
  * Predeclare the interfaces

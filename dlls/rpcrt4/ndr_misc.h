@@ -23,6 +23,9 @@
 
 #include <stdarg.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "rpc.h"
 #include "rpcndr.h"
 
 struct IPSFactoryBuffer;

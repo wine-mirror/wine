@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <errno.h>
@@ -40,6 +41,7 @@
 #endif
 
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "psdrv.h"

@@ -21,7 +21,10 @@
 #ifndef __WINE_MESSAGE_H
 #define __WINE_MESSAGE_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wine/windef16.h"
 
 struct received_message_info;

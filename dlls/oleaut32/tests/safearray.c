@@ -19,8 +19,7 @@
  *
  */
 
-#include <winsock.h>
-
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -28,10 +27,12 @@
 #include <time.h>
 
 #include "wine/test.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "winsock.h"
 #include "winerror.h"
 #include "winnt.h"
 

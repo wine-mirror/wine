@@ -21,6 +21,7 @@
  *  - a whole lot
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -29,6 +30,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "ntstatus.h"
 
 #include "rpc.h"
 #include "excpt.h"

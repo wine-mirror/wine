@@ -23,6 +23,7 @@
 
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "ntstatus.h"
 #include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"

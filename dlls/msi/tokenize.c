@@ -16,9 +16,12 @@
 ** parser for analysis.
 */
 
-#include "winbase.h"
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdlib.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "wine/debug.h"
 #include "winnls.h"
 #include "query.h"

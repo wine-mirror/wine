@@ -22,9 +22,13 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include "winerror.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"

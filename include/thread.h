@@ -21,6 +21,10 @@
 #ifndef __WINE_THREAD_H
 #define __WINE_THREAD_H
 
+#include <stdarg.h>
+#include <windef.h>
+#include <winbase.h>
+#include <winreg.h>
 #define WINE_NO_TEB
 #include <winternl.h>
 #include <wine/windef16.h>

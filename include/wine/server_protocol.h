@@ -8,8 +8,11 @@
 #ifndef __WINE_WINE_SERVER_PROTOCOL_H
 #define __WINE_WINE_SERVER_PROTOCOL_H
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include <windef.h>
 #include <winbase.h>
 
 struct request_header

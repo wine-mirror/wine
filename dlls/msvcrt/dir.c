@@ -24,7 +24,12 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <time.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "msvcrt.h"

@@ -20,10 +20,13 @@
 #ifndef __WINE_DMCOMPOS_PRIVATE_H
 #define __WINE_DMCOMPOS_PRIVATE_H
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "wine/debug.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "wingdi.h"
 #include "dmusicc.h"
 #include "dmusici.h"
 #include "dmusics.h"

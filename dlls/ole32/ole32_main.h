@@ -19,7 +19,10 @@
 #ifndef __WINE_OLE32_MAIN_H
 #define __WINE_OLE32_MAIN_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 
 extern HINSTANCE OLE32_hInstance;

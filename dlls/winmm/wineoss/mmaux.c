@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -34,6 +35,7 @@
 #endif
 
 #include "windef.h"
+#include "winbase.h"
 #include "mmddk.h"
 #include "oss.h"
 #include "wine/debug.h"

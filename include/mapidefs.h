@@ -19,7 +19,6 @@
 #ifndef __WINE_MAPIDEFS_H
 #define __WINE_MAPIDEFS_H
 
-#include <windef.h>
 #include <windows.h>
 #include <winerror.h>
 #ifndef _OBJBASE_H_

@@ -21,6 +21,10 @@
 #ifndef __WINE_D3DX8CORE_PRIVATE_H
 #define __WINE_D3DX8CORE_PRIVATE_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "d3dx8core.h"
 
 /* Interfaces */

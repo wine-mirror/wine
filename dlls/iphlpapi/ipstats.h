@@ -22,7 +22,10 @@
 #ifndef WINE_IPSTATS_H_
 #define WINE_IPSTATS_H_
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "iprtrmib.h"
 
 /* Fills in entry's interface stats, using name to find them.

@@ -19,7 +19,10 @@
 #ifndef __WINE_URLMON_MAIN_H
 #define __WINE_URLMON_MAIN_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 
 extern HINSTANCE URLMON_hInstance;
 

@@ -1514,8 +1514,6 @@ static DWORD __builtin_return_address(int p_iDepth)
 #define IS_TEXT_UNICODE_NULL_BYTES         0x1000
 #define IS_TEXT_UNICODE_NOT_ASCII_MASK     0xF000
 
-#include <ntstatus.h>
-
 #define MAXIMUM_WAIT_OBJECTS 64
 #define MAXIMUM_SUSPEND_COUNT 127
 

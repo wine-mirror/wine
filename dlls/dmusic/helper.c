@@ -17,6 +17,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #if 0
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"

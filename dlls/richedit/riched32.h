@@ -22,7 +22,10 @@
 #ifndef __WINE_RICHED32_H
 #define __WINE_RICHED32_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "winuser.h"
 #include "richedit.h"
 

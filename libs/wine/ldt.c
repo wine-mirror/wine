@@ -24,10 +24,12 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
+#include "windef.h"
 #include "winbase.h"
 #define WINE_EXPORT_LDT_COPY
 #include "wine/library.h"

@@ -38,7 +38,10 @@
 #ifndef WINE_IFENUM_H_
 #define WINE_IFENUM_H_
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "iprtrmib.h"
 
 #define MAX_INTERFACE_PHYSADDR    8

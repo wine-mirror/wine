@@ -21,11 +21,13 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "ole2ver.h"

@@ -22,9 +22,11 @@
 
 #include "ts_xlib.h"
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "bitmap.h"
 #include "x11drv.h"
 #include "x11font.h"

@@ -60,6 +60,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -103,6 +104,7 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"

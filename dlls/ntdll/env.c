@@ -21,7 +21,11 @@
 #include "config.h"
 
 #include <assert.h>
+#include <stdarg.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

@@ -21,11 +21,6 @@
 #ifndef __WINE_COMMCTRL_H
 #define __WINE_COMMCTRL_H
 
-#include <windef.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
-#include <winnls.h>
 #include <prsht.h>
 
 #ifdef __cplusplus

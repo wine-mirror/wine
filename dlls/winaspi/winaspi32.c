@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -30,6 +31,7 @@
 # include <unistd.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "aspi.h"
 #include "wnaspi32.h"

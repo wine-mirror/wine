@@ -21,7 +21,11 @@
 /* Define _WIN32_WINNT to get SetThreadIdealProcessor on Windows */
 #define _WIN32_WINNT 0x0500
 
+#include <stdarg.h>
+
 #include "wine/test.h"
+#include <ntstatus.h>
+#include <windef.h>
 #include <winbase.h>
 #include <winnt.h>
 #include <winerror.h>

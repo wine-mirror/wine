@@ -21,16 +21,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdarg.h>
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "mmsystem.h"
+#include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
 #include "wineacm.h"

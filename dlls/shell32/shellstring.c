@@ -17,15 +17,19 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "winreg.h"
 
 #include "shlobj.h"

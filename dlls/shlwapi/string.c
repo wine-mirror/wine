@@ -24,15 +24,19 @@
 #include "wine/port.h"
 
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

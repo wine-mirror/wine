@@ -25,11 +25,16 @@
  *   (IpSaveRestorePosition, IpFindNextMatchLine, ...).
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "setupapi.h"
 #include "setupx16.h"
 #include "setupapi_private.h"

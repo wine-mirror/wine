@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -39,6 +40,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "mmddk.h"
 #include "wine/windef16.h"
@@ -1127,17 +1129,17 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRL3D) {
 		dsb->ds3db_ds3db.dwSize = sizeof(DS3DBUFFER);
-		dsb->ds3db_ds3db.vPosition.u1.x = 0.0;
-		dsb->ds3db_ds3db.vPosition.u2.y = 0.0;
-		dsb->ds3db_ds3db.vPosition.u3.z = 0.0;
-		dsb->ds3db_ds3db.vVelocity.u1.x = 0.0;
-		dsb->ds3db_ds3db.vVelocity.u2.y = 0.0;
-		dsb->ds3db_ds3db.vVelocity.u3.z = 0.0;
+		dsb->ds3db_ds3db.vPosition.x = 0.0;
+		dsb->ds3db_ds3db.vPosition.y = 0.0;
+		dsb->ds3db_ds3db.vPosition.z = 0.0;
+		dsb->ds3db_ds3db.vVelocity.x = 0.0;
+		dsb->ds3db_ds3db.vVelocity.y = 0.0;
+		dsb->ds3db_ds3db.vVelocity.z = 0.0;
 		dsb->ds3db_ds3db.dwInsideConeAngle = DS3D_DEFAULTCONEANGLE;
 		dsb->ds3db_ds3db.dwOutsideConeAngle = DS3D_DEFAULTCONEANGLE;
-		dsb->ds3db_ds3db.vConeOrientation.u1.x = 0.0;
-		dsb->ds3db_ds3db.vConeOrientation.u2.y = 0.0;
-		dsb->ds3db_ds3db.vConeOrientation.u3.z = 0.0;
+		dsb->ds3db_ds3db.vConeOrientation.x = 0.0;
+		dsb->ds3db_ds3db.vConeOrientation.y = 0.0;
+		dsb->ds3db_ds3db.vConeOrientation.z = 0.0;
 		dsb->ds3db_ds3db.lConeOutsideVolume = DS3D_DEFAULTCONEOUTSIDEVOLUME;
 		dsb->ds3db_ds3db.flMinDistance = DS3D_DEFAULTMINDISTANCE;
 		dsb->ds3db_ds3db.flMaxDistance = DS3D_DEFAULTMAXDISTANCE;

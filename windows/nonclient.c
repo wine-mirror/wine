@@ -20,7 +20,10 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wownt32.h"

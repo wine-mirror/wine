@@ -19,9 +19,9 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
-#include <windef.h>
 #include <mmsystem.h>
-#include <wingdi.h>
+#include <mmreg.h>
+#include <msacm.h>
 
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV

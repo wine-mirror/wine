@@ -40,7 +40,10 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include <stdarg.h>
 #include <string.h>
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "snoop.h"

@@ -22,8 +22,11 @@
 #define __WINE_DEBUGGER_H
 
 #include <assert.h>
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
+#include "ntstatus.h"
 #include "wine/exception.h"
 
 #ifdef __i386__

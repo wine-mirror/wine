@@ -22,14 +22,18 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 
 #include "objbase.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 
 #include "wine/debug.h"

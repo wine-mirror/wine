@@ -21,13 +21,16 @@
 #ifndef __WINE_FILE_H
 #define __WINE_FILE_H
 
+#include <stdarg.h>
 #include <time.h> /* time_t */
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
 #include <sys/types.h>
+#include <windef.h>
 #include <winbase.h>
 #include <wine/windef16.h>  /* HFILE16 */
+#include <winreg.h>
 #include <winternl.h>
 
 #define MAX_PATHNAME_LEN   1024

@@ -19,7 +19,10 @@
 #ifndef __WINE_DPLAYX_MESSAGES__
 #define __WINE_DPLAYX_MESSAGES__
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "dplay.h"
 #include "rpc.h" /* For GUID */
 

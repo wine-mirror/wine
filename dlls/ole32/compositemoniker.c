@@ -19,10 +19,12 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"

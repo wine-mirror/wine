@@ -27,15 +27,18 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winnt.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "thread.h"

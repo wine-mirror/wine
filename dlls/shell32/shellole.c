@@ -21,10 +21,15 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "windef.h"
+#include "winbase.h"
 #include "shellapi.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlobj.h"
 #include "shlguid.h"
 #include "winreg.h"
@@ -36,7 +41,6 @@
 
 #include "wine/debug.h"
 #include "shlwapi.h"
-#include "winuser.h"
 #include "debughlp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

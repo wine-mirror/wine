@@ -34,6 +34,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
@@ -43,8 +44,10 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/unicode.h"

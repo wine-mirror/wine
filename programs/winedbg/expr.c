@@ -19,14 +19,16 @@
  */
 
 #include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "debugger.h"
 #include "expr.h"
-
-#include <stdarg.h>
 
 struct expr
 {

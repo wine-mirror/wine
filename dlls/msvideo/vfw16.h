@@ -19,6 +19,11 @@
 #ifndef __WINE_VFW16_H
 #define __WINE_VFW16_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "vfw.h"
 #include "wownt32.h"
 #include "wine/windef16.h"

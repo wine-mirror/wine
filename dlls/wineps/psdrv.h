@@ -21,7 +21,10 @@
 #ifndef __WINE_PSDRV_H
 #define __WINE_PSDRV_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
 #include "winspool.h"

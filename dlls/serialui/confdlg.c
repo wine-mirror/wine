@@ -32,8 +32,10 @@
 #include "wine/port.h"
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "wingdi.h"

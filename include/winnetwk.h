@@ -20,9 +20,6 @@
 #ifndef _WINNETWK_H_
 #define _WINNETWK_H_
 
-#include <windef.h>
-#include <winerror.h>
-
 /*
  * Network types
  */

@@ -25,6 +25,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -37,6 +38,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

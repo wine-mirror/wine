@@ -26,12 +26,16 @@
  *  	99/4	added mmTask and mmThread functions support
  */
 
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "mmsystem.h"
+#include "windef.h"
 #include "winbase.h"
+#include "mmsystem.h"
+#include "winreg.h"
+#include "ntstatus.h"
 #include "winternl.h"
 #include "wownt32.h"
 

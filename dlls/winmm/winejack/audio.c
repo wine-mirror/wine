@@ -38,6 +38,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -45,6 +46,7 @@
 #endif
 #include <fcntl.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
 #include "wine/winuser16.h"

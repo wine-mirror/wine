@@ -19,13 +19,15 @@
  */
 
 #include "wine/test.h"
-#include <winbase.h>
-#include <winnls.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <io.h>
+#include <windef.h>
+#include <winbase.h>
+#include <winnls.h>
 
 static void test_fdopen( void )
 {

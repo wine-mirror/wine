@@ -53,6 +53,7 @@
 #include "wine/port.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -86,6 +87,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 

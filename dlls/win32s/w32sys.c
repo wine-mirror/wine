@@ -21,11 +21,13 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
 #include "windef.h"
+#include "winbase.h"
 #include "wine/windef16.h"
 #include "wine/winbase16.h"
 #include "wine/debug.h"

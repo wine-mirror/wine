@@ -21,6 +21,10 @@
 #ifndef __WINE_CRYPT_H
 #define __WINE_CRYPT_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "wincrypt.h"
 
 typedef struct tagPROVFUNCS

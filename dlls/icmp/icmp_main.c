@@ -52,6 +52,7 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H

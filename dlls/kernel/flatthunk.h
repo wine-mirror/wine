@@ -21,7 +21,10 @@
 #ifndef __WINE_FLATTHUNK_H
 #define __WINE_FLATTHUNK_H
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 
 struct ThunkDataCommon
 {

@@ -19,6 +19,10 @@
 #ifndef __WINE_DIRECT_PLAY_SP_H
 #define __WINE_DIRECT_PLAY_SP_H
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "dplay.h"
 #include "dplobby.h"
 

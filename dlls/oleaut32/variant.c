@@ -38,6 +38,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -49,7 +50,9 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "oleauto.h"
+#include "winreg.h"
 #include "heap.h"
 #include "wine/debug.h"
 #include "winerror.h"

@@ -26,6 +26,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
 
@@ -34,6 +35,7 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"

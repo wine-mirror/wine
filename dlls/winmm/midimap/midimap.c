@@ -23,6 +23,7 @@
  *	IDF file loading
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include "windef.h"

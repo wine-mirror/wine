@@ -24,6 +24,11 @@
 
 /* THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES */
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "d3d.h"
 
 #define MAX_TEXTURES 8

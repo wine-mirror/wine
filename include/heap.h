@@ -21,8 +21,10 @@
 #ifndef __WINE_HEAP_H
 #define __WINE_HEAP_H
 
+#include <stdarg.h>
 #include <string.h>
 
+#include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
 

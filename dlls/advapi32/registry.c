@@ -27,11 +27,14 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "ntstatus.h"
 #include "wine/unicode.h"
 #include "heap.h"
 #include "wine/server.h"

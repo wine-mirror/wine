@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #ifdef HAVE_UNISTD_H
@@ -40,6 +41,7 @@
 #include <sys/mman.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "thread.h"
 #include "winternl.h"

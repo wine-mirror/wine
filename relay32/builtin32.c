@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -30,7 +31,9 @@
 #include <sys/mman.h>
 #endif
 
+#include "ntstatus.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "module.h"

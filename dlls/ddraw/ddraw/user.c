@@ -20,10 +20,14 @@
 #include "config.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "ddraw.h"
 #include "ddraw_private.h"
 #include "ddraw/main.h"

@@ -23,6 +23,7 @@
 
 #include <fcntl.h>
 #include <memory.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -31,11 +32,13 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "winbase.h"
 #include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ntstatus.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "msdos.h"

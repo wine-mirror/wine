@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -28,6 +29,7 @@
 # include <unistd.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnt.h"

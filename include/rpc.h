@@ -35,6 +35,8 @@
  #define __RPC_WIN32__
 #endif
 
+#include <basetsd.h>
+
 #define __RPC_FAR
 #define __RPC_API  WINAPI
 #define __RPC_USER WINAPI
@@ -48,7 +50,6 @@ typedef void* I_RPC_HANDLE;
 #include <rpcdce.h>
 /* #include <rpcnsi.h> */
 #include <rpcnterr.h>
-#include <excpt.h>
 #include <winerror.h>
 
 /* ignore exception handling for now */

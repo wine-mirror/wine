@@ -52,7 +52,10 @@
 #ifndef TWAIN
 #define TWAIN
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 
 #undef FAR
 #define FAR

@@ -18,7 +18,9 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
 #include "wine/windef16.h"
 #include "wine/winaspi.h"

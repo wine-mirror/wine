@@ -28,8 +28,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "ntstatus.h"
 
 #include "wine/exception.h"
 #include "wine/unicode.h"

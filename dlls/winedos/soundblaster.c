@@ -20,9 +20,14 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "dosexe.h"
 #include "wine/debug.h"
+#include "wingdi.h"
+#include "mmsystem.h"
 #include "dsound.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sblaster);

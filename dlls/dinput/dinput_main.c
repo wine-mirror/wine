@@ -31,14 +31,15 @@
 
 #include "config.h"
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "windef.h"
 #include "dinput_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);

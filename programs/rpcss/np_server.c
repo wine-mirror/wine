@@ -20,6 +20,7 @@
 
 #include <assert.h>
 
+#include "ntstatus.h"
 #include "rpcss.h"
 #include "wine/debug.h"
 

@@ -26,6 +26,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,8 +35,9 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "mmsystem.h"
+#include "windef.h"
 #include "winbase.h"
+#include "mmsystem.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"

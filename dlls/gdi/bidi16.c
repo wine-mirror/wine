@@ -19,7 +19,10 @@
  * NOTE: Right now, most of these functions do nothing.
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wine/wingdi16.h"
 #include "wine/debug.h"
 

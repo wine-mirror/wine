@@ -19,10 +19,6 @@
 #ifndef __WINE_PRSHT_H
 #define __WINE_PRSHT_H
 
-#include <windef.h>
-#include <wingdi.h>
-#include <winuser.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

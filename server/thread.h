@@ -22,6 +22,7 @@
 #define __WINE_SERVER_THREAD_H
 
 #include "object.h"
+#include "ntstatus.h"
 
 /* thread structure */
 

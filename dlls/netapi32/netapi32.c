@@ -19,12 +19,14 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "wingdi.h"

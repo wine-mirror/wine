@@ -22,6 +22,7 @@
  *  - check for errors and throw exceptions
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>

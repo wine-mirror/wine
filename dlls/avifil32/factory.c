@@ -18,8 +18,11 @@
 
 #define COM_NO_WINDOWS_H
 #include <assert.h>
+#include <stdarg.h>
 
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winnls.h"
 #include "winerror.h"
 

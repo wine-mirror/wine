@@ -24,6 +24,11 @@
 # error You must include config.h to use this header
 #endif
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "ddrawi.h"
 
 extern LPDDRAWI_DDRAWSURFACE_LCL X11DRV_DD_Primary;

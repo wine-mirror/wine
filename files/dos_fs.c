@@ -29,6 +29,7 @@
 #include <sys/errno.h>
 #endif
 #include <fcntl.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -42,7 +43,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
 

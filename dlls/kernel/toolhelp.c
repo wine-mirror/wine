@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -27,6 +28,7 @@
 #endif
 #include <ctype.h>
 #include <assert.h>
+#include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winerror.h"

@@ -23,6 +23,8 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "wine/windef16.h"
 #include "winbase.h"

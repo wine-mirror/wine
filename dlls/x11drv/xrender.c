@@ -24,10 +24,12 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wownt32.h"
 #include "x11drv.h"
 #include "bitmap.h"

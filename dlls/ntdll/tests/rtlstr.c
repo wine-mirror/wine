@@ -22,12 +22,16 @@
  * windows.
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wine/test.h"
 #include "winnt.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "winternl.h"
 
 /* Function ptrs for ntdll calls */

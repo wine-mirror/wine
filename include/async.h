@@ -27,6 +27,7 @@
 #define __WINE_ASYNC_H
 
 #include <thread.h>
+#include <ntstatus.h>
 #include <wine/server.h>
 #include <winternl.h>
 

@@ -25,7 +25,6 @@
 #define __WINE_RPCNDR_H
 
 #include <basetsd.h>
-#include <rpcdcep.h>
 
 /* stupid #if can't handle casts... this __stupidity 
    is just a workaround for that limitation */

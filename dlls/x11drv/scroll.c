@@ -22,8 +22,11 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
 #include "ts_xlib.h"
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"

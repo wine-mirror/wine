@@ -44,8 +44,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
    have its own.
 */
 
+#include <stdarg.h>
 #include <stdlib.h>
-#include "windef.h" /* DateToTm use */
+#include "windef.h"
+#include "winbase.h"
 
 /* ----------------------------------------------------------------
  *				Section 1:	bool, true, false, TRUE, FALSE

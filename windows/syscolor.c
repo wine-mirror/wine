@@ -20,14 +20,15 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "winbase.h"
 #include "winuser.h"
 #include "wownt32.h"
 #include "winreg.h"

@@ -24,6 +24,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -37,6 +38,7 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
+#include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/winbase16.h"

@@ -18,10 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include "windef.h"
-#include "wingdi.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
 

@@ -20,9 +20,11 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "winerror.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
 #include "wine/debug.h"

@@ -40,6 +40,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -1000,18 +1001,18 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	/* 3D listener initial parameters */
 	(*ippDS)->listener	= NULL;
 	(*ippDS)->ds3dl.dwSize = sizeof(DS3DLISTENER);
-	(*ippDS)->ds3dl.vPosition.u1.x = 0.0;
-	(*ippDS)->ds3dl.vPosition.u2.y = 0.0;
-	(*ippDS)->ds3dl.vPosition.u3.z = 0.0;
-	(*ippDS)->ds3dl.vVelocity.u1.x = 0.0;
-	(*ippDS)->ds3dl.vVelocity.u2.y = 0.0;
-	(*ippDS)->ds3dl.vVelocity.u3.z = 0.0;
-	(*ippDS)->ds3dl.vOrientFront.u1.x = 0.0;
-	(*ippDS)->ds3dl.vOrientFront.u2.y = 0.0;
-	(*ippDS)->ds3dl.vOrientFront.u3.z = 1.0;
-	(*ippDS)->ds3dl.vOrientTop.u1.x = 0.0;
-	(*ippDS)->ds3dl.vOrientTop.u2.y = 1.0;
-	(*ippDS)->ds3dl.vOrientTop.u3.z = 0.0;
+	(*ippDS)->ds3dl.vPosition.x = 0.0;
+	(*ippDS)->ds3dl.vPosition.y = 0.0;
+	(*ippDS)->ds3dl.vPosition.z = 0.0;
+	(*ippDS)->ds3dl.vVelocity.x = 0.0;
+	(*ippDS)->ds3dl.vVelocity.y = 0.0;
+	(*ippDS)->ds3dl.vVelocity.z = 0.0;
+	(*ippDS)->ds3dl.vOrientFront.x = 0.0;
+	(*ippDS)->ds3dl.vOrientFront.y = 0.0;
+	(*ippDS)->ds3dl.vOrientFront.z = 1.0;
+	(*ippDS)->ds3dl.vOrientTop.x = 0.0;
+	(*ippDS)->ds3dl.vOrientTop.y = 1.0;
+	(*ippDS)->ds3dl.vOrientTop.z = 0.0;
 	(*ippDS)->ds3dl.flDistanceFactor = DS3D_DEFAULTDISTANCEFACTOR;
 	(*ippDS)->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
 	(*ippDS)->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;

@@ -22,8 +22,6 @@
 #ifndef __WINE_DDEML_H
 #define __WINE_DDEML_H
 
-#include <windef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -30,13 +30,15 @@
 
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 
-#include "mmsystem.h"
 #include "windef.h"
+#include "winbase.h"
+#include "mmsystem.h"
 #include "heap.h"
 #include "winemm.h"
 

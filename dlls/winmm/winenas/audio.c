@@ -37,6 +37,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -72,6 +73,7 @@
 #undef BYTE
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
 #include "wine/winuser16.h"

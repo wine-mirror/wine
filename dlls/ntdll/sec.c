@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -38,8 +39,8 @@
 #include "wine/debug.h"
 #include "winerror.h"
 
-#include "winternl.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "ntdll_misc.h"
 #include "excpt.h"
 

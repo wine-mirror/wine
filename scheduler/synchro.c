@@ -20,7 +20,12 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "../kernel/kernel_private.h" /* FIXME: to be changed when moving file to dlls/kernel */
 

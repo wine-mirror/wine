@@ -26,11 +26,14 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/winbase16.h"

@@ -23,6 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -31,11 +32,14 @@
 #include <ctype.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "wownt32.h"
 #include "dlgs.h"
 #include "shellapi.h"
+#include "winuser.h"
+#include "wingdi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
 #include "ddeml.h"

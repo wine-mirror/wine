@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -52,7 +53,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 
 #include "wine/winbase16.h"

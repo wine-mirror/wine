@@ -21,6 +21,10 @@
  */
 
 #include "config.h"
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "dshow.h"
 #include "wine/debug.h"
 #include "strmif.h"

@@ -20,8 +20,6 @@
 #ifndef __WINE_LZEXPAND_H
 #define __WINE_LZEXPAND_H
 
-#include <windef.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -46,8 +46,10 @@
  *   in place but no notifications are sent to the sinks yet.
  */
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/unicode.h"

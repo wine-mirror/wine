@@ -26,6 +26,11 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "msvcrt.h"
 #include "wine/exception.h"

@@ -21,6 +21,7 @@
 
 #include "extrachunk.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "windowsx.h"
 #include "vfw.h"
 

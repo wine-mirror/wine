@@ -20,8 +20,11 @@
 
 #include "config.h"
 
+#include "windef.h"
+
 #ifdef HAVE_PPDEV
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -33,6 +36,8 @@
 #include <linux/ppdev.h>
 
 #include "winerror.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "miscemu.h"
 
@@ -315,7 +320,6 @@ BOOL IO_pp_outp(int port, DWORD* res)
 
 #else /* HAVE_PPDEV */
 
-#include "windef.h"
 
 char IO_pp_init(void)
 {

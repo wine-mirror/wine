@@ -21,7 +21,9 @@
 #ifndef __WIDL_WIDLTYPES_H
 #define __WIDL_WIDLTYPES_H
 
+#include <stdarg.h>
 #include "windef.h"
+#include "winbase.h"
 #include "guiddef.h"
 #include "wine/rpcfc.h"
 

@@ -37,6 +37,7 @@
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
+#include "ntstatus.h"
 #include "thread.h"
 #include "winbase.h"
 #include "winnt.h"

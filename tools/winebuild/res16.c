@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -36,6 +37,7 @@
 #include <sys/mman.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "build.h"
 

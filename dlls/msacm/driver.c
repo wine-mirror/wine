@@ -24,19 +24,21 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "mmsystem.h"
+#include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
 #include "wineacm.h"
-#include "winreg.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);

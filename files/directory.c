@@ -22,6 +22,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -34,12 +35,14 @@
 #include <sys/errno.h>
 #endif
 
+#include "ntstatus.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "drive.h"

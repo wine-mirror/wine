@@ -26,8 +26,13 @@
 
 /* All private prototype functions used by OLE will be added to this header file */
 
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "wtypes.h"
 #include "dcom.h"
+#include "winreg.h"
 #include "winternl.h"
 
 /* exported interface */

@@ -21,10 +21,12 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #ifdef HAVE_UNICODE_UBIDI_H
 #include <unicode/ubidi.h>
 #endif
 
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/debug.h"

@@ -24,6 +24,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -39,6 +40,7 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
+#include "winbase.h"
 #include "mmddk.h"
 #include "oss.h"
 #include "wine/debug.h"

@@ -22,6 +22,8 @@
  * - Private file where devenum globals are declared
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"

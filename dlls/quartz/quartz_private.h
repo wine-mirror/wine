@@ -23,6 +23,9 @@
 #ifndef __QUARTZ_PRIVATE_INCLUDED__
 #define __QUARTZ_PRIVATE_INCLUDED__
 
+#include <stdarg.h>
+
+#include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
 #include "wingdi.h"

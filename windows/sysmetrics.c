@@ -18,15 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
 #include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "wingdi.h"
+#include "wine/winuser16.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "user.h"

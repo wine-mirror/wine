@@ -21,6 +21,8 @@
  *       Get rid of #if 0'ed code.
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
