@@ -874,7 +874,9 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
     /*** IWineD3DVertexDeclaration methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(GetDeclaration8)(THIS_ DWORD*, DWORD* pSizeOfData) PURE;
+#ifdef __WINE_D3D9_H
     STDMETHOD(GetDeclaration9)(THIS_ D3DVERTEXELEMENT9*, UINT* pNumElements) PURE;
+#endif
 };
 #undef INTERFACE
 
