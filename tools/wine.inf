@@ -34,6 +34,7 @@ AddReg=\
     Debugger,\
     Desktop,\
     DirectX,\
+    Environment,\
     Fonts,\
     MCI,\
     Misc,\
@@ -124,6 +125,17 @@ HKLM,Software\Microsoft\DirectMusic,GMFilePath,,"%12%\gm.dls"
 HKLM,Software\Microsoft\DirectMusic\Defaults,DefaultOutputPort,,"{58C2B4D0-46E7-11D1-89AC-00A0C9054129}"
 HKLM,Software\Microsoft\DirectMusic\SoftwareSynths\{58C2B4D0-46E7-11D1-89AC-00A0C9054129},Description,,"Microsoft Software Synthesizer"
 HKLM,Software\Microsoft\DirectPlay\Service Providers,,,""
+
+[Environment]
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ComSpec",,"%11%\wcmd.exe"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"Path",,"%11%;%10%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"ProgramFiles",,"c:\Program Files"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"SYSTEMROOT",,"%10%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TEMP",,"%10%\temp"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"TMP",,"%10%\temp"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"USERPROFILE",,"%53%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"windir",,"%10%"
+HKLM,System\CurrentControlSet\Control\Session Manager\Environment,"winsysdir",,"%11%"
 
 [Fonts]
 HKLM,%FontSubStr%,"Arial CE,238",,"Arial,238"
@@ -531,17 +543,17 @@ HKCU,%ShellFolders%,"Recent",,"%25%\Recent"
 HKCU,%ShellFolders%,"NetHood",,"%25%\NetHood"
 HKCU,%ShellFolders%,"Personal",,"c:\My Documents"
 
-HKU,%ShellFolders%,"Favorites",,"%25%\Favorites"
-HKU,%ShellFolders%,"StartUp",,"%25%\Start Menu\Programs\Startup"
-HKU,%ShellFolders%,"Desktop",,"%25%\Desktop"
-HKU,%ShellFolders%,"Programs",,"%25%\Start Menu\Programs"
-HKU,%ShellFolders%,"Fonts",,"%25%\Fonts"
-HKU,%ShellFolders%,"SendTo",,"%25%\SendTo"
-HKU,%ShellFolders%,"Start Menu",,"%25%\Start Menu"
-HKU,%ShellFolders%,"Templates",,"%25%\ShellNew"
-HKU,%ShellFolders%,"Recent",,"%25%\Recent"
-HKU,%ShellFolders%,"NetHood",,"%25%\NetHood"
-HKU,%ShellFolders%,"Personal",,"c:\My Documents"
+HKU,.Default\%ShellFolders%,"Favorites",,"%25%\Favorites"
+HKU,.Default\%ShellFolders%,"StartUp",,"%25%\Start Menu\Programs\Startup"
+HKU,.Default\%ShellFolders%,"Desktop",,"%25%\Desktop"
+HKU,.Default\%ShellFolders%,"Programs",,"%25%\Start Menu\Programs"
+HKU,.Default\%ShellFolders%,"Fonts",,"%25%\Fonts"
+HKU,.Default\%ShellFolders%,"SendTo",,"%25%\SendTo"
+HKU,.Default\%ShellFolders%,"Start Menu",,"%25%\Start Menu"
+HKU,.Default\%ShellFolders%,"Templates",,"%25%\ShellNew"
+HKU,.Default\%ShellFolders%,"Recent",,"%25%\Recent"
+HKU,.Default\%ShellFolders%,"NetHood",,"%25%\NetHood"
+HKU,.Default\%ShellFolders%,"Personal",,"c:\My Documents"
 
 [Tapi]
 HKLM,%CurrentVersion%\Telephony,"Perf1",0x10001,5045524a
