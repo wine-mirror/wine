@@ -117,6 +117,7 @@
 #include "wine/winsock16.h"
 #include "winnt.h"
 #include "wownt32.h"
+#include "iphlpapi.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -205,10 +206,6 @@ typedef struct          /* WSAAsyncSelect() control struct */
 
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define WS_MAX_UDP_DATAGRAM             1024
-
-#define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs
-                                                that lists the network devices.
-                                                Do we need an #ifdef LINUX for this? */
 
 static void *he_buffer;          /* typecast for Win16/32 ws_hostent */
 static SEGPTR he_buffer_seg;
@@ -1983,122 +1980,101 @@ INT WINAPI WSAIoctl (SOCKET s,
          case SIO_GET_INTERFACE_LIST:
          {
             INTERFACE_INFO* intArray = (INTERFACE_INFO*)lpbOutBuffer;
-            int i, numInt;
-            struct ifreq ifInfo;
-            char ifName[512];
-
+            DWORD size, numInt, apiReturn;
 
             TRACE ("-> SIO_GET_INTERFACE_LIST request\n");
+            /* FIXME: length of output buffer not checked */
 
-            numInt = WSAIOCTL_GetInterfaceCount();
-            if (numInt < 0)
+            apiReturn = GetAdaptersInfo(NULL, &size);
+            if (apiReturn == ERROR_NO_DATA)
             {
-               ERR ("Unable to open /proc filesystem to determine number of network interfaces!\n");
+               numInt = 0;
+            }
+            else if (apiReturn == ERROR_BUFFER_OVERFLOW)
+            {
+               PIP_ADAPTER_INFO table = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(),0,size);
+
+               if (table)
+               {
+                  if (GetAdaptersInfo(table, &size) == NO_ERROR)
+                  {
+                     PIP_ADAPTER_INFO ptr;
+
+                     for (ptr = table, numInt = 0; ptr;
+                      ptr = ptr->Next, intArray++, numInt++)
+                     {
+                        unsigned int addr, mask, bcast;
+                        struct ifreq ifInfo;
+
+                        /* Socket Status Flags */
+                        strncpy(ifInfo.ifr_name, ptr->AdapterName, IFNAMSIZ);
+                        ifInfo.ifr_name[IFNAMSIZ-1] = '\0';
+                        if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0)
+                        {
+                           ERR ("Error obtaining status flags for socket!\n");
+                           HeapFree(GetProcessHeap(),0,table);
+                           close(fd);
+                           WSASetLastError(WSAEINVAL);
+                           return (SOCKET_ERROR);
+                        }
+                        else
+                        {
+                           /* set flags; the values of IFF_* are not the same
+                              under Linux and Windows, therefore must generate
+                              new flags */
+                           intArray->iiFlags = 0;
+                           if (ifInfo.ifr_flags & IFF_BROADCAST)
+                              intArray->iiFlags |= WS_IFF_BROADCAST;
+                           if (ifInfo.ifr_flags & IFF_POINTOPOINT)
+                              intArray->iiFlags |= WS_IFF_POINTTOPOINT;
+                           if (ifInfo.ifr_flags & IFF_LOOPBACK)
+                              intArray->iiFlags |= WS_IFF_LOOPBACK;
+                           if (ifInfo.ifr_flags & IFF_UP)
+                              intArray->iiFlags |= WS_IFF_UP;
+                        }
+
+                        addr = inet_addr(ptr->IpAddressList.IpAddress.String);
+                        mask = inet_addr(ptr->IpAddressList.IpMask.String);
+                        bcast = addr | (addr & !mask);
+                        intArray->iiAddress.AddressIn.sin_family = AF_INET;
+                        intArray->iiAddress.AddressIn.sin_port = 0;
+                        intArray->iiAddress.AddressIn.sin_addr.WS_s_addr =
+                         addr;
+                        intArray->iiNetmask.AddressIn.sin_family = AF_INET;
+                        intArray->iiNetmask.AddressIn.sin_port = 0;
+                        intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr =
+                         mask;
+                        intArray->iiBroadcastAddress.AddressIn.sin_family =
+                         AF_INET;
+                        intArray->iiBroadcastAddress.AddressIn.sin_port = 0;
+                        intArray->iiBroadcastAddress.AddressIn.sin_addr.
+                         WS_s_addr = bcast;
+                     }
+                     HeapFree(GetProcessHeap(),0,table);
+                  }
+                  else
+                  {
+                     ERR ("Unable to get interface table!\n");
+                     close(fd);
+                     HeapFree(GetProcessHeap(),0,table);
+                     WSASetLastError(WSAEINVAL);
+                     return (SOCKET_ERROR);
+                  }
+               }
+               else
+               {
+                  close(fd);
+                  WSASetLastError(WSAEINVAL);
+                  return (SOCKET_ERROR);
+               }
+            }
+            else
+            {
+               ERR ("Unable to get interface table!\n");
                close(fd);
                WSASetLastError(WSAEINVAL);
                return (SOCKET_ERROR);
             }
-
-            for (i=0; i<numInt; i++)
-            {
-               if (!WSAIOCTL_GetInterfaceName(i, ifName))
-               {
-                  ERR ("Error parsing /proc filesystem!\n");
-                  close(fd);
-                  WSASetLastError(WSAEINVAL);
-                  return (SOCKET_ERROR);
-               }
-
-               ifInfo.ifr_addr.sa_family = AF_INET;
-
-               /* IP Address */
-               strcpy (ifInfo.ifr_name, ifName);
-               if (ioctl(fd, SIOCGIFADDR, &ifInfo) < 0)
-               {
-                  ERR ("Error obtaining IP address\n");
-                  close(fd);
-                  WSASetLastError(WSAEINVAL);
-                  return (SOCKET_ERROR);
-               }
-               else
-               {
-                  struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_addr;
-
-                  intArray->iiAddress.AddressIn.sin_family = AF_INET;
-                  intArray->iiAddress.AddressIn.sin_port = ipTemp->sin_port;
-                  intArray->iiAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
-               }
-
-               /* Broadcast Address */
-               strcpy (ifInfo.ifr_name, ifName);
-               if (ioctl(fd, SIOCGIFBRDADDR, &ifInfo) < 0)
-               {
-                  ERR ("Error obtaining Broadcast IP address\n");
-                  close(fd);
-                  WSASetLastError(WSAEINVAL);
-                  return (SOCKET_ERROR);
-               }
-               else
-               {
-                  struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_broadaddr;
-
-                  intArray->iiBroadcastAddress.AddressIn.sin_family = AF_INET;
-                  intArray->iiBroadcastAddress.AddressIn.sin_port = ipTemp->sin_port;
-                  intArray->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
-               }
-
-               /* Subnet Mask */
-               strcpy (ifInfo.ifr_name, ifName);
-               if (ioctl(fd, SIOCGIFNETMASK, &ifInfo) < 0)
-               {
-                  ERR ("Error obtaining Subnet IP address\n");
-                  close(fd);
-                  WSASetLastError(WSAEINVAL);
-                  return (SOCKET_ERROR);
-               }
-               else
-               {
-                  /* Trying to avoid some compile problems across platforms.
-                     (Linux, FreeBSD, Solaris...) */
-                  #ifndef ifr_netmask
-                    #ifndef ifr_addr
-                       intArray->iiNetmask.AddressIn.sin_family = AF_INET;
-                       intArray->iiNetmask.AddressIn.sin_port = 0;
-                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = 0;
-                       ERR ("Unable to determine Netmask on your platform!\n");
-                    #else
-                       struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_addr;
-
-                       intArray->iiNetmask.AddressIn.sin_family = AF_INET;
-                       intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
-                    #endif
-                  #else
-                     struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_netmask;
-
-                     intArray->iiNetmask.AddressIn.sin_family = AF_INET;
-                     intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                     intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
-                  #endif
-               }
-
-               /* Socket Status Flags */
-               strcpy(ifInfo.ifr_name, ifName);
-               if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0)
-               {
-                  ERR ("Error obtaining status flags for socket!\n");
-                  close(fd);
-                  WSASetLastError(WSAEINVAL);
-                  return (SOCKET_ERROR);
-               }
-               else
-               {
-                  /* FIXME - Is this the right flag to use? */
-                  intArray->iiFlags = ifInfo.ifr_flags;
-               }
-               intArray++; /* Prepare for another interface */
-            }
-
             /* Calculate the size of the array being returned */
             *lpcbBytesReturned = sizeof(INTERFACE_INFO) * numInt;
             break;
@@ -2123,127 +2099,6 @@ INT WINAPI WSAIoctl (SOCKET s,
       return (SOCKET_ERROR);
    }
 }
-
-
-/*
-  Helper function for WSAIoctl - Get count of the number of interfaces
-  by parsing /proc filesystem.
-*/
-int WSAIOCTL_GetInterfaceCount(void)
-{
-   FILE *procfs;
-   char buf[512];  /* Size doesn't matter, something big */
-   int  intcnt=0;
-
-
-   /* Open /proc filesystem file for network devices */
-   procfs = fopen(PROCFS_NETDEV_FILE, "r");
-   if (!procfs)
-   {
-      /* If we can't open the file, return an error */
-      return (-1);
-   }
-
-   /* Omit first two lines, they are only headers */
-   fgets(buf, sizeof buf, procfs);
-   fgets(buf, sizeof buf, procfs);
-
-   while (fgets(buf, sizeof buf, procfs))
-   {
-      /* Each line in the file represents a network interface */
-      intcnt++;
-   }
-
-   fclose(procfs);
-   return(intcnt);
-}
-
-
-/*
-   Helper function for WSAIoctl - Get name of device from interface number
-   by parsing /proc filesystem.
-*/
-int WSAIOCTL_GetInterfaceName(int intNumber, char *intName)
-{
-   FILE *procfs;
-   char buf[512]; /* Size doesn't matter, something big */
-   int  i;
-
-   /* Open /proc filesystem file for network devices */
-   procfs = fopen(PROCFS_NETDEV_FILE, "r");
-   if (!procfs)
-   {
-      /* If we can't open the file, return an error */
-      return (-1);
-   }
-
-   /* Omit first two lines, they are only headers */
-   fgets(buf, sizeof(buf), procfs);
-   fgets(buf, sizeof(buf), procfs);
-
-   for (i=0; i<intNumber; i++)
-   {
-      /* Skip the lines that don't interest us. */
-      fgets(buf, sizeof(buf), procfs);
-   }
-   fgets(buf, sizeof(buf), procfs); /* This is the line we want */
-
-
-   /* Parse out the line, grabbing only the name of the device
-      to the intName variable
-
-      The Line comes in like this: (we only care about the device name)
-      lo:   21970 377 0 0 0 0 0 0 21970 377 0 0 0 0 0 0
-   */
-   i=0;
-   while (isspace(buf[i])) /* Skip initial space(s) */
-   {
-      i++;
-   }
-
-   while (buf[i])
-   {
-      if (isspace(buf[i]))
-      {
-         break;
-      }
-
-      if (buf[i] == ':')  /* FIXME: Not sure if this block (alias detection) works properly */
-      {
-         /* This interface could be an alias... */
-         int hold = i;
-         char *dotname = intName;
-         *intName++ = buf[i++];
-
-         while (isdigit(buf[i]))
-         {
-            *intName++ = buf[i++];
-         }
-
-         if (buf[i] != ':')
-         {
-            /* ... It wasn't, so back up */
-            i = hold;
-            intName = dotname;
-         }
-
-         if (buf[i] == '\0')
-         {
-            fclose(procfs);
-            return(FALSE);
-         }
-
-         i++;
-         break;
-      }
-
-      *intName++ = buf[i++];
-   }
-   *intName++ = '\0';
-
-   fclose(procfs);
-   return(TRUE);
- }
 
 
 /***********************************************************************

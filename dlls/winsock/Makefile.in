@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ws2_32.dll
-IMPORTS   = user32 kernel32 ntdll
+IMPORTS   = user32 iphlpapi kernel32 ntdll
 ALTNAMES  = winsock.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
