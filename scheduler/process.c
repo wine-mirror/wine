@@ -313,6 +313,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     pdb->heap            = pdb->system_heap;  /* will be changed later on */
     pdb->next            = PROCESS_First;
     pdb->winver          = 0xffff; /* to be determined */
+    pdb->main_queue      = INVALID_HANDLE_VALUE16;
     PROCESS_First = pdb;
     return pdb;
 }
@@ -338,6 +339,7 @@ BOOL PROCESS_Init(void)
     initial_pdb.priority        = 8;  /* Normal */
     initial_pdb.flags           = PDB32_WIN16_PROC;
     initial_pdb.winver          = 0xffff; /* to be determined */
+    initial_pdb.main_queue      = INVALID_HANDLE_VALUE16;
 
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
@@ -351,6 +353,14 @@ BOOL PROCESS_Init(void)
     /* Create the system heap */
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
     initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
+
+    /* Create the idle event for the initial process
+       FIXME 1: Shouldn't we call UserSignalProc for the initial process too?
+       FIXME 2: It seems to me that the initial pdb becomes never freed, so I don't now
+                where to release the idle event for the initial process.
+    */
+    initial_pdb.idle_event = CreateEventA ( NULL, TRUE, FALSE, NULL );
+    initial_pdb.idle_event = ConvertToGlobalHandle ( initial_pdb.idle_event );
 
     /* Initialize signal handling */
     if (!SIGNAL_Init()) return FALSE;
@@ -485,8 +495,9 @@ void PROCESS_Start(void)
     if ( Options.debug && TASK_AddTaskEntryBreakpoint )
         TASK_AddTaskEntryBreakpoint( pdb->task );
 
-    /* Now call the entry point */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
+    /* Call UserSignalProc ( USIG_PROCESS_RUNNING ... ) only for non-GUI win32 apps */
+    if ( type != PROC_WIN16 && (pdb->flags & PDB32_CONSOLE_PROC))
+        PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0, 0 );
 
     switch ( type )
     {

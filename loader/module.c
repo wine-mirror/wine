@@ -834,6 +834,10 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         return 11;
     }
     
+    /* Give 30 seconds to the app to come up */
+    if ( Callout.WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF ) 
+      WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
+    
     /* Get 16-bit hInstance/hTask from process */
     pdb = PROCESS_IdToPDB( info.dwProcessId );
     tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
@@ -1289,7 +1293,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 
 
 /***********************************************************************
- *              GetModuleFileName32A      (KERNEL32.235)
+ *              GetModuleFileNameA      (KERNEL32.235)
  */
 DWORD WINAPI GetModuleFileNameA( 
 	HMODULE hModule,	/* [in] module handle (32bit) */

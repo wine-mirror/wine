@@ -375,6 +375,7 @@ void THUNK_InitCallout(void)
         GETADDR( DispatchMessageW, "DispatchMessageW" );
         GETADDR( DispatchMessageA, "DispatchMessageA" );
         GETADDR( RedrawWindow, "RedrawWindow" );
+        GETADDR( WaitForInputIdle, "WaitForInputIdle" );
 
 #undef GETADDR
     }

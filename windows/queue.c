@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <signal.h>
+#include <assert.h>
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "miscemu.h"
@@ -18,7 +19,6 @@
 #include "heap.h"
 #include "thread.h"
 #include "process.h"
-#include <assert.h>
 #include "debugtools.h"
 #include "spy.h"
 
@@ -467,7 +467,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 
         if (msgQueue->hEvent == 0)
         {
-            WARN_(msg)("CreateEvent32A is not able to create an event object");
+            WARN_(msg)("CreateEventA is not able to create an event object");
             return 0;
         }
         msgQueue->hEvent = ConvertToGlobalHandle( msgQueue->hEvent );
@@ -672,14 +672,19 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 {
     MESSAGEQUEUE *queue;
     DWORD curTime = 0;
+    HQUEUE16 hQueue;
+    PDB * pdb;
 
     TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
 
     if ( THREAD_IsWin16( NtCurrentTeb() ) && (timeout != INFINITE) )
         curTime = GetTickCount();
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0;
+    hQueue = GetFastQueue16();
+    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue ))) return 0;
     
+    pdb = PROCESS_Current();
+
     for (;;)
     {
         if (queue->changeBits & bits)
@@ -716,7 +721,24 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 	        TRACE_(msg)("bHasWin16Lock=TRUE\n");
 	        ReleaseThunkLock( &dwlc );
 	    }
+
+
+	    if ( pdb->main_queue == INVALID_HANDLE_VALUE16 ) 
+	    {
+	        pdb->main_queue = hQueue;
+	    }
+	    if ( pdb->main_queue == hQueue ) 
+	    {
+	        SetEvent ( pdb->idle_event );
+	    }
+
 	    WaitForSingleObject( queue->hEvent, timeout );
+
+	    if ( pdb->main_queue == hQueue ) 
+	    {
+	        ResetEvent ( pdb->idle_event );
+	    }
+
 	    if ( bHasWin16Lock ) 
 	    {
 	        RestoreThunkLock( dwlc );
@@ -724,6 +746,8 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
         }
         else
         {
+	    SetEvent ( pdb->idle_event );
+
             if ( timeout == INFINITE )
                 WaitEvent16( 0 );  /* win 16 thread, use WaitEvent */
             else
@@ -1395,7 +1419,7 @@ BOOL16 WINAPI SetMessageQueue16( INT16 size )
 
 
 /***********************************************************************
- *           SetMessageQueue32   (USER32.494)
+ *           SetMessageQueue   (USER32.494)
  */
 BOOL WINAPI SetMessageQueue( INT size )
 {
@@ -1409,7 +1433,7 @@ BOOL WINAPI SetMessageQueue( INT size )
 }
 
 /***********************************************************************
- *           InitThreadInput   (USER.409)
+ *           InitThreadInput16   (USER.409)
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 {
@@ -1430,7 +1454,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         {
             WARN_(msg)("failed!\n");
             return FALSE;
-    }
+	}
         
         /* Link new queue into list */
         queuePtr = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
@@ -1496,11 +1520,53 @@ BOOL16 WINAPI GetInputState16(void)
  */
 DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 {
-  FIXME_(msg)("(hProcess=%d, dwTimeOut=%ld): stub\n", hProcess, dwTimeOut);
+  PDB * pdb;
+  DWORD cur_time, ret, pid = MapProcessHandle ( hProcess );
 
+  /* Check whether the calling process is a command line application */
+  if (!THREAD_IsWin16(NtCurrentTeb() ) &&
+      (PROCESS_Current()->flags & PDB32_CONSOLE_PROC))
+  {
+    TRACE_(msg)("not a win32 GUI application!\n" );
+    return 0; 
+  }
+  
+  pdb = PROCESS_IdToPDB( pid );
+
+  /* check whether we are waiting for a win32 process or the win16 subsystem */
+  if ( pdb->flags & PDB32_WIN16_PROC ) {
+    if ( THREAD_IsWin16(NtCurrentTeb()) ) return 0;
+  }
+    else { /* target is win32 */
+    if ( pdb->flags & PDB32_CONSOLE_PROC ) return 0;
+    if ( GetFastQueue16() == pdb->main_queue ) return 0;
+  }
+
+  cur_time = GetTickCount();
+  
+  TRACE_(msg)("waiting for %x\n", pdb->idle_event );
+  while ( dwTimeOut > GetTickCount() - cur_time || dwTimeOut == INFINITE ) {
+
+    ret = MsgWaitForMultipleObjects ( 1, &pdb->idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
+    if ( ret == ( WAIT_OBJECT_0 + 1 )) {
+      MESSAGEQUEUE * queue;
+      if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() ))) return 0xFFFFFFFF;
+      QUEUE_ReceiveMessage ( queue );
+      QUEUE_Unlock ( queue );
+      continue; 
+    }
+    if ( ret == WAIT_TIMEOUT || ret == 0xFFFFFFFF ) {
+      TRACE_(msg)("timeout or error\n");
+      return ret;
+    }
+    else {
+      TRACE_(msg)("finished\n");
+      return 0;
+    }
+    
+  }
   return WAIT_TIMEOUT;
 }
-
 
 /***********************************************************************
  *           GetInputState32   (USER32.244)

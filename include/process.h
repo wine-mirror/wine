@@ -96,6 +96,8 @@ typedef struct _PDB
     struct _PDB     *next;             /*    List reference - list of PDB's */
     WORD            winver;            /*    Windows version figured out by VERSION_GetVersion */
     struct _SERVICETABLE *service_table; /*  Service table for service thread */
+    HANDLE           idle_event;       /* event to signal, when the process is idle */
+    HANDLE16         main_queue;       /* main message queue of the process */ 
 } PDB;
 
 /* Process flags */
@@ -146,6 +148,7 @@ typedef struct _PDB
 
 extern DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset );
 void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
+extern DWORD WINAPI MapProcessHandle( HANDLE handle );
 
 /* scheduler/environ.c */
 extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );

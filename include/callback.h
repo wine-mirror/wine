@@ -103,6 +103,7 @@ typedef struct
     HQUEUE16 WINAPI (*InitThreadInput16)( WORD unknown, WORD flags );
     void WINAPI (*UserYield16)( void );
     WORD WINAPI (*DestroyIcon32)( HGLOBAL16 handle, UINT16 flags );
+    DWORD WINAPI (*WaitForInputIdle)( HANDLE hProcess, DWORD dwTimeOut );
     
 }  CALLOUT_TABLE;
 
