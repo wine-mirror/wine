@@ -367,7 +367,7 @@ debug_channels (msvcrt)
 @ cdecl _mbslwr(str) _mbslwr
 @ stub _mbsnbcat #(str str long)
 @ cdecl _mbsnbcmp(str str long) _mbsnbcmp
-@ stub _mbsnbcnt #(ptr long)
+@ cdecl _mbsnbcnt(ptr long) _mbsnbcnt
 @ stub _mbsnbcoll #(str str long)
 @ cdecl _mbsnbcpy(ptr str long) _mbsnbcpy
 @ stub _mbsnbicmp #(str str long)
@@ -768,3 +768,5 @@ debug_channels (msvcrt)
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
 @ stub wscanf #(wstr) varargs
+@ stub _Gettnames
+@ stub __lc_collate_cp

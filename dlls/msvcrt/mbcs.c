@@ -446,6 +446,7 @@ unsigned char* _mbschr(const unsigned char* str, unsigned int c)
 
 /*********************************************************************
  *		_mbsnccnt(MSVCRT.@)
+ * 'c' is for 'character'.
  */
 unsigned int _mbsnccnt(const unsigned char *str, unsigned int len)
 {
@@ -464,6 +465,30 @@ unsigned int _mbsnccnt(const unsigned char *str, unsigned int len)
       str++;
     }
     return ret;
+  }
+  return min(strlen(str), len); /* ASCII CP */
+}
+
+/*********************************************************************
+ *		_mbsnbcnt(MSVCRT.@)
+ * 'b' is for byte count.
+ */
+unsigned int _mbsnbcnt(const unsigned char *str, unsigned int len)
+{
+  const unsigned char *xstr = str;
+
+  if(MSVCRT___mb_cur_max > 1)
+  {
+    while(*xstr && len-- > 0)
+    {
+      if(MSVCRT_isleadbyte(*xstr))
+      {
+        xstr++;
+        len--;
+      }
+      xstr++;
+    }
+    return xstr-str;
   }
   return min(strlen(str), len); /* ASCII CP */
 }
