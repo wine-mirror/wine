@@ -133,7 +133,7 @@ struct DefaultFontInfo
         LOGFONTW        SystemFont;
         LOGFONTW        DeviceDefaultFont;
         LOGFONTW        SystemFixedFont;
-        LOGFONTW        DefaultGuiFont;
+        LOGFONTW        DefaultGuiFont; /* Note for this font the lfHeight member should be the point size */
 };
 
 static const struct DefaultFontInfo default_fonts[] =
@@ -155,9 +155,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   EASTEUROPE_CHARSET,
@@ -177,9 +177,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   RUSSIAN_CHARSET,
@@ -199,9 +199,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   GREEK_CHARSET,
@@ -221,9 +221,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   TURKISH_CHARSET,
@@ -243,9 +243,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   HEBREW_CHARSET,
@@ -265,9 +265,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   ARABIC_CHARSET,
@@ -287,9 +287,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   BALTIC_CHARSET,
@@ -309,9 +309,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   THAI_CHARSET,
@@ -331,9 +331,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
+           {'M','S',' ','S','h','e','l','l',' ','D','l','g','\0'}
         },
     },
     {   SHIFTJIS_CHARSET,
@@ -353,7 +353,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','U','I',' ','G','o','t','h','i','c','\0'}
         },
@@ -375,7 +375,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','S','o','n','g','\0'}   /* FIXME: Is this correct? */
         },
@@ -397,9 +397,9 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+           9, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'G','u','l','i','m'},
+           {'G','u','l','i','m','\0'},
         },
     },
     {   CHINESEBIG5_CHARSET,
@@ -419,7 +419,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'\0'}       /* FIXME - what is the native font??? */
         },
@@ -441,7 +441,7 @@ static const struct DefaultFontInfo default_fonts[] =
            {'\0'}
         },
         { /* DefaultGuiFont */
-         -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+           8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'M','S',' ','M','i','n','g','l','i','u','\0'} /* FIXME: Is this correct? */
         },
@@ -488,6 +488,33 @@ static UINT get_default_charset( void )
     return csi.ciCharset;
 }
 
+static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
+
+/******************************************************************************
+ *      get_dpi   (internal)
+ *
+ * get the dpi from the registry
+ */
+static DWORD get_dpi( void )
+{
+    DWORD dpi = 96;
+    HKEY hkey;
+
+    if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
+    {
+        DWORD type, size, new_dpi;
+
+        size = sizeof(new_dpi);
+        if(RegQueryValueExW(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
+        {
+            if(type == REG_DWORD && new_dpi != 0)
+                dpi = new_dpi;
+        }
+        RegCloseKey(hkey);
+    }
+    return dpi;
+}
 
 /******************************************************************************
  *           create_stock_font
@@ -586,6 +613,7 @@ BOOL GDI_Init(void)
     HINSTANCE16 instance;
     HKEY hkey;
     GDIOBJHDR *ptr;
+    LOGFONTW default_gui_font;
     const struct DefaultFontInfo* deffonts;
     int i;
 
@@ -620,7 +648,12 @@ BOOL GDI_Init(void)
     stock_objects[SYSTEM_FONT]         = create_stock_font( "System", &deffonts->SystemFont, hkey );
     stock_objects[DEVICE_DEFAULT_FONT] = create_stock_font( "DeviceDefault", &deffonts->DeviceDefaultFont, hkey );
     stock_objects[SYSTEM_FIXED_FONT]   = create_stock_font( "SystemFixed", &deffonts->SystemFixedFont, hkey );
-    stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &deffonts->DefaultGuiFont, hkey );
+
+    /* For the default gui font, we use the lfHeight member in deffonts as a place-holder
+       for the point size so we must convert this into a true height */
+    memcpy(&default_gui_font, &deffonts->DefaultGuiFont, sizeof(default_gui_font));
+    default_gui_font.lfHeight = -MulDiv(default_gui_font.lfHeight, get_dpi(), 72);
+    stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &default_gui_font, hkey );
 
     stock_objects[DC_BRUSH]     = CreateBrushIndirect( &DCBrush );
     stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
