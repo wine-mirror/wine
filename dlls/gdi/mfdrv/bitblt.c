@@ -65,12 +65,17 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     METARECORD *mr;
     BITMAP BM;
     METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
-    DC *dcSrc = physDevSrc->dc;
 #ifdef STRETCH_VIA_DIB
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
 #endif
-    GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
+    HBITMAP hBitmap = GetCurrentObject(physDevSrc->hdc, OBJ_BITMAP);
+
+    if (GetObjectW(hBitmap, sizeof(BITMAP), &BM) != sizeof(BITMAP))
+    {
+        WARN("bad bitmap object %p passed for hdc %p\n", hBitmap, physDevSrc->hdc);
+        return FALSE;
+    }
 #ifdef STRETCH_VIA_DIB
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
     if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
@@ -89,14 +94,14 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     lpBMI->biSizeImage = DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * lpBMI->biHeight;
     lpBMI->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
     lpBMI->biCompression = BI_RGB;
-    lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
-    lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
+    lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSX),3937,100);
+    lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
     TRACE("MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
-	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(dcSrc->hSelf,
-						       LOGPIXELSY));
-    if (GetDIBits(dcSrc->hSelf,dcSrc->hBitmap,0,(UINT)lpBMI->biHeight,
+	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(physDevSrc->hdc, LOGPIXELSY));
+
+    if (GetDIBits(physDevSrc->hdc, hBitmap, 0, (UINT)lpBMI->biHeight,
                   (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
                                                      DIB_RGB_COLORS ),
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
@@ -111,8 +116,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     *(mr->rdParm +13) = BM.bmPlanes;
     *(mr->rdParm +14) = BM.bmBitsPixel;
     TRACE("len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits( dcSrc->hBitmap, BM.bmWidthBytes * BM.bmHeight,
-                         mr->rdParm +15))
+    if (GetBitmapBits( hBitmap, BM.bmWidthBytes * BM.bmHeight, mr->rdParm + 15))
 #endif
     {
       mr->rdSize = len / sizeof(INT16);
