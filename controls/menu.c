@@ -4036,16 +4036,15 @@ HMENU16 WINAPI GetMenu16( HWND16 hWnd )
  *         GetMenu    (USER32.257)
  */
 HMENU WINAPI GetMenu( HWND hWnd ) 
-{ 
+{
     HMENU retvalue;
     WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr && !(wndPtr->dwStyle & WS_CHILD)) 
-    {
-        retvalue = (HMENU)wndPtr->wIDmenu;
-        goto END;
-    }
-    retvalue = 0;
-END:
+
+    if (!wndPtr) return 0;
+
+    retvalue = (HMENU)wndPtr->wIDmenu;
+    TRACE("for %swindow %04x returning %04x\n",
+          (wndPtr->dwStyle & WS_CHILD) ? "child " : "", hWnd, retvalue);
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 }
