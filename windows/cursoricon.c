@@ -2174,7 +2174,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
                     else
                         hbitmap = CreateCompatibleBitmap(screen_dc, width, height);
 
-                    SetDIBits(screen_dc, hbitmap, 0, height, bits, info, DIB_RGB_COLORS);
+                    SetDIBits(screen_dc, hbitmap, 0, height, bits, fix_info, DIB_RGB_COLORS);
                 }
             }
          }
