@@ -3,13 +3,15 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advapi32
-SOVERSION = 1.0
-IMPORTS   = kernel32 ntdll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	advapi.c \
 	crypt.c \
 	eventlog.c \
+	registry.c \
 	security.c \
 	service.c
 

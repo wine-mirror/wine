@@ -368,7 +368,7 @@ static	BOOL	MCI_DeleteCommandTable(UINT uTbl)
     if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].hMem)
 	return FALSE;
 
-    FreeResource16(S_MciCmdTable[uTbl].hMem);
+    FreeResource(S_MciCmdTable[uTbl].hMem);
     S_MciCmdTable[uTbl].hMem = 0;
     if (S_MciCmdTable[uTbl].aVerbs) {
 	HeapFree(GetProcessHeap(), 0, S_MciCmdTable[uTbl].aVerbs);

@@ -4,8 +4,9 @@ init WINMM_LibMain
 rsrc winmm_res.res
 
 import user32.dll
+import advapi32.dll
 import kernel32.dll
-import	ntdll.dll
+import ntdll.dll
 
 debug_channels (mci mmio mmsys mmtime sound)
 

@@ -19,7 +19,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "heap.h"
 #include "server.h"
@@ -1302,4 +1301,241 @@ LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
     DWORD ret = RegSaveKeyA( hkey, fileA, sa );
     if (fileA) HeapFree( GetProcessHeap(), 0, fileA );
     return ret;
+}
+
+
+/******************************************************************************
+ * RegRestoreKeyW [ADVAPI32.164]
+ *
+ * PARAMS
+ *    hkey    [I] Handle of key where restore begins
+ *    lpFile  [I] Address of filename containing saved tree
+ *    dwFlags [I] Optional flags
+ */
+LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
+{
+    TRACE("(%x,%s,%ld)\n",hkey,debugstr_w(lpFile),dwFlags);
+
+    /* It seems to do this check before the hkey check */
+    if (!lpFile || !*lpFile)
+        return ERROR_INVALID_PARAMETER;
+
+    FIXME("(%x,%s,%ld): stub\n",hkey,debugstr_w(lpFile),dwFlags);
+
+    /* Check for file existence */
+
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegRestoreKeyA [ADVAPI32.163]
+ */
+LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
+{
+    LPWSTR lpFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpFile );
+    LONG ret = RegRestoreKeyW( hkey, lpFileW, dwFlags );
+    HeapFree( GetProcessHeap(), 0, lpFileW );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegUnLoadKeyW [ADVAPI32.173]
+ *
+ * PARAMS
+ *    hkey     [I] Handle of open key
+ *    lpSubKey [I] Address of name of subkey to unload
+ */
+LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
+{
+    FIXME("(%x,%s): stub\n",hkey, debugstr_w(lpSubKey));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegUnLoadKeyA [ADVAPI32.172]
+ */
+LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
+{
+    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
+    LONG ret = RegUnLoadKeyW( hkey, lpSubKeyW );
+    if(lpSubKeyW) HeapFree( GetProcessHeap(), 0, lpSubKeyW);
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegReplaceKeyW [ADVAPI32.162]
+ *
+ * PARAMS
+ *    hkey      [I] Handle of open key
+ *    lpSubKey  [I] Address of name of subkey
+ *    lpNewFile [I] Address of filename for file with new data
+ *    lpOldFile [I] Address of filename for backup file
+ */
+LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
+                              LPCWSTR lpOldFile )
+{
+    FIXME("(%x,%s,%s,%s): stub\n", hkey, debugstr_w(lpSubKey), 
+          debugstr_w(lpNewFile),debugstr_w(lpOldFile));
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegReplaceKeyA [ADVAPI32.161]
+ */
+LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
+                              LPCSTR lpOldFile )
+{
+    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
+    LPWSTR lpNewFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpNewFile );
+    LPWSTR lpOldFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpOldFile );
+    LONG ret = RegReplaceKeyW( hkey, lpSubKeyW, lpNewFileW, lpOldFileW );
+    HeapFree( GetProcessHeap(), 0, lpOldFileW );
+    HeapFree( GetProcessHeap(), 0, lpNewFileW );
+    HeapFree( GetProcessHeap(), 0, lpSubKeyW );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegSetKeySecurity [ADVAPI32.167]
+ *
+ * PARAMS
+ *    hkey          [I] Open handle of key to set
+ *    SecurityInfo  [I] Descriptor contents
+ *    pSecurityDesc [I] Address of descriptor for key
+ */
+LONG WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
+                               PSECURITY_DESCRIPTOR pSecurityDesc )
+{
+    TRACE("(%x,%ld,%p)\n",hkey,SecurityInfo,pSecurityDesc);
+
+    /* It seems to perform this check before the hkey check */
+    if ((SecurityInfo & OWNER_SECURITY_INFORMATION) ||
+        (SecurityInfo & GROUP_SECURITY_INFORMATION) ||
+        (SecurityInfo & DACL_SECURITY_INFORMATION) ||
+        (SecurityInfo & SACL_SECURITY_INFORMATION)) {
+        /* Param OK */
+    } else
+        return ERROR_INVALID_PARAMETER;
+
+    if (!pSecurityDesc)
+        return ERROR_INVALID_PARAMETER;
+
+    FIXME(":(%x,%ld,%p): stub\n",hkey,SecurityInfo,pSecurityDesc);
+
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegGetKeySecurity [ADVAPI32.144]
+ * Retrieves a copy of security descriptor protecting the registry key
+ *
+ * PARAMS
+ *    hkey                   [I]   Open handle of key to set
+ *    SecurityInformation    [I]   Descriptor contents
+ *    pSecurityDescriptor    [O]   Address of descriptor for key
+ *    lpcbSecurityDescriptor [I/O] Address of size of buffer and description
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformation,
+                               PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                               LPDWORD lpcbSecurityDescriptor )
+{
+    TRACE("(%x,%ld,%p,%ld)\n",hkey,SecurityInformation,pSecurityDescriptor,
+          lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
+
+    /* FIXME: Check for valid SecurityInformation values */
+
+    if (*lpcbSecurityDescriptor < sizeof(SECURITY_DESCRIPTOR))
+        return ERROR_INSUFFICIENT_BUFFER;
+
+    FIXME("(%x,%ld,%p,%ld): stub\n",hkey,SecurityInformation,
+          pSecurityDescriptor,lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
+
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegFlushKey [ADVAPI32.143]
+ * Immediately writes key to registry.
+ * Only returns after data has been written to disk.
+ *
+ * FIXME: does it really wait until data is written ?
+ *
+ * PARAMS
+ *    hkey [I] Handle of key to write
+ *
+ * RETURNS
+ *    Success: ERROR_SUCCESS
+ *    Failure: Error code
+ */
+DWORD WINAPI RegFlushKey( HKEY hkey )
+{
+    FIXME( "(%x): stub\n", hkey );
+    return ERROR_SUCCESS;
+}
+
+
+/******************************************************************************
+ * RegConnectRegistryW [ADVAPI32.128]
+ *
+ * PARAMS
+ *    lpMachineName [I] Address of name of remote computer
+ *    hHey          [I] Predefined registry handle
+ *    phkResult     [I] Address of buffer for remote registry handle
+ */
+LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey, 
+                                   LPHKEY phkResult )
+{
+    TRACE("(%s,%x,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
+
+    if (!lpMachineName || !*lpMachineName) {
+        /* Use the local machine name */
+        return RegOpenKeyA( hKey, "", phkResult );
+    }
+
+    FIXME("Cannot connect to %s\n",debugstr_w(lpMachineName));
+    return ERROR_BAD_NETPATH;
+}
+
+
+/******************************************************************************
+ * RegConnectRegistryA [ADVAPI32.127]
+ */
+LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, LPHKEY reskey )
+{
+    LPWSTR machineW = HEAP_strdupAtoW( GetProcessHeap(), 0, machine );
+    DWORD ret = RegConnectRegistryW( machineW, hkey, reskey );
+    HeapFree( GetProcessHeap(), 0, machineW );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegNotifyChangeKeyValue [ADVAPI32.???]
+ *
+ * PARAMS
+ *    hkey            [I] Handle of key to watch
+ *    fWatchSubTree   [I] Flag for subkey notification
+ *    fdwNotifyFilter [I] Changes to be reported
+ *    hEvent          [I] Handle of signaled event
+ *    fAsync          [I] Flag for asynchronous reporting
+ */
+LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree, 
+                                     DWORD fdwNotifyFilter, HANDLE hEvent,
+                                     BOOL fAsync )
+{
+    FIXME("(%x,%i,%ld,%x,%i): stub\n",hkey,fWatchSubTree,fdwNotifyFilter,
+          hEvent,fAsync);
+    return ERROR_SUCCESS;
 }

@@ -4,7 +4,7 @@ type	win32
 import	kernel32.dll
 import	ntdll.dll
 
-debug_channels (advapi)
+debug_channels (advapi reg)
 
 @ stub AbortSystemShutdownA
 @ stub AbortSystemShutdownW
@@ -122,7 +122,7 @@ debug_channels (advapi)
 @ stdcall InitializeSid(ptr ptr long) InitializeSid
 @ stub InitiateSystemShutdownA
 @ stub InitiateSystemShutdownW
-@ stdcall IsTextUnicode(ptr long ptr) RtlIsTextUnicode
+@ forward IsTextUnicode ntdll.RtlIsTextUnicode
 @ stub IsValidAcl
 @ stdcall IsValidSecurityDescriptor(ptr) IsValidSecurityDescriptor
 @ stdcall IsValidSid(ptr) IsValidSid
