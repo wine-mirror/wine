@@ -181,7 +181,8 @@ create_device_helper(IDirect3DImpl *This,
 	return D3D_OK;
     }
     if ((iid == NULL) ||
-	(IsEqualGUID(&IID_IDirect3DHALDevice, iid))) {
+	(IsEqualGUID(&IID_IDirect3DHALDevice, iid)) ||
+	(IsEqualGUID(&IID_IDirect3DTnLHalDevice, iid))) {
         switch (interface) {
 	    case 1:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice);
@@ -293,6 +294,32 @@ GL_IDirect3DImpl_7_3T_EnumZBufferFormats(LPDIRECT3D7 iface,
     return D3D_OK;
 }
 
+HRESULT WINAPI
+GL_IDirect3DImpl_7_EnumDevices(LPDIRECT3D7 iface,
+			       LPD3DENUMDEVICESCALLBACK7 lpEnumDevicesCallback,
+			       LPVOID lpUserArg)
+{
+    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpEnumDevicesCallback, lpUserArg);
+
+    if (d3ddevice_enumerate7(lpEnumDevicesCallback, lpUserArg) != D3DENUMRET_OK)
+	return D3D_OK;
+    
+    return D3D_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DImpl_7_CreateDevice(LPDIRECT3D7 iface,
+				REFCLSID rclsid,
+				LPDIRECTDRAWSURFACE7 lpDDS,
+				LPDIRECT3DDEVICE7* lplpD3DDevice)
+{
+    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    IDirectDrawSurfaceImpl *ddsurfaceimpl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpDDS);
+    TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_guid(rclsid), lpDDS, lplpD3DDevice);
+    return create_device_helper(This, rclsid, ddsurfaceimpl, (void **) lplpD3DDevice, 7);
+}
+
 static void light_released(IDirect3DImpl *This, GLenum light_num)
 {
     IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
@@ -311,8 +338,8 @@ ICOM_VTABLE(IDirect3D7) VTABLE_IDirect3D7 =
     XCAST(QueryInterface) Main_IDirect3DImpl_7_3T_2T_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DImpl_7_3T_2T_1T_AddRef,
     XCAST(Release) Main_IDirect3DImpl_7_3T_2T_1T_Release,
-    XCAST(EnumDevices) Main_IDirect3DImpl_7_EnumDevices,
-    XCAST(CreateDevice) Main_IDirect3DImpl_7_CreateDevice,
+    XCAST(EnumDevices) GL_IDirect3DImpl_7_EnumDevices,
+    XCAST(CreateDevice) GL_IDirect3DImpl_7_CreateDevice,
     XCAST(CreateVertexBuffer) Main_IDirect3DImpl_7_3T_CreateVertexBuffer,
     XCAST(EnumZBufferFormats) GL_IDirect3DImpl_7_3T_EnumZBufferFormats,
     XCAST(EvictManagedTextures) Main_IDirect3DImpl_7_3T_EvictManagedTextures,

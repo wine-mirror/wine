@@ -207,6 +207,49 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1)
     d1->wMaxSimultaneousTextures = 1;  /* TODO add proper caps according to OpenGL multi-texture stuff */
 }
 
+static void fill_opengl_caps_7(D3DDEVICEDESC7 *d)
+{
+    D3DDEVICEDESC d1;
+
+    /* Copy first D3D1/2/3 capabilities */
+    fill_opengl_caps(&d1);
+
+    /* And fill the D3D7 one with it */
+    d->dwDevCaps = d1.dwDevCaps;
+    d->dpcLineCaps = d1.dpcLineCaps;
+    d->dpcTriCaps = d1.dpcTriCaps;
+    d->dwDeviceRenderBitDepth = d1.dwDeviceRenderBitDepth;
+    d->dwDeviceZBufferBitDepth = d1.dwDeviceZBufferBitDepth;
+    d->dwMinTextureWidth = d1.dwMinTextureWidth;
+    d->dwMinTextureHeight = d1.dwMinTextureHeight;
+    d->dwMaxTextureWidth = d1.dwMaxTextureWidth;
+    d->dwMaxTextureHeight = d1.dwMaxTextureHeight;
+    d->dwMaxTextureRepeat = d1.dwMaxTextureRepeat;
+    d->dwMaxTextureAspectRatio = d1.dwMaxTextureAspectRatio;
+    d->dwMaxAnisotropy = d1.dwMaxAnisotropy;
+    d->dvGuardBandLeft = d1.dvGuardBandLeft;
+    d->dvGuardBandTop = d1.dvGuardBandTop;
+    d->dvGuardBandRight = d1.dvGuardBandRight;
+    d->dvGuardBandBottom = d1.dvGuardBandBottom;
+    d->dvExtentsAdjust = d1.dvExtentsAdjust;
+    d->dwStencilCaps = d1.dwStencilCaps;
+    d->dwFVFCaps = d1.dwFVFCaps;
+    d->dwTextureOpCaps = d1.dwTextureOpCaps;
+    d->wMaxTextureBlendStages = d1.wMaxTextureBlendStages;
+    d->wMaxSimultaneousTextures = d1.wMaxSimultaneousTextures;
+    d->dwMaxActiveLights = d1.dlcLightingCaps.dwNumLights;
+    d->dvMaxVertexW = 100000000.0; /* No idea exactly what to put here... */
+    d->deviceGUID = IID_IDirect3DTnLHalDevice;
+    d->wMaxUserClipPlanes = 1;
+    d->wMaxVertexBlendMatrices = 1;
+    d->dwVertexProcessingCaps = D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_VERTEXFOG | D3DVTXPCAPS_DIRECTIONALLIGHTS |
+      D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER;
+    d->dwReserved1 = 0;
+    d->dwReserved2 = 0;
+    d->dwReserved3 = 0;
+    d->dwReserved4 = 0;
+}
+
 #if 0 /* TODO : fix this and add multitexturing and other needed stuff */
 static void fill_device_capabilities(IDirectDrawImpl* ddraw)
 {
@@ -252,6 +295,17 @@ HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD i
 
     TRACE(" enumerating OpenGL D3DDevice%ld interface (IID %s).\n", interface_version, debugstr_guid(iid));
     return cb((LPGUID) iid, buf, "direct3d", &d1, &d2, context);
+}
+
+HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context)
+{
+    D3DDEVICEDESC7 ddesc;
+
+    fill_opengl_caps_7(&ddesc);
+    
+    TRACE(" enumerating OpenGL D3DDevice7 interface.\n");
+    
+    return cb("WINE Direct3D7 using OpenGL", "Wine D3D7 device", &ddesc, context);
 }
 
 ULONG WINAPI
