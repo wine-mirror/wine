@@ -382,7 +382,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
                                                             IDirect3DDevice8** ppReturnedDeviceInterface) {
     IDirect3DDevice8Impl *object;
     HWND whichHWND;
+    int num;
+    XVisualInfo template;
     const char *GL_Extensions = NULL;
+    const char *GLX_Extensions = NULL;
 
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
@@ -390,6 +393,9 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice8Impl));
+    if (NULL == object) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
     object->lpVtbl = &Direct3DDevice8_Vtbl;
     object->ref = 1;
     object->direct3d8 = This;
@@ -417,6 +423,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         HDC hDc;
         int          dblBuf[]={GLX_STENCIL_SIZE,8,GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
         /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
+	/*int          dblBuf[]={GLX_RGBA,GLX_RED_SIZE,4,GLX_GREEN_SIZE,4,GLX_BLUE_SIZE,4,GLX_DOUBLEBUFFER,None}; */
 
         /* Which hwnd are we using? */
 /*      if (pPresentationParameters->Windowed) { */
@@ -437,12 +444,32 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         object->display = get_display(hDc);
 
         ENTER_GL();
-        object->visInfo = glXChooseVisual(object->display, DefaultScreen(object->display), dblBuf);
-        object->glCtx   = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
+	object->visInfo = glXChooseVisual(object->display, DefaultScreen(object->display), dblBuf);
+	if (NULL == object->visInfo) {
+	  FIXME("cannot choose needed glxVisual with Stencil Buffer\n"); 
 
+	  /**
+	   * second try using wine initialized visual ...
+	   * must be fixed reworking wine-glx init
+	   */
+	  template.visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
+	  object->visInfo = XGetVisualInfo(object->display, VisualIDMask, &template, &num);
+	  if (NULL == object->visInfo) {
+	    ERR("cannot really get XVisual\n"); 
+	    LEAVE_GL();
+	    return D3DERR_NOTAVAILABLE;
+	  }
+	}
+
+        object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
+	if (NULL == object->visInfo) {
+	  ERR("cannot create glxContext\n"); 
+	  LEAVE_GL();
+	  return D3DERR_NOTAVAILABLE;
+	}
 	LEAVE_GL();
-        ReleaseDC(whichHWND, hDc);
 
+        ReleaseDC(whichHWND, hDc);
     }
 
     if (object->glCtx == NULL) {
@@ -492,8 +519,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 
     ENTER_GL();
     if (glXMakeCurrent(object->display, object->win, object->glCtx) == False) {
-        ERR("Error in setting current context (context %p drawable %ld)!\n",
-            object->glCtx, object->win);
+      ERR("Error in setting current context (context %p drawable %ld)!\n", object->glCtx, object->win);
     }
     checkGLcall("glXMakeCurrent");
 
@@ -509,7 +535,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
 
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
     checkGLcall("glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
     /* Setup all the devices defaults */
@@ -518,21 +544,51 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
     TRACE("GL_Extensions reported:\n");  
-
-    while (*GL_Extensions!=0x00) {
+    
+    if (NULL == GL_Extensions) {
+      ERR("   GL_Extensions returns NULL\n");      
+    } else {
+      while (*GL_Extensions!=0x00) {
         const char *Start = GL_Extensions;
         char ThisExtn[256];
-
+	
         memset(ThisExtn, 0x00, sizeof(ThisExtn));
         while (*GL_Extensions!=' ' && *GL_Extensions!=0x00) {
-            GL_Extensions++;
+	  GL_Extensions++;
         }
         memcpy(ThisExtn, Start, (GL_Extensions-Start));
         TRACE ("   %s\n", ThisExtn);
         if (*GL_Extensions==' ') GL_Extensions++;
+      }
+    }
+
+    GLX_Extensions = glXQueryExtensionsString(object->display, DefaultScreen(object->display));
+    TRACE("GLX_Extensions reported:\n");  
+    
+    if (NULL == GLX_Extensions) {
+      ERR("   GLX_Extensions returns NULL\n");      
+    } else {
+      while (*GLX_Extensions!=0x00) {
+        const char *Start = GLX_Extensions;
+        char ThisExtn[256];
+	
+        memset(ThisExtn, 0x00, sizeof(ThisExtn));
+        while (*GLX_Extensions!=' ' && *GLX_Extensions!=0x00) {
+	  GLX_Extensions++;
+        }
+        memcpy(ThisExtn, Start, (GLX_Extensions-Start));
+        TRACE ("   %s\n", ThisExtn);
+        if (*GLX_Extensions==' ') GLX_Extensions++;
+      }
     }
 
     LEAVE_GL();
+
+    {
+        GLint gl_max_texture_units_arb;
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
+        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
+    }
 
     { /* Set a default viewport */
        D3DVIEWPORT8 vp;

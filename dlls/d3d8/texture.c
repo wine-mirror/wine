@@ -107,7 +107,7 @@ D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
     return This->ResourceType;
 }
 
-/* IDirect3DTexture8 (Inherited from IDirect3DBaseTexture8) */
+/* IDirect3DTexture8 IDirect3DBaseTexture8 Interface follow: */
 DWORD    WINAPI        IDirect3DTexture8Impl_SetLOD(LPDIRECT3DTEXTURE8 iface, DWORD LODNew) {
     ICOM_THIS(IDirect3DTexture8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;

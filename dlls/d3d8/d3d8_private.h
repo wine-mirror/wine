@@ -170,8 +170,8 @@ typedef SHADER8Vector SHADER8Constants[SHADER_MAX_CONSTANTS];
 
 typedef struct SHADER8Data {
   /** Run Time Shader Function Constants */
-  /*D3DXBUFFER* constants; */
-  SHADER8Constants constants;
+  /*D3DXBUFFER* constants;*/
+  SHADER8Constants C;
   /** Shader Code as char ... */
   CONST DWORD* code;
   UINT codeLength;
@@ -183,6 +183,8 @@ typedef struct VERTEXSHADER8 { /* TODO: Vertex Shader */
   DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
   UINT declLength;
   UINT functionLength;
+ 
+  DWORD fvf;
 
   /* run time datas */
   SHADER8Data* data;
@@ -904,5 +906,12 @@ extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetVolumeLevel(LPDIREC
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level,D3DLOCKED_BOX* pLockedVolume,CONST D3DBOX* pBox,DWORD Flags);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level);
 extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE8 iface, CONST D3DBOX* pDirtyBox);
+
+/*******************
+ * private functions
+ */
+DWORD vshader_decl_parse(VERTEXSHADER8* vshader);
+DWORD vshader_program_parse(VERTEXSHADER8* vshader);
+
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

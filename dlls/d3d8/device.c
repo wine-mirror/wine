@@ -177,7 +177,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
         } else {
             glMatrixMode(GL_PROJECTION);
-	        checkGLcall("glMatrixMode");
+	    checkGLcall("glMatrixMode");
             glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_PROJECTION].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
 
@@ -2153,6 +2153,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_INDEXEDVERTEXBLENDENABLE  :
     case D3DRS_COLORWRITEENABLE          :
     case D3DRS_TWEENFACTOR               :
+    case D3DRS_POSITIONORDER             :
+    case D3DRS_NORMALORDER               :
         /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
         TRACE("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
         break;
@@ -3128,7 +3130,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     VERTEXSHADER8* object;
     UINT i;
 
-    FIXME("(%p) : VertexShader not fully supported yet\n", This);    
+    FIXME("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p\n", This, pDeclaration, pFunction);    
     if (NULL == pDeclaration || NULL == pHandle) { /* pFunction can be NULL see MSDN */
       return D3DERR_INVALIDCALL;
     }
@@ -3142,21 +3144,26 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     }
 
     object->usage = Usage;
-    object->data = NULL; /* TODO */
+    object->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SHADER8Data));
 
     VertexShaders[i] = object;
     *pHandle = VS_HIGHESTFIXEDFXF + i;
 
     object->decl = pDeclaration;
+    object->function = pFunction;
+
+    /*
     for (i = 0; 0xFFFFFFFF != pDeclaration[i]; ++i) ;
     object->declLength = i + 1;
-    object->function = pFunction;
     if (NULL != pFunction) {
       for (i = 0; 0xFFFFFFFF != pFunction[i]; ++i) ;
       object->functionLength = i + 1;
     } else {
-      object->functionLength = 1; /* no Function defined use fixed function vertex processing */
+      object->functionLength = 1; // no Function defined use fixed function vertex processing
     }
+    */
+    vshader_decl_parse(object);
+    vshader_program_parse(object);
 
     return D3D_OK;
 }
@@ -3172,7 +3179,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, D
         TRACE("Recording... not performing anything\n");
         return D3D_OK;
     }
-
     if (Handle <= VS_HIGHESTFIXEDFXF) {
         TRACE("(%p) : FVF Shader, Handle=%lx\n", This, Handle);
         return D3D_OK;
@@ -3196,10 +3202,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
       return D3DERR_INVALIDCALL;
     }
     object = VertexShaders[Handle - VS_HIGHESTFIXEDFXF];
+    if (NULL == object) {
+      return D3DERR_INVALIDCALL;
+    }
     TRACE("(%p) : freing VertexShader %p\n", This, object);
     /* TODO: check validity of object */
+    if (NULL != object->data) HeapFree(GetProcessHeap(), 0, (void *)object->data);
     HeapFree(GetProcessHeap(), 0, (void *)object);
-    VertexShaders[Handle - VS_HIGHESTFIXEDFXF] = 0;
+    VertexShaders[Handle - VS_HIGHESTFIXEDFXF] = NULL;
     return D3D_OK;
 }
 
@@ -3210,8 +3220,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   VERTEXSHADER8* object;
   DWORD Handle = This->UpdateStateBlock->VertexShader;
 
-  FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This);   
-
+  /* FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This); */
   if (Register + ConstantCount > VSHADER_MAX_CONSTANTS) {
     return D3DERR_INVALIDCALL;
   }
@@ -3219,7 +3228,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   if (NULL == object || NULL == pConstantData) {
     return D3DERR_INVALIDCALL;
   }
-  memcpy(object->data->constants + Register, pConstantData, ConstantCount * sizeof(SHADER8Vector));
+  if (NULL == object->data) { /* temporary while datas not supported */
+    FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This);
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(object->data->C + Register, pConstantData, ConstantCount * sizeof(SHADER8Vector));
 
   return D3D_OK;
 }
@@ -3237,7 +3250,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 
   if (NULL == object || NULL == pConstantData) {
     return D3DERR_INVALIDCALL;
   }
-  memcpy(pConstantData, object->data->constants + Register, ConstantCount * sizeof(SHADER8Vector));
+  if (NULL == object->data) { /* temporary while datas not supported */
+    return D3DERR_INVALIDCALL;
+  }
+  memcpy(pConstantData, object->data->C + Register, ConstantCount * sizeof(SHADER8Vector));
 
   return D3D_OK;
 }
@@ -3288,10 +3304,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 
 }
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData,UINT BaseVertexIndex) {
-
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
     IDirect3DIndexBuffer8 *oldIdxs;
 
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Setting to %p, base %d\n", This, pIndexData, BaseVertexIndex);
     oldIdxs = This->StateBlock.pIndexData;
 

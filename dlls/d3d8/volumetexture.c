@@ -36,7 +36,9 @@ HRESULT WINAPI IDirect3DVolumeTexture8Impl_QueryInterface(LPDIRECT3DVOLUMETEXTUR
 
     TRACE("(%p) : QueryInterface\n", This);
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IClassFactory)) {
+	|| IsEqualGUID(riid, &IID_IDirect3DResource8)
+	|| IsEqualGUID(riid, &IID_IDirect3DBaseTexture8)
+	|| IsEqualGUID(riid, &IID_IDirect3DVolumeTexture8)) {
         IDirect3DVolumeTexture8Impl_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
@@ -55,7 +57,7 @@ ULONG WINAPI IDirect3DVolumeTexture8Impl_AddRef(LPDIRECT3DVOLUMETEXTURE8 iface) 
 ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8 iface) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     ULONG ref = --This->ref;
-    int   i;
+    UINT  i;
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -107,7 +109,7 @@ D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(LPDIRECT3DVOLUMETEXTU
     return This->ResourceType;
 }
 
-/* IDirect3DVolumeTexture8 (Inherited from IDirect3DBaseTexture8) */
+/* IDirect3DVolumeTexture8 IDirect3DBaseTexture8 Interface follow: */
 DWORD    WINAPI        IDirect3DVolumeTexture8Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE8 iface, DWORD LODNew) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;
