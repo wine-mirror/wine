@@ -2668,7 +2668,7 @@ else
 fi])
 if test -n "$WINE_TOOLS"
 then
-  WINE_TOOL_PATH="$WINE_TOOLS:$WINE_TOOLS/wrc:$WINE_TOOLS/winebuild"
+  WINE_TOOL_PATH="$WINE_TOOLS:$WINE_TOOLS/tools/wrc:$WINE_TOOLS/tools/winebuild"
 fi
 
 if test -z "$WINE_INCLUDE_ROOT"
@@ -2714,7 +2714,7 @@ then
   then
     WINE_DLL_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls"
   else
-    WINE_DLL_ROOT="/lib:/lib/dlls:/usr/lib:/usr/lib/dlls"
+    WINE_DLL_ROOT="/lib:/lib/dlls:/usr/lib:/usr/lib/dlls:/usr/local/lib:/usr/local/lib/dlls"
   fi
 fi
 AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.so],[
