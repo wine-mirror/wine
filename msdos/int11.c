@@ -67,7 +67,10 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
 		bits 15-14 		} Added by William Owen Smith,
 		bits 11-9		} wos@dcs.warwick.ac.uk
 		bits 7-6
-		bit  2			(always set)
+		bit  2			(always set)  ( bit 2 = 4 )
+		bit  1                  } Robert 'Admiral' Coeyman
+			All *nix systems either have a math processor or
+				emmulate one.
 */
 
     if (GetDriveTypeA("A:\\") == DRIVE_REMOVABLE) diskdrives++;
@@ -98,5 +101,5 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
     if (parallelports > 3)		/* 2 bits -- maximum value = 3 */
         parallelports=3;
 
-    SET_AX( context, (diskdrives << 6) | (serialports << 9) | (parallelports << 14) | 0x02 );
+    SET_AX( context, (diskdrives << 6) | (serialports << 9) | (parallelports << 14) | 0x06 );
 }
