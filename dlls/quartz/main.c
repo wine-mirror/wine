@@ -110,6 +110,8 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_Colour, &QUARTZ_CreateColour },
 	{ &CLSID_ACMWrapper, &QUARTZ_CreateACMWrapper },
 	{ &CLSID_FileWriter, &QUARTZ_CreateFileWriter },
+	{ &CLSID_CMpegAudioCodec, &QUARTZ_CreateCMpegAudioCodec },
+	{ &CLSID_CMpegVideoCodec, &QUARTZ_CreateCMpegVideoCodec },
 	{ NULL, NULL },
 };
 

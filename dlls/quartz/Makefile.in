@@ -36,7 +36,9 @@ C_SRCS = \
 	iunk.c \
 	main.c \
 	memalloc.c \
+	mpadec.c \
 	mpgparse.c \
+	mpvdec.c \
 	mtype.c \
 	parser.c \
 	regsvr.c \
