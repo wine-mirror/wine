@@ -93,7 +93,7 @@ owner	kernel32
 84  pascal   _llseek(word long word) _llseek16
 85  pascal16 _lopen(str word) _lopen16
 86  pascal16 _lwrite(word ptr word) _lwrite16
-87  stub Reserved5 #lstrcmp16
+87  pascal16 Reserved5(str str) KERNEL_lstrcmp16
 88  pascal   lstrcpy(segptr str) lstrcpy16
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16

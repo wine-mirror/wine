@@ -173,3 +173,8 @@ SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
     }
     else return tolower((char)strOrChar);
 }
+
+INT16 WINAPI KERNEL_lstrcmp16( LPCSTR str1, LPCSTR str2 )
+{
+    return (INT16)strcmp( str1, str2 );
+}
