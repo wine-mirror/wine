@@ -357,9 +357,29 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */
     FIXME("ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
     return SS_COMP;
-  case SC_GET_DEV_TYPE:
-    FIXME("Not implemented SC_GET_DEV_TYPE\n");
+  case SC_GET_DEV_TYPE: {
+    SRB		tmpsrb;
+    char	inqbuf[200];
+
+    memset(&tmpsrb,0,sizeof(tmpsrb));
+
+    tmpsrb.cmd.SRB_Cmd = SC_EXEC_SCSI_CMD;
+#define X(x) tmpsrb.cmd.SRB_##x = lpSRB->devtype.SRB_##x
+    X(Status);X(HaId);X(Flags);X(Target);X(Lun);
+#undef X
+    tmpsrb.cmd.SRB_BufLen	= sizeof(inqbuf);
+    tmpsrb.cmd.SRB_BufPointer	= inqbuf;
+    tmpsrb.cmd.CDBByte[0]	= 0x12; /* INQUIRY  */
+    tmpsrb.cmd.CDBByte[4]	= sizeof(inqbuf);
+    tmpsrb.cmd.SRB_CDBLen	= 6;
+    ASPI_ExecScsiCmd(&tmpsrb.cmd);
+#define X(x) lpSRB->devtype.SRB_##x = tmpsrb.cmd.SRB_##x
+    X(Status);
+#undef X
+    lpSRB->devtype.SRB_DeviceType = inqbuf[0]>>3;
+    FIXME("returning devicetype %d for target %d\n",inqbuf[0]>>3,tmpsrb.cmd.SRB_Target);
     break;
+  }
   case SC_EXEC_SCSI_CMD:
     return ASPI_ExecScsiCmd(&lpSRB->cmd);
     break;
