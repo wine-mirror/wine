@@ -8042,6 +8042,7 @@ struct tagPROPVARIANT {
     WORD wReserved2;
     WORD wReserved3;
     union {
+        char cVal;
         UCHAR bVal;
         short iVal;
         USHORT uiVal;

@@ -2058,6 +2058,7 @@ interface IPropertyStorage : IUnknown
     WORD wReserved3;
     [switch_is(vt & 0x1fff)] union {
     [case(VT_EMPTY, VT_NULL)]             ;
+    [case(VT_I1)]                         char cVal;
     [case(VT_UI1)]                        UCHAR bVal;
     [case(VT_I2)]                         short iVal;
     [case(VT_UI2)]                        USHORT uiVal;
