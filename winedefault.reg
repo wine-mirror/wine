@@ -5,40 +5,40 @@
 # Primarily used by installation programs and the Explorer.
 
 [HKEY_USERS\.Default\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders]
-"Favorites"="C:\WINDOWS\Favorites"
-"StartUp"="C:\WINDOWS\Start Menu\Programs\Startup"
-"Desktop"="C:\WINDOWS\Desktop"
-"Programs"="C:\WINDOWS\Start Menu\Programs"
-"Fonts"="C:\WINDOWS\Fonts"
-"SendTo"="C:\WINDOWS\SendTo"
-"Start Menu"="C:\WINDOWS\Start Menu"
-"Templates"="C:\WINDOWS\ShellNew"
-"Recent"="C:\WINDOWS\Recent"
-"NetHood"="C:\WINDOWS\NetHood"
-"Personal"="C:\My Documents"
+"Favorites"="C:\\WINDOWS\\Favorites"
+"StartUp"="C:\\WINDOWS\\Start Menu\\Programs\\Startup"
+"Desktop"="C:\\WINDOWS\\Desktop"
+"Programs"="C:\\WINDOWS\\Start Menu\\Programs"
+"Fonts"="C:\\WINDOWS\\Fonts"
+"SendTo"="C:\\WINDOWS\\SendTo"
+"Start Menu"="C:\\WINDOWS\\Start Menu"
+"Templates"="C:\\WINDOWS\\ShellNew"
+"Recent"="C:\\WINDOWS\\Recent"
+"NetHood"="C:\\WINDOWS\\NetHood"
+"Personal"="C:\\My Documents"
 
 [HKEY_USERS\.Default\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders]
-"Personal"="C:\My Documents"
-"Favorites"="C:\WINDOWS\Favorites"
+"Personal"="C:\\My Documents"
+"Favorites"="C:\\WINDOWS\\Favorites"
 
 # Same as above, but for HKEY_CURRENT_USER, not HKEY_USERS\.Default
 
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders]
-"Favorites"="C:\WINDOWS\Favorites"
-"StartUp"="C:\WINDOWS\Start Menu\Programs\Startup"
-"Desktop"="C:\WINDOWS\Desktop"
-"Programs"="C:\WINDOWS\Start Menu\Programs"
-"Fonts"="C:\WINDOWS\Fonts"
-"SendTo"="C:\WINDOWS\SendTo"
-"Start Menu"="C:\WINDOWS\Start Menu"
-"Templates"="C:\WINDOWS\ShellNew"
-"Recent"="C:\WINDOWS\Recent"
-"NetHood"="C:\WINDOWS\NetHood"
-"Personal"="C:\My Documents"
+"Favorites"="C:\\WINDOWS\\Favorites"
+"StartUp"="C:\\WINDOWS\\Start Menu\\Programs\\Startup"
+"Desktop"="C:\\WINDOWS\\Desktop"
+"Programs"="C:\\WINDOWS\\Start Menu\\Programs"
+"Fonts"="C:\\WINDOWS\\Fonts"
+"SendTo"="C:\\WINDOWS\\SendTo"
+"Start Menu"="C:\\WINDOWS\\Start Menu"
+"Templates"="C:\\WINDOWS\\ShellNew"
+"Recent"="C:\\WINDOWS\\Recent"
+"NetHood"="C:\\WINDOWS\\NetHood"
+"Personal"="C:\\My Documents"
 
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders]
-"Personal"="C:\My Documents"
-"Favorites"="C:\WINDOWS\Favorites"
+"Personal"="C:\\My Documents"
+"Favorites"="C:\\WINDOWS\\Favorites"
 
 [HKEY_CURRENT_USER\Control Panel\desktop]
 "DragFullWindows"="0"
@@ -66,8 +66,8 @@
 #
 
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
-"ProgramFilesDir"="C:\Program Files"
-"CommonFilesDir"="C:\Program Files\Common Files"
+"ProgramFilesDir"="C:\\Program Files"
+"CommonFilesDir"="C:\\Program Files\\Common Files"
 "RegisteredOrganization"="Change preferred organization in ~/.wine/system.reg"
 "RegisteredOwner"="Change preferred owner in ~/.wine/system.reg"
 
@@ -80,7 +80,7 @@
 # system files and e.g. fonts can reside. Most installs have this set
 # to C:\WINDOWS, though.
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Setup]
-"SharedDir"="C:\WINDOWS"
+"SharedDir"="C:\\WINDOWS"
 
 #
 # Configuration for unhandled exceptions
@@ -365,16 +365,16 @@
 @="MozillaControl 1.0 Type Library"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\TypeLib\{1339B53E-3453-11D2-93B9-000000000000}\1.0\0\win32]
-@="C:\mozilla\bin\mozctl.dll"
+@="C:\\mozilla\\bin\\mozctl.dll"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Mozilla]
-"BinDirectoryPath"="C:\mozilla\bin"
+"BinDirectoryPath"="C:\\mozilla\\bin"
 
 [HKEY_LOCAL_MACHINE\TypeLib\{1339B53E-3453-11D2-93B9-000000000000}\1.0]
 @="MozillaControl 1.0 Type Library"
 
 [HKEY_LOCAL_MACHINE\TypeLib\{1339B53E-3453-11D2-93B9-000000000000}\1.0\0\win32]
-@="C:\mozilla\bin\mozctl.dll"
+@="C:\\mozilla\\bin\\mozctl.dll"
 
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes]
 "Arial CE,238"="Arial,238"
