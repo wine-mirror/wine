@@ -31,6 +31,10 @@ FONTFAMILY *PSDRV_AFMFontList = NULL;
 /* qsort/bsearch callback functions */
 typedef int (*compar_callback_fn) (const void *, const void *);
 
+static VOID SortFontMetrics(AFM *afm, AFMMETRICS *metrics);
+static VOID CalcWindowsMetrics(AFM *afm);
+static void PSDRV_ReencodeCharWidths(AFM *afm);
+
 /*******************************************************************************
  *  IsWinANSI
  *
@@ -94,28 +98,6 @@ inline static BOOL CheckMetrics(const AFMMETRICS *metrics)
     return TRUE;
 }
 
-/*******************************************************************************
- *  FreeAFM
- *
- *  Free an AFM structure and any subsidiary objects that have been allocated.
- *  AFM must have been allocated with HEAP_ZERO_MEMORY.
- *
- */
-static void FreeAFM(AFM *afm)
-{
-    if (afm->FontName != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->FontName);
-    if (afm->FullName != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->FullName);
-    if (afm->FamilyName != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->FamilyName);
-    if (afm->EncodingScheme != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->EncodingScheme);
-    if (afm->Metrics != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->Metrics);
-	
-    HeapFree(PSDRV_Heap, 0, afm);
-}
 
 /***********************************************************
  *
@@ -131,13 +113,14 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
     unsigned char line[256], valbuf[256];
     unsigned char *cp, *item, *value, *curpos, *endpos;
     int i;
-    AFMMETRICS *metric;
+    AFMMETRICS *metric, *retval;
 
-    afm->Metrics = metric = HeapAlloc( PSDRV_Heap, 0,
-                                       afm->NumofMetrics * sizeof(AFMMETRICS) );
+    metric = HeapAlloc( PSDRV_Heap, 0, afm->NumofMetrics * sizeof(AFMMETRICS));
     if (metric == NULL)
         return FALSE;
-				       
+	
+    retval = metric;
+	
     for(i = 0; i < afm->NumofMetrics; i++, metric++) {
     
     	*metric = badMetrics;
@@ -145,8 +128,7 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	do {
             if(!fgets(line, sizeof(line), fp)) {
 		ERR("Unexpected EOF\n");
-		HeapFree(PSDRV_Heap, 0, afm->Metrics);
-		afm->Metrics = NULL;
+		HeapFree(PSDRV_Heap, 0, retval);
 		return FALSE;
 	    }
 	    cp = line + strlen(line);
@@ -164,8 +146,7 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    value = strpbrk(item, " \t");
 	    if (!value) {
 	    	ERR("No whitespace found.\n");
-		HeapFree(PSDRV_Heap, 0, afm->Metrics);
-		afm->Metrics = NULL;
+		HeapFree(PSDRV_Heap, 0, retval);
 		return FALSE;
 	    }
 	    while(isspace(*value))
@@ -173,8 +154,7 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    cp = endpos = strchr(value, ';');
 	    if (!cp) {
 	    	ERR("missing ;, failed. [%s]\n", line);
-		HeapFree(PSDRV_Heap, 0, afm->Metrics);
-		afm->Metrics = NULL;
+		HeapFree(PSDRV_Heap, 0, retval);
 		return FALSE;
 	    }
 	    while(isspace(*--cp))
@@ -218,8 +198,7 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	
 	if (CheckMetrics(metric) == FALSE) {
 	    ERR("Error parsing character metrics\n");
-	    HeapFree(PSDRV_Heap, 0, afm->Metrics);
-	    afm->Metrics = NULL;
+	    HeapFree(PSDRV_Heap, 0, retval);
 	    return FALSE;
 	}
 
@@ -227,6 +206,10 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	      metric->N->sz, metric->WX, metric->B.llx, metric->B.lly,
 	      metric->B.urx, metric->B.ury);
     }
+    
+    SortFontMetrics(afm, retval);
+    
+    afm->Metrics = retval;
 
     return TRUE;
 }
@@ -237,13 +220,13 @@ static BOOL PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
  *	PSDRV_AFMParse
  *
  * Fills out an AFM structure and associated substructures (see psdrv.h)
- * for a given AFM file. All memory is allocated from the process heap. 
+ * for a given AFM file. All memory is allocated from the driver heap. 
  * Returns a ptr to the AFM structure or NULL on error.
  *
  * This is not complete (we don't handle kerning yet) and not efficient
  */
 
-static AFM *PSDRV_AFMParse(char const *file)
+static const AFM *PSDRV_AFMParse(char const *file)
 {
     FILE *fp;
     unsigned char buf[256];
@@ -252,6 +235,8 @@ static AFM *PSDRV_AFMParse(char const *file)
     unsigned char *cp;
     int afmfile = 0; 
     int c;
+    LPSTR font_name = NULL, full_name = NULL, family_name = NULL,
+    	    encoding_scheme = NULL;
 
     TRACE("parsing '%s'\n", file);
 
@@ -260,7 +245,7 @@ static AFM *PSDRV_AFMParse(char const *file)
         return NULL;
     }
 
-    afm = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY, sizeof(AFM));
+    afm = HeapAlloc(PSDRV_Heap, 0, sizeof(AFM));
     if(!afm) {
         fclose(fp);
         return NULL;
@@ -297,32 +282,23 @@ static AFM *PSDRV_AFMParse(char const *file)
 	        value++;
 
 	if(!strncmp("FontName", buf, 8)) {
-	    afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->FontName == NULL) {
-	    	fclose(fp);
-		FreeAFM(afm);
-		return NULL;
-	    }
+	    afm->FontName = font_name = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->FontName == NULL)
+		goto cleanup_fp;
 	    continue;
 	}
 
 	if(!strncmp("FullName", buf, 8)) {
-	    afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->FullName == NULL) {
-	    	fclose(fp);
-		FreeAFM(afm);
-		return NULL;
-	    }
+	    afm->FullName = full_name = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->FullName == NULL)
+		goto cleanup_fp;
 	    continue;
 	}
 
 	if(!strncmp("FamilyName", buf, 10)) {
-	    afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->FamilyName == NULL) {
-	    	fclose(fp);
-		FreeAFM(afm);
-		return NULL;
-	    }
+	    afm->FamilyName = family_name = HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->FamilyName == NULL)
+	    	goto cleanup_fp;
 	    continue;
 	}
 	
@@ -399,21 +375,16 @@ static AFM *PSDRV_AFMParse(char const *file)
 
 	if(!strncmp("StartCharMetrics", buf, 16)) {
 	    sscanf(value, "%d", &(afm->NumofMetrics) );
-	    if (PSDRV_AFMGetCharMetrics(afm, fp) == FALSE) {
-	    	fclose(fp);
-		FreeAFM(afm);
-		return NULL;
-	    }
+	    if (PSDRV_AFMGetCharMetrics(afm, fp) == FALSE)
+	    	goto cleanup_fp;
 	    continue;
 	}
 
 	if(!strncmp("EncodingScheme", buf, 14)) {
-	    afm->EncodingScheme = HEAP_strdupA(PSDRV_Heap, 0, value);
-	    if (afm->EncodingScheme == NULL) {
-	    	fclose(fp);
-		FreeAFM(afm);
-		return NULL;
-	    }
+	    afm->EncodingScheme = encoding_scheme =
+	    	    HEAP_strdupA(PSDRV_Heap, 0, value);
+	    if (afm->EncodingScheme == NULL)
+	    	goto cleanup_fp;
 	    continue;
 	}
 
@@ -427,21 +398,20 @@ static AFM *PSDRV_AFMParse(char const *file)
 
     if(afm->FontName == NULL) {
         WARN("%s contains no FontName.\n", file);
-	afm->FontName = HEAP_strdupA(PSDRV_Heap, 0, "nofont");
-	if (afm->FontName == NULL) {
-	    FreeAFM(afm);
-	    return NULL;
-	}
+	afm->FontName = font_name = HEAP_strdupA(PSDRV_Heap, 0, "nofont");
+	if (afm->FontName == NULL)
+	    goto cleanup;
     }
     
     if(afm->FullName == NULL)
-        afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
+        afm->FullName = full_name = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
+	
     if(afm->FamilyName == NULL)
-        afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
-    if (afm->FullName == NULL || afm->FamilyName == NULL) {
-    	FreeAFM(afm);
-	return NULL;
-    }
+        afm->FamilyName = family_name =
+	    	HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
+		
+    if (afm->FullName == NULL || afm->FamilyName == NULL)
+    	goto cleanup;
     
     if(afm->Ascender == 0.0)
         afm->Ascender = afm->FontBBox.ury;
@@ -452,7 +422,32 @@ static AFM *PSDRV_AFMParse(char const *file)
     if(afm->Weight == 0)
         afm->Weight = FW_NORMAL;
 	
+    CalcWindowsMetrics(afm);
+    
+    if (afm->EncodingScheme != NULL &&
+    	    strcmp(afm->EncodingScheme, "AdobeStandardEncoding") == 0)
+    	PSDRV_ReencodeCharWidths(afm);
+	
     return afm;
+    
+    cleanup_fp:
+    
+    	fclose(fp);
+    
+    cleanup:
+    
+    	if (font_name == NULL)
+	    HeapFree(PSDRV_Heap, 0, font_name);
+	if (full_name == NULL)
+	    HeapFree(PSDRV_Heap, 0, full_name);
+	if (family_name == NULL)
+	    HeapFree(PSDRV_Heap, 0, family_name);
+	if (encoding_scheme == NULL)
+	    HeapFree(PSDRV_Heap, 0, encoding_scheme);
+	    
+	HeapFree(PSDRV_Heap, 0, afm);
+	    
+	return NULL;
 }
 
 /***********************************************************
@@ -484,7 +479,7 @@ void PSDRV_FreeAFMList( FONTFAMILY *head )
  * Returns ptr to an AFM if name (which is a PS font name) exists in list
  * headed by head.
  */
-AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name)
+const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name)
 {
     FONTFAMILY *family;
     AFMLISTENTRY *afmle;
@@ -505,7 +500,7 @@ AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name)
  * Adds an afm to the list whose head is pointed to by head. Creates new
  * family node if necessary and always creates a new AFMLISTENTRY.
  */
-BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
+BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm)
 {
     FONTFAMILY *family = *head;
     FONTFAMILY **insert = head;
@@ -574,7 +569,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
 static void PSDRV_ReencodeCharWidths(AFM *afm)
 {
     int i, j;
-    AFMMETRICS *metric;
+    const AFMMETRICS *metric;
 
     for(i = 0; i < 256; i++) {
         if(isalnum(i))
@@ -649,68 +644,56 @@ static int AFMMetricsByUV(const AFMMETRICS *a, const AFMMETRICS *b)
     return a->UV - b->UV;
 }
  
-static BOOL SortFontMetrics()
+static VOID SortFontMetrics(AFM *afm, AFMMETRICS *metrics)
 {
-    FONTFAMILY	    *family = PSDRV_AFMFontList;
+    INT     i;
     
-    while (family != NULL)
+    TRACE("%s\n", afm->FontName);
+    
+    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
     {
-    	AFMLISTENTRY	*afmle = family->afmlist;
-	
-	while (afmle != NULL)
+    	PSDRV_IndexGlyphList();     	/* enable searching by name index */
+	    
+	for (i = 0; i < afm->NumofMetrics; ++i)
 	{
-	    AFM *afm = afmle->afm;  	/* should always be valid */
-	    INT i;
-	    
-	    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
+	    UNICODEGLYPH    ug, *pug;
+		    
+	    ug.name = metrics[i].N;
+		    
+	    pug = bsearch(&ug, PSDRV_AGLbyName, PSDRV_AGLbyNameSize,
+	    	    sizeof(UNICODEGLYPH),
+		    (compar_callback_fn)UnicodeGlyphByNameIndex);
+	    if (pug == NULL)
 	    {
-	    	PSDRV_IndexGlyphList();     /* enable searching by name index */
-	    
-		for (i = 0; i < afm->NumofMetrics; ++i)
-		{
-		    UNICODEGLYPH    ug, *pug;
-		    
-		    ug.name = afm->Metrics[i].N;
-		    ug.UV = -1;
-		    
-		    pug = bsearch(&ug, PSDRV_AGLbyName, PSDRV_AGLbyNameSize,
-		    	    sizeof(UNICODEGLYPH),
-			    (compar_callback_fn)UnicodeGlyphByNameIndex);
-		    if (pug == NULL)
-		    {
-		    	WARN("Glyph '%s' in font '%s' does not have a UV\n",
-			    	ug.name->sz, afm->FullName);
-			afm->Metrics[i].UV = -1;
-		    }
-		    else
-		    {
-		    	afm->Metrics[i].UV = pug->UV;
-		    }
-		}
+	    	WARN("Glyph '%s' in font '%s' does not have a UV\n",
+    		    	ug.name->sz, afm->FullName);
+		metrics[i].UV = -1;
 	    }
-	    else    	    	    	    	/* FontSpecific encoding */
+	    else
 	    {
-	    	for (i = 0; i < afm->NumofMetrics; ++i)
-		    afm->Metrics[i].UV = afm->Metrics[i].C;
+	    	metrics[i].UV = pug->UV;
 	    }
-	    
-	    qsort(afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS),
-	    	    (compar_callback_fn)AFMMetricsByUV);
-		    
-	    for (i = 0; i < afm->NumofMetrics; ++i)
-	    	if (afm->Metrics[i].UV >= 0)
-		    break;
-		    
-	    afm->NumofMetrics -= i; 	    /* Ignore unencoded glyphs */
-	    afm->Metrics += i;
-	    
-	    afmle = afmle->next;
 	}
-	
-	family = family->next;
     }
-    
-    return TRUE;
+    else    	    	    	    	    /* FontSpecific encoding */
+    {
+    	for (i = 0; i < afm->NumofMetrics; ++i)
+	    metrics[i].UV = metrics[i].C;
+    }
+	    
+    qsort(metrics, afm->NumofMetrics, sizeof(AFMMETRICS),
+    	    (compar_callback_fn)AFMMetricsByUV);
+		    
+    for (i = 0; i < afm->NumofMetrics; ++i) 	/* count unencoded glyphs */
+    	if (metrics[i].UV >= 0)
+	    break;
+	    
+    if (i != 0)
+    {
+    	TRACE("Ignoring %i unencoded glyphs\n", i);
+    	afm->NumofMetrics -= i;
+	memmove(metrics, metrics + i, afm->NumofMetrics * sizeof(*metrics));
+    }
 }
 
 /*******************************************************************************
@@ -770,98 +753,78 @@ SHORT PSDRV_CalcAvgCharWidth(const AFM *afm)
 /*******************************************************************************
  *  CalcWindowsMetrics
  *
- *  Calculates several Windows-specific font metrics for each font.  Relies on
- *  the fact that AFMs are allocated with HEAP_ZERO_MEMORY to distinguish
- *  TrueType fonts (when implemented), which already have these filled in.
+ *  Calculates several Windows-specific font metrics for each font.
  *
  */
-static VOID CalcWindowsMetrics()
+static VOID CalcWindowsMetrics(AFM *afm)
 {
-    FONTFAMILY	*family = PSDRV_AFMFontList;
-    
-    while (family != NULL)
+    WINMETRICS	wm;
+    INT     	i;
+	    
+    wm.usUnitsPerEm = 1000;         	    	/* for PostScript fonts */
+    wm.sTypoAscender = (SHORT)(afm->Ascender + 0.5);
+    wm.sTypoDescender = (SHORT)(afm->Descender - 0.5);
+	    
+    wm.sTypoLineGap = 1200 - (wm.sTypoAscender - wm.sTypoDescender);
+    if (wm.sTypoLineGap < 0)
+    	wm.sTypoLineGap = 0;
+		
+    wm.usWinAscent = 0;
+    wm.usWinDescent = 0;
+	    
+    for (i = 0; i < afm->NumofMetrics; ++i)
     {
-    	AFMLISTENTRY	*afmle = family->afmlist;
-	
-	while (afmle != NULL)
+    	if (IsWinANSI(afm->Metrics[i].UV) == FALSE)
+	    continue;
+	    
+	if (afm->Metrics[i].B.ury > 0)
 	{
-	    WINMETRICS	wm;
-	    AFM     	*afm = afmle->afm;  	/* should always be valid */
-	    INT     	i;
-	    
-	    if (afm->WinMetrics.usUnitsPerEm != 0)
-	    	continue;   	    	    	    /* TrueType font */
-		
-	    wm.usUnitsPerEm = 1000;         	    /* for PostScript fonts */
-	    wm.sTypoAscender = (SHORT)(afm->Ascender + 0.5);
-	    wm.sTypoDescender = (SHORT)(afm->Descender - 0.5);
-	    
-	    wm.sTypoLineGap = 1200 - (wm.sTypoAscender - wm.sTypoDescender);
-	    if (wm.sTypoLineGap < 0)
-	    	wm.sTypoLineGap = 0;
-		
-	    wm.usWinAscent = 0;
-	    wm.usWinDescent = 0;
-	    
-	    for (i = 0; i < afm->NumofMetrics; ++i)
-	    {
-	    	if (IsWinANSI(afm->Metrics[i].UV) == FALSE)
-		    continue;
-		    
-		if (afm->Metrics[i].B.ury > 0)
-		{
-		    USHORT ascent = (USHORT)(afm->Metrics[i].B.ury + 0.5);
-						
-		    if (ascent > wm.usWinAscent)
-		    	wm.usWinAscent = ascent;
-		}
-		
-		if (afm->Metrics[i].B.lly < 0)    
-		{
-		    USHORT descent = (USHORT)(-(afm->Metrics[i].B.lly) + 0.5);
-		    
-		    if (descent > wm.usWinDescent)
-		    	wm.usWinDescent = descent;
-		}
-	    }
-	    
-	    if (wm.usWinAscent == 0 && afm->FontBBox.ury > 0)
-	    	wm.usWinAscent = (USHORT)(afm->FontBBox.ury + 0.5);
-		
-	    if (wm.usWinDescent == 0 && afm->FontBBox.lly < 0)
-	    	wm.usWinDescent = (USHORT)(-(afm->FontBBox.lly) + 0.5);
-		
-	    wm.sAscender = wm.usWinAscent;
-	    wm.sDescender = -(wm.usWinDescent);
-	    
-	    wm.sLineGap = 1150 - (wm.sAscender - wm.sDescender);
-	    if (wm.sLineGap < 0)
-	    	wm.sLineGap = 0;
-		
-	    wm.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
-						
-	    TRACE("Windows metrics for '%s':\n", afm->FullName);
-	    TRACE("\tsAscender = %i\n", wm.sAscender);
-	    TRACE("\tsDescender = %i\n", wm.sDescender);
-	    TRACE("\tsLineGap = %i\n", wm.sLineGap);
-	    TRACE("\tusUnitsPerEm = %u\n", wm.usUnitsPerEm);
-	    TRACE("\tsTypoAscender = %i\n", wm.sTypoAscender);
-	    TRACE("\tsTypoDescender = %i\n", wm.sTypoDescender);
-	    TRACE("\tsTypoLineGap = %i\n", wm.sTypoLineGap);
-	    TRACE("\tusWinAscent = %u\n", wm.usWinAscent);
-	    TRACE("\tusWinDescent = %u\n", wm.usWinDescent);
-	    TRACE("\tsAvgCharWidth = %i\n", wm.sAvgCharWidth);
-	    
-	    afm->WinMetrics = wm;
-	    
-	    /* See afm2c.c and mkagl.c for an explanation of this */
-	    /*	PSDRV_AFM2C(afm);   */
-	    
-	    afmle = afmle->next;
+	    USHORT ascent = (USHORT)(afm->Metrics[i].B.ury + 0.5);
+					
+	    if (ascent > wm.usWinAscent)
+	    	wm.usWinAscent = ascent;
 	}
 	
-	family = family ->next;
+	if (afm->Metrics[i].B.lly < 0)    
+	{
+	    USHORT descent = (USHORT)(-(afm->Metrics[i].B.lly) + 0.5);
+	    
+	    if (descent > wm.usWinDescent)
+	    	wm.usWinDescent = descent;
+	}
     }
+    
+    if (wm.usWinAscent == 0 && afm->FontBBox.ury > 0)
+    	wm.usWinAscent = (USHORT)(afm->FontBBox.ury + 0.5);
+	
+    if (wm.usWinDescent == 0 && afm->FontBBox.lly < 0)
+    	wm.usWinDescent = (USHORT)(-(afm->FontBBox.lly) + 0.5);
+		
+    wm.sAscender = wm.usWinAscent;
+    wm.sDescender = -(wm.usWinDescent);
+	    
+    wm.sLineGap = 1150 - (wm.sAscender - wm.sDescender);
+    if (wm.sLineGap < 0)
+    	wm.sLineGap = 0;
+		
+    wm.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
+						
+    TRACE("Windows metrics for '%s':\n", afm->FullName);
+    TRACE("\tsAscender = %i\n", wm.sAscender);
+    TRACE("\tsDescender = %i\n", wm.sDescender);
+    TRACE("\tsLineGap = %i\n", wm.sLineGap);
+    TRACE("\tusUnitsPerEm = %u\n", wm.usUnitsPerEm);
+    TRACE("\tsTypoAscender = %i\n", wm.sTypoAscender);
+    TRACE("\tsTypoDescender = %i\n", wm.sTypoDescender);
+    TRACE("\tsTypoLineGap = %i\n", wm.sTypoLineGap);
+    TRACE("\tusWinAscent = %u\n", wm.usWinAscent);
+    TRACE("\tusWinDescent = %u\n", wm.usWinDescent);
+    TRACE("\tsAvgCharWidth = %i\n", wm.sAvgCharWidth);
+	    
+    afm->WinMetrics = wm;
+	    
+    /* See afm2c.c and mkagl.c for an explanation of this */
+    /*	PSDRV_AFM2C(afm);   */
 }
 
 
@@ -898,7 +861,7 @@ static BOOL AddBuiltinAFMs()
 
 static BOOL PSDRV_ReadAFMDir(const char* afmdir) {
     DIR *dir;
-    AFM	*afm;
+    const AFM	*afm;
 
     dir = opendir(afmdir);
     if (dir) {
@@ -919,13 +882,8 @@ static BOOL PSDRV_ReadAFMDir(const char* afmdir) {
 		TRACE("loading AFM %s\n",afmfn);
 		afm = PSDRV_AFMParse(afmfn);
 		if (afm) {
-		    if(afm->EncodingScheme && 
-		       !strcmp(afm->EncodingScheme,"AdobeStandardEncoding")) {
-			PSDRV_ReencodeCharWidths(afm);
-		    }
 		    if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
 		    	closedir(dir);
-			FreeAFM(afm);
 			return FALSE;
 		    }
 		}
@@ -964,13 +922,9 @@ BOOL PSDRV_GetFontMetrics(void)
     value_len = sizeof(value);
     while(!RegEnumValueA(hkey, idx++, key, &key_len, NULL, &type, value, &value_len))
     {
-        AFM* afm = PSDRV_AFMParse(value);
+        const AFM* afm = PSDRV_AFMParse(value);
 	
         if (afm) {
-            if(afm->EncodingScheme && 
-               !strcmp(afm->EncodingScheme, "AdobeStandardEncoding")) {
-                PSDRV_ReencodeCharWidths(afm);
-            }
             if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE) {
 		RegCloseKey(hkey);
 	    	return FALSE;
@@ -1011,9 +965,6 @@ no_afmfiles:
 
 no_afmdirs:
 
-    if (SortFontMetrics() == FALSE)
-    	return FALSE;
-    CalcWindowsMetrics();
     if (AddBuiltinAFMs() == FALSE)
     	return FALSE;
 

@@ -157,7 +157,7 @@ static INT GlyphListSearch(LPCSTR szName, INT loIndex, INT hiIndex)
  *  necessary, and returns a pointer to it (NULL if unable to add it)
  *
  */
-GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
+const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
 {
     INT index;
 

@@ -39,6 +39,7 @@
 #include <stdio.h>
 
 #include "winnt.h"
+#include "winerror.h"
 #include "winreg.h"
 #include "psdrv.h"
 #include "debugtools.h"
@@ -59,6 +60,16 @@ static TT_Header    	*head;
 static TT_Postscript	*post;
 static TT_OS2	    	*os2;
 static TT_HoriHeader	*hhea;
+
+/* This is now officially a pain in the ass! */
+
+typedef struct
+{
+    LPSTR   FontName;
+    LPSTR   FullName;
+    LPSTR   FamilyName;
+    LPSTR   EncodingScheme;
+} AFMSTRINGS;
 
 /*******************************************************************************
  *
@@ -81,7 +92,7 @@ static const char *encoding_names[7] =
     "WindowsJohab"  	    /* TT_MS_ID_JOHAB */
 };
  
-static BOOL FindCharMap(AFM *afm)
+static BOOL FindCharMap(AFM *afm, AFMSTRINGS *str)
 {
     FT_Int  	i;
     FT_Error	error;
@@ -115,21 +126,23 @@ static BOOL FindCharMap(AFM *afm)
 	
     if (charmap->encoding_id < 7)
     {
-    	afm->EncodingScheme = HEAP_strdupA(PSDRV_Heap, 0,
+    	str->EncodingScheme = HEAP_strdupA(PSDRV_Heap, 0,
 	    	encoding_names[charmap->encoding_id]);
-	if (afm->EncodingScheme == NULL)
+	if (str->EncodingScheme == NULL)
 	    return FALSE;
     }
     else
     {
-    	afm->EncodingScheme = HeapAlloc(PSDRV_Heap, 0,	    /* encoding_id   */
-	    	sizeof("WindowsUnknown65535"));     	    /*   is a UShort */
-	if (afm->EncodingScheme == NULL)
+    	str->EncodingScheme =
+	    	HeapAlloc(PSDRV_Heap, 0, sizeof("WindowsUnknown65535"));
+	if (str->EncodingScheme == NULL)
 	    return FALSE;
 	    
-	sprintf(afm->EncodingScheme, "%s%u", "WindowsUnknown",
+	sprintf(str->EncodingScheme, "%s%u", "WindowsUnknown",
 	    	charmap->encoding_id);
     }
+    
+    afm->EncodingScheme = str->EncodingScheme;
     
     return TRUE;
 }
@@ -160,7 +173,7 @@ static BOOL NameTableString(LPSTR *sz, const FT_SfntName *name)
     }
     
     len = name->string_len / 2;
-    s = *sz = HeapAlloc(PSDRV_Heap, 0, len + 1);
+    *sz = s = HeapAlloc(PSDRV_Heap, 0, len + 1);
     if (s == NULL)
     	return FALSE;
     ws = (FT_UShort *)(name->string);
@@ -198,7 +211,7 @@ static BOOL NameTableString(LPSTR *sz, const FT_SfntName *name)
  *  returns FALSE only in the event of an unexpected error.
  *
  */
-static BOOL ReadNameTable(AFM *afm)
+static BOOL ReadNameTable(AFM *afm, AFMSTRINGS *str)
 {
     FT_UInt 	numStrings, stringIndex;
     FT_SfntName name;
@@ -226,49 +239,28 @@ static BOOL ReadNameTable(AFM *afm)
 	{
 	    case TT_NAME_ID_FONT_FAMILY:
 	    
-	    	if (NameTableString(&(afm->FamilyName), &name) == FALSE)
+	    	if (NameTableString(&(str->FamilyName), &name) == FALSE)
 		    return FALSE;
+		afm->FamilyName = str->FamilyName;
 		break;
 	    
 	    case TT_NAME_ID_FULL_NAME:
 	    
-	    	if (NameTableString(&(afm->FullName), &name) == FALSE)
+	    	if (NameTableString(&(str->FullName), &name) == FALSE)
 		    return FALSE;
+		afm->FullName = str->FullName;
 		break;
 	    
 	    case TT_NAME_ID_PS_NAME:
 	    
-	    	if (NameTableString(&(afm->FontName), &name) == FALSE)
+	    	if (NameTableString(&(str->FontName), &name) == FALSE)
 		    return FALSE;
+		afm->FontName = str->FontName;
 		break;
 	}
     }
     
     return TRUE;
-}
-
-/*******************************************************************************
- *  FreeAFM
- *
- *  Frees an AFM and all subsidiary objects.  For this function to work
- *  properly, the AFM must have been allocated with HEAP_ZERO_MEMORY, and the
- *  UNICODEVECTOR and it's associated array of UNICODEGLYPHs must have been
- *  allocated as a single object.
- */
-static void FreeAFM(AFM *afm)
-{
-    if (afm->FontName != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->FontName);
-    if (afm->FullName != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->FullName);
-    if (afm->FamilyName != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->FamilyName);
-    if (afm->EncodingScheme != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->EncodingScheme);
-    if (afm->Metrics != NULL)
-    	HeapFree(PSDRV_Heap, 0, afm->Metrics);
-	
-    HeapFree(PSDRV_Heap, 0, afm);
 }
 
 /*******************************************************************************
@@ -335,14 +327,13 @@ static BOOL ReadMetricsTables(AFM *afm)
 /*******************************************************************************
  *  ReadCharMetrics
  *
- *  Reads metrics for each glyph in a TrueType font.  Since FreeAFM will try to
- *  free afm->Metrics and afm->Encoding if they are non-NULL, don't free them
- *  in the event of an error.
+ *  Reads metrics for each glyph in a TrueType font.
  *
  */
-static BOOL ReadCharMetrics(AFM *afm)
+static AFMMETRICS *ReadCharMetrics(AFM *afm)
 {
     FT_ULong	    charcode, index;
+    AFMMETRICS	    *metrics;
     
     /*
      *	There does not seem to be an easy way to get the number of characters
@@ -356,9 +347,9 @@ static BOOL ReadCharMetrics(AFM *afm)
     
     afm->NumofMetrics = index;
     
-    afm->Metrics = HeapAlloc(PSDRV_Heap, 0, index * sizeof(AFMMETRICS));
-    if (afm->Metrics == NULL)
-    	return FALSE;
+    metrics = HeapAlloc(PSDRV_Heap, 0, index * sizeof(AFMMETRICS));
+    if (metrics == NULL)
+    	return NULL;
 	
     for (charcode = 0, index = 0; charcode <= 65536; ++charcode)
     {
@@ -376,14 +367,14 @@ static BOOL ReadCharMetrics(AFM *afm)
 	if (error != FT_Err_Ok)
 	{
 	    ERR("%s returned %i\n", "FT_Load_Glyph", error);
-	    return FALSE;
+	    goto cleanup;
 	}
 	
 	error = FT_Get_Glyph(face->glyph, &glyph);
 	if (error != FT_Err_Ok)
 	{
 	    ERR("%s returned %i\n", "FT_Get_Glyph", error);
-	    return FALSE;
+	    goto cleanup;
 	}
 	
 	FT_Glyph_Get_CBox(glyph, ft_glyph_bbox_unscaled, &bbox);
@@ -392,26 +383,26 @@ static BOOL ReadCharMetrics(AFM *afm)
 	if (error != FT_Err_Ok)
 	{
 	    ERR("%s returned %i\n", "FT_Get_Glyph_Name", error);
-	    return FALSE;
+	    goto cleanup;
 	}
 	
-	afm->Metrics[index].N = PSDRV_GlyphName(buffer);
-	if (afm->Metrics[index].N == NULL)
-	    return FALSE;
+	metrics[index].N = PSDRV_GlyphName(buffer);
+	if (metrics[index].N == NULL)
+	    goto cleanup;;
 	
-	afm->Metrics[index].C = charcode;
-	afm->Metrics[index].UV = charcode;
-	afm->Metrics[index].WX = PSUnits(face->glyph->metrics.horiAdvance);
-	afm->Metrics[index].B.llx = PSUnits(bbox.xMin);
-	afm->Metrics[index].B.lly = PSUnits(bbox.yMin);
-	afm->Metrics[index].B.urx = PSUnits(bbox.xMax);
-	afm->Metrics[index].B.ury = PSUnits(bbox.yMax);
-	afm->Metrics[index].L = NULL;
+	metrics[index].C = charcode;
+	metrics[index].UV = charcode;
+	metrics[index].WX = PSUnits(face->glyph->metrics.horiAdvance);
+	metrics[index].B.llx = PSUnits(bbox.xMin);
+	metrics[index].B.lly = PSUnits(bbox.yMin);
+	metrics[index].B.urx = PSUnits(bbox.xMax);
+	metrics[index].B.ury = PSUnits(bbox.yMax);
+	metrics[index].L = NULL;
 	
 	TRACE("Metrics for '%s' WX = %f B = %f,%f - %f,%f\n",
-	    	afm->Metrics[index].N->sz, afm->Metrics[index].WX,
-		afm->Metrics[index].B.llx, afm->Metrics[index].B.lly,
-	      	afm->Metrics[index].B.urx, afm->Metrics[index].B.ury);
+	    	metrics[index].N->sz, metrics[index].WX,
+		metrics[index].B.llx, metrics[index].B.lly,
+		metrics[index].B.urx, metrics[index].B.ury);
 	
 	if (charcode == 0x0048)     	    	    /* 'H' */
 	    afm->CapHeight = PSUnits(bbox.yMax);
@@ -421,7 +412,12 @@ static BOOL ReadCharMetrics(AFM *afm)
 	++index;
     }
     
-    return TRUE;
+    return metrics;
+    
+    cleanup:
+    
+    	HeapFree(PSDRV_Heap, 0, metrics);
+	return NULL;
 }
 
 /*******************************************************************************
@@ -429,11 +425,13 @@ static BOOL ReadCharMetrics(AFM *afm)
  *
  *  Fills in AFM structure for opened TrueType font file.  Returns FALSE only on
  *  an unexpected error (memory allocation failure or FreeType error); otherwise
- *  returns TRUE.  Leaves it to the caller (ReadTrueTypeFile) to clean up.
+ *  returns TRUE.
  *
  */
 static BOOL ReadTrueTypeAFM(AFM *afm)
 {
+    AFMSTRINGS	str = { NULL, NULL, NULL, NULL };
+    AFMMETRICS	*metrics;
 
     if ((face->face_flags & REQUIRED_FACE_FLAGS) != REQUIRED_FACE_FLAGS)
     {
@@ -441,7 +439,7 @@ static BOOL ReadTrueTypeAFM(AFM *afm)
 	return TRUE;
     }
     
-    if (FindCharMap(afm) == FALSE)
+    if (FindCharMap(afm, &str) == FALSE)
     	return FALSE;
 	
     if (charmap == NULL)
@@ -452,13 +450,22 @@ static BOOL ReadTrueTypeAFM(AFM *afm)
     
     TRACE("Using encoding '%s'\n", afm->EncodingScheme);
 
-    if (ReadNameTable(afm) == FALSE)
+    if (ReadNameTable(afm, &str) == FALSE)
+    {
+    	if (str.FontName != NULL)   HeapFree(PSDRV_Heap, 0, str.FontName);
+	if (str.FullName != NULL)   HeapFree(PSDRV_Heap, 0, str.FullName);
+	if (str.FamilyName != NULL) HeapFree(PSDRV_Heap, 0, str.FamilyName);
+	HeapFree(PSDRV_Heap, 0, str.EncodingScheme);
     	return FALSE;
+    }
    
-    if (afm->FamilyName == NULL || afm->FullName == NULL ||
-    	    afm->FontName == NULL)
+    if (str.FamilyName == NULL || str.FullName == NULL || str.FontName == NULL)
     {
     	WARN("Required strings missing from font\n");
+    	if (str.FontName != NULL)   HeapFree(PSDRV_Heap, 0, str.FontName);
+	if (str.FullName != NULL)   HeapFree(PSDRV_Heap, 0, str.FullName);
+	if (str.FamilyName != NULL) HeapFree(PSDRV_Heap, 0, str.FamilyName);
+	HeapFree(PSDRV_Heap, 0, str.EncodingScheme);
 	return TRUE;
     }
 
@@ -468,13 +475,30 @@ static BOOL ReadTrueTypeAFM(AFM *afm)
 	return TRUE;
     }
     
-    if (ReadCharMetrics(afm) == FALSE)
+    afm->Metrics = metrics = ReadCharMetrics(afm);
+    if (metrics == NULL)
+    {
+    	HeapFree(PSDRV_Heap, 0, str.FontName);
+	HeapFree(PSDRV_Heap, 0, str.FullName);
+	HeapFree(PSDRV_Heap, 0, str.FamilyName);
+	HeapFree(PSDRV_Heap, 0, str.EncodingScheme);
     	return FALSE;
+    }
 
     /* Can't do this check until character metrics are read */
 
     if (afm->WinMetrics.sAvgCharWidth == 0)
     	afm->WinMetrics.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
+	
+    if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE)
+    {
+    	HeapFree(PSDRV_Heap, 0, str.FontName);
+	HeapFree(PSDRV_Heap, 0, str.FullName);
+	HeapFree(PSDRV_Heap, 0, str.FamilyName);
+	HeapFree(PSDRV_Heap, 0, str.EncodingScheme);
+    	HeapFree(PSDRV_Heap, 0, metrics);
+	return FALSE;
+    }
 
     return TRUE;
 }
@@ -490,7 +514,7 @@ static BOOL ReadTrueTypeAFM(AFM *afm)
 static BOOL ReadTrueTypeFile(LPCSTR filename)
 {
     FT_Error	error;
-    AFM     	*afm;
+    AFM  	*afm;
     
     TRACE("'%s'\n", filename);
 
@@ -499,7 +523,6 @@ static BOOL ReadTrueTypeFile(LPCSTR filename)
     	return FALSE;
 
     error = FT_New_Face(library, filename, 0, &face);
-
     if (error != FT_Err_Ok)
     {
     	WARN("FreeType error %i opening '%s'\n", error, filename);
@@ -509,7 +532,7 @@ static BOOL ReadTrueTypeFile(LPCSTR filename)
     
     if (ReadTrueTypeAFM(afm) == FALSE)
     {
-    	FreeAFM(afm);
+    	HeapFree(PSDRV_Heap, 0, afm);
 	FT_Done_Face(face);
 	return FALSE;
     }    
@@ -518,20 +541,14 @@ static BOOL ReadTrueTypeFile(LPCSTR filename)
     if (error != FT_Err_Ok)
     {
     	ERR("%s returned %i\n", "FT_Done_Face", error);
-	FreeAFM(afm);
+	HeapFree(PSDRV_Heap, 0, afm);
 	return FALSE;
     }
     
     if (afm->Metrics == NULL)	    	    	/* last element to be set */
     {
-    	FreeAFM(afm);
+    	HeapFree(PSDRV_Heap, 0, afm);
 	return TRUE;
-    }
-    
-    if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm) == FALSE)
-    {
-    	FreeAFM(afm);
-	return FALSE;
     }
     
     return TRUE;
@@ -556,8 +573,8 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
     CHAR    	keybuf[256], namebuf[256];
     INT     	i = 0;
     FT_Error	error;
-    HKEY hkey;
-    DWORD type, key_len, name_len;
+    HKEY    	hkey;
+    DWORD   	type, key_len, name_len;
 
     error = FT_Init_FreeType(&library);
     if (error != FT_Err_Ok)
@@ -566,13 +583,16 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
 	return FALSE;
     }
 
-    if(RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\TrueType Font Directories",
-		     0, KEY_READ, &hkey))
+    if(RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+    	    "Software\\Wine\\Wine\\Config\\TrueType Font Directories",
+	    0, KEY_READ, &hkey) != ERROR_SUCCESS)
 	goto no_metrics;
 
     key_len = sizeof(keybuf);
     name_len = sizeof(namebuf);
-    while(!RegEnumValueA(hkey, i++, keybuf, &key_len, NULL, &type, namebuf, &name_len))
+    
+    while(RegEnumValueA(hkey, i++, keybuf, &key_len, NULL, &type, namebuf,
+    	    &name_len) == ERROR_SUCCESS)
     {
     	struct dirent	*dent;
     	DIR 	    	*dir;
@@ -626,9 +646,11 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
 	key_len = sizeof(keybuf);
 	name_len = sizeof(namebuf);
     }
+    
     RegCloseKey(hkey);
 
-no_metrics:
+    no_metrics:
+    
     FT_Done_FreeType(library);
     return TRUE;
 }

@@ -26,13 +26,13 @@ inline static float round(float f)
  
 static void ScaleFont(DC *dc, LOGFONTW *lf, PSDRV_PDEVICE *physDev)
 {
-    PSFONT  	    *font = &(physDev->font);
-    WINMETRICS	    *wm = &(font->afm->WinMetrics);
-    TEXTMETRICW     *tm = &(font->tm);
-    LONG    	    lfHeight_ds;
-    USHORT  	    usUnitsPerEm, usWinAscent, usWinDescent;
-    SHORT   	    sAscender, sDescender, sLineGap, sTypoAscender;
-    SHORT    	    sTypoDescender, sTypoLineGap, sAvgCharWidth;
+    PSFONT  	    	*font = &(physDev->font);
+    const WINMETRICS	*wm = &(font->afm->WinMetrics);
+    TEXTMETRICW     	*tm = &(font->tm);
+    LONG    	    	lfHeight_ds;
+    USHORT  	    	usUnitsPerEm, usWinAscent, usWinDescent;
+    SHORT   	    	sAscender, sDescender, sLineGap, sTypoAscender;
+    SHORT    	    	sTypoDescender, sTypoLineGap, sAvgCharWidth;
     
     TRACE("'%s' %li\n", font->afm->FontName, lf->lfHeight);
 		
@@ -452,8 +452,8 @@ BOOL PSDRV_SetFont( DC *dc )
 /***********************************************************************
  *           PSDRV_GetFontMetric
  */
-static UINT PSDRV_GetFontMetric(HDC hdc, AFM *pafm, NEWTEXTMETRICEXW *pTM, 
-				ENUMLOGFONTEXW *pLF, INT16 size)
+static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *pafm,
+    	NEWTEXTMETRICEXW *pTM, ENUMLOGFONTEXW *pLF, INT16 size)
 
 {
     DC *dc = DC_GetDCPtr( hdc );

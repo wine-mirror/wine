@@ -462,7 +462,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     DWORD type = REG_BINARY, needed, res, dwPaperSize;
     PRINTERINFO *pi = PSDRV_PrinterList, **last = &PSDRV_PrinterList;
     FONTNAME *font;
-    AFM *afm;
+    const AFM *afm;
     HANDLE hPrinter;
     const char *ppd = NULL;
     char ppdFileName[256];

@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
     LONG	    UV;
-    GLYPHNAME	    *name;
+    const GLYPHNAME *name;
 } UNICODEGLYPH;
 
 typedef struct {
@@ -36,9 +36,9 @@ typedef struct _tagAFMMETRICS {
     int			C;		/* character */  
     LONG     	    	UV;
     float		WX;
-    GLYPHNAME		*N;		/* name */
+    const GLYPHNAME	*N;		/* name */
     AFMBBOX		B;
-    AFMLIGS		*L;		/* Ligatures */
+    const AFMLIGS	*L;		/* Ligatures */
 } AFMMETRICS;
 
 typedef struct {
@@ -55,10 +55,10 @@ typedef struct {
 } WINMETRICS;
 
 typedef struct _tagAFM {
-    char		*FontName;
-    char		*FullName;
-    char		*FamilyName;
-    char		*EncodingScheme;
+    LPCSTR		FontName;
+    LPCSTR		FullName;
+    LPCSTR		FamilyName;
+    LPCSTR		EncodingScheme;
     LONG		Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
     BOOL		IsFixedPitch;
@@ -73,7 +73,7 @@ typedef struct _tagAFM {
     WINMETRICS	    	WinMetrics;
     float		CharWidths[256];
     int			NumofMetrics;
-    AFMMETRICS		*Metrics;
+    const AFMMETRICS	*Metrics;
 } AFM; /* CharWidths is a shortcut to the WX values of numbered glyphs */
 
 /* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allow more than
@@ -82,7 +82,7 @@ typedef struct _tagAFM {
    fonts for each DC (dc->physDev->Fonts) */
 
 typedef struct _tagAFMLISTENTRY {
-    AFM				*afm;
+    const AFM			*afm;
     struct _tagAFMLISTENTRY	*next;
 } AFMLISTENTRY;
 
@@ -218,7 +218,7 @@ typedef struct {
 } PSCOLOR;
 
 typedef struct {
-    AFM                 *afm;
+    const AFM           *afm;
     TEXTMETRICW         tm;
     INT                 size;
     float               scale;
@@ -297,8 +297,8 @@ extern void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 extern BOOL PSDRV_GetFontMetrics(void);
 extern PPD *PSDRV_ParsePPD(char *fname);
 extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name);
-extern AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
-extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm);
+extern const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
+extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);
@@ -425,7 +425,7 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      LPDEVMODEA lpdm);
 VOID PSDRV_DrawLine( DC *dc );
 INT PSDRV_GlyphListInit();
-GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
+const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
 VOID PSDRV_IndexGlyphList();
 BOOL PSDRV_GetTrueTypeMetrics();
 const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm);
