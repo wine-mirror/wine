@@ -664,7 +664,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     {
         /* Send initialisation messages and set focus */
 
-        if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
+        if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ) &&
+            ((~template.style & DS_CONTROL) || (template.style & WS_VISIBLE)))
         {
             /* By returning TRUE, app has requested a default focus assignment */
             dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);

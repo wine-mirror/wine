@@ -716,6 +716,31 @@ static LRESULT CALLBACK delayFocusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wPar
     return FALSE;
 }
 
+static LRESULT CALLBACK focusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
+        LPARAM lParam)
+{
+    switch (uiMsg)
+    {
+    case WM_INITDIALOG:
+       return TRUE;
+
+    case WM_COMMAND:
+       if (LOWORD(wParam) == IDCANCEL)
+       {
+           EndDialog(hDlg, LOWORD(wParam));
+           return TRUE;
+       }
+       else if (LOWORD(wParam) == 200)
+       {
+           if (HIWORD(wParam) == EN_SETFOCUS)
+               g_hwndInitialFocusT1 = (HWND)lParam;
+       }
+       return FALSE;
+    }
+
+    return FALSE;
+}
+
 /* Helper for InitialFocusTest */
 static const char * GetHwndString(HWND hw)
 {
@@ -800,6 +825,28 @@ static void InitialFocusTest (void)
        "Expected the second button (%p), got %s (%p).\n",
        g_hwndButton2, GetHwndString(g_hwndInitialFocusT2),
        g_hwndInitialFocusT2);
+
+    /* Test 3:
+     * If the dialog has DS_CONTROL and it's not visible then we shouldn't change focus */
+    {
+        HWND hDlg;
+        HRSRC hResource;
+        HANDLE hTemplate;
+        DLGTEMPLATE* pTemplate;
+
+        hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG", (LPSTR)RT_DIALOG);
+        hTemplate = LoadResource(g_hinst, hResource);
+        pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
+
+        g_hwndInitialFocusT1 = 0;
+        hDlg = CreateDialogIndirectParamW(g_hinst, pTemplate, NULL, (DLGPROC)focusDlgWinProc,0);
+        ok (hDlg != 0, "Failed to create test dialog.\n");
+
+        ok ((g_hwndInitialFocusT1 == 0),
+            "Focus should not be set for an invisible DS_CONTROL dialog %p.\n", g_hwndInitialFocusT1);
+
+        DestroyWindow(hDlg);
+    }
 }
 
 
