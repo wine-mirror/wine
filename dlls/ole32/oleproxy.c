@@ -452,7 +452,9 @@ PSFacBuf_CreateProxy(
     LPPSFACTORYBUFFER iface, IUnknown* pUnkOuter, REFIID riid,
     IRpcProxyBuffer **ppProxy, LPVOID *ppv
 ) {
-    if (IsEqualIID(&IID_IClassFactory,riid))
+    if (IsEqualIID(&IID_IClassFactory,riid) ||
+	IsEqualIID(&IID_IUnknown,riid)
+    )
 	return CFProxy_Construct(ppv,(LPVOID*)ppProxy);
     FIXME("proxying not implemented for (%s) yet!\n",debugstr_guid(riid));
     return E_FAIL;
@@ -467,7 +469,9 @@ PSFacBuf_CreateStub(
 
     TRACE("(%s,%p,%p)\n",debugstr_guid(riid),pUnkServer,ppStub);
 
-    if (IsEqualIID(&IID_IClassFactory,riid)) {
+    if (IsEqualIID(&IID_IClassFactory,riid) ||
+        IsEqualIID(&IID_IUnknown,riid)
+    ) {
 	hres = CFStub_Construct(ppStub);
 	if (!hres)
 	    IRpcStubBuffer_Connect((*ppStub),pUnkServer);
@@ -503,7 +507,11 @@ HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
 	STUBMGR_Start();
 	return S_OK;
     }
-    if (IsEqualIID(rclsid,&CLSID_DfMarshal)&&IsEqualIID(iid,&IID_IClassFactory))
+    if (IsEqualIID(rclsid,&CLSID_DfMarshal)&&(
+		IsEqualIID(iid,&IID_IClassFactory) ||
+		IsEqualIID(iid,&IID_IUnknown)
+	)
+    )
 	return MARSHAL_GetStandardMarshalCF(ppv);
     FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;

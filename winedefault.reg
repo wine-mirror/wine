@@ -129,6 +129,9 @@
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}\NumMethods]
 @="3"
 
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}\ProxyStubClsid32]
+@="{00000320-0000-0000-C000-000000000046}"
+
 # IClassFactory, standard interface for creating instances of classes.
 [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000001-0000-0000-C000-000000000046}]
 @="IClassFactory"

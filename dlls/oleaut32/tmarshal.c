@@ -436,6 +436,8 @@ marshall_param(
 	ITypeInfo_Release(tinfo2);
 	return hres;
     }
+    case VT_UNKNOWN:
+        return _marshal_interface(buf,&IID_IUnknown,(LPUNKNOWN)*arg);
     default:
 	ERR("Cannot marshal type %d\n",tdesc->vt);
 	/*dump_ELEMDESC(elem);*/
@@ -887,7 +889,10 @@ stuballoc_param(
 	case VT_UNKNOWN:
 	    /* FIXME: UNKNOWN is unknown ..., but allocate 4 byte for it */
 	    *arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD));
-	    return S_OK;
+	    hres = S_OK;
+	    if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN)
+		hres = _unmarshal_interface(buf,&IID_IUnknown,(LPUNKNOWN*)arg);
+	    return hres;
 	case VT_VOID:
 	    *arg = (DWORD)HeapAlloc(GetProcessHeap(),0,sizeof(LPVOID));
 	    hres = S_OK;
@@ -993,7 +998,7 @@ stubunalloc_param(
     case VT_UNKNOWN:
 	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT) {
 	    FIXME("Marshaling back VT_UNKNOWN %lx\n",*arg);
-	    hres = xbuf_add(buf,(LPBYTE)*arg,sizeof(DWORD));
+	    hres = _marshal_interface(buf,&IID_IUnknown,(LPUNKNOWN)*arg);
 	}
 	HeapFree(GetProcessHeap(),0,(LPVOID)*arg);
 	return hres;
