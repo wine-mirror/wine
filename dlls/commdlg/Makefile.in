@@ -25,6 +25,9 @@ C_SRCS = \
 	generic.c \
 	printdlg.c
 
+C_SRCS16  = \
+	fontdlg16.c \
+
 RC_SRCS= rsrc.rc
 
 @MAKE_DLL_RULES@
