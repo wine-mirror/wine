@@ -161,7 +161,6 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
         szCurrentTheme[0] = '\0';
         szCurrentColor[0] = '\0';
         szCurrentSize[0] = '\0';
-        return MSSTYLES_SetActiveTheme(NULL);
     }
 
     TRACE("Writing theme config to registry\n");
@@ -169,9 +168,17 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
         tmp[0] = bThemeActive?'1':'0';
         tmp[1] = '\0';
         RegSetValueExW(hKey, szThemeActive, 0, REG_SZ, (const BYTE*)tmp, sizeof(WCHAR)*2);
-        RegSetValueExW(hKey, szColorName, 0, REG_SZ, (const BYTE*)szCurrentColor, lstrlenW(szCurrentColor)+1);
-        RegSetValueExW(hKey, szSizeName, 0, REG_SZ, (const BYTE*)szCurrentSize, lstrlenW(szCurrentSize)+1);
-        RegSetValueExW(hKey, szDllName, 0, REG_SZ, (const BYTE*)szCurrentTheme, lstrlenW(szCurrentTheme)+1);
+        if(bThemeActive) {
+            RegSetValueExW(hKey, szColorName, 0, REG_SZ, (const BYTE*)szCurrentColor, lstrlenW(szCurrentColor)+1);
+            RegSetValueExW(hKey, szSizeName, 0, REG_SZ, (const BYTE*)szCurrentSize, lstrlenW(szCurrentSize)+1);
+            RegSetValueExW(hKey, szDllName, 0, REG_SZ, (const BYTE*)szCurrentTheme, lstrlenW(szCurrentTheme)+1);
+        }
+        else {
+            RegDeleteValueW(hKey, szColorName);
+            RegDeleteValueW(hKey, szSizeName);
+            RegDeleteValueW(hKey, szDllName);
+
+        }
         RegCloseKey(hKey);
     }
     else
