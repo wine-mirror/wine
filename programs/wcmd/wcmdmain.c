@@ -193,7 +193,10 @@ int main (int argc, char *argv[])
        * the currently allocated input and output handles. This allows
        * us to pipe to and read from the command interpreter.
        */
-      WCMD_process_command(cmd);
+      if (strchr(cmd,'|') != NULL)
+          WCMD_pipe(cmd);
+      else
+          WCMD_process_command(cmd);
       HeapFree(GetProcessHeap(), 0, cmd);
       return 0;
   }
