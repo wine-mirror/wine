@@ -2921,10 +2921,11 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TREEVIEW_ITEM *editedItem = TREEVIEW_ValidItem (infoPtr, infoPtr->editItem);
   BOOL          bRevert     = (BOOL)wParam;
   BOOL          bReturn     = ! bRevert;
+  NMTVDISPINFOA tvdi;
 
   if ( ! (BOOL)wParam ) /* wParam is set to true to cancel the edition */
   {
-		if ( TREEVIEW_SendDispInfoNotify(  /* return true to cancel edition */
+	if ( TREEVIEW_SendDispInfoNotify(  /* return true to cancel edition */
            hwnd, 
            editedItem,
            TVN_ENDLABELEDITA, 
@@ -2952,28 +2953,69 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
     else
     {
-      if (strcmp( tmpText, editedItem->pszText ) == 0)
-        /* Do nothing if the label has not changed */
-        bReturn = TRUE;
-      else
+      /*
+       * notify our parent with the new string
+       */
+      tvdi.hdr.hwndFrom	= hwnd;
+      tvdi.hdr.idFrom	= GetWindowLongA( hwnd, GWL_ID);
+      tvdi.hdr.code	= TVN_ENDLABELEDITA;
+      tvdi.item.hItem 	= editedItem->hItem;
+      tvdi.item.lParam 	= editedItem->lParam;
+      tvdi.item.mask	= TVIF_TEXT|TVIF_HANDLE|TVIF_PARAM;
+      tvdi.item.pszText	= tmpText;
+
+      SendMessageA (
+              GetParent(hwnd), 
+              WM_NOTIFY,
+              (WPARAM)tvdi.hdr.idFrom, 
+              (LPARAM)&tvdi);
+
+      if (editedItem->pszText != LPSTR_TEXTCALLBACKA)
       {
-        LPSTR tmpLabel = COMCTL32_Alloc( iLength+1 );
+          if (strcmp( tmpText, editedItem->pszText ) == 0)
+            /* Do nothing if the label has not changed */
+            bReturn = TRUE;
+          else
+          {
+            LPSTR tmpLabel = COMCTL32_Alloc( iLength+1 );
   
-        if ( tmpLabel == NULL )
-          ERR(
-            "OutOfMemory, cannot allocate space for label");
-        else
-        {
-          COMCTL32_Free(editedItem->pszText);
-          editedItem->pszText = tmpLabel;
-          lstrcpyA( editedItem->pszText, tmpText);
-          bReturn = TRUE;
-        }
-      }
+            if ( tmpLabel == NULL )
+              ERR(
+                "OutOfMemory, cannot allocate space for label");
+            else
+            {
+              COMCTL32_Free(editedItem->pszText);
+              editedItem->pszText = tmpLabel;
+              lstrcpyA( editedItem->pszText, tmpText);
+              bReturn = TRUE;
+            }
+          }
+       }
+       else
+       {
+           /*
+            * This is a callback string so we need
+            * to inform the parent that the string
+            * has changed
+            *
+            */
+           tvdi.hdr.hwndFrom	= hwnd;
+           tvdi.hdr.idFrom	= GetWindowLongA( hwnd, GWL_ID);
+           tvdi.hdr.code	= TVN_SETDISPINFOA;
+           tvdi.item.mask	= TVIF_TEXT;
+           tvdi.item.pszText	= tmpText;
+
+           SendMessageA (
+                  GetParent(hwnd), 
+                  WM_NOTIFY,
+                  (WPARAM)tvdi.hdr.idFrom, 
+                  (LPARAM)&tvdi);
+       }
     }
 
-		ShowWindow(infoPtr->hwndEdit, SW_HIDE);
-		EnableWindow(infoPtr->hwndEdit, FALSE);
+    ShowWindow(infoPtr->hwndEdit, SW_HIDE);
+    EnableWindow(infoPtr->hwndEdit, FALSE);
+
     infoPtr->editItem = 0;
   }
 
@@ -3077,7 +3119,37 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
   		TRACE("Edit started for %s.\n", wineItem->pszText);
   		infoPtr->editItem = wineItem->hItem;
-  
+
+      /* 
+       * It is common practice for a windows program to get this
+       * edit control and then subclass it. It is assumed that a
+       * new edit control is given every time.
+       *
+       * As a result some programs really mess up the edit control
+       * so we need to destory our old edit control and create a new
+       * one. Recycling would be nice but we would need to reset
+       * everything. So recreating may just be easyier
+       *
+       */
+	    DestroyWindow(infoPtr->hwndEdit);
+ 	    infoPtr->hwndEdit = CreateWindowExA ( 
+                          WS_EX_LEFT, 
+                          "EDIT",
+                          0,
+                          WS_CHILD | WS_BORDER | ES_AUTOHSCROLL | 
+                          ES_WANTRETURN | ES_LEFT,
+                          0, 0, 0, 0,
+                          hwnd, 
+                          0,0,0); /* FIXME: (HMENU)IDTVEDIT,pcs->hInstance,0);*/
+
+ 	    SetWindowLongA (
+        infoPtr->hwndEdit,
+        GWL_WNDPROC, 
+      	(LONG) TREEVIEW_Edit_SubclassProc);
+
+ 
+      SendMessageA ( infoPtr->hwndEdit, WM_SETFONT, infoPtr->hFont, FALSE);
+
   		SetWindowPos ( 
         infoPtr->hwndEdit, 
         HWND_TOP, 
