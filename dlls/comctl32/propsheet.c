@@ -4,6 +4,7 @@
  * Copyright 1998 Francis Beaudet
  * Copyright 1999 Thuy Nguyen
  * Copyright 2004 Maxime Bellenge
+ * Copyright 2004 Filip Navara
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +20,42 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Sep. 12, 2004, by Filip Navara.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ *
  * TODO:
  *   - Tab order
- *   - Unicode property sheets
+ *   - Wizard 97 header resizing
+ *   - Enforcing of minimal wizard size
+ *   - Messages:
+ *     o PSM_GETRESULT
+ *     o PSM_IDTOINDEX
+ *     o PSM_INDEXTOID
+ *     o PSM_INDEXTOPAGE
+ *     o PSM_INSERTPAGE
+ *     o PSM_PAGETOINDEX
+ *     o PSM_RECALCPAGESIZES
+ *     o PSM_SETHEADERSUBTITLE
+ *     o PSM_SETHEADERTITLE
+ *   - Notifications:
+ *     o PSN_GETOBJECT
+ *     o PSN_QUERYINITIALFOCUS
+ *     o PSN_TRANSLATEACCELERATOR
+ *   - Styles:
+ *     o PSH_WIZARDHASFINISH
+ *     o PSH_RTLREADING
+ *     o PSH_WIZARDCONTEXTHELP
+ *     o PSH_STRETCHWATERMARK
+ *     o PSH_USEPAGELANG
+ *     o PSH_NOCONTEXTHELP
+ *     o PSH_USEPSTARTPAGE
+ *   - Page styles:
+ *     o PSP_USEFUSIONCONTEXT
+ *     o PSP_USEREFPARENT
  */
 
 #include <stdarg.h>
@@ -201,19 +235,11 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
 
   /*
    * unhandled header flags:
-   *  PSH_DEFAULT            0x00000000
    *  PSH_WIZARDHASFINISH    0x00000010
    *  PSH_RTLREADING         0x00000800
    *  PSH_WIZARDCONTEXTHELP  0x00001000
-   *  PSH_WATERMARK          0x00008000
-   *  PSH_USEHBMWATERMARK    0x00010000
-   *  PSH_USEHPLWATERMARK    0x00020000
    *  PSH_STRETCHWATERMARK   0x00040000
-   *  PSH_HEADER             0x00080000
-   *  PSH_USEHBMHEADER       0x00100000
    *  PSH_USEPAGELANG        0x00200000
-   *  PSH_WIZARD_LITE        0x00400000      also not in .h
-   *  PSH_WIZARD97           0x01000000  (IE 5 and above)
    *  PSH_NOCONTEXTHELP      0x02000000      also not in .h
    */
 
@@ -222,7 +248,6 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
     add_flag(PSH_WIZARDCONTEXTHELP);
     add_flag(PSH_STRETCHWATERMARK);
     add_flag(PSH_USEPAGELANG);
-    add_flag(PSH_WIZARD_LITE);
     add_flag(PSH_NOCONTEXTHELP);
     if (string[0] != '\0')
 	FIXME("%s\n", string);
