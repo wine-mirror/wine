@@ -1075,6 +1075,11 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
  *           DOSFS_DoGetFullPathName
  *
  * Implementation of GetFullPathName32A/W.
+ *
+ * Known discrepancies to Win95 OSR2 bon 000118
+ * "g:..\test should return G:\test
+ * "..\..\..\..\test should return (Current drive):test
+ *              even when test is not existant
  */
 static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
                                       BOOL unicode )
@@ -1082,6 +1087,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     char buffer[MAX_PATHNAME_LEN];
     int drive;
     char *p;
+    char namelast;
     DWORD ret;
     
     /* Address of the last byte in the buffer */
@@ -1152,10 +1158,26 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
         }
     }
     *p = '\0';
-
+    /* Only return a trailing \\ if name does end in \\ // or :*/
+    namelast= name[strlen(name)-1];
+    if ( (namelast != '\\') && (namelast != '/')&& (namelast != ':') )
+      {
+	if(*(p-1) == '\\')
+	  *(p-1) = '\0';
+      }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
-        CharUpperA( buffer );
-       
+      CharUpperA( buffer );
+    /* If the lpBuffer buffer is too small, the return value is the 
+    size of the buffer, in characters, required to hold the path 
+    plus the terminating \0 (tested against win95osr, bon 001118)
+    . */
+    ret = strlen(buffer);
+    if (ret >= len )
+      {
+	/* don't touch anything when the buffer is not large enough */
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+	return ret+1;
+      }
     if (result)
     {
 	if (unicode)
@@ -1165,15 +1187,6 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     }
 
     TRACE("returning '%s'\n", buffer );
-
-    /* If the lpBuffer buffer is too small, the return value is the 
-    size of the buffer, in characters, required to hold the path. */
-
-    ret = strlen(buffer);
-
-    if (ret >= len )
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-
     return ret;
 }
 
@@ -1187,7 +1200,7 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                  LPSTR *lastpart )
 {
     DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer, FALSE );
-    if (ret && buffer && lastpart)
+    if (ret && (ret<=len) && buffer && lastpart)
     {
         LPSTR p = buffer + strlen(buffer);
 
@@ -1211,7 +1224,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     DWORD ret = DOSFS_DoGetFullPathName( nameA, len, (LPSTR)buffer, TRUE );
     HeapFree( GetProcessHeap(), 0, nameA );
-    if (ret && buffer && lastpart)
+    if (ret && (ret<=len) && buffer && lastpart)
     {
         LPWSTR p = buffer + lstrlenW(buffer);
         if (*p != (WCHAR)'\\')
