@@ -166,6 +166,39 @@ Win32 compilation mode also sets __WIN32__ to 1 and __FLAT__ to 1.
 .PP
 Special macros __FILE__, __LINE__, __TIME__ and __DATE__ are also
 recognized and expand to their respective equivalent.
+.SH "LANGUAGE SUPPORT"
+Language, version and characteristics can be bound to all resource types that
+have inline data, such as RCDATA. This is an extension to MS' resource
+compiler, which lacks this support completely. Only VERSIONINFO cannot have
+version and characteristics attached, but languages are propagated properly if
+you declare it correctly before the VERSIONINFO resource starts.
+.PP
+Example:
+.PP
+1 RCDATA DISCARDABLE
+.br
+LANGUAGE 1, 0
+.br
+VERSION 312
+.br
+CHARACTERISTICS 876
+.br
+{
+.br
+	1, 2, 3, 4, 5, "and whatever more data you want"
+.br
+	'00 01 02 03 04 05 06 07 08'
+.br
+}
+.SH NE/PE RESOURCE DIRECTORY GENERATION
+A windows executable has a table/directory of resources available in that
+module. Wrc will generate this directory with the '-s' option and place it
+in the assembly output. 
+.PP
+The layout of the PE directory should be exactly like the executable file.
+The NE directory layout _DIFFERS_ from the real NE executable in such way
+that all offsets to actual resource data are relative to the NE directory and
+_NOT_ the beginning of the file.
 .SH "ERROR REPORTING"
 All errors and warnings are written to standard error and report:
 .br
