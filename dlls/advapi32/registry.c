@@ -640,7 +640,11 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 {
     UNICODE_STRING nameW;
 
-    if (count && is_string(type))
+    if (GetVersion() & 0x80000000)  /* win95 */
+    {
+        if (type == REG_SZ) count = (strlenW( (WCHAR *)data ) + 1) * sizeof(WCHAR);
+    }
+    else if (count && is_string(type))
     {
         LPCWSTR str = (LPCWSTR)data;
         /* if user forgot to count terminating null, add it (yes NT does this) */
@@ -663,7 +667,11 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
     WCHAR *dataW = NULL;
     NTSTATUS status;
 
-    if (count && is_string(type))
+    if (GetVersion() & 0x80000000)  /* win95 */
+    {
+        if (type == REG_SZ) count = strlen(data) + 1;
+    }
+    else if (count && is_string(type))
     {
         /* if user forgot to count terminating null, add it (yes NT does this) */
         if (data[count-1] && !data[count]) count++;
