@@ -64,7 +64,7 @@ static WINE_HDD*       MSVIDEO_GetHddPtr(HDRAWDIB hd)
 {
     WINE_HDD*   hdd;
 
-    for (hdd = HDD_FirstHdd; hdd != NULL && hdd->hSelf != hdd; hdd = hdd->next);
+    for (hdd = HDD_FirstHdd; hdd != NULL && hdd->hSelf != hd; hdd = hdd->next);
     return hdd;
 }
 
@@ -97,12 +97,22 @@ HDRAWDIB VFWAPI DrawDibOpen(void)
 BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) 
 {
     WINE_HDD* whdd = MSVIDEO_GetHddPtr(hdd);
+    WINE_HDD** p;
 
     TRACE("(%p)\n", hdd);
 
     if (!whdd) return FALSE;
 
     if (whdd->begun) DrawDibEnd(hdd);
+
+    for (p = &HDD_FirstHdd; *p != NULL; p = &((*p)->next))
+    {
+        if (*p == whdd)
+        {
+            *p = whdd->next;
+            break;
+        }
+    }
 
     HeapFree(GetProcessHeap(), 0, whdd);
 
