@@ -48,7 +48,7 @@
 #endif
 
 #ifndef DECLSPEC_NORETURN
-# if (_MSVC_VER >= 1200) && !defined(MIDL_PASS)
+# if (_MSC_VER >= 1200) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
 # elif defined(__GNUC__)
 #  define DECLSPEC_NORETURN __attribute__((noreturn))
