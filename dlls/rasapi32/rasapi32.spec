@@ -36,8 +36,8 @@
 62  stdcall RasSetAutodialParamW(long ptr long) RasSetAutodialParamW
 63  stub RasSetCredentialsA
 64  stub RasSetCredentialsW
-67  stub RasSetEntryPropertiesA
-68  stub RasSetEntryPropertiesW
+67  stdcall RasSetEntryPropertiesA( str  str ptr long ptr long) RasSetEntryPropertiesA
+68  stdcall RasSetEntryPropertiesW(wstr wstr ptr long ptr long) RasSetEntryPropertiesW
 69  stub RasSetOldPassword
 70  stub RasSetSubEntryPropertiesA
 71  stub RasSetSubEntryPropertiesW

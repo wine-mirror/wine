@@ -1,7 +1,7 @@
 /*
  * RASAPI32
  *
- * Copyright 1998 Marcus Meissner
+ * Copyright 1998,2001 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,9 +64,9 @@ DWORD WINAPI RasEnumEntriesA( LPCSTR Reserved, LPCSTR lpszPhoneBook,
 /**************************************************************************
  *                 RasGetEntryDialParamsA			[RASAPI32.550]
  */
-DWORD WINAPI RasGetEntryDialParamsA( LPCSTR lpszPhoneBook,
-        LPRASDIALPARAMSA lpRasDialParams,
-        LPBOOL lpfPassword)
+DWORD WINAPI RasGetEntryDialParamsA(
+	LPCSTR lpszPhoneBook, LPRASDIALPARAMSA lpRasDialParams,
+	LPBOOL lpfPassword)
 {
 	FIXME("(%s,%p,%p),stub!\n",debugstr_a(lpszPhoneBook),
             lpRasDialParams,lpfPassword);
@@ -118,17 +118,25 @@ DWORD WINAPI RasEnumAutodialAddressesW(LPCWSTR *a, LPDWORD b, LPDWORD c)
 	return 0;
 }
 
-typedef LPVOID LPRASDEVINFOA;
-typedef LPVOID LPRASDEVINFOW;
 typedef LPVOID LPRASAUTODIALENTRYA;
 typedef LPVOID LPRASAUTODIALENTRYW;
 
 /**************************************************************************
  *                 RasEnumDevicesA		[RASAPI32.19]
+ *
+ * Just return a virtual modem too see what other APIs programs will
+ * call with it.
  */
-DWORD WINAPI RasEnumDevicesA(LPRASDEVINFOA a, LPDWORD b, LPDWORD c)
+DWORD WINAPI RasEnumDevicesA(LPRASDEVINFOA lpRasDevinfo, LPDWORD lpcb, LPDWORD lpcDevices)
 {
-	FIXME("(%p,%p,%p),stub!\n",a,b,c);
+	FIXME("(%p,%p,%p),stub!\n",lpRasDevinfo,lpcb,lpcDevices);
+	if (*lpcb < sizeof(RASDEVINFOA)) {
+		*lpcb = sizeof(RASDEVINFOA);
+		return ERROR_BUFFER_TOO_SMALL;
+	}
+	/* honor dwSize ? */
+	strcpy(lpRasDevinfo->szDeviceType, RASDT_Modem);
+	strcpy(lpRasDevinfo->szDeviceName, "WINE virtmodem");
 	return 0;
 }
 
@@ -182,18 +190,18 @@ DWORD WINAPI RasGetAutodialEnableW(DWORD a, LPBOOL b)
 /**************************************************************************
  *                 RasGetAutodialParamA		[RASAPI32.28]
  */
-DWORD WINAPI RasGetAutodialParamA(DWORD a, LPVOID b, LPDWORD c)
+DWORD WINAPI RasGetAutodialParamA(DWORD dwKey, LPVOID lpvValue, LPDWORD lpdwcbValue)
 {
-	FIXME("(%lx,%p,%p),stub!\n",a,b,c);
+	FIXME("(%lx,%p,%p),stub!\n",dwKey,lpvValue,lpdwcbValue);
 	return 0;
 }
 
 /**************************************************************************
  *                 RasGetAutodialParamW		[RASAPI32.29]
  */
-DWORD WINAPI RasGetAutodialParamW(DWORD a, LPVOID b, LPDWORD c)
+DWORD WINAPI RasGetAutodialParamW(DWORD dwKey, LPVOID lpvValue, LPDWORD lpdwcbValue)
 {
-	FIXME("(%lx,%p,%p),stub!\n",a,b,c);
+	FIXME("(%lx,%p,%p),stub!\n",dwKey,lpvValue,lpdwcbValue);
 	return 0;
 }
 
@@ -220,18 +228,18 @@ DWORD WINAPI RasSetAutodialAddressW(LPCWSTR a, DWORD b, LPRASAUTODIALENTRYW c,
 /**************************************************************************
  *                 RasSetAutodialEnableA	[RASAPI32.59]
  */
-DWORD WINAPI RasSetAutodialEnableA(DWORD a, BOOL b)
+DWORD WINAPI RasSetAutodialEnableA(DWORD dwDialingLocation, BOOL fEnabled)
 {
-	FIXME("(%lx,%x),stub!\n",a,b);
+	FIXME("(%lx,%x),stub!\n",dwDialingLocation,fEnabled);
 	return 0;
 }
 
 /**************************************************************************
  *                 RasSetAutodialEnableW	[RASAPI32.60]
  */
-DWORD WINAPI RasSetAutodialEnableW(DWORD a, BOOL b)
+DWORD WINAPI RasSetAutodialEnableW(DWORD dwDialingLocation, BOOL fEnabled)
 {
-	FIXME("(%lx,%x),stub!\n",a,b);
+	FIXME("(%lx,%x),stub!\n",dwDialingLocation,fEnabled);
 	return 0;
 }
 
@@ -254,9 +262,48 @@ DWORD WINAPI RasSetAutodialParamW(DWORD a, LPVOID b, DWORD c)
 }
 
 /**************************************************************************
+ *                 RasSetEntryPropertiesA	[RASAPI32.67]
+ */
+DWORD WINAPI RasSetEntryPropertiesA(LPCSTR lpszPhonebook, LPCSTR lpszEntry,
+	LPRASENTRYA lpRasEntry, DWORD dwEntryInfoSize, LPBYTE lpbDeviceInfo,
+	DWORD dwDeviceInfoSize
+) {
+	FIXME("(%s,%s,%p,%ld,%p,%ld), stub!\n",
+		debugstr_a(lpszPhonebook),debugstr_a(lpszEntry),
+		lpRasEntry,dwEntryInfoSize,lpbDeviceInfo,dwDeviceInfoSize
+	);
+	FIXME("Rasentry:\n");
+	FIXME("\tdwfOptions %lx\n",lpRasEntry->dwfOptions);
+	FIXME("\tszLocalPhoneNumber %s\n",debugstr_a(lpRasEntry->szLocalPhoneNumber));
+	return 0;
+}
+
+/**************************************************************************
+ *                 RasSetEntryPropertiesW	[RASAPI32.68]
+ */
+DWORD WINAPI RasSetEntryPropertiesW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry,
+	LPRASENTRYW lpRasEntry, DWORD dwEntryInfoSize, LPBYTE lpbDeviceInfo,
+	DWORD dwDeviceInfoSize
+) {
+	FIXME("(%s,%s,%p,%ld,%p,%ld), stub!\n",
+		debugstr_w(lpszPhonebook),debugstr_w(lpszEntry),
+		lpRasEntry,dwEntryInfoSize,lpbDeviceInfo,dwDeviceInfoSize
+	);
+	return 0;
+}
+
+/**************************************************************************
  *                 RasValidateEntryNameA	[RASAPI32.72]
  */
-DWORD WINAPI RasValidateEntryNameA(LPSTR lpszPhonebook, LPSTR lpszEntry) {
-	FIXME("(%s,%s), stub!\n",lpszPhonebook,lpszEntry);
+DWORD WINAPI RasValidateEntryNameA(LPCSTR lpszPhonebook, LPCSTR lpszEntry) {
+	FIXME("(%s,%s), stub!\n",debugstr_a(lpszPhonebook),debugstr_a(lpszEntry));
+	return 0;
+}
+
+/**************************************************************************
+ *                 RasValidateEntryNameW	[RASAPI32.73]
+ */
+DWORD WINAPI RasValidateEntryNameW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry) {
+	FIXME("(%s,%s), stub!\n",debugstr_w(lpszPhonebook),debugstr_w(lpszEntry));
 	return 0;
 }
