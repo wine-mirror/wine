@@ -1263,6 +1263,7 @@ dlls/msacm/Makefile
 dlls/msacm/imaadp32/Makefile
 dlls/msacm/msadp32/Makefile
 dlls/msacm/msg711/Makefile
+dlls/msacm/winemp3/Makefile
 dlls/msdmo/Makefile
 dlls/msimg32/Makefile
 dlls/msisys/Makefile

@@ -41,6 +41,7 @@ BASEDIRS = \
 	msacm/imaadp32 \
 	msacm/msadp32 \
 	msacm/msg711 \
+	msacm/winemp3 \
 	msdmo \
 	msimg32 \
 	msisys \
@@ -232,6 +233,7 @@ all: \
 	windebug.dll$(DLLEXT) \
 	winearts.drv$(DLLEXT) \
 	winedos.dll$(DLLEXT) \
+	winemp3.acm$(DLLEXT) \
 	wineoss.drv$(DLLEXT) \
 	wineps.dll$(DLLEXT) \
 	wineps16.dll$(DLLEXT) \
@@ -491,6 +493,9 @@ winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
 winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
 
+winemp3.acm$(DLLEXT): msacm/winemp3/winemp3.acm$(DLLEXT)
+	$(RM) $@ && $(LN_S) msacm/winemp3/winemp3.acm$(DLLEXT) $@
+
 wineoss.drv$(DLLEXT): winmm/wineoss/wineoss.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv$(DLLEXT) $@
 
@@ -607,6 +612,7 @@ version/version.dll$(DLLEXT): version
 win32s/w32skrnl.dll$(DLLEXT): win32s
 winmm/winearts/winearts.drv$(DLLEXT): winmm/winearts
 winedos/winedos.dll$(DLLEXT): winedos
+msacm/winemp3/winemp3.acm$(DLLEXT): msacm/winemp3
 winmm/wineoss/wineoss.drv$(DLLEXT): winmm/wineoss
 wineps/wineps.dll$(DLLEXT): wineps
 wininet/wininet.dll$(DLLEXT): wininet
@@ -625,7 +631,7 @@ x11drv/x11drv.dll$(DLLEXT): x11drv
 advapi32: kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 avicap32: kernel32.dll$(DLLEXT)
 avifil32: msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-comcat:   ole32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
+comcat:   ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 comctl32: user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
           winmm.dll$(DLLEXT)
 commdlg:  shell32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) comctl32.dll$(DLLEXT) winspool.drv$(DLLEXT) \
@@ -653,6 +659,7 @@ mpr:      advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 msacm/imaadp32: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 msacm/msadp32: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 msacm/msg711: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
+msacm/winemp3: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 msacm:    winmm.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 msdmo:    kernel32.dll$(DLLEXT)
 msimg32:  kernel32.dll$(DLLEXT)

@@ -1,0 +1,24 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winemp3.acm
+IMPORTS   = winmm user32 kernel32
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	common.c \
+	dct64_i386.c \
+	decode_i386.c \
+	interface.c \
+	layer1.c \
+	layer2.c \
+	layer3.c \
+	mpegl3.c \
+	tabinit.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
