@@ -327,6 +327,7 @@ static HRESULT WINAPI AVISplitter_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 {
     HRESULT hr = S_OK;
     AVISplitter *This = (AVISplitter *)iface;
+    int i;
 
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 
@@ -334,6 +335,17 @@ static HRESULT WINAPI AVISplitter_Run(IBaseFilter * iface, REFERENCE_TIME tStart
     {
         This->rtStreamStart = tStart;
         This->state = State_Running;
+
+        hr = PullPin_InitProcessing(This->pInputPin);
+
+        if (SUCCEEDED(hr))
+        { 
+            for (i = 1; i < This->cStreams + 1; i++)
+            {
+                OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
+            }
+            hr = PullPin_StartProcessing(This->pInputPin);
+        }
     }
     LeaveCriticalSection(&This->csFilter);
 
@@ -840,9 +852,9 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pD
     }
 
     dump_AM_MEDIA_TYPE(&amt);
-    FIXME("fSamplesPerSec = %f\n", (double)fSamplesPerSec);
-    FIXME("dwSampleSize = %lx\n", dwSampleSize);
-    FIXME("dwLength = %lx\n", dwLength);
+    TRACE("fSamplesPerSec = %f\n", (double)fSamplesPerSec);
+    TRACE("dwSampleSize = %lx\n", dwSampleSize);
+    TRACE("dwLength = %lx\n", dwLength);
 
     ppOldPins = This->ppPins;
 

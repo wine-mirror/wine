@@ -82,6 +82,17 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
         if (SUCCEEDED(hr))
             hr = IMemInputPin_GetAllocator(This->pMemInputPin, &pMemAlloc);
 
+        if (hr == VFW_E_NO_ALLOCATOR)
+        {
+            /* Input pin provides no allocator, use standard memory allocator */
+            hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)&pMemAlloc);
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IMemInputPin_NotifyAllocator(This->pMemInputPin, pMemAlloc, FALSE);
+            }
+        }
+
         if (SUCCEEDED(hr))
             hr = IMemAllocator_SetProperties(pMemAlloc, &This->allocProps, &actual);
 
@@ -180,7 +191,6 @@ HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, 
     else
         ZeroMemory(&pPinImpl->allocProps, sizeof(pPinImpl->allocProps));
 
-
     return S_OK;
 }
 
@@ -217,7 +227,7 @@ ULONG WINAPI IPinImpl_AddRef(IPin * iface)
 {
     IPinImpl *This = (IPinImpl *)iface;
     
-    TRACE("()\n");
+    TRACE("(%p)->() AddRef from %ld\n", iface, This->refCount);
     
     return InterlockedIncrement(&This->refCount);
 }
@@ -394,7 +404,7 @@ ULONG WINAPI InputPin_Release(IPin * iface)
 {
     InputPin *This = (InputPin *)iface;
     
-    TRACE("()\n");
+    TRACE("(%p)->() Release from %ld\n", iface, This->pin.refCount);
     
     if (!InterlockedDecrement(&This->pin.refCount))
     {
@@ -1142,6 +1152,8 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
 
     rtCurrent = MEDIATIME_FROM_BYTES(ALIGNDOWN(BYTES_FROM_MEDIATIME(This->rtStart), allocProps.cbAlign));
 
+    TRACE("Start\n");
+
     while (rtCurrent < This->rtStop)
     {
         /* FIXME: to improve performance by quite a bit this should be changed
@@ -1150,6 +1162,8 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
         IMediaSample * pSample = NULL;
         REFERENCE_TIME rtSampleStop;
         DWORD dwUser;
+
+        TRACE("Process sample\n");
 
         hr = IMemAllocator_GetBuffer(This->pAlloc, &pSample, NULL, NULL, 0);
 
@@ -1178,6 +1192,8 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
     }
 
     CoUninitialize();
+
+    TRACE("End\n");
 }
 
 static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)

@@ -235,6 +235,9 @@ static HRESULT AVIDec_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
             pAVIDec->pBihOut->biCompression = 0;
             pAVIDec->pBihOut->biSizeImage = pAVIDec->pBihOut->biWidth * pAVIDec->pBihOut->biHeight * pAVIDec->pBihOut->biBitCount / 8;
 
+            /* Update buffer size of media samples in output */
+            ((OutputPin*)pAVIDec->ppPins[1])->allocProps.cbBuffer = pAVIDec->pBihOut->biSizeImage;
+	    
             pAVIDec->init = 1;
             TRACE("Connection accepted\n");
             return S_OK;
@@ -354,7 +357,13 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        hr = AVIDec_OutputPin_Construct(&piOutput, NULL, NULL, AVIDec_Output_QueryAccept, &pAVIDec->csFilter, &pAVIDec->ppPins[1]);
+        ALLOCATOR_PROPERTIES props;
+        props.cbAlign = 1;
+        props.cbPrefix = 0;
+        props.cbBuffer = 0; /* Will be updated at connection time */
+        props.cBuffers = 2;
+	
+        hr = AVIDec_OutputPin_Construct(&piOutput, &props, NULL, AVIDec_Output_QueryAccept, &pAVIDec->csFilter, &pAVIDec->ppPins[1]);
 
 	if (FAILED(hr))
 	    ERR("Cannot create output pin (%lx)\n", hr);
@@ -498,8 +507,8 @@ static HRESULT WINAPI AVIDec_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     EnterCriticalSection(&This->csFilter);
     {
         This->rtStreamStart = tStart;
-
         This->state = State_Running;
+        OutputPin_CommitAllocator((OutputPin *)This->ppPins[1]);
     }
     LeaveCriticalSection(&This->csFilter);
 

@@ -180,6 +180,8 @@ typedef struct _IFilterGraphImpl {
     int EcCompleteCount;
     int HandleEcComplete;
     int HandleEcRepaint;
+    OAFilterState state;
+    CRITICAL_SECTION cs;
 } IFilterGraphImpl;
 
 
@@ -245,6 +247,7 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
 	IFilterMapper2_Release(This->pFilterMapper2);
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
+	DeleteCriticalSection(&This->cs);
 	HeapFree(GetProcessHeap(), 0, This->ppFiltersInGraph);
 	HeapFree(GetProcessHeap(), 0, This->pFilterNames);
 	HeapFree(GetProcessHeap(), 0, This);
@@ -519,18 +522,18 @@ static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
     return hr;
 }
 
-static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* poutputpin, IPin*** pppins, ULONG* pnb)
+static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPin*** pppins, ULONG* pnb)
 {
     HRESULT hr;
     ULONG nb = 0;
 
-    TRACE("(%p, %p, %p, %p)\n", pfilter, poutputpin, pppins, pnb);
-    hr = IPin_QueryInternalConnections(poutputpin, NULL, &nb);
+    TRACE("(%p, %p, %p, %p)\n", pfilter, pinputpin, pppins, pnb);
+    hr = IPin_QueryInternalConnections(pinputpin, NULL, &nb);
     if (hr == S_OK) {
         /* Rendered input */
     } else if (hr == S_FALSE) {
         *pppins = CoTaskMemAlloc(sizeof(IPin*)*nb);
-        hr = IPin_QueryInternalConnections(poutputpin, *pppins, &nb);
+        hr = IPin_QueryInternalConnections(pinputpin, *pppins, &nb);
         if (hr != S_OK) {
             ERR("Error (%lx)\n", hr);
         }
@@ -1159,14 +1162,116 @@ static HRESULT WINAPI Mediacontrol_Invoke(IMediaControl *iface,
     return S_OK;
 }
 
+static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, REFERENCE_TIME tStart)
+{
+    HRESULT hr;
+    IPin* pInputPin;
+    IPin** ppPins;
+    ULONG nb;
+    ULONG i;
+    PIN_INFO PinInfo;
+
+    TRACE("%p %p %lld\n", pGraph, pOutputPin, tStart);
+
+    hr = IPin_ConnectedTo(pOutputPin, &pInputPin);
+
+    if (SUCCEEDED(hr))
+        hr = IPin_QueryPinInfo(pInputPin, &PinInfo);
+
+    if (SUCCEEDED(hr))
+        hr = GetInternalConnections(PinInfo.pFilter, pInputPin, &ppPins, &nb);
+
+    if (SUCCEEDED(hr))
+    {
+        if (nb == 0)
+        {
+            TRACE("Reached a renderer\n");
+            /* Count renderers for end of stream notification */
+            pGraph->nRenderers++;
+        }
+        else
+        {
+            for(i = 0; i < nb; i++)
+            {
+                /* Explore the graph downstream from this pin
+		 * FIXME: We should prevent exploring from a pin more than once. This can happens when
+		 * several input pins are connected to the same output (a MUX for instance). */
+                ExploreGraph(pGraph, ppPins[i], tStart);
+            }
+
+            CoTaskMemFree(ppPins);
+        }
+        TRACE("Run filter %p\n", PinInfo.pFilter);
+        IBaseFilter_Run(PinInfo.pFilter, tStart);
+    }
+
+    return hr;
+}
+
 /*** IMediaControl methods ***/
 static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
+    int i;
+    IBaseFilter* pfilter;
+    IEnumPins* pEnum;
+    HRESULT hr;
+    IPin* pPin;
+    LONG dummy;
+    PIN_DIRECTION dir;
 
-    TRACE("(%p/%p)->(): stub !!!\n", This, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
 
+    EnterCriticalSection(&This->cs);
+
+    if (This->state == State_Running)
+    {
+        LeaveCriticalSection(&This->cs);
+        return S_OK;
+    }
+
+    /* Explorer the graph from source filters to renderers, determine renderers number and
+     * run filters from renderers to source filters */
+    This->nRenderers = 0;  
     ResetEvent(This->hEventCompletion);
 
+    for(i = 0; i < This->nFilters; i++)
+    {
+        BOOL source = TRUE;
+        pfilter = This->ppFiltersInGraph[i];
+        hr = IBaseFilter_EnumPins(pfilter, &pEnum);
+        if (hr != S_OK)
+        {
+            ERR("Enum pins failed %lx\n", hr);
+            continue;
+        }
+        /* Check if it is a source filter */
+        while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
+        {
+            IPin_QueryDirection(pPin, &dir);
+            if (dir == PINDIR_INPUT)
+            {
+                source = FALSE;
+                break;
+            }
+        }
+        if (source == TRUE)
+        {
+            TRACE("Found a source filter\n");
+            IEnumPins_Reset(pEnum);
+            while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
+            {
+                /* Explore the graph downstream from this pin */
+                ExploreGraph(This, pPin, 0);
+            }
+            IBaseFilter_Run(pfilter, 0);
+        }
+        IEnumPins_Release(pEnum);
+    }
+
+    This->state = State_Running;
+
+    LeaveCriticalSection(&This->cs);
+    
     return S_FALSE;
 }
 
@@ -1191,8 +1296,14 @@ static HRESULT WINAPI Mediacontrol_GetState(IMediaControl *iface,
 					    OAFilterState *pfs) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
 
-    TRACE("(%p/%p)->(%ld, %p): stub !!!\n", This, iface, msTimeout, pfs);
+    TRACE("(%p/%p)->(%ld, %p): semi-stub !!!\n", This, iface, msTimeout, pfs);
 
+    EnterCriticalSection(&This->cs);
+
+    *pfs = This->state;
+
+    LeaveCriticalSection(&This->cs);
+    
     return S_OK;
 }
 
@@ -2876,7 +2987,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, long EventCo
 
     /* We need thread safety here, let's use the events queue's one */
     EnterCriticalSection(&This->evqueue.msg_crst);
-    
+
     if ((EventCode == EC_COMPLETE) && This->HandleEcComplete)
     {
 	if (++This->EcCompleteCount == This->nRenderers)
@@ -2950,7 +3061,9 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     fimpl->notif.disabled = TRUE;
     fimpl->nRenderers = 0;
     fimpl->EcCompleteCount = 0;
+    fimpl->state = State_Stopped;
     EventsQueue_Init(&fimpl->evqueue);
+    InitializeCriticalSection(&fimpl->cs);
 
     hr = CoCreateInstance(&CLSID_FilterMapper, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);
     if (FAILED(hr)) {
