@@ -4385,7 +4385,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			TBN_ENDDRAG);
 
 	if (bSendMessage)
-	    SendMessageA (GetParent(hwnd), WM_COMMAND,
+	    SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
 			  MAKEWPARAM(btnPtr->idCommand, 0), (LPARAM)hwnd);
 
 	/* !!! Undocumented - toolbar at 4.71 level and above sends
@@ -5194,7 +5194,13 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DRAWITEM:
 	case WM_MEASUREITEM:
 	case WM_VKEYTOITEM:
-	    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
+	    {
+                TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+                if(infoPtr != NULL)
+                    return SendMessageA (infoPtr->hwndNotify, uMsg, wParam, lParam);
+                else
+                    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
+            }
 
 	default:
 	    if (uMsg >= WM_USER)
