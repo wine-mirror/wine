@@ -83,6 +83,20 @@ struct _stat {
   MSVCRT(time_t) st_ctime;
 };
 
+struct MSVCRT(stat) {
+  _dev_t         st_dev;
+  _ino_t         st_ino;
+  unsigned short st_mode;
+  short          st_nlink;
+  short          st_uid;
+  short          st_gid;
+  _dev_t         st_rdev;
+  MSVCRT(_off_t) st_size;
+  MSVCRT(time_t) st_atime;
+  MSVCRT(time_t) st_mtime;
+  MSVCRT(time_t) st_ctime;
+};
+
 struct _stati64 {
   _dev_t         st_dev;
   _ino_t         st_ino;
@@ -128,8 +142,8 @@ int _wstati64(const MSVCRT(wchar_t)*,struct _stati64*);
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
 
-static inline int fstat(int fd, struct _stat* ptr) { return _fstat(fd, ptr); }
-static inline int stat(const char* path, struct _stat* ptr) { return _stat(path, ptr); }
+static inline int fstat(int fd, struct stat* ptr) { return _fstat(fd, (struct _stat*)ptr); }
+static inline int stat(const char* path, struct stat* ptr) { return _stat(path, (struct _stat*)ptr); }
 #ifndef MSVCRT_UMASK_DEFINED
 static inline int umask(int fd) { return _umask(fd); }
 #define MSVCRT_UMASK_DEFINED
