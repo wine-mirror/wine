@@ -98,7 +98,7 @@
 544 stdcall	RasEnumConnectionsA(ptr ptr ptr)
 545 stdcall	RasEnumConnectionsW(ptr ptr ptr)
 546 stdcall	RasEnumEntriesA(str str ptr ptr ptr)
-547 stub	RasEnumEntriesW
+547 stdcall	RasEnumEntriesW(str str ptr ptr ptr)
 548 stub	RasGetConnectStatusA
 549 stub	RasGetConnectStatusW
 550 stdcall	RasGetEntryDialParamsA(str ptr ptr)

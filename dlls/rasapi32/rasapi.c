@@ -62,6 +62,20 @@ DWORD WINAPI RasEnumEntriesA( LPCSTR Reserved, LPCSTR lpszPhoneBook,
 }
 
 /**************************************************************************
+ *                 RasEnumEntriesW		        	[RASAPI32.547]
+ */
+DWORD WINAPI RasEnumEntriesW( LPCWSTR Reserved, LPCWSTR lpszPhoneBook,
+        LPRASENTRYNAMEW lpRasEntryName,
+        LPDWORD lpcb, LPDWORD lpcEntries)
+{
+	FIXME("(%p,%s,%p,%p,%p),stub!\n",Reserved,debugstr_w(lpszPhoneBook),
+            lpRasEntryName,lpcb,lpcEntries);
+        *lpcEntries = 0;
+	return 0;
+}
+
+
+/**************************************************************************
  *                 RasGetEntryDialParamsA			[RASAPI32.550]
  */
 DWORD WINAPI RasGetEntryDialParamsA(
