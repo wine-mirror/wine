@@ -2794,7 +2794,9 @@ VOID COMM_WaitCommEventService(void **args)
     if(buffer)
         *buffer = events;
  
+    lpOverlapped->Internal = STATUS_SUCCESS;
     SetEvent( lpOverlapped->hEvent);
+    CloseHandle(lpOverlapped->InternalHigh);
 }
 
 /***********************************************************************
@@ -2836,14 +2838,16 @@ BOOL WINAPI WaitCommEvent(
 
     /* check that the overlapped structure has a valid event flag */
     if ( (lpov->hEvent==0) || (lpov->hEvent == INVALID_HANDLE_VALUE) )
-{
+    {
         ERR("Couldn't create Event flag for Overlapped structure\n");
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    lpov->Internal = 0;
-    lpov->InternalHigh = hFile;
+    ResetEvent(lpov->hEvent);
+
+    lpov->Internal = STATUS_PENDING;
+    lpov->InternalHigh = 0;
     lpov->Offset = 0;
     lpov->OffsetHigh = 0;
 
@@ -2861,7 +2865,7 @@ BOOL WINAPI WaitCommEvent(
 
         ret=server_call( REQ_CREATE_ASYNC );
 
-        lpov->Internal = req->ov_handle;
+        lpov->InternalHigh = req->ov_handle;
     }
     SERVER_END_REQ;
 
@@ -2872,6 +2876,9 @@ BOOL WINAPI WaitCommEvent(
         TRACE("server call failed.\n");
         return FALSE;
     }
+
+    /* activate the overlapped operation */
+    lpov->Internal = STATUS_PENDING;
 
     /* wait ourselves if the caller didn't give us an overlapped struct */
     if(!lpOverlapped)
