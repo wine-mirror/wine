@@ -389,13 +389,14 @@ void *open_winelib_app( char *argv[] )
     void *ret = NULL;
     char *tmp;
     const char *name;
+    char errStr[100];
 
     if ((name = getenv( "WINEPRELOAD" )))
     {
-        if (!(ret = wine_dll_load_main_exe( name, 0 )))
+        if (!(ret = wine_dll_load_main_exe( name, 0, errStr, sizeof(errStr) )))
         {
-            MESSAGE( "%s: could not load '%s' as specified in the WINEPRELOAD environment variable\n",
-                     argv[0], name );
+            MESSAGE( "%s: could not load '%s' as specified in the WINEPRELOAD environment variable: %s\n",
+                     argv[0], name, errStr );
             ExitProcess(1);
         }
     }
@@ -417,12 +418,12 @@ void *open_winelib_app( char *argv[] )
             strcpy( tmp, argv0 );
             strcat( tmp, ".so" );
             /* search in PATH only if there was no '/' in argv[0] */
-            ret = wine_dll_load_main_exe( tmp, (name == argv0) );
+            ret = wine_dll_load_main_exe( tmp, (name == argv0), errStr, sizeof(errStr) );
             if (!ret && !argv[1])
             {
                 /* if no argv[1], this will be better than displaying usage */
-                MESSAGE( "%s: could not load library '%s' as Winelib application\n",
-                         argv[0], tmp );
+                MESSAGE( "%s: could not load library '%s' as Winelib application: %s\n",
+                         argv[0], tmp, errStr );
                 ExitProcess(1);
             }
             HeapFree( GetProcessHeap(), 0, tmp );

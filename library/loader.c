@@ -349,7 +349,7 @@ void wine_dll_unload( void *handle )
  *
  * Try to load the .so for the main exe, optionally searching for it in PATH.
  */
-void *wine_dll_load_main_exe( const char *name, int search_path )
+void *wine_dll_load_main_exe( const char *name, int search_path, char *error, int errorsize )
 {
     void *ret = NULL;
     const char *path = NULL;
@@ -358,7 +358,7 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
     if (!path)
     {
         /* no path, try only the specified name */
-        ret = wine_dlopen( name, RTLD_NOW, NULL, 0 );
+        ret = wine_dlopen( name, RTLD_NOW, error, errorsize );
     }
     else
     {
@@ -380,7 +380,7 @@ void *wine_dll_load_main_exe( const char *name, int search_path )
                 if ((len = p - path) > 0)
                 {
                     memcpy( basename - len, path, len );
-                    if ((ret = wine_dlopen( basename - len, RTLD_NOW, NULL, 0 ))) break;
+                    if ((ret = wine_dlopen( basename - len, RTLD_NOW, error, errorsize ))) break;
                 }
                 if (!*p) break;
                 path = p + 1;
