@@ -561,9 +561,17 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
         goto done;
     }
 
-    /* then module basename preceded by '*' in AppDefaults */
+    /* then module basename preceded by '*' in environment */
     basename = (WCHAR *)get_basename( module+1 );
     basename[-1] = '*';
+    if (get_env_load_order( basename-1, loadorder ))
+    {
+        TRACE( "got environment basename %s for %s\n",
+               debugstr_loadorder(loadorder), debugstr_w(path) );
+        goto done;
+    }
+
+    /* then module basename preceded by '*' in AppDefaults */
     if (app_key && get_registry_value( app_key, basename-1, loadorder ))
     {
         TRACE( "got app defaults basename %s for %s\n",
