@@ -1809,13 +1809,15 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpTbInfo->fsState = btnPtr->fsState;
     if (lpTbInfo->dwMask & TBIF_STYLE)
 	lpTbInfo->fsStyle = btnPtr->fsStyle;
-    if (lpTbInfo->dwMask & TBIF_TEXT) {
-	if ((btnPtr->iString >= 0) || (btnPtr->iString < infoPtr->nNumStrings))
-	    lstrcpynWtoA (lpTbInfo->pszText,
-			  (LPWSTR)infoPtr->strings[btnPtr->iString],
-			 lpTbInfo->cchText);
+     if (lpTbInfo->dwMask & TBIF_TEXT) {
+         if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
+         {	
+             lstrcpynWtoA (lpTbInfo->pszText,
+                           (LPWSTR)infoPtr->strings[btnPtr->iString],
+                           lpTbInfo->cchText);
+         }
+         else lpTbInfo->pszText[0]=0;
     }
-
     return nIndex;
 }
 
