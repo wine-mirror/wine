@@ -121,12 +121,13 @@ VOID WINAPI GetSystemInfo(
 					cachedsi.wProcessorLevel= 5;
 					break;
 				case 1: /* two-figure levels */
-					switch (value[1] - '0') {
-					case 5: /* P4; FIXME: data correct ? */
-					  cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-					  cachedsi.wProcessorLevel= 5;
-					  break;
-					} /* fall through to prev. default */
+                                    if (value[1] == '5')
+                                    {
+                                        cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+                                        cachedsi.wProcessorLevel= 5;
+                                        break;
+                                    }
+                                    /* fall through */
 				default:
 					FIXME("unknown cpu family '%s', please report ! (-> setting to 386)\n", value);
 					break;
