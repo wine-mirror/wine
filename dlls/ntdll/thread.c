@@ -44,6 +44,7 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init)
     static PEB peb;
     static PEB_LDR_DATA ldr;
     static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
+    static RTL_BITMAP tls_bitmap;
     static struct debug_info info;  /* debug info for initial thread */
 
     if (teb.Tib.Self) return;  /* do it only once */
@@ -67,7 +68,9 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init)
     InitializeListHead( &teb.TlsLinks );
 
     peb.ProcessParameters = &params;
-    peb.LdrData = &ldr;
+    peb.TlsBitmap         = &tls_bitmap;
+    peb.LdrData           = &ldr;
+    RtlInitializeBitMap( &tls_bitmap, (BYTE *)peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );

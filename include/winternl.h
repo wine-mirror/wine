@@ -81,6 +81,20 @@ typedef struct RTL_DRIVE_LETTER_CURDIR
     UNICODE_STRING      DosPath;
 } RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
 
+typedef struct tagRTL_BITMAP {
+    ULONG  SizeOfBitMap; /* Number of bits in the bitmap */
+    LPBYTE BitMapBuffer; /* Bitmap data, assumed sized to a DWORD boundary */
+} RTL_BITMAP, *PRTL_BITMAP;
+
+typedef const RTL_BITMAP *PCRTL_BITMAP;
+
+typedef struct tagRTL_BITMAP_RUN {
+    ULONG StartOfRun; /* Bit position at which run starts - FIXME: Name? */
+    ULONG SizeOfRun;  /* Size of the run in bits - FIXME: Name? */
+} RTL_BITMAP_RUN, *PRTL_BITMAP_RUN;
+
+typedef const RTL_BITMAP_RUN *PCRTL_BITMAP_RUN;
+
 typedef struct _RTL_USER_PROCESS_PARAMETERS
 {
     ULONG               AllocationSize;
@@ -140,7 +154,10 @@ typedef struct _PEB
     RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 */
     PVOID                        __pad_14;           /*  14 */
     HANDLE                       ProcessHeap;        /*  18 */
-    BYTE                         __pad_1c[204];      /*  1c */
+    BYTE                         __pad_1c[36];       /*  1c */
+    PRTL_BITMAP                  TlsBitmap;          /*  40 */
+    ULONG                        TlsBitmapBits[2];   /*  44 */
+    BYTE                         __pad_4c[156];      /*  4c */
     PVOID                        Reserved3[59];      /*  e8 */
     ULONG                        SessionId;          /* 1d4 */
 } PEB, *PPEB;
@@ -651,20 +668,6 @@ typedef struct _RTL_HEAP_DEFINITION {
 
     ULONG Unknown[11];
 } RTL_HEAP_DEFINITION, *PRTL_HEAP_DEFINITION;
-
-typedef struct tagRTL_BITMAP {
-    ULONG  SizeOfBitMap; /* Number of bits in the bitmap */
-    LPBYTE BitMapBuffer; /* Bitmap data, assumed sized to a DWORD boundary */
-} RTL_BITMAP, *PRTL_BITMAP;
-
-typedef const RTL_BITMAP *PCRTL_BITMAP;
-
-typedef struct tagRTL_BITMAP_RUN {
-    ULONG StartOfRun; /* Bit position at which run starts - FIXME: Name? */
-    ULONG SizeOfRun;  /* Size of the run in bits - FIXME: Name? */
-} RTL_BITMAP_RUN, *PRTL_BITMAP_RUN;
-
-typedef const RTL_BITMAP_RUN *PCRTL_BITMAP_RUN;
 
 typedef struct _RTL_RWLOCK {
     RTL_CRITICAL_SECTION rtlCS;

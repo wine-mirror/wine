@@ -46,57 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(server);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-/* Win32 process database */
-typedef struct _PDB
-{
-    LONG             header[2];        /* 00 Kernel object header */
-    HMODULE          module;           /* 08 Main exe module (NT) */
-    PPEB_LDR_DATA    LdrData;          /* 0c Pointer to loader information */
-    RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 Process parameters */
-    DWORD            unknown2;         /* 14 Unknown */
-    HANDLE           heap;             /* 18 Default process heap */
-    HANDLE           mem_context;      /* 1c Process memory context */
-    DWORD            flags;            /* 20 Flags */
-    void            *pdb16;            /* 24 DOS PSP */
-    WORD             PSP_sel;          /* 28 Selector to DOS PSP */
-    WORD             imte;             /* 2a IMTE for the process module */
-    WORD             threads;          /* 2c Number of threads */
-    WORD             running_threads;  /* 2e Number of running threads */
-    WORD             free_lib_count;   /* 30 Recursion depth of FreeLibrary calls */
-    WORD             ring0_threads;    /* 32 Number of ring 0 threads */
-    HANDLE           system_heap;      /* 34 System heap to allocate handles */
-    HTASK            task;             /* 38 Win16 task */
-    void            *mem_map_files;    /* 3c Pointer to mem-mapped files */
-    struct _ENVDB   *env_db;           /* 40 Environment database */
-    void            *handle_table;     /* 44 Handle table */
-    struct _PDB     *parent;           /* 48 Parent process */
-    void            *modref_list;      /* 4c MODREF list */
-    void            *thread_list;      /* 50 List of threads */
-    void            *debuggee_CB;      /* 54 Debuggee context block */
-    void            *local_heap_free;  /* 58 Head of local heap free list */
-    DWORD            unknown4;         /* 5c Unknown */
-    CRITICAL_SECTION crit_section;     /* 60 Critical section */
-    DWORD            unknown5[3];      /* 78 Unknown */
-    void            *console;          /* 84 Console */
-    DWORD            tls_bits[2];      /* 88 TLS in-use bits */
-    DWORD            process_dword;    /* 90 Unknown */
-    struct _PDB     *group;            /* 94 Process group */
-    void            *exe_modref;       /* 98 MODREF for the process EXE */
-    void            *top_filter;       /* 9c Top exception filter */
-    DWORD            priority;         /* a0 Priority level */
-    HANDLE           heap_list;        /* a4 Head of process heap list */
-    void            *heap_handles;     /* a8 Head of heap handles list */
-    DWORD            unknown6;         /* ac Unknown */
-    void            *console_provider; /* b0 Console provider (??) */
-    WORD             env_selector;     /* b4 Selector to process environment */
-    WORD             error_mode;       /* b6 Error mode */
-    HANDLE           load_done_evt;    /* b8 Event for process loading done */
-    void            *UTState;          /* bc Head of Univeral Thunk list */
-    DWORD            unknown8;         /* c0 Unknown (NT) */
-    LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
-} PDB;
-
-static PDB *current_process;
+static UINT process_error_mode;
 
 static HANDLE main_exe_file;
 static DWORD shutdown_flags = 0;
@@ -661,20 +611,12 @@ static BOOL process_init( char *argv[] )
     BOOL ret;
     size_t info_size = 0;
     RTL_USER_PROCESS_PARAMETERS *params;
+    PEB *peb = NtCurrentTeb()->Peb;
     HANDLE hstdin, hstdout, hstderr;
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
-
-    /* Fill the initial process structure */
-    current_process = (PDB *)NtCurrentTeb()->Peb;  /* FIXME: should be a PEB */
-    params = current_process->ProcessParameters;
-    current_process->threads           = 1;
-    current_process->running_threads   = 1;
-    current_process->ring0_threads     = 1;
-    current_process->group             = current_process;
-    current_process->priority          = 8;  /* Normal */
 
     /* Setup the server connection */
     wine_server_init_thread();
@@ -698,10 +640,12 @@ static BOOL process_init( char *argv[] )
     if (!ret) return FALSE;
 
     /* Create the process heap */
-    current_process->heap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
+    peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
 
     if (info_size == 0)
     {
+        params = peb->ProcessParameters;
+
         /* This is wine specific: we have no parent (we're started from unix)
          * so, create a simple console with bare handles to unix stdio 
          * input & output streams (aka simple console)
@@ -723,7 +667,7 @@ static BOOL process_init( char *argv[] )
     else
     {
         if (!(params = init_user_process_params( info_size ))) return FALSE;
-        current_process->ProcessParameters = params;
+        peb->ProcessParameters = params;
 
         /* convert value from server:
          * + 0 => INVALID_HANDLE_VALUE
@@ -1942,8 +1886,8 @@ BOOL WINAPI GetExitCodeProcess(
  */
 UINT WINAPI SetErrorMode( UINT mode )
 {
-    UINT old = current_process->error_mode;
-    current_process->error_mode = mode;
+    UINT old = process_error_mode;
+    process_error_mode = mode;
     return old;
 }
 
@@ -1959,25 +1903,14 @@ UINT WINAPI SetErrorMode( UINT mode )
  */
 DWORD WINAPI TlsAlloc( void )
 {
-    DWORD i, mask, ret = 0;
-    DWORD *bits = current_process->tls_bits;
+    DWORD index;
+
     RtlAcquirePebLock();
-    if (*bits == 0xffffffff)
-    {
-        bits++;
-        ret = 32;
-        if (*bits == 0xffffffff)
-        {
-            RtlReleasePebLock();
-            SetLastError( ERROR_NO_MORE_ITEMS );
-            return 0xffffffff;
-        }
-    }
-    for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
-    *bits |= mask;
+    index = RtlFindClearBitsAndSet( NtCurrentTeb()->Peb->TlsBitmap, 1, 0 );
+    if (index != ~0UL) NtCurrentTeb()->TlsSlots[index] = 0; /* clear the value */
+    else SetLastError( ERROR_NO_MORE_ITEMS );
     RtlReleasePebLock();
-    NtCurrentTeb()->TlsSlots[ret+i] = 0; /* clear the value */
-    return ret + i;
+    return index;
 }
 
 
@@ -1993,23 +1926,16 @@ DWORD WINAPI TlsAlloc( void )
 BOOL WINAPI TlsFree(
     DWORD index) /* [in] TLS Index to free */
 {
-    DWORD mask = (1 << (index & 31));
-    DWORD *bits = current_process->tls_bits;
-    if (index >= 64)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    if (index >= 32) bits++;
+    BOOL ret;
+
     RtlAcquirePebLock();
-    if (!(*bits & mask))  /* already free? */
+    ret = RtlAreBitsSet( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
+    if (ret)
     {
-        RtlReleasePebLock();
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
+        RtlClearBits( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
+        NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
     }
-    *bits &= ~mask;
-    NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
+    else SetLastError( ERROR_INVALID_PARAMETER );
     RtlReleasePebLock();
     return TRUE;
 }
@@ -2025,7 +1951,7 @@ BOOL WINAPI TlsFree(
 LPVOID WINAPI TlsGetValue(
     DWORD index) /* [in] TLS index to retrieve value for */
 {
-    if (index >= 64)
+    if (index >= NtCurrentTeb()->Peb->TlsBitmap->SizeOfBitMap)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -2046,7 +1972,7 @@ BOOL WINAPI TlsSetValue(
     DWORD index,  /* [in] TLS index to set value for */
     LPVOID value) /* [in] Value to be stored */
 {
-    if (index >= 64)
+    if (index >= NtCurrentTeb()->Peb->TlsBitmap->SizeOfBitMap)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
