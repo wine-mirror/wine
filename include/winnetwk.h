@@ -66,19 +66,22 @@ typedef struct {
 } NETCONNECTINFOSTRUCT,*LPNETCONNECTINFOSTRUCT;
   
 
-UINT      WINAPI WNetAddConnection2A(LPNETRESOURCEA,LPCSTR,LPCSTR,DWORD);
-UINT      WINAPI WNetAddConnection2W(LPNETRESOURCEW,LPCWSTR,LPCWSTR,DWORD);
-#define     WNetAddConnection2 WINELIB_NAME_AW(WNetAddConnection2_)
-UINT      WINAPI WNetAddConnection3A(HWND,LPNETRESOURCEA,LPCSTR,LPCSTR,DWORD);
-UINT      WINAPI WNetAddConnection3W(HWND,LPNETRESOURCEW,LPCWSTR,LPCWSTR,DWORD);
-#define     WNetAddConnection3 WINELIB_NAME_AW(WNetAddConnection3_)
-UINT      WINAPI WNetConnectionDialog1(HWND,DWORD);
-UINT      WINAPI WNetConnectionDialog1A(LPCONNECTDLGSTRUCTA);
-UINT      WINAPI WNetConnectionDialog1W(LPCONNECTDLGSTRUCTW);
-#define     WNetConnectionDialog1 WINELIB_NAME_AW(WNetConnectionDialog1_)
-UINT      WINAPI MultinetGetErrorTextA(DWORD,DWORD,DWORD);
-UINT      WINAPI MultinetGetErrorTextW(DWORD,DWORD,DWORD);
-#define     MultinetGetErrorText WINELIB_NAME_AW(MultinetGetErrorText_)
+UINT        WINAPI WNetAddConnection2A(LPNETRESOURCEA,LPCSTR,LPCSTR,DWORD);
+UINT        WINAPI WNetAddConnection2W(LPNETRESOURCEW,LPCWSTR,LPCWSTR,DWORD);
+#define     WNetAddConnection2 WINELIB_NAME_AW(WNetAddConnection2)
+UINT        WINAPI WNetAddConnection3A(HWND,LPNETRESOURCEA,LPCSTR,LPCSTR,DWORD);
+UINT        WINAPI WNetAddConnection3W(HWND,LPNETRESOURCEW,LPCWSTR,LPCWSTR,DWORD);
+#define     WNetAddConnection3 WINELIB_NAME_AW(WNetAddConnection3)
+UINT        WINAPI WNetConnectionDialog1(HWND,DWORD);
+UINT        WINAPI WNetConnectionDialog1A(LPCONNECTDLGSTRUCTA);
+UINT        WINAPI WNetConnectionDialog1W(LPCONNECTDLGSTRUCTW);
+#define     WNetConnectionDialog1 WINELIB_NAME_AW(WNetConnectionDialog1)
+UINT        WINAPI MultinetGetErrorTextA(DWORD,DWORD,DWORD);
+UINT        WINAPI MultinetGetErrorTextW(DWORD,DWORD,DWORD);
+#define     MultinetGetErrorText WINELIB_NAME_AW(MultinetGetErrorText)
+DWORD       WINAPI NPSGetSectionNameA(DWORD,LPCSTR*);
+DWORD       WINAPI NPSGetSectionNameW(DWORD,LPCWSTR*);
+#define     NPSGetSectionName WINELIB_NAME_AW(NPSGetSectionName)
 
 #define RESOURCETYPE_ANY             0x00000000
 #define RESOURCETYPE_DISK            0x00000001

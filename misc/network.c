@@ -767,6 +767,34 @@ DWORD WINAPI NPSGetProviderHandleA(DWORD x) {
 	return 0;
 }
 
+/****************************************************************
+ * NPSGetProviderNameA [MPR.35]
+ * 'DWORD x' replaces 'HPROVIDER hProvider'
+ * FAR omitted in lpszProviderName def
+ */
+DWORD WINAPI NPSGetProviderNameA(
+            DWORD x,
+            LPCSTR * lpszProviderName) {
+           FIXME_(mpr)("(0x%08lx),stub!\n",x);
+/*            return WN_SUCCESS;
+*/
+              return WN_BAD_HANDLE;
+}
+
+/*****************************************************************
+ *  NPSGetSectionNameA [MPR.36]
+ *  'DWORD x'  replaces 'HPROVIDER hProvider'
+ *  FAR omitted in lpszSectionName def
+ */
+DWORD WINAPI NPSGetSectionNameA(
+            DWORD x,
+            LPCSTR  * lpszSectionName) {
+       FIXME_(mpr)("(0x%08lx),stub!\n",x);
+/*       return WN_SUCCESS;
+*/
+         return WN_BAD_HANDLE;
+}
+
 /*****************************************************************
  *  WNetCancelConnection232A [MPR.53]
  */

@@ -5,6 +5,8 @@
 #ifndef __WINE_WNET_H
 #define __WINE_WNET_H
 
+#include "winerror.h"
+
 #define WNDN_MKDIR  1
 #define WNDN_RMDIR  2
 #define WNDN_MVDIR  3
@@ -23,6 +25,7 @@
 #define WN_OUT_OF_MEMORY                        0x000B
 #define WN_CANCEL                               0x000C
 #define WN_CONTINUE                             0x000D
+#define WN_BAD_HANDLE                           ERROR_INVALID_HANDLE
 #define WN_NOT_CONNECTED                        0x0030
 #define WN_OPEN_FILES                           0x0031
 #define WN_BAD_NETNAME                          0x0032
