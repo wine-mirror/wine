@@ -2725,6 +2725,19 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	if (!MSG_InternalGetMessage( QMSG_WIN32A, &msg, msg.hwnd, mt.hOwnerWnd,
 				     MSGF_MENU, PM_NOREMOVE, !enterIdleSent, &enterIdleSent )) break;
 
+	/* check if EndMenu() tried to cancel us, by posting this message */
+        if(msg.message == WM_CANCELMODE) 
+	{
+	    /* we are now out of the loop */
+    	    fEndMenu = TRUE;
+
+	    /* remove the message from the queue */
+	    PeekMessageA( &msg, 0, msg.message, msg.message, PM_REMOVE );
+	   
+	    /* break out of internal loop, ala ESCAPE */
+	    break;
+	}
+
         TranslateMessage( &msg );
         mt.pt = msg.pt;
 
@@ -4157,11 +4170,18 @@ BOOL WINAPI DrawMenuBar( HWND hWnd )
  */
 void WINAPI EndMenu(void)
 {
-    /*
-     * FIXME: NOT ENOUGH! This has to cancel menu tracking right away.
-     */
+    /* if we are in the menu code, and it is active */
+    if (fEndMenu == FALSE && MENU_IsMenuActive()) 
+    {
+	/* terminate the menu handling code */
+        fEndMenu = TRUE;
 
-    fEndMenu = TRUE;
+	/* needs to be posted to wakeup the internal menu handler */
+	/* which will now terminate the menu, in the event that */
+	/* the main window was minimized, or lost focus, so we */
+	/* don't end up with an orphaned menu */
+    	PostMessageA( pTopPopupWnd->hwndSelf, WM_CANCELMODE, 0, 0);
+    }
 }
 
 
