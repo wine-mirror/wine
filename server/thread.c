@@ -7,6 +7,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -32,8 +33,11 @@
 
 struct thread_wait
 {
+    struct thread_wait     *next;       /* next wait structure for this thread */
+    struct thread          *thread;     /* owner thread */
     int                     count;      /* count of objects */
     int                     flags;
+    void                   *cookie;     /* magic cookie to return to client */
     struct timeval          timeout;
     struct timeout_user    *user;
     struct wait_queue_entry queues[1];
@@ -325,8 +329,8 @@ static void end_wait( struct thread *thread )
     for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
         entry->obj->ops->remove_queue( entry->obj, entry );
     if (wait->user) remove_timeout_user( wait->user );
+    thread->wait = wait->next;
     free( wait );
-    thread->wait = NULL;
 }
 
 /* build the thread wait structure */
@@ -337,10 +341,12 @@ static int wait_on( int count, struct object *objects[], int flags, int sec, int
     int i;
 
     if (!(wait = mem_alloc( sizeof(*wait) + (count-1) * sizeof(*entry) ))) return 0;
-    current->wait = wait;
+    wait->next    = current->wait;
+    wait->thread  = current;
     wait->count   = count;
     wait->flags   = flags;
     wait->user    = NULL;
+    current->wait = wait;
     if (flags & SELECT_TIMEOUT)
     {
         wait->timeout.tv_sec = sec;
@@ -409,40 +415,67 @@ static int check_wait( struct thread *thread )
     return -1;
 }
 
+/* send the wakeup signal to a thread */
+static int send_thread_wakeup( struct thread *thread, void *cookie, int signaled )
+{
+    struct wake_up_reply reply;
+    int ret;
+
+    reply.cookie   = cookie;
+    reply.signaled = signaled;
+    if ((ret = write( thread->wait_fd, &reply, sizeof(reply) )) == sizeof(reply)) return 0;
+    if (ret >= 0)
+        fatal_protocol_error( thread, "partial wakeup write %d\n", ret );
+    else if (errno == EPIPE)
+        kill_thread( thread, 0 );  /* normal death */
+    else
+        fatal_protocol_perror( thread, "write" );
+    return -1;
+}
+
 /* attempt to wake up a thread */
-/* return 1 if OK, 0 if the wait condition is still not satisfied */
+/* return >0 if OK, 0 if the wait condition is still not satisfied */
 static int wake_thread( struct thread *thread )
 {
-    int signaled;
-    if ((signaled = check_wait( thread )) == -1) return 0;
+    int signaled, count;
+    void *cookie;
 
-    if (debug_level) fprintf( stderr, "%08x: *wakeup* object=%d\n",
-                              (unsigned int)thread, signaled );
-    end_wait( thread );
-    send_thread_wakeup( thread, signaled );
-    return 1;
+    for (count = 0; thread->wait; count++)
+    {
+        if ((signaled = check_wait( thread )) == -1) break;
+
+        cookie = thread->wait->cookie;
+        if (debug_level) fprintf( stderr, "%08x: *wakeup* signaled=%d cookie=%p\n",
+                                  (unsigned int)thread, signaled, cookie );
+        end_wait( thread );
+        send_thread_wakeup( thread, cookie, signaled );
+    }
+    return count;
 }
 
 /* thread wait timeout */
 static void thread_timeout( void *ptr )
 {
-    struct thread *thread = ptr;
+    struct thread_wait *wait = ptr;
+    struct thread *thread = wait->thread;
+    void *cookie = wait->cookie;
 
-    if (debug_level) fprintf( stderr, "%08x: *timeout*\n", (unsigned int)thread );
+    wait->user = NULL;
+    if (thread->wait != wait) return; /* not the top-level wait, ignore it */
 
-    assert( thread->wait );
-    thread->wait->user = NULL;
+    if (debug_level) fprintf( stderr, "%08x: *wakeup* signaled=%d cookie=%p\n",
+                              (unsigned int)thread, STATUS_TIMEOUT, cookie );
     end_wait( thread );
-    send_thread_wakeup( thread, STATUS_TIMEOUT );
+    send_thread_wakeup( thread, cookie, STATUS_TIMEOUT );
+    /* check if other objects have become signaled in the meantime */
+    wake_thread( thread );
 }
 
 /* select on a list of handles */
-static void select_on( int count, handle_t *handles, int flags, int sec, int usec )
+static void select_on( int count, void *cookie, handle_t *handles, int flags, int sec, int usec )
 {
     int ret, i;
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
-
-    assert( !current->wait );
 
     if ((count < 0) || (count > MAXIMUM_WAIT_OBJECTS))
     {
@@ -470,12 +503,13 @@ static void select_on( int count, handle_t *handles, int flags, int sec, int use
     if (flags & SELECT_TIMEOUT)
     {
         if (!(current->wait->user = add_timeout_user( &current->wait->timeout,
-                                                      thread_timeout, current )))
+                                                      thread_timeout, current->wait )))
         {
             end_wait( current );
             goto done;
         }
     }
+    current->wait->cookie = cookie;
     set_error( STATUS_PENDING );
 
 done:
@@ -527,7 +561,7 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
     if (!apc->prev)  /* first one */
     {
         queue->head = apc;
-        if (thread->wait) wake_thread( thread );
+        wake_thread( thread );
     }
     return 1;
 }
@@ -661,7 +695,8 @@ void kill_thread( struct thread *thread, int violent_death )
                  (unsigned int)thread, thread->exit_code );
     if (thread->wait)
     {
-        end_wait( thread );
+        while (thread->wait) end_wait( thread );
+        send_thread_wakeup( thread, NULL, STATUS_PENDING );
         /* if it is waiting on the socket, we don't need to send a SIGTERM */
         violent_death = 0;
     }
@@ -886,7 +921,7 @@ DECL_HANDLER(resume_thread)
 DECL_HANDLER(select)
 {
     int count = get_req_data_size(req) / sizeof(int);
-    select_on( count, get_req_data(req), req->flags, req->sec, req->usec );
+    select_on( count, req->cookie, get_req_data(req), req->flags, req->sec, req->usec );
 }
 
 /* queue an APC for a thread */

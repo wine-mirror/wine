@@ -554,6 +554,7 @@ static void dump_open_process_reply( const struct open_process_request *req )
 static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
+    fprintf( stderr, " cookie=%p,", req->cookie );
     fprintf( stderr, " sec=%d,", req->sec );
     fprintf( stderr, " usec=%d,", req->usec );
     fprintf( stderr, " handles=" );

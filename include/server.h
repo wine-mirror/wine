@@ -125,6 +125,13 @@ struct send_fd
     int    fd;   /* file descriptor on client-side */
 };
 
+/* structure sent by the server on the wait fifo */
+struct wake_up_reply
+{
+    void *cookie;    /* magic cookie that was passed in select_request */
+    int   signaled;  /* wait result */
+};
+
 /* Create a new process from the context of the parent */
 struct new_process_request
 {
@@ -425,6 +432,7 @@ struct select_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int          flags;        /* wait flags (see below) */
+    IN  void*        cookie;       /* magic cookie to return to client */
     IN  int          sec;          /* absolute timeout */
     IN  int          usec;         /* absolute timeout */
     IN  VARARG(handles,handles);   /* handles to select on */
@@ -1603,7 +1611,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 41
+#define SERVER_PROTOCOL_VERSION 42
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

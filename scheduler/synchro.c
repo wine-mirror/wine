@@ -40,18 +40,33 @@ inline static void get_timeout( struct timeval *when, int timeout )
  *
  * Wait for a reply on the waiting pipe of the current thread.
  */
-static int wait_reply(void)
+static int wait_reply( void *cookie )
 {
     int signaled;
+    struct wake_up_reply reply;
     for (;;)
     {
-        int ret = read( NtCurrentTeb()->wait_fd, &signaled, sizeof(signaled) );
-        if (ret == sizeof(signaled)) return signaled;
-        if (!ret) break;
-        if (ret > 0) server_protocol_error( "partial wakeup read %d\n", ret );
+        int ret = read( NtCurrentTeb()->wait_fd[0], &reply, sizeof(reply) );
+        if (ret == sizeof(reply))
+        {
+            if (!reply.cookie) break;  /* thread got killed */
+            if (reply.cookie == cookie) return reply.signaled;
+            /* we stole another reply, wait for the real one */
+            signaled = wait_reply( cookie );
+            /* and now put the wrong one back in the pipe */
+            for (;;)
+            {
+                ret = write( NtCurrentTeb()->wait_fd[1], &reply, sizeof(reply) );
+                if (ret == sizeof(reply)) break;
+                if (ret >= 0) server_protocol_error( "partial wakeup write %d\n", ret );
+                if (errno == EINTR) continue;
+                server_protocol_perror("wakeup write");
+            }
+            return signaled;
+        }
+        if (ret >= 0) server_protocol_error( "partial wakeup read %d\n", ret );
         if (errno == EINTR) continue;
-        if (errno == EPIPE) break;
-        server_protocol_perror("read");
+        server_protocol_perror("wakeup read");
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
@@ -161,7 +176,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout,
                                        BOOL alertable )
 {
-    int i, ret;
+    int i, ret, cookie;
     struct timeval tv;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
@@ -180,6 +195,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
             int *data = server_data_ptr( req );
 
             req->flags   = SELECT_INTERRUPTIBLE;
+            req->cookie  = &cookie;
             req->sec     = tv.tv_sec;
             req->usec    = tv.tv_usec;
             for (i = 0; i < count; i++) data[i] = handles[i];
@@ -191,7 +207,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
             ret = SERVER_CALL();
         }
         SERVER_END_VAR_REQ;
-        if (ret == STATUS_PENDING) ret = wait_reply();
+        if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
         if (ret != STATUS_USER_APC) break;
         call_apcs( alertable );
         if (alertable) break;

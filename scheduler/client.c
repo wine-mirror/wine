@@ -638,22 +638,22 @@ void CLIENT_InitThread(void)
 {
     TEB *teb = NtCurrentTeb();
     int version, ret;
-    int reply_pipe[2], wait_pipe[2];
+    int reply_pipe[2];
 
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
 
     /* create the server->client communication pipes */
     if (pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
-    if (pipe( wait_pipe ) == -1) server_protocol_perror( "pipe" );
+    if (pipe( teb->wait_fd ) == -1) server_protocol_perror( "pipe" );
     wine_server_send_fd( reply_pipe[1] );
-    wine_server_send_fd( wait_pipe[1] );
+    wine_server_send_fd( teb->wait_fd[1] );
     teb->reply_fd = reply_pipe[0];
-    teb->wait_fd = wait_pipe[0];
 
     /* set close on exec flag */
     fcntl( teb->reply_fd, F_SETFD, 1 );
-    fcntl( teb->wait_fd, F_SETFD, 1 );
+    fcntl( teb->wait_fd[0], F_SETFD, 1 );
+    fcntl( teb->wait_fd[1], F_SETFD, 1 );
 
     SERVER_START_REQ( init_thread )
     {
@@ -661,7 +661,7 @@ void CLIENT_InitThread(void)
         req->teb         = teb;
         req->entry       = teb->entry_point;
         req->reply_fd    = reply_pipe[1];
-        req->wait_fd     = wait_pipe[1];
+        req->wait_fd     = teb->wait_fd[1];
         ret = SERVER_CALL();
         teb->pid = req->pid;
         teb->tid = req->tid;
@@ -669,7 +669,6 @@ void CLIENT_InitThread(void)
         if (req->boot) boot_thread_id = teb->tid;
         else if (boot_thread_id == teb->tid) boot_thread_id = 0;
         close( reply_pipe[1] );
-        close( wait_pipe[1] );
     }
     SERVER_END_REQ;
 

@@ -24,15 +24,19 @@
 #ifdef __GNUC__
 extern void fatal_protocol_error( struct thread *thread,
                                   const char *err, ... ) __attribute__((format (printf,2,3)));
+extern void fatal_protocol_perror( struct thread *thread,
+                                   const char *err, ... ) __attribute__((format (printf,2,3)));
+extern void fatal_error( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
+extern void fatal_perror( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
 #else
 extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
+extern void fatal_protocol_perror( struct thread *thread, const char *err, ... );
+extern void fatal_error( const char *err, ... );
+extern void fatal_perror( const char *err, ... );
 #endif
 
-extern void fatal_error( const char *err, ... ) WINE_NORETURN;
-extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
 extern int receive_fd( struct process *process );
-extern int send_thread_wakeup( struct thread *thread, int signaled );
 extern int send_client_fd( struct process *process, int fd, handle_t handle );
 extern void read_request( struct thread *thread );
 extern void send_reply( struct thread *thread, union generic_request *request );

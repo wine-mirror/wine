@@ -277,20 +277,6 @@ int receive_fd( struct process *process )
     return -1;
 }
 
-/* send the wakeup signal to a thread */
-int send_thread_wakeup( struct thread *thread, int signaled )
-{
-    int ret = write( thread->wait_fd, &signaled, sizeof(signaled) );
-    if (ret == sizeof(signaled)) return 0;
-    if (ret >= 0)
-        fatal_protocol_error( thread, "partial wakeup write %d\n", ret );
-    else if (errno == EPIPE)
-        kill_thread( thread, 0 );  /* normal death */
-    else
-        fatal_protocol_perror( thread, "write" );
-    return -1;
-}
-
 /* send an fd to a client */
 int send_client_fd( struct process *process, int fd, handle_t handle )
 {

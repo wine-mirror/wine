@@ -91,7 +91,8 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->exit_code = STILL_ACTIVE;
     teb->request_fd = -1;
     teb->reply_fd   = -1;
-    teb->wait_fd    = -1;
+    teb->wait_fd[0] = -1;
+    teb->wait_fd[1] = -1;
     teb->stack_top  = (void *)~0UL;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
@@ -115,7 +116,8 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
 
     close( teb->request_fd );
     close( teb->reply_fd );
-    close( teb->wait_fd );
+    close( teb->wait_fd[0] );
+    close( teb->wait_fd[1] );
     if (teb->stack_sel) FreeSelector16( teb->stack_sel );
     FreeSelector16( teb->teb_sel );
     if (teb->buffer) munmap( (void *)teb->buffer, teb->buffer_size );
