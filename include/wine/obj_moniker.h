@@ -50,14 +50,6 @@ typedef struct IRunnableObject IRunnableObject,*LPRUNNABLEOBJECT;
 DEFINE_OLEGUID(IID_IRunningObjectTable,	0x00000010L, 0, 0);
 typedef struct IRunningObjectTable IRunningObjectTable,*LPRUNNINGOBJECTTABLE;
 
-DEFINE_GUID( CLSID_FileMoniker,0x00000303,0,0,0xc0,0,0,0,0,0,0,0x46);
-
-DEFINE_GUID( CLSID_ItemMoniker,0x00000304,0,0,0xc0,0,0,0,0,0,0,0x46);
-
-DEFINE_GUID( CLSID_AntiMoniker,0x00000305,0,0,0xc0,0,0,0,0,0,0,0x46);
-
-DEFINE_GUID( CLSID_CompositeMoniker,0x00000309,0,0,0xc0,0,0,0,0,0,0,0x46);
-
 /*********************************************************************************
  *	BIND_OPTS and BIND_OPTS2 structures definition
  *	These structures contain parameters used during a moniker-binding operation.
@@ -259,8 +251,6 @@ ICOM_DEFINE(IROTData,IUnknown)
 #define IROTData_Release(p)            ICOM_CALL (Release,p)
 /*** IROTData methods ***/
 #define IROTData_GetComparisonData(p,a,b,c) ICOM_CALL3(GetComparisonData,p,a,b,c)
-
-#define ICOM_THIS_From_IROTData(class, name) class* This = (class*)(((char*)name)-sizeof(void*))
 
 /*****************************************************************************
  * IRunnableObject interface

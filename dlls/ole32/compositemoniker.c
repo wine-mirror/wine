@@ -24,8 +24,13 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "ole2.h"
+#include "moniker.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+const CLSID CLSID_CompositeMoniker = {
+  0x309, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46}
+};
 
 #define  BLOCK_TAB_SIZE 5 /* represent the first size table and it's increment block size */
 
@@ -1715,5 +1720,3 @@ HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMon
     FIXME("(),stub!\n");
     return E_NOTIMPL;
 }
-
-

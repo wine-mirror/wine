@@ -26,10 +26,15 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "objbase.h"
+#include "moniker.h"
 
 #include "compobj_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+const CLSID CLSID_FileMoniker = {
+  0x303, 0, 0, {0xC0, 0, 0, 0, 0, 0, 0, 0x46}
+};
 
 /* filemoniker data structure */
 typedef struct FileMonikerImpl{
