@@ -111,6 +111,8 @@
  * 21. Fix test in REBAR_Layout.
  * rev 8d
  * 22. Add support for WM_WINDOWPOSCHANGED to save new origin of window.
+ * 23. Correct RBN_CHILDSIZE rect value for CCS_VERT rebar.
+ * 24. Do UpdateWindow only if doing redraws.
  *
  *
  *    Still to do:
@@ -1254,7 +1256,10 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 	    rbcz.wID = lpBand->wID;
 	    rbcz.rcChild = lpBand->rcChild;
 	    rbcz.rcBand = lpBand->rcBand;
-	    rbcz.rcBand.left += lpBand->cxHeader;
+	    if (infoPtr->dwStyle & CCS_VERT) 
+		rbcz.rcBand.top += lpBand->cxHeader;
+	    else
+		rbcz.rcBand.left += lpBand->cxHeader;
 	    REBAR_Notify ((NMHDR *)&rbcz, infoPtr, RBN_CHILDSIZE);
 	    if (!EqualRect (&lpBand->rcChild, &rbcz.rcChild)) {
 		TRACE("Child rect changed by NOTIFY for band %u\n", i);
@@ -1323,7 +1328,8 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
     if (!EndDeferWindowPos(deferpos))
         ERR("EndDeferWindowPos returned NULL\n");
 
-    UpdateWindow (infoPtr->hwndSelf);
+    if (infoPtr->DoRedraw)
+	UpdateWindow (infoPtr->hwndSelf);
 
     if (infoPtr->fStatus & NTF_HGHTCHG) {
         infoPtr->fStatus &= ~NTF_HGHTCHG;
