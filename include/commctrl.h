@@ -316,7 +316,7 @@ typedef struct tagUDACCEL
 {
     UINT nSec;
     UINT nInc;
-} UDACCEL;
+} UDACCEL, *LPUDACCEL;
 
 #define UD_MAXVAL          0x7fff
 #define UD_MINVAL          0x8001
@@ -614,6 +614,7 @@ HRESULT WINAPI UninitializeFlatSB(HWND);
 #define HDF_RIGHT               0x0001
 #define HDF_CENTER              0x0002
 #define HDF_JUSTIFYMASK         0x0003
+#define HDF_RTLREADING          0x0004
 
 #define HDF_IMAGE               0x0800
 #define HDF_BITMAP_ON_RIGHT     0x1000
