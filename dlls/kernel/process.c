@@ -1484,7 +1484,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         if (!(ret = cmdline) || !cmdline[0])
         {
             /* no command-line, create one */
-            if ((ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(appname) + 3) + sizeof(WCHAR) )))
+            if ((ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(appname) + 3) * sizeof(WCHAR) )))
                 sprintfW( ret, quotesW, appname );
         }
         return ret;
