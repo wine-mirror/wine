@@ -145,10 +145,20 @@ outofthread:
 
 static BOOL PostMessageToProcessMsgThread(IDirectMusicPerformance8Impl* This, UINT iMsg) {
   if (FALSE == This->procThreadTicStarted && PROCESSMSG_EXIT != iMsg) {
+    BOOL res;
     This->procThread = CreateThread(NULL, 0, ProcessMsgThread, This, 0, &This->procThreadId);
     if (NULL == This->procThread) return FALSE;
     SetThreadPriority(This->procThread, THREAD_PRIORITY_TIME_CRITICAL);
     This->procThreadTicStarted = TRUE;
+    while(1) {
+      res = PostThreadMessageA(This->procThreadId, iMsg, 0, 0);
+      /* Let the thread creates its message queue (with MsgWaitForMultipleObjects call) by yielding and retrying */
+      if (!res && (GetLastError() == ERROR_INVALID_THREAD_ID))
+	Sleep(0);
+      else
+	break;
+    }
+    return res;
   }
   return PostThreadMessageA(This->procThreadId, iMsg, 0, 0);
 }
