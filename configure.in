@@ -382,7 +382,7 @@ AC_CHECK_LIB(cups,cupsGetPPD,
 AC_SUBST(CUPSLIBS)
 
 dnl **** Check for FreeType 2 ****
-AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no)
+AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
 then
     FREETYPELIBS=""

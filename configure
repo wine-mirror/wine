@@ -4532,7 +4532,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lfreetype  $LIBS"
+LIBS="-lfreetype $X_LIBS $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 4538 "configure"
 #include "confdefs.h"
