@@ -927,9 +927,10 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     assert(gdbctx->in_trap);
     /* FIXME:check in_packet_len for reading %p,%x */
     if (sscanf(gdbctx->in_packet, "%p,%x", &addr, &len) != 2) return packet_error;
+    if (len <= 0) return packet_error;
     if (gdbctx->trace & GDBPXY_TRC_COMMAND)
         fprintf(stderr, "Read mem at %p for %u bytes\n", addr, len);
-    for (nread = 0; nread < len > 0; nread += r, addr += r)
+    for (nread = 0; nread < len; nread += r, addr += r)
     {
         blk_len = min(sizeof(buffer), len - nread);
         if (!ReadProcessMemory(gdbctx->process->handle, addr, buffer, blk_len, &r) ||
