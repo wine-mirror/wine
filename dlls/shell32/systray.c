@@ -249,7 +249,8 @@ void SYSTRAY_InitItem(SystrayData *ptrayItem)
 
 void SYSTRAY_SetIcon(SystrayData *ptrayItem, HICON hIcon)
 {
-  ptrayItem->notifyIcon.hIcon = hIcon;
+  /* keep our own copy of "hIcon" object */     
+  ptrayItem->notifyIcon.hIcon = CopyIcon(hIcon); 
 }
 
 void SYSTRAY_SetTip(SystrayData *ptrayItem, CHAR* szTip)
@@ -430,6 +431,7 @@ static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
             (*ptrayItem)->notifyIcon.uID, (*ptrayItem)->notifyIcon.szTip);
       SYSTRAY_TermItem(*ptrayItem);
 
+	  DestroyIcon  ((*ptrayItem)->notifyIcon.hIcon);
       DestroyWindow((*ptrayItem)->hWndToolTip);
       DestroyWindow((*ptrayItem)->hWnd);
 
