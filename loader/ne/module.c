@@ -480,6 +480,10 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     pModule = (NE_MODULE *)GlobalLock16( hModule );
     memcpy( pModule, &ne_header, sizeof(ne_header) );
     pModule->count = 0;
+    /* check *programs* for default minimal stack size */
+    if ( (!(pModule->flags & NE_FFLAGS_LIBMODULE))
+		&& (pModule->stack_size < 0x1400) )
+		pModule->stack_size = 0x1400;
     pModule->module32 = 0;
     pModule->self = hModule;
     pModule->self_loading_sel = 0;
