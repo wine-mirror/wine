@@ -1516,13 +1516,13 @@ static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVO
 
 static ULONG WINAPI MsiCF_AddRef(LPCLASSFACTORY iface) {
   IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-  return ++(This->ref);
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI MsiCF_Release(LPCLASSFACTORY iface) {
   IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   /* static class, won't be  freed */
-  return --(This->ref);
+  return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {

@@ -55,13 +55,13 @@ DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 static ULONG WINAPI
 DP_and_DPL_AddRef(LPCLASSFACTORY iface) {
         IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-        return ++(This->ref);
+        return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
         IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
         /* static class (reference starts @ 1), won't ever be freed */
-        return --(This->ref);
+        return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI DP_and_DPL_CreateInstance(
