@@ -857,10 +857,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	  case DLL_PROCESS_DETACH:
 	    shell32_RefCount--;
 
-	    pOleUninitialize();
-	    FreeLibrary(hOle32);
-	    FreeLibrary(hComctl32);
-
 	    if ( !shell32_RefCount )
 	    { 
 	      shell32_hInstance = 0;
@@ -879,6 +875,10 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	        WARN_(shell)("leaving with %u objects left (memory leak)\n", shell32_ObjCount);
 	      }
 	    }
+
+	    FreeLibrary(hOle32);
+	    FreeLibrary(hComctl32);
+
 	    TRACE_(shell)("refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);
 	    break;
 	}
