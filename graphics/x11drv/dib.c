@@ -2678,9 +2678,9 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
        case 1:
        case 4:
        case 8:
-               descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap( dc, coloruse,
-                                                   dc->w.bitsPerPixel,
-                                                   info, &descr.nColorMap );
+               descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap( 
+                                            coloruse == DIB_PAL_COLORS ? dc : NULL, coloruse,
+                                            dc->w.bitsPerPixel, info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
                descr.rMask = descr.gMask = descr.bMask = 0;
                break;
@@ -2764,7 +2764,8 @@ INT X11DRV_DIB_SetDIBits(
        case 1:
        case 4:
        case 8:
-	       descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap( descr.dc, coloruse,
+	       descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap(
+                        coloruse == DIB_PAL_COLORS ? descr.dc : NULL, coloruse,
                                                           bmp->bitmap.bmBitsPixel,
                                                           info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
