@@ -535,7 +535,7 @@ INT WINAPI GetDIBits(
     if (bits && lines)
     {
         /* If the bitmap object already have a dib section that contains image data, get the bits from it*/
-        if(bmp->dib->dsBm.bmBits && bmp->dib->dsBm.bmBitsPixel >= 16 && info->bmiHeader.biBitCount >= 16)
+        if(bmp->dib && bmp->dib->dsBm.bmBitsPixel >= 15 && info->bmiHeader.biBitCount >= 15)
         {
             /*FIXME: Only RGB dibs supported for now */
             int srcwidth = bmp->dib->dsBm.bmWidth, srcwidthb = bmp->dib->dsBm.bmWidthBytes;
@@ -545,12 +545,13 @@ INT WINAPI GetDIBits(
 
             if ((info->bmiHeader.biHeight < 0) ^ (bmp->dib->dsBmih.biHeight < 0))
             {
-                dbits = bits + (dstwidthb * lines);
+                dbits = bits + (dstwidthb * (lines-1));
                 dstwidthb = -dstwidthb;
             }
 
             switch( info->bmiHeader.biBitCount ) {
 
+	    case 15:
             case 16: /* 16 bpp dstDIB */
                 {
                     LPWORD dstbits = (LPWORD)dbits;

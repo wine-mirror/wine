@@ -224,12 +224,13 @@ typedef struct
     struct tagDC     *dc;
     LPCVOID           bits;
     XImage           *image;
+    PALETTEENTRY     *palentry;
     int               lines;
     DWORD             infoWidth;
     WORD              depth;
     WORD              infoBpp;
     WORD              compression;
-    int              *colorMap;
+    RGBQUAD          *colorMap;
     int               nColorMap;
     Drawable          drawable;
     GC                gc;
