@@ -3278,12 +3278,12 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
 			dx = x - es->format_rect.left - ww / HSCROLL_FRACTION / cw * cw;
 		if (x > es->format_rect.right)
 			dx = x - es->format_rect.left - (HSCROLL_FRACTION - 1) * ww / HSCROLL_FRACTION / cw * cw;
-		if (dy || dx)
+		if (dy || dx || (es->y_offset && (es->line_count - es->y_offset < vlc)))
 		{
 		    /* check if we are going to move too far */
 		    if(es->x_offset + dx + ww > es->text_width)
 			dx = es->text_width - ww - es->x_offset;
-		    if(dx || dy)
+		    if(dx || dy || (es->y_offset && (es->line_count - es->y_offset < vlc)))
 			EDIT_EM_LineScroll_internal(es, dx, dy);
 		}
 	} else {
