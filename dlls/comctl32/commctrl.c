@@ -1150,3 +1150,45 @@ VOID WINAPI InitMUILanguage (LANGID uiLang)
 {
    COMCTL32_uiLang = uiLang;
 }
+
+
+/***********************************************************************
+ * COMCTL32_CreateToolTip [NOT AN API]
+ *
+ * Creates a tooltip for the control specified in hwnd and does all
+ * necessary setup and notifications.
+ *
+ * PARAMS
+ *     hwndOwner [I] Handle to the window that will own the tool tip.
+ *
+ * RETURNS
+ *     Success: Handle of tool tip window.
+ *     Failure: NULL
+ */
+HWND
+COMCTL32_CreateToolTip(HWND hwndOwner)
+{
+    HWND hwndToolTip;
+
+    hwndToolTip = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
+				  CW_USEDEFAULT, CW_USEDEFAULT,
+				  CW_USEDEFAULT, CW_USEDEFAULT, hwndOwner,
+				  0, 0, 0);
+
+    /* Send NM_TOOLTIPSCREATED notification */
+    if (hwndToolTip)
+    {
+	NMTOOLTIPSCREATED nmttc;
+
+	nmttc.hdr.hwndFrom = hwndOwner;
+	nmttc.hdr.idFrom = GetWindowLongA(hwndOwner, GWL_ID);
+	nmttc.hdr.code = NM_TOOLTIPSCREATED;
+	nmttc.hwndToolTips = hwndToolTip;
+
+	SendMessageA(GetParent(hwndOwner), WM_NOTIFY,
+		     (WPARAM)GetWindowLongA(hwndOwner, GWL_ID),
+		     (LPARAM)&nmttc);
+    }
+
+    return hwndToolTip;
+}

@@ -7,6 +7,9 @@
  *
  */
 
+#ifndef __WINE_COMCTL32_H
+#define __WINE_COMCTL32_H
+
 extern HMODULE COMCTL32_hModule;
 
 /* Property sheet / Wizard */
@@ -62,3 +65,7 @@ extern HMODULE COMCTL32_hModule;
 
 #define IDT_CHECK        401
 
+/* Internal function */
+HWND COMCTL32_CreateToolTip (HWND);
+
+#endif  /* __WINE_COMCTL32_H */
