@@ -80,22 +80,21 @@
 	<para>
 	  Once you got your copy of Wine, you might need to follow the
 	  next chapter <link linkend="compiling">Compiling</link> if you
-	  got Wine source code.
+	  decided to get Wine source code.
 	  Otherwise, the next chapter <link
 	  linkend="installing">Installing Wine</link> will explain the
-	  methods to use to install the Wine files to some location
-	  on your system (alternatively the chapter <link
-	  linkend="compiling">Compiling</link> will explain first how to
-	  compile Wine if you choose to use Wine source code).
+	  methods to use to install the Wine binary files to some location
+	  on your system.
 	</para>
 	<para>
 	  Once Wine is installed on your system, the next chapter <link
 	  linkend="config-wine-main">Configuring Wine</link> will
-	  focus on the available configuration methods for Wine: there are
-	  either graphical (e.g. WineSetupTk) or text mode (wineinstall)
-	  configuration helper applications available that will
+	  focus on the available configuration methods for Wine to set up
+	  a proper Wine/Windows environment with all its requirements:
+	  there are either graphical (e.g. WineSetupTk) or text mode
+	  (wineinstall) configuration helper applications available that will
 	  fully configure the Wine environment for you.
-	  And For those people who dislike a fully automated
+	  And for those people who dislike a fully automated
 	  installation (maybe because they really want to know what they're
 	  doing), we'll describe how to manually set up a complete Wine
 	  environment configuration.
@@ -103,8 +102,9 @@
 	<para>
 	  Once the configuration of the Wine environment is done, the
 	  next chapter <link linkend="running">Running Wine</link>
-	  will show you how to run Wine and how to satisfy
-	  the requirements of certain Windows programs.
+	  will show you how to run Windows programs with Wine and
+	  how to satisfy the more specific requirements of certain
+	  Windows programs.
 	</para>
 	<para>
 	  In case you run into trouble, the chapter <link
@@ -195,10 +195,10 @@
 	  program package e.g. available on CD), or as natively compiled
           <ulink url="http://www.xfree86.org/#whatis">X11 (X-Window
           System)</ulink> applications (via the part of Wine that's called
-	  Winelib). If you're interested in compiling your Windows program
-	  source code, then please refer to the Winelib User's Guide
-	  instead, which explains this particular topic.
-          The Wine Users Guide however will focus on running standard
+	  Winelib). If you're interested in compiling the source code of a
+	  Windows program you wrote, then please refer to the
+	  Winelib User's Guide instead, which explains this particular topic.
+          This Wine Users Guide however will focus on running standard
           Windows applications using Wine.
         </para>
 
@@ -440,7 +440,49 @@
 	</tgroup>
       </table>
     </sect1>
-    
+
+    <sect1 id="competition">
+      <title>Alternatives to Wine you might want to consider</title>
+
+      <para>
+        We'll mention some alternatives (or we could also say:
+	competitors) to Wine here that might come in handy if Wine is
+	not usable for the program or job you want it to do, since
+	these alternatives usually provide better Windows compatibility.
+      </para>
+
+      <sect2>
+        <title>VMWare</title>
+        <para>
+	  <ulink url="http://www.vmware.com">VMWare</ulink> is a
+	  software package to emulate an additional machine on your PC.
+	  In other words, it establishes a virtual machine that can be
+	  used to run any kind of Intel x86 compatible operating system
+	  in parallel to your currently running operating system.
+	  Thus you could use Linux and at the same time run Windows 98
+	  in a virtual machine on the same screen.
+        </para>
+	<para>
+	  Sounds nice, doesn't it? Well, there are some drawbacks, of
+	  course... First, VMWare is pretty expensive, and second, you
+	  need a licensed copy of the operating system you want to run.
+	  Third, since VMWare is a virtual machine, it's quite slow.
+	  Wine doesn't have any of these limitations, but unfortunately
+	  this also means that you will not have the relatively good
+	  compatibility of a real original Windows system if you use
+	  Wine.
+	</para>
+      </sect2>
+      <sect2>
+        <title>Win4Lin</title>
+	<para>
+	  <ulink url="http://www.win4lin.com">Win4Lin</ulink> by
+	  NeTraverse allows you to run a special version of Win98 in
+	  Linux. Compared to VMWare, this has the advantage that it's
+	  faster, but you still have the license fees.
+	</para>
+      </sect2>
+    </sect1>
     <sect1 id="wine-stats">
       <title>Basic Wine Requirements</title>
 

@@ -3,6 +3,7 @@
 
     <para>
       Written by &name-john-sheets; <email>&email-john-sheets;</email>
+      Modified by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
     </para>
     <para>
       Extended by &name-mike-hearn; <email>&email-mike-hearn;</email>, &name-eric-pouech; <email>&email-eric-pouech;</email>
@@ -13,6 +14,16 @@
       This chapter will describe all aspects of running Wine, like e.g.
       basic Wine invocation, command line parameters of various Wine
       support programs etc.
+    </para>
+
+    <para>
+      This chapter will describe all aspects of running Wine, like e.g.
+      basic Wine invocation, command line parameters of various Wine
+      support programs etc.
+    </para>
+
+    <para>
+
     </para>
 
     <sect1 id="basic-usage">
@@ -73,10 +84,10 @@
 	remember to include the double quotes.  Some programs don't
 	always use obvious naming for their directories and EXE files,
 	so you might have to look inside the program files directory to
-	see what it put where
+	see what it put where.
       </para>
     </sect1>
-    
+
     <sect1 id="running-wine">
       <title>How to run Wine</title>
       <para>
@@ -152,7 +163,7 @@ Options:
 
     <sect1>
       <title>Explorer-like graphical Wine environments</title>
-    
+
       <para>
 	If you don't feel like manually invoking Wine for every program
 	you want to run and instead want to have an integrated graphical
@@ -377,7 +388,7 @@ winspool</><entry>wnet</><entry>x11</>
 	  wineserver specific debugging output (not to confuse with Wine's wineserver logging channel, --debugmsg +server, though!).
         </para>
       </sect2>
-      
+
       <sect2>
         <title>-h</title>
         <para>
@@ -447,7 +458,7 @@ winspool</><entry>wnet</><entry>x11</>
 	be to change the "path" setting in the wine config file's <link
 	linkend="config-wine">[wine]</link> section.
       </para>
-	
+
     </sect1>
 
     <sect1 id="CUI-programs">
