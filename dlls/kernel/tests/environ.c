@@ -31,71 +31,85 @@ static void test_GetSetEnvironmentVariableA(void)
     static const char name_cased[] = "sOMEwILDnAME";
     static const char value[] = "SomeWildValue";
 
-    ret = SetEnvironmentVariableA(NULL, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_PARAMETER, "should fail with NULL, NULL");
-
-    ret = SetEnvironmentVariableA("", "");
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_PARAMETER, "should fail with \"\", \"\"");
-
-    ret = SetEnvironmentVariableA(name, "");
-    ok(ret == TRUE, "should not fail with empty value");
-
-    ret = SetEnvironmentVariableA("", value);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_PARAMETER, "should fail with empty name");
-
     ret = SetEnvironmentVariableA(name, value);
-    ok(ret == TRUE, "unexpected error in SetEnvironmentVariableA");
+    ok(ret == TRUE,
+       "unexpected error in SetEnvironmentVariableA, GetLastError=%ld",
+       GetLastError());
 
-    /* the following line should just crash */
-    /* ret_size = GetEnvironmentVariableA(name, NULL, lstrlenA(value) + 1); */
-
-    ret_size = GetEnvironmentVariableA(NULL, NULL, 0);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-
-    ret_size = GetEnvironmentVariableA(NULL, buf, lstrlenA(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-
-    ret_size = GetEnvironmentVariableA("", buf, lstrlenA(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-
-    lstrcpyA(buf, "foo");
-    ret_size = GetEnvironmentVariableA(name, buf, 0);
-    ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    ok(ret_size == lstrlenA(value) + 1, "should return length with terminating 0");
+    /* Try to retrieve the environment variable we just set */
+    ret_size = GetEnvironmentVariableA(name, NULL, 0);
+    ok(ret_size == lstrlenA(value) + 1,
+       "should return length with terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value));
     ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
-    ok(ret_size == lstrlenA(value) + 1, "should return length with terminating 0");
+    ok(ret_size == lstrlenA(value) + 1,
+       "should return length with terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
     ok(lstrcmpA(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenA(value), "should return length without terminating 0");
+    ok(ret_size == lstrlenA(value),
+       "should return length without terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name_cased, buf, lstrlenA(value) + 1);
     ok(lstrcmpA(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenA(value), "should return length without terminating 0");
+    ok(ret_size == lstrlenA(value),
+       "should return length without terminating 0 ret_size=%ld", ret_size);
 
-    ret = SetEnvironmentVariableA(name, NULL);
+    /* Remove that environment variable */
+    ret = SetEnvironmentVariableA(name_cased, NULL);
     ok(ret == TRUE, "should erase existing variable");
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
     ok(lstrcmpA(buf, "foo") == 0, "should not touch the buffer");
+    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
 
+    /* Check behavior of SetEnvironmentVariableA(name, "") */
     ret = SetEnvironmentVariableA(name, value);
-    ok(ret == TRUE, "unexpected error in SetEnvironmentVariableA");
-
-    ret = SetEnvironmentVariableA(name, "");
-    ok(ret == TRUE, "should not fail with empty value");
+    ok(ret == TRUE,
+       "unexpected error in SetEnvironmentVariableA, GetLastError=%ld",
+       GetLastError());
 
     lstrcpyA(buf, "foo");
+    ret_size = GetEnvironmentVariableA(name_cased, buf, lstrlenA(value) + 1);
+    ok(lstrcmpA(buf, value) == 0, "should touch the buffer");
+    ok(ret_size == lstrlenA(value),
+       "should return length without terminating 0 ret_size=%ld", ret_size);
+
+    ret = SetEnvironmentVariableA(name_cased, "");
+    ok(ret == TRUE,
+       "should not fail with empty value but GetLastError=%ld", GetLastError());
+
+    lstrcpyA(buf, "foo");
+    SetLastError(0);
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-    ok(lstrcmpA(buf, "") == 0, "should copy an empty string");
+    ok(ret_size == 0 &&
+       ((GetLastError() == 0 && lstrcmpA(buf, "") == 0) ||
+        (GetLastError() == ERROR_ENVVAR_NOT_FOUND)),
+       "%s should be set to \"\" (NT) or removed (Win9x) but ret_size=%ld GetLastError=%ld and buf=%s",
+       name, ret_size, GetLastError(), buf);
+
+    /* Test the limits */
+    ret_size = GetEnvironmentVariableA(NULL, NULL, 0);
+    ok(ret_size == 0 && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ENVVAR_NOT_FOUND),
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
+
+    ret_size = GetEnvironmentVariableA(NULL, buf, lstrlenA(value) + 1);
+    ok(ret_size == 0 && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ENVVAR_NOT_FOUND),
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
+
+    ret_size = GetEnvironmentVariableA("", buf, lstrlenA(value) + 1);
+    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
 }
 
 static void test_GetSetEnvironmentVariableW(void)
@@ -109,77 +123,93 @@ static void test_GetSetEnvironmentVariableW(void)
     static const WCHAR empty_strW[] = { 0 };
     static const WCHAR fooW[] = {'f','o','o',0};
 
-    ret = SetEnvironmentVariableW(NULL, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_PARAMETER, "should fail with NULL, NULL");
-
-    ret = SetEnvironmentVariableW(empty_strW, empty_strW);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_PARAMETER, "should fail with \"\", \"\"");
-
-    ret = SetEnvironmentVariableW(name, empty_strW);
-    ok(ret == TRUE, "should not fail with empty value");
-
-    ret = SetEnvironmentVariableW(empty_strW, value);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_PARAMETER, "should fail with empty name");
-
     ret = SetEnvironmentVariableW(name, value);
-    ok(ret == TRUE, "unexpected error in SetEnvironmentVariableW");
+    if (ret == FALSE && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        /* Must be Win9x which doesn't support the Unicode functions */
+        return;
+    }
+    ok(ret == TRUE,
+       "unexpected error in SetEnvironmentVariableW, GetLastError=%ld",
+       GetLastError());
 
-    /* the following line should just crash */
-    /* ret_size = GetEnvironmentVariableW(name, NULL, lstrlenW(value) + 1); */
-
-    ret_size = GetEnvironmentVariableW(NULL, NULL, 0);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-
-    ret_size = GetEnvironmentVariableW(NULL, buf, lstrlenW(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-
-    ret_size = GetEnvironmentVariableW(empty_strW, buf, lstrlenW(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
-
-    lstrcpyW(buf, fooW);
-    ret_size = GetEnvironmentVariableW(name, buf, 0);
-    ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
-    ok(ret_size == lstrlenW(value) + 1, "should return length with terminating 0");
+    /* Try to retrieve the environment variable we just set */
+    ret_size = GetEnvironmentVariableW(name, NULL, 0);
+    ok(ret_size == lstrlenW(value) + 1,
+       "should return length with terminating 0 ret_size=%ld",
+       ret_size);
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value));
-
     todo_wine {
         ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
     };
-    ok(ret_size == lstrlenW(value) + 1, "should return length with terminating 0");
+    ok(ret_size == lstrlenW(value) + 1,
+       "should return length with terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value) + 1);
     ok(lstrcmpW(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenW(value), "should return length without terminating 0");
+    ok(ret_size == lstrlenW(value),
+       "should return length without terminating 0 ret_size=%ld", ret_size);
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name_cased, buf, lstrlenW(value) + 1);
     ok(lstrcmpW(buf, value) == 0, "should touch the buffer");
-    ok(ret_size == lstrlenW(value), "should return length without terminating 0");
+    ok(ret_size == lstrlenW(value),
+       "should return length without terminating 0 ret_size=%ld", ret_size);
 
-    ret = SetEnvironmentVariableW(name, NULL);
+    /* Remove that environment variable */
+    ret = SetEnvironmentVariableW(name_cased, NULL);
     ok(ret == TRUE, "should erase existing variable");
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
     ok(lstrcmpW(buf, fooW) == 0, "should not touch the buffer");
+    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
 
+    /* Check behavior of SetEnvironmentVariableW(name, "") */
     ret = SetEnvironmentVariableW(name, value);
-    ok(ret == TRUE, "unexpected error in SetEnvironmentVariableW");
-
-    ret = SetEnvironmentVariableW(name, empty_strW);
-    ok(ret == TRUE, "should not fail with empty value");
+    ok(ret == TRUE,
+       "unexpected error in SetEnvironmentVariableW, GetLastError=%ld",
+       GetLastError());
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value) + 1);
-    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND, "should not find variable");
+    ok(lstrcmpW(buf, value) == 0, "should touch the buffer");
+    ok(ret_size == lstrlenW(value),
+       "should return length without terminating 0 ret_size=%ld", ret_size);
+
+    ret = SetEnvironmentVariableW(name_cased, empty_strW);
+    ok(ret == TRUE, "should not fail with empty value but GetLastError=%ld", GetLastError());
+
+    lstrcpyW(buf, fooW);
+    ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value) + 1);
+    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
 
     todo_wine {
         ok(lstrcmpW(buf, empty_strW) == 0, "should copy an empty string");
     };
+
+    /* Test the limits */
+    ret_size = GetEnvironmentVariableW(NULL, NULL, 0);
+    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
+
+    ret_size = GetEnvironmentVariableW(NULL, buf, lstrlenW(value) + 1);
+    ok(ret_size == 0 && GetLastError() == ERROR_ENVVAR_NOT_FOUND,
+       "should not find variable but ret_size=%ld GetLastError=%ld",
+       ret_size, GetLastError());
+
+    ret = SetEnvironmentVariableW(NULL, NULL);
+    ok(ret == FALSE && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ENVVAR_NOT_FOUND),
+       "should fail with NULL, NULL but ret=%d and GetLastError=%ld",
+       ret, GetLastError());
 }
 
 START_TEST(environ)
