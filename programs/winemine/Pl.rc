@@ -1,10 +1,10 @@
 /*
  * WineMine
- * Italian Language Support
+ * Polish Language Support
  *
  * Copyright 2000 Joshua Thielen
  * Copyright 2003 Marcelo Duarte
- * Copyright 2003-2004 Ivan Leo Puoti
+ * Copyright 2004 Jacek Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,57 +21,58 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
 STRINGTABLE {
      IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nobody"
+     IDS_NOBODY,  "Anonim"
 }
 
 MENU_WINEMINE MENU DISCARDABLE
 {
-    POPUP "&Opzioni" {
-        MENUITEM "&Nuovo\tF2",           IDM_NEW
+    POPUP "&Opcje" {
+        MENUITEM "&Nowa\tF2",         IDM_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Contrassegna domanda", IDM_MARKQ
+        MENUITEM "&Znaczniki",        IDM_MARKQ
         MENUITEM SEPARATOR
-        MENUITEM "&Principiante",      IDM_BEGINNER
-        MENUITEM "&Avanzato",      IDM_ADVANCED
-        MENUITEM "&Esperto",        IDM_EXPERT
-        MENUITEM "&Presonalizza",        IDM_CUSTOM
+        MENUITEM "&Pocz¹tkuj¹cy",     IDM_BEGINNER
+        MENUITEM "Z&aawansowany",     IDM_ADVANCED
+        MENUITEM "&Ekspert",          IDM_EXPERT
+        MENUITEM "&U¿ytkownika",      IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM "E&sci\tAlt+X",          IDM_EXIT
+        MENUITEM "&Najlepsze Wyniki", IDM_TIMES
+        MENUITEM SEPARATOR
+        MENUITEM "W&yjœcie\tAlt+X",   IDM_EXIT
     }
-    POPUP "&Informazioni" {
-        MENUITEM "&Tempi migliori",    IDM_TIMES
-        MENUITEM "&Informazioni su WineMine",         IDM_ABOUT
+    POPUP "&Pomoc" {
+        MENUITEM "&O Programie",      IDM_ABOUT
     }
 }
 
-DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
+DLG_TIMES DIALOG DISCARDABLE 0, 0, 170, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Tempi migliori"
+CAPTION "Najlepsze Wyniki"
 {
-    GROUPBOX        "Tempi migliori", IDIGNORE,  10,  10, 140,  45
-    LTEXT           "Principiante",      IDIGNORE,  20,  20,  40,   8
-    LTEXT           "Avanzato",      IDIGNORE,  20,  30,  40,   8
-    LTEXT           "Esperto",        IDIGNORE,  20,  40,  40,   8
-    LTEXT           "999",          IDC_TIME1,  70,  20,  15,   8
-    LTEXT           "999",          IDC_TIME2,  70,  30,  15,   8
-    LTEXT           "999",          IDC_TIME3,  70,  40,  15,   8
-    LTEXT           "",             IDC_NAME1,  90,  20,  55,   8
-    LTEXT           "",             IDC_NAME2,  90,  30,  55,   8
-    LTEXT           "",             IDC_NAME3,  90,  40,  55,   8
-    DEFPUSHBUTTON   "OK",                IDOK,  55,  60,  50,  15
+    GROUPBOX        "Najlepsze Wyniki", IDIGNORE,  10,  10, 150,  45
+    LTEXT           "Pocz¹tkuj¹cy",      IDIGNORE,  20,  20,  50,   8
+    LTEXT           "Zaawansowany",      IDIGNORE,  20,  30,  50,   8
+    LTEXT           "Ekspert",        IDIGNORE,  20,  40,  50,   8
+    LTEXT           "999",          IDC_TIME1,  80,  20,  15,   8
+    LTEXT           "999",          IDC_TIME2,  80,  30,  15,   8
+    LTEXT           "999",          IDC_TIME3,  80,  40,  15,   8
+    LTEXT           "",             IDC_NAME1,  100,  20,  55,   8
+    LTEXT           "",             IDC_NAME2,  100,  30,  55,   8
+    LTEXT           "",             IDC_NAME3,  100,  40,  55,   8
+    DEFPUSHBUTTON   "OK",                IDOK,  60,  60,  50,  15
 }
 
 DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Congratulazioni!"
+CAPTION "Gratulacje!"
 {
-    LTEXT           "Inserisci il tuo nome", IDIGNORE,  10,  10, 150,  10
+    LTEXT           "Podaj swoje imiê", IDIGNORE,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
 }
@@ -81,24 +82,24 @@ STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Custom Game"
 {
-    LTEXT           "Righe",   IDIGNORE,   5,   5,  30,  10
-    LTEXT           "Colonne",   IDIGNORE,   5,  35,  30,  10
-    LTEXT           "Mine",  IDIGNORE,   5,  65,  30,  10
+    LTEXT           "Wiersze",   IDIGNORE,   5,   5,  30,  10
+    LTEXT           "Kolumny",   IDIGNORE,   5,  35,  30,  10
+    LTEXT           "Miny",  IDIGNORE,   5,  65,  30,  10
     EDITTEXT              IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
     EDITTEXT              IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
     EDITTEXT             IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
     DEFPUSHBUTTON   "OK",     IDOK,      40,  30,  50,  15
-    PUSHBUTTON      "Annulla", IDCANCEL,  40,  50,  50,  15
+    PUSHBUTTON      "Anuluj", IDCANCEL,  40,  50,  50,  15
 }
 
 DLG_ABOUT DIALOG DISCARDABLE  0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Informazioni su WineMine"
+CAPTION "About"
 {
     LTEXT                               "Winemine", IDIGNORE,  10,  10,  50,  10
     LTEXT         "Copyright 2000, Joshua Thielen", IDIGNORE,  35,  25, 115,  10
-    LTEXT                 "Concesso in licenza secondo i termini della LGPL", IDIGNORE,  35,  35, 115,  10
+    LTEXT                 "Na licencji LGPL", IDIGNORE,  35,  35, 115,  10
     ICON                                "WINEMINE", IDIGNORE,  10,  25,  20,  20
     DEFPUSHBUTTON                             "OK", IDOK,      50,  60,  60,  15
 }

@@ -46,5 +46,6 @@
 #define IDC_EDITMINES  1033
 
 #define IDS_APPNAME    1101
+#define IDS_NOBODY     1102
 
 #define IDA_WINEMINE   1201

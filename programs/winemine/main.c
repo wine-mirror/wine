@@ -366,7 +366,7 @@ void LoadBoard( BOARD *p_board )
                 (LPDWORD) &size ) == ERROR_SUCCESS )
                     strncpy( p_board->best_name[i], data, sizeof( data ) );
         else
-            wsprintf( p_board->best_name[i], "Nobody");
+            LoadString( p_board->hInst, IDS_NOBODY, p_board->best_name[i], 16 );
     }
 
     for( i = 0; i < 3; i++ ) {
