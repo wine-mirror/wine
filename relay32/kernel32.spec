@@ -893,8 +893,8 @@ init	MAIN_KernelInit
 875 stdcall GetFileAttributesExW(wstr long ptr) GetFileAttributesEx32W
 876 stub GetProcessPriorityBoost
 877 stub GetThreadPriorityBoost
-878 stub InterlockedCompareExchange
-879 stub InterlockedExchangeAdd
+878 stdcall InterlockedCompareExchange (ptr long long) InterlockedCompareExchange
+879 stdcall InterlockedExchangeAdd (ptr long ) InterlockedExchangeAdd
 880 stdcall IsProcessorFeaturePresent(long) IsProcessorFeaturePresent
 881 stub OpenWaitableTimerA
 882 stub OpenWaitableTimerW
