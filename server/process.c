@@ -461,11 +461,16 @@ int open_object( const char *name, const struct object_ops *ops,
                  unsigned int access, int inherit )
 {
     struct object *obj = find_object( name );
-    if (!obj) return -1;  /* FIXME: set error code */
+    if (!obj) 
+    {
+        SET_ERROR( ERROR_FILE_NOT_FOUND );
+        return -1;
+    }
     if (ops && obj->ops != ops)
     {
         release_object( obj );
-        return -1;  /* FIXME: set error code */
+        SET_ERROR( ERROR_INVALID_HANDLE );  /* FIXME: not the right type */ 
+        return -1;
     }
     return alloc_handle( current->process, obj, access, inherit );
 }
