@@ -74,10 +74,22 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME,HDC,int,int,const RECT*,HRGN*);
 HRESULT WINAPI GetThemeBool(HTHEME,int,int,int,BOOL*);
 HRESULT WINAPI GetThemeColor(HTHEME,int,int,int,COLORREF*);
 
-#define SZ_THDOCPROP_DISPLAYNAME   L"DisplayName"
-#define SZ_THDOCPROP_CANONICALNAME L"ThemeName"
-#define SZ_THDOCPROP_TOOLTIP       L"ToolTip"
-#define SZ_THDOCPROP_AUTHOR        L"author"
+#if defined(__GNUC__)
+# define SZ_THDOCPROP_DISPLAYNAME   (const WCHAR []){ 'D','i','s','p','l','a','y','N','a','m','e',0 }
+# define SZ_THDOCPROP_CANONICALNAME (const WCHAR []){ 'T','h','e','m','e','N','a','m','e',0 }
+# define SZ_THDOCPROP_TOOLTIP       (const WCHAR []){ 'T','o','o','l','T','i','p',0 }
+# define SZ_THDOCPROP_AUTHOR        (const WCHAR []){ 'a','u','t','h','o','r',0 }
+#elif defined(_MSC_VER)
+# define SZ_THDOCPROP_DISPLAYNAME   L"DisplayName"
+# define SZ_THDOCPROP_CANONICALNAME L"ThemeName"
+# define SZ_THDOCPROP_TOOLTIP       L"ToolTip"
+# define SZ_THDOCPROP_AUTHOR        L"author"
+#else
+static const WCHAR SZ_THDOCPROP_DISPLAYNAME[] =   { 'D','i','s','p','l','a','y','N','a','m','e',0 };
+static const WCHAR SZ_THDOCPROP_CANONICALNAME[] = { 'T','h','e','m','e','N','a','m','e',0 };
+static const WCHAR SZ_THDOCPROP_TOOLTIP[] =       { 'T','o','o','l','T','i','p',0 };
+static const WCHAR SZ_THDOCPROP_AUTHOR[] =        { 'a','u','t','h','o','r',0 };
+#endif
 
 HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR,LPCWSTR,LPWSTR,int);
 HRESULT WINAPI GetThemeEnumValue(HTHEME,int,int,int,int*);

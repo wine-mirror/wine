@@ -48,64 +48,136 @@ typedef struct sockaddr SOCKADDR;
 #define DPNA_SEPARATOR_COMPONENT_A          ';'
 #define DPNA_ESCAPECHAR                     L'%'
 #define DPNA_ESCAPECHAR_A                   '%'
-#define DPNA_HEADER                         L"x-directplay:/"
+
 #define DPNA_HEADER_A                       "x-directplay:/"
-#define DPNA_KEY_APPLICATION_INSTANCE       L"applicationinstance"
 #define DPNA_KEY_APPLICATION_INSTANCE_A     "applicationinstance"
-#define DPNA_KEY_BAUD                       L"baud"
 #define DPNA_KEY_BAUD_A                     "baud"
-#define DPNA_KEY_DEVICE                     L"device"
 #define DPNA_KEY_DEVICE_A                   "device"
-#define DPNA_KEY_FLOWCONTROL                L"flowcontrol"
 #define DPNA_KEY_FLOWCONTROL_A              "flowcontrol"
-#define DPNA_KEY_HOSTNAME                   L"hostname"
 #define DPNA_KEY_HOSTNAME_A                 "hostname"
-#define DPNA_KEY_PARITY                     L"parity"
 #define DPNA_KEY_PARITY_A                   "parity"
-#define DPNA_KEY_PHONENUMBER                L"phonenumber"
 #define DPNA_KEY_PHONENUMBER_A              "phonenumber"
-#define DPNA_KEY_PORT                       L"port"
 #define DPNA_KEY_PORT_A                     "port"
-#define DPNA_KEY_PROGRAM                    L"program"
 #define DPNA_KEY_PROGRAM_A                  "program"
-#define DPNA_KEY_PROVIDER                   L"provider"
 #define DPNA_KEY_PROVIDER_A                 "provider"
-#define DPNA_KEY_STOPBITS                   L"stopbits"
 #define DPNA_KEY_STOPBITS_A                 "stopbits"
-#define DPNA_STOP_BITS_ONE                  L"1"
 #define DPNA_STOP_BITS_ONE_A                "1"
-#define DPNA_STOP_BITS_ONE_FIVE             L"1.5"
 #define DPNA_STOP_BITS_ONE_FIVE_A           "1.5"
-#define DPNA_STOP_BITS_TWO                  L"2"
 #define DPNA_STOP_BITS_TWO_A                "2"
-#define DPNA_PARITY_NONE                    L"NONE"
 #define DPNA_PARITY_NONE_A                  "NONE"
-#define DPNA_PARITY_EVEN                    L"EVEN"
 #define DPNA_PARITY_EVEN_A                  "EVEN"
-#define DPNA_PARITY_ODD                     L"ODD"
 #define DPNA_PARITY_ODD_A                   "ODD"
-#define DPNA_PARITY_MARK                    L"MARK"
 #define DPNA_PARITY_MARK_A                  "MARK"
-#define DPNA_PARITY_SPACE                   L"SPACE"
 #define DPNA_PARITY_SPACE_A                 "SPACE"
-#define DPNA_FLOW_CONTROL_NONE              L"NONE"
 #define DPNA_FLOW_CONTROL_NONE_A            "NONE"
-#define DPNA_FLOW_CONTROL_XONXOFF           L"XONXOFF"
 #define DPNA_FLOW_CONTROL_XONXOFF_A         "XONXOFF"
-#define DPNA_FLOW_CONTROL_RTS               L"RTS"
 #define DPNA_FLOW_CONTROL_RTS_A             "RTS"
-#define DPNA_FLOW_CONTROL_DTR               L"DTR"
 #define DPNA_FLOW_CONTROL_DTR_A             "DTR"
-#define DPNA_FLOW_CONTROL_RTSDTR            L"RTSDTR"
 #define DPNA_FLOW_CONTROL_RTSDTR_A          "RTSDTR"
-#define DPNA_VALUE_TCPIPPROVIDER            L"IP"
 #define DPNA_VALUE_TCPIPPROVIDER_A          "IP"
-#define DPNA_VALUE_IPXPROVIDER              L"IPX"
 #define DPNA_VALUE_IPXPROVIDER_A            "IPX"
-#define DPNA_VALUE_MODEMPROVIDER            L"MODEM"
 #define DPNA_VALUE_MODEMPROVIDER_A          "MODEM"
-#define DPNA_VALUE_SERIALPROVIDER           L"SERIAL"
 #define DPNA_VALUE_SERIALPROVIDER_A         "SERIAL"
+
+/* And now the same thing but as Unicode strings */
+#if defined(__GNUC__)
+
+# define DPNA_HEADER                   (const WCHAR []){ 'x','-','d','i','r','e','c','t','p','l','a','y',':','/',0 }
+# define DPNA_KEY_APPLICATION_INSTANCE (const WCHAR []){ 'a','p','p','l','i','c','a','t','i','o','n','i','n','s','t','a','n','c','e',0 }
+# define DPNA_KEY_BAUD                 (const WCHAR []){ 'b','a','u','d',0 }
+# define DPNA_KEY_DEVICE               (const WCHAR []){ 'd','e','v','i','c','e',0 }
+# define DPNA_KEY_FLOWCONTROL          (const WCHAR []){ 'f','l','o','w','c','o','n','t','r','o','l',0 }
+# define DPNA_KEY_HOSTNAME             (const WCHAR []){ 'h','o','s','t','n','a','m','e',0 }
+# define DPNA_KEY_PARITY               (const WCHAR []){ 'p','a','r','i','t','y',0 }
+# define DPNA_KEY_PHONENUMBER          (const WCHAR []){ 'p','h','o','n','e','n','u','m','b','e','r',0 }
+# define DPNA_KEY_PORT                 (const WCHAR []){ 'p','o','r','t',0 }
+# define DPNA_KEY_PROGRAM              (const WCHAR []){ 'p','r','o','g','r','a','m',0 }
+# define DPNA_KEY_PROVIDER             (const WCHAR []){ 'p','r','o','v','i','d','e','r',0 }
+# define DPNA_KEY_STOPBITS             (const WCHAR []){ 's','t','o','p','b','i','t','s',0 }
+# define DPNA_STOP_BITS_ONE            (const WCHAR []){ '1',0 }
+# define DPNA_STOP_BITS_ONE_FIVE       (const WCHAR []){ '1','.','5',0 }
+# define DPNA_STOP_BITS_TWO            (const WCHAR []){ '2',0 }
+# define DPNA_PARITY_NONE              (const WCHAR []){ 'N','O','N','E',0 }
+# define DPNA_PARITY_EVEN              (const WCHAR []){ 'E','V','E','N',0 }
+# define DPNA_PARITY_ODD               (const WCHAR []){ 'O','D','D',0 }
+# define DPNA_PARITY_MARK              (const WCHAR []){ 'M','A','R','K',0 }
+# define DPNA_PARITY_SPACE             (const WCHAR []){ 'S','P','A','C','E',0 }
+# define DPNA_FLOW_CONTROL_NONE        (const WCHAR []){ 'N','O','N','E',0 }
+# define DPNA_FLOW_CONTROL_XONXOFF     (const WCHAR []){ 'X','O','N','X','O','F','F',0 }
+# define DPNA_FLOW_CONTROL_RTS         (const WCHAR []){ 'R','T','S',0 }
+# define DPNA_FLOW_CONTROL_DTR         (const WCHAR []){ 'D','T','R',0 }
+# define DPNA_FLOW_CONTROL_RTSDTR      (const WCHAR []){ 'R','T','S','D','T','R',0 }
+# define DPNA_VALUE_TCPIPPROVIDER      (const WCHAR []){ 'I','P',0 }
+# define DPNA_VALUE_IPXPROVIDER        (const WCHAR []){ 'I','P','X',0 }
+# define DPNA_VALUE_MODEMPROVIDER      (const WCHAR []){ 'M','O','D','E','M',0 }
+# define DPNA_VALUE_SERIALPROVIDER     (const WCHAR []){ 'S','E','R','I','A','L',0 }
+
+#elif defined(_MSC_VER)
+
+# define DPNA_HEADER                   L"x-directplay:/"
+# define DPNA_KEY_APPLICATION_INSTANCE L"applicationinstance"
+# define DPNA_KEY_BAUD                 L"baud"
+# define DPNA_KEY_DEVICE               L"device"
+# define DPNA_KEY_FLOWCONTROL          L"flowcontrol"
+# define DPNA_KEY_HOSTNAME             L"hostname"
+# define DPNA_KEY_PARITY               L"parity"
+# define DPNA_KEY_PHONENUMBER          L"phonenumber"
+# define DPNA_KEY_PORT                 L"port"
+# define DPNA_KEY_PROGRAM              L"program"
+# define DPNA_KEY_PROVIDER             L"provider"
+# define DPNA_KEY_STOPBITS             L"stopbits"
+# define DPNA_STOP_BITS_ONE            L"1"
+# define DPNA_STOP_BITS_ONE_FIVE       L"1.5"
+# define DPNA_STOP_BITS_TWO            L"2"
+# define DPNA_PARITY_NONE              L"NONE"
+# define DPNA_PARITY_EVEN              L"EVEN"
+# define DPNA_PARITY_ODD               L"ODD"
+# define DPNA_PARITY_MARK              L"MARK"
+# define DPNA_PARITY_SPACE             L"SPACE"
+# define DPNA_FLOW_CONTROL_NONE        L"NONE"
+# define DPNA_FLOW_CONTROL_XONXOFF     L"XONXOFF"
+# define DPNA_FLOW_CONTROL_RTS         L"RTS"
+# define DPNA_FLOW_CONTROL_DTR         L"DTR"
+# define DPNA_FLOW_CONTROL_RTSDTR      L"RTSDTR"
+# define DPNA_VALUE_TCPIPPROVIDER      L"IP"
+# define DPNA_VALUE_IPXPROVIDER        L"IPX"
+# define DPNA_VALUE_MODEMPROVIDER      L"MODEM"
+# define DPNA_VALUE_SERIALPROVIDER     L"SERIAL"
+
+#else
+
+static const WCHAR DPNA_HEADER[] = { 'x','-','d','i','r','e','c','t','p','l','a','y',':','/',0 };
+static const WCHAR DPNA_KEY_APPLICATION_INSTANCE[] = { 'a','p','p','l','i','c','a','t','i','o','n','i','n','s','t','a','n','c','e',0 };
+static const WCHAR DPNA_KEY_BAUD[] = { 'b','a','u','d',0 };
+static const WCHAR DPNA_KEY_DEVICE[] = { 'd','e','v','i','c','e',0 };
+static const WCHAR DPNA_KEY_FLOWCONTROL[] = { 'f','l','o','w','c','o','n','t','r','o','l',0 };
+static const WCHAR DPNA_KEY_HOSTNAME[] = { 'h','o','s','t','n','a','m','e',0 };
+static const WCHAR DPNA_KEY_PARITY[] = { 'p','a','r','i','t','y',0 };
+static const WCHAR DPNA_KEY_PHONENUMBER[] = { 'p','h','o','n','e','n','u','m','b','e','r',0 };
+static const WCHAR DPNA_KEY_PORT[] =   { 'p','o','r','t',0 };
+static const WCHAR DPNA_KEY_PROGRAM[] = { 'p','r','o','g','r','a','m',0 };
+static const WCHAR DPNA_KEY_PROVIDER[] = { 'p','r','o','v','i','d','e','r',0 };
+static const WCHAR DPNA_KEY_STOPBITS[] = { 's','t','o','p','b','i','t','s',0 };
+static const WCHAR DPNA_STOP_BITS_ONE[] = { '1',0 };
+static const WCHAR DPNA_STOP_BITS_ONE_FIVE[] = { '1','.','5',0 };
+static const WCHAR DPNA_STOP_BITS_TWO[] = { '2',0 };
+static const WCHAR DPNA_PARITY_NONE[] = { 'N','O','N','E',0 };
+static const WCHAR DPNA_PARITY_EVEN[] = { 'E','V','E','N',0 };
+static const WCHAR DPNA_PARITY_ODD[] = { 'O','D','D',0 };
+static const WCHAR DPNA_PARITY_MARK[] = { 'M','A','R','K',0 };
+static const WCHAR DPNA_PARITY_SPACE[] = { 'S','P','A','C','E',0 };
+static const WCHAR DPNA_FLOW_CONTROL_NONE[] = { 'N','O','N','E',0 };
+static const WCHAR DPNA_FLOW_CONTROL_XONXOFF[] = { 'X','O','N','X','O','F','F',0 };
+static const WCHAR DPNA_FLOW_CONTROL_RTS[] = { 'R','T','S',0 };
+static const WCHAR DPNA_FLOW_CONTROL_DTR[] = { 'D','T','R',0 };
+static const WCHAR DPNA_FLOW_CONTROL_RTSDTR[] = { 'R','T','S','D','T','R',0 };
+static const WCHAR DPNA_VALUE_TCPIPPROVIDER[] = { 'I','P',0 };
+static const WCHAR DPNA_VALUE_IPXPROVIDER[] = { 'I','P','X',0 };
+static const WCHAR DPNA_VALUE_MODEMPROVIDER[] = { 'M','O','D','E','M',0 };
+static const WCHAR DPNA_VALUE_SERIALPROVIDER[] = { 'S','E','R','I','A','L',0 };
+
+
+#endif
 
 #define DPNA_BAUD_RATE_9600                   9600
 #define DPNA_BAUD_RATE_14400                 14400
