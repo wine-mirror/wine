@@ -186,7 +186,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 {
     unsigned int len = 0;
 
-    FIXME("(%p,%ld,%p,%ld,%p): stub\n",
+    TRACE("(%p,%ld,%p,%ld,%p)\n",
           token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
 
     switch (tokeninfoclass)
