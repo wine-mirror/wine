@@ -1216,7 +1216,7 @@ HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(LPBYTE lpdata, UINT cBytes)
     HWND hwnd = GetOpenClipboardWindow();
     HDC hdc = GetDC(hwnd);
 
-    hTargetImage = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc, TRUE);
+    hTargetImage = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc);
 
     ReleaseDC(hwnd, hdc);
 

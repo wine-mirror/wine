@@ -433,56 +433,6 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
     return TRUE;
 }
 
-/**************************************************************************
- *	        X11DRV_BITMAP_CreateBitmapHeaderFromPixmap
- *
- *  Allocates an HBITMAP which references the Pixmap passed in.
- *  Note: This function makes the bitmap an owner of the Pixmap so subsequently
- *  calling DeleteObject on this will free the Pixmap as well.
- */
-HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(HDC hdc, Pixmap pixmap)
-{
-    HDC hdcMem;
-    Pixmap old_pixmap;
-    HBITMAP hBmp = 0, old;
-    Window root;
-    int x,y;               /* Unused */
-    unsigned border_width; /* Unused */
-    unsigned int depth, width, height;
-
-    /* Get the Pixmap dimensions and bit depth */
-    wine_tsx11_lock();
-    if (!XGetGeometry(gdi_display, pixmap, &root, &x, &y, &width, &height,
-                      &border_width, &depth)) depth = 0;
-    wine_tsx11_unlock();
-    if (!depth) goto END;
-
-    TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
-          width, height, depth);
-
-    /*
-     * Create an HBITMAP with the same dimensions and BPP as the pixmap,
-     * and make it a container for the pixmap passed.
-     */
-    hBmp = CreateBitmap( width, height, 1, depth, NULL );
-
-    /* force bitmap to be owned by a screen DC */
-    hdcMem = CreateCompatibleDC( hdc );
-    old = SelectObject( hdcMem, hBmp );
-
-    old_pixmap = X11DRV_set_pixmap( hBmp, pixmap );
-    wine_tsx11_lock();
-    if (old_pixmap) XFreePixmap( gdi_display, old_pixmap );
-    wine_tsx11_unlock();
-
-    SelectObject( hdcMem, old );
-    DeleteDC( hdcMem );
-
-END:
-    TRACE("\tReturning HBITMAP %p\n", hBmp);
-    return hBmp;
-}
-
 
 /***********************************************************************
  *           X11DRV_set_pixmap

@@ -202,11 +202,9 @@ extern void X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
 
 extern int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
-extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
-extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(HDC hdc, Pixmap pixmap);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
-extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
+extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
 extern Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap );
 extern Pixmap X11DRV_get_pixmap( HBITMAP hbitmap );
