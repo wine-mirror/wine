@@ -37,7 +37,6 @@
 #endif
 
 #include "winbase.h"
-#include "wine/unicode.h"
 #include "build.h"
 
 /* Unicode string or integer id */
@@ -90,6 +89,19 @@ inline static struct resource *add_resource(void)
 {
     resources = xrealloc( resources, (nb_resources + 1) * sizeof(*resources) );
     return &resources[nb_resources++];
+}
+
+static inline unsigned int strlenW( const WCHAR *str )
+{
+    const WCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
+static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
 }
 
 static struct res_name *add_name( struct res_type *type, const struct resource *res )
@@ -232,7 +244,7 @@ static int cmp_string( const struct string_id *str1, const struct string_id *str
         return 1;  /* an id compares larger than a string */
     }
     if (!str2->str) return -1;
-    return strcmpiW( str1->str, str2->str );
+    return strcmpW( str1->str, str2->str );
 }
 
 /* compare two resources for sorting the resource directory */
