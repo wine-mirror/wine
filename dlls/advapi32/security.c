@@ -316,7 +316,7 @@ BOOL WINAPI
 SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength )
 {
-    FIXME("(%p, %s, %p, %ld): stub\n",
+    TRACE("(%p, %s, %p, %ld): stub\n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :
@@ -336,9 +336,7 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
           "Unknown",
           tokeninfo, tokeninfolength);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
-    return FALSE;
+    CallWin32ToNt (NtSetInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength ));
 }
 
 /*************************************************************************
