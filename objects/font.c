@@ -2098,10 +2098,48 @@ BOOL WINAPI TranslateCharsetInfo(
 /*************************************************************************
  *             GetFontLanguageInfo   (GDI32.@)
  */
-DWORD WINAPI GetFontLanguageInfo(HDC hdc) {
-	/* return value 0 is correct for most cases anyway */
-        FIXME("(%x):stub!\n", hdc);
-	return 0;
+DWORD WINAPI GetFontLanguageInfo(HDC hdc)
+{
+	FONTSIGNATURE fontsig;
+	static const DWORD GCP_DBCS_MASK=0x003F0000,
+		GCP_DIACRITIC_MASK=0x00000000,
+		FLI_GLYPHS_MASK=0x00000000,
+		GCP_GLYPHSHAPE_MASK=0x00000040,
+		GCP_KASHIDA_MASK=0x00000000,
+		GCP_LIGATE_MASK=0x00000000,
+		GCP_USEKERNING_MASK=0x00000000,
+		GCP_REORDER_MASK=0x00000060;
+	
+	DWORD result=0;
+	
+	GetTextCharsetInfo( hdc, &fontsig, 0 );
+	/* We detect each flag we return using a bitmask on the Codepage Bitfields */
+
+	if( (fontsig.fsCsb[0]&GCP_DBCS_MASK)!=0 )
+		result|=GCP_DBCS;
+	
+	if( (fontsig.fsCsb[0]&GCP_DIACRITIC_MASK)!=0 )
+		result|=GCP_DIACRITIC;
+	
+	if( (fontsig.fsCsb[0]&FLI_GLYPHS_MASK)!=0 )
+		result|=FLI_GLYPHS;
+	
+	if( (fontsig.fsCsb[0]&GCP_GLYPHSHAPE_MASK)!=0 )
+		result|=GCP_GLYPHSHAPE;
+	
+	if( (fontsig.fsCsb[0]&GCP_KASHIDA_MASK)!=0 )
+		result|=GCP_KASHIDA;
+	
+	if( (fontsig.fsCsb[0]&GCP_LIGATE_MASK)!=0 )
+		result|=GCP_LIGATE;
+
+	if( (fontsig.fsCsb[0]&GCP_USEKERNING_MASK)!=0 )
+		result|=GCP_USEKERNING;
+	
+	if( (fontsig.fsCsb[0]&GCP_REORDER_MASK)!=0 )
+		result|=GCP_REORDER;
+	
+	return result;
 }
 
 /*************************************************************************
@@ -2235,11 +2273,31 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 
 /*************************************************************************
  * GetCharacterPlacementW [GDI32.@]
+ *
+ *   Retrieve information about a string. This includes the width, reordering,
+ *   Glyphing and so on.
+ *
+ * RETURNS
+ *
+ *   The width and height of the string if succesful, 0 if failed.
+ *
+ * BUGS
+ *
+ *   All flags except GCP_REORDER are not yet implemented.
+ *   Reordering is not 100% complient to the Windows BiDi method.
+ *   Caret positioning is not yet implemented.
+ *   Classes are not yet implemented.
+ *
  */
 DWORD WINAPI
-GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
-			 INT nMaxExtent, GCP_RESULTSW *lpResults,
-			 DWORD dwFlags)
+GetCharacterPlacementW(
+		HDC hdc,	/* Device context for which the rendering is to be done */
+		LPCWSTR lpString,	/* The string for which information is to be returned */
+		INT uCount,	/* Number of WORDS in string. */
+		INT nMaxExtent,	/* Maximum extent the string is to take (in HDC logical units) */
+		GCP_RESULTSW *lpResults,	/* A pointer to a GCP_RESULTSW struct */
+		DWORD dwFlags	/* Flags specifying how to process the string */
+		)
 {
     DWORD ret=0;
     SIZE size;
@@ -2254,37 +2312,115 @@ GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
 	    lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
 	    lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
 
-    if(dwFlags)			FIXME("flags 0x%08lx ignored\n", dwFlags);
+    if(dwFlags&(~GCP_REORDER))			FIXME("flags 0x%08lx ignored\n", dwFlags);
     if(lpResults->lpCaretPos)	FIXME("caret positions not implemented\n");
     if(lpResults->lpClass)	FIXME("classes not implemented\n");
 
-    /* FIXME: reordering not implemented */
-    /* copy will do if the GCP_REORDER flag is not set */
-    if(lpResults->lpOutString)
-      lstrcpynW(lpResults->lpOutString, lpString, uCount);
+	nSet = (UINT)uCount;
+	if(nSet > lpResults->nGlyphs)
+		nSet = lpResults->nGlyphs;
 
-    nSet = (UINT)uCount;
-    if(nSet > lpResults->nGlyphs)
-	nSet = lpResults->nGlyphs;
+	/* return number of initialized fields */
+	lpResults->nGlyphs = nSet;
 
-    /* return number of initialized fields */
-    lpResults->nGlyphs = nSet;
+	if(dwFlags==0)
+	{
+		/* Treat the case where no special handling was requested in a fastpath way */
+		/* copy will do if the GCP_REORDER flag is not set */
+		if(lpResults->lpOutString)
+			lstrcpynW(lpResults->lpOutString, lpString, uCount);
 
-    if(lpResults->lpOrder)
-    {
-	for(i = 0; i < nSet; i++)
-	    lpResults->lpOrder[i] = i;
-    }
+		if(lpResults->lpOrder)
+		{
+			for(i = 0; i < nSet; i++)
+				lpResults->lpOrder[i] = i;
+		}
+		
+	} else
+	{
+		WORD *pwCharType;
+		int run_end;
+		/* Keep a static table that translates the C2 types to something meaningful */
+		/* 1 - left to right
+		 * -1 - right to left
+		 * 0 - neutral
+		 */
+		static const int chardir[]={ 0, 1, -1, 1, 1, 1, -1, 1, 0, 0, 0, 0 };
+		
+		WARN("The BiDi algorythm doesn't conform to Windows' yet\n");
+		if( (pwCharType=HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD)))==NULL )
+		{
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			
+			return 0;
+		}
+		
+		/* Fill in the order array with directionality values */
+		GetStringTypeW(CT_CTYPE2, lpString, uCount, pwCharType);
+		
+		/* The complete and correct (at list according to MS) BiDi algorythm is not
+		 * yet implemented here. Instead, we just make sure that consecutive runs of
+		 * the same direction (or neutral) are ordered correctly
+		 */
+		for( i=0; i<uCount; i+=run_end )
+		{
+			for( run_end=1; i+run_end<uCount &&
+			     (chardir[pwCharType[i+run_end]]==chardir[pwCharType[i]] ||
+			     chardir[pwCharType[i+run_end]]==0); ++run_end )
+				;
+			
+			if( chardir[pwCharType[i]]==1 || chardir[pwCharType[i]]==0 )
+			{
+				/* A LTR run */
+				if(lpResults->lpOutString)
+				{
+					int j;
+					for( j=0; j<run_end; j++ )
+					{
+						lpResults->lpOutString[i+j]=lpString[i+j];
+					}
+				}
+				
+				if(lpResults->lpOrder)
+				{
+					int j;
+					for( j=0; j<run_end; j++ )
+						lpResults->lpOrder[i+j] = i+j;
+				}
+			} else
+			{
+				/* A RTL run */
+				if(lpResults->lpOutString)
+				{
+					int j;
+					for( j=0; j<run_end; j++ )
+					{
+						lpResults->lpOutString[i+j]=lpString[i+run_end-j-1];
+					}
+				}
+				
+				if(lpResults->lpOrder)
+				{
+					int j;
+					for( j=0; j<run_end; j++ )
+						lpResults->lpOrder[i+j] = i+run_end-j-1;
+				}
+			}
+		}
+		
+		HeapFree(GetProcessHeap(), 0, pwCharType);
+	}
 
-    if (lpResults->lpDx)
-    {
-      int c;
-      for (i = 0; i < nSet; i++)
-      {
-        if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
-          lpResults->lpDx[i]= c;
-      }
-    }
+	/* FIXME: Will use the placement chars */
+	if (lpResults->lpDx)
+	{
+		int c;
+		for (i = 0; i < nSet; i++)
+		{
+			if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
+				lpResults->lpDx[i]= c;
+		}
+	}
 
     if(lpResults->lpGlyphs)
 	GetGlyphIndicesW(hdc, lpString, nSet, lpResults->lpGlyphs, 0);
