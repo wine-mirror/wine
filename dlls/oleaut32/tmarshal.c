@@ -43,6 +43,8 @@
 #include "ntddk.h"
 
 static const WCHAR riidW[5] = {'r','i','i','d',0};
+static const WCHAR pdispparamsW[] = {'p','d','i','s','p','p','a','r','a','m','s',0};
+static const WCHAR ppvObjectW[] = {'p','p','v','O','b','j','e','c','t',0};
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(olerelay);
@@ -357,60 +359,146 @@ static ICOM_VTABLE(IRpcProxyBuffer) tmproxyvtable = {
     TMProxyImpl_Disconnect
 };
 
+/* how much space do we use on stack in DWORD steps. */
+static int const
+_argsize(DWORD vt) {
+    switch (vt) {
+    case VT_VARIANT:
+	return (sizeof(VARIANT)+3)/sizeof(DWORD);
+    default:
+	return 1;
+    }
+}
+
+static int
+_xsize(TYPEDESC *td) {
+    switch (td->vt) {
+    case VT_VARIANT:
+	return sizeof(VARIANT)+3;
+    case VT_CARRAY: {
+	int i, arrsize = 1;
+	ARRAYDESC *adesc = td->u.lpadesc;
+
+	for (i=0;i<adesc->cDims;i++)
+	    arrsize *= adesc->rgbounds[i].cElements;
+	return arrsize*_xsize(&adesc->tdescElem);
+    }
+    case VT_UI2:
+    case VT_I2:
+	return 2;
+    case VT_UI1:
+    case VT_I1:
+	return 1;
+    default:
+	return 4;
+    }
+}
+
 static HRESULT
-marshall_param(
-    ITypeInfo *tinfo, ELEMDESC *elem, TYPEDESC *tdesc, DWORD *arg, marshal_state *buf
+serialize_param(
+    ITypeInfo		*tinfo,
+    BOOL		writeit,
+    BOOL		debugout,
+    BOOL		dealloc,
+    TYPEDESC		*tdesc,
+    DWORD		*arg,
+    marshal_state	*buf
 ) {
-    int relaydeb = TRACE_ON(olerelay);
-    HRESULT	hres;
+    HRESULT hres = S_OK;
 
-    if (!tdesc) tdesc = &(elem->tdesc);
+    TRACE("(tdesc.vt %d)\n",tdesc->vt);
+
     switch (tdesc->vt) {
-    case VT_NULL:
+    case VT_EMPTY: /* nothing. empty variant for instance */
 	return S_OK;
-    case VT_BSTR: {	/* DWORD size, string data */
+    case VT_BOOL:
+    case VT_ERROR:
+    case VT_UI4:
+    case VT_UINT:
+    case VT_I4:
+    case VT_UI2:
+    case VT_UI1:
+	hres = S_OK;
+	if (debugout) MESSAGE("%lx",*arg);
+	if (writeit)
+	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
+	return hres;
+    case VT_VARIANT: {
+	TYPEDESC	tdesc2;
+	VARIANT		*vt = (VARIANT*)arg;
+	DWORD		vttype = V_VT(vt);
 
-	    if (*arg) {
+	if (debugout) MESSAGE("Vt(%ld)(",vttype);
+	tdesc2.vt = vttype;
+	if (writeit) {
+	    hres = xbuf_add(buf,(LPBYTE)&vttype,sizeof(vttype));
+	    if (hres) return hres;
+	}
+	/* need to recurse since we need to free the stuff */
+	hres = serialize_param(tinfo,writeit,debugout,dealloc,&tdesc2,&(V_I4(vt)),buf);
+	if (debugout) MESSAGE(")");
+	return hres;
+    }
+    case VT_BSTR: {
+	if (debugout) {
+	    if (arg)
+		    MESSAGE("%s",debugstr_w((BSTR)*arg));
+	    else
+		    MESSAGE("<bstr NULL>");
+	}
+	if (writeit) {
+	    if (!*arg) {
+		DWORD fakelen = -1;
+		hres = xbuf_add(buf,(LPBYTE)&fakelen,4);
+		if (hres)
+		    return hres;
+	    } else {
 		DWORD *bstr = ((DWORD*)(*arg))-1;
 
-		if (relaydeb) MESSAGE("%s",debugstr_w((LPWSTR)(bstr+1)));
-		return xbuf_add(buf,(LPBYTE)bstr,bstr[0]+4);
-	    } else {
-		DWORD xnull = 0;
-
-		return xbuf_add(buf,(LPBYTE)&xnull,sizeof(xnull));
+		hres = xbuf_add(buf,(LPBYTE)bstr,bstr[0]+4);
+		if (hres)
+		    return hres;
 	    }
 	}
-    case VT_BOOL:
-    case VT_I4:
-	if (relaydeb) MESSAGE("%ld",*arg);
-	return xbuf_add(buf,(LPBYTE)arg,4);
-    case VT_VARIANT: {
-	/* We use ourselves to marshal the value further */
-	TYPEDESC tdesc2;
-	VARIANT *vt = (VARIANT*)arg;
-	DWORD vttype = V_VT(vt);
-
-	hres = xbuf_add(buf,(LPBYTE)&vttype,sizeof(vttype));
-	if (hres) return hres;
-	tdesc2.vt = vttype;
-	if (relaydeb) MESSAGE("Vt %ld ",vttype);
-	/* shield your eyes, bad pointer voodoo below */
-	return marshall_param(tinfo,elem,&tdesc2,(DWORD*)&(V_I4(vt)),buf);
+	if (dealloc && arg)
+	    SysFreeString((BSTR)arg);
+	return S_OK;
     }
-    case VT_PTR:
-	return marshall_param(tinfo,elem,tdesc->u.lptdesc,(DWORD*)*arg,buf);
-    case VT_VOID:
-	hres = _marshal_interface(buf,&(buf->iid),(LPUNKNOWN)arg);
-	if (hres) {
-	    FIXME("Failed unmarshaling VT_VOID with guid %s?\n",debugstr_guid(&(buf->iid)));
+    case VT_PTR: {
+	DWORD cookie;
+
+	if (debugout) MESSAGE("*");
+	if (writeit) {
+	    cookie = *arg ? 0x42424242 : 0;
+	    hres = xbuf_add(buf,(LPBYTE)&cookie,sizeof(cookie));
+	    if (hres)
+		return hres;
 	}
+	if (!*arg) {
+	    if (debugout) MESSAGE("NULL");
+	    return S_OK;
+	}
+	hres = serialize_param(tinfo,writeit,debugout,dealloc,tdesc->u.lptdesc,(DWORD*)*arg,buf);
+	if (dealloc) HeapFree(GetProcessHeap(),0,(LPVOID)arg);
 	return hres;
+    }
+    case VT_UNKNOWN:
+	if (debugout) MESSAGE("unk(0x%lx)",*arg);
+	if (writeit)
+	    hres = _marshal_interface(buf,&IID_IUnknown,(LPUNKNOWN)*arg);
+	return hres;
+    case VT_DISPATCH:
+	if (debugout) MESSAGE("idisp(0x%lx)",*arg);
+	if (writeit)
+	    hres = _marshal_interface(buf,&IID_IDispatch,(LPUNKNOWN)*arg);
+	return hres;
+    case VT_VOID:
+	if (debugout) MESSAGE("<void>");
+	return S_OK;
     case VT_USERDEFINED: {
 	ITypeInfo	*tinfo2;
 	TYPEATTR	*tattr;
 
-	/*FIXME("VT_USERDEFINED arg is %p, *arg is %p\n",arg,*arg);*/
 	hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
 	if (hres) {
 	    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED.\n",tdesc->u.hreftype);
@@ -419,15 +507,53 @@ marshall_param(
 	ITypeInfo_GetTypeAttr(tinfo2,&tattr);
 	switch (tattr->typekind) {
 	case TKIND_INTERFACE:
-	    if (relaydeb) MESSAGE("if(%p), vtbl %p",arg,(LPVOID)*arg);
-	    hres = _marshal_interface(buf,&(tattr->guid),(LPUNKNOWN)arg);
+	    if (writeit)
+	       hres=_marshal_interface(buf,&(tattr->guid),(LPUNKNOWN)arg);
 	    break;
-	case TKIND_RECORD:
-	    if (relaydeb) MESSAGE("record %p",arg);
-	    if (buf->thisisiid)
+	case TKIND_RECORD: {
+	    int i;
+	    if (debugout) MESSAGE("{");
+	    for (i=0;i<tattr->cVars;i++) {
+		VARDESC *vdesc;
+		ELEMDESC *elem2;
+		TYPEDESC *tdesc2;
+
+		hres = ITypeInfo2_GetVarDesc(tinfo2, i, &vdesc);
+		if (hres) {
+		    FIXME("Could not get vardesc of %d\n",i);
+		    return hres;
+		}
+		/* Need them for hack below */
+		/*
+		memset(names,0,sizeof(names));
+		hres = ITypeInfo_GetNames(tinfo2,vdesc->memid,names,sizeof(names)/sizeof(names[0]),&nrofnames);
+		if (nrofnames > sizeof(names)/sizeof(names[0])) {
+		    ERR("Need more names!\n");
+		}
+		if (!hres && debugout)
+		    MESSAGE("%s=",debugstr_w(names[0]));
+		*/
+		elem2 = &vdesc->elemdescVar;
+		tdesc2 = &elem2->tdesc;
+		hres = serialize_param(
+		    tinfo2,
+		    writeit,
+		    debugout,
+		    dealloc,
+		    tdesc2,
+		    (DWORD*)(((LPBYTE)arg)+vdesc->u.oInst),
+		    buf
+		);
+		if (hres!=S_OK)
+		    return hres;
+		if (debugout && (i<(tattr->cVars-1)))
+		    MESSAGE(",");
+	    }
+	    if (buf->thisisiid && (tattr->cbSizeInstance==sizeof(GUID)))
 		memcpy(&(buf->iid),arg,sizeof(buf->iid));
-	    hres = xbuf_add(buf,(LPBYTE)arg,tattr->cbSizeInstance);
+	    if (debugout) MESSAGE("}");
 	    break;
+	}
 	default:
 	    FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
 	    hres = E_FAIL;
@@ -436,85 +562,502 @@ marshall_param(
 	ITypeInfo_Release(tinfo2);
 	return hres;
     }
-    case VT_UNKNOWN:
-        return _marshal_interface(buf,&IID_IUnknown,(LPUNKNOWN)*arg);
+    case VT_CARRAY: {
+	ARRAYDESC *adesc = tdesc->u.lpadesc;
+	int i, arrsize = 1;
+
+	if (debugout) MESSAGE("carr");
+	for (i=0;i<adesc->cDims;i++) {
+	    if (debugout) MESSAGE("[%ld]",adesc->rgbounds[i].cElements);
+	    arrsize *= adesc->rgbounds[i].cElements;
+	}
+	if (debugout) MESSAGE("[");
+	for (i=0;i<arrsize;i++) {
+	    hres = serialize_param(tinfo, writeit, debugout, dealloc, &adesc->tdescElem, (DWORD*)((LPBYTE)arg+i*_xsize(&adesc->tdescElem)), buf);
+	    if (hres)
+		return hres;
+	    if (debugout && (i<arrsize-1)) MESSAGE(",");
+	}
+	if (debugout) MESSAGE("]");
+	return S_OK;
+    }
     default:
-	ERR("Cannot marshal type %d\n",tdesc->vt);
-	/*dump_ELEMDESC(elem);*/
+	ERR("Unhandled marshal type %d.\n",tdesc->vt);
+	return S_OK;
+    }
+}
+
+static HRESULT
+serialize_LPVOID_ptr(
+    ITypeInfo		*tinfo,
+    BOOL		writeit,
+    BOOL		debugout,
+    BOOL		dealloc,
+    TYPEDESC		*tdesc,
+    DWORD		*arg,
+    marshal_state	*buf
+) {
+    HRESULT	hres;
+    DWORD	cookie;
+
+    if ((tdesc->vt != VT_PTR)			||
+	(tdesc->u.lptdesc->vt != VT_PTR)	||
+	(tdesc->u.lptdesc->u.lptdesc->vt != VT_VOID)
+    ) {
+	FIXME("ppvObject not expressed as VT_PTR -> VT_PTR -> VT_VOID?\n");
 	return E_FAIL;
+    }
+    cookie = (*arg) ? 0x42424242: 0x0;
+    if (writeit) {
+	hres = xbuf_add(buf, (LPVOID)&cookie, sizeof(cookie));
+	if (hres)
+	    return hres;
+    }
+    if (!*arg) {
+	if (debugout) MESSAGE("<lpvoid NULL>");
+	return S_OK;
+    }
+    if (debugout)
+	MESSAGE("ppv(%p)",*(LPUNKNOWN*)*arg);
+    if (writeit) {
+	hres = _marshal_interface(buf,&(buf->iid),*(LPUNKNOWN*)*arg);
+	if (hres)
+	    return hres;
+    }
+    if (dealloc)
+	HeapFree(GetProcessHeap(),0,(LPVOID)*arg);
+    return S_OK;
+}
+
+static HRESULT
+serialize_DISPPARAM_ptr(
+    ITypeInfo		*tinfo,
+    BOOL		writeit,
+    BOOL		debugout,
+    BOOL		dealloc,
+    TYPEDESC		*tdesc,
+    DWORD		*arg,
+    marshal_state	*buf
+) {
+    DWORD	cookie;
+    HRESULT	hres;
+    DISPPARAMS	*disp;
+    int		i;
+
+    if ((tdesc->vt != VT_PTR) || (tdesc->u.lptdesc->vt != VT_USERDEFINED)) {
+	FIXME("DISPPARAMS not expressed as VT_PTR -> VT_USERDEFINED?\n");
+	return E_FAIL;
+    }
+
+    cookie = *arg ? 0x42424242 : 0x0;
+    if (writeit) {
+	hres = xbuf_add(buf,(LPBYTE)&cookie,sizeof(cookie));
+	if (hres)
+	    return hres;
+    }
+    if (!*arg) {
+	if (debugout) MESSAGE("<DISPPARAMS NULL>");
+	return S_OK;
+    }
+    disp = (DISPPARAMS*)*arg;
+    if (writeit) {
+	hres = xbuf_add(buf,(LPBYTE)&disp->cArgs,sizeof(disp->cArgs));
+	if (hres)
+	    return hres;
+    }
+    if (debugout) MESSAGE("D{");
+    for (i=0;i<disp->cArgs;i++) {
+	TYPEDESC	vtdesc;
+
+	vtdesc.vt = VT_VARIANT;
+	serialize_param(
+	    tinfo,
+	    writeit,
+	    debugout,
+	    dealloc,
+	    &vtdesc,
+	    (DWORD*)(disp->rgvarg+i),
+	    buf
+        );
+	if (debugout && (i<disp->cArgs-1))
+	    MESSAGE(",");
+    }
+    if (dealloc)
+	HeapFree(GetProcessHeap(),0,disp->rgvarg);
+    if (writeit) {
+	hres = xbuf_add(buf,(LPBYTE)&disp->cNamedArgs,sizeof(disp->cNamedArgs));
+	if (hres)
+	    return hres;
+    }
+    if (debugout) MESSAGE("}{");
+    for (i=0;i<disp->cNamedArgs;i++) {
+	TYPEDESC	vtdesc;
+
+	vtdesc.vt = VT_UINT;
+	serialize_param(
+	    tinfo,
+	    writeit,
+	    debugout,
+	    dealloc,
+	    &vtdesc,
+	    (DWORD*)(disp->rgdispidNamedArgs+i),
+	    buf
+	);
+	if (debugout && (i<disp->cNamedArgs-1))
+	    MESSAGE(",");
+    }
+    if (debugout) MESSAGE("}");
+    if (dealloc) {
+	HeapFree(GetProcessHeap(),0,disp->rgdispidNamedArgs);
+	HeapFree(GetProcessHeap(),0,disp);
     }
     return S_OK;
 }
 
 static HRESULT
-unmarshall_param(
-    ITypeInfo *tinfo, ELEMDESC *elem, TYPEDESC *tdesc, DWORD *arg, marshal_state *buf
+deserialize_param(
+    ITypeInfo		*tinfo,
+    BOOL		readit,
+    BOOL		debugout,
+    BOOL		alloc,
+    TYPEDESC		*tdesc,
+    DWORD		*arg,
+    marshal_state	*buf
 ) {
     HRESULT hres = S_OK;
-    int relaydeb = TRACE_ON(olerelay);
 
-    if (!tdesc) tdesc = &(elem->tdesc);
-    switch (tdesc->vt) {
-    case VT_I4: {
-	DWORD x;
-	xbuf_get(buf,(LPBYTE)&x,sizeof(x));
-	*arg = x;
-	if (relaydeb) MESSAGE("%ld ",x);
-	return S_OK;
-    }
-    case VT_PTR:
-	if ((tdesc->u.lptdesc->vt != VT_USERDEFINED) &&
-	    (tdesc->u.lptdesc->vt != VT_VOID)
-	)
-	    hres = unmarshall_param(tinfo,elem,tdesc->u.lptdesc,(DWORD*)(*arg),buf);
-	else
-	    hres = unmarshall_param(tinfo,elem,tdesc->u.lptdesc,arg,buf);
-	if (relaydeb) MESSAGE("%p ",(LPVOID)*arg);
-	return S_OK;
-    case VT_USERDEFINED: {
-	ITypeInfo	*tinfo2;
-	TYPEATTR	*tattr;
+    TRACE("vt %d at %p\n",tdesc->vt,arg);
 
-	if (relaydeb) MESSAGE("%p",arg);
-	hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
-	if (hres) {
-	    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED.\n",tdesc->u.hreftype);
+    while (1) {
+	switch (tdesc->vt) {
+	case VT_EMPTY:
+	    if (debugout) MESSAGE("<empty>");
+	    return S_OK;
+	case VT_NULL:
+	    if (debugout) MESSAGE("<null>");
+	    return S_OK;
+	case VT_VARIANT: {
+	    VARIANT	*vt = (VARIANT*)arg;
+
+	    if (readit) {
+		DWORD	vttype;
+		TYPEDESC	tdesc2;
+		hres = xbuf_get(buf,(LPBYTE)&vttype,sizeof(vttype));
+		if (hres) {
+		    FIXME("vt type not read?\n");
+		    return hres;
+		}
+		memset(&tdesc2,0,sizeof(tdesc2));
+		tdesc2.vt = vttype;
+		V_VT(vt)  = vttype;
+	        if (debugout) MESSAGE("Vt(%ld)(",vttype);
+		hres = deserialize_param(tinfo, readit, debugout, alloc, &tdesc2, &(V_I4(vt)), buf);
+		MESSAGE(")");
+		return hres;
+	    } else {
+		VariantInit(vt);
+		return S_OK;
+	    }
+	}
+        case VT_ERROR:
+	case VT_BOOL: case VT_I4: case VT_UI4: case VT_UINT:
+        case VT_UI2:
+	case VT_UI1:
+	    if (readit) {
+		hres = xbuf_get(buf,(LPBYTE)arg,sizeof(DWORD));
+		if (hres) FIXME("Failed to read integer 4 byte\n");
+	    }
+	    if (debugout) MESSAGE("%lx",*arg);
+	    return hres;
+	case VT_BSTR: {
+	    WCHAR	*str;
+	    DWORD	len;
+
+	    if (readit) {
+		hres = xbuf_get(buf,(LPBYTE)&len,sizeof(DWORD));
+		if (hres) {
+		    FIXME("failed to read bstr klen\n");
+		    return hres;
+		}
+		if (len == -1) {
+		    *arg = 0;
+		    if (debugout) MESSAGE("<bstr NULL>");
+		} else {
+		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,len+sizeof(WCHAR));
+		    hres = xbuf_get(buf,(LPBYTE)str,len);
+		    if (hres) {
+			FIXME("Failed to read BSTR.\n");
+			return hres;
+		    }
+		    *arg = (DWORD)SysAllocStringLen(str,len);
+		    if (debugout) MESSAGE("%s",debugstr_w(str));
+		    HeapFree(GetProcessHeap(),0,str);
+		}
+	    } else {
+	        *arg = 0;
+	    }
+	    return S_OK;
+	}
+	case VT_PTR: {
+	    DWORD	cookie;
+	    BOOL	derefhere = 0;
+
+	    derefhere = (tdesc->u.lptdesc->vt != VT_USERDEFINED);
+
+	    if (readit) {
+		hres = xbuf_get(buf,(LPBYTE)&cookie,sizeof(cookie));
+		if (hres) {
+		    FIXME("Failed to load pointer cookie.\n");
+		    return hres;
+		}
+		if (cookie != 0x42424242) {
+		    if (debugout) MESSAGE("NULL");
+		    *arg = 0;
+		    return S_OK;
+		}
+		if (debugout) MESSAGE("*");
+	    }
+	    if (alloc) {
+		if (derefhere)
+		    *arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,_xsize(tdesc->u.lptdesc));
+	    }
+	    if (derefhere)
+		return deserialize_param(tinfo, readit, debugout, alloc, tdesc->u.lptdesc, (LPDWORD)*arg, buf);
+	    else
+		return deserialize_param(tinfo, readit, debugout, alloc, tdesc->u.lptdesc, arg, buf);
+        }
+	case VT_UNKNOWN:
+	    /* FIXME: UNKNOWN is unknown ..., but allocate 4 byte for it */
+	    if (alloc)
+	        *arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD));
+	    hres = S_OK;
+	    if (readit)
+		hres = _unmarshal_interface(buf,&IID_IUnknown,(LPUNKNOWN*)arg);
+	    if (debugout)
+		MESSAGE("unk(%p)",arg);
+	    return hres;
+	case VT_DISPATCH:
+	    hres = S_OK;
+	    if (readit)
+		hres = _unmarshal_interface(buf,&IID_IDispatch,(LPUNKNOWN*)arg);
+	    if (debugout)
+		MESSAGE("idisp(%p)",arg);
+	    return hres;
+	case VT_VOID:
+	    if (debugout) MESSAGE("<void>");
+	    return S_OK;
+	case VT_USERDEFINED: {
+	    ITypeInfo	*tinfo2;
+	    TYPEATTR	*tattr;
+
+	    hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
+	    if (hres) {
+		FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED.\n",tdesc->u.hreftype);
+		return hres;
+	    }
+	    hres = ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+	    if (hres) {
+		FIXME("Could not get typeattr in VT_USERDEFINED.\n");
+	    } else {
+		if (alloc)
+		    *arg = (DWORD)HeapAlloc(GetProcessHeap(),0,tattr->cbSizeInstance);
+		switch (tattr->typekind) {
+		case TKIND_INTERFACE:
+		    if (readit)
+			hres = _unmarshal_interface(buf,&(tattr->guid),(LPUNKNOWN*)arg);
+		    break;
+		case TKIND_RECORD: {
+		    int i;
+
+		    if (debugout) MESSAGE("{");
+		    for (i=0;i<tattr->cVars;i++) {
+			VARDESC *vdesc;
+
+			hres = ITypeInfo2_GetVarDesc(tinfo2, i, &vdesc);
+			if (hres) {
+			    FIXME("Could not get vardesc of %d\n",i);
+			    return hres;
+			}
+			hres = deserialize_param(
+			    tinfo2,
+			    readit,
+			    debugout,
+			    alloc,
+			    &vdesc->elemdescVar.tdesc,
+			    (DWORD*)(((LPBYTE)*arg)+vdesc->u.oInst),
+			    buf
+			);
+		        if (debugout && (i<tattr->cVars-1)) MESSAGE(",");
+		    }
+		    if (buf->thisisiid && (tattr->cbSizeInstance==sizeof(GUID)))
+			memcpy(&(buf->iid),(LPBYTE)*arg,sizeof(buf->iid));
+		    if (debugout) MESSAGE("}");
+		    break;
+		}
+		default:
+		    FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
+		    hres = E_FAIL;
+		    break;
+		}
+	    }
+	    if (hres)
+		FIXME("failed to stuballoc in TKIND_RECORD.\n");
+	    ITypeInfo_Release(tinfo2);
 	    return hres;
 	}
-	hres = ITypeInfo_GetTypeAttr(tinfo2,&tattr);
-	if (hres) {
-	    FIXME("Could not get typeattr in VT_USERDEFINED.\n");
-	    return hres;
+	case VT_CARRAY: {
+	    /* arg is pointing to the start of the array. */
+	    ARRAYDESC *adesc = tdesc->u.lpadesc;
+	    int		arrsize,i;
+	    arrsize = 1;
+	    if (adesc->cDims > 1) FIXME("cDims > 1 in VT_CARRAY. Does it work?\n");
+	    for (i=0;i<adesc->cDims;i++)
+		arrsize *= adesc->rgbounds[i].cElements;
+	    for (i=0;i<arrsize;i++)
+		deserialize_param(
+		    tinfo,
+		    readit,
+		    debugout,
+		    alloc,
+		    &adesc->tdescElem,
+		    (DWORD*)((LPBYTE)(arg)+i*_xsize(&adesc->tdescElem)),
+		    buf
+		);
+	    return S_OK;
 	}
-	switch (tattr->typekind) {
-	case TKIND_INTERFACE:
-	    hres = _unmarshal_interface(buf,&(tattr->guid),(LPUNKNOWN*)arg);
-	    break;
-	case TKIND_RECORD:
-	    hres = xbuf_get(buf,(LPBYTE)arg,tattr->cbSizeInstance);
-	    break;
 	default:
-	    hres = E_FAIL;
-	    FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
+	    ERR("No handler for VT type %d!\n",tdesc->vt);
+	    return S_OK;
 	}
-	ITypeInfo_Release(tinfo2);
+    }
+}
+
+static HRESULT
+deserialize_LPVOID_ptr(
+    ITypeInfo		*tinfo,
+    BOOL		readit,
+    BOOL		debugout,
+    BOOL		alloc,
+    TYPEDESC		*tdesc,
+    DWORD		*arg,
+    marshal_state	*buf
+) {
+    HRESULT	hres;
+    DWORD	cookie;
+
+    if ((tdesc->vt != VT_PTR)			||
+	(tdesc->u.lptdesc->vt != VT_PTR)	||
+	(tdesc->u.lptdesc->u.lptdesc->vt != VT_VOID)
+    ) {
+	FIXME("ppvObject not expressed as VT_PTR -> VT_PTR -> VT_VOID?\n");
+	return E_FAIL;
+    }
+    if (alloc)
+	*arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(LPVOID));
+    if (readit) {
+	hres = xbuf_get(buf, (LPVOID)&cookie, sizeof(cookie));
+	if (hres)
+	    return hres;
+	if (cookie != 0x42424242) {
+	    *(DWORD*)*arg = 0;
+	    if (debugout) MESSAGE("<lpvoid NULL>");
+	    return S_OK;
+	}
+    }
+    if (readit) {
+	hres = _unmarshal_interface(buf,&buf->iid,(LPUNKNOWN*)*arg);
+	if (hres)
+	    return hres;
+    }
+    if (debugout) MESSAGE("ppv(%p)",(LPVOID)*arg);
+    return S_OK;
+}
+
+static HRESULT
+deserialize_DISPPARAM_ptr(
+    ITypeInfo		*tinfo,
+    BOOL		readit,
+    BOOL		debugout,
+    BOOL		alloc,
+    TYPEDESC		*tdesc,
+    DWORD		*arg,
+    marshal_state	*buf
+) {
+    DWORD	cookie;
+    DISPPARAMS	*disps;
+    HRESULT	hres;
+    int		i;
+
+    if ((tdesc->vt != VT_PTR) || (tdesc->u.lptdesc->vt != VT_USERDEFINED)) {
+	FIXME("DISPPARAMS not expressed as VT_PTR -> VT_USERDEFINED?\n");
+	return E_FAIL;
+    }
+    if (readit) {
+	hres = xbuf_get(buf,(LPBYTE)&cookie,sizeof(cookie));
+	if (hres)
+	    return hres;
+	if (cookie == 0) {
+	    *arg = 0;
+	    if (debugout) MESSAGE("<DISPPARAMS NULL>");
+	    return S_OK;
+	}
+    }
+    if (alloc)
+	*arg = (DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DISPPARAMS));
+    disps = (DISPPARAMS*)*arg;
+    if (!readit)
+	return S_OK;
+    hres = xbuf_get(buf, (LPBYTE)&disps->cArgs, sizeof(disps->cArgs));
+    if (hres)
 	return hres;
+    if (alloc)
+        disps->rgvarg = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(VARIANT)*disps->cArgs);
+    if (debugout) MESSAGE("D{");
+    for (i=0; i< disps->cArgs; i++) {
+        TYPEDESC vdesc;
+
+	vdesc.vt = VT_VARIANT;
+	hres = deserialize_param(
+	    tinfo,
+	    readit,
+	    debugout,
+	    alloc,
+	    &vdesc,
+	    (DWORD*)(disps->rgvarg+i),
+	    buf
+	);
     }
-    case VT_VOID:
-	/* Hacky. If we are LPVOID* we apparently have to guess the IID
-	 * for the interface. This sucks pretty badly. */
-	return _unmarshal_interface(buf,&(buf->iid),(LPUNKNOWN*)arg);
-    default:	ERR("Cannot unmarshal type %d\n",tdesc->vt);
-		return E_FAIL;
+    if (debugout) MESSAGE("}{");
+    hres = xbuf_get(buf, (LPBYTE)&disps->cNamedArgs, sizeof(disps->cNamedArgs));
+    if (hres)
+	return hres;
+    if (disps->cNamedArgs) {
+	if (alloc)
+	    disps->rgdispidNamedArgs = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DISPID)*disps->cNamedArgs);
+	for (i=0; i< disps->cNamedArgs; i++) {
+	    TYPEDESC vdesc;
+
+	    vdesc.vt = VT_UINT;
+	    hres = deserialize_param(
+		tinfo,
+		readit,
+		debugout,
+		alloc,
+		&vdesc,
+		(DWORD*)(disps->rgdispidNamedArgs+i),
+		buf
+	    );
+	    if (debugout && i<(disps->cNamedArgs-1)) MESSAGE(",");
+	}
     }
+    if (debugout) MESSAGE("}");
     return S_OK;
 }
 
 /* Searches function, also in inherited interfaces */
 static HRESULT
 _get_funcdesc(
-	ITypeInfo *tinfo, int iMethod, FUNCDESC **fdesc,
-	BSTR *iname, BSTR *fname
+    ITypeInfo *tinfo, int iMethod, FUNCDESC **fdesc, BSTR *iname, BSTR *fname
 ) {
     int i = 0, j = 0;
     HRESULT hres;
@@ -564,17 +1107,6 @@ _get_funcdesc(
     return E_FAIL;
 }
 
-/* how much space do we use on stack in DWORD steps. */
-static int
-_argsize(DWORD vt_type) {
-    switch (vt_type) {
-    case VT_VARIANT:
-	return (sizeof(VARIANT)+3)/sizeof(DWORD);
-    default:
-	return 1;
-    }
-}
-
 static DWORD
 xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     DWORD		*args = ((DWORD*)&tpinfo)+1, *xargs;
@@ -609,10 +1141,11 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     }
     /* Need them for hack below */
     memset(names,0,sizeof(names));
-    ITypeInfo_GetNames(tpinfo->tinfo,fdesc->memid,names,sizeof(names)/sizeof(names[0]),&nrofnames);
-    if (nrofnames > sizeof(names)/sizeof(names[0])) {
+    if (ITypeInfo_GetNames(tpinfo->tinfo,fdesc->memid,names,sizeof(names)/sizeof(names[0]),&nrofnames))
+	nrofnames = 0;
+    if (nrofnames > sizeof(names)/sizeof(names[0]))
 	ERR("Need more names!\n");
-    }
+
     memset(&buf,0,sizeof(buf));
     buf.iid = IID_IUnknown;
     if (method == 0) {
@@ -622,15 +1155,11 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
 	xargs = args;
 	for (i=0;i<fdesc->cParams;i++) {
 	    ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
+	    BOOL	isserialized = FALSE;
 	    if (relaydeb) {
 		if (i) MESSAGE(",");
 		if (i+1<nrofnames && names[i+1])
 		    MESSAGE("%s=",debugstr_w(names[i+1]));
-	    }
-	    if (((i+1)<nrofnames) && !lstrcmpW(names[i+1],riidW)) {
-		buf.thisisiid = TRUE;
-	    } else {
-		buf.thisisiid = FALSE;
 	    }
 	    /* No need to marshal other data than FIN */
 	    if (!(elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN)) {
@@ -638,12 +1167,55 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
 		if (relaydeb) MESSAGE("[out]");
 		continue;
 	    }
-	    hres = marshall_param(tpinfo->tinfo,elem,NULL,xargs,&buf);
-	    xargs+=_argsize(elem->tdesc.vt);
+	    if (((i+1)<nrofnames) && !IsBadStringPtrW(names[i+1],1)) {
+		/* If the parameter is 'riid', we use it as interface IID
+		 * for a later ppvObject serialization.
+		 */
+		buf.thisisiid = !lstrcmpW(names[i+1],riidW);
+
+		/* DISPPARAMS* needs special serializer */
+		if (!lstrcmpW(names[i+1],pdispparamsW)) {
+		    hres = serialize_DISPPARAM_ptr(
+			tpinfo->tinfo,
+			elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+			relaydeb,
+			FALSE,
+			&elem->tdesc,
+			xargs,
+			&buf
+		    );
+		    isserialized = TRUE;
+		}
+		if (!lstrcmpW(names[i+1],ppvObjectW)) {
+		    hres = serialize_LPVOID_ptr(
+			tpinfo->tinfo,
+			elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+			relaydeb,
+			FALSE,
+			&elem->tdesc,
+			xargs,
+			&buf
+		    );
+		    if (hres == S_OK)
+		        isserialized = TRUE;
+		}
+	    }
+	    if (!isserialized)
+		hres = serialize_param(
+		    tpinfo->tinfo,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+		    relaydeb,
+		    FALSE,
+		    &elem->tdesc,
+		    xargs,
+		    &buf
+		);
+
 	    if (hres) {
-		FIXME("Failed to marshall param, hres %lx\n",hres);
+		FIXME("Failed to serialize param, hres %lx\n",hres);
 		break;
 	    }
+	    xargs+=_argsize(elem->tdesc.vt);
 	}
     }
     if (relaydeb) MESSAGE(")");
@@ -656,11 +1228,13 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
 	return hres;
     }
     memcpy(msg.Buffer,buf.base,buf.curoff);
+    if (relaydeb) MESSAGE("\n");
     hres = IRpcChannelBuffer_SendReceive(tpinfo->chanbuf,&msg,&status);
     if (hres) {
 	FIXME("RpcChannelBuffer SendReceive failed, %lx\n",hres);
 	return hres;
     }
+    relaydeb = TRACE_ON(olerelay);
     if (relaydeb) MESSAGE(" = %08lx (",status);
     if (buf.base)
 	buf.base = HeapReAlloc(GetProcessHeap(),0,buf.base,msg.cbBuffer);
@@ -676,6 +1250,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
 	xargs = args;
 	for (i=0;i<fdesc->cParams;i++) {
 	    ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
+	    BOOL	isdeserialized = FALSE;
 
 	    if (relaydeb) {
 		if (i) MESSAGE(",");
@@ -687,15 +1262,61 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
 		if (relaydeb) MESSAGE("[in]");
 		continue;
 	    }
-	    hres = unmarshall_param(tpinfo->tinfo,elem,&(elem->tdesc),xargs,&buf);
-	    xargs += _argsize(elem->tdesc.vt);
+	    if (((i+1)<nrofnames) && !IsBadStringPtrW(names[i+1],1)) {
+		/* If the parameter is 'riid', we use it as interface IID
+		 * for a later ppvObject serialization.
+		 */
+		buf.thisisiid = !lstrcmpW(names[i+1],riidW);
+
+		/* deserialize DISPPARAM */
+		if (!lstrcmpW(names[i+1],pdispparamsW)) {
+		    hres = deserialize_DISPPARAM_ptr(
+			tpinfo->tinfo,
+			elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+			relaydeb,
+			FALSE,
+			&(elem->tdesc),
+			xargs,
+			&buf
+		    );
+		    if (hres) {
+			FIXME("Failed to deserialize DISPPARAM*, hres %lx\n",hres);
+			break;
+		    }
+		    isdeserialized = TRUE;
+		}
+		if (!lstrcmpW(names[i+1],ppvObjectW)) {
+		    hres = deserialize_LPVOID_ptr(
+			tpinfo->tinfo,
+			elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+			relaydeb,
+			FALSE,
+			&elem->tdesc,
+			xargs,
+			&buf
+		    );
+		    if (hres == S_OK)
+			isdeserialized = TRUE;
+		}
+	    }
+	    if (!isdeserialized)
+		hres = deserialize_param(
+		    tpinfo->tinfo,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+		    relaydeb,
+		    FALSE,
+		    &(elem->tdesc),
+		    xargs,
+		    &buf
+		);
 	    if (hres) {
 		FIXME("Failed to unmarshall param, hres %lx\n",hres);
 		break;
 	    }
+	    xargs += _argsize(elem->tdesc.vt);
 	}
     }
-    if (relaydeb) MESSAGE(")\n");
+    if (relaydeb) MESSAGE(")\n\n");
     HeapFree(GetProcessHeap(),0,buf.base);
     return status;
 }
@@ -840,208 +1461,6 @@ TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface) {
     return;
 }
 
-static HRESULT
-stuballoc_param(
-    ITypeInfo *tinfo, ELEMDESC *elem, TYPEDESC *tdesc, DWORD *arg, marshal_state *buf
-) {
-    HRESULT hres;
-
-    while (1) {
-	switch (tdesc->vt) {
-	case VT_VARIANT: {
-	    DWORD	vttype;
-	    VARIANT	*vt = (VARIANT*)arg;
-	    TYPEDESC	tdesc2;
-
-	    hres = xbuf_get(buf,(LPBYTE)&vttype,sizeof(vttype));
-	    if (hres) return hres;
-	    memset(&tdesc2,0,sizeof(tdesc));
-	    tdesc2.vt = vttype;
-	    V_VT(vt)  = vttype;
-	    return stuballoc_param(tinfo,elem,&tdesc2,&(V_I4(vt)),buf);
-	}
-	case VT_BOOL: case VT_I4:
-	    xbuf_get(buf,(LPBYTE)arg,sizeof(DWORD));
-	    return S_OK;
-	case VT_BSTR: {
-		WCHAR	*str;
-		DWORD	len;
-
-		hres = xbuf_get(buf,(LPBYTE)&len,sizeof(DWORD));
-		if (hres)
-		    return hres;
-		str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,len+sizeof(WCHAR));
-		hres = xbuf_get(buf,(LPBYTE)str,len);
-		if (hres) return hres;
-		*arg = (DWORD)SysAllocStringLen(str,len);
-		HeapFree(GetProcessHeap(),0,str);
-		return S_OK;
-	    }
-	case VT_PTR:
-	    if ((tdesc->u.lptdesc->vt != VT_USERDEFINED) &&
-		(tdesc->u.lptdesc->vt != VT_VOID)
-	    ) {
-		*arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(LPVOID));
-		arg = (DWORD*)*arg;
-	    }
-	    tdesc = tdesc->u.lptdesc;
-	    break;
-	case VT_UNKNOWN:
-	    /* FIXME: UNKNOWN is unknown ..., but allocate 4 byte for it */
-	    *arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD));
-	    hres = S_OK;
-	    if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN)
-		hres = _unmarshal_interface(buf,&IID_IUnknown,(LPUNKNOWN*)arg);
-	    return hres;
-	case VT_VOID:
-	    *arg = (DWORD)HeapAlloc(GetProcessHeap(),0,sizeof(LPVOID));
-	    hres = S_OK;
-	    if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN)
-		hres = _unmarshal_interface(buf,&(buf->iid),(LPUNKNOWN*)arg);
-	    return hres;
-	case VT_USERDEFINED: {
-	    if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN) {
-		ITypeInfo	*tinfo2;
-		TYPEATTR	*tattr;
-
-		hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
-		if (hres) {
-		    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED.\n",tdesc->u.hreftype);
-		    return hres;
-		}
-		hres = ITypeInfo_GetTypeAttr(tinfo2,&tattr);
-		if (hres) {
-		    FIXME("Could not get typeattr in VT_USERDEFINED.\n");
-		    return hres;
-		}
-		switch (tattr->typekind) {
-		case TKIND_INTERFACE:
-		    hres = _unmarshal_interface(buf,&(tattr->guid),(LPUNKNOWN*)arg);
-		    break;
-		case TKIND_RECORD:
-		    *arg = (DWORD)HeapAlloc(GetProcessHeap(),0,tattr->cbSizeInstance);
-		    hres = xbuf_get(buf,(LPBYTE)*arg,tattr->cbSizeInstance);
-		    if (buf->thisisiid)
-			memcpy(&(buf->iid),(LPBYTE)*arg,sizeof(buf->iid));
-		    break;
-		default:
-		    FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
-		    hres = E_FAIL;
-		    break;
-		}
-		ITypeInfo_Release(tinfo2);
-		return hres;
-	    } else {
-		*arg = (DWORD)HeapAlloc(GetProcessHeap(),0,sizeof(LPVOID));
-		return S_OK;
-	    }
-	}
-	default:
-	    ERR("No handler for VT type %d, just allocating 4 bytes.\n",tdesc->vt);
-	    *arg=(DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD));
-	    return S_OK;
-	}
-    }
-}
-
-static HRESULT
-stubunalloc_param(
-    ITypeInfo *tinfo, ELEMDESC *elem, TYPEDESC *tdesc, DWORD *arg, marshal_state *buf
-) {
-    HRESULT hres = S_OK;
-
-    if (!tdesc) tdesc = &(elem->tdesc);
-
-    switch (tdesc->vt) {
-    case VT_BOOL:
-    case VT_I4:
-	hres = S_OK;
-	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT)
-	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
-	return hres;
-    case VT_VARIANT: {
-	TYPEDESC	tdesc2;
-	VARIANT		*vt = (VARIANT*)arg;
-	DWORD		vttype = V_VT(vt);
-
-	tdesc2.vt = vttype;
-	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT) {
-	    hres = xbuf_add(buf,(LPBYTE)&vttype,sizeof(vttype));
-	    if (hres) return hres;
-	}
-	/* need to recurse since we need to free the stuff */
-	hres = stubunalloc_param(tinfo,elem,&tdesc2,&(V_I4(vt)),buf);
-	return hres;
-    }
-    case VT_BSTR: {
-	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT) {
-	    DWORD *bstr = ((DWORD*)(*arg))-1;
-
-	    hres = xbuf_add(buf,(LPBYTE)bstr,bstr[0]+4);
-	    if (hres)
-		return hres;
-	}
-	SysFreeString((BSTR)*arg);
-	return S_OK;
-    }
-    case VT_PTR:
-	/*FIXME("VT_PTR *arg is %p\n",(LPVOID)*arg);*/
-	if ((tdesc->u.lptdesc->vt != VT_USERDEFINED) &&
-	    (tdesc->u.lptdesc->vt != VT_VOID)
-	) {
-	    hres = stubunalloc_param(tinfo,elem,tdesc->u.lptdesc,arg,buf);
-	} else {
-	    hres = stubunalloc_param(tinfo,elem,tdesc->u.lptdesc,(DWORD*)*arg,buf);
-	    HeapFree(GetProcessHeap(),0,(LPVOID)*arg);
-	}
-	return hres;
-    case VT_UNKNOWN:
-	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT) {
-	    FIXME("Marshaling back VT_UNKNOWN %lx\n",*arg);
-	    hres = _marshal_interface(buf,&IID_IUnknown,(LPUNKNOWN)*arg);
-	}
-	HeapFree(GetProcessHeap(),0,(LPVOID)*arg);
-	return hres;
-    case VT_VOID:
-	hres = S_OK;
-	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT)
-	    hres = _marshal_interface(buf,&(buf->iid),(LPUNKNOWN)*arg);
-	return hres;
-    case VT_USERDEFINED: {
-	ITypeInfo	*tinfo2;
-	TYPEATTR	*tattr;
-
-	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT) {
-	    /*FIXME("VT_USERDEFINED arg is %p, *arg is %p\n",arg,*arg);*/
-	    hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
-	    if (hres) {
-		FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED.\n",tdesc->u.hreftype);
-		return hres;
-	    }
-	    ITypeInfo_GetTypeAttr(tinfo2,&tattr);
-	    switch (tattr->typekind) {
-	    case TKIND_INTERFACE:
-		hres = _marshal_interface(buf,&(tattr->guid),(LPUNKNOWN)*arg);
-		break;
-	    case TKIND_RECORD:
-		hres = xbuf_add(buf,(LPBYTE)arg,tattr->cbSizeInstance);
-		break;
-	    default:
-		FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
-		hres = E_FAIL;
-		break;
-	    }
-	    ITypeInfo_Release(tinfo2);
-	}
-	return hres;
-    }
-    default:
-	ERR("Unhandled marshal type %d.\n",tdesc->vt);
-	HeapFree(GetProcessHeap(),0,(LPVOID)*arg);
-	return S_OK;
-    }
-}
-
 static HRESULT WINAPI
 TMStubImpl_Invoke(
     LPRPCSTUBBUFFER iface, RPCOLEMESSAGE* xmsg,IRpcChannelBuffer*rpcchanbuf
@@ -1096,15 +1515,58 @@ TMStubImpl_Invoke(
     xargs = args+1;
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
+	BOOL		isdeserialized = FALSE;
 
-	if (((i+1)<nrofnames) && !lstrcmpW(names[i+1],riidW))
-	    buf.thisisiid = TRUE;
-	else
-	    buf.thisisiid = FALSE;
-	hres   = stuballoc_param(This->tinfo,elem,&(elem->tdesc),xargs,&buf);
+	if (((i+1)<nrofnames) && !IsBadStringPtrW(names[i+1],1)) {
+	    /* If the parameter is 'riid', we use it as interface IID
+	     * for a later ppvObject serialization.
+	     */
+	    buf.thisisiid = !lstrcmpW(names[i+1],riidW);
+
+	    /* deserialize DISPPARAM */
+	    if (!lstrcmpW(names[i+1],pdispparamsW)) {
+		hres = deserialize_DISPPARAM_ptr(
+		    This->tinfo,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+		    FALSE,
+		    TRUE,
+		    &(elem->tdesc),
+		    xargs,
+		    &buf
+		);
+		if (hres) {
+		    FIXME("Failed to deserialize DISPPARAM*, hres %lx\n",hres);
+		    break;
+		}
+		isdeserialized = TRUE;
+	    }
+	    if (!lstrcmpW(names[i+1],ppvObjectW)) {
+		hres = deserialize_LPVOID_ptr(
+		    This->tinfo,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+		    FALSE,
+		    TRUE,
+		    &elem->tdesc,
+		    xargs,
+		    &buf
+		);
+		if (hres == S_OK)
+		    isdeserialized = TRUE;
+	    }
+	}
+	if (!isdeserialized)
+	    hres = deserialize_param(
+		This->tinfo,
+		elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN,
+		FALSE,
+		TRUE,
+		&(elem->tdesc),
+		xargs,
+		&buf
+	    );
 	xargs += _argsize(elem->tdesc.vt);
 	if (hres) {
-	    FIXME("Failed to stuballoc param %s, hres %lx\n",debugstr_w(names[i+1]),hres);
+	    FIXME("Failed to deserialize param %s, hres %lx\n",debugstr_w(names[i+1]),hres);
 	    break;
 	}
     }
@@ -1124,7 +1586,51 @@ TMStubImpl_Invoke(
     xargs = args+1;
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
-	hres = stubunalloc_param(This->tinfo,elem,NULL,xargs,&buf);
+	BOOL		isserialized = FALSE;
+
+	if (((i+1)<nrofnames) && !IsBadStringPtrW(names[i+1],1)) {
+	    /* If the parameter is 'riid', we use it as interface IID
+	     * for a later ppvObject serialization.
+	     */
+	    buf.thisisiid = !lstrcmpW(names[i+1],riidW);
+
+	    /* DISPPARAMS* needs special serializer */
+	    if (!lstrcmpW(names[i+1],pdispparamsW)) {
+		hres = serialize_DISPPARAM_ptr(
+		    This->tinfo,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+		    FALSE,
+		    TRUE,
+		    &elem->tdesc,
+		    xargs,
+		    &buf
+		);
+		isserialized = TRUE;
+	    }
+	    if (!lstrcmpW(names[i+1],ppvObjectW)) {
+		hres = serialize_LPVOID_ptr(
+		    This->tinfo,
+		    elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+		    FALSE,
+		    TRUE,
+		    &elem->tdesc,
+		    xargs,
+		    &buf
+		);
+		if (hres == S_OK)
+		    isserialized = TRUE;
+	    }
+	}
+	if (!isserialized)
+	    hres = serialize_param(
+	       This->tinfo,
+	       elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+	       FALSE,
+	       TRUE,
+	       &elem->tdesc,
+	       xargs,
+	       &buf
+	    );
 	xargs += _argsize(elem->tdesc.vt);
 	if (hres) {
 	    FIXME("Failed to stuballoc param, hres %lx\n",hres);
