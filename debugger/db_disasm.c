@@ -1036,15 +1036,22 @@ db_print_address(seg, size, addrp, byref)
 	} 
 	else {
 
-	    /* try to get destination of indirect call)
-	       works not for segmented adresses */	
+	    /* try to get destination of indirect call
+	       does not work for segmented adresses */	
 	    if (!seg && byref) {
-	        DBG_ADDR dbg_addr = {0,0,*(LPDWORD)(addrp->disp)};
-	        fprintf(stderr,"0x%x -> ", addrp->disp);
-		if ( DEBUG_IsBadReadPtr( &dbg_addr, sizeof(DWORD)))
-		    fprintf(stderr, "(invalid destination)");
-		else 
-		    db_task_printsym(dbg_addr.off, 0);
+               DBG_ADDR dbg_addr = {NULL, 0, 0};
+
+               dbg_addr.off = addrp->disp;
+               fprintf(stderr,"0x%x -> ", addrp->disp);
+               if (DEBUG_IsBadReadPtr( &dbg_addr, sizeof(LPDWORD))) {
+                   fprintf(stderr, "(invalid source)");
+               } else {
+                  dbg_addr.off = *(LPDWORD)(addrp->disp);
+                  if (DEBUG_IsBadReadPtr( &dbg_addr, sizeof(DWORD)))
+                     fprintf(stderr, "(invalid destination)");
+                  else
+                     db_task_printsym(dbg_addr.off, 0);
+               }
 	    }
 	    else
 	       db_task_printsym(addrp->disp, size);
