@@ -32,7 +32,6 @@
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
-#include "y.tab.h"
 
 /* FIXME: support generation of stubless proxies */
 

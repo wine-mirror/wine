@@ -61,9 +61,9 @@
 # endif
 #endif
 
-static attr_t *make_attr(int type);
-static attr_t *make_attrv(int type, DWORD val);
-static attr_t *make_attrp(int type, void *val);
+static attr_t *make_attr(enum attr_type type);
+static attr_t *make_attrv(enum attr_type type, DWORD val);
+static attr_t *make_attrp(enum attr_type type, void *val);
 static type_t *make_type(BYTE type, type_t *ref);
 static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
@@ -253,30 +253,30 @@ attrib_list: attribute
 	;
 
 attribute:
-	  tASYNC				{ $$ = make_attr(tASYNC); }
-	| tCALLAS '(' ident ')'			{ $$ = make_attrp(tCALLAS, $3); }
+	  tASYNC				{ $$ = make_attr(ATTR_ASYNC); }
+	| tCALLAS '(' ident ')'			{ $$ = make_attrp(ATTR_CALLAS, $3); }
 	| tCASE '(' expr_list ')'		{ $$ = NULL; }
 	| tCONTEXTHANDLE			{ $$ = NULL; }
 	| tCONTEXTHANDLENOSERIALIZE		{ $$ = NULL; }
 	| tCONTEXTHANDLESERIALIZE		{ $$ = NULL; }
-	| tDEFAULT				{ $$ = make_attr(tDEFAULT); }
-	| tIIDIS '(' ident ')'			{ $$ = make_attrp(tIIDIS, $3); }
-	| tIN					{ $$ = make_attr(tIN); }
+	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
+	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
+	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tLENGTHIS '(' aexprs ')'		{ $$ = NULL; }
-	| tLOCAL				{ $$ = make_attr(tLOCAL); }
-	| tOBJECT				{ $$ = make_attr(tOBJECT); }
-	| tOLEAUTOMATION			{ $$ = make_attr(tOLEAUTOMATION); }
-	| tOUT					{ $$ = make_attr(tOUT); }
-	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(tPOINTERDEFAULT, $3); }
+	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
+	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
+	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
+	| tOUT					{ $$ = make_attr(ATTR_OUT); }
+	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
 	| tSIZEIS '(' aexprs ')'		{ $$ = NULL; }
-	| tSTRING				{ $$ = make_attr(tSTRING); }
+	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
 	| tSWITCHIS '(' aexpr ')'		{ $$ = NULL; }
 	| tSWITCHTYPE '(' type ')'		{ $$ = NULL; }
 	| tUUID '(' aUUID ')'			{ $$ = NULL; }
-	| tV1ENUM				{ $$ = make_attr(tV1ENUM); }
+	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVERSION '(' version ')'		{ $$ = NULL; }
-	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(tWIREMARSHAL, type_ref($3)); }
-	| pointer_type				{ $$ = make_attrv(tPOINTERTYPE, $1); }
+	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, type_ref($3)); }
+	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
 
 callconv:
@@ -464,7 +464,7 @@ version:
 
 %%
 
-static attr_t *make_attr(int type)
+static attr_t *make_attr(enum attr_type type)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
@@ -472,7 +472,7 @@ static attr_t *make_attr(int type)
   return a;
 }
 
-static attr_t *make_attrv(int type, DWORD val)
+static attr_t *make_attrv(enum attr_type type, DWORD val)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
@@ -480,7 +480,7 @@ static attr_t *make_attrv(int type, DWORD val)
   return a;
 }
 
-static attr_t *make_attrp(int type, void *val)
+static attr_t *make_attrp(enum attr_type type, void *val)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;

@@ -43,8 +43,26 @@ typedef struct _func_t func_t;
 #define NEXT_LINK(x) ((x)->l_next)
 #define PREV_LINK(x) ((x)->l_prev)
 
+enum attr_type
+{
+    ATTR_ASYNC,
+    ATTR_CALLAS,
+    ATTR_DEFAULT,
+    ATTR_IIDIS,
+    ATTR_IN,
+    ATTR_LOCAL,
+    ATTR_OBJECT,
+    ATTR_OLEAUTOMATION,
+    ATTR_OUT,
+    ATTR_POINTERDEFAULT,
+    ATTR_POINTERTYPE,
+    ATTR_STRING,
+    ATTR_V1ENUM,
+    ATTR_WIREMARSHAL,
+};
+
 struct _attr_t {
-  int type;
+  enum attr_type type;
   union {
     DWORD ival;
     void *pval;

@@ -33,7 +33,6 @@
 #include "parser.h"
 #include "header.h"
 #include "proxy.h"
-#include "y.tab.h"
 
 static int indentation = 0;
 
@@ -177,7 +176,7 @@ void write_typedef(type_t *type, var_t *names)
 int is_object(attr_t *a)
 {
   while (a) {
-    if (a->type == tOBJECT) return 1;
+    if (a->type == ATTR_OBJECT) return 1;
     a = NEXT_LINK(a);
   }
   return 0;
@@ -186,7 +185,7 @@ int is_object(attr_t *a)
 int is_local(attr_t *a)
 {
   while (a) {
-    if (a->type == tLOCAL) return 1;
+    if (a->type == ATTR_LOCAL) return 1;
     a = NEXT_LINK(a);
   }
   return 0;
@@ -195,7 +194,7 @@ int is_local(attr_t *a)
 var_t *is_callas(attr_t *a)
 {
   while (a) {
-    if (a->type == tCALLAS) return a->u.pval;
+    if (a->type == ATTR_CALLAS) return a->u.pval;
     a = NEXT_LINK(a);
   }
   return NULL;
