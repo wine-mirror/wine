@@ -9,6 +9,11 @@ Printing in Wine can be done in one of two ways. Both of which are very alpha.
    non-postscript printers).
 
 
+Note that at the moment WinPrinters (cheap, dumb printers that require the host
+computer to explicitly control the head) will not work. It is unclear whether
+they ever will.
+
+
 1. External printer drivers
 ---------------------------
 At present only 16 bit drivers will work.
