@@ -63,8 +63,6 @@ static BOOL32 DeviceIo_VTDAPI(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 
 static BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
 
-static BOOL32 VxDCall_IFSMgr( DWORD *retv, DWORD service, CONTEXT *context );
-
 static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
@@ -149,7 +147,7 @@ struct VxDInfo
     { "WINSOCK",  0x003E, NULL, NULL },
     { "WSOCK",    0x003E, NULL, NULL },
     { "WSIPX",    0x003F, NULL, NULL },
-    { "IFSMgr",   0x0040, VxDCall_IFSMgr, DeviceIo_IFSMgr },
+    { "IFSMgr",   0x0040, NULL, DeviceIo_IFSMgr },
     { "VCDFSD",   0x0041, NULL, NULL },
     { "MRCI2",    0x0042, NULL, NULL },
     { "PCI",      0x0043, NULL, NULL },
@@ -263,145 +261,6 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
     "RegReplaceKey",          /* 0x0027 */
     "<KERNEL32.101>"          /* 0x0028 -- What does this do??? */
 };
-
-
-/*
- * IFSMgr VxDCall service
- */
-
-#define N_IFSMGR_SERVICE 118
-
-LPCSTR IFSMgr_Service_Name[N_IFSMGR_SERVICE] =
-{ 
-    "Get_Version",                 /* 0x0000 */
-    "RegisterMount",               /* 0x0001 */
-    "RegisterNet",                 /* 0x0002 */
-    "RegisterMailSlot",            /* 0x0003 */
-    "Attach",                      /* 0x0004 */
-    "Detach",                      /* 0x0005 */
-    "Get_NetTime",                 /* 0x0006 */
-    "Get_DOSTime",                 /* 0x0007 */
-    "SetupConnection",             /* 0x0008 */
-    "DerefConnection",             /* 0x0009 */
-    "ServerDOSCall",               /* 0x000A */
-    "CompleteAsync",               /* 0x000B */
-    "RegisterHeap",                /* 0x000C */
-    "GetHeap",                     /* 0x000D */
-    "RetHeap",                     /* 0x000E */
-    "CheckHeap",                   /* 0x000F */
-    "CheckHeapItem",               /* 0x0010 */
-    "FillHeapSpare",               /* 0x0011 */
-    "Block",                       /* 0x0012 */
-    "Wakeup",                      /* 0x0013 */
-    "Yield",                       /* 0x0014 */
-    "SchedEvent",                  /* 0x0015 */
-    "QueueEvent",                  /* 0x0016 */
-    "KillEvent",                   /* 0x0017 */
-    "FreeIOReq",                   /* 0x0018 */
-    "MakeMailSlot",                /* 0x0019 */
-    "DeleteMailSlot",              /* 0x001A */
-    "WriteMailSlot",               /* 0x001B */
-    "PopUp",                       /* 0x001C */
-    "printf",                      /* 0x001D */
-    "AssertFailed",                /* 0x001E */
-    "LogEntry",                    /* 0x001F */
-    "DebugMenu",                   /* 0x0020 */
-    "DebugVars",                   /* 0x0021 */
-    "GetDebugString",              /* 0x0022 */
-    "GetDebugHexNum",              /* 0x0023 */
-    "NetFunction",                 /* 0x0024 */
-    "DoDelAllUses",                /* 0x0025 */
-    "SetErrString",                /* 0x0026 */
-    "GetErrString",                /* 0x0027 */
-    "SetReqHook",                  /* 0x0028 */
-    "SetPathHook",                 /* 0x0029 */
-    "UseAdd",                      /* 0x002A */
-    "UseDel",                      /* 0x002B */
-    "InitUseAdd",                  /* 0x002C */
-    "ChangeDir",                   /* 0x002D */
-    "DelAllUses",                  /* 0x002E */
-    "CDROM_Attach",                /* 0x002F */
-    "CDROM_Detach",                /* 0x0030 */
-    "Win32DupHandle",              /* 0x0031 */
-    "Ring0_FileIO",                /* 0x0032 */
-    "Win32_Get_Ring0_Handle",      /* 0x0033 */
-    "Get_Drive_Info",              /* 0x0034 */
-    "Ring0GetDriveInfo",           /* 0x0035 */
-    "BlockNoEvents",               /* 0x0036 */
-    "NetToDosTime",                /* 0x0037 */
-    "DosToNetTime",                /* 0x0038 */
-    "DosToWin32Time",              /* 0x0039 */
-    "Win32ToDosTime",              /* 0x003A */
-    "NetToWin32Time",              /* 0x003B */
-    "Win32ToNetTime",              /* 0x003C */
-    "MetaMatch",                   /* 0x003D */
-    "TransMatch",                  /* 0x003E */
-    "CallProvider",                /* 0x003F */
-    "UniToBCS",                    /* 0x0040 */
-    "UniToBCSPath",                /* 0x0041 */
-    "BCSToUni",                    /* 0x0042 */
-    "UniToUpper",                  /* 0x0043 */
-    "UniCharToOEM",                /* 0x0044 */
-    "CreateBasis",                 /* 0x0045 */
-    "MatchBasisName",              /* 0x0046 */
-    "AppendBasisTail",             /* 0x0047 */
-    "FcbToShort",                  /* 0x0048 */
-    "ShortToFcb",                  /* 0x0049 */
-    "ParsePath",                   /* 0x004A */
-    "Query_PhysLock",              /* 0x004B */
-    "_VolFlush",                   /* 0x004C */
-    "NotifyVolumeArrival",         /* 0x004D */
-    "NotifyVolumeRemoval",         /* 0x004E */
-    "QueryVolumeRemoval",          /* 0x004F */
-    "FSDUnmountCFSD",              /* 0x0050 */
-    "GetConversionTablePtrs",      /* 0x0051 */
-    "CheckAccessConflict",         /* 0x0052 */
-    "LockFile",                    /* 0x0053 */
-    "UnlockFile",                  /* 0x0054 */
-    "RemoveLocks",                 /* 0x0055 */
-    "CheckLocks",                  /* 0x0056 */
-    "CountLocks",                  /* 0x0057 */
-    "ReassignLockFileInst",        /* 0x0058 */
-    "UnassignLockList",            /* 0x0059 */
-    "MountChildVolume",            /* 0x005A */
-    "UnmountChildVolume",          /* 0x005B */
-    "SwapDrives",                  /* 0x005C */
-    "FSDMapFHtoIOREQ",             /* 0x005D */
-    "FSDParsePath",                /* 0x005E */
-    "FSDAttachSFT",                /* 0x005F */
-    "GetTimeZoneBias",             /* 0x0060 */
-    "PNPEvent",                    /* 0x0061 */
-    "RegisterCFSD",                /* 0x0062 */
-    "Win32MapExtendedHandleToSFT", /* 0x0063 */
-    "DbgSetFileHandleLimit",       /* 0x0064 */
-    "Win32MapSFTToExtendedHandle", /* 0x0065 */
-    "FSDGetCurrentDrive",          /* 0x0066 */
-    "InstallFileSystemApiHook",    /* 0x0067 */
-    "RemoveFileSystemApiHook",     /* 0x0068 */
-    "RunScheduledEvents",          /* 0x0069 */
-    "CheckDelResource",            /* 0x006A */
-    "Win32GetVMCurdir",            /* 0x006B */
-    "SetupFailedConnection",       /* 0x006C */
-    "_GetMappedErr",               /* 0x006D */
-    "ShortToLossyFcb",             /* 0x006F */
-    "GetLockState",                /* 0x0070 */
-    "BcsToBcs",                    /* 0x0071 */
-    "SetLoopback",                 /* 0x0072 */
-    "ClearLoopback",               /* 0x0073 */
-    "ParseOneElement",             /* 0x0074 */
-    "BcsToBcsUpper"                /* 0x0075 */
-};
-
-
-/*
- * IFSMgr DeviceIO service
- */
-
-#define IFS_IOCTL_21				100
-#define IFS_IOCTL_2F				101
-#define	IFS_IOCTL_GET_RES			102
-#define IFS_IOCTL_GET_NETPRO_NAME_A	103
-
 
 HANDLE32 DEVICE_Open(LPCSTR filename, DWORD access) 
 {
@@ -838,23 +697,6 @@ BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context )
     return ok;
 }
 
-
-/***********************************************************************
- *           VxDCall_IFSMgr
- */
-BOOL32 VxDCall_IFSMgr( DWORD *retv, DWORD service, CONTEXT *context )
-{
-    if (LOWORD(service) < N_IFSMGR_SERVICE)
-        FIXME(win32, "Unimplemented service %s (%08lx)\n",
-                      IFSMgr_Service_Name[LOWORD(service)], service);
-    else
-        FIXME(win32, "Unknown service %08lx\n", service);
-
-	return FALSE;
-}
-
-
-
 /***********************************************************************
  *           DeviceIo_IFSMgr
  * NOTES
@@ -865,6 +707,15 @@ BOOL32 VxDCall_IFSMgr( DWORD *retv, DWORD service, CONTEXT *context )
  *   based on a resonable guesses on information found in the Windows 95 DDK.
  *   
  */
+
+/*
+ * IFSMgr DeviceIO service
+ */
+
+#define IFS_IOCTL_21                100
+#define IFS_IOCTL_2F                101
+#define	IFS_IOCTL_GET_RES           102
+#define IFS_IOCTL_GET_NETPRO_NAME_A 103
 
 struct win32apireq {
 	unsigned long 	ar_proid;
