@@ -60,7 +60,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM SEPARATOR
 		MENUITEM "&Format Disk..." ,			203
 #ifdef _WIN95
-		MENUITEM "&Make System Disk...", -1	/*@@ */
+		MENUITEM "&Make System Disk...", -1	/*TODO*/
 #endif
 		MENUITEM SEPARATOR
 		MENUITEM "Connect &Network Drive" ,			252
@@ -112,7 +112,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "F&ull Screen\tCtrl+Shift+S" , 	ID_VIEW_FULLSCREEN
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "&Minize on run" ,		-1
+		MENUITEM "&Minimize on run" ,		-1
 		MENUITEM "&Save settings on exit" ,			511
 	}
 
