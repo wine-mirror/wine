@@ -2179,14 +2179,32 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     if (!wnd) return 0;
     if (!(descr = *(LB_DESCR **)wnd->wExtra))
     {
-        if (msg == WM_CREATE)
-        {
-            if (!LISTBOX_Create( wnd, NULL ))
-                return -1;
-            TRACE("creating wnd=%04x descr=%p\n",
-			 hwnd, *(LB_DESCR **)wnd->wExtra );
-            return 0;
-        }
+        switch (msg)
+	{
+	    case WM_CREATE:
+	    {
+                if (!LISTBOX_Create( wnd, NULL ))
+		     return -1;
+		TRACE("creating wnd=%04x descr=%p\n",
+		      hwnd, *(LB_DESCR **)wnd->wExtra );
+		return 0;
+	    }
+	    case WM_NCCREATE:
+	    {
+	        /*
+		 * When a listbox is not in a combobox and the look
+		 * is win95,  the WS_BORDER style is replaced with 
+		 * the WS_EX_CLIENTEDGE style.
+		 */
+	        if ( (TWEAK_WineLook > WIN31_LOOK) &&
+		     (wnd->dwStyle & WS_BORDER) )
+		{
+	            wnd->dwExStyle |= WS_EX_CLIENTEDGE;
+		    wnd->dwStyle     &= ~ WS_BORDER;
+		}
+	    }
+	}
+
         /* Ignore all other messages before we get a WM_CREATE */
         return DefWindowProcA( hwnd, msg, wParam, lParam );
     }
@@ -2574,10 +2592,6 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         }
 	break;
 
-    case WM_NCCREATE:
-	if (TWEAK_WineLook > WIN31_LOOK)
-	    wnd->dwExStyle |= WS_EX_CLIENTEDGE;
-        return DefWindowProcA( hwnd, msg, wParam, lParam );
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
             WARN("[%04x]: unknown msg %04x wp %08x lp %08lx\n",
