@@ -285,7 +285,7 @@ hwnd, hDriver, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile,
 fwMode);
 
   if(!fwMode)
-    return sizeof(DEVMODEA); /* Just copy dmPublic bit of PSDRV_DEVMODE */
+    return pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra;
 
   if((fwMode & DM_MODIFY) && lpdmInput) {
     TRACE("DM_MODIFY set. devIn->dmFields = %08lx\n", lpdmInput->dmFields);
@@ -337,7 +337,7 @@ fwMode);
 
   if((fwMode & DM_COPY) || (fwMode & DM_UPDATE)) {
     if (lpdmOutput)
-        memcpy(lpdmOutput, pi->Devmode, sizeof(DEVMODEA));
+        memcpy(lpdmOutput, pi->Devmode, pi->Devmode->dmPublic.dmSize + pi->Devmode->dmPublic.dmDriverExtra );
     else
         FIXME("lpdmOutput is NULL what should we do??\n");
   }

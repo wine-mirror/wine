@@ -46,7 +46,7 @@ static PSDRV_DEVMODEA DefaultDevmode =
 /* dmSpecVersion */	0x30a,
 /* dmDriverVersion */	0x001,
 /* dmSize */		sizeof(DEVMODEA),
-/* dmDriverExtra */	0,
+/* dmDriverExtra */	sizeof(PSDRV_DEVMODEA)-sizeof(DEVMODEA),
 /* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE |
 			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR |
 			DM_DUPLEX | DM_YRESOLUTION | DM_TTOPTION,
