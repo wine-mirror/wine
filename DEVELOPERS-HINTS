@@ -43,6 +43,28 @@ defined as a DWORD, you'll get a compilation warning if you mistakenly
 use it as a regular 32-bit pointer.
 
 
+STRUCTURE PACKING
+=================
+
+Under Windows, data structures are tightly packed, i.e. there is no
+padding between structure members. On the other hand, by default gcc
+aligns structure members (e.g. WORDs are on a WORD boundary, etc.).
+This means that a structure like
+
+struct { BYTE x; WORD y; };
+
+will take 3 bytes under Windows, but 4 with gcc, because gcc will add a
+dummy byte between x and y. To have the correct layout for structures
+used by Windows code, you need to use the WINE_PACKED attribute; so you
+would declare the above structure like this:
+
+struct { BYTE x; WORD y WINE_PACKED; };
+
+You have to do this every time a structure member is not aligned
+correctly under Windows (i.e. a WORD not on an even address, or a
+DWORD on a address that is not a multiple of 4).
+
+
 NAMING CONVENTIONS FOR API FUNCTIONS AND TYPES
 ==============================================
 

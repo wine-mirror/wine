@@ -250,29 +250,26 @@ int main(int argc, char **argv)
  *           Substitutions for some WINELIB functions
  */
 
+static FILE *file = 0;
+
 HFILE OpenFile( LPCSTR path, OFSTRUCT *ofs, UINT mode )
 {
-  FILE *file;
-
-  if (!*path) return (HFILE) stdin;
-
-  file = fopen(path, "r");
-  if (!file) return HFILE_ERROR;
-  return (HFILE) file;
+  file = *path ? fopen(path, "r") : stdin;
+  return file ? 1 : HFILE_ERROR;
 }
 
 HFILE _lclose( HFILE hFile )
 {
-  fclose((FILE*) hFile);
+  fclose(file);
   return 0;
 }
 
 LONG _hread( HFILE hFile, SEGPTR buffer, LONG count )
 {
-  return fread(buffer, 1, count, (FILE*) hFile);
+  return fread(buffer, 1, count, file);
 }
 
-HGLOBAL GlobalAlloc( WORD flags, DWORD size )
+HGLOBAL GlobalAlloc( UINT flags, DWORD size )
 {
   return (HGLOBAL) malloc(size);
 }

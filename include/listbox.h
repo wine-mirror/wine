@@ -33,7 +33,6 @@ typedef struct {
         BOOL    OwnerDrawn;
 	WORD    iNumStops;
 	LPINT16 TabStops;
-	HANDLE  hDrawItemStruct;
         BOOL    needMeasure;
 	HANDLE	HeapSel;
 /*	MDESC   *Heap; */

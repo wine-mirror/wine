@@ -9,8 +9,10 @@
 #include <stdio.h>
 #include "win.h"
 #include "user.h"
+#include "heap.h"
 #include "nonclient.h"
 #include "winpos.h"
+#include "string32.h"
 #include "syscolor.h"
 #include "stddebug.h"
 /* #define DEBUG_MESSAGE */
@@ -26,6 +28,7 @@
 
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
+
 
 /***********************************************************************
  *           DEFWND_InitSysMenuPopup
@@ -52,49 +55,55 @@ static void DEFWND_InitSysMenuPopup( HMENU hmenu, DWORD style, DWORD clsStyle )
 
 
 /***********************************************************************
- *           DEFWND_SetText
+ *           DEFWND_HandleWindowPosChanged
  *
- * Set the window text.
+ * Handle the WM_WINDOWPOSCHANGED message.
  */
-void DEFWND_SetText( WND *wndPtr, LPSTR text )
+static void DEFWND_HandleWindowPosChanged( WND *wndPtr, UINT32 flags )
 {
-    LPSTR textPtr;
+    WPARAM16 wp = SIZE_RESTORED;
 
-    if (!text) text = "";
-    if (wndPtr->hText) USER_HEAP_FREE( wndPtr->hText );
-    wndPtr->hText = USER_HEAP_ALLOC( strlen(text) + 1 );
-    textPtr = (LPSTR) USER_HEAP_LIN_ADDR( wndPtr->hText );
-    strcpy( textPtr, text );
-    if (wndPtr->window)
-        XStoreName( display, wndPtr->window, text );
+    if (!(flags & SWP_NOCLIENTMOVE))
+        SendMessage16( wndPtr->hwndSelf, WM_MOVE, 0,
+                    MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top));
+    if (!(flags & SWP_NOCLIENTSIZE))
+    {
+        if (wndPtr->dwStyle & WS_MAXIMIZE) wp = SIZE_MAXIMIZED;
+        else if (wndPtr->dwStyle & WS_MINIMIZE) wp = SIZE_MINIMIZED;
+
+        SendMessage16( wndPtr->hwndSelf, WM_SIZE, wp, 
+                     MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
+                            wndPtr->rectClient.bottom-wndPtr->rectClient.top));
+    }
 }
 
 
 /***********************************************************************
- *           DefWindowProc   (USER.107)
+ *           DEFWND_SetText
+ *
+ * Set the window text.
  */
-LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+void DEFWND_SetText( WND *wndPtr, LPCSTR text )
 {
-    LPSTR textPtr;
-    int len;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!text) text = "";
+    if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
+    wndPtr->text = HEAP_strdupA( SystemHeap, 0, text );
+    if (wndPtr->window) XStoreName( display, wndPtr->window, wndPtr->text );
+}
 
-    SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
+
+/***********************************************************************
+ *           DEFWND_DefWinProc
+ *
+ * Default window procedure for messages that are the same in Win16 and Win32.
+ */
+static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
+                                  LPARAM lParam )
+{
+    HWND16 hwnd = wndPtr->hwndSelf;
 
     switch(msg)
     {
-    case WM_NCCREATE:
-	{
-	    CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
-	    if (cs->lpszName)
-		DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(cs->lpszName) );
-	    return 1;
-	}
-
-    case WM_NCCALCSIZE:
-	return NC_HandleNCCalcSize( hwnd,
-                               (NCCALCSIZE_PARAMS16 *)PTR_SEG_TO_LIN(lParam) );
-
     case WM_PAINTICON: 
     case WM_NCPAINT:
 	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
@@ -113,10 +122,11 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return NC_HandleNCActivate( hwnd, wParam );
 
     case WM_NCDESTROY:
-	if (wndPtr->hText) USER_HEAP_FREE(wndPtr->hText);
+	if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
+	wndPtr->text = NULL;
 	if (wndPtr->hVScroll) USER_HEAP_FREE(wndPtr->hVScroll);
 	if (wndPtr->hHScroll) USER_HEAP_FREE(wndPtr->hHScroll);
-	wndPtr->hText = wndPtr->hVScroll = wndPtr->hHScroll = 0;
+        wndPtr->hVScroll = wndPtr->hHScroll = 0;
 	return 0;
 	
     case WM_PAINT:
@@ -143,41 +153,15 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_MOUSEACTIVATE:
 	if (wndPtr->dwStyle & WS_CHILD)
 	{
-	    LONG ret = SendMessage( wndPtr->parent->hwndSelf, WM_MOUSEACTIVATE,
+	    LONG ret = SendMessage16( wndPtr->parent->hwndSelf, WM_MOUSEACTIVATE,
 				    wParam, lParam );
 	    if (ret) return ret;
 	}
 	return MA_ACTIVATE;
 
     case WM_ACTIVATE:
-      /* LOWORD() needed for WINELIB32 implementation.  Should be fine. */
-	if (LOWORD(wParam)!=WA_INACTIVE) SetFocus( hwnd );
+	if (LOWORD(wParam) != WA_INACTIVE) SetFocus( hwnd );
 	break;
-
-    case WM_WINDOWPOSCHANGING:
-	return WINPOS_HandleWindowPosChanging( (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam) );
-
-    case WM_WINDOWPOSCHANGED:
-	{
-	    WINDOWPOS16 * winPos = (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam);
-	    WPARAM16 wp = SIZE_RESTORED;
-
-	    if (!(winPos->flags & SWP_NOCLIENTMOVE))
-		SendMessage( hwnd, WM_MOVE, 0,
-		             MAKELONG( wndPtr->rectClient.left,
-				       wndPtr->rectClient.top ));
-	    if (!(winPos->flags & SWP_NOCLIENTSIZE))
-		 {
-	       	   if( wndPtr->dwStyle & WS_MAXIMIZE ) wp = SIZE_MAXIMIZED;
-		   else if(wndPtr->dwStyle & WS_MINIMIZE ) wp = SIZE_MINIMIZED;
-
-		   SendMessage( hwnd, WM_SIZE, wp, 
-			        MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
-			                 wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-
-                 }
-	    return 0;
-	}
 
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
@@ -208,13 +192,13 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_CTLCOLORSTATIC:
         SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
         SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
-        return (LONG)sysColorObjects.hbrushWindow;
+        return (LRESULT)sysColorObjects.hbrushWindow;
 
     case WM_CTLCOLORSCROLLBAR:
         SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
         SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
         UnrealizeObject( sysColorObjects.hbrushScrollbar );
-        return (LONG)sysColorObjects.hbrushScrollbar;
+        return (LRESULT)sysColorObjects.hbrushScrollbar;
 
     case WM_CTLCOLOR:
 	{
@@ -223,51 +207,23 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
 		SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
 		UnrealizeObject( sysColorObjects.hbrushScrollbar );
-		return (LONG)sysColorObjects.hbrushScrollbar;
+		return (LRESULT)sysColorObjects.hbrushScrollbar;
 	    }
 	    else
 	    {
 		SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
 		SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
-		return (LONG)sysColorObjects.hbrushWindow;
+		return (LRESULT)sysColorObjects.hbrushWindow;
 	    }
 	}
 	
-    case WM_GETTEXT:
-	{
-	    if (wParam)
-	    {
-		if (wndPtr->hText)
-		{
-		    textPtr = (LPSTR)USER_HEAP_LIN_ADDR(wndPtr->hText);
-		    if ((int)wParam > (len = strlen(textPtr)))
-		    {
-			strcpy((char *)PTR_SEG_TO_LIN(lParam), textPtr);
-			return (DWORD)len;
-		    }
-		}
-	    }
-	    return 0;
-	}
-
     case WM_GETTEXTLENGTH:
-	{
-	    if (wndPtr->hText)
-	    {
-		textPtr = (LPSTR)USER_HEAP_LIN_ADDR(wndPtr->hText);
-		return (DWORD)strlen(textPtr);
-	    }
-	    return 0;
-	}
-
-    case WM_SETTEXT:
-	DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
-	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
-	return 0;
+        if (wndPtr->text) return (LRESULT)strlen(wndPtr->text);
+        return 0;
 
     case WM_SETCURSOR:
 	if (wndPtr->dwStyle & WS_CHILD)
-	    if (SendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR,
+	    if (SendMessage16(wndPtr->parent->hwndSelf, WM_SETCURSOR,
                             wParam, lParam))
 		return TRUE;
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
@@ -276,12 +232,10 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT16(lParam) );
 
     case WM_KEYDOWN:
-
 	if(wParam == VK_F10) iF10Key = VK_F10;
 	break;
 
     case WM_SYSKEYDOWN:
-
 	if( HIWORD(lParam) & KEYDATA_ALT )
 	  {
 	    /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
@@ -297,63 +251,45 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	         iF10Key = 1;
 	     else
 	         if( wParam == VK_ESCAPE && GetKeyState(VK_SHIFT) < 0 )
-		     SendMessage( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, 
+		     SendMessage16( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, 
  						       (LPARAM)VK_SPACE);
 	break;
 
     case WM_KEYUP:
     case WM_SYSKEYUP:
-
 	/* Press and release F10 or ALT */
-
-	if( ( wParam == VK_MENU && iMenuSysKey ) 
-	      || ( wParam == VK_F10 && iF10Key ) )
-
-	      SendMessage( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
+	if (((wParam == VK_MENU) && iMenuSysKey) ||
+            ((wParam == VK_F10) && iF10Key))
+	      SendMessage16( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
 			   SC_KEYMENU, 0L );
-
 	iMenuSysKey = iF10Key = 0;
         break;
 
     case WM_SYSCHAR:
-
 	iMenuSysKey = 0;
-
-	if( wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE) )
-	  {
+	if (wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE))
+        {
 	    PostMessage(hwnd, WM_SYSCOMMAND, (WPARAM)SC_RESTORE, 0L ); 
 	    break;
-	  }  
-
-	if( (HIWORD(lParam) & KEYDATA_ALT) && wParam )
-	  {
-	    if( wParam == VK_TAB || wParam == VK_ESCAPE )
-	      break;
-
-	    if( wParam == VK_SPACE && (wndPtr->dwStyle & WS_CHILD) )
-	      SendMessage( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+        } 
+	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
+        {
+	    if (wParam == VK_TAB || wParam == VK_ESCAPE) break;
+	    if (wParam == VK_SPACE && (wndPtr->dwStyle & WS_CHILD))
+                SendMessage16( wndPtr->parent->hwndSelf, msg, wParam, lParam );
 	    else
-	      SendMessage(hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, (LPARAM)(DWORD)wParam );
-	  } 
-	else
-	  /* check for Ctrl-Esc */
-	  if( wParam != VK_ESCAPE )   
-	      MessageBeep(0);
-	  
+                SendMessage16( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, (LPARAM)(DWORD)wParam );
+        } 
+	else /* check for Ctrl-Esc */
+            if (wParam != VK_ESCAPE) MessageBeep(0);
 	break;
 
     case WM_SHOWWINDOW:
-	if( !lParam ) return 0; /* sent from ShowWindow */
-
-	if( !(wndPtr->dwStyle & WS_POPUP) || !wndPtr->owner ) 
-	      return 0;
-
-	if( wndPtr->dwStyle & WS_VISIBLE )
-	    { if( wParam ) return 0; }
-	else
-	      if(!wParam ) return 0;
-  
-	ShowWindow(hwnd,(wParam)? SW_SHOWNOACTIVATE: SW_HIDE);
+        if (!lParam) return 0; /* sent from ShowWindow */
+        if (!(wndPtr->dwStyle & WS_POPUP) || !wndPtr->owner) return 0;
+        if ((wndPtr->dwStyle & WS_VISIBLE) && wParam) return 0;
+	else if (!(wndPtr->dwStyle & WS_VISIBLE) && !wParam) return 0;
+        ShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
 	break; 
 
     case WM_INITMENUPOPUP:
@@ -364,13 +300,9 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         break;
 
     case WM_CANCELMODE:
-
 	/* EndMenu() should be called if in menu state but currently it's
 	   impossible to detect - menu code should be updated*/
-
-	if( GetCapture() == hwnd )
-	    ReleaseCapture();
-
+	if (GetCapture() == hwnd) ReleaseCapture();
 	break;
 
     case WM_VKEYTOITEM:
@@ -381,25 +313,197 @@ LRESULT DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	return DRAG_FILE;  
 
     case WM_QUERYDROPOBJECT:
-	if(wndPtr->dwExStyle & WS_EX_ACCEPTFILES)
-	   return 1;
+	if (wndPtr->dwExStyle & WS_EX_ACCEPTFILES) return 1;
 	break;
 
     case WM_QUERYDRAGICON:
-	{
-	 HICON hI = 0;
-
-	 len = 1;
-	 while(len < 64)
+        {
+            HICON hI = 0;
+            UINT16 len = 1;
+            while(len < 64)
 		if( (hI = LoadIcon(wndPtr->hInstance,MAKEINTRESOURCE(len))) )
-		     return (LRESULT)hI;
-	}
+                    return (LRESULT)hI;
+        }
         break;
 
     case WM_QUERYOPEN:
     case WM_QUERYENDSESSION:
 	return 1;
-
     }
     return 0;
+}
+
+
+
+/***********************************************************************
+ *           DefWindowProc16   (USER.107)
+ */
+LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
+                         LPARAM lParam )
+{
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    LRESULT result = 0;
+
+    SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
+
+    switch(msg)
+    {
+    case WM_NCCREATE:
+	{
+	    CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+	    if (cs->lpszName)
+		DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(cs->lpszName) );
+	    result = 1;
+	}
+        break;
+
+    case WM_NCCALCSIZE:
+	result = NC_HandleNCCalcSize(wndPtr, (RECT16 *)PTR_SEG_TO_LIN(lParam));
+        break;
+
+    case WM_WINDOWPOSCHANGING:
+	result = WINPOS_HandleWindowPosChanging16( wndPtr,
+                                       (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam) );
+        break;
+
+    case WM_WINDOWPOSCHANGED:
+	{
+	    WINDOWPOS16 * winPos = (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam);
+            DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
+	}
+        break;
+
+    case WM_GETTEXT:
+        if (wParam && wndPtr->text)
+        {
+            lstrcpyn( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
+            return (LRESULT)strlen( (LPSTR)PTR_SEG_TO_LIN(lParam) ) + 1;
+        }
+        break;
+
+    case WM_SETTEXT:
+	DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
+	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+        break;
+
+    default:
+        result = DEFWND_DefWinProc( wndPtr, msg, wParam, lParam );
+        break;
+    }
+
+    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, result );
+    return result;
+}
+
+
+/***********************************************************************
+ *           DefWindowProc32A   (USER32.125)
+ */
+LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                          LPARAM lParam )
+{
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    LRESULT result = 0;
+
+    SPY_EnterMessage( SPY_DEFWNDPROC32, hwnd, msg, wParam, lParam );
+
+    switch(msg)
+    {
+    case WM_NCCREATE:
+	{
+	    CREATESTRUCT32A *cs = (CREATESTRUCT32A *)lParam;
+	    if (cs->lpszName) DEFWND_SetText( wndPtr, cs->lpszName );
+	    result = 1;
+	}
+        break;
+
+    case WM_NCCALCSIZE:
+        {
+            RECT16 rect16;
+            CONV_RECT32TO16( (RECT32 *)lParam, &rect16 );
+            result = NC_HandleNCCalcSize( wndPtr, &rect16 );
+            CONV_RECT16TO32( &rect16, (RECT32 *)lParam );
+        }
+        break;
+
+    case WM_WINDOWPOSCHANGING:
+	result = WINPOS_HandleWindowPosChanging32( wndPtr,
+                                                   (WINDOWPOS32 *)lParam );
+        break;
+
+    case WM_WINDOWPOSCHANGED:
+	{
+	    WINDOWPOS32 * winPos = (WINDOWPOS32 *)lParam;
+            DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
+	}
+        break;
+
+    case WM_GETTEXT:
+        if (wParam && wndPtr->text)
+        {
+            lstrcpyn( (LPSTR)lParam, wndPtr->text, wParam );
+            return (LRESULT)strlen( (LPSTR)lParam ) + 1;
+        }
+        break;
+
+    case WM_SETTEXT:
+	DEFWND_SetText( wndPtr, (LPSTR)lParam );
+	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+        break;
+
+    default:
+        result = DEFWND_DefWinProc( wndPtr, msg, wParam, lParam );
+        break;
+    }
+
+    SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, result );
+    return result;
+}
+
+
+/***********************************************************************
+ *           DefWindowProc32W   (USER32.126)
+ */
+LRESULT DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                          LPARAM lParam )
+{
+    LRESULT result;
+
+    switch(msg)
+    {
+    case WM_NCCREATE:
+	{
+	    CREATESTRUCT32W *cs = (CREATESTRUCT32W *)lParam;
+	    if (cs->lpszName)
+            {
+                WND *wndPtr = WIN_FindWndPtr( hwnd );
+                LPSTR str = STRING32_DupUniToAnsi( cs->lpszName );
+                DEFWND_SetText( wndPtr, str );
+                free( str );
+            }
+	    result = 1;
+	}
+
+    case WM_GETTEXT:
+        {
+            LPSTR str = malloc( wParam );
+            result = DefWindowProc32A( hwnd, msg, wParam, (LPARAM)str );
+            STRING32_AnsiToUni( (LPWSTR)lParam, str );
+            free( str );
+        }
+        break;
+
+    case WM_SETTEXT:
+        {
+            LPSTR str = STRING32_DupUniToAnsi( (LPWSTR)lParam );
+            result = DefWindowProc32A( hwnd, msg, wParam, (LPARAM)str );
+            free( str );
+        }
+        break;
+
+    default:
+        result = DefWindowProc32A( hwnd, msg, wParam, lParam );
+        break;
+    }
+    return result;
 }

@@ -1,3 +1,13 @@
+Sat May 18 11:06:02 1996  Pablo Saratxaga <srtxg@f2219.n293.z2.fidonet.org>
+
+	* [Fr.rc] (new)
+ 	Added French language support.
+
+Thu May 16 19:24:19 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
+
+	* [macro.lex.l] [macro.yacc.y]
+	Support older versions of Flex.
+
 Mon Apr 29 19:48:15 1996  Ulrich Schmid  <uschmid@mail.hh.provi.de>
 
 	* [winhelp.c] [winhelp.h] [hlpfile.c] [hlpfile.h]

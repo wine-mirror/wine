@@ -17,8 +17,7 @@ typedef struct tagCLASS
     UINT32           magic;         /* Magic number */
     UINT32           cWindows;      /* Count of existing windows */
     UINT32           style;         /* Class style */
-    UINT32           flags;         /* Class flags (see below) */
-    WNDPROC16        lpfnWndProc;   /* 16-bit window procedure */ 
+    WNDPROC16        lpfnWndProc;   /* Window procedure */ 
     INT32            cbClsExtra;    /* Class extra bytes */
     INT32            cbWndExtra;    /* Window extra bytes */
     LPSTR            menuNameA;     /* Default menu name (ASCII string) */
@@ -32,9 +31,6 @@ typedef struct tagCLASS
     HANDLE16         hdce;          /* Class DCE (if CS_CLASSDC) */
     LONG             wExtra[1];     /* Class extra bytes */
 } CLASS;
-
-/* Class flags */
-#define CLASS_FLAG_UNICODE  0x0001  /* Window procedure expects Unicode */
 
 extern void CLASS_DumpClass( CLASS *class );
 extern void CLASS_WalkClasses(void);

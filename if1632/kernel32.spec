@@ -210,7 +210,7 @@ base	1
 0205 stub GetDefaultCommConfigW
 0206 stub GetDiskFreeSpaceA
 0207 stub GetDiskFreeSpaceW
-0208 stub GetDriveTypeA
+0208 stdcall GetDriveTypeA(ptr) GetDriveType32A
 0209 stub GetDriveTypeW
 0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
 0211 stub GetEnvironmentStringsA
@@ -233,9 +233,9 @@ base	1
 0228    stdcall GetLocalTime(ptr) GetLocalTime
 0229 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
 0230 stub GetLocaleInfoW
-0231 stub GetLogicalDriveStringsA
-0232 stub GetLogicalDriveStringsW
-0233 stub GetLogicalDrives
+0231 stdcall GetLogicalDriveStringsA(long ptr) GetLogicalDriveStrings32A
+0232 stdcall GetLogicalDriveStringsW(long ptr) GetLogicalDriveStrings32W
+0233 stdcall GetLogicalDrives() GetLogicalDrives
 0234 stub GetMailslotInfo
 0235	stdcall GetModuleFileNameA(long ptr long) GetModuleFileNameA
 0236 stub GetModuleFileNameW
@@ -361,7 +361,7 @@ base	1
 0355 stub IsBadStringPtrA
 0356 stub IsBadStringPtrW
 0357 stdcall IsBadWritePtr(ptr long)	WIN32_IsBadWritePtr
-0358 stub IsDBCSLeadByte
+0358 return IsDBCSLeadByte 4 0
 0359 stub IsDBCSLeadByteEx
 0360 stub IsValidCodePage
 0361 stub IsValidLocale

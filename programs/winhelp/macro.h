@@ -11,7 +11,6 @@ VOID MACRO_ExecuteMacro(LPCSTR);
 INT  yyparse(VOID);
 INT  yylex(VOID);
 VOID yyerror(LPCSTR);
-extern CHAR MACRO_extra_separator;
 
 VOID MACRO_About(VOID);
 VOID MACRO_AddAccelerator(LONG, LONG, LPCSTR);

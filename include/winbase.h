@@ -11,7 +11,7 @@
 #endif
 
 
-#define INVALID_HANDLE_VALUE ((HANDLE) -1)
+#define INVALID_HANDLE_VALUE    ((HANDLE32) -1)
 
 #define WAIT_FAILED		0xffffffff
 #define WAIT_OBJECT_0		0

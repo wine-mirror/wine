@@ -54,11 +54,11 @@ void FOCUS_SwitchFocus(HWND hFocusFrom, HWND hFocusTo)
 {
     hwndFocus = hFocusTo;
 
-    if (hFocusFrom) SendMessage( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0L);
+    if (hFocusFrom) SendMessage16( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0L);
     if( !hFocusTo || hFocusTo != hwndFocus )
 	return;
 
-    SendMessage( hFocusTo, WM_SETFOCUS, (WPARAM)hFocusFrom, 0L);
+    SendMessage16( hFocusTo, WM_SETFOCUS, (WPARAM)hFocusFrom, 0L);
     FOCUS_SetXFocus( hFocusTo );
 }
 

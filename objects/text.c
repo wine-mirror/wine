@@ -250,19 +250,18 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 	{
 	    if (!ExtTextOut16(hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
                               rect, line, len, NULL )) return 0;
+            if (prefix_offset != -1)
+            {
+                HPEN16 hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
+                HPEN16 oldPen = SelectObject( hdc, hpen );
+                MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
+                LineTo(hdc, x + prefix_end, y + tm.tmAscent + 1 );
+                SelectObject( hdc, oldPen );
+                DeleteObject( hpen );
+            }
 	}
 	else if (size.cx > max_width)
 	    max_width = size.cx;
-
-	if (prefix_offset != -1)
-	{
-	    HPEN16 hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
-	    HPEN16 oldPen = SelectObject( hdc, hpen );
-	    MoveTo(hdc, x + prefix_x, y + tm.tmAscent + 1 );
-	    LineTo(hdc, x + prefix_end, y + tm.tmAscent + 1 );
-	    SelectObject( hdc, oldPen );
-	    DeleteObject( hpen );
-	}
 
 	y += lh;
 	if (strPtr)

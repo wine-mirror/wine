@@ -81,7 +81,6 @@
 #undef DEBUG_BITBLT
 #undef DEBUG_BITMAP
 #undef DEBUG_CARET
-#undef DEBUG_CATCH
 #undef DEBUG_CDAUDIO
 #undef DEBUG_CLASS
 #undef DEBUG_CLIPBOARD
@@ -148,7 +147,6 @@
 #undef DEBUG_TEXT
 #undef DEBUG_TIMER
 #undef DEBUG_TOOLHELP
-#undef DEBUG_UTILITY
 #undef DEBUG_VXD
 #undef DEBUG_WIN
 #undef DEBUG_WIN32
@@ -161,7 +159,6 @@
 #define DEBUG_BITBLT
 #define DEBUG_BITMAP
 #define DEBUG_CARET
-#define DEBUG_CATCH
 #define DEBUG_CDAUDIO
 #define DEBUG_CLASS
 #define DEBUG_CLIPBOARD
@@ -228,7 +225,6 @@
 #define DEBUG_TEXT
 #define DEBUG_TIMER
 #define DEBUG_TOOLHELP
-#define DEBUG_UTILITY
 #define DEBUG_VXD
 #define DEBUG_WIN
 #define DEBUG_WIN32

@@ -101,7 +101,7 @@ HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits 
     bmpObjPtr->bitmap.bmHeight = height;
     bmpObjPtr->bitmap.bmPlanes = planes;
     bmpObjPtr->bitmap.bmBitsPixel = bpp;
-    bmpObjPtr->bitmap.bmWidthBytes = (width * bpp + 15) / 16 * 2;
+    bmpObjPtr->bitmap.bmWidthBytes = BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmBits = NULL;
 
       /* Create the pixmap */

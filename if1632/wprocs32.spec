@@ -1,18 +1,15 @@
 name	wprocs32
 type	win32
 
-1  stdcall ButtonWndProc(long long long long) ButtonWndProc32
 2  stdcall StaticWndProc(long long long long) StaticWndProc32
 3  stdcall ScrollBarWndProc(long long long long) ScrollBarWndProc32
 4  stdcall ListBoxWndProc(long long long long) ListBoxWndProc32
 5  stdcall ComboBoxWndProc(long long long long) ComboBoxWndProc32
 6  stdcall EditWndProc(long long long long) EditWndProc32
 7  stdcall PopupMenuWndProc(long long long long) PopupMenuWndProc32
-8  stdcall DesktopWndProc(long long long long) DesktopWndProc32
 9  stdcall DefDlgProc(long long long long) DefDlgProc32
 10 stdcall MDIClientWndProc(long long long long) MDIClientWndProc32
-11 stdcall DefWindowProc(long long long long) DefWindowProc32
-12 stdcall DefMDIChildProc(long long long long) DefMDIChildProc32
+11 stdcall DefWindowProc(long long long long) DefWindowProc32A
 13 stdcall SystemMessageBoxProc(long long long long) SystemMessageBoxProc32
 14 stdcall FileOpenDlgProc(long long long long) FileOpenDlgProc32
 15 stdcall FileSaveDlgProc(long long long long) FileSaveDlgProc32

@@ -148,12 +148,12 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &OLE32_Descriptor,    0 },
     { &GDI32_Descriptor,    0 },
     { &KERNEL32_Descriptor, DLL_FLAG_ALWAYS_USED },
-    { &NTDLL_Descriptor,  0 },
+    { &NTDLL_Descriptor,    0 },
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },
     { &WPROCS32_Descriptor, DLL_FLAG_ALWAYS_USED },
     { &WINSPOOL_Descriptor, 0 },
-    { &WSOCK32_Descriptor, 0 },
+    { &WSOCK32_Descriptor,  0 },
     /* Last entry */
     { NULL, 0 }
 };
@@ -404,6 +404,7 @@ BOOL BUILTIN_ParseDLLOptions( const char *str )
         }
         if (!dll->descr) return FALSE;
         str = p;
+        while (*str && (isspace(*str) || (*str == ','))) str++;
     }
     return TRUE;
 }

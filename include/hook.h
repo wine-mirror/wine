@@ -32,6 +32,7 @@ typedef struct
 
 #define HOOK_MAGIC  ((int)'H' | (int)'K' << 8)  /* 'HK' */
 
+extern HANDLE HOOK_GetHook( short id , HQUEUE hQueue );
 extern DWORD HOOK_CallHooks( short id, short code,
                              WPARAM wParam, LPARAM lParam );
 extern void HOOK_FreeModuleHooks( HMODULE hModule );

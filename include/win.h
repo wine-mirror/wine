@@ -37,22 +37,22 @@ typedef struct tagWND
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
     HWND16         hwndSelf;      /* Handle of this window */
     HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
+    WNDPROC16      lpfnWndProc;   /* Window procedure */
     RECT16         rectClient;    /* Client area rel. to parent client area */
     RECT16         rectWindow;    /* Whole window rel. to parent client area */
     RECT16         rectNormal;    /* Window rect. when in normal state */
     POINT16        ptIconPos;     /* Icon position */
     POINT16        ptMaxPos;      /* Maximized window position */
+    LPSTR          text;          /* Window text */
     HGLOBAL        hmemTaskQ;     /* Task queue global memory handle */
     HRGN           hrgnUpdate;    /* Update region */
     HWND           hwndLastActive;/* Last active popup hwnd */
-    WNDPROC        lpfnWndProc;   /* Window procedure */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     HANDLE         hdce;          /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HANDLE         hVScroll;      /* Vertical scroll-bar info */
     HANDLE         hHScroll;      /* Horizontal scroll-bar info */
     UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
-    HANDLE         hText;         /* Handle of window text */
     WORD           flags;         /* Misc. flags (see below) */
     Window         window;        /* X window (only for top-level windows) */
     HMENU          hSysMenu;      /* window's copy of System Menu */
@@ -70,7 +70,6 @@ typedef struct tagWND
 #define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
 #define WIN_MANAGED            0x0100 /* Window managed by the X wm */
-#define WIN_UNICODE            0x0200 /* Window procedure expects Unicode */
 
   /* Window functions */
 extern WND *WIN_FindWndPtr( HWND hwnd );
@@ -86,6 +85,8 @@ extern void WIN_SendParentNotify( HWND hwnd, WORD event,
 extern BOOL WIN_CreateDesktopWindow(void);
 extern HWND WIN_GetTopParent( HWND hwnd );
 extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
+
+extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );  /* windows/defwnd.c */
 
 extern Display * display;
 extern Screen * screen;

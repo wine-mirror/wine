@@ -16,6 +16,7 @@ extern const char people[];
 
 VOID LIBWINE_Register_De(void);
 VOID LIBWINE_Register_En(void);
+VOID LIBWINE_Register_Fr(void);
 
 static BOOL    WINHELP_RegisterWinClasses();
 static LRESULT WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -52,6 +53,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   /* Register resources */
   LIBWINE_Register_De();
   LIBWINE_Register_En();
+  LIBWINE_Register_Fr();
 #endif
 
   Globals.hInstance = hInstance;
@@ -196,7 +198,7 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
 
   if (bPopup)
     lpszWindow = NULL;
-  else if (!lpszWindow)
+  else if (!lpszWindow || !lpszWindow[0])
     lpszWindow = Globals.active_win->lpszName;
   bPrimary = lpszWindow && !lstrcmpi(lpszWindow, "main");
 
@@ -586,10 +588,10 @@ static LRESULT WINHELP_TextWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
     case WM_VSCROLL:
       {
-	BOOL update = TRUE;
-	RECT rect;
-	INT  Min, Max;
-	INT  CurPos = GetScrollPos(hWnd, SB_VERT);
+	BOOL  update = TRUE;
+	RECT  rect;
+	INT16 Min, Max;
+	INT   CurPos = GetScrollPos(hWnd, SB_VERT);
 	GetScrollRange(hWnd, SB_VERT, &Min, &Max);
 	GetClientRect(hWnd, &rect);
 
@@ -775,7 +777,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
       while (len)
 	{
 	  INT free_width = rect.right - (part ? (*line)->rect.right : rect.left) - space.cx;
-	  UINT low = 0, curr = len, high = len, textlen;
+	  UINT low = 0, curr = len, high = len, textlen = 0;
 
 	  if (free_width > 0)
 	    {
@@ -789,7 +791,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
 		  if (high <= low + 1) break;
 
 		  if (textsize.cx) curr = (curr * free_width) / textsize.cx;
-		  if (curr <= low)  curr = low + 1;
+		  if (curr <= low) curr = low + 1;
 		  else if (curr >= high) curr = high - 1;
 		}
 	      textlen = low;

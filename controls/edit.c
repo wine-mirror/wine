@@ -84,10 +84,10 @@ typedef struct
 
 #ifdef WINELIB32
 #define EDIT_SEND_CTLCOLOR(wndPtr,hdc) \
-		SendMessage((wndPtr)->parent->hwndSelf, WM_CTLCOLOREDIT, \
+		SendMessage32A((wndPtr)->parent->hwndSelf, WM_CTLCOLOREDIT, \
 				(WPARAM)(hdc), (LPARAM)(wndPtr)->hwndSelf)
 #define EDIT_NOTIFY_PARENT(wndPtr, wNotifyCode) \
-		SendMessage((wndPtr)->parent->hwndSelf, WM_COMMAND, \
+		SendMessage32A((wndPtr)->parent->hwndSelf, WM_COMMAND, \
 				MAKEWPARAM((wndPtr)->wIDmenu, wNotifyCode), \
 				(LPARAM)(wndPtr)->hwndSelf )
 #define DPRINTF_EDIT_MSG(str) \
@@ -96,10 +96,10 @@ typedef struct
 			(UINT)hwnd, (UINT)wParam, (DWORD)lParam)
 #else
 #define EDIT_SEND_CTLCOLOR(wndPtr,hdc) \
-		SendMessage((wndPtr)->parent->hwndSelf, WM_CTLCOLOR, \
+		SendMessage16((wndPtr)->parent->hwndSelf, WM_CTLCOLOR, \
 				(WPARAM)(hdc), MAKELPARAM((wndPtr)->hwndSelf, CTLCOLOR_EDIT))
 #define EDIT_NOTIFY_PARENT(wndPtr, wNotifyCode) \
-		SendMessage((wndPtr)->parent->hwndSelf, WM_COMMAND, \
+		SendMessage16((wndPtr)->parent->hwndSelf, WM_COMMAND, \
 				(wndPtr)->wIDmenu, \
 				MAKELPARAM((wndPtr)->hwndSelf, wNotifyCode))
 #define DPRINTF_EDIT_MSG(str) \
@@ -491,7 +491,7 @@ LRESULT EditWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	default:
 		if (msg >= WM_USER)
 			fprintf(stdnimp, "edit: undocumented message %d >= WM_USER, please report.\n", msg);
-		lResult = DefWindowProc(hwnd, msg, wParam, lParam);
+		lResult = DefWindowProc16(hwnd, msg, wParam, lParam);
 		break;
 	}
 	EDIT_ReleasePointer(wndPtr);

@@ -48,7 +48,6 @@ DLLS	= \
 SPEC_FILES = $(DLLS:.spec=.S)
 
 C_SRCS = \
-	callback.c \
 	dummy.c \
 	relay.c
 

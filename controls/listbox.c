@@ -84,7 +84,7 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   HDC         hdc;
 
   lphl = (LPHEADLIST)xmalloc(sizeof(HEADLIST));
-  SetWindowLong(hwnd, 0, (LONG)lphl);
+  SetWindowLong32A(hwnd, 0, (LONG)lphl);
   ListBoxInitialize(lphl);
   lphl->DrawCtlType    = CtlType;
   lphl->CtlID          = GetWindowWord(hwnd,GWW_ID);
@@ -114,10 +114,10 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
       ReleaseDC( 0, hdc );
   }
 
-  if (lphl->OwnerDrawn) {
+  if (lphl->OwnerDrawn)
+  {
     LISTSTRUCT dummyls;
     
-    lphl->hDrawItemStruct = USER_HEAP_ALLOC(sizeof(DRAWITEMSTRUCT16));
     lphl->needMeasure = TRUE;
     dummyls.mis.CtlType    = lphl->DrawCtlType;
     dummyls.mis.CtlID      = lphl->CtlID;
@@ -126,8 +126,6 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
     dummyls.mis.itemData   = 0;
 
     ListBoxAskMeasure(lphl,&dummyls);
-  } else {
-    lphl->hDrawItemStruct = 0;
   }
 
 /* WINELIBS list boxes do not operate on local heaps */
@@ -141,9 +139,6 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
 
 void DestroyListBoxStruct(LPHEADLIST lphl)
 {
-  if (lphl->hDrawItemStruct)
-    USER_HEAP_FREE(lphl->hDrawItemStruct);
-
   /* XXX need to free lphl->Heap */
   GlobalFree16(lphl->HeapSel);
   free(lphl);
@@ -160,11 +155,11 @@ void ListBoxSendNotification(LPHEADLIST lphl, WORD code)
 {
   if (lphl->dwStyle & LBS_NOTIFY)
 #ifdef WINELIB32
-    SendMessage(lphl->hParent, WM_COMMAND,
-		MAKEWPARAM(lphl->CtlID,code), (LPARAM)lphl->hSelf);
+    SendMessage32A(lphl->hParent, WM_COMMAND,
+                   MAKEWPARAM(lphl->CtlID,code), (LPARAM)lphl->hSelf);
 #else
-    SendMessage(lphl->hParent, WM_COMMAND,
-		lphl->CtlID, MAKELONG(lphl->hSelf, code));
+    SendMessage16(lphl->hParent, WM_COMMAND,
+                  lphl->CtlID, MAKELONG(lphl->hSelf, code));
 #endif
 }
 
@@ -237,21 +232,22 @@ LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex)
 void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls, 
 		      RECT16 *rect, WORD itemAction, WORD itemState)
 {
-  if (lphl->OwnerDrawn) {
-    DRAWITEMSTRUCT16   *dis = USER_HEAP_LIN_ADDR(lphl->hDrawItemStruct);
+    if (lphl->OwnerDrawn)
+    {
+        DRAWITEMSTRUCT32 dis;
 
-    dis->CtlID    = lpls->mis.CtlID;
-    dis->CtlType  = lpls->mis.CtlType;
-    dis->itemID   = lpls->mis.itemID;
-    dis->hDC      = hdc;
-    dis->hwndItem = hwnd;
-    dis->itemData = lpls->mis.itemData;
-    dis->itemAction = itemAction;
-    dis->itemState  = itemState;
-    dis->rcItem     = *rect;
-    SendMessage(lphl->hParent, WM_DRAWITEM,
-		0, (LPARAM)USER_HEAP_SEG_ADDR(lphl->hDrawItemStruct));
-  } else {
+        dis.CtlID      = lpls->mis.CtlID;
+        dis.CtlType    = lpls->mis.CtlType;
+        dis.itemID     = lpls->mis.itemID;
+        dis.hDC        = hdc;
+        dis.hwndItem   = hwnd;
+        dis.itemData   = lpls->mis.itemData;
+        dis.itemAction = itemAction;
+        dis.itemState  = itemState;
+        CONV_RECT16TO32( rect, &dis.rcItem );
+        SendMessage32A( lphl->hParent, WM_DRAWITEM, 0, (LPARAM)&dis );
+        return;
+    }
     if (itemAction == ODA_DRAWENTIRE || itemAction == ODA_SELECT) {
       int 	OldBkMode;
       DWORD 	dwOldTextColor = 0;
@@ -277,10 +273,8 @@ void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls,
       }
       
       SetBkMode(hdc, OldBkMode);
-    } else DrawFocusRect16(hdc, rect);
-  }
-
-  return;
+    }
+    else DrawFocusRect16(hdc, rect);
 }
 
 
@@ -321,7 +315,7 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
  
   *lpmeasure = lpls->mis;
   lpmeasure->itemHeight = lphl->StdItemHeight;
-  SendMessage(lphl->hParent, WM_MEASUREITEM, 0, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
+  SendMessage16(lphl->hParent, WM_MEASUREITEM, 0, (LPARAM)USER_HEAP_SEG_ADDR(hTemp));
 
   if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
     if (lpmeasure->itemHeight > lphl->StdItemHeight)
@@ -931,7 +925,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
   if (y == -1) return 0;
 
   if (lphl->dwStyle & LBS_NOTIFY && y!= LB_ERR )
-     if( SendMessage(lphl->hParent, WM_LBTRACKPOINT, y, lParam) )
+     if( SendMessage16(lphl->hParent, WM_LBTRACKPOINT, y, lParam) )
          return 0;
 
 
@@ -986,7 +980,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 #ifndef WINELIB
   if (GetWindowLong(lphl->hSelf,GWL_EXSTYLE) & WS_EX_DRAGDETECT)
      if( DragDetect(lphl->hSelf,MAKEPOINT16(lParam)) )
-         SendMessage(lphl->hParent, WM_BEGINDRAG,0,0L);
+         SendMessage16(lphl->hParent, WM_BEGINDRAG,0,0L);
 #endif
   return 0;
 }
@@ -1014,11 +1008,11 @@ static LONG LBRButtonUp(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
 #ifdef WINELIB32
-  SendMessage(lphl->hParent, WM_COMMAND, 
-	      MAKEWPARAM(GetWindowWord(hwnd,GWW_ID),LBN_DBLCLK),
-	      (LPARAM)hwnd);
+  SendMessage32A(lphl->hParent, WM_COMMAND, 
+                 MAKEWPARAM(GetWindowWord(hwnd,GWW_ID),LBN_DBLCLK),
+                 (LPARAM)hwnd);
 #else
-  SendMessage(lphl->hParent, WM_COMMAND, GetWindowWord(hwnd,GWW_ID),
+  SendMessage16(lphl->hParent, WM_COMMAND, GetWindowWord(hwnd,GWW_ID),
 		MAKELONG(hwnd, LBN_DBLCLK));
 #endif
 
@@ -1116,8 +1110,8 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 	case VK_NEXT:
 	     if ( lphl->dwStyle & LBS_WANTKEYBOARDINPUT )
 	        {
-		  newFocused = (WORD)(INT)SendMessage(lphl->hParent,WM_VKEYTOITEM,
-					              wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
+		  newFocused = (WORD)(INT)SendMessage16(lphl->hParent,WM_VKEYTOITEM,
+                                                        wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
 	          if ( newFocused == 0xFFFE ) return 0L;
                 }
 	     if ( newFocused == 0xFFFF ) 
@@ -1220,8 +1214,8 @@ static LONG LBChar(HWND hwnd, WORD wParam, LONG lParam)
 
   if ( (lphl->dwStyle & LBS_WANTKEYBOARDINPUT) && !(lphl->HasStrings))
        {
-        newFocused = (WORD)(INT)SendMessage(lphl->hParent,WM_CHARTOITEM,
-                                            wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
+        newFocused = (WORD)(INT)SendMessage16(lphl->hParent,WM_CHARTOITEM,
+                                              wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
         if ( newFocused == 0xFFFE ) return 0L;
        }
 
@@ -1320,11 +1314,11 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   hOldFont = SelectObject(hdc, lphl->hFont);
 
 #ifdef WINELIB32
-  hBrush = (HBRUSH) SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
-				(LPARAM)hwnd);
+  hBrush = (HBRUSH) SendMessage16(lphl->hParent, WM_CTLCOLORLISTBOX, (WPARAM)hdc,
+                                  (LPARAM)hwnd);
 #else
-  hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
-		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
+  hBrush = SendMessage16(lphl->hParent, WM_CTLCOLOR, hdc,
+                         MAKELONG(hwnd, CTLCOLOR_LISTBOX));
 #endif
 
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
@@ -1948,7 +1942,7 @@ static LRESULT LBPassToParent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
   if( ptrWnd )
       if( /* !(ptrWnd->dwExStyle & WS_EX_NOPARENTNOTIFY) && */ 
           ptrWnd->parent ) 
-          return SendMessage(ptrWnd->parent->hwndSelf,message,wParam,lParam);
+          return SendMessage16(ptrWnd->parent->hwndSelf,message,wParam,lParam);
   return 0;
 }
 
@@ -2032,7 +2026,7 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
     }
     
-    return DefWindowProc(hwnd, message, wParam, lParam);
+    return DefWindowProc16(hwnd, message, wParam, lParam);
 }
 
 
@@ -2045,10 +2039,10 @@ BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, INT id )
     INT i;
 
     dprintf_listbox( stddeb, "DlgDirSelect: %04x '%s' %d\n", hDlg, lpStr, id );
-    if ((i = SendDlgItemMessage( hDlg, id, LB_GETCURSEL, 0, 0 )) == LB_ERR)
+    if ((i = SendDlgItemMessage16( hDlg, id, LB_GETCURSEL, 0, 0 )) == LB_ERR)
         return FALSE;
     if (!(buffer = SEGPTR_ALLOC( 20 * sizeof(char) ))) return FALSE;
-    SendDlgItemMessage( hDlg, id, LB_GETTEXT, i, (LPARAM)SEGPTR_GET(buffer) );
+    SendDlgItemMessage16(hDlg, id, LB_GETTEXT, i, (LPARAM)SEGPTR_GET(buffer) );
     if (buffer[0] == '[')  /* drive or directory */
     {
         if (buffer[1] == '-')  /* drive */
@@ -2084,7 +2078,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
 
 #define SENDMSG(msg,wparam,lparam) \
     ((attrib & DDL_POSTMSGS) ? PostMessage( hwnd, msg, wparam, lparam ) \
-                             : SendMessage( hwnd, msg, wparam, lparam ))
+                             : SendMessage16( hwnd, msg, wparam, lparam ))
 
     dprintf_listbox( stddeb, "DlgDirList: %04x '%s' %d %d %04x\n",
                      hDlg, filespec ? filespec : "NULL",
@@ -2135,6 +2129,8 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
                          (LPARAM)spec ) == LB_ERR) return FALSE;
             if (!(temp = SEGPTR_ALLOC( 4*sizeof(char) ))) return FALSE;
             strcpy( temp, "*.*" );
+            /* FIXME: this won't work with PostMessage(), as temp will */
+            /* have been freed by the time we do a DispatchMessage().  */
             if (SENDMSG( LB_DIR, (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
                          (LPARAM)SEGPTR_GET(temp) ) == LB_ERR)
             {
@@ -2151,15 +2147,14 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
 
     if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
-        const char *cwd = DRIVE_GetDosCwd(drive);
-        char *temp = SEGPTR_ALLOC( strlen(cwd) + 4 );
-        if (!temp) return FALSE;
+        char temp[512];
+        int drive = DRIVE_GetCurrentDrive();
         strcpy( temp, "A:\\" );
         temp[0] += drive;
-        strcpy( temp + 3, cwd );
+        lstrcpyn( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
         AnsiLower( temp );
-        SENDMSG( WM_SETTEXT, 0, (LPARAM)SEGPTR_GET(temp) );
-        SEGPTR_FREE(temp);
+        /* Can't use PostMessage() here, because the string is on the stack */
+        SetDlgItemText32A( hDlg, idStatic, temp );
     }
     return TRUE;
 #undef SENDMSG

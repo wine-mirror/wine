@@ -35,8 +35,8 @@ heap	65520
 33  pascal16 GetClientRect(word ptr) GetClientRect16
 34  pascal16 EnableWindow(word word) EnableWindow
 35  pascal16 IsWindowEnabled(word) IsWindowEnabled
-36  pascal16 GetWindowText(word segptr word) WIN16_GetWindowText
-37  pascal16 SetWindowText(word segptr) WIN16_SetWindowText
+36  pascal16 GetWindowText(word segptr word) GetWindowText16
+37  pascal16 SetWindowText(word segptr) SetWindowText16
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength
 39  pascal16 BeginPaint(word ptr) BeginPaint16
 40  pascal16 EndPaint(word ptr) EndPaint16
@@ -91,26 +91,26 @@ heap	65520
 89  pascal16 CreateDialog(word segptr word segptr) CreateDialog
 90  pascal16 IsDialogMessage(word ptr) IsDialogMessage
 91  pascal16 GetDlgItem(word word) GetDlgItem
-92  pascal16 SetDlgItemText(word word segptr) SetDlgItemText
-93  pascal16 GetDlgItemText(word word segptr word) GetDlgItemText
-94  pascal16 SetDlgItemInt(word word word word) SetDlgItemInt
+92  pascal16 SetDlgItemText(word word segptr) SetDlgItemText16
+93  pascal16 GetDlgItemText(word word segptr word) GetDlgItemText16
+94  pascal16 SetDlgItemInt(word word word word) SetDlgItemInt16
 95  pascal16 GetDlgItemInt(word word ptr word) GetDlgItemInt
 96  pascal16 CheckRadioButton(word word word word) CheckRadioButton
 97  pascal16 CheckDlgButton(word word word) CheckDlgButton
 98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked
 99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect
 100 pascal16 DlgDirList(word segptr word word word) DlgDirList
-101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage
+101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage16
 102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect16
 103 pascal16 MapDialogRect(word ptr) MapDialogRect16
 104 pascal16 MessageBeep(word) MessageBeep
 105 pascal16 FlashWindow(word word) FlashWindow
 106 pascal16 GetKeyState(word) GetKeyState
-107 pascal   DefWindowProc(word word word long) DefWindowProc
+107 pascal   DefWindowProc(word word word long) DefWindowProc16
 108 pascal16 GetMessage(segptr word word word) GetMessage
 109 pascal16 PeekMessage(ptr word word word word) PeekMessage
 110 pascal16 PostMessage(word word word long) PostMessage
-111 pascal   SendMessage(word word word long) SendMessage
+111 pascal   SendMessage(word word word long) SendMessage16
 112 pascal16 WaitMessage() WaitMessage
 113 pascal16 TranslateMessage(ptr) TranslateMessage
 114 pascal   DispatchMessage(ptr) DispatchMessage
@@ -135,7 +135,7 @@ heap	65520
 133 pascal16 GetWindowWord(word s_word) GetWindowWord
 134 pascal16 SetWindowWord(word s_word word) SetWindowWord
 135 pascal   GetWindowLong(word s_word) GetWindowLong
-136 pascal   SetWindowLong(word s_word long) SetWindowLong
+136 pascal   SetWindowLong(word s_word long) SetWindowLong16
 137 pascal16 OpenClipboard(word) OpenClipboard
 138 pascal16 CloseClipboard() CloseClipboard
 139 pascal16 EmptyClipboard() EmptyClipboard
@@ -152,7 +152,7 @@ heap	65520
 150 pascal16 LoadMenu(word segptr) LoadMenu
 151 pascal16 CreateMenu() CreateMenu
 152 pascal16 DestroyMenu(word) DestroyMenu
-153 pascal16 ChangeMenu(word word segptr word word) ChangeMenu
+153 pascal16 ChangeMenu(word word segptr word word) ChangeMenu16
 154 pascal16 CheckMenuItem(word word word) CheckMenuItem
 155 pascal16 EnableMenuItem(word word word) EnableMenuItem
 156 pascal16 GetSystemMenu(word word) GetSystemMenu
@@ -194,7 +194,7 @@ heap	65520
 192 pascal16 InSendMessage() InSendMessage
 193 pascal16 IsClipboardFormatAvailable(word) IsClipboardFormatAvailable
 194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox
-195 pascal16 DlgDirListComboBox(word segptr word word word) DlgDirListComboBox
+195 pascal16 DlgDirListComboBox(word ptr word word word) DlgDirListComboBox16
 196 pascal   TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
              TabbedTextOut
 197 pascal   GetTabbedTextExtent(word ptr word word ptr) GetTabbedTextExtent
@@ -220,7 +220,7 @@ heap	65520
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect
 219 pascal16 CreateDialogIndirect(word segptr word segptr) CreateDialogIndirect
-220 pascal16 LoadMenuIndirect(segptr) LoadMenuIndirect
+220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect16
 221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
@@ -363,11 +363,11 @@ heap	65520
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
 	     CreateCursorIconIndirect
 409 stub InitThreadInput
-410 pascal16 InsertMenu(word word word word segptr) InsertMenu
-411 pascal16 AppendMenu(word word word segptr) AppendMenu
+410 pascal16 InsertMenu(word word word word segptr) InsertMenu16
+411 pascal16 AppendMenu(word word word segptr) AppendMenu16
 412 pascal16 RemoveMenu(word word word) RemoveMenu
 413 pascal16 DeleteMenu(word word word) DeleteMenu
-414 pascal16 ModifyMenu(word word word word segptr) ModifyMenu
+414 pascal16 ModifyMenu(word word word word segptr) ModifyMenu16
 415 pascal16 CreatePopupMenu() CreatePopupMenu
 416 pascal16 TrackPopupMenu(word word s_word s_word s_word word ptr) TrackPopupMenu16
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
@@ -390,9 +390,9 @@ heap	65520
 438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff
 441 stub InsertMenuItem
 443 stub GetMenuItemInfo
-445 pascal   DefFrameProc(word word word word long) DefFrameProc
+445 pascal   DefFrameProc(word word word word long) DefFrameProc16
 446 stub SetMenuItemInfo
-447 pascal   DefMDIChildProc(word word word long) DefMDIChildProc
+447 pascal   DefMDIChildProc(word word word long) DefMDIChildProc16
 448 stub DrawAnimatedRects
 449 stub DrawState
 450 stub CreateIconFromResourceEx

@@ -12,7 +12,6 @@
 #include <stdarg.h>
 #include "windows.h"
 #include "winerror.h"
-#include "alias.h"
 #include "stackframe.h"
 #include "xmalloc.h"
 #include "handle32.h"
@@ -21,6 +20,7 @@
 #include "string32.h"
 #include "dialog.h"
 #include "win.h"
+#include "winproc.h"
 #include "debug.h"
 #include "stddebug.h"
 
@@ -59,73 +59,6 @@ BOOL USER32_TranslateMessage(MSG32* lpmsg)
 	return TranslateMessage(&msg);
 }
 
-#if 0
-/***********************************************************************
- *         CreateWindowEx32A        (USER32.82)
- */
-HWND32 CreateWindowEx32A( DWORD flags, LPCSTR class, LPCSTR title,
-                          DWORD style, INT32 x, INT32 y, INT32 width,
-                          INT32 height, HWND32 parent, HMENU32 menu,
-                          HINSTANCE32 instance, LPVOID param )
-{
-    HWND32 retval;
-    HANDLE classh=0, titleh=0;
-    SEGPTR classsegp=0, titlesegp=0;
-    char *classbuf, *titlebuf;
-	int usec,uset;
-
-    /*Have to translate CW_USEDEFAULT */
-    if(x==CW_USEDEFAULT32)x=CW_USEDEFAULT16;
-    if(y==CW_USEDEFAULT32)y=CW_USEDEFAULT16;
-    if(width==CW_USEDEFAULT32)width=CW_USEDEFAULT16;
-    if(height==CW_USEDEFAULT32)height=CW_USEDEFAULT16;
-
-    /* FIXME: There has to be a better way of doing this - but neither
-    malloc nor alloca will work */
-	usec = HIWORD(class);
-	uset = HIWORD(title);
-
-	if(usec){
-    	classh = GlobalAlloc16(0, strlen(class)+1);
-    	classsegp = WIN16_GlobalLock16(classh);
-    	classbuf = PTR_SEG_TO_LIN(classsegp);
-    	strcpy( classbuf, class );
-	}
-	if(uset){
-    	titleh = GlobalAlloc16(0, strlen(title)+1);
-    	titlesegp = WIN16_GlobalLock16(titleh);
-    	titlebuf = PTR_SEG_TO_LIN(titlesegp);
-    	strcpy( titlebuf, title );
-	}
-    
-    retval = (HWND32)CreateWindowEx16(flags,(usec ? classsegp : (SEGPTR)class),
-				  (uset ? titlesegp : (SEGPTR)title),style,x,y,width,height,
-				  (HWND)parent,(HMENU)menu,(HINSTANCE)instance,
-				  (DWORD)param);
-    if(usec)GlobalFree16(classh);
-    if(uset)GlobalFree16(titleh);
-    return retval;
-}
-
-#endif
-HWND32 CreateWindowEx32W( DWORD flags, LPCWSTR class, LPCWSTR title,
-                          DWORD style, INT32 x, INT32 y, INT32 width,
-                          INT32 height, HWND32 parent, HMENU32 menu,
-                          HINSTANCE32 instance, LPVOID param )
-{
-        HWND32 hwnd;
-	LPSTR c,t;
-	int usec,uset;
-	usec=HIWORD(class);
-	uset=HIWORD(title);
-	c = usec ? STRING32_DupUniToAnsi(class) : (LPSTR)class;
-	t = uset ? STRING32_DupUniToAnsi(title) : (LPSTR)title;
-	hwnd=CreateWindowEx32A(flags,c,t,style,x,y,width,height,parent,menu,
-		instance,param);
-	if(usec)free(c);
-	if(uset)free(t);
-	return hwnd;
-}
 
 UINT USER32_SetTimer(HWND hwnd, UINT id, UINT timeout, void *proc)
 
@@ -296,13 +229,13 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 		SetWindowPos( hwndCtrl, HWND_BOTTOM, 0, 0, 0, 0,
 			SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
 		/* Send initialisation messages to the control */
-		if (hFont) SendMessage( hwndCtrl, WM_SETFONT, (WPARAM)hFont, 0 );
-		if (SendMessage( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
+		if (hFont) SendMessage32A( hwndCtrl, WM_SETFONT, (WPARAM)hFont, 0 );
+		if (SendMessage32A( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
 		{
 			/* If there's already a default push-button, set it back */
 			/* to normal and use this one instead. */
 			if (hwndDefButton)
-				SendMessage( hwndDefButton, BM_SETSTYLE32, BS_PUSHBUTTON, FALSE);
+				SendMessage32A( hwndDefButton, BM_SETSTYLE32, BS_PUSHBUTTON, FALSE);
 			hwndDefButton = hwndCtrl;
 			dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
 		}
@@ -310,8 +243,7 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 	dprintf_dialog(stddeb, " END\n" );
 
 	 /* Initialise dialog extra data */
-	ALIAS_RegisterAlias(0,0,lpDialogFunc);
-	dlgInfo->dlgProc   = lpDialogFunc;
+	dlgInfo->dlgProc   = WINPROC_AllocWinProc(lpDialogFunc,WIN_PROC_32A);
 	dlgInfo->hUserFont = hFont;
 	dlgInfo->hMenu     = hMenu;
 	dlgInfo->xBaseUnit = xUnit;
@@ -320,8 +252,8 @@ HWND USER32_CreateDialogIndirectParamAorW(HINSTANCE hInst,LPVOID templ,
 
 	/* Send initialisation messages and set focus */
 	if (dlgInfo->hUserFont)
-		SendMessage( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
-	if (SendMessage( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, dwInitParam ))
+		SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
+	if (SendMessage32A( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, dwInitParam ))
 		SetFocus( dlgInfo->hwndFocus );
 	if (dlgTempl->style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
 		return hwnd;

@@ -968,8 +968,8 @@ VOID HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
 
   HLPFILE_DeletePage(hlpfile->first_page);
   HLPFILE_DeleteMacro(hlpfile->first_macro);
-  GlobalFree(hlpfile->hContext);
-  GlobalFree(hlpfile->hTitle);
+  if (hlpfile->hContext) GlobalFree(hlpfile->hContext);
+  if (hlpfile->hTitle) GlobalFree(hlpfile->hTitle);
   GlobalFree(hlpfile->hSelf);
 }
 

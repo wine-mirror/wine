@@ -45,7 +45,7 @@ static HANDLE HOOK_GetNextHook( HANDLE hook )
  *
  * Get the first hook for a given type.
  */
-static HANDLE HOOK_GetHook( short id , HQUEUE hQueue )
+HANDLE HOOK_GetHook( short id , HQUEUE hQueue )
 {
     MESSAGEQUEUE *queue;
     HANDLE hook = 0;

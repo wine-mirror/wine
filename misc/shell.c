@@ -336,14 +336,14 @@ LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
   switch(msg) {
    case WM_INITDIALOG:
 #ifdef WINELIB32
-    SendDlgItemMessage(hWnd,stc1,STM_SETICON,lParam,0);
+    SendDlgItemMessage32A(hWnd,stc1,STM_SETICON,lParam,0);
 #else
-    SendDlgItemMessage(hWnd,stc1,STM_SETICON,LOWORD(lParam),0);
+    SendDlgItemMessage16(hWnd,stc1,STM_SETICON,LOWORD(lParam),0);
 #endif
-    GetWindowText(hWnd, Template, 511);
+    GetWindowText32A(hWnd, Template, sizeof(Template));
     sprintf(AppTitle, Template, AppName);
-    SetWindowText(hWnd, AppTitle);
-    SetWindowText(GetDlgItem(hWnd,100), AppMisc);
+    SetWindowText32A(hWnd, AppTitle);
+    SetWindowText32A(GetDlgItem(hWnd,100), AppMisc);
     return 1;
     
    case WM_COMMAND:

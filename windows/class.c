@@ -15,6 +15,7 @@
 #include "ldt.h"
 #include "string32.h"
 #include "toolhelp.h"
+#include "winproc.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -155,6 +156,22 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
 
 
 /***********************************************************************
+ *           CLASS_SetWndProc
+ *
+ * Set the window procedure and return the old one.
+ */
+static WNDPROC16 CLASS_SetWndProc( CLASS *classPtr, WNDPROC16 proc,
+                                   WINDOWPROCTYPE type )
+{
+    WNDPROC16 oldProc = classPtr->lpfnWndProc;
+    if (type == WIN_PROC_16) classPtr->lpfnWndProc = proc;
+    else classPtr->lpfnWndProc = WINPROC_AllocWinProc( (WNDPROC32)proc, type );
+    WINPROC_FreeWinProc( oldProc );
+    return oldProc;
+}
+
+
+/***********************************************************************
  *           CLASS_FreeClass
  *
  * Free a class structure.
@@ -184,6 +201,7 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
     if (classPtr->hbrBackground) DeleteObject( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
+    CLASS_SetWndProc( classPtr, (WNDPROC16)0, WIN_PROC_16 );
     HeapFree( SystemHeap, 0, classPtr );
     return TRUE;
 }
@@ -256,7 +274,8 @@ CLASS *CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance )
  */
 static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
                                    DWORD style, INT32 classExtra,
-                                   INT32 winExtra )
+                                   INT32 winExtra, WNDPROC16 wndProc,
+                                   WINDOWPROCTYPE wndProcType )
 {
     CLASS *classPtr;
 
@@ -286,17 +305,19 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
     classPtr = (CLASS *)HeapAlloc( SystemHeap, 0, sizeof(CLASS) +
                                        classExtra - sizeof(classPtr->wExtra) );
     if (!classPtr) return NULL;
-    classPtr->next       = firstClass;
-    classPtr->magic      = CLASS_MAGIC;
-    classPtr->cWindows   = 0;  
-    classPtr->style      = style;
-    classPtr->cbWndExtra = winExtra;
-    classPtr->cbClsExtra = classExtra;
-    classPtr->hInstance  = hInstance;
-    classPtr->atomName   = atom;
-    classPtr->menuNameA  = 0;
-    classPtr->menuNameW  = 0;
-    classPtr->hdce       = (style&CS_CLASSDC) ? DCE_AllocDCE(DCE_CLASS_DC) : 0;
+    classPtr->next        = firstClass;
+    classPtr->magic       = CLASS_MAGIC;
+    classPtr->cWindows    = 0;  
+    classPtr->style       = style;
+    classPtr->lpfnWndProc = 0;
+    classPtr->cbWndExtra  = winExtra;
+    classPtr->cbClsExtra  = classExtra;
+    classPtr->hInstance   = hInstance;
+    classPtr->atomName    = atom;
+    classPtr->menuNameA   = 0;
+    classPtr->menuNameW   = 0;
+    classPtr->hdce        = (style&CS_CLASSDC) ? DCE_AllocDCE(DCE_CLASS_DC): 0;
+    CLASS_SetWndProc( classPtr, wndProc, wndProcType );
     /* Other values must be set by caller */
 
     if (classExtra) memset( classPtr->wExtra, 0, classExtra );
@@ -317,7 +338,8 @@ ATOM RegisterClass16( const WNDCLASS16 *wc )
 
     if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
+                                          wc->cbClsExtra, wc->cbWndExtra,
+                                          wc->lpfnWndProc, WIN_PROC_16 )))
     {
         GlobalDeleteAtom( atom );
         return 0;
@@ -328,8 +350,6 @@ ATOM RegisterClass16( const WNDCLASS16 *wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
 
-    classPtr->flags         = 0;
-    classPtr->lpfnWndProc   = wc->lpfnWndProc;
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = 0;
     classPtr->hCursor       = wc->hCursor;
@@ -354,7 +374,9 @@ ATOM RegisterClass32A( const WNDCLASS32A* wc )
 
     if (!(atom = GlobalAddAtom32A( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
+                                          wc->cbClsExtra, wc->cbWndExtra,
+                                          (WNDPROC16)wc->lpfnWndProc,
+                                          WIN_PROC_32A )))
     {
         GlobalDeleteAtom( atom );
         return 0;
@@ -365,13 +387,10 @@ ATOM RegisterClass32A( const WNDCLASS32A* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
-    classPtr->flags         = 0;
-    classPtr->lpfnWndProc   = (WNDPROC16)wc->lpfnWndProc;
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = 0;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
-    ALIAS_RegisterAlias( 0, 0, (DWORD)wc->lpfnWndProc );
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
     return atom;
 }
@@ -390,7 +409,9 @@ ATOM RegisterClass32W( const WNDCLASS32W* wc )
 
     if (!(atom = GlobalAddAtom32W( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
+                                          wc->cbClsExtra, wc->cbWndExtra,
+                                          (WNDPROC16)wc->lpfnWndProc,
+                                          WIN_PROC_32W )))
     {
         GlobalDeleteAtom( atom );
         return 0;
@@ -401,14 +422,10 @@ ATOM RegisterClass32W( const WNDCLASS32W* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
-    classPtr->flags         = CLASS_FLAG_UNICODE;
-    classPtr->lpfnWndProc   = (WNDPROC16)wc->lpfnWndProc;
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = 0;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
-
-    ALIAS_RegisterAlias( 0, 0, (DWORD)wc->lpfnWndProc );
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
     return atom;
 }
@@ -426,7 +443,8 @@ ATOM RegisterClassEx16( const WNDCLASSEX16 *wc )
 
     if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
+                                          wc->cbClsExtra, wc->cbWndExtra,
+                                          wc->lpfnWndProc, WIN_PROC_16 )))
     {
         GlobalDeleteAtom( atom );
         return 0;
@@ -437,7 +455,6 @@ ATOM RegisterClassEx16( const WNDCLASSEX16 *wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
-    classPtr->lpfnWndProc   = wc->lpfnWndProc;
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
@@ -462,7 +479,9 @@ ATOM RegisterClassEx32A( const WNDCLASSEX32A* wc )
 
     if (!(atom = GlobalAddAtom32A( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
+                                          wc->cbClsExtra, wc->cbWndExtra,
+                                          (WNDPROC16)wc->lpfnWndProc,
+                                          WIN_PROC_32A )))
     {
         GlobalDeleteAtom( atom );
         return 0;
@@ -473,13 +492,10 @@ ATOM RegisterClassEx32A( const WNDCLASSEX32A* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
-    classPtr->lpfnWndProc   = (WNDPROC16)wc->lpfnWndProc;
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = (HICON16)wc->hIconSm;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
-
-    ALIAS_RegisterAlias( 0, 0, (DWORD)wc->lpfnWndProc );
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
     return atom;
 }
@@ -498,7 +514,9 @@ ATOM RegisterClassEx32W( const WNDCLASSEX32W* wc )
 
     if (!(atom = GlobalAddAtom32W( wc->lpszClassName ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
-                                          wc->cbClsExtra, wc->cbWndExtra )))
+                                          wc->cbClsExtra, wc->cbWndExtra,
+                                          (WNDPROC16)wc->lpfnWndProc,
+                                          WIN_PROC_32W )))
     {
         GlobalDeleteAtom( atom );
         return 0;
@@ -509,13 +527,10 @@ ATOM RegisterClassEx32W( const WNDCLASSEX32W* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
-    classPtr->lpfnWndProc   = (WNDPROC16)wc->lpfnWndProc;
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = (HICON16)wc->hIconSm;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
-
-    ALIAS_RegisterAlias( 0, 0, (DWORD)wc->lpfnWndProc );
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
     return atom;
 }
@@ -572,7 +587,7 @@ BOOL32 UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
 /***********************************************************************
  *           GetClassWord    (USER.129) (USER32.218)
  */
-WORD GetClassWord( HWND hwnd, INT32 offset )
+WORD GetClassWord( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
     
@@ -661,7 +676,7 @@ LONG GetClassLong32W( HWND hwnd, INT32 offset )
 /***********************************************************************
  *           SetClassWord    (USER.130) (USER32.468)
  */
-WORD SetClassWord( HWND hwnd, INT32 offset, WORD newval )
+WORD SetClassWord( HWND32 hwnd, INT32 offset, WORD newval )
 {
     WND * wndPtr;
     WORD retval = 0;
@@ -706,9 +721,19 @@ WORD SetClassWord( HWND hwnd, INT32 offset, WORD newval )
  */
 LONG SetClassLong16( HWND hwnd, INT16 offset, LONG newval )
 {
-    if ((offset == GCL_MENUNAME) && HIWORD(newval))
-        newval = (LONG)PTR_SEG_TO_LIN(newval);
-    return SetClassLong32A( hwnd, offset, newval );
+    WND *wndPtr;
+
+    switch(offset)
+    {
+    case GCL_WNDPROC:
+        if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+        return (LONG)CLASS_SetWndProc( wndPtr->class, (WNDPROC16)newval,
+                                       WIN_PROC_16 );
+    case GCL_MENUNAME:
+        return SetClassLong32A( hwnd, offset, (LONG)PTR_SEG_TO_LIN(newval) );
+    default:
+        return SetClassLong32A( hwnd, offset, newval );
+    }
 }
 
 
@@ -738,6 +763,9 @@ LONG SetClassLong32A( HWND hwnd, INT32 offset, LONG newval )
         case GCL_MENUNAME:
             CLASS_SetMenuNameA( wndPtr->class, (LPCSTR)newval );
             return 0;  /* Old value is now meaningless anyway */
+        case GCL_WNDPROC:
+            return (LONG)CLASS_SetWndProc( wndPtr->class, (WNDPROC16)newval,
+                                           WIN_PROC_32A );
         case GCL_HBRBACKGROUND:
         case GCL_HCURSOR:
         case GCL_HICON:
@@ -746,7 +774,6 @@ LONG SetClassLong32A( HWND hwnd, INT32 offset, LONG newval )
         case GCL_STYLE:      ptr = &wndPtr->class->style; break;
         case GCL_CBWNDEXTRA: ptr = &wndPtr->class->cbWndExtra; break;
         case GCL_CBCLSEXTRA: ptr = &wndPtr->class->cbClsExtra; break;
-        case GCL_WNDPROC:    ptr = &wndPtr->class->lpfnWndProc; break;
         case GCL_HMODULE:    ptr = &wndPtr->class->hInstance; break;
         default:
             fprintf( stderr, "Warning: invalid offset %d for SetClassLong()\n",
@@ -765,10 +792,19 @@ LONG SetClassLong32A( HWND hwnd, INT32 offset, LONG newval )
 LONG SetClassLong32W( HWND hwnd, INT32 offset, LONG newval )
 {
     WND *wndPtr;
-    if (offset != GCL_MENUNAME) return SetClassLong32A( hwnd, offset, newval );
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    CLASS_SetMenuNameW( wndPtr->class, (LPCWSTR)newval );
-    return 0;  /* Old value is now meaningless anyway */
+
+    switch(offset)
+    {
+    case GCL_WNDPROC:
+        return (LONG)CLASS_SetWndProc( wndPtr->class, (WNDPROC16)newval,
+                                       WIN_PROC_32W );
+    case GCL_MENUNAME:
+        CLASS_SetMenuNameW( wndPtr->class, (LPCWSTR)newval );
+        return 0;  /* Old value is now meaningless anyway */
+    default:
+        return SetClassLong32A( hwnd, offset, newval );
+    }
 }
 
 

@@ -330,7 +330,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 		if(GetKeyState(VK_MENU) & 0x8000) mask |= ALT_ACCEL;
 		if(mask == (lpAccelTbl->tbl[i].type &
 			    (SHIFT_ACCEL | CONTROL_ACCEL | ALT_ACCEL))) {
-		    SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval,
+		    SendMessage16(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval,
 				0x00010000L);
 		    GlobalUnlock16(hAccel);
 		    return 1;
@@ -342,7 +342,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 	else {
 	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
 		msg->message == WM_CHAR) {
-		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
+		SendMessage16(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
 		GlobalUnlock16(hAccel);
 		return 1;
 		}

@@ -11,8 +11,6 @@
 #include "user.h"
 #include "static.h"
 
-extern void DEFWND_SetText( WND *wndPtr, LPSTR text );  /* windows/defwnd.c */
-
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc );
 static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc );
@@ -70,14 +68,15 @@ static HICON STATIC_SetIcon( WND *wndPtr, HICON hicon )
 /***********************************************************************
  *           StaticWndProc
  */
-LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	LONG lResult = 0;
-	WND *wndPtr = WIN_FindWndPtr(hWnd);
-	LONG style = wndPtr->dwStyle & 0x0000000F;
-        STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    LRESULT lResult = 0;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+    LONG style = wndPtr->dwStyle & 0x0000000F;
+    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-	switch (uMsg) {
+    switch (uMsg)
+    {
 	case WM_ENABLE:
 	    InvalidateRect32( hWnd, NULL, FALSE );
 	    break;
@@ -95,7 +94,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
                 return 1;
             }
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProc16(hWnd, uMsg, wParam, lParam);
 
 	case WM_CREATE:
 	    if (style < 0L || style > LAST_STATIC_TYPE)
@@ -114,7 +113,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if (style == SS_ICON)
                 DestroyIcon( STATIC_SetIcon( wndPtr, 0 ) );
             else 
-                lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
+                lResult = DefWindowProc16(hWnd, uMsg, wParam, lParam);
             break;
 
 	case WM_PAINT:
@@ -174,7 +173,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    break;
 
 	default:
-		lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
+		lResult = DefWindowProc16(hWnd, uMsg, wParam, lParam);
 		break;
 	}
 
@@ -186,14 +185,12 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 {
     RECT16 rc;
     HBRUSH hBrush;
-    char *text;
     WORD wFormat;
 
     LONG style = wndPtr->dwStyle;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
-    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
 
     switch (style & 0x0000000F)
     {
@@ -226,15 +223,15 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
 #ifdef WINELIB32
-    hBrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                          hdc, wndPtr->hwndSelf );
+    hBrush = SendMessage32A( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+                             hdc, wndPtr->hwndSelf );
 #else
-    hBrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, (WORD)hdc,
-                          MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
+    hBrush = SendMessage16( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, (WORD)hdc,
+                            MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
 #endif
     if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect16(hdc, &rc, hBrush);
-    if (text) DrawText16( hdc, text, -1, &rc, wFormat );
+    if (wndPtr->text) DrawText16( hdc, wndPtr->text, -1, &rc, wFormat );
 }
 
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
@@ -285,11 +282,11 @@ static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
 #ifdef WINELIB32
-    hbrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                          hdc, wndPtr->hwndSelf );
+    hbrush = SendMessage32A( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+                             hdc, wndPtr->hwndSelf );
 #else
-    hbrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, hdc,
-                          MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
+    hbrush = SendMessage16( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, hdc,
+                            MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
 #endif
     FillRect16( hdc, &rc, hbrush );
     if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );

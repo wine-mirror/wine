@@ -6,25 +6,19 @@
  */
 %}
 %x quote dquote
-%x null_string
 %{
 #include "macro.h"
 #include "y.tab.h"
 
-static LPCSTR  macroptr, firsttoken, thistoken, nexttoken, current_string;
+static LPCSTR  macroptr;
 static LPSTR   strptr;
 static HGLOBAL hStringBuffer = 0;
-
-CHAR MACRO_extra_separator = 0;
+static INT     nested_quotes = 0;
 
 #define YY_INPUT(buf,result,max_size)\
   if ((result = *macroptr ? 1 : 0)) buf[0] = *macroptr++;
 
-#define YY_USER_ACTION\
-  if (YY_START == INITIAL) thistoken = nexttoken, nexttoken = macroptr;
-
 #define YY_NO_UNPUT
-#define YY_NO_TOP_STATE
 %}
 %%
 About			yylval = MACRO_About;			return VOID_FUNCTION_VOID;
@@ -130,56 +124,35 @@ UpdateWindow|UW		yylval = MACRO_UpdateWindow;		return VOID_FUNCTION_2STRING;
 			      hStringBuffer = GlobalAlloc(GMEM_FIXED, strlen(macroptr));
 			      strptr = GlobalLock(hStringBuffer);
 			    }
-			  current_string = strptr;
-			  yy_push_state(yytext[0] == '`' ? quote : dquote);
+			  yylval = strptr;
+			  BEGIN (yytext[0] == '`' ? quote : dquote);
 			}
 
 <quote>\`		{
 			  *strptr++ = yytext[0];
-			  yy_push_state(quote);
+			  nested_quotes++;
 			}
 
 <quote>\'		|
 <dquote>\"		{
-			  yy_pop_state();
-			  if (YY_START == INITIAL)
+			  if (nested_quotes)
 			    {
+			      nested_quotes--;
+			      *strptr++ = yytext[0];
+			    }
+			  else
+			    {
+			      BEGIN INITIAL;
 			      *strptr++ = '\0';
-			      if (MACRO_extra_separator)
-				{
-				  yy_push_state(null_string);
-				  MACRO_extra_separator = 0;
-				}
-			      yylval = current_string;
 			      return STRING;
 			    }
-			  else *strptr++ = yytext[0];
 			}
 
-<quote,dquote>{
+<quote,dquote>.		*strptr++ = yytext[0];
+<quote,dquote>\\.	*strptr++ = yytext[1];
 
-.			{
-			  if (MACRO_extra_separator == (CHAR) yytext[0])
-			    {
-			      *strptr++ = '\0';
-			      MACRO_extra_separator = 0;
-			      yylval = current_string;
-			      current_string = strptr;
-			      return STRING;
-			    }
-			  else *strptr++ = yytext[0];
-			}
+<quote,dquote><<EOF>>	return 0;
 
-\\.			*strptr++ = yytext[1];
-
-<<EOF>>			return 0;
-}
-
-<null_string>""		{
-			  yy_pop_state();
-			  yylval = (LPCSTR) 0;
-			  return STRING;
-			}
 
 " "
 
@@ -193,7 +166,7 @@ static LRESULT MACRO_TestDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
   if (msg == WM_COMMAND && wParam == IDOK)
     {
       GetDlgItemText(hDlg, 99, szTestMacro, sizeof(szTestMacro));
-      EndDialog(hDlg, IDCANCEL);
+      EndDialog(hDlg, IDOK);
       return TRUE;
     }
   return FALSE;
@@ -201,16 +174,6 @@ static LRESULT MACRO_TestDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
 
 VOID MACRO_ExecuteMacro(LPCSTR macro)
 {
-  static BOOL init = TRUE;
-
-  if (init) init = FALSE;
-  else
-    {
-      YY_FLUSH_BUFFER;
-      while (YY_START != INITIAL)
-	yy_pop_state();
-    }
-
   if (!lstrcmpi(macro, "MacroTest"))
     {
       WNDPROC lpfnDlg = MakeProcInstance(MACRO_TestDialogProc, Globals.hInstance);
@@ -219,7 +182,7 @@ VOID MACRO_ExecuteMacro(LPCSTR macro)
       macro = szTestMacro;
     }
 
-  macroptr = firsttoken = thistoken = nexttoken = macro;
+  macroptr = macro;
 
   yyparse();
 
@@ -229,7 +192,12 @@ VOID MACRO_ExecuteMacro(LPCSTR macro)
 
 void yyerror (const char *s)
 {
-  fprintf(stderr, "%s\n%.*s\n%*s%s\n", s,
-	  thistoken - firsttoken, firsttoken,
-	  thistoken - firsttoken, "", thistoken);
+  fprintf(stderr, "%s\n", s);
+  nested_quotes = 0;
+  BEGIN INITIAL;
+  yyrestart(yyin);
 }
+
+#ifndef yywrap
+int yywrap(void) { return 1; }
+#endif

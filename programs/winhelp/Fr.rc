@@ -1,0 +1,55 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1996 Ulrich Schmid
+ * French language by Pablo Saratxaga <srtxg@f2219.n293.z2.fidonet.org>
+ */
+
+/* This file is not yet complete !! */
+/* Alors peut-être ceci aidera (so maybe this will help) :) */
+/* #include ../progman/Fr.rc */
+
+#define LANGUAGE_ID                  Fr
+#define LANGUAGE_NUMBER              4
+
+/* Menu */
+
+#define MENU_FILE                    "&Fichier"
+#define MENU_FILE_OPEN               "O&uvrir..."
+#define MENU_FILE_PRINT              "&Imprimer la rubrique"
+#define MENU_FILE_PRINTER_SETUP      "&Configuration de l'impression..."
+#define MENU_FILE_EXIT               "&Quitter"
+
+#define MENU_EDIT                    "&Edition"
+#define MENU_EDIT_COPY_DIALOG        "&Copier..."
+#define MENU_EDIT_ANNOTATE           "&Annotation..."
+
+#define MENU_BOOKMARK                "&Signet"
+#define MENU_BOOKMARK_DEFINE         "&Définir..."
+
+#define MENU_HELP                    "&?"
+#define MENU_HELP_ON_HELP            "&Utiliser l'aide"
+#define MENU_HELP_ON_TOP             "&Toujours visible"
+#define MENU_HELP_INFO               "&Info..."
+#define MENU_HELP_ABOUT_WINE         "&A propos de WINE"
+
+/*
+	Configuration de l'imprimante
+*/
+
+/* Strings */
+
+#define STRING_WINE_HELP             "Aide de WINE"
+#define STRING_ERROR                 "ERREUR"
+#define STRING_WARNING               "WARNING"
+#define STRING_INFO                  "Information"
+#define STRING_NOT_IMPLEMENTED       "Non implementé"
+#define STRING_HLPFILE_ERROR_s       "Une erreur est survenue en lisant le fichier d'aide `%s'"
+#define STRING_CONTENTS              "&Index"
+#define STRING_SEARCH                "&Rechercher"
+#define STRING_BACK                  "&Précédent"
+#define STRING_HISTORY               "&Historique"
+#define STRING_ALL_FILES             "Tout fichier (*.*)"
+#define STRING_HELP_FILES_HLP        "Fichiers d'aide (*.hlp)"
+
+#include "Xx.rc"

@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -477,6 +478,29 @@ WORD GetDriveType( INT drive )
 
 
 /***********************************************************************
+ *           GetDriveType32A   (KERNEL32.)
+ */
+WORD GetDriveType32A( LPCSTR root )
+{
+    dprintf_dosfs( stddeb, "GetDriveType32A(%s)\n", root );
+    if ((root[1] != ':') || (root[2] != '\\'))
+    {
+        fprintf( stderr, "GetDriveType32A: invalid root '%s'\n", root );
+        return DRIVE_DOESNOTEXIST;
+    }
+    switch(DRIVE_GetType(toupper(root[0]) - 'A'))
+    {
+    case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
+    case TYPE_HD:      return DRIVE_FIXED;
+    case TYPE_CDROM:   return DRIVE_REMOVABLE;
+    case TYPE_NETWORK: return DRIVE_REMOTE;
+    case TYPE_INVALID:
+    default:           return DRIVE_CANNOTDETERMINE;
+    }
+}
+
+
+/***********************************************************************
  *           GetCurrentDirectory   (KERNEL.411)
  */
 UINT32 GetCurrentDirectory( UINT32 buflen, LPSTR buf )
@@ -498,4 +522,70 @@ UINT32 GetCurrentDirectory( UINT32 buflen, LPSTR buf )
 BOOL32 SetCurrentDirectory( LPCSTR dir )
 {
     return DRIVE_Chdir( DRIVE_GetCurrentDrive(), dir );
+}
+
+
+/***********************************************************************
+ *           GetLogicalDriveStrings32A   (KERNEL32.231)
+ */
+UINT32 GetLogicalDriveStrings32A( UINT32 len, LPSTR buffer )
+{
+    int drive, count;
+
+    for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++)
+        if (DRIVE_IsValid(drive)) count++;
+    if (count * 4 * sizeof(char) <= len)
+    {
+        LPSTR p = buffer;
+        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            if (DRIVE_IsValid(drive))
+            {
+                *p++ = 'a' + drive;
+                *p++ = ':';
+                *p++ = '\\';
+                *p++ = '\0';
+            }
+        *p = '\0';
+    }
+    return count * 4 * sizeof(char);
+}
+
+
+/***********************************************************************
+ *           GetLogicalDriveStrings32W   (KERNEL32.232)
+ */
+UINT32 GetLogicalDriveStrings32W( UINT32 len, LPWSTR buffer )
+{
+    int drive, count;
+
+    for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++)
+        if (DRIVE_IsValid(drive)) count++;
+    if (count * 4 * sizeof(WCHAR) <= len)
+    {
+        LPWSTR p = buffer;
+        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            if (DRIVE_IsValid(drive))
+            {
+                *p++ = (WCHAR)('a' + drive);
+                *p++ = (WCHAR)':';
+                *p++ = (WCHAR)'\\';
+                *p++ = (WCHAR)'\0';
+            }
+        *p = (WCHAR)'\0';
+    }
+    return count * 4 * sizeof(WCHAR);
+}
+
+
+/***********************************************************************
+ *           GetLogicalDrives   (KERNEL32.233)
+ */
+DWORD GetLogicalDrives(void)
+{
+    DWORD ret = 0;
+    int drive;
+
+    for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+        if (DRIVE_IsValid(drive)) ret |= (1 << drive);
+    return ret;
 }

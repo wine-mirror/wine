@@ -24,7 +24,6 @@
 #include "peexe.h"
 #include "pe_image.h"
 #include "module.h"
-#include "alias.h"
 #include "global.h"
 #include "task.h"
 #include "ldt.h"
@@ -537,8 +536,6 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	HMODULE hModule;
 	HINSTANCE hInstance;
         struct mz_header_s mz_header;
-
-	ALIAS_UseAliases=1;
 
 	lseek(fd,0,SEEK_SET);
 	read( fd, &mz_header, sizeof(mz_header) );

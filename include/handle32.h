@@ -103,10 +103,6 @@ typedef struct _HEAPITEM_OBJECT{
 #define KERNEL_OBJECT_HEAP      (KERNEL_OBJECT_UNUSED + 9)
 #define KERNEL_OBJECT_HEAPITEM  (KERNEL_OBJECT_UNUSED + 10)
 
-/* Define the invalid handle value
- */
-#define INVALID_HANDLE_VALUE    ((HANDLE32)-1)
-
 /* Functions for checking kernel objects.
  */
 int ValidateKernelObject(KERNEL_OBJECT *ptr);

@@ -420,13 +420,14 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
                       SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
 
             /* Send initialisation messages to the control */
-        if (hFont) SendMessage( hwndCtrl, WM_SETFONT, (WPARAM)hFont, 0 );
-        if (SendMessage( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
+        if (hFont) SendMessage16( hwndCtrl, WM_SETFONT, (WPARAM)hFont, 0 );
+        if (SendMessage16( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
         {
               /* If there's already a default push-button, set it back */
               /* to normal and use this one instead. */
             if (hwndDefButton)
-                SendMessage(hwndDefButton, BM_SETSTYLE16, BS_PUSHBUTTON,FALSE);
+                SendMessage32A( hwndDefButton, BM_SETSTYLE32,
+                                BS_PUSHBUTTON,FALSE );
             hwndDefButton = hwndCtrl;
             dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
         }
@@ -446,8 +447,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
       /* Send initialisation messages and set focus */
 
     if (dlgInfo->hUserFont)
-	SendMessage( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
-    if (SendMessage( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
+	SendMessage16( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
+    if (SendMessage16( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
 	SetFocus( dlgInfo->hwndFocus );
     if (template.style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
     return hwnd;
@@ -577,7 +578,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
 	(msg->message != WM_CHAR))
         return FALSE;
 
-    dlgCode = SendMessage( msg->hwnd, WM_GETDLGCODE, 0, 0 );
+    dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, 0 );
     if (dlgCode & DLGC_WANTMESSAGE)
     {
         DispatchMessage( msg );
@@ -593,7 +594,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
         case VK_TAB:
             if (!(dlgCode & DLGC_WANTTAB))
             {
-                SendMessage( hwndDlg, WM_NEXTDLGCTL,
+                SendMessage16( hwndDlg, WM_NEXTDLGCTL,
                              (GetKeyState(VK_SHIFT) & 0x80), 0 );
                 return TRUE;
             }
@@ -619,33 +620,33 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
 
         case VK_ESCAPE:
 #ifdef WINELIB32
-            SendMessage( hwndDlg, WM_COMMAND, 
-			 MAKEWPARAM( IDCANCEL, 0 ),
-                         (LPARAM)GetDlgItem(hwndDlg,IDCANCEL) );
+            SendMessage32A( hwndDlg, WM_COMMAND, 
+                            MAKEWPARAM( IDCANCEL, 0 ),
+                            (LPARAM)GetDlgItem(hwndDlg,IDCANCEL) );
 #else
-            SendMessage( hwndDlg, WM_COMMAND, IDCANCEL,
-                         MAKELPARAM( GetDlgItem(hwndDlg,IDCANCEL), 0 ));
+            SendMessage16( hwndDlg, WM_COMMAND, IDCANCEL,
+                           MAKELPARAM( GetDlgItem(hwndDlg,IDCANCEL), 0 ));
 #endif
             break;
 
         case VK_RETURN:
             {
-                DWORD dw = SendMessage( hwndDlg, DM_GETDEFID, 0, 0 );
+                DWORD dw = SendMessage16( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
 #ifdef WINELIB32
-                    SendMessage( hwndDlg, WM_COMMAND, 
-				 MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
-                                 (LPARAM)GetDlgItem( hwndDlg, LOWORD(dw) ) );
+                    SendMessage32A( hwndDlg, WM_COMMAND, 
+                                    MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
+                                   (LPARAM)GetDlgItem( hwndDlg, LOWORD(dw) ) );
                 else
-                    SendMessage( hwndDlg, WM_COMMAND, 
-				 MAKEWPARAM( IDOK, 0 ),
-                                 (LPARAM)GetDlgItem(hwndDlg,IDOK) );
+                    SendMessage32A( hwndDlg, WM_COMMAND, 
+                                    MAKEWPARAM( IDOK, 0 ),
+                                    (LPARAM)GetDlgItem(hwndDlg,IDOK) );
 #else
-                    SendMessage( hwndDlg, WM_COMMAND, LOWORD(dw),
+                    SendMessage16( hwndDlg, WM_COMMAND, LOWORD(dw),
                                  MAKELPARAM( GetDlgItem( hwndDlg, LOWORD(dw) ),
                                              BN_CLICKED ));
                 else
-                    SendMessage( hwndDlg, WM_COMMAND, IDOK,
+                    SendMessage16( hwndDlg, WM_COMMAND, IDOK,
                                  MAKELPARAM( GetDlgItem(hwndDlg,IDOK), 0 ));
 #endif
             }
@@ -699,46 +700,123 @@ HWND GetDlgItem( HWND hwndDlg, WORD id )
 
 
 /*******************************************************************
- *           SendDlgItemMessage   (USER.101)
+ *           SendDlgItemMessage16   (USER.101)
  */
-LRESULT SendDlgItemMessage(HWND hwnd, INT id, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
+                              WPARAM16 wParam, LPARAM lParam )
 {
-    HWND hwndCtrl = GetDlgItem( hwnd, id );
-    if (hwndCtrl) return SendMessage( hwndCtrl, msg, wParam, lParam );
+    HWND16 hwndCtrl = GetDlgItem( hwnd, id );
+    if (hwndCtrl) return SendMessage16( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
 
 
 /*******************************************************************
- *           SetDlgItemText   (USER.92)
+ *           SendDlgItemMessage32A   (USER32.451)
  */
-void SetDlgItemText( HWND hwnd, WORD id, SEGPTR lpString )
+LRESULT SendDlgItemMessage32A( HWND32 hwnd, INT32 id, UINT32 msg,
+                               WPARAM32 wParam, LPARAM lParam )
 {
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (DWORD)lpString );
-}
-
-
-/***********************************************************************
- *           GetDlgItemText   (USER.93)
- */
-int GetDlgItemText( HWND hwnd, WORD id, SEGPTR str, WORD max )
-{
-    return (int)SendDlgItemMessage( hwnd, id, WM_GETTEXT, max, (DWORD)str );
+    HWND hwndCtrl = GetDlgItem( (HWND16)hwnd, (INT16)id );
+    if (hwndCtrl) return SendMessage32A( hwndCtrl, msg, wParam, lParam );
+    else return 0;
 }
 
 
 /*******************************************************************
- *           SetDlgItemInt   (USER.94)
+ *           SendDlgItemMessage32W   (USER32.452)
  */
-void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
+LRESULT SendDlgItemMessage32W( HWND32 hwnd, INT32 id, UINT32 msg,
+                               WPARAM32 wParam, LPARAM lParam )
+{
+    HWND hwndCtrl = GetDlgItem( (HWND16)hwnd, (INT16)id );
+    if (hwndCtrl) return SendMessage32W( hwndCtrl, msg, wParam, lParam );
+    else return 0;
+}
+
+
+/*******************************************************************
+ *           SetDlgItemText16   (USER.92)
+ */
+void SetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR lpString )
+{
+    SendDlgItemMessage16( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+}
+
+
+/*******************************************************************
+ *           SetDlgItemText32A   (USER32.477)
+ */
+void SetDlgItemText32A( HWND32 hwnd, INT32 id, LPCSTR lpString )
+{
+    SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+}
+
+
+/*******************************************************************
+ *           SetDlgItemText32W   (USER32.478)
+ */
+void SetDlgItemText32W( HWND32 hwnd, INT32 id, LPCWSTR lpString )
+{
+    SendDlgItemMessage32W( hwnd, id, WM_SETTEXT, 0, (LPARAM)lpString );
+}
+
+
+/***********************************************************************
+ *           GetDlgItemText16   (USER.93)
+ */
+INT16 GetDlgItemText16( HWND16 hwnd, INT16 id, SEGPTR str, UINT16 len )
+{
+    return (INT16)SendDlgItemMessage16( hwnd, id, WM_GETTEXT,
+                                        len, (LPARAM)str );
+}
+
+
+/***********************************************************************
+ *           GetDlgItemText32A   (USER32.236)
+ */
+INT32 GetDlgItemText32A( HWND32 hwnd, INT32 id, LPSTR str, UINT32 len )
+{
+    return (INT32)SendDlgItemMessage32A( hwnd, id, WM_GETTEXT,
+                                         len, (LPARAM)str );
+}
+
+
+/***********************************************************************
+ *           GetDlgItemText32W   (USER32.237)
+ */
+INT32 GetDlgItemText32W( HWND32 hwnd, INT32 id, LPWSTR str, UINT32 len )
+{
+    return (INT32)SendDlgItemMessage32W( hwnd, id, WM_GETTEXT,
+                                         len, (LPARAM)str );
+}
+
+
+/*******************************************************************
+ *           SetDlgItemInt16   (USER.94)
+ */
+void SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
     char *str = (char *)SEGPTR_ALLOC( 20 * sizeof(char) );
 
     if (!str) return;
-    if (fSigned) sprintf( str, "%d", (int)value );
+    if (fSigned) sprintf( str, "%d", (INT32)(INT16)value );
     else sprintf( str, "%u", value );
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LPARAM)SEGPTR_GET(str) );
+    SendDlgItemMessage16( hwnd, id, WM_SETTEXT, 0, (LPARAM)SEGPTR_GET(str) );
     SEGPTR_FREE(str);
+}
+
+
+/*******************************************************************
+ *           SetDlgItemInt32   (USER32.476)
+ */
+void SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value, BOOL32 fSigned )
+{
+    char str[20];
+
+    if (fSigned) sprintf( str, "%d", (INT32)value );
+    else sprintf( str, "%u", value );
+    SendDlgItemMessage32A( hwnd, id, WM_SETTEXT, 0, (LPARAM)str );
 }
 
 
@@ -752,7 +830,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
     
     if (translated) *translated = FALSE;
     if (!(str = (char *)SEGPTR_ALLOC( 30 * sizeof(char) ))) return 0;
-    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, 30, (LPARAM)SEGPTR_GET(str)))
+    if (SendDlgItemMessage16( hwnd, id, WM_GETTEXT, 30, (LPARAM)SEGPTR_GET(str)))
     {
 	char * endptr;
 	result = strtol( str, &endptr, 10 );
@@ -780,7 +858,7 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
  */
 BOOL CheckDlgButton( HWND hwnd, INT id, UINT check )
 {
-    SendDlgItemMessage( hwnd, id, BM_SETCHECK16, check, 0 );
+    SendDlgItemMessage32A( hwnd, id, BM_SETCHECK32, check, 0 );
     return TRUE;
 }
 
@@ -790,7 +868,7 @@ BOOL CheckDlgButton( HWND hwnd, INT id, UINT check )
  */
 WORD IsDlgButtonChecked( HWND hwnd, WORD id )
 {
-    return (WORD)SendDlgItemMessage( hwnd, id, BM_GETCHECK16, 0, 0 );
+    return (WORD)SendDlgItemMessage16( hwnd, id, BM_GETCHECK16, 0, 0 );
 }
 
 
@@ -810,7 +888,8 @@ BOOL CheckRadioButton( HWND hwndDlg, UINT firstID, UINT lastID, UINT checkID )
         lastID = firstID;  /* Buttons are in reverse order */
     while (pWnd)
     {
-	SendMessage(pWnd->hwndSelf,BM_SETCHECK16,(pWnd->wIDmenu == checkID),0);
+	SendMessage32A( pWnd->hwndSelf, BM_SETCHECK32,
+                        (pWnd->wIDmenu == checkID), 0 );
         if (pWnd->wIDmenu == lastID) break;
 	pWnd = pWnd->next;
     }

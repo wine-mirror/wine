@@ -317,7 +317,7 @@ static HBITMAP OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->bitmap.bmType       = 0;
     bmpObjPtr->bitmap.bmWidth      = width;
     bmpObjPtr->bitmap.bmHeight     = height;
-    bmpObjPtr->bitmap.bmWidthBytes = (width * bpp + 15) / 16 * 2;
+    bmpObjPtr->bitmap.bmWidthBytes = BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmPlanes     = 1;
     bmpObjPtr->bitmap.bmBitsPixel  = bpp;
     bmpObjPtr->bitmap.bmBits       = NULL;
@@ -440,7 +440,7 @@ HANDLE OBM_LoadCursorIcon( WORD id, BOOL fCursor )
     bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( hXorBits, BITMAP_MAGIC );
     bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( hAndBits, BITMAP_MAGIC );
     sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
-    sizeAnd = bmpXor->bitmap.bmHeight * ((bmpXor->bitmap.bmWidth+15) / 16 * 2);
+    sizeAnd = bmpXor->bitmap.bmHeight * BITMAP_WIDTH_BYTES( bmpXor->bitmap.bmWidth, 1 );
 
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))

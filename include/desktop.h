@@ -17,9 +17,8 @@ typedef struct
     BOOL     fTileWallPaper;
 } DESKTOPINFO;
 
-extern BOOL DESKTOP_Init();
 extern BOOL DESKTOP_SetPattern(char *pattern );
-
-extern LRESULT DesktopWndProc ( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
+extern LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
+                               WPARAM32 wParam, LPARAM lParam );
 
 #endif  /* DESKTOP_H */

@@ -36,7 +36,7 @@ type	win16
 33  pascal16 LockCurrentTask(word) LockCurrentTask
 34  pascal SetTaskQueue(word word) SetTaskQueue
 35  pascal16 GetTaskQueue(word) GetTaskQueue
-36  pascal GetCurrentTask() GetCurrentTask
+36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB
 38  stub SetTaskSignalProc
 41  return EnableDos 0 0

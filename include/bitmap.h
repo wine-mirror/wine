@@ -24,6 +24,9 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 #define BITMAP_GC(bmp) \
   (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
+#define BITMAP_WIDTH_BYTES(width,bpp) \
+    (((bpp) == 24) ? (width) * 4 : ((width) * (bpp) + 15) / 16 * 2)
+
 #define XCREATEIMAGE(image,width,height,bpp) \
 { \
     int width_bytes = DIB_GetImageWidthBytes( (width), (bpp) ); \

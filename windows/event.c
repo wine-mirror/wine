@@ -564,8 +564,8 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
 
         /* Artificial messages - what is this for? */
-	SendMessage(hwnd, WM_ENTERSIZEMOVE, 0, 0);
-	SendMessage(hwnd, WM_EXITSIZEMOVE, 0, 0);
+	SendMessage16(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+	SendMessage16(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
 	/* Fill WINDOWPOS struct */
 	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
@@ -584,7 +584,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	    winpos->flags |= SWP_NOSIZE;
 
 	/* Send WM_WINDOWPOSCHANGING */
-	SendMessage(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)SEGPTR_GET(winpos));
+	SendMessage16(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)SEGPTR_GET(winpos));
 
 	/* Calculate new position and size */
 	newWindowRect.left = event->x;
@@ -603,7 +603,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 	/* Set new size and position */
 	wndPtr->rectWindow = newWindowRect;
 	wndPtr->rectClient = newClientRect;
-	SendMessage( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)SEGPTR_GET(winpos));
+	SendMessage16( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)SEGPTR_GET(winpos));
         SEGPTR_FREE(winpos);
 
         /* full window drag leaves unrepainted garbage without this */
@@ -697,7 +697,7 @@ static void EVENT_ClientMessage (HWND hwnd, XClientMessageEvent *event )
 	dprintf_event( stddeb, "unrecognized ClientMessage\n" );
 	return;
     }
-    SendMessage( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+    SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
 }
 
 

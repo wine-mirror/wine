@@ -1064,12 +1064,14 @@ void GetTaskQueueES( struct sigcontext_struct context )
  */
 HTASK GetCurrentTask(void)
 {
-      /* Undocumented: first task is returned in high word */
-#ifdef WINELIB32
     return hCurrentTask;
-#else
+}
+
+DWORD WIN16_GetCurrentTask(void)
+{
+    /* This is the version used by relay code; the first task is */
+    /* returned in the high word of the result */
     return MAKELONG( hCurrentTask, hFirstTask );
-#endif
 }
 
 

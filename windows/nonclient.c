@@ -202,7 +202,7 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT16 *maxSize, POINT16 *maxPos,
         MinMax->ptMaxPosition.y = -yinc;
     }
 
-    SendMessage( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)SEGPTR_GET(MinMax) );
+    SendMessage16( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)SEGPTR_GET(MinMax) );
 
       /* Some sanity checks */
 
@@ -230,23 +230,21 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT16 *maxSize, POINT16 *maxPos,
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS16 *params )
+LONG NC_HandleNCCalcSize( WND *pWnd, RECT16 *winRect )
 {
     RECT16 tmpRect = { 0, 0, 0, 0 };
-    WND *wndPtr = WIN_FindWndPtr( hwnd );    
 
-    if (!wndPtr) return 0;
-    NC_AdjustRect( &tmpRect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle );
-    params->rgrc[0].left   -= tmpRect.left;
-    params->rgrc[0].top    -= tmpRect.top;
-    params->rgrc[0].right  -= tmpRect.right;
-    params->rgrc[0].bottom -= tmpRect.bottom;
+    NC_AdjustRect( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
+    winRect->left   -= tmpRect.left;
+    winRect->top    -= tmpRect.top;
+    winRect->right  -= tmpRect.right;
+    winRect->bottom -= tmpRect.bottom;
 
-    if (HAS_MENU(wndPtr))
+    if (HAS_MENU(pWnd))
     {
-	params->rgrc[0].top += MENU_GetMenuBarHeight( hwnd,
-				  params->rgrc[0].right - params->rgrc[0].left,
-				  -tmpRect.left, -tmpRect.top ) + 1;
+	winRect->top += MENU_GetMenuBarHeight( pWnd->hwndSelf,
+                                               winRect->right - winRect->left,
+                                             -tmpRect.left, -tmpRect.top ) + 1;
     }
     return 0;
 }
@@ -635,7 +633,7 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
     FillRect16( hdc, &r, active ? sysColorObjects.hbrushActiveCaption : 
 	                          sysColorObjects.hbrushInactiveCaption );
 
-    if (GetWindowText( hwnd, buffer, 256 ))
+    if (GetWindowText32A( hwnd, buffer, sizeof(buffer) ))
     {
 	if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
 	else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
@@ -676,7 +674,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     {
         if (wndPtr->class->hIcon)
         {
-            SendMessage(hwnd, WM_ICONERASEBKGND, (WPARAM)hdc, 0);
+            SendMessage16(hwnd, WM_ICONERASEBKGND, (WPARAM)hdc, 0);
             DrawIcon( hdc, 0, 0, wndPtr->class->hIcon );
         }
         ReleaseDC(hwnd, hdc);
@@ -1028,7 +1026,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 	mouseRect.top    = MAX( mouseRect.top, sizingRect.top+minTrack.y );
 	mouseRect.bottom = MIN( mouseRect.bottom, sizingRect.top+maxTrack.y );
     }
-    SendMessage( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+    SendMessage16( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
     if (GetCapture() != hwnd) SetCapture( hwnd );    
 
@@ -1108,8 +1106,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 	ReleaseDC( 0, hdc );
 	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
     }
-    SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
-    SendMessage( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
+    SendMessage16( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
 
     /* Single click brings up the system menu when iconized */
 
@@ -1168,9 +1166,9 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     if (!pressed) return;
 
     if (wParam == HTMINBUTTON) 
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&msg.pt );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&msg.pt );
     else
-	SendMessage( hwnd, WM_SYSCOMMAND, 
+	SendMessage16( hwnd, WM_SYSCOMMAND, 
 		  IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, *(LONG*)&msg.pt );
 }
 
@@ -1243,7 +1241,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
 	break;
 
     case HTSYSMENU:
@@ -1251,15 +1249,15 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case HTMENU:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
 	break;
 
     case HTHSCROLL:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
 	break;
 
     case HTVSCROLL:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
 	break;
 
     case HTMINBUTTON:
@@ -1275,7 +1273,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case HTBOTTOM:
     case HTBOTTOMLEFT:
     case HTBOTTOMRIGHT:
-	SendMessage( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - HTLEFT+1, lParam);
+	SendMessage16( hwnd, WM_SYSCOMMAND, SC_SIZE + wParam - HTLEFT+1, lParam);
 	break;
 
     case HTBORDER:
@@ -1300,7 +1298,7 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
      */
     if (pWnd->dwStyle & WS_MINIMIZE)
     {
-        SendMessage( pWnd->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, lParam );
+        SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, lParam );
         return 0;
     } 
 
@@ -1309,14 +1307,14 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
     case HTCAPTION:
         /* stop processing if WS_MAXIMIZEBOX is missing */
         if (pWnd->dwStyle & WS_MAXIMIZEBOX)
-            SendMessage( pWnd->hwndSelf, WM_SYSCOMMAND,
+            SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND,
                       (pWnd->dwStyle & WS_MAXIMIZE) ? SC_RESTORE : SC_MAXIMIZE,
                       lParam );
 	break;
 
     case HTSYSMENU:
         if (!(pWnd->class->style & CS_NOCLOSE))
-            SendMessage( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
+            SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
 	break;
     }
     return 0;
@@ -1362,7 +1360,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT16 pt )
 	break;
 
     case SC_CLOSE:
-	return SendMessage( hwnd, WM_CLOSE, 0, 0 );
+	return SendMessage16( hwnd, WM_CLOSE, 0, 0 );
 
     case SC_VSCROLL:
     case SC_HSCROLL:

@@ -39,7 +39,8 @@ extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
                                   RECT16 *newWindowRect, RECT16 *oldWindowRect,
 				  RECT16 *oldClientRect, SEGPTR winpos,
 				  RECT16 *newClientRect );
-extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS16 *winpos );
+extern LONG WINPOS_HandleWindowPosChanging16(WND *wndPtr, WINDOWPOS16 *winpos);
+extern LONG WINPOS_HandleWindowPosChanging32(WND *wndPtr, WINDOWPOS32 *winpos);
 extern INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd );
 
 #endif  /* __WINE_WINPOS_H */

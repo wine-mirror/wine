@@ -31,10 +31,8 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
   switch(message) {
    case WM_INITDIALOG:
     lpmb = (LPMSGBOX)lParam;
-    if (lpmb->title != NULL) {
-      SetWindowText(hwnd, lpmb->title);
-    }
-    SetWindowText(GetDlgItem(hwnd, 100), lpmb->text);
+    if (lpmb->title) SetWindowText32A(hwnd, lpmb->title);
+    SetWindowText32A(GetDlgItem(hwnd, 100), lpmb->text);
     /* Hide not selected buttons */
     switch(lpmb->type & MB_TYPEMASK) {
      case MB_OK:
@@ -66,21 +64,21 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     /* Set the icon */
     switch(lpmb->type & MB_ICONMASK) {
      case MB_ICONEXCLAMATION:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
-			 (WPARAM)LoadIcon(0, IDI_EXCLAMATION), 0);
+      SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
+                           (WPARAM)LoadIcon(0, IDI_EXCLAMATION), 0);
       break;
      case MB_ICONQUESTION:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
-			 (WPARAM)LoadIcon(0, IDI_QUESTION), 0);
+      SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
+                           (WPARAM)LoadIcon(0, IDI_QUESTION), 0);
       break;
      case MB_ICONASTERISK:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
-			 (WPARAM)LoadIcon(0, IDI_ASTERISK), 0);
+      SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
+                           (WPARAM)LoadIcon(0, IDI_ASTERISK), 0);
       break;
      case MB_ICONHAND:
      default:
-      SendDlgItemMessage(hwnd, stc1, STM_SETICON, 
-			 (WPARAM)LoadIcon(0, IDI_HAND), 0);
+      SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
+                           (WPARAM)LoadIcon(0, IDI_HAND), 0);
       break;
     }
     
@@ -146,7 +144,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
       if (GetWindowLong(hItem, GWL_STYLE) & WS_VISIBLE) {
 	if (buttons++ == ((lpmb->type & MB_DEFMASK) >> 8)) {
 	  SetFocus(hItem);
-	  SendMessage(hItem, BM_SETSTYLE16, BS_DEFPUSHBUTTON, TRUE);
+	  SendMessage32A( hItem, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
 	}
 	SetWindowPos(hItem, 0, bpos, tiheight, 0, 0,
 		     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);

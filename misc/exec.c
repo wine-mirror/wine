@@ -86,7 +86,7 @@ BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
     {
           /* Make sure that window still exists */
         if (!IsWindow(*pWnd)) continue;
-	if (!SendMessage( *pWnd, WM_QUERYENDSESSION, 0, 0 )) break;
+	if (!SendMessage16( *pWnd, WM_QUERYENDSESSION, 0, 0 )) break;
     }
     result = (i == count);
 
@@ -95,7 +95,7 @@ BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
     for (pWnd = list; i > 0; i--, pWnd++)
     {
 	if (!IsWindow(*pWnd)) continue;
-	SendMessage( *pWnd, WM_ENDSESSION, result, 0 );
+	SendMessage16( *pWnd, WM_ENDSESSION, result, 0 );
     }
     free( list );
 
@@ -176,5 +176,5 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 	} else
 		lpwh->ofsData = 0;
 	GlobalUnlock16(hwh);
-	return SendMessage(hDest,WM_WINHELP,hWnd,hwh);
+	return SendMessage16(hDest,WM_WINHELP,hWnd,hwh);
 }

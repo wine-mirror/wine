@@ -1,4 +1,74 @@
 ----------------------------------------------------------------------
+Tue May 21 14:06:07 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/button.c]
+	Made ButtonWndProc a 32-bit window procedure.
+
+	* [controls/desktop.c]
+	Made DesktopWndProc a 32-bit window procedure.
+	Added handling of WM_SETCURSOR.
+
+	* [controls/menu.c]
+	Allocate menu items and strings on the 32-bit system heap.
+	Implemented Win32 versions for ChangeMenu, InsertMenu, ModifyMenu,
+	AppendMenu and LoadMenuIndirect.
+
+	* [controls/widgets.c]
+	Added possibility to have 32-bit built-in classes.
+
+	* [files/drive.c]
+	Implemented GetLogicalDrive() and GetLogicalDriveStrings().
+
+	* [misc/spy.c] [include/spy.h]
+	Added support for spying Win32 messages.
+
+	* [loader/builtin.c]
+	Fixed bug in -dll option parsing.
+
+	* [memory/local.c]
+	Added back the change by Huw D. M. Davies to free the block in
+	LocalRealloc() before allocating the new one.
+
+	* [objects/bitmap.c] [objects/cursoricon.c] [objects/oembitmap.c]
+	Fixed bug in bitmap size that caused memory corruption for 24bpp.
+
+	* [windows/defwnd.c]
+	Implemented Win32 version of DefWindowProc().
+
+	* [windows/dialog.c]
+	Implemented Win32 version of SendDlgItemMessage,
+	Get/SetDlgItemText and Get/SetDlgItemInt.
+
+	* [windows/mdi.c]
+	Implemented Win32 version of DefFrameProc() and DefMDIChildProc().
+	Don't make a copy of the OBM bitmaps for every MDI window.
+
+	* [windows/message.c]
+	Implemented Win32 version of SendMessage().
+	
+	* [windows/winproc.c] [windows/class.c] [windows/win.c]
+	New scheme for 32-bit window procedures to replace aliases. All
+	32-bit window procedure get a 16-bit address pointing to a
+	WINDOWPROC structure.
+	Implemented Ansi<->Unicode translation for CallWindowProc().
+	Added translation of WM_DRAWITEM between Win16 and Win32.
+
+	* [windows/win.c] [include/callback.h]
+	Added ugly hack to build CREATESTRUCT on the stack when sending
+	WM_NCCREATE.
+	Implemented Win32 version of Get/SetWindowWord/Long and
+	Get/SetWindowText.
+	
+Fri May 17 10:20:16 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [controls/button.c]
+	Avoid gray text on gray background in disabled push buttons
+	using a b/w raster and some raster operations (PatBlt,BitBlt).
+
+	* [objects/text.c]
+	DrawText(): don't draw an underbar anymore if DT_CALCRECT is set.
+
+----------------------------------------------------------------------
 Thu May 16 13:35:31 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [*/*.c]

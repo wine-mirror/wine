@@ -278,7 +278,7 @@ INT16 WINPOS_WindowFromPoint( POINT16 pt, WND **ppWnd )
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
         if ((*ppWnd)->hmemTaskQ != GetTaskQueue(0)) return HTCLIENT;
-        hittest = (INT)SendMessage( (*ppWnd)->hwndSelf, WM_NCHITTEST, 0,
+        hittest = (INT)SendMessage16( (*ppWnd)->hwndSelf, WM_NCHITTEST, 0,
                                     MAKELONG( pt.x, pt.y ) );
         if (hittest != HTTRANSPARENT) return hittest;  /* Found the window */
 
@@ -582,7 +582,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
                 y  = wndPtr->ptMaxPos.y;
 
 		if( wndPtr->dwStyle & WS_MINIMIZE )
-		    if( !SendMessage( hwnd, WM_QUERYOPEN, 0, 0L ) )
+		    if( !SendMessage16( hwnd, WM_QUERYOPEN, 0, 0L ) )
 			{
 		         swpflags |= SWP_NOSIZE;
 			 break;
@@ -614,7 +614,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
             if (wndPtr->dwStyle & WS_MINIMIZE)
             {
-                if( !SendMessage( hwnd, WM_QUERYOPEN, 0, 0L) )
+                if( !SendMessage16( hwnd, WM_QUERYOPEN, 0, 0L) )
                   {
                     swpflags |= SWP_NOSIZE;
                     break;
@@ -655,7 +655,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	    break;
     }
 
-    SendMessage( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
+    SendMessage16( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
     SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
 
     if (wndPtr->flags & WIN_NEED_SIZE)
@@ -665,10 +665,10 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	wndPtr->flags &= ~WIN_NEED_SIZE;
 	if (wndPtr->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
 	else if (wndPtr->dwStyle & WS_MINIMIZE) wParam = SIZE_MINIMIZED;
-	SendMessage( hwnd, WM_SIZE, wParam,
+	SendMessage16( hwnd, WM_SIZE, wParam,
 		     MAKELONG(wndPtr->rectClient.right-wndPtr->rectClient.left,
 			    wndPtr->rectClient.bottom-wndPtr->rectClient.top));
-	SendMessage( hwnd, WM_MOVE, 0,
+	SendMessage16( hwnd, WM_MOVE, 0,
 		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
     }
 
@@ -832,7 +832,7 @@ BOOL ACTIVATEAPP_callback(HWND hWnd, LPARAM lParam)
  
     if (GetWindowTask(hWnd) != lpActStruct->hTaskSendTo) return 1;
 
-    SendMessage( hWnd, WM_ACTIVATEAPP, lpActStruct->wFlag,
+    SendMessage16( hWnd, WM_ACTIVATEAPP, lpActStruct->wFlag,
 		(LPARAM)((lpActStruct->hWindowTask)?lpActStruct->hWindowTask:0));
     return 1;
 }
@@ -886,18 +886,18 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     if( (hwndPrevActive = hwndActive) )
     {
 /* FIXME: need a Win32 translation for WINELIB32 */
-	if( !SendMessage(hwndPrevActive, WM_NCACTIVATE, 0, MAKELONG(hWnd,wIconized)) )
+	if( !SendMessage16(hwndPrevActive, WM_NCACTIVATE, 0, MAKELONG(hWnd,wIconized)) )
         {
 	    if (GetSysModalWindow() != hWnd) return 0;
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
 #ifdef WINELIB32
-	SendMessage( hwndActive, WM_ACTIVATE,
+	SendMessage32A( hwndActive, WM_ACTIVATE,
 		     MAKEWPARAM( WA_INACTIVE, wIconized ),
 		     (LPARAM)hWnd );
 #else
-	SendMessage(hwndPrevActive, WM_ACTIVATE, WA_INACTIVE, 
+	SendMessage16(hwndPrevActive, WM_ACTIVATE, WA_INACTIVE, 
 		    MAKELONG(hWnd,wIconized));
 #endif
 
@@ -909,8 +909,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     hwndActive = hWnd;
 
     /* send palette messages */
-    if( SendMessage( hWnd, WM_QUERYNEWPALETTE, 0, 0L) )
-	SendMessage((HWND)-1, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0L );
+    if( SendMessage16( hWnd, WM_QUERYNEWPALETTE, 0, 0L) )
+	SendMessage16((HWND16)-1, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0L );
 
     /* if prev wnd is minimized redraw icon title 
   if( hwndPrevActive )
@@ -973,14 +973,14 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
 /* FIXME: Needs a Win32 translation for WINELIB32 */
-    SendMessage( hWnd, WM_NCACTIVATE, 1,
+    SendMessage16( hWnd, WM_NCACTIVATE, 1,
 		 MAKELONG(hwndPrevActive,wIconized));
 #ifdef WINELIB32
-    SendMessage( hWnd, WM_ACTIVATE,
+    SendMessage32A( hWnd, WM_ACTIVATE,
 		 MAKEWPARAM( (fMouse)?WA_CLICKACTIVE:WA_ACTIVE, wIconized),
 		 (LPARAM)hwndPrevActive );
 #else
-    SendMessage( hWnd, WM_ACTIVATE, (fMouse)? WA_CLICKACTIVE : WA_ACTIVE,
+    SendMessage16( hWnd, WM_ACTIVATE, (fMouse)? WA_CLICKACTIVE : WA_ACTIVE,
 		 MAKELONG(hwndPrevActive,wIconized));
 #endif
 
@@ -1016,7 +1016,7 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 
     /* child windows get WM_CHILDACTIVATE message */
     if( (wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD )
-	return SendMessage(hWnd, WM_CHILDACTIVATE, 0, 0L);
+	return SendMessage16(hWnd, WM_CHILDACTIVATE, 0, 0L);
 
         /* owned popups imply owner activation - not sure */
     if ((wndPtr->dwStyle & WS_POPUP) && wndPtr->owner &&
@@ -1063,7 +1063,7 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 	params->rgrc[2] = *oldClientRect;
 	params->lppos = winpos;
     }
-    result = SendMessage( hwnd, WM_NCCALCSIZE, calcValidRect,
+    result = SendMessage16( hwnd, WM_NCCALCSIZE, calcValidRect,
                           (LPARAM)SEGPTR_GET( params ) );
     dprintf_win(stddeb, "WINPOS_SendNCCalcSize: %d %d %d %d\n",
 		(int)params->rgrc[0].top,    (int)params->rgrc[0].left,
@@ -1075,15 +1075,34 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 
 
 /***********************************************************************
- *           WINPOS_HandleWindowPosChanging
+ *           WINPOS_HandleWindowPosChanging16
  *
  * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
  */
-LONG WINPOS_HandleWindowPosChanging( WINDOWPOS16 *winpos )
+LONG WINPOS_HandleWindowPosChanging16( WND *wndPtr, WINDOWPOS16 *winpos )
 {
     POINT16 maxSize;
-    WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );
-    if (!wndPtr || (winpos->flags & SWP_NOSIZE)) return 0;
+    if (winpos->flags & SWP_NOSIZE) return 0;
+    if ((wndPtr->dwStyle & WS_THICKFRAME) ||
+	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
+    {
+	NC_GetMinMaxInfo( winpos->hwnd, &maxSize, NULL, NULL, NULL );
+	winpos->cx = MIN( winpos->cx, maxSize.x );
+	winpos->cy = MIN( winpos->cy, maxSize.y );
+    }
+    return 0;
+}
+
+
+/***********************************************************************
+ *           WINPOS_HandleWindowPosChanging32
+ *
+ * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
+ */
+LONG WINPOS_HandleWindowPosChanging32( WND *wndPtr, WINDOWPOS32 *winpos )
+{
+    POINT16 maxSize;
+    if (winpos->flags & SWP_NOSIZE) return 0;
     if ((wndPtr->dwStyle & WS_THICKFRAME) ||
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
@@ -1481,7 +1500,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* Send WM_WINDOWPOSCHANGING message */
 
     if (!(flags & SWP_NOSENDCHANGING))
-	SendMessage( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)MAKE_SEGPTR(&winpos) );
+	SendMessage16( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)MAKE_SEGPTR(&winpos) );
 
       /* Calculate new position and size */
 
@@ -1696,8 +1715,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
     if (!(winpos.flags & SWP_NOSENDCHANGING))
-        SendMessage( winpos.hwnd, WM_WINDOWPOSCHANGED,
-                     0, (LPARAM)MAKE_SEGPTR(&winpos) );
+        SendMessage16( winpos.hwnd, WM_WINDOWPOSCHANGED,
+                       0, (LPARAM)MAKE_SEGPTR(&winpos) );
 
     return TRUE;
 }

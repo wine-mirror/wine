@@ -2,7 +2,6 @@ TOPSRC = @top_srcdir@
 MODULE = windows
 
 C_SRCS = \
-	alias.c \
 	caret.c \
 	class.c \
 	dce.c \

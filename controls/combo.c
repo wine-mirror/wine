@@ -73,7 +73,7 @@ int CreateComboStruct(HWND hwnd, LONG style)
   LPHEADCOMBO lphc;
 
   lphc = (LPHEADCOMBO)xmalloc(sizeof(HEADCOMBO));
-  SetWindowLong(hwnd,4,(LONG)lphc);
+  SetWindowLong32A(hwnd,4,(LONG)lphc);
   lphc->hWndEdit = 0;
   lphc->hWndLBox = 0;
   lphc->dwState = 0;
@@ -103,10 +103,10 @@ static LRESULT CBNCCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   createStruct = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
   createStruct->style |= WS_BORDER;
-  SetWindowLong(hwnd, GWL_STYLE, createStruct->style);
+  SetWindowLong32A(hwnd, GWL_STYLE, createStruct->style);
 
   dprintf_combo(stddeb,"ComboBox WM_NCCREATE!\n");
-  return DefWindowProc(hwnd, WM_NCCREATE, wParam, lParam);
+  return DefWindowProc16(hwnd, WM_NCCREATE, wParam, lParam);
 
 }
 
@@ -251,10 +251,10 @@ static LRESULT CBPaint(HWND hwnd, WPARAM wParam, LPARAM lParam)
   hOldFont = SelectObject(hdc, lphl->hFont);
 
 #ifdef WINELIB32
-  hBrush = SendMessage(lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd);
+  hBrush = SendMessage32A(lphl->hParent, WM_CTLCOLORLISTBOX, hdc, hwnd);
 #else
-  hBrush = SendMessage(lphl->hParent, WM_CTLCOLOR, hdc,
-		       MAKELONG(hwnd, CTLCOLOR_LISTBOX));
+  hBrush = SendMessage16(lphl->hParent, WM_CTLCOLOR, hdc,
+                         MAKELONG(hwnd, CTLCOLOR_LISTBOX));
 #endif
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
@@ -290,7 +290,7 @@ static LRESULT CBGetDlgCode(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT CBLButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
-  SendMessage(hwnd,CB_SHOWDROPDOWN,!lphc->DropDownVisible,0);
+  SendMessage16(hwnd,CB_SHOWDROPDOWN,!lphc->DropDownVisible,0);
   return 0;
 }
 
@@ -323,7 +323,7 @@ static LRESULT CBKeyDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
-  SendMessage(hwnd, WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
+  SendMessage16(hwnd, WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
 
   lphl->ItemFocused = newFocused;
@@ -349,7 +349,7 @@ static LRESULT CBChar(HWND hwnd, WPARAM wParam, LPARAM lParam)
     newFocused = lphl->ItemsCount - 1;
   
   ListBoxSetCurSel(lphl, newFocused);
-  SendMessage(hwnd, WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
+  SendMessage16(hwnd, WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
@@ -555,7 +555,7 @@ static LRESULT CBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
   else
     lphl->hFont = (HFONT)wParam;
   if (lphc->hWndEdit)
-     SendMessage(lphc->hWndEdit,WM_SETFONT,lphl->hFont,0); 
+     SendMessage16(lphc->hWndEdit,WM_SETFONT,lphl->hFont,0); 
   return 0;
 }
 
@@ -691,14 +691,14 @@ static LRESULT CBCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                  { 
                   ListBoxGetText(lphl,lphl->ItemFocused, buffer);
                   dprintf_combo(stddeb,"CBCommand: update Edit: %s\n",buffer);
-                  SendMessage( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(buffer));
+                  SetWindowText32A( lphc->hWndEdit, buffer );
                  }
                 break;
     case ID_EDIT:                                      /* update LISTBOX window */
                  id=GetWindowWord(hwnd,GWW_ID);
                  switch (HIWORD(lParam))
                  {
-                  case EN_UPDATE:GetWindowText(lphc->hWndEdit,buffer,255);
+                  case EN_UPDATE:GetWindowText32A(lphc->hWndEdit,buffer,255);
                                  if (*buffer)
                                  {
                                   newFocused=ListBoxFindString(lphl, -1, MAKE_SEGPTR(buffer));
@@ -711,13 +711,13 @@ static LRESULT CBCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                                    InvalidateRect32(hwnd, NULL, TRUE); 
                                   }
                                  }
-                                 SendMessage(GetParent(hwnd),WM_COMMAND,id,
+                                 SendMessage16(GetParent(hwnd),WM_COMMAND,id,
                                          MAKELONG(hwnd, CBN_EDITUPDATE));
                                  break;
-                  case EN_CHANGE:SendMessage(GetParent(hwnd),WM_COMMAND,id,
+                  case EN_CHANGE:SendMessage16(GetParent(hwnd),WM_COMMAND,id,
                                          MAKELONG(hwnd, CBN_EDITCHANGE));
                                  break;
-                  case EN_ERRSPACE:SendMessage(GetParent(hwnd),WM_COMMAND,id,
+                  case EN_ERRSPACE:SendMessage16(GetParent(hwnd),WM_COMMAND,id,
                                          MAKELONG(hwnd, CBN_ERRSPACE));
                                  break;
                 }
@@ -766,7 +766,7 @@ LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case CB_SETITEMHEIGHT: return CBSetItemHeight(hwnd, wParam, lParam);
      case CB_SHOWDROPDOWN: return CBShowDropDown(hwnd, wParam, lParam);
     }
-    return DefWindowProc(hwnd, message, wParam, lParam);
+    return DefWindowProc16(hwnd, message, wParam, lParam);
 }
 
 /*--------------------------------------------------------------------*/
@@ -848,7 +848,7 @@ static LRESULT CBLKeyDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   
   ListBoxSetCurSel(lphl, newFocused);
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
-  SendMessage(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
+  SendMessage16(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
   SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
@@ -946,7 +946,7 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM wParam, LPARAM lParam )
  */
 static LRESULT CBLKillFocus( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-/*  SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);*/
+/*  SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);*/
   return 0;
 }
 
@@ -956,7 +956,7 @@ static LRESULT CBLKillFocus( HWND hwnd, WPARAM wParam, LPARAM lParam )
 static LRESULT CBLActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
   if (wParam == WA_INACTIVE)
-    SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
+    SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
   return 0;
 }
 
@@ -1000,12 +1000,12 @@ static LRESULT CBLLButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam )
      }
   else if (lphl->PrevFocused != lphl->ItemFocused) 
           {
-      		SendMessage(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
-      		SendMessage(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
+      		SendMessage16(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
+      		SendMessage16(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
       		ListBoxSendNotification(lphl, CBN_SELCHANGE);
      	  }
 
-  SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
+  SendMessage16(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
 
   return 0;
 }
@@ -1174,7 +1174,7 @@ LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case WM_VSCROLL: return CBLVScroll(hwnd, wParam, lParam);
      case WM_SIZE: return CBLCheckSize(hwnd);
     }
-    return DefWindowProc(hwnd, message, wParam, lParam);
+    return DefWindowProc16(hwnd, message, wParam, lParam);
 }
 
 /************************************************************************
@@ -1187,37 +1187,66 @@ BOOL DlgDirSelectComboBox(HWND hDlg, LPSTR lpStr, INT nIDLBox)
 	return TRUE;
 }
 
-
-/************************************************************************
- * 					DlgDirListComboBox     [USER.195]
- */
-INT DlgDirListComboBox( HWND hDlg, SEGPTR path, INT idCBox,
-                        INT idStatic, UINT wType )
+static INT32 COMBO_DlgDirList( HWND32 hDlg, LPARAM path, INT32 idCBox,
+                               INT32 idStatic, UINT32 wType, BOOL32 unicode )
 {
-    INT ret = 0;
-
-    dprintf_combo( stddeb,"DlgDirListComboBox(%04x,%08lx,%d,%d,%04X) \n",
-                   hDlg, (DWORD)path, idCBox, idStatic, wType );
+    LRESULT res = 0;
 
     if (idCBox)
     {
-        SendDlgItemMessage( hDlg, idCBox, CB_RESETCONTENT, 0, 0 );
-        ret = (SendDlgItemMessage( hDlg, idCBox, CB_DIR,
-                                   wType, (LPARAM)path ) >= 0);
+        SendDlgItemMessage32A( hDlg, idCBox, CB_RESETCONTENT, 0, 0 );
+        if (unicode)
+            res = SendDlgItemMessage32W( hDlg, idCBox, CB_DIR, wType, path );
+        else
+            res = SendDlgItemMessage32A( hDlg, idCBox, CB_DIR, wType, path );
     }
     if (idStatic)
     {
+        char temp[512] = "A:\\";
         int drive = DRIVE_GetCurrentDrive();
-        const char *cwd = DRIVE_GetDosCwd(drive);
-        char *temp = SEGPTR_ALLOC( strlen(cwd) + 4 );
-        if (!temp) return FALSE;
-        strcpy( temp, "A:\\" );
         temp[0] += drive;
-        strcpy( temp + 3, cwd );
+        lstrcpyn( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
         AnsiLower( temp );
-        SendDlgItemMessage( hDlg, idStatic, WM_SETTEXT,
-                            0, (LPARAM)SEGPTR_GET(temp) );
-        SEGPTR_FREE(temp);
+        SetDlgItemText32A( hDlg, idStatic, temp );
     } 
-    return ret;
+    return (res >= 0);
+}
+
+
+/***********************************************************************
+ *           DlgDirListComboBox16   (USER.195)
+ */
+INT16 DlgDirListComboBox16( HWND16 hDlg, LPCSTR path, INT16 idCBox,
+                            INT16 idStatic, UINT16 wType )
+{
+    dprintf_combo( stddeb,"DlgDirListComboBox16(%04x,'%s',%d,%d,%04x)\n",
+                   hDlg, path, idCBox, idStatic, wType );
+    return COMBO_DlgDirList( hDlg, (LPARAM)path, idCBox,
+                             idStatic, wType, FALSE );
+}
+
+
+/***********************************************************************
+ *           DlgDirListComboBox32A   (USER32.143)
+ */
+INT32 DlgDirListComboBox32A( HWND32 hDlg, LPCSTR path, INT32 idCBox,
+                             INT32 idStatic, UINT32 wType )
+{
+    dprintf_combo( stddeb,"DlgDirListComboBox32A(%08x,'%s',%d,%d,%08X)\n",
+                   hDlg, path, idCBox, idStatic, wType );
+    return COMBO_DlgDirList( hDlg, (LPARAM)path, idCBox,
+                             idStatic, wType, FALSE );
+}
+
+
+/***********************************************************************
+ *           DlgDirListComboBox32W   (USER32.144)
+ */
+INT32 DlgDirListComboBox32W( HWND32 hDlg, LPCWSTR path, INT32 idCBox,
+                             INT32 idStatic, UINT32 wType )
+{
+    dprintf_combo( stddeb,"DlgDirListComboBox32W(%08x,%p,%d,%d,%08X)\n",
+                   hDlg, path, idCBox, idStatic, wType );
+    return COMBO_DlgDirList( hDlg, (LPARAM)path, idCBox,
+                             idStatic, wType, TRUE );
 }

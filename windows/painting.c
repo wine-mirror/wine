@@ -76,7 +76,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
         hClip = 1;
     }
 
-    if (hClip) SendMessage( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
+    if (hClip) SendMessage16( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
 
     if (hClip > 1) DeleteObject( hClip );
 }
@@ -119,7 +119,7 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0 );
+        lps->fErase = !SendMessage16(hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0);
     }
     else lps->fErase = TRUE;
 
@@ -193,12 +193,12 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
     {
 	if (!hwndParent) return;
 #ifdef WINELIB32
-	hbrush = (HBRUSH)SendMessage( hwndParent, 
-				      WM_CTLCOLORMSGBOX+(DWORD)hbrush,
-				      (WPARAM)hdc, (LPARAM)hwnd );
+	hbrush = (HBRUSH)SendMessage32A( hwndParent, 
+                                         WM_CTLCOLORMSGBOX+(DWORD)hbrush,
+                                         (WPARAM)hdc, (LPARAM)hwnd );
 #else
-	hbrush = (HBRUSH)SendMessage( hwndParent, WM_CTLCOLOR,
-				      hdc, MAKELONG( hwnd, hbrush ) );
+	hbrush = (HBRUSH)SendMessage16( hwndParent, WM_CTLCOLOR,
+                                        hdc, MAKELONG( hwnd, hbrush ) );
 #endif
     }
     if (hbrush) FillRect16( hdc, rect, hbrush );
@@ -211,11 +211,11 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 {
 #ifdef WINELIB32
-    return (HBRUSH)SendMessage( GetParent(hwnd), WM_CTLCOLOR+control,
-                                (WPARAM)hdc, (LPARAM)hwnd );
+    return (HBRUSH)SendMessage32A( GetParent(hwnd), WM_CTLCOLOR+control,
+                                   (WPARAM)hdc, (LPARAM)hwnd );
 #else
-    return (HBRUSH)SendMessage( GetParent(hwnd), WM_CTLCOLOR,
-                                hdc, MAKELONG( hwnd, control ) );
+    return (HBRUSH)SendMessage16( GetParent(hwnd), WM_CTLCOLOR,
+                                  hdc, MAKELONG( hwnd, control ) );
 #endif
 }
 
@@ -338,7 +338,7 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
 
     if (flags & RDW_UPDATENOW)
     {
-        if (wndPtr->hrgnUpdate) SendMessage( hwnd, WM_PAINT, 0, 0 );
+        if (wndPtr->hrgnUpdate) SendMessage16( hwnd, WM_PAINT, 0, 0 );
     }
     else if (flags & RDW_ERASENOW)
     {
@@ -356,7 +356,7 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
                 if (!(wndPtr->dwStyle & WS_MINIMIZE) ||
                     !wndPtr->class->hIcon)
                 {
-                    if (SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 ))
+                    if (SendMessage16( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 ))
                         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
                 }
                 ReleaseDC( hwnd, hdc );

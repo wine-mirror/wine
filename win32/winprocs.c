@@ -102,10 +102,8 @@ BOOL WIN32_CallWindowProcTo16(LRESULT(*func)(HWND,UINT,WPARAM,LPARAM),
 
 
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
-extern LRESULT ButtonWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ColorDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ComboBoxWndProc(HWND,UINT,WPARAM,LPARAM);
-extern LRESULT DesktopWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT EditWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT FileOpenDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT FileSaveDlgProc(HWND,UINT,WPARAM,LPARAM);
@@ -120,18 +118,6 @@ extern LRESULT ScrollBarWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT StaticWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT SystemMessageBoxProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ComboLBoxWndProc(HWND,UINT,WPARAM,LPARAM);
-
-LRESULT USER32_DefWindowProcA(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
-
-{
-	return WIN32_CallWindowProcTo16(DefWindowProc,(HWND)hwnd, msg, wParam, lParam);
-}
-
-LRESULT ButtonWndProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
-
-{
-	return WIN32_CallWindowProcTo16(ButtonWndProc,(HWND)hwnd, msg, wParam, lParam);
-}
 
 LRESULT StaticWndProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
 
@@ -169,12 +155,6 @@ LRESULT PopupMenuWndProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
 	return WIN32_CallWindowProcTo16(PopupMenuWndProc,(HWND)hwnd, msg, wParam, lParam);
 }
 
-LRESULT DesktopWndProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
-
-{
-	return WIN32_CallWindowProcTo16(DesktopWndProc,(HWND)hwnd, msg, wParam, lParam);
-}
-
 LRESULT DefDlgProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
 
 {
@@ -185,18 +165,6 @@ LRESULT MDIClientWndProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
 
 {
 	return WIN32_CallWindowProcTo16(MDIClientWndProc,(HWND)hwnd, msg, wParam, lParam);
-}
-
-LRESULT DefWindowProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
-
-{
-	return WIN32_CallWindowProcTo16(DefWindowProc,(HWND)hwnd, msg, wParam, lParam);
-}
-
-LRESULT DefMDIChildProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
-
-{
-	return WIN32_CallWindowProcTo16(DefMDIChildProc,(HWND)hwnd, msg, wParam, lParam);
 }
 
 LRESULT SystemMessageBoxProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)

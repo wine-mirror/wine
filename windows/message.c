@@ -25,7 +25,8 @@
 /* #define DEBUG_MSG */
 #include "debug.h"
 
-#define HWND_BROADCAST  ((HWND)0xffff)
+#define HWND_BROADCAST16  ((HWND16)0xffff)
+#define HWND_BROADCAST32  ((HWND32)0xffffffff)
 
 extern BYTE* 	KeyStateTable;				 /* event.c */
 extern WPARAM	lastEventChar;				 /* event.c */
@@ -95,7 +96,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
         if (msg->hwnd != GetActiveWindow() && msg->hwnd != GetDesktopWindow())
         {
-            LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
+            LONG ret = SendMessage16( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
                                     MAKELONG( hittest, msg->message ) );
 
             if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
@@ -109,8 +110,8 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 
       /* Send the WM_SETCURSOR message */
 
-    SendMessage( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
-                 MAKELONG( hittest, msg->message ));
+    SendMessage16( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
+                   MAKELONG( hittest, msg->message ));
     if (eatMsg) return FALSE;
 
       /* Check for double-click */
@@ -533,7 +534,7 @@ BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
                                   0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
-		SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
+		SendMessage16( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
 		MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                                  0, 0, 0, flags, FALSE );
 	    }
@@ -579,7 +580,6 @@ BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last )
 }
 
 
-
 /***********************************************************************
  *           PostMessage   (USER.110)
  */
@@ -601,7 +601,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
        return TRUE;
 #endif  /* CONFIG_IPC */
     
-    if (hwnd == HWND_BROADCAST)
+    if (hwnd == HWND_BROADCAST16)
     {
         dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
         for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
@@ -644,18 +644,18 @@ BOOL PostAppMessage( HTASK hTask, WORD message, WORD wParam, LONG lParam )
 
 
 /***********************************************************************
- *           SendMessage   (USER.111)
+ *           SendMessage16   (USER.111)
  */
-LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 {
     WND * wndPtr;
-    LONG ret;
+    LRESULT ret;
     struct
     {
-	LPARAM lParam;
-	WPARAM wParam;
-	UINT wMsg;
-	HWND hWnd;
+	LPARAM   lParam;
+	WPARAM16 wParam;
+	UINT16   wMsg;
+	HWND16   hWnd;
     } msgstruct = { lParam, wParam, msg, hwnd };
 
 #ifdef CONFIG_IPC
@@ -663,7 +663,7 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     if (DDE_SendMessage(&DDE_msg)) return TRUE;
 #endif  /* CONFIG_IPC */
 
-    if (hwnd == HWND_BROADCAST)
+    if (hwnd == HWND_BROADCAST16)
     {
         dprintf_msg(stddeb,"SendMessage // HWND_BROADCAST !\n");
         for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
@@ -672,24 +672,96 @@ LRESULT SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             {
                 dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
                             wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
-                ret |= SendMessage( wndPtr->hwndSelf, msg, wParam, lParam );
+                SendMessage16( wndPtr->hwndSelf, msg, wParam, lParam );
 	    }
         }
         dprintf_msg(stddeb,"SendMessage // End of HWND_BROADCAST !\n");
         return TRUE;
     }
 
-    SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wParam, lParam );
+    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1,
+                    (LPARAM)MAKE_SEGPTR(&msgstruct) );
+    hwnd   = msgstruct.hWnd;
+    msg    = msgstruct.wMsg;
+    wParam = msgstruct.wParam;
+    lParam = msgstruct.lParam;
 
-    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)MAKE_SEGPTR(&msgstruct) );
+    SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
     {
-        SPY_ExitMessage( SPY_RESULT_INVALIDHWND, hwnd, msg, 0 );
+        SPY_ExitMessage( SPY_RESULT_INVALIDHWND16, hwnd, msg, 0 );
         return 0;
     }
-    ret = CallWindowProc16(wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
-                           msgstruct.wParam, msgstruct.lParam );
-    SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, ret );
+    ret = CallWindowProc16( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
+    SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SendMessage32A   (USER32.453)
+ */
+LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+{
+    WND * wndPtr;
+    LRESULT ret;
+
+    if (hwnd == HWND_BROADCAST32)
+    {
+        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        {
+            /* FIXME: should use something like EnumWindows here */
+            if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
+                SendMessage32A( wndPtr->hwndSelf, msg, wParam, lParam );
+        }
+        return TRUE;
+    }
+
+    /* FIXME: call hooks */
+
+    SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+    {
+        SPY_ExitMessage( SPY_RESULT_INVALIDHWND32, hwnd, msg, 0 );
+        return 0;
+    }
+    ret = CallWindowProc32A( (WNDPROC32)wndPtr->lpfnWndProc,
+                             hwnd, msg, wParam, lParam );
+    SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SendMessage32W   (USER32.458)
+ */
+LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+{
+    WND * wndPtr;
+    LRESULT ret;
+
+    if (hwnd == HWND_BROADCAST32)
+    {
+        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        {
+            /* FIXME: should use something like EnumWindows here */
+            if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
+                SendMessage32W( wndPtr->hwndSelf, msg, wParam, lParam );
+        }
+        return TRUE;
+    }
+
+    /* FIXME: call hooks */
+
+    SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+    {
+        SPY_ExitMessage( SPY_RESULT_INVALIDHWND32, hwnd, msg, 0 );
+        return 0;
+    }
+    ret = CallWindowProc32W( (WNDPROC32)wndPtr->lpfnWndProc,
+                             hwnd, msg, wParam, lParam );
+    SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
     return ret;
 }
 
@@ -765,9 +837,6 @@ LONG DispatchMessage( const MSG* msg )
     LONG retval;
     int painting;
     
-    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
-                      msg->wParam, msg->lParam );
-
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
@@ -785,8 +854,13 @@ LONG DispatchMessage( const MSG* msg )
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
 /*    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
+
+    SPY_EnterMessage( SPY_DISPATCHMESSAGE16, msg->hwnd, msg->message,
+                      msg->wParam, msg->lParam );
     retval = CallWindowProc16( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
                                msg->wParam, msg->lParam );
+    SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval );
+
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {

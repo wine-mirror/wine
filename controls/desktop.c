@@ -128,7 +128,8 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
  *
  * Window procedure for the desktop window.
  */
-LRESULT DesktopWndProc ( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
+                        WPARAM32 wParam, LPARAM lParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
@@ -152,7 +153,10 @@ LRESULT DesktopWndProc ( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 
     case WM_SYSCOMMAND:
 	if ((wParam & 0xfff0) != SC_CLOSE) return 0;
-	ExitWindows( 0, 0 );
+	ExitWindows( 0, 0 ); 
+
+    case WM_SETCURSOR:
+        return (LRESULT)SetCursor( LoadCursor( 0, IDC_ARROW ) );
     }
     
     return 0;

@@ -6,8 +6,8 @@ base	1
 0001 stdcall AdjustWindowRect(ptr long long) AdjustWindowRect32
 0002 stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx32
 0003 stub AnyPopup
-0004 stub AppendMenuA
-0005 stub AppendMenuW
+0004 stdcall AppendMenuA(long long long ptr) AppendMenu32A
+0005 stdcall AppendMenuW(long long long ptr) AppendMenu32W
 0006 stub ArrangeIconicWindows
 0007 stub AttachThreadInput
 0008 stub BeginDeferWindowPos
@@ -24,8 +24,8 @@ base	1
 0019 stub CascadeChildWindows
 0020 stub CascadeWindows
 0021 stub ChangeClipboardChain
-0022 stub ChangeMenuA
-0023 stub ChangeMenuW
+0022 stdcall ChangeMenuA(long long ptr long long) ChangeMenu32A
+0023 stdcall ChangeMenuW(long long ptr long long) ChangeMenu32W
 0024 stub CharLowerA
 0025 stub CharLowerBuffA
 0026 stub CharLowerBuffW
@@ -90,7 +90,8 @@ base	1
 0081 stub CreatePopupMenu
 0082 stdcall CreateWindowExA(long ptr ptr long long long long long 
 				long long long ptr) CreateWindowEx32A
-0083 stub CreateWindowExW
+0083 stdcall CreateWindowExW(long ptr ptr long long long long long 
+				long long long ptr) CreateWindowEx32W
 0084 stub CreateWindowStationA
 0085 stub CreateWindowStationW
 0086 stub DdeAbandonTransaction
@@ -128,12 +129,12 @@ base	1
 0118 stub DdeUninitialize
 0119 stub DefDlgProcA
 0120 stub DefDlgProcW
-0121 stub DefFrameProcA
-0122 stub DefFrameProcW
-0123 stub DefMDIChildProcA
-0124 stub DefMDIChildProcW
-0125 stdcall DefWindowProcA(long long long long) USER32_DefWindowProcA
-0126 stub DefWindowProcW
+0121 stdcall DefFrameProcA(long long long long long) DefFrameProc32A
+0122 stdcall DefFrameProcW(long long long long long) DefFrameProc32W
+0123 stdcall DefMDIChildProcA(long long long long) DefMDIChildProc32A
+0124 stdcall DefMDIChildProcW(long long long long) DefMDIChildProc32W
+0125 stdcall DefWindowProcA(long long long long) DefWindowProc32A
+0126 stdcall DefWindowProcW(long long long long) DefWindowProc32W
 0127 stub DeferWindowPos
 0128 stub DeleteMenu
 0129 stub DestroyAcceleratorTable
@@ -152,8 +153,8 @@ base	1
 0140 stdcall DispatchMessageA(ptr) USER32_DispatchMessageA
 0141 stub DispatchMessageW
 0142 stub DlgDirListA
-0143 stub DlgDirListComboBoxA
-0144 stub DlgDirListComboBoxW
+0143 stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBox32A
+0144 stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBox32W
 0145 stub DlgDirListW
 0146 stub DlgDirSelectComboBoxExA
 0147 stub DlgDirSelectComboBoxExW
@@ -245,8 +246,8 @@ base	1
 0233 stub GetDlgCtrlID
 0234 stdcall GetDlgItem(long long) GetDlgItem
 0235 stdcall GetDlgItemInt(long long long long) GetDlgItemInt
-0236 stub GetDlgItemTextA
-0237 stub GetDlgItemTextW
+0236 stdcall GetDlgItemTextA(long long ptr long) GetDlgItemText32A
+0237 stdcall GetDlgItemTextW(long long ptr long) GetDlgItemText32W
 0238 stub GetDoubleClickTime
 0239 stub GetFocus
 0240 stub GetForegroundWindow
@@ -317,12 +318,12 @@ base	1
 0305 stub GetWindowLongW
 0306 stdcall GetWindowPlacement(long ptr) GetWindowPlacement32
 0307 stdcall GetWindowRect(long ptr) GetWindowRect32
-0308 stdcall GetWindowTextA(long segptr long) WIN16_GetWindowText
+0308 stdcall GetWindowTextA(long ptr long) GetWindowText32A
 0309 stub GetWindowTextLengthA
 0310 stub GetWindowTextLengthW
-0311 stub GetWindowTextW
+0311 stdcall GetWindowTextW(long ptr long) GetWindowText32W
 0312 stub GetWindowThreadProcessId
-0313 stub GetWindowWord
+0313 stdcall GetWindowWord(long long) GetWindowWord
 0314 stub GrayStringA
 0315 stub GrayStringW
 0316 stub HideCaret
@@ -330,10 +331,10 @@ base	1
 0318 stub ImpersonateDdeClientWindow
 0319 stub InSendMessage
 0320 stdcall InflateRect(ptr long long) InflateRect32
-0321 stub InsertMenuA
+0321 stdcall InsertMenuA(long long long long ptr) InsertMenu32A
 0322 stub InsertMenuItemA
 0323 stub InsertMenuItemW
-0324 stub InsertMenuW
+0324 stdcall InsertMenuW(long long long long ptr) InsertMenu32W
 0325 stub InternalGetWindowText
 0326 stdcall IntersectRect(ptr ptr ptr) IntersectRect32
 0327 stdcall InvalidateRect(long ptr long) InvalidateRect32
@@ -379,8 +380,8 @@ base	1
 0367 stub LoadKeyboardLayoutW
 0368 stub LoadLocalFonts
 0369 stdcall LoadMenuA(long ptr) WIN32_LoadMenuA
-0370 stdcall LoadMenuIndirectA(long ptr) WIN32_LoadMenuIndirectA
-0371 stdcall LoadMenuIndirectW(long ptr) WIN32_LoadMenuIndirectW
+0370 stdcall LoadMenuIndirectA(ptr) LoadMenuIndirect32A
+0371 stdcall LoadMenuIndirectW(ptr) LoadMenuIndirect32W
 0372 stdcall LoadMenuW(long ptr) WIN32_LoadMenuW
 0373 stub LoadRemoteFonts
 0374 	stdcall LoadStringA(long long ptr long) WIN32_LoadStringA
@@ -405,8 +406,8 @@ base	1
 0393 stub MessageBoxIndirectA
 0394 stub MessageBoxIndirectW
 0395 stub MessageBoxW
-0396 stub ModifyMenuA
-0397 stub ModifyMenuW
+0396 stdcall ModifyMenuA(long long long long ptr) ModifyMenu32A
+0397 stdcall ModifyMenuW(long long long long ptr) ModifyMenu32W
 0398 stdcall MoveWindow(long long long long long long) MoveWindow
 0399 stub MsgWaitForMultipleObjects
 0400 stub OemKeyScan
@@ -460,14 +461,14 @@ base	1
 0448 stub ScrollDC
 0449 stub ScrollWindow
 0450 stub ScrollWindowEx
-0451 stub SendDlgItemMessageA
-0452 stub SendDlgItemMessageW
-0453 stdcall SendMessageA(long long long long) SendMessage
+0451 stdcall SendDlgItemMessageA(long long long long long) SendDlgItemMessage32A
+0452 stdcall SendDlgItemMessageW(long long long long long) SendDlgItemMessage32W
+0453 stdcall SendMessageA(long long long long) SendMessage32A
 0454 stub SendMessageCallbackA
 0455 stub SendMessageCallbackW
 0456 stub SendMessageTimeoutA
 0457 stub SendMessageTimeoutW
-0458 stub SendMessageW
+0458 stdcall SendMessageW(long long long long) SendMessage32W
 0459 stub SendNotifyMessageA
 0460 stub SendNotifyMessageW
 0461 stub ServerSetFunctionPointers
@@ -485,9 +486,9 @@ base	1
 0473 stub SetCursorPos
 0474 stub SetDebugErrorLevel
 0475 stub SetDeskWallpaper
-0476 stdcall SetDlgItemInt(long long long long) SetDlgItemInt
-0477 stub SetDlgItemTextA
-0478 stub SetDlgItemTextW
+0476 stdcall SetDlgItemInt(long long long long) SetDlgItemInt32
+0477 stdcall SetDlgItemTextA(long long ptr) SetDlgItemText32A
+0478 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
 0479 stub SetDoubleClickTime
 0480 stub SetFocus
 0481 stub SetForegroundWindow
@@ -525,14 +526,14 @@ base	1
 0513 stub SetUserObjectSecurity
 0514 stub SetWindowContextHelpId
 0515 stub SetWindowFullScreenState
-0516 stub SetWindowLongA
-0517 stub SetWindowLongW
+0516 stdcall SetWindowLongA(long long long) SetWindowLong32A
+0517 stdcall SetWindowLongW(long long long) SetWindowLong32W
 0518 stdcall SetWindowPlacement(long ptr) SetWindowPlacement32
 0519 stub SetWindowPos
 0520 stub SetWindowStationUser
-0521 stdcall SetWindowTextA(long ptr)	SetWindowText
-0522 stub SetWindowTextW
-0523 stub SetWindowWord
+0521 stdcall SetWindowTextA(long ptr) SetWindowText32A
+0522 stdcall SetWindowTextW(long ptr) SetWindowText32W
+0523 stdcall SetWindowWord(long long long) SetWindowWord
 0524 stub SetWindowsHookA
 0525 stdcall SetWindowsHookExA(long long long long) SetWindowsHookEx32A
 0526 stub SetWindowsHookExW

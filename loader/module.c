@@ -762,11 +762,14 @@ BOOL MODULE_SetEntryPoint( HMODULE hModule, WORD ordinal, WORD offset )
 FARPROC16 MODULE_GetWndProcEntry16( const char *name )
 {
     WORD ordinal;
+    FARPROC16 ret;
     static HMODULE hModule = 0;
 
     if (!hModule) hModule = GetModuleHandle( "WPROCS" );
     ordinal = MODULE_GetOrdinal( hModule, name );
-    return MODULE_GetEntryPoint( hModule, ordinal );
+    if (!(ret = MODULE_GetEntryPoint( hModule, ordinal )))
+        fprintf( stderr, "GetWndProc16: %s not found, please report\n", name );
+    return ret;
 }
 #endif
 
@@ -779,10 +782,13 @@ FARPROC16 MODULE_GetWndProcEntry16( const char *name )
 #ifndef WINELIB
 FARPROC32 MODULE_GetWndProcEntry32( const char *name )
 {
+    FARPROC32 ret;
     static HMODULE hModule = 0;
 
     if (!hModule) hModule = GetModuleHandle( "WPROCS32" );
-    return PE_GetProcAddress( hModule, name );
+    if (!(ret = PE_GetProcAddress( hModule, name )))
+        fprintf( stderr, "GetWndProc32: %s not found, please report\n", name );
+    return ret;
 }
 #endif
 

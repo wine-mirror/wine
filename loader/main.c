@@ -11,7 +11,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <errno.h>
 #include "windows.h"
-#include "alias.h"
 #include "module.h"
 #include "selectors.h"
 #include "comm.h"
@@ -111,9 +110,6 @@ int MAIN_Init(void)
 
       /* GDI initialisation */
     if (!GDI_Init()) return 0;
-
-    /* Initialise window procedures aliases */
-    if (!ALIAS_Init()) return 0;
 
       /* Initialize system colors and metrics*/
     SYSMETRICS_Init();

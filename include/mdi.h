@@ -37,11 +37,9 @@ typedef struct
     HMENU  	hWindowMenu;
     WORD   	idFirstChild;
     WORD	nTotalCreated;
-    HANDLE 	hFrameTitle;
+    LPSTR 	frameTitle;
     WORD   	sbNeedUpdate;
     WORD   	sbRecalc;
-    HBITMAP 	obmClose;
-    HBITMAP 	obmRestore;
     HWND   	self;
 } MDICLIENTINFO;
 

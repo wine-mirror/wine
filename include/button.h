@@ -28,7 +28,7 @@ typedef struct
 
 #define BUTTON_STATE(hwnd)     ((WIN_FindWndPtr(hwnd))->wExtra[0])
 
-extern LRESULT ButtonWndProc( HWND hWnd, UINT uMsg,
-                              WPARAM wParam, LPARAM lParam );
+extern LRESULT ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
+                              WPARAM32 wParam, LPARAM lParam );
 
 #endif  /* BUTTON_H */

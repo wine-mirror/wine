@@ -381,60 +381,6 @@ HBITMAP WIN32_LoadBitmapA( HANDLE instance, LPCSTR name )
     return res;
 }
 
-/**********************************************************************
- *      WIN32_ParseMenu
- *      LoadMenu helper function
- */
-BYTE* WIN32_ParseMenu(HMENU hMenu,BYTE *it)
-{
-    char entry[200]; /* buffer for ANSI names */
-	int bufsize=100;
-	int len;
-	WORD flags;
-	WORD wMenuID;
-	WCHAR *utext;
-	do{
-		flags=*(WORD*)it;
-		it+=sizeof(WORD);
-		/* POPUP entries have no ID, but a sub menu */
-		if(flags & MF_POPUP)
-		{
-			wMenuID = CreatePopupMenu();
-			len = STRING32_lstrlenW((LPWSTR)it);
-			utext = (WCHAR*)it;
-			it += sizeof(WCHAR)*(len+1);
-			it = WIN32_ParseMenu(wMenuID,it);
-		} else {
-			wMenuID=*(WORD*)it;
-			it+=sizeof(WORD);
-			utext = (LPWSTR)it;
-			len = STRING32_lstrlenW((LPWSTR)it);
-			it += sizeof(WCHAR)*(len+1);
-			if(!wMenuID && !*utext)
-				flags |= MF_SEPARATOR;
-		}
-		if(len>=bufsize) continue;  /* hack hack */
-		STRING32_UniToAnsi(entry,utext);
-		AppendMenu(hMenu,flags,wMenuID,MAKE_SEGPTR(entry));
-	}while(!(flags & MF_END));
-	return it;
-}
-
-/*****************************************************************
- *        LoadMenuIndirectW         (USER32.371)
- */
-HMENU WIN32_LoadMenuIndirectW(void *menu)
-{
-	BYTE *it=menu;
-	HMENU hMenu = CreateMenu();
-	/*skip menu header*/
-	if(*(DWORD*)it)
-		fprintf(stderr,"Unknown menu header\n");
-	it+=2*sizeof(WORD);
-	WIN32_ParseMenu(hMenu,it);
-	return hMenu;
-}
-
 /*****************************************************************
  *        LoadMenuW                 (USER32.372)
  */
@@ -443,16 +389,7 @@ HMENU WIN32_LoadMenuW(HANDLE instance, LPCWSTR name)
 	HANDLE32 hrsrc;
 	hrsrc=FindResource32(instance,name,(LPWSTR)RT_MENU);
 	if(!hrsrc)return 0;
-	return WIN32_LoadMenuIndirectW(LoadResource32(instance, hrsrc));
-}
-
-/*****************************************************************
- *        LoadMenuIndirectA         (USER32.370)
- */
-HMENU WIN32_LoadMenuIndirectA(void *menu)
-{
-	fprintf(stderr,"WIN32_LoadMenuIndirectA not implemented\n");
-	return 0;
+        return LoadMenuIndirect32W( LoadResource32(instance, hrsrc) );
 }
 
 /*****************************************************************

@@ -536,9 +536,9 @@ HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
 
     hInstance = GetExePtr( hInstance );  /* Make it a module handle */
     if (!hInstance || !lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
-    info->nWidthBytes = (info->nWidth * info->bBitsPerPixel + 15) / 16 * 2;
+    info->nWidthBytes = BITMAP_WIDTH_BYTES(info->nWidth,info->bBitsPerPixel);
     sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * ((info->nWidth + 15) / 16 * 2);
+    sizeAnd = info->nHeight * BITMAP_WIDTH_BYTES( info->nWidth, 1 );
     if (!(handle = DirectResAlloc(hInstance, 0x10,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
@@ -624,7 +624,7 @@ BOOL DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
     hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, (char *)(ptr+1));
     hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                              ptr->bBitsPerPixel, (char *)(ptr + 1)
-                              + ptr->nHeight * ((ptr->nWidth + 15) / 16 * 2) );
+                         + ptr->nHeight * BITMAP_WIDTH_BYTES(ptr->nWidth,1) );
     oldFg = SetTextColor( hdc, RGB(0,0,0) );
     oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
@@ -657,7 +657,7 @@ DWORD DumpIcon( SEGPTR pInfo, WORD *lpLen,
 
     if (!info) return 0;
     sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * ((info->nWidth + 15) / 16 * 2);
+    sizeAnd = info->nHeight * BITMAP_WIDTH_BYTES( info->nWidth, 1 );
     if (lpAndBits) *lpAndBits = pInfo + sizeof(CURSORICONINFO);
     if (lpXorBits) *lpXorBits = pInfo + sizeof(CURSORICONINFO) + sizeAnd;
     if (lpLen) *lpLen = sizeof(CURSORICONINFO) + sizeAnd + sizeXor;

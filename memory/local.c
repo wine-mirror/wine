@@ -16,6 +16,8 @@
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "global.h"
+#include "heap.h"
 #include "instance.h"
 #include "local.h"
 #include "module.h"
@@ -112,7 +114,7 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE16 ds )
     LOCALHEAPINFO *pInfo;
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( ds, 0 );
     dprintf_local( stddeb, "Heap at %p, %04x\n", ptr, ptr->heap );
-    if (!ptr->heap) return NULL;
+    if (!ptr || !ptr->heap) return NULL;
     if (IsBadReadPtr((SEGPTR)MAKELONG( ptr->heap, ds ), sizeof(LOCALHEAPINFO)))
         return NULL;
     pInfo = (LOCALHEAPINFO*)((char*)ptr + ptr->heap);
@@ -1022,7 +1024,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena, *pNext;
     LOCALHANDLEENTRY *pEntry;
-    WORD arena, newhandle, blockhandle;
+    WORD arena, newhandle, blockhandle, oldsize;
     LONG nextarena;
 
     if (!handle) return LOCAL_Alloc( ds, size, flags );
@@ -1104,6 +1106,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     }
 
     size = LALIGN( size );
+    oldsize = pArena->next - arena - ARENA_HEADER_SIZE;
     nextarena = LALIGN(blockhandle + size);
 
       /* Check for size reduction */
@@ -1154,19 +1157,28 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
     if (!newhandle)
     {
-        /* Check if previous block is free and large enough */
-        LOCALARENA *pPrev = ARENA_PTR( ptr, pArena->prev & 3 );
-        if (((pPrev->prev & 3) == LOCAL_ARENA_FREE) &&
-            (pPrev->size + pArena->next >= nextarena))
+        /* Remove the block from the heap and try again */
+        LPSTR buffer = HeapAlloc( SystemHeap, 0, oldsize );
+        if (!buffer) return 0;
+        memcpy( buffer, ptr + (arena + ARENA_HEADER_SIZE), oldsize );
+        LOCAL_FreeArena( ds, arena );
+        if (!(newhandle = LOCAL_GetBlock( ds, size, flags )))
         {
-            newhandle = (pArena->prev & ~3) + ARENA_HEADER_SIZE;
-            LOCAL_GrowArenaDownward( ds, arena, size + ARENA_HEADER_SIZE );
+            if (!(newhandle = LOCAL_GetBlock( ds, oldsize, flags )))
+            {
+                fprintf( stderr, "LocalRealloc: can't restore saved block\n" );
+                HeapFree( SystemHeap, 0, buffer );
+                return 0;
+            }
+            size = oldsize;
         }
-        else return 0;  /* Nothing to do, no space left for the block */
+        ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
+        memcpy( ptr + newhandle, buffer, oldsize );
+        HeapFree( SystemHeap, 0, buffer );
     }
     else
     {
-        memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), size );
+        memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), oldsize );
         LOCAL_FreeArena( ds, arena );
     }
     if (HANDLE_MOVEABLE( handle ))
@@ -1177,6 +1189,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
         pEntry->lock = 0;
 	newhandle = handle;
     }
+    if (size == oldsize) newhandle = 0;  /* Realloc failed */
     dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", newhandle );
     return newhandle;
 }
@@ -1541,7 +1554,7 @@ BOOL LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle )
  */
 BOOL LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle )
 {
-    WORD ds = SELECTOROF( WIN16_GlobalLock16( handle ) );
+    WORD ds = GlobalHandleToSel( handle );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     if (!pInfo) return FALSE;
@@ -1564,7 +1577,7 @@ BOOL LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle )
  */
 BOOL LocalNext( LOCALENTRY *pLocalEntry )
 {
-    WORD ds = SELECTOROF( pLocalEntry->hHeap );
+    WORD ds = GlobalHandleToSel( pLocalEntry->hHeap );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALARENA *pArena;
 

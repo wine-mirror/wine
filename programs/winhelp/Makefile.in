@@ -3,7 +3,7 @@ MODULE   = none
 PROGRAMS = winhelp hlp2sgml
 ALL_LIBS = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
-LANGUAGES   = En De
+LANGUAGES   = En De Fr
 
 # Installation infos
 
@@ -54,7 +54,7 @@ y.tab.c y.tab.h: macro.yacc.y
 	$(YACC) -d -t macro.yacc.y
 
 lex.yy.c: macro.lex.l
-	$(LEX) -8 -I macro.lex.l
+	$(LEX) -8 -i macro.lex.l
 
 $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
 
