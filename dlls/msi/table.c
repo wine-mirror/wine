@@ -427,15 +427,21 @@ static UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
     TRACE("Finding string %s in %ld strings\n", debugstr_w(buffer), count);
 
     sz = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
+    if( sz <= 0 )
+        return r;
     str = HeapAlloc( GetProcessHeap(), 0, sz );
+    if( !str )
+        return ERROR_NOT_ENOUGH_MEMORY;
     WideCharToMultiByte( CP_ACP, 0, buffer, -1, str, sz, NULL, NULL );
 
     offset = 0;
+    sz--;  /* nul terminated */
     for(i=0; i<count; i++)
     {
         len = st->pool.data[i*2];
         if ( ( sz == len ) && !memcmp( str, st->info.data+offset, sz ) )
         {
+            TRACE("%ld <- %s\n",i,debugstr_an(st->info.data+offset, len) );
             *id = i;
             r = ERROR_SUCCESS;
             break;
