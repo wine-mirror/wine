@@ -100,7 +100,7 @@ $(TESTSUBDIRS:%=%/__test__): test_environment
 check test:: $(TESTSUBDIRS:%=%/__test__)
 
 TAGS etags:
-	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`
+	etags `find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.glue.c' -a -not -name '*.dbg.c' -print`
 
 manpages:
 	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w
