@@ -875,12 +875,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     /* Now create the bitmap */
 
-    if (fColor)
-    {
-        HDC tmpdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
-        handle = CreateCompatibleBitmap( tmpdc, width, height );
-        DeleteDC( tmpdc );
-    }
+    if (fColor) handle = CreateCompatibleBitmap( hdc, width, height );
     else handle = CreateBitmap( width, height, 1, 1, NULL );
 
     if (!handle) return 0;
