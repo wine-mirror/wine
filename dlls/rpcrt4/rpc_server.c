@@ -487,9 +487,9 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
   TRACE(" interface id: %s %d.%d\n", debugstr_guid(&If->InterfaceId.SyntaxGUID),
                                      If->InterfaceId.SyntaxVersion.MajorVersion,
                                      If->InterfaceId.SyntaxVersion.MinorVersion);
-  TRACE(" transfer syntax: %s %d.%d\n", debugstr_guid(&If->InterfaceId.SyntaxGUID),
-                                        If->InterfaceId.SyntaxVersion.MajorVersion,
-                                        If->InterfaceId.SyntaxVersion.MinorVersion);
+  TRACE(" transfer syntax: %s %d.%d\n", debugstr_guid(&If->TransferSyntax.SyntaxGUID),
+                                        If->TransferSyntax.SyntaxVersion.MajorVersion,
+                                        If->TransferSyntax.SyntaxVersion.MinorVersion);
   TRACE(" dispatch table: %p\n", If->DispatchTable);
   if (If->DispatchTable) {
     TRACE("  dispatch table count: %d\n", If->DispatchTable->DispatchTableCount);
