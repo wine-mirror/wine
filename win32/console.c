@@ -4,6 +4,14 @@
  * Copyright 1995 Martin von Loewis and Cameron Heide
  * Copyright 1997 Karl Garrison
  * Copyright 1998 John Richardson
+ * Copyright 1998 Marcus Meissner
+ */
+
+/* FIXME:
+ * - completely lacks SCREENBUFFER interface
+ * - No abstraction for something other than xterm
+ * - Key input needs proper scancodes/virtualkeycodes
+ * - win32 syncs deadlock for infinite waits
  */
 
 #include <stdlib.h>
@@ -28,36 +36,24 @@
 #include "heap.h"
 #include "debug.h"
 
-static CONSOLE_SCREEN_BUFFER_INFO dummyinfo =
-{
-    {80, 24},
-    {0, 0},
-    0,
-    {0, 0, 79, 23},
-    {80, 24}
-};
-
-/* The console -- I chose to keep the master and slave
- * (UNIX) file descriptors around in case they are needed for
- * ioctls later.  The pid is needed to destroy the xterm on close
- */
+/* The CONSOLE kernel32 Object */
 typedef struct _CONSOLE {
-	K32OBJ  header;
-	int	master;			/* xterm side of pty */
-	int	slave;			/* wine side of pty */
-	int	pid;			/* xterm's pid, -1 if no xterm */
-        LPSTR   title;                  /* title of console */
+	K32OBJ  		header;
+	DWORD			mode;
+	CONSOLE_CURSOR_INFO	cinfo;
+
+	int			master;	/* xterm side of pty */
+	int			infd,outfd;
+	int			pid;	/* xterm's pid, -1 if no xterm */
+        LPSTR   		title;	/* title of console */
+	INPUT_RECORD		*irs;	/* buffered input records */
+	int			nrofirs;/* nr of buffered input records */
 } CONSOLE;
 
-
-/* This probably belongs somewhere else */
-typedef struct _CONSOLE_CURSOR_INFO {
-    DWORD  dwSize;   /* Between 1 & 100 for percentage of cell filled */
-    BOOL32 bVisible; /* Visibility of cursor */
-} CONSOLE_CURSOR_INFO, *LPCONSOLE_CURSOR_INFO;
-
-
-
+static void CONSOLE_AddWait(K32OBJ *ptr, DWORD thread_id);
+static void CONSOLE_RemoveWait(K32OBJ *ptr, DWORD thread_id);
+static BOOL32 CONSOLE_Satisfied(K32OBJ *ptr, DWORD thread_id);
+static BOOL32 CONSOLE_Signaled(K32OBJ *ptr, DWORD thread_id);
 static void CONSOLE_Destroy( K32OBJ *obj );
 static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer, 
 			    DWORD nNumberOfChars,  LPDWORD lpNumberOfChars, 
@@ -65,22 +61,17 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
 static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, 
 			   DWORD nNumberOfChars, LPDWORD lpNumberOfChars, 
 			   LPOVERLAPPED lpOverlapped);
-static int wine_openpty(int *master, int *slave, char *name, 
-		     struct termios *term, struct winsize *winsize);
-static BOOL32 wine_createConsole(int *master, int *slave, int *pid);
 
 const K32OBJ_OPS CONSOLE_Ops =
 {
-	NULL,			/* signaled */
-	NULL,			/* satisfied */
-	NULL,			/* add_wait */
-	NULL,			/* remove_wait */
+	CONSOLE_Signaled,	/* signaled */
+	CONSOLE_Satisfied,	/* satisfied */
+	CONSOLE_AddWait,	/* add_wait */
+	CONSOLE_RemoveWait,	/* remove_wait */
 	CONSOLE_Read,		/* read */
 	CONSOLE_Write,		/* write */
 	CONSOLE_Destroy		/* destroy */
 };
-
-
 
 /***********************************************************************
  * CONSOLE_Destroy
@@ -95,10 +86,9 @@ static void CONSOLE_Destroy(K32OBJ *obj)
 	if (console->title)
 	  	  HeapFree( SystemHeap, 0, console->title );
 	console->title = NULL;
-	/* make sure a xterm exists to kill */
-	if (console->pid != -1) {
+	/* if there is a xterm, kill it. */
+	if (console->pid != -1)
 		kill(console->pid, SIGTERM);
-	}
 	HeapFree(SystemHeap, 0, console);
 }
 
@@ -115,12 +105,9 @@ static BOOL32 CONSOLE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
 	CONSOLE *console = (CONSOLE *)ptr;
 	int result;
 
-	TRACE(console, "%p %p %ld\n", ptr, lpBuffer,
-		     nNumberOfChars);
-
+	TRACE(console, "%p %p %ld\n", ptr, lpBuffer, nNumberOfChars);
 	*lpNumberOfChars = 0; 
-
-	if ((result = read(console->slave, lpBuffer, nNumberOfChars)) == -1) {
+	if ((result = read(console->infd, lpBuffer, nNumberOfChars)) == -1) {
 		FILE_SetDosError();
 		return FALSE;
 	}
@@ -142,11 +129,8 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
 	CONSOLE *console = (CONSOLE *)ptr;
 	int result;
 
-	TRACE(console, "%p %p %ld\n", ptr, lpBuffer,
-		     nNumberOfChars);
-
+	TRACE(console, "%p %p %ld\n", ptr, lpBuffer, nNumberOfChars);
 	*lpNumberOfChars = 0; 
-
 	/* 
 	 * I assume this loop around EAGAIN is here because
 	 * win32 doesn't have interrupted system calls 
@@ -154,7 +138,7 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
 
 	for (;;)
         {
-		result = write(console->slave, lpBuffer, nNumberOfChars);
+		result = write(console->outfd, lpBuffer, nNumberOfChars);
 		if (result != -1) {
 			*lpNumberOfChars = result;
                         return TRUE;
@@ -164,6 +148,262 @@ static BOOL32 CONSOLE_Write(K32OBJ *ptr, LPCVOID lpBuffer,
 			return FALSE;
 		}
         }
+}
+
+/****************************************************************************
+ *		CONSOLE_add_input_record			[internal]
+ *
+ * Adds an INPUT_RECORD to the CONSOLEs input queue.
+ */
+static void
+CONSOLE_add_input_record(CONSOLE *console,INPUT_RECORD *inp) {
+	console->irs = HeapReAlloc(GetProcessHeap(),0,console->irs,sizeof(INPUT_RECORD)*(console->nrofirs+1));
+	console->irs[console->nrofirs++]=*inp;
+}
+
+/****************************************************************************
+ *		XTERM_string_to_IR			[internal]
+ *
+ * Transfers a string read from XTERM to INPUT_RECORDs and adds them to the
+ * queue. Does translation of vt100 style function keys and xterm-mouse clicks.
+ */
+static void
+CONSOLE_string_to_IR(CONSOLE *console,unsigned char *buf,int len) {
+    int			j,k;
+    INPUT_RECORD	ir;
+
+    for (j=0;j<len;j++) {
+    	unsigned char inchar = buf[j];
+
+	if (inchar!=27) { /* no escape -> 'normal' keyboard event */
+	    ir.EventType = 1; /* Key_event */
+
+	    ir.Event.KeyEvent.bKeyDown = 1;
+	    ir.Event.KeyEvent.wRepeatCount = 0;
+
+	    ir.Event.KeyEvent.wVirtualKeyCode = 0xdead;	/* FIXME */
+	    ir.Event.KeyEvent.wVirtualScanCode = 0xf0ad;	/* FIXME */
+	    ir.Event.KeyEvent.dwControlKeyState = 0;
+	    if (inchar & 0x80) {
+		ir.Event.KeyEvent.dwControlKeyState|=LEFT_ALT_PRESSED;
+		inchar &= ~0x80;
+	    }
+	    if (inchar>='A' && inchar <='Z') {
+		ir.Event.KeyEvent.dwControlKeyState|=SHIFT_PRESSED;
+		inchar = inchar-'A'+'a';
+	    }
+	    if (inchar=='\n') {
+		ir.Event.KeyEvent.wVirtualScanCode= 0x1c;
+		ir.Event.KeyEvent.uChar.AsciiChar = '\r';
+	    } else {
+		ir.Event.KeyEvent.uChar.AsciiChar = inchar;
+	    }
+
+	    CONSOLE_add_input_record(console,&ir);
+	    ir.Event.KeyEvent.bKeyDown = 0;
+	    CONSOLE_add_input_record(console,&ir);
+	    continue;
+	}
+	/* inchar is ESC */
+	if ((j==len-1) || (buf[j+1]!='[')) {/* add ESCape on its own */
+	    ir.EventType = 1; /* Key_event */
+	    ir.Event.KeyEvent.bKeyDown = 1;
+	    ir.Event.KeyEvent.wRepeatCount = 0;
+
+	    ir.Event.KeyEvent.wVirtualKeyCode	= 0xdead;	/* FIXME */
+	    ir.Event.KeyEvent.dwControlKeyState = 0;
+	    ir.Event.KeyEvent.wVirtualScanCode	= 0x01;
+	    ir.Event.KeyEvent.uChar.AsciiChar	= 27;
+	    CONSOLE_add_input_record(console,&ir);
+	    ir.Event.KeyEvent.bKeyDown = 0;
+	    CONSOLE_add_input_record(console,&ir);
+	    continue;
+	}
+	for (k=j;k<len;k++) {
+	    if (((buf[k]>='A') && (buf[k]<='Z')) ||
+		((buf[k]>='a') && (buf[k]<='z')) ||
+	    	 (buf[k]=='~')
+	    )
+	    	break;
+	}
+	if (k<len) {
+	    int	subid,scancode=0;
+
+	    ir.EventType			= 1; /* Key_event */
+	    ir.Event.KeyEvent.bKeyDown		= 1;
+	    ir.Event.KeyEvent.wRepeatCount	= 0;
+	    ir.Event.KeyEvent.dwControlKeyState	= 0;
+
+	    ir.Event.KeyEvent.wVirtualKeyCode	= 0xdead;
+	    ir.Event.KeyEvent.wVirtualScanCode	= 0xbeef;
+	    ir.Event.KeyEvent.uChar.AsciiChar	= 0;
+
+	    switch (buf[k]) {
+	    case '~':
+		sscanf(&buf[j+2],"%d",&subid);
+		switch (subid) {
+		case  2:/*INS */scancode = 0xe052;break;
+		case  3:/*DEL */scancode = 0xe053;break;
+		case  6:/*PGDW*/scancode = 0xe051;break;
+		case  5:/*PGUP*/scancode = 0xe049;break;
+		case 11:/*F1  */scancode = 0x003b;break;
+		case 12:/*F2  */scancode = 0x003c;break;
+		case 13:/*F3  */scancode = 0x003d;break;
+		case 14:/*F4  */scancode = 0x003e;break;
+		case 15:/*F5  */scancode = 0x003f;break;
+		case 17:/*F6  */scancode = 0x0040;break;
+		case 18:/*F7  */scancode = 0x0041;break;
+		case 19:/*F8  */scancode = 0x0042;break;
+		case 20:/*F9  */scancode = 0x0043;break;
+		case 21:/*F10 */scancode = 0x0044;break;
+		case 23:/*F11 */scancode = 0x00d9;break;
+		case 24:/*F12 */scancode = 0x00da;break;
+		/* FIXME: Shift-Fx */
+		default:
+			FIXME(console,"parse ESC[%d~\n",subid);
+			break;
+		}
+		break;
+	    case 'A': /* Cursor Up    */scancode = 0xe048;break;
+	    case 'B': /* Cursor Down  */scancode = 0xe050;break;
+	    case 'D': /* Cursor Left  */scancode = 0xe04b;break;
+	    case 'C': /* Cursor Right */scancode = 0xe04d;break;
+	    case 'F': /* End          */scancode = 0xe04f;break;
+	    case 'H': /* Home         */scancode = 0xe047;break;
+	    case 'M':
+	    	/* Mouse Button Press  (ESCM<button+'!'><x+'!'><y+'!'>) or
+		 *              Release (ESCM#<x+'!'><y+'!'>
+		 */
+		if (k<len-3) {
+		    ir.EventType			= MOUSE_EVENT;
+		    ir.Event.MouseEvent.dwMousePosition.x = buf[k+2]-'!';
+		    ir.Event.MouseEvent.dwMousePosition.y = buf[k+3]-'!';
+		    if (buf[k+1]=='#')
+			ir.Event.MouseEvent.dwButtonState = 0;
+		    else
+			ir.Event.MouseEvent.dwButtonState = 1<<(buf[k+1]-' ');
+		    ir.Event.MouseEvent.dwEventFlags	  = 0; /* FIXME */
+		    CONSOLE_add_input_record(console,&ir);
+		    j=k+3;
+		}
+	    	break;
+	    	
+	    }
+	    if (scancode) {
+		ir.Event.KeyEvent.wVirtualScanCode = scancode;
+		CONSOLE_add_input_record(console,&ir);
+		ir.Event.KeyEvent.bKeyDown		= 0;
+		CONSOLE_add_input_record(console,&ir);
+		j=k;
+		continue;
+	    }
+	}
+    }
+}
+/****************************************************************************
+ * 		CONSOLE_get_input		(internal)
+ *
+ * Reads (nonblocking) as much input events as possible and stores them
+ * in an internal queue.
+ * (not necessarily XTERM dependend, but UNIX filedescriptor...)
+ */
+static void
+CONSOLE_get_input(CONSOLE *console) {
+    char	*buf = HeapAlloc(GetProcessHeap(),0,1);
+    int		len = 0;
+
+    while (1) {
+	fd_set	infds;
+	DWORD	res;
+	struct timeval tv;
+	char		inchar;
+
+	FD_ZERO(&infds);
+	FD_SET(console->infd,&infds);
+	memset(&tv,0,sizeof(tv));
+	if (select(console->infd+1,&infds,NULL,NULL,&tv)<1)
+	    break; /* no input there */
+
+	if (!FD_ISSET(console->infd,&infds))
+	    break;
+	if (!CONSOLE_Read((K32OBJ*)console,&inchar,1,&res,NULL))
+	    break;
+	buf = HeapReAlloc(GetProcessHeap(),0,buf,len+1);
+	buf[len++]=inchar;
+    }
+    CONSOLE_string_to_IR(console,buf,len);
+    HeapFree(GetProcessHeap(),0,buf);
+}
+
+/****************************************************************************
+ * 		CONSOLE_drain_input		(internal)
+ *
+ * Drains 'n' console input events from the queue.
+ */
+static void
+CONSOLE_drain_input(CONSOLE *console,int n) {
+    assert(n<=console->nrofirs);
+    if (n) {
+	console->nrofirs-=n;
+    	memcpy(	&console->irs[0],
+		&console->irs[n],
+		console->nrofirs*sizeof(INPUT_RECORD)
+	);
+	console->irs = HeapReAlloc(
+		GetProcessHeap(),
+		0,
+		console->irs,
+		console->nrofirs*sizeof(INPUT_RECORD)
+	);
+    }
+}
+
+/***********************************************************************
+ *		CONSOLE_Signaled			[internal]
+ *
+ * Checks if we can read something. (Hmm, what about writing ?)
+ */
+static BOOL32
+CONSOLE_Signaled(K32OBJ *ptr,DWORD tid) {
+	CONSOLE	*console =(CONSOLE*)ptr;
+
+	if (ptr->type!= K32OBJ_CONSOLE)
+		return FALSE;
+	CONSOLE_get_input(console);
+	return console->nrofirs!=0;
+}
+
+/***********************************************************************
+ *		CONSOLE_AddWait			[internal]
+ *
+ * Add thread to our waitqueue (so we can signal it if we have input).
+ */
+static void CONSOLE_AddWait(K32OBJ *ptr, DWORD thread_id)
+{
+	WARN(console,"(),stub. Expect hang.\n");
+	return;
+}
+
+/***********************************************************************
+ *		CONSOLE_AddWait			[internal]
+ *
+ * Remove thread from our waitqueue.
+ */
+static void CONSOLE_RemoveWait(K32OBJ *ptr, DWORD thread_id)
+{
+	TRACE(console,"(),stub\n");
+	return;
+}
+
+/***********************************************************************
+ *		CONSOLE_Satisfied			[internal]
+ *
+ * Condition from last Signaled is satisfied and will be used now.
+ */
+static BOOL32 CONSOLE_Satisfied(K32OBJ *ptr, DWORD thread_id)
+{
+	TRACE(console,"(),stub\n");
+	return TRUE;
 }
 
 
@@ -244,7 +484,7 @@ BOOL32 WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
 {
   if (dwCtrlEvent != CTRL_C_EVENT && dwCtrlEvent != CTRL_BREAK_EVENT)
     {
-      ERR( console, "invalid event %d for PGID %d\n", 
+      ERR( console, "invalid event %d for PGID %ld\n", 
 	   (unsigned short)dwCtrlEvent, dwProcessGroupID );
       return FALSE;
     }
@@ -254,7 +494,7 @@ BOOL32 WINAPI GenerateConsoleCtrlEvent( DWORD dwCtrlEvent,
 	     (unsigned short)dwCtrlEvent );
       return FALSE;
     }
-  FIXME( console,"event %d to external PGID %d - not implemented yet\n",
+  FIXME( console,"event %d to external PGID %ld - not implemented yet\n",
 	 (unsigned short)dwCtrlEvent, dwProcessGroupID );
   return FALSE;
 }
@@ -283,7 +523,8 @@ HANDLE32 WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
 {
     FIXME(console, "(%ld,%ld,%p,%ld,%p): stub\n",dwDesiredAccess,
           dwShareMode, sa, dwFlags, lpScreenBufferData);
-    return 1;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE32;
 }
 
 
@@ -328,7 +569,7 @@ BOOL32 WINAPI SetConsoleActiveScreenBuffer(
  */
 DWORD WINAPI GetLargestConsoleWindowSize( HANDLE32 hConsoleOutput )
 {
-    return (DWORD)MAKELONG(dummyinfo.dwMaximumWindowSize.x,dummyinfo.dwMaximumWindowSize.y);
+    return (DWORD)MAKELONG(80,24);
 }
 
 /***********************************************************************
@@ -363,7 +604,7 @@ BOOL32 WINAPI FreeConsole(VOID)
  *  is buggy (second call returns what looks like a dup of 0 and 1
  *  instead of a new pty), this is a generic replacement.
  */
-static int wine_openpty(int *master, int *slave, char *name, 
+static int CONSOLE_openpty(CONSOLE *console, char *name, 
 			struct termios *term, struct winsize *winsize)
 {
         int fdm, fds;
@@ -388,13 +629,13 @@ static int wine_openpty(int *master, int *slave, char *name,
                                 pts_name[5] = 'p';
                                 continue;
                         }
-                        *master = fdm;
-                        *slave = fds;
+                        console->master = fdm;
+                        console->infd = console->outfd = fds;
 			
 			if (term != NULL)
-				tcsetattr(*slave, TCSANOW, term);
+				tcsetattr(console->infd, TCSANOW, term);
 			if (winsize != NULL)
-				ioctl(*slave, TIOCSWINSZ, winsize);
+				ioctl(console->outfd, TIOCSWINSZ, winsize);
 			if (name != NULL)
 				strcpy(name, pts_name);
                         return fds;
@@ -403,47 +644,67 @@ static int wine_openpty(int *master, int *slave, char *name,
 	return -1;
 }
 
-static BOOL32 wine_createConsole(int *master, int *slave, int *pid)
+/*************************************************************************
+ * 		CONSOLE_make_complex			[internal]
+ *
+ * Turns a CONSOLE kernel object into a complex one.
+ * (switches from output/input using the terminal where WINE was started to 
+ * its own xterm).
+ * 
+ * This makes simple commandline tools pipeable, while complex commandline 
+ * tools work without getting messed up by debugoutput.
+ * 
+ * All other functions should work indedependend from this call.
+ *
+ * To test for complex console: pid == -1 -> simple, otherwise complex.
+ */
+static BOOL32 CONSOLE_make_complex(CONSOLE *console)
 {
 	struct termios term;
-	char buf[1024];
+	char buf[30];
 	char c = '\0';
 	int status = 0;
-	int i;
+	int i,xpid;
+	DWORD	xlen;
+
+	if (console->pid != -1)
+		return TRUE; /* already complex */
+
+	MSG("Console: Making console complex (creating an xterm)...\n");
 
 	if (tcgetattr(0, &term) < 0) return FALSE;
-	term.c_lflag |= ICANON;
-	term.c_lflag &= ~ECHO;
-	if (wine_openpty(master, slave, NULL, &term, NULL) < 0) return FALSE;
+	term.c_lflag = ~(ECHO|ICANON);
+	if (CONSOLE_openpty(console, NULL, &term, NULL) < 0) return FALSE;
 
-	if ((*pid=fork()) == 0) {
-		tcsetattr(*slave, TCSADRAIN, &term);
-		sprintf(buf, "-Sxx%d", *master);
-		execlp("xterm", "xterm", buf, NULL);
+	if ((xpid=fork()) == 0) {
+		tcsetattr(console->infd, TCSADRAIN, &term);
+		sprintf(buf, "-Sxx%d", console->master);
+		/* "-fn vga" for VGA font. Harmless if vga is not present:
+		 *  xterm: unable to open font "vga", trying "fixed".... 
+		 */
+		execlp("xterm", "xterm", buf, "-fn","vga",NULL);
 		ERR(console, "error creating AllocConsole xterm\n");
 		exit(1);
 	}
+	console->pid = xpid;
 
 	/* most xterms like to print their window ID when used with -S;
 	 * read it and continue before the user has a chance...
-	 * NOTE: this is the reason we started xterm with ECHO off, 
-	 * we'll turn it back on below
 	 */
-
-	for (i=0; c!='\n'; (status=read(*slave, &c, 1)), i++) {
+	for (i=0; c!='\n'; (status=read(console->infd, &c, 1)), i++) {
 		if (status == -1 && c == '\0') {
 				/* wait for xterm to be created */
 			usleep(100);
 		}
 		if (i > 10000) {
-			WARN(console, "can't read xterm WID\n");
-			kill(*pid, SIGKILL);
+			ERR(console, "can't read xterm WID\n");
+			kill(console->pid, SIGKILL);
 			return FALSE;
 		}
 	}
-	term.c_lflag |= ECHO;
-	tcsetattr(*master, TCSADRAIN, &term);
-
+	/* enable mouseclicks */
+	sprintf(buf,"%c[?1001s%c[?1000h",27,27);
+	CONSOLE_Write(&console->header,buf,strlen(buf),&xlen,NULL);
 	return TRUE;
 
 }
@@ -475,9 +736,6 @@ HFILE32 CONSOLE_GetConsoleHandle(VOID)
 BOOL32 WINAPI AllocConsole(VOID)
 {
 
-	int master;
-	int slave;
-	int pid;
 	PDB32 *pdb = PROCESS_Current();
 	CONSOLE *console;
 	HANDLE32 hIn, hOut, hErr;
@@ -506,17 +764,14 @@ BOOL32 WINAPI AllocConsole(VOID)
         console->header.refcount = 1;
         console->pid             = -1;
         console->title           = NULL;
-
-	if (wine_createConsole(&master, &slave, &pid) == FALSE) {
-		K32OBJ_DecCount(&console->header);
-		SYSTEM_UNLOCK();
-		return FALSE;
-	}
-
-	/* save the pid and other info for future use */
-        console->master = master;
-	console->slave = slave;
-	console->pid = pid;
+	console->nrofirs	 = 0;
+	console->irs	 	 = HeapAlloc(GetProcessHeap(),0,1);;
+    	console->mode		 =   ENABLE_PROCESSED_INPUT
+				   | ENABLE_LINE_INPUT
+				   | ENABLE_ECHO_INPUT;
+	/* FIXME: we shouldn't probably use hardcoded UNIX values here. */
+	console->infd		 = 0;
+	console->outfd		 = 1;
 
 	if ((hIn = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
         {
@@ -543,9 +798,9 @@ BOOL32 WINAPI AllocConsole(VOID)
             return FALSE;
 	}
 
-	/* associate this console with the process */
         if (pdb->console) K32OBJ_DecCount( pdb->console );
 	pdb->console = (K32OBJ *)console;
+        K32OBJ_IncCount( pdb->console );
 
 	/* NT resets the STD_*_HANDLEs on console alloc */
 	SetStdHandle(STD_INPUT_HANDLE, hIn);
@@ -584,10 +839,15 @@ UINT32 WINAPI GetConsoleOutputCP(VOID)
  */
 BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
 {
-	*mode = 	ENABLE_PROCESSED_INPUT	|
-			ENABLE_LINE_INPUT	|
-			ENABLE_ECHO_INPUT;
-	return TRUE;
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+
+    if (!console) {
+    	FIXME(console,"(%d,%p), no console handle passed!\n",hcon,mode);
+	return FALSE;
+    }
+    *mode = console->mode;
+    K32OBJ_DecCount(&console->header);
+    return TRUE;
 }
 
 
@@ -604,7 +864,15 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
  */
 BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
 {
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+
+    if (!console) {
+    	FIXME(console,"(%d,%ld), no console handle passed!\n",hcon,mode);
+	return FALSE;
+    }
     FIXME(console,"(0x%08x,0x%08lx): stub\n",hcon,mode);
+    console->mode = mode;
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -614,15 +882,14 @@ BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
  */
 DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
 {
-	PDB32 *pdb = PROCESS_Current();
-	CONSOLE *console= (CONSOLE *)pdb->console;
+    PDB32 *pdb = PROCESS_Current();
+    CONSOLE *console= (CONSOLE *)pdb->console;
 
-	if(console && console->title) 
-	  {
-	    lstrcpyn32A(title,console->title,size);
-	    return strlen(title);
-	  }
-	return 0;
+    if(console && console->title) {
+	lstrcpyn32A(title,console->title,size);
+	return strlen(title);
+    }
+    return 0;
 }
 
 
@@ -675,12 +942,19 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
                                      LPSMALL_RECT lpWriteRegion)
 {
     int i,j,off=0,lastattr=-1;
-    char	buffer[200];
+    char	buffer[20];
     DWORD	res;
-    static int colormap[8] = {
+    const int colormap[8] = {
     	0,4,2,6,
 	1,5,3,7,
     };
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleOutput, K32OBJ_CONSOLE, 0, NULL);
+
+    if (!console) {
+    	FIXME(console,"(%d,...): no console handle!\n",hConsoleOutput);
+	return FALSE;
+    }
+    CONSOLE_make_complex(console);
 
     TRACE(console,"wr: top = %d, bottom=%d, left=%d,right=%d\n",
     	lpWriteRegion->Top,
@@ -690,15 +964,17 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
     );
 
     for (i=lpWriteRegion->Top;i<=lpWriteRegion->Bottom;i++) {
-    	sprintf(buffer,"%c[%d;%dH",27,i,lpWriteRegion->Left);
+    	sprintf(buffer,"%c[%d;%dH",27,i+1,lpWriteRegion->Left+1);
 	WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
 	if (lastattr != lpBuffer[off].Attributes) {
 		lastattr = lpBuffer[off].Attributes;
-		sprintf(buffer,"%c[0;3%d;4%d",27,colormap[lastattr&7],colormap[(lastattr&0x70)>>4]);
-		if (lastattr & FOREGROUND_INTENSITY)
-			strcat(buffer,";1");
-		/* BACKGROUND_INTENSITY */
-		strcat(buffer,"m");
+		sprintf(buffer,"%c[0;%s3%d;4%dm",
+			27,
+			(lastattr & FOREGROUND_INTENSITY)?"1;":"",
+			colormap[lastattr&7],
+			colormap[(lastattr&0x70)>>4]
+		);
+		/* FIXME: BACKGROUND_INTENSITY */
 		WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
 	}
 	for (j=lpWriteRegion->Left;j<=lpWriteRegion->Right;j++)
@@ -706,6 +982,7 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
     }
     sprintf(buffer,"%c[0m",27);
     WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -740,19 +1017,37 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-	return ReadFile(hConsoleInput, lpBuffer, nNumberOfCharsToRead,
-			lpNumberOfCharsRead, NULL);
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
+    int		i,charsread = 0;
+    LPSTR	xbuf = (LPSTR)lpBuffer;
 
-#ifdef OLD
-        fgets(lpBuffer,nNumberOfCharsToRead, CONSOLE_console.conIO);
-	if (ferror(CONSOLE_console.conIO) {
-		clearerr();
-		return FALSE;
-	}
-        *lpNumberOfCharsRead = strlen(lpBuffer);
-        return TRUE;
-#endif
+    if (!console) {
+    	SetLastError(ERROR_INVALID_HANDLE);
+	FIXME(console,"(%d,...), no console handle!\n",hConsoleInput);
+    	return FALSE;
+    }
+    TRACE(console,"(%d,%p,%ld,%p,%p)\n",
+	    hConsoleInput,lpBuffer,nNumberOfCharsToRead,
+	    lpNumberOfCharsRead,lpReserved
+    );
+    CONSOLE_get_input(console);
 
+    /* FIXME:	should this drain everything from the input queue and just 
+     * 		put the keypresses in the buffer? Needs further thought.
+     */
+    for (i=0;(i<console->nrofirs)&&(charsread<nNumberOfCharsToRead);i++) {
+    	if (console->irs[i].EventType != KEY_EVENT)
+		continue;
+    	if (!console->irs[i].Event.KeyEvent.bKeyDown)
+		continue;
+	*xbuf++ = console->irs[i].Event.KeyEvent.uChar.AsciiChar; 
+	nNumberOfCharsToRead--;
+    }
+    CONSOLE_drain_input(console,i);
+    if (lpNumberOfCharsRead)
+    	*lpNumberOfCharsRead = charsread;
+    K32OBJ_DecCount(&console->header);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -764,33 +1059,20 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-        BOOL32 ret;
-	LPSTR buf = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 
-				       nNumberOfCharsToRead);
-	ret = ReadFile(hConsoleInput, buf, nNumberOfCharsToRead,
-			lpNumberOfCharsRead, NULL);
-	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
-	*lpNumberOfCharsRead = strlen(buf);
-	HeapFree( GetProcessHeap(), 0, buf );
-	return ret;
+    BOOL32 ret;
+    LPSTR buf = (LPSTR)HeapAlloc(GetProcessHeap(), 0, nNumberOfCharsToRead);
 
-#ifdef OLD
-	LPSTR buf = (LPSTR)HEAP_xalloc(GetProcessHeap(), 0, 
-				       nNumberOfCharsToRead);
-	fgets(buf, nNumberOfCharsToRead, CONSOLE_console.conIO);
-
-	if (ferror(CONSOLE_console.conIO) {
-		HeapFree( GetProcessHeap(), 0, buf );
-		clearerr();
-		return FALSE;
-	}
-
-	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
-	*lpNumberOfCharsRead = strlen(buf);
-	HeapFree( GetProcessHeap(), 0, buf );
-	return TRUE;
-#endif
-
+    ret = ReadConsole32A(
+    	hConsoleInput,
+	buf,
+	nNumberOfCharsToRead,
+	lpNumberOfCharsRead,
+	lpReserved
+    );
+    if (ret)
+    	lstrcpynAtoW(lpBuffer,buf,nNumberOfCharsToRead);
+    HeapFree( GetProcessHeap(), 0, buf );
+    return ret;
 }
 
 
@@ -807,50 +1089,71 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL32 WINAPI ReadConsoleInputA( HANDLE32 hConsoleInput,
-                                 LPINPUT_RECORD lpBuffer,
-                                 DWORD nLength, LPDWORD lpNumberOfEventsRead)
+BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
+				  LPINPUT_RECORD lpBuffer,
+				  DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-    FIXME(console, "(%d,%p,%ld,%p): stub\n",hConsoleInput, lpBuffer, nLength,
-          lpNumberOfEventsRead);
-    return ReadConsole32A(hConsoleInput, lpBuffer, nLength, 
-                          lpNumberOfEventsRead, 0);
-}
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
 
+    TRACE(console, "(%d,%p,%ld,%p)\n",hConsoleInput, lpBuffer, nLength,
+          lpNumberOfEventsRead);
+    if (!console) {
+    	FIXME(console, "(%d,%p,%ld,%p), No console handle!\n",hConsoleInput,
+		lpBuffer, nLength, lpNumberOfEventsRead);
+	return FALSE;
+    }
+    CONSOLE_get_input(console);
+    if (nLength>console->nrofirs)
+    	nLength = console->nrofirs;
+    memcpy(lpBuffer,console->irs,sizeof(INPUT_RECORD)*nLength);
+    if (lpNumberOfEventsRead)
+	*lpNumberOfEventsRead = nLength;
+    CONSOLE_drain_input(console,nLength);
+    K32OBJ_DecCount(&console->header);
+    return TRUE;
+}
 
 /***********************************************************************
  *            SetConsoleTitle32A   (KERNEL32.476)
+ *
+ * Sets the console title.
+ *
+ * We do not necessarily need to create a complex console for that,
+ * but should remember the title and set it on creation of the latter.
+ * (not fixed at this time).
  */
 BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 {
-	PDB32 *pdb = PROCESS_Current();
-	CONSOLE *console;
-	DWORD written;
-	char titleformat[]="\033]2;%s\a"; /*this should work for xterms*/
-	LPSTR titlestring; 
-	BOOL32 ret=FALSE;
+    PDB32 *pdb = PROCESS_Current();
+    CONSOLE *console;
+    DWORD written;
+    char titleformat[]="\033]2;%s\a"; /*this should work for xterms*/
+    LPSTR titlestring; 
+    BOOL32 ret=FALSE;
 
-	TRACE(console,"(%s)\n",title);
-	
-	console = (CONSOLE *)pdb->console;
-	if (!console)
-	  return FALSE;
-	if(console->title) /* Free old title, if there is one */
-	  HeapFree( SystemHeap, 0, console->title );
-	console->title = (LPSTR)HeapAlloc(SystemHeap, 0,strlen(title)+1);
-	if(console->title) strcpy(console->title,title);
+    TRACE(console,"(%s)\n",title);
 
-	titlestring = HeapAlloc(GetProcessHeap(), 0,strlen(title)+strlen(titleformat)+1);
-	if (!titlestring)
-	  return FALSE;
-	
- 	sprintf(titlestring,titleformat,title);
-	/* Ugly casting */
-	CONSOLE_Write((K32OBJ *)console,titlestring,strlen(titlestring),&written,NULL);
-	if (written == strlen(titlestring))
-	  ret =TRUE;
-	HeapFree( GetProcessHeap(), 0, titlestring );
-	return ret;
+    console = (CONSOLE *)pdb->console;
+    if (!console)
+	return FALSE;
+    if(console->title) /* Free old title, if there is one */
+	HeapFree( SystemHeap, 0, console->title );
+    console->title = (LPSTR)HeapAlloc(SystemHeap, 0,strlen(title)+1);
+    if(console->title) strcpy(console->title,title);
+    titlestring = HeapAlloc(GetProcessHeap(), 0,strlen(title)+strlen(titleformat)+1);
+    if (!titlestring) {
+	K32OBJ_DecCount(&console->header);
+	return FALSE;
+    }
+
+    sprintf(titlestring,titleformat,title);
+    /* FIXME: hmm, should use WriteFile probably... */
+    CONSOLE_Write(&console->header,titlestring,strlen(titlestring),&written,NULL);
+    if (written == strlen(titlestring))
+	ret =TRUE;
+    HeapFree( GetProcessHeap(), 0, titlestring );
+    K32OBJ_DecCount(&console->header);
+    return ret;
 }
 
 
@@ -883,7 +1186,12 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
  */
 BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
 {
-    FIXME(console,"(%d): stub\n",hConsoleInput);
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
+
+    if (!console)
+    	return FALSE;
+    CONSOLE_drain_input(console,console->nrofirs);
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -898,26 +1206,40 @@ BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
  *
  * RETURNS STD
  */
-BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hConsoleOutput, 
-                                        COORD dwCursorPosition )
+BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
 {
-    TRACE(console, "%d (%d x %d)\n", hConsoleOutput, dwCursorPosition.x, 
-          dwCursorPosition.y);
-    /* x are columns, y rows */
-    	fprintf(stderr,"\r");
-            /* note: 0x1B == ESC */
-    fprintf(stdout,"%c[%d;%dH", 0x1B, dwCursorPosition.y, dwCursorPosition.x);
-	return TRUE;
-}
+    char 	xbuf[20];
+    DWORD	xlen;
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
 
+    if (!console) {
+    	FIXME(console,"(%d,...), no console handle!\n",hcon);
+    	return FALSE;
+    }
+    CONSOLE_make_complex(console);
+    TRACE(console, "%d (%dx%d)\n", hcon, pos.x , pos.y );
+    /* x are columns, y rows */
+    sprintf(xbuf,"%c[%d;%dH", 0x1B, pos.y+1, pos.x+1);
+    /* FIXME: store internal if we start using own console buffers */
+    WriteFile(hcon,xbuf,strlen(xbuf),&xlen,NULL);
+    K32OBJ_DecCount(&console->header);
+    return TRUE;
+}
 
 /***********************************************************************
  *            GetNumberOfConsoleInputEvents   (KERNEL32.246)
  */
 BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 {
-    *nrofevents = 0;
-    FIXME(console,"(%x): stub\n", hcon);
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+
+    if (!console) {
+    	FIXME(console,"(%d,%p), no console handle!\n",hcon,nrofevents);
+    	return FALSE;
+    }
+    CONSOLE_get_input(console);
+    *nrofevents = console->nrofirs;
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -931,62 +1253,35 @@ BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
     return TRUE;
 }
 
-
 /***********************************************************************
  *            PeekConsoleInputA   (KERNEL32.550)
+ *
+ * Gets 'cInRecords' first events (or less) from input queue.
+ *
+ * Does not need a complex console.
  */
 BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
                                   LPINPUT_RECORD pirBuffer,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
 {
-    fd_set infds;
-    int	i,fd = FILE_GetUnixHandle(hConsoleInput);
-    struct timeval tv;
-    char	inchar;
-    DWORD	res;
-    static int keystate[256];
-    LPINPUT_RECORD	ir = pirBuffer;
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
 
-    TRACE(console,"(%d,%p,%ld,%p): stub\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
-
-    memset(&tv,0,sizeof(tv));
-    FD_ZERO(&infds);
-    FD_SET(fd,&infds);
-    select(fd+1,&infds,NULL,NULL,&tv);
-
-    if (FD_ISSET(fd,&infds)) {
-    	ReadFile(hConsoleInput,&inchar,1,&res,NULL);
-	for (i=0;i<256;i++)  {
-	    if (keystate[i] && i!=inchar) {
-	    	ir->EventType = 1;
-	    	ir->Event.KeyEvent.bKeyDown = 0;
-	    	ir->Event.KeyEvent.wRepeatCount = 0;
-	    	ir->Event.KeyEvent.wVirtualKeyCode = 0;
-	    	ir->Event.KeyEvent.wVirtualScanCode = 0;
-	    	ir->Event.KeyEvent.uChar.AsciiChar = i;
-	    	ir->Event.KeyEvent.dwControlKeyState = 0;
-		ir++;
-		keystate[i]=0;
-	    }
-	}
-
-	ir->EventType = 1; /* Key_event */
-	ir->Event.KeyEvent.bKeyDown = 1;
-	ir->Event.KeyEvent.wRepeatCount = 0;
-	ir->Event.KeyEvent.wVirtualKeyCode = 0;
-	ir->Event.KeyEvent.wVirtualScanCode = 0;
-	ir->Event.KeyEvent.uChar.AsciiChar = inchar;
-	ir->Event.KeyEvent.dwControlKeyState = 0;
-	keystate[inchar]=1;
-	ir++;
-	*lpcRead = ir-pirBuffer;
-    } else {
-	*lpcRead = 0;
+    if (!console) {
+        FIXME(console,"(%d,%p,%ld,%p), No console handle passed!\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
+    	return FALSE;
     }
+    TRACE(console,"(%d,%p,%ld,%p)\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
+    CONSOLE_get_input(console);
+    if (cInRecords>console->nrofirs)
+    	cInRecords = console->nrofirs;
+    if (pirBuffer)
+	memcpy(pirBuffer,console->irs,cInRecords*sizeof(INPUT_RECORD));
+    if (lpcRead)
+	*lpcRead = cInRecords;
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
-
 
 /***********************************************************************
  *            PeekConsoleInputW   (KERNEL32.551)
@@ -996,12 +1291,8 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
 {
-    pirBuffer = NULL;
-    cInRecords = 0;
-    *lpcRead = 0;
-    FIXME(console,"(%d,%p,%ld,%p): stub\n", hConsoleInput, pirBuffer,
-          cInRecords, lpcRead);
-    return TRUE;
+    /* FIXME: Hmm. Fix this if we get UNICODE input. */
+    return PeekConsoleInput32A(hConsoleInput,pirBuffer,cInRecords,lpcRead);
 }
 
 
@@ -1019,10 +1310,17 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
 BOOL32 WINAPI GetConsoleCursorInfo32( HANDLE32 hcon,
                                       LPCONSOLE_CURSOR_INFO cinfo )
 {
-    FIXME(console, "(%x,%p): stub\n", hcon, cinfo);
-    if (!cinfo) return FALSE;
-    cinfo->dwSize = 10;      /* 10% of character box is cursor.  */
-    cinfo->bVisible = TRUE;  /* Cursor is visible.  */
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+
+    if (!console) {
+    	FIXME(console, "(%x,%p), no console handle!\n", hcon, cinfo);
+	return FALSE;
+    }
+    TRACE(console, "(%x,%p)\n", hcon, cinfo);
+    if (!cinfo)
+    	return FALSE;
+    *cinfo = console->cinfo;
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -1038,7 +1336,18 @@ BOOL32 WINAPI SetConsoleCursorInfo32(
     HANDLE32 hcon,                /* [in] Handle to console screen buffer */
     LPCONSOLE_CURSOR_INFO cinfo)  /* [in] Address of cursor information */
 {
-    FIXME(console, "(%x,%ld,%i): stub\n", hcon,cinfo->dwSize,cinfo->bVisible);
+    char	buf[8];
+    DWORD	xlen;
+    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+
+    TRACE(console, "(%x,%ld,%i): stub\n", hcon,cinfo->dwSize,cinfo->bVisible);
+    if (!console)
+    	return FALSE;
+    CONSOLE_make_complex(console);
+    sprintf(buf,"%c[?25%c",27,cinfo->bVisible?'h':'l');
+    WriteFile(hcon,buf,strlen(buf),&xlen,NULL);
+    console->cinfo = *cinfo;
+    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -1072,101 +1381,20 @@ BOOL32 WINAPI SetConsoleWindowInfo(
  */
 BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hConsoleOutput,WORD wAttr)
 {
-    int forecolor = 0;
-    int backcolor = 0;
-    int boldtext = 0;
-    unsigned int attrib;
-    
-    attrib = wAttr;
-    if( attrib >= BACKGROUND_INTENSITY )
-        attrib -= BACKGROUND_INTENSITY; /* Background intensity is ignored */
-    if( attrib >= BACKGROUND_RED )
-    {
-        attrib -= BACKGROUND_RED;
-        if( attrib >= BACKGROUND_GREEN )
-        {
-            attrib -= BACKGROUND_GREEN;
-            if( attrib >= BACKGROUND_BLUE )
-            {
-                attrib -= BACKGROUND_BLUE;
-                backcolor = 47; /* White background */
-            }
-            else
-                backcolor = 43; /* Yellow background */
-        }
-        else if( attrib >= BACKGROUND_BLUE )
-        {
-            attrib -= BACKGROUND_BLUE;
-            backcolor = 45; /* Magenta background */
-        }
-        else
-            backcolor = 41; /* Red Background */
-    }
-    else if( attrib >= BACKGROUND_GREEN )
-    {
-        attrib -= BACKGROUND_GREEN;
-        if( attrib >= BACKGROUND_BLUE )
-        {
-            attrib -= BACKGROUND_BLUE;
-            backcolor = 46; /* Cyan background */
-        }
-        else
-            backcolor = 42; /* Green background */
-    }
-    else if( attrib >= BACKGROUND_BLUE )
-    {
-        attrib -= BACKGROUND_BLUE;
-        backcolor = 44; /* Blue background */
-    }
-    else
-        backcolor = 40; /* Black background */
-    if( attrib >= FOREGROUND_INTENSITY )
-    {
-        attrib -= FOREGROUND_INTENSITY;
-        boldtext = 1;   /* Bold attribute is on */
-    }
-    if( attrib >= FOREGROUND_RED )
-    {
-        attrib -= FOREGROUND_RED;
-        if( attrib >= FOREGROUND_GREEN )
-        {
-            attrib -= FOREGROUND_GREEN;
-            if( attrib >= FOREGROUND_BLUE )
-            {
-                attrib -= FOREGROUND_BLUE;
-                forecolor = 37; /* White foreground */
-            }
-            else
-                forecolor = 33; /* Yellow foreground */
-        }
-        else if( attrib >= FOREGROUND_BLUE )
-        {
-            attrib -= FOREGROUND_BLUE;
-            forecolor = 35; /* Magenta foreground */
-        }
-        else
-            forecolor = 31; /* Red foreground */
-    }
-    else if( attrib >= FOREGROUND_GREEN )
-    {
-        attrib -= FOREGROUND_GREEN;
-        if( attrib >= FOREGROUND_BLUE )
-        {
-            attrib -= FOREGROUND_BLUE;
-            forecolor = 36; /* Cyan foreground */
-        }
-        else
-            forecolor = 32; /* Green foreground */
-    }
-    else if( attrib >= FOREGROUND_BLUE )
-    {
-        attrib -= FOREGROUND_BLUE;
-        forecolor = 34; /* Blue foreground */
-    }
-    else
-        forecolor = 30; /* Black foreground */
+    const int colormap[8] = {
+    	0,4,2,6,
+	1,5,3,7,
+    };
+    DWORD xlen;
+    char buffer[20];
 
-    fprintf(stdout,"%c[%d;%d;%dm",0x1B,boldtext,forecolor,backcolor);
+    sprintf(buffer,"%c[0;%s3%d;4%dm",
+	27,
+	(wAttr & FOREGROUND_INTENSITY)?"1;":"",
+	colormap[wAttr&7],
+	colormap[(wAttr&0x70)>>4]
+    );
+    WriteFile(hConsoleOutput,buffer,strlen(buffer),&xlen,NULL);
     return TRUE;
 }
 
@@ -1211,10 +1439,12 @@ BOOL32 WINAPI FillConsoleOutputCharacterA(
     COORD dwCoord,
     LPDWORD lpNumCharsWritten)
 {
-    long count;
+    long 	count;
+    DWORD	xlen;
+
     SetConsoleCursorPosition(hConsoleOutput,dwCoord);
     for(count=0;count<nLength;count++)
-        putc(cCharacter,stdout);
+	WriteFile(hConsoleOutput,&cCharacter,1,&xlen,NULL);
     *lpNumCharsWritten = nLength;
     return TRUE;
 }
@@ -1240,10 +1470,15 @@ BOOL32 WINAPI FillConsoleOutputCharacterW(HANDLE32 hConsoleOutput,
                                            COORD dwCoord, 
                                             LPDWORD lpNumCharsWritten)
 {
-    long count;
+    long	count;
+    DWORD	xlen;
+
     SetConsoleCursorPosition(hConsoleOutput,dwCoord);
+    /* FIXME: not quite correct ... but the lower part of UNICODE char comes
+     * first 
+     */
     for(count=0;count<nLength;count++)
-        putc(cCharacter,stdout);
+	WriteFile(hConsoleOutput,&cCharacter,1,&xlen,NULL);
     *lpNumCharsWritten = nLength;
     return TRUE;
 }

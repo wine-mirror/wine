@@ -584,7 +584,7 @@ init	MAIN_KernelInit
 566 stub QueueUserAPC
 567 register RaiseException() RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
-569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
+569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInput32A
 570 stub ReadConsoleInputW
 571 stub ReadConsoleOutputA
 572 stub ReadConsoleOutputAttribute

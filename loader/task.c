@@ -244,6 +244,9 @@ static void TASK_CallToStart(void)
 
         LPTHREAD_START_ROUTINE entry = (LPTHREAD_START_ROUTINE)
                 RVA_PTR(pModule->module32, OptionalHeader.AddressOfEntryPoint);
+        
+	if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		AllocConsole();
 
         if (pModule->heap_size)
             LocalInit( pTask->hInstance, 0, pModule->heap_size );

@@ -31,6 +31,11 @@ typedef BOOL32 HANDLER_ROUTINE(WORD);
 #define BACKGROUND_RED       0x0040 /* background color contains red. */
 #define BACKGROUND_INTENSITY 0x0080 /* background color is intensified. */
 
+typedef struct _CONSOLE_CURSOR_INFO {
+    DWORD	dwSize;   /* Between 1 & 100 for percentage of cell filled */
+    BOOL32	bVisible; /* Visibility of cursor */
+} CONSOLE_CURSOR_INFO, *LPCONSOLE_CURSOR_INFO;
+
 /*
 typedef struct tagCOORD
 {
@@ -68,17 +73,28 @@ typedef struct tagCHAR_INFO
 
 typedef struct tagKEY_EVENT_RECORD
 {
-    BOOL32	bKeyDown;
-    WORD	wRepeatCount;
-    WORD	wVirtualKeyCode;
-    WORD	wVirtualScanCode;
-    union
+    BOOL32	bKeyDown;		/* 04 */
+    WORD	wRepeatCount;		/* 08 */
+    WORD	wVirtualKeyCode;	/* 0A */
+    WORD	wVirtualScanCode;	/* 0C */
+    union				/* 0E */
 	{
-	WCHAR UniCodeChar;
-	CHAR AsciiChar;
+	WCHAR UniCodeChar;		/* 0E */
+	CHAR AsciiChar;			/* 0E */
 	} uChar;
-    DWORD	dwControlKeyState;
+    DWORD	dwControlKeyState;	/* 10 */
 } KEY_EVENT_RECORD,*LPKEY_EVENT_RECORD;
+
+/* dwControlKeyState bitmask */
+#define	RIGHT_ALT_PRESSED	0x0001
+#define	LEFT_ALT_PRESSED	0x0002
+#define	RIGHT_CTRL_PRESSED	0x0004
+#define	LEFT_CTRL_PRESSED	0x0008
+#define	SHIFT_PRESSED		0x0010
+#define	NUMLOCK_ON		0x0020
+#define	SCROLLLOCK_ON		0x0040
+#define	CAPSLOCK_ON		0x0080
+#define	ENHANCED_KEY		0x0100
 
 typedef struct tagMOUSE_EVENT_RECORD
 {
@@ -105,7 +121,7 @@ typedef struct tagFOCUS_EVENT_RECORD
 
 typedef struct tagINPUT_RECORD
 {
-    WORD		EventType;
+    WORD		EventType;		/* 00 */
     union
 	{
 	KEY_EVENT_RECORD KeyEvent;
@@ -115,5 +131,12 @@ typedef struct tagINPUT_RECORD
 	FOCUS_EVENT_RECORD FocusEvent;
 	} Event;
 } INPUT_RECORD,*LPINPUT_RECORD;
+
+/* INPUT_RECORD.wEventType */
+#define KEY_EVENT			0x01
+#define MOUSE_EVENT			0x02
+#define WINDOW_BUFFER_SIZE_EVENT	0x04
+#define MENU_EVENT			0x08
+#define FOCUS_EVENT 			0x10
 
 #endif  /* __WINE_WINCON_H */
