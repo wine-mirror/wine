@@ -139,6 +139,5 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
             FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);
             return 1;
     }
-    FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);
     return 0;
 }
