@@ -12,18 +12,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "callback.h"
 #include "windows.h"
-#include "miscemu.h"
-#include "dosexe.h"
-#include "vga.h"
 #include "selectors.h"
 #include "sig_context.h"
+#include "miscemu.h"
 #include "debug.h"
 
 typedef struct
 {
-    FARPROC16 callback;  /* NULL if not in use */
+    SYSTEMTIMERPROC callback;  /* NULL if not in use */
     INT32     rate;
     INT32     ticks;
 } SYSTEM_TIMER;
@@ -35,14 +32,9 @@ static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
 static int SYS_NbTimers = 0;
 static BOOL32 SYS_TimersDisabled = FALSE;
 
+
 /***********************************************************************
  *           SYSTEM_TimerTick
- * FIXME: It is a very bad idea to call 16bit code in a signal handler:
- *	  If the signal reached us in 16 bit code, we could have a broken
- *	  %FS, which is in turned saved into the single global
- *	  CALLTO16_Current_fs temporary storage, so a single misplaced
- *	  signal crashes the whole WINE process.
- *	  This needs more thought. -MM
  */
 static HANDLER_DEF(SYSTEM_TimerTick)
 {
@@ -55,17 +47,7 @@ static HANDLER_DEF(SYSTEM_TimerTick)
         if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
         {
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
-
-	    if (SYS_Timers[i].callback == (FARPROC16)DOSMEM_Tick) {
-	    	DOSMEM_Tick();
-	    } else
-	    if (SYS_Timers[i].callback == (FARPROC16)MZ_Tick) {
-	    	MZ_Tick(i+1);
-	    } else
-	    if (SYS_Timers[i].callback == (FARPROC16)VGA_Poll) {
-	    	VGA_Poll();
-	    } else
-		Callbacks->CallSystemTimerProc( SYS_Timers[i].callback );
+            SYS_Timers[i].callback( i+1 );
         }
     }
 }
@@ -146,20 +128,9 @@ DWORD WINAPI InquireSystem( WORD code, WORD arg )
 /***********************************************************************
  *           CreateSystemTimer   (SYSTEM.2)
  */
-WORD WINAPI CreateSystemTimer( WORD rate, FARPROC16 callback )
+WORD WINAPI CreateSystemTimer( WORD rate, SYSTEMTIMERPROC callback )
 {
     int i;
-
-    /* FIXME: HACK: do not create system timers due to problems mentioned
-     * above, except DOSMEM_Tick(), MZ_Tick(), and VGA_Poll().
-     */
-    if ((callback!=(FARPROC16)DOSMEM_Tick)&&
-        (callback!=(FARPROC16)MZ_Tick)&&
-        (callback!=(FARPROC16)VGA_Poll)) {
-    	FIXME(system,"are currently broken, returning 0.\n");
-    	return 0;
-    }
-
     for (i = 0; i < NB_SYS_TIMERS; i++)
         if (!SYS_Timers[i].callback)  /* Found one */
         {

@@ -121,14 +121,6 @@ static WORD WINAPI CALLBACK_CallLocalNotifyFunc( FARPROC16 proc,
 
 
 /**********************************************************************
- *	     CALLBACK_CallSystemTimerProc
- */
-static void WINAPI CALLBACK_CallSystemTimerProc( FARPROC16 proc )
-{
-    proc();
-}
-
-/**********************************************************************
  *	     CALLBACK_CallResourceHandlerProc
  */
 static HGLOBAL16 WINAPI CALLBACK_CallResourceHandlerProc( FARPROC16 proc,
@@ -274,7 +266,6 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
     CALLBACK_CallBootAppProc,         /* CallBootAppProc */
     CALLBACK_CallLoadAppSegProc,      /* CallLoadAppSegProc */
     CALLBACK_CallLocalNotifyFunc,     /* CallLocalNotifyFunc */
-    CALLBACK_CallSystemTimerProc,     /* CallSystemTimerProc */
     CALLBACK_CallResourceHandlerProc, /* CallResourceHandlerProc */
     NULL,                             /* CallPostAppMessageProc */
     CALLBACK_CallWOWCallbackProc,     /* CallWOWCallbackProc */

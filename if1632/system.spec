@@ -2,7 +2,7 @@ name	system
 type	win16
 
 1 pascal   InquireSystem(word word) InquireSystem
-2 pascal16 CreateSystemTimer(word segptr) CreateSystemTimer
+2 pascal16 CreateSystemTimer(word segptr) WIN16_CreateSystemTimer
 3 pascal16 KillSystemTimer(word) SYSTEM_KillSystemTimer
 4 pascal16 EnableSystemTimers() EnableSystemTimers
 5 pascal16 DisableSystemTimers() DisableSystemTimers

@@ -157,7 +157,6 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_word_ww,              /* CallBootAppProc */
     (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
     (void *)CallTo16_word_www,             /* CallLocalNotifyFunc */
-    (void *)CallTo16_word_,                /* CallSystemTimerProc */
     (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
     (void *)CallTo16_word_wwwl,            /* CallPostAppMessageProc */
     (void *)CallTo16_long_l,               /* CallWOWCallbackProc */
@@ -814,6 +813,42 @@ void WINAPI WIN16_keybd_event( CONTEXT *context )
                  dwFlags, MAKELONG(SI_reg(context), DI_reg(context)) );
 }
 
+
+/***********************************************************************
+ *           WIN16_CreateSystemTimer   (SYSTEM.2)
+ */
+static void CALLBACK THUNK_CallSystemTimerProc( FARPROC16 proc, WORD timer )
+{
+    CONTEXT context;
+    memset( &context, '\0', sizeof(context) );
+
+    CS_reg( &context ) = SELECTOROF( proc );
+    IP_reg( &context ) = OFFSETOF( proc );
+    BP_reg( &context ) = OFFSETOF( THREAD_Current()->cur_stack )
+                         + (WORD)&((STACK16FRAME*)0)->bp;
+
+    AX_reg( &context ) = timer;
+
+    CallTo16_sreg_( &context, 0 ); 
+
+    /* FIXME: This does not work if the signal occurs while some thread
+              is currently in 16-bit code. With the current structure
+              of the Wine thunking code, this seems to be hard to fix ... */
+}
+WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
+{
+    THUNK *thunk = THUNK_Alloc( proc, (RELAY)THUNK_CallSystemTimerProc );
+    WORD timer = 0;
+
+#if 1
+    FIXME(system,"are currently broken, returning 0.\n");
+#else
+    timer = CreateSystemTimer( rate, (SYSTEMTIMERPROC)thunk );
+#endif
+
+    if (!timer) THUNK_Free( thunk );
+    return timer;
+}
 
 
 /***********************************************************************

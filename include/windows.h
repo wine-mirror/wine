@@ -6585,6 +6585,8 @@ typedef const DLGITEMTEMPLATE *LPCDLGITEMTEMPLATE;
 /* Declarations for functions that exist only in Win16 */
 
 #ifdef __WINE__
+typedef VOID (*SYSTEMTIMERPROC)(WORD);
+
 WORD        WINAPI AllocCStoDSAlias(WORD);
 WORD        WINAPI AllocDStoCSAlias(WORD);
 HGLOBAL16   WINAPI AllocResource(HINSTANCE16,HRSRC16,DWORD);
@@ -6595,7 +6597,7 @@ VOID        WINAPI CascadeChildWindows(HWND16,WORD);
 INT16       WINAPI CloseComm(INT16);
 HGLOBAL16   WINAPI CreateCursorIconIndirect(HINSTANCE16,CURSORICONINFO*,
                                             LPCVOID,LPCVOID);
-WORD        WINAPI CreateSystemTimer(WORD,FARPROC16);
+WORD        WINAPI CreateSystemTimer(WORD,SYSTEMTIMERPROC);
 BOOL16      WINAPI DCHook(HDC16,WORD,DWORD,LPARAM);
 VOID        WINAPI DirectedYield(HTASK16);
 HGLOBAL16   WINAPI DirectResAlloc(HINSTANCE16,WORD,UINT16);
