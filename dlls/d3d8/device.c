@@ -3028,7 +3028,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : returning %p for stage %ld\n", This, This->UpdateStateBlock->textures[Stage], Stage);
     *ppTexture = (LPDIRECT3DBASETEXTURE8) This->UpdateStateBlock->textures[Stage];
-    IDirect3DBaseTexture8Impl_AddRef(*ppTexture);
+    if (*ppTexture)
+        IDirect3DBaseTexture8Impl_AddRef(*ppTexture);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage, IDirect3DBaseTexture8* pTexture) {
