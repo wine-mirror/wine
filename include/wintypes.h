@@ -138,6 +138,7 @@ typedef INT32          *LPINT32;
 typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
 typedef FLOAT          *LPFLOAT;
+typedef BOOL32         *LPBOOL32;
 
 /* Special case: a segmented pointer is just a pointer in the user's code. */
 

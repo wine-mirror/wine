@@ -52,6 +52,12 @@ static const BYTE STRING_Ansi2Oem[256] =
 #define OEM_TO_ANSI(ch) (STRING_Oem2Ansi[(unsigned char)(ch)])
 #define ANSI_TO_OEM(ch) (STRING_Ansi2Oem[(unsigned char)(ch)])
 
+/* Internaly used by strchr family functions */
+static BOOL32 ChrCmpA( WORD word1, WORD word2);
+static BOOL32 ChrCmpW( WORD word1, WORD word2);
+
+extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
+
 
 /***********************************************************************
  *           hmemcpy   (KERNEL.348)
@@ -663,3 +669,98 @@ INT32 WINAPI LocalToWideChar32(
 	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
   return lstrlen32W(pWide);
 }
+
+
+/***********************************************************************
+ *           lstrrchr   (Not a Windows API)
+ *
+ * This is the implementation meant to be invoked form within
+ * COMCTL32_StrRChrA and shell32(TODO)...
+ *
+ * Return a pointer to the last occurence of wMatch in lpStart
+ * not looking further than lpEnd...
+ */
+LPSTR WINAPI lstrrchr( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
+{
+  LPCSTR lpGotIt = NULL;
+
+  TRACE(string,"(%s, %s)\n", lpStart, lpEnd);
+
+  if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
+
+  for(; lpStart < lpEnd; lpStart = CharNext32A(lpStart)) 
+    if (!ChrCmpA( GET_WORD(lpStart), wMatch)) 
+      lpGotIt = lpStart;
+    
+  return ((LPSTR)lpGotIt);
+}
+
+/***********************************************************************
+ *           lstrrchrw    (Not a Windows API)
+ *
+ * This is the implementation meant to be invoked form within
+ * COMCTL32_StrRChrW and shell32(TODO)...
+ *
+ * Return a pointer to the last occurence of wMatch in lpStart
+ * not looking further than lpEnd...
+ */  
+LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
+{
+  LPCWSTR lpGotIt = NULL;
+
+  TRACE(string,"(%p, %p, %c)\n", lpStart,      lpEnd, wMatch);
+  if (!lpEnd) lpEnd = lpStart + lstrlen32W(lpStart);
+
+  for(; lpStart < lpEnd; lpStart = CharNext32W(lpStart)) 
+    if (!ChrCmpW( GET_WORD(lpStart), wMatch)) 
+      lpGotIt = lpStart;
+    
+  return (LPWSTR)lpGotIt;
+}
+
+/***********************************************************************
+ *           strstrw   (Not a Windows API)
+ *
+ * This is the implementation meant to be invoked form within
+ * COMCTL32_StrStrW and shell32(TODO)...
+ *
+ */
+LPWSTR WINAPI strstrw( LPCWSTR lpFirst, LPCWSTR lpSrch) {
+  UINT32 uSrchLen  = (UINT32)lstrlen32W(lpSrch);
+  WORD wMatchBeg   = *(WORD*)lpSrch;
+
+  TRACE(string,"(%p, %p)\n", lpFirst,  lpSrch);
+
+  for(; 
+    ((lpFirst=CRTDLL_wcschr(lpFirst, wMatchBeg))!=0) && 
+      lstrncmp32W(lpFirst, lpSrch, uSrchLen); 
+    lpFirst++) {
+      continue;
+  }
+  return (LPWSTR)lpFirst;
+}
+
+
+/***********************************************************************
+ *           ChrCmpA   
+ * This fuction returns FALSE if both words match, TRUE otherwise...
+ */
+static BOOL32 ChrCmpA( WORD word1, WORD word2) {
+  if (LOBYTE(word1) == LOBYTE(word2)) {
+    if (IsDBCSLeadByte32(LOBYTE(word1))) {
+      return (word1 != word2);
+    }
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/***********************************************************************
+ *           ChrCmpW   
+ * This fuction returns FALSE if both words match, TRUE otherwise...
+ */
+static BOOL32 ChrCmpW( WORD word1, WORD word2) {
+  return (word1 != word2);
+}
+
+

@@ -24,12 +24,12 @@ init	COMCTL32_LibMain
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
  17 stdcall InitCommonControls() InitCommonControls
  18 stub CreatePropertySheetPage
- 19 stub CreatePropertySheetPageA
- 20 stub CreatePropertySheetPageW
+ 19 stdcall CreatePropertySheetPageA(ptr) CreatePropertySheetPage32A
+ 20 stdcall CreatePropertySheetPageW(ptr) CreatePropertySheetPage32W
  21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32AW
  22 stdcall CreateStatusWindowW(long wstr long long) CreateStatusWindow32W
  23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
- 24 stub DestroyPropertySheetPage
+ 24 stdcall DestroyPropertySheetPage(long) DestroyPropertySheetPage32
  25 stdcall DllGetVersion(ptr) COMCTL32_DllGetVersion
  26 stub DllInstall
  27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32AW
@@ -89,8 +89,8 @@ init	COMCTL32_LibMain
  81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
  82 stub InitializeFlatSB
  83 stub PropertySheet
- 84 stub PropertySheetA
- 85 stub PropertySheetW
+ 84 stdcall PropertySheetA(ptr) PropertySheet32A
+ 85 stdcall PropertySheetW(ptr) PropertySheet32W
  86 stub UninitializeFlatSB
  87 stub _TrackMouseEvent
 
@@ -138,20 +138,20 @@ init	COMCTL32_LibMain
 342 stdcall SendNotifyEx(long long long ptr long) COMCTL32_SendNotifyEx
 
 350 stdcall StrChrA(str str) COMCTL32_StrChrA
-351 stub StrRChrA
-352 stub StrCmpNA
+351 stdcall StrRChrA(str str long) COMCTL32_StrRChrA
+352 stdcall StrCmpNA(str str long) COMCTL32_StrCmpNA
 353 stub StrCmpNIA
-354 stub StrStrA
+354 stdcall StrStrA(str str) COMCTL32_StrStrA
 355 stdcall StrStrIA(str str) COMCTL32_StrStrIA
-356 stub StrCSpnA
+356 stdcall StrCSpnA(str str) COMCTL32_StrCSpnA
 357 stdcall StrToIntA(str) COMCTL32_StrToIntA
-358 stub StrChrW
-359 stub StrRChrW
-360 stub StrCmpNW
+358 stdcall StrChrW(wstr long) COMCTL32_StrChrW
+359 stdcall StrRChrW(wstr wstr long) COMCTL32_StrRChrW
+360 stdcall StrCmpNW(wstr wstr long) COMCTL32_StrCmpNW
 361 stub StrCmpNIW
-362 stub StrStrW
+362 stdcall StrStrW(wstr wstr) COMCTL32_StrStrW
 363 stub StrStrIW
-364 stub StrSpnW
+364 stdcall StrSpnW(wstr wstr) COMCTL32_StrSpnW
 365 stub StrToIntW
 366 stub StrChrIA
 367 stub StrChrIW

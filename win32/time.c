@@ -138,3 +138,16 @@ BOOL32 WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime) {
 	DOSFS_UnixTimeToFileTime(time(NULL),systemtimeAsfiletime,0);
 }
+
+/***********************************************************************
+ *              SystemTimeToTzSpecificLocalTime32  (KERNEL32.683)
+ */
+BOOL32 WINAPI SystemTimeToTzSpecificLocalTime32(
+  LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+  LPSYSTEMTIME lpUniversalTime,
+  LPSYSTEMTIME lpLocalTime) {
+
+  FIXME(win32, ":stub\n"); 
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+       return FALSE;
+}

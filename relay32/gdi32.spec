@@ -2,7 +2,7 @@ name	gdi32
 type	win32
 init	MAIN_GdiInit
 
-  0 stub AbortDoc
+  0 stdcall AbortDoc(long) AbortDoc32
   1 stdcall AbortPath(long) AbortPath32
   2 stdcall AddFontResourceA(str) AddFontResource32A
   3 stub AddFontResourceTracking
@@ -10,7 +10,7 @@ init	MAIN_GdiInit
   5 stub AngleArc
   6 stdcall AnimatePalette(long long long ptr) AnimatePalette32
   7 stdcall Arc(long long long long long long long long long) Arc32
-  8 stub ArcTo
+  8 stdcall ArcTo(long long long long long long long long long) ArcTo32
   9 stdcall BeginPath(long) BeginPath32
  10 stdcall BitBlt(long long long long long long long long long) BitBlt32
  11 stub CancelDC
@@ -43,8 +43,8 @@ init	MAIN_GdiInit
  38 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap32
  39 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn32
  40 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
- 41 stdcall CreateEnhMetaFileA(long ptr ptr ptr) CreateEnhMetaFile32A
- 42 stub CreateEnhMetaFileW
+ 41 stdcall CreateEnhMetaFileA(long str ptr str) CreateEnhMetaFile32A
+ 42 stdcall CreateEnhMetaFileW(long wstr ptr wstr) CreateEnhMetaFile32W
  43 stdcall CreateFontA(long long long long long long long long long long long long long str) CreateFont32A
  44 stdcall CreateFontIndirectA(ptr) CreateFontIndirect32A
  45 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
@@ -54,7 +54,7 @@ init	MAIN_GdiInit
  49 stdcall CreateICA(str str str ptr) CreateIC32A
  50 stdcall CreateICW(wstr wstr wstr ptr) CreateIC32W
  51 stdcall CreateMetaFileA(str) CreateMetaFile32A
- 52 stub CreateMetaFileW
+ 52 stdcall CreateMetaFileW(wstr) CreateMetaFile32W
  53 stdcall CreatePalette(ptr) CreatePalette32
  54 stdcall CreatePatternBrush(long) CreatePatternBrush32
  55 stdcall CreatePen(long long long) CreatePen32
@@ -182,7 +182,7 @@ init	MAIN_GdiInit
 177 stdcall GetEnhMetaFileDescriptionW(long long ptr) GetEnhMetaFileDescription32W
 178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader
 179 stdcall GetEnhMetaFilePaletteEntries (long long ptr) GetEnhMetaFilePaletteEntries
-180 stub GetEnhMetaFileW
+180 stdcall GetEnhMetaFileW(wstr) GetEnhMetaFile32W
 181 stdcall GetFontData(long long long ptr long) GetFontData32
 182 stdcall GetFontLanguageInfo(long) GetFontLanguageInfo32
 183 stub GetFontResourceInfo
@@ -210,7 +210,7 @@ init	MAIN_GdiInit
 205 stdcall GetObjectType(long) GetObjectType
 206 stdcall GetObjectW(long long ptr) GetObject32W
 207 stdcall GetOutlineTextMetricsA(long long ptr) GetOutlineTextMetrics32A
-208 stub GetOutlineTextMetricsW
+208 stdcall GetOutlineTextMetricsW(long long ptr) GetOutlineTextMetrics32W
 209 stdcall GetPaletteEntries(long long long ptr) GetPaletteEntries32
 210 stdcall GetPath(long ptr ptr long) GetPath32
 211 stdcall GetPixel(long long long) GetPixel32
@@ -243,7 +243,7 @@ init	MAIN_GdiInit
 238 stub GetTransform
 239 stdcall GetViewportExtEx(long ptr) GetViewportExtEx32
 240 stdcall GetViewportOrgEx(long ptr) GetViewportOrgEx32
-241 stub GetWinMetaFileBits
+241 stdcall GetWinMetaFileBits(long long ptr long long) GetWinMetaFileBits
 242 stdcall GetWindowExtEx(long ptr) GetWindowExtEx32
 243 stdcall GetWindowOrgEx(long ptr) GetWindowOrgEx32
 244 stdcall GetWorldTransform(long ptr) GetWorldTransform
@@ -254,7 +254,7 @@ init	MAIN_GdiInit
 249 stdcall LineTo(long long long) LineTo32
 250 stub LoadImageColorMatcherA
 251 stub LoadImageColorMatcherW
-252 stub MaskBlt
+252 stdcall MaskBlt(long long long long long long long long long long long long) MaskBlt32
 253 stdcall ModifyWorldTransform(long ptr long) ModifyWorldTransform
 254 stdcall MoveToEx(long long long ptr) MoveToEx32
 255 stdcall OffsetClipRgn(long long long) OffsetClipRgn32
@@ -279,7 +279,7 @@ init	MAIN_GdiInit
 274 stub PolyTextOutW
 275 stdcall Polygon(long ptr long) Polygon32
 276 stdcall Polyline(long ptr long) Polyline32
-277 stub PolylineTo
+277 stdcall PolylineTo(long ptr long) PolylineTo32
 278 stdcall PtInRegion(long long long) PtInRegion32
 279 stdcall PtVisible(long long long) PtVisible32
 280 stdcall RealizePalette(long) RealizePalette32
@@ -309,7 +309,7 @@ init	MAIN_GdiInit
 304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
 305 stdcall SetBkColor(long long) SetBkColor32
 306 stdcall SetBkMode(long long) SetBkMode32
-307 stub SetBoundsRect
+307 stdcall SetBoundsRect(long ptr long) SetBoundsRect32
 308 stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
 309 stub SetColorAdjustment
 310 stub SetColorSpace
@@ -350,7 +350,7 @@ init	MAIN_GdiInit
 345 stdcall SetWindowOrgEx(long long long ptr) SetWindowOrgEx32
 346 stdcall SetWorldTransform(long ptr) SetWorldTransform
 347 stdcall StartDocA(long ptr) StartDoc32A
-348 stub StartDocW
+348 stdcall StartDocW(long ptr) StartDoc32W
 349 stdcall StartPage(long) StartPage32 
 350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt32
 351 stdcall StretchDIBits(long long long long long long long long long ptr ptr long long) StretchDIBits32

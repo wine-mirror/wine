@@ -224,7 +224,7 @@ init	Shell32LibMain
  216 stub ExtractVersionResource16W   # exported by name
  217 stub FindExeDlgProc   # exported by name
  218 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A   # exported by name
- 219 stub FindExecutableW   # exported by name
+ 219 stdcall FindExecutableW(wstr wstr wstr) FindExecutable32W   # exported by name
  220 stdcall FreeIconList(long) FreeIconList   # exported by name
  221 stub InternalExtractIconListA   # exported by name
  222 stub InternalExtractIconListW   # exported by name
@@ -300,7 +300,7 @@ init	Shell32LibMain
  291 stdcall ShellExecuteEx (long) ShellExecuteEx32
  292 stdcall ShellExecuteExA (long) ShellExecuteEx32A
  293 stdcall ShellExecuteExW (long) ShellExecuteEx32W
- 294 stub ShellExecuteW
+ 294 stdcall ShellExecuteW (long wstr wstr wstr wstr long) ShellExecute32W
  295 stub ShellHookProc   # exported by name
  296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
  297 stdcall Shell_NotifyIconA(long ptr) Shell_NotifyIconA

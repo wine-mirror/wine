@@ -145,6 +145,38 @@ HCONV WINAPI DdeQueryNextServer32( HCONVLIST hConvList, HCONV hConvPrev )
     return 0;
 }
 
+/*****************************************************************
+ * DdeQueryString32A [USER32.113]
+ */
+DWORD WINAPI DdeQueryString32A(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT32 iCodePage)
+{
+    FIXME(ddeml,
+         "(%ld, 0x%lx, %p, %ld, %d): stub\n",
+         idInst,
+         hsz,
+         psz, 
+         cchMax,
+         iCodePage);
+
+    return 0;
+}
+
+/*****************************************************************
+ * DdeQueryString32W [USER32.114]
+ */
+DWORD WINAPI DdeQueryString32W(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, INT32 iCodePage)
+{
+    FIXME(ddeml,
+         "(%ld, 0x%lx, %p, %ld, %d): stub\n",
+         idInst,
+         hsz,
+         psz, 
+         cchMax,
+         iCodePage);
+
+    return 0;
+}
+
 
 /*****************************************************************
  *            DdeDisconnectList (DDEML.6)
@@ -211,14 +243,38 @@ BOOL16 WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser )
 }
 
 /*****************************************************************
- *            DdeCreateDataHandle (DDEML.14)
+ *            DdeCreateDataHandle16 (DDEML.14)
  */
-HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, 
+HDDEDATA WINAPI DdeCreateDataHandle16( DWORD idInst, LPBYTE pSrc, DWORD cb, 
                                      DWORD cbOff, HSZ hszItem, UINT16 wFmt, 
                                      UINT16 afCmd )
 {
-    FIXME( ddeml, "(%ld,%p,%ld,%ld,%ld,%d,%d): stub\n",idInst,pSrc,cb,cbOff,
-           hszItem, wFmt, afCmd );
+    return DdeCreateDataHandle32(idInst,
+                                pSrc,
+                                cb,
+                                cbOff,
+                                hszItem,
+                                wFmt,
+                                afCmd);
+}
+
+/*****************************************************************
+ *            DdeCreateDataHandle32 (USER32.94)
+ */
+HDDEDATA WINAPI DdeCreateDataHandle32( DWORD idInst, LPBYTE pSrc, DWORD cb, 
+                                       DWORD cbOff, HSZ hszItem, UINT32 wFmt, 
+                                       UINT32 afCmd )
+{
+    FIXME( ddeml,
+          "(%ld,%p,%ld,%ld,0x%lx,%d,%d): stub\n",
+          idInst,
+          pSrc,
+          cb,
+          cbOff,
+           hszItem,
+          wFmt, 
+          afCmd );
+
     return 0;
 }
 
@@ -448,29 +504,55 @@ DWORD WINAPI DdeGetData16(
 
 
 /*****************************************************************
- *            DdeAccessData (DDEML.17)
+ *            DdeAccessData16 (DDEML.17)
  */
-LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
+LPBYTE WINAPI DdeAccessData16( HDDEDATA hData, LPDWORD pcbDataSize )
 {
-     FIXME( ddeml, "empty stub\n" );
+     return DdeAccessData32(hData, pcbDataSize);
+}
+
+/*****************************************************************
+ *            DdeAccessData32 (USER32.88)
+ */
+LPBYTE WINAPI DdeAccessData32( HDDEDATA hData, LPDWORD pcbDataSize )
+{
+     FIXME( ddeml, "(%ld,%p): stub\n", hData, pcbDataSize);
      return 0;
 }
 
 /*****************************************************************
- *            DdeUnaccessData (DDEML.18)
+ *            DdeUnaccessData16 (DDEML.18)
  */
-BOOL16 WINAPI DdeUnaccessData( HDDEDATA hData )
+BOOL16 WINAPI DdeUnaccessData16( HDDEDATA hData )
 {
-     FIXME( ddeml, "empty stub\n" );
+     return DdeUnaccessData32(hData);
+}
+
+/*****************************************************************
+ *            DdeUnaccessData32 (USER32.118)
+ */
+BOOL32 WINAPI DdeUnaccessData32( HDDEDATA hData )
+{
+     FIXME( ddeml, "(0x%lx): stub\n", hData);
+
      return 0;
 }
 
 /*****************************************************************
- *            DdeEnableCallback (DDEML.26)
+ *            DdeEnableCallback16 (DDEML.26)
  */
-BOOL16 WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT16 wCmd )
+BOOL16 WINAPI DdeEnableCallback16( DWORD idInst, HCONV hConv, UINT16 wCmd )
 {
-     FIXME( ddeml, "empty stub\n" );
+     return DdeEnableCallback32(idInst, hConv, wCmd);
+}
+
+/*****************************************************************
+ *            DdeEnableCallback32 (USER32.99)
+ */
+BOOL32 WINAPI DdeEnableCallback32( DWORD idInst, HCONV hConv, UINT32 wCmd )
+{
+     FIXME( ddeml, "(%ld, 0x%lx, %d) stub\n", idInst, hConv, wCmd);
+
      return 0;
 }
 
@@ -531,11 +613,19 @@ UINT32 WINAPI DdeGetLastError32( DWORD idInst )
 
 
 /*****************************************************************
- *            DdeCmpStringHandles (DDEML.36)
+ *            DdeCmpStringHandles16 (DDEML.36)
  */
-int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
+int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
 {
-     FIXME( ddeml, "empty stub\n" );
+     return DdeCmpStringHandles32(hsz1, hsz2);
+}
+
+/*****************************************************************
+ *            DdeCmpStringHandles32 (USER32.91)
+ */
+int WINAPI DdeCmpStringHandles32( HSZ hsz1, HSZ hsz2 )
+{
+     FIXME( ddeml, "(0x%lx, 0x%lx): stub\n", hsz1, hsz2 );
      return 0;
 }
 

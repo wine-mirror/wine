@@ -196,6 +196,23 @@ HDC32 WINAPI CreateMetaFile32A(
   return CreateMetaFile16( filename );
 }
 
+/**********************************************************************
+ *          CreateMetaFile32W   (GDI32.52)
+ */
+HDC32 WINAPI CreateMetaFile32W(LPCWSTR filename)
+{
+    LPSTR filenameA;
+    HDC32 hReturnDC;
+
+    filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+
+    hReturnDC = CreateMetaFile32A(filenameA);
+
+    HeapFree( GetProcessHeap(), 0, filenameA );
+
+    return hReturnDC;
+}
+
 static DC *METAFILE_CloseMetaFile( HDC32 hdc ) 
 {
     DC *dc;
@@ -310,8 +327,8 @@ BOOL32 WINAPI DeleteMetaFile32(
 
 **********************************************************************/
 
-/*
-  need wide version as well
+/**********************************************************************
+ *          CreateEnhMetaFile32A   (GDI32.41)
 */
 HDC32 WINAPI CreateEnhMetaFile32A( 
     HDC32 hdc, /* optional reference DC */
@@ -351,7 +368,43 @@ HDC32 WINAPI CreateEnhMetaFile32A(
     TRACE(metafile, "returning %04x\n", dc->hSelf);
     return dc->hSelf;
 #endif
+
+    FIXME(metafile,
+         "(0x%lx,%s,%p,%s): stub\n",
+         hdc,
+         filename,
+         rect,
+         description);
+
     return 0;
+}
+
+/**********************************************************************
+ *          CreateEnhMetaFile32W   (GDI32.42)
+ */
+HDC32 WINAPI CreateEnhMetaFile32W(
+    HDC32         hdc,        /* optional reference DC */
+    LPCWSTR       filename,   /* optional filename for disk metafiles */
+    const RECT32* rect,       /* optional bounding rectangle */
+    LPCWSTR       description /* optional description */ 
+    )
+{
+    LPSTR filenameA;
+    LPSTR descriptionA;
+    HDC32 hReturnDC;
+
+    filenameA    = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    descriptionA = HEAP_strdupWtoA( GetProcessHeap(), 0, description );
+
+    hReturnDC = CreateEnhMetaFile32A(hdc,
+                                    filenameA,
+                                    rect,
+                                    descriptionA);
+
+    HeapFree( GetProcessHeap(), 0, filenameA );
+    HeapFree( GetProcessHeap(), 0, descriptionA );
+
+    return hReturnDC;
 }
 
 HENHMETAFILE32 WINAPI CloseEnhMetaFile32( 

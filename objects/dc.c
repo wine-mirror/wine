@@ -1250,3 +1250,12 @@ UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
     return DCB_RESET | DCB_DISABLE; /* bounding rectangle always empty and disabled*/
 }
 
+/***********************************************************************
+ *           SetBoundsRect32    (GDI32.307)
+ */
+UINT32 WINAPI SetBoundsRect32(HDC32 hdc, const RECT32* rect, UINT32 flags)
+{
+    FIXME(dc, "(): stub\n");
+    return DCB_DISABLE;   /* bounding rectangle always empty */
+}
+

@@ -126,6 +126,43 @@ BOOL32 WINAPI Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
     	   dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
+/***********************************************************************
+ *           ArcTo32    (GDI32.8)
+ */
+BOOL32 WINAPI ArcTo32( HDC32 hdc, 
+                      INT32 left,   INT32 top, 
+                      INT32 right,  INT32 bottom,
+                      INT32 xstart, INT32 ystart,
+                      INT32 xend,   INT32 yend )
+{
+    BOOL32 result;
+
+    /*
+     * According to the documentation, a line is drawn from the current
+     * position to the starting point of the arc.
+     */
+    LineTo32(hdc, xstart, ystart);
+
+    /*
+     * Then the arc is drawn.
+     */
+    result = Arc32(hdc, 
+                  left, top,
+                  right, bottom,
+                  xstart, ystart,
+                  xend, yend);
+
+    /*
+     * If no error occured, the current position is moved to the ending
+     * point of the arc.
+     */
+    if (result)
+    {
+        MoveToEx32(hdc, xend, yend, NULL);
+    }
+
+    return result;
+}
 
 /***********************************************************************
  *           Pie16    (GDI.26)
@@ -1144,3 +1181,32 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
     return ret;
 }
 
+
+/*************************************************************************
+ * StartDoc32W [GDI32.348]
+ * 
+ */
+INT32 WINAPI 
+StartDoc32W(HDC32 hdc ,const DOCINFO32W* doc) {
+  FIXME(gdi,"stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+  return 0; /* failure*/
+}
+
+/******************************************************************************
+ *                 PolylineTo32      [GDI32.277]
+ */
+BOOL32 WINAPI PolylineTo32(HDC32 hdc, const POINT32 *lppt, DWORD cCount)
+{
+    FIXME(gdi, "(%d,%p,%ld): stub\n", hdc, lppt, cCount);
+    return 1;
+}
+
+/******************************************************************************
+ *                 AbortDoc32        [GDI32.0]
+ */
+INT32 WINAPI AbortDoc32(HDC32 hdc)
+{
+    FIXME(gdi, "(%d): stub\n", hdc);
+    return 1;
+}

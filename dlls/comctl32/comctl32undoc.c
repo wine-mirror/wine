@@ -25,6 +25,15 @@
 
 extern HANDLE32 COMCTL32_hHeap; /* handle to the private heap */
 
+/*
+ * We put some function prototypes here that don't seem to belong in
+ * any header file. When they find their place, we can remove them.
+ */
+extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR, WCHAR);
+extern LPSTR WINAPI lstrrchr(LPCSTR, LPCSTR, WORD);
+extern LPWSTR WINAPI lstrrchrw(LPCWSTR, LPCWSTR, WORD);
+extern LPWSTR WINAPI strstrw(LPCWSTR, LPCWSTR);
+
 
 /**************************************************************************
  * DPA_Merge [COMCTL32.11]
@@ -1780,4 +1789,88 @@ DSA_DestroyCallback (const HDSA hdsa, DSAENUMPROC enumProc, LPARAM lParam)
 
     return DSA_Destroy (hdsa);
 }
+
+/**************************************************************************
+ * StrCSpnA [COMCTL32.356]
+ *
+ */
+INT32 WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
+  return strcspn(lpStr, lpSet);
+}
+
+/**************************************************************************
+ * StrChrW [COMCTL32.358]
+ *
+ */
+LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
+  return CRTDLL_wcschr(lpStart, wMatch);
+}
+
+/**************************************************************************
+ * StrCmpNA [COMCTL32.352]
+ *
+ */
+INT32 WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
+  return lstrncmp32A(lpStr1, lpStr2, nChar);
+}
+
+/**************************************************************************
+ * StrCmpNW [COMCTL32.360]
+ *
+ */
+INT32 WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
+  return lstrncmp32W(lpStr1, lpStr2, nChar);
+}
+
+/**************************************************************************
+ * StrRChrA [COMCTL32.351]
+ *
+ */
+LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch) {
+  return lstrrchr(lpStart, lpEnd, wMatch); 
+}
+
+/**************************************************************************
+ * StrRChrW [COMCTL32.359]
+ *
+ */
+LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch) {
+  return lstrrchrw(lpStart, lpEnd, wMatch); 
+}
+
+/**************************************************************************
+ * StrStrA [COMCTL32.354]
+ *
+ */
+LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
+  return strstr(lpFirst, lpSrch);
+}
+
+/**************************************************************************
+ * StrStrW [COMCTL32.362]
+ *
+ */
+LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
+  return strstrw(lpFirst, lpSrch);
+}
+
+/**************************************************************************
+ * StrSpnW [COMCTL32.364]
+ *
+ */
+INT32 WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
+  LPWSTR lpLoop = lpStr;
+
+  /* validate ptr */
+  if ((lpStr == 0) || (lpSet == 0)) return 0;
+
+/* while(*lpLoop) { if lpLoop++; } */
+
+  for(; (*lpLoop != 0); lpLoop++)
+    if( CRTDLL_wcschr(lpSet, *(WORD*)lpLoop))
+      return (INT32)(lpLoop-lpStr);
+  
+  return (INT32)(lpLoop-lpStr);
+}
+
 

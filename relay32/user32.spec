@@ -2,7 +2,7 @@ name	user32
 type	win32
 init	MAIN_UserInit
 
-  1 stub ActivateKeyboardLayout
+  1 stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout32
   2 stdcall AdjustWindowRect(ptr long long) AdjustWindowRect32
   3 stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx32
   4 stdcall AnyPopup() AnyPopup32
@@ -89,18 +89,18 @@ init	MAIN_UserInit
  85 stub CreateWindowStationA
  86 stdcall CreateWindowStationW(wstr long long ptr) CreateWindowStation32W
  87 stub DdeAbandonTransaction
- 88 stub DdeAccessData
+ 88 stdcall DdeAccessData(long ptr) DdeAccessData32
  89 stub DdeAddData
  90 stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction32
- 91 stub DdeCmpStringHandles
+ 91 stdcall DdeCmpStringHandles(long long) DdeCmpStringHandles32
  92 stdcall DdeConnect(long long long ptr) DdeConnect32
  93 stdcall DdeConnectList(long long long long ptr) DdeConnectList32
- 94 stub DdeCreateDataHandle
+ 94 stdcall DdeCreateDataHandle(long ptr long long long long long) DdeCreateDataHandle32
  95 stdcall DdeCreateStringHandleA(long str long) DdeCreateStringHandle32A
  96 stdcall DdeCreateStringHandleW(long wstr long) DdeCreateStringHandle32W
  97 stdcall DdeDisconnect(long) DdeDisconnect32
  98 stdcall DdeDisconnectList(long) DdeDisconnectList32
- 99 stub DdeEnableCallback
+ 99 stdcall DdeEnableCallback(long long long) DdeEnableCallback32
 100 stdcall DdeFreeDataHandle(long) DdeFreeDataHandle32
 101 stdcall DdeFreeStringHandle(long long) DdeFreeStringHandle32
 102 stdcall DdeGetData(long ptr long long) DdeGetData32
@@ -114,12 +114,12 @@ init	MAIN_UserInit
 110 stdcall DdePostAdvise(long long long) DdePostAdvise32
 111 stub DdeQueryConvInfo
 112 stdcall DdeQueryNextServer(long long) DdeQueryNextServer32
-113 stub DdeQueryStringA
-114 stub DdeQueryStringW
+113 stdcall DdeQueryStringA(long long ptr long long) DdeQueryString32A
+114 stdcall DdeQueryStringW(long long ptr long long) DdeQueryString32W
 115 stdcall DdeReconnect(long) DdeReconnect
 116 stub DdeSetQualityOfService
 117 stub DdeSetUserHandle
-118 stub DdeUnaccessData
+118 stdcall DdeUnaccessData(long) DdeUnaccessData32
 119 stdcall DdeUninitialize(long) DdeUninitialize32
 120 stdcall DefDlgProcA(long long long long) DefDlgProc32A
 121 stdcall DefDlgProcW(long long long long) DefDlgProc32W
@@ -164,7 +164,7 @@ init	MAIN_UserInit
 160 stdcall DrawIconEx(long long long long long long long long long) DrawIconEx32
 161 stdcall DrawMenuBar(long) DrawMenuBar32
 162 stdcall DrawStateA(long long ptr long long long long long long long) DrawState32A
-163 stub DrawStateW
+163 stdcall DrawStateW(long long ptr long long long long long long long) DrawState32W
 164 stdcall DrawTextA(long str long ptr long) DrawText32A
 165 stdcall DrawTextExA(long str long ptr long ptr) DrawTextEx32A
 166 stdcall DrawTextExW(long wstr long ptr long ptr) DrawTextEx32W
@@ -368,8 +368,8 @@ init	MAIN_UserInit
 364 stdcall LoadIconW(long wstr) LoadIcon32W
 365 stdcall LoadImageA(long str long long long long) LoadImage32A
 366 stdcall LoadImageW(long wstr long long long long) LoadImage32W
-367 stub LoadKeyboardLayoutA
-368 stub LoadKeyboardLayoutW
+367 stdcall LoadKeyboardLayoutA(str long) LoadKeyboardLayout32A
+368 stdcall LoadKeyboardLayoutW(wstr long) LoadKeyboardLayout32W
 369 stdcall LoadLocalFonts() LoadLocalFonts
 370 stdcall LoadMenuA(long str) LoadMenu32A
 371 stdcall LoadMenuIndirectA(ptr) LoadMenuIndirect32A
@@ -462,7 +462,7 @@ init	MAIN_UserInit
 458 stdcall SendMessageTimeoutW(long long long long ptr ptr) SendMessageTimeout32W
 459 stdcall SendMessageW(long long long long) SendMessage32W
 460 stdcall SendNotifyMessageA(long long long long) SendNotifyMessage32A
-461 stub SendNotifyMessageW
+461 stdcall SendNotifyMessageW(long long long long) SendNotifyMessage32W
 462 stub ServerSetFunctionPointers
 463 stdcall SetActiveWindow(long) SetActiveWindow32
 464 stdcall SetCapture(long) SetCapture32
@@ -549,7 +549,7 @@ init	MAIN_UserInit
 545 stdcall TileWindows(long long ptr long ptr) TileWindows
 546 stdcall ToAscii(long long ptr ptr long) ToAscii32
 547 stub ToAsciiEx
-548 stub ToUnicode
+548 stdcall ToUnicode(long long ptr wstr long long) ToUnicode32
 549 stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu32
 550 stdcall TrackPopupMenuEx(long long long long long ptr) TrackPopupMenuEx
 551 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator32

@@ -1020,7 +1020,17 @@ UINT32 WINAPI GetOutlineTextMetrics32A(
     return rtn;
 }
 
-
+/***********************************************************************
+ *           GetOutlineTextMetrics32W [GDI32.208]
+ */
+UINT32 WINAPI GetOutlineTextMetrics32W(
+    HDC32 hdc,    /* [in]  Handle of device context */
+    UINT32 cbData, /* [in]  Size of metric data array */
+    LPOUTLINETEXTMETRIC32W lpOTM)  /* [out] Address of metric data array */
+{
+    FIXME(font, "(%d,%d,%p): stub\n", hdc, cbData, lpOTM);
+    return 0; 
+}
 
 /***********************************************************************
  *           GetCharWidth16    (GDI.350)

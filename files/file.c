@@ -3,6 +3,10 @@
  *
  * Copyright 1993 John Burton
  * Copyright 1996 Alexandre Julliard
+ *
+ * TODO:
+ *    Fix the CopyFileEx methods to implement the "extented" functionality.
+ *    Right now, they simply call the CopyFile method.
  */
 
 #include <assert.h>
@@ -2001,6 +2005,60 @@ BOOL32 WINAPI CopyFile32W( LPCWSTR source, LPCWSTR dest, BOOL32 fail_if_exists)
     BOOL32 ret = CopyFile32A( sourceA, destA, fail_if_exists );
     HeapFree( GetProcessHeap(), 0, sourceA );
     HeapFree( GetProcessHeap(), 0, destA );
+    return ret;
+}
+
+
+/**************************************************************************
+ *           CopyFileEx32A   (KERNEL32.858)
+ *
+ * This implementation ignores most of the extra parameters passed-in into
+ * the "ex" version of the method and calls the CopyFile method.
+ * It will have to be fixed eventually.
+ */
+BOOL32 WINAPI CopyFileEx32A(LPCSTR             sourceFilename,
+                           LPCSTR             destFilename,
+                           LPPROGRESS_ROUTINE progressRoutine,
+                           LPVOID             appData,
+                           LPBOOL32           cancelFlagPointer,
+                           DWORD              copyFlags)
+{
+  BOOL32 failIfExists = FALSE;
+
+  /*
+   * Interpret the only flag that CopyFile can interpret.
+   */
+  if ( (copyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0)
+  {
+    failIfExists = TRUE;
+  }
+
+  return CopyFile32A(sourceFilename, destFilename, failIfExists);
+}
+
+/**************************************************************************
+ *           CopyFileEx32W   (KERNEL32.859)
+ */
+BOOL32 WINAPI CopyFileEx32W(LPCWSTR            sourceFilename,
+                           LPCWSTR            destFilename,
+                           LPPROGRESS_ROUTINE progressRoutine,
+                           LPVOID             appData,
+                           LPBOOL32           cancelFlagPointer,
+                           DWORD              copyFlags)
+{
+    LPSTR sourceA = HEAP_strdupWtoA( GetProcessHeap(), 0, sourceFilename );
+    LPSTR destA   = HEAP_strdupWtoA( GetProcessHeap(), 0, destFilename );
+
+    BOOL32 ret = CopyFileEx32A(sourceA,
+                              destA,
+                              progressRoutine,
+                              appData,
+                              cancelFlagPointer,
+                              copyFlags);
+
+    HeapFree( GetProcessHeap(), 0, sourceA );
+    HeapFree( GetProcessHeap(), 0, destA );
+
     return ret;
 }
 

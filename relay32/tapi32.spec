@@ -53,7 +53,7 @@ type	win32
  50 stub    linePark
  51 stub    linePickup
  52 stub    linePrepareAddToConference
- 53 stub    lineRedirect
+ 53 stdcall lineRedirect(long ptr long) lineRedirect32
  54 stub    lineRegisterRequestRecipient
  55 stub    lineReleaseUserUserInfo
  56 stub    lineRemoveFromConference
@@ -113,5 +113,5 @@ type	win32
 110 stub    phoneShutdown
 111 stub    tapiGetLocationInfo
 112 stub    tapiRequestDrop
-113 stub    tapiRequestMakeCall
+113 stdcall tapiRequestMakeCall(str str str str) tapiRequestMakeCall32
 114 stub    tapiRequestMediaCall

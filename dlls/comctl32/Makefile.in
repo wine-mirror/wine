@@ -20,6 +20,7 @@ C_SRCS = \
 	nativefont.c \
 	pager.c \
 	progress.c \
+	propsheet.c \
 	rebar.c \
 	status.c \
 	tab.c \

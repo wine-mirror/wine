@@ -791,6 +791,17 @@ HKL32 WINAPI GetKeyboardLayout(DWORD dwLayout)
         return layout;
 }
 
+/**********************************************************************
+ *           ActivateKeyboardLayout32      (USER32.1)
+ */
+HKL32 WINAPI ActivateKeyboardLayout32(HKL32 hLayout, UINT32 flags)
+{
+    FIXME(keyboard, "(%d, %d): stub\n", hLayout, flags);
+
+    return 0;
+}
+
+
 /***********************************************************************
  *           GetKeyboardLayoutList		(USER32.251)
  * FIXME
@@ -820,3 +831,36 @@ BOOL32 WINAPI UnregisterHotKey(HWND32 hwnd,INT32 id) {
 	return TRUE;
 }
 
+
+/***********************************************************************
+ *           ToUnicode32                       (USER32.548)
+ */
+INT32 WINAPI ToUnicode32(
+  UINT32 wVirtKey,
+  UINT32 wScanCode,
+  PBYTE  lpKeyState,
+  LPWSTR pwszBuff,
+  int    cchBuff,
+  UINT32 wFlags) {
+
+       FIXME(keyboard,": stub\n");
+       return 0;
+}
+
+/***********************************************************************
+ *           LoadKeyboardLayout32A                (USER32.367)
+ */
+HKL32 WINAPI LoadKeyboardLayout32A(LPCSTR pwszKLID, UINT32 Flags)
+{
+  FIXME(keyboard, "%s, %d): stub\n", pwszKLID, Flags);
+  return 0; 
+}
+
+/***********************************************************************
+ *           LoadKeyboardLayout32W                (USER32.368)
+ */
+HKL32 WINAPI LoadKeyboardLayout32W(LPCWSTR pwszKLID, UINT32 Flags)
+{
+  FIXME(keyboard, "%p, %d): stub\n", pwszKLID, Flags);
+  return 0;
+}

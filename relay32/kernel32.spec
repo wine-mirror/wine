@@ -585,6 +585,7 @@ init	MAIN_KernelInit
 567 register RaiseException() RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
 569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInput32A
+570 stdcall ReadConsoleInputW(long ptr long ptr) ReadConsoleInput32W 
 570 stub ReadConsoleInputW
 571 stub ReadConsoleOutputA
 572 stub ReadConsoleOutputAttribute
@@ -698,7 +699,7 @@ init	MAIN_KernelInit
 680 stdcall SleepEx(long long) SleepEx
 681 stdcall SuspendThread(long) SuspendThread
 682 stdcall SystemTimeToFileTime(ptr ptr) SystemTimeToFileTime
-683 stub SystemTimeToTzSpecificLocalTime
+683 stdcall SystemTimeToTzSpecificLocalTime (ptr ptr ptr) SystemTimeToTzSpecificLocalTime32
 684 stdcall TerminateProcess(long long) TerminateProcess
 685 stdcall TerminateThread(long long) TerminateThread
 686 stub Thread32First
@@ -722,8 +723,8 @@ init	MAIN_KernelInit
 704 stdcall UnlockFile(long long long long long) UnlockFile
 705 stub UnlockFileEx
 706 stdcall UnmapViewOfFile(ptr) UnmapViewOfFile
-707 stub UpdateResourceA
-708 stub UpdateResourceW
+707 stdcall UpdateResourceA(long str str long ptr long) UpdateResource32A
+708 stdcall UpdateResourceW(long wstr wstr long ptr long) UpdateResource32W
 709 stdcall VerLanguageNameA(long str long) VerLanguageName32A
 710 stdcall VerLanguageNameW(long wstr long) VerLanguageName32W
 711 stdcall VirtualAlloc(ptr long long long) VirtualAlloc
@@ -874,8 +875,8 @@ init	MAIN_KernelInit
 # NT 4.0 additions
 856 stub CancelIo
 857 stub CancelWaitableTimer
-858 stub CopyFileExA
-859 stub CopyFileExW
+858 stdcall CopyFileExA (str str ptr ptr ptr long) CopyFileEx32A
+859 stdcall CopyFileExW (wstr wstr ptr ptr ptr long) CopyFileEx32W
 860 stub CreateFiber
 861 stub CreateWaitableTimerA
 862 stub CreateWaitableTimerW

@@ -951,7 +951,6 @@ typedef struct _DEBUG_EVENT {
 #define IDCLOSE             8
 #define IDHELP              9      
 
-
 typedef struct
 {
     HWND16    hwnd;
@@ -2391,6 +2390,11 @@ typedef struct
 #define SEM_NOGPFAULTERRORBOX       0x0002
 #define SEM_NOALIGNMENTFAULTEXCEPT  0x0004
 #define SEM_NOOPENFILEERRORBOX      0x8000
+
+/* CopyFileEx flags */
+#define COPY_FILE_FAIL_IF_EXISTS        0x00000001
+#define COPY_FILE_RESTARTABLE           0x00000002
+#define COPY_FILE_OPEN_SOURCE_FOR_WRITE 0x00000004
 
 /* GetTempFileName() Flags */
 #define TF_FORCEDRIVE	        0x80
@@ -6580,6 +6584,14 @@ typedef struct tagDLGITEMTEMPLATE
 }DLGITEMTEMPLATE, *LPDLGITEMTEMPLATE;
 typedef const DLGITEMTEMPLATE *LPCDLGITEMTEMPLATE;
 
+/*
+ * This one seems to be a Win32 only definition. It also is defined with
+ * WINAPI instead of CALLBACK in the windows headers.
+ */
+typedef DWORD (WINAPI *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER, 
+                                           LARGE_INTEGER, DWORD, DWORD, HANDLE32,
+                                           HANDLE32, LPVOID);
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -6764,6 +6776,9 @@ HENHMETAFILE32 WINAPI CopyEnhMetaFile32W(HENHMETAFILE32,LPCWSTR);
 BOOL32      WINAPI CopyFile32A(LPCSTR,LPCSTR,BOOL32);
 BOOL32      WINAPI CopyFile32W(LPCWSTR,LPCWSTR,BOOL32);
 #define     CopyFile WINELIB_NAME_AW(CopyFile)
+BOOL32      WINAPI CopyFileEx32A(LPCSTR, LPCSTR, LPPROGRESS_ROUTINE, LPVOID, LPBOOL32, DWORD);
+BOOL32      WINAPI CopyFileEx32W(LPCWSTR, LPCWSTR, LPPROGRESS_ROUTINE, LPVOID, LPBOOL32, DWORD);
+#define     CopyFileEx WINELIB_NAME_AW(CopyFileEx)
 INT32       WINAPI CompareFileTime(LPFILETIME,LPFILETIME);
 BOOL32      WINAPI ControlService(HANDLE32,DWORD,LPSERVICE_STATUS);
 HANDLE32    WINAPI CreateEvent32A(LPSECURITY_ATTRIBUTES,BOOL32,BOOL32,LPCSTR);
@@ -6986,6 +7001,9 @@ BOOL32      WINAPI IsDBCSLeadByteEx(UINT32,BYTE);
 BOOL32      WINAPI IsProcessorFeaturePresent(DWORD);
 BOOL32      WINAPI IsWindowUnicode(HWND32);
 BOOL32      WINAPI IsValidLocale(DWORD,DWORD);
+HKL32       WINAPI LoadKeyboardLayout32A(LPCSTR,UINT32);
+HKL32       WINAPI LoadKeyboardLayout32W(LPCWSTR,UINT32);
+#define     LoadKeyboardLayout WINELIB_NAME_AW(LoadKeyboardLayout)
 BOOL32      WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 BOOL32      WINAPI LockFile(HFILE32,DWORD,DWORD,DWORD,DWORD);
 BOOL32      WINAPI LookupPrivilegeValue32A(LPCSTR,LPCSTR,LPVOID);

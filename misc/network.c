@@ -761,3 +761,64 @@ DWORD WINAPI NPSGetProviderHandle32A(DWORD x) {
 	FIXME(mpr,"(0x%08lx),stub!\n",x);
 	return 0;
 }
+
+/*****************************************************************
+ *  WNetCancelConnection232A [MPR.53]
+ */
+DWORD WINAPI WNetCancelConnection232A(
+  LPCSTR lpName, 
+  DWORD dwFlags, 
+  BOOL32 fForce) {
+
+  FIXME(wnet,": stub\n");
+  return WN_SUCCESS;
+}
+
+/*****************************************************************
+ *  WNetCancelConnection232W [MPR.54]
+ */
+DWORD WINAPI WNetCancelConnection232W(
+  LPCWSTR lpName, 
+  DWORD dwFlags, 
+  BOOL32 fForce) {
+
+  FIXME(wnet,": stub\n");
+  return WN_SUCCESS;
+}
+
+/*****************************************************************
+ *  WNetCancelConnection32A [MPR.55]
+ */
+DWORD WINAPI WNetCancelConnection32A(
+  LPCSTR lpName, 
+  DWORD dwFlags, 
+  BOOL32 fForce) {
+
+  FIXME(wnet,": stub\n");
+  return WN_SUCCESS;
+}
+
+/*****************************************************************
+ *  WNetCancelConnection32W [MPR.56]
+ */
+DWORD WINAPI WNetCancelConnection32W(
+  LPCWSTR lpName, 
+  DWORD dwFlags, 
+  BOOL32 fForce) {
+
+  FIXME(wnet,": stub\n");
+  return WN_SUCCESS;
+}
+
+/*****************************************************************
+ *  WNetGetUser32W [MPR.87]
+ */
+DWORD WINAPI WNetGetUser32W(
+  LPCWSTR  lpName,
+  LPWSTR   lpUserName,
+  LPDWORD  lpnLength) {
+
+  FIXME(wnet,": stub\n");
+       SetLastError(WN_NO_NETWORK);
+  return WN_NO_NETWORK;
+}

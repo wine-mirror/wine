@@ -1068,6 +1068,17 @@ UINT32 WINAPI GetMetaFileBitsEx(
   return MIN(nSize, h->mtSize);
 }
 
+/******************************************************************
+ *         GetWinMetaFileBits [GDI32.241]
+ */
+UINT32 WINAPI GetWinMetaFileBits(HENHMETAFILE32 hemf,
+                                UINT32 cbBuffer, LPBYTE lpbBuffer,
+                                INT32 fnMapMode, HDC32 hdcRef)
+{
+  FIXME(metafile, "(%d,%d,%p,%d,%d): stub\n",
+        hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
+  return 0;
+}
 
 /******************************************************************
  *         MF_Meta_CreateRegion

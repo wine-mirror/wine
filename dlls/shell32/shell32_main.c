@@ -287,6 +287,16 @@ HINSTANCE32 WINAPI FindExecutable32A( LPCSTR lpFile, LPCSTR lpDirectory,
     return retval;
 }
 
+/*************************************************************************
+ *             FindExecutable32W   (SHELL32.219)
+ */
+HINSTANCE32 WINAPI FindExecutable32W(LPCWSTR lpFile, LPCWSTR lpDirectory,
+                                     LPWSTR lpResult)
+{
+  FIXME(shell, "(%p,%p,%p): stub\n", lpFile, lpDirectory, lpResult);
+  return 31;    /* default - 'No association was found' */
+}
+
 typedef struct
 { LPCSTR  szApp;
     LPCSTR  szOtherStuff;
@@ -649,6 +659,29 @@ HINSTANCE32 WINAPI ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation,
     return ShellExecute16( hWnd, lpOperation, lpFile, lpParameters,
                            lpDirectory, iShowCmd );
 }
+
+/*************************************************************************
+ * ShellExecute32W [SHELL32.294]
+ * from shellapi.h
+ * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, 
+ * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);   
+ */
+HINSTANCE32 WINAPI 
+ShellExecute32W(
+       HWND32 hwnd, 
+       LPCWSTR lpOperation, 
+       LPCWSTR lpFile, 
+       LPCWSTR lpParameters, 
+       LPCWSTR lpDirectory, 
+       INT32 nShowCmd) {
+
+       FIXME(shell,": stub\n");
+       return 0;
+}
+
+
+
+
 
 
 /*************************************************************************

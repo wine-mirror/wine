@@ -22,6 +22,7 @@
 #include "debug.h"
 #include "flatthunk.h"
 #include "syslevel.h"
+#include "winerror.h"
 
 
 /***********************************************************************
@@ -1103,4 +1104,39 @@ REGS_ENTRYPOINT(K32Thk1632Epilog)
                    EBP_reg(context), ESP_reg(context), thdb->cur_stack);
    }
 }
+
+/***********************************************************************
+ *           UpdateResource32A                 (KERNEL32.707)
+ */
+BOOL32 WINAPI UpdateResource32A(
+  HANDLE32  hUpdate,
+  LPCSTR  lpType,
+  LPCSTR  lpName,
+  WORD    wLanguage,
+  LPVOID  lpData,
+  DWORD   cbData) {
+
+  FIXME(win32, ": stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/***********************************************************************
+ *           UpdateResource32W                 (KERNEL32.708)
+ */
+BOOL32 WINAPI UpdateResource32W(
+  HANDLE32  hUpdate,
+  LPCWSTR lpType,
+  LPCWSTR lpName,
+  WORD    wLanguage,
+  LPVOID  lpData,
+  DWORD   cbData) {
+
+  FIXME(win32, ": stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+
+
 

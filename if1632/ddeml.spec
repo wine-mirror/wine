@@ -14,11 +14,11 @@ type	win16
             DdeClientTransaction16
 12 pascal DdeAbandonTransaction(long word long) DdeAbandonTransaction
 13 pascal DdePostAdvise(long word word) DdePostAdvise16
-14 pascal DdeCreateDataHandle(long ptr long long word word word) DdeCreateDataHandle
+14 pascal DdeCreateDataHandle(long ptr long long word word word) DdeCreateDataHandle16
 15 pascal DdeAddData(word ptr long long) DdeAddData
 16 pascal DdeGetData(word ptr long long) DdeGetData16
-17 pascal DdeAccessData(word ptr) DdeAccessData
-18 pascal DdeUnaccessData(word) DdeUnaccessData
+17 pascal DdeAccessData(word ptr) DdeAccessData16
+18 pascal DdeUnaccessData(word) DdeUnaccessData16
 19 pascal16 DdeFreeDataHandle(long) DdeFreeDataHandle16
 20 pascal16 DdeGetLastError(long) DdeGetLastError16
 21 pascal   DdeCreateStringHandle(long str s_word) DdeCreateStringHandle16
@@ -26,8 +26,8 @@ type	win16
 23 stub DdeQueryString #(long word ptr long word) DdeQueryString
 24 pascal16 DdeKeepStringHandle(long long) DdeKeepStringHandle16
 
-26 pascal DdeEnableCallback(long word word) DdeEnableCallback
+26 pascal DdeEnableCallback(long word word) DdeEnableCallback16
 27 pascal   DdeNameService(long long long s_word) DdeNameService16
 
-36 pascal DdeCmpStringHandles(word word) DdeCmpStringHandles
+36 pascal DdeCmpStringHandles(word word) DdeCmpStringHandles16
 37 pascal   DdeReconnect(long) DdeReconnect

@@ -543,10 +543,6 @@ typedef struct
 
 typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
 
-/* FIXME; the next two lines are propersheet related, move to prsht.h when created */
-struct _PSP;
-typedef struct _PSP FAR* HPROPSHEETPAGE;
-
 typedef BOOL32 (CALLBACK FAR * LPFNADDPROPSHEETPAGE)(HPROPSHEETPAGE, LPARAM);
 typedef BOOL32 (CALLBACK FAR * LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE,LPARAM);
 

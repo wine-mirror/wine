@@ -43,8 +43,6 @@
 					   wrapped line, instead of in front of the next character */
 #define EF_USE_SOFTBRK		0x0100	/* Enable soft breaks in text. */
 
-typedef BOOL32 *LPBOOL32;
-
 typedef enum
 {
 	END_0 = 0,	/* line ends with terminating '\0' character */

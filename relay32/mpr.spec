@@ -53,10 +53,10 @@ type win32
 0050 stdcall WNetAddConnectionA(str str str) WNetAddConnection32A
 0051 stdcall WNetAddConnectionW(wstr wstr wstr) WNetAddConnection32W
 0052 stdcall WNetCachePassword(str long str long long) WNetCachePassword
-0053 stub WNetCancelConnection2A
-0054 stub WNetCancelConnection2W
-0055 stub WNetCancelConnectionA
-0056 stub WNetCancelConnectionW
+0053 stdcall WNetCancelConnection2A(str long long) WNetCancelConnection232A
+0054 stdcall WNetCancelConnection2W(wstr long long) WNetCancelConnection232W
+0055 stdcall WNetCancelConnectionA(str long) WNetCancelConnection32A
+0056 stdcall WNetCancelConnectionW(wstr long) WNetCancelConnection32W
 0057 stub WNetCloseEnum
 0058 stdcall WNetConnectionDialog1A(ptr) WNetConnectionDialog1_32A
 0059 stdcall WNetConnectionDialog1W(ptr) WNetConnectionDialog1_32W
@@ -87,7 +87,7 @@ type win32
 0084 stub WNetGetUniversalNameA
 0085 stub WNetGetUniversalNameW
 0086 stdcall WNetGetUserA(str ptr ptr) WNetGetUser32A
-0087 stub WNetGetUserW
+0087 stdcall WNetGetUserW(wstr wstr ptr) WNetGetUser32W
 0088 stub WNetLogoffA
 0089 stub WNetLogoffW
 0090 stub WNetLogonA

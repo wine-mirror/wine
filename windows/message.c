@@ -1981,6 +1981,17 @@ LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM l
 	}
 	return ret;
 }
+
+/***********************************************************************
+ *           SendNotifyMessage32W    (USER32.461)
+ */
+BOOL32 WINAPI SendNotifyMessage32W(HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
+                                   LPARAM lParam)
+{
+  FIXME(msg, "(%04x,%08x,%08x,%08lx): stub\n", hWnd, msg, wParam, lParam);
+  return 0; 
+}
+
 /***********************************************************************
  *           SendMessageCallBack32A
  * FIXME: It's like PostMessage. The callback gets called when the message

@@ -39,6 +39,16 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32A(
 }
 
 /*****************************************************************************
+ *          GetEnhMetaFile32W  (GDI32.180)
+ */
+HENHMETAFILE32 WINAPI GetEnhMetaFile32W(
+             LPCWSTR lpszMetaFile)  /* filename of enhanced metafile */ 
+{
+  FIXME(metafile, "(%p): stub\n", lpszMetaFile);
+  return NULL;
+}
+
+/*****************************************************************************
  *        GetEnhMetaFileHeader  (GDI32.178)
  *
  *  If _buf_ is NULL, returns the size of buffer required.

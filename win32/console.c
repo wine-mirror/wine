@@ -1077,7 +1077,7 @@ BOOL32 WINAPI ReadConsole32W( HANDLE32 hConsoleInput,
 
 
 /******************************************************************************
- * ReadConsoleInputA [KERNEL32.569]  Reads data from a console
+ * ReadConsoleInput32A [KERNEL32.569]  Reads data from a console
  *
  * PARAMS
  *    hConsoleInput        [I] Handle to console input buffer
@@ -1180,6 +1180,17 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
     return ret;
 }
 
+/***********************************************************************
+ *            ReadConsoleInput32W   (KERNEL32.570)
+ */
+BOOL32 WINAPI ReadConsoleInput32W(HANDLE32 hConsoleInput,
+                                LPINPUT_RECORD lpBuffer,
+                                DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+    FIXME(console, "(%d,%p,%ld,%p): stub\n",hConsoleInput, lpBuffer, nLength,
+          lpNumberOfEventsRead);
+    return 0;
+}
 
 /***********************************************************************
  *            FlushConsoleInputBuffer   (KERNEL32.132)

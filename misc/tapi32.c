@@ -40,3 +40,37 @@ UINT32 WINAPI lineNegotiateAPIVersion(
     *lpdwAPIVersion = dwAPIHighVersion;
     return 0;
 }
+
+/*************************************************************************
+ * lineRedirect32 [TAPI32.53]
+ * 
+ */
+LONG WINAPI lineRedirect32(
+  HANDLE32* hCall,
+  LPCSTR lpszDestAddress,
+  DWORD  dwCountryCode) {
+
+  FIXME(comm, ": stub.\n");
+  return -1;
+/*  return LINEERR_OPERATIONFAILED; */
+}
+
+/*************************************************************************
+ * tapiRequestMakeCall32 [TAPI32.113]
+ * 
+ */
+LONG WINAPI tapiRequestMakeCall32(
+  LPCSTR lpszDestAddress,
+  LPCSTR lpszAppName,
+  LPCSTR lpszCalledParty,
+  LPCSTR lpszComment) {
+
+  FIXME(comm, ": stub.\n");
+  return -1;
+/*  return TAPIERR_REQUESTQUEUEFULL; */
+}
+
+
+
+
+
