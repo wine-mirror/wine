@@ -38,6 +38,9 @@
 #include "request.h"
 #include "user.h"
 
+#define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
+#define WM_NCMOUSELAST  WM_NCMBUTTONDBLCLK
+
 enum message_kind { SEND_MESSAGE, POST_MESSAGE };
 #define NB_MSG_KINDS (POST_MESSAGE+1)
 
@@ -322,6 +325,21 @@ inline static void clear_queue_bits( struct msg_queue *queue, unsigned int bits 
 inline static int is_keyboard_msg( struct message *msg )
 {
     return (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST);
+}
+
+/* check whether a message filter contains at least one potential hardware message */
+inline static int filter_contains_hw_range( unsigned int first, unsigned int last )
+{
+    /* hardware message ranges are (in numerical order):
+     *   WM_NCMOUSEFIRST .. WM_NCMOUSELAST
+     *   WM_KEYFIRST .. WM_KEYLAST
+     *   WM_MOUSEFIRST .. WM_MOUSELAST
+     */
+    if (last < WM_NCMOUSEFIRST) return 0;
+    if (first > WM_NCMOUSELAST && last < WM_KEYFIRST) return 0;
+    if (first > WM_KEYLAST && last < WM_MOUSEFIRST) return 0;
+    if (first > WM_MOUSELAST) return 0;
+    return 1;
 }
 
 /* get the QS_* bit corresponding to a given hardware message */
@@ -1515,7 +1533,8 @@ DECL_HANDLER(get_message)
         return;
 
     /* then check for any raw hardware message */
-    if (get_hardware_message( current, req->get_next_hw, first_hw_msg, get_win, reply ))
+    if (filter_contains_hw_range( req->get_first, req->get_last ) &&
+        get_hardware_message( current, req->get_next_hw, first_hw_msg, get_win, reply ))
         return;
 
     /* now check for WM_PAINT */
