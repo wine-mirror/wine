@@ -330,6 +330,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       break;
     case SAVE_DIALOG :
       fodInfos->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
+      ofn->Flags &= ~OFN_FILEMUSTEXIST;
       ret = GetFileName95(fodInfos);
       break;
     default :
@@ -403,6 +404,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   BOOL ret;
   FileOpenDlgInfos *fodInfos;
   HINSTANCE hInstance;
+  LPSTR lpstrSavDir = NULL;
 
   /* out arguments */
   LPWSTR lpstrFile = NULL;
@@ -444,7 +446,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
     len = WideCharToMultiByte( CP_ACP, 0, ofn->lpstrFilter, n, NULL, 0, NULL, NULL );
     y = (LPSTR)MemAlloc(len);
     WideCharToMultiByte( CP_ACP, 0, ofn->lpstrFilter, n, y, len, NULL, NULL );
-    (LPSTR)ofn->lpstrFilter = y;
+    ofn->lpstrFilter = (LPWSTR)y;
   }
 
   /* convert lpstrCustomFilter */
@@ -463,7 +465,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
     len = WideCharToMultiByte( CP_ACP, 0, ofn->lpstrCustomFilter, n, NULL, 0, NULL, NULL );
     y = (LPSTR)MemAlloc(len);
     WideCharToMultiByte( CP_ACP, 0, ofn->lpstrCustomFilter, n, y, len, NULL, NULL );
-    (LPSTR)ofn->lpstrCustomFilter = y;
+    ofn->lpstrCustomFilter = (LPWSTR)y;
   }
 
   /* convert string arguments, save others */
@@ -472,9 +474,20 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   AllocInArgWtoA(ofn->lpstrInitialDir, lpstrInitialDir);
   AllocInArgWtoA(ofn->lpstrTitle, lpstrTitle);
   AllocInArgWtoA(ofn->lpstrDefExt, lpstrDefExt);
-  AllocInArgWtoA(ofn->lpTemplateName, lpTemplateName);
+  if(HIWORD(ofn->lpTemplateName)) {
+       AllocInArgWtoA(ofn->lpTemplateName, lpTemplateName);
+  }
+  else lpTemplateName = ofn->lpTemplateName;
+
   dwFlags = ofn->Flags;
   hInstance = ofn->hInstance;
+
+  /* save current directory */
+  if (ofn->Flags & OFN_NOCHANGEDIR)
+  {
+     lpstrSavDir = MemAlloc(MAX_PATH);
+     GetCurrentDirectoryA(MAX_PATH, lpstrSavDir);
+  }
 
   ofn->Flags = ofn->Flags|OFN_WINE|OFN_UNICODE;
   ofn->hInstance = MapHModuleLS(ofn->hInstance);
@@ -486,10 +499,17 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
       break;
   case SAVE_DIALOG :
       fodInfos->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
+      ofn->Flags &= ~OFN_FILEMUSTEXIST;
       ret = GetFileName95(fodInfos);
       break;
   default :
       ret = 0;
+  }
+
+  if (lpstrSavDir)
+  {
+      SetCurrentDirectoryA(lpstrSavDir);
+      MemFree(lpstrSavDir);
   }
 
   /* restore saved IN arguments and convert OUT arguments back */
@@ -502,8 +522,10 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   FreeInArg(ofn->lpstrInitialDir, lpstrInitialDir);
   FreeInArg(ofn->lpstrTitle, lpstrTitle);
   FreeInArg(ofn->lpstrDefExt, lpstrDefExt);
-  FreeInArg(ofn->lpTemplateName, lpTemplateName);
-
+  if(HIWORD(lpTemplateName)) {
+       FreeInArg(ofn->lpTemplateName, lpTemplateName);
+  }
+  else ofn->lpTemplateName = lpTemplateName;
   MemFree((LPVOID)(fodInfos));
   return ret;
 }
