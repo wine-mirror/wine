@@ -622,6 +622,7 @@ controls/Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
+dlls/avifil32/Makefile
 dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/imagehlp/Makefile

@@ -1,5 +1,6 @@
 SUBDIRS = \
 	advapi32 \
+	avifil32 \
 	comctl32 \
 	commdlg \
 	imagehlp \
