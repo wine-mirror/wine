@@ -274,6 +274,7 @@ static void KEYBOARD_Init(void)
     /* Now store one keycode for each modifier. Used to simulate keypresses. */
     kcControl = TSXKeysymToKeycode(display, XK_Control_L);
     kcAlt = TSXKeysymToKeycode(display, XK_Alt_L);
+    if (!kcAlt) kcAlt = TSXKeysymToKeycode(display, XK_Meta_L);
     kcShift = TSXKeysymToKeycode(display, XK_Shift_L);
     kcNumLock = TSXKeysymToKeycode(display, XK_Num_Lock);
     kcCapsLock = TSXKeysymToKeycode(display, XK_Caps_Lock);
