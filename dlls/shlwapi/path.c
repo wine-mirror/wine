@@ -3244,7 +3244,7 @@ HRESULT WINAPI PathCreateFromUrlA(LPCSTR lpszUrl, LPSTR lpszPath,
 HRESULT WINAPI PathCreateFromUrlW(LPCWSTR lpszUrl, LPWSTR lpszPath,
                                   LPDWORD pcchPath, DWORD dwFlags)
 {
-  static const WCHAR stemp[] = { 'f','i','l','e',':','/','/',0 };
+  static const WCHAR stemp[] = { 'f','i','l','e',':','/','/','/',0 };
   LPWSTR pwszPathPart;
   HRESULT hr;
 
@@ -3253,8 +3253,13 @@ HRESULT WINAPI PathCreateFromUrlW(LPCWSTR lpszUrl, LPWSTR lpszPath,
   if (!lpszUrl || !lpszPath || !pcchPath || !*pcchPath)
     return E_INVALIDARG;
 
+  /* Path of the form file:///... */
+  if (!strncmpW(lpszUrl, stemp, 8))
+  {
+    lpszUrl += 8;
+  }
   /* Path of the form file://... */
-  if (!strncmpW(lpszUrl, stemp, 7))
+  else if (!strncmpW(lpszUrl, stemp, 7))
   {
     lpszUrl += 7;
   }
