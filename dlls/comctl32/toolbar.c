@@ -227,7 +227,12 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
     /* separator */
     if (btnPtr->fsStyle & TBSTYLE_SEP) {
-	if ((dwStyle & TBSTYLE_FLAT) && (btnPtr->iBitmap == 0))
+        /* with the FLAT style, iBitmap is the width and has already */
+        /* been taken into consideration in calculating the width    */
+        /* so now we need to draw the vertical separator             */
+        /* empirical tests show that iBitmap can/will be non-zero    */
+        /* when drawing the vertical bar...      */
+        if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */)
 	    TOOLBAR_DrawFlatSeparator (&rc, hdc);
 	return;
     }
