@@ -24,7 +24,9 @@
 
 #include "wine/test.h"
 
-HDC desktopDC;
+static typeof(ImageList_DrawIndirect) * pImageList_DrawIndirect = NULL;
+
+static HDC desktopDC;
 
 static HIMAGELIST createImageList(cx, cy)
 {
@@ -233,6 +235,17 @@ static BOOL DoTest3(void)
     HDC hdc;
     HWND hwndfortest;
 
+    if (!pImageList_DrawIndirect)
+    {
+        HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+        pImageList_DrawIndirect = GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
+        if (!pImageList_DrawIndirect)
+        {
+            trace("ImageList_DrawIndirect not available, skipping test\n");
+            return TRUE;
+        }
+    }
+
     hwndfortest = create_a_window();
     hdc = GetDC(hwndfortest);
     ok(hdc!=NULL, "couldn't get DC\n");
@@ -262,25 +275,25 @@ static BOOL DoTest3(void)
 
     Rectangle(hdc, 100, 100, 74, 74);
     memset(&imldp, 0, sizeof imldp);
-    ok(!ImageList_DrawIndirect(&imldp), "zero data succeeded!");
+    ok(!pImageList_DrawIndirect(&imldp), "zero data succeeded!");
     imldp.cbSize = sizeof imldp;
-    ok(!ImageList_DrawIndirect(&imldp), "zero hdc succeeded!");
+    ok(!pImageList_DrawIndirect(&imldp), "zero hdc succeeded!");
     imldp.hdcDst = hdc;
-    ok(!ImageList_DrawIndirect(&imldp),"zero himl succeeded!");
+    ok(!pImageList_DrawIndirect(&imldp),"zero himl succeeded!");
     imldp.himl = himl;
-    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
     imldp.fStyle = SRCCOPY;
     imldp.rgbBk = CLR_DEFAULT;
     imldp.rgbFg = CLR_DEFAULT;
     imldp.y = 100;
     imldp.x = 100;
-    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
     imldp.i ++;
-    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
     imldp.i ++;
-    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    ok(pImageList_DrawIndirect(&imldp),"should succeeded");
     imldp.i ++;
-    ok(!ImageList_DrawIndirect(&imldp),"should fail");
+    ok(!pImageList_DrawIndirect(&imldp),"should fail");
 
     /* remove three */
     ok(ImageList_Remove(himl, 0), "removing 1st bitmap");
