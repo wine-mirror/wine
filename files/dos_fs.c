@@ -889,8 +889,8 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
  *             b) file does exist     -> set the short filename.
  * - trailing slashes are reproduced in the short name, even if the
  *   file is not a directory
- * - the absolute/relative path of the short name is reproduced in the 
- *    same way, like the long name
+ * - the absolute/relative path of the short name is reproduced like found
+ *   in the long name
  * - longpath and shortpath may have the same adress
  * Peter Ganten, 1999
  */
@@ -899,8 +899,11 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 {
     DOS_FULL_NAME full_name;
     LPSTR tmpshortpath;
-    DWORD length = 0, pos = 0;
-    INT start=-1, end=-1, tmplen;
+    DWORD sp = 0, lp = 0;
+    int tmplen, drive;
+    UINT flags;
+
+    TRACE("%s\n", longpath);
 
     if (!longpath) {
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -911,69 +914,60 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
       return 0;
     }
 
-    tmpshortpath = HeapAlloc( GetProcessHeap(), 0, MAX_PATHNAME_LEN );
-    if ( !tmpshortpath ) {
+    if ( ( tmpshortpath = HeapAlloc ( GetProcessHeap(), 0, MAX_PATHNAME_LEN ) ) == NULL ) {
       SetLastError ( ERROR_NOT_ENOUGH_MEMORY );
       return 0;
     }
 
-    /* Check for Drive-Letter */
+    /* check for drive letter */
     if ( longpath[1] == ':' ) {
-      lstrcpynA ( tmpshortpath, longpath, 3 );
-      length = 2;
-      pos = 2;
+      tmpshortpath[0] = longpath[0];
+      tmpshortpath[1] = ':';
+      sp = 2;
     }
 
-    /* loop over each part of the name */
-    while ( longpath[pos] ) {
+    if ( ( drive = DOSFS_GetPathDrive ( &longpath )) == -1 ) return 0;
+    flags = DRIVE_GetFlags ( drive );
 
-      if (( longpath[pos] == '\\' ) || 
-	  ( longpath[pos+1] == '\0' ) ||
-	  ( longpath[pos] == '/')) {
+    while ( longpath[lp] ) {
 
-	if ( start != -1 ) {
-	  if ( DOSFS_ValidDOSName ( longpath + start, TRUE )) {
-	    tmplen = end - start + ( (( longpath[pos] == '\\' ) || ( longpath[pos] == '/' )) ? 1 : 2 );
-	    lstrcpynA ( tmpshortpath+length, longpath+start, tmplen );
-	    length += tmplen - 1;
-	  }
-	  else {
-	    DOSFS_Hash ( longpath + start, tmpshortpath+length, FALSE, FALSE );
-	    length = lstrlenA ( tmpshortpath );
-
-	    /* Check if the path, up to this point exists */
-	    if ( !DOSFS_GetFullName ( tmpshortpath, TRUE, &full_name ) ) {
-	      SetLastError ( ERROR_FILE_NOT_FOUND );
-	      return 0;
-	    }
-
-	  }
-	}
-
-	if (( longpath[pos] == '\\' ) || ( longpath[pos] == '/' )) {
-	  tmpshortpath[length] = '\\';
-	  tmpshortpath[length+1]='\0';
-	  length++;
-	}
-	pos++;
-	
-	start = -1;
-	end = -1;
+      /* check for path delimiters and reproduce them */
+      if ( longpath[lp] == '\\' || longpath[lp] == '/' ) {
+	tmpshortpath[sp] = longpath[lp];
+	sp++;
+	lp++;
 	continue;
       }
 
-      if ( start == -1 ) {
-	start = pos;
+      tmplen = strcspn ( longpath + lp, "\\/" ); 
+      lstrcpynA ( tmpshortpath+sp, longpath + lp, tmplen+1 );
+      
+      /* Check, if the current element is a valid dos name */
+      if ( DOSFS_ValidDOSName ( longpath + lp, !(flags & DRIVE_CASE_SENSITIVE) ) ) {
+	sp += tmplen;
+	lp += tmplen;
+	continue;
       }
-      pos++;
-      end = pos;
+
+      /* Check if the file exists and use the existing file name */
+      if ( DOSFS_GetFullName ( tmpshortpath, TRUE, &full_name ) ) {
+	lstrcpyA ( tmpshortpath+sp, strrchr ( full_name.short_name, '\\' ) + 1 );
+	sp += lstrlenA ( tmpshortpath+sp );
+	lp += tmplen;
+	continue;
+      }
+
+      TRACE("not found!\n" );
+      SetLastError ( ERROR_FILE_NOT_FOUND );
+      return 0;
     }
-    
+
     lstrcpynA ( shortpath, tmpshortpath, shortlen );
-    length = lstrlenA ( tmpshortpath );
+    TRACE("returning %s\n", shortpath );
+    tmplen = lstrlenA ( tmpshortpath );
     HeapFree ( GetProcessHeap(), 0, tmpshortpath );
     
-    return length;
+    return tmplen;
 }
 
 
