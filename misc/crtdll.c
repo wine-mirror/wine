@@ -1911,6 +1911,25 @@ LPSTR  __cdecl CRTDLL__ltoa(long x,LPSTR buf,INT32 radix)
     return buf;
 }
 
+/*********************************************************************
+ *                  _ultoa           (CRTDLL.311)
+ */
+LPSTR  __cdecl CRTDLL__ultoa(long x,LPSTR buf,INT32 radix)
+{
+    switch(radix) {
+        case  2: FIXME(crtdll, "binary format not implemented !\n");
+                 break;
+        case  8: wsnprintf32A(buf,0x80,"%lo",x);
+                 break;
+        case 10: wsnprintf32A(buf,0x80,"%ld",x);
+                 break;
+        case 16: wsnprintf32A(buf,0x80,"%lx",x);
+                 break;
+        default: FIXME(crtdll, "radix %d not implemented !\n", radix);
+    }
+    return buf;
+}
+
 typedef VOID (*sig_handler_type)(VOID);
 
 /*********************************************************************
@@ -2052,12 +2071,4 @@ LPSTR __cdecl CRTDLL__strdate (LPSTR date)
 LPSTR __cdecl CRTDLL__strtime (LPSTR date)
 {	FIXME (crtdll,"%p stub\n", date);
 	return 0;
-}
-
-/*********************************************************************
- *                  _ultoa           (CRTDLL.311)
- */
-LPSTR __cdecl CRTDLL__ultoa(UINT32 x, LPSTR buf, INT32 buflen) {
-	wsnprintf32A(buf,buflen,"%d",x);
-	return buf;
 }
