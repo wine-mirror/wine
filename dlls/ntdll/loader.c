@@ -363,19 +363,16 @@ static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr, 
     if (status)
     {
         if (status == STATUS_DLL_NOT_FOUND)
-            ERR("Module (file) %s (which is needed by %s) not found\n",
+            ERR("Library %s (which is needed by %s) not found\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer));
         else
-            ERR("Loading module (file) %s (which is needed by %s) failed (error %lx).\n",
+            ERR("Loading library %s (which is needed by %s) failed (error %lx).\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer), status);
-        imp_mod = NULL;
-        exports = NULL;
+        return NULL;
     }
-    else
-    {
-        imp_mod = wmImp->ldr.BaseAddress;
-        exports = RtlImageDirectoryEntryToData( imp_mod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
-    }
+
+    imp_mod = wmImp->ldr.BaseAddress;
+    exports = RtlImageDirectoryEntryToData( imp_mod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
 
     if (!exports)
     {
