@@ -1,5 +1,9 @@
 /************************************************************
  *    IContextMenu
+ *
+ * Undocumented:
+ * word95 gets a IContextMenu Interface and calls HandleMenuMsg()
+ * whitch should only a member of IContextMenu2. 
  */
 
 #ifndef __WINE_WINE_OBJ_CONTEXTMENU_H

@@ -17,7 +17,10 @@ extern "C" {
 
 DEFINE_SHLGUID(IID_IExtractIconA,	0x000214EBL, 0, 0);
 DEFINE_SHLGUID(IID_IExtractIconW,	0x000214FAL, 0, 0);
+#define IID_IExtractIcon WINELIB_NAME_AW(IID_IExtractIcon)
+
 typedef struct IExtractIconA IExtractIconA,*LPEXTRACTICONA;
+#define LPEXTRACTICON WINELIB_NAME_AW(LPEXTRACTICON)
 
 /* GetIconLocation() input flags*/
 #define GIL_OPENICON     0x0001      /* allows containers to specify an "open" look */
@@ -47,8 +50,6 @@ ICOM_DEFINE(IExtractIconA,IUnknown)
 #define IExtractIconA_Release(p)		ICOM_CALL(Release,p)
 #define IExtractIconA_GetIconLocation(p,a,b,c,d,e)	ICOM_CALL5(GetIconLocation,p,a,b,c,d,e)
 #define IExtractIconA_Extract(p,a,b,c,d,e)	ICOM_CALL5(Extract,p,a,b,c,d,e)
-
-#define IExtractIcon        IExtractIconA 
 
 #ifdef __cplusplus
 } /* extern "C" */
