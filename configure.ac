@@ -419,12 +419,15 @@ if test "$ac_cv_header_unicode_ubidi_h" = "yes"
 then
     saved_libs="$LIBS"
     ICU_LIB_DIR="${ICU_LIB_DIR-/usr/lib}"
-    ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libicuuc.a}"
-    ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libicudata.a}"
+    ICUUC_LIB="${ICUUC_LIB-$ICU_LIB_DIR/libsicuuc.a}"
+    ICUDATA_LIB="${ICUDATA_LIB-$ICU_LIB_DIR/libsicudata.a}"
+    AC_MSG_CHECKING(whether can link with ICU libraries $ICUUC_LIB and $ICUDATA_LIB)
     LIBS="$LIBS $ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s"
     AC_TRY_LINK([#include <unicode/ubidi.h>],[ubidi_open()],
                 [AC_DEFINE(HAVE_ICU,1,[Define to 1 if the ICU libraries are installed])
-                 AC_SUBST(ICULIBS,"$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s")])
+                 AC_SUBST(ICULIBS,"$ICUUC_LIB $ICUDATA_LIB -lstdc++ -lgcc_s")
+                 AC_MSG_RESULT(yes)],
+                [AC_MSG_RESULT(no)])
     LIBS="$saved_libs"
 fi
 
