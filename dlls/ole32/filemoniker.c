@@ -281,6 +281,7 @@ HRESULT WINAPI FileMonikerImpl_Load(IMoniker* iface,IStream* pStm)
     /* read filePath string */
     filePathA=HeapAlloc(GetProcessHeap(),0,length);
     res=IStream_Read(pStm,filePathA,length,&bread);
+    HeapFree(GetProcessHeap(),0,filePathA);
     if (bread != length)
         return E_FAIL;
 
@@ -329,8 +330,6 @@ HRESULT WINAPI FileMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         HeapFree(GetProcessHeap(),0,This->filePathName);
 
     This->filePathName=filePathW;
-
-    HeapFree(GetProcessHeap(),0,filePathA);
 
     return res;
 }
@@ -1030,6 +1029,7 @@ HRESULT WINAPI FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
     IMoniker_IsSystemMoniker(pmkOther,&mkSys);
 
     if(mkSys==MKSYS_FILEMONIKER){
+        HRESULT ret;
 
         CreateBindCtx(0,&pbind);
 
@@ -1068,24 +1068,26 @@ HRESULT WINAPI FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
             sameIdx--;
 
         if (machimeNameCase && (sameIdx<=3) && (nb1 > 3 || nb2 > 3) )
-            return MK_E_NOPREFIX;
-
-        for(i=0;i<sameIdx;i++)
-            strcatW(commonPath,stringTable1[i]);
-
-        for(i=0;i<nb1;i++)
-            CoTaskMemFree(stringTable1[i]);
-
-        CoTaskMemFree(stringTable1);
-
-        for(i=0;i<nb2;i++)
-            CoTaskMemFree(stringTable2[i]);
-
-        CoTaskMemFree(stringTable2);
-
+            ret = MK_E_NOPREFIX;
+        else
+        {
+            for(i=0;i<sameIdx;i++)
+                strcatW(commonPath,stringTable1[i]);
+    
+            for(i=0;i<nb1;i++)
+                CoTaskMemFree(stringTable1[i]);
+    
+            CoTaskMemFree(stringTable1);
+    
+            for(i=0;i<nb2;i++)
+                CoTaskMemFree(stringTable2[i]);
+    
+            CoTaskMemFree(stringTable2);
+    
+            ret = CreateFileMoniker(commonPath,ppmkPrefix);
+        }
         HeapFree(GetProcessHeap(),0,commonPath);
-
-        return CreateFileMoniker(commonPath,ppmkPrefix);
+        return ret;
     }
     else
         return MonikerCommonPrefixWith(iface,pmkOther,ppmkPrefix);

@@ -1632,13 +1632,13 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,
     int i;
 
 
+    if (currentPos > tabSize)
+        return E_INVALIDARG;
+
     newEnumMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumMonikerImpl));
 
     if (newEnumMoniker == 0)
         return STG_E_INSUFFICIENTMEMORY;
-
-    if (currentPos > tabSize)
-        return E_INVALIDARG;
 
     /* Initialize the virtual function table. */
     newEnumMoniker->lpVtbl       = &VT_EnumMonikerImpl;
@@ -1649,8 +1649,10 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,
 
     newEnumMoniker->tabMoniker=HeapAlloc(GetProcessHeap(),0,tabSize*sizeof(IMoniker));
 
-    if (newEnumMoniker->tabMoniker==NULL)
+    if (newEnumMoniker->tabMoniker==NULL) {
+        HeapFree(GetProcessHeap(), 0, newEnumMoniker);
         return E_OUTOFMEMORY;
+    }
 
     if (leftToRigth)
         for (i=0;i<tabSize;i++){

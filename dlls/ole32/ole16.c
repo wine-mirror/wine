@@ -376,10 +376,8 @@ HRESULT WINAPI ProgIDFromCLSID16(
     if (ret == S_OK)
     {
       ret = _xmalloc16(buf2len+1, (SEGPTR*)lplpszProgID);
-      if (ret != S_OK)
-        return ret;
-      strcpy(MapSL((SEGPTR)*lplpszProgID),buf2);
-      ret = S_OK;
+      if (ret == S_OK)
+        strcpy(MapSL((SEGPTR)*lplpszProgID),buf2);
     }
     HeapFree(GetProcessHeap(), 0, buf2);
   }
