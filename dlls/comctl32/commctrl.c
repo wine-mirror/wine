@@ -412,26 +412,34 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
  *     (will be written ...)
  */
 
-VOID WINAPI
-DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
+void WINAPI DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
 {
     RECT r = *lprc;
     UINT border = BDR_SUNKENOUTER;
 
     if (style & SBT_POPOUT)
-      border = BDR_RAISEDOUTER;
+        border = BDR_RAISEDOUTER;
     else if (style & SBT_NOBORDERS)
-      border = 0;
+        border = 0;
 
-    DrawEdge (hdc, &r, border, BF_RECT|BF_ADJUST|BF_MIDDLE);
+    DrawEdge (hdc, &r, border, BF_RECT|BF_ADJUST);
 
     /* now draw text */
     if (text) {
-      int oldbkmode = SetBkMode (hdc, TRANSPARENT);
-      r.left += 3;
-      DrawTextW (hdc, text, lstrlenW(text),
-		   &r, DT_LEFT|DT_VCENTER|DT_SINGLELINE);  
-      if (oldbkmode != TRANSPARENT)
+        int oldbkmode = SetBkMode (hdc, TRANSPARENT);
+        UINT align = DT_LEFT;
+        if (*text == L'\t') {
+	    text++;
+	    align = DT_CENTER;
+	    if (*text == L'\t') {
+	        text++;
+	        align = DT_RIGHT;
+	    }
+        }
+        r.left += 3;
+        if (style & SBT_RTLREADING)
+	    FIXME("Usupported RTL style!");
+        DrawTextW (hdc, text, -1, &r, align|DT_VCENTER|DT_SINGLELINE);
 	SetBkMode(hdc, oldbkmode);
     }
 }
@@ -453,8 +461,7 @@ DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
  *     No return value.
  */
 
-VOID WINAPI
-DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
+void WINAPI DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 {
     INT len;
     LPWSTR textW = NULL;
