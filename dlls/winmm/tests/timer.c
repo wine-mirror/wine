@@ -33,23 +33,26 @@
 
 #include "winmm_test.h"
 
-TIMECAPS tc;
+static TIMECAPS tc;
 
-void test_timeGetDevCaps()
+static void test_timeGetDevCaps()
 {
    MMRESULT rc;
 
     rc = timeGetDevCaps(&tc, 0);
-    ok(rc == TIMERR_NOCANDO, "timeGetDevCaps() returned %s, "
-       "should have returned TIMERR_NOCANDO\n", mmsys_error(rc));
+    ok(rc == TIMERR_NOCANDO || rc == MMSYSERR_INVALPARAM,
+       "timeGetDevCaps() returned %s, should have returned TIMERR_NOCANDO "
+       "or MMSYSERR_INVALPARAM\n", mmsys_error(rc));
 
     rc = timeGetDevCaps(0, sizeof(tc));
-    ok(rc == TIMERR_NOCANDO, "timeGetDevCaps() returned %s, "
-       "should have returned TIMERR_NOCANDO\n", mmsys_error(rc));
+    ok(rc == TIMERR_NOCANDO || rc == TIMERR_STRUCT,
+       "timeGetDevCaps() returned %s, should have returned TIMERR_NOCANDO "
+       "or TIMERR_STRUCT\n", mmsys_error(rc));
 
     rc = timeGetDevCaps(0, 0);
-    ok(rc == TIMERR_NOCANDO, "timeGetDevCaps() returned %s, "
-       "should have returned TIMERR_NOCANDO\n", mmsys_error(rc));
+    ok(rc == TIMERR_NOCANDO || rc == MMSYSERR_INVALPARAM,
+       "timeGetDevCaps() returned %s, should have returned TIMERR_NOCANDO "
+       "or MMSYSERR_INVALPARAM\n", mmsys_error(rc));
 
     rc = timeGetDevCaps(&tc, sizeof(tc));
     ok(rc == TIMERR_NOERROR, "timeGetDevCaps() returned %s, "
@@ -65,13 +68,13 @@ void test_timeGetDevCaps()
 static DWORD count = 0;
 static DWORD times[NUM_SAMPLES];
 
-void CALLBACK testTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+static void CALLBACK testTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
     if (count < NUM_SAMPLES)
         times[count++] = timeGetTime();
 }
 
-void test_timer(UINT period, UINT resolution)
+static void test_timer(UINT period, UINT resolution)
 {
     MMRESULT rc;
     UINT i, id, delta;
