@@ -72,6 +72,15 @@ int _mbscmp(const char *str, const char *cmp)
 }
 
 /*********************************************************************
+ *		_mbscspn(MSVCRT.@)
+ */
+int _mbscspn(const char *str, const char *cmp)
+{
+   FIXME("don't handle double character case\n");
+   return strcspn(str, cmp);
+}
+
+/*********************************************************************
  *		_mbsicmp(MSVCRT.@)
  */
 int _mbsicmp(const char *str, const char *cmp)

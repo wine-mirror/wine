@@ -357,7 +357,7 @@ debug_channels (msvcrt)
 @ cdecl _mbscmp(str str) _mbscmp
 @ stub _mbscoll #(str str)
 @ cdecl _mbscpy(ptr str) strcpy
-@ stub _mbscspn #(str str)
+@ cdecl _mbscspn (str str) _mbscspn
 @ cdecl _mbsdec(ptr ptr) _mbsdec
 @ cdecl _mbsdup(str) _strdup
 @ cdecl _mbsicmp(str str) _mbsicmp
@@ -675,7 +675,7 @@ debug_channels (msvcrt)
 @ cdecl memcpy(ptr ptr long) memcpy
 @ cdecl memmove(ptr ptr long) memmove
 @ cdecl memset(ptr long long) memset
-@ cdecl mktime(ptr) mktime
+@ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) modf
 @ cdecl perror(str) MSVCRT_perror
 @ cdecl pow(double double) pow
