@@ -46,6 +46,9 @@ static const WCHAR  szServiceMutexNameFmtW[] = {'A','D','V','A','P','I','_',
                                                 'M','U','X','_','%','s',0};
 static const WCHAR  szServiceAckEventNameFmtW[] = {'A','D','V','A','P','I','_',
                                                    'A','C','K','_','%','s',0};
+static const WCHAR  szWaitServiceStartW[]  = {'A','D','V','A','P','I','_','W',
+                                              'a','i','t','S','e','r','v','i',
+                                              'c','e','S','t','a','r','t',0};
 
 struct SEB              /* service environment block */
 {                       /*   resides in service's shared memory object */
@@ -472,6 +475,7 @@ error:
 static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii )
 {
     WCHAR object_name[ MAX_PATH ];
+    HANDLE wait;
 
     /* FIXME: if shared service, find entry by service name */
 
@@ -503,6 +507,14 @@ static BOOL service_ctrl_dispatcher( LPSERVICE_TABLE_ENTRYW servent, BOOL ascii 
 
     /* ready to accept control requests */
     ReleaseMutex( service->mutex );
+
+    /* signal for StartService */
+    wait = OpenSemaphoreW( SEMAPHORE_MODIFY_STATE, FALSE, szWaitServiceStartW );
+    if( wait )
+    {
+        ReleaseSemaphore( wait, 1, NULL );
+        CloseHandle( wait );
+    }
 
     /* dispatcher loop */
     for(;;)
@@ -1223,9 +1235,6 @@ BOOL WINAPI
 StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
                  LPCWSTR *lpServiceArgVectors )
 {
-    static const WCHAR  _WaitServiceStartW[]  = {'A','D','V','A','P','I','_','W',
-                                                'a','i','t','S','e','r','v','i',
-                                                'c','e','S','t','a','r','t',0};
     static const WCHAR  _ImagePathW[]  = {'I','m','a','g','e','P','a','t','h',0};
                                                 
     struct sc_handle *hsvc = hService;
@@ -1306,7 +1315,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
         argptr += 1 + strlenW( argptr );
     }
 
-    wait = CreateSemaphoreW(NULL,0,1,_WaitServiceStartW);
+    wait = CreateSemaphoreW(NULL,0,1,szWaitServiceStartW);
     if (!wait)
     {
         ERR("Couldn't create wait semaphore\n");
@@ -1339,6 +1348,13 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     if( WAIT_FAILED == r )
     {
         CloseHandle( procinfo.hProcess );
+        goto done;
+    }
+    if( WAIT_TIMEOUT == r )
+    {
+        TerminateProcess( procinfo.hProcess, 1 );
+        CloseHandle( procinfo.hProcess );
+        SetLastError( ERROR_SERVICE_REQUEST_TIMEOUT );
         goto done;
     }
 
