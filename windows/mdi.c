@@ -921,7 +921,8 @@ static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
     INT nItems = GetMenuItemCount(frameWnd->wIDmenu) - 1;
     UINT iId = GetMenuItemID(frameWnd->wIDmenu,nItems) ;
 
-    TRACE("frameWnd %p,child %04x\n",frameWnd,hChild);
+    TRACE("frameWnd %p,(%04x),child %04x,nIt=%d,iId=%d\n",
+           frameWnd,frameWnd->hwndSelf,hChild,nItems,iId);
 
     if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0; 
@@ -1126,7 +1127,8 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
         goto END;
       
       case WM_DESTROY:
-	if( ci->hwndChildMaximized ) MDI_RestoreFrameMenu(w, frameWnd->hwndSelf);
+	if( ci->hwndChildMaximized )
+            MDI_RestoreFrameMenu(w->parent, ci->hwndChildMaximized);
 	if((nItems = GetMenuItemCount(ci->hWindowMenu)) > 0) 
 	{
     	    ci->idFirstChild = nItems - 1;
