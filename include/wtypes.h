@@ -192,6 +192,14 @@ typedef struct _COSERVERINFO {
     DWORD dwReserved2;
 } COSERVERINFO;
 
+typedef enum tagMEMCTX {
+    MEMCTX_TASK = 1,
+    MEMCTX_SHARED = 2,
+    MEMCTX_MACSYSTEM = 3,
+    MEMCTX_UNKNOWN = -1,
+    MEMCTX_SAME = -2
+} MEMCTX;
+
 #ifndef _ROTFLAGS_DEFINED
 #define _ROTFLAGS_DEFINED
 #define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1
@@ -484,6 +492,12 @@ typedef enum tagSTGMOVE {
     STGMOVE_COPY = 1,
     STGMOVE_SHALLOWCOPY = 2
 } STGMOVE;
+
+typedef enum tagSTATFLAG {
+    STATFLAG_DEFAULT = 0,
+    STATFLAG_NONAME = 1,
+    STATFLAG_NOOPEN = 2
+} STATFLAG;
 
 #if 0
 typedef struct tagCY {

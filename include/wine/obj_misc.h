@@ -130,17 +130,6 @@ ICOM_DEFINE(IMalloc,IUnknown)
 #define IMalloc_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
 
 
-/* values passed to CoGetMalloc */
-#define	MEMCTX_TASK		1 /* private task memory */
-#define	MEMCTX_SHARED		2 /* shared memory */
-#ifdef _MAC
-#define	MEMCTX_MACSYSTEM	3 /* system heap on mac */
-#endif
-/* mainly for internal use... */
-#define	MEMCTX_UNKNOWN		-1
-#define	MEMCTX_SAME		-2
-
-
 /*****************************************************************************
  * IMallocSpy interface
  */
