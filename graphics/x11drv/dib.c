@@ -3245,6 +3245,8 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
 
                     if (!XShmErrorFlag)
                     {
+			shmctl(shminfo->shmid, IPC_RMID, 0);
+
                         XSetErrorHandler(WineXHandler);
                         LeaveCriticalSection( &X11DRV_CritSection );
 
@@ -3438,7 +3440,6 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
           TSXShmDetach (display, &(dib->shminfo));
           XDestroyImage (dib->image);
           shmdt (dib->shminfo.shmaddr);
-          shmctl (dib->shminfo.shmid, IPC_RMID, 0);
           dib->shminfo.shmid = -1;
       }
       else
