@@ -49,9 +49,6 @@ struct thread
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */
     void               *buffer;    /* buffer for communication with the client */
-    void               *req_pos;   /* current request position in buffer */
-    void               *req_end;   /* ptr to end of current request */
-    void               *reply_pos; /* current reply position in buffer */
     enum request        last_req;  /* last request received (for debugging) */
 };
 

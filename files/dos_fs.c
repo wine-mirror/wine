@@ -613,17 +613,14 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
  */
 const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
 {
-    struct get_file_info_request req;
-    struct get_file_info_reply reply;
+    struct get_file_info_request *req = get_req_buffer();
 
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
-    if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) &&
-        (reply.type == FILE_TYPE_UNKNOWN))
+    req->handle = hFile;
+    if (!server_call( REQ_GET_FILE_INFO ) && (req->type == FILE_TYPE_UNKNOWN))
     {
-        if ((reply.attr >= 0) &&
-            (reply.attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
-            return &DOSFS_Devices[reply.attr];
+        if ((req->attr >= 0) &&
+            (req->attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
+            return &DOSFS_Devices[req->attr];
     }
     return NULL;
 }

@@ -17,6 +17,27 @@
 #include "x11drv.h"
 #include "server.h"
 
+/***********************************************************************
+ *              call_apcs
+ *
+ * Call outstanding APCs.
+ */
+static void call_apcs(void)
+{
+#define MAX_APCS 16
+    int i;
+    void *buffer[MAX_APCS * 2];
+    struct get_apcs_request *req = get_req_buffer();
+
+    if (server_call( REQ_GET_APCS ) || !req->count) return;
+    assert( req->count <= MAX_APCS );
+    memcpy( buffer, req->apcs, req->count * 2 * sizeof(req->apcs[0]) );
+    for (i = 0; i < req->count * 2; i += 2)
+    {
+        PAPCFUNC func = (PAPCFUNC)req->apcs[i];
+        if (func) func( (ULONG_PTR)req->apcs[i+1] );
+    }
+}
 
 /***********************************************************************
  *              Sleep  (KERNEL32.679)
@@ -73,11 +94,8 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL wait_all, DWORD timeout,
                                        BOOL alertable )
 {
-    struct select_request req;
-    struct select_reply reply;
-    int server_handle[MAXIMUM_WAIT_OBJECTS];
-    void *apc[32];
-    int i, len;
+    struct select_request *req = get_req_buffer();
+    int i, ret;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
     {
@@ -99,32 +117,18 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
             EVENT_Synchronize( FALSE );
     }
 
-    for (i = 0; i < count; i++) server_handle[i] = handles[i];
+    req->count   = count;
+    req->flags   = 0;
+    req->timeout = timeout;
+    for (i = 0; i < count; i++) req->handles[i] = handles[i];
 
-    req.count   = count;
-    req.flags   = 0;
-    req.timeout = timeout;
+    if (wait_all) req->flags |= SELECT_ALL;
+    if (alertable) req->flags |= SELECT_ALERTABLE;
+    if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
 
-    if (wait_all) req.flags |= SELECT_ALL;
-    if (alertable) req.flags |= SELECT_ALERTABLE;
-    if (timeout != INFINITE) req.flags |= SELECT_TIMEOUT;
-
-    CLIENT_SendRequest( REQ_SELECT, -1, 2,
-                        &req, sizeof(req),
-                        server_handle, count * sizeof(int) );
-    CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply),
-                      apc, sizeof(apc) );
-    if ((reply.signaled == STATUS_USER_APC) && (len > sizeof(reply)))
-    {
-        int i;
-        len -= sizeof(reply);
-        for (i = 0; i < len / sizeof(void*); i += 2)
-        {
-            PAPCFUNC func = (PAPCFUNC)apc[i];
-            if ( func ) func( (ULONG_PTR)apc[i+1] );
-        }
-    }
-    return reply.signaled;
+    server_call( REQ_SELECT );
+    if ((ret = req->signaled) == STATUS_USER_APC) call_apcs();
+    return ret;
 }
 
 

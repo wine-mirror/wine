@@ -128,25 +128,22 @@ static int event_satisfied( struct object *obj, struct thread *thread )
 /* create an event */
 DECL_HANDLER(create_event)
 {
-    size_t len = get_req_strlen();
-    struct create_event_reply *reply = push_reply_data( current, sizeof(*reply) );
+    size_t len = get_req_strlen( req->name );
     struct event *event;
 
-    if ((event = create_event( get_req_data(len+1), len, req->manual_reset, req->initial_state )))
+    req->handle = -1;
+    if ((event = create_event( req->name, len, req->manual_reset, req->initial_state )))
     {
-        reply->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
+        req->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
         release_object( event );
     }
-    else reply->handle = -1;
 }
 
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    size_t len = get_req_strlen();
-    struct open_event_reply *reply = push_reply_data( current, sizeof(*reply) );
-    reply->handle = open_object( get_req_data( len + 1 ), len, &event_ops,
-                                 req->access, req->inherit );
+    size_t len = get_req_strlen( req->name );
+    req->handle = open_object( req->name, len, &event_ops, req->access, req->inherit );
 }
 
 /* do an event operation */
@@ -164,6 +161,6 @@ DECL_HANDLER(event_op)
         reset_event( req->handle );
         break;
     default:
-        fatal_protocol_error( "event_op: invalid operation" );
+        fatal_protocol_error( current, "event_op: invalid operation %d\n", req->op );
     }
 }

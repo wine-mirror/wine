@@ -17,13 +17,12 @@
  */
 static DWORD DEBUG_SendEvent( int code, void *data, int size )
 {
-    struct send_debug_event_request req;
-    struct send_debug_event_reply reply;
-
-    req.code = code;
-    CLIENT_SendRequest( REQ_SEND_DEBUG_EVENT, -1, 2, &req, sizeof(req), data, size );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0;
-    return reply.status;
+    DWORD ret = 0;
+    struct send_debug_event_request *req = get_req_buffer();
+    req->code = code;
+    memcpy( req + 1, data, size );
+    if (!server_call( REQ_SEND_DEBUG_EVENT )) ret = req->status;
+    return ret;
 }
 
 
@@ -135,94 +134,74 @@ DWORD DEBUG_SendUnloadDLLEvent( HMODULE module )
  */
 BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
 {
-    /* size of the event data */
-    static const int event_sizes[] =
-    {
-        0,
-        sizeof(struct debug_event_exception),       /* EXCEPTION_DEBUG_EVENT */
-        sizeof(struct debug_event_create_thread),   /* CREATE_THREAD_DEBUG_EVENT */
-        sizeof(struct debug_event_create_process),  /* CREATE_PROCESS_DEBUG_EVENT */
-        sizeof(struct debug_event_exit),            /* EXIT_THREAD_DEBUG_EVENT */
-        sizeof(struct debug_event_exit),            /* EXIT_PROCESS_DEBUG_EVENT */
-        sizeof(struct debug_event_load_dll),        /* LOAD_DLL_DEBUG_EVENT */
-        sizeof(struct debug_event_unload_dll),      /* UNLOAD_DLL_DEBUG_EVENT */
-        sizeof(struct debug_event_output_string),   /* OUTPUT_DEBUG_STRING_EVENT */
-        sizeof(struct debug_event_rip_info)         /* RIP_EVENT */
-    };
+    struct wait_debug_event_request *req = get_req_buffer();
+    union debug_event_data *data = (union debug_event_data *)(req + 1);
+    int i;
 
-    struct wait_debug_event_request req;
-    struct wait_debug_event_reply reply;
-    union debug_event_data data;
-    int i, len;
+    req->timeout = timeout;
+    if (server_call( REQ_WAIT_DEBUG_EVENT )) return FALSE;
+    if ((req->code < 0) || (req->code > RIP_EVENT))
+        server_protocol_error( "WaitForDebugEvent: bad code %d\n", req->code );
 
-    req.timeout = timeout;
-    CLIENT_SendRequest( REQ_WAIT_DEBUG_EVENT, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply),
-                          &data, sizeof(data) )) return FALSE;
-    if ((reply.code < 0) || (reply.code > RIP_EVENT))
-        CLIENT_ProtocolError( "WaitForDebugEvent: bad code %d\n", reply.code );
-    if (len != sizeof(reply) + event_sizes[reply.code])
-        CLIENT_ProtocolError( "WaitForDebugEvent: bad len %d for code %d\n", len, reply.code );
-
-    event->dwDebugEventCode = reply.code;
-    event->dwProcessId      = (DWORD)reply.pid;
-    event->dwThreadId       = (DWORD)reply.tid;
-    switch(reply.code)
+    event->dwDebugEventCode = req->code;
+    event->dwProcessId      = (DWORD)req->pid;
+    event->dwThreadId       = (DWORD)req->tid;
+    switch(req->code)
     {
     case EXCEPTION_DEBUG_EVENT:
-        event->u.Exception.ExceptionRecord.ExceptionCode    = data.exception.code;
-        event->u.Exception.ExceptionRecord.ExceptionFlags   = data.exception.flags;
-        event->u.Exception.ExceptionRecord.ExceptionRecord  = data.exception.record;
-        event->u.Exception.ExceptionRecord.ExceptionAddress = data.exception.addr;
-        event->u.Exception.ExceptionRecord.NumberParameters = data.exception.nb_params;
-        for (i = 0; i < data.exception.nb_params; i++)
-            event->u.Exception.ExceptionRecord.ExceptionInformation[i] = data.exception.params[i];
-        event->u.Exception.dwFirstChance = data.exception.first_chance;
+        event->u.Exception.ExceptionRecord.ExceptionCode    = data->exception.code;
+        event->u.Exception.ExceptionRecord.ExceptionFlags   = data->exception.flags;
+        event->u.Exception.ExceptionRecord.ExceptionRecord  = data->exception.record;
+        event->u.Exception.ExceptionRecord.ExceptionAddress = data->exception.addr;
+        event->u.Exception.ExceptionRecord.NumberParameters = data->exception.nb_params;
+        for (i = 0; i < data->exception.nb_params; i++)
+            event->u.Exception.ExceptionRecord.ExceptionInformation[i] = data->exception.params[i];
+        event->u.Exception.dwFirstChance = data->exception.first_chance;
         break;
     case CREATE_THREAD_DEBUG_EVENT:
-        event->u.CreateThread.hThread           = data.create_thread.handle;
-        event->u.CreateThread.lpThreadLocalBase = data.create_thread.teb;
-        event->u.CreateThread.lpStartAddress    = data.create_thread.start;
+        event->u.CreateThread.hThread           = data->create_thread.handle;
+        event->u.CreateThread.lpThreadLocalBase = data->create_thread.teb;
+        event->u.CreateThread.lpStartAddress    = data->create_thread.start;
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
-        event->u.CreateProcessInfo.hFile                 = data.create_process.file;
-        event->u.CreateProcessInfo.hProcess              = data.create_process.process;
-        event->u.CreateProcessInfo.hThread               = data.create_process.thread;
-        event->u.CreateProcessInfo.lpBaseOfImage         = data.create_process.base;
-        event->u.CreateProcessInfo.dwDebugInfoFileOffset = data.create_process.dbg_offset;
-        event->u.CreateProcessInfo.nDebugInfoSize        = data.create_process.dbg_size;
-        event->u.CreateProcessInfo.lpThreadLocalBase     = data.create_process.teb;
-        event->u.CreateProcessInfo.lpStartAddress        = data.create_process.start;
-        event->u.CreateProcessInfo.lpImageName           = data.create_process.name;
-        event->u.CreateProcessInfo.fUnicode              = data.create_process.unicode;
-        if (data.create_process.file == -1) event->u.CreateProcessInfo.hFile = 0;
+        event->u.CreateProcessInfo.hFile                 = data->create_process.file;
+        event->u.CreateProcessInfo.hProcess              = data->create_process.process;
+        event->u.CreateProcessInfo.hThread               = data->create_process.thread;
+        event->u.CreateProcessInfo.lpBaseOfImage         = data->create_process.base;
+        event->u.CreateProcessInfo.dwDebugInfoFileOffset = data->create_process.dbg_offset;
+        event->u.CreateProcessInfo.nDebugInfoSize        = data->create_process.dbg_size;
+        event->u.CreateProcessInfo.lpThreadLocalBase     = data->create_process.teb;
+        event->u.CreateProcessInfo.lpStartAddress        = data->create_process.start;
+        event->u.CreateProcessInfo.lpImageName           = data->create_process.name;
+        event->u.CreateProcessInfo.fUnicode              = data->create_process.unicode;
+        if (data->create_process.file == -1) event->u.CreateProcessInfo.hFile = 0;
         break;
     case EXIT_THREAD_DEBUG_EVENT:
-        event->u.ExitThread.dwExitCode = data.exit.exit_code;
+        event->u.ExitThread.dwExitCode = data->exit.exit_code;
         break;
     case EXIT_PROCESS_DEBUG_EVENT:
-        event->u.ExitProcess.dwExitCode = data.exit.exit_code;
+        event->u.ExitProcess.dwExitCode = data->exit.exit_code;
         break;
     case LOAD_DLL_DEBUG_EVENT:
-        event->u.LoadDll.hFile                 = data.load_dll.handle;
-        event->u.LoadDll.lpBaseOfDll           = data.load_dll.base;
-        event->u.LoadDll.dwDebugInfoFileOffset = data.load_dll.dbg_offset;
-        event->u.LoadDll.nDebugInfoSize        = data.load_dll.dbg_size;
-        event->u.LoadDll.lpImageName           = data.load_dll.name;
-        event->u.LoadDll.fUnicode              = data.load_dll.unicode;
-        if (data.load_dll.handle == -1) event->u.LoadDll.hFile = 0;
+        event->u.LoadDll.hFile                 = data->load_dll.handle;
+        event->u.LoadDll.lpBaseOfDll           = data->load_dll.base;
+        event->u.LoadDll.dwDebugInfoFileOffset = data->load_dll.dbg_offset;
+        event->u.LoadDll.nDebugInfoSize        = data->load_dll.dbg_size;
+        event->u.LoadDll.lpImageName           = data->load_dll.name;
+        event->u.LoadDll.fUnicode              = data->load_dll.unicode;
+        if (data->load_dll.handle == -1) event->u.LoadDll.hFile = 0;
         break;
     case UNLOAD_DLL_DEBUG_EVENT:
-        event->u.UnloadDll.lpBaseOfDll = data.unload_dll.base;
+        event->u.UnloadDll.lpBaseOfDll = data->unload_dll.base;
         break;
     case OUTPUT_DEBUG_STRING_EVENT:
-        event->u.DebugString.lpDebugStringData  = data.output_string.string;
-        event->u.DebugString.fUnicode           = data.output_string.unicode;
-        event->u.DebugString.nDebugStringLength = data.output_string.length;
+        event->u.DebugString.lpDebugStringData  = data->output_string.string;
+        event->u.DebugString.fUnicode           = data->output_string.unicode;
+        event->u.DebugString.nDebugStringLength = data->output_string.length;
         break;
     case RIP_EVENT:
-        event->u.RipInfo.dwError = data.rip_info.error;
-        event->u.RipInfo.dwType  = data.rip_info.type;
+        event->u.RipInfo.dwError = data->rip_info.error;
+        event->u.RipInfo.dwType  = data->rip_info.type;
         break;
     }
     return TRUE;
@@ -234,13 +213,11 @@ BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
  */
 BOOL WINAPI ContinueDebugEvent( DWORD pid, DWORD tid, DWORD status )
 {
-    struct continue_debug_event_request req;
-
-    req.pid    = (void *)pid;
-    req.tid    = (void *)tid;
-    req.status = status;
-    CLIENT_SendRequest( REQ_CONTINUE_DEBUG_EVENT, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct continue_debug_event_request *req = get_req_buffer();
+    req->pid    = (void *)pid;
+    req->tid    = (void *)tid;
+    req->status = status;
+    return !server_call( REQ_CONTINUE_DEBUG_EVENT );
 }
 
 
@@ -249,10 +226,9 @@ BOOL WINAPI ContinueDebugEvent( DWORD pid, DWORD tid, DWORD status )
  */
 BOOL WINAPI DebugActiveProcess( DWORD pid )
 {
-    struct debug_process_request req;
-    req.pid = (void *)pid;
-    CLIENT_SendRequest( REQ_DEBUG_PROCESS, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct debug_process_request *req = get_req_buffer();
+    req->pid = (void *)pid;
+    return !server_call( REQ_DEBUG_PROCESS );
 }
 
 

@@ -47,7 +47,7 @@ static int file_signaled( struct object *obj, struct thread *thread );
 static int file_get_read_fd( struct object *obj );
 static int file_get_write_fd( struct object *obj );
 static int file_flush( struct object *obj );
-static int file_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int file_get_info( struct object *obj, struct get_file_info_request *req );
 static void file_destroy( struct object *obj );
 
 static const struct object_ops file_ops =
@@ -208,7 +208,7 @@ struct file *create_temp_file( int access )
     struct file *file;
     int fd;
 
-    if ((fd = create_anonymous_file()) != -1) return NULL;
+    if ((fd = create_anonymous_file()) == -1) return NULL;
     if (!(file = create_file_for_fd( fd, access, 0, 0 ))) close( fd );
     return file;
 }
@@ -295,7 +295,7 @@ static int file_flush( struct object *obj )
     return ret;
 }
 
-static int file_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int file_get_info( struct object *obj, struct get_file_info_request *req )
 {
     struct stat st;
     struct file *file = (struct file *)obj;
@@ -307,19 +307,19 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply 
         return 0;
     }
     if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-        S_ISSOCK(st.st_mode) || isatty(file->select.fd)) reply->type = FILE_TYPE_CHAR;
-    else reply->type = FILE_TYPE_DISK;
-    if (S_ISDIR(st.st_mode)) reply->attr = FILE_ATTRIBUTE_DIRECTORY;
-    else reply->attr = FILE_ATTRIBUTE_ARCHIVE;
-    if (!(st.st_mode & S_IWUSR)) reply->attr |= FILE_ATTRIBUTE_READONLY;
-    reply->access_time = st.st_atime;
-    reply->write_time  = st.st_mtime;
-    reply->size_high   = 0;
-    reply->size_low    = S_ISDIR(st.st_mode) ? 0 : st.st_size;
-    reply->links       = st.st_nlink;
-    reply->index_high  = st.st_dev;
-    reply->index_low   = st.st_ino;
-    reply->serial      = 0; /* FIXME */
+        S_ISSOCK(st.st_mode) || isatty(file->select.fd)) req->type = FILE_TYPE_CHAR;
+    else req->type = FILE_TYPE_DISK;
+    if (S_ISDIR(st.st_mode)) req->attr = FILE_ATTRIBUTE_DIRECTORY;
+    else req->attr = FILE_ATTRIBUTE_ARCHIVE;
+    if (!(st.st_mode & S_IWUSR)) req->attr |= FILE_ATTRIBUTE_READONLY;
+    req->access_time = st.st_atime;
+    req->write_time  = st.st_mtime;
+    req->size_high   = 0;
+    req->size_low    = S_ISDIR(st.st_mode) ? 0 : st.st_size;
+    req->links       = st.st_nlink;
+    req->index_high  = st.st_dev;
+    req->index_low   = st.st_ino;
+    req->serial      = 0; /* FIXME */
     return 1;
 }
 
@@ -485,71 +485,72 @@ static int file_unlock( struct file *file, int offset_high, int offset_low,
     /* FIXME: implement this */
     return 1;
 }
+
 /* create a file */
 DECL_HANDLER(create_file)
 {
-    struct create_file_reply *reply = push_reply_data( current, sizeof(*reply) );
-    struct file *file = NULL;
+    size_t len = get_req_strlen( req->name );
+    struct file *file;
 
-    if (fd == -1)
+    req->handle = -1;
+    if ((file = create_file( req->name, len, req->access,
+                             req->sharing, req->create, req->attrs )))
     {
-        size_t len = get_req_strlen();
-        file = create_file( get_req_data( len + 1), len, req->access,
-                            req->sharing, req->create, req->attrs );
-    }
-    else
-    {
-        if ((fd = dup(fd)) == -1)
-            file_set_error();
-        else
-            file = create_file_for_fd( fd, req->access, req->sharing, req->attrs );
-    }
-    if (file)
-    {
-        reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
+        req->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
     }
-    else reply->handle = -1;
+}
+
+/* allocate a file handle for a Unix fd */
+DECL_HANDLER(alloc_file_handle)
+{
+    struct file *file;
+
+    req->handle = -1;
+    if ((fd = dup(fd)) != -1)
+    {
+        if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 )))
+        {
+            req->handle = alloc_handle( current->process, file, req->access, 0 );
+            release_object( file );
+        }
+        else close( fd );
+    }
+    else file_set_error();
 }
 
 /* get a Unix fd to read from a file */
 DECL_HANDLER(get_read_fd)
 {
     struct object *obj;
-    int read_fd;
 
     if ((obj = get_handle_obj( current->process, req->handle, GENERIC_READ, NULL )))
     {
-        read_fd = obj->ops->get_read_fd( obj );
+        set_reply_fd( current, obj->ops->get_read_fd( obj ) );
         release_object( obj );
     }
-    else read_fd = -1;
-    set_reply_fd( current, read_fd );
 }
 
 /* get a Unix fd to write to a file */
 DECL_HANDLER(get_write_fd)
 {
     struct object *obj;
-    int write_fd;
 
     if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
     {
-        write_fd = obj->ops->get_write_fd( obj );
+        set_reply_fd( current, obj->ops->get_write_fd( obj ) );
         release_object( obj );
     }
-    else write_fd = -1;
-    set_reply_fd( current, write_fd );
 }
 
 /* set a file current position */
 DECL_HANDLER(set_file_pointer)
 {
-    struct set_file_pointer_reply reply;
-    reply.low = req->low;
-    reply.high = req->high;
-    set_file_pointer( req->handle, &reply.low, &reply.high, req->whence );
-    add_reply_data( current, &reply, sizeof(reply) );
+    int high = req->high;
+    int low  = req->low;
+    set_file_pointer( req->handle, &low, &high, req->whence );
+    req->new_low  = low;
+    req->new_high = high;
 }
 
 /* truncate (or extend) a file */
@@ -580,11 +581,10 @@ DECL_HANDLER(set_file_time)
 DECL_HANDLER(get_file_info)
 {
     struct object *obj;
-    struct get_file_info_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
     {
-        obj->ops->get_file_info( obj, reply );
+        obj->ops->get_file_info( obj, req );
         release_object( obj );
     }
 }

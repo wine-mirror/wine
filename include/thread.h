@@ -39,8 +39,8 @@ typedef struct _TEB
     WORD         teb_sel;        /*  3c Selector to TEB */
     WORD         emu_sel;        /*  3e 80387 emulator selector */
     void        *buffer;         /*  40 Buffer shared with server */
-    void        *buffer_args;    /*  44 Current position of arguments in server buffer */
-    int          buffer_size;    /*  48 Size of server buffer */
+    int          buffer_size;    /*  44 Size of server buffer */
+    void       (*startup)(void); /*  48 Thread startup routine */
     int          thread_errno;   /*  4c Per-thread errno (was: ring0_thread) */
     int          thread_h_errno; /*  50 Per-thread h_errno (was: ptr to tdbx structure) */
     void        *stack_base;     /*  54 Base of the stack */
@@ -69,8 +69,6 @@ typedef struct _TEB
     SYSLEVEL    *sys_mutex[4];   /* 1d8 Syslevel mutex pointers */
     DWORD        unknown6[2];    /* 1e8 Unknown */
     /* The following are Wine-specific fields */
-    unsigned int seq;            /* Server sequence number */
-    void       (*startup)(void); /* Thread startup routine */
     struct _TEB *next;           /* Global thread list */
     DWORD        cleanup;        /* Cleanup service handle */
 } TEB;

@@ -55,15 +55,14 @@ FILE *wine_openpty(int *master, int *slave, char *name,
                    struct termios *term, struct winsize *winsize);
 
 /****************************************************************************
- *		CONSOLE_GetInfo
+ *		CONSOLE_GetPid
  */
-static BOOL CONSOLE_GetInfo( HANDLE handle, struct get_console_info_reply *reply )
+static int CONSOLE_GetPid( HANDLE handle )
 {
-    struct get_console_info_request req;
-
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_GET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 1, reply, sizeof(*reply) );
+    struct get_console_info_request *req = get_req_buffer();
+    req->handle = handle;
+    if (server_call( REQ_GET_CONSOLE_INFO )) return 0;
+    return req->pid;
 }
 
 /****************************************************************************
@@ -428,9 +427,7 @@ DWORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
  */
 BOOL WINAPI FreeConsole(VOID)
 {
-    struct free_console_request req;
-    CLIENT_SendRequest( REQ_FREE_CONSOLE, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    return !server_call( REQ_FREE_CONSOLE );
 }
 
 
@@ -441,16 +438,15 @@ BOOL WINAPI FreeConsole(VOID)
  */
 HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    struct open_console_request req;
-    struct open_console_reply reply;
+    int ret = -1;
+    struct open_console_request *req = get_req_buffer();
 
-    req.output  = output;
-    req.access  = access;
-    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
+    req->output  = output;
+    req->access  = access;
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     SetLastError(0);
-    if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return reply.handle;
-    return -1;
+    if (!server_call( REQ_OPEN_CONSOLE )) ret = req->handle;
+    return ret;
 }
 
 
@@ -470,17 +466,13 @@ HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
  */
 static BOOL CONSOLE_make_complex(HANDLE handle)
 {
-        struct set_console_fd_request req;
-        struct get_console_info_reply info;
+        struct set_console_fd_request *req = get_req_buffer();
 	struct termios term;
 	char buf[256];
 	char c = '\0';
-	int status = 0;
-	int i,xpid,master,slave;
-	DWORD	xlen;
+	int i,xpid,master,slave,pty_handle;
 
-        if (!CONSOLE_GetInfo( handle, &info )) return FALSE;
-        if (info.pid) return TRUE; /* already complex */
+        if (CONSOLE_GetPid( handle )) return TRUE; /* already complex */
 
 	MESSAGE("Console: Making console complex (creating an xterm)...\n");
 
@@ -494,6 +486,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 
 	if ((xpid=fork()) == 0) {
 		tcsetattr(slave, TCSADRAIN, &term);
+                close( slave );
 		sprintf(buf, "-Sxx%d", master);
 		/* "-fn vga" for VGA font. Harmless if vga is not present:
 		 *  xterm: unable to open font "vga", trying "fixed".... 
@@ -502,35 +495,41 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 		ERR("error creating AllocConsole xterm\n");
 		exit(1);
 	}
-
-        req.handle = handle;
-        req.pid = xpid;
-        CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(slave), 1, &req, sizeof(req) );
-        CLIENT_WaitReply( NULL, NULL, 0 );
+        pty_handle = FILE_DupUnixHandle( slave, GENERIC_READ | GENERIC_WRITE );
+        close( master );
+        close( slave );
+        if (pty_handle == -1) return FALSE;
 
 	/* most xterms like to print their window ID when used with -S;
 	 * read it and continue before the user has a chance...
 	 */
-	for (i=0; c!='\n'; (status=read(slave, &c, 1)), i++) {
-		if (status == -1 && c == '\0') {
-				/* wait for xterm to be created */
-			usleep(100);
-		}
-		if (i > 10000) {
-			ERR("can't read xterm WID\n");
-			kill(xpid, SIGKILL);
-			return FALSE;
-		}
-	}
-	/* enable mouseclicks */
-	sprintf(buf,"%c[?1001s%c[?1000h",27,27);
-	WriteFile(handle,buf,strlen(buf),&xlen,NULL);
-        
-        if (GetConsoleTitleA( buf, sizeof(buf) ))
+        for (i = 0; i < 10000; i++)
         {
-	    WriteFile(handle,"\033]2;",4,&xlen,NULL);
-	    WriteFile(handle,buf,strlen(buf),&xlen,NULL);
-	    WriteFile(handle,"\a",1,&xlen,NULL);
+            BOOL ok = ReadFile( pty_handle, &c, 1, NULL, NULL );
+            if (!ok && !c) usleep(100); /* wait for xterm to be created */
+            else if (c == '\n') break;
+        }
+        if (i == 10000)
+        {
+            ERR("can't read xterm WID\n");
+            CloseHandle( pty_handle );
+            return FALSE;
+	}
+        req->handle = handle;
+        req->file_handle = pty_handle;
+        req->pid = xpid;
+        server_call( REQ_SET_CONSOLE_FD );
+        CloseHandle( pty_handle );
+
+	/* enable mouseclicks */
+	strcpy( buf, "\033[?1001s\033[?1000h" );
+	WriteFile(handle,buf,strlen(buf),NULL,NULL);
+
+        strcpy( buf, "\033]2;" );
+        if (GetConsoleTitleA( buf + 4, sizeof(buf) - 5 ))
+        {
+            strcat( buf, "\a" );
+	    WriteFile(handle,buf,strlen(buf),NULL,NULL);
 	}
 	return TRUE;
 
@@ -544,29 +543,29 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
  */
 BOOL WINAPI AllocConsole(VOID)
 {
-    struct alloc_console_request req;
-    struct alloc_console_reply reply;
+    struct alloc_console_request *req = get_req_buffer();
     HANDLE hStderr;
+    int handle_in, handle_out;
 
     TRACE("()\n");
-    req.access  = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
-    req.inherit = FALSE;
-    CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) != ERROR_SUCCESS)
-        return FALSE;
+    req->access  = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
+    req->inherit = FALSE;
+    if (server_call( REQ_ALLOC_CONSOLE )) return FALSE;
+    handle_in = req->handle_in;
+    handle_out = req->handle_out;
 
-    if (!DuplicateHandle( GetCurrentProcess(), reply.handle_out, GetCurrentProcess(), &hStderr,
+    if (!DuplicateHandle( GetCurrentProcess(), req->handle_out, GetCurrentProcess(), &hStderr,
                           0, TRUE, DUPLICATE_SAME_ACCESS ))
     {
-        CloseHandle( reply.handle_in );
-        CloseHandle( reply.handle_out );
+        CloseHandle( handle_in );
+        CloseHandle( handle_out );
         FreeConsole();
         return FALSE;
     }
 
     /* NT resets the STD_*_HANDLEs on console alloc */
-    SetStdHandle( STD_INPUT_HANDLE, reply.handle_in );
-    SetStdHandle( STD_OUTPUT_HANDLE, reply.handle_out );
+    SetStdHandle( STD_INPUT_HANDLE, handle_in );
+    SetStdHandle( STD_OUTPUT_HANDLE, handle_out );
     SetStdHandle( STD_ERROR_HANDLE, hStderr );
 
     SetLastError(ERROR_SUCCESS);
@@ -600,14 +599,15 @@ UINT WINAPI GetConsoleOutputCP(VOID)
  */
 BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
 {
-    struct get_console_mode_request req;
-    struct get_console_mode_reply reply;
-
-    req.handle = hcon;
-    CLIENT_SendRequest( REQ_GET_CONSOLE_MODE, -1, 1, &req, sizeof(req));
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
-    *mode = reply.mode;
-    return TRUE;
+    BOOL ret = FALSE;
+    struct get_console_mode_request *req = get_req_buffer();
+    req->handle = hcon;
+    if (!server_call( REQ_GET_CONSOLE_MODE ))
+    {
+        if (mode) *mode = req->mode;
+        ret = TRUE;
+    }
+    return ret;
 }
 
 
@@ -624,12 +624,10 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
  */
 BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
 {
-    struct set_console_mode_request req;
-
-    req.handle = hcon;
-    req.mode = mode;
-    CLIENT_SendRequest( REQ_SET_CONSOLE_MODE, -1, 1, &req, sizeof(req));
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct set_console_mode_request *req = get_req_buffer();
+    req->handle = hcon;
+    req->mode = mode;
+    return !server_call( REQ_SET_CONSOLE_MODE );
 }
 
 
@@ -638,21 +636,18 @@ BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
  */
 DWORD WINAPI GetConsoleTitleA(LPSTR title,DWORD size)
 {
-    struct get_console_info_request req;
-    struct get_console_info_reply reply;
-    int len;
+    struct get_console_info_request *req = get_req_buffer();
     DWORD ret = 0;
     HANDLE hcon;
 
     if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ, 0, NULL,
                                OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return 0;
-    req.handle = hcon;
-    CLIENT_SendRequest( REQ_GET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
-    if (!CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply), title, size ))
+    req->handle = hcon;
+    if (!server_call( REQ_GET_CONSOLE_INFO ))
     {
-        if (len > sizeof(reply)+size) title[size-1] = 0;
-        ret = strlen(title);
+        lstrcpynA( title, req->title, size );
+        ret = strlen(req->title);
     }
     CloseHandle( hcon );
     return ret;
@@ -722,7 +717,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
 	1,5,3,7,
     };
     CONSOLE_make_complex(hConsoleOutput);
-    buffer = HeapAlloc(GetProcessHeap(),0,100);;
+    buffer = HeapAlloc(GetProcessHeap(),0,100);
     curbufsize = 100;
 
     TRACE("wr: top = %d, bottom=%d, left=%d,right=%d\n",
@@ -790,8 +785,6 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
 {
     int		charsread = 0;
     LPSTR	xbuf = (LPSTR)lpBuffer;
-    struct read_console_input_request req;
-    struct read_console_input_reply reply;
     INPUT_RECORD	ir;
 
     TRACE("(%d,%p,%ld,%p,%p)\n",
@@ -801,21 +794,15 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
 
     CONSOLE_get_input(hConsoleInput,FALSE);
 
-    req.handle = hConsoleInput;
-    req.count = 1;
-    req.flush = 1;
-
     /* FIXME: should we read at least 1 char? The SDK does not say */
     while (charsread<nNumberOfCharsToRead)
     {
-    	int len;
-
-        CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
-        if (CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply), &ir, sizeof(ir) ))
-            return FALSE;
-        len -= sizeof(reply);
-        assert( !(len % sizeof(ir)) );
-        if (!len) break;
+        struct read_console_input_request *req = get_req_buffer();
+        req->handle = hConsoleInput;
+        req->count = 1;
+        req->flush = 1;
+        if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
+        if (!req->read) break;
     	if (!ir.Event.KeyEvent.bKeyDown)
 		continue;
     	if (ir.EventType != KEY_EVENT)
@@ -867,33 +854,27 @@ BOOL WINAPI ReadConsoleW( HANDLE hConsoleInput,
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput,
-				  LPINPUT_RECORD lpBuffer,
-				  DWORD nLength, LPDWORD lpNumberOfEventsRead)
+BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
+                              DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-    struct read_console_input_request req;
-    struct read_console_input_reply reply;
-    int len;
-
-    req.handle = hConsoleInput;
-    req.count = nLength;
-    req.flush = 1;
+    struct read_console_input_request *req = get_req_buffer();
 
     /* loop until we get at least one event */
     for (;;)
     {
-        CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
-        if (CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply),
-                              lpBuffer, nLength * sizeof(*lpBuffer) ))
-            return FALSE;
-        len -= sizeof(reply);
-        assert( !(len % sizeof(INPUT_RECORD)) );
-        if (len) break;
+        req->handle = hConsoleInput;
+        req->count = nLength;
+        req->flush = 1;
+        if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
+        if (req->read)
+        {
+            memcpy( lpBuffer, req + 1, req->read * sizeof(*lpBuffer) );
+            if (lpNumberOfEventsRead) *lpNumberOfEventsRead = req->read;
+            return TRUE;
+        }
 	CONSOLE_get_input(hConsoleInput,TRUE);
         /*WaitForSingleObject( hConsoleInput, INFINITE32 );*/
     }
-    if (lpNumberOfEventsRead) *lpNumberOfEventsRead = len / sizeof(INPUT_RECORD);
-    return TRUE;
 }
 
 
@@ -913,14 +894,11 @@ BOOL WINAPI ReadConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer,
  */
 BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 {
-    struct read_console_input_request req;
-    int len;
-
-    req.handle = handle;
-    req.count = -1;  /* get all records */
-    req.flush = 1;
-    CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( &len, NULL, 0 );
+    struct read_console_input_request *req = get_req_buffer();
+    req->handle = handle;
+    req->count = -1;  /* get all records */
+    req->flush = 1;
+    return !server_call( REQ_READ_CONSOLE_INPUT );
 }
 
 
@@ -934,22 +912,16 @@ BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer,
                                    DWORD count, LPDWORD read )
 {
-    struct read_console_input_request req;
-    struct read_console_input_reply reply;
-    int len;
+    struct read_console_input_request *req = get_req_buffer();
 
     CONSOLE_get_input(handle,FALSE);
-    req.handle = handle;
-    req.count = count;
-    req.flush = 0;
 
-    CLIENT_SendRequest( REQ_READ_CONSOLE_INPUT, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply),
-                          buffer, count * sizeof(*buffer) ))
-        return FALSE;
-    len -= sizeof(reply);
-    assert( !(len % sizeof(INPUT_RECORD)) );
-    if (read) *read = len / sizeof(INPUT_RECORD);
+    req->handle = handle;
+    req->count = count;
+    req->flush = 0;
+    if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
+    if (req->read) memcpy( buffer, req + 1, req->read * sizeof(*buffer) );
+    if (read) *read = req->read;
     return TRUE;
 }
 
@@ -972,17 +944,23 @@ BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput,
  *
  */
 BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
-                                    DWORD count, LPDWORD written )
+                                DWORD count, LPDWORD written )
 {
-    struct write_console_input_request req;
-    struct write_console_input_reply reply;
+    struct write_console_input_request *req = get_req_buffer();
+    const DWORD max = server_remaining( req + 1 ) / sizeof(INPUT_RECORD);
 
-    req.handle = handle;
-    req.count = count;
-    CLIENT_SendRequest( REQ_WRITE_CONSOLE_INPUT, -1, 2, &req, sizeof(req),
-                        buffer, count * sizeof(*buffer) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
-    if (written) *written = reply.written;
+    if (written) *written = 0;
+    while (count)
+    {
+        DWORD len = count < max ? count : max;
+        req->count = len;
+        req->handle = handle;
+        memcpy( req + 1, buffer, len * sizeof(*buffer) );
+        if (server_call( REQ_WRITE_CONSOLE_INPUT )) return FALSE;
+        if (written) *written += req->written;
+        count -= len;
+        buffer += len;
+    }
     return TRUE;
 }
 
@@ -998,20 +976,18 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
  */
 BOOL WINAPI SetConsoleTitleA(LPCSTR title)
 {
-    struct set_console_info_request req;
-    struct get_console_info_reply info;
+    struct set_console_info_request *req = get_req_buffer();
     HANDLE hcon;
     DWORD written;
 
     if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return FALSE;
-    req.handle = hcon;
-    req.mask = SET_CONSOLE_INFO_TITLE;
-    CLIENT_SendRequest( REQ_SET_CONSOLE_INFO, -1, 2, &req, sizeof(req),
-                        title, strlen(title)+1 );
-    if (CLIENT_WaitReply( NULL, NULL, 0 )) goto error;
-    if (CONSOLE_GetInfo( hcon, &info ) && info.pid)
+    req->handle = hcon;
+    req->mask = SET_CONSOLE_INFO_TITLE;
+    lstrcpynA( req->title, title, server_remaining(req->title) );
+    if (server_call( REQ_SET_CONSOLE_INFO )) goto error;
+    if (CONSOLE_GetPid( hcon ))
     {
         /* only set title for complex console (own xterm) */
         WriteFile( hcon, "\033]2;", 4, &written, NULL );
@@ -1112,16 +1088,15 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon,
-                                      LPCONSOLE_CURSOR_INFO cinfo )
+BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo )
 {
-    struct get_console_info_reply reply;
-
-    if (!CONSOLE_GetInfo( hcon, &reply )) return FALSE;
+    struct get_console_info_request *req = get_req_buffer();
+    req->handle = hcon;
+    if (server_call( REQ_GET_CONSOLE_INFO )) return FALSE;
     if (cinfo)
     {
-        cinfo->dwSize = reply.cursor_size;
-        cinfo->bVisible = reply.cursor_visible;
+        cinfo->dwSize = req->cursor_size;
+        cinfo->bVisible = req->cursor_visible;
     }
     return TRUE;
 }
@@ -1138,20 +1113,19 @@ BOOL WINAPI SetConsoleCursorInfo(
     HANDLE hcon,                /* [in] Handle to console screen buffer */
     LPCONSOLE_CURSOR_INFO cinfo)  /* [in] Address of cursor information */
 {
-    struct set_console_info_request req;
+    struct set_console_info_request *req = get_req_buffer();
     char	buf[8];
     DWORD	xlen;
 
-    req.handle = hcon;
     CONSOLE_make_complex(hcon);
     sprintf(buf,"\033[?25%c",cinfo->bVisible?'h':'l');
     WriteFile(hcon,buf,strlen(buf),&xlen,NULL);
 
-    req.cursor_size    = cinfo->dwSize;
-    req.cursor_visible = cinfo->bVisible;
-    req.mask           = SET_CONSOLE_INFO_CURSOR;
-    CLIENT_SendRequest( REQ_SET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    req->handle         = hcon;
+    req->cursor_size    = cinfo->dwSize;
+    req->cursor_visible = cinfo->bVisible;
+    req->mask           = SET_CONSOLE_INFO_CURSOR;
+    return !server_call( REQ_SET_CONSOLE_INFO );
 }
 
 

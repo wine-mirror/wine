@@ -403,8 +403,7 @@ DECL_HANDLER(close_handle)
 /* get information about a handle */
 DECL_HANDLER(get_handle_info)
 {
-    struct get_handle_info_reply *reply = push_reply_data( current, sizeof(*reply) );
-    reply->flags = set_handle_info( current->process, req->handle, 0, 0 );
+    req->flags = set_handle_info( current->process, req->handle, 0, 0 );
 }
 
 /* set a handle information */
@@ -416,20 +415,20 @@ DECL_HANDLER(set_handle_info)
 /* duplicate a handle */
 DECL_HANDLER(dup_handle)
 {
-    struct dup_handle_reply reply = { -1 };
     struct process *src, *dst;
 
+    req->handle = -1;
     if ((src = get_process_from_handle( req->src_process, PROCESS_DUP_HANDLE )))
     {
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
         {
-            reply.handle = duplicate_handle( src, req->src_handle, NULL,
-                                             req->access, req->inherit, req->options );
+            req->handle = duplicate_handle( src, req->src_handle, NULL,
+                                            req->access, req->inherit, req->options );
         }
         else if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
         {
-            reply.handle = duplicate_handle( src, req->src_handle, dst,
-                                             req->access, req->inherit, req->options );
+            req->handle = duplicate_handle( src, req->src_handle, dst,
+                                            req->access, req->inherit, req->options );
             release_object( dst );
         }
         /* close the handle no matter what happened */
@@ -437,5 +436,4 @@ DECL_HANDLER(dup_handle)
             close_handle( src, req->src_handle );
         release_object( src );
     }
-    add_reply_data( current, &reply, sizeof(reply) );
 }

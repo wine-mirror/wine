@@ -19,20 +19,17 @@
 
 
 /****************************************************************************
- *		FindFirstChangeNotification32A (KERNEL32.248)
+ *		FindFirstChangeNotificationA (KERNEL32.248)
  */
-HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName,
-                                                BOOL bWatchSubtree,
-                                                DWORD dwNotifyFilter ) 
+HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
+                                            DWORD dwNotifyFilter ) 
 {
-    struct create_change_notification_request req;
-    struct create_change_notification_reply reply;
+    struct create_change_notification_request *req = get_req_buffer();
 
-    req.subtree = bWatchSubtree;
-    req.filter  = dwNotifyFilter;
-    CLIENT_SendRequest( REQ_CREATE_CHANGE_NOTIFICATION, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
+    req->subtree = bWatchSubtree;
+    req->filter  = dwNotifyFilter;
+    server_call( REQ_CREATE_CHANGE_NOTIFICATION );
+    return req->handle;
 }
 
 /****************************************************************************

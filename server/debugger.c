@@ -146,16 +146,16 @@ static void build_event_reply( struct debug_ctx *debug_ctx )
 {
     struct debug_event *event = debug_ctx->event_head;
     struct thread *thread = event->thread;
-    struct wait_debug_event_reply *reply = push_reply_data( debug_ctx->owner, sizeof(*reply) );
+    struct wait_debug_event_request *req = get_req_ptr( debug_ctx->owner );
 
     assert( event );
     assert( debug_ctx->waiting );
 
     unlink_event( debug_ctx, event );
     event->sent = 1;
-    reply->code = event->code;
-    reply->pid  = thread->process;
-    reply->tid  = thread;
+    req->code = event->code;
+    req->pid  = thread->process;
+    req->tid  = thread;
     debug_ctx->waiting = 0;
     if (debug_ctx->timeout)
     {
@@ -163,20 +163,20 @@ static void build_event_reply( struct debug_ctx *debug_ctx )
         debug_ctx->timeout = NULL;
     }
     debug_ctx->owner->error = 0;
-    add_reply_data( debug_ctx->owner, &event->data, event_sizes[event->code] );
+    memcpy( req + 1, &event->data, event_sizes[event->code] );
 }
 
 /* timeout callback while waiting for a debug event */
 static void wait_event_timeout( void *ctx )
 {
     struct debug_ctx *debug_ctx = (struct debug_ctx *)ctx;
-    struct wait_debug_event_reply *reply = push_reply_data( debug_ctx->owner, sizeof(*reply) );
+    struct wait_debug_event_request *req = get_req_ptr( debug_ctx->owner );
 
     assert( debug_ctx->waiting );
 
-    reply->code = 0;
-    reply->pid  = 0;
-    reply->tid  = 0;
+    req->code = 0;
+    req->pid  = 0;
+    req->tid  = 0;
     debug_ctx->waiting = 0;
     debug_ctx->timeout = NULL;
     debug_ctx->owner->error = WAIT_TIMEOUT;
@@ -232,8 +232,8 @@ static int continue_debug_event( struct process *process, struct thread *thread,
     {
         /* only send a reply if the thread is still there */
         /* (we can get a continue on an exit thread/process event) */
-        struct send_debug_event_reply *reply = push_reply_data( thread, sizeof(*reply) );
-        reply->status = status;
+        struct send_debug_event_request *req = get_req_ptr( thread );
+        req->status = status;
         send_reply( thread );
     }
     free_event( event );
@@ -380,10 +380,9 @@ DECL_HANDLER(wait_debug_event)
 {
     if (!wait_for_debug_event( req->timeout ))
     {
-        struct wait_debug_event_reply *reply = push_reply_data( current, sizeof(*reply) );
-        reply->code = 0;
-        reply->pid  = NULL;
-        reply->tid  = NULL;
+        req->code = 0;
+        req->pid  = NULL;
+        req->tid  = NULL;
     }
 }
 
@@ -423,23 +422,13 @@ DECL_HANDLER(send_debug_event)
     assert( !current->debug_event );
     if ((req->code <= 0) || (req->code > RIP_EVENT))
     {
-        fatal_protocol_error( "send_debug_event: bad event code" );
+        fatal_protocol_error( current, "send_debug_event: bad code %d\n", req->code );
         return;
     }
-    if (!check_req_data( event_sizes[req->code] ))
-    {
-        fatal_protocol_error( "send_debug_event: bad length" );
-        return;
-    }
-    if (debugger && queue_debug_event( debugger, current, req->code,
-                                       get_req_data( event_sizes[req->code] )))
+    req->status = 0;
+    if (debugger && queue_debug_event( debugger, current, req->code, req + 1 ))
     {
         /* wait for continue_debug_event */
         current->state = SLEEPING;
-    }
-    else
-    {
-        struct send_debug_event_reply *reply = push_reply_data( current, sizeof(*reply) );
-        reply->status = 0;
     }
 }

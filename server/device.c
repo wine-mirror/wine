@@ -30,7 +30,7 @@ struct device
 };
 
 static void device_dump( struct object *obj, int verbose );
-static int device_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int device_get_info( struct object *obj, struct get_file_info_request *req );
 
 static const struct object_ops device_ops =
 {
@@ -64,13 +64,20 @@ static void device_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device id=%08x\n", dev->id );
 }
 
-static int device_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int device_get_info( struct object *obj, struct get_file_info_request *req )
 {
     struct device *dev = (struct device *)obj;
     assert( obj->ops == &device_ops );
-    memset( reply, 0, sizeof(*reply) );
-    reply->type = FILE_TYPE_UNKNOWN;
-    reply->attr = dev->id;  /* hack! */
+    req->type        = FILE_TYPE_UNKNOWN;
+    req->attr        = dev->id;  /* hack! */
+    req->access_time = 0;
+    req->write_time  = 0;
+    req->size_high   = 0;
+    req->size_low    = 0;
+    req->links       = 0;
+    req->index_high  = 0;
+    req->index_low   = 0;
+    req->serial      = 0;
     return 1;
 }
 
@@ -78,12 +85,11 @@ static int device_get_info( struct object *obj, struct get_file_info_reply *repl
 DECL_HANDLER(create_device)
 {
     struct device *dev;
-    struct create_device_reply *reply = push_reply_data( current, sizeof(*reply) );
 
+    req->handle = -1;
     if ((dev = create_device( req->id )))
     {
-        reply->handle = alloc_handle( current->process, dev, req->access, req->inherit );
+        req->handle = alloc_handle( current->process, dev, req->access, req->inherit );
         release_object( dev );
     }
-    else reply->handle = -1;
 }

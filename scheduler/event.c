@@ -18,18 +18,16 @@
 HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                                 BOOL initial_state, LPCSTR name )
 {
-    struct create_event_request req;
-    struct create_event_reply reply;
+    struct create_event_request *req = get_req_buffer();
 
-    if (!name) name = "";
-    req.manual_reset = manual_reset;
-    req.initial_state = initial_state;
-    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_CREATE_EVENT, -1, 2, &req, sizeof(req), name, strlen(name)+1 );
+    req->manual_reset = manual_reset;
+    req->initial_state = initial_state;
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
     SetLastError(0);
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return 0;
-    return reply.handle;
+    server_call( REQ_CREATE_EVENT );
+    if (req->handle == -1) return 0;
+    return req->handle;
 }
 
 
@@ -59,16 +57,14 @@ HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
  */
 HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_event_request req;
-    struct open_event_reply reply;
-    int len = name ? strlen(name) + 1 : 0;
+    struct open_event_request *req = get_req_buffer();
 
-    req.access  = access;
-    req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_EVENT, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return (HANDLE)reply.handle;
+    req->access  = access;
+    req->inherit = inherit;
+    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_call( REQ_OPEN_EVENT );
+    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return req->handle;
 }
 
 
@@ -91,12 +87,10 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
 {
-    struct event_op_request req;
-
-    req.handle = handle;
-    req.op     = op;
-    CLIENT_SendRequest( REQ_EVENT_OP, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct event_op_request *req = get_req_buffer();
+    req->handle = handle;
+    req->op     = op;
+    return !server_call( REQ_EVENT_OP );
 }
 
 

@@ -84,10 +84,9 @@ static int alloc_client_buffer( struct thread *thread )
     int fd;
 
     if ((fd = create_anonymous_file()) == -1) return -1;
-    if (ftruncate( fd, MAX_MSG_LENGTH ) == -1) goto error;
-    if ((thread->buffer = mmap( 0, MAX_MSG_LENGTH, PROT_READ | PROT_WRITE,
+    if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
+    if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
-    thread->req_pos = thread->reply_pos = thread->buffer;
     return fd;
 
  error:
@@ -123,7 +122,7 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
     thread->affinity    = 1;
     thread->suspend     = (suspend != 0);
     thread->buffer      = (void *)-1;
-    thread->last_req    = 0;
+    thread->last_req    = REQ_GET_THREAD_BUFFER;
 
     if (!first_thread)  /* creating the first thread */
     {
@@ -143,7 +142,6 @@ static struct thread *create_thread( int fd, struct process *process, int suspen
         close( buf_fd );
         goto error;
     }
-    push_reply_data( thread, sizeof(struct header) );
     set_reply_fd( thread, buf_fd );  /* send the fd to the client */
     send_reply( thread );
     return thread;
@@ -173,7 +171,7 @@ static void destroy_thread( struct object *obj )
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
     if (thread->apc) free( thread->apc );
-    if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_MSG_LENGTH );
+    if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -378,7 +376,7 @@ static int check_wait( struct thread *thread, int *signaled )
             /* Wait satisfied: tell it to the object */
             *signaled = i;
             if (entry->obj->ops->satisfied( entry->obj, thread ))
-                *signaled += STATUS_ABANDONED_WAIT_0;
+                *signaled = i + STATUS_ABANDONED_WAIT_0;
             return 1;
         }
     }
@@ -404,62 +402,48 @@ static int check_wait( struct thread *thread, int *signaled )
     return 0;
 }
 
-/* build a select reply to wake up the client */
-static void build_select_reply( struct thread *thread, int signaled )
-{
-    struct select_reply *reply = push_reply_data( thread, sizeof(*reply) );
-    reply->signaled = signaled;
-    if ((signaled == STATUS_USER_APC) && thread->apc)
-    {
-        add_reply_data( thread, thread->apc, thread->apc_count * sizeof(*thread->apc) );
-        free( thread->apc );
-        thread->apc = NULL;
-        thread->apc_count = 0;
-    }
-}
-
 /* attempt to wake up a thread */
 /* return 1 if OK, 0 if the wait condition is still not satisfied */
 static int wake_thread( struct thread *thread )
 {
-    int signaled;
+    struct select_request *req = get_req_ptr( thread );
 
-    if (!check_wait( thread, &signaled )) return 0;
+    if (!check_wait( thread, &req->signaled )) return 0;
     end_wait( thread );
-    build_select_reply( thread, signaled );
     return 1;
 }
 
 /* sleep on a list of objects */
 static void sleep_on( struct thread *thread, int count, int *handles, int flags, int timeout )
 {
+    struct select_request *req;
     assert( !thread->wait );
-    if (!wait_on( thread, count, handles, flags, timeout ))
-    {
-        build_select_reply( thread, -1 );
-        return;
-    }
+    if (!wait_on( thread, count, handles, flags, timeout )) goto error;
     if (wake_thread( thread )) return;
     /* now we need to wait */
     if (flags & SELECT_TIMEOUT)
     {
         if (!(thread->wait->user = add_timeout_user( &thread->wait->timeout,
                                                      call_timeout_handler, thread )))
-        {
-            build_select_reply( thread, -1 );
-            return;
-        }
+            goto error;
     }
     thread->state = SLEEPING;
+    return;
+
+ error:
+    req = get_req_ptr( thread );
+    req->signaled = -1;
 }
 
 /* timeout for the current thread */
 void thread_timeout(void)
 {
+    struct select_request *req = get_req_ptr( current );
+
     assert( current->wait );
     current->wait->user = NULL;
     end_wait( current );
-    build_select_reply( current, STATUS_TIMEOUT );
+    req->signaled = STATUS_TIMEOUT;
     send_reply( current );
 }
 
@@ -525,39 +509,40 @@ void thread_killed( struct thread *thread, int exit_code )
 /* create a new thread */
 DECL_HANDLER(new_thread)
 {
-    struct new_thread_reply reply;
     struct thread *thread;
     struct process *process;
-    int new_fd;
 
     if ((process = get_process_from_id( req->pid )))
     {
-        if ((new_fd = dup(fd)) != -1)
+        if ((fd = dup(fd)) != -1)
         {
-            if ((thread = create_thread( new_fd, process, req->suspend )))
+            if ((thread = create_thread( fd, process, req->suspend )))
             {
-                reply.tid = thread;
-                reply.handle = alloc_handle( current->process, thread,
-                                             THREAD_ALL_ACCESS, req->inherit );
-                if (reply.handle == -1) release_object( thread );
+                req->tid = thread;
+                if ((req->handle = alloc_handle( current->process, thread,
+                                                 THREAD_ALL_ACCESS, req->inherit )) == -1)
+                    release_object( thread );
                 /* else will be released when the thread gets killed */
             }
-            else close( new_fd );
+            else close( fd );
         }
-        else set_error( ERROR_TOO_MANY_OPEN_FILES );
+        else file_set_error();
         release_object( process );
     }
-    add_reply_data( current, &reply, sizeof(reply) );
+}
+
+/* retrieve the thread buffer file descriptor */
+DECL_HANDLER(get_thread_buffer)
+{
+    fatal_protocol_error( current, "get_thread_buffer: should never get called directly\n" );
 }
 
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
-    struct init_thread_reply *reply = push_reply_data( current, sizeof(*reply) );
-
     if (current->state != STARTING)
     {
-        fatal_protocol_error( "init_thread: already running\n" );
+        fatal_protocol_error( current, "init_thread: already running\n" );
         return;
     }
     current->state    = RUNNING;
@@ -565,8 +550,8 @@ DECL_HANDLER(init_thread)
     current->teb      = req->teb;
     if (current->suspend + current->process->suspend > 0)
         kill( current->unix_pid, SIGSTOP );
-    reply->pid = current->process;
-    reply->tid = current;
+    req->pid = current->process;
+    req->tid = current;
 }
 
 /* terminate a thread */
@@ -585,13 +570,12 @@ DECL_HANDLER(terminate_thread)
 DECL_HANDLER(get_thread_info)
 {
     struct thread *thread;
-    struct get_thread_info_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
     {
-        reply->tid       = thread;
-        reply->exit_code = thread->exit_code;
-        reply->priority  = thread->priority;
+        req->tid       = thread;
+        req->exit_code = thread->exit_code;
+        req->priority  = thread->priority;
         release_object( thread );
     }
 }
@@ -612,10 +596,10 @@ DECL_HANDLER(set_thread_info)
 DECL_HANDLER(suspend_thread)
 {
     struct thread *thread;
-    struct suspend_thread_reply *reply = push_reply_data( current, sizeof(*reply) );
+
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        reply->count = suspend_thread( thread );
+        req->count = suspend_thread( thread );
         release_object( thread );
     }
 }
@@ -624,10 +608,10 @@ DECL_HANDLER(suspend_thread)
 DECL_HANDLER(resume_thread)
 {
     struct thread *thread;
-    struct resume_thread_reply *reply = push_reply_data( current, sizeof(*reply) );
+
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
-        reply->count = resume_thread( thread );
+        req->count = resume_thread( thread );
         release_object( thread );
     }
 }
@@ -635,12 +619,7 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    if (check_req_data( req->count * sizeof(int) ))
-    {
-        sleep_on( current, req->count, get_req_data( req->count * sizeof(int) ),
-                  req->flags, req->timeout );
-    }
-    else fatal_protocol_error( "select: bad length" );
+    sleep_on( current, req->count, req->handles, req->flags, req->timeout );
 }
 
 /* queue an APC for a thread */
@@ -651,5 +630,17 @@ DECL_HANDLER(queue_apc)
     {
         thread_queue_apc( thread, req->func, req->param );
         release_object( thread );
+    }
+}
+
+/* get list of APC to call */
+DECL_HANDLER(get_apcs)
+{
+    if ((req->count = current->apc_count))
+    {
+        memcpy( req->apcs, current->apc, current->apc_count * sizeof(*current->apc) );
+        free( current->apc );
+        current->apc = NULL;
+        current->apc_count = 0;
     }
 }

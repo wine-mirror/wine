@@ -26,55 +26,33 @@
 struct thread *current = NULL;  /* thread handling the current request */
 
 /* complain about a protocol error and terminate the client connection */
-void fatal_protocol_error( const char *err )
+void fatal_protocol_error( struct thread *thread, const char *err, ... )
 {
-    unsigned char *p;
+    va_list args;
 
-    fprintf( stderr, "Protocol error:%p: %s\n    request:", current, err );
-    for (p = (unsigned char *)current->buffer; p < (unsigned char *)current->req_end; p++)
-        fprintf( stderr, " %02x", *p );
-    fprintf( stderr, "\n" );
-    remove_client( current->client, -2 );
+    va_start( args, err );
+    fprintf( stderr, "Protocol error:%p: ", thread );
+    vfprintf( stderr, err, args );
+    va_end( args );
+    remove_client( thread->client, PROTOCOL_ERROR );
 }
 
 /* call a request handler */
-void call_req_handler( struct thread *thread, int fd )
+void call_req_handler( struct thread *thread, enum request req, int fd )
 {
-    const struct handler *handler;
-    struct header *head;
-    unsigned int req, len;
-
     current = thread;
-    assert (current);
-
-    head = (struct header *)current->buffer;
-
-    req = head->type;
-    len = head->len;
-
-    /* set the buffer pointers */
-    current->req_pos = current->reply_pos = (char *)current->buffer + sizeof(struct header);
-    current->req_end = (char *)current->buffer + len;
     clear_error();
-
-    if ((len < sizeof(struct header)) || (len > MAX_MSG_LENGTH)) goto bad_header;
-    if (req >= REQ_NB_REQUESTS) goto bad_header;
 
     if (debug_level) trace_request( req, fd );
 
-    /* now call the handler */
-    handler = &req_handlers[req];
-    if (!check_req_data( handler->min_size )) goto bad_request;
-    handler->handler( get_req_data( handler->min_size ), fd );
-    if (current && current->state != SLEEPING) send_reply( current );
-    current = NULL;
-    return;
-
- bad_header:
-    /* dump only the header */
-    current->req_end = (char *)current->buffer + sizeof(struct header);
- bad_request:
-    fatal_protocol_error( "bad request" );
+    if (req < REQ_NB_REQUESTS)
+    {
+        req_handlers[req].handler( current->buffer, fd );
+        if (current && current->state != SLEEPING) send_reply( current );
+        current = NULL;
+        return;
+    }
+    fatal_protocol_error( current, "bad request %d\n", req );
 }
 
 /* handle a client timeout */
@@ -110,15 +88,8 @@ void set_reply_fd( struct thread *thread, int pass_fd )
 /* send a reply to a thread */
 void send_reply( struct thread *thread )
 {
-    struct header *head = thread->buffer;
-    int len = (char *)thread->reply_pos - (char *)thread->buffer;
-
-    assert( len < MAX_MSG_LENGTH );
-
-    head->len  = len;
-    head->type = thread->error;
     if (thread->state == SLEEPING) thread->state = RUNNING;
-    client_reply( thread->client );
+    client_reply( thread->client, thread->error );
 }
 
 /* set the debug level */

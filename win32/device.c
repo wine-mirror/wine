@@ -285,20 +285,16 @@ HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
 
 static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
 {
-    struct get_file_info_request req;
-    struct get_file_info_reply reply;
+    struct get_file_info_request *req = get_req_buffer();
 
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
-    if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) &&
-        (reply.type == FILE_TYPE_UNKNOWN) &&
-        (reply.attr & 0x10000))
+    req->handle = handle;
+    if (!server_call( REQ_GET_FILE_INFO ) &&
+        (req->type == FILE_TYPE_UNKNOWN) &&
+        (req->attr & 0x10000))
     {
         const struct VxDInfo *info;
-
         for (info = VxDList; info->name; info++)
-            if (info->id == LOWORD(reply.attr)) break;
-        return info;
+            if (info->id == LOWORD(req->attr)) return info;
     }
     return NULL;
 }

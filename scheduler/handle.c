@@ -18,11 +18,9 @@ DEFAULT_DEBUG_CHANNEL(win32)
  */
 BOOL WINAPI CloseHandle( HANDLE handle )
 {
-    struct close_handle_request req;
-    
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_CLOSE_HANDLE, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct close_handle_request *req = get_req_buffer();
+    req->handle = handle;
+    return !server_call( REQ_CLOSE_HANDLE );
 }
 
 
@@ -31,13 +29,10 @@ BOOL WINAPI CloseHandle( HANDLE handle )
  */
 BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 {
-    struct get_handle_info_request req;
-    struct get_handle_info_reply reply;
-
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_GET_HANDLE_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
-    if (flags) *flags = reply.flags;
+    struct get_handle_info_request *req = get_req_buffer();
+    req->handle = handle;
+    if (server_call( REQ_GET_HANDLE_INFO )) return FALSE;
+    if (flags) *flags = req->flags;
     return TRUE;
 }
 
@@ -47,13 +42,11 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
  */
 BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
-    struct set_handle_info_request req;
-
-    req.handle = handle;
-    req.flags  = flags;
-    req.mask   = mask;
-    CLIENT_SendRequest( REQ_SET_HANDLE_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct set_handle_info_request *req = get_req_buffer();
+    req->handle = handle;
+    req->flags  = flags;
+    req->mask   = mask;
+    return !server_call( REQ_SET_HANDLE_INFO );
 }
 
 
@@ -64,19 +57,17 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
                                HANDLE dest_process, HANDLE *dest,
                                DWORD access, BOOL inherit, DWORD options )
 {
-    struct dup_handle_request req;
-    struct dup_handle_reply reply;
+    struct dup_handle_request *req = get_req_buffer();
 
-    req.src_process = source_process;
-    req.src_handle  = source;
-    req.dst_process = dest_process;
-    req.access      = access;
-    req.inherit     = inherit;
-    req.options     = options;
+    req->src_process = source_process;
+    req->src_handle  = source;
+    req->dst_process = dest_process;
+    req->access      = access;
+    req->inherit     = inherit;
+    req->options     = options;
 
-    CLIENT_SendRequest( REQ_DUP_HANDLE, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
-    if (dest) *dest = reply.handle;
+    if (server_call( REQ_DUP_HANDLE )) return FALSE;
+    if (dest) *dest = req->handle;
     return TRUE;
 }
 
@@ -86,19 +77,17 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
  */
 HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
 {
-    struct dup_handle_request req;
-    struct dup_handle_reply reply;
+    struct dup_handle_request *req = get_req_buffer();
 
-    req.src_process = GetCurrentProcess();
-    req.src_handle  = hSrc;
-    req.dst_process = -1;
-    req.access      = 0;
-    req.inherit     = FALSE;
-    req.options     = DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS;
+    req->src_process = GetCurrentProcess();
+    req->src_handle  = hSrc;
+    req->dst_process = -1;
+    req->access      = 0;
+    req->inherit     = FALSE;
+    req->options     = DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS;
 
-    CLIENT_SendRequest( REQ_DUP_HANDLE, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
+    server_call( REQ_DUP_HANDLE );
+    return req->handle;
 }
 
 /***********************************************************************

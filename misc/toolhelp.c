@@ -116,8 +116,7 @@ FARPROC16 tmp;
  */
 HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
 {
-    struct create_snapshot_request req;
-    struct create_snapshot_reply reply;
+    struct create_snapshot_request *req = get_req_buffer();
 
     TRACE( toolhelp, "%lx,%lx\n", flags, process );
     if (flags & (TH32CS_SNAPHEAPLIST|TH32CS_SNAPMODULE|TH32CS_SNAPTHREAD))
@@ -127,13 +126,12 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return INVALID_HANDLE_VALUE;
     }
-
+    
     /* Now do the snapshot */
-    req.flags   = flags & ~TH32CS_INHERIT;
-    req.inherit = (flags & TH32CS_INHERIT) != 0;
-    CLIENT_SendRequest( REQ_CREATE_SNAPSHOT, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
+    req->flags   = flags & ~TH32CS_INHERIT;
+    req->inherit = (flags & TH32CS_INHERIT) != 0;
+    server_call( REQ_CREATE_SNAPSHOT );
+    return req->handle;
 }
 
 
@@ -144,8 +142,7 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
  */
 static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL first )
 {
-    struct next_process_request req;
-    struct next_process_reply reply;
+    struct next_process_request *req = get_req_buffer();
 
     if (lppe->dwSize < sizeof (PROCESSENTRY))
     {
@@ -153,17 +150,16 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL fir
         ERR (toolhelp, "Result buffer too small\n");
         return FALSE;
     }
-    req.handle = handle;
-    req.reset = first;
-    CLIENT_SendRequest( REQ_NEXT_PROCESS, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    req->handle = handle;
+    req->reset = first;
+    if (server_call( REQ_NEXT_PROCESS )) return FALSE;
     lppe->cntUsage            = 1;
-    lppe->th32ProcessID       = (DWORD)reply.pid;
+    lppe->th32ProcessID       = (DWORD)req->pid;
     lppe->th32DefaultHeapID   = 0;  /* FIXME */ 
     lppe->th32ModuleID        = 0;  /* FIXME */
-    lppe->cntThreads          = reply.threads;
+    lppe->cntThreads          = req->threads;
     lppe->th32ParentProcessID = 0;  /* FIXME */
-    lppe->pcPriClassBase      = reply.priority;
+    lppe->pcPriClassBase      = req->priority;
     lppe->dwFlags             = -1; /* FIXME */
     lppe->szExeFile[0]        = 0;  /* FIXME */
     return TRUE;

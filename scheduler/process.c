@@ -74,29 +74,16 @@ PDB *PROCESS_Initial(void)
 }
 
 /***********************************************************************
- *           PROCESS_QueryInfo
- *
- * Retrieve information about a process
- */
-static BOOL PROCESS_QueryInfo( HANDLE handle,
-                                 struct get_process_info_reply *reply )
-{
-    struct get_process_info_request req;
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitSimpleReply( reply, sizeof(*reply), NULL );
-}
-
-/***********************************************************************
  *           PROCESS_IsCurrent
  *
  * Check if a handle is to the current process
  */
 BOOL PROCESS_IsCurrent( HANDLE handle )
 {
-    struct get_process_info_reply reply;
-    return (PROCESS_QueryInfo( handle, &reply ) &&
-            (reply.pid == PROCESS_Current()->server_pid));
+    struct get_process_info_request *req = get_req_buffer();
+    req->handle = handle;
+    return (!server_call( REQ_GET_PROCESS_INFO ) &&
+            (req->pid == PROCESS_Current()->server_pid));
 }
 
 
@@ -252,20 +239,11 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
  */
 static BOOL PROCESS_CreateEnvDB(void)
 {
-    struct init_process_request req;
-    struct init_process_reply reply;
+    struct init_process_request *req = get_req_buffer();
     STARTUPINFOA *startup;
     ENVDB *env_db;
     char cmd_line[4096];
-    int len;
     PDB *pdb = PROCESS_Current();
-
-    /* Retrieve startup info from the server */
-
-    req.dummy = 0;
-    CLIENT_SendRequest( REQ_INIT_PROCESS, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply), cmd_line, sizeof(cmd_line) ))
-        return FALSE;
 
     /* Allocate the env DB */
 
@@ -278,15 +256,20 @@ static BOOL PROCESS_CreateEnvDB(void)
     if (!(startup = HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
         return FALSE;
     env_db->startup_info = startup;
-    startup->dwFlags     = reply.start_flags;
-    startup->wShowWindow = reply.cmd_show;
-    env_db->hStdin  = startup->hStdInput  = reply.hstdin;
-    env_db->hStdout = startup->hStdOutput = reply.hstdout;
-    env_db->hStderr = startup->hStdError  = reply.hstderr;
+
+    /* Retrieve startup info from the server */
+
+    if (server_call( REQ_INIT_PROCESS )) return FALSE;
+    startup->dwFlags     = req->start_flags;
+    startup->wShowWindow = req->cmd_show;
+    env_db->hStdin  = startup->hStdInput  = req->hstdin;
+    env_db->hStdout = startup->hStdOutput = req->hstdout;
+    env_db->hStderr = startup->hStdError  = req->hstderr;
+    lstrcpynA( cmd_line, req->cmdline, sizeof(cmd_line) );
 
     /* Copy the parent environment */
 
-    if (!ENV_InheritEnvironment( pdb, reply.env_ptr )) return FALSE;
+    if (!ENV_InheritEnvironment( pdb, req->env_ptr )) return FALSE;
 
     /* Copy the command line */
 
@@ -527,8 +510,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     HANDLE handles[2], load_done_evt = INVALID_HANDLE_VALUE;
     DWORD exitcode, size;
     int server_thandle;
-    struct new_process_request req;
-    struct new_process_reply reply;
+    struct new_process_request *req = get_req_buffer();
     TEB *teb = NULL;
     PDB *parent = PROCESS_Current();
     PDB *pdb = PROCESS_CreatePDB( parent, inherit );
@@ -538,29 +520,28 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Create the process on the server side */
 
-    req.inherit      = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
-    req.inherit_all  = inherit;
-    req.create_flags = flags;
-    req.start_flags  = startup->dwFlags;
+    req->inherit      = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    req->inherit_all  = inherit;
+    req->create_flags = flags;
+    req->start_flags  = startup->dwFlags;
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {
-        req.hstdin  = startup->hStdInput;
-        req.hstdout = startup->hStdOutput;
-        req.hstderr = startup->hStdError;
+        req->hstdin  = startup->hStdInput;
+        req->hstdout = startup->hStdOutput;
+        req->hstderr = startup->hStdError;
     }
     else
     {
-        req.hstdin  = GetStdHandle( STD_INPUT_HANDLE );
-        req.hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
-        req.hstderr = GetStdHandle( STD_ERROR_HANDLE );
+        req->hstdin  = GetStdHandle( STD_INPUT_HANDLE );
+        req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
+        req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
     }
-    req.cmd_show = startup->wShowWindow;
-    req.env_ptr = (void*)env;  /* FIXME: hack */
-    CLIENT_SendRequest( REQ_NEW_PROCESS, -1, 2,
-                        &req, sizeof(req), cmd_line, strlen(cmd_line) + 1 );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
-    pdb->server_pid   = reply.pid;
-    info->hProcess    = reply.handle;
+    req->cmd_show = startup->wShowWindow;
+    req->env_ptr = (void*)env;  /* FIXME: hack */
+    lstrcpynA( req->cmdline, cmd_line, server_remaining(req->cmdline) );
+    if (server_call( REQ_NEW_PROCESS )) goto error;
+    pdb->server_pid   = req->pid;
+    info->hProcess    = req->handle;
     info->dwProcessId = (DWORD)pdb->server_pid;
 
     if ((flags & DEBUG_PROCESS) ||
@@ -675,11 +656,10 @@ void WINAPI ExitProcess16( WORD status )
  */
 BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
-    struct terminate_process_request req;
-    req.handle    = handle;
-    req.exit_code = exit_code;
-    CLIENT_SendRequest( REQ_TERMINATE_PROCESS, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct terminate_process_request *req = get_req_buffer();
+    req->handle    = handle;
+    req->exit_code = exit_code;
+    return !server_call( REQ_TERMINATE_PROCESS );
 }
 
 
@@ -816,15 +796,14 @@ HANDLE WINAPI GetCurrentProcess(void)
  */
 HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
-    struct open_process_request req;
-    struct open_process_reply reply;
+    HANDLE ret = 0;
+    struct open_process_request *req = get_req_buffer();
 
-    req.pid     = (void *)id;
-    req.access  = access;
-    req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0;
-    return reply.handle;
+    req->pid     = (void *)id;
+    req->access  = access;
+    req->inherit = inherit;
+    if (!server_call( REQ_OPEN_PROCESS )) ret = req->handle;
+    return ret;
 }			      
 
 /*********************************************************************
@@ -832,9 +811,11 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
  */
 DWORD WINAPI MapProcessHandle( HANDLE handle )
 {
-    struct get_process_info_reply reply;
-    if ( !PROCESS_QueryInfo( handle, &reply ) ) return 0;
-    return (DWORD)reply.pid;
+    DWORD ret = 0;
+    struct get_process_info_request *req = get_req_buffer();
+    req->handle = handle;
+    if (!server_call( REQ_GET_PROCESS_INFO )) ret = (DWORD)req->pid;
+    return ret;
 }
 
 /***********************************************************************
@@ -870,12 +851,11 @@ LCID WINAPI GetThreadLocale(void)
  */
 BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 {
-    struct set_process_info_request req;
-    req.handle   = hprocess;
-    req.priority = priorityclass;
-    req.mask     = SET_PROCESS_INFO_PRIORITY;
-    CLIENT_SendRequest( REQ_SET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct set_process_info_request *req = get_req_buffer();
+    req->handle   = hprocess;
+    req->priority = priorityclass;
+    req->mask     = SET_PROCESS_INFO_PRIORITY;
+    return !server_call( REQ_SET_PROCESS_INFO );
 }
 
 
@@ -884,9 +864,11 @@ BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
  */
 DWORD WINAPI GetPriorityClass(HANDLE hprocess)
 {
-    struct get_process_info_reply reply;
-    if (!PROCESS_QueryInfo( hprocess, &reply )) return 0;
-    return reply.priority;
+    DWORD ret = 0;
+    struct get_process_info_request *req = get_req_buffer();
+    req->handle = hprocess;
+    if (!server_call( REQ_GET_PROCESS_INFO )) ret = req->priority;
+    return ret;
 }
 
 
@@ -895,12 +877,11 @@ DWORD WINAPI GetPriorityClass(HANDLE hprocess)
  */
 BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
 {
-    struct set_process_info_request req;
-    req.handle   = hProcess;
-    req.affinity = affmask;
-    req.mask     = SET_PROCESS_INFO_AFFINITY;
-    CLIENT_SendRequest( REQ_SET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct set_process_info_request *req = get_req_buffer();
+    req->handle   = hProcess;
+    req->affinity = affmask;
+    req->mask     = SET_PROCESS_INFO_AFFINITY;
+    return !server_call( REQ_SET_PROCESS_INFO );
 }
 
 /**********************************************************************
@@ -910,11 +891,16 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
                                       LPDWORD lpProcessAffinityMask,
                                       LPDWORD lpSystemAffinityMask )
 {
-    struct get_process_info_reply reply;
-    if (!PROCESS_QueryInfo( hProcess, &reply )) return FALSE;
-    if (lpProcessAffinityMask) *lpProcessAffinityMask = reply.process_affinity;
-    if (lpSystemAffinityMask) *lpSystemAffinityMask = reply.system_affinity;
-    return TRUE;
+    BOOL ret = FALSE;
+    struct get_process_info_request *req = get_req_buffer();
+    req->handle = hProcess;
+    if (!server_call( REQ_GET_PROCESS_INFO ))
+    {
+        if (lpProcessAffinityMask) *lpProcessAffinityMask = req->process_affinity;
+        if (lpSystemAffinityMask) *lpSystemAffinityMask = req->system_affinity;
+        ret = TRUE;
+    }
+    return ret;
 }
 
 
@@ -1119,10 +1105,15 @@ BOOL WINAPI GetExitCodeProcess(
     HANDLE hProcess,  /* [I] handle to the process */
     LPDWORD lpExitCode) /* [O] address to receive termination status */
 {
-    struct get_process_info_reply reply;
-    if (!PROCESS_QueryInfo( hProcess, &reply )) return FALSE;
-    if (lpExitCode) *lpExitCode = reply.exit_code;
-    return TRUE;
+    BOOL ret = FALSE;
+    struct get_process_info_request *req = get_req_buffer();
+    req->handle = hProcess;
+    if (!server_call( REQ_GET_PROCESS_INFO ))
+    {
+        if (lpExitCode) *lpExitCode = req->exit_code;
+        ret = TRUE;
+    }
+    return ret;
 }
 
 

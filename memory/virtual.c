@@ -1051,8 +1051,7 @@ HANDLE WINAPI CreateFileMappingA(
                 DWORD size_low,  /* [in] Low-order 32 bits of object size */
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
-    struct create_mapping_request req;
-    struct create_mapping_reply reply;
+    struct create_mapping_request *req = get_req_buffer();
     BYTE vprot;
 
     /* Check parameters */
@@ -1074,19 +1073,16 @@ HANDLE WINAPI CreateFileMappingA(
 
     /* Create the server object */
 
-    if (!name) name = "";
-    req.handle    = hFile;
-    req.size_high = size_high;
-    req.size_low  = size_low;
-    req.protect   = vprot;
-    req.inherit   = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
-                        &req, sizeof(req),
-                        name, strlen(name) + 1 );
+    req->file_handle = hFile;
+    req->size_high   = size_high;
+    req->size_low    = size_low;
+    req->protect     = vprot;
+    req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
     SetLastError(0);
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return 0;
-    return reply.handle;
+    server_call( REQ_CREATE_MAPPING );
+    if (req->handle == -1) return 0;
+    return req->handle;
 }
 
 
@@ -1119,16 +1115,14 @@ HANDLE WINAPI OpenFileMappingA(
                 BOOL inherit, /* [in] Inherit flag */
                 LPCSTR name )   /* [in] Name of file-mapping object */
 {
-    struct open_mapping_request req;
-    struct open_mapping_reply reply;
-    int len = name ? strlen(name) + 1 : 0;
+    struct open_mapping_request *req = get_req_buffer();
 
-    req.access  = access;
-    req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_MAPPING, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return reply.handle;
+    req->access  = access;
+    req->inherit = inherit;
+    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_call( REQ_OPEN_MAPPING );
+    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return req->handle;
 }
 
 
@@ -1185,8 +1179,8 @@ LPVOID WINAPI MapViewOfFileEx(
     UINT ptr = (UINT)-1, size = 0;
     int flags = MAP_PRIVATE;
     int unix_handle = -1;
-    struct get_mapping_info_request req;
-    struct get_mapping_info_reply info;
+    int prot;
+    struct get_mapping_info_request *req = get_req_buffer();
 
     /* Check parameters */
 
@@ -1197,29 +1191,28 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
     }
 
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_GET_MAPPING_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &info, sizeof(info), &unix_handle ))
-        goto error;
+    req->handle = handle;
+    if (server_call_fd( REQ_GET_MAPPING_INFO, -1, &unix_handle )) goto error;
 
-    if (info.size_high || offset_high)
+    if (req->size_high || offset_high)
         ERR("Offsets larger than 4Gb not supported\n");
 
-    if ((offset_low >= info.size_low) ||
-        (count > info.size_low - offset_low))
+    if ((offset_low >= req->size_low) ||
+        (count > req->size_low - offset_low))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         goto error;
     }
     if (count) size = ROUND_SIZE( offset_low, count );
-    else size = info.size_low - offset_low;
+    else size = req->size_low - offset_low;
+    prot = req->protect;
 
     switch(access)
     {
     case FILE_MAP_ALL_ACCESS:
     case FILE_MAP_WRITE:
     case FILE_MAP_WRITE | FILE_MAP_READ:
-        if (!(info.protect & VPROT_WRITE))
+        if (!(prot & VPROT_WRITE))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             goto error;
@@ -1229,7 +1222,7 @@ LPVOID WINAPI MapViewOfFileEx(
     case FILE_MAP_READ:
     case FILE_MAP_COPY:
     case FILE_MAP_COPY | FILE_MAP_READ:
-        if (info.protect & VPROT_READ) break;
+        if (prot & VPROT_READ) break;
         /* fall through */
     default:
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1238,13 +1231,10 @@ LPVOID WINAPI MapViewOfFileEx(
 
     /* Map the file */
 
-    TRACE("handle=%x size=%x offset=%lx\n",
-                     handle, size, offset_low );
+    TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset_low );
 
-    ptr = (UINT)FILE_dommap( unix_handle,
-                               addr, 0, size, 0, offset_low,
-                               VIRTUAL_GetUnixProt( info.protect ),
-                               flags );
+    ptr = (UINT)FILE_dommap( unix_handle, addr, 0, size, 0, offset_low,
+                             VIRTUAL_GetUnixProt( prot ), flags );
     if (ptr == (UINT)-1) {
         /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
 	 * Platform Differences": 
@@ -1259,8 +1249,7 @@ LPVOID WINAPI MapViewOfFileEx(
         goto error;
     }
 
-    if (!(view = VIRTUAL_CreateView( ptr, size, offset_low, 0,
-                                     info.protect, handle )))
+    if (!(view = VIRTUAL_CreateView( ptr, size, offset_low, 0, prot, handle )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         goto error;

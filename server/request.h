@@ -13,14 +13,21 @@
 
 #include "thread.h"
 
-/* request handler definition */
+/* max request length */
+#define MAX_REQUEST_LENGTH  8192
 
+/* exit code passed to remove_client on communication error */
+#define OUT_OF_MEMORY  -1
+#define BROKEN_PIPE    -2
+#define PROTOCOL_ERROR -3
+
+/* request handler definition */
 #define DECL_HANDLER(name) void req_##name( struct name##_request *req, int fd )
 
 /* request functions */
 
-extern void fatal_protocol_error( const char *err );
-extern void call_req_handler( struct thread *thread, int fd );
+extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
+extern void call_req_handler( struct thread *thread, enum request req, int fd );
 extern void call_timeout_handler( void *thread );
 extern void call_kill_handler( struct thread *thread, int exit_code );
 extern void set_reply_fd( struct thread *thread, int pass_fd );
@@ -29,48 +36,26 @@ extern void send_reply( struct thread *thread );
 extern void trace_request( enum request req, int fd );
 extern void trace_timeout(void);
 extern void trace_kill( int exit_code );
-extern void trace_reply( struct thread *thread, int pass_fd );
+extern void trace_reply( struct thread *thread, unsigned int res, int pass_fd );
 
-
-/* Warning: the buffer is shared between request and reply,
- * so make sure you are finished using the request before starting
- * to add data for the reply.
- */
-
-/* remove some data from the current request */
-static inline void *get_req_data( size_t len )
+/* get the request buffer */
+static inline void *get_req_ptr( struct thread *thread )
 {
-    void *old = current->req_pos;
-    current->req_pos = (char *)old + len;
-    return old;
+    return thread->buffer;
 }
 
-/* check that there is enough data available in the current request */
-static inline int check_req_data( size_t len )
+/* get the remaining size in the request buffer for object of a given size */
+static inline int get_req_size( const void *ptr, size_t typesize )
 {
-    return (char *)current->req_pos + len <= (char *)current->req_end;
+    return ((char *)current->buffer + MAX_REQUEST_LENGTH - (char *)ptr) / typesize;
 }
 
 /* get the length of a request string, without going past the end of the request */
-static inline size_t get_req_strlen(void)
+static inline size_t get_req_strlen( const char *str )
 {
-    char *p = current->req_pos;
-    while (*p && (p < (char *)current->req_end - 1)) p++;
-    return p - (char *)current->req_pos;
-}
-
-/* make space for some data in the current reply */
-static inline void *push_reply_data( struct thread *thread, size_t len )
-{
-    void *old = thread->reply_pos;
-    thread->reply_pos = (char *)old + len;
-    return old;
-}
-
-/* add some data to the current reply */
-static inline void add_reply_data( struct thread *thread, const void *data, size_t len )
-{
-    memcpy( push_reply_data( thread, len ), data, len );
+    const char *p = str;
+    while (*p && (p < (char *)current->buffer + MAX_REQUEST_LENGTH - 1)) p++;
+    return p - str;
 }
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -81,6 +66,7 @@ DECL_HANDLER(new_thread);
 DECL_HANDLER(set_debug);
 DECL_HANDLER(init_process);
 DECL_HANDLER(init_thread);
+DECL_HANDLER(get_thread_buffer);
 DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
 DECL_HANDLER(get_process_info);
@@ -91,6 +77,7 @@ DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
 DECL_HANDLER(debugger);
 DECL_HANDLER(queue_apc);
+DECL_HANDLER(get_apcs);
 DECL_HANDLER(close_handle);
 DECL_HANDLER(get_handle_info);
 DECL_HANDLER(set_handle_info);
@@ -107,6 +94,7 @@ DECL_HANDLER(create_semaphore);
 DECL_HANDLER(release_semaphore);
 DECL_HANDLER(open_semaphore);
 DECL_HANDLER(create_file);
+DECL_HANDLER(alloc_file_handle);
 DECL_HANDLER(get_read_fd);
 DECL_HANDLER(get_write_fd);
 DECL_HANDLER(set_file_pointer);
@@ -150,6 +138,7 @@ static const struct handler {
     { (void(*)())req_set_debug, sizeof(struct set_debug_request) },
     { (void(*)())req_init_process, sizeof(struct init_process_request) },
     { (void(*)())req_init_thread, sizeof(struct init_thread_request) },
+    { (void(*)())req_get_thread_buffer, sizeof(struct get_thread_buffer_request) },
     { (void(*)())req_terminate_process, sizeof(struct terminate_process_request) },
     { (void(*)())req_terminate_thread, sizeof(struct terminate_thread_request) },
     { (void(*)())req_get_process_info, sizeof(struct get_process_info_request) },
@@ -160,6 +149,7 @@ static const struct handler {
     { (void(*)())req_resume_thread, sizeof(struct resume_thread_request) },
     { (void(*)())req_debugger, sizeof(struct debugger_request) },
     { (void(*)())req_queue_apc, sizeof(struct queue_apc_request) },
+    { (void(*)())req_get_apcs, sizeof(struct get_apcs_request) },
     { (void(*)())req_close_handle, sizeof(struct close_handle_request) },
     { (void(*)())req_get_handle_info, sizeof(struct get_handle_info_request) },
     { (void(*)())req_set_handle_info, sizeof(struct set_handle_info_request) },
@@ -176,6 +166,7 @@ static const struct handler {
     { (void(*)())req_release_semaphore, sizeof(struct release_semaphore_request) },
     { (void(*)())req_open_semaphore, sizeof(struct open_semaphore_request) },
     { (void(*)())req_create_file, sizeof(struct create_file_request) },
+    { (void(*)())req_alloc_file_handle, sizeof(struct alloc_file_handle_request) },
     { (void(*)())req_get_read_fd, sizeof(struct get_read_fd_request) },
     { (void(*)())req_get_write_fd, sizeof(struct get_write_fd_request) },
     { (void(*)())req_set_file_pointer, sizeof(struct set_file_pointer_request) },

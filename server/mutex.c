@@ -126,25 +126,22 @@ static int mutex_satisfied( struct object *obj, struct thread *thread )
 /* create a mutex */
 DECL_HANDLER(create_mutex)
 {
-    size_t len = get_req_strlen();
-    struct create_mutex_reply *reply = push_reply_data( current, sizeof(*reply) );
+    size_t len = get_req_strlen( req->name );
     struct mutex *mutex;
 
-    if ((mutex = create_mutex( get_req_data( len + 1 ), len, req->owned )))
+    req->handle = -1;
+    if ((mutex = create_mutex( req->name, len, req->owned )))
     {
-        reply->handle = alloc_handle( current->process, mutex, MUTEX_ALL_ACCESS, req->inherit );
+        req->handle = alloc_handle( current->process, mutex, MUTEX_ALL_ACCESS, req->inherit );
         release_object( mutex );
     }
-    else reply->handle = -1;
 }
 
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    size_t len = get_req_strlen();
-    struct open_mutex_reply *reply = push_reply_data( current, sizeof(*reply) );
-    reply->handle = open_object( get_req_data( len + 1 ), len, &mutex_ops,
-                                 req->access, req->inherit );
+    size_t len = get_req_strlen( req->name );
+    req->handle = open_object( req->name, len, &mutex_ops, req->access, req->inherit );
 }
 
 /* release a mutex */

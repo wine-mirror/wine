@@ -104,11 +104,11 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         if (!(mapping->file = get_file_obj( current->process, handle, access ))) goto error;
         if (!size_high && !size_low)
         {
-            struct get_file_info_reply reply;
+            struct get_file_info_request req;
             struct object *obj = (struct object *)mapping->file;
-            obj->ops->get_file_info( obj, &reply );
-            size_high = reply.size_high;
-            size_low  = ROUND_SIZE( 0, reply.size_low );
+            obj->ops->get_file_info( obj, &req );
+            size_high = req.size_high;
+            size_low  = ROUND_SIZE( 0, req.size_low );
         }
         else if (!grow_file( mapping->file, size_high, size_low )) goto error;
     }
@@ -133,23 +133,6 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
     return NULL;
 }
 
-static int get_mapping_info( int handle, struct get_mapping_info_reply *reply )
-{
-    struct mapping *mapping;
-    int fd;
-
-    if (!(mapping = (struct mapping *)get_handle_obj( current->process, handle,
-                                                      0, &mapping_ops )))
-        return -1;
-    reply->size_high = mapping->size_high;
-    reply->size_low  = mapping->size_low;
-    reply->protect   = mapping->protect;
-    if (mapping->file) fd = file_get_mmap_fd( mapping->file );
-    else fd = -1;
-    release_object( mapping );
-    return fd;
-}
-
 static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
@@ -169,34 +152,40 @@ static void mapping_destroy( struct object *obj )
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    size_t len = get_req_strlen();
-    struct create_mapping_reply *reply = push_reply_data( current, sizeof(*reply) );
+    size_t len = get_req_strlen( req->name );
     struct object *obj;
 
+    req->handle = -1;
     if ((obj = create_mapping( req->size_high, req->size_low,
-                               req->protect, req->handle, get_req_data( len + 1 ), len )))
+                               req->protect, req->file_handle, req->name, len )))
     {
         int access = FILE_MAP_ALL_ACCESS;
         if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
-        reply->handle = alloc_handle( current->process, obj, access, req->inherit );
+        req->handle = alloc_handle( current->process, obj, access, req->inherit );
         release_object( obj );
     }
-    else reply->handle = -1;
 }
 
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    size_t len = get_req_strlen();
-    struct open_mapping_reply *reply = push_reply_data( current, sizeof(*reply) );
-    reply->handle = open_object( get_req_data( len + 1 ), len, &mapping_ops,
-                                 req->access, req->inherit );
+    size_t len = get_req_strlen( req->name );
+    req->handle = open_object( req->name, len, &mapping_ops, req->access, req->inherit );
 }
 
 /* get a mapping information */
 DECL_HANDLER(get_mapping_info)
 {
-    struct get_mapping_info_reply *reply = push_reply_data( current, sizeof(*reply) );
-    int map_fd = get_mapping_info( req->handle, reply );
-    set_reply_fd( current, map_fd );
+    struct mapping *mapping;
+
+    if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle,
+                                                     0, &mapping_ops )))
+    {
+        req->size_high = mapping->size_high;
+        req->size_low  = mapping->size_low;
+        req->protect   = mapping->protect;
+        if (mapping->file) set_reply_fd( current, file_get_mmap_fd( mapping->file ) );
+        release_object( mapping );
+    }
 }
+

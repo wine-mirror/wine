@@ -64,31 +64,25 @@ static struct snapshot *create_snapshot( int flags )
 }
 
 /* get the next process in the snapshot */
-static int snapshot_next_process( int handle, int reset, struct next_process_reply *reply )
+static int snapshot_next_process( struct snapshot *snapshot, struct next_process_request *req )
 {
-    struct snapshot *snapshot;
     struct process_snapshot *ptr;
-    if (!(snapshot = (struct snapshot *)get_handle_obj( current->process, handle,
-                                                        0, &snapshot_ops )))
-        return 0;
+
     if (!snapshot->process_count)
     {
         set_error( ERROR_INVALID_PARAMETER );  /* FIXME */
-        release_object( snapshot );
         return 0;
     }
-    if (reset) snapshot->process_pos = 0;
+    if (req->reset) snapshot->process_pos = 0;
     else if (snapshot->process_pos >= snapshot->process_count)
     {
         set_error( ERROR_NO_MORE_FILES );
-        release_object( snapshot );
         return 0;
     }
     ptr = &snapshot->process[snapshot->process_pos++];
-    reply->pid      = ptr->process;
-    reply->threads  = ptr->threads;
-    reply->priority = ptr->priority;
-    release_object( snapshot );
+    req->pid      = ptr->process;
+    req->threads  = ptr->threads;
+    req->priority = ptr->priority;
     return 1;
 }
 
@@ -117,19 +111,24 @@ static void snapshot_destroy( struct object *obj )
 DECL_HANDLER(create_snapshot)
 {
     struct snapshot *snapshot;
-    struct create_snapshot_reply *reply = push_reply_data( current, sizeof(*reply) );
 
+    req->handle = -1;
     if ((snapshot = create_snapshot( req->flags )))
     {
-        reply->handle = alloc_handle( current->process, snapshot, 0, req->inherit );
+        req->handle = alloc_handle( current->process, snapshot, 0, req->inherit );
         release_object( snapshot );
     }
-    else reply->handle = -1;
 }
 
 /* get the next process from a snapshot */
 DECL_HANDLER(next_process)
 {
-    struct next_process_reply *reply = push_reply_data( current, sizeof(*reply) );
-    snapshot_next_process( req->handle, req->reset, reply );
+    struct snapshot *snapshot;
+
+    if ((snapshot = (struct snapshot *)get_handle_obj( current->process, req->handle,
+                                                       0, &snapshot_ops )))
+    {
+        snapshot_next_process( snapshot, req );
+        release_object( snapshot );
+    }
 }

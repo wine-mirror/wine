@@ -39,7 +39,7 @@ static void pipe_remove_queue( struct object *obj, struct wait_queue_entry *entr
 static int pipe_signaled( struct object *obj, struct thread *thread );
 static int pipe_get_read_fd( struct object *obj );
 static int pipe_get_write_fd( struct object *obj );
-static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply );
+static int pipe_get_info( struct object *obj, struct get_file_info_request *req );
 static void pipe_destroy( struct object *obj );
 
 static const struct object_ops pipe_ops =
@@ -189,10 +189,18 @@ static int pipe_get_write_fd( struct object *obj )
     return dup( pipe->select.fd );
 }
 
-static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply )
+static int pipe_get_info( struct object *obj, struct get_file_info_request *req )
 {
-    memset( reply, 0, sizeof(*reply) );
-    reply->type = FILE_TYPE_PIPE;
+    req->type        = FILE_TYPE_PIPE;
+    req->attr        = 0;
+    req->access_time = 0;
+    req->write_time  = 0;
+    req->size_high   = 0;
+    req->size_low    = 0;
+    req->links       = 0;
+    req->index_high  = 0;
+    req->index_low   = 0;
+    req->serial      = 0;
     return 1;
 }
 
@@ -209,23 +217,25 @@ static void pipe_destroy( struct object *obj )
 /* create an anonymous pipe */
 DECL_HANDLER(create_pipe)
 {
-    struct create_pipe_reply reply = { -1, -1 };
     struct object *obj[2];
+    int hread = -1, hwrite = -1;
+
     if (create_pipe( obj ))
     {
-        reply.handle_read = alloc_handle( current->process, obj[0],
-                                          STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
-                                          req->inherit );
-        if (reply.handle_read != -1)
+        hread = alloc_handle( current->process, obj[0],
+                              STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
+                              req->inherit );
+        if (hread != -1)
         {
-            reply.handle_write = alloc_handle( current->process, obj[1],
-                                               STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
-                                               req->inherit );
-            if (reply.handle_write == -1)
-                close_handle( current->process, reply.handle_read );
+            hwrite = alloc_handle( current->process, obj[1],
+                                   STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
+                                   req->inherit );
+            if (hwrite == -1)
+                close_handle( current->process, hread );
         }
         release_object( obj[0] );
         release_object( obj[1] );
     }
-    add_reply_data( current, &reply, sizeof(reply) );
+    req->handle_read  = hread;
+    req->handle_write = hwrite;
 }

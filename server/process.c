@@ -82,10 +82,10 @@ static struct process *create_process( struct process *parent, struct new_proces
     /* alloc a handle for the process itself */
     alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
 
-    if (!(process->info = mem_alloc( sizeof(*process->info) + len + 1 ))) goto error;
+    if (!(process->info = mem_alloc( sizeof(*process->info) + len ))) goto error;
     memcpy( process->info, req, sizeof(*req) );
-    memcpy( process->info->cmd_line, cmd_line, len );
-    process->info->cmd_line[len] = 0;
+    memcpy( process->info->cmdline, cmd_line, len );
+    process->info->cmdline[len] = 0;
 
     /* set the process console */
     if (req->create_flags & CREATE_NEW_CONSOLE)
@@ -285,14 +285,13 @@ void kill_process( struct process *process, int exit_code )
 }
 
 /* get all information about a process */
-static void get_process_info( struct process *process,
-                              struct get_process_info_reply *reply )
+static void get_process_info( struct process *process, struct get_process_info_request *req )
 {
-    reply->pid              = process;
-    reply->exit_code        = process->exit_code;
-    reply->priority         = process->priority;
-    reply->process_affinity = process->affinity;
-    reply->system_affinity  = 1;
+    req->pid              = process;
+    req->exit_code        = process->exit_code;
+    req->priority         = process->priority;
+    req->process_affinity = process->affinity;
+    req->system_affinity  = 1;
 }
 
 /* set all information about a process */
@@ -333,62 +332,55 @@ struct process_snapshot *process_snap( int *count )
 /* create a new process */
 DECL_HANDLER(new_process)
 {
-    struct new_process_reply *reply = push_reply_data( current, sizeof(*reply) );
-    size_t len = get_req_strlen();
+    size_t len = get_req_strlen( req->cmdline );
     struct process *process;
 
-    if ((process = create_process( current->process, req, get_req_data( len + 1 ), len )))
+    req->handle = -1;
+    req->pid    = NULL;
+    if ((process = create_process( current->process, req, req->cmdline, len )))
     {
-        reply->handle = alloc_handle( current->process, process,
-                                      PROCESS_ALL_ACCESS, req->inherit );
-        reply->pid    = process;
+        req->handle = alloc_handle( current->process, process, PROCESS_ALL_ACCESS, req->inherit );
+        req->pid    = process;
         release_object( process );
-    }
-    else
-    {
-        reply->handle = -1;
-        reply->pid    = NULL;
     }
 }
 
 /* initialize a new process */
 DECL_HANDLER(init_process)
 {
-    struct init_process_reply *reply = push_reply_data( current, sizeof(*reply) );
     struct new_process_request *info;
 
     if (current->state == STARTING)
     {
-        fatal_protocol_error( "init_process: init_thread not called yet\n" );
+        fatal_protocol_error( current, "init_process: init_thread not called yet\n" );
         return;
     }
     if (!(info = current->process->info))
     {
-        fatal_protocol_error( "init_process: called twice\n" );
+        fatal_protocol_error( current, "init_process: called twice\n" );
         return;
     }
     current->process->info = NULL;
-    reply->start_flags = info->start_flags;
-    reply->hstdin      = info->hstdin;
-    reply->hstdout     = info->hstdout;
-    reply->hstderr     = info->hstderr;
-    reply->cmd_show    = info->cmd_show;
-    reply->env_ptr     = info->env_ptr;
-    add_reply_data( current, info->cmd_line, strlen(info->cmd_line) + 1 );
+    req->start_flags = info->start_flags;
+    req->hstdin      = info->hstdin;
+    req->hstdout     = info->hstdout;
+    req->hstderr     = info->hstderr;
+    req->cmd_show    = info->cmd_show;
+    req->env_ptr     = info->env_ptr;
+    strcpy( req->cmdline, info->cmdline );
     free( info );
 }
 
 /* open a handle to a process */
 DECL_HANDLER(open_process)
 {
-    struct open_process_reply *reply = push_reply_data( current, sizeof(*reply) );
     struct process *process = get_process_from_id( req->pid );
+    req->handle = -1;
     if (process)
     {
-        reply->handle = alloc_handle( current->process, process, req->access, req->inherit );
+        req->handle = alloc_handle( current->process, process, req->access, req->inherit );
         release_object( process );
     }
-    else reply->handle = -1;
 }
 
 /* terminate a process */
@@ -407,11 +399,10 @@ DECL_HANDLER(terminate_process)
 DECL_HANDLER(get_process_info)
 {
     struct process *process;
-    struct get_process_info_reply *reply = push_reply_data( current, sizeof(*reply) );
 
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
-        get_process_info( process, reply );
+        get_process_info( process, req );
         release_object( process );
     }
 }

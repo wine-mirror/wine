@@ -304,24 +304,16 @@ void FILE_SetDosError(void)
 HFILE FILE_DupUnixHandle( int fd, DWORD access )
 {
     int unix_handle;
-    struct create_file_request req;
-    struct create_file_reply reply;
+    struct alloc_file_handle_request *req = get_req_buffer();
 
     if ((unix_handle = dup(fd)) == -1)
     {
         FILE_SetDosError();
         return INVALID_HANDLE_VALUE;
     }
-    req.access  = access;
-    req.inherit = 1;
-    req.sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    req.create  = 0;
-    req.attrs   = 0;
-    
-    CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1,
-                        &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
+    req->access  = access;
+    server_call_fd( REQ_ALLOC_FILE_HANDLE, unix_handle, NULL );
+    return req->handle;
 }
 
 
@@ -334,38 +326,28 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                          LPSECURITY_ATTRIBUTES sa, DWORD creation,
                          DWORD attributes, HANDLE template )
 {
-    struct create_file_request req;
-    struct create_file_reply reply;
+    struct create_file_request *req = get_req_buffer();
 
-    req.access  = access;
-    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    req.sharing = sharing;
-    req.create  = creation;
-    req.attrs   = attributes;
-    CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
-                        &req, sizeof(req),
-                        filename, strlen(filename) + 1 );
+    req->access  = access;
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    req->sharing = sharing;
+    req->create  = creation;
+    req->attrs   = attributes;
+    lstrcpynA( req->name, filename, server_remaining(req->name) );
     SetLastError(0);
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    server_call( REQ_CREATE_FILE );
 
     /* If write access failed, retry without GENERIC_WRITE */
 
-    if ((reply.handle == -1) && !Options.failReadOnly &&
+    if ((req->handle == -1) && !Options.failReadOnly &&
         (access & GENERIC_WRITE)) 
     {
     	DWORD lasterror = GetLastError();
-	if ((lasterror == ERROR_ACCESS_DENIED) || 
-	    (lasterror == ERROR_WRITE_PROTECT))
-        {
-	    req.access &= ~GENERIC_WRITE;
-	    CLIENT_SendRequest( REQ_CREATE_FILE, -1, 2,
-				&req, sizeof(req),
-				filename, strlen(filename) + 1 );
-            SetLastError(0);
-	    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-	}
+	if ((lasterror == ERROR_ACCESS_DENIED) || (lasterror == ERROR_WRITE_PROTECT))
+            return FILE_CreateFile( filename, access & ~GENERIC_WRITE, sharing,
+                                    sa, creation, attributes, template );
     }
-    return reply.handle;
+    return req->handle;
 }
 
 
@@ -376,16 +358,14 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
  */
 HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    struct create_device_request req;
-    struct create_device_reply reply;
+    struct create_device_request *req = get_req_buffer();
 
-    req.access  = access;
-    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    req.id      = client_id;
-    CLIENT_SendRequest( REQ_CREATE_DEVICE, -1, 1, &req, sizeof(req) );
+    req->access  = access;
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    req->id      = client_id;
     SetLastError(0);
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
+    server_call( REQ_CREATE_DEVICE );
+    return req->handle;
 }
 
 
@@ -562,24 +542,21 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 DWORD WINAPI GetFileInformationByHandle( HFILE hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
 {
-    struct get_file_info_request req;
-    struct get_file_info_reply reply;
+    struct get_file_info_request *req = get_req_buffer();
 
     if (!info) return 0;
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
-        return 0;
-    DOSFS_UnixTimeToFileTime( reply.write_time, &info->ftCreationTime, 0 );
-    DOSFS_UnixTimeToFileTime( reply.write_time, &info->ftLastWriteTime, 0 );
-    DOSFS_UnixTimeToFileTime( reply.access_time, &info->ftLastAccessTime, 0 );
-    info->dwFileAttributes     = reply.attr;
-    info->dwVolumeSerialNumber = reply.serial;
-    info->nFileSizeHigh        = reply.size_high;
-    info->nFileSizeLow         = reply.size_low;
-    info->nNumberOfLinks       = reply.links;
-    info->nFileIndexHigh       = reply.index_high;
-    info->nFileIndexLow        = reply.index_low;
+    req->handle = hFile;
+    if (server_call( REQ_GET_FILE_INFO )) return 0;
+    DOSFS_UnixTimeToFileTime( req->write_time, &info->ftCreationTime, 0 );
+    DOSFS_UnixTimeToFileTime( req->write_time, &info->ftLastWriteTime, 0 );
+    DOSFS_UnixTimeToFileTime( req->access_time, &info->ftLastAccessTime, 0 );
+    info->dwFileAttributes     = req->attr;
+    info->dwVolumeSerialNumber = req->serial;
+    info->nFileSizeHigh        = req->size_high;
+    info->nFileSizeLow         = req->size_low;
+    info->nNumberOfLinks       = req->links;
+    info->nFileIndexHigh       = req->index_high;
+    info->nFileIndexLow        = req->index_low;
     return 1;
 }
 
@@ -1121,7 +1098,7 @@ HFILE WINAPI _lclose( HFILE hFile )
 BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
-    struct get_read_fd_request req;
+    struct get_read_fd_request *req = get_req_buffer();
     int unix_handle, result;
 
     TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToRead );
@@ -1129,9 +1106,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( NULL, &unix_handle, 0 );
+    req->handle = hFile;
+    server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
     if (unix_handle == -1) return FALSE;
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
@@ -1153,7 +1129,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
-    struct get_write_fd_request req;
+    struct get_write_fd_request *req = get_req_buffer();
     int unix_handle, result;
 
     TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToWrite );
@@ -1161,9 +1137,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitReply( NULL, &unix_handle, 0 );
+    req->handle = hFile;
+    server_call_fd( REQ_GET_WRITE_FD, -1, &unix_handle );
     if (unix_handle == -1) return FALSE;
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {
@@ -1254,8 +1229,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 DWORD WINAPI SetFilePointer( HFILE hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
-    struct set_file_pointer_request req;
-    struct set_file_pointer_reply reply;
+    struct set_file_pointer_request *req = get_req_buffer();
 
     if (highword && *highword)
     {
@@ -1266,16 +1240,15 @@ DWORD WINAPI SetFilePointer( HFILE hFile, LONG distance, LONG *highword,
     TRACE(file, "handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    req.handle = hFile;
-    req.low = distance;
-    req.high = highword ? *highword : 0;
+    req->handle = hFile;
+    req->low = distance;
+    req->high = highword ? *highword : 0;
     /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
-    req.whence = method;
-    CLIENT_SendRequest( REQ_SET_FILE_POINTER, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
+    req->whence = method;
     SetLastError( 0 );
-    if (highword) *highword = reply.high;
-    return reply.low;
+    if (server_call( REQ_SET_FILE_POINTER )) return 0xffffffff;
+    if (highword) *highword = req->new_high;
+    return req->new_low;
 }
 
 
@@ -1462,11 +1435,9 @@ UINT WINAPI SetHandleCount( UINT count )
  */
 BOOL WINAPI FlushFileBuffers( HFILE hFile )
 {
-    struct flush_file_request req;
-
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_FLUSH_FILE, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct flush_file_request *req = get_req_buffer();
+    req->handle = hFile;
+    return !server_call( REQ_FLUSH_FILE );
 }
 
 
@@ -1475,11 +1446,9 @@ BOOL WINAPI FlushFileBuffers( HFILE hFile )
  */
 BOOL WINAPI SetEndOfFile( HFILE hFile )
 {
-    struct truncate_file_request req;
-
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_TRUNCATE_FILE, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct truncate_file_request *req = get_req_buffer();
+    req->handle = hFile;
+    return !server_call( REQ_TRUNCATE_FILE );
 }
 
 
@@ -1631,14 +1600,10 @@ int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
  */
 DWORD WINAPI GetFileType( HFILE hFile )
 {
-    struct get_file_info_request req;
-    struct get_file_info_reply reply;
-
-    req.handle = hFile;
-    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
-        return FILE_TYPE_UNKNOWN;
-    return reply.type;
+    struct get_file_info_request *req = get_req_buffer();
+    req->handle = hFile;
+    if (server_call( REQ_GET_FILE_INFO )) return FILE_TYPE_UNKNOWN;
+    return req->type;
 }
 
 
@@ -1913,20 +1878,18 @@ BOOL WINAPI SetFileTime( HFILE hFile,
                            const FILETIME *lpLastAccessTime,
                            const FILETIME *lpLastWriteTime )
 {
-    struct set_file_time_request req;
+    struct set_file_time_request *req = get_req_buffer();
 
-    req.handle = hFile;
+    req->handle = hFile;
     if (lpLastAccessTime)
-	req.access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
+	req->access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
     else
-	req.access_time = 0; /* FIXME */
+	req->access_time = 0; /* FIXME */
     if (lpLastWriteTime)
-	req.write_time = DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
+	req->write_time = DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
     else
-	req.write_time = 0; /* FIXME */
-
-    CLIENT_SendRequest( REQ_SET_FILE_TIME, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+	req->write_time = 0; /* FIXME */
+    return !server_call( REQ_SET_FILE_TIME );
 }
 
 
@@ -1936,15 +1899,14 @@ BOOL WINAPI SetFileTime( HFILE hFile,
 BOOL WINAPI LockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
 {
-    struct lock_file_request req;
+    struct lock_file_request *req = get_req_buffer();
 
-    req.handle      = hFile;
-    req.offset_low  = dwFileOffsetLow;
-    req.offset_high = dwFileOffsetHigh;
-    req.count_low   = nNumberOfBytesToLockLow;
-    req.count_high  = nNumberOfBytesToLockHigh;
-    CLIENT_SendRequest( REQ_LOCK_FILE, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    req->handle      = hFile;
+    req->offset_low  = dwFileOffsetLow;
+    req->offset_high = dwFileOffsetHigh;
+    req->count_low   = nNumberOfBytesToLockLow;
+    req->count_high  = nNumberOfBytesToLockHigh;
+    return !server_call( REQ_LOCK_FILE );
 }
 
 /**************************************************************************
@@ -1984,15 +1946,14 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 BOOL WINAPI UnlockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
 {
-    struct unlock_file_request req;
+    struct unlock_file_request *req = get_req_buffer();
 
-    req.handle      = hFile;
-    req.offset_low  = dwFileOffsetLow;
-    req.offset_high = dwFileOffsetHigh;
-    req.count_low   = nNumberOfBytesToUnlockLow;
-    req.count_high  = nNumberOfBytesToUnlockHigh;
-    CLIENT_SendRequest( REQ_UNLOCK_FILE, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    req->handle      = hFile;
+    req->offset_low  = dwFileOffsetLow;
+    req->offset_high = dwFileOffsetHigh;
+    req->count_low   = nNumberOfBytesToUnlockLow;
+    req->count_high  = nNumberOfBytesToUnlockHigh;
+    return !server_call( REQ_UNLOCK_FILE );
 }
 
 

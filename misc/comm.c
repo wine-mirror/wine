@@ -1476,31 +1476,30 @@ BOOL WINAPI BuildCommDCBW(LPCWSTR devid,LPDCB lpdcb)
 }
 
 /*****************************************************************************
- *      COMM_Handle2fd
- *  returns a file descriptor for reading from or writing to
- *  mode is GENERIC_READ or GENERIC_WRITE. Make sure to close
- *  the handle afterwards!
+ *      COMM_GetReadFd
+ *  Returns a file descriptor for reading.
+ *  Make sure to close the handle afterwards!
  */
-int COMM_Handle2fd(HANDLE handle, int mode) {
-    struct get_read_fd_request r_req;
-    struct get_write_fd_request w_req;
+static int COMM_GetReadFd( HANDLE handle)
+{
     int fd;
+    struct get_read_fd_request *req = get_req_buffer();
+    req->handle = handle;
+    server_call_fd( REQ_GET_READ_FD, -1, &fd );
+    return fd;
+}
 
-    w_req.handle = r_req.handle = handle;
-
-    switch(mode) {
-    case GENERIC_WRITE:
-        CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
-        break;
-    case GENERIC_READ:
-        CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &r_req, sizeof(r_req) );
-        break;
-    default:
-        ERR(comm,"COMM_Handle2fd: Don't know what type of fd is required.\n");
-        return -1;
-    }
-    CLIENT_WaitReply( NULL, &fd, 0 );
-
+/*****************************************************************************
+ *      COMM_GetWriteFd
+ *  Returns a file descriptor for writing.
+ *  Make sure to close the handle afterwards!
+ */
+static int COMM_GetWriteFd( HANDLE handle)
+{
+    int fd;
+    struct get_write_fd_request *req = get_req_buffer();
+    req->handle = handle;
+    server_call_fd( REQ_GET_WRITE_FD, -1, &fd );
     return fd;
 }
 
@@ -1534,7 +1533,7 @@ BOOL WINAPI EscapeCommFunction(HANDLE handle,UINT nFunction)
 	struct termios	port;
 
     	TRACE(comm,"handle %d, function=%d\n", handle, nFunction);
-	fd = COMM_Handle2fd(handle, GENERIC_WRITE);
+	fd = COMM_GetWriteFd(handle);
 	if(fd<0)
 		return FALSE;
 
@@ -1611,7 +1610,7 @@ BOOL WINAPI PurgeComm( HANDLE handle, DWORD flags)
 
      TRACE(comm,"handle %d, flags %lx\n", handle, flags);
 
-     fd = COMM_Handle2fd(handle, GENERIC_WRITE);
+     fd = COMM_GetWriteFd(handle);
      if(fd<0)
          return FALSE;
 
@@ -1648,7 +1647,7 @@ BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
 {
     int fd;
 
-    fd=COMM_Handle2fd(handle,GENERIC_READ);
+    fd=COMM_GetReadFd(handle);
     if(0>fd) 
     {
         return FALSE;
@@ -1693,7 +1692,7 @@ BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
     int fd;
 
     FIXME(comm, "insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-    fd=COMM_Handle2fd(handle,GENERIC_WRITE);
+    fd=COMM_GetWriteFd(handle);
     if(0>fd)
     {
         return FALSE;
@@ -1710,7 +1709,7 @@ BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
     int fd;
 
     TRACE(comm, "handle %d, mask %p\n", handle, evtmask);
-    if(0>(fd=COMM_Handle2fd(handle,GENERIC_READ))) 
+    if(0>(fd=COMM_GetReadFd(handle))) 
     {
         return FALSE;
     }
@@ -1727,7 +1726,7 @@ BOOL WINAPI SetCommMask(INT handle,DWORD evtmask)
     int fd;
 
     TRACE(comm, "handle %d, mask %lx\n", handle, evtmask);
-    if(0>(fd=COMM_Handle2fd(handle,GENERIC_WRITE))) {
+    if(0>(fd=COMM_GetWriteFd(handle))) {
         return FALSE;
     }
     close(fd);
@@ -1742,19 +1741,14 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 {
      struct termios port;
      int fd;
-     struct get_write_fd_request req;
 
      TRACE(comm,"handle %d, ptr %p\n", handle, lpdcb);
 
-     req.handle = handle;
-     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
-     CLIENT_WaitReply( NULL, &fd, 0 );
-
-     if(fd<0)
-         return FALSE;
+     if ((fd = COMM_GetWriteFd(handle)) < 0) return FALSE;
 
      if (tcgetattr(fd,&port) == -1) {
-         commerror = WinError();	
+         commerror = WinError();
+         close( fd );
          return FALSE;
      }
 
@@ -1821,6 +1815,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 			break;		
 		default:
 			commerror = IE_BAUDRATE;
+                        close( fd );
 			return FALSE;
 	}
 #elif !defined(__EMX__)
@@ -1863,6 +1858,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
                         break;
                 default:
                         commerror = IE_BAUDRATE;
+                        close( fd );
                         return FALSE;
         }
         port.c_ispeed = port.c_ospeed;
@@ -1884,6 +1880,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 			break;
 		default:
 			commerror = IE_BYTESIZE;
+                        close( fd );
 			return FALSE;
 	}
 
@@ -1904,6 +1901,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
                         break;
                 default:
                         commerror = IE_BYTESIZE;
+                        close( fd );
                         return FALSE;
         }
 	
@@ -1918,6 +1916,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 				break;
 		default:
 			commerror = IE_BYTESIZE;
+                        close( fd );
 			return FALSE;
 	}
 #ifdef CRTSCTS
@@ -1941,9 +1940,11 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 
 	if (tcsetattr(fd,TCSADRAIN,&port)==-1) {
 		commerror = WinError();	
+                close( fd );
 		return FALSE;
 	} else {
 		commerror = 0;
+                close( fd );
 		return TRUE;
 	}
 }
@@ -1956,21 +1957,18 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 {
      struct termios port;
      int fd;
-     struct get_read_fd_request req;
 
      TRACE(comm,"handle %d, ptr %p\n", handle, lpdcb);
-     req.handle = handle;
-     CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
-     CLIENT_WaitReply( NULL, &fd, 0 );
 
-     if(fd<0)
-         return FALSE;
+     if ((fd = COMM_GetReadFd(handle)) < 0) return FALSE;
 
      if (tcgetattr(fd, &port) == -1) {
         TRACE(comm,"tcgetattr(%d, ...) returned -1",fd);
 		commerror = WinError();	
+                close( fd );
 		return FALSE;
 	}
+     close( fd );
 #ifndef __EMX__
 #ifdef CBAUD
         switch (port.c_cflag & CBAUD) {

@@ -14,9 +14,7 @@
     "unsigned int" => "%08x",
     "void*"        => "%p",
     "time_t"       => "%ld",
-    "char[0]"      => "dump_chars",
-    "int[0]"       => "dump_ints",
-    "void*[0]"     => "dump_ptrs"
+    "char[1]"      => "\\\"%s\\\""
 );
 
 my @requests = ();
@@ -31,7 +29,6 @@ my @trace_lines = ();
 while (<SERVER>)
 {
     if (/^struct +(\w+)_request/) { &DO_REQUEST($1); }
-    if (/^struct +(\w+)_reply/)   { &DO_REPLY($1); }
 }
 
 ### Output the dumping function tables
@@ -92,71 +89,56 @@ REPLACE_IN_FILE( "server/request.h", @request_lines );
 sub DO_REQUEST
 {
     my $name = shift;
-    my @struct = ();
+    my @in_struct = ();
+    my @out_struct = ();
     while (<SERVER>)
     {
+	my ($dir, $type, $var);
 	last if /^};$/;
         next if /^{$/;
 	s!/\*.*\*/!!g;
 	next if /^\s*$/;
-	/ *(\w+\**( +\w+\**)*) +(\w+)(\[0\])?;/ or die "Unrecognized syntax $_";
-	my $type = $1 . ($4 || "");
-	my $var = $3;
-        die "Unrecognized type $type" unless defined($formats{$type});
-	push @struct, $type, $var;
+	/^\s*(IN|OUT)\s*(\w+\**(\s+\w+\**)*)\s+(\w+)(\[[1]\])?;/ or die "Unrecognized syntax $_";
+	$dir = $1;
+	$type = $2 . ($5 || "");
+	$var = $4;
+	die "Unrecognized type $type" unless (defined($formats{$type}) || $5);
+	if ($dir =~ /IN/) { push @in_struct, $type, $var; }
+	if ($dir =~ /OUT/) { push @out_struct, $type, $var; }
     }
     push @requests, $name;
-    &DO_DUMP_FUNC( $name . "_request",@struct);
-}
-
-### Handle a reply structure definition
-
-sub DO_REPLY
-{
-    my $name = shift;
-    my @struct = ();
-    while (<SERVER>)
+    &DO_DUMP_FUNC( $name, "request", @in_struct);
+    if ($#out_struct >= 0)
     {
-	last if /^};$/;
-        next if /^{$/;
-	s!/\*.*\*/!!g;
-	next if /^\s*$/;
-	/ *(\w+\**( +\w+\**)*) +(\w+)(\[0\])?;/ or die "Unrecognized syntax $_";
-	my $type = $1 . ($4 || "");
-	my $var = $3;
-        die "Unrecognized type $type" unless defined($formats{$type});
-	push @struct, $type, $var;
+	$replies{$name} = 1;
+	&DO_DUMP_FUNC( $name, "reply", @out_struct);
     }
-    $replies{$name} = 1;
-    &DO_DUMP_FUNC( $name . "_reply" ,@struct);
 }
 
 ### Generate a dumping function
 
 sub DO_DUMP_FUNC
 {
-    my $vararg = 0;
     my $name = shift;
-    push @trace_lines, "static int dump_$name( struct $name *req, int len )\n{\n";
+    my $req = shift;
+    push @trace_lines, "static void dump_${name}_$req( struct ${name}_request *req )\n{\n";
     while ($#_ >= 0)
     {
 	my $type = shift;
 	my $var = shift;
-	if ($type =~ /\[0\]$/)  # vararg type?
-	{
-	    $vararg = 1;
-	    push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-	    push @trace_lines, "    return $formats{$type}( req+1, len - (int)sizeof(*req) ) + sizeof(*req);\n";
-	}
-	else
+	if (defined($formats{$type}))
 	{
 	    push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
 	    push @trace_lines, "," if ($#_ > 0);
 	    push @trace_lines, "\", ";
 	    push @trace_lines, "req->$var );\n";
+	}
+	else  # must be some varargs format
+	{
+	    push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
+	    push @trace_lines, "    dump_varargs_${name}( req );\n";
         }
     }
-    push @trace_lines, "    return (int)sizeof(*req);\n" unless $vararg;
     push @trace_lines, "}\n\n";
 }
 

@@ -16,17 +16,15 @@
  */
 HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 {
-    struct create_mutex_request req;
-    struct create_mutex_reply reply;
+    struct create_mutex_request *req = get_req_buffer();
 
-    if (!name) name = "";
-    req.owned   = owner;
-    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, strlen(name)+1 );
+    req->owned   = owner;
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
     SetLastError(0);
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return 0;
-    return reply.handle;
+    server_call( REQ_CREATE_MUTEX );
+    if (req->handle == -1) return 0;
+    return req->handle;
 }
 
 
@@ -48,16 +46,14 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner,
  */
 HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    struct open_mutex_request req;
-    struct open_mutex_reply reply;
-    int len = name ? strlen(name) + 1 : 0;
+    struct open_mutex_request *req = get_req_buffer();
 
-    req.access  = access;
-    req.inherit = inherit;
-    CLIENT_SendRequest( REQ_OPEN_MUTEX, -1, 2, &req, sizeof(req), name, len );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
-    return reply.handle;
+    req->access  = access;
+    req->inherit = inherit;
+    lstrcpynA( req->name, name ? name : "", server_remaining(req->name) );
+    server_call( REQ_OPEN_MUTEX );
+    if (req->handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return req->handle;
 }
 
 
@@ -78,9 +74,7 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
-    struct release_mutex_request req;
-
-    req.handle = handle;
-    CLIENT_SendRequest( REQ_RELEASE_MUTEX, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct release_mutex_request *req = get_req_buffer();
+    req->handle = handle;
+    return !server_call( REQ_RELEASE_MUTEX );
 }

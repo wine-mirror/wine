@@ -64,31 +64,33 @@ static struct semaphore *create_semaphore( const char *name, size_t len,
     return sem;
 }
 
-static void release_semaphore( int handle, unsigned int count, unsigned int *prev_count )
+static unsigned int release_semaphore( int handle, unsigned int count )
 {
     struct semaphore *sem;
+    unsigned int prev = 0;
 
-    if (!(sem = (struct semaphore *)get_handle_obj( current->process, handle,
-                                                    SEMAPHORE_MODIFY_STATE, &semaphore_ops )))
-        return;
-
-    *prev_count = sem->count;
-    if (sem->count + count < sem->count || sem->count + count > sem->max)
+    if ((sem = (struct semaphore *)get_handle_obj( current->process, handle,
+                                                   SEMAPHORE_MODIFY_STATE, &semaphore_ops )))
     {
-        set_error( ERROR_TOO_MANY_POSTS );
+        prev = sem->count;
+        if (sem->count + count < sem->count || sem->count + count > sem->max)
+        {
+            set_error( ERROR_TOO_MANY_POSTS );
+        }
+        else if (sem->count)
+        {
+            /* there cannot be any thread waiting if the count is != 0 */
+            assert( !sem->obj.head );
+            sem->count += count;
+        }
+        else
+        {
+            sem->count = count;
+            wake_up( &sem->obj, count );
+        }
+        release_object( sem );
     }
-    else if (sem->count)
-    {
-        /* there cannot be any thread waiting if the count is != 0 */
-        assert( !sem->obj.head );
-        sem->count += count;
-    }
-    else
-    {
-        sem->count = count;
-        wake_up( &sem->obj, count );
-    }
-    release_object( sem );
+    return prev;
 }
 
 static void semaphore_dump( struct object *obj, int verbose )
@@ -118,30 +120,26 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
 /* create a semaphore */
 DECL_HANDLER(create_semaphore)
 {
-    size_t len = get_req_strlen();
-    struct create_semaphore_reply *reply = push_reply_data( current, sizeof(*reply) );
+    size_t len = get_req_strlen( req->name );
     struct semaphore *sem;
 
-    if ((sem = create_semaphore( get_req_data( len + 1 ), len, req->initial, req->max )))
+    req->handle = -1;
+    if ((sem = create_semaphore( req->name, len, req->initial, req->max )))
     {
-        reply->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
+        req->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
         release_object( sem );
     }
-    else reply->handle = -1;
 }
 
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    size_t len = get_req_strlen();
-    struct open_semaphore_reply *reply = push_reply_data( current, sizeof(*reply) );
-    reply->handle = open_object( get_req_data( len + 1 ), len, &semaphore_ops,
-                                 req->access, req->inherit );
+    size_t len = get_req_strlen( req->name );
+    req->handle = open_object( req->name, len, &semaphore_ops, req->access, req->inherit );
 }
 
 /* release a semaphore */
 DECL_HANDLER(release_semaphore)
 {
-    struct release_semaphore_reply *reply = push_reply_data( current, sizeof(*reply) );
-    release_semaphore( req->handle, req->count, &reply->prev_count );
+    req->prev_count = release_semaphore( req->handle, req->count );
 }

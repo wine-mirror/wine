@@ -41,13 +41,15 @@ static const struct object_ops change_ops =
 };
 
 
-static struct object *create_change_notification( int subtree, int filter )
+static struct change *create_change_notification( int subtree, int filter )
 {
     struct change *change;
-    if (!(change = alloc_object( &change_ops ))) return NULL;
-    change->subtree = subtree;
-    change->filter  = filter;
-    return &change->obj;
+    if ((change = alloc_object( &change_ops )))
+    {
+        change->subtree = subtree;
+        change->filter  = filter;
+    }
+    return change;
 }
 
 static void change_dump( struct object *obj, int verbose )
@@ -68,13 +70,13 @@ static int change_signaled( struct object *obj, struct thread *thread )
 /* create a change notification */
 DECL_HANDLER(create_change_notification)
 {
-    struct object *obj;
-    struct create_change_notification_reply *reply = push_reply_data( current, sizeof(*reply) );
+    struct change *change;
 
-    if ((obj = create_change_notification( req->subtree, req->filter )))
+    req->handle = -1;
+    if ((change = create_change_notification( req->subtree, req->filter )))
     {
-        reply->handle = alloc_handle( current->process, obj,
-                                      STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
-        release_object( obj );
+        req->handle = alloc_handle( current->process, change,
+                                    STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE, 0 );
+        release_object( change );
     }
 }

@@ -344,8 +344,8 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   pid_t child;
   char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
   SECURITY_ATTRIBUTES attr={sizeof(attr),NULL,TRUE};
-  struct get_read_fd_request r_req;
-  struct get_write_fd_request w_req;
+  struct get_read_fd_request *r_req = get_req_buffer();
+  struct get_write_fd_request *w_req = get_req_buffer();
 
   if (!lpDosTask) return FALSE;
   /* create pipes */
@@ -357,12 +357,10 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
     CloseHandle(lpDosTask->hXPipe);
     return FALSE;
   }
-  r_req.handle = lpDosTask->hReadPipe;
-  CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &r_req, sizeof(r_req) );
-  CLIENT_WaitReply( NULL, &(lpDosTask->read_pipe), 0 );
-  w_req.handle = lpDosTask->hXPipe;
-  CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &w_req, sizeof(w_req) );
-  CLIENT_WaitReply( NULL, &x_fd, 0 );
+  r_req->handle = lpDosTask->hReadPipe;
+  server_call_fd( REQ_GET_READ_FD, -1, &lpDosTask->read_pipe );
+  w_req->handle = lpDosTask->hXPipe;
+  server_call_fd( REQ_GET_WRITE_FD, -1, &x_fd );
 
   TRACE("win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
 	       lpDosTask->hReadPipe,lpDosTask->hXPipe,lpDosTask->read_pipe,x_fd);

@@ -199,8 +199,7 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
                      LPSECURITY_ATTRIBUTES sa, int *server_handle )
 {
-    struct new_thread_request request;
-    struct new_thread_reply reply = { NULL, -1 };
+    struct new_thread_request *req = get_req_buffer();
     int fd[2];
     HANDLE cleanup_object;
 
@@ -217,6 +216,7 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
 
     /* Allocate the TEB selector (%fs register) */
 
+    *server_handle = -1;
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
     if (!teb->teb_sel) goto error;
 
@@ -232,13 +232,12 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
 
     /* Create the thread on the server side */
 
-    request.pid     = teb->process->server_pid;
-    request.suspend = ((flags & CREATE_SUSPENDED) != 0);
-    request.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    CLIENT_SendRequest( REQ_NEW_THREAD, fd[1], 1, &request, sizeof(request) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) goto error;
-    teb->tid = reply.tid;
-    *server_handle = reply.handle;
+    req->pid     = teb->process->server_pid;
+    req->suspend = ((flags & CREATE_SUSPENDED) != 0);
+    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    if (server_call_fd( REQ_NEW_THREAD, fd[1], NULL )) goto error;
+    teb->tid = req->tid;
+    *server_handle = req->handle;
 
     /* Do the rest of the initialization */
 
@@ -255,7 +254,7 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
     return teb;
 
 error:
-    if (reply.handle != -1) CloseHandle( reply.handle );
+    if (*server_handle != -1) CloseHandle( *server_handle );
     if (teb->teb_sel) SELECTOR_FreeBlock( teb->teb_sel, 1 );
     if (teb->socket != -1) close( teb->socket );
     HeapFree( SystemHeap, 0, teb );
@@ -532,13 +531,11 @@ BOOL WINAPI GetThreadContext(
 INT WINAPI GetThreadPriority(
     HANDLE hthread) /* [in] Handle to thread */
 {
-    struct get_thread_info_request req;
-    struct get_thread_info_reply reply;
-    req.handle = hthread;
-    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
-        return THREAD_PRIORITY_ERROR_RETURN;
-    return reply.priority;
+    INT ret = THREAD_PRIORITY_ERROR_RETURN;
+    struct get_thread_info_request *req = get_req_buffer();
+    req->handle = hthread;
+    if (!server_call( REQ_GET_THREAD_INFO )) ret = req->priority;
+    return ret;
 }
 
 
@@ -553,12 +550,11 @@ BOOL WINAPI SetThreadPriority(
     HANDLE hthread, /* [in] Handle to thread */
     INT priority)   /* [in] Thread priority level */
 {
-    struct set_thread_info_request req;
-    req.handle   = hthread;
-    req.priority = priority;
-    req.mask     = SET_THREAD_INFO_PRIORITY;
-    CLIENT_SendRequest( REQ_SET_THREAD_INFO, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct set_thread_info_request *req = get_req_buffer();
+    req->handle   = hthread;
+    req->priority = priority;
+    req->mask     = SET_THREAD_INFO_PRIORITY;
+    return !server_call( REQ_SET_THREAD_INFO );
 }
 
 
@@ -567,12 +563,11 @@ BOOL WINAPI SetThreadPriority(
  */
 DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 {
-    struct set_thread_info_request req;
-    req.handle   = hThread;
-    req.affinity = dwThreadAffinityMask;
-    req.mask     = SET_THREAD_INFO_AFFINITY;
-    CLIENT_SendRequest( REQ_SET_THREAD_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitReply( NULL, NULL, 0 )) return 0;
+    struct set_thread_info_request *req = get_req_buffer();
+    req->handle   = hThread;
+    req->affinity = dwThreadAffinityMask;
+    req->mask     = SET_THREAD_INFO_AFFINITY;
+    if (server_call( REQ_SET_THREAD_INFO )) return 0;
     return 1;  /* FIXME: should return previous value */
 }
 
@@ -588,11 +583,10 @@ BOOL WINAPI TerminateThread(
     HANDLE handle, /* [in] Handle to thread */
     DWORD exitcode)  /* [in] Exit code for thread */
 {
-    struct terminate_thread_request req;
-    req.handle    = handle;
-    req.exit_code = exitcode;
-    CLIENT_SendRequest( REQ_TERMINATE_THREAD, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct terminate_thread_request *req = get_req_buffer();
+    req->handle    = handle;
+    req->exit_code = exitcode;
+    return !server_call( REQ_TERMINATE_THREAD );
 }
 
 
@@ -607,13 +601,15 @@ BOOL WINAPI GetExitCodeThread(
     HANDLE hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
-    struct get_thread_info_request req;
-    struct get_thread_info_reply reply;
-    req.handle = hthread;
-    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
-    if (exitcode) *exitcode = reply.exit_code;
-    return TRUE;
+    BOOL ret = FALSE;
+    struct get_thread_info_request *req = get_req_buffer();
+    req->handle = hthread;
+    if (!server_call( REQ_GET_THREAD_INFO ))
+    {
+        if (exitcode) *exitcode = req->exit_code;
+        ret = TRUE;
+    }
+    return ret;
 }
 
 
@@ -631,12 +627,11 @@ BOOL WINAPI GetExitCodeThread(
 DWORD WINAPI ResumeThread(
     HANDLE hthread) /* [in] Identifies thread to restart */
 {
-    struct resume_thread_request req;
-    struct resume_thread_reply reply;
-    req.handle = hthread;
-    CLIENT_SendRequest( REQ_RESUME_THREAD, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
-    return reply.count;
+    DWORD ret = 0xffffffff;
+    struct resume_thread_request *req = get_req_buffer();
+    req->handle = hthread;
+    if (!server_call( REQ_RESUME_THREAD )) ret = req->count;
+    return ret;
 }
 
 
@@ -650,12 +645,11 @@ DWORD WINAPI ResumeThread(
 DWORD WINAPI SuspendThread(
     HANDLE hthread) /* [in] Handle to the thread */
 {
-    struct suspend_thread_request req;
-    struct suspend_thread_reply reply;
-    req.handle = hthread;
-    CLIENT_SendRequest( REQ_SUSPEND_THREAD, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
-    return reply.count;
+    DWORD ret = 0xffffffff;
+    struct suspend_thread_request *req = get_req_buffer();
+    req->handle = hthread;
+    if (!server_call( REQ_SUSPEND_THREAD )) ret = req->count;
+    return ret;
 }
 
 
@@ -664,12 +658,11 @@ DWORD WINAPI SuspendThread(
  */
 DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 {
-    struct queue_apc_request req;
-    req.handle = hthread;
-    req.func   = func;
-    req.param  = (void *)data;
-    CLIENT_SendRequest( REQ_QUEUE_APC, -1, 1, &req, sizeof(req) );
-    return !CLIENT_WaitReply( NULL, NULL, 0 );
+    struct queue_apc_request *req = get_req_buffer();
+    req->handle = hthread;
+    req->func   = func;
+    req->param  = (void *)data;
+    return !server_call( REQ_QUEUE_APC );
 }
 
 

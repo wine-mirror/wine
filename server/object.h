@@ -47,7 +47,7 @@ struct object_ops
     /* flush the object buffers */
     int  (*flush)(struct object *);
     /* get file information */
-    int  (*get_file_info)(struct object *,struct get_file_info_reply *);
+    int  (*get_file_info)(struct object *,struct get_file_info_request *);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };
@@ -80,7 +80,7 @@ extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_read_fd( struct object *obj );
 extern int no_write_fd( struct object *obj );
 extern int no_flush( struct object *obj );
-extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info );
+extern int no_get_file_info( struct object *obj, struct get_file_info_request *info );
 extern void no_destroy( struct object *obj );
 extern void default_select_event( int event, void *private );
 #ifdef DEBUG_OBJECTS
@@ -123,7 +123,7 @@ struct client;
 extern struct client *add_client( int client_fd, struct thread *self );
 extern void remove_client( struct client *client, int exit_code );
 extern void client_pass_fd( struct client *client, int pass_fd );
-extern void client_reply( struct client *client );
+extern void client_reply( struct client *client, unsigned int res );
 
 /* mutex functions */
 

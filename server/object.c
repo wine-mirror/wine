@@ -240,7 +240,7 @@ int no_flush( struct object *obj )
     return 0;
 }
 
-int no_get_file_info( struct object *obj, struct get_file_info_reply *info )
+int no_get_file_info( struct object *obj, struct get_file_info_request *info )
 {
     set_error( ERROR_INVALID_HANDLE );
     return 0;

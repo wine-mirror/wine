@@ -26,6 +26,14 @@
 #define SCM_RIGHTS 1
 #endif
 
+/* data structure used to pass an fd with sendmsg/recvmsg */
+struct cmsg_fd
+{
+    int len;   /* sizeof structure */
+    int level; /* SOL_SOCKET */
+    int type;  /* SCM_RIGHTS */
+    int fd;    /* fd to pass */
+};
 
 /***********************************************************************
  *           CLIENT_Die
@@ -39,9 +47,9 @@ static void CLIENT_Die(void)
 }
 
 /***********************************************************************
- *           CLIENT_ProtocolError
+ *           server_protocol_error
  */
-void CLIENT_ProtocolError( const char *err, ... )
+void server_protocol_error( const char *err, ... )
 {
     va_list args;
 
@@ -54,9 +62,9 @@ void CLIENT_ProtocolError( const char *err, ... )
 
 
 /***********************************************************************
- *           CLIENT_perror
+ *           server_perror
  */
-void CLIENT_perror( const char *err )
+static void server_perror( const char *err )
 {
     fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
     perror( err );
@@ -71,24 +79,15 @@ void CLIENT_perror( const char *err )
  */
 static void send_request( enum request req )
 {
-    struct header *head = NtCurrentTeb()->buffer;
-    int ret, seq = NtCurrentTeb()->seq++;
-
-    assert( server_remaining() >= 0 );
-
-    head->type = req;
-    head->len  = (char *)NtCurrentTeb()->buffer_args - (char *)NtCurrentTeb()->buffer;
-
-    NtCurrentTeb()->buffer_args = head + 1;  /* reset the args buffer */
-
-    if ((ret = write( NtCurrentTeb()->socket, &seq, sizeof(seq) )) == sizeof(seq))
+    int ret;
+    if ((ret = write( NtCurrentTeb()->socket, &req, sizeof(req) )) == sizeof(req))
         return;
     if (ret == -1)
     {
         if (errno == EPIPE) CLIENT_Die();
-        CLIENT_perror( "sendmsg" );
+        server_perror( "sendmsg" );
     }
-    CLIENT_ProtocolError( "partial seq sent %d/%d\n", ret, sizeof(seq) );
+    server_protocol_error( "partial msg sent %d/%d\n", ret, sizeof(req) );
 }
 
 /***********************************************************************
@@ -98,23 +97,15 @@ static void send_request( enum request req )
  */
 static void send_request_fd( enum request req, int fd )
 {
-    struct header *head = NtCurrentTeb()->buffer;
-    int ret, seq = NtCurrentTeb()->seq++;
+    int ret;
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     struct cmsg_fd cmsg;
 #endif
     struct msghdr msghdr;
     struct iovec vec;
 
-    assert( server_remaining() >= 0 );
-
-    head->type = req;
-    head->len  = (char *)NtCurrentTeb()->buffer_args - (char *)NtCurrentTeb()->buffer;
-
-    NtCurrentTeb()->buffer_args = head + 1;  /* reset the args buffer */
-
-    vec.iov_base = &seq;
-    vec.iov_len  = sizeof(seq);
+    vec.iov_base = &req;
+    vec.iov_len  = sizeof(req);
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
@@ -134,13 +125,13 @@ static void send_request_fd( enum request req, int fd )
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(seq)) return;
+    if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(req)) return;
     if (ret == -1)
     {
         if (errno == EPIPE) CLIENT_Die();
-        CLIENT_perror( "sendmsg" );
+        server_perror( "sendmsg" );
     }
-    CLIENT_ProtocolError( "partial seq sent %d/%d\n", ret, sizeof(seq) );
+    server_protocol_error( "partial msg sent %d/%d\n", ret, sizeof(req) );
 }
 
 /***********************************************************************
@@ -148,26 +139,23 @@ static void send_request_fd( enum request req, int fd )
  *
  * Wait for a reply from the server.
  */
-static void wait_reply(void)
+static unsigned int wait_reply(void)
 {
-    int seq, ret;
+    int ret;
+    unsigned int res;
 
     for (;;)
     {
-        if ((ret = read( NtCurrentTeb()->socket, &seq, sizeof(seq) )) == sizeof(seq))
-        {
-            if (seq != NtCurrentTeb()->seq++)
-                CLIENT_ProtocolError( "sequence %08x instead of %08x\n", seq, NtCurrentTeb()->seq - 1 );
-            return;
-        }
+        if ((ret = read( NtCurrentTeb()->socket, &res, sizeof(res) )) == sizeof(res))
+            return res;
         if (ret == -1)
         {
             if (errno == EINTR) continue;
             if (errno == EPIPE) CLIENT_Die();
-            CLIENT_perror("read");
+            server_perror("read");
         }
         if (!ret) CLIENT_Die(); /* the server closed the connection; time to die... */
-        CLIENT_ProtocolError( "partial seq received %d/%d\n", ret, sizeof(seq) );
+        server_protocol_error( "partial msg received %d/%d\n", ret, sizeof(res) );
     }
 }
 
@@ -177,17 +165,18 @@ static void wait_reply(void)
  *
  * Wait for a reply from the server, when a file descriptor is passed.
  */
-static int wait_reply_fd(void)
+static unsigned int wait_reply_fd( int *fd )
 {
     struct iovec vec;
-    int seq, ret;
+    int ret;
+    unsigned int res;
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     struct msghdr msghdr;
-    int fd = -1;
 
-    msghdr.msg_accrights    = (void *)&fd;
-    msghdr.msg_accrightslen = sizeof(int);
+    *fd = -1;
+    msghdr.msg_accrights    = (void *)fd;
+    msghdr.msg_accrightslen = sizeof(*fd);
 #else  /* HAVE_MSGHDR_ACCRIGHTS */
     struct msghdr msghdr;
     struct cmsg_fd cmsg;
@@ -205,29 +194,26 @@ static int wait_reply_fd(void)
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
-    vec.iov_base = &seq;
-    vec.iov_len  = sizeof(seq);
+    vec.iov_base = &res;
+    vec.iov_len  = sizeof(res);
 
     for (;;)
     {
-        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(seq))
+        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(res))
         {
-            if (seq != NtCurrentTeb()->seq++)
-                CLIENT_ProtocolError( "sequence %08x instead of %08x\n", seq, NtCurrentTeb()->seq - 1 );
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-            return fd;
-#else
-            return cmsg.fd;
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+            *fd = cmsg.fd;
 #endif
+            return res;
         }
         if (ret == -1)
         {
             if (errno == EINTR) continue;
             if (errno == EPIPE) CLIENT_Die();
-            CLIENT_perror("recvmsg");
+            server_perror("recvmsg");
         }
         if (!ret) CLIENT_Die(); /* the server closed the connection; time to die... */
-        CLIENT_ProtocolError( "partial seq received %d/%d\n", ret, sizeof(seq) );
+        server_protocol_error( "partial seq received %d/%d\n", ret, sizeof(res) );
     }
 }
 
@@ -239,17 +225,14 @@ static int wait_reply_fd(void)
  */
 unsigned int server_call( enum request req )
 {
-    struct header *head;
+    unsigned int res;
 
     send_request( req );
-    wait_reply();
-
-    head = (struct header *)NtCurrentTeb()->buffer;
-    if ((head->len < sizeof(*head)) || (head->len > NtCurrentTeb()->buffer_size))
-        CLIENT_ProtocolError( "header length %d\n", head->len );
-    if (head->type) SetLastError( head->type );
-    return head->type;  /* error code */
+    res = wait_reply();
+    if (res) SetLastError( res );
+    return res;  /* error code */
 }
+
 
 /***********************************************************************
  *           server_call_fd
@@ -258,125 +241,17 @@ unsigned int server_call( enum request req )
  * If *fd is != -1, it will be passed to the server.
  * If the server passes an fd, it will be stored into *fd.
  */
-unsigned int server_call_fd( enum request req, int *fd )
+unsigned int server_call_fd( enum request req, int fd_out, int *fd_in )
 {
-    struct header *head;
+    unsigned int res;
 
-    if (*fd == -1) send_request( req );
-    else send_request_fd( req, *fd );
-    *fd = wait_reply_fd();
+    if (fd_out == -1) send_request( req );
+    else send_request_fd( req, fd_out );
 
-    head = (struct header *)NtCurrentTeb()->buffer;
-    if ((head->len < sizeof(*head)) || (head->len > NtCurrentTeb()->buffer_size))
-        CLIENT_ProtocolError( "header length %d\n", head->len );
-    if (head->type) SetLastError( head->type );
-    return head->type;  /* error code */
-}
-
-/***********************************************************************
- *           CLIENT_SendRequest
- *
- * Send a request to the server.
- */
-void CLIENT_SendRequest( enum request req, int pass_fd,
-                         int n, ... /* arg_1, len_1, etc. */ )
-{
-    va_list args;
-
-    va_start( args, n );
-    while (n--)
-    {
-        void *ptr = va_arg( args, void * );
-        int len   = va_arg( args, int );
-        memcpy( server_add_data( len ), ptr, len );
-    }
-    va_end( args );
-
-    if (pass_fd == -1) send_request( req );
-    else
-    {
-        send_request_fd( req, pass_fd );
-        close( pass_fd ); /* we passed the fd now we can close it */
-    }
-}
-
-
-/***********************************************************************
- *           CLIENT_WaitReply_v
- *
- * Wait for a reply from the server.
- * Returns the error code (or 0 if OK).
- */
-static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
-                                        struct iovec *vec, int veclen )
-{
-    struct header *head;
-    char *ptr;
-    int i, remaining;
-
-    if (passed_fd) *passed_fd = wait_reply_fd();
-    else wait_reply();
-
-    head = (struct header *)NtCurrentTeb()->buffer;
-    if ((head->len < sizeof(*head)) || (head->len > NtCurrentTeb()->buffer_size))
-        CLIENT_ProtocolError( "header length %d\n", head->len );
-
-    remaining = head->len - sizeof(*head);
-    ptr = (char *)(head + 1);
-    for (i = 0; i < veclen; i++, vec++)
-    {
-        int len = MIN( remaining, vec->iov_len );
-        memcpy( vec->iov_base, ptr, len );
-        ptr += len;
-        if (!(remaining -= len)) break;
-    }
-    if (len) *len = head->len - sizeof(*head);
-    if (head->type) SetLastError( head->type );
-    return head->type;  /* error code */
-}
-
-
-/***********************************************************************
- *           CLIENT_WaitReply
- *
- * Wait for a reply from the server.
- */
-unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
-                               int n, ... /* arg_1, len_1, etc. */ )
-{
-    struct iovec vec[16];
-    va_list args;
-    int i;
-
-    assert( n < 16 );
-    va_start( args, n );
-    for (i = 0; i < n; i++)
-    {
-        vec[i].iov_base = va_arg( args, void * );
-        vec[i].iov_len  = va_arg( args, int );
-    }
-    va_end( args );
-    return CLIENT_WaitReply_v( len, passed_fd, vec, n );
-}
-
-
-/***********************************************************************
- *           CLIENT_WaitSimpleReply
- *
- * Wait for a simple fixed-length reply from the server.
- */
-unsigned int CLIENT_WaitSimpleReply( void *reply, int len, int *passed_fd )
-{
-    struct iovec vec;
-    unsigned int ret;
-    int got;
-
-    vec.iov_base = reply;
-    vec.iov_len  = len;
-    ret = CLIENT_WaitReply_v( &got, passed_fd, &vec, 1 );
-    if (got != len)
-        CLIENT_ProtocolError( "WaitSimpleReply: len %d != %d\n", len, got );
-    return ret;
+    if (fd_in) res = wait_reply_fd( fd_in );
+    else res = wait_reply();
+    if (res) SetLastError( res );
+    return res;  /* error code */
 }
 
 
@@ -427,24 +302,23 @@ int CLIENT_InitServer(void)
  */
 int CLIENT_InitThread(void)
 {
-    struct init_thread_request req;
-    struct init_thread_reply reply;
+    struct init_thread_request *req;
     TEB *teb = NtCurrentTeb();
+    int fd;
 
-    int fd = wait_reply_fd();
-    if (fd == -1) CLIENT_ProtocolError( "no fd passed on first request\n" );
-    if ((teb->buffer_size = lseek( fd, 0, SEEK_END )) == -1) CLIENT_perror( "lseek" );
+    if (wait_reply_fd( &fd ) || (fd == -1))
+        server_protocol_error( "no fd passed on first request\n" );
+    if ((teb->buffer_size = lseek( fd, 0, SEEK_END )) == -1) server_perror( "lseek" );
     teb->buffer = mmap( 0, teb->buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
     close( fd );
-    if (teb->buffer == (void*)-1) CLIENT_perror( "mmap" );
-    teb->buffer_args = (char *)teb->buffer + sizeof(struct header);
+    if (teb->buffer == (void*)-1) server_perror( "mmap" );
 
-    req.unix_pid = getpid();
-    req.teb      = teb;
-    CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return -1;
-    teb->process->server_pid = reply.pid;
-    teb->tid = reply.tid;
+    req = get_req_buffer();
+    req->unix_pid = getpid();
+    req->teb      = teb;
+    if (server_call( REQ_INIT_THREAD )) return -1;
+    teb->process->server_pid = req->pid;
+    teb->tid = req->tid;
     return 0;
 }
 
@@ -456,8 +330,9 @@ int CLIENT_InitThread(void)
  */
 int CLIENT_SetDebug( int level )
 {
-    CLIENT_SendRequest( REQ_SET_DEBUG, -1, 1, &level, sizeof(level) );
-    return CLIENT_WaitReply( NULL, NULL, 0 );
+    struct set_debug_request *req = get_req_buffer();
+    req->level = level;
+    return server_call( REQ_SET_DEBUG );
 }
 
 /***********************************************************************
@@ -467,9 +342,8 @@ int CLIENT_SetDebug( int level )
  */
 int CLIENT_DebuggerRequest( int op )
 {
-    struct debugger_request req;
-    req.op = op;
-    CLIENT_SendRequest( REQ_DEBUGGER, -1, 1, &req, sizeof(req) );
-    return CLIENT_WaitReply( NULL, NULL, 0 );
+    struct debugger_request *req = get_req_buffer();
+    req->op = op;
+    return server_call( REQ_DEBUGGER );
 }
 
