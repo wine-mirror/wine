@@ -1,3 +1,4 @@
+EXTRADEFS = -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
