@@ -29,7 +29,6 @@ struct tagCURSORICONINFO;
 struct tagDC;
 struct tagDeviceCaps;
 struct tagPALETTEOBJ;
-struct tagWND;
 struct tagWINDOWPOS;
 struct DIDEVICEOBJECTDATA;
 
@@ -366,8 +365,6 @@ extern UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
 extern INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
 extern BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr);
 extern BOOL X11DRV_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
-
-extern void X11DRV_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 
 /* X11 mouse driver */
 

@@ -41,94 +41,89 @@ const struct builtin_class_descr ICONTITLE_builtin_class =
 /***********************************************************************
  *           ICONTITLE_Create
  */
-HWND ICONTITLE_Create( WND* wnd )
+HWND ICONTITLE_Create( HWND owner )
 {
     WND* wndPtr;
     HWND hWnd;
+    HINSTANCE instance = GetWindowLongA( owner, GWL_HINSTANCE );
 
-    if( wnd->dwStyle & WS_CHILD )
+    if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
 	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
 				  WS_CHILD | WS_CLIPSIBLINGS, 0, 0, 1, 1,
-				  wnd->parent->hwndSelf, 0, wnd->hInstance, NULL );
+				  GetParent(owner), 0, instance, NULL );
     else
 	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
 				  WS_CLIPSIBLINGS, 0, 0, 1, 1,
-				  wnd->hwndSelf, 0, wnd->hInstance, NULL );
+				  owner, 0, instance, NULL );
     wndPtr = WIN_FindWndPtr( hWnd );
     if( wndPtr )
     {
+        WND *wnd = WIN_FindWndPtr(owner);
 	wndPtr->owner = wnd;	/* MDI depends on this */
 	wndPtr->dwStyle &= ~(WS_CAPTION | WS_BORDER);
-	if( wnd->dwStyle & WS_DISABLED ) wndPtr->dwStyle |= WS_DISABLED;
+        if (!IsWindowEnabled(owner)) wndPtr->dwStyle |= WS_DISABLED;
         WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleaseWndPtr(wnd);
 	return hWnd;
     }
     return 0;
 }
 
 /***********************************************************************
- *           ICONTITLE_GetTitlePos
+ *           ICONTITLE_SetTitlePos
  */
-static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
+static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
 {
     static WCHAR emptyTitleText[] = {'<','.','.','.','>',0};
-    LPWSTR str = NULL;
-    int length = lstrlenW( wnd->owner->text );
+    WCHAR str[80];
+    HDC hDC;
+    HFONT hPrevFont;
+    RECT rect;
+    INT cx, cy;
+    POINT pt;
 
-    if( length )
+    int length = GetWindowTextW( owner, str, sizeof(str)/sizeof(WCHAR) );
+
+    while (length && str[length - 1] == ' ') /* remove trailing spaces */
+        str[--length] = 0;
+
+    if( !length )
     {
-	str = HeapAlloc( GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR) );
-	strcpyW( str, wnd->owner->text );
-	while( str[length - 1] == ' ' ) /* remove trailing spaces */
-	{ 
-	    str[--length] = '\0';
-	    if( !length )
-	    {
-		HeapFree( GetProcessHeap(), 0, str );
-		break;
-	    }
-	}
-    }
-    if( !length ) 
-    {
-	str = emptyTitleText;
-	length = lstrlenW( str );
+        strcpyW( str, emptyTitleText );
+        length = strlenW( str );
     }
 
-    if( str )
-    {
-	HDC hDC = GetDC( wnd->hwndSelf );
-	if( hDC )
-	{
-	    HFONT hPrevFont = SelectObject( hDC, hIconTitleFont );
+    if (!(hDC = GetDC( hwnd ))) return FALSE;
 
-	    SetRect( lpRect, 0, 0, GetSystemMetrics(SM_CXICONSPACING) -
-		       GetSystemMetrics(SM_CXBORDER) * 2,
-		       GetSystemMetrics(SM_CYBORDER) * 2 );
+    hPrevFont = SelectObject( hDC, hIconTitleFont );
 
-	    DrawTextW( hDC, str, length, lpRect, DT_CALCRECT |
-			 DT_CENTER | DT_NOPREFIX | DT_WORDBREAK |
-			 (( bMultiLineTitle ) ? 0 : DT_SINGLELINE) );
+    SetRect( &rect, 0, 0, GetSystemMetrics(SM_CXICONSPACING) -
+             GetSystemMetrics(SM_CXBORDER) * 2,
+             GetSystemMetrics(SM_CYBORDER) * 2 );
 
-	    SelectObject( hDC, hPrevFont );
-	    ReleaseDC( wnd->hwndSelf, hDC );
+    DrawTextW( hDC, str, length, &rect, DT_CALCRECT | DT_CENTER | DT_NOPREFIX | DT_WORDBREAK |
+               (( bMultiLineTitle ) ? 0 : DT_SINGLELINE) );
 
-	    lpRect->right += 4 * GetSystemMetrics(SM_CXBORDER) - lpRect->left;
-	    lpRect->left = wnd->owner->rectWindow.left + GetSystemMetrics(SM_CXICON) / 2 -
-				      (lpRect->right - lpRect->left) / 2;
-	    lpRect->bottom -= lpRect->top;
-	    lpRect->top = wnd->owner->rectWindow.top + GetSystemMetrics(SM_CYICON);
-	}
-	if( str != emptyTitleText ) HeapFree( GetProcessHeap(), 0, str );
-	return ( hDC ) ? TRUE : FALSE;
-    }
-    return FALSE;
+    SelectObject( hDC, hPrevFont );
+    ReleaseDC( hwnd, hDC );
+
+    cx = rect.right - rect.left +  4 * GetSystemMetrics(SM_CXBORDER);
+    cy = rect.bottom - rect.top;
+
+    pt.x = (GetSystemMetrics(SM_CXICON) - cx) / 2;
+    pt.y = GetSystemMetrics(SM_CYICON);
+
+    /* point is relative to owner, make it relative to parent */
+    MapWindowPoints( owner, GetParent(hwnd), &pt, 1 );
+
+    SetWindowPos( hwnd, owner, pt.x, pt.y, cx, cy, SWP_NOACTIVATE );
+    return TRUE;
 }
 
 /***********************************************************************
  *           ICONTITLE_Paint
  */
-static BOOL ICONTITLE_Paint( WND* wnd, HDC hDC, BOOL bActive )
+static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 {
     HFONT hPrevFont;
     HBRUSH hBrush = 0;
@@ -141,9 +136,9 @@ static BOOL ICONTITLE_Paint( WND* wnd, HDC hDC, BOOL bActive )
     }
     else 
     {
-	if( wnd->dwStyle & WS_CHILD ) 
+        if( GetWindowLongA( hwnd, GWL_STYLE ) & WS_CHILD )
 	{ 
-	    hBrush = (HBRUSH) GetClassLongA(wnd->hwndSelf, GCL_HBRBACKGROUND);
+	    hBrush = (HBRUSH) GetClassLongA(hwnd, GCL_HBRBACKGROUND);
 	    if( hBrush )
 	    {
 		INT level;
@@ -165,25 +160,23 @@ static BOOL ICONTITLE_Paint( WND* wnd, HDC hDC, BOOL bActive )
 	}
     }
 
-    FillWindow16( wnd->parent->hwndSelf, wnd->hwndSelf, hDC, hBrush );
+    FillWindow16( GetParent(hwnd), hwnd, hDC, hBrush );
 
     hPrevFont = SelectObject( hDC, hIconTitleFont );
     if( hPrevFont )
     {
         RECT  rect;
 	INT	length;
-	char	buffer[80];
+	WCHAR buffer[80];
 
-	rect.left = rect.top = 0;
-	rect.right = wnd->rectWindow.right - wnd->rectWindow.left;
-	rect.bottom = wnd->rectWindow.bottom - wnd->rectWindow.top;
+        GetClientRect( hwnd, &rect );
 
-	length = GetWindowTextA( wnd->owner->hwndSelf, buffer, 80 );
+	length = GetWindowTextW( owner, buffer, 80 );
         SetTextColor( hDC, textColor );
         SetBkMode( hDC, TRANSPARENT );
-	
-	DrawTextA( hDC, buffer, length, &rect, DT_CENTER | DT_NOPREFIX |
-		     DT_WORDBREAK | ((bMultiLineTitle) ? 0 : DT_SINGLELINE) ); 
+
+        DrawTextW( hDC, buffer, length, &rect, DT_CENTER | DT_NOPREFIX |
+                   DT_WORDBREAK | ((bMultiLineTitle) ? 0 : DT_SINGLELINE) );
 
 	SelectObject( hDC, hPrevFont );
     }
@@ -197,6 +190,7 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
                                  WPARAM wParam, LPARAM lParam )
 {
     LRESULT retvalue;
+    HWND owner = GetWindow( hWnd, GW_OWNER );
     WND *wnd = WIN_FindWndPtr( hWnd );
 
     if( !wnd )
@@ -219,44 +213,27 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
              goto END;
 	case WM_NCMOUSEMOVE:
 	case WM_NCLBUTTONDBLCLK:
-	     retvalue = SendMessageA( wnd->owner->hwndSelf, msg, wParam, lParam );	
+	     retvalue = SendMessageW( owner, msg, wParam, lParam );
              goto END;
 	case WM_ACTIVATE:
-	     if( wParam ) SetActiveWindow( wnd->owner->hwndSelf );
+	     if( wParam ) SetActiveWindow( owner );
 	     /* fall through */
 
 	case WM_CLOSE:
 	     retvalue = 0;
              goto END;
 	case WM_SHOWWINDOW:
-	     if( wnd && wParam )
-	     {
-		 RECT titleRect;
-
-		 ICONTITLE_GetTitlePos( wnd, &titleRect );
-		 if( wnd->owner->next != wnd )	/* keep icon title behind the owner */
-		     SetWindowPos( hWnd, wnd->owner->hwndSelf, 
-				     titleRect.left, titleRect.top,
-				     titleRect.right, titleRect.bottom, SWP_NOACTIVATE );
-		 else
-		     SetWindowPos( hWnd, 0, titleRect.left, titleRect.top,
-				     titleRect.right, titleRect.bottom, 
-				     SWP_NOACTIVATE | SWP_NOZORDER );
-	     }
+	     if( wnd && wParam ) ICONTITLE_SetTitlePos( hWnd, owner );
 	     retvalue = 0;
              goto END;
 	case WM_ERASEBKGND:
 	     if( wnd )
 	     {
-		 WND* iconWnd = WIN_LockWndPtr(wnd->owner);
-
-		 if( iconWnd->dwStyle & WS_CHILD )
-		     lParam = SendMessageA( iconWnd->hwndSelf, WM_ISACTIVEICON, 0, 0 );
+		 if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
+		     lParam = SendMessageA( owner, WM_ISACTIVEICON, 0, 0 );
 		 else
-		     lParam = (iconWnd->hwndSelf == GetActiveWindow16());
-
-                 WIN_ReleaseWndPtr(iconWnd);
-		 if( ICONTITLE_Paint( wnd, (HDC)wParam, (BOOL)lParam ) )
+		     lParam = (owner == GetActiveWindow());
+		 if( ICONTITLE_Paint( hWnd, owner, (HDC)wParam, (BOOL)lParam ) )
 		     ValidateRect( hWnd, NULL );
                  retvalue = 1;
                  goto END;

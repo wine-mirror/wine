@@ -79,11 +79,11 @@ BOOL WINPOS_CreateInternalPosAtom()
  *
  * Called when a window is destroyed.
  */
-void WINPOS_CheckInternalPos( WND* wndPtr )
+void WINPOS_CheckInternalPos( HWND hwnd )
 {
     LPINTERNALPOS lpPos;
     MESSAGEQUEUE *pMsgQ = 0;
-    HWND hwnd = wndPtr->hwndSelf;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     lpPos = (LPINTERNALPOS) GetPropA( hwnd, atomInternalPos );
 
@@ -92,6 +92,7 @@ void WINPOS_CheckInternalPos( WND* wndPtr )
     if ( !pMsgQ )
     {
         WARN("\tMessage queue not found. Exiting!\n" );
+        WIN_ReleaseWndPtr( wndPtr );
         return;
     }
 
@@ -111,6 +112,7 @@ void WINPOS_CheckInternalPos( WND* wndPtr )
     }
 
     QUEUE_Unlock( pMsgQ );
+    WIN_ReleaseWndPtr( wndPtr );
     return;
 }
 
@@ -141,16 +143,13 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
     {
         if( IsIconic( hwndChild ) )
         {
-            WND *wndPtr = WIN_FindWndPtr(hwndChild);
-            
-            WINPOS_ShowIconTitle( wndPtr, FALSE );
-               
+            WINPOS_ShowIconTitle( hwndChild, FALSE );
+
             SetWindowPos( hwndChild, 0, x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2,
                             y - yspacing - GetSystemMetrics(SM_CYICON)/2, 0, 0,
                             SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
 	    if( IsWindow(hwndChild) )
-                WINPOS_ShowIconTitle(wndPtr , TRUE );
-            WIN_ReleaseWndPtr(wndPtr);
+                WINPOS_ShowIconTitle(hwndChild , TRUE );
 
             if (x <= rectParent.right - xspacing) x += xspacing;
             else
@@ -1050,32 +1049,28 @@ BOOL WINPOS_RedrawIconTitle( HWND hWnd )
 /***********************************************************************
  *           WINPOS_ShowIconTitle
  */
-BOOL WINPOS_ShowIconTitle( WND* pWnd, BOOL bShow )
+BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
 {
-    LPINTERNALPOS lpPos = (LPINTERNALPOS)GetPropA( pWnd->hwndSelf, atomInternalPos );
+    LPINTERNALPOS lpPos = (LPINTERNALPOS)GetPropA( hwnd, atomInternalPos );
 
-    if( lpPos && !(pWnd->dwExStyle & WS_EX_MANAGED))
+    if( lpPos && !(GetWindowLongA( hwnd, GWL_EXSTYLE) & WS_EX_MANAGED))
     {
-	HWND16 hWnd = lpPos->hwndIconTitle;
+        HWND title = lpPos->hwndIconTitle;
 
-	TRACE("0x%04x %i\n", pWnd->hwndSelf, (bShow != 0) );
+	TRACE("0x%04x %i\n", hwnd, (bShow != 0) );
 
-	if( !hWnd )
-	    lpPos->hwndIconTitle = hWnd = ICONTITLE_Create( pWnd );
+	if( !title )
+	    lpPos->hwndIconTitle = title = ICONTITLE_Create( hwnd );
 	if( bShow )
         {
-	    if( ( pWnd = WIN_FindWndPtr(hWnd) ) != NULL) 
-	    {
-	        if( !(pWnd->dwStyle & WS_VISIBLE) )
-		{
-		   SendMessageA( hWnd, WM_SHOWWINDOW, TRUE, 0 );
-		   SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-				 SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
-		}
-		WIN_ReleaseWndPtr(pWnd);
-	    }
+            if (!IsWindowVisible(title))
+            {
+                SendMessageA( title, WM_SHOWWINDOW, TRUE, 0 );
+                SetWindowPos( title, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                              SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
+            }
 	}
-	else ShowWindow( hWnd, SW_HIDE );
+	else ShowWindow( title, SW_HIDE );
     }
     return FALSE;
 }
@@ -1085,12 +1080,14 @@ BOOL WINPOS_ShowIconTitle( WND* pWnd, BOOL bShow )
  *
  * Get the minimized and maximized information for a window.
  */
-void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
+void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			   POINT *minTrack, POINT *maxTrack )
 {
     LPINTERNALPOS lpPos;
     MINMAXINFO MinMax;
     INT xinc, yinc;
+    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+    LONG exstyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
 
     /* Compute default values */
 
@@ -1101,7 +1098,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
     MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN);
 
-    if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (HAS_DLGFRAME( style, exstyle ))
     {
         xinc = GetSystemMetrics(SM_CXDLGFRAME);
         yinc = GetSystemMetrics(SM_CYDLGFRAME);
@@ -1109,12 +1106,12 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
     else
     {
         xinc = yinc = 0;
-        if (HAS_THICKFRAME(wndPtr->dwStyle))
+        if (HAS_THICKFRAME(style))
         {
             xinc += GetSystemMetrics(SM_CXFRAME);
             yinc += GetSystemMetrics(SM_CYFRAME);
         }
-        if (wndPtr->dwStyle & WS_BORDER)
+        if (style & WS_BORDER)
         {
             xinc += GetSystemMetrics(SM_CXBORDER);
             yinc += GetSystemMetrics(SM_CYBORDER);
@@ -1123,7 +1120,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxSize.x += 2 * xinc;
     MinMax.ptMaxSize.y += 2 * yinc;
 
-    lpPos = (LPINTERNALPOS)GetPropA( wndPtr->hwndSelf, atomInternalPos );
+    lpPos = (LPINTERNALPOS)GetPropA( hwnd, atomInternalPos );
     if( lpPos && !EMPTYPOINT(lpPos->ptMaxPos) )
 	CONV_POINT16TO32( &lpPos->ptMaxPos, &MinMax.ptMaxPosition );
     else
@@ -1132,7 +1129,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
         MinMax.ptMaxPosition.y = -yinc;
     }
 
-    SendMessageA( wndPtr->hwndSelf, WM_GETMINMAXINFO, 0, (LPARAM)&MinMax );
+    SendMessageA( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&MinMax );
 
       /* Some sanity checks */
 
@@ -1292,7 +1289,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT16 *wndpl,
 
 	if( pWnd->dwStyle & WS_MINIMIZE )
 	{
-	    WINPOS_ShowIconTitle( pWnd, FALSE );
+	    WINPOS_ShowIconTitle( pWnd->hwndSelf, FALSE );
 	    if( wndpl->flags & WPF_SETMINPOSITION && !EMPTYPOINT(lpPos->ptIconPos))
 		SetWindowPos( hwnd, 0, lpPos->ptIconPos.x, lpPos->ptIconPos.y,
 				0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
@@ -1312,7 +1309,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT16 *wndpl,
 	ShowWindow( hwnd, wndpl->showCmd );
 	if( IsWindow(hwnd) && pWnd->dwStyle & WS_MINIMIZE )
 	{
-	    if( pWnd->dwStyle & WS_VISIBLE ) WINPOS_ShowIconTitle( pWnd, TRUE );
+	    if( pWnd->dwStyle & WS_VISIBLE ) WINPOS_ShowIconTitle( pWnd->hwndSelf, TRUE );
 
 	    /* SDK: ...valid only the next time... */
 	    if( wndpl->flags & WPF_RESTORETOMAXIMIZED ) pWnd->flags |= WIN_RESTORE_MAX;
@@ -1680,11 +1677,11 @@ CLEANUP_END:
  *
  *  Activates window other than pWnd.
  */
-BOOL WINPOS_ActivateOtherWindow(WND* pWnd)
+BOOL WINPOS_ActivateOtherWindow(HWND hwnd)
 {
-  BOOL	bRet = 0;
-  WND*  	pWndTo = NULL;
-    HWND       hwndActive = 0;
+    BOOL bRet = 0;
+    WND *pWnd, *pWndTo = NULL;
+    HWND hwndActive = 0;
 
     /* Get current active window from the active queue */
     if ( hActiveQueue )
@@ -1697,37 +1694,42 @@ BOOL WINPOS_ActivateOtherWindow(WND* pWnd)
         }
     }
 
-  if( pWnd->hwndSelf == hwndPrevActive )
-      hwndPrevActive = 0;
+    if( hwnd == hwndPrevActive )
+        hwndPrevActive = 0;
 
-  if( hwndActive != pWnd->hwndSelf && 
-    ( hwndActive || QUEUE_IsExitingQueue(pWnd->hmemTaskQ)) )
-      return 0;
+    pWnd = WIN_FindWndPtr( hwnd );
+    if( hwndActive != hwnd &&
+        ( hwndActive || QUEUE_IsExitingQueue(pWnd->hmemTaskQ)) )
+    {
+        WIN_ReleaseWndPtr( pWnd );
+        return 0;
+    }
 
-  if( !(pWnd->dwStyle & WS_POPUP) || !(pWnd->owner) ||
-      !WINPOS_CanActivate((pWndTo = WIN_GetTopParentPtr(pWnd->owner))) ) 
-  {
-      WND* pWndPtr = WIN_GetTopParentPtr(pWnd);
+    if( !(pWnd->dwStyle & WS_POPUP) || !(pWnd->owner) ||
+        !WINPOS_CanActivate((pWndTo = WIN_GetTopParentPtr(pWnd->owner))) )
+    {
+        WND* pWndPtr = WIN_GetTopParentPtr(pWnd);
 
-      WIN_ReleaseWndPtr(pWndTo);
-      pWndTo = WIN_FindWndPtr(hwndPrevActive);
+        WIN_ReleaseWndPtr(pWndTo);
+        pWndTo = WIN_FindWndPtr(hwndPrevActive);
 
-      while( !WINPOS_CanActivate(pWndTo) ) 
-      {
-	 /* by now owned windows should've been taken care of */
-          WIN_UpdateWndPtr(&pWndTo,pWndPtr->next);
-          WIN_UpdateWndPtr(&pWndPtr,pWndTo);
-	  if( !pWndTo ) break;
-      }
-      WIN_ReleaseWndPtr(pWndPtr);
-  }
+        while( !WINPOS_CanActivate(pWndTo) )
+        {
+            /* by now owned windows should've been taken care of */
+            WIN_UpdateWndPtr(&pWndTo,pWndPtr->next);
+            WIN_UpdateWndPtr(&pWndPtr,pWndTo);
+            if( !pWndTo ) break;
+        }
+        WIN_ReleaseWndPtr(pWndPtr);
+    }
+    WIN_ReleaseWndPtr( pWnd );
 
-  bRet = WINPOS_SetActiveWindow( pWndTo ? pWndTo->hwndSelf : 0, FALSE, TRUE );
+    bRet = WINPOS_SetActiveWindow( pWndTo ? pWndTo->hwndSelf : 0, FALSE, TRUE );
 
-  if( pWndTo ) WIN_ReleaseWndPtr(pWndTo);
+    if( pWndTo ) WIN_ReleaseWndPtr(pWndTo);
 
-  hwndPrevActive = 0;
-  return bRet;  
+    hwndPrevActive = 0;
+    return bRet;
 }
 
 /*******************************************************************
@@ -1827,17 +1829,18 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
  *
  * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
  */
-LONG WINPOS_HandleWindowPosChanging16( WND *wndPtr, WINDOWPOS16 *winpos )
+LONG WINPOS_HandleWindowPosChanging16( HWND hwnd, WINDOWPOS16 *winpos )
 {
     POINT maxSize, minTrack;
+    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+
     if (winpos->flags & SWP_NOSIZE) return 0;
-    if ((wndPtr->dwStyle & WS_THICKFRAME) ||
-	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
+    if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, &minTrack, NULL );
+	WINPOS_GetMinMaxInfo( hwnd, &maxSize, NULL, &minTrack, NULL );
 	if (maxSize.x < winpos->cx) winpos->cx = maxSize.x;
 	if (maxSize.y < winpos->cy) winpos->cy = maxSize.y;
-	if (!(wndPtr->dwStyle & WS_MINIMIZE))
+	if (!(style & WS_MINIMIZE))
 	{
 	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
 	    if (winpos->cy < minTrack.y ) winpos->cy = minTrack.y;
@@ -1852,17 +1855,18 @@ LONG WINPOS_HandleWindowPosChanging16( WND *wndPtr, WINDOWPOS16 *winpos )
  *
  * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
  */
-LONG WINPOS_HandleWindowPosChanging( WND *wndPtr, WINDOWPOS *winpos )
+LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
 {
     POINT maxSize, minTrack;
+    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+
     if (winpos->flags & SWP_NOSIZE) return 0;
-    if ((wndPtr->dwStyle & WS_THICKFRAME) ||
-	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
+    if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
     {
-	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, &minTrack, NULL );
+	WINPOS_GetMinMaxInfo( hwnd, &maxSize, NULL, &minTrack, NULL );
 	winpos->cx = min( winpos->cx, maxSize.x );
 	winpos->cy = min( winpos->cy, maxSize.y );
-	if (!(wndPtr->dwStyle & WS_MINIMIZE))
+	if (!(style & WS_MINIMIZE))
 	{
 	    if (winpos->cx < minTrack.x ) winpos->cx = minTrack.x;
 	    if (winpos->cy < minTrack.y ) winpos->cy = minTrack.y;

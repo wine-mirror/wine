@@ -144,11 +144,12 @@ static void SCROLL_LoadBitmaps(void)
 
 
 /***********************************************************************
- *           SCROLL_GetPtrScrollInfo
+ *           SCROLL_GetScrollInfo
  */
-static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, INT nBar )
+static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, INT nBar )
 {
     SCROLLBAR_INFO *infoPtr;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return NULL;
     switch(nBar)
@@ -156,7 +157,9 @@ static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, INT nBar )
         case SB_HORZ: infoPtr = (SCROLLBAR_INFO *)wndPtr->pHScroll; break;
         case SB_VERT: infoPtr = (SCROLLBAR_INFO *)wndPtr->pVScroll; break;
         case SB_CTL:  infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra; break;
-        default:      return NULL;
+        default:
+            WIN_ReleaseWndPtr( wndPtr );
+            return NULL;
     }
 
     if (!infoPtr)  /* Create the info structure if needed */
@@ -171,20 +174,8 @@ static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, INT nBar )
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
     }
+    WIN_ReleaseWndPtr( wndPtr );
     return infoPtr;
-}
-
-
-/***********************************************************************
- *           SCROLL_GetScrollInfo
- */
-static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, INT nBar )
-{
-   SCROLLBAR_INFO *retvalue;
-   WND *wndPtr = WIN_FindWndPtr( hwnd );
-   retvalue = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
-   WIN_ReleaseWndPtr(wndPtr);
-   return retvalue;
 }
 
 
@@ -258,7 +249,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
     }
     else
     {
-        SCROLLBAR_INFO *info = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+        SCROLLBAR_INFO *info = SCROLL_GetScrollInfo( hwnd, nBar );
 
         *arrowSize = GetSystemMetrics(SM_CXVSCROLL);
         pixels -= (2 * (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP));
@@ -793,7 +784,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     RECT rect;
     BOOL vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
     BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
 
     if (!wndPtr || !infoPtr ||
@@ -877,9 +868,8 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
  */
 static void SCROLL_HandleKbdEvent( HWND hwnd, WPARAM wParam )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
     WPARAM msg;
-    
+
     switch(wParam)
     {
     case VK_PRIOR: msg = SB_PAGEUP; break;
@@ -888,14 +878,11 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WPARAM wParam )
     case VK_END:   msg = SB_BOTTOM; break;
     case VK_UP:    msg = SB_LINEUP; break;
     case VK_DOWN:  msg = SB_LINEDOWN; break;
-    default:
-        WIN_ReleaseWndPtr(wndPtr);
-        return;
+    default: return;
     }
     SendMessageW( GetParent(hwnd),
-                    (wndPtr->dwStyle & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
-                    msg, hwnd );
-    WIN_ReleaseWndPtr(wndPtr);
+                  (GetWindowLongA( hwnd, GWL_STYLE ) & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
+                  msg, hwnd );
 }
 
 
@@ -1651,30 +1638,33 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
  *
  * Updates both scrollbars at the same time. Used by MDI CalcChildScroll().
  */
-INT SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
-				       int hMin, int hMax, int hPos)
+INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
+                        int hMin, int hMax, int hPos)
 {
     INT vA, hA;
     SCROLLINFO vInfo, hInfo;
- 
+
     vInfo.cbSize = hInfo.cbSize = sizeof(SCROLLINFO);
-    vInfo.nMin   = vMin;	 hInfo.nMin   = hMin;
-    vInfo.nMax   = vMax;	 hInfo.nMax   = hMax;
-    vInfo.nPos   = vPos;	 hInfo.nPos   = hPos;
+    vInfo.nMin   = vMin;
+    vInfo.nMax   = vMax;
+    vInfo.nPos   = vPos;
+    hInfo.nMin   = hMin;
+    hInfo.nMax   = hMax;
+    hInfo.nPos   = hPos;
     vInfo.fMask  = hInfo.fMask = SIF_RANGE | SIF_POS;
 
-    SCROLL_SetScrollInfo( wndPtr->hwndSelf, SB_VERT, &vInfo, &vA );
-    SCROLL_SetScrollInfo( wndPtr->hwndSelf, SB_HORZ, &hInfo, &hA );
+    SCROLL_SetScrollInfo( hwnd, SB_VERT, &vInfo, &vA );
+    SCROLL_SetScrollInfo( hwnd, SB_HORZ, &hInfo, &hA );
 
-    if( !SCROLL_ShowScrollBar( wndPtr->hwndSelf, SB_BOTH,
+    if( !SCROLL_ShowScrollBar( hwnd, SB_BOTH,
 			      (hA & SA_SSI_SHOW),(vA & SA_SSI_SHOW) ) )
     {
 	/* SetWindowPos() wasn't called, just redraw the scrollbars if needed */
 	if( vA & SA_SSI_REFRESH )
-	    SCROLL_RefreshScrollBar( wndPtr->hwndSelf, SB_VERT, FALSE, TRUE );
+	    SCROLL_RefreshScrollBar( hwnd, SB_VERT, FALSE, TRUE );
 
 	if( hA & SA_SSI_REFRESH )
-	    SCROLL_RefreshScrollBar( wndPtr->hwndSelf, SB_HORZ, FALSE, TRUE );
+	    SCROLL_RefreshScrollBar( hwnd, SB_HORZ, FALSE, TRUE );
     }
     return 0;
 }

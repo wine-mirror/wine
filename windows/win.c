@@ -438,7 +438,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
 
-    WINPOS_CheckInternalPos( wndPtr );
+    WINPOS_CheckInternalPos( hwnd );
     if( hwnd == GetCapture()) ReleaseCapture();
 
     /* free resources associated with the window */
@@ -844,7 +844,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
     {
-        WINPOS_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack);
+        WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
         if (maxSize.x < cs->cx) cs->cx = maxSize.x;
         if (maxSize.y < cs->cy) cs->cy = maxSize.y;
         if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
@@ -1321,7 +1321,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         else break;
       }
 
-      WINPOS_ActivateOtherWindow(wndPtr);
+      WINPOS_ActivateOtherWindow(wndPtr->hwndSelf);
 
       if( wndPtr->owner &&
 	  wndPtr->owner->hwndLastActive == wndPtr->hwndSelf )

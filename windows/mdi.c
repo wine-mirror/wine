@@ -1309,7 +1309,7 @@ static LRESULT WINAPI MDIClientWndProc_locked( WND *wndPtr, UINT message,
 	    AppendMenuW( ci->hWindowMenu, MF_SEPARATOR, 0, NULL );
 
 	GetClientRect(frameWnd->hwndSelf, &rect);
-	NC_HandleNCCalcSize( wndPtr, &rect );
+	NC_HandleNCCalcSize( wndPtr->hwndSelf, &rect );
 	wndPtr->rectClient = rect;
 
 	TRACE("Client created - hwnd = %04x, idFirst = %u\n",
@@ -2270,8 +2270,8 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
 			SetScrollInfo(hwnd, scroll, &info, TRUE);
 			break;
 	case SB_BOTH:
-			SCROLL_SetNCSbState( Wnd, vmin, vmax, vpos,
-						  hmin, hmax, hpos);
+			SCROLL_SetNCSbState( Wnd->hwndSelf, vmin, vmax, vpos,
+                                             hmin, hmax, hpos);
     }    
     WIN_ReleaseWndPtr(Wnd);
 }

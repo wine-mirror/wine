@@ -8,7 +8,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "win.h"
 #include "cursoricon.h"
 #include "controls.h"
 #include "user.h"
@@ -16,25 +15,23 @@
 
 DEFAULT_DEBUG_CHANNEL(static);
 
-static void STATIC_PaintOwnerDrawfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintBitmapfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintEtchedfn( WND *wndPtr, HDC hdc );
+static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style );
+static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style );
+static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style );
+static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style );
+static void STATIC_PaintBitmapfn( HWND hwnd, HDC hdc, DWORD style );
+static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style );
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 static COLORREF color_windowframe, color_background, color_window;
 
-typedef struct
-{
-    HFONT16  hFont;   /* Control font (or 0 for system font) */
-    WORD     dummy;   /* Don't know what MS-Windows puts in there */
-    HICON16  hIcon;   /* Icon handle for SS_ICON controls */
-} STATICINFO;
+/* offsets for GetWindowLong for static private information */
+#define HFONT_GWL_OFFSET    0
+#define HICON_GWL_OFFSET    (sizeof(HFONT))
+#define STATIC_EXTRA_BYTES  (HICON_GWL_OFFSET + sizeof(HICON))
 
-typedef void (*pfPaint)( WND *, HDC );
+typedef void (*pfPaint)( HWND hwnd, HDC hdc, DWORD style );
 
 static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
 {
@@ -69,7 +66,7 @@ const struct builtin_class_descr STATIC_builtin_class =
     CS_GLOBALCLASS | CS_DBLCLKS | CS_PARENTDC, /* style  */
     StaticWndProcA,      /* procA */
     StaticWndProcW,      /* procW */
-    sizeof(STATICINFO),  /* extra */
+    STATIC_EXTRA_BYTES,  /* extra */
     IDC_ARROWA,          /* cursor */
     0                    /* brush */
 };
@@ -80,22 +77,20 @@ const struct builtin_class_descr STATIC_builtin_class =
  *
  * Set the icon for an SS_ICON control.
  */
-static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
+static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
 {
-    HICON16 prevIcon;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    HICON prevIcon;
     CURSORICONINFO *info = hicon?(CURSORICONINFO *) GlobalLock16( hicon ):NULL;
 
-    if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_ICON) return 0;
+    if ((style & SS_TYPEMASK) != SS_ICON) return 0;
     if (hicon && !info) {
 	ERR("huh? hicon!=0, but info=0???\n");
     	return 0;
     }
-    prevIcon = infoPtr->hIcon;
-    infoPtr->hIcon = hicon;
+    prevIcon = SetWindowLongA( hwnd, HICON_GWL_OFFSET, hicon );
     if (hicon)
     {
-        SetWindowPos( wndPtr->hwndSelf, 0, 0, 0, info->nWidth, info->nHeight,
+        SetWindowPos( hwnd, 0, 0, 0, info->nWidth, info->nHeight,
                         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         GlobalUnlock16( hicon );
     }
@@ -107,23 +102,21 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
  *
  * Set the bitmap for an SS_BITMAP control.
  */
-static HBITMAP16 STATIC_SetBitmap( WND *wndPtr, HBITMAP16 hBitmap )
+static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 {
-    HBITMAP16 hOldBitmap;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    HBITMAP hOldBitmap;
 
-    if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_BITMAP) return 0;
+    if ((style & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hBitmap && GetObjectType(hBitmap) != OBJ_BITMAP) {
 	ERR("huh? hBitmap!=0, but not bitmap\n");
     	return 0;
     }
-    hOldBitmap = infoPtr->hIcon;
-    infoPtr->hIcon = hBitmap;
+    hOldBitmap = SetWindowLongA( hwnd, HICON_GWL_OFFSET, hBitmap );
     if (hBitmap)
     {
         BITMAP bm;
         GetObjectW(hBitmap, sizeof(bm), &bm);
-        SetWindowPos( wndPtr->hwndSelf, 0, 0, 0, bm.bmWidth, bm.bmHeight,
+        SetWindowPos( hwnd, 0, 0, 0, bm.bmWidth, bm.bmHeight,
 		      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
     }
     return hOldBitmap;
@@ -134,9 +127,10 @@ static HBITMAP16 STATIC_SetBitmap( WND *wndPtr, HBITMAP16 hBitmap )
  *
  * Load the icon for an SS_ICON control.
  */
-static HICON STATIC_LoadIconA( WND *wndPtr, LPCSTR name )
+static HICON STATIC_LoadIconA( HWND hwnd, LPCSTR name )
 {
-    HICON hicon = LoadIconA( wndPtr->hInstance, name );
+    HINSTANCE hInstance = GetWindowLongA( hwnd, GWL_HINSTANCE );
+    HICON hicon = LoadIconA( hInstance, name );
     if (!hicon) hicon = LoadIconA( 0, name );
     return hicon;
 }
@@ -146,9 +140,10 @@ static HICON STATIC_LoadIconA( WND *wndPtr, LPCSTR name )
  *
  * Load the icon for an SS_ICON control.
  */
-static HICON STATIC_LoadIconW( WND *wndPtr, LPCWSTR name )
+static HICON STATIC_LoadIconW( HWND hwnd, LPCWSTR name )
 {
-    HICON hicon = LoadIconW( wndPtr->hInstance, name );
+    HINSTANCE hInstance = GetWindowLongA( hwnd, GWL_HINSTANCE );
+    HICON hicon = LoadIconW( hInstance, name );
     if (!hicon) hicon = LoadIconW( 0, name );
     return hicon;
 }
@@ -158,9 +153,10 @@ static HICON STATIC_LoadIconW( WND *wndPtr, LPCWSTR name )
  *
  * Load the bitmap for an SS_BITMAP control.
  */
-static HBITMAP STATIC_LoadBitmapA( WND *wndPtr, LPCSTR name )
+static HBITMAP STATIC_LoadBitmapA( HWND hwnd, LPCSTR name )
 {
-    HBITMAP hbitmap = LoadBitmapA( wndPtr->hInstance, name );
+    HINSTANCE hInstance = GetWindowLongA( hwnd, GWL_HINSTANCE );
+    HBITMAP hbitmap = LoadBitmapA( hInstance, name );
     if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
         hbitmap = LoadBitmapA( 0, name );
     return hbitmap;
@@ -171,23 +167,24 @@ static HBITMAP STATIC_LoadBitmapA( WND *wndPtr, LPCSTR name )
  *
  * Load the bitmap for an SS_BITMAP control.
  */
-static HBITMAP STATIC_LoadBitmapW( WND *wndPtr, LPCWSTR name )
+static HBITMAP STATIC_LoadBitmapW( HWND hwnd, LPCWSTR name )
 {
-    HBITMAP hbitmap = LoadBitmapW( wndPtr->hInstance, name );
+    HINSTANCE hInstance = GetWindowLongA( hwnd, GWL_HINSTANCE );
+    HBITMAP hbitmap = LoadBitmapW( hInstance, name );
     if (!hbitmap)  /* Try OEM icon (FIXME: is this right?) */
         hbitmap = LoadBitmapW( 0, name );
     return hbitmap;
 }
 
 /***********************************************************************
- *           StaticWndProc_locked
+ *           StaticWndProc_common
  */
-static LRESULT StaticWndProc_locked( WND *wndPtr, UINT uMsg, WPARAM wParam,
+static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam, BOOL unicode )
 {
     LRESULT lResult = 0;
-    LONG style = wndPtr->dwStyle & SS_TYPEMASK;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    LONG full_style = GetWindowLongA( hwnd, GWL_STYLE );
+    LONG style = full_style & SS_TYPEMASK;
 
     switch (uMsg)
     {
@@ -195,8 +192,7 @@ static LRESULT StaticWndProc_locked( WND *wndPtr, UINT uMsg, WPARAM wParam,
         if (style < 0L || style > SS_TYPEMASK)
         {
             ERR("Unknown style 0x%02lx\n", style );
-            lResult = -1L;
-            break;
+            return -1;
         }
         /* initialise colours */
         color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
@@ -214,36 +210,36 @@ static LRESULT StaticWndProc_locked( WND *wndPtr, UINT uMsg, WPARAM wParam,
  * had already been loaded by the application the last thing we want to do is
  * GlobalFree16 the handle.
  */
-        } else {
-            lResult = unicode ? DefWindowProcW(wndPtr->hwndSelf, uMsg, wParam, lParam) :
-				DefWindowProcA(wndPtr->hwndSelf, uMsg, wParam, lParam);
-	}
-        break;
+            break;
+        }
+        else return unicode ? DefWindowProcW(hwnd, uMsg, wParam, lParam) :
+                              DefWindowProcA(hwnd, uMsg, wParam, lParam);
 
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
-            BeginPaint(wndPtr->hwndSelf, &ps);
+            BeginPaint(hwnd, &ps);
             if (staticPaintFunc[style])
-                (staticPaintFunc[style])( wndPtr, ps.hdc );
-            EndPaint(wndPtr->hwndSelf, &ps);
+                (staticPaintFunc[style])( hwnd, ps.hdc, full_style );
+            EndPaint(hwnd, &ps);
         }
         break;
 
     case WM_ENABLE:
-        InvalidateRect(wndPtr->hwndSelf, NULL, FALSE);
+        InvalidateRect(hwnd, NULL, FALSE);
         break;
 
     case WM_SYSCOLORCHANGE:
         color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
         color_background   = GetSysColor(COLOR_BACKGROUND);
         color_window       = GetSysColor(COLOR_WINDOW);
-        InvalidateRect(wndPtr->hwndSelf, NULL, TRUE);
+        InvalidateRect(hwnd, NULL, TRUE);
         break;
 
     case WM_NCCREATE:
-	if ((TWEAK_WineLook > WIN31_LOOK) && (wndPtr->dwStyle & SS_SUNKEN))
-	    wndPtr->dwExStyle |= WS_EX_STATICEDGE;
+	if ((TWEAK_WineLook > WIN31_LOOK) && (full_style & SS_SUNKEN))
+            SetWindowLongA( hwnd, GWL_EXSTYLE,
+                            GetWindowLongA( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
 
 	if(unicode)
 	    lParam = (LPARAM)(((LPCREATESTRUCTW)lParam)->lpszName);
@@ -255,98 +251,81 @@ static LRESULT StaticWndProc_locked( WND *wndPtr, UINT uMsg, WPARAM wParam,
 	{
 	    HICON hIcon;
 	    if(unicode)
-		hIcon = STATIC_LoadIconW(wndPtr, (LPCWSTR)lParam);
+		hIcon = STATIC_LoadIconW(hwnd, (LPCWSTR)lParam);
 	    else
-		hIcon = STATIC_LoadIconA(wndPtr, (LPCSTR)lParam);
+		hIcon = STATIC_LoadIconA(hwnd, (LPCSTR)lParam);
             /* FIXME : should we also return the previous hIcon here ??? */
-            STATIC_SetIcon(wndPtr, hIcon);
+            STATIC_SetIcon(hwnd, hIcon, style);
 	}
         else if (style == SS_BITMAP) 
 	{
 	    HBITMAP hBitmap;
 	    if(unicode)
-		hBitmap = STATIC_LoadBitmapW(wndPtr, (LPCWSTR)lParam);
+		hBitmap = STATIC_LoadBitmapW(hwnd, (LPCWSTR)lParam);
 	    else
-		hBitmap = STATIC_LoadBitmapA(wndPtr, (LPCSTR)lParam);
-            STATIC_SetBitmap(wndPtr, hBitmap);
+		hBitmap = STATIC_LoadBitmapA(hwnd, (LPCSTR)lParam);
+            STATIC_SetBitmap(hwnd, hBitmap, style);
 	}
-	else if(lParam && HIWORD(lParam))
+	else if (HIWORD(lParam))
 	{
 	    if(unicode)
-		DEFWND_SetTextW(wndPtr, (LPCWSTR)lParam);
+                lResult = DefWindowProcW( hwnd, WM_SETTEXT, wParam, lParam );
 	    else
-		DEFWND_SetTextA(wndPtr, (LPCSTR)lParam);
+                lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
 	}
 	if(uMsg == WM_SETTEXT)
-	    InvalidateRect(wndPtr->hwndSelf, NULL, FALSE);
-	lResult = 1; /* success. FIXME: check text length */
-        break;
+	    InvalidateRect(hwnd, NULL, FALSE);
+        return 1; /* success. FIXME: check text length */
 
     case WM_SETFONT:
-        if (style == SS_ICON)
-        {
-            lResult = 0;
-            goto END;
-        }
-        if (style == SS_BITMAP)
-        {
-            lResult = 0;
-            goto END;
-        }
-        infoPtr->hFont = (HFONT16)wParam;
+        if ((style == SS_ICON) || (style == SS_BITMAP)) return 0;
+        SetWindowLongA( hwnd, HFONT_GWL_OFFSET, wParam );
         if (LOWORD(lParam))
-            InvalidateRect( wndPtr->hwndSelf, NULL, FALSE );
+            InvalidateRect( hwnd, NULL, FALSE );
         break;
 
     case WM_GETFONT:
-        lResult = infoPtr->hFont;
-        goto END;
+        return GetWindowLongA( hwnd, HFONT_GWL_OFFSET );
 
     case WM_NCHITTEST:
-        if (wndPtr->dwStyle & SS_NOTIFY)
-           lResult = HTCLIENT;
+        if (full_style & SS_NOTIFY)
+           return HTCLIENT;
         else
-           lResult = HTTRANSPARENT;
-        goto END;
+           return HTTRANSPARENT;
 
     case WM_GETDLGCODE:
-        lResult = DLGC_STATIC;
-        goto END;
+        return DLGC_STATIC;
 
     case STM_GETIMAGE:
     case STM_GETICON16:
     case STM_GETICON:
-        lResult = infoPtr->hIcon;
-        goto END;
+        return GetWindowLongA( hwnd, HICON_GWL_OFFSET );
 
     case STM_SETIMAGE:
         switch(wParam) {
 	case IMAGE_BITMAP:
-	    lResult = STATIC_SetBitmap( wndPtr, (HBITMAP)lParam );
+	    lResult = STATIC_SetBitmap( hwnd, (HBITMAP)lParam, style );
 	    break;
 	case IMAGE_ICON:
-	    lResult = STATIC_SetIcon( wndPtr, (HICON16)lParam );
+	    lResult = STATIC_SetIcon( hwnd, (HICON)lParam, style );
 	    break;
 	default:
 	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
 	    break;
 	}
-        InvalidateRect( wndPtr->hwndSelf, NULL, FALSE );
+        InvalidateRect( hwnd, NULL, FALSE );
 	break;
 
     case STM_SETICON16:
     case STM_SETICON:
-        lResult = STATIC_SetIcon( wndPtr, (HICON16)wParam );
-        InvalidateRect( wndPtr->hwndSelf, NULL, FALSE );
+        lResult = STATIC_SetIcon( hwnd, (HICON)wParam, style );
+        InvalidateRect( hwnd, NULL, FALSE );
         break;
 
     default:
-        lResult = unicode ? DefWindowProcW(wndPtr->hwndSelf, uMsg, wParam, lParam) :
-			    DefWindowProcA(wndPtr->hwndSelf, uMsg, wParam, lParam);
-        break;
+        return unicode ? DefWindowProcW(hwnd, uMsg, wParam, lParam) :
+                         DefWindowProcA(hwnd, uMsg, wParam, lParam);
     }
-    
-END:
     return lResult;
 }
 
@@ -355,15 +334,8 @@ END:
  */
 static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT lResult = 0;
-    WND *wndPtr = WIN_FindWndPtr(hWnd);
-
-    if (wndPtr)
-    {
-        lResult = StaticWndProc_locked(wndPtr, uMsg, wParam, lParam, FALSE);
-        WIN_ReleaseWndPtr(wndPtr);
-    }
-    return lResult;
+    if (!IsWindow( hWnd )) return 0;
+    return StaticWndProc_common(hWnd, uMsg, wParam, lParam, FALSE);
 }
 
 /***********************************************************************
@@ -371,47 +343,39 @@ static LRESULT WINAPI StaticWndProcA( HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
  */
 static LRESULT WINAPI StaticWndProcW( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-    LRESULT lResult = 0;
-    WND *wndPtr = WIN_FindWndPtr(hWnd);
-
-    if (wndPtr)
-    {
-        lResult = StaticWndProc_locked(wndPtr, uMsg, wParam, lParam, TRUE);
-        WIN_ReleaseWndPtr(wndPtr);
-    }
-    return lResult;
+    if (!IsWindow( hWnd )) return 0;
+    return StaticWndProc_common(hWnd, uMsg, wParam, lParam, TRUE);
 }
 
-static void STATIC_PaintOwnerDrawfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintOwnerDrawfn( HWND hwnd, HDC hdc, DWORD style )
 {
   DRAWITEMSTRUCT dis;
+  LONG id = GetWindowLongA( hwnd, GWL_ID );
 
   dis.CtlType    = ODT_STATIC;
-  dis.CtlID      = wndPtr->wIDmenu;
+  dis.CtlID      = id;
   dis.itemID     = 0;
   dis.itemAction = ODA_DRAWENTIRE;
   dis.itemState  = 0;
-  dis.hwndItem   = wndPtr->hwndSelf;
+  dis.hwndItem   = hwnd;
   dis.hDC        = hdc;
   dis.itemData   = 0;
-  GetClientRect( wndPtr->hwndSelf, &dis.rcItem );
+  GetClientRect( hwnd, &dis.rcItem );
 
-  SendMessageW( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC, 
-		hdc, wndPtr->hwndSelf );    
-  SendMessageW( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
-		wndPtr->wIDmenu, (LPARAM)&dis );
+  SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
+  SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
 }
 
-static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
     HBRUSH hBrush;
+    HFONT hFont;
     WORD wFormat;
+    INT len;
+    WCHAR *text;
 
-    LONG style = wndPtr->dwStyle;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
-
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect( hwnd, &rc);
 
     switch (style & SS_TYPEMASK)
     {
@@ -442,31 +406,32 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     if (style & SS_NOPREFIX)
 	wFormat |= DT_NOPREFIX;
 
-    if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
+    if ((hFont = GetWindowLongA( hwnd, HFONT_GWL_OFFSET ))) SelectObject( hdc, hFont );
 
     if ((style & SS_NOPREFIX) || ((style & SS_TYPEMASK) != SS_SIMPLE))
     {
-        hBrush = SendMessageW( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                             hdc, wndPtr->hwndSelf );
+        hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
         if (!hBrush) /* did the app forget to call defwindowproc ? */
-            hBrush = DefWindowProcW(GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                                    hdc, wndPtr->hwndSelf);
-        FillRect( hdc, &rc, hBrush );    
+            hBrush = DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd);
+        FillRect( hdc, &rc, hBrush );
     }
-    if (!IsWindowEnabled(wndPtr->hwndSelf))
-   	SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+    if (!IsWindowEnabled(hwnd)) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 
-    if (wndPtr->text) DrawTextW( hdc, wndPtr->text, -1, &rc, wFormat );
+    if (!(len = SendMessageW( hwnd, WM_GETTEXTLENGTH, 0, 0 ))) return;
+    if (!(text = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return;
+    SendMessageW( hwnd, WM_GETTEXT, len + 1, (LPARAM)text );
+    DrawTextW( hdc, text, -1, &rc, wFormat );
+    HeapFree( GetProcessHeap(), 0, text );
 }
 
-static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
     HBRUSH hBrush;
 
-    GetClientRect( wndPtr->hwndSelf, &rc);
+    GetClientRect( hwnd, &rc);
     
-    switch (wndPtr->dwStyle & SS_TYPEMASK)
+    switch (style & SS_TYPEMASK)
     {
     case SS_BLACKRECT:
 	hBrush = CreateSolidBrush(color_windowframe);
@@ -499,42 +464,41 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 }
 
 
-static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
     HBRUSH hbrush;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    HICON hIcon;
 
-    GetClientRect( wndPtr->hwndSelf, &rc );
-    hbrush = SendMessageW( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                             hdc, wndPtr->hwndSelf );
+    GetClientRect( hwnd, &rc );
+    hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
     FillRect( hdc, &rc, hbrush );
-    if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
+    if ((hIcon = GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
+        DrawIcon( hdc, rc.left, rc.top, hIcon );
 }
 
-static void STATIC_PaintBitmapfn(WND *wndPtr, HDC hdc )
+static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
     HBRUSH hbrush;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    HICON hIcon;
     HDC hMemDC;
     HBITMAP oldbitmap;
 
-    GetClientRect( wndPtr->hwndSelf, &rc );
-    hbrush = SendMessageW( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                             hdc, wndPtr->hwndSelf );
+    GetClientRect( hwnd, &rc );
+    hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, hwnd );
     FillRect( hdc, &rc, hbrush );
 
-    if (infoPtr->hIcon) {
+    if ((hIcon = GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
+    {
         BITMAP bm;
 	SIZE sz;
 
-        if(GetObjectType(infoPtr->hIcon) != OBJ_BITMAP)
-	    return;
+        if(GetObjectType(hIcon) != OBJ_BITMAP) return;
         if (!(hMemDC = CreateCompatibleDC( hdc ))) return;
-	GetObjectW(infoPtr->hIcon, sizeof(bm), &bm);
-	GetBitmapDimensionEx(infoPtr->hIcon, &sz);
-	oldbitmap = SelectObject(hMemDC, infoPtr->hIcon);
+	GetObjectW(hIcon, sizeof(bm), &bm);
+	GetBitmapDimensionEx(hIcon, &sz);
+	oldbitmap = SelectObject(hMemDC, hIcon);
 	BitBlt(hdc, sz.cx, sz.cy, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
 	       SRCCOPY);
 	SelectObject(hMemDC, oldbitmap);
@@ -543,15 +507,15 @@ static void STATIC_PaintBitmapfn(WND *wndPtr, HDC hdc )
 }
 
 
-static void STATIC_PaintEtchedfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
 
     if (TWEAK_WineLook == WIN31_LOOK)
 	return;
 
-    GetClientRect( wndPtr->hwndSelf, &rc );
-    switch (wndPtr->dwStyle & SS_TYPEMASK)
+    GetClientRect( hwnd, &rc );
+    switch (style & SS_TYPEMASK)
     {
 	case SS_ETCHEDHORZ:
 	    DrawEdge(hdc,&rc,EDGE_ETCHED,BF_TOP|BF_BOTTOM);
@@ -564,4 +528,3 @@ static void STATIC_PaintEtchedfn( WND *wndPtr, HDC hdc )
 	    break;
     }
 }
-

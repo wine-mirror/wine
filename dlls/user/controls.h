@@ -10,8 +10,6 @@
 #include "winuser.h"
 #include "winproc.h"
 
-struct tagWND;
-
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
 #define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
@@ -36,7 +34,7 @@ struct builtin_class_descr
 extern BOOL DESKTOP_SetPattern( LPCSTR pattern );
 
 /* icon title */
-extern HWND ICONTITLE_Create( struct tagWND * );
+extern HWND ICONTITLE_Create( HWND hwnd );
 
 /* menu controls */
 extern BOOL MENU_Init(void);
@@ -44,8 +42,8 @@ extern BOOL MENU_IsMenuActive(void);
 extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
                                      INT orgX, INT orgY );
-extern void MENU_TrackMouseMenuBar( struct tagWND *wnd, INT ht, POINT pt );
-extern void MENU_TrackKbdMenuBar( struct tagWND *wnd, UINT wParam, INT vkey );
+extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt );
+extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, INT vkey );
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
                                 HWND hwnd, BOOL suppress_draw );
 extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget );
@@ -53,7 +51,7 @@ extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget );
 /* scrollbar */
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, BOOL arrows, BOOL interior );
 extern void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt );
-extern INT SCROLL_SetNCSbState( struct tagWND *wndPtr, int vMin, int vMax, int vPos,
+extern INT SCROLL_SetNCSbState( HWND hwnd, int vMin, int vMax, int vPos,
                                 int hMin, int hMax, int hPos );
 
 /* combo box */
@@ -80,7 +78,7 @@ extern INT SCROLL_SetNCSbState( struct tagWND *wndPtr, int vMin, int vMax, int v
 /* combo state struct */
 typedef struct
 {
-   struct tagWND *self;
+   HWND           self;
    HWND           owner;
    UINT           dwStyle;
    HWND           hWndEdit;
@@ -98,10 +96,6 @@ typedef struct
 
 /* Note, that CBS_DROPDOWNLIST style is actually (CBS_SIMPLE | CBS_DROPDOWN) */
 #define CB_GETTYPE( lphc )    ((lphc)->dwStyle & (CBS_DROPDOWNLIST))
-#define CB_DISABLED( lphc )   ((lphc)->self->dwStyle & WS_DISABLED)
-#define CB_OWNERDRAWN( lphc ) ((lphc)->dwStyle & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE))
-#define CB_HASSTRINGS( lphc ) ((lphc)->dwStyle & CBS_HASSTRINGS)
-#define CB_HWND( lphc )       ((lphc)->self->hwndSelf)
 
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
 

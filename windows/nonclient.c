@@ -495,41 +495,45 @@ BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCCalcSize( WND *pWnd, RECT *winRect )
+LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 {
     RECT tmpRect = { 0, 0, 0, 0 };
     LONG result = 0;
-    UINT style = (UINT) GetClassLongA(pWnd->hwndSelf, GCL_STYLE);
+    LONG cls_style = GetClassLongA(hwnd, GCL_STYLE);
+    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
+    LONG exStyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
 
-    if (style & CS_VREDRAW) result |= WVR_VREDRAW;
-    if (style & CS_HREDRAW) result |= WVR_HREDRAW;
+    if (cls_style & CS_VREDRAW) result |= WVR_VREDRAW;
+    if (cls_style & CS_HREDRAW) result |= WVR_HREDRAW;
 
-    if( !( pWnd->dwStyle & WS_MINIMIZE ) ) {
+    if (!IsIconic(hwnd))
+    {
 	if (TWEAK_WineLook == WIN31_LOOK)
-	    NC_AdjustRect( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
+	    NC_AdjustRect( &tmpRect, style, FALSE, exStyle );
 	else
-	    NC_AdjustRectOuter95( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
+	    NC_AdjustRectOuter95( &tmpRect, style, FALSE, exStyle );
 
 	winRect->left   -= tmpRect.left;
 	winRect->top    -= tmpRect.top;
 	winRect->right  -= tmpRect.right;
 	winRect->bottom -= tmpRect.bottom;
 
-	if (HAS_MENU(pWnd)) {
+        if (!(style & WS_CHILD) && GetMenu(hwnd))
+        {
 	    TRACE("Calling GetMenuBarHeight with HWND 0x%x, width %d, "
-                  "at (%d, %d).\n", pWnd->hwndSelf,
+                  "at (%d, %d).\n", hwnd,
                   winRect->right - winRect->left,
                   -tmpRect.left, -tmpRect.top );
 
 	    winRect->top +=
-		MENU_GetMenuBarHeight( pWnd->hwndSelf,
+		MENU_GetMenuBarHeight( hwnd,
 				       winRect->right - winRect->left,
 				       -tmpRect.left, -tmpRect.top ) + 1;
 	}
 
 	if (TWEAK_WineLook > WIN31_LOOK) {
 	    SetRect(&tmpRect, 0, 0, 0, 0);
-	    NC_AdjustRectInner95 (&tmpRect, pWnd->dwStyle, pWnd->dwExStyle);
+	    NC_AdjustRectInner95 (&tmpRect, style, exStyle);
 	    winRect->left   -= tmpRect.left;
 	    winRect->top    -= tmpRect.top;
 	    winRect->right  -= tmpRect.right;
@@ -1693,23 +1697,26 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( WND *wndPtr, WPARAM wParam )
+LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
+    WND* wndPtr = WIN_FindWndPtr( hwnd );
+
     /* Lotus Notes draws menu descriptions in the caption of its main
      * window. When it wants to restore original "system" view, it just
      * sends WM_NCACTIVATE message to itself. Any optimizations here in
      * attempt to minimize redrawings lead to a not restored caption.
      */
+    if (wndPtr)
     {
 	if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
 	else wndPtr->flags &= ~WIN_NCACTIVATED;
 
-	if( wndPtr->dwStyle & WS_MINIMIZE ) 
-	    WINPOS_RedrawIconTitle( wndPtr->hwndSelf );
+	if (IsIconic(hwnd)) WINPOS_RedrawIconTitle( hwnd );
 	else if (TWEAK_WineLook == WIN31_LOOK)
 	    NC_DoNCPaint( wndPtr, (HRGN)1, FALSE );
 	else
 	    NC_DoNCPaint95( wndPtr, (HRGN)1, FALSE );
+        WIN_ReleaseWndPtr(wndPtr);
     }
     return TRUE;
 }
@@ -1769,30 +1776,28 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 /***********************************************************************
  *           NC_GetSysPopupPos
  */
-BOOL NC_GetSysPopupPos( WND* wndPtr, RECT* rect )
+void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
 {
-  if( wndPtr->hSysMenu )
-  {
-      if( wndPtr->dwStyle & WS_MINIMIZE )
-	  GetWindowRect( wndPtr->hwndSelf, rect );
-      else
-      {
-          NC_GetInsideRect( wndPtr->hwndSelf, rect );
-  	  OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
-  	  if (wndPtr->dwStyle & WS_CHILD)
-     	      ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)rect );
-          if (TWEAK_WineLook == WIN31_LOOK) {
+    if (IsIconic(hwnd)) GetWindowRect( hwnd, rect );
+    else
+    {
+        WND *wndPtr = WIN_FindWndPtr( hwnd );
+        if (!wndPtr) return;
+
+        NC_GetInsideRect( hwnd, rect );
+        OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
+        if (wndPtr->dwStyle & WS_CHILD)
+            ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)rect );
+        if (TWEAK_WineLook == WIN31_LOOK) {
             rect->right = rect->left + GetSystemMetrics(SM_CXSIZE);
             rect->bottom = rect->top + GetSystemMetrics(SM_CYSIZE);
-	  }
-	  else {
+        }
+        else {
             rect->right = rect->left + GetSystemMetrics(SM_CYCAPTION) - 1;
             rect->bottom = rect->top + GetSystemMetrics(SM_CYCAPTION) - 1;
-	  }
-      }
-      return TRUE;
-  }
-  return FALSE;
+        }
+        WIN_ReleaseWndPtr( wndPtr );
+    }
 }
 
 /***********************************************************************
@@ -2052,23 +2057,25 @@ END:
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    HWND hwnd = pWnd->hwndSelf;
+    LONG style = GetWindowLongA( hwnd, GWL_STYLE );
 
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
-	 hwnd = WIN_GetTopParent(hwnd);
+        {
+            HWND top = WIN_GetTopParent(hwnd);
 
-	 if( WINPOS_SetActiveWindow(hwnd, TRUE, TRUE) || (GetActiveWindow() == hwnd) )
-		SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
-	 break;
+            if( WINPOS_SetActiveWindow(top, TRUE, TRUE) || (GetActiveWindow() == top) )
+                SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
+            break;
+        }
 
     case HTSYSMENU:
-	 if( pWnd->dwStyle & WS_SYSMENU )
+	 if( style & WS_SYSMENU )
 	 {
-	     if( !(pWnd->dwStyle & WS_MINIMIZE) )
+	     if( !(style & WS_MINIMIZE) )
 	     {
 		HDC hDC = GetWindowDC(hwnd);
 		if (TWEAK_WineLook == WIN31_LOOK)
@@ -2130,15 +2137,15 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
      * a double click
      */
-    if (pWnd->dwStyle & WS_MINIMIZE)
+    if (IsIconic(hwnd))
     {
-        SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_RESTORE, lParam );
+        SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, lParam );
         return 0;
     } 
 
@@ -2146,22 +2153,22 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
     {
     case HTCAPTION:
         /* stop processing if WS_MAXIMIZEBOX is missing */
-        if (pWnd->dwStyle & WS_MAXIMIZEBOX)
-            SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND,
-                          (pWnd->dwStyle & WS_MAXIMIZE) ? SC_RESTORE : SC_MAXIMIZE, lParam );
+        if (GetWindowLongA( hwnd, GWL_STYLE ) & WS_MAXIMIZEBOX)
+            SendMessageW( hwnd, WM_SYSCOMMAND,
+                          IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, lParam );
 	break;
 
     case HTSYSMENU:
-        if (!(GetClassWord(pWnd->hwndSelf, GCW_STYLE) & CS_NOCLOSE))
-            SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, lParam );
+        if (!(GetClassWord(hwnd, GCW_STYLE) & CS_NOCLOSE))
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, lParam );
 	break;
 
     case HTHSCROLL:
-        SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
+        SendMessageW( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lParam );
 	break;
 
     case HTVSCROLL:
-        SendMessageW( pWnd->hwndSelf, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
+        SendMessageW( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lParam );
 	break;
     }
     return 0;
@@ -2219,11 +2226,11 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 	break;
 
     case SC_MOUSEMENU:
-        MENU_TrackMouseMenuBar( wndPtr, wParam & 0x000F, pt );
+        MENU_TrackMouseMenuBar( hwnd, wParam & 0x000F, pt );
 	break;
 
     case SC_KEYMENU:
-	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
+	MENU_TrackKbdMenuBar( hwnd, wParam , pt.x );
 	break;
 	
     case SC_TASKLIST:

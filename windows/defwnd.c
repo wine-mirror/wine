@@ -307,11 +307,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
         }
 
     case WM_NCLBUTTONDOWN:
-	return NC_HandleNCLButtonDown( wndPtr, wParam, lParam );
+        return NC_HandleNCLButtonDown( wndPtr->hwndSelf, wParam, lParam );
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
-	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
+        return NC_HandleNCLButtonDblClk( wndPtr->hwndSelf, wParam, lParam );
 
     case WM_NCRBUTTONDOWN:
         /* in Windows, capture is taken when right-clicking on the caption bar */
@@ -376,7 +376,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
         break;
 
     case WM_NCACTIVATE:
-	return NC_HandleNCActivate( wndPtr, wParam );
+        return NC_HandleNCActivate( wndPtr->hwndSelf, wParam );
 
     case WM_NCDESTROY:
 	if (wndPtr->text) HeapFree( GetProcessHeap(), 0, wndPtr->text );
@@ -674,13 +674,13 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         {
             RECT rect32;
             CONV_RECT16TO32( MapSL(lParam), &rect32 );
-            result = NC_HandleNCCalcSize( wndPtr, &rect32 );
+            result = NC_HandleNCCalcSize( hwnd, &rect32 );
             CONV_RECT32TO16( &rect32, MapSL(lParam) );
         }
         break;
 
     case WM_WINDOWPOSCHANGING:
-	result = WINPOS_HandleWindowPosChanging16( wndPtr, MapSL(lParam) );
+        result = WINPOS_HandleWindowPosChanging16( hwnd, MapSL(lParam) );
         break;
 
     case WM_WINDOWPOSCHANGED:
@@ -751,12 +751,11 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
         break;
 
     case WM_NCCALCSIZE:
-        result = NC_HandleNCCalcSize( wndPtr, (RECT *)lParam );
+        result = NC_HandleNCCalcSize( hwnd, (RECT *)lParam );
         break;
 
     case WM_WINDOWPOSCHANGING:
-	result = WINPOS_HandleWindowPosChanging( wndPtr,
-                                                   (WINDOWPOS *)lParam );
+        result = WINPOS_HandleWindowPosChanging( hwnd, (WINDOWPOS *)lParam );
         break;
 
     case WM_WINDOWPOSCHANGED:
@@ -875,12 +874,11 @@ LRESULT WINAPI DefWindowProcW(
         break;
 
     case WM_NCCALCSIZE:
-        result = NC_HandleNCCalcSize( wndPtr, (RECT *)lParam );
+        result = NC_HandleNCCalcSize( hwnd, (RECT *)lParam );
         break;
 
     case WM_WINDOWPOSCHANGING:
-	result = WINPOS_HandleWindowPosChanging( wndPtr,
-                                                   (WINDOWPOS *)lParam );
+        result = WINPOS_HandleWindowPosChanging( hwnd, (WINDOWPOS *)lParam );
         break;
 
     case WM_WINDOWPOSCHANGED:

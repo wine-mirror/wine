@@ -953,12 +953,12 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             break;
 
         case SW_MAXIMIZE:
-            WINPOS_GetMinMaxInfo( wndPtr, &size, &wpl.ptMaxPosition, NULL, NULL );
+            WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
             if( wndPtr->dwStyle & WS_MINIMIZE )
             {
                 wndPtr->dwStyle &= ~WS_MINIMIZE;
-                WINPOS_ShowIconTitle( wndPtr, FALSE );
+                WINPOS_ShowIconTitle( hwnd, FALSE );
                 X11DRV_set_iconic_state( wndPtr );
             }
             wndPtr->dwStyle |= WS_MAXIMIZE;
@@ -970,13 +970,13 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             if( wndPtr->dwStyle & WS_MINIMIZE )
             {
                 wndPtr->dwStyle &= ~WS_MINIMIZE;
-                WINPOS_ShowIconTitle( wndPtr, FALSE );
+                WINPOS_ShowIconTitle( hwnd, FALSE );
                 X11DRV_set_iconic_state( wndPtr );
 
                 if( wndPtr->flags & WIN_RESTORE_MAX)
                 {
                     /* Restore to maximized position */
-                    WINPOS_GetMinMaxInfo( wndPtr, &size, &wpl.ptMaxPosition, NULL, NULL);
+                    WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
                     wndPtr->dwStyle |= WS_MAXIMIZE;
                     SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
                     break;
@@ -1103,14 +1103,14 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
          */
 
         if (hwnd == GetActiveWindow())
-            WINPOS_ActivateOtherWindow(wndPtr);
+            WINPOS_ActivateOtherWindow(hwnd);
 
         /* Revert focus to parent */
         if (hwnd == GetFocus() || IsChild(hwnd, GetFocus()))
             SetFocus( GetParent(hwnd) );
     }
     if (!IsWindow( hwnd )) goto END;
-    else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( wndPtr, TRUE );
+    else if( wndPtr->dwStyle & WS_MINIMIZE ) WINPOS_ShowIconTitle( hwnd, TRUE );
 
     if (wndPtr->flags & WIN_NEED_SIZE)
     {
@@ -1704,7 +1704,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
       /* Get min/max info */
 
-    WINPOS_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
+    WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
     origRect = sizingRect;
     if (wndPtr->dwStyle & WS_CHILD)
@@ -1816,7 +1816,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 {
                     hOldCursor = SetCursor(hDragCursor);
                     ShowCursor( TRUE );
-                    WINPOS_ShowIconTitle( wndPtr, FALSE );
+                    WINPOS_ShowIconTitle( hwnd, FALSE );
                 }
                 else if(!DragFullWindows)
                     draw_moving_frame( hdc, &sizingRect, thickframe );
@@ -1934,7 +1934,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 SendMessageA( hwnd, WM_SYSCOMMAND,
                               SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x,pt.y));
         }
-        else WINPOS_ShowIconTitle( wndPtr, TRUE );
+        else WINPOS_ShowIconTitle( hwnd, TRUE );
     }
 
 END:
