@@ -777,6 +777,12 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
              || lpStartupInfo->wShowWindow == SW_SHOWMINNOACTIVE )
             iconic = TRUE;
 
+    /* Build argument list */
+
+    argptr = argv;
+    if ( !useWine )
+    {
+        char *p = strdup(lpCmdLine);
     if (    strchr(filename, '/') 
          || strchr(filename, ':') 
          || strchr(filename, '\\') )
@@ -784,19 +790,6 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
         if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
             unixfilename = full_name.long_name;
     }
-
-    if ( !unixfilename )
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return FALSE;
-    }
-
-    /* Build argument list */
-
-    argptr = argv;
-    if ( !useWine )
-    {
-        char *p = strdup(lpCmdLine);
         *argptr++ = unixfilename;
         if (iconic) *argptr++ = "-iconic";
         while (1)
@@ -806,6 +799,7 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
             *argptr++ = p;
             while (*p && *p != ' ' && *p != '\t') p++;
         }
+	free (p);
     }
     else
     {
@@ -1129,8 +1123,10 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     HFILE hFile;
     OFSTRUCT ofs;
     DWORD type;
-    char name[256];
+    char name[256], dummy[256];
     LPCSTR cmdline = NULL;
+    LPSTR tidy_cmdline;
+    int len = 0;
 
     /* Get name and command line */
 
@@ -1140,22 +1136,34 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         return FALSE;
     }
 
-    /* Process the AppName or CmdLine to get module name and path */
+    /* Process the AppName and/or CmdLine to get module name and path */
 
     name[0] = '\0';
 
     if (lpApplicationName) {
        found_file = make_lpApplicationName_name( lpApplicationName, name, sizeof(name) );
-       cmdline = (lpCommandLine) ? lpCommandLine : lpApplicationName ;
+       if (lpCommandLine) {
+	  make_lpCommandLine_name( lpCommandLine, dummy, sizeof ( dummy ), &cmdline );
     }
-    else 
+       else {
+	  cmdline = lpApplicationName;
+       }
+       len += strlen(lpApplicationName);
+    }
+    else {
        found_file = make_lpCommandLine_name( lpCommandLine, name, sizeof ( name ), &cmdline );
+       if (lpCommandLine) len = strlen(lpCommandLine);
+    }
 
     if ( !found_file ) {
         /* make an early exit if file not found - save second pass */
         SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
+
+    len += strlen(name) + 2;
+    tidy_cmdline = HeapAlloc( GetProcessHeap(), 0, len );
+    sprintf( tidy_cmdline, "\"%s\"%s", name, cmdline);
 
     /* Warn if unsupported features are used */
 
@@ -1217,14 +1225,17 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* When in WineLib, always fork new Unix process */
 
-    if ( __winelib )
-        return MODULE_CreateUnixProcess( name, cmdline, 
+    if ( __winelib ) {
+        retv = MODULE_CreateUnixProcess( name, tidy_cmdline, 
                                          lpStartupInfo, lpProcessInfo, TRUE );
+	HeapFree( GetProcessHeap(), 0, tidy_cmdline );
+	return (retv);
+    }
 
     /* Check for special case: second instance of NE module */
 
     lstrcpynA( ofs.szPathName, name, sizeof( ofs.szPathName ) );
-    retv = NE_CreateProcess( HFILE_ERROR, &ofs, cmdline, lpEnvironment, 
+    retv = NE_CreateProcess( HFILE_ERROR, &ofs, tidy_cmdline, lpEnvironment, 
                              lpProcessAttributes, lpThreadAttributes,
                              bInheritHandles, dwCreationFlags,
                              lpStartupInfo, lpProcessInfo );
@@ -1238,6 +1249,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         if ( (hFile = OpenFile( name, &ofs, OF_READ )) == HFILE_ERROR )
         {
             SetLastError( ERROR_FILE_NOT_FOUND );
+            HeapFree( GetProcessHeap(), 0, tidy_cmdline );
             return FALSE;
         }
 
@@ -1246,10 +1258,13 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
             CloseHandle( hFile );
 
             /* FIXME: Try Unix executable only when appropriate! */
-            if ( MODULE_CreateUnixProcess( name, cmdline, 
+            if ( MODULE_CreateUnixProcess( name, tidy_cmdline, 
                                            lpStartupInfo, lpProcessInfo, FALSE ) )
+            {
+                HeapFree( GetProcessHeap(), 0, tidy_cmdline );
                 return TRUE;
-
+            }
+            HeapFree( GetProcessHeap(), 0, tidy_cmdline );
             SetLastError( ERROR_BAD_FORMAT );
             return FALSE;
         }
@@ -1260,21 +1275,21 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         switch ( type )
         {
         case SCS_32BIT_BINARY:
-            retv = PE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+            retv = PE_CreateProcess( hFile, &ofs, tidy_cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, dwCreationFlags,
                                      lpStartupInfo, lpProcessInfo );
             break;
     
         case SCS_DOS_BINARY:
-            retv = MZ_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+            retv = MZ_CreateProcess( hFile, &ofs, tidy_cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, dwCreationFlags,
                                      lpStartupInfo, lpProcessInfo );
             break;
 
         case SCS_WOW_BINARY:
-            retv = NE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
+            retv = NE_CreateProcess( hFile, &ofs, tidy_cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
                                      bInheritHandles, dwCreationFlags,
                                      lpStartupInfo, lpProcessInfo );
@@ -1294,6 +1309,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
         CloseHandle( hFile );
     }
+    HeapFree( GetProcessHeap(), 0, tidy_cmdline );
     return retv;
 }
 
