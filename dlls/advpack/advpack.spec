@@ -13,8 +13,8 @@
 @ stub GetVersionFromFile
 @ stub GetVersionFromFileEx
 @ stub IsNTAdmin
-@ stub LaunchINFSection
-@ stub LaunchINFSectionEx
+@ stdcall LaunchINFSection(ptr ptr str long)
+@ stdcall LaunchINFSectionEx(ptr ptr str long)
 @ stub NeedReboot
 @ stub NeedRebootInit
 @ stub OpenINFEngine

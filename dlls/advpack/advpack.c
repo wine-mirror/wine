@@ -35,3 +35,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *		LaunchINFSection  (SETUPAPI.@)
+ */
+void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+{
+    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(cmdline), show );
+}
+
+/***********************************************************************
+ *		LaunchINFSectionEx  (SETUPAPI.@)
+ */
+void WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
+{
+    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(cmdline), show );
+}
