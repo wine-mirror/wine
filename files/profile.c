@@ -14,6 +14,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "file.h"
 #include "heap.h"
 #include "debug.h"
@@ -1170,7 +1171,7 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
     
     LeaveCriticalSection( &PROFILE_CritSect );
 
-    return 0;
+    return ret;
 }
 
 /***********************************************************************
@@ -1186,6 +1187,7 @@ INT WINAPI GetPrivateProfileSectionW (LPCWSTR section, LPWSTR buffer,
     LPSTR bufferA   = HeapAlloc( GetProcessHeap(), 0, len );
     INT ret = GetPrivateProfileSectionA( sectionA, bufferA, len, 
 						filenameA );
+    MultiByteToWideChar(CP_ACP,0,bufferA,ret,buffer,len);
     HeapFree( GetProcessHeap(), 0, sectionA );
     HeapFree( GetProcessHeap(), 0, filenameA );
     HeapFree( GetProcessHeap(), 0, bufferA);

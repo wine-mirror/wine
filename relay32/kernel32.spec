@@ -379,10 +379,10 @@ init	MAIN_KernelInit
 361 stdcall GetPriorityClass(long) GetPriorityClass
 362 stdcall GetPrivateProfileIntA(str str long str) GetPrivateProfileIntA
 363 stdcall GetPrivateProfileIntW(wstr wstr long wstr) GetPrivateProfileIntW
-364 stdcall GetPrivateProfileSectionA(str str long str) GetPrivateProfileSectionA
+364 stdcall GetPrivateProfileSectionA(str ptr long str) GetPrivateProfileSectionA
 365 stdcall GetPrivateProfileSectionNamesA(ptr long str) GetPrivateProfileSectionNamesA
 366 stdcall GetPrivateProfileSectionNamesW(ptr long wstr) GetPrivateProfileSectionNamesW
-367 stdcall GetPrivateProfileSectionW(wstr wstr long wstr) GetPrivateProfileSectionW
+367 stdcall GetPrivateProfileSectionW(wstr ptr long wstr) GetPrivateProfileSectionW
 368 stdcall GetPrivateProfileStringA(str str str ptr long str) GetPrivateProfileStringA
 369 stdcall GetPrivateProfileStringW(wstr wstr wstr ptr long wstr) GetPrivateProfileStringW
 370 stdcall GetPrivateProfileStructA (str str ptr long str) GetPrivateProfileStructA
@@ -399,8 +399,8 @@ init	MAIN_KernelInit
 381 stub GetProductName
 382 stdcall GetProfileIntA(str str long) GetProfileIntA
 383 stdcall GetProfileIntW(wstr wstr long) GetProfileIntW
-384 stdcall GetProfileSectionA(str str long) GetProfileSectionA
-385 stdcall GetProfileSectionW(wstr wstr long) GetProfileSectionW
+384 stdcall GetProfileSectionA(str ptr long) GetProfileSectionA
+385 stdcall GetProfileSectionW(wstr ptr long) GetProfileSectionW
 386 stdcall GetProfileStringA(str str str ptr long) GetProfileStringA
 387 stdcall GetProfileStringW(wstr wstr wstr ptr long) GetProfileStringW
 388 stub GetQueuedCompletionStatus
