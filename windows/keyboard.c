@@ -87,6 +87,7 @@ static const int modifier_key[] =
     VK_MENU, VK_MENU, VK_MENU, VK_MENU                         /* FFE7 */
 };
 
+/* Returns the Windows virtual key code associated with the X event <e> */
 static WORD EVENT_event_to_vkey( XKeyEvent *e)
 {
     KeySym keysym;
@@ -749,6 +750,21 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 
 /****************************************************************************
  *	ToAscii   (KEYBOARD.4)
+
+The ToAscii function translates the specified virtual-key code and keyboard
+state to the corresponding Windows character or characters.
+
+If the specified key is a dead key, the return value is negative. Otherwise,
+it is one of the following values:
+Value	Meaning
+0	The specified virtual key has no translation for the current state of the keyboard.
+1	One Windows character was copied to the buffer.
+2	Two characters were copied to the buffer. This usually happens when a
+        dead-key character (accent or diacritic) stored in the keyboard layout cannot
+        be composed with the specified virtual key to form a single character.
+
+FIXME : should do the above (return 2 for non matching deadchar+char combinations)
+
  */
 INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
                        LPVOID lpChar, UINT16 flags) 
@@ -787,25 +803,28 @@ INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
     for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
       { /* Find a keycode that could have generated this virtual key */
           if  ((keyc2vkey[keyc] & 0xFF) == virtKey)
-          { /* we can filter the extended bit, VK* are different enough... */
+          { /* We filter the extended bit, we don't know it */
               e.keycode = keyc; /* Store it temporarily */
-              if ((EVENT_event_to_vkey(&e) & 0xFF) != virtKey)
+              if ((EVENT_event_to_vkey(&e) & 0xFF) != virtKey) {
                   e.keycode = 0; /* Wrong one (ex: because of the NumLock
                          state), so set it to 0, we'll find another one */
+              }
 	  }
       }
-    if ((!e.keycode) && (lpKeyState[VK_NUMLOCK] & 0x01)) 
-    {
-	if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
-	  e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
-	if (virtKey==VK_DECIMAL)
-	  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
-      }
+
+    if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
+        e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
+          
+    if (virtKey==VK_DECIMAL)
+        e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
+
     if (!e.keycode)
       {
 	WARN(keyboard,"Unknown virtual key %X !!! \n",virtKey);
 	return virtKey; /* whatever */
       }
+    else TRACE(keyboard,"Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
+
     ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
     if (ret == 0)
 	{
@@ -918,8 +937,19 @@ INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
 		}
 	    }
 	}
+    else {  /* ret = 1 */
+        /* We have a special case to handle : Shift + arrow, shift + home, ...
+           X returns a char for it, but Windows doesn't. Let's eat it. */
+        if (!(lpKeyState[VK_NUMLOCK] & 0x01)  /* NumLock is off */
+            && (lpKeyState[VK_SHIFT] & 0x80) /* Shift is pressed */
+            && (keysym>=XK_KP_0) && (keysym<=XK_KP_9))
+        {
+            *(char*)lpChar = 0;
+            ret = 0;
+        }
+    }
+
     TRACE(key, "ToAscii about to return %d with char %x\n",
 		ret, *(char*)lpChar);
     return ret;
 }
-
