@@ -76,7 +76,7 @@ static void test_ClipboardOwner(void)
     ok(!OpenClipboard(hWnd2) && GetLastError() == 0xdeadbeef,
        "OpenClipboard should fail without setting last error value\n");
 
-    ok(CloseClipboard(), "CloseClipboard error %ld", GetLastError());
+    ok(CloseClipboard(), "CloseClipboard error %ld\n", GetLastError());
     ok(GetClipboardOwner() == hWnd1, "clipboard should still be owned\n");
 
     ok(DestroyWindow(hWnd1), "DestroyWindow error %ld\n", GetLastError());

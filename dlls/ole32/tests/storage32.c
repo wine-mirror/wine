@@ -58,7 +58,7 @@ void test_hglobal_storage_stat(void)
     todo_wine {
     ok( stat.grfMode == 0x12, "grf mode is incorrect\n");
     }
-    ok( !memcmp(&stat.clsid, &test_stg_cls, sizeof test_stg_cls), "CLSID is wrong");
+    ok( !memcmp(&stat.clsid, &test_stg_cls, sizeof test_stg_cls), "CLSID is wrong\n");
 
     refcount = IStorage_Release( stg );
     ok( refcount == 0, "IStorage refcount is wrong\n");

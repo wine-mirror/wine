@@ -299,7 +299,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 
     if (!flags)
     {
-	ok(n == total, "IEnumCodePage_Next: expected %u, got %lu", total, n);
+	ok(n == total, "IEnumCodePage_Next: expected %u, got %lu\n", total, n);
 
 	flags = MIMECONTF_MIME_LATEST;
     }

@@ -562,7 +562,7 @@ static void WM_NEXTDLGCTLTest(void)
     DefDlgProcA( g_hwndTestDlgBut1, BM_SETSTYLE, BS_DEFPUSHBUTTON, FALSE );
     dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
 
-    ok ( IDCANCEL == (LOWORD(dwVal)), "Did not set default ID" );
+    ok ( IDCANCEL == (LOWORD(dwVal)), "Did not set default ID\n" );
 
     /*
      * Check whether message WM_NEXTDLGCTL is changing the focus to next control and if
