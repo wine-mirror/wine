@@ -116,53 +116,12 @@
 	        of installing Wine.
 	        Plus, by carefully following the instructions in this
 	        Guide, you'll be able to gain the very best Wine
-	        environment compatibility (instead of falling victim
-	        to package maintainers who fail to follow some
-	        instructions in the Wine Packagers Guide).
+	        environment compatibility.
 	      </para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
 	
-	<para>
-	  To summarize, the "best" way to install Wine is to download
-	  Wine source code via CVS to get the newest code (which might
-	  be unstable!). Then you could easily compile and install the
-	  Wine files manually. The final configuration part (writing the
-	  configuration file and setting up the drive environment) could then
-	  be handled by WineSetupTk. All in all the best way to go,
-	  except for the about 500MB of disk space that you'll need.
-	</para>
-	
-	<para>
-	  With source code archive files, you have the advantage that you're
-	  running standard release versions, plus you can update to
-	  newer versions via patch files that we release.
-	  You won't have the newest code and the flexibility offered by CVS,
-	  though.
-	</para>
-
-	<para>
-	  About binary package files: not sure. There's about a zillion
-	  reasons to not like them as much as you'd think: they may be
-	  outdated, they may not include "everything", they are
-	  <emphasis>not</emphasis> optimized for your particular
-	  environment (as opposed to a source compile, which would guess
-	  and set everything based on your system), they frequently fail
-	  to provide a completely configured Wine environment.
-	  On the plus side: they're pretty easy to install and they
-	  don't take as much space as a full-blown source code compile.
-	  But that's about it when it comes to their advantages.
-	  So I'd say they are OK if you want to have a
-	  <emphasis>quick</emphasis> way to have a test run of Wine, but
-	  for prolonged Wine use, configuring the environment on your
-	  own is probably better.
-	  Eventually this will change (we'll probably do some packaging
-	  efforts on our own at some time), but at the current explosive
-	  rate of Wine development, staying as close as possible to the
-	  actual Wine development that's going on is the way to go.
-	</para>
-
 	<para>
           If you are running a distribution of Linux or some other
 	  system that uses packages to keep track of installed software,
@@ -190,10 +149,6 @@
           install Wine, although it might be nice to have some minor
           UNIX administrative skills.  Working from the source is
           covered in the Wine Developer's Guide.
-	  The main problem with externally maintained package files is
-	  that they lack a standard configuration method, and in fact
-	  they often fail to configure Wine's Windows environment
-	  properly (which is outlined in the Wine Packagers Guide).
         </para>
       </sect2>
 
