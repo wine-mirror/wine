@@ -50,6 +50,16 @@ BOOL WINAPI I_CryptFreeLruCache(DWORD x)
     return FALSE;
 }
 
+/*
+ * (0x1001350, %eax, 0, 0, 9);
+ *
+ */
+BOOL WINAPI CertOpenStore(LPSTR dw1, DWORD dw2, DWORD dw3, DWORD dw4, DWORD dw5)
+{
+  FIXME("(%s, %ld, %ld, %ld, %ld), stub.\n", debugstr_a(dw1), dw2, dw3, dw4, dw5);
+  return TRUE;
+}
+
 BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
 {
     FIXME("stub!\n");
