@@ -116,15 +116,34 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 	IN ULONG ProcessInformationLength,
 	OUT PULONG ReturnLength)
 {
-	FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
-		ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength,ReturnLength
-	);
-	/* "These are not the debuggers you are looking for." */
-	if (ProcessInformationClass == ProcessDebugPort)
-	    /* set it to 0 aka "no debugger" to satisfy copy protections */
-	    memset(ProcessInformation,0,ProcessInformationLength);
+	NTSTATUS ret = STATUS_SUCCESS;
+	ULONG len = 0;
 
-	return 0;
+	switch (ProcessInformationClass) {
+	case ProcessDebugPort:
+		/* "These are not the debuggers you are looking for." */
+		/* set it to 0 aka "no debugger" to satisfy copy protections */
+		if (ProcessInformationLength == 4)
+		{
+			memset(ProcessInformation,0,ProcessInformationLength);
+			len = 4;
+		}
+		else
+			ret = STATUS_INFO_LENGTH_MISMATCH;
+		break;
+	default:
+		FIXME("(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+			ProcessHandle,ProcessInformationClass,
+			ProcessInformation,ProcessInformationLength,
+			ReturnLength
+		);
+		break;
+	}
+
+	if (ReturnLength)
+		*ReturnLength = len;
+
+	return ret;
 }
 
 /******************************************************************************
