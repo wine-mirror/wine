@@ -37,7 +37,7 @@ extern LPVOID VIRTUAL_MapFileW( LPCWSTR name );
 
 typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
 extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
-extern BOOL VIRTUAL_HandleFault(LPCVOID addr);
+extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
 
 /* memory/atom.c */
 extern BOOL ATOM_Init( WORD globalTableSel );

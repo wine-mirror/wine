@@ -475,13 +475,14 @@ static HANDLER_DEF(segv_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    DWORD page_fault_code = EXCEPTION_ACCESS_VIOLATION;
 
     handler_init( &context, HANDLER_CONTEXT );
 
 #ifdef CR2_sig
     /* we want the page-fault case to be fast */
     if (get_trap_code(HANDLER_CONTEXT) == T_PAGEFLT)
-        if (VIRTUAL_HandleFault( (LPVOID)CR2_sig(HANDLER_CONTEXT) )) return;
+        if (!(page_fault_code = VIRTUAL_HandleFault( (LPVOID)CR2_sig(HANDLER_CONTEXT) ))) return;
 #endif
 
     save_context( &context, HANDLER_CONTEXT );
@@ -520,7 +521,7 @@ static HANDLER_DEF(segv_handler)
 #endif /* ERROR_sig */
         rec.ExceptionInformation[1] = CR2_sig(HANDLER_CONTEXT);
 #endif /* CR2_sig */
-        rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        rec.ExceptionCode = page_fault_code;
         break;
     case T_ALIGNFLT:  /* Alignment check exception */
         /* FIXME: pass through exception handler first? */

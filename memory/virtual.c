@@ -510,13 +510,33 @@ BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
 /***********************************************************************
  *           VIRTUAL_HandleFault
  */
-BOOL VIRTUAL_HandleFault( LPCVOID addr )
+DWORD VIRTUAL_HandleFault( LPCVOID addr )
 {
     FILE_VIEW *view = VIRTUAL_FindView((UINT)addr);
+    DWORD ret = EXCEPTION_ACCESS_VIOLATION;
 
-    if (view && view->handlerProc)
-        return view->handlerProc(view->handlerArg, addr);
-    return FALSE;
+    if (view)
+    {
+        if (view->handlerProc)
+        {
+            if (view->handlerProc(view->handlerArg, addr)) ret = 0;  /* handled */
+        }
+        else
+        {
+            BYTE vprot = view->prot[((UINT)addr - view->base) >> page_shift];
+            UINT page = (UINT)addr & ~page_mask;
+            char *stack = (char *)NtCurrentTeb()->stack_base + SIGNAL_STACK_SIZE + page_mask + 1;
+            if (vprot & VPROT_GUARD)
+            {
+                VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
+                ret = STATUS_GUARD_PAGE_VIOLATION;
+            }
+            /* is it inside the stack guard pages? */
+            if (((char *)addr >= stack) && ((char *)addr < stack + 2*(page_mask+1)))
+                ret = STATUS_STACK_OVERFLOW;
+        }
+    }
+    return ret;
 }
 
 
