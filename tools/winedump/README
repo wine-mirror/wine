@@ -45,7 +45,8 @@ tracing of calls to the DLL, and (in some cases) automatically determining
 the parameters, calling conventions, and return values of the DLLs functions.
 
 You can think of winedump as somewhat similar to the IMPLIB tool when
-only its basic functionality is used.
+only its basic functionality is used. In addition, winedump can be used to
+dump other information from PE files; See the section 'Dumping' below.
 
 
 Usage
@@ -54,18 +55,26 @@ Usage
 Winedump is a command line tool. Running it with no arguments or passing
 it '-h' on the command line lists the available options:
 
-Winedump can be used for different usages:
-- generating default source files (.spec, .c...) for using a native DLL in Wine
-- demangling MSVC C++ symbol names
-- dumping the 'PE' files contents
-
 Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll>] [mode options]
-When used in -h mode
-   -h           Display this help message
-When used in sym mode
-   sym <sym>    Demangle C++ symbol <sym>' and exit
-When used in spec mode
-   spec <dll>   Use dll for input file and generate implementation code
+
+Winedump can be used in several different modes. The first argument to the
+program determines the mode winedump will run in.
+
+   -h           Help mode. Basic usage help is printed.
+   sym          Symbol mode. Used to demangle C++ symbols
+   spec         For generating .spec files and stub DLL's
+   dump         To dump the contents of a PE file.
+
+[mode options] depend on the mode given as the first argument.
+
+Help mode:
+   No options are used. The program prints help and then exits
+
+Sym mode:
+   <sym>        Demangles C++ symbol <sym>' and then exits.
+
+Spec mode:
+   <dll>        Use dll for input file and generate implementation code
    -I dir       Look for prototypes in 'dir' (implies -c)
    -c           Generate skeleton code (requires -I)
    -t           TRACE arguments (implies -c)
@@ -75,17 +84,21 @@ When used in spec mode
    -C           Assume __cdecl calls (default: __stdcall)
    -s num       Start prototype search after symbol 'num'
    -e num       End prototype search after symbol 'num'
+   -S symfile   Search only prototype names found in 'symfile'
    -q           Don't show progress (quiet).
    -v           Show lots of detail while working (verbose).
-When used in dump mode
-   dump <dll>   Dumps the content of the dll named <dll>
+
+Dump mode:
+   <dll>        Dumps the content of the dll named <dll>
    -C           Turns on symbol demangling
    -f           Dumps file header information
    -j sect_name Dumps only the content of section sect_name (import, export, debug)
    -x           Dumps everything
 
-Basic options
--------------
+Each modes options are explained below.
+
+Spec mode: Basic options
+------------------------
 
 OPTION: -o name  Set the output dll name (default: dll)
 
@@ -120,8 +133,8 @@ winedump determines the calling convention for and which does not match
 the assumed calling convention.
 
 
-Generating stub DLLS
---------------------
+Spec mode: Generating stub DLLS
+-------------------------------
 
 If all you want to do is generate a stub DLL to allow you to link your
 Winelib application to an x86 DLL, the above options are all you need.
@@ -153,14 +166,14 @@ This is the .spec file. Each exported function is listed as a stub:
 ...
 
 This means that winebuild will generate dummy code for this function. That
-doesn't concern us, because all we want is for winebuild to allow the
-symbols to be resolved. At run-time, the functions in the native DLL will
+doesn't concern us, because all we want is for winebuild to allow the symbols
+to be resolved when linking. At run-time, the functions in the native DLL will
 be called; this just allows us to link.
 
 zipextra_dll.h zipextra_main.c
 These are source code files containing the minimum set of code to build
 a stub DLL. The C file contains one function, ZIPEXTRA_Init, which does
-nothing.
+nothing (but must be present).
 
 Makefile.in
 This is a template for 'configure' to produce a makefile. It is designed
@@ -175,8 +188,8 @@ zipextra_install
 A shell script for adding zipextra to the Wine source tree (see below).
 
 
-Inserting a stub DLL into the Wine tree
----------------------------------------
+Spec mode: Inserting a stub DLL into the Wine tree
+--------------------------------------------------
 
 To build your stub DLL as part of Wine, do the following:
 
@@ -190,6 +203,17 @@ To build your stub DLL as part of Wine, do the following:
 
 Your application can now link with the DLL.
 
+If you recieve the following error when running autoconf:
+
+ autoconf: configure.in: No such file or directory
+
+Then you need to install a newer version of autoconf. At the time of writing
+version 2.53 or later is required to re-generate configure.
+
+If you have problems with this step, you can post to the wine-devel mailing
+list for help. The build process can change regularly and winebuild may lag
+behind in support.
+
 NOTE: **DO NOT** submit patches to Wine for 3rd party DLLs! Building DLLs
       into your copy of the tree is just a simple way for you to link. When
       you release your application you won't be distributing the Unix .so
@@ -198,8 +222,8 @@ NOTE: **DO NOT** submit patches to Wine for 3rd party DLLs! Building DLLs
       involved, it should be pretty resiliant to changes).
 
 
-Advanced Options
-----------------
+Spec mode: Advanced Options
+---------------------------
 
 This section discusses features of winedump that are useful to Wine Hackers
 or developers looking to reimplement a Win32 DLL for Unix. Using these
@@ -209,7 +233,7 @@ have a general understanding of Wine programming.
 
 OPTION: -I dir   Look for prototypes in 'dir' (implies -c)
 
-For all advanced functionality, you must give winedump a directoryor file that
+For all advanced functionality, you must give winedump a directory or file that
 contains prototypes for the DLL. In the case of Windows DLLs, this could be
 either the standard include directory from your compiler, or an SDK include
 directory. If you have a text document with prototypes (such as documentation)
@@ -249,6 +273,12 @@ function, for example, if you wanted to add functionality to an existing DLL.
 
 They is also useful for debugging problems, in conjunction with -v.
 
+OPTION: -S symfile Search only prototype names found in 'symfile'
+
+If you want to only generate code for a subset of exported functions from
+your source DLL, you can use this option to provide a text file containing
+the names of the symbols to extract, one per line. Only the symbols present
+in this file will be used in your output DLL.
 
 OPTION: -D       Generate documentation
 
@@ -420,8 +450,8 @@ code automatically for common Win32 types.
 See below for more information on setting up a forwarding DLL.
 
 
-Problems compiling a DLL containing generated code
---------------------------------------------------
+Spec mode: Problems compiling a DLL containing generated code
+-------------------------------------------------------------
 
 Unless you are very lucky, you will need to do a small amount of work to
 get a DLL generated with -c, -t or -f to compile. The reason for this is
@@ -487,8 +517,8 @@ the .spec entry in order to forward correctly. Otherwise, include the typedef
 in your fixup header to avoid compile errors.
 
 
-Using a forwarding DLL
-----------------------
+Spec mode: Using a forwarding DLL
+---------------------------------
 
 To create and use a forwarding DLL to trace DLL calls, you need to first
 create a DLL using the -f option as outlined above, and get it to compile.
@@ -534,6 +564,62 @@ arguments on the way.
 At this point you are ready to start reimplementing the calls.
 
 
+Sym mode: Demangling
+--------------------
+
+If you need to demangle a single C++ symbol, you can use the demangling mode
+of winedump. This is useful for testing the demangler or implementing
+C++ functions in partially implemented wine DLLS. As an example:
+
+winedump sym "??3@YAXPAX@Z"
+
+Gives:
+
+void __cdecl _global_operator_delete_1(void * arg0)
+
+Which is enough information to begin implementing the function.
+
+
+Dump Mode: Dumping a PE file
+----------------------------
+
+Another use for this tool is to diplay information about a 32bit DLL or PE
+format image file. When used in this way winedump functions similarly to tools
+such as pedump provided by many Win32 compiler vendors.
+
+Usage:
+winedump dump <dllname.dll> [switches]
+
+dump mode switches:
+   -h           Display this help message
+   -C           Turns on symbol demangling
+   -f           Dump file header information
+   -j dir_name  Dump only the contents of directory dir_name (import, export, debug)
+   -x           Dump everything
+
+
+Dump Mode: Options
+------------------
+
+OPTION: -x           Dump everything
+
+This command prints all available information about the file. You may wish to
+pipe the output through more/less or into a file, since a lot of output will
+be produced.
+
+If you are only interested in a subset of the available information, you can
+use one of the following switches:
+
+OPTION: -f           Dump file header information-x  Dump everything
+
+This option dumps only the standard PE header structures, along with the COFF
+sections available in the file.
+
+OPTION: -j dir_name  Dump directory dir_name (import, export, debug)
+
+To dump only a given directory, specify them using this option. Currently only
+the import, export and debug directories are implemented.
+
 Final comments
 --------------
 
@@ -561,48 +647,3 @@ References
 
 [1] See the Wine and Wine.conf man pages for details on how to tell Wine
     whether to use native (Win32) or internal DLLs.
-
-
-Demangling
-----------
-
-If you need to demangle a single C++ symbol, you can use the demangling mode
-of winedump. This is useful for testing the demangler or implementing
-C++ functions in partially implemented wine DLLS. As an example:
-
-winedump sym "??3@YAXPAX@Z"
-
-Gives:
-
-void __cdecl _global_operator_delete_1(void * arg0)
-
-Which is enough information to begin implementing the function.
-
-
-Dumping
--------
-
-Another tool might be helpful for digging into a 32bit DLL (and any PE image file):
-pedump.
-
-Usage:
-winedump [-h | sym <sym> | spec <dll> | dump <dll> ] [switches]
-
-winedump switches:
-   -h           Display this help message
-   -d <dll>     Use dll for input file and generate implementation code
-   -C           Turns on symbol demangling
-   -f           Dumps file header information
-   -j dir_name  Dumps only the content of directory dir_name (import, export, debug)
-   -x           Dumps everything
-
-The basic usage, to look at everything in a file is:
-winedump dump mydll.dll -x
-
-It'll print any available information on the file. This information can be splitted
-into sub-categories:
-- file headers (request by -f or -x) are made of the standard PE header structures,
-  plus the COFF sections
-- directories: you can print them one after the other using the -j switch.
-  Currently, only the import, export and debug directories are implemented.
-- -x displays the file headers and any available directory.
