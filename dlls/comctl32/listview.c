@@ -5584,7 +5584,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
           lprc->top = ptItem.y;
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
-          if (infoPtr->dwExStyle & LVS_EX_FULLROWSELECT)
+          if ((infoPtr->dwExStyle & LVS_EX_FULLROWSELECT) || (uView == LVS_REPORT))
 	  {
 	    RECT br;
 	    int nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
