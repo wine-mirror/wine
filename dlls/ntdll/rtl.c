@@ -370,49 +370,6 @@ void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
     context->Esp -= context->Eax;
 }
 
-/******************************************************************************
- * RtlExtendedLargeIntegerDivide [NTDLL.359]
- */
-INT WINAPI RtlExtendedLargeIntegerDivide(
-	LARGE_INTEGER dividend,
-	DWORD divisor,
-	LPDWORD rest
-) {
-#if SIZEOF_LONG_LONG==8
-	long long x1 = *(long long*)&dividend;
-
-	if (*rest)
-		*rest = x1 % divisor;
-	return x1/divisor;
-#else
-	FIXME("((%ld<<32)+%ld,%ld,%p), implement this using normal integer arithmetic!\n",
-              dividend.s.HighPart,dividend.s.LowPart,divisor,rest);
-	return 0;
-#endif
-}
-
-/******************************************************************************
- * RtlExtendedIntegerMultiply [NTDLL.359]
- * Note: This even works, since gcc returns 64bit values in eax/edx just like
- * the caller expects. However... The relay code won't grok this I think.
- */
-LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(
-	LARGE_INTEGER factor1,
-	INT factor2) 
-{
-#if SIZEOF_LONG_LONG==8
-        long long result = (*(long long*)&factor1) * factor2;
-	return (*(LARGE_INTEGER*)&result);
-#else
-	LARGE_INTEGER result;
-	result.s.HighPart = 0;
-        result.s.LowPart = 0;
-        FIXME("((%ld<<32)+%ld,%d), implement this using normal integer arithmetic!\n",
-              factor1.s.HighPart,factor1.s.LowPart,factor2);
-	return result;
-#endif
-}
-
 /**************************************************************************
  *                 RtlDosPathNameToNtPathName_U		[NTDLL.338]
  *

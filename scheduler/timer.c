@@ -134,29 +134,20 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
 {
     BOOL ret;
-    FILETIME ft;
-    DWORD remainder;
+    LARGE_INTEGER exp = *when;
 
-    if (when->s.HighPart < 0)  /* relative time */
+    if (exp.s.HighPart < 0)  /* relative time */
     {
-        DWORD low;
-        GetSystemTimeAsFileTime( &ft );
-        low = ft.dwLowDateTime;
-        ft.dwLowDateTime -= when->s.LowPart;
-        ft.dwHighDateTime -= when->s.HighPart;
-        if (low < ft.dwLowDateTime) ft.dwHighDateTime--; /* overflow */
-    }
-    else  /* absolute time */
-    {
-        ft.dwLowDateTime = when->s.LowPart;
-        ft.dwHighDateTime = when->s.HighPart;
+        LARGE_INTEGER now;
+        NtQuerySystemTime( &now );
+        exp.QuadPart = RtlLargeIntegerSubtract( now.QuadPart, exp.QuadPart );
     }
 
     SERVER_START_REQ
     {
         struct set_timer_request *req = server_alloc_req( sizeof(*req), 0 );
 
-        if (!ft.dwLowDateTime && !ft.dwHighDateTime)
+        if (!exp.s.LowPart && !exp.s.HighPart)
         {
             /* special case to start timeout on now+period without too many calculations */
             req->sec  = 0;
@@ -164,7 +155,8 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         }
         else
         {
-            req->sec  = DOSFS_FileTimeToUnixTime( &ft, &remainder );
+            DWORD remainder;
+            req->sec  = DOSFS_FileTimeToUnixTime( (FILETIME *)&exp, &remainder );
             req->usec = remainder / 10;  /* convert from 100-ns to us units */
         }
         req->handle   = handle;

@@ -174,7 +174,7 @@ type	win32
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
 @ stub NtQuerySystemEnvironmentValue
 @ stdcall NtQuerySystemInformation(long long long long) NtQuerySystemInformation
-@ stdcall NtQuerySystemTime(ptr) GetSystemTimeAsFileTime
+@ stdcall NtQuerySystemTime(ptr) NtQuerySystemTime
 @ stub NtQueryTimer
 @ stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
 @ stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
@@ -298,11 +298,11 @@ type	win32
 @ stub RtlCompressBuffer
 @ stub RtlConsoleMultiByteToUnicodeN
 @ stub RtlConvertExclusiveToShared
-@ stub RtlConvertLongToLargeInteger
+@ stdcall64 RtlConvertLongToLargeInteger(long) RtlConvertLongToLargeInteger
 @ stub RtlConvertSharedToExclusive
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr)RtlConvertSidToUnicodeString
 @ stub RtlConvertUiListToApiList
-@ stub RtlConvertUlongToLargeInteger
+@ stdcall64 RtlConvertUlongToLargeInteger(long) RtlConvertUlongToLargeInteger
 @ stub RtlCopyLuid
 @ stub RtlCopyLuidAndAttributesArray
 @ stub RtlCopySecurityDescriptor
@@ -345,9 +345,9 @@ type	win32
 @ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long) RtlDosPathNameToNtPathName_U
 @ stub RtlDosSearchPath_U
 @ stdcall RtlDumpResource(ptr) RtlDumpResource
-@ stub RtlEnlargedIntegerMultiply
-@ stub RtlEnlargedUnsignedDivide
-@ stub RtlEnlargedUnsignedMultiply
+@ stdcall64 RtlEnlargedIntegerMultiply(long long) RtlEnlargedIntegerMultiply
+@ stdcall RtlEnlargedUnsignedDivide(long long long ptr) RtlEnlargedUnsignedDivide
+@ stdcall64 RtlEnlargedUnsignedMultiply(long long) RtlEnlargedUnsignedMultiply
 @ stdcall RtlEnterCriticalSection(ptr) RtlEnterCriticalSection
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
@@ -362,8 +362,8 @@ type	win32
 @ stdcall RtlEraseUnicodeString(ptr) RtlEraseUnicodeString
 @ stub RtlExpandEnvironmentStrings_U
 @ stub RtlExtendHeap
-@ stdcall RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
-@ stdcall RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
+@ stdcall64 RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
+@ stdcall64 RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
 @ stub RtlExtendedMagicDivide
 @ stdcall RtlFillMemory(ptr long long) RtlFillMemory
 @ stub RtlFillMemoryUlong
@@ -422,13 +422,13 @@ type	win32
 @ stub RtlIsGenericTableEmpty
 @ stub RtlIsNameLegalDOS8Dot3
 @ stdcall RtlIsTextUnicode(ptr long ptr) RtlIsTextUnicode
-@ stub RtlLargeIntegerAdd
-@ stub RtlLargeIntegerArithmeticShift
-@ stub RtlLargeIntegerDivide
-@ stub RtlLargeIntegerNegate
-@ stub RtlLargeIntegerShiftLeft
-@ stub RtlLargeIntegerShiftRight
-@ stub RtlLargeIntegerSubtract
+@ stdcall64 RtlLargeIntegerAdd(long long long long) RtlLargeIntegerAdd
+@ stdcall64 RtlLargeIntegerArithmeticShift(long long long) RtlLargeIntegerArithmeticShift
+@ stdcall64 RtlLargeIntegerDivide(long long long long ptr) RtlLargeIntegerDivide
+@ stdcall64 RtlLargeIntegerNegate(long long) RtlLargeIntegerNegate
+@ stdcall64 RtlLargeIntegerShiftLeft(long long long) RtlLargeIntegerShiftLeft
+@ stdcall64 RtlLargeIntegerShiftRight(long long long) RtlLargeIntegerShiftRight
+@ stdcall64 RtlLargeIntegerSubtract(long long long long) RtlLargeIntegerSubtract
 @ stub RtlLargeIntegerToChar
 @ stdcall RtlLeaveCriticalSection(ptr) RtlLeaveCriticalSection
 @ stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
@@ -674,7 +674,7 @@ type	win32
 @ stub ZwQuerySymbolicLinkObject
 @ stub ZwQuerySystemEnvironmentValue
 @ stdcall ZwQuerySystemInformation(long long long long) NtQuerySystemInformation
-@ stdcall ZwQuerySystemTime(ptr) GetSystemTimeAsFileTime
+@ stdcall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stub ZwQueryTimer
 @ stub ZwQueryTimerResolution
 @ stub ZwQueryValueKey

@@ -12,6 +12,7 @@ C_SRCS = \
 	exception.c \
 	error.c \
 	file.c \
+	large_int.c \
 	misc.c \
 	nt.c \
 	om.c \

@@ -9,11 +9,13 @@
  */
 
 #include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include "ntddk.h"
 #include "debugtools.h"
-#include "file.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
@@ -28,6 +30,12 @@ DEFAULT_DEBUG_CHANNEL(ntdll)
 #define DAYSPERNORMALYEAR  365
 #define DAYSPERLEAPYEAR    366
 #define MONSPERYEAR        12
+
+/* 1601 to 1970 is 369 years plus 89 leap days */
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * 86400ULL)
+/* 1601 to 1980 is 379 years plus 91 leap days */
+#define SECS_1601_to_1980  ((379 * 365 + 91) * 86400ULL)
+
 
 static const int YearLengths[2] = {DAYSPERNORMALYEAR, DAYSPERLEAPYEAR};
 static const int MonthLengths[2][MONSPERYEAR] =
@@ -182,41 +190,43 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 /******************************************************************************
  *  RtlTimeToSecondsSince1970		[NTDLL] 
  */
-BOOLEAN WINAPI RtlTimeToSecondsSince1970(
-	LPFILETIME ft,
-	LPDWORD timeret) 
+BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 {
-    *timeret = DOSFS_FileTimeToUnixTime(ft,NULL);
+    ULONGLONG tmp = RtlLargeIntegerDivide( ((LARGE_INTEGER *)time)->QuadPart, 10000000LL, NULL );
+    tmp -= SECS_1601_TO_1970;
+    if (tmp > 0xffffffff) return FALSE;
+    *res = (DWORD)tmp;
     return TRUE;
 }
 
 /******************************************************************************
  *  RtlTimeToSecondsSince1980		[NTDLL] 
  */
-BOOLEAN WINAPI RtlTimeToSecondsSince1980(
-	LPFILETIME ft,
-	LPDWORD timeret) 
+BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
 {
-    /* 1980 = 1970+10*365 days +  29. februar 1972 + 29.februar 1976 */
-    if (!RtlTimeToSecondsSince1970( ft, timeret )) return FALSE;
-    *timeret -= (10*365+2)*24*60*60;
+    ULONGLONG tmp = RtlLargeIntegerDivide( ((LARGE_INTEGER *)time)->QuadPart, 10000000LL, NULL );
+    tmp -= SECS_1601_to_1980;
+    if (tmp > 0xffffffff) return FALSE;
+    *res = (DWORD)tmp;
     return TRUE;
 }
 
 /******************************************************************************
  *  RtlSecondsSince1970ToTime		[NTDLL] 
  */
-void WINAPI RtlSecondsSince1970ToTime( DWORD time, LPFILETIME ft )
+void WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res )
 {
-    DOSFS_UnixTimeToFileTime( time, ft, 0 );
+    LONGLONG secs = time + SECS_1601_TO_1970;
+    ((LARGE_INTEGER *)res)->QuadPart = RtlExtendedIntegerMultiply( secs, 10000000 );
 }
 
 /******************************************************************************
  *  RtlSecondsSince1980ToTime		[NTDLL] 
  */
-void WINAPI RtlSecondsSince1980ToTime( DWORD time, LPFILETIME ft )
+void WINAPI RtlSecondsSince1980ToTime( DWORD time, FILETIME *res )
 {
-    RtlSecondsSince1970ToTime( time + (10*365+2)*24*60*60, ft );
+    LONGLONG secs = time + SECS_1601_to_1980;
+    ((LARGE_INTEGER *)res)->QuadPart = RtlExtendedIntegerMultiply( secs, 10000000 );
 }
 
 /******************************************************************************
@@ -228,4 +238,17 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
 	PTIME_FIELDS TimeFields)
 {
 	FIXME("(%p,%p): stub\n",liTime,TimeFields);
+}
+
+/***********************************************************************
+ *      NtQuerySystemTime   (NTDLL.@)
+ */
+void WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
+{
+    LONGLONG secs;
+    struct timeval now;
+
+    gettimeofday( &now, 0 );
+    secs = now.tv_sec + SECS_1601_TO_1970;
+    time->QuadPart = RtlExtendedIntegerMultiply( secs, 10000000 ) + now.tv_usec * 10;
 }

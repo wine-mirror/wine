@@ -59,16 +59,3 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
     systime->wSecond = local_tm->tm_sec;
     systime->wMilliseconds = (tv.tv_usec / 1000) % 1000;
 }
-
-
-/***********************************************************************
- *              GetSystemTimeAsFileTime  (KERNEL32)
- */
-VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime)
-{
-    struct timeval now;
-    gettimeofday( &now, 0 );
-    /* FIXME: convert to UTC */
-    DOSFS_UnixTimeToFileTime( now.tv_sec, systemtimeAsfiletime, now.tv_usec * 10 );
-}
-

@@ -694,16 +694,12 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
 	PLARGE_INTEGER liTime,
 	PTIME_FIELDS TimeFields);
 	
-BOOLEAN WINAPI RtlTimeToSecondsSince1980(
-	LPFILETIME ft,
-	LPDWORD timeret);
+void    WINAPI NtQuerySystemTime( LARGE_INTEGER *time );
 
-BOOLEAN WINAPI RtlTimeToSecondsSince1970(
-	LPFILETIME ft,
-	LPDWORD timeret);
-
-void WINAPI RtlSecondsSince1970ToTime( DWORD time, LPFILETIME ft );
-void WINAPI RtlSecondsSince1980ToTime( DWORD time, LPFILETIME ft );
+BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res );
+BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res );
+void    WINAPI RtlSecondsSince1970ToTime( DWORD time, FILETIME *res );
+void    WINAPI RtlSecondsSince1980ToTime( DWORD time, FILETIME *res );
 
 /*	heap functions */
 
@@ -756,14 +752,21 @@ VOID WINAPI RtlAcquirePebLock(void);
 VOID WINAPI RtlReleasePebLock(void);
 
 /*	mathematics */
-INT WINAPI RtlExtendedLargeIntegerDivide(
-	LARGE_INTEGER dividend,
-	DWORD divisor,
-	LPDWORD rest);
-
-LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(
-	LARGE_INTEGER factor1,
-	INT factor2);
+LONGLONG  WINAPI RtlConvertLongToLargeInteger( LONG a );
+LONGLONG  WINAPI RtlEnlargedIntegerMultiply( INT a, INT b );
+LONGLONG  WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b );
+LONGLONG  WINAPI RtlExtendedMagicDivide( LONGLONG a, LONGLONG b, INT shift );
+LONGLONG  WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b );
+LONGLONG  WINAPI RtlExtendedLargeIntegerDivide( LONGLONG a, INT b, INT *rem );
+LONGLONG  WINAPI RtlLargeIntegerAdd( LONGLONG a, LONGLONG b );
+LONGLONG  WINAPI RtlLargeIntegerArithmeticShift( LONGLONG a, INT count );
+LONGLONG  WINAPI RtlLargeIntegerNegate( LONGLONG a );
+LONGLONG  WINAPI RtlLargeIntegerShiftLeft( LONGLONG a, INT count );
+LONGLONG  WINAPI RtlLargeIntegerShiftRight( LONGLONG a, INT count );
+LONGLONG  WINAPI RtlLargeIntegerSubtract( LONGLONG a, LONGLONG b );
+UINT      WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr );
+ULONGLONG WINAPI RtlConvertUlongToLargeInteger( ULONG a );
+ULONGLONG WINAPI RtlLargeIntegerDivide( ULONGLONG a, ULONGLONG b, ULONGLONG *rem );
 
 /*	environment */
 DWORD WINAPI RtlCreateEnvironment(
@@ -817,6 +820,10 @@ NTSTATUS    WINAPI NtCreateKey(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES*,ULON
 NTSTATUS    WINAPI NtDeleteKey(HANDLE);
 NTSTATUS    WINAPI NtDeleteValueKey(HANDLE,const UNICODE_STRING*);
 NTSTATUS    WINAPI NtOpenKey(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES*);
+NTSTATUS    WINAPI NtSetValueKey(HANDLE,const UNICODE_STRING*,ULONG,ULONG,const void*,ULONG);
+NTSTATUS    WINAPI NtQueryValueKey(HANDLE,const UNICODE_STRING*,KEY_VALUE_INFORMATION_CLASS,
+                                   void*,DWORD,DWORD*);
+
 
 NTSTATUS WINAPI NtEnumerateKey(
 	HANDLE KeyHandle,
@@ -867,14 +874,6 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 	ULONG Length,
 	PULONG  ReturnLength);
 
-NTSTATUS WINAPI NtQueryValueKey(
-	IN HANDLE KeyHandle,
-	IN PUNICODE_STRING ValueName,
-	IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-	OUT PVOID KeyValueInformation,
-	IN ULONG Length,
-	OUT PULONG ResultLength);
-
 NTSTATUS WINAPI NtReplaceKey(
 	IN POBJECT_ATTRIBUTES ObjectAttributes,
 	IN HANDLE Key,
@@ -894,14 +893,6 @@ NTSTATUS WINAPI NtSetInformationKey(
 	IN const int KeyInformationClass,
 	IN PVOID KeyInformation,
 	IN ULONG KeyInformationLength);
-
-NTSTATUS WINAPI NtSetValueKey(
-	HANDLE KeyHandle,
-	PUNICODE_STRING ValueName,
-	ULONG TitleIndex,
-	ULONG Type,
-	PVOID Data,
-	ULONG DataSize);
 
 NTSTATUS WINAPI NtUnloadKey(
 	IN HANDLE KeyHandle);

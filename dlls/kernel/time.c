@@ -194,6 +194,16 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
        return FALSE;
 }
 
+
+/***********************************************************************
+ *              GetSystemTimeAsFileTime  (KERNEL32)
+ */
+VOID WINAPI GetSystemTimeAsFileTime( LPFILETIME time )
+{
+    NtQuerySystemTime( (LARGE_INTEGER *)time );
+}
+
+
 /*********************************************************************
  *      TIME_ClockTimeToFileTime
  *      (olorin@fandra.org, 20-Sep-1998)

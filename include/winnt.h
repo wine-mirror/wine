@@ -2326,9 +2326,9 @@ typedef union _LARGE_INTEGER {
 typedef union _ULARGE_INTEGER {
     struct {
         DWORD    LowPart;
-        LONG     HighPart;
+        DWORD    HighPart;
     } DUMMYSTRUCTNAME;
-    LONGLONG QuadPart;
+    ULONGLONG QuadPart;
 } ULARGE_INTEGER, *LPULARGE_INTEGER, *PULARGE_INTEGER;
 
 /*
