@@ -4759,16 +4759,13 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nHit >= 0) {
 	RECT arrowRect;
 	btnPtr = &infoPtr->buttons[nHit];
-	if (!(btnPtr->fsState & TBSTATE_ENABLED))
-	    return 0;
-
 	infoPtr->nOldHit = nHit;
 
 	CopyRect(&arrowRect, &btnPtr->rect);
 	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
 
 	/* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
-	if ((btnPtr->fsStyle & TBSTYLE_DROPDOWN) &&
+	if ((btnPtr->fsState & TBSTATE_ENABLED) && (btnPtr->fsStyle & TBSTYLE_DROPDOWN) &&
 	     ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
 	      (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))
 	{
@@ -4799,8 +4796,8 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState |= TBSTATE_PRESSED;
 	btnPtr->bHot = FALSE;
 
-	InvalidateRect(hwnd, &btnPtr->rect,
-		       TOOLBAR_HasText(infoPtr, btnPtr));
+        if (btnPtr->fsState & TBSTATE_ENABLED)
+	    InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr, btnPtr));
 	UpdateWindow(hwnd);
 	SetCapture (hwnd);
 
@@ -4882,6 +4879,7 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	 */
 	if ((infoPtr->bCaptured) && (infoPtr->nButtonDown >= 0))
 	    ReleaseCapture ();
+	infoPtr->nButtonDown = -1;
 
 	/* Issue NM_RELEASEDCAPTURE to parent to let him know it is released */
 	TOOLBAR_SendNotify ((NMHDR *) &hdr, infoPtr,
@@ -4902,17 +4900,19 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 			TBN_ENDDRAG);
 
-	SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
-	  MAKEWPARAM(infoPtr->buttons[nHit].idCommand, 0), (LPARAM)hwnd);
+	if (btnPtr->fsState & TBSTATE_ENABLED)
+	{
+	    SendMessageA (infoPtr->hwndNotify, WM_COMMAND,
+	      MAKEWPARAM(infoPtr->buttons[nHit].idCommand, 0), (LPARAM)hwnd);
 
-	/* !!! Undocumented - toolbar at 4.71 level and above sends
-	 * either NMRCLICK or NM_CLICK with the NMMOUSE structure.
-	 * Only NM_RCLICK is documented.
-	 */
-	nmmouse.dwItemSpec = btnPtr->idCommand;
-	nmmouse.dwItemData = btnPtr->dwData;
-	TOOLBAR_SendNotify ((NMHDR *) &nmmouse, infoPtr,
-			NM_CLICK);
+	    /* !!! Undocumented - toolbar at 4.71 level and above sends
+	    * either NMRCLICK or NM_CLICK with the NMMOUSE structure.
+	    * Only NM_RCLICK is documented.
+	    */
+	    nmmouse.dwItemSpec = btnPtr->idCommand;
+	    nmmouse.dwItemData = btnPtr->dwData;
+	    TOOLBAR_SendNotify ((NMHDR *) &nmmouse, infoPtr, NM_CLICK);
+	}
     return 0;
 }
 
@@ -4929,11 +4929,11 @@ TOOLBAR_CaptureChanged(HWND hwnd)
         btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
        	btnPtr->fsState &= ~TBSTATE_PRESSED;
 
-        infoPtr->nButtonDown = -1;
         infoPtr->nOldHit = -1;
 
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
-            btnPtr));
+        if (btnPtr->fsState & TBSTATE_ENABLED)
+            InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
+              btnPtr));
     }
     return 0;
 }
