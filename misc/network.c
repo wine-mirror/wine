@@ -745,11 +745,19 @@ UINT32 WINAPI MultinetGetErrorText32A (DWORD x, DWORD y, DWORD z)
 {	FIXME(mpr,"(%lx,%lx,%lx): stub\n",x,y,z);
   return 0;
 }
+
 /*****************************************************************
  *  MultinetGetErrorTextW [MPR.29]
  */
-
 UINT32 WINAPI MultinetGetErrorText32W (DWORD x, DWORD y, DWORD z)
 {	FIXME(mpr,"(%lx,%lx,%lx): stub\n",x,y,z);
   return 0;
+}
+
+/*****************************************************************
+ *  NPSGetProviderHandle [MPR.33]
+ */
+DWORD WINAPI NPSGetProviderHandle32A(DWORD x) {
+	FIXME(mpr,"(0x%08lx),stub!\n",x);
+	return 0;
 }

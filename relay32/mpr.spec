@@ -33,7 +33,7 @@ type win32
 0030 stub NPSCopyStringA
 0031 stub NPSDeviceGetNumberA
 0032 stub NPSDeviceGetStringA
-0033 stub NPSGetProviderHandleA
+0033 stdcall NPSGetProviderHandleA(long) NPSGetProviderHandle32A
 0034 stub NPSGetProviderNameA
 0035 stub NPSGetSectionNameA
 0036 stub NPSNotifyGetContextA
