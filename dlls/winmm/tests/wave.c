@@ -324,12 +324,12 @@ static void wave_out_tests()
             }
         }
 
-        /* Try an invalid format to test error handling */
-        trace("Testing invalid format\n");
+        /* Try invalid formats to test error handling */
+        trace("Testing invalid format: 11 bits per sample\n");
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=2;
         format.wBitsPerSample=11;
-        format.nSamplesPerSec=8000;
+        format.nSamplesPerSec=22050;
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
@@ -337,6 +337,27 @@ static void wave_out_tests()
         rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
            "waveOutOpen: opening the device in 11 bits mode should fail %d: rc=%d\n",d,rc);
+        if (rc==MMSYSERR_NOERROR) {
+            trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
+                  format.nSamplesPerSec, format.wBitsPerSample,
+                  format.nChannels,
+                  oformat.nSamplesPerSec, oformat.wBitsPerSample,
+                  oformat.nChannels);
+            waveOutClose(wout);
+        }
+
+        trace("Testing invalid format: 2 MHz sample rate\n");
+        format.wFormatTag=WAVE_FORMAT_PCM;
+        format.nChannels=2;
+        format.wBitsPerSample=16;
+        format.nSamplesPerSec=2000000;
+        format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
+        format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+        format.cbSize=0;
+        oformat=format;
+        rc=waveOutOpen(&wout,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+           "waveOutOpen: opening the device at 2 MHz sample rate should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
@@ -525,12 +546,12 @@ static void wave_in_tests()
             }
         }
 
-        /* Try an invalid format to test error handling */
-        trace("Testing invalid format\n");
+        /* Try invalid formats to test error handling */
+        trace("Testing invalid format: 11 bits per sample\n");
         format.wFormatTag=WAVE_FORMAT_PCM;
         format.nChannels=2;
         format.wBitsPerSample=11;
-        format.nSamplesPerSec=8000;
+        format.nSamplesPerSec=22050;
         format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
@@ -538,6 +559,27 @@ static void wave_in_tests()
         rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
         ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
            "waveInOpen: opening the device in 11 bit mode should fail %d: rc=%d\n",d,rc);
+        if (rc==MMSYSERR_NOERROR) {
+            trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
+                  format.nSamplesPerSec, format.wBitsPerSample,
+                  format.nChannels,
+                  oformat.nSamplesPerSec, oformat.wBitsPerSample,
+                  oformat.nChannels);
+            waveInClose(win);
+        }
+
+        trace("Testing invalid format: 2 MHz sample rate\n");
+        format.wFormatTag=WAVE_FORMAT_PCM;
+        format.nChannels=2;
+        format.wBitsPerSample=16;
+        format.nSamplesPerSec=2000000;
+        format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
+        format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+        format.cbSize=0;
+        oformat=format;
+        rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG,
+           "waveInOpen: opening the device with 2 MHz sample rate should fail %d: rc=%d\n",d,rc);
         if (rc==MMSYSERR_NOERROR) {
             trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
                   format.nSamplesPerSec, format.wBitsPerSample,
