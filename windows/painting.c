@@ -341,6 +341,8 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~WIN_INTERNAL_PAINT;
 
+    WIN_ReleaseWndPtr(wndPtr);
+
     HideCaret( hwnd );
 
     TRACE("hrgnUpdate = %04x, \n", hrgnUpdate);
@@ -368,7 +370,6 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     if (!lps->hdc)
     {
         WARN("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
-        WIN_ReleaseWndPtr(wndPtr);
         return 0;
     }
 
@@ -388,6 +389,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     TRACE("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );
 
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;

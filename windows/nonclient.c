@@ -1393,27 +1393,40 @@ static void  NC_DrawCaption95(
  *
  * Paint the non-client area. clip is currently unused.
  */
-static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
+static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 {
     HDC hdc;
     RECT rect;
     BOOL active;
-    HWND hwnd = wndPtr->hwndSelf;
+    WND *wndPtr;
+    DWORD dwStyle, dwExStyle;
+    WORD flags;
+    RECT rectClient, rectWindow;
+    int has_menu;
 
-    if ( wndPtr->dwStyle & WS_MINIMIZE ||
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
+    has_menu = HAS_MENU(wndPtr);
+    dwStyle = wndPtr->dwStyle;
+    dwExStyle = wndPtr->dwExStyle;    
+    flags = wndPtr->flags;
+    rectClient = wndPtr->rectClient;
+    rectWindow = wndPtr->rectWindow;
+    WIN_ReleasePtr( wndPtr );
+
+    if ( dwStyle & WS_MINIMIZE ||
          !WIN_IsWindowDrawable( hwnd, 0 )) return; /* Nothing to do */
 
-    active  = wndPtr->flags & WIN_NCACTIVATED;
+    active  = flags & WIN_NCACTIVATED;
 
     TRACE("%04x %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx( hwnd, (clip > 1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
 			      ((clip > 1) ? (DCX_INTERSECTRGN | DCX_KEEPCLIPRGN): 0) ))) return;
 
-    if (ExcludeVisRect16( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
-		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
-		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
-		        wndPtr->rectClient.bottom-wndPtr->rectWindow.top )
+    if (ExcludeVisRect16( hdc, rectClient.left-rectWindow.left,
+		        rectClient.top-rectWindow.top,
+		        rectClient.right-rectWindow.left,
+		        rectClient.bottom-rectWindow.top )
 	== NULLREGION)
     {
 	ReleaseDC( hwnd, hdc );
@@ -1421,32 +1434,32 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
     }
 
     rect.top = rect.left = 0;
-    rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-    rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+    rect.right  = rectWindow.right - rectWindow.left;
+    rect.bottom = rectWindow.bottom - rectWindow.top;
 
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
-    if (HAS_ANYFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (HAS_ANYFRAME( dwStyle, dwExStyle ))
     {
         SelectObject( hdc, GetStockObject(NULL_BRUSH) );
         Rectangle( hdc, 0, 0, rect.right, rect.bottom );
         InflateRect( &rect, -1, -1 );
     }
 
-    if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (HAS_THICKFRAME( dwStyle, dwExStyle ))
         NC_DrawFrame(hdc, &rect, FALSE, active );
-    else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    else if (HAS_DLGFRAME( dwStyle, dwExStyle ))
         NC_DrawFrame( hdc, &rect, TRUE, active );
 
-    if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+    if ((dwStyle & WS_CAPTION) == WS_CAPTION)
     {
         RECT r = rect;
         r.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
         rect.top += GetSystemMetrics(SM_CYSIZE) + GetSystemMetrics(SM_CYBORDER);
-        NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
+        NC_DrawCaption( hdc, &r, hwnd, dwStyle, active );
     }
 
-    if (HAS_MENU(wndPtr))
+    if (has_menu)
     {
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);  /* default height */
@@ -1455,14 +1468,14 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 
       /* Draw the scroll-bars */
 
-    if (wndPtr->dwStyle & WS_VSCROLL)
+    if (dwStyle & WS_VSCROLL)
         SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
-    if (wndPtr->dwStyle & WS_HSCROLL)
+    if (dwStyle & WS_HSCROLL)
         SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
 
       /* Draw the "size-box" */
 
-    if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
+    if ((dwStyle & WS_VSCROLL) && (dwStyle & WS_HSCROLL))
     {
         RECT r = rect;
         r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
@@ -1481,7 +1494,7 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 /******************************************************************************
  *
  *   void  NC_DoNCPaint95(
- *      WND  *wndPtr,
+ *      HWND  hwnd,
  *      HRGN  clip,
  *      BOOL  suppress_menupaint )
  *
@@ -1503,19 +1516,32 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
  *****************************************************************************/
 
 static void  NC_DoNCPaint95(
-    WND  *wndPtr,
+    HWND  hwnd,
     HRGN  clip,
     BOOL  suppress_menupaint )
 {
     HDC hdc;
     RECT rfuzz, rect, rectClip;
     BOOL active;
-    HWND hwnd = wndPtr->hwndSelf;
+    WND *wndPtr;
+    DWORD dwStyle, dwExStyle;
+    WORD flags;
+    RECT rectClient, rectWindow;
+    int has_menu;
 
-    if ( wndPtr->dwStyle & WS_MINIMIZE ||
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
+    has_menu = HAS_MENU(wndPtr);
+    dwStyle = wndPtr->dwStyle;
+    dwExStyle = wndPtr->dwExStyle;    
+    flags = wndPtr->flags;
+    rectClient = wndPtr->rectClient;
+    rectWindow = wndPtr->rectWindow;
+    WIN_ReleasePtr( wndPtr );
+
+    if ( dwStyle & WS_MINIMIZE ||
          !WIN_IsWindowDrawable( hwnd, 0 )) return; /* Nothing to do */
 
-    active  = wndPtr->flags & WIN_NCACTIVATED;
+    active  = flags & WIN_NCACTIVATED;
 
     TRACE("%04x %d\n", hwnd, active );
 
@@ -1530,10 +1556,10 @@ static void  NC_DoNCPaint95(
 			      ((clip > 1) ?(DCX_INTERSECTRGN | DCX_KEEPCLIPRGN) : 0) ))) return;
 
 
-    if (ExcludeVisRect16( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
-		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
-		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
-		        wndPtr->rectClient.bottom-wndPtr->rectWindow.top )
+    if (ExcludeVisRect16( hdc, rectClient.left-rectWindow.left,
+		        rectClient.top-rectWindow.top,
+		        rectClient.right-rectWindow.left,
+		        rectClient.bottom-rectWindow.top )
 	== NULLREGION)
     {
 	ReleaseDC( hwnd, hdc );
@@ -1541,8 +1567,8 @@ static void  NC_DoNCPaint95(
     }
 
     rect.top = rect.left = 0;
-    rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-    rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+    rect.right  = rectWindow.right - rectWindow.left;
+    rect.bottom = rectWindow.bottom - rectWindow.top;
 
     if( clip > 1 )
 	GetRgnBox( clip, &rectClip );
@@ -1554,19 +1580,19 @@ static void  NC_DoNCPaint95(
 
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
-    if (HAS_STATICOUTERFRAME(wndPtr->dwStyle, wndPtr->dwExStyle)) {
+    if (HAS_STATICOUTERFRAME(dwStyle, dwExStyle)) {
         DrawEdge (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
     }
-    else if (HAS_BIGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle)) {
+    else if (HAS_BIGFRAME( dwStyle, dwExStyle)) {
         DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
     }
 
-    NC_DrawFrame95(hdc, &rect, active, wndPtr->dwStyle, wndPtr->dwExStyle );
+    NC_DrawFrame95(hdc, &rect, active, dwStyle, dwExStyle );
 
-    if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+    if ((dwStyle & WS_CAPTION) == WS_CAPTION)
     {
         RECT  r = rect;
-        if (wndPtr->dwExStyle & WS_EX_TOOLWINDOW) {
+        if (dwExStyle & WS_EX_TOOLWINDOW) {
             r.bottom = rect.top + GetSystemMetrics(SM_CYSMCAPTION);
             rect.top += GetSystemMetrics(SM_CYSMCAPTION);
         }
@@ -1575,11 +1601,11 @@ static void  NC_DoNCPaint95(
             rect.top += GetSystemMetrics(SM_CYCAPTION);
         }
         if( !clip || IntersectRect( &rfuzz, &r, &rectClip ) )
-            NC_DrawCaption95 (hdc, &r, hwnd, wndPtr->dwStyle,
-                              wndPtr->dwExStyle, active);
+            NC_DrawCaption95 (hdc, &r, hwnd, dwStyle,
+                              dwExStyle, active);
     }
 
-    if (HAS_MENU(wndPtr))
+    if (has_menu)
     {
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);
@@ -1593,18 +1619,18 @@ static void  NC_DoNCPaint95(
     TRACE("After MenuBar, rect is (%d, %d)-(%d, %d).\n",
           rect.left, rect.top, rect.right, rect.bottom );
 
-    if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
+    if (dwExStyle & WS_EX_CLIENTEDGE)
 	DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     /* Draw the scroll-bars */
 
-    if (wndPtr->dwStyle & WS_VSCROLL)
+    if (dwStyle & WS_VSCROLL)
         SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
-    if (wndPtr->dwStyle & WS_HSCROLL)
+    if (dwStyle & WS_HSCROLL)
         SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
 
     /* Draw the "size-box" */
-    if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
+    if ((dwStyle & WS_VSCROLL) && (dwStyle & WS_HSCROLL))
     {
         RECT r = rect;
         r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
@@ -1625,18 +1651,17 @@ static void  NC_DoNCPaint95(
  */
 LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
-    WND* wndPtr = WIN_FindWndPtr( hwnd );
+    DWORD dwStyle = GetWindowLongW( hwnd, GWL_STYLE );
 
-    if( wndPtr && wndPtr->dwStyle & WS_VISIBLE )
+    if( dwStyle & WS_VISIBLE )
     {
-	if( wndPtr->dwStyle & WS_MINIMIZE )
+	if( dwStyle & WS_MINIMIZE )
 	    WINPOS_RedrawIconTitle( hwnd );
 	else if (TWEAK_WineLook == WIN31_LOOK)
-	    NC_DoNCPaint( wndPtr, clip, FALSE );
+	    NC_DoNCPaint( hwnd, clip, FALSE );
 	else
-	    NC_DoNCPaint95( wndPtr, clip, FALSE );
+	    NC_DoNCPaint95( hwnd, clip, FALSE );
     }
-    WIN_ReleaseWndPtr(wndPtr);
     return 0;
 }
 
@@ -1659,13 +1684,13 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
     {
 	if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
 	else wndPtr->flags &= ~WIN_NCACTIVATED;
+        WIN_ReleaseWndPtr(wndPtr);
 
 	if (IsIconic(hwnd)) WINPOS_RedrawIconTitle( hwnd );
 	else if (TWEAK_WineLook == WIN31_LOOK)
-	    NC_DoNCPaint( wndPtr, (HRGN)1, FALSE );
+	    NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
 	else
-	    NC_DoNCPaint95( wndPtr, (HRGN)1, FALSE );
-        WIN_ReleaseWndPtr(wndPtr);
+	    NC_DoNCPaint95( hwnd, (HRGN)1, FALSE );
     }
     return TRUE;
 }
