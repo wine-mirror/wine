@@ -225,7 +225,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
     *retlen = len;
 
     if (tokeninfolength < len)
-        return STATUS_INFO_LENGTH_MISMATCH;
+        return STATUS_BUFFER_TOO_SMALL;
 
     switch (tokeninfoclass)
     {
