@@ -77,8 +77,8 @@
 @ stub ??1streambuf@@UAE@XZ #
 @ stub ??1strstream@@UAE@XZ #
 @ stub ??1strstreambuf@@UAE@XZ #
-@ forward ??2@YAPAXI@Z msvcrt.??2@YAPAXI@Z
-@ forward ??3@YAXPAX@Z msvcrt.??3@YAXPAX@Z
+@ cdecl ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
+@ cdecl ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
 @ stub ??4Iostream_init@@QAEAAV0@ABV0@@Z #
 @ stub ??4filebuf@@QAEAAV0@ABV0@@Z #
 @ stub ??4fstream@@QAEAAV0@AAV0@@Z #
@@ -224,11 +224,11 @@
 @ stub ??_Gstreambuf@@UAEPAXI@Z #
 @ stub ??_Gstrstream@@UAEPAXI@Z #
 @ stub ??_Gstrstreambuf@@UAEPAXI@Z #
-@ forward ?_query_new_handler@@YAP6AHI@ZXZ msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
-@ forward ?_query_new_mode@@YAHXZ  msvcrt.?_query_new_mode@@YAHXZ
-@ forward ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
-@ forward ?_set_new_mode@@YAHH@Z msvcrt.?_set_new_mode@@YAHH@Z
-@ forward ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
+@ cdecl ?_query_new_handler@@YAP6AHI@ZXZ() msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
+@ cdecl ?_query_new_mode@@YAHXZ()  msvcrt.?_query_new_mode@@YAHXZ
+@ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
+@ cdecl ?_set_new_mode@@YAHH@Z(long) msvcrt.?_set_new_mode@@YAHH@Z
+@ cdecl ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
 @ stub ?adjustfield@ios@@2JB #
 @ stub ?allocate@streambuf@@IAEHXZ #
 @ stub ?attach@filebuf@@QAEPAV1@H@Z #
@@ -363,8 +363,8 @@
 @ stub ?seekp@ostream@@QAEAAV1@J@Z #
 @ stub ?seekp@ostream@@QAEAAV1@JW4seek_dir@ios@@@Z #
 @ stub ?seekpos@streambuf@@UAEJJH@Z #
-@ forward ?set_terminate@@YAP6AXXZP6AXXZ@Z msvcrt.?set_terminate@@YAP6AXXZP6AXXZ@Z
-@ forward ?set_unexpected@@YAP6AXXZP6AXXZ@Z msvcrt.?set_unexpected@@YAP6AXXZP6AXXZ@Z
+@ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_terminate@@YAP6AXXZP6AXXZ@Z
+@ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_unexpected@@YAP6AXXZP6AXXZ@Z
 @ stub ?setb@streambuf@@IAEXPAD0H@Z #
 @ stub ?setbuf@filebuf@@UAEPAVstreambuf@@PADH@Z #
 @ stub ?setbuf@fstream@@QAEPAVstreambuf@@PADH@Z #
@@ -407,7 +407,7 @@
 @ stub ?sync_with_stdio@ios@@SAXXZ #
 @ stub ?tellg@istream@@QAEJXZ #
 @ stub ?tellp@ostream@@QAEJXZ #
-@ forward ?terminate@@YAXXZ msvcrt.?terminate@@YAXXZ
+@ cdecl ?terminate@@YAXXZ() msvcrt.?terminate@@YAXXZ
 @ stub ?text@filebuf@@2HB #
 @ stub ?tie@ios@@QAEPAVostream@@PAV2@@Z #
 @ stub ?tie@ios@@QBEPAVostream@@XZ #
@@ -416,7 +416,7 @@
 @ stub ?underflow@filebuf@@UAEHXZ #
 @ stub ?underflow@stdiobuf@@UAEHXZ #
 @ stub ?underflow@strstreambuf@@UAEHXZ #
-@ forward ?unexpected@@YAXXZ msvcrt.?unexpected@@YAXXZ
+@ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
 @ stub ?unlock@ios@@QAAXXZ #
 @ stub ?unlock@streambuf@@QAEXXZ #
 @ stub ?unlockbuf@ios@@QAAXXZ #
@@ -437,697 +437,697 @@
 @ stub ?xsgetn@streambuf@@UAEHPADH@Z #
 @ stub ?xsputn@streambuf@@UAEHPBDH@Z #
 @ stub $I10_OUTPUT #
-@ forward _CIacos msvcrt._CIacos
-@ forward _CIasin msvcrt._CIasin
-@ forward _CIatan msvcrt._CIatan
-@ forward _CIatan2 msvcrt._CIatan2
-@ forward _CIcos msvcrt._CIcos
-@ forward _CIcosh msvcrt._CIcosh
-@ forward _CIexp msvcrt._CIexp
-@ forward _CIfmod msvcrt._CIfmod
-@ forward _CIlog msvcrt._CIlog
-@ forward _CIlog10 msvcrt._CIlog10
-@ forward _CIpow msvcrt._CIpow
-@ forward _CIsin msvcrt._CIsin
-@ forward _CIsinh msvcrt._CIsinh
-@ forward _CIsqrt msvcrt._CIsqrt
-@ forward _CItan msvcrt._CItan
-@ forward _CItanh msvcrt._CItanh
-@ forward _CxxThrowException msvcrt._CxxThrowException
-@ forward _HUGE msvcrt._HUGE
-@ forward _XcptFilter msvcrt._XcptFilter
-@ forward __CxxFrameHandler msvcrt.__CxxFrameHandler
-@ forward __CxxLongjmpUnwind msvcrt.__CxxLongjmpUnwind
-@ forward __STRINGTOLD msvcrt.__STRINGTOLD
-@ forward __argc msvcrt.__argc
-@ forward __argv msvcrt.__argv
-@ forward __dllonexit msvcrt.__dllonexit
-@ forward __doserrno msvcrt.__doserrno
-@ forward __fpecode msvcrt.__fpecode
+@ cdecl _CIacos() msvcrt._CIacos
+@ cdecl _CIasin() msvcrt._CIasin
+@ cdecl _CIatan() msvcrt._CIatan
+@ cdecl _CIatan2() msvcrt._CIatan2
+@ cdecl _CIcos() msvcrt._CIcos
+@ cdecl _CIcosh() msvcrt._CIcosh
+@ cdecl _CIexp() msvcrt._CIexp
+@ cdecl _CIfmod() msvcrt._CIfmod
+@ cdecl _CIlog() msvcrt._CIlog
+@ cdecl _CIlog10() msvcrt._CIlog10
+@ cdecl _CIpow() msvcrt._CIpow
+@ cdecl _CIsin() msvcrt._CIsin
+@ cdecl _CIsinh() msvcrt._CIsinh
+@ cdecl _CIsqrt() msvcrt._CIsqrt
+@ cdecl _CItan() msvcrt._CItan
+@ cdecl _CItanh() msvcrt._CItanh
+@ cdecl _CxxThrowException(long long) msvcrt._CxxThrowException
+@ extern _HUGE msvcrt._HUGE
+@ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
+@ cdecl -i386 __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
+@ stdcall __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
+@ cdecl __STRINGTOLD(ptr ptr str long) msvcrt.__STRINGTOLD
+@ extern __argc msvcrt.__argc
+@ extern __argv msvcrt.__argv
+@ cdecl __dllonexit(ptr ptr ptr) msvcrt.__dllonexit
+@ cdecl __doserrno() msvcrt.__doserrno
+@ cdecl __fpecode() msvcrt.__fpecode
 @ cdecl __getmainargs(ptr ptr ptr long long) MSVCRT20__getmainargs
-@ forward __initenv msvcrt.__initenv
-@ forward __isascii msvcrt.__isascii
-@ forward __iscsym msvcrt.__iscsym
-@ forward __iscsymf msvcrt.__iscsymf
-@ forward __lconv_init msvcrt.__lconv_init
-@ forward __mb_cur_max msvcrt.__mb_cur_max
-@ forward __p___argc msvcrt.__p___argc
-@ forward __p___argv msvcrt.__p___argv
-@ forward __p___initenv msvcrt.__p___initenv
-@ forward __p___mb_cur_max msvcrt.__p___mb_cur_max
-@ forward __p___wargv msvcrt.__p___wargv
-@ forward __p___winitenv msvcrt.__p___winitenv
-@ forward __p__acmdln msvcrt.__p__acmdln
-@ forward __p__amblksiz msvcrt.__p__amblksiz
-@ forward __p__commode msvcrt.__p__commode
-@ forward __p__daylight msvcrt.__p__daylight
-@ forward __p__environ msvcrt.__p__environ
-@ forward __p__fmode msvcrt.__p__fmode
-@ forward __p__iob msvcrt.__p__iob
-@ forward __p__mbctype msvcrt.__p__mbctype
-@ forward __p__osver msvcrt.__p__osver
-@ forward __p__pctype msvcrt.__p__pctype
-@ forward __p__pgmptr msvcrt.__p__pgmptr
-@ forward __p__pwctype msvcrt.__p__pwctype
-@ forward __p__timezone msvcrt.__p__timezone
-@ forward __p__tzname msvcrt.__p__tzname
-@ forward __p__wcmdln msvcrt.__p__wcmdln
-@ forward __p__wenviron msvcrt.__p__wenviron
-@ forward __p__winmajor msvcrt.__p__winmajor
-@ forward __p__winminor msvcrt.__p__winminor
-@ forward __p__winver msvcrt.__p__winver
-@ forward __p__wpgmptr msvcrt.__p__wpgmptr
-@ forward __pxcptinfoptrs msvcrt.__pxcptinfoptrs
-@ forward __threadhandle msvcrt.__threadhandle
-@ forward __threadid msvcrt.__threadid
-@ forward __toascii msvcrt.__toascii
-@ forward __wargv msvcrt.__wargv
+@ extern __initenv msvcrt.__initenv
+@ cdecl __isascii(long) msvcrt.__isascii
+@ cdecl __iscsym(long) msvcrt.__iscsym
+@ cdecl __iscsymf(long) msvcrt.__iscsymf
+@ cdecl __lconv_init() msvcrt.__lconv_init
+@ extern __mb_cur_max msvcrt.__mb_cur_max
+@ cdecl __p___argc() msvcrt.__p___argc
+@ cdecl __p___argv() msvcrt.__p___argv
+@ cdecl __p___initenv() msvcrt.__p___initenv
+@ cdecl __p___mb_cur_max() msvcrt.__p___mb_cur_max
+@ cdecl __p___wargv() msvcrt.__p___wargv
+@ cdecl __p___winitenv() msvcrt.__p___winitenv
+@ cdecl __p__acmdln() msvcrt.__p__acmdln
+@ cdecl __p__amblksiz() msvcrt.__p__amblksiz
+@ cdecl __p__commode() msvcrt.__p__commode
+@ cdecl __p__daylight() msvcrt.__p__daylight
+@ cdecl __p__environ() msvcrt.__p__environ
+@ cdecl __p__fmode() msvcrt.__p__fmode
+@ cdecl __p__iob() msvcrt.__p__iob
+@ cdecl __p__mbctype() msvcrt.__p__mbctype
+@ cdecl __p__osver() msvcrt.__p__osver
+@ cdecl __p__pctype() msvcrt.__p__pctype
+@ cdecl __p__pgmptr() msvcrt.__p__pgmptr
+@ cdecl __p__pwctype() msvcrt.__p__pwctype
+@ cdecl __p__timezone() msvcrt.__p__timezone
+@ cdecl __p__tzname() msvcrt.__p__tzname
+@ cdecl __p__wcmdln() msvcrt.__p__wcmdln
+@ cdecl __p__wenviron() msvcrt.__p__wenviron
+@ cdecl __p__winmajor() msvcrt.__p__winmajor
+@ cdecl __p__winminor() msvcrt.__p__winminor
+@ cdecl __p__winver() msvcrt.__p__winver
+@ cdecl __p__wpgmptr() msvcrt.__p__wpgmptr
+@ cdecl __pxcptinfoptrs() msvcrt.__pxcptinfoptrs
+@ cdecl __threadhandle() msvcrt.__threadhandle
+@ cdecl __threadid() msvcrt.__threadid
+@ cdecl __toascii(long) msvcrt.__toascii
+@ extern __wargv msvcrt.__wargv
 @ cdecl __wgetmainargs(ptr ptr ptr long long) MSVCRT20__wgetmainargs
-@ forward __winitenv msvcrt.__winitenv
-@ forward _abnormal_termination msvcrt._abnormal_termination
-@ forward _access msvcrt._access
-@ forward _acmdln msvcrt._acmdln
-@ forward _adj_fdiv_m16i msvcrt._adj_fdiv_m16i
-@ forward _adj_fdiv_m32 msvcrt._adj_fdiv_m32
-@ forward _adj_fdiv_m32i msvcrt._adj_fdiv_m32i
-@ forward _adj_fdiv_m64 msvcrt._adj_fdiv_m64
-@ forward _adj_fdiv_r msvcrt._adj_fdiv_r
-@ forward _adj_fdivr_m16i msvcrt._adj_fdivr_m16i
-@ forward _adj_fdivr_m32 msvcrt._adj_fdivr_m32
-@ forward _adj_fdivr_m32i msvcrt._adj_fdivr_m32i
-@ forward _adj_fdivr_m64 msvcrt._adj_fdivr_m64
-@ forward _adj_fpatan msvcrt._adj_fpatan
-@ forward _adj_fprem msvcrt._adj_fprem
-@ forward _adj_fprem1 msvcrt._adj_fprem1
-@ forward _adj_fptan msvcrt._adj_fptan
-@ forward _adjust_fdiv msvcrt._adjust_fdiv
-@ forward _aexit_rtn msvcrt._aexit_rtn
-@ forward _amsg_exit msvcrt._amsg_exit
-@ forward _assert msvcrt._assert
-@ forward _atodbl msvcrt._atodbl
-@ forward _atoi64 msvcrt._atoi64
-@ forward _atoldbl msvcrt._atoldbl
-@ forward _beep msvcrt._beep
-@ forward _beginthread msvcrt._beginthread
-@ forward _beginthreadex msvcrt._beginthreadex
-@ forward _c_exit msvcrt._c_exit
-@ forward _cabs msvcrt._cabs
-@ forward _cexit msvcrt._cexit
-@ forward _cgets msvcrt._cgets
-@ forward _chdir msvcrt._chdir
-@ forward _chdrive msvcrt._chdrive
-@ forward _chgsign msvcrt._chgsign
-@ forward _chmod msvcrt._chmod
-@ forward _chsize msvcrt._chsize
-@ forward _clearfp msvcrt._clearfp
-@ forward _close msvcrt._close
-@ forward _commit msvcrt._commit
-@ forward _commode msvcrt._commode
-@ forward _control87 msvcrt._control87
-@ forward _controlfp msvcrt._controlfp
-@ forward _copysign msvcrt._copysign
-@ forward _cprintf msvcrt._cprintf
-@ forward _cputs msvcrt._cputs
-@ forward _creat msvcrt._creat
-@ forward _cscanf msvcrt._cscanf
-@ forward _ctype msvcrt._ctype
-@ forward _cwait msvcrt._cwait
-@ forward _daylight msvcrt._daylight
-@ forward _dup msvcrt._dup
-@ forward _dup2 msvcrt._dup2
-@ forward _ecvt msvcrt._ecvt
-@ forward _endthread msvcrt._endthread
-@ forward _endthreadex msvcrt._endthreadex
-@ forward _environ msvcrt._environ
-@ forward _eof msvcrt._eof
-@ forward _errno msvcrt._errno
-@ forward _except_handler2 msvcrt._except_handler2
-@ forward _except_handler3 msvcrt._except_handler3
-@ forward _execl msvcrt._execl
-@ forward _execle msvcrt._execle
-@ forward _execlp msvcrt._execlp
-@ forward _execlpe msvcrt._execlpe
-@ forward _execv msvcrt._execv
-@ forward _execve msvcrt._execve
-@ forward _execvp msvcrt._execvp
-@ forward _execvpe msvcrt._execvpe
-@ forward _exit msvcrt._exit
-@ forward _expand msvcrt._expand
-@ forward _fcloseall msvcrt._fcloseall
-@ forward _fcvt msvcrt._fcvt
-@ forward _fdopen msvcrt._fdopen
-@ forward _fgetchar msvcrt._fgetchar
-@ forward _fgetwchar msvcrt._fgetwchar
-@ forward _filbuf msvcrt._filbuf
-@ forward _fileinfo msvcrt._fileinfo
-@ forward _filelength msvcrt._filelength
-@ forward _fileno msvcrt._fileno
-@ forward _findclose msvcrt._findclose
-@ forward _findfirst msvcrt._findfirst
-@ forward _findnext msvcrt._findnext
-@ forward _finite msvcrt._finite
-@ forward _flsbuf msvcrt._flsbuf
-@ forward _flushall msvcrt._flushall
-@ forward _fmode msvcrt._fmode
-@ forward _fpclass msvcrt._fpclass
-@ forward _fpieee_flt msvcrt._fpieee_flt
-@ forward _fpreset msvcrt._fpreset
-@ forward _fputchar msvcrt._fputchar
-@ forward _fputwchar msvcrt._fputwchar
-@ forward _fsopen msvcrt._fsopen
-@ forward _fstat msvcrt._fstat
-@ forward _ftime msvcrt._ftime
-@ forward _ftol msvcrt._ftol
-@ forward _fullpath msvcrt._fullpath
-@ forward _futime msvcrt._futime
-@ forward _gcvt msvcrt._gcvt
-@ forward _get_osfhandle msvcrt._get_osfhandle
-@ forward _getch msvcrt._getch
-@ forward _getche msvcrt._getche
-@ forward _getcwd msvcrt._getcwd
-@ forward _getdcwd msvcrt._getdcwd
-@ forward _getdiskfree msvcrt._getdiskfree
-@ forward _getdllprocaddr msvcrt._getdllprocaddr
-@ forward _getdrive msvcrt._getdrive
-@ forward _getdrives msvcrt._getdrives
-@ forward _getmbcp msvcrt._getmbcp
-@ forward _getpid msvcrt._getpid
-@ forward _getsystime msvcrt._getsystime
-@ forward _getw msvcrt._getw
-@ forward _getws msvcrt._getws
-@ forward _global_unwind2 msvcrt._global_unwind2
-@ forward _heapadd msvcrt._heapadd
-@ forward _heapchk msvcrt._heapchk
-@ forward _heapmin msvcrt._heapmin
-@ forward _heapset msvcrt._heapset
-@ forward _heapused msvcrt._heapused
-@ forward _heapwalk msvcrt._heapwalk
-@ forward _hypot msvcrt._hypot
-@ forward _i64toa msvcrt._i64toa
-@ forward _i64tow msvcrt._i64tow
-@ forward _initterm msvcrt._initterm
-@ forward _iob msvcrt._iob
-@ forward _isatty msvcrt._isatty
-@ forward _isctype msvcrt._isctype
-@ forward _ismbbalnum msvcrt._ismbbalnum
-@ forward _ismbbalpha msvcrt._ismbbalpha
-@ forward _ismbbgraph msvcrt._ismbbgraph
-@ forward _ismbbkalnum msvcrt._ismbbkalnum
-@ forward _ismbbkana msvcrt._ismbbkana
-@ forward _ismbbkprint msvcrt._ismbbkprint
-@ forward _ismbbkpunct msvcrt._ismbbkpunct
-@ forward _ismbblead msvcrt._ismbblead
-@ forward _ismbbprint msvcrt._ismbbprint
-@ forward _ismbbpunct msvcrt._ismbbpunct
-@ forward _ismbbtrail msvcrt._ismbbtrail
-@ forward _ismbcalnum msvcrt._ismbcalnum
-@ forward _ismbcalpha msvcrt._ismbcalpha
-@ forward _ismbcdigit msvcrt._ismbcdigit
-@ forward _ismbcgraph msvcrt._ismbcgraph
-@ forward _ismbchira msvcrt._ismbchira
-@ forward _ismbckata msvcrt._ismbckata
-@ forward _ismbcl0 msvcrt._ismbcl0
-@ forward _ismbcl1 msvcrt._ismbcl1
-@ forward _ismbcl2 msvcrt._ismbcl2
-@ forward _ismbclegal msvcrt._ismbclegal
-@ forward _ismbclower msvcrt._ismbclower
-@ forward _ismbcprint msvcrt._ismbcprint
-@ forward _ismbcpunct msvcrt._ismbcpunct
-@ forward _ismbcspace msvcrt._ismbcspace
-@ forward _ismbcsymbol msvcrt._ismbcsymbol
-@ forward _ismbcupper msvcrt._ismbcupper
-@ forward _ismbslead msvcrt._ismbslead
-@ forward _ismbstrail msvcrt._ismbstrail
-@ forward _isnan msvcrt._isnan
-@ forward _itoa msvcrt._itoa
-@ forward _itow msvcrt._itow
-@ forward _j0 msvcrt._j0
-@ forward _j1 msvcrt._j1
-@ forward _jn msvcrt._jn
-@ forward _kbhit msvcrt._kbhit
-@ forward _lfind msvcrt._lfind
-@ forward _loaddll msvcrt._loaddll
-@ forward _local_unwind2 msvcrt._local_unwind2
-@ forward _locking msvcrt._locking
-@ forward _logb msvcrt._logb
-@ forward _longjmpex msvcrt._longjmpex
-@ forward _lrotl msvcrt._lrotl
-@ forward _lrotr msvcrt._lrotr
-@ forward _lsearch msvcrt._lsearch
-@ forward _lseek msvcrt._lseek
-@ forward _ltoa msvcrt._ltoa
-@ forward _ltow msvcrt._ltow
-@ forward _makepath msvcrt._makepath
-@ forward _matherr msvcrt._matherr
-@ forward _mbbtombc msvcrt._mbbtombc
-@ forward _mbbtype msvcrt._mbbtype
-@ forward _mbccpy msvcrt._mbccpy
-@ forward _mbcjistojms msvcrt._mbcjistojms
-@ forward _mbcjmstojis msvcrt._mbcjmstojis
-@ forward _mbclen msvcrt._mbclen
-@ forward _mbctohira msvcrt._mbctohira
-@ forward _mbctokata msvcrt._mbctokata
-@ forward _mbctolower msvcrt._mbctolower
-@ forward _mbctombb msvcrt._mbctombb
-@ forward _mbctoupper msvcrt._mbctoupper
-@ forward _mbctype msvcrt._mbctype
-@ forward _mbsbtype msvcrt._mbsbtype
-@ forward _mbscat msvcrt._mbscat
-@ forward _mbschr msvcrt._mbschr
-@ forward _mbscmp msvcrt._mbscmp
-@ forward _mbscoll msvcrt._mbscoll
-@ forward _mbscpy msvcrt._mbscpy
-@ forward _mbscspn msvcrt._mbscspn
-@ forward _mbsdec msvcrt._mbsdec
-@ forward _mbsdup msvcrt._mbsdup
-@ forward _mbsicmp msvcrt._mbsicmp
-@ forward _mbsicoll msvcrt._mbsicoll
-@ forward _mbsinc msvcrt._mbsinc
-@ forward _mbslen msvcrt._mbslen
-@ forward _mbslwr msvcrt._mbslwr
-@ forward _mbsnbcat msvcrt._mbsnbcat
-@ forward _mbsnbcmp msvcrt._mbsnbcmp
-@ forward _mbsnbcnt msvcrt._mbsnbcnt
-@ forward _mbsnbcoll msvcrt._mbsnbcoll
-@ forward _mbsnbcpy msvcrt._mbsnbcpy
-@ forward _mbsnbicmp msvcrt._mbsnbicmp
-@ forward _mbsnbicoll msvcrt._mbsnbicoll
-@ forward _mbsnbset msvcrt._mbsnbset
-@ forward _mbsncat msvcrt._mbsncat
-@ forward _mbsnccnt msvcrt._mbsnccnt
-@ forward _mbsncmp msvcrt._mbsncmp
-@ forward _mbsncoll msvcrt._mbsncoll
-@ forward _mbsncpy msvcrt._mbsncpy
-@ forward _mbsnextc msvcrt._mbsnextc
-@ forward _mbsnicmp msvcrt._mbsnicmp
-@ forward _mbsnicoll msvcrt._mbsnicoll
-@ forward _mbsninc msvcrt._mbsninc
-@ forward _mbsnset msvcrt._mbsnset
-@ forward _mbspbrk msvcrt._mbspbrk
-@ forward _mbsrchr msvcrt._mbsrchr
-@ forward _mbsrev msvcrt._mbsrev
-@ forward _mbsset msvcrt._mbsset
-@ forward _mbsspn msvcrt._mbsspn
-@ forward _mbsspnp msvcrt._mbsspnp
-@ forward _mbsstr msvcrt._mbsstr
-@ forward _mbstok msvcrt._mbstok
-@ forward _mbstrlen msvcrt._mbstrlen
-@ forward _mbsupr msvcrt._mbsupr
-@ forward _memccpy msvcrt._memccpy
-@ forward _memicmp msvcrt._memicmp
-@ forward _mkdir msvcrt._mkdir
-@ forward _mktemp msvcrt._mktemp
-@ forward _msize msvcrt._msize
+@ extern __winitenv msvcrt.__winitenv
+@ cdecl _abnormal_termination() msvcrt._abnormal_termination
+@ cdecl _access(str long) msvcrt._access
+@ extern _acmdln msvcrt._acmdln
+@ cdecl _adj_fdiv_m16i() msvcrt._adj_fdiv_m16i
+@ cdecl _adj_fdiv_m32() msvcrt._adj_fdiv_m32
+@ cdecl _adj_fdiv_m32i() msvcrt._adj_fdiv_m32i
+@ cdecl _adj_fdiv_m64() msvcrt._adj_fdiv_m64
+@ cdecl _adj_fdiv_r() msvcrt._adj_fdiv_r
+@ cdecl _adj_fdivr_m16i() msvcrt._adj_fdivr_m16i
+@ cdecl _adj_fdivr_m32() msvcrt._adj_fdivr_m32
+@ cdecl _adj_fdivr_m32i() msvcrt._adj_fdivr_m32i
+@ cdecl _adj_fdivr_m64() msvcrt._adj_fdivr_m64
+@ cdecl _adj_fpatan() msvcrt._adj_fpatan
+@ cdecl _adj_fprem() msvcrt._adj_fprem
+@ cdecl _adj_fprem1() msvcrt._adj_fprem1
+@ cdecl _adj_fptan() msvcrt._adj_fptan
+@ cdecl _adjust_fdiv() msvcrt._adjust_fdiv
+@ extern _aexit_rtn msvcrt._aexit_rtn
+@ cdecl _amsg_exit(long) msvcrt._amsg_exit
+@ cdecl _assert(str str long) msvcrt._assert
+@ cdecl _atodbl(ptr str) msvcrt._atodbl
+@ cdecl -ret64 _atoi64(str) msvcrt._atoi64
+@ cdecl _atoldbl(ptr str) msvcrt._atoldbl
+@ cdecl _beep(long long) msvcrt._beep
+@ cdecl _beginthread(ptr long ptr) msvcrt._beginthread
+@ cdecl _beginthreadex(ptr long ptr ptr long ptr) msvcrt._beginthreadex
+@ cdecl _c_exit() msvcrt._c_exit
+@ cdecl _cabs(long) msvcrt._cabs
+@ cdecl _cexit() msvcrt._cexit
+@ cdecl _cgets(str) msvcrt._cgets
+@ cdecl _chdir(str) msvcrt._chdir
+@ cdecl _chdrive(long) msvcrt._chdrive
+@ cdecl _chgsign( double ) msvcrt._chgsign
+@ cdecl _chmod(str long) msvcrt._chmod
+@ cdecl _chsize(long long) msvcrt._chsize
+@ cdecl _clearfp() msvcrt._clearfp
+@ cdecl _close(long) msvcrt._close
+@ cdecl _commit(long) msvcrt._commit
+@ extern _commode msvcrt._commode
+@ cdecl _control87(long long) msvcrt._control87
+@ cdecl _controlfp(long long) msvcrt._controlfp
+@ cdecl _copysign( double double ) msvcrt._copysign
+@ varargs _cprintf(str) msvcrt._cprintf
+@ cdecl _cputs(str) msvcrt._cputs
+@ cdecl _creat(str long) msvcrt._creat
+@ varargs _cscanf(str) msvcrt._cscanf
+@ extern _ctype msvcrt._ctype
+@ cdecl _cwait(ptr long long) msvcrt._cwait
+@ extern _daylight msvcrt._daylight
+@ cdecl _dup(long) msvcrt._dup
+@ cdecl _dup2(long long) msvcrt._dup2
+@ cdecl _ecvt( double long ptr ptr) msvcrt._ecvt
+@ cdecl _endthread() msvcrt._endthread
+@ cdecl _endthreadex(long) msvcrt._endthreadex
+@ extern _environ msvcrt._environ
+@ cdecl _eof(long) msvcrt._eof
+@ cdecl _errno() msvcrt._errno
+@ cdecl _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
+@ cdecl _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
+@ varargs _execl(str str) msvcrt._execl
+@ varargs _execle(str str) msvcrt._execle
+@ varargs _execlp(str str) msvcrt._execlp
+@ varargs _execlpe(str str) msvcrt._execlpe
+@ cdecl _execv(str str) msvcrt._execv
+@ cdecl _execve(str str str) msvcrt._execve
+@ cdecl _execvp(str str) msvcrt._execvp
+@ cdecl _execvpe(str str str) msvcrt._execvpe
+@ cdecl _exit(long) msvcrt._exit
+@ cdecl _expand(ptr long) msvcrt._expand
+@ cdecl _fcloseall() msvcrt._fcloseall
+@ cdecl _fcvt( double long ptr ptr) msvcrt._fcvt
+@ cdecl _fdopen(long str) msvcrt._fdopen
+@ cdecl _fgetchar() msvcrt._fgetchar
+@ cdecl _fgetwchar() msvcrt._fgetwchar
+@ cdecl _filbuf(ptr) msvcrt._filbuf
+@ extern _fileinfo msvcrt._fileinfo
+@ cdecl _filelength(long) msvcrt._filelength
+@ cdecl _fileno(ptr) msvcrt._fileno
+@ cdecl _findclose(long) msvcrt._findclose
+@ cdecl _findfirst(str ptr) msvcrt._findfirst
+@ cdecl _findnext(long ptr) msvcrt._findnext
+@ cdecl _finite( double ) msvcrt._finite
+@ cdecl _flsbuf(long ptr) msvcrt._flsbuf
+@ cdecl _flushall() msvcrt._flushall
+@ extern _fmode msvcrt._fmode
+@ cdecl _fpclass(double) msvcrt._fpclass
+@ cdecl _fpieee_flt(long ptr ptr) msvcrt._fpieee_flt
+@ cdecl _fpreset() msvcrt._fpreset
+@ cdecl _fputchar(long) msvcrt._fputchar
+@ cdecl _fputwchar(long) msvcrt._fputwchar
+@ cdecl _fsopen(str str long) msvcrt._fsopen
+@ cdecl _fstat(long ptr) msvcrt._fstat
+@ cdecl _ftime(ptr) msvcrt._ftime
+@ cdecl _ftol() msvcrt._ftol
+@ cdecl _fullpath(ptr str long) msvcrt._fullpath
+@ cdecl _futime(long ptr) msvcrt._futime
+@ cdecl _gcvt( double long str) msvcrt._gcvt
+@ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
+@ cdecl _getch() msvcrt._getch
+@ cdecl _getche() msvcrt._getche
+@ cdecl _getcwd(str long) msvcrt._getcwd
+@ cdecl _getdcwd(long str long) msvcrt._getdcwd
+@ cdecl _getdiskfree(long ptr) msvcrt._getdiskfree
+@ cdecl _getdllprocaddr(long str long) msvcrt._getdllprocaddr
+@ cdecl _getdrive() msvcrt._getdrive
+@ cdecl _getdrives() msvcrt._getdrives
+@ cdecl _getmbcp() msvcrt._getmbcp
+@ cdecl _getpid() msvcrt._getpid
+@ cdecl _getsystime(ptr) msvcrt._getsystime
+@ cdecl _getw(ptr) msvcrt._getw
+@ cdecl _getws(ptr) msvcrt._getws
+@ cdecl _global_unwind2(ptr) msvcrt._global_unwind2
+@ cdecl _heapadd(ptr long) msvcrt._heapadd
+@ cdecl _heapchk() msvcrt._heapchk
+@ cdecl _heapmin() msvcrt._heapmin
+@ cdecl _heapset(long) msvcrt._heapset
+@ cdecl _heapused(ptr ptr) msvcrt._heapused
+@ cdecl _heapwalk(ptr) msvcrt._heapwalk
+@ cdecl _hypot(double double) msvcrt._hypot
+@ cdecl _i64toa(long long ptr long) msvcrt._i64toa
+@ cdecl _i64tow(long long ptr long) msvcrt._i64tow
+@ cdecl _initterm(ptr ptr) msvcrt._initterm
+@ extern _iob msvcrt._iob
+@ cdecl _isatty(long) msvcrt._isatty
+@ cdecl _isctype(long long) msvcrt._isctype
+@ cdecl _ismbbalnum(long) msvcrt._ismbbalnum
+@ cdecl _ismbbalpha(long) msvcrt._ismbbalpha
+@ cdecl _ismbbgraph(long) msvcrt._ismbbgraph
+@ cdecl _ismbbkalnum(long) msvcrt._ismbbkalnum
+@ cdecl _ismbbkana(long) msvcrt._ismbbkana
+@ cdecl _ismbbkprint(long) msvcrt._ismbbkprint
+@ cdecl _ismbbkpunct(long) msvcrt._ismbbkpunct
+@ cdecl _ismbblead(long) msvcrt._ismbblead
+@ cdecl _ismbbprint(long) msvcrt._ismbbprint
+@ cdecl _ismbbpunct(long) msvcrt._ismbbpunct
+@ cdecl _ismbbtrail(long) msvcrt._ismbbtrail
+@ cdecl _ismbcalnum(long) msvcrt._ismbcalnum
+@ cdecl _ismbcalpha(long) msvcrt._ismbcalpha
+@ cdecl _ismbcdigit(long) msvcrt._ismbcdigit
+@ cdecl _ismbcgraph(long) msvcrt._ismbcgraph
+@ cdecl _ismbchira(long) msvcrt._ismbchira
+@ cdecl _ismbckata(long) msvcrt._ismbckata
+@ cdecl _ismbcl0(long) msvcrt._ismbcl0
+@ cdecl _ismbcl1(long) msvcrt._ismbcl1
+@ cdecl _ismbcl2(long) msvcrt._ismbcl2
+@ cdecl _ismbclegal(long) msvcrt._ismbclegal
+@ cdecl _ismbclower(long) msvcrt._ismbclower
+@ cdecl _ismbcprint(long) msvcrt._ismbcprint
+@ cdecl _ismbcpunct(long) msvcrt._ismbcpunct
+@ cdecl _ismbcspace(long) msvcrt._ismbcspace
+@ cdecl _ismbcsymbol(long) msvcrt._ismbcsymbol
+@ cdecl _ismbcupper(long) msvcrt._ismbcupper
+@ cdecl _ismbslead(ptr ptr) msvcrt._ismbslead
+@ cdecl _ismbstrail(ptr ptr) msvcrt._ismbstrail
+@ cdecl _isnan( double ) msvcrt._isnan
+@ cdecl _itoa(long ptr long) msvcrt._itoa
+@ cdecl _itow(long ptr long) msvcrt._itow
+@ cdecl _j0(double) msvcrt._j0
+@ cdecl _j1(double) msvcrt._j1
+@ cdecl _jn(long double) msvcrt._jn
+@ cdecl _kbhit() msvcrt._kbhit
+@ cdecl _lfind(ptr ptr ptr long ptr) msvcrt._lfind
+@ cdecl _loaddll(str) msvcrt._loaddll
+@ cdecl _local_unwind2(ptr long) msvcrt._local_unwind2
+@ cdecl _locking(long long long) msvcrt._locking
+@ cdecl _logb(double) msvcrt._logb
+@ cdecl _longjmpex(ptr long) msvcrt._longjmpex
+@ cdecl _lrotl(long long) msvcrt._lrotl
+@ cdecl _lrotr(long long) msvcrt._lrotr
+@ cdecl _lsearch(ptr ptr long long ptr) msvcrt._lsearch
+@ cdecl _lseek(long long long) msvcrt._lseek
+@ cdecl _ltoa(long ptr long) msvcrt._ltoa
+@ cdecl _ltow(long ptr long) msvcrt._ltow
+@ cdecl _makepath(str str str str str) msvcrt._makepath
+@ cdecl _matherr(ptr) msvcrt._matherr
+@ cdecl _mbbtombc(long) msvcrt._mbbtombc
+@ cdecl _mbbtype(long long) msvcrt._mbbtype
+@ cdecl _mbccpy(str str) msvcrt._mbccpy
+@ cdecl _mbcjistojms(long) msvcrt._mbcjistojms
+@ cdecl _mbcjmstojis(long) msvcrt._mbcjmstojis
+@ cdecl _mbclen(ptr) msvcrt._mbclen
+@ cdecl _mbctohira(long) msvcrt._mbctohira
+@ cdecl _mbctokata(long) msvcrt._mbctokata
+@ cdecl _mbctolower(long) msvcrt._mbctolower
+@ cdecl _mbctombb(long) msvcrt._mbctombb
+@ cdecl _mbctoupper(long) msvcrt._mbctoupper
+@ extern _mbctype msvcrt._mbctype
+@ cdecl _mbsbtype(str long) msvcrt._mbsbtype
+@ cdecl _mbscat(str str) msvcrt._mbscat
+@ cdecl _mbschr(str long) msvcrt._mbschr
+@ cdecl _mbscmp(str str) msvcrt._mbscmp
+@ cdecl _mbscoll(str str) msvcrt._mbscoll
+@ cdecl _mbscpy(ptr str) msvcrt._mbscpy
+@ cdecl _mbscspn(str str) msvcrt._mbscspn
+@ cdecl _mbsdec(ptr ptr) msvcrt._mbsdec
+@ cdecl _mbsdup(str) msvcrt._mbsdup
+@ cdecl _mbsicmp(str str) msvcrt._mbsicmp
+@ cdecl _mbsicoll(str str) msvcrt._mbsicoll
+@ cdecl _mbsinc(str) msvcrt._mbsinc
+@ cdecl _mbslen(str) msvcrt._mbslen
+@ cdecl _mbslwr(str) msvcrt._mbslwr
+@ cdecl _mbsnbcat(str str long) msvcrt._mbsnbcat
+@ cdecl _mbsnbcmp(str str long) msvcrt._mbsnbcmp
+@ cdecl _mbsnbcnt(ptr long) msvcrt._mbsnbcnt
+@ cdecl _mbsnbcoll(str str long) msvcrt._mbsnbcoll
+@ cdecl _mbsnbcpy(ptr str long) msvcrt._mbsnbcpy
+@ cdecl _mbsnbicmp(str str long) msvcrt._mbsnbicmp
+@ cdecl _mbsnbicoll(str str long) msvcrt._mbsnbicoll
+@ cdecl _mbsnbset(str long long) msvcrt._mbsnbset
+@ cdecl _mbsncat(str str long) msvcrt._mbsncat
+@ cdecl _mbsnccnt(str long) msvcrt._mbsnccnt
+@ cdecl _mbsncmp(str str long) msvcrt._mbsncmp
+@ cdecl _mbsncoll(str str long) msvcrt._mbsncoll
+@ cdecl _mbsncpy(str str long) msvcrt._mbsncpy
+@ cdecl _mbsnextc(str) msvcrt._mbsnextc
+@ cdecl _mbsnicmp(str str long) msvcrt._mbsnicmp
+@ cdecl _mbsnicoll(str str long) msvcrt._mbsnicoll
+@ cdecl _mbsninc(str long) msvcrt._mbsninc
+@ cdecl _mbsnset(str long long) msvcrt._mbsnset
+@ cdecl _mbspbrk(str str) msvcrt._mbspbrk
+@ cdecl _mbsrchr(str long) msvcrt._mbsrchr
+@ cdecl _mbsrev(str) msvcrt._mbsrev
+@ cdecl _mbsset(str long) msvcrt._mbsset
+@ cdecl _mbsspn(str str) msvcrt._mbsspn
+@ cdecl _mbsspnp(str str) msvcrt._mbsspnp
+@ cdecl _mbsstr(str str) msvcrt._mbsstr
+@ cdecl _mbstok(str str) msvcrt._mbstok
+@ cdecl _mbstrlen(str) msvcrt._mbstrlen
+@ cdecl _mbsupr(str) msvcrt._mbsupr
+@ cdecl _memccpy(ptr ptr long long) msvcrt._memccpy
+@ cdecl _memicmp(str str long) msvcrt._memicmp
+@ cdecl _mkdir(str) msvcrt._mkdir
+@ cdecl _mktemp(str) msvcrt._mktemp
+@ cdecl _msize(ptr) msvcrt._msize
 @ stub _mtlock
 @ stub _mtunlock
-@ forward _nextafter msvcrt._nextafter
-@ forward _onexit msvcrt._onexit
-@ forward _open msvcrt._open
-@ forward _open_osfhandle msvcrt._open_osfhandle
-@ forward _osver msvcrt._osver
-@ forward _pclose msvcrt._pclose
-@ forward _pctype msvcrt._pctype
-@ forward _pgmptr msvcrt._pgmptr
-@ forward _pipe msvcrt._pipe
-@ forward _popen msvcrt._popen
-@ forward _purecall msvcrt._purecall
-@ forward _putch msvcrt._putch
-@ forward _putenv msvcrt._putenv
-@ forward _putw msvcrt._putw
-@ forward _putws msvcrt._putws
-@ forward _pwctype msvcrt._pwctype
-@ forward _read msvcrt._read
-@ forward _rmdir msvcrt._rmdir
-@ forward _rmtmp msvcrt._rmtmp
-@ forward _rotl msvcrt._rotl
-@ forward _rotr msvcrt._rotr
-@ forward _safe_fdiv msvcrt._safe_fdiv
-@ forward _safe_fdivr msvcrt._safe_fdivr
-@ forward _safe_fprem msvcrt._safe_fprem
-@ forward _safe_fprem1 msvcrt._safe_fprem1
-@ forward _scalb msvcrt._scalb
-@ forward _searchenv msvcrt._searchenv
-@ forward __seh_longjmp_unwind msvcrt._seh_longjmp_unwind
-@ forward _seterrormode msvcrt._seterrormode
-@ forward _setjmp msvcrt._setjmp
-@ forward _setjmp3 msvcrt._setjmp3
-@ forward _setmbcp msvcrt._setmbcp
-@ forward _setmode msvcrt._setmode
-@ forward _setsystime msvcrt._setsystime
-@ forward _sleep msvcrt._sleep
-@ forward _snprintf msvcrt._snprintf
-@ forward _snwprintf msvcrt._snwprintf
-@ forward _sopen msvcrt._sopen
-@ forward _spawnl msvcrt._spawnl
-@ forward _spawnle msvcrt._spawnle
-@ forward _spawnlp msvcrt._spawnlp
-@ forward _spawnlpe msvcrt._spawnlpe
-@ forward _spawnv msvcrt._spawnv
-@ forward _spawnve msvcrt._spawnve
-@ forward _spawnvp msvcrt._spawnvp
-@ forward _spawnvpe msvcrt._spawnvpe
-@ forward _splitpath msvcrt._splitpath
-@ forward _stat msvcrt._stat
-@ forward _statusfp msvcrt._statusfp
-@ forward _strcmpi msvcrt._strcmpi
-@ forward _strdate msvcrt._strdate
-@ forward _strdup msvcrt._strdup
-@ forward _strerror msvcrt._strerror
-@ forward _stricmp msvcrt._stricmp
-@ forward _stricoll msvcrt._stricoll
-@ forward _strlwr msvcrt._strlwr
-@ forward _strncoll msvcrt._strncoll
-@ forward _strnicmp msvcrt._strnicmp
-@ forward _strnicoll msvcrt._strnicoll
-@ forward _strnset msvcrt._strnset
-@ forward _strrev msvcrt._strrev
-@ forward _strset msvcrt._strset
-@ forward _strtime msvcrt._strtime
-@ forward _strupr msvcrt._strupr
-@ forward _swab msvcrt._swab
-@ forward _sys_errlist msvcrt._sys_errlist
-@ forward _sys_nerr msvcrt._sys_nerr
-@ forward _tccpy msvcrt._mbccpy
-@ forward _tclen msvcrt._mbclen
-@ forward _tcschr msvcrt._mbschr
-@ forward _tcsclen msvcrt._mbslen
-@ forward _tcscmp msvcrt._mbscmp
-@ forward _tcscspn msvcrt._mbscspn
-@ forward _tcsdec msvcrt._mbsdec
-@ forward _tcsicmp msvcrt._mbsicmp
-@ forward _tcsinc msvcrt._mbsinc
-@ forward _tcslwr msvcrt._mbslwr
-@ forward _tcsnbcnt msvcrt._mbsnbcnt
-@ forward _tcsncat msvcrt._mbsnbcat
-@ forward _tcsnccat msvcrt._mbsncat
-@ forward _tcsnccmp msvcrt._mbsncmp
-@ forward _tcsnccnt msvcrt._mbsnccnt
-@ forward _tcsnccpy msvcrt._mbsncpy
-@ forward _tcsncicmp msvcrt._mbsnicmp
-@ forward _tcsncmp msvcrt._mbsnbcmp
-@ forward _tcsncpy msvcrt._mbsnbcpy
-@ forward _tcsncset msvcrt._mbsnset
-@ forward _tcsnextc msvcrt._mbsnextc
-@ forward _tcsnicmp msvcrt._mbsnbicmp
-@ forward _tcsninc msvcrt._mbsninc
-@ forward _tcsnset msvcrt._mbsnbset
-@ forward _tcspbrk msvcrt._mbspbrk
-@ forward _tcsrchr msvcrt._mbsrchr
-@ forward _tcsrev msvcrt._mbsrev
-@ forward _tcsset msvcrt._mbsset
-@ forward _tcsspn msvcrt._mbsspn
-@ forward _tcsspnp msvcrt._mbsspnp
-@ forward _tcsstr msvcrt._mbsstr
-@ forward _tcstok msvcrt._mbstok
-@ forward _tcsupr msvcrt._mbsupr
-@ forward _tell msvcrt._tell
-@ forward _tempnam msvcrt._tempnam
-@ forward _timezone msvcrt._timezone
-@ forward _tolower msvcrt._tolower
-@ forward _toupper msvcrt._toupper
-@ forward _tzname msvcrt._tzname
-@ forward _tzset msvcrt._tzset
-@ forward _ui64toa msvcrt._ui64toa
-@ forward _ui64tow msvcrt._ui64tow
-@ forward _ultoa msvcrt._ultoa
-@ forward _ultow msvcrt._ultow
-@ forward _umask msvcrt._umask
-@ forward _ungetch msvcrt._ungetch
-@ forward _unlink msvcrt._unlink
-@ forward _unloaddll msvcrt._unloaddll
-@ forward _utime msvcrt._utime
-@ forward _vsnprintf msvcrt._vsnprintf
-@ forward _vsnwprintf msvcrt._vsnwprintf
-@ forward _waccess msvcrt._waccess
-@ forward _wasctime msvcrt._wasctime
-@ forward _wchdir msvcrt._wchdir
-@ forward _wchmod msvcrt._wchmod
-@ forward _wcmdln msvcrt._wcmdln
-@ forward _wcreat msvcrt._wcreat
-@ forward _wcsdup msvcrt._wcsdup
-@ forward _wcsicmp msvcrt._wcsicmp
-@ forward _wcsicoll msvcrt._wcsicoll
-@ forward _wcslwr msvcrt._wcslwr
-@ forward _wcsncoll msvcrt._wcsncoll
-@ forward _wcsnicmp msvcrt._wcsnicmp
-@ forward _wcsnicoll msvcrt._wcsnicoll
-@ forward _wcsnset msvcrt._wcsnset
-@ forward _wcsrev msvcrt._wcsrev
-@ forward _wcsset msvcrt._wcsset
-@ forward _wcsupr msvcrt._wcsupr
-@ forward _wctime msvcrt._wctime
-@ forward _wenviron msvcrt._wenviron
-@ forward _wexecl msvcrt._wexecl
-@ forward _wexecle msvcrt._wexecle
-@ forward _wexeclp msvcrt._wexeclp
-@ forward _wexeclpe msvcrt._wexeclpe
-@ forward _wexecv msvcrt._wexecv
-@ forward _wexecve msvcrt._wexecve
-@ forward _wexecvp msvcrt._wexecvp
-@ forward _wexecvpe msvcrt._wexecvpe
-@ forward _wfdopen msvcrt._wfdopen
-@ forward _wfindfirst msvcrt._wfindfirst
-@ forward _wfindnext msvcrt._wfindnext
-@ forward _wfopen msvcrt._wfopen
-@ forward _wfreopen msvcrt._wfreopen
-@ forward _wfsopen msvcrt._wfsopen
-@ forward _wfullpath msvcrt._wfullpath
-@ forward _wgetcwd msvcrt._wgetcwd
-@ forward _wgetdcwd msvcrt._wgetdcwd
-@ forward _wgetenv msvcrt._wgetenv
-@ forward _winmajor msvcrt._winmajor
-@ forward _winminor msvcrt._winminor
-@ forward _winver msvcrt._winver
-@ forward _wmakepath msvcrt._wmakepath
-@ forward _wmkdir msvcrt._wmkdir
-@ forward _wmktemp msvcrt._wmktemp
-@ forward _wopen msvcrt._wopen
-@ forward _wperror msvcrt._wperror
-@ forward _wpgmptr msvcrt._wpgmptr
-@ forward _wpopen msvcrt._wpopen
-@ forward _wputenv msvcrt._wputenv
-@ forward _wremove msvcrt._wremove
-@ forward _wrename msvcrt._wrename
-@ forward _write msvcrt._write
-@ forward _wrmdir msvcrt._wrmdir
-@ forward _wsearchenv msvcrt._wsearchenv
-@ forward _wsetlocale msvcrt._wsetlocale
-@ forward _wsopen msvcrt._wsopen
-@ forward _wspawnl msvcrt._wspawnl
-@ forward _wspawnle msvcrt._wspawnle
-@ forward _wspawnlp msvcrt._wspawnlp
-@ forward _wspawnlpe msvcrt._wspawnlpe
-@ forward _wspawnv msvcrt._wspawnv
-@ forward _wspawnve msvcrt._wspawnve
-@ forward _wspawnvp msvcrt._wspawnvp
-@ forward _wspawnvpe msvcrt._wspawnvpe
-@ forward _wsplitpath msvcrt._wsplitpath
-@ forward _wstat msvcrt._wstat
-@ forward _wstrdate msvcrt._wstrdate
-@ forward _wstrtime msvcrt._wstrtime
-@ forward _wsystem msvcrt._wsystem
-@ forward _wtempnam msvcrt._wtempnam
-@ forward _wtmpnam msvcrt._wtmpnam
-@ forward _wtoi msvcrt._wtoi
-@ forward _wtoi64 msvcrt._wtoi64
-@ forward _wtol msvcrt._wtol
-@ forward _wunlink msvcrt._wunlink
-@ forward _wutime msvcrt._wutime
-@ forward _y0 msvcrt._y0
-@ forward _y1 msvcrt._y1
-@ forward _yn msvcrt._yn
-@ forward abort msvcrt.abort
-@ forward abs msvcrt.abs
-@ forward acos msvcrt.acos
-@ forward asctime msvcrt.asctime
-@ forward asin msvcrt.asin
-@ forward atan msvcrt.atan
-@ forward atan2 msvcrt.atan2
-@ forward atexit msvcrt.atexit
-@ forward atof msvcrt.atof
-@ forward atoi msvcrt.atoi
-@ forward atol msvcrt.atol
-@ forward bsearch msvcrt.bsearch
-@ forward calloc msvcrt.calloc
-@ forward ceil msvcrt.ceil
-@ forward clearerr msvcrt.clearerr
-@ forward clock msvcrt.clock
-@ forward cos msvcrt.cos
-@ forward cosh msvcrt.cosh
-@ forward ctime msvcrt.ctime
-@ forward difftime msvcrt.difftime
-@ forward div msvcrt.div
-@ forward exit msvcrt.exit
-@ forward exp msvcrt.exp
-@ forward fabs msvcrt.fabs
-@ forward fclose msvcrt.fclose
-@ forward feof msvcrt.feof
-@ forward ferror msvcrt.ferror
-@ forward fflush msvcrt.fflush
-@ forward fgetc msvcrt.fgetc
-@ forward fgetpos msvcrt.fgetpos
-@ forward fgets msvcrt.fgets
-@ forward fgetwc msvcrt.fgetwc
-@ forward fgetws msvcrt.fgetws
-@ forward floor msvcrt.floor
-@ forward fmod msvcrt.fmod
-@ forward fopen msvcrt.fopen
-@ forward fprintf msvcrt.fprintf
-@ forward fputc msvcrt.fputc
-@ forward fputs msvcrt.fputs
-@ forward fputwc msvcrt.fputwc
-@ forward fputws msvcrt.fputws
-@ forward fread msvcrt.fread
-@ forward free msvcrt.free
-@ forward freopen msvcrt.freopen
-@ forward frexp msvcrt.frexp
-@ forward fscanf msvcrt.fscanf
-@ forward fseek msvcrt.fseek
-@ forward fsetpos msvcrt.fsetpos
-@ forward ftell msvcrt.ftell
-@ forward fwprintf msvcrt.fwprintf
-@ forward fwrite msvcrt.fwrite
-@ forward fwscanf msvcrt.fwscanf
-@ forward getc msvcrt.getc
-@ forward getchar msvcrt.getchar
-@ forward getenv msvcrt.getenv
-@ forward gets msvcrt.gets
-@ forward getwc msvcrt.getwc
-@ forward getwchar msvcrt.getwchar
-@ forward gmtime msvcrt.gmtime
-@ forward is_wctype msvcrt.is_wctype
-@ forward isalnum msvcrt.isalnum
-@ forward isalpha msvcrt.isalpha
-@ forward iscntrl msvcrt.iscntrl
-@ forward isdigit msvcrt.isdigit
-@ forward isgraph msvcrt.isgraph
-@ forward isleadbyte msvcrt.isleadbyte
-@ forward islower msvcrt.islower
-@ forward isprint msvcrt.isprint
-@ forward ispunct msvcrt.ispunct
-@ forward isspace msvcrt.isspace
-@ forward isupper msvcrt.isupper
-@ forward iswalnum msvcrt.iswalnum
-@ forward iswalpha msvcrt.iswalpha
-@ forward iswascii msvcrt.iswascii
-@ forward iswcntrl msvcrt.iswcntrl
-@ forward iswctype msvcrt.iswctype
-@ forward iswdigit msvcrt.iswdigit
-@ forward iswgraph msvcrt.iswgraph
-@ forward iswlower msvcrt.iswlower
-@ forward iswprint msvcrt.iswprint
-@ forward iswpunct msvcrt.iswpunct
-@ forward iswspace msvcrt.iswspace
-@ forward iswupper msvcrt.iswupper
-@ forward iswxdigit msvcrt.iswxdigit
-@ forward isxdigit msvcrt.isxdigit
-@ forward labs msvcrt.labs
-@ forward ldexp msvcrt.ldexp
-@ forward ldiv msvcrt.ldiv
-@ forward localeconv msvcrt.localeconv
-@ forward localtime msvcrt.localtime
-@ forward log msvcrt.log
-@ forward log10 msvcrt.log10
-@ forward longjmp msvcrt.longjmp
-@ forward malloc msvcrt.malloc
-@ forward mblen msvcrt.mblen
-@ forward mbstowcs msvcrt.mbstowcs
-@ forward mbtowc msvcrt.mbtowc
-@ forward memchr msvcrt.memchr
-@ forward memcmp msvcrt.memcmp
-@ forward memcpy msvcrt.memcpy
-@ forward memmove msvcrt.memmove
-@ forward memset msvcrt.memset
-@ forward mktime msvcrt.mktime
-@ forward modf msvcrt.modf
-@ forward perror msvcrt.perror
-@ forward pow msvcrt.pow
-@ forward printf msvcrt.printf
-@ forward putc msvcrt.putc
-@ forward putchar msvcrt.putchar
-@ forward puts msvcrt.puts
-@ forward putwc msvcrt.putwc
-@ forward putwchar msvcrt.putwchar
-@ forward qsort msvcrt.qsort
-@ forward raise msvcrt.raise
-@ forward rand msvcrt.rand
-@ forward realloc msvcrt.realloc
-@ forward remove msvcrt.remove
-@ forward rename msvcrt.rename
-@ forward rewind msvcrt.rewind
-@ forward scanf msvcrt.scanf
-@ forward setbuf msvcrt.setbuf
-@ forward setlocale msvcrt.setlocale
-@ forward setvbuf msvcrt.setvbuf
-@ forward signal msvcrt.signal
-@ forward sin msvcrt.sin
-@ forward sinh msvcrt.sinh
-@ forward sprintf msvcrt.sprintf
-@ forward sqrt msvcrt.sqrt
-@ forward srand msvcrt.srand
-@ forward sscanf msvcrt.sscanf
-@ forward strcat msvcrt.strcat
-@ forward strchr msvcrt.strchr
-@ forward strcmp msvcrt.strcmp
-@ forward strcoll msvcrt.strcoll
-@ forward strcpy msvcrt.strcpy
-@ forward strcspn msvcrt.strcspn
-@ forward strerror msvcrt.strerror
-@ forward strftime msvcrt.strftime
-@ forward strlen msvcrt.strlen
-@ forward strncat msvcrt.strncat
-@ forward strncmp msvcrt.strncmp
-@ forward strncpy msvcrt.strncpy
-@ forward strpbrk msvcrt.strpbrk
-@ forward strrchr msvcrt.strrchr
-@ forward strspn msvcrt.strspn
-@ forward strstr msvcrt.strstr
-@ forward strtod msvcrt.strtod
-@ forward strtok msvcrt.strtok
-@ forward strtol msvcrt.strtol
-@ forward strtoul msvcrt.strtoul
-@ forward strxfrm msvcrt.strxfrm
-@ forward swprintf msvcrt.swprintf
-@ forward swscanf msvcrt.swscanf
-@ forward system msvcrt.system
-@ forward tan msvcrt.tan
-@ forward tanh msvcrt.tanh
-@ forward time msvcrt.time
-@ forward tmpfile msvcrt.tmpfile
-@ forward tmpnam msvcrt.tmpnam
-@ forward tolower msvcrt.tolower
-@ forward toupper msvcrt.toupper
-@ forward towlower msvcrt.towlower
-@ forward towupper msvcrt.towupper
-@ forward ungetc msvcrt.ungetc
-@ forward ungetwc msvcrt.ungetwc
-@ forward vfprintf msvcrt.vfprintf
-@ forward vfwprintf msvcrt.vfwprintf
-@ forward vprintf msvcrt.vprintf
-@ forward vsprintf msvcrt.vsprintf
-@ forward vswprintf msvcrt.vswprintf
-@ forward vwprintf msvcrt.vwprintf
-@ forward wcscat msvcrt.wcscat
-@ forward wcschr msvcrt.wcschr
-@ forward wcscmp msvcrt.wcscmp
-@ forward wcscoll msvcrt.wcscoll
-@ forward wcscpy msvcrt.wcscpy
-@ forward wcscspn msvcrt.wcscspn
-@ forward wcsftime msvcrt.wcsftime
-@ forward wcslen msvcrt.wcslen
-@ forward wcsncat msvcrt.wcsncat
-@ forward wcsncmp msvcrt.wcsncmp
-@ forward wcsncpy msvcrt.wcsncpy
-@ forward wcspbrk msvcrt.wcspbrk
-@ forward wcsrchr msvcrt.wcsrchr
-@ forward wcsspn msvcrt.wcsspn
-@ forward wcsstr msvcrt.wcsstr
-@ forward wcstod msvcrt.wcstod
-@ forward wcstok msvcrt.wcstok
-@ forward wcstol msvcrt.wcstol
-@ forward wcstombs msvcrt.wcstombs
-@ forward wcstoul msvcrt.wcstoul
-@ forward wcsxfrm msvcrt.wcsxfrm
-@ forward wctomb msvcrt.wctomb
-@ forward wprintf msvcrt.wprintf
-@ forward wscanf msvcrt.wscanf
+@ cdecl _nextafter(double double) msvcrt._nextafter
+@ cdecl _onexit(ptr) msvcrt._onexit
+@ varargs _open(str long) msvcrt._open
+@ cdecl _open_osfhandle(long long) msvcrt._open_osfhandle
+@ extern _osver msvcrt._osver
+@ cdecl _pclose(ptr) msvcrt._pclose
+@ extern _pctype msvcrt._pctype
+@ extern _pgmptr msvcrt._pgmptr
+@ cdecl _pipe(ptr long long) msvcrt._pipe
+@ cdecl _popen(str str) msvcrt._popen
+@ cdecl _purecall() msvcrt._purecall
+@ cdecl _putch(long) msvcrt._putch
+@ cdecl _putenv(str) msvcrt._putenv
+@ cdecl _putw(long ptr) msvcrt._putw
+@ cdecl _putws(wstr) msvcrt._putws
+@ extern _pwctype msvcrt._pwctype
+@ cdecl _read(long ptr long) msvcrt._read
+@ cdecl _rmdir(str) msvcrt._rmdir
+@ cdecl _rmtmp() msvcrt._rmtmp
+@ cdecl _rotl(long long) msvcrt._rotl
+@ cdecl _rotr(long long) msvcrt._rotr
+@ cdecl _safe_fdiv() msvcrt._safe_fdiv
+@ cdecl _safe_fdivr() msvcrt._safe_fdivr
+@ cdecl _safe_fprem() msvcrt._safe_fprem
+@ cdecl _safe_fprem1() msvcrt._safe_fprem1
+@ cdecl _scalb( double long) msvcrt._scalb
+@ cdecl _searchenv(str str ptr) msvcrt._searchenv
+@ stdcall -i386 __seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
+@ cdecl _seterrormode(long) msvcrt._seterrormode
+@ cdecl -i386 _setjmp(ptr) msvcrt._setjmp
+@ cdecl -i386 _setjmp3(ptr long) msvcrt._setjmp3
+@ cdecl _setmbcp(long) msvcrt._setmbcp
+@ cdecl _setmode(long long) msvcrt._setmode
+@ cdecl _setsystime(ptr long) msvcrt._setsystime
+@ cdecl _sleep(long) msvcrt._sleep
+@ varargs _snprintf(str long str) msvcrt._snprintf
+@ varargs _snwprintf(wstr long wstr) msvcrt._snwprintf
+@ varargs _sopen(str long long) msvcrt._sopen
+@ varargs _spawnl(long str str) msvcrt._spawnl
+@ varargs _spawnle(long str str) msvcrt._spawnle
+@ varargs _spawnlp(long str str) msvcrt._spawnlp
+@ varargs _spawnlpe(long str str) msvcrt._spawnlpe
+@ cdecl _spawnv(long str ptr) msvcrt._spawnv
+@ cdecl _spawnve(long str ptr ptr) msvcrt._spawnve
+@ cdecl _spawnvp(long str ptr) msvcrt._spawnvp
+@ cdecl _spawnvpe(long str ptr ptr) msvcrt._spawnvpe
+@ cdecl _splitpath(str ptr ptr ptr ptr) msvcrt._splitpath
+@ cdecl _stat(str ptr) msvcrt._stat
+@ cdecl _statusfp() msvcrt._statusfp
+@ cdecl _strcmpi(str str) msvcrt._strcmpi
+@ cdecl _strdate(ptr) msvcrt._strdate
+@ cdecl _strdup(str) msvcrt._strdup
+@ cdecl _strerror(long) msvcrt._strerror
+@ cdecl _stricmp(str str) msvcrt._stricmp
+@ cdecl _stricoll(str str) msvcrt._stricoll
+@ cdecl _strlwr(str) msvcrt._strlwr
+@ cdecl _strncoll(str str long) msvcrt._strncoll
+@ cdecl _strnicmp(str str long) msvcrt._strnicmp
+@ cdecl _strnicoll(str str long) msvcrt._strnicoll
+@ cdecl _strnset(str long long) msvcrt._strnset
+@ cdecl _strrev(str) msvcrt._strrev
+@ cdecl _strset(str long) msvcrt._strset
+@ cdecl _strtime(ptr) msvcrt._strtime
+@ cdecl _strupr(str) msvcrt._strupr
+@ cdecl _swab(str str long) msvcrt._swab
+@ extern _sys_errlist msvcrt._sys_errlist
+@ extern _sys_nerr msvcrt._sys_nerr
+@ cdecl _tccpy(str str) msvcrt._mbccpy
+@ cdecl _tclen(ptr) msvcrt._mbclen
+@ cdecl _tcschr(str long) msvcrt._mbschr
+@ cdecl _tcsclen(str) msvcrt._mbslen
+@ cdecl _tcscmp(str str) msvcrt._mbscmp
+@ cdecl _tcscspn(str str) msvcrt._mbscspn
+@ cdecl _tcsdec(ptr ptr) msvcrt._mbsdec
+@ cdecl _tcsicmp(str str) msvcrt._mbsicmp
+@ cdecl _tcsinc(str) msvcrt._mbsinc
+@ cdecl _tcslwr(str) msvcrt._mbslwr
+@ cdecl _tcsnbcnt(ptr long) msvcrt._mbsnbcnt
+@ cdecl _tcsncat(str str long) msvcrt._mbsnbcat
+@ cdecl _tcsnccat(str str long) msvcrt._mbsncat
+@ cdecl _tcsnccmp(str str long) msvcrt._mbsncmp
+@ cdecl _tcsnccnt(str long) msvcrt._mbsnccnt
+@ cdecl _tcsnccpy(str str long) msvcrt._mbsncpy
+@ cdecl _tcsncicmp(str str long) msvcrt._mbsnicmp
+@ cdecl _tcsncmp(str str long) msvcrt._mbsnbcmp
+@ cdecl _tcsncpy(ptr str long) msvcrt._mbsnbcpy
+@ cdecl _tcsncset(str long long) msvcrt._mbsnset
+@ cdecl _tcsnextc(str) msvcrt._mbsnextc
+@ cdecl _tcsnicmp(str str long) msvcrt._mbsnbicmp
+@ cdecl _tcsninc(str long) msvcrt._mbsninc
+@ cdecl _tcsnset(str long long) msvcrt._mbsnbset
+@ cdecl _tcspbrk(str str) msvcrt._mbspbrk
+@ cdecl _tcsrchr(str long) msvcrt._mbsrchr
+@ cdecl _tcsrev(str) msvcrt._mbsrev
+@ cdecl _tcsset(str long) msvcrt._mbsset
+@ cdecl _tcsspn(str str) msvcrt._mbsspn
+@ cdecl _tcsspnp(str str) msvcrt._mbsspnp
+@ cdecl _tcsstr(str str) msvcrt._mbsstr
+@ cdecl _tcstok(str str) msvcrt._mbstok
+@ cdecl _tcsupr(str) msvcrt._mbsupr
+@ cdecl _tell(long) msvcrt._tell
+@ cdecl _tempnam(str str) msvcrt._tempnam
+@ extern _timezone msvcrt._timezone
+@ cdecl _tolower(long) msvcrt._tolower
+@ cdecl _toupper(long) msvcrt._toupper
+@ extern _tzname msvcrt._tzname
+@ cdecl _tzset() msvcrt._tzset
+@ cdecl _ui64toa(long long ptr long) msvcrt._ui64toa
+@ cdecl _ui64tow(long long ptr long) msvcrt._ui64tow
+@ cdecl _ultoa(long ptr long) msvcrt._ultoa
+@ cdecl _ultow(long ptr long) msvcrt._ultow
+@ cdecl _umask(long) msvcrt._umask
+@ cdecl _ungetch(long) msvcrt._ungetch
+@ cdecl _unlink(str) msvcrt._unlink
+@ cdecl _unloaddll(long) msvcrt._unloaddll
+@ cdecl _utime(str ptr) msvcrt._utime
+@ cdecl _vsnprintf(ptr long ptr ptr) msvcrt._vsnprintf
+@ cdecl _vsnwprintf(ptr long wstr long) msvcrt._vsnwprintf
+@ cdecl _waccess(wstr long) msvcrt._waccess
+@ cdecl _wasctime(ptr) msvcrt._wasctime
+@ cdecl _wchdir(wstr) msvcrt._wchdir
+@ cdecl _wchmod(wstr long) msvcrt._wchmod
+@ extern _wcmdln msvcrt._wcmdln
+@ cdecl _wcreat(wstr long) msvcrt._wcreat
+@ cdecl _wcsdup(wstr) msvcrt._wcsdup
+@ cdecl _wcsicmp(wstr wstr) msvcrt._wcsicmp
+@ cdecl _wcsicoll(wstr wstr) msvcrt._wcsicoll
+@ cdecl _wcslwr(wstr) msvcrt._wcslwr
+@ cdecl _wcsncoll(wstr wstr long) msvcrt._wcsncoll
+@ cdecl _wcsnicmp(wstr wstr long) msvcrt._wcsnicmp
+@ cdecl _wcsnicoll(wstr wstr long) msvcrt._wcsnicoll
+@ cdecl _wcsnset(wstr long long) msvcrt._wcsnset
+@ cdecl _wcsrev(wstr) msvcrt._wcsrev
+@ cdecl _wcsset(wstr long) msvcrt._wcsset
+@ cdecl _wcsupr(wstr) msvcrt._wcsupr
+@ cdecl _wctime(ptr) msvcrt._wctime
+@ extern _wenviron msvcrt._wenviron
+@ varargs _wexecl(wstr wstr) msvcrt._wexecl
+@ varargs _wexecle(wstr wstr) msvcrt._wexecle
+@ varargs _wexeclp(wstr wstr) msvcrt._wexeclp
+@ varargs _wexeclpe(wstr wstr) msvcrt._wexeclpe
+@ varargs _wexecv(wstr ptr) msvcrt._wexecv
+@ varargs _wexecve(wstr ptr ptr) msvcrt._wexecve
+@ varargs _wexecvp(wstr ptr) msvcrt._wexecvp
+@ varargs _wexecvpe(wstr ptr ptr) msvcrt._wexecvpe
+@ cdecl _wfdopen(long wstr) msvcrt._wfdopen
+@ cdecl _wfindfirst(wstr ptr) msvcrt._wfindfirst
+@ cdecl _wfindnext(long ptr) msvcrt._wfindnext
+@ cdecl _wfopen(wstr wstr) msvcrt._wfopen
+@ cdecl _wfreopen(wstr wstr ptr) msvcrt._wfreopen
+@ cdecl _wfsopen(wstr wstr long) msvcrt._wfsopen
+@ cdecl _wfullpath(ptr wstr long) msvcrt._wfullpath
+@ cdecl _wgetcwd(wstr long) msvcrt._wgetcwd
+@ cdecl _wgetdcwd(long wstr long) msvcrt._wgetdcwd
+@ cdecl _wgetenv(wstr) msvcrt._wgetenv
+@ extern _winmajor msvcrt._winmajor
+@ extern _winminor msvcrt._winminor
+@ extern _winver msvcrt._winver
+@ cdecl _wmakepath(wstr wstr wstr wstr wstr) msvcrt._wmakepath
+@ cdecl _wmkdir(wstr) msvcrt._wmkdir
+@ cdecl _wmktemp(wstr) msvcrt._wmktemp
+@ varargs _wopen(wstr long) msvcrt._wopen
+@ cdecl _wperror(wstr) msvcrt._wperror
+@ extern _wpgmptr msvcrt._wpgmptr
+@ cdecl _wpopen(wstr wstr) msvcrt._wpopen
+@ cdecl _wputenv(wstr) msvcrt._wputenv
+@ cdecl _wremove(wstr) msvcrt._wremove
+@ cdecl _wrename(wstr wstr) msvcrt._wrename
+@ cdecl _write(long ptr long) msvcrt._write
+@ cdecl _wrmdir(wstr) msvcrt._wrmdir
+@ cdecl _wsearchenv(wstr wstr ptr) msvcrt._wsearchenv
+@ cdecl _wsetlocale(long wstr) msvcrt._wsetlocale
+@ varargs _wsopen(wstr long long) msvcrt._wsopen
+@ varargs _wspawnl(long wstr wstr) msvcrt._wspawnl
+@ varargs _wspawnle(long wstr wstr) msvcrt._wspawnle
+@ varargs _wspawnlp(long wstr wstr) msvcrt._wspawnlp
+@ varargs _wspawnlpe(long wstr wstr) msvcrt._wspawnlpe
+@ cdecl _wspawnv(long wstr ptr) msvcrt._wspawnv
+@ cdecl _wspawnve(long wstr ptr ptr) msvcrt._wspawnve
+@ cdecl _wspawnvp(long wstr ptr) msvcrt._wspawnvp
+@ cdecl _wspawnvpe(long wstr ptr ptr) msvcrt._wspawnvpe
+@ cdecl _wsplitpath(wstr wstr wstr wstr wstr) msvcrt._wsplitpath
+@ cdecl _wstat(wstr ptr) msvcrt._wstat
+@ cdecl _wstrdate(ptr) msvcrt._wstrdate
+@ cdecl _wstrtime(ptr) msvcrt._wstrtime
+@ cdecl _wsystem(wstr) msvcrt._wsystem
+@ cdecl _wtempnam(wstr wstr) msvcrt._wtempnam
+@ cdecl _wtmpnam(ptr) msvcrt._wtmpnam
+@ cdecl _wtoi(wstr) msvcrt._wtoi
+@ cdecl _wtoi64(wstr) msvcrt._wtoi64
+@ cdecl _wtol(wstr) msvcrt._wtol
+@ cdecl _wunlink(wstr) msvcrt._wunlink
+@ cdecl _wutime(wstr ptr) msvcrt._wutime
+@ cdecl _y0(double) msvcrt._y0
+@ cdecl _y1(double) msvcrt._y1
+@ cdecl _yn(long double ) msvcrt._yn
+@ cdecl abort() msvcrt.abort
+@ cdecl abs(long) msvcrt.abs
+@ cdecl acos(double) msvcrt.acos
+@ cdecl asctime(ptr) msvcrt.asctime
+@ cdecl asin(double) msvcrt.asin
+@ cdecl atan(double) msvcrt.atan
+@ cdecl atan2(double double) msvcrt.atan2
+@ cdecl atexit(ptr) msvcrt.atexit
+@ cdecl atof(str) msvcrt.atof
+@ cdecl atoi(str) msvcrt.atoi
+@ cdecl atol(str) msvcrt.atol
+@ cdecl bsearch(ptr ptr long long ptr) msvcrt.bsearch
+@ cdecl calloc(long long) msvcrt.calloc
+@ cdecl ceil(double) msvcrt.ceil
+@ cdecl clearerr(ptr) msvcrt.clearerr
+@ cdecl clock() msvcrt.clock
+@ cdecl cos(double) msvcrt.cos
+@ cdecl cosh(double) msvcrt.cosh
+@ cdecl ctime(ptr) msvcrt.ctime
+@ cdecl difftime(long long) msvcrt.difftime
+@ cdecl div(long long) msvcrt.div
+@ cdecl exit(long) msvcrt.exit
+@ cdecl exp(double) msvcrt.exp
+@ cdecl fabs(double) msvcrt.fabs
+@ cdecl fclose(ptr) msvcrt.fclose
+@ cdecl feof(ptr) msvcrt.feof
+@ cdecl ferror(ptr) msvcrt.ferror
+@ cdecl fflush(ptr) msvcrt.fflush
+@ cdecl fgetc(ptr) msvcrt.fgetc
+@ cdecl fgetpos(ptr ptr) msvcrt.fgetpos
+@ cdecl fgets(ptr long ptr) msvcrt.fgets
+@ cdecl fgetwc(ptr) msvcrt.fgetwc
+@ cdecl fgetws(ptr long ptr) msvcrt.fgetws
+@ cdecl floor(double) msvcrt.floor
+@ cdecl fmod(double double) msvcrt.fmod
+@ cdecl fopen(str str) msvcrt.fopen
+@ varargs fprintf(ptr str) msvcrt.fprintf
+@ cdecl fputc(long ptr) msvcrt.fputc
+@ cdecl fputs(str ptr) msvcrt.fputs
+@ cdecl fputwc(long ptr) msvcrt.fputwc
+@ cdecl fputws(wstr ptr) msvcrt.fputws
+@ cdecl fread(ptr long long ptr) msvcrt.fread
+@ cdecl free(ptr) msvcrt.free
+@ cdecl freopen(str str ptr) msvcrt.freopen
+@ cdecl frexp(double ptr) msvcrt.frexp
+@ varargs fscanf(ptr str) msvcrt.fscanf
+@ cdecl fseek(ptr long long) msvcrt.fseek
+@ cdecl fsetpos(ptr ptr) msvcrt.fsetpos
+@ cdecl ftell(ptr) msvcrt.ftell
+@ varargs fwprintf(ptr wstr) msvcrt.fwprintf
+@ cdecl fwrite(ptr long long ptr) msvcrt.fwrite
+@ varargs fwscanf(ptr wstr) msvcrt.fwscanf
+@ cdecl getc(ptr) msvcrt.getc
+@ cdecl getchar() msvcrt.getchar
+@ cdecl getenv(str) msvcrt.getenv
+@ cdecl gets(str) msvcrt.gets
+@ cdecl getwc(ptr) msvcrt.getwc
+@ cdecl getwchar() msvcrt.getwchar
+@ cdecl gmtime(ptr) msvcrt.gmtime
+@ cdecl is_wctype(long long) msvcrt.is_wctype
+@ cdecl isalnum(long) msvcrt.isalnum
+@ cdecl isalpha(long) msvcrt.isalpha
+@ cdecl iscntrl(long) msvcrt.iscntrl
+@ cdecl isdigit(long) msvcrt.isdigit
+@ cdecl isgraph(long) msvcrt.isgraph
+@ cdecl isleadbyte(long) msvcrt.isleadbyte
+@ cdecl islower(long) msvcrt.islower
+@ cdecl isprint(long) msvcrt.isprint
+@ cdecl ispunct(long) msvcrt.ispunct
+@ cdecl isspace(long) msvcrt.isspace
+@ cdecl isupper(long) msvcrt.isupper
+@ cdecl iswalnum(long) msvcrt.iswalnum
+@ cdecl iswalpha(long) msvcrt.iswalpha
+@ cdecl iswascii(long) msvcrt.iswascii
+@ cdecl iswcntrl(long) msvcrt.iswcntrl
+@ cdecl iswctype(long long) msvcrt.iswctype
+@ cdecl iswdigit(long) msvcrt.iswdigit
+@ cdecl iswgraph(long) msvcrt.iswgraph
+@ cdecl iswlower(long) msvcrt.iswlower
+@ cdecl iswprint(long) msvcrt.iswprint
+@ cdecl iswpunct(long) msvcrt.iswpunct
+@ cdecl iswspace(long) msvcrt.iswspace
+@ cdecl iswupper(long) msvcrt.iswupper
+@ cdecl iswxdigit(long) msvcrt.iswxdigit
+@ cdecl isxdigit(long) msvcrt.isxdigit
+@ cdecl labs(long) msvcrt.labs
+@ cdecl ldexp( double long) msvcrt.ldexp
+@ cdecl ldiv(long long) msvcrt.ldiv
+@ cdecl localeconv() msvcrt.localeconv
+@ cdecl localtime(ptr) msvcrt.localtime
+@ cdecl log(double) msvcrt.log
+@ cdecl log10(double) msvcrt.log10
+@ cdecl -i386 longjmp(ptr long) msvcrt.longjmp
+@ cdecl malloc(long) msvcrt.malloc
+@ cdecl mblen(ptr long) msvcrt.mblen
+@ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs
+@ cdecl mbtowc(wstr str long) msvcrt.mbtowc
+@ cdecl memchr(ptr long long) msvcrt.memchr
+@ cdecl memcmp(ptr ptr long) msvcrt.memcmp
+@ cdecl memcpy(ptr ptr long) msvcrt.memcpy
+@ cdecl memmove(ptr ptr long) msvcrt.memmove
+@ cdecl memset(ptr long long) msvcrt.memset
+@ cdecl mktime(ptr) msvcrt.mktime
+@ cdecl modf(double ptr) msvcrt.modf
+@ cdecl perror(str) msvcrt.perror
+@ cdecl pow(double double) msvcrt.pow
+@ varargs printf(str) msvcrt.printf
+@ cdecl putc(long ptr) msvcrt.putc
+@ cdecl putchar(long) msvcrt.putchar
+@ cdecl puts(str) msvcrt.puts
+@ cdecl putwc(long ptr) msvcrt.putwc
+@ cdecl putwchar(long) msvcrt.putwchar
+@ cdecl qsort(ptr long long ptr) msvcrt.qsort
+@ cdecl raise(long) msvcrt.raise
+@ cdecl rand() msvcrt.rand
+@ cdecl realloc(ptr long) msvcrt.realloc
+@ cdecl remove(str) msvcrt.remove
+@ cdecl rename(str str) msvcrt.rename
+@ cdecl rewind(ptr) msvcrt.rewind
+@ varargs scanf(str) msvcrt.scanf
+@ cdecl setbuf(ptr ptr) msvcrt.setbuf
+@ cdecl setlocale(long str) msvcrt.setlocale
+@ cdecl setvbuf(ptr str long long) msvcrt.setvbuf
+@ cdecl signal(long long) msvcrt.signal
+@ cdecl sin(double) msvcrt.sin
+@ cdecl sinh(double) msvcrt.sinh
+@ varargs sprintf(ptr str) msvcrt.sprintf
+@ cdecl sqrt(double) msvcrt.sqrt
+@ cdecl srand(long) msvcrt.srand
+@ varargs sscanf(str str) msvcrt.sscanf
+@ cdecl strcat(str str) msvcrt.strcat
+@ cdecl strchr(str long) msvcrt.strchr
+@ cdecl strcmp(str str) msvcrt.strcmp
+@ cdecl strcoll(str str) msvcrt.strcoll
+@ cdecl strcpy(ptr str) msvcrt.strcpy
+@ cdecl strcspn(str str) msvcrt.strcspn
+@ cdecl strerror(long) msvcrt.strerror
+@ cdecl strftime(str long str ptr) msvcrt.strftime
+@ cdecl strlen(str) msvcrt.strlen
+@ cdecl strncat(str str long) msvcrt.strncat
+@ cdecl strncmp(str str long) msvcrt.strncmp
+@ cdecl strncpy(ptr str long) msvcrt.strncpy
+@ cdecl strpbrk(str str) msvcrt.strpbrk
+@ cdecl strrchr(str long) msvcrt.strrchr
+@ cdecl strspn(str str) msvcrt.strspn
+@ cdecl strstr(str str) msvcrt.strstr
+@ cdecl strtod(str ptr) msvcrt.strtod
+@ cdecl strtok(str str) msvcrt.strtok
+@ cdecl strtol(str ptr long) msvcrt.strtol
+@ cdecl strtoul(str ptr long) msvcrt.strtoul
+@ cdecl strxfrm(ptr str long) msvcrt.strxfrm
+@ varargs swprintf(wstr wstr) msvcrt.swprintf
+@ varargs swscanf(wstr wstr) msvcrt.swscanf
+@ cdecl system(str) msvcrt.system
+@ cdecl tan(double) msvcrt.tan
+@ cdecl tanh(double) msvcrt.tanh
+@ cdecl time(ptr) msvcrt.time
+@ cdecl tmpfile() msvcrt.tmpfile
+@ cdecl tmpnam(ptr) msvcrt.tmpnam
+@ cdecl tolower(long) msvcrt.tolower
+@ cdecl toupper(long) msvcrt.toupper
+@ cdecl towlower(long) msvcrt.towlower
+@ cdecl towupper(long) msvcrt.towupper
+@ cdecl ungetc(long ptr) msvcrt.ungetc
+@ cdecl ungetwc(long ptr) msvcrt.ungetwc
+@ cdecl vfprintf(ptr str long) msvcrt.vfprintf
+@ cdecl vfwprintf(ptr wstr long) msvcrt.vfwprintf
+@ cdecl vprintf(str long) msvcrt.vprintf
+@ cdecl vsprintf(ptr str ptr) msvcrt.vsprintf
+@ cdecl vswprintf(ptr wstr long) msvcrt.vswprintf
+@ cdecl vwprintf(wstr long) msvcrt.vwprintf
+@ cdecl wcscat(wstr wstr) msvcrt.wcscat
+@ cdecl wcschr(wstr long) msvcrt.wcschr
+@ cdecl wcscmp(wstr wstr) msvcrt.wcscmp
+@ cdecl wcscoll(wstr wstr) msvcrt.wcscoll
+@ cdecl wcscpy(ptr wstr) msvcrt.wcscpy
+@ cdecl wcscspn(wstr wstr) msvcrt.wcscspn
+@ cdecl wcsftime(ptr long wstr ptr) msvcrt.wcsftime
+@ cdecl wcslen(wstr) msvcrt.wcslen
+@ cdecl wcsncat(wstr wstr long) msvcrt.wcsncat
+@ cdecl wcsncmp(wstr wstr long) msvcrt.wcsncmp
+@ cdecl wcsncpy(ptr wstr long) msvcrt.wcsncpy
+@ cdecl wcspbrk(wstr wstr) msvcrt.wcspbrk
+@ cdecl wcsrchr(wstr long) msvcrt.wcsrchr
+@ cdecl wcsspn(wstr wstr) msvcrt.wcsspn
+@ cdecl wcsstr(wstr wstr) msvcrt.wcsstr
+@ cdecl wcstod(wstr ptr) msvcrt.wcstod
+@ cdecl wcstok(wstr wstr) msvcrt.wcstok
+@ cdecl wcstol(wstr ptr long) msvcrt.wcstol
+@ cdecl wcstombs(ptr ptr long) msvcrt.wcstombs
+@ cdecl wcstoul(wstr ptr long) msvcrt.wcstoul
+@ cdecl wcsxfrm(ptr wstr long) msvcrt.wcsxfrm
+@ cdecl wctomb(ptr long) msvcrt.wctomb
+@ varargs wprintf(wstr) msvcrt.wprintf
+@ varargs wscanf(wstr) msvcrt.wscanf
