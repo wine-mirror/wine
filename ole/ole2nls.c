@@ -3089,9 +3089,9 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     else
     {
         if (dwflags & LOCALE_NOUSEROVERRIDE)
-            used_operation = USE_LOCALEINFO;
-        else
             used_operation = USE_SYSTEMDEFAULT;
+        else
+            used_operation = USE_LOCALEINFO;
     }
 
     /* Load the fields we need */
@@ -3329,9 +3329,9 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
     else
     {
         if (dwflags & LOCALE_NOUSEROVERRIDE)
-            used_operation = USE_LOCALEINFO;
-        else
             used_operation = USE_SYSTEMDEFAULT;
+        else
+            used_operation = USE_LOCALEINFO;
     }
 
     /* Load the fields we need */
