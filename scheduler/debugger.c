@@ -34,19 +34,28 @@ static DWORD DEBUG_SendEvent( int code, void *data, int size )
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the current process debugger.
  */
-DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance )
+DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEXT *context )
 {
-    struct debug_event_exception event;
     int i;
+    DWORD ret = 0;
+    struct send_debug_event_request *req = get_req_buffer();
+    struct debug_event_exception *event = (struct debug_event_exception *)(req + 1);
 
-    event.code      = rec->ExceptionCode;
-    event.flags     = rec->ExceptionFlags;
-    event.record    = rec->ExceptionRecord;
-    event.addr      = rec->ExceptionAddress;
-    event.nb_params = rec->NumberParameters;
-    for (i = 0; i < event.nb_params; i++) event.params[i] = rec->ExceptionInformation[i];
-    event.first_chance = first_chance;
-    return DEBUG_SendEvent( EXCEPTION_DEBUG_EVENT, &event, sizeof(event) );
+    req->code        = EXCEPTION_DEBUG_EVENT;
+    event->code      = rec->ExceptionCode;
+    event->flags     = rec->ExceptionFlags;
+    event->record    = rec->ExceptionRecord;
+    event->addr      = rec->ExceptionAddress;
+    event->nb_params = rec->NumberParameters;
+    for (i = 0; i < event->nb_params; i++) event->params[i] = rec->ExceptionInformation[i];
+    event->first_chance = first_chance;
+    event->context      = *context;
+    if (!server_call( REQ_SEND_DEBUG_EVENT ))
+    {
+        ret = req->status;
+        *context = event->context;
+    }
+    return ret;
 }
 
 

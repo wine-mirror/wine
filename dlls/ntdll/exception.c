@@ -122,7 +122,7 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
 static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     if ((PROCESS_Current()->flags & PDB32_DEBUGGED) &&
-        (DEBUG_SendExceptionEvent( rec, FALSE ) == DBG_CONTINUE))
+        (DEBUG_SendExceptionEvent( rec, FALSE, context ) == DBG_CONTINUE))
         return;  /* continue execution */
 
     if (debug_hook( rec, context, FALSE ) == DBG_CONTINUE)
@@ -152,7 +152,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     TRACE( "code=%lx flags=%lx\n", rec->ExceptionCode, rec->ExceptionFlags );
 
     if ((PROCESS_Current()->flags & PDB32_DEBUGGED) &&
-        (DEBUG_SendExceptionEvent( rec, TRUE ) == DBG_CONTINUE))
+        (DEBUG_SendExceptionEvent( rec, TRUE, context ) == DBG_CONTINUE))
         return;  /* continue execution */
 
     if (debug_hook( rec, context, TRUE ) == DBG_CONTINUE)

@@ -9,7 +9,7 @@
 
 #include <stdlib.h>
 #include <time.h>
-#include "windef.h"
+#include "winbase.h"
 
 /* Request structures */
 
@@ -734,6 +734,7 @@ struct debug_event_exception
     int        nb_params;      /* exceptions parameters */
     int        params[15];
     int        first_chance;   /* first chance to handle it? */
+    CONTEXT    context;        /* thread context */
 };
 struct debug_event_create_thread
 {
