@@ -996,8 +996,7 @@ HINSTANCE32 WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL32 bAutoFree)
 	if (!found) {
 	    /* dll not found, add it */
  	    tmp = openDllList;
-	    openDllList->next = 
-	        (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
+	    openDllList = (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
 	    openDllList->DllName = HEAP_strdupA(GetProcessHeap(), 0, lpszLibName);
 	    openDllList->hLibrary = hLibrary;
 	    openDllList->next = tmp;
