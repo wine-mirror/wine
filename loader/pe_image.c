@@ -375,15 +375,34 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
     IMAGE_NT_HEADERS *nt;
     HMODULE hModule;
     HANDLE mapping;
-    void *base;
+    void *base = NULL;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER lg_int;
+    DWORD len = 0;
+    NTSTATUS nts;
 
     TRACE_(module)( "loading %s\n", filename );
 
-    mapping = CreateFileMappingA( hFile, NULL, SEC_IMAGE, 0, 0, NULL );
-    if (!mapping) return 0;
-    base = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
-    CloseHandle( mapping );
-    if (!base) return 0;
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    
+    lg_int.QuadPart = 0;
+
+    if (NtCreateSection( &mapping, 
+                         STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
+                         &attr, &lg_int, 0, SEC_IMAGE, hFile ) != STATUS_SUCCESS)
+        return 0;
+
+    nts = NtMapViewOfSection( mapping, GetCurrentProcess(),
+                              &base, 0, 0, &lg_int, &len, ViewShare, 0,
+                              PAGE_READONLY );
+    
+    NtClose( mapping );
+    if (nts != STATUS_SUCCESS) return 0;
 
     /* virus check */
 
@@ -662,6 +681,7 @@ _fixup_address(PIMAGE_OPTIONAL_HEADER opt,int delta,LPVOID addr) {
 		/* the address has been relocated already */
 		return addr;
 }
+
 void PE_InitTls( void )
 {
 	WINE_MODREF		*wm;
@@ -688,7 +708,8 @@ void PE_InitTls( void )
 		}
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
-		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+                NtAllocateVirtualMemory( GetCurrentProcess(), &mem, NULL, &size,
+                                         MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
 		memcpy(mem,_fixup_address(&(peh->OptionalHeader),delta,(LPVOID)pdir->StartAddressOfRawData),datasize);
 		if (pdir->AddressOfCallBacks) {
 		     PIMAGE_TLS_CALLBACK *cbs;
