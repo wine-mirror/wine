@@ -234,13 +234,6 @@ WINE REGISTRY Version 2
 ;; set the "Windows" value in the [Version] section if you want that.
 "WineLook" = "Win95"
 
-[Console]
-;"Drivers" = "tty"
-;"XtermProg" = "nxterm"
-;"InitialRows" = "25"
-;"InitialColumns" = "80"
-;"TerminalType" = "nxterm"
-
 [Clipboard]
 "ClearAllSelections" = "0"
 "PersistentSelection" = "1"

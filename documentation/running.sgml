@@ -5,7 +5,7 @@
       Written by &name-john-sheets; <email>&email-john-sheets;</email>
     </para>
     <para>
-      Extended by &name-mike-hearn; <email>&email-mike-hearn;</email>
+      Extended by &name-mike-hearn; <email>&email-mike-hearn;</email>, &name-eric-pouech; <email>&email-eric-pouech;</email>
     </para>
 
     <sect1 id="basic-usage">
@@ -124,15 +124,9 @@ Options:
       <para>
       (note the backslash-escaped "\" !)
       </para>
-
       <para>
-        If you want to run a console program (aka a CUI executable), use
-	<command>wineconsole</command> instead of <command>wine</command>
-	to start it. It will display the program in a separate Window
-	(this requires X11 to be run). If you don't, you'll still be able
-	to run your program directly in the Unix console where you started it,
-	but with very limited capacities (so your program might work,
-	but your mileage may vary). This shall be improved in the future.
+	For details on running text mode (CUI) executables, read the 
+	<link linkend="CUI-programs">section</link> below.
       </para>
     </sect1>
 
@@ -361,6 +355,293 @@ winspool</><entry>wnet</><entry>x11</>
 	
     </sect1>
 
+    <sect1 id="CUI-programs">
+      <title>Text mode programs (CUI: Console User Interface)</title>
+      <para>Text mode programs are program which output is only made
+	out of text (surprise!). In Windows terminolgy, they are
+	called CUI (Console User Interface) executables, by opposition
+	to GUI (Graphical User Interface) executables. Win32 API
+	provide a complete set of APIs to handle this situation, which
+	goes from basic features like text printing, up to high level
+	functionnalities (like full screen editing, color support,
+	cursor motion, mouse support), going through features like
+	line editing or raw/cooked input stream support
+      </para>
+      <para>
+        Given the wide scope of features above, and the current usage
+	in Un*x world, Wine comes out with three different ways for
+	running a console program (aka a CUI executable):
+	<itemizedlist>
+	  <listitem>
+	    <para>bare streams</para>
+	  </listitem>
+	  <listitem>
+	    <para>wineconsole with user backend</para>
+	  </listitem>
+	  <listitem>
+	    <para>wineconsole with curses backend</para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      <para>The names here are a bit obscure. "bare streams" means
+	that no extra support of wine is provide to map between the
+	unix console access and Windows console access. The two other
+	ways require the use of a specific Wine program (wineconsole)
+	which provide extended facilities. The following table
+	describes what you can do (and cannot do) with those three 
+	ways.
+	<table>
+	  <title>Basic differences in consoles</title>
+	  <tgroup cols="4" align="left">
+	    <thead>
+	      <row>
+		<entry>Function</entry>
+		<entry>Bare streams</entry>
+		<entry>Wineconsole &amp; user backend</entry>
+		<entry>Wineconsole &amp; curses backend</entry>
+		</row>
+	    </thead>
+	    <tbody>
+	      <row>
+		<entry>How to run (assuming executable is called foo.exe)</entry>
+		<entry><msgtext>
+<screen><prompt>$</prompt> <userinput>wine foo.exe</userinput></screen>
+		  </msgtext></entry>
+		<entry><msgtext>
+<screen><prompt>$</prompt> <userinput>wineconsole -- --backend=user foo.exe</userinput></screen>
+                </msgtext></entry>
+		<entry><msgtext>
+<screen><prompt>$</prompt> <userinput>wineconsole foo.exe</userinput></screen>
+                </msgtext>You can also use --backend=curses as an option</entry>
+	      </row>
+	      <row>
+		<entry>Good support for line oriented CUI applications
+		  (which print information line after line)
+		  </entry>
+		<entry>Yes</entry>
+		<entry>Yes</entry>
+		<entry>Yes</entry>
+	      </row>
+	      <row>
+		<entry>Good support for full screen CUI
+		  applications (including but not limited to color
+		  support, mouse support...)</entry>
+		<entry>No</entry>
+		<entry>Yes</entry>
+		<entry>Yes</entry>
+	      </row>
+	      <row>
+		<entry>Can be run even if X11 is not running</entry>
+		<entry>Yes</entry>
+		<entry>No</entry>
+		<entry>Yes</entry>
+	      </row>
+	      <row>
+		<entry>Implementation</entry>
+		<entry>Maps the standard Windows streams to the
+		  standard Unix streams (stdin/stdout/stderr)
+		</entry>
+		<entry>
+		  Wineconsole will create a new Window (hence
+		  requiring the USER32 DLL is available) where all
+		  information will be displayed
+		</entry>
+		<entry>
+		  Wineconsole will use existing unix console
+		  (from which the program is run) and with the help of
+		  the (n)curses library take control of all the terminal
+		  surface for interacting with the user
+		</entry>
+	      </row>
+	      <row>
+		<entry>Known limitations</entry>
+		<entry></entry>
+		<entry></entry>
+		<entry>
+		  Will produce strange behavior if two (or more)
+		  Windows consoles are used on the same Un*x terminal.
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</table>
+      </para>
+      <sect2 id="CUI-programs-config">
+	<title>Configuration of CUI executables</title>
+	<para>
+	  When wineconsole is used, several configuration options are
+	  available. Wine (as Windows do) stores, on a per application
+	  basis, several options in the registry. This let a user, for
+	  example, define the default screen-buffer size he would like
+	  to have for a given application.
+	</para>
+	<para>
+	  As of today, only the USER backend allows you to edit those
+	  options (we don't recommend editing by hand the registry
+	  contents). This edition is fired when a user right click in
+	  the console (this popups a menu), where you can either
+	  choose from:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		Default: this will edit the settings shared by all
+		applications which haven't been configured yet. So,
+		when an application is first run (on your machine,
+		under your account) in wineconsole, wineconsole will
+		inherit this default settings for the
+		application. Afterwards, the application will have its
+		own settings, that you'll be able to modify at your will.
+	      </para>
+	      <para>
+		Properties: this will edit the application's
+		settings. When you're done, with the edition, you'll
+		be prompted whether you want to:
+		<orderedlist>
+		  <listitem>
+		    <para>
+		      Keep these modified settings only for this
+		      session (next time you run the application, you
+		      will not see the modification you've just made).
+		    </para>
+		  </listitem>
+		  <listitem>
+		    <para>
+		      Use the settings for this session and save them
+		      as well, so that next you run your application,
+		      you'll use these new settings again.
+		    </para>
+		  </listitem>
+		</orderedlist>
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  Here's the list of the items you can configure, and their
+	  meanings:
+	  <table>
+	    <title>Wineconsole configuration options</title>
+	    <tgroup cols="2" align="left">
+	      <thead>
+		<row>
+		  <entry>Configuration option</entry>
+		  <entry>Meaning</entry>
+		</row>
+	      </thead>
+	      <tbody>
+		<row>
+		  <entry>Cursor's size</entry>
+		  <entry>
+		    Defines the size of the cursor. Three options are
+		    available: small (33% of character height), medium
+		    (66%) and large (100%)
+		  </entry>
+		</row>
+		<row>
+		  <entry>Popup menu</entry>
+		  <entry>
+		    It's been said earlier that wineconsole
+		    configuration popup was triggered using a right
+		    click in the console's window. However, this can
+		    be an issue when the application you run inside
+		    wineconsole expects the right click events to be
+		    sent to it. By ticking control or shift you select
+		    additional modifiers on the right click for
+		    opening the popup. For example, ticking shift will
+		    send events to the application when you right
+		    click the window without shift being hold down,
+		    and open the window when you right-click while
+		    shift being hold down.
+		  </entry>
+		</row>
+		<row>
+		  <entry>Quick edit</entry>
+		  <entry>
+		    This tick box lets you decide whether left-click
+		    mouse events shall be interpreted as events to be
+		    sent to the underlying application (tick off) or
+		    as a selection of rectangular part of the screen
+		    to be later on copied onto the clipboard (tick on).
+		  </entry>
+		</row>
+		<row>
+		  <entry>History</entry>
+		  <entry>
+		    This lets you pick up how many commands you want
+		    the console to recall. You can also drive whether
+		    you want, when entering several times the same
+		    command - potentially intertwened with others -
+		    whether you want to store all of them (tick off)
+		    or only the last one (tick on).
+		  </entry>
+		</row>
+		<row>
+		  <entry>Police</entry>
+		  <entry>
+		    The Police property sheet allows you to pick the
+		    default font for the console (font file, size,
+		    background and foreground color).
+		  </entry>
+		</row>
+		<row>
+		  <entry>Screenbuffer &amp; window size</entry>
+		  <entry>
+		    The console as you see it is made of two different
+		    parts. On one hand there's the screenbuffer which
+		    contains all the information your application puts
+		    on the screen, and the window which displays a
+		    given area of this screen buffer. Note that the
+		    window is always smaller or of the same size than
+		    the screen buffer. Having a stricly smaller window
+		    size will put on scrollbars on the window so that
+		    you can see the whole screenbuffer's content.
+		  </entry>
+		</row>
+		<row>
+		  <entry>Close on exit</entry>
+		  <entry>
+		    If it's ticked, then the wineconsole will exit
+		    when the application within terminates. Otherwise,
+		    it'll remain opened until the user manually closes
+		    it: this allows seeing the latest information of a
+		    program after it has terminated.
+		  </entry>
+		</row>
+		<row>
+		  <entry>Edition mode</entry>
+		  <entry>
+		    <msgtext>
+		      <para>
+			When the user enter commands, he or she can
+			choose between several edition modes:
+			<itemizedlist>
+			  <listitem>
+			    <para>
+			      Emacs: the same keybindings as under
+			      emacs are available. For example, Ctrl-A
+			      will bring the cursor to the beginning
+			      of the edition line. See your emacs
+			      manual for the details of the commands.
+			    </para>
+			  </listitem>
+			  <listitem>
+			    <para>
+			      Win32: this are the standard Windows
+			      console key-bindings (mainly using
+			      arrows).
+			    </para>
+			  </listitem>
+			</itemizedlist>
+		      </para>
+		    </msgtext>
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</para>
+      </sect2>
+    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file
