@@ -171,6 +171,73 @@ const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"http://www.winehq.org/tests/../", "tests11", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests/../tests11"},
 };
 
+struct {
+    char *path;
+    char *url;
+    DWORD ret;
+} TEST_URLFROMPATH [] = {
+    {"foo", "file:foo", S_OK},
+    {"foo\\bar", "file:foo/bar", S_OK},
+    {"\\foo\\bar", "file:///foo/bar", S_OK},
+    {"c:\\foo\\bar", "file:///c:/foo/bar", S_OK},
+    {"c:foo\\bar", "file:///c:foo/bar", S_OK},
+    {"c:\\foo/b a%r", "file:///c:/foo/b%20a%25r", S_OK},
+
+    {"xx:c:\\foo\\bar", "xx:c:\\foo\\bar", S_FALSE}
+};
+
+struct {
+    char *url;
+    char *path;
+    DWORD ret;
+} TEST_PATHFROMURL[] = {
+    {"file:///c:/foo/ba%5Cr", "c:\\foo\\ba\\r", S_OK},
+    {"file:///c:/foo/../ba%5Cr", "c:\\foo\\..\\ba\\r", S_OK},
+    {"file:///host/c:/foo/bar", "\\host\\c:\\foo\\bar", S_OK},
+    {"file://host/c:/foo/bar", "\\\\hostc:\\foo\\bar", S_OK},
+    {"file://host/c:/foo/bar", "\\\\hostc:\\foo\\bar", S_OK},
+    {"file:\\\\host\\c:\\foo\\bar", "\\\\hostc:\\foo\\bar", S_OK},
+    {"file:\\\\host\\ca\\foo\\bar", "\\\\host\\ca\\foo\\bar", S_OK},
+    {"file:\\\\host\\c|\\foo\\bar", "\\\\hostc|\\foo\\bar", S_OK},
+    {"file:\\%5Chost\\c:\\foo\\bar", "\\\\host\\c:\\foo\\bar", S_OK},
+    {"file:\\\\host\\cx:\\foo\\bar", "\\\\host\\cx:\\foo\\bar", S_OK},
+    {"file://c:/foo/bar", "c:\\foo\\bar", S_OK},
+    {"file://c:/d:/foo/bar", "c:\\d:\\foo\\bar", S_OK},
+    {"file://c|/d|/foo/bar", "c:\\d|\\foo\\bar", S_OK},
+    {"file://host/foo/bar", "\\\\host\\foo\\bar", S_OK},
+    {"file:/foo/bar", "\\foo\\bar", S_OK},
+    {"file:/foo/bar/", "\\foo\\bar\\", S_OK},
+    {"file:foo/bar", "foo\\bar", S_OK},
+    {"file:c:/foo/bar", "c:\\foo\\bar", S_OK},
+    {"file:c|/foo/bar", "c:\\foo\\bar", S_OK},
+    {"file:cx|/foo/bar", "cx|\\foo\\bar", S_OK},
+    {"file:////c:/foo/bar", "c:\\foo\\bar", S_OK},
+
+    {"c:\\foo\\bar", NULL, E_INVALIDARG},
+    {"foo/bar", NULL, E_INVALIDARG},
+    {"http://foo/bar", NULL, E_INVALIDARG},
+
+};
+
+struct {
+    char *url;
+    char *expect;
+} TEST_URL_UNESCAPE[] = {
+    {"file://foo/bar", "file://foo/bar"},
+    {"file://fo%20o%5Ca/bar", "file://fo o\\a/bar"}
+};
+
+
+struct {
+    char *path;
+    BOOL expect;
+} TEST_PATH_IS_URL[] = {
+    {"http://foo/bar", TRUE},
+    {"c:\\foo\\bar", FALSE},
+    {"foo://foo/bar", TRUE},
+    {"foo\\bar", FALSE}
+};
+
 static LPWSTR GetWideString(const char* szString)
 {
   LPWSTR wszString = (LPWSTR) HeapAlloc(GetProcessHeap(), 0,
@@ -266,6 +333,7 @@ static void test_url_escape(const char *szUrl, DWORD dwFlags, HRESULT dwExpectRe
     FreeWideString(expected_urlW);
 
 }
+
 static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl)
 {
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
@@ -376,6 +444,59 @@ static void test_UrlCombine(void)
     }
 }
 
+static void test_UrlCreateFromPath(void)
+{
+    int i;
+    char ret_url[INTERNET_MAX_URL_LENGTH];
+    DWORD len, ret;
+    WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *pathW, *urlW;
+
+    for(i = 0; i < sizeof(TEST_URLFROMPATH) / sizeof(TEST_URLFROMPATH[0]); i++) {
+        len = INTERNET_MAX_URL_LENGTH;
+        ret = UrlCreateFromPathA(TEST_URLFROMPATH[i].path, ret_url, &len, 0);
+        ok(ret == TEST_URLFROMPATH[i].ret, "ret %08lx from path %s\n", ret, TEST_URLFROMPATH[i].path);
+        ok(!lstrcmpi(ret_url, TEST_URLFROMPATH[i].url), "url %s from path %s\n", ret_url, TEST_URLFROMPATH[i].path);
+        ok(len == strlen(ret_url), "ret len %ld from path %s\n", len, TEST_URLFROMPATH[i].path);
+
+        len = INTERNET_MAX_URL_LENGTH;
+        pathW = GetWideString(TEST_URLFROMPATH[i].path);
+        urlW = GetWideString(TEST_URLFROMPATH[i].url);
+        ret = UrlCreateFromPathW(pathW, ret_urlW, &len, 0);
+        WideCharToMultiByte(CP_ACP, 0, ret_urlW, -1, ret_url, sizeof(ret_url),0,0);
+        ok(ret == TEST_URLFROMPATH[i].ret, "ret %08lx from path L\"%s\"\n", ret, TEST_URLFROMPATH[i].path);
+        ok(!lstrcmpiW(ret_urlW, urlW), "got %s expected %s from path L\"%s\"\n", ret_url, TEST_URLFROMPATH[i].url, TEST_URLFROMPATH[i].path);
+        ok(len == strlenW(ret_urlW), "ret len %ld from path L\"%s\"\n", len, TEST_URLFROMPATH[i].path);
+        FreeWideString(urlW);
+        FreeWideString(pathW);
+    }
+}
+
+static void test_UrlUnescape(void)
+{
+    CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
+    WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *urlW, *expected_urlW; 
+    DWORD dwEscaped;
+    unsigned int i;
+
+    for(i=0; i<sizeof(TEST_URL_UNESCAPE)/sizeof(TEST_URL_UNESCAPE[0]); i++) { 
+        dwEscaped=INTERNET_MAX_URL_LENGTH;
+        ok(UrlUnescapeA(TEST_URL_UNESCAPE[i].url, szReturnUrl, &dwEscaped, 0) == S_OK, "UrlEscapeA didn't return 0x%08lx from \"%s\"\n", S_OK, TEST_URL_UNESCAPE[i].url);
+        ok(strcmp(szReturnUrl,TEST_URL_UNESCAPE[i].expect)==0, "Expected \"%s\", but got \"%s\" from \"%s\"\n", TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url);
+
+        dwEscaped = INTERNET_MAX_URL_LENGTH;
+        urlW = GetWideString(TEST_URL_UNESCAPE[i].url);
+        expected_urlW = GetWideString(TEST_URL_UNESCAPE[i].expect);
+        ok(UrlUnescapeW(urlW, ret_urlW, &dwEscaped, 0) == S_OK, "UrlEscapeW didn't return 0x%08lx from \"%s\"\n", S_OK, TEST_URL_UNESCAPE[i].url);
+        WideCharToMultiByte(CP_ACP,0,ret_urlW,-1,szReturnUrl,INTERNET_MAX_URL_LENGTH,0,0);
+        ok(strcmpW(ret_urlW, expected_urlW)==0, "Expected \"%s\", but got \"%s\" from \"%s\" flags %08lx\n", TEST_URL_UNESCAPE[i].expect, szReturnUrl, TEST_URL_UNESCAPE[i].url, 0L);
+        FreeWideString(urlW);
+        FreeWideString(expected_urlW);
+    }
+
+}
+
 static void test_PathSearchAndQualify(void)
 {
     WCHAR path1[] = {'c',':','\\','f','o','o',0};
@@ -426,6 +547,51 @@ static void test_PathSearchAndQualify(void)
 
 }
 
+static void test_PathCreateFromUrl(void)
+{
+    int i;
+    char ret_path[INTERNET_MAX_URL_LENGTH];
+    DWORD len, ret;
+    WCHAR ret_pathW[INTERNET_MAX_URL_LENGTH];
+    WCHAR *pathW, *urlW;
+
+    for(i = 0; i < sizeof(TEST_PATHFROMURL) / sizeof(TEST_PATHFROMURL[0]); i++) {
+        len = INTERNET_MAX_URL_LENGTH;
+        ret = PathCreateFromUrlA(TEST_PATHFROMURL[i].url, ret_path, &len, 0);
+        ok(ret == TEST_PATHFROMURL[i].ret, "ret %08lx from url %s\n", ret, TEST_PATHFROMURL[i].url);
+        if(TEST_PATHFROMURL[i].path) {
+           ok(!lstrcmpi(ret_path, TEST_PATHFROMURL[i].path), "got %s expected %s from url %s\n", ret_path, TEST_PATHFROMURL[i].path,  TEST_PATHFROMURL[i].url);
+           ok(len == strlen(ret_path), "ret len %ld from url %s\n", len, TEST_PATHFROMURL[i].url);
+        }
+        len = INTERNET_MAX_URL_LENGTH;
+        pathW = GetWideString(TEST_PATHFROMURL[i].path);
+        urlW = GetWideString(TEST_PATHFROMURL[i].url);
+        ret = PathCreateFromUrlW(urlW, ret_pathW, &len, 0);
+        WideCharToMultiByte(CP_ACP, 0, ret_pathW, -1, ret_path, sizeof(ret_path),0,0);
+        ok(ret == TEST_PATHFROMURL[i].ret, "ret %08lx from url L\"%s\"\n", ret, TEST_PATHFROMURL[i].url);
+        if(TEST_PATHFROMURL[i].path) {
+            ok(!lstrcmpiW(ret_pathW, pathW), "got %s expected %s from url L\"%s\"\n", ret_path, TEST_PATHFROMURL[i].path, TEST_PATHFROMURL[i].url);
+            ok(len == strlenW(ret_pathW), "ret len %ld from url L\"%s\"\n", len, TEST_PATHFROMURL[i].url);
+        }
+        FreeWideString(urlW);
+        FreeWideString(pathW);
+    }
+}
+
+
+static void test_PathIsUrl(void)
+{
+    int i;
+    BOOL ret;
+
+    for(i = 0; i < sizeof(TEST_PATH_IS_URL)/sizeof(TEST_PATH_IS_URL[0]); i++) {
+        ret = PathIsURLA(TEST_PATH_IS_URL[i].path);
+        ok(ret == TEST_PATH_IS_URL[i].expect,
+           "returned %d from path %s, expected %d\n", ret, TEST_PATH_IS_URL[i].path,
+           TEST_PATH_IS_URL[i].expect);
+    }
+}
+
 START_TEST(path)
 {
   test_UrlHash();
@@ -433,6 +599,10 @@ START_TEST(path)
   test_UrlCanonicalize();
   test_UrlEscape();
   test_UrlCombine();
+  test_UrlCreateFromPath();
+  test_UrlUnescape();
 
   test_PathSearchAndQualify();
+  test_PathCreateFromUrl();
+  test_PathIsUrl();
 }
