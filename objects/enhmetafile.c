@@ -543,7 +543,45 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
       }
-
+    case EMR_POLYLINETO16:
+      {
+	PEMRPOLYLINETO16 pPoly = (PEMRPOLYLINETO16) mr;
+	/* Shouldn't use PolylineTo16 since pPoly->cpts is DWORD */
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPoly->cpts; i++)
+	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	PolylineTo(hdc, pts, pPoly->cpts);
+	HeapFree( GetProcessHeap(), 0, pts );
+	break;
+      }
+    case EMR_POLYBEZIER16:
+      {
+	PEMRPOLYBEZIER16 pPoly = (PEMRPOLYBEZIER16) mr;
+	/* Shouldn't use PolyBezier16 since pPoly->cpts is DWORD */
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPoly->cpts; i++)
+	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	PolyBezier(hdc, pts, pPoly->cpts);
+	HeapFree( GetProcessHeap(), 0, pts );
+	break;
+      }
+    case EMR_POLYBEZIERTO16:
+      {
+	PEMRPOLYBEZIERTO16 pPoly = (PEMRPOLYBEZIERTO16) mr;
+	/* Shouldn't use PolyBezierTo16 since pPoly->cpts is DWORD */
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPoly->cpts; i++)
+	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	PolyBezierTo(hdc, pts, pPoly->cpts);
+	HeapFree( GetProcessHeap(), 0, pts );
+	break;
+      }
     case EMR_POLYPOLYGON16:
       {
         PEMRPOLYPOLYGON16 pPolyPoly = (PEMRPOLYPOLYGON16) mr;
@@ -558,6 +596,23 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 				      pPolyPoly->nPolys) + i, pts + i);
 
 	PolyPolygon(hdc, pts, (INT*)pPolyPoly->aPolyCounts, pPolyPoly->nPolys);
+	HeapFree( GetProcessHeap(), 0, pts );
+	break;
+      }
+    case EMR_POLYPOLYLINE16:
+      {
+        PEMRPOLYPOLYLINE16 pPolyPoly = (PEMRPOLYPOLYLINE16) mr;
+	/* NB POINTS array doesn't start at pPolyPoly->apts it's actually
+	   pPolyPoly->aPolyCounts + pPolyPoly->nPolys */
+
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPolyPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPolyPoly->cpts; i++)
+	  CONV_POINT16TO32((POINTS*) (pPolyPoly->aPolyCounts +
+				      pPolyPoly->nPolys) + i, pts + i);
+
+	PolyPolyline(hdc, pts, pPolyPoly->aPolyCounts, pPolyPoly->nPolys);
 	HeapFree( GetProcessHeap(), 0, pts );
 	break;
       }
@@ -1107,10 +1162,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_PLGBLT:
     case EMR_SETDIBITSTODEVICE:
     case EMR_EXTTEXTOUTA:
-    case EMR_POLYBEZIER16:
-    case EMR_POLYBEZIERTO16:
-    case EMR_POLYLINETO16:
-    case EMR_POLYPOLYLINE16:
     case EMR_POLYDRAW16:
     case EMR_CREATEMONOBRUSH:
     case EMR_POLYTEXTOUTA:
