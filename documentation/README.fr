@@ -216,7 +216,7 @@ Certaines documentations (divers Guides Wine etc) peuvent être trouvées dans
 le répertoire documentation/ (à part ceux disponibles également sur WineHQ)
 
 Si vou voulez construire les fichier SGML ici, vous pouvez exécuter la
-commande "make" dans le répertoire documentation/.
+commande "make doc" dans le répertoire documentation/.
 Pour le faire vous aurrez besoin des outils du package sgml (pour db2html,
 db2ps, db2pdf) nommés :
 Debian:		docbook-utils
