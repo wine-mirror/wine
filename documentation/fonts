@@ -1,3 +1,10 @@
+Note:
+=====
+The fnt2bdf utility is included with Wine. It can be found in the tools 
+directory.
+Links to the other tools mentioned in this document can be found on wine
+headquarters: http://www.winehq.com/tools.html
+
 
 How To Convert Windows Fonts
 ============================

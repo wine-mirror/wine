@@ -3107,7 +3107,8 @@ INT16 WINAPI AddFontResource16( LPCSTR filename )
  */
 INT WINAPI AddFontResourceA( LPCSTR str )
 {
-    FIXME("(%s): stub\n", debugres_a(str));
+    FIXME("(%s): stub! Read \"documentation/fonts\" how to install "
+            "this font manually.\n", debugres_a(str));
     return 1;
 }
 
@@ -3117,7 +3118,8 @@ INT WINAPI AddFontResourceA( LPCSTR str )
  */
 INT WINAPI AddFontResourceW( LPCWSTR str )
 {
-    FIXME("(%s): stub\n", debugres_w(str) );
+    FIXME("(%s): stub! Read \"documentation/fonts\" how to install "
+            "this font manually.\n", debugres_w(str));
     return 1;
 }
 
