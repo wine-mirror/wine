@@ -1923,6 +1923,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_WININICHANGE:
         FIXME_(msg)("message %04x needs translation\n", msg32 );
         return -1;
+    case WM_SIZING:  /* should not be send to 16-bit apps */
+        return -1;
     default:  /* No translation needed */
         return 0;
     }
