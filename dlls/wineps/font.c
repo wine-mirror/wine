@@ -5,6 +5,7 @@
  *
  */
 #include <string.h>
+#include <stdlib.h> 	    /* for bsearch() */
 #include "winspool.h"
 #include "psdrv.h"
 #include "debugtools.h"
@@ -197,6 +198,7 @@ BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
     return TRUE;
 }
 
+#if 0
 /***********************************************************************
  *           PSDRV_UnicodeToANSI
  */
@@ -224,9 +226,51 @@ char PSDRV_UnicodeToANSI(int u)
 	return 0xff;
     }
 }
+#endif
+
+/******************************************************************************
+ *  	PSDRV_UVMetrics
+ *
+ *  Find the AFMMETRICS for a given UV.  Returns first glyph in the font
+ *  (space?) if the font does not have a glyph for the given UV.
+ */
+static int MetricsByUV(const void *a, const void *b)
+{
+    return (int)(((const AFMMETRICS *)a)->UV - ((const AFMMETRICS *)b)->UV);
+}
+ 
+const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
+{
+    AFMMETRICS	    	key;
+    const AFMMETRICS	*needle;
+    
+    /*
+     *	Ugly work-around for symbol fonts.  Wine is sending characters which
+     *	belong in the Unicode private use range (U+F020 - U+F0FF) as ASCII
+     *	characters (U+0020 - U+00FF).
+     */
+    
+    if ((afm->Metrics->UV & 0xff00) == 0xf000 && UV < 0x100)
+    	UV |= 0xf000;
+    
+    key.UV = UV;
+    
+    needle = bsearch(&key, afm->Metrics, afm->NumofMetrics, sizeof(AFMMETRICS),
+	    MetricsByUV);
+
+    if (needle == NULL)
+    {
+    	WARN("No glyph for U+%.4lX in %s\n", UV, afm->FontName);
+    	needle = afm->Metrics;
+    }
+	
+    return needle;
+}
+
 /***********************************************************************
  *           PSDRV_GetTextExtentPoint
  */
+#if 0
 BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
                                   LPSIZE size )
 {
@@ -249,11 +293,34 @@ BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 
     return TRUE;
 }
+#endif
 
+BOOL PSDRV_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count, LPSIZE size)
+{
+    PSDRV_PDEVICE   *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    int     	    i;
+    float   	    width = 0.0;
+    
+    TRACE("%s %i\n", debugstr_wn(str, count), count);
+    
+    for (i = 0; i < count && str[i] != '\0'; ++i)
+	width += PSDRV_UVMetrics(str[i], physDev->font.afm)->WX;
+	
+    width *= physDev->font.scale;
+    
+    size->cx = GDI_ROUND((FLOAT)width * dc->xformVport2World.eM11);
+    size->cy = GDI_ROUND((FLOAT)physDev->font.tm.tmHeight *
+    	    dc->xformVport2World.eM22);
+	    
+    TRACE("cx=%li cy=%li\n", size->cx, size->cy);
+	    
+    return TRUE;
+}
 
 /***********************************************************************
  *           PSDRV_GetCharWidth
  */
+#if 0
 BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 			   LPINT buffer )
 {
@@ -268,7 +335,31 @@ BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 
     return TRUE;
 }
+#endif
 
+BOOL PSDRV_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar, LPINT buffer)
+{
+    PSDRV_PDEVICE   *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    UINT    	    i;
+    
+    TRACE("U+%.4X U+%.4X\n", firstChar, lastChar);
+    
+    if (lastChar > 0xffff || firstChar > lastChar)
+    {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+    	return FALSE;
+    }
+	
+    for (i = firstChar; i <= lastChar; ++i)
+    {
+    	*buffer = GDI_ROUND(PSDRV_UVMetrics(i, physDev->font.afm)->WX
+	    	* physDev->font.scale);
+	TRACE("U+%.4X: %i\n", i, *buffer);
+	++buffer;
+    }
+	
+    return TRUE;
+}
     
 /***********************************************************************
  *           PSDRV_SetFont

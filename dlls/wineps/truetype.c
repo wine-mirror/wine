@@ -329,6 +329,7 @@ static BOOL ReadMetricsTables(AFM *afm)
     afm->WinMetrics.sTypoLineGap = os2->sTypoLineGap;
     afm->WinMetrics.usWinAscent = os2->usWinAscent;
     afm->WinMetrics.usWinDescent = os2->usWinDescent;
+    afm->WinMetrics.sAvgCharWidth = os2->xAvgCharWidth;
     
     return TRUE;
 }
@@ -482,6 +483,11 @@ static BOOL ReadTrueTypeAFM(AFM *afm)
     
     if (ReadCharMetrics(afm) == FALSE)
     	return FALSE;
+
+    /* Can't do this check until character metrics are read */
+
+    if (afm->WinMetrics.sAvgCharWidth == 0)
+    	afm->WinMetrics.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
 
     return TRUE;
 }

@@ -421,6 +421,8 @@ INT PSDRV_GlyphListInit();
 GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
 VOID PSDRV_IndexGlyphList();
 BOOL PSDRV_GetTrueTypeMetrics();
+const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm);
+SHORT PSDRV_CalcAvgCharWidth(const AFM *afm);
 
 #endif
 

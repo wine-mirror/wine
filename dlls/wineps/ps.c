@@ -115,6 +115,9 @@ static char psrrectangle[] = /* x, y, width, height, -width */
 static char psshow[] = /* string */
 "(%s) show\n";
 
+static const char psglyphshow[] = /* glyph name */
+"/%s glyphshow\n";
+
 static char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement */
 "/%s findfont\n"
 "[%d 0 0 %d 0 0]\n"
@@ -634,6 +637,7 @@ BOOL PSDRV_WriteReencodeFont(DC *dc)
     return TRUE;
 }    
 
+#if 0
 BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
 {
     char *buf, *buf1;
@@ -671,6 +675,33 @@ BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
 
     return TRUE;
 }    
+#endif
+
+BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
+{
+    char    buf[128];
+    int     i;
+    
+    for (i = 0; i < count; ++i)
+    {
+    	LPCSTR	name;
+	int 	l;
+	
+	name = PSDRV_UVMetrics(str[i],
+	    	((PSDRV_PDEVICE *)dc->physDev)->font.afm)->N->sz;
+	l = snprintf(buf, sizeof(buf), psglyphshow, name);
+	
+	if (l < sizeof(psglyphshow) - 2 || l > sizeof(buf) - 1)
+	{
+	    WARN("Unusable glyph name '%s' - ignoring\n", name);
+	    continue;
+	}
+	
+	PSDRV_WriteSpool(dc, buf, l);
+    }
+    
+    return TRUE;
+}
 
 BOOL PSDRV_WriteFill(DC *dc)
 {

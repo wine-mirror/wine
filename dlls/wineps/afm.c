@@ -802,6 +802,60 @@ static BOOL SortFontMetrics()
 }
 
 /*******************************************************************************
+ *  PSDRV_CalcAvgCharWidth
+ *
+ *  Calculate WinMetrics.sAvgCharWidth for a Type 1 font.  Can also be used on
+ *  TrueType fonts, if font designer set OS/2:xAvgCharWidth to zero.
+ *
+ *  Tries to use formula in TrueType specification; falls back to simple mean
+ *  if any lowercase latin letter (or space) is not present.
+ */
+inline static SHORT MeanCharWidth(const AFM *afm)
+{
+    float   w = 0.0;
+    int     i;
+    
+    for (i = 0; i < afm->NumofMetrics; ++i)
+    	w += afm->Metrics[i].WX;
+	
+    w /= afm->NumofMetrics;
+    
+    return (SHORT)(w + 0.5);
+}
+
+static const struct { LONG UV; int weight; } UVweight[27] =
+{
+    { 0x0061,  64 }, { 0x0062,  14 }, { 0x0063,  27 }, { 0x0064,  35 },
+    { 0x0065, 100 }, { 0x0066,  20 }, { 0x0067,  14 }, { 0x0068,  42 },
+    { 0x0069,  63 }, { 0x006a,   3 }, { 0x006b,   6 }, { 0x006c,  35 },
+    { 0x006d,  20 }, { 0x006e,  56 }, { 0x006f,  56 }, { 0x0070,  17 },
+    { 0x0071,   4 }, { 0x0072,  49 }, { 0x0073,  56 }, { 0x0074,  71 },
+    { 0x0075,  31 }, { 0x0076,  10 }, { 0x0077,  18 }, { 0x0078,   3 },
+    { 0x0079,  18 }, { 0x007a,   2 }, { 0x0020, 166 }
+};
+ 
+SHORT PSDRV_CalcAvgCharWidth(const AFM *afm)
+{
+    float   w = 0.0;
+    int     i;
+    
+    for (i = 0; i < 27; ++i)
+    {
+    	const AFMMETRICS    *afmm;
+	
+	afmm = PSDRV_UVMetrics(UVweight[i].UV, afm);
+	if (afmm->UV != UVweight[i].UV)     /* UVMetrics returns first glyph */
+	    return MeanCharWidth(afm);	    /*   in font if UV is missing    */
+	    
+	w += afmm->WX * (float)(UVweight[i].weight);
+    }
+    
+    w /= 1000.0;
+    
+    return (SHORT)(w + 0.5);
+}
+
+/*******************************************************************************
  *  CalcWindowsMetrics
  *
  *  Calculates several Windows-specific font metrics for each font.  Relies on
@@ -871,6 +925,8 @@ static VOID CalcWindowsMetrics()
 	    wm.sLineGap = 1150 - (wm.sAscender - wm.sDescender);
 	    if (wm.sLineGap < 0)
 	    	wm.sLineGap = 0;
+		
+	    wm.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
 						
 	    TRACE("Windows metrics for '%s':\n", afm->FullName);
 	    TRACE("\tsAscender = %i\n", wm.sAscender);
@@ -882,6 +938,7 @@ static VOID CalcWindowsMetrics()
 	    TRACE("\tsTypoLineGap = %i\n", wm.sTypoLineGap);
 	    TRACE("\tusWinAscent = %u\n", wm.usWinAscent);
 	    TRACE("\tusWinDescent = %u\n", wm.usWinDescent);
+	    TRACE("\tsAvgCharWidth = %i\n", wm.sAvgCharWidth);
 	    
 	    afm->WinMetrics = wm;
 	    
