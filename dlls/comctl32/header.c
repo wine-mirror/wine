@@ -651,8 +651,12 @@ HEADER_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	phdi->lParam = lpItem->lParam;
 
     if (phdi->mask & HDI_TEXT) {
-	if (lpItem->pszText != LPSTR_TEXTCALLBACKW)
-	    lstrcpynWtoA (phdi->pszText, lpItem->pszText, phdi->cchTextMax);
+	if (lpItem->pszText != LPSTR_TEXTCALLBACKW) {
+	    if (lpItem->pszText)
+		lstrcpynWtoA (phdi->pszText, lpItem->pszText, phdi->cchTextMax);
+	    else
+	        *phdi->pszText = 0;
+	}	
 	else
 	    phdi->pszText = LPSTR_TEXTCALLBACKA;
     }
@@ -699,8 +703,12 @@ HEADER_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	phdi->lParam = lpItem->lParam;
 
     if (phdi->mask & HDI_TEXT) {
-	if (lpItem->pszText != LPSTR_TEXTCALLBACKW)
-	    lstrcpynW (phdi->pszText, lpItem->pszText, phdi->cchTextMax);
+	if (lpItem->pszText != LPSTR_TEXTCALLBACKW) {
+	    if (lpItem->pszText)
+	        lstrcpynW (phdi->pszText, lpItem->pszText, phdi->cchTextMax);
+	    else
+	        *phdi->pszText = 0;
+	}
 	else
 	    phdi->pszText = LPSTR_TEXTCALLBACKW;
     }
