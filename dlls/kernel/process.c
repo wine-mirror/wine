@@ -104,9 +104,9 @@ inline static int contains_path( LPCWSTR name )
  */
 inline static int is_special_env_var( const char *var )
 {
-    return (!memcmp( var, "PATH=", sizeof("PATH=")-1 ) ||
-            !memcmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
-            !memcmp( var, "TMP=", sizeof("TMP=")-1 ));
+    return (!strncmp( var, "PATH=", sizeof("PATH=")-1 ) ||
+            !strncmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
+            !strncmp( var, "TMP=", sizeof("TMP=")-1 ));
 }
 
 
@@ -386,7 +386,7 @@ static BOOL build_initial_environment( char **environ )
         char *str = *e;
 
         /* skip Unix special variables and use the Wine variants instead */
-        if (!memcmp( str, "WINE", 4 ))
+        if (!strncmp( str, "WINE", 4 ))
         {
             if (is_special_env_var( str + 4 )) str += 4;
         }
@@ -731,7 +731,7 @@ static BOOL process_init( char *argv[], char **environ )
     if (!build_initial_environment( environ )) return FALSE;
 
     /* Parse command line arguments */
-    OPTIONS_ParseOptions( !info_size ? argv : NULL );
+    if (!info_size) OPTIONS_ParseOptions( argv );
 
     /* initialise DOS drives */
     if (!DRIVE_Init()) return FALSE;
@@ -1100,8 +1100,8 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
                 continue; /* skipped */
             if (is_special_env_var( p ))  /* prefix it with "WINE" */
                 *envptr++ = alloc_env_string( "WINE", p );
-            else if (memcmp( p, "HOME=", 5 ) &&
-                     memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = p;
+            else if (strncmp( p, "HOME=", 5 ) &&
+                     strncmp( p, "WINEPREFIX=", 11 )) *envptr++ = p;
         }
         *envptr = 0;
     }

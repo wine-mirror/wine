@@ -37,36 +37,23 @@ struct option_descr
     const char *longname;
     char        shortname;
     int         has_arg;
-    int         inherit;
     void      (*func)( const char *arg );
     const char *usage;
 };
 
-static char *inherit_str;  /* options to pass to child processes */
-
-static void DECLSPEC_NORETURN out_of_memory(void);
-static void out_of_memory(void)
-{
-    MESSAGE( "Virtual memory exhausted\n" );
-    ExitProcess(1);
-}
-
 static void do_debugmsg( const char *arg );
-static void do_dll( const char *arg );
 static void do_help( const char *arg );
 static void do_version( const char *arg );
 
 static const struct option_descr option_table[] =
 {
-    { "debugmsg",     0, 1, 1, do_debugmsg,
+    { "debugmsg",     0, 1, do_debugmsg,
       "--debugmsg name  Turn debugging-messages on or off" },
-    { "dll",          0, 1, 1, do_dll,
-      "--dll name       This option is no longer supported" },
-    { "help",       'h', 0, 0, do_help,
+    { "help",       'h', 0, do_help,
       "--help,-h        Show this help message" },
-    { "version",    'v', 0, 0, do_version,
+    { "version",    'v', 0, do_version,
       "--version,-v     Display the Wine version" },
-    { NULL,           0, 0, 0, NULL, NULL }  /* terminator */
+    { NULL,           0, 0, NULL, NULL }  /* terminator */
 };
 
 
@@ -83,6 +70,8 @@ static void do_version( const char *arg )
 
 static void do_debugmsg( const char *arg )
 {
+    char buffer[1024];
+
     if (wine_dbg_parse_options( arg ))
     {
         MESSAGE("wine: Syntax: --debugmsg [class]+xxx,...  or -debugmsg [class]-xxx,...\n");
@@ -91,40 +80,23 @@ static void do_debugmsg( const char *arg )
         MESSAGE("Available message classes: err, warn, fixme, trace\n\n");
         ExitProcess(1);
     }
-}
+    MESSAGE("Warning: the --debugmsg option is deprecated. You should use\n");
+    MESSAGE("the WINEDEBUG environment variable instead, like this:\n\n");
+    MESSAGE("  WINEDEBUG=%s wine ...\n\n", arg );
 
-static void do_dll( const char *arg )
-{
-    MESSAGE("The --dll option has been removed, you should use\n"
-            "the WINEDLLOVERRIDES environment variable instead.\n"
-            "To see a help message, run:\n"
-            "    WINEDLLOVERRIDES=help wine <program.exe>\n");
-    ExitProcess(1);
-}
-
-static void remove_options( char *argv[], int pos, int count, int inherit )
-{
-    if (inherit)
+    /* append the argument to WINEDEBUG so that it gets inherited */
+    if (GetEnvironmentVariableA( "WINEDEBUG", buffer, sizeof(buffer)-1 ) && buffer[0])
     {
-        int i, len = 0;
-        for (i = 0; i < count; i++) len += strlen(argv[pos+i]) + 1;
-        if (inherit_str)
-        {
-            if (!(inherit_str = realloc( inherit_str, strlen(inherit_str) + 1 + len )))
-                out_of_memory();
-            strcat( inherit_str, " " );
-        }
-        else
-        {
-            if (!(inherit_str = malloc( len ))) out_of_memory();
-            inherit_str[0] = 0;
-        }
-        for (i = 0; i < count; i++)
-        {
-            strcat( inherit_str, argv[pos+i] );
-            if (i < count-1) strcat( inherit_str, " " );
-        }
+        char *p = buffer + strlen(buffer);
+        *p++ = ',';
+        lstrcpynA( p, arg, buffer + sizeof(buffer) - p );
+        SetEnvironmentVariableA( "WINEDEBUG", buffer );
     }
+    else SetEnvironmentVariableA( "WINEDEBUG", arg );
+}
+
+static inline void remove_options( char *argv[], int pos, int count )
+{
     while ((argv[pos] = argv[pos+count])) pos++;
 }
 
@@ -168,40 +140,19 @@ static void parse_options( char *argv[] )
 	if (equalarg)
 	{
             opt->func( equalarg );
-            remove_options( argv, i, 1, opt->inherit );
+            remove_options( argv, i, 1 );
 	}
         else if (opt->has_arg && argv[i+1])
         {
             opt->func( argv[i+1] );
-            remove_options( argv, i, 2, opt->inherit );
+            remove_options( argv, i, 2 );
         }
         else
         {
             opt->func( "" );
-            remove_options( argv, i, 1, opt->inherit );
+            remove_options( argv, i, 1 );
         }
         i--;
-    }
-}
-
-/* inherit options from WINEOPTIONS variable */
-static void inherit_options( char *buffer )
-{
-    char *argv[256];
-    unsigned int n;
-
-    char *p = strtok( buffer, " \t" );
-    for (n = 0; n < sizeof(argv)/sizeof(argv[0])-1 && p; n++)
-    {
-        argv[n] = p;
-        p = strtok( NULL, " \t" );
-    }
-    argv[n] = NULL;
-    parse_options( argv );
-    if (argv[0])  /* an option remains */
-    {
-        MESSAGE( "Unknown option '%s' in WINEOPTIONS variable\n\n", argv[0] );
-        OPTIONS_Usage();
     }
 }
 
@@ -224,23 +175,16 @@ void OPTIONS_Usage(void)
  */
 void OPTIONS_ParseOptions( char *argv[] )
 {
-    char buffer[1024];
     int i;
 
-    if (GetEnvironmentVariableA( "WINEOPTIONS", buffer, sizeof(buffer) ) && buffer[0])
-        inherit_options( buffer );
-    if (!argv) return;
-
     parse_options( argv + 1 );
-
-    SetEnvironmentVariableA( "WINEOPTIONS", inherit_str );
 
     /* check if any option remains */
     for (i = 1; argv[i]; i++)
     {
         if (!strcmp( argv[i], "--" ))
         {
-            remove_options( argv, i, 1, 0 );
+            remove_options( argv, i, 1 );
             break;
         }
         if (argv[i][0] == '-')

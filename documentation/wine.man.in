@@ -44,46 +44,10 @@ source.
 .SH OPTIONS
 .TP
 .I --debugmsg [xxx]#name[,[xxx1]#name1]
-Turn debugging messages on or off.  
-.RS +7
-.PP
-xxx is optional and can be one of the following: 
-.I err, 
-.I warn, 
-.I fixme, 
-or 
-.I trace. 
-If xxx is not specified, all debugging messages for the specified
-channel are turned on.  Each channel will print messages about a particular
-component of 
-.B wine.  
-# can be either + or - to switch the specified channel on or off
-respectively.  If there is no
-.I xxx
-part before it, a leading + can be omitted. Note that spaces are not
-allowed anywhere in the string.
-.PP
-For instance:
-.PP
-.I --debugmsg warn+all
-will turn on all warning messages (recommended for debugging)
-.br
-.I --debugmsg warn+dll,+heap
-will turn on DLL warning messages and all heap messages.  
-.br
-.I --debugmsg fixme-all,warn+cursor,+relay
-will turn off all FIXME messages, turn on cursor warning messages, and turn
-on all relay messages (API calls).
-.br 
-.I --debugmsg +relay
-will turn on all relay messages. For more control on including or excluding
-functions and dlls from the relay trace look into the [Debug] section
-of the wine configuration file.
-.PP
-For more information on debugging messages, see the
-.I Running Wine
-chapter of the Wine User Guide.
-.RE
+Turn debugging messages on or off.  This option is deprecated, you
+should use the
+.I WINEDEBUG
+environment variable instead (see below).
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
@@ -186,7 +150,51 @@ the path and in a few other likely locations.
 .TP
 .I WINEDEBUG
 Turns debugging messages on or off. The syntax of the variable is
-identical to the syntax of the arguments for the --debugmsg option.
+of the form
+.RI [ class ][+/-] channel [,[ class2 ][+/-] channel2 ].
+.RS +7
+.PP
+.I class
+is optional and can be one of the following: 
+.B err, warn, fixme,
+or 
+.B trace. 
+If
+.I class
+is not specified, all debugging messages for the specified
+channel are turned on.  Each channel will print messages about a particular
+component of 
+.B wine.  
+The following character can be either + or - to switch the specified
+channel on or off respectively.  If there is no
+.I class
+part before it, a leading + can be omitted. Note that spaces are not
+allowed anywhere in the string.
+.PP
+Examples:
+.TP
+WINEDEBUG=warn+all
+will turn on all warning messages (recommended for debugging).
+.br
+.TP
+WINEDEBUG=warn+dll,+heap
+will turn on DLL warning messages and all heap messages.  
+.br
+.TP
+WINEDEBUG=fixme-all,warn+cursor,+relay
+will turn off all FIXME messages, turn on cursor warning messages, and turn
+on all relay messages (API calls).
+.br 
+.TP
+WINEDEBUG=relay
+will turn on all relay messages. For more control on including or excluding
+functions and dlls from the relay trace look into the [Debug] section
+of the wine configuration file.
+.PP
+For more information on debugging messages, see the
+.I Running Wine
+chapter of the Wine User Guide.
+.RE
 .TP
 .I WINEDLLPATH
 Specifies the path(s) in which to search for builtin dlls and Winelib
@@ -209,23 +217,23 @@ internal dlls (
 ). The type may be abbreviated with the first letter of the type (
 .I n, b
 ). Each sequence of orders must be separated by commas.
-.br
+.RS
+.PP
 Each dll may have its own specific load order. The load order
 determines which version of the dll is attempted to be loaded into the
 address space. If the first fails, then the next is tried and so
 on. Multiple libraries with the same load order can be separated with
 commas. It is also possible to use specify different loadorders for
 different libraries by separating the entries by ";".
-.br
+.PP
 The load order for a 16-bit dll is always defined by the load order of
 the 32-bit dll that contains it (which can be identified by looking at
 the symbolic link of the 16-bit .dll.so file). For instance if
 ole32.dll is configured as builtin, storage.dll will be loaded as
 builtin too, since the 32-bit ole32.dll contains the 16-bit
 storage.dll.
-.br
+.PP
 Examples:
-.RS
 .TP
 WINEDLLOVERRIDES="comdlg32,shell32=n,b"
 .br
@@ -289,12 +297,8 @@ Problems and suggestions with this manpage please also report to
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
-can be obtained via FTP from ibiblio.org in the
-/pub/Linux/ALPHA/Wine/development directory.  The releases are in the
-format 'Wine-yyyymmdd.tar.gz', or 'Wine-yyyymmdd.diff.gz' for the
-diff's from the previous release. The same directory holds the
-pre-built contents of the documentation in various formats
-(wine-doc.xxx.gz).
+can be downloaded from
+.I http://www.winehq.org/download
 .PP
 The latest snapshot of the code may be obtained via CVS.  For information
 on how to do this, please see
