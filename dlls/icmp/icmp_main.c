@@ -19,13 +19,17 @@
  * - Using the winsock functions has not been tested.
  */
 
+#include "config.h"
 
-#define __USE_BSD
-
-#include <sys/socket.h>
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <netdb.h>
 #include <netinet/in_systm.h>
-#include <netinet/in.h>
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <sys/time.h>
@@ -33,7 +37,9 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <arpa/inet.h>
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -221,19 +227,19 @@ DWORD WINAPI IcmpSendEcho(
             int len;
             /* Before we mess with the options, get the default values */
             len=sizeof(val);
-            ISOCK_getsockopt(icp->sid,SOL_IP,IP_TTL,&val,&len);
+            ISOCK_getsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,&len);
             icp->default_opts.Ttl=val;
 
             len=sizeof(val);
-            ISOCK_getsockopt(icp->sid,SOL_IP,IP_TOS,&val,&len);
+            ISOCK_getsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,&len);
             icp->default_opts.Tos=val;
             /* FIXME: missing: handling of IP 'flags', and all the other options */
         }
 
         val=RequestOptions->Ttl;
-        ISOCK_setsockopt(icp->sid,SOL_IP,IP_TTL,&val,sizeof(val));
+        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,sizeof(val));
         val=RequestOptions->Tos;
-        ISOCK_setsockopt(icp->sid,SOL_IP,IP_TOS,&val,sizeof(val));
+        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,sizeof(val));
         /* FIXME:  missing: handling of IP 'flags', and all the other options */
 
         icp->default_opts.OptionsSize=IP_OPTS_CUSTOM;
@@ -242,9 +248,9 @@ DWORD WINAPI IcmpSendEcho(
 
         /* Restore the default options */
         val=icp->default_opts.Ttl;
-        ISOCK_setsockopt(icp->sid,SOL_IP,IP_TTL,&val,sizeof(val));
+        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TTL,(char *)&val,sizeof(val));
         val=icp->default_opts.Tos;
-        ISOCK_setsockopt(icp->sid,SOL_IP,IP_TOS,&val,sizeof(val));
+        ISOCK_setsockopt(icp->sid,IPPROTO_IP,IP_TOS,(char *)&val,sizeof(val));
         /* FIXME: missing: handling of IP 'flags', and all the other options */
 
         icp->default_opts.OptionsSize=IP_OPTS_DEFAULT;
@@ -319,10 +325,18 @@ DWORD WINAPI IcmpSendEcho(
                 case ICMP_UNREACH:
                     switch (icmp_header->icmp_code) {
                     case ICMP_UNREACH_HOST:
+#ifdef ICMP_UNREACH_HOST_UNKNOWN
                     case ICMP_UNREACH_HOST_UNKNOWN:
+#endif
+#ifdef ICMP_UNREACH_ISOLATED
                     case ICMP_UNREACH_ISOLATED:
+#endif
+#ifdef ICMP_UNREACH_HOST_PROHIB
               	    case ICMP_UNREACH_HOST_PROHIB:
+#endif
+#ifdef ICMP_UNREACH_TOSHOST
                     case ICMP_UNREACH_TOSHOST:
+#endif
                         ier->Status=IP_DEST_HOST_UNREACHABLE;
                         break;
                     case ICMP_UNREACH_PORT:
