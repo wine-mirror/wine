@@ -43,29 +43,6 @@ typedef struct
 } SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
 
 
-static HBITMAP hUpArrow;
-static HBITMAP hDnArrow;
-static HBITMAP hLfArrow;
-static HBITMAP hRgArrow;
-static HBITMAP hUpArrowD;
-static HBITMAP hDnArrowD;
-static HBITMAP hLfArrowD;
-static HBITMAP hRgArrowD;
-static HBITMAP hUpArrowI;
-static HBITMAP hDnArrowI;
-static HBITMAP hLfArrowI;
-static HBITMAP hRgArrowI;
-
-#define TOP_ARROW(flags,pressed) \
-   (((flags)&ESB_DISABLE_UP) ? hUpArrowI : ((pressed) ? hUpArrowD:hUpArrow))
-#define BOTTOM_ARROW(flags,pressed) \
-   (((flags)&ESB_DISABLE_DOWN) ? hDnArrowI : ((pressed) ? hDnArrowD:hDnArrow))
-#define LEFT_ARROW(flags,pressed) \
-   (((flags)&ESB_DISABLE_LEFT) ? hLfArrowI : ((pressed) ? hLfArrowD:hLfArrow))
-#define RIGHT_ARROW(flags,pressed) \
-   (((flags)&ESB_DISABLE_RIGHT) ? hRgArrowI : ((pressed) ? hRgArrowD:hRgArrow))
-
-
   /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4
 
@@ -155,26 +132,6 @@ LPSCROLLINFO info /* [in] The SCROLLINFO struct to be tested */)
 
 
 /***********************************************************************
- *           SCROLL_LoadBitmaps
- */
-static void SCROLL_LoadBitmaps(void)
-{
-    hUpArrow  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_UPARROW) );
-    hDnArrow  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_DNARROW) );
-    hLfArrow  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_LFARROW) );
-    hRgArrow  = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RGARROW) );
-    hUpArrowD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_UPARROWD) );
-    hDnArrowD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_DNARROWD) );
-    hLfArrowD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_LFARROWD) );
-    hRgArrowD = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RGARROWD) );
-    hUpArrowI = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_UPARROWI) );
-    hDnArrowI = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_DNARROWI) );
-    hLfArrowI = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_LFARROWI) );
-    hRgArrowI = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_RGARROWI) );
-}
-
-
-/***********************************************************************
  *           SCROLL_GetScrollBarInfo
  */
 static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
@@ -203,7 +160,6 @@ static SCROLLBAR_INFO *SCROLL_GetScrollBarInfo( HWND hwnd, INT nBar )
             if (nBar == SB_HORZ) wndPtr->pHScroll = infoPtr;
             else wndPtr->pVScroll = infoPtr;
         }
-        if (!hUpArrow) SCROLL_LoadBitmaps();
     }
     WIN_ReleaseWndPtr( wndPtr );
     return infoPtr;
@@ -1267,7 +1223,6 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     {
     case WM_CREATE:
         SCROLL_CreateScrollBar(hwnd, (LPCREATESTRUCTW)lParam);
-        if (!hUpArrow) SCROLL_LoadBitmaps();
         break;
 
     case WM_ENABLE:
