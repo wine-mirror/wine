@@ -11,6 +11,7 @@
  * 98/7 changes for making this MIDI driver work on OSS
  * 	current support is limited to MIDI ports of OSS systems
  * 98/9	rewriting MCI code for MIDI
+ * 98/11 splitted in midi.c and mcimidi.c
  */
 
 #include <errno.h>
@@ -30,6 +31,7 @@
 #include "debug.h"
 #include "callback.h"
 #include "options.h"
+#include "heap.h"
 
 typedef struct {
 #ifndef HAVE_OSS
@@ -64,41 +66,8 @@ typedef struct {
 #endif
 } WINE_MIDIOUT;
 
-typedef struct {
-    DWORD		dwFirst;		/* offset in file of track */
-    DWORD		dwLast;			/* number of bytes in file of track */
-    DWORD		dwIndex;		/* current index in file (dwFirst <= dwIndex < dwLast) */
-    DWORD		dwLength;		/* number of pulses in this track */
-    DWORD		dwEventPulse;		/* current pulse # (event) pointed by dwIndex */
-    DWORD		dwEventData;		/* current data    (event) pointed by dwIndex */
-    WORD		wEventLength;		/* current length  (event) pointed by dwIndex */
-    WORD		wStatus : 1,		/* 1 : playing, 0 : done */
-	                wTrackNr : 7,
-	                wLastCommand : 8;
-} MCI_MIDITRACK;
-
-typedef struct {
-    int			nUseCount;          	/* Incremented for each shared open          */
-    BOOL16		fShareable;         	/* TRUE if first open was shareable          */
-    WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
-    HANDLE16 		hCallback;         	/* Callback handle for pending notification  */
-    HMMIO32		hFile;	            	/* mmio file handle open as Element          */
-    WORD		wFormat;
-    WORD		nTracks;
-    WORD		nDivision;
-    DWORD		dwTempo;
-    MCI_OPEN_PARMS16 	openParms;
-    WORD		dwStatus;
-    MCI_MIDITRACK*     	tracks;
-    DWORD		dwPulse;
-    DWORD		dwPositionMS;
-    DWORD		dwStartTicks;
-    HLOCAL16		hMidiHdr;
-} WINE_MCIMIDI;
-
 static WINE_MIDIIN	MidiInDev [MAX_MIDIINDRV ];
 static WINE_MIDIOUT	MidiOutDev[MAX_MIDIOUTDRV];
-static WINE_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 
 /* this is the total number of MIDI out devices found */
 int 	MODM_NUMDEVS = 0;				
@@ -135,6 +104,10 @@ LPMIDIINCAPS16  midiInDevices [MAX_MIDIINDRV];
  * number of midi devices found...
  * check also when HAVE_OSS is defined that midiDesc is not NULL
  */
+
+/*======================================================================*
+ *                  Low level MIDI implemantation			*
+ *======================================================================*/
 
 /**************************************************************************
  * 			MIDI_NotifyClient			[internal]
@@ -183,1098 +156,6 @@ static DWORD MIDI_NotifyClient(UINT16 wDevID, WORD wMsg,
     return DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2) ?
 	0 : MCIERR_INTERNAL;
 }
-
-/**************************************************************************
- * 				MIDI_ReadByte			[internal]	
- */
-static DWORD MIDI_ReadByte(UINT16 wDevID, BYTE *lpbyt)
-{
-    if (lpbyt != NULL) {
-	if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)lpbyt,
-		       (long) sizeof(BYTE)) == (long) sizeof(BYTE)) {
-	    return 0;
-	}
-    }
-    WARN(midi, "error reading wDevID=%04X\n", wDevID);
-    return MCIERR_INTERNAL;
-    
-}
-
-/**************************************************************************
- * 				MIDI_ReadWord			[internal]	
- */
-static DWORD MIDI_ReadWord(UINT16 wDevID, LPWORD lpw)
-{
-    BYTE	hibyte, lobyte;
-
-    if (lpw != NULL) {
-	if (MIDI_ReadByte(wDevID, &hibyte) == 0) {
-	    if (MIDI_ReadByte(wDevID, &lobyte) == 0) {
-		*lpw = ((WORD)hibyte << 8) + lobyte;
-		return 0;
-	    }
-	}
-    }
-    WARN(midi, "error reading wDevID=%04X\n", wDevID);
-    return MCIERR_INTERNAL;
-}
-
-/**************************************************************************
- * 				MIDI_ReadLong			[internal]	
- */
-static DWORD MIDI_ReadLong(UINT16 wDevID, LPDWORD lpdw)
-{
-    WORD	hiword, loword;
-
-    if (lpdw != NULL) {
-	if (MIDI_ReadWord(wDevID, &hiword) == 0) {
-	    if (MIDI_ReadWord(wDevID, &loword) == 0) {
-		*lpdw = MAKELONG(loword, hiword);
-		return 0;
-	    }
-	}
-    }
-    WARN(midi, "error reading wDevID=%04X\n", wDevID);
-    return MCIERR_INTERNAL;
-}
-
-/**************************************************************************
- *  				MIDI_ReadVaryLen		[internal]	
- */
-static WORD MIDI_ReadVaryLen(UINT16 wDevID, LPDWORD lpdw)
-{
-    BYTE	byte;
-    DWORD	value = 0;
-    WORD	ret = 0;
-
-    if (lpdw == NULL) 
-	return MCIERR_INTERNAL;
-
-    do {
-	if (MIDI_ReadByte(wDevID, &byte) != 0) {
-	    WARN(midi, "error reading wDevID=%04X\n", wDevID);
-	    return 0;
-	}
-	value = (value << 7) + (byte & 0x7F);
-	ret++; 
-    } while (byte & 0x80);
-    *lpdw = value;
-    /*
-      TRACE(midi, "val=%08lX \n", value);
-    */
-    return ret;
-}
-
-/**************************************************************************
- * 				MIDI_ReadNextEvent		[internal]	
- */
-static DWORD	MIDI_ReadNextEvent(UINT16 wDevID, MCI_MIDITRACK* mmt) 
-{
-    BYTE	b1, b2 = 0, b3;
-    WORD	hw = 0;
-    DWORD	evtPulse;
-    DWORD	evtLength;
-    DWORD	tmp;
-
-    if (mmioSeek32(MCIMidiDev[wDevID].hFile, mmt->dwIndex, SEEK_SET) != mmt->dwIndex) {
-	WARN(midi, "can't seek at %08lX \n", mmt->dwIndex);
-	return MCIERR_INTERNAL;
-    }
-    evtLength = MIDI_ReadVaryLen(wDevID, &evtPulse) + 1;	/* > 0 */
-    MIDI_ReadByte(wDevID, &b1);
-    switch (b1) {
-    case 0xF0:
-    case 0xF7:
-	evtLength += MIDI_ReadVaryLen(wDevID, &tmp);
-	evtLength += tmp;
-	break;
-    case 0xFF:
-	MIDI_ReadByte(wDevID, &b2);	evtLength++;
-	
-	evtLength += MIDI_ReadVaryLen(wDevID, &tmp);
-	if (evtLength >= 0x10000u) {
-	    /* this limitation shouldn't be a problem */
-	    WARN(midi, "Ouch !! Implementation limitation to 64k bytes for a MIDI event is overflowed\n");
-	    hw = 0xFFFF;
-	} else {
-	    hw = LOWORD(evtLength);
-	}
-	evtLength += tmp;
-	break;
-    default:
-	if (b1 & 0x80) { // use running status ?
-	    mmt->wLastCommand = b1;
-	    MIDI_ReadByte(wDevID, &b2);	evtLength++;
-	} else {
-	    b2 = b1;
-	    b1 = mmt->wLastCommand;
-	}
-	switch ((b1 >> 4) & 0x07) {
-	case 0:	case 1:	case 2: case 3: case 6:
-	    MIDI_ReadByte(wDevID, &b3);	evtLength++;
-	    hw = b3;
-	    break;
-	case 4:	case 5:
-	    break;
-	case 7:
-	    WARN(midi, "Strange indeed b1=0x%02x\n", b1);
-	}
-	break;
-    }
-    if (mmt->dwIndex + evtLength > mmt->dwLast)
-	return MCIERR_INTERNAL;
-
-    mmt->dwEventPulse += evtPulse;
-    mmt->dwEventData   = (hw << 16) + (b2 << 8) + b1;
-    mmt->wEventLength  = evtLength;
-
-    /*
-    TRACE(midi, "[%u] => pulse=%08lx(%08lx), data=%08lx, length=%u\n", 
-	  mmt->wTrackNr, mmt->dwEventPulse, evtPulse, 
-	  mmt->dwEventData, mmt->wEventLength);
-    */
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_ReadMTrk			[internal]	
- */
-static DWORD MIDI_ReadMTrk(UINT16 wDevID, MCI_MIDITRACK* mmt)
-{
-    DWORD	toberead;
-    FOURCC	fourcc;
-
-    if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
-		   (long) sizeof(FOURCC)) != (long) sizeof(FOURCC)) {
-	return MCIERR_INTERNAL;
-    }
-
-    if (fourcc != mmioFOURCC('M', 'T', 'r', 'k')) {
-	WARN(midi, "cannot synchronize on MTrk !\n");
-	return MCIERR_INTERNAL;
-    }
-
-    if (MIDI_ReadLong(wDevID, &toberead) != 0) {
-	return MCIERR_INTERNAL;
-    }
-    mmt->dwFirst = mmioSeek32(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR); /* >= 0 */
-    mmt->dwLast = mmt->dwFirst + toberead;
-
-    /* compute # of pulses in this track */
-    mmt->dwIndex = mmt->dwFirst;
-    mmt->dwEventPulse = 0;
-    while (MIDI_ReadNextEvent(wDevID, mmt) == 0 && 
-	   LOWORD(mmt->dwEventData) != 0x2FFF) {	
-	mmt->dwIndex += mmt->wEventLength;
-    }
-    mmt->dwLength = mmt->dwEventPulse;
-
-    TRACE(midi, "Track %u has %lu bytes and %lu pulses\n", 
-	  mmt->wTrackNr, toberead, mmt->dwLength);
-
-    /* reset track data */
-    mmt->wStatus = 1;	/* ok, playing */
-    mmt->dwIndex = mmt->dwFirst;
-    mmt->dwEventPulse = 0;
-
-    if (mmioSeek32(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR) != mmt->dwLast) {
-	WARN(midi, "Ouch, out of sync seek=%lu track=%lu\n", 
-	     mmioSeek32(MCIMidiDev[wDevID].hFile, 0, SEEK_CUR), mmt->dwLast);
-	/* position at end of this track, to be ready to read next track */
-	mmioSeek32(MCIMidiDev[wDevID].hFile, mmt->dwLast, SEEK_SET);
-    }
-
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_ReadMThd			[internal]	
- */
-static DWORD MIDI_ReadMThd(UINT16 wDevID, DWORD dwOffset)
-{
-    DWORD	toberead;
-    FOURCC	fourcc;
-    WORD	nt;
-
-    TRACE(midi, "(%04X, %08lX);\n", wDevID, dwOffset);
-    if (mmioSeek32(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
-	WARN(midi, "can't seek at %08lX begin of 'MThd' \n", dwOffset);
-	return MCIERR_INTERNAL;
-    }
-    if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)&fourcc,
-		   (long) sizeof(FOURCC)) != (long) sizeof(FOURCC))
-	return MCIERR_INTERNAL;
-
-    if (fourcc != mmioFOURCC('M', 'T', 'h', 'd')) {
-	WARN(midi, "cannot synchronize on MThd !\n");
-	return MCIERR_INTERNAL;
-    }
-
-    if (MIDI_ReadLong(wDevID, &toberead) != 0 || toberead < 3 * sizeof(WORD))
-	return MCIERR_INTERNAL;
-    if (MIDI_ReadWord(wDevID, &MCIMidiDev[wDevID].wFormat) != 0)
-	return MCIERR_INTERNAL;
-    if (MIDI_ReadWord(wDevID, &MCIMidiDev[wDevID].nTracks) != 0)
-	return MCIERR_INTERNAL;
-    if (MIDI_ReadWord(wDevID, &MCIMidiDev[wDevID].nDivision) != 0)
-	return MCIERR_INTERNAL;
-
-    TRACE(midi, "toberead=0x%08lX, wFormat=0x%04X nTracks=0x%04X nDivision=0x%04X\n",
-	  toberead, MCIMidiDev[wDevID].wFormat,
-	  MCIMidiDev[wDevID].nTracks,
-	  MCIMidiDev[wDevID].nDivision);
-
-    if (MCIMidiDev[wDevID].nDivision > 0x8000) {
-	WARN(midi, "Handling SMPTE time in MIDI files is not (yet) supported\n"
-	           "Please report with MIDI file !\n");
-	return MCIERR_INTERNAL;
-    }
-
-    switch (MCIMidiDev[wDevID].wFormat) {
-    case 0:
-	if (MCIMidiDev[wDevID].nTracks != 1) {
-	    WARN(midi, "Got type 0 file whose number of track is not 1. Setting it to 1\n");
-	    MCIMidiDev[wDevID].nTracks = 1;
-	}
-	break;
-    case 1:
-    case 2:
-	break;
-    default:
-	WARN(midi, "Handling MIDI files which format = %d is not (yet) supported\n"
-	           "Please report with MIDI file !\n", MCIMidiDev[wDevID].wFormat);
-	return MCIERR_INTERNAL;
-    }
-
-    if (MCIMidiDev[wDevID].nTracks & 0x8000) {
-	/* this shouldn't be a problem... */
-	WARN(midi, "Ouch !! Implementation limitation to 32k tracks per MIDI file is overflowed\n");
-	MCIMidiDev[wDevID].nTracks = 0x7FFF;
-    }
-    MCIMidiDev[wDevID].tracks = xmalloc(sizeof(MCI_MIDITRACK) * MCIMidiDev[wDevID].nTracks);
-
-    toberead -= 3 * sizeof(WORD); 
-    if (toberead > 0) {
-	TRACE(midi, "Size of MThd > 6, skipping %ld extra bytes\n", toberead);
-	mmioSeek32(MCIMidiDev[wDevID].hFile, toberead, SEEK_CUR);
-    }
-
-    for (nt = 0; nt < MCIMidiDev[wDevID].nTracks; nt++) {
-	MCIMidiDev[wDevID].tracks[nt].wTrackNr = nt;
-	if (MIDI_ReadMTrk(wDevID, &MCIMidiDev[wDevID].tracks[nt]) != 0) {
-	    WARN(midi, "can't read 'MTrk' header \n");
-	    return MCIERR_INTERNAL;
-	}
-    }
-
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciOpen			[internal]	
- */
-static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, void* lp, BOOL32 is32)
-{
-    MIDIOPENDESC 	MidiDesc;
-    DWORD		dwRet;
-    DWORD		dwDeviceID;
-
-    TRACE(midi, "(%08lX, %p)\n", dwFlags, lp);
-     
-    if (lp == NULL) return MCIERR_INTERNAL;
-    
-    if (MCIMidiDev[wDevID].nUseCount > 0) {
-	/* The driver already open on this channel */
-	/* If the driver was opened shareable before and this open specifies */
-	/* shareable then increment the use count */
-	if (MCIMidiDev[wDevID].fShareable && (dwFlags & MCI_OPEN_SHAREABLE))
-	    ++MCIMidiDev[wDevID].nUseCount;
-	else
-	    return MCIERR_MUST_USE_SHAREABLE;
-    } else {
-	MCIMidiDev[wDevID].nUseCount = 1;
-	MCIMidiDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
-	MCIMidiDev[wDevID].hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR));
-    }
-
-    if (is32) 	dwDeviceID = ((LPMCI_OPEN_PARMS32A)lp)->wDeviceID;
-    else	dwDeviceID = ((LPMCI_OPEN_PARMS16)lp)->wDeviceID;
-    
-    TRACE(midi, "wDevID=%04X (lpParams->wDeviceID=%08lX)\n", wDevID, dwDeviceID);
-    /*	lpParms->wDeviceID = wDevID;*/
-    TRACE(midi, "before OPEN_ELEMENT\n");
-    if (dwFlags & MCI_OPEN_ELEMENT) {
-	LPSTR		lpstrElementName;
-
-	if (is32)	lpstrElementName = ((LPMCI_OPEN_PARMS32A)lp)->lpstrElementName;
-	else		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(((LPMCI_OPEN_PARMS16)lp)->lpstrElementName);
-
-	TRACE(midi, "MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
-	if (strlen(lpstrElementName) > 0) {
-	    MCIMidiDev[wDevID].hFile = mmioOpen32A(lpstrElementName, NULL, 
-						   MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
-	    if (MCIMidiDev[wDevID].hFile == 0) {
-		WARN(midi, "can't find file='%s' !\n", lpstrElementName);
-		return MCIERR_FILE_NOT_FOUND;
-	    }
-	} else 
-	    MCIMidiDev[wDevID].hFile = 0;
-    }
-    TRACE(midi, "hFile=%u\n", MCIMidiDev[wDevID].hFile);
-
-    /* should be of same size in all cases */
-    memcpy(&MCIMidiDev[wDevID].openParms, lp, sizeof(MCI_OPEN_PARMS16));
-
-    MCIMidiDev[wDevID].wNotifyDeviceID = dwDeviceID;
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
-    MidiDesc.hMidi = 0;
-
-    if (MCIMidiDev[wDevID].hFile != 0) {
-	MMCKINFO	ckMainRIFF;
-	DWORD		dwOffset = 0;
-
-	if (mmioDescend(MCIMidiDev[wDevID].hFile, &ckMainRIFF, NULL, 0) != 0) {
-	    return MCIERR_INTERNAL;
-	}
-	TRACE(midi,"ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
-	      (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
-	      ckMainRIFF.cksize);
-
-	if (ckMainRIFF.ckid == mmioFOURCC('R', 'M', 'I', 'D')) {
-	    TRACE(midi, "is a 'RMID' file \n");
-	    dwOffset = ckMainRIFF.dwDataOffset;
-	    FIXME(midi, "Setting #tracks for RMID to 1: is this correct ?\n");
-	    MCIMidiDev[wDevID].nTracks = 1;
-	}
-	if (MIDI_ReadMThd(wDevID, dwOffset) != 0) {
-	    WARN(midi, "can't read 'MThd' header \n");
-	    return MCIERR_INTERNAL;
-	}
-
-	TRACE(midi, "Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
-	      (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
-	      ckMainRIFF.cksize);
-    }
-    
-    dwRet = modMessage(wDevID, MODM_OPEN, 0, (DWORD)&MidiDesc, CALLBACK_NULL);
-    /*	dwRet = midMessage(wDevID, MIDM_OPEN, 0, (DWORD)&MidiDesc, CALLBACK_NULL);*/
-    
-    return 0;
-}
-
-static	DWORD	MIDI_ConvertPulseToMS(UINT16 wDevID, DWORD pulse)
-{
-    DWORD	ret = (DWORD)((double)pulse * ((double)MCIMidiDev[wDevID].dwTempo / 1000) /	
-			      (double)MCIMidiDev[wDevID].nDivision);
-
-    /*
-    TRACE(midi, "pulse=%lu tempo=%lu division=%u => ms=%lu\n", 
-          pulse, MCIMidiDev[wDevID].dwTempo, MCIMidiDev[wDevID].nDivision, ret);
-    */
-    return ret;
-}
-
-/**************************************************************************
- * 				MIDI_mciStop			[internal]
- */
-static DWORD MIDI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
-    TRACE(midi, "MCIMidiDev[wDevID].dwStatus=%d\n", MCIMidiDev[wDevID].dwStatus);
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciClose			[internal]
- */
-static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
-{
-    DWORD		dwRet;
-    
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
-	MIDI_mciStop(wDevID, MCI_WAIT, lpParms);
-    }
-
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
-    MCIMidiDev[wDevID].nUseCount--;
-    if (MCIMidiDev[wDevID].nUseCount == 0) {
-	if (MCIMidiDev[wDevID].hFile != 0) {
-	    mmioClose32(MCIMidiDev[wDevID].hFile, 0);
-	    MCIMidiDev[wDevID].hFile = 0;
-	    TRACE(midi, "hFile closed !\n");
-	}
-	USER_HEAP_FREE(MCIMidiDev[wDevID].hMidiHdr);
-	free(MCIMidiDev[wDevID].tracks);
-	dwRet = modMessage(wDevID, MODM_CLOSE, 0, 0L, 0L);
-	if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-	/*
-	  dwRet = midMessage(wDevID, MIDM_CLOSE, 0, 0L, 0L);
-	  if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-	*/
-    }
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciPlay			[internal]
- */
-static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
-{
-    DWORD		start = 0, end = 0xFFFFFFFFul;
-    DWORD		dwRet;
-    WORD		nt, cnt;
-
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (MCIMidiDev[wDevID].hFile == 0) {
-	WARN(midi, "Cannot play : can't find file='%08lx' !\n", 
-	     (DWORD)MCIMidiDev[wDevID].openParms.lpstrElementName);
-	return MCIERR_FILE_NOT_FOUND;
-    }
-
-    if (MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
-	WARN(midi, "Cannot play : device is not stopped !\n");
-	return MCIERR_INTERNAL;
-    }
-
-    if (lpParms && (dwFlags & MCI_FROM)) {
-	start = lpParms->dwFrom; 
-	FIXME(midi, "MCI_FROM=%lu \n", start);
-    }
-    if (lpParms && (dwFlags & MCI_TO)) {
-	end = lpParms->dwTo;
-	FIXME(midi, "MCI_TO=%lu \n", end);
-    }
-
-    if (!(dwFlags & MCI_WAIT)) {	
-	/** FIXME: I'm not 100% sure that wNotifyDeviceID is the right value in all cases ??? */
-	return mciSendCommandAsync32(MCIMidiDev[wDevID].wNotifyDeviceID, MCI_PLAY, dwFlags, (DWORD)lpParms);
-    }
-
-    /* init tracks */
-    for (nt = 0; nt < MCIMidiDev[wDevID].nTracks; nt++) {
-	MCI_MIDITRACK*	mmt = &MCIMidiDev[wDevID].tracks[nt];
-
-	mmt->wStatus = 1;	/* ok, playing */
-	mmt->dwIndex = mmt->dwFirst;
-	if (MCIMidiDev[wDevID].wFormat == 2 && nt > 0) {
-	    mmt->dwEventPulse = MCIMidiDev[wDevID].tracks[nt - 1].dwLength;
-	} else {
-	    mmt->dwEventPulse = 0;
-	}
-	MIDI_ReadNextEvent(wDevID, mmt); /* FIXME == 0 */
-    }
-	
-    MCIMidiDev[wDevID].dwPulse = 0;
-    MCIMidiDev[wDevID].dwPositionMS = 0;
-    MCIMidiDev[wDevID].dwStartTicks = GetTickCount();
-    MCIMidiDev[wDevID].dwTempo = 500000;
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_PLAY;
-
-    while (MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
-	MCI_MIDITRACK*	mmt;
-	DWORD		hiPulse;
-
-	TRACE(midi, "MCIMidiDev[wDevID].dwStatus=%p %d\n",
-	      &MCIMidiDev[wDevID].dwStatus, MCIMidiDev[wDevID].dwStatus);
-
-	while (MCIMidiDev[wDevID].dwStatus == MCI_MODE_PAUSE);
-
-	/* find first event */
-	hiPulse = 0xFFFFFFFFul;
-	cnt = 0xFFFFu;
-	for (nt = 0; nt < MCIMidiDev[wDevID].nTracks; nt++) {
-	    mmt = &MCIMidiDev[wDevID].tracks[nt];
-	    
-	    if (mmt->wStatus == 0)
-		continue;
-	    if (mmt->dwEventPulse < hiPulse) {
-		hiPulse = mmt->dwEventPulse;
-		cnt = nt;
-	    }
-	}
-	if (cnt == 0xFFFFu)  /* no more event on tracks */
-	    break;
-
-	mmt = &MCIMidiDev[wDevID].tracks[cnt];
-	if (hiPulse > MCIMidiDev[wDevID].dwPulse) {
-	    DWORD	togo = MCIMidiDev[wDevID].dwStartTicks + 
-		MIDI_ConvertPulseToMS(wDevID, hiPulse);
-	    DWORD	tc = GetTickCount();
-
-	    TRACE(midi, "Pulses hi=0x%08lx <> cur=0x%08lx\n", hiPulse, MCIMidiDev[wDevID].dwPulse);
-	    TRACE(midi, "Wait til %08lx -> %08lx ms\n", 	
-		  tc - MCIMidiDev[wDevID].dwStartTicks, 
-		  togo - MCIMidiDev[wDevID].dwStartTicks);
-	    if (tc < togo)	Sleep(togo - tc);
-	    MCIMidiDev[wDevID].dwPositionMS += MIDI_ConvertPulseToMS(wDevID, hiPulse - MCIMidiDev[wDevID].dwPulse);
-	    MCIMidiDev[wDevID].dwPulse = hiPulse;
-	}
-	    
-	switch (LOBYTE(LOWORD(mmt->dwEventData))) {
-	case 0xF0:
-	case 0xF7:	/* sysex events */
-	    FIXME(midi, "Not handling SysEx events (yet)\n");
-	    break;
-	case 0xFF:
-	    /* position after meta data header */
-	    mmioSeek32(MCIMidiDev[wDevID].hFile, mmt->dwIndex + HIWORD(mmt->dwEventData), SEEK_SET);
-	    switch (HIBYTE(LOWORD(mmt->dwEventData))) {
-	    case 0x00: /* 16-bit sequence number */
-		if (TRACE_ON(midi)) {
-		    WORD	twd;
-
-		    MIDI_ReadWord(wDevID, &twd);	/* == 0 */
-		    TRACE(midi, "Got sequence number %u\n", twd);
-		}
-		break;
-	    case 0x01: /* any text */
-	    case 0x02: /* Copyright Message text */
-	    case 0x03: /* Sequence/Track Name text */
-	    case 0x04: /* Instrument Name text */
-	    case 0x05: /* Lyric text */
-	    case 0x06: /* Marker text */
-	    case 0x07: /* Cue-point text */
-		if (TRACE_ON(midi)) {
-		    char	buf[1024];
-		    WORD	len = mmt->wEventLength - HIWORD(mmt->dwEventData);
-		    static	char*	info[8] = {"", "Text", "Copyright", "Seq/Trk name", 
-						   "Instrument", "Lyric", "Marker", "Cue-point"};
-		    WORD	idx = HIBYTE(LOWORD(mmt->dwEventData));
-
-		    if (len >= sizeof(buf)) {
-			WARN(midi, "Buffer for text is too small (%d bytes, when %u are needed)\n", sizeof(buf) - 1, len);
-			len = sizeof(buf) - 1;
-		    }
-		    if (mmioRead32(MCIMidiDev[wDevID].hFile, (HPSTR)buf, len) == len) {
-			buf[len] = 0;	/* end string in case */
-			TRACE(midi, "%s => \"%s\"\n", (idx < 8 ) ? info[idx] : "", buf);
-		    } else {
-			WARN(midi, "Couldn't read data for %s\n", (idx < 8 ) ? info[idx] : "");
-		    }
-		}
-		break;
-	    case 0x20: 
-		/* MIDI channel
-		 * cc 
-		 */
-		if (TRACE_ON(midi)) {
-		    BYTE	bt;
-		    
-		    MIDI_ReadByte(wDevID, &bt);	/* == 0 */
-		    FIXME(midi, "NIY: MIDI channel %u\n", bt);
-
-		} else {
-		    FIXME(midi, "NIY: MIDI channel\n");
-		}
-		break;
-	    case 0x21:
-		/* MIDI port
-		 * pp
-		 */
-		if (TRACE_ON(midi)) {
-		    BYTE	bt;
-		    
-		    MIDI_ReadByte(wDevID, &bt);	/* == 0 */
-		    FIXME(midi, "NIY: MIDI port %u\n", bt);
-		} else {
-		    FIXME(midi, "NIY: MIDI port\n");
-		}
-		break;
-	    case 0x2F: /* end of track */
-		mmt->wStatus = 0;
-		break;
-	    case 0x51:/* set tempo */
-		/* Tempo is expressed in µ-seconds per midi quarter note
-		 * for format 1 MIDI files, this can only be present on track #0
-		 */
-		if (mmt->wTrackNr != 0 && MCIMidiDev[wDevID].wFormat == 1) {
-		    WARN(midi, "For format #1 MIDI files, tempo can only be changed on track #0 (%u)\n", mmt->wTrackNr);
-		} else { 
-		    BYTE	tbt;
-		    
-		    MIDI_ReadByte(wDevID, &tbt);	MCIMidiDev[wDevID].dwTempo  = ((DWORD)tbt) << 16;
-		    MIDI_ReadByte(wDevID, &tbt);	MCIMidiDev[wDevID].dwTempo |= ((DWORD)tbt) << 8;
-		    MIDI_ReadByte(wDevID, &tbt);	MCIMidiDev[wDevID].dwTempo |= ((DWORD)tbt) << 0;
-		    TRACE(midi, "Setting tempo to %ld (BPM=%ld)\n", MCIMidiDev[wDevID].dwTempo, 60000000l / MCIMidiDev[wDevID].dwTempo);
-		}
-		
-		break;
-	    case 0x54: /* (hour) (min) (second) (frame) (fractional-frame) - SMPTE track start */
-		FIXME(midi, "NIY: SMPTE track start\n");
-		break;
-	    case 0x58: 
-		if (TRACE_ON(midi)) {
-		    BYTE	num, den, cpmc, _32npqn;
-		    
-		    MIDI_ReadByte(wDevID, &num);	
-		    MIDI_ReadByte(wDevID, &den);	/* to notate e.g. 6/8 */
-		    MIDI_ReadByte(wDevID, &cpmc);	/* number of MIDI clocks per metronome click */ 
-		    MIDI_ReadByte(wDevID, &_32npqn);	/* number of notated 32nd notes per MIDI quarter note */
-
-		    TRACE(midi, "%u/%u, clock per metronome click=%u, 32nd notes by 1/4 note=%u\n", num, 1 << den, cpmc, _32npqn);
-		}
-		break;
-	    case 0x59: 
-		if (TRACE_ON(midi)) {
-		    BYTE	sf, mm;
-
-		    MIDI_ReadByte(wDevID, &sf);		MIDI_ReadByte(wDevID, &mm);	
-
-		    if (sf >= 0x80) 	TRACE(midi, "%d flats\n", -(char)sf);	 
-		    else if (sf > 0) 	TRACE(midi, "%d sharps\n", (char)sf);	 
-		    else 		TRACE(midi, "Key of C\n");
-		    TRACE(midi, "Mode: %s\n", (mm = 0) ? "major" : "minor");
-		}
-		break;
-	    default:
-		WARN(midi, "Unknown MIDI meta event %02x. Skipping...\n", HIBYTE(LOWORD(mmt->dwEventData)));
-		break;
-	    }
-	    break;
-	default:		
-	    dwRet = modMessage(wDevID, MODM_DATA, 0, mmt->dwEventData, 0);
-	}
-	mmt->dwIndex += mmt->wEventLength;
-	if (mmt->dwIndex < mmt->dwFirst || mmt->dwIndex >= mmt->dwLast) {
-	    mmt->wStatus = 0;
-	} 
-	if (mmt->wStatus) {	
-	    MIDI_ReadNextEvent(wDevID, mmt);
-	}
-    }
-
-    /* stop all notes */
-#ifdef HAVE_OSS
-    modMessage(wDevID, MODM_DATA, 0, (MIDI_CTL_CHANGE << 8) | 0x78, 0);
-#endif
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciRecord			[internal]
- */
-static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
-{
-    int			start, end;
-    LPMIDIHDR		lpMidiHdr;
-    DWORD		dwRet;
-    
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (MCIMidiDev[wDevID].hFile == 0) {
-	WARN(midi, "can't find file='%08lx' !\n", 
-	     (DWORD)MCIMidiDev[wDevID].openParms.lpstrElementName);
-	return MCIERR_FILE_NOT_FOUND;
-    }
-    start = 1; 		end = 99999;
-    if (lpParms && (dwFlags & MCI_FROM)) {
-	start = lpParms->dwFrom; 
-	TRACE(midi, "MCI_FROM=%d \n", start);
-    }
-    if (lpParms && (dwFlags & MCI_TO)) {
-	end = lpParms->dwTo;
-	TRACE(midi, "MCI_TO=%d \n", end);
-    }
-    lpMidiHdr = USER_HEAP_LIN_ADDR(MCIMidiDev[wDevID].hMidiHdr);
-    lpMidiHdr->lpData = (LPSTR) xmalloc(1200);
-    lpMidiHdr->dwBufferLength = 1024;
-    lpMidiHdr->dwUser = 0L;
-    lpMidiHdr->dwFlags = 0L;
-    dwRet = midMessage(wDevID, MIDM_PREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
-    TRACE(midi, "after MIDM_PREPARE \n");
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_RECORD;
-    while (MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
-	TRACE(midi, "MCIMidiDev[wDevID].dwStatus=%p %d\n",
-	      &MCIMidiDev[wDevID].dwStatus, MCIMidiDev[wDevID].dwStatus);
-	lpMidiHdr->dwBytesRecorded = 0;
-	dwRet = midMessage(wDevID, MIDM_START, 0, 0L, 0L);
-	TRACE(midi, "after MIDM_START lpMidiHdr=%p dwBytesRecorded=%lu\n",
-	      lpMidiHdr, lpMidiHdr->dwBytesRecorded);
-	if (lpMidiHdr->dwBytesRecorded == 0) break;
-    }
-    TRACE(midi, "before MIDM_UNPREPARE \n");
-    dwRet = midMessage(wDevID, MIDM_UNPREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR));
-    TRACE(midi, "after MIDM_UNPREPARE \n");
-    if (lpMidiHdr->lpData != NULL) {
-	free(lpMidiHdr->lpData);
-	lpMidiHdr->lpData = NULL;
-    }
-    MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciPause			[internal]
- */
-static DWORD MIDI_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (MCIMidiDev[wDevID].dwStatus == MCI_MODE_PLAY) {
-	MCIMidiDev[wDevID].dwStatus = MCI_MODE_PAUSE;
-    } 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-	
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciResume			[internal]
- */
-static DWORD MIDI_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (MCIMidiDev[wDevID].dwStatus == MCI_MODE_PAUSE) {
-	MCIMidiDev[wDevID].dwStatus = MCI_MODE_PLAY;
-    } 
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciSet			[internal]
- */
-static DWORD MIDI_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (lpParms == NULL) return MCIERR_INTERNAL;
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    TRACE(midi, "dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
-    TRACE(midi, "dwAudio=%08lX\n", lpParms->dwAudio);
-
-    if (dwFlags & MCI_SET_TIME_FORMAT) {
-	switch (lpParms->dwTimeFormat) {
-	case MCI_FORMAT_MILLISECONDS:
-	    TRACE(midi, "MCI_FORMAT_MILLISECONDS !\n");
-	    break;
-	case MCI_FORMAT_BYTES:
-	    TRACE(midi, "MCI_FORMAT_BYTES !\n");
-	    break;
-	case MCI_FORMAT_SAMPLES:
-	    TRACE(midi, "MCI_FORMAT_SAMPLES !\n");
-	    break;
-	default:
-	    WARN(midi, "bad time format !\n");
-	    return MCIERR_BAD_TIME_FORMAT;
-	}
-    }
-    if (dwFlags & MCI_SET_VIDEO) {
-	TRACE(midi, "No support for video !\n");
-	return MCIERR_UNSUPPORTED_FUNCTION;
-    }
-    if (dwFlags & MCI_SET_DOOR_OPEN) {
-	TRACE(midi, "No support for door open !\n");
-	return MCIERR_UNSUPPORTED_FUNCTION;
-    }
-    if (dwFlags & MCI_SET_DOOR_CLOSED) {
-	TRACE(midi, "No support for door close !\n");
-	return MCIERR_UNSUPPORTED_FUNCTION;
-    }
-
-    if (dwFlags && MCI_SET_ON) {
-	TRACE(midi, "MCI_SET_ON !\n");
-	if (dwFlags & MCI_SET_AUDIO) {
-	    TRACE(midi, "MCI_SET_AUDIO !\n");
-	}
-	if (dwFlags && MCI_SET_AUDIO_LEFT)
-	    TRACE(midi, "MCI_SET_AUDIO_LEFT !\n");
-	if (dwFlags && MCI_SET_AUDIO_RIGHT)
-	    TRACE(midi, "MCI_SET_AUDIO_RIGHT !\n");
-    }
-    if (dwFlags & MCI_SET_OFF) {
-	TRACE(midi, "MCI_SET_OFF !\n");
-	if (dwFlags & MCI_SET_AUDIO) {
-	    TRACE(midi, "MCI_SET_AUDIO !\n");
-	}    
-	if (dwFlags && MCI_SET_AUDIO_LEFT)
-	    TRACE(midi, "MCI_SET_AUDIO_LEFT !\n");
-	if (dwFlags && MCI_SET_AUDIO_RIGHT)
-	    TRACE(midi, "MCI_SET_AUDIO_RIGHT !\n");
-    }
-    if (dwFlags & MCI_SEQ_SET_MASTER)
-	TRACE(midi, "MCI_SEQ_SET_MASTER !\n");
-    if (dwFlags & MCI_SEQ_SET_SLAVE)
-	TRACE(midi, "MCI_SEQ_SET_SLAVE !\n");
-    if (dwFlags & MCI_SEQ_SET_OFFSET)
-	TRACE(midi, "MCI_SEQ_SET_OFFSET !\n");
-    if (dwFlags & MCI_SEQ_SET_PORT)
-	TRACE(midi, "MCI_SEQ_SET_PORT !\n");
-    if (dwFlags & MCI_SEQ_SET_TEMPO)
-	TRACE(midi, "MCI_SEQ_SET_TEMPO !\n");
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciStatus			[internal]
- */
-static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (lpParms == NULL) return MCIERR_INTERNAL;
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (dwFlags & MCI_STATUS_ITEM) {
-	switch (lpParms->dwItem) {
-	case MCI_STATUS_CURRENT_TRACK:
-	    TRACE(midi, "MCI_STATUS_CURRENT_TRACK !\n");
-	    lpParms->dwReturn = 1;
-	    break;
-	case MCI_STATUS_LENGTH:
-	    TRACE(midi, "MCI_STATUS_LENGTH !\n");
-	    {
-		WORD	nt;
-		DWORD	ret = 0;
-
-		for (nt = 0; nt < MCIMidiDev[wDevID].nTracks; nt++) {
-		    if (MCIMidiDev[wDevID].wFormat == 2) {
-			ret += MCIMidiDev[wDevID].tracks[nt].dwLength;
-		    } else {
-			if (MCIMidiDev[wDevID].tracks[nt].dwLength > ret)
-			    ret = MCIMidiDev[wDevID].tracks[nt].dwLength;
-		    }
-		}
-		lpParms->dwReturn = MIDI_ConvertPulseToMS(wDevID, ret);
-	    }
-	    break;
-	case MCI_STATUS_MODE:
-	    TRACE(midi, "MCI_STATUS_MODE !\n");
-	    lpParms->dwReturn = MCIMidiDev[wDevID].dwStatus;
-	    break;
-	case MCI_STATUS_MEDIA_PRESENT:
-	    TRACE(midi, "MCI_STATUS_MEDIA_PRESENT !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_STATUS_NUMBER_OF_TRACKS:
-	    TRACE(midi, "MCI_STATUS_NUMBER_OF_TRACKS !\n");
-	    lpParms->dwReturn = 1; /* FIXME: except in format 2 */
-	    break;
-	case MCI_STATUS_POSITION:
-	    TRACE(midi, "MCI_STATUS_POSITION !\n");
-	    if (dwFlags & MCI_STATUS_START) {
-		lpParms->dwReturn = 0;
-	    } else {
-		lpParms->dwReturn = MCIMidiDev[wDevID].dwPositionMS;
-	    }
-	    break;
-	case MCI_STATUS_READY:
-	    TRACE(midi, "MCI_STATUS_READY !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_STATUS_TIME_FORMAT:
-	    TRACE(midi, "MCI_STATUS_TIME_FORMAT !\n");
-	    lpParms->dwReturn = MCI_FORMAT_MILLISECONDS;
-	    break;
-	case MCI_SEQ_STATUS_DIVTYPE:
-	    TRACE(midi, "MCI_SEQ_STATUS_DIVTYPE !\n");
-	    lpParms->dwReturn = MCI_SEQ_DIV_PPQN;
-	    break;
-	case MCI_SEQ_STATUS_MASTER:
-	    TRACE(midi, "MCI_SEQ_STATUS_MASTER !\n");
-	    lpParms->dwReturn = 0;
-	    break;
-	case MCI_SEQ_STATUS_SLAVE:
-	    TRACE(midi, "MCI_SEQ_STATUS_SLAVE !\n");
-	    lpParms->dwReturn = 0;
-	    break;
-	case MCI_SEQ_STATUS_OFFSET:
-	    TRACE(midi, "MCI_SEQ_STATUS_OFFSET !\n");
-	    lpParms->dwReturn = 0;
-	    break;
-	case MCI_SEQ_STATUS_PORT:
-	    TRACE(midi, "MCI_SEQ_STATUS_PORT !\n");
-	    lpParms->dwReturn = 0;
-	    break;
-	case MCI_SEQ_STATUS_TEMPO:
-	    TRACE(midi, "MCI_SEQ_STATUS_TEMPO !\n");
-	    lpParms->dwReturn = MCIMidiDev[wDevID].dwTempo;
-	    break;
-	default:
-	    WARN(midi, "unknowm command %08lX !\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
-	}
-    } else {
-	WARN(midi, "No Status-Item!\n");
-	return MCIERR_UNRECOGNIZED_COMMAND;
-    }
-    if (dwFlags & MCI_NOTIFY) {
-	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
-			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciGetDevCaps		[internal]
- */
-static DWORD MIDI_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
-				LPMCI_GETDEVCAPS_PARMS lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (lpParms == NULL) return MCIERR_INTERNAL;
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    if (dwFlags & MCI_GETDEVCAPS_ITEM) {
-	switch (lpParms->dwItem) {
-	case MCI_GETDEVCAPS_CAN_RECORD:
-	    TRACE(midi, "MCI_GETDEVCAPS_CAN_RECORD !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_GETDEVCAPS_HAS_AUDIO:
-	    TRACE(midi, "MCI_GETDEVCAPS_HAS_AUDIO !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_GETDEVCAPS_HAS_VIDEO:
-	    TRACE(midi, "MCI_GETDEVCAPS_HAS_VIDEO !\n");
-	    lpParms->dwReturn = FALSE;
-	    break;
-	case MCI_GETDEVCAPS_DEVICE_TYPE:
-	    TRACE(midi, "MCI_GETDEVCAPS_DEVICE_TYPE !\n");
-	    lpParms->dwReturn = MCI_DEVTYPE_SEQUENCER;
-	    break;
-	case MCI_GETDEVCAPS_USES_FILES:
-	    TRACE(midi, "MCI_GETDEVCAPS_USES_FILES !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_GETDEVCAPS_COMPOUND_DEVICE:
-	    TRACE(midi, "MCI_GETDEVCAPS_COMPOUND_DEVICE !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_GETDEVCAPS_CAN_EJECT:
-	    TRACE(midi, "MCI_GETDEVCAPS_CAN_EJECT !\n");
-	    lpParms->dwReturn = FALSE;
-	    break;
-	case MCI_GETDEVCAPS_CAN_PLAY:
-	    TRACE(midi, "MCI_GETDEVCAPS_CAN_PLAY !\n");
-	    lpParms->dwReturn = TRUE;
-	    break;
-	case MCI_GETDEVCAPS_CAN_SAVE:
-	    TRACE(midi, "MCI_GETDEVCAPS_CAN_SAVE !\n");
-	    lpParms->dwReturn = FALSE;
-	    break;
-	default:
-	    TRACE(midi, "Unknown capability (%08lx) !\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
-	}
-    } else {
-	TRACE(midi, "No GetDevCaps-Item !\n");
-	return MCIERR_UNRECOGNIZED_COMMAND;
-    }
-    return 0;
-}
-
-/**************************************************************************
- * 				MIDI_mciInfo			[internal]
- */
-static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
-{
-    TRACE(midi, "(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (lpParms == NULL) return MCIERR_INTERNAL;
-
-    if (wDevID >= MAX_MCIMIDIDRV || MCIMidiDev[wDevID].nUseCount == 0) {
-	WARN(midi, "Invalid wDevID=%u\n", wDevID);
-	return MCIERR_INVALID_DEVICE_ID;
-    }
-
-    lpParms->lpstrReturn = NULL;
-
-    switch (dwFlags) {
-    case MCI_INFO_PRODUCT:
-	lpParms->lpstrReturn = "Linux Sound System 0.5";
-	break;
-    case MCI_INFO_FILE:
-	lpParms->lpstrReturn = "FileName";
-	break;
-    default:
-	return MCIERR_UNRECOGNIZED_COMMAND;
-    }
-    lpParms->dwRetSize = (lpParms->lpstrReturn != NULL) ? strlen(lpParms->lpstrReturn) : 0;
-    return 0;
-}
-
-/*-----------------------------------------------------------------------*/
 
 #ifdef HAVE_OSS
 /**************************************************************************
@@ -1994,6 +875,10 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN(midi, "bad dwFlags\n");
 	return MMSYSERR_INVALFLAG;
     }
+    if (midiOutDevices[wDevID] == NULL) {
+	TRACE(midi, "un-allocated wDevID\n");
+	return MMSYSERR_BADDEVICEID;
+    }
     
 #ifdef HAVE_OSS
     MidiOutDev[wDevID].lpExtra = 0;
@@ -2285,6 +1170,9 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    break;
 		    
 		case 0x78: /* all sounds off */
+		    /* FIXME: I don't know if I have to take care of the channel 
+		     * for this control ?
+		     */
 		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
 			if (voice[i].status != sVS_UNUSED && voice[i].channel == chn) {
 			    voice[i].status = sVS_UNUSED;
@@ -2293,6 +1181,9 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    }
 		    break;
 		case 0x7B: /* all notes off */
+		    /* FIXME: I don't know if I have to take care of the channel 
+		     * for this control ?
+		     */
 		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
 			if (voice[i].status == sVS_PLAYING && voice[i].channel == chn) {
 			    voice[i].status = sVS_UNUSED;
@@ -2330,9 +1221,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    modFMReset(wDevID);
 		    break; 
 		default:
-		    WARN(midi, 
-			 "Unsupported (yet) system event %02x\n", 
-			 evt & 0x0F);
+		    WARN(midi, "Unsupported (yet) system event %02x\n", evt & 0x0F);
 		}
 		break;
 	    default:	
@@ -2594,6 +1483,10 @@ static DWORD modReset(WORD wDevID)
     return MMSYSERR_NOTENABLED;
 }
 
+/*======================================================================*
+ *                  	    MIDI entry points 				*
+ *======================================================================*/
+
 /**************************************************************************
  * 				modMessage		[sample driver]
  */
@@ -2633,40 +1526,6 @@ DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 /**************************************************************************
- * 				MIDI_DriverProc16	[sample driver]
- */
-LONG MIDI_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2)
-{
-    switch (wMsg) {
-    case DRV_LOAD:		return 1;
-    case DRV_FREE:		return 1;
-    case DRV_OPEN:		return 1;
-    case DRV_CLOSE:		return 1;
-    case DRV_ENABLE:		return 1;
-    case DRV_DISABLE:		return 1;
-    case DRV_QUERYCONFIGURE:	return 1;
-    case DRV_CONFIGURE:		MessageBox16(0, "Sample Midi Linux Driver !", "MMLinux Driver", MB_OK); return 1;
-    case DRV_INSTALL:		return DRVCNF_RESTART;
-    case DRV_REMOVE:		return DRVCNF_RESTART;
-    case MCI_OPEN_DRIVER:	
-    case MCI_OPEN:		return MIDI_mciOpen(dwDevID, dwParam1, PTR_SEG_TO_LIN(dwParam2), FALSE);
-    case MCI_CLOSE_DRIVER:	
-    case MCI_CLOSE:		return MIDI_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_PLAY:		return MIDI_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_RECORD:		return MIDI_mciRecord(dwDevID, dwParam1, (LPMCI_RECORD_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_STOP:		return MIDI_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_SET:		return MIDI_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_PAUSE:		return MIDI_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_RESUME:		return MIDI_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_STATUS:		return MIDI_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
-    case MCI_INFO:		return MIDI_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)PTR_SEG_TO_LIN(dwParam2));
-    default:			return DefDriverProc16(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
-    }
-}
-
-/**************************************************************************
  * 				MIDI_DriverProc32	[sample driver]
  */
 LONG MIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
@@ -2683,20 +1542,33 @@ LONG MIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		MessageBox16(0, "Sample Midi Linux Driver !", "MMLinux Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-    case MCI_OPEN_DRIVER:	
-    case MCI_OPEN:		return MIDI_mciOpen(dwDevID, dwParam1, (void*)dwParam2, TRUE);
-    case MCI_CLOSE_DRIVER:	
-    case MCI_CLOSE:		return MIDI_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_PLAY:		return MIDI_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);
-    case MCI_RECORD:		return MIDI_mciRecord(dwDevID, dwParam1, (LPMCI_RECORD_PARMS)dwParam2);
-    case MCI_STOP:		return MIDI_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_SET:		return MIDI_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
-    case MCI_PAUSE:		return MIDI_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_RESUME:		return MIDI_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
-    case MCI_STATUS:		return MIDI_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
-    case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return MIDI_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
-    default:			return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    default:			
+	TRACE(midi, "Sending msg=%lu to default driver proc\n", wMsg);
+	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
+
+/**************************************************************************
+ * 				MIDI_DriverProc16	[sample driver]
+ */
+LONG MIDI_DriverProc16(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+		       DWORD dwParam1, DWORD dwParam2)
+{
+    switch (wMsg) {
+    case DRV_LOAD:		return 1;
+    case DRV_FREE:		return 1;
+    case DRV_OPEN:		return 1;
+    case DRV_CLOSE:		return 1;
+    case DRV_ENABLE:		return 1;
+    case DRV_DISABLE:		return 1;
+    case DRV_QUERYCONFIGURE:	return 1;
+    case DRV_CONFIGURE:		MessageBox16(0, "Sample Midi Linux Driver !", "MMLinux Driver", MB_OK); return 1;
+    case DRV_INSTALL:		return DRVCNF_RESTART;
+    case DRV_REMOVE:		return DRVCNF_RESTART;
+    default:			
+	TRACE(midi, "Sending msg=%u to default driver proc\n", wMsg);
+	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    }
+}
+
 /*-----------------------------------------------------------------------*/
