@@ -2,6 +2,7 @@
  * AVI Splitter Filter
  *
  * Copyright 2003 Robert Shearman
+ * Copyright 2004-2005 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,460 +41,19 @@
 #include <math.h>
 #include <assert.h>
 
+#include "parser.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
-static const struct IBaseFilterVtbl AVISplitter_Vtbl;
-static const struct IMediaSeekingVtbl AVISplitter_Seeking_Vtbl;
-static const struct IPinVtbl AVISplitter_OutputPin_Vtbl;
-static const struct IPinVtbl AVISplitter_InputPin_Vtbl;
-
-static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample);
-static HRESULT AVISplitter_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt);
-static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt);
-static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin);
-static HRESULT AVISplitter_ChangeStart(LPVOID iface);
-static HRESULT AVISplitter_ChangeStop(LPVOID iface);
-static HRESULT AVISplitter_ChangeRate(LPVOID iface);
-
-static HRESULT AVISplitter_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
-
-typedef struct AVISplitter
+typedef struct AVISplitterImpl
 {
-    const IBaseFilterVtbl * lpVtbl;
-
-    ULONG refCount;
-    CRITICAL_SECTION csFilter;
-    FILTER_STATE state;
-    REFERENCE_TIME rtStreamStart;
-    IReferenceClock * pClock;
-    FILTER_INFO filterInfo;
-
-    PullPin * pInputPin;
-    ULONG cStreams;
-    IPin ** ppPins;
+    ParserImpl Parser;
     IMediaSample * pCurrentSample;
     RIFFCHUNK CurrentChunk;
     LONGLONG CurrentChunkOffset; /* in media time */
     LONGLONG EndOfFile;
     AVIMAINHEADER AviHeader;
-} AVISplitter;
-
-typedef struct AVISplitter_OutputPin
-{
-    OutputPin pin;
-
-    AM_MEDIA_TYPE * pmt;
-    float fSamplesPerSec;
-    DWORD dwSamplesProcessed;
-    DWORD dwSampleSize;
-    DWORD dwLength;
-    MediaSeekingImpl mediaSeeking;
-} AVISplitter_OutputPin;
-
-
-#define _IMediaSeeking_Offset ((int)(&(((AVISplitter_OutputPin*)0)->mediaSeeking)))
-#define ICOM_THIS_From_IMediaSeeking(impl, iface) impl* This = (impl*)(((char*)iface)-_IMediaSeeking_Offset);
-
-HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
-{
-    HRESULT hr;
-    PIN_INFO piInput;
-    AVISplitter * pAviSplit;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppv);
-
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-    
-    pAviSplit = CoTaskMemAlloc(sizeof(AVISplitter));
-
-    pAviSplit->lpVtbl = &AVISplitter_Vtbl;
-    pAviSplit->refCount = 1;
-    InitializeCriticalSection(&pAviSplit->csFilter);
-    pAviSplit->state = State_Stopped;
-    pAviSplit->pClock = NULL;
-    pAviSplit->pCurrentSample = NULL;
-    ZeroMemory(&pAviSplit->filterInfo, sizeof(FILTER_INFO));
-
-    pAviSplit->cStreams = 0;
-    pAviSplit->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
-
-    /* construct input pin */
-    piInput.dir = PINDIR_INPUT;
-    piInput.pFilter = (IBaseFilter *)pAviSplit;
-    strncpyW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
-
-    hr = AVISplitter_InputPin_Construct(&piInput, AVISplitter_Sample, (LPVOID)pAviSplit, AVISplitter_QueryAccept, &pAviSplit->csFilter, (IPin **)&pAviSplit->pInputPin);
-
-    if (SUCCEEDED(hr))
-    {
-        pAviSplit->ppPins[0] = (IPin *)pAviSplit->pInputPin;
-        pAviSplit->pInputPin->fnPreConnect = AVISplitter_InputPin_PreConnect;
-        *ppv = (LPVOID)pAviSplit;
-    }
-    else
-    {
-        CoTaskMemFree(pAviSplit->ppPins);
-        DeleteCriticalSection(&pAviSplit->csFilter);
-        CoTaskMemFree(pAviSplit);
-    }
-
-    return hr;
-}
-
-static HRESULT AVISplitter_OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, float fSamplesPerSec, LPCRITICAL_SECTION pCritSec, AVISplitter_OutputPin * pPinImpl)
-{
-    pPinImpl->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-    CopyMediaType(pPinImpl->pmt, pmt);
-    pPinImpl->dwSamplesProcessed = 0;
-    pPinImpl->dwSampleSize = 0;
-    pPinImpl->fSamplesPerSec = fSamplesPerSec;
-
-    MediaSeekingImpl_Init((LPVOID)pPinInfo->pFilter, AVISplitter_ChangeStop, AVISplitter_ChangeStart, AVISplitter_ChangeRate, &pPinImpl->mediaSeeking);
-    pPinImpl->mediaSeeking.lpVtbl = &AVISplitter_Seeking_Vtbl;
-
-    return OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pCritSec, &pPinImpl->pin);
-}
-
-static HRESULT AVISplitter_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, const AM_MEDIA_TYPE * pmt, float fSamplesPerSec, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
-{
-    AVISplitter_OutputPin * pPinImpl;
-
-    *ppPin = NULL;
-
-    assert(pPinInfo->dir == PINDIR_OUTPUT);
-
-    pPinImpl = CoTaskMemAlloc(sizeof(AVISplitter_OutputPin));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
-    if (SUCCEEDED(AVISplitter_OutputPin_Init(pPinInfo, props, pUserData, pQueryAccept, pmt, fSamplesPerSec, pCritSec, pPinImpl)))
-    {
-        pPinImpl->pin.pin.lpVtbl = &AVISplitter_OutputPin_Vtbl;
-        
-        *ppPin = (IPin *)pPinImpl;
-        return S_OK;
-    }
-    return E_FAIL;
-}
-
-static HRESULT WINAPI AVISplitter_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = (LPVOID)This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = (LPVOID)This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = (LPVOID)This;
-
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
-
-    FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI AVISplitter_AddRef(IBaseFilter * iface)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    TRACE("(%p/%p)->() AddRef from %ld\n", This, iface, refCount - 1);
-
-    return refCount;
-}
-
-static ULONG WINAPI AVISplitter_Release(IBaseFilter * iface)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-
-    TRACE("(%p/%p)->() Release from %ld\n", This, iface, refCount + 1);
-    
-    if (!refCount)
-    {
-        ULONG i;
-
-        DeleteCriticalSection(&This->csFilter);
-        if (This->pClock)
-            IReferenceClock_Release(This->pClock);
-        
-        for (i = 0; i < This->cStreams + 1; i++)
-            IPin_Release(This->ppPins[i]);
-        
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
-        This->lpVtbl = NULL;
-        
-        TRACE("Destroying AVI splitter\n");
-        CoTaskMemFree(This);
-        
-        return 0;
-    }
-    else
-        return refCount;
-}
-
-/** IPersist methods **/
-
-static HRESULT WINAPI AVISplitter_GetClassID(IBaseFilter * iface, CLSID * pClsid)
-{
-    TRACE("(%p)\n", pClsid);
-
-    *pClsid = CLSID_AviSplitter;
-
-    return S_OK;
-}
-
-/** IMediaFilter methods **/
-
-static HRESULT WINAPI AVISplitter_Stop(IBaseFilter * iface)
-{
-    HRESULT hr;
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("()\n");
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        hr = PullPin_StopProcessing(This->pInputPin);
-        This->state = State_Stopped;
-    }
-    LeaveCriticalSection(&This->csFilter);
-    
-    return hr;
-}
-
-static HRESULT WINAPI AVISplitter_Pause(IBaseFilter * iface)
-{
-    HRESULT hr = S_OK;
-    BOOL bInit;
-    AVISplitter *This = (AVISplitter *)iface;
-    
-    TRACE("()\n");
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        bInit = (This->state == State_Stopped);
-        This->state = State_Paused;
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    if (bInit)
-    {
-        unsigned int i;
-
-        hr = PullPin_Seek(This->pInputPin, This->CurrentChunkOffset, This->EndOfFile);
-
-        if (SUCCEEDED(hr))
-            hr = PullPin_InitProcessing(This->pInputPin);
-
-        if (SUCCEEDED(hr))
-        {
-            for (i = 1; i < This->cStreams + 1; i++)
-            {
-                AVISplitter_OutputPin* StreamPin = (AVISplitter_OutputPin *)This->ppPins[i];
-                OutputPin_DeliverNewSegment((OutputPin *)This->ppPins[i], 0, (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec), 1.0);
-                StreamPin->mediaSeeking.llDuration = (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec);
-                StreamPin->mediaSeeking.llStop = (LONGLONG)ceil(10000000.0 * (float)StreamPin->dwLength / StreamPin->fSamplesPerSec);
-                OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
-            }
-
-            /* FIXME: this is a little hacky: we have to deliver (at least?) one sample
-             * to each renderer before they will complete their transitions. We should probably
-             * seek through the stream for the first of each, rather than do it this way which is
-             * probably a bit prone to deadlocking */
-            hr = PullPin_StartProcessing(This->pInputPin);
-        }
-    }
-    /* FIXME: else pause thread */
-
-    return hr;
-}
-
-static HRESULT WINAPI AVISplitter_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
-{
-    HRESULT hr = S_OK;
-    AVISplitter *This = (AVISplitter *)iface;
-    int i;
-
-    TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        This->rtStreamStart = tStart;
-        This->state = State_Running;
-
-        hr = PullPin_InitProcessing(This->pInputPin);
-
-        if (SUCCEEDED(hr))
-        { 
-            for (i = 1; i < This->cStreams + 1; i++)
-            {
-                OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
-            }
-            hr = PullPin_StartProcessing(This->pInputPin);
-        }
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    return hr;
-}
-
-static HRESULT WINAPI AVISplitter_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("(%ld, %p)\n", dwMilliSecsTimeout, pState);
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        *pState = This->state;
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    /* FIXME: this is a little bit unsafe, but I don't see that we can do this
-     * while in the critical section. Maybe we could copy the pointer and addref in the
-     * critical section and then release after this.
-     */
-    if (This->pInputPin && (PullPin_WaitForStateChange(This->pInputPin, dwMilliSecsTimeout) == S_FALSE))
-        return VFW_S_STATE_INTERMEDIATE;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AVISplitter_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("(%p)\n", pClock);
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        if (This->pClock)
-            IReferenceClock_Release(This->pClock);
-        This->pClock = pClock;
-        if (This->pClock)
-            IReferenceClock_AddRef(This->pClock);
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI AVISplitter_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("(%p)\n", ppClock);
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        *ppClock = This->pClock;
-        if (This->pClock)
-            IReferenceClock_AddRef(This->pClock);
-    }
-    LeaveCriticalSection(&This->csFilter);
-    
-    return S_OK;
-}
-
-/** IBaseFilter implementation **/
-
-static HRESULT WINAPI AVISplitter_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    ENUMPINDETAILS epd;
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("(%p)\n", ppEnum);
-
-    epd.cPins = This->cStreams + 1; /* +1 for input pin */
-    epd.ppPins = This->ppPins;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
-}
-
-static HRESULT WINAPI AVISplitter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
-{
-    FIXME("AVISplitter::FindPin(...)\n");
-
-    /* FIXME: critical section */
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI AVISplitter_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
-{
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("(%p)\n", pInfo);
-
-    strcpyW(pInfo->achName, This->filterInfo.achName);
-    pInfo->pGraph = This->filterInfo.pGraph;
-
-    if (pInfo->pGraph)
-        IFilterGraph_AddRef(pInfo->pGraph);
-    
-    return S_OK;
-}
-
-static HRESULT WINAPI AVISplitter_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
-{
-    HRESULT hr = S_OK;
-    AVISplitter *This = (AVISplitter *)iface;
-
-    TRACE("(%p, %s)\n", pGraph, debugstr_w(pName));
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        if (pName)
-            strcpyW(This->filterInfo.achName, pName);
-        else
-            *This->filterInfo.achName = '\0';
-        This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    return hr;
-}
-
-static HRESULT WINAPI AVISplitter_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
-{
-    TRACE("(%p)\n", pVendorInfo);
-    return E_NOTIMPL;
-}
-
-static const IBaseFilterVtbl AVISplitter_Vtbl =
-{
-    AVISplitter_QueryInterface,
-    AVISplitter_AddRef,
-    AVISplitter_Release,
-    AVISplitter_GetClassID,
-    AVISplitter_Stop,
-    AVISplitter_Pause,
-    AVISplitter_Run,
-    AVISplitter_GetState,
-    AVISplitter_SetSyncSource,
-    AVISplitter_GetSyncSource,
-    AVISplitter_EnumPins,
-    AVISplitter_FindPin,
-    AVISplitter_QueryFilterInfo,
-    AVISplitter_JoinFilterGraph,
-    AVISplitter_QueryVendorInfo
-};
+} AVISplitterImpl;
 
 static HRESULT AVISplitter_NextChunk(LONGLONG * pllCurrentChunkOffset, RIFFCHUNK * pCurrentChunk, const REFERENCE_TIME * tStart, const REFERENCE_TIME * tStop, const BYTE * pbSrcStream)
 {
@@ -514,7 +74,7 @@ static HRESULT AVISplitter_NextChunk(LONGLONG * pllCurrentChunkOffset, RIFFCHUNK
 
 static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 {
-    AVISplitter *This = (AVISplitter *)iface;
+    AVISplitterImpl *This = (AVISplitterImpl *)iface;
     LPBYTE pbSrcStream = NULL;
     long cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -559,7 +119,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         long chunk_remaining_bytes = 0;
         long offset_src;
         WORD streamId;
-        AVISplitter_OutputPin * pOutputPin;
+        Parser_OutputPin * pOutputPin;
         BOOL bSyncPoint = TRUE;
 
         if (This->CurrentChunkOffset >= tStart)
@@ -617,13 +177,13 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 
         streamId = StreamFromFOURCC(This->CurrentChunk.fcc);
 
-        if (streamId > This->cStreams)
+        if (streamId > This->Parser.cStreams)
         {
-            ERR("Corrupted AVI file (contains stream id %d, but supposed to only have %ld streams)\n", streamId, This->cStreams);
+            ERR("Corrupted AVI file (contains stream id %d, but supposed to only have %ld streams)\n", streamId, This->Parser.cStreams);
             return E_FAIL;
         }
 
-        pOutputPin = (AVISplitter_OutputPin *)This->ppPins[streamId + 1];
+        pOutputPin = (Parser_OutputPin *)This->Parser.ppPins[streamId + 1];
 
         if (!This->pCurrentSample)
         {
@@ -726,11 +286,10 @@ static HRESULT AVISplitter_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     return S_FALSE;
 }
 
-static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pData, DWORD cb)
+static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE * pData, DWORD cb)
 {
     PIN_INFO piOutput;
     const RIFFCHUNK * pChunk;
-    IPin ** ppOldPins;
     HRESULT hr;
     AM_MEDIA_TYPE amt;
     float fSamplesPerSec = 0.0f;
@@ -747,7 +306,7 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pD
     ZeroMemory(&amt, sizeof(amt));
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
-    wsprintfW(piOutput.achName, wszStreamTemplate, This->cStreams);
+    wsprintfW(piOutput.achName, wszStreamTemplate, This->Parser.cStreams);
 
     for (pChunk = (const RIFFCHUNK *)pData; 
          ((const BYTE *)pChunk >= pData) && ((const BYTE *)pChunk + sizeof(RIFFCHUNK) < pData + cb) && (pChunk->cb > 0); 
@@ -858,52 +417,9 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitter * This, const BYTE * pD
     TRACE("dwSampleSize = %lx\n", dwSampleSize);
     TRACE("dwLength = %lx\n", dwLength);
 
-    ppOldPins = This->ppPins;
-
-    This->ppPins = HeapAlloc(GetProcessHeap(), 0, (This->cStreams + 2) * sizeof(IPin *));
-    memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
-
-    hr = AVISplitter_OutputPin_Construct(&piOutput, &props, NULL, AVISplitter_OutputPin_QueryAccept, &amt, fSamplesPerSec, &This->csFilter, This->ppPins + This->cStreams + 1);
-
-    if (SUCCEEDED(hr))
-    {
-        ((AVISplitter_OutputPin *)(This->ppPins[This->cStreams + 1]))->dwSampleSize = dwSampleSize;
-        ((AVISplitter_OutputPin *)(This->ppPins[This->cStreams + 1]))->dwLength = dwLength;
-        ((AVISplitter_OutputPin *)(This->ppPins[This->cStreams + 1]))->pin.pin.pUserData = (LPVOID)This->ppPins[This->cStreams + 1];
-        This->cStreams++;
-        HeapFree(GetProcessHeap(), 0, ppOldPins);
-    }
-    else
-    {
-        HeapFree(GetProcessHeap(), 0, This->ppPins);
-        This->ppPins = ppOldPins;
-        ERR("Failed with error %lx\n", hr);
-    }
+    hr = Parser_AddPin(&(This->Parser), &piOutput, &props, &amt, fSamplesPerSec, dwSampleSize, dwLength);
 
     return hr;
-}
-
-static HRESULT AVISplitter_RemoveOutputPins(AVISplitter * This)
-{
-    /* NOTE: should be in critical section when calling this function */
-
-    ULONG i;
-    IPin ** ppOldPins = This->ppPins;
-
-    /* reduce the pin array down to 1 (just our input pin) */
-    This->ppPins = HeapAlloc(GetProcessHeap(), 0, sizeof(IPin *) * 1);
-    memcpy(This->ppPins, ppOldPins, sizeof(IPin *) * 1);
-
-    for (i = 0; i < This->cStreams; i++)
-    {
-        OutputPin_DeliverDisconnect((OutputPin *)ppOldPins[i + 1]);
-        IPin_Release(ppOldPins[i + 1]);
-    }
-
-    This->cStreams = 0;
-    HeapFree(GetProcessHeap(), 0, ppOldPins);
-
-    return S_OK;
 }
 
 /* FIXME: fix leaks on failure here */
@@ -915,7 +431,7 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     LONGLONG pos = 0; /* in bytes */
     BYTE * pBuffer;
     RIFFCHUNK * pCurrentChunk;
-    AVISplitter * pAviSplit = (AVISplitter *)This->pin.pinInfo.pFilter;
+    AVISplitterImpl * pAviSplit = (AVISplitterImpl *)This->pin.pinInfo.pFilter;
 
     hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     pos += sizeof(list);
@@ -1025,237 +541,29 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
     return hr;
 }
 
-static HRESULT AVISplitter_ChangeStart(LPVOID iface)
+HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
-    FIXME("(%p)\n", iface);
-    return S_OK;
-}
+    HRESULT hr;
+    AVISplitterImpl * This;
 
-static HRESULT AVISplitter_ChangeStop(LPVOID iface)
-{
-    FIXME("(%p)\n", iface);
-    return S_OK;
-}
-
-static HRESULT AVISplitter_ChangeRate(LPVOID iface)
-{
-    FIXME("(%p)\n", iface);
-    return S_OK;
-}
-
-
-static HRESULT WINAPI AVISplitter_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
-{
-    ICOM_THIS_From_IMediaSeeking(AVISplitter_OutputPin, iface);
-
-    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
-}
-
-static ULONG WINAPI AVISplitter_Seeking_AddRef(IMediaSeeking * iface)
-{
-    ICOM_THIS_From_IMediaSeeking(AVISplitter_OutputPin, iface);
-
-    return IUnknown_AddRef((IUnknown *)This);
-}
-
-static ULONG WINAPI AVISplitter_Seeking_Release(IMediaSeeking * iface)
-{
-    ICOM_THIS_From_IMediaSeeking(AVISplitter_OutputPin, iface);
-
-    return IUnknown_Release((IUnknown *)This);
-}
-
-static const IMediaSeekingVtbl AVISplitter_Seeking_Vtbl =
-{
-    AVISplitter_Seeking_QueryInterface,
-    AVISplitter_Seeking_AddRef,
-    AVISplitter_Seeking_Release,
-    MediaSeekingImpl_GetCapabilities,
-    MediaSeekingImpl_CheckCapabilities,
-    MediaSeekingImpl_IsFormatSupported,
-    MediaSeekingImpl_QueryPreferredFormat,
-    MediaSeekingImpl_GetTimeFormat,
-    MediaSeekingImpl_IsUsingTimeFormat,
-    MediaSeekingImpl_SetTimeFormat,
-    MediaSeekingImpl_GetDuration,
-    MediaSeekingImpl_GetStopPosition,
-    MediaSeekingImpl_GetCurrentPosition,
-    MediaSeekingImpl_ConvertTimeFormat,
-    MediaSeekingImpl_SetPositions,
-    MediaSeekingImpl_GetPositions,
-    MediaSeekingImpl_GetAvailable,
-    MediaSeekingImpl_SetRate,
-    MediaSeekingImpl_GetRate,
-    MediaSeekingImpl_GetPreroll
-};
-
-HRESULT WINAPI AVISplitter_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
-{
-    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
-
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    TRACE("(%p, %p)\n", pUnkOuter, ppv);
 
     *ppv = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = (LPVOID)iface;
-    else if (IsEqualIID(riid, &IID_IPin))
-        *ppv = (LPVOID)iface;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = (LPVOID)&This->mediaSeeking;
+    if (pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
 
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)(*ppv));
-        return S_OK;
-    }
+    /* Note: This memory is managed by the transform filter once created */
+    This = CoTaskMemAlloc(sizeof(AVISplitterImpl));
 
-    FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
+    This->pCurrentSample = NULL;
 
-    return E_NOINTERFACE;
-}
+    hr = Parser_Create(&(This->Parser), &CLSID_AviSplitter, AVISplitter_Sample, AVISplitter_QueryAccept, AVISplitter_InputPin_PreConnect);
 
-static ULONG WINAPI AVISplitter_OutputPin_Release(IPin * iface)
-{
-    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
-    ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-    
-    TRACE("()\n");
-    
-    if (!refCount)
-    {
-        DeleteMediaType(This->pmt);
-        CoTaskMemFree(This->pmt);
-        DeleteMediaType(&This->pin.pin.mtCurrent);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    return refCount;
-}
+    if (FAILED(hr))
+        return hr;
 
-static HRESULT WINAPI AVISplitter_OutputPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
-{
-    ENUMMEDIADETAILS emd;
-    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
+    *ppv = (LPVOID)This;
 
-    TRACE("(%p)\n", ppEnum);
-
-    /* override this method to allow enumeration of your types */
-    emd.cMediaTypes = 1;
-    emd.pMediaTypes = This->pmt;
-
-    return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
-}
-
-static HRESULT AVISplitter_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
-{
-    AVISplitter_OutputPin *This = (AVISplitter_OutputPin *)iface;
-
-    TRACE("()\n");
-    dump_AM_MEDIA_TYPE(pmt);
-
-    return (memcmp(This->pmt, pmt, sizeof(AM_MEDIA_TYPE)) == 0);
-}
-
-static const IPinVtbl AVISplitter_OutputPin_Vtbl = 
-{
-    AVISplitter_OutputPin_QueryInterface,
-    IPinImpl_AddRef,
-    AVISplitter_OutputPin_Release,
-    OutputPin_Connect,
-    OutputPin_ReceiveConnection,
-    OutputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
-    AVISplitter_OutputPin_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
-    OutputPin_EndOfStream,
-    OutputPin_BeginFlush,
-    OutputPin_EndFlush,
-    OutputPin_NewSegment
-};
-
-static HRESULT AVISplitter_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
-{
-    PullPin * pPinImpl;
-
-    *ppPin = NULL;
-
-    if (pPinInfo->dir != PINDIR_INPUT)
-    {
-        ERR("Pin direction(%x) != PINDIR_INPUT\n", pPinInfo->dir);
-        return E_INVALIDARG;
-    }
-
-    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
-
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
-
-    if (SUCCEEDED(PullPin_Init(pPinInfo, pSampleProc, pUserData, pQueryAccept, pCritSec, pPinImpl)))
-    {
-        pPinImpl->pin.lpVtbl = &AVISplitter_InputPin_Vtbl;
-        
-        *ppPin = (IPin *)(&pPinImpl->pin.lpVtbl);
-        return S_OK;
-    }
-    return E_FAIL;
-}
-
-static HRESULT WINAPI AVISplitter_InputPin_Disconnect(IPin * iface)
-{
-    HRESULT hr;
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("()\n");
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (This->pConnectedTo)
-        {
-            FILTER_STATE state;
-
-            hr = IBaseFilter_GetState(This->pinInfo.pFilter, 0, &state);
-
-            if (SUCCEEDED(hr) && (state == State_Stopped))
-            {
-                IPin_Release(This->pConnectedTo);
-                This->pConnectedTo = NULL;
-                hr = AVISplitter_RemoveOutputPins((AVISplitter *)This->pinInfo.pFilter);
-            }
-            else
-                hr = VFW_E_NOT_STOPPED;
-        }
-        else
-            hr = S_FALSE;
-    }
-    LeaveCriticalSection(This->pCritSec);
-    
     return hr;
 }
-
-static const IPinVtbl AVISplitter_InputPin_Vtbl =
-{
-    PullPin_QueryInterface,
-    IPinImpl_AddRef,
-    PullPin_Release,
-    OutputPin_Connect,
-    PullPin_ReceiveConnection,
-    AVISplitter_InputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
-    IPinImpl_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
-    PullPin_EndOfStream,
-    PullPin_BeginFlush,
-    PullPin_EndFlush,
-    PullPin_NewSegment
-};
