@@ -1181,8 +1181,8 @@ typedef struct {
 	HBITMAP32	hbmColor;
 } ICONINFO32,*LPICONINFO32;
 
-DECL_WINELIB_TYPE(ICONINFO);
-DECL_WINELIB_TYPE(LPICONINFO);
+DECL_WINELIB_TYPE(ICONINFO)
+DECL_WINELIB_TYPE(LPICONINFO)
 
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct
@@ -1690,7 +1690,9 @@ typedef struct
 
 #define	HELPINFO_WINDOW		0x0001
 #define	HELPINFO_MENUITEM	0x0002
-typedef struct			/* Structure pointed to by lParam of WM_HELP */
+
+/* Structure pointed to by lParam of WM_HELP */
+typedef struct			
 {
     UINT32	cbSize;		/* Size in bytes of this struct  */
     INT32	iContextType;	/* Either HELPINFO_WINDOW or HELPINFO_MENUITEM */
