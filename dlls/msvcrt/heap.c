@@ -9,7 +9,7 @@
 
 #include "msvcrt.h"
 
-#include "msvcrt/stdlib.h"
+#include "msvcrt/malloc.h"
 
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -19,27 +19,11 @@ extern CRITICAL_SECTION MSVCRT_heap_cs;
 #define LOCK_HEAP      EnterCriticalSection(&MSVCRT_heap_cs)
 #define UNLOCK_HEAP    LeaveCriticalSection(&MSVCRT_heap_cs)
 
-/* heap function constants */
-#define MSVCRT_HEAPEMPTY    -1
-#define MSVCRT_HEAPOK       -2
-#define MSVCRT_HEAPBADBEGIN -3
-#define MSVCRT_HEAPBADNODE  -4
-#define MSVCRT_HEAPEND      -5
-#define MSVCRT_HEAPBADPTR   -6
-#define MSVCRT_FREEENTRY    0
-#define MSVCRT_USEDENTRY    1
-
-typedef struct MSVCRT_heapinfo
-{
-  int * _pentry;
-  size_t _size;
-  int    _useflag;
-} MSVCRT_HEAPINFO;
-
 typedef void (*MSVCRT_new_handler_func)(void);
 
 static MSVCRT_new_handler_func MSVCRT_new_handler;
 static int MSVCRT_new_mode;
+
 
 /*********************************************************************
  *		operator_new (MSVCRT.@)
@@ -111,7 +95,7 @@ int MSVCRT__set_new_mode(int mode)
 /*********************************************************************
  *		_expand (MSVCRT.@)
  */
-void* _expand(void* mem, unsigned int size)
+void* _expand(void* mem, MSVCRT_size_t size)
 {
   return HeapReAlloc(GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, mem, size);
 }
@@ -124,9 +108,9 @@ int _heapchk(void)
   if (!HeapValidate( GetProcessHeap(), 0, NULL))
   {
     MSVCRT__set_errno(GetLastError());
-    return MSVCRT_HEAPBADNODE;
+    return _HEAPBADNODE;
   }
-  return MSVCRT_HEAPOK;
+  return _HEAPOK;
 }
 
 /*********************************************************************
@@ -146,21 +130,21 @@ int _heapmin(void)
 /*********************************************************************
  *		_heapwalk (MSVCRT.@)
  */
-int _heapwalk(MSVCRT_HEAPINFO* next)
+int _heapwalk(_HEAPINFO* next)
 {
   PROCESS_HEAP_ENTRY phe;
 
   LOCK_HEAP;
   phe.lpData = next->_pentry;
   phe.cbData = next->_size;
-  phe.wFlags = next->_useflag == MSVCRT_USEDENTRY ? PROCESS_HEAP_ENTRY_BUSY : 0;
+  phe.wFlags = next->_useflag == _USEDENTRY ? PROCESS_HEAP_ENTRY_BUSY : 0;
 
   if (phe.lpData && phe.wFlags & PROCESS_HEAP_ENTRY_BUSY &&
       !HeapValidate( GetProcessHeap(), 0, phe.lpData ))
   {
     UNLOCK_HEAP;
     MSVCRT__set_errno(GetLastError());
-    return MSVCRT_HEAPBADNODE;
+    return _HEAPBADNODE;
   }
 
   do
@@ -169,19 +153,19 @@ int _heapwalk(MSVCRT_HEAPINFO* next)
     {
       UNLOCK_HEAP;
       if (GetLastError() == ERROR_NO_MORE_ITEMS)
-         return MSVCRT_HEAPEND;
+         return _HEAPEND;
       MSVCRT__set_errno(GetLastError());
       if (!phe.lpData)
-        return MSVCRT_HEAPBADBEGIN;
-      return MSVCRT_HEAPBADNODE;
+        return _HEAPBADBEGIN;
+      return _HEAPBADNODE;
     }
   } while (phe.wFlags & (PROCESS_HEAP_REGION|PROCESS_HEAP_UNCOMMITTED_RANGE));
 
   UNLOCK_HEAP;
   next->_pentry = phe.lpData;
   next->_size = phe.cbData;
-  next->_useflag = phe.wFlags & PROCESS_HEAP_ENTRY_BUSY ? MSVCRT_USEDENTRY : MSVCRT_FREEENTRY;
-  return MSVCRT_HEAPOK;
+  next->_useflag = phe.wFlags & PROCESS_HEAP_ENTRY_BUSY ? _USEDENTRY : _FREEENTRY;
+  return _HEAPOK;
 }
 
 /*********************************************************************
@@ -190,23 +174,23 @@ int _heapwalk(MSVCRT_HEAPINFO* next)
 int _heapset(unsigned int value)
 {
   int retval;
-  MSVCRT_HEAPINFO heap;
+  _HEAPINFO heap;
 
-  memset( &heap, 0, sizeof(MSVCRT_HEAPINFO) );
+  memset( &heap, 0, sizeof(_HEAPINFO) );
   LOCK_HEAP;
-  while ((retval = _heapwalk(&heap)) == MSVCRT_HEAPOK)
+  while ((retval = _heapwalk(&heap)) == _HEAPOK)
   {
-    if (heap._useflag == MSVCRT_FREEENTRY)
+    if (heap._useflag == _FREEENTRY)
       memset(heap._pentry, value, heap._size);
   }
   UNLOCK_HEAP;
-  return retval == MSVCRT_HEAPEND? MSVCRT_HEAPOK : retval;
+  return retval == _HEAPEND? _HEAPOK : retval;
 }
 
 /*********************************************************************
  *		_msize (MSVCRT.@)
  */
-long _msize(void* mem)
+MSVCRT_size_t _msize(void* mem)
 {
   long size = HeapSize(GetProcessHeap(),0,mem);
   if (size == -1)
@@ -220,7 +204,7 @@ long _msize(void* mem)
 /*********************************************************************
  *		calloc (MSVCRT.@)
  */
-void* MSVCRT_calloc(unsigned int size, unsigned int count)
+void* MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
 {
   return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size * count );
 }
@@ -236,7 +220,7 @@ void MSVCRT_free(void* ptr)
 /*********************************************************************
  *                  malloc (MSVCRT.@)
  */
-void* MSVCRT_malloc(unsigned int size)
+void* MSVCRT_malloc(MSVCRT_size_t size)
 {
   void *ret = HeapAlloc(GetProcessHeap(),0,size);
   if (!ret)
@@ -247,7 +231,7 @@ void* MSVCRT_malloc(unsigned int size)
 /*********************************************************************
  *		realloc (MSVCRT.@)
  */
-void* MSVCRT_realloc(void* ptr, unsigned int size)
+void* MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
 {
   return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }

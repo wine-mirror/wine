@@ -6,8 +6,8 @@
  * Copyright 1997,2000 Uwe Bonnes
  * Copyright 2000 Jon Griffiths
  */
-#include "msvcrt.h"
 
+#include "msvcrt.h"
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
 

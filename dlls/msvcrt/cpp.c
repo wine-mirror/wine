@@ -3,9 +3,9 @@
  *
  * Copyright 2000 Jon Griffiths
  */
-#include "msvcrt.h"
 
-#include "msvcrt/stdlib.h"
+#include "msvcrt.h"
+#include "msvcrt/malloc.h"
 
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);

@@ -9,12 +9,8 @@
 #define __WINE_STDLIB_H
 
 #include "winnt.h"
-
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
-#endif
+#include "msvcrt/malloc.h"                /* For size_t, malloc & co */
+#include "msvcrt/search.h"                /* For bsearch and qsort */
 
 
 #ifndef USE_MSVCRT_PREFIX
@@ -33,11 +29,6 @@
 #define _MAX_PATH           260
 #endif
 
-
-#ifndef MSVCRT_SIZE_T_DEFINED
-typedef unsigned int MSVCRT(size_t);
-#define MSVCRT_SIZE_T_DEFINED
-#endif
 
 typedef struct MSVCRT(_div_t) {
     int quot;
@@ -113,7 +104,6 @@ extern int*           MSVCRT(_errno)(void);
 
 
 typedef int (*_onexit_t)(void);
-typedef int (*_pfunccmp_t)(const void*,const void*);
 
 
 __int64     _atoi64(const char*);
@@ -151,8 +141,6 @@ int         MSVCRT(atexit)(_onexit_t);
 double      MSVCRT(atof)(const char*);
 int         MSVCRT(atoi)(const char*);
 long        MSVCRT(atol)(const char*);
-void*       MSVCRT(bsearch)(const void*,const void*,MSVCRT(size_t),MSVCRT(size_t),_pfunccmp_t);
-void*       MSVCRT(calloc)(MSVCRT(size_t),MSVCRT(size_t));
 #ifdef __i386__
 LONGLONG    MSVCRT(div)(int,int);
 ULONGLONG   MSVCRT(ldiv)(long,long);
@@ -161,15 +149,11 @@ MSVCRT(div_t) MSVCRT(div)(int,int);
 MSVCRT(ldiv_t) MSVCRT(ldiv)(long,long);
 #endif
 void        MSVCRT(exit)(int);
-void        MSVCRT(free)(void*);
 char*       MSVCRT(getenv)(const char*);
 long        MSVCRT(labs)(long);
-void*       MSVCRT(malloc)(MSVCRT(size_t));
 int         MSVCRT(mblen)(const char*,MSVCRT(size_t));
 void        MSVCRT(perror)(const char*);
-void        MSVCRT(qsort)(const void*,MSVCRT(size_t),MSVCRT(size_t),_pfunccmp_t);
 int         MSVCRT(rand)(void);
-void*       MSVCRT(realloc)(void*,MSVCRT(size_t));
 void        MSVCRT(srand)(unsigned int);
 double      MSVCRT(strtod)(const char*,char**);
 long        MSVCRT(strtol)(const char*,char**,int);

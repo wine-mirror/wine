@@ -4,15 +4,14 @@
  * Copyright 2000 Jon Griffiths
  */
 
-#include "msvcrt.h"
-
 #include <stdlib.h>
+
+#include "msvcrt.h"
 #include "msvcrt/stdlib.h"
 
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-typedef int (*MSVCRT_comp_func)(const void*, const void*);
 
 /*********************************************************************
  *		_beep (MSVCRT.@)
@@ -45,7 +44,7 @@ void _sleep(unsigned long timeout)
  */
 void* _lfind(const void* match, const void* start,
              unsigned int* array_size, unsigned int elem_size,
-             MSVCRT_comp_func cf)
+             MSVCRT_compar_fn_t cf)
 {
   unsigned int size = *array_size;
   if (size)
@@ -63,7 +62,7 @@ void* _lfind(const void* match, const void* start,
  */
 void* _lsearch(const void* match, void* start,
                unsigned int* array_size, unsigned int elem_size,
-               MSVCRT_comp_func cf)
+               MSVCRT_compar_fn_t cf)
 {
   unsigned int size = *array_size;
   if (size)

@@ -10,8 +10,8 @@
 #include "wincon.h"
 
 #include "msvcrt/conio.h"
+#include "msvcrt/malloc.h"
 #include "msvcrt/stdio.h"
-#include "msvcrt/stdlib.h"
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
