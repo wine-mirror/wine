@@ -340,6 +340,7 @@ DEBUG_InitTypes(void)
    */
   DEBUG_InitCVDataTypes();
 
+  DEBUG_InitBasic(DT_BASIC_CONTEXT,NULL,4,0,"%R");
 }
 
 long long int
@@ -1103,4 +1104,3 @@ int DEBUG_PrintType( const DBG_VALUE *value )
    DEBUG_Printf(DBG_CHN_MESG, "\n");
    return TRUE;
 }
-

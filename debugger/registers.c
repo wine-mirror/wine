@@ -27,7 +27,7 @@
  *
  * Return Flag String.
  */
-char *DEBUG_Flags( DWORD flag, char *buf )
+static char *DEBUG_Flags( DWORD flag, char *buf )
 {
 #ifdef __i386__
     char *pt;
@@ -86,42 +86,42 @@ char *DEBUG_Flags( DWORD flag, char *buf )
  *
  * Display registers information.
  */
-void DEBUG_InfoRegisters(void)
+void DEBUG_InfoRegisters(const CONTEXT* ctx)
 {
     DEBUG_Printf(DBG_CHN_MESG,"Register dump:\n");
 
 #ifdef __i386__
     /* First get the segment registers out of the way */
     DEBUG_Printf( DBG_CHN_MESG," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
-		  (WORD)DEBUG_context.SegCs, (WORD)DEBUG_context.SegSs,
-		  (WORD)DEBUG_context.SegDs, (WORD)DEBUG_context.SegEs,
-		  (WORD)DEBUG_context.SegFs, (WORD)DEBUG_context.SegGs );
+		  (WORD)ctx->SegCs, (WORD)ctx->SegSs,
+		  (WORD)ctx->SegDs, (WORD)ctx->SegEs,
+		  (WORD)ctx->SegFs, (WORD)ctx->SegGs );
     if (DEBUG_CurrThread->dbg_mode != MODE_32)
     {
         char flag[33];
 
         DEBUG_Printf( DBG_CHN_MESG,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
-		      LOWORD(DEBUG_context.Eip), LOWORD(DEBUG_context.Esp),
-		      LOWORD(DEBUG_context.Ebp), LOWORD(DEBUG_context.EFlags),
-		      DEBUG_Flags(LOWORD(DEBUG_context.EFlags), flag));
+		      LOWORD(ctx->Eip), LOWORD(ctx->Esp),
+		      LOWORD(ctx->Ebp), LOWORD(ctx->EFlags),
+		      DEBUG_Flags(LOWORD(ctx->EFlags), flag));
 	DEBUG_Printf( DBG_CHN_MESG," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
-		      LOWORD(DEBUG_context.Eax), LOWORD(DEBUG_context.Ebx),
-		      LOWORD(DEBUG_context.Ecx), LOWORD(DEBUG_context.Edx),
-		      LOWORD(DEBUG_context.Esi), LOWORD(DEBUG_context.Edi) );
+		      LOWORD(ctx->Eax), LOWORD(ctx->Ebx),
+		      LOWORD(ctx->Ecx), LOWORD(ctx->Edx),
+		      LOWORD(ctx->Esi), LOWORD(ctx->Edi) );
     }
     else  /* 32-bit mode */
     {
         char flag[33];
 
         DEBUG_Printf( DBG_CHN_MESG, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n",
-		      DEBUG_context.Eip, DEBUG_context.Esp,
-		      DEBUG_context.Ebp, DEBUG_context.EFlags,
-		      DEBUG_Flags(DEBUG_context.EFlags, flag));
+		      ctx->Eip, ctx->Esp,
+		      ctx->Ebp, ctx->EFlags,
+		      DEBUG_Flags(ctx->EFlags, flag));
 	DEBUG_Printf( DBG_CHN_MESG, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n",
-		      DEBUG_context.Eax, DEBUG_context.Ebx,
-		      DEBUG_context.Ecx, DEBUG_context.Edx );
+		      ctx->Eax, ctx->Ebx,
+		      ctx->Ecx, ctx->Edx );
 	DEBUG_Printf( DBG_CHN_MESG, " ESI:%08lx EDI:%08lx\n",
-		      DEBUG_context.Esi, DEBUG_context.Edi );
+		      ctx->Esi, ctx->Edi );
     }
 #endif
 }

@@ -230,7 +230,7 @@ info_command:
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
     | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); DEBUG_FreeExprMem(); }
     | tINFO tQUEUE expr_value tEOL    { DEBUG_DumpQueue( $3 ); DEBUG_FreeExprMem(); }
-    | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }
+    | tINFO tREGS tEOL          { DEBUG_InfoRegisters(&DEBUG_context); }
     | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); DEBUG_FreeExprMem(); }
     | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }

@@ -56,6 +56,8 @@ enum    debug_type_basic {DT_BASIC_INT = 1, DT_BASIC_CHAR, DT_BASIC_LONGINT, DT_
                           DT_BASIC_STRING,
                           /* this is for historical reasons... should take care of it RSN */
                           DT_BASIC_CONST_INT,
+                          /* not so basic, but handy */
+                          DT_BASIC_CONTEXT,
                           /* to be kept as last... sentinel entry... do not use */
                           DT_BASIC_LAST};
 
@@ -456,7 +458,7 @@ extern enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module,
 extern void DEBUG_InitCVDataTypes(void);
 
   /* debugger/registers.c */
-extern void DEBUG_InfoRegisters(void);
+extern void DEBUG_InfoRegisters(const CONTEXT* ctx);
 extern BOOL DEBUG_ValidateRegisters(void);
 
   /* debugger/source.c */

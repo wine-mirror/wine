@@ -70,4 +70,6 @@ INTERNAL_VAR(cs,			0,		&DEBUG_context.SegCs,	DT_BASIC_CONST_INT)
 INTERNAL_VAR(ss,			0,		&DEBUG_context.SegSs,  	DT_BASIC_CONST_INT)
 INTERNAL_VAR(fs,			0,		&DEBUG_context.SegFs,  	DT_BASIC_CONST_INT)
 INTERNAL_VAR(gs,			0,		&DEBUG_context.SegGs,  	DT_BASIC_CONST_INT)
+
+INTERNAL_VAR(regs,                      0,              (DWORD*)&DEBUG_context, DT_BASIC_CONTEXT)
 #endif

@@ -86,56 +86,63 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
     case 'b':
         DEBUG_Printf(DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format);
     case 0:
-        if (default_format != NULL)
-	{
-            if (strstr(default_format, "%S") != NULL)
-	    {
-                char* 	ptr;
-                int	state = 0;
+        if (default_format == NULL) break;
 
-                /* FIXME: simplistic implementation for default_format being
-                 * foo%Sbar => will print foo, then string then bar
-                 */
-                for (ptr = default_format; *ptr; ptr++)
-                {
-                    if (*ptr == '%')
-                    {
-                        state++;
-                    }
-                    else if (state == 1)
-		    {
-                        if (*ptr == 'S')
-                        {
-                            DBG_ADDR    addr;
+        if (strstr(default_format, "%S") != NULL)
+        {
+            char* 	ptr;
+            int	state = 0;
 
-                            addr.seg = 0;
-                            addr.off = (long)res;
-                            DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &addr, -1);
-                        }
-                        else
-                        {
-			    /* shouldn't happen */
-			    DEBUG_Printf(DBG_CHN_MESG, "%%%c", *ptr);
-			    DEBUG_nchar += 2;
-                        }
-                        state = 0;
-		    }
-                    else
-		    {
-                        DEBUG_OutputA(DBG_CHN_MESG, ptr, 1);
-                        DEBUG_nchar++;
-		    }
-                }
-	    }
-            else if (strcmp(default_format, "%B") == 0)
+            /* FIXME: simplistic implementation for default_format being
+             * foo%Sbar => will print foo, then string then bar
+             */
+            for (ptr = default_format; *ptr; ptr++)
             {
-                DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%s", res ? "true" : "false");
+                if (*ptr == '%')
+                {
+                    state++;
+                }
+                else if (state == 1)
+                {
+                    if (*ptr == 'S')
+                    {
+                        DBG_ADDR    addr;
+
+                        addr.seg = 0;
+                        addr.off = (long)res;
+                        DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &addr, -1);
+                    }
+                    else
+                    {
+                        /* shouldn't happen */
+                        DEBUG_Printf(DBG_CHN_MESG, "%%%c", *ptr);
+                        DEBUG_nchar += 2;
+                    }
+                    state = 0;
+                }
+                else
+                {
+                    DEBUG_OutputA(DBG_CHN_MESG, ptr, 1);
+                    DEBUG_nchar++;
+                }
             }
+        }
+        else if (strcmp(default_format, "%B") == 0)
+        {
+            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%s", res ? "true" : "false");
+        }
+        else if (strcmp(default_format, "%R") == 0)
+        {
+            if (value->cookie == DV_HOST)
+                DEBUG_InfoRegisters((CONTEXT*)value->addr.off);
             else
-	    {
-                DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, default_format, res);
-	    }
-	}
+                DEBUG_Printf(DBG_CHN_MESG, "NIY: info on register struct in debuggee address space\n");
+            DEBUG_nchar = 0;
+        }
+        else
+        {
+            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, default_format, res);
+        }
         break;
     }
 }
@@ -661,7 +668,7 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
     else if (!strcmp(chnl, "warn"))     mask = 4;
     else if (!strcmp(chnl, "trace"))    mask = 8;
     else { DEBUG_Printf(DBG_CHN_MESG, "Unknown channel %s\n", chnl); return; }
-    
+
     bAll = !strcmp("all", name);
     while (addr && DEBUG_READ_MEM(addr, &dol, sizeof(dol)))
     {
@@ -670,7 +677,7 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
             if (DEBUG_READ_MEM((void*)(dol.channels + i), &str, sizeof(str)) &&
                 DEBUG_READ_MEM(str, buffer, sizeof(buffer)) &&
                 (!strcmp(buffer + 1, name) || bAll))
-            {   
+            {
                 if (turn_on) buffer[0] |= mask; else buffer[0] &= ~mask;
                 if (DEBUG_WRITE_MEM(str, buffer, 1)) done++;
             }
@@ -680,4 +687,3 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
     if (!done) DEBUG_Printf(DBG_CHN_MESG, "Unable to find debug channel %s\n", name);
     else DEBUG_Printf(DBG_CHN_TRACE, "Changed %d channel instances\n", done);
 }
-

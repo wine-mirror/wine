@@ -389,7 +389,7 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 	DEBUG_BackTrace(DEBUG_CurrTid, FALSE);
     } else {
 	/* This is a real crash, dump some info */
-	DEBUG_InfoRegisters();
+	DEBUG_InfoRegisters(&DEBUG_context);
 	DEBUG_InfoStack();
 #ifdef __i386__
 	if (DEBUG_CurrThread->dbg_mode == MODE_16) {
