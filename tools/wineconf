@@ -164,7 +164,7 @@ sub FindWindowsDir {
 	foreach(@FATD) {
 	    my $ThisDrive = shift(@FATD);
 	    my $MntPoint = $ThisDrive->[1];
-	    push(@wininis, `find $MntPoint -name win.ini -print`);
+	    push(@wininis, `find $MntPoint -iname win.ini -print`);
 	}
 	foreach $winini (@wininis) {
 	    chomp $winini;
