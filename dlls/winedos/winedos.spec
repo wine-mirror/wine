@@ -5,6 +5,8 @@ import user32.dll
 import kernel32.dll
 import ntdll.dll
 
+debug_channels (int module relay)
+
 @ stdcall GetCurrent() MZ_Current
 @ stdcall LoadDPMI() MZ_AllocDPMITask
 @ stdcall LoadDosExe(str long) MZ_LoadImage

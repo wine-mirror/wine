@@ -3,9 +3,9 @@ type	win32
 
 debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
                 file fixup global heap int int10 int16 int17 int19 int21 int31
-                io local loaddll module ntdll process profile reg relay resource segment
-                seh selector server snoop string system tape task thread thunk
-                timer toolhelp tweak ver virtual vxd win32)
+                io loaddll local module ntdll process profile reg relay resource
+                segment seh selector server snoop string system tape task thread
+                thunk timer toolhelp ver virtual vxd win32)
 
 #note that the Zw... functions are alternate names for the 
 #Nt... functions.  (see www.sysinternals.com for details)
