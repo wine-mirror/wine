@@ -245,14 +245,25 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
                       unsigned int access, int inherit, int options )
 {
     int res;
-    struct handle_entry *entry = get_handle( src, src_handle );
-    if (!entry) return -1;
+    struct object *obj = get_handle_obj( src, src_handle, 0, NULL );
 
-    if (options & DUP_HANDLE_SAME_ACCESS) access = entry->access;
+    if (!obj) return -1;
+    if (options & DUP_HANDLE_SAME_ACCESS)
+    {
+        struct handle_entry *entry = get_handle( src, src_handle );
+        if (entry)
+            access = entry->access;
+        else  /* pseudo-handle, give it full access */
+        {
+            access = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
+            CLEAR_ERROR();
+        }
+    }
     if (options & DUP_HANDLE_MAKE_GLOBAL) dst = initial_process;
     access &= ~RESERVED_ALL;
-    res = alloc_handle( dst, entry->ptr, access, inherit );
-    if (options & DUP_HANDLE_MAKE_GLOBAL) res = HANDLE_LOCAL_TO_GLOBAL(res);
+    res = alloc_handle( dst, obj, access, inherit );
+    release_object( obj );
+    if ((options & DUP_HANDLE_MAKE_GLOBAL) && (res != -1)) res = HANDLE_LOCAL_TO_GLOBAL(res);
     return res;
 }
 
