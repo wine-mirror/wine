@@ -540,153 +540,153 @@ union codeview_type
 {
   struct
   {
-    short int	len;
-    short int	id;
+    unsigned short int  len;
+    short int           id;
   } generic;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		attribute;
-    short int		datatype;
-    unsigned char	variant[1];
+    unsigned short int len;
+    short int          id;
+    short int          attribute;
+    short int          datatype;
+    unsigned char      variant[1];
   } pointer;
 
   struct
   {
-    short int		len;
-    short int		id;
-    unsigned int	datatype;
-    unsigned int	attribute;
-    unsigned char	variant[1];
+    unsigned short int len;
+    short int          id;
+    unsigned int       datatype;
+    unsigned int       attribute;
+    unsigned char      variant[1];
   } pointer32;
 
   struct
   {
-    short int		len;
-    short int		id;
-    unsigned char	nbits;
-    unsigned char	bitoff;
-    unsigned short	type;
+    unsigned short int len;
+    short int          id;
+    unsigned char      nbits;
+    unsigned char      bitoff;
+    unsigned short     type;
   } bitfield;
 
   struct
   {
-    short int		len;
-    short int		id;
-    unsigned int	type;
-    unsigned char	nbits;
-    unsigned char	bitoff;
+    unsigned short int len;
+    short int          id;
+    unsigned int       type;
+    unsigned char      nbits;
+    unsigned char      bitoff;
   } bitfield32;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		elemtype;
-    short int		idxtype;
-    unsigned short int	arrlen;     /* numeric leaf */
+    unsigned short int len;
+    short int          id;
+    short int          elemtype;
+    short int          idxtype;
+    unsigned short int arrlen;     /* numeric leaf */
 #if 0
-    unsigned char	name[1];
+    unsigned char      name[1];
 #endif
   } array;
 
   struct
   {
-    short int		len;
-    short int		id;
-    unsigned int	elemtype;
-    unsigned int	idxtype;
-    unsigned short int	arrlen;    /* numeric leaf */
+    unsigned short int len;
+    short int          id;
+    unsigned int       elemtype;
+    unsigned int       idxtype;
+    unsigned short int arrlen;    /* numeric leaf */
 #if 0
-    unsigned char	name[1];
+    unsigned char      name[1];
 #endif
   } array32;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		n_element;
-    short int		fieldlist;
-    short int		property;
-    short int		derived;
-    short int		vshape;
-    unsigned short int	structlen;  /* numeric leaf */
+    unsigned short int len;
+    short int          id;
+    short int          n_element;
+    short int          fieldlist;
+    short int          property;
+    short int          derived;
+    short int          vshape;
+    unsigned short int structlen;  /* numeric leaf */
 #if 0
-    unsigned char	name[1];
+    unsigned char      name[1];
 #endif
   } structure;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		n_element;
-    short int		property;
-    unsigned int	fieldlist;
-    unsigned int	derived;
-    unsigned int	vshape;
-    unsigned short int	structlen;  /* numeric leaf */
+    unsigned short int len;
+    short int          id;
+    short int          n_element;
+    short int          property;
+    unsigned int       fieldlist;
+    unsigned int       derived;
+    unsigned int       vshape;
+    unsigned short int structlen;  /* numeric leaf */
 #if 0
-    unsigned char	name[1];
+    unsigned char      name[1];
 #endif
   } structure32;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		count;
-    short int		fieldlist;
-    short int		property;
-    unsigned short int	un_len;     /* numeric leaf */
+    unsigned short int len;
+    short int          id;
+    short int          count;
+    short int          fieldlist;
+    short int          property;
+    unsigned short int un_len;     /* numeric leaf */
 #if 0
-    unsigned char	name[1];
+    unsigned char      name[1];
 #endif
   } t_union;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		count;
-    short int		property;
-    unsigned int	fieldlist;
-    unsigned short int	un_len;     /* numeric leaf */
+    unsigned short int len;
+    short int          id;
+    short int          count;
+    short int          property;
+    unsigned int       fieldlist;
+    unsigned short int un_len;     /* numeric leaf */
 #if 0
-    unsigned char	name[1];
+    unsigned char      name[1];
 #endif
   } t_union32;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		count;
-    short int		type;
-    short int		field;
-    short int		property;
-    unsigned char	name[1];
+    unsigned short int len;
+    short int          id;
+    short int          count;
+    short int          type;
+    short int          field;
+    short int          property;
+    unsigned char      name[1];
   } enumeration;
 
   struct
   {
-    short int		len;
-    short int		id;
-    short int		count;
-    short int		property;
-    unsigned int	type;
-    unsigned int	field;
-    unsigned char	name[1];
+    unsigned short int len;
+    short int          id;
+    short int          count;
+    short int          property;
+    unsigned int       type;
+    unsigned int       field;
+    unsigned char      name[1];
   } enumeration32;
 
   struct
   {
-    short int		len;
-    short int		id;
-    unsigned char	list[1];
+    unsigned short int len;
+    short int          id;
+    unsigned char      list[1];
   } fieldlist;
 };
 
@@ -1569,7 +1569,8 @@ DEBUG_AddCVType_Enum( unsigned int typeno, char *name, unsigned int fieldlist )
     struct datatype *list = DEBUG_GetCVType( fieldlist );
 
     if ( list )
-        DEBUG_CopyFieldlist( dt, list );
+        if(DEBUG_CopyFieldlist( dt, list ) == FALSE)
+            return FALSE;
 
     return DEBUG_AddCVType( typeno, dt );
 }
@@ -1583,7 +1584,8 @@ DEBUG_AddCVType_Struct( unsigned int typeno, char *name, int structlen, unsigned
     if ( list )
     {
         DEBUG_SetStructSize( dt, structlen );
-        DEBUG_CopyFieldlist( dt, list );
+        if(DEBUG_CopyFieldlist( dt, list ) == FALSE)
+            return FALSE;
     }
 
     return DEBUG_AddCVType( typeno, dt );

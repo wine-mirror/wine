@@ -569,8 +569,14 @@ DEBUG_SetStructSize(struct datatype * dt, int size)
 int
 DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2)
 {
-
-  assert( dt->type == dt2->type && ((dt->type == DT_STRUCT) || (dt->type == DT_ENUM)));
+  if (!(dt->type == dt2->type && ((dt->type == DT_STRUCT) || (dt->type == DT_ENUM)))) {
+    DEBUG_Printf(DBG_CHN_MESG, "Error: Copyfield list mismatch (%d<>%d): ", dt->type, dt2->type);
+    DEBUG_PrintTypeCast(dt);
+    DEBUG_Printf(DBG_CHN_MESG, " ");
+    DEBUG_PrintTypeCast(dt2);
+    DEBUG_Printf(DBG_CHN_MESG, "\n");
+    return FALSE;
+  }
 
   if( dt->type == DT_STRUCT )
     {
@@ -1023,6 +1029,12 @@ int
 DEBUG_PrintTypeCast(const struct datatype * dt)
 {
   const char* name = "none";
+
+  if(dt == NULL)
+    {
+      DEBUG_Printf(DBG_CHN_MESG, "--invalid--");
+      return FALSE;
+    }
 
   if( dt->name != NULL )
     {
