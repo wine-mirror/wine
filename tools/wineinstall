@@ -75,6 +75,10 @@ TMPREG=/tmp/wineinstall.reg
 
 # functions
 
+function std_sleep {
+  sleep 1
+}
+
 function conf_question {
   # parameters: $1 = importance, $2 = question-id, $3+ = message lines
   # the first two parameters can be used by e.g. debconf in debian packages
@@ -157,6 +161,7 @@ fi
 if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
 then {
   echo "I see that WINE has already been configured, so I'll skip that."
+  std_sleep
   # load configure results
   . ./config.cache
 }
@@ -196,11 +201,13 @@ fi
 if [ -f wine ] && [ wine -nt Makefile ]
 then {
   echo "Hmm, looks like WINE is already compiled. I'll skip that too, I guess."
+  std_sleep
 }
 else {
   echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
   echo "in the meantime..."
   echo
+  std_sleep
   if ! { make depend && make; }
   then {
     echo
@@ -233,6 +240,7 @@ then {
 else {
   echo "Now installing binaries onto the system..."
   echo
+  std_sleep
   if ! make install
   then {
     echo
@@ -358,17 +366,18 @@ then {
    "Configuring Wine without Windows." \
    "Some fake Windows directories must be created, to hold any .ini files, DLLs," \
    "start menu entries, and other things your applications may need to install." \
-   "Where would oyu like your fake C drive to be placed?"
+   "Where would you like your fake C drive to be placed?"
   while [ -z "$CROOT" ]
   do {
     conf_string_answer "(default is $DCROOT) "
-    if [ -z "$ANSWER" ]
-    then CROOT="$DCROOT"
-    elif ! [ -d "$ANSWER" ]
+    [ -z "$ANSWER" ] && ANSWER="$DCROOT"
+    if ! [ -d "$ANSWER" ]
     then {
       if mkdir -p "$ANSWER"
       then CROOT="$ANSWER"
-      else conf_reset_question drivec_path
+      else
+        echo "Directory $ANSWER can't be created !"
+        conf_reset_question drivec_path
       fi
     }
     else CROOT="$ANSWER"
