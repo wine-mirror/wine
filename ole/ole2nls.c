@@ -3193,7 +3193,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     UINT thisnegativeorder;
 
 
-	LPSTR sptr;
+	LPCSTR sptr;
 	LPSTR dptr;
 	char roundbuffer[24]; /* Should be enough */
 	char *gptr;
@@ -3334,28 +3334,28 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
 */
 
 	if (decsize>0 && decsize>thisnumdigits) {
-		sptr-=(decsize-thisnumdigits);
-               		
-		if (*sptr>='5') {
-			strcpy(roundbuffer+1,lpValue);
-			if (negflag) {
-				*roundbuffer='-';
-				*(roundbuffer+1)='0';
-			} else
-				*roundbuffer='0';
-				sptr=roundbuffer+(sptr-lpValue);  // +1-1
-				
-				while ( (++*sptr) > '9') {
-					*(sptr--)='0';
-					if (*sptr=='.') sptr--;
-				}
-				if ((negflag ? *(roundbuffer+leadingzeros+1) : *(roundbuffer+leadingzeros))  == '1')
-					intsize++;	
-					sptr=roundbuffer;
-				} else
-					sptr=lpValue;
-			} else
-				sptr=lpValue;
+	    sptr-=(decsize-thisnumdigits);
+	    
+	    if (*sptr>='5') {
+		strcpy(roundbuffer+1,lpValue);
+		if (negflag) {
+		    *roundbuffer='-';
+		    *(roundbuffer+1)='0';
+		} else
+		    *roundbuffer='0';
+		dptr=roundbuffer+(sptr-lpValue);  // +1-1
+		
+		while ( (++*dptr) > '9') {
+		    *(dptr--)='0';
+		    if (*dptr=='.') dptr--;
+		}
+		if ((negflag ? *(roundbuffer+leadingzeros+1) : *(roundbuffer+leadingzeros))  == '1')
+		    intsize++;	
+		sptr=roundbuffer;
+	    } else
+		sptr=lpValue;
+	} else
+	    sptr=lpValue;
 
 	totalsize=intsize;
 

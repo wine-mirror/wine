@@ -2374,7 +2374,7 @@ BOOL WINAPI GetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts)
  *	SetCommTimeouts		(KERNEL32.453)
  */
 BOOL WINAPI SetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts) {
-	struct DosDeviceStruct *ptr;
+	/* struct DosDeviceStruct *ptr; */
 	struct termios	tios;
 	int	fd;
 

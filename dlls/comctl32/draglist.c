@@ -93,12 +93,14 @@ INT WINAPI LBItemFromPt (HWND hwndLB, POINT pt, BOOL bAutoScroll)
 }
 
 
+#if 0
 static LRESULT CALLBACK
 DRAGLIST_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 
     return FALSE;
 }
+#endif
 
 
 

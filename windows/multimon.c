@@ -23,6 +23,7 @@ MONITOR MONITOR_PrimaryMonitor;
 /***********************************************************************
  *              MONITOR_GetMonitor
  */
+#if 0
 static MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
 {
   if(hMonitor == xPRIMARY_MONITOR)
@@ -34,6 +35,7 @@ static MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
       return NULL;
     }
 }
+#endif
 
 /***********************************************************************
  *              MONITOR_Initialize

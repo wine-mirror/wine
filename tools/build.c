@@ -753,10 +753,12 @@ static void ParseTopLevel(void)
     }
 
     if (!DLLFileName[0])
+    {
         if (SpecMode == SPEC_MODE_DLL)
             sprintf( DLLFileName, "%s.DLL", DLLName );
         else
             sprintf( DLLFileName, "%s.EXE", DLLName );
+    }
 }
 
 

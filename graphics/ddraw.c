@@ -4685,7 +4685,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   XVisualInfo *vi;
   XPixmapFormatValues *pf;
   XVisualInfo vt;
-  int xbpp, nvisuals, npixmap, i, emu;
+  int xbpp = 1, nvisuals, npixmap, i, emu;
   int has_mode[]  = { 0,  0,  0,  0 };
   int has_depth[] = { 8, 15, 16, 24 };
   DDSURFACEDESC	ddsfd;

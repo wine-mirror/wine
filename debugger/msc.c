@@ -1451,7 +1451,7 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
  * can make 'info shared' types of displays possible.
  */
 int
-DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name)
+DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, const char * name)
 {
   struct deferred_debug_info * deefer;
 

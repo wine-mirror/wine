@@ -1177,7 +1177,7 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
 
 static
 int
-DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
+DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
 {
   int			rtn = FALSE;
   struct stat		statbuf;

@@ -283,7 +283,7 @@ extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int 
   /* debugger/msc.c */
 extern int DEBUG_RegisterDebugInfo( HMODULE, const char *);
 extern int DEBUG_ProcessDeferredDebug(void);
-extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name);
+extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, const char * name);
 extern void DEBUG_InfoShare(void);
 extern void DEBUG_InitCVDataTypes(void);
 
