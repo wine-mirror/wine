@@ -107,7 +107,7 @@
 @ stdcall NtEnumerateKey (long long long long long long)
 @ stdcall NtEnumerateValueKey (long long long long long long)
 @ stub NtExtendSection
-@ stub NtFlushBuffersFile
+@ stdcall NtFlushBuffersFile(long ptr)
 @ stub NtFlushInstructionCache
 @ stdcall NtFlushKey(long)
 @ stdcall NtFlushVirtualMemory(long ptr ptr long)
@@ -441,7 +441,7 @@
 @ stdcall RtlInt64ToUnicodeString(long long long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)
 @ stdcall RtlIntegerToUnicodeString(long long ptr)
-@ stdcall RtlIsDosDeviceName_U(wstr) RtlIsDosDeviceName_U
+@ stdcall RtlIsDosDeviceName_U(wstr)
 @ stub RtlIsGenericTableEmpty
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
 @ stdcall RtlIsTextUnicode(ptr long ptr)
@@ -634,7 +634,7 @@
 @ stdcall ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
 @ stdcall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 @ stub ZwExtendSection
-@ stub ZwFlushBuffersFile
+@ stdcall ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
 @ stub ZwFlushInstructionCache
 @ stdcall ZwFlushKey(long) NtFlushKey
 @ stdcall ZwFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory

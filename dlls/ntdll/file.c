@@ -491,3 +491,18 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	IoStatusBlock->Information = len;
 	return STATUS_SUCCESS;
 }
+
+/******************************************************************
+ *		NtFlushBuffersFile  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock )
+{
+    NTSTATUS ret;
+    SERVER_START_REQ( flush_file )
+    {
+        req->handle = hFile;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}

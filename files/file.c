@@ -2361,14 +2361,17 @@ UINT WINAPI SetHandleCount( UINT count )
  */
 BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 {
-    BOOL ret;
-    SERVER_START_REQ( flush_file )
+    NTSTATUS            nts;
+    IO_STATUS_BLOCK     ioblk;
+
+    nts = NtFlushBuffersFile( hFile, &ioblk );
+    if (nts != STATUS_SUCCESS)
     {
-        req->handle = hFile;
-        ret = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError( nts ) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+
+    return TRUE;
 }
 
 
