@@ -554,3 +554,16 @@ HRESULT WINAPI ATL_DllUnregisterServer(void)
 	hr = unregister_interfaces(interface_list);
     return hr;
 }
+
+/***********************************************************************
+ *		DllGetClassObject (ATL.@)
+ */
+HRESULT WINAPI ATL_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    if (IsEqualCLSID (rclsid, &CLSID_ATLRegistrar)) {
+        FIXME("No COM Class for ATLRegistrar\n");
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+    FIXME("(%s, %s, %p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
