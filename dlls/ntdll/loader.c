@@ -1430,7 +1430,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
     }
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    MODULE_GetLoadOrderW( loadorder, main_exe->ldr.BaseDllName.Buffer, filename );
+    MODULE_GetLoadOrderW( loadorder, main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, filename );
 
     nts = STATUS_DLL_NOT_FOUND;
     for (i = 0; i < LOADORDER_NTYPES; i++)
@@ -1799,9 +1799,9 @@ static inline void init_system_dir(void)
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  *
- * FIXME: the arguments are not correct, main_file and CreateFileW_ptr are Wine inventions.
+ * FIXME: the arguments are not correct, main_file is a Wine invention.
  */
-void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG unknown3, ULONG unknown4 )
+void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3, ULONG unknown4 )
 {
     NTSTATUS status;
     WINE_MODREF *wm;
@@ -1810,7 +1810,6 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
 
-    pCreateFileW = CreateFileW_ptr;
     init_system_dir();
 
     /* allocate the modref for the main exe */
@@ -1974,6 +1973,13 @@ void __wine_process_init( int argc, char *argv[] )
                                           0, (void **)&init_func )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %lx\n", status );
+        exit(1);
+    }
+    RtlInitAnsiString( &func_name, "CreateFileW" );
+    if ((status = LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name,
+                                          0, (void **)&pCreateFileW )) != STATUS_SUCCESS)
+    {
+        MESSAGE( "wine: could not find CreateFileW in kernel32.dll, status %lx\n", status );
         exit(1);
     }
     init_func();

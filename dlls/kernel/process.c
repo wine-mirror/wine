@@ -740,7 +740,7 @@ static void start_process( void *arg )
         IMAGE_NT_HEADERS *nt;
         LPTHREAD_START_ROUTINE entry;
 
-        LdrInitializeThunk( main_exe_file, CreateFileW, 0, 0 );
+        LdrInitializeThunk( main_exe_file, 0, 0, 0 );
 
         nt = RtlImageNtHeader( peb->ImageBaseAddress );
         entry = (LPTHREAD_START_ROUTINE)((char *)peb->ImageBaseAddress +
