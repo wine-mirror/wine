@@ -21,6 +21,7 @@
 
 #include "winnt.h"
 #include "winternl.h"
+#include "thread.h"
 
 /* debug helper */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
@@ -28,5 +29,11 @@ extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
 /* module handling */
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );
+
+static inline HANDLE ntdll_get_process_heap(void)
+{
+    HANDLE *pdb = (HANDLE *)NtCurrentTeb()->process;
+    return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
+}
 
 #endif

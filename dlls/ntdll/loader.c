@@ -25,8 +25,15 @@
 #include "wine/exception.h"
 #include "excpt.h"
 #include "wine/debug.h"
+#include "wine/server.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+WINE_DECLARE_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(loaddll);
+
+static int free_lib_count;   /* recursion depth of FreeLibrary calls */
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -154,7 +161,6 @@ FARPROC MODULE_GetProcAddress(
     if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
         retproc = wm->find_export( wm, function, hint, snoop );
-        if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
     }
     RtlLeaveCriticalSection( &loader_section );
     return retproc;
@@ -172,7 +178,7 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE base, PANSI_STRING name, ULONG or
 
     *address = MODULE_GetProcAddress( base, name ? name->Buffer : (LPSTR)ord, -1, TRUE );
 
-    return (*address) ? STATUS_SUCCESS : STATUS_DLL_NOT_FOUND;
+    return (*address) ? STATUS_SUCCESS : STATUS_PROCEDURE_NOT_FOUND;
 }
 
 
@@ -214,6 +220,131 @@ NTSTATUS WINAPI LdrShutdownThread(void)
 
     RtlLeaveCriticalSection( &loader_section );
     return STATUS_SUCCESS; /* FIXME */
+}
+
+/***********************************************************************
+ *           MODULE_FlushModrefs
+ *
+ * NOTE: Assumes that the process critical section is held!
+ *
+ * Remove all unused modrefs and call the internal unloading routines
+ * for the library type.
+ */
+static void MODULE_FlushModrefs(void)
+{
+    WINE_MODREF *wm, *next;
+
+    for (wm = MODULE_modref_list; wm; wm = next)
+    {
+        next = wm->next;
+
+        if (wm->refCount)
+            continue;
+
+        /* Unlink this modref from the chain */
+        if (wm->next)
+            wm->next->prev = wm->prev;
+        if (wm->prev)
+            wm->prev->next = wm->next;
+        if (wm == MODULE_modref_list)
+            MODULE_modref_list = wm->next;
+
+        TRACE(" unloading %s\n", wm->filename);
+        if (!TRACE_ON(module))
+            TRACE_(loaddll)("Unloaded module '%s' : %s\n", wm->filename,
+                            wm->dlhandle ? "builtin" : "native" );
+
+        SERVER_START_REQ( unload_dll )
+        {
+            req->base = (void *)wm->module;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+
+        if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
+        else UnmapViewOfFile( (LPVOID)wm->module );
+        FreeLibrary16( wm->hDummyMod );
+        RtlFreeHeap( ntdll_get_process_heap(), 0, wm->deps );
+        RtlFreeHeap( ntdll_get_process_heap(), 0, wm );
+    }
+}
+
+/***********************************************************************
+ *           MODULE_DecRefCount
+ *
+ * NOTE: Assumes that the process critical section is held!
+ */
+static void MODULE_DecRefCount( WINE_MODREF *wm )
+{
+    int i;
+
+    if ( wm->flags & WINE_MODREF_MARKER )
+        return;
+
+    if ( wm->refCount <= 0 )
+        return;
+
+    --wm->refCount;
+    TRACE("(%s) refCount: %d\n", wm->modname, wm->refCount );
+
+    if ( wm->refCount == 0 )
+    {
+        wm->flags |= WINE_MODREF_MARKER;
+
+        for ( i = 0; i < wm->nDeps; i++ )
+            if ( wm->deps[i] )
+                MODULE_DecRefCount( wm->deps[i] );
+
+        wm->flags &= ~WINE_MODREF_MARKER;
+    }
+}
+
+/******************************************************************
+ *		LdrUnloadDll (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI LdrUnloadDll( HMODULE hModule )
+{
+    NTSTATUS retv = STATUS_SUCCESS;
+
+    TRACE("(%p)\n", hModule);
+
+    RtlEnterCriticalSection( &loader_section );
+
+    /* if we're stopping the whole process (and forcing the removal of all
+     * DLLs) the library will be freed anyway
+     */
+    if (!process_detaching)
+    {
+        WINE_MODREF *wm;
+
+        free_lib_count++;
+        if ((wm = MODULE32_LookupHMODULE( hModule )) != NULL)
+        {
+            TRACE("(%s) - START\n", wm->modname);
+
+            /* Recursively decrement reference counts */
+            MODULE_DecRefCount( wm );
+
+            /* Call process detach notifications */
+            if ( free_lib_count <= 1 )
+            {
+                MODULE_DllProcessDetach( FALSE, NULL );
+                MODULE_FlushModrefs();
+            }
+
+            TRACE("END\n");
+        }
+        else
+            retv = STATUS_DLL_NOT_FOUND;
+
+        free_lib_count--;
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+
+    return retv;
 }
 
 /***********************************************************************

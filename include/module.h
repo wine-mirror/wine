@@ -194,12 +194,10 @@ enum binary_type
 
 /* module.c */
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
-extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );
 extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved );
 extern void MODULE_DllThreadAttach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags );
-extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );

@@ -48,7 +48,6 @@ WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 WINE_MODREF *MODULE_modref_list = NULL;
 
 WINE_MODREF *exe_modref;
-static int free_lib_count;   /* recursion depth of FreeLibrary calls */
 int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
 
 CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
@@ -1083,7 +1082,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 		if ( !MODULE_DllProcessAttach( wm, NULL ) )
 		{
 			WARN_(module)("Attach failed for module '%s'.\n", libname);
-			MODULE_FreeLibrary(wm);
+			LdrUnloadDll(wm->module);
 			SetLastError(ERROR_DLL_INIT_FAILED);
 			wm = NULL;
 		}
@@ -1334,66 +1333,13 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW,HANDLE hfile,DWORD flags)
 }
 
 /***********************************************************************
- *           MODULE_FlushModrefs
- *
- * NOTE: Assumes that the process critical section is held!
- *
- * Remove all unused modrefs and call the internal unloading routines
- * for the library type.
- */
-static void MODULE_FlushModrefs(void)
-{
-	WINE_MODREF *wm, *next;
-
-	for(wm = MODULE_modref_list; wm; wm = next)
-	{
-		next = wm->next;
-
-		if(wm->refCount)
-			continue;
-
-		/* Unlink this modref from the chain */
-		if(wm->next)
-                        wm->next->prev = wm->prev;
-		if(wm->prev)
-                        wm->prev->next = wm->next;
-		if(wm == MODULE_modref_list)
-			MODULE_modref_list = wm->next;
-
-                TRACE(" unloading %s\n", wm->filename);
-                if (!TRACE_ON(module))
-                    TRACE_(loaddll)("Unloaded module '%s' : %s\n", wm->filename,
-                                    wm->dlhandle ? "builtin" : "native" );
-
-                SERVER_START_REQ( unload_dll )
-                {
-                    req->base = (void *)wm->module;
-                    wine_server_call( req );
-                }
-                SERVER_END_REQ;
-
-                if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
-                else UnmapViewOfFile( (LPVOID)wm->module );
-                FreeLibrary16(wm->hDummyMod);
-                HeapFree( GetProcessHeap(), 0, wm->deps );
-                HeapFree( GetProcessHeap(), 0, wm );
-	}
-}
-
-/***********************************************************************
  *           FreeLibrary   (KERNEL32.@)
  *           FreeLibrary32 (KERNEL.486)
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
-    BOOL retv = FALSE;
-    WINE_MODREF *wm;
-
-    if (!hLibModule)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
+    BOOL                retv = FALSE;
+    NTSTATUS            nts;
 
     if ((ULONG_PTR)hLibModule & 1)
     {
@@ -1402,79 +1348,19 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
         UnmapViewOfFile( ptr );
         return TRUE;
     }
-
-    RtlEnterCriticalSection( &loader_section );
-
-    /* if we're stopping the whole process (and forcing the removal of all
-     * DLLs) the library will be freed anyway
-     */
-    if (process_detaching) retv = TRUE;
-    else
+    
+    if (!hLibModule)
     {
-        free_lib_count++;
-        if ((wm = MODULE32_LookupHMODULE( hLibModule ))) retv = MODULE_FreeLibrary( wm );
-        free_lib_count--;
+        SetLastError( ERROR_INVALID_HANDLE );
+        RtlLeaveCriticalSection( &loader_section );
+        return FALSE;
     }
 
-    RtlLeaveCriticalSection( &loader_section );
+    if ((nts = LdrUnloadDll( hLibModule )) == STATUS_SUCCESS) retv = TRUE;
+    else SetLastError( RtlNtStatusToDosError( nts ) );
 
     return retv;
 }
-
-/***********************************************************************
- *           MODULE_DecRefCount
- *
- * NOTE: Assumes that the process critical section is held!
- */
-static void MODULE_DecRefCount( WINE_MODREF *wm )
-{
-    int i;
-
-    if ( wm->flags & WINE_MODREF_MARKER )
-        return;
-
-    if ( wm->refCount <= 0 )
-        return;
-
-    --wm->refCount;
-    TRACE("(%s) refCount: %d\n", wm->modname, wm->refCount );
-
-    if ( wm->refCount == 0 )
-    {
-        wm->flags |= WINE_MODREF_MARKER;
-
-        for ( i = 0; i < wm->nDeps; i++ )
-            if ( wm->deps[i] )
-                MODULE_DecRefCount( wm->deps[i] );
-
-        wm->flags &= ~WINE_MODREF_MARKER;
-    }
-}
-
-/***********************************************************************
- *           MODULE_FreeLibrary
- *
- * NOTE: Assumes that the process critical section is held!
- */
-BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
-{
-    TRACE("(%s) - START\n", wm->modname );
-
-    /* Recursively decrement reference counts */
-    MODULE_DecRefCount( wm );
-
-    /* Call process detach notifications */
-    if ( free_lib_count <= 1 )
-    {
-        MODULE_DllProcessDetach( FALSE, NULL );
-        MODULE_FlushModrefs();
-    }
-
-    TRACE("END\n");
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           FreeLibraryAndExitThread (KERNEL32.@)

@@ -48,7 +48,7 @@
 @ stub LdrQueryProcessModuleInformation
 @ stdcall LdrShutdownProcess() LdrShutdownProcess
 @ stdcall LdrShutdownThread() LdrShutdownThread
-@ stub LdrUnloadDll
+@ stdcall LdrUnloadDll(ptr) LdrUnloadDll
 @ stub LdrVerifyImageMatchesChecksum
 @ stub NPXEMULATORTABLE
 @ extern NlsAnsiCodePage NlsAnsiCodePage
