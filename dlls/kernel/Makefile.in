@@ -9,6 +9,16 @@ ALTNAMES  = krnl386.exe comm.dll stress.dll system.dll toolhelp.dll windebug.dll
 LDIMPORTS = ntdll.dll
 DLLMAIN   = MAIN_KernelInit
 
+SPEC_SRCS16 = \
+	comm.spec \
+	krnl386.exe.spec \
+	stress.spec \
+	system.spec \
+	toolhelp.spec \
+	win87em.spec \
+	windebug.spec \
+	wprocs.spec
+
 C_SRCS = \
 	$(TOPOBJDIR)/ole/ole2nls.c \
 	comm.c \

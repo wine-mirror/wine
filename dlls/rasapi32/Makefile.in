@@ -9,6 +9,8 @@ ALTNAMES  = rasapi16.dll
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
+
 C_SRCS = rasapi.c
 
 @MAKE_DLL_RULES@

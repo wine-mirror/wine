@@ -9,6 +9,8 @@ ALTNAMES  = winaspi.dll
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
+
 C_SRCS = \
 	aspi.c \
 	winaspi32.c

@@ -10,6 +10,8 @@ EXTRALIBS = $(LIBUUID)
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
+
 C_SRCS = \
 	acmstream.c \
 	api.c \

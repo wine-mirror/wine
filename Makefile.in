@@ -133,7 +133,7 @@ tags ctags:
 
 manpages:
 	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w
-	for i in $(SUBDIRS); do (cd $$i && $(MAKE) man); done
+	cd dlls && $(MAKE) man
 
 htmlpages:
 	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html

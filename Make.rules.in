@@ -10,7 +10,6 @@
 # C_SRCS       : C sources for the module
 # C_SRCS16     : 16-bit C sources for the module
 # RC_SRCS      : resource source files
-# SPEC_SRCS    : interface definition files
 # EXTRA_SRCS   : extra source files for make depend
 # EXTRA_OBJS   : extra object files
 # IMPORTS      : dlls to import
@@ -154,7 +153,7 @@ $(MODULE).dbg.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
 
 # Rule to rebuild the tools
 
-$(MAKEDEP) $(WIDL) $(WINEBUILD) $(WMC) $(WRC):
+$(MAKEDEP):
 	cd $(TOOLSDIR)/tools && $(MAKE) `basename $@`
 
 # Rules for makefile
@@ -162,28 +161,6 @@ $(MAKEDEP) $(WIDL) $(WINEBUILD) $(WMC) $(WRC):
 Makefile: Makefile.in $(TOPSRCDIR)/configure
 	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
 	@exit 1
-
-# Rules for auto documentation
-
-$(SUBDIRS:%=%/__man__): dummy
-	cd `dirname $@` && $(MAKE) man
-
-man: $(C_SRCS) $(SUBDIRS:%=%/__man__)
-	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man$(api_manext) && $(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -S$(api_manext) $(DIVINCL) $(MAINSPEC:%=-w %) $(SPEC_SRCS:%=-w %) $(C_SRCS) $(C_SRCS16)
-
-$(SUBDIRS:%=%/__doc_html__): dummy
-	cd `dirname $@` && $(MAKE) doc-html
-
-doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
-	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html && $(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) $(DIVINCL) -Th $(MAINSPEC:%=-w %) $(SPEC_SRCS:%=-w %) $(C_SRCS) $(C_SRCS16)
-
-$(SUBDIRS:%=%/__doc_sgml__): dummy
-	cd `dirname $@` && $(MAKE) doc-sgml
-
-doc-sgml: $(C_SRCS) $(SUBDIRS:%=%/__doc_sgml__)
-	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/api-guide && $(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) $(DIVINCL) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS:%=-w %) $(C_SRCS) $(C_SRCS16)
-
-.PHONY: man doc-html doc-sgml $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
 
 # Rule for linting
 
@@ -273,8 +250,6 @@ $(SUBDIRS:%=%/__crosstest__): dummy
 .PHONY: check test crosstest $(SUBDIRS:%=%/__test__) $(SUBDIRS:%=%/__crosstest__)
 
 # Misc. rules
-
-$(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD)
 
 $(RC_SRCS:.rc=.res): $(WRC)
 

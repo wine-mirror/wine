@@ -12,6 +12,13 @@ DLLMAIN   = UserClientDllInitialize
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = \
+	ddeml.spec \
+	display.spec \
+	keyboard.spec \
+	mouse.spec \
+	user.exe.spec
+
 C_SRCS = \
 	$(TOPOBJDIR)/controls/button.c \
 	$(TOPOBJDIR)/controls/combo.c \

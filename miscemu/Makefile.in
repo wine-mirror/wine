@@ -6,8 +6,6 @@ MODULE    = wine
 IMPORTS   = ntdll
 LDIMPORTS = ntdll.dll
 
-SPEC_SRCS = wine.spec
-
 C_SRCS = \
 	main.c
 
@@ -15,13 +13,13 @@ all: $(MODULE)
 
 @MAKE_RULES@
 
-ALL_OBJS = $(SPEC_SRCS:.spec=.spec.o) $(OBJS)
+ALL_OBJS = $(MODULE).spec.o $(OBJS)
 
 $(MODULE): $(ALL_OBJS)
 	$(CC) -o $@ $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
 
-wine.spec.c: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe wine --exe-mode gui --entry wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)
+$(MODULE).spec.c: $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode gui --entry wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)
 
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)

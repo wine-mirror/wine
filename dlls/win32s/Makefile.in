@@ -9,6 +9,8 @@ ALTNAMES  = w32sys.dll win32s16.dll
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
+
 C_SRCS = \
 	w32skernel.c \
 	w32sys.c

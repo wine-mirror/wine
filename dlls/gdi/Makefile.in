@@ -12,6 +12,11 @@ EXTRALIBS = $(LIBUNICODE)
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = \
+	dispdib.spec \
+	gdi.exe.spec \
+	wing.spec
+
 C_SRCS = \
 	$(TOPOBJDIR)/graphics/bitblt.c \
 	$(TOPOBJDIR)/graphics/dispdib.c \

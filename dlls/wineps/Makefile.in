@@ -10,6 +10,8 @@ EXTRAINCL = @FREETYPEINCL@
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = wineps16.drv.spec
+
 FONTMETRICS = \
 	AvantGarde_Book \
 	AvantGarde_BookOblique \

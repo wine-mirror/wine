@@ -10,6 +10,8 @@ ALTNAMES  = winsock.dll
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
+
 C_SRCS = \
 	async.c \
 	socket.c

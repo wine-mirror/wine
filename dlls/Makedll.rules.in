@@ -4,17 +4,16 @@
 # MODULE       : name of the main module being built
 # ALTNAMES     : alternate names for this dll (optional)
 # EXTRALIBS    : extra libraries to link in (optional)
+# SPEC_SRCS16  : interface definition files for 16-bit dlls (optional)
 #
 # plus all variables required by the global Make.rules.in
 #
 
 DEFS        = @DLLFLAGS@ -D__WINESRC__ $(EXTRADEFS)
 DLLEXT      = @DLLEXT@
-ALTSPECS    = $(ALTNAMES:%.dll=%)
-SPEC_SRCS   = $(ALTSPECS:%=%.spec)
 MAINSPEC    = $(MODULE:%.dll=%).spec
 SPEC_DEF    = $(MAINSPEC).def
-WIN16_FILES = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
+WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LIBS)
 IMPORTLIBS  = $(DELAYIMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT)) $(IMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT))
@@ -66,6 +65,28 @@ check test:: $(SUBDIRS:%=%/__test__)
 
 crosstest:: $(SUBDIRS:%=%/__crosstest__)
 
+# Rules for auto documentation
+
+$(SUBDIRS:%=%/__man__): dummy
+	cd `dirname $@` && $(MAKE) man
+
+man: $(C_SRCS) $(SUBDIRS:%=%/__man__)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -S$(api_manext) $(DIVINCL) $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+
+$(SUBDIRS:%=%/__doc_html__): dummy
+	cd `dirname $@` && $(MAKE) doc-html
+
+doc-html: $(C_SRCS) $(SUBDIRS:%=%/__doc_html__)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) $(DIVINCL) -Th $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+
+$(SUBDIRS:%=%/__doc_sgml__): dummy
+	cd `dirname $@` && $(MAKE) doc-sgml
+
+doc-sgml: $(C_SRCS) $(SUBDIRS:%=%/__doc_sgml__)
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) $(DIVINCL) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+
+.PHONY: man doc-html doc-sgml $(SUBDIRS:%=%/__man__) $(SUBDIRS:%=%/__doc_html__) $(SUBDIRS:%=%/__doc_sgml__)
+
 # Sanity check
 
 Makedll.rules: $(TOPSRCDIR)/dlls/Makedll.rules.in $(TOPSRCDIR)/configure
@@ -89,5 +110,9 @@ install:: install_lib @WIN16_INSTALL@
 
 uninstall::
 	$(RM) $(dlldir)/$(MODULE)$(DLLEXT) $(ALTNAMES:%=$(dlldir)/%$(DLLEXT))
+
+# Misc. rules
+
+$(SPEC_SRCS16:.spec=.spec.c): $(WINEBUILD)
 
 # End of global dll rules

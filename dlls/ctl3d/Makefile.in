@@ -9,6 +9,8 @@ ALTNAMES  = ctl3d.dll ctl3dv2.dll
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
+SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
+
 C_SRCS = ctl3d32.c
 
 C_SRCS16 = ctl3d.c
