@@ -28,13 +28,6 @@
 THDB *pCurrentThread;
 #endif
 
-static void THREAD_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS THREAD_Ops =
-{
-    THREAD_Destroy      /* destroy */
-};
-
 /* Is threading code initialized? */
 BOOL THREAD_InitDone = FALSE;
 
@@ -173,8 +166,6 @@ THDB *THREAD_CreateInitialThread( PDB *pdb )
     extern void server_init( int fd );
     extern void select_loop(void);
 
-    initial_thdb.header.type     = K32OBJ_THREAD;
-    initial_thdb.header.refcount = 1;
     initial_thdb.process         = pdb;
     initial_thdb.teb.except      = (void *)-1;
     initial_thdb.teb.self        = &initial_thdb.teb;
@@ -241,8 +232,6 @@ THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
 {
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
-    thdb->header.type     = K32OBJ_THREAD;
-    thdb->header.refcount = 1;
     thdb->process         = pdb;
     thdb->teb.except      = (void *)-1;
     thdb->teb.htask16     = pdb->task;
@@ -278,43 +267,6 @@ error:
 
 
 /***********************************************************************
- *           THREAD_Destroy
- */
-static void THREAD_Destroy( K32OBJ *ptr )
-{
-    THDB *thdb = (THDB *)ptr;
-    THDB **pptr = &THREAD_First;
-
-    assert( ptr->type == K32OBJ_THREAD );
-    ptr->type = K32OBJ_UNKNOWN;
-
-    while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
-    if (*pptr) *pptr = thdb->next;
-
-    /* Free the associated memory */
-
-#ifdef __i386__
-    {
-        /* Check if we are deleting the current thread */
-        WORD fs;
-        GET_FS( fs );
-        if (fs == thdb->teb_sel)
-        {
-            GET_DS( fs );
-            SET_FS( fs );
-        }
-    }
-#endif
-    CloseHandle( thdb->event );
-    close( thdb->socket );
-    SELECTOR_FreeBlock( thdb->teb_sel, 1 );
-    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
-    HeapFree( SystemHeap, 0, thdb );
-
-}
-
-
-/***********************************************************************
  *           THREAD_Start
  *
  * Start execution of a newly created thread. Does not return.
@@ -336,24 +288,18 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                               LPTHREAD_START_ROUTINE start, LPVOID param,
                               DWORD flags, LPDWORD id )
 {
-    int server_handle = -1;
-    HANDLE handle = INVALID_HANDLE_VALUE;
+    int handle = -1;
     BOOL inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-
     THDB *thread = THREAD_Create( PROCESS_Current(), stack,
-                                  TRUE, &server_handle, NULL, start, param );
+                                  TRUE, &handle, NULL, start, param );
     if (!thread) return INVALID_HANDLE_VALUE;
-    handle = HANDLE_Alloc( PROCESS_Current(), &thread->header,
-                           THREAD_ALL_ACCESS, inherit, server_handle );
-    if (handle == INVALID_HANDLE_VALUE) goto error;
-    if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
+    if (SYSDEPS_SpawnThread( thread ) == -1)
+    {
+        CloseHandle( handle );
+        return INVALID_HANDLE_VALUE;
+    }
     if (id) *id = (DWORD)thread->server_tid;
     return handle;
-
-error:
-    if (handle != INVALID_HANDLE_VALUE) CloseHandle( handle );
-    K32OBJ_DecCount( &thread->header );
-    return INVALID_HANDLE_VALUE;
 }
 
 
@@ -367,26 +313,32 @@ void WINAPI ExitThread(
     DWORD code) /* [in] Exit code for this thread */
 {
     THDB *thdb = THREAD_Current();
-    LONG count;
+    THDB **pptr = &THREAD_First;
+    WORD ds;
 
     MODULE_InitializeDLLs( 0, DLL_THREAD_DETACH, NULL );
 
-    SYSTEM_LOCK();
     thdb->exit_code = code;
 
     /* cleanup the message queue, if there's one */
     if (thdb->teb.queue)
         USER_QueueCleanup( thdb->teb.queue );
         
+    CloseHandle( thdb->event );
+    while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
+    if (*pptr) *pptr = thdb->next;
+
+    /* Free the associated memory */
+
+    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
+    GET_DS( ds );
+    SET_FS( ds );
+    SELECTOR_FreeBlock( thdb->teb_sel, 1 );
+    close( thdb->socket );
+    HeapFree( SystemHeap, HEAP_NO_SERIALIZE, thdb );
+
     /* FIXME: should free the stack somehow */
-#if 0
-    /* FIXME: We cannot do this; once the current thread is destroyed,
-       synchronization primitives do not work properly. */
-    K32OBJ_DecCount( &thdb->header );
-#endif
-    /* Completely unlock the system lock just in case */
-    count = SYSTEM_LOCK_COUNT();
-    while (count--) SYSTEM_UNLOCK();
+
     SYSDEPS_ExitThread();
 }
 
@@ -653,8 +605,7 @@ INT WINAPI GetThreadPriority(
 {
     struct get_thread_info_request req;
     struct get_thread_info_reply reply;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
-                                         K32OBJ_THREAD, THREAD_QUERY_INFORMATION );
+    req.handle = hthread;
     CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
         return THREAD_PRIORITY_ERROR_RETURN;
@@ -674,9 +625,7 @@ BOOL WINAPI SetThreadPriority(
     INT priority)   /* [in] Thread priority level */
 {
     struct set_thread_info_request req;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
-                                         K32OBJ_THREAD, THREAD_SET_INFORMATION );
-    if (req.handle == -1) return FALSE;
+    req.handle   = hthread;
     req.priority = priority;
     req.mask     = SET_THREAD_INFO_PRIORITY;
     CLIENT_SendRequest( REQ_SET_THREAD_INFO, -1, 1, &req, sizeof(req) );
@@ -690,9 +639,7 @@ BOOL WINAPI SetThreadPriority(
 DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
 {
     struct set_thread_info_request req;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hThread,
-                                         K32OBJ_THREAD, THREAD_SET_INFORMATION );
-    if (req.handle == -1) return FALSE;
+    req.handle   = hThread;
     req.affinity = dwThreadAffinityMask;
     req.mask     = SET_THREAD_INFO_AFFINITY;
     CLIENT_SendRequest( REQ_SET_THREAD_INFO, -1, 1, &req, sizeof(req) );
@@ -713,9 +660,7 @@ BOOL WINAPI TerminateThread(
     DWORD exitcode)  /* [in] Exit code for thread */
 {
     struct terminate_thread_request req;
-
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                         K32OBJ_THREAD, THREAD_TERMINATE );
+    req.handle    = handle;
     req.exit_code = exitcode;
     CLIENT_SendRequest( REQ_TERMINATE_THREAD, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
@@ -735,8 +680,7 @@ BOOL WINAPI GetExitCodeThread(
 {
     struct get_thread_info_request req;
     struct get_thread_info_reply reply;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
-                                         K32OBJ_THREAD, THREAD_QUERY_INFORMATION );
+    req.handle = hthread;
     CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
     if (exitcode) *exitcode = reply.exit_code;
@@ -760,8 +704,7 @@ DWORD WINAPI ResumeThread(
 {
     struct resume_thread_request req;
     struct resume_thread_reply reply;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
-                                         K32OBJ_THREAD, THREAD_SUSPEND_RESUME );
+    req.handle = hthread;
     CLIENT_SendRequest( REQ_RESUME_THREAD, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
     return reply.count;
@@ -780,8 +723,7 @@ DWORD WINAPI SuspendThread(
 {
     struct suspend_thread_request req;
     struct suspend_thread_reply reply;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
-                                         K32OBJ_THREAD, THREAD_SUSPEND_RESUME );
+    req.handle = hthread;
     CLIENT_SendRequest( REQ_SUSPEND_THREAD, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
     return reply.count;
@@ -794,10 +736,9 @@ DWORD WINAPI SuspendThread(
 DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 {
     struct queue_apc_request req;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
-                                         K32OBJ_THREAD, THREAD_SET_CONTEXT );
-    req.func  = func;
-    req.param = (void *)data;
+    req.handle = hthread;
+    req.func   = func;
+    req.param  = (void *)data;
     CLIENT_SendRequest( REQ_QUEUE_APC, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }

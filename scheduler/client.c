@@ -288,9 +288,9 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
     fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
 
     if (thandle) *thandle = reply.thandle;
-    else if (reply.thandle != -1) CLIENT_CloseHandle( reply.thandle );
+    else if (reply.thandle != -1) CloseHandle( reply.thandle );
     if (phandle) *phandle = reply.phandle;
-    else if (reply.phandle != -1) CLIENT_CloseHandle( reply.phandle );
+    else if (reply.phandle != -1) CloseHandle( reply.phandle );
     return 0;
 
  error:
@@ -329,58 +329,4 @@ int CLIENT_SetDebug( int level )
 {
     CLIENT_SendRequest( REQ_SET_DEBUG, -1, 1, &level, sizeof(level) );
     return CLIENT_WaitReply( NULL, NULL, 0 );
-}
-
-/***********************************************************************
- *           CLIENT_CloseHandle
- *
- * Send a close handle request. Return 0 if OK.
- */
-int CLIENT_CloseHandle( int handle )
-{
-    CLIENT_SendRequest( REQ_CLOSE_HANDLE, -1, 1, &handle, sizeof(handle) );
-    return CLIENT_WaitReply( NULL, NULL, 0 );
-}
-
-/***********************************************************************
- *           CLIENT_DuplicateHandle
- *
- * Send a duplicate handle request. Return 0 if OK.
- */
-int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, int dst_handle,
-                            DWORD access, BOOL inherit, DWORD options )
-{
-    struct dup_handle_request req;
-    struct dup_handle_reply reply;
-
-    req.src_process = src_process;
-    req.src_handle  = src_handle;
-    req.dst_process = dst_process;
-    req.access      = access;
-    req.inherit     = inherit;
-    req.options     = options;
-
-    CLIENT_SendRequest( REQ_DUP_HANDLE, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
-}
-
-
-/***********************************************************************
- *           CLIENT_OpenProcess
- *
- * Open a handle to a process.
- */
-int CLIENT_OpenProcess( void *pid, DWORD access, BOOL inherit )
-{
-    struct open_process_request req;
-    struct open_process_reply reply;
-
-    req.pid     = pid;
-    req.access  = access;
-    req.inherit = inherit;
-
-    CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.handle;
 }

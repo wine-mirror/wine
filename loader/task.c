@@ -538,8 +538,8 @@ static void TASK_DeleteTask( HTASK16 hTask )
 
     /* Delete the Win32 part of the task */
 
-    K32OBJ_DecCount( &pTask->thdb->process->header );
-    K32OBJ_DecCount( &pTask->thdb->header );
+/*    PROCESS_FreePDB( pTask->thdb->process ); FIXME */
+/*    K32OBJ_DecCount( &pTask->thdb->header ); FIXME */
 
     /* Free the selector aliases */
 

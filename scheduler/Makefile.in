@@ -10,7 +10,6 @@ C_SRCS = \
 	critsection.c \
 	event.c \
 	handle.c \
-	k32obj.c \
 	mutex.c \
 	pipe.c \
 	process.c \

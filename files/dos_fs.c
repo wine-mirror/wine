@@ -609,9 +609,7 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
     struct get_file_info_request req;
     struct get_file_info_reply reply;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return NULL;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
     if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) &&
         (reply.type == FILE_TYPE_UNKNOWN))

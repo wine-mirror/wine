@@ -17,12 +17,6 @@
 #include "server.h"
 #include "debug.h"
 
-/* The change notification object */
-typedef struct
-{
-    K32OBJ       header;
-} CHANGE_OBJECT;
-
 
 /****************************************************************************
  *		FindFirstChangeNotification32A (KERNEL32.248)
@@ -31,7 +25,6 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName,
                                                 BOOL bWatchSubtree,
                                                 DWORD dwNotifyFilter ) 
 {
-    CHANGE_OBJECT *change;
     struct create_change_notification_request req;
     struct create_change_notification_reply reply;
 
@@ -39,19 +32,7 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName,
     req.filter  = dwNotifyFilter;
     CLIENT_SendRequest( REQ_CREATE_CHANGE_NOTIFICATION, -1, 1, &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
-
-    change = HeapAlloc( SystemHeap, 0, sizeof(CHANGE_OBJECT) );
-    if (!change)
-    {
-        CLIENT_CloseHandle( reply.handle );
-        return INVALID_HANDLE_VALUE;
-    }
-    change->header.type = K32OBJ_CHANGE;
-    change->header.refcount = 1;
-    return HANDLE_Alloc( PROCESS_Current(), &change->header, 
-                         STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE /*FIXME*/,
-                         FALSE, reply.handle );
+    return reply.handle;
 }
 
 /****************************************************************************
@@ -73,9 +54,6 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
  */
 BOOL WINAPI FindNextChangeNotification( HANDLE handle ) 
 {
-    if (HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                K32OBJ_FILE, 0 ) == -1)
-        return FALSE;
     /* FIXME: do something */
     return TRUE;
 }

@@ -8,7 +8,7 @@
 #define __WINE_FILE_H
 
 #include <time.h> /* time_t */
-#include "k32obj.h"
+#include "winbase.h"
 
 #define MAX_PATHNAME_LEN   1024
 

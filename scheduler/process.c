@@ -24,12 +24,6 @@
 #include "server.h"
 #include "debug.h"
 
-static void PROCESS_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS PROCESS_Ops =
-{
-    PROCESS_Destroy      /* destroy */
-};
 
 /* The initial process PDB */
 static PDB initial_pdb;
@@ -66,8 +60,7 @@ static BOOL PROCESS_QueryInfo( HANDLE handle,
                                  struct get_process_info_reply *reply )
 {
     struct get_process_info_request req;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                         K32OBJ_PROCESS, PROCESS_QUERY_INFORMATION );
+    req.handle = handle;
     CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitSimpleReply( reply, sizeof(*reply), NULL );
 }
@@ -190,12 +183,10 @@ static BOOL PROCESS_InheritEnvDB( PDB *pdb, LPCSTR cmd_line, LPCSTR env,
  *
  * Free a PDB and all associated storage.
  */
-static void PROCESS_FreePDB( PDB *pdb )
+void PROCESS_FreePDB( PDB *pdb )
 {
     PDB **pptr = &PROCESS_First;
 
-    pdb->header.type = K32OBJ_UNKNOWN;
-    if (pdb->handle_table) HANDLE_CloseAll( pdb, NULL );
     ENV_FreeEnvironment( pdb );
     while (*pptr && (*pptr != pdb)) pptr = &(*pptr)->next;
     if (*pptr) *pptr = pdb->next;
@@ -216,8 +207,6 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     PDB *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB) );
 
     if (!pdb) return NULL;
-    pdb->header.type     = K32OBJ_PROCESS;
-    pdb->header.refcount = 1;
     pdb->exit_code       = 0x103; /* STILL_ACTIVE */
     pdb->threads         = 1;
     pdb->running_threads = 1;
@@ -229,15 +218,7 @@ static PDB *PROCESS_CreatePDB( PDB *parent, BOOL inherit )
     pdb->heap            = pdb->system_heap;  /* will be changed later on */
     pdb->next            = PROCESS_First;
     PROCESS_First = pdb;
-
-    /* Create the handle table */
-
-    if (!HANDLE_CreateTable( pdb, inherit )) goto error;
     return pdb;
-
-error:
-    PROCESS_FreePDB( pdb );
-    return NULL;
 }
 
 
@@ -264,8 +245,6 @@ BOOL PROCESS_Init(void)
     THDB *thdb;
 
     /* Fill the initial process structure */
-    initial_pdb.header.type     = K32OBJ_PROCESS;
-    initial_pdb.header.refcount = 1;
     initial_pdb.exit_code       = 0x103; /* STILL_ACTIVE */
     initial_pdb.threads         = 1;
     initial_pdb.running_threads = 1;
@@ -276,16 +255,15 @@ BOOL PROCESS_Init(void)
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
 
-    /* Create the system heap */
-    if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
-    initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
-
-    /* Create the initial process and thread structures */
-    if (!HANDLE_CreateTable( &initial_pdb, FALSE )) return FALSE;
+    /* Create the initial thread structure */
     if (!(thdb = THREAD_CreateInitialThread( &initial_pdb ))) return FALSE;
 
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = thdb->teb_sel;
+
+    /* Create the system heap */
+    if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
+    initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
 
     /* Create the environment DB of the first process */
     if (!PROCESS_BuildEnvDB( &initial_pdb )) return FALSE;
@@ -351,12 +329,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     if (!(thdb = THREAD_Create( pdb, size, hInstance == 0, 
                                 &server_thandle, &server_phandle, NULL, NULL ))) 
         goto error;
-    if ((info->hThread = HANDLE_Alloc( parent, &thdb->header, THREAD_ALL_ACCESS,
-                                       FALSE, server_thandle )) == INVALID_HANDLE_VALUE)
-        goto error;
-    if ((info->hProcess = HANDLE_Alloc( parent, &pdb->header, PROCESS_ALL_ACCESS,
-                                        FALSE, server_phandle )) == INVALID_HANDLE_VALUE)
-        goto error;
+    info->hThread     = server_thandle;
+    info->hProcess    = server_phandle;
     info->dwProcessId = (DWORD)pdb->server_pid;
     info->dwThreadId  = (DWORD)thdb->server_tid;
 
@@ -391,24 +365,8 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 error:
     if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
     if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
-    if (thdb) K32OBJ_DecCount( &thdb->header );
     PROCESS_FreePDB( pdb );
     return NULL;
-}
-
-
-/***********************************************************************
- *           PROCESS_Destroy
- */
-static void PROCESS_Destroy( K32OBJ *ptr )
-{
-    PDB *pdb = (PDB *)ptr;
-    assert( ptr->type == K32OBJ_PROCESS );
-
-    /* Free everything */
-
-    ptr->type = K32OBJ_UNKNOWN;
-    PROCESS_FreePDB( pdb );
 }
 
 
@@ -424,11 +382,9 @@ void WINAPI ExitProcess( DWORD status )
     if ( pTask && pTask->thdb != THREAD_Current() )
         ExitThread( status );
 
-    SYSTEM_LOCK();
     /* FIXME: should kill all running threads of this process */
     pdb->exit_code = status;
-    if (pdb->console) FreeConsole();
-    SYSTEM_UNLOCK();
+    FreeConsole();
 
     __RESTORE_ES;  /* Necessary for Pietrek's showseh example program */
     TASK_KillCurrentTask( status );
@@ -441,9 +397,7 @@ void WINAPI ExitProcess( DWORD status )
 BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
     struct terminate_process_request req;
-
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                         K32OBJ_PROCESS, PROCESS_TERMINATE );
+    req.handle    = handle;
     req.exit_code = exit_code;
     CLIENT_SendRequest( REQ_TERMINATE_PROCESS, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
@@ -463,18 +417,15 @@ HANDLE WINAPI GetCurrentProcess(void)
  */
 HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
-    PDB *pdb;
     struct open_process_request req;
     struct open_process_reply reply;
 
-    if (!(pdb = PROCESS_IdToPDB( id ))) return 0;
     req.pid     = (void *)id;
     req.access  = access;
     req.inherit = inherit;
     CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0;
-    return HANDLE_Alloc( PROCESS_Current(), &pdb->header, access,
-                         inherit, reply.handle );
+    return reply.handle;
 }			      
 
 
@@ -512,9 +463,7 @@ LCID WINAPI GetThreadLocale(void)
 BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 {
     struct set_process_info_request req;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hprocess,
-                                         K32OBJ_PROCESS, PROCESS_SET_INFORMATION );
-    if (req.handle == -1) return FALSE;
+    req.handle   = hprocess;
     req.priority = priorityclass;
     req.mask     = SET_PROCESS_INFO_PRIORITY;
     CLIENT_SendRequest( REQ_SET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
@@ -539,9 +488,7 @@ DWORD WINAPI GetPriorityClass(HANDLE hprocess)
 BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD affmask )
 {
     struct set_process_info_request req;
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hProcess,
-                                         K32OBJ_PROCESS, PROCESS_SET_INFORMATION );
-    if (req.handle == -1) return FALSE;
+    req.handle   = hProcess;
     req.affinity = affmask;
     req.mask     = SET_PROCESS_INFO_AFFINITY;
     CLIENT_SendRequest( REQ_SET_PROCESS_INFO, -1, 1, &req, sizeof(req) );

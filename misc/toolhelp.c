@@ -16,16 +16,9 @@
 #include "tlhelp32.h"
 #include "toolhelp.h"
 #include "heap.h"
-#include "k32obj.h"
 #include "server.h"
 #include "debug.h"
 
-
-/* The K32 snapshot object object */
-typedef struct
-{
-    K32OBJ header;
-} SNAPSHOT_OBJECT;
 
 /* FIXME: to make this working, we have to callback all these registered 
  * functions from all over the WINE code. Someone with more knowledge than
@@ -121,7 +114,6 @@ FARPROC16 tmp;
  */
 HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
 {
-    SNAPSHOT_OBJECT *snapshot;
     struct create_snapshot_request req;
     struct create_snapshot_reply reply;
 
@@ -133,21 +125,13 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return INVALID_HANDLE_VALUE;
     }
-    /* Now do the snapshot */
-    if (!(snapshot = HeapAlloc( SystemHeap, 0, sizeof(*snapshot) )))
-        return INVALID_HANDLE_VALUE;
-    snapshot->header.type = K32OBJ_TOOLHELP_SNAPSHOT;
-    snapshot->header.refcount = 1;
 
+    /* Now do the snapshot */
     req.flags   = flags & ~TH32CS_INHERIT;
     req.inherit = (flags & TH32CS_INHERIT) != 0;
     CLIENT_SendRequest( REQ_CREATE_SNAPSHOT, -1, 1, &req, sizeof(req) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
-    {
-        HeapFree( SystemHeap, 0, snapshot );
-        return INVALID_HANDLE_VALUE;
-    }
-    return HANDLE_Alloc( PROCESS_Current(), &snapshot->header, 0, req.inherit, reply.handle );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    return reply.handle;
 }
 
 
@@ -167,9 +151,7 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY lppe, BOOL fir
         ERR (toolhelp, "Result buffer too small\n");
         return FALSE;
     }
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                              K32OBJ_TOOLHELP_SNAPSHOT, 0 )) == -1)
-        return FALSE;
+    req.handle = handle;
     req.reset = first;
     CLIENT_SendRequest( REQ_NEXT_PROCESS, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;

@@ -7,17 +7,9 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
-#include "k32obj.h"
-#include "process.h"
-#include "thread.h"
 #include "heap.h"
 #include "server/request.h"
 #include "server.h"
-
-typedef struct _MUTEX
-{
-    K32OBJ         header;
-} MUTEX;
 
 
 /***********************************************************************
@@ -29,24 +21,13 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner,
     struct create_mutex_request req;
     struct create_mutex_reply reply;
     int len = name ? strlen(name) + 1 : 0;
-    HANDLE handle;
-    MUTEX *mutex;
 
     req.owned   = owner;
     req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-
     CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     if (reply.handle == -1) return 0;
-
-    SYSTEM_LOCK();
-    mutex = (MUTEX *)K32OBJ_Create( K32OBJ_MUTEX, sizeof(*mutex),
-                                    name, reply.handle, MUTEX_ALL_ACCESS,
-                                    sa, &handle );
-    if (mutex) K32OBJ_DecCount( &mutex->header );
-    if (handle == INVALID_HANDLE_VALUE) handle = 0;
-    SYSTEM_UNLOCK();
-    return handle;
+    return reply.handle;
 }
 
 
@@ -68,8 +49,6 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner,
  */
 HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 {
-    HANDLE handle = 0;
-    K32OBJ *obj;
     struct open_named_obj_request req;
     struct open_named_obj_reply reply;
     int len = name ? strlen(name) + 1 : 0;
@@ -79,20 +58,8 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
     req.inherit = inherit;
     CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle != -1)
-    {
-        SYSTEM_LOCK();
-        if ((obj = K32OBJ_FindNameType( name, K32OBJ_MUTEX )) != NULL)
-        {
-            handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
-            K32OBJ_DecCount( obj );
-            if (handle == INVALID_HANDLE_VALUE)
-                handle = 0; /* must return 0 on failure, not -1 */
-        }
-        else CLIENT_CloseHandle( reply.handle );
-        SYSTEM_UNLOCK();
-    }
-    return handle;
+    if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return reply.handle;
 }
 
 
@@ -115,9 +82,7 @@ BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
     struct release_mutex_request req;
 
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                         K32OBJ_MUTEX, MUTEX_MODIFY_STATE );
-    if (req.handle == -1) return FALSE;
+    req.handle = handle;
     CLIENT_SendRequest( REQ_RELEASE_MUTEX, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }

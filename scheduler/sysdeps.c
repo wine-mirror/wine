@@ -119,11 +119,11 @@ int SYSDEPS_SpawnThread( THDB *thread )
  *           SYSDEPS_ExitThread
  *
  * Exit a running thread; must not return.
+ * Must not make any reference to the thread structures (THDB etc.) as
+ * they have already been deleted.
  */
 void SYSDEPS_ExitThread(void)
 {
-    THDB *thdb = THREAD_Current();
-    close( thdb->socket );
     _exit( 0 );
 }
 

@@ -8,23 +8,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/sem.h>
 #include "debug.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "heap.h"
-#include "k32obj.h"
 #include "debug.h"
 #include "thread.h"
-
-/* On some systems this is supposed to be defined in the program */
-#ifndef HAVE_UNION_SEMUN
-union semun {
-    int val;
-    struct semid_ds *buf;
-    ushort *array;
-};
-#endif
 
 
 /***********************************************************************
@@ -36,23 +25,8 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
     crit->LockSemaphore  = 0;
-    if (SystemHeap)
-    {
-        crit->LockSemaphore = CreateSemaphoreA( NULL, 0, 1, NULL );
-        crit->Reserved      = (DWORD)-1;
-    }
-    else
-    {
-        union semun val;
-        crit->Reserved = (DWORD)semget( IPC_PRIVATE, 1, IPC_CREAT | 0777 );
-        if (crit->Reserved == (DWORD)-1)
-        {
-            perror( "semget" );
-            return;
-        }
-        val.val = 0;
-        semctl( (int)crit->Reserved, 0, SETVAL, val );
-    }
+    crit->LockSemaphore  = CreateSemaphoreA( NULL, 0, 1, NULL );
+    crit->Reserved       = (DWORD)-1;
 }
 
 
@@ -71,10 +45,6 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
         CloseHandle( crit->LockSemaphore );
         crit->LockSemaphore  = 0;
     }
-    else if (crit->Reserved != (DWORD)-1)
-    {
-        semctl( (int)crit->Reserved, 0, IPC_RMID, (union semun)0 );
-    }
 }
 
 
@@ -83,9 +53,8 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
 {
-    if (	(crit->Reserved==-1) && !(crit->LockSemaphore) &&
-		(crit!=HEAP_SystemLock)
-    ) {
+    if (!crit->LockSemaphore)
+    {
     	FIXME(win32,"entering uninitialized section(%p)?\n",crit);
     	InitializeCriticalSection(crit);
     }
@@ -97,28 +66,8 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
             return;
         }
         /* Now wait for it */
-        if (crit->LockSemaphore)
-        {
-            /* FIXME: should set a timeout and raise an exception */
-            WaitForSingleObject( crit->LockSemaphore, INFINITE );
-        }
-        else if (crit->Reserved != (DWORD)-1)
-        {
-            int ret;
-            struct sembuf sop;
-            sop.sem_num = 0;
-            sop.sem_op  = -1;
-            sop.sem_flg = 0/*SEM_UNDO*/;
-            do
-            {
-                ret = semop( (int)crit->Reserved, &sop, 1 );
-            } while ((ret == -1) && (errno == EINTR));
-        }
-        else
-        {
-            MSG( "Uninitialized critical section (%p)\n", crit );
-            return;
-        }
+        /* FIXME: should set a timeout and raise an exception */
+        WaitForSingleObject( crit->LockSemaphore, INFINITE );
     }
     crit->OwningThread   = GetCurrentThreadId();
     crit->RecursionCount = 1;
@@ -163,18 +112,7 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
     if (InterlockedDecrement( &crit->LockCount ) >= 0)
     {
         /* Someone is waiting */
-        if (crit->LockSemaphore)
-        {
-            ReleaseSemaphore( crit->LockSemaphore, 1, NULL );
-        }
-        else if (crit->Reserved != (DWORD)-1)
-        {
-            struct sembuf sop;
-            sop.sem_num = 0;
-            sop.sem_op  = 1;
-            sop.sem_flg = 0/*SEM_UNDO*/;
-            semop( (int)crit->Reserved, &sop, 1 );
-        }
+        ReleaseSemaphore( crit->LockSemaphore, 1, NULL );
     }
 }
 

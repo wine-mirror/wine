@@ -27,12 +27,6 @@
 #define MS_SYNC 0
 #endif
 
-/* File mapping */
-typedef struct
-{
-    K32OBJ        header;
-} FILE_MAPPING;
-
 /* File view */
 typedef struct _FV
 {
@@ -1055,40 +1049,9 @@ HANDLE WINAPI CreateFileMappingA(
                 DWORD size_low,  /* [in] Low-order 32 bits of object size */
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
-    FILE_MAPPING *mapping = NULL;
     struct create_mapping_request req;
-    struct create_mapping_reply reply = { -1 };
-    HANDLE handle;
+    struct create_mapping_reply reply;
     BYTE vprot;
-    BOOL inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-
-    /* First search for an object with the same name */
-
-    K32OBJ *obj = K32OBJ_FindName( name );
-
-    if (obj)
-    {
-        if (obj->type == K32OBJ_MEM_MAPPED_FILE)
-        {
-            req.handle = -1;
-            CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
-                                &req, sizeof(req),
-                                name, name ? strlen(name) + 1 : 0 );
-            CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-            if (reply.handle == -1) return 0;
-            if (GetLastError() != ERROR_ALREADY_EXISTS)
-                return 0;  /* not supposed to happen */
-            handle = HANDLE_Alloc( PROCESS_Current(), obj,
-                                   FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, reply.handle );
-        }
-        else
-        {
-            SetLastError( ERROR_DUP_NAME );
-            handle = 0;
-        }
-        K32OBJ_DecCount( obj );
-        return handle;
-    }
 
     /* Check parameters */
 
@@ -1107,52 +1070,19 @@ HANDLE WINAPI CreateFileMappingA(
     else vprot |= VPROT_COMMITTED;
     if (protect & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
 
-    /* Compute the size and extend the file if necessary */
-
-    if (hFile != INVALID_HANDLE_VALUE) /* We have a file */
-    {
-        DWORD access = GENERIC_READ;
-
-        if (((protect & 0xff) == PAGE_READWRITE) ||
-            ((protect & 0xff) == PAGE_WRITECOPY) ||
-            ((protect & 0xff) == PAGE_EXECUTE_READWRITE) ||
-            ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
-                access |= GENERIC_WRITE;
-
-        if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                                  K32OBJ_FILE, access )) == -1) goto error;
-    }
-    else req.handle = -1;
-
     /* Create the server object */
 
+    req.handle    = hFile;
     req.size_high = size_high;
-    req.size_low  = ROUND_SIZE( 0, size_low );
+    req.size_low  = size_low;
     req.protect   = vprot;
-    req.inherit   = inherit;
+    req.inherit   = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     CLIENT_SendRequest( REQ_CREATE_MAPPING, -1, 2,
                         &req, sizeof(req),
                         name, name ? strlen(name) + 1 : 0 );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
-        goto error;
-
-    /* Allocate the mapping object */
-
-    if (!(mapping = HeapAlloc( SystemHeap, 0, sizeof(*mapping) ))) goto error;
-    mapping->header.type     = K32OBJ_MEM_MAPPED_FILE;
-    mapping->header.refcount = 1;
-
-    if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
-    else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
-                                FILE_MAP_ALL_ACCESS /*FIXME*/, inherit, reply.handle );
-    K32OBJ_DecCount( &mapping->header );
-    SetLastError(0); /* Last error value is relevant. (see the start of fun) */
-    return handle;
-
-error:
-    if (reply.handle != -1) CLIENT_CloseHandle( reply.handle );
-    if (mapping) HeapFree( SystemHeap, 0, mapping );
-    return 0;
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    if (reply.handle == -1) return 0;
+    return reply.handle;
 }
 
 
@@ -1185,8 +1115,6 @@ HANDLE WINAPI OpenFileMappingA(
                 BOOL inherit, /* [in] Inherit flag */
                 LPCSTR name )   /* [in] Name of file-mapping object */
 {
-    HANDLE handle = 0;
-    K32OBJ *obj;
     struct open_named_obj_request req;
     struct open_named_obj_reply reply;
     int len = name ? strlen(name) + 1 : 0;
@@ -1196,21 +1124,8 @@ HANDLE WINAPI OpenFileMappingA(
     req.inherit = inherit;
     CLIENT_SendRequest( REQ_OPEN_NAMED_OBJ, -1, 2, &req, sizeof(req), name, len );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-
-    if (reply.handle != -1)
-    {
-        SYSTEM_LOCK();
-        if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
-        {
-            handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, reply.handle );
-            K32OBJ_DecCount( obj );
-            if (handle == INVALID_HANDLE_VALUE)
-                handle = 0; /* must return 0 on failure, not -1 */
-        }
-        else CLIENT_CloseHandle( reply.handle );
-        SYSTEM_UNLOCK();
-    }
-    return handle;
+    if (reply.handle == -1) return 0; /* must return 0 on failure, not -1 */
+    return reply.handle;
 }
 
 
@@ -1279,8 +1194,7 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
     }
 
-    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
-                                         K32OBJ_MEM_MAPPED_FILE, 0 /* FIXME */ );
+    req.handle = handle;
     CLIENT_SendRequest( REQ_GET_MAPPING_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &info, sizeof(info), &unix_handle ))
         goto error;

@@ -8,7 +8,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "k32obj.h"
 #include "heap.h"
 #include "process.h"
 #include "thread.h"
@@ -85,17 +84,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         return WAIT_FAILED;
     }
 
-    for (i = 0; i < count; i++)
-    {
-    	TRACE(win32,"handle %d is %08x\n",i,handles[i]);
-        server_handle[i] = HANDLE_GetServerHandle( PROCESS_Current(), handles[i],
-                                                   K32OBJ_UNKNOWN, SYNCHRONIZE );
-        if (server_handle[i] == -1)
-        {
-            ERR(win32,"No server handle for %08x\n",handles[i] );
-            return WAIT_FAILED;
-        }
-    }
+    for (i = 0; i < count; i++) server_handle[i] = handles[i];
 
     req.count   = count;
     req.flags   = 0;

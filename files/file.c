@@ -50,13 +50,6 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
-/* The file object */
-typedef struct
-{
-    K32OBJ    header;
-} FILE_OBJECT;
-
-
 /* Size of per-process table of DOS handles */
 #define DOS_TABLE_SIZE 256
 
@@ -309,7 +302,6 @@ void FILE_SetDosError(void)
  */
 HFILE FILE_DupUnixHandle( int fd, DWORD access )
 {
-    FILE_OBJECT *file;
     int unix_handle;
     struct create_file_request req;
     struct create_file_reply reply;
@@ -328,18 +320,7 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
     CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1,
                         &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
-
-    if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
-    {
-        CLIENT_CloseHandle( reply.handle );
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        return (HFILE)NULL;
-    }
-    file->header.type = K32OBJ_FILE;
-    file->header.refcount = 0;
-    return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
-                         req.inherit, reply.handle );
+    return reply.handle;
 }
 
 
@@ -352,7 +333,6 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                          LPSECURITY_ATTRIBUTES sa, DWORD creation,
                          DWORD attributes, HANDLE template )
 {
-    FILE_OBJECT *file;
     struct create_file_request req;
     struct create_file_reply reply;
 
@@ -382,20 +362,7 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 	    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
 	}
     }
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
-
-    /* Now build the FILE_OBJECT */
-
-    if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
-    {
-        SetLastError( ERROR_OUTOFMEMORY );
-        CLIENT_CloseHandle( reply.handle );
-        return (HFILE)INVALID_HANDLE_VALUE;
-    }
-    file->header.type = K32OBJ_FILE;
-    file->header.refcount = 0;
-    return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
-                         req.inherit, reply.handle );
+    return reply.handle;
 }
 
 
@@ -406,7 +373,6 @@ HFILE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
  */
 HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    FILE_OBJECT *file;
     struct create_device_request req;
     struct create_device_reply reply;
 
@@ -415,20 +381,7 @@ HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
     req.id      = client_id;
     CLIENT_SendRequest( REQ_CREATE_DEVICE, -1, 1, &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    if (reply.handle == -1) return INVALID_HANDLE_VALUE;
-
-    /* Now build the FILE_OBJECT */
-
-    if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
-    {
-        SetLastError( ERROR_OUTOFMEMORY );
-        CLIENT_CloseHandle( reply.handle );
-        return (HFILE)INVALID_HANDLE_VALUE;
-    }
-    file->header.type = K32OBJ_FILE;
-    file->header.refcount = 0;
-    return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
-                         req.inherit, reply.handle );
+    return reply.handle;
 }
 
 
@@ -597,9 +550,7 @@ DWORD WINAPI GetFileInformationByHandle( HFILE hFile,
     struct get_file_info_reply reply;
 
     if (!info) return 0;
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return 0;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
         return 0;
@@ -1141,9 +1092,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_UNKNOWN, GENERIC_READ )) == -1)
-        return FALSE;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_GET_READ_FD, -1, 1, &req, sizeof(req) );
     CLIENT_WaitReply( NULL, &unix_handle, 0 );
     if (unix_handle == -1) return FALSE;
@@ -1175,9 +1124,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_UNKNOWN, GENERIC_WRITE )) == -1)
-        return FALSE;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_GET_WRITE_FD, -1, 1, &req, sizeof(req) );
     CLIENT_WaitReply( NULL, &unix_handle, 0 );
     if (unix_handle == -1) return FALSE;
@@ -1293,9 +1240,7 @@ DWORD WINAPI SetFilePointer( HFILE hFile, LONG distance, LONG *highword,
     TRACE(file, "handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return 0xffffffff;
+    req.handle = hFile;
     req.low = distance;
     req.high = highword ? *highword : 0;
     /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
@@ -1493,9 +1438,7 @@ BOOL WINAPI FlushFileBuffers( HFILE hFile )
 {
     struct flush_file_request req;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return FALSE;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_FLUSH_FILE, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
@@ -1508,9 +1451,7 @@ BOOL WINAPI SetEndOfFile( HFILE hFile )
 {
     struct truncate_file_request req;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return FALSE;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_TRUNCATE_FILE, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
@@ -1667,9 +1608,7 @@ DWORD WINAPI GetFileType( HFILE hFile )
     struct get_file_info_request req;
     struct get_file_info_reply reply;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_UNKNOWN, 0 )) == -1)
-        return FILE_TYPE_UNKNOWN;
+    req.handle = hFile;
     CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
         return FILE_TYPE_UNKNOWN;
@@ -1950,9 +1889,7 @@ BOOL WINAPI SetFileTime( HFILE hFile,
 {
     struct set_file_time_request req;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, GENERIC_WRITE )) == -1)
-        return FALSE;
+    req.handle = hFile;
     if (lpLastAccessTime)
 	req.access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
     else
@@ -1975,9 +1912,7 @@ BOOL WINAPI LockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh
 {
     struct lock_file_request req;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return FALSE;
+    req.handle      = hFile;
     req.offset_low  = dwFileOffsetLow;
     req.offset_high = dwFileOffsetHigh;
     req.count_low   = nNumberOfBytesToLockLow;
@@ -1995,9 +1930,7 @@ BOOL WINAPI UnlockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHi
 {
     struct unlock_file_request req;
 
-    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
-                                              K32OBJ_FILE, 0 )) == -1)
-        return FALSE;
+    req.handle      = hFile;
     req.offset_low  = dwFileOffsetLow;
     req.offset_high = dwFileOffsetHigh;
     req.count_low   = nNumberOfBytesToUnlockLow;

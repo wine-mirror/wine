@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "winbase.h"
-#include "k32obj.h"
 #include "selectors.h"  /* for SET_FS */
 
 #ifdef linux
@@ -58,9 +57,9 @@ typedef struct _TEB
 /* Thread database */
 typedef struct _THDB
 {
-    K32OBJ         header;         /*  00 Kernel object header */
-    struct _PDB *process;        /*  08 Process owning this thread */
-    HANDLE       event;          /*  0c Thread event */
+    LONG           header[2];      /*  00 Kernel object header */
+    struct _PDB   *process;        /*  08 Process owning this thread */
+    HANDLE         event;          /*  0c Thread event */
     TEB            teb;            /*  10 Thread exception block */
     DWORD          flags;          /*  44 Flags */
     DWORD          exit_code;      /*  48 Termination status */
