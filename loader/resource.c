@@ -202,7 +202,8 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
     }
 
     if ( !hrsrc )
-        ERR(resource,"0x%08x(%s) %s(%s) not found!\n", hModule,wm->modname, debugres_w (name), debugres_w (type));
+        WARN(resource,"0x%08x(%s) %s(%s) not found!\n",
+	     hModule,wm->modname, debugres_w (name), debugres_w (type));
 
     return hrsrc;
 }
