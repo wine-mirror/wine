@@ -46,11 +46,12 @@ DECLARE_DEBUG_CHANNEL(relay)
 
 #undef TRY_PICRETURN
 
+extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec,
+                                                 CONTEXT *context );
+
 static void do_exception( int signal, CONTEXT86 *context )
 {
     EXCEPTION_RECORD rec;
-    extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec,
-                                                     CONTEXT *context );
     if ((signal == SIGTRAP) || (signal == SIGHUP))
     {
         rec.ExceptionCode  = EXCEPTION_BREAKPOINT;
