@@ -1118,7 +1118,7 @@ int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
  *	SHValidateUNC				[SHELL32.173]
  *
  */
-HRESULT SHValidateUNC (DWORD x, DWORD y, DWORD z)
+HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
 {	FIXME(shell,"0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
 	return 0;
 }
