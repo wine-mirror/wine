@@ -18,10 +18,76 @@
 
 DEFAULT_DEBUG_CHANNEL(text);
 
+/***********************************************************************
+ *           FONT_mbtowc
+ *
+ * Returns a '\0' terminated Unicode translation of str using the
+ * charset of the currently selected font in hdc.  If count is -1 then
+ * str is assumed to be '\0' terminated, otherwise it contains the
+ * number of bytes to convert.  If plenW is non-NULL, on return it
+ * will point to the number of WCHARs (excluding the '\0') that have
+ * been written.  If pCP is non-NULL, on return it will point to the
+ * codepage used in the conversion.  The caller should free the
+ * returned LPWSTR from the process heap itself.
+ */
+LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
+{
+    LOGFONTW lf;
+    UINT cp = CP_ACP;
+    INT lenW;
+    LPWSTR strW;
+    CHARSETINFO csi;
+
+    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+
+    /* Hmm, nicely designed api this one! */
+    if(TranslateCharsetInfo((DWORD*)(UINT)lf.lfCharSet, &csi, TCI_SRCCHARSET))
+        cp = csi.ciACP;
+    else {
+        switch(lf.lfCharSet) {
+	case SYMBOL_CHARSET:
+	    cp = CP_SYMBOL;
+	    break;
+	case OEM_CHARSET:
+	    cp = GetOEMCP();
+	    break;
+
+	case VISCII_CHARSET:
+	case TCVN_CHARSET:
+	case KOI8_CHARSET:
+	case ISO3_CHARSET:
+	case ISO4_CHARSET:
+	case ISO10_CHARSET:
+	case CELTIC_CHARSET:
+	  /* FIXME: These have no place here, but becasue x11drv
+	     enumerates fonts with these (made up) charsets some apps
+	     might use them and then the FIXME below would become
+	     annoying.  Now we could pick the intended codepage for
+	     each of these, but since it's broken anyway we'll just
+	     use CP_ACP and hope it'll go away...
+	  */
+	    cp = CP_ACP;
+	    break;
+
+
+	default:
+	    FIXME("Can't find codepage for charset %d\n", lf.lfCharSet);
+	    break;
+	}
+    }
+
+    lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
+    strW = HeapAlloc(GetProcessHeap(), 0, (lenW + 1) * sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, str, count, strW, lenW);
+    strW[lenW] = '\0';
+    if(plenW) *plenW = lenW;
+    if(pCP) *pCP = cp;
+    return strW;
+}
 
 /***********************************************************************
- *           ExtTextOut    (GDI.351)
- */
+ *           ExtTextOut (GDI.351)
+*/
 BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
                             const RECT16 *lprect, LPCSTR str, UINT16 count,
                             const INT16 *lpDx )
@@ -47,48 +113,33 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
  *           ExtTextOutA    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
-                             const RECT *lprect, LPCSTR str, UINT count,
-                             const INT *lpDx )
+                         const RECT *lprect, LPCSTR str, UINT count, const INT *lpDx )
 {
-    DC * dc = DC_GetDCUpdate( hdc );
-    LPWSTR p;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-    BOOL ret = FALSE;
+    INT wlen;
+    UINT codepage;
+    LPWSTR p = FONT_mbtowc(hdc, str, count, &wlen, &codepage);
+    BOOL ret;
     LPINT lpDxW = NULL;
 
-    if (!dc) return FALSE;
+    if (lpDx) {
+        unsigned int i = 0, j = 0;
 
-    if (dc->funcs->pExtTextOut)
-    {
-        UINT wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
-        if (lpDx)
-        {
-            unsigned int i = 0, j = 0;
-
-            lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
-            while(i < count)
-            {
-                if(IsDBCSLeadByteEx(codepage, str[i]))
-                {
-                    lpDxW[j++] = lpDx[i] + lpDx[i+1];
-                    i = i + 2;
-                }
-                else
-                {
-                    lpDxW[j++] = lpDx[i];
-                    i = i + 1;
-                }
-            }
-        }
-        if ((p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) )))
-        {
-            wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
-            ret = dc->funcs->pExtTextOut( dc, x, y, flags, lprect, p, wlen, lpDxW );
-            HeapFree( GetProcessHeap(), 0, p );
-        }
-        if (lpDxW) HeapFree( GetProcessHeap(), 0, lpDxW );
+	lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
+	while(i < count) {
+	    if(IsDBCSLeadByteEx(codepage, str[i])) {
+	        lpDxW[j++] = lpDx[i] + lpDx[i+1];
+		i = i + 2;
+	    } else {
+	        lpDxW[j++] = lpDx[i];
+		i = i + 1;
+	    }
+	}
     }
-    GDI_ReleaseObj( hdc );
+
+    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDxW );
+
+    HeapFree( GetProcessHeap(), 0, p );
+    if (lpDxW) HeapFree( GetProcessHeap(), 0, lpDxW );
     return ret;
 }
 
@@ -97,8 +148,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
-                             const RECT *lprect, LPCWSTR str, UINT count,
-                             const INT *lpDx )
+                         const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
 {
     BOOL ret = FALSE;
     DC * dc = DC_GetDCUpdate( hdc );

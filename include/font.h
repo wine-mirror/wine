@@ -71,6 +71,8 @@ extern void FONT_TextMetricAToW(const TEXTMETRICA *ptm32A, LPTEXTMETRICW ptm32W 
 extern void FONT_NewTextMetricEx16ToW(const NEWTEXTMETRICEX16*, LPNEWTEXTMETRICEXW);
 extern void FONT_EnumLogFontEx16ToW(const ENUMLOGFONTEX16*, LPENUMLOGFONTEXW);
 
+extern LPWSTR FONT_mbtowc(HDC, LPCSTR, INT, INT*, UINT*);
+
 extern DWORD WineEngAddRefFont(GdiFont);
 extern GdiFont WineEngCreateFontInstance(HFONT);
 extern DWORD WineEngDecRefFont(GdiFont);

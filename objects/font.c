@@ -1032,12 +1032,10 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
                                      LPSIZE size )
 {
     BOOL ret = FALSE;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-    UINT wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
-    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
+    INT wlen;
+    LPWSTR p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
 
     if (p) {
-        wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
 	ret = GetTextExtentPoint32W( hdc, p, wlen, size );
 	HeapFree( GetProcessHeap(), 0, p );
     }
@@ -1109,11 +1107,9 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
 				   LPINT alpDx, LPSIZE size )
 {
     BOOL ret;
-
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
-    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, str, count, p, len );
-    ret = GetTextExtentExPointW( hdc, p, len, maxExt, lpnFit, alpDx, size);
+    INT wlen;
+    LPWSTR p = FONT_mbtowc( hdc, str, count, &wlen, NULL);
+    ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, alpDx, size);
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
