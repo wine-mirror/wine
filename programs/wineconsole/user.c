@@ -39,8 +39,8 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	for (i = 0; i < data->curcfg.win_width; i++)
 	{
 	    attr = cell[i].Attributes;
-	    SetBkColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[attr & 0x0F]);
-	    SetTextColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[(attr >> 4) & 0x0F]);
+	    SetBkColor(PRIVATE(data)->hMemDC,WCUSER_ColorMap[(attr>>4)&0x0F]);
+	    SetTextColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[attr&0x0F]);
 	    for (k = i; k < data->curcfg.win_width && cell[k].Attributes == attr; k++)
 	    {
 		line[k - i] = cell[k].Char.UnicodeChar;
