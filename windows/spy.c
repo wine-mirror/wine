@@ -2003,6 +2003,22 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 		}
 		break;
 	    }
+	case TCM_INSERTITEMW:
+	case TCM_INSERTITEMA:
+	case TCM_SETITEMW:
+	case TCM_SETITEMA:
+	    if (!enter) break;
+	    /* fall through */
+	case TCM_GETITEMW:
+	case TCM_GETITEMA:
+	    {
+		TCITEMA *item = (TCITEMA *) sp_e->lParam;
+		if (item) {
+		    SPY_DumpMem ("TCITEM", (UINT*)item, sizeof(TCITEMA));
+		}
+		break;
+	    }
+	case TCM_ADJUSTRECT:
 	case LVM_GETITEMRECT:
 	case LVM_GETSUBITEMRECT:
 	    {
