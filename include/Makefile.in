@@ -89,7 +89,6 @@ WINDOWS_INCLUDES = \
 	imagehlp.h \
 	imm.h \
 	initguid.h \
-	instance.h \
 	ipexport.h \
 	iphlpapi.h \
 	ipifcons.h \
