@@ -7701,10 +7701,13 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 {
   SCROLLINFO scrollInfo;
 
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  SendMessageA(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
   scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
- 
+
   if (GetScrollInfo(hwnd, SB_VERT, &scrollInfo) != FALSE)
   {
     INT nOldScrollPos = scrollInfo.nPos;
@@ -7792,6 +7795,10 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
                                 HWND hScrollWnd)
 {
   SCROLLINFO scrollInfo;
+
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  SendMessageA(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+
 
   ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
   scrollInfo.cbSize = sizeof(SCROLLINFO);
