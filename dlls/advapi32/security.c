@@ -634,13 +634,15 @@ LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid )
 BOOL WINAPI
 LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid )
 {
-    LPWSTR lpSystemNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpSystemName);
-    LPWSTR lpNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, lpName);
+    UNICODE_STRING lpSystemNameW;
+    UNICODE_STRING lpNameW;
     BOOL ret;
 
-    ret = LookupPrivilegeValueW( lpSystemNameW, lpNameW, lpLuid);
-    HeapFree(GetProcessHeap(), 0, lpNameW);
-    HeapFree(GetProcessHeap(), 0, lpSystemNameW);
+    RtlCreateUnicodeStringFromAsciiz(&lpSystemNameW, lpSystemName);
+    RtlCreateUnicodeStringFromAsciiz(&lpNameW,lpName);
+    ret = LookupPrivilegeValueW(lpSystemNameW.Buffer, lpNameW.Buffer, lpLuid);
+    RtlFreeUnicodeString(&lpNameW);
+    RtlFreeUnicodeString(&lpSystemNameW);
     return ret;
 }
 

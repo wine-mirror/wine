@@ -28,6 +28,7 @@
 #include "wine/unicode.h"
 #include "heap.h"
 #include "wine/debug.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
@@ -234,12 +235,15 @@ SC_HANDLE WINAPI
 OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {
-    LPWSTR lpMachineNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpMachineName);
-    LPWSTR lpDatabaseNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpDatabaseName);
-    SC_HANDLE ret = OpenSCManagerW(lpMachineNameW,lpDatabaseNameW,
-                                 dwDesiredAccess);
-    HeapFree(GetProcessHeap(),0,lpDatabaseNameW);
-    HeapFree(GetProcessHeap(),0,lpMachineNameW);
+    UNICODE_STRING lpMachineNameW;
+    UNICODE_STRING lpDatabaseNameW;
+    SC_HANDLE ret;
+
+    RtlCreateUnicodeStringFromAsciiz (&lpMachineNameW,lpMachineName);
+    RtlCreateUnicodeStringFromAsciiz (&lpDatabaseNameW,lpDatabaseName);
+    ret = OpenSCManagerW(lpMachineNameW.Buffer,lpDatabaseNameW.Buffer, dwDesiredAccess);
+    RtlFreeUnicodeString(&lpDatabaseNameW);
+    RtlFreeUnicodeString(&lpMachineNameW);
     return ret;
 }
 
@@ -347,15 +351,15 @@ SC_HANDLE WINAPI
 OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
                 DWORD dwDesiredAccess )
 {
-    LPWSTR lpServiceNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpServiceName);
+    UNICODE_STRING lpServiceNameW;
     SC_HANDLE ret;
-
+    RtlCreateUnicodeStringFromAsciiz (&lpServiceNameW,lpServiceName);
     if(lpServiceName)
         TRACE("Request for service %s\n",lpServiceName);
     else
         return FALSE;
-    ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
-    HeapFree(GetProcessHeap(),0,lpServiceNameW);
+    ret = OpenServiceW( hSCManager, lpServiceNameW.Buffer, dwDesiredAccess);
+    RtlFreeUnicodeString(&lpServiceNameW);
     return ret;
 }
 

@@ -36,6 +36,7 @@
 #include "heap.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -1636,9 +1637,12 @@ LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
  */
 LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
 {
-    LPWSTR lpFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpFile );
-    LONG ret = RegRestoreKeyW( hkey, lpFileW, dwFlags );
-    HeapFree( GetProcessHeap(), 0, lpFileW );
+    UNICODE_STRING lpFileW;
+    LONG ret;
+
+    RtlCreateUnicodeStringFromAsciiz( &lpFileW, lpFile );
+    ret = RegRestoreKeyW( hkey, lpFileW.Buffer, dwFlags );
+    RtlFreeUnicodeString( &lpFileW );
     return ret;
 }
 
@@ -1662,9 +1666,12 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
  */
 LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
-    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
-    LONG ret = RegUnLoadKeyW( hkey, lpSubKeyW );
-    if(lpSubKeyW) HeapFree( GetProcessHeap(), 0, lpSubKeyW);
+    UNICODE_STRING lpSubKeyW;
+    LONG ret;
+
+    RtlCreateUnicodeStringFromAsciiz( &lpSubKeyW, lpSubKey );
+    ret = RegUnLoadKeyW( hkey, lpSubKeyW.Buffer );
+    RtlFreeUnicodeString( &lpSubKeyW );
     return ret;
 }
 
@@ -1693,13 +1700,18 @@ LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
 LONG WINAPI RegReplaceKeyA( HKEY hkey, LPCSTR lpSubKey, LPCSTR lpNewFile,
                               LPCSTR lpOldFile )
 {
-    LPWSTR lpSubKeyW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpSubKey );
-    LPWSTR lpNewFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpNewFile );
-    LPWSTR lpOldFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpOldFile );
-    LONG ret = RegReplaceKeyW( hkey, lpSubKeyW, lpNewFileW, lpOldFileW );
-    HeapFree( GetProcessHeap(), 0, lpOldFileW );
-    HeapFree( GetProcessHeap(), 0, lpNewFileW );
-    HeapFree( GetProcessHeap(), 0, lpSubKeyW );
+    UNICODE_STRING lpSubKeyW;
+    UNICODE_STRING lpNewFileW;
+    UNICODE_STRING lpOldFileW;
+    LONG ret;
+
+    RtlCreateUnicodeStringFromAsciiz( &lpSubKeyW, lpSubKey );
+    RtlCreateUnicodeStringFromAsciiz( &lpOldFileW, lpOldFile );
+    RtlCreateUnicodeStringFromAsciiz( &lpNewFileW, lpNewFile );
+    ret = RegReplaceKeyW( hkey, lpSubKeyW.Buffer, lpNewFileW.Buffer, lpOldFileW.Buffer );
+    RtlFreeUnicodeString( &lpOldFileW );
+    RtlFreeUnicodeString( &lpNewFileW );
+    RtlFreeUnicodeString( &lpSubKeyW );
     return ret;
 }
 
@@ -1820,9 +1832,12 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
  */
 LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, PHKEY reskey )
 {
-    LPWSTR machineW = HEAP_strdupAtoW( GetProcessHeap(), 0, machine );
-    DWORD ret = RegConnectRegistryW( machineW, hkey, reskey );
-    HeapFree( GetProcessHeap(), 0, machineW );
+    UNICODE_STRING machineW;
+    LONG ret;
+
+    RtlCreateUnicodeStringFromAsciiz( &machineW, machine );
+    ret = RegConnectRegistryW( machineW.Buffer, hkey, reskey );
+    RtlFreeUnicodeString( &machineW );
     return ret;
 }
 

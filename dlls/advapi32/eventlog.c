@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "heap.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 
@@ -216,11 +217,15 @@ ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
  */
 HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName )
 {
-    LPWSTR lpUNCServerNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpUNCServerName);
-    LPWSTR lpSourceNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpSourceName);
-    HANDLE ret = RegisterEventSourceW(lpUNCServerNameW,lpSourceNameW);
-    HeapFree(GetProcessHeap(),0,lpSourceNameW);
-    HeapFree(GetProcessHeap(),0,lpUNCServerNameW);
+    
+    UNICODE_STRING lpUNCServerNameW;
+    UNICODE_STRING lpSourceNameW;
+    HANDLE ret;
+    RtlCreateUnicodeStringFromAsciiz(&lpUNCServerNameW, lpUNCServerName);
+    RtlCreateUnicodeStringFromAsciiz(&lpSourceNameW, lpSourceName);
+    ret = RegisterEventSourceW(lpUNCServerNameW.Buffer,lpSourceNameW.Buffer);
+    RtlFreeUnicodeString (&lpUNCServerNameW);
+    RtlFreeUnicodeString (&lpSourceNameW);
     return ret;
 }
 
