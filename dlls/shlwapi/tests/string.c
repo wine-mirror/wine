@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -29,6 +31,13 @@
 #define NO_SHLWAPI_GDI
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
+#include "shtypes.h"
+
+static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
 
 /* StrToInt/StrToIntEx results */
 typedef struct tagStrToIntResult
@@ -537,8 +546,55 @@ void test_StrFromTimeIntervalA(void)
   }
 }
 
+static WCHAR *CoDupStrW(const char* src)
+{
+  INT len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
+  WCHAR* szTemp = (WCHAR*)CoTaskMemAlloc(len * sizeof(WCHAR));
+  MultiByteToWideChar(CP_ACP, 0, src, -1, szTemp, len);
+  return szTemp;
+}
+
+static void test_StrRetToBSTR(void)
+{
+    static const WCHAR szTestW[] = { 'T','e','s','t','\0' };
+    ITEMIDLIST iidl[10];
+    BSTR bstr;
+    STRRET strret;
+    HRESULT ret;
+
+    strret.uType = STRRET_WSTR;
+    strret.u.pOleStr = CoDupStrW("Test");
+    bstr = 0;
+    ret = StrRetToBSTR(&strret, NULL, &bstr);
+    ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
+       "STRRET_WSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
+    if (bstr)
+      SysFreeString(bstr);
+
+    strret.uType = STRRET_CSTR;
+    lstrcpyA(strret.u.cStr, "Test");
+    ret = StrRetToBSTR(&strret, NULL, &bstr);
+    ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
+       "STRRET_CSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
+    if (bstr)
+      SysFreeString(bstr);
+
+    strret.uType = STRRET_OFFSET;
+    strret.u.uOffset = 1;
+    strcpy((char*)&iidl, " Test");
+    ret = StrRetToBSTR(&strret, iidl, &bstr);
+    ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
+       "STRRET_OFFSET: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
+    if (bstr)
+      SysFreeString(bstr);
+
+    /* Native crashes if str is NULL */
+}
+
 START_TEST(string)
 {
+  CoInitialize(0);
+
   test_StrChrA();
   test_StrChrW();
   test_StrChrIA();
@@ -555,4 +611,5 @@ START_TEST(string)
   test_StrFormatKBSizeA();
   test_StrFormatKBSizeW();
   test_StrFromTimeIntervalA();
+  test_StrRetToBSTR();
 }
