@@ -36,7 +36,7 @@ DEFAULT_DEBUG_CHANNEL(midi)
 typedef struct {
     int			state;
     DWORD		bufsize;
-    LPMIDIOPENDESC	midiDesc;
+    MIDIOPENDESC	midiDesc;
     WORD		wFlags;
     LPMIDIHDR	 	lpQueueHdr;
     DWORD		dwTotalPlayed;
@@ -49,7 +49,7 @@ typedef struct {
 typedef struct {
     int			state;
     DWORD		bufsize;
-    LPMIDIOPENDESC	midiDesc;
+    MIDIOPENDESC	midiDesc;
     WORD		wFlags;
     LPMIDIHDR	 	lpQueueHdr;
     DWORD		dwTotalPlayed;
@@ -345,10 +345,10 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	if (wDevID > MAX_MIDIOUTDRV) 
 	    return MCIERR_INTERNAL;
 	
-	dwCallBack = MidiOutDev[wDevID].midiDesc->dwCallback;
+	dwCallBack = MidiOutDev[wDevID].midiDesc.dwCallback;
 	uFlags = MidiOutDev[wDevID].wFlags;
-	hDev = MidiOutDev[wDevID].midiDesc->hMidi;
-	dwInstance = MidiOutDev[wDevID].midiDesc->dwInstance;
+	hDev = MidiOutDev[wDevID].midiDesc.hMidi;
+	dwInstance = MidiOutDev[wDevID].midiDesc.dwInstance;
 	break;
 	
     case MIM_OPEN:
@@ -358,10 +358,10 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	if (wDevID > MAX_MIDIINDRV) 
 	    return MCIERR_INTERNAL;
 	
-	dwCallBack = MidiInDev[wDevID].midiDesc->dwCallback;
+	dwCallBack = MidiInDev[wDevID].midiDesc.dwCallback;
 	uFlags = MidiInDev[wDevID].wFlags;
-	hDev = MidiInDev[wDevID].midiDesc->hMidi;
-	dwInstance = MidiInDev[wDevID].midiDesc->dwInstance;
+	hDev = MidiInDev[wDevID].midiDesc.hMidi;
+	dwInstance = MidiInDev[wDevID].midiDesc.dwInstance;
 	break;
     default:
 	WARN("Unsupported MSW-MIDI message %u\n", wMsg);
@@ -629,7 +629,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN("wDevID too large (%u) !\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
-    if (MidiInDev[wDevID].midiDesc != 0) {
+    if (MidiInDev[wDevID].midiDesc.hMidi != 0) {
 	WARN("device already open !\n");
 	return MMSYSERR_ALLOCATED;
     }
@@ -662,7 +662,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiInDev[wDevID].lpQueueHdr = NULL;
     MidiInDev[wDevID].dwTotalPlayed = 0;
     MidiInDev[wDevID].bufsize = 0x3FFF;
-    MidiInDev[wDevID].midiDesc = lpDesc;
+    MidiInDev[wDevID].midiDesc = *lpDesc;
     MidiInDev[wDevID].state = 0;
     MidiInDev[wDevID].incLen = 0;
     MidiInDev[wDevID].startTime = 0;
@@ -687,7 +687,7 @@ static DWORD midClose(WORD wDevID)
 	WARN("wDevID too big (%u) !\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
-    if (MidiInDev[wDevID].midiDesc == 0) {
+    if (MidiInDev[wDevID].midiDesc.hMidi == 0) {
 	WARN("device not opened !\n");
 	return MMSYSERR_ERROR;
     }
@@ -713,7 +713,7 @@ static DWORD midClose(WORD wDevID)
 	WARN("can't notify client !\n");
 	ret = MMSYSERR_INVALPARAM;
     }
-    MidiInDev[wDevID].midiDesc = 0;
+    MidiInDev[wDevID].midiDesc.hMidi = 0;
     return ret;
 }
 
@@ -974,7 +974,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	TRACE("MAX_MIDIOUTDRV reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
-    if (MidiOutDev[wDevID].midiDesc != 0) {
+    if (MidiOutDev[wDevID].midiDesc.hMidi != 0) {
 	WARN("device already open !\n");
 	return MMSYSERR_ALLOCATED;
     }
@@ -1031,7 +1031,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiOutDev[wDevID].lpQueueHdr = NULL;
     MidiOutDev[wDevID].dwTotalPlayed = 0;
     MidiOutDev[wDevID].bufsize = 0x3FFF;
-    MidiOutDev[wDevID].midiDesc = lpDesc;
+    MidiOutDev[wDevID].midiDesc = *lpDesc;
     
     if (MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {
 	WARN("can't notify client !\n");
@@ -1051,7 +1051,7 @@ static DWORD modClose(WORD wDevID)
 
     TRACE("(%04X);\n", wDevID);
     
-    if (MidiOutDev[wDevID].midiDesc == 0) {
+    if (MidiOutDev[wDevID].midiDesc.hMidi == 0) {
 	WARN("device not opened !\n");
 	return MMSYSERR_ERROR;
     }
@@ -1084,7 +1084,7 @@ static DWORD modClose(WORD wDevID)
 	WARN("can't notify client !\n");
 	ret = MMSYSERR_INVALPARAM;
     }
-    MidiOutDev[wDevID].midiDesc = 0;
+    MidiOutDev[wDevID].midiDesc.hMidi = 0;
     return ret;
 }
 
