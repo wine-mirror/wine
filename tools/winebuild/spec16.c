@@ -29,12 +29,30 @@
 #include <ctype.h>
 
 #include "wine/exception.h"
-#include "wine/library.h"
 #include "builtin16.h"
 #include "module.h"
 #include "stackframe.h"
 
 #include "build.h"
+
+
+/*******************************************************************
+ *         get_cs
+ */
+#ifdef __i386__
+static inline unsigned short get_cs(void)
+{
+    unsigned short res;
+#ifdef __GNUC__
+    __asm__("movw %%cs,%w0" : "=r"(res));
+#elif defined(_MSC_VER)
+    __asm { mov res, cs }
+#else
+    res = 0;
+#endif
+    return res;
+}
+#endif /* __i386__ */
 
 
 /*******************************************************************
@@ -629,7 +647,7 @@ void BuildSpec16File( FILE *outfile )
     unsigned char *data;
     char constructor[100], destructor[100];
 #ifdef __i386__
-    unsigned short code_selector = wine_get_cs();
+    unsigned short code_selector = get_cs();
 #endif
 
     /* File header */
