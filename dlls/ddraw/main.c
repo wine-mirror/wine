@@ -316,9 +316,11 @@ HRESULT WINAPI DirectDrawCreate(
 	ddraw_drivers[drvindex] = NULL; /* mark this one as unusable */
     }
 
-    if (IsEqualGUID( &IID_IDirectDraw2, lpGUID ) ||
-	IsEqualGUID( &IID_IDirectDraw4, lpGUID ) ||
-	IsEqualGUID( &IID_IDirectDraw7, lpGUID )
+    if (lpGUID &&
+	(IsEqualGUID( &IID_IDirectDraw2, lpGUID ) ||
+	 IsEqualGUID( &IID_IDirectDraw4, lpGUID ) ||
+	 IsEqualGUID( &IID_IDirectDraw7, lpGUID )
+	)
     ) {
 	LPVOID x;
 	ret = IDirectDraw_QueryInterface(*lplpDD,lpGUID,&x);
