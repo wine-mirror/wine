@@ -129,7 +129,7 @@ BOOL TTYDRV_DC_LineTo(TTYDRV_PDEVICE *physDev, INT x, INT y)
 
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%x, %d, %d): stub\n", physDev->hdc, x, y);
+  FIXME("(%p, %d, %d): stub\n", physDev->hdc, x, y);
 
   return TRUE;
 #endif /* defined(WINE_CURSES) */
@@ -248,7 +248,7 @@ BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, 
 
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%x, %d, %d, %d, %d): stub\n", physDev->hdc, left, top, right, bottom);
+  FIXME("(%p, %d, %d, %d, %d): stub\n", physDev->hdc, left, top, right, bottom);
 
   return TRUE;
 #endif /* defined(WINE_CURSES) */
@@ -291,7 +291,7 @@ COLORREF TTYDRV_DC_SetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF colo
 
   return RGB(0,0,0); /* FIXME: Always returns black */
 #else /* defined(WINE_CURSES) */
-  FIXME("(%x, %d, %d, 0x%08lx): stub\n", physDev->hdc, x, y, color);
+  FIXME("(%p, %d, %d, 0x%08lx): stub\n", physDev->hdc, x, y, color);
 
   return RGB(0,0,0); /* FIXME: Always returns black */
 #endif /* defined(WINE_CURSES) */
@@ -379,7 +379,7 @@ BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%x, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
+  FIXME("(%p, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
         physDev->hdc, x, y, flags, lpRect, debugstr_wn(str,count), count, lpDx);
 
   return TRUE;
