@@ -24,13 +24,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "wine/debug.h"
 #include "windef.h"
 #include "winerror.h"
-#include "stackframe.h"
-
 #include "winternl.h"
 #include "winreg.h"
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -335,13 +334,48 @@ void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
 /**************************************************************************
  *                 RtlDosPathNameToNtPathName_U		[NTDLL.@]
  *
- * FIXME: convert to UNC or whatever is expected here
+ * szwDosPath: a fully qualified DOS path name
+ * ntpath:     pointer to a UNICODE_STRING to hold the converted
+ *              path name
+ *
+ * FIXME: Should we not allocate the ntpath buffer under some
+ *         circumstances?
+ *        Are the conversions static? (always prepend '\??\' ?)
+ *        Not really sure about the last two arguments.
  */
 BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
-	LPWSTR from,PUNICODE_STRING us,DWORD x2,DWORD x3)
+	LPWSTR szwDosPath,PUNICODE_STRING ntpath,
+	DWORD x2,DWORD x3)
 {
-    FIXME("(%s,%p,%08lx,%08lx)\n",debugstr_w(from),us,x2,x3);
-    if (us) RtlCreateUnicodeString( us, from );
+    ULONG length;
+    UNICODE_STRING pathprefix;
+    WCHAR szPrefix[] = { '\\', '?', '?', '\\', 0 };
+
+    FIXME("(%s,%p,%08lx,%08lx) partial stub\n",
+        debugstr_w(szwDosPath),ntpath,x2,x3);
+
+    if ( !szwDosPath )
+        return FALSE;
+
+    if ( !szwDosPath[0] )
+        return FALSE;
+ 
+    if ( szwDosPath[1]!= ':' )
+        return FALSE;
+
+    length = strlenW(szwDosPath) * sizeof (WCHAR) + sizeof szPrefix;
+ 
+    ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, length);
+    ntpath->Length = 0;
+    ntpath->MaximumLength = length;
+
+    if ( !ntpath->Buffer )
+        return FALSE;
+
+    RtlInitUnicodeString( &pathprefix, szPrefix );
+    RtlCopyUnicodeString( ntpath, &pathprefix );
+    RtlAppendUnicodeToString( ntpath, szwDosPath );
+
     return TRUE;
 }
 
