@@ -44,7 +44,12 @@ extern "C" {
 typedef char      __int8;
 typedef short     __int16;
 typedef int       __int32;
+#ifndef __MINGW__
 typedef long long __int64;
+#else
+/* Using a typedef can tweak bugs in the C++ parser under Mingw32 */
+#define __int64 long long
+#endif /* !defined(__MINGW__) */
 #endif /* !defined(_MSC_VER) */
 
 typedef unsigned char      __uint8;
