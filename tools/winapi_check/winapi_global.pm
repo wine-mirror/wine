@@ -20,11 +20,11 @@ sub check {
     }
 
     if($options->declared) {
-	foreach my $name ($winapi->all_functions) {
-	    if(!$winapi->function_found($name) && !$nativeapi->is_function($name)) {
-		my $module = $winapi->function_module($name);
-		$output->write("*.c: $module: $name: ");
-		$output->write("function declared but not implemented: " . $winapi->function_arguments($name) . "\n");
+	foreach my $internal_name ($winapi->all_internal_functions) {
+	    if(!$winapi->internal_function_found($internal_name) && !$nativeapi->is_function($internal_name)) {
+		my $module = $winapi->function_internal_module($internal_name);
+		$output->write("*.c: $module: $internal_name: ");
+		$output->write("function declared but not implemented: " . $winapi->function_internal_arguments($internal_name) . "\n");
 	    }
 	}
     }

@@ -5,17 +5,16 @@ double
 %long
 
 DWORD
-HANDLE
 INT
 LONG
 MSVCRT_clock_t
 MSVCRT_complex
 MSVCRT_size_t
 MSVCRT_time_t
-ULONG
 WCHAR
 int
 long
+size_t
 unsigned int
 unsigned long
 
@@ -73,10 +72,10 @@ unsigned int *
 va_list
 void *
 
-%str
+%ptr --extension
 
-LPSTR
-LPCSTR
+_beginthread_start_routine_t
+_beginthreadex_start_routine_t
 
 %unknown
 
@@ -87,8 +86,3 @@ MSVCRT_ldiv_t
 
 void
 VOID
-
-%wstr
-
-LPCWSTR
-LPWSTR

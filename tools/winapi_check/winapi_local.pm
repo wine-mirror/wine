@@ -14,7 +14,7 @@ sub check_function {
     my $nativeapi = shift;
     my $winapi = shift;
 
-    my $module = $winapi->function_module($internal_name);
+    my $module = $winapi->function_internal_module($internal_name);
        
     if($winapi->name eq "win16") {
 	if($winapi->function_stub($internal_name)) {
@@ -89,8 +89,8 @@ sub check_function {
 	}
     }
 
-    my $declared_calling_convention = $winapi->function_calling_convention($internal_name);
-    my @declared_argument_kinds = split(/\s+/, $winapi->function_arguments($internal_name));
+    my $declared_calling_convention = $winapi->function_internal_calling_convention($internal_name);
+    my @declared_argument_kinds = split(/\s+/, $winapi->function_internal_arguments($internal_name));
 
     if($declared_calling_convention =~ /^register|interrupt$/) {
 	push @declared_argument_kinds, "ptr";
@@ -122,7 +122,11 @@ sub check_function {
 	    $output->write("function not implemented as vararg\n");
 	}
     } elsif($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
-	$output->write("function not declared as vararg\n");
+	if($#argument_types == 0) {
+	    pop @argument_types;
+	} else {
+	    $output->write("function not declared as vararg\n");
+	}
     }
 
     if($#argument_types != -1 && $argument_types[$#argument_types] eq "CONTEXT *" &&

@@ -1,7 +1,6 @@
 %long
 
 int
-size_t
 
 %ptr
 

@@ -13,6 +13,8 @@ _lwp_exit
 _lwp_makecontext
 _lxstat
 _sysconf
+_tolower
+_toupper
 _xmknod
 _xstat
 abs
@@ -242,6 +244,7 @@ tolower
 toupper
 towlower
 towupper
+tzset
 unlink
 usleep
 utime

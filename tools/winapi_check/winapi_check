@@ -154,16 +154,16 @@ if($options->global) {
 
 my $nativeapi = 'nativeapi'->new($options, $output, "$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
-for my $name ($win32api->all_functions) {
-    my $module16 = $win16api->function_module($name);
-    my $module32 = $win32api->function_module($name);
+for my $internal_name ($win32api->all_internal_functions) {
+    my $module16 = $win16api->function_internal_module($internal_name);
+    my $module32 = $win32api->function_internal_module($internal_name);
 	
     if(defined($module16)) {
-	$win16api->found_shared_function($name);
-	$win32api->found_shared_function($name);
-	
+	$win16api->found_shared_function($internal_name);
+	$win32api->found_shared_function($internal_name);
+
 	if($options->shared) {
-	    $output->write("*.spec: $name: is shared between $module16 (Win16) and $module32 (Win32)\n");
+	    $output->write("*.spec: $internal_name: is shared between $module16 (Win16) and $module32 (Win32)\n");
 	}
     }
 }
@@ -246,7 +246,7 @@ if($options->headers) {
 	    my $statements = shift;
 
 	    foreach my $winapi (@winapis) {
-		my $module = $winapi->function_module($internal_name);
+		my $module = $winapi->function_internal_module($internal_name);
 		if(!defined($module)) { next }
 
 		my $external_name = $winapi->function_external_name($internal_name);
@@ -340,14 +340,14 @@ foreach my $file (@c_files) {
 		$win16api->found_type($argument) if $options->win16;
 		$win32api->found_type($argument) if $options->win32;
 	    }
-	    
-	    $win16api->found_function($internal_name) if $options->win16;
-	    $win32api->found_function($internal_name) if $options->win32;
+
+	    $win16api->found_internal_function($internal_name) if $options->win16;
+	    $win32api->found_internal_function($internal_name) if $options->win32;
 	}
 	
 	if($file_type ne "application") {
-	    my $module16 = $win16api->function_module($internal_name);
-	    my $module32 = $win32api->function_module($internal_name);
+	    my $module16 = $win16api->function_internal_module($internal_name);
+	    my $module32 = $win32api->function_internal_module($internal_name);
 
 	    if(defined($module16)) {
 		$modules->found_module_in_dir($module16, $file_dir);
@@ -636,9 +636,9 @@ if($options->global) {
 	    my %module_stub_count16;
 	    my %module_total_count16;
 
-	    foreach my $name ($win16api->all_functions,$win16api->all_functions_stub) {
-		foreach my $module (split(/ \& /, $win16api->function_module($name))) {
-		    if($win16api->function_stub($name)) {
+	    foreach my $internal_name ($win16api->all_internal_functions,$win16api->all_functions_stub) {
+		foreach my $module (split(/ \& /, $win16api->function_internal_module($internal_name))) {
+		    if($win16api->function_stub($internal_name)) {
 			$module_stub_count16{$module}++;
 		    }
 		    $module_total_count16{$module}++;
@@ -668,9 +668,9 @@ if($options->global) {
 	    my %module_stub_count32;
 	    my %module_total_count32;
 
-	    foreach my $name ($win32api->all_functions,$win32api->all_functions_stub) {
-		foreach my $module (split(/ \& /, $win32api->function_module($name))) {
-		    if($win32api->function_stub($name)) {
+	    foreach my $internal_name ($win32api->all_internal_functions,$win32api->all_functions_stub) {
+		foreach my $module (split(/ \& /, $win32api->function_internal_module($internal_name))) {
+		    if($win32api->function_stub($internal_name)) {
 			$module_stub_count32{$module}++;
 		    }
 		    $module_total_count32{$module}++;

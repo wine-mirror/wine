@@ -344,7 +344,6 @@ controls
 dlls/kernel
 dlls/user
 memory
-misc
 windows
 
 % dlls/user/user32.spec
@@ -352,7 +351,6 @@ windows
 controls
 dlls/user
 loader
-misc
 windows
 
 % dlls/version/ver.spec

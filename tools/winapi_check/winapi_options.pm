@@ -96,6 +96,11 @@ my %options = (
 	default => 0, 
 	parent => "documentation", description => "check for documentation comment width inconsistances"
 	},
+    "documentation-name" => {
+	default => 1,
+	parent => "documentation",
+	description => "check for documentation name inconsistances\n"
+	},
     "documentation-ordinal" => {
 	default => 0,
 	parent => "documentation",

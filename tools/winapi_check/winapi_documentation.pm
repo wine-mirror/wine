@@ -75,7 +75,7 @@ sub check_documentation {
 	$external_name = $internal_name;
     }
 
-    if($options->documentation_pedantic) {
+    if($options->documentation_name) {
 	my $n = 0;
 	if((++$n && defined($module16) && defined($external_name16) &&
 	    $external_name16 ne "@" && $documentation !~ /\b\Q$external_name16\E\b/) ||
@@ -87,17 +87,15 @@ sub check_documentation {
 	    $external_name32 eq "@" && $documentation !~ /\@/))
 	{
 	    my $external_name = ($external_name16, $external_name32)[($n-1)/2];
-	    $output->write("documentation: wrong or missing name ($external_name) \\\n$documentation\n");
-	}
-    } else {
-	if($documentation !~ /\b(?:\Q$external_name\E|$internal_name|$name1|$name2)\b/) {
-	    $output->write("documentation: wrong or missing name \\\n$documentation\n");
+	    if($options->documentation_pedantic || $documentation !~ /\b(?:$internal_name|$name1|$name2)\b/) {
+		$output->write("documentation: wrong or missing name ($external_name) \\\n$documentation\n");
+	    }
 	}
     }
 
     if($options->documentation_ordinal) {
 	if(defined($module16)) {
-	    my $ordinal16 = $win16api->function_ordinal($internal_name);
+	    my $ordinal16 = $win16api->function_internal_ordinal($internal_name);
 
 	    if(!defined($ordinal16)) {
 		$output->write("function have no ordinal\n");
@@ -112,7 +110,7 @@ sub check_documentation {
 	    }
 	}
 	if(defined($module32)) {
-	    my $ordinal32 = $win32api->function_ordinal($internal_name);
+	    my $ordinal32 = $win32api->function_internal_ordinal($internal_name);
 
 	    if(!defined($ordinal32)) {
 		$output->write("function have no ordinal\n");
@@ -129,7 +127,7 @@ sub check_documentation {
     }
 
     if($options->documentation_pedantic) {
-	my $ordinal = $win16api->function_ordinal($internal_name);
+	my $ordinal = $win16api->function_internal_ordinal($internal_name);
 	if(defined($ordinal) && $documentation !~ /^ \*\s+(?:\@|\w+)(?:\s+[\(\[]\w+\.(?:\@|\d+)[\)\]])+/m) {
 	    $output->write("documentation: pedantic check failed \\\n$documentation\n");
 	}

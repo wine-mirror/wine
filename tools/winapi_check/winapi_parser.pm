@@ -257,7 +257,7 @@ sub parse_c_file {
 
 	    $arguments =~ y/\t\n/  /;
 	    $arguments =~ s/^\s*(.*?)\s*$/$1/;
-	    if($arguments eq "") { $arguments = "void" }
+	    if($arguments eq "") { $arguments = "..." }
 
 	    my @argument_types;
 	    my @argument_names;

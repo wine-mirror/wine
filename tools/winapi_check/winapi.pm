@@ -228,14 +228,18 @@ sub parse_spec_file {
 
     my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
-    my $function_arguments = \%{$self->{FUNCTION_ARGUMENTS}};
-    my $function_ordinal = \%{$self->{FUNCTION_ORDINAL}};
-    my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_internal_arguments = \%{$self->{FUNCTION_INTERNAL_ARGUMENTS}};
+    my $function_external_arguments = \%{$self->{FUNCTION_EXTERNAL_ARGUMENTS}};
+    my $function_internal_ordinal = \%{$self->{FUNCTION_INTERNAL_ORDINAL}};
+    my $function_external_ordinal = \%{$self->{FUNCTION_EXTERNAL_ORDINAL}};
+    my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
+    my $function_external_calling_convention = \%{$self->{FUNCTION_EXTERNAL_CALLING_CONVENTION}};
     my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
     my $function_external_name = \%{$self->{FUNCTION_EXTERNAL_NAME}};
     my $function_stub = \%{$self->{FUNCTION_STUB}};
     my $function_forward = \%{$self->{FUNCTION_FORWARD}};
-    my $function_module = \%{$self->{FUNCTION_MODULE}};
+    my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
+    my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
     my $modules = \%{$self->{MODULES}};
     my $module_files = \%{$self->{MODULE_FILES}};
 
@@ -283,18 +287,29 @@ sub parse_spec_file {
 	    # FIXME: Internal name existing more than once not handled properly
 	    $$function_internal_name{$external_name} = $internal_name;
 	    $$function_external_name{$internal_name} = $external_name;
-	    $$function_arguments{$internal_name} = $arguments;
-	    $$function_ordinal{$internal_name} = $ordinal;
-	    $$function_calling_convention{$internal_name} = $calling_convention;
-	    if(!$$function_module{$internal_name}) {
-		$$function_module{$internal_name} = "$module";
-	    } elsif($$function_module{$internal_name} !~ /$module/) {
+	    $$function_internal_arguments{$internal_name} = $arguments;
+	    $$function_external_arguments{$external_name} = $arguments;
+	    $$function_internal_ordinal{$internal_name} = $ordinal;
+	    $$function_external_ordinal{$external_name} = $ordinal;
+	    $$function_internal_calling_convention{$internal_name} = $calling_convention;
+	    $$function_external_calling_convention{$external_name} = $calling_convention;
+	    if(!$$function_internal_module{$internal_name}) {
+		$$function_internal_module{$internal_name} = "$module";
+	    } elsif($$function_internal_module{$internal_name} !~ /$module/) {
 		if(0) {
 		    $$output->write("$file: $external_name: the internal function ($internal_name) " . 
-				    "already belongs to a module ($$function_module{$internal_name})\n");
+				    "already belongs to a module ($$function_internal_module{$internal_name})\n");
 		}
-		$$function_module{$internal_name} .= " & $module";
-
+		$$function_internal_module{$internal_name} .= " & $module";
+	    }
+	    if(!$$function_external_module{$external_name}) {
+		$$function_external_module{$external_name} = "$module";
+	    } elsif($$function_external_module{$external_name} !~ /$module/) {
+		if(0) {
+		    $$output->write("$file: $internal_name: the external function ($external_name) " . 
+				    "already belongs to a module ($$function_external_module{$external_name})\n");
+		}
+		$$function_external_module{$external_name} .= " & $module";
 	    }
 
 	    if(0 && $$options->spec_mismatch) {
@@ -346,10 +361,17 @@ sub parse_spec_file {
 
 	    # FIXME: Internal name existing more than once not handled properly
 	    $$function_stub{$internal_name} = 1;
-	    if(!$$function_module{$internal_name}) {
-		$$function_module{$internal_name} = "$module";
-	    } elsif($$function_module{$internal_name} !~ /$module/) {
-		$$function_module{$internal_name} .= " & $module";
+	    $$function_internal_ordinal{$internal_name} = $ordinal;
+	    $$function_external_ordinal{$external_name} = $ordinal;
+	    if(!$$function_internal_module{$internal_name}) {
+		$$function_internal_module{$internal_name} = "$module";
+	    } elsif($$function_internal_module{$internal_name} !~ /$module/) {
+		$$function_internal_module{$internal_name} .= " & $module";
+	    }
+	    if(!$$function_external_module{$external_name}) {
+		$$function_external_module{$external_name} = "$module";
+	    } elsif($$function_external_module{$external_name} !~ /$module/) {
+		$$function_external_module{$external_name} .= " & $module";
 	    }
 	} elsif(/^(\d+|@)\s+forward(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)\s+(\S+)\.(\S+)$/) {
 	    $ordinal = $1;
@@ -381,11 +403,8 @@ sub parse_spec_file {
     close(IN);
 
     $$modules{$module}++;
-    if(defined($module_file)) {
-	$$module_files{$module} = $module_file;
-    } else {
-	$$module_files{$module} = "$module.drv";
-    }
+
+    $$module_files{$module} = $file;
 }
 
 sub name {
@@ -584,23 +603,23 @@ sub module_file {
     return $$module_files{$module};
 }
 
-sub all_functions {
+sub all_internal_functions {
     my $self = shift;
-    my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
 
-    return sort(keys(%$function_calling_convention));
+    return sort(keys(%$function_internal_calling_convention));
 }
 
-sub all_functions_in_module {
+sub all_internal_functions_in_module {
     my $self = shift;
-    my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
-    my $function_module = \%{$self->{FUNCTION_MODULE}};
+    my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
+    my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
 
     my $module = shift;
 
     my @names;
-    foreach my $name (keys(%$function_calling_convention)) {
-	if($$function_module{$name} eq $module) {
+    foreach my $name (keys(%$function_internal_calling_convention)) {
+	if($$function_internal_module{$name} eq $module) {
 	    push @names, $name;
 	}
     }
@@ -615,29 +634,47 @@ sub all_functions_stub {
     return sort(keys(%$function_stub));
 }
 
-sub all_functions_found {
+sub all_internal_functions_found {
     my $self = shift;
     my $function_found = \%{$self->{FUNCTION_FOUND}};
 
     return sort(keys(%$function_found));
 }
 
-sub function_ordinal {
+sub function_internal_ordinal {
     my $self = shift;
-    my $function_ordinal = \%{$self->{FUNCTION_ORDINAL}};
+    my $function_internal_ordinal = \%{$self->{FUNCTION_INTERNAL_ORDINAL}};
 
     my $name = shift;
 
-    return $$function_ordinal{$name};
+    return $$function_internal_ordinal{$name};
 }
 
-sub function_calling_convention {
+sub function_external_ordinal {
     my $self = shift;
-    my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_external_ordinal = \%{$self->{FUNCTION_EXTERNAL_ORDINAL}};
 
     my $name = shift;
 
-    return $$function_calling_convention{$name};
+    return $$function_external_ordinal{$name};
+}
+
+sub function_internal_calling_convention {
+    my $self = shift;
+    my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
+
+    my $name = shift;
+
+    return $$function_internal_calling_convention{$name};
+}
+
+sub function_external_calling_convention {
+    my $self = shift;
+    my $function_external_calling_convention = \%{$self->{FUNCTION_EXTERNAL_CALLING_CONVENTION}};
+
+    my $name = shift;
+
+    return $$function_external_calling_convention{$name};
 }
 
 sub function_external_name {
@@ -651,11 +688,11 @@ sub function_external_name {
 
 sub is_function {
     my $self = shift;
-    my $function_calling_convention = \%{$self->{FUNCTION_CALLING_CONVENTION}};
+    my $function_internal_calling_convention = \%{$self->{FUNCTION_INTERNAL_CALLING_CONVENTION}};
 
     my $name = shift;
 
-    return $$function_calling_convention{$name};
+    return $$function_internal_calling_convention{$name};
 }
 
 sub is_shared_function {
@@ -676,22 +713,40 @@ sub found_shared_function {
     $$function_shared{$name} = 1;
 }
 
-sub function_arguments {
+sub function_internal_arguments {
     my $self = shift;
-    my $function_arguments = \%{$self->{FUNCTION_ARGUMENTS}};
+    my $function_internal_arguments = \%{$self->{FUNCTION_INTERNAL_ARGUMENTS}};
 
     my $name = shift;
 
-    return $$function_arguments{$name};
+    return $$function_internal_arguments{$name};
 }
 
-sub function_module {
+sub function_external_arguments {
     my $self = shift;
-    my $function_module = \%{$self->{FUNCTION_MODULE}};
+    my $function_external_arguments = \%{$self->{FUNCTION_EXTERNAL_ARGUMENTS}};
 
     my $name = shift;
 
-    return $$function_module{$name};
+    return $$function_external_arguments{$name};
+}
+
+sub function_internal_module {
+    my $self = shift;
+    my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
+
+    my $name = shift;
+
+    return $$function_internal_module{$name};
+}
+
+sub function_external_module {
+    my $self = shift;
+    my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
+
+    my $name = shift;
+
+    return $$function_external_module{$name};
 }
 
 sub function_stub {
@@ -703,7 +758,7 @@ sub function_stub {
     return $$function_stub{$name};
 }
 
-sub found_function {
+sub found_internal_function {
     my $self = shift;
     my $function_found = \%{$self->{FUNCTION_FOUND}};
 
@@ -712,7 +767,7 @@ sub found_function {
     $$function_found{$name}++;
 }
 
-sub function_found {
+sub internal_function_found {
     my $self = shift;
     my $function_found = \%{$self->{FUNCTION_FOUND}};
 
