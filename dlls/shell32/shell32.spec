@@ -74,7 +74,7 @@ import kernel32.dll
   65 stub InvalidateDriveType
   66 stub IsNetDrive
   67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
-  68 stdcall SHGetSettings(ptr long) SHGetSettings
+  68 stdcall SHGetSetSettings(long long long) SHGetSetSettings
   69 stub SHGetNetResource
   70 stdcall SHCreateDefClassObject(long long long long long)SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
@@ -388,6 +388,7 @@ import kernel32.dll
 @ stdcall SHGetPathFromIDList(ptr ptr)SHGetPathFromIDListAW
 @ stdcall SHGetPathFromIDListA(long long)SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListW(long long)SHGetPathFromIDListW
+@ stdcall SHGetSettings(ptr long) SHGetSettings
 @ stdcall SHGetSpecialFolderLocation(long long ptr)SHGetSpecialFolderLocation 
 @ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL 
 @ stub SHHelpShortcuts_RunDLLA@16 

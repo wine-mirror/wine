@@ -103,11 +103,20 @@ BOOL WINAPI GetFileNameFromBrowse(
 }
 
 /*************************************************************************
- * SHGetSettings				[SHELL32.68]
+ * SHGetSetSettings				[SHELL32.68]
+ */
+VOID WINAPI SHGetSetSettings(DWORD x, DWORD y, DWORD z)
+{
+	FIXME("0x%08lx 0x%08lx 0x%08lx\n", x, y, z);
+}
+
+/*************************************************************************
+ * SHGetSettings				[SHELL32.@]
  * 
  * NOTES
  *  the registry path are for win98 (tested)
  *  and possibly are the same in nt40
+ *
  */
 VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
 {
