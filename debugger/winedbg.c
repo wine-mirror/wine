@@ -38,8 +38,9 @@ DBG_PROCESS*	DEBUG_CurrProcess = NULL;
 DBG_THREAD*	DEBUG_CurrThread = NULL;
 DWORD		DEBUG_CurrTid;
 DWORD		DEBUG_CurrPid;
-CONTEXT		DEBUG_context;
+CONTEXT         DEBUG_context;
 BOOL		DEBUG_InteractiveP = FALSE;
+static BOOL     DEBUG_InException = FALSE;
 int 		curr_frame = 0;
 static char*	DEBUG_LastCmdLine = NULL;
 
@@ -333,11 +334,31 @@ BOOL				DEBUG_Detach(void)
     return TRUE;
 }
 
+static BOOL                     DEBUG_FetchContext(void)
+{
+    DEBUG_context.ContextFlags = CONTEXT_CONTROL
+                               | CONTEXT_INTEGER
+#ifdef CONTEXT_SEGMENTS
+                               | CONTEXT_SEGMENTS
+#endif
+#ifdef CONTEXT_DEBUG_REGISTERS
+	                       | CONTEXT_DEBUG_REGISTERS
+#endif
+                               ;
+    if (!GetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context))
+    {
+        DEBUG_Printf(DBG_CHN_WARN, "Can't get thread's context\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 {
     DBG_ADDR	addr;
     int		newmode;
 
+    DEBUG_InException = TRUE;
     DEBUG_GetCurrentAddress(&addr);
     DEBUG_SuspendExecution();
 
@@ -429,6 +450,7 @@ static  void	DEBUG_ExceptionEpilog(void)
      */
     if (DEBUG_CurrThread->exec_mode == EXEC_CONT)
 	DEBUG_CurrThread->exec_count = 0;
+    DEBUG_InException = FALSE;
 }
 
 static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL force)
@@ -600,29 +622,16 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
             if (!DBG_IVAR(BreakOnAttach)) break;
         }
 
-        DEBUG_context.ContextFlags =  CONTEXT_CONTROL
-                                    | CONTEXT_INTEGER
-#ifdef CONTEXT_SEGMENTS
-                                    | CONTEXT_SEGMENTS
-#endif
-#ifdef CONTEXT_DEBUG_REGISTERS
-	                            | CONTEXT_DEBUG_REGISTERS
-#endif
-                                    ;
-
-        if (!GetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context))
+        if (DEBUG_FetchContext())
         {
-            DEBUG_Printf(DBG_CHN_WARN, "Can't get thread's context\n");
-            break;
-        }
-
-        ret = DEBUG_HandleException(&de->u.Exception.ExceptionRecord,
-                                    de->u.Exception.dwFirstChance,
-                                    DEBUG_CurrThread->wait_for_first_exception);
-        if (DEBUG_CurrThread)
-        {
-            DEBUG_CurrThread->wait_for_first_exception = 0;
-            SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
+            ret = DEBUG_HandleException(&de->u.Exception.ExceptionRecord,
+                                        de->u.Exception.dwFirstChance,
+                                        DEBUG_CurrThread->wait_for_first_exception);
+            if (!ret && DEBUG_CurrThread)
+            {
+                DEBUG_CurrThread->wait_for_first_exception = 0;
+                SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
+            }
         }
         break;
 
@@ -764,7 +773,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         {
             DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n",
                          buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
-            ret = TRUE;
+            ret = DEBUG_FetchContext();
         }
         break;
 
@@ -805,24 +814,27 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 
 static void                     DEBUG_ResumeDebuggee(DWORD cont)
 {
-    DEBUG_ExceptionEpilog();
-#if 1
-    DEBUG_Printf(DBG_CHN_TRACE,
-                 "Exiting debugger      PC=%lx EFL=%08lx mode=%d count=%d\n",
-#ifdef __i386__
-                 DEBUG_context.Eip, DEBUG_context.EFlags,
-#else
-                 0L, 0L,
-#endif
-                 DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
-#endif
-    DEBUG_InteractiveP = FALSE;
-    if (DEBUG_CurrThread)
+    if (DEBUG_InException)
     {
-        if (!SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context))
-            DEBUG_Printf(DBG_CHN_MESG, "Cannot set ctx on %lu\n", DEBUG_CurrTid);
-        DEBUG_CurrThread->wait_for_first_exception = 0;
+        DEBUG_ExceptionEpilog();
+#if 1
+        DEBUG_Printf(DBG_CHN_TRACE,
+                     "Exiting debugger      PC=%lx EFL=%08lx mode=%d count=%d\n",
+#ifdef __i386__
+                     DEBUG_context.Eip, DEBUG_context.EFlags,
+#else
+                     0L, 0L,
+#endif
+                     DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
+#endif
+        if (DEBUG_CurrThread)
+        {
+            if (!SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context))
+                DEBUG_Printf(DBG_CHN_MESG, "Cannot set ctx on %lu\n", DEBUG_CurrTid);
+            DEBUG_CurrThread->wait_for_first_exception = 0;
+        }
     }
+    DEBUG_InteractiveP = FALSE;
     if (!ContinueDebugEvent(DEBUG_CurrPid, DEBUG_CurrTid, cont))
         DEBUG_Printf(DBG_CHN_MESG, "Cannot continue on %lu (%lu)\n",
                      DEBUG_CurrTid, cont);
