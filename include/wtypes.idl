@@ -620,7 +620,7 @@ cpp_quote("  } DUMMYUNIONNAME1;")
 cpp_quote("} DECIMAL;")
 cpp_quote("#endif")
 cpp_quote("#define DECIMAL_NEG ((BYTE)0x80)")
-cpp_quote("#define DECIMAL_SETZERO(d) do{ memset(((char*)(d)) + sizeof(USHORT), 0, sizeof(ULONG) * 3u); }while (0)")
+cpp_quote("#define DECIMAL_SETZERO(d) do{ memset(((char*)(d)) + sizeof(USHORT), 0, sizeof(ULONG) * 3u + sizeof(USHORT)); }while (0)")
 
 typedef DECIMAL *LPDECIMAL;
 

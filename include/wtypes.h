@@ -666,7 +666,7 @@ typedef struct tagDEC {
 } DECIMAL;
 #endif
 #define DECIMAL_NEG ((BYTE)0x80)
-#define DECIMAL_SETZERO(d) do{ memset(((char*)(d)) + sizeof(USHORT), 0, sizeof(ULONG) * 3u); }while (0)
+#define DECIMAL_SETZERO(d) do{ memset(((char*)(d)) + sizeof(USHORT), 0, sizeof(ULONG) * 3u + sizeof(USHORT)); }while (0)
 typedef DECIMAL *LPDECIMAL;
 
 typedef FLAGGED_WORD_BLOB *wireBSTR;

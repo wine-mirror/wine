@@ -4593,12 +4593,9 @@ HRESULT WINAPI VarDecFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags,
 {   WCHAR *p=strIn;
     ULONGLONG t;
     ULONG  cy;
-#ifdef FIXIT
+
     DECIMAL_SETZERO(pdecOut);
-#else
-    pdecOut->u.s.sign = pdecOut->u.s.scale = UI1_MIN;
-    pdecOut->Hi32 = pdecOut->u1.s1.Mid32 = pdecOut->u1.s1.Lo32 = UI4_MIN;
-#endif
+
     if(*p == (WCHAR)'-')pdecOut->u.s.sign= DECIMAL_NEG;
     if((*p == (WCHAR)'-') || (*p == (WCHAR)'+')) p++;
     for(;*p != (WCHAR)0; p++) {
@@ -4617,7 +4614,7 @@ HRESULT WINAPI VarDecFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags,
         pdecOut->Hi32 = (ULONG)(t & (ULONGLONG)UI4_MAX);
         if(cy) goto overflow ;
     }
-    TRACE("(4) %s -> sign %02x,hi %08lx,mid %08lx, lo%08lx, scale %08x\n",
+    TRACE("%s -> sign %02x,hi %08lx,mid %08lx, lo%08lx, scale %08x\n",
           debugstr_w(strIn),
           pdecOut->u.s.sign, pdecOut->Hi32, pdecOut->u1.s1.Mid32,
           pdecOut->u1.s1.Lo32, pdecOut->u.s.scale);
