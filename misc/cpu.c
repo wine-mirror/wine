@@ -273,15 +273,20 @@ VOID WINAPI GetSystemInfo(
 		/* NOTE: the ':' is the only character we can rely on */
 		if (!(value = strchr(line,':')))
 			continue;
+		
 		/* terminate the valuename */
-		*value++ = '\0';
-		/* skip any leading spaces */
+		s = value - 1;
+		while ((s >= line) && ((*s == ' ') || (*s == '\t'))) s--;
+		*(s + 1) = '\0';
+
+		/* and strip leading spaces from value */
+		value += 1;
 		while (*value==' ') value++;
 		if ((s=strchr(value,'\n')))
 			*s='\0';
 
 		/* 2.1 method */
-		if (!strncasecmp(line, "cpu family",strlen("cpu family"))) {
+		if (!strcasecmp(line, "cpu family")) {
 			if (isdigit (value[0])) {
 				switch (value[0] - '0') {
 				case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
@@ -311,7 +316,7 @@ VOID WINAPI GetSystemInfo(
 			continue;
 		}
 		/* old 2.0 method */
-		if (!strncasecmp(line, "cpu",strlen("cpu"))) {
+		if (!strcasecmp(line, "cpu")) {
 			if (	isdigit (value[0]) && value[1] == '8' &&
 				value[2] == '6' && value[3] == 0
 			) {
@@ -334,42 +339,47 @@ VOID WINAPI GetSystemInfo(
 			}
 			continue;
 		}
-		if (!strncasecmp(line,"fdiv_bug",strlen("fdiv_bug"))) {
+		if (!strcasecmp(line,"fdiv_bug")) {
 			if (!strncasecmp(value,"yes",3))
 				PF[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
 
 			continue;
 		}
-		if (!strncasecmp(line,"fpu",strlen("fpu"))) {
+		if (!strcasecmp(line,"fpu")) {
 			if (!strncasecmp(value,"no",2))
 				PF[PF_FLOATING_POINT_EMULATED] = TRUE;
 
 			continue;
 		}
-		if (!strncasecmp(line,"processor",strlen("processor"))) {
+		if (!strcasecmp(line,"processor")) {
 			/* processor number counts up... */
 			unsigned int x;
 
 			if (sscanf(value,"%d",&x))
 				if (x+1>cachedsi.dwNumberOfProcessors)
 					cachedsi.dwNumberOfProcessors=x+1;
+			
+			continue;
 		}
-		if (!strncasecmp(line,"stepping",strlen("stepping"))) {
+		if (!strcasecmp(line,"stepping")) {
 			int	x;
 
 			if (sscanf(value,"%d",&x))
 				cachedsi.wProcessorRevision = x;
+
+			continue;
 		}
-		if (!strncasecmp(line, "cpu MHz",strlen("cpu MHz"))) {
+		if (!strcasecmp(line, "cpu MHz")) {
 			double cmz;
 			if (sscanf( value, "%lf", &cmz ) == 1) {
 				/* SYSTEMINFO doesn't have a slot for cpu speed, so store in a global */
 				cpuHz = cmz * 1000 * 1000;
 				TRACE("CPU speed read as %lld\n", cpuHz);
 			}
+			continue;
 		}
-		if (	!strncasecmp(line,"flags",strlen("flags"))	||
-			!strncasecmp(line,"features",strlen("features"))
+		if (	!strcasecmp(line,"flags")	||
+			!strcasecmp(line,"features")
 		) {
 			if (strstr(value,"cx8"))
 				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
@@ -387,7 +397,8 @@ VOID WINAPI GetSystemInfo(
 				PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
 			if (strstr(value,"pae"))
 				PF[PF_PAE_ENABLED] = TRUE;
-
+			
+			continue;
 		}
 	}
 	fclose (f);
