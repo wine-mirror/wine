@@ -95,7 +95,8 @@ line: command
     | error tEOL               { yyerrok; }
 
 command:
-      tQUIT tEOL               { DEBUG_Exit(0); }
+      tQUIT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
+				 DEBUG_CurrThread->dbg_exec_mode = EXEC_KILL; return 1; }
     | tHELP tEOL               { DEBUG_Help(); }
     | tHELP tINFO tEOL         { DEBUG_HelpInfo(); }
     | tCONT tEOL               { DEBUG_CurrThread->dbg_exec_count = 1; 
@@ -164,8 +165,8 @@ set_command:
  					     DEBUG_FreeExprMem(); }
 
 pathname:
-      tIDENTIFIER                    { $$ = $1; }
-    | tPATH			     { $$ = $1; }
+      tIDENTIFIER              { $$ = $1; }
+    | tPATH		       { $$ = $1; }
 
 disassemble_command:
       tDISASSEMBLE tEOL              { DEBUG_Disassemble( NULL, NULL, 10 ); }
@@ -210,7 +211,7 @@ break_command:
 				   }
 				 else
 				   {
-				     fprintf(stderr,"Unable to add breakpoint\n");
+				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
 				   }
 				}
     | tBREAK tIDENTIFIER ':' tNUM tEOL  { DBG_VALUE value;
@@ -220,9 +221,9 @@ break_command:
 				   }
 				 else
 				   {
-				     fprintf(stderr,"Unable to add breakpoint\n");
+				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
 				   }
-				}
+			       }
     | tBREAK tNUM tEOL	       { struct name_hash *nh;
 				 DBG_VALUE value;
 				 DEBUG_GetCurrentAddress( &value.addr );
@@ -237,7 +238,7 @@ break_command:
 				   }
 				 else
 				   {
-				     fprintf(stderr,"Unable to add breakpoint\n");
+				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
 				   }
                                }
 
@@ -255,7 +256,7 @@ watch_command:
 				 if( DEBUG_GetSymbolValue($2, -1, &value, TRUE) )
 				     DEBUG_AddWatchpoint( &value, 1 );
 				 else
-				     fprintf(stderr,"Unable to add breakpoint\n");
+				     DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
 				}
 
 info_command:
@@ -388,49 +389,43 @@ lvalue:
 static void issue_prompt(void)
 {
 #ifdef DONT_USE_READLINE
-   fprintf(stderr, "Wine-dbg>");
+   DEBUG_Printf(DBG_CHN_MESG, "Wine-dbg>");
 #endif
 }
 
 static void mode_command(int newmode)
 {
     if ((newmode == 16) || (newmode == 32)) DEBUG_CurrThread->dbg_mode = newmode;
-    else fprintf(stderr,"Invalid mode (use 16 or 32)\n");
+    else DEBUG_Printf(DBG_CHN_MESG,"Invalid mode (use 16 or 32)\n");
+}
+
+void DEBUG_Exit(DWORD ec)
+{
+   ExitProcess(ec);
 }
 
 static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
 {
-	fprintf(stderr, "\nwine_dbg_cmd: ");
+   DEBUG_Printf(DBG_CHN_MESG, "\nwine_dbg_cmd: ");
    switch (GetExceptionCode()) {
    case DEBUG_STATUS_INTERNAL_ERROR:
-      fprintf(stderr, "WineDbg internal error\n");
+      DEBUG_Printf(DBG_CHN_MESG, "WineDbg internal error\n");
       break;
    case DEBUG_STATUS_NO_SYMBOL:
-      fprintf(stderr, "Undefined symbol\n");
+      DEBUG_Printf(DBG_CHN_MESG, "Undefined symbol\n");
       break;
    case DEBUG_STATUS_DIV_BY_ZERO:
-      fprintf(stderr, "Division by zero\n");
+      DEBUG_Printf(DBG_CHN_MESG, "Division by zero\n");
       break;
    case DEBUG_STATUS_BAD_TYPE:
-      fprintf(stderr, "No type or type mismatch\n");
+      DEBUG_Printf(DBG_CHN_MESG, "No type or type mismatch\n");
       break;
    default:
-      fprintf(stderr, "Exception %lx\n", GetExceptionCode());
+      DEBUG_Printf(DBG_CHN_MESG, "Exception %lx\n", GetExceptionCode());
       break;
    }
-   return EXCEPTION_EXECUTE_HANDLER;
-}
 
-/***********************************************************************
- *           DEBUG_Exit
- *
- * Kill current process.
- *
- */
-void DEBUG_Exit( DWORD exit_code )
-{
-    TASK_KillTask( 0 ); /* FIXME: should not be necessary */
-    TerminateProcess( DEBUG_CurrProcess->handle, exit_code );
+   return EXCEPTION_EXECUTE_HANDLER;
 }
 
 /***********************************************************************
@@ -456,17 +451,16 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
     {
 #ifdef __i386__
         if (DEBUG_IsSelectorSystem(DEBUG_context.SegCs))
-            fprintf( stderr, " in 32-bit code (0x%08lx).\n", DEBUG_context.Eip );
+            DEBUG_Printf( DBG_CHN_MESG, " in 32-bit code (0x%08lx).\n", DEBUG_context.Eip );
         else
-            fprintf( stderr, " in 16-bit code (%04x:%04lx).\n",
-                     (WORD)DEBUG_context.SegCs, DEBUG_context.Eip );
+            DEBUG_Printf( DBG_CHN_MESG, " in 16-bit code (%04x:%04lx).\n",
+			  (WORD)DEBUG_context.SegCs, DEBUG_context.Eip );
 #else
-        fprintf( stderr, " (%p).\n", GET_IP(&DEBUG_context) );
+        DEBUG_Printf( DBG_CHN_MESG, " (%p).\n", GET_IP(&DEBUG_context) );
 #endif
     }
 
-    if (DEBUG_LoadEntryPoints("Loading new modules symbols:\n"))
-       DEBUG_ProcessDeferredDebug();
+    DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
 
     if (force || !(is_debug && DEBUG_ShouldContinue( code, 
 						     DEBUG_CurrThread->dbg_exec_mode, 
@@ -478,13 +472,13 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
 #ifdef __i386__
         switch (newmode = DEBUG_GetSelectorType(addr.seg)) {
 	case 16: case 32: break;
-	default: fprintf(stderr, "Bad CS (%ld)\n", addr.seg); newmode = 32;
+	default: DEBUG_Printf(DBG_CHN_MESG, "Bad CS (%ld)\n", addr.seg); newmode = 32;
 	}
 #else
         newmode = 32;
 #endif
         if (newmode != DEBUG_CurrThread->dbg_mode)
-            fprintf(stderr,"In %d bit mode.\n", DEBUG_CurrThread->dbg_mode = newmode);
+            DEBUG_Printf(DBG_CHN_MESG,"In %d bit mode.\n", DEBUG_CurrThread->dbg_mode = newmode);
 
 	DEBUG_DoDisplay();
 
@@ -520,9 +514,9 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
 	    /* Show where we crashed */
 	    curr_frame = 0;
 	    DEBUG_PrintAddress( &addr, DEBUG_CurrThread->dbg_mode, TRUE );
-	    fprintf(stderr,":  ");
+	    DEBUG_Printf(DBG_CHN_MESG,":  ");
 	    DEBUG_Disasm( &addr, TRUE );
-	    fprintf( stderr, "\n" );
+	    DEBUG_Printf( DBG_CHN_MESG, "\n" );
         }
 
         ret_ok = 0;
@@ -531,16 +525,20 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
 	    __TRY 
 	    {
 	       issue_prompt();
-	       yyparse();
-	       flush_symbols();
+	       if (yyparse()) {
+		  DEBUG_CurrThread->dbg_exec_mode = EXEC_KILL;
+		  ret_ok = TRUE;
+	       } else {
+		  flush_symbols();
 
-	       DEBUG_GetCurrentAddress( &addr );
-	       if ((ret_ok = DEBUG_ValidateRegisters()))
-		  ret_ok = DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear( &addr ), &ch, 1 );
+		  DEBUG_GetCurrentAddress( &addr );
+		  ret_ok = DEBUG_ValidateRegisters() && 
+		     DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(&addr), &ch, 1);
+	       }
 	    } 
 	    __EXCEPT(wine_dbg_cmd)
 	    {
-	       ret_ok = 0;
+	       ret_ok = FALSE;
 	    }
 	    __ENDTRY;
 
@@ -553,14 +551,14 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
      * if it was used.  Otherwise it would have been ignored.
      * In any case, we don't mess with it any more.
      */
-    if ((DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT) || (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS))
+    if (DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT || DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS)
 	DEBUG_CurrThread->dbg_exec_count = 0;
     
-    return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? 0 : DBG_CONTINUE;
+    return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE;
 }
 
 int yyerror(char* s)
 {
-   fprintf(stderr,"%s\n", s);
+   DEBUG_Printf(DBG_CHN_MESG,"%s\n", s);
    return 0;
 }

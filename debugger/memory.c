@@ -23,7 +23,7 @@
 
 static	void	DEBUG_Die(const char* msg)
 {
-   fprintf(stderr, msg);
+   DEBUG_Printf(DBG_CHN_MESG, msg);
    exit(1);
 }
 
@@ -118,16 +118,21 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
 #endif
 }
 
+void	DEBUG_InvalAddr( const DBG_ADDR* addr )
+{
+   DEBUG_Printf(DBG_CHN_MESG,"*** Invalid address ");
+   DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
+   DEBUG_Printf(DBG_CHN_MESG,"\n");
+   if (DBG_IVAR(ExtDbgOnInvalidAddress)) DEBUG_ExternalDebugger();
+}
+
 void	DEBUG_InvalLinAddr( void* addr )
 {
    DBG_ADDR address;
 
    address.seg = 0;
    address.off = (unsigned long)addr;
-
-   fprintf(stderr,"*** Invalid address ");
-   DEBUG_PrintAddress(&address, DEBUG_CurrThread->dbg_mode, FALSE);
-   fprintf(stderr,"\n");
+   DEBUG_InvalAddr( &address );
 }
 
 /***********************************************************************
@@ -215,14 +220,14 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
       }
     else if (!value.addr.seg && !value.addr.off)
     {
-	fprintf(stderr,"Invalid expression\n");
+	DEBUG_Printf(DBG_CHN_MESG,"Invalid expression\n");
 	return;
     }
 
     if (format != 'i' && count > 1)
     {
         DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
-        fprintf(stderr,": ");
+        DEBUG_Printf(DBG_CHN_MESG,": ");
     }
 
     pnt = (void*)DEBUG_ToLinear( &value.addr );
@@ -239,7 +244,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
                     pnt += sizeof(wch);
                     fputc( (char)wch, stderr );
                 }
-		fprintf(stderr,"\n");
+		DEBUG_Printf(DBG_CHN_MESG,"\n");
 		return;
 	    }
           case 's': {
@@ -253,31 +258,31 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
                     pnt++;
                     fputc( ch, stderr );
                 }
-		fprintf(stderr,"\n");
+		DEBUG_Printf(DBG_CHN_MESG,"\n");
 		return;
 	  }
 	case 'i':
 		while (count--)
                 {
                     DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, TRUE );
-                    fprintf(stderr,": ");
+                    DEBUG_Printf(DBG_CHN_MESG,": ");
                     DEBUG_Disasm( &value.addr, TRUE );
-                    fprintf(stderr,"\n");
+                    DEBUG_Printf(DBG_CHN_MESG,"\n");
 		}
 		return;
 #define DO_DUMP2(_t,_l,_f,_vv) { \
 	        _t _v; \
 		for(i=0; i<count; i++) { \
                     if (!DEBUG_READ_MEM_VERBOSE(pnt, &_v, sizeof(_t))) break; \
-                    fprintf(stderr,_f,(_vv)); \
+                    DEBUG_Printf(DBG_CHN_MESG,_f,(_vv)); \
                     pnt += sizeof(_t); value.addr.off += sizeof(_t); \
                     if ((i % (_l)) == (_l)-1) { \
-                        fprintf(stderr,"\n"); \
+                        DEBUG_Printf(DBG_CHN_MESG,"\n"); \
                         DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );\
-                        fprintf(stderr,": ");\
+                        DEBUG_Printf(DBG_CHN_MESG,": ");\
                     } \
 		} \
-		fprintf(stderr,"\n"); \
+		DEBUG_Printf(DBG_CHN_MESG,"\n"); \
         } \
 	return
 #define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v) 

@@ -16,16 +16,8 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <stdlib.h>
 
-#include <sys/types.h>
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #ifndef PATH_MAX
@@ -46,44 +38,79 @@ typedef struct {
 
 #define	MSC_INFO(module)	((MSC_DBG_INFO*)((module)->extra_info))
 
+static int DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module);
+
 /*
  * dbg_filename must be at least MAX_PATHNAME_LEN bytes in size
  */
-static void LocateDebugInfoFile(char *filename, char *dbg_filename)
+static void DEBUG_LocateDebugInfoFile(const char *filename, char *dbg_filename)
 {
-    char	  *str1 = DBG_alloc(MAX_PATHNAME_LEN*10);
-    char	  *str2 = DBG_alloc(MAX_PATHNAME_LEN);
-    char	  *file;
+    char	  *str1 = DBG_alloc(MAX_PATHNAME_LEN);
+    char	  *str2 = DBG_alloc(MAX_PATHNAME_LEN*10);
+    const char	  *file;
     char	  *name_part;
-    DOS_FULL_NAME fullname;
     
     file = strrchr(filename, '\\');
     if( file == NULL ) file = filename; else file++;
 
-    if (GetEnvironmentVariableA("_NT_SYMBOL_PATH", str1, MAX_PATHNAME_LEN))
-	if (SearchPathA(str1, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))
-	    goto ok;
-    if (GetEnvironmentVariableA("_NT_ALT_SYMBOL_PATH", str1, MAX_PATHNAME_LEN))
-	if (SearchPathA(str1, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))
-	    goto ok;
-    if (SearchPathA(NULL, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))
-	goto ok;
+    if ((GetEnvironmentVariable("_NT_SYMBOL_PATH", str1, MAX_PATHNAME_LEN) &&
+	 (SearchPath(str1, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))) ||
+	(GetEnvironmentVariable("_NT_ALT_SYMBOL_PATH", str1, MAX_PATHNAME_LEN) &&
+	 (SearchPath(str1, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part))) ||
+	(SearchPath(NULL, file, NULL, MAX_PATHNAME_LEN*10, str2, &name_part)))
+        lstrcpyn(dbg_filename, str2, MAX_PATHNAME_LEN);
     else
-    {
-quit:	
-        memcpy(dbg_filename, filename, MAX_PATHNAME_LEN);
-	DBG_free(str1);
-	DBG_free(str2);
-	return;
-    }
-ok:
-    if (DOSFS_GetFullName(str2, TRUE, &fullname))
-	memcpy(dbg_filename, fullname.long_name, MAX_PATHNAME_LEN);
-    else
-	goto quit;
+        lstrcpyn(dbg_filename, filename, MAX_PATHNAME_LEN);
     DBG_free(str1);
     DBG_free(str2);
-    return;
+}
+
+/***********************************************************************
+ *           DEBUG_MapDebugInfoFile
+ */
+static void*	DEBUG_MapDebugInfoFile(const char* name, DWORD offset, DWORD size,
+				       HANDLE* hFile, HANDLE* hMap)
+{
+    OFSTRUCT	ofs;
+    DWORD	g_offset;	/* offset aligned on map granuality */
+    DWORD	g_size;		/* size to map, with offset aligned */
+    char*	ret;
+
+    *hMap = 0;
+
+    if (name != NULL) {
+       char 	filename[MAX_PATHNAME_LEN];
+
+       DEBUG_LocateDebugInfoFile(name, filename);
+       if ((*hFile = OpenFile(filename, &ofs, OF_READ)) == HFILE_ERROR)
+	  return NULL;
+    }
+
+    if (!size) {
+       DWORD file_size = GetFileSize(*hFile, NULL);
+       if (file_size == (DWORD)-1) return NULL;
+       size = file_size - offset;
+    }
+
+    g_offset = offset & ~0xFFFF; /* FIXME: is granularity portable ? */
+    g_size = offset + size - g_offset;
+
+    if ((*hMap = CreateFileMapping(*hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == 0)
+       return NULL;
+    
+    if ((ret = MapViewOfFile(*hMap, FILE_MAP_READ, 0, g_offset, g_size)) != NULL)
+       ret += offset - g_offset;
+    return ret;
+}
+
+/***********************************************************************
+ *           DEBUG_UnmapDebugInfoFile
+ */
+static void	DEBUG_UnmapDebugInfoFile(HANDLE hFile, HANDLE hMap, void* addr)
+{
+   if (addr) UnmapViewOfFile(addr);
+   if (hMap) CloseHandle(hMap);
+   if (hFile) CloseHandle(hFile);
 }
 
 union any_size
@@ -790,7 +817,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	       * This is a numeric leaf, I am too lazy to handle this right
 	       * now.
 	       */
-	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 	      break;
 	    }
 	  if( type->array.namelen != 0 )
@@ -825,7 +852,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	       * This is a numeric leaf, I am too lazy to handle this right
 	       * now.
 	       */
-	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 	      break;
 	    }
 	  if( type->array32.namelen != 0 )
@@ -900,7 +927,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 		       * This is a numeric leaf, I am too lazy to handle this right
 		       * now.
 		       */
-		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 		    }
 		  else
 		    {
@@ -920,7 +947,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 		       * This is a numeric leaf, I am too lazy to handle this right
 		       * now.
 		       */
-		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 		    }
 		  else
 		    {
@@ -935,7 +962,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 		   * object in the fieldlist, or some other problem which I wouldn't
 		   * really know how to handle until it came up.
 		   */
-		  fprintf(stderr, "Unexpected entry in fieldlist\n");
+		  DEBUG_Printf(DBG_CHN_MESG, "Unexpected entry in fieldlist\n");
 		  break;
 		}
 
@@ -990,7 +1017,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 		       * This is a numeric leaf, I am too lazy to handle this right
 		       * now.
 		       */
-		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 		    }
 		  else
 		    {
@@ -1010,7 +1037,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 		       * This is a numeric leaf, I am too lazy to handle this right
 		       * now.
 		       */
-		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 		    }
 		  else
 		    {
@@ -1025,7 +1052,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 		   * object in the fieldlist, or some other problem which I wouldn't
 		   * really know how to handle until it came up.
 		   */
-		  fprintf(stderr, "Unexpected entry in fieldlist\n");
+		  DEBUG_Printf(DBG_CHN_MESG, "Unexpected entry in fieldlist\n");
 		  break;
 		}
 
@@ -1041,7 +1068,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	       * This is a numeric leaf, I am too lazy to handle this right
 	       * now.
 	       */
-	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 	      break;
 	    }
 	  memset(symname, 0, sizeof(symname));
@@ -1075,7 +1102,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	       * This is a numeric leaf, I am too lazy to handle this right
 	       * now.
 	       */
-	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 	      break;
 	    }
 	  memset(symname, 0, sizeof(symname));
@@ -1108,7 +1135,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	       * This is a numeric leaf, I am too lazy to handle this right
 	       * now.
 	       */
-	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 	      break;
 	    }
 	  memset(symname, 0, sizeof(symname));
@@ -1143,7 +1170,7 @@ DEBUG_ParseTypeTable(char * table, int len)
 	       * This is a numeric leaf, I am too lazy to handle this right
 	       * now.
 	       */
-	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
 	      break;
 	    }
 	  memset(symname, 0, sizeof(symname));
@@ -1274,7 +1301,7 @@ DEBUG_InitCVDataTypes(void)
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs)
+DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth, unsigned long nth_ofs)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
@@ -1309,7 +1336,7 @@ DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs
 	case IMAGE_DEBUG_TYPE_COFF:
 	  /*
 	   * If we have both codeview and COFF debug info, ignore the
-	   * coff debug info as  it would just confuse us, and it is 
+	   * coff debug info as it would just confuse us, and it is 
 	   * less complete.
 	   *
 	   * FIXME - this is broken - if we cannot find the PDB file, then
@@ -1335,11 +1362,6 @@ DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs
           if(   (dbg.Type != IMAGE_DEBUG_TYPE_MISC) ||
                 (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) != 0 )
             {
-                char            fn[PATH_MAX];
-                int             fd = -1;
-                DOS_FULL_NAME   full_name;
-		char*		dbg_info;
-
                 /*
                  * Read the important bits.  What we do after this depends
                  * upon the type, but this is always enough so we are able
@@ -1349,31 +1371,27 @@ DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs
                  * the DataDirectory array's content. One its entry contains the *beloved*
                  * debug information. (Note the DataDirectory is mapped, not its content)
                  */
-		/* FIXME: the module->handle value is not usable in the debugger's process */
-		if (GetModuleFileNameA(module->handle, fn, sizeof(fn)) > 0 &&
-                    DOSFS_GetFullName(fn, TRUE, &full_name) &&
-                    (fd = open(full_name.long_name, O_RDONLY)) > 0)
-		{
-                    dbg_info = mmap(NULL, dbg.SizeOfData,
-				    PROT_READ, MAP_PRIVATE, fd, dbg.PointerToRawData);
-                    close(fd);
-                    if( dbg_info == (char *) 0xffffffff ) break;
-                }
-                else
-                {
-                    fprintf(stderr, " (not mapped: fn='%s', lfn='%s', fd=%d)\n", fn, full_name.long_name, fd);
-                    break;
-                }
-		if (!(module->extra_info = DBG_alloc(sizeof(MSC_DBG_INFO))))
-		    break;
+		HANDLE	hMap;
+		char*	dbg_info;
 
-		MSC_INFO(module)->dbg_info = dbg_info;
-		MSC_INFO(module)->dbg_size = dbg.SizeOfData;
-                MSC_INFO(module)->dbgdir = dbg;
-                MSC_INFO(module)->sect_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
-		   nth->FileHeader.SizeOfOptionalHeader;
-                MSC_INFO(module)->nsect = nth->FileHeader.NumberOfSections;
-            }
+		DEBUG_Printf(DBG_CHN_TRACE, "PE debugging info at %ld<%ld>\n", dbg.PointerToRawData, dbg.SizeOfData);
+		dbg_info = DEBUG_MapDebugInfoFile(NULL, dbg.PointerToRawData, dbg.SizeOfData,
+						  &hFile, &hMap);
+
+		if (dbg_info != NULL && 
+		    (module->extra_info = DBG_alloc(sizeof(MSC_DBG_INFO))) != NULL) {
+		   MSC_INFO(module)->dbg_info = dbg_info;
+		   MSC_INFO(module)->dbg_size = dbg.SizeOfData;
+		   MSC_INFO(module)->dbgdir = dbg;
+		   MSC_INFO(module)->sect_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
+		      nth->FileHeader.SizeOfOptionalHeader;
+		   MSC_INFO(module)->nsect = nth->FileHeader.NumberOfSections;
+		   DEBUG_ProcessMSCDebugInfo(module);
+		   DBG_free(MSC_INFO(module));
+		   MSC_INFO(module) = NULL;
+		}
+		DEBUG_UnmapDebugInfoFile(0, hMap, dbg_info);
+	    }
 	  break;
 #if 0
 	default:
@@ -1388,44 +1406,65 @@ DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs
 }
 
 /* look for stabs information in PE header (it's how mingw compiler provides its
- * debugging information
+ * debugging information), and also wine PE <-> ELF linking thru .wsolnk sections
  */
-int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs)
+int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth, 
+				 unsigned long nth_ofs)
 {
     IMAGE_SECTION_HEADER	pe_seg;
     unsigned long		pe_seg_ofs;
-    int 		      	i, stabsize = 0, stabstrsize = 0;
-    unsigned int 		stabs = 0, stabstr = 0;
-    char			bufstr[256];
-    PIMAGE_NT_HEADERS		nth  = (PIMAGE_NT_HEADERS)_nth;
+    int 		      	i, stabsize = 0, stabstrsize = 0, xcnlnksize = 0;
+    unsigned int 		stabs = 0, stabstr = 0, xcnlnk = 0;
+    PIMAGE_NT_HEADERS		nth = (PIMAGE_NT_HEADERS)_nth;
 
     pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
 	nth->FileHeader.SizeOfOptionalHeader;
 
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
       if (!DEBUG_READ_MEM_VERBOSE((void*)((char *)module->load_addr + pe_seg_ofs), 
-				  &pe_seg, sizeof(pe_seg)) ||
-	  !DEBUG_READ_MEM_VERBOSE((void*)pe_seg.Name, bufstr, sizeof(bufstr)))
-	  {fprintf(stderr, "err3\n");continue;}
-      bufstr[sizeof(bufstr) - 1] = 0;
+				  &pe_seg, sizeof(pe_seg)))
+	  continue;
 
-      if (!strcasecmp(bufstr, ".stab")) {
+      if (!strcasecmp(pe_seg.Name, ".stab")) {
 	stabs = pe_seg.VirtualAddress;
 	stabsize = pe_seg.SizeOfRawData;
-      } else if (!strncasecmp(bufstr, ".stabstr", 8)) {
+      } else if (!strncasecmp(pe_seg.Name, ".stabstr", 8)) {
 	stabstr = pe_seg.VirtualAddress;
 	stabstrsize = pe_seg.SizeOfRawData;
+      } else if (!strncasecmp(pe_seg.Name, ".xcnlnk", 7)) {
+	xcnlnk = pe_seg.VirtualAddress;
+	xcnlnksize = pe_seg.SizeOfRawData;
       }
     }
+
     if (stabstrsize && stabsize) {
-#ifdef _WE_SUPPORT_THE_STAB_TYPES_USED_BY_MINGW_TOO
-      /* Won't work currently, since MINGW32 uses some special typedefs
-       * which we do not handle yet. Support for them is a bit difficult.
-       */
-       /* FIXME: load_addr is in a different address space... */
-      DEBUG_ParseStabs(module->load_addr, 0, stabs, stabsize, stabstr, stabstrsize);
-#endif
-      fprintf(stderr,"(stabs not loaded)");
+       char*	s1 = DBG_alloc(stabsize+stabstrsize);
+
+       if (s1) {
+	  if (DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabs, s1, stabsize) &&
+	      DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabstr, 
+				     s1 + stabsize, stabstrsize)) {
+	     DEBUG_ParseStabs(s1, 0, 0, stabsize, stabsize, stabstrsize);
+	  } else {
+	     DEBUG_Printf(DBG_CHN_MESG, "couldn't read data block\n");
+	  }
+	  DBG_free(s1);
+       } else {
+	  DEBUG_Printf(DBG_CHN_MESG, "couldn't alloc %d bytes\n", 
+		       stabsize + stabstrsize);
+       }
+    }
+    if (xcnlnksize) {
+       DWORD	addr;
+       char	bufstr[256];
+
+       if (DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + xcnlnk, &addr, 
+				  sizeof(addr)) &&
+	   DEBUG_READ_MEM_VERBOSE((char*)addr, bufstr, sizeof(bufstr))) {
+	  bufstr[sizeof(bufstr) - 1] = 0;
+	  DEBUG_Printf(DBG_CHN_TRACE, "Got xcnlnk: argv0 '%s'\n", bufstr);
+ 	  DEBUG_ReadExecutableDbgInfo(bufstr);
+       }
     }
     return TRUE;
 }
@@ -1504,9 +1543,7 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	  curr_file->linecnt = 0;
 	  curr_file->entries = NULL;
 	  curr_file->neps = curr_file->neps_alloc = 0;
-#if 0
-	  fprintf(stderr,"New file %s\n", curr_file->filename);
-#endif
+	  DEBUG_Printf(DBG_CHN_TRACE,"New file %s\n", curr_file->filename);
 	  i += naux;
 	  continue;
 	}
@@ -1527,19 +1564,19 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	  if( curr_file->linetab_offset != -1 )
 	    {
 #if 0
-	      fprintf(stderr, "Duplicating sect from %s: %x %x %x %d %d\n",
-		      curr_file->filename,
-		      aux->Length,
-		      aux->NumberOfRelocations,
-		      aux->NumberOfLinenumbers,
-		      aux->Number,
-		      aux->Selection);
-	      fprintf(stderr, "More sect %d %x %d %d %d\n", 
-		      coff_sym->SectionNumber,
-		      coff_sym->Value,
-		      coff_sym->Type,
-		      coff_sym->StorageClass,
-		      coff_sym->NumberOfAuxSymbols);
+	      DEBUG_Printf(DBG_CHN_TRACE, "Duplicating sect from %s: %x %x %x %d %d\n",
+			   curr_file->filename,
+			   aux->Length,
+			   aux->NumberOfRelocations,
+			   aux->NumberOfLinenumbers,
+			   aux->Number,
+			   aux->Selection);
+	      DEBUG_Printf(DBG_CHN_TRACE, "More sect %d %x %d %d %d\n", 
+			   coff_sym->SectionNumber,
+			   coff_sym->Value,
+			   coff_sym->Type,
+			   coff_sym->StorageClass,
+			   coff_sym->NumberOfAuxSymbols);
 #endif
 
 	      /*
@@ -1555,7 +1592,7 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 		{
 		  nfiles_alloc += 10;
 		  coff_files = (struct CoffFiles *) DBG_realloc(coff_files,
-							     nfiles_alloc * sizeof(struct CoffFiles));
+								nfiles_alloc * sizeof(struct CoffFiles));
 		}
 	      curr_file = coff_files + nfiles;
 	      nfiles++;
@@ -1570,13 +1607,13 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 #if 0
 	  else
 	    {
-	      fprintf(stderr, "New text sect from %s: %x %x %x %d %d\n",
-		      curr_file->filename,
-		      aux->Length,
-		      aux->NumberOfRelocations,
-		      aux->NumberOfLinenumbers,
-		      aux->Number,
-		      aux->Selection);
+	      DEBUG_Printf(DBG_CHN_TRACE, "New text sect from %s: %x %x %x %d %d\n",
+			   curr_file->filename,
+			   aux->Length,
+			   aux->NumberOfRelocations,
+			   aux->NumberOfLinenumbers,
+			   aux->Number,
+			   aux->Selection);
 	    }
 #endif
 
@@ -1638,7 +1675,7 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 			 curr_file->neps_alloc * sizeof(struct name_hash *));
 	    }
 #if 0
-	  fprintf(stderr,"\tAdding static symbol %s\n", nampnt);
+	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding static symbol %s\n", nampnt);
 #endif
 	  curr_file->entries[curr_file->neps++] =
 	     DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 );
@@ -1671,9 +1708,9 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
 
 #if 0
-	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
+	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %x %s\n", i, new_value.addr.off, nampnt);
 
-	  fprintf(stderr,"\tAdding global symbol %s\n", nampnt);
+	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global symbol %s\n", nampnt);
 #endif
 
 	  /*
@@ -1730,9 +1767,9 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	  new_value.addr.off = (int) ((char *)module->load_addr + coff_sym->Value);
 
 #if 0
-	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
+	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %x %s\n", i, new_value.addr.off, nampnt);
 
-	  fprintf(stderr,"\tAdding global data symbol %s\n", nampnt);
+	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global data symbol %s\n", nampnt);
 #endif
 
 	  /*
@@ -1755,8 +1792,8 @@ DEBUG_ProcessCoff(DBG_MODULE* module)
 	}
 
 #if 0
-      fprintf(stderr,"Skipping unknown entry %d %d %d\n", coff_sym->StorageClass, 
-	      coff_sym->SectionNumber, naux);
+      DEBUG_Printf(DBG_CHN_TRACE,"Skipping unknown entry %d %d %d\n", coff_sym->StorageClass, 
+		   coff_sym->SectionNumber, naux);
 #endif
 
       /*
@@ -2547,12 +2584,10 @@ static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols,
     }
 }
 
-static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
+static int DEBUG_ProcessPDBFile( DBG_MODULE* module, const char *full_filename )
 {
-    char filename[MAX_PATHNAME_LEN];
-    struct stat	statbuf;
-    int	fd = -1;
-    char *image = (char *) 0xffffffff;
+    HANDLE hFile, hMap;
+    char *image = NULL;
     PDB_HEADER *pdb = NULL;
     PDB_TOC *toc = NULL;
     PDB_ROOT *root = NULL;
@@ -2565,29 +2600,11 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
 
 
     /*
-     * Open and mmap() .PDB file
+     * Open and map() .PDB file
      */
-
-    LocateDebugInfoFile( full_filename, filename );
-
-    if ( stat( filename, &statbuf ) == -1 )
-    {
-        fprintf( stderr, "-Unable to open .PDB file %s\n", filename );
-        goto leave;
-    }
-
-    fd = open(filename, O_RDONLY);
-    if ( fd == -1 )
-    {
-        fprintf( stderr, "-Unable to open .PDB file %s\n", filename );
-        goto leave;
-    }
-
-    image = mmap( 0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0 );
-    if ( image == (char *) 0xffffffff )
-    {
-        fprintf(stderr, "-Unable to mmap .PDB file %s\n", filename);
-        goto leave;
+    if ((image = DEBUG_MapDebugInfoFile(full_filename, 0, 0, &hFile, &hMap)) == NULL) {
+       DEBUG_Printf( DBG_CHN_ERR, "-Unable to peruse .PDB file %s\n", full_filename );
+       goto leave;
     }
 
     /*
@@ -2615,7 +2632,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
         case 19970604:      /* VC 6.0 */
             break;
         default:
-            fprintf( stderr, "-Unknown root block version %ld\n", root->version );
+            DEBUG_Printf( DBG_CHN_ERR, "-Unknown root block version %ld\n", root->version );
     }
 
     switch ( types.version )
@@ -2625,7 +2642,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
         case 19961031:      /* VC 5.0 / 6.0 */
             break;
         default:
-            fprintf( stderr, "-Unknown type info version %ld\n", types.version );
+            DEBUG_Printf( DBG_CHN_ERR, "-Unknown type info version %ld\n", types.version );
     }
 
     switch ( symbols.version )
@@ -2635,7 +2652,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
         case 19970606:     /* VC 6.0 */
             break;
         default:
-            fprintf( stderr, "-Unknown symbol info version %ld\n", symbols.version );
+            DEBUG_Printf( DBG_CHN_ERR, "-Unknown symbol info version %ld\n", symbols.version );
     }
 
 
@@ -2646,7 +2663,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
     if (      root->TimeDateStamp 
          != ((struct CodeViewDebug *)MSC_INFO(module)->dbg_info)->cv_timestamp ) 
     {
-        fprintf(stderr, "-Wrong time stamp of .PDB file %s\n", filename);
+        DEBUG_Printf(DBG_CHN_ERR, "-Wrong time stamp of .PDB file %s\n", full_filename);
         goto leave;
     }
 
@@ -2663,7 +2680,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
     if ( symbols.pdbimport_size )
     {   
         /* FIXME */
-        fprintf(stderr, "-Type server .PDB imports ignored!\n" );
+        DEBUG_Printf(DBG_CHN_ERR, "-Type server .PDB imports ignored!\n" );
     }
 
     /* 
@@ -2738,8 +2755,7 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
     if ( root ) pdb_free( root );
     if ( toc ) pdb_free( toc );
 
-    if ( image != (char *) 0xffffffff ) munmap( image, statbuf.st_size );
-    if ( fd != -1 ) close( fd );
+    DEBUG_UnmapDebugInfoFile(hFile, hMap, image);
 
     return TRUE;
 }
@@ -2750,61 +2766,33 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
  */
 static
 int
-DEBUG_ProcessDBGFile(DBG_MODULE* module, char * filename)
+DEBUG_ProcessDBGFile(DBG_MODULE* module, const char* filename)
 {
-  char			      * addr = (char *) 0xffffffff;
+  HANDLE			hFile, hMap;
+  char			      * addr;
   char			      * codeview;
   struct CV4_DirHead	      * codeview_dir;
   struct CV4_DirEnt	      * codeview_dent;
   PIMAGE_DEBUG_DIRECTORY	dbghdr;
   DBG_MODULE			module2;
-  int				fd = -1;
   int				i;
   int				j;
   struct codeview_linetab_hdr * linetab;
   int				nsect;
   PIMAGE_SEPARATE_DEBUG_HEADER pdbg = NULL;
   IMAGE_SECTION_HEADER        * sectp;
-  struct stat			statbuf;
-  int				status;
-  char				dbg_file[MAX_PATHNAME_LEN];
 
-  LocateDebugInfoFile(filename, dbg_file);
-  status = stat(dbg_file, &statbuf);
-  if( status == -1 )
-    {
-      fprintf(stderr, "-Unable to open .DBG file %s\n", dbg_file);
-      goto leave;
-    }
-
-  /*
-   * Now open the file, so that we can mmap() it.
-   */
-  fd = open(dbg_file, O_RDONLY);
-  if( fd == -1 )
-    {
-      fprintf(stderr, "Unable to open .DBG file %s\n", dbg_file);
-      goto leave;
-    }
-
-
-  /*
-   * Now mmap() the file.
-   */
-  addr = mmap(0, statbuf.st_size, PROT_READ, 
-	      MAP_PRIVATE, fd, 0);
-  if( addr == (char *) 0xffffffff )
-    {
-      fprintf(stderr, "Unable to mmap .DBG file %s\n", dbg_file);
-      goto leave;
-    }
+  if ((addr = DEBUG_MapDebugInfoFile(filename, 0, 0, &hFile, &hMap)) == NULL) {
+     DEBUG_Printf(DBG_CHN_ERR, "-Unable to peruse .DBG file %s\n", filename);
+     goto leave;
+  }
 
   pdbg = (PIMAGE_SEPARATE_DEBUG_HEADER) addr;
 
   if( pdbg->TimeDateStamp != MSC_INFO(module)->dbgdir.TimeDateStamp )
     {
-      fprintf(stderr, "Warning - %s has incorrect internal timestamp\n",
-	      dbg_file);
+      DEBUG_Printf(DBG_CHN_ERR, "Warning - %s has incorrect internal timestamp\n",
+	      filename);
 /*      goto leave; */
 /*
    Well, sometimes this happens to DBG files which ARE REALLY the right .DBG
@@ -2813,7 +2801,7 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, char * filename)
 */
    }
 
-  fprintf(stderr, "Processing symbols from %s...\n", dbg_file);
+  DEBUG_Printf(DBG_CHN_MESG, "Processing symbols from %s...\n", filename);
 
   dbghdr = (PIMAGE_DEBUG_DIRECTORY) (  addr + sizeof(*pdbg) 
 		 + pdbg->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) 
@@ -2918,20 +2906,12 @@ DEBUG_ProcessDBGFile(DBG_MODULE* module, char * filename)
     }
 leave:
 
-  if( addr != (char *) 0xffffffff )
-    {
-      munmap(addr, statbuf.st_size);
-    }
-
-  if( fd != -1 )
-    {
-      close(fd);
-    }
+  DEBUG_UnmapDebugInfoFile(hFile, hMap, addr);
 
   return TRUE;
 }
 
-int
+static int 
 DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module)
 {
   struct CodeViewDebug	     * cvd;
@@ -2946,9 +2926,7 @@ DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module)
 	 * Standard COFF debug information that VC++ adds when you
 	 * use /debugtype:both with the linker.
 	 */
-#if 0
-	fprintf(stderr, "Processing COFF symbols...\n");
-#endif
+	DEBUG_Printf(DBG_CHN_TRACE, "Processing COFF symbols...\n");
 	sts = DEBUG_ProcessCoff(module);
 	break;
      case IMAGE_DEBUG_TYPE_CODEVIEW:
@@ -2967,9 +2945,7 @@ DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module)
 	      break;
 	   }
 	sts = DEBUG_ProcessPDBFile(module, cvd->cv_name);
-#if 0
-	fprintf(stderr, "Processing PDB file %s\n", cvd->cv_name);
-#endif
+	DEBUG_Printf(DBG_CHN_TRACE, "Processing PDB file %s\n", cvd->cv_name);
 	break;
      case IMAGE_DEBUG_TYPE_MISC:
 	/*
@@ -3007,6 +2983,7 @@ DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module)
 	sts = FALSE;
 	break;
      }
+  module->status = (sts) ? DM_STATUS_LOADED : DM_STATUS_ERROR;
   return sts;
 }
 

@@ -96,15 +96,15 @@ static inline void WINE_UNUSED stack16_pop( int size )
 /* Push a DWORD on the 32-bit stack */
 static inline void WINE_UNUSED stack32_push( CONTEXT86 *context, DWORD val )
 {
-    ESP_reg(context) -= sizeof(DWORD);
-    *(DWORD *)ESP_reg(context) = val;
+    context->Esp -= sizeof(DWORD);
+    *(DWORD *)context->Esp = val;
 }
 
 /* Pop a DWORD from the 32-bit stack */
 static inline DWORD WINE_UNUSED stack32_pop( CONTEXT86 *context )
 {
-    DWORD ret = *(DWORD *)ESP_reg(context);
-    ESP_reg(context) += sizeof(DWORD);
+    DWORD ret = *(DWORD *)context->Esp;
+    context->Esp += sizeof(DWORD);
     return ret;
 }
 

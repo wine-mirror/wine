@@ -106,11 +106,12 @@ enum exec_mode
     EXEC_STEPI_OVER,  		/* Stepping over a call */
     EXEC_STEPI_INSTR,  		/* Single-stepping an instruction */
     EXEC_FINISH,		/* Step until we exit current frame */
-    EXEC_STEP_OVER_TRAMPOLINE  	/* Step over trampoline.  Requires that
+    EXEC_STEP_OVER_TRAMPOLINE, 	/* Step over trampoline.  Requires that
 				 * we dig the real return value off the stack
 				 * and set breakpoint there - not at the
 				 * instr just after the call.
 				 */
+    EXEC_KILL			/* terminate debugging session */
 };
 
 #define	DBG_BREAK 0
@@ -330,6 +331,7 @@ extern void DEBUG_WalkWindows(HWND hWnd, int indent);
 extern int DEBUG_ReadMemory( const DBG_ADDR *address );
 extern void DEBUG_WriteMemory( const DBG_ADDR *address, int value );
 extern void DEBUG_ExamineMemory( const DBG_VALUE *addr, int count, char format);
+extern void DEBUG_InvalAddr( const DBG_ADDR* addr );
 extern void DEBUG_InvalLinAddr( void* addr );
 #ifdef __i386__
 extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
@@ -342,21 +344,19 @@ extern int  DEBUG_IsSelectorSystem( WORD sel );
 
   /* debugger/module.c */
 extern int  DEBUG_LoadEntryPoints( const char * prefix );
-extern void DEBUG_LoadModule32( const char* name, DWORD base );
+extern void DEBUG_LoadModule32( const char* name, HANDLE hFile, DWORD base );
 extern DBG_MODULE* DEBUG_AddModule(const char* name, int type, 
 				   void* mod_addr, HMODULE hmod);
 extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, int type);
 extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, int type);
 extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, const char* name);
 extern DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, const char* name);
-extern int DEBUG_ProcessDeferredDebug(void);
 extern void DEBUG_InfoShare(void);
 
   /* debugger/msc.c */
-extern int DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* nth, unsigned long nth_ofs);
-extern int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, void* nth, unsigned long nth_ofs);
+extern int DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, HANDLE hFile, void* nth, unsigned long nth_ofs);
+extern int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* nth, unsigned long nth_ofs);
 extern void DEBUG_InitCVDataTypes(void);
-extern int DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module);
 
   /* debugger/registers.c */
 extern void DEBUG_SetRegister( enum debug_regs reg, int val );
@@ -375,7 +375,8 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 				  unsigned int * ebp);
 
   /* debugger/stabs.c */
-extern int DEBUG_ReadExecutableDbgInfo(void);
+extern int DEBUG_ReadExecutableDbgInfo(const char* exe_name);
+extern int DEBUG_ProcessElfObject(const char* filename, unsigned int load_offset);
 extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, 
 			    int stablen, unsigned int strtaboff, int strtablen);
 
@@ -420,8 +421,16 @@ extern void DEBUG_Disassemble( const DBG_VALUE *, const DBG_VALUE*, int offset )
 extern void DEBUG_ExternalDebugger(void);
 
   /* debugger/dbg.y */
-extern void DEBUG_Exit( DWORD exit_code );
 extern BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code );
+extern void DEBUG_Exit( DWORD );
+
+  /* debugger/winedbg.c */
+#define DBG_CHN_MESG	1
+#define DBG_CHN_ERR	2
+#define DBG_CHN_WARN	4
+#define DBG_CHN_FIXME	8
+#define DBG_CHN_TRACE	16
+extern int DEBUG_Printf(int chn, const char* format, ...);
 
   /* Choose your allocator! */
 #if 1
@@ -454,5 +463,10 @@ extern HANDLE dbg_heap;
 #define	DEBUG_STATUS_NO_SYMBOL		(DEBUG_STATUS_OFFSET+1)
 #define	DEBUG_STATUS_DIV_BY_ZERO	(DEBUG_STATUS_OFFSET+2)
 #define	DEBUG_STATUS_BAD_TYPE		(DEBUG_STATUS_OFFSET+3)
+
+#define  DBG_IVAR(_var)	DEBUG_IV_##_var
+#define  INTERNAL_VAR(_var,_val) extern int DBG_IVAR(_var);
+#include "intvar.h"
+#undef   INTERNAL_VAR
 
 #endif  /* __WINE_DEBUGGER_H */

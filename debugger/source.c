@@ -53,12 +53,12 @@ DEBUG_ShowDir(void)
 {
   struct searchlist * sl;
 
-  fprintf(stderr,"Search list :\n");
+  DEBUG_Printf(DBG_CHN_MESG,"Search list :\n");
   for(sl = listhead; sl; sl = sl->next)
     {
-      fprintf(stderr, "\t%s\n", sl->path);
+      DEBUG_Printf(DBG_CHN_MESG, "\t%s\n", sl->path);
     }
-  fprintf(stderr, "\n");
+  DEBUG_Printf(DBG_CHN_MESG, "\n");
 }
 
 void
@@ -186,7 +186,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	      /*
 	       * Still couldn't find it.  Ask user for path to add.
 	       */
-	      fprintf(stderr,"Enter path to file %s: ", sourcefile);
+	      DEBUG_Printf(DBG_CHN_MESG,"Enter path to file %s: ", sourcefile);
 	      fgets(tmppath, sizeof(tmppath), stdin);
 	      
 	      if( tmppath[strlen(tmppath)-1] == '\n' )
@@ -217,7 +217,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 		  ol->nlines = 0;
 		  ol->linelist = NULL;
 		  ofiles = ol;
-		  fprintf(stderr,"Unable to open file %s\n", tmppath);
+		  DEBUG_Printf(DBG_CHN_MESG,"Unable to open file %s\n", tmppath);
 		  return FALSE;
 		}
 	    }
@@ -314,7 +314,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	  memcpy(&buffer, addr + ol->linelist[i], 
 		 (ol->linelist[i+1] - ol->linelist[i]) - 1);
 	}
-      fprintf(stderr,"%d\t%s\n", i + 1,  buffer);
+      DEBUG_Printf(DBG_CHN_MESG,"%d\t%s\n", i + 1,  buffer);
     }
 
   munmap(addr, ol->size);
@@ -343,7 +343,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
       && source2->sourcefile != NULL 
       && strcmp(source1->sourcefile, source2->sourcefile) != 0 )
     {
-      fprintf(stderr, "Ambiguous source file specification.\n");
+      DEBUG_Printf(DBG_CHN_MESG, "Ambiguous source file specification.\n");
       return;
     }
 
@@ -367,7 +367,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
 
   if( sourcefile == NULL )
     {
-      fprintf(stderr, "No source file specified.\n");
+      DEBUG_Printf(DBG_CHN_MESG, "No source file specified.\n");
       return;
     }
 
@@ -430,10 +430,10 @@ _disassemble(DBG_ADDR *addr)
    char	ch;
 
    DEBUG_PrintAddress( addr, DEBUG_CurrThread->dbg_mode, TRUE );
-   fprintf(stderr,": ");
+   DEBUG_Printf(DBG_CHN_MESG,": ");
    if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(addr), &ch, sizeof(ch))) return 0;
    DEBUG_Disasm( addr, TRUE );
-   fprintf(stderr,"\n");
+   DEBUG_Printf(DBG_CHN_MESG,"\n");
    return 1;
 }
 
@@ -469,7 +469,7 @@ _disassemble_fixaddr(DBG_VALUE *value) {
       }
     else if (!value->addr.seg && !value->addr.off)
     {
-        fprintf(stderr,"Invalid expression\n");
+        DEBUG_Printf(DBG_CHN_MESG,"Invalid expression\n");
         return;
     }
 }

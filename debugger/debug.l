@@ -190,7 +190,7 @@ enum					{ return tENUM; }
 
 .		{ if (syntax_error == 0)
                   {
-		    syntax_error ++; fprintf(stderr, "Syntax Error\n");
+		    syntax_error ++; DEBUG_Printf(DBG_CHN_MESG, "Syntax Error\n");
                   }
 		}
 
@@ -239,7 +239,7 @@ static int dbg_read(char * buf, int size)
         line = readline ("Wine-dbg>");
         if (!line)
         {
-            fprintf( stderr, "\n" );
+            DEBUG_Printf( DBG_CHN_MESG, "\n" );
             DEBUG_Exit(0);
         }
 
@@ -264,8 +264,8 @@ static int dbg_read(char * buf, int size)
         {
             if (size < len + 1)
             {
-                fprintf(stderr,"Fatal readline goof.\n");
-                DEBUG_Exit(0);
+                DEBUG_Printf(DBG_CHN_MESG,"Fatal readline goof.\n");
+		DEBUG_Exit(0);
             }
             strcpy(buf, line);
             buf[len] = '\n';

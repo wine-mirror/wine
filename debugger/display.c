@@ -60,9 +60,9 @@ DEBUG_InfoDisplay(void)
     {
       if( displaypoints[i].exp != NULL )
 	{
-	  fprintf(stderr, "%d : ", i+1);
+	  DEBUG_Printf(DBG_CHN_MESG, "%d : ", i+1);
 	  DEBUG_DisplayExpr(displaypoints[i].exp);
-	  fprintf(stderr, "\n");
+	  DEBUG_Printf(DBG_CHN_MESG, "\n");
 	}
     }
 
@@ -85,16 +85,16 @@ DEBUG_DoDisplay(void)
 	  value = DEBUG_EvalExpr(displaypoints[i].exp);
 	  if( value.type == NULL )
 	    {
-	      fprintf(stderr, "Unable to evaluate expression ");
+	      DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
 	      DEBUG_DisplayExpr(displaypoints[i].exp);
-	      fprintf(stderr, "\nDisabling...\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "\nDisabling...\n");
 	      DEBUG_DelDisplay(i);
 	    }
 	  else
 	    {
-	      fprintf(stderr, "%d  : ", i + 1);
+	      DEBUG_Printf(DBG_CHN_MESG, "%d  : ", i + 1);
 	      DEBUG_DisplayExpr(displaypoints[i].exp);
-	      fprintf(stderr, " = ");
+	      DEBUG_Printf(DBG_CHN_MESG, " = ");
 	      if( displaypoints[i].format == 'i' )
 		{
 		  DEBUG_ExamineMemory( &value, 
@@ -121,7 +121,7 @@ DEBUG_DelDisplay(int displaynum)
   
   if( displaynum >= MAX_DISPLAY || displaynum == 0 || displaynum < -1 )
     {
-      fprintf(stderr, "Invalid display number\n");
+      DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");
       return TRUE;
     }
   if( displaynum == -1 )

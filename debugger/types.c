@@ -794,7 +794,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 
   if (count != 1)
     {
-      fprintf( stderr, "Count other than 1 is meaningless in 'print' command\n" );
+      DEBUG_Printf( DBG_CHN_MESG, "Count other than 1 is meaningless in 'print' command\n" );
       return;
     }
   
@@ -802,8 +802,8 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
   {
       /* No type, just print the addr value */
       if (value->addr.seg && (value->addr.seg != 0xffffffff))
-          DEBUG_nchar += fprintf( stderr, "0x%04lx: ", value->addr.seg );
-      DEBUG_nchar += fprintf( stderr, "0x%08lx", value->addr.off );
+          DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%04lx: ", value->addr.seg );
+      DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", value->addr.off );
       goto leave;
   }
   
@@ -814,13 +814,13 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 
   if( DEBUG_nchar > DEBUG_maxchar )
     {
-      fprintf(stderr, "...");
+      DEBUG_Printf(DBG_CHN_MESG, "...");
       goto leave;
     }
 
   if( format == 'i' || format == 's' || format == 'w' || format == 'b' )
     {
-      fprintf( stderr, "Format specifier '%c' is meaningless in 'print' command\n", format );
+      DEBUG_Printf( DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format );
       format = '\0';
     }
 
@@ -833,24 +833,24 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       DEBUG_PrintBasic(value, 1, format);
       break;
     case DT_STRUCT:
-      DEBUG_nchar += fprintf(stderr, "{");
+      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "{");
       for(m = value->type->un.structure.members; m; m = m->next)
 	{
 	  val1 = *value;
 	  DEBUG_FindStructElement(&val1, m->name, &xval);
-	  DEBUG_nchar += fprintf(stderr, "%s=", m->name);
+	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%s=", m->name);
 	  DEBUG_Print(&val1, 1, format, level + 1);
 	  if( m->next != NULL )
 	    {
-	      DEBUG_nchar += fprintf(stderr, ", ");
+	      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, ", ");
 	    }
 	  if( DEBUG_nchar > DEBUG_maxchar )
 	    {
-	      fprintf(stderr, "...}");
+	      DEBUG_Printf(DBG_CHN_MESG, "...}");
 	      goto leave;
 	    }
 	}
-      DEBUG_nchar += fprintf(stderr, "}");
+      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "}");
       break;
     case DT_ARRAY:
       /*
@@ -863,38 +863,38 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 	   * Special handling for character arrays.
 	   */
 	  pnt = (char *) value->addr.off;
-	  DEBUG_nchar += fprintf(stderr, "\"");
+	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
 	  for( i=value->type->un.array.start; i < value->type->un.array.end; i++ )
 	    {
 	      fputc(*pnt++, stderr);
 	      DEBUG_nchar++;
 	      if( DEBUG_nchar > DEBUG_maxchar )
 		{
-		  fprintf(stderr, "...\"");
+		  DEBUG_Printf(DBG_CHN_MESG, "...\"");
 		  goto leave;
 		}
 	    }
-	  DEBUG_nchar += fprintf(stderr, "\"");
+	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
 	  break;
 	}
       val1 = *value;
       val1.type = value->type->un.array.basictype;
-      DEBUG_nchar += fprintf(stderr, "{");
+      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "{");
       for( i=value->type->un.array.start; i <= value->type->un.array.end; i++ )
 	{
 	  DEBUG_Print(&val1, 1, format, level + 1);
 	  val1.addr.off += size;
 	  if( i == value->type->un.array.end )
 	    {
-	      DEBUG_nchar += fprintf(stderr, "}");
+	      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "}");
 	    }
 	  else
 	    {
-	      DEBUG_nchar += fprintf(stderr, ", ");
+	      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, ", ");
 	    }
 	  if( DEBUG_nchar > DEBUG_maxchar )
 	    {
-	      fprintf(stderr, "...}");
+	      DEBUG_Printf(DBG_CHN_MESG, "...}");
 	      goto leave;
 	    }
 	}
@@ -908,7 +908,7 @@ leave:
 
   if( level == 0 )
     {
-      DEBUG_nchar += fprintf(stderr, "\n");
+      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\n");
     }
   return;
 }
@@ -935,11 +935,11 @@ DEBUG_DumpTypes(void)
 	  switch(dt->type)
 	    {
 	    case DT_BASIC:
-	      fprintf(stderr, "0x%p - BASIC(%s)\n",
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - BASIC(%s)\n",
 		      dt, name);
 	      break;
 	    case DT_POINTER:
-	      fprintf(stderr, "0x%p - POINTER(%s)(%p)\n",
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - POINTER(%s)(%p)\n",
 		      dt, name, dt->un.pointer.pointsto);
 	      break;
 	    case DT_STRUCT:
@@ -954,27 +954,26 @@ DEBUG_DumpTypes(void)
 		      nm++;
 		    }
 		}
-	      fprintf(stderr, "0x%p - STRUCT(%s) %d %d %s\n", dt, name,
-		      dt->un.structure.size, nm, member_name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - STRUCT(%s) %d %d %s\n", dt, name,
+			   dt->un.structure.size, nm, member_name);
 	      break;
 	    case DT_ARRAY:
-	      fprintf(stderr, "0x%p - ARRAY(%s)(%p)\n",
-		      dt, name, dt->un.array.basictype);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - ARRAY(%s)(%p)\n",
+			   dt, name, dt->un.array.basictype);
 	      break;
 	    case DT_ENUM:
-	      fprintf(stderr, "0x%p - ENUM(%s)\n",
-		      dt, name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - ENUM(%s)\n", dt, name);
 	      break;
 	    case DT_BITFIELD:
-	      fprintf(stderr, "0x%p - BITFIELD(%s)\n", dt, name);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - BITFIELD(%s)\n", dt, name);
 	      break;
 	    case DT_FUNC:
-	      fprintf(stderr, "0x%p - FUNC(%s)(%p)\n",
-		      dt, name, dt->un.funct.rettype);
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%p - FUNC(%s)(%p)\n",
+			   dt, name, dt->un.funct.rettype);
 	      break;
 	    case DT_CONST:
 	    case DT_TYPEDEF:
-	      fprintf(stderr, "What???\n");
+	      DEBUG_Printf(DBG_CHN_MESG, "What???\n");
 	      break;
 	    }
 	}
@@ -1025,31 +1024,31 @@ DEBUG_PrintTypeCast(const struct datatype * dt)
   switch(dt->type)
     {
     case DT_BASIC:
-      fprintf(stderr, "%s", name);
+      DEBUG_Printf(DBG_CHN_MESG, "%s", name);
       break;
     case DT_POINTER:
       DEBUG_PrintTypeCast(dt->un.pointer.pointsto);
-      fprintf(stderr, "*");
+      DEBUG_Printf(DBG_CHN_MESG, "*");
       break;
     case DT_STRUCT:
-      fprintf(stderr, "struct %s", name);
+      DEBUG_Printf(DBG_CHN_MESG, "struct %s", name);
       break;
     case DT_ARRAY:
-      fprintf(stderr, "%s[]", name);
+      DEBUG_Printf(DBG_CHN_MESG, "%s[]", name);
       break;
     case DT_ENUM:
-      fprintf(stderr, "enum %s", name);
+      DEBUG_Printf(DBG_CHN_MESG, "enum %s", name);
       break;
     case DT_BITFIELD:
-      fprintf(stderr, "unsigned %s", name);
+      DEBUG_Printf(DBG_CHN_MESG, "unsigned %s", name);
       break;
     case DT_FUNC:
       DEBUG_PrintTypeCast(dt->un.funct.rettype);
-      fprintf(stderr, "(*%s)()", name);
+      DEBUG_Printf(DBG_CHN_MESG, "(*%s)()", name);
       break;
     case DT_CONST:
     case DT_TYPEDEF:
-      fprintf(stderr, "What???\n");
+      DEBUG_Printf(DBG_CHN_MESG, "What???\n");
       break;
     }
 
@@ -1062,12 +1061,12 @@ int DEBUG_PrintType( const DBG_VALUE *value )
 
    if (!value->type) 
    {
-      fprintf(stderr, "Unknown type\n");
+      DEBUG_Printf(DBG_CHN_MESG, "Unknown type\n");
       return FALSE;
    }
    if (!DEBUG_PrintTypeCast(value->type))
       return FALSE;
-   fprintf(stderr, "\n");
+   DEBUG_Printf(DBG_CHN_MESG, "\n");
    return TRUE;
 }
 

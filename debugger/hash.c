@@ -146,7 +146,7 @@ DEBUG_ResortSymbols(void)
 	    if( (nh->flags & SYM_INVALID) == 0 )
 	       nsym++;
 	    else
-	       fprintf( stderr, "Symbol %s is invalid\n", nh->name );
+	       DEBUG_Printf( DBG_CHN_MESG, "Symbol %s is invalid\n", nh->name );
 	  }
     }
 
@@ -198,6 +198,10 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, const char * source,
     {
  	if( ((nh->flags & SYM_INVALID) != 0) && strcmp(name, nh->name) == 0 )
         {
+#if 0
+	    DEBUG_Printf(DBG_CHN_MESG, "Changing address for symbol %s (%08lx:%08lx => %08lx:%08lx)\n",
+			 name, nh->value.addr.seg, nh->value.addr.off, value->addr.seg, value->addr.off);
+#endif
  	    nh->value.addr = value->addr;
 
  	    if( nh->value.type == NULL && value->type != NULL )
@@ -222,6 +226,11 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, const char * source,
             return nh;
         }
     }
+
+#if 0
+    DEBUG_Printf(DBG_CHN_TRACE, "adding symbol (%s) from file '%s' at 0x%04lx:%08lx\n",
+		 name, source, value->addr.seg, value->addr.off);
+#endif
 
     /*
      * First see if we already have an entry for this symbol.  If so
@@ -564,12 +573,12 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		  }
 		nearest = addr_sorttab[mid];
 #if 0
-		fprintf(stderr, "Found %x:%x when looking for %x:%x %x %s\n",
-			addr_sorttab[mid ]->value.addr.seg,
-			addr_sorttab[mid ]->value.addr.off,
-			addr->seg, addr->off,
-			addr_sorttab[mid ]->linetab,
-			addr_sorttab[mid ]->name);
+		DEBUG_Printf(DBG_CHN_MESG, "Found %x:%x when looking for %x:%x %x %s\n",
+			     addr_sorttab[mid ]->value.addr.seg,
+			     addr_sorttab[mid ]->value.addr.off,
+			     addr->seg, addr->off,
+			     addr_sorttab[mid ]->linetab,
+			     addr_sorttab[mid ]->name);
 #endif
 		break;
 	      }
@@ -722,7 +731,6 @@ void DEBUG_ReadSymbolTable( const char * filename )
 {
     FILE * symbolfile;
     DBG_VALUE value;
-    int nargs;
     char type;
     char * cpnt;
     char buffer[256];
@@ -730,11 +738,11 @@ void DEBUG_ReadSymbolTable( const char * filename )
 
     if (!(symbolfile = fopen(filename, "r")))
     {
-        fprintf( stderr, "Unable to open symbol table %s\n", filename );
+        DEBUG_Printf( DBG_CHN_WARN, "Unable to open symbol table %s\n", filename );
         return;
     }
 
-    fprintf( stderr, "Reading symbols from file %s\n", filename );
+    DEBUG_Printf( DBG_CHN_MESG, "Reading symbols from file %s\n", filename );
 
     value.type = NULL;
     value.addr.seg = 0;
@@ -760,8 +768,8 @@ void DEBUG_ReadSymbolTable( const char * filename )
         }
         if (!(*cpnt) || *cpnt == '\n') continue;
 		
-        nargs = sscanf(buffer, "%lx %c %s", &value.addr.off, &type, name);
-        DEBUG_AddSymbol( name, &value, NULL, SYM_WINE );
+        if (sscanf(buffer, "%lx %c %s", &value.addr.off, &type, name) == 3)
+	   DEBUG_AddSymbol( name, &value, NULL, SYM_WINE );
     }
     fclose(symbolfile);
 }
@@ -837,7 +845,7 @@ DEBUG_DumpHashInfo(void)
 	{
 	  depth++;
 	}
-      fprintf(stderr, "Bucket %d: %d\n", i, depth);
+      DEBUG_Printf(DBG_CHN_MESG, "Bucket %d: %d\n", i, depth);
     }
 }
 
@@ -913,12 +921,12 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 		  }
 		nearest = addr_sorttab[mid];
 #if 0
-		fprintf(stderr, "Found %x:%x when looking for %x:%x %x %s\n",
-			addr_sorttab[mid ]->value.addr.seg,
-			addr_sorttab[mid ]->value.addr.off,
-			addr->seg, addr->off,
-			addr_sorttab[mid ]->linetab,
-			addr_sorttab[mid ]->name);
+		DEBUG_Printf(DBG_CHN_MESG, "Found %x:%x when looking for %x:%x %x %s\n",
+			     addr_sorttab[mid ]->value.addr.seg,
+			     addr_sorttab[mid ]->value.addr.off,
+			     addr->seg, addr->off,
+			     addr_sorttab[mid ]->linetab,
+			     addr_sorttab[mid ]->name);
 #endif
 		break;
 	      }
@@ -1055,11 +1063,11 @@ DEBUG_GetFuncInfo( struct list_id * ret, const char * filename,
       {
 	if( filename != NULL )
 	  {
-	    fprintf(stderr, "No such function %s in %s\n", name, filename);
+	    DEBUG_Printf(DBG_CHN_MESG, "No such function %s in %s\n", name, filename);
 	  }
 	else
 	  {
-	    fprintf(stderr, "No such function %s\n", name);
+	    DEBUG_Printf(DBG_CHN_MESG, "No such function %s\n", name);
 	  }
 	ret->sourcefile = NULL;
 	ret->line = -1;
@@ -1188,17 +1196,17 @@ DEBUG_InfoLocals(void)
 	{
 	  ptr = (unsigned int *)(((DWORD)&DEBUG_context)
 				 + reg_ofs[curr_func->local_vars[i].regno - 1]);
-	  fprintf(stderr, "%s:%s (optimized into register $%s) == 0x%8.8x\n",
-		  curr_func->name, curr_func->local_vars[i].name,
-		  reg_name[curr_func->local_vars[i].regno - 1],
-		  *ptr);
+	  DEBUG_Printf(DBG_CHN_MESG, "%s:%s (optimized into register $%s) == 0x%8.8x\n",
+		       curr_func->name, curr_func->local_vars[i].name,
+		       reg_name[curr_func->local_vars[i].regno - 1],
+		       *ptr);
 	}
       else
 	{
 	  DEBUG_READ_MEM_VERBOSE((void*)(ebp + curr_func->local_vars[i].offset), 
 				 &val, sizeof(val));
-	  fprintf(stderr, "%s:%s == 0x%8.8x\n",
-		  curr_func->name, curr_func->local_vars[i].name, val);
+	  DEBUG_Printf(DBG_CHN_MESG, "%s:%s == 0x%8.8x\n",
+		       curr_func->name, curr_func->local_vars[i].name, val);
 	}
     }
 

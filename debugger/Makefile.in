@@ -1,9 +1,12 @@
-DEFS      = -D__WINE__ -DLIBDIR="\"$(libdir)\""
+DEFS      = -DWINELIB
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = debugger
+MODULE    = none
+PROGRAMS  = winedbg
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+WRCEXTRA  = -A -p $*
 
 C_SRCS = \
 	break.c \
@@ -24,18 +27,14 @@ C_SRCS = \
 	types.c \
 	winedbg.c
 
+SPEC_SRCS = winedbg.spec
+
 EXTRA_SRCS = dbg.y debug.l
 EXTRA_OBJS = y.tab.o lex.yy.o
 
-all: $(MODULE).o
+all: $(PROGRAMS)
 
 depend: y.tab.h
-
-#
-# This is a special test program that helps debug the internal debugger.
-#
-debug: $(MODULE).o dbgmain.o ../misc/xmalloc.o
-	$(CC) -o debug $(MODULE).o dbgmain.o ../misc/xmalloc.o
 
 @MAKE_RULES@
 
@@ -44,5 +43,8 @@ y.tab.c y.tab.h: dbg.y
 
 lex.yy.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
+
+winedbg: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 ### Dependencies:

@@ -418,7 +418,7 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	  break;
 	}
 #else
-      fprintf(stderr, "Function call no longer implemented\n");
+      DEBUG_Printf(DBG_CHN_MESG, "Function call no longer implemented\n");
       /* would need to set up a call to this function, and then restore the current
        * context afterwards...
        */
@@ -637,7 +637,7 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	}
       break;
     default:
-      fprintf(stderr,"Unexpected expression (%d).\n", exp->type);
+      DEBUG_Printf(DBG_CHN_MESG,"Unexpected expression (%d).\n", exp->type);
       RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
@@ -656,111 +656,111 @@ DEBUG_DisplayExpr(const struct expr * exp)
   switch(exp->type)
     {
     case EXPR_TYPE_CAST:
-      fprintf(stderr, "((");
+      DEBUG_Printf(DBG_CHN_MESG, "((");
       DEBUG_PrintTypeCast(exp->un.cast.cast);
-      fprintf(stderr, ")");
+      DEBUG_Printf(DBG_CHN_MESG, ")");
       DEBUG_DisplayExpr(exp->un.cast.expr);
-      fprintf(stderr, ")");
+      DEBUG_Printf(DBG_CHN_MESG, ")");
       break;
     case EXPR_TYPE_REGISTER:
       DEBUG_PrintRegister(exp->un.rgister.reg);
       break;
     case EXPR_TYPE_US_CONST:
-      fprintf(stderr, "%ud", exp->un.u_const.value);
+      DEBUG_Printf(DBG_CHN_MESG, "%ud", exp->un.u_const.value);
       break;
     case EXPR_TYPE_CONST:
-      fprintf(stderr, "%d", exp->un.u_const.value);
+      DEBUG_Printf(DBG_CHN_MESG, "%d", exp->un.u_const.value);
       break;
     case EXPR_TYPE_STRING:
-      fprintf(stderr, "\"%s\"", exp->un.string.str); 
+      DEBUG_Printf(DBG_CHN_MESG, "\"%s\"", exp->un.string.str); 
       break;
     case EXPR_TYPE_SYMBOL:
-      fprintf(stderr, "%s" , exp->un.symbol.name);
+      DEBUG_Printf(DBG_CHN_MESG, "%s" , exp->un.symbol.name);
       break;
     case EXPR_TYPE_PSTRUCT:
       DEBUG_DisplayExpr(exp->un.structure.exp1);
-      fprintf(stderr, "->%s", exp->un.structure.element_name);
+      DEBUG_Printf(DBG_CHN_MESG, "->%s", exp->un.structure.element_name);
       break;
     case EXPR_TYPE_STRUCT:
       DEBUG_DisplayExpr(exp->un.structure.exp1);
-      fprintf(stderr, ".%s", exp->un.structure.element_name);
+      DEBUG_Printf(DBG_CHN_MESG, ".%s", exp->un.structure.element_name);
       break;
     case EXPR_TYPE_CALL:
-      fprintf(stderr, "%s(",exp->un.call.funcname);
+      DEBUG_Printf(DBG_CHN_MESG, "%s(",exp->un.call.funcname);
       for(i=0; i < exp->un.call.nargs; i++)
 	{
 	  DEBUG_DisplayExpr(exp->un.call.arg[i]);
 	  if( i != exp->un.call.nargs - 1 )
 	    {
-	      fprintf(stderr, ", ");
+	      DEBUG_Printf(DBG_CHN_MESG, ", ");
 	    }
 	}
-      fprintf(stderr, ")");
+      DEBUG_Printf(DBG_CHN_MESG, ")");
       break;
     case EXPR_TYPE_BINOP:
-      fprintf(stderr, "( ");
+      DEBUG_Printf(DBG_CHN_MESG, "( ");
       DEBUG_DisplayExpr(exp->un.binop.exp1);
       switch(exp->un.binop.binop_type)
 	{
 	case EXP_OP_ADD:
- 	  fprintf(stderr, " + ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " + ");
 	  break;
 	case EXP_OP_SUB:
- 	  fprintf(stderr, " - ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " - ");
 	  break;
 	case EXP_OP_SEG:
- 	  fprintf(stderr, ":");
+ 	  DEBUG_Printf(DBG_CHN_MESG, ":");
 	  break;
 	case EXP_OP_LOR:
- 	  fprintf(stderr, " || ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " || ");
 	  break;
 	case EXP_OP_LAND:
- 	  fprintf(stderr, " && ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " && ");
 	  break;
 	case EXP_OP_OR:
- 	  fprintf(stderr, " | ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " | ");
 	  break;
 	case EXP_OP_AND:
- 	  fprintf(stderr, " & ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " & ");
 	  break;
 	case EXP_OP_XOR:
- 	  fprintf(stderr, " ^ ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " ^ ");
  	  break;
 	case EXP_OP_EQ:
- 	  fprintf(stderr, " == ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " == ");
 	  break;
 	case EXP_OP_GT:
- 	  fprintf(stderr, " > ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " > ");
 	  break;
 	case EXP_OP_LT:
- 	  fprintf(stderr, " < ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " < ");
 	  break;
 	case EXP_OP_GE:
- 	  fprintf(stderr, " >= ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " >= ");
 	  break;
 	case EXP_OP_LE:
- 	  fprintf(stderr, " <= ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " <= ");
 	  break;
 	case EXP_OP_NE:
- 	  fprintf(stderr, " != ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " != ");
 	  break;
 	case EXP_OP_SHL:
- 	  fprintf(stderr, " << ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " << ");
 	  break;
 	case EXP_OP_SHR:
- 	  fprintf(stderr, " >> ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " >> ");
 	  break;
 	case EXP_OP_MUL:
- 	  fprintf(stderr, " * ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " * ");
 	  break;
 	case EXP_OP_DIV:
- 	  fprintf(stderr, " / ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " / ");
 	  break;
 	case EXP_OP_REM:
- 	  fprintf(stderr, " %% ");
+ 	  DEBUG_Printf(DBG_CHN_MESG, " %% ");
 	  break;
 	case EXP_OP_ARR:
- 	  fprintf(stderr, "[");
+ 	  DEBUG_Printf(DBG_CHN_MESG, "[");
 	  break;
 	default:
 	  break;
@@ -768,33 +768,33 @@ DEBUG_DisplayExpr(const struct expr * exp)
       DEBUG_DisplayExpr(exp->un.binop.exp2);
       if( exp->un.binop.binop_type == EXP_OP_ARR )
 	{
- 	  fprintf(stderr, "]");
+ 	  DEBUG_Printf(DBG_CHN_MESG, "]");
 	}
-      fprintf(stderr, " )");
+      DEBUG_Printf(DBG_CHN_MESG, " )");
       break;
     case EXPR_TYPE_UNOP:
       switch(exp->un.unop.unop_type)
 	{
 	case EXP_OP_NEG:
- 	  fprintf(stderr, "-");
+ 	  DEBUG_Printf(DBG_CHN_MESG, "-");
 	  break;
 	case EXP_OP_NOT:
-	  fprintf(stderr, "!");
+	  DEBUG_Printf(DBG_CHN_MESG, "!");
 	  break;
 	case EXP_OP_LNOT:
-	  fprintf(stderr, "~");
+	  DEBUG_Printf(DBG_CHN_MESG, "~");
  	  break;
 	case EXP_OP_DEREF:
-	  fprintf(stderr, "*");
+	  DEBUG_Printf(DBG_CHN_MESG, "*");
 	  break;
 	case EXP_OP_ADDR:
-	  fprintf(stderr, "&");
+	  DEBUG_Printf(DBG_CHN_MESG, "&");
 	  break;
 	}
       DEBUG_DisplayExpr(exp->un.unop.exp1);
       break;
     default:
-      fprintf(stderr,"Unexpected expression.\n");
+      DEBUG_Printf(DBG_CHN_MESG,"Unexpected expression.\n");
       RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
@@ -851,7 +851,7 @@ DEBUG_CloneExpr(const struct expr * exp)
       rtn->un.unop.exp1 = DEBUG_CloneExpr(exp->un.unop.exp1);
       break;
     default:
-      fprintf(stderr,"Unexpected expression.\n");
+      DEBUG_Printf(DBG_CHN_MESG,"Unexpected expression.\n");
       RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }
@@ -904,7 +904,7 @@ DEBUG_FreeExpr(struct expr * exp)
       DEBUG_FreeExpr(exp->un.unop.exp1);
       break;
     default:
-      fprintf(stderr,"Unexpected expression.\n");
+      DEBUG_Printf(DBG_CHN_MESG,"Unexpected expression.\n");
       RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
       break;
     }

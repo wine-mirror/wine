@@ -64,7 +64,7 @@ void DEBUG_InfoStack(void)
     value.addr.seg = DEBUG_context.SegSs;
     value.addr.off = DEBUG_context.Esp;
 
-    fprintf(stderr,"Stack dump:\n");
+    DEBUG_Printf(DBG_CHN_MESG,"Stack dump:\n");
     switch (DEBUG_GetSelectorType(value.addr.seg)) {
     case 32: /* 32-bit mode */
        DEBUG_ExamineMemory( &value, 24, 'x' );
@@ -74,9 +74,9 @@ void DEBUG_InfoStack(void)
         DEBUG_ExamineMemory( &value, 24, 'w' );
 	break;
     default:
-       fprintf(stderr, "Bad segment (%ld)\n", value.addr.seg);
+       DEBUG_Printf(DBG_CHN_MESG, "Bad segment (%ld)\n", value.addr.seg);
     }
-    fprintf(stderr,"\n");
+    DEBUG_Printf(DBG_CHN_MESG,"\n");
 #endif
 }
 
@@ -87,7 +87,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
     frames = (struct bt_info *)DBG_realloc(frames,
 					   nframe*sizeof(struct bt_info));
     if (noisy)
-      fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
+      DEBUG_Printf(DBG_CHN_MESG,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
               frameno);
     frames[theframe].cs = code->seg;
     frames[theframe].eip = code->off;
@@ -101,7 +101,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
     frames[theframe].ss = stack->seg;
     frames[theframe].ebp = stack->off;
     if (noisy) {
-      fprintf( stderr, (bits == 16) ? " (bp=%04lx)\n" : " (ebp=%08lx)\n", stack->off );
+      DEBUG_Printf( DBG_CHN_MESG, (bits == 16) ? " (bp=%04lx)\n" : " (ebp=%08lx)\n", stack->off );
     }
 }
 
@@ -115,11 +115,7 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     if (!p) return FALSE;
     
     if (!DEBUG_READ_MEM(p, &frame, sizeof(frame))) {
-        if (noisy) {
-	    fprintf(stderr,"*** Invalid address ");
-	    DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
-	    fprintf(stderr,"\n");
-	}
+        if (noisy) DEBUG_InvalAddr(addr);
 	return FALSE;
     }
     if (!frame.bp) return FALSE;
@@ -127,8 +123,8 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     frames = (struct bt_info *)DBG_realloc(frames,
 					   nframe*sizeof(struct bt_info));
     if (noisy)
-        fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
-		frameno);
+        DEBUG_Printf(DBG_CHN_MESG,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
+		     frameno);
     if (frame.bp & 1) *cs = frame.cs;
     else {
         /* not explicitly marked as far call,
@@ -156,11 +152,11 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     frames[theframe].ss = addr->seg = ss;
     frames[theframe].ebp = addr->off = frame.bp & ~1;
     if (noisy) {
-        fprintf( stderr, " (bp=%04lx", addr->off );
+        DEBUG_Printf( DBG_CHN_MESG, " (bp=%04lx", addr->off );
         if (possible_cs) {
-	    fprintf( stderr, ", far call assumed" );
+	    DEBUG_Printf( DBG_CHN_MESG, ", far call assumed" );
 	}
-	fprintf( stderr, ")\n" );
+	DEBUG_Printf( DBG_CHN_MESG, ")\n" );
     }
     return TRUE;
 }
@@ -175,11 +171,7 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     if (!p) return FALSE;
     
     if (!DEBUG_READ_MEM(p, &frame, sizeof(frame))) {
-       if (noisy) {
-	  fprintf(stderr,"*** Invalid address ");
-	  DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
-	  fprintf(stderr,"\n");
-       }
+       if (noisy) DEBUG_InvalAddr(addr);
        return FALSE;
     }
     if (!frame.ip) return FALSE;
@@ -188,8 +180,8 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     frames = (struct bt_info *)DBG_realloc(frames,
 					   nframe*sizeof(struct bt_info));
     if (noisy)
-       fprintf(stderr,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
-	       frameno);
+       DEBUG_Printf(DBG_CHN_MESG,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
+		    frameno);
     frames[theframe].cs = addr->seg = *cs;
     frames[theframe].eip = addr->off = frame.ip;
     if (noisy)
@@ -199,7 +191,7 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
         DEBUG_FindNearestSymbol( addr, TRUE, 
 				 &frames[theframe].frame.sym, frame.bp, 
 				 &frames[theframe].frame.list);
-    if (noisy) fprintf( stderr, " (ebp=%08lx)\n", frame.bp );
+    if (noisy) DEBUG_Printf( DBG_CHN_MESG, " (ebp=%08lx)\n", frame.bp );
     frames[theframe].ss = addr->seg = ss;
     frames[theframe].ebp = frame.bp;
     if (addr->off == frame.bp) return FALSE;
@@ -226,13 +218,13 @@ void DEBUG_BackTrace(BOOL noisy)
     STACK32FRAME       	frame32;
     char		ch;
 
-    if (noisy) fprintf( stderr, "Backtrace:\n" );
+    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Backtrace:\n" );
 
     nframe = 1;
     if (frames) DBG_free( frames );
     frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
     if (noisy)
-        fprintf(stderr,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
+        DEBUG_Printf(DBG_CHN_MESG,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
 
     if (DEBUG_IsSelectorSystem(ss)) ss = 0;
     if (DEBUG_IsSelectorSystem(cs)) cs = 0;
@@ -250,7 +242,7 @@ void DEBUG_BackTrace(BOOL noisy)
 				     &frames[0].frame.list);
         frames[0].ss = addr.seg = ss;
 	frames[0].ebp = addr.off = DEBUG_context.Ebp;
-        if (noisy) fprintf( stderr, " (ebp=%08x)\n", frames[0].ebp );
+        if (noisy) DEBUG_Printf( DBG_CHN_MESG, " (ebp=%08x)\n", frames[0].ebp );
         is16 = FALSE;
 	break;
     case 16:
@@ -263,11 +255,11 @@ void DEBUG_BackTrace(BOOL noisy)
 				     &frames[0].frame.list);
         frames[0].ss = addr.seg = ss;
 	frames[0].ebp = addr.off = LOWORD(DEBUG_context.Ebp);
-        if (noisy) fprintf( stderr, " (bp=%04x)\n", frames[0].ebp );
+        if (noisy) DEBUG_Printf( DBG_CHN_MESG, " (bp=%04x)\n", frames[0].ebp );
         is16 = TRUE;
 	break;
     default:
-        if (noisy) fprintf( stderr, "Bad segment '%u'\n", ss);
+        if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad segment '%u'\n", ss);
 	return;
     }
 
@@ -276,14 +268,14 @@ void DEBUG_BackTrace(BOOL noisy)
      */
     cur_switch = (DWORD)DEBUG_CurrThread->teb + OFFSET_OF(TEB, cur_stack);
     if (!DEBUG_READ_MEM((void*)cur_switch, &next_switch, sizeof(next_switch))) {
-        if (noisy) fprintf( stderr, "Can't read TEB:cur_stack\n");
+        if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Can't read TEB:cur_stack\n");
 	return;
     }
 
     if (is16) {
         if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", 
-				(STACK32FRAME*)next_switch );
+	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", 
+				     (STACK32FRAME*)next_switch );
 	    return;
 	}
 	cur_switch = (DWORD)frame32.frame16;
@@ -295,7 +287,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	p = DEBUG_ToLinear(&tmp);
 	
 	if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-	    if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK16FRAME*)p );
+	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", (STACK16FRAME*)p );
 	    return;
 	}
 	cur_switch = (DWORD)frame16.frame32;
@@ -315,7 +307,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	   if (is16) {
 	      
 	       if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		  if (noisy) fprintf( stderr, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
+		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", (STACK32FRAME*)next_switch );
 		  return;
 	       }
 
@@ -333,8 +325,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	       p = DEBUG_ToLinear(&tmp);
 	       
 	       if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		   if (noisy) fprintf( stderr, "Bad stack frame %p\n", 
-				       (STACK16FRAME*)p );
+		   if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", 
+					    (STACK16FRAME*)p );
 		   return;
 	       }
 	       cur_switch = (DWORD)frame16.frame32;
@@ -348,8 +340,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	      p = DEBUG_ToLinear(&tmp);
 	      
 	      if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		  if (noisy) fprintf( stderr, "Bad stack frame %p\n",
-				      (STACK16FRAME*)p );
+		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n",
+					   (STACK16FRAME*)p );
 		  return;
 	      }
 	      
@@ -363,8 +355,8 @@ void DEBUG_BackTrace(BOOL noisy)
 	      
 	      next_switch = cur_switch;
 	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		 if (noisy) fprintf( stderr, "Bad stack frame %p\n", 
-				     (STACK32FRAME*)next_switch );
+		 if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame %p\n", 
+					  (STACK32FRAME*)next_switch );
 		 return;
 	      }
 	      cur_switch = (DWORD)frame32.frame16;
@@ -383,7 +375,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	      : DEBUG_Frame32( &addr, &cs, ++frameno, noisy);
 	}
     }
-    if (noisy) fprintf( stderr, "\n" );
+    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "\n" );
 #endif
 }
 

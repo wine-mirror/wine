@@ -85,7 +85,7 @@ int DEBUG_PrintRegister(enum debug_regs reg)
         case REG_FS:  val = "%%fs";  break;
         case REG_GS:  val = "%%gs";  break;
     }
-    if (val) fprintf(stderr, val);
+    if (val) DEBUG_Printf(DBG_CHN_MESG, val);
     return TRUE;
 #else
     return FALSE;
@@ -195,40 +195,40 @@ char *DEBUG_Flags( DWORD flag, char *buf )
  */
 void DEBUG_InfoRegisters(void)
 {
-    fprintf(stderr,"Register dump:\n");
+    DEBUG_Printf(DBG_CHN_MESG,"Register dump:\n");
 
 #ifdef __i386__
     /* First get the segment registers out of the way */
-    fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
-             (WORD)DEBUG_context.SegCs, (WORD)DEBUG_context.SegSs,
-             (WORD)DEBUG_context.SegDs, (WORD)DEBUG_context.SegEs,
-             (WORD)DEBUG_context.SegFs, (WORD)DEBUG_context.SegGs );
+    DEBUG_Printf( DBG_CHN_MESG," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
+		  (WORD)DEBUG_context.SegCs, (WORD)DEBUG_context.SegSs,
+		  (WORD)DEBUG_context.SegDs, (WORD)DEBUG_context.SegEs,
+		  (WORD)DEBUG_context.SegFs, (WORD)DEBUG_context.SegGs );
     if (DEBUG_CurrThread->dbg_mode == 16)
     {
         char flag[33];
 
-        fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
-                 LOWORD(DEBUG_context.Eip), LOWORD(DEBUG_context.Esp),
-                 LOWORD(DEBUG_context.Ebp), LOWORD(DEBUG_context.EFlags),
-		 DEBUG_Flags(LOWORD(DEBUG_context.EFlags), flag));
-	fprintf( stderr," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
-                 LOWORD(DEBUG_context.Eax), LOWORD(DEBUG_context.Ebx),
-                 LOWORD(DEBUG_context.Ecx), LOWORD(DEBUG_context.Edx),
-                 LOWORD(DEBUG_context.Esi), LOWORD(DEBUG_context.Edi) );
+        DEBUG_Printf( DBG_CHN_MESG,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
+		      LOWORD(DEBUG_context.Eip), LOWORD(DEBUG_context.Esp),
+		      LOWORD(DEBUG_context.Ebp), LOWORD(DEBUG_context.EFlags),
+		      DEBUG_Flags(LOWORD(DEBUG_context.EFlags), flag));
+	DEBUG_Printf( DBG_CHN_MESG," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
+		      LOWORD(DEBUG_context.Eax), LOWORD(DEBUG_context.Ebx),
+		      LOWORD(DEBUG_context.Ecx), LOWORD(DEBUG_context.Edx),
+		      LOWORD(DEBUG_context.Esi), LOWORD(DEBUG_context.Edi) );
     }
     else  /* 32-bit mode */
     {
         char flag[33];
 
-        fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n", 
-                 DEBUG_context.Eip, DEBUG_context.Esp,
-                 DEBUG_context.Ebp, DEBUG_context.EFlags,
-		 DEBUG_Flags(DEBUG_context.EFlags, flag));
-	fprintf( stderr, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
-		 DEBUG_context.Eax, DEBUG_context.Ebx,
-                 DEBUG_context.Ecx, DEBUG_context.Edx );
-	fprintf( stderr, " ESI:%08lx EDI:%08lx\n",
-                 DEBUG_context.Esi, DEBUG_context.Edi );
+        DEBUG_Printf( DBG_CHN_MESG, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n", 
+		      DEBUG_context.Eip, DEBUG_context.Esp,
+		      DEBUG_context.Ebp, DEBUG_context.EFlags,
+		      DEBUG_Flags(DEBUG_context.EFlags, flag));
+	DEBUG_Printf( DBG_CHN_MESG, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
+		      DEBUG_context.Eax, DEBUG_context.Ebx,
+		      DEBUG_context.Ecx, DEBUG_context.Edx );
+	DEBUG_Printf( DBG_CHN_MESG, " ESI:%08lx EDI:%08lx\n",
+		      DEBUG_context.Esi, DEBUG_context.Edi );
     }
 #endif
 }
@@ -249,8 +249,8 @@ BOOL DEBUG_ValidateRegisters(void)
 /* Check that a selector is a valid ring-3 LDT selector, or a NULL selector */
 #define CHECK_SEG(seg,name) \
     if (((seg) & ~3) && ((((seg) & 7) != 7) || !DEBUG_IsSelector(seg))) { \
-        fprintf( stderr, "*** Invalid value for %s register: %04x\n", \
-                 (name), (WORD)(seg) ); \
+        DEBUG_Printf( DBG_CHN_MESG, "*** Invalid value for %s register: %04x\n", \
+                      (name), (WORD)(seg) ); \
         return FALSE; \
     }
 
@@ -268,14 +268,14 @@ BOOL DEBUG_ValidateRegisters(void)
 
     if (!(DEBUG_context.SegCs & ~3))
     {
-        fprintf( stderr, "*** Invalid value for CS register: %04x\n",
-                 (WORD)DEBUG_context.SegCs );
+        DEBUG_Printf( DBG_CHN_MESG, "*** Invalid value for CS register: %04x\n",
+		      (WORD)DEBUG_context.SegCs );
         return FALSE;
     }
     if (!(DEBUG_context.SegSs & ~3))
     {
-        fprintf( stderr, "*** Invalid value for SS register: %04x\n",
-                 (WORD)DEBUG_context.SegSs );
+        DEBUG_Printf( DBG_CHN_MESG, "*** Invalid value for SS register: %04x\n",
+		      (WORD)DEBUG_context.SegSs );
         return FALSE;
     }
     return TRUE;

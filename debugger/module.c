@@ -12,6 +12,7 @@
 #include "neexe.h"
 #include "peexe.h"
 #include "module.h"
+#include "file.h"
 #include "debugger.h"
 #include "toolhelp.h"
 
@@ -232,7 +233,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
 /***********************************************************************
  *			DEBUG_LoadModule32
  */
-void	DEBUG_LoadModule32(const char* name, DWORD base)
+void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 {
     DBG_VALUE			value;
     char			buffer[256];
@@ -249,7 +250,7 @@ void	DEBUG_LoadModule32(const char* name, DWORD base)
     /* FIXME: we make the assumption that hModule == base */
     wmod = DEBUG_RegisterPEModule((HMODULE)base, base, name);
 
-    fprintf(stderr, "Registring 32bit DLL '%s' at %08lx\n", name, base);
+    DEBUG_Printf(DBG_CHN_TRACE, "Registring 32bit DLL '%s' at %08lx\n", name, base);
     
     value.type = NULL;
     value.cookie = DV_TARGET;
@@ -257,15 +258,15 @@ void	DEBUG_LoadModule32(const char* name, DWORD base)
     value.addr.off = 0;
     
     /* grab PE Header */
-    if (!DEBUG_READ_MEM_VERBOSE((void*)(base + OFFSET_OF(IMAGE_DOS_HEADER, e_lfanew)), 
+    if (!DEBUG_READ_MEM_VERBOSE((void*)(base + OFFSET_OF(IMAGE_DOS_HEADER, e_lfanew)),
 				&pe_header_ofs, sizeof(pe_header_ofs)) ||
 	!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_header_ofs), 
 				&pe_header, sizeof(pe_header)))
 	return;
     
     if (wmod) {
-	DEBUG_RegisterMSCDebugInfo(wmod, &pe_header, pe_header_ofs);	
-	DEBUG_RegisterStabsDebugInfo(wmod, &pe_header, pe_header_ofs);
+	DEBUG_RegisterStabsDebugInfo(wmod, hFile, &pe_header, pe_header_ofs);
+	DEBUG_RegisterMSCDebugInfo(wmod, hFile, &pe_header, pe_header_ofs);	
     }
 
     /* Add start of DLL */
@@ -282,11 +283,9 @@ void	DEBUG_LoadModule32(const char* name, DWORD base)
 	pe_header.FileHeader.SizeOfOptionalHeader;
     
     for (i = 0; i < pe_header.FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
-	if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)) ||
-	    !DEBUG_READ_MEM_VERBOSE((void*)pe_seg.Name, bufstr, sizeof(bufstr)))
+	if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)))
 	    continue;
-	bufstr[sizeof(bufstr) - 1] = 0;
-	sprintf(buffer, "%s.%s", name, bufstr);
+	sprintf(buffer, "%s.%s", name, pe_seg.Name);
 	value.addr.off = base + pe_seg.VirtualAddress;
 	DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
     }
@@ -359,6 +358,10 @@ int DEBUG_LoadEntryPoints(const char* pfx)
     int		len;
 
     /* FIXME: we assume that a module is never removed from memory */
+    /* FIXME: this is (currently plain wrong when debugger is started by
+     *	      attaching to an existing program => the 16 bit modules will
+     *        not be shared... not much to do on debugger side... sigh
+     */
     if (ModuleFirst16(&entry)) do {
 	if (DEBUG_FindModuleByName(entry.szModule, DM_TYPE_UNKNOWN) ||
 	    !(moduleAddr = NE_GetPtr(entry.hModule)) ||
@@ -366,66 +369,25 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	    (module.flags & NE_FFLAGS_WIN32) /* NE module */)
 	    continue;
 	if (!first) {
-	    if (pfx) fprintf(stderr, pfx);
-	    fprintf(stderr, "   ");
+	    if (pfx) DEBUG_Printf(DBG_CHN_MESG, pfx);
+	    DEBUG_Printf(DBG_CHN_MESG, "   ");
 	    rowcount = 3 + (pfx ? strlen(pfx) : 0);
 	    first = 1;
 	}
 	
 	len = strlen(entry.szModule);
 	if ((rowcount + len) > 76) {
-	    fprintf(stderr, "\n   ");
+	    DEBUG_Printf(DBG_CHN_MESG, "\n   ");
 	    rowcount = 3;
 	}
-	fprintf(stderr, " %s", entry.szModule);
+	DEBUG_Printf(DBG_CHN_MESG, " %s", entry.szModule);
 	rowcount += len + 1;
 	
 	DEBUG_LoadModule16(entry.hModule, &module, moduleAddr, entry.szModule);
     } while (ModuleNext16(&entry));
     
-    if (first) fprintf(stderr, "\n"); 
+    if (first) DEBUG_Printf(DBG_CHN_MESG, "\n"); 
     return first;
-}
-
-/***********************************************************************
- *		DEBUG_ProcessDeferredDebug
- *
- */
-int DEBUG_ProcessDeferredDebug(void)
-{
-    DBG_MODULE*	wmod;
-    int		sts;
-    int		last_proc = -1;
-    int		need_print = 0;
-    int		rowcount = 0;
-    int		len;
-
-    for (wmod = DEBUG_CurrProcess->modules; wmod; wmod = wmod->next) {
-	if (wmod->status != DM_STATUS_NEW) continue;
-	
-	if (last_proc != wmod->dbg_index) {
-	    if (!need_print) {
-		fprintf(stderr, "DeferredDebug for:");
-		rowcount = 18;
-		need_print = 1;
-	    }
-	    if (rowcount + (len = strlen(wmod->module_name)) > 76) {
-		rowcount = 0;
-		fprintf(stderr, "\n");
-	    } else {
-		fprintf(stderr, " ");
-		rowcount++;
-	    }
-	    rowcount += len;
-	    fprintf(stderr, wmod->module_name);
-	    last_proc = wmod->dbg_index;
-	}
-	
-	sts = (wmod->extra_info) ? DEBUG_ProcessMSCDebugInfo(wmod) : TRUE;
-	wmod->status = (sts) ? DM_STATUS_LOADED : DM_STATUS_ERROR;
-    }
-    if (need_print) fprintf(stderr, "\n");
-    return TRUE;
 }
 
 /***********************************************************************
@@ -438,7 +400,7 @@ void DEBUG_InfoShare(void)
     DBG_MODULE*	wmod;
     const char*	xtype;
 
-    fprintf(stderr, "Address\t\tModule\tName\n");
+    DEBUG_Printf(DBG_CHN_MESG, "Address\t\tModule\tName\n");
 
     for (wmod = DEBUG_CurrProcess->modules; wmod; wmod = wmod->next) {
 	switch (wmod->type) {
@@ -447,8 +409,8 @@ void DEBUG_InfoShare(void)
 	case DM_TYPE_ELF:	xtype = "ELF"; break;
 	default:		xtype = "???"; break;
 	}
-	fprintf(stderr, "0x%8.8x\t(%s)\t%s\n", (unsigned int)wmod->load_addr,
-		xtype, wmod->module_name);
+	DEBUG_Printf(DBG_CHN_MESG, "0x%8.8x\t(%s)\t%s\n", (unsigned int)wmod->load_addr,
+		     xtype, wmod->module_name);
     }
 }
 
@@ -482,13 +444,13 @@ void DEBUG_DumpModule(DWORD mod)
 
     if (!(wmod = DEBUG_FindModuleByHandle(mod, DM_TYPE_UNKNOWN)) &&
 	!(wmod = DEBUG_FindModuleByAddr((void*)mod, DM_TYPE_UNKNOWN))) {
-	fprintf(stderr, "'0x%08lx' is not a valid module handle or address\n", mod);
+	DEBUG_Printf(DBG_CHN_MESG, "'0x%08lx' is not a valid module handle or address\n", mod);
 	return;
     }
 
-    fprintf(stderr, "Module '%s' (handle=0x%08x) at 0x%8.8x (%s/%s)\n",
-	    wmod->module_name, wmod->handle, (unsigned int)wmod->load_addr,
-	    DEBUG_GetModuleType(wmod->type), DEBUG_GetModuleStatus(wmod->status));
+    DEBUG_Printf(DBG_CHN_MESG, "Module '%s' (handle=0x%08x) at 0x%8.8x (%s/%s)\n",
+		 wmod->module_name, wmod->handle, (unsigned int)wmod->load_addr,
+		 DEBUG_GetModuleType(wmod->type), DEBUG_GetModuleStatus(wmod->status));
 }
 
 /***********************************************************************
@@ -501,7 +463,7 @@ void DEBUG_WalkModules(void)
     DBG_MODULE*	wmod;
     const char*	xtype;
 
-    fprintf(stderr, "Address\t\tModule\tName\n");
+    DEBUG_Printf(DBG_CHN_MESG, "Address\t\tModule\tName\n");
 
     for (wmod = DEBUG_CurrProcess->modules; wmod; wmod = wmod->next) {
 	switch (wmod->type) {
@@ -511,9 +473,9 @@ void DEBUG_WalkModules(void)
 	default:		xtype = "???"; break;
 	}
 	
-	fprintf(stderr, "0x%8.8x\t(%s)\t%s\n", 
-		(unsigned int)wmod->load_addr, DEBUG_GetModuleType(wmod->type), 
-		wmod->module_name);
+	DEBUG_Printf(DBG_CHN_MESG, "0x%8.8x\t(%s)\t%s\n", 
+		     (unsigned int)wmod->load_addr, DEBUG_GetModuleType(wmod->type), 
+		     wmod->module_name);
     }
 }
 

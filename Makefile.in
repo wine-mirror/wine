@@ -28,7 +28,6 @@ TOOLSUBDIRS = tools
 LIBSUBDIRS = \
 	controls \
 	console \
-	debugger \
 	dlls/advapi32 \
 	dlls/crtdll \
 	dlls/display \
@@ -60,16 +59,24 @@ EMUSUBDIRS = \
 	miscemu \
 	server
 
-PROGSUBDIRS = libtest programs
+PROGSUBDIRS = \
+	debugger \
+	libtest \
+	programs
 
 DOCSUBDIRS = documentation
 
 INCSUBDIRS = include
 
+# Stand-alone programs
 PROGRAMS = \
 	loader/dos/dosmod \
 	server/wineserver \
 	windows/x11drv/wineclipsrv
+
+# Programs that link with libwine
+LIBPROGRAMS = \
+	debugger/winedbg
 
 # Sub-directories to run make into
 SUBDIRS = \
@@ -90,7 +97,6 @@ LINTSUBDIRS = $(LIBSUBDIRS) $(DLLDIR) $(EMUSUBDIRS) $(DOCSUBDIRS)
 LIBOBJS = \
 	controls/controls.o \
 	console/console.o \
-	debugger/debugger.o \
 	dlls/advapi32/advapi32.o \
 	dlls/crtdll/crtdll.o \
 	dlls/display/display.o \
@@ -126,7 +132,7 @@ EXTRA_OBJS = $(LIBOBJS)
 
 EMU_TARGET = @EMU_TARGET@
 
-all: Make.rules $(PROGRAMS) $(EMU_TARGET)
+all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET)
 	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
@@ -167,15 +173,16 @@ install_wine: wine
 	[ -f wine.sym ] && $(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
-install:: $(PROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=install_%)
+install:: $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=install_%)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
 	$(INSTALL_PROGRAM) windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
 	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
+	$(INSTALL_PROGRAM) debugger/winedbg $(bindir)/winedbg
 
 uninstall::
 	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION) wine.sym
-	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod
+	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod winedbg
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
 	$(LDSHARED) $(OBJS) -o $@
@@ -191,8 +198,10 @@ lib$(MODULE).a: $(OBJS) Makefile.in Make.rules.in
 checklink::
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -lwine $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS) && $(RM) checklink
 
-$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
+$(EMUOBJS) $(LIBOBJS) $(DLLOBJS) $(PROGRAMS) $(LIBPROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
+
+$(LIBPROGRAMS): lib$(MODULE).$(LIBEXT) $(DLLOBJS)
 
 $(LIBLINTS) $(EMULINTS): dummy
 	@cd `dirname $@` && $(MAKE) lint

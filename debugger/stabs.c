@@ -4,6 +4,7 @@
  * File stabs.c - read stabs information from the wine executable itself.
  *
  * Copyright (C) 1996, Eric Youngdale.
+ *		 1999, 2000 Eric Pouech
  */
 
 #include "config.h"
@@ -23,7 +24,6 @@
 #define PATH_MAX _MAX_PATH
 #endif
 
-#include "options.h"
 #include "debugger.h"
 
 #if defined(__svr4__) || defined(__sun)
@@ -240,7 +240,7 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
 {
   struct datatype** ret;
   
-  /* fprintf(stderr, "creating type id for (%d,%d)\n", filenr, subnr); */
+  /* DEBUG_Printf(DBG_CHN_MESG, "creating type id for (%d,%d)\n", filenr, subnr); */
   
   /* FIXME: I could perhaps create a dummy include_def for each compilation
    * unit which would allow not to handle those two cases separately
@@ -271,7 +271,7 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
 	}
       ret = &idef->vector[subnr];
     }
-  /* fprintf(stderr,"(%d,%d) is %d\n",filenr,subnr,ret); */
+  /* DEBUG_Printf(DBG_CHN_MESG,"(%d,%d) is %d\n",filenr,subnr,ret); */
   return ret;
 }
 
@@ -403,7 +403,7 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
 	  expect = DT_FUNC;
 	  break;
 	default:
-	  fprintf(stderr, "Unknown type (%c).\n",ptr[1]);
+	  DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%c).\n",ptr[1]);
 	  return FALSE;
 	}
       if( expect != -1 && expect != DEBUG_GetType(ktd->types[count]) )
@@ -491,7 +491,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  /*
 	   * If this ever happens, just bump the counter.
 	   */
-	  fprintf(stderr, "Typedef nesting overflow\n");
+	  DEBUG_Printf(DBG_CHN_MESG, "Typedef nesting overflow\n");
 	  return FALSE;
 	}
       
@@ -535,7 +535,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  curr_types[ntypes++] = *dt;
 	  break;
 	default:
-	  fprintf(stderr, "Unknown type (%c).\n",c[1]);
+	  DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%c).\n",c[1]);
 	}
       typename = NULL;
       
@@ -594,7 +594,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	    } 
 	  else 
 	    {
-	      fprintf(stderr, "Unknown condition %p %p (%s)\n", *dt, *dt2, ptr);
+	      DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %p %p (%s)\n", *dt, *dt2, ptr);
 	    }
 	  if( *tc == '\0' )
 	    *c = '\0';
@@ -679,7 +679,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 		{
 		  failure = 1;
 		  /* ... but proceed parsing to the end of the stab */
-		  fprintf(stderr, "failure on %s %s\n", ptr, ti);
+		  DEBUG_Printf(DBG_CHN_MESG, "failure on %s %s\n", ptr, ti);
 		}
 	    }
 	  
@@ -723,7 +723,7 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	    strcpy(c, tc + 1);
 	  break;
 	default:
-	  fprintf(stderr, "Unknown type (%c).\n",c[1]);
+	  DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%c).\n",c[1]);
 	  break;
 	}
     }
@@ -852,7 +852,7 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            * ignore them, and when we process the normal symbol table
            * we should do the right thing.
            *
-           * With a.out, they actually do make some amount of sense.
+           * With a.out or mingw, they actually do make some amount of sense.
            */
           new_value.addr.seg = 0;
           new_value.type = DEBUG_ParseStabType(ptr);
@@ -862,9 +862,9 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           stab_strcpy(symname, ptr);
 #ifdef __ELF__
           curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
-                                      SYM_WINE | SYM_DATA | SYM_INVALID);
+                                      SYM_WINE | SYM_DATA | SYM_INVALID );
 #else
-          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath, 
+          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA );
 #endif
           break;
@@ -956,22 +956,30 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            * on, we will add the line number information and the
            * local symbols.
            */
-          if( !in_external_file )
+          if( !in_external_file)
             {
-              new_value.addr.seg = 0;
-              new_value.type = DEBUG_ParseStabType(ptr);
-              new_value.addr.off = load_offset + stab_ptr->n_value;
-	      new_value.cookie = DV_TARGET;
-              /*
-               * Copy the string to a temp buffer so we
-               * can kill everything after the ':'.  We do
-               * it this way because otherwise we end up dirtying
-               * all of the pages related to the stabs, and that
-               * sucks up swap space like crazy.
-               */
               stab_strcpy(symname, ptr);
-              curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
-                                           SYM_WINE | SYM_FUNC);
+	      if (*symname)
+		{
+		  new_value.addr.seg = 0;
+		  new_value.type = DEBUG_ParseStabType(ptr);
+		  new_value.addr.off = load_offset + stab_ptr->n_value;
+		  new_value.cookie = DV_TARGET;
+		  /*
+		   * Copy the string to a temp buffer so we
+		   * can kill everything after the ':'.  We do
+		   * it this way because otherwise we end up dirtying
+		   * all of the pages related to the stabs, and that
+		   * sucks up swap space like crazy.
+		   */
+		  curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
+					       SYM_WINE | SYM_FUNC);
+		} 
+	      else
+		{
+		  /* some GCC seem to use a N_FUN "" to mark the end of a function */
+		  curr_func = NULL;
+		}
             }
           else
             {
@@ -1054,16 +1062,16 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
            */
           break;
         default:
-	  fprintf(stderr, "Unkown stab type 0x%02x\n", stab_ptr->n_type);
+	  DEBUG_Printf(DBG_CHN_MESG, "Unkown stab type 0x%02x\n", stab_ptr->n_type);
           break;
         }
 
       stabbuff[0] = '\0';
 
 #if 0
-      fprintf(stderr, "%d %x %s\n", stab_ptr->n_type, 
-              (unsigned int) stab_ptr->n_value,
-              strs + (unsigned int) stab_ptr->n_un.n_name);
+      DEBUG_Printf(DBG_CHN_MESG, "%d %x %s\n", stab_ptr->n_type, 
+		   (unsigned int) stab_ptr->n_value,
+		   strs + (unsigned int) stab_ptr->n_un.n_name);
 #endif
     }
 
@@ -1110,7 +1118,8 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
        * Ignore certain types of entries which really aren't of that much
        * interest.
        */
-      if( ELF32_ST_TYPE(symp->st_info) == STT_SECTION )
+      if( ELF32_ST_TYPE(symp->st_info) == STT_SECTION ||
+	  symp->st_shndx == STN_UNDEF )
 	{
 	  continue;
 	}
@@ -1160,15 +1169,13 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
   return TRUE;
 }
 
-static
 int
 DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
 {
   int			rtn = FALSE;
-  struct stat		statbuf;
+  char		      * addr = (char*)0xffffffff;
   int			fd = -1;
-  int			status;
-  char		      * addr = (char *) 0xffffffff;
+  struct stat		statbuf;
   Elf32_Ehdr	      * ehptr;
   Elf32_Shdr	      * spnt;
   char		      * shstrtab;
@@ -1177,15 +1184,13 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
   int			stabsect;
   int			stabstrsect;
 
-
   /*
    * Make sure we can stat and open this file.
    */
   if( filename == NULL )
       goto leave;
 
-  status = stat(filename, &statbuf);
-  if( status == -1 )
+  if (stat(filename, &statbuf) == -1)
     {
       char *s,*t,*fn,*paths;
       if (strchr(filename,'/'))
@@ -1207,25 +1212,28 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
 	DBG_free(fn);
 	if (t) s = t+1; else break;
       }
-      if (!s || !*s) fprintf(stderr," not found");
+      if (!s || !*s) DEBUG_Printf(DBG_CHN_MESG," not found");
       DBG_free(paths);
       goto leave;
     }
 
+  if (DEBUG_FindModuleByName(filename, DM_TYPE_ELF))
+    goto leave;
+
+  DEBUG_Printf(DBG_CHN_MESG, "Loading stabs debug symbols from %s (0x%08lx)\n", 
+	       filename, load_offset);
+
   /*
    * Now open the file, so that we can mmap() it.
    */
-  fd = open(filename, O_RDONLY);
-  if( fd == -1 )
+  if ((fd = open(filename, O_RDONLY)) == -1)
       goto leave;
-
 
   /*
    * Now mmap() the file.
    */
-  addr = mmap(0, statbuf.st_size, PROT_READ, 
-	      MAP_PRIVATE, fd, 0);
-  if( addr == (char *) 0xffffffff )
+  addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (addr == (char*)0xffffffff)
       goto leave;
 
   /*
@@ -1255,20 +1263,22 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
 	  stabstrsect = i;
     }
 
-  if( stabsect == -1 || stabstrsect == -1 )
-      goto leave;
+  if( stabsect == -1 || stabstrsect == -1 ) {
+    DEBUG_Printf(DBG_CHN_WARN, "no .stab section\n");
+    goto leave;
+  }
 
   /*
    * OK, now just parse all of the stabs.
    */
-  rtn = DEBUG_ParseStabs(addr, load_offset, 
-			 spnt[stabsect].sh_offset,
-			 spnt[stabsect].sh_size,
-			 spnt[stabstrsect].sh_offset,
-			 spnt[stabstrsect].sh_size);
-
-  if( rtn != TRUE )
-      goto leave;
+  if (!(rtn = DEBUG_ParseStabs(addr, load_offset, 
+			       spnt[stabsect].sh_offset,
+			       spnt[stabsect].sh_size,
+			       spnt[stabstrsect].sh_offset,
+			       spnt[stabstrsect].sh_size))) {
+    DEBUG_Printf(DBG_CHN_WARN, "bad stabs\n");
+    goto leave;
+  }
 
   for(i=0; i < nsect; i++)
     {
@@ -1285,22 +1295,17 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
 
 leave:
 
-  if( addr != (char *) 0xffffffff )
-      munmap(addr, statbuf.st_size);
+  if (addr != (char*)0xffffffff)
+    munmap(addr, statbuf.st_size);
 
-  if( fd != -1 )
-      close(fd);
+  if (fd != -1) close(fd);
 
-  return (rtn);
-
+  return rtn;
 }
 
 int
-DEBUG_ReadExecutableDbgInfo(void)
+DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 {
-  const char	      * exe_name;
-  DBG_VALUE		val;
-  u_long		dyn_addr;
   Elf32_Dyn		dyn;
   struct r_debug        dbg_hdr;
   u_long		lm_addr;
@@ -1308,9 +1313,7 @@ DEBUG_ReadExecutableDbgInfo(void)
   Elf32_Ehdr	        ehdr;
   char			bufstr[256];
   int			rtn = FALSE;
-  int                   rowcount;
-
-  exe_name = argv0;
+  DBG_VALUE		val;
 
   /*
    * Make sure we can stat and open this file.
@@ -1319,19 +1322,20 @@ DEBUG_ReadExecutableDbgInfo(void)
       goto leave;
 
   fprintf( stderr, "Loading symbols: %s", exe_name );
-  rowcount = 17 + strlen(exe_name);
   DEBUG_ProcessElfObject(exe_name, 0);
 
+  /* previous step should have loaded symbol _DYNAMIC if it exists inside 
+   * the main executable
+   */
   if (!DEBUG_GetSymbolValue("_DYNAMIC", -1, &val, FALSE)) {
     fprintf(stderr, "Can't find symbol _DYNAMIC\n");
     goto leave;
   }
-  dyn_addr = val.addr.off;
 
   do {
-    if (!DEBUG_READ_MEM_VERBOSE((void*)dyn_addr, &dyn, sizeof(dyn)))
+    if (!DEBUG_READ_MEM_VERBOSE((void*)val.addr.off, &dyn, sizeof(dyn)))
       goto leave;
-    dyn_addr += sizeof(dyn);
+    val.addr.off += sizeof(dyn);
   } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
   if (dyn.d_tag == DT_NULL) goto leave;
 
@@ -1351,124 +1355,34 @@ DEBUG_ReadExecutableDbgInfo(void)
     {
       if (!DEBUG_READ_MEM_VERBOSE((void*)lm_addr, &lm, sizeof(lm)))
 	goto leave;
-      if (!DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)))
-	continue;
-      /*
-       * We already got the stuff for the executable using the
-       * argv[0] entry above.  Here we only need to concentrate on any
-       * shared libraries which may be loaded.
-       */
-      if( (lm.l_addr == 0) || (ehdr.e_type != ET_DYN) )
-	  continue;
-
-      if( lm.l_name != NULL )
-      {
-	  if (!DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr)))
-	    continue;
-	  bufstr[sizeof(bufstr) - 1] = '\0';
-          if (rowcount + strlen(bufstr) > 76)
-          {
-              fprintf( stderr, "\n   " );
-              rowcount = 3;
-          }
-          fprintf( stderr, " %s", bufstr );
-          rowcount += strlen(bufstr) + 1;
-	  DEBUG_ProcessElfObject(bufstr, lm.l_addr);
+      if (lm.l_addr != 0 &&
+	  DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
+	  ehdr.e_type == ET_DYN && /* only look at dynamic modules */
+	  lm.l_name != NULL &&
+	  DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr))) {
+	bufstr[sizeof(bufstr) - 1] = '\0';
+	DEBUG_ProcessElfObject(bufstr, lm.l_addr);
       }
     }
-
+  
   rtn = TRUE;
 
 leave:
-  fprintf( stderr, "\n" );
-  return (rtn);
-
+  return rtn;
 }
 
 #else	/* !__ELF__ */
 
-#ifdef linux
-/*
- * a.out linux.
- */
+int
+DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
+{
+  return FALSE;
+}
+
 int
 DEBUG_ReadExecutableDbgInfo(void)
 {
-  char		      * addr = (char *) 0xffffffff;
-  char		      * exe_name;
-  struct exec	      * ahdr;
-  int			fd = -1;
-  int			rtn = FALSE;
-  unsigned int		staboff;
-  struct stat		statbuf;
-  int			status;
-  unsigned int		stroff;
-
-  exe_name = argv0;
-
-  /*
-   * Make sure we can stat and open this file.
-   */
-  if( exe_name == NULL )
-      goto leave;
-
-  status = stat(exe_name, &statbuf);
-  if( status == -1 )
-      goto leave;
-
-  /*
-   * Now open the file, so that we can mmap() it.
-   */
-  fd = open(exe_name, O_RDONLY);
-  if( fd == -1 )
-      goto leave;
-
-
-  /*
-   * Now mmap() the file.
-   */
-  addr = mmap(0, statbuf.st_size, PROT_READ, 
-	      MAP_PRIVATE, fd, 0);
-  if( addr == (char *) 0xffffffff )
-      goto leave;
-
-  ahdr = (struct exec *) addr;
-
-  staboff = N_SYMOFF(*ahdr);
-  stroff = N_STROFF(*ahdr);
-  rtn = DEBUG_ParseStabs(addr, 0, 
-			 staboff, 
-			 ahdr->a_syms,
-			 stroff,
-			 statbuf.st_size - stroff);
-
-  /*
-   * Give a nice status message here...
-   */
-  fprintf( stderr, "Loading symbols: %s", exe_name );
-
-  rtn = TRUE;
-
-leave:
-
-  if( addr != (char *) 0xffffffff )
-      munmap(addr, statbuf.st_size);
-
-  if( fd != -1 )
-      close(fd);
-
-  return (rtn);
-
+  return FALSE;
 }
-#else
-/*
- * Non-linux, non-ELF platforms.
- */
-int
-DEBUG_ReadExecutableDbgInfo(void)
-{
-return FALSE;
-}
-#endif
 
 #endif  /* __ELF__ */

@@ -896,7 +896,7 @@ static unsigned int db_get_task_value( const DBG_ADDR *addr,
     char       		buffer[4];
 
     if (size != 1 && size != 2 && size != 4) {
-        fprintf(stderr, "Illegal size specified\n");
+        DEBUG_Printf(DBG_CHN_MESG, "Illegal size specified\n");
     } else {
        DEBUG_READ_MEM((void*)DEBUG_ToLinear( addr ), buffer, size);
 
@@ -1020,22 +1020,21 @@ static void db_task_printsym(unsigned int addr, int size)
 void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
 {
 	if (addrp->is_reg) {
-	    fprintf(stderr,"%s", db_reg[size][addrp->disp]);
+	    DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][addrp->disp]);
 	    return;
 	}
 
 	if (seg) {
-	    fprintf(stderr,"%s:", seg);
+	    DEBUG_Printf(DBG_CHN_MESG,"%s:", seg);
 	}
 
 	if (addrp->base != 0 || addrp->index != 0) {
-	    fprintf(stderr,"0x%x", addrp->disp);
-	    fprintf(stderr,"(");
+	    DEBUG_Printf(DBG_CHN_MESG,"0x%x(", addrp->disp);
 	    if (addrp->base)
-		fprintf(stderr,"%s", addrp->base);
+		DEBUG_Printf(DBG_CHN_MESG,"%s", addrp->base);
 	    if (addrp->index)
-		fprintf(stderr,",%s,%d", addrp->index, 1<<addrp->ss);
-	    fprintf(stderr,")");
+		DEBUG_Printf(DBG_CHN_MESG,",%s,%d", addrp->index, 1<<addrp->ss);
+	    DEBUG_Printf(DBG_CHN_MESG,")");
 	} 
 	else {
 
@@ -1045,11 +1044,11 @@ void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
 	       void*	a1;
 	       void*	a2;
 
-               fprintf(stderr,"0x%x -> ", addrp->disp);
+               DEBUG_Printf(DBG_CHN_MESG,"0x%x -> ", addrp->disp);
 	       if (!DEBUG_READ_MEM((void*)addrp->disp, &a1, sizeof(a1))) {
-		   fprintf(stderr, "(invalid source)");
+		   DEBUG_Printf(DBG_CHN_MESG, "(invalid source)");
 	       } else if (!DEBUG_READ_MEM(a1, &a2, sizeof(a2))) {
-		  fprintf(stderr, "(invalid destination)");
+		  DEBUG_Printf(DBG_CHN_MESG, "(invalid destination)");
 	       } else {
 		  db_task_printsym((unsigned long)a1, 0);
                }
@@ -1085,30 +1084,30 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	     * Normal address modes.
 	     */
 	    db_read_address( addr, short_addr, regmodrm, &address);
-	    fprintf(stderr,fp->f_name);
+	    DEBUG_Printf(DBG_CHN_MESG,fp->f_name);
 	    switch(fp->f_size) {
 		case SNGL:
-		    fprintf(stderr,"s");
+		    DEBUG_Printf(DBG_CHN_MESG,"s");
 		    break;
 		case DBLR:
-		    fprintf(stderr,"l");
+		    DEBUG_Printf(DBG_CHN_MESG,"l");
 		    break;
 		case EXTR:
-		    fprintf(stderr,"t");
+		    DEBUG_Printf(DBG_CHN_MESG,"t");
 		    break;
 		case WORD:
-		    fprintf(stderr,"s");
+		    DEBUG_Printf(DBG_CHN_MESG,"s");
 		    break;
 		case LONG:
-		    fprintf(stderr,"l");
+		    DEBUG_Printf(DBG_CHN_MESG,"l");
 		    break;
 		case QUAD:
-		    fprintf(stderr,"q");
+		    DEBUG_Printf(DBG_CHN_MESG,"q");
 		    break;
 		default:
 		    break;
 	    }
-	    fprintf(stderr,"\t");
+	    DEBUG_Printf(DBG_CHN_MESG,"\t");
 	    db_print_address(seg, BYTE, &address, 0);
 	}
 	else {
@@ -1118,25 +1117,25 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	    switch (fp->f_rrmode) {
 		case op2(ST,STI):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    fprintf(stderr,"%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
+		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
 		    break;
 		case op2(STI,ST):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    fprintf(stderr,"%s\t%%st(%d),%%st",name, f_rm(regmodrm));
+		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%st(%d),%%st",name, f_rm(regmodrm));
 		    break;
 		case op1(STI):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    fprintf(stderr,"%s\t%%st(%d)",name, f_rm(regmodrm));
+		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%st(%d)",name, f_rm(regmodrm));
 		    break;
 		case op1(X):
-		    fprintf(stderr,"%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+		    DEBUG_Printf(DBG_CHN_MESG,"%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
 		    break;
 		case op1(XA):
-		    fprintf(stderr,"%s\t%%ax",
+		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%ax",
 				 ((char **)fp->f_rrname)[f_rm(regmodrm)]);
 		    break;
 		default:
-		    fprintf(stderr,"<bad instruction>");
+		    DEBUG_Printf(DBG_CHN_MESG,"<bad instruction>");
 		    break;
 	    }
 	}
@@ -1174,7 +1173,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
         switch (DEBUG_GetSelectorType(addr->seg)) {
 	case 16: db_disasm_16 = 1; break;
 	case 32: db_disasm_16 = 0; break;
-	default: fprintf(stderr, "Bad selector %ld\n", addr->seg); return;
+	default: DEBUG_Printf(DBG_CHN_MESG, "Bad selector %ld\n", addr->seg); return;
 	}
 
 	get_value_inc( inst, addr, 1, FALSE );
@@ -1224,15 +1223,15 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    break;
 		case 0xf0:
 		    if( db_display )
-			fprintf(stderr,"lock ");
+			DEBUG_Printf(DBG_CHN_MESG,"lock ");
 		    break;
 		case 0xf2:
 		    if( db_display )
-			fprintf(stderr,"repne ");
+			DEBUG_Printf(DBG_CHN_MESG,"repne ");
 		    break;
 		case 0xf3:
 		    if( db_display )
-			fprintf(stderr,"repe ");	/* XXX repe VS rep */
+			DEBUG_Printf(DBG_CHN_MESG,"repe ");	/* XXX repe VS rep */
 		    break;
 		default:
 		    prefix = FALSE;
@@ -1297,28 +1296,28 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	  if( db_display )
 	    {
 	      if (size == WORD)
-		fprintf(stderr,i_name);
+		DEBUG_Printf(DBG_CHN_MESG,i_name);
 	      else
-		fprintf(stderr,ip->i_extra);
+		DEBUG_Printf(DBG_CHN_MESG,ip->i_extra);
 	    }
 	}
 	else {
 	  if( db_display )
 	    {
-	      fprintf(stderr,i_name);
+	      DEBUG_Printf(DBG_CHN_MESG,i_name);
 	    }
 	    if (i_size != NONE) {
 		if (i_size == BYTE) {
 		  if( db_display )
 		    {
-		      fprintf(stderr,"b");
+		      DEBUG_Printf(DBG_CHN_MESG,"b");
 		    }
 		    size = BYTE;
 		}
 		else if (i_size == WORD) {
 		  if( db_display )
 		    {
-		      fprintf(stderr,"w");
+		      DEBUG_Printf(DBG_CHN_MESG,"w");
 		    }
 		    size = WORD;
 		}
@@ -1326,28 +1325,28 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  {
 		  if( db_display )
 		    {
-		      fprintf(stderr,"w");
+		      DEBUG_Printf(DBG_CHN_MESG,"w");
 		    }
 		  }
 		else
 		  {
 		  if( db_display )
 		    {
-		      fprintf(stderr,"l");
+		      DEBUG_Printf(DBG_CHN_MESG,"l");
 		    }
 		  }
 	    }
 	}
 	if( db_display )
 	  {
-	    fprintf(stderr,"\t");
+	    DEBUG_Printf(DBG_CHN_MESG,"\t");
 	  }
 	for (first = TRUE;
 	     i_mode != 0;
 	     i_mode >>= 8, first = FALSE)
 	{
 	    if (!first && db_display)
-		fprintf(stderr,",");
+		DEBUG_Printf(DBG_CHN_MESG,",");
 
 	    switch (i_mode & 0xFF) {
 
@@ -1361,7 +1360,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case Eind:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"*");
+		      DEBUG_Printf(DBG_CHN_MESG,"*");
 		      db_print_address(seg, size, &address, 1);
 		    }
 		    break;
@@ -1383,42 +1382,42 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case R:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%s", db_reg[size][f_reg(regmodrm)]);
+		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Rw:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%s", db_reg[WORD][f_reg(regmodrm)]);
+		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[WORD][f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Ri:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%s", db_reg[size][f_rm(inst)]);
+		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][f_rm(inst)]);
 		    }
 		    break;
 
 		case S:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%s", db_seg_reg[f_reg(regmodrm)]);
+		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_seg_reg[f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Si:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%s", db_seg_reg[f_reg(inst)]);
+		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_seg_reg[f_reg(inst)]);
 		    }
 		    break;
 
 		case A:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%s", db_reg[size][0]);	/* acc */
+		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][0]);	/* acc */
 		    }
 		    break;
 
@@ -1426,22 +1425,22 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      if (seg)
-			fprintf(stderr,"%s:", seg);
-		      fprintf(stderr,"(%s)", short_addr ? "%bx" : "%ebx");
+			DEBUG_Printf(DBG_CHN_MESG,"%s:", seg);
+		      DEBUG_Printf(DBG_CHN_MESG,"(%s)", short_addr ? "%bx" : "%ebx");
 		    }
 		    break;
 
 		case CL:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%%cl");
+		      DEBUG_Printf(DBG_CHN_MESG,"%%cl");
 		    }
 		    break;
 
 		case DX:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%%dx");
+		      DEBUG_Printf(DBG_CHN_MESG,"%%dx");
 		    }
 		    break;
 
@@ -1449,36 +1448,36 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      if (seg)
-			fprintf(stderr,"%s:", seg);
-		      fprintf(stderr,"(%s)", short_addr ? "%si" : "%esi");
+			DEBUG_Printf(DBG_CHN_MESG,"%s:", seg);
+		      DEBUG_Printf(DBG_CHN_MESG,"(%s)", short_addr ? "%si" : "%esi");
 		    }
 		    break;
 
 		case DI:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%%es:(%s)", short_addr ? "%di" : "%edi");
+		      DEBUG_Printf(DBG_CHN_MESG,"%%es:(%s)", short_addr ? "%di" : "%edi");
 		    }
 		    break;
 
 		case CR:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%%cr%d", f_reg(regmodrm));
+		      DEBUG_Printf(DBG_CHN_MESG,"%%cr%d", f_reg(regmodrm));
 		    }
 		    break;
 
 		case DR:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%%dr%d", f_reg(regmodrm));
+		      DEBUG_Printf(DBG_CHN_MESG,"%%dr%d", f_reg(regmodrm));
 		    }
 		    break;
 
 		case TR:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"%%tr%d", f_reg(regmodrm));
+		      DEBUG_Printf(DBG_CHN_MESG,"%%tr%d", f_reg(regmodrm));
 		    }
 		    break;
 
@@ -1487,7 +1486,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, len, FALSE);/* unsigned */
 		    if( db_display )
 		      {
-			fprintf(stderr,"$0x%x", imm);
+			DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
 		      }
 		    break;
 
@@ -1496,7 +1495,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, len, TRUE); /* signed */
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$%d", imm);
+		      DEBUG_Printf(DBG_CHN_MESG,"$%d", imm);
 		    }
 		    break;
 
@@ -1504,7 +1503,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 1, FALSE); /* unsigned */
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$0x%x", imm);
+		      DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
 		    }
 		    break;
 
@@ -1512,7 +1511,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 1, TRUE); /* signed */
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$%d", imm);
+		      DEBUG_Printf(DBG_CHN_MESG,"$%d", imm);
 		    }
 		    break;
 
@@ -1520,7 +1519,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 2, FALSE); /* unsigned */
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$0x%x", imm);
+		      DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
 		    }
 		    break;
 
@@ -1528,7 +1527,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 4, FALSE);
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$0x%x", imm);
+		      DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
 		    }
 		    break;
 
@@ -1545,7 +1544,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		      }
 
 		    if (seg)
-			fprintf(stderr,"%s:0x%x",seg, displ);
+			DEBUG_Printf(DBG_CHN_MESG,"%s:0x%x",seg, displ);
 		    else
 			db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;
@@ -1587,14 +1586,14 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case o1:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$1");
+		      DEBUG_Printf(DBG_CHN_MESG,"$1");
 		    }
 		    break;
 
 		case o3:
 		  if( db_display )
 		    {
-		      fprintf(stderr,"$3");
+		      DEBUG_Printf(DBG_CHN_MESG,"$3");
 		    }
 		    break;
 
