@@ -82,7 +82,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
    DWORD	wndStyle;
    MCIWndInfo*	mwi;
 
-   TRACE("%x %x %lx %s\n", hwndParent, hInstance, dwStyle, szFile);
+   TRACE("%p %p %lx %s\n", hwndParent, hInstance, dwStyle, szFile);
 
    MCIWndRegisterClass(hInstance);
 
@@ -116,7 +116,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
 			   DWORD dwStyle, LPCWSTR szFile)
 {
-   FIXME("%x %x %lx %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
+   FIXME("%p %p %lx %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 
    MCIWndRegisterClass(hInstance);
 
@@ -233,14 +233,17 @@ static void MCIWND_Create(HWND hWnd, LPCREATESTRUCTA cs)
 
    /* adding the other elements: play/stop button, menu button, status */
    hChld = CreateWindowExA(0, "BUTTON", "Play", WS_CHILD|WS_VISIBLE, 0, cy, 32, 32,
-			   hWnd, (HMENU)CTL_PLAYSTOP, GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
-   TRACE("Get Button1: %04x\n", hChld);
+			   hWnd, (HMENU)CTL_PLAYSTOP,
+			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
+   TRACE("Get Button1: %p\n", hChld);
    hChld = CreateWindowExA(0, "BUTTON", "Menu", WS_CHILD|WS_VISIBLE, 32, cy, 32, 32,
-			   hWnd, (HMENU)CTL_MENU, GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
-   TRACE("Get Button2: %04x\n", hChld);
+			   hWnd, (HMENU)CTL_MENU,
+			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
+   TRACE("Get Button2: %p\n", hChld);
    hChld = CreateWindowExA(0, TRACKBAR_CLASSA, "", WS_CHILD|WS_VISIBLE, 64, cy, cx - 64, 32,
-			   hWnd, (HMENU)CTL_TRACKBAR, GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
-   TRACE("Get status: %04x\n", hChld);
+			   hWnd, (HMENU)CTL_TRACKBAR,
+			   (HINSTANCE)GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
+   TRACE("Get status: %p\n", hChld);
    SendMessageA(hChld, TBM_SETRANGEMIN, 0L, 0L);
    SendMessageA(hChld, TBM_SETRANGEMAX, 1L, MCIWND_Get(mwi, MCI_STATUS_LENGTH));
 
@@ -343,4 +346,3 @@ static LRESULT WINAPI	MCIWndProc(HWND hWnd, UINT wMsg, WPARAM lParam1, LPARAM lP
 
    return DefWindowProcA(hWnd, wMsg, lParam1, lParam2);
 }
-

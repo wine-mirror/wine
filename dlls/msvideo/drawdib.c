@@ -66,8 +66,8 @@ HDRAWDIB VFWAPI DrawDibOpen(void) {
 	HDRAWDIB hdd;
 
 	TRACE("(void)\n");
-	hdd = GlobalAlloc16(GHND,sizeof(WINE_HDD));
-	TRACE("=> %d\n",hdd);
+	hdd = HDRAWDIB_32(GlobalAlloc16(GHND,sizeof(WINE_HDD)));
+	TRACE("=> %p\n",hdd);
 	return hdd;
 }
 
@@ -75,9 +75,9 @@ HDRAWDIB VFWAPI DrawDibOpen(void) {
  *		DrawDibClose		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) {
-	WINE_HDD *whdd = GlobalLock16(hdd);
+	WINE_HDD *whdd = GlobalLock16(HDRAWDIB_16(hdd));
 
-	TRACE("(0x%08lx)\n",(DWORD)hdd);
+	TRACE("(%p)\n",hdd);
 
 	if (!whdd)
 		return FALSE;
@@ -85,8 +85,8 @@ BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) {
 	if (whdd->begun)
 		DrawDibEnd(hdd);
 
-	GlobalUnlock16(hdd);
-	GlobalFree16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
+	GlobalFree16(HDRAWDIB_16(hdd));
 	return TRUE;
 }
 
@@ -95,9 +95,9 @@ BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) {
  */
 BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd) {
 	BOOL ret = TRUE;
-	WINE_HDD *whdd = GlobalLock16(hdd);
+	WINE_HDD *whdd = GlobalLock16(HDRAWDIB_16(hdd));
 
-	TRACE("(0x%08lx)\n",(DWORD)hdd);
+	TRACE("(%p)\n",hdd);
 
 	whdd->hpal = 0; /* Do not free this */
 	whdd->hdc = 0;
@@ -130,7 +130,7 @@ BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd) {
 
 	whdd->lpvbits = NULL;
 
-	GlobalUnlock16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
 	return ret;
 }
 
@@ -148,8 +148,8 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 	BOOL ret = TRUE;
 	WINE_HDD *whdd;
 
-	TRACE("(%d,0x%lx,%d,%d,%p,%d,%d,0x%08lx)\n",
-		hdd,(DWORD)hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,(DWORD)wFlags
+	TRACE("(%p,%p,%d,%d,%p,%d,%d,0x%08lx)\n",
+		hdd,hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,(DWORD)wFlags
 	);
 	TRACE("lpbi: %ld,%ld/%ld,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld\n",
 		  lpbi->biSize, lpbi->biWidth, lpbi->biHeight, lpbi->biPlanes,
@@ -160,7 +160,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 	if (wFlags & ~(DDF_BUFFER))
 		FIXME("wFlags == 0x%08x not handled\n", wFlags & ~(DDF_BUFFER));
 
-	whdd = (WINE_HDD*)GlobalLock16(hdd);
+	whdd = (WINE_HDD*)GlobalLock16(HDRAWDIB_16(hdd));
 	if (!whdd) return FALSE;
 
 	if (whdd->begun)
@@ -217,7 +217,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 		if (!whdd->hDib) {
 			TRACE("Error: %ld\n",GetLastError());
 		}
-		TRACE("Created: %d,%p\n",whdd->hDib,whdd->lpvbits);
+		TRACE("Created: %p,%p\n",whdd->hDib,whdd->lpvbits);
 		whdd->hOldDib = SelectObject(whdd->hMemDC,whdd->hDib);
 	}
 
@@ -240,7 +240,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 		}
 	}
 
-	GlobalUnlock16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
 
 	return ret;
 }
@@ -258,8 +258,8 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 	WINE_HDD *whdd;
 	BOOL ret = TRUE;
 
-	TRACE("(%d,0x%lx,%d,%d,%d,%d,%p,%p,%d,%d,%d,%d,0x%08lx)\n",
-		  hdd,(DWORD)hdc,xDst,yDst,dxDst,dyDst,lpbi,lpBits,xSrc,ySrc,dxSrc,dySrc,(DWORD)wFlags
+	TRACE("(%p,%p,%d,%d,%d,%d,%p,%p,%d,%d,%d,%d,0x%08lx)\n",
+		  hdd,hdc,xDst,yDst,dxDst,dyDst,lpbi,lpBits,xSrc,ySrc,dxSrc,dySrc,(DWORD)wFlags
 	);
 
 	if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME |
@@ -271,7 +271,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 		lpBits = (LPSTR)lpbi + (WORD)(lpbi->biSize) + (WORD)(num_colours(lpbi)*sizeof(RGBQUAD));
 	}
 
-	whdd = GlobalLock16(hdd);
+	whdd = GlobalLock16(HDRAWDIB_16(hdd));
 
 #define CHANGED(x) (whdd->x != x)
 
@@ -312,7 +312,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 	if (!(StretchBlt(whdd->hdc,xDst,yDst,dxDst,dyDst,whdd->hMemDC,xSrc,ySrc,dxSrc,dySrc,SRCCOPY)))
 	    ret = FALSE;
 
-	GlobalUnlock16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
 	return ret;
 }
 
@@ -320,7 +320,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
  *		DrawDibStart		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibStart(HDRAWDIB hdd, DWORD rate) {
-	FIXME("(0x%08lx,%ld), stub\n",(DWORD)hdd,rate);
+	FIXME("(%p,%ld), stub\n",hdd,rate);
 	return TRUE;
 }
 
@@ -328,7 +328,7 @@ BOOL VFWAPI DrawDibStart(HDRAWDIB hdd, DWORD rate) {
  *		DrawDibStop		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibStop(HDRAWDIB hdd) {
-	FIXME("(0x%08lx), stub\n",(DWORD)hdd);
+	FIXME("(%p), stub\n",hdd);
 	return TRUE;
 }
 
@@ -338,16 +338,16 @@ BOOL VFWAPI DrawDibStop(HDRAWDIB hdd) {
 BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal) {
 	WINE_HDD *whdd;
 
-	TRACE("(0x%08lx,0x%08lx)\n",(DWORD)hdd,(DWORD)hpal);
+	TRACE("(%p,%p)\n",hdd,hpal);
 
-	whdd = GlobalLock16(hdd);
+	whdd = GlobalLock16(HDRAWDIB_16(hdd));
 	whdd->hpal = hpal;
 
 	if (whdd->begun) {
 		SelectPalette(whdd->hdc,hpal,0);
 		RealizePalette(whdd->hdc);
 	}
-	GlobalUnlock16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
 	return TRUE;
 }
 
@@ -358,11 +358,11 @@ HPALETTE VFWAPI DrawDibGetPalette(HDRAWDIB hdd) {
 	WINE_HDD *whdd;
 	HPALETTE ret;
 
-	TRACE("(0x%08lx)\n",(DWORD)hdd);
+	TRACE("(%p)\n",hdd);
 
-	whdd = GlobalLock16(hdd);
+	whdd = GlobalLock16(HDRAWDIB_16(hdd));
 	ret = whdd->hpal;
-	GlobalUnlock16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
 	return ret;
 }
 
@@ -374,9 +374,9 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 	HPALETTE oldPal;
 	UINT ret = 0;
 
-	FIXME("(%d,0x%08lx,%d), stub\n",hdd,(DWORD)hdc,fBackground);
+	FIXME("(%p,%p,%d), stub\n",hdd,hdc,fBackground);
 
-	whdd = GlobalLock16(hdd);
+	whdd = GlobalLock16(HDRAWDIB_16(hdd));
 
 	if (!whdd || !(whdd->begun)) {
 		ret = 0;
@@ -390,7 +390,7 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 	ret = RealizePalette(hdc);
 
  out:
-	GlobalUnlock16(hdd);
+	GlobalUnlock16(HDRAWDIB_16(hdd));
 
 	TRACE("=> %u\n",ret);
 	return ret;

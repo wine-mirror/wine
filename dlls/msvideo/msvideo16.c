@@ -28,15 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 
-/* handle16 --> handle conversions */
-#define HDRAWDIB_32(h16)	((HDRAWDIB)(ULONG_PTR)(h16))
-#define HIC_32(h16)		((HIC)(ULONG_PTR)(h16))
-
-/* handle --> handle16 conversions */
-#define HDRAWDIB_16(h32)	(LOWORD(h32))
-#define HIC_16(h32)		(LOWORD(h32))
-
-
 /***********************************************************************
  *		DrawDibOpen		[MSVIDEO.102]
  */

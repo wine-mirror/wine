@@ -195,7 +195,7 @@ HIC VFWAPI ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
 	char		type[5],handler[5],codecname[20];
 	ICOPEN		icopen;
 	HDRVR		hdrv;
-	HIC16		hic;
+	HIC		hic;
 	WINE_HIC	*whic;
 
 	memcpy(type,&fccType,4);type[4]=0;
@@ -223,19 +223,19 @@ HIC VFWAPI ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
 		    return 0;
 	}
 	/* The handle should be a valid 16-bit handle as well */
-	hic = GlobalAlloc16(GHND,sizeof(WINE_HIC));
-	whic = (WINE_HIC*)GlobalLock16(hic);
+	hic = HIC_32(GlobalAlloc16(GHND,sizeof(WINE_HIC)));
+	whic = (WINE_HIC*)GlobalLock16(HIC_16(hic));
 	whic->hdrv	= hdrv;
 	whic->driverproc= NULL;
 	whic->private	= 0;
-	GlobalUnlock16(hic);
-	TRACE("=> 0x%08lx\n",(DWORD)hic);
-	return hic;
+	GlobalUnlock16(HIC_16(hic));
+	TRACE("=> %p\n",hic);
+	return HIC_32(hic);
 }
 
 HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler, BOOL bFrom32) {
 	char	type[5],handler[5],codecname[20];
-	HIC16	hic;
+	HIC	hic;
         ICOPEN icopen;
         SEGPTR seg_icopen;
 	WINE_HIC	*whic;
@@ -251,10 +251,10 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 
         sprintf(codecname,"%s.%s",type,handler);
 
-	hic = GlobalAlloc16(GHND,sizeof(WINE_HIC));
+	hic = HIC_32(GlobalAlloc16(GHND,sizeof(WINE_HIC)));
 	if (!hic)
 		return 0;
-	whic = GlobalLock16(hic);
+	whic = GlobalLock16(HIC_16(hic));
 	whic->driverproc = lpfnHandler;
 
 	whic->private = bFrom32;
@@ -263,8 +263,8 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 	/* What if the function is used more than once? */
 
 	if (MSVIDEO_SendMessage(hic,DRV_LOAD,0L,0L,bFrom32) != DRV_SUCCESS) {
-		WARN("DRV_LOAD failed for hic 0x%08lx\n",(DWORD)hic);
-		GlobalFree16(hic);
+		WARN("DRV_LOAD failed for hic %p\n", hic);
+		GlobalFree16(HIC_16(hic));
 		return 0;
 	}
 	/* return value is not checked */
@@ -274,13 +274,13 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
         whic->hdrv = (HDRVR)MSVIDEO_SendMessage(hic,DRV_OPEN,0,seg_icopen,FALSE);
         UnMapLS( seg_icopen );
 	if (whic->hdrv == 0) {
-		WARN("DRV_OPEN failed for hic 0x%08lx\n",(DWORD)hic);
-		GlobalFree16(hic);
+		WARN("DRV_OPEN failed for hic %p\n",hic);
+		GlobalFree16(HIC_16(hic));
 		return 0;
 	}
 
-	GlobalUnlock16(hic);
-	TRACE("=> 0x%08lx\n",(DWORD)hic);
+	GlobalUnlock16(HIC_16(hic));
+	TRACE("=> %p\n",hic);
 	return hic;
 }
 
@@ -296,7 +296,7 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC l
  */
 HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FARPROC16 lpfnHandler)
 {
-	return MSVIDEO_OpenFunc(fccType, fccHandler, wMode, (FARPROC)lpfnHandler,FALSE);
+	return HIC_16(MSVIDEO_OpenFunc(fccType, fccHandler, wMode, (FARPROC)lpfnHandler,FALSE));
 }
 
 /***********************************************************************
@@ -305,7 +305,7 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
 LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	LRESULT		ret;
 
-	TRACE("(0x%08lx,%p,%ld)\n",(DWORD)hic,picinfo,cb);
+	TRACE("(%p,%p,%ld)\n",hic,picinfo,cb);
 	ret = ICSendMessage(hic,ICM_GETINFO,(DWORD)picinfo,cb);
 	TRACE("	-> 0x%08lx\n",ret);
 	return ret;
@@ -402,7 +402,7 @@ HIC VFWAPI ICGetDisplayFormat(
 {
 	HIC	tmphic = hic;
 
-	FIXME("(0x%08lx,%p,%p,%d,%d,%d),stub!\n",(DWORD)hic,lpbiIn,lpbiOut,depth,dx,dy);
+	FIXME("(%p,%p,%p,%d,%d,%d),stub!\n",hic,lpbiIn,lpbiOut,depth,dx,dy);
 	if (!tmphic) {
 		tmphic=ICLocate(ICTYPE_VIDEO,0,lpbiIn,NULL,ICMODE_DECOMPRESS);
 		if (!tmphic)
@@ -438,7 +438,7 @@ HIC VFWAPI ICGetDisplayFormat(
 	if (lpbiIn->biBitCount == 8)
 		depth = 8;
 
-	TRACE("=> 0x%08lx\n",(DWORD)tmphic);
+	TRACE("=> %p\n", tmphic);
 	return tmphic;
 errout:
 	if (hic!=tmphic)
@@ -460,7 +460,7 @@ ICCompress(
 {
 	ICCOMPRESS	iccmp;
 
-	TRACE("(0x%08lx,%ld,%p,%p,%p,%p,...)\n",(DWORD)hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
+	TRACE("(%p,%ld,%p,%p,%p,%p,...)\n",hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
 
 	iccmp.dwFlags		= dwFlags;
 
@@ -488,7 +488,7 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	ICDECOMPRESS	icd;
 	DWORD ret;
 
-	TRACE("(0x%08lx,%ld,%p,%p,%p,%p)\n",(DWORD)hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
+	TRACE("(%p,%ld,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
 	TRACE("lpBits[0] == %ld\n",((LPDWORD)lpBits)[0]);
 
@@ -674,7 +674,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			COPY(icdb,dwFlags);
 			icdb->hpal = HPALETTE_32(icdb16->hpal);
 			icdb->hwnd = HWND_32(icdb16->hwnd);
-			COPY(icdb,hdc);
+			icdb->hdc = HDC_32(icdb16->hdc);
 			COPY(icdb,xDst);
 			COPY(icdb,yDst);
 			COPY(icdb,dxDst);
@@ -705,7 +705,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			COPY(icds,dySrc);
 			COPY(icds,dxDst);
 			COPY(icds,dyDst);
-			COPY(icds,hicDecompressor);
+			icds->hicDecompressor = HIC_32(icds16->hicDecompressor);
 
 			*lParam1 = (DWORD)(icds);
 			*lParam2 = sizeof(ICDRAWSUGGEST);
@@ -793,11 +793,11 @@ void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPDWORD lP
 
 LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL bFrom32) {
 	LRESULT		ret;
-	WINE_HIC	*whic = GlobalLock16(hic);
+	WINE_HIC	*whic = GlobalLock16(HIC_16(hic));
 	LPVOID data16 = 0;
 	BOOL bDrv32;
 
-#define XX(x) case x: TRACE("(0x%08lx,"#x",0x%08lx,0x%08lx,%d)\n",(DWORD)hic,lParam1,lParam2,bFrom32?32:16);break;
+#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx,%d)\n",hic,lParam1,lParam2,bFrom32?32:16);break;
 
 	switch (msg) {
 		/* DRV_* */
@@ -858,7 +858,7 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 		XX(ICM_DECOMPRESSEX_END);
 		XX(ICM_SET_STATUS_PROC);
 	default:
-		FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,%i) unknown message\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2,bFrom32?32:16);
+		FIXME("(%p,0x%08lx,0x%08lx,0x%08lx,%i) unknown message\n",hic,(DWORD)msg,lParam1,lParam2,bFrom32?32:16);
 	}
 
 #undef XX
@@ -886,7 +886,7 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 		if (bDrv32) {
 			ret = whic->driverproc(whic->hdrv,hic,msg,lParam1,lParam2);
 		} else {
-			ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc,HDRVR_16(whic->hdrv),hic,msg,lParam1,lParam2);
+			ret = MSVIDEO_CallTo16_long_lwwll((FARPROC16)whic->driverproc,(LONG)whic->hdrv,HIC_16(hic),msg,lParam1,lParam2);
 		}
 	} else {
 		ret = SendDriverMessage(whic->hdrv,msg,lParam1,lParam2);
@@ -896,7 +896,7 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 		MSVIDEO_UnmapMsg16To32(msg,data16,&lParam1,&lParam2);
 
  out:
-	GlobalUnlock16(hic);
+	GlobalUnlock16(HIC_16(hic));
 
 	TRACE("	-> 0x%08lx\n",ret);
 	return ret;
@@ -913,7 +913,7 @@ LRESULT VFWAPI ICSendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2) {
  *		ICSendMessage			[MSVIDEO.205]
  */
 LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2) {
-	return MSVIDEO_SendMessage(hic,msg,lParam1,lParam2,FALSE);
+	return MSVIDEO_SendMessage(HIC_32(hic),msg,lParam1,lParam2,FALSE);
 }
 
 /***********************************************************************
@@ -940,8 +940,8 @@ DWORD VFWAPIV ICDrawBegin(
 
 	ICDRAWBEGIN	icdb;
 
-	TRACE("(0x%08lx,%ld,0x%08lx,0x%08lx,0x%08lx,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
-		  (DWORD)hic, dwFlags, (DWORD)hpal, (DWORD)hwnd, (DWORD)hdc, xDst, yDst, dxDst, dyDst,
+	TRACE("(%p,%ld,%p,%p,%p,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
+		  hic, dwFlags, hpal, hwnd, hdc, xDst, yDst, dxDst, dyDst,
 		  lpbi, xSrc, ySrc, dxSrc, dySrc, dwRate, dwScale);
 
 	icdb.dwFlags = dwFlags;
@@ -968,7 +968,7 @@ DWORD VFWAPIV ICDrawBegin(
 DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWORD cbData, LONG lTime) {
 	ICDRAW	icd;
 
-	TRACE("(0x%09lx,%ld,%p,%p,%ld,%ld)\n",(DWORD)hic,dwFlags,lpFormat,lpData,cbData,lTime);
+	TRACE("(%p,%ld,%p,%p,%ld,%ld)\n",hic,dwFlags,lpFormat,lpData,cbData,lTime);
 
 	icd.dwFlags = dwFlags;
 	icd.lpFormat = lpFormat;
@@ -983,8 +983,8 @@ DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWO
  *		ICClose			[MSVFW32.@]
  */
 LRESULT WINAPI ICClose(HIC hic) {
-	WINE_HIC *whic = GlobalLock16(hic);
-	TRACE("(0x%08lx)\n",(DWORD)hic);
+	WINE_HIC *whic = GlobalLock16(HIC_16(hic));
+	TRACE("(%p)\n",hic);
 	if (whic->driverproc) {
 		ICSendMessage(hic,DRV_CLOSE,0,0);
 		ICSendMessage(hic,DRV_DISABLE,0,0);
@@ -993,8 +993,8 @@ LRESULT WINAPI ICClose(HIC hic) {
 		CloseDriver(whic->hdrv,0,0);
 	}
 
-	GlobalUnlock16(hic);
-	GlobalFree16(hic);
+	GlobalUnlock16(HIC_16(hic));
+	GlobalFree16(HIC_16(hic));
 	return 0;
 }
 
@@ -1009,7 +1009,7 @@ HANDLE VFWAPI ICImageCompress(
 	LPBITMAPINFO lpbiOut, LONG lQuality,
 	LONG* plSize)
 {
-	FIXME("(%08x,%08x,%p,%p,%p,%ld,%p)\n",
+	FIXME("(%p,%08x,%p,%p,%p,%ld,%p)\n",
 		hic, uiFlags, lpbiIn, lpBits, lpbiOut, lQuality, plSize);
 
 	return (HANDLE)NULL;
@@ -1032,7 +1032,7 @@ HANDLE VFWAPI ICImageDecompress(
 	BOOL	bInDecompress = FALSE;
 	DWORD	biSizeImage;
 
-	TRACE("(%08x,%08x,%p,%p,%p)\n",
+	TRACE("(%p,%08x,%p,%p,%p)\n",
 		hic, uiFlags, lpbiIn, lpBits, lpbiOut);
 
 	if ( hic == (HIC)NULL )
