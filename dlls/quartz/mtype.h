@@ -17,6 +17,10 @@ AM_MEDIA_TYPE* QUARTZ_MediaType_Duplicate(
 void QUARTZ_MediaType_Destroy(
 	AM_MEDIA_TYPE* pmt );
 
+void QUARTZ_MediaSubType_FromFourCC(
+	GUID* psubtype, DWORD dwFourCC );
+BOOL QUARTZ_MediaSubType_IsFourCC(
+	const GUID* psubtype );
 
 HRESULT QUARTZ_CreateEnumMediaTypes(
 	IEnumMediaTypes** ppobj,

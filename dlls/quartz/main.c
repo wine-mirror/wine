@@ -32,7 +32,8 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "fmap2.h"
 #include "seekpass.h"
 #include "audren.h"
-
+#include "vidren.h"
+#include "parser.h"
 
 typedef struct QUARTZ_CLASSENTRY
 {
@@ -77,6 +78,8 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_FilterMapper2, &QUARTZ_CreateFilterMapper2 },
 	{ &CLSID_SeekingPassThru, &QUARTZ_CreateSeekingPassThru },
 	{ &CLSID_AudioRender, &QUARTZ_CreateAudioRenderer },
+	{ &CLSID_VideoRenderer, &QUARTZ_CreateVideoRenderer },
+	{ &CLSID_quartzWaveParser, &QUARTZ_CreateWaveParser },
 	{ NULL, NULL },
 };
 

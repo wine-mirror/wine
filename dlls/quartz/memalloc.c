@@ -318,6 +318,8 @@ IMemAllocator_fnGetBuffer(IMemAllocator* iface,IMediaSample** ppSample,REFERENCE
 
 	EnterCriticalSection( &This->csMem );
 
+	TRACE("(%p) enter critical section\n",This);
+
 	hr = NOERROR;
 
 	if ( This->pData == NULL || This->ppSamples == NULL ||
@@ -353,6 +355,7 @@ IMemAllocator_fnGetBuffer(IMemAllocator* iface,IMediaSample** ppSample,REFERENCE
 
 end:
 	LeaveCriticalSection( &This->csMem );
+	TRACE("(%p) leave critical section\n",This);
 
 	return hr;
 }
@@ -418,3 +421,4 @@ void CMemoryAllocator_UninitIMemAllocator( CMemoryAllocator* pma )
 	if ( pma->hEventSample != (HANDLE)NULL )
 		CloseHandle( pma->hEventSample );
 }
+

@@ -25,6 +25,147 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 
 /***************************************************************************
  *
+ *	Helper functions
+ *
+ */
+
+HRESULT QUARTZ_IMediaSample_GetProperties(
+	IMediaSample* pSample,
+	AM_SAMPLE2_PROPERTIES* pProp )
+{
+	HRESULT hr;
+	AM_SAMPLE2_PROPERTIES	prop;
+	IMediaSample2*	pSample2 = NULL;
+
+	ZeroMemory( &prop, sizeof(AM_SAMPLE2_PROPERTIES) );
+
+#if 0 /* not yet */
+	hr = IMediaSample_QueryInterface( pSample, &IID_IMediaSample2, (void**)&pSample2 );
+	if ( hr == S_OK )
+	{
+		hr = IMediaSample2_GetProperties(pSample2,sizeof(AM_SAMPLE2_PROPERTIES),&prop);
+		IMediaSample2_Release(pSample2);
+		if ( hr == S_OK )
+		{
+			memcpy( pProp, &prop, sizeof(AM_SAMPLE2_PROPERTIES) );
+			pProp->pMediaType =
+				QUARTZ_MediaType_Duplicate( &prop.pMediaType );
+
+			return NOERROR;
+		}
+	}
+#endif
+
+	pProp->cbData = sizeof(AM_SAMPLE2_PROPERTIES);
+	pProp->dwTypeSpecificFlags = 0;
+	pProp->dwSampleFlags = 0;
+	if ( IMediaSample_IsSyncPoint(pSample) == S_OK )
+		pProp->dwSampleFlags |= AM_SAMPLE_SPLICEPOINT;
+	if ( IMediaSample_IsPreroll(pSample) == S_OK )
+		pProp->dwSampleFlags |= AM_SAMPLE_PREROLL;
+	if ( IMediaSample_IsDiscontinuity(pSample) == S_OK )
+		pProp->dwSampleFlags |= AM_SAMPLE_DATADISCONTINUITY;
+	pProp->lActual = (LONG)IMediaSample_GetActualDataLength(pSample);
+	if ( IMediaSample_GetTime(pSample,&pProp->tStart,&pProp->tStop) == S_OK )
+		pProp->dwSampleFlags |= AM_SAMPLE_TIMEVALID | AM_SAMPLE_STOPVALID;
+	pProp->dwStreamId = 0;
+	if ( IMediaSample_GetMediaType(pSample,&(pProp->pMediaType)) == S_OK )
+		pProp->dwSampleFlags |= AM_SAMPLE_TYPECHANGED;
+	IMediaSample_GetPointer(pSample,&(pProp->pbBuffer));
+	pProp->cbBuffer = (LONG)IMediaSample_GetSize(pSample);
+
+	return NOERROR;
+}
+
+HRESULT QUARTZ_IMediaSample_SetProperties(
+	IMediaSample* pSample,
+	const AM_SAMPLE2_PROPERTIES* pProp )
+{
+	HRESULT hr;
+	AM_SAMPLE2_PROPERTIES	prop;
+	IMediaSample2*	pSample2 = NULL;
+
+	memcpy( &prop, pProp, sizeof(AM_SAMPLE2_PROPERTIES) );
+	prop.cbData = sizeof(AM_SAMPLE2_PROPERTIES);
+	prop.pbBuffer = NULL;
+	prop.cbBuffer = 0;
+
+#if 0 /* not yet */
+	hr = IMediaSample_QueryInterface( pSample, &IID_IMediaSample2, (void**)&pSample2 );
+	if ( hr == S_OK )
+	{
+		hr = IMediaSample2_SetProperties(pSample2,sizeof(AM_SAMPLE2_PROPERTIES),&prop);
+		IMediaSample2_Release(pSample2);
+		if ( hr == S_OK )
+			return NOERROR;
+	}
+#endif
+
+	hr = S_OK;
+
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_SetSyncPoint(pSample,
+			(prop.dwSampleFlags & AM_SAMPLE_SPLICEPOINT) ? TRUE : FALSE);
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_SetPreroll(pSample,
+			(prop.dwSampleFlags & AM_SAMPLE_PREROLL) ? TRUE : FALSE);
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_SetDiscontinuity(pSample,
+			(prop.dwSampleFlags & AM_SAMPLE_DATADISCONTINUITY) ? TRUE : FALSE);
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_SetActualDataLength(pSample,prop.lActual);
+	if ( SUCCEEDED(hr) )
+	{
+		if ( ( prop.dwSampleFlags & AM_SAMPLE_TIMEVALID) &&
+		     ( prop.dwSampleFlags & AM_SAMPLE_STOPVALID) )
+			hr = IMediaSample_SetTime(pSample,&prop.tStart,&prop.tStop);
+		else
+			hr = IMediaSample_SetTime(pSample,NULL,NULL);
+	}
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_SetMediaType(pSample,
+			(prop.dwSampleFlags & AM_SAMPLE_TYPECHANGED) ?
+				prop.pMediaType : NULL);
+
+	return hr;
+}
+
+HRESULT QUARTZ_IMediaSample_Copy(
+	IMediaSample* pDstSample,
+	IMediaSample* pSrcSample,
+	BOOL bCopyData )
+{
+	HRESULT hr;
+	AM_SAMPLE2_PROPERTIES	prop;
+	BYTE* pDataSrc = NULL;
+	BYTE* pDataDst = NULL;
+
+	hr = QUARTZ_IMediaSample_GetProperties( pSrcSample, &prop );
+	if ( FAILED(hr) )
+		return hr;
+	hr = QUARTZ_IMediaSample_SetProperties( pDstSample, &prop );
+	if ( prop.pMediaType != NULL )
+		QUARTZ_MediaType_Destroy( prop.pMediaType );
+
+	if ( SUCCEEDED(hr) && bCopyData )
+	{
+		hr = IMediaSample_GetPointer(pSrcSample,&pDataSrc);
+		if ( SUCCEEDED(hr) )
+			hr = IMediaSample_GetPointer(pDstSample,&pDataDst);
+		if ( SUCCEEDED(hr) )
+		{
+			if ( pDataSrc != NULL && pDataDst != NULL )
+				memcpy( pDataDst, pDataSrc, prop.lActual );
+			else
+				hr = E_FAIL;
+		}
+	}
+
+	return hr;
+}
+
+/***************************************************************************
+ *
  *	CMemMediaSample::IMediaSample2
  *
  */
@@ -69,6 +210,12 @@ IMediaSample2_fnRelease(IMediaSample2* iface)
 
 	TRACE("(%p)->()\n",This);
 
+	if ( This->ref == 0 )
+	{
+		ERR("(%p) - released sample!\n",This);
+		return 0;
+	}
+
 	ref = InterlockedExchangeAdd(&(This->ref),-1) - 1;
 	if ( ref > 0 )
 		return (ULONG)ref;
@@ -97,6 +244,12 @@ IMediaSample2_fnGetPointer(IMediaSample2* iface,BYTE** ppData)
 
 	TRACE("(%p)->()\n",This);
 
+	if ( This->ref == 0 )
+	{
+		ERR("(%p) - released sample!\n",This);
+		return E_UNEXPECTED;
+	}
+
 	if ( ppData == NULL )
 		return E_POINTER;
 
@@ -120,6 +273,12 @@ IMediaSample2_fnGetTime(IMediaSample2* iface,REFERENCE_TIME* prtStart,REFERENCE_
 	ICOM_THIS(CMemMediaSample,iface);
 
 	TRACE("(%p)->(%p,%p)\n",This,prtStart,prtEnd);
+
+	if ( This->ref == 0 )
+	{
+		ERR("(%p) - released sample!\n",This);
+		return E_UNEXPECTED;
+	}
 
 	if ( prtStart == NULL || prtEnd == NULL )
 		return E_POINTER;
@@ -226,7 +385,7 @@ IMediaSample2_fnSetActualDataLength(IMediaSample2* iface,long lLength)
 
 	TRACE("(%p)->(%ld)\n",This,lLength);
 
-	if ( This->prop.cbBuffer > lLength )
+	if ( This->prop.cbBuffer < lLength )
 		return E_INVALIDARG;
 
 	This->prop.lActual = lLength;

@@ -14,6 +14,7 @@
 #include "wine/obj_base.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
+#include "uuids.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -101,6 +102,22 @@ void QUARTZ_MediaType_Destroy(
 	CoTaskMemFree( pmt );
 }
 
+void QUARTZ_MediaSubType_FromFourCC(
+	GUID* psubtype, DWORD dwFourCC )
+{
+	memcpy( psubtype, &MEDIASUBTYPE_PCM, sizeof(GUID) );
+	psubtype->Data1 = dwFourCC;
+}
+
+BOOL QUARTZ_MediaSubType_IsFourCC(
+	const GUID* psubtype )
+{
+	GUID guidTemp;
+
+	QUARTZ_MediaSubType_FromFourCC(
+		&guidTemp, psubtype->Data1 );
+	return IsEqualGUID( psubtype, &guidTemp );
+}
 
 /****************************************************************************/
 

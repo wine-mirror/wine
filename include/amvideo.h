@@ -4,11 +4,75 @@
 #include "ole2.h"
 #include "ddraw.h"
 
+
 typedef struct IBaseVideoMixer IBaseVideoMixer;
 typedef struct IDirectDrawVideo IDirectDrawVideo;
 typedef struct IFullScreenVideo IFullScreenVideo;
 typedef struct IFullScreenVideoEx IFullScreenVideoEx;
 typedef struct IQualProp IQualProp;
+
+
+#define	iEGA_COLORS	16
+#define	iPALETTE_COLORS	256
+#define	iMASK_COLORS	3
+#define	iRED	0
+#define	iGREEN	1
+#define	iBLUE	2
+
+#define WIDTHBYTES(bits)	((DWORD)((((DWORD)(bits)+31U)&(~31U))>>3))
+#define DIBWIDTHBYTES(bi)	((DWORD)WIDTHBYTES((bi).biWidth*(bi).biBitCount))
+#define DIBSIZE(bi)	(DIBWIDTHBYTES(bi)*(DWORD)abs((bi).biHeight))
+
+
+typedef struct
+{
+	DWORD	dwBitMasks[iMASK_COLORS];
+	RGBQUAD	bmiColors[iPALETTE_COLORS];
+} TRUECOLORINFO;
+
+typedef struct
+{
+	RECT	rcSource;
+	RECT	rcTarget;
+	DWORD	dwBitRate;
+	DWORD	dwBitErrorRate;
+	REFERENCE_TIME	AvgTimePerFrame;
+	BITMAPINFOHEADER	bmiHeader;
+} VIDEOINFOHEADER;
+
+typedef struct
+{
+	RECT	rcSource;
+	RECT	rcTarget;
+	DWORD	dwBitRate;
+	DWORD	dwBitErrorRate;
+	REFERENCE_TIME	AvgTimePerFrame;
+	BITMAPINFOHEADER	bmiHeader;
+
+    union {
+		RGBQUAD	bmiColors[iPALETTE_COLORS];
+		DWORD	dwBitMasks[iMASK_COLORS];
+		TRUECOLORINFO	TrueColorInfo;
+    } DUMMYUNIONNAME;
+} VIDEOINFO;
+
+typedef struct
+{
+	VIDEOINFOHEADER	hdr;
+	DWORD	dwStartTimeCode;
+	DWORD	cbSequenceHeader;
+	BYTE	bSequenceHeader[1];
+} MPEG1VIDEOINFO;
+
+typedef struct
+{
+	RECT	rcSource;
+	RECT	rcTarget;
+	DWORD	dwActiveWidth;
+	DWORD	dwActiveHeight;
+	REFERENCE_TIME	AvgTimePerFrame;
+} ANALOGVIDEOINFO;
+
 
 /**************************************************************************
  *

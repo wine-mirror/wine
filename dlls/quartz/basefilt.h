@@ -44,6 +44,7 @@ struct CBaseFilterHandlers
 {
 	HRESULT (*pOnActive)( CBaseFilterImpl* pImpl );
 	HRESULT (*pOnInactive)( CBaseFilterImpl* pImpl );
+	HRESULT (*pOnStop)( CBaseFilterImpl* pImpl );
 };
 
 
@@ -54,11 +55,17 @@ HRESULT CBaseFilterImpl_InitIBaseFilter(
 void CBaseFilterImpl_UninitIBaseFilter( CBaseFilterImpl* This );
 
 
+HRESULT CBaseFilterImpl_MediaEventNotify(
+	CBaseFilterImpl* This, long lEvent,LONG_PTR lParam1,LONG_PTR lParam2);
+
+
 /*
  * Implements IPin, IMemInputPin, and IQualityControl. (internal)
  *
  * a base class for implementing IPin.
  */
+
+typedef struct OutputPinAsyncImpl OutputPinAsyncImpl;
 
 typedef struct CPinBaseImpl
 {
@@ -80,7 +87,9 @@ typedef struct CPinBaseImpl
 	CRITICAL_SECTION*	pcsPin;
 	CBaseFilterImpl*	pFilter;
 	IPin*	pPinConnectedTo;
+	IMemInputPin*	pMemInputPinConnectedTo;
 	AM_MEDIA_TYPE*	pmtConn;
+	OutputPinAsyncImpl* pAsyncOut; /* for asynchronous output */
 } CPinBaseImpl;
 
 typedef struct CMemInputPinBaseImpl
@@ -111,6 +120,9 @@ typedef struct CQualityControlPassThruImpl
 
 struct CBasePinHandlers
 {
+	HRESULT (*pOnPreConnect)( CPinBaseImpl* pImpl, IPin* pPin );
+	HRESULT (*pOnPostConnect)( CPinBaseImpl* pImpl, IPin* pPin );
+	HRESULT (*pOnDisconnect)( CPinBaseImpl* pImpl );
 	HRESULT (*pCheckMediaType)( CPinBaseImpl* pImpl, const AM_MEDIA_TYPE* pmt );
 	HRESULT (*pQualityNotify)( CPinBaseImpl* pImpl, IBaseFilter* pFilter, Quality q );
 	HRESULT (*pReceive)( CPinBaseImpl* pImpl, IMediaSample* pSample );
@@ -144,6 +156,42 @@ HRESULT CQualityControlPassThruImpl_InitIQualityControl(
 	CPinBaseImpl* pPin );
 void CQualityControlPassThruImpl_UninitIQualityControl(
 	CQualityControlPassThruImpl* This );
+
+
+HRESULT CPinBaseImpl_SendSample( CPinBaseImpl* This, IMediaSample* pSample );
+HRESULT CPinBaseImpl_SendEndOfStream( CPinBaseImpl* This );
+HRESULT CPinBaseImpl_SendBeginFlush( CPinBaseImpl* This );
+HRESULT CPinBaseImpl_SendEndFlush( CPinBaseImpl* This );
+HRESULT CPinBaseImpl_SendNewSegment( CPinBaseImpl* This, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop, double rate );
+
+
+/***************************************************************************
+ *
+ *	handlers for output pins.
+ *
+ */
+
+HRESULT OutputPinSync_Receive( CPinBaseImpl* pImpl, IMediaSample* pSample );
+HRESULT OutputPinSync_ReceiveCanBlock( CPinBaseImpl* pImpl );
+HRESULT OutputPinSync_EndOfStream( CPinBaseImpl* pImpl );
+HRESULT OutputPinSync_BeginFlush( CPinBaseImpl* pImpl );
+HRESULT OutputPinSync_EndFlush( CPinBaseImpl* pImpl );
+HRESULT OutputPinSync_NewSegment( CPinBaseImpl* pImpl, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop, double rate );
+
+/***************************************************************************
+ *
+ *	handlers for output pins (async).
+ *
+ */
+
+HRESULT OutputPinAsync_OnActive( CPinBaseImpl* pImpl );
+HRESULT OutputPinAsync_OnInactive( CPinBaseImpl* pImpl );
+HRESULT OutputPinAsync_Receive( CPinBaseImpl* pImpl, IMediaSample* pSample );
+HRESULT OutputPinAsync_ReceiveCanBlock( CPinBaseImpl* pImpl );
+HRESULT OutputPinAsync_EndOfStream( CPinBaseImpl* pImpl );
+HRESULT OutputPinAsync_BeginFlush( CPinBaseImpl* pImpl );
+HRESULT OutputPinAsync_EndFlush( CPinBaseImpl* pImpl );
+HRESULT OutputPinAsync_NewSegment( CPinBaseImpl* pImpl, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop, double rate );
 
 
 

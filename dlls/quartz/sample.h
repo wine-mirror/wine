@@ -31,4 +31,18 @@ HRESULT QUARTZ_CreateMemMediaSample(
 void QUARTZ_DestroyMemMediaSample(
 	CMemMediaSample* pSample );
 
+
+HRESULT QUARTZ_IMediaSample_GetProperties(
+	IMediaSample* pSample,
+	AM_SAMPLE2_PROPERTIES* pProp );
+HRESULT QUARTZ_IMediaSample_SetProperties(
+	IMediaSample* pSample,
+	const AM_SAMPLE2_PROPERTIES* pProp );
+HRESULT QUARTZ_IMediaSample_Copy(
+	IMediaSample* pDstSample,
+	IMediaSample* pSrcSample,
+	BOOL bCopyData );
+
+
+
 #endif	/* WINE_DSHOW_SAMPLE_H */

@@ -23,6 +23,13 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "basefilt.h"
 #include "enumunk.h"
 
+
+/***************************************************************************
+ *
+ *	CBaseFilterImpl::IBaseFilter
+ *
+ */
+
 static HRESULT WINAPI
 CBaseFilterImpl_fnQueryInterface(IBaseFilter* iface,REFIID riid,void** ppobj)
 {
@@ -85,10 +92,17 @@ CBaseFilterImpl_fnStop(IBaseFilter* iface)
 	{
 		if ( This->pHandlers->pOnInactive != NULL )
 			hr = This->pHandlers->pOnInactive( This );
+		if ( SUCCEEDED(hr) )
+			This->fstate = State_Paused;
+	}
+	if ( This->fstate == State_Paused )
+	{
+		if ( This->pHandlers->pOnStop != NULL )
+			hr = This->pHandlers->pOnStop( This );
+		if ( SUCCEEDED(hr) )
+			This->fstate = State_Stopped;
 	}
 
-	if ( SUCCEEDED(hr) )
-		This->fstate = State_Stopped;
 	LeaveCriticalSection( &This->csFilter );
 
 	return hr;
@@ -105,16 +119,13 @@ CBaseFilterImpl_fnPause(IBaseFilter* iface)
 	hr = NOERROR;
 
 	EnterCriticalSection( &This->csFilter );
-
-	if ( This->fstate == State_Running )
+	if ( This->fstate != State_Paused )
 	{
 		if ( This->pHandlers->pOnInactive != NULL )
 			hr = This->pHandlers->pOnInactive( This );
+		if ( SUCCEEDED(hr) )
+			This->fstate = State_Paused;
 	}
-
-	if ( SUCCEEDED(hr) )
-		This->fstate = State_Paused;
-
 	LeaveCriticalSection( &This->csFilter );
 
 	TRACE("hr = %08lx\n",hr);
@@ -136,14 +147,20 @@ CBaseFilterImpl_fnRun(IBaseFilter* iface,REFERENCE_TIME rtStart)
 
 	This->rtStart = rtStart;
 
-	if ( This->fstate != State_Running )
+	if ( This->fstate == State_Stopped )
+	{
+		if ( This->pHandlers->pOnInactive != NULL )
+			hr = This->pHandlers->pOnInactive( This );
+		if ( SUCCEEDED(hr) )
+			This->fstate = State_Paused;
+	}
+	if ( This->fstate == State_Paused )
 	{
 		if ( This->pHandlers->pOnActive != NULL )
 			hr = This->pHandlers->pOnActive( This );
+		if ( SUCCEEDED(hr) )
+			This->fstate = State_Running;
 	}
-
-	if ( SUCCEEDED(hr) )
-		This->fstate = State_Running;
 
 	LeaveCriticalSection( &This->csFilter );
 
@@ -366,6 +383,11 @@ CBaseFilterImpl_fnQueryVendorInfo(IBaseFilter* iface,LPWSTR* lpwszVendor)
 }
 
 
+/***************************************************************************
+ *
+ *	construct/destruct CBaseFilterImpl
+ *
+ */
 
 static ICOM_VTABLE(IBaseFilter) ibasefilter =
 {
@@ -491,3 +513,41 @@ void CBaseFilterImpl_UninitIBaseFilter( CBaseFilterImpl* This )
 
 	DeleteCriticalSection( &This->csFilter );
 }
+
+/***************************************************************************
+ *
+ *	CBaseFilterImpl methods
+ *
+ */
+
+HRESULT CBaseFilterImpl_MediaEventNotify(
+	CBaseFilterImpl* This, long lEvent,LONG_PTR lParam1,LONG_PTR lParam2)
+{
+	IMediaEventSink*	pSink = NULL;
+	HRESULT	hr = E_NOTIMPL;
+
+	EnterCriticalSection( &This->csFilter );
+
+	if ( This->pfg == NULL )
+	{
+		hr = E_UNEXPECTED;
+		goto err;
+	}
+
+	hr = IFilterGraph_QueryInterface( This->pfg, &IID_IMediaEventSink, (void**)&pSink );
+	if ( FAILED(hr) )
+		goto err;
+	if ( pSink == NULL )
+	{
+		hr = E_FAIL;
+		goto err;
+	}
+
+	hr = IMediaEventSink_Notify(pSink,lEvent,lParam1,lParam2);
+	IMediaEventSink_Release(pSink);
+err:
+	LeaveCriticalSection( &This->csFilter );
+
+	return hr;
+}
+

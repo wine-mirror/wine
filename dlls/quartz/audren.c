@@ -22,6 +22,7 @@
 #include "control.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
+#include "evcode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -365,6 +366,7 @@ static const CBaseFilterHandlers filterhandlers =
 {
 	CAudioRendererImpl_OnActive, /* pOnActive */
 	CAudioRendererImpl_OnInactive, /* pOnInactive */
+	NULL, /* pOnStop */
 };
 
 /***************************************************************************
@@ -378,7 +380,7 @@ static HRESULT CAudioRendererPinImpl_CheckMediaType( CPinBaseImpl* pImpl, const 
 	CAudioRendererPinImpl_THIS(pImpl,pin);
 	const WAVEFORMATEX* pwfx;
 
-	TRACE( "(%p,%p)\n",This,pmt );
+	TRACE("(%p,%p)\n",This,pmt);
 
 	if ( !IsEqualGUID( &pmt->majortype, &MEDIATYPE_Audio ) )
 		return E_FAIL;
@@ -463,9 +465,11 @@ static HRESULT CAudioRendererPinImpl_EndOfStream( CPinBaseImpl* pImpl )
 	FIXME( "(%p)\n", This );
 
 	This->pRender->m_fInFlush = FALSE;
-	/* IMediaEventSink::Notify(EC_COMPLETE) */
 
-	return NOERROR;
+	/* FIXME - don't notify twice until stopped or seeked. */
+	return CBaseFilterImpl_MediaEventNotify(
+		&This->pRender->basefilter, EC_COMPLETE,
+		(LONG_PTR)S_OK, (LONG_PTR)(IBaseFilter*)(This->pRender) );
 }
 
 static HRESULT CAudioRendererPinImpl_BeginFlush( CPinBaseImpl* pImpl )
@@ -497,11 +501,16 @@ static HRESULT CAudioRendererPinImpl_NewSegment( CPinBaseImpl* pImpl, REFERENCE_
 
 	FIXME( "(%p)\n", This );
 
+	This->pRender->m_fInFlush = FALSE;
+
 	return NOERROR;
 }
 
 static const CBasePinHandlers pinhandlers =
 {
+	NULL, /* pOnPreConnect */
+	NULL, /* pOnPostConnect */
+	NULL, /* pOnDisconnect */
 	CAudioRendererPinImpl_CheckMediaType, /* pCheckMediaType */
 	NULL, /* pQualityNotify */
 	CAudioRendererPinImpl_Receive, /* pReceive */

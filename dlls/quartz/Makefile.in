@@ -10,6 +10,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	amundoc.c \
+	asyncsrc.c \
 	audren.c \
 	basefilt.c \
 	basepin.c \
@@ -34,10 +35,13 @@ C_SRCS = \
 	main.c \
 	memalloc.c \
 	mtype.c \
+	parser.c \
 	regsvr.c \
 	sample.c \
 	seekpass.c \
-	sysclock.c
+	sysclock.c \
+	vidren.c \
+	wavparse.c
 
 @MAKE_DLL_RULES@
 

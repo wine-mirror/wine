@@ -71,8 +71,10 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 
 	if ( !This->bOutput )
 		return E_UNEXPECTED;
-	if ( pPin == NULL || pmt == NULL )
+	if ( pPin == NULL )
 		return E_POINTER;
+
+	TRACE("try to connect to %p\n",pPin);
 
 	EnterCriticalSection( This->pcsPin );
 
@@ -83,6 +85,13 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 	}
 
 	/* FIXME - return fail if running */
+
+	if ( This->pHandlers->pOnPreConnect != NULL )
+	{
+		hr = This->pHandlers->pOnPreConnect(This,pPin);
+		if ( FAILED(hr) )
+			goto err;
+	}
 
 	if ( pmt != NULL )
 	{
@@ -113,9 +122,6 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 		goto err;
 	}
 
-	if ( FAILED(hr) )
-		goto err;
-
 connected:;
 	This->pmtConn = QUARTZ_MediaType_Duplicate( pmt );
 	if ( This->pmtConn == NULL )
@@ -124,11 +130,32 @@ connected:;
 		IPin_Disconnect(pPin);
 		goto err;
 	}
-	hr = S_OK;
 
 	This->pPinConnectedTo = pPin; IPin_AddRef(pPin);
+	hr = IPin_QueryInterface(pPin,&IID_IMemInputPin,(void**)&This->pMemInputPinConnectedTo);
+	if ( FAILED(hr) )
+	{
+		IPin_Disconnect(pPin);
+		goto err;
+	}
+
+	if ( This->pHandlers->pOnPostConnect != NULL )
+	{
+		hr = This->pHandlers->pOnPostConnect(This,pPin);
+		if ( FAILED(hr) )
+		{
+			IPin_Disconnect(pPin);
+			goto err;
+		}
+	}
+
+	hr = S_OK;
 
 err:
+	if ( FAILED(hr) )
+	{
+		IPin_Disconnect(iface);
+	}
 	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
@@ -157,6 +184,12 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 
 	/* FIXME - return fail if running */
 
+	if ( This->pHandlers->pOnPreConnect != NULL )
+	{
+		hr = This->pHandlers->pOnPreConnect(This,pPin);
+		if ( FAILED(hr) )
+			goto err;
+	}
 
 	hr = IPin_QueryAccept(iface,pmt);
 	if ( FAILED(hr) )
@@ -168,10 +201,20 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 		hr = E_OUTOFMEMORY;
 		goto err;
 	}
-	hr = S_OK;
 
+	if ( This->pHandlers->pOnPostConnect != NULL )
+	{
+		hr = This->pHandlers->pOnPostConnect(This,pPin);
+		if ( FAILED(hr) )
+			goto err;
+	}
+
+	hr = S_OK;
 	This->pPinConnectedTo = pPin; IPin_AddRef(pPin);
+
 err:
+	if ( FAILED(hr) )
+		IPin_Disconnect(iface);
 	LeaveCriticalSection( This->pcsPin );
 
 	return hr;
@@ -189,15 +232,22 @@ CPinBaseImpl_fnDisconnect(IPin* iface)
 
 	/* FIXME - return fail if running */
 
+	if ( This->pHandlers->pOnDisconnect != NULL )
+		hr = This->pHandlers->pOnDisconnect(This);
+
+	if ( This->pmtConn != NULL )
+	{
+		QUARTZ_MediaType_Destroy( This->pmtConn );
+		This->pmtConn = NULL;
+	}
+	if ( This->pMemInputPinConnectedTo != NULL )
+	{
+		IMemInputPin_Release(This->pMemInputPinConnectedTo);
+		This->pMemInputPinConnectedTo = NULL;
+	}
 	if ( This->pPinConnectedTo != NULL )
 	{
 		/* FIXME - cleanup */
-
-		if ( This->pmtConn != NULL )
-		{
-			QUARTZ_MediaType_Destroy( This->pmtConn );
-			This->pmtConn = NULL;
-		}
 
 		IPin_Release(This->pPinConnectedTo);
 		This->pPinConnectedTo = NULL;
@@ -517,7 +567,9 @@ HRESULT CPinBaseImpl_InitIPin(
 	This->pcsPin = pcsPin;
 	This->pFilter = pFilter;
 	This->pPinConnectedTo = NULL;
+	This->pMemInputPinConnectedTo = NULL;
 	This->pmtConn = NULL;
+	This->pAsyncOut = NULL;
 
 	This->pwszId = (WCHAR*)QUARTZ_AllocMem( This->cbIdLen );
 	if ( This->pwszId == NULL )
@@ -876,4 +928,464 @@ void CQualityControlPassThruImpl_UninitIQualityControl(
 	CQualityControlPassThruImpl* This )
 {
 }
+
+/***************************************************************************
+ *
+ *	helper methods for output pins.
+ *
+ */
+
+HRESULT CPinBaseImpl_SendSample( CPinBaseImpl* This, IMediaSample* pSample )
+{
+	if ( This->pHandlers->pReceive == NULL )
+		return E_NOTIMPL;
+
+	return This->pHandlers->pReceive( This, pSample );
+}
+
+HRESULT CPinBaseImpl_SendEndOfStream( CPinBaseImpl* This )
+{
+	if ( This->pHandlers->pEndOfStream == NULL )
+		return E_NOTIMPL;
+
+	return This->pHandlers->pEndOfStream( This );
+}
+
+HRESULT CPinBaseImpl_SendBeginFlush( CPinBaseImpl* This )
+{
+	if ( This->pHandlers->pBeginFlush == NULL )
+		return E_NOTIMPL;
+
+	return This->pHandlers->pBeginFlush( This );
+}
+
+HRESULT CPinBaseImpl_SendEndFlush( CPinBaseImpl* This )
+{
+	if ( This->pHandlers->pEndFlush == NULL )
+		return E_NOTIMPL;
+
+	return This->pHandlers->pEndFlush( This );
+}
+
+HRESULT CPinBaseImpl_SendNewSegment( CPinBaseImpl* This, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop, double rate )
+{
+	if ( This->pHandlers->pNewSegment == NULL )
+		return E_NOTIMPL;
+
+	return This->pHandlers->pNewSegment( This, rtStart, rtStop, rate );
+}
+
+
+
+/***************************************************************************
+ *
+ *	handlers for output pins.
+ *
+ */
+
+HRESULT OutputPinSync_Receive( CPinBaseImpl* pImpl, IMediaSample* pSample )
+{
+	if ( pImpl->pMemInputPinConnectedTo == NULL )
+		return E_UNEXPECTED;
+
+	return IMemInputPin_Receive(pImpl->pMemInputPinConnectedTo,pSample);
+}
+
+HRESULT OutputPinSync_ReceiveCanBlock( CPinBaseImpl* pImpl )
+{
+	if ( pImpl->pMemInputPinConnectedTo == NULL )
+		return S_FALSE;
+
+	return IMemInputPin_ReceiveCanBlock(pImpl->pMemInputPinConnectedTo);
+}
+
+HRESULT OutputPinSync_EndOfStream( CPinBaseImpl* pImpl )
+{
+	if ( pImpl->pPinConnectedTo == NULL )
+		return NOERROR;
+
+	return IPin_EndOfStream(pImpl->pPinConnectedTo);
+}
+
+HRESULT OutputPinSync_BeginFlush( CPinBaseImpl* pImpl )
+{
+	if ( pImpl->pPinConnectedTo == NULL )
+		return NOERROR;
+
+	return IPin_BeginFlush(pImpl->pPinConnectedTo);
+}
+
+HRESULT OutputPinSync_EndFlush( CPinBaseImpl* pImpl )
+{
+	if ( pImpl->pPinConnectedTo == NULL )
+		return NOERROR;
+
+	return IPin_EndFlush(pImpl->pPinConnectedTo);
+}
+
+HRESULT OutputPinSync_NewSegment( CPinBaseImpl* pImpl, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop, double rate )
+{
+	if ( pImpl->pPinConnectedTo == NULL )
+		return NOERROR;
+
+	return IPin_NewSegment(pImpl->pPinConnectedTo,rtStart,rtStop,rate);
+}
+
+/***************************************************************************
+ *
+ *	handlers for output pins (async).
+ *
+ */
+
+typedef struct OutputPinTask OutputPinTask;
+
+enum OutputPinTaskType
+{
+	OutTask_ExitThread,
+	OutTask_Receive,
+	OutTask_EndOfStream,
+	OutTask_BeginFlush,
+	OutTask_EndFlush,
+	OutTask_NewSegment,
+};
+
+struct OutputPinTask
+{
+	OutputPinTask* pNext;
+	enum OutputPinTaskType tasktype;
+	IMediaSample* pSample;
+	REFERENCE_TIME rtStart;
+	REFERENCE_TIME rtStop;
+	double rate;
+};
+
+struct OutputPinAsyncImpl
+{
+	HANDLE m_hTaskThread;
+	HANDLE m_hTaskEvent;
+	IPin* m_pPin; /* connected pin */
+	IMemInputPin* m_pMemInputPin; /* connected pin */
+	CRITICAL_SECTION m_csTasks;
+	OutputPinTask* m_pFirst;
+	OutputPinTask* m_pLast;
+	OutputPinTask* m_pTaskExitThread;
+};
+
+static OutputPinTask* OutputPinAsync_AllocTask( enum OutputPinTaskType tasktype )
+{
+	OutputPinTask* pTask;
+
+	pTask = (OutputPinTask*)QUARTZ_AllocMem( sizeof(OutputPinTask) );
+	pTask->pNext = NULL;
+	pTask->tasktype = tasktype;
+	pTask->pSample = NULL;
+
+	return pTask;
+}
+
+static void OutputPinAsync_FreeTask( OutputPinTask* pTask )
+{
+	if ( pTask->pSample != NULL )
+		IMediaSample_Release( pTask->pSample );
+	QUARTZ_FreeMem( pTask );
+}
+
+static void OutputPinAsync_AddTask( OutputPinAsyncImpl* This, OutputPinTask* pTask, BOOL bFirst )
+{
+	EnterCriticalSection( &This->m_csTasks );
+
+	if ( bFirst )
+	{
+		pTask->pNext = This->m_pFirst;
+		This->m_pFirst = pTask;
+		if ( This->m_pLast == NULL )
+			This->m_pLast = pTask;
+	}
+	else
+	{
+		if ( This->m_pLast != NULL )
+			This->m_pLast->pNext = pTask;
+		else
+			This->m_pFirst = pTask;
+		This->m_pLast = pTask;
+	}
+
+	LeaveCriticalSection( &This->m_csTasks );
+
+	SetEvent( This->m_hTaskEvent );
+}
+
+static OutputPinTask* OutputPinAsync_GetNextTask( OutputPinAsyncImpl* This )
+{
+	OutputPinTask* pTask;
+
+	EnterCriticalSection( &This->m_csTasks );
+	pTask = This->m_pFirst;
+	if ( pTask != NULL )
+	{
+		This->m_pFirst = pTask->pNext;
+		if ( This->m_pFirst == NULL )
+			This->m_pLast = NULL;
+		else
+			SetEvent( This->m_hTaskEvent );
+	}
+
+	LeaveCriticalSection( &This->m_csTasks );
+
+	return pTask;
+}
+
+static DWORD WINAPI OutputPinAsync_ThreadEntry( LPVOID pv )
+{
+	OutputPinAsyncImpl* This = ((CPinBaseImpl*)pv)->pAsyncOut;
+	OutputPinTask* pTask;
+	BOOL bLoop = TRUE;
+	BOOL bInFlush = FALSE;
+	HRESULT hr;
+
+	while ( bLoop )
+	{
+		WaitForSingleObject( This->m_hTaskEvent, INFINITE );
+		ResetEvent( This->m_hTaskEvent );
+
+		pTask = OutputPinAsync_GetNextTask( This );
+		if ( pTask == NULL )
+			continue;
+
+		hr = S_OK;
+		switch ( pTask->tasktype )
+		{
+		case OutTask_ExitThread:
+			bLoop = FALSE;
+			break;
+		case OutTask_Receive:
+			if ( !bInFlush )
+				hr = IMemInputPin_Receive( This->m_pMemInputPin, pTask->pSample );
+			break;
+		case OutTask_EndOfStream:
+			hr = IPin_EndOfStream( This->m_pPin );
+			break;
+		case OutTask_BeginFlush:
+			bInFlush = TRUE;
+			hr = IPin_BeginFlush( This->m_pPin );
+			break;
+		case OutTask_EndFlush:
+			bInFlush = FALSE;
+			hr = IPin_EndFlush( This->m_pPin );
+			break;
+		case OutTask_NewSegment:
+			hr = IPin_NewSegment( This->m_pPin, pTask->rtStart, pTask->rtStop, pTask->rate );
+			break;
+		default:
+			ERR( "unexpected task type %d.\n", pTask->tasktype );
+			bLoop = FALSE;
+			break;
+		}
+
+		OutputPinAsync_FreeTask( pTask );
+
+		if ( FAILED(hr) )
+		{
+			ERR( "hresult %08lx\n", hr );
+			bLoop = FALSE;
+		}
+	}
+
+	return 0;
+}
+
+HRESULT OutputPinAsync_OnActive( CPinBaseImpl* pImpl )
+{
+	HRESULT hr;
+	DWORD dwThreadId;
+
+	FIXME("(%p)\n",pImpl);
+
+	if ( pImpl->pMemInputPinConnectedTo == NULL )
+		return NOERROR;
+
+	pImpl->pAsyncOut = (OutputPinAsyncImpl*)
+		QUARTZ_AllocMem( sizeof( OutputPinAsyncImpl ) );
+	if ( pImpl->pAsyncOut == NULL )
+		return E_OUTOFMEMORY;
+
+	InitializeCriticalSection( &pImpl->pAsyncOut->m_csTasks );
+	pImpl->pAsyncOut->m_hTaskThread = (HANDLE)NULL;
+	pImpl->pAsyncOut->m_hTaskEvent = (HANDLE)NULL;
+	pImpl->pAsyncOut->m_pFirst = NULL;
+	pImpl->pAsyncOut->m_pLast = NULL;
+	pImpl->pAsyncOut->m_pTaskExitThread = NULL;
+	pImpl->pAsyncOut->m_pPin = pImpl->pPinConnectedTo;
+	pImpl->pAsyncOut->m_pMemInputPin = pImpl->pMemInputPinConnectedTo;
+
+	pImpl->pAsyncOut->m_hTaskEvent =
+		CreateEventA( NULL, TRUE, FALSE, NULL );
+	if ( pImpl->pAsyncOut->m_hTaskEvent == (HANDLE)NULL )
+	{
+		hr = E_FAIL;
+		goto err;
+	}
+
+	pImpl->pAsyncOut->m_pTaskExitThread =
+		OutputPinAsync_AllocTask( OutTask_ExitThread );
+	if ( pImpl->pAsyncOut->m_pTaskExitThread == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto err;
+	}
+
+	pImpl->pAsyncOut->m_hTaskThread = CreateThread(
+		NULL, 0, OutputPinAsync_ThreadEntry, pImpl,
+		0, &dwThreadId );
+	if ( pImpl->pAsyncOut->m_hTaskThread == (HANDLE)NULL )
+	{
+		hr = E_FAIL;
+		goto err;
+	}
+
+	return NOERROR;
+err:
+	OutputPinAsync_OnInactive( pImpl );
+	return hr;
+}
+
+HRESULT OutputPinAsync_OnInactive( CPinBaseImpl* pImpl )
+{
+	OutputPinTask* pTask;
+
+	FIXME("(%p)\n",pImpl);
+
+	if ( pImpl->pAsyncOut == NULL )
+		return NOERROR;
+
+	if ( pImpl->pAsyncOut->m_pTaskExitThread != NULL )
+	{
+		OutputPinAsync_AddTask( pImpl->pAsyncOut, pImpl->pAsyncOut->m_pTaskExitThread, TRUE );
+		pImpl->pAsyncOut->m_pTaskExitThread = NULL;
+	}
+
+	if ( pImpl->pAsyncOut->m_hTaskThread != (HANDLE)NULL )
+	{
+		WaitForSingleObject( pImpl->pAsyncOut->m_hTaskThread, INFINITE );
+		CloseHandle( pImpl->pAsyncOut->m_hTaskThread );
+	}
+	if ( pImpl->pAsyncOut->m_hTaskEvent != (HANDLE)NULL )
+		CloseHandle( pImpl->pAsyncOut->m_hTaskEvent );
+
+	/* release all tasks. */
+	while ( 1 )
+	{
+		pTask = OutputPinAsync_GetNextTask( pImpl->pAsyncOut );
+		if ( pTask == NULL )
+			break;
+		OutputPinAsync_FreeTask( pTask );
+	}
+
+	DeleteCriticalSection( &pImpl->pAsyncOut->m_csTasks );
+
+	QUARTZ_FreeMem( pImpl->pAsyncOut );
+	pImpl->pAsyncOut = NULL;
+
+	return NOERROR;
+}
+
+HRESULT OutputPinAsync_Receive( CPinBaseImpl* pImpl, IMediaSample* pSample )
+{
+	OutputPinAsyncImpl* This = pImpl->pAsyncOut;
+	OutputPinTask* pTask;
+
+	TRACE("(%p,%p)\n",pImpl,pSample);
+
+	if ( This == NULL )
+		return NOERROR;
+
+	pTask = OutputPinAsync_AllocTask( OutTask_Receive );
+	if ( pTask == NULL )
+		return E_OUTOFMEMORY;
+	pTask->pSample = pSample; IMediaSample_AddRef( pSample );
+	OutputPinAsync_AddTask( pImpl->pAsyncOut, pTask, FALSE );
+
+	return NOERROR;
+}
+
+HRESULT OutputPinAsync_ReceiveCanBlock( CPinBaseImpl* pImpl )
+{
+	return S_FALSE;
+}
+
+HRESULT OutputPinAsync_EndOfStream( CPinBaseImpl* pImpl )
+{
+	OutputPinAsyncImpl* This = pImpl->pAsyncOut;
+	OutputPinTask* pTask;
+
+	TRACE("(%p)\n",pImpl);
+
+	if ( This == NULL )
+		return NOERROR;
+
+	pTask = OutputPinAsync_AllocTask( OutTask_EndOfStream );
+	if ( pTask == NULL )
+		return E_OUTOFMEMORY;
+	OutputPinAsync_AddTask( pImpl->pAsyncOut, pTask, FALSE );
+
+	return NOERROR;
+}
+
+HRESULT OutputPinAsync_BeginFlush( CPinBaseImpl* pImpl )
+{
+	OutputPinAsyncImpl* This = pImpl->pAsyncOut;
+	OutputPinTask* pTask;
+
+	TRACE("(%p)\n",pImpl);
+
+	if ( This == NULL )
+		return NOERROR;
+
+	pTask = OutputPinAsync_AllocTask( OutTask_BeginFlush );
+	if ( pTask == NULL )
+		return E_OUTOFMEMORY;
+	OutputPinAsync_AddTask( pImpl->pAsyncOut, pTask, TRUE );
+
+	return NOERROR;
+}
+
+HRESULT OutputPinAsync_EndFlush( CPinBaseImpl* pImpl )
+{
+	OutputPinAsyncImpl* This = pImpl->pAsyncOut;
+	OutputPinTask* pTask;
+
+	TRACE("(%p)\n",pImpl);
+
+	if ( This == NULL )
+		return NOERROR;
+
+	pTask = OutputPinAsync_AllocTask( OutTask_EndFlush );
+	if ( pTask == NULL )
+		return E_OUTOFMEMORY;
+	OutputPinAsync_AddTask( pImpl->pAsyncOut, pTask, FALSE );
+
+	return NOERROR;
+}
+
+HRESULT OutputPinAsync_NewSegment( CPinBaseImpl* pImpl, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop, double rate )
+{
+	OutputPinAsyncImpl* This = pImpl->pAsyncOut;
+	OutputPinTask* pTask;
+
+	TRACE("(%p)\n",pImpl);
+
+	if ( This == NULL )
+		return NOERROR;
+
+	pTask = OutputPinAsync_AllocTask( OutTask_NewSegment );
+	if ( pTask == NULL )
+		return E_OUTOFMEMORY;
+	pTask->rtStart = rtStart;
+	pTask->rtStop = rtStop;
+	pTask->rate = rate;
+	OutputPinAsync_AddTask( pImpl->pAsyncOut, pTask, FALSE );
+
+	return NOERROR;
+}
+
 

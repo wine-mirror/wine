@@ -73,10 +73,19 @@ static HRESULT WINAPI
 IGraphConfig_fnReconfigure(IGraphConfig* iface,IGraphConfigCallback* pCallback,PVOID pvParam,DWORD dwFlags,HANDLE hAbort)
 {
 	CFilterGraph_THIS(iface,grphconf);
+	HRESULT hr;
 
-	FIXME("(%p)->() stub!\n",This);
+	FIXME("(%p)->(%p,%p,%08lx,%08x) stub!\n",This,pCallback,pvParam,dwFlags,hAbort);
 
-	return E_NOTIMPL;
+	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csGraphState );
+
+	hr = IGraphConfigCallback_Reconfigure(pCallback,pvParam,dwFlags);
+
+	LeaveCriticalSection( &This->m_csGraphState );
+	QUARTZ_CompList_Unlock( This->m_pFilterList );
+
+	return hr;
 }
 
 static HRESULT WINAPI
