@@ -2126,7 +2126,7 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
                 default:
                         commerror = IE_BAUDRATE;
                         close( fd );
-			ERR("baudrate %d \n",lpdcb->BaudRate);
+			ERR("baudrate %ld\n",lpdcb->BaudRate);
                         return FALSE;
         }
         port.c_ispeed = port.c_ospeed;
