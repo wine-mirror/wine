@@ -615,7 +615,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
     if (load_addr == 0) 
     {
         /* We need to perform base relocations */
-        FIXME("We need to perform base relocations for %s\n", filename);
+        WARN("We need to perform base relocations for %s\n", filename);
 	dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_BASERELOC;
         if (dir->Size)
             reloc = dir->VirtualAddress;
