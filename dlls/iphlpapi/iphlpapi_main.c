@@ -602,7 +602,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
 
             memset(pAdapterInfo, 0, size);
             if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-             "\\Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ,
+             "Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ,
              &hKey) == ERROR_SUCCESS) {
               DWORD size = sizeof(primaryWINS.String);
               unsigned long addr;
@@ -1042,7 +1042,7 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
           ret = ERROR_INSUFFICIENT_BUFFER;
         }
         else {
-          DWORD ndx;
+          DWORD ndx, bcast;
 
           pIpAddrTable->dwNumEntries = 0;
           for (ndx = 0; ndx < table->numIndexes; ndx++) {
@@ -1051,8 +1051,13 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
              getInterfaceIPAddrByIndex(table->indexes[ndx]);
             pIpAddrTable->table[ndx].dwMask =
              getInterfaceMaskByIndex(table->indexes[ndx]);
+            /* the dwBCastAddr member isn't the broadcast address, it indicates
+             * whether the interface uses the 1's broadcast address (1) or the
+             * 0's broadcast address (0).
+             */
+            bcast = getInterfaceBCastAddrByIndex(table->indexes[ndx]);
             pIpAddrTable->table[ndx].dwBCastAddr =
-             getInterfaceBCastAddrByIndex(table->indexes[ndx]);
+             (bcast & pIpAddrTable->table[ndx].dwMask) ? 1 : 0;
             /* FIXME: hardcoded reasm size, not sure where to get it */
             pIpAddrTable->table[ndx].dwReasmSize = 65535;
             pIpAddrTable->table[ndx].unused1 = 0;

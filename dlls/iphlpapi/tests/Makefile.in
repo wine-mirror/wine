@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = iphlpapi.dll
+IMPORTS   = iphlpapi
+
+CTESTS = \
+	iphlpapi.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
