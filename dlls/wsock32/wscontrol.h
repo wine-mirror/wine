@@ -58,51 +58,11 @@ typedef struct TDIObjectID
    unsigned long toi_id;
 } TDIObjectID;
 
-#ifdef if_type
-#undef if_type
-#endif
-#ifdef if_mtu
-#undef if_mtu
-#endif
-#ifdef if_lastchange
-#undef if_lastchange
-#endif
-
-#define	MAX_PHYSADDR_SIZE    8
-#define	MAX_IFDESCR_LEN      256
-typedef struct IFEntry
-{
-   unsigned long if_index;
-   unsigned long if_type;
-   unsigned long if_mtu;
-   unsigned long if_speed;
-   unsigned long if_physaddrlen;
-   unsigned char if_physaddr[MAX_PHYSADDR_SIZE];
-   unsigned long if_adminstatus;
-   unsigned long if_operstatus;
-   unsigned long if_lastchange;
-   unsigned long if_inoctets;
-   unsigned long if_inucastpkts;
-   unsigned long if_innucastpkts;
-   unsigned long if_indiscards;
-   unsigned long if_inerrors;
-   unsigned long if_inunknownprotos;
-   unsigned long if_outoctets;
-   unsigned long if_outucastpkts;
-   unsigned long if_outnucastpkts;
-   unsigned long if_outdiscards;
-   unsigned long if_outerrors;
-   unsigned long if_outqlen;
-   unsigned long if_descrlen;
-   unsigned char if_descr[1];
-} IFEntry;
-
-
 /* FIXME: real name and definition of this struct that contains
  * an IP route table entry is unknown */
 typedef struct IPRouteEntry {
    unsigned long ire_addr;
-   unsigned long ire_index;  /*matches if_index in IFEntry and iae_index in IPAddrEntry */
+   unsigned long ire_index;  /*matches interface index used by iphlpapi */
    unsigned long ire_metric;
    unsigned long ire_option4;
    unsigned long ire_option5;
