@@ -49,4 +49,15 @@ typedef struct _DMOMediaType
     BYTE *pbFormat;
 } DMO_MEDIA_TYPE;
 
+#define INTERFACE IEnumDMO
+#define IEnumDMO_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(Next)(THIS_ DWORD  cItemsToFetch, CLSID * pCLSID, \
+        WCHAR ** Names, DWORD *  pcItemsFectched) PURE; \
+    STDMETHOD(Skip)(THIS_ DWORD  cItemsToSkip) PURE; \
+    STDMETHOD(Reset)(THIS) PURE; \
+    STDMETHOD(Clone)(THIS_ IEnumDMO ** ppEnum) PURE;
+ICOM_DEFINE(IEnumDMO,IUnknown)
+#undef INTERFACE
+
 #endif /* __mediaobj_h__ */
