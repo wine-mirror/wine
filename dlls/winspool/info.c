@@ -280,11 +280,11 @@ static void FREE_PRINTER_INFO_2W(HANDLE heap, LPPRINTER_INFO_2W piW)
  *              DeviceCapabilitiesA    [WINSPOOL.150 & WINSPOOL.151]
  *
  */
-INT WINAPI DeviceCapabilitiesA(LPCSTR pDeivce,LPCSTR pPort, WORD cap,
+INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort, WORD cap,
 			       LPSTR pOutput, LPDEVMODEA lpdm)
 {
     INT ret;
-    ret = GDI_CallDeviceCapabilities16(pDeivce, pPort, cap, pOutput, lpdm);
+    ret = GDI_CallDeviceCapabilities16(pDevice, pPort, cap, pOutput, lpdm);
 
     /* If DC_PAPERSIZE map POINT16s to POINTs */
     if(ret != -1 && cap == DC_PAPERSIZE && pOutput) {

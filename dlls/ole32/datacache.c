@@ -932,7 +932,7 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
    */
   if ((*ppvObject)==0)
   {
-    WARN( "() : asking for un supported interface %s\n", debugstr_guid(riid));
+    WARN( "() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
   

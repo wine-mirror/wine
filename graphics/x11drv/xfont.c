@@ -1428,7 +1428,7 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
 	pfa->faAlias = pfa->faTypeFace + j;
 	lstrcpyA( pfa->faAlias, lpAlias );
 
-        TRACE("added alias '%s' for %s\n", lpAlias, lpTypeFace );
+        TRACE("added alias '%s' for '%s'\n", lpAlias, lpTypeFace );
 
 	return pfa;
     }
@@ -1485,7 +1485,7 @@ static void XFONT_LoadAlias(const LFD* lfd, LPCSTR lpAlias, BOOL bSubst)
 		prev = pfa;
 	    }
 						
-	    TRACE("\tsubstituted '%s' with %s\n", frMatch->lfFaceName, lpAlias );
+	    TRACE("\tsubstituted '%s' with '%s'\n", frMatch->lfFaceName, lpAlias );
 		
 	    lstrcpynA( frMatch->lfFaceName, lpAlias, LF_FACESIZE );
 	    frMatch->fr_flags |= FR_NAMESET;
@@ -1507,7 +1507,7 @@ static void XFONT_LoadAlias(const LFD* lfd, LPCSTR lpAlias, BOOL bSubst)
  *
  * INIT ONLY 
  *
- * Create font aliases for some standard windows fonts using users
+ * Create font aliases for some standard windows fonts using user's
  * default choice of (sans-)serif fonts
  *
  * Read user-defined aliases from wine.conf. Format is as follows
@@ -1519,7 +1519,7 @@ static void XFONT_LoadAlias(const LFD* lfd, LPCSTR lpAlias, BOOL bSubst)
  *   Alias1 = Times New Roman, -bitstream-courier-, 1
  *   ...
  *
- * Note that from 081797 and on we have built-in alias templates that take
+ * Note that from 970817 and on we have built-in alias templates that take
  * care of the necessary Windows typefaces.
  */
 typedef struct
@@ -1626,7 +1626,7 @@ static LPCSTR XFONT_UnAlias(char* font)
  *
  * Caller should check if the font resource is in use. If it is it should
  * set FR_REMOVED flag to delay removal until the resource is not in use
- * anymore.
+ * any more.
  */
 void XFONT_RemoveFontResource( fontResource** ppfr )
 {
@@ -1719,7 +1719,7 @@ static void XFONT_LoadIgnores(void)
  *           XFONT_UserMetricsCache
  * 
  * Returns expanded name for the cachedmetrics file.
- * Now it also appends the current value of the $DISPLAY varaible.
+ * Now it also appends the current value of the $DISPLAY variable.
  */
 static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
 {

@@ -60,9 +60,9 @@ LPWORKREQUEST lpWorkQueueTail;
  * WININET_LibMain [Internal] Initializes the internal 'WININET.DLL'.
  *
  * PARAMS
- *     hinstDLL    [I] handle to the 'dlls' instance
+ *     hinstDLL    [I] handle to the DLL's instance
  *     fdwReason   [I]
- *     lpvReserved [I] reserverd, must be NULL
+ *     lpvReserved [I] reserved, must be NULL
  *
  * RETURNS
  *     Success: TRUE

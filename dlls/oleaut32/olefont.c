@@ -336,7 +336,7 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
  * OLEFontImpl_Construct
  *
  * This method is called by the Release method when the reference
- * count goes doen to 0. it will free all resources used by
+ * count goes down to 0. It will free all resources used by
  * this object.
  */
 static void OLEFontImpl_Destroy(OLEFontImpl* fontDesc)

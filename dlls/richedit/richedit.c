@@ -34,9 +34,9 @@ HMODULE RICHED32_hModule = 0;
  * RICHED32_LibMain [Internal] Initializes the internal 'RICHED32.DLL'.
  *
  * PARAMS
- *     hinstDLL    [I] handle to the 'dlls' instance
+ *     hinstDLL    [I] handle to the DLL's instance
  *     fdwReason   [I]
- *     lpvReserved [I] reserverd, must be NULL
+ *     lpvReserved [I] reserved, must be NULL
  *
  * RETURNS
  *     Success: TRUE

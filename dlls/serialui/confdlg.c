@@ -1,6 +1,6 @@
 /*		
  * This DLL contains the user interface for the serial driver.
- *    a Dialog box to configure the specified COMM port
+ *    a dialog box to configure the specified COMM port
  *    an interface to the control panel (??)
  *    functions to load and save default configuration
  *
@@ -36,9 +36,9 @@ DWORD SERIALUI_dwProcessesAttached = 0;
  * SERIALUI_LibMain [Internal] Initializes the internal 'SERIALUI.DLL'.
  *
  * PARAMS
- *     hinstDLL    [I] handle to the 'dlls' instance
+ *     hinstDLL    [I] handle to the DLL's instance
  *     fdwReason   [I]
- *     lpvReserved [I] reserverd, must be NULL
+ *     lpvReserved [I] reserved, must be NULL
  *
  * RETURNS
  *     Success: TRUE
@@ -532,7 +532,6 @@ BOOL WINAPI SERIALUI_GetDefaultCommConfig(
         lpCommConfig->dcb.fParity = FALSE;
         lpCommConfig->dcb.ByteSize = 8;
         lpCommConfig->dcb.Parity = NOPARITY;
-        lpCommConfig->dcb.StopBits = ONESTOPBIT;
         lpCommConfig->dcb.StopBits = ONESTOPBIT;
         return TRUE;
     }

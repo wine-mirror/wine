@@ -369,7 +369,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
     FarSetOwner16( pTask->pdb.environment, pTask->hPDB );
 
-      /* Default DTA overwrites command-line */
+      /* Default DTA overwrites command line */
 
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
@@ -723,7 +723,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
      * dx     cmdShow parameter
      * si     instance handle of the previous instance
      * di     instance handle of the new task
-     * es:bx  pointer to command-line inside PSP
+     * es:bx  pointer to command line inside PSP
      *
      * 0 (=%bp) is pushed on the stack
      */
@@ -1117,7 +1117,8 @@ BOOL16 WINAPI GetCodeInfo16( FARPROC16 proc, SEGINFO *segInfo )
  */
 BOOL16 WINAPI DefineHandleTable16( WORD wOffset )
 {
-    return TRUE;  /* FIXME */
+    FIXME("(%04x): stub ?\n", wOffset);
+    return TRUE;
 }
 
 

@@ -1153,7 +1153,7 @@ BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
 
     /* workaround: if hInstance=NULL you expect to get the system classes
     but this classes (as example from comctl32.dll SysListView) won't be
-    registred with hInstance=NULL in WINE because of the late loading
+    registered with hInstance=NULL in WINE because of the late loading
     of this dll. fixes file dialogs in WinWord95 (jsch)*/
 
     if (!(atom=GlobalFindAtomA(name)) || !(classPtr=CLASS_FindClassByAtom(atom,hInstance)))

@@ -347,14 +347,14 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 	if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
         {
 	    TRACE("Write access failed for file '%s', trying without "
-		  "write access", filename);
+		  "write access\n", filename);
             access &= ~GENERIC_WRITE;
             goto restart;
         }
     }
 
     if (req->handle == -1)
-	WARN("Unable to create file '%s' (GLE %ld)", filename,
+	WARN("Unable to create file '%s' (GLE %ld)\n", filename,
 	     GetLastError());
 
     return req->handle;
@@ -1130,7 +1130,7 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile,LPOVERLAPPED lpOverlapped,
                                 LPDWORD lpNumberOfBytesTransferred,
                                 BOOL bWait)
 {
-    /* Since all i/o is currently synchronuos,
+    /* Since all i/o is currently synchronous,
      * return true, assuming ReadFile/WriteFile
      * have completed the operation */
     FIXME("NO Asynch I/O, assuming Read/Write succeeded\n" );
