@@ -797,7 +797,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(hhook, nCode, wParam, lParam);
 }
 
-static void test_shell_window()
+static void test_shell_window(void)
 {
     BOOL ret;
     DWORD error;
@@ -806,6 +806,12 @@ static void test_shell_window()
     BOOL (WINAPI*SetShellWindowEx)(HWND, HWND);
     HWND hwnd1, hwnd2, hwnd3, hwnd4, hwnd5;
     HWND shellWindow, nextWnd;
+
+    if (!GetWindowLongW(GetDesktopWindow(), GWL_STYLE))
+    {
+        trace("Skipping shell window test on Win9x\n");
+        return;
+    }
 
     shellWindow = GetShellWindow();
     hinst = GetModuleHandle(0);
@@ -817,12 +823,23 @@ static void test_shell_window()
     trace("previous shell window: %p\n", shellWindow);
 
     if (shellWindow) {
+        DWORD pid;
+        HANDLE hProcess;
+
         ret = DestroyWindow(shellWindow);
         error = GetLastError();
 
         ok(!ret, "DestroyWindow(shellWindow)\n");
-        /* passes on Win XP, but not on Win98
-        ok(error==ERROR_ACCESS_DENIED, "ERROR_ACCESS_DENIED after DestroyWindow(shellWindow)\n"); */
+        /* passes on Win XP, but not on Win98 */
+        ok(error==ERROR_ACCESS_DENIED, "ERROR_ACCESS_DENIED after DestroyWindow(shellWindow)\n");
+
+        /* close old shell instance */
+        GetWindowThreadProcessId(shellWindow, &pid);
+        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+        ret = TerminateProcess(hProcess, 0);
+        ok(ret, "termination of previous shell process failed: GetLastError()=%ld\n", GetLastError());
+        WaitForSingleObject(hProcess, INFINITE);    /* wait for termination */
+        CloseHandle(hProcess);
     }
 
     hwnd1 = CreateWindowEx(0, TEXT("#32770"), TEXT("TEST1"), WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 100, 100, 300, 200, 0, 0, hinst, 0);
@@ -1988,15 +2005,6 @@ static void test_capture_3(HWND hwnd1, HWND hwnd2)
 static void test_keyboard_input(HWND hwnd)
 {
     MSG msg;
-    INPUT input;
-    FARPROC pSendInput = GetProcAddress(GetModuleHandleA("user32.dll"), "SendInput");
-
-    input.type = INPUT_KEYBOARD;
-    input.u.ki.wVk = VK_SPACE;
-    input.u.ki.wScan = 0;
-    input.u.ki.dwFlags = 0;
-    input.u.ki.time = 0;
-    input.u.ki.dwExtraInfo = 0;
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
@@ -2022,13 +2030,10 @@ static void test_keyboard_input(HWND hwnd)
 
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
-    if (pSendInput)
-    {
-	ok(pSendInput(1, &input, sizeof(input)) == 1, "SendInput failed\n");
-	ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
-	ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-	ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
-    }
+    keybd_event(VK_SPACE, 0, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_KEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
 
     SetFocus(0);
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
@@ -2049,13 +2054,10 @@ static void test_keyboard_input(HWND hwnd)
 
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
-    if (pSendInput)
-    {
-	ok(pSendInput(1, &input, sizeof(input)) == 1, "SendInput failed\n");
-	ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
-	ok(msg.hwnd == hwnd && msg.message == WM_SYSKEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
-	ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
-    }
+    keybd_event(VK_SPACE, 0, 0, 0);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_SYSKEYDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "message %04x available\n", msg.message);
 }
 
 START_TEST(win)
