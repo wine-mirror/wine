@@ -770,58 +770,49 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     LPSTR lpstrFileSpec;
-    char lpstrCurrentDir[MAX_PATH]="";
+    int reqSize;
+    char lpstrPath[MAX_PATH];
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
     if(!fodInfos)
-        return TRUE;
+        return -1;
     switch(uMsg)
     {
         case CDM_GETFILEPATH:
-        { 
-            char lpstrPathSpec[MAX_PATH]="";
-            GetDlgItemTextA(hwnd,IDC_FILENAME,(LPSTR)lParam, (int)wParam);
-            lpstrFileSpec = (LPSTR)COMDLG32_PathFindFilenameA((LPSTR)lParam);
-            strcpy(lpstrPathSpec,(LPSTR)lParam);
-            COMDLG32_PathRemoveFileSpecA(lpstrPathSpec);
-            if(!lpstrPathSpec[0])
-                COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,
-                lpstrPathSpec);
-            strcat(lpstrPathSpec,"\\");
-            strcat(lpstrPathSpec,(LPSTR)lParam);
-            strcpy((LPSTR)lParam,(LPSTR)lpstrPathSpec);
-        }
-            return TRUE;
-        case CDM_GETFOLDERPATH:
-            if(lParam)
             {
-                if(fodInfos)
-                {
-                    COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,
-                    lpstrCurrentDir);
-                    strncpy((LPSTR)lParam,lpstrCurrentDir,(int)wParam);
+            GetDlgItemTextA(hwnd,IDC_FILENAME,lpstrPath, sizeof(lpstrPath));
+            lpstrFileSpec = (LPSTR)COMDLG32_PathFindFilenameA(lpstrPath);
+            if (lpstrFileSpec==lpstrPath) {
+                char lpstrCurrentDir[MAX_PATH];
+                /* Prepend the current path */
+                COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrCurrentDir);
+                if ((LPSTR)lParam!=NULL)
+                    wsnprintfA((LPSTR)lParam,(int)wParam,"%s\\%s",lpstrCurrentDir,lpstrPath);
+                reqSize=strlen(lpstrCurrentDir)+1+strlen(lpstrPath)+1;
+            } else {
+                lstrcpynA((LPSTR)lParam,(LPSTR)lpstrPath,(int)wParam);
+                reqSize=strlen(lpstrPath);
                 }
-                else
-                *((LPSTR)lParam)=0;
             }
-            return TRUE;
+            /* return the required buffer size */
+            return reqSize;
+        case CDM_GETFOLDERPATH:
+            COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
+            if ((LPSTR)lParam!=NULL)
+                lstrcpynA((LPSTR)lParam,lpstrPath,(int)wParam);
+            return strlen(lpstrPath);
     case CDM_GETSPEC:
-            if(lParam)
-            {
-                GetDlgItemTextA(hwnd,IDC_FILENAME,(LPSTR)lParam, (int)wParam);
-                lpstrFileSpec = (LPSTR)COMDLG32_PathFindFilenameA((LPSTR)lParam);
-                if(lpstrFileSpec)
-                   strcpy((LPSTR)lParam, lpstrFileSpec);
-                else
-                    *((LPSTR)lParam)=0;
-            }
-            return TRUE;
+            reqSize=GetDlgItemTextA(hwnd,IDC_FILENAME,lpstrPath, sizeof(lpstrPath));
+            lpstrFileSpec = (LPSTR)COMDLG32_PathFindFilenameA(lpstrPath);
+            if ((LPSTR)lParam!=NULL)
+                lstrcpynA((LPSTR)lParam, lpstrFileSpec, (int)wParam);
+            return strlen(lpstrFileSpec);
         case CDM_HIDECONTROL:
         case CDM_SETCONTROLTEXT:
         case CDM_SETDEFEXT:
         FIXME("CDM_HIDECONTROL,CDM_SETCONTROLTEXT,CDM_SETDEFEXT not implemented\n");
         return TRUE;
     }
-    return TRUE;
+    return -1;
 }
  
 /***********************************************************************
@@ -1147,13 +1138,10 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       	  /* Add drive spec  \TEXT => C:\TEXT */
        	  case '\\':
        	      {
-       		  INT iCopy = 2;
-       		  char lpstrTmp[MAX_PATH] = "";
-       		  if(!strlen(lpstrPathSpec))
-       		      iCopy = 3;
-       		  strncpy(lpstrTmp,lpstrCurrentDir,iCopy);
-       		  strcat(lpstrTmp,lpstrPathSpec);
-       		  strcpy(lpstrPathSpec,lpstrTmp);
+              int lenPathSpec=strlen(lpstrPathSpec);
+              INT iCopy = (lenPathSpec!=0?2:3);
+              memmove(lpstrPathSpec+iCopy,lpstrPathSpec,lenPathSpec);
+       	      strncpy(lpstrPathSpec,lpstrCurrentDir,iCopy);
        	      }
        	      break;           
           /* Go to parent ..\TEXT */ 
@@ -1165,7 +1153,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
        		  iSize = lpstrTmp - lpstrCurrentDir;
        		  strncpy(lpstrTmp2,lpstrCurrentDir,iSize + 1);
 		  if(strlen(lpstrSpecifiedByUser) <= 3)
-		      strcpy(lpstrFileSpec,"");
+                  *lpstrFileSpec='\0';
        		  if(strcmp(lpstrPathSpec,".."))
        		      strcat(lpstrTmp2,&lpstrPathSpec[3]);
 		  strcpy(lpstrPathSpec,lpstrTmp2);
@@ -1634,11 +1622,11 @@ static BOOL FILEDLG95_SHELL_NewFolder(HWND hwnd)
     {
       char lpstrText[128+MAX_PATH];
       char lpstrTempText[128];
-      char lpstrCaption[32];
+      char lpstrCaption[256];
       
       /* Cannot Create folder because of permissions */
-      LoadStringA(COMMDLG_hInstance32, IDS_CREATEFOLDER_DENIED, lpstrTempText, 256);
-      LoadStringA(COMMDLG_hInstance32, IDS_FILEOPEN_CAPTION,    lpstrCaption,  256);
+      LoadStringA(COMMDLG_hInstance32, IDS_CREATEFOLDER_DENIED, lpstrTempText, sizeof(lpstrTempText));
+      LoadStringA(COMMDLG_hInstance32, IDS_FILEOPEN_CAPTION,    lpstrCaption,  sizeof(lpstrCaption));
       sprintf(lpstrText,lpstrTempText, lpstrDirName);
       MessageBoxA(hwnd,lpstrText, lpstrCaption, MB_OK | MB_ICONEXCLAMATION);
     }
