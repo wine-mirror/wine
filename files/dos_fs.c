@@ -945,6 +945,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 	    tmpshortpath[sp] = '\\';
 	    sp++;
         }
+        tmpshortpath[sp]=0;/*terminate string*/
 	lp++;
 	continue;
       }
