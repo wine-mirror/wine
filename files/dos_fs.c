@@ -723,7 +723,10 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
     }
     SERVER_END_REQ;
 
-    TRACE("return %08X\n", ret );
+    if(!ret)
+        ERR("Couldn't open %s ! (check permissions)\n",devname);
+    else
+        TRACE("return %08X\n", ret );
     return ret;
 }
 
@@ -780,8 +783,7 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access )
 
                 if( (handle=DOSFS_CreateCommPort(DOSFS_Devices[i].name,access)) )
                     return handle;
-
-		FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
+                FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return 0;
 	    }
         }
