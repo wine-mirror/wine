@@ -31,7 +31,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "stackframe.h"
-#include "selectors.h"
 #include "controls.h"
 #include "heap.h"
 #include "struct32.h"
@@ -45,7 +44,7 @@
 
 WINE_DECLARE_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(win);
+WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 #include "pshpack1.h"
 
@@ -110,24 +109,60 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
                                                UINT msg, WPARAM wParam,
                                                LPARAM lParam );
 
-static HANDLE WinProcHeap;
-static WORD WinProcSel;
+#define MAX_WINPROCS  (0x10000 / sizeof(WINDOWPROC))
 
+static WINDOWPROC winproc_array[MAX_WINPROCS];
+static WINDOWPROC *winproc_first_free;
+static UINT winproc_used;
+static CRITICAL_SECTION winproc_cs = CRITICAL_SECTION_INIT("winproc_cs");
 
-/**********************************************************************
- *	     WINPROC_Init
- */
-BOOL WINPROC_Init(void)
+/* allocate a window procedure from the global array */
+static WINDOWPROC *alloc_winproc(void)
 {
-    WinProcHeap = HeapCreate( 0, 0x10000, 0x10000 );
-    WinProcSel = SELECTOR_AllocBlock( (void *)WinProcHeap, 0x10000,
-                                      WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
-    if (!WinProcHeap || !WinProcSel)
+    WINDOWPROC *ret = NULL;
+
+    EnterCriticalSection( &winproc_cs );
+    if ((ret = winproc_first_free))
+        winproc_first_free = ret->next;
+    else if (winproc_used < MAX_WINPROCS)
+        ret = &winproc_array[winproc_used++];
+    LeaveCriticalSection( &winproc_cs );
+    return ret;
+}
+
+static void free_winproc( WINDOWPROC *proc )
+{
+    EnterCriticalSection( &winproc_cs );
+    proc->magic = 0;
+    proc->next  = winproc_first_free;
+    winproc_first_free = proc;
+    LeaveCriticalSection( &winproc_cs );
+}
+
+static BOOL is_valid_winproc( WINDOWPROC *proc )
+{
+    if (proc < winproc_array || proc >= winproc_array + MAX_WINPROCS) return FALSE;
+    if (proc != winproc_array + (proc - winproc_array)) return FALSE;
+    return (proc->magic == WINPROC_MAGIC);
+}
+
+static WORD get_winproc_selector(void)
+{
+    static LONG winproc_selector;
+    WORD ret;
+
+    if (!(ret = winproc_selector))
     {
-        WARN_(relay)("Unable to create winproc heap\n" );
-        return FALSE;
+        LDT_ENTRY entry;
+        WORD sel = wine_ldt_alloc_entries(1);
+        wine_ldt_set_base( &entry, winproc_array );
+        wine_ldt_set_limit( &entry, sizeof(winproc_array) - 1 );
+        wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+        wine_ldt_set_entry( sel, &entry );
+        if (!(ret = InterlockedCompareExchange( &winproc_selector, sel, 0 ))) ret = sel;
+        else wine_ldt_free_entries( sel, 1 );  /* somebody beat us to it */
     }
-    return TRUE;
+    return ret;
 }
 
 
@@ -279,12 +314,11 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC handle )
     ptr = (BYTE *)handle;
     /* First check if it is the jmp address */
     proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->jmp);
-    if (HeapValidate( WinProcHeap, 0, proc ) && (proc->magic == WINPROC_MAGIC))
-        return proc;
+    if (is_valid_winproc(proc)) return proc;
+
     /* Now it must be the thunk address */
     proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->thunk);
-    if (HeapValidate( WinProcHeap, 0, proc ) && (proc->magic == WINPROC_MAGIC))
-        return proc;
+    if (is_valid_winproc(proc)) return proc;
 
     /* Check for a segmented pointer */
 
@@ -293,8 +327,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC handle )
         ptr = MapSL( (SEGPTR)handle );
         /* It must be the thunk address */
         proc = (WINDOWPROC *)(ptr - (int)&((WINDOWPROC *)0)->thunk);
-        if (HeapValidate( WinProcHeap, 0, proc ) && (proc->magic == WINPROC_MAGIC))
-            return proc;
+        if (is_valid_winproc(proc)) return proc;
     }
 
     return NULL;
@@ -315,7 +348,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC func, WINDOWPROCTYPE type,
 
     /* Allocate a window procedure */
 
-    if (!(proc = HeapAlloc( WinProcHeap, 0, sizeof(WINDOWPROC) ))) return 0;
+    if (!(proc = alloc_winproc())) return 0;
 
     /* Check if the function is already a win proc */
 
@@ -374,7 +407,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC func, WINDOWPROCTYPE type,
         proc->user  = user;
     }
     proc->next  = NULL;
-    TRACE_(win)("(%p,%d): returning %p\n", func, type, proc );
+    TRACE("(%p,%d): returning %p\n", func, type, proc );
     return proc;
 }
 
@@ -394,7 +427,8 @@ WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type )
         if (ptr->type == WIN_PROC_16)
             return ptr->thunk.t_from32.proc;
         else
-            return (WNDPROC16)MAKESEGPTR( WinProcSel, (char *)&ptr->thunk - (char *)WinProcHeap );
+            return (WNDPROC16)MAKESEGPTR( get_winproc_selector(),
+                                          (char *)&ptr->thunk - (char *)winproc_array );
     }
     else  /* We want a 32-bit address */
     {
@@ -501,8 +535,7 @@ BOOL WINPROC_SetProc( WNDPROC *pFirst, WNDPROC func,
 
     /* Add the win proc at the head of the list */
 
-    TRACE_(win)("(%08x,%08x,%d): res=%08x\n",
-                 (UINT)*pFirst, (UINT)func, type, (UINT)proc );
+    TRACE("(%p,%p,%d): res=%p\n", *pFirst, func, type, proc );
     proc->next  = *(WINDOWPROC **)pFirst;
     *(WINDOWPROC **)pFirst = proc;
     return TRUE;
@@ -521,8 +554,8 @@ void WINPROC_FreeProc( WNDPROC proc, WINDOWPROCUSER user )
     {
         WINDOWPROC *next = ptr->next;
         if (ptr->user != user) break;
-        TRACE_(win)("freeing %p (%d)\n", ptr, user);
-        HeapFree( WinProcHeap, 0, ptr );
+        TRACE("freeing %p (%d)\n", ptr, user);
+        free_winproc( ptr );
         ptr = next;
     }
 }

@@ -56,7 +56,6 @@ typedef struct
 
 struct tagWINDOWPROC;
 
-extern BOOL WINPROC_Init(void);
 extern WNDPROC16 WINPROC_GetProc( WNDPROC proc, WINDOWPROCTYPE type );
 extern BOOL WINPROC_SetProc( WNDPROC *pFirst, WNDPROC func,
                                WINDOWPROCTYPE type, WINDOWPROCUSER user );

@@ -237,9 +237,6 @@ static BOOL process_attach(void)
     /* Setup palette function pointers */
     palette_init();
 
-    /* Initialize window procedures */
-    if (!WINPROC_Init()) return FALSE;
-
     /* Initialize built-in window classes */
     controls_init();
 
