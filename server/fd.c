@@ -991,9 +991,22 @@ struct async
     void                *sb;
     struct timeval       when;
     struct timeout_user *timeout;
-    struct async        *next;
-    struct async       **head;
+    struct list          entry;
 };
+
+/* notifies client thread of new status of its async request */
+/* destroys the server side of it */
+static void async_terminate( struct async *async, int status )
+{
+    thread_queue_apc( async->thread, NULL, async->apc, APC_ASYNC_IO,
+                      1, async->user, async->sb, (void *)status );
+
+    if (async->timeout) remove_timeout_user( async->timeout );
+    async->timeout = NULL;
+    list_remove( &async->entry );
+    release_object( async->thread );
+    free( async );
+}
 
 /* cb for timeout on an async request */
 static void async_callback(void *private)
@@ -1006,12 +1019,10 @@ static void async_callback(void *private)
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async(struct fd *fd, struct thread *thread,
-                           int timeout, struct async **head, 
+struct async *create_async(struct fd *fd, struct thread *thread, int timeout, struct list *queue,
                            void *io_apc, void *io_user, void* io_sb)
 {
     struct async *async = mem_alloc( sizeof(struct async) );
-    struct async **p;
 
     if (!async) return NULL;
 
@@ -1020,11 +1031,8 @@ struct async *create_async(struct fd *fd, struct thread *thread,
     async->apc = io_apc;
     async->user = io_user;
     async->sb = io_sb;
-    async->head = head;
-    async->next = NULL;
 
-    for (p = head; *p; p = &(*p)->next);
-    *p = async;
+    list_add_tail( queue, &async->entry );
 
     if (timeout)
     {
@@ -1037,29 +1045,11 @@ struct async *create_async(struct fd *fd, struct thread *thread,
     return async;
 }
 
-/* notifies client thread of new status of its async request */
-/* destroys the server side of it */
-void async_terminate( struct async *async, int status )
+/* terminate the async operation at the head of the queue */
+void async_terminate_head( struct list *queue, int status )
 {
-    struct async** p;
-
-    thread_queue_apc( async->thread, NULL, async->apc, APC_ASYNC_IO,
-                      1, async->user, async->sb, (void *)status );
-
-    if (async->timeout) remove_timeout_user( async->timeout );
-    async->timeout = NULL;
-
-    for (p = async->head; *p; p = &(*p)->next)
-    {
-        if (*p == async)
-        {
-            *p = async->next;
-            break;
-        }
-    }
-
-    release_object( async->thread );
-    free( async );
+    struct list *ptr = list_head( queue );
+    if (ptr) async_terminate( LIST_ENTRY( ptr, struct async, entry ), status );
 }
 
 /****************************************************************/

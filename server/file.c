@@ -57,8 +57,8 @@ struct file
     struct fd          *fd;         /* file descriptor for this file */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
-    struct async       *read_q;
-    struct async       *write_q;
+    struct list         read_q;
+    struct list         write_q;
 };
 
 static void file_dump( struct object *obj, int verbose );
@@ -160,10 +160,8 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 
     file->access     = access;
     file->options    = options;
-    if (is_overlapped( file ))
-    {
-        file->read_q = file->write_q = NULL;
-    }
+    list_init( &file->read_q );
+    list_init( &file->write_q );
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
@@ -237,14 +235,14 @@ static void file_poll_event( struct fd *fd, int event )
     assert( file->obj.ops == &file_ops );
     if (is_overlapped( file ))
     {
-        if ( file->read_q && (POLLIN & event) )
+        if (!list_empty( &file->read_q ) && (POLLIN & event) )
         {
-            async_terminate( file->read_q, STATUS_ALERTED );
+            async_terminate_head( &file->read_q, STATUS_ALERTED );
             return;
         }
-        if ( file->write_q && (POLLOUT & event) )
+        if (!list_empty( &file->write_q ) && (POLLOUT & event) )
         {
-            async_terminate( file->write_q, STATUS_ALERTED );
+            async_terminate_head( &file->write_q, STATUS_ALERTED );
             return;
         }
     }
@@ -271,7 +269,7 @@ static void file_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
                               int type, int count )
 {
     struct file *file = get_fd_user( fd );
-    struct async **head;
+    struct list *queue;
     int events;
 
     assert( file->obj.ops == &file_ops );
@@ -285,17 +283,17 @@ static void file_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        head = &file->read_q;
+        queue = &file->read_q;
         break;
     case ASYNC_TYPE_WRITE:
-        head = &file->write_q;
+        queue = &file->write_q;
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
 
-    if (!create_async( fd, current, 0, head, apc, user, iosb ))
+    if (!create_async( fd, current, 0, queue, apc, user, iosb ))
         return;
 
     /* Check if the new pending request can be served immediately */

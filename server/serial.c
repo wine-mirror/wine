@@ -83,9 +83,9 @@ struct serial
 
     struct termios      original;
 
-    struct async       *read_q;
-    struct async       *write_q;
-    struct async       *wait_q;
+    struct list         read_q;
+    struct list         write_q;
+    struct list         wait_q;
 
     /* FIXME: add dcb, comm status, handler module, sharing */
 };
@@ -145,7 +145,9 @@ struct object *create_serial( struct fd *fd, unsigned int options )
     serial->writeconst   = 0;
     serial->eventmask    = 0;
     serial->commerror    = 0;
-    serial->read_q = serial->write_q = serial->wait_q = NULL;
+    list_init( &serial->read_q );
+    list_init( &serial->write_q );
+    list_init( &serial->wait_q );
     if (!(serial->fd = create_anonymous_fd( &serial_fd_ops, unix_fd, &serial->obj )))
     {
         release_object( serial );
@@ -188,9 +190,9 @@ static int serial_get_poll_events( struct fd *fd )
     int events = 0;
     assert( serial->obj.ops == &serial_ops );
 
-    if (serial->read_q)  events |= POLLIN;
-    if (serial->write_q) events |= POLLOUT;
-    if (serial->wait_q)  events |= POLLIN;
+    if (!list_empty( &serial->read_q ))  events |= POLLIN;
+    if (!list_empty( &serial->write_q )) events |= POLLOUT;
+    if (!list_empty( &serial->wait_q ))  events |= POLLIN;
 
     /* fprintf(stderr,"poll events are %04x\n",events); */
 
@@ -221,14 +223,14 @@ static void serial_poll_event(struct fd *fd, int event)
 
     /* fprintf(stderr,"Poll event %02x\n",event); */
 
-    if (serial->read_q && (POLLIN & event) )
-        async_terminate( serial->read_q, STATUS_ALERTED );
+    if (!list_empty( &serial->read_q ) && (POLLIN & event) )
+        async_terminate_head( &serial->read_q, STATUS_ALERTED );
 
-    if (serial->write_q && (POLLOUT & event) )
-        async_terminate( serial->write_q, STATUS_ALERTED );
+    if (!list_empty( &serial->write_q ) && (POLLOUT & event) )
+        async_terminate_head( &serial->write_q, STATUS_ALERTED );
 
-    if (serial->wait_q && (POLLIN & event) )
-        async_terminate( serial->wait_q, STATUS_ALERTED );
+    if (!list_empty( &serial->wait_q ) && (POLLIN & event) )
+        async_terminate_head( &serial->wait_q, STATUS_ALERTED );
 
     set_fd_events( fd, serial_get_poll_events(fd) );
 }
@@ -237,7 +239,7 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
                                 int type, int count )
 {
     struct serial *serial = get_fd_user( fd );
-    struct async **head;
+    struct list *queue;
     int timeout;
     int events;
 
@@ -246,15 +248,15 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        head = &serial->read_q;
+        queue = &serial->read_q;
         timeout = serial->readconst + serial->readmult*count;
         break;
     case ASYNC_TYPE_WAIT:
-        head = &serial->wait_q;
+        queue = &serial->wait_q;
         timeout = 0;
         break;
     case ASYNC_TYPE_WRITE:
-        head = &serial->write_q;
+        queue = &serial->write_q;
         timeout = serial->writeconst + serial->writemult*count;
         break;
     default:
@@ -262,7 +264,7 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
         return;
     }
 
-    if (!create_async( fd, current, timeout, head, apc, user, iosb ))
+    if (!create_async( fd, current, timeout, queue, apc, user, iosb ))
         return;
 
     /* Check if the new pending request can be served immediately */

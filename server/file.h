@@ -112,12 +112,12 @@ extern struct object *create_serial( struct fd *fd, unsigned int options );
 
 /* async I/O functions */
 extern struct async *create_async( struct fd *fd, struct thread *thread, int timeout,
-                                   struct async **head, void *, void *, void *);
-extern void async_terminate( struct async *async, int status );
+                                   struct list *queue, void *, void *, void *);
+extern void async_terminate_head( struct list *queue, int status );
 
-static inline void async_terminate_queue( struct async **head, int status )
+static inline void async_terminate_queue( struct list *queue, int status )
 {
-    while (*head) async_terminate( *head, status );
+    while (!list_empty( queue )) async_terminate_head( queue, status );
 }
 
 #endif  /* __WINE_SERVER_FILE_H */

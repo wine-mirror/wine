@@ -81,8 +81,8 @@ struct sock
     obj_handle_t        wparam;      /* message wparam (socket handle) */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
     struct sock        *deferred;    /* socket that waits for a deferred accept */
-    struct async       *read_q;      /* Queue for asynchronous reads */
-    struct async       *write_q;     /* Queue for asynchronous writes */
+    struct list         read_q;      /* queue for asynchronous reads */
+    struct list         write_q;     /* queue for asynchronous writes */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -237,16 +237,16 @@ static void sock_wake_up( struct sock *sock, int pollev )
 
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
-        if ( pollev & (POLLIN|POLLPRI) && sock->read_q )
+        if ( pollev & (POLLIN|POLLPRI) && !list_empty( &sock->read_q ))
         {
             if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
-            async_terminate( sock->read_q, STATUS_ALERTED );
+            async_terminate_head( &sock->read_q, STATUS_ALERTED );
             async_active = 1;
         }
-        if ( pollev & POLLOUT && sock->write_q )
+        if ( pollev & POLLOUT && !list_empty( &sock->write_q ))
         {
             if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
-            async_terminate( sock->write_q, STATUS_ALERTED );
+            async_terminate_head( &sock->write_q, STATUS_ALERTED );
             async_active = 1;
         }
     }
@@ -466,9 +466,9 @@ static int sock_get_poll_events( struct fd *fd )
         /* listening, wait for readable */
         return (sock->hmask & FD_ACCEPT) ? 0 : POLLIN;
 
-    if (mask & (FD_READ) || (sock->flags & WSA_FLAG_OVERLAPPED && sock->read_q))
+    if (mask & (FD_READ) || (sock->flags & WSA_FLAG_OVERLAPPED && !list_empty( &sock->read_q )))
         ev |= POLLIN | POLLPRI;
-    if (mask & FD_WRITE || (sock->flags & WSA_FLAG_OVERLAPPED && sock->write_q))
+    if (mask & FD_WRITE || (sock->flags & WSA_FLAG_OVERLAPPED && !list_empty( &sock->write_q )))
         ev |= POLLOUT;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
     if ( sock->type == SOCK_STREAM && ( sock->mask & ~sock->hmask & FD_CLOSE) )
@@ -496,9 +496,9 @@ static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
                               int type, int count )
 {
     struct sock *sock = get_fd_user( fd );
-    struct async **head;
+    struct list *queue;
     int pollev;
-    
+
     assert( sock->obj.ops == &sock_ops );
 
     if ( !(sock->flags & WSA_FLAG_OVERLAPPED) )
@@ -510,11 +510,11 @@ static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        head = &sock->read_q;
+        queue = &sock->read_q;
         sock->hmask &= ~FD_CLOSE;
         break;
     case ASYNC_TYPE_WRITE:
-        head = &sock->write_q;
+        queue = &sock->write_q;
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );
@@ -528,7 +528,7 @@ static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
     }
     else
     {
-        if (!create_async( fd, current, 0, head, apc, user, iosb ))
+        if (!create_async( fd, current, 0, queue, apc, user, iosb ))
             return;
     }
 
@@ -608,10 +608,8 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
         release_object( sock );
         return NULL;
     }
-    if (sock->flags & WSA_FLAG_OVERLAPPED)
-    {
-        sock->read_q = sock->write_q = NULL;
-    }
+    list_init( &sock->read_q );
+    list_init( &sock->write_q );
     sock_reselect( sock );
     clear_error();
     return &sock->obj;
@@ -682,10 +680,8 @@ static struct sock *accept_socket( obj_handle_t handle )
             release_object( sock );
             return NULL;
         }
-        if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
-        {
-            acceptsock->read_q = acceptsock->write_q = NULL;
-        }
+        list_init( &acceptsock->read_q );
+        list_init( &acceptsock->write_q );
     }
     clear_error();
     sock->pmask &= ~FD_ACCEPT;
