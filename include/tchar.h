@@ -74,7 +74,7 @@ char *CRTDLL__strrev(char *string);
  */
 #define _strdec(start,current)  (start<current?(current)-1:NULL)
 #define _strinc(current) ((current)+1)
-/* FIXME: _strncnt ans strncnt are missing */
+/* FIXME: _strncnt and strncnt are missing */
 /* FIXME: _strspnp is not implemented */
 
 
