@@ -77,6 +77,7 @@ struct IDirectMusicScriptImpl {
   DWORD          ref;
 
   /* IDirectMusicScriptImpl fields */
+  IDirectMusicPerformance* pPerformance;
   LPDMUS_OBJECTDESC pDesc;
   DMUS_IO_SCRIPT_HEADER* pHeader;
   DMUS_IO_VERSION* pVersion;

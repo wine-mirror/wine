@@ -1117,6 +1117,22 @@ const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
 /* dump whole DMUS_OBJECTDESC struct */
 const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 	if (pDesc) {
+		TRACE("DMUS_OBJECTDESC (%p):\n", pDesc);
+                TRACE(" - dwSize = %ld\n", pDesc->dwSize);
+                TRACE(" - dwValidData = %s\n", debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
+                if (pDesc->dwValidData & DMUS_OBJ_NAME)     TRACE(" - wszName = %s\n", debugstr_w(pDesc->wszName));
+                if (pDesc->dwValidData & DMUS_OBJ_CLASS)    TRACE(" - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
+                if (pDesc->dwValidData & DMUS_OBJ_OBJECT)   TRACE(" - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
+                if (pDesc->dwValidData & DMUS_OBJ_DATE)     TRACE(" - ftDate = FIXME\n");
+                if (pDesc->dwValidData & DMUS_OBJ_VERSION)  TRACE(" - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
+                if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) TRACE(" - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
+                if (pDesc->dwValidData & DMUS_OBJ_FILENAME) TRACE(" - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
+                if (pDesc->dwValidData & DMUS_OBJ_MEMORY)   TRACE(" - llMemLength = %lli\n  - pbMemData = %p\n", pDesc->llMemLength, pDesc->pbMemData);
+                if (pDesc->dwValidData & DMUS_OBJ_STREAM)   TRACE(" - pStream = %p\n", pDesc->pStream);
+	} else {
+		TRACE("(NULL)\n");
+	}/*
+	if (pDesc) {
 		char buffer[1024] = "", *ptr = &buffer[0];
 		
 		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
@@ -1136,4 +1152,6 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 	} else {
 		return wine_dbg_sprintf("(NULL)");
 	}
+        */
+	return "X";
 }

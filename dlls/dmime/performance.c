@@ -418,6 +418,8 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_GetGraph (LPDIRECTMUSICPERFORMANCE8 
   if (NULL != This->pToolGraph) {
     *ppGraph = (LPDIRECTMUSICGRAPH) This->pToolGraph; 
     IDirectMusicGraph_AddRef((LPDIRECTMUSICGRAPH) *ppGraph);
+  } else {
+    return E_FAIL;
   }
   return S_OK;
 }
@@ -702,6 +704,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio (LPDIRECTMUSICPERFORMANCE8
 	   * TODO, how can i fill the struct 
 	   * as seen at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/dmusaudioparams.asp
 	   */
+	  memset(&This->pParams, 0, sizeof(DMUS_AUDIOPARAMS));
 	  This->pParams.dwSize = sizeof(DMUS_AUDIOPARAMS);
 	  This->pParams.fInitNow = FALSE;
 	  This->pParams.dwValidData = DMUS_AUDIOPARAMS_FEATURES | DMUS_AUDIOPARAMS_VOICES | DMUS_AUDIOPARAMS_SAMPLERATE | DMUS_AUDIOPARAMS_DEFAULTSYNTH;
@@ -736,9 +739,25 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_ClonePMsg (LPDIRECTMUSICPERFORMANCE8
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_CreateAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pSourceConfig, BOOL fActivate, IDirectMusicAudioPath** ppNewPath) {
+	IDirectMusicAudioPathImpl *default_path;
+	IDirectMusicAudioPath *pPath;
+
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	FIXME("(%p, %p, %d, %p): stub\n", This, pSourceConfig, fActivate, ppNewPath);
-	return S_OK;
+
+	if (NULL == ppNewPath) {
+	  return E_POINTER;
+	}
+
+	DMUSIC_CreateDirectMusicAudioPathImpl (&IID_IDirectMusicAudioPath, (LPVOID*)&pPath, NULL);
+	default_path = (IDirectMusicAudioPathImpl*)((char*)(pPath) - offsetof(IDirectMusicAudioPathImpl,AudioPathVtbl));
+	default_path->pPerf = (IDirectMusicPerformance8*) This;
+
+	/** TODO */
+	
+	*ppNewPath = (LPDIRECTMUSICAUDIOPATH) pPath;
+
+	return IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate(*ppNewPath, fActivate);
 }
 
 /**
@@ -765,6 +784,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	default_path->pPerf = (IDirectMusicPerformance8*) This;
 	
 	/* Secondary buffer description */
+	memset(&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
 	format.nChannels = 1;
 	format.nSamplesPerSec = 44000;
@@ -773,6 +793,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	format.wBitsPerSample = 16;
 	format.cbSize = 0;
 	
+	memset(&desc, 0, sizeof(desc));
 	desc.dwSize = sizeof(desc);
 	desc.dwFlags = DSBCAPS_CTRLFX | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS;
 	desc.dwBufferBytes = DSBSIZE_MIN;
@@ -831,7 +852,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUS
 	
 	TRACE(" returning IDirectMusicPerformance interface at %p.\n", *ppNewPath);
 
-	return S_OK;
+	return IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate(*ppNewPath, fActivate);
 }
 
 HRESULT WINAPI IDirectMusicPerformance8Impl_SetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath* pAudioPath) {

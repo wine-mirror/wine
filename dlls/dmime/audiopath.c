@@ -59,13 +59,16 @@ ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 }
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_Release (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
+  ULONG ref = --This->ref;
+  TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+  if (ref == 0) {
+    if (This->pDSBuffer) {
+      IDirectSoundBuffer8_Release(This->pDSBuffer);
+    }
+    HeapFree(GetProcessHeap(), 0, This);
+  }
+  return ref;
 }
 
 ICOM_VTABLE(IUnknown) DirectMusicAudioPath_Unknown_Vtbl = {
@@ -180,9 +183,17 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectInPath (
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate (LPDIRECTMUSICAUDIOPATH iface, BOOL fActivate) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
-	FIXME("(%p, %d): stub\n", This, fActivate);
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
+  FIXME("(%p, %d): stub\n", This, fActivate);
+  if (!fActivate) {
+    if (!This->fActive) return S_OK;
+    This->fActive = FALSE;
+  } else {
+    if (This->fActive) return S_OK;
+    This->fActive = TRUE;
+    IDirectSoundBuffer_Stop(This->pDSBuffer);
+  }
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_SetVolume (LPDIRECTMUSICAUDIOPATH iface, long lVolume, DWORD dwDuration) {

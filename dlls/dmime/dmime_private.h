@@ -264,7 +264,9 @@ struct IDirectMusicSegment8Impl {
   DWORD          ref;
 
   /* IDirectMusicSegment8Impl fields */
-  LPDMUS_OBJECTDESC pDesc;
+  LPDMUS_OBJECTDESC      pDesc;
+  DMUS_IO_SEGMENT_HEADER header;
+  IDirectMusicGraph*     pGraph;
 };
 
 /* IUnknown: */
@@ -408,6 +410,8 @@ struct IDirectMusicAudioPathImpl {
   IDirectMusicGraph*        pToolGraph;
   IDirectSoundBuffer*       pDSBuffer;
   IDirectSoundBuffer*       pPrimary;
+
+  BOOL fActive;
 };
 
 /* IUnknown: */
