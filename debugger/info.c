@@ -481,7 +481,7 @@ void DEBUG_WalkThreads(void)
             if (entry.th32OwnerProcessID != GetCurrentProcessId())
                 DEBUG_Printf(DBG_CHN_MESG, "%08lx %08lx %4ld%s\n",
                              entry.th32ThreadID, entry.th32OwnerProcessID,
-                             entry.tbBasePri, (entry.th32ThreadID == current) ? " <==" : "" );
+                             entry.tpBasePri, (entry.th32ThreadID == current) ? " <==" : "" );
             ok = Thread32Next( snap, &entry );
         }
         CloseHandle( snap );

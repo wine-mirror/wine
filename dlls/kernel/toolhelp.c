@@ -234,8 +234,8 @@ static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL fir
             lpte->cntUsage           = req->count;
             lpte->th32ThreadID       = (DWORD)req->tid;
             lpte->th32OwnerProcessID = (DWORD)req->pid;
-            lpte->tbBasePri          = req->base_pri;
-            lpte->tbDeltaPri         = req->delta_pri;
+            lpte->tpBasePri          = req->base_pri;
+            lpte->tpDeltaPri         = req->delta_pri;
             lpte->dwFlags            = 0;  /* SDK: "reserved; do not use" */
         }
     }

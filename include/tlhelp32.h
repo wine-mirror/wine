@@ -28,8 +28,8 @@ typedef struct tagTHREADENTRY32
     DWORD cntUsage; 
     DWORD th32ThreadID; 
     DWORD th32OwnerProcessID; 
-    LONG  tbBasePri; 
-    LONG  tbDeltaPri; 
+    LONG  tpBasePri; 
+    LONG  tpDeltaPri; 
     DWORD dwFlags; 
 } THREADENTRY32, *PTHREADENTRY32, *LPTHREADENTRY32; 
 
