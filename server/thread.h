@@ -126,7 +126,7 @@ extern struct thread_snapshot *thread_snap( int *count );
 
 /* ptrace functions */
 
-extern void sigchld_handler();
+extern void sigchld_callback(void);
 extern int get_ptrace_pid( struct thread *thread );
 extern void detach_thread( struct thread *thread, int sig );
 extern int attach_process( struct process *process );

@@ -109,7 +109,7 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
 }
 
 /* handle a SIGCHLD signal */
-void sigchld_handler()
+void sigchld_callback(void)
 {
     int pid, status;
 

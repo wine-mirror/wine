@@ -145,6 +145,11 @@ extern void flush_registry(void);
 extern void close_registry(void);
 extern void registry_close_handle( struct object *obj, obj_handle_t hkey );
 
+/* signal functions */
+
+extern void init_signals(void);
+extern void close_signals(void);
+
 /* atom functions */
 
 extern void close_atom_table(void);

@@ -784,6 +784,7 @@ static void close_socket_timeout( void *arg )
 #ifdef DEBUG_OBJECTS
     /* shut down everything properly */
     release_object( master_socket );
+    close_signals();
     close_global_hooks();
     close_global_handles();
     close_registry();

@@ -110,27 +110,25 @@ static void sigterm_handler()
     exit(1);  /* make sure atexit functions get called */
 }
 
-/* initialize signal handling */
-static void signal_init(void)
+int main( int argc, char *argv[] )
 {
+    parse_args( argc, argv );
+
+    /* setup temporary handlers before the real signal initialization is done */
     signal( SIGPIPE, SIG_IGN );
     signal( SIGHUP, sigterm_handler );
     signal( SIGINT, sigterm_handler );
     signal( SIGQUIT, sigterm_handler );
     signal( SIGTERM, sigterm_handler );
     signal( SIGABRT, sigterm_handler );
-}
 
-int main( int argc, char *argv[] )
-{
-    parse_args( argc, argv );
-    signal_init();
     sock_init();
     open_master_socket();
     sync_namespace = create_namespace( 37, TRUE );
     setvbuf( stderr, NULL, _IOLBF, 0 );
 
     if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
+    init_signals();
     init_registry();
     main_loop();
 

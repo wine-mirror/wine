@@ -309,57 +309,10 @@ static void remove_poll_user( struct fd *fd, int user )
 }
 
 
-/* SIGHUP handler */
-static void sighup_handler()
-{
-#ifdef DEBUG_OBJECTS
-    dump_objects();
-#endif
-}
-
-/* SIGTERM handler */
-static void sigterm_handler()
-{
-    flush_registry();
-    exit(1);
-}
-
-/* SIGINT handler */
-static void sigint_handler()
-{
-    kill_all_processes( NULL, 1 );
-    flush_registry();
-    exit(1);
-}
-
 /* server main poll() loop */
 void main_loop(void)
 {
     int ret;
-    sigset_t sigset;
-    struct sigaction action;
-
-    /* block the signals we use */
-    sigemptyset( &sigset );
-    sigaddset( &sigset, SIGCHLD );
-    sigaddset( &sigset, SIGHUP );
-    sigaddset( &sigset, SIGINT );
-    sigaddset( &sigset, SIGQUIT );
-    sigaddset( &sigset, SIGTERM );
-    sigprocmask( SIG_BLOCK, &sigset, NULL );
-
-    /* set the handlers */
-    action.sa_mask = sigset;
-    action.sa_flags = 0;
-    action.sa_handler = sigchld_handler;
-    sigaction( SIGCHLD, &action, NULL );
-    action.sa_handler = sighup_handler;
-    sigaction( SIGHUP, &action, NULL );
-    action.sa_handler = sigint_handler;
-    sigaction( SIGINT, &action, NULL );
-    action.sa_handler = sigterm_handler;
-    sigaction( SIGQUIT, &action, NULL );
-    sigaction( SIGTERM, &action, NULL );
 
     while (active_users)
     {
@@ -380,16 +333,7 @@ void main_loop(void)
             }
             if (!active_users) break;  /* last user removed by a timeout */
         }
-
-        sigprocmask( SIG_UNBLOCK, &sigset, NULL );
-
-        /* Note: we assume that the signal handlers do not manipulate the pollfd array
-         *       or the timeout list, otherwise there is a race here.
-         */
         ret = poll( pollfd, nb_users, diff );
-
-        sigprocmask( SIG_BLOCK, &sigset, NULL );
-
         if (ret > 0)
         {
             int i;
