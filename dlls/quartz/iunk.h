@@ -24,6 +24,9 @@
 
  */
 
+/* for InterlockedExchangeAdd. */
+#include <pshpack4.h>
+
 typedef struct QUARTZ_IFEntry
 {
 	REFIID		piid;		/* interface ID. */
@@ -38,11 +41,15 @@ typedef struct QUARTZ_IUnkImpl
 	/* array of supported IIDs and offsets. */
 	const QUARTZ_IFEntry*	pEntries;
 	DWORD	dwEntries;
+	/* called on final release. */
+	void (*pOnFinalRelease)(IUnknown* punk);
 
 	/* IUnknown fields. */
-	ULONG	ref;
+	LONG	ref;
 	IUnknown*	punkControl;
 } QUARTZ_IUnkImpl;
+
+#include <poppack.h>
 
 
 void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl, IUnknown* punkOuter );

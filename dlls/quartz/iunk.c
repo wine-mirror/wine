@@ -8,6 +8,7 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "winbase.h"
 #include "wine/obj_base.h"
 
 #include "debugtools.h"
@@ -66,17 +67,22 @@ IUnknown_fnAddRef(IUnknown* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return ++(This->ref);
+	return InterlockedExchangeAdd(&(This->ref),1) + 1;
 }
 
 static ULONG WINAPI
 IUnknown_fnRelease(IUnknown* iface)
 {
 	ICOM_THIS(QUARTZ_IUnkImpl,iface);
+	LONG	ref;
 
 	TRACE("(%p)->()\n",This);
-	if ( (--(This->ref)) > 0 )
-		return This->ref;
+	ref = InterlockedExchangeAdd(&(This->ref),-1) - 1;
+	if ( ref > 0 )
+		return (ULONG)ref;
+
+	if ( This->pOnFinalRelease != NULL )
+		(*(This->pOnFinalRelease))(iface);
 
 	QUARTZ_FreeObj(This);
 
@@ -100,6 +106,7 @@ void QUARTZ_IUnkInit( QUARTZ_IUnkImpl* pImpl, IUnknown* punkOuter )
 	ICOM_VTBL(pImpl) = &iunknown;
 	pImpl->pEntries = NULL;
 	pImpl->dwEntries = 0;
+	pImpl->pOnFinalRelease = NULL;
 	pImpl->ref = 1;
 	pImpl->punkControl = (IUnknown*)pImpl;
 

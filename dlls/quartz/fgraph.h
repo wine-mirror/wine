@@ -15,6 +15,10 @@
 		+ IDispatch - IBasicVideo (pass to a renderer)
 		+ IDispatch - IBasicAudio (pass to a renderer)
 		+ IDispatch - IVideoWindow  (pass to a renderer)
+	(following interfaces are not implemented)
+		+ IDispatch
+		+ IMediaEventSink
+		+ IGraphVerson
  */
 
 #include "iunk.h"
@@ -77,7 +81,7 @@ typedef struct CFilterGraph
 	/* IMediaEvent fields. */
 	/* IMediaPosition fields. */
 	/* IMediaSeeking fields. */
-	/* IBasicVideo fields. */
+	/* IBasicVideo2 fields. */
 	/* IBasicAudio fields. */
 	/* IVideoWindow fields. */
 } CFilterGraph;
@@ -87,13 +91,21 @@ typedef struct CFilterGraph
 HRESULT QUARTZ_CreateFilterGraph(IUnknown* punkOuter,void** ppobj);
 
 void CFilterGraph_InitIFilterGraph2( CFilterGraph* pfg );
+void CFilterGraph_UninitIFilterGraph2( CFilterGraph* pfg );
 void CFilterGraph_InitIMediaControl( CFilterGraph* pfg );
+void CFilterGraph_UninitIMediaControl( CFilterGraph* pfg );
 void CFilterGraph_InitIMediaEventEx( CFilterGraph* pfg );
+void CFilterGraph_UninitIMediaEventEx( CFilterGraph* pfg );
 void CFilterGraph_InitIMediaPosition( CFilterGraph* pfg );
+void CFilterGraph_UninitIMediaPosition( CFilterGraph* pfg );
 void CFilterGraph_InitIMediaSeeking( CFilterGraph* pfg );
+void CFilterGraph_UninitIMediaSeeking( CFilterGraph* pfg );
 void CFilterGraph_InitIBasicVideo2( CFilterGraph* pfg );
+void CFilterGraph_UninitIBasicVideo2( CFilterGraph* pfg );
 void CFilterGraph_InitIBasicAudio( CFilterGraph* pfg );
+void CFilterGraph_UninitIBasicAudio( CFilterGraph* pfg );
 void CFilterGraph_InitIVideoWindow( CFilterGraph* pfg );
+void CFilterGraph_UninitIVideoWindow( CFilterGraph* pfg );
 
 
 #endif	/* WINE_DSHOW_FGRAPH_H */

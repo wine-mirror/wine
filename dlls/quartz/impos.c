@@ -239,3 +239,8 @@ void CFilterGraph_InitIMediaPosition( CFilterGraph* pfg )
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediaposition) = &imediaposition;
 }
+
+void CFilterGraph_UninitIMediaPosition( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}

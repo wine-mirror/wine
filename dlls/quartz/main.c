@@ -17,6 +17,9 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "fgraph.h"
 #include "sysclock.h"
 #include "memalloc.h"
+#include "devenum.h"
+#include "fmap.h"
+#include "fmap2.h"
 
 
 typedef struct QUARTZ_CLASSENTRY
@@ -57,6 +60,9 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_FilterGraph, &QUARTZ_CreateFilterGraph },
 	{ &CLSID_SystemClock, &QUARTZ_CreateSystemClock },
 	{ &CLSID_MemoryAllocator, &QUARTZ_CreateMemoryAllocator },
+	{ &CLSID_SystemDeviceEnum, &QUARTZ_CreateSystemDeviceEnum },
+	{ &CLSID_FilterMapper, &QUARTZ_CreateFilterMapper },
+	{ &CLSID_FilterMapper2, &QUARTZ_CreateFilterMapper2 },
 	{ NULL, NULL },
 };
 
@@ -190,6 +196,7 @@ static HRESULT IClassFactory_Alloc( const CLSID* pclsid, void** ppobj )
 	{
 		if ( IsEqualGUID( pclsid, pEntry->pclsid ) )
 			goto found;
+		pEntry ++;
 	}
 
 	return CLASS_E_CLASSNOTAVAILABLE;
@@ -197,6 +204,8 @@ found:
 	pImpl = (IClassFactoryImpl*)QUARTZ_AllocObj( sizeof(IClassFactoryImpl) );
 	if ( pImpl == NULL )
 		return E_OUTOFMEMORY;
+
+	TRACE( "allocated successfully.\n" );
 
 	ICOM_VTBL(pImpl) = &iclassfact;
 	pImpl->ref = 1;
@@ -322,4 +331,31 @@ HRESULT WINAPI QUARTZ_DllUnregisterServer( void )
 	FIXME( "(): stub\n" );
 	return E_FAIL;
 }
+
+
+/***********************************************************************
+ *		AmpFactorToDB (QUARTZ.@)
+ *
+ *	undocumented.
+ *  (converting from Amp to dB?)
+ *
+ */
+DWORD WINAPI QUARTZ_AmpFactorToDB( DWORD dw )
+{
+	FIXME( "(%08lx): undocumented API - stub!\n", dw );
+	return 0;
+}
+
+/***********************************************************************
+ *		DBToAmpFactor (QUARTZ.@)
+ *
+ *	undocumented.
+ *  (converting from dB to Amp?)
+ */
+DWORD WINAPI QUARTZ_DBToAmpFactor( DWORD dw )
+{
+	FIXME( "(%08lx): undocumented API - stub!\n", dw );
+	return 0;
+}
+
 

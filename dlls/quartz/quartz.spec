@@ -10,8 +10,8 @@ debug_channels (quartz)
 
 @ stdcall AMGetErrorTextA(long ptr long) AMGetErrorTextA
 @ stdcall AMGetErrorTextW(long ptr long) AMGetErrorTextW
-@ stub AmpFactorToDB
-@ stub DBToAmpFactor
+@ stdcall AmpFactorToDB(long) QUARTZ_AmpFactorToDB
+@ stdcall DBToAmpFactor(long) QUARTZ_DBToAmpFactor
 @ stdcall DllCanUnloadNow() QUARTZ_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) QUARTZ_DllGetClassObject
 @ stdcall DllRegisterServer() QUARTZ_DllRegisterServer

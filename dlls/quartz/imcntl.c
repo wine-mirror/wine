@@ -218,3 +218,8 @@ void CFilterGraph_InitIMediaControl( CFilterGraph* pfg )
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediacontrol) = &imediacontrol;
 }
+
+void CFilterGraph_UninitIMediaControl( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}

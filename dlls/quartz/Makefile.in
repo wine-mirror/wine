@@ -11,10 +11,16 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	amerror.c \
 	complist.c \
+	devenum.c \
 	fgraph.c \
+	fmap.c \
+	fmap2.c \
 	ibasaud.c \
 	ibasvid.c \
+	idevenum.c \
 	ifgraph.c \
+	ifmap.c \
+	ifmap3.c \
 	imcntl.c \
 	imem.c \
 	imevent.c \
@@ -25,6 +31,7 @@ C_SRCS = \
 	ividwin.c \
 	main.c \
 	memalloc.c \
+	regsvr.c \
 	sysclock.c
 
 @MAKE_DLL_RULES@

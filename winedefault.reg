@@ -256,6 +256,20 @@
 @="quartz.dll"
 "ThreadingModel"="Both"
 
+# CLSID_SystemDeviceEnum
+[HKEY_CLASSES_ROOT\CLSID\{62BE5D10-60EB-11D0-BD3B-00A0C911CE86}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
+# CLSID_FilterMapper
+[HKEY_CLASSES_ROOT\CLSID\{E436EBB2-524f-11CE-9F53-0020AF0BA770}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
+
+# CLSID_FilterMapper2
+[HKEY_CLASSES_ROOT\CLSID\{CDA42200-BD88-11D0-BD4E-00A0C911CE86}\InprocServer32]
+@="quartz.dll"
+"ThreadingModel"="Both"
 
 #
 # Entries for Mozilla ActiveX control support

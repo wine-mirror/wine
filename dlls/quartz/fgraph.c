@@ -36,9 +36,25 @@ static QUARTZ_IFEntry IFEntries[] =
   { &IID_IMediaPosition, offsetof(CFilterGraph,mediaposition)-offsetof(CFilterGraph,unk) },
   { &IID_IMediaSeeking, offsetof(CFilterGraph,mediaseeking)-offsetof(CFilterGraph,unk) },
   { &IID_IBasicVideo, offsetof(CFilterGraph,basvid)-offsetof(CFilterGraph,unk) },
+  { &IID_IBasicVideo2, offsetof(CFilterGraph,basvid)-offsetof(CFilterGraph,unk) },
   { &IID_IBasicAudio, offsetof(CFilterGraph,basaud)-offsetof(CFilterGraph,unk) },
   { &IID_IVideoWindow, offsetof(CFilterGraph,vidwin)-offsetof(CFilterGraph,unk) },
 };
+
+
+static void QUARTZ_DestroyFilterGraph(IUnknown* punk)
+{
+	CFilterGraph_THIS(punk,unk);
+
+	CFilterGraph_UninitIFilterGraph2( This );
+	CFilterGraph_UninitIMediaControl( This );
+	CFilterGraph_UninitIMediaEventEx( This );
+	CFilterGraph_UninitIMediaPosition( This );
+	CFilterGraph_UninitIMediaSeeking( This );
+	CFilterGraph_UninitIBasicVideo2( This );
+	CFilterGraph_UninitIBasicAudio( This );
+	CFilterGraph_UninitIVideoWindow( This );
+}
 
 HRESULT QUARTZ_CreateFilterGraph(IUnknown* punkOuter,void** ppobj)
 {
@@ -62,8 +78,11 @@ HRESULT QUARTZ_CreateFilterGraph(IUnknown* punkOuter,void** ppobj)
 
 	pfg->unk.pEntries = IFEntries;
 	pfg->unk.dwEntries = sizeof(IFEntries)/sizeof(IFEntries[0]);
+	pfg->unk.pOnFinalRelease = QUARTZ_DestroyFilterGraph;
 
 	*ppobj = (void*)(&pfg->unk);
 
 	return S_OK;
 }
+
+

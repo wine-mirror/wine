@@ -552,3 +552,9 @@ void CFilterGraph_InitIVideoWindow( CFilterGraph* pfg )
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->vidwin) = &ivideowindow;
 }
+
+void CFilterGraph_UninitIVideoWindow( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}
+

@@ -260,3 +260,8 @@ void CFilterGraph_InitIFilterGraph2( CFilterGraph* pfg )
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->fgraph) = &ifgraph;
 }
+
+void CFilterGraph_UninitIFilterGraph2( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}

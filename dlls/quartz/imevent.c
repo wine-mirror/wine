@@ -220,3 +220,8 @@ void CFilterGraph_InitIMediaEventEx( CFilterGraph* pfg )
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->mediaevent) = &imediaevent;
 }
+
+void CFilterGraph_UninitIMediaEventEx( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}

@@ -485,3 +485,7 @@ void CFilterGraph_InitIBasicVideo2( CFilterGraph* pfg )
 	ICOM_VTBL(&pfg->basvid) = &ibasicvideo;
 }
 
+void CFilterGraph_UninitIBasicVideo2( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}

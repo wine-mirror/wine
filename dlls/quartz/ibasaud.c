@@ -164,3 +164,8 @@ void CFilterGraph_InitIBasicAudio( CFilterGraph* pfg )
 	ICOM_VTBL(&pfg->basaud) = &ibasicaudio;
 }
 
+void CFilterGraph_UninitIBasicAudio( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}
+
