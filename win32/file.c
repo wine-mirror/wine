@@ -170,11 +170,12 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
     }
 
     /* If the name is either CONIN$ or CONOUT$, give them duplicated stdin
-     * or stdout, respectively.
+     * or stdout, respectively. The lower case version is also allowed. Most likely
+     * this should be a case ignore string compare.
      */
-    if(!strcmp(filename, "CONIN$"))
+    if(!strcasecmp(filename, "CONIN$"))
 	to_dup = GetStdHandle( STD_INPUT_HANDLE );
-    else if(!strcmp(filename, "CONOUT$"))
+    else if(!strcasecmp(filename, "CONOUT$"))
 	to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
 
     if(to_dup != HFILE_ERROR32)
