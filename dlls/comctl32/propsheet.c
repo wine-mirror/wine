@@ -3413,6 +3413,9 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       {
           PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwnd, PropSheetInfoStr);
 
+          if (!psInfo)
+              return FALSE;
+
           /* No default handler, forward notification to active page */
           if (psInfo->activeValid && psInfo->active_page != -1)
           {
@@ -3447,6 +3450,9 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwnd,
                                                         PropSheetInfoStr);
       HWND hwndPage = 0;
+
+      if (!psInfo)
+        return FALSE;
 
       if (psInfo->activeValid && psInfo->active_page != -1)
         hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
@@ -3509,6 +3515,9 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwnd,
                                                         PropSheetInfoStr);
 
+      if (!psInfo)
+        return FALSE;
+
       psInfo->restartWindows = TRUE;
       return TRUE;
     }
@@ -3517,6 +3526,9 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwnd,
                                                         PropSheetInfoStr);
+
+      if (!psInfo)
+        return FALSE;
 
       psInfo->rebootSystem = TRUE;
       return TRUE;
