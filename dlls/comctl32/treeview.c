@@ -2933,8 +2933,8 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
     PFNDPACOMPARE pfnCompare;
     LPARAM lpCompare;
 
-    /* undocumented feature: TVI_ROOT means `sort the whole tree' */
-    if (parent == TVI_ROOT)
+    /* undocumented feature: TVI_ROOT or NULL means `sort the whole tree' */
+    if (parent == TVI_ROOT || parent == NULL)
 	parent = infoPtr->root;
 
     /* Check for a valid handle to the parent item */
