@@ -97,7 +97,7 @@ extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *l
 extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
                                  DOS_FULL_NAME *full );
 
-/* win32/device.c */
-extern HANDLE DEVICE_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
+/* vxd.c */
+extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 #endif  /* __WINE_FILE_H */

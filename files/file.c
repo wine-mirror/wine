@@ -397,7 +397,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         }
         else if (!DOSFS_GetDevice( filename ))
         {
-            ret = DEVICE_Open( filename+4, access, sa );
+            ret = VXD_Open( filename+4, access, sa );
             goto done;
         }
 	else

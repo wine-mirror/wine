@@ -33,7 +33,6 @@ C_SRCS = \
 	console.c \
 	cpu.c \
 	debugger.c \
-	device.c \
 	dosmem.c \
 	editline.c \
 	environ.c \
