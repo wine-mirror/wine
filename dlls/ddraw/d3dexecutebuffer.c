@@ -595,11 +595,15 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 
 		    if ((This->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
 		        if (!ci->bNegate) {
-			    TRACE(" Should branch to %ld\n", ci->dwOffset);
+			    TRACE(" Branch to %ld\n", ci->dwOffset);
+			    instr = (char*)current + ci->dwOffset;
+			    break;
 			}
 		    } else {
 		        if (ci->bNegate) {
-			    TRACE(" Should branch to %ld\n", ci->dwOffset);
+			    TRACE(" Branch to %ld\n", ci->dwOffset);
+			    instr = (char*)current + ci->dwOffset;
+			    break;
 			}
 		    }
 
@@ -627,7 +631,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	    } break;
 
 	    default:
-	        ERR("Unhandled OpCode !!!\n");
+	        ERR("Unhandled OpCode %d !!!\n",current->bOpcode);
 	        /* Try to save ... */
 	        instr += count * size;
 	        break;
