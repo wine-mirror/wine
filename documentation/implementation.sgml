@@ -403,31 +403,25 @@ wait: ff
 #include &lt;stdio.h&gt;
 #include &lt;string.h&gt;
 
-void 
-main (void)
+int main (void)
 {
-  char buff[256], lastline[256];
-  int count;
+    char buff[256], lastline[256] = "";
+    int count = 0;
 
-  count = 0;
-  lastline[0] = 0;
-
-  while (!feof (stdin))
+    while (!feof (stdin))
     {
-      fgets (buff, sizeof (buff), stdin);
-      if (strcmp (buff, lastline) == 0)
+        fgets (buff, sizeof (buff), stdin);
+        if (strcmp (buff, lastline))
 	{
-	  count++;
-	}
-      else
-	{
-	  if (count &gt; 1)
-	    fprintf (stdout, "# Last line repeated %i times #\n", count);
-	  fprintf (stdout, "%s", buff);
-	  strcpy (lastline, buff);
+	    if (count &gt; 1)
+	        printf ("# Last line repeated %i times #\n", count);
+	    printf ("%s", buff);
+	    strcpy (lastline, buff);
 	    count = 1;
 	}
+        else count++;
     }
+    return 0;
 }
       </programlisting>
       </para>
