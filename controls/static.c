@@ -316,8 +316,17 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         goto END;
 
     case STM_SETIMAGE:
-    	/* FIXME: handle wParam */
-        lResult = STATIC_SetBitmap( wndPtr, (HBITMAP)lParam );
+        switch(wParam) {
+	case IMAGE_BITMAP:
+	    lResult = STATIC_SetBitmap( wndPtr, (HBITMAP)lParam );
+	    break;
+	case IMAGE_ICON:
+	    lResult = STATIC_SetIcon( wndPtr, (HICON16)lParam );
+	    break;
+	default:
+	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
+	    break;
+	}
         InvalidateRect( hWnd, NULL, FALSE );
         UpdateWindow( hWnd );
 	break;
