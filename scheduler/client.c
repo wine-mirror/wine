@@ -284,6 +284,7 @@ int CLIENT_InitServer(void)
         exit(1);
     case 0:  /* child */
         close( fd[1] );
+        fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
         break;
     default:  /* parent */
         close( fd[0] );
