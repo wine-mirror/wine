@@ -262,14 +262,28 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
   LPCVOID template;
   HRSRC hResInfo;
+  HINSTANCE hDlginst;
   HGLOBAL hDlgTmpl;
 
-  if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+  if ( (lpChFont->Flags&CF_ENABLETEMPLATE)!=0 )
   {
-    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-    return FALSE;
+    hDlginst=lpChFont->hInstance;
+    if( !(hResInfo = FindResourceA(hDlginst, lpChFont->lpTemplateName,
+      RT_DIALOGA)))
+    {
+      COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+      return FALSE;
+    }
+  } else
+  {
+    hDlginst=COMMDLG_hInstance32;
+    if (!(hResInfo = FindResourceA(hDlginst, "CHOOSE_FONT", RT_DIALOGA)))
+    {
+      COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+      return FALSE;
+    }
   }
-  if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+  if (!(hDlgTmpl = LoadResource(hDlginst, hResInfo )) ||
       !(template = LockResource( hDlgTmpl )))
   {
     COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
@@ -720,7 +734,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     hBitmapTT = LoadBitmapA(0, MAKEINTRESOURCEA(OBM_TRTYPE));
 
   /* This font will be deleted by WM_COMMAND */
-  SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,
+  SendDlgItemMessageA(hDlg,stc5,WM_SETFONT,
      (WPARAM)CreateFontA(0, 0, 1, 1, 400, 0, 0, 0, 0, 0, 0, 0, 0, NULL),FALSE);
 
   if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
@@ -959,7 +973,7 @@ static LRESULT CFn_WMCtlColorStatic(HWND hDlg, WPARAM wParam, LPARAM lParam,
                              LPCHOOSEFONTA lpcf)
 {
   if (lpcf->Flags & CF_EFFECTS)
-   if (GetDlgCtrlID(HWND_32(LOWORD(lParam)))==stc6)
+   if (GetDlgCtrlID(HWND_32(LOWORD(lParam)))==stc5)
    {
      SetTextColor((HDC)wParam, lpcf->rgbColors);
      return (LRESULT)GetStockObject(WHITE_BRUSH);
@@ -1065,9 +1079,9 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		    hFont=CreateFontIndirectA(lpxx);
 		    if (hFont)
 		    {
-		      HFONT oldFont=(HFONT)SendDlgItemMessageA(hDlg, stc6,
+		      HFONT oldFont=(HFONT)SendDlgItemMessageA(hDlg, stc5,
 		          WM_GETFONT, 0, 0);
-		      SendDlgItemMessageA(hDlg,stc6,WM_SETFONT,(WPARAM)hFont,TRUE);
+		      SendDlgItemMessageA(hDlg,stc5,WM_SETFONT,(WPARAM)hFont,TRUE);
 		      DeleteObject(oldFont);
 		    }
                   }
@@ -1077,7 +1091,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		  if (i!=CB_ERR)
 		  {
 		   lpcf->rgbColors=textcolors[i];
-		   InvalidateRect( GetDlgItem(hDlg,stc6), NULL, 0 );
+		   InvalidateRect( GetDlgItem(hDlg,stc5), NULL, 0 );
 		  }
 		  break;
 
@@ -1109,7 +1123,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 
 static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  DeleteObject((HFONT)SendDlgItemMessageA(hwnd, stc6, WM_GETFONT, 0, 0));
+  DeleteObject((HFONT)SendDlgItemMessageA(hwnd, stc5, WM_GETFONT, 0, 0));
   return TRUE;
 }
 
