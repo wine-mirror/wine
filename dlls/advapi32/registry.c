@@ -297,6 +297,8 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
 
     if (reserved) return ERROR_INVALID_PARAMETER;
 
+    if (!hkey) return ERROR_INVALID_HANDLE;
+
     status = NtEnumerateKey( hkey, index, KeyNodeInformation,
                              buffer, sizeof(buffer), &total_size );
 
@@ -357,6 +359,8 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
            name_len ? *name_len : -1, reserved, class, class_len, ft );
 
     if (reserved) return ERROR_INVALID_PARAMETER;
+
+    if (!hkey) return ERROR_INVALID_HANDLE;
 
     status = NtEnumerateKey( hkey, index, KeyNodeInformation,
                              buffer, sizeof(buffer), &total_size );
