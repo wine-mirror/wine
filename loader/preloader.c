@@ -295,10 +295,11 @@ static inline void *wld_memset( void *dest, int val, size_t len )
  *  %x prints a hex number
  *  %s prints a string
  */
-static void wld_vsprintf(char *str, const char *fmt, va_list args )
+static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
 {
     static const char hex_chars[16] = "0123456789abcdef";
     const char *p = fmt;
+    char *str = buffer;
 
     while( *p )
     {
@@ -325,28 +326,31 @@ static void wld_vsprintf(char *str, const char *fmt, va_list args )
         *str++ = *p++;
     }
     *str = 0;
+    return str - buffer;
 }
 
 static void wld_printf(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
+    int len;
 
     va_start( args, fmt );
-    wld_vsprintf(buffer, fmt, args );
+    len = wld_vsprintf(buffer, fmt, args );
     va_end( args );
-    wld_write(2, buffer, strlen(buffer));
+    wld_write(2, buffer, len);
 }
 
 static __attribute__((noreturn)) void fatal_error(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
+    int len;
 
     va_start( args, fmt );
-    wld_vsprintf(buffer, fmt, args );
+    len = wld_vsprintf(buffer, fmt, args );
     va_end( args );
-    wld_write(2, buffer, strlen(buffer));
+    wld_write(2, buffer, len);
     wld_exit(1);
 }
 
