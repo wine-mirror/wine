@@ -2516,7 +2516,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tleal -8(%%esp), %%eax\n" );
         fprintf( outfile, "\tmovl %%eax, -8(%%edi)\n" );    /* 32-bit sp */
 
-        fprintf( outfile, "\tmovl %%ss, %%ax\n" );
+        fprintf( outfile, "\tmovw %%ss, %%ax\n" );
         fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
         fprintf( outfile, "\tmovl %%eax, -4(%%edi)\n" );    /* 32-bit ss */
 
@@ -2531,7 +2531,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\taddl $%d, %%ebx\n", sizeof(STACK16FRAME)-size+4 );
         fprintf( outfile, "\tmovl %%ebx, 0(%%edi)\n" );
 
-        fprintf( outfile, "\tmovl %%ds, %%ax\n" );
+        fprintf( outfile, "\tmovw %%ds, %%ax\n" );
         fprintf( outfile, "\tmovw %%ax, 4(%%edi)\n" );
 
         fprintf( outfile, "\taddl $20, %%ebx\n" );
@@ -2540,7 +2540,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tleal -8(%%esp), %%eax\n" );
         fprintf( outfile, "\tmovl %%eax, 12(%%edi)\n" );
 
-        fprintf( outfile, "\tmovl %%ss, %%ax\n" );
+        fprintf( outfile, "\tmovw %%ss, %%ax\n" );
         fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
         fprintf( outfile, "\tmovl %%eax, 16(%%edi)\n" );
 
