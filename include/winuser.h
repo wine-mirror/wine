@@ -253,6 +253,7 @@ typedef struct
 #define ODT_LISTBOX     2
 #define ODT_COMBOBOX    3
 #define ODT_BUTTON      4
+#define ODT_STATIC      5
 
 /* Owner draw actions */
 #define ODA_DRAWENTIRE  0x0001
@@ -265,6 +266,9 @@ typedef struct
 #define ODS_DISABLED    0x0004
 #define ODS_CHECKED     0x0008
 #define ODS_FOCUS       0x0010
+#define ODS_COMBOBOXEDIT 0x1000
+#define ODS_HOTLIGHT    0x0040
+#define ODS_INACTIVE    0x0080
 
 /* Edit control styles */
 #define ES_LEFT         0x00000000
@@ -1254,9 +1258,10 @@ typedef struct {
   HMENU   hSubMenu;
   HBITMAP hbmpChecked;
   HBITMAP hbmpUnchecked;
-  DWORD     dwItemData;
-  LPSTR     dwTypeData;
+  DWORD   dwItemData;
+  LPSTR   dwTypeData;
   UINT    cch;
+  HBITMAP hbmpItem;
 } MENUITEMINFOA, *LPMENUITEMINFOA;
 
 typedef struct {
@@ -1271,10 +1276,30 @@ typedef struct {
   DWORD     dwItemData;
   LPWSTR    dwTypeData;
   UINT    cch;
+  HBITMAP hbmpItem;
 } MENUITEMINFOW, *LPMENUITEMINFOW;
 
 DECL_WINELIB_TYPE_AW(MENUITEMINFO)
 DECL_WINELIB_TYPE_AW(LPMENUITEMINFO)
+
+typedef struct {
+  DWORD   cbSize;
+  DWORD   fMask;
+  DWORD   dwStyle;
+  UINT    cyMax;
+  HBRUSH  hbrBack;
+  DWORD   dwContextHelpID;
+  DWORD   dwMenuData;
+} MENUINFO, *LPMENUINFO;
+
+typedef MENUINFO const * LPCMENUINFO;
+
+#define MIM_MAXHEIGHT		0x00000001
+#define MIM_BACKGROUND		0x00000002
+#define MIM_HELPID		0x00000004
+#define MIM_MENUDATA		0x00000008
+#define MIM_STYLE		0x00000010
+#define MIM_APPLYTOSUBMENUS	0x80000000
 
 typedef struct {
   WORD versionNumber;
@@ -1299,6 +1324,21 @@ typedef PVOID *LPMENUTEMPLATE;
 #define MIIM_CHECKMARKS  0x00000008
 #define MIIM_TYPE        0x00000010
 #define MIIM_DATA        0x00000020
+#define MIIM_STRING      0x00000040
+#define MIIM_BITMAP      0x00000080
+#define MIIM_FTYPE       0x00000100
+
+#define HBMMENU_CALLBACK	((HBITMAP) -1)
+#define HBMMENU_SYSTEM		((HBITMAP)  1)
+#define HBMMENU_MBAR_RESTORE	((HBITMAP)  2)
+#define HBMMENU_MBAR_MINIMIZE	((HBITMAP)  3)
+#define HBMMENU_MBAR_CLOSE	((HBITMAP)  5)
+#define HBMMENU_MBAR_CLOSE_D	((HBITMAP)  6)
+#define HBMMENU_MBAR_MINIMIZE_D	((HBITMAP)  7)
+#define HBMMENU_POPUP_CLOSE	((HBITMAP)  8)
+#define HBMMENU_POPUP_RESTORE	((HBITMAP)  9)
+#define HBMMENU_POPUP_MAXIMIZE	((HBITMAP) 10)
+#define HBMMENU_POPUP_MINIMIZE	((HBITMAP) 11)
 
 /* DrawState defines ... */
 typedef BOOL (CALLBACK *DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
@@ -2251,6 +2291,12 @@ typedef struct
 #define MFS_UNCHECKED       MF_UNCHECKED
 #define MFS_UNHILITE        MF_UNHILITE
 #define MFS_DEFAULT         MF_DEFAULT
+#define MFS_MASK            0x0000108BL
+#define MFS_HOTTRACKDRAWN   0x10000000L
+#define MFS_CACHEDBMP       0x20000000L
+#define MFS_BOTTOMGAPDROP   0x40000000L
+#define MFS_TOPGAPDROP      0x80000000L
+#define MFS_GAPDROP         0xC0000000L
 
 #define DT_TOP 0
 #define DT_LEFT 0
@@ -2768,6 +2814,7 @@ BOOL      WINAPI ExitWindowsEx(UINT,DWORD);
 BOOL      WINAPI GetIconInfo(HICON,LPICONINFO);
 DWORD       WINAPI GetMenuContextHelpId(HMENU);
 UINT      WINAPI GetMenuDefaultItem(HMENU,UINT,UINT);
+BOOL      WINAPI GetMenuInfo(HMENU,LPMENUINFO);
 BOOL      WINAPI GetMenuItemInfoA(HMENU,UINT,BOOL,MENUITEMINFOA*);
 BOOL      WINAPI GetMenuItemInfoW(HMENU,UINT,BOOL,MENUITEMINFOW*);
 #define     GetMenuItemInfo WINELIB_NAME_AW(GetMenuItemInfo)
@@ -2801,6 +2848,7 @@ BOOL      WINAPI SendNotifyMessageW(HWND,UINT,WPARAM,LPARAM);
 VOID        WINAPI SetDebugErrorLevel(DWORD);
 VOID        WINAPI SetLastErrorEx(DWORD,DWORD);
 BOOL      WINAPI SetMenuDefaultItem(HMENU,UINT,UINT);
+BOOL      WINAPI SetMenuInfo(HMENU,LPCMENUINFO);
 BOOL      WINAPI SetMenuItemInfoA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
 BOOL      WINAPI SetMenuItemInfoW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 #define     SetMenuItemInfo WINELIB_NAME_AW(SetMenuItemInfo)

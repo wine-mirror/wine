@@ -7,10 +7,6 @@
 
 #include "win.h"
 
-#define MAGIC_REDUCE  3
-#define MAGIC_RESTORE 2
-#define MAGIC_CLOSE   5
-
 extern BOOL MENU_Init(void);
 extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,

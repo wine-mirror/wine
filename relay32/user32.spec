@@ -626,3 +626,8 @@ init	MAIN_UserInit
 621 stdcall SetTaskmanWindow (long) SetTaskmanWindow
 622 stdcall GetProgmanWindow () GetProgmanWindow
 623 stdcall UserSignalProc(long long long long) UserSignalProc
+
+
+# win98
+800 stdcall GetMenuInfo(long ptr)GetMenuInfo
+801 stdcall SetMenuInfo(long ptr)SetMenuInfo

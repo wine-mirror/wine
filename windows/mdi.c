@@ -825,9 +825,9 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
 		hSysPopup, child->hSysMenu);
  
     AppendMenuA(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                   SC_MINIMIZE, (LPSTR)(DWORD)MAGIC_REDUCE ) ;
+                   SC_MINIMIZE, (LPSTR)(DWORD)HBMMENU_MBAR_MINIMIZE ) ;
     AppendMenuA(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                   SC_RESTORE, (LPSTR)(DWORD)MAGIC_RESTORE );
+                   SC_RESTORE, (LPSTR)(DWORD)HBMMENU_MBAR_RESTORE );
 
     if( !InsertMenuA(frame->wIDmenu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
                     hSysPopup, (LPSTR)(DWORD)hBmpClose ))
@@ -841,7 +841,7 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
     if(TWEAK_WineLook > WIN31_LOOK)
     {
         AppendMenuA(frame->wIDmenu,MF_HELP | MF_BITMAP,
-                       SC_CLOSE, (LPSTR)(DWORD)MAGIC_CLOSE );
+                       SC_CLOSE, (LPSTR)(DWORD)HBMMENU_MBAR_CLOSE );
     }
 
     EnableMenuItem(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
