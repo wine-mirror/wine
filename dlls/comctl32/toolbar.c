@@ -160,7 +160,7 @@ typedef struct
     BOOL     bAnchor;         /* anchor highlight enabled */
     BOOL     bDoRedraw;       /* Redraw status */
     BOOL     bDragOutSent;    /* has TBN_DRAGOUT notification been sent for this drag? */
-    BOOL     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
+    BOOL     bUnicode;        /* Notifications are ASCII (FALSE) or Unicode (TRUE)? */
     BOOL     bCaptured;       /* mouse captured? */
     DWORD      dwStyle;         /* regular toolbar style */
     DWORD      dwExStyle;       /* extended toolbar style */
@@ -233,6 +233,10 @@ static inline int TOOLBAR_GetListTextOffset(TOOLBAR_INFO *infoPtr, INT iListGap)
                         TBSTYLE_EX_UNDOC1 | \
                         TBSTYLE_EX_MIXEDBUTTONS | \
                         TBSTYLE_EX_HIDECLIPPEDBUTTONS)
+
+/* all of the CCS_ styles */
+#define COMMON_STYLES (CCS_TOP|CCS_NOMOVEY|CCS_BOTTOM|CCS_NORESIZE| \
+                       CCS_NOPARENTALIGN|CCS_ADJUSTABLE|CCS_NODIVIDER|CCS_VERT)
 
 #define GETIBITMAP(infoPtr, i) (infoPtr->iVersion >= 5 ? LOWORD(i) : i)
 #define GETHIMLID(infoPtr, i) (infoPtr->iVersion >= 5 ? HIWORD(i) : 0)
@@ -4971,10 +4975,15 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     for (i = 0; i < infoPtr->cimlDef; i++)
         infoPtr->nNumBitmaps += ImageList_GetImageCount(infoPtr->himlDef[i]->himl);
 
-    ImageList_GetIconSize(himl, &infoPtr->nBitmapWidth,
-			  &infoPtr->nBitmapHeight);
-    TRACE("hwnd %p, new himl=%08x, count=%d, bitmap w=%d, h=%d\n",
-	  hwnd, (INT)infoPtr->himlDef, infoPtr->nNumBitmaps,
+    if (!ImageList_GetIconSize(himl, &infoPtr->nBitmapWidth,
+            &infoPtr->nBitmapHeight))
+    {
+        infoPtr->nBitmapWidth = 0;
+        infoPtr->nBitmapHeight = 0;
+    }
+
+    TRACE("hwnd %p, new himl=%p, id = %d, count=%d, bitmap w=%d, h=%d\n",
+	  hwnd, infoPtr->himlDef, id, infoPtr->nNumBitmaps,
 	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
 
     InvalidateRect(hwnd, NULL, TRUE);
@@ -6653,27 +6662,29 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    if (nType == GWL_STYLE) {
-	if (lpStyle->styleNew & TBSTYLE_LIST) {
-	    infoPtr->dwDTFlags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS;
-	}
-	else {
-	    infoPtr->dwDTFlags = DT_CENTER | DT_END_ELLIPSIS;
-	}
+    if (nType == GWL_STYLE)
+    {
+        if (lpStyle->styleNew & TBSTYLE_LIST)
+            infoPtr->dwDTFlags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS;
+        else
+            infoPtr->dwDTFlags = DT_CENTER | DT_END_ELLIPSIS;
+
 	infoPtr->bBtnTranspnt = (lpStyle->styleNew &
 				 (TBSTYLE_FLAT | TBSTYLE_LIST));
-	TOOLBAR_CheckStyle (hwnd, lpStyle->styleNew);
+        TOOLBAR_CheckStyle (hwnd, lpStyle->styleNew);
 
         TRACE("new style 0x%08lx\n", lpStyle->styleNew);
 
+        /* only resize if one of the CCS_* styles was changed */
+        if ((infoPtr->dwStyle ^ lpStyle->styleNew) & COMMON_STYLES)
+        {
+            TOOLBAR_AutoSize (hwnd);
+    
+            InvalidateRect(hwnd, NULL, TRUE);
+        }
+
         infoPtr->dwStyle = lpStyle->styleNew;
     }
-
-    TOOLBAR_CalcToolbar(hwnd);
-
-    TOOLBAR_AutoSize (hwnd);
-
-    InvalidateRect(hwnd, NULL, TRUE);
 
     return 0;
 }
