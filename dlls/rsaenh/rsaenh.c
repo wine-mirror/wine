@@ -2937,7 +2937,7 @@ cleanup:
     return res;
 }
 
-static const WCHAR szProviderKeys[3][97] = {
+static const WCHAR szProviderKeys[4][97] = {
     {   'S','o','f','t','w','a','r','e','\\',
         'M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r',
         'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
@@ -2956,12 +2956,24 @@ static const WCHAR szProviderKeys[3][97] = {
         'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
         'i','d','e','r','\\','M','i','c','r','o','s','o','f','t',' ','S','t','r','o','n','g',
         ' ','C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r',
-        'o','v','i','d','e','r',0 }
+        'o','v','i','d','e','r',0 },
+    {   'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+        'C','r','y','p','t','o','g','r','a','p','h','y','\\','D','e','f','a','u','l','t','s','\\',
+        'P','r','o','v','i','d','e','r','\\','M','i','c','r','o','s','o','f','t',' ',
+        'R','S','A',' ','S','C','h','a','n','n','e','l',' ',
+        'C','r','y','p','t','o','g','r','a','p','h','i','c',' ','P','r','o','v','i','d','e','r',0 }
 };
-static const WCHAR szDefaultKey[] = { 'S','o','f','t','w','a','r','e','\\',
- 'M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r',
- 'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
- 'i','d','e','r',' ','T','y','p','e','s','\\','T','y','p','e',' ','0','0','1',0};
+static const WCHAR szDefaultKeys[2][65] = {
+    {   'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r',
+        'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
+        'i','d','e','r',' ','T','y','p','e','s','\\','T','y','p','e',' ','0','0','1',0 },
+    {   'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r',
+        'a','p','h','y','\\','D','e','f','a','u','l','t','s','\\','P','r','o','v',
+        'i','d','e','r',' ','T','y','p','e','s','\\','T','y','p','e',' ','0','1','2',0 }
+};
+
 
 /******************************************************************************
  * DllRegisterServer (RSAENH.@)
@@ -2991,7 +3003,7 @@ HRESULT WINAPI RSAENH_DllRegisterServer()
     long apiRet;
     int i;
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<4; i++) {
         apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szProviderKeys[i], 0, NULL,
             REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dp);
 
@@ -3003,7 +3015,7 @@ HRESULT WINAPI RSAENH_DllRegisterServer()
                 static const WCHAR szRSABase[] = { 'r','s','a','e','n','h','.','d','l','l',0 };
                 static const WCHAR szType[] = { 'T','y','p','e',0 };
                 static const WCHAR szSignature[] = { 'S','i','g','n','a','t','u','r','e',0 };
-                DWORD type = 1;
+                DWORD type = (i == 3) ? PROV_RSA_SCHANNEL : PROV_RSA_FULL;
                 DWORD sign = 0xdeadbeef;
                 RegSetValueExW(key, szImagePath, 0, REG_SZ, (LPBYTE)szRSABase, 
                                (lstrlenW(szRSABase) + 1) * sizeof(WCHAR));
@@ -3013,29 +3025,38 @@ HRESULT WINAPI RSAENH_DllRegisterServer()
             RegCloseKey(key);
         }
     }
-    if (apiRet == ERROR_SUCCESS)
-        apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szDefaultKey, 0, NULL, REG_OPTION_NON_VOLATILE,
-                                 KEY_ALL_ACCESS, NULL, &key, &dp);
-    if (apiRet == ERROR_SUCCESS)
-    {
-        if (dp == REG_CREATED_NEW_KEY)
+    
+    for (i=0; i<2; i++) {
+        apiRet = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szDefaultKeys[i], 0, NULL, 
+                                 REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &dp);
+        if (apiRet == ERROR_SUCCESS)
         {
-            static const WCHAR szName[] = { 'N','a','m','e',0 };
-            static const WCHAR szRSAName[] = {
-              'M','i','c','r','o','s','o','f','t',' ','S','t','r','o','n','g',' ',
-              'C','r','y','p','t','o','g','r','a','p','h','i','c',' ',
-              'P','r','o','v','i','d','e','r',0 };
-            static const WCHAR szTypeName[] = { 'T','y','p','e','N','a','m','e',0 };
-            static const WCHAR szRSATypeName[] = {
-              'R','S','A',' ','F','u','l','l',' ',
-              '(','S','i','g','n','a','t','u','r','e',' ','a','n','d',' ',
-              'K','e','y',' ','E','x','c','h','a','n','g','e',')',0 };
+            if (dp == REG_CREATED_NEW_KEY)
+            {
+                static const WCHAR szName[] = { 'N','a','m','e',0 };
+                static const WCHAR szRSAName[2][46] = {
+                  { 'M','i','c','r','o','s','o','f','t',' ', 'B','a','s','e',' ',
+                    'C','r','y','p','t','o','g','r','a','p','h','i','c',' ', 
+                    'P','r','o','v','i','d','e','r',' ','v','1','.','0',0 },
+                  { 'M','i','c','r','o','s','o','f','t',' ','R','S','A',' ',
+                    'S','C','h','a','n','n','e','l',' ',
+                    'C','r','y','p','t','o','g','r','a','p','h','i','c',' ',
+                    'P','r','o','v','i','d','e','r',0 } };
+                static const WCHAR szTypeName[] = { 'T','y','p','e','N','a','m','e',0 };
+                static const WCHAR szRSATypeName[2][38] = { 
+                  { 'R','S','A',' ','F','u','l','l',' ',
+                       '(','S','i','g','n','a','t','u','r','e',' ','a','n','d',' ',
+                    'K','e','y',' ','E','x','c','h','a','n','g','e',')',0 },
+                  { 'R','S','A',' ','S','C','h','a','n','n','e','l',0 } };
 
-            RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName, sizeof(szRSAName));
-            RegSetValueExW(key, szTypeName, 0, REG_SZ, (LPBYTE)szRSATypeName,sizeof(szRSATypeName));
+                RegSetValueExW(key, szName, 0, REG_SZ, (LPBYTE)szRSAName[i], sizeof(szRSAName));
+                RegSetValueExW(key, szTypeName, 0, REG_SZ, 
+                                (LPBYTE)szRSATypeName[i],sizeof(szRSATypeName));
+            }
         }
         RegCloseKey(key);
     }
+    
     return HRESULT_FROM_WIN32(apiRet);
 }
 
@@ -3057,6 +3078,8 @@ HRESULT WINAPI RSAENH_DllUnregisterServer()
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[0]);
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[1]);
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[2]);
-    RegDeleteKeyW(HKEY_LOCAL_MACHINE, szDefaultKey);
+    RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[3]);
+    RegDeleteKeyW(HKEY_LOCAL_MACHINE, szDefaultKeys[0]);
+    RegDeleteKeyW(HKEY_LOCAL_MACHINE, szDefaultKeys[1]);
     return S_OK;
 }
