@@ -4417,6 +4417,12 @@ DECL_WINELIB_TYPE_AW(LPNMDATETIMEFORMATQUERY)
 #define DateTime_GetMonthCalFont(hdp) \
   SNDMSGA (hdp, DTM_GETMCFONT, 0, 0)
 
+#define DA_LAST         (0x7fffffff)
+#define DPA_APPEND      (0x7fffffff)
+#define DPA_ERR         (-1)
+
+#define DSA_APPEND      (0x7fffffff)
+#define DSA_ERR         (-1)
 
 struct _DSA;
 typedef struct _DSA *HDSA;
