@@ -919,6 +919,7 @@ TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     /* Do this first in case it fails. */
     if (tvItem->mask & TVIF_TEXT)
     {
+        wineItem->textWidth = 0; /* force width recalculation */
 	if (tvItem->pszText != LPSTR_TEXTCALLBACKA)
 	{
 	    int len = lstrlenA(tvItem->pszText) + 1;
