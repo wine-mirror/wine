@@ -114,7 +114,7 @@ debug_channels (shell)
 102 forward @ user32.LoadCursorW
 103 forward @ user32.LoadIconW
 104 forward @ user32.LoadImageW
-105 forward @ user32.LoadLibraryExW
+105 forward @ kernel32.LoadLibraryExW
 106 forward @ user32.LoadMenuW
 107 forward @ user32.LoadStringW
 108 forward @ user32.MessageBoxIndirectW
@@ -321,7 +321,7 @@ debug_channels (shell)
 309 forward @ kernel32.LoadLibraryW
 310 forward @ kernel32.GetTimeFormatW
 311 forward @ kernel32.GetDateFormatW
-312 forward @ kernel32.specGetPrivateProfileStringW
+312 forward @ kernel32.GetPrivateProfileStringW
 313 stdcall @(ptr long ptr long long) SHLWAPI_313
 314 forward @ user32.RegisterClassExW
 315 forward @ user32.GetClassInfoExW
@@ -349,7 +349,7 @@ debug_channels (shell)
 337 stdcall @(wstr long ptr ptr long) SHLWAPI_337
 338 forward @ kernel32.SetFileAttributesW
 339 forward @ kernel32.GetNumberFormatW
-340 forward @ user32.specMessageBoxW
+340 forward @ user32.MessageBoxW
 341 forward @ kernel32.FindNextFileW
 342 stdcall @(long long long long) SHLWAPI_342
 343 stub @
@@ -369,7 +369,7 @@ debug_channels (shell)
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
 358 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_358
 359 forward @ kernel32.OpenEventW
-360 forward @ kernel32.specRemoveDirectoryW
+360 forward @ kernel32.RemoveDirectoryW
 361 forward @ kernel32.GetShortPathNameW
 362 stub @
 363 stub @
