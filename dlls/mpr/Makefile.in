@@ -1,9 +1,9 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mpr
+SOVERSION = 1.0
 
 SPEC_SRCS = mpr.spec
 
@@ -15,9 +15,7 @@ C_SRCS = \
 	pwcache.c \
 	wnet.c
 
-all: $(MODULE).o
-
-@MAKE_RULES@
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

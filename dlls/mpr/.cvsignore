@@ -1,2 +1,3 @@
 Makefile
+libmpr.so.1.0
 mpr.spec.c

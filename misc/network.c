@@ -147,7 +147,9 @@ WORD WINAPI WNetUnlockQueueData16( LPSTR szQueue )
 WORD WINAPI WNetAddConnection16( LPSTR lpNetPath, LPSTR lpPassWord,
                                  LPSTR lpLocalName )
 {	
-   return WNetAddConnectionA( lpNetPath, lpPassWord, lpLocalName );
+    FIXME( "(%s, %p, %s): stub\n", 
+           debugstr_a(lpNetPath), lpPassWord, debugstr_a(lpLocalName) );
+    return WN16_NET_ERROR;
 }
 
 /********************************************************************
@@ -165,10 +167,36 @@ WORD WINAPI WNetCancelConnection16( LPSTR lpName, BOOL16 bForce )
 WORD WINAPI WNetGetConnection16( LPSTR lpLocalName, 
                                  LPSTR lpRemoteName, UINT16 *cbRemoteName )
 {
-    DWORD len = *cbRemoteName;
-    WORD retv = WNetGetConnectionA( lpLocalName, lpRemoteName, &len );
-    *cbRemoteName = (UINT16)len;
-    return retv;
+    const char *path;
+
+    TRACE( "local %s\n", lpLocalName );
+    if (lpLocalName[1] == ':')
+    {
+        int drive = toupper(lpLocalName[0]) - 'A';
+        switch(DRIVE_GetType(drive))
+        {
+        case TYPE_INVALID:
+            return WN16_BAD_LOCALNAME;
+        case TYPE_NETWORK:
+            path = DRIVE_GetLabel(drive);
+            if (strlen(path) + 1 > *cbRemoteName)
+            {
+                *cbRemoteName = strlen(path) + 1;
+                return WN16_MORE_DATA;
+            }
+            strcpy( lpRemoteName, path );
+            *cbRemoteName = strlen(lpRemoteName) + 1;
+            return WN16_SUCCESS;
+	case TYPE_FLOPPY:
+	case TYPE_HD:
+	case TYPE_CDROM:
+	  TRACE("file is local\n");
+	  return WN16_NOT_CONNECTED;
+	default:
+	    return WN16_BAD_LOCALNAME;
+        }
+    }
+    return WN16_BAD_LOCALNAME;
 }
 
 /**************************************************************************

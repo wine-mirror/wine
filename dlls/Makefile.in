@@ -14,6 +14,7 @@ DLLFILES = \
 	imagehlp/libimagehlp.@LIBEXT@ \
 	imm32/libimm32.@LIBEXT@ \
 	lzexpand/liblz32.@LIBEXT@ \
+	mpr/libmpr.@LIBEXT@ \
 	msacm/libmsacm.@LIBEXT@ \
 	msacm32/libmsacm32.@LIBEXT@ \
 	msnet32/libmsnet32.@LIBEXT@ \
@@ -131,6 +132,9 @@ libmciwave.drv.@LIBEXT@: winmm/mciwave/libmciwave.drv.@LIBEXT@
 
 libmidimap.drv.@LIBEXT@: winmm/midimap/libmidimap.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/midimap/libmidimap.drv.@LIBEXT@ $@
+
+libmpr.@LIBEXT@: mpr/libmpr.@LIBEXT@
+	$(RM) $@ && $(LN_S) mpr/libmpr.@LIBEXT@ $@
 
 libmsacm.@LIBEXT@: msacm/libmsacm.@LIBEXT@
 	$(RM) $@ && $(LN_S) msacm/libmsacm.@LIBEXT@ $@

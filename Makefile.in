@@ -35,7 +35,6 @@ LIBSUBDIRS = \
 	dlls/crtdll \
 	dlls/display \
 	dlls/mouse \
-	dlls/mpr \
 	dlls/ntdll \
 	files \
 	graphics \
@@ -111,7 +110,6 @@ LIBOBJS = \
 	dlls/crtdll/crtdll.o \
 	dlls/display/display.o \
 	dlls/mouse/mouse.o \
-	dlls/mpr/mpr.o \
 	dlls/ntdll/ntdll.o \
 	files/files.o \
 	graphics/graphics.o \

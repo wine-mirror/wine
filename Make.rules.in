@@ -98,6 +98,7 @@ DLLS = \
 	mciseq.drv \
 	mciwave.drv \
 	midimap.drv \
+	mpr \
 	msacm \
 	msacm.drv \
 	msacm32 \
