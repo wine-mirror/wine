@@ -58,13 +58,15 @@ typedef struct
     OSVERSIONINFOEXA getVersionEx;
 } VERSION_DATA;
 
-/* FIXME: compare values below with original and fix */
+/* FIXME: compare values below with original and fix.
+ * An *excellent* win9x version page (ALL versions !)
+ * can be found at members.aol.com/axcel216/ver.htm */
 static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 {
     /* WIN20 FIXME: verify values */
     {
 	MAKELONG( 0x0002, 0x0303 ), /* assume DOS 3.3 */
-	MAKELONG( 0x0003, 0x8000 ),
+	MAKELONG( 0x0002, 0x8000 ),
 	{
             sizeof(OSVERSIONINFOA), 2, 0, 0,
             VER_PLATFORM_WIN32s, "Win32s 1.3",
@@ -110,22 +112,22 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 	    0, 0, 0, 0, 0
         }
     },
-    /* WIN98 */
+    /* WIN98 (second edition) */
     {
         0x070A5F03,
         0xC0000A04,
         {
-            /* Win98:   4, 10, 0x40A07CE, " "
-             * Win98SE: 4, 10, 0x40A08AE, " A "
+            /* Win98:   4, 10, 0x40A07CE, " "   4.10.1998
+             * Win98SE: 4, 10, 0x40A08AE, " A " 4.10.2222
              */
-            sizeof(OSVERSIONINFOA), 4, 10, 0x40A07CE,
-            VER_PLATFORM_WIN32_WINDOWS, " ",
+            sizeof(OSVERSIONINFOA), 4, 10, 0x40A08AE,
+            VER_PLATFORM_WIN32_WINDOWS, " A ",
 	    0, 0, 0, 0, 0
         }
     },
     /* WINME */
     {
-        0x07005F03, /* Assuming DOS 7 like the other Win9x */
+        0x08005F03,
         0xC0005A04,
         {
             sizeof(OSVERSIONINFOA), 4, 90, 0x45A0BB8,
@@ -203,7 +205,7 @@ static char * special_dlls[] =
 
 /* the current version has not been autodetected but forced via cmdline */
 static BOOL versionForced = FALSE;
-static WINDOWS_VERSION defaultWinVersion = WIN31;
+static WINDOWS_VERSION forcedWinVersion = WIN31; /* init value irrelevant */
 
 /**********************************************************************
  *         VERSION_ParseWinVersion
@@ -221,7 +223,7 @@ static void VERSION_ParseWinVersion( const char *arg )
             len = p ? (int)p - (int)pCurr : strlen(pCurr);
             if ( (!strncmp( pCurr, arg, len )) && (arg[len] == '\0') )
             {
-                defaultWinVersion = (WINDOWS_VERSION)i;
+                forcedWinVersion = (WINDOWS_VERSION)i;
                 versionForced = TRUE;
                 return;
             }
@@ -297,7 +299,7 @@ static void VERSION_Init(void)
             if (!RegQueryValueExA( appkey, "Windows", NULL, &type, buffer, &count ))
             {
                 VERSION_ParseWinVersion( buffer );
-                TRACE( "got app win version %s\n", WinVersionNames[defaultWinVersion] );
+                TRACE( "got app win version %s\n", WinVersionNames[forcedWinVersion] );
                 got_win_ver = TRUE;
             }
             count = sizeof(buffer);
@@ -322,7 +324,7 @@ static void VERSION_Init(void)
             if (!RegQueryValueExA( hkey, "Windows", NULL, &type, buffer, &count ))
             {
                 VERSION_ParseWinVersion( buffer );
-                TRACE( "got default win version %s\n", WinVersionNames[defaultWinVersion] );
+                TRACE( "got default win version %s\n", WinVersionNames[forcedWinVersion] );
             }
         }
         if (!got_dos_ver)
@@ -363,10 +365,17 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
 	    
 	    if (!strncasecmp(name, "ntdll", 5))
 	    {
-	      if (3 == PE_HEADER(hmod)->OptionalHeader.MajorOperatingSystemVersion)
-	        return NT351;
-	      else
-	        return NT40;
+	      switch(PE_HEADER(hmod)->OptionalHeader.MajorOperatingSystemVersion) {
+		  case 3:
+			  MESSAGE("WARNING: very old native DLL (NT 3.x) used, might cause instability.\n");
+			  return NT351;
+		  case 4: return NT40;
+		  case 5: return NT2K;
+		  case 6: return WINXP;
+		  default:
+			  FIXME("Unknown DLL OS version, please report !!\n");
+			  return WINXP;
+	      }
 	    }
         }
     }
@@ -386,7 +395,7 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
  * 2.xx/1.00/0.00/4.00	Win95 		system files
  * x.xx/4.00/0.00/4.00	Win95		most applications
  * 3.10/4.00/0.00/4.00	Win98		notepad
- * x.xx/5.00/5.00/4.00	Win98 		system dlls
+ * x.xx/5.00/5.00/4.00	Win98 		system dlls (e.g. comctl32.dll)
  * x.xx/4.00/4.00/4.00	NT 4 		most apps
  * 5.12/5.00/5.00/4.00	NT4+IE5		comctl32.dll
  * 5.12/5.00/5.00/4.00	Win98		calc
@@ -425,11 +434,11 @@ DWORD VERSION_GetLinkedDllVersion(void)
 	          WinVersion = DllVersion;
 	        else {
 	          if (WinVersion != DllVersion) {
-	            ERR("You mixed system dlls from different windows versions! Expect a crash! (%s: expected version '%s', but is '%s')\n",
+	            ERR("You mixed system DLLs from different windows versions! Expect a crash! (%s: expected version '%s', but is '%s')\n",
 			wm->modname,
 			VersionData[WinVersion].getVersionEx.szCSDVersion,
 			VersionData[DllVersion].getVersionEx.szCSDVersion);
-	            return WIN31; /* this may let the exe exiting */
+	            return WIN20; /* this may let the exe exiting */
 	          }
 	        }
 	        break;
@@ -496,7 +505,7 @@ static WINDOWS_VERSION VERSION_GetVersion(void)
 
         VERSION_Init();
         if (versionForced) /* user has overridden any sensible checks */
-	    winver = defaultWinVersion;
+	    winver = forcedWinVersion;
 	else
 	{
 	    retver = VERSION_GetLinkedDllVersion();
