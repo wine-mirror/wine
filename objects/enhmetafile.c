@@ -2422,7 +2422,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     RECT rc, *prcFrame = NULL;
     gdi_mf_comment *mfcomment;
     UINT mfcomment_size;
-    INT horzres, vertres, horzsize, vertsize, xext, yext;
+    INT horzres, vertres;
 
     TRACE("(%d, %p, %p, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
 
@@ -2439,18 +2439,14 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     if(!lpmfp) {
         lpmfp = &mfp;
 	mfp.mm = MM_ANISOTROPIC;
-	mfp.xExt = 100;
-	mfp.yExt = 100;
-	FIXME("Correct Exts from dc\n");
+	mfp.xExt = -1;
+	mfp.yExt = -1;
     }
-    else
-    {
-        TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
-        if ( ( mfp.xExt < 0 ) || ( mfp.yExt < 0) )
-	    FIXME("Negative coordinates!\n");
-    }
+    
+    TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
 
-    if(lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC) {
+    if((lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC) &&
+       mfp.xExt > 0 && mfp.yExt > 0) {
         rc.left = rc.top = 0;
 	rc.right = lpmfp->xExt;
 	rc.bottom = lpmfp->yExt;
@@ -2464,8 +2460,6 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
     horzres = GetDeviceCaps(hdcRef, HORZRES);
     vertres = GetDeviceCaps(hdcRef, VERTRES);
-    horzsize = GetDeviceCaps(hdcRef, HORZSIZE);
-    vertsize = GetDeviceCaps(hdcRef, VERTSIZE);
 
     if(hdcdisp) {
         DeleteDC(hdcdisp);
@@ -2495,10 +2489,8 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
         SetMapMode(hdc, lpmfp->mm);
 
     /* set the initial viewport:window ratio as 1:1 */
-    xext = lpmfp->xExt*horzres/(100*horzsize);
-    yext = lpmfp->yExt*vertres/(100*vertsize);
-    SetViewportExtEx(hdc, xext, yext, NULL);
-    SetWindowExtEx(hdc,   xext, yext, NULL);
+    SetViewportExtEx(hdc, horzres, vertres, NULL);
+    SetWindowExtEx(hdc,   horzres, vertres, NULL);
 
     PlayMetaFile(hdc, hmf);
 
