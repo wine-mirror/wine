@@ -691,7 +691,7 @@ static int output_immediate_imports( FILE *outfile )
     fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
     pos = (sizeof(void *) + 2*sizeof(unsigned int) + sizeof(const char *) + sizeof(void *)) *
             (nb_imm + 1);  /* offset of imports.data from start of imports */
-    fprintf( outfile, "asm(\".data\\n\\t.align %d\\n\"\n", get_alignment(8) );
+    fprintf( outfile, "asm(\".text\\n\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", import_thunks);
 
     for (i = 0; i < nb_imports; i++)
@@ -1017,7 +1017,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     }
     output_function_size( outfile, delayed_import_loaders );
 
-    fprintf( outfile, "\n    \".data\\n\\t.align %d\\n\"\n", get_alignment(8) );
+    fprintf( outfile, "\n    \".align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", delayed_import_thunks);
     pos = nb_delayed * 32;
     for (i = 0; i < nb_imports; i++)
@@ -1087,7 +1087,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
         }
     }
     output_function_size( outfile, delayed_import_thunks );
-    fprintf( outfile, "\".text\");\n" );
+    fprintf( outfile, ");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
