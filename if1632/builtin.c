@@ -280,19 +280,20 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
     max_offset = 0;
     *pOrd = 0;
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
-    entry = (ET_ENTRY *)((BYTE *)bundle+6);
-    do {
-	for (i = bundle->first + 1; i < bundle->last; i++)
-            {
+    do 
+    {
+        entry = (ET_ENTRY *)((BYTE *)bundle+6);
+	for (i = bundle->first + 1; i <= bundle->last; i++)
+        {
 	    if ((entry->offs <= ip)
-	    && (entry->type == 1) /* code segment ? */
+	    && (entry->segnum == 1) /* code segment ? */
 	    && (entry->offs >= max_offset))
-                {
+            {
 		max_offset = entry->offs;
 		*pOrd = i;
-        }
+            }
 	    entry++;
-    }
+        }
     } while ( (bundle->next)
 	   && (bundle = (ET_BUNDLE *)((BYTE *)pModule+bundle->next)));
 
