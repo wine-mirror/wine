@@ -451,10 +451,10 @@ static DWORD VERSION_GetLinkedDllVersion(void)
         if (ophd->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             return NT351; /* FIXME: NT 3.1, not tested */
         else
-            return WIN95;
+            return WIN98;
     }
 
-    return WIN95;
+    return WIN98;
 }
 
 /**********************************************************************
