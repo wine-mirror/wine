@@ -19,6 +19,7 @@ extern "C" {
 #include "winnls.h"
 #include "objbase.h"
 #include "mmsystem.h"
+#include "commdlg.h"
 #include "winspool.h"
 
 #if 0
