@@ -1,4 +1,4 @@
-static char RCSId[] = "$Id: wine.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char RCSId[] = "$Id: wine.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
@@ -11,18 +11,24 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <linux/head.h>
 #include <linux/ldt.h>
 #include <linux/segment.h>
+#include <string.h>
 #include <errno.h>
 #include "neexe.h"
 #include "segmem.h"
 #include "prototypes.h"
 #include "dlls.h"
+#include "wine.h"
 
 extern int CallToInit16(unsigned long csip, unsigned long sssp, 
 			unsigned short ds);
 extern void CallTo32();
 
+char * GetModuleName(struct w_files * wpnt, int index, char *buffer);
+extern unsigned char ran_out;
 unsigned short WIN_StackSize;
 unsigned short WIN_HeapSize;
+
+struct  w_files * wine_files = NULL;
 
 char **Argv;
 int Argc;
@@ -57,109 +63,214 @@ myerror(const char *s)
     exit(1);
 }
 
-/**********************************************************************
- *					main
- */
-main(int argc, char **argv)
-{
-    struct stat finfo;
-    struct mz_header_s *mz_header;
-    struct ne_header_s *ne_header;
-    struct ne_segment_table_entry_s *seg_table;
-    unsigned int status;
-    unsigned int read_size;
-    struct segment_descriptor_s *selector_table;
-    int fd;
-    int segment;
-    int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
-    int rv;
 
-    Argc = argc;
-    Argv = argv;
-    
-    if (argc < 2)
-    {
-	fprintf(stderr, "usage: %s FILENAME\n", argv[0]);
-	exit(1);
-    }
-    
+/* Load one NE format executable into memory */
+LoadImage(char * filename,  char * modulename)
+{
+    unsigned int read_size;
+    int i;
+    struct w_files * wpnt, *wpnt1;
+    unsigned int status;
+
+    /* First allocate a spot to store the info we collect, and add it to
+     * our linked list.
+     */
+
+    wpnt = (struct w_files *) malloc(sizeof(struct w_files));
+    if(wine_files == NULL)
+      wine_files = wpnt;
+    else {
+      wpnt1 = wine_files;
+      while(wpnt1->next) wpnt1 =  wpnt1->next;
+      wpnt1->next  = wpnt;
+    };
+    wpnt->next = NULL;
+
     /*
      * Open file for reading.
      */
-    fd = open(argv[1], O_RDONLY);
-    if (fd < 0)
+    wpnt->fd = open(filename, O_RDONLY);
+    if (wpnt->fd < 0)
     {
 	myerror(NULL);
     }
-
-    /*
-     * Allocate memory to hold entire executable.
-     */
-    if (fstat(fd, &finfo) < 0)
-	myerror(NULL);
-    
     /*
      * Establish header pointers.
      */
-    mz_header = (struct mz_header_s *) malloc(sizeof(struct mz_header_s));;
-    status = lseek(fd, 0, SEEK_SET);
-    if (read(fd, mz_header, sizeof(struct mz_header_s)) !=
+    wpnt->filename = strdup(filename);
+    wpnt->name = NULL;
+    if(modulename)  wpnt->name = strdup(modulename);
+
+    wpnt->mz_header = (struct mz_header_s *) malloc(sizeof(struct mz_header_s));;
+    status = lseek(wpnt->fd, 0, SEEK_SET);
+    if (read(wpnt->fd, wpnt->mz_header, sizeof(struct mz_header_s)) !=
 	sizeof(struct mz_header_s))
     {
 	myerror("Unable to read MZ header from file");
     }
-    if (mz_header->must_be_0x40 != 0x40)
+    if (wpnt->mz_header->must_be_0x40 != 0x40)
 	myerror("This is not a Windows program");
     
-    ne_header = (struct ne_header_s *) malloc(sizeof(struct ne_header_s));
-    status = lseek(fd, mz_header->ne_offset, SEEK_SET);
-    if (read(fd, ne_header, sizeof(struct ne_header_s)) 
+    wpnt->ne_header = (struct ne_header_s *) malloc(sizeof(struct ne_header_s));
+    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
+    if (read(wpnt->fd, wpnt->ne_header, sizeof(struct ne_header_s)) 
 	!= sizeof(struct ne_header_s))
     {
 	myerror("Unable to read NE header from file");
     }
-    if (ne_header->header_type[0] != 'N' || ne_header->header_type[1] != 'E')
-	myerror("This is not a Windows program");
+    if (wpnt->ne_header->header_type[0] != 'N' || 
+	wpnt->ne_header->header_type[1] != 'E')
+      myerror("This is not a Windows program");
 
-    CurrentMZHeader = mz_header;
-    CurrentNEHeader = ne_header;
-    CurrentNEFile   = fd;
-
-    WIN_StackSize = ne_header->stack_length;
-    WIN_HeapSize = ne_header->local_heap_length;
+    if(wine_files ==  wpnt){
+      CurrentMZHeader = wpnt->mz_header;
+      CurrentNEHeader = wpnt->ne_header;
+      CurrentNEFile   = wpnt->fd;
+      
+      WIN_StackSize = wpnt->ne_header->stack_length;
+      WIN_HeapSize = wpnt->ne_header->local_heap_length;
+    };
 
     /*
      * Create segment selectors.
      */
-    status = lseek(fd, mz_header->ne_offset + ne_header->segment_tab_offset,
+    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+		   wpnt->ne_header->segment_tab_offset,
 		   SEEK_SET);
-    read_size  = ne_header->n_segment_tab *
+    read_size  = wpnt->ne_header->n_segment_tab *
 	         sizeof(struct ne_segment_table_entry_s);
-    seg_table = (struct ne_segment_table_entry_s *) malloc(read_size);
-    if (read(fd, seg_table, read_size) != read_size)
+    wpnt->seg_table = (struct ne_segment_table_entry_s *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->seg_table, read_size) != read_size)
 	myerror("Unable to read segment table header from file");
-    selector_table = CreateSelectors(fd, seg_table, ne_header);
-    
+    wpnt->selector_table = CreateSelectors(wpnt);
+
+    /* Get the lookup  table.  This is used for looking up the addresses
+       of functions that are exported */
+
+    read_size  = wpnt->ne_header->entry_tab_length;
+    wpnt->lookup_table = (char *) malloc(read_size);
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+	  wpnt->ne_header->entry_tab_offset, SEEK_SET);
+    if (read(wpnt->fd, wpnt->lookup_table, read_size) != read_size)
+	myerror("Unable to read lookup table header from file");
+
+    /* Get the iname table.  This is used for looking up the names
+       of functions that are exported */
+
+    status = lseek(wpnt->fd, wpnt->ne_header->nrname_tab_offset,  SEEK_SET);
+    read_size  = wpnt->ne_header->nrname_tab_length;
+    wpnt->nrname_table = (char *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->nrname_table, read_size) != read_size)
+	myerror("Unable to read nrname table header from file");
+
+    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+		   wpnt->ne_header->rname_tab_offset,  SEEK_SET);
+    read_size  = wpnt->ne_header->moduleref_tab_offset - 
+	    wpnt->ne_header->rname_tab_offset;
+    wpnt->rname_table = (char *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->rname_table, read_size) != read_size)
+	myerror("Unable to read rname table header from file");
+
+    /* Now get the module name */
+
+    wpnt->name  = (char*) malloc(*wpnt->rname_table + 1);
+    memcpy(wpnt->name, wpnt->rname_table+1, *wpnt->rname_table);
+    wpnt->name[*wpnt->rname_table] =  0;
+
+    /*
+     * Now load any DLLs that  this module refers to.
+     */
+    for(i=0; i<wpnt->ne_header->n_mod_ref_tab; i++){
+      char buff[14];
+      char buff2[14];
+      int  fd, j;
+      GetModuleName(wpnt, i + 1, buff);
+      
+      if(FindDLLTable(buff)) continue;  /* This module already loaded */
+
+      /* The next trick is to convert the case, and add the .dll
+       * extension if required to find the actual library.  We may want
+       * to use a search path at some point as well. */
+
+      /*  First try  the straight name */
+       strcpy(buff2, buff);
+      if(fd = open(buff2, O_RDONLY)  >= 0) {
+	close(fd);
+	LoadImage(buff2, buff);
+	continue;
+      };
+
+      /* OK, that did not work,  try making it lower-case, and add the .dll
+	 extension */
+
+      for(j=0;  j<strlen(buff2);  j++)  
+	if(buff2[j] >= 'A' && buff2[j] <= 'Z')  buff2[j] |= 0x20;
+      strcat(buff2, ".dll");
+      
+      if(fd = open(buff2, O_RDONLY)  >= 0) {
+	close(fd);
+	LoadImage(buff2, buff);
+	continue;
+      };
+
+      fprintf(stderr,"Unable to load:%s\n",  buff);
+    };
+}
+
+
+/**********************************************************************
+ *					main
+ */
+_WinMain(int argc, char **argv)
+{
+	int segment;
+	struct w_files * wpnt;
+	int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
+	int i;
+	int rv;
+	
+	Argc = argc;
+	Argv = argv;
+	
+	if (argc < 2)
+	{
+		fprintf(stderr, "usage: %s FILENAME\n", argv[0]);
+		exit(1);
+	}
+	
+	LoadImage(argv[1], NULL);
+	
+	if(ran_out) exit(1);
+#ifdef DEBUG
+	GetEntryDLLName("USER", "INITAPP", 0, 0);
+	for(i=0; i<1024; i++) {
+		int j;
+		j = GetEntryPointFromOrdinal(wine_files, i);
+		if(j == 0)  break;
+		fprintf(stderr," %d %x\n", i,  j);
+	};
+#endif
     /*
      * Fixup references.
      */
-    for (segment = 0; segment < ne_header->n_segment_tab; segment++)
-    {
-	if (FixupSegment(fd, mz_header, ne_header, seg_table,
-			 selector_table, segment) < 0)
+    wpnt = wine_files;
+    for(wpnt = wine_files; wpnt; wpnt = wpnt->next)
+      for (segment = 0; segment < wpnt->ne_header->n_segment_tab; segment++)
 	{
-	    myerror("fixup failed.");
+	  if (FixupSegment(wpnt, segment) < 0)
+	    {
+	      myerror("fixup failed.");
+	    }
 	}
-    }
 
     /*
      * Fixup stack and jump to start.
      */
-    ds_reg = selector_table[ne_header->auto_data_seg-1].selector;
-    cs_reg = selector_table[ne_header->cs-1].selector;
-    ip_reg = ne_header->ip;
-    ss_reg = selector_table[ne_header->ss-1].selector;
-    sp_reg = ne_header->sp;
+    ds_reg = wine_files->selector_table[wine_files->ne_header->auto_data_seg-1].selector;
+    cs_reg = wine_files->selector_table[wine_files->ne_header->cs-1].selector;
+    ip_reg = wine_files->ne_header->ip;
+    ss_reg = wine_files->selector_table[wine_files->ne_header->ss-1].selector;
+    sp_reg = wine_files->ne_header->sp;
 
     rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
     printf ("rv = %x\n", rv);
@@ -191,9 +302,11 @@ GetImportedName(int fd, struct mz_header_s *mz_header,
  *					GetModuleName
  */
 char *
-GetModuleName(int fd, struct mz_header_s *mz_header, 
-	      struct ne_header_s *ne_header, int index, char *buffer)
+GetModuleName(struct w_files * wpnt, int index, char *buffer)
 {
+    int fd = wpnt->fd;
+    struct mz_header_s *mz_header = wpnt->mz_header; 
+    struct ne_header_s *ne_header = wpnt->ne_header;
     char *p;
     int length;
     int name_offset, status;
@@ -209,6 +322,11 @@ GetModuleName(int fd, struct mz_header_s *mz_header,
     read(fd, &length, 1);  /* Get the length byte */
     read(fd, buffer, length);
     buffer[length] = 0;
+
+    /* Module names  are always upper case */
+    for(i=0; i<length; i++)
+	    if(buffer[i] >= 'a' && buffer[i] <= 'z')  buffer[i] &= ~0x20;
+
     return buffer;
 }
 
@@ -217,21 +335,23 @@ GetModuleName(int fd, struct mz_header_s *mz_header,
  *					FixupSegment
  */
 int
-FixupSegment(int fd, struct mz_header_s * mz_header,
-	     struct ne_header_s *ne_header,
-	     struct ne_segment_table_entry_s *seg_table, 
-	     struct segment_descriptor_s *selector_table,
-	     int segment_num)
+FixupSegment(struct w_files * wpnt, int segment_num)
 {
+  int fd =  wpnt->fd;
+  struct mz_header_s * mz_header = wpnt->mz_header;
+  struct ne_header_s *ne_header =  wpnt->ne_header;
+  struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
+  struct segment_descriptor_s *selector_table = wpnt->selector_table;
+
     struct relocation_entry_s *rep, *rep1;
     struct ne_segment_table_entry_s *seg;
     struct segment_descriptor_s *sel;
     struct dll_table_entry_s *dll_table;
+    int status;
     unsigned short *sp;
     unsigned int selector, address;
     unsigned int next_addr;
     int ordinal;
-    int status;
     char dll_name[257];
     char func_name[257];
     int i, n_entries;
@@ -239,7 +359,8 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
     seg = &seg_table[segment_num];
     sel = &selector_table[segment_num];
 
-    if (seg->seg_data_offset == 0)
+    if ((seg->seg_data_offset == 0) ||
+	!(seg->seg_flags & NE_SEGFLAGS_RELOC_DATA))
 	return 0;
 
     /*
@@ -272,25 +393,26 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 	switch (rep->relocation_type)
 	{
 	  case NE_RELTYPE_ORDINAL:
-	    if (GetModuleName(fd, mz_header, ne_header, rep->target1,
+	    if (GetModuleName(wpnt, rep->target1,
 			      dll_name) == NULL)
 	    {
+	      fprintf(stderr, "NE_RELTYPE_ORDINAL failed");
 		return -1;
 	    }
 	    
- 	    dll_table = FindDLLTable(dll_name);
-	    if (dll_table == NULL)
+	    ordinal = rep->target2;
+
+  	    status = GetEntryDLLOrdinal(dll_name, ordinal, &selector,
+					&address);
+	    if (status)
 	    {
 		char s[80];
 		
-		sprintf(s, "Bad DLL name '%s'", dll_name);
+		sprintf(s, "Bad DLL name '%s.%d'", dll_name, ordinal);
 		myerror(s);
 		return -1;
 	    }
 
-	    ordinal = rep->target2;
-	    selector = dll_table[ordinal].selector;
-	    address  = (unsigned int) dll_table[ordinal].address;
 #ifdef DEBUG_FIXUP
 	    printf("%d: %s.%d: %04.4x:%04.4x\n", i + 1, dll_name, ordinal,
 		   selector, address);
@@ -298,29 +420,31 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 	    break;
 	    
 	  case NE_RELTYPE_NAME:
-	    if (GetModuleName(fd, mz_header, ne_header, rep->target1, dll_name)
+	    if (GetModuleName(wpnt, rep->target1, dll_name)
 		== NULL)
 	    {
-		return -1;
-	    }
- 	    dll_table = FindDLLTable(dll_name);
-	    if (dll_table == NULL)
-	    {
-		char s[80];
-		
-		sprintf(s, "Bad DLL name '%s'", dll_name);
-		myerror(s);
+	      fprintf(stderr,"NE_RELTYPE_NAME failed");
 		return -1;
 	    }
 
 	    if (GetImportedName(fd, mz_header, ne_header, 
 				rep->target2, func_name) == NULL)
 	    {
+	      fprintf(stderr,"getimportedname failed");
 		return -1;
 	    }
-	    ordinal = FindOrdinalFromName(dll_table, func_name);
-	    selector = dll_table[ordinal].selector;
-	    address  = (unsigned int) dll_table[ordinal].address;
+
+  	    status = GetEntryDLLName(dll_name, func_name, &selector, 
+					   &address);
+	    if (status)
+	    {
+		char s[80];
+		
+		sprintf(s, "Bad DLL name '%s (%s)'", dll_name,func_name);
+		myerror(s);
+		return -1;
+	    }
+
 #ifdef DEBUG_FIXUP
 	    printf("%d: %s %s.%d: %04.4x:%04.4x\n", i + 1, func_name,
 		   dll_name, ordinal, selector, address);
@@ -330,8 +454,7 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 	  case NE_RELTYPE_INTERNAL:
 	    if (rep->target1 == 0x00ff)
 	    {
-		address  = GetEntryPointFromOrdinal(fd, mz_header, ne_header,
-						    rep->target2);
+		address  = GetEntryPointFromOrdinal(wpnt, rep->target2);
 		selector = (address >> 16) & 0xffff;
 		address &= 0xffff;
 	    }
@@ -364,7 +487,7 @@ FixupSegment(int fd, struct mz_header_s * mz_header,
 	    continue;
 	    
 	  default:
-#ifdef DEBUG_FIXUP
+#ifndef DEBUG_FIXUP
 	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);

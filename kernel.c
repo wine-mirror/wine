@@ -1,4 +1,4 @@
-static char RCSId[] = "$Id: kernel.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char RCSId[] = "$Id: kernel.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
@@ -92,6 +92,9 @@ KERNEL_DOS3Call(int ax, int cx, int dx, int bx, int sp, int bp,
       case 0x25:
       case 0x35:
 	return 0;
+
+      case 0x4c:
+	exit(ax & 0xff);
 
       default:
 	fprintf(stderr, "DOS: AX %04x, BX %04x, CX %04x, DX %04x\n",

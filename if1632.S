@@ -19,11 +19,12 @@ saved_ss:
 /**********************************************************************
  *	Places to keep info about the current 16-bit stack frame.
  */
-saved_16esp:
+	.globl	_IF1632_Saved16_esp,_IF1632_Saved16_ebp,_IF1632_Saved16_ss
+_IF1632_Saved16_esp:
 	.long	0
-saved_16ebp:
+_IF1632_Saved16_ebp:
 	.long	0
-saved_16ss:
+_IF1632_Saved16_ss:
 	.word	0
 
 nbytes:
@@ -136,6 +137,88 @@ _CallToInit16:
 	ret
 
 /**********************************************************************
+ *	int CallTo16(unsigned long csip, unsigned short ds)
+ *
+ *	Stack:	 	0	ebp
+ *		 	4	eip
+ *		 	8	target ip
+ *			10	target cs
+ *			12	target ds
+ */
+	.align	4
+	.globl _CallTo16
+_CallTo16:
+	pushl	%ebp
+	movl	%esp,%ebp
+
+	/*
+	 * Get target address and new ds
+	 */
+	movl	8(%ebp),%eax
+	movl	%eax,jump_target
+	lea	jump_target,%edx
+	movw	12(%ebp),%ax
+
+	/*
+	 * Switch to 16-bit stack
+	 */
+	pushl	saved_esp
+	pushl	saved_ebp
+	pushw	saved_ss
+
+	movw	%ss,saved_ss
+	movl	%esp,saved_esp
+	movl	%ebp,saved_ebp
+
+	movw	_IF1632_Saved16_ss,%ss
+	movl	_IF1632_Saved16_esp,%esp
+	movl	_IF1632_Saved16_ebp,%ebp
+
+	/*
+	 * Call entry point
+	 */
+	movw	%ax,%ds
+	.byte	0x66
+	lcall	%fs:(%edx)
+
+	/*
+	 * Restore old stack and segment registers.
+	 *
+	 * Two choices here:
+	 *	1. Trust that fs or gs hasn't changed.
+	 *	2. Rely on knowledge of Linux use of segments.
+	 *
+	 * I'll opt for choice 2 because who knows what programs we
+	 * going to run.  Linux should be fairly stable in terms of
+	 * GDT usage.
+	 */
+	pushl	%eax
+	movw	$0x2b,%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%fs
+	movw	%ax,%gs
+	popl	%eax
+
+	movw	%ss,_IF1632_Saved16_ss
+	movl	%esp,_IF1632_Saved16_esp
+	movl	%ebp,_IF1632_Saved16_ebp
+
+	movw	saved_ss,%ss
+	movl	saved_esp,%esp
+	movl	saved_ebp,%ebp
+
+	popw	saved_ss
+	popl	saved_ebp
+	popl	saved_esp
+
+	movl	%eax,return_value
+	movw	return_value+2,%dx
+	.align	2,0x90
+	leave
+	ret
+
+/**********************************************************************
  *	CallTo32()
  *
  *	This function is called as a relay point to the built function
@@ -174,13 +257,13 @@ _CallTo32:
 	 * Save old stack save variables, save stack registers, reload
 	 * stack registers.
 	 */
-	pushl	saved_16esp
-	pushl	saved_16ebp
-	pushw	saved_16ss
+	pushl	_IF1632_Saved16_esp
+	pushl	_IF1632_Saved16_ebp
+	pushw	_IF1632_Saved16_ss
 
-	movw	%ss,saved_16ss
-	movl	%esp,saved_16esp
-	movl	%ebp,saved_16ebp
+	movw	%ss,_IF1632_Saved16_ss
+	movl	%esp,_IF1632_Saved16_esp
+	movl	%ebp,_IF1632_Saved16_ebp
 
 	movw	saved_ss,%ss
 	movl	saved_esp,%esp
@@ -189,21 +272,21 @@ _CallTo32:
 	/*
 	 * Call entry point
 	 */
-	pushw	saved_16ss
-	pushw	saved_16esp
+	pushw	_IF1632_Saved16_ss
+	pushw	_IF1632_Saved16_esp
 	pushl	%eax
 	call	_DLLRelay
 
 	/*
  	 * Restore registers, but do not destroy return value.
 	 */
-	movw	saved_16ss,%ss
-	movl	saved_16esp,%esp
-	movl	saved_16ebp,%ebp
+	movw	_IF1632_Saved16_ss,%ss
+	movl	_IF1632_Saved16_esp,%esp
+	movl	_IF1632_Saved16_ebp,%ebp
 
-	popw	saved_16ss
-	popl	saved_16ebp
-	popl	saved_16esp
+	popw	_IF1632_Saved16_ss
+	popl	_IF1632_Saved16_ebp
+	popl	_IF1632_Saved16_esp
 
 	popw	%es
 	popw	%ds
@@ -252,17 +335,15 @@ _KERNEL_InitTask:
 	/*
  	 * Restore stack
 	 */
-	movw	saved_16ss,%ss
-	movl	saved_16esp,%esp
-	movl	saved_16ebp,%ebp
+	movw	_IF1632_Saved16_ss,%ss
+	movl	_IF1632_Saved16_esp,%esp
+	movl	_IF1632_Saved16_ebp,%ebp
 
-	popw	saved_16ss
-	popl	saved_16ebp
-	popl	saved_16esp
+	popw	_IF1632_Saved16_ss
+	popl	_IF1632_Saved16_ebp
+	popl	_IF1632_Saved16_esp
 
 	popw	%es
-/*	movw	_PSPSelector,%ax
-	movw	%ax,%es */
 	popw	%ds
 
 	.align	2,0x90

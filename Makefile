@@ -1,4 +1,4 @@
-CFLAGS=-g -DDEBUG_RESOURCE
+CFLAGS=-g -DDEBUG_RESOURCE -DDEBUG_HEAP -I./
 
 ######################################################################
 # FILES:
@@ -18,19 +18,22 @@ BUILDOBJS=dll_kernel.o dll_user.o dll_gdi.o dll_unixlib.o \
 MUST_BE_LINKED_FIRST=if1632.o $(BUILDOBJS)
 
 OBJS=$(MUST_BE_LINKED_FIRST) \
-	dump.o heap.o ldt.o kernel.o relay.o resource.o \
-	selector.o user.o wine.o
+	callback.o dump.o global.o heap.o ldt.o kernel.o relay.o resource.o \
+	selector.o user.o wine.o wintcl.o
 
 TARGET=wine
-LIBS=-lldt
+LIBS=-L. -L/usr/X386/lib -L/dasd3/usr/lib -lldt -ltk -ltcl -lX11
 
-all: $(TARGET) libldt.a
+all: $(TARGET)
 
 clean:
-	rm -f *.o *~ *.s dll_*
+	rm -f *.o *~ *.s dll_* *.a
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+ci:
+	ci Makefile README *.c *.h *.S build-spec.txt *.spec
+
+$(TARGET): $(OBJS) libldt.a
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
 build: build.c
 	cc -g -o build build.c
@@ -56,3 +59,6 @@ dll_win87em.S dll_win87em_tab.c: build win87em.spec
 
 dll_shell.S dll_shell_tab.c: build shell.spec
 	build shell.spec
+
+wintcl.o: wintcl.c windows.h
+	cc -c -I. -g wintcl.c

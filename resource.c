@@ -1,10 +1,11 @@
-static char RCSId[] = "$Id: resource.c,v 1.3 1993/06/30 14:24:33 root Exp root $";
+static char RCSId[] = "$Id: resource.c,v 1.4 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "prototypes.h"
 #include "neexe.h"
+#include "windows.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
@@ -14,8 +15,88 @@ typedef struct resource_data_s
     void *resource_data;
 } RSCD;
 
+int ResourceSizes[16] =
+{
+    0, 0, sizeof(BITMAP), 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+};
+
 RSCD *Resources;
 int ResourceArraySize;
+
+/**********************************************************************
+ *					ConvertCoreBitmap
+ */
+void *
+ConvertCoreBitmap(BITMAPCOREHEADER *image, int image_size)
+{
+    BITMAP *new_image;
+    char *old_p, *new_p;
+    int old_line_length, new_line_length;
+    unsigned int handle;
+    int i;
+    int n_colors;
+    
+    n_colors = 1 << image->bcBitCount;
+    handle = GLOBAL_Alloc(GMEM_MOVEABLE, 
+			  image_size + sizeof(*new_image) + n_colors);
+    new_image = GLOBAL_Lock(handle);
+    if (new_image == NULL)
+	return NULL;
+
+    new_image->bmType = 0;
+    new_image->bmWidth = image->bcWidth;
+    new_image->bmHeight = image->bcHeight;
+    new_image->bmPlanes = image->bcPlanes;
+    new_image->bmBitsPixel = image->bcBitCount;
+
+    if (image->bcBitCount < 24)
+    {
+	RGBTRIPLE *old_color = (RGBTRIPLE *) (image + 1);
+	RGBQUAD *new_color = (RGBQUAD *) (new_image + 1);
+	for (i = 0; i < n_colors; i++)
+	{
+	    memcpy(new_color, old_color, sizeof(*old_color));
+	    new_color++;
+	    old_color++;
+	}
+
+	old_p = (char *) old_color;
+	new_p = (char *) new_color;
+	old_line_length = image->bcWidth / (8 / image->bcBitCount);
+    }
+    else
+    {
+	old_p = (char *) (image + 1);
+	new_p = (char *) (new_image + 1);
+	old_line_length = image->bcWidth * 3;
+    }
+    
+    new_line_length = (old_line_length + 1) & ~1;
+    old_line_length = (old_line_length + 3) & ~3;
+
+    new_image->bmBits = (unsigned long) new_p;
+    new_image->bmWidthBytes = new_line_length;
+
+    for (i = 0; i < image->bcHeight; i++)
+    {
+	memcpy(new_p, old_p, new_line_length);
+	new_p += new_line_length;
+	old_p += old_line_length;
+    }
+
+    return new_image;
+}
+
+/**********************************************************************
+ *					ConvertInfoBitmap
+ */
+void *
+ConvertInfoBitmap(BITMAPINFOHEADER *image, int image_size)
+{
+}
 
 /**********************************************************************
  *					AddResource
@@ -183,37 +264,35 @@ RSC_LoadString(int instance, int resource_id, char *buffer, int buflen)
 }
 
 /**********************************************************************
- *					RSC_LoadBitmap
+ *					RSC_LoadResource
  */
 int 
-RSC_LoadBitmap(int instance, char *bmp_name)
+RSC_LoadResource(int instance, char *rsc_name, int type)
 {
     struct resource_nameinfo_s nameinfo;
     void *image;
+    void *rsc_image;
+    long *lp;
     int image_size;
     int size_shift;
     
-#ifdef DEBUG_RESOURCE
-    printf("LoadBitmap: instance = %04x, name = %08x\n",
-	   instance, bmp_name);
-#endif
     /*
-     * Built-in bitmaps
+     * Built-in resources
      */
     if (instance == 0)
     {
 	return 0;
     }
     /*
-     * Get bitmap by ordinal
+     * Get resource by ordinal
      */
-    else if (((int) bmp_name & 0xffff0000) == 0)
+    else if (((int) rsc_name & 0xffff0000) == 0)
     {
-	size_shift = FindResourceByNumber(&nameinfo, NE_RSCTYPE_BITMAP,
-					  (int) bmp_name | 0x8000);
+	size_shift = FindResourceByNumber(&nameinfo, type,
+					  (int) rsc_name | 0x8000);
     }
     /*
-     * Get bitmap by name
+     * Get resource by name
      */
     else
     {
@@ -223,7 +302,7 @@ RSC_LoadBitmap(int instance, char *bmp_name)
 	return 0;
 
     /*
-     * Read bitmap.
+     * Read resource.
      */
     lseek(CurrentNEFile, ((int) nameinfo.offset << size_shift), SEEK_SET);
 
@@ -236,7 +315,81 @@ RSC_LoadBitmap(int instance, char *bmp_name)
     }
 
     /*
+     * Convert bitmap to internal format.
+     */
+    lp = (long *) image;
+    if (*lp == sizeof(BITMAPCOREHEADER))
+	rsc_image = ConvertCoreBitmap(image, image_size);
+    else if (*lp == sizeof(BITMAPINFOHEADER))
+	rsc_image = ConvertInfoBitmap(image, image_size);
+
+    free(image);
+
+    /*
      * Add to resource list.
      */
-    return AddResource(NE_RSCTYPE_BITMAP, image);
+    if (rsc_image)
+	return AddResource(type, rsc_image);
+    else
+	return 0;
+}
+
+/**********************************************************************
+ *					RSC_LoadIcon
+ */
+int 
+RSC_LoadIcon(int instance, char *icon_name)
+{
+#ifdef DEBUG_RESOURCE
+    printf("LoadIcon: instance = %04x, name = %08x\n",
+	   instance, icon_name);
+#endif
+    return RSC_LoadResource( instance, icon_name, NE_RSCTYPE_ICON);
+}
+
+/**********************************************************************
+ *					RSC_LoadBitmap
+ */
+int 
+RSC_LoadBitmap(int instance, char *bmp_name)
+{
+#ifdef DEBUG_RESOURCE
+    printf("LoadBitmap: instance = %04x, name = %08x\n",
+	   instance, bmp_name);
+#endif
+    return RSC_LoadResource( instance, bmp_name, NE_RSCTYPE_BITMAP);
+}
+
+/**********************************************************************
+ *					RSC_LoadCursor
+ */
+int 
+RSC_LoadCursor(int instance, char *cursor_name)
+{
+#ifdef DEBUG_RESOURCE
+    printf("LoadCursor: instance = %04x, name = %08x\n",
+	   instance, cursor_name);
+#endif
+    return RSC_LoadResource( instance, cursor_name, NE_RSCTYPE_CURSOR);
+}
+
+/**********************************************************************
+ *					RSC_GetObject
+ */
+int
+RSC_GetObject(int handle, int nbytes, void *buffer)
+{
+    if (handle > 0 && handle <= ResourceArraySize)
+    {
+	RSCD *r = &Resources[handle - 1];
+	
+	if (r->resource_type > 0)
+	{
+	    int n = MIN(nbytes, ResourceSizes[r->resource_type & 0xf]);
+	    memcpy(buffer, r->resource_data, n);
+	    return n;
+	}
+    }
+    
+    return 0;
 }

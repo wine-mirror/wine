@@ -1,4 +1,4 @@
-/* $Id: segmem.h,v 1.1 1993/06/29 15:55:18 root Exp $
+/* $Id: segmem.h,v 1.3 1993/07/04 04:04:21 root Exp root $
  */
 /*
  * Copyright  Robert J. Amstadt, 1993
@@ -22,5 +22,14 @@ struct segment_descriptor_s
  * Additional flags
  */
 #define NE_SEGFLAGS_MALLOCED	0x00010000 /* Memory allocated with malloc() */
+
+/*
+ * Global memory flags
+ */
+#define GLOBAL_FLAGS_MOVEABLE		0x0002
+#define GLOBAL_FLAGS_ZEROINIT		0x0040
+#define GLOBAL_FLAGS_CODE		0x00010000
+#define GLOBAL_FLAGS_EXECUTEONLY	0x00020000
+#define GLOBAL_FLAGS_READONLY		0x00020000
 
 #endif /* SEGMEM_H */

@@ -1,48 +1,45 @@
-static char RCSId[] = "$Id: heap.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char RCSId[] = "$Id: heap.c,v 1.3 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "prototypes.h"
+#include "segmem.h"
+#include "heap.h"
 
-typedef struct heap_mem_desc_s
-{
-    struct heap_mem_desc_s *prev, *next;
-    int   length;
-} MDESC;
-
-MDESC *FreeList;
+MDESC *LOCAL_FreeList;
 
 /**********************************************************************
- *					HEAP_LocalInit
+ *					HEAP_Init
  */
 void
-HEAP_LocalInit(void *start, int length)
+HEAP_Init(MDESC **free_list, void *start, int length)
 {
-    FreeList = (MDESC *) start;
-    FreeList->prev = NULL;
-    FreeList->next = NULL;
-    FreeList->length = length - sizeof(MDESC);
+    *free_list = (MDESC *) start;
+    (*free_list)->prev = NULL;
+    (*free_list)->next = NULL;
+    (*free_list)->length = length - sizeof(MDESC);
 }
 
 /**********************************************************************
- *					HEAP_LocalAlloc
+ *					HEAP_Alloc
  */
 void *
-HEAP_LocalAlloc(int flags, int bytes)
+HEAP_Alloc(MDESC **free_list, int flags, int bytes)
 {
     MDESC *m, *m_new;
     
-#ifdef HEAP_DEBUG
-    printf("LocalAlloc: flags %x, bytes %d, ", flags, bytes);
+#ifdef DEBUG_HEAP
+    printf("HeapAlloc: free_list %08x, flags %x, bytes %d\n", 
+	   free_list, flags, bytes);
 #endif
 
     /*
      * Find free block big enough.
      */
-    for (m = FreeList; m != NULL; m = m->next)
+    for (m = *free_list; m != NULL; m = m->next)
     {
-	if (m->length == bytes && m->length < bytes + 4 * sizeof(MDESC))
+	if (m->length >= bytes && m->length < bytes + 4 * sizeof(MDESC))
 	{
 	    break;
 	}
@@ -50,7 +47,7 @@ HEAP_LocalAlloc(int flags, int bytes)
 	{
 	    m_new = m + (bytes / sizeof(MDESC)) + 2;
 	    if (m->prev == NULL)
-		FreeList = m_new;
+		*free_list = m_new;
 	    else
 		m->prev->next = m_new;
 	    
@@ -62,9 +59,8 @@ HEAP_LocalAlloc(int flags, int bytes)
 	    m_new->length = m->length - ((int) m_new - (int) m);
 	    m->length -= (m_new->length + sizeof(MDESC));
 
-#ifdef HEAP_DEBUG
-	    printf("Returning %x\n", (int) (m + 1));
-#endif
+	    m->prev = m;
+	    m->next = m;
 	    return (void *) (m + 1);
 	}
     }
@@ -72,22 +68,144 @@ HEAP_LocalAlloc(int flags, int bytes)
     if (m != NULL)
     {
 	if (m->prev == NULL)
-	    FreeList = m->next;
+	    *free_list = m->next;
 	else
 	    m->prev->next = m->next;
 	
 	if (m->next != NULL)
 	    m->next->prev = m->prev;
 	
-#ifdef HEAP_DEBUG
-	printf("Returning %x\n", (int) (m + 1));
-#endif
+	m->prev = m;
+	m->next = m;
 	return (void *) (m + 1);
     }
 
-#ifdef HEAP_DEBUG
-    printf("Returning 0\n");
-#endif
     return 0;
 }
 
+/**********************************************************************
+ *					HEAP_Free
+ */
+void
+HEAP_Free(MDESC **free_list, void *block)
+{
+    MDESC *m_free;
+    MDESC *m;
+    MDESC *m_prev;
+
+    /*
+     * Validate pointer.
+     */
+    m_free = (MDESC *) block - 1;
+    if (m_free->prev != m_free || m_free->next != m_free || 
+	((int) m_free & 0xffff0000) != ((int) *free_list & 0xffff0000))
+    {
+#ifdef DEBUG_HEAP
+	printf("Attempt to free bad pointer,"
+	       "m_free = %08x, *free_list = %08x\n",
+	       m_free, free_list);
+#endif
+	return;
+    }
+
+    /*
+     * Find location in free list.
+     */
+    m_prev = NULL;
+    for (m = *free_list; m != NULL && m < m_free; m = m->next)
+	m_prev = m;
+    
+    if (m_prev != NULL && (int) m_prev + m_prev->length > (int) m_free)
+    {
+#ifdef DEBUG_HEAP
+	printf("Attempt to free bad pointer,"
+	       "m_free = %08x, m_prev = %08x (length %x)\n",
+	       m_free, m_prev, m_prev->length);
+#endif
+	return;
+    }
+	
+    if ((m != NULL && (int) m_free + m_free->length > (int) m) ||
+	(int) m_free + m_free->length > ((int) m_free | 0xffff))
+    {
+#ifdef DEBUG_HEAP
+	printf("Attempt to free bad pointer,"
+	       "m_free = %08x (length %x), m = %08x\n",
+	       m_free, m_free->length, m);
+#endif
+	return;
+    }
+
+    /*
+     * Put block back in free list.
+     * Does it merge with the previos block?
+     */
+    if (m_prev != NULL)
+    {
+	if ((int) m_prev + m_prev->length == (int) m_free)
+	{
+	    m_prev->length += sizeof(MDESC) + m_free->length;
+	    m_free = m_prev;
+	}
+	else
+	{
+	    m_prev->next = m_free;
+	    m_free->prev = m_prev;
+	}
+    }
+    else
+    {
+	*free_list = m_free;
+	m_free->prev = NULL;
+    }
+    
+    /*
+     * Does it merge with the next block?
+     */
+    if (m != NULL)
+    {
+	if ((int) m_free + m_free->length == (int) m)
+	{
+	    m_free->length += sizeof(MDESC) + m->length;
+	    m_free->next = m->next;
+	}
+	else
+	{
+	    m->prev = m_free;
+	    m_free->next = m;
+	}
+    }
+    else
+    {
+	m_free->next = NULL;
+    }
+}
+
+/**********************************************************************
+ *					HEAP_LocalInit
+ */
+void
+HEAP_LocalInit(void *start, int length)
+{
+    HEAP_Init(&LOCAL_FreeList, start, length);
+}
+
+/**********************************************************************
+ *					HEAP_LocalAlloc
+ */
+void *
+HEAP_LocalAlloc(int flags, int bytes)
+{
+    void *m;
+    
+#ifdef DEBUG_HEAP
+    printf("LocalAlloc: flags %x, bytes %d\n", flags, bytes);
+#endif
+
+    m = HEAP_Alloc(&LOCAL_FreeList, flags, bytes);
+	
+#ifdef DEBUG_HEAP
+	printf("LocalAlloc: returning %x\n", (int) m);
+#endif
+    return m;
+}

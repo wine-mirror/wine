@@ -2,10 +2,27 @@ Copyright  Robert J. Amstadt, 1993.  All code is provided without
 warranty.  It is my intent to cover this code with the Gnu Public
 License.
 
-So here goes release 0.0.3 of the Windows loader.  It will do some 
+So here goes release 0.1.0 of the Windows loader.  It will do some 
 relocations and then run the program.  I have successfully loaded 
 the Windows solitaire game.  Try it.  It currently stops a call to
 GetObject().
+
+WHAT'S NEW with version 0.1.0:
+    - Integrated patches from Alexandre.
+    - Minor bug fix in if1632.S
+
+WHAT'S NEW with version 0.0.5:
+    - Patches from Alexandre Julliard.  Some integration with Tcl.
+    - Generic interface for callback procedures.  This will allow
+      callbacks into DLLs.
+    - MakeProcInstance() has been implemented but untested.
+
+WHAT'S NEW with version 0.0.4:
+    - Eric Youngdale modified wine.c and selector.c to allow loading
+      of Windows DLLs.
+    - Added global memory allocation routines (GlobalAlloc, GlobalFree,
+      and GlobalLock)
+    - Bitmap resource loading into global memory.
 
 WHAT'S NEW with version 0.0.3:
     - Fixed bug with sector sizes.
@@ -41,24 +58,21 @@ WHAT'S NEW with version 0.0.1:
 TODO:
 
     - Segment fixup code completion.
-    - Make changes to the kernel to allow more than 32 LDT entries.
     - Trap and handle DOS and DPMI calls.
-    - Windows emulation library (connect to Peter MacDonald's library).
-    - Allowing loading of 16-bit DLLs for use with program.
-    - global memory allocation.
+    - global memory allocation completion
+    - GlobalAlloc should support ZEROINIT.
+    - GlobalAlloc of code segments.
     - complete and improve local heap allocation.
     - Handle self-loading applications.
-    - Deal with callback functions.
     - Resource loading
 
 INSTALLATION:
 
     Uncompress and untar this archive into the directory of your
 choice.  The file "ldt.tar" contains a necessary kernel patch against
-Linux 0.99.10.  If you installed the "ldt.tar" from the first release
-of this package, then you MUST to replace it.  In the directory 
-/usr/src/linux (or whereever you keep your kernel sources), untar 
-this file it contains three files:
+Linux 0.99.10.  "ldt.tar" is unchanged from the version released
+with release 0.0.2.  In the directory /usr/src/linux (or whereever 
+you keep your kernel sources), untar this file it contains three files:
 
 	kernel/ldt.c
 		- This is source for a new system call.

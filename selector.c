@@ -1,4 +1,4 @@
-static char RCSId[] = "$Id: selector.c,v 1.1 1993/06/29 15:55:18 root Exp $";
+static char RCSId[] = "$Id: selector.c,v 1.3 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
@@ -16,34 +16,155 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "neexe.h"
 #include "segmem.h"
 #include "prototypes.h"
+#include "wine.h"
 
-struct segment_descriptor_s *SelectorTable;
-int SelectorTableLength;
-int EnvironmentSelectorIdx;
-int PSPSelectorIdx;
+#define MAX_SELECTORS	512
+
+static struct segment_descriptor_s * EnvironmentSelector =  NULL;
+static struct segment_descriptor_s * PSP_Selector = NULL;
+struct segment_descriptor_s * MakeProcThunks = NULL;
 unsigned short PSPSelector;
+unsigned char ran_out = 0;
+unsigned short SelectorOwners[MAX_SELECTORS];
 
+static int next_unused_selector = 0;
 extern void KERNEL_Ordinal_102();
 extern void UNIXLIB_Ordinal_0();
 
 /**********************************************************************
+ *					GetNextSegment
+ */
+struct segment_descriptor_s *
+GetNextSegment(unsigned int flags, unsigned int limit)
+{
+    struct segment_descriptor_s *selectors, *s;
+    int sel_idx;
+    FILE *zfile;
+
+    sel_idx = next_unused_selector++;
+
+    /*
+     * Fill in selector info.
+     */
+    zfile = fopen("/dev/zero","r");
+
+    s = malloc(sizeof(*s));
+    s->flags = NE_SEGFLAGS_DATA;
+    s->selector = (sel_idx << 3) | 0x0007;
+    s->length = limit;
+    s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				 ((s->length + PAGE_SIZE - 1) & 
+				  ~(PAGE_SIZE - 1)),
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+
+    fclose(zfile);
+
+    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
+		      (s->length - 1) & 0xffff, 0, 
+		      MODIFY_LDT_CONTENTS_DATA, 0, 0) < 0)
+    {
+	next_unused_selector--;
+	free(s);
+	return NULL;
+    }
+
+    return s;
+}
+
+/**********************************************************************
  *					GetEntryPointFromOrdinal
  */
-unsigned int 
-GetEntryPointFromOrdinal(int fd, struct mz_header_s *mz_header, 
-			 struct ne_header_s *ne_header, int ordinal)
+union lookup{
+    struct entry_tab_header_s *eth;
+    struct entry_tab_movable_s *etm;
+    struct entry_tab_fixed_s *etf;
+    char  * cpnt;
+};
+
+unsigned int GetEntryDLLName(char * dll_name, char * function, int * sel, 
+				int  * addr)
 {
-    struct entry_tab_header_s eth;
-    struct entry_tab_movable_s etm;
-    struct entry_tab_fixed_s etf;
+	struct dll_table_entry_s *dll_table;
+	struct w_files * wpnt;
+	char * cpnt;
+	int ordinal, j, len;
+
+	dll_table = FindDLLTable(dll_name);
+
+	if(dll_table) {
+		ordinal = FindOrdinalFromName(dll_table, function);
+		*sel = dll_table[ordinal].selector;
+		*addr  = (unsigned int) dll_table[ordinal].address;
+		return 0;
+	};
+
+	/* We need a means  of determining the ordinal for the function. */
+	/* Not a builtin symbol, look to see what the file has for us */
+	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
+		if(strcmp(wpnt->name, dll_name)) continue;
+		cpnt  = wpnt->nrname_table;
+		while(1==1){
+			if( ((int) cpnt)  - ((int)wpnt->nrname_table) >  
+			   wpnt->ne_header->nrname_tab_length)  return 1;
+			len = *cpnt++;
+			if(strncmp(cpnt, function, len) ==  0) break;
+			cpnt += len + 2;
+		};
+		ordinal =  *((unsigned short *)  (cpnt +  len));
+		j = GetEntryPointFromOrdinal(wpnt, ordinal);		
+		*addr  = j & 0xffff;
+		j = j >> 16;
+		*sel = wpnt->selector_table[j].selector;
+		return 0;
+	};
+	return 1;
+}
+
+unsigned int GetEntryDLLOrdinal(char * dll_name, int ordinal, int * sel, 
+				int  * addr)
+{
+	struct dll_table_entry_s *dll_table;
+	struct w_files * wpnt;
+	int j;
+
+	dll_table = FindDLLTable(dll_name);
+
+	if(dll_table) {
+	    *sel = dll_table[ordinal].selector;
+	    *addr  = (unsigned int) dll_table[ordinal].address;
+	    return 0;
+	};
+
+	/* Not a builtin symbol, look to see what the file has for us */
+	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
+		if(strcmp(wpnt->name, dll_name)) continue;
+		j = GetEntryPointFromOrdinal(wpnt, ordinal);
+		*addr  = j & 0xffff;
+		j = j >> 16;
+		*sel = wpnt->selector_table[j].selector;
+		return 0;
+	};
+	return 1;
+}
+
+unsigned int 
+GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
+{
+   int fd =  wpnt->fd;
+   struct mz_header_s *mz_header = wpnt->mz_header;   
+   struct ne_header_s *ne_header = wpnt->ne_header;   
+
+   
+    union lookup entry_tab_pointer;
+    struct entry_tab_header_s *eth;
+    struct entry_tab_movable_s *etm;
+    struct entry_tab_fixed_s *etf;
     int current_ordinal;
     int i;
     
-    /*
-     * Move to the beginning of the entry table.
-     */
-    lseek(fd, mz_header->ne_offset + ne_header->entry_tab_offset, SEEK_SET);
 
+   entry_tab_pointer.cpnt = wpnt->lookup_table;
     /*
      * Let's walk through the table until we get to our entry.
      */
@@ -53,46 +174,44 @@ GetEntryPointFromOrdinal(int fd, struct mz_header_s *mz_header,
 	/*
 	 * Read header for this bundle.
 	 */
-	if (read(fd, &eth, sizeof(eth)) != sizeof(eth))
-	    myerror("Error reading entry table");
+	eth = entry_tab_pointer.eth++;
 	
-	if (eth.n_entries == 0)
-	    return 0;
+	if (eth->n_entries == 0)
+	    return 0xffffffff;  /* Yikes - we went off the end of the table */
 
-	if (eth.seg_number == 0)
+	if (eth->seg_number == 0)
 	{
-	    current_ordinal++;
+	    current_ordinal += eth->n_entries;
+	    if(current_ordinal > ordinal) return 0;
 	    continue;
 	}
 
 	/*
 	 * Read each of the bundle entries.
 	 */
-	for (i = 0; i < eth.n_entries; i++, current_ordinal++)
+	for (i = 0; i < eth->n_entries; i++, current_ordinal++)
 	{
-	    if (eth.seg_number >= 0xfe)
+	    if (eth->seg_number >= 0xfe)
 	    {
-		if (read(fd, &etm, sizeof(etm)) != sizeof(etm))
-		    myerror("Error reading entry table");
+		    etm = entry_tab_pointer.etm++;
 
 		if (current_ordinal == ordinal)
 		{
 		    return ((unsigned int) 
-			    (SelectorTable[etm.seg_number - 1].base_addr + 
-			     etm.offset));
+			    (wpnt->selector_table[etm->seg_number - 1].base_addr + 
+			     etm->offset));
 		}
 	    }
 	    else
 	    {
-		if (read(fd, &etf, sizeof(etf)) != sizeof(etf))
-		    myerror("Error reading entry table");
+		    etf = entry_tab_pointer.etf++;
 
 		if (current_ordinal == ordinal)
 		{
 		    return ((unsigned int) 
-			    (SelectorTable[eth.seg_number - 1].base_addr + 
-			     (int) etf.offset[0] + 
-			     ((int) etf.offset[1] << 8)));
+			    (wpnt->selector_table[eth->seg_number - 1].base_addr + 
+			     (int) etf->offset[0] + 
+			     ((int) etf->offset[1] << 8)));
 		}
 	    }
 	}
@@ -105,24 +224,28 @@ GetEntryPointFromOrdinal(int fd, struct mz_header_s *mz_header,
 void *
 GetDOSEnvironment()
 {
-    return SelectorTable[EnvironmentSelectorIdx].base_addr;
+    return EnvironmentSelector->base_addr;
 }
 
 /**********************************************************************
  *					CreateEnvironment
  */
-void
-CreateEnvironment(int sel_idx, struct segment_descriptor_s *s, FILE *zfile)
+static struct segment_descriptor_s *
+CreateEnvironment(FILE *zfile)
 {
     char *p;
+    int sel_idx;
+    struct segment_descriptor_s * s;
 
-    EnvironmentSelectorIdx = sel_idx;
+    s = (struct segment_descriptor_s *) 
+	    malloc(sizeof(struct segment_descriptor_s));
 
+    sel_idx =  next_unused_selector;
     /*
      * Create memory to hold environment.
      */
     s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (sel_idx << 3) | 0x0007;
+    s->selector = (next_unused_selector++ << 3) | 0x0007;
     s->length = PAGE_SIZE;
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 PAGE_SIZE,
@@ -143,29 +266,72 @@ CreateEnvironment(int sel_idx, struct segment_descriptor_s *s, FILE *zfile)
     /*
      * Create entry in LDT for this segment.
      */
-    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, s->length, 0, 
+    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
+		      (s->length - 1) & 0xffff, 0, 
 		      MODIFY_LDT_CONTENTS_DATA, 0, 0) < 0)
     {
 	myerror("Could not create LDT entry for environment");
     }
+    return  s;
+}
+
+/**********************************************************************
+ *					CreateThunks
+ */
+static struct segment_descriptor_s *
+CreateThunks(FILE *zfile)
+{
+    int sel_idx;
+    struct segment_descriptor_s * s;
+
+    s = (struct segment_descriptor_s *) 
+	    malloc(sizeof(struct segment_descriptor_s));
+
+    sel_idx =  next_unused_selector;
+    /*
+     * Create memory to hold environment.
+     */
+    s->flags = 0;
+    s->selector = (next_unused_selector++ << 3) | 0x0007;
+    s->length = 0x10000;
+    s->base_addr = (void *) mmap((char *) (s->selector << 16),
+				 s->length,
+				 PROT_EXEC | PROT_READ | PROT_WRITE,
+				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+
+
+    /*
+     * Create entry in LDT for this segment.
+     */
+    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
+		      (s->length - 1) & 0xffff, 0, 
+		      MODIFY_LDT_CONTENTS_CODE, 0, 0) < 0)
+    {
+	myerror("Could not create LDT entry for thunks");
+    }
+    return  s;
 }
 
 /**********************************************************************
  *					CreatePSP
  */
-void
-CreatePSP(int sel_idx, struct segment_descriptor_s *s, FILE *zfile)
+static struct segment_descriptor_s *
+CreatePSP(FILE *zfile)
 {
     struct dos_psp_s *psp;
     unsigned short *usp;
-    
-    PSPSelectorIdx = sel_idx;
+    int sel_idx;
+    struct segment_descriptor_s * s;
 
+    s = (struct segment_descriptor_s *) 
+	    malloc(sizeof(struct segment_descriptor_s));
+    
+    sel_idx =  next_unused_selector;
     /*
      * Create memory to hold PSP.
      */
     s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (sel_idx << 3) | 0x0007;
+    s->selector = (next_unused_selector++ << 3) | 0x0007;
     s->length = PAGE_SIZE;
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 PAGE_SIZE,
@@ -188,7 +354,7 @@ CreatePSP(int sel_idx, struct segment_descriptor_s *s, FILE *zfile)
     psp->pspControlCVector[1] = 0x0023;
     psp->pspCritErrorVector[0] = (unsigned short) UNIXLIB_Ordinal_0;
     psp->pspCritErrorVector[1] = 0x0023;
-    psp->pspEnvironment = SelectorTable[EnvironmentSelectorIdx].selector;
+    psp->pspEnvironment = EnvironmentSelector->selector;
     psp->pspCommandTailCount = 1;
     strcpy(psp->pspCommandTail, "\r");
     
@@ -196,22 +362,28 @@ CreatePSP(int sel_idx, struct segment_descriptor_s *s, FILE *zfile)
     /*
      * Create entry in LDT for this segment.
      */
-    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, s->length, 0, 
+    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
+		      (s->length - 1) & 0xffff, 0, 
 		      MODIFY_LDT_CONTENTS_DATA, 0, 0) < 0)
     {
 	myerror("Could not create LDT entry for PSP");
     }
+    return s;
 }
 
 /**********************************************************************
  *					CreateSelectors
  */
 struct segment_descriptor_s *
-CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
-		struct ne_header_s *ne_header)
+CreateSelectors(struct  w_files * wpnt)
 {
+    int fd = wpnt->fd;
+    struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
+    struct ne_header_s *ne_header = wpnt->ne_header;
     struct segment_descriptor_s *selectors, *s;
+    unsigned short *sp;
     int contents, read_only;
+    int SelectorTableLength;
     int i;
     int status;
     FILE * zfile;
@@ -220,11 +392,10 @@ CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
     /*
      * Allocate memory for the table to keep track of all selectors.
      */
-    SelectorTableLength = ne_header->n_segment_tab + 2;
+    SelectorTableLength = ne_header->n_segment_tab;
     selectors = malloc(SelectorTableLength * sizeof(*selectors));
     if (selectors == NULL)
 	return NULL;
-    SelectorTable = selectors;
 
     /*
      * Step through the segment table in the exe header.
@@ -245,7 +416,7 @@ CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
 	 * Store the flags in our table.
 	 */
 	s->flags = seg_table[i].seg_flags;
-	s->selector = (i << 3) | 0x0007;
+	s->selector = ((next_unused_selector + i) << 3) | 0x0007;
 
 	/*
 	 * Is there an image for this segment in the file?
@@ -319,10 +490,13 @@ CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
 	/*
 	 * Create entry in LDT for this segment.
 	 */
-	if (set_ldt_entry(i, (unsigned long) s->base_addr, s->length, 0, 
+	if (set_ldt_entry(i, (unsigned long) s->base_addr, 
+			  (s->length - 1) & 0xffff, 0, 
 			  contents, read_only, 0) < 0)
 	{
 	    free(selectors);
+	    fprintf(stderr,"Ran out of ldt  entries.\n");
+	    ran_out++;
 	    return NULL;
 	}
 	/*
@@ -336,8 +510,18 @@ CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
 	}
     }
 
-    CreateEnvironment(i++, s++, zfile);
-    CreatePSP(i++, s++, zfile);
+    sp = &SelectorOwners[next_unused_selector];
+    for (i = 0; i < ne_header->n_segment_tab; i++)
+	*sp++ = (((next_unused_selector + ne_header->auto_data_seg - 1) << 3)
+		 | 0x0007);
+
+    next_unused_selector += ne_header->n_segment_tab;
+
+    if(!EnvironmentSelector) {
+	    EnvironmentSelector = CreateEnvironment(zfile);
+	    PSP_Selector = CreatePSP(zfile);
+	    MakeProcThunks = CreateThunks(zfile);
+    };
 
     fclose(zfile);
 

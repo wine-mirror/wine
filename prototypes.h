@@ -1,4 +1,4 @@
-/* $Id: prototypes.h,v 1.1 1993/06/29 15:55:18 root Exp $
+/* $Id: prototypes.h,v 1.3 1993/07/04 04:04:21 root Exp root $
  */
 /*
  * Copyright  Robert J. Amstadt, 1993
@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include "neexe.h"
 #include "segmem.h"
+#include "wine.h"
 
 extern struct segment_descriptor_s *
-    CreateSelectors(int fd, struct ne_segment_table_entry_s *seg_table,
-  		    struct ne_header_s *ne_header);
+    CreateSelectors(struct w_files *);
 
 extern void PrintFileHeader(struct ne_header_s *ne_header);
 extern void PrintSegmentTable(struct ne_segment_table_entry_s *seg_table, 
@@ -20,18 +20,17 @@ extern void PrintSegmentTable(struct ne_segment_table_entry_s *seg_table,
 extern void PrintRelocationTable(char *exe_ptr, 
 				 struct ne_segment_table_entry_s *seg_entry_p,
 				 int segment);
-extern int FixupSegment(int fd, struct mz_header_s * mz_header,
-			struct ne_header_s *ne_header,
-			struct ne_segment_table_entry_s *seg_table, 
-			struct segment_descriptor_s *selecetor_table,
-			int segment_num);
+extern int FixupSegment(struct w_files * wpnt, int segment_num);
 extern struct  dll_table_entry_s *FindDLLTable(char *dll_name);
-extern unsigned int GetEntryPointFromOrdinal(int fd, 
-					     struct mz_header_s *mz_header, 
-					     struct ne_header_s *ne_header, 
+extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt, 
 					     int ordinal);
 
-extern char WIN_CommandLine[];
+extern struct segment_descriptor_s *GetNextSegment(unsigned int flags,
+						   unsigned int limit);
+extern unsigned int GLOBAL_Alloc(unsigned int flags, unsigned long size);
+extern unsigned int GLOBAL_Free(unsigned int block);
+extern void *GLOBAL_Lock(unsigned int block);
+
 extern struct mz_header_s *CurrentMZHeader;
 extern struct ne_header_s *CurrentNEHeader;
 extern int CurrentNEFile;

@@ -1,4 +1,4 @@
-/* $Id: dlls.h,v 1.1 1993/06/29 15:55:18 root Exp $
+/* $Id: dlls.h,v 1.2 1993/07/04 04:04:21 root Exp root $
  */
 /*
  * Copyright  Robert J. Amstadt, 1993
