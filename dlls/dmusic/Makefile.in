@@ -11,17 +11,16 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	dmusic.c \
-	dmusic8.c \
-	dmusic_buffer.c \
-	dmusic_collection.c \
-	dmusic_dlinstrument.c \
-	dmusic_download.c \
 	dmusic_instrument.c \
+	dmusic_loader.c \
 	dmusic_main.c \
+	dmusic_misc.c \
+	dmusic_performance.c \
+	dmusic_plugins.c \
 	dmusic_port.c \
-	dmusic_portdl.c \
-	dmusic_thru.c \
-	reference_clock.c
+	dmusic_segment.c \
+	dmusic_style.c \
+	dmusic_synth.c
 
 RC_SRCS = version.rc
 

@@ -1,4 +1,5 @@
 /* IDirectMusicPort Implementation
+ * IDirectMusicPortDownloadImpl Implementation
  *
  * Copyright (C) 2003 Rok Mandeljc
  *
@@ -180,4 +181,90 @@ ICOM_VTABLE(IDirectMusicPort) DirectMusicPort_Vtbl =
 	IDirectMusicPortImpl_GetChannelPriority,
 	IDirectMusicPortImpl_SetDirectSound,
 	IDirectMusicPortImpl_GetFormat
+};
+
+
+/* IDirectMusicPortDownload IUnknown parts follow: */
+HRESULT WINAPI IDirectMusicPortDownloadImpl_QueryInterface (LPDIRECTMUSICPORTDOWNLOAD iface, REFIID riid, LPVOID *ppobj)
+{
+	ICOM_THIS(IDirectMusicPortDownloadImpl,iface);
+
+	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPortDownload))
+	{
+		IDirectMusicPortDownloadImpl_AddRef(iface);
+		*ppobj = This;
+		return DS_OK;
+	}
+	WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+ULONG WINAPI IDirectMusicPortDownloadImpl_AddRef (LPDIRECTMUSICPORTDOWNLOAD iface)
+{
+	ICOM_THIS(IDirectMusicPortDownloadImpl,iface);
+	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+	return ++(This->ref);
+}
+
+ULONG WINAPI IDirectMusicPortDownloadImpl_Release (LPDIRECTMUSICPORTDOWNLOAD iface)
+{
+	ICOM_THIS(IDirectMusicPortDownloadImpl,iface);
+	ULONG ref = --This->ref;
+	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+	if (ref == 0)
+	{
+		HeapFree(GetProcessHeap(), 0, This);
+	}
+	return ref;
+}
+
+/* IDirectMusicPortDownload Interface follow: */
+HRESULT WINAPI IDirectMusicPortDownloadImpl_GetBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwDLId, IDirectMusicDownload** ppIDMDownload)
+{
+	FIXME("stub\n");
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectMusicPortDownloadImpl_AllocateBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwSize, IDirectMusicDownload** ppIDMDownload)
+{
+	FIXME("stub\n");
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectMusicPortDownloadImpl_GetDLId (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* pdwStartDLId, DWORD dwCount)
+{
+	FIXME("stub\n");
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectMusicPortDownloadImpl_GetAppend (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* pdwAppend)
+{
+	FIXME("stub\n");
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectMusicPortDownloadImpl_Download (LPDIRECTMUSICPORTDOWNLOAD iface, IDirectMusicDownload* pIDMDownload)
+{
+	FIXME("stub\n");
+	return DS_OK;
+}
+
+HRESULT WINAPI IDirectMusicPortDownloadImpl_Unload (LPDIRECTMUSICPORTDOWNLOAD iface, IDirectMusicDownload* pIDMDownload)
+{
+	FIXME("stub\n");
+	return DS_OK;
+}
+
+ICOM_VTABLE(IDirectMusicPortDownload) DirectMusicPortDownload_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IDirectMusicPortDownloadImpl_QueryInterface,
+	IDirectMusicPortDownloadImpl_AddRef,
+	IDirectMusicPortDownloadImpl_Release,
+	IDirectMusicPortDownloadImpl_GetBuffer,
+	IDirectMusicPortDownloadImpl_AllocateBuffer,
+	IDirectMusicPortDownloadImpl_GetDLId,
+	IDirectMusicPortDownloadImpl_GetAppend,
+	IDirectMusicPortDownloadImpl_Download,
+	IDirectMusicPortDownloadImpl_Unload
 };
