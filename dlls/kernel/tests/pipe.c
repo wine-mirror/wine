@@ -700,7 +700,7 @@ static void test_NamedPipe_2(void)
     trace("test_NamedPipe_2 returning\n");
 }
 
-static void test_DisconnectNamedPipe(void)
+static int test_DisconnectNamedPipe(void)
 {
     HANDLE hnp;
     HANDLE hFile;
@@ -715,7 +715,10 @@ static void test_DisconnectNamedPipe(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    if (INVALID_HANDLE_VALUE == hnp) {
+        trace ("Seems we have no named pipes.\n");
+        return 1;
+    }
 
     ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL) == 0
         && GetLastError() == ERROR_PIPE_LISTENING, "WriteFile to not-yet-connected pipe\n");
@@ -745,12 +748,14 @@ static void test_DisconnectNamedPipe(void)
 
     ok(CloseHandle(hnp), "CloseHandle\n");
 
+    return 0;
 }
 
 START_TEST(pipe)
 {
     trace("test 1 of 4:\n");
-    test_DisconnectNamedPipe();
+    if (test_DisconnectNamedPipe())
+        return;
     trace("test 2 of 4:\n");
     test_CreateNamedPipe_instances_must_match();
     trace("test 3 of 4:\n");
