@@ -4574,6 +4574,24 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
 
 
 /**********************************************************************
+ *              VarFormatDateTime [OLEAUT32.97]
+ */
+HRESULT WINAPI VarFormatDateTime(LPVARIANT var, INT format, ULONG dwFlags, BSTR *out)
+{
+    FIXME("%p %d %lx %p\n", var, format, dwFlags, out);
+    return E_NOTIMPL;
+}
+
+/**********************************************************************
+ *              VarFormatCurrency [OLEAUT32.127]
+ */
+HRESULT WINAPI VarFormatCurrency(LPVARIANT var, INT digits, INT lead, INT paren, INT group, ULONG dwFlags, BSTR *out)
+{
+    FIXME("%p %d %d %d %d %lx %p\n", var, digits, lead, paren, group, dwFlags, out);
+    return E_NOTIMPL;
+}
+
+/**********************************************************************
  *              VariantTimeToDosDateTime [OLEAUT32.13]
  * Convert variant representation of time to the date and time representation
  * stored in dos.

@@ -1135,10 +1135,10 @@ static HRESULT duplicateData(
 
 
 /************************************************************************
- *		SafeArrayGetVarType (OLEAUT32.77)
+ *		SafeArrayGetVartype (OLEAUT32.77)
  * Returns the VARTYPE stored in the given safearray
  */
-HRESULT WINAPI SafeArrayGetVarType(
+HRESULT WINAPI SafeArrayGetVartype(
   SAFEARRAY* psa,
   VARTYPE*   pvt)
 {

@@ -40,7 +40,11 @@ name oleaut32
 38 stdcall SafeArrayDestroyDescriptor(ptr) SafeArrayDestroyDescriptor
 39 stdcall SafeArrayDestroyData(ptr) SafeArrayDestroyData
 40 stdcall SafeArrayRedim(ptr ptr) SafeArrayRedim
-41 stub OACreateTypeLib2
+41 stdcall SafeArrayAllocDescriptorEx(long long ptr) SafeArrayAllocDescriptorEx
+42 stub SafeArrayCreateEx
+43 stub SafeArrayCreateVectorEx
+44 stub SafeArraySetRecordInfo
+45 stub SafeArrayGetRecordInfo
 46 stdcall VarParseNumFromStr(wstr long long ptr ptr) VarParseNumFromStr
 47 stdcall VarNumFromParseNum(ptr ptr long ptr) VarNumFromParseNum
 48 stdcall VarI2FromUI1(long ptr) VarI2FromUI1
@@ -52,6 +56,7 @@ name oleaut32
 54 stdcall VarI2FromStr(wstr long long ptr) VarI2FromStr
 55 stub VarI2FromDisp
 56 stdcall VarI2FromBool(long ptr) VarI2FromBool
+57 stub SafeArraySetIID
 58 stdcall VarI4FromUI1(long ptr) VarI4FromUI1
 59 stdcall VarI4FromI2(long ptr) VarI4FromI2
 60 stdcall VarI4FromR4(long ptr) VarI4FromR4
@@ -61,6 +66,7 @@ name oleaut32
 64 stdcall VarI4FromStr(wstr long long ptr) VarI4FromStr
 65 stub VarI4FromDisp
 66 stdcall VarI4FromBool(long ptr) VarI4FromBool
+67 stub SafeArrayGetIID
 68 stdcall VarR4FromUI1(long ptr) VarR4FromUI1
 69 stdcall VarR4FromI2(long ptr) VarR4FromI2
 70 stdcall VarR4FromI4(long ptr) VarR4FromI4
@@ -70,7 +76,7 @@ name oleaut32
 74 stdcall VarR4FromStr(wstr long long ptr) VarR4FromStr
 75 stub VarR4FromDisp
 76 stdcall VarR4FromBool(long ptr) VarR4FromBool
-77 stdcall SafeArrayGetVarType(ptr ptr) SafeArrayGetVarType
+77 stdcall SafeArrayGetVartype(ptr ptr) SafeArrayGetVartype
 78 stdcall VarR8FromUI1(long ptr) VarR8FromUI1
 79 stdcall VarR8FromI2(long ptr) VarR8FromI2
 80 stdcall VarR8FromI4(long ptr) VarR8FromI4
@@ -80,6 +86,7 @@ name oleaut32
 84 stdcall VarR8FromStr(wstr long long ptr) VarR8FromStr
 85 stub VarR8FromDisp
 86 stdcall VarR8FromBool(long ptr) VarR8FromBool
+87 stdcall VarFormat(ptr ptr long long long ptr) VarFormat
 88 stdcall VarDateFromUI1(long ptr) VarDateFromUI1
 89 stdcall VarDateFromI2(long ptr) VarDateFromI2
 90 stdcall VarDateFromI4(long ptr) VarDateFromI4
@@ -89,7 +96,7 @@ name oleaut32
 94 stdcall VarDateFromStr(wstr long long ptr) VarDateFromStr
 95 stub VarDateFromDisp
 96 stdcall VarDateFromBool(long ptr) VarDateFromBool
-#97 stub VarFormatDateTime # (ptr long long ptr)
+97 stdcall VarFormatDateTime(ptr long long ptr) VarFormatDateTime
 98 stdcall VarCyFromUI1(long ptr) VarCyFromUI1
 99 stdcall VarCyFromI2(long ptr) VarCyFromI2
 100 stdcall VarCyFromI4(long ptr) VarCyFromI4
@@ -99,6 +106,7 @@ name oleaut32
 104 stdcall VarCyFromStr(ptr long long ptr) VarCyFromStr
 105 stub VarCyFromDisp
 106 stdcall VarCyFromBool(long ptr) VarCyFromBool
+107 stub VarFormatNumber # stdcall (ptr long long long long long ptr)
 108 stdcall VarBstrFromUI1(long long long ptr) VarBstrFromUI1
 109 stdcall VarBstrFromI2(long long long ptr) VarBstrFromI2
 110 stdcall VarBstrFromI4(long long long ptr) VarBstrFromI4
@@ -108,6 +116,7 @@ name oleaut32
 114 stdcall VarBstrFromDate(double long long ptr) VarBstrFromDate
 115 stub VarBstrFromDisp
 116 stdcall VarBstrFromBool(long long long ptr) VarBstrFromBool
+117 stub VarFormatPercent # stdcall (ptr long long long long long ptr)
 118 stdcall VarBoolFromUI1(long ptr) VarBoolFromUI1
 119 stdcall VarBoolFromI2(long ptr) VarBoolFromI2
 120 stdcall VarBoolFromI4(long ptr) VarBoolFromI4
@@ -117,6 +126,9 @@ name oleaut32
 124 stdcall VarBoolFromCy(double ptr) VarBoolFromCy
 125 stdcall VarBoolFromStr(wstr long long ptr) VarBoolFromStr
 126 stub VarBoolFromDisp
+127 stdcall VarFormatCurrency(ptr long long long long long ptr) VarFormatCurrency
+128 stub VarWeekdayName # stdcall (long long long long ptr)
+129 stub VarMonthName # stdcall (long long long ptr)
 130 stdcall VarUI1FromI2(long ptr) VarUI1FromI2
 131 stdcall VarUI1FromI4(long ptr) VarUI1FromI4
 132 stdcall VarUI1FromR4(long ptr) VarUI1FromR4
@@ -126,12 +138,25 @@ name oleaut32
 136 stdcall VarUI1FromStr(wstr long long ptr) VarUI1FromStr
 137 stub VarUI1FromDisp
 138 stdcall VarUI1FromBool(long ptr) VarUI1FromBool
+139 stdcall VarFormatFromTokens (ptr ptr ptr long ptr long) VarFormatFromTokens
 140 stdcall VarTokenizeFormatString (ptr ptr long long long long ptr) VarTokenizeFormatString
+141 stub VarAdd # stdcall (ptr ptr ptr)
+142 stdcall VarAnd(ptr ptr ptr) VarAnd
+143 stub VarDiv # stdcall (ptr ptr ptr)
+144 stub OACreateTypeLib2
 146 stub DispCallFunc
 147 stdcall VariantChangeTypeEx(ptr ptr long long long) VariantChangeTypeEx
 148 stdcall SafeArrayPtrOfIndex(ptr ptr ptr) SafeArrayPtrOfIndex
 149 stdcall SysStringByteLen(ptr) SysStringByteLen
 150 stdcall SysAllocStringByteLen(ptr long) SysAllocStringByteLen
+152 stub VarEqv # stdcall (ptr ptr ptr)
+153 stub VarIdiv # stdcall (ptr ptr ptr)
+154 stub VarImp # stdcall (ptr ptr ptr)
+155 stub VarMod # stdcall (ptr ptr ptr)
+156 stub VarMul # stdcall (ptr ptr ptr)
+157 stub VarOr # stdcall (ptr ptr ptr)
+158 stub VarPow # stdcall (ptr ptr ptr)
+159 stub VarSub # stdcall (ptr ptr ptr)
 160 stdcall CreateTypeLib(long wstr ptr) CreateTypeLib
 161 stdcall LoadTypeLib (wstr ptr) LoadTypeLib
 162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib
@@ -139,13 +164,29 @@ name oleaut32
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib
 165 stdcall LHashValOfNameSys(long long wstr) LHashValOfNameSys
 166 stdcall LHashValOfNameSysA(long long str) LHashValOfNameSysA
+167 stub VarXor # stdcall (ptr ptr ptr)
+168 stub VarAbs # stdcall (ptr ptr)
+169 stub VarFix # stdcall (ptr ptr)
 170 stdcall OaBuildVersion() OaBuildVersion
 171 stub ClearCustData
+172 stub VarInt # stdcall (ptr ptr)
+173 stub VarNeg # stdcall (ptr ptr)
+174 stdcall VarNot(ptr ptr) VarNot
+175 stub VarRound # stdcall (ptr long ptr)
+176 stdcall VarCmp(ptr ptr long long) VarCmp
+177 stub VarDecAdd # stdcall (ptr ptr ptr)
+178 stub VarDecDiv # stdcall (ptr ptr ptr)
+179 stub VarDecMul # stdcall (ptr ptr ptr)
 180 stub CreateTypeLib2
+181 stub VarDecSub # stdcall (ptr ptr ptr)
+182 stub VarDecAbs # stdcall (ptr ptr)
 183 stdcall LoadTypeLibEx (wstr long ptr) LoadTypeLibEx
 184 stdcall SystemTimeToVariantTime(ptr ptr) SystemTimeToVariantTime
 185 stdcall VariantTimeToSystemTime(double ptr) VariantTimeToSystemTime
 186 stdcall UnRegisterTypeLib (ptr long long long long) UnRegisterTypeLib
+187 stub VarDecFix # stdcall (ptr ptr)
+188 stub VarDecInt # stdcall (ptr ptr)
+189 stub VarDecNeg # stdcall (ptr ptr)
 190 stub VarDecFromUI1
 191 stub VarDecFromI2
 192 stub VarDecFromI4
@@ -159,6 +200,8 @@ name oleaut32
 200 forward GetErrorInfo ole32.GetErrorInfo
 201 forward SetErrorInfo ole32.SetErrorInfo
 202 forward CreateErrorInfo ole32.CreateErrorInfo
+203 stub VarDecRound # stdcall (ptr long ptr)
+204 stub VarDecCmp # stdcall (ptr ptr)
 205 stdcall VarI2FromI1(long ptr) VarI2FromI1
 206 stdcall VarI2FromUI2(long ptr) VarI2FromUI2
 207 stdcall VarI2FromUI4(long ptr) VarI2FromUI4
@@ -252,8 +295,29 @@ name oleaut32
 295 stub LPSAFEARRAY_Size
 296 stub LPSAFEARRAY_Marshal
 297 stub LPSAFEARRAY_Unmarshal
+298 stub VarDecCmpR8 # stdcall (ptr double)
+299 stub VarCyAdd
+303 stub VarCyMul
+304 stub VarCyMulI4
+305 stub VarCySub
+306 stub VarCyAbs
+307 stub VarCyFix
+308 stub VarCyInt
+309 stub VarCyNeg
+310 stub VarCyRound
+311 stub VarCyCmp
+312 stub VarCyCmpR8
+313 stdcall VarBstrCat(ptr ptr ptr) VarBstrCat
+314 stdcall VarBstrCmp(ptr ptr long long) VarBstrCmp
+315 stub VarR8Pow # stdcall (double double ptr)
+316 stub VarR4CmpR8
+317 stub VarR8Round # stdcall (double long ptr)
+318 stdcall VarCat(ptr ptr ptr) VarCat
+319 stub VarDateFromUdateEx # stdcall (ptr long long ptr)
 320 stdcall DllRegisterServer() OLEAUT32_DllRegisterServer
 321 stdcall DllUnregisterServer() OLEAUT32_DllUnregisterServer
+322 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
+323 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
 330 stdcall VarDateFromUdate(ptr long ptr) VarDateFromUdate
 331 stdcall VarUdateFromDate(double long ptr) VarUdateFromDate
 332 stub GetAltMonthNames
@@ -277,6 +341,8 @@ name oleaut32
 397 stub UserMSG_to_local
 398 stub UserMSG_free_inst
 399 stub UserMSG_free_local
+401 stdcall OleLoadPictureEx(ptr long long long long long long ptr) OleLoadPictureEx
+402 stub OleLoadPictureFileEx
 410 stdcall DllCanUnloadNow() OLEAUT32_DllCanUnloadNow
 411 stdcall SafeArrayCreateVector(long long long) SafeArrayCreateVector
 412 stdcall SafeArrayCopyData(ptr ptr) SafeArrayCopyData
@@ -292,72 +358,3 @@ name oleaut32
 422 stub OleLoadPictureFile
 423 stub OleSavePictureFile
 424 stub OleLoadPicturePath
-425 stdcall OleLoadPictureEx(ptr long long long long long long ptr) OleLoadPictureEx
-
-#Win98 and higher (NT4.0sp4)
-426 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
-427 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
-428 stub OleLoadPictureFileEx
-429 stdcall SafeArrayAllocDescriptorEx(long long ptr) SafeArrayAllocDescriptorEx
-430 stub SafeArrayCreateEx
-431 stub SafeArrayCreateVectorEx
-432 stub SafeArrayGetIID
-433 stub SafeArrayGetRecordInfo
-434 stub SafeArraySetIID
-435 stub SafeArraySetRecordInfo
-436 stub VarAbs # stdcall (ptr ptr)
-437 stub VarAdd # stdcall (ptr ptr ptr)
-438 stdcall VarAnd(ptr ptr ptr) VarAnd
-439 stdcall VarBstrCat(ptr ptr ptr) VarBstrCat
-440 stdcall VarBstrCmp(ptr ptr long long) VarBstrCmp
-441 stdcall VarCat(ptr ptr ptr) VarCat
-442 stdcall VarCmp(ptr ptr long long) VarCmp
-443 stub VarCyAbs
-444 stub VarCyAdd
-445 stub VarCyCmp
-446 stub VarCyCmpR8
-447 stub VarCyFix
-448 stub VarCyInt
-449 stub VarCyMul
-450 stub VarCyMulI4
-451 stub VarCyNeg
-452 stub VarCyRound
-453 stub VarCySub
-454 stub VarDateFromUdateEx # stdcall (ptr long long ptr)
-455 stub VarDecAbs # stdcall (ptr ptr)
-456 stub VarDecAdd # stdcall (ptr ptr ptr)
-457 stub VarDecCmp # stdcall (ptr ptr)
-458 stub VarDecCmpR8 # stdcall (ptr double)
-459 stub VarDecDiv # stdcall (ptr ptr ptr)
-460 stub VarDecFix # stdcall (ptr ptr)
-461 stub VarDecInt # stdcall (ptr ptr)
-462 stub VarDecMul # stdcall (ptr ptr ptr)
-463 stub VarDecNeg # stdcall (ptr ptr)
-464 stub VarDecRound # stdcall (ptr long ptr)
-465 stub VarDecSub # stdcall (ptr ptr ptr)
-466 stub VarDiv # stdcall (ptr ptr ptr)
-467 stub VarEqv # stdcall (ptr ptr ptr)
-468 stub VarFix # stdcall (ptr ptr)
-469 stdcall VarFormat(ptr ptr long long long ptr) VarFormat
-470 stub VarFormatCurrency # stdcall (ptr long long long long long ptr)
-471 stub VarFormatDateTime # stdcall (ptr long long ptr)
-472 stdcall VarFormatFromTokens (ptr ptr ptr long ptr long) VarFormatFromTokens
-473 stub VarFormatNumber # stdcall (ptr long long long long long ptr)
-474 stub VarFormatPercent # stdcall (ptr long long long long long ptr)
-475 stub VarIdiv # stdcall (ptr ptr ptr)
-476 stub VarImp # stdcall (ptr ptr ptr)
-477 stub VarInt # stdcall (ptr ptr)
-478 stub VarMod # stdcall (ptr ptr ptr)
-479 stub VarMonthName # stdcall (long long long ptr)
-480 stub VarMul # stdcall (ptr ptr ptr)
-481 stub VarNeg # stdcall (ptr ptr)
-482 stdcall VarNot(ptr ptr) VarNot
-483 stub VarOr # stdcall (ptr ptr ptr)
-484 stub VarPow # stdcall (ptr ptr ptr)
-485 stub VarR4CmpR8
-486 stub VarR8Pow # stdcall (double double ptr)
-487 stub VarR8Round # stdcall (double long ptr)
-488 stub VarRound # stdcall (ptr long ptr)
-489 stub VarSub # stdcall (ptr ptr ptr)
-491 stub VarWeekdayName # stdcall (long long long long ptr)
-492 stub VarXor # stdcall (ptr ptr ptr)
