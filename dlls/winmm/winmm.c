@@ -1292,7 +1292,7 @@ UINT WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
 	    return 0;
 	}
 	if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, TRUE);
 	}
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2605,7 +2605,7 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL) {
 	if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, TRUE);
 	}
 	return MMSYSERR_INVALHANDLE;
     }
@@ -2860,7 +2860,7 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL) {
 	if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, TRUE);
 	}
 	return MMSYSERR_INVALHANDLE;
     }

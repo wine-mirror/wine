@@ -1465,7 +1465,7 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
 
     if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, FALSE)) == NULL) {
 	if ((wmld = MMDRV_Get(HWAVEOUT_32(hWaveOut), MMDRV_WAVEOUT, TRUE)) != NULL) {
-	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, FALSE);
 	}
 	return MMSYSERR_INVALHANDLE;
     }
@@ -1703,14 +1703,18 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
 
     TRACE("(%04x, %u, %ld, %ld)\n", hWaveIn, uMessage, dwParam1, dwParam2);
 
+    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL) {
+	if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, TRUE)) != NULL) {
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2, FALSE);
+	}
+	return MMSYSERR_INVALHANDLE;
+    }
+
     /* from M$ KB */
     if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
 	return MMSYSERR_INVALPARAM;
 
-    if ((wmld = MMDRV_Get(HWAVEIN_32(hWaveIn), MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
-
-    return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
+    return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, FALSE);
 }
 
 /* ###################################################
