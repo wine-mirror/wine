@@ -163,7 +163,8 @@ BASEDIRS = \
 	wintab32 \
 	wintrust \
 	wow32 \
-	wsock32
+	wsock32 \
+	wtsapi32
 
 SUBDIRS = \
 	$(BASEDIRS) \
@@ -396,7 +397,8 @@ SYMLINKS_SO = \
 	wnaspi32.dll.so \
 	wow32.dll.so \
 	ws2_32.dll.so \
-	wsock32.dll.so
+	wsock32.dll.so \
+	wtsapi32.dll.so
 
 # Main target
 
@@ -965,6 +967,9 @@ winsock.dll.so : ws2_32.dll.so
 wsock32.dll.so: wsock32/wsock32.dll.so
 	$(RM) $@ && $(LN_S) wsock32/wsock32.dll.so $@
 
+wtsapi32.dll.so: wtsapi32/wtsapi32.dll.so
+	$(RM) $@ && $(LN_S) wtsapi32/wtsapi32.dll.so $@
+
 x11drv.dll.so: x11drv/x11drv.dll.so
 	$(RM) $@ && $(LN_S) x11drv/x11drv.dll.so $@
 
@@ -1114,6 +1119,7 @@ IMPORT_LIBS = \
 	libwow32.$(IMPLIBEXT) \
 	libws2_32.$(IMPLIBEXT) \
 	libwsock32.$(IMPLIBEXT) \
+	libwtsapi32.$(IMPLIBEXT) \
 	libx11drv.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
@@ -1758,6 +1764,11 @@ libwsock32.def: wsock32/wsock32.spec.def
 libwsock32.a: wsock32/wsock32.spec.def
 	$(DLLTOOL) -k -l $@ -d wsock32/wsock32.spec.def
 
+libwtsapi32.def: wtsapi32/wtsapi32.spec.def
+	$(RM) $@ && $(LN_S) wtsapi32/wtsapi32.spec.def $@
+libwtsapi32.a: wtsapi32/wtsapi32.spec.def
+	$(DLLTOOL) -k -l $@ -d wtsapi32/wtsapi32.spec.def
+
 libx11drv.def: x11drv/x11drv.spec.def
 	$(RM) $@ && $(LN_S) x11drv/x11drv.spec.def $@
 libx11drv.a: x11drv/x11drv.spec.def
@@ -1890,6 +1901,7 @@ winaspi/wnaspi32.spec.def: $(WINEBUILD)
 wow32/wow32.spec.def: $(WINEBUILD)
 winsock/ws2_32.spec.def: $(WINEBUILD)
 wsock32/wsock32.spec.def: $(WINEBUILD)
+wtsapi32/wtsapi32.spec.def: $(WINEBUILD)
 x11drv/x11drv.spec.def: $(WINEBUILD)
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
@@ -2053,6 +2065,7 @@ winaspi/wnaspi32.dll.so: winaspi
 wow32/wow32.dll.so: wow32
 winsock/ws2_32.dll.so: winsock
 wsock32/wsock32.dll.so: wsock32
+wtsapi32/wtsapi32.dll.so: wtsapi32
 x11drv/x11drv.dll.so: x11drv
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9

@@ -254,6 +254,7 @@ WINDOWS_INCLUDES = \
 	wshisotp.h \
 	wsipx.h \
 	wsnwlink.h \
+	wtsapi32.h \
 	xcmc.h \
 	zmouse.h
 

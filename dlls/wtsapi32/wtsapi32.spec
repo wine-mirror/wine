@@ -1,0 +1,32 @@
+@ stub WTSCloseServer
+@ stub WTSDisconnectSession
+@ stub WTSEnumerateProcessA
+@ stub WTSEnumerateProcessW
+@ stub WTSEnumerateServersA
+@ stub WTSEnumerateServersW
+@ stub WTSEnumerateSessionsA
+@ stub WTSEnumerateSessionsW
+@ stub WTSFreeMemory
+@ stub WTSLogoffSession
+@ stub WTSOpenServerA
+@ stub WTSOpenServerW
+@ stub WTSQuerySessionInformationA
+@ stdcall WTSQuerySessionInformationW(long long long ptr ptr)
+@ stub WTSQueryUserConfigA
+@ stub WTSQueryUserConfigW
+@ stub WTSSendMessageA
+@ stub WTSSendMessageW
+@ stub WTSSetSessionInformationA
+@ stub WTSSetSessionInformationW
+@ stub WTSSetUserConfigA
+@ stub WTSSetUserConfigW
+@ stub WTSShutdownSystem
+@ stub WTSTerminateProcess
+@ stub WTSVirtualChannelClose
+@ stub WTSVirtualChannelOpen
+@ stub WTSVirtualChannelPurgeInput
+@ stub WTSVirtualChannelPurgeOutput
+@ stub WTSVirtualChannelQuery
+@ stub WTSVirtualChannelRead
+@ stub WTSVirtualChannelWrite
+@ stdcall WTSWaitSystemEvent(long long ptr)

@@ -1703,6 +1703,7 @@ dlls/wintab32/Makefile
 dlls/wintrust/Makefile
 dlls/wow32/Makefile
 dlls/wsock32/Makefile
+dlls/wtsapi32/Makefile
 dlls/x11drv/Makefile
 documentation/Makefile
 fonts/Makefile
