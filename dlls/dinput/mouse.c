@@ -501,9 +501,9 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     
     switch(wparam) {
         case WM_LBUTTONDOWN:
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0xFF,
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x80,
 		      hook->time, This->dinput->evsequence++);
-	    This->m_state.rgbButtons[0] = 0xFF;
+	    This->m_state.rgbButtons[0] = 0x80;
 	    break;
 	case WM_LBUTTONUP:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_L_POSITION], 0x00,
@@ -511,9 +511,9 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	    This->m_state.rgbButtons[0] = 0x00;
 	    break;
 	case WM_RBUTTONDOWN:
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0xFF,
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x80,
 		      hook->time, This->dinput->evsequence++);
-	    This->m_state.rgbButtons[1] = 0xFF;
+	    This->m_state.rgbButtons[1] = 0x80;
 	    break;
 	case WM_RBUTTONUP:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_R_POSITION], 0x00,
@@ -521,9 +521,9 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	    This->m_state.rgbButtons[1] = 0x00;
 	    break;
 	case WM_MBUTTONDOWN:
-	    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0xFF,
+	    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x80,
 		      hook->time, This->dinput->evsequence++);
-	    This->m_state.rgbButtons[2] = 0xFF;
+	    This->m_state.rgbButtons[2] = 0x80;
 	    break;
 	case WM_MBUTTONUP:
 	    GEN_EVENT(This->offset_array[WINE_MOUSE_M_POSITION], 0x00,
