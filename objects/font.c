@@ -39,6 +39,51 @@ typedef struct
   DWORD                 dwFlags;
 } fontEnum32;
  
+/*
+ *  For TranslateCharsetInfo
+ */
+#define FS(x) {{0,0,0,0},{0x1<<(x),0}}
+#define MAXTCIINDEX 32
+static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
+  /* ANSI */
+  { ANSI_CHARSET, 1252, FS(0)},
+  { EASTEUROPE_CHARSET, 1250, FS(1)},
+  { RUSSIAN_CHARSET, 1251, FS(2)},
+  { GREEK_CHARSET, 1253, FS(3)},
+  { TURKISH_CHARSET, 1254, FS(4)},
+  { HEBREW_CHARSET, 1255, FS(5)},
+  { ARABIC_CHARSET, 1256, FS(6)},
+  { BALTIC_CHARSET, 1257, FS(7)},
+  /* reserved by ANSI */
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  /* ANSI and OEM */
+  { THAI_CHARSET,  874,  FS(16)},
+  { SHIFTJIS_CHARSET, 932, FS(17)},
+  { GB2312_CHARSET, 936, FS(18)},
+  { HANGEUL_CHARSET, 949, FS(19)},
+  { CHINESEBIG5_CHARSET, 950, FS(20)},
+  { JOHAB_CHARSET, 1361, FS(21)}, 
+  /* reserved for alternate ANSI and OEM */
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+  /* reserved for system */
+  { DEFAULT_CHARSET, 0, FS(0)},
+  { DEFAULT_CHARSET, 0, FS(0)},
+};
+
 /***********************************************************************
  *              LOGFONT conversion functions.
  */
@@ -1352,8 +1397,6 @@ DWORD WINAPI GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
  * RETURNS
  *   TRUE on success, FALSE on failure.
  *
- * BUGS
- *  Not implemented.
  */
 BOOL32 WINAPI TranslateCharsetInfo(
   LPDWORD lpSrc, /*
@@ -1364,7 +1407,22 @@ BOOL32 WINAPI TranslateCharsetInfo(
   LPCHARSETINFO lpCs, /* structure to receive charset information */
   DWORD flags /* determines interpretation of lpSrc */
 ) {
-    FIXME(font,"(%p,%p,0x%08lx), stub.\n",lpSrc,lpCs, flags);
+    int index = 0;
+    switch (flags) {
+    case TCI_SRCFONTSIG:
+	while (!(*lpSrc>>index & 0x0001) && index<MAXTCIINDEX) index++;
+      break;
+    case TCI_SRCCODEPAGE:
+      while ((UINT32) (lpSrc) != FONT_tci[index].ciACP && index < MAXTCIINDEX) index++;
+      break;
+    case TCI_SRCCHARSET:
+      while ((UINT32) (lpSrc) != FONT_tci[index].ciCharset && index < MAXTCIINDEX) index++;
+      break;
+    default:
+      return FALSE;
+    }
+    if (index >= MAXTCIINDEX || FONT_tci[index].ciCharset == DEFAULT_CHARSET) return FALSE;
+    memcpy(lpCs, &FONT_tci[index], sizeof(CHARSETINFO));
     return TRUE;
 }
 

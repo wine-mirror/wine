@@ -27,7 +27,7 @@ typedef struct
     CHAR	dfUnderline;
     CHAR	dfStrikeOut;
     INT16	dfWeight;
-    CHAR	dfCharSet;
+    BYTE	dfCharSet;
     INT16	dfPixWidth;
     INT16	dfPixHeight;
     CHAR	dfPitchAndFamily;

@@ -420,10 +420,9 @@ typedef struct
 } CHARSETINFO,*LPCHARSETINFO;
 
 /* Flags for TranslateCharsetInfo */
-/* FIXME */
-#define TCI_SRCCHARSET 
-#define TCI_SRCCODEPAGE
-#define TCI_SRCFONTSIG
+#define TCI_SRCCHARSET    1
+#define TCI_SRCCODEPAGE   2
+#define TCI_SRCFONTSIG    3
 
 /* Flags for ModifyWorldTransform */
 #define MWT_IDENTITY      1
@@ -469,7 +468,7 @@ typedef struct
     CHAR  dfUnderline;
     CHAR  dfStrikeOut;
     INT16 dfWeight;
-    CHAR  dfCharSet;
+    BYTE  dfCharSet;
     INT16 dfPixWidth;
     INT16 dfPixHeight;
     CHAR  dfPitchAndFamily;
@@ -511,30 +510,33 @@ typedef struct
 #define FW_BLACK	    900
 
   /* lfCharSet values */
-#define ANSI_CHARSET	      (CHAR)0   /* CP1252, ansi-0, iso8859-{1,15} */
-#define DEFAULT_CHARSET       (CHAR)1
-#define SYMBOL_CHARSET	      (CHAR)2
-#define SHIFTJIS_CHARSET      (CHAR)128
-#define HANGEUL_CHARSET       (CHAR)129 /* ksc5601.1987-0 */
-#define GB2312_CHARSET        (CHAR)134 /* gb2312.1980-0 */
-#define CHINESEBIG5_CHARSET   (CHAR)136 /* big5.et-0 */
-#define GREEK_CHARSET         (CHAR)161	/* CP1253 */
-#define TURKISH_CHARSET       (CHAR)162	/* CP1254, -iso8859-9 */
-#define HEBREW_CHARSET        (CHAR)177	/* CP1255, -iso8859-8 */
-#define ARABIC_CHARSET        (CHAR)178	/* CP1256, -iso8859-6 */
-#define BALTIC_CHARSET        (CHAR)186	/* CP1257, -iso8859-10 */
-#define RUSSIAN_CHARSET       (CHAR)204	/* CP1251, -iso8859-5 */
-#define EE_CHARSET	      (CHAR)238	/* CP1250, -iso8859-2 */
-#define OEM_CHARSET	      (CHAR)255
+#define ANSI_CHARSET	      (BYTE)0   /* CP1252, ansi-0, iso8859-{1,15} */
+#define DEFAULT_CHARSET       (BYTE)1
+#define SYMBOL_CHARSET	      (BYTE)2
+#define SHIFTJIS_CHARSET      (BYTE)128 /* CP932 */
+#define HANGEUL_CHARSET       (BYTE)129 /* CP949, ksc5601.1987-0 */
+#define HANGUL_CHARSET        HANGEUL_CHARSET
+#define GB2312_CHARSET        (BYTE)134 /* CP936, gb2312.1980-0 */
+#define CHINESEBIG5_CHARSET   (BYTE)136 /* CP950, big5.et-0 */
+#define GREEK_CHARSET         (BYTE)161	/* CP1253 */
+#define TURKISH_CHARSET       (BYTE)162	/* CP1254, -iso8859-9 */
+#define HEBREW_CHARSET        (BYTE)177	/* CP1255, -iso8859-8 */
+#define ARABIC_CHARSET        (BYTE)178	/* CP1256, -iso8859-6 */
+#define BALTIC_CHARSET        (BYTE)186	/* CP1257, -iso8859-10 */
+#define RUSSIAN_CHARSET       (BYTE)204	/* CP1251, -iso8859-5 */
+#define EE_CHARSET	      (BYTE)238	/* CP1250, -iso8859-2 */
+#define EASTEUROPE_CHARSET    EE_CHARSET
+#define THAI_CHARSET	      (BYTE)222 /* CP874, iso8859-11, tis620 */
+#define JOHAB_CHARSET         (BYTE)130 /* korean (johab) CP1361 */
+#define OEM_CHARSET	      (BYTE)255
 /* I don't know if the values of *_CHARSET macros are defined in Windows
  * or if we can choose them as we want. -- srtxg
  */
-#define THAI_CHARSET	      (CHAR)239 /* iso8859-11, tis620 */
-#define VISCII_CHARSET        (CHAR)240 /* viscii1.1-1 */
-#define TCVN_CHARSET          (CHAR)241 /* tcvn-0 */
-#define KOI8_CHARSET          (CHAR)242 /* koi8-{r,u,ru} */
-#define ISO3_CHARSET          (CHAR)243 /* iso8859-3 */
-#define ISO4_CHARSET          (CHAR)244 /* iso8859-4 */
+#define VISCII_CHARSET        (BYTE)240 /* viscii1.1-1 */
+#define TCVN_CHARSET          (BYTE)241 /* tcvn-0 */
+#define KOI8_CHARSET          (BYTE)242 /* koi8-{r,u,ru} */
+#define ISO3_CHARSET          (BYTE)243 /* iso8859-3 */
+#define ISO4_CHARSET          (BYTE)244 /* iso8859-4 */
 
   /* lfOutPrecision values */
 #define OUT_DEFAULT_PRECIS	0
