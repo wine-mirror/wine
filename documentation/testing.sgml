@@ -79,10 +79,13 @@
           </listitem>
           <listitem>
             <para>
-              FIXME: Ports to new architectures involve New ports involve modifying core parts of Wine:
-              synchronization, exception handling, thread management, etc.
-              After such modifications extensive testing is necessary to
-              make sure the changes did not To check the correctness of new ports.
+              Conformance tests will also come in handy when testing Wine on
+              new (or not as widely used) architectures such as FreeBSD,
+              Solaris x86 or even non-x86 systems. Even when the port does
+              not involve any significant change in the thread management,
+              exception handling or other low-level aspects of Wine, new
+              architectures can expose subtle bugs that can be hard to
+              diagnose when debugging regular (complex) applications.
             </para>
           </listitem>
         </itemizedlist>
