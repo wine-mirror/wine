@@ -29,8 +29,8 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 WINEBIN=@bindir@
 WINELIB=@libdir@
-WINESERVERBIN=
-WINELIBDLLS=
+WINESERVER=
+WINELIBDLLS=@libdir@
 
 #------------------------------------------------------------------------------
 #  Establish Color Scheme
@@ -74,10 +74,18 @@ fi
 #    of the actual script we're running (and lets remove at least
 #    one level of symlinking).
 #------------------------------------------------------------------------------
-real_name=`find $0 -type l -printf "%l\n"`
-if [ ! $real_name ]; then
-    real_name=$0;
+argv0_path=`which $0`
+if [ -z $argv0_path ] ; then
+    argv0_path=$0
 fi
+
+real_name=`find $argv0_path -type l -printf "%l\n"`
+if [ ! $real_name ]; then
+    real_name=$argv0_path
+elif [ ! -x $real_name ]; then
+    real_name=`find $argv0_path -printf "%h\n"`/$real_name
+fi
+
 argv0_dir=`find $real_name -printf "%h\n"`
 
 if [ -z $argv0_dir ] ; then
@@ -130,7 +138,7 @@ if [ -x $WINEBIN/server/wineserver ] ; then
     WINESERVER=$WINEBIN/server/wineserver
 fi
 
-if [ -r $WINELIB/dlls/libuser.so ] ; then
+if [ -r $WINELIB/dlls/libntdll.so ] ; then
     WINELIBDLLS=$WINELIB/dlls
 fi
 
@@ -161,6 +169,16 @@ fi
 
 
 #------------------------------------------------------------------------------
+#  Handle winelib apps going through here
+#------------------------------------------------------------------------------
+winelib=0
+if [ -f $argv0_path.so ] ; then
+    winelib=1
+    export WINEPRELOAD=$argv0_path.so
+fi
+
+
+#------------------------------------------------------------------------------
 #  No arguments?  Help 'em out
 #------------------------------------------------------------------------------
 always_see_output=0
@@ -171,6 +189,10 @@ fi
 
 if [ $# -eq 1 -a foo$1 = foo ] ; then
     no_args=1
+fi
+
+if [ $winelib -eq 1 ] ; then
+    no_args=0
 fi
 
 if [ $no_args -eq 1 ] ; then
