@@ -69,6 +69,7 @@ typedef struct {
     MENUITEM    *items;       /* Array of menu items */
     UINT        FocusedItem;  /* Currently focused item */
     HWND	hwndOwner;    /* window receiving the messages for ownerdraw */
+    BOOL        bTimeToHide;  /* Request hiding when receiving a second click in the top-level menu item */
     /* ------------ MENUINFO members ------ */
     DWORD	dwStyle;	/* Extended mennu style */
     UINT	cyMax;		/* max hight of the whole menu, 0 is screen hight */
@@ -2187,7 +2188,6 @@ static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id )
 	!((ptmenu->wFlags | topmenu->wFlags) & MF_POPUP) )
     {
 	/* both are top level menus (system and menu-bar) */
-
 	MENU_HideSubPopups( pmt->hOwnerWnd, pmt->hTopMenu, FALSE );
 	MENU_SelectItem( pmt->hOwnerWnd, pmt->hTopMenu, NO_SELECTED_ITEM, FALSE );
         pmt->hTopMenu = hPtMenu;
@@ -2219,29 +2219,13 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu )
 
 	if( item )
 	{
-	    if( ptmenu->FocusedItem == id )
-	    {
-		/* nothing to do with already selected non-popup */
-		if( !(item->fType & MF_POPUP) ) return TRUE;
+	    if( ptmenu->FocusedItem != id )
+		MENU_SwitchTracking( pmt, hPtMenu, id );
 
-	        if( item->fState & MF_MOUSESELECT )
-		{
-		    if( ptmenu->wFlags & MF_POPUP )
-		    {
-			/* hide selected subpopup */
+	    /* If the popup menu is not already "popped" */
+	    if(!(item->fState & MF_MOUSESELECT ))
+		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE );
 
-			MENU_HideSubPopups( pmt->hOwnerWnd, hPtMenu, TRUE );
-			pmt->hCurrentMenu = hPtMenu;
-			return TRUE;
-		    }
-		    return FALSE; /* shouldn't get here */
-		} 
-	    }
-	    else MENU_SwitchTracking( pmt, hPtMenu, id );
-
-	    /* try to display a subpopup */
-
-	    pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE );
 	    return TRUE;
 	} 
 	else WARN("\tunable to find clicked item!\n");
@@ -2276,15 +2260,14 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 	{
 	    if( !(item->fType & MF_POPUP) )
 		return MENU_ExecFocusedItem( pmt, hPtMenu, wFlags);
-	    hPtMenu = item->hSubMenu;
-	    if( hPtMenu == pmt->hCurrentMenu )
-	    {
-	        /* Select first item of sub-popup */    
 
-	        MENU_SelectItem( pmt->hOwnerWnd, hPtMenu, NO_SELECTED_ITEM, FALSE );
-	        MENU_MoveSelection( pmt->hOwnerWnd, hPtMenu, ITEM_NEXT );
-	    }
+	    /* If we are dealing with the top-level menu and that this */
+	    /* is a click on an already "poppped" item                 */
+	    /* Stop the menu tracking and close the opened submenus    */
+	    if((pmt->hTopMenu == hPtMenu) && (ptmenu->bTimeToHide == TRUE))
+		return 1;
 	}
+	ptmenu->bTimeToHide = TRUE;
     }
     return 0;
 }
@@ -2780,11 +2763,12 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     ReleaseCapture();
 
+    menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( mt.hTopMenu );
+
     if( IsWindow( mt.hOwnerWnd ) )
     {
 	MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE );
 
-	menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( mt.hTopMenu );
 	if (menu && menu->wFlags & MF_POPUP) 
 	{
 	    ShowWindow( menu->hWnd, SW_HIDE );
@@ -2794,8 +2778,11 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	SendMessageA( mt.hOwnerWnd, WM_MENUSELECT, MAKELONG(0,0), 0xffff );
     }
 
-    /* returning the id of the selected menu.
-      The return value is only used by TrackPopupMenu */
+    /* Reset the variable for hiding menu */
+    menu->bTimeToHide = FALSE;
+    
+    /* Returning the id of the selected menu.
+       The return value is only used by TrackPopupMenu */
     return executedMenuId;
 }
 
@@ -3633,6 +3620,7 @@ HMENU WINAPI CreatePopupMenu(void)
     if (!(hmenu = CreateMenu())) return 0;
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
     menu->wFlags |= MF_POPUP;
+    menu->bTimeToHide = FALSE;
     return hmenu;
 }
 
@@ -3703,6 +3691,7 @@ HMENU WINAPI CreateMenu(void)
     ZeroMemory(menu, sizeof(POPUPMENU));
     menu->wMagic = MENU_MAGIC;
     menu->FocusedItem = NO_SELECTED_ITEM;
+    menu->bTimeToHide = FALSE;
 
     TRACE("return %04x\n", hMenu );
 
