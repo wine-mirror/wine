@@ -5939,6 +5939,9 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     if (nItem == -1) goto fail;
     infoPtr->nItemCount++;
 
+    /* shift indices first so they don't get tangled */
+    LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
+
     /* set the item attributes */
     if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
     {
@@ -5979,11 +5982,6 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 	}
     }
     
-    /* Add the subitem list to the items array. Do this last in case we go to
-     * fail during the above.
-     */
-    LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
-    
     /* send LVN_INSERTITEM notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     nmlv.iItem = nItem;
@@ -6008,6 +6006,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     return nItem;
 
 undo:
+    LISTVIEW_ShiftIndices(infoPtr, nItem, -1);
     DPA_DeletePtr(infoPtr->hdpaItems, nItem);
     infoPtr->nItemCount--;
 fail:
