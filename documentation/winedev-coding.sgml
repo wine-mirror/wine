@@ -76,7 +76,7 @@ diff -u file.old file.c > file.txt
       <title>Some notes about style</title>
        
       <para>
-        There are a few conventions that about coding style that have
+        There are a few conventions about coding style that have
 	been adopted over the years of development. The rational for
 	these <quote>rules</quote> is explained for each one.
       </para>
@@ -162,11 +162,11 @@ code
 	  attachments. Giving the patch a <filename>.txt</filename>
 	  extension and attaching will solve the problem for most
 	  mailers including Outlook. Also, there is a way to enable
-	  Outlook Express send <filename>.diff</filename>
+	  Outlook Express to send <filename>.diff</filename>
 	  attachments.
         </para>
         <para>
-          You need following two things to make it work.
+          You need the following two things to make it work.
         </para>
         <orderedlist>
           <listitem>
@@ -190,9 +190,9 @@ code
           </listitem>
         </orderedlist>
         <para>
-          Item #1 is important. After you hit "Send" button, go to
+          Item #1 is important. After you hit the "Send" button, go to
 	  "Outbox" and using "Properties" verify the message source to
-	  make sure that the mail has correct format. You might want
+	  make sure that the mail has the correct format. You might want
 	  to send several test emails to yourself too.
         </para>
       </sect2>
