@@ -1109,9 +1109,10 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
       }
     if ((strlen(name) >2)&& (name[1]==':') &&
 	     ((name[2]=='\\') || (name[2]=='/')))
-      /*absolue path given */
+      /*absolute path given */
       {
 	lstrcpynA(full_name.short_name,name,MAX_PATHNAME_LEN);
+	drive = (int)toupper(name[0]) - 'A';
       }
     else
       {
@@ -1127,6 +1128,11 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	/* find path that drive letter substitutes*/
 	drive = (int)toupper(full_name.short_name[0]) -0x41;
 	root= DRIVE_GetRoot(drive);
+	if (!root)
+	  {
+	    FIXME("internal: error getting DOS Drive Root\n");
+	    return 0;
+	  }
 	p= full_name.long_name +strlen(root);
 	/* append long name (= unix name) to drive */
 	lstrcpynA(full_name.short_name+2,p,MAX_PATHNAME_LEN-3);
