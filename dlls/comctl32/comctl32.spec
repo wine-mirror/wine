@@ -3,6 +3,9 @@ type	win32
 init	COMCTL32_LibMain
 rsrc	comctl32
 
+import	user32.dll
+import	gdi32.dll
+
 # Functions exported by the Win95 comctl32.dll 
 # (these need to have these exact ordinals, because some win95 dlls 
 #  import comctl32.dll by ordinal)

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = oleaut32
 SOVERSION = 1.0
 ALTNAMES  = ole2disp typelib
-IMPORTS   = ole32 comctl32
+IMPORTS   = ole32 gdi32 kernel32
 
 C_SRCS = \
 	connpt.c \

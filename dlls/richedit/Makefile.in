@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = riched32
 SOVERSION = 1.0
+IMPORTS   = user32
 
 C_SRCS = \
 	charlist.c \

@@ -6,6 +6,8 @@ name ws2_32
 type win32
 init WSOCK32_LibMain
 
+import user32.dll
+
 #  EXPORTS ***********
 1   stdcall  accept(long ptr ptr) WSOCK32_accept
 2   stdcall  bind(long ptr long) WSOCK32_bind

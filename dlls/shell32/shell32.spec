@@ -3,12 +3,15 @@ type	win32
 init	Shell32LibMain
 rsrc	shres
 
-import	shlwapi.dll
-import	user32.dll
-import	comctl32.dll
-
 # fixme: avoid this import
-import	ole32.dll
+import ole32.dll
+
+import shlwapi.dll
+import comctl32.dll
+import advapi32.dll
+import user32.dll
+import gdi32.dll
+import kernel32.dll
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 

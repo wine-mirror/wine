@@ -3,6 +3,8 @@ type	win32
 file	winspool.drv
 init	WINSPOOL_EntryPoint
 
+import	gdi32.dll
+
 101 stub ADVANCEDSETUPDIALOG
 102 stub AbortPrinter
 103 stdcall AddFormA(long long ptr) AddFormA

@@ -3,6 +3,8 @@ type	win32
 init	USER_Init
 rsrc	user32
 
+import	gdi32.dll
+
   1 stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout
   2 stdcall AdjustWindowRect(ptr long long) AdjustWindowRect
   3 stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx

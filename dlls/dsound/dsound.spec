@@ -1,6 +1,7 @@
 name dsound
 type win32
 import winmm
+import kernel32
 
 0 stub DirectSoundUnknown
 1 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate

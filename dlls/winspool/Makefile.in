@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winspool.drv
 SOVERSION = 1.0
+IMPORTS   = gdi32
 
 C_SRCS = \
 	info.c \

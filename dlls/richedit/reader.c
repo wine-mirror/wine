@@ -92,12 +92,6 @@ extern HANDLE RICHED32_hHeap;
 
 # define	maxCSStack		10
 
-#ifndef THINK_C
-extern char	*malloc ();
-#else
-extern void	*malloc(size_t);
-#endif
-
 static int      _RTFGetChar();
 static void	_RTFGetToken ();
 static void	_RTFGetToken2 ();

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw
 SOVERSION = 1.0
-IMPORTS   = x11drv
+IMPORTS   = ole32 user32 x11drv gdi32 kernel32
 
 MESA_SRCS = \
 	d3dcommon.c \

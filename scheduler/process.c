@@ -247,17 +247,6 @@ static BOOL process_init( char *argv[] )
  */
 static int load_system_dlls(void)
 {
-    char driver[MAX_PATH];
-
-    PROFILE_GetWineIniString( "Wine", "GraphicsDriver", "x11drv", driver, sizeof(driver) );
-    if (!LoadLibraryA( driver ))
-    {
-        MESSAGE( "Could not load graphics driver '%s'\n", driver );
-        return 0;
-    }
-
-    if (!LoadLibraryA("USER32.DLL")) return 0;
-
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
 

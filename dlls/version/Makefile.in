@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = version
 SOVERSION = 1.0
 ALTNAMES  = ver
-IMPORTS   = lz32
+IMPORTS   = lz32 kernel32
 
 C_SRCS = \
 	info.c \

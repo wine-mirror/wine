@@ -3,7 +3,8 @@ name	crtdll
 type	win32
 init    CRTDLL_Init
 
-import	ntdll
+import kernel32.dll
+import ntdll.dll
 
 @ cdecl ??2@YAPAXI@Z(long) CRTDLL_new
 @ cdecl ??3@YAXPAX@Z(long) CRTDLL_delete

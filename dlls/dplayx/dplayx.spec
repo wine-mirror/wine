@@ -3,6 +3,8 @@ type win32
 init DPLAYX_LibMain
 
 import ole32.dll
+import advapi32.dll
+import kernel32.dll
 
   1 stdcall DirectPlayCreate(ptr ptr ptr) DirectPlayCreate
   2 stdcall DirectPlayEnumerateA(ptr ptr) DirectPlayEnumerateA

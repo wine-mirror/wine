@@ -6,6 +6,7 @@ MODULE    = user32
 SOVERSION = 1.0
 WRCEXTRA  = -w16 -m
 ALTNAMES  = user keyboard ddeml display mouse
+IMPORTS   = gdi32
 
 C_SRCS = \
 	bidi16.c \

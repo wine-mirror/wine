@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = x11drv
 SOVERSION = 1.0
 EXTRALIBS = $(X_LIBS) $(XLIB)
+IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = \
 	x11drv_main.c

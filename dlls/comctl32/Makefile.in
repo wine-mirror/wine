@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = comctl32
 SOVERSION = 1.0
 WRCEXTRA  = -s -p$(MODULE)
+IMPORTS   = user32 gdi32
 
 C_SRCS = \
 	animate.c \

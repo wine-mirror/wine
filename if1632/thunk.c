@@ -169,7 +169,7 @@ void THUNK_InitCallout(void)
     HMODULE hModule;
     NE_MODULE *pModule;
 
-    hModule = GetModuleHandleA( "USER32" );
+    hModule = LoadLibraryA( "user32.dll" );
     if ( hModule )
     {
 #define GETADDR( name )  \
@@ -199,7 +199,7 @@ void THUNK_InitCallout(void)
 #undef GETADDR
     }
 
-    pModule = NE_GetPtr( GetModuleHandle16( "USER" ) );
+    pModule = NE_GetPtr( LoadLibrary16( "USER.EXE" ) );
     if ( pModule )
     {
 #define GETADDR( var, name, thk )  \

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi
 SOVERSION = 1.0
+IMPORTS   = advapi32 user32 kernel32
 
 C_SRCS = \
 	ordinal.c \

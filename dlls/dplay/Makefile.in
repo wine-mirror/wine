@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dplay
 SOVERSION = 1.0
+IMPORTS   = dplayx
 
 C_SRCS = dplay_main.c
 

@@ -3,6 +3,8 @@ file wineoss.drv
 type win32
 
 import winmm.dll
+import user32.dll
+import kernel32.dll
 
   1 stdcall DriverProc(long long long long long) OSS_DriverProc
   2 stdcall auxMessage(long long long long long) OSS_auxMessage

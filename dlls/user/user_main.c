@@ -5,6 +5,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "wine/winbase16.h"
 
 #include "dce.h"
@@ -19,6 +20,34 @@
 #include "sysmetrics.h"
 #include "user.h"
 #include "win.h"
+#include "debugtools.h"
+
+
+/* load the graphics driver */
+static BOOL load_driver(void)
+{
+    char buffer[MAX_PATH];
+    HKEY hkey;
+    DWORD type, count;
+
+    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", 0, NULL,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        MESSAGE("load_driver: Cannot create config registry key\n" );
+        return FALSE;
+    }
+    count = sizeof(buffer);
+    if (RegQueryValueExA( hkey, "GraphicsDriver", 0, &type, buffer, &count ))
+        strcpy( buffer, "x11drv" );  /* default value */
+    RegCloseKey( hkey );
+
+    if (!LoadLibraryA( buffer ))
+    {
+        MESSAGE( "Could not load graphics driver '%s'\n", buffer );
+        return FALSE;
+    }
+    return TRUE;
+}
 
 
 /***********************************************************************
@@ -37,6 +66,9 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
      /* Global atom table initialisation */
     if (!ATOM_Init( USER_HeapSel )) return FALSE;
+
+    /* Load the graphics driver */
+    if (!load_driver()) return FALSE;
 
     /* Initialize window handling (critical section) */
     WIN_Init();

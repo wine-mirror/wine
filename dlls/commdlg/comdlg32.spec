@@ -8,6 +8,8 @@ import shlwapi.dll
 import comctl32.dll
 import user32.dll
 import winspool.drv
+import gdi32.dll
+import kernel32.dll
 
  0 stub ArrowBtnWndProc
  1 stdcall ChooseColorA(ptr) ChooseColorA

@@ -1,10 +1,11 @@
 name ddraw
 type win32
 
-import kernel32.dll
-import user32.dll
 import ole32.dll
+import user32.dll
 import x11drv.dll
+import gdi32.dll
+import kernel32.dll
 
 @ stub DDHAL32_VidMemAlloc
 @ stub DDHAL32_VidMemFree
