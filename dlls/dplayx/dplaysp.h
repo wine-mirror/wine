@@ -78,7 +78,7 @@ DECLARE_INTERFACE_(IDirectPlaySP,IUnknown) { IDirectPlaySP_METHODS };
 /* NOTE: The microsoft provided header file doesn't have these access
  * functions
  */
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectPlaySP_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectPlaySP_AddRef(p)                    (p)->lpVtbl->AddRef(p)

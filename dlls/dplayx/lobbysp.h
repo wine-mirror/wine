@@ -483,7 +483,7 @@ HRESULT WINAPI DPLSPInit(LPSPDATA_INIT);
 DECLARE_INTERFACE_(IDPLobbySP,IUnknown) { IDPLobbySP_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDPLobbySP_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDPLobbySP_AddRef(p)                     (p)->lpVtbl->AddRef(p)

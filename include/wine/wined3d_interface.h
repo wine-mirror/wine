@@ -74,7 +74,7 @@ typedef struct IWineD3D IWineD3D;
 DECLARE_INTERFACE_(IWineD3D,IUnknown) { IWineD3D_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IWineD3D_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3D_AddRef(p)                                (p)->lpVtbl->AddRef(p)

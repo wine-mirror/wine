@@ -144,7 +144,7 @@ typedef struct _DSCDRIVERCAPS
 DECLARE_INTERFACE_(IDsDriver,IUnknown) { IDsDriver_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDsDriver_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDsDriver_AddRef(p)                     (p)->lpVtbl->AddRef(p)
@@ -176,7 +176,7 @@ DECLARE_INTERFACE_(IDsDriver,IUnknown) { IDsDriver_METHODS };
 DECLARE_INTERFACE_(IDsDriverBuffer,IUnknown) { IDsDriverBuffer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDsDriverBuffer_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDsDriverBuffer_AddRef(p)               (p)->lpVtbl->AddRef(p)
@@ -205,7 +205,7 @@ DECLARE_INTERFACE_(IDsDriverBuffer,IUnknown) { IDsDriverBuffer_METHODS };
 DECLARE_INTERFACE_(IDsDriverPropertySet,IUnknown) { IDsDriverPropertySet_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDsDriverPropertySet_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDsDriverPropertySet_AddRef(p)                  (p)->lpVtbl->AddRef(p)
@@ -261,7 +261,7 @@ typedef enum
 DECLARE_INTERFACE_(IDsDriverNotify,IUnknown) { IDsDriverNotify_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDsDriverNotify_QueryInterface(p,a,b)           (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDsDriverNotify_AddRef(p)                       (p)->lpVtbl->AddRef(p)
@@ -284,7 +284,7 @@ DECLARE_INTERFACE_(IDsDriverNotify,IUnknown) { IDsDriverNotify_METHODS };
 DECLARE_INTERFACE_(IDsCaptureDriver,IUnknown) { IDsCaptureDriver_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDsCaptureDriver_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDsCaptureDriver_AddRef(p)                      (p)->lpVtbl->AddRef(p)
@@ -313,7 +313,7 @@ DECLARE_INTERFACE_(IDsCaptureDriver,IUnknown) { IDsCaptureDriver_METHODS };
 DECLARE_INTERFACE_(IDsCaptureDriverBuffer,IUnknown) { IDsCaptureDriverBuffer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined (__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDsCaptureDriverBuffer_QueryInterface(p,a,b)    (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDsCaptureDriverBuffer_AddRef(p)                (p)->lpVtbl->AddRef(p)
