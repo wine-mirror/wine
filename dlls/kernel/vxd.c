@@ -306,6 +306,14 @@ static DWORD VMM_RegCloseKey( HKEY hkey )
     return RtlNtStatusToDosError( NtClose( hkey ) );
 }
 
+/******************************************************************************
+ *           VMM_RegFlushKey
+ */
+static DWORD VMM_RegFlushKey( HKEY hkey )
+{
+    return RtlNtStatusToDosError( NtFlushKey( hkey ) );
+}
+
 
 /******************************************************************************
  *           VMM_RegDeleteKeyA
@@ -805,8 +813,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
     case 0x001C:  /* RegFlushKey */
     {
         HKEY hkey = (HKEY)stack32_pop( context );
-        FIXME( "RegFlushKey(%p): stub\n", hkey );
-        return ERROR_SUCCESS;
+        return VMM_RegFlushKey( hkey );
     }
 
     case 0x001D:  /* RegQueryInfoKey */

@@ -1563,6 +1563,11 @@ static void dump_delete_key_request( const struct delete_key_request *req )
     fprintf( stderr, " hkey=%p", req->hkey );
 }
 
+static void dump_flush_key_request( const struct flush_key_request *req )
+{
+    fprintf( stderr, " hkey=%p", req->hkey );
+}
+
 static void dump_enum_key_request( const struct enum_key_request *req )
 {
     fprintf( stderr, " hkey=%p,", req->hkey );
@@ -2694,6 +2699,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_key_request,
     (dump_func)dump_open_key_request,
     (dump_func)dump_delete_key_request,
+    (dump_func)dump_flush_key_request,
     (dump_func)dump_enum_key_request,
     (dump_func)dump_set_key_value_request,
     (dump_func)dump_get_key_value_request,
@@ -2878,6 +2884,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_create_key_reply,
     (dump_func)dump_open_key_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_enum_key_reply,
     (dump_func)0,
@@ -3064,6 +3071,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_key",
     "open_key",
     "delete_key",
+    "flush_key",
     "enum_key",
     "set_key_value",
     "get_key_value",

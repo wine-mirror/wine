@@ -1795,6 +1795,18 @@ struct delete_key_reply
 
 
 
+struct flush_key_request
+{
+    struct request_header __header;
+    obj_handle_t hkey;
+};
+struct flush_key_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct enum_key_request
 {
     struct request_header __header;
@@ -3284,6 +3296,7 @@ enum request
     REQ_create_key,
     REQ_open_key,
     REQ_delete_key,
+    REQ_flush_key,
     REQ_enum_key,
     REQ_set_key_value,
     REQ_get_key_value,
@@ -3473,6 +3486,7 @@ union generic_request
     struct create_key_request create_key_request;
     struct open_key_request open_key_request;
     struct delete_key_request delete_key_request;
+    struct flush_key_request flush_key_request;
     struct enum_key_request enum_key_request;
     struct set_key_value_request set_key_value_request;
     struct get_key_value_request get_key_value_request;
@@ -3660,6 +3674,7 @@ union generic_reply
     struct create_key_reply create_key_reply;
     struct open_key_reply open_key_reply;
     struct delete_key_reply delete_key_reply;
+    struct flush_key_reply flush_key_reply;
     struct enum_key_reply enum_key_reply;
     struct set_key_value_reply set_key_value_reply;
     struct get_key_value_reply get_key_value_reply;
@@ -3747,6 +3762,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 130
+#define SERVER_PROTOCOL_VERSION 131
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

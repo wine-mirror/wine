@@ -542,11 +542,20 @@ NTSTATUS WINAPI RtlpNtQueryValueKey( HKEY handle, ULONG *result_type, PBYTE dest
  *  NtFlushKey	[NTDLL.@]
  *  ZwFlushKey  [NTDLL.@]
  */
-NTSTATUS WINAPI NtFlushKey(HKEY KeyHandle)
+NTSTATUS WINAPI NtFlushKey(HKEY key)
 {
-	FIXME("(%p) stub!\n",
-	KeyHandle);
-	return 1;
+    NTSTATUS ret;
+
+    TRACE("key=%p\n", key);
+
+    SERVER_START_REQ( flush_key )
+    {
+	req->hkey = key;
+	ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    
+    return ret;
 }
 
 /******************************************************************************

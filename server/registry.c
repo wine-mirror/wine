@@ -1777,6 +1777,17 @@ DECL_HANDLER(delete_key)
     }
 }
 
+/* flush a registry key */
+DECL_HANDLER(flush_key)
+{
+    struct key *key = get_hkey_obj( req->hkey, 0 );
+    if (key)
+    {
+        /* we don't need to do anything here with the current implementation */
+        release_object( key );
+    }
+}
+
 /* enumerate registry subkeys */
 DECL_HANDLER(enum_key)
 {

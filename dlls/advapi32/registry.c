@@ -1831,8 +1831,10 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
  */
 DWORD WINAPI RegFlushKey( HKEY hkey )
 {
-    FIXME( "(%p): stub\n", hkey );
-    return ERROR_SUCCESS;
+    hkey = get_special_root_hkey( hkey );
+    if (!hkey) return ERROR_INVALID_HANDLE;
+
+    return RtlNtStatusToDosError( NtFlushKey( hkey ) );
 }
 
 

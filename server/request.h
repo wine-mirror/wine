@@ -200,6 +200,7 @@ DECL_HANDLER(write_process_memory);
 DECL_HANDLER(create_key);
 DECL_HANDLER(open_key);
 DECL_HANDLER(delete_key);
+DECL_HANDLER(flush_key);
 DECL_HANDLER(enum_key);
 DECL_HANDLER(set_key_value);
 DECL_HANDLER(get_key_value);
@@ -388,6 +389,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_key,
     (req_handler)req_open_key,
     (req_handler)req_delete_key,
+    (req_handler)req_flush_key,
     (req_handler)req_enum_key,
     (req_handler)req_set_key_value,
     (req_handler)req_get_key_value,

@@ -1295,6 +1295,12 @@ enum char_info_mode
 @END
 
 
+/* Flush a registry key */
+@REQ(flush_key)
+    obj_handle_t hkey;         /* handle to the key */
+@END
+
+
 /* Enumerate registry subkeys */
 @REQ(enum_key)
     obj_handle_t hkey;         /* handle to registry key */
